@@ -63,7 +63,6 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
 }
 
 
-/*
 void netFindTopology (Net *net)
 {
   // the topology discovery mechanism is implemented in this
@@ -151,8 +150,8 @@ void netFindTopology (Net *net)
 	}
     }
 }
-*/
 
+/*
 void netFindTopology (Net *net)
 {
   // the machine is assumed to be only one if this function is
@@ -169,7 +168,7 @@ void netFindTopology (Net *net)
     }
   net->procs_per_machine[ 0 ] = net->procs;
 }
-
+*/
 
 void netInit (LBM *lbm, Net *net)
 {
