@@ -147,7 +147,7 @@ void lbmReadParameters (LBM *lbm)
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
   
   lbm->omega = -1.0 / lbm->tau;
-  lbm->stress_par = (1 - 2.0 / lbm->tau) / sqrt(2.0);
+  lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
   
   fscanf (parameters_file, "%i\n", &lbm->checkpoint_frequency);
   fscanf (parameters_file, "%i\n", &lbm->convergence_frequency);
@@ -372,7 +372,7 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+2] = (float)vy;
 	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+3] = (float)vz;
 	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+4] =
-		(float)(-lbm->stress_par * sqrt(lbmStress (f_neq)));
+		(float)(lbm->stress_par * sqrt(lbmStress (f_neq)));
 	    }
 	}
       if (net->id != 0 && net->proc_id[ n ] == net->id)

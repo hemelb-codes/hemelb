@@ -8,52 +8,53 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <rpc/types.h>
 #include <rpc/xdr.h>
 
-int STABLE   = 1;
-int UNSTABLE = 0;
+extern int STABLE;
+extern int UNSTABLE;
 
 // the constants needed to define the configuration of the lattice
 // sites follow
 
-unsigned int SOLID_TYPE  = 0U;
-unsigned int FLUID_TYPE  = 1U;
-unsigned int INLET_TYPE  = 2U;
-unsigned int OUTLET_TYPE = 3U;
-unsigned int NULL_TYPE   = 4U;
+extern unsigned int SOLID_TYPE;
+extern unsigned int FLUID_TYPE;
+extern unsigned int INLET_TYPE;
+extern unsigned int OUTLET_TYPE;
+extern unsigned int NULL_TYPE;
 
-unsigned int BOUNDARIES              = 4U;
-unsigned int INLET_BOUNDARY          = 0U;
-unsigned int OUTLET_BOUNDARY         = 1U;
-unsigned int WALL_BOUNDARY           = 2U;
-unsigned int CHARACTERISTIC_BOUNDARY = 3U;
+extern unsigned int BOUNDARIES;
+extern unsigned int INLET_BOUNDARY;
+extern unsigned int OUTLET_BOUNDARY;
+extern unsigned int WALL_BOUNDARY;
+extern unsigned int CHARACTERISTIC_BOUNDARY;
 
-unsigned int SITE_TYPE_BITS       = 2U;
-unsigned int BOUNDARY_CONFIG_BITS = 14U;
-unsigned int BOUNDARY_DIR_BITS    = 4U;
-unsigned int BOUNDARY_ID_BITS     = 10U;
+extern unsigned int SITE_TYPE_BITS;
+extern unsigned int BOUNDARY_CONFIG_BITS;
+extern unsigned int BOUNDARY_DIR_BITS;
+extern unsigned int BOUNDARY_ID_BITS;
 
-unsigned int BOUNDARY_CONFIG_SHIFT = 2U;   // SITE_TYPE_BITS;
-unsigned int BOUNDARY_DIR_SHIFT    = 16U;  // BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
-unsigned int BOUNDARY_ID_SHIFT     = 20U;  // BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
+extern unsigned int BOUNDARY_CONFIG_SHIFT ;   // SITE_TYPE_BITS;
+extern unsigned int BOUNDARY_DIR_SHIFT;  // BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
+extern unsigned int BOUNDARY_ID_SHIFT;  // BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
 
-unsigned int SITE_TYPE_MASK       = ((1U <<  2U) - 1U);         // ((1U << SITE_TYPE_BITS) - 1U);
-unsigned int BOUNDARY_CONFIG_MASK = ((1U << 14U) - 1U) << 2U;   // ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUNDARY_CONFIG_SHIFT;
-unsigned int BOUNDARY_DIR_MASK    = ((1U <<  4U) - 1U) << 16U;  //((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
-unsigned int BOUNDARY_ID_MASK     = ((1U << 10U) - 1U) << 20U;  // ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT
-unsigned int CHARACTERISTIC_MASK  = 1U << 31U;
+extern unsigned int SITE_TYPE_MASK;         // ((1U << SITE_TYPE_BITS) - 1U);
+extern unsigned int BOUNDARY_CONFIG_MASK;   // ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUNDARY_CONFIG_SHIFT;
+extern unsigned int BOUNDARY_DIR_MASK;  //((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
+extern unsigned int BOUNDARY_ID_MASK;  // ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT
+extern unsigned int CHARACTERISTIC_MASK;
 
 // square of the speed of sound
 
-double Cs2 = 3.0 / 8.0;
+extern double Cs2;
 
 
 // parameters related to the lattice directions
 
-int e_x[] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1};
-int e_y[] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1};
-int e_z[] = { 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1};
-int inv_dir[] = {0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13};
+extern int e_x[];
+extern int e_y[];
+extern int e_z[];
+extern int inv_dir[];
 
 
 #define MACROSCOPIC_PARS   5
@@ -165,20 +166,20 @@ struct Net
 };
 
 
-double *f_old, *f_new;
+extern double *f_old, *f_new;
 
-int *f_id;
+extern int *f_id;
 
-Velocity *vel;
+extern Velocity *vel;
 
 
-short int f_data[4*SHARED_DISTRIBUTIONS_MAX];
+extern short int f_data[4*SHARED_DISTRIBUTIONS_MAX];
 
-double f_to_send[SHARED_DISTRIBUTIONS_MAX];
-double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
+extern double f_to_send[SHARED_DISTRIBUTIONS_MAX];
+extern double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 
-int f_send_id[SHARED_DISTRIBUTIONS_MAX];
-int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
+extern int f_send_id[SHARED_DISTRIBUTIONS_MAX];
+extern int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
 
 
 // declarations of all the functions used
@@ -194,7 +195,11 @@ void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z,
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
 double lbmStress (double f[]);
-void CalculateBC (double f[], unsigned int site_data,double  *vx, double *vy, double *vz, LBM *lbm);
+void lbmCalculateBC (double f[], unsigned int site_data,double  *vx, double *vy, double *vz, LBM *lbm);
+void lbmInit (char *system_file_name, char *parameters_file_name, char *checkpoint_file_name,
+	      LBM *lbm, Net *net);
+int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LBM *lbm, Net *net);
+void lbmEnd (LBM *lbm);
 
 void netFindTopology (Net *net);
 void netInit (LBM *lbm, Net *net);
@@ -204,41 +209,6 @@ void lbmReadAndSetConfig (LBM *lbm, Net *net);
 void lbmReadParameters (LBM *lbm);
 void lbmSetInitialConditions (LBM *lbm, Net *net);
 void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, LBM *lbm, Net *net);
-
-
-
-// some simple functions
-
-int min (int a, int b)
-{
-  if (a < b)
-    {
-      return a;
-    }
-  else
-    {
-      return b;
-    }
-}
-
-
-int max (int a, int b)
-{
-  if (a > b)
-    {
-      return a;
-    }
-  else
-    {
-      return b;
-    }
-}
-
-
-double myClock ()
-{
-  return (double)clock () / (double)CLOCKS_PER_SEC;
-}
 
 
 #endif                  // __config_h__

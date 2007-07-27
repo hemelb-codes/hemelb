@@ -152,7 +152,7 @@ double lbmStress (double f[])
 }
 
 
-void CalculateBC (double f[], unsigned int site_data,double  *vx, double *vy, double *vz, LBM *lbm)
+void lbmCalculateBC (double f[], unsigned int site_data, double *vx, double *vy, double *vz, LBM *lbm)
 {
   double density, dummy_density;
   
@@ -181,7 +181,6 @@ void CalculateBC (double f[], unsigned int site_data,double  *vx, double *vy, do
     }
   else
     {
-      
       boundary_config = (site_data & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;
       boundary_id     = (site_data & BOUNDARY_ID_MASK)     >> BOUNDARY_ID_SHIFT;
       
@@ -215,4 +214,292 @@ void CalculateBC (double f[], unsigned int site_data,double  *vx, double *vy, do
 	  for (i = 7; i < 15; i++) f[ i ] = density;
 	}
     }
+}
+
+
+void lbmInit (char *system_file_name, char *parameters_file_name, char *checkpoint_file_name,
+	      LBM *lbm, Net *net)
+{
+  // basically, this function call other ones only
+  
+  lbm->system_file_name     = system_file_name;
+  lbm->parameters_file_name = parameters_file_name;
+  lbm->checkpoint_file_name = checkpoint_file_name;
+  
+  lbmReadAndSetConfig (lbm, net);
+  lbmReadParameters (lbm);
+  lbmSetInitialConditions (lbm, net);
+}
+
+
+int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LBM *lbm, Net *net)
+{
+  // the entire simulation time step takes place through this function
+  
+  double seconds;
+  double f_eq[15];
+  double omega;
+  double density;
+  double vx, vy, vz;
+  double sum1, sum2;
+  double stability_and_convergence_partial[3];
+  double stability_and_convergence_total[3];
+  double *f_old_p, *f_new_p;
+  
+  int i, l, m, n;
+  int is_unstable;
+  int *f_id_p;
+  
+  unsigned int site_data;
+  
+  short int *f_data_p;
+  
+  Velocity *vel_p;
+  
+  NeighProc *neigh_proc_p;
+  
+  
+  is_unstable = 0;
+  
+  *is_converged = 0;
+  
+  sum1 = 0.0;
+  sum2 = 0.0;
+  
+  omega = lbm->omega;
+  
+  seconds = myClock ();
+  
+  for (i = net->my_inner_sites;
+       i < net->my_inner_sites + net->my_inter_sites; i++)
+    {
+      site_data = net->site_data[ i ];
+      f_old_p = &f_old[ i*15 ];
+      
+      if (site_data == FLUID_TYPE)
+	{
+	  lbmFeq (f_old_p, &density, &vx, &vy, &vz, f_eq);
+	  
+	  for (l = 0; l < 15; l++)
+	    {
+	      f_old_p[l] += omega * (f_old_p[l] - f_eq[l]);
+	    }
+	}
+      else
+	{
+	  lbmCalculateBC (f_old_p, site_data, &vx, &vy, &vz, lbm);
+	}
+      vel_p = &vel[ i ];
+      
+      sum1 += fabs(vel_p->x - vx) + fabs(vel_p->y - vy) + fabs(vel_p->z - vz);
+      sum2 += fabs(vx) + fabs(vy) + fabs(vz);
+      
+      vel_p->x = vx;
+      vel_p->y = vy;
+      vel_p->z = vz;
+    }
+  net->timing[0] += myClock () - seconds;
+  seconds = myClock ();
+  
+  for (m = 0; m < net->neigh_procs; m++)
+    {
+      neigh_proc_p = &net->neigh_proc[ m ];
+      
+      for (n = 0; n < neigh_proc_p->fs; n++)
+	{
+	  neigh_proc_p->f_to_send[ n ] = f_old[ neigh_proc_p->f_send_id[n] ];
+	}
+    }
+  for (m = 0; m < net->inter_m_neigh_procs; m++)
+    {
+      neigh_proc_p = &net->inter_m_neigh_proc[ m ];
+      
+      for (n = 0; n < neigh_proc_p->fs; n++)
+	{
+	  neigh_proc_p->f_to_send[ n ] = f_old[ neigh_proc_p->f_send_id[n] ];
+	}
+    }
+  net->timing[1] += myClock () - seconds;
+  seconds = myClock ();
+  
+  for (m = 0; m < net->neigh_procs; m++)
+    {
+      neigh_proc_p = &net->neigh_proc[ m ];
+      
+      net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ],
+			     neigh_proc_p->fs, MPI_DOUBLE,
+			     neigh_proc_p->id, 10, MPI_COMM_WORLD,
+			     &net->req[ 0 ][ net->id * net->procs + m ]);
+      
+      net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ],
+			    neigh_proc_p->fs, MPI_DOUBLE,
+			    neigh_proc_p->id, 10, MPI_COMM_WORLD,
+			    &net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+    }
+  for (m = 0; m < net->inter_m_neigh_procs; m++)
+    {
+      neigh_proc_p = &net->inter_m_neigh_proc[ m ];
+      
+      net->err = MPI_Issend (&neigh_proc_p->f_to_send[ 0 ],
+			     neigh_proc_p->fs, MPI_DOUBLE,
+			     neigh_proc_p->id, 10, MPI_COMM_WORLD,
+			     &net->req[ 1 ][ net->id * net->procs + m ]);
+      
+      net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ],
+			    neigh_proc_p->fs, MPI_DOUBLE,
+			    neigh_proc_p->id, 10, MPI_COMM_WORLD,
+			    &net->req[ 1 ][ (net->id + net->procs) * net->procs + m ]);
+    }
+
+  net->timing[2] += myClock () - seconds;
+  seconds = myClock ();
+  
+  for (i = 0; i < net->my_inner_sites; i++)
+    {
+      site_data = net->site_data[ i ];
+      f_old_p = &f_old[ i*15 ];
+      
+      if (site_data == FLUID_TYPE)
+	{
+	  lbmFeq (f_old_p, &density, &vx, &vy, &vz, f_eq);
+	  
+	  for (l = 0; l < 15; l++)
+	    {
+	      f_old_p[l] += omega * (f_old_p[l] - f_eq[l]);
+	    }
+	}
+      else
+	{
+	  lbmCalculateBC (f_old_p, site_data, &vx, &vy, &vz, lbm);
+	}
+      f_id_p = &f_id[ i*15 ];
+      
+      for (l = 0; l < 15; l++)
+	{
+	  if (f_old_p[l] < 0.) is_unstable = 1;
+	  
+	  f_new[ f_id_p[l] ] = f_old_p[l];
+	}
+      vel_p = &vel[ i ];
+      
+      sum1 += fabs(vel_p->x - vx) + fabs(vel_p->y - vy) + fabs(vel_p->z - vz);
+      sum2 += fabs(vx) + fabs(vy) + fabs(vz);
+      
+      vel_p->x = vx;
+      vel_p->y = vy;
+      vel_p->z = vz;
+    }
+  net->timing[3] += myClock () - seconds;
+  seconds = myClock ();
+  
+  for (m = 0; m < net->inter_m_neigh_procs; m++)
+    {
+      net->err = MPI_Wait (&net->req[ 1 ][ net->id * net->procs + m ], net->status);
+      net->err = MPI_Wait (&net->req[ 1 ][ (net->id + net->procs) * net->procs + m ], net->status);
+    }
+  for (m = 0; m < net->neigh_procs; m++)
+    {
+      net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
+      net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
+    }
+  net->timing[2] += myClock () - seconds;
+  seconds = myClock ();
+  
+  for (m = 0; m < net->inter_m_neigh_procs; m++)
+    {
+      neigh_proc_p = &net->inter_m_neigh_proc[ m ];
+      
+      for (n = 0; n < neigh_proc_p->fs; n++)
+	{
+	  f_new[ neigh_proc_p->f_recv_iv[n] ] = neigh_proc_p->f_to_recv[ n ];
+	}
+    }
+  for (m = 0; m < net->neigh_procs; m++)
+    {
+      neigh_proc_p = &net->neigh_proc[ m ];
+      
+      for (n = 0; n < neigh_proc_p->fs; n++)
+	{
+	  f_new[ neigh_proc_p->f_recv_iv[n] ] = neigh_proc_p->f_to_recv[ n ];
+	}
+    }
+  net->timing[1] += myClock () - seconds;
+  seconds = myClock ();
+  
+  for (i = net->my_inner_sites;
+       i < net->my_inner_sites + net->my_inter_sites; i++)
+    {
+      f_old_p = &f_old[ i*15 ];
+      f_id_p = &f_id[ i*15 ];
+      
+      for (l = 0; l < 15; l++)
+	{
+	  if (f_old_p[l] < 0.) is_unstable = 1;
+	  
+	  f_new[ f_id_p[l] ] = f_old_p[l];
+	}
+    }
+  f_old_p = f_old;
+  f_old = f_new;
+  f_new = f_old_p;
+  
+  net->timing[4] += myClock () - seconds;
+  seconds = myClock ();
+  
+  free(lbm->inlet_density);
+  free(lbm->outlet_density);
+  
+  lbmReadParameters (lbm);
+  
+  if (check_convergence)
+    {
+      if (net->procs > 1)
+	{
+	  stability_and_convergence_partial[ 0 ] = (double)is_unstable;
+	  stability_and_convergence_partial[ 1 ] = sum1;
+	  stability_and_convergence_partial[ 2 ] = sum2;
+	  
+	  net->err = MPI_Allreduce (stability_and_convergence_partial,
+				    stability_and_convergence_total, 3,
+				    MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD);
+	  
+	  sum1 = stability_and_convergence_total[ 1 ];
+	  sum2 = stability_and_convergence_total[ 2 ];
+	  
+	  is_unstable = (stability_and_convergence_total[ 0 ] >= 1.);
+	}
+      
+      if (sum1 <= sum2 * lbm->tolerance && sum2 > lbm->tolerance)
+	{
+	  *is_converged = 1;
+	}
+    }
+  if (write_checkpoint)
+    {
+      lbmWriteConfig (!is_unstable, lbm->checkpoint_file_name, 1, lbm, net);
+    }
+  
+  net->timing[5] += myClock () - seconds;
+  
+  if (is_unstable)
+    {
+      return UNSTABLE;
+    }
+  else
+    {
+      return STABLE;
+    }
+}
+
+
+void lbmEnd (LBM *lbm)
+{
+  free(lbm->outlet_density);
+  lbm->outlet_density = NULL;
+  
+  free(lbm->inlet_density);
+  lbm->inlet_density = NULL;
+  
+  free(lbm->fluid_sites_per_block);
+  lbm->fluid_sites_per_block = NULL;
 }
