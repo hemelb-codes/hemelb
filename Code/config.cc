@@ -1,12 +1,5 @@
 // In this file all the declarations and some simple functions are reported.
 
-#include "mpi.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
-#include <rpc/types.h>
-#include <rpc/xdr.h>
 #include "config.h"
 
 int STABLE   = 1;
