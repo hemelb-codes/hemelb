@@ -357,7 +357,7 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 	      
 	      if (site_data != FLUID_TYPE)
 		{
-		  CalculateBC (f_old_p, site_data, &vx, &vy, &vz, lbm);
+		  lbmCalculateBC (f_old_p, site_data, &vx, &vy, &vz, lbm);
 		}
 	      lbmFeq (f_old_p, &pressure, &vx, &vy, &vz, f_eq);
 	      
