@@ -6,7 +6,7 @@ TEST1INPUT=/home/steven/hemelb/Input/square_duct_32x16x16_input.asc
 TEST2INPUT=/home/steven/hemelb/Input/angio1_input.asc
 
 FLAGS=-O3
-DEFS=-DRG
+#DEFS=-DRG
 
 OBJ=config.o \
 	io.o \

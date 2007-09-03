@@ -2341,7 +2341,10 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
 		      rt->coloured_pixels_max <<= 1;
 		      rt->coloured_pixel_recv = (float *)realloc(rt->coloured_pixel_recv,
 								 sizeof(float) * 6 * rt->coloured_pixels_max);
+
+#ifdef RG
 		      send_array = (Pixel *)realloc(send_array, sizeof(Pixel) * rt->coloured_pixels_max);
+#endif
 		    }
 		  *coloured_pixel_id_p = rt->coloured_pixels;
 		  
@@ -2438,7 +2441,9 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
 		      rt->coloured_pixels_max <<= 1;
 		      rt->coloured_pixel_recv = (float *)realloc(rt->coloured_pixel_recv,
 								 sizeof(float) * 6 * rt->coloured_pixels_max);
+#ifdef RG
 		      send_array = (Pixel *)realloc(send_array, sizeof(Pixel) * rt->coloured_pixels_max);
+#endif
 		    }
 		  *coloured_pixel_id_p = rt->coloured_pixels;
 		  
@@ -2723,7 +2728,9 @@ void rtInit (char *image_file_name, RT *rt)
   rt->coloured_pixel_ids_max = 512 * 512;
   rt->coloured_pixel_id = (int *)malloc(sizeof(int) * rt->coloured_pixel_ids_max);
   
+#ifdef RG
   send_array = (Pixel *)malloc(sizeof(Pixel) * rt->coloured_pixels_max);
+#endif
   
   rtRayAABBIntersection[0] = rtRayAABBIntersection000;
   rtRayAABBIntersection[1] = rtRayAABBIntersection001;
