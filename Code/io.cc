@@ -2,22 +2,47 @@
 
 #include "config.h"
 
-
-void lbmReadAndSetConfig (LBM *lbm, Net *net)
+void lbmReadConfig (LBM *lbm, Net *net)
 {
   // this function reads the XDR configuration file but does not store the system
   // and calculate some parameters
   
+  FILE *system_config;
   XDR xdr_config;
   
-  int i, j, k, ii, jj, kk, n;
+  double seconds;
+  
+  float *block_density_p = NULL;
+  float error;
+  float temp;
+  
+  int blocks, blocks_max;
+  int iters;
+  
+  int i, j, k, ii, jj, kk, m, n;
   int flag;
+  int dummy = 0;
   
   unsigned int site_data;
   unsigned int site_i, site_j, site_k;
+  unsigned int boundary_id;
+  
+  //SiteLocation *site_location_a_p; ///
+  
+  //DataBlock *iter_block_p; ///
+  
+  struct DensityBlock
+  {
+    int neigh[26];
+    int neighs;
+    int boundary_sites;
+  };
+  
+  DensityBlock *density_block = NULL;
+  DensityBlock *density_block_p = NULL;
   
   
-  FILE *system_config = fopen (lbm->system_file_name, "r");
+  system_config = fopen (lbm->system_file_name, "r");
   
   xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
   
@@ -34,7 +59,7 @@ void lbmReadAndSetConfig (LBM *lbm, Net *net)
   lbm->sites_in_a_block = lbm->block_size * lbm->block_size * lbm->block_size;
 
   i = lbm->block_size;
-
+  
   lbm->shift = 0;
 
   while (i > 1)
@@ -57,6 +82,32 @@ void lbmReadAndSetConfig (LBM *lbm, Net *net)
   lbm->site_max_y = 0;
   lbm->site_max_z = 0;
   
+  
+  //lbm->iter_block = (DataBlock *)malloc(sizeof(DataBlock) * lbm->blocks); ///
+  //
+  //for (n = 0; n < lbm->blocks; n++)
+  //  {
+  //    lbm->iter_block[ n ].site_data = NULL; ///
+  //  }
+  //lbm->inlet_sites = 0; ///
+  //
+  //lbm->site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * 1000000); ///
+  //lbm->site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * 1000000); ///
+  
+  
+  blocks_max = dummy;
+  blocks = dummy;
+  
+  if (!lbm->is_checkpoint)
+    {
+      blocks_max = 10000;
+      
+      lbm->block_density = (float *)malloc(sizeof(float) * blocks_max);
+      
+      lbm->block_map = (int *)malloc(sizeof(int) * lbm->blocks);
+  
+      density_block = (DensityBlock *)malloc(sizeof(DensityBlock) * blocks_max);
+    }
   n = -1;
   
   for (i = 0; i < lbm->blocks_x; i++)
@@ -69,7 +120,35 @@ void lbmReadAndSetConfig (LBM *lbm, Net *net)
 	      
 	      xdr_int (&xdr_config, &flag);
 	      
+	      if (!lbm->is_checkpoint) lbm->block_map[ n ] = -1;
+	      
 	      if (flag == 0) continue;
+	      
+	      //iter_block_p = &lbm->iter_block[ n ]; ///
+	      
+	      //iter_block_p->site_data = ///
+		//	(unsigned int *)malloc(sizeof(unsigned int) * lbm->sites_in_a_block);
+	      
+	      if (!lbm->is_checkpoint)
+		{
+		  lbm->block_map[ n ] = blocks;
+		  
+		  if (blocks == blocks_max)
+		    {
+		      blocks_max <<= 2;
+		      lbm->block_density = (float *)realloc(lbm->block_density,
+							    sizeof(float) * blocks_max);
+		      density_block = (DensityBlock *)realloc(density_block,
+							      sizeof(DensityBlock) * blocks_max);
+		    }
+		  block_density_p = &lbm->block_density[ blocks ];
+		  *block_density_p = 0.F;
+		  
+		  density_block_p = &density_block[ blocks ];
+		  density_block_p->boundary_sites = 0;
+		  ++blocks;
+		}
+	      //m = -1; ///
 	      
 	      for (ii = 0; ii < lbm->block_size; ii++)
 		{
@@ -83,10 +162,13 @@ void lbmReadAndSetConfig (LBM *lbm, Net *net)
 			{
 			  site_k = (k << lbm->shift) + kk;
 			  
+			  //++m; ///
+			  
 			  xdr_u_int (&xdr_config, &site_data);
 			  
 			  if ((site_data & SITE_TYPE_MASK) == SOLID_TYPE)
 			    {
+			      //iter_block_p->site_data[ m ] = 1U << 31U; ///
 			      continue;
 			    }
 			  
@@ -99,60 +181,248 @@ void lbmReadAndSetConfig (LBM *lbm, Net *net)
 			  lbm->site_max_x = max(lbm->site_max_x, site_i);
 			  lbm->site_max_y = max(lbm->site_max_y, site_j);
 			  lbm->site_max_z = max(lbm->site_max_z, site_k);
+			  
+			  //if ((site_data & SITE_TYPE_MASK) == INLET_TYPE) ///
+			  //  {
+			  //    site_location_a_p = &lbm->site_location_a[ lbm->inlet_sites ];
+			  //    site_location_a_p->i = (i << lbm->shift) + ii;
+			  //    site_location_a_p->j = (j << lbm->shift) + jj;
+			  //    site_location_a_p->k = (k << lbm->shift) + kk;
+			  //    ++lbm->inlet_sites;
+			  //    
+			  //    iter_block_p->site_data[ m ] = 0U;
+			  //  }
+			  //else
+			  //  {
+			  //    iter_block_p->site_data[ m ] = 1U << 15U;
+			  //  }
+			  
+			  if (!lbm->is_checkpoint)
+			    {
+			      if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
+				{
+				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+				  
+				  ++density_block_p->boundary_sites;
+				  *block_density_p += lbm->inlet_density[ boundary_id ];
+				}
+			      else if ((site_data & SITE_TYPE_MASK) == OUTLET_TYPE)
+				{
+				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+				  
+				  ++density_block_p->boundary_sites;
+				  *block_density_p += lbm->outlet_density[ boundary_id ];
+				}
+			    }
 			}
 		    }
 		}
 	    }
 	}
     }
-  
+  xdr_destroy (&xdr_config);
   fclose (system_config);
   
-  netInit (lbm, net);
+  if (lbm->is_checkpoint) return;
   
-  vel = (Velocity *)malloc(sizeof(Velocity) * (net->my_inner_sites + net->my_inter_sites));
+  seconds = myClock ();
+  
+  blocks = 0;
+  n = -1;
+  
+  for (i = 0; i < lbm->blocks_x; i++)
+    {
+      for (j = 0; j < lbm->blocks_y; j++)
+	{
+	  for (k = 0; k < lbm->blocks_z; k++)
+	    {
+	      if (lbm->block_map[ ++n ] == -1) continue;
+	      
+	      block_density_p = &lbm->block_density[ blocks ];
+	      
+	      density_block_p = &density_block[ blocks ];
+	      density_block_p->neighs = 0;
+	      ++blocks;
+	      
+	      if (density_block_p->boundary_sites > 0)
+		{
+		  *block_density_p /= (float)density_block_p->boundary_sites;
+		  continue;
+		}
+	      for (ii = max(0, i - 1); ii <= min(i + 1, lbm->blocks_x - 1); ii++)
+		{
+		  for (jj = max(0, j - 1); jj <= min(j + 1, lbm->blocks_y - 1); jj++)
+		    {
+		      for (kk = max(0, k - 1); kk <= min(k + 1, lbm->blocks_z - 1); kk++)
+			{
+			  m = (ii * lbm->blocks_y + jj) * lbm->blocks_z + kk;
+			  
+			  if (m == n || lbm->block_map[ m ] == -1) continue;
+			  
+			  density_block_p->neigh[ density_block_p->neighs ] = lbm->block_map[ m ];
+			  ++density_block_p->neighs;
+			}
+		    }
+		}
+	    }
+	}
+    }
+  error = 1.e+30F;
+  iters = 0;
+  
+  while (error > 1.e-3F)
+    {
+      ++iters;
+      
+      error = 0.F;
+      
+      for (n = 0; n < blocks; n++)
+	{
+	  density_block_p = &density_block[ n ];
+	  
+	  if (density_block_p->neighs == 0) continue;
+	  
+	  block_density_p = &lbm->block_density[ n ];
+	  
+	  temp = *block_density_p;
+	  *block_density_p = 0.F;
+	  
+	  for (m = 0; m < density_block_p->neighs; m++)
+	    {
+	      *block_density_p += lbm->block_density[ density_block_p->neigh[m] ];
+	    }
+	  *block_density_p /= (float)density_block_p->neighs;
+	  
+	  error = fmaxf(error, fabsf(*block_density_p - temp) /
+			fmaxf(1.e-30F, *block_density_p));
+	}
+    }
+  seconds = myClock () - seconds;
+  
+  free(density_block);
+  
+  if (net->id == 0)
+    {
+      printf ("Coarse-level density gradients minimization: %.3e, iters: %i\n",
+	      seconds, iters);
+      fflush (stdout);
+    }
 }
 
 
-void lbmReadParameters (LBM *lbm)
+void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 {
-  // this function reads the ASCII file of the parameters 
+  // through this function the processor 0 reads the LB parameters
+  // and then communicate them to the other processors
+  
+  double par_to_send[6+2000];
+  
   int n;
+  int iters;
   
-  FILE *parameters_file = fopen (lbm->parameters_file_name, "r");
-  
-  
-  fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
-  
-  fscanf (parameters_file, "%le\n", &lbm->tau);
-  fscanf (parameters_file, "%i\n", &lbm->inlets);
-  
-  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
-  
-  for (n = 0; n < lbm->inlets; n++)
+  if (net->id == 0)
     {
-      fscanf (parameters_file, "%le\n", &lbm->inlet_density[ n ]);
+      FILE *parameters_file = fopen (parameters_file_name, "r");
+      
+      
+      fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
+      fscanf (parameters_file, "%le\n", &lbm->tau);
+      fscanf (parameters_file, "%i\n", &lbm->inlets);
+
+      if (lbm->inlet_density == NULL)
+	{
+	  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
+	}
+      
+      for (n = 0; n < lbm->inlets; n++)
+	{
+	  //fscanf (parameters_file, "%i\n", &iters);
+	  //lbm->inlet_density[ n ] = 1.0 - (double)iters * 1.e-5;
+	  fscanf (parameters_file, "%le\n", &lbm->inlet_density[ n ]);
+	}
+      fscanf (parameters_file, "%i\n", &lbm->outlets);
+      
+      if (lbm->outlet_density == NULL)
+	{
+	  lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
+	}
+      for (n = 0; n < lbm->outlets; n++)
+	{
+	  //fscanf (parameters_file, "%i\n", &iters);
+	  //lbm->outlet_density[ n ] = 1.0 - (double)iters * 1.e-5;
+	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
+	  //printf (" %le\n", lbm->outlet_density[ n ]);
+	}
+      fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
+      fscanf (parameters_file, "%le\n", &lbm->tolerance);
+      fscanf (parameters_file, "%i\n", &lbm->checkpoint_frequency);
+      fscanf (parameters_file, "%i\n", &lbm->convergence_frequency);
+      
+      fclose (parameters_file);
+      
+      par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
+      par_to_send[ 1 ] = 0.1 + (double)lbm->outlets;
     }
-  fscanf (parameters_file, "%i\n", &lbm->outlets);
   
-  lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
+  net->err = MPI_Bcast (par_to_send, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
-  for (n = 0; n < lbm->outlets; n++)
+  if (net->id != 0)
     {
-      fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
+      lbm->inlets  = (int)par_to_send[ 0 ];
+      if (lbm->inlet_density == NULL)
+	{
+	  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
+	}
+      lbm->outlets = (int)par_to_send[ 1 ];
+      if (lbm->outlet_density == NULL)
+	{
+	  lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
+	}
+      
     }
-  fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
-  fscanf (parameters_file, "%le\n", &lbm->tolerance);
+  else
+    {
+      par_to_send[ 0 ] = 0.1 + (double)lbm->is_checkpoint;
+      par_to_send[ 1 ] = lbm->tau;
+      
+      for (n = 0; n < lbm->inlets; n++)
+	{
+	  par_to_send[ 2 + n ] = 0.1 + (double)lbm->inlet_density[ n ];
+	}
+      for (n = 0; n < lbm->outlets; n++)
+	{
+	  par_to_send[ 2 + lbm->inlets + n ] = 0.1 + (double)lbm->outlet_density[ n ];
+	}
+      par_to_send[ 2 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->time_steps_max;
+      par_to_send[ 3 + lbm->inlets + lbm->outlets ] = lbm->tolerance;
+      par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->checkpoint_frequency;
+      par_to_send[ 5 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->convergence_frequency;
+    }
+
+  net->err = MPI_Bcast (par_to_send, 6 + lbm->inlets + lbm->outlets, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
+  if (net->id != 0)
+    {
+      lbm->is_checkpoint = (int)par_to_send[ 0 ];
+      lbm->tau           =      par_to_send[ 1 ];
+      
+      for (n = 0; n < lbm->inlets; n++)
+	{
+	  lbm->inlet_density[ n ] = (int)par_to_send[ 2 + n ];
+	}
+      for (n = 0; n < lbm->outlets; n++)
+	{
+	  lbm->outlet_density[ n ] = (int)par_to_send[ 2 + lbm->inlets + n ];
+	}
+      lbm->time_steps_max        = (int)par_to_send[ 2 + lbm->inlets + lbm->outlets ];
+      lbm->tolerance             =      par_to_send[ 3 + lbm->inlets + lbm->outlets ];
+      lbm->checkpoint_frequency  = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
+      lbm->convergence_frequency = (int)par_to_send[ 5 + lbm->inlets + lbm->outlets ];
+    }
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
   
   lbm->omega = -1.0 / lbm->tau;
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
-  
-  fscanf (parameters_file, "%i\n", &lbm->checkpoint_frequency);
-  fscanf (parameters_file, "%i\n", &lbm->convergence_frequency);
-  
-  fclose (parameters_file);
 }
 
 
@@ -164,11 +434,14 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
   // flow fields specified in the checkpoint file if the checkpoint
   // status is one
   
+  FILE *system_config;
+  XDR  xdr_system_config;
+  
+  double f_eq[15];
   float pressure, density;
   float vx, vy, vz;
   float stress;
   
-  double f_eq[15];
   double *f_old_p, *f_new_p;
   
   int stability;
@@ -178,12 +451,51 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
   DataBlock *map_block_p;
   
   
-  if (!lbm->is_checkpoint)
+  if (!lbm->is_checkpoint) return;
+  
+  if (net->id == 0)
     {
-      lbmFeq (1., 0., 0., 0., f_eq);
+      printf("Opening checkpoint file to read: %s\n", lbm->checkpoint_file_name);
+      fflush (stdout);
+    }
+  system_config = fopen (lbm->checkpoint_file_name, "r");
+  xdrstdio_create (&xdr_system_config, system_config, XDR_DECODE);
+  
+  xdr_int    (&xdr_system_config, &stability);
+  xdr_double (&xdr_system_config, &lbm->lattice_to_system);
+  xdr_int    (&xdr_system_config, &lbm->blocks_x);
+  xdr_int    (&xdr_system_config, &lbm->blocks_y);
+  xdr_int    (&xdr_system_config, &lbm->blocks_z);
+  xdr_int    (&xdr_system_config, &lbm->block_size);
+  
+  for (n = 0; n < lbm->blocks; n++)
+    {
+      xdr_int (&xdr_system_config, &flag);
       
-      for (i = 0; i < net->my_inner_sites + net->my_inter_sites; i++)
+      if (flag == 0) continue;
+      
+      map_block_p = &net->map_block[ n ];
+      
+      for (m = 0; m < net->sites_in_a_block; m++)
 	{
+	  xdr_int (&xdr_system_config, &flag);
+	  
+	  if (flag == 0) continue;
+	  
+	  xdr_float (&xdr_system_config, &pressure);
+	  xdr_float (&xdr_system_config, &vx);
+	  xdr_float (&xdr_system_config, &vy);
+	  xdr_float (&xdr_system_config, &vz);
+	  xdr_float (&xdr_system_config, &stress);
+	  
+	  if (net->proc_id[ n ] != net->id) continue;
+	  
+	  density = pressure / Cs2;
+	  
+	  lbmFeq (density, vx, vy, vz, f_eq);
+	  
+	  i = map_block_p->site_data[ m ];
+	  
 	  f_old_p = &f_old[ i*15 ];
 	  f_new_p = &f_new[ i*15 ];
 	  
@@ -194,66 +506,8 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
 	  vel[ i ].x = vel[ i ].y = vel[ i ].z = 1.e+30;
 	}
     }
-  else
-    {
-      FILE *system_config;
-      XDR  xdr_system_config;
-      
-      if (net->id == 0)
-	{
-	  printf("Opening checkpoint file to read: %s\n", lbm->checkpoint_file_name);
-	  fflush (stderr);
-	}
-      system_config = fopen (lbm->checkpoint_file_name, "r");
-      xdrstdio_create (&xdr_system_config, system_config, XDR_DECODE);
-      
-      xdr_int    (&xdr_system_config, &stability);
-      xdr_double (&xdr_system_config, &lbm->lattice_to_system);
-      xdr_int    (&xdr_system_config, &lbm->blocks_x);
-      xdr_int    (&xdr_system_config, &lbm->blocks_y);
-      xdr_int    (&xdr_system_config, &lbm->blocks_z);
-      xdr_int    (&xdr_system_config, &lbm->block_size);
-      
-      for (n = 0; n < lbm->blocks; n++)
-	{
-	  xdr_int (&xdr_system_config, &flag);
-	  
-	  if (flag == 0) continue;
-	  
-	  map_block_p = &net->map_block[ n ];
-	  
-	  for (m = 0; m < net->sites_in_a_block; m++)
-	    {
-	      xdr_int (&xdr_system_config, &flag);
-	      
-	      if (flag == 0) continue;
-	      
-	      xdr_float (&xdr_system_config, &pressure);
-	      xdr_float (&xdr_system_config, &vx);
-	      xdr_float (&xdr_system_config, &vy);
-	      xdr_float (&xdr_system_config, &vz);
-	      xdr_float (&xdr_system_config, &stress);
-	      
-	      if (net->proc_id[ n ] != net->id) continue;
-	      
-	      density = pressure / Cs2;
-	      
-	      lbmFeq (density, vx, vy, vz, f_eq);
-	      
-	      i = map_block_p->site_data[ m ];
-	      
-	      f_old_p = &f_old[ i*15 ];
-	      f_new_p = &f_new[ i*15 ];
-	      
-	      for (l = 0; l < 15; l++)
-		{
-		  f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
-		}
-	      vel[ i ].x = vel[ i ].y = vel[ i ].z = 1.e+30;
-	    }
-	}
-      xdr_destroy(&xdr_system_config);
-    }
+  xdr_destroy (&xdr_system_config);
+  fclose (system_config);
 }
 
 
@@ -264,9 +518,10 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
   // output file or the checkpoint one if "is_checkpoint" is "0" or
   // "1" respectively
   
-  FILE *system_config;
+  FILE *system_config = NULL;
   XDR	xdr_system_config;
   
+  double seconds;
   double pressure, pressure_min, pressure_max;
   double velocity, velocity_min, velocity_max;
   double stress, stress_min, stress_max;
@@ -285,11 +540,10 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
   DataBlock *map_block_p;
   
   
+  seconds = myClock ();
+  
   if (net->id == 0)
     {
-      printf ("Opening output config file: %s\n", output_file_name);
-      fflush (stderr);
-      
       system_config = fopen (output_file_name, "w");
       xdrstdio_create (&xdr_system_config, system_config, XDR_ENCODE);
       xdr_int (&xdr_system_config, &stability);
@@ -300,6 +554,7 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
       if (net->id == 0)
 	{
 	  xdr_destroy(&xdr_system_config);
+	  fclose (system_config);
 	}
       return;
     }
@@ -355,12 +610,14 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 	      f_old_p = &f_old[ my_site_id*15 ];
 	      site_data = net->site_data[ my_site_id ];
 	      
-	      if (site_data != FLUID_TYPE)
+	      if (site_data == FLUID_TYPE)
 		{
-		  lbmCalculateBC (f_old_p, site_data, &vx, &vy, &vz, lbm);
+		  lbmFeq (f_old_p, &pressure, &vx, &vy, &vz, f_eq);
 		}
-	      lbmFeq (f_old_p, &pressure, &vx, &vy, &vz, f_eq);
-	      
+	      else
+		{
+		  lbmCalculateBC (f_old_p, site_data, &pressure, &vx, &vy, &vz, lbm);
+		}
 	      pressure *= Cs2;
 	      
 	      for (l = 0; l < 15; l++)
@@ -387,6 +644,8 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 			       MACROSCOPIC_PARS * net->sites_in_a_block, MPI_REAL,
 			       net->proc_id[ n ], 10, MPI_COMM_WORLD, net->status);
 	}
+      
+      net->err = MPI_Barrier (MPI_COMM_WORLD);
       
       if (net->id != 0) continue;
       
@@ -427,13 +686,15 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
   if (net->id == 0)
     {
       xdr_destroy(&xdr_system_config);
+      fclose (system_config);
       
       if (!is_checkpoint)
 	{
 	  printf ("pressure_min, max: %le, %le\n", pressure_min, pressure_max);
 	  printf ("velocity_min, max: %le, %le\n", velocity_min, velocity_max);
 	  printf ("stress_min, max: %le, %le\n", stress_min, stress_max);
-	  fflush (stderr);
+	  fflush (stdout);
 	}
     }
+  net->timing[7] = myClock () - seconds;
 }

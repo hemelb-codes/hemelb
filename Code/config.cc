@@ -1,6 +1,7 @@
-// In this file all the declarations and some simple functions are reported.
-
 #include "config.h"
+
+
+float EPSILON = 1.0e-30;
 
 int STABLE   = 1;
 int UNSTABLE = 0;
@@ -54,6 +55,12 @@ int *f_id = NULL;
 
 Velocity *vel = NULL;
 
+float *flow_field = NULL;
+
+double *d = NULL;
+
+double **nd_p = NULL;
+
 
 short int f_data[4*SHARED_DISTRIBUTIONS_MAX];
 
@@ -63,6 +70,12 @@ double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 int f_send_id[SHARED_DISTRIBUTIONS_MAX];
 int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
 
+
+Screen screen;
+
+Viewpoint viewpoint;
+
+Ray ray;
 
 
 // some simple functions

@@ -117,6 +117,18 @@ void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
 }
 
 
+void lbmVelocity (double f[], double *v_x, double *v_y, double *v_z)
+{
+  *v_x = f[ 1 ] + (f[  7 ] + f[  9 ]) + (f[ 11 ] + f[ 13 ]);
+  *v_y = f[ 3 ] + (f[ 12 ] + f[ 14 ]);
+  *v_z = f[ 5 ] + f[ 10 ];
+  
+  *v_x -= (f[ 2 ] + f[ 8 ] + f[ 10 ] + (f[ 12 ] + f[ 14 ]));
+  *v_y += (f[ 7 ] + f[ 9 ]) - ((f[ 4 ] + f[ 8 ] + f[ 10 ] + (f[ 11 ] + f[ 13 ])));
+  *v_z += f[ 7 ] + f[ 11 ] + f[ 14 ] - (((f[ 6 ] + f[ 8 ]) + f[ 9 ] + f[ 12 ] + f[ 13 ]));
+}
+
+
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z)
 {
   *v_x = f[ 1 ] + (f[  7 ] + f[  9 ]) + (f[ 11 ] + f[ 13 ]);
@@ -152,9 +164,10 @@ double lbmStress (double f[])
 }
 
 
-void lbmCalculateBC (double f[], unsigned int site_data, double *vx, double *vy, double *vz, LBM *lbm)
+void lbmCalculateBC (double f[], unsigned int site_data, double *density,
+		     double *vx, double *vy, double *vz, LBM *lbm)
 {
-  double density, dummy_density;
+  double dummy_density;
   
   int unknowns, i;
   
@@ -167,17 +180,17 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *vx, double *vy,
   
   if (boundary_type == FLUID_TYPE)
     {
-      density = 0.;
+      *density = 0.;
 
-      for (i = 0; i < 15; i++) density += f[ i ];
+      for (i = 0; i < 15; i++) *density += f[ i ];
       
-      density *= (1.0 / 8.0);
+      *density *= (1.0 / 8.0);
       
-      for (i = 0; i < 7; i++) f[ i ] = density;
+      for (i = 0; i < 7; i++) f[ i ] = *density;
       
-      density *= (1.0 / 8.0);
+      *density *= (1.0 / 8.0);
       
-      for (i = 7; i < 15; i++) f[ i ] = density;
+      for (i = 7; i < 15; i++) f[ i ] = *density;
     }
   else
     {
@@ -192,67 +205,276 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *vx, double *vy,
 	}
       if (boundary_type == INLET_TYPE)
 	{
-	  density = lbm->inlet_density[ boundary_id ];
+	  *density = lbm->inlet_density[ boundary_id ];
 	}
       else
 	{
-	  density = lbm->outlet_density[ boundary_id ];
+	  *density = lbm->outlet_density[ boundary_id ];
 	}
       if (unknowns <= 5)
 	{
 	  lbmDensityAndVelocity (f, &dummy_density, vx, vy, vz);
-	  lbmFeq (density, *vx, *vy, *vz, f);
+	  lbmFeq (*density, *vx, *vy, *vz, f);
 	}
       else
 	{
-	  density *= (1.0 / 8.0);
+	  *density *= (1.0 / 8.0);
 	  
-	  for (i = 0; i < 7; i++) f[ i ] = density;
+	  for (i = 0; i < 7; i++) f[ i ] = *density;
 	  
-	  density *= (1.0 / 8.0);
+	  *density *= (1.0 / 8.0);
 	  
-	  for (i = 7; i < 15; i++) f[ i ] = density;
+	  for (i = 7; i < 15; i++) f[ i ] = *density;
 	}
     }
 }
 
 
-void lbmInit (char *system_file_name, char *parameters_file_name, char *checkpoint_file_name,
+void lbmInit (char *system_file_name, char *checkpoint_file_name,
 	      LBM *lbm, Net *net)
 {
-  // basically, this function call other ones only
+  // basically, this function calls other ones only
   
   lbm->system_file_name     = system_file_name;
-  lbm->parameters_file_name = parameters_file_name;
   lbm->checkpoint_file_name = checkpoint_file_name;
   
-  lbmReadAndSetConfig (lbm, net);
-  lbmReadParameters (lbm);
+  lbmReadConfig (lbm, net);
   lbmSetInitialConditions (lbm, net);
 }
 
 
-int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LBM *lbm, Net *net)
+void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
+{
+  double seconds;
+  double *d_p;
+  double **nd_p_p;
+  double density;
+  double *f_old_p, *f_new_p, f_eq[15];
+  double error, error_tot;
+  double temp;
+  
+  int iters;
+  int neighs;
+  int i;
+  int l, m, n;
+  int my_sites;
+  
+  unsigned int site_data, boundary_id;
+  
+  NeighProc *neigh_proc_p;
+  
+  
+  seconds = myClock ();
+  
+  my_sites = net->my_inner_sites + net->my_inter_sites;
+  
+  for (i = 0; i < my_sites; i++)
+    {
+      site_data = net->site_data[ i ];
+      
+      if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
+	{
+	  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+	  
+	  d[ i ] = lbm->inlet_density[ boundary_id ];
+	}
+      else if ((site_data & SITE_TYPE_MASK) == OUTLET_TYPE)
+	{
+	  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+	  
+	  d[ i ] = lbm->outlet_density[ boundary_id ];
+	}
+    }
+  d[ my_sites ] = -1.;
+  
+  error_tot = 1.e+30;
+  iters = 0;
+  
+  while (error_tot > 1.e-3)
+    {
+      ++iters;
+      
+      error = 0.;
+      
+      for (m = 0; m < net->neigh_procs; m++)
+	{
+	  neigh_proc_p = &net->neigh_proc[ m ];
+	  
+	  for (n = 0; n < neigh_proc_p->fs; n++)
+	    {
+	      neigh_proc_p->f_to_send[ n ] = *neigh_proc_p->d_to_send_p[ n ];
+	    }
+	}
+      for (m = 0; m < net->neigh_procs; m++)
+	{
+	  neigh_proc_p = &net->neigh_proc[ m ];
+	  
+	  net->err = MPI_Issend (&neigh_proc_p->f_to_send[ 0 ],
+				 neigh_proc_p->fs, MPI_DOUBLE,
+				 neigh_proc_p->id, 10, MPI_COMM_WORLD,
+				 &net->req[ 0 ][ net->id * net->procs + m ]);
+	  
+	  net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ],
+				neigh_proc_p->fs, MPI_DOUBLE,
+				neigh_proc_p->id, 10, MPI_COMM_WORLD,
+				&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+	}
+      for (m = 0; m < net->inter_m_neigh_procs; m++)
+	{
+	  neigh_proc_p = &net->inter_m_neigh_proc[ m ];
+	  
+	  for (n = 0; n < neigh_proc_p->fs; n++)
+	    {
+	      neigh_proc_p->f_to_send[ n ] = *neigh_proc_p->d_to_send_p[ n ];
+	    }
+	}
+      for (m = 0; m < net->inter_m_neigh_procs; m++)
+	{
+	  neigh_proc_p = &net->inter_m_neigh_proc[ m ];
+	  
+	  net->err = MPI_Issend (&neigh_proc_p->f_to_send[ 0 ],
+				 neigh_proc_p->fs, MPI_DOUBLE,
+				 neigh_proc_p->id, 10, MPI_COMM_WORLD,
+				 &net->req[ 1 ][ net->id * net->procs + m ]);
+	  
+	  net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ],
+				neigh_proc_p->fs, MPI_DOUBLE,
+				neigh_proc_p->id, 10, MPI_COMM_WORLD,
+				&net->req[ 1 ][ (net->id + net->procs) * net->procs + m ]);
+	}
+      for (i = 0; i < net->my_inner_sites; i++)
+	{
+	  site_data = net->site_data[ i ];
+	  
+	  if ((site_data & SITE_TYPE_MASK) == INLET_TYPE ||
+	      (site_data & SITE_TYPE_MASK) == OUTLET_TYPE)
+	    {
+	      continue;
+	    }
+	  d_p = &d[ i ];
+	  
+	  temp = *d_p;
+	  *d_p = 0.;
+	  neighs = 0;
+	  
+	  nd_p_p = &nd_p[ i*14 ];
+	  
+	  for (l = 0; l < 14; l++)
+	    {
+	      if (*nd_p_p[ l ] < 0.) continue;
+	      
+	      ++neighs;
+	      *d_p += *nd_p_p[ l ];
+	    }
+	  *d_p /= (double)neighs;
+	  
+	  error = fmax(error, fabs(*d_p - temp) / fmax(1.e-30, *d_p));
+	}
+      for (m = 0; m < net->inter_m_neigh_procs; m++)
+      	{
+      	  net->err = MPI_Wait (&net->req[ 1 ][ net->id * net->procs + m ], net->status);
+      	  net->err = MPI_Wait (&net->req[ 1 ][ (net->id + net->procs) * net->procs + m ], net->status);
+      	}
+      for (m = 0; m < net->neigh_procs; m++)
+      	{
+      	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
+      	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
+      	}
+      for (i = net->my_inner_sites; i < my_sites; i++)
+	{
+	  site_data = net->site_data[ i ];
+	  
+	  if ((site_data & SITE_TYPE_MASK) == INLET_TYPE ||
+	      (site_data & SITE_TYPE_MASK) == OUTLET_TYPE)
+	    {
+	      continue;
+	    }
+	  d_p = &d[ i ];
+	  
+	  temp = *d_p;
+	  *d_p = 0.;
+	  neighs = 0;
+	  
+	  nd_p_p = &nd_p[ i*14 ];
+	  
+	  for (l = 0; l < 14; l++)
+	    {
+	      if (*nd_p_p[ l ] < 0.) continue;
+	      
+	      ++neighs;
+	      *d_p += *nd_p_p[ l ];
+	    }
+	  *d_p /= (double)neighs;
+	  
+	  error = fmax(error, fabs(*d_p - temp) / fmax(1.e-30, *d_p));
+	}
+      net->err = MPI_Allreduce (&error, &error_tot, 1,
+				MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD);
+    }
+  for (i = 0; i < my_sites; i++)
+    {
+      density = d[ i ];
+      
+      density *= (1.0 / 8.0);
+      
+      for (l = 0; l < 7; l++) f_eq[ l ] = density;
+      
+      density *= (1.0 / 8.0);
+      
+      for (l = 7; l < 15; l++) f_eq[ l ] = density;
+      
+      f_old_p = &f_old[ i*15 ];
+      f_new_p = &f_new[ i*15 ];
+      
+      for (l = 0; l < 15; l++)
+	{
+	  f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
+	}
+    }
+  seconds = myClock () - seconds;
+  
+  for (n = 0; n < net->neigh_procs; n++)
+    {
+      free(net->neigh_proc[ n ].d_to_send_p);
+    }
+  for (n = 0; n < net->inter_m_neigh_procs; n++)
+    {
+      free(net->inter_m_neigh_proc[ n ].d_to_send_p);
+    }
+  free (nd_p);
+  nd_p = NULL;
+  
+  free (d);
+  d = NULL;
+  
+  if (net->id == 0)
+    {
+      printf ("Fine-level density gradients minimization: s %.3e, iters: %i\n",
+	      seconds, iters);
+      fflush (stdout);
+    }
+}
+
+
+int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *is_converged, LBM *lbm, Net *net)
 {
   // the entire simulation time step takes place through this function
   
   double seconds;
-  double f_eq[15];
+  double f_eq[15], f_neq[15];
   double omega;
-  double density;
+  double density, stress;
   double vx, vy, vz;
   double sum1, sum2;
   double stability_and_convergence_partial[3];
   double stability_and_convergence_total[3];
-  double *f_old_p, *f_new_p;
+  double *f_old_p;
   
   int i, l, m, n;
   int is_unstable;
   int *f_id_p;
   
   unsigned int site_data;
-  
-  short int *f_data_p;
   
   Velocity *vel_p;
   
@@ -276,18 +498,21 @@ int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LB
       site_data = net->site_data[ i ];
       f_old_p = &f_old[ i*15 ];
       
+      stress = 0.;
+      
       if (site_data == FLUID_TYPE)
 	{
 	  lbmFeq (f_old_p, &density, &vx, &vy, &vz, f_eq);
 	  
 	  for (l = 0; l < 15; l++)
 	    {
-	      f_old_p[l] += omega * (f_old_p[l] - f_eq[l]);
+	      f_old_p[l] += omega * (f_neq[l] = f_old_p[l] - f_eq[l]);
 	    }
+	  if (perform_rt) stress = lbm->stress_par * sqrt(lbmStress (f_neq));
 	}
       else
 	{
-	  lbmCalculateBC (f_old_p, site_data, &vx, &vy, &vz, lbm);
+	  lbmCalculateBC (f_old_p, site_data, &density, &vx, &vy, &vz, lbm);
 	}
       vel_p = &vel[ i ];
       
@@ -297,6 +522,13 @@ int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LB
       vel_p->x = vx;
       vel_p->y = vy;
       vel_p->z = vz;
+      
+      if (perform_rt)
+	{
+	  flow_field[ 3 * i + 0 ] = (float)density;
+	  flow_field[ 3 * i + 1 ] = (float)sqrt(vx * vx + vy * vy + vz * vz);
+	  flow_field[ 3 * i + 2 ] = (float)stress;
+	}
     }
   net->timing[0] += myClock () - seconds;
   seconds = myClock ();
@@ -326,7 +558,7 @@ int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LB
     {
       neigh_proc_p = &net->neigh_proc[ m ];
       
-      net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ],
+      net->err = MPI_Issend (&neigh_proc_p->f_to_send[ 0 ],
 			     neigh_proc_p->fs, MPI_DOUBLE,
 			     neigh_proc_p->id, 10, MPI_COMM_WORLD,
 			     &net->req[ 0 ][ net->id * net->procs + m ]);
@@ -359,18 +591,21 @@ int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LB
       site_data = net->site_data[ i ];
       f_old_p = &f_old[ i*15 ];
       
+      stress = 0.;
+      
       if (site_data == FLUID_TYPE)
 	{
 	  lbmFeq (f_old_p, &density, &vx, &vy, &vz, f_eq);
 	  
 	  for (l = 0; l < 15; l++)
 	    {
-	      f_old_p[l] += omega * (f_old_p[l] - f_eq[l]);
+	      f_old_p[l] += omega * (f_neq[ l ] = f_old_p[l] - f_eq[l]);
 	    }
+	  if (perform_rt) stress = lbm->stress_par * sqrt(lbmStress (f_neq));
 	}
       else
 	{
-	  lbmCalculateBC (f_old_p, site_data, &vx, &vy, &vz, lbm);
+	  lbmCalculateBC (f_old_p, site_data, &density, &vx, &vy, &vz, lbm);
 	}
       f_id_p = &f_id[ i*15 ];
       
@@ -388,6 +623,13 @@ int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LB
       vel_p->x = vx;
       vel_p->y = vy;
       vel_p->z = vz;
+      
+      if (perform_rt)
+	{
+	  flow_field[ 3 * i + 0 ] = (float)density;
+	  flow_field[ 3 * i + 1 ] = (float)sqrt(vx * vx + vy * vy + vz * vz);
+	  flow_field[ 3 * i + 2 ] = (float)stress;
+	}
     }
   net->timing[3] += myClock () - seconds;
   seconds = myClock ();
@@ -446,15 +688,12 @@ int lbmCycle (int write_checkpoint, int check_convergence, int *is_converged, LB
   net->timing[4] += myClock () - seconds;
   seconds = myClock ();
   
-  free(lbm->inlet_density);
-  free(lbm->outlet_density);
-  
-  lbmReadParameters (lbm);
-  
   if (check_convergence)
     {
       if (net->procs > 1)
 	{
+	  ++net->convergence_count;
+	  
 	  stability_and_convergence_partial[ 0 ] = (double)is_unstable;
 	  stability_and_convergence_partial[ 1 ] = sum1;
 	  stability_and_convergence_partial[ 2 ] = sum2;
