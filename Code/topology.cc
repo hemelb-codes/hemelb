@@ -1475,8 +1475,9 @@ void netEnd (Net *net, RT *rt)
   free(net->procs_per_machine);
   free(net->machine_id);
   
-  
+#ifdef RG
   free(send_array);
+#endif
   
   free(rt->coloured_pixel_id);
   

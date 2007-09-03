@@ -1,4 +1,7 @@
+========================================================================
 HemeLB Version 1.3-RG
+
+This document was last updated on the 3/9/2007.
 
 0. Overview
 1. Compiling HemeLB
@@ -6,45 +9,44 @@ HemeLB Version 1.3-RG
 3. RealityGrid Steering and Visualisation
 4. Ray Tracing Outline
 
+0. Overview ============================================================
+
+HemeLB's documentation is in "doc/HemeLB_doc.pdf". It comprises the
+paper submitted to Comput. Phys. Comm. (with the same title and authors)
+and the usage at the end of the file. The code is in directory
+hemelb/Code, two input configurations and parameters are in the
+directory hemelb/Input" (see the documentation for details).
+
+Please email the GENIUS discussion mailing list,
+genius-discuss@ucl.ac.uk if you have any problems, or wish to report
+bugs, etc.
 
 
 
-0. Overview ==============================================================
+1. Compiling HemeLB ====================================================
 
-HemeLB's documentation is in "doc/HemeLB_doc.pdf". It comprises the paper
-submitted to Comput. Phys. Comm. (with the same title and authors) and
-the usage at the end of the file. The code is in directory hemelb/Code, two
-input configurations and parameters are in the directory
-hemelb/Input" (see the documentation for details).
-
-Please feel free to email me at m.mazzeo@ucl.ac.uk if you have any
-problems.
-
-Please email the GENIUS discussion mailing list, genius-discuss@ucl.ac.uk
-if you have any problems, or wish to report bugs, etc.
+HemeLB can be compiled and run in standalone mode or RealityGrid
+steering mode. The definition RG is used to seperate out the RealityGrid
+specific parts of HemeLB. A basic makefile is provided in hemelb/Code.
+For normal testing purposes, please comment out the DEFS=-DRG line.
 
 
-
-1. Compiling HemeLB ======================================================
-
-HemeLB can be run in standalone mode or RealityGrid steering mode.
-The definition RG is used to seperate out the RealityGrid specific parts
-of HemeLB.
-
-
-
-2. Running HemeLB ========================================================
+2. Running HemeLB ======================================================
 
 HemeLB is run with a single argument that gives the location of an input
-file.
-
-Two sets of input/output files can be found in hemelb/Input. The current
-version of hemelb requires full path names to be specified in these files
+file. Two sets of input/output files can be found in hemelb/Input. The 
+current version of hemelb requires full path names to be specified in
+these files:
 
 Input/square_duct_32x16x16_input.asc
 Input/angio1_input.asc
 
 Before running HemeLB please edit these files appropriately.
+
+From a terminal, two test can be run using two different datasets
+
+make test1     (small dataset)
+make test2     (large neurovascular dataset)
 
 
 3. RealityGrid Steering and Visualisation =============================
@@ -52,20 +54,20 @@ Before running HemeLB please edit these files appropriately.
 
 4. Ray Tracing outline ================================================
 
-The flow field is rendered by a parallelised raytracer which is built into
-the same code as the LB-fluid solver. In other words, the rendering of the 
-HemeLB is not done externally, which is usually the case, but within the same
-application, exploiting the domain decomposition of the LB solver. The code 
-to perform the ray tracing can be found in Code/rt.cc. Technical details on
-the ray tracing core and the parallel approach implemented are provided
-elsewhere.
+The flow field is rendered by a parallelised raytracer which is built
+into the same code as the LB-fluid solver. In other words, the
+rendering of the HemeLB is not done externally, which is usually the
+case, but within the same application, exploiting the domain
+decomposition of the LB solver. The code to perform the ray tracing can
+be found in Code/rt.cc. Technical details on the ray tracing core and
+the parallel approach implemented are provided elsewhere.
 
 The parameters used by the ray-tracing algorithm are read from a file
 whose name (the path should be specified if not defined in a RSL
 script) must occupy the 4-th line of the input file which is read on
 command line as first argument when submitting a job (see
-hemelb/Doc/HemeLB_doc.pdf). The rendering parameters must be inserted in
-different lines and are
+hemelb/Doc/HemeLB_doc.pdf). The rendering parameters must be inserted
+in different lines and are
 
 pixels_x
 pixels_y
@@ -105,8 +107,4 @@ The image is outputted on file which must be specified in the 5-th line
 of the input file which is read on command line as first argument when
 submitting a job. Its format is under investigation and will be
 descripted elsewhere.
-
-
-
-This document was last updated on the 3/9/2007.
 
