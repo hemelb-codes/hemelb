@@ -26,7 +26,7 @@ test2:
 	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST2INPUT)
 
 display:
-	g++ displayClient.cc -O2 -lGLU -lglut eVizRLEUtil.c -o displayClient
+	g++ displayClient.cc -O3 -lGLU -lglut eVizRLEUtil.c -o displayClient
 
 .cc.o:
 	$(CC) $(FLAGS) $(DEFS) -c $<

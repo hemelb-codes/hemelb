@@ -33,78 +33,79 @@ pthread_cond_t network_send_frame;
 
 #ifdef RG
 
-void *hemeLB_network(void *ptr) {
-
-	printf("kicking off thread.....\n");
-
-	while(true) {
-
-	int sock_fd, new_fd;
-	int yes = 1;
-	struct sockaddr_in my_address;
-	struct sockaddr_in their_addr; // client address
-
-	socklen_t sin_size;
-
-	if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-	perror("socket");
-	exit(1);
+void *hemeLB_network(void *ptr)
+{
+  printf("kicking off thread.....\n");
+  
+  while (true)
+    {
+      int sock_fd, new_fd;
+      int yes = 1;
+      struct sockaddr_in my_address;
+      struct sockaddr_in their_addr; // client address
+      
+      socklen_t sin_size;
+      
+      if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
+	{
+	  perror("socket");
+	  exit(1);
 	}
-
-	if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-		perror("setsockopt");
-		exit(1);
+      
+      if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+	{
+	  perror("setsockopt");
+	  exit(1);
 	}
+      
+      my_address.sin_family = AF_INET;
+      my_address.sin_port = htons (MYPORT);
+      my_address.sin_addr.s_addr = INADDR_ANY;
+      memset (my_address.sin_zero, '\0', sizeof my_address.sin_zero);
 
-	my_address.sin_family = AF_INET;
-	my_address.sin_port = htons(MYPORT);
-	my_address.sin_addr.s_addr = INADDR_ANY;
-	memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
-
-	if (bind(sock_fd, (struct sockaddr *)&my_address, sizeof my_address) == -1) {
-		perror("bind");
-		exit(1);
+      if (bind (sock_fd, (struct sockaddr *)&my_address, sizeof my_address) == -1)
+	{
+	  perror("bind");
+	  exit(1);
 	}
-
-	if (listen(sock_fd, 10) == -1) {
-		perror("listen");
-		exit(1);
+      
+      if (listen(sock_fd, 10) == -1)
+	{
+	  perror("listen");
+	  exit(1);
 	}
-
-	sin_size = sizeof their_addr;
-
-	if ((new_fd = accept(sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1)
-		perror("accept");
-
-	printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
-
+      sin_size = sizeof their_addr;
+      
+      if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1)
+	{
+	  perror("accept");
+	}
+      printf("server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
+      
 	close(sock_fd);
 
 	int frameNumber = 0;
 
-	while(true) {
+	while (true)
+	  {
+	    pthread_mutex_lock ( &network_buffer_copy_lock );
+	    pthread_cond_wait (&network_send_frame, &network_buffer_copy_lock);
 
-		pthread_mutex_lock( &network_buffer_copy_lock );
-		pthread_cond_wait(&network_send_frame, &network_buffer_copy_lock);
-
-		send(new_fd, &frameNumber, sizeof(frameNumber), 0);
-
-		send(new_fd, &compressedFrameSize, sizeof(compressedFrameSize), 0);
-
-		for(int i=0; i<compressedFrameSize; i++)
-			send(new_fd, &compressedData[i], sizeof(compressedData[i]), 0);
-
-		printf("done sending array...");
-
-		pthread_mutex_unlock( &network_buffer_copy_lock );
-
-		frameNumber++;
-
-	}
-
+	    send (new_fd, &frameNumber, sizeof(frameNumber), 0);
+	    
+	    send (new_fd, &compressedFrameSize, sizeof(compressedFrameSize), 0);
+	    
+	    for (int i = 0; i < compressedFrameSize; i++)
+	      send (new_fd, &compressedData[i], sizeof(compressedData[i]), 0);
+	    
+	    printf("done sending array...");
+	    
+	    pthread_mutex_unlock ( &network_buffer_copy_lock );
+	    
+	    frameNumber++;
+	  }
 	close(new_fd);
-
-	}
+    }
 
 }
 
@@ -194,12 +195,12 @@ int main (int argc, char *argv[])
     }
   
   char *input_file_name(argv[1]);
-  char input_config_name[800];
-  char input_parameters_name[800];
-  char output_config_name[800];
-  char checkpoint_config_name[800];
-  char rt_parameters_name[800];
-  char output_image_name[800];
+  char input_config_name[256];
+  char input_parameters_name[256];
+  char output_config_name[256];
+  char checkpoint_config_name[256];
+  char rt_parameters_name[256];
+  char output_image_name[256];
   
   FILE *input_file = fopen (input_file_name, "r");
 
@@ -227,18 +228,16 @@ int main (int argc, char *argv[])
   lbmReadParameters (input_parameters_name, &lbm, &net);
 
 #ifdef RG
-
-	if(net.id == 0) {
-
-		pthread_mutex_init(&network_buffer_copy_lock, NULL);
-		pthread_cond_init(&network_send_frame, NULL);
-
-		pthread_attr_init(&pthread_attrib);
-		pthread_attr_setdetachstate(&pthread_attrib, PTHREAD_CREATE_JOINABLE);
-
-		pthread_create(&network_thread, &pthread_attrib, hemeLB_network, NULL);
-
-	}
+  if(net.id == 0) {
+    
+    pthread_mutex_init (&network_buffer_copy_lock, NULL);
+    pthread_cond_init (&network_send_frame, NULL);
+    
+    pthread_attr_init (&pthread_attrib);
+    pthread_attr_setdetachstate (&pthread_attrib, PTHREAD_CREATE_JOINABLE);
+    
+    pthread_create (&network_thread, &pthread_attrib, hemeLB_network, NULL);
+  }
 
 #endif // RG
 
@@ -382,9 +381,7 @@ int main (int argc, char *argv[])
   netEnd (&net, &rt);
 
 #ifdef RG
-
-	pthread_join(network_thread, NULL);
-
+  pthread_join (network_thread, NULL);
 #endif // RG
 
   net.err = MPI_Finalize ();

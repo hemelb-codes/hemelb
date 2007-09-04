@@ -86,7 +86,7 @@ struct Pixel {
 	float r, g, b;
 };
 
-extern Pixel* send_array;
+// extern Pixel* send_array;
 extern int send_array_length;
 extern int send_frame_count;
 

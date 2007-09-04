@@ -290,7 +290,7 @@ void netInit (LBM *lbm, Net *net, RT *rt)
   
   net->proc_id = (short int *)malloc(sizeof(short int) * net->blocks);
   
-  clusters_max = 10;
+  clusters_max = 20;
   rt->clusters = 0;
   rt->cluster = (Cluster *)malloc(sizeof(Cluster) * clusters_max);
       
@@ -1475,14 +1475,5 @@ void netEnd (Net *net, RT *rt)
   free(net->procs_per_machine);
   free(net->machine_id);
   
-#ifdef RG
-  free(send_array);
-#endif
-  
-  free(rt->coloured_pixel_id);
-  
-  free(rt->coloured_pixel_recv);
-  //free(rt->coloured_pixel_send);
-  
-  free(rt->cluster);
 }
+
