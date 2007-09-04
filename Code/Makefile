@@ -6,14 +6,15 @@ TEST1INPUT=/home/steven/hemelb/Input/square_duct_32x16x16_input.asc
 TEST2INPUT=/home/steven/hemelb/Input/angio1_input.asc
 
 FLAGS=-O3
-#DEFS=-DRG
+DEFS=-DRG
 
 OBJ=config.o \
 	io.o \
 	lb.o \
 	main.o \
 	rt.o \
-	topology.o
+	topology.o \
+	eVizRLEUtil.o
 
 $(EXE):$(OBJ)
 	$(CC) $(FLAGS) $(OBJ) -o $(EXE)
@@ -24,9 +25,15 @@ test1:
 test2:
 	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST2INPUT)
 
+display:
+	g++ displayClient.cc -O2 -lGLU -lglut eVizRLEUtil.c -o displayClient
+
 .cc.o:
 	$(CC) $(FLAGS) $(DEFS) -c $<
 
+.c.o:
+	$(CC) $(FLAGS) $(DEFS) -c $<
+
 clean:
-	rm -f $(OBJ) $(EXE)
+	rm -f $(OBJ) $(EXE) displayClient
 

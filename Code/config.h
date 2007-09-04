@@ -90,6 +90,11 @@ extern Pixel* send_array;
 extern int send_array_length;
 extern int send_frame_count;
 
+extern int compressedFrameSize;
+
+extern unsigned char *pixelData;
+extern unsigned char *compressedData;
+
 #endif // RG
 
 
