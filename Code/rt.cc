@@ -1,4 +1,18 @@
 #include "config.h"
+#include <string.h>
+
+#ifdef RG
+
+#include "eVizRLEUtil.h"
+
+int compressedFrameSize;
+
+unsigned char *pixelData;
+unsigned char *compressedData;
+
+double compressionTime = 0.0;
+
+#endif // RG
 
 
 
@@ -2490,8 +2504,8 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
   
   float factor = 255.F * rt->absorption_factor;
 
-#ifdef RG
 
+#ifdef RG
 
 	pthread_mutex_lock( &network_buffer_copy_lock );
 	
@@ -2499,18 +2513,68 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
 	
 	printf("# coloured pixels -> %i for frame %i\n",rt->coloured_pixels, send_frame_count);
 
-	send_array_length = rt->coloured_pixels;
-	
-	for(int i=0; i < send_array_length; i++) {
+//	send_array_length = rt->coloured_pixels;
+//	
+//	for(int i=0; i < send_array_length; i++) {
+//
+//		pixel_data_p = &rt->coloured_pixel_recv[ 6 * i ];
+//		send_array[i].x = (int)pixel_data_p[4];
+//		send_array[i].y = (int)pixel_data_p[5];
+//		send_array[i].r = 1.F - rt->absorption_factor * pixel_data_p[ 0 ]; // max(0, min(255, (int)(255.F - factor * pixel_data_p[0])));
+//		send_array[i].g = 1.F - rt->absorption_factor * pixel_data_p[ 1 ]; // max(0, min(255, (int)(255.F - factor * pixel_data_p[1])));
+//		send_array[i].b = 1.F - rt->absorption_factor * pixel_data_p[ 2 ]; // max(0, min(255, (int)(255.F - factor * pixel_data_p[2])));
+//
+//	} 
+
+//	Case for using full frame, to be later compressed by RLE, PNG, e.g.
+
+//	int fullFrameBytes = sizeof(float) * 3 * screen.pixels_x * screen.pixels_y;
+
+	int fullFrameBytes = sizeof(unsigned char) * 3 * screen.pixels_x * screen.pixels_y;
+
+//	float one = 0.0;
+//	for(int i=0; i<fullFrameBytes; i+=4)
+	for(int i=0; i<fullFrameBytes; i++)
+		pixelData[i] = 255;
+//		memcpy(&pixelData[i],(void*)&one, sizeof(float));
+
+	// int BytesPerPixel = 12;
+	int BytesPerPixel = 3;
+
+	float r, g, b;
+
+	for(int i=0; i<rt->coloured_pixels; i++) {
 
 		pixel_data_p = &rt->coloured_pixel_recv[ 6 * i ];
-		send_array[i].x = (int)pixel_data_p[4];
-		send_array[i].y = (int)pixel_data_p[5];
-		send_array[i].r = 1.F - rt->absorption_factor * pixel_data_p[ 0 ]; // max(0, min(255, (int)(255.F - factor * pixel_data_p[0])));
-		send_array[i].g = 1.F - rt->absorption_factor * pixel_data_p[ 1 ]; // max(0, min(255, (int)(255.F - factor * pixel_data_p[1])));
-		send_array[i].b = 1.F - rt->absorption_factor * pixel_data_p[ 2 ]; // max(0, min(255, (int)(255.F - factor * pixel_data_p[2])));
+		
+		int pixel_x = (int)pixel_data_p[4];
+		int pixel_y = (int)pixel_data_p[5];
+
+		int I = (pixel_x + pixel_y*512)*BytesPerPixel;
+
+//		r = 1.F - rt->absorption_factor * pixel_data_p[ 0 ];
+//		g = 1.F - rt->absorption_factor * pixel_data_p[ 1 ];
+//		b = 1.F - rt->absorption_factor * pixel_data_p[ 2 ];
+
+		pixelData[I] = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[0])));
+		pixelData[I+1] = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[1])));
+		pixelData[I+2] = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[2])));
+
+//		memcpy(&pixelData[I],(void*)&r,4);
+//		memcpy(&pixelData[I+4],(void*)&g,4);
+//		memcpy(&pixelData[I+8],(void*)&b,4);
 
 	}
+
+	seconds = myClock();
+
+	int eVizret = eViz_RLE_writeMemory(pixelData, 512, 512, BytesPerPixel, &compressedFrameSize, compressedData);
+
+	seconds = myClock() - seconds;
+
+	compressionTime += seconds;
+
+	printf("ret, compressed size, time, total time = %i, %i, %0.4f, %0.4f\n", eVizret, compressedFrameSize, seconds, compressionTime);
 
 	pthread_mutex_unlock( &network_buffer_copy_lock );
 
@@ -2536,6 +2600,7 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
       pixel_r = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[0])));
       pixel_g = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[1])));
       pixel_b = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[2])));
+
       pixel_i = (short int)pixel_data_p[4];
       pixel_j = (short int)pixel_data_p[5];
       
@@ -2549,7 +2614,6 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
   fclose (image_file);
 
 #endif // RG
-
 
 }
 
@@ -2719,9 +2783,12 @@ void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
 
 void rtInit (char *image_file_name, RT *rt)
 {
+
+	printf("%i\n", sizeof(unsigned char));
+
   rt->image_file_name = image_file_name;
   
-  rt->coloured_pixels_max = 100000;
+  rt->coloured_pixels_max = 512*512;
   //rt->coloured_pixel_send = (float *)malloc(sizeof(float) * 6 * rt->coloured_pixels_max);
   rt->coloured_pixel_recv = (float *)malloc(sizeof(float) * 6 * rt->coloured_pixels_max);
   
@@ -2729,7 +2796,17 @@ void rtInit (char *image_file_name, RT *rt)
   rt->coloured_pixel_id = (int *)malloc(sizeof(int) * rt->coloured_pixel_ids_max);
   
 #ifdef RG
-  send_array = (Pixel *)malloc(sizeof(Pixel) * rt->coloured_pixels_max);
+
+	send_array = (Pixel *)malloc(sizeof(Pixel) * rt->coloured_pixels_max);
+
+//	pixelData = (unsigned char *) malloc( sizeof(float) * 3 * 512 * 512 );
+
+	pixelData = (unsigned char *) malloc( sizeof(unsigned char) * 3 * 512 * 512 );
+
+//	compressedData = (unsigned char *) malloc( sizeof(float) * 3 * 512 * 512 );
+
+	compressedData = (unsigned char *) malloc( sizeof(unsigned char) * 3 * 512 * 512 );
+
 #endif
   
   rtRayAABBIntersection[0] = rtRayAABBIntersection000;

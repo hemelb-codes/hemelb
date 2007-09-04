@@ -86,19 +86,13 @@ void *hemeLB_network(void *ptr) {
 
 		pthread_mutex_lock( &network_buffer_copy_lock );
 		pthread_cond_wait(&network_send_frame, &network_buffer_copy_lock);
-		float data_size = send_array_length * ( 2.0 + 2.0 + 4.0 + 4.0 + 4.0 ) / 1024.0;
-		printf("sending frame %i array of %i elements, %0.1fKB\n", frameNumber, send_array_length, data_size );
 
 		send(new_fd, &frameNumber, sizeof(frameNumber), 0);
-		send(new_fd, &send_array_length, sizeof(send_array_length), 0);
 
-		for(int i=0; i<send_array_length; i++) {
-			send(new_fd, &send_array[i].x, sizeof(send_array[i].x), 0);
-			send(new_fd, &send_array[i].y, sizeof(send_array[i].y), 0);
-			send(new_fd, &send_array[i].r, sizeof(send_array[i].r), 0);
-			send(new_fd, &send_array[i].g, sizeof(send_array[i].g), 0);
-			send(new_fd, &send_array[i].b, sizeof(send_array[i].b), 0);
-		}
+		send(new_fd, &compressedFrameSize, sizeof(compressedFrameSize), 0);
+
+		for(int i=0; i<compressedFrameSize; i++)
+			send(new_fd, &compressedData[i], sizeof(compressedData[i]), 0);
 
 		printf("done sending array...");
 
@@ -109,7 +103,6 @@ void *hemeLB_network(void *ptr) {
 	}
 
 	close(new_fd);
-
 
 	}
 
@@ -398,3 +391,4 @@ int main (int argc, char *argv[])
   
   return(0);
 }
+
