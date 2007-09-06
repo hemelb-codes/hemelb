@@ -507,6 +507,10 @@ int main (int argc, char *argv[])
 	  perform_rt = 1;
 	  ray_tracing_count = 0;
 	}
+
+      // Between the rtRayTracingA/B calls, do not change any ray tracing
+      // parameters.
+      
       if (perform_rt)
 	{
 	  rtRayTracingA (AbsorptionCoefficients, &net, &rt);
