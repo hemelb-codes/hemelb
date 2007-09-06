@@ -1,17 +1,18 @@
-CC=mpicxx
+#CC=mpicxx
+CC=lamc++-64
 EXE=hemelb
-MPIRUN=/usr/local/bin/mpiexec
+MPIRUN=/usr/bin/mpirun #   /usr/local/bin/mpiexec
 MPICPUS=2
 TEST1INPUT=/home/steven/hemelb/Input/square_duct_32x16x16_input.asc
 TEST2INPUT=/home/steven/hemelb/Input/angio1_input.asc
 
-REG_HOME=/home/ngs0011/work/RealityGrid/file/reg_steer_lib
+#REG_HOME=/home/ngs0011/work/RealityGrid/file/reg_steer_lib
 REG_CPPFLAGS=-I${REG_HOME}/include
-REG_LDFLAGS=-L${REG_HOME}/lib64 -Wl,-Bstatic -lReG_Steer -lReG_Steer_Utils \
-		-lReG_Steer_SOAP -Wl,-Bdynamic -lxml2
+#REG_LDFLAGS=-L${REG_HOME}/lib64 -Wl,-Bstatic -lReG_Steer -lReG_Steer_Utils \
+#		-lReG_Steer_SOAP -Wl,-Bdynamic -lxml2
 
 FLAGS=-O3 ${REG_CPPFLAGS}
-DEFS=-DRG -DSTEER
+DEFS=-DRG #-DSTEER
 
 OBJ=config.o \
 	io.o \

@@ -36,26 +36,18 @@ RT rt;
 
 #define MYPORT 10000
 
-Pixel* send_array;
-int send_array_length;
-int send_frame_count = 0;
-
-pthread_mutex_t network_buffer_copy_lock;
-pthread_cond_t network_send_frame;
-
 #endif // RG
 
 
 #ifdef RG
 
-void *hemeLB_network(void *ptr)
+void *hemeLB_network (void *ptr)
 {
-  printf("kicking off thread.....\n");
-  
   while (true)
     {
       int sock_fd, new_fd;
       int yes = 1;
+      
       struct sockaddr_in my_address;
       struct sockaddr_in their_addr; // client address
       
@@ -77,7 +69,7 @@ void *hemeLB_network(void *ptr)
       my_address.sin_port = htons (MYPORT);
       my_address.sin_addr.s_addr = INADDR_ANY;
       memset (my_address.sin_zero, '\0', sizeof my_address.sin_zero);
-
+      
       if (bind (sock_fd, (struct sockaddr *)&my_address, sizeof my_address) == -1)
 	{
 	  perror("bind");
@@ -97,31 +89,31 @@ void *hemeLB_network(void *ptr)
 	}
       printf("server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
       
-	close(sock_fd);
-
-	int frameNumber = 0;
-
-	while (true)
-	  {
-	    pthread_mutex_lock ( &network_buffer_copy_lock );
-	    pthread_cond_wait (&network_send_frame, &network_buffer_copy_lock);
-
-	    send (new_fd, &frameNumber, sizeof(frameNumber), 0);
-	    
-	    send (new_fd, &compressedFrameSize, sizeof(compressedFrameSize), 0);
-	    
-	    for (int i = 0; i < compressedFrameSize; i++)
-	      send (new_fd, &compressedData[i], sizeof(compressedData[i]), 0);
-	    
-	    printf("done sending array...");
-	    
-	    pthread_mutex_unlock ( &network_buffer_copy_lock );
-	    
-	    frameNumber++;
-	  }
-	close(new_fd);
+      close(sock_fd);
+      
+      int frameNumber = 0;
+      
+      while (true)
+	{
+	  pthread_mutex_lock ( &network_buffer_copy_lock );
+	  pthread_cond_wait (&network_send_frame, &network_buffer_copy_lock);
+	  
+	  send (new_fd, &frameNumber, sizeof(frameNumber), 0);
+	  
+	  send (new_fd, &compressed_frame_size, sizeof(compressed_frame_size), 0);
+	  
+	  for (int i = 0; i < compressed_frame_size; i++)
+	    {
+	      send (new_fd, &compressed_data[i], sizeof(compressed_data[i]), 0);
+	    }
+	  printf("done sending array...");
+	  
+	  pthread_mutex_unlock ( &network_buffer_copy_lock );
+	  
+	  frameNumber++;
+	}
+      close(new_fd);
     }
-
 }
 
 #endif // RG
@@ -311,16 +303,19 @@ int main (int argc, char *argv[])
 #endif // STEER
 
 #ifdef RG
-  if(net.id == 0) {
-    
-    pthread_mutex_init (&network_buffer_copy_lock, NULL);
-    pthread_cond_init (&network_send_frame, NULL);
-    
-    pthread_attr_init (&pthread_attrib);
-    pthread_attr_setdetachstate (&pthread_attrib, PTHREAD_CREATE_JOINABLE);
-    
-    pthread_create (&network_thread, &pthread_attrib, hemeLB_network, NULL);
-  }
+  
+  send_frame_count = 0;
+  
+  if(net.id == 0)
+    {
+      pthread_mutex_init (&network_buffer_copy_lock, NULL);
+      pthread_cond_init (&network_send_frame, NULL);
+      
+      pthread_attr_init (&pthread_attrib);
+      pthread_attr_setdetachstate (&pthread_attrib, PTHREAD_CREATE_JOINABLE);
+      
+      pthread_create (&network_thread, &pthread_attrib, hemeLB_network, NULL);
+    }
 
 #endif // RG
 
@@ -430,8 +425,13 @@ int main (int argc, char *argv[])
       write_checkpoint = 0;
       check_convergence = 0;
       perform_rt = 0;
-
-      if(net.id==0) { printf("time step %i\n",time_step); fflush(0x0); }
+      
+      if(net.id == 0)
+	{
+	  printf("time step %i\n", time_step);
+	  fflush (stdout);
+	}
+      
       
 #ifdef STEER
       // call steering control
@@ -507,12 +507,16 @@ int main (int argc, char *argv[])
 	  perform_rt = 1;
 	  ray_tracing_count = 0;
 	}
+      if (perform_rt)
+	{
+	  rtRayTracingA (AbsorptionCoefficients, &net, &rt);
+	}
       stability = lbmCycle (write_checkpoint, check_convergence, perform_rt,
 			    &is_converged, &lbm, &net);
       
       if (perform_rt)
 	{
-	  rtRayTracing (AbsorptionCoefficients, &lbm, &net, &rt);
+	  rtRayTracingB (AbsorptionCoefficients, &net, &rt);
 	}
       
       if (stability == UNSTABLE || is_converged) break;

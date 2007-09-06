@@ -430,6 +430,9 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 	{
 	  f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
 	}
+      flow_field[ 3 * i + 0 ] = (float)density;
+      flow_field[ 3 * i + 1 ] = 0.F;
+      flow_field[ 3 * i + 2 ] = 0.F;
     }
   seconds = myClock () - seconds;
   
