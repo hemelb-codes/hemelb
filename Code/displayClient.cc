@@ -16,149 +16,161 @@
 
 #include "eVizRLEUtil.h"
 
+
 int pixels_x = 512, pixels_y = 512;
 
-int frameNumber;
-unsigned char* pixelData;
-unsigned char* compressedData;
-int compressedFrameSize;
+int frame_number;
+unsigned char* pixel_data;
+unsigned char* compressed_data;
+int compressed_frame_size;
 
 int sockfd;
 
-void ReceiveAndFillDispBuffers() {
+unsigned int width;
+unsigned int height;
+unsigned int bpp;
 
-	recv(sockfd, &frameNumber, sizeof(frameNumber),0);
-	recv(sockfd, &compressedFrameSize, sizeof(compressedFrameSize),0);
 
-	printf("got frame # %i, # pixels %i\n", frameNumber, compressedFrameSize); fflush(NULL);
-
-	for(int i=0; i<compressedFrameSize; i++) {
-		recv(sockfd, &compressedData[i], sizeof(compressedData[i]), 0);
-	} 
-
-	printf("got the entire frame\n"); fflush(NULL);
-
-	unsigned int width;
-	unsigned int height;
-	unsigned int bpp;
-
-	eViz_RLE_readMemory(compressedData, compressedFrameSize, &width, &height, &bpp, pixelData);
-
-	printf("size %i, width %i, height %i, bpp %i\n", compressedFrameSize, width, height, bpp);
-
-	glPointSize (1.F);
-
-	glBegin (GL_POINTS);
-
-//	float r, g, b;
-
-	int x_coord=0, y_coord=0;
-
-	for(int i=0; i<width*height; i++) {
-
-		if( i>0 && i%width==0 ) {
-			x_coord = 0;
-			y_coord++;
-		}
-
-		int I = (x_coord + y_coord*width)*bpp;
-
-//		memcpy(&r, &pixelData[I], 4);
-//		memcpy(&g, &pixelData[I+4], 4);
-//		memcpy(&b, &pixelData[I+8], 4);
-
-//		if(r==0.0 && g == 0.0 && b == 0.0) { r = 1.0; g = 1.0; b = 1.0; }
-
-		glColor3f(pixelData[I]/255.F , pixelData[I+1]/255.F  , pixelData[I+2]/255.F );
-		glVertex2f(x_coord, y_coord);
-
-		// printf("%i %i %0.1f %0.1f %0.1f\n", x_coord, y_coord, r, g, b);
-
-		x_coord++;
+void ReceiveAndFillDispBuffers ()
+{
+  int pixel_i, pixel_j;
+  int i, k;
+  
+  
+  recv(sockfd, &frame_number, sizeof(frame_number), 0);
+  recv(sockfd, &compressed_frame_size, sizeof(compressed_frame_size), 0);
+  
+  printf("got frame # %i, # pixels %i\n", frame_number, compressed_frame_size);
+  fflush(NULL);
+  
+  for (i = 0; i < compressed_frame_size; i++)
+    {
+      recv(sockfd, &compressed_data[i], sizeof(compressed_data[i]), 0);
+    } 
+  
+  printf("got the entire frame\n");
+  fflush(NULL);
+  
+  eViz_RLE_readMemory (compressed_data, compressed_frame_size, &width, &height, &bpp, pixel_data);
+  
+  printf("size %i, width %i, height %i, bpp %i\n", compressed_frame_size, width, height, bpp);
+  
+  glPointSize (1.F);
+  
+  glBegin (GL_POINTS);
+  
+  pixel_i = 0;
+  pixel_j = 0;
+  
+  for (i = 0; i < width * height; i++)
+    {
+      if (i > 0 && i%width == 0)
+	{
+	  pixel_i = 0;
+	  pixel_j++;
 	}
+      k = (pixel_i * width + pixel_j) * bpp;
+      
+//      float r, g, b;
+//      memcpy(&r, &pixel_data[ k   ], 4);
+//      memcpy(&g, &pixel_data[ k+4 ], 4);
+//      memcpy(&b, &pixel_data[ k+8 ], 4);
+//      
+//      if (r == 0.F && g == 0.F && b == 0.F)
+//	{
+//	  r = 1.F;
+//	  g = 1.F;
+//	  b = 1.F;
+//	}
 
-	glEnd();
-
-}
-
-void GLUTCALLBACK Display (void) {
-	glClear(GL_COLOR_BUFFER_BIT);
-	ReceiveAndFillDispBuffers();
-	glutSwapBuffers();
-}
-
-
-
-
-void OpenWindow (int pixels_x, int pixels_y) {
-
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
-	glutInitWindowPosition(0, 0);
-	glutInitWindowSize(pixels_x, pixels_y);
-
-	glutCreateWindow (" ");
-
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glShadeModel(GL_FLAT);
-	glDisable(GL_DITHER);
-
-	glClear(GL_COLOR_BUFFER_BIT);
-
+      glColor3f(pixel_data[ k   ] * (1.F / 255.F),
+		pixel_data[ k+1 ] * (1.F / 255.F),
+		pixel_data[ k+2 ] * (1.F / 255.F));
+      
+      glVertex2f (pixel_i, pixel_j);
+      
+      ++pixel_i;
+    }
+  glEnd();
 }
 
 
+void GLUTCALLBACK Display (void)
+{
+  glClear (GL_COLOR_BUFFER_BIT);
+  ReceiveAndFillDispBuffers ();
+  glutSwapBuffers ();
+}
 
-int main(int argc, char *argv[]) {
 
-//	pixelData = (unsigned char *) malloc( sizeof(float) * 3 * pixels_x * pixels_y );
-//	compressedData = (unsigned char *) malloc( sizeof(float) * 3 * pixels_x * pixels_y );
+void OpenWindow (int pixels_x, int pixels_y)
+{
+  glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE);
+  glutInitWindowPosition (0, 0);
+  glutInitWindowSize (pixels_x, pixels_y);
+  
+  glutCreateWindow (" ");
+  
+  glDisable (GL_DEPTH_TEST);
+  glDisable (GL_BLEND);
+  glShadeModel (GL_FLAT);
+  glDisable (GL_DITHER);
+  
+  glClear (GL_COLOR_BUFFER_BIT);
+}
 
-	pixelData = (unsigned char *) malloc( sizeof(unsigned char) * 3 * pixels_x * pixels_y );
-	compressedData = (unsigned char *) malloc( sizeof(unsigned char) * 3 * pixels_x * pixels_y );
 
-	struct hostent *he;
-	struct sockaddr_in their_addr;
 
-	if (argc != 2) {
-		fprintf(stderr,"usage: client hostname\n");
-		exit(1);
-	}
-
-	if ((he=gethostbyname(argv[1])) == NULL) {
-		herror("gethostbyname");
-		exit(1);
-	}
-
-	if ((sockfd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
-		perror("socket");
-		exit(1);
-	}
-
-	their_addr.sin_family = AF_INET;
-	their_addr.sin_port = htons(PORT);
-	their_addr.sin_addr = *((struct in_addr *)he->h_addr);
-	memset(their_addr.sin_zero, '\0', sizeof their_addr.sin_zero);
-
-	if (connect(sockfd, (struct sockaddr *)&their_addr, sizeof their_addr) == -1) {
-		perror("connect");
-		exit(1);
-	}
-
-	glutInit(&argc, argv);
-	OpenWindow(pixels_x, pixels_y);
-
-	glLoadIdentity();
-	gluOrtho2D(0.0, 512.0, 0.0, 512.0);
-	glClearColor(1.0, 1.0, 1.0, 0.F);
-
-	glutIdleFunc(Display);
-	glutDisplayFunc(Display);
-	glutMainLoop();
-
-	close(sockfd);
-
-	return 0;
-
+int main(int argc, char *argv[])
+{
+  pixel_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * pixels_x * pixels_y);
+  compressed_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * pixels_x * pixels_y);
+  
+  struct hostent *he;
+  struct sockaddr_in their_addr;
+  
+  if (argc != 2)
+    {
+      fprintf(stderr, "usage: client hostname\n");
+      exit(1);
+    }
+  
+  if ((he = gethostbyname(argv[1])) == NULL)
+    {
+      herror("gethostbyname");
+      exit(1);
+    }
+  
+  if ((sockfd = socket(PF_INET, SOCK_STREAM, 0)) == -1)
+    {
+      perror("socket");
+      exit(1);
+    }
+  
+  their_addr.sin_family = AF_INET;
+  their_addr.sin_port = htons(PORT);
+  their_addr.sin_addr = *((struct in_addr *)he->h_addr);
+  memset (their_addr.sin_zero, '\0', sizeof their_addr.sin_zero);
+  
+  if (connect (sockfd, (struct sockaddr *)&their_addr, sizeof their_addr) == -1)
+    {
+      perror("connect");
+      exit(1);
+    }
+  
+  glutInit (&argc, argv);
+  OpenWindow (pixels_x, pixels_y);
+  
+  glLoadIdentity ();
+  gluOrtho2D (0.F, 512.F, 0.F, 512.F);
+  glClearColor (1.F, 1.F, 1.F, 0.F);
+  
+  glutIdleFunc (Display);
+  glutDisplayFunc (Display);
+  glutMainLoop ();
+  
+  close (sockfd);
+  
+  return 0;
 } 
 

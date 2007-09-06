@@ -26,7 +26,8 @@
 
 #define NEIGHBOUR_PROCS_MAX            52
 #define SHARED_DISTRIBUTIONS_MAX       4000000
-#define COLOURED_PIXELS_PER_PROC_MAX   512 * 512
+#define COLOURED_PIXELS_PER_PROC_MAX   1024 * 1024
+#define COMMS_LEVELS                   3
 
 
 extern float EPSILON;
@@ -85,19 +86,13 @@ extern int inv_dir[15];
 extern pthread_mutex_t network_buffer_copy_lock;
 extern pthread_cond_t network_send_frame;
 
-struct Pixel {
-	int x, y;
-	float r, g, b;
-};
-
-// extern Pixel* send_array;
 extern int send_array_length;
 extern int send_frame_count;
 
-extern int compressedFrameSize;
+extern int compressed_frame_size;
 
-extern unsigned char *pixelData;
-extern unsigned char *compressedData;
+extern unsigned char *pixel_data;
+extern unsigned char *compressed_data;
 
 #endif // RG
 
@@ -291,7 +286,7 @@ struct RT
   int coloured_pixels_max;
   int coloured_pixels;
   int *coloured_pixel_id;
-  int coloured_pixel_ids_max;
+  int pixels_max;
   int ray_tracing_count;
   
   short int clusters;
@@ -369,6 +364,9 @@ extern double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 extern int f_send_id[SHARED_DISTRIBUTIONS_MAX];
 extern int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
 
+extern float pixel_color_to_send[4*1024*1024];
+extern float pixel_color_to_recv[4*1024*1024];
+
 
 extern Screen screen;
 
@@ -408,9 +406,12 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 
 
 void rtProject (float px1, float py1, float pz1, float *px2, float *py2);
-void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						   float cutoff, float *r, float *g, float *b),
-		   LBM *lbm, Net *net, RT *rt);
+void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2,
+						    float cutoff, float *r, float *g, float *b),
+		    Net *net, RT *rt);
+void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2,
+						    float cutoff, float *r, float *g, float *b),
+		    Net *net, RT *rt);
 void rtRotate (float sin_1, float cos_1,
 	       float sin_2, float cos_2,
 	       float  x1, float  y1, float  z1,

@@ -49,6 +49,22 @@ int e_z[] = { 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1};
 int inv_dir[] = {0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13};
 
 
+#ifdef RG
+
+pthread_mutex_t network_buffer_copy_lock;
+pthread_cond_t network_send_frame;
+
+int send_array_length;
+int send_frame_count;
+
+int compressed_frame_size;
+
+unsigned char *pixel_data = NULL;
+unsigned char *compressed_data = NULL;
+
+#endif // RG
+
+
 double *f_old = NULL, *f_new = NULL;
 
 int *f_id = NULL;
@@ -69,6 +85,9 @@ double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 
 int f_send_id[SHARED_DISTRIBUTIONS_MAX];
 int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
+
+float pixel_color_to_send[4*1024*1024];
+float pixel_color_to_recv[4*1024*1024];
 
 
 Screen screen;

@@ -171,7 +171,25 @@ void netFindTopology (Net *net)
     }
   net->procs_per_machine[ 0 ] = net->procs;
 }
-
+/*
+void netFindTopology (Net *net)
+{
+  // the machine is assumed to be only one if this function is
+  // used instead of the previous one
+  
+  net->machines = 2;
+  
+  net->machine_id = (int *)malloc(sizeof(int) * net->procs);
+  net->procs_per_machine = (int *)malloc(sizeof(int) * net->machines);
+  
+  for (int i = 0; i < net->procs; i++)
+    {
+      net->machine_id[ i ] = i;
+    }
+  net->procs_per_machine[ 0 ] = 1;
+  net->procs_per_machine[ 1 ] = 1;
+}
+*/
 #endif
 
 void netInit (LBM *lbm, Net *net, RT *rt)
@@ -1245,11 +1263,12 @@ void netInit (LBM *lbm, Net *net, RT *rt)
   // propagate to different partitions is avoided (only their values
   // will be communicated)
   
-  net->req = (MPI_Request **)malloc(sizeof(MPI_Request *) * 2);
+  net->req = (MPI_Request **)malloc(sizeof(MPI_Request *) * COMMS_LEVELS);
   
-  net->req[ 0 ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs * net->procs));
-  net->req[ 1 ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs * net->procs));
-  
+  for (m = 0; m < COMMS_LEVELS; m++)
+    {
+      net->req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs * net->procs));
+    }  
   for (m = 0; m < net->inter_m_neigh_procs; m++)
     {
       neigh_proc_p = &net->inter_m_neigh_proc[ m ];
@@ -1465,15 +1484,15 @@ void netEnd (Net *net, RT *rt)
   free(f_old);
   f_old = NULL;
   
-  free(net->req[ 0 ]);
-  net->req[ 0 ] = NULL;
-  free(net->req[ 1 ]);
-  net->req[ 1 ] = NULL;
+  for (i = 0; i < COMMS_LEVELS; i++)
+    {
+      free(net->req[ i ]);
+      net->req[ i ] = NULL;
+    }
   free(net->req);
   net->req = NULL;
   
   free(net->procs_per_machine);
   free(net->machine_id);
-  
 }
 
