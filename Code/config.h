@@ -15,6 +15,10 @@
 #include <pthread.h>
 #endif // RG
 
+#ifdef STEER
+#include "ReG_Steer_types.h"
+#endif // STEER
+
 #define MACROSCOPIC_PARS   5
 #define DENSITY            0
 #define VELOCITY           1
@@ -97,6 +101,41 @@ extern unsigned char *compressedData;
 
 #endif // RG
 
+#ifdef STEER
+
+// this is here so that I can transfer all params and data in one chunk
+// in one MPI_Bcast rather than loads of separate ones...
+struct SteerParams {
+  // reg
+  int    status;
+  int    num_recvd_cmds;
+  int    recvd_cmds[REG_MAX_NUM_STR_CMDS];
+  int    num_params_changed;
+
+  // lbm
+  double tau;
+  double tolerance;
+  int    max_time_steps;
+  int    conv_freq;
+  int    check_freq;
+
+  // rt
+  int    pixels_x;
+  int    pixels_y;
+  float  longitude;
+  float  latitude;
+  float  zoom;
+  int    image_freq;
+  int    flow_field_type;
+  int    is_isosurface;
+  float  abs_factor;
+  float  cutoff;
+  float  max_density;
+  float  max_velocity;
+  float  max_stress;
+};
+
+#endif // STEER
 
 struct DataBlock
 {
