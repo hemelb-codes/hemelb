@@ -1,9 +1,24 @@
 // In this file, the functions useful to initiate/end the LB simulation
 // and perform the dynamics are reported
 
+// Code surrounded by RG blocks is for network distribution of the
+// raytraced output.
+// Added by Steven Manos, University College London
+// on behalf of the GENIUS project.
+
+// Code surrounded by STEER blocks is for RealityGrid instrumentation.
+// Added by Robert Haines, University of Manchester
+// on behalf of the GENIUS project.
+
 #include "config.h"
 
 RT rt;
+
+#ifdef STEER
+#include "ReG_Steer_Appside.h"
+#include <string.h>
+#include <unistd.h>
+#endif // STEER
 
 #ifdef RG
 
@@ -178,6 +193,22 @@ int main (int argc, char *argv[])
   pthread_attr_t pthread_attrib;
 #endif // RG
 
+#ifdef STEER
+  int    reg_num_cmds;
+  int    reg_cmds[REG_INITIAL_NUM_CMDS];
+  char** steer_changed_param_labels;
+  char** steer_recvd_cmd_params;
+
+  SteerParams steer;
+
+  steer_changed_param_labels = Alloc_string_array(REG_MAX_STRING_LENGTH,
+						REG_MAX_NUM_STR_PARAMS);
+  steer_recvd_cmd_params = Alloc_string_array(REG_MAX_STRING_LENGTH,
+					    REG_MAX_NUM_STR_CMDS);
+
+  int reg_finished;
+#endif // STEER
+
   LBM lbm;
   
   Net net;
@@ -227,6 +258,58 @@ int main (int argc, char *argv[])
   
   lbmReadParameters (input_parameters_name, &lbm, &net);
 
+#ifdef STEER
+  // create the derived datatype for the MPI_Bcast
+  int count = 23;
+  int blocklengths[23] = {1, 1, REG_MAX_NUM_STR_CMDS, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  MPI_Datatype types[23] = {MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_DOUBLE, MPI_DOUBLE, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_UB};
+
+  // calculate displacements
+  MPI_Aint disps[23];
+  disps[0] = 0;
+  for(int i = 1; i < count; i++) {
+    if(i == 3) {
+      disps[i] = disps[i - 1] + (sizeof(int) * REG_MAX_NUM_STR_CMDS);
+    }
+    else {
+      switch(types[i - 1]) {
+      case MPI_INTEGER:
+	disps[i] = disps[i - 1] + sizeof(int);
+	break;
+      case MPI_DOUBLE:
+	disps[i] = disps[i - 1] + sizeof(double);
+	break;
+      case MPI_REAL:
+	disps[i] = disps[i - 1] + sizeof(float);
+	break;
+      }
+    }
+  }
+
+  MPI_Datatype MPI_steer_type;
+  MPI_Type_struct(count, blocklengths, disps, types, &MPI_steer_type);
+  MPI_Type_commit(&MPI_steer_type);
+
+  // initialize the steering library
+  if(net.id == 0) {
+    Steering_enable(REG_TRUE);
+
+    reg_num_cmds = 2;
+    reg_cmds[0] = REG_STR_STOP;
+    reg_cmds[1] = REG_STR_PAUSE_INTERNAL;
+    steer.status = Steering_initialize("HemeLB", reg_num_cmds, reg_cmds);
+  }
+
+  // broadcast/collect status
+  net.err = MPI_Bcast(&steer.status, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+
+  // if broken, quit
+  if(steer.status == REG_FAILURE) {
+    net.err = MPI_Finalize();
+    return REG_FAILURE;
+  }
+#endif // STEER
+
 #ifdef RG
   if(net.id == 0) {
     
@@ -261,13 +344,153 @@ int main (int argc, char *argv[])
   convergence_count = 0;
   ray_tracing_count = 0;
   
+#ifdef STEER
+  // set up the ReG struct
+  steer.tau = lbm.tau;
+  steer.tolerance = lbm.tolerance;
+  steer.max_time_steps = lbm.time_steps_max;
+  steer.conv_freq = lbm.convergence_frequency;
+  steer.check_freq = lbm.checkpoint_frequency;
+  steer.pixels_x = screen.pixels_x;
+  steer.pixels_y = screen.pixels_y;
+  steer.longitude = 0.0;
+  steer.latitude = 0.0;
+  steer.zoom = screen.zoom;
+  steer.image_freq = rt.image_frequency;
+  steer.flow_field_type = rt.flow_field_type;
+  steer.is_isosurface = rt.is_isosurface;
+  steer.abs_factor = rt.absorption_factor;
+  steer.cutoff = rt.cutoff;
+  steer.max_density = 1.F / rt.flow_field_value_max_inv[DENSITY];
+  steer.max_velocity = 1.F / rt.flow_field_value_max_inv[VELOCITY];
+  steer.max_stress = 1.F / rt.flow_field_value_max_inv[STRESS];
+
+  // register params with RealityGrid here
+  if(net.id == 0) {
+    // LBM params
+    steer.status = Register_param("Tau", REG_TRUE,
+				(void*)(&steer.tau), REG_DBL, "0.5", "");
+    steer.status = Register_param("Tolerance", REG_TRUE,
+				(void*)(&steer.tolerance), REG_DBL, "0.0", "0.1");
+    steer.status = Register_param("Max time steps", REG_TRUE,
+				(void*)(&steer.max_time_steps), REG_INT, "1", "");
+    steer.status = Register_param("Convergence frequency", REG_TRUE,
+				  (void*)(&steer.conv_freq), REG_INT, "1", "");
+    steer.status = Register_param("Checkpoint frequency", REG_TRUE,
+				  (void*)(&steer.check_freq), REG_INT, "1", "");
+
+    // RT params
+    steer.status = Register_param("X pixel size", REG_TRUE,
+				  (void*)(&steer.pixels_x), REG_INT, "0", "1024");
+    steer.status = Register_param("Y pixel size", REG_TRUE,
+				  (void*)(&steer.pixels_y), REG_INT, "0", "1024");
+    steer.status = Register_param("Longitude", REG_TRUE,
+				  (void *)(&steer.longitude), REG_FLOAT, "", "");
+    steer.status = Register_param("Latitude", REG_TRUE,
+				  (void *)(&steer.latitude), REG_FLOAT, "", "");
+    steer.status = Register_param("Zoom", REG_TRUE,
+				  (void *)(&steer.zoom), REG_FLOAT, "0.0", "");
+    steer.status = Register_param("Image output frequency", REG_TRUE,
+				  (void*)(&steer.image_freq), REG_INT, "1", "");
+    steer.status = Register_param("Flow field type", REG_TRUE,
+				  (void*)(&steer.flow_field_type), REG_INT, "0", "2");
+    steer.status = Register_param("Is isosurface", REG_TRUE,
+				  (void*)(&steer.is_isosurface), REG_INT, "0", "1");
+    steer.status = Register_param("Absorption factor", REG_TRUE,
+				  (void *)(&steer.abs_factor), REG_FLOAT, "0.0", "");
+    steer.status = Register_param("Cutoff", REG_TRUE,
+				  (void *)(&steer.cutoff), REG_FLOAT, "0.0", "1.0");
+    steer.status = Register_param("Max density", REG_TRUE,
+				  (void *)(&steer.max_density), REG_FLOAT, "0.0", "");
+    steer.status = Register_param("Max velocity", REG_TRUE,
+				  (void *)(&steer.max_velocity), REG_FLOAT, "0.0", "");
+    steer.status = Register_param("Max stress", REG_TRUE,
+				  (void *)(&steer.max_stress), REG_FLOAT, "0.0", "");
+  }
+
+  // broadcast/collect status
+  net.err = MPI_Bcast(&steer.status, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+
+  // if broken, quit
+  if(steer.status == REG_FAILURE) {
+    net.err = MPI_Finalize();
+    return REG_FAILURE;
+  }
+
+  reg_finished = 0;
+
+  if(net.id == 0) {
+    printf("STEER: RealityGrid library initialized and parameters registered.\n");
+    fflush(stdout);
+  }
+#endif // STEER
+
   for (time_step = 1; time_step <= lbm.time_steps_max; time_step++)
     {
       write_checkpoint = 0;
       check_convergence = 0;
       perform_rt = 0;
 
-	if(net.id==0) { printf("time step %i\n",time_step); fflush(0x0); }
+      if(net.id==0) { printf("time step %i\n",time_step); fflush(0x0); }
+      
+#ifdef STEER
+      // call steering control
+      if(net.id == 0) {
+	steer.status = Steering_control(time_step,
+					&steer.num_params_changed,
+					steer_changed_param_labels,
+					&steer.num_recvd_cmds,
+					steer.recvd_cmds,
+					steer_recvd_cmd_params);
+      }
+      
+      // broadcast/collect everything
+      net.err = MPI_Bcast(&steer, 1, MPI_steer_type, 0, MPI_COMM_WORLD);
+
+      if(steer.status != REG_SUCCESS) {
+	printf("STEER: I am %d and I detected that Steering_control failed.\n", net.id);
+	fflush(stdout);
+	continue;
+      }
+            
+      // process commands received
+      for(int i = 0; i < steer.num_recvd_cmds; i++) {
+	switch(steer.recvd_cmds[i]) {
+	case REG_STR_STOP:
+	  printf("STEER: I am %d and I've been told to STOP.\n", net.id);
+	  fflush(stdout);
+	  reg_finished = 1;
+	  break;
+	}
+      } // end of command processing
+      
+      // process changed params
+      // not bothered what changed, just copy across...
+      if(steer.num_params_changed > 0) {
+	printf("STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
+	fflush(stdout);
+	lbm.tau = steer.tau;
+	lbm.tolerance = steer.tolerance;
+	lbm.time_steps_max = steer.max_time_steps;
+	lbm.convergence_frequency = steer.conv_freq;
+	lbm.checkpoint_frequency = steer.check_freq;
+	screen.pixels_x = steer.pixels_x;
+	screen.pixels_y = steer.pixels_y;
+	//steer.longitude;
+	//steer.latitude;
+	screen.zoom = steer.zoom;
+	rt.image_frequency = steer.image_freq;
+	rt.flow_field_type = steer.flow_field_type;
+	rt.is_isosurface = steer.is_isosurface;
+	rt.absorption_factor = steer.abs_factor;
+	rt.cutoff = steer.cutoff;
+	rt.flow_field_value_max_inv[ DENSITY  ] = 1.F / steer.max_density;
+	rt.flow_field_value_max_inv[ VELOCITY ] = 1.F / steer.max_velocity;
+	rt.flow_field_value_max_inv[ STRESS   ] = 1.F / steer.max_stress;
+      }
+      // end of param processing
+
+#endif // STEER
       
       if (++checkpoint_count >= lbm.checkpoint_frequency)
 	{
@@ -293,7 +516,13 @@ int main (int argc, char *argv[])
 	}
       
       if (stability == UNSTABLE || is_converged) break;
+
+#ifdef STEER
+      if(reg_finished == 1) break;
+#endif // STEER
+      
     }
+
   time_step = min(time_step, lbm.time_steps_max);
   
   simulation_time = 0.;
@@ -383,6 +612,12 @@ int main (int argc, char *argv[])
 #ifdef RG
   pthread_join (network_thread, NULL);
 #endif // RG
+
+#ifdef STEER
+  if(net.id == 0) {
+    Steering_finalize();
+  }
+#endif // STEER
 
   net.err = MPI_Finalize ();
   
