@@ -100,7 +100,8 @@ extern unsigned char *compressed_data;
 
 // this is here so that I can transfer all params and data in one chunk
 // in one MPI_Bcast rather than loads of separate ones...
-struct SteerParams {
+struct SteerParams
+{
   // reg
   int    status;
   int    num_recvd_cmds;
@@ -144,12 +145,6 @@ struct BlockLocation
 };
 
 
-struct SiteLocation ///
-{
-  short int i, j, k;
-};
-
-
 struct LBM
 {
   char *system_file_name;
@@ -176,18 +171,12 @@ struct LBM
   int time_steps_max;
   int checkpoint_frequency, convergence_frequency;
   int is_checkpoint;
-  int inlet_sites; ///
   
   float *block_density;
   
   int *block_map;
   
   short int *fluid_sites_per_block;
-  
-  SiteLocation *site_location_a; ///
-  SiteLocation *site_location_b; ///
-  
-  DataBlock *iter_block; ///
 };
 
 
@@ -246,7 +235,7 @@ struct Net
   
   MPI_Request **req;
   
-  double timing[8];
+  double timing[9];
 };
 
 

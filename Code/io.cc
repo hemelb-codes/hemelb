@@ -27,10 +27,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
   unsigned int site_i, site_j, site_k;
   unsigned int boundary_id;
   
-  //SiteLocation *site_location_a_p; ///
-  
-  //DataBlock *iter_block_p; ///
-  
   struct DensityBlock
   {
     int neigh[26];
@@ -83,18 +79,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
   lbm->site_max_z = 0;
   
   
-  //lbm->iter_block = (DataBlock *)malloc(sizeof(DataBlock) * lbm->blocks); ///
-  //
-  //for (n = 0; n < lbm->blocks; n++)
-  //  {
-  //    lbm->iter_block[ n ].site_data = NULL; ///
-  //  }
-  //lbm->inlet_sites = 0; ///
-  //
-  //lbm->site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * 1000000); ///
-  //lbm->site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * 1000000); ///
-  
-  
   blocks_max = dummy;
   blocks = dummy;
   
@@ -124,11 +108,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      
 	      if (flag == 0) continue;
 	      
-	      //iter_block_p = &lbm->iter_block[ n ]; ///
-	      
-	      //iter_block_p->site_data = ///
-		//	(unsigned int *)malloc(sizeof(unsigned int) * lbm->sites_in_a_block);
-	      
 	      if (!lbm->is_checkpoint)
 		{
 		  lbm->block_map[ n ] = blocks;
@@ -148,7 +127,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
 		  density_block_p->boundary_sites = 0;
 		  ++blocks;
 		}
-	      //m = -1; ///
 	      
 	      for (ii = 0; ii < lbm->block_size; ii++)
 		{
@@ -162,13 +140,10 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			{
 			  site_k = (k << lbm->shift) + kk;
 			  
-			  //++m; ///
-			  
 			  xdr_u_int (&xdr_config, &site_data);
 			  
 			  if ((site_data & SITE_TYPE_MASK) == SOLID_TYPE)
 			    {
-			      //iter_block_p->site_data[ m ] = 1U << 31U; ///
 			      continue;
 			    }
 			  
@@ -181,21 +156,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			  lbm->site_max_x = max(lbm->site_max_x, site_i);
 			  lbm->site_max_y = max(lbm->site_max_y, site_j);
 			  lbm->site_max_z = max(lbm->site_max_z, site_k);
-			  
-			  //if ((site_data & SITE_TYPE_MASK) == INLET_TYPE) ///
-			  //  {
-			  //    site_location_a_p = &lbm->site_location_a[ lbm->inlet_sites ];
-			  //    site_location_a_p->i = (i << lbm->shift) + ii;
-			  //    site_location_a_p->j = (j << lbm->shift) + jj;
-			  //    site_location_a_p->k = (k << lbm->shift) + kk;
-			  //    ++lbm->inlet_sites;
-			  //    
-			  //    iter_block_p->site_data[ m ] = 0U;
-			  //  }
-			  //else
-			  //  {
-			  //    iter_block_p->site_data[ m ] = 1U << 15U;
-			  //  }
 			  
 			  if (!lbm->is_checkpoint)
 			    {
@@ -318,7 +278,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   double par_to_send[6+2000];
   
   int n;
-  int iters;
   
   if (net->id == 0)
     {
@@ -336,8 +295,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  //fscanf (parameters_file, "%i\n", &iters);
-	  //lbm->inlet_density[ n ] = 1.0 - (double)iters * 1.e-5;
 	  fscanf (parameters_file, "%le\n", &lbm->inlet_density[ n ]);
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
@@ -348,10 +305,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  //fscanf (parameters_file, "%i\n", &iters);
-	  //lbm->outlet_density[ n ] = 1.0 - (double)iters * 1.e-5;
 	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
-	  //printf (" %le\n", lbm->outlet_density[ n ]);
 	}
       fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
       fscanf (parameters_file, "%le\n", &lbm->tolerance);
@@ -696,5 +650,5 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 	  fflush (stdout);
 	}
     }
-  net->timing[7] = myClock () - seconds;
+  net->timing[8] = myClock () - seconds;
 }

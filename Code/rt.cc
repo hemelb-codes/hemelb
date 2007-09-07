@@ -2544,7 +2544,9 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
   if (net->machines == 1 || net->id != master_proc_id) return;
   
   // non-blocking inter-machine communications of sub-images begin here
-    
+  
+  seconds = myClock ();
+  
   for (k = 0; k < 4 * pixels_x * pixels_y;)
     {
       pixel_color_to_send[ k   ] = 0.F;
@@ -2589,6 +2591,7 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
 	  send_id += net->procs_per_machine[ m ];
 	}
     }
+  net->timing[7] += myClock () - seconds;
 }
 
 
@@ -2606,12 +2609,10 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   float r, g, b;
   
   int pixels_x, pixels_y;
-  int i, j, k;
+  int k;
   int m, n;
   int send_id, recv_id;
   int master_proc_id;
-  int full_frame_bytes;
-  int bytes_per_pixel;
   
   short int pixel_i, pixel_j;
   
@@ -2623,6 +2624,8 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   
   if (net->machines > 1)
     {
+      seconds = myClock ();
+      
       master_proc_id = 0;
       
       for (m = 0; m < net->machine_id[ net->id ]; m++)
@@ -2669,6 +2672,7 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
 	      send_id += net->procs_per_machine[ m ];
 	    }
 	}
+      net->timing[7] += myClock () - seconds;
     }
   
   if (net->id != 0) return;
