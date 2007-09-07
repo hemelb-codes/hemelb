@@ -2609,7 +2609,7 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   float r, g, b;
   
   int pixels_x, pixels_y;
-  int k;
+  int i, j, k;
   int m, n;
   int send_id, recv_id;
   int master_proc_id;
@@ -2682,7 +2682,7 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   
 #ifdef RG
   
-  bytes_per_pixel = sizeof(unsigned char) * 3;
+  int bytes_per_pixel = sizeof(unsigned char) * 3;
   
   pthread_mutex_lock (&network_buffer_copy_lock);
   

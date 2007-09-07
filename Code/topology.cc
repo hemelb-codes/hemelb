@@ -171,6 +171,7 @@ void netFindTopology (Net *net)
     }
   net->procs_per_machine[ 0 ] = net->procs;
 }
+
 #endif
 
 void netInit (LBM *lbm, Net *net, RT *rt)
