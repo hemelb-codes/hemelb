@@ -1,24 +1,9 @@
 // In this file, the functions useful to initiate/end the LB simulation
 // and perform the dynamics are reported
 
-// Code surrounded by RG blocks is for network distribution of the
-// raytraced output.
-// Added by Steven Manos, University College London
-// on behalf of the GENIUS project.
-
-// Code surrounded by STEER blocks is for RealityGrid instrumentation.
-// Added by Robert Haines, University of Manchester
-// on behalf of the GENIUS project.
-
 #include "config.h"
 
 RT rt;
-
-#ifdef STEER
-#include "ReG_Steer_Appside.h"
-#include <string.h>
-#include <unistd.h>
-#endif // STEER
 
 #ifdef RG
 
@@ -31,94 +16,130 @@ RT rt;
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <sys/wait.h>
 #include <signal.h>
 
+
 #define MYPORT 10000
+#define CONNECTION_BACKLOG 10
 
 #endif // RG
-
 
 #ifdef RG
 
 void *hemeLB_network (void *ptr)
 {
-  while (true)
-    {
-      int sock_fd, new_fd;
-      int yes = 1;
-      
-      struct sockaddr_in my_address;
-      struct sockaddr_in their_addr; // client address
-      
-      socklen_t sin_size;
-      
-      if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
-	{
-	  perror("socket");
-	  exit(1);
-	}
-      
-      if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
-	{
-	  perror("setsockopt");
-	  exit(1);
-	}
-      
-      my_address.sin_family = AF_INET;
-      my_address.sin_port = htons (MYPORT);
-      my_address.sin_addr.s_addr = INADDR_ANY;
-      memset (my_address.sin_zero, '\0', sizeof my_address.sin_zero);
-      
-      if (bind (sock_fd, (struct sockaddr *)&my_address, sizeof my_address) == -1)
-	{
-	  perror("bind");
-	  exit(1);
-	}
-      
-      if (listen(sock_fd, 10) == -1)
-	{
-	  perror("listen");
-	  exit(1);
-	}
-      sin_size = sizeof their_addr;
-      
-      if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1)
-	{
-	  perror("accept");
-	}
-      printf("server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
-      
-      close(sock_fd);
-      
-      int frameNumber = 0;
-      
-      while (true)
-	{
-	  pthread_mutex_lock ( &network_buffer_copy_lock );
-	  pthread_cond_wait (&network_send_frame, &network_buffer_copy_lock);
-	  
-	  send (new_fd, &frameNumber, sizeof(frameNumber), 0);
-	  
-	  send (new_fd, &compressed_frame_size, sizeof(compressed_frame_size), 0);
-	  
-	  for (int i = 0; i < compressed_frame_size; i++)
-	    {
-	      send (new_fd, &compressed_data[i], sizeof(compressed_data[i]), 0);
-	    }
-	  printf("done sending array...");
-	  
-	  pthread_mutex_unlock ( &network_buffer_copy_lock );
-	  
-	  frameNumber++;
-	}
-      close(new_fd);
-    }
+
+	signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
+
+	int sock_fd;
+	int new_fd;
+	int yes = 1;
+		
+	int brokenPipe = 0;
+	
+	while(1) {
+
+		struct sockaddr_in my_address;
+		struct sockaddr_in their_addr; // client address
+		socklen_t sin_size;
+
+		if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) == -1) { perror("socket"); exit(1); }
+			
+		if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) { perror("setsockopt"); exit(1); }
+
+		my_address.sin_family = AF_INET;
+		my_address.sin_port = htons (MYPORT);
+		my_address.sin_addr.s_addr = INADDR_ANY;
+		memset (my_address.sin_zero, '\0', sizeof my_address.sin_zero);
+
+		if (bind (sock_fd, (struct sockaddr *)&my_address, sizeof my_address) == -1) { perror("bind"); exit(1); }
+
+		if (listen(sock_fd, CONNECTION_BACKLOG) == -1) { perror("listen"); exit(1); }
+		
+		sin_size = sizeof their_addr;
+			
+		if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1) { perror("accept"); continue; }
+	
+		printf("server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
+						
+		close(sock_fd);
+			
+		int frameNumber = 0;
+
+		brokenPipe = 0;
+
+		while ( brokenPipe == 0 ) {
+		
+			pthread_mutex_lock ( &network_buffer_copy_lock );
+			pthread_cond_wait (&network_send_frame, &network_buffer_copy_lock);
+
+			int bytesSent = 0;
+		
+			XDR xdr_network_stream;
+		
+			u_int sizeToSend = 2 + 512*512*1000;
+		
+			char* xdrBuffer = (char*) malloc( sizeToSend );
+		
+			xdrmem_create(&xdr_network_stream, xdrBuffer, sizeToSend, XDR_ENCODE);
+		
+			xdr_int(&xdr_network_stream, &frameNumber);
+			xdr_int(&xdr_network_stream, &compressed_frame_size);
+		
+			// printf("XDR pos %i\n", xdr_getpos(&xdr_network_stream));;
+		
+			for (int i = 0; i < compressed_frame_size; i++)
+				xdr_u_char(&xdr_network_stream, &compressed_data[i]);
+		
+			// printf("XDR pos %i\n", xdr_getpos(&xdr_network_stream));
+		
+			int currentPosition = xdr_getpos(&xdr_network_stream);
+			
+			int nElements = currentPosition / sizeof(char);
+			
+			printf("n Elements of char to send %i\n", nElements);
+			
+			for (int i = 0; i < nElements ; i++)
+			{
+				int ret = send(new_fd, &xdrBuffer[i], sizeof(char), 0);
+				
+				if( ret < 0 ) {
+
+					printf("hello! %i\n", ret); fflush(0x0);
+					// close(new_fd);
+					brokenPipe = 1;
+					break;
+
+				} else {
+				
+					bytesSent += ret;
+					
+				}
+			}
+				
+			printf("bytes sent.... %i %i\n", bytesSent, nElements);
+			
+			xdr_destroy(&xdr_network_stream);
+			
+			free(xdrBuffer);
+			
+			printf("done sending array...");
+			
+			pthread_mutex_unlock ( &network_buffer_copy_lock );
+			
+			frameNumber++;
+				
+		} // while( brokenPipe == 0 )
+
+		close(new_fd);
+
+    } // while(1)
+
 }
 
 #endif // RG
-
-
 
 
 inline void AbsorptionCoefficients (float flow_field_value, float t1, float t2, float cutoff, float *r, float *g, float *b)

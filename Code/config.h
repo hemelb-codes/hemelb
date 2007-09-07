@@ -133,6 +133,7 @@ struct SteerParams
 
 #endif // STEER
 
+
 struct DataBlock
 {
   unsigned int *site_data;
@@ -417,3 +418,4 @@ void rtInit (char *image_file_name, RT *rt);
 void rtEnd (RT *rt);
 
 #endif                  // __config_h__
+
