@@ -171,25 +171,6 @@ void netFindTopology (Net *net)
     }
   net->procs_per_machine[ 0 ] = net->procs;
 }
-/*
-void netFindTopology (Net *net)
-{
-  // the machine is assumed to be only one if this function is
-  // used instead of the previous one
-  
-  net->machines = 2;
-  
-  net->machine_id = (int *)malloc(sizeof(int) * net->procs);
-  net->procs_per_machine = (int *)malloc(sizeof(int) * net->machines);
-  
-  for (int i = 0; i < net->procs; i++)
-    {
-      net->machine_id[ i ] = i;
-    }
-  net->procs_per_machine[ 0 ] = 1;
-  net->procs_per_machine[ 1 ] = 1;
-}
-*/
 #endif
 
 void netInit (LBM *lbm, Net *net, RT *rt)

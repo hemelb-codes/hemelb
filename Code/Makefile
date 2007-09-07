@@ -4,7 +4,7 @@ EXE=hemelb
 MPIRUN=/usr/bin/mpirun #   /usr/local/bin/mpiexec
 MPICPUS=2
 TEST1INPUT=/home/steven/hemelb/Input/square_duct_32x16x16_input.asc
-TEST2INPUT=/home/steven/hemelb/Input/angio1_input.asc
+TEST2INPUT=/home/marco/hemelb/Input/angio1_input.asc #/home/steven/hemelb/Input/angio1_input.asc
 
 #REG_HOME=/home/ngs0011/work/RealityGrid/file/reg_steer_lib
 REG_CPPFLAGS=-I${REG_HOME}/include
@@ -12,7 +12,7 @@ REG_CPPFLAGS=-I${REG_HOME}/include
 #		-lReG_Steer_SOAP -Wl,-Bdynamic -lxml2
 
 FLAGS=-O3 ${REG_CPPFLAGS}
-DEFS=-DRG #-DSTEER
+#DEFS=-DRG #-DSTEER
 
 OBJ=config.o \
 	io.o \

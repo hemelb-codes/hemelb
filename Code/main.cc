@@ -426,12 +426,11 @@ int main (int argc, char *argv[])
       check_convergence = 0;
       perform_rt = 0;
       
-      if(net.id == 0)
-	{
-	  printf("time step %i\n", time_step);
-	  fflush (stdout);
-	}
-      
+      //if(net.id == 0)
+      //	{
+      //	  printf("time step %i\n", time_step);
+      //	  fflush (stdout);
+      //	}
       
 #ifdef STEER
       // call steering control
@@ -528,7 +527,6 @@ int main (int argc, char *argv[])
 #ifdef STEER
       if(reg_finished == 1) break;
 #endif // STEER
-      
     }
 
   time_step = min(time_step, lbm.time_steps_max);
@@ -570,22 +568,23 @@ int main (int argc, char *argv[])
   if (net.id == 0)
     {
       printf ("timings results (average seconds per single time)\n");
-      printf ("1) rank\n");
-      printf ("2) collisions at interface-dependent lattice sites\n");
-      printf ("3) copying to the buffers to send/recv\n");
-      printf ("4) communicational time\n");
-      printf ("5) collisions + streaming from inner sites\n");
-      printf ("6) streaming from interface-dependent lattice sites\n");
-      printf ("7) all-reduce + convergence test + checkpoint\n");
-      printf ("8) ray tracing \n");
-      printf ("9) output (1 time only, seconds) \n");
+      printf ("1)  rank\n");
+      printf ("2)  collisions at interface-dependent lattice sites\n");
+      printf ("3)  copying to the buffers to send/recv\n");
+      printf ("4)  communicational time\n");
+      printf ("5)  collisions + streaming from inner sites\n");
+      printf ("6)  streaming from interface-dependent lattice sites\n");
+      printf ("7)  all-reduce + convergence test + checkpoint\n");
+      printf ("8)  intra-machine ray tracing \n");
+      printf ("9)  inter-machine ray tracing \n");
+      printf ("10) output (1 time only, seconds) \n");
       fflush (stdout);
     }
   total_time = 0.;
   
-  for (n = 0; n < 7; n++) total_time += net.timing[ n ];
+  for (n = 0; n < 8; n++) total_time += net.timing[ n ];
   
-  for (n = 0; n < 7; n++)
+  for (n = 0; n < 8; n++)
     {
       if (net.timing[ n ] < 1.e-5 * total_time)
 	{
@@ -601,16 +600,17 @@ int main (int argc, char *argv[])
 	    {
 	      net.timing[ n ] /= net.convergence_count;
 	    }
-	  else if (n == 6)
+	  else if (n == 6 || n == 7)
 	    {
 	      net.timing[ n ] /= rt.ray_tracing_count;
 	    }
 	}
     }
   
-  printf ("%i %.3e %.3e %.3e %.3e %.3e %.3e %.3e %.3e 1) -> 9)\n", net.id,
+  printf ("%i %.3e %.3e %.3e %.3e %.3e %.3e %.3e %.3e %.3e 1) -> 10)\n",
+	  net.id,
 	  net.timing[0], net.timing[1], net.timing[2], net.timing[3],
-	  net.timing[4], net.timing[5], net.timing[6], net.timing[7]);
+	  net.timing[4], net.timing[5], net.timing[6], net.timing[7], net.timing[8]);
   fflush (stdout);
   
   rtEnd (&rt);
@@ -622,9 +622,10 @@ int main (int argc, char *argv[])
 #endif // RG
 
 #ifdef STEER
-  if(net.id == 0) {
-    Steering_finalize();
-  }
+  if(net.id == 0)
+    {
+      Steering_finalize();
+    }
 #endif // STEER
 
   net.err = MPI_Finalize ();
