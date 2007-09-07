@@ -31,6 +31,10 @@ RT rt;
 void *hemeLB_network (void *ptr)
 {
 
+	system ("echo $HOSTNAME > $HOME/env_details.asc");
+
+	//printf("%s\n", getenv("HOSTNAME"));
+
 	signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
 
 	int sock_fd;
