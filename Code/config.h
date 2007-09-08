@@ -17,6 +17,7 @@
 
 #ifdef STEER
 #include "ReG_Steer_types.h"
+#include "ReG_Steer_Appside.h"
 #endif // STEER
 
 #define MACROSCOPIC_PARS   5
@@ -118,6 +119,7 @@ struct SteerParams
   // rt
   int    pixels_x;
   int    pixels_y;
+  float  ctr_x, ctr_y, ctr_z;
   float  longitude;
   float  latitude;
   float  zoom;
@@ -141,6 +143,11 @@ struct DataBlock
 
 
 struct BlockLocation
+{
+  short int i, j, k;
+};
+
+struct SiteLocation
 {
   short int i, j, k;
 };
@@ -172,12 +179,17 @@ struct LBM
   int time_steps_max;
   int checkpoint_frequency, convergence_frequency;
   int is_checkpoint;
-  
-  float *block_density;
+  int inlet_sites;
+  int first_outlet_ref, first_outlet_site_id;
   
   int *block_map;
   
   short int *fluid_sites_per_block;
+  
+  SiteLocation *site_location_a;
+  SiteLocation *site_location_b;
+  
+  DataBlock *iter_block;
 };
 
 
@@ -347,7 +359,6 @@ extern double **nd_p;
 
 
 extern short int f_data[4*SHARED_DISTRIBUTIONS_MAX];
-
 extern double f_to_send[SHARED_DISTRIBUTIONS_MAX];
 extern double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 
@@ -390,7 +401,17 @@ void netInit (LBM *lbm, Net *net, RT *rt);
 void netEnd (Net *net, RT *rt);
 
 void lbmReadConfig (LBM *lbm, Net *net);
-void lbmReadParameters (char * parameters_file_name, LBM *lbm, Net *net);
+
+#ifdef STEER
+void lbmReadParameters (SteerParams *steer, char *parameters_file_name, LBM *lbm, Net *net);
+#else
+void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
+#endif
+
+#ifdef STEER
+void lbmUpdateParameters (SteerParams *steer, LBM *lbm, Net *net);
+#endif
+
 void lbmSetInitialConditions (LBM *lbm, Net *net);
 void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, LBM *lbm, Net *net);
 
@@ -413,7 +434,16 @@ void rtProjection (float ortho_x, float ortho_y,
 		   float longitude, float latitude,
 		   float dist,
 		   float zoom);
-void rtReadParameters (char * parameters_file_name, RT *rt, Net * net);
+#ifdef STEER
+void rtReadParameters (SteerParams *steer, char *parameters_file_name, RT *rt, Net * net);
+#else
+void rtReadParameters (char *parameters_file_name, RT *rt, Net * net);
+#endif
+
+#ifdef STEER
+void rtUpdateParameters (SteerParams *steer, RT *rt, Net * net);
+#endif
+
 void rtInit (char *image_file_name, RT *rt);
 void rtEnd (RT *rt);
 

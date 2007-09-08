@@ -10,32 +10,17 @@ void lbmReadConfig (LBM *lbm, Net *net)
   FILE *system_config;
   XDR xdr_config;
   
-  double seconds;
-  
-  float *block_density_p = NULL;
-  float error;
-  float temp;
-  
-  int blocks, blocks_max;
-  int iters;
-  
   int i, j, k, ii, jj, kk, m, n;
   int flag;
-  int dummy = 0;
+  int is_first_outlet_site_found, first_outlet_ref;
   
   unsigned int site_data;
   unsigned int site_i, site_j, site_k;
   unsigned int boundary_id;
   
-  struct DensityBlock
-  {
-    int neigh[26];
-    int neighs;
-    int boundary_sites;
-  };
+  SiteLocation *site_location_a_p;
   
-  DensityBlock *density_block = NULL;
-  DensityBlock *density_block_p = NULL;
+  DataBlock *iter_block_p;
   
   
   system_config = fopen (lbm->system_file_name, "r");
@@ -79,19 +64,29 @@ void lbmReadConfig (LBM *lbm, Net *net)
   lbm->site_max_z = 0;
   
   
-  blocks_max = dummy;
-  blocks = dummy;
+  lbm->iter_block = (DataBlock *)malloc(sizeof(DataBlock) * lbm->blocks);
   
-  if (!lbm->is_checkpoint)
+  for (n = 0; n < lbm->blocks; n++)
     {
-      blocks_max = 10000;
-      
-      lbm->block_density = (float *)malloc(sizeof(float) * blocks_max);
-      
-      lbm->block_map = (int *)malloc(sizeof(int) * lbm->blocks);
-  
-      density_block = (DensityBlock *)malloc(sizeof(DensityBlock) * blocks_max);
+      lbm->iter_block[ n ].site_data = NULL;
     }
+  lbm->inlet_sites = 0;
+  
+  lbm->site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * 1000000);
+  lbm->site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * 1000000);
+  
+  lbm->first_outlet_ref = 0;
+  
+  for (n = 0; n < lbm->outlets; n++)
+    {
+      if (lbm->outlet_density[ n ] < 0.999999 * lbm->inlet_density[ 0 ] ||
+	  lbm->outlet_density[ n ] > 1.000001 * lbm->inlet_density[ 0 ])
+	{
+	  lbm->first_outlet_ref = n;
+	}
+    }
+  is_first_outlet_site_found = 0;
+  
   n = -1;
   
   for (i = 0; i < lbm->blocks_x; i++)
@@ -104,29 +99,14 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      
 	      xdr_int (&xdr_config, &flag);
 	      
-	      if (!lbm->is_checkpoint) lbm->block_map[ n ] = -1;
-	      
 	      if (flag == 0) continue;
 	      
-	      if (!lbm->is_checkpoint)
-		{
-		  lbm->block_map[ n ] = blocks;
-		  
-		  if (blocks == blocks_max)
-		    {
-		      blocks_max <<= 2;
-		      lbm->block_density = (float *)realloc(lbm->block_density,
-							    sizeof(float) * blocks_max);
-		      density_block = (DensityBlock *)realloc(density_block,
-							      sizeof(DensityBlock) * blocks_max);
-		    }
-		  block_density_p = &lbm->block_density[ blocks ];
-		  *block_density_p = 0.F;
-		  
-		  density_block_p = &density_block[ blocks ];
-		  density_block_p->boundary_sites = 0;
-		  ++blocks;
-		}
+	      iter_block_p = &lbm->iter_block[ n ];
+	      
+	      iter_block_p->site_data =
+	      	(unsigned int *)malloc(sizeof(unsigned int) * lbm->sites_in_a_block);
+	      
+	      m = -1;
 	      
 	      for (ii = 0; ii < lbm->block_size; ii++)
 		{
@@ -140,10 +120,12 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			{
 			  site_k = (k << lbm->shift) + kk;
 			  
+			  ++m;
 			  xdr_u_int (&xdr_config, &site_data);
 			  
 			  if ((site_data & SITE_TYPE_MASK) == SOLID_TYPE)
 			    {
+			      iter_block_p->site_data[ m ] = 1U << 31U;
 			      continue;
 			    }
 			  
@@ -157,21 +139,30 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			  lbm->site_max_y = max(lbm->site_max_y, site_j);
 			  lbm->site_max_z = max(lbm->site_max_z, site_k);
 			  
-			  if (!lbm->is_checkpoint)
+			  if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
 			    {
-			      if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
+			      site_location_a_p = &lbm->site_location_a[ lbm->inlet_sites ];
+			      site_location_a_p->i = (i << lbm->shift) + ii;
+			      site_location_a_p->j = (j << lbm->shift) + jj;
+			      site_location_a_p->k = (k << lbm->shift) + kk;
+			      ++lbm->inlet_sites;
+			      
+			      iter_block_p->site_data[ m ] = 0U;
+			    }
+			  else
+			    {
+			      iter_block_p->site_data[ m ] = 1U << 15U;
+			    }
+			  if ((site_data & SITE_TYPE_MASK) == OUTLET_TYPE &&
+			      !is_first_outlet_site_found)
+			    {
+			      boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+			      
+			      if (boundary_id == lbm->first_outlet_ref)
 				{
-				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-				  
-				  ++density_block_p->boundary_sites;
-				  *block_density_p += lbm->inlet_density[ boundary_id ];
-				}
-			      else if ((site_data & SITE_TYPE_MASK) == OUTLET_TYPE)
-				{
-				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-				  
-				  ++density_block_p->boundary_sites;
-				  *block_density_p += lbm->outlet_density[ boundary_id ];
+				  is_first_outlet_site_found = 1;
+				  lbm->first_outlet_site_id =
+				    (site_i * lbm->sites_y + site_j) * lbm->sites_z + site_k;
 				}
 			    }
 			}
@@ -182,95 +173,14 @@ void lbmReadConfig (LBM *lbm, Net *net)
     }
   xdr_destroy (&xdr_config);
   fclose (system_config);
-  
-  if (lbm->is_checkpoint) return;
-  
-  seconds = myClock ();
-  
-  blocks = 0;
-  n = -1;
-  
-  for (i = 0; i < lbm->blocks_x; i++)
-    {
-      for (j = 0; j < lbm->blocks_y; j++)
-	{
-	  for (k = 0; k < lbm->blocks_z; k++)
-	    {
-	      if (lbm->block_map[ ++n ] == -1) continue;
-	      
-	      block_density_p = &lbm->block_density[ blocks ];
-	      
-	      density_block_p = &density_block[ blocks ];
-	      density_block_p->neighs = 0;
-	      ++blocks;
-	      
-	      if (density_block_p->boundary_sites > 0)
-		{
-		  *block_density_p /= (float)density_block_p->boundary_sites;
-		  continue;
-		}
-	      for (ii = max(0, i - 1); ii <= min(i + 1, lbm->blocks_x - 1); ii++)
-		{
-		  for (jj = max(0, j - 1); jj <= min(j + 1, lbm->blocks_y - 1); jj++)
-		    {
-		      for (kk = max(0, k - 1); kk <= min(k + 1, lbm->blocks_z - 1); kk++)
-			{
-			  m = (ii * lbm->blocks_y + jj) * lbm->blocks_z + kk;
-			  
-			  if (m == n || lbm->block_map[ m ] == -1) continue;
-			  
-			  density_block_p->neigh[ density_block_p->neighs ] = lbm->block_map[ m ];
-			  ++density_block_p->neighs;
-			}
-		    }
-		}
-	    }
-	}
-    }
-  error = 1.e+30F;
-  iters = 0;
-  
-  while (error > 1.e-3F)
-    {
-      ++iters;
-      
-      error = 0.F;
-      
-      for (n = 0; n < blocks; n++)
-	{
-	  density_block_p = &density_block[ n ];
-	  
-	  if (density_block_p->neighs == 0) continue;
-	  
-	  block_density_p = &lbm->block_density[ n ];
-	  
-	  temp = *block_density_p;
-	  *block_density_p = 0.F;
-	  
-	  for (m = 0; m < density_block_p->neighs; m++)
-	    {
-	      *block_density_p += lbm->block_density[ density_block_p->neigh[m] ];
-	    }
-	  *block_density_p /= (float)density_block_p->neighs;
-	  
-	  error = fmaxf(error, fabsf(*block_density_p - temp) /
-			fmaxf(1.e-30F, *block_density_p));
-	}
-    }
-  seconds = myClock () - seconds;
-  
-  free(density_block);
-  
-  if (net->id == 0)
-    {
-      printf ("Coarse-level density gradients minimization: %.3e, iters: %i\n",
-	      seconds, iters);
-      fflush (stdout);
-    }
 }
 
 
+#ifdef STEER
+void lbmReadParameters (SteerParams *steer, char *parameters_file_name, LBM *lbm, Net *net)
+#else
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
+#endif
 {
   // through this function the processor 0 reads the LB parameters
   // and then communicate them to the other processors
@@ -373,11 +283,56 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       lbm->checkpoint_frequency  = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
       lbm->convergence_frequency = (int)par_to_send[ 5 + lbm->inlets + lbm->outlets ];
     }
+  
+  lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
+  
+  lbm->omega = -1.0 / lbm->tau;
+  lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
+  
+  
+#ifdef STEER
+  steer->tau            = lbm->tau;
+  steer->tolerance      = lbm->tolerance;
+  steer->max_time_steps = lbm->time_steps_max;
+  steer->conv_freq      = lbm->convergence_frequency;
+  steer->check_freq     = lbm->checkpoint_frequency;
+#endif
+}
+
+#ifdef STEER
+
+void lbmUpdateParameters (SteerParams *steer, LBM *lbm, Net *net)
+{
+  // through this function the processor 0 reads the LB parameters
+  // and then communicate them to the other processors
+  
+  double par_to_send[5];
+  
+  int n;
+  
+  if (net->id == 0)
+    {
+      par_to_send[  0 ] = steer->tau;
+      par_to_send[  1 ] = steer->tolerance;
+      par_to_send[  2 ] = 0.1 + (double)steer->max_time_steps;
+      par_to_send[  3 ] = 0.1 + (double)steer->conv_freq;
+      par_to_send[  4 ] = 0.1 + (double)steer->check_freq;
+    }
+  net->err = MPI_Bcast (par_to_send, 5, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  
+  lbm->tau                   = par_to_send[  0 ];
+  lbm->tolerance             = par_to_send[  1 ];
+  lbm->time_steps_max        = (int)par_to_send[  2 ];
+  lbm->convergence_frequency = (int)par_to_send[  3 ];
+  lbm->checkpoint_frequency  = (int)par_to_send[  4 ];
+  
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
   
   lbm->omega = -1.0 / lbm->tau;
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
 }
+
+#endif
 
 
 void lbmSetInitialConditions (LBM *lbm, Net *net)
