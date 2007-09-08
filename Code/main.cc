@@ -109,18 +109,17 @@ void *hemeLB_network (void *ptr)
 			
 			for (int i = 0; i < nElements ; i++)
 			{
-				int ret = send(new_fd, &xdrBuffer[i], sizeof(char), 0);
-				
-				if( ret < 0 ) {
-				  
-				  brokenPipe = 1;
-				  break;
-				  
-				} else {
-				  
-				  bytesSent += ret;
-				  
-				}
+			  int ret = send(new_fd, &xdrBuffer[i], sizeof(char), 0);
+			  
+			  if( ret < 0 ) {
+			    
+			    brokenPipe = 1;
+			    break;
+			    
+			  } else {
+			    
+			    bytesSent += ret;
+			  }
 			}
 				
 			printf("bytes sent.... %i %i\n", bytesSent, nElements);
@@ -477,6 +476,11 @@ int main (int argc, char *argv[])
       
       // process changed params
       // not bothered what changed, just copy across...
+      
+      steer.longitude += 1.F;
+      
+      rtUpdateParameters (&steer, &rt, &net);
+      
       if(steer.num_params_changed > 0) {
 	printf("STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
 	fflush(stdout);
@@ -484,7 +488,6 @@ int main (int argc, char *argv[])
 	lbmUpdateParameters (&steer, &lbm, &net);
 	
 	rtUpdateParameters (&steer, &rt, &net);
-	
       }
       // end of param processing
 
