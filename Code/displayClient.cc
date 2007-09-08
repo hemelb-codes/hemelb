@@ -19,7 +19,7 @@
 
 #define GLUTCALLBACK
 
-#define PORT 10000
+#define PORT 65250
 
 #include <GL/glut.h>
 
@@ -37,8 +37,7 @@
 
 #include "eVizRLEUtil.h"
 
-int pixels_x = 512;
-int pixels_y = 512;
+int pixels_x, pixels_y;
 
 int frame_number;
 unsigned char* pixel_data;
@@ -47,201 +46,244 @@ int compressed_frame_size;
 
 int sockfd;
 
+unsigned int width;
+unsigned int height;
+unsigned int bpp;
+
+int pixels_max;
+
+u_int receiveSize;
+
+char* xdrReceiveBuffer;
+
 int recv_all(int sockid, char *buf, int *length ) {
-
-	int received_bytes = 0;
-	int bytes_left_to_receive = *length;
-	int n;
-
-    while( received_bytes < *length ) {
-		n = recv(sockid, buf+received_bytes, bytes_left_to_receive, 0);
-		if (n == -1)
-			break;
-		received_bytes += n;
-		bytes_left_to_receive -= n;
-	}
-
-	*length = received_bytes;
-
-	return n==-1?-1:0;
-
+  
+  int received_bytes = 0;
+  int bytes_left_to_receive = *length;
+  int n;
+  
+  while( received_bytes < *length ) {
+    n = recv(sockid, buf+received_bytes, bytes_left_to_receive, 0);
+    if (n == -1)
+      break;
+    received_bytes += n;
+    bytes_left_to_receive -= n;
+  }
+  
+  *length = received_bytes;
+  
+  return n==-1?-1:0;
 } 
 
-void ReceiveAndFillDispBuffers() {
-	
-#ifdef networkXDR
+void ReceiveFrame() {
 
-	int ret;
-	int bytesReceived = 0;
-	int lengthToReceive;
+  int ret;
+  int bytesReceived = 0;
+  int lengthToReceive;
+  
+  XDR xdr_network_stream;
+  
+  unsigned short shortWidth, shortHeight;
 	
-	XDR xdr_network_stream;
-	
-	char* xdrReceiveBuffer;
-	
-	u_int receiveSize = 2 + 512*512*1000;
-	
-	xdrReceiveBuffer = (char*) malloc( receiveSize );
-	
-	xdrmem_create(&xdr_network_stream, xdrReceiveBuffer, receiveSize, XDR_DECODE);
-	
-	printf("%i\n", xdr_getpos(&xdr_network_stream));
-	
-	lengthToReceive = 4;
-	recv_all(sockfd, xdrReceiveBuffer, &lengthToReceive );
-
-	bytesReceived += lengthToReceive;
-	
-	lengthToReceive = 4;
-	recv_all(sockfd, xdrReceiveBuffer, &lengthToReceive );
-
-	bytesReceived += lengthToReceive;
-	
-	xdr_int(&xdr_network_stream, &compressed_frame_size);
-	xdr_int(&xdr_network_stream, &frame_number);
-	
-	printf("got compressed frame size = %i, frame #%i\n", compressed_frame_size, frame_number);
-	
-	xdr_setpos(&xdr_network_stream, 0);
-	
-	lengthToReceive = compressed_frame_size*4;
-	recv_all(sockfd, xdrReceiveBuffer, &lengthToReceive );
-	bytesReceived += lengthToReceive;
-
-	printf("received %iB\n", bytesReceived);
-	
-	for (int i = 0; i<compressed_frame_size; i++)
-		xdr_u_char(&xdr_network_stream, &compressed_data[i]);
-	
-	xdr_destroy(&xdr_network_stream);
-	
-	free(xdrReceiveBuffer);
-	
-#else
-	
-	recv(sockfd, &frame_number, sizeof(frame_number),0);
-	recv(sockfd, &compressed_frame_size, sizeof(compressed_frame_size),0);
-	
-	printf("got frame # %i, # pixels %i\n", frame_number, compressed_frame_size); fflush(NULL);
-	
-	for(int i=0; i<compressed_frame_size; i++) {
-		recv(sockfd, &compressed_data[i], sizeof(compressed_data[i]), 0);
-	} 
-	
-#endif // networkXDR
-	
-	printf("got the entire frame\n"); fflush(NULL);
-	
-	unsigned int width;
-	unsigned int height;
-	unsigned int bpp;
-	
-	eViz_RLE_readMemory(compressed_data, compressed_frame_size, &width, &height, &bpp, pixel_data);
-	
-	printf("size %i, width %i, height %i, bpp %i\n", compressed_frame_size, width, height, bpp);
-	
-	glPointSize (1.F);
-	
-	glBegin (GL_POINTS);
-	
-	int pixel_i = 0;
-	int pixel_j = 0;
-	int k;
-	
-	for(int i=0; i<width*height; i++) {
-		
-		if( i>0 && i%width==0 ) {
-			pixel_i = 0;
-			pixel_j++;
-		}
-		
-		k = (pixel_i * width + pixel_j) * bpp;
-		
-		glColor3f(pixel_data[ k   ] * (1.F / 255.F),
-				  pixel_data[ k+1 ] * (1.F / 255.F),
-				  pixel_data[ k+2 ] * (1.F / 255.F));
-		
-		glVertex2f (pixel_i, pixel_j);
-		
-		++pixel_i;
-
-	}
-
-	glEnd();
-	
+  
+  xdrmem_create(&xdr_network_stream, xdrReceiveBuffer, receiveSize, XDR_DECODE);
+  
+  printf("%i\n", xdr_getpos(&xdr_network_stream));
+  
+  lengthToReceive = 4;
+  recv_all(sockfd, xdrReceiveBuffer, &lengthToReceive );
+  
+  bytesReceived += lengthToReceive;
+  
+  lengthToReceive = 4;
+  recv_all(sockfd, xdrReceiveBuffer, &lengthToReceive );
+  
+  bytesReceived += lengthToReceive;
+  
+  xdr_int(&xdr_network_stream, &compressed_frame_size);
+  xdr_int(&xdr_network_stream, &frame_number);
+  
+  printf("got compressed frame size = %i, frame #%i\n", compressed_frame_size, frame_number);
+  
+  xdr_setpos(&xdr_network_stream, 0);
+  
+  lengthToReceive = compressed_frame_size*4;
+  recv_all(sockfd, xdrReceiveBuffer, &lengthToReceive );
+  bytesReceived += lengthToReceive;
+  
+  printf("received %i Bytes\n", bytesReceived);
+  
+  for (int i = 0; i<compressed_frame_size; i++)
+    xdr_u_char(&xdr_network_stream, &compressed_data[i]);
+  
+  xdr_destroy(&xdr_network_stream);
+  
+  printf("got frame # %i, # pixels %i\n", frame_number, compressed_frame_size);
+  fflush(NULL);
+  
+  printf("got the entire frame\n");
+  fflush(NULL);
+  
+  ((unsigned char*)&shortWidth)[0] = compressed_data[0];
+  ((unsigned char*)&shortWidth)[1] = compressed_data[1];
+  ((unsigned char*)&shortHeight)[0] = compressed_data[2];
+  ((unsigned char*)&shortHeight)[1] = compressed_data[3];
+  
+  width = shortWidth;
+  height = shortHeight;
+  
+  pixels_x = width;
+  pixels_y = height;
+  
+  pixels_max = width * height;
+  
+  if (pixel_data == NULL)
+    {
+      printf("allocated pixel_data"); fflush(NULL);
+      pixel_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * pixels_max);
+    }
+  
+  eViz_RLE_readMemory(compressed_data, compressed_frame_size, &width, &height, &bpp, pixel_data);
+  
+  printf("size %i, width %i, height %i, bpp %i\n", compressed_frame_size, width, height, bpp);
+  fflush(NULL);
 }
+
+void DisplayFrame()
+{
+  int k;
+  
+  ReceiveFrame();
+  
+  
+  glPointSize (1.F);
+  glBegin (GL_POINTS);
+  
+  for (int i = 0; i < width; i++)
+    {
+      for (int j = 0; j < height; j++)
+	{
+	  k = (i * height + j) * bpp;
+	  
+	  glColor3f (pixel_data[ k   ] * (1.F / 255.F),
+		     pixel_data[ k+1 ] * (1.F / 255.F),
+		     pixel_data[ k+2 ] * (1.F / 255.F));
+	  
+	  glVertex2f (i, j);
+	}
+    }
+  
+  glEnd();
+}
+
 
 void GLUTCALLBACK Display (void)
 {
-	glClear (GL_COLOR_BUFFER_BIT);
-	ReceiveAndFillDispBuffers ();
-	glutSwapBuffers ();
+  glClear (GL_COLOR_BUFFER_BIT);
+  
+  DisplayFrame ();
+  
+  glutSwapBuffers ();
 }
+
+
+void GLUTCALLBACK Reshape (GLsizei w, GLsizei h)
+{
+  pixels_x = w;
+  pixels_y = h;
+  
+  glViewport(0, 0, w, h);
+  
+  glLoadIdentity ();
+  gluOrtho2D (0.F, (float)pixels_x, 0.F, (float)pixels_y);
+  
+  if (pixels_x * pixels_y > pixels_max)
+    {
+      pixels_max = pixels_x * pixels_y;
+      pixel_data = (unsigned char *)realloc(pixel_data,
+					    sizeof(unsigned char) * 3 * pixels_max);
+    }
+}
+
 
 void OpenWindow (int pixels_x, int pixels_y)
 {
-	glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE);
-	glutInitWindowPosition (0, 0);
-	glutInitWindowSize (pixels_x, pixels_y);
-	
-	glutCreateWindow (" ");
-	
-	glDisable (GL_DEPTH_TEST);
-	glDisable (GL_BLEND);
-	glShadeModel (GL_FLAT);
-	glDisable (GL_DITHER);
-	
-	glClear (GL_COLOR_BUFFER_BIT);
-
+  glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE);
+  glutInitWindowPosition (0, 0);
+  glutInitWindowSize (pixels_x, pixels_y);
+  
+  glutCreateWindow (" ");
+  
+  glDisable (GL_DEPTH_TEST);
+  glDisable (GL_BLEND);
+  glShadeModel (GL_FLAT);
+  glDisable (GL_DITHER);
+  
+  glClear (GL_COLOR_BUFFER_BIT);
 }
 
 int main(int argc, char *argv[]) {
+  
+  struct hostent *he;
+  struct sockaddr_in their_addr;
+  
+  int compressed_frame_size_max;
+  
+  
+  if (argc != 2) {
+    fprintf(stderr, "usage: client hostname\n");
+    exit(1);
+  }
+  
+  if ((he = gethostbyname(argv[1])) == NULL) {
+    herror("gethostbyname");
+    exit(1);
+  }
+  
+  if ((sockfd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
+    perror("socket");
+    exit(1);
+  }
+  
+  their_addr.sin_family = AF_INET;
+  their_addr.sin_port = htons(PORT);
+  their_addr.sin_addr = *((struct in_addr *)he->h_addr);
+  memset (their_addr.sin_zero, '\0', sizeof their_addr.sin_zero);
+  
+  if (connect (sockfd, (struct sockaddr *)&their_addr, sizeof their_addr) == -1) {
+    perror("connect");
+    exit(1);
+  }
+  
+  compressed_frame_size_max = 1024 * 1024;
+  compressed_data = (unsigned char *)malloc(sizeof(unsigned char) * compressed_frame_size_max);
+  
+  pixel_data = NULL;
+  pixels_max = 1024 * 1024;
+  
+  receiveSize = 1024 * 1024;
+  xdrReceiveBuffer = (char*)malloc(sizeof(char) * receiveSize);
+  
+  ReceiveFrame();
 
-	pixel_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * pixels_x * pixels_y);
-	compressed_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * pixels_x * pixels_y);
-	
-	struct hostent *he;
-	struct sockaddr_in their_addr;
-	
-	if (argc != 2) {
-		fprintf(stderr, "usage: client hostname\n");
-		exit(1);
-    }
-	
-	if ((he = gethostbyname(argv[1])) == NULL) {
-		herror("gethostbyname");
-		exit(1);
-    }
-	
-	if ((sockfd = socket(PF_INET, SOCK_STREAM, 0)) == -1) {
-		perror("socket");
-		exit(1);
-    }
-	
-	their_addr.sin_family = AF_INET;
-	their_addr.sin_port = htons(PORT);
-	their_addr.sin_addr = *((struct in_addr *)he->h_addr);
-	memset (their_addr.sin_zero, '\0', sizeof their_addr.sin_zero);
-	
-	if (connect (sockfd, (struct sockaddr *)&their_addr, sizeof their_addr) == -1) {
-		perror("connect");
-		exit(1);
-    }
-	
-	glutInit (&argc, argv);
-	OpenWindow (pixels_x, pixels_y);
-	
-	glLoadIdentity ();
-	gluOrtho2D (0.F, 512.F, 0.F, 512.F);
-	glClearColor (1.F, 1.F, 1.F, 0.F);
-	
-	glutIdleFunc (Display);
-	glutDisplayFunc (Display);
-	glutMainLoop ();
-	
-	close (sockfd);
-	
-	return 0;
-
+  glutInit (&argc, argv);
+  OpenWindow (pixels_x, pixels_y);
+  
+  glLoadIdentity ();
+  gluOrtho2D (0.F, (float)pixels_x, 0.F, (float)pixels_y);
+  glClearColor (1.F, 1.F, 1.F, 0.F);
+  
+  glutReshapeFunc (Reshape);
+  glutIdleFunc (Display);
+  glutDisplayFunc (Display);
+  glutMainLoop ();
+  
+  close (sockfd);
+  
+  free(xdrReceiveBuffer);
+  free(compressed_data);
+  free(pixel_data);
+  
+  return 0;
 } 
 
