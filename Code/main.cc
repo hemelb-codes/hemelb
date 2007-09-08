@@ -21,7 +21,7 @@ RT rt;
 #include <signal.h>
 
 
-#define MYPORT 10000
+#define MYPORT 65250
 #define CONNECTION_BACKLOG 10
 
 #endif // RG
@@ -45,10 +45,13 @@ void *hemeLB_network (void *ptr)
 	
 	while(1) {
 
+		pthread_mutex_lock ( &network_buffer_copy_lock );
+
 		struct sockaddr_in my_address;
 		struct sockaddr_in their_addr; // client address
 		socklen_t sin_size;
-
+		
+		
 		if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) == -1) { perror("socket"); exit(1); }
 			
 		if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) { perror("setsockopt"); exit(1); }
@@ -74,6 +77,8 @@ void *hemeLB_network (void *ptr)
 
 		brokenPipe = 0;
 
+		pthread_mutex_unlock ( &network_buffer_copy_lock );
+
 		while ( brokenPipe == 0 ) {
 		
 			pthread_mutex_lock ( &network_buffer_copy_lock );
@@ -83,7 +88,7 @@ void *hemeLB_network (void *ptr)
 		
 			XDR xdr_network_stream;
 		
-			u_int sizeToSend = 2 + 512*512*1000;
+			u_int sizeToSend = 1024 * 1024;
 		
 			char* xdrBuffer = (char*) malloc( sizeToSend );
 		
@@ -92,13 +97,10 @@ void *hemeLB_network (void *ptr)
 			xdr_int(&xdr_network_stream, &frameNumber);
 			xdr_int(&xdr_network_stream, &compressed_frame_size);
 		
-			// printf("XDR pos %i\n", xdr_getpos(&xdr_network_stream));;
-		
 			for (int i = 0; i < compressed_frame_size; i++)
-				xdr_u_char(&xdr_network_stream, &compressed_data[i]);
-		
-			// printf("XDR pos %i\n", xdr_getpos(&xdr_network_stream));
-		
+			  {
+			    xdr_u_char(&xdr_network_stream, &compressed_data[i]);
+			  }
 			int currentPosition = xdr_getpos(&xdr_network_stream);
 			
 			int nElements = currentPosition / sizeof(char);
@@ -110,16 +112,14 @@ void *hemeLB_network (void *ptr)
 				int ret = send(new_fd, &xdrBuffer[i], sizeof(char), 0);
 				
 				if( ret < 0 ) {
-
-					printf("hello! %i\n", ret); fflush(0x0);
-					// close(new_fd);
-					brokenPipe = 1;
-					break;
-
+				  
+				  brokenPipe = 1;
+				  break;
+				  
 				} else {
-				
-					bytesSent += ret;
-					
+				  
+				  bytesSent += ret;
+				  
 				}
 			}
 				
@@ -140,7 +140,6 @@ void *hemeLB_network (void *ptr)
 		close(new_fd);
 
     } // while(1)
-
 }
 
 #endif // RG
@@ -273,7 +272,11 @@ int main (int argc, char *argv[])
   lbm.inlet_density = NULL;
   lbm.outlet_density = NULL;
   
+#ifdef STEER
+  lbmReadParameters (&steer, input_parameters_name, &lbm, &net);
+#else
   lbmReadParameters (input_parameters_name, &lbm, &net);
+#endif
 
 #ifdef STEER
   // create the derived datatype for the MPI_Bcast
@@ -348,7 +351,11 @@ int main (int argc, char *argv[])
   
   netInit (&lbm, &net, &rt);
   
+#ifdef STEER
+  rtReadParameters (&steer, rt_parameters_name, &rt, &net);
+#else
   rtReadParameters (rt_parameters_name, &rt, &net);
+#endif
   
   if (!lbm.is_checkpoint)
     {
@@ -365,26 +372,6 @@ int main (int argc, char *argv[])
   ray_tracing_count = 0;
   
 #ifdef STEER
-  // set up the ReG struct
-  steer.tau = lbm.tau;
-  steer.tolerance = lbm.tolerance;
-  steer.max_time_steps = lbm.time_steps_max;
-  steer.conv_freq = lbm.convergence_frequency;
-  steer.check_freq = lbm.checkpoint_frequency;
-  steer.pixels_x = screen.pixels_x;
-  steer.pixels_y = screen.pixels_y;
-  steer.longitude = 0.0;
-  steer.latitude = 0.0;
-  steer.zoom = screen.zoom;
-  steer.image_freq = rt.image_frequency;
-  steer.flow_field_type = rt.flow_field_type;
-  steer.is_isosurface = rt.is_isosurface;
-  steer.abs_factor = rt.absorption_factor;
-  steer.cutoff = rt.cutoff;
-  steer.max_density = 1.F / rt.flow_field_value_max_inv[DENSITY];
-  steer.max_velocity = 1.F / rt.flow_field_value_max_inv[VELOCITY];
-  steer.max_stress = 1.F / rt.flow_field_value_max_inv[STRESS];
-
   // register params with RealityGrid here
   if(net.id == 0) {
     // LBM params
@@ -451,11 +438,11 @@ int main (int argc, char *argv[])
       check_convergence = 0;
       perform_rt = 0;
       
-      //if(net.id == 0)
-      //	{
-      //	  printf("time step %i\n", time_step);
-      //	  fflush (stdout);
-      //	}
+      if(net.id == 0)
+      	{
+      	  printf("time step: %i\n", time_step);
+      	  fflush (stdout);
+      	}
       
 #ifdef STEER
       // call steering control
@@ -493,24 +480,11 @@ int main (int argc, char *argv[])
       if(steer.num_params_changed > 0) {
 	printf("STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
 	fflush(stdout);
-	lbm.tau = steer.tau;
-	lbm.tolerance = steer.tolerance;
-	lbm.time_steps_max = steer.max_time_steps;
-	lbm.convergence_frequency = steer.conv_freq;
-	lbm.checkpoint_frequency = steer.check_freq;
-	screen.pixels_x = steer.pixels_x;
-	screen.pixels_y = steer.pixels_y;
-	//steer.longitude;
-	//steer.latitude;
-	screen.zoom = steer.zoom;
-	rt.image_frequency = steer.image_freq;
-	rt.flow_field_type = steer.flow_field_type;
-	rt.is_isosurface = steer.is_isosurface;
-	rt.absorption_factor = steer.abs_factor;
-	rt.cutoff = steer.cutoff;
-	rt.flow_field_value_max_inv[ DENSITY  ] = 1.F / steer.max_density;
-	rt.flow_field_value_max_inv[ VELOCITY ] = 1.F / steer.max_velocity;
-	rt.flow_field_value_max_inv[ STRESS   ] = 1.F / steer.max_stress;
+	
+	lbmUpdateParameters (&steer, &lbm, &net);
+	
+	rtUpdateParameters (&steer, &rt, &net);
+	
       }
       // end of param processing
 

@@ -2684,63 +2684,69 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   
   int bytes_per_pixel = sizeof(unsigned char) * 3;
   
-  pthread_mutex_lock (&network_buffer_copy_lock);
-  
-  send_frame_count++;
-  
-  if (net->machines == 1)
+//  pthread_mutex_lock (&network_buffer_copy_lock);
+
+  if (pthread_mutex_trylock( &network_buffer_copy_lock ) == 0)
     {
-      for (n = 0; n < (pixels_x * pixels_y) * 3; n++)
+      
+      //printf("THREAD: Was able to acquire lock on mutex\n");
+      
+      send_frame_count++;
+      
+      if (net->machines == 1)
 	{
-	  pixel_data[ n ] = 255;
+	  for (n = 0; n < (pixels_x * pixels_y) * 3; n++)
+	    {
+	      pixel_data[ n ] = 255;
+	    }
+	  for (n = 0; n < rt->coloured_pixels; n++)
+	    {
+	      pixel_data_p = &rt->coloured_pixel_recv[ 6 * n ];
+	      
+	      r = pixel_data_p[0];
+	      g = pixel_data_p[1];
+	      b = pixel_data_p[2];
+	      
+	      i = (int)pixel_data_p[4];
+	      j = (int)pixel_data_p[5];
+	      
+	      k = (i * 512 + j) * 3;
+	      
+	      pixel_data[ k   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
+	      pixel_data[ k+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
+	      pixel_data[ k+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
+	    }
 	}
-      for (n = 0; n < rt->coloured_pixels; n++)
+      else
 	{
-	  pixel_data_p = &rt->coloured_pixel_recv[ 6 * n ];
-	  
-	  r = pixel_data_p[0];
-	  g = pixel_data_p[1];
-	  b = pixel_data_p[2];
-	  
-	  i = (int)pixel_data_p[4];
-	  j = (int)pixel_data_p[5];
-	  
-	  k = (i * 512 + j) * 3;
-	  
-	  pixel_data[ k   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
-	  pixel_data[ k+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
-	  pixel_data[ k+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
+	  for (k = 0; k < pixels_x * pixels_y; k++)
+	    {
+	      r = pixel_color_to_send[ (k<<2)   ];
+	      g = pixel_color_to_send[ (k<<2)+1 ];
+	      b = pixel_color_to_send[ (k<<2)+2 ];
+	      
+	      pixel_data[ (k*3)   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
+	      pixel_data[ (k*3)+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
+	      pixel_data[ (k*3)+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
+	    }
 	}
+      
+      seconds = myClock();
+      
+      int eVizret = eViz_RLE_writeMemory (pixel_data, pixels_x, pixels_y,
+					  bytes_per_pixel, &compressed_frame_size, compressed_data);
+      
+      seconds = myClock() - seconds;
+      
+      compression_time += seconds;
+      
+      //printf("ret, compressed size, time, total time: %i, %i, %0.3f, %0.3f\n",
+      //	     eVizret, compressed_frame_size, seconds, compression_time);
+      
+      pthread_mutex_unlock (&network_buffer_copy_lock);
+      
+      pthread_cond_signal (&network_send_frame);
     }
-  else
-    {
-      for (k = 0; k < pixels_x * pixels_y; k++)
-	{
-	  r = pixel_color_to_send[ (k<<2)   ];
-	  g = pixel_color_to_send[ (k<<2)+1 ];
-	  b = pixel_color_to_send[ (k<<2)+2 ];
-	  
-	  pixel_data[ (k*3)   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
-	  pixel_data[ (k*3)+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
-	  pixel_data[ (k*3)+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
-	}
-    }
-  
-  seconds = myClock();
-  
-  int eVizret = eViz_RLE_writeMemory (pixel_data, pixels_x, pixels_y,
-				      bytes_per_pixel, &compressed_frame_size, compressed_data);
-  
-  seconds = myClock() - seconds;
-  
-  compression_time += seconds;
-  
-  printf("ret, compressed size, time, total time: %i, %i, %0.3f, %0.3f\n",
-	 eVizret, compressed_frame_size, seconds, compression_time);
-  
-  pthread_mutex_unlock (&network_buffer_copy_lock);
-  
-  pthread_cond_signal (&network_send_frame);
 
 #else // RG
   
@@ -2879,8 +2885,11 @@ void rtProjection (float ortho_x, float ortho_y,
   screen.par_y = (2.F * screen.max_y) / (float)pixels_y;
 }
 
-
+#ifdef STEER
+void rtReadParameters (SteerParams *steer, char *parameters_file_name, RT *rt, Net *net)
+#else
 void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
+#endif
 {
   FILE *parameters_file;
   
@@ -2935,25 +2944,104 @@ void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
     }
   net->err = MPI_Bcast (par_to_send, 16, MPI_FLOAT, 0, MPI_COMM_WORLD);
   
-  if (net->id != 0)
+  pixels_x              = (int)par_to_send[  0 ];
+  pixels_y              = (int)par_to_send[  1 ];
+  ctr_x                 =      par_to_send[  2 ];
+  ctr_y                 =      par_to_send[  3 ];
+  ctr_z                 =      par_to_send[  4 ];
+  longitude             =      par_to_send[  5 ];
+  latitude              =      par_to_send[  6 ];
+  zoom                  =      par_to_send[  7 ];
+  rt->image_frequency   = (int)par_to_send[  8 ];
+  rt->flow_field_type   = (int)par_to_send[  9 ];
+  rt->is_isosurface     = (int)par_to_send[ 10 ];
+  rt->absorption_factor =      par_to_send[ 11 ];
+  rt->cutoff            =      par_to_send[ 12 ];
+  density_max           =      par_to_send[ 13 ];
+  velocity_max          =      par_to_send[ 14 ];
+  stress_max            =      par_to_send[ 15 ];
+  
+  rtProjection (0.5F * rt->system_size, 0.5F * rt->system_size,
+		pixels_x, pixels_y,
+		ctr_x, ctr_y, ctr_z,
+		5.F * rt->system_size,
+		longitude, latitude,
+		0.5F * (5.F * rt->system_size),
+		zoom);
+  
+  rt->flow_field_value_max_inv[ DENSITY  ] = 1.F / density_max;
+  rt->flow_field_value_max_inv[ VELOCITY ] = 1.F / velocity_max;
+  rt->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
+  
+  
+#ifdef STEER
+  // set up the ReG struct
+  
+  steer->pixels_x = pixels_x;
+  steer->pixels_y = pixels_y;
+  steer->longitude = longitude;
+  steer->latitude = latitude;
+  steer->zoom = zoom;
+  steer->image_freq = rt->image_frequency;
+  steer->flow_field_type = rt->flow_field_type;
+  steer->is_isosurface = rt->is_isosurface;
+  steer->abs_factor = rt->absorption_factor;
+  steer->cutoff = rt->cutoff;
+  steer->max_density = density_max;
+  steer->max_velocity = velocity_max;
+  steer->max_stress = stress_max;
+#endif
+}
+
+#ifdef STEER
+
+void rtUpdateParameters (SteerParams *steer, RT *rt, Net *net)
+{
+  float par_to_send[ 16 ];
+  float ctr_x, ctr_y, ctr_z;
+  float longitude, latitude;
+  float zoom;
+  float density_max, velocity_max, stress_max;
+  
+  int pixels_x, pixels_y;
+  
+  if (net->id == 0)
     {
-      pixels_x              = (int)par_to_send[  0 ];
-      pixels_y              = (int)par_to_send[  1 ];
-      ctr_x                 =      par_to_send[  2 ];
-      ctr_y                 =      par_to_send[  3 ];
-      ctr_z                 =      par_to_send[  4 ];
-      longitude             =      par_to_send[  5 ];
-      latitude              =      par_to_send[  6 ];
-      zoom                  =      par_to_send[  7 ];
-      rt->image_frequency   = (int)par_to_send[  8 ];
-      rt->flow_field_type   = (int)par_to_send[  9 ];
-      rt->is_isosurface     = (int)par_to_send[ 10 ];
-      rt->absorption_factor =      par_to_send[ 11 ];
-      rt->cutoff            =      par_to_send[ 12 ];
-      density_max           =      par_to_send[ 13 ];
-      velocity_max          =      par_to_send[ 14 ];
-      stress_max            =      par_to_send[ 15 ];
+      par_to_send[  0 ] = 0.1 + (float)steer->pixels_x;
+      par_to_send[  1 ] = 0.1 + (float)steer->pixels_y;
+      par_to_send[  2 ] = steer->ctr_x;
+      par_to_send[  3 ] = steer->ctr_y;
+      par_to_send[  4 ] = steer->ctr_z;
+      par_to_send[  5 ] = steer->longitude;
+      par_to_send[  6 ] = steer->latitude;
+      par_to_send[  7 ] = steer->zoom;
+      par_to_send[  8 ] = 0.1 + (float)steer->image_freq;
+      par_to_send[  9 ] = 0.1 + (float)steer->flow_field_type;
+      par_to_send[ 10 ] = 0.1 + (float)steer->is_isosurface;
+      par_to_send[ 11 ] = steer->abs_factor;
+      par_to_send[ 12 ] = steer->cutoff;
+      par_to_send[ 13 ] = steer->max_density;
+      par_to_send[ 14 ] = steer->max_velocity;
+      par_to_send[ 15 ] = steer->max_stress;
     }
+  net->err = MPI_Bcast (par_to_send, 16, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  
+  pixels_x              = (int)par_to_send[  0 ];
+  pixels_y              = (int)par_to_send[  1 ];
+  ctr_x                 =      par_to_send[  2 ];
+  ctr_y                 =      par_to_send[  3 ];
+  ctr_z                 =      par_to_send[  4 ];
+  longitude             =      par_to_send[  5 ];
+  latitude              =      par_to_send[  6 ];
+  zoom                  =      par_to_send[  7 ];
+  rt->image_frequency   = (int)par_to_send[  8 ];
+  rt->flow_field_type   = (int)par_to_send[  9 ];
+  rt->is_isosurface     = (int)par_to_send[ 10 ];
+  rt->absorption_factor =      par_to_send[ 11 ];
+  rt->cutoff            =      par_to_send[ 12 ];
+  density_max           =      par_to_send[ 13 ];
+  velocity_max          =      par_to_send[ 14 ];
+  stress_max            =      par_to_send[ 15 ];
   
   rtProjection (0.5F * rt->system_size, 0.5F * rt->system_size,
 		pixels_x, pixels_y,
@@ -2968,6 +3056,7 @@ void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
   rt->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
 }
 
+#endif
 
 void rtInit (char *image_file_name, RT *rt)
 {
