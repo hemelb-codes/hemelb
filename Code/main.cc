@@ -30,115 +30,114 @@ RT rt;
 
 void *hemeLB_network (void *ptr)
 {
-
-	system ("echo $HOSTNAME > $HOME/env_details.asc");
-
-	//printf("%s\n", getenv("HOSTNAME"));
-
-	signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
-
-	int sock_fd;
-	int new_fd;
-	int yes = 1;
-		
-	int brokenPipe = 0;
-	
-	while(1) {
-
-		pthread_mutex_lock ( &network_buffer_copy_lock );
-
-		struct sockaddr_in my_address;
-		struct sockaddr_in their_addr; // client address
-		socklen_t sin_size;
-		
-		
-		if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) == -1) { perror("socket"); exit(1); }
-			
-		if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) { perror("setsockopt"); exit(1); }
-
-		my_address.sin_family = AF_INET;
-		my_address.sin_port = htons (MYPORT);
-		my_address.sin_addr.s_addr = INADDR_ANY;
-		memset (my_address.sin_zero, '\0', sizeof my_address.sin_zero);
-
-		if (bind (sock_fd, (struct sockaddr *)&my_address, sizeof my_address) == -1) { perror("bind"); exit(1); }
-
-		if (listen(sock_fd, CONNECTION_BACKLOG) == -1) { perror("listen"); exit(1); }
-		
-		sin_size = sizeof their_addr;
-			
-		if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1) { perror("accept"); continue; }
-	
-		printf("server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
-						
-		close(sock_fd);
-			
-		int frameNumber = 0;
-
-		brokenPipe = 0;
-
-		pthread_mutex_unlock ( &network_buffer_copy_lock );
-
-		while ( brokenPipe == 0 ) {
-		
-			pthread_mutex_lock ( &network_buffer_copy_lock );
-			pthread_cond_wait (&network_send_frame, &network_buffer_copy_lock);
-
-			int bytesSent = 0;
-		
-			XDR xdr_network_stream;
-		
-			u_int sizeToSend = 1024 * 1024;
-		
-			char* xdrBuffer = (char*) malloc( sizeToSend );
-		
-			xdrmem_create(&xdr_network_stream, xdrBuffer, sizeToSend, XDR_ENCODE);
-		
-			xdr_int(&xdr_network_stream, &frameNumber);
-			xdr_int(&xdr_network_stream, &compressed_frame_size);
-		
-			for (int i = 0; i < compressed_frame_size; i++)
-			  {
-			    xdr_u_char(&xdr_network_stream, &compressed_data[i]);
-			  }
-			int currentPosition = xdr_getpos(&xdr_network_stream);
-			
-			int nElements = currentPosition / sizeof(char);
-			
-			printf("n Elements of char to send %i\n", nElements);
-			
-			for (int i = 0; i < nElements ; i++)
-			{
-			  int ret = send(new_fd, &xdrBuffer[i], sizeof(char), 0);
-			  
-			  if( ret < 0 ) {
-			    
-			    brokenPipe = 1;
-			    break;
-			    
-			  } else {
-			    
-			    bytesSent += ret;
-			  }
-			}
-				
-			printf("bytes sent.... %i %i\n", bytesSent, nElements);
-			
-			xdr_destroy(&xdr_network_stream);
-			
-			free(xdrBuffer);
-			
-			printf("done sending array...");
-			
-			pthread_mutex_unlock ( &network_buffer_copy_lock );
-			
-			frameNumber++;
-				
-		} // while( brokenPipe == 0 )
-
-		close(new_fd);
-
-    } // while(1)
+  system ("echo $HOSTNAME > $HOME/env_details.asc");
+  
+  //printf("%s\n", getenv("HOSTNAME"));
+  
+  signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
+  
+  int sock_fd;
+  int new_fd;
+  int yes = 1;
+  
+  int brokenPipe = 0;
+  
+  while(1) {
+    
+    pthread_mutex_lock ( &network_buffer_copy_lock );
+    
+    struct sockaddr_in my_address;
+    struct sockaddr_in their_addr; // client address
+    socklen_t sin_size;
+    
+    
+    if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) == -1) { perror("socket"); exit(1); }
+    
+    if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) { perror("setsockopt"); exit(1); }
+    
+    my_address.sin_family = AF_INET;
+    my_address.sin_port = htons (MYPORT);
+    my_address.sin_addr.s_addr = INADDR_ANY;
+    memset (my_address.sin_zero, '\0', sizeof my_address.sin_zero);
+    
+    if (bind (sock_fd, (struct sockaddr *)&my_address, sizeof my_address) == -1) { perror("bind"); exit(1); }
+    
+    if (listen(sock_fd, CONNECTION_BACKLOG) == -1) { perror("listen"); exit(1); }
+    
+    sin_size = sizeof their_addr;
+    
+    if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1) { perror("accept"); continue; }
+    
+    printf("server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
+    
+    close(sock_fd);
+    
+    int frameNumber = 0;
+    
+    brokenPipe = 0;
+    
+    pthread_mutex_unlock ( &network_buffer_copy_lock );
+    
+    while ( brokenPipe == 0 ) {
+      
+      pthread_mutex_lock ( &network_buffer_copy_lock );
+      pthread_cond_wait (&network_send_frame, &network_buffer_copy_lock);
+      
+      int bytesSent = 0;
+      
+      XDR xdr_network_stream;
+      
+      u_int sizeToSend = 1024 * 1024;
+      
+      char* xdrBuffer = (char*) malloc( sizeToSend );
+      
+      xdrmem_create(&xdr_network_stream, xdrBuffer, sizeToSend, XDR_ENCODE);
+      
+      xdr_int(&xdr_network_stream, &frameNumber);
+      xdr_int(&xdr_network_stream, &compressed_frame_size);
+      
+      for (int i = 0; i < compressed_frame_size; i++)
+	{
+	  xdr_u_char(&xdr_network_stream, &compressed_data[i]);
+	}
+      int currentPosition = xdr_getpos(&xdr_network_stream);
+      
+      int nElements = currentPosition / sizeof(char);
+      
+      printf("n Elements of char to send %i\n", nElements);
+      
+      for (int i = 0; i < nElements ; i++)
+	{
+	  int ret = send(new_fd, &xdrBuffer[i], sizeof(char), 0);
+	  
+	  if( ret < 0 ) {
+	    
+	    brokenPipe = 1;
+	    break;
+	    
+	  } else {
+	    
+	    bytesSent += ret;
+	  }
+	}
+      
+      printf("bytes sent.... %i %i\n", bytesSent, nElements);
+      
+      xdr_destroy(&xdr_network_stream);
+      
+      free(xdrBuffer);
+      
+      printf("done sending array...");
+      
+      pthread_mutex_unlock ( &network_buffer_copy_lock );
+      
+      frameNumber++;
+      
+    } // while( brokenPipe == 0 )
+    
+    close(new_fd);
+    
+  } // while(1)
 }
 
 #endif // RG
@@ -182,8 +181,8 @@ inline void AbsorptionCoefficients (float flow_field_value, float t1, float t2, 
 
 void usage (char *progname)
 {
-  printf ("Usage: %s input file name with config, parameters, output,\n", progname);
-  printf ("          checkpoint, rt_parameters and image file names\n");
+  printf ("Usage: %s /path/to/input/files\n", progname);
+  printf (" files which must be present: config.dat input.asc, pars.asc, rt_pars.asc\n");
 }
 
 
@@ -239,8 +238,9 @@ int main (int argc, char *argv[])
       net.err = MPI_Abort (MPI_COMM_WORLD, 1);
       net.err = MPI_Finalize ();
     }
-  
-  char *input_file_name(argv[1]);
+ 
+  char *input_file_path( argv[1] );
+
   char input_config_name[256];
   char input_parameters_name[256];
   char output_config_name[256];
@@ -248,17 +248,24 @@ int main (int argc, char *argv[])
   char rt_parameters_name[256];
   char output_image_name[256];
   
-  FILE *input_file = fopen (input_file_name, "r");
+  strcpy ( input_config_name , input_file_path );
+  strcat ( input_config_name , "/config.dat" );
 
-  fscanf (input_file, "%s ", input_config_name);
-  fscanf (input_file, "%s ", input_parameters_name);
-  fscanf (input_file, "%s ", output_config_name);
-  fscanf (input_file, "%s ", checkpoint_config_name);
-  fscanf (input_file, "%s ", rt_parameters_name);
-  fscanf (input_file, "%s ", output_image_name);
-  
-  fclose (input_file);
-  
+  strcpy ( input_parameters_name , input_file_path );
+  strcat ( input_parameters_name , "/pars.asc" );
+
+  strcpy ( output_config_name , input_file_path );
+  strcat ( output_config_name , "/out.dat" );
+
+  strcpy ( checkpoint_config_name , input_file_path );
+  strcat ( checkpoint_config_name , "/check.dat" );
+
+  strcpy ( rt_parameters_name , input_file_path );
+  strcat ( rt_parameters_name , "/rt_pars.asc" );
+
+  strcpy ( output_image_name , input_file_path );
+  strcat ( output_image_name , "/image.dat" );
+
   if (net.id == 0)
     {
       printf ("\n");
