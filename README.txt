@@ -33,20 +33,15 @@ For normal testing purposes, please comment out the DEFS=-DRG line.
 
 2. Running HemeLB ======================================================
 
-HemeLB is run with a single argument that gives the location of an input
-file. Two sets of input/output files can be found in hemelb/Input. The 
-current version of hemelb requires full path names to be specified in
-these files:
+HemeLB is run with a single argument that gives the path name to a 
+directory which contains the input files. There are currently three sets
+of input/output files which can be found in hemelb/Input.
 
-Input/square_duct_32x16x16_input.asc
-Input/angio1_input.asc
-
-Before running HemeLB please edit these files appropriately.
-
-From a terminal, two test can be run using two different datasets
+The 3 datasets can be run using (within hemelb/Code)
 
 make test1     (small dataset)
 make test2     (large neurovascular dataset)
+make test3     (large bifurcation dataset)
 
 
 3. RealityGrid Steering and Visualisation =============================
