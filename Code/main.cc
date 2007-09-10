@@ -30,11 +30,18 @@ RT rt;
 
 void *hemeLB_network (void *ptr)
 {
-  system ("echo $HOSTNAME > $HOME/env_details.asc");
+
+	char host_name[255];
+	gethostname(host_name, 255);
+
+	FILE *f;
+	f = fopen("env_details.asc","w");
+	fprintf(f, "%s\n", host_name);
+	fclose(f);
+
+	printf("MPI 0 Hostname -> %s\n", host_name);
   
-  //printf("%s\n", getenv("HOSTNAME"));
-  
-  signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
+	signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
   
   int sock_fd;
   int new_fd;
@@ -334,6 +341,7 @@ int main (int argc, char *argv[])
     net.err = MPI_Finalize();
     return REG_FAILURE;
   }
+
 #endif // STEER
 
 #ifdef RG
@@ -362,6 +370,7 @@ int main (int argc, char *argv[])
 #else
   rtReadParameters (rt_parameters_name, &rt, &net);
 #endif
+
   
   if (!lbm.is_checkpoint)
     {
@@ -378,47 +387,49 @@ int main (int argc, char *argv[])
   ray_tracing_count = 0;
   
 #ifdef STEER
+
   // register params with RealityGrid here
+
   if(net.id == 0) {
     // LBM params
     steer.status = Register_param("Tau", REG_TRUE,
 				(void*)(&steer.tau), REG_DBL, "0.5", "");
     steer.status = Register_param("Tolerance", REG_TRUE,
 				(void*)(&steer.tolerance), REG_DBL, "0.0", "0.1");
-    steer.status = Register_param("Max time steps", REG_TRUE,
+    steer.status = Register_param("Max time steps",REG_TRUE,
 				(void*)(&steer.max_time_steps), REG_INT, "1", "");
     steer.status = Register_param("Convergence frequency", REG_TRUE,
-				  (void*)(&steer.conv_freq), REG_INT, "1", "");
+				(void*)(&steer.conv_freq), REG_INT, "1", "");
     steer.status = Register_param("Checkpoint frequency", REG_TRUE,
-				  (void*)(&steer.check_freq), REG_INT, "1", "");
+				(void*)(&steer.check_freq), REG_INT, "1", "");
 
     // RT params
     steer.status = Register_param("X pixel size", REG_TRUE,
-				  (void*)(&steer.pixels_x), REG_INT, "0", "1024");
+				(void*)(&steer.pixels_x), REG_INT, "0", "1024");
     steer.status = Register_param("Y pixel size", REG_TRUE,
-				  (void*)(&steer.pixels_y), REG_INT, "0", "1024");
+				(void*)(&steer.pixels_y), REG_INT, "0", "1024");
     steer.status = Register_param("Longitude", REG_TRUE,
-				  (void *)(&steer.longitude), REG_FLOAT, "", "");
+				(void *)(&steer.longitude), REG_FLOAT, "", "");
     steer.status = Register_param("Latitude", REG_TRUE,
-				  (void *)(&steer.latitude), REG_FLOAT, "", "");
+				(void *)(&steer.latitude), REG_FLOAT, "", "");
     steer.status = Register_param("Zoom", REG_TRUE,
-				  (void *)(&steer.zoom), REG_FLOAT, "0.0", "");
+				(void *)(&steer.zoom), REG_FLOAT, "0.0", "");
     steer.status = Register_param("Image output frequency", REG_TRUE,
-				  (void*)(&steer.image_freq), REG_INT, "1", "");
+				(void*)(&steer.image_freq), REG_INT, "1", "");
     steer.status = Register_param("Flow field type", REG_TRUE,
-				  (void*)(&steer.flow_field_type), REG_INT, "0", "2");
+				(void*)(&steer.flow_field_type), REG_INT, "0", "2");
     steer.status = Register_param("Is isosurface", REG_TRUE,
-				  (void*)(&steer.is_isosurface), REG_INT, "0", "1");
+				(void*)(&steer.is_isosurface), REG_INT, "0", "1");
     steer.status = Register_param("Absorption factor", REG_TRUE,
-				  (void *)(&steer.abs_factor), REG_FLOAT, "0.0", "");
+				(void *)(&steer.abs_factor), REG_FLOAT, "0.0", "");
     steer.status = Register_param("Cutoff", REG_TRUE,
-				  (void *)(&steer.cutoff), REG_FLOAT, "0.0", "1.0");
+				(void *)(&steer.cutoff), REG_FLOAT, "0.0", "1.0");
     steer.status = Register_param("Max density", REG_TRUE,
-				  (void *)(&steer.max_density), REG_FLOAT, "0.0", "");
+				(void *)(&steer.max_density), REG_FLOAT, "0.0", "");
     steer.status = Register_param("Max velocity", REG_TRUE,
-				  (void *)(&steer.max_velocity), REG_FLOAT, "0.0", "");
+				(void *)(&steer.max_velocity), REG_FLOAT, "0.0", "");
     steer.status = Register_param("Max stress", REG_TRUE,
-				  (void *)(&steer.max_stress), REG_FLOAT, "0.0", "");
+				(void *)(&steer.max_stress), REG_FLOAT, "0.0", "");
   }
 
   // broadcast/collect status
@@ -436,6 +447,7 @@ int main (int argc, char *argv[])
     printf("STEER: RealityGrid library initialized and parameters registered.\n");
     fflush(stdout);
   }
+
 #endif // STEER
 
   for (time_step = 1; time_step <= lbm.time_steps_max; time_step++)
