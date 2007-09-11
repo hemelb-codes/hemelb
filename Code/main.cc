@@ -293,32 +293,27 @@ int main (int argc, char *argv[])
 
 #ifdef STEER
   // create the derived datatype for the MPI_Bcast
-  int count = 23;
-  int blocklengths[23] = {1, 1, REG_MAX_NUM_STR_CMDS, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  MPI_Datatype types[23] = {MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_DOUBLE, MPI_DOUBLE, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_UB};
+  int count = 26;
+  int blocklengths[26] = {1, 1, REG_MAX_NUM_STR_CMDS, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  MPI_Datatype types[26] = {MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_DOUBLE, MPI_DOUBLE, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_UB};
 
   // calculate displacements
-  MPI_Aint disps[23];
+  MPI_Aint disps[26];
   disps[0] = 0;
   for(int i = 1; i < count; i++) {
-    if(i == 3) {
-      disps[i] = disps[i - 1] + (sizeof(int) * REG_MAX_NUM_STR_CMDS);
-    }
-    else {
-      switch(types[i - 1]) {
-      case MPI_INTEGER:
-	disps[i] = disps[i - 1] + sizeof(int);
-	break;
-      case MPI_DOUBLE:
-	disps[i] = disps[i - 1] + sizeof(double);
-	break;
-      case MPI_REAL:
-	disps[i] = disps[i - 1] + sizeof(float);
-	break;
-      }
+    switch(types[i - 1]) {
+    case MPI_INTEGER:
+      disps[i] = disps[i - 1] + (sizeof(int) * blocklengths[i - 1]);
+      break;
+    case MPI_DOUBLE:
+      disps[i] = disps[i - 1] + (sizeof(double) * blocklengths[i - 1]);
+      break;
+    case MPI_REAL:
+      disps[i] = disps[i - 1] + (sizeof(float) * blocklengths[i - 1]);
+      break;
     }
   }
-
+  
   MPI_Datatype MPI_steer_type;
   MPI_Type_struct(count, blocklengths, disps, types, &MPI_steer_type);
   MPI_Type_commit(&MPI_steer_type);
@@ -496,17 +491,36 @@ int main (int argc, char *argv[])
       // process changed params
       // not bothered what changed, just copy across...
       
-      steer.longitude += 1.F;
+      //steer.longitude += 1.F;
       
-      rtUpdateParameters (&steer, &rt, &net);
+      //rtUpdateParameters (&steer, &rt, &net);
       
       if(steer.num_params_changed > 0) {
 	printf("STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
 	fflush(stdout);
 	
-	lbmUpdateParameters (&steer, &lbm, &net);
-	
-	rtUpdateParameters (&steer, &rt, &net);
+	// update lbm params
+	lbm.tau = steer.tau;
+	lbm.tolerance = steer.tolerance;
+	lbm.time_steps_max = steer.max_time_steps;
+	lbm.convergence_frequency = steer.conv_freq;
+	lbm.checkpoint_frequency  = steer.check_freq;
+	lbm.viscosity = ((2.0 * lbm.tau - 1.0) / 6.0);
+	lbm.omega = -1.0 / lbm.tau;
+	lbm.stress_par = (1.0 - 1.0 / (2.0 * lbm.tau)) / sqrt(2.0);
+
+	// update rt params
+	rtProjection (0.5F * rt.system_size, 0.5F * rt.system_size,
+		      steer.pixels_x, steer.pixels_y,
+		      steer.ctr_x, steer.ctr_y, steer.ctr_z,
+		      5.F * rt.system_size,
+		      steer.longitude, steer.latitude,
+		      0.5F * (5.F * rt.system_size),
+		      steer.zoom);
+  
+	rt.flow_field_value_max_inv[ DENSITY  ] = 1.F / steer.max_density;
+	rt.flow_field_value_max_inv[ VELOCITY ] = 1.F / steer.max_velocity;
+	rt.flow_field_value_max_inv[ STRESS   ] = 1.F / steer.max_stress;
       }
       // end of param processing
 
