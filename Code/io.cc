@@ -308,42 +308,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 #endif
 }
 
-#ifdef STEER
-
-void lbmUpdateParameters (SteerParams *steer, LBM *lbm, Net *net)
-{
-  // through this function the processor 0 reads the LB parameters
-  // and then communicate them to the other processors
-  
-  double par_to_send[5];
-  
-  int n;
-  
-  if (net->id == 0)
-    {
-      par_to_send[  0 ] = steer->tau;
-      par_to_send[  1 ] = steer->tolerance;
-      par_to_send[  2 ] = 0.1 + (double)steer->max_time_steps;
-      par_to_send[  3 ] = 0.1 + (double)steer->conv_freq;
-      par_to_send[  4 ] = 0.1 + (double)steer->check_freq;
-    }
-  net->err = MPI_Bcast (par_to_send, 5, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  
-  lbm->tau                   = par_to_send[  0 ];
-  lbm->tolerance             = par_to_send[  1 ];
-  lbm->time_steps_max        = (int)par_to_send[  2 ];
-  lbm->convergence_frequency = (int)par_to_send[  3 ];
-  lbm->checkpoint_frequency  = (int)par_to_send[  4 ];
-  
-  lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
-  
-  lbm->omega = -1.0 / lbm->tau;
-  lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
-}
-
-#endif
-
-
 void lbmSetInitialConditions (LBM *lbm, Net *net)
 {
   // this functions set the initial distribution functions to the
