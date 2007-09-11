@@ -2743,9 +2743,9 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
       //printf("ret, compressed size, time, total time: %i, %i, %0.3f, %0.3f\n",
       //	     eVizret, compressed_frame_size, seconds, compression_time);
       
-     pthread_mutex_unlock (&network_buffer_copy_lock);
+    pthread_mutex_unlock (&network_buffer_copy_lock);
       
-      pthread_cond_signal (&network_send_frame);
+     pthread_cond_signal (&network_send_frame);
     }
 
 #else // RG
