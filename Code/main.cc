@@ -547,10 +547,10 @@ int main (int argc, char *argv[])
       // Between the rtRayTracingA/B calls, do not change any ray tracing
       // parameters.
 
-	int flag = 1; pthread_mutex_trylock( &network_buffer_copy_lock );
+	int flag = 0; // pthread_mutex_trylock( &network_buffer_copy_lock );
 
      // if (perform_rt)
-      if (flag==1 && perform_rt==1)
+      if (flag==0 && perform_rt==1)
 	{
 	  rtRayTracingA (AbsorptionCoefficients, &net, &rt);
 	}
@@ -558,13 +558,13 @@ int main (int argc, char *argv[])
       stability = lbmCycle (write_checkpoint, check_convergence, perform_rt,
 			    &is_converged, &lbm, &net);
       
-      if (flag==1 && perform_rt==1)
+      if (flag==0 && perform_rt==1)
 	{
 	  rtRayTracingB (AbsorptionCoefficients, &net, &rt);
 
 //	      pthread_mutex_unlock (&network_buffer_copy_lock);
 
-//      pthread_cond_signal (&network_send_frame);
+     // pthread_cond_signal (&network_send_frame);
 
 	}
       
