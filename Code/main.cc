@@ -29,20 +29,22 @@ RT rt;
 #endif // RG
 
 #ifdef RG
+char host_name[255];
 
 void *hemeLB_network (void *ptr)
 {
 
-	char host_name[255];
 	gethostname(host_name, 255);
 
+#ifndef STEER
 	FILE *f;
 	f = fopen("env_details.asc","w");
 	fprintf(f, "%s\n", host_name);
 	fclose(f);
 
 	printf("MPI 0 Hostname -> %s\n", host_name);
-  
+#endif
+
 	signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
   
   int sock_fd;
@@ -295,12 +297,12 @@ int main (int argc, char *argv[])
 
 #ifdef STEER
   // create the derived datatype for the MPI_Bcast
-  int count = 26;
-  int blocklengths[26] = {1, 1, REG_MAX_NUM_STR_CMDS, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  MPI_Datatype types[26] = {MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_DOUBLE, MPI_DOUBLE, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_UB};
+  int count = 27;
+  int blocklengths[27] = {1, 1, REG_MAX_NUM_STR_CMDS, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  MPI_Datatype types[27] = {MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_DOUBLE, MPI_DOUBLE, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_INTEGER, MPI_UB};
 
   // calculate displacements
-  MPI_Aint disps[26];
+  MPI_Aint disps[27];
   disps[0] = 0;
   for(int i = 1; i < count; i++) {
     switch(types[i - 1]) {
@@ -382,51 +384,62 @@ int main (int argc, char *argv[])
   checkpoint_count = 0;
   convergence_count = 0;
   ray_tracing_count = 0;
+
+  int rotate_view = 1;
   
 #ifdef STEER
 
-  // register params with RealityGrid here
+  steer.rotate = rotate_view;
 
+  // register params with RealityGrid here
   if(net.id == 0) {
+    // read only and only if displaying
+#ifdef RG
+    steer.status = Register_param("Display Host", REG_FALSE,
+				  (void*)(&host_name), REG_CHAR, "", "");
+#endif
+
     // LBM params
     steer.status = Register_param("Tau", REG_TRUE,
-				(void*)(&steer.tau), REG_DBL, "0.5", "");
+				  (void*)(&steer.tau), REG_DBL, "0.5", "");
     steer.status = Register_param("Tolerance", REG_TRUE,
-				(void*)(&steer.tolerance), REG_DBL, "0.0", "0.1");
+				  (void*)(&steer.tolerance), REG_DBL, "0.0", "0.1");
     steer.status = Register_param("Max time steps",REG_TRUE,
-				(void*)(&steer.max_time_steps), REG_INT, "1", "");
+				  (void*)(&steer.max_time_steps), REG_INT, "1", "");
     steer.status = Register_param("Convergence frequency", REG_TRUE,
-				(void*)(&steer.conv_freq), REG_INT, "1", "");
+				  (void*)(&steer.conv_freq), REG_INT, "1", "");
     steer.status = Register_param("Checkpoint frequency", REG_TRUE,
-				(void*)(&steer.check_freq), REG_INT, "1", "");
-
+				  (void*)(&steer.check_freq), REG_INT, "1", "");
+    
     // RT params
+    steer.status = Register_param("Auto Rotate", REG_TRUE,
+				  (void*)(&steer.rotate), REG_INT, "0", "5");
     steer.status = Register_param("X pixel size", REG_TRUE,
-				(void*)(&steer.pixels_x), REG_INT, "0", "1024");
+				  (void*)(&steer.pixels_x), REG_INT, "0", "1024");
     steer.status = Register_param("Y pixel size", REG_TRUE,
-				(void*)(&steer.pixels_y), REG_INT, "0", "1024");
+				  (void*)(&steer.pixels_y), REG_INT, "0", "1024");
     steer.status = Register_param("Longitude", REG_TRUE,
-				(void *)(&steer.longitude), REG_FLOAT, "", "");
+				  (void *)(&steer.longitude), REG_FLOAT, "", "");
     steer.status = Register_param("Latitude", REG_TRUE,
-				(void *)(&steer.latitude), REG_FLOAT, "", "");
+				  (void *)(&steer.latitude), REG_FLOAT, "", "");
     steer.status = Register_param("Zoom", REG_TRUE,
-				(void *)(&steer.zoom), REG_FLOAT, "0.0", "");
+				  (void *)(&steer.zoom), REG_FLOAT, "0.0", "");
     steer.status = Register_param("Image output frequency", REG_TRUE,
-				(void*)(&steer.image_freq), REG_INT, "1", "");
+				  (void*)(&steer.image_freq), REG_INT, "1", "");
     steer.status = Register_param("Flow field type", REG_TRUE,
-				(void*)(&steer.flow_field_type), REG_INT, "0", "2");
+				  (void*)(&steer.flow_field_type), REG_INT, "0", "2");
     steer.status = Register_param("Is isosurface", REG_TRUE,
-				(void*)(&steer.is_isosurface), REG_INT, "0", "1");
+				  (void*)(&steer.is_isosurface), REG_INT, "0", "1");
     steer.status = Register_param("Absorption factor", REG_TRUE,
-				(void *)(&steer.abs_factor), REG_FLOAT, "0.0", "");
+				  (void *)(&steer.abs_factor), REG_FLOAT, "0.0", "");
     steer.status = Register_param("Cutoff", REG_TRUE,
-				(void *)(&steer.cutoff), REG_FLOAT, "0.0", "1.0");
+				  (void *)(&steer.cutoff), REG_FLOAT, "0.0", "1.0");
     steer.status = Register_param("Max density", REG_TRUE,
-				(void *)(&steer.max_density), REG_FLOAT, "0.0", "");
+				  (void *)(&steer.max_density), REG_FLOAT, "0.0", "");
     steer.status = Register_param("Max velocity", REG_TRUE,
-				(void *)(&steer.max_velocity), REG_FLOAT, "0.0", "");
+				  (void *)(&steer.max_velocity), REG_FLOAT, "0.0", "");
     steer.status = Register_param("Max stress", REG_TRUE,
-				(void *)(&steer.max_stress), REG_FLOAT, "0.0", "");
+				  (void *)(&steer.max_stress), REG_FLOAT, "0.0", "");
   }
 
   // broadcast/collect status
@@ -493,11 +506,7 @@ int main (int argc, char *argv[])
       // process changed params
       // not bothered what changed, just copy across...
       
-     steer.longitude += 1.F;
-      
-      //rtUpdateParameters (&steer, &rt, &net);
-      
-     // if(steer.num_params_changed > 0) {
+      if(steer.num_params_changed > 0) {
 	printf("STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
 	fflush(stdout);
 	
@@ -519,11 +528,18 @@ int main (int argc, char *argv[])
 		      steer.longitude, steer.latitude,
 		      0.5F * (5.F * rt.system_size),
 		      steer.zoom);
-  
+
+	rt.image_frequency = steer.image_freq;
+	rt.flow_field_type = steer.flow_field_type;
+	rt.is_isosurface = steer.is_isosurface;
+	rt.absorption_factor = steer.abs_factor;
+	rt.cutoff = steer.cutoff;
 	rt.flow_field_value_max_inv[ DENSITY  ] = 1.F / steer.max_density;
 	rt.flow_field_value_max_inv[ VELOCITY ] = 1.F / steer.max_velocity;
 	rt.flow_field_value_max_inv[ STRESS   ] = 1.F / steer.max_stress;
-   //   }
+
+	rotate_view = steer.rotate;
+      }
       // end of param processing
 
 #endif // STEER
@@ -543,6 +559,18 @@ int main (int argc, char *argv[])
 	  perform_rt = 1;
 	  ray_tracing_count = 0;
 	}
+
+      // do we want to rotate?
+      if(perform_rt == 1 && rotate_view > 0) {
+	steer.longitude += rotate_view;
+	rtProjection (0.5F * rt.system_size, 0.5F * rt.system_size,
+		      steer.pixels_x, steer.pixels_y,
+		      steer.ctr_x, steer.ctr_y, steer.ctr_z,
+		      5.F * rt.system_size,
+		      steer.longitude, steer.latitude,
+		      0.5F * (5.F * rt.system_size),
+		      steer.zoom);
+      }
 
       // Between the rtRayTracingA/B calls, do not change any ray tracing
       // parameters.
@@ -671,6 +699,8 @@ int main (int argc, char *argv[])
   if(net.id == 0)
     {
       Steering_finalize();
+      printf("STEER: Steering_finalize() called.\n");
+      fflush(stdout);
     }
 #endif // STEER
 

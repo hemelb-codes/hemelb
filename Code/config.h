@@ -131,6 +131,7 @@ struct SteerParams
   float  max_density;
   float  max_velocity;
   float  max_stress;
+  int    rotate;
 };
 
 #endif // STEER
