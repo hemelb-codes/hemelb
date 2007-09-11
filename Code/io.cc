@@ -177,7 +177,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
   fclose (system_config);
 }
 
-
+/*
 #ifdef STEER
 void lbmReadParameters (SteerParams *steer, char *parameters_file_name, LBM *lbm, Net *net)
 #else
@@ -298,6 +298,64 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   lbm->omega = -1.0 / lbm->tau;
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
   
+  
+#ifdef STEER
+  steer->tau            = lbm->tau;
+  steer->tolerance      = lbm->tolerance;
+  steer->max_time_steps = lbm->time_steps_max;
+  steer->conv_freq      = lbm->convergence_frequency;
+  steer->check_freq     = lbm->checkpoint_frequency;
+#endif
+}
+*/
+
+#ifdef STEER
+void lbmReadParameters (SteerParams *steer, char *parameters_file_name, LBM *lbm, Net *net)
+#else
+void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
+#endif
+{
+  // through this function the processor 0 reads the LB parameters
+  // and then communicate them to the other processors
+	int n;
+  
+      FILE *parameters_file = fopen (parameters_file_name, "r");
+      
+      fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
+      fscanf (parameters_file, "%le\n", &lbm->tau);
+      fscanf (parameters_file, "%i\n", &lbm->inlets);
+
+      if (lbm->inlet_density == NULL)
+	{
+	  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
+	}
+      
+      for (n = 0; n < lbm->inlets; n++)
+	{
+	  fscanf (parameters_file, "%le\n", &lbm->inlet_density[ n ]);
+	}
+      fscanf (parameters_file, "%i\n", &lbm->outlets);
+      
+      if (lbm->outlet_density == NULL)
+	{
+	  lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
+	}
+      for (n = 0; n < lbm->outlets; n++)
+	{
+	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
+	} 
+
+      fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
+      fscanf (parameters_file, "%le\n", &lbm->tolerance);
+      fscanf (parameters_file, "%i\n", &lbm->checkpoint_frequency);
+      fscanf (parameters_file, "%i\n", &lbm->convergence_frequency);
+      
+      fclose (parameters_file);
+      
+  lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
+  
+  lbm->omega = -1.0 / lbm->tau;
+  lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
   
 #ifdef STEER
   steer->tau            = lbm->tau;

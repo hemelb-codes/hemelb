@@ -367,7 +367,7 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 	  f_new_p = &f_new[ site_id*15 ];
 	  
 	  density = lbm->inlet_density[ 0 ] - density_diff * (double)iter_block_p->site_data[ m ];
-	  
+
 	  lbmFeq (density, 0., 0., 0., f_eq);
 	  
 	  for (l = 0; l < 15; l++)

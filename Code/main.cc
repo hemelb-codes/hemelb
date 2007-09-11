@@ -5,6 +5,8 @@
 
 RT rt;
 
+#include <string.h>
+
 #ifdef RG
 
 #include <stdio.h>
@@ -491,11 +493,11 @@ int main (int argc, char *argv[])
       // process changed params
       // not bothered what changed, just copy across...
       
-      //steer.longitude += 1.F;
+     steer.longitude += 1.F;
       
       //rtUpdateParameters (&steer, &rt, &net);
       
-      if(steer.num_params_changed > 0) {
+     // if(steer.num_params_changed > 0) {
 	printf("STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
 	fflush(stdout);
 	
@@ -521,7 +523,7 @@ int main (int argc, char *argv[])
 	rt.flow_field_value_max_inv[ DENSITY  ] = 1.F / steer.max_density;
 	rt.flow_field_value_max_inv[ VELOCITY ] = 1.F / steer.max_velocity;
 	rt.flow_field_value_max_inv[ STRESS   ] = 1.F / steer.max_stress;
-      }
+   //   }
       // end of param processing
 
 #endif // STEER
@@ -544,17 +546,26 @@ int main (int argc, char *argv[])
 
       // Between the rtRayTracingA/B calls, do not change any ray tracing
       // parameters.
-      
-      if (perform_rt)
+
+	int flag = 1; pthread_mutex_trylock( &network_buffer_copy_lock );
+
+     // if (perform_rt)
+      if (flag==1 && perform_rt==1)
 	{
 	  rtRayTracingA (AbsorptionCoefficients, &net, &rt);
 	}
+
       stability = lbmCycle (write_checkpoint, check_convergence, perform_rt,
 			    &is_converged, &lbm, &net);
       
-      if (perform_rt)
+      if (flag==1 && perform_rt==1)
 	{
 	  rtRayTracingB (AbsorptionCoefficients, &net, &rt);
+
+//	      pthread_mutex_unlock (&network_buffer_copy_lock);
+
+//      pthread_cond_signal (&network_send_frame);
+
 	}
       
       if (stability == UNSTABLE || is_converged) break;
