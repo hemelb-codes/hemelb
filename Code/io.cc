@@ -79,8 +79,10 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   for (n = 0; n < lbm->outlets; n++)
     {
-      if (lbm->outlet_density[ n ] < 0.999999 * lbm->inlet_density[ 0 ] ||
-	  lbm->outlet_density[ n ] > 1.000001 * lbm->inlet_density[ 0 ])
+      // if (lbm->outlet_density[ n ] < 0.999999 * lbm->inlet_density[ 0 ] ||
+      if (lbm->outlet_density[ n ] < 4.999999 * lbm->inlet_density[ 0 ] ||
+	  lbm->outlet_density[ n ] > 5.000001 * lbm->inlet_density[ 0 ])
+//	  lbm->outlet_density[ n ] > 1.000001 * lbm->inlet_density[ 0 ])
 	{
 	  lbm->first_outlet_ref = n;
 	}
@@ -216,7 +218,14 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       for (n = 0; n < lbm->outlets; n++)
 	{
 	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
-	}
+	} 
+//	int iters;
+ //     for (n = 0; n < lbm->outlets; n++)
+//	{
+//	  fscanf (parameters_file, "%i\n", &iters);
+//		lbm->outlet_density[ n ] = 5. - iters * 2.e-4;
+//	printf("%le\n", lbm->outlet_density[ n ] );
+//	} 
       fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
       fscanf (parameters_file, "%le\n", &lbm->tolerance);
       fscanf (parameters_file, "%i\n", &lbm->checkpoint_frequency);
