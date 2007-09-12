@@ -21,8 +21,6 @@
 
 #define PORT 65250
 
-#include <GL/glut.h>
-
 #ifdef MAC_GLUT
 
 #include <OpenGL/gl.h>
