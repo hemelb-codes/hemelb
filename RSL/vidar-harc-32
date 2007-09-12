@@ -1,0 +1,9 @@
+& 
+(job_type = "mpi")
+(count= "32")
+(maxWallTime = "15")
+(executable = "/home/ngs0023/bin/hemelb")
+(arguments = "/home/ngs0023/bin/hemelb/Input/angio1")
+(stderr="/home/ngs0023/hemelb/script.error")
+(stdout="/home/ngs0023/hemelb/script.outpu")
+(reservation_id="R18393.vidar")
