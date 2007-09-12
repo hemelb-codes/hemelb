@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#PBS -N hemelb
+#PBS -l select=8:ncpus=4
+#PBS -l walltime=0:40:00
+#PBS -o /nfs/users/ngs0023/hemelb/PBS/angio1_32_VIDAR_MPICH.out
+#PBS -e /nfs/users/ngs0023/hemelb/PBS/angio1_32_VIDAR_MPICH.err
+#PBS -V
+
+NP=32
+EXE=/nfs/users/ngs0023/bin/hemelb
+DATA=/nfs/users/ngs0023/hemelb/Input/angio1
+MPI=/usr/local/bin/mpiexec
+
+. /nfs/users/ngs0023/reg_steer_lib/reg_steer_configure.sh
+export REG_STEER_DIRECTORY=/home/ngs0023/tmp
+
+$MPI -np $NP $EXE $DATA 
