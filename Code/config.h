@@ -29,6 +29,7 @@
 #define SHARED_DISTRIBUTIONS_MAX       4000000
 #define COLOURED_PIXELS_PER_PROC_MAX   1024 * 1024
 #define COMMS_LEVELS                   3
+#define SCREEN_SIZE_MAX                1024 * 1024
 
 
 extern float EPSILON;
@@ -78,6 +79,8 @@ extern int e_y[15];
 extern int e_z[15];
 extern int inv_dir[15];
 
+extern MPI_Datatype MPI_col_pixel_type;
+
 
 // data structures useful to define the simulation set-up, construct
 // the system and partition it
@@ -88,7 +91,6 @@ extern pthread_mutex_t network_buffer_copy_lock;
 extern pthread_cond_t network_send_frame;
 
 extern int send_array_length;
-extern int send_frame_count;
 
 extern int compressed_frame_size;
 
@@ -99,8 +101,8 @@ extern unsigned char *compressed_data;
 
 #ifdef STEER
 
-// this is here so that I can transfer all params and data in one chunk
-// in one MPI_Bcast rather than loads of separate ones...
+// this is here so that I can transfer all params and data in one
+// chunk in one MPI_Bcast rather than loads of separate ones...
 struct SteerParams
 {
   // reg
@@ -131,7 +133,6 @@ struct SteerParams
   float  max_density;
   float  max_velocity;
   float  max_stress;
-  int    rotate;
 };
 
 #endif // STEER
@@ -144,11 +145,6 @@ struct DataBlock
 
 
 struct BlockLocation
-{
-  short int i, j, k;
-};
-
-struct SiteLocation
 {
   short int i, j, k;
 };
@@ -180,17 +176,12 @@ struct LBM
   int time_steps_max;
   int checkpoint_frequency, convergence_frequency;
   int is_checkpoint;
-  int inlet_sites;
-  int first_outlet_ref, first_outlet_site_id;
+  
+  float *block_density;
   
   int *block_map;
   
   short int *fluid_sites_per_block;
-  
-  SiteLocation *site_location_a;
-  SiteLocation *site_location_b;
-  
-  DataBlock *iter_block;
 };
 
 
@@ -264,6 +255,15 @@ struct BlockData
 };
 
 
+struct ColPixel
+{
+  float r, g, b;
+  float t;
+  
+  short int i, j;
+};
+
+
 struct Cluster
 {
   float block_min_x, block_min_y, block_min_z;
@@ -286,9 +286,9 @@ struct RT
   int blocks_yz, blocks;
   int block_size, block_size2, block_size3, block_size_1;
   int shift, shift2;
-  int coloured_pixels_max;
-  int coloured_pixels;
-  int *coloured_pixel_id;
+  int col_pixels_max;
+  int col_pixels;
+  int *col_pixel_id;
   int pixels_max;
   int ray_tracing_count;
   
@@ -302,8 +302,8 @@ struct RT
   float system_size;
   float half_dim_x, half_dim_y, half_dim_z;
   
-  float coloured_pixel_send[6*COLOURED_PIXELS_PER_PROC_MAX];
-  float *coloured_pixel_recv;
+  ColPixel col_pixel_send[COLOURED_PIXELS_PER_PROC_MAX];
+  ColPixel *col_pixel_recv;
   
   Cluster *cluster;
 };
@@ -404,13 +404,13 @@ void netEnd (Net *net, RT *rt);
 void lbmReadConfig (LBM *lbm, Net *net);
 
 #ifdef STEER
-void lbmReadParameters (SteerParams *steer, char *parameters_file_name, LBM *lbm, Net *net);
+void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net, SteerParams *steer);
 #else
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
 #endif
 
 #ifdef STEER
-void lbmUpdateParameters (SteerParams *steer, LBM *lbm, Net *net);
+void lbmUpdateParameters (LBM *lbm, SteerParams *steer);
 #endif
 
 void lbmSetInitialConditions (LBM *lbm, Net *net);
@@ -436,17 +436,17 @@ void rtProjection (float ortho_x, float ortho_y,
 		   float dist,
 		   float zoom);
 #ifdef STEER
-void rtReadParameters (SteerParams *steer, char *parameters_file_name, RT *rt, Net * net);
+void rtReadParameters (char *parameters_file_name, RT *rt, Net * net, SteerParams *steer);
 #else
 void rtReadParameters (char *parameters_file_name, RT *rt, Net * net);
 #endif
 
 #ifdef STEER
-void rtUpdateParameters (SteerParams *steer, RT *rt, Net * net);
+void rtUpdateParameters (RT *rt, SteerParams *steer);
 #endif
 
-void rtInit (char *image_file_name, RT *rt);
-void rtEnd (RT *rt);
+void rtInit (char *image_file_name, Net *net, RT *rt);
+void rtEnd (Net *net, RT *rt);
 
 #endif                  // __config_h__
 

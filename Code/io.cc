@@ -2,6 +2,7 @@
 
 #include "config.h"
 
+
 void lbmReadConfig (LBM *lbm, Net *net)
 {
   // this function reads the XDR configuration file but does not store the system
@@ -10,17 +11,32 @@ void lbmReadConfig (LBM *lbm, Net *net)
   FILE *system_config;
   XDR xdr_config;
   
+  double seconds;
+  
+  float *block_density_p = NULL;
+  float error;
+  float temp;
+  
+  int blocks, blocks_max;
+  int iters;
+  
   int i, j, k, ii, jj, kk, m, n;
   int flag;
-  int is_first_outlet_site_found, first_outlet_ref;
+  int dummy = 0;
   
   unsigned int site_data;
   unsigned int site_i, site_j, site_k;
   unsigned int boundary_id;
   
-  SiteLocation *site_location_a_p;
+  struct DensityBlock
+  {
+    int neigh[26];
+    int neighs;
+    int boundary_sites;
+  };
   
-  DataBlock *iter_block_p;
+  DensityBlock *density_block = NULL;
+  DensityBlock *density_block_p = NULL;
   
   
   system_config = fopen (lbm->system_file_name, "r");
@@ -63,32 +79,19 @@ void lbmReadConfig (LBM *lbm, Net *net)
   lbm->site_max_y = 0;
   lbm->site_max_z = 0;
   
+  blocks_max = dummy;
+  blocks = dummy;
   
-  lbm->iter_block = (DataBlock *)malloc(sizeof(DataBlock) * lbm->blocks);
-  
-  for (n = 0; n < lbm->blocks; n++)
+  if (!lbm->is_checkpoint)
     {
-      lbm->iter_block[ n ].site_data = NULL;
+      blocks_max = 10000;
+      
+      lbm->block_density = (float *)malloc(sizeof(float) * blocks_max);
+      
+      lbm->block_map = (int *)malloc(sizeof(int) * lbm->blocks);
+  
+      density_block = (DensityBlock *)malloc(sizeof(DensityBlock) * blocks_max);
     }
-  lbm->inlet_sites = 0;
-  
-  lbm->site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * 1000000);
-  lbm->site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * 1000000);
-  
-  lbm->first_outlet_ref = 0;
-  
-  for (n = 0; n < lbm->outlets; n++)
-    {
-      // if (lbm->outlet_density[ n ] < 0.999999 * lbm->inlet_density[ 0 ] ||
-      if (lbm->outlet_density[ n ] < 4.999999 * lbm->inlet_density[ 0 ] ||
-	  lbm->outlet_density[ n ] > 5.000001 * lbm->inlet_density[ 0 ])
-//	  lbm->outlet_density[ n ] > 1.000001 * lbm->inlet_density[ 0 ])
-	{
-	  lbm->first_outlet_ref = n;
-	}
-    }
-  is_first_outlet_site_found = 0;
-  
   n = -1;
   
   for (i = 0; i < lbm->blocks_x; i++)
@@ -101,14 +104,29 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      
 	      xdr_int (&xdr_config, &flag);
 	      
+	      if (!lbm->is_checkpoint) lbm->block_map[ n ] = -1;
+	      
 	      if (flag == 0) continue;
 	      
-	      iter_block_p = &lbm->iter_block[ n ];
-	      
-	      iter_block_p->site_data =
-	      	(unsigned int *)malloc(sizeof(unsigned int) * lbm->sites_in_a_block);
-	      
-	      m = -1;
+	      if (!lbm->is_checkpoint)
+		{
+		  lbm->block_map[ n ] = blocks;
+		  
+		  if (blocks == blocks_max)
+		    {
+		      blocks_max <<= 2;
+		      lbm->block_density = (float *)realloc(lbm->block_density,
+							    sizeof(float) * blocks_max);
+		      density_block = (DensityBlock *)realloc(density_block,
+							      sizeof(DensityBlock) * blocks_max);
+		    }
+		  block_density_p = &lbm->block_density[ blocks ];
+		  *block_density_p = 0.F;
+		  
+		  density_block_p = &density_block[ blocks ];
+		  density_block_p->boundary_sites = 0;
+		  ++blocks;
+		}
 	      
 	      for (ii = 0; ii < lbm->block_size; ii++)
 		{
@@ -122,12 +140,10 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			{
 			  site_k = (k << lbm->shift) + kk;
 			  
-			  ++m;
 			  xdr_u_int (&xdr_config, &site_data);
 			  
 			  if ((site_data & SITE_TYPE_MASK) == SOLID_TYPE)
 			    {
-			      iter_block_p->site_data[ m ] = 1U << 31U;
 			      continue;
 			    }
 			  
@@ -141,30 +157,21 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			  lbm->site_max_y = max(lbm->site_max_y, site_j);
 			  lbm->site_max_z = max(lbm->site_max_z, site_k);
 			  
-			  if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
+			  if (!lbm->is_checkpoint)
 			    {
-			      site_location_a_p = &lbm->site_location_a[ lbm->inlet_sites ];
-			      site_location_a_p->i = (i << lbm->shift) + ii;
-			      site_location_a_p->j = (j << lbm->shift) + jj;
-			      site_location_a_p->k = (k << lbm->shift) + kk;
-			      ++lbm->inlet_sites;
-			      
-			      iter_block_p->site_data[ m ] = 0U;
-			    }
-			  else
-			    {
-			      iter_block_p->site_data[ m ] = 1U << 15U;
-			    }
-			  if ((site_data & SITE_TYPE_MASK) == OUTLET_TYPE &&
-			      !is_first_outlet_site_found)
-			    {
-			      boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-			      
-			      if (boundary_id == lbm->first_outlet_ref)
+			      if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
 				{
-				  is_first_outlet_site_found = 1;
-				  lbm->first_outlet_site_id =
-				    (site_i * lbm->sites_y + site_j) * lbm->sites_z + site_k;
+				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+				  
+				  ++density_block_p->boundary_sites;
+				  *block_density_p += lbm->inlet_density[ boundary_id ];
+				}
+			      else if ((site_data & SITE_TYPE_MASK) == OUTLET_TYPE)
+				{
+				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+				  
+				  ++density_block_p->boundary_sites;
+				  *block_density_p += lbm->outlet_density[ boundary_id ];
 				}
 			    }
 			}
@@ -175,11 +182,97 @@ void lbmReadConfig (LBM *lbm, Net *net)
     }
   xdr_destroy (&xdr_config);
   fclose (system_config);
+  
+  
+  if (lbm->is_checkpoint) return;
+  
+  seconds = myClock ();
+  
+  blocks = 0;
+  n = -1;
+  
+  for (i = 0; i < lbm->blocks_x; i++)
+    {
+      for (j = 0; j < lbm->blocks_y; j++)
+	{
+	  for (k = 0; k < lbm->blocks_z; k++)
+	    {
+	      if (lbm->block_map[ ++n ] == -1) continue;
+	      
+	      block_density_p = &lbm->block_density[ blocks ];
+	      
+	      density_block_p = &density_block[ blocks ];
+	      density_block_p->neighs = 0;
+	      ++blocks;
+	      
+	      if (density_block_p->boundary_sites > 0)
+		{
+		  *block_density_p /= (float)density_block_p->boundary_sites;
+		  continue;
+		}
+	      for (ii = max(0, i - 1); ii <= min(i + 1, lbm->blocks_x - 1); ii++)
+		{
+		  for (jj = max(0, j - 1); jj <= min(j + 1, lbm->blocks_y - 1); jj++)
+		    {
+		      for (kk = max(0, k - 1); kk <= min(k + 1, lbm->blocks_z - 1); kk++)
+			{
+			  m = (ii * lbm->blocks_y + jj) * lbm->blocks_z + kk;
+			  
+			  if (m == n || lbm->block_map[ m ] == -1) continue;
+			  
+			  density_block_p->neigh[ density_block_p->neighs ] = lbm->block_map[ m ];
+			  ++density_block_p->neighs;
+			}
+		    }
+		}
+	    }
+	}
+    }
+  error = 1.e+30F;
+  iters = 0;
+  
+  while (error > 1.e-3F)
+    {
+      ++iters;
+      
+      error = 0.F;
+      
+      for (n = 0; n < blocks; n++)
+	{
+	  density_block_p = &density_block[ n ];
+	  
+	  if (density_block_p->neighs == 0) continue;
+	  
+	  block_density_p = &lbm->block_density[ n ];
+	  
+	  temp = *block_density_p;
+	  *block_density_p = 0.F;
+	  
+	  for (m = 0; m < density_block_p->neighs; m++)
+	    {
+	      *block_density_p += lbm->block_density[ density_block_p->neigh[m] ];
+	    }
+	  *block_density_p /= (float)density_block_p->neighs;
+	  
+	  error = fmaxf(error, fabsf(*block_density_p - temp) /
+			fmaxf(1.e-30F, *block_density_p));
+	}
+    }
+  seconds = myClock () - seconds;
+  
+  free(density_block);
+  
+  if (net->id == 0)
+    {
+      printf ("Coarse-level density gradients minimization: %.3e, iters: %i\n",
+	      seconds, iters);
+      fflush (stdout);
+    }
 }
 
-/*
+
 #ifdef STEER
-void lbmReadParameters (SteerParams *steer, char *parameters_file_name, LBM *lbm, Net *net)
+void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net, SteerParams *steer)
 #else
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 #endif
@@ -190,6 +283,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   double par_to_send[6+2000];
   
   int n;
+  int iters;
   
   if (net->id == 0)
     {
@@ -199,7 +293,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
       fscanf (parameters_file, "%le\n", &lbm->tau);
       fscanf (parameters_file, "%i\n", &lbm->inlets);
-
+      
       if (lbm->inlet_density == NULL)
 	{
 	  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
@@ -218,14 +312,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       for (n = 0; n < lbm->outlets; n++)
 	{
 	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
-	} 
-//	int iters;
- //     for (n = 0; n < lbm->outlets; n++)
-//	{
-//	  fscanf (parameters_file, "%i\n", &iters);
-//		lbm->outlet_density[ n ] = 5. - iters * 2.e-4;
-//	printf("%le\n", lbm->outlet_density[ n ] );
-//	} 
+	}
       fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
       fscanf (parameters_file, "%le\n", &lbm->tolerance);
       fscanf (parameters_file, "%i\n", &lbm->checkpoint_frequency);
@@ -236,22 +323,21 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
       par_to_send[ 1 ] = 0.1 + (double)lbm->outlets;
     }
-  
   net->err = MPI_Bcast (par_to_send, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
   if (net->id != 0)
     {
       lbm->inlets  = (int)par_to_send[ 0 ];
+      lbm->outlets = (int)par_to_send[ 1 ];
+      
       if (lbm->inlet_density == NULL)
 	{
 	  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
 	}
-      lbm->outlets = (int)par_to_send[ 1 ];
       if (lbm->outlet_density == NULL)
 	{
 	  lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
 	}
-      
     }
   else
     {
@@ -260,18 +346,17 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  par_to_send[ 2 + n ] = 0.1 + (double)lbm->inlet_density[ n ];
+	  par_to_send[ 2 + n ] = lbm->inlet_density[ n ];
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  par_to_send[ 2 + lbm->inlets + n ] = 0.1 + (double)lbm->outlet_density[ n ];
+	  par_to_send[ 2 + lbm->inlets + n ] = lbm->outlet_density[ n ];
 	}
       par_to_send[ 2 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->time_steps_max;
       par_to_send[ 3 + lbm->inlets + lbm->outlets ] = lbm->tolerance;
       par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->checkpoint_frequency;
       par_to_send[ 5 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->convergence_frequency;
     }
-
   net->err = MPI_Bcast (par_to_send, 6 + lbm->inlets + lbm->outlets, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
   if (net->id != 0)
@@ -281,23 +366,21 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  lbm->inlet_density[ n ] = (int)par_to_send[ 2 + n ];
+	  lbm->inlet_density[ n ] = par_to_send[ 2 + n ];
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  lbm->outlet_density[ n ] = (int)par_to_send[ 2 + lbm->inlets + n ];
+	  lbm->outlet_density[ n ] = par_to_send[ 2 + lbm->inlets + n ];
 	}
       lbm->time_steps_max        = (int)par_to_send[ 2 + lbm->inlets + lbm->outlets ];
       lbm->tolerance             =      par_to_send[ 3 + lbm->inlets + lbm->outlets ];
       lbm->checkpoint_frequency  = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
       lbm->convergence_frequency = (int)par_to_send[ 5 + lbm->inlets + lbm->outlets ];
     }
-  
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
   
   lbm->omega = -1.0 / lbm->tau;
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
-  
   
 #ifdef STEER
   steer->tau            = lbm->tau;
@@ -307,64 +390,23 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   steer->check_freq     = lbm->checkpoint_frequency;
 #endif
 }
-*/
+
 
 #ifdef STEER
-void lbmReadParameters (SteerParams *steer, char *parameters_file_name, LBM *lbm, Net *net)
-#else
-void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
-#endif
+void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
 {
-  // through this function the processor 0 reads the LB parameters
-  // and then communicate them to the other processors
-	int n;
+  lbm->tau = steer->tau;
+  lbm->tolerance = steer->tolerance;
+  lbm->time_steps_max = steer->max_time_steps;
+  lbm->convergence_frequency = steer->conv_freq;
+  lbm->checkpoint_frequency  = steer->check_freq;
   
-      FILE *parameters_file = fopen (parameters_file_name, "r");
-      
-      fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
-      fscanf (parameters_file, "%le\n", &lbm->tau);
-      fscanf (parameters_file, "%i\n", &lbm->inlets);
-
-      if (lbm->inlet_density == NULL)
-	{
-	  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
-	}
-      
-      for (n = 0; n < lbm->inlets; n++)
-	{
-	  fscanf (parameters_file, "%le\n", &lbm->inlet_density[ n ]);
-	}
-      fscanf (parameters_file, "%i\n", &lbm->outlets);
-      
-      if (lbm->outlet_density == NULL)
-	{
-	  lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
-	}
-      for (n = 0; n < lbm->outlets; n++)
-	{
-	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
-	} 
-
-      fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
-      fscanf (parameters_file, "%le\n", &lbm->tolerance);
-      fscanf (parameters_file, "%i\n", &lbm->checkpoint_frequency);
-      fscanf (parameters_file, "%i\n", &lbm->convergence_frequency);
-      
-      fclose (parameters_file);
-      
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
-  
   lbm->omega = -1.0 / lbm->tau;
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
-  
-#ifdef STEER
-  steer->tau            = lbm->tau;
-  steer->tolerance      = lbm->tolerance;
-  steer->max_time_steps = lbm->time_steps_max;
-  steer->conv_freq      = lbm->convergence_frequency;
-  steer->check_freq     = lbm->checkpoint_frequency;
-#endif
 }
+#endif
+
 
 void lbmSetInitialConditions (LBM *lbm, Net *net)
 {
