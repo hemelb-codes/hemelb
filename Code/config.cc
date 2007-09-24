@@ -48,6 +48,8 @@ int e_y[] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1};
 int e_z[] = { 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1};
 int inv_dir[] = {0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13};
 
+MPI_Datatype MPI_col_pixel_type;
+
 
 #ifdef RG
 
@@ -55,7 +57,6 @@ pthread_mutex_t network_buffer_copy_lock;
 pthread_cond_t network_send_frame;
 
 int send_array_length;
-int send_frame_count;
 
 int compressed_frame_size;
 

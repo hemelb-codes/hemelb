@@ -2,16 +2,7 @@
 #include <string.h>
 
 #ifdef RG
-
 #include "eVizRLEUtil.h"
-
-int compressedFrameSize;
-
-unsigned char *pixelData;
-unsigned char *compressedData;
-
-double compression_time = 0.F;
-
 #endif // RG
 
 void (*rtRayAABBIntersection[8]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t);
@@ -2161,8 +2152,6 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
   float vx[2], vy[2], vz[2];
   float scale_x, scale_y;
   
-  float *pixel_data_p, *pixel_data1, *pixel_data2;
-  
   int pixels_x, pixels_y;
   int i, j, k;
   int m, n;
@@ -2170,12 +2159,14 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
   int min_i, min_j, max_i, max_j;
   int viewpoint_flag;
   int ray_dir_code;
-  int *coloured_pixel_id_p;
-  int coloured_pixels;
+  int *col_pixel_id_p;
+  int col_pixels;
   int comm_inc, send_id, recv_id;
   int machine_id, master_proc_id;
   
   AABB aabb;
+  
+  ColPixel *col_pixel_p, *col_pixel1, *col_pixel2;
   
   Cluster *cluster_p;
   
@@ -2210,19 +2201,22 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
     {
       rt->pixels_max = pixels_x * pixels_y;
 
-      rt->coloured_pixel_id = (int *)realloc(rt->coloured_pixel_id, sizeof(int) * rt->pixels_max);
+      rt->col_pixel_id = (int *)realloc(rt->col_pixel_id, sizeof(int) * rt->pixels_max);
 
 #ifdef RG
-      pixel_data = (unsigned char *)realloc(pixel_data, sizeof(unsigned char) * 3 * pixels_x * pixels_y);
-      compressed_data = (unsigned char *)realloc(compressed_data, sizeof(unsigned char) * 3 * pixels_x * pixels_y);
+      if (net->id == 0)
+	{
+	  pixel_data = (unsigned char *)realloc(pixel_data, sizeof(unsigned char) * 3 * pixels_x * pixels_y);
+	  compressed_data = (unsigned char *)realloc(compressed_data, sizeof(unsigned char) * 3 * pixels_x * pixels_y);
+	}
 #endif // RG
     }
 
   for (i = 0; i < pixels_x * pixels_y; i++)
     {
-      rt->coloured_pixel_id[ i ] = -1;
+      rt->col_pixel_id[ i ] = -1;
     }
-  rt->coloured_pixels = 0;
+  rt->col_pixels = 0;
 
   for (cluster_id = 0; cluster_id < rt->clusters; cluster_id++)
     {
@@ -2343,52 +2337,52 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
 
 	      if (rt->t_min >= 1.e+30F) continue;
 
-	      if (*(coloured_pixel_id_p = &rt->coloured_pixel_id[ i * pixels_y + j ]) == -1)
+	      if (*(col_pixel_id_p = &rt->col_pixel_id[ i * pixels_y + j ]) == -1)
 		{
-		  if (rt->coloured_pixels == COLOURED_PIXELS_PER_PROC_MAX)
+		  if (rt->col_pixels >= COLOURED_PIXELS_PER_PROC_MAX)
 		    {
 		      printf (" too many coloured pixels per proc\n");
 		      printf (" the execution is terminated\n");
 		      net->err = MPI_Abort (MPI_COMM_WORLD, 1);
 		    }
-		  if (rt->coloured_pixels == rt->coloured_pixels_max)
+		  if (rt->col_pixels == rt->col_pixels_max)
 		    {
-		      rt->coloured_pixels_max <<= 1;
-		      rt->coloured_pixel_recv = (float *)realloc(rt->coloured_pixel_recv,
-								 sizeof(float) * 6 * rt->coloured_pixels_max);
+		      rt->col_pixels_max <<= 1;
+		      rt->col_pixel_recv = (ColPixel *)realloc(rt->col_pixel_recv,
+							       sizeof(ColPixel) * rt->col_pixels_max);
 		    }
-		  *coloured_pixel_id_p = rt->coloured_pixels;
+		  *col_pixel_id_p = rt->col_pixels;
 		  
-		  pixel_data_p = &rt->coloured_pixel_send[ 6 * *coloured_pixel_id_p ];
-		  pixel_data_p[ 0 ] = 0.F;
-		  pixel_data_p[ 1 ] = 0.F;
-		  pixel_data_p[ 2 ] = 0.F;
-		  pixel_data_p[ 3 ] = 1.e+30F;
-		  pixel_data_p[ 4 ] = (float)i + 0.1F;
-		  pixel_data_p[ 5 ] = (float)j + 0.1F;
-		  ++rt->coloured_pixels;
+		  col_pixel_p = &rt->col_pixel_send[ *col_pixel_id_p ];
+		  col_pixel_p->r = 0.F;
+		  col_pixel_p->g = 0.F;
+		  col_pixel_p->b = 0.F;
+		  col_pixel_p->t = 1.e+30F;
+		  col_pixel_p->i = (short int)i;
+		  col_pixel_p->j = (short int)j;
+		  ++rt->col_pixels;
 		}
 	      else
 		{
-		  pixel_data_p = &rt->coloured_pixel_send[ 6 * *coloured_pixel_id_p ];
+		  col_pixel_p = &rt->col_pixel_send[ *col_pixel_id_p ];
 		}
 	      if (rt->is_isosurface)
 		{
 		  rt->t_min += t;
 		  
-		  if (rt->t_min < pixel_data_p[ 3 ])
+		  if (rt->t_min < col_pixel_p->t)
 		    {
-		      pixel_data_p[ 0 ] = ray.col_r;
-		      pixel_data_p[ 1 ] = ray.col_g;
-		      pixel_data_p[ 2 ] = ray.col_b;
-		      pixel_data_p[ 3 ] = rt->t_min;
+		      col_pixel_p->r = ray.col_r;
+		      col_pixel_p->g = ray.col_g;
+		      col_pixel_p->b = ray.col_b;
+		      col_pixel_p->t = rt->t_min;
 		    }
 		}
 	      else
 		{
-		  pixel_data_p[ 0 ] += ray.col_r;
-		  pixel_data_p[ 1 ] += ray.col_g;
-		  pixel_data_p[ 2 ] += ray.col_b;
+		  col_pixel_p->r += ray.col_r;
+		  col_pixel_p->g += ray.col_g;
+		  col_pixel_p->b += ray.col_b;
 		}
 	    }
 	  par3x += par1x;
@@ -2404,17 +2398,17 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
   // if the number of machines is greater than one, take place in the
   // routine rtRayTracingB.
   
-  for (n = 0; n < rt->coloured_pixels; n++)
+  for (n = 0; n < rt->col_pixels; n++)
     {
-      pixel_data1 = &rt->coloured_pixel_send[ 6 * n ];
-      pixel_data2 = &rt->coloured_pixel_recv[ 6 * n ];
+      col_pixel1 = &rt->col_pixel_send[ n ];
+      col_pixel2 = &rt->col_pixel_recv[ n ];
       
-      pixel_data2[ 0 ] = pixel_data1[ 0 ];
-      pixel_data2[ 1 ] = pixel_data1[ 1 ];
-      pixel_data2[ 2 ] = pixel_data1[ 2 ];
-      pixel_data2[ 3 ] = pixel_data1[ 3 ];
-      pixel_data2[ 4 ] = pixel_data1[ 4 ];
-      pixel_data2[ 5 ] = pixel_data1[ 5 ];
+      col_pixel2->r = col_pixel1->r;
+      col_pixel2->g = col_pixel1->g;
+      col_pixel2->b = col_pixel1->b;
+      col_pixel2->t = col_pixel1->t;
+      col_pixel2->i = col_pixel1->i;
+      col_pixel2->j = col_pixel1->j;
     }
 
   // "master_proc_id" will be the identifier of the processor with
@@ -2453,65 +2447,70 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
 	    }
 	  if (net->id == send_id)
 	    {
-	      net->err = MPI_Send (&rt->coloured_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
+	      net->err = MPI_Send (&rt->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 	      
-	      net->err = MPI_Send (&rt->coloured_pixel_send, rt->coloured_pixels * 6, MPI_FLOAT, recv_id, 20, MPI_COMM_WORLD);
+	      if (rt->col_pixels > 0)
+		{
+		  net->err = MPI_Send (&rt->col_pixel_send, rt->col_pixels, MPI_col_pixel_type, recv_id, 20, MPI_COMM_WORLD);
+		}
 	    }
 	  else
 	    {
-	      net->err = MPI_Recv (&coloured_pixels, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD,
+	      net->err = MPI_Recv (&col_pixels, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD,
 				   net->status);
 	      
-	      net->err = MPI_Recv (&rt->coloured_pixel_send, coloured_pixels * 6, MPI_INT, send_id, 20, MPI_COMM_WORLD,
-				   net->status);
-	      
-	      for (n = 0; n < coloured_pixels; n++)
+	      if (col_pixels > 0)
 		{
-		  pixel_data1 = &rt->coloured_pixel_send[ 6 * n ];
-		  i = (int)pixel_data1[ 4 ];
-		  j = (int)pixel_data1[ 5 ];
+		  net->err = MPI_Recv (&rt->col_pixel_send, col_pixels, MPI_col_pixel_type, send_id, 20, MPI_COMM_WORLD,
+				       net->status);
+		}
+	      for (n = 0; n < col_pixels; n++)
+		{
+		  col_pixel1 = &rt->col_pixel_send[ n ];
+		  i = col_pixel1->i;
+		  j = col_pixel1->j;
 		  
-		  if (*(coloured_pixel_id_p = &rt->coloured_pixel_id[ i * pixels_y + j ]) == -1)
+		  if (*(col_pixel_id_p = &rt->col_pixel_id[ i * pixels_y + j ]) == -1)
 		    {
-		      if (rt->coloured_pixels == rt->coloured_pixels_max)
+		      if (rt->col_pixels == rt->col_pixels_max)
 			{
-			  rt->coloured_pixels_max <<= 1;
-			  rt->coloured_pixel_recv = (float *)realloc(rt->coloured_pixel_recv,
-								     sizeof(float) * 6 * rt->coloured_pixels_max);
+			  rt->col_pixels_max <<= 1;
+			  rt->col_pixel_recv = (ColPixel *)realloc(rt->col_pixel_recv,
+								   sizeof(ColPixel) * rt->col_pixels_max);
 			}
-		      *coloured_pixel_id_p = rt->coloured_pixels;
+		      *col_pixel_id_p = rt->col_pixels;
 		      
-		      pixel_data1 = &rt->coloured_pixel_send[ 6 * n ];
-		      pixel_data2 = &rt->coloured_pixel_recv[ 6 * *coloured_pixel_id_p ];
+		      col_pixel1 = &rt->col_pixel_send[ n ];
+		      col_pixel2 = &rt->col_pixel_recv[ *col_pixel_id_p ];
 		      
-		      pixel_data2[ 0 ] = pixel_data1[ 0 ];
-		      pixel_data2[ 1 ] = pixel_data1[ 1 ];
-		      pixel_data2[ 2 ] = pixel_data1[ 2 ];
-		      pixel_data2[ 3 ] = pixel_data1[ 3 ];
-		      pixel_data2[ 4 ] = pixel_data1[ 4 ];
-		      pixel_data2[ 5 ] = pixel_data1[ 5 ];
-		      ++rt->coloured_pixels;
+		      col_pixel2->r = col_pixel1->r;
+		      col_pixel2->g = col_pixel1->g;
+		      col_pixel2->b = col_pixel1->b;
+		      col_pixel2->t = col_pixel1->t;
+		      col_pixel2->i = col_pixel1->i;
+		      col_pixel2->j = col_pixel1->j;
+		      ++rt->col_pixels;
 		    }
 		  else
 		    {
-		      pixel_data1 = &rt->coloured_pixel_send[ 6 * n ];
-		      pixel_data2 = &rt->coloured_pixel_recv[ 6 * *coloured_pixel_id_p ];
+		      col_pixel1 = &rt->col_pixel_send[ n ];
+		      col_pixel2 = &rt->col_pixel_recv[ *col_pixel_id_p ];
 		      
 		      if (rt->is_isosurface)
 			{
-			  if (pixel_data1[ 3 ] < pixel_data2[ 3 ])
+			  if (col_pixel1->t < col_pixel2->t)
 			    {
-			      pixel_data2[ 0 ] = pixel_data1[ 0 ];
-			      pixel_data2[ 1 ] = pixel_data1[ 1 ];
-			      pixel_data2[ 2 ] = pixel_data1[ 2 ];
-			      pixel_data2[ 3 ] = pixel_data1[ 3 ];
+			      col_pixel2->r = col_pixel1->r;
+			      col_pixel2->g = col_pixel1->g;
+			      col_pixel2->b = col_pixel1->b;
+			      col_pixel2->t = col_pixel1->t;
 			    }
 			}
 		      else
 			{
-			  pixel_data2[ 0 ] += pixel_data1[ 0 ];
-			  pixel_data2[ 1 ] += pixel_data1[ 1 ];
-			  pixel_data2[ 2 ] += pixel_data1[ 2 ];
+			  col_pixel2->r += col_pixel1->r;
+			  col_pixel2->g += col_pixel1->g;
+			  col_pixel2->b += col_pixel1->b;
 			}
 		    }
 		}
@@ -2520,17 +2519,17 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
 	    {
 	      if (net->id == recv_id)
 		{
-		  for (n = 0; n < rt->coloured_pixels; n++)
+		  for (n = 0; n < rt->col_pixels; n++)
 		    {
-		      pixel_data1 = &rt->coloured_pixel_recv[ 6 * n ];
-		      pixel_data2 = &rt->coloured_pixel_send[ 6 * n ];
+		      col_pixel1 = &rt->col_pixel_recv[ n ];
+		      col_pixel2 = &rt->col_pixel_send[ n ];
 		      
-		      pixel_data2[ 0 ] = pixel_data1[ 0 ];
-		      pixel_data2[ 1 ] = pixel_data1[ 1 ];
-		      pixel_data2[ 2 ] = pixel_data1[ 2 ];
-		      pixel_data2[ 3 ] = pixel_data1[ 3 ];
-		      pixel_data2[ 4 ] = pixel_data1[ 4 ];
-		      pixel_data2[ 5 ] = pixel_data1[ 5 ];
+		      col_pixel2->r = col_pixel1->r;
+		      col_pixel2->g = col_pixel1->g;
+		      col_pixel2->b = col_pixel1->b;
+		      col_pixel2->t = col_pixel1->t;
+		      col_pixel2->i = col_pixel1->i;
+		      col_pixel2->j = col_pixel1->j;
 		    }
 		}
 	    }
@@ -2555,19 +2554,19 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
       pixel_color_to_send[ k+3 ] = 1.e+30F;
       k += 4;
     }
-  for (n = 0; n < rt->coloured_pixels; n++)
+  for (n = 0; n < rt->col_pixels; n++)
     {
-      pixel_data_p = &rt->coloured_pixel_recv[ 6 * n ];
+      col_pixel_p = &rt->col_pixel_recv[ n ];
       
-      i = (int)pixel_data_p[ 4 ];
-      j = (int)pixel_data_p[ 5 ];
+      i = col_pixel_p->i;
+      j = col_pixel_p->j;
       
       k = 4 * (i * pixels_y + j);
       
-      pixel_color_to_send[ k   ] += pixel_data_p[ 0 ];
-      pixel_color_to_send[ k+1 ] += pixel_data_p[ 1 ];
-      pixel_color_to_send[ k+2 ] += pixel_data_p[ 2 ];
-      pixel_color_to_send[ k+3 ]  = pixel_data_p[ 3 ];
+      pixel_color_to_send[ k   ] += col_pixel_p->r;
+      pixel_color_to_send[ k+1 ] += col_pixel_p->g;
+      pixel_color_to_send[ k+2 ] += col_pixel_p->b;
+      pixel_color_to_send[ k+3 ]  = col_pixel_p->t;
     }
   if (net->id != 0)
     {
@@ -2604,7 +2603,6 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   
   double seconds;
   
-  float *pixel_data_p;
   float factor;
   float r, g, b;
   
@@ -2617,6 +2615,8 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   short int pixel_i, pixel_j;
   
   unsigned char pixel_r, pixel_g, pixel_b;
+
+  ColPixel *col_pixel_p;
   
   
   pixels_x = screen.pixels_x;
@@ -2677,77 +2677,60 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   
   if (net->id != 0) return;
   
-  factor = 255.F * rt->absorption_factor;
-  
+  if (rt->is_isosurface)
+    {
+      factor = 255.F;
+    }
+  else
+    {
+      factor = 255.F * rt->absorption_factor;
+    }
   
 #ifdef RG
   
   int bytes_per_pixel = sizeof(unsigned char) * 3;
   
-//  pthread_mutex_lock (&network_buffer_copy_lock);
-
-  if (pthread_mutex_trylock( &network_buffer_copy_lock ) == 0)
+  
+  if (net->machines == 1)
     {
-      
-      //printf("THREAD: Was able to acquire lock on mutex\n");
-      
-      send_frame_count++;
-      
-      if (net->machines == 1)
+      for (n = 0; n < (pixels_x * pixels_y) * 3; n++)
 	{
-	  for (n = 0; n < (pixels_x * pixels_y) * 3; n++)
-	    {
-	      pixel_data[ n ] = 255;
-	    }
-	  for (n = 0; n < rt->coloured_pixels; n++)
-	    {
-	      pixel_data_p = &rt->coloured_pixel_recv[ 6 * n ];
-	      
-	      r = pixel_data_p[0];
-	      g = pixel_data_p[1];
-	      b = pixel_data_p[2];
-	      
-	      i = (int)pixel_data_p[4];
-	      j = (int)pixel_data_p[5];
-	      
-	      k = (i * 512 + j) * 3;
-	      
-	      pixel_data[ k   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
-	      pixel_data[ k+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
-	      pixel_data[ k+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
-	    }
+	  pixel_data[ n ] = 255;
 	}
-      else
+      for (n = 0; n < rt->col_pixels; n++)
 	{
-	  for (k = 0; k < pixels_x * pixels_y; k++)
-	    {
-	      r = pixel_color_to_send[ (k<<2)   ];
-	      g = pixel_color_to_send[ (k<<2)+1 ];
-	      b = pixel_color_to_send[ (k<<2)+2 ];
-	      
-	      pixel_data[ (k*3)   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
-	      pixel_data[ (k*3)+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
-	      pixel_data[ (k*3)+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
-	    }
+	  col_pixel_p = &rt->col_pixel_recv[ n ];
+	  
+	  r = col_pixel_p->r;
+	  g = col_pixel_p->g;
+	  b = col_pixel_p->b;
+	  i = col_pixel_p->i;
+	  j = col_pixel_p->j;
+	  
+	  k = (i * pixels_y + j) * 3;
+	  
+	  pixel_data[ k   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
+	  pixel_data[ k+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
+	  pixel_data[ k+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
 	}
-      
-      seconds = myClock();
-      
-      int eVizret = eViz_RLE_writeMemory (pixel_data, pixels_x, pixels_y,
-					  bytes_per_pixel, &compressed_frame_size, compressed_data);
-      
-      seconds = myClock() - seconds;
-      
-      compression_time += seconds;
-      
-      //printf("ret, compressed size, time, total time: %i, %i, %0.3f, %0.3f\n",
-      //	     eVizret, compressed_frame_size, seconds, compression_time);
-      
-    pthread_mutex_unlock (&network_buffer_copy_lock);
-      
-     pthread_cond_signal (&network_send_frame);
     }
-
+  else
+    {
+      for (k = 0; k < pixels_x * pixels_y; k++)
+	{
+	  r = pixel_color_to_send[ (k<<2)   ];
+	  g = pixel_color_to_send[ (k<<2)+1 ];
+	  b = pixel_color_to_send[ (k<<2)+2 ];
+	  
+	  pixel_data[ (k*3)   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
+	  pixel_data[ (k*3)+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
+	  pixel_data[ (k*3)+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
+	}
+    }
+  
+  int eVizret = eViz_RLE_writeMemory (pixel_data, pixels_x, pixels_y,
+				      bytes_per_pixel, &compressed_frame_size, compressed_data);
+  
 #else // RG
   
   FILE *image_file;
@@ -2762,18 +2745,18 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   
   if (net->machines == 1)
     {
-      xdr_int (&xdr_image_file, &rt->coloured_pixels);
+      xdr_int (&xdr_image_file, &rt->col_pixels);
       
-      for (n = 0; n < rt->coloured_pixels; n++)
+      for (n = 0; n < rt->col_pixels; n++)
 	{
-	  pixel_data_p = &rt->coloured_pixel_recv[ 6 * n ];
+	  col_pixel_p = &rt->col_pixel_recv[ n ];
 	  
-	  pixel_r = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[0])));
-	  pixel_g = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[1])));
-	  pixel_b = (unsigned char)max(0, min(255, (int)(255.F - factor * pixel_data_p[2])));
+	  pixel_r = (unsigned char)max(0, min(255, (int)(255.F - factor * col_pixel_p->r)));
+	  pixel_g = (unsigned char)max(0, min(255, (int)(255.F - factor * col_pixel_p->g)));
+	  pixel_b = (unsigned char)max(0, min(255, (int)(255.F - factor * col_pixel_p->b)));
 	  
-	  pixel_i = (short int)pixel_data_p[4];
-	  pixel_j = (short int)pixel_data_p[5];
+	  pixel_i = col_pixel_p->i;
+	  pixel_j = col_pixel_p->j;
 	  
 	  xdr_u_char (&xdr_image_file, &pixel_r);
 	  xdr_u_char (&xdr_image_file, &pixel_g);
@@ -2886,7 +2869,7 @@ void rtProjection (float ortho_x, float ortho_y,
 }
 
 #ifdef STEER
-void rtReadParameters (SteerParams *steer, char *parameters_file_name, RT *rt, Net *net)
+void rtReadParameters (char *parameters_file_name, RT *rt, Net *net, SteerParams *steer)
 #else
 void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
 #endif
@@ -2993,23 +2976,89 @@ void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
 #endif
 }
 
-void rtInit (char *image_file_name, RT *rt)
+
+#ifdef STEER
+void rtUpdateParameters (RT *rt, SteerParams *steer)
 {
+  // update rt params
+  
+  rtProjection (0.5F * rt->system_size, 0.5F * rt->system_size,
+		steer->pixels_x, steer->pixels_y,
+		steer->ctr_x, steer->ctr_y, steer->ctr_z,
+		5.F * rt->system_size,
+		steer->longitude, steer->latitude,
+		0.5F * (5.F * rt->system_size),
+		steer->zoom);
+  
+  rt->image_frequency = steer->image_freq;
+  rt->flow_field_type = steer->flow_field_type;
+  rt->is_isosurface = steer->is_isosurface;
+  rt->absorption_factor = steer->abs_factor;
+  rt->cutoff = steer->cutoff;
+  
+  rt->flow_field_value_max_inv[ DENSITY  ] = 1.F / steer->max_density;
+  rt->flow_field_value_max_inv[ VELOCITY ] = 1.F / steer->max_velocity;
+  rt->flow_field_value_max_inv[ STRESS   ] = 1.F / steer->max_stress;
+}
+#endif
+
+
+void rtInit (char *image_file_name, Net *net, RT *rt)
+{
+  int col_pixel_count = 6;
+  int col_pixel_blocklengths[6] = {1, 1, 1, 1, 1, 1};
+  MPI_Datatype col_pixel_types[6] = {MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL,
+				     MPI_SHORT, MPI_SHORT};
+
+  // calculate displacements
+  MPI_Aint col_pixel_disps[6];
+  
+  
   rt->image_file_name = image_file_name;
   
-  rt->coloured_pixels_max = 512 * 512;
+  rt->col_pixels_max = 512 * 512;
 
-  //rt->coloured_pixel_send = (float *)malloc(sizeof(float) * 6 * rt->coloured_pixels_max);
+  //rt->col_pixel_send = (ColPixel *)malloc(sizeof(ColPixel) * rt->col_pixels_max);
 
-  rt->coloured_pixel_recv = (float *)malloc(sizeof(float) * 6 * rt->coloured_pixels_max);
+  rt->col_pixel_recv = (ColPixel *)malloc(sizeof(ColPixel) * rt->col_pixels_max);
   
   rt->pixels_max = 512 * 512;
-  rt->coloured_pixel_id = (int *)malloc(sizeof(int) * rt->pixels_max);
+  rt->col_pixel_id = (int *)malloc(sizeof(int) * rt->pixels_max);
   
 #ifdef RG
-  pixel_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * rt->pixels_max);
-  compressed_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * rt->pixels_max);
+  if (net->id == 0)
+    {
+      pixel_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * rt->pixels_max);
+      compressed_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * rt->pixels_max);
+    }
 #endif
+  
+  // create the derived datatype for the MPI communications
+  
+  col_pixel_disps[0] = 0;
+  
+  for (int i = 1; i < col_pixel_count; i++)
+    {
+      if (col_pixel_types[i - 1] == MPI_INTEGER)
+	{
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(int) * col_pixel_blocklengths[i - 1]);
+	}
+      else if (col_pixel_types[i - 1] == MPI_DOUBLE)
+	{
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(double) * col_pixel_blocklengths[i - 1]);
+	}
+      else if (col_pixel_types[i - 1] == MPI_REAL)
+	{
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float) * col_pixel_blocklengths[i - 1]);
+	}
+      else if (col_pixel_types[i - 1] == MPI_SHORT)
+	{
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(short int) * col_pixel_blocklengths[i - 1]);
+	}
+    }
+  MPI_Type_struct (col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types, &MPI_col_pixel_type);
+  MPI_Type_commit (&MPI_col_pixel_type);
+  
   
   rtRayAABBIntersection[0] = rtRayAABBIntersection000;
   rtRayAABBIntersection[1] = rtRayAABBIntersection001;
@@ -3030,14 +3079,17 @@ void rtInit (char *image_file_name, RT *rt)
   rtTraverse[7] = rtTraverse111;
 }
 
-void rtEnd (RT *rt)
+void rtEnd (Net *net, RT *rt)
 {
-  free(rt->coloured_pixel_id);
-  free(rt->coloured_pixel_recv);
+  free(rt->col_pixel_id);
+  free(rt->col_pixel_recv);
   free(rt->cluster);
 
 #ifdef RG
-  free(compressed_data);
-  free(pixel_data);
+  if (net->id == 0)
+    {
+      free(compressed_data);
+      free(pixel_data);
+    }
 #endif // RG
 }

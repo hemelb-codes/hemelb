@@ -14,10 +14,10 @@ MPIRUN=/usr/bin/mpirun
 
 #REG_HOME=/home/steven/reg_steer_lib
 
-#REG_CPPFLAGS=-I${REG_HOME}/include
+REG_CPPFLAGS=-I${REG_HOME}/include
 
 #REG_LDFLAGS=-L${REG_HOME}/lib64 -Wl,-Bstatic -lReG_Steer -lReG_Steer_Utils \
-                -lReG_Steer_SOAP -Wl,-Bdynamic -lxml2
+#                -lReG_Steer_SOAP -Wl,-Bdynamic -lxml2
 
 MPICPUS=2
 
@@ -26,7 +26,7 @@ TEST2INPUT=$(HOME)/hemelb/Input/angio1
 TEST3INPUT=$(HOME)/hemelb/Input/bifurcation_512x512x512
 
 FLAGS=-O3 ${REG_CPPFLAGS} 
-DEFS=-DRG -DSTEER
+#DEFS=-DRG -DSTEER
 DEFS=-DRG 
 
 OBJ=config.o \

@@ -1211,6 +1211,10 @@ void netInit (LBM *lbm, Net *net, RT *rt)
 				  ++net->neigh_procs;
 				}
 			    }
+			  if (!lbm->is_checkpoint)
+			    {
+			      d[ site_map ] = (double)lbm->block_density[ lbm->block_map[n] ];
+			    }
 			  net->site_data[ site_map ] = site_data[ my_sites ];
 			  ++my_sites;
 			}
@@ -1221,6 +1225,9 @@ void netInit (LBM *lbm, Net *net, RT *rt)
     }
   
   free(site_data);
+  
+  free(lbm->block_map);
+  free(lbm->block_density);
   
   // point-to-point communications are performed to match data to be
   // sent to/receive from different partitions; in this way, the
