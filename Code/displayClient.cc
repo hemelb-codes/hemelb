@@ -113,41 +113,41 @@ void ReceiveFrame ()
   
   xdr_setpos (&xdr_network_stream, 0);
   
-  lengthToReceive = compressed_frame_size;//*4;
+  lengthToReceive = compressed_frame_size*4;
   recv_all (sockfd, xdrReceiveBuffer, &lengthToReceive);
   bytesReceived += lengthToReceive;
   
   printf("received %i Bytes\n", bytesReceived);
   
-  //for (int i = 0; i < compressed_frame_size; i++)
-  //  {
-  //    xdr_u_char (&xdr_network_stream, &compressed_data[i]);
-  //  }
-  m = (compressed_frame_size >> 2) << 2;
-  
-  if (m < compressed_frame_size) m += 4;
-  
-  n = 0;
-  
-  for (int i = 0; i < (m >> 2); i++)
+  for (int i = 0; i < compressed_frame_size; i++)
     {
-      xdr_u_int (&xdr_network_stream, &four_compressed_data);
-      
-      compressed_data[n++] = four_compressed_data & (1U << 8U);
-      
-      if (n++ < compressed_frame_size)
-  	{
-  	  compressed_data[n] = (four_compressed_data >> 8U) & (1U << 8U);
-  	}
-      if (n++ < compressed_frame_size)
-  	{
-  	  compressed_data[n] = (four_compressed_data >> 16U) & (1U << 8U);
-  	}
-      if (n++ < compressed_frame_size)
-  	{
-  	  compressed_data[n] = (four_compressed_data >> 24U) & (1U << 8U);
-  	}
+      xdr_u_char (&xdr_network_stream, &compressed_data[i]);
     }
+  //m = (compressed_frame_size >> 2) << 2;
+  //
+  //if (m < compressed_frame_size) m += 4;
+  //
+  //n = 0;
+  //
+  //for (int i = 0; i < (m >> 2); i++)
+  //  {
+  //    xdr_u_int (&xdr_network_stream, &four_compressed_data);
+  //    
+  //    compressed_data[n++] = four_compressed_data & (1U << 8U);
+  //    
+  //    if (n++ < compressed_frame_size)
+  //	{
+  //	  compressed_data[n] = (four_compressed_data >> 8U) & (1U << 8U);
+  //	}
+  //    if (n++ < compressed_frame_size)
+  //	{
+  //	  compressed_data[n] = (four_compressed_data >> 16U) & (1U << 8U);
+  //	}
+  //    if (n++ < compressed_frame_size)
+  //	{
+  //	  compressed_data[n] = (four_compressed_data >> 24U) & (1U << 8U);
+  //	}
+  //  }
   
   xdr_destroy (&xdr_network_stream);
   

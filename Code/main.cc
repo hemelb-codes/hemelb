@@ -133,39 +133,39 @@ void *hemeLB_network (void *ptr)
 	  xdr_int(&xdr_network_stream, &frame_number);
 	  xdr_int(&xdr_network_stream, &compressed_frame_size);
 	  
-	  //for (int i = 0; i < compressed_frame_size; i++)
+	  for (int i = 0; i < compressed_frame_size; i++)
+	    {
+	      xdr_u_char(&xdr_network_stream, &compressed_data[i]);
+	    }
+	  //m = (compressed_frame_size >> 2) << 2;
+	  //
+	  //for (int i = 0; i < m;)
 	  //  {
-	  //    xdr_u_char(&xdr_network_stream, &compressed_data[i]);
+	  //    four_compressed_data = compressed_data[i++];
+	  //    four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << 8U;
+	  //    four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << 16U;
+	  //    four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << 24U;
+	  //    
+	  //    xdr_u_int (&xdr_network_stream, &four_compressed_data);
 	  //  }
-	  m = (compressed_frame_size >> 2) << 2;
-	  
-	  for (int i = 0; i < m;)
-	    {
-	      four_compressed_data = compressed_data[i++];
-	      four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << (2 * sizeof(unsigned char));
-	      four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << (4 * sizeof(unsigned char));
-	      four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << (6 * sizeof(unsigned char));
-	      
-	      xdr_u_int (&xdr_network_stream, &four_compressed_data);
-	    }
-	  for (int i = m; i < compressed_frame_size;)
-	    {
-	      four_compressed_data = compressed_data[i++];
-	      
-	      if (i++ < compressed_frame_size)
-	  	{
-	  	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 8U;
-	  	}
-	      if (i++ < compressed_frame_size)
-	  	{
-	  	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 16U;
-	  	}
-	      if (i++ < compressed_frame_size)
-	  	{
-	  	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 24U;
-	  	}
-	      xdr_u_int (&xdr_network_stream, &four_compressed_data);
-	    }
+	  //for (int i = m; i < compressed_frame_size;)
+	  //  {
+	  //    four_compressed_data = compressed_data[i++];
+	  //    
+	  //    if (i++ < compressed_frame_size)
+	  //	{
+	  //	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 8U;
+	  //	}
+	  //    if (i++ < compressed_frame_size)
+	  //	{
+	  //	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 16U;
+	  //	}
+	  //    if (i++ < compressed_frame_size)
+	  //	{
+	  //	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 24U;
+	  //	}
+	  //    xdr_u_int (&xdr_network_stream, &four_compressed_data);
+	  //  }
 	  int currentPosition = xdr_getpos (&xdr_network_stream);
 	  
 	  int nElements = currentPosition / sizeof(char);
@@ -419,8 +419,7 @@ int main (int argc, char *argv[])
       pthread_attr_init (&pthread_attrib);
       pthread_attr_setdetachstate (&pthread_attrib, PTHREAD_CREATE_JOINABLE);
       
-      pthread_create (&network_thread, &pthread_attrib, he
-	      four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << (8 * sizeof(unsigned char));meLB_network, NULL);
+      pthread_create (&network_thread, &pthread_attrib, hemeLB_network, NULL);
     }
 
 #endif // RG
