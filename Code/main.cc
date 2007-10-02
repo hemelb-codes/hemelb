@@ -31,9 +31,29 @@ RT rt;
 #ifdef RG
 char host_name[255];
 
+int send_all(int sockid, char *buf, int *length ) {
+	
+  int sent_bytes = 0;
+  int bytes_left_to_send = *length;
+  int n;
+	
+  while( sent_bytes < *length ) {
+    n = send(sockid, buf+sent_bytes, bytes_left_to_send, 0);
+    if (n == -1)
+      break;
+    sent_bytes += n;
+    bytes_left_to_send -= n;
+  }
+	
+  *length = sent_bytes;
+	
+  return n==-1?-1:0;
+
+}
 
 void *hemeLB_network (void *ptr)
 {
+
   gethostname (host_name, 255);
 
 #ifndef STEER
@@ -166,27 +186,24 @@ void *hemeLB_network (void *ptr)
 	  //	}
 	  //    xdr_u_int (&xdr_network_stream, &four_compressed_data);
 	  //  }
+
 	  int currentPosition = xdr_getpos (&xdr_network_stream);
 	  
 	  int nElements = currentPosition / sizeof(char);
 	  
-	  printf("n Elements of char to send %i\n", nElements);
-	  
-	  for (int i = 0; i < nElements; i++)
-	    {
-	      int ret = send(new_fd, &xdrBuffer[i], sizeof(char), 0);
-	      
-	      if (ret < 0)
-		{
-		  is_broken_pipe = 1;
-		  break;
-		}
-	      else
-		{
-		  bytesSent += ret;
-		}
-	    }
-	  
+	  printf("n Elements of char to send %i (%iB)\n", nElements, currentPosition);
+
+          int ret;
+
+          ret = send_all(new_fd, xdrBuffer, &currentPosition);
+
+          if (ret < 0) {
+            is_broken_pipe = 1;
+            break;
+          } else {
+            bytesSent += currentPosition;
+          }
+
 	  printf ("bytes sent, elements: %i %i\n", bytesSent, nElements);
 	  
 	  xdr_destroy (&xdr_network_stream);
