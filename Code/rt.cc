@@ -1,9 +1,11 @@
 #include "config.h"
-#include <string.h>
 
+#ifndef BENCH
 #ifdef RG
 #include "eVizRLEUtil.h"
 #endif // RG
+#endif // BENCH
+
 
 void (*rtRayAABBIntersection[8]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t);
 
@@ -2133,8 +2135,6 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
 {
   // here, the ray tracing is performed and the intra-machine communications take place
   
-  double seconds;
-  
   float screen_vtx_x, screen_vtx_y, screen_vtx_z;
   
   float px0, py0, pz0;
@@ -2171,10 +2171,6 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
   Cluster *cluster_p;
   
   
-  seconds = myClock ();
-  
-  ++rt->ray_tracing_count;
-  
   px0 = viewpoint.pos_x;
   py0 = viewpoint.pos_y;
   pz0 = viewpoint.pos_z;
@@ -2200,9 +2196,10 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
   if (pixels_x * pixels_y > rt->pixels_max)
     {
       rt->pixels_max = pixels_x * pixels_y;
-
+      
       rt->col_pixel_id = (int *)realloc(rt->col_pixel_id, sizeof(int) * rt->pixels_max);
-
+      
+#ifndef BENCH
 #ifdef RG
       if (net->id == 0)
 	{
@@ -2210,6 +2207,7 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
 	  compressed_data = (unsigned char *)realloc(compressed_data, sizeof(unsigned char) * 3 * pixels_x * pixels_y);
 	}
 #endif // RG
+#endif // BENCH
     }
 
   for (i = 0; i < pixels_x * pixels_y; i++)
@@ -2398,18 +2396,7 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
   // if the number of machines is greater than one, take place in the
   // routine rtRayTracingB.
   
-  for (n = 0; n < rt->col_pixels; n++)
-    {
-      col_pixel1 = &rt->col_pixel_send[ n ];
-      col_pixel2 = &rt->col_pixel_recv[ n ];
-      
-      col_pixel2->r = col_pixel1->r;
-      col_pixel2->g = col_pixel1->g;
-      col_pixel2->b = col_pixel1->b;
-      col_pixel2->t = col_pixel1->t;
-      col_pixel2->i = col_pixel1->i;
-      col_pixel2->j = col_pixel1->j;
-    }
+  memcpy (rt->col_pixel_recv, rt->col_pixel_send, rt->col_pixels * sizeof(ColPixel));
 
   // "master_proc_id" will be the identifier of the processor with
   // lowest rank in its machine
@@ -2478,22 +2465,13 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
 			  rt->col_pixel_recv = (ColPixel *)realloc(rt->col_pixel_recv,
 								   sizeof(ColPixel) * rt->col_pixels_max);
 			}
-		      *col_pixel_id_p = rt->col_pixels;
+		      col_pixel2 = &rt->col_pixel_recv[ *col_pixel_id_p = rt->col_pixels ];
 		      
-		      col_pixel1 = &rt->col_pixel_send[ n ];
-		      col_pixel2 = &rt->col_pixel_recv[ *col_pixel_id_p ];
-		      
-		      col_pixel2->r = col_pixel1->r;
-		      col_pixel2->g = col_pixel1->g;
-		      col_pixel2->b = col_pixel1->b;
-		      col_pixel2->t = col_pixel1->t;
-		      col_pixel2->i = col_pixel1->i;
-		      col_pixel2->j = col_pixel1->j;
+		      memcpy (col_pixel2, col_pixel1, sizeof(ColPixel));
 		      ++rt->col_pixels;
 		    }
 		  else
 		    {
-		      col_pixel1 = &rt->col_pixel_send[ n ];
 		      col_pixel2 = &rt->col_pixel_recv[ *col_pixel_id_p ];
 		      
 		      if (rt->is_isosurface)
@@ -2519,32 +2497,18 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
 	    {
 	      if (net->id == recv_id)
 		{
-		  for (n = 0; n < rt->col_pixels; n++)
-		    {
-		      col_pixel1 = &rt->col_pixel_recv[ n ];
-		      col_pixel2 = &rt->col_pixel_send[ n ];
-		      
-		      col_pixel2->r = col_pixel1->r;
-		      col_pixel2->g = col_pixel1->g;
-		      col_pixel2->b = col_pixel1->b;
-		      col_pixel2->t = col_pixel1->t;
-		      col_pixel2->i = col_pixel1->i;
-		      col_pixel2->j = col_pixel1->j;
-		    }
+		  memcpy (rt->col_pixel_send, rt->col_pixel_recv,
+			  rt->col_pixels * sizeof(ColPixel));
 		}
 	    }
 	  recv_id += comm_inc << 1;
 	}
       comm_inc <<= 1;
     }
-
-  net->timing[6] += myClock () - seconds;
   
   if (net->machines == 1 || net->id != master_proc_id) return;
   
   // non-blocking inter-machine communications of sub-images begin here
-  
-  seconds = myClock ();
   
   for (k = 0; k < 4 * pixels_x * pixels_y;)
     {
@@ -2583,14 +2547,13 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
       
       for (m = 1; m < net->machines; m++)
 	{
-	  net->err = MPI_Irecv (pixel_color_to_recv,
+	  net->err = MPI_Irecv (&pixel_color_to_recv[ (m-1) * (4 * SCREEN_SIZE_MAX) ],
 				4 * pixels_x * pixels_y, MPI_FLOAT,
 				send_id, 30, MPI_COMM_WORLD,
 				&net->req[ 2 ][ (net->id + net->procs) * net->procs + send_id ]);
 	  send_id += net->procs_per_machine[ m ];
 	}
     }
-  net->timing[7] += myClock () - seconds;
 }
 
 
@@ -2601,8 +2564,6 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   // here, the intra-machine communications take place and the RG
   // buffers or the output file are set
   
-  double seconds;
-  
   float factor;
   float r, g, b;
   
@@ -2611,6 +2572,7 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   int m, n;
   int send_id, recv_id;
   int master_proc_id;
+  int offset;
   
   short int pixel_i, pixel_j;
   
@@ -2624,15 +2586,12 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   
   if (net->machines > 1)
     {
-      seconds = myClock ();
-      
       master_proc_id = 0;
       
       for (m = 0; m < net->machine_id[ net->id ]; m++)
 	{
 	  master_proc_id += net->procs_per_machine[ m ];
 	}
-      
       if (net->id != master_proc_id) return;
       
       if (net->id != 0)
@@ -2649,34 +2608,37 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
 	    {
 	      net->err = MPI_Wait (&net->req[ 2 ][ (net->id + net->procs) * net->procs + send_id ], net->status);
 	      
+	      offset = (m-1) * (4 * SCREEN_SIZE_MAX);
+	      
 	      for (k = 0; k < 4 * pixels_x * pixels_y;)
 		{
 		  if (rt->is_isosurface)
 		    {
-		      if (pixel_color_to_recv[ k+3 ] < pixel_color_to_send[ k+3 ])
+		      if (pixel_color_to_recv[ offset+3 ] < pixel_color_to_send[ k+3 ])
 			{
-			  pixel_color_to_send[ k   ] = pixel_color_to_recv[ k   ];
-			  pixel_color_to_send[ k+1 ] = pixel_color_to_recv[ k+1 ];
-			  pixel_color_to_send[ k+2 ] = pixel_color_to_recv[ k+2 ];
-			  pixel_color_to_send[ k+3 ] = pixel_color_to_recv[ k+3 ];
+			  pixel_color_to_send[ k   ] = pixel_color_to_recv[ offset   ];
+			  pixel_color_to_send[ k+1 ] = pixel_color_to_recv[ offset+1 ];
+			  pixel_color_to_send[ k+2 ] = pixel_color_to_recv[ offset+2 ];
+			  pixel_color_to_send[ k+3 ] = pixel_color_to_recv[ offset+3 ];
 			}
 		    }
 		  else
 		    {
-		      pixel_color_to_send[ k   ] += pixel_color_to_recv[ k   ];
-		      pixel_color_to_send[ k+1 ] += pixel_color_to_recv[ k+1 ];
-		      pixel_color_to_send[ k+2 ] += pixel_color_to_recv[ k+2 ];
+		      pixel_color_to_send[ k   ] += pixel_color_to_recv[ offset   ];
+		      pixel_color_to_send[ k+1 ] += pixel_color_to_recv[ offset+1 ];
+		      pixel_color_to_send[ k+2 ] += pixel_color_to_recv[ offset+2 ];
 		    }
 		  k += 4;
+		  offset += 4;
 		}
 	      send_id += net->procs_per_machine[ m ];
 	    }
 	}
-      net->timing[7] += myClock () - seconds;
     }
   
   if (net->id != 0) return;
   
+#ifndef BENCH
   if (rt->is_isosurface)
     {
       factor = 255.F;
@@ -2685,7 +2647,6 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
     {
       factor = 255.F * rt->absorption_factor;
     }
-  
 #ifdef RG
   
   int bytes_per_pixel = sizeof(unsigned char) * 3;
@@ -2791,6 +2752,7 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   fclose (image_file);
   
 #endif // RG
+#endif // BENCH
 }
 
 
@@ -2868,11 +2830,15 @@ void rtProjection (float ortho_x, float ortho_y,
   screen.par_y = (2.F * screen.max_y) / (float)pixels_y;
 }
 
+#ifndef BENCH
 #ifdef STEER
-void rtReadParameters (char *parameters_file_name, RT *rt, Net *net, SteerParams *steer)
+void rtReadParameters (char *parameters_file_name, Net *net, RT *rt, SteerParams *steer)
 #else
-void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
+  void rtReadParameters (char *parameters_file_name, Net *net, RT *rt)
 #endif
+#else // BENCH
+void rtReadParameters (char *parameters_file_name, Net *net, RT *rt)
+#endif // BENCH
 {
   FILE *parameters_file;
   
@@ -2956,7 +2922,7 @@ void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
   rt->flow_field_value_max_inv[ VELOCITY ] = 1.F / velocity_max;
   rt->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
   
-  
+#ifndef BENCH
 #ifdef STEER
   // set up the ReG struct
   
@@ -2974,9 +2940,11 @@ void rtReadParameters (char *parameters_file_name, RT *rt, Net *net)
   steer->max_velocity = velocity_max;
   steer->max_stress = stress_max;
 #endif
+#endif // BENCH
 }
 
 
+#ifndef BENCH
 #ifdef STEER
 void rtUpdateParameters (RT *rt, SteerParams *steer)
 {
@@ -3001,6 +2969,7 @@ void rtUpdateParameters (RT *rt, SteerParams *steer)
   rt->flow_field_value_max_inv[ STRESS   ] = 1.F / steer->max_stress;
 }
 #endif
+#endif // BENCH
 
 
 void rtInit (char *image_file_name, Net *net, RT *rt)
@@ -3025,6 +2994,9 @@ void rtInit (char *image_file_name, Net *net, RT *rt)
   rt->pixels_max = 512 * 512;
   rt->col_pixel_id = (int *)malloc(sizeof(int) * rt->pixels_max);
   
+  rt->col_pixels_recv = (int *)malloc(sizeof(int) * net->procs);
+  
+#ifndef BENCH
 #ifdef RG
   if (net->id == 0)
     {
@@ -3032,6 +3004,7 @@ void rtInit (char *image_file_name, Net *net, RT *rt)
       compressed_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * rt->pixels_max);
     }
 #endif
+#endif // BENCH
   
   // create the derived datatype for the MPI communications
   
@@ -3081,10 +3054,13 @@ void rtInit (char *image_file_name, Net *net, RT *rt)
 
 void rtEnd (Net *net, RT *rt)
 {
+  free(rt->col_pixels_recv);
+  //free(rt->col_pixel_send);
   free(rt->col_pixel_id);
   free(rt->col_pixel_recv);
   free(rt->cluster);
-
+  
+#ifndef BENCH
 #ifdef RG
   if (net->id == 0)
     {
@@ -3092,4 +3068,5 @@ void rtEnd (Net *net, RT *rt)
       free(pixel_data);
     }
 #endif // RG
+#endif // BENCH
 }

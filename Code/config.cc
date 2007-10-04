@@ -51,6 +51,7 @@ int inv_dir[] = {0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13};
 MPI_Datatype MPI_col_pixel_type;
 
 
+#ifndef BENCH
 #ifdef RG
 
 pthread_mutex_t network_buffer_copy_lock;
@@ -64,6 +65,7 @@ unsigned char *pixel_data = NULL;
 unsigned char *compressed_data = NULL;
 
 #endif // RG
+#endif // BENCH
 
 
 double *f_old = NULL, *f_new = NULL;
@@ -87,8 +89,8 @@ double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 int f_send_id[SHARED_DISTRIBUTIONS_MAX];
 int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
 
-float pixel_color_to_send[4*1024*1024];
-float pixel_color_to_recv[4*1024*1024];
+float pixel_color_to_send[4*SCREEN_SIZE_MAX];
+float pixel_color_to_recv[4*SCREEN_SIZE_MAX*(MACHINES_MAX-1)];
 
 
 Screen screen;
@@ -128,6 +130,6 @@ int max (int a, int b)
 
 double myClock ()
 {
-  return (double)clock () / (double)CLOCKS_PER_SEC;
+  return (double)clock () * (1. / (double)CLOCKS_PER_SEC);
 }
 

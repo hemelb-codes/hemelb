@@ -11,8 +11,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
   FILE *system_config;
   XDR xdr_config;
   
-  double seconds;
-  
   float *block_density_p = NULL;
   float error;
   float temp;
@@ -183,10 +181,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
   xdr_destroy (&xdr_config);
   fclose (system_config);
   
-  
   if (lbm->is_checkpoint) return;
-  
-  seconds = myClock ();
   
   blocks = 0;
   n = -1;
@@ -258,24 +253,21 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			fmaxf(1.e-30F, *block_density_p));
 	}
     }
-  seconds = myClock () - seconds;
-  
   free(density_block);
   
-  if (net->id == 0)
-    {
-      printf ("Coarse-level density gradients minimization: %.3e, iters: %i\n",
-	      seconds, iters);
-      fflush (stdout);
-    }
+  lbm->convergence_error = 1.;
 }
 
 
+#ifndef BENCH
 #ifdef STEER
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net, SteerParams *steer)
 #else
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 #endif
+#else // BENCH
+void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
+#endif // BENCH
 {
   // through this function the processor 0 reads the LB parameters
   // and then communicate them to the other processors
@@ -284,6 +276,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   
   int n;
   int iters;
+  
   
   if (net->id == 0)
     {
@@ -382,6 +375,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   lbm->omega = -1.0 / lbm->tau;
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
   
+#ifndef BENCH
 #ifdef STEER
   steer->tau            = lbm->tau;
   steer->tolerance      = lbm->tolerance;
@@ -389,9 +383,11 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   steer->conv_freq      = lbm->convergence_frequency;
   steer->check_freq     = lbm->checkpoint_frequency;
 #endif
+#endif // BENCH
 }
 
 
+#ifndef BENCH
 #ifdef STEER
 void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
 {
@@ -406,6 +402,7 @@ void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
 }
 #endif
+#endif // BENCH
 
 
 void lbmSetInitialConditions (LBM *lbm, Net *net)
@@ -420,7 +417,7 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
   XDR  xdr_system_config;
   
   double f_eq[15];
-  float pressure, density;
+  float density;
   float vx, vy, vz;
   float stress;
   
@@ -464,15 +461,13 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
 	  
 	  if (flag == 0) continue;
 	  
-	  xdr_float (&xdr_system_config, &pressure);
+	  xdr_float (&xdr_system_config, &density);
 	  xdr_float (&xdr_system_config, &vx);
 	  xdr_float (&xdr_system_config, &vy);
 	  xdr_float (&xdr_system_config, &vz);
 	  xdr_float (&xdr_system_config, &stress);
 	  
 	  if (net->proc_id[ n ] != net->id) continue;
-	  
-	  density = pressure / Cs2;
 	  
 	  lbmFeq (density, vx, vy, vz, f_eq);
 	  
@@ -495,7 +490,7 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
 
 void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, LBM *lbm, Net *net)
 {
-  // this function writes the pressure, velocity and effective von
+  // this function writes the density, velocity and effective von
   // Mises stress flow field on "output_file_name" which will be the
   // output file or the checkpoint one if "is_checkpoint" is "0" or
   // "1" respectively
@@ -503,8 +498,7 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
   FILE *system_config = NULL;
   XDR	xdr_system_config;
   
-  double seconds;
-  double pressure, pressure_min, pressure_max;
+  double density, density_min, density_max;
   double velocity, velocity_min, velocity_max;
   double stress, stress_min, stress_max;
   double vx, vy, vz;
@@ -521,8 +515,6 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
   
   DataBlock *map_block_p;
   
-  
-  seconds = myClock ();
   
   if (net->id == 0)
     {
@@ -550,8 +542,8 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
       xdr_int    (&xdr_system_config, &lbm->block_size);
     }
   
-  pressure_min = +1.e+30;
-  pressure_max = -1.e+30;
+  density_min = +1.e+30;
+  density_max = -1.e+30;
   
   velocity_min = +1.e+30;
   velocity_max = -1.e+30;
@@ -594,19 +586,17 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 	      
 	      if (site_data == FLUID_TYPE)
 		{
-		  lbmFeq (f_old_p, &pressure, &vx, &vy, &vz, f_eq);
+		  lbmFeq (f_old_p, &density, &vx, &vy, &vz, f_eq);
 		}
 	      else
 		{
-		  lbmCalculateBC (f_old_p, site_data, &pressure, &vx, &vy, &vz, lbm);
+		  lbmCalculateBC (f_old_p, site_data, &density, &vx, &vy, &vz, lbm);
 		}
-	      pressure *= Cs2;
-	      
 	      for (l = 0; l < 15; l++)
 		{
 		  f_neq[ l ] = f_old_p[ l ] - f_eq[ l ];
 		}
-	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+0] = (float)pressure;
+	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+0] = (float)density;
 	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+1] = (float)vx;
 	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+2] = (float)vy;
 	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+3] = (float)vz;
@@ -651,9 +641,9 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 	  xdr_float (&xdr_system_config, &macroscopic_par_buffer[m*MACROSCOPIC_PARS+3]);
 	  xdr_float (&xdr_system_config, &macroscopic_par_buffer[m*MACROSCOPIC_PARS+4]);
 	  
-	  pressure = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS];
-	  pressure_min = fmin(pressure_min, pressure);
-	  pressure_max = fmax(pressure_max, pressure);
+	  density = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS];
+	  density_min = fmin(density_min, density);
+	  density_max = fmax(density_max, density);
 	  vx = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS+1];
 	  vy = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS+2];
 	  vz = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS+3];
@@ -672,11 +662,10 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
       
       if (!is_checkpoint)
 	{
-	  printf ("pressure_min, max: %le, %le\n", pressure_min, pressure_max);
-	  printf ("velocity_min, max: %le, %le\n", velocity_min, velocity_max);
-	  printf ("stress_min, max: %le, %le\n", stress_min, stress_max);
+	  printf ("density min, max: %le, %le\n", density_min, density_max);
+	  printf ("velocity min, max: %le, %le\n", velocity_min, velocity_max);
+	  printf ("stress min, max: %le, %le\n", stress_min, stress_max);
 	  fflush (stdout);
 	}
     }
-  net->timing[8] = myClock () - seconds;
 }
