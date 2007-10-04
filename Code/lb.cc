@@ -245,7 +245,6 @@ void lbmInit (char *system_file_name, char *checkpoint_file_name,
 
 void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 {
-  double seconds;
   double *d_p;
   double **nd_p_p;
   double density;
@@ -263,8 +262,6 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
   
   NeighProc *neigh_proc_p;
   
-  
-  seconds = myClock ();
   
   my_sites = net->my_inner_sites + net->my_inter_sites;
   
@@ -434,7 +431,6 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
       flow_field[ 3 * i + 1 ] = 0.F;
       flow_field[ 3 * i + 2 ] = 0.F;
     }
-  seconds = myClock () - seconds;
   
   for (n = 0; n < net->neigh_procs; n++)
     {
@@ -449,21 +445,13 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
   
   free (d);
   d = NULL;
-  
-  if (net->id == 0)
-    {
-      printf ("Fine-level density gradients minimization: s %.3e, iters: %i\n",
-	      seconds, iters);
-      fflush (stdout);
-    }
 }
 
 
-int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *is_converged, LBM *lbm, Net *net)
+int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *is_converged, LBM *lbm, Net *net, RT *rt)
 {
   // the entire simulation time step takes place through this function
   
-  double seconds;
   double f_eq[15], f_neq[15];
   double omega;
   double density, stress;
@@ -488,12 +476,12 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
   
   *is_converged = 0;
   
+#ifndef BENCH
   sum1 = 0.0;
   sum2 = 0.0;
+#endif // BENCH
   
   omega = lbm->omega;
-  
-  seconds = myClock ();
   
   for (i = net->my_inner_sites;
        i < net->my_inner_sites + net->my_inter_sites; i++)
@@ -511,12 +499,16 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 	    {
 	      f_old_p[l] += omega * (f_neq[l] = f_old_p[l] - f_eq[l]);
 	    }
-	  if (perform_rt) stress = lbm->stress_par * sqrt(lbmStress (f_neq));
+	  if (perform_rt && rt->flow_field_type == VELOCITY)
+	    {
+	      stress = lbm->stress_par * sqrt(lbmStress (f_neq));
+	    }
 	}
       else
 	{
 	  lbmCalculateBC (f_old_p, site_data, &density, &vx, &vy, &vz, lbm);
 	}
+#ifndef BENCH
       vel_p = &vel[ i ];
       
       sum1 += fabs(vel_p->x - vx) + fabs(vel_p->y - vy) + fabs(vel_p->z - vz);
@@ -525,6 +517,7 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
       vel_p->x = vx;
       vel_p->y = vy;
       vel_p->z = vz;
+#endif // BENCH
       
       if (perform_rt)
 	{
@@ -533,8 +526,6 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 	  flow_field[ 3 * i + 2 ] = (float)stress;
 	}
     }
-  net->timing[0] += myClock () - seconds;
-  seconds = myClock ();
   
   for (m = 0; m < net->neigh_procs; m++)
     {
@@ -554,8 +545,6 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 	  neigh_proc_p->f_to_send[ n ] = f_old[ neigh_proc_p->f_send_id[n] ];
 	}
     }
-  net->timing[1] += myClock () - seconds;
-  seconds = myClock ();
   
   for (m = 0; m < net->neigh_procs; m++)
     {
@@ -585,9 +574,6 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 			    neigh_proc_p->id, 10, MPI_COMM_WORLD,
 			    &net->req[ 1 ][ (net->id + net->procs) * net->procs + m ]);
     }
-
-  net->timing[2] += myClock () - seconds;
-  seconds = myClock ();
   
   for (i = 0; i < net->my_inner_sites; i++)
     {
@@ -604,7 +590,10 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 	    {
 	      f_old_p[l] += omega * (f_neq[ l ] = f_old_p[l] - f_eq[l]);
 	    }
-	  if (perform_rt) stress = lbm->stress_par * sqrt(lbmStress (f_neq));
+	  if (perform_rt && rt->flow_field_type == VELOCITY)
+	    {
+	      stress = lbm->stress_par * sqrt(lbmStress (f_neq));
+	    }
 	}
       else
 	{
@@ -614,10 +603,13 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
       
       for (l = 0; l < 15; l++)
 	{
+#ifndef BENCH
 	  if (f_old_p[l] < 0.) is_unstable = 1;
+#endif // BENCH
 	  
 	  f_new[ f_id_p[l] ] = f_old_p[l];
 	}
+#ifndef BENCH
       vel_p = &vel[ i ];
       
       sum1 += fabs(vel_p->x - vx) + fabs(vel_p->y - vy) + fabs(vel_p->z - vz);
@@ -626,6 +618,7 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
       vel_p->x = vx;
       vel_p->y = vy;
       vel_p->z = vz;
+#endif // BENCH
       
       if (perform_rt)
 	{
@@ -634,8 +627,6 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 	  flow_field[ 3 * i + 2 ] = (float)stress;
 	}
     }
-  net->timing[3] += myClock () - seconds;
-  seconds = myClock ();
   
   for (m = 0; m < net->inter_m_neigh_procs; m++)
     {
@@ -647,8 +638,6 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
       net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
       net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
     }
-  net->timing[2] += myClock () - seconds;
-  seconds = myClock ();
   
   for (m = 0; m < net->inter_m_neigh_procs; m++)
     {
@@ -668,8 +657,6 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 	  f_new[ neigh_proc_p->f_recv_iv[n] ] = neigh_proc_p->f_to_recv[ n ];
 	}
     }
-  net->timing[1] += myClock () - seconds;
-  seconds = myClock ();
   
   for (i = net->my_inner_sites;
        i < net->my_inner_sites + net->my_inter_sites; i++)
@@ -679,7 +666,9 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
       
       for (l = 0; l < 15; l++)
 	{
+#ifndef BENCH
 	  if (f_old_p[l] < 0.) is_unstable = 1;
+#endif // BENCH
 	  
 	  f_new[ f_id_p[l] ] = f_old_p[l];
 	}
@@ -688,15 +677,11 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
   f_old = f_new;
   f_new = f_old_p;
   
-  net->timing[4] += myClock () - seconds;
-  seconds = myClock ();
-  
+#ifndef BENCH
   if (check_convergence)
     {
       if (net->procs > 1)
 	{
-	  ++net->convergence_count;
-	  
 	  stability_and_convergence_partial[ 0 ] = (double)is_unstable;
 	  stability_and_convergence_partial[ 1 ] = sum1;
 	  stability_and_convergence_partial[ 2 ] = sum2;
@@ -715,17 +700,13 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 	{
 	  *is_converged = 1;
 	}
-      if (net->id == 0)
-	{
-	  printf (" error: %e ", sum1 / sum2);
-	}
+      lbm->convergence_error = sum1 / sum2;
     }
   if (write_checkpoint)
     {
       lbmWriteConfig (!is_unstable, lbm->checkpoint_file_name, 1, lbm, net);
     }
-  
-  net->timing[5] += myClock () - seconds;
+#endif // BENCH
   
   if (is_unstable)
     {
