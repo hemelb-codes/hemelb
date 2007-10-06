@@ -51,7 +51,6 @@ int inv_dir[] = {0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13};
 MPI_Datatype MPI_col_pixel_type;
 
 
-#ifndef BENCH
 #ifdef RG
 
 pthread_mutex_t network_buffer_copy_lock;
@@ -65,7 +64,6 @@ unsigned char *pixel_data = NULL;
 unsigned char *compressed_data = NULL;
 
 #endif // RG
-#endif // BENCH
 
 
 double *f_old = NULL, *f_new = NULL;
@@ -98,6 +96,8 @@ Screen screen;
 Viewpoint viewpoint;
 
 Ray ray;
+
+RT rt;
 
 
 // some simple functions
