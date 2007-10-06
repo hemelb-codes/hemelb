@@ -239,7 +239,6 @@ void lbmInit (char *system_file_name, char *checkpoint_file_name,
   lbm->checkpoint_file_name = checkpoint_file_name;
   
   lbmReadConfig (lbm, net);
-  lbmSetInitialConditions (lbm, net);
 }
 
 
