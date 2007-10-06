@@ -1,11 +1,5 @@
 #include "config.h"
 
-#ifndef BENCH
-#ifdef RG
-#include "eVizRLEUtil.h"
-#endif // RG
-#endif // BENCH
-
 
 void (*rtRayAABBIntersection[8]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t);
 
@@ -2830,15 +2824,11 @@ void rtProjection (float ortho_x, float ortho_y,
   screen.par_y = (2.F * screen.max_y) / (float)pixels_y;
 }
 
-#ifndef BENCH
 #ifdef STEER
 void rtReadParameters (char *parameters_file_name, Net *net, RT *rt, SteerParams *steer)
 #else
-  void rtReadParameters (char *parameters_file_name, Net *net, RT *rt)
-#endif
-#else // BENCH
 void rtReadParameters (char *parameters_file_name, Net *net, RT *rt)
-#endif // BENCH
+#endif
 {
   FILE *parameters_file;
   
@@ -2922,7 +2912,6 @@ void rtReadParameters (char *parameters_file_name, Net *net, RT *rt)
   rt->flow_field_value_max_inv[ VELOCITY ] = 1.F / velocity_max;
   rt->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
   
-#ifndef BENCH
 #ifdef STEER
   // set up the ReG struct
   
@@ -2940,11 +2929,9 @@ void rtReadParameters (char *parameters_file_name, Net *net, RT *rt)
   steer->max_velocity = velocity_max;
   steer->max_stress = stress_max;
 #endif
-#endif // BENCH
 }
 
 
-#ifndef BENCH
 #ifdef STEER
 void rtUpdateParameters (RT *rt, SteerParams *steer)
 {
@@ -2969,7 +2956,6 @@ void rtUpdateParameters (RT *rt, SteerParams *steer)
   rt->flow_field_value_max_inv[ STRESS   ] = 1.F / steer->max_stress;
 }
 #endif
-#endif // BENCH
 
 
 void rtInit (char *image_file_name, Net *net, RT *rt)
@@ -2996,7 +2982,6 @@ void rtInit (char *image_file_name, Net *net, RT *rt)
   
   rt->col_pixels_recv = (int *)malloc(sizeof(int) * net->procs);
   
-#ifndef BENCH
 #ifdef RG
   if (net->id == 0)
     {
@@ -3004,7 +2989,6 @@ void rtInit (char *image_file_name, Net *net, RT *rt)
       compressed_data = (unsigned char *)malloc(sizeof(unsigned char) * 3 * rt->pixels_max);
     }
 #endif
-#endif // BENCH
   
   // create the derived datatype for the MPI communications
   
@@ -3060,7 +3044,6 @@ void rtEnd (Net *net, RT *rt)
   free(rt->col_pixel_recv);
   free(rt->cluster);
   
-#ifndef BENCH
 #ifdef RG
   if (net->id == 0)
     {
@@ -3068,5 +3051,4 @@ void rtEnd (Net *net, RT *rt)
       free(pixel_data);
     }
 #endif // RG
-#endif // BENCH
 }

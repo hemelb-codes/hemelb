@@ -12,19 +12,23 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#ifndef BENCH
+
+#ifdef BENCH
+#undef RG
+#undef STEER
+#endif
+
+
 #ifdef RG
 #include <pthread.h>
+#include "eVizRLEUtil.h"
 #endif // RG
-#endif // BENCH
 
 
-#ifndef BENCH
 #ifdef STEER
 #include "ReG_Steer_types.h"
 #include "ReG_Steer_Appside.h"
 #endif // STEER
-#endif // BENCH
 
 
 #define MACROSCOPIC_PARS   5
@@ -38,11 +42,6 @@
 #define COMMS_LEVELS                   3
 #define SCREEN_SIZE_MAX                1024 * 1024
 #define MACHINES_MAX                   4
-
-
-#ifdef BENCH
-#define MINUTES   30
-#endif
 
 
 extern float EPSILON;
@@ -98,7 +97,6 @@ extern MPI_Datatype MPI_col_pixel_type;
 // data structures useful to define the simulation set-up, construct
 // the system and partition it
 
-#ifndef BENCH
 #ifdef RG
 
 extern pthread_mutex_t network_buffer_copy_lock;
@@ -112,10 +110,8 @@ extern unsigned char *pixel_data;
 extern unsigned char *compressed_data;
 
 #endif // RG
-#endif // BENCH
 
 
-#ifndef BENCH
 #ifdef STEER
 
 // this is here so that I can transfer all params and data in one
@@ -153,7 +149,6 @@ struct SteerParams
 };
 
 #endif // STEER
-#endif // BENCH
 
 
 struct DataBlock
@@ -181,6 +176,9 @@ struct LBM
   double *outlet_density;
   double tolerance;
   double convergence_error;
+  double density_min, density_max;
+  double velocity_min, velocity_max;
+  double stress_min, stress_max;
   
   int sites_x, sites_y, sites_z;
   int blocks_x, blocks_y, blocks_z;
@@ -395,6 +393,8 @@ extern Viewpoint viewpoint;
 
 extern Ray ray;
 
+extern RT rt;
+
 
 // declarations of all the functions used
 
@@ -416,32 +416,24 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net);
 int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *is_converged, LBM *lbm, Net *net, RT *rt);
 void lbmEnd (LBM *lbm);
 
-void netFindTopology (Net *net);
+int netFindTopology (Net *net);
 void netInit (LBM *lbm, Net *net, RT *rt);
 void netEnd (Net *net, RT *rt);
 
 void lbmReadConfig (LBM *lbm, Net *net);
 
-#ifndef BENCH
 #ifdef STEER
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net, SteerParams *steer);
 #else
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
 #endif
-#else
-void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
-#endif // BENCH
 
-#ifndef BENCH
 #ifdef STEER
 void lbmUpdateParameters (LBM *lbm, SteerParams *steer);
 #endif
-#endif // BENCH
 
-
-void lbmSetInitialConditions (LBM *lbm, Net *net);
 void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, LBM *lbm, Net *net);
-
+void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net);
 
 void rtProject (float px1, float py1, float pz1, float *px2, float *py2);
 void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2,
@@ -462,21 +454,15 @@ void rtProjection (float ortho_x, float ortho_y,
 		   float dist,
 		   float zoom);
 
-#ifndef BENCH
 #ifdef STEER
 void rtReadParameters (char *parameters_file_name, Net *net, RT *rt, SteerParams *steer);
 #else
 void rtReadParameters (char *parameters_file_name, Net *net, RT *rt);
 #endif
-#else // BENCH
-void rtReadParameters (char *parameters_file_name, Net *net, RT *rt);
-#endif // BENCH
 
-#ifndef BENCH
 #ifdef STEER
 void rtUpdateParameters (RT *rt, SteerParams *steer);
 #endif
-#endif // BENCH
 
 void rtInit (char *image_file_name, Net *net, RT *rt);
 void rtEnd (Net *net, RT *rt);

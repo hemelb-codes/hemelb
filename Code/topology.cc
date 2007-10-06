@@ -64,7 +64,7 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
 
 #ifdef MPICHX_TOPOLOGY_DEPTHS
 
-void netFindTopology (Net *net)
+int netFindTopology (Net *net)
 {
   // the topology discovery mechanism is implemented in this
   // function. Use the following commented one if some MPI constants
@@ -80,16 +80,14 @@ void netFindTopology (Net *net)
   
   if (net->err != MPI_SUCCESS || flag == 0)
     {
-      printf("MPI_Attr_get(depth) failed, aborting\n"); fflush (stderr);
-      MPI_Abort(MPI_COMM_WORLD, 1);
+      return 0;
     }
   
   net->err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag);
   
   if (net->err != MPI_SUCCESS || flag == 0)
     {
-      printf("MPI_Attr_get(colors) failed, aborting\n"); fflush (stderr);
-      MPI_Abort(MPI_COMM_WORLD, 1);
+      return 0;
     }
 
   net->machines = 0;
@@ -156,11 +154,12 @@ void netFindTopology (Net *net)
 	  net->machine_id[ i ] = machine_id;
 	}
     }
+  return 1;
 }
 
 #else
 
-void netFindTopology (Net *net)
+int netFindTopology (Net *net)
 {
   // the machine is assumed to be only one if this function is
   // used instead of the previous one
@@ -175,27 +174,9 @@ void netFindTopology (Net *net)
       net->machine_id[ i ] = 0;
     }
   net->procs_per_machine[ 0 ] = net->procs;
+  
+  return 1;
 }
-
-/*
-void netFindTopology (Net *net)
-{
-  // the machines are assumed to be two and the number of processors per
-  // machines the half of the total one
-  
-  net->machines = 2;
-  
-  net->machine_id = (int *)malloc(sizeof(int) * net->procs);
-  net->procs_per_machine = (int *)malloc(sizeof(int) * net->machines);
-  
-  for (int i = 0; i < net->procs; i++)
-    {
-      net->machine_id[ i ] = i;
-    }
-  net->procs_per_machine[ 0 ] = net->procs >> 1;
-  net->procs_per_machine[ 1 ] = net->procs - net->procs_per_machine[ 0 ];
-}
-*/
 #endif
 
 
@@ -253,8 +234,6 @@ void netInit (LBM *lbm, Net *net, RT *rt)
   
   Cluster *cluster_p;
   
-  
-  netFindTopology (net);
   
   net->sites_x = lbm->sites_x;
   net->sites_y = lbm->sites_y;
