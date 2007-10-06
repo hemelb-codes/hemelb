@@ -3,9 +3,7 @@
 
 #include "config.h"
 
-RT rt;
 
-#ifndef BENCH
 #ifdef RG
 #include <unistd.h>
 #include <errno.h>
@@ -19,10 +17,11 @@ RT rt;
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
 #endif // RG
-#endif // BENCH
 
 
-#ifndef BENCH
+FILE *timings_ptr;
+
+
 #ifdef RG
 
 char host_name[255];
@@ -30,6 +29,7 @@ char host_name[255];
 u_int sizeToSend = (2 + SCREEN_SIZE_MAX) * sizeof(unsigned int);
 
 char *xdrSendBuffer;
+
 
 int send_all(int sockid, char *buf, int *length ) {
 	
@@ -53,7 +53,6 @@ int send_all(int sockid, char *buf, int *length ) {
 
 void *hemeLB_network (void *ptr)
 {
-
   gethostname (host_name, 255);
 
 #ifndef STEER
@@ -61,8 +60,8 @@ void *hemeLB_network (void *ptr)
   
   fprintf (f, "%s\n", host_name);
   fclose (f);
-
-  printf("MPI 0 Hostname -> %s\n", host_name);
+  
+  fprintf (timings_ptr, "MPI 0 Hostname -> %s\n\n", host_name);
 #endif
 
   signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
@@ -120,7 +119,7 @@ void *hemeLB_network (void *ptr)
 	  continue;
 	}
       
-      printf("server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
+      fprintf (timings_ptr, "server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
       
       close(sock_fd);
       
@@ -185,11 +184,11 @@ void *hemeLB_network (void *ptr)
 	  
 	  int nElements = currentPosition / sizeof(char);
 	  
-	  printf("n Elements of char to send %i (%iB)\n", nElements, currentPosition);
+	  fprintf (timings_ptr, "n Elements of char to send %i (%iB)\n", nElements, currentPosition);
 
           int ret;
 
-          ret = send_all(new_fd, xdrBuffer, &currentPosition);
+          ret = send_all(new_fd, xdrSendBuffer, &currentPosition);
 
           if (ret < 0) {
             is_broken_pipe = 1;
@@ -198,7 +197,7 @@ void *hemeLB_network (void *ptr)
             bytesSent += currentPosition;
           }
 
-	  printf ("bytes sent, elements: %i %i\n", bytesSent, nElements);
+	  fprintf (timings_ptr, "bytes sent, elements: %i %i\n", bytesSent, nElements);
 	  
 	  xdr_destroy (&xdr_network_stream);
 	  
@@ -214,7 +213,6 @@ void *hemeLB_network (void *ptr)
 }
 
 #endif // RG
-#endif // BENCH
 
 
 inline void AbsorptionCoefficients (float flow_field_value, float t1, float t2, float cutoff, float *r, float *g, float *b)
@@ -255,8 +253,15 @@ inline void AbsorptionCoefficients (float flow_field_value, float t1, float t2, 
 
 void usage (char *progname)
 {
-  printf ("Usage: %s /path/to/input/files\n", progname);
-  printf (" files which must be present: config.dat input.asc, pars.asc, rt_pars.asc\n");
+#ifndef BENCH
+  fprintf (timings_ptr, "Usage: %s path of the input files\n", progname);
+  fprintf (timings_ptr, "the following files must be present: config.dat, pars.asc\n");
+  fprintf (timings_ptr, "check.dat (if it is a checkpoint file and must be used), rt_pars.asc\n");
+#else
+  fprintf (timings_ptr, "Usage: %s path of the input files and minutes for benchmarking\n", progname);
+  fprintf (timings_ptr, "the following files must be present: config.dat, pars.asc\n");
+  fprintf (timings_ptr, "check.dat (if it is a checkpoint file and must be used), rt_pars.asc\n");
+#endif
 }
 
 
@@ -271,6 +276,7 @@ int main (int argc, char *argv[])
 #ifndef BENCH
   double simulation_time;
 #else
+  double minutes;
   double fluid_solver_time, fluid_solver_and_vr_time, fluid_solver_and_is_time;
 #endif // BENCH
   
@@ -280,7 +286,7 @@ int main (int argc, char *argv[])
   int checkpoint_count = 0;
   int convergence_count = 0;
   int ray_tracing_count = 0;
-  int required_args = 2;
+  int is_bench_section_finished;
   int is_thread_locked;
   
 #ifdef BENCH
@@ -289,14 +295,11 @@ int main (int argc, char *argv[])
   int fluid_solver_and_is_time_steps;
 #endif
   
-#ifndef BENCH
 #ifdef RG
   pthread_t network_thread;
   pthread_attr_t pthread_attrib;
 #endif // RG
-#endif // BENCH
 
-#ifndef BENCH
 #ifdef STEER
   int    reg_num_cmds;
   int    reg_cmds[REG_INITIAL_NUM_CMDS];
@@ -312,24 +315,24 @@ int main (int argc, char *argv[])
   
   int reg_finished;
 #endif // STEER
-#endif // BENCH
 
   LBM lbm;
   
   Net net;
   
+  
   net.err = MPI_Init (&argc, &argv);
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
   net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
-
-  if (argc != required_args)
+  
+  if (argc != 2 && argc != 3)
     {
       if (net.id == 0) usage(argv[0]);
       
       net.err = MPI_Abort (MPI_COMM_WORLD, 1);
       net.err = MPI_Finalize ();
     }
- 
+  
   char *input_file_path( argv[1] );
 
   char input_config_name[256];
@@ -338,7 +341,12 @@ int main (int argc, char *argv[])
   char checkpoint_config_name[256];
   char rt_parameters_name[256];
   char output_image_name[256];
+  char timings_name[256];
   
+  
+#ifdef BENCH
+  minutes = atof( argv[2] );
+#endif
   
   strcpy ( input_config_name , input_file_path );
   strcat ( input_config_name , "/config.dat" );
@@ -354,34 +362,34 @@ int main (int argc, char *argv[])
 
   strcpy ( rt_parameters_name , input_file_path );
   strcat ( rt_parameters_name , "/rt_pars.asc" );
-
+  
   strcpy ( output_image_name , input_file_path );
   strcat ( output_image_name , "/image.dat" );
-
+  
+  strcpy ( timings_name , input_file_path );
+  strcat ( timings_name , "/timings.asc" );
+  
+  
   if (net.id == 0)
     {
-      printf ("\n");
-      printf ("***********************************************************\n");
-      printf("Opening parameters file: %s\n", input_parameters_name);
-      printf("Opening config file: %s\n", input_config_name);
-      printf("Opening rt parameters file: %s\n", rt_parameters_name);
+      timings_ptr = fopen (timings_name, "w");
+      
+      fprintf (timings_ptr, "***********************************************************\n");
+      fprintf (timings_ptr, "Opening parameters file:\n %s\n", input_parameters_name);
+      fprintf (timings_ptr, "Opening config file:\n %s\n", input_config_name);
+      fprintf (timings_ptr, "Opening rt parameters file:\n %s\n\n", rt_parameters_name);
     }
   
   lbm.inlet_density = NULL;
   lbm.outlet_density = NULL;
   
-#ifndef BENCH
 #ifdef STEER
   lbmReadParameters (input_parameters_name, &lbm, &net, &steer);
 #else
   lbmReadParameters (input_parameters_name, &lbm, &net);
 #endif
-#else
-  lbmReadParameters (input_parameters_name, &lbm, &net);
-#endif // BENCH
 
 
-#ifndef BENCH
 #ifdef STEER
   // create the derived datatype for the MPI_Bcast
   int steer_count = 25;
@@ -439,12 +447,9 @@ int main (int argc, char *argv[])
       net.err = MPI_Finalize ();
       return REG_FAILURE;
     }
-
 #endif // STEER
-#endif // BENCH
 
 
-#ifndef BENCH
 #ifdef RG
   if(net.id == 0)
     {
@@ -461,26 +466,35 @@ int main (int argc, char *argv[])
       free (xdrSendBuffer);
     }
 #endif // RG
-#endif // BENCH
 
   lbmInit (input_config_name, checkpoint_config_name, &lbm, &net);
   
+  if (netFindTopology (&net) == 0)
+    {
+      fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");
+      MPI_Abort(MPI_COMM_WORLD, 1);
+    }
   netInit (&lbm, &net, &rt);
   
-#ifndef BENCH
 #ifdef STEER
   rtReadParameters (rt_parameters_name, &net, &rt, &steer);
 #else
   rtReadParameters (rt_parameters_name, &net, &rt);
 #endif
-#else // BENCH
-  rtReadParameters (rt_parameters_name, &net, &rt);
-#endif // BENCH
 
   
   if (!lbm.is_checkpoint)
     {
       lbmSetOptimizedInitialConditions (&lbm, &net);
+    }
+  else
+    {
+      if (net.id == 0)
+	{
+	  fprintf (timings_ptr, "Opening checkpoint file to read: %s\n", lbm.checkpoint_file_name);
+	  fflush (timings_ptr);
+	}
+      void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net);
     }
   
   rtInit (output_image_name, &net, &rt);
@@ -491,7 +505,6 @@ int main (int argc, char *argv[])
   ray_tracing_count = 0;
   
   
-#ifndef BENCH
 #ifdef STEER
 
   // register params with RealityGrid here
@@ -558,12 +571,12 @@ int main (int argc, char *argv[])
 
   if(net.id == 0)
     {
-      printf("STEER: RealityGrid library initialized and parameters registered.\n");
-      fflush(stdout);
+      fprintf (timings_ptr, "STEER: RealityGrid library initialized and parameters registered.\n");
+      fflush (timings_ptr);
     }
 #endif // STEER
-#endif // BENCH
   
+  net.err = MPI_Barrier (MPI_COMM_WORLD);
   
 #ifndef BENCH
   simulation_time = myClock ();
@@ -576,9 +589,9 @@ int main (int argc, char *argv[])
       
       if (net.id == 0)
       	{
-      	  printf("time step: %i, convergence error: %le\n",
-		 time_step, lbm.convergence_error);
-      	  fflush (stdout);
+      	  fprintf (timings_ptr, "time step: %i, convergence error: %le\n",
+		   time_step, fmin(1., lbm.convergence_error));
+      	  fflush (timings_ptr);
       	}
       
 #ifdef STEER
@@ -598,8 +611,8 @@ int main (int argc, char *argv[])
 
       if (steer.status != REG_SUCCESS)
 	{
-	  printf("STEER: I am %d and I detected that Steering_control failed.\n", net.id);
-	  fflush(stdout);
+	  fprintf (timings_ptr, "STEER: I am %d and I detected that Steering_control failed.\n", net.id);
+	  fflush (timings_ptr);
 	  continue;
 	}
       
@@ -609,8 +622,8 @@ int main (int argc, char *argv[])
 	  switch (steer.recvd_cmds[i])
 	    {
 	    case REG_STR_STOP:
-	      printf ("STEER: I am %d and I've been told to STOP.\n", net.id);
-	      fflush (stdout);
+	      fprintf (timings_ptr, "STEER: I am %d and I've been told to STOP.\n", net.id);
+	      fflush (timings_ptr);
 	      reg_finished = 1;
 	      break;
 	    }
@@ -621,8 +634,8 @@ int main (int argc, char *argv[])
       
       if (steer.num_params_changed > 0)
 	{
-	  printf("STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
-	  fflush(stdout);
+	  fprintf (timings_ptr, "STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
+	  fflush (timings_ptr);
 	  
 	  lbmUpdateParameters (&lbm, &steer);
 	  
@@ -659,9 +672,8 @@ int main (int argc, char *argv[])
 	  ///pthread_mutex_lock( &network_buffer_copy_lock ); ///
 	  is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
 	}
-      
+      net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
-net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INTEGER, 0, MPI_COMM_WORLD); ///
       
       if (perform_rt == 1 && is_thread_locked == 0)
       	{
@@ -701,12 +713,20 @@ net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INTEGER, 0, MPI_COMM_WORLD); ///
     {
       if (net.id == 0)
 	{
-	  printf (" time step: %i\n", time_step);
-	  fflush (stdout);
+	  fprintf (timings_ptr, " fluid solver, time step: %i\n", time_step);
+	  fflush (timings_ptr);
 	}
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net, &rt);
       
-      if ((myClock () - fluid_solver_time) > MINUTES * (60. / 3.))
+      is_bench_section_finished = 0;
+      
+      if ((myClock () - fluid_solver_time) > minutes * (60. / 3.))
+	{
+	  is_bench_section_finished = 1;
+	}
+      net.err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+      
+      if (is_bench_section_finished)
 	{
 	  break;
 	}
@@ -722,19 +742,32 @@ net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INTEGER, 0, MPI_COMM_WORLD); ///
 
   for (time_step = 1; time_step < 1000000000; time_step++)
     {
+      if (net.id == 0)
+	{
+	  fprintf (timings_ptr, " fluid solver and vr, time step: %i\n", time_step);
+	  fflush (timings_ptr);
+	}
       rtRayTracingA (AbsorptionCoefficients, &net, &rt);
       
       stability = lbmCycle (0, 0, 1, &is_converged, &lbm, &net, &rt);
       
       rtRayTracingB (AbsorptionCoefficients, &net, &rt);
       
-      if ((myClock () - fluid_solver_and_vr_time) > MINUTES * (60. / 3.))
+      is_bench_section_finished = 0;
+      
+      if ((myClock () - fluid_solver_and_vr_time) > minutes * (60. / 3.))
+	{
+	  is_bench_section_finished = 1;
+	}
+      net.err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+      
+      if (is_bench_section_finished)
 	{
 	  break;
 	}
     }
   fluid_solver_and_vr_time = myClock () - fluid_solver_and_vr_time;
-  fluid_solver_and_vr_time_steps = time_step;
+  fluid_solver_and_is_time_steps = time_step;
   
   rt.image_frequency = 1;
   rt.flow_field_type = VELOCITY;
@@ -744,13 +777,26 @@ net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INTEGER, 0, MPI_COMM_WORLD); ///
   
   for (time_step = 1; time_step < 1000000000; time_step++)
     {
+     if (net.id == 0)
+	{
+	  fprintf (timings_ptr, " fluid solver and iso-surface, time step: %i\n", time_step);
+	  fflush (timings_ptr);
+	}
       rtRayTracingA (AbsorptionCoefficients, &net, &rt);
       
       stability = lbmCycle (0, 0, 1, &is_converged, &lbm, &net, &rt);
       
       rtRayTracingB (AbsorptionCoefficients, &net, &rt);
       
-      if ((myClock () - fluid_solver_and_is_time) > MINUTES * (60. / 3.))
+      is_bench_section_finished = 0;
+      
+      if ((myClock () - fluid_solver_and_is_time) > minutes * (60. / 3.))
+	{
+	  is_bench_section_finished = 1;
+	}
+      net.err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+      
+      if (is_bench_section_finished)
 	{
 	  break;
 	}
@@ -767,42 +813,43 @@ net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INTEGER, 0, MPI_COMM_WORLD); ///
   	{
   	  if (!is_converged)
   	    {
-  	      printf (" ATTENTION: SIMULATION NOT CONVERGED\n");
+  	      fprintf (timings_ptr, " ATTENTION: SIMULATION NOT CONVERGED\n");
   	    }
   	}
       else
   	{
-  	  printf (" ATTENTION: INSTABILITY CONDITION OCCURRED\n");
-  	  printf (" AFTER %i time steps\n", time_step);
+  	  fprintf (timings_ptr, " ATTENTION: INSTABILITY CONDITION OCCURRED\n");
+  	  fprintf (timings_ptr, " AFTER %i time steps\n", time_step);
   	}
-      printf (" processors: %i, machines checked: %i\n", net.procs, net.machines);
-      printf (" time steps: %i \n", time_step);
-      printf (" time steps per second: %.3f\n\n", time_step / simulation_time);
+      fprintf (timings_ptr, "\n");
+      fprintf (timings_ptr, "processors: %i, machines checked: %i\n", net.procs, net.machines);
+      fprintf (timings_ptr, "time steps: %i \n", time_step);
+      fprintf (timings_ptr, "time steps per second: %.3f\n\n", time_step / simulation_time);
     }
 #else // BENCH
   
   if (net.id == 0)
     {
-      printf ("---------- BENCHMARKS RESULTS ----------\n");
+      fprintf (timings_ptr, "\n---------- BENCHMARKS RESULTS ----------\n");
       
-      printf (" procs checked: %i, machines checked: %i\n\n", net.procs, net.machines);
-      printf (" fluid sites: %i\n\n", lbm.total_fluid_sites);
-      printf (" time steps per second: %.3f, MSUPS: %.3f\n\n",
-	      fluid_solver_time_steps / fluid_solver_time,
-	      1.e-6 * lbm.total_fluid_sites / (fluid_solver_time / fluid_solver_time_steps));
+      fprintf (timings_ptr, " procs checked: %i, machines checked: %i\n\n", net.procs, net.machines);
+      fprintf (timings_ptr, " fluid sites: %i\n\n", lbm.total_fluid_sites);
+      fprintf (timings_ptr, " time: %.3f, time steps per second: %.3f, MSUPS: %.3f\n\n",
+	       fluid_solver_time, fluid_solver_time_steps / fluid_solver_time,
+	       1.e-6 * lbm.total_fluid_sites / (fluid_solver_time / fluid_solver_time_steps));
       
-      printf (" time steps per second with volume rendering: %.3f\n\n",
-	      fluid_solver_and_vr_time_steps / fluid_solver_and_vr_time);
+      fprintf (timings_ptr, " time: %.3f, time steps per second with volume rendering: %.3f\n\n",
+	       fluid_solver_and_vr_time, fluid_solver_and_vr_time_steps / fluid_solver_and_vr_time);
       
-      printf (" time steps per second with isosurface: %.3f\n\n",
-	      fluid_solver_and_is_time_steps / fluid_solver_and_is_time);
+      fprintf (timings_ptr, " time: %.3f, time steps per second with isosurface: %.3f\n\n",
+	       fluid_solver_and_is_time, fluid_solver_and_is_time_steps / fluid_solver_and_is_time);
     }
 #endif
   
   if (net.id == 0)
     {
-      printf ("Opening output config file: %s\n", output_config_name);
-      fflush (stdout);
+      fprintf (timings_ptr, "Opening output config file:\n %s\n\n", output_config_name);
+      fflush (timings_ptr);
     }
   net.fo_time = myClock ();
   
@@ -812,17 +859,21 @@ net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INTEGER, 0, MPI_COMM_WORLD); ///
   
   if (net.id == 0)
     {
-      printf (" domain decomposition time (s):             %.3f\n", net.dd_time);
-      printf (" pre-processing buffer management time (s): %.3f\n", net.bm_time);
-      printf (" input configuration reading time (s):      %.3f\n", net.fr_time);
-      printf (" flow field outputting time (s):            %.3f\n", net.fo_time);
+      fprintf (timings_ptr, "density  min, max: %le, %le\n", lbm.density_min, lbm.density_max);
+      fprintf (timings_ptr, "velocity min, max: %le, %le\n", lbm.velocity_min, lbm.velocity_max);
+      fprintf (timings_ptr, "stress   min, max: %le, %le\n", lbm.stress_min, lbm.stress_max);
+      fprintf (timings_ptr, "\n");
+      fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);
+      fprintf (timings_ptr, "pre-processing buffer management time (s): %.3f\n", net.bm_time);
+      fprintf (timings_ptr, "input configuration reading time (s):      %.3f\n", net.fr_time);
+      fprintf (timings_ptr, "flow field outputting time (s):            %.3f\n", net.fo_time);
+      fflush (timings_ptr);
     }
   
   rtEnd (&net, &rt);
   lbmEnd (&lbm);
   netEnd (&net, &rt);
 
-#ifndef BENCH
 #ifdef RG
   if (net.id == 0)
     {
@@ -831,24 +882,23 @@ net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INTEGER, 0, MPI_COMM_WORLD); ///
       //pthread_join (network_thread, NULL);
     }
 #endif // RG
-#endif // BENCH
   
   
-#ifndef BENCH
 #ifdef STEER
   if (net.id == 0)
     {
       Steering_finalize ();
-      printf("STEER: Steering_finalize () called.\n");
-      fflush(stdout);
+      fprintf (timings_ptr, "STEER: Steering_finalize () called.\n");
+      fflush (timings_ptr);
     }
 #endif // STEER
-#endif // BENCH
   
   if (net.id == 0)
     {
       total_time = myClock () - total_time;
-      printf (" total time (s):                            %.3f\n", total_time);
+      fprintf (timings_ptr, "total time (s):                            %.3f\n", total_time);
+      
+      fclose (timings_ptr);
     }
   net.err = MPI_Finalize ();
   
