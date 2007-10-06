@@ -254,20 +254,14 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	}
     }
   free(density_block);
-  
-  lbm->convergence_error = 1.;
 }
 
 
-#ifndef BENCH
 #ifdef STEER
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net, SteerParams *steer)
 #else
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 #endif
-#else // BENCH
-void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
-#endif // BENCH
 {
   // through this function the processor 0 reads the LB parameters
   // and then communicate them to the other processors
@@ -375,7 +369,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   lbm->omega = -1.0 / lbm->tau;
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
   
-#ifndef BENCH
 #ifdef STEER
   steer->tau            = lbm->tau;
   steer->tolerance      = lbm->tolerance;
@@ -383,11 +376,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   steer->conv_freq      = lbm->convergence_frequency;
   steer->check_freq     = lbm->checkpoint_frequency;
 #endif
-#endif // BENCH
 }
 
 
-#ifndef BENCH
 #ifdef STEER
 void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
 {
@@ -402,10 +393,9 @@ void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
   lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
 }
 #endif
-#endif // BENCH
 
 
-void lbmSetInitialConditions (LBM *lbm, Net *net)
+void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net)
 {
   // this functions set the initial distribution functions to the
   // equilibrium ones calculated with zero velocity and unitary
@@ -430,13 +420,6 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
   DataBlock *map_block_p;
   
   
-  if (!lbm->is_checkpoint) return;
-  
-  if (net->id == 0)
-    {
-      printf("Opening checkpoint file to read: %s\n", lbm->checkpoint_file_name);
-      fflush (stdout);
-    }
   system_config = fopen (lbm->checkpoint_file_name, "r");
   xdrstdio_create (&xdr_system_config, system_config, XDR_DECODE);
   
@@ -659,13 +642,13 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
     {
       xdr_destroy(&xdr_system_config);
       fclose (system_config);
-      
-      if (!is_checkpoint)
-	{
-	  printf ("density min, max: %le, %le\n", density_min, density_max);
-	  printf ("velocity min, max: %le, %le\n", velocity_min, velocity_max);
-	  printf ("stress min, max: %le, %le\n", stress_min, stress_max);
-	  fflush (stdout);
-	}
     }
+  lbm->density_min = density_min;
+  lbm->density_max = density_max;
+  
+  lbm->velocity_min = velocity_min;
+  lbm->velocity_max = velocity_max;
+  
+  lbm->stress_min = stress_min;
+  lbm->stress_max = stress_max;
 }
