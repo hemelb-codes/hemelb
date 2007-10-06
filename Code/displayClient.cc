@@ -208,6 +208,52 @@ void DisplayFrame ()
 }
 
 
+void SaveWindowImage (int pixels_x, int pixels_y, char *file_name)
+{
+  FILE *ppm_image_file_ptr = fopen (file_name, "wb");
+  
+  int i, j;
+  
+  unsigned char *data = NULL;  
+  unsigned char *data_p = NULL;
+  unsigned char *buffer;
+  
+  
+  glReadBuffer (GL_FRONT);
+  
+  data = (unsigned char *)malloc(sizeof(unsigned char) * pixels_x * pixels_y * 3);
+  
+  buffer = (unsigned char *)malloc(sizeof(unsigned char) * pixels_x * 3);
+  
+  data_p = data;
+
+  for (j = 0; j < pixels_y; j++)
+    {
+      glReadPixels (0, j, pixels_x, 1, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+      
+      for (i = 0; i < pixels_x; i++)
+	{
+	  *data_p = buffer[ i * 3     ]; data_p++;
+	  *data_p = buffer[ i * 3 + 1 ]; data_p++;
+	  *data_p = buffer[ i * 3 + 2 ]; data_p++;
+	}
+    }
+  
+  free((unsigned char *)buffer);
+  
+  fprintf (ppm_image_file_ptr, "P6\n%i %i\n255\n", pixels_x, pixels_y);
+  
+  for (j = pixels_y - 1; j >= 0; j--)
+    {
+      fwrite (data + j * pixels_x * 3, 1, pixels_x * 3, ppm_image_file_ptr);
+    }
+  
+  free((unsigned char *)data);
+  
+  fclose (ppm_image_file_ptr);
+}
+
+
 void GLUTCALLBACK Display (void)
 {
   glClear (GL_COLOR_BUFFER_BIT);
@@ -251,6 +297,25 @@ void OpenWindow (int pixels_x, int pixels_y)
   glDisable (GL_DITHER);
   
   glClear (GL_COLOR_BUFFER_BIT);
+}
+
+
+void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
+{
+  if (key == 'S')
+    {
+      SaveWindowImage (pixels_x, pixels_y, "./image.ppm");
+    }
+  else if (key == 'q')
+    {
+      close (sockfd);
+      
+      free(xdrReceiveBuffer);
+      free(compressed_data);
+      free(pixel_data);
+      
+      exit(0);
+    }
 }
 
 
@@ -309,13 +374,8 @@ int main(int argc, char *argv[])
   glutReshapeFunc (Reshape);
   glutIdleFunc (Display);
   glutDisplayFunc (Display);
+  glutKeyboardFunc (KeybordFunction);
   glutMainLoop ();
-  
-  close (sockfd);
-  
-  free(xdrReceiveBuffer);
-  free(compressed_data);
-  free(pixel_data);
   
   return 0;
 } 
