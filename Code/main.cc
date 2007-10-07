@@ -343,7 +343,11 @@ int main (int argc, char *argv[])
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
   net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
   
-  if (argc != 2 && argc != 3)
+#ifdef BENCH
+  if (argc != 3)
+#else
+  if (argc != 2 || argc != 3)
+#endif
     {
       if (net.id == 0) usage(argv[0]);
       
