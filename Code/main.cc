@@ -251,6 +251,25 @@ inline void AbsorptionCoefficients (float flow_field_value, float t1, float t2, 
 }
 
 
+int IsBenckSectionFinished (double minutes, double starting_time)
+{
+  int is_bench_section_finished = 0;
+  int err;
+  
+  if ((myClock () - starting_time) > minutes * 60.)
+    {
+      is_bench_section_finished = 1;
+    }
+  err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  
+  if (is_bench_section_finished)
+    {
+      return 1;
+    }
+  return 0;
+}
+
+
 void usage (char *progname)
 {
 #ifndef BENCH
@@ -286,7 +305,6 @@ int main (int argc, char *argv[])
   int checkpoint_count = 0;
   int convergence_count = 0;
   int ray_tracing_count = 0;
-  int is_bench_section_finished;
   int is_thread_locked;
   
 #ifdef BENCH
@@ -707,6 +725,8 @@ int main (int argc, char *argv[])
   time_step = min(time_step, lbm.time_steps_max);
 #else // BENCH
   
+  // benchmarking HemeLB's fluid solver only
+  
   fluid_solver_time = myClock ();
   
   for (time_step = 1; time_step < 1000000000; time_step++)
@@ -718,21 +738,17 @@ int main (int argc, char *argv[])
 	}
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net, &rt);
       
-      is_bench_section_finished = 0;
-      
-      if ((myClock () - fluid_solver_time) > minutes * (60. / 3.))
-	{
-	  is_bench_section_finished = 1;
-	}
-      net.err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
-      
-      if (is_bench_section_finished)
+      if (time_step % 100 == 1 &
+	  IsBenckSectionFinished (minutes / 3., fluid_solver_time))
 	{
 	  break;
 	}
     }
   fluid_solver_time = myClock () - fluid_solver_time;
   fluid_solver_time_steps = time_step;
+  
+  
+  // benchmarking HemeLB's fluid solver and volume rendering
   
   rt.image_frequency = 1;
   rt.flow_field_type = VELOCITY;
@@ -753,21 +769,17 @@ int main (int argc, char *argv[])
       
       rtRayTracingB (AbsorptionCoefficients, &net, &rt);
       
-      is_bench_section_finished = 0;
-      
-      if ((myClock () - fluid_solver_and_vr_time) > minutes * (60. / 3.))
-	{
-	  is_bench_section_finished = 1;
-	}
-      net.err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
-      
-      if (is_bench_section_finished)
+      if (time_step % 100 == 1 &
+	  IsBenckSectionFinished (minutes / 3., fluid_solver_and_vr_time))
 	{
 	  break;
 	}
     }
   fluid_solver_and_vr_time = myClock () - fluid_solver_and_vr_time;
-  fluid_solver_and_is_time_steps = time_step;
+  fluid_solver_and_vr_time_steps = time_step;
+  
+  
+  // benchmarking HemeLB's fluid solver and iso-surface
   
   rt.image_frequency = 1;
   rt.flow_field_type = VELOCITY;
@@ -788,15 +800,8 @@ int main (int argc, char *argv[])
       
       rtRayTracingB (AbsorptionCoefficients, &net, &rt);
       
-      is_bench_section_finished = 0;
-      
-      if ((myClock () - fluid_solver_and_is_time) > minutes * (60. / 3.))
-	{
-	  is_bench_section_finished = 1;
-	}
-      net.err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
-      
-      if (is_bench_section_finished)
+      if (time_step % 100 == 1 &
+	  IsBenckSectionFinished (minutes / 3., fluid_solver_and_is_time))
 	{
 	  break;
 	}
@@ -834,15 +839,16 @@ int main (int argc, char *argv[])
       
       fprintf (timings_ptr, " procs checked: %i, machines checked: %i\n\n", net.procs, net.machines);
       fprintf (timings_ptr, " fluid sites: %i\n\n", lbm.total_fluid_sites);
-      fprintf (timings_ptr, " time: %.3f, time steps per second: %.3f, MSUPS: %.3f\n\n",
-	       fluid_solver_time, fluid_solver_time_steps / fluid_solver_time,
-	       1.e-6 * lbm.total_fluid_sites / (fluid_solver_time / fluid_solver_time_steps));
+      fprintf (timings_ptr, " time steps per second: %.3f, MSUPS: %.3f, time: %.3f\n\n",
+	       fluid_solver_time_steps / fluid_solver_time,
+	       1.e-6 * lbm.total_fluid_sites / (fluid_solver_time / fluid_solver_time_steps),
+	       fluid_solver_time);
       
-      fprintf (timings_ptr, " time: %.3f, time steps per second with volume rendering: %.3f\n\n",
-	       fluid_solver_and_vr_time, fluid_solver_and_vr_time_steps / fluid_solver_and_vr_time);
+      fprintf (timings_ptr, " time steps per second with volume rendering: %.3f, time: %.3f\n\n",
+	       fluid_solver_and_vr_time_steps / fluid_solver_and_vr_time, fluid_solver_and_vr_time);
       
-      fprintf (timings_ptr, " time: %.3f, time steps per second with isosurface: %.3f\n\n",
-	       fluid_solver_and_is_time, fluid_solver_and_is_time_steps / fluid_solver_and_is_time);
+      fprintf (timings_ptr, " time steps per second with isosurface: %.3f, time: %.3f\n\n",
+	       fluid_solver_and_is_time_steps / fluid_solver_and_is_time, fluid_solver_and_is_time);
     }
 #endif
   
