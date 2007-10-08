@@ -741,7 +741,6 @@ int main (int argc, char *argv[])
 	{
 	  fprintf (timings_ptr, " fluid solver, time step: %i, time steps/s: %.3f\n",
 		   time_step, time_step / (myClock () - fluid_solver_time));
-	  fflush (timings_ptr);
 	}
       if (time_step % 100 == 1 &
 	  IsBenckSectionFinished (minutes / 3., fluid_solver_time))
@@ -773,7 +772,6 @@ int main (int argc, char *argv[])
 	{
 	  fprintf (timings_ptr, " fluid solver and vr, time step: %i, time steps/s: %.3f\n",
 		   time_step, time_step / (myClock () - fluid_solver_and_vr_time));
-	  fflush (timings_ptr);
 	}
       if (time_step % 100 == 1 &
 	  IsBenckSectionFinished (minutes / 3., fluid_solver_and_vr_time))
@@ -798,8 +796,7 @@ int main (int argc, char *argv[])
      if (net.id == 0)
 	{
 	  fprintf (timings_ptr, " fluid solver and iso-surface, time step: %i, time steps/s: %.3f\n",
-		   time_step / (myClock () - fluid_solver_and_is_time));
-	  fflush (timings_ptr);
+		   time_step, time_step / (myClock () - fluid_solver_and_is_time));
 	}
       rtRayTracingA (AbsorptionCoefficients, &net, &rt);
       
