@@ -346,7 +346,7 @@ int main (int argc, char *argv[])
 #ifdef BENCH
   if (argc != 3)
 #else
-  if (argc != 2 || argc != 3)
+  if (argc != 2 && argc != 3)
 #endif
     {
       if (net.id == 0) usage(argv[0]);
@@ -735,13 +735,14 @@ int main (int argc, char *argv[])
   
   for (time_step = 1; time_step < 1000000000; time_step++)
     {
-      if (net.id == 0)
-	{
-	  fprintf (timings_ptr, " fluid solver, time step: %i\n", time_step);
-	  fflush (timings_ptr);
-	}
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net, &rt);
       
+      if (net.id == 0)
+	{
+	  fprintf (timings_ptr, " fluid solver, time step: %i, time steps/s: %.3f\n",
+		   time_step, time_step / (myClock () - fluid_solver_time));
+	  fflush (timings_ptr);
+	}
       if (time_step % 100 == 1 &
 	  IsBenckSectionFinished (minutes / 3., fluid_solver_time))
 	{
@@ -762,17 +763,18 @@ int main (int argc, char *argv[])
 
   for (time_step = 1; time_step < 1000000000; time_step++)
     {
-      if (net.id == 0)
-	{
-	  fprintf (timings_ptr, " fluid solver and vr, time step: %i\n", time_step);
-	  fflush (timings_ptr);
-	}
       rtRayTracingA (AbsorptionCoefficients, &net, &rt);
       
       stability = lbmCycle (0, 0, 1, &is_converged, &lbm, &net, &rt);
       
       rtRayTracingB (AbsorptionCoefficients, &net, &rt);
       
+      if (net.id == 0)
+	{
+	  fprintf (timings_ptr, " fluid solver and vr, time step: %i, time steps/s: %.3f\n",
+		   time_step, time_step / (myClock () - fluid_solver_and_vr_time));
+	  fflush (timings_ptr);
+	}
       if (time_step % 100 == 1 &
 	  IsBenckSectionFinished (minutes / 3., fluid_solver_and_vr_time))
 	{
@@ -795,7 +797,8 @@ int main (int argc, char *argv[])
     {
      if (net.id == 0)
 	{
-	  fprintf (timings_ptr, " fluid solver and iso-surface, time step: %i\n", time_step);
+	  fprintf (timings_ptr, " fluid solver and iso-surface, time step: %i, time steps/s: %.3f\n",
+		   time_step / (myClock () - fluid_solver_and_is_time));
 	  fflush (timings_ptr);
 	}
       rtRayTracingA (AbsorptionCoefficients, &net, &rt);
