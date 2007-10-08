@@ -325,7 +325,7 @@ void netInit (LBM *lbm, Net *net, RT *rt)
       // explored at the coarse level of the data hierarchy by means
       // of the arrays "block_location_a[]" and "block_location_b[]"
       
-      fluid_sites_per_unit = (int)((double)lbm->total_fluid_sites / (double)net->procs);
+      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
       proc_count = 0;
       
       partial_visited_fluid_sites = 0;
@@ -341,13 +341,6 @@ void netInit (LBM *lbm, Net *net, RT *rt)
 		{
 		  if (*(proc_id_p = &net->proc_id[ ++n ]) != marker) continue;
 		  
-		  if (proc_count == net->procs - 1)
-		    {
-		      // the rest of the fluid sites will be assigned
-		      // to last processor
-		      
-		      fluid_sites_per_unit = 1000000000;
-		    }
 		  *proc_id_p = proc_count;
 		  
 		  if (proc_count == net->id)
@@ -497,7 +490,7 @@ void netInit (LBM *lbm, Net *net, RT *rt)
 	  else
 	    {
 	      up_units_max = net->machines;
-	      fluid_sites_per_unit = (int)((double)lbm->total_fluid_sites / (double)net->procs);
+	      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
 	    }
 	  
 	  for (up_unit = 0; up_unit < up_units_max; up_unit++)
@@ -516,13 +509,6 @@ void netInit (LBM *lbm, Net *net, RT *rt)
 		  for (n = 0; n < up_unit; n++)
 		    {
 		      proc_count += net->procs_per_machine[ n ];
-		    }
-		  if (proc_count == net->procs - 1)
-		    {
-		      // the rest of the fluid sites will be assigned
-		      // to the last processor
-		      
-		      fluid_sites_per_unit = 1000000000;
 		    }
 		}
 	      
