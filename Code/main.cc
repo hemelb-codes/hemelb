@@ -146,7 +146,7 @@ void *hemeLB_network (void *ptr)
 	  xdr_int (&xdr_network_stream, &frame_number);
 	  xdr_int (&xdr_network_stream, &compressed_frame_size);
 	  
-	  for (int i = 0; i < compressed_frame_size; i++)
+	  for (int i = 0; i < compressedcompressed_frame_size_frame_size; i++)
 	    {
 	      xdr_u_char (&xdr_network_stream, &compressed_data[i]);
 	    }
@@ -185,7 +185,7 @@ void *hemeLB_network (void *ptr)
 	  int nElements = currentPosition / sizeof(char);
 	  
 	  fprintf (timings_ptr, "n Elements of char to send %i (%iB)\n", nElements, currentPosition);
-
+	  
           int ret;
 
           ret = send_all(new_fd, xdrSendBuffer, &currentPosition);
@@ -391,7 +391,6 @@ int main (int argc, char *argv[])
   strcpy ( timings_name , input_file_path );
   strcat ( timings_name , "/timings.asc" );
   
-  
   if (net.id == 0)
     {
       timings_ptr = fopen (timings_name, "w");
@@ -484,8 +483,6 @@ int main (int argc, char *argv[])
       pthread_attr_setdetachstate (&pthread_attrib, PTHREAD_CREATE_JOINABLE);
       
       pthread_create (&network_thread, &pthread_attrib, hemeLB_network, NULL);
-      
-      free (xdrSendBuffer);
     }
 #endif // RG
 
@@ -496,7 +493,16 @@ int main (int argc, char *argv[])
       fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
-  netInit (&lbm, &net, &rt);
+  int proc_sites[16];
+  netInit (&lbm, &net, &rt, proc_sites);
+  
+      if (net.id == 0)
+	{
+	  for (int k = 0; k < net.procs; k++)
+	    {
+	      fprintf (timings_ptr, "rank: %i, sites: %i\n", k, proc_sites[ k ]);
+	    }
+	}
   
 #ifdef STEER
   rtReadParameters (rt_parameters_name, &net, &rt, &steer);
@@ -513,6 +519,10 @@ int main (int argc, char *argv[])
     {
       if (net.id == 0)
 	{
+	  for (int k = 0; k < net.procs; k++)
+	    {
+	      fprintf (timings_ptr, "rank: %i, sites: %i\n", k, proc_sites[ k ]);
+	    }
 	  fprintf (timings_ptr, "Opening checkpoint file to read: %s\n", lbm.checkpoint_file_name);
 	  fflush (timings_ptr);
 	}
@@ -831,8 +841,9 @@ int main (int argc, char *argv[])
   	  fprintf (timings_ptr, " AFTER %i time steps\n", time_step);
   	}
       fprintf (timings_ptr, "\n");
-      fprintf (timings_ptr, "processors: %i, machines checked: %i\n", net.procs, net.machines);
-      fprintf (timings_ptr, "time steps: %i \n", time_step);
+      fprintf (timings_ptr, "processors: %i, machines checked: %i\n\n", net.procs, net.machines);
+      fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
+      fprintf (timings_ptr, "time steps: %i \n\n", time_step);
       fprintf (timings_ptr, "time steps per second: %.3f\n\n", time_step / simulation_time);
     }
 #else // BENCH
@@ -841,17 +852,18 @@ int main (int argc, char *argv[])
     {
       fprintf (timings_ptr, "\n---------- BENCHMARKS RESULTS ----------\n");
       
-      fprintf (timings_ptr, " procs checked: %i, machines checked: %i\n\n", net.procs, net.machines);
-      fprintf (timings_ptr, " fluid sites: %i\n\n", lbm.total_fluid_sites);
-      fprintf (timings_ptr, " time steps per second: %.3f, MSUPS: %.3f, time: %.3f\n\n",
+      fprintf (timings_ptr, "procs checked: %i, machines checked: %i\n\n", net.procs, net.machines);
+      fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
+      fprintf (timings_ptr, "time steps: %i \n\n", time_step);
+      fprintf (timings_ptr, "time steps per second: %.3f, MSUPS: %.3f, time: %.3f\n\n",
 	       fluid_solver_time_steps / fluid_solver_time,
 	       1.e-6 * lbm.total_fluid_sites / (fluid_solver_time / fluid_solver_time_steps),
 	       fluid_solver_time);
       
-      fprintf (timings_ptr, " time steps per second with volume rendering: %.3f, time: %.3f\n\n",
+      fprintf (timings_ptr, "time steps per second with volume rendering: %.3f, time: %.3f\n\n",
 	       fluid_solver_and_vr_time_steps / fluid_solver_and_vr_time, fluid_solver_and_vr_time);
       
-      fprintf (timings_ptr, " time steps per second with isosurface: %.3f, time: %.3f\n\n",
+      fprintf (timings_ptr, "time steps per second with isosurface: %.3f, time: %.3f\n\n",
 	       fluid_solver_and_is_time_steps / fluid_solver_and_is_time, fluid_solver_and_is_time);
     }
 #endif
@@ -877,7 +889,6 @@ int main (int argc, char *argv[])
       fprintf (timings_ptr, "pre-processing buffer management time (s): %.3f\n", net.bm_time);
       fprintf (timings_ptr, "input configuration reading time (s):      %.3f\n", net.fr_time);
       fprintf (timings_ptr, "flow field outputting time (s):            %.3f\n", net.fo_time);
-      fflush (timings_ptr);
     }
   
   rtEnd (&net, &rt);
@@ -890,6 +901,7 @@ int main (int argc, char *argv[])
       // there are some problems if the following is called
       
       //pthread_join (network_thread, NULL);
+      free(xdrSendBuffer);
     }
 #endif // RG
   
