@@ -177,10 +177,11 @@ int netFindTopology (Net *net)
   
   return 1;
 }
+
 #endif
 
 
-void netInit (LBM *lbm, Net *net, RT *rt)
+void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[])
 {
   // the domain partitioning technique and the management of the
   // buffers useful for the inter-processor communications are
@@ -325,8 +326,13 @@ void netInit (LBM *lbm, Net *net, RT *rt)
       // explored at the coarse level of the data hierarchy by means
       // of the arrays "block_location_a[]" and "block_location_b[]"
       
+#ifndef FREEROOT
       fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
       proc_count = 0;
+#else
+      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)(net->procs - 1));
+      proc_count = 1;
+#endif
       
       partial_visited_fluid_sites = 0;
       proc_inc = 1;
@@ -490,7 +496,12 @@ void netInit (LBM *lbm, Net *net, RT *rt)
 	  else
 	    {
 	      up_units_max = net->machines;
+	      
+//#ifndef FREEROOT
 	      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
+//#else
+//	      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)(net->procs - 1));
+//#endif
 	    }
 	  
 	  for (up_unit = 0; up_unit < up_units_max; up_unit++)
@@ -498,18 +509,33 @@ void netInit (LBM *lbm, Net *net, RT *rt)
 	      if (unit_level == 1)
 		{
 		  marker = -1;
+		  
+//#ifndef FREEROOT
 		  proc_count = net->procs;
+//#else
+//		  proc_count = net->procs - 1;
+//#endif
 		}
 	      else
 		{
+//#ifndef FREEROOT
 		  marker = net->procs + up_unit;
+//#else
+//		  marker = net->procs - 1 + up_unit;
+//#endif
 		  
 		  proc_count = 0;
-		  
+
 		  for (n = 0; n < up_unit; n++)
 		    {
 		      proc_count += net->procs_per_machine[ n ];
 		    }
+//#ifdef FREEROOT 
+//		  if (up_unit == 0)
+//		    {
+//		      proc_count = 1;
+//		    }
+//#endif
 		}
 	      
 	      partial_visited_fluid_sites = 0;
@@ -528,9 +554,15 @@ void netInit (LBM *lbm, Net *net, RT *rt)
 			  
 			  if (unit_level == 1)
 			    {
+//#ifndef FREEROOT
 			      machine_id = proc_count - net->procs;
 			      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites *
 							       (double)net->procs_per_machine[ machine_id ] / net->procs);
+//#else
+//			      machine_id = proc_count - (net->procs - 1);
+//			      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites *
+//							       (double)net->procs_per_machine[ machine_id ] / (net->procs - 1));
+//#endif
 			    }
 			  *proc_id_p = proc_count;
 			  
@@ -1070,6 +1102,9 @@ void netInit (LBM *lbm, Net *net, RT *rt)
   d = (double *)malloc(sizeof(double) * (my_sites + 1));
   
   nd_p = (double **)malloc(sizeof(double *) * (my_sites * 14 + 1));
+  
+  net->err = MPI_Gather (&my_sites, 1, MPI_INT, proc_sites, 1, MPI_INT, 
+			 0, MPI_COMM_WORLD);
   
   my_sites_temp = my_sites;
   my_sites = 0;

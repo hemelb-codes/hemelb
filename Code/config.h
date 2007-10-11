@@ -10,6 +10,11 @@
 #include <time.h>
 #include <math.h>
 #include <rpc/types.h>
+
+#ifndef int64_t
+#define int64_t long int
+#endif
+
 #include <rpc/xdr.h>
 
 
@@ -307,7 +312,6 @@ struct RT
   int col_pixels;
   int *col_pixel_id;
   int pixels_max;
-  int *col_pixels_recv;
   
   short int clusters;
   
@@ -417,7 +421,7 @@ int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *
 void lbmEnd (LBM *lbm);
 
 int netFindTopology (Net *net);
-void netInit (LBM *lbm, Net *net, RT *rt);
+void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[]);
 void netEnd (Net *net, RT *rt);
 
 void lbmReadConfig (LBM *lbm, Net *net);
