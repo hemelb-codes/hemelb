@@ -298,6 +298,10 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
+	  //int iters;
+	  //fscanf (parameters_file, "%i\n", &iters);
+	  //lbm->outlet_density[ n ] = 0.5 - iters * 1.e-6;
+	  //printf (" outlet id: %i, density: %f\n", n, lbm->outlet_density[ n ]);
 	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
 	}
       fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
