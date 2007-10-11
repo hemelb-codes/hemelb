@@ -146,40 +146,46 @@ void *hemeLB_network (void *ptr)
 	  xdr_int (&xdr_network_stream, &frame_number);
 	  xdr_int (&xdr_network_stream, &compressed_frame_size);
 	  
-	  for (int i = 0; i < compressedcompressed_frame_size_frame_size; i++)
+	  for (int i = 0; i < compressed_frame_size; i++)
 	    {
 	      xdr_u_char (&xdr_network_stream, &compressed_data[i]);
 	    }
 	  //m = (compressed_frame_size >> 2) << 2;
 	  //
-	  //for (int i = 0; i < m;)
+	  //int i = 0;
+	  //
+	  //while (i < m)
 	  //  {
-	  //    four_compressed_data = compressed_data[i++];
-	  //    four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << 8U;
-	  //    four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << 16U;
-	  //    four_compressed_data |= (data = (unsigned int)compressed_data[i++]) << 24U;
+	  //    four_compressed_data = compressed_data[i];
+	  //    four_compressed_data |= (data = (unsigned int)compressed_data[++i]) << 8U;
+	  //    four_compressed_data |= (data = (unsigned int)compressed_data[++i]) << 16U;
+	  //    four_compressed_data |= (data = (unsigned int)compressed_data[++i]) << 24U;
+	  //    ++i;
 	  //    
 	  //    xdr_u_int (&xdr_network_stream, &four_compressed_data);
 	  //  }
-	  //for (int i = m; i < compressed_frame_size;)
+	  //i = m;
+	  //
+	  //while (i < compressed_frame_size)
 	  //  {
-	  //    four_compressed_data = compressed_data[i++];
+	  //    four_compressed_data = compressed_data[i];
 	  //    
-	  //    if (i++ < compressed_frame_size)
+	  //    if (++i < compressed_frame_size)
 	  //	{
 	  //	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 8U;
 	  //	}
-	  //    if (i++ < compressed_frame_size)
+	  //    if (++i < compressed_frame_size)
 	  //	{
 	  //	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 16U;
 	  //	}
-	  //    if (i++ < compressed_frame_size)
+	  //    if (++i < compressed_frame_size)
 	  //	{
 	  //	  four_compressed_data |= (data = (unsigned int)compressed_data[i]) << 24U;
 	  //	}
+	  //    ++i;
 	  //    xdr_u_int (&xdr_network_stream, &four_compressed_data);
 	  //  }
-
+	  
 	  int currentPosition = xdr_getpos (&xdr_network_stream);
 	  
 	  int nElements = currentPosition / sizeof(char);
@@ -306,6 +312,7 @@ int main (int argc, char *argv[])
   int convergence_count = 0;
   int ray_tracing_count = 0;
   int is_thread_locked;
+  int proc_fluid_sites[4 * 1024];
   
 #ifdef BENCH
   int fluid_solver_time_steps;
@@ -493,16 +500,8 @@ int main (int argc, char *argv[])
       fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
-  int proc_sites[16];
-  netInit (&lbm, &net, &rt, proc_sites);
-  
-      if (net.id == 0)
-	{
-	  for (int k = 0; k < net.procs; k++)
-	    {
-	      fprintf (timings_ptr, "rank: %i, sites: %i\n", k, proc_sites[ k ]);
-	    }
-	}
+
+  netInit (&lbm, &net, &rt, proc_fluid_sites);
   
 #ifdef STEER
   rtReadParameters (rt_parameters_name, &net, &rt, &steer);
@@ -519,10 +518,6 @@ int main (int argc, char *argv[])
     {
       if (net.id == 0)
 	{
-	  for (int k = 0; k < net.procs; k++)
-	    {
-	      fprintf (timings_ptr, "rank: %i, sites: %i\n", k, proc_sites[ k ]);
-	    }
 	  fprintf (timings_ptr, "Opening checkpoint file to read: %s\n", lbm.checkpoint_file_name);
 	  fflush (timings_ptr);
 	}
@@ -918,7 +913,15 @@ int main (int argc, char *argv[])
   if (net.id == 0)
     {
       total_time = myClock () - total_time;
-      fprintf (timings_ptr, "total time (s):                            %.3f\n", total_time);
+      fprintf (timings_ptr, "total time (s):                            %.3f\n\n", total_time);
+
+      
+      fprintf (timings_ptr, "Sub-domains info:\n\n", net.fo_time);
+      
+      for (int n = 0; n < net.procs; n++)
+	{
+	  fprintf (timings_ptr, "rank: %i, fluid sites: %i\n", n, proc_fluid_sites[ n ]);
+	}
       
       fclose (timings_ptr);
     }
