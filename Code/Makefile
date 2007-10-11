@@ -26,7 +26,8 @@ TEST2INPUT=$(HOME)/hemelb/Input/angio1
 TEST3INPUT=$(HOME)/hemelb/Input/bifurcation_512x512x512
 
 FLAGS=-O3 ${REG_CPPFLAGS} 
-#DEFS=-DRG -DSTEER
+#DEFS=-DRG -DSTEER -DFREEROOT
+#DEFS=-DBENCH
 DEFS=-DRG 
 
 OBJ=config.o \
