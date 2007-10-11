@@ -2391,7 +2391,7 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
   // routine rtRayTracingB.
   
   memcpy (rt->col_pixel_recv, rt->col_pixel_send, rt->col_pixels * sizeof(ColPixel));
-
+  
   // "master_proc_id" will be the identifier of the processor with
   // lowest rank in its machine
   
@@ -2500,7 +2500,10 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
       comm_inc <<= 1;
     }
   
-  if (net->machines == 1 || net->id != master_proc_id) return;
+  if (net->machines == 1 || (net->id != 0 && net->id != master_proc_id))
+    {
+      return;
+    }
   
   // non-blocking inter-machine communications of sub-images begin here
   
@@ -2526,6 +2529,7 @@ void rtRayTracingA (void (*AbsorptionCoefficients) (float flow_field_data, float
       pixel_color_to_send[ k+2 ] += col_pixel_p->b;
       pixel_color_to_send[ k+3 ]  = col_pixel_p->t;
     }
+  
   if (net->id != 0)
     {
       recv_id = 0;
@@ -2586,7 +2590,7 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
 	{
 	  master_proc_id += net->procs_per_machine[ m ];
 	}
-      if (net->id != master_proc_id) return;
+      if (net->id != 0 && net->id != master_proc_id) return;
       
       if (net->id != 0)
 	{
@@ -2604,9 +2608,9 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
 	      
 	      offset = (m-1) * (4 * SCREEN_SIZE_MAX);
 	      
-	      for (k = 0; k < 4 * pixels_x * pixels_y;)
+	      if (rt->is_isosurface)
 		{
-		  if (rt->is_isosurface)
+		  for (k = 0; k < 4 * pixels_x * pixels_y;)
 		    {
 		      if (pixel_color_to_recv[ offset+3 ] < pixel_color_to_send[ k+3 ])
 			{
@@ -2615,15 +2619,20 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
 			  pixel_color_to_send[ k+2 ] = pixel_color_to_recv[ offset+2 ];
 			  pixel_color_to_send[ k+3 ] = pixel_color_to_recv[ offset+3 ];
 			}
+		      k += 4;
+		      offset += 4;
 		    }
-		  else
+		}
+	      else
+		{
+		  for (k = 0; k < 4 * pixels_x * pixels_y;)
 		    {
 		      pixel_color_to_send[ k   ] += pixel_color_to_recv[ offset   ];
 		      pixel_color_to_send[ k+1 ] += pixel_color_to_recv[ offset+1 ];
 		      pixel_color_to_send[ k+2 ] += pixel_color_to_recv[ offset+2 ];
+		      k += 4;
+		      offset += 4;
 		    }
-		  k += 4;
-		  offset += 4;
 		}
 	      send_id += net->procs_per_machine[ m ];
 	    }
@@ -2672,15 +2681,15 @@ void rtRayTracingB (void (*AbsorptionCoefficients) (float flow_field_data, float
   else
     {
       for (k = 0; k < pixels_x * pixels_y; k++)
-	{
-	  r = pixel_color_to_send[ (k<<2)   ];
-	  g = pixel_color_to_send[ (k<<2)+1 ];
-	  b = pixel_color_to_send[ (k<<2)+2 ];
-	  
-	  pixel_data[ (k*3)   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
-	  pixel_data[ (k*3)+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
-	  pixel_data[ (k*3)+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
-	}
+  	{
+  	  r = pixel_color_to_send[ (k<<2)   ];
+  	  g = pixel_color_to_send[ (k<<2)+1 ];
+  	  b = pixel_color_to_send[ (k<<2)+2 ];
+  	  
+  	  pixel_data[ (k*3)   ] = (unsigned char)max(0, min(255, (int)(255.F - factor * r)));
+  	  pixel_data[ (k*3)+1 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * g)));
+  	  pixel_data[ (k*3)+2 ] = (unsigned char)max(0, min(255, (int)(255.F - factor * b)));
+  	}
     }
   
   int eVizret = eViz_RLE_writeMemory (pixel_data, pixels_x, pixels_y,
@@ -2980,8 +2989,6 @@ void rtInit (char *image_file_name, Net *net, RT *rt)
   rt->pixels_max = 512 * 512;
   rt->col_pixel_id = (int *)malloc(sizeof(int) * rt->pixels_max);
   
-  rt->col_pixels_recv = (int *)malloc(sizeof(int) * net->procs);
-  
 #ifdef RG
   if (net->id == 0)
     {
@@ -3038,7 +3045,6 @@ void rtInit (char *image_file_name, Net *net, RT *rt)
 
 void rtEnd (Net *net, RT *rt)
 {
-  free(rt->col_pixels_recv);
   //free(rt->col_pixel_send);
   free(rt->col_pixel_id);
   free(rt->col_pixel_recv);
