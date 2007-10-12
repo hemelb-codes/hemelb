@@ -210,7 +210,7 @@ void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[])
   int unit_level, up_units_max, up_unit, marker;
   int machine_id, neigh_machine_id;
   int my_sites, my_sites_temp;
-  int are_fluid_sites_incrementing, proc_inc;
+  int are_fluid_sites_incrementing;
   int is_inter_site, is_inner_site;
   int flag;
   int use_fast_dd;
@@ -335,7 +335,6 @@ void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[])
 #endif
       
       partial_visited_fluid_sites = 0;
-      proc_inc = 1;
       
       n = -1;
       
@@ -447,14 +446,6 @@ void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[])
 			  block_location_b = block_location_a_p;
 			  blocks_a = blocks_b;
 			}
-		      else
-			{
-			  proc_inc = 0;
-			}
-		      if (partial_visited_fluid_sites >= fluid_sites_per_unit)
-			{
-			  proc_inc = 1;
-			}
 		    }
 		  if (net->id == proc_count)
 		    {
@@ -469,10 +460,10 @@ void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[])
 		      cluster_p->blocks_yz = (int)cluster_p->blocks_y * cluster_p->blocks_z;
 		      cluster_p->blocks = (int)cluster_p->blocks_x * cluster_p->blocks_yz;
 		    }
-		  if (proc_inc)
+		  if (partial_visited_fluid_sites >= fluid_sites_per_unit)
 		    {
 		      ++proc_count;
-		      partial_visited_fluid_sites -= fluid_sites_per_unit;
+		      partial_visited_fluid_sites = 0;
 		    }
 		}
 	    }
@@ -539,8 +530,6 @@ void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[])
 		}
 	      
 	      partial_visited_fluid_sites = 0;
-	      
-	      proc_inc = 1;
 	      
 	      n = -1;
 	      
@@ -662,16 +651,7 @@ void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[])
 				  block_location_a_p = block_location_a;
 				  block_location_a = block_location_b;
 				  block_location_b = block_location_a_p;
-				  
 				  blocks_a = blocks_b;
-				}
-			      else
-				{
-				  proc_inc = 0;
-				}
-			      if (partial_visited_fluid_sites >= fluid_sites_per_unit)
-				{
-				  proc_inc = 1;
 				}
 			    }
 			  if (net->id == proc_count)
@@ -687,10 +667,10 @@ void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[])
 			      cluster_p->blocks_yz = (int)cluster_p->blocks_y * cluster_p->blocks_z;
 			      cluster_p->blocks = (int)cluster_p->blocks_x * cluster_p->blocks_yz;
 			    }
-			  if (proc_inc)
+			  if (partial_visited_fluid_sites >= fluid_sites_per_unit)
 			    {
 			      ++proc_count;
-			      partial_visited_fluid_sites -= fluid_sites_per_unit;
+			      partial_visited_fluid_sites = 0;
 			    }
 			}
 		    }
