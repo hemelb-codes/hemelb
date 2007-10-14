@@ -9,13 +9,18 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+
+#ifdef XT3
+#include "types.h"
+#include "xdr.h"
+#else
 #include <rpc/types.h>
+#include <rpc/xdr.h>
+#endif
 
 #ifndef int64_t
 #define int64_t long int
 #endif
-
-#include <rpc/xdr.h>
 
 
 #ifdef BENCH
