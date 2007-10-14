@@ -4,15 +4,20 @@
 #include <errno.h>
 #include <string.h>
 #include <netdb.h>
+#ifndef XT3
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#endif
 
 #define networkXDR
 
 #ifdef networkXDR
-#include <rpc/types.h>
-#include <rpc/xdr.h>
+#ifdef XT3
+#include "types.h"
+#include "xdr.h"
+#else
+#include <xdr.h>
 #endif
 
 
