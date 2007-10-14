@@ -1,0 +1,24 @@
+#!/bin/csh
+module swap PrgEnv-pgi PrgEnv-gnu
+module load gmalloc
+#module load iobuf
+set COPT='-I./xdr -O3 -finstrument-functions -DBENCH -DXT3'
+#set COPT = '-O0 -g'
+set CLIBS='-L./xdr -lxdr -lm'
+rm -rf *.o *.exe 
+cd xdr; make clean; make; cd ../
+CC $COPT config.cc -c 
+CC $COPT lb.cc -c 
+CC $COPT io.cc -c 
+CC $COPT topology.cc -c
+CC $COPT main.cc -c 
+CC $COPT rt.cc -c
+CC $COPT $CLIBS config.o lb.o io.o topology.o rt.o main.o -o hemeLB.exe
+
+
+#This stuff doesn't work for the XT3 yet
+#CC -DBENCH -I../../../xdr -O3 -finstrument-functions eVizRLEUtil.c -c 
+#CC -DBENCH -I../../../xdr -O3 -finstrument-functions displayClient.cc -c 
+#CC -O3 -DBENCH -I../../../xdr -L../../../xdr -lxdr -lm config.o lb.o io.o topology.o main.o eVizRLEUtil.o displayClient.o -o hemeLB.exe 
+
+
