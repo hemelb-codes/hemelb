@@ -915,8 +915,7 @@ int main (int argc, char *argv[])
       total_time = myClock () - total_time;
       fprintf (timings_ptr, "total time (s):                            %.3f\n\n", total_time);
 
-      
-      fprintf (timings_ptr, "Sub-domains info:\n\n", net.fo_time);
+      fprintf (timings_ptr, "Sub-domains info:\n\n");
       
       for (int n = 0; n < net.procs; n++)
 	{
