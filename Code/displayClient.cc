@@ -4,21 +4,26 @@
 #include <errno.h>
 #include <string.h>
 #include <netdb.h>
+
 #ifndef XT3
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
 
-#define networkXDR
-
-#ifdef networkXDR
-#ifdef XT3
-#include "types.h"
-#include "xdr.h"
+#ifndef networkXDR
+#include <rpc/xdr.h>
+#include <rpc/types.h>
 #else
-#include <xdr.h>
+#ifdef XT3
+#include "xdr/types.h"
+#include "xdr/xdr.h"
+#else
+#include <rpc/types.h>
+#include <rpc/xdr.h>
 #endif
+#endif
+
 
 
 #define GLUTCALLBACK
@@ -167,9 +172,8 @@ void ReceiveFrame ()
   ((unsigned char*)&shortHeight)[0] = compressed_data[2];
   ((unsigned char*)&shortHeight)[1] = compressed_data[3];
   
-  width = shortWidth;
-  height = shortHeight;
-  
+  width = 512; // shortWidth;
+  height = 512; // shortHeight;
   pixels_x = width;
   pixels_y = height;
   
@@ -184,6 +188,10 @@ void ReceiveFrame ()
   
   printf("size %i, width %i, height %i, bpp %i\n", compressed_frame_size, width, height, bpp);
   fflush(NULL);
+  width = 512; // shortWidth;
+  height = 512; // shortHeight;
+  pixels_x = width;
+  pixels_y = height;
 }
 
 void DisplayFrame ()
