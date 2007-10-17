@@ -11,8 +11,8 @@
 #include <math.h>
 
 #ifdef XT3
-#include "types.h"
-#include "xdr.h"
+#include "xdr/types.h"
+#include "xdr/xdr.h"
 #else
 #include <rpc/types.h>
 #include <rpc/xdr.h>
