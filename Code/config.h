@@ -425,7 +425,7 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net);
 int lbmCycle (int write_checkpoint, int check_convergence, int perform_rt, int *is_converged, LBM *lbm, Net *net, RT *rt);
 void lbmEnd (LBM *lbm);
 
-int netFindTopology (Net *net);
+int netFindTopology (Net *net, int *depths);
 void netInit (LBM *lbm, Net *net, RT *rt, int proc_sites[]);
 void netEnd (Net *net, RT *rt);
 

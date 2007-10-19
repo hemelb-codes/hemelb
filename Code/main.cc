@@ -313,6 +313,7 @@ int main (int argc, char *argv[])
   int ray_tracing_count = 0;
   int is_thread_locked;
   int proc_fluid_sites[4 * 1024];
+  int depths;
   
 #ifdef BENCH
   int fluid_solver_time_steps;
@@ -495,12 +496,12 @@ int main (int argc, char *argv[])
 
   lbmInit (input_config_name, checkpoint_config_name, &lbm, &net);
   
-  if (netFindTopology (&net) == 0)
+  if (netFindTopology (&net, &depths) == 0)
     {
       fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");
       MPI_Abort(MPI_COMM_WORLD, 1);
     }
-
+  
   netInit (&lbm, &net, &rt, proc_fluid_sites);
   
 #ifdef STEER
@@ -837,6 +838,7 @@ int main (int argc, char *argv[])
   	}
       fprintf (timings_ptr, "\n");
       fprintf (timings_ptr, "processors: %i, machines checked: %i\n\n", net.procs, net.machines);
+      fprintf (timings_ptr, "topology depths checked: %i\n\n", depths);
       fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
       fprintf (timings_ptr, "time steps: %i \n\n", time_step);
       fprintf (timings_ptr, "time steps per second: %.3f\n\n", time_step / simulation_time);
@@ -845,7 +847,7 @@ int main (int argc, char *argv[])
   
   if (net.id == 0)
     {
-      fprintf (timings_ptr, "\n---------- BENCHMARKS RESULTS ----------\n");
+      fprintf (timings_ptr, "\n---------- BENCHMARk RESULTS ----------\n");
       
       fprintf (timings_ptr, "procs checked: %i, machines checked: %i\n\n", net.procs, net.machines);
       fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
