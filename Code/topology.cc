@@ -64,7 +64,7 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
 
 #ifdef MPICHX_TOPOLOGY_DEPTHS
 
-int netFindTopology (Net *net)
+int netFindTopology (Net *net, int *depths)
 {
   // the topology discovery mechanism is implemented in this
   // function. Use the following commented one if some MPI constants
@@ -99,8 +99,12 @@ int netFindTopology (Net *net)
     {
       net->procs_per_machine[ i ] = 0;
     }
+  *depths = 0;
+  
   for (i = 0; i < net->procs; i++)
     {
+      *depths = max(*depths, depth[ i ]);
+      
       if (depth[ i ] != 4) continue;
       
       for (j = 0, is_found = 0; j < net->machines && is_found == 0; j++)
@@ -131,6 +135,7 @@ int netFindTopology (Net *net)
 	{
 	  net->machine_id[ i ] = 0;
 	}
+      net->procs_per_machine[ 0 ] = net->procs;
     }
   else
     {
@@ -159,10 +164,13 @@ int netFindTopology (Net *net)
 
 #else
 
-int netFindTopology (Net *net)
+int netFindTopology (Net *net, int *depths)
 {
   // the machine is assumed to be only one if this function is
   // used instead of the previous one
+  
+  
+  *depths = 1;
   
   net->machines = 1;
   
