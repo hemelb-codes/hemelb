@@ -36,6 +36,8 @@ void lbmReadConfig (LBM *lbm, Net *net)
   DensityBlock *density_block = NULL;
   DensityBlock *density_block_p = NULL;
   
+  BlockLocation *fluid_block_p;
+  
   
   system_config = fopen (lbm->system_file_name, "r");
   
@@ -79,6 +81,10 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   blocks_max = dummy;
   blocks = dummy;
+
+  lbm->fluid_blocks_max = 10000;
+  lbm->fluid_block = (BlockLocation *)malloc(sizeof(BlockLocation) * lbm->fluid_blocks_max);
+  lbm->fluid_blocks = 0;
   
   if (!lbm->is_checkpoint)
     {
@@ -90,6 +96,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
       density_block = (DensityBlock *)malloc(sizeof(DensityBlock) * blocks_max);
     }
+  
   n = -1;
   
   for (i = 0; i < lbm->blocks_x; i++)
@@ -105,6 +112,18 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      if (!lbm->is_checkpoint) lbm->block_map[ n ] = -1;
 	      
 	      if (flag == 0) continue;
+	      
+	      if (lbm->fluid_blocks == lbm->fluid_blocks_max)
+	      	{
+	      	  lbm->fluid_blocks_max <<= 1;
+	      	  lbm->fluid_block = (BlockLocation *)realloc(lbm->fluid_block,
+	      						      sizeof(BlockLocation) * lbm->fluid_blocks_max);
+	      	}
+	      fluid_block_p = &lbm->fluid_block[ lbm->fluid_blocks ];
+	      fluid_block_p->i = i;
+	      fluid_block_p->j = j;
+	      fluid_block_p->k = k;
+	      ++lbm->fluid_blocks;
 	      
 	      if (!lbm->is_checkpoint)
 		{
@@ -300,7 +319,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	{
 	  //int iters;
 	  //fscanf (parameters_file, "%i\n", &iters);
-	  //lbm->outlet_density[ n ] = 0.5 - iters * 1.e-6;
+	  //lbm->outlet_density[ n ] = 0.5 - iters * 1.e-4;
 	  //printf (" outlet id: %i, density: %f\n", n, lbm->outlet_density[ n ]);
 	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
 	}

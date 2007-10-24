@@ -10,16 +10,16 @@
 #include <time.h>
 #include <math.h>
 
+#ifndef int64_t
+#define int64_t long int
+#endif
+
 #ifdef XT3
 #include "xdr/types.h"
 #include "xdr/xdr.h"
 #else
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-#endif
-
-#ifndef int64_t
-#define int64_t long int
 #endif
 
 
@@ -203,12 +203,15 @@ struct LBM
   int time_steps_max;
   int checkpoint_frequency, convergence_frequency;
   int is_checkpoint;
+  int fluid_blocks, fluid_blocks_max;
   
   float *block_density;
   
   int *block_map;
   
   short int *fluid_sites_per_block;
+  
+  BlockLocation *fluid_block;
 };
 
 

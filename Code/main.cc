@@ -849,7 +849,8 @@ int main (int argc, char *argv[])
     {
       fprintf (timings_ptr, "\n---------- BENCHMARk RESULTS ----------\n");
       
-      fprintf (timings_ptr, "procs checked: %i, machines checked: %i\n\n", net.procs, net.machines);
+      fprintf (timings_ptr, "processors: %i, machines checked: %i\n\n", net.procs, net.machines);
+      fprintf (timings_ptr, "topology depths checked: %i\n\n", depths);
       fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
       fprintf (timings_ptr, "time steps: %i \n\n", time_step);
       fprintf (timings_ptr, "time steps per second: %.3f, MSUPS: %.3f, time: %.3f\n\n",
