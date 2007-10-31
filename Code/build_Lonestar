@@ -1,0 +1,36 @@
+SRC="config.cc eVizRLEUtil.c io.cc lb.cc main.cc rt.cc topology.cc"
+FLAGS=-O2
+MPI_CC=mpicxx
+REG_INCLUDE_GRID=-I$HOME/reg_steer_lib/include
+REG_LIBS_GRID="-L$HOME/reg_steer_lib/lib64 -lReG_Steer -lReG_Steer_Utils -lReG_Steer_SOAP -lxml2 -lssl"
+
+function BuildHemeLB_MPI_Bench {
+echo "Building HemeLB with standard MPI + benchmarking"
+$MPI_CC \
+        -DBENCH \
+        $FLAGS $SRC -lm \
+        -o hemelb_bench
+}
+
+function BuildHemeLB_MPI_Vis {
+echo "Building HemeLB with standard MPI + vis output"
+$MPI_CC \
+        -DRG -DFREEROOT \
+        $FLAGS $SRC -lm \
+        -o hemelb_vis
+}
+
+function BuildHemeLB_MPI_Vis_Grid_Steering {
+echo "Building HemeLB with standard MPI + vis output + grid-based ReG steering"
+$MPI_CC \
+        -DRG -DFREEROOT -DSTEER \
+        $REG_INCLUDE_GRID \
+        $REG_LIBS_GRID \
+        $FLAGS $SRC -lm \
+        -o hemelb_vis_reg_grid
+}
+
+BuildHemeLB_MPI_Bench
+BuildHemeLB_MPI_Vis
+BuildHemeLB_MPI_Vis_Grid_Steering
+
