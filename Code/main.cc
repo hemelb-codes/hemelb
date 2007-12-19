@@ -270,7 +270,7 @@ inline void slColourPalette (float vel_magnitude, float *r, float *g, float *b)
 }
 
 
-int IsBenckSectionFinished (double minutes, double elapsed_time)
+int IsBenchSectionFinished (double minutes, double elapsed_time)
 {
   int is_bench_section_finished = 0;
   int err;
@@ -772,7 +772,7 @@ int main (int argc, char *argv[])
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%100 == 1 &&
-	  IsBenckSectionFinished (minutes / 3., elapsed_time))
+	  IsBenchSectionFinished (minutes / 3., elapsed_time))
 	{
 	  break;
 	}
@@ -804,7 +804,7 @@ int main (int argc, char *argv[])
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%100 == 1 &&
-	  IsBenckSectionFinished (minutes / 3., elapsed_time))
+	  IsBenchSectionFinished (minutes / 3., elapsed_time))
 	{
 	  break;
 	}
@@ -836,7 +836,7 @@ int main (int argc, char *argv[])
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%100 == 1 &&
-	  IsBenckSectionFinished (minutes / 3., elapsed_time))
+	  IsBenchSectionFinished (minutes / 3., elapsed_time))
 	{
 	  break;
 	}
