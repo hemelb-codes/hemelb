@@ -3,7 +3,6 @@
 
 #include "config.h"
 
-
 #ifdef RG
 #include <unistd.h>
 #include <errno.h>
@@ -18,94 +17,7 @@
 #define CONNECTION_BACKLOG 10
 #endif // RG
 
-
 FILE *timings_ptr;
-
-float globalLongitude = 0.;
-
-
-void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
-{
-  FILE *parameters_file;
-
-  float par_to_send[14];
-  float ctr_x, ctr_y, ctr_z;
-  float longitude, latitude;
-  float zoom;
-  float density_max, velocity_max, stress_max;
-  float dummy;
-  
-  
-  if (net->id == 0)
-    {
-      parameters_file = fopen (parameters_file_name, "r");
-      
-      fscanf (parameters_file, "%e \n", &dummy);
-      fscanf (parameters_file, "%e \n", &dummy);
-      fscanf (parameters_file, "%e \n", &ctr_x);
-      fscanf (parameters_file, "%e \n", &ctr_y);
-      fscanf (parameters_file, "%e \n", &ctr_z);
-      fscanf (parameters_file, "%e \n", &longitude);
-      fscanf (parameters_file, "%e \n", &latitude);
-      fscanf (parameters_file, "%e \n", &zoom);
-      
-      fscanf (parameters_file, "%i \n", &vis->image_freq);
-      fscanf (parameters_file, "%i \n", &vis->flow_field_type);
-      fscanf (parameters_file, "%i \n", &vis->mode);
-      fscanf (parameters_file, "%e \n", &vis->absorption_factor);
-      fscanf (parameters_file, "%e \n", &vis->cutoff);
-      fscanf (parameters_file, "%e \n", &density_max);
-      fscanf (parameters_file, "%e \n", &velocity_max);
-      fscanf (parameters_file, "%e \n", &stress_max);
-
-      fclose (parameters_file);
-      
-      par_to_send[  0 ] = ctr_x;
-      par_to_send[  1 ] = ctr_y;
-      par_to_send[  2 ] = ctr_z;
-      par_to_send[  3 ] = longitude;
-      par_to_send[  4 ] = latitude;
-      par_to_send[  5 ] = zoom;
-      par_to_send[  6 ] = 0.1 + (float)vis->image_freq;
-      par_to_send[  7 ] = 0.1 + (float)vis->flow_field_type;
-      par_to_send[  8 ] = 0.1 + (float)vis->mode;
-      par_to_send[  9 ] = vis->absorption_factor;
-      par_to_send[ 10 ] = vis->cutoff;
-      par_to_send[ 11 ] = density_max;
-      par_to_send[ 12 ] = velocity_max;
-      par_to_send[ 13 ] = stress_max;
-    }
-  net->err = MPI_Bcast (par_to_send, 14, MPI_FLOAT, 0, MPI_COMM_WORLD);
-  
-  ctr_x                  =      par_to_send[  0 ];
-  ctr_y                  =      par_to_send[  1 ];
-  ctr_z                  =      par_to_send[  2 ];
-  longitude              =      par_to_send[  3 ];
-  latitude               =      par_to_send[  4 ];
-  zoom                   =      par_to_send[  5 ];
-  vis->image_freq        = (int)par_to_send[  6 ];
-  vis->flow_field_type   = (int)par_to_send[  7 ];
-  vis->mode              = (int)par_to_send[  8 ];
-  vis->absorption_factor =      par_to_send[  9 ];
-  vis->cutoff            =      par_to_send[ 10 ];
-  density_max            =      par_to_send[ 11 ];
-  velocity_max           =      par_to_send[ 12 ];
-  stress_max             =      par_to_send[ 13 ];
-  
-  visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
-		 PIXELS_X, PIXELS_Y,
-		 ctr_x, ctr_y, ctr_z,
-		 5.F * vis->system_size,
-		 globalLongitude, latitude,
-		 0.5F * (5.F * vis->system_size),
-		 zoom);
-  
-///  vis->flow_field_value_max_inv[ DENSITY  ] = 1.F / density_max;
-///  vis->flow_field_value_max_inv[ VELOCITY ] = 1.F / velocity_max;
-///  vis->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
-}
-
-
 
 #ifdef RG
 
