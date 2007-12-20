@@ -1,0 +1,82 @@
+#CC=mpicxx
+#CC=g++
+
+CC=lamc++-64
+CC=g++
+
+#INCLUDES=-I/usr/local/include
+#LIBS=-L/usr/local/lib -llammpio -llammpi++ -lmpi -llam -ldl
+EXE=hemelb
+LIBS=-L/usr/local/lib -llammpio -llammpi++ -lmpi -llam -ldl
+
+MPIRUN=/usr/local/bin/mpiexec
+MPIRUN=/usr/local/bin/mpirun
+MPIRUN=/usr/bin/mpirun
+MPIRUN=/usr/bin/mpirun
+
+MPIRUN=/usr/local/bin/mpirun
+#REG_HOME=/home/steven/reg_steer_lib
+
+REG_CPPFLAGS=-I${REG_HOME}/include
+
+#REG_LDFLAGS=-L${REG_HOME}/lib64 -Wl,-Bstatic -lReG_Steer -lReG_Steer_Utils \
+#                -lReG_Steer_SOAP -Wl,-Bdynamic -lxml2
+
+MPICPUS=2
+
+TEST1INPUT=$(HOME)/hemelb/Input/square_duct_32x16x16 3
+TEST2INPUT=$(HOME)/hemelb/Input/angio1
+TEST3INPUT=$(HOME)/hemelb/Input/bifurcation_512x512x512
+TEST4INPUT=$(HOME)/hemelb/Input/angio4
+
+FLAGS=-O3 -Wunused ${REG_CPPFLAGS} 
+FLAGS=-O0
+#DEFS=-DRG -DSTEER -DFREEROOT
+#DEFS=-DBENCH
+DEFS=-DRG 
+
+OBJ=config.o \
+	io.o \
+	lb.o \
+	main.o \
+	rt.o \
+	topology.o \
+	eVizRLEUtil.o \
+	network.o
+
+$(EXE): $(OBJ)
+	$(CC) $(FLAGS) $(LIBS) ${REG_LDFLAGS} $(OBJ) -o $(EXE)
+
+test1:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST1INPUT)
+
+test2:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST2INPUT)
+
+test3:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST3INPUT)
+
+test4:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST4INPUT)
+
+display:
+	g++ displayClient.cc -O3 -lGLU -lglut eVizRLEUtil.c -o displayClient
+
+mac-display:
+	g++ -O3 -framework OpenGL -framework GLUT -framework Foundation -o displayClient displayClient.cc eVizRLEUtil.c -DMAC_GLUT
+
+display-debug:
+	g++ displayClient.cc -g -lGLU -lglut eVizRLEUtil.c -o displayClient
+
+.cc.o:
+	$(CC) $(FLAGS) $(DEFS) $(INCLUDES) -c $<
+
+.c.o:
+	$(CC) $(FLAGS) $(DEFS) -c $<
+
+clean:
+	rm -f $(OBJ) $(EXE) displayClient
+
+distclean: clean
+	find ./ -name \*~ -exec rm -f {} \;
+

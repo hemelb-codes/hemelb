@@ -1,3 +1,4 @@
+
 // In this file all the declarations and some simple functions are reported.
 
 #ifndef __config_h__
@@ -113,16 +114,6 @@ extern MPI_Datatype MPI_col_pixel_type;
 
 // data structures useful to define the simulation set-up, construct
 // the system and partition it
-
-#ifdef RG
-
-extern pthread_mutex_t network_buffer_copy_lock;
-extern pthread_cond_t network_send_frame;
-
-extern int send_array_length;
-
-#endif // RG
-
 
 #ifdef STEER
 
