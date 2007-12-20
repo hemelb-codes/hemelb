@@ -53,11 +53,6 @@ MPI_Datatype MPI_col_pixel_type;
 
 #ifdef RG
 
-pthread_mutex_t network_buffer_copy_lock;
-pthread_cond_t network_send_frame;
-
-int send_array_length;
-
 int frame_size;
 
 unsigned char *pixel_data = NULL;
