@@ -9,18 +9,18 @@ short int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net)
   // specific lattice site (with global coordinates
   // (site_i,site_j,site_k)
   
-  if (site_i < 0 || site_i >= net->sites_x ||
-      site_j < 0 || site_j >= net->sites_y ||
-      site_k < 0 || site_k >= net->sites_z)
+  if (site_i < 0 || site_i >= sites_x ||
+      site_j < 0 || site_j >= sites_y ||
+      site_k < 0 || site_k >= sites_z)
     {
       return NULL;
     }
 
-  int i = site_i >> net->shift;
-  int j = site_j >> net->shift;
-  int k = site_k >> net->shift;
+  int i = site_i >> shift;
+  int j = site_j >> shift;
+  int k = site_k >> shift;
   
-  return &net->proc_id[ (i * net->blocks_y + j) * net->blocks_z + k ];
+  return &net->proc_id[ (i * blocks_y + j) * blocks_z + k ];
 }
 
 
@@ -34,18 +34,18 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
   DataBlock *map_block_p;
 
 
-  if (site_i < 0 || site_i >= net->sites_x ||
-      site_j < 0 || site_j >= net->sites_y ||
-      site_k < 0 || site_k >= net->sites_z)
+  if (site_i < 0 || site_i >= sites_x ||
+      site_j < 0 || site_j >= sites_y ||
+      site_k < 0 || site_k >= sites_z)
     {
       return NULL;   // out of the bounding box
     }
   
-  i = site_i >> net->shift;
-  j = site_j >> net->shift;
-  k = site_k >> net->shift;
+  i = site_i >> shift;
+  j = site_j >> shift;
+  k = site_k >> shift;
 
-  map_block_p = &net->map_block[(i * net->blocks_y + j) * net->blocks_z + k];
+  map_block_p = &net->map_block[(i * blocks_y + j) * blocks_z + k];
 
   if (map_block_p->site_data == NULL)
     {
@@ -53,11 +53,11 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
     }
   else
     {
-      ii = site_i - (i << net->shift);
-      jj = site_j - (j << net->shift);
-      kk = site_k - (k << net->shift);
+      ii = site_i - (i << shift);
+      jj = site_j - (j << shift);
+      kk = site_k - (k << shift);
       
-      return &map_block_p->site_data[(((ii << net->shift) + jj) << net->shift) + kk];
+      return &map_block_p->site_data[(((ii << shift) + jj) << shift) + kk];
     }
 }
 
@@ -242,44 +242,6 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   Cluster *cluster_p;
   
   
-  net->sites_x = lbm->sites_x;
-  net->sites_y = lbm->sites_y;
-  net->sites_z = lbm->sites_z;
-  
-  net->block_size = lbm->block_size;
-  
-  net->sites_in_a_block = lbm->sites_in_a_block;
-  
-  net->blocks_x = lbm->blocks_x;
-  net->blocks_y = lbm->blocks_y;
-  net->blocks_z = lbm->blocks_z;
-  
-  net->blocks = lbm->blocks;
-  
-  net->shift = lbm->shift;
-  
-  
-  vis->blocks_x = net->blocks_x;
-  vis->blocks_y = net->blocks_y;
-  vis->blocks_z = net->blocks_z;
-  
-  vis->blocks = net->blocks;
-  vis->blocks_yz = vis->blocks_y * vis->blocks_z;
-  
-  vis->block_size_inv = 1. / (float)lbm->block_size;
-  
-  vis->half_dim_x = 0.5F * (float)lbm->sites_x;
-  vis->half_dim_y = 0.5F * (float)lbm->sites_y;
-  vis->half_dim_z = 0.5F * (float)lbm->sites_z;
-
-  vis->system_size = 2.F * fmaxf(vis->half_dim_x, fmaxf(vis->half_dim_y, vis->half_dim_z));
-  
-  vis->shift = net->shift;
-  vis->shift2 = net->shift << 1;
-  vis->block_size = net->block_size;
-  vis->block_size2 = vis->block_size * vis->block_size;
-  vis->block_size3 = vis->block_size * vis->block_size2;
-  vis->block_size_1 = vis->block_size - 1;
   
   if (net->machines == 1 || net->machines == net->procs)
     {
@@ -294,7 +256,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   seconds = myClock ();
   
-  net->proc_id = (short int *)malloc(sizeof(short int) * net->blocks);
+  net->proc_id = (short int *)malloc(sizeof(short int) * blocks);
   
   clusters_max = 20;
   vis->clusters = 0;
@@ -302,7 +264,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   marker = -1;
   
-  for (n = 0; n < net->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       if (lbm->fluid_sites_per_block[ n ] == 0)
 	{
@@ -343,11 +305,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
       
       n = -1;
       
-      for (i = 0; i < net->blocks_x; i++)
+      for (i = 0; i < blocks_x; i++)
 	{
-	  for (j = 0; j < net->blocks_y; j++)
+	  for (j = 0; j < blocks_y; j++)
 	    {
-	      for (k = 0; k < net->blocks_z; k++)
+	      for (k = 0; k < blocks_z; k++)
 		{
 		  if (*(proc_id_p = &net->proc_id[ ++n ]) != marker) continue;
 		  
@@ -363,9 +325,9 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 		      cluster_p = &vis->cluster[ vis->clusters ];
 		      ++vis->clusters;
 		      
-		      cluster_p->block_min_i = i;
-		      cluster_p->block_min_j = j;
-		      cluster_p->block_min_k = k;
+		      cluster_p->block_min[0] = i;
+		      cluster_p->block_min[1] = j;
+		      cluster_p->block_min[2] = k;
 		      
 		      cluster_block_max_i = i;
 		      cluster_block_max_j = j;
@@ -401,11 +363,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			      neigh_j = block_location_a_p->j + n_y[ l ];
 			      neigh_k = block_location_a_p->k + n_z[ l ];
 			      
-			      if (neigh_i == -1 || neigh_i == net->blocks_x) continue;
-			      if (neigh_j == -1 || neigh_j == net->blocks_y) continue;
-			      if (neigh_k == -1 || neigh_k == net->blocks_z) continue;
+			      if (neigh_i == -1 || neigh_i == blocks_x) continue;
+			      if (neigh_j == -1 || neigh_j == blocks_y) continue;
+			      if (neigh_k == -1 || neigh_k == blocks_z) continue;
 			      
-			      block_id = (neigh_i * net->blocks_y + neigh_j) * net->blocks_z + neigh_k;
+			      block_id = (neigh_i * blocks_y + neigh_j) * blocks_z + neigh_k;
 			      
 			      if (*(proc_id_p = &net->proc_id[ block_id ]) != marker)
 				{
@@ -433,9 +395,9 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			      
 			      if (proc_count == net->id)
 				{
-				  cluster_p->block_min_i = min((int)cluster_p->block_min_i, neigh_i);
-				  cluster_p->block_min_j = min((int)cluster_p->block_min_j, neigh_j);
-				  cluster_p->block_min_k = min((int)cluster_p->block_min_k, neigh_k);
+				  cluster_p->block_min[0] = min((int)cluster_p->block_min[0], neigh_i);
+				  cluster_p->block_min[1] = min((int)cluster_p->block_min[1], neigh_j);
+				  cluster_p->block_min[2] = min((int)cluster_p->block_min[2], neigh_k);
 				  
 				  cluster_block_max_i = max((int)cluster_block_max_i, neigh_i);
 				  cluster_block_max_j = max((int)cluster_block_max_j, neigh_j);
@@ -454,16 +416,13 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 		    }
 		  if (net->id == proc_count)
 		    {
-		      cluster_p->block_min_x = cluster_p->block_min_i * lbm->block_size - vis->half_dim_x;
-		      cluster_p->block_min_y = cluster_p->block_min_j * lbm->block_size - vis->half_dim_y;
-		      cluster_p->block_min_z = cluster_p->block_min_k * lbm->block_size - vis->half_dim_z;
+		      cluster_p->x[0] = cluster_p->block_min[0] * block_size - 0.5F * sites_x;
+		      cluster_p->x[1] = cluster_p->block_min[1] * block_size - 0.5F * sites_y;
+		      cluster_p->x[2] = cluster_p->block_min[2] * block_size - 0.5F * sites_z;
 		      
-		      cluster_p->blocks_x = 1 + cluster_block_max_i - cluster_p->block_min_i;
-		      cluster_p->blocks_y = 1 + cluster_block_max_j - cluster_p->block_min_j;
-		      cluster_p->blocks_z = 1 + cluster_block_max_k - cluster_p->block_min_k;
-		      
-		      cluster_p->blocks_yz = (int)cluster_p->blocks_y * cluster_p->blocks_z;
-		      cluster_p->blocks = (int)cluster_p->blocks_x * cluster_p->blocks_yz;
+		      cluster_p->blocks_x = 1 + cluster_block_max_i - cluster_p->block_min[0];
+		      cluster_p->blocks_y = 1 + cluster_block_max_j - cluster_p->block_min[1];
+		      cluster_p->blocks_z = 1 + cluster_block_max_k - cluster_p->block_min[2];
 		    }
 		  if (partial_visited_fluid_sites >= fluid_sites_per_unit)
 		    {
@@ -538,11 +497,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	      
 	      n = -1;
 	      
-	      for (i = 0; i < net->blocks_x; i++)
+	      for (i = 0; i < blocks_x; i++)
 		{
-		  for (j = 0; j < net->blocks_y; j++)
+		  for (j = 0; j < blocks_y; j++)
 		    {
-		      for (k = 0; k < net->blocks_z; k++)
+		      for (k = 0; k < blocks_z; k++)
 			{
 			  if (*(proc_id_p = &net->proc_id[ ++n ]) != marker) continue;
 			  
@@ -570,10 +529,10 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			      cluster_p = &vis->cluster[ vis->clusters ];
 			      ++vis->clusters;
 			      
-			      cluster_p->block_min_i = i;
-			      cluster_p->block_min_j = j;
-			      cluster_p->block_min_k = k;
-				  
+			      cluster_p->block_min[0] = i;
+			      cluster_p->block_min[1] = j;
+			      cluster_p->block_min[2] = k;
+			      
 			      cluster_block_max_i = i;
 			      cluster_block_max_j = j;
 			      cluster_block_max_k = k;
@@ -608,11 +567,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 				      neigh_j = block_location_a_p->j + n_y[ l ];
 				      neigh_k = block_location_a_p->k + n_z[ l ];
 				      
-				      if (neigh_i == -1 || neigh_i == net->blocks_x) continue;
-				      if (neigh_j == -1 || neigh_j == net->blocks_y) continue;
-				      if (neigh_k == -1 || neigh_k == net->blocks_z) continue;
+				      if (neigh_i == -1 || neigh_i == blocks_x) continue;
+				      if (neigh_j == -1 || neigh_j == blocks_y) continue;
+				      if (neigh_k == -1 || neigh_k == blocks_z) continue;
 				      
-				      block_id = (neigh_i * net->blocks_y + neigh_j) * net->blocks_z + neigh_k;
+				      block_id = (neigh_i * blocks_y + neigh_j) * blocks_z + neigh_k;
 				      
 				      if (*(proc_id_p = &net->proc_id[ block_id ]) != marker)
 					{
@@ -640,9 +599,9 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 				      
 				      if (proc_count == net->id)
 					{
-					  cluster_p->block_min_i = min((int)cluster_p->block_min_i, neigh_i);
-					  cluster_p->block_min_j = min((int)cluster_p->block_min_j, neigh_j);
-					  cluster_p->block_min_k = min((int)cluster_p->block_min_k, neigh_k);
+					  cluster_p->block_min[0] = min((int)cluster_p->block_min[0], neigh_i);
+					  cluster_p->block_min[1] = min((int)cluster_p->block_min[1], neigh_j);
+					  cluster_p->block_min[2] = min((int)cluster_p->block_min[2], neigh_k);
 					  
 					  cluster_block_max_i = max((int)cluster_block_max_i, neigh_i);
 					  cluster_block_max_j = max((int)cluster_block_max_j, neigh_j);
@@ -661,16 +620,13 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			    }
 			  if (net->id == proc_count)
 			    {
-			      cluster_p->block_min_x = cluster_p->block_min_i * lbm->block_size - vis->half_dim_x;
-			      cluster_p->block_min_y = cluster_p->block_min_j * lbm->block_size - vis->half_dim_y;
-			      cluster_p->block_min_z = cluster_p->block_min_k * lbm->block_size - vis->half_dim_z;
+			      cluster_p->x[0] = cluster_p->block_min[0] * block_size - 0.5F * sites_x;
+			      cluster_p->x[1] = cluster_p->block_min[1] * block_size - 0.5F * sites_y;
+			      cluster_p->x[2] = cluster_p->block_min[2] * block_size - 0.5F * sites_z;
 			      
-			      cluster_p->blocks_x = 1 + cluster_block_max_i - cluster_p->block_min_i;
-			      cluster_p->blocks_y = 1 + cluster_block_max_j - cluster_p->block_min_j;
-			      cluster_p->blocks_z = 1 + cluster_block_max_k - cluster_p->block_min_k;
-			      
-			      cluster_p->blocks_yz = (int)cluster_p->blocks_y * cluster_p->blocks_z;
-			      cluster_p->blocks = (int)cluster_p->blocks_x * cluster_p->blocks_yz;
+			      cluster_p->blocks_x = 1 + cluster_block_max_i - cluster_p->block_min[0];
+			      cluster_p->blocks_y = 1 + cluster_block_max_j - cluster_p->block_min[1];
+			      cluster_p->blocks_z = 1 + cluster_block_max_k - cluster_p->block_min[2];
 			    }
 			  if (partial_visited_fluid_sites >= fluid_sites_per_unit)
 			    {
@@ -690,16 +646,16 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   seconds = myClock ();
   
   
-  net->data_block = (DataBlock *)malloc(sizeof(DataBlock) * net->blocks);
+  net->data_block = (DataBlock *)malloc(sizeof(DataBlock) * blocks);
   
-  for (n = 0; n < net->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       net->data_block[ n ].site_data = NULL;
     }
   
-  net->map_block = (DataBlock *)malloc(sizeof(DataBlock) * net->blocks);
+  net->map_block = (DataBlock *)malloc(sizeof(DataBlock) * blocks);
   
-  for (n = 0; n < net->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       net->map_block[ n ].site_data = NULL;
     }
@@ -709,11 +665,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   n = -1;
   
-  for (i = 0; i < net->blocks_x; i++)
+  for (i = 0; i < blocks_x; i++)
     {
-      for (j = 0; j < net->blocks_y; j++)
+      for (j = 0; j < blocks_y; j++)
 	{
-	  for (k = 0; k < net->blocks_z; k++)
+	  for (k = 0; k < blocks_z; k++)
 	    {
 	      proc_id = net->proc_id[ ++n ];
 	      
@@ -722,7 +678,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	      if (net->data_block[ n ].site_data == NULL)
 		{
 		  net->data_block[ n ].site_data =
-		    (unsigned int *)malloc(sizeof(unsigned int) * net->sites_in_a_block);
+		    (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
 		}
 	      
 	      for (l = 0; l < 26; l++)
@@ -731,11 +687,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 		  neigh_j = j + n_y[ l ];
 		  neigh_k = k + n_z[ l ];
 		  
-		  if (neigh_i == -1 || neigh_i == net->blocks_x) continue;
-		  if (neigh_j == -1 || neigh_j == net->blocks_y) continue;
-		  if (neigh_k == -1 || neigh_k == net->blocks_z) continue;
+		  if (neigh_i == -1 || neigh_i == blocks_x) continue;
+		  if (neigh_j == -1 || neigh_j == blocks_y) continue;
+		  if (neigh_k == -1 || neigh_k == blocks_z) continue;
 		  
-		  block_id = (neigh_i * net->blocks_y + neigh_j) * net->blocks_z + neigh_k;
+		  block_id = (neigh_i * blocks_y + neigh_j) * blocks_z + neigh_k;
 		  
 		  if (lbm->fluid_sites_per_block[ block_id ] == 0)
 		    {
@@ -744,7 +700,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 		  if (net->data_block[ block_id ].site_data == NULL)
 		    {
 		      net->data_block[ block_id ].site_data =
-			(unsigned int *)malloc(sizeof(unsigned int) * net->sites_in_a_block);
+			(unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
 		    }
 		}
 	    }
@@ -754,7 +710,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   // the configurational file is read and the information of non-void
   // sites is stored;
   
-  site_data = (unsigned int *)malloc(sizeof(unsigned int) * lbm->sites_in_a_block);
+  site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
   
   net->fr_time = myClock ();
   
@@ -763,20 +719,20 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
   
   xdr_double (&xdr_config, &lbm->lattice_to_system);
-  xdr_int    (&xdr_config, &lbm->blocks_x);
-  xdr_int    (&xdr_config, &lbm->blocks_y);
-  xdr_int    (&xdr_config, &lbm->blocks_z);
-  xdr_int    (&xdr_config, &lbm->block_size);
+  xdr_int    (&xdr_config, &blocks_x);
+  xdr_int    (&xdr_config, &blocks_y);
+  xdr_int    (&xdr_config, &blocks_z);
+  xdr_int    (&xdr_config, &block_size);
   
   net->my_sites = 0;
   
-  for (n = 0; n < lbm->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       xdr_int (&xdr_config, &flag);
       
       if (flag == 0) continue;
       
-      for (m = 0; m < lbm->sites_in_a_block; m++)
+      for (m = 0; m < sites_in_a_block; m++)
 	{
 	  xdr_u_int (&xdr_config, &site_data[ m ]);
 	}
@@ -788,7 +744,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	}
       proc_id = net->proc_id[ n ];
       
-      for (m = 0; m < lbm->sites_in_a_block; m++)
+      for (m = 0; m < sites_in_a_block; m++)
 	{
 	  data_block_p->site_data[ m ] = site_data[ m ];
 	  
@@ -811,7 +767,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   my_sites = 0;
   
-  for (n = 0; n < net->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       data_block_p = &net->data_block[ n ];
       
@@ -820,11 +776,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	  continue;
 	}
       map_block_p = &net->map_block[ n ];
-      map_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * net->sites_in_a_block);
+      map_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
       
       proc_id = net->proc_id[ n ];
       
-      for (m = 0; m < net->sites_in_a_block; m++)
+      for (m = 0; m < sites_in_a_block; m++)
 	{
 	  if (proc_id == net->id)
 	    {
@@ -853,7 +809,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	}
     }
   
-  for (n = 0; n < net->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       if (net->data_block[ n ].site_data != NULL)
 	{
@@ -889,11 +845,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   n = -1;
   
-  for (i = 0; i < net->sites_x; i += net->block_size)
+  for (i = 0; i < sites_x; i += block_size)
     {
-      for (j = 0; j < net->sites_y; j += net->block_size)
+      for (j = 0; j < sites_y; j += block_size)
 	{
-	  for (k = 0; k < net->sites_z; k += net->block_size)
+	  for (k = 0; k < sites_z; k += block_size)
 	    {
 	      proc_id = net->proc_id[ ++n ];
 	      
@@ -903,11 +859,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	      
 	      m = -1;
 	      
-	      for (site_i = i; site_i < i + net->block_size; site_i++)
+	      for (site_i = i; site_i < i + block_size; site_i++)
 		{
-		  for (site_j = j; site_j < j + net->block_size; site_j++)
+		  for (site_j = j; site_j < j + block_size; site_j++)
 		    {
-		      for (site_k = k; site_k < k + net->block_size; site_k++)
+		      for (site_k = k; site_k < k + block_size; site_k++)
 			{
 			  if (map_block_p->site_data[ ++m ] & (1U << 31U))
 			    {
@@ -955,7 +911,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 				    {
 				      printf (" too many intra machine, inter processor neighbours\n");
 				      printf (" the execution is terminated\n");
+#ifndef NOMPI
 				      net->err = MPI_Abort (MPI_COMM_WORLD, 1);
+#else
+				      exit(1);
+#endif
 				    }
 				  neigh_proc_p = &net->neigh_proc[ net->neigh_procs ];
 				  neigh_proc_p->id = neigh_proc_id;
@@ -1003,8 +963,8 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   for (m = 0; m < COLLISION_TYPES; m++)
     {
-      net->my_inter_collisions_sse[m] = (net->my_inter_collisions[m]/SSE_SIZE)*SSE_SIZE;
-      net->my_inner_collisions_sse[m] = (net->my_inner_collisions[m]/SSE_SIZE)*SSE_SIZE;
+      net->my_inter_collisions_sse[m] = (net->my_inter_collisions[m]/SIMD_SIZE)*SIMD_SIZE;
+      net->my_inner_collisions_sse[m] = (net->my_inner_collisions[m]/SIMD_SIZE)*SIMD_SIZE;
     }
   
   collision_offset[0][0] = 0;
@@ -1022,13 +982,13 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   n = -1;
   
-  for (n = 0; n < net->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       map_block_p = &net->map_block[ n ];
       
       if (map_block_p->site_data == NULL) continue;
       
-      for (m = 0; m < net->sites_in_a_block; m++)
+      for (m = 0; m < sites_in_a_block; m++)
 	{
 	  site_data_p = &map_block_p->site_data[ m ];
 	  
@@ -1084,7 +1044,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
     {
       printf (" too many shared distributions\n");
       printf (" the execution is terminated\n");
+#ifndef NOMPI
       net->err = MPI_Abort (MPI_COMM_WORLD, 1);
+#else
+      exit(1);
+#endif
     }
   
   f_old = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1));
@@ -1100,8 +1064,10 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   nd_p = (double **)malloc(sizeof(double *) * (net->my_sites * 14 + 1));
   
+#ifndef NOMPI
   net->err = MPI_Gather (&net->my_sites, 1, MPI_INT, proc_sites, 1, MPI_INT, 
 			 0, MPI_COMM_WORLD);
+#endif
   
   
   net->from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * net->procs);
@@ -1119,11 +1085,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   n = -1;
   
-  for (i = 0; i < net->sites_x; i += net->block_size)
+  for (i = 0; i < sites_x; i += block_size)
     {
-      for (j = 0; j < net->sites_y; j += net->block_size)
+      for (j = 0; j < sites_y; j += block_size)
 	{
-	  for (k = 0; k < net->sites_z; k += net->block_size)
+	  for (k = 0; k < sites_z; k += block_size)
 	    {
 	      proc_id = net->proc_id[ ++n ];
 	      
@@ -1133,11 +1099,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	      
 	      m = -1;
 	      
-	      for (site_i = i; site_i < i + net->block_size; site_i++)
+	      for (site_i = i; site_i < i + block_size; site_i++)
 		{
-		  for (site_j = j; site_j < j + net->block_size; site_j++)
+		  for (site_j = j; site_j < j + block_size; site_j++)
 		    {
-		      for (site_k = k; site_k < k + net->block_size; site_k++)
+		      for (site_k = k; site_k < k + block_size; site_k++)
 			{
 			  site_map = map_block_p->site_data[ ++m ];
 			  
@@ -1206,12 +1172,14 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   // propagate to different partitions is avoided (only their values
   // will be communicated)
   
+#ifndef NOMPI
   net->req = (MPI_Request **)malloc(sizeof(MPI_Request *) * COMMS_LEVELS);
   
   for (m = 0; m < COMMS_LEVELS; m++)
     {
       net->req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs * net->procs));
     }
+#endif
   
   for (m = 0; m < net->neigh_procs; m++)
     {
@@ -1219,17 +1187,21 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
       
       if (neigh_proc_p->id > net->id)
   	{
+#ifndef NOMPI
 	  net->err = MPI_Isend (&neigh_proc_p->f_data[ 0 ],
 				neigh_proc_p->fs * 4, MPI_SHORT,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
 				&net->req[ 0 ][ net->id * net->procs + m ]);
+#endif
   	}
       else
   	{
+#ifndef NOMPI
   	  net->err = MPI_Irecv (&neigh_proc_p->f_data[ 0 ],
   				neigh_proc_p->fs * 4, MPI_SHORT,
   				neigh_proc_p->id, 10, MPI_COMM_WORLD,
   				&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+#endif
   	}
     }
   for (m = 0; m < net->neigh_procs; m++)
@@ -1238,11 +1210,15 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
       
       if (neigh_proc_p->id > net->id)
   	{
+#ifndef NOMPI
   	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
+#endif
   	}
       else
   	{
+#ifndef NOMPI
   	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
+#endif
   	  
   	  for (n = 0; n < (neigh_proc_p->fs<<2); n += 4)
   	    {
@@ -1277,7 +1253,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	}
     }
   
-  for (n = 0; n < net->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       if (net->proc_id[ n ] != net->id)
 	{
@@ -1325,7 +1301,7 @@ void netEnd (Net *net, Vis *vis)
   free(net->proc_id);
   net->proc_id = NULL;
   
-  for (i = 0; i < net->blocks; i++)
+  for (i = 0; i < blocks; i++)
     {
       if (net->map_block[ i ].site_data != NULL)
 	{
@@ -1352,6 +1328,7 @@ void netEnd (Net *net, Vis *vis)
   free(f_old);
   f_old = NULL;
   
+#ifndef NOMPI
   for (i = 0; i < COMMS_LEVELS; i++)
     {
       free(net->req[ i ]);
@@ -1359,7 +1336,9 @@ void netEnd (Net *net, Vis *vis)
     }
   free(net->req);
   net->req = NULL;
+#endif
   
   free(net->procs_per_machine);
   free(net->machine_id);
 }
+

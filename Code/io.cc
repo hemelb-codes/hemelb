@@ -15,7 +15,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
   float error;
   float temp;
   
-  int blocks, blocks_max;
+  int density_blocks, density_blocks_max;
   int iters;
   
   int i, j, k, ii, jj, kk, m, n;
@@ -36,37 +36,48 @@ void lbmReadConfig (LBM *lbm, Net *net)
   DensityBlock *density_block = NULL;
   DensityBlock *density_block_p = NULL;
   
-  
+  fprintf(stderr, "opening system configuration file %s [rank %i]\n", lbm->system_file_name, net->id);
+
   system_config = fopen (lbm->system_file_name, "r");
-  
+
+  if( system_config == NULL ) {
+    fprintf(stderr, "unable to open file %s [rank %i], exiting\n", lbm->system_file_name, net->id);
+    fflush(0x0);
+    exit(0x0);
+  } else {
+    fprintf(stderr, "done\n");
+  }
+
+  fflush(NULL);
+
   xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
   
   xdr_double (&xdr_config, &lbm->lattice_to_system);
-  xdr_int    (&xdr_config, &lbm->blocks_x);
-  xdr_int    (&xdr_config, &lbm->blocks_y);
-  xdr_int    (&xdr_config, &lbm->blocks_z);
-  xdr_int    (&xdr_config, &lbm->block_size);
+  xdr_int    (&xdr_config, &blocks_x);
+  xdr_int    (&xdr_config, &blocks_y);
+  xdr_int    (&xdr_config, &blocks_z);
+  xdr_int    (&xdr_config, &block_size);
   
-  lbm->sites_x = lbm->blocks_x * lbm->block_size;
-  lbm->sites_y = lbm->blocks_y * lbm->block_size;
-  lbm->sites_z = lbm->blocks_z * lbm->block_size;
+  sites_x = blocks_x * block_size;
+  sites_y = blocks_y * block_size;
+  sites_z = blocks_z * block_size;
   
-  lbm->sites_in_a_block = lbm->block_size * lbm->block_size * lbm->block_size;
+  sites_in_a_block = block_size * block_size * block_size;
 
-  i = lbm->block_size;
+  i = block_size;
   
-  lbm->shift = 0;
+  shift = 0;
 
   while (i > 1)
     {
       i >>= 1;
 
-      ++lbm->shift;
+      ++shift;
     }
 
-  lbm->blocks = lbm->blocks_x * lbm->blocks_y * lbm->blocks_z;
+  blocks = blocks_x * blocks_y * blocks_z;
   
-  lbm->fluid_sites_per_block = (short int *)malloc(sizeof(short int) * lbm->blocks);
+  lbm->fluid_sites_per_block = (short int *)malloc(sizeof(short int) * blocks);
 
   lbm->total_fluid_sites = 0;
   
@@ -77,26 +88,26 @@ void lbmReadConfig (LBM *lbm, Net *net)
   lbm->site_max_y = 0;
   lbm->site_max_z = 0;
   
-  blocks_max = dummy;
-  blocks = dummy;
+  density_blocks_max = dummy;
+  density_blocks = dummy;
   
   if (!lbm->is_checkpoint)
     {
-      blocks_max = 10000;
+      density_blocks_max = 10000;
       
-      lbm->block_density = (float *)malloc(sizeof(float) * blocks_max);
+      lbm->block_density = (float *)malloc(sizeof(float) * density_blocks_max);
       
-      lbm->block_map = (int *)malloc(sizeof(int) * lbm->blocks);
+      lbm->block_map = (int *)malloc(sizeof(int) * blocks);
   
-      density_block = (DensityBlock *)malloc(sizeof(DensityBlock) * blocks_max);
+      density_block = (DensityBlock *)malloc(sizeof(DensityBlock) * density_blocks_max);
     }
   n = -1;
   
-  for (i = 0; i < lbm->blocks_x; i++)
+  for (i = 0; i < blocks_x; i++)
     {
-      for (j = 0; j < lbm->blocks_y; j++)
+      for (j = 0; j < blocks_y; j++)
 	{
-	  for (k = 0; k < lbm->blocks_z; k++)
+	  for (k = 0; k < blocks_z; k++)
 	    {
 	      lbm->fluid_sites_per_block[ ++n ] = 0;
 	      
@@ -108,35 +119,35 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      
 	      if (!lbm->is_checkpoint)
 		{
-		  lbm->block_map[ n ] = blocks;
+		  lbm->block_map[ n ] = density_blocks;
 		  
-		  if (blocks == blocks_max)
+		  if (density_blocks == density_blocks_max)
 		    {
-		      blocks_max <<= 2;
+		      density_blocks_max <<= 2;
 		      lbm->block_density = (float *)realloc(lbm->block_density,
-							    sizeof(float) * blocks_max);
+							    sizeof(float) * density_blocks_max);
 		      density_block = (DensityBlock *)realloc(density_block,
-							      sizeof(DensityBlock) * blocks_max);
+							      sizeof(DensityBlock) * density_blocks_max);
 		    }
-		  block_density_p = &lbm->block_density[ blocks ];
+		  block_density_p = &lbm->block_density[ density_blocks ];
 		  *block_density_p = 0.F;
 		  
-		  density_block_p = &density_block[ blocks ];
+		  density_block_p = &density_block[ density_blocks ];
 		  density_block_p->boundary_sites = 0;
-		  ++blocks;
+		  ++density_blocks;
 		}
 	      
-	      for (ii = 0; ii < lbm->block_size; ii++)
+	      for (ii = 0; ii < block_size; ii++)
 		{
-		  site_i = (i << lbm->shift) + ii;
+		  site_i = (i << shift) + ii;
 		  
-		  for (jj = 0; jj < lbm->block_size; jj++)
+		  for (jj = 0; jj < block_size; jj++)
 		    {
-		      site_j = (j << lbm->shift) + jj;
+		      site_j = (j << shift) + jj;
 		      
-		      for (kk = 0; kk < lbm->block_size; kk++)
+		      for (kk = 0; kk < block_size; kk++)
 			{
-			  site_k = (k << lbm->shift) + kk;
+			  site_k = (k << shift) + kk;
 			  
 			  xdr_u_int (&xdr_config, &site_data);
 			  
@@ -183,35 +194,35 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   if (lbm->is_checkpoint) return;
   
-  blocks = 0;
+  density_blocks = 0;
   n = -1;
   
-  for (i = 0; i < lbm->blocks_x; i++)
+  for (i = 0; i < blocks_x; i++)
     {
-      for (j = 0; j < lbm->blocks_y; j++)
+      for (j = 0; j < blocks_y; j++)
 	{
-	  for (k = 0; k < lbm->blocks_z; k++)
+	  for (k = 0; k < blocks_z; k++)
 	    {
 	      if (lbm->block_map[ ++n ] == -1) continue;
 	      
-	      block_density_p = &lbm->block_density[ blocks ];
+	      block_density_p = &lbm->block_density[ density_blocks ];
 	      
-	      density_block_p = &density_block[ blocks ];
+	      density_block_p = &density_block[ density_blocks ];
 	      density_block_p->neighs = 0;
-	      ++blocks;
+	      ++density_blocks;
 	      
 	      if (density_block_p->boundary_sites > 0)
 		{
 		  *block_density_p /= (float)density_block_p->boundary_sites;
 		  continue;
 		}
-	      for (ii = max(0, i - 1); ii <= min(i + 1, lbm->blocks_x - 1); ii++)
+	      for (ii = max(0, i - 1); ii <= min(i + 1, blocks_x - 1); ii++)
 		{
-		  for (jj = max(0, j - 1); jj <= min(j + 1, lbm->blocks_y - 1); jj++)
+		  for (jj = max(0, j - 1); jj <= min(j + 1, blocks_y - 1); jj++)
 		    {
-		      for (kk = max(0, k - 1); kk <= min(k + 1, lbm->blocks_z - 1); kk++)
+		      for (kk = max(0, k - 1); kk <= min(k + 1, blocks_z - 1); kk++)
 			{
-			  m = (ii * lbm->blocks_y + jj) * lbm->blocks_z + kk;
+			  m = (ii * blocks_y + jj) * blocks_z + kk;
 			  
 			  if (m == n || lbm->block_map[ m ] == -1) continue;
 			  
@@ -232,7 +243,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
       
       error = 0.F;
       
-      for (n = 0; n < blocks; n++)
+      for (n = 0; n < density_blocks; n++)
 	{
 	  density_block_p = &density_block[ n ];
 	  
@@ -273,8 +284,20 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   
   if (net->id == 0)
     {
+
+      fprintf(stderr, "opening parameters file %s\n", parameters_file_name);
+
       FILE *parameters_file = fopen (parameters_file_name, "r");
-      
+
+      if( parameters_file == NULL ) {
+        fprintf(stderr, "unable to open file %s, exiting\n", parameters_file_name);
+        fflush(NULL);
+        exit(0x0);
+      } else {
+        fprintf(stderr, "done\n");
+      }
+
+      fflush(NULL);
       
       fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
       fscanf (parameters_file, "%le\n", &lbm->tau);
@@ -313,8 +336,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
       par_to_send[ 1 ] = 0.1 + (double)lbm->outlets;
     }
+#ifndef NOMPI
   net->err = MPI_Bcast (par_to_send, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  
+#endif
   if (net->id != 0)
     {
       lbm->inlets  = (int)par_to_send[ 0 ];
@@ -347,8 +371,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->checkpoint_freq;
       par_to_send[ 5 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->conv_freq;
     }
+#ifndef NOMPI
   net->err = MPI_Bcast (par_to_send, 6 + lbm->inlets + lbm->outlets, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  
+#endif
   if (net->id != 0)
     {
       lbm->is_checkpoint = (int)par_to_send[ 0 ];
@@ -428,12 +453,12 @@ void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net)
   
   xdr_int    (&xdr_system_config, &stability);
   xdr_double (&xdr_system_config, &lbm->lattice_to_system);
-  xdr_int    (&xdr_system_config, &lbm->blocks_x);
-  xdr_int    (&xdr_system_config, &lbm->blocks_y);
-  xdr_int    (&xdr_system_config, &lbm->blocks_z);
-  xdr_int    (&xdr_system_config, &lbm->block_size);
+  xdr_int    (&xdr_system_config, &blocks_x);
+  xdr_int    (&xdr_system_config, &blocks_y);
+  xdr_int    (&xdr_system_config, &blocks_z);
+  xdr_int    (&xdr_system_config, &block_size);
   
-  for (n = 0; n < lbm->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       xdr_int (&xdr_system_config, &flag);
       
@@ -441,7 +466,7 @@ void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net)
       
       map_block_p = &net->map_block[ n ];
       
-      for (m = 0; m < net->sites_in_a_block; m++)
+      for (m = 0; m < sites_in_a_block; m++)
 	{
 	  xdr_int (&xdr_system_config, &flag);
 	  
@@ -524,10 +549,10 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
   if (net->id == 0)
     {
       xdr_double (&xdr_system_config, &lbm->lattice_to_system);
-      xdr_int    (&xdr_system_config, &lbm->blocks_x);
-      xdr_int    (&xdr_system_config, &lbm->blocks_y);
-      xdr_int    (&xdr_system_config, &lbm->blocks_z);
-      xdr_int    (&xdr_system_config, &lbm->block_size);
+      xdr_int    (&xdr_system_config, &blocks_x);
+      xdr_int    (&xdr_system_config, &blocks_y);
+      xdr_int    (&xdr_system_config, &blocks_z);
+      xdr_int    (&xdr_system_config, &block_size);
     }
   
   density_min = +1.e+30;
@@ -539,7 +564,7 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
   stress_min = +1.e+30;
   stress_max = -1.e+30;
   
-  for (n = 0; n < lbm->blocks; n++)
+  for (n = 0; n < blocks; n++)
     {
       if (net->proc_id[ n ] >= 1 << 14)
 	{
@@ -559,7 +584,7 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 	{
 	  map_block_p = &net->map_block[ n ];
 	  
-	  for (m = 0; m < net->sites_in_a_block; m++)
+	  for (m = 0; m < sites_in_a_block; m++)
 	    {
 	      my_site_id = map_block_p->site_data[ m ];
 	      
@@ -599,24 +624,25 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
 	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+4] = (float)stress;
 	    }
 	}
+#ifndef NOMPI
       if (net->id != 0 && net->proc_id[ n ] == net->id)
 	{
 	  net->err = MPI_Send (&macroscopic_par_buffer[ 0 ],
-			       MACROSCOPIC_PARS * net->sites_in_a_block, MPI_REAL,
+			       MACROSCOPIC_PARS * sites_in_a_block, MPI_REAL,
 			       0, 10, MPI_COMM_WORLD);
 	}
       else if (net->id == 0 && net->proc_id[ n ] != net->id)
 	{
 	  net->err = MPI_Recv (&macroscopic_par_buffer[ 0 ],
-			       MACROSCOPIC_PARS * net->sites_in_a_block, MPI_REAL,
+			       MACROSCOPIC_PARS * sites_in_a_block, MPI_REAL,
 			       net->proc_id[ n ], 10, MPI_COMM_WORLD, net->status);
 	}
       
       net->err = MPI_Barrier (MPI_COMM_WORLD);
-      
+#endif
       if (net->id != 0) continue;
       
-      for (m = 0; m < net->sites_in_a_block; m++)
+      for (m = 0; m < sites_in_a_block; m++)
 	{
 	  if (macroscopic_par_buffer[ m * MACROSCOPIC_PARS ] < 0.F)
 	    {
@@ -664,3 +690,4 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
   lbm->stress_min = stress_min;
   lbm->stress_max = stress_max;
 }
+

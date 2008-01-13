@@ -48,10 +48,17 @@ int e_y[] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1};
 int e_z[] = { 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1};
 int inv_dir[] = {0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13};
 
+#ifndef NOMPI
 MPI_Datatype MPI_col_pixel_type;
+#endif
 
 
 #ifdef RG
+
+pthread_mutex_t network_buffer_copy_lock;
+pthread_cond_t network_send_frame;
+
+int send_array_length;
 
 int frame_size;
 
@@ -81,23 +88,38 @@ double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 int f_send_id[SHARED_DISTRIBUTIONS_MAX];
 int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
 
-float streamline_to_send[NEIGHBOUR_PROCS_MAX][3*STREAMLINES_MAX];
-float streamline_to_recv[NEIGHBOUR_PROCS_MAX][1+3*STREAMLINES_MAX];
+float streamline_to_send[NEIGHBOUR_PROCS_MAX][VIS_VEC_SIZE*STREAMLINES_MAX];
+float streamline_to_recv[NEIGHBOUR_PROCS_MAX][1+VIS_VEC_SIZE*STREAMLINES_MAX];
 
 int streamlines_to_send[NEIGHBOUR_PROCS_MAX];
 int streamlines_to_recv[NEIGHBOUR_PROCS_MAX];
+
+
+int sites_x, sites_y, sites_z;
+int blocks_x, blocks_y, blocks_z;
+int blocks_yz, blocks;
+int blocks_vec[4];
+int block_size, block_size2, block_size3, block_size_1;
+int block_size_vec[4];
+int shift;
+int sites_in_a_block;
+
+float block_size_inv;
+
+
+float ray_dir[VIS_VEC_SIZE];
+float ray_inv[VIS_VEC_SIZE];
+float ray_col[VIS_VEC_SIZE];
 
 
 Screen screen;
 
 Viewpoint viewpoint;
 
-Ray ray;
-
 Vis vis;
 
 
-// some simple functions
+// some simple math functions
 
 int min (int a, int b)
 {
@@ -121,6 +143,19 @@ int max (int a, int b)
   else
     {
       return b;
+    }
+}
+
+
+int nint (float a)
+{
+  if (a > (int)(a + 0.5F))
+    {
+      return 1 + (int)a;
+    }
+  else
+    {
+      return (int)a;
     }
 }
 
@@ -153,4 +188,5 @@ double myClock ()
   //  }
   //return time;
 }
+
 

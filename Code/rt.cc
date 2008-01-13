@@ -3,9 +3,9 @@
 
 void (*rtRayAABBIntersection[8]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t);
 
-void (*rtTraverse[8]) (float org_x, float org_y, float org_z,
+void (*rtTraverse[8]) (float org[],
 		       void (*rtAbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-							 float cutoff, float *r, float *g, float *b),
+							 float cutoff, float col[]),
 		       Cluster *cluster_p, Net *net, Vis *vis);
 
 
@@ -155,1946 +155,1918 @@ void rtRayAABBIntersection111 (AABB *aabb, float inv_x, float inv_y, float inv_z
 }
 
 
-void rtTraverse000 (BlockData block_data,
+void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b), Net *net, Vis *vis)
+						    float cutoff, float col[]), Vis *vis)
 {
-  float t_max_x, t_max_y, t_max_z;
-  float t;
+  float t_max[VIS_VEC_SIZE];
   float value;
   
-  int i, j, k;
+  int i, j, k, i_vec[VIS_VEC_SIZE];
   
   unsigned int site_data;
   
   
-  t = block_data.t;
-  
-  i = max(0, min(vis->block_size_1, block_data.i));
-  j = max(0, min(vis->block_size_1, block_data.j));
-  k = max(0, min(vis->block_size_1, block_data.k));
-  
-  t_max_x = (block_data.min_x + (float)i) * ray.inv_x;
-  t_max_y = (block_data.min_y + (float)j) * ray.inv_y;
-  t_max_z = (block_data.min_z + (float)k) * ray.inv_z;
-  
-  i <<= vis->shift2;
-  j <<= vis->shift;
+///#pragma vector always
+  for (i = 0; i < VIS_VEC_SIZE; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, block_i[i]));
+      t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
+    }
+  for (i = 0; i < 2; i++)
+    {
+      i_vec[i] *= block_size_vec[i];
+    }
+  i = i_vec[0];
+  j = i_vec[1];
+  k = i_vec[2];
   
   for (;;)
     {
       value = -1.F;
       
-      if ((site_data = block_data.p->site_data[ i + j + k ]) != (1U << 31U))
+      if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
 	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
 	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
 	}
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 	      	{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_x, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((i -= vis->block_size2) < 0) return;
+	      if ((i -= block_size2) < 0) return;
 	      
-	      t = t_max_x;
-	      t_max_x -= ray.inv_x;
-	      
+	      t = t_max[0];
+	      t_max[0] -= ray_inv[0];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
 	      if (--k < 0) return;
 	      
-	      t = t_max_z;
-	      t_max_z -= ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] -= ray_inv[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_y, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((j -= vis->block_size) < 0) return;
-		  
-	      t = t_max_y;
-	      t_max_y -= ray.inv_y;
+	      if ((j -= block_size) < 0) return;
+	      
+	      t = t_max[1];
+	      t_max[1] -= ray_inv[1];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
 	      if (--k < 0) return;
 	      
-	      t = t_max_z;
-	      t_max_z -= ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] -= ray_inv[2];
 	    }
 	}
     }
 }
 
-void rtTraverse001 (BlockData block_data,
+void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b), Net *net, Vis *vis)
+						    float cutoff, float col[]), Vis *vis)
 {
-  float t_max_x, t_max_y, t_max_z;
-  float t;
+  float t_max[VIS_VEC_SIZE];
   float value;
   
-  int i, j, k;
+  int i, j, k, i_vec[VIS_VEC_SIZE];
   
   unsigned int site_data;
   
   
-  t = block_data.t;
+///#pragma vector always
+  for (i = 0; i < VIS_VEC_SIZE; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, block_i[i]));
+      t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
+    }
+  for (i = 0; i < 2; i++)
+    {
+      i_vec[i] *= block_size_vec[i];
+    }
+  t_max[2] += ray_inv[2];
   
-  i = max(0, min(vis->block_size_1, block_data.i));
-  j = max(0, min(vis->block_size_1, block_data.j));
-  k = max(0, min(vis->block_size_1, block_data.k));
-  
-  t_max_x = (block_data.min_x + (float)i      ) * ray.inv_x;
-  t_max_y = (block_data.min_y + (float)j      ) * ray.inv_y;
-  t_max_z = (block_data.min_z + (float)(k + 1)) * ray.inv_z;
-  
-  i <<= vis->shift2;
-  j <<= vis->shift;
+  i = i_vec[0];
+  j = i_vec[1];
+  k = i_vec[2];
   
   for (;;)
     {
       value = -1.F;
       
-      if ((site_data = block_data.p->site_data[ i + j + k ]) != (1U << 31U))
+      if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
 	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
 	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
 	}
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_x, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
-		}	      
-	      if ((i -= vis->block_size2) < 0) return;
+		}
+	      if ((i -= block_size2) < 0) return;
 	      
-	      t = t_max_x;
-	      t_max_x -= ray.inv_x;
+	      t = t_max[0];
+	      t_max[0] -= ray_inv[0];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if (++k >= vis->block_size) return;
+	      if (++k >= block_size) return;
 	      
-	      t = t_max_z;
-	      t_max_z += ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] += ray_inv[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_y, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((j -= vis->block_size) < 0) return;
+	      if ((j -= block_size) < 0) return;
 	      
-	      t = t_max_y;
-	      t_max_y -= ray.inv_y;
+	      t = t_max[1];
+	      t_max[1] -= ray_inv[1];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if (++k >= vis->block_size) return;
+	      if (++k >= block_size) return;
 	      
-	      t = t_max_z;
-	      t_max_z += ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] += ray_inv[2];
 	    }
 	}
     }
 }
 
-void rtTraverse010 (BlockData block_data,
+void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b), Net *net, Vis *vis)
+						    float cutoff, float col[]), Vis *vis)
 {
-  float t_max_x, t_max_y, t_max_z;
-  float t;
+  float t_max[VIS_VEC_SIZE];
   float value;
   
-  int i, j, k;
+  int i, j, k, i_vec[VIS_VEC_SIZE];
   
   unsigned int site_data;
   
   
-  t = block_data.t;
+///#pragma vector always
+  for (i = 0; i < VIS_VEC_SIZE; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, block_i[i]));
+      t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
+    }
+  for (i = 0; i < 2; i++)
+    {
+      i_vec[i] *= block_size_vec[i];
+    }
+  t_max[1] += ray_inv[1];
   
-  i = max(0, min(vis->block_size_1, block_data.i));
-  j = max(0, min(vis->block_size_1, block_data.j));
-  k = max(0, min(vis->block_size_1, block_data.k));
-  
-  t_max_x = (block_data.min_x + (float)i      ) * ray.inv_x;
-  t_max_y = (block_data.min_y + (float)(j + 1)) * ray.inv_y;
-  t_max_z = (block_data.min_z + (float)k      ) * ray.inv_z;
-  
-  i <<= vis->shift2;
-  j <<= vis->shift;
+  i = i_vec[0];
+  j = i_vec[1];
+  k = i_vec[2];
   
   for (;;)
     {
       value = -1.F;
       
-      if ((site_data = block_data.p->site_data[ i + j + k ]) != (1U << 31U))
+      if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
 	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
 	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
 	}
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_x, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((i -= vis->block_size2) < 0) return;
+	      if ((i -= block_size2) < 0) return;
 	      
-	      t = t_max_x;
-	      t_max_x -= ray.inv_x;
+	      t = t_max[0];
+	      t_max[0] -= ray_inv[0];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
 	      if (--k < 0) return;
 	      
-	      t = t_max_z;
-	      t_max_z -= ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] -= ray_inv[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_y, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((j += vis->block_size) >= vis->block_size2) return;
+	      if ((j += block_size) >= block_size2) return;
 	      
-	      t = t_max_y;
-	      t_max_y += ray.inv_y;
+	      t = t_max[1];
+	      t_max[1] += ray_inv[1];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
 	      if (--k < 0) return;
 	      
-	      t = t_max_z;
-	      t_max_z -= ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] -= ray_inv[2];
 	    }
 	}
     }
 }
 
-void rtTraverse011 (BlockData block_data,
+void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b), Net *net, Vis *vis)
+						    float cutoff, float col[]), Vis *vis)
 {
-  float t_max_x, t_max_y, t_max_z;
-  float t;
+  float t_max[VIS_VEC_SIZE];
   float value;
   
-  int i, j, k;
+  int i, j, k, i_vec[VIS_VEC_SIZE];
   
   unsigned int site_data;
   
   
-  t = block_data.t;
+///#pragma vector always
+  for (i = 0; i < VIS_VEC_SIZE; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, block_i[i]));
+      t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
+    }
+  for (i = 0; i < 2; i++)
+    {
+      i_vec[i] *= block_size_vec[i];
+    }
+  t_max[0] -= ray_inv[0];
   
-  i = max(0, min(vis->block_size_1, block_data.i));
-  j = max(0, min(vis->block_size_1, block_data.j));
-  k = max(0, min(vis->block_size_1, block_data.k));
-  
-  t_max_x = (block_data.min_x + (float)i      ) * ray.inv_x;
-  t_max_y = (block_data.min_y + (float)(j + 1)) * ray.inv_y;
-  t_max_z = (block_data.min_z + (float)(k + 1)) * ray.inv_z;
-  
-  i <<= vis->shift2;
-  j <<= vis->shift;
+  i = i_vec[0];
+  j = i_vec[1];
+  k = i_vec[2];
   
   for (;;)
     {
       value = -1.F;
       
-      if ((site_data = block_data.p->site_data[ i + j + k ]) != (1U << 31U))
+      if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
 	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
 	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
 	}
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_x, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((i -= vis->block_size2) < 0) return;
+	      if ((i -= block_size2) < 0) return;
 	      
-	      t = t_max_x;
-	      t_max_x -= ray.inv_x;
+	      t = t_max[0];
+	      t_max[0] -= ray_inv[0];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if (++k >= vis->block_size) return;
+	      if (++k >= block_size) return;
 	      
-	      t = t_max_z;
-	      t_max_z += ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] += ray_inv[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_y, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((j += vis->block_size) >= vis->block_size2) return;
+	      if ((j += block_size) >= block_size2) return;
 	      
-	      t = t_max_y;
-	      t_max_y += ray.inv_y;
+	      t = t_max[1];
+	      t_max[1] += ray_inv[1];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if (++k >= vis->block_size) return;
+	      if (++k >= block_size) return;
 	      
-	      t = t_max_z;
-	      t_max_z += ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] += ray_inv[2];
 	    }
 	}
     }
 }
 
-void rtTraverse100 (BlockData block_data,
+void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b), Net *net, Vis *vis)
+						    float cutoff, float col[]), Vis *vis)
 {
-  float t_max_x, t_max_y, t_max_z;
-  float t;
+  float t_max[VIS_VEC_SIZE];
   float value;
   
-  int i, j, k;
+  int i, j, k, i_vec[VIS_VEC_SIZE];
   
   unsigned int site_data;
   
   
-  t = block_data.t;
+///#pragma vector always
+  for (i = 0; i < VIS_VEC_SIZE; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, block_i[i]));
+      t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
+    }
+  for (i = 0; i < 2; i++)
+    {
+      i_vec[i] *= block_size_vec[i];
+    }
+  t_max[0] += ray_inv[0];
   
-  i = max(0, min(vis->block_size_1, block_data.i));
-  j = max(0, min(vis->block_size_1, block_data.j));
-  k = max(0, min(vis->block_size_1, block_data.k));
-  
-  t_max_x = (block_data.min_x + (float)(i + 1)) * ray.inv_x;
-  t_max_y = (block_data.min_y + (float)j      ) * ray.inv_y;
-  t_max_z = (block_data.min_z + (float)k      ) * ray.inv_z;
-  
-  i <<= vis->shift2;
-  j <<= vis->shift;
+  i = i_vec[0];
+  j = i_vec[1];
+  k = i_vec[2];
   
   for (;;)
     {
       value = -1.F;
       
-      if ((site_data = block_data.p->site_data[ i + j + k ]) != (1U << 31U))
+      if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
 	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
 	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
 	}
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_x, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((i += vis->block_size2) >= vis->block_size3) return;
+	      if ((i += block_size2) >= block_size3) return;
 	      
-	      t = t_max_x;
-	      t_max_x += ray.inv_x;
+	      t = t_max[0];
+	      t_max[0] += ray_inv[0];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
 	      if (--k < 0) return;
 	      
-	      t = t_max_z;
-	      t_max_z -= ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] -= ray_inv[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_y, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((j -= vis->block_size) < 0) return;
+	      if ((j -= block_size) < 0) return;
 	      
-	      t = t_max_y;
-	      t_max_y -= ray.inv_y;
+	      t = t_max[1];
+	      t_max[1] -= ray_inv[1];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
 	      if (--k < 0) return;
 	      
-	      t = t_max_z;
-	      t_max_z -= ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] -= ray_inv[2];
 	    }
 	}
     }
 }
 
-void rtTraverse101 (BlockData block_data,
+void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b), Net *net, Vis *vis)
+						    float cutoff, float col[]), Vis *vis)
 {
-  float t_max_x, t_max_y, t_max_z;
-  float t;
+  float t_max[VIS_VEC_SIZE];
   float value;
   
-  int i, j, k;
+  int i, j, k, i_vec[VIS_VEC_SIZE];
   
   unsigned int site_data;
   
   
-  t = block_data.t;
+///#pragma vector always
+  for (i = 0; i < VIS_VEC_SIZE; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, block_i[i]));
+      t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
+    }
+  for (i = 0; i < 2; i++)
+    {
+      i_vec[i] *= block_size_vec[i];
+    }
+  t_max[1] -= ray_inv[1];
   
-  i = max(0, min(vis->block_size_1, block_data.i));
-  j = max(0, min(vis->block_size_1, block_data.j));
-  k = max(0, min(vis->block_size_1, block_data.k));
-  
-  t_max_x = (block_data.min_x + (float)(i + 1)) * ray.inv_x;
-  t_max_y = (block_data.min_y + (float)j      ) * ray.inv_y;
-  t_max_z = (block_data.min_z + (float)(k + 1)) * ray.inv_z;
-  
-  i <<= vis->shift2;
-  j <<= vis->shift;
+  i = i_vec[0];
+  j = i_vec[1];
+  k = i_vec[2];
   
   for (;;)
     {
       value = -1.F;
       
-      if ((site_data = block_data.p->site_data[ i + j + k ]) != (1U << 31U))
+      if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
 	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
 	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
 	}
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_x, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((i += vis->block_size2) >= vis->block_size3) return;
+	      if ((i += block_size2) >= block_size3) return;
 	      
-	      t = t_max_x;
-	      t_max_x += ray.inv_x;
+	      t = t_max[0];
+	      t_max[0] += ray_inv[0];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		      
 		  if (vis->mode == 1) return;
 		}
-	      if (++k >= vis->block_size) return;
+	      if (++k >= block_size) return;
 	      
-	      t = t_max_z;
-	      t_max_z += ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] += ray_inv[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_y, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((j -= vis->block_size) < 0) return;
+	      if ((j -= block_size) < 0) return;
 	      
-	      t = t_max_y;
-	      t_max_y -= ray.inv_y;
+	      t = t_max[1];
+	      t_max[1] -= ray_inv[1];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if (++k >= vis->block_size) return;
+	      if (++k >= block_size) return;
 	      
-	      t = t_max_z;
-	      t_max_z += ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] += ray_inv[2];
 	    }
 	}
     }
 }
 
-void rtTraverse110 (BlockData block_data,
+void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b), Net *net, Vis *vis)
+						    float cutoff, float col[]), Vis *vis)
 {
-  float t_max_x, t_max_y, t_max_z;
-  float t;
+  float t_max[VIS_VEC_SIZE];
   float value;
   
-  int i, j, k;
+  int i, j, k, i_vec[VIS_VEC_SIZE];
   
   unsigned int site_data;
   
   
-  t = block_data.t;
+///#pragma vector always
+  for (i = 0; i < VIS_VEC_SIZE; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, block_i[i]));
+      t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
+    }
+  for (i = 0; i < 2; i++)
+    {
+      i_vec[i] *= block_size_vec[i];
+    }
+  t_max[2] -= ray_inv[2];
   
-  i = max(0, min(vis->block_size_1, block_data.i));
-  j = max(0, min(vis->block_size_1, block_data.j));
-  k = max(0, min(vis->block_size_1, block_data.k));
-  
-  t_max_x = (block_data.min_x + (float)(i + 1)) * ray.inv_x;
-  t_max_y = (block_data.min_y + (float)(j + 1)) * ray.inv_y;
-  t_max_z = (block_data.min_z + (float)k      ) * ray.inv_z;
-  
-  i <<= vis->shift2;
-  j <<= vis->shift;
+  i = i_vec[0];
+  j = i_vec[1];
+  k = i_vec[2];
   
   for (;;)
     {
       value = -1.F;
       
-      if ((site_data = block_data.p->site_data[ i + j + k ]) != (1U << 31U))
+      if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
 	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
 	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
 	}
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_x, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((i += vis->block_size2) >= vis->block_size3) return;
+	      if ((i += block_size2) >= block_size3) return;
 	      
-	      t = t_max_x;
-	      t_max_x += ray.inv_x;
+	      t = t_max[0];
+	      t_max[0] += ray_inv[0];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		      
 		  if (vis->mode == 1) return;
 		}
 	      if (--k < 0) return;
 	      
-	      t = t_max_z;
-	      t_max_z -= ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] -= ray_inv[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_y, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((j += vis->block_size) >= vis->block_size2) return;
+	      if ((j += block_size) >= block_size2) return;
 	      
-	      t = t_max_y;
-	      t_max_y += ray.inv_y;
+	      t = t_max[1];
+	      t_max[1] += ray_inv[1];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
 	      if (--k < 0) return;
 	      
-	      t = t_max_z;
-	      t_max_z -= ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] -= ray_inv[2];
 	    }
 	}
     }
 }
 
-void rtTraverse111 (BlockData block_data,
+void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b), Net *net, Vis *vis)
+						    float cutoff, float col[]), Vis *vis)
 {
-  float t_max_x, t_max_y, t_max_z;
-  float t;
+  float t_max[VIS_VEC_SIZE];
   float value;
   
-  int i, j, k;
+  int i, j, k, i_vec[VIS_VEC_SIZE];
   
   unsigned int site_data;
   
   
-  t = block_data.t;
-  
-  i = max(0, min(vis->block_size_1, block_data.i));
-  j = max(0, min(vis->block_size_1, block_data.j));
-  k = max(0, min(vis->block_size_1, block_data.k));
-  
-  t_max_x = (block_data.min_x + (float)(i + 1)) * ray.inv_x;
-  t_max_y = (block_data.min_y + (float)(j + 1)) * ray.inv_y;
-  t_max_z = (block_data.min_z + (float)(k + 1)) * ray.inv_z;
-  
-  i <<= vis->shift2;
-  j <<= vis->shift;
+///#pragma vector always
+  for (i = 0; i < VIS_VEC_SIZE; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, block_i[i]));
+      t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
+    }
+  for (i = 0; i < 2; i++)
+    {
+      i_vec[i] *= block_size_vec[i];
+    }
+  i = i_vec[0];
+  j = i_vec[1];
+  k = i_vec[2];
   
   for (;;)
     {
       value = -1.F;
       
-      if ((site_data = block_data.p->site_data[ i + j + k ]) != (1U << 31U))
+      if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
 	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
 	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
 	}
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_x, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if ((i += vis->block_size2) >= vis->block_size3) return;
+	      if ((i += block_size2) >= block_size3) return;
 	      
-	      t = t_max_x;
-	      t_max_x += ray.inv_x;
-	    }
-	  else
-	    {
-	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
-		  
-		  if (vis->mode == 1) return;
-		}
-	      if (++k >= vis->block_size) return;
-	      
-	      t = t_max_z;
-	      t_max_z += ray.inv_z;
-	    }
-	}
-      else
-	{
-	  if (t_max_y < t_max_z)
-	    {
-	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_y, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
-		  
-		  if (vis->mode == 1) return;
-		}
-	      if ((j += vis->block_size) >= vis->block_size2) return;
-	      
-	      t = t_max_y;
-	      t_max_y += ray.inv_y;
+	      t = t_max[0];
+	      t_max[0] += ray_inv[0];
 	    }
 	  else
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max_z, vis->cutoff, &ray.col_r, &ray.col_g, &ray.col_b);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
-	      if (++k >= vis->block_size) return;
+	      if (++k >= block_size) return;
 	      
-	      t = t_max_z;
-	      t_max_z += ray.inv_z;
+	      t = t_max[2];
+	      t_max[2] += ray_inv[2];
+	    }
+	}
+      else
+	{
+	  if (t_max[1] < t_max[2])
+	    {
+	      if (value > vis->cutoff)
+		{
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  
+		  if (vis->mode == 1) return;
+		}
+	      if ((j += block_size) >= block_size2) return;
+	      
+	      t = t_max[1];
+	      t_max[1] += ray_inv[1];
+	    }
+	  else
+	    {
+	      if (value > vis->cutoff)
+		{
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  
+		  if (vis->mode == 1) return;
+		}
+	      if (++k >= block_size) return;
+	      
+	      t = t_max[2];
+	      t_max[2] += ray_inv[2];
 	    }
 	}
     }
 }
 
-void rtTraverse000 (float org_x, float org_y, float org_z,
+void rtTraverse000 (float org[],
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b),
+						    float cutoff, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
-  float dx, dy, dz;
-  float t_max_x, t_max_y, t_max_z;
-  float t_delta_x, t_delta_y, t_delta_z;
+  float block_min[VIS_VEC_SIZE];
+  float t_max[VIS_VEC_SIZE];
+  float t_delta[VIS_VEC_SIZE];
+  float dx[VIS_VEC_SIZE];
   
-  int i, j, k;
+  int block_i[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE], ii_vec[3];
+  int cluster_blocks_vec[3];
+  int l;
   int ii, jj, kk;
+
+  DataBlock *block_p;
   
-  BlockData block_data;
   
+  cluster_blocks_vec[0] = cluster_p->blocks_x;
+  cluster_blocks_vec[1] = cluster_p->blocks_y;
+  cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-  dx = org_x - cluster_p->block_min_x;
-  dy = org_y - cluster_p->block_min_y;
-  dz = org_z - cluster_p->block_min_z;
-  
-  i = max(0, min(cluster_p->blocks_x - 1, (int)(vis->block_size_inv * dx)));
-  j = max(0, min(cluster_p->blocks_y - 1, (int)(vis->block_size_inv * dy)));
-  k = max(0, min(cluster_p->blocks_z - 1, (int)(vis->block_size_inv * dz)));
-  
-  block_data.min_x = (float)(i * vis->block_size) - dx;
-  block_data.min_y = (float)(j * vis->block_size) - dy;
-  block_data.min_z = (float)(k * vis->block_size) - dz;
-  
-  ii = i + cluster_p->block_min_i;
-  jj = j + cluster_p->block_min_j;
-  kk = k + cluster_p->block_min_k;
-  
-  ii *= vis->blocks_yz;
-  jj *= vis->blocks_z;
-  
-  if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+///#pragma vector always
+  for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      block_data.t = 0.F;
-      block_data.i = (int)(-block_data.min_x);
-      block_data.j = (int)(-block_data.min_y);
-      block_data.k = (int)(-block_data.min_z);
-      
-      rtTraverse000 (block_data, AbsorptionCoefficients, net, vis);
+      dx[l] = org[l] - cluster_p->x[l];
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < 3; l++)
+    {
+      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
+      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+    }
+  ii = ii_vec[0];
+  jj = ii_vec[1];
+  kk = ii_vec[2];
+  
+  if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+    {
+      for (l = 0; l < 3; l++)
+	{
+	  block_i[l] = (int)(-block_min[l]);
+	}
+      rtTraverse000 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
-  i *= cluster_p->blocks_yz;
-  j *= cluster_p->blocks_z;
-  
-  t_max_x = block_data.min_x * ray.inv_x;
-  t_max_y = block_data.min_y * ray.inv_y;
-  t_max_z = block_data.min_z * ray.inv_z;
-  
-  t_delta_x = vis->block_size * ray.inv_x;
-  t_delta_y = vis->block_size * ray.inv_y;
-  t_delta_z = vis->block_size * ray.inv_z;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      t_max[l] = block_min[l] * ray_inv[l];
+      t_delta[l] = block_size * ray_inv[l];
+    }
   
   for (;;)
     {
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i -= cluster_p->blocks_yz) < 0) return;
-	      ii -= vis->blocks_yz;
+	      if (--i_vec[0] < 0) return;
+	      ii -= blocks_yz;
 	      
-	      block_data.min_x -= vis->block_size;
+	      block_min[0] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_x;
-		  block_data.i = (int)(t_max_x * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_x * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_x * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse000 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse000 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_x -= t_delta_x;
+	      t_max[0] -= t_delta[0];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
+	      if (--i_vec[2] < 0) return;
 	      --kk;
 	      
-	      block_data.min_z -= vis->block_size;
+	      block_min[2] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse000 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse000 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z -= t_delta_z;
+	      t_max[2] -= t_delta[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j -= cluster_p->blocks_z) < 0) return;
-	      jj -= vis->blocks_z;
+	      if (--i_vec[1] < 0) return;
+	      jj -= blocks_z;
 	      
-	      block_data.min_y -= vis->block_size;
+	      block_min[1] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_y;
-		  block_data.i = (int)(t_max_y * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_y * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_y * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse000 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse000 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_y -= t_delta_y;
+	      t_max[1] -= t_delta[1];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
+	      if (--i_vec[2] < 0) return;
 	      --kk;
 	      
-	      block_data.min_z -= vis->block_size;
+	      block_min[2] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse000 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse000 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z -= t_delta_z;
+	      t_max[2] -= t_delta[2];
 	    }
 	}
     }
 }
 
-void rtTraverse001 (float org_x, float org_y, float org_z,
+void rtTraverse001 (float org[],
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b),
+						    float cutoff, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
-  float dx, dy, dz;
-  float t_max_x, t_max_y, t_max_z;
-  float t_delta_x, t_delta_y, t_delta_z;
+  float block_min[VIS_VEC_SIZE];
+  float t_max[VIS_VEC_SIZE];
+  float t_delta[VIS_VEC_SIZE];
+  float dx[VIS_VEC_SIZE];
   
-  int i, j, k;
+  int block_i[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE], ii_vec[3];
+  int cluster_blocks_vec[3];
+  int l;
   int ii, jj, kk;
+
+  DataBlock *block_p;
   
-  BlockData block_data;
   
+  cluster_blocks_vec[0] = cluster_p->blocks_x;
+  cluster_blocks_vec[1] = cluster_p->blocks_y;
+  cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-  dx = org_x - cluster_p->block_min_x;
-  dy = org_y - cluster_p->block_min_y;
-  dz = org_z - cluster_p->block_min_z;
-  
-  i = max(0, min(cluster_p->blocks_x - 1, (int)(vis->block_size_inv * dx)));
-  j = max(0, min(cluster_p->blocks_y - 1, (int)(vis->block_size_inv * dy)));
-  k = max(0, min(cluster_p->blocks_z - 1, (int)(vis->block_size_inv * dz)));
-  
-  block_data.min_x = (float)(i * vis->block_size) - dx;
-  block_data.min_y = (float)(j * vis->block_size) - dy;
-  block_data.min_z = (float)(k * vis->block_size) - dz;
-  
-  ii = i + cluster_p->block_min_i;
-  jj = j + cluster_p->block_min_j;
-  kk = k + cluster_p->block_min_k;
-  
-  ii *= vis->blocks_yz;
-  jj *= vis->blocks_z;
-  
-  if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+///#pragma vector always
+  for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      block_data.t = 0.F;
-      block_data.i = (int)(-block_data.min_x);
-      block_data.j = (int)(-block_data.min_y);
-      block_data.k = (int)(-block_data.min_z);
-      
-      rtTraverse001 (block_data, AbsorptionCoefficients, net, vis);
+      dx[l] = org[l] - cluster_p->x[l];
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < 3; l++)
+    {
+      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
+      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+    }
+  ii = ii_vec[0];
+  jj = ii_vec[1];
+  kk = ii_vec[2];
+  
+  if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+    {
+      for (l = 0; l < 3; l++)
+	{
+	  block_i[l] = (int)(-block_min[l]);
+	}
+      rtTraverse001 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
-  i *= cluster_p->blocks_yz;
-  j *= cluster_p->blocks_z;
-  
-  t_max_x = (block_data.min_x                  ) * ray.inv_x;
-  t_max_y = (block_data.min_y                  ) * ray.inv_y;
-  t_max_z = (block_data.min_z + vis->block_size) * ray.inv_z;
-  
-  t_delta_x = vis->block_size * ray.inv_x;
-  t_delta_y = vis->block_size * ray.inv_y;
-  t_delta_z = vis->block_size * ray.inv_z;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      t_max[l] = block_min[l] * ray_inv[l];
+      t_delta[l] = block_size * ray_inv[l];
+    }
+  t_max[2] += t_delta[2];
   
   for (;;)
     {
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i -= cluster_p->blocks_yz) < 0) return;
-	      ii -= vis->blocks_yz;
+	      if (--i_vec[0] < 0) return;
+	      ii -= blocks_yz;
 	      
-	      block_data.min_x -= vis->block_size;
+	      block_min[0] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_x;
-		  block_data.i = (int)(t_max_x * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_x * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_x * ray.dir_z - block_data.min_z);
-
-		  rtTraverse001 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse001 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_x -= t_delta_x;
+	      t_max[0] -= t_delta[0];
 	    }
 	  else
 	    {
-	      if (++k >= cluster_p->blocks_z) return;
+	      if (++i_vec[2] >= cluster_blocks_vec[2]) return;
 	      ++kk;
 	      
-	      block_data.min_z += vis->block_size;
+	      block_min[2] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_x - block_data.min_z);
-		  
-		  rtTraverse001 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse001 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z += t_delta_z;
+	      t_max[2] += t_delta[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j -= cluster_p->blocks_z) < 0) return;
-	      jj -= vis->blocks_z;
+	      if (--i_vec[1] < 0) return;
+	      jj -= blocks_z;
 	      
-	      block_data.min_y -= vis->block_size;
+	      block_min[1] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_y;
-		  block_data.i = (int)(t_max_y * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_y * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_y * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse001 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse001 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_y -= t_delta_y;
+	      t_max[1] -= t_delta[1];
 	    }
 	  else
 	    {
-	      if (++k >= cluster_p->blocks_z) return;
+	      if (++i_vec[2] >= cluster_blocks_vec[2]) return;
 	      ++kk;
 	      
-	      block_data.min_z += vis->block_size;
+	      block_min[2] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse001 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse001 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z += t_delta_z;
+	      t_max[2] += t_delta[2];
 	    }
 	}
     }
 }
 
-void rtTraverse010 (float org_x, float org_y, float org_z,
+void rtTraverse010 (float org[],
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b),
+						    float cutoff, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
-  float dx, dy, dz;
-  float t_max_x, t_max_y, t_max_z;
-  float t_delta_x, t_delta_y, t_delta_z;
+  float block_min[VIS_VEC_SIZE];
+  float t_max[VIS_VEC_SIZE];
+  float t_delta[VIS_VEC_SIZE];
+  float dx[VIS_VEC_SIZE];
   
-  int i, j, k;
+  int block_i[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE], ii_vec[3];
+  int cluster_blocks_vec[3];
+  int l;
   int ii, jj, kk;
+
+  DataBlock *block_p;
   
-  BlockData block_data;
   
+  cluster_blocks_vec[0] = cluster_p->blocks_x;
+  cluster_blocks_vec[1] = cluster_p->blocks_y;
+  cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-  dx = org_x - cluster_p->block_min_x;
-  dy = org_y - cluster_p->block_min_y;
-  dz = org_z - cluster_p->block_min_z;
-  
-  i = max(0, min(cluster_p->blocks_x - 1, (int)(vis->block_size_inv * dx)));
-  j = max(0, min(cluster_p->blocks_y - 1, (int)(vis->block_size_inv * dy)));
-  k = max(0, min(cluster_p->blocks_z - 1, (int)(vis->block_size_inv * dz)));
-  
-  block_data.min_x = (float)(i * vis->block_size) - dx;
-  block_data.min_y = (float)(j * vis->block_size) - dy;
-  block_data.min_z = (float)(k * vis->block_size) - dz;
-  
-  ii = i + cluster_p->block_min_i;
-  jj = j + cluster_p->block_min_j;
-  kk = k + cluster_p->block_min_k;
-  
-  ii *= vis->blocks_yz;
-  jj *= vis->blocks_z;
-  
-  if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+///#pragma vector always
+  for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      block_data.t = 0.F;
-      block_data.i = (int)(-block_data.min_x);
-      block_data.j = (int)(-block_data.min_y);
-      block_data.k = (int)(-block_data.min_z);
-      
-      rtTraverse010 (block_data, AbsorptionCoefficients, net, vis);
+      dx[l] = org[l] - cluster_p->x[l];
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < 3; l++)
+    {
+      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
+      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+    }
+  ii = ii_vec[0];
+  jj = ii_vec[1];
+  kk = ii_vec[2];
+  
+  if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+    {
+      for (l = 0; l < 3; l++)
+	{
+	  block_i[l] = (int)(-block_min[l]);
+	}
+      rtTraverse010 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
-  i *= cluster_p->blocks_yz;
-  j *= cluster_p->blocks_z;
-  
-  t_max_x = (block_data.min_x                  ) * ray.inv_x;
-  t_max_y = (block_data.min_y + vis->block_size) * ray.inv_y;
-  t_max_z = (block_data.min_z                  ) * ray.inv_z;
-  
-  t_delta_x = vis->block_size * ray.inv_x;
-  t_delta_y = vis->block_size * ray.inv_y;
-  t_delta_z = vis->block_size * ray.inv_z;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      t_max[l] = block_min[l] * ray_inv[l];
+      t_delta[l] = block_size * ray_inv[l];
+    }
+  t_max[1] += t_delta[1];
   
   for (;;)
     {
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i -= cluster_p->blocks_yz) < 0) return;
-	      ii -= vis->blocks_yz;
+	      if (--i_vec[0] < 0) return;
+	      ii -= blocks_yz;
 	      
-	      block_data.min_x -= vis->block_size;
+	      block_min[0] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_x;
-		  block_data.i = (int)(t_max_x * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_x * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_x * ray.dir_z - block_data.min_z);
-
-		  rtTraverse010 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse010 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_x -= t_delta_x;
+	      t_max[0] -= t_delta[0];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
+	      if (--i_vec[2] < 0) return;
 	      --kk;
 	      
-	      block_data.min_z -= vis->block_size;
+	      block_min[2] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse010 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse010 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z -= t_delta_z;
+	      t_max[2] -= t_delta[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j += cluster_p->blocks_z) >= cluster_p->blocks_yz) return;
-	      jj += vis->blocks_z;
+	      if (++i_vec[1] >= cluster_blocks_vec[1]) return;
+	      jj += blocks_z;
 	      
-	      block_data.min_y += vis->block_size;
+	      block_min[1] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_y;
-		  block_data.i = (int)(t_max_y * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_y * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_y * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse010 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse010 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_y += t_delta_y;
+	      t_max[1] += t_delta[1];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
+	      if (--i_vec[2] < 0) return;
 	      --kk;
 	      
-	      block_data.min_z -= vis->block_size;
+	      block_min[2] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse010 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse010 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z -= t_delta_z;
+	      t_max[2] -= t_delta[2];
 	    }
 	}
     }
 }
 
-void rtTraverse011 (float org_x, float org_y, float org_z,
+void rtTraverse011 (float org[],
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b),
+						    float cutoff, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
-  float dx, dy, dz;
-  float t_max_x, t_max_y, t_max_z;
-  float t_delta_x, t_delta_y, t_delta_z;
+  float block_min[VIS_VEC_SIZE];
+  float t_max[VIS_VEC_SIZE];
+  float t_delta[VIS_VEC_SIZE];
+  float dx[VIS_VEC_SIZE];
   
-  int i, j, k;
+  int block_i[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE], ii_vec[3];
+  int cluster_blocks_vec[3];
+  int l;
   int ii, jj, kk;
+
+  DataBlock *block_p;
   
-  BlockData block_data;
   
+  cluster_blocks_vec[0] = cluster_p->blocks_x;
+  cluster_blocks_vec[1] = cluster_p->blocks_y;
+  cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-  dx = org_x - cluster_p->block_min_x;
-  dy = org_y - cluster_p->block_min_y;
-  dz = org_z - cluster_p->block_min_z;
-  
-  i = max(0, min(cluster_p->blocks_x - 1, (int)(vis->block_size_inv * dx)));
-  j = max(0, min(cluster_p->blocks_y - 1, (int)(vis->block_size_inv * dy)));
-  k = max(0, min(cluster_p->blocks_z - 1, (int)(vis->block_size_inv * dz)));
-  
-  block_data.min_x = (float)(i * vis->block_size) - dx;
-  block_data.min_y = (float)(j * vis->block_size) - dy;
-  block_data.min_z = (float)(k * vis->block_size) - dz;
-  
-  ii = i + cluster_p->block_min_i;
-  jj = j + cluster_p->block_min_j;
-  kk = k + cluster_p->block_min_k;
-  
-  ii *= vis->blocks_yz;
-  jj *= vis->blocks_z;
-  
-  if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+///#pragma vector always
+  for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      block_data.t = 0.F;
-      block_data.i = (int)(-block_data.min_x);
-      block_data.j = (int)(-block_data.min_y);
-      block_data.k = (int)(-block_data.min_z);
-      
-      rtTraverse011 (block_data, AbsorptionCoefficients, net, vis);
+      dx[l] = org[l] - cluster_p->x[l];
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < 3; l++)
+    {
+      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
+      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+    }
+  ii = ii_vec[0];
+  jj = ii_vec[1];
+  kk = ii_vec[2];
+  
+  if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+    {
+      for (l = 0; l < 3; l++)
+	{
+	  block_i[l] = (int)(-block_min[l]);
+	}
+      rtTraverse011 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
-  i *= cluster_p->blocks_yz;
-  j *= cluster_p->blocks_z;
-  
-  t_max_x = (block_data.min_x                  ) * ray.inv_x;
-  t_max_y = (block_data.min_y + vis->block_size) * ray.inv_y;
-  t_max_z = (block_data.min_z + vis->block_size) * ray.inv_z;
-  
-  t_delta_x = vis->block_size * ray.inv_x;
-  t_delta_y = vis->block_size * ray.inv_y;
-  t_delta_z = vis->block_size * ray.inv_z;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      t_max[l] = block_min[l] * ray_inv[l];
+      t_delta[l] = block_size * ray_inv[l];
+    }
+  t_max[1] += t_delta[1];
+  t_max[2] += t_delta[2];
   
   for (;;)
     {
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i -= cluster_p->blocks_yz) < 0) return;
-	      ii -= vis->blocks_yz;
+	      if (--i_vec[0] < 0) return;
+	      ii -= blocks_yz;
 	      
-	      block_data.min_x -= vis->block_size;
+	      block_min[0] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_x;
-		  block_data.i = (int)(t_max_x * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_x * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_x * ray.dir_z - block_data.min_z);
-
-		  rtTraverse011 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse011 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_x -= t_delta_x;
+	      t_max[0] -= t_delta[0];
 	    }
 	  else
 	    {
-	      if (++k >= cluster_p->blocks_z) return;
+	      if (++i_vec[2] >= cluster_blocks_vec[2]) return;
 	      ++kk;
 	      
-	      block_data.min_z += vis->block_size;
+	      block_min[2] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse011 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse011 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z += t_delta_z;
+	      t_max[2] += t_delta[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j += cluster_p->blocks_z) >= cluster_p->blocks_yz) return;
-	      jj += vis->blocks_z;
+	      if (++i_vec[1] >= cluster_blocks_vec[1]) return;
+	      jj += blocks_z;
 	      
-	      block_data.min_y += vis->block_size;
+	      block_min[1] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_y;
-		  block_data.i = (int)(t_max_y * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_y * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_y * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse011 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse011 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_y += t_delta_y;
+	      t_max[1] += t_delta[1];
 	    }
 	  else
 	    {
-	      if (++k >= cluster_p->blocks_z) return;
+	      if (++i_vec[2] >= cluster_blocks_vec[2]) return;
 	      ++kk;
 	      
-	      block_data.min_z += vis->block_size;
+	      block_min[2] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse011 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse011 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z += t_delta_z;
+	      t_max[2] += t_delta[2];
 	    }
 	}
     }
 }
 
-void rtTraverse100 (float org_x, float org_y, float org_z,
+void rtTraverse100 (float org[],
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b),
+						    float cutoff, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
-  float dx, dy, dz;
-  float t_max_x, t_max_y, t_max_z;
-  float t_delta_x, t_delta_y, t_delta_z;
+  float block_min[VIS_VEC_SIZE];
+  float t_max[VIS_VEC_SIZE];
+  float t_delta[VIS_VEC_SIZE];
+  float dx[VIS_VEC_SIZE];
   
-  int i, j, k;
+  int block_i[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE], ii_vec[3];
+  int cluster_blocks_vec[3];
+  int l;
   int ii, jj, kk;
+
+  DataBlock *block_p;
   
-  BlockData block_data;
   
+  cluster_blocks_vec[0] = cluster_p->blocks_x;
+  cluster_blocks_vec[1] = cluster_p->blocks_y;
+  cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-  dx = org_x - cluster_p->block_min_x;
-  dy = org_y - cluster_p->block_min_y;
-  dz = org_z - cluster_p->block_min_z;
-  
-  i = max(0, min(cluster_p->blocks_x - 1, (int)(vis->block_size_inv * dx)));
-  j = max(0, min(cluster_p->blocks_y - 1, (int)(vis->block_size_inv * dy)));
-  k = max(0, min(cluster_p->blocks_z - 1, (int)(vis->block_size_inv * dz)));
-  
-  block_data.min_x = (float)(i * vis->block_size) - dx;
-  block_data.min_y = (float)(j * vis->block_size) - dy;
-  block_data.min_z = (float)(k * vis->block_size) - dz;
-  
-  ii = i + cluster_p->block_min_i;
-  jj = j + cluster_p->block_min_j;
-  kk = k + cluster_p->block_min_k;
-  
-  ii *= vis->blocks_yz;
-  jj *= vis->blocks_z;
-  
-  if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+///#pragma vector always
+  for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      block_data.t = 0.F;
-      block_data.i = (int)(-block_data.min_x);
-      block_data.j = (int)(-block_data.min_y);
-      block_data.k = (int)(-block_data.min_z);
-      
-      rtTraverse100 (block_data, AbsorptionCoefficients, net, vis);
+      dx[l] = org[l] - cluster_p->x[l];
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < 3; l++)
+    {
+      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
+      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+    }
+  ii = ii_vec[0];
+  jj = ii_vec[1];
+  kk = ii_vec[2];
+  
+  if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+    {
+      for (l = 0; l < 3; l++)
+	{
+	  block_i[l] = (int)(-block_min[l]);
+	}
+      rtTraverse100 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
-  i *= cluster_p->blocks_yz;
-  j *= cluster_p->blocks_z;
-  
-  t_max_x = (block_data.min_x + vis->block_size) * ray.inv_x;
-  t_max_y = (block_data.min_y                  ) * ray.inv_y;
-  t_max_z = (block_data.min_z                  ) * ray.inv_z;
-  
-  t_delta_x = vis->block_size * ray.inv_x;
-  t_delta_y = vis->block_size * ray.inv_y;
-  t_delta_z = vis->block_size * ray.inv_z;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      t_max[l] = block_min[l] * ray_inv[l];
+      t_delta[l] = block_size * ray_inv[l];
+    }
+  t_max[0] += t_delta[0];
   
   for (;;)
     {
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i += cluster_p->blocks_yz) >= cluster_p->blocks) return;
-	      ii += vis->blocks_yz;
+	      if (++i_vec[0] >= cluster_blocks_vec[0]) return;
+	      ii += blocks_yz;
 	      
-	      block_data.min_x += vis->block_size;
+	      block_min[0] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_x;
-		  block_data.i = (int)(t_max_x * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_x * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_x * ray.dir_z - block_data.min_z);
-
-		  rtTraverse100 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse100 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_x += t_delta_x;
+	      t_max[0] += t_delta[0];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
+	      if (--i_vec[2] < 0) return;
 	      --kk;
 	      
-	      block_data.min_z -= vis->block_size;
+	      block_min[2] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse100 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse100 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z -= t_delta_z;
+	      t_max[2] -= t_delta[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j -= cluster_p->blocks_z) < 0) return;
-	      jj -= vis->blocks_z;
+	      if (--i_vec[1] < 0) return;
+	      jj -= blocks_z;
 	      
-	      block_data.min_y -= vis->block_size;
+	      block_min[1] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_y;
-		  block_data.i = (int)(t_max_y * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_y * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_y * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse100 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse100 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_y -= t_delta_y;
+	      t_max[1] -= t_delta[1];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
+	      if (--i_vec[2] < 0) return;
 	      --kk;
 	      
-	      block_data.min_z -= vis->block_size;
+	      block_min[2] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse100 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse100 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z -= t_delta_z;
+	      t_max[2] -= t_delta[2];
 	    }
 	}
     }
 }
 
-void rtTraverse101 (float org_x, float org_y, float org_z,
+void rtTraverse101 (float org[],
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b),
+						    float cutoff, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
-  float dx, dy, dz;
-  float t_max_x, t_max_y, t_max_z;
-  float t_delta_x, t_delta_y, t_delta_z;
+  float block_min[VIS_VEC_SIZE];
+  float t_max[VIS_VEC_SIZE];
+  float t_delta[VIS_VEC_SIZE];
+  float dx[VIS_VEC_SIZE];
   
-  int i, j, k;
+  int block_i[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE], ii_vec[3];
+  int cluster_blocks_vec[3];
+  int l;
   int ii, jj, kk;
+
+  DataBlock *block_p;
   
-  BlockData block_data;
   
+  cluster_blocks_vec[0] = cluster_p->blocks_x;
+  cluster_blocks_vec[1] = cluster_p->blocks_y;
+  cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-  dx = org_x - cluster_p->block_min_x;
-  dy = org_y - cluster_p->block_min_y;
-  dz = org_z - cluster_p->block_min_z;
-  
-  i = max(0, min(cluster_p->blocks_x - 1, (int)(vis->block_size_inv * dx)));
-  j = max(0, min(cluster_p->blocks_y - 1, (int)(vis->block_size_inv * dy)));
-  k = max(0, min(cluster_p->blocks_z - 1, (int)(vis->block_size_inv * dz)));
-  
-  block_data.min_x = (float)(i * vis->block_size) - dx;
-  block_data.min_y = (float)(j * vis->block_size) - dy;
-  block_data.min_z = (float)(k * vis->block_size) - dz;
-  
-  ii = i + cluster_p->block_min_i;
-  jj = j + cluster_p->block_min_j;
-  kk = k + cluster_p->block_min_k;
-  
-  ii *= vis->blocks_yz;
-  jj *= vis->blocks_z;
-  
-  if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+///#pragma vector always
+  for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      block_data.t = 0.F;
-      block_data.i = (int)(-block_data.min_x);
-      block_data.j = (int)(-block_data.min_y);
-      block_data.k = (int)(-block_data.min_z);
-      
-      rtTraverse101 (block_data, AbsorptionCoefficients, net, vis);
+      dx[l] = org[l] - cluster_p->x[l];
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < 3; l++)
+    {
+      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
+      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+    }
+  ii = ii_vec[0];
+  jj = ii_vec[1];
+  kk = ii_vec[2];
+  
+  if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+    {
+      for (l = 0; l < 3; l++)
+	{
+	  block_i[l] = (int)(-block_min[l]);
+	}
+      rtTraverse101 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
-  i *= cluster_p->blocks_yz;
-  j *= cluster_p->blocks_z;
-  
-  t_max_x = (block_data.min_x + vis->block_size) * ray.inv_x;
-  t_max_y = (block_data.min_y                  ) * ray.inv_y;
-  t_max_z = (block_data.min_z + vis->block_size) * ray.inv_z;
-  
-  t_delta_x = vis->block_size * ray.inv_x;
-  t_delta_y = vis->block_size * ray.inv_y;
-  t_delta_z = vis->block_size * ray.inv_z;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      t_max[l] = block_min[l] * ray_inv[l];
+      t_delta[l] = block_size * ray_inv[l];
+    }
+  t_max[0] += t_delta[0];
+  t_max[2] += t_delta[2];
   
   for (;;)
     {
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i += cluster_p->blocks_yz) >= cluster_p->blocks) return;
-	      ii += vis->blocks_yz;
+	      if (++i_vec[0] >= cluster_blocks_vec[0]) return;
+	      ii += blocks_yz;
 	      
-	      block_data.min_x += vis->block_size;
+	      block_min[0] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_x;
-		  block_data.i = (int)(t_max_x * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_x * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_x * ray.dir_z - block_data.min_z);
-
-		  rtTraverse101 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse101 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_x += t_delta_x;
+	      t_max[0] += t_delta[0];
 	    }
 	  else
 	    {
-	      if (++k >= cluster_p->blocks_z) return;
+	      if (++i_vec[2] >= cluster_blocks_vec[2]) return;
 	      ++kk;
 	      
-	      block_data.min_z += vis->block_size;
+	      block_min[2] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse101 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse101 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z += t_delta_z;
+	      t_max[2] += t_delta[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j -= cluster_p->blocks_z) < 0) return;
-	      jj -= vis->blocks_z;
+	      if (--i_vec[1] < 0) return;
+	      jj -= blocks_z;
 	      
-	      block_data.min_y -= vis->block_size;
+	      block_min[1] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_y;
-		  block_data.i = (int)(t_max_y * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_y * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_y * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse101 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse101 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_y -= t_delta_y;
+	      t_max[1] -= t_delta[1];
 	    }
 	  else
 	    {
-	      if (++k >= cluster_p->blocks_z) return;
+	      if (++i_vec[2] >= cluster_blocks_vec[2]) return;
 	      ++kk;
 	      
-	      block_data.min_z += vis->block_size;
+	      block_min[2] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse101 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse101 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z += t_delta_z;
+	      t_max[2] += t_delta[2];
 	    }
 	}
     }
 }
 
-void rtTraverse110 (float org_x, float org_y, float org_z,
+void rtTraverse110 (float org[],
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b),
+						    float cutoff, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
-  float dx, dy, dz;
-  float t_max_x, t_max_y, t_max_z;
-  float t_delta_x, t_delta_y, t_delta_z;
+  float block_min[VIS_VEC_SIZE];
+  float t_max[VIS_VEC_SIZE];
+  float t_delta[VIS_VEC_SIZE];
+  float dx[VIS_VEC_SIZE];
   
-  int i, j, k;
+  int block_i[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE], ii_vec[3];
+  int cluster_blocks_vec[3];
+  int l;
   int ii, jj, kk;
+
+  DataBlock *block_p;
   
-  BlockData block_data;
   
+  cluster_blocks_vec[0] = cluster_p->blocks_x;
+  cluster_blocks_vec[1] = cluster_p->blocks_y;
+  cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-  dx = org_x - cluster_p->block_min_x;
-  dy = org_y - cluster_p->block_min_y;
-  dz = org_z - cluster_p->block_min_z;
-  
-  i = max(0, min(cluster_p->blocks_x - 1, (int)(vis->block_size_inv * dx)));
-  j = max(0, min(cluster_p->blocks_y - 1, (int)(vis->block_size_inv * dy)));
-  k = max(0, min(cluster_p->blocks_z - 1, (int)(vis->block_size_inv * dz)));
-  
-  block_data.min_x = (float)(i * vis->block_size) - dx;
-  block_data.min_y = (float)(j * vis->block_size) - dy;
-  block_data.min_z = (float)(k * vis->block_size) - dz;
-  
-  ii = i + cluster_p->block_min_i;
-  jj = j + cluster_p->block_min_j;
-  kk = k + cluster_p->block_min_k;
-  
-  ii *= vis->blocks_yz;
-  jj *= vis->blocks_z;
-  
-  if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+///#pragma vector always
+  for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      block_data.t = 0.F;
-      block_data.i = (int)(-block_data.min_x);
-      block_data.j = (int)(-block_data.min_y);
-      block_data.k = (int)(-block_data.min_z);
-      
-      rtTraverse110 (block_data, AbsorptionCoefficients, net, vis);
+      dx[l] = org[l] - cluster_p->x[l];
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < 3; l++)
+    {
+      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
+      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+    }
+  ii = ii_vec[0];
+  jj = ii_vec[1];
+  kk = ii_vec[2];
+  
+  if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+    {
+      for (l = 0; l < 3; l++)
+	{
+	  block_i[l] = (int)(-block_min[l]);
+	}
+      rtTraverse110 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
-  i *= cluster_p->blocks_yz;
-  j *= cluster_p->blocks_z;
-  
-  t_max_x = (block_data.min_x + vis->block_size) * ray.inv_x;
-  t_max_y = (block_data.min_y + vis->block_size) * ray.inv_y;
-  t_max_z = (block_data.min_z                  ) * ray.inv_z;
-  
-  t_delta_x = vis->block_size * ray.inv_x;
-  t_delta_y = vis->block_size * ray.inv_y;
-  t_delta_z = vis->block_size * ray.inv_z;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      t_max[l] = block_min[l] * ray_inv[l];
+      t_delta[l] = block_size * ray_inv[l];
+    }
+  t_max[0] += t_delta[0];
+  t_max[1] += t_delta[1];
   
   for (;;)
     {
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i += cluster_p->blocks_yz) >= cluster_p->blocks) return;
-	      ii += vis->blocks_yz;
+	      if (++i_vec[0] >= cluster_blocks_vec[0]) return;
+	      ii += blocks_yz;
 	      
-	      block_data.min_x += vis->block_size;
+	      block_min[0] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_x;
-		  block_data.i = (int)(t_max_x * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_x * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_x * ray.dir_z - block_data.min_z);
-
-		  rtTraverse110 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse110 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_x += t_delta_x;
+	      t_max[0] += t_delta[0];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
+	      if (--i_vec[2] < 0) return;
 	      --kk;
 	      
-	      block_data.min_z -= vis->block_size;
+	      block_min[2] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse110 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse110 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z -= t_delta_z;
+	      t_max[2] -= t_delta[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j += cluster_p->blocks_z) >= cluster_p->blocks_yz) return;
-	      jj += vis->blocks_z;
+	      if (++i_vec[1] >= cluster_blocks_vec[1]) return;
+	      jj += blocks_z;
 	      
-	      block_data.min_y += vis->block_size;
+	      block_min[1] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_y;
-		  block_data.i = (int)(t_max_y * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_y * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_y * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse110 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse110 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_y += t_delta_y;
+	      t_max[1] += t_delta[1];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
+	      if (--i_vec[2] < 0) return;
 	      --kk;
 	      
-	      block_data.min_z -= vis->block_size;
+	      block_min[2] -= block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse110 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse110 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z -= t_delta_z;
+	      t_max[2] -= t_delta[2];
 	    }
 	}
     }
 }
 
-void rtTraverse111 (float org_x, float org_y, float org_z,
+void rtTraverse111 (float org[],
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float *r, float *g, float *b),
+						    float cutoff, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
-  float dx, dy, dz;
-  float t_max_x, t_max_y, t_max_z;
-  float t_delta_x, t_delta_y, t_delta_z;
+  float block_min[VIS_VEC_SIZE];
+  float t_max[VIS_VEC_SIZE];
+  float t_delta[VIS_VEC_SIZE];
+  float dx[VIS_VEC_SIZE];
   
-  int i, j, k;
+  int block_i[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE], ii_vec[3];
+  int cluster_blocks_vec[3];
+  int l;
   int ii, jj, kk;
+
+  DataBlock *block_p;
   
-  BlockData block_data;
   
+  cluster_blocks_vec[0] = cluster_p->blocks_x;
+  cluster_blocks_vec[1] = cluster_p->blocks_y;
+  cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-  dx = org_x - cluster_p->block_min_x;
-  dy = org_y - cluster_p->block_min_y;
-  dz = org_z - cluster_p->block_min_z;
-  
-  i = max(0, min(cluster_p->blocks_x - 1, (int)(vis->block_size_inv * dx)));
-  j = max(0, min(cluster_p->blocks_y - 1, (int)(vis->block_size_inv * dy)));
-  k = max(0, min(cluster_p->blocks_z - 1, (int)(vis->block_size_inv * dz)));
-  
-  block_data.min_x = (float)(i * vis->block_size) - dx;
-  block_data.min_y = (float)(j * vis->block_size) - dy;
-  block_data.min_z = (float)(k * vis->block_size) - dz;
-  
-  ii = i + cluster_p->block_min_i;
-  jj = j + cluster_p->block_min_j;
-  kk = k + cluster_p->block_min_k;
-  
-  ii *= vis->blocks_yz;
-  jj *= vis->blocks_z;
-  
-  if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+///#pragma vector always
+  for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      block_data.t = 0.F;
-      block_data.i = (int)(-block_data.min_x);
-      block_data.j = (int)(-block_data.min_y);
-      block_data.k = (int)(-block_data.min_z);
-      
-      rtTraverse111 (block_data, AbsorptionCoefficients, net, vis);
+      dx[l] = org[l] - cluster_p->x[l];
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < 3; l++)
+    {
+      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
+      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+    }
+  ii = ii_vec[0];
+  jj = ii_vec[1];
+  kk = ii_vec[2];
+  
+  if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+    {
+      for (l = 0; l < 3; l++)
+	{
+	  block_i[l] = (int)(-block_min[l]);
+	}
+      rtTraverse111 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
-  i *= cluster_p->blocks_yz;
-  j *= cluster_p->blocks_z;
-  
-  t_max_x = (block_data.min_x + vis->block_size) * ray.inv_x;
-  t_max_y = (block_data.min_y + vis->block_size) * ray.inv_y;
-  t_max_z = (block_data.min_z + vis->block_size) * ray.inv_z;
-  
-  t_delta_x = vis->block_size * ray.inv_x;
-  t_delta_y = vis->block_size * ray.inv_y;
-  t_delta_z = vis->block_size * ray.inv_z;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      t_max[l] = (block_min[l] + block_size) * ray_inv[l];
+      t_delta[l] = block_size * ray_inv[l];
+    }
   
   for (;;)
     {
-      if (t_max_x < t_max_y)
+      if (t_max[0] < t_max[1])
 	{
-	  if (t_max_x < t_max_z)
+	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i += cluster_p->blocks_yz) >= cluster_p->blocks) return;
-	      ii += vis->blocks_yz;
+	      if (++i_vec[0] >= cluster_blocks_vec[0]) return;
+	      ii += blocks_yz;
 	      
-	      block_data.min_x += vis->block_size;
+	      block_min[0] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_x;
-		  block_data.i = (int)(t_max_x * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_x * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_x * ray.dir_z - block_data.min_z);
-
-		  rtTraverse111 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse111 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_x += t_delta_x;
+	      t_max[0] += t_delta[0];
 	    }
 	  else
 	    {
-	      if (++k >= cluster_p->blocks_z) return;
+	      if (++i_vec[2] >= cluster_blocks_vec[2]) return;
 	      ++kk;
 	      
-	      block_data.min_z += vis->block_size;
+	      block_min[2] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse111 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse111 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z += t_delta_z;
+	      t_max[2] += t_delta[2];
 	    }
 	}
       else
 	{
-	  if (t_max_y < t_max_z)
+	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j += cluster_p->blocks_z) >= cluster_p->blocks_yz) return;
-	      jj += vis->blocks_z;
+	      if (++i_vec[1] >= cluster_blocks_vec[1]) return;
+	      jj += blocks_z;
 	      
-	      block_data.min_y += vis->block_size;
+	      block_min[1] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_y;
-		  block_data.i = (int)(t_max_y * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_y * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_y * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse111 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse111 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_y += t_delta_y;
+	      t_max[1] += t_delta[1];
 	    }
 	  else
 	    {
-	      if (++k >= cluster_p->blocks_z) return;
+	      if (++i_vec[2] >= cluster_blocks_vec[2]) return;
 	      ++kk;
 	      
-	      block_data.min_z += vis->block_size;
+	      block_min[2] += block_size;
 	      
-	      if ((block_data.p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
+	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  block_data.t = t_max_z;
-		  block_data.i = (int)(t_max_z * ray.dir_x - block_data.min_x);
-		  block_data.j = (int)(t_max_z * ray.dir_y - block_data.min_y);
-		  block_data.k = (int)(t_max_z * ray.dir_z - block_data.min_z);
-		  
-		  rtTraverse111 (block_data, AbsorptionCoefficients, net, vis);
+		  for (l = 0; l < 3; l++)
+		    {
+		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		    }
+		  rtTraverse111 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
-	      t_max_z += t_delta_z;
+	      t_max[2] += t_delta[2];
 	    }
 	}
     }
@@ -2124,32 +2096,28 @@ void rtInit (Net *net, Vis *vis)
 
 
 void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						   float cutoff, float *r, float *g, float *b),
+						   float cutoff, float col[]),
 		   Net *net, Vis *vis)
 {
   // here, the ray tracing is performed and the intra-machine communications take place
   
-  float screen_vtx_x, screen_vtx_y, screen_vtx_z;
-  
-  float px0, py0, pz0;
-  float px1, py1, pz1;
-  float nx0, ny0, nz0;
+  float screen_max[4];
+  float screen_vtx[VIS_VEC_SIZE];
+  float p0[VIS_VEC_SIZE], p1[VIS_VEC_SIZE], p2[VIS_VEC_SIZE];
+  float dir[VIS_VEC_SIZE];
+  float cluster_blocks_vec[VIS_VEC_SIZE];
   float t;
-  float temp1;
+  float temp1, temp2;
   
-  float par1x, par1y, par1z;
-  float par2x, par2y, par2z;
-  float par3x, par3y, par3z;
-  
-  float v_min_x, v_min_y;
-  float v_max_x, v_max_y;
-  float vx[2], vy[2], vz[2];
-  float scale_x, scale_y;
+  float par1[VIS_VEC_SIZE], par2[VIS_VEC_SIZE], par3[VIS_VEC_SIZE];
+  float subimage_vtx[4];
+  float v[2][VIS_VEC_SIZE];
+  float scale_vec[4];
   
   int pixels_x, pixels_y;
-  int i, j, k;
+  int i, j, k, l;
   int cluster_id;
-  int min_i, min_j, max_i, max_j;
+  int subimage_pix[4];
   int viewpoint_flag;
   int ray_dir_code;
   
@@ -2158,27 +2126,29 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
   Cluster *cluster_p;
   
   
-  px0 = viewpoint.pos_x;
-  py0 = viewpoint.pos_y;
-  pz0 = viewpoint.pos_z;
-  
-  screen_vtx_x = EPSILON + screen.ctr_x - screen.dir1x - screen.dir2x - px0;
-  screen_vtx_y = EPSILON + screen.ctr_y - screen.dir1y - screen.dir2y - py0;
-  screen_vtx_z = EPSILON + screen.ctr_z - screen.dir1z - screen.dir2z - pz0;
-  
   pixels_x = screen.pixels_x;
   pixels_y = screen.pixels_y;
   
-  par1x = screen.dir1x * (2.F / (float)pixels_x);
-  par1y = screen.dir1y * (2.F / (float)pixels_x);
-  par1z = screen.dir1z * (2.F / (float)pixels_x);
+  screen_max[0] = screen.max_x;
+  screen_max[1] = screen.max_x;
+  screen_max[2] = screen.max_y;
+  screen_max[3] = screen.max_y;
   
-  par2x = screen.dir2x * (2.F / (float)pixels_y);
-  par2y = screen.dir2y * (2.F / (float)pixels_y);
-  par2z = screen.dir2z * (2.F / (float)pixels_y);
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      p0[l] = viewpoint.x[l];
+      screen_vtx[l] = EPSILON + screen.ctr[l] - screen.dir1[l] - screen.dir2[l] - p0[l];
+    }
+  temp1 = (2.F / (float)pixels_x);
+  temp2 = (2.F / (float)pixels_y);
   
-  scale_x = 1.F / screen.par_x;
-  scale_y = 1.F / screen.par_y;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      par1[l] = screen.dir1[l] * temp1;
+      par2[l] = screen.dir2[l] * temp2;
+    }
+  scale_vec[0] = scale_vec[1] = 1.F / screen.par_x;
+  scale_vec[2] = scale_vec[3] = 1.F / screen.par_y;
 
   for (cluster_id = 0; cluster_id < vis->clusters; cluster_id++)
     {
@@ -2186,47 +2156,57 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
       
       // the image-based projection of the cluster bounding box is calculated here
       
-      vx[0] = cluster_p->block_min_x;
-      vy[0] = cluster_p->block_min_y;
-      vz[0] = cluster_p->block_min_z;
-      vx[1] = vx[0] + cluster_p->blocks_x * vis->block_size;
-      vy[1] = vy[0] + cluster_p->blocks_y * vis->block_size;
-      vz[1] = vz[0] + cluster_p->blocks_z * vis->block_size;
+      cluster_blocks_vec[0] = (float)cluster_p->blocks_x;
+      cluster_blocks_vec[1] = (float)cluster_p->blocks_y;
+      cluster_blocks_vec[2] = (float)cluster_p->blocks_z;
       
-      v_min_x = 1.e+30F;
-      v_min_y = 1.e+30F;
-      v_max_x = -1.e+30F;
-      v_max_y = -1.e+30F;
+      for (l = 0; l < VIS_VEC_SIZE; l++)
+	{
+	  v[0][l] = cluster_p->x[l];
+	  v[1][l] = cluster_p->x[l] + cluster_blocks_vec[l] * (float)block_size;
+	}
+      subimage_vtx[0] =  1.e+30F;
+      subimage_vtx[1] = -1.e+30F;
+      subimage_vtx[2] =  1.e+30F;
+      subimage_vtx[3] = -1.e+30F;
       
       for (i = 0; i < 2; i++)
 	{
+	  p1[0] = v[i][0];
+	  
 	  for (j = 0; j < 2; j++)
 	    {
+	      p1[1] = v[j][1];
+	      
 	      for (k = 0; k < 2; k++)
 		{
-		  visProject (vx[i], vy[j], vz[k], &px1, &py1, &pz1);
+		  p1[2] = v[k][2];
 		  
-		  v_min_x = fminf(v_min_x, px1);
-		  v_min_y = fminf(v_min_y, py1);
-		  v_max_x = fmaxf(v_max_x, px1);
-		  v_max_y = fmaxf(v_max_y, py1);
+		  visProject (p1, p2);
+		  
+		  subimage_vtx[0] = fminf(subimage_vtx[0], p2[0]);
+		  subimage_vtx[1] = fmaxf(subimage_vtx[1], p2[0]);
+		  subimage_vtx[2] = fminf(subimage_vtx[2], p2[1]);
+		  subimage_vtx[3] = fmaxf(subimage_vtx[3], p2[1]);
 		}
 	    }
 	}
-      min_i = (int)(scale_x * (v_min_x + screen.max_x));
-      max_i = (int)(scale_x * (v_max_x + screen.max_x));
-      min_j = (int)(scale_y * (v_min_y + screen.max_y));
-      max_j = (int)(scale_y * (v_max_y + screen.max_y));
+      for (l = 0; l < 4; l++)
+	{
+	  subimage_pix[l] = (int)(scale_vec[l] * (subimage_vtx[l] + screen_max[l]));
+	}
+      if (subimage_pix[0] >= pixels_x || subimage_pix[1] < 0 ||
+	  subimage_pix[2] >= pixels_y || subimage_pix[3] < 0)
+	{
+	  continue;
+	}
+      subimage_pix[0] = max(subimage_pix[0], 0);
+      subimage_pix[1] = min(subimage_pix[1], pixels_x - 1);
+      subimage_pix[2] = max(subimage_pix[2], 0);
+      subimage_pix[3] = min(subimage_pix[3], pixels_y - 1);
       
-      if (min_i >= pixels_x || min_j >= pixels_y || max_i < 0 || max_j < 0) continue;
-      
-      min_i = max(min_i, 0);
-      min_j = max(min_j, 0);
-      max_i = min(max_i, pixels_x - 1);
-      max_j = min(max_j, pixels_y - 1);
-      
-      if (px0 >= vx[0] && py0 >= vy[0] && pz0 >= vz[0] &&
-	  px0 <= vx[1] && py0 <= vy[1] && pz0 <= vz[1])
+      if (p0[0] >= v[0][0] && p0[1] >= v[0][1] && p0[2] >= v[0][2] &&
+	  p0[0] <= v[1][0] && p0[1] <= v[1][1] && p0[2] <= v[1][2])
 	{
 	  viewpoint_flag = 1;
 	}
@@ -2234,77 +2214,80 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
 	{
 	  viewpoint_flag = 0;
 	}
-      aabb.acc_1 = vx[1] - px0;
-      aabb.acc_2 = vx[0] - px0;
-      aabb.acc_3 = vy[1] - py0;
-      aabb.acc_4 = vy[0] - py0;
-      aabb.acc_5 = vz[1] - pz0;
-      aabb.acc_6 = vz[0] - pz0;
+      aabb.acc_1 = v[1][0] - p0[0];
+      aabb.acc_2 = v[0][0] - p0[0];
+      aabb.acc_3 = v[1][1] - p0[1];
+      aabb.acc_4 = v[0][1] - p0[1];
+      aabb.acc_5 = v[1][2] - p0[2];
+      aabb.acc_6 = v[0][2] - p0[2];
       
-      par3x = screen_vtx_x + (float)(min_i + 0.5F) * par1x + (float)(min_j + 0.5F) * par2x;
-      par3y = screen_vtx_y + (float)(min_i + 0.5F) * par1y + (float)(min_j + 0.5F) * par2y;
-      par3z = screen_vtx_z + (float)(min_i + 0.5F) * par1z + (float)(min_j + 0.5F) * par2z;
+      temp1 = (float)subimage_pix[0] + 0.5F;
+      temp2 = (float)subimage_pix[2] + 0.5F;
       
-      for (i = min_i; i <= max_i; i++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  nx0 = par3x;
-	  ny0 = par3y;
-	  nz0 = par3z;
-	  
-	  for (j = min_j; j <= max_j; j++)
+	  par3[l] = screen_vtx[l] + temp1 * par1[l] + temp2 * par2[l];
+	}
+      
+      for (i = subimage_pix[0]; i <= subimage_pix[1]; i++)
+	{
+	  for (l = 0; l < VIS_VEC_SIZE; l++)
 	    {
-	      px1 = px0;
-	      py1 = py0;
-	      pz1 = pz0;
+	      dir[l] = par3[l];
+	    }
+	  for (j = subimage_pix[2]; j <= subimage_pix[3]; j++)
+	    {
+	      for (l = 0; l < VIS_VEC_SIZE; l++)
+		{
+		  p1[l] = p0[l];
+		  ray_dir[l] = dir[l];
+		}
+	      temp1 = 1.F / sqrtf(dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2]);
 	      
-	      ray.dir_x = nx0;
-	      ray.dir_y = ny0;
-	      ray.dir_z = nz0;
-	      temp1 = 1.F / sqrtf(nx0 * nx0 + ny0 * ny0 + nz0 * nz0);
-	      ray.dir_x *= temp1;
-	      ray.dir_y *= temp1;
-	      ray.dir_z *= temp1;
+	      for (l = 0; l < VIS_VEC_SIZE; l++)
+		{	      
+		  ray_dir[l] *= temp1;
+		  ray_inv[l] = 1.F / ray_dir[l];
+		}
+	      ray_dir_code = ray_dir[2] > 0.F;
+	      ray_dir_code |= (ray_dir[1] > 0.F) << 1;
+	      ray_dir_code |= (ray_dir[0] > 0.F) << 2;
 	      
-	      ray.inv_x = 1.F / ray.dir_x;
-	      ray.inv_y = 1.F / ray.dir_y;
-	      ray.inv_z = 1.F / ray.dir_z;
-	      
-	      ray_dir_code = ray.dir_z > 0.F;
-	      ray_dir_code |= (ray.dir_y > 0.F) << 1;
-	      ray_dir_code |= (ray.dir_x > 0.F) << 2;
-	      
-	      nx0 += par2x;
-	      ny0 += par2y;
-	      nz0 += par2z;
-	      
+	      for (l = 0; l < VIS_VEC_SIZE; l++)
+		{
+		  dir[l] += par2[l];
+		}
 	      t = 0.F;
 	      
 	      if (!viewpoint_flag)
 		{
-		  (*rtRayAABBIntersection[ ray_dir_code ]) (&aabb, ray.inv_x, ray.inv_y, ray.inv_z, &t);
+		  (*rtRayAABBIntersection[ ray_dir_code ]) (&aabb, ray_inv[0], ray_inv[1], ray_inv[2], &t);
 		  
 		  if (t >= 1.e+30F) continue;
 		  
-		  px1 += t * ray.dir_x;
-		  py1 += t * ray.dir_y;
-		  pz1 += t * ray.dir_z;
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
+		    {
+		      p1[l] += t * ray_dir[l];
+		    }
 		}
 	      
-	      ray.col_r = 0.F;
-	      ray.col_g = 0.F;
-	      ray.col_b = 0.F;
-	      
+	      for (l = 0; l < VIS_VEC_SIZE; l++)
+		{
+		  ray_col[l] = 0.F;
+		}
 	      vis->t_min = 1.e+30F;
 	      
-	      (*rtTraverse[ ray_dir_code ]) (px1, py1, pz1, AbsorptionCoefficients, cluster_p, net, vis);
+	      (*rtTraverse[ ray_dir_code ]) (p1, AbsorptionCoefficients, cluster_p, net, vis);
 	      
 	      if (vis->t_min >= 1.e+30F) continue;
 	      
-	      visWritePixel (ray.col_r, ray.col_g, ray.col_b, vis->t_min + t, i, j, vis);
+	      visWritePixel (ray_col, vis->t_min + t, i, j, vis);
+	      
 	    }
-	  par3x += par1x;
-	  par3y += par1y;
-	  par3z += par1z;
+	  for (l = 0; l < VIS_VEC_SIZE; l++)
+	    {
+	      par3[l] += par1[l];
+	    }
 	}
     }
 }
@@ -2318,12 +2301,10 @@ void rtEnd (Vis *vis)
 
 void slInit (Net *net, Vis *vis)
 {
-  float *seed_p;
-  
   int boundary_sites_count;
-  int site_i, site_j, site_k;
+  int site_vec[3];
   int i, j, k;
-  int m, n;
+  int l, m, n;
   
   unsigned int site_id, site_type;
   
@@ -2331,7 +2312,7 @@ void slInit (Net *net, Vis *vis)
   
   
   vis->seeds_max = 10000;
-  vis->seed = (float *)malloc(sizeof(float) * 3 * vis->seeds_max);
+  vis->seed = (float *)malloc(sizeof(float) * VIS_VEC_SIZE * vis->seeds_max);
   
   vis->seeds = 0;
   
@@ -2339,11 +2320,11 @@ void slInit (Net *net, Vis *vis)
   
   n = -1;
   
-  for (i = 0; i < net->sites_x; i += net->block_size)
+  for (i = 0; i < sites_x; i += block_size)
     {
-      for (j = 0; j < net->sites_y; j += net->block_size)
+      for (j = 0; j < sites_y; j += block_size)
 	{
-	  for (k = 0; k < net->sites_z; k += net->block_size)
+	  for (k = 0; k < sites_z; k += block_size)
 	    {
 	      if (net->proc_id[ ++n ] != net->id)
 		{
@@ -2353,11 +2334,11 @@ void slInit (Net *net, Vis *vis)
 	      
 	      m = -1;
 	      
-	      for (site_i = i; site_i < i + net->block_size; site_i++)
+	      for (site_vec[0] = i; site_vec[0] < i + block_size; site_vec[0]++)
 		{
-		  for (site_j = j; site_j < j + net->block_size; site_j++)
+		  for (site_vec[1] = j; site_vec[1] < j + block_size; site_vec[1]++)
 		    {
-		      for (site_k = k; site_k < k + net->block_size; site_k++)
+		      for (site_vec[2] = k; site_vec[2] < k + block_size; site_vec[2]++)
 			{
 			  site_id = map_block_p->site_data[ ++m ];
 			  
@@ -2382,10 +2363,10 @@ void slInit (Net *net, Vis *vis)
 			      vis->seed = (float *)realloc(vis->seed,
 							   sizeof(float) * 3 * vis->seeds_max);
 			    }
-			  seed_p = &vis->seed[ 3 * vis->seeds ];
-			  seed_p[ 0 ] = (float)site_i + (0.5F - vis->half_dim_x);
-			  seed_p[ 1 ] = (float)site_j + (0.5F - vis->half_dim_y);
-			  seed_p[ 2 ] = (float)site_k + (0.5F - vis->half_dim_z);
+			  for (l = 0; l < VIS_VEC_SIZE; l++)
+			    {
+			      vis->seed[ VIS_VEC_SIZE*vis->seeds+l ] = (float)site_vec[l] + (0.5F - vis->half_dim[l]);
+			    }
 			  ++vis->seeds;
 			}
 		    }
@@ -2398,36 +2379,33 @@ void slInit (Net *net, Vis *vis)
 }
 
 
-void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *b),
+void slStreamlines (void ColourPalette (float vel_m, float col[]),
 		    Net *net, Vis *vis)
 {
-  double density, vx, vy, vz;
+  double density, v[VIS_VEC_SIZE];
   
   float scale_x, scale_y;
   float vel_m;
-  float r, g, b;
+  float col[3];
+  float x[VIS_VEC_SIZE];
+  float z, z1, z2, dz;
   float z_old, z_new;
-  float x, y, z;
-  float z1;
-  float z2;
-  float dz;
   float d, incE, incNE;
-  float *streamline_p;
   
   int pixels_x, pixels_y;
   int cycles;
   int is_inside_my_subdomain;
   int proc_id, neigh_proc_index;
-  int site_i, site_j, site_k;
-  int bi, bj, bk;
-  int si, sj, sk;
+  int site_vec[VIS_VEC_SIZE];
+  int b_vec[3];
+  int s_vec[3];
   int block_id;
   int i_old, j_old;
   int i_new, j_new;
   int i1, j1, i2, j2;
   int di, dj;
   int i, j;
-  int m, n;
+  int l, m, n;
   int streamlines_max;
   
   unsigned int site_id;
@@ -2438,7 +2416,7 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
   
   
   vis->streamlines = vis->seeds;
-  memcpy (vis->streamline, vis->seed, vis->seeds * 3 * sizeof(float));
+  memcpy (vis->streamline, vis->seed, vis->seeds * VIS_VEC_SIZE * sizeof(float));
   
   pixels_x = screen.pixels_x;
   pixels_y = screen.pixels_y;
@@ -2454,24 +2432,23 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
 	}
       for (n = vis->streamlines - 1; n >= 0; n--)
 	{
-	  streamline_p = &vis->streamline[ 3 * n ];
-	  
-	  site_i = (int)(streamline_p[ 0 ] + vis->half_dim_x);
-	  site_j = (int)(streamline_p[ 1 ] + vis->half_dim_y);
-	  site_k = (int)(streamline_p[ 2 ] + vis->half_dim_z);
-	  
-	  if (site_i < 0 || site_i >= net->sites_x ||
-	      site_j < 0 || site_j >= net->sites_y ||
-	      site_k < 0 || site_k >= net->sites_z)
+///#pragma vector always
+	  for (l = 0; l < VIS_VEC_SIZE; l++)
+	    {
+	      site_vec[l] = (int)(vis->streamline[ VIS_VEC_SIZE*n+l ] + vis->half_dim[l]);
+	    }
+	  if (site_vec[0] < 0 || site_vec[0] >= sites_x ||
+	      site_vec[1] < 0 || site_vec[1] >= sites_y ||
+	      site_vec[2] < 0 || site_vec[2] >= sites_z)
 	    {
 	      --vis->streamlines;
 	      continue;
 	    }
-	  bi = site_i >> net->shift;
-	  bj = site_j >> net->shift;
-	  bk = site_k >> net->shift;
-	  
-	  block_id = (bi * net->blocks_y + bj) * net->blocks_z + bk;
+	  for (l = 0; l < 3; l++)
+	    {
+	      b_vec[l] = site_vec[l] / block_size;
+	    }
+	  block_id = (b_vec[0] * blocks_y + b_vec[1]) * blocks_z + b_vec[2];
 	  
 	  proc_id = net->proc_id[ block_id ];
 	  
@@ -2480,22 +2457,23 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
 	      --vis->streamlines;
 	      continue;
 	    }
-	  si = site_i - (bi << net->shift);
-	  sj = site_j - (bj << net->shift);
-	  sk = site_k - (bk << net->shift);
-	  
-	  site_id = net->map_block[ block_id ].site_data[ (((si << net->shift) + sj) << net->shift) + sk ];
+	  for (l = 0; l < 3; l++)
+	    {
+	      s_vec[l] = site_vec[l] - (b_vec[l] * block_size);
+	    }
+	  site_id = (((s_vec[0] * block_size) + s_vec[1]) * block_size) + s_vec[2];
+	  site_id = net->map_block[ block_id ].site_data[ site_id ];
 	  
 	  if (site_id & (1U << 31U))
 	    {
 	      --vis->streamlines;
 	      continue;
 	    }
-	  visProject (streamline_p[ 0 ], streamline_p[ 1 ], streamline_p[ 2 ], &x, &y, &z);
+	  visProject (&vis->streamline[ VIS_VEC_SIZE*n ], x);
 	  
-	  i_old = (int)(scale_x * (x + screen.max_x));
-	  j_old = (int)(scale_y * (y + screen.max_y));
-	  z_old = z;
+	  i_old = (int)(scale_x * (x[0] + screen.max_x));
+	  j_old = (int)(scale_y * (x[1] + screen.max_y));
+	  z_old = x[2];
 	  
 	  is_inside_my_subdomain = 1;
 	  
@@ -2503,27 +2481,29 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
 	    {
 	      is_inside_my_subdomain = 0;
 	      
-	      lbmDensityAndVelocity (&f_old[ site_id*15 ], &density, &vx, &vy, &vz);
+	      lbmDensityAndVelocity (&f_old[ site_id*15 ], &density, &v[0], &v[1], &v[2]);
 	      
-	      vel_m = (float)sqrt(vx * vx + vy * vy + vz * vz);
+	      vel_m = (float)sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 	      
 	      if (vel_m < 1.e-6)
 		{
 		  --vis->streamlines;
 		  continue;
 		}
-	      ColourPalette (vel_m * vis->flow_field_value_max_inv[ VELOCITY ],
-			     &r, &g, &b);
+	      ColourPalette (vel_m * vis->flow_field_value_max_inv[ VELOCITY ], col);
 	      
 	      vel_m = 1.F / vel_m;
-	      streamline_p[ 0 ] += (float)vx * vel_m;
-	      streamline_p[ 1 ] += (float)vy * vel_m;
-	      streamline_p[ 2 ] += (float)vz * vel_m;
+///#pragma vector always
+	      for (l = 0; l < VIS_VEC_SIZE; l++)
+		{
+		  vis->streamline[ VIS_VEC_SIZE*n+l ] += (float)v[l] * vel_m;
+		}
+	      visProject (&vis->streamline[ VIS_VEC_SIZE*n ], x);
 	      
-	      visProject (streamline_p[ 0 ], streamline_p[ 1 ], streamline_p[ 2 ], &x, &y, &z);
+	      z = x[2];
 	      
-	      i_new = (int)(scale_x * (x + screen.max_x));
-	      j_new = (int)(scale_y * (y + screen.max_y));
+	      i_new = (int)(scale_x * (x[0] + screen.max_x));
+	      j_new = (int)(scale_y * (x[1] + screen.max_y));
 	      z_new = z;
 	      
 	      i1 = i_old;
@@ -2572,7 +2552,7 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
 		      if (!(i < 0 || i >= pixels_x ||
 			    j < 0 || j >= pixels_y))
 			{
-			  visWritePixel (r, g, b, z, i, j, vis);
+			  visWritePixel (col, z, i, j, vis);
 			}
 		      if (d < 0)
 			{
@@ -2599,7 +2579,7 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
 		      if (!(i < 0 || i >= pixels_x ||
 			    j < 0 || j >= pixels_y))
 			{
-			  visWritePixel (r, g, b, z, i, j, vis);
+			  visWritePixel (col, z, i, j, vis);
 			}
 		      if (d < 0)
 			{
@@ -2614,22 +2594,23 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
 		      j += m;
 		    }
 		}
-	      site_i = (int)(streamline_p[ 0 ] + vis->half_dim_x);
-	      site_j = (int)(streamline_p[ 1 ] + vis->half_dim_y);
-	      site_k = (int)(streamline_p[ 2 ] + vis->half_dim_z);
-	      
-	      if (site_i < 0 || site_i >= net->sites_x ||
-		  site_j < 0 || site_j >= net->sites_y ||
-		  site_k < 0 || site_k >= net->sites_z)
+///#pragma vector always
+	      for (l = 0; l < VIS_VEC_SIZE; l++)
+		{
+		  site_vec[l] = (int)(vis->streamline[ VIS_VEC_SIZE*n+l ] + vis->half_dim[l]);
+		}
+	      if (site_vec[0] < 0 || site_vec[0] >= sites_x ||
+		  site_vec[1] < 0 || site_vec[1] >= sites_y ||
+		  site_vec[2] < 0 || site_vec[2] >= sites_z)
 		{
 		  --vis->streamlines;
 		  continue;
 		}
-	      bi = site_i >> net->shift;
-	      bj = site_j >> net->shift;
-	      bk = site_k >> net->shift;
-	      
-	      block_id = (bi * net->blocks_y + bj) * net->blocks_z + bk;
+	      for (l = 0; l < 3; l++)
+		{
+		  b_vec[l] = site_vec[l] / block_size;
+		}
+	      block_id = (b_vec[0] * blocks_y + b_vec[1]) * blocks_z + b_vec[2];
 	      
 	      proc_id = net->proc_id[ block_id ];
 	      
@@ -2639,8 +2620,8 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
 		  
 		  if (streamlines_to_send[ neigh_proc_index ] < STREAMLINES_MAX)
 		    {
-		      memcpy (&streamline_to_send[ neigh_proc_index ][ 3*streamlines_to_send[neigh_proc_index] ],
-		  	      streamline_p, 3 * sizeof(float));
+		      memcpy (&streamline_to_send[ neigh_proc_index ][ VIS_VEC_SIZE*streamlines_to_send[neigh_proc_index] ],
+		  	      &vis->streamline[ VIS_VEC_SIZE*n ], VIS_VEC_SIZE * sizeof(float));
 		      ++streamlines_to_send[ neigh_proc_index ];
 		    }
 		  --vis->streamlines;
@@ -2653,11 +2634,12 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
 		  --vis->streamlines;
 		  continue;
 		}
-	      si = site_i - (bi << net->shift);
-	      sj = site_j - (bj << net->shift);
-	      sk = site_k - (bk << net->shift);
-	      
-	      site_id = map_block_p->site_data[ (((si << net->shift) + sj) << net->shift) + sk ];
+	      for (l = 0; l < 3; l++)
+		{
+		  s_vec[l] = site_vec[l] - (b_vec[l] * block_size);
+		}
+	      site_id = (((s_vec[0] * block_size) + s_vec[1]) * block_size) + s_vec[2];
+	      site_id = net->map_block[ block_id ].site_data[ site_id ];
 	      
 	      if (site_id & (1U << 31U))
 		{
@@ -2675,6 +2657,7 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
       	{
       	  neigh_proc_p = &net->neigh_proc[ m ];
       	  
+#ifndef NOMPI
       	  net->err = MPI_Ssend (&streamlines_to_send[m], 1, MPI_INT,
 				neigh_proc_p->id, 30, MPI_COMM_WORLD);
       	  net->err = MPI_Recv (&streamlines_to_recv[m], 1, MPI_INT,
@@ -2682,21 +2665,22 @@ void slStreamlines (void ColourPalette (float vel_m, float *r, float *g, float *
       	  
 	  if (streamlines_to_send[ m ] > 0)
       	    {
-      	      net->err = MPI_Ssend (&streamline_to_send[m][0], 3 * streamlines_to_send[ m ],
+      	      net->err = MPI_Ssend (&streamline_to_send[m][0], VIS_VEC_SIZE * streamlines_to_send[ m ],
 				    MPI_REAL, neigh_proc_p->id, 30, MPI_COMM_WORLD);
       	    }
 	  if (streamlines_to_recv[ m ] > 0)
       	    {
-      	      net->err = MPI_Recv (&streamline_to_recv[m][0], 3 * streamlines_to_recv[ m ],
+      	      net->err = MPI_Recv (&streamline_to_recv[m][0], VIS_VEC_SIZE * streamlines_to_recv[ m ],
 				   MPI_REAL, neigh_proc_p->id, 30, MPI_COMM_WORLD, net->status);
 	      
               streamlines_max = min(STREAMLINES_MAX - vis->streamlines,
       	  			    streamlines_to_recv[ m ]);
       	      
       	      memcpy (&vis->streamline[ vis->streamlines ], &streamline_to_recv[ m ][ 0 ],
-      	  	      streamlines_max * 3 * sizeof(float));
+      	  	      streamlines_max * VIS_VEC_SIZE * sizeof(float));
       	      vis->streamlines += streamlines_max;
       	    }
+#endif
 	}
       
     }
@@ -2731,28 +2715,32 @@ void visRotate (float sin_1, float cos_1,
 }
 
 
-void visProject (float px1, float py1, float pz1, float *px2, float *py2, float *pz2)
+void visProject (float p1[], float p2[])
 {
-  float x1, y1, z1, x2, y2, z2;
+  float x1[VIS_VEC_SIZE], x2[VIS_VEC_SIZE];
   float temp;
   
+  int l;
   
-  x1 = px1 - viewpoint.pos_x;
-  y1 = py1 - viewpoint.pos_y;
-  z1 = pz1 - viewpoint.pos_z;
   
-  temp = viewpoint.cos_1 * z1 + viewpoint.sin_1 * x1;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      x1[l] = p1[l] - viewpoint.x[l];
+    }
+  temp = viewpoint.cos_1 * x1[2] + viewpoint.sin_1 * x1[0];
   
-  x2 = viewpoint.cos_1 * x1 - viewpoint.sin_1 * z1;
-  y2 = viewpoint.cos_2 * y1 - viewpoint.sin_2 * temp;
-  z2 = viewpoint.cos_2 * temp + viewpoint.sin_2 * y1;
+  x2[0] = viewpoint.cos_1 * x1[0] - viewpoint.sin_1 * x1[2];
+  x2[1] = viewpoint.cos_2 * x1[1] - viewpoint.sin_2 * temp;
+  x2[2] = viewpoint.cos_2 * temp + viewpoint.sin_2 * x1[1];
   
-  *pz2 = -z2;
+  p2[2] = -x2[2];
   
-  temp = screen.dist / *pz2;
+  temp = screen.dist / p2[2];
   
-  *px2 = temp * x2;
-  *py2 = temp * y2;
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      p2[l] = temp * x2[l];
+    }
 }
 
 
@@ -2785,15 +2773,15 @@ void visProjection (float ortho_x, float ortho_y,
   
   temp = rad * viewpoint.cos_2;
   
-  viewpoint.pos_x = temp * viewpoint.sin_1 + ctr_x;
-  viewpoint.pos_y = rad  * viewpoint.sin_2 + ctr_y;
-  viewpoint.pos_z = temp * viewpoint.cos_1 + ctr_z;
+  viewpoint.x[0] = temp * viewpoint.sin_1 + ctr_x;
+  viewpoint.x[1] = rad  * viewpoint.sin_2 + ctr_y;
+  viewpoint.x[2] = temp * viewpoint.cos_1 + ctr_z;
   
   temp = dist / rad;
   
-  screen.ctr_x = viewpoint.pos_x + temp * (ctr_x - viewpoint.pos_x);
-  screen.ctr_y = viewpoint.pos_y + temp * (ctr_y - viewpoint.pos_y);
-  screen.ctr_z = viewpoint.pos_z + temp * (ctr_z - viewpoint.pos_z);
+  screen.ctr[0] = viewpoint.x[0] + temp * (ctr_x - viewpoint.x[0]);
+  screen.ctr[1] = viewpoint.x[1] + temp * (ctr_y - viewpoint.x[1]);
+  screen.ctr[2] = viewpoint.x[2] + temp * (ctr_z - viewpoint.x[2]);
   
   screen.zoom = zoom;
   screen.dist = dist;
@@ -2801,19 +2789,19 @@ void visProjection (float ortho_x, float ortho_y,
   visRotate (viewpoint.sin_1, viewpoint.cos_1,
 	     viewpoint.sin_2, viewpoint.cos_2,
 	     screen.max_x, 0.0F, 0.0F,
-	     &screen.dir1x, &screen.dir1y, &screen.dir1z);
+	     &screen.dir1[0], &screen.dir1[1], &screen.dir1[2]);
   
   visRotate (viewpoint.sin_1, viewpoint.cos_1,
 	     viewpoint.sin_2, viewpoint.cos_2,
 	     0.0F, screen.max_y, 0.0F,
-	     &screen.dir2x, &screen.dir2y, &screen.dir2z);
+	     &screen.dir2[0], &screen.dir2[1], &screen.dir2[2]);
   
   screen.par_x = (2.F * screen.max_x) / (float)pixels_x;
   screen.par_y = (2.F * screen.max_y) / (float)pixels_y;
 }
 
 
-void visWritePixel (float r, float g, float b, float t, int i, int j, Vis *vis)
+void visWritePixel (float col[], float t, int i, int j, Vis *vis)
 {
   int pixels_x, pixels_y;
   int *col_pixel_id_p;
@@ -2831,7 +2819,11 @@ void visWritePixel (float r, float g, float b, float t, int i, int j, Vis *vis)
 	{
 	  printf (" too many coloured pixels per proc\n");
 	  printf (" the execution is terminated\n");
+#ifndef NOMPI
 	  err = MPI_Abort (MPI_COMM_WORLD, 1);
+#else
+	  exit(1);
+#endif
 	}
       if (vis->col_pixels == vis->col_pixels_max)
 	{
@@ -2856,17 +2848,17 @@ void visWritePixel (float r, float g, float b, float t, int i, int j, Vis *vis)
     }
   if (vis->mode == 0)
     {
-      col_pixel_p->r += r;
-      col_pixel_p->g += g;
-      col_pixel_p->b += b;
+      col_pixel_p->r += col[0];
+      col_pixel_p->g += col[1];
+      col_pixel_p->b += col[2];
     }
   else if (vis->mode == 1 || vis->mode == 2)
     {
       if (t < col_pixel_p->t)
 	{
-	  col_pixel_p->r = r;
-	  col_pixel_p->g = g;
-	  col_pixel_p->b = b;
+	  col_pixel_p->r = col[0];
+	  col_pixel_p->g = col[1];
+	  col_pixel_p->b = col[2];
 	  col_pixel_p->t = t;
 	}
     }
@@ -2891,7 +2883,20 @@ void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
   
   if (net->id == 0)
     {
+
+      fprintf(stderr, "opening ray tracing configuration file %s\n", parameters_file_name);
+
       parameters_file = fopen (parameters_file_name, "r");
+
+      if( parameters_file == NULL ) {
+        fprintf(stderr, "unable to open file %s, exiting\n", parameters_file_name);
+        fflush(0x0);
+        exit(0x0);
+      } else {
+        fprintf(stderr, "done\n");
+      }
+
+      fflush(NULL);
       
       fscanf (parameters_file, "%e \n", &dummy);
       fscanf (parameters_file, "%e \n", &dummy);
@@ -2928,7 +2933,9 @@ void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
       par_to_send[ 12 ] = velocity_max;
       par_to_send[ 13 ] = stress_max;
     }
+#ifndef NOMPI
   net->err = MPI_Bcast (par_to_send, 14, MPI_FLOAT, 0, MPI_COMM_WORLD);
+#endif
   
   ctr_x                  =      par_to_send[  0 ];
   ctr_y                  =      par_to_send[  1 ];
@@ -3006,10 +3013,38 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   int col_pixel_count = 6;
   int col_pixel_blocklengths[6] = {1, 1, 1, 1, 1, 1};
   
+  
+  blocks_yz = blocks_y * blocks_z;
+  
+  vis->half_dim[0] = 0.5F * (float)sites_x;
+  vis->half_dim[1] = 0.5F * (float)sites_y;
+  vis->half_dim[2] = 0.5F * (float)sites_z;
+  
+  vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
+  
+  block_size2 = block_size * block_size;
+  block_size3 = block_size * block_size2;
+  block_size_1 = block_size - 1;
+  
+  block_size_inv = 1.F / (float)block_size;
+  
+  blocks_vec[0] = blocks_y * blocks_z;
+  blocks_vec[1] = blocks_z;
+  blocks_vec[2] = 1;
+  blocks_vec[3] = 0;
+  
+  block_size_vec[0] = block_size * block_size;
+  block_size_vec[1] = block_size;
+  block_size_vec[2] = 1;
+  block_size_vec[3] = 0;
+  
+  
+#ifndef NOMPI
   MPI_Datatype col_pixel_types[6] = {MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL,
 				     MPI_SHORT, MPI_SHORT};
   
   MPI_Aint col_pixel_disps[6];
+#endif
   
   
   vis->image_file_name = image_file_name;
@@ -3024,6 +3059,8 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   vis->pixels_max = IMAGE_SIZE;
   vis->col_pixel_id = (int *)malloc(sizeof(int) * vis->pixels_max);
   
+  
+#ifndef NOMPI
   // create the derived datatype for the MPI communications
   
   col_pixel_disps[0] = 0;
@@ -3049,7 +3086,7 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
     }
   MPI_Type_struct (col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types, &MPI_col_pixel_type);
   MPI_Type_commit (&MPI_col_pixel_type);
-  
+#endif
   
   rtInit (net, vis);
   
@@ -3058,8 +3095,8 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
 
 
 void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						   float cutoff, float *r, float *g, float *b),
-		 void slColourPalette (float vel_m, float *r, float *g, float *b),
+						   float cutoff, float col[]),
+		 void slColourPalette (float vel_m, float col[]),
 		 Net *net, Vis *vis)
 {
   int pixels_x, pixels_y;
@@ -3142,23 +3179,30 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
 	    }
 	  if (net->id == send_id)
 	    {
+#ifndef NOMPI
 	      net->err = MPI_Ssend (&vis->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
-	      
+#endif
 	      if (vis->col_pixels > 0)
 		{
-		  net->err = MPI_Ssend (&vis->col_pixel_send, vis->col_pixels, MPI_col_pixel_type, recv_id, 20, MPI_COMM_WORLD);
+#ifndef NOMPI
+		  net->err = MPI_Ssend (&vis->col_pixel_send, vis->col_pixels, MPI_col_pixel_type,
+					recv_id, 20, MPI_COMM_WORLD);
+#endif
 		}
 	    }
 	  else
 	    {
+#ifndef NOMPI
 	      net->err = MPI_Recv (&col_pixels, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD,
 				   net->status);
-	      
 	      if (col_pixels > 0)
 		{
-		  net->err = MPI_Recv (&vis->col_pixel_send, col_pixels, MPI_col_pixel_type, send_id, 20, MPI_COMM_WORLD,
-				       net->status);
+		  net->err = MPI_Recv (&vis->col_pixel_send, col_pixels, MPI_col_pixel_type,
+				       send_id, 20, MPI_COMM_WORLD, net->status);
 		}
+#else
+	      col_pixels = 0;
+#endif
 	      for (n = 0; n < col_pixels; n++)
 		{
 		  col_pixel1 = &vis->col_pixel_send[ n ];
@@ -3226,18 +3270,19 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
   if (net->id != 0)
     {
       recv_id = 0;
-      
+#ifndef NOMPI
       net->err = MPI_Ssend (&vis->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
-      
+#endif
       if (vis->col_pixels > 0)
 	{
 	  memcpy (vis->col_pixel_send, vis->col_pixel_recv,
 		  vis->col_pixels * sizeof(ColPixel));
-	  
+#ifndef NOMPI
 	  net->err = MPI_Isend (vis->col_pixel_send,
 				vis->col_pixels, MPI_col_pixel_type,
 				recv_id, 30, MPI_COMM_WORLD,
 				&net->req[ 1 ][ net->id * net->procs + recv_id ]);
+#endif
 	}
     }
   else
@@ -3246,15 +3291,18 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
       
       for (m = 1; m < net->machines; m++)
 	{
+#ifndef NOMPI
 	  net->err = MPI_Recv (&vis->col_pixels_recv[ m-1 ], 1, MPI_INT, send_id, 20, MPI_COMM_WORLD,
 			       net->status);
-	  
+#endif
 	  if (vis->col_pixels_recv[ m-1 ] > 0)
 	    {
+#ifndef NOMPI
 	      net->err = MPI_Irecv (&vis->col_pixel_send[ (m-1) * (COLOURED_PIXELS_PER_PROC_MAX * sizeof(ColPixel)) ],
 				    vis->col_pixels_recv[ m-1 ], MPI_col_pixel_type,
 				    send_id, 30, MPI_COMM_WORLD,
 				    &net->req[ 1 ][ (net->id + net->procs) * net->procs + send_id ]);
+#endif
 	    }
 	  send_id += net->procs_per_machine[ m ];
 	}
@@ -3296,8 +3344,9 @@ void visRenderB (Net *net, Vis *vis)
       if (net->id != 0)
 	{
 	  recv_id = 0;
-	  
+#ifndef NOMPI
 	  net->err = MPI_Wait (&net->req[ 1 ][ net->id * net->procs + recv_id ], net->status);
+#endif
 	}
       else
 	{
@@ -3310,8 +3359,9 @@ void visRenderB (Net *net, Vis *vis)
 		  send_id += net->procs_per_machine[ m ];
 		  continue;
 		}
+#ifndef NOMPI
 	      net->err = MPI_Wait (&net->req[ 1 ][ (net->id + net->procs) * net->procs + send_id ], net->status);
-	      
+#endif
 	      offset = (m-1) * COLOURED_PIXELS_PER_PROC_MAX;
 	      
 	      for (n = 0; n < vis->col_pixels_recv[ m-1 ]; n++)
@@ -3387,7 +3437,7 @@ void visRenderB (Net *net, Vis *vis)
     }
   
 #else
-  
+    
   FILE *image_file;
   XDR	xdr_image_file;
   
@@ -3442,3 +3492,4 @@ void visEnd (Net *net, Vis *vis)
   free(vis->col_pixel_locked);
   free(vis->col_pixel_recv);
 }
+

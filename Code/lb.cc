@@ -5,7 +5,9 @@
 #include "config.h"
 
 void (*lbmCollision[COLLISION_TYPES]) (double omega, double f[], int site_id, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], LBM *lbm, Net *net);
-void (*lbmCollisionSSE[COLLISION_TYPES]) (double omega, double f[], int site_id, double density[], double v_x[], double v_y[], double v_z[], double f_neq[], LBM *lbm, Net *net);
+void (*lbmCollisionSIMD[COLLISION_TYPES]) (double omega, double f[], int site_id, double density[], double v_x[], double v_y[], double v_z[], double f_neq[], LBM *lbm, Net *net);
+
+
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[])
 {
@@ -182,22 +184,20 @@ void lbmCollision0 (double omega, double f[], int site_id,
 }
 
 
-void lbmCollisionSSE0 (double omega, double f[], int site_id,
-		       double density[], double v_x[], double v_y[], double v_z[],
-		       double f_neq[], LBM *lbm, Net *net)
+void lbmCollisionSIMD0 (double omega, double f[], int site_id,
+			double density[], double v_x[], double v_y[], double v_z[],
+			double f_neq[], LBM *lbm, Net *net)
 {
-  double f_vec[15][SSE_SIZE];
-  double f_neq_vec[15][SSE_SIZE];
+  double f_vec[15][SIMD_SIZE];
+  double f_neq_vec[15][SIMD_SIZE];
   double v_xx, v_yy, v_zz;
   double temp1, temp2;
   
   int j, l;
   
   
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
-#pragma ivdep
       for (l = 0; l < 15; l++)
 	{
 	  f_vec[l][j] = f[ j*15+l ];
@@ -205,9 +205,7 @@ void lbmCollisionSSE0 (double omega, double f[], int site_id,
 	  f_neq_vec[l][j] = f_neq[ j*15+l ];
 	}
     }
-
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
       v_x[j] = f_vec[1][j] + (f_vec[7][j] + f_vec[9][j]) + (f_vec[11][j] + f_vec[13][j]);
       v_y[j] = f_vec[3][j] + (f_vec[12][j] + f_vec[14][j]);
@@ -262,11 +260,8 @@ void lbmCollisionSSE0 (double omega, double f[], int site_id,
       f_vec[13][j] += omega * (f_neq_vec[13][j] = f_vec[13][j] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, -1, -1)
       f_vec[14][j] += omega * (f_neq_vec[14][j] = f_vec[14][j] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, +1, +1)
     }
-  
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
-#pragma ivdep
       for (l = 0; l < 15; l++)
         {
           f[ j*15+l ] = f_vec[l][j];
@@ -305,15 +300,14 @@ void lbmCollision1 (double omega, double f[], int site_id,
 }
 
 
-void lbmCollisionSSE1 (double omega, double f[], int site_id,
-		       double density[], double v_x[], double v_y[], double v_z[],
-		       double f_neq[], LBM *lbm, Net *net)
+void lbmCollisionSIMD1 (double omega, double f[], int site_id,
+			double density[], double v_x[], double v_y[], double v_z[],
+			double f_neq[], LBM *lbm, Net *net)
 {
   int l;
   
-
-#pragma ivdep  
-  for (int j = 0; j < SSE_SIZE; j++)
+  
+  for (int j = 0; j < SIMD_SIZE; j++)
     {
       v_x[j] = v_y[j] = v_z[j] = 0.F;
       
@@ -360,11 +354,11 @@ void lbmCollision2 (double omega, double f[], int site_id,
 }
 
 
-void lbmCollisionSSE2 (double omega, double f[], int site_id,
-		       double density[], double v_x[], double v_y[], double v_z[],
-		       double f_neq[], LBM *lbm, Net *net)
+void lbmCollisionSIMD2 (double omega, double f[], int site_id,
+			double density[], double v_x[], double v_y[], double v_z[],
+			double f_neq[], LBM *lbm, Net *net)
 {
-  double f_vec[15][SSE_SIZE];
+  double f_vec[15][SIMD_SIZE];
   double v_xx, v_yy, v_zz;
   double temp1, temp2;
   
@@ -373,26 +367,20 @@ void lbmCollisionSSE2 (double omega, double f[], int site_id,
   unsigned int boundary_id;
   
   
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
-#pragma ivdep
       for (l = 0; l < 15; l++)
 	{
 	  f_vec[l][j] = f[ j*15+l ];
 	}
     }
-
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
       boundary_id = (net->site_data[ site_id+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
       density[j] = lbm->inlet_density[ boundary_id ];
     }
-  
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
       v_x[j] = f_vec[1][j] + (f_vec[7][j] + f_vec[9][j]) + (f_vec[11][j] + f_vec[13][j]);
       v_y[j] = f_vec[3][j] + (f_vec[12][j] + f_vec[14][j]);
@@ -445,11 +433,8 @@ void lbmCollisionSSE2 (double omega, double f[], int site_id,
       f_vec[13][j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, -1)
       f_vec[14][j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, +1)
     }
-  
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
-#pragma ivdep
       for (l = 0; l < 15; l++)
         {
           f[ j*15+l ] = f_vec[l][j];
@@ -484,11 +469,11 @@ void lbmCollision3 (double omega, double f[], int site_id,
 
 
 
-void lbmCollisionSSE3 (double omega, double f[], int site_id,
-		       double density[], double v_x[], double v_y[], double v_z[],
-		       double f_neq[], LBM *lbm, Net *net)
+void lbmCollisionSIMD3 (double omega, double f[], int site_id,
+			double density[], double v_x[], double v_y[], double v_z[],
+			double f_neq[], LBM *lbm, Net *net)
 {
-  double f_vec[15][SSE_SIZE];
+  double f_vec[15][SIMD_SIZE];
   double v_xx, v_yy, v_zz;
   double temp1, temp2;
   
@@ -497,26 +482,20 @@ void lbmCollisionSSE3 (double omega, double f[], int site_id,
   unsigned int boundary_id;
   
   
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
-#pragma ivdep
       for (l = 0; l < 15; l++)
 	{
 	  f_vec[l][j] = f[ j*15+l ];
 	}
     }
-
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
       boundary_id = (net->site_data[ site_id+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
       density[j] = lbm->outlet_density[ boundary_id ];
     }
-  
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
       v_x[j] = f_vec[1][j] + (f_vec[7][j] + f_vec[9][j]) + (f_vec[11][j] + f_vec[13][j]);
       v_y[j] = f_vec[3][j] + (f_vec[12][j] + f_vec[14][j]);
@@ -569,11 +548,8 @@ void lbmCollisionSSE3 (double omega, double f[], int site_id,
       f_vec[13][j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, -1)
       f_vec[14][j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, +1)
     }
-
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
-#pragma ivdep
       for (l = 0; l < 15; l++)
         {
           f[ j*15+l ] = f_vec[l][j];
@@ -614,17 +590,16 @@ void lbmCollision4 (double omega, double f[], int site_id,
 }
 
 
-void lbmCollisionSSE4 (double omega, double f[], int site_id,
-		       double density[], double v_x[], double v_y[], double v_z[],
-		       double f_neq[], LBM *lbm, Net *net)
+void lbmCollisionSIMD4 (double omega, double f[], int site_id,
+			double density[], double v_x[], double v_y[], double v_z[],
+			double f_neq[], LBM *lbm, Net *net)
 {
   int l;
   
   unsigned int boundary_id;
   
-
-#pragma ivdep  
-  for (int j = 0; j < SSE_SIZE; j++)
+  
+  for (int j = 0; j < SIMD_SIZE; j++)
     {
       boundary_id = (net->site_data[ site_id+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
@@ -678,17 +653,16 @@ void lbmCollision5 (double omega, double f[], int site_id,
 }
 
 
-void lbmCollisionSSE5 (double omega, double f[], int site_id,
-		       double density[], double v_x[], double v_y[], double v_z[],
-		       double f_neq[], LBM *lbm, Net *net)
+void lbmCollisionSIMD5 (double omega, double f[], int site_id,
+			double density[], double v_x[], double v_y[], double v_z[],
+			double f_neq[], LBM *lbm, Net *net)
 {
   int l;
   
   unsigned int boundary_id;
   
-
-#pragma ivdep  
-  for (int j = 0; j < SSE_SIZE; j++)
+  
+  for (int j = 0; j < SIMD_SIZE; j++)
     {
       boundary_id = (net->site_data[ site_id+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
@@ -738,9 +712,9 @@ void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_
 }
 
 
-void lbmStressSSE (double f[], double stress[], LBM *lbm)
+void lbmStressSIMD (double f[], double stress[], LBM *lbm)
 {
-  double f_vec[15][SSE_SIZE];
+  double f_vec[15][SIMD_SIZE];
   double sigma_xx_yy, sigma_yy_zz, sigma_xx_zz;
   double sigma_xy, sigma_xz, sigma_yz;
   double a, b;
@@ -748,18 +722,14 @@ void lbmStressSSE (double f[], double stress[], LBM *lbm)
   int j, l;
   
   
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
-#pragma ivdep
       for (l = 0; l < 15; l++)
 	{
 	  f_vec[l][j] = f[ j*15+l ];
 	}
     }
-  
-#pragma ivdep
-  for (j = 0; j < SSE_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
       sigma_xx_yy = (f_vec[1][j]+f_vec[2][j]) - (f_vec[3][j]+f_vec[4][j]);
       sigma_yy_zz = (f_vec[3][j]+f_vec[4][j]) - (f_vec[5][j]+f_vec[6][j]);
@@ -931,12 +901,12 @@ void lbmInit (char *system_file_name, char *checkpoint_file_name,
   lbmCollision[4] = lbmCollision4;
   lbmCollision[5] = lbmCollision5;
 
-  lbmCollisionSSE[0] = lbmCollisionSSE0;
-  lbmCollisionSSE[1] = lbmCollisionSSE1;
-  lbmCollisionSSE[2] = lbmCollisionSSE2;
-  lbmCollisionSSE[3] = lbmCollisionSSE3;
-  lbmCollisionSSE[4] = lbmCollisionSSE4;
-  lbmCollisionSSE[5] = lbmCollisionSSE5;
+  lbmCollisionSIMD[0] = lbmCollisionSIMD0;
+  lbmCollisionSIMD[1] = lbmCollisionSIMD1;
+  lbmCollisionSIMD[2] = lbmCollisionSIMD2;
+  lbmCollisionSIMD[3] = lbmCollisionSIMD3;
+  lbmCollisionSIMD[4] = lbmCollisionSIMD4;
+  lbmCollisionSIMD[5] = lbmCollisionSIMD5;
 }
 
 
@@ -998,6 +968,7 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 	    {
 	      neigh_proc_p->f_to_send[ n ] = *neigh_proc_p->d_to_send_p[ n ];
 	    }
+#ifndef NOMPI
 	  net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ],
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
@@ -1007,6 +978,7 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
 				&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+#endif
 	}
       for (i = 0; i < net->my_inner_sites; i++)
 	{
@@ -1038,8 +1010,10 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 	}
       for (m = 0; m < net->neigh_procs; m++)
       	{
+#ifndef NOMPI
       	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
       	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
+#endif
       	}
       for (i = net->my_inner_sites; i < my_sites; i++)
 	{
@@ -1069,8 +1043,12 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 	  
 	  error = fmax(error, fabs(*d_p - temp) / fmax(1.e-30, *d_p));
 	}
+#ifndef NOMPI
       net->err = MPI_Allreduce (&error, &error_tot, 1,
 				MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD);
+#else
+      error_tot = error;
+#endif
     }
   for (i = 0; i < my_sites; i++)
     {
@@ -1210,6 +1188,7 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	    {
 	      neigh_proc_p->f_to_send[ n ] = f_old[ neigh_proc_p->f_send_id[n] ];
 	    }
+#ifndef NOMPI
 	  net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ],
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
@@ -1219,6 +1198,7 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
 				&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+#endif
 	}
     }
   
@@ -1286,9 +1266,10 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	    {
 	      continue;
 	    }
+#ifndef NOMPI
 	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
 	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
-	  
+#endif
 	  for (n = 0; n < neigh_proc_p->fs; n++)
 	    {
 	      f_new[ neigh_proc_p->f_recv_iv[n] ] = neigh_proc_p->f_to_recv[ n ];
@@ -1323,11 +1304,15 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	  stability_and_conv_partial[ 0 ] = (double)is_unstable;
 	  stability_and_conv_partial[ 1 ] = sum1;
 	  stability_and_conv_partial[ 2 ] = sum2;
-	  
+#ifndef NOMPI
 	  net->err = MPI_Allreduce (stability_and_conv_partial,
 				    stability_and_conv_total, 3,
 				    MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD);
-	  
+#else
+	  stability_and_conv_total[ 0 ] = stability_and_conv_partial[ 0 ];
+	  stability_and_conv_total[ 1 ] = stability_and_conv_partial[ 1 ];
+	  stability_and_conv_total[ 2 ] = stability_and_conv_partial[ 2 ];
+#endif
 	  sum1 = stability_and_conv_total[ 1 ];
 	  sum2 = stability_and_conv_total[ 2 ];
 	  
@@ -1361,15 +1346,15 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 {
   // the entire simulation time step takes place through this function
   
-  double f_neq[SSE_SIZE*15];
+  double f_neq[SIMD_SIZE*15];
   double omega;
-  double density[SSE_SIZE];
-  double vx[SSE_SIZE], vy[SSE_SIZE], vz[SSE_SIZE];
+  double density[SIMD_SIZE];
+  double vx[SIMD_SIZE], vy[SIMD_SIZE], vz[SIMD_SIZE];
   double *f_old_p;
   
 #ifndef BENCH
-  double vel_x[SSE_SIZE], vel_y[SSE_SIZE], vel_z[SSE_SIZE];
-  double stress[SSE_SIZE];
+  double vel_x[SIMD_SIZE], vel_y[SIMD_SIZE], vel_z[SIMD_SIZE];
+  double stress[SIMD_SIZE];
   double sum1, sum2;
   double stability_and_conv_partial[3];
   double stability_and_conv_total[3];
@@ -1402,26 +1387,24 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
       for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
 	{
 	  for (i = offset;
-	       i < offset + net->my_inter_collisions_sse[ collision_type ]; i+=SSE_SIZE)
+	       i < offset + net->my_inter_collisions_sse[ collision_type ]; i+=SIMD_SIZE)
 	    {
-	      (*lbmCollisionSSE[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq, lbm, net);
+	      (*lbmCollisionSIMD[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq, lbm, net);
 #ifndef BENCH
-	      lbmStressSSE (f_neq, stress, lbm);
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      lbmStressSIMD (f_neq, stress, lbm);
+	      
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  vel_x[j] = vel[ 3*(i+j)+0 ];
 		  vel_y[j] = vel[ 3*(i+j)+1 ];
 		  vel_z[j] = vel[ 3*(i+j)+2 ];
 		}
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  sum1 += fabs(vel_x[j]-vx[j]) + fabs(vel_y[j]-vy[j]) + fabs(vel_z[j]-vz[j]);
 		  sum2 += fabs(vx[j]) + fabs(vy[j]) + fabs(vz[j]);
 		}
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  vel[ 3*(i+j)+0 ] = vx[j];
 		  vel[ 3*(i+j)+1 ] = vy[j];
@@ -1460,25 +1443,22 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
       for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
 	{
 	  for (i = offset;
-	       i < offset + net->my_inter_collisions_sse[ collision_type ]; i+=SSE_SIZE)
+	       i < offset + net->my_inter_collisions_sse[ collision_type ]; i+=SIMD_SIZE)
 	    {
-	      (*lbmCollisionSSE[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq, lbm, net);
+	      (*lbmCollisionSIMD[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq, lbm, net);
 #ifndef BENCH
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  vel_x[j] = vel[ 3*(i+j)+0 ];
 		  vel_y[j] = vel[ 3*(i+j)+1 ];
 		  vel_z[j] = vel[ 3*(i+j)+2 ];
 		}
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  sum1 += fabs(vel_x[j]-vx[j]) + fabs(vel_y[j]-vy[j]) + fabs(vel_z[j]-vz[j]);
 		  sum2 += fabs(vx[j]) + fabs(vy[j]) + fabs(vz[j]);
 		}
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  vel[ 3*(i+j)+0 ] = vx[j];
 		  vel[ 3*(i+j)+1 ] = vy[j];
@@ -1518,6 +1498,7 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	    {
 	      neigh_proc_p->f_to_send[ n ] = f_old[ neigh_proc_p->f_send_id[n] ];
 	    }
+#ifndef NOMPI
 	  net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ],
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
@@ -1527,6 +1508,7 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
 				&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+#endif
 	}
     }
   
@@ -1537,13 +1519,13 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
       for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
 	{
 	  for (i = offset;
-	       i < offset + net->my_inner_collisions_sse[ collision_type ]; i+=SSE_SIZE)
+	       i < offset + net->my_inner_collisions_sse[ collision_type ]; i+=SIMD_SIZE)
 	    {
-	      (*lbmCollisionSSE[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq, lbm, net);
+	      (*lbmCollisionSIMD[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq, lbm, net);
 #ifndef BENCH
-	      lbmStressSSE (f_neq, stress, lbm);
+	      lbmStressSIMD (f_neq, stress, lbm);
 #endif // BENCH
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  for (l = 0; l < 15; l++)
 		    {
@@ -1554,21 +1536,18 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 		    }
 		}
 #ifndef BENCH
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  vel_x[j] = vel[ 3*(i+j)+0 ];
 		  vel_y[j] = vel[ 3*(i+j)+1 ];
 		  vel_z[j] = vel[ 3*(i+j)+2 ];
 		}
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  sum1 += fabs(vel_x[j]-vx[j]) + fabs(vel_y[j]-vy[j]) + fabs(vel_z[j]-vz[j]);
 		  sum2 += fabs(vx[j]) + fabs(vy[j]) + fabs(vz[j]);
 		}
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  vel[ 3*(i+j)+0 ] = vx[j];
 		  vel[ 3*(i+j)+1 ] = vy[j];
@@ -1615,11 +1594,11 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
       for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
 	{
 	  for (i = offset;
-	       i < offset + net->my_inner_collisions_sse[ collision_type ]; i+=SSE_SIZE)
+	       i < offset + net->my_inner_collisions_sse[ collision_type ]; i+=SIMD_SIZE)
 	    {
-	      (*lbmCollisionSSE[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq, lbm, net);
+	      (*lbmCollisionSIMD[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq, lbm, net);
 	      
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  for (l = 0; l < 15; l++)
 		    {
@@ -1630,21 +1609,18 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 		    }
 		}
 #ifndef BENCH
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  vel_x[j] = vel[ 3*(i+j)+0 ];
 		  vel_y[j] = vel[ 3*(i+j)+1 ];
 		  vel_z[j] = vel[ 3*(i+j)+2 ];
 		}
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  sum1 += fabs(vel_x[j]-vx[j]) + fabs(vel_y[j]-vy[j]) + fabs(vel_z[j]-vz[j]);
 		  sum2 += fabs(vx[j]) + fabs(vy[j]) + fabs(vz[j]);
 		}
-#pragma ivdep
-	      for (j = 0; j < SSE_SIZE; j++)
+	      for (j = 0; j < SIMD_SIZE; j++)
 		{
 		  vel[ 3*(i+j)+0 ] = vx[j];
 		  vel[ 3*(i+j)+1 ] = vy[j];
@@ -1688,9 +1664,10 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	    {
 	      continue;
 	    }
+#ifndef NOMPI
 	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
 	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
-	  
+#endif
 	  for (n = 0; n < neigh_proc_p->fs; n++)
 	    {
 	      f_new[ neigh_proc_p->f_recv_iv[n] ] = neigh_proc_p->f_to_recv[ n ];
@@ -1722,15 +1699,18 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
     {
       if (net->procs > 1)
 	{
-#pragma ivdep
 	  stability_and_conv_partial[ 0 ] = (double)is_unstable;
 	  stability_and_conv_partial[ 1 ] = sum1;
 	  stability_and_conv_partial[ 2 ] = sum2;
-	  
+#ifndef NOMPI
 	  net->err = MPI_Allreduce (stability_and_conv_partial,
 				    stability_and_conv_total, 3,
 				    MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD);
-	  
+#else
+	  stability_and_conv_total[ 0 ] = stability_and_conv_partial[ 0 ];
+	  stability_and_conv_total[ 1 ] = stability_and_conv_partial[ 1 ];
+	  stability_and_conv_total[ 2 ] = stability_and_conv_partial[ 2 ];
+#endif
 	  sum1 = stability_and_conv_total[ 1 ];
 	  sum2 = stability_and_conv_total[ 2 ];
 	  
@@ -1771,3 +1751,4 @@ void lbmEnd (LBM *lbm)
   free(lbm->fluid_sites_per_block);
   lbm->fluid_sites_per_block = NULL;
 }
+
