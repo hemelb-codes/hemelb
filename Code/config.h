@@ -1,10 +1,12 @@
-
 // In this file all the declarations and some simple functions are reported.
 
 #ifndef __config_h__
 #define __config_h__
 
+#ifndef NOMPI
 #include "mpi.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,7 +62,8 @@
 #define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
 #define IMAGE_SIZE                     PIXELS_X * PIXELS_Y
 
-#define SSE_SIZE                       4
+#define SIMD_SIZE                      2
+#define VIS_VEC_SIZE                   4
 
 extern float EPSILON;
 
@@ -109,11 +112,22 @@ extern int e_y[15];
 extern int e_z[15];
 extern int inv_dir[15];
 
+#ifndef NOMPI
 extern MPI_Datatype MPI_col_pixel_type;
-
+#endif
 
 // data structures useful to define the simulation set-up, construct
 // the system and partition it
+
+#ifdef RG
+
+extern pthread_mutex_t network_buffer_copy_lock;
+extern pthread_cond_t network_send_frame;
+
+extern int send_array_length;
+
+#endif // RG
+
 
 #ifdef STEER
 
@@ -181,12 +195,6 @@ struct LBM
   double velocity_min, velocity_max;
   double stress_min, stress_max;
   
-  int sites_x, sites_y, sites_z;
-  int blocks_x, blocks_y, blocks_z;
-  int blocks;
-  int block_size;
-  int shift;
-  int sites_in_a_block;
   int total_fluid_sites;
   int site_min_x, site_min_y, site_min_z;
   int site_max_x, site_max_y, site_max_z;
@@ -222,12 +230,6 @@ struct NeighProc
 
 struct Net
 {
-  int sites_x, sites_y, sites_z;
-  int blocks_x, blocks_y, blocks_z;
-  int blocks;
-  int block_size;
-  int shift;
-  int sites_in_a_block;
   int id;
   int procs, machines;
   int neigh_procs;
@@ -253,23 +255,12 @@ struct Net
   
   NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX];
   
+#ifndef NOMPI
   MPI_Status status[4];
   
   MPI_Request **req;
-  
+#endif
   double dd_time, bm_time, fr_time, fo_time;
-};
-
-
-struct BlockData
-{
-  double min[3]; int id[3];///
-  DataBlock *p;
-  
-  float t;
-  float min_x, min_y, min_z;
-  
-  int i, j, k;
 };
 
 
@@ -284,12 +275,10 @@ struct ColPixel
 
 struct Cluster
 {
-  float block_min_x, block_min_y, block_min_z;
-  
-  int blocks_yz, blocks;
+  float x[VIS_VEC_SIZE];
   
   unsigned short int blocks_x, blocks_y, blocks_z;
-  unsigned short int block_min_i, block_min_j, block_min_k;
+  unsigned short int block_min[3];
 };
 
 
@@ -300,10 +289,6 @@ struct Vis
   int image_freq;
   int flow_field_type;
   int mode;
-  int blocks_x, blocks_y, blocks_z;
-  int blocks_yz, blocks;
-  int block_size, block_size2, block_size3, block_size_1;
-  int shift, shift2;
   int col_pixels, col_pixels_max, col_pixels_locked;
   int col_pixels_recv[ MACHINES_MAX-1 ];
   int *col_pixel_id;
@@ -317,9 +302,8 @@ struct Vis
   float absorption_factor;
   float cutoff;
   float t_min;
-  float block_size_inv;
+  float half_dim[VIS_VEC_SIZE];
   float system_size;
-  float half_dim_x, half_dim_y, half_dim_z;
   
   float *seed;
   float *streamline;
@@ -334,12 +318,12 @@ struct Vis
 
 struct Screen
 {
-  float ctr_x, ctr_y, ctr_z;
-  float max_x, max_y;
+  float dir1[VIS_VEC_SIZE];
+  float dir2[VIS_VEC_SIZE];
+  float ctr[VIS_VEC_SIZE];
   
-  float dir1x, dir1y, dir1z;
-  float dir2x, dir2y, dir2z;
-  float par_x, par_y, par_z;
+  float max_x, max_y;
+  float par_x, par_y;
   
   float zoom, dist;
   
@@ -349,24 +333,14 @@ struct Screen
 
 struct Viewpoint
 {
-  float pos_x, pos_y, pos_z;
+  float x[VIS_VEC_SIZE];
   float sin_1, cos_1;
   float sin_2, cos_2;
 };
 
 
-struct Ray
-{
-  double dir[3], inv[3]; ///
-  float dir_x, dir_y, dir_z;
-  float inv_x, inv_y, inv_z;
-  float col_r, col_g, col_b;
-};
-
-
 struct AABB
 {
-  float acc[6];///
   float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
 };
 
@@ -391,18 +365,33 @@ extern double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 extern int f_send_id[SHARED_DISTRIBUTIONS_MAX];
 extern int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
 
-extern float streamline_to_send[NEIGHBOUR_PROCS_MAX][3*STREAMLINES_MAX];
-extern float streamline_to_recv[NEIGHBOUR_PROCS_MAX][1+3*STREAMLINES_MAX];
+extern float streamline_to_send[NEIGHBOUR_PROCS_MAX][VIS_VEC_SIZE*STREAMLINES_MAX];
+extern float streamline_to_recv[NEIGHBOUR_PROCS_MAX][1+VIS_VEC_SIZE*STREAMLINES_MAX];
 
 extern int streamlines_to_send[NEIGHBOUR_PROCS_MAX];
 extern int streamlines_to_recv[NEIGHBOUR_PROCS_MAX];
 
 
+extern int sites_x, sites_y, sites_z;
+extern int blocks_x, blocks_y, blocks_z;
+extern int blocks_yz, blocks;
+extern int blocks_vec[4];
+extern int block_size, block_size2, block_size3, block_size_1;
+extern int block_size_vec[4];
+extern int shift;
+extern int sites_in_a_block;
+
+extern float block_size_inv;
+
+
+extern float ray_dir[VIS_VEC_SIZE];
+extern float ray_inv[VIS_VEC_SIZE];
+extern float ray_col[VIS_VEC_SIZE];
+
+
 extern Screen screen;
 
 extern Viewpoint viewpoint;
-
-extern Ray ray;
 
 extern Vis vis;
 
@@ -411,6 +400,7 @@ extern Vis vis;
 
 int min (int a, int b);
 int max (int a, int b);
+int nint (float a);
 double myClock ();
 
 short int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
@@ -420,7 +410,7 @@ void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z,
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmVelocity (double f[], double *v_x, double *v_y, double *v_z);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
-void lbmStressSSE (double f[], double stress[], LBM *lbm);
+void lbmStressSIMD (double f[], double stress[], LBM *lbm);
 void lbmStress (double f[], double *stress, LBM *lbm);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, LBM *lbm);
 int lbmCollisionType (unsigned int site_data);
@@ -450,7 +440,7 @@ void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net);
 
 void rtInit (Net *net, Vis *vis);
 void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						   float cutoff, float *r, float *g, float *b),
+						   float cutoff, float col[]),
 		   Net *net, Vis *vis);
 void rtEnd (Vis *vis);
 
@@ -459,8 +449,8 @@ void slStreamlines (Net *net, Vis *vis);
 void slEnd (Vis *vis);
 
 
-void visProject (float px1, float py1, float pz1, float *px2, float *py2, float *pz2);
-void visWritePixel (float r, float g, float b, float t, int i, int j, Vis *vis);
+void visProject (float p1[], float p2[]);
+void visWritePixel (float col[], float t, int i, int j, Vis *vis);
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,
 		float  x1, float  y1, float  z1,
@@ -474,8 +464,8 @@ void visProjection (float ortho_x, float ortho_y,
 		    float zoom);
 void visInit (char *image_file_name, Net *net, Vis *vis);
 void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						 float cutoff, float *r, float *g, float *b),
-		 void ColourPalette (float vel_m, float *r, float *g, float *b),
+						   float cutoff, float col[]),
+		 void ColourPalette (float vel_m, float col[]),
 		 Net *net, Vis *vis);
 void visRenderB (Net *net, Vis *vis);
 
@@ -492,3 +482,4 @@ void visUpdateParameters (Vis *vis, SteerParams *steer);
 void visEnd (Net *net, Vis *vis);
 
 #endif                  // __config_h__
+

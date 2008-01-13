@@ -75,7 +75,9 @@ void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
       par_to_send[ 12 ] = velocity_max;
       par_to_send[ 13 ] = stress_max;
     }
+#ifndef NOMPI
   net->err = MPI_Bcast (par_to_send, 14, MPI_FLOAT, 0, MPI_COMM_WORLD);
+#endif
   
   ctr_x                  =      par_to_send[  0 ];
   ctr_y                  =      par_to_send[  1 ];
@@ -100,9 +102,9 @@ void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
 		 0.5F * (5.F * vis->system_size),
 		 zoom);
   
-///  vis->flow_field_value_max_inv[ DENSITY  ] = 1.F / density_max;
-///  vis->flow_field_value_max_inv[ VELOCITY ] = 1.F / velocity_max;
-///  vis->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
+  vis->flow_field_value_max_inv[ DENSITY  ] = 1.F / density_max;
+  vis->flow_field_value_max_inv[ VELOCITY ] = 1.F / velocity_max;
+  vis->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
 }
 
 
@@ -312,49 +314,42 @@ void *hemeLB_network (void *ptr)
 #endif // RG
 
 
-inline void rtAbsorptionCoefficients (float flow_field_value, float t1, float t2, float cutoff, float *r, float *g, float *b)
+inline void rtAbsorptionCoefficients (float flow_field_value, float t1, float t2, float cutoff, float col[])
 {
-  // the absorption factors are regulated here
-  
   flow_field_value = fminf(1.F, flow_field_value);
   
   if (vis.mode == 0)
     {
-      // volume rendering option;
-      // dt is the thickness of the trasversal segment in lattice unit
+      // volume rendering option; dt is the thickness of the
+      // trasversal segment in lattice unit
       
       float dt = t2 - t1;
+      float palette[VIS_VEC_SIZE];
       
-      if (flow_field_value > cutoff)
+      palette[0] = (1.F - flow_field_value) * (1.F - flow_field_value);
+      palette[1] = flow_field_value * (1.F - flow_field_value);
+      palette[2] = flow_field_value * flow_field_value;
+      
+      for (int l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  *r += dt * (1.F - flow_field_value) * (1.F - flow_field_value);
-	  *g += dt * (flow_field_value) * (1.F - flow_field_value);
-	  *b += dt * (flow_field_value * flow_field_value);
-	}
-      else
-	{
-	  dt *= flow_field_value;
-	  *r += dt;
-	  *g += dt;
-	  *b += dt;
+	  col[l] += dt * palette[l];
 	}
     }
   else if (vis.mode == 1)
     {
-      *r = (1.F - flow_field_value) * (1.F - flow_field_value);
-      *g = flow_field_value * (1.F - flow_field_value);
-      *b = flow_field_value * flow_field_value;
+      col[0] = (1.F - flow_field_value) * (1.F - flow_field_value);
+      col[1] = flow_field_value * (1.F - flow_field_value);
+      col[2] = flow_field_value * flow_field_value;
     }
 }
 
-
-inline void slColourPalette (float vel_magnitude, float *r, float *g, float *b)
+inline void slColourPalette (float vel_magnitude, float col[])
 {
   vel_magnitude = fminf(1.F, vel_magnitude);
   
-  *r = (1.F - vel_magnitude) * (1.F - vel_magnitude);
-  *g = vel_magnitude * (1.F - vel_magnitude);
-  *b = vel_magnitude * vel_magnitude;
+  col[0] = (1.F - vel_magnitude) * (1.F - vel_magnitude);
+  col[1] = vel_magnitude * (1.F - vel_magnitude);
+  col[2] = vel_magnitude * vel_magnitude;
 }
 
 
@@ -368,7 +363,9 @@ int IsBenckSectionFinished (double minutes, double elapsed_time)
     {
       is_bench_section_finished = 1;
     }
+#ifndef NOMPI
   err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+#endif
   
   if (is_bench_section_finished)
     {
@@ -451,24 +448,18 @@ int main (int argc, char *argv[])
   Net net;
   
   
+#ifndef NOMPI
   net.err = MPI_Init (&argc, &argv);
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
   net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
-  
-#ifdef BENCH
-  if (argc != 3)
 #else
-  if (argc != 2 && argc != 3)
+  net.procs = 1;
+  net.id = 0;
 #endif
-    {
-      if (net.id == 0) usage(argv[0]);
-      
-      net.err = MPI_Abort (MPI_COMM_WORLD, 1);
-      net.err = MPI_Finalize ();
-    }
+  
   
   char *input_file_path( argv[1] );
-
+  
   char input_config_name[256];
   char input_parameters_name[256];
   char output_config_name[256];
@@ -477,10 +468,6 @@ int main (int argc, char *argv[])
   char output_image_name[256];
   char timings_name[256];
   
-  
-#ifdef BENCH
-  minutes = atof( argv[2] );
-#endif
   
   strcpy ( input_config_name , input_file_path );
   strcat ( input_config_name , "/config.dat" );
@@ -503,10 +490,34 @@ int main (int argc, char *argv[])
   strcpy ( timings_name , input_file_path );
   strcat ( timings_name , "/timings.asc" );
   
+  
   if (net.id == 0)
     {
       timings_ptr = fopen (timings_name, "w");
+    }
+  
+#ifdef BENCH
+  if (argc != 3)
+#else
+  if (argc != 2 && argc != 3)
+#endif
+    {
+      if (net.id == 0) usage(argv[0]);
       
+#ifndef NOMPI
+      net.err = MPI_Abort (MPI_COMM_WORLD, 1);
+      net.err = MPI_Finalize ();
+#else
+      exit(1);
+#endif
+    }
+  
+#ifdef BENCH
+  minutes = atof( argv[2] );
+#endif
+  
+  if (net.id == 0)
+    {
       fprintf (timings_ptr, "***********************************************************\n");
       fprintf (timings_ptr, "Opening parameters file:\n %s\n", input_parameters_name);
       fprintf (timings_ptr, "Opening config file:\n %s\n", input_config_name);
@@ -550,6 +561,7 @@ int main (int argc, char *argv[])
 				1, 1, 1,
 				1, 1, 1, 1, 1, 1, 1,
 				1};
+#ifndef NOMPI
   MPI_Datatype steer_types[24] = {MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER,
 				  MPI_DOUBLE, MPI_DOUBLE, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER,
 				  MPI_REAL, MPI_REAL, MPI_REAL,
@@ -581,6 +593,7 @@ int main (int argc, char *argv[])
   
   MPI_Type_struct (steer_count, steer_blocklengths, steer_disps, steer_types, &MPI_steer_type);
   MPI_Type_commit (&MPI_steer_type);
+#endif
   
   
   // initialize the steering library
@@ -595,12 +608,16 @@ int main (int argc, char *argv[])
     }
   
   // broadcast/collect status
+#ifndef NOMPI
   net.err = MPI_Bcast (&steer.status, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+#endif
   
   // if broken, quit
   if(steer.status == REG_FAILURE)
     {
+#ifndef NOMPI
       net.err = MPI_Finalize ();
+#endif
       return REG_FAILURE;
     }
 #endif // STEER
@@ -610,7 +627,9 @@ int main (int argc, char *argv[])
   if (netFindTopology (&net, &depths) == 0)
     {
       fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");
+#ifndef NOMPI
       MPI_Abort(MPI_COMM_WORLD, 1);
+#endif
     }
   proc_fluid_sites = (int *)malloc(sizeof(int) * net.procs);
   
@@ -686,13 +705,17 @@ int main (int argc, char *argv[])
 				    (void *)(&steer.max_stress), REG_FLOAT, "0.0", "");
     }
   
+#ifndef NOMPI
   // broadcast/collect status
   net.err = MPI_Bcast(&steer.status, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+#endif
   
   // if broken, quit
   if(steer.status == REG_FAILURE)
     {
+#ifndef NOMPI
       net.err = MPI_Finalize ();
+#endif
       return REG_FAILURE;
     }
 
@@ -716,6 +739,9 @@ int main (int argc, char *argv[])
   
   for (time_step = 1; time_step <= lbm.time_steps_max; time_step++)
     {
+///      globalLongitude += 1.F;
+///      visUpdateLongitude (vis_parameters_name, &net, &vis);
+      
       write_checkpoint = 0;
       check_conv = 0;
       perform_vis = 0;
@@ -732,8 +758,10 @@ int main (int argc, char *argv[])
 					   steer_recvd_cmd_params);
 	}
       
+#ifndef NOMPI
       // broadcast/collect everything
       net.err = MPI_Bcast (&steer, 1, MPI_steer_type, 0, MPI_COMM_WORLD);
+#endif
       
       if (steer.status != REG_SUCCESS)
 	{
@@ -790,7 +818,7 @@ int main (int argc, char *argv[])
       // Between the visRenderA/B calls, do not change any vis
       // parameters.
       
-      is_thread_locked = 1;
+      is_thread_locked = 0;
       
 #ifdef RG
       if (net.id == 0 && perform_vis == 1)
@@ -798,7 +826,9 @@ int main (int argc, char *argv[])
 	  ///pthread_mutex_lock( &network_buffer_copy_lock ); ///
 	  is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
 	}
+#ifndef NOMPI
       net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
 #endif
       
       if (perform_vis == 1 && is_thread_locked == 0)
@@ -858,6 +888,8 @@ int main (int argc, char *argv[])
 	{
 	  fprintf (timings_ptr, " FS, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
+	  fprintf (stderr, " FS, time: %.3f, time step: %i, time steps/s: %.3f\n",
+		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%100 == 1 &&
 	  IsBenckSectionFinished (minutes / 3., elapsed_time))
@@ -876,7 +908,7 @@ int main (int argc, char *argv[])
   vis.mode = 0;
   vis.cutoff = -EPSILON;
   fluid_solver_and_vr_time = myClock ();
-
+  
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
       visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
@@ -889,6 +921,8 @@ int main (int argc, char *argv[])
       if (time_step%100 == 1 && net.id == 0)
 	{
 	  fprintf (timings_ptr, " FS + VR, time: %.3f, time step: %i, time steps/s: %.3f\n",
+		   elapsed_time, time_step, time_step / elapsed_time);
+	  fprintf (stderr, " FS + VR, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%100 == 1 &&
@@ -921,6 +955,8 @@ int main (int argc, char *argv[])
       if (time_step%100 == 1 && net.id == 0)
 	{
 	  fprintf (timings_ptr, " FS + IS, time: %.3f, time step: %i, time steps/s: %.3f\n",
+		   elapsed_time, time_step, time_step / elapsed_time);
+	  fprintf (stderr, " FS + IS, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%100 == 1 &&
@@ -1046,8 +1082,11 @@ int main (int argc, char *argv[])
     }
   free(proc_fluid_sites);
   
+#ifndef NOMPI
   net.err = MPI_Finalize ();
+#endif
   
   return(0);
 }
+
 
