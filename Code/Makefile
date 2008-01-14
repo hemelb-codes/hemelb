@@ -1,20 +1,19 @@
 #CC=mpicxx
 #CC=g++
 
-CC=lamc++-64
 CC=g++
+CC=lamc++-64
 
 #INCLUDES=-I/usr/local/include
 #LIBS=-L/usr/local/lib -llammpio -llammpi++ -lmpi -llam -ldl
 EXE=hemelb
-LIBS=-L/usr/local/lib -llammpio -llammpi++ -lmpi -llam -ldl
+#LIBS=-L/usr/local/lib -llammpio -llammpi++ -lmpi -llam -ldl
 
 MPIRUN=/usr/local/bin/mpiexec
 MPIRUN=/usr/local/bin/mpirun
 MPIRUN=/usr/bin/mpirun
 MPIRUN=/usr/bin/mpirun
 
-MPIRUN=/usr/local/bin/mpirun
 #REG_HOME=/home/steven/reg_steer_lib
 
 REG_CPPFLAGS=-I${REG_HOME}/include
