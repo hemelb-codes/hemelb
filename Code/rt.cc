@@ -2658,14 +2658,14 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
       	  neigh_proc_p = &net->neigh_proc[ m ];
       	  
 #ifndef NOMPI
-      	  net->err = MPI_Ssend (&streamlines_to_send[m], 1, MPI_INT,
+      	  net->err = MPI_Send (&streamlines_to_send[m], 1, MPI_INT,
 				neigh_proc_p->id, 30, MPI_COMM_WORLD);
       	  net->err = MPI_Recv (&streamlines_to_recv[m], 1, MPI_INT,
 			       neigh_proc_p->id, 30, MPI_COMM_WORLD, net->status);
       	  
 	  if (streamlines_to_send[ m ] > 0)
       	    {
-      	      net->err = MPI_Ssend (&streamline_to_send[m][0], VIS_VEC_SIZE * streamlines_to_send[ m ],
+      	      net->err = MPI_Send (&streamline_to_send[m][0], VIS_VEC_SIZE * streamlines_to_send[ m ],
 				    MPI_REAL, neigh_proc_p->id, 30, MPI_COMM_WORLD);
       	    }
 	  if (streamlines_to_recv[ m ] > 0)
@@ -3180,12 +3180,12 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
 	  if (net->id == send_id)
 	    {
 #ifndef NOMPI
-	      net->err = MPI_Ssend (&vis->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
+	      net->err = MPI_Send (&vis->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 #endif
 	      if (vis->col_pixels > 0)
 		{
 #ifndef NOMPI
-		  net->err = MPI_Ssend (&vis->col_pixel_send, vis->col_pixels, MPI_col_pixel_type,
+		  net->err = MPI_Send (&vis->col_pixel_send, vis->col_pixels, MPI_col_pixel_type,
 					recv_id, 20, MPI_COMM_WORLD);
 #endif
 		}
@@ -3271,7 +3271,7 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
     {
       recv_id = 0;
 #ifndef NOMPI
-      net->err = MPI_Ssend (&vis->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
+      net->err = MPI_Send (&vis->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 #endif
       if (vis->col_pixels > 0)
 	{
