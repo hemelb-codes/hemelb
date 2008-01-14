@@ -32,8 +32,8 @@ TEST4INPUT=$(HOME)/hemelb/Input/angio4
 FLAGS=-O3 -Wunused ${REG_CPPFLAGS} 
 FLAGS=-O0
 #DEFS=-DRG -DSTEER -DFREEROOT
-#DEFS=-DBENCH
-DEFS=-DRG 
+DEFS=-DBENCH
+#DEFS=-DRG 
 
 OBJ=config.o \
 	io.o \
@@ -41,8 +41,7 @@ OBJ=config.o \
 	main.o \
 	rt.o \
 	topology.o \
-	eVizRLEUtil.o \
-	network.o
+	eVizRLEUtil.o
 
 $(EXE): $(OBJ)
 	$(CC) $(FLAGS) $(LIBS) ${REG_LDFLAGS} $(OBJ) -o $(EXE)
