@@ -487,9 +487,8 @@ int main (int argc, char *argv[])
   strcpy ( output_image_name , input_file_path );
   strcat ( output_image_name , "/image.dat" );
   
-  strcpy ( timings_name , input_file_path );
-  strcat ( timings_name , "/timings.asc" );
-  
+  // strcpy ( timings_name , input_file_path );
+  strcat ( timings_name , "timings.asc" );
   
   if (net.id == 0)
     {
