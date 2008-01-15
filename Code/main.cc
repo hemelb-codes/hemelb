@@ -178,7 +178,6 @@ void *hemeLB_network (void *ptr)
   
   ColPixel *col_pixel_p;
   
-  
   while (1)
     {
       pthread_mutex_lock ( &network_buffer_copy_lock );
@@ -364,7 +363,7 @@ int IsBenckSectionFinished (double minutes, double elapsed_time)
       is_bench_section_finished = 1;
     }
 #ifndef NOMPI
-  err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
   
   if (is_bench_section_finished)
@@ -391,9 +390,6 @@ void usage (char *progname)
 
 int main (int argc, char *argv[])
 {
-  double total_time = myClock ();
-  double elapsed_time;
-  
   // main function needed to perform the entire simulation. Some
   // simulation paramenters and performance statistics are outputted on
   // standard output
@@ -452,6 +448,10 @@ int main (int argc, char *argv[])
   net.err = MPI_Init (&argc, &argv);
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
   net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
+
+  double total_time = myClock ();
+  double elapsed_time; 
+  
 #else
   net.procs = 1;
   net.id = 0;
@@ -561,12 +561,12 @@ int main (int argc, char *argv[])
 				1, 1, 1, 1, 1, 1, 1,
 				1};
 #ifndef NOMPI
-  MPI_Datatype steer_types[24] = {MPI_INTEGER, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER,
-				  MPI_DOUBLE, MPI_DOUBLE, MPI_INTEGER, MPI_INTEGER, MPI_INTEGER,
-				  MPI_REAL, MPI_REAL, MPI_REAL,
-				  MPI_REAL, MPI_REAL, MPI_REAL,
-				  MPI_INTEGER, MPI_INTEGER, MPI_INTEGER,
-				  MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL,
+  MPI_Datatype steer_types[24] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT,
+				  MPI_DOUBLE, MPI_DOUBLE, MPI_INT, MPI_INT, MPI_INT,
+				  MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+				  MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+				  MPI_INT, MPI_INT, MPI_INT,
+				  MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
 				  MPI_UB};
   
   MPI_Aint steer_disps[24];
@@ -578,13 +578,13 @@ int main (int argc, char *argv[])
   
   for(int i = 1; i < steer_count; i++) {
     switch(steer_types[i - 1]) {
-    case MPI_INTEGER:
+    case MPI_INT:
       steer_disps[i] = steer_disps[i - 1] + (sizeof(int) * steer_blocklengths[i - 1]);
       break;
     case MPI_DOUBLE:
       steer_disps[i] = steer_disps[i - 1] + (sizeof(double) * steer_blocklengths[i - 1]);
       break;
-    case MPI_REAL:
+    case MPI_FLOAT:
       steer_disps[i] = steer_disps[i - 1] + (sizeof(float) * steer_blocklengths[i - 1]);
       break;
     }
@@ -608,7 +608,7 @@ int main (int argc, char *argv[])
   
   // broadcast/collect status
 #ifndef NOMPI
-  net.err = MPI_Bcast (&steer.status, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  net.err = MPI_Bcast (&steer.status, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
   
   // if broken, quit
@@ -654,7 +654,6 @@ int main (int argc, char *argv[])
   checkpoint_count = 0;
   conv_count = 0;
   ray_tracing_count = 0;
-  
   
 #ifdef STEER
 
@@ -706,7 +705,7 @@ int main (int argc, char *argv[])
   
 #ifndef NOMPI
   // broadcast/collect status
-  net.err = MPI_Bcast(&steer.status, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+  net.err = MPI_Bcast(&steer.status, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
   
   // if broken, quit
@@ -896,9 +895,9 @@ int main (int argc, char *argv[])
 	  break;
 	}
     }
+
   fluid_solver_time = myClock () - fluid_solver_time;
   fluid_solver_time_steps = time_step;
-  
   
   // benchmarking HemeLB's fluid solver and volume rendering
   
@@ -907,11 +906,14 @@ int main (int argc, char *argv[])
   vis.mode = 0;
   vis.cutoff = -EPSILON;
   fluid_solver_and_vr_time = myClock ();
-  
+
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
+
       visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
+
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+
       visRenderB (&net, &vis);
       
       // partial timings
@@ -944,8 +946,11 @@ int main (int argc, char *argv[])
   
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
-      visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
+
+     visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
+
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+
       visRenderB (&net, &vis);
       
       // partial timings
