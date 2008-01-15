@@ -1045,7 +1045,7 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 	}
 #ifndef NOMPI
       net->err = MPI_Allreduce (&error, &error_tot, 1,
-				MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD);
+				MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 #else
       error_tot = error;
 #endif
@@ -1305,9 +1305,9 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	  stability_and_conv_partial[ 1 ] = sum1;
 	  stability_and_conv_partial[ 2 ] = sum2;
 #ifndef NOMPI
-	  net->err = MPI_Allreduce (stability_and_conv_partial,
-				    stability_and_conv_total, 3,
-				    MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD);
+	  net->err = MPI_Allreduce (&stability_and_conv_partial,
+				    &stability_and_conv_total, 3,
+				    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #else
 	  stability_and_conv_total[ 0 ] = stability_and_conv_partial[ 0 ];
 	  stability_and_conv_total[ 1 ] = stability_and_conv_partial[ 1 ];
@@ -1703,9 +1703,9 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	  stability_and_conv_partial[ 1 ] = sum1;
 	  stability_and_conv_partial[ 2 ] = sum2;
 #ifndef NOMPI
-	  net->err = MPI_Allreduce (stability_and_conv_partial,
-				    stability_and_conv_total, 3,
-				    MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD);
+	  net->err = MPI_Allreduce (&stability_and_conv_partial,
+				    &stability_and_conv_total, 3,
+				    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #else
 	  stability_and_conv_total[ 0 ] = stability_and_conv_partial[ 0 ];
 	  stability_and_conv_total[ 1 ] = stability_and_conv_partial[ 1 ];
