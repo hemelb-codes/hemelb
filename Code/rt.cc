@@ -3274,7 +3274,7 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
     }
   
   // inter-machine communications of sub-images begin here
- fprintf(stderr, "HELLO\n"); fflush(0x0); 
+
   if (net->id != 0)
     {
       recv_id = 0;
