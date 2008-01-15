@@ -628,13 +628,13 @@ void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, L
       if (net->id != 0 && net->proc_id[ n ] == net->id)
 	{
 	  net->err = MPI_Send (&macroscopic_par_buffer[ 0 ],
-			       MACROSCOPIC_PARS * sites_in_a_block, MPI_REAL,
+			       MACROSCOPIC_PARS * sites_in_a_block, MPI_FLOAT,
 			       0, 10, MPI_COMM_WORLD);
 	}
       else if (net->id == 0 && net->proc_id[ n ] != net->id)
 	{
 	  net->err = MPI_Recv (&macroscopic_par_buffer[ 0 ],
-			       MACROSCOPIC_PARS * sites_in_a_block, MPI_REAL,
+			       MACROSCOPIC_PARS * sites_in_a_block, MPI_FLOAT,
 			       net->proc_id[ n ], 10, MPI_COMM_WORLD, net->status);
 	}
       
