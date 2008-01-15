@@ -3,8 +3,11 @@
 SRC="config.cc eVizRLEUtil.c io.cc lb.cc main.cc rt.cc topology.cc"
 FLAGS="-qstrict -qstrict_induction -O4 -qipa=level=2 -qhot=vector -qcache=auto"
 FLAGS="-qstrict -qstrict_induction -O4"
+FLAGS="-O4 -qstrict -qstrict_induction -bmaxdata:0x60000000 -qipa=level=2 -qhot=vector -qcache=auto"
+FLAGS="-O3 -qstrict -qstrict_induction -bmaxdata:0x60000000"
 MPI_CC=mpcc_r
 MPIg_CC=/usr/local/packages/mpig-1.0.6-64/bin/mpicxx
+MPIg_CC=/work/default/steven/mpig/bin/mpicxx
 REG_INCLUDE_FILE=-I/home/steven/RealityGrid/file/reg_steer_lib/include
 REG_INCLUDE_GRID=-I/home/steven/RealityGrid/grid/reg_steer_lib/include
 REG_LIBS_FILE="-L/home/steven/RealityGrid/file/reg_steer_lib/lib64 -L/opt/freeware/lib -lReG_Steer -lReG_Steer_Utils -lReG_Steer_SOAP -liconv -lxml2 -q64 -brtl"
@@ -54,7 +57,6 @@ function BuildHemeLB_MPIg_Bench {
 echo "Building HemeLB with MPIg + benchmarking"
 $MPIg_CC \
         -DBENCH \
-        -bmaxdata:0x70000000 \
 	$FLAGS $SRC -lm \
 	-o hemelb_mpig_bench
 }
