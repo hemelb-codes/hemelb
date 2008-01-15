@@ -1,6 +1,5 @@
 #include "config.h"
 
-
 void (*rtRayAABBIntersection[8]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t);
 
 void (*rtTraverse[8]) (float org[],
@@ -2666,12 +2665,12 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
 	  if (streamlines_to_send[ m ] > 0)
       	    {
       	      net->err = MPI_Send (&streamline_to_send[m][0], VIS_VEC_SIZE * streamlines_to_send[ m ],
-				    MPI_REAL, neigh_proc_p->id, 30, MPI_COMM_WORLD);
+				    MPI_FLOAT, neigh_proc_p->id, 30, MPI_COMM_WORLD);
       	    }
 	  if (streamlines_to_recv[ m ] > 0)
       	    {
       	      net->err = MPI_Recv (&streamline_to_recv[m][0], VIS_VEC_SIZE * streamlines_to_recv[ m ],
-				   MPI_REAL, neigh_proc_p->id, 30, MPI_COMM_WORLD, net->status);
+				   MPI_FLOAT, neigh_proc_p->id, 30, MPI_COMM_WORLD, net->status);
 	      
               streamlines_max = min(STREAMLINES_MAX - vis->streamlines,
       	  			    streamlines_to_recv[ m ]);
@@ -3010,9 +3009,6 @@ void visUpdateParameters (Vis *vis, SteerParams *steer)
 
 void visInit (char *image_file_name, Net *net, Vis *vis)
 {
-  int col_pixel_count = 6;
-  int col_pixel_blocklengths[6] = {1, 1, 1, 1, 1, 1};
-  
   
   blocks_yz = blocks_y * blocks_z;
   
@@ -3038,14 +3034,17 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   block_size_vec[2] = 1;
   block_size_vec[3] = 0;
   
-  
 #ifndef NOMPI
-  MPI_Datatype col_pixel_types[6] = {MPI_REAL, MPI_REAL, MPI_REAL, MPI_REAL,
-				     MPI_SHORT, MPI_SHORT};
+
+  MPI_Datatype col_pixel_types[7] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+				     MPI_SHORT, MPI_SHORT, MPI_UB};
   
-  MPI_Aint col_pixel_disps[6];
+  int col_pixel_count =7;
+  int col_pixel_blocklengths[7] = {1, 1, 1, 1, 1, 1,1};
+
+  MPI_Aint col_pixel_disps[7];
+
 #endif
-  
   
   vis->image_file_name = image_file_name;
   
@@ -3059,33 +3058,40 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   vis->pixels_max = IMAGE_SIZE;
   vis->col_pixel_id = (int *)malloc(sizeof(int) * vis->pixels_max);
   
-  
 #ifndef NOMPI
   // create the derived datatype for the MPI communications
   
-  col_pixel_disps[0] = 0;
+/*  col_pixel_disps[0] = 0;
   
-  for (int i = 1; i < col_pixel_count; i++)
+ for (int i = 1; i < col_pixel_count; i++)
     {
-      if (col_pixel_types[i - 1] == MPI_INTEGER)
+      if (col_pixel_types[i - 1] == MPI_FLOAT)
 	{
-	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(int) * col_pixel_blocklengths[i - 1]);
-	}
-      else if (col_pixel_types[i - 1] == MPI_DOUBLE)
-	{
-	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(double) * col_pixel_blocklengths[i - 1]);
-	}
-      else if (col_pixel_types[i - 1] == MPI_REAL)
-	{
-	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float) * col_pixel_blocklengths[i - 1]);
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + sizeof(float);
 	}
       else if (col_pixel_types[i - 1] == MPI_SHORT)
 	{
-	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(short int) * col_pixel_blocklengths[i - 1]);
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + sizeof(short);
 	}
-    }
+    } */
+
+  MPI_Address( &vis->col_pixel_send[0].r, col_pixel_disps + 0 ); 
+  MPI_Address( &vis->col_pixel_send[0].g, col_pixel_disps + 1 ); 
+  MPI_Address( &vis->col_pixel_send[0].b, col_pixel_disps + 2 ); 
+  MPI_Address( &vis->col_pixel_send[0].t, col_pixel_disps + 3 ); 
+  MPI_Address( &vis->col_pixel_send[0].i, col_pixel_disps + 4 );
+  MPI_Address( &vis->col_pixel_send[0].j, col_pixel_disps + 5 );
+  MPI_Address( &vis->col_pixel_send[0]+1, col_pixel_disps + 6 );
+  
+  int base = col_pixel_disps[0];
+
+  for(int i=0; i<col_pixel_count; i++)
+	col_pixel_disps[i] -= base;
+
   MPI_Type_struct (col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types, &MPI_col_pixel_type);
+
   MPI_Type_commit (&MPI_col_pixel_type);
+
 #endif
   
   rtInit (net, vis);
@@ -3099,6 +3105,7 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
 		 void slColourPalette (float vel_m, float col[]),
 		 Net *net, Vis *vis)
 {
+
   int pixels_x, pixels_y;
   int i, j;
   int m, n;
@@ -3108,7 +3115,6 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
   int machine_id, master_proc_id;
   
   ColPixel *col_pixel1, *col_pixel2;
-  
   
   pixels_x = screen.pixels_x;
   pixels_y = screen.pixels_y;
@@ -3177,11 +3183,13 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
 	      recv_id += comm_inc << 1;
 	      continue;
 	    }
+
 	  if (net->id == send_id)
 	    {
 #ifndef NOMPI
 	      net->err = MPI_Send (&vis->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 #endif
+
 	      if (vis->col_pixels > 0)
 		{
 #ifndef NOMPI
@@ -3199,7 +3207,7 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
 		{
 		  net->err = MPI_Recv (&vis->col_pixel_send, col_pixels, MPI_col_pixel_type,
 				       send_id, 20, MPI_COMM_WORLD, net->status);
-		}
+		} 
 #else
 	      col_pixels = 0;
 #endif
@@ -3266,7 +3274,7 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
     }
   
   // inter-machine communications of sub-images begin here
-  
+ fprintf(stderr, "HELLO\n"); fflush(0x0); 
   if (net->id != 0)
     {
       recv_id = 0;
