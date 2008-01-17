@@ -21,10 +21,10 @@ void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z,
   
   *density = f[0] + (f[2] + f[4]) + (f[6] + f[8]) + *v_x + *v_y + *v_z;
   
-  *v_x -= f[2] + f[8] + f[10] + (f[12] + f[14]);
-  *v_y += (f[7] + f[9]) - (f[4] + f[8] + f[10 ] + (f[11] + f[13]));
+  *v_x -= f[2] + (f[8] + f[10]) + (f[12] + f[14]);
+  *v_y += (f[7] + f[9]) - (f[4] + (f[8] + f[10]) + (f[11] + f[13]));
   *v_z += f[7] + f[11] + f[14] - ((f[6] + f[8]) + f[9] + f[12] + f[13]);
-
+  
   v_xx = *v_x * *v_x;
   v_yy = *v_y * *v_y;
   v_zz = *v_z * *v_z;
@@ -37,36 +37,36 @@ void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z,
   
   temp1 -= (1.0 / 6.0) * temp2;
   
-  f_eq[1] = temp1 + ((1.0 / 3.0) * *v_x) + 0.5 * v_xx;   // (+1, 0, 0)
-  f_eq[2] = temp1 - ((1.0 / 3.0) * *v_x) + 0.5 * v_xx;   // (+1, 0, 0)
+  f_eq[1] = (temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * *v_x);   // (+1, 0, 0)
+  f_eq[2] = (temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * *v_x);   // (+1, 0, 0)
   
-  f_eq[3] = temp1 + ((1.0 / 3.0) * *v_y) + 0.5 * v_yy;   // (0, +1, 0)
-  f_eq[4] = temp1 - ((1.0 / 3.0) * *v_y) + 0.5 * v_yy;   // (0, -1, 0)
+  f_eq[3] = (temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * *v_y);   // (0, +1, 0)
+  f_eq[4] = (temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * *v_y);   // (0, -1, 0)
   
-  f_eq[5] = temp1 + ((1.0 / 3.0) * *v_z) + 0.5 * v_zz;   // (0, 0, +1)
-  f_eq[6] = temp1 - ((1.0 / 3.0) * *v_z) + 0.5 * v_zz;   // (0, 0, -1)
+  f_eq[5] = (temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * *v_z);   // (0, 0, +1)
+  f_eq[6] = (temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * *v_z);   // (0, 0, -1)
   
   temp1 *= (1.0 / 8.0);
   
-  temp2 = *v_x + *v_y + *v_z;
+  temp2 = (*v_x + *v_y) + *v_z;
   
-  f_eq[ 7] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, +1, +1)
-  f_eq[ 8] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, -1, -1)
+  f_eq[ 7] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, +1, +1)
+  f_eq[ 8] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, -1, -1)
 							     
-  temp2 = *v_x + *v_y - *v_z;				     
+  temp2 = (*v_x + *v_y) - *v_z;				     
   							     
-  f_eq[ 9] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, +1, -1)
-  f_eq[10] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, -1, +1)
+  f_eq[ 9] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, +1, -1)
+  f_eq[10] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, -1, +1)
 							     
-  temp2 = *v_x - *v_y + *v_z;				     
+  temp2 = (*v_x - *v_y) + *v_z;				     
   							     
-  f_eq[11] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, +1)
-  f_eq[12] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, -1)
+  f_eq[11] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, +1)
+  f_eq[12] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, -1)
 							     
-  temp2 = *v_x - *v_y - *v_z;				     
+  temp2 = (*v_x - *v_y) - *v_z;				     
   							     
-  f_eq[13] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, -1)
-  f_eq[14] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, +1)
+  f_eq[13] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, -1)
+  f_eq[14] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, +1)
 }
 
 
@@ -88,36 +88,36 @@ void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
   
   temp1 -= (1.0 / 6.0) * temp2;
   
-  f_eq[1] = temp1 + ((1.0 / 3.0) * v_x) + 0.5 * v_xx;   // (+1, 0, 0)
-  f_eq[2] = temp1 - ((1.0 / 3.0) * v_x) + 0.5 * v_xx;   // (+1, 0, 0)
+  f_eq[1] = (temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * v_x);   // (+1, 0, 0)
+  f_eq[2] = (temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * v_x);   // (+1, 0, 0)
   
-  f_eq[3] = temp1 + ((1.0 / 3.0) * v_y) + 0.5 * v_yy;   // (0, +1, 0)
-  f_eq[4] = temp1 - ((1.0 / 3.0) * v_y) + 0.5 * v_yy;   // (0, -1, 0)
+  f_eq[3] = (temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * v_y);   // (0, +1, 0)
+  f_eq[4] = (temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * v_y);   // (0, -1, 0)
   
-  f_eq[5] = temp1 + ((1.0 / 3.0) * v_z) + 0.5 * v_zz;   // (0, 0, +1)
-  f_eq[6] = temp1 - ((1.0 / 3.0) * v_z) + 0.5 * v_zz;   // (0, 0, -1)
+  f_eq[5] = (temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * v_z);   // (0, 0, +1)
+  f_eq[6] = (temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * v_z);   // (0, 0, -1)
   
   temp1 *= (1.0 / 8.0);
   
-  temp2 = v_x + v_y + v_z;
+  temp2 = (v_x + v_y) + v_z;
   
-  f_eq[ 7] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, +1, +1)
-  f_eq[ 8] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, -1, -1)
+  f_eq[ 7] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, +1, +1)
+  f_eq[ 8] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, -1, -1)
   
-  temp2 = v_x + v_y - v_z;				     
+  temp2 = (v_x + v_y) - v_z;				     
   
-  f_eq[ 9] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, +1, -1)
-  f_eq[10] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, -1, +1)
+  f_eq[ 9] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, +1, -1)
+  f_eq[10] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, -1, +1)
   
-  temp2 = v_x - v_y + v_z;				     
+  temp2 = (v_x - v_y) + v_z;				     
   
-  f_eq[11] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, +1)
-  f_eq[12] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, -1)
+  f_eq[11] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, +1)
+  f_eq[12] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, -1)
   
-  temp2 = v_x - v_y - v_z;				     
+  temp2 = (v_x - v_y) - v_z;				     
   						     
-  f_eq[13] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, -1)
-  f_eq[14] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, +1)
+  f_eq[13] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, -1)
+  f_eq[14] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, +1)
 }
 
 
@@ -135,8 +135,8 @@ void lbmCollision0 (double omega, double f[], int site_id,
   
   *density = f[0] + (f[2] + f[4]) + (f[6] + f[ 8 ]) + *v_x + *v_y + *v_z;
   
-  *v_x -= f[2] + f[8] + f[10] + (f[12] + f[14]);
-  *v_y += (f[7] + f[9]) - (f[4] + f[8] + f[10] + (f[11] + f[13]));
+  *v_x -= f[2] + (f[8] + f[10]) + (f[12] + f[14]);
+  *v_y += (f[7] + f[9]) - (f[4] + (f[8] + f[10]) + (f[11] + f[13]));
   *v_z += f[7] + f[11] + f[14] - ((f[6] + f[8]) + f[9] + f[12] + f[13]);
 
   v_xx = *v_x * *v_x;
@@ -151,36 +151,36 @@ void lbmCollision0 (double omega, double f[], int site_id,
   
   temp1 -= (1.0 / 6.0) * temp2;
   
-  f[1] += omega * (f_neq[1] = f[1] - (temp1 + ((1.0 / 3.0) * *v_x) + 0.5 * v_xx));   // (+1, 0, 0)
-  f[2] += omega * (f_neq[2] = f[2] - (temp1 - ((1.0 / 3.0) * *v_x) + 0.5 * v_xx));   // (+1, 0, 0)
+  f[1] += omega * (f_neq[1] = f[1] - ((temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
+  f[2] += omega * (f_neq[2] = f[2] - ((temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
   
-  f[3] += omega * (f_neq[3] = f[3] - (temp1 + ((1.0 / 3.0) * *v_y) + 0.5 * v_yy));   // (0, +1, 0)
-  f[4] += omega * (f_neq[4] = f[4] - (temp1 - ((1.0 / 3.0) * *v_y) + 0.5 * v_yy));   // (0, -1, 0)
+  f[3] += omega * (f_neq[3] = f[3] - ((temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * *v_y)));   // (0, +1, 0)
+  f[4] += omega * (f_neq[4] = f[4] - ((temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * *v_y)));   // (0, -1, 0)
   
-  f[5] += omega * (f_neq[5] = f[5] - (temp1 + ((1.0 / 3.0) * *v_z) + 0.5 * v_zz));   // (0, 0, +1)
-  f[6] += omega * (f_neq[6] = f[6] - (temp1 - ((1.0 / 3.0) * *v_z) + 0.5 * v_zz));   // (0, 0, -1)
+  f[5] += omega * (f_neq[5] = f[5] - ((temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * *v_z)));   // (0, 0, +1)
+  f[6] += omega * (f_neq[6] = f[6] - ((temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * *v_z)));   // (0, 0, -1)
   
   temp1 *= (1.0 / 8.0);
   
-  temp2 = *v_x + *v_y + *v_z;
+  temp2 = (*v_x + *v_y) + *v_z;
   
-  f[7] += omega * (f_neq[7] = f[7] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, +1, +1)
-  f[8] += omega * (f_neq[8] = f[8] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, -1, -1)
+  f[7] += omega * (f_neq[7] = f[7] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, +1)
+  f[8] += omega * (f_neq[8] = f[8] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, -1)
   
-  temp2 = *v_x + *v_y - *v_z;				     
+  temp2 = (*v_x + *v_y) - *v_z;				     
   
-  f[ 9] += omega * (f_neq[ 9] = f[ 9] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, +1, -1)
-  f[10] += omega * (f_neq[10] = f[10] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, -1, +1)
+  f[ 9] += omega * (f_neq[ 9] = f[ 9] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, -1)
+  f[10] += omega * (f_neq[10] = f[10] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, +1)
   
-  temp2 = *v_x - *v_y + *v_z;				     
+  temp2 = (*v_x - *v_y) + *v_z;				     
   
-  f[11] += omega * (f_neq[11] = f[11] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, -1, +1)
-  f[12] += omega * (f_neq[12] = f[12] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, +1, -1)
+  f[11] += omega * (f_neq[11] = f[11] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, +1)
+  f[12] += omega * (f_neq[12] = f[12] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, -1)
   
-  temp2 = *v_x - *v_y - *v_z;				     
+  temp2 = (*v_x - *v_y) - *v_z;				     
   
-  f[13] += omega * (f_neq[13] = f[13] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, -1, -1)
-  f[14] += omega * (f_neq[14] = f[14] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, +1, +1)
+  f[13] += omega * (f_neq[13] = f[13] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
+  f[14] += omega * (f_neq[14] = f[14] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
 }
 
 
@@ -213,8 +213,8 @@ void lbmCollisionSIMD0 (double omega, double f[], int site_id,
       
       density[j] = f_vec[0][j] + (f_vec[2][j] + f_vec[4][j]) + (f_vec[6][j] + f_vec[8][j]) + v_x[j] + v_y[j] + v_z[j];
       
-      v_x[j] -= f_vec[2][j] + f_vec[8][j] + f_vec[10][j] + (f_vec[12][j] + f_vec[14][j]);
-      v_y[j] += (f_vec[7][j] + f_vec[9][j]) - (f_vec[4][j] + f_vec[8][j] + f_vec[10][j] + (f_vec[11][j] + f_vec[13][j]));
+      v_x[j] -= f_vec[2][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[12][j] + f_vec[14][j]);
+      v_y[j] += (f_vec[7][j] + f_vec[9][j]) - (f_vec[4][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[11][j] + f_vec[13][j]));
       v_z[j] += f_vec[7][j] + f_vec[11][j] + f_vec[14][j] - ((f_vec[6][j] + f_vec[8][j]) + f_vec[9][j] + f_vec[12][j] + f_vec[13][j]);
       
       v_xx = v_x[j] * v_x[j];
@@ -229,36 +229,36 @@ void lbmCollisionSIMD0 (double omega, double f[], int site_id,
       
       temp1 -= (1.0 / 6.0) * temp2;
       
-      f_vec[1][j] += omega * (f_neq_vec[1][j] = f_vec[1][j] - (temp1 + ((1.0 / 3.0) * v_x[j]) + 0.5 * v_xx));   // (+1, 0, 0)
-      f_vec[2][j] += omega * (f_neq_vec[2][j] = f_vec[2][j] - (temp1 - ((1.0 / 3.0) * v_x[j]) + 0.5 * v_xx));   // (+1, 0, 0)
+      f_vec[1][j] += omega * (f_neq_vec[1][j] = f_vec[1][j] - ((temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * v_x[j])));   // (+1, 0, 0)
+      f_vec[2][j] += omega * (f_neq_vec[2][j] = f_vec[2][j] - ((temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * v_x[j])));   // (+1, 0, 0)
       
-      f_vec[3][j] += omega * (f_neq_vec[3][j] = f_vec[3][j] - (temp1 + ((1.0 / 3.0) * v_y[j]) + 0.5 * v_yy));   // (0, +1, 0)
-      f_vec[4][j] += omega * (f_neq_vec[4][j] = f_vec[4][j] - (temp1 - ((1.0 / 3.0) * v_y[j]) + 0.5 * v_yy));   // (0, -1, 0)
+      f_vec[3][j] += omega * (f_neq_vec[3][j] = f_vec[3][j] - ((temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * v_y[j])));   // (0, +1, 0)
+      f_vec[4][j] += omega * (f_neq_vec[4][j] = f_vec[4][j] - ((temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * v_y[j])));   // (0, -1, 0)
       
-      f_vec[5][j] += omega * (f_neq_vec[5][j] = f_vec[5][j] - (temp1 + ((1.0 / 3.0) * v_z[j]) + 0.5 * v_zz));   // (0, 0, +1)
-      f_vec[6][j] += omega * (f_neq_vec[6][j] = f_vec[6][j] - (temp1 - ((1.0 / 3.0) * v_z[j]) + 0.5 * v_zz));   // (0, 0, -1)
+      f_vec[5][j] += omega * (f_neq_vec[5][j] = f_vec[5][j] - ((temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * v_z[j])));   // (0, 0, +1)
+      f_vec[6][j] += omega * (f_neq_vec[6][j] = f_vec[6][j] - ((temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * v_z[j])));   // (0, 0, -1)
       
       temp1 *= (1.0 / 8.0);
       
-      temp2 = v_x[j] + v_y[j] + v_z[j];
+      temp2 = (v_x[j] + v_y[j]) + v_z[j];
       
-      f_vec[7][ j] += omega * (f_neq_vec[ 7][j] = f_vec[7][ j] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, +1, +1)
-      f_vec[8][ j] += omega * (f_neq_vec[ 8][j] = f_vec[8][ j] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, -1, -1)
+      f_vec[7][ j] += omega * (f_neq_vec[ 7][j] = f_vec[7][ j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, +1)
+      f_vec[8][ j] += omega * (f_neq_vec[ 8][j] = f_vec[8][ j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, -1)
+			       
+      temp2 = (v_x[j] + v_y[j]) - v_z[j];		     
       
-      temp2 = v_x[j] + v_y[j] - v_z[j];		     
+      f_vec[9][ j] += omega * (f_neq_vec[ 9][j] = f_vec[9][ j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, -1)
+      f_vec[10][j] += omega * (f_neq_vec[10][j] = f_vec[10][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, +1)
       
-      f_vec[9][ j] += omega * (f_neq_vec[ 9][j] = f_vec[9][ j] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, +1, -1)
-      f_vec[10][j] += omega * (f_neq_vec[10][j] = f_vec[10][j] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, -1, +1)
+      temp2 = (v_x[j] - v_y[j]) + v_z[j];	     
       
-      temp2 = v_x[j] - v_y[j] + v_z[j];	     
+      f_vec[11][j] += omega * (f_neq_vec[11][j] = f_vec[11][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, +1)
+      f_vec[12][j] += omega * (f_neq_vec[12][j] = f_vec[12][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, -1)
       
-      f_vec[11][j] += omega * (f_neq_vec[11][j] = f_vec[11][j] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, -1, +1)
-      f_vec[12][j] += omega * (f_neq_vec[12][j] = f_vec[12][j] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, +1, -1)
+      temp2 = (v_x[j] - v_y[j]) - v_z[j];     
       
-      temp2 = v_x[j] - v_y[j] - v_z[j];     
-      
-      f_vec[13][j] += omega * (f_neq_vec[13][j] = f_vec[13][j] - (temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (+1, -1, -1)
-      f_vec[14][j] += omega * (f_neq_vec[14][j] = f_vec[14][j] - (temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2));   // (-1, +1, +1)
+      f_vec[13][j] += omega * (f_neq_vec[13][j] = f_vec[13][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
+      f_vec[14][j] += omega * (f_neq_vec[14][j] = f_vec[14][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
     }
   for (j = 0; j < SIMD_SIZE; j++)
     {
@@ -386,8 +386,8 @@ void lbmCollisionSIMD2 (double omega, double f[], int site_id,
       v_y[j] = f_vec[3][j] + (f_vec[12][j] + f_vec[14][j]);
       v_z[j] = f_vec[5][j] + f_vec[10][j];
       
-      v_x[j] -= f_vec[2][j] + f_vec[8][j] + f_vec[10][j] + (f_vec[12][j] + f_vec[14][j]);
-      v_y[j] += (f_vec[7][j] + f_vec[9][j]) - (f_vec[4][j] + f_vec[8][j] + f_vec[10][j] + (f_vec[11][j] + f_vec[13][j]));
+      v_x[j] -= f_vec[2][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[12][j] + f_vec[14][j]);
+      v_y[j] += (f_vec[7][j] + f_vec[9][j]) - (f_vec[4][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[11][j] + f_vec[13][j]));
       v_z[j] += f_vec[7][j] + f_vec[11][j] + f_vec[14][j] - ((f_vec[6][j] + f_vec[8][j]) + f_vec[9][j] + f_vec[12][j] + f_vec[13][j]);
       
       v_xx = v_x[j] * v_x[j];
@@ -402,36 +402,36 @@ void lbmCollisionSIMD2 (double omega, double f[], int site_id,
       
       temp1 -= (1.0 / 6.0) * temp2;
       
-      f_vec[1][j] = temp1 + ((1.0 / 3.0) * v_x[j]) + 0.5 * v_xx;   // (+1, 0, 0)
-      f_vec[2][j] = temp1 - ((1.0 / 3.0) * v_x[j]) + 0.5 * v_xx;   // (+1, 0, 0)
+      f_vec[1][j] = (temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * v_x[j]);   // (+1, 0, 0)
+      f_vec[2][j] = (temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * v_x[j]);   // (+1, 0, 0)
+					    
+      f_vec[3][j] = (temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * v_y[j]);   // (0, +1, 0)
+      f_vec[4][j] = (temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * v_y[j]);   // (0, -1, 0)
       
-      f_vec[3][j] = temp1 + ((1.0 / 3.0) * v_y[j]) + 0.5 * v_yy;   // (0, +1, 0)
-      f_vec[4][j] = temp1 - ((1.0 / 3.0) * v_y[j]) + 0.5 * v_yy;   // (0, -1, 0)
-      
-      f_vec[5][j] = temp1 + ((1.0 / 3.0) * v_z[j]) + 0.5 * v_zz;   // (0, 0, +1)
-      f_vec[6][j] = temp1 - ((1.0 / 3.0) * v_z[j]) + 0.5 * v_zz;   // (0, 0, -1)
+      f_vec[5][j] = (temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * v_z[j]);   // (0, 0, +1)
+      f_vec[6][j] = (temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * v_z[j]);   // (0, 0, -1)
       
       temp1 *= (1.0 / 8.0);
       
-      temp2 = v_x[j] + v_y[j] + v_z[j];
+      temp2 = (v_x[j] + v_y[j]) + v_z[j];
       
-      f_vec[7][ j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, +1, +1)
-      f_vec[8][ j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, -1, -1)
+      f_vec[7][ j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, +1, +1)
+      f_vec[8][ j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, -1, -1)
       
-      temp2 = v_x[j] + v_y[j] - v_z[j];		     
+      temp2 = (v_x[j] + v_y[j]) - v_z[j];		     
       
-      f_vec[9][ j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, +1, -1)
-      f_vec[10][j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, -1, +1)
+      f_vec[9][ j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, +1, -1)
+      f_vec[10][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, -1, +1)
       
-      temp2 = v_x[j] - v_y[j] + v_z[j];	     
+      temp2 = (v_x[j] - v_y[j]) + v_z[j];	     
       
-      f_vec[11][j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, +1)
-      f_vec[12][j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, -1)
+      f_vec[11][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, +1)
+      f_vec[12][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, -1)
       
-      temp2 = v_x[j] - v_y[j] - v_z[j];     
+      temp2 = (v_x[j] - v_y[j]) - v_z[j];     
       
-      f_vec[13][j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, -1)
-      f_vec[14][j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, +1)
+      f_vec[13][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, -1)
+      f_vec[14][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, +1)
     }
   for (j = 0; j < SIMD_SIZE; j++)
     {
@@ -501,8 +501,8 @@ void lbmCollisionSIMD3 (double omega, double f[], int site_id,
       v_y[j] = f_vec[3][j] + (f_vec[12][j] + f_vec[14][j]);
       v_z[j] = f_vec[5][j] + f_vec[10][j];
       
-      v_x[j] -= f_vec[2][j] + f_vec[8][j] + f_vec[10][j] + (f_vec[12][j] + f_vec[14][j]);
-      v_y[j] += (f_vec[7][j] + f_vec[9][j]) - (f_vec[4][j] + f_vec[8][j] + f_vec[10][j] + (f_vec[11][j] + f_vec[13][j]));
+      v_x[j] -= f_vec[2][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[12][j] + f_vec[14][j]);
+      v_y[j] += (f_vec[7][j] + f_vec[9][j]) - (f_vec[4][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[11][j] + f_vec[13][j]));
       v_z[j] += f_vec[7][j] + f_vec[11][j] + f_vec[14][j] - ((f_vec[6][j] + f_vec[8][j]) + f_vec[9][j] + f_vec[12][j] + f_vec[13][j]);
       
       v_xx = v_x[j] * v_x[j];
@@ -517,36 +517,36 @@ void lbmCollisionSIMD3 (double omega, double f[], int site_id,
       
       temp1 -= (1.0 / 6.0) * temp2;
       
-      f_vec[1][j] = temp1 + ((1.0 / 3.0) * v_x[j]) + 0.5 * v_xx;   // (+1, 0, 0)
-      f_vec[2][j] = temp1 - ((1.0 / 3.0) * v_x[j]) + 0.5 * v_xx;   // (+1, 0, 0)
+      f_vec[1][j] = (temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * v_x[j]);   // (+1, 0, 0)
+      f_vec[2][j] = (temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * v_x[j]);   // (+1, 0, 0)
       
-      f_vec[3][j] = temp1 + ((1.0 / 3.0) * v_y[j]) + 0.5 * v_yy;   // (0, +1, 0)
-      f_vec[4][j] = temp1 - ((1.0 / 3.0) * v_y[j]) + 0.5 * v_yy;   // (0, -1, 0)
+      f_vec[3][j] = (temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * v_y[j]);   // (0, +1, 0)
+      f_vec[4][j] = (temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * v_y[j]);   // (0, -1, 0)
       
-      f_vec[5][j] = temp1 + ((1.0 / 3.0) * v_z[j]) + 0.5 * v_zz;   // (0, 0, +1)
-      f_vec[6][j] = temp1 - ((1.0 / 3.0) * v_z[j]) + 0.5 * v_zz;   // (0, 0, -1)
+      f_vec[5][j] = (temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * v_z[j]);   // (0, 0, +1)
+      f_vec[6][j] = (temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * v_z[j]);   // (0, 0, -1)
       
       temp1 *= (1.0 / 8.0);
       
-      temp2 = v_x[j] + v_y[j] + v_z[j];
+      temp2 = (v_x[j] + v_y[j]) + v_z[j];
       
-      f_vec[7][ j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, +1, +1)
-      f_vec[8][ j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, -1, -1)
+      f_vec[7][ j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, +1, +1)
+      f_vec[8][ j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, -1, -1)
       
-      temp2 = v_x[j] + v_y[j] - v_z[j];		     
+      temp2 = (v_x[j] + v_y[j]) - v_z[j];		     
       
-      f_vec[9][ j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, +1, -1)
-      f_vec[10][j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, -1, +1)
+      f_vec[9][ j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, +1, -1)
+      f_vec[10][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, -1, +1)
       
-      temp2 = v_x[j] - v_y[j] + v_z[j];	     
+      temp2 = (v_x[j] - v_y[j]) + v_z[j];	     
       
-      f_vec[11][j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, +1)
-      f_vec[12][j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, -1)
+      f_vec[11][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, +1)
+      f_vec[12][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, -1)
       
-      temp2 = v_x[j] - v_y[j] - v_z[j];     
+      temp2 = (v_x[j] - v_y[j]) - v_z[j];     
       
-      f_vec[13][j] = temp1 + ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (+1, -1, -1)
-      f_vec[14][j] = temp1 - ((1.0 / 24.0) * temp2) + (1.0 / 16.0) * temp2 * temp2;   // (-1, +1, +1)
+      f_vec[13][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, -1)
+      f_vec[14][j] = (temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, +1)
     }
   for (j = 0; j < SIMD_SIZE; j++)
     {
@@ -910,27 +910,53 @@ void lbmInit (char *system_file_name, char *checkpoint_file_name,
 }
 
 
-void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
+void lbmSetInitialConditions (LBM *lbm, Net *net)
 {
+  double *f_old_p, *f_new_p, f_eq[15];
+  
+  int my_sites;
+
+  int i, l;
+  
+  
+  my_sites = net->my_inner_sites + net->my_inter_sites;
+  
+#ifdef BENCH
+  
+  for (i = 0; i < my_sites; i++)
+    {
+      for (l = 0; l < 7; l++) f_eq[ l ] = (1.0 / 8.0);
+      
+      for (l = 7; l < 15; l++) f_eq[ l ] = (1.0 / 64.0);
+      
+      f_old_p = &f_old[ i*15 ];
+      f_new_p = &f_new[ i*15 ];
+      
+      for (l = 0; l < 15; l++)
+	{
+	  f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
+	}
+      flow_field[ 3*i+0 ] = 1.F;
+      flow_field[ 3*i+1 ] = 0.F;
+      flow_field[ 3*i+2 ] = 0.F;
+    }
+  return;
+#else   // BENCH
+  
   double *d_p;
   double **nd_p_p;
   double density;
-  double *f_old_p, *f_new_p, f_eq[15];
   double error, error_tot;
   double temp;
   
   int iters;
   int neighs;
-  int i;
-  int l, m, n;
-  int my_sites;
+  int m, n;
   
   unsigned int site_data, boundary_id;
   
   NeighProc *neigh_proc_p;
   
-  
-  my_sites = net->my_inner_sites + net->my_inter_sites;
   
   for (i = 0; i < my_sites; i++)
     {
@@ -1069,7 +1095,7 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
 	{
 	  f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
 	}
-      flow_field[ 3*i+0 ] = (float)density;
+      flow_field[ 3*i+0 ] = d[ i ];
       flow_field[ 3*i+1 ] = 0.F;
       flow_field[ 3*i+2 ] = 0.F;
     }
@@ -1083,6 +1109,7 @@ void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net)
   
   free (d);
   d = NULL;
+#endif
 }
 
 /*
@@ -1305,8 +1332,8 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	  stability_and_conv_partial[ 1 ] = sum1;
 	  stability_and_conv_partial[ 2 ] = sum2;
 #ifndef NOMPI
-	  net->err = MPI_Allreduce (&stability_and_conv_partial,
-				    &stability_and_conv_total, 3,
+	  net->err = MPI_Allreduce (stability_and_conv_partial,
+				    stability_and_conv_total, 3,
 				    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #else
 	  stability_and_conv_total[ 0 ] = stability_and_conv_partial[ 0 ];
@@ -1703,8 +1730,8 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
 	  stability_and_conv_partial[ 1 ] = sum1;
 	  stability_and_conv_partial[ 2 ] = sum2;
 #ifndef NOMPI
-	  net->err = MPI_Allreduce (&stability_and_conv_partial,
-				    &stability_and_conv_total, 3,
+	  net->err = MPI_Allreduce (stability_and_conv_partial,
+				    stability_and_conv_total, 3,
 				    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #else
 	  stability_and_conv_total[ 0 ] = stability_and_conv_partial[ 0 ];
@@ -1725,7 +1752,7 @@ int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_conv
     }
   if (write_checkpoint)
     {
-      lbmWriteConfig (!is_unstable, lbm->checkpoint_file_name, 1, lbm, net);
+      lbmWriteConfig (!is_unstable, lbm->checkpoint_file_name, lbm, net);
     }
 #endif // BENCH
   

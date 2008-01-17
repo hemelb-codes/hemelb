@@ -61,7 +61,7 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
     }
 }
 
-///#undef MPICHX_TOPOLOGY_DEPTHS
+//#undef MPICHX_TOPOLOGY_DEPTHS
 #ifdef MPICHX_TOPOLOGY_DEPTHS
 
 int netFindTopology (Net *net, int *depths)
@@ -1035,8 +1035,9 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
       net->neigh_proc[ n ].f_recv_iv = &f_recv_iv[ net->shared_fs ];
       
       m = net->neigh_proc[ n ].fs;
+#ifndef BENCH
       net->neigh_proc[ n ].d_to_send_p = (double **)malloc(sizeof(double *) * m);
-      
+#endif
       net->shared_fs += net->neigh_proc[ n ].fs;
       net->neigh_proc[ n ].fs = 0;
     }
@@ -1060,15 +1061,16 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
       
       net->site_data = (unsigned int *)malloc(sizeof(unsigned int) * net->my_sites);
     }
+#ifndef BENCH
   d = (double *)malloc(sizeof(double) * (net->my_sites + 1));
   
   nd_p = (double **)malloc(sizeof(double *) * (net->my_sites * 14 + 1));
+#endif
   
 #ifndef NOMPI
   net->err = MPI_Gather (&net->my_sites, 1, MPI_INT, proc_sites, 1, MPI_INT, 
 			 0, MPI_COMM_WORLD);
 #endif
-  
   
   net->from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * net->procs);
   
@@ -1120,8 +1122,9 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			      neigh_k = site_k + e_z[ l ];
 			      
 			      f_id[ site_map*15+l   ] = net->my_sites * 15;
+#ifndef BENCH
 			      nd_p[ site_map*14+l-1 ] = &d[ net->my_sites ];
-			      
+#endif
 			      site_data_p = netSiteMapPointer (neigh_i, neigh_j, neigh_k, net);
 			      
 			      if (site_data_p == NULL || *site_data_p & (1U << 31U))
@@ -1133,7 +1136,9 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			      if (neigh_proc_id == net->id)
 				{
 				  f_id[ site_map*15+l   ] = *site_data_p * 15 + l;
+#ifndef BENCH
 				  nd_p[ site_map*14+l-1 ] = &d[ *site_data_p ];
+#endif
 				  continue;
 				}
 			      
@@ -1148,10 +1153,12 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			      f_data_p[ 3 ] = l;
 			      ++neigh_proc_p->fs;
 			    }
+#ifndef BENCH
 			  if (!lbm->is_checkpoint)
 			    {
 			      d[ site_map ] = (double)lbm->block_density[ lbm->block_map[n] ];
 			    }
+#endif
 			  net->site_data[ site_map ] = site_data[ my_sites ];
 			  ++my_sites;
 			}
@@ -1162,9 +1169,10 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
     }
   free(site_data);
   
+#ifndef BENCH
   free(lbm->block_map);
   free(lbm->block_density);
-  
+#endif
   // point-to-point communications are performed to match data to be
   // sent to/receive from different partitions; in this way, the
   // communication of the locations of the interface-dependent fluid
@@ -1180,7 +1188,6 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
       net->req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs * net->procs));
     }
 #endif
-  
   for (m = 0; m < net->neigh_procs; m++)
     {
       neigh_proc_p = &net->neigh_proc[ m ];
@@ -1219,7 +1226,6 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 #ifndef NOMPI
   	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
 #endif
-  	  
   	  for (n = 0; n < (neigh_proc_p->fs<<2); n += 4)
   	    {
 	      f_data_p = &neigh_proc_p->f_data[ n ];
@@ -1247,9 +1253,10 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	  site_map = *netSiteMapPointer (i, j, k, net);
 	  neigh_proc_p->f_send_id[ n ] = site_map * 15 + l;
 	  neigh_proc_p->f_recv_iv[ n ] = site_map * 15 + inv_dir[ l ];
-	  
+#ifndef BENCH
 	  neigh_proc_p->d_to_send_p[ n ] = &d[ site_map ];
 	  nd_p[ site_map*14+l-1 ] = &neigh_proc_p->f_to_recv[ n ];
+#endif
 	}
     }
   
