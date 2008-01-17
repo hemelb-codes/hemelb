@@ -3049,7 +3049,7 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   
 #ifndef NOMPI
   // create the derived datatype for the MPI communications
-  /*
+  
   col_pixel_disps[0] = 0;
   
   for (int i = 1; i < col_pixel_count; i++)
@@ -3063,7 +3063,7 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
 	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(short int) * col_pixel_blocklengths[i - 1]);
 	}
     }
-  */
+  /*
   MPI_Address( &vis->col_pixel_send[0].r, col_pixel_disps + 0 ); 
   MPI_Address( &vis->col_pixel_send[0].g, col_pixel_disps + 1 ); 
   MPI_Address( &vis->col_pixel_send[0].b, col_pixel_disps + 2 ); 
@@ -3076,7 +3076,7 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
 
   for(int i=0; i<col_pixel_count; i++)
     col_pixel_disps[i] -= base;
-  
+  */
   MPI_Type_struct (col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types, &MPI_col_pixel_type);
   MPI_Type_commit (&MPI_col_pixel_type);
 #endif
