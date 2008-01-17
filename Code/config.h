@@ -224,7 +224,9 @@ struct NeighProc
   int *f_send_id;
   int *f_recv_iv;
   
+#ifndef BENCH
   double **d_to_send_p;
+#endif
 };
 
 
@@ -353,9 +355,11 @@ extern double *vel;
 
 extern float *flow_field;
 
+#ifndef BENCH
 extern double *d;
 
 extern double **nd_p;
+#endif
 
 
 extern short int f_data[4*SHARED_DISTRIBUTIONS_MAX];
@@ -415,7 +419,7 @@ void lbmStress (double f[], double *stress, LBM *lbm);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, LBM *lbm);
 int lbmCollisionType (unsigned int site_data);
 void lbmInit (char *system_file_name, char *checkpoint_file_name, LBM *lbm, Net *net);
-void lbmSetOptimizedInitialConditions (LBM *lbm, Net *net);
+void lbmSetInitialConditions (LBM *lbm, Net *net);
 int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_converged, LBM *lbm, Net *net);
 void lbmEnd (LBM *lbm);
 
@@ -435,12 +439,11 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
 void lbmUpdateParameters (LBM *lbm, SteerParams *steer);
 #endif
 
-void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, LBM *lbm, Net *net);
+void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net);
 
 void rtInit (Net *net, Vis *vis);
-void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						   float cutoff, float col[]),
+void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2, float col[]),
 		   Net *net, Vis *vis);
 void rtEnd (Vis *vis);
 
@@ -463,8 +466,7 @@ void visProjection (float ortho_x, float ortho_y,
 		    float dist,
 		    float zoom);
 void visInit (char *image_file_name, Net *net, Vis *vis);
-void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						   float cutoff, float col[]),
+void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float t1, float t2, float col[]),
 		 void ColourPalette (float vel_m, float col[]),
 		 Net *net, Vis *vis);
 void visRenderB (Net *net, Vis *vis);
