@@ -10,20 +10,24 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   FILE *system_config;
   XDR xdr_config;
-  
+#ifndef BENCH
   float *block_density_p = NULL;
   float error;
   float temp;
   
   int density_blocks, density_blocks_max;
   int iters;
-  
-  int i, j, k, ii, jj, kk, m, n;
+#endif
+  int i, j, k, ii, jj, kk, n;
   int flag;
+#ifndef BENCH
+  int m;
   int dummy = 0;
+#endif
   
   unsigned int site_data;
   unsigned int site_i, site_j, site_k;
+#ifndef BENCH
   unsigned int boundary_id;
   
   struct DensityBlock
@@ -35,6 +39,8 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   DensityBlock *density_block = NULL;
   DensityBlock *density_block_p = NULL;
+#endif
+  
   
   fprintf(stderr, "opening system configuration file %s [rank %i]\n", lbm->system_file_name, net->id);
 
@@ -88,6 +94,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
   lbm->site_max_y = 0;
   lbm->site_max_z = 0;
   
+#ifndef BENCH
   density_blocks_max = dummy;
   density_blocks = dummy;
   
@@ -101,6 +108,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
       density_block = (DensityBlock *)malloc(sizeof(DensityBlock) * density_blocks_max);
     }
+#endif
   n = -1;
   
   for (i = 0; i < blocks_x; i++)
@@ -112,11 +120,11 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      lbm->fluid_sites_per_block[ ++n ] = 0;
 	      
 	      xdr_int (&xdr_config, &flag);
-	      
+#ifndef BENCH
 	      if (!lbm->is_checkpoint) lbm->block_map[ n ] = -1;
-	      
+#endif
 	      if (flag == 0) continue;
-	      
+#ifndef BENCH
 	      if (!lbm->is_checkpoint)
 		{
 		  lbm->block_map[ n ] = density_blocks;
@@ -136,7 +144,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
 		  density_block_p->boundary_sites = 0;
 		  ++density_blocks;
 		}
-	      
+#endif
 	      for (ii = 0; ii < block_size; ii++)
 		{
 		  site_i = (i << shift) + ii;
@@ -165,7 +173,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			  lbm->site_max_x = max(lbm->site_max_x, site_i);
 			  lbm->site_max_y = max(lbm->site_max_y, site_j);
 			  lbm->site_max_z = max(lbm->site_max_z, site_k);
-			  
+#ifndef BENCH
 			  if (!lbm->is_checkpoint)
 			    {
 			      if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
@@ -183,6 +191,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
 				  *block_density_p += lbm->outlet_density[ boundary_id ];
 				}
 			    }
+#endif
 			}
 		    }
 		}
@@ -191,7 +200,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
     }
   xdr_destroy (&xdr_config);
   fclose (system_config);
-  
+#ifndef BENCH
   if (lbm->is_checkpoint) return;
   
   density_blocks = 0;
@@ -265,6 +274,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	}
     }
   free(density_block);
+#endif
 }
 
 
@@ -284,7 +294,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   
   if (net->id == 0)
     {
-
       fprintf(stderr, "opening parameters file %s\n", parameters_file_name);
 
       FILE *parameters_file = fopen (parameters_file_name, "r");
@@ -335,6 +344,16 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
       par_to_send[ 1 ] = 0.1 + (double)lbm->outlets;
+#ifdef BENCH
+      for (n = 0; n < lbm->inlets; n++)
+	{
+	  lbm->inlet_density[ n ] = 1.;
+	}
+      for (n = 0; n < lbm->outlets; n++)
+	{
+	  lbm->outlet_density[ n ] = 1.;
+	}
+#endif
     }
 #ifndef NOMPI
   net->err = MPI_Bcast (par_to_send, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -501,12 +520,10 @@ void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net)
 }
 
 
-void lbmWriteConfig (int stability, char *output_file_name, int is_checkpoint, LBM *lbm, Net *net)
+void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 {
   // this function writes the density, velocity and effective von
-  // Mises stress flow field on "output_file_name" which will be the
-  // output file or the checkpoint one if "is_checkpoint" is "0" or
-  // "1" respectively
+  // Mises stress flow fields on "output_file_name"
   
   FILE *system_config = NULL;
   XDR	xdr_system_config;
