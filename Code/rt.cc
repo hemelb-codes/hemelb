@@ -1,10 +1,10 @@
 #include "config.h"
 
+
 void (*rtRayAABBIntersection[8]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t);
 
 void (*rtTraverse[8]) (float org[],
-		       void (*rtAbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-							 float cutoff, float col[]),
+		       void (*rtAbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		       Cluster *cluster_p, Net *net, Vis *vis);
 
 
@@ -156,7 +156,7 @@ void rtRayAABBIntersection111 (AABB *aabb, float inv_x, float inv_y, float inv_z
 
 void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]), Vis *vis)
+						    float col[]), Vis *vis)
 {
   float t_max[VIS_VEC_SIZE];
   float value;
@@ -195,7 +195,7 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 	      	{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -208,7 +208,7 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -224,7 +224,7 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -237,7 +237,7 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -252,7 +252,7 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 
 void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]), Vis *vis)
+						    float col[]), Vis *vis)
 {
   float t_max[VIS_VEC_SIZE];
   float value;
@@ -293,7 +293,7 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -306,7 +306,7 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -322,7 +322,7 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -335,7 +335,7 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -350,7 +350,7 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
 
 void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]), Vis *vis)
+						    float col[]), Vis *vis)
 {
   float t_max[VIS_VEC_SIZE];
   float value;
@@ -391,7 +391,7 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -404,7 +404,7 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -420,7 +420,7 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -433,7 +433,7 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -448,7 +448,7 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
 
 void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]), Vis *vis)
+						    float col[]), Vis *vis)
 {
   float t_max[VIS_VEC_SIZE];
   float value;
@@ -489,7 +489,7 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -502,7 +502,7 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -518,7 +518,7 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -531,7 +531,7 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -546,7 +546,7 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
 
 void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]), Vis *vis)
+						    float col[]), Vis *vis)
 {
   float t_max[VIS_VEC_SIZE];
   float value;
@@ -587,7 +587,7 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -600,7 +600,7 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -616,7 +616,7 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -629,7 +629,7 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -644,7 +644,7 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
 
 void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]), Vis *vis)
+						    float col[]), Vis *vis)
 {
   float t_max[VIS_VEC_SIZE];
   float value;
@@ -685,7 +685,7 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -698,7 +698,7 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		      
 		  if (vis->mode == 1) return;
 		}
@@ -714,7 +714,7 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -727,7 +727,7 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -742,7 +742,7 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
 
 void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]), Vis *vis)
+						    float col[]), Vis *vis)
 {
   float t_max[VIS_VEC_SIZE];
   float value;
@@ -783,7 +783,7 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -796,7 +796,7 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		      
 		  if (vis->mode == 1) return;
 		}
@@ -812,7 +812,7 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -825,7 +825,7 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -840,7 +840,7 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
 
 void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float t,
 		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]), Vis *vis)
+						    float col[]), Vis *vis)
 {
   float t_max[VIS_VEC_SIZE];
   float value;
@@ -879,7 +879,7 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -892,7 +892,7 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -908,7 +908,7 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -921,7 +921,7 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], vis->cutoff, ray_col);
+		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
 		  
 		  if (vis->mode == 1) return;
 		}
@@ -935,8 +935,7 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 }
 
 void rtTraverse000 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]),
+		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
@@ -1076,8 +1075,7 @@ void rtTraverse000 (float org[],
 }
 
 void rtTraverse001 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]),
+		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
@@ -1218,8 +1216,7 @@ void rtTraverse001 (float org[],
 }
 
 void rtTraverse010 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]),
+		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
@@ -1360,8 +1357,7 @@ void rtTraverse010 (float org[],
 }
 
 void rtTraverse011 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]),
+		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
@@ -1503,8 +1499,7 @@ void rtTraverse011 (float org[],
 }
 
 void rtTraverse100 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]),
+		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
@@ -1645,8 +1640,7 @@ void rtTraverse100 (float org[],
 }
 
 void rtTraverse101 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]),
+		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
@@ -1788,8 +1782,7 @@ void rtTraverse101 (float org[],
 }
 
 void rtTraverse110 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]),
+		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
@@ -1931,8 +1924,7 @@ void rtTraverse110 (float org[],
 }
 
 void rtTraverse111 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float cutoff, float col[]),
+		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
@@ -2094,8 +2086,7 @@ void rtInit (Net *net, Vis *vis)
 }
 
 
-void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						   float cutoff, float col[]),
+void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2, float col[]),
 		   Net *net, Vis *vis)
 {
   // here, the ray tracing is performed and the intra-machine communications take place
@@ -2405,14 +2396,15 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
   int di, dj;
   int i, j;
   int l, m, n;
+#ifndef NOMPI
   int streamlines_max;
-  
+#endif
   unsigned int site_id;
   
   DataBlock *map_block_p;
-  
+#ifndef NOMPI
   NeighProc *neigh_proc_p;
-  
+#endif
   
   vis->streamlines = vis->seeds;
   memcpy (vis->streamline, vis->seed, vis->seeds * VIS_VEC_SIZE * sizeof(float));
@@ -2652,11 +2644,11 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
 	      is_inside_my_subdomain = 1;
 	    }
 	}
+#ifndef NOMPI
       for (m = 0; m < net->neigh_procs; m++)
       	{
       	  neigh_proc_p = &net->neigh_proc[ m ];
       	  
-#ifndef NOMPI
       	  net->err = MPI_Send (&streamlines_to_send[m], 1, MPI_INT,
 				neigh_proc_p->id, 30, MPI_COMM_WORLD);
       	  net->err = MPI_Recv (&streamlines_to_recv[m], 1, MPI_INT,
@@ -2679,9 +2671,8 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
       	  	      streamlines_max * VIS_VEC_SIZE * sizeof(float));
       	      vis->streamlines += streamlines_max;
       	    }
-#endif
 	}
-      
+#endif
     }
 }
 
@@ -2802,17 +2793,15 @@ void visProjection (float ortho_x, float ortho_y,
 
 void visWritePixel (float col[], float t, int i, int j, Vis *vis)
 {
-  int pixels_x, pixels_y;
   int *col_pixel_id_p;
+#ifndef NOMPI
   int err;
+#endif
   
   ColPixel *col_pixel_p;
   
   
-  pixels_x = screen.pixels_x;
-  pixels_y = screen.pixels_y;
-  
-  if (*(col_pixel_id_p = &vis->col_pixel_id[ i * pixels_y + j ]) == -1)
+  if (*(col_pixel_id_p = &vis->col_pixel_id[ i * screen.pixels_y + j ]) == -1)
     {
       if (vis->col_pixels >= COLOURED_PIXELS_PER_PROC_MAX)
 	{
@@ -2882,7 +2871,6 @@ void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
   
   if (net->id == 0)
     {
-
       fprintf(stderr, "opening ray tracing configuration file %s\n", parameters_file_name);
 
       parameters_file = fopen (parameters_file_name, "r");
@@ -3009,7 +2997,6 @@ void visUpdateParameters (Vis *vis, SteerParams *steer)
 
 void visInit (char *image_file_name, Net *net, Vis *vis)
 {
-  
   blocks_yz = blocks_y * blocks_z;
   
   vis->half_dim[0] = 0.5F * (float)sites_x;
@@ -3034,17 +3021,18 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   block_size_vec[2] = 1;
   block_size_vec[3] = 0;
   
-#ifndef NOMPI
-
-  MPI_Datatype col_pixel_types[7] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-				     MPI_SHORT, MPI_SHORT, MPI_UB};
   
-  int col_pixel_count =7;
-  int col_pixel_blocklengths[7] = {1, 1, 1, 1, 1, 1,1};
-
+#ifndef NOMPI
+  int col_pixel_count = 7;
+  int col_pixel_blocklengths[7] = {1, 1, 1, 1, 1, 1, 1};
+  
+  MPI_Datatype col_pixel_types[7] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+				     MPI_SHORT, MPI_SHORT,
+				     MPI_UB};
+  
   MPI_Aint col_pixel_disps[7];
-
 #endif
+  
   
   vis->image_file_name = image_file_name;
   
@@ -3058,23 +3046,24 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   vis->pixels_max = IMAGE_SIZE;
   vis->col_pixel_id = (int *)malloc(sizeof(int) * vis->pixels_max);
   
+  
 #ifndef NOMPI
   // create the derived datatype for the MPI communications
+  /*
+  col_pixel_disps[0] = 0;
   
-/*  col_pixel_disps[0] = 0;
-  
- for (int i = 1; i < col_pixel_count; i++)
+  for (int i = 1; i < col_pixel_count; i++)
     {
       if (col_pixel_types[i - 1] == MPI_FLOAT)
 	{
-	  col_pixel_disps[i] = col_pixel_disps[i - 1] + sizeof(float);
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float) * col_pixel_blocklengths[i - 1]);
 	}
       else if (col_pixel_types[i - 1] == MPI_SHORT)
 	{
-	  col_pixel_disps[i] = col_pixel_disps[i - 1] + sizeof(short);
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(short int) * col_pixel_blocklengths[i - 1]);
 	}
-    } */
-
+    }
+  */
   MPI_Address( &vis->col_pixel_send[0].r, col_pixel_disps + 0 ); 
   MPI_Address( &vis->col_pixel_send[0].g, col_pixel_disps + 1 ); 
   MPI_Address( &vis->col_pixel_send[0].b, col_pixel_disps + 2 ); 
@@ -3086,12 +3075,10 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   int base = col_pixel_disps[0];
 
   for(int i=0; i<col_pixel_count; i++)
-	col_pixel_disps[i] -= base;
-
+    col_pixel_disps[i] -= base;
+  
   MPI_Type_struct (col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types, &MPI_col_pixel_type);
-
   MPI_Type_commit (&MPI_col_pixel_type);
-
 #endif
   
   rtInit (net, vis);
@@ -3100,12 +3087,10 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
 }
 
 
-void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float t1, float t2,
-						   float cutoff, float col[]),
+void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float t1, float t2, float col[]),
 		 void slColourPalette (float vel_m, float col[]),
 		 Net *net, Vis *vis)
 {
-
   int pixels_x, pixels_y;
   int i, j;
   int m, n;
@@ -3115,6 +3100,7 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
   int machine_id, master_proc_id;
   
   ColPixel *col_pixel1, *col_pixel2;
+  
   
   pixels_x = screen.pixels_x;
   pixels_y = screen.pixels_y;
@@ -3183,13 +3169,11 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
 	      recv_id += comm_inc << 1;
 	      continue;
 	    }
-
 	  if (net->id == send_id)
 	    {
 #ifndef NOMPI
 	      net->err = MPI_Send (&vis->col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 #endif
-
 	      if (vis->col_pixels > 0)
 		{
 #ifndef NOMPI
@@ -3207,7 +3191,7 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
 		{
 		  net->err = MPI_Recv (&vis->col_pixel_send, col_pixels, MPI_col_pixel_type,
 				       send_id, 20, MPI_COMM_WORLD, net->status);
-		} 
+		}
 #else
 	      col_pixels = 0;
 #endif
@@ -3274,7 +3258,7 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
     }
   
   // inter-machine communications of sub-images begin here
-
+  
   if (net->id != 0)
     {
       recv_id = 0;
@@ -3323,9 +3307,7 @@ void visRenderB (Net *net, Vis *vis)
   // here, the intra-machine communications take place and the buffer
   // to stream to the client or the output image are set
   
-  float factor;
-  
-  int pixels_x, pixels_y;
+  int pixels_y;
   int i, j;
   int m, n;
   int *col_pixel_id_p;
@@ -3336,7 +3318,6 @@ void visRenderB (Net *net, Vis *vis)
   ColPixel *col_pixel1, *col_pixel2;
   
   
-  pixels_x = screen.pixels_x;
   pixels_y = screen.pixels_y;
   
   if (net->machines > 1)
@@ -3419,6 +3400,8 @@ void visRenderB (Net *net, Vis *vis)
   
 #ifndef BENCH
   
+  float factor;
+  
   if (net->id != 0) return;
   
   if (vis->mode == 0)
@@ -3429,7 +3412,6 @@ void visRenderB (Net *net, Vis *vis)
     {
       factor = 255.F;
     }
-  
   
 #ifdef RG
   

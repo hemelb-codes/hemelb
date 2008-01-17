@@ -178,6 +178,7 @@ void *hemeLB_network (void *ptr)
   
   ColPixel *col_pixel_p;
   
+  
   while (1)
     {
       pthread_mutex_lock ( &network_buffer_copy_lock );
@@ -313,7 +314,7 @@ void *hemeLB_network (void *ptr)
 #endif // RG
 
 
-inline void rtAbsorptionCoefficients (float flow_field_value, float t1, float t2, float cutoff, float col[])
+inline void rtAbsorptionCoefficients (float flow_field_value, float t1, float t2, float col[])
 {
   flow_field_value = fminf(1.F, flow_field_value);
   
@@ -355,8 +356,9 @@ inline void slColourPalette (float vel_magnitude, float col[])
 int IsBenckSectionFinished (double minutes, double elapsed_time)
 {
   int is_bench_section_finished = 0;
+#ifndef NOMPI
   int err;
-  
+#endif
   
   if (elapsed_time > minutes * 60.)
     {
@@ -402,9 +404,6 @@ int main (int argc, char *argv[])
 #endif // BENCH
   
   int time_step, stability, is_converged;
-  int checkpoint_count = 0;
-  int conv_count = 0;
-  int ray_tracing_count = 0;
   int *proc_fluid_sites;
   int depths;
   
@@ -413,6 +412,9 @@ int main (int argc, char *argv[])
   int fluid_solver_and_vr_time_steps;
   int fluid_solver_and_is_time_steps;
 #else
+  int checkpoint_count = 0;
+  int conv_count = 0;
+  int ray_tracing_count = 0;
   int write_checkpoint, check_conv, perform_vis;
   int is_thread_locked;
 #endif
@@ -448,15 +450,13 @@ int main (int argc, char *argv[])
   net.err = MPI_Init (&argc, &argv);
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
   net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
-
-  double total_time = myClock ();
-  double elapsed_time; 
-  
 #else
   net.procs = 1;
   net.id = 0;
 #endif
   
+  double total_time = myClock ();
+  double elapsed_time;
   
   char *input_file_path( argv[1] );
   
@@ -621,6 +621,7 @@ int main (int argc, char *argv[])
     }
 #endif // STEER
   
+  
   lbmInit (input_config_name, checkpoint_config_name, &lbm, &net);
   
   if (netFindTopology (&net, &depths) == 0)
@@ -636,7 +637,7 @@ int main (int argc, char *argv[])
   
   if (!lbm.is_checkpoint)
     {
-      lbmSetOptimizedInitialConditions (&lbm, &net);
+      lbmSetInitialConditions (&lbm, &net);
     }
   else
     {
@@ -651,9 +652,7 @@ int main (int argc, char *argv[])
   visInit (output_image_name, &net, &vis);
   
   stability = STABLE;
-  checkpoint_count = 0;
-  conv_count = 0;
-  ray_tracing_count = 0;
+  
   
 #ifdef STEER
 
@@ -731,6 +730,7 @@ int main (int argc, char *argv[])
 #else
   visReadParameters (vis_parameters_name, &net, &vis);
 #endif
+  
   
 #ifndef BENCH
   simulation_time = myClock ();
@@ -895,9 +895,9 @@ int main (int argc, char *argv[])
 	  break;
 	}
     }
-
   fluid_solver_time = myClock () - fluid_solver_time;
   fluid_solver_time_steps = time_step;
+  
   
   // benchmarking HemeLB's fluid solver and volume rendering
   
@@ -906,14 +906,11 @@ int main (int argc, char *argv[])
   vis.mode = 0;
   vis.cutoff = -EPSILON;
   fluid_solver_and_vr_time = myClock ();
-
+  
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
-
       visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
-
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
-
       visRenderB (&net, &vis);
       
       // partial timings
@@ -946,11 +943,8 @@ int main (int argc, char *argv[])
   
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
-
-     visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
-
+      visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
-
       visRenderB (&net, &vis);
       
       // partial timings
@@ -1027,7 +1021,7 @@ int main (int argc, char *argv[])
     }
   net.fo_time = myClock ();
   
-  /// lbmWriteConfig (stability, output_config_name, 0, &lbm, &net);
+  /// lbmWriteConfig (stability, output_config_name, &lbm, &net);
   
   net.fo_time = myClock () - net.fo_time;
   
