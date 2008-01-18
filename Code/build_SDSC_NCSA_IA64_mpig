@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRC="config.cc eVizRLEUtil.c io.cc lb.cc main.cc rt.cc topology.cc"
+SRC="config.cc io.cc lb.cc main.cc rt.cc topology.cc"
 FLAGS="-O3 -mcpu=itanium2 -no-gcc"
 MPI_CC=mpicxx
 MPIg_CC=mpicxx
