@@ -3088,7 +3088,7 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
 
 
 void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float t1, float t2, float col[]),
-		 void slColourPalette (float vel_m, float col[]),
+		 void (*slColourPalette) (float vel_m, float col[]),
 		 Net *net, Vis *vis)
 {
   int pixels_x, pixels_y;
