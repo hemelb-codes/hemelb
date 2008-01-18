@@ -12,7 +12,7 @@ echo "Building HemeLB with MPIg + benchmarking"
 $MPIg_CC \
         -DBENCH \
         $FLAGS $SRC -lm \
-        -o hemelb_mpig_bench
+        -o hemelb
 }
 
 function BuildHemeLB_MPIg_Vis {
