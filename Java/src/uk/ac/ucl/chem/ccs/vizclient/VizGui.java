@@ -9,18 +9,32 @@ import javax.swing.BorderFactory;
 import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.JFrame;
-import javax.swing.JTextPane;
+import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.media.opengl.*;
 
 
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 public class VizGui extends javax.swing.JPanel implements GLEventListener{
-	private JTextPane jTextPane1;
+	private JTextArea notificationArea;
+	static private JScrollPane jScrollPane1;
 	private GLCanvas canvas1;
 	private GLCapabilities cap;
-
-	float scale_x = 1.0f / (float)1024;
-	float scale_y = 1.0f / (float)1024;
+	float scale_x;
+	float scale_y;
 	
 	ConcurrentLinkedQueue queue;
 	
@@ -31,6 +45,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	    Thread thread = new Thread(nt);
 	    thread.start();
 		initGUI();
+
+		
 	}
 	
 	/**
@@ -39,7 +55,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	*/
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		VizGui vg = new VizGui(65250, "fermi.chem.ucl.ac.uk");
+		VizGui vg = new VizGui(65251, "fermi.chem.ucl.ac.uk");
 		frame.getContentPane().add(vg);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
@@ -67,51 +83,52 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     public void init(GLAutoDrawable drawable) {
 
         // print every openGL call for debugging purposes
-	drawable.setGL(new TraceGL(drawable.getGL(), System.err));
+	//drawable.setGL(new TraceGL(drawable.getGL(), System.err));
 	GL gl = drawable.getGL();
 	
 	gl.glDisable (GL.GL_DEPTH_TEST);
 	gl.glDisable (GL.GL_BLEND);
 	gl.glShadeModel (GL.GL_FLAT);
 	gl.glDisable (GL.GL_DITHER);
-	
-	/** 
-	 * Set the background colour when the GLDrawable 
-	 * is cleared 
-	 */ 
+
 	gl.glClearColor( 1.0f, 1.0f, 1.0f, 1.0f ); //white
 
-	/** Set the drawing colour to black */
-	//gl.glColor3f( 0.0f, 0.0f, 0.0f );
-	//drawable.getGL().glPointSize(1.0f); //a 'dot' is 4 by 4 pixels
+	gl.glPointSize (1.F);
+	
+	int y = 512;
+	int x = 512;
+	scale_x = 1.0f / (float)x;
+	scale_y = 1.0f / (float)y;
+	
     }
     
     /** 
      * Executed if the associated GLDrawable is resized
      */ 
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
-/*	GL gl = drawable.getGL();
+	GL gl = drawable.getGL();
 	gl.glViewport( 0, 0, width, height );
-	gl.glMatrixMode( GL.GL_PROJECTION ); 
+	//gl.glMatrixMode( GL.GL_PROJECTION ); 
 	gl.glLoadIdentity();
-        gl.glOrtho(0, 400, 0, 300, -1, 1);
+   //  
+	//gl.glOrtho(0, 400, 0, 300, -1, 1);
     	
     	
-   	  float ortho_x = 0.5F * (float)w / (float)PIXELS_X;
-      float ortho_y = 0.5F * (float)h / (float)PIXELS_Y;
+   	 // float ortho_x = 0.5F * (float)w / (float)PIXELS_X;
+      //float ortho_y = 0.5F * (float)h / (float)PIXELS_Y;
     	  
-    gl.glViewport(0, 0, width, height);
+    //gl.glViewport(0, 0, width, height);
     	  
-    	  gl.glLoadIdentity ();
-    	  gl.glOrtho2D(-ortho_x, ortho_x, -ortho_y, ortho_y);*/
+    	  //gl.glLoadIdentity ();
+    	 // gl.glOrtho2D(-ortho_x, ortho_x, -ortho_y, ortho_y);*/
     }
 
     /** This method handles the painting of the GLDrawable */
     
     public void display(GLAutoDrawable drawable) {
-        VizFrameData vfd = (VizFrameData)queue.poll();
+    VizFrameData vfd = (VizFrameData)queue.poll();
     
-        if (queue != null) {	
+    if (vfd != null) {	
     GL gl = drawable.getGL();
 	/** Clear the colour buffer */
 	gl.glClear( GL.GL_COLOR_BUFFER_BIT );
@@ -124,14 +141,15 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	      gl.glColor3f (vfd.getR(i) * (1.0f / 255.0f),
 	      				vfd.getG(i) * (1.0f / 255.0f),
 						vfd.getB(i) * (1.0f / 255.0f));
-
 	      
 	  gl.glVertex2f (-0.5f + scale_x * vfd.getX(i),-0.5f + scale_y * vfd.getY(i));
 	    
 	    }
+	  gl.glEnd(); 
+	  notificationArea.append("Frame " + vfd.getFrameNo() + "  Buffer size " + vfd.getBufferSize() + "\n");
+	  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+	  
 	
-	
-	gl.glEnd(); 
     }
     }
     /** This method handles things if display depth changes */
@@ -154,18 +172,24 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			thisLayout.setVGap(5);
 			this.setPreferredSize(new java.awt.Dimension(570, 677));
 			{
-				jTextPane1 = new JTextPane();
-				this.add(jTextPane1, "0, 9, 0, 9");
-				jTextPane1.setText("Messsages");
-				jTextPane1.setEditable(false);
-				jTextPane1.setVisible(true)
-;				jTextPane1.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED));
-			}
-			{
 				cap = new GLCapabilities(); 
 				canvas1 = new GLCanvas(cap);
 				this.add(canvas1, "0, 0, 0, 8");
 				canvas1.addGLEventListener(this);
+			}
+			{
+				jScrollPane1 = new JScrollPane();
+				this.add(jScrollPane1, "0, 9, 0, 9");
+				jScrollPane1.setAutoscrolls(true);
+				{
+					notificationArea = new JTextArea();
+					jScrollPane1.setViewportView(notificationArea);
+					notificationArea.setText("Messsages");
+					notificationArea.setVisible(true);
+					notificationArea.setBorder(BorderFactory
+						.createBevelBorder(BevelBorder.LOWERED));
+					notificationArea.setDoubleBuffered(true);
+				}
 			}
 
 		} catch (Exception e) {
