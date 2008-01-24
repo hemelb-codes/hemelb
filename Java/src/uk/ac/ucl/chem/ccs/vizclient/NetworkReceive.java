@@ -2,8 +2,6 @@ package uk.ac.ucl.chem.ccs.vizclient;
 
 import java.io.*;
 import java.net.*;
-import java.awt.*;
-import java.awt.image.*;
 
 public class NetworkReceive {
 
