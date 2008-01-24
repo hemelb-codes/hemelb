@@ -11,14 +11,16 @@ package uk.ac.ucl.chem.ccs.vizclient;
 
 public class VizFrameData {
 
-	int length = 0;
+	private long frameNo = 0;
+	private int bufferSize = 0;
+	private int length = 0;
 	
-	int r[];
-	int g[];
-	int b[];
+	private int r[];
+	private int g[];
+	private int b[];
 	
-	int x[];
-	int y[];
+	private int x[];
+	private int y[];
 	
 	
 	/**
@@ -35,6 +37,30 @@ public class VizFrameData {
 	
 	
 
+	/**
+	 * @return Returns the bufferSize.
+	 */
+	public int getBufferSize() {
+		return bufferSize;
+	}
+	/**
+	 * @param bufferSize The bufferSize to set.
+	 */
+	public void setBufferSize(int bufferSize) {
+		this.bufferSize = bufferSize;
+	}
+	/**
+	 * @return Returns the frameNo.
+	 */
+	public long getFrameNo() {
+		return frameNo;
+	}
+	/**
+	 * @param frameNo The frameNo to set.
+	 */
+	public void setFrameNo(long frame_no) {
+		this.frameNo = frame_no;
+	}
 	/**
 	 * @return Returns the b.
 	 */
