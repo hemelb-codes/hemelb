@@ -14,20 +14,6 @@ import javax.swing.JScrollPane;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.media.opengl.*;
 
-
-
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
 public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private JTextArea notificationArea;
 	static private JScrollPane jScrollPane1;
@@ -35,18 +21,54 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private GLCapabilities cap;
 	float scale_x;
 	float scale_y;
-	
-	ConcurrentLinkedQueue queue;
+	private String hostname;
+	private int port;
+    private NetThread thread=null; 
+	private Animator animator = null;
+    private boolean connected = false;
+	private ConcurrentLinkedQueue queue;
+	private NetworkReceive nr;
 	
 	public VizGui(int port, String hostname) {
 		super();
 		queue = new ConcurrentLinkedQueue();
-	    NetThread nt = new NetThread(port, hostname);
-	    Thread thread = new Thread(nt);
-	    thread.start();
+		this.port = port;
+		this.hostname = hostname;
 		initGUI();
 
-		
+	}
+	
+	public boolean startReceive() {
+		if (!connected) {
+		nr = new NetworkReceive (port, hostname);
+		connected = nr.connect();
+		if (!connected) {
+			notificationArea.append("Connection error\n");
+			  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+			return connected;
+		}
+		notificationArea.append("Connection started\n");
+		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+		thread = new NetThread();
+	    thread.start();
+
+		//start the animator thread
+		animator = new Animator(canvas1);
+		animator.start();
+		}
+		return connected;
+	}
+	
+	public boolean stopReceive() {
+		if (connected){
+			animator.stop();
+			connected = !nr.disconnect();
+			
+			//thread.stopThread();
+			notificationArea.append("Connection terminated\n");
+			  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+		}
+		return !connected;
 	}
 	
 	/**
@@ -55,22 +77,21 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	*/
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		VizGui vg = new VizGui(65251, "fermi.chem.ucl.ac.uk");
+		VizGui vg = new VizGui(Integer.parseInt(args[1]), args[0]);
 		frame.getContentPane().add(vg);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
 		frame.addWindowListener( new WindowAdapter() {
 		    public void windowClosed(WindowEvent e){
-				System.exit(0);
+					System.exit(0);
 			    }
 				public void windowClosing(WindowEvent e) {
 				    windowClosed(e);
 				}
 			    }
 		);
-		Animator animator = new Animator(vg.canvas1);
-		animator.start();
+		vg.startReceive();
 
 	}
 	
@@ -99,6 +120,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	int x = 512;
 	scale_x = 1.0f / (float)x;
 	scale_y = 1.0f / (float)y;
+	
+
 	
     }
     
@@ -174,17 +197,17 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				cap = new GLCapabilities(); 
 				canvas1 = new GLCanvas(cap);
-				this.add(canvas1, "0, 0, 0, 8");
+				this.add(canvas1, "0, 1, 0, 9");
 				canvas1.addGLEventListener(this);
 			}
 			{
 				jScrollPane1 = new JScrollPane();
-				this.add(jScrollPane1, "0, 9, 0, 9");
+				this.add(jScrollPane1, "0, 0, 0, 0");
 				jScrollPane1.setAutoscrolls(true);
 				{
 					notificationArea = new JTextArea();
 					jScrollPane1.setViewportView(notificationArea);
-					notificationArea.setText("Messsages");
+					notificationArea.setText("-------Messages-------\n");
 					notificationArea.setVisible(true);
 					notificationArea.setBorder(BorderFactory
 						.createBevelBorder(BevelBorder.LOWERED));
@@ -197,18 +220,27 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		}
 	}
 	
-    private class NetThread implements Runnable {
+    private class NetThread extends Thread {
     	
-    	NetworkReceive nr;
+
+
+		public NetThread () {
+    
+    	}
     	
-    	public NetThread (int port, String hostname) {
-    	    nr = new NetworkReceive (port, hostname);
+    	public void stopThread () {
+    		nr.disconnect();
     	}
     	
     	public void run() {
-    		while(true) {
-    			queue.offer(nr.getFrame());
+    		while(nr.isConnected()) {
+    			VizFrameData vfd =nr.getFrame();
+    			if (vfd != null) {
+    			queue.offer(vfd);
     		}
+    		}
+    			stopReceive();
+
     	}
     }
 

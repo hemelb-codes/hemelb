@@ -17,42 +17,26 @@ public class NetworkReceive  {
 	// r-, g-, b- pixel components need "bits_per_char" bits
 	private int colour_mask = (1 << bits_per_char) - 1;
 	// x-, y- pixel components need "bits_per_two_chars" bits
-	private int pixel_mask = (1 << bits_per_two_chars) - 1;		
+	//private int pixel_mask = (1 << bits_per_two_chars) - 1;		
 	private int colour_data = 0;
-	private int pixel_data = 0;	
+	//private int pixel_data = 0;	
 	private long frame_no = 0;
-	
+	private boolean connected = false;
+	private String hostname;
+	private int port;
 	/**
 	 * 
 	 */
 	public NetworkReceive(int port, String hostname) {
 		// TODO Auto-generated method stub
-		int s=0;
-		try {
-			listenSocket = new Socket();
-			//set TCP buffer size
-			listenSocket.setReceiveBufferSize(1024*1024);
-			s=listenSocket.getReceiveBufferSize();
-			listenSocket.connect(new InetSocketAddress(hostname, port));
-			
-       		BufferedInputStream bufff = new BufferedInputStream(listenSocket.getInputStream());
-			d = new DataInputStream(bufff);
-
-		} catch (UnknownHostException e) {
-			System.err.println("can't connect to host: " + hostname);
-			System.exit(1);
-		} catch (IOException e) {
-			System.err.println("Couldn't get I/O for the connection to: " + hostname);
-			System.exit(1);
-		}
-
-		System.err.println("RecSize " + s);
-		
+		this.hostname = hostname;
+		this.port = port;		
 	}
 
 	
 	public VizFrameData getFrame () {
-		
+		//check if connected?
+		if (connected) {
 		int frame_size=0;
 		frame_no++;		
 		Calendar cal = Calendar.getInstance();
@@ -60,8 +44,6 @@ public class NetworkReceive  {
 		
 		long start_time = cal.getTimeInMillis();
 		System.err.println("Frame no " + frame_no);
-		
-
 
 			try {				
 				frame_size = d.readInt();
@@ -70,8 +52,8 @@ public class NetworkReceive  {
 					return null;
 				}
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				connected = false;
+				return null;
 			}
 	
 		int col_pixels = frame_size/BYTES_PER_PIXEL_DATA;
@@ -84,16 +66,14 @@ public class NetworkReceive  {
 					x_data = d.readShort();
 					y_data = d.readShort();
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					connected = false;
+					return null;
 				}
 
 			vizFrame.setR(i,(colour_data >> bits_per_two_chars) & colour_mask);
 			vizFrame.setG(i,(colour_data >> bits_per_char     ) & colour_mask);
 			vizFrame.setB(i,(colour_data                      ) & colour_mask);
-		  
-			//vizFrame.setX(i, (pixel_data >> bits_per_two_chars) & pixel_mask);
-			//vizFrame.setY(i, (pixel_data                   ) & pixel_mask);	    
+	    
 			
 			vizFrame.setX(i, x_data);
 			vizFrame.setY(i, y_data);	    
@@ -111,9 +91,57 @@ public class NetworkReceive  {
 		vizFrame.setFrameNo(frame_no);
 		vizFrame.setBufferSize(frame_size);
 		return vizFrame;
+		} 
+		return null;
 
 	}
 	
+	public boolean isConnected() {
+		return connected;
+	}
+	
+	public boolean connect(int port, String hostname) {
+		this.port = port;
+		this.hostname = hostname;
+		return connect();
+	}
+	
+	public boolean connect() {
+		if (!connected) {
+		int s=0;
+		try {
+			listenSocket = new Socket();
+			//set TCP buffer size
+			listenSocket.setReceiveBufferSize(1024*1024);
+			s=listenSocket.getReceiveBufferSize();
+			listenSocket.connect(new InetSocketAddress(hostname, port));
+			
+       		BufferedInputStream bufff = new BufferedInputStream(listenSocket.getInputStream());
+			d = new DataInputStream(bufff);
+			connected = true;
+		} catch (UnknownHostException e) {
+			System.err.println("can't connect to host: " + hostname);
+		} catch (IOException e) {
+			System.err.println("Couldn't get I/O for the connection to: " + hostname);
+		}
+
+		System.err.println("RecSize " + s);
+		}
+		return connected;
+	}
+	
+	public boolean disconnect() {
+		if (connected) {
+		try {
+			d.close();
+			listenSocket.close();
+			connected = false;
+		} catch (Exception e) {
+			System.err.println("couldn't close connection");
+		}
+		}
+		return !connected;
+	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#finalize()
@@ -121,13 +149,7 @@ public class NetworkReceive  {
 	protected void finalize() throws Throwable {
 		// TODO Auto-generated method stub
 		super.finalize();
-		try {
-			d.close();
-			listenSocket.close();
-		} catch (Exception e) {
-			System.err.println("couldn't close connection");
-			e.printStackTrace();
-		}
+		disconnect();
 	}
 	/**
 	 * @param args
@@ -135,22 +157,10 @@ public class NetworkReceive  {
 	 */
 	public static void main(String[] args) throws IOException {
 		NetworkReceive nr = new NetworkReceive (Integer.parseInt(args[1]), args[0]);
-		while (true) {
+		while (nr.isConnected()) {
 		nr.getFrame();
 		}
 	}
 	
-	public static final int byteArrayToInt(byte [] b) {
-       // return (b[3] << 24)
-        //        + ((b[2] & 0xFF) << 16)
-          //      + ((b[1] & 0xFF) << 8)
-            //    + (b[0] & 0xFF);
-		
-			int result = b[3] + 256*(b[2] + 256*(b[1] + 256*b[0]));
-	    //System.err.println("b0 " + b[0] + " b1 " + b[1] + " b2 " +  b[2] + " b3 " + b[3]);
-    return result;
-
-}
-
 	
 }
