@@ -14,7 +14,6 @@ public class VizFrameData {
 	private long frameNo = 0;
 	private int bufferSize = 0;
 	private int length = 0;
-	
 	private int r[];
 	private int g[];
 	private int b[];
