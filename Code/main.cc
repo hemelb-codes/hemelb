@@ -24,7 +24,7 @@ FILE *timings_ptr;
 float globalLongitude = 0.;
 
 
-void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
+void visUpdateLongitude (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis)
 {
   FILE *parameters_file;
 
@@ -50,7 +50,7 @@ void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
       fscanf (parameters_file, "%e \n", &zoom);
       
       fscanf (parameters_file, "%i \n", &vis->image_freq);
-      fscanf (parameters_file, "%i \n", &vis->flow_field_type);
+      fscanf (parameters_file, "%i \n", &lbm->flow_field_type);
       fscanf (parameters_file, "%i \n", &vis->mode);
       fscanf (parameters_file, "%e \n", &vis->absorption_factor);
       fscanf (parameters_file, "%e \n", &vis->cutoff);
@@ -67,7 +67,7 @@ void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
       par_to_send[  4 ] = latitude;
       par_to_send[  5 ] = zoom;
       par_to_send[  6 ] = 0.1 + (float)vis->image_freq;
-      par_to_send[  7 ] = 0.1 + (float)vis->flow_field_type;
+      par_to_send[  7 ] = 0.1 + (float)lbm->flow_field_type;
       par_to_send[  8 ] = 0.1 + (float)vis->mode;
       par_to_send[  9 ] = vis->absorption_factor;
       par_to_send[ 10 ] = vis->cutoff;
@@ -86,7 +86,7 @@ void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
   latitude               =      par_to_send[  4 ];
   zoom                   =      par_to_send[  5 ];
   vis->image_freq        = (int)par_to_send[  6 ];
-  vis->flow_field_type   = (int)par_to_send[  7 ];
+  lbm->flow_field_type   = (int)par_to_send[  7 ];
   vis->mode              = (int)par_to_send[  8 ];
   vis->absorption_factor =      par_to_send[  9 ];
   vis->cutoff            =      par_to_send[ 10 ];
@@ -102,9 +102,19 @@ void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
 		 0.5F * (5.F * vis->system_size),
 		 zoom);
   
-  vis->flow_field_value_max_inv[ DENSITY  ] = 1.F / density_max;
-  vis->flow_field_value_max_inv[ VELOCITY ] = 1.F / velocity_max;
-  vis->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
+  if (lbm->flow_field_type == DENSITY)
+    {
+      vis->flow_field_value_max_inv = 1.F / density_max;
+    }
+  else if (lbm->flow_field_type == VELOCITY)
+    {
+      vis->flow_field_value_max_inv = 1.F / velocity_max;
+    }
+  else
+    {
+      vis->flow_field_value_max_inv = 1.F / stress_max;
+    }
+  vis->velocity_max_inv = 1.F / velocity_max;
 }
 
 
@@ -314,42 +324,24 @@ void *hemeLB_network (void *ptr)
 #endif // RG
 
 
-inline void rtAbsorptionCoefficients (float flow_field_value, float t1, float t2, float col[])
+inline void ColourPalette (float value, float col[])
 {
-  flow_field_value = fminf(1.F, flow_field_value);
+  value = fminf(1.F, value);
   
-  if (vis.mode == 0)
-    {
-      // volume rendering option; dt is the thickness of the
-      // trasversal segment in lattice unit
-      
-      float dt = t2 - t1;
-      float palette[VIS_VEC_SIZE];
-      
-      palette[0] = (1.F - flow_field_value) * (1.F - flow_field_value);
-      palette[1] = flow_field_value * (1.F - flow_field_value);
-      palette[2] = flow_field_value * flow_field_value;
-      
-      for (int l = 0; l < VIS_VEC_SIZE; l++)
-	{
-	  col[l] += dt * palette[l];
-	}
-    }
-  else if (vis.mode == 1)
-    {
-      col[0] = (1.F - flow_field_value) * (1.F - flow_field_value);
-      col[1] = flow_field_value * (1.F - flow_field_value);
-      col[2] = flow_field_value * flow_field_value;
-    }
+  col[0] = (1.F - value) * (1.F - value);
+  col[1] = value * (1.F - value);
+  col[2] = value * value;
 }
 
-inline void slColourPalette (float vel_magnitude, float col[])
+
+void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
+			   double inlet_density[], double outlet_density[])
 {
-  vel_magnitude = fminf(1.F, vel_magnitude);
+  double K = 0.00025;
+  double w = 2. * PI / period;
   
-  col[0] = (1.F - vel_magnitude) * (1.F - vel_magnitude);
-  col[1] = vel_magnitude * (1.F - vel_magnitude);
-  col[2] = vel_magnitude * vel_magnitude;
+  inlet_density[0]  = 1. + (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
+  outlet_density[0] = 1. - (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
 }
 
 
@@ -403,6 +395,9 @@ int main (int argc, char *argv[])
   double fluid_solver_time, fluid_solver_and_vr_time, fluid_solver_and_is_time;
 #endif // BENCH
   
+#ifndef BENCH
+  int cycle_id;
+#endif
   int time_step, stability, is_converged;
   int *proc_fluid_sites;
   int depths;
@@ -412,10 +407,15 @@ int main (int argc, char *argv[])
   int fluid_solver_and_vr_time_steps;
   int fluid_solver_and_is_time_steps;
 #else
+#ifndef TD
   int checkpoint_count = 0;
+#endif
   int conv_count = 0;
   int ray_tracing_count = 0;
-  int write_checkpoint, check_conv, perform_vis;
+#ifndef TD
+  int write_checkpoint;
+#endif
+  int check_conv, perform_vis;
   int is_thread_locked;
 #endif
   
@@ -456,7 +456,6 @@ int main (int argc, char *argv[])
 #endif
   
   double total_time = myClock ();
-  double elapsed_time;
   
   char *input_file_path( argv[1] );
   
@@ -621,6 +620,7 @@ int main (int argc, char *argv[])
     }
 #endif // STEER
   
+  proc_fluid_sites = (int *)malloc(sizeof(int) * net.procs);
   
   lbmInit (input_config_name, checkpoint_config_name, &lbm, &net);
   
@@ -631,9 +631,8 @@ int main (int argc, char *argv[])
       MPI_Abort(MPI_COMM_WORLD, 1);
 #endif
     }
-  proc_fluid_sites = (int *)malloc(sizeof(int) * net.procs);
   
-  netInit (&lbm, &net, &vis, proc_fluid_sites);
+  netInit (&lbm, &net, proc_fluid_sites);
   
   if (!lbm.is_checkpoint)
     {
@@ -653,17 +652,16 @@ int main (int argc, char *argv[])
   
   stability = STABLE;
   
-  
 #ifdef STEER
 
   // register params with RealityGrid here
   if(net.id == 0)
     {
       // read only and only if displaying
-/*#ifdef RG
-      steer.status = Register_param("Display Host", REG_FALSE,
-				    (void*)(&host_name), REG_CHAR, "", "");
-#endif */
+//#ifdef RG
+//      steer.status = Register_param("Display Host", REG_FALSE,
+//				    (void*)(&host_name), REG_CHAR, "", "");
+//#endif 
       
       // LBM params
       steer.status = Register_param("Tau", REG_TRUE,
@@ -671,12 +669,16 @@ int main (int argc, char *argv[])
       steer.status = Register_param("Tolerance", REG_TRUE,
 				    (void*)(&steer.tolerance), REG_DBL, "0.0", "0.1");
       steer.status = Register_param("Max time steps",REG_TRUE,
-				    (void*)(&steer.max_time_steps), REG_INT, "1", "");
+				    (void*)(&steer.max_cycles), REG_INT, "1", "");
       steer.status = Register_param("Conv frequency", REG_TRUE,
 				    (void*)(&steer.conv_freq), REG_INT, "1", "");
+#ifndef TD
       steer.status = Register_param("Checkpoint frequency", REG_TRUE,
 				    (void*)(&steer.check_freq), REG_INT, "1", "");
-      
+#else
+      steer.status = Register_param("Checkpoint frequency", REG_TRUE,
+				    (void*)(&steer.period), REG_INT, "1", "");
+#endif
       // Vis params
       steer.status = Register_param("Longitude", REG_TRUE,
 				    (void *)(&steer.longitude), REG_FLOAT, "", "");
@@ -724,152 +726,177 @@ int main (int argc, char *argv[])
       fflush (timings_ptr);
     }
 #endif // STEER
-
+  
 #ifdef STEER
-  visReadParameters (vis_parameters_name, &net, &vis, &steer);
+  visReadParameters (vis_parameters_name, &lbm, &net, &vis, &steer);
 #else
-  visReadParameters (vis_parameters_name, &net, &vis);
+  visReadParameters (vis_parameters_name, &lbm, &net, &vis);
 #endif
   
+#ifdef STEER
+  int steering_time_step = 0;
+#endif
   
 #ifndef BENCH
+  int is_stop = 0;
+  
   simulation_time = myClock ();
   
-  for (time_step = 1; time_step <= lbm.time_steps_max; time_step++)
+  for (cycle_id = 0; cycle_id < lbm.cycles_max && !is_stop; cycle_id++)
     {
-///      globalLongitude += 1.F;
-///      visUpdateLongitude (vis_parameters_name, &net, &vis);
-      
-      write_checkpoint = 0;
-      check_conv = 0;
-      perform_vis = 0;
-      
+      for (time_step = 0; time_step < lbm.period; time_step++)
+	{
+	  //globalLongitude += 1.F;
+	  //visUpdateLongitude (vis_parameters_name, &lbm, &net, &vis);
+	  
+#ifndef TD
+	  write_checkpoint = 0;
+#endif
+	  check_conv = 0;
+	  perform_vis = 0;
+	  
 #ifdef STEER
-      // call steering control
-      if (net.id == 0)
-	{
-	  steer.status = Steering_control (time_step,
-					   &steer.num_params_changed,
-					   steer_changed_param_labels,
-					   &steer.num_recvd_cmds,
-					   steer.recvd_cmds,
-					   steer_recvd_cmd_params);
-	}
-      
-#ifndef NOMPI
-      // broadcast/collect everything
-      net.err = MPI_Bcast (&steer, 1, MPI_steer_type, 0, MPI_COMM_WORLD);
-#endif
-      
-      if (steer.status != REG_SUCCESS)
-	{
-	  fprintf (stderr, "STEER: I am %d and I detected that Steering_control failed.\n", net.id);
-          fflush(stderr);  
-	  continue;
-	}
-      
-      // process commands received
-      for (int i = 0; i < steer.num_recvd_cmds; i++)
-	{
-	  switch (steer.recvd_cmds[i])
-	    {
-	    case REG_STR_STOP:
-	      fprintf (stderr, "STEER: I am %d and I've been told to STOP.\n", net.id);
-              fflush(stderr);
-	      reg_finished = 1;
-	      break;
-	    }
-	} // end of command processing
-      
-      // process changed params
-      // not bothered what changed, just copy across...
-      
-      if (steer.num_params_changed > 0)
-	{
-	  fprintf (stderr, "STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
-          fflush(stderr);
-	  
-	  lbmUpdateParameters (&lbm, &steer);
-	  
-	  visUpdateParameters (&vis, &steer);
-	}
-      // end of param processing
-
-#endif // STEER
-      
-      if (++checkpoint_count >= lbm.checkpoint_freq)
-	{
-	  write_checkpoint = 1;
-	  checkpoint_count = 0;
-	}
-      if (++conv_count >= lbm.conv_freq)
-	{
-	  check_conv = 1;
-	  conv_count = 0;
-	}
-      if (++ray_tracing_count >= vis.image_freq)
-	{
-	  perform_vis = 1;
-	  ray_tracing_count = 0;
-	}
-      
-      // Between the visRenderA/B calls, do not change any vis
-      // parameters.
-      
-      is_thread_locked = 0;
-      
-#ifdef RG
-      if (net.id == 0 && perform_vis == 1)
-	{
-	  ///pthread_mutex_lock( &network_buffer_copy_lock ); ///
-	  is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
-	}
-#ifndef NOMPI
-      net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-#endif
-      
-      if (perform_vis == 1 && is_thread_locked == 0)
-      	{
-      	  visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
-      	}
-      
-      stability = lbmCycle (write_checkpoint, check_conv, perform_vis,
-      			    &is_converged, &lbm, &net);
-      
-      if (perform_vis == 1 && is_thread_locked == 0)
-	{
-	  visRenderB (&net, &vis);
-	  
-#ifdef RG
+	  // call steering control
 	  if (net.id == 0)
 	    {
-	      pthread_mutex_unlock (&network_buffer_copy_lock);
-	      pthread_cond_signal (&network_send_frame);
+	      steer.status = Steering_control (++steering_time_step,
+					       &steer.num_params_changed,
+					       steer_changed_param_labels,
+					       &steer.num_recvd_cmds,
+					       steer.recvd_cmds,
+					       steer_recvd_cmd_params);
+	    }
+	  
+#ifndef NOMPI
+	  // broadcast/collect everything
+	  net.err = MPI_Bcast (&steer, 1, MPI_steer_type, 0, MPI_COMM_WORLD);
+#endif
+	  if (steer.status != REG_SUCCESS)
+	    {
+	      fprintf (stderr, "STEER: I am %d and I detected that Steering_control failed.\n", net.id);
+	      fflush(stderr);  
+	      continue;
+	    }
+	  
+	  // process commands received
+	  for (int i = 0; i < steer.num_recvd_cmds; i++)
+	    {
+	      switch (steer.recvd_cmds[i])
+		{
+		case REG_STR_STOP:
+		  fprintf (stderr, "STEER: I am %d and I've been told to STOP.\n", net.id);
+		  fflush(stderr);
+		  reg_finished = 1;
+		  break;
+		}
+	    } // end of command processing
+	  
+	  // process changed params
+	  // not bothered what changed, just copy across...
+	  
+	  if (steer.num_params_changed > 0)
+	    {
+	      fprintf (stderr, "STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
+	      fflush(stderr);
+	      
+	      lbmUpdateParameters (&lbm, &steer);
+	      
+	      visUpdateParameters (&vis, &steer);
+	    }
+	  // end of param processing
+	  
+#endif // STEER
+	  
+#ifndef TD
+	  if (++checkpoint_count >= lbm.checkpoint_freq)
+	    {
+	      write_checkpoint = 1;
+	      checkpoint_count = 0;
 	    }
 #endif
-	}
-      
-      if (net.id == 0)
-      	{
-	  elapsed_time = myClock () - simulation_time;
+	  if (++conv_count >= lbm.conv_freq)
+	    {
+	      check_conv = 1;
+	      conv_count = 0;
+	    }
+	  if (++ray_tracing_count >= vis.image_freq)
+	    {
+	      perform_vis = 1;
+	      ray_tracing_count = 0;
+	    }
 	  
-      	  fprintf (timings_ptr, "time step: %i, conv error: %le\n",
-		   time_step, fmin(1., lbm.conv_error));
-      	  printf ("time step: %i, conv error: %le\n",
-		  time_step, fmin(1., lbm.conv_error));
-      	}
-      
-      if (stability == UNSTABLE || is_converged) break;
-
+	  // Between the visRenderA/B calls, do not change any vis
+	  // parameters.
+	  
+	  is_thread_locked = 0;
+	  
+#ifdef RG
+	  if (net.id == 0 && perform_vis == 1)
+	    {
+	      ///pthread_mutex_lock( &network_buffer_copy_lock ); ///
+	      is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
+	    }
+#ifndef NOMPI
+	  net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+#endif // RG
+	  
+	  if (perform_vis == 1 && is_thread_locked == 0)
+	    {
+	      visRenderA (ColourPalette, &net, &vis);
+	    }
+#ifndef TD
+	  stability = lbmCycle (write_checkpoint, check_conv, perform_vis, &is_converged, &lbm, &net);
+#else
+	  TimeVaryingDensities (lbm.period, time_step, lbm.inlets, lbm.outlets,
+	  			lbm.inlet_density, lbm.outlet_density);
+	  
+	  stability = lbmCycle (cycle_id, time_step, check_conv, perform_vis, &is_converged, &lbm, &net);
+#endif // TD
+	  if (perform_vis == 1 && is_thread_locked == 0)
+	    {
+	      visRenderB (&net, &vis);
+#ifdef RG
+	      if (net.id == 0)
+		{
+		  pthread_mutex_unlock (&network_buffer_copy_lock);
+		  pthread_cond_signal (&network_send_frame);
+		}
+#endif
+	    }
+#ifdef TD
+	  if (net.id == 0)
+	    {
+	      fprintf (timings_ptr, "time step: %i\n", time_step+1);
+	      printf ("time step: %i\n", time_step+1);
+	    }
+#endif
+	  if (stability == UNSTABLE || is_converged)
+	    {
+	      is_stop = 1;
+	      break;
+	    }
 #ifdef STEER
-      if (reg_finished == 1) break;
+	  if (reg_finished == 1)
+	    {
+	      is_stop = 1;
+	      break;
+	    }
 #endif // STEER
+	}
+      if (net.id == 0)
+	{
+	  fprintf (timings_ptr, "cycle id: %i, conv error: %le\n",
+		   cycle_id+1, fmin(1., lbm.conv_error));
+	  printf ("cycle id: %i, conv error: %le\n",
+		  cycle_id+1, fmin(1., lbm.conv_error));
+	}
     }
   simulation_time = myClock () - simulation_time;
-  
-  time_step = min(time_step, lbm.time_steps_max);
+  time_step = (1+min(time_step, lbm.period-1)) * min(cycle_id, lbm.cycles_max-1);
 #else // BENCH
+  
+  double elapsed_time;
   
   // benchmarking HemeLB's fluid solver only
   
@@ -877,7 +904,11 @@ int main (int argc, char *argv[])
   
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
+#ifndef TD
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+#else
+      stability = lbmCycle (0, 0, 0, 0, &is_converged, &lbm, &net);
+#endif // TD
       
       // partial timings
       elapsed_time = myClock () - fluid_solver_time;
@@ -901,16 +932,20 @@ int main (int argc, char *argv[])
   
   // benchmarking HemeLB's fluid solver and volume rendering
   
+  lbm.flow_field_type = VELOCITY;
   vis.image_freq = 1;
-  vis.flow_field_type = VELOCITY;
   vis.mode = 0;
   vis.cutoff = -EPSILON;
   fluid_solver_and_vr_time = myClock ();
   
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
-      visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
+      visRenderA (ColourPalette, &net, &vis);
+#ifndef TD
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+#else
+      stability = lbmCycle (0, 0, 0, 0, &is_converged, &lbm, &net);
+#endif // TD
       visRenderB (&net, &vis);
       
       // partial timings
@@ -935,16 +970,20 @@ int main (int argc, char *argv[])
   
   // benchmarking HemeLB's fluid solver and iso-surface
   
+  lbm.flow_field_type = VELOCITY;
   vis.image_freq = 1;
-  vis.flow_field_type = VELOCITY;
   vis.mode = 1;
   vis.cutoff = -EPSILON;
   fluid_solver_and_is_time = myClock ();
   
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
-      visRenderA (rtAbsorptionCoefficients, slColourPalette, &net, &vis);
+      visRenderA (ColourPalette, &net, &vis);
+#ifndef TD
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+#else
+      stability = lbmCycle (0, 0, 0, 0, &is_converged, &lbm, &net);
+#endif // TD
       visRenderB (&net, &vis);
       
       // partial timings
@@ -1021,7 +1060,7 @@ int main (int argc, char *argv[])
     }
   net.fo_time = myClock ();
   
-  /// lbmWriteConfig (stability, output_config_name, &lbm, &net);
+  lbmWriteConfig (stability, output_config_name, &lbm, &net);
   
   net.fo_time = myClock () - net.fo_time;
   
@@ -1038,9 +1077,8 @@ int main (int argc, char *argv[])
     }
   
   visEnd (&net, &vis);
+  netEnd (&net);
   lbmEnd (&lbm);
-  netEnd (&net, &vis);
-
   
 #ifdef RG
   if (net.id == 0)

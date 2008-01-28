@@ -186,7 +186,7 @@ int netFindTopology (Net *net, int *depths)
 #endif
 
 
-void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
+void netInit (LBM *lbm, Net *net, int proc_sites[])
 {
   // the domain partitioning technique and the management of the
   // buffers useful for the inter-processor communications are
@@ -259,8 +259,8 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   net->proc_id = (short int *)malloc(sizeof(short int) * blocks);
   
   clusters_max = 20;
-  vis->clusters = 0;
-  vis->cluster = (Cluster *)malloc(sizeof(Cluster) * clusters_max);
+  clusters = 0;
+  cluster = (Cluster *)malloc(sizeof(Cluster) * clusters_max);
   
   marker = -1;
   
@@ -317,13 +317,13 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 		  
 		  if (proc_count == net->id)
 		    {
-		      if (vis->clusters == clusters_max)
+		      if (clusters == clusters_max)
 			{
 			  clusters_max <<= 1;
-			  vis->cluster = (Cluster *)realloc(vis->cluster, sizeof(Cluster) * clusters_max);
+			  cluster = (Cluster *)realloc(cluster, sizeof(Cluster) * clusters_max);
 			}
-		      cluster_p = &vis->cluster[ vis->clusters ];
-		      ++vis->clusters;
+		      cluster_p = &cluster[ clusters ];
+		      ++clusters;
 		      
 		      cluster_p->block_min[0] = i;
 		      cluster_p->block_min[1] = j;
@@ -521,13 +521,13 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			  
 			  if (net->id == proc_count)
 			    {
-			      if (vis->clusters == clusters_max)
+			      if (clusters == clusters_max)
 				{
 				  clusters_max <<= 1;
-				  vis->cluster = (Cluster *)realloc(vis->cluster, sizeof(Cluster) * clusters_max);
+				  cluster = (Cluster *)realloc(cluster, sizeof(Cluster) * clusters_max);
 				}
-			      cluster_p = &vis->cluster[ vis->clusters ];
-			      ++vis->clusters;
+			      cluster_p = &cluster[ clusters ];
+			      ++clusters;
 			      
 			      cluster_p->block_min[0] = i;
 			      cluster_p->block_min[1] = j;
@@ -963,8 +963,8 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   for (m = 0; m < COLLISION_TYPES; m++)
     {
-      net->my_inter_collisions_sse[m] = (net->my_inter_collisions[m]/SIMD_SIZE)*SIMD_SIZE;
-      net->my_inner_collisions_sse[m] = (net->my_inner_collisions[m]/SIMD_SIZE)*SIMD_SIZE;
+      net->my_inter_collisions_simd[m] = (net->my_inter_collisions[m]/SIMD_SIZE)*SIMD_SIZE;
+      net->my_inner_collisions_simd[m] = (net->my_inner_collisions[m]/SIMD_SIZE)*SIMD_SIZE;
     }
   
   collision_offset[0][0] = 0;
@@ -1029,8 +1029,13 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   for (n = 0; n < net->neigh_procs; n++)
     {
       net->neigh_proc[ n ].f_data    = &f_data[ net->shared_fs<<2 ];
+#ifndef TD
       net->neigh_proc[ n ].f_to_send = &f_to_send[ net->shared_fs ];
       net->neigh_proc[ n ].f_to_recv = &f_to_recv[ net->shared_fs ];
+#else
+      net->neigh_proc[ n ].f_to_send = &f_to_send[ net->shared_fs*2 ];
+      net->neigh_proc[ n ].f_to_recv = &f_to_recv[ net->shared_fs*2 ];
+#endif
       net->neigh_proc[ n ].f_send_id = &f_send_id[ net->shared_fs ];
       net->neigh_proc[ n ].f_recv_iv = &f_recv_iv[ net->shared_fs ];
       
@@ -1041,7 +1046,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
       net->shared_fs += net->neigh_proc[ n ].fs;
       net->neigh_proc[ n ].fs = 0;
     }
+#ifndef TD
   if (net->shared_fs >= SHARED_DISTRIBUTIONS_MAX)
+#else
+  if (net->shared_fs*2 >= SHARED_DISTRIBUTIONS_MAX)
+#endif
     {
       printf (" too many shared distributions\n");
       printf (" the execution is terminated\n");
@@ -1052,8 +1061,13 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 #endif
     }
   
+#ifndef TD
   f_old = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1));
   f_new = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1));
+#else
+  f_old = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
+  f_new = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
+#endif
   
   if (net->my_sites > 0)
     {
@@ -1068,8 +1082,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 #endif
   
 #ifndef NOMPI
-  net->err = MPI_Gather (&net->my_sites, 1, MPI_INT, proc_sites, 1, MPI_INT, 
-			 0, MPI_COMM_WORLD);
+  net->err = MPI_Gather (&net->my_sites, 1, MPI_INT, proc_sites, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
   
   net->from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * net->procs);
@@ -1113,15 +1126,21 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			    {
 			      continue;
 			    }
+#ifndef TD
 			  f_id[ site_map*15+0 ] = site_map * 15 + 0;
-			  
+#else
+			  f_id[ site_map*15+0 ] = site_map * 30 + 0;
+#endif
 			  for (l = 1; l < 15; l++)
 			    {
 			      neigh_i = site_i + e_x[ l ];
 			      neigh_j = site_j + e_y[ l ];
 			      neigh_k = site_k + e_z[ l ];
-			      
+#ifndef TD
 			      f_id[ site_map*15+l   ] = net->my_sites * 15;
+#else
+			      f_id[ site_map*15+l   ] = net->my_sites * 30;
+#endif
 #ifndef BENCH
 			      nd_p[ site_map*14+l-1 ] = &d[ net->my_sites ];
 #endif
@@ -1135,7 +1154,11 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 			      
 			      if (neigh_proc_id == net->id)
 				{
+#ifndef TD
 				  f_id[ site_map*15+l   ] = *site_data_p * 15 + l;
+#else
+				  f_id[ site_map*15+l   ] = *site_data_p * 30 + l;
+#endif
 #ifndef BENCH
 				  nd_p[ site_map*14+l-1 ] = &d[ *site_data_p ];
 #endif
@@ -1251,8 +1274,13 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	  l = f_data_p[ 3 ];
 	  
 	  site_map = *netSiteMapPointer (i, j, k, net);
+#ifndef TD
 	  neigh_proc_p->f_send_id[ n ] = site_map * 15 + l;
 	  neigh_proc_p->f_recv_iv[ n ] = site_map * 15 + inv_dir[ l ];
+#else
+	  neigh_proc_p->f_send_id[ n ] = site_map * 30 + l;
+	  neigh_proc_p->f_recv_iv[ n ] = site_map * 30 + inv_dir[ l ];
+#endif
 #ifndef BENCH
 	  neigh_proc_p->d_to_send_p[ n ] = &d[ site_map ];
 	  nd_p[ site_map*14+l-1 ] = &neigh_proc_p->f_to_recv[ n ];
@@ -1274,6 +1302,7 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
   
   if (net->my_sites > 0)
     {
+#ifndef TD
       vel = (double *)malloc(sizeof(double) * 3 * net->my_sites);
       
       for (i = 0; i < net->my_sites; i++)
@@ -1282,15 +1311,15 @@ void netInit (LBM *lbm, Net *net, Vis *vis, int proc_sites[])
 	  vel[ 3*i+1 ] = 1.e+30;
 	  vel[ 3*i+2 ] = 1.e+30;
 	}
-      
-      flow_field = (float *)malloc(sizeof(float) * 3 * net->my_sites);
+#endif
+      flow_field = (float *)malloc(sizeof(float) * net->my_sites);
     }
   
   net->bm_time = myClock () - seconds - net->fr_time;
 }
 
 
-void netEnd (Net *net, Vis *vis)
+void netEnd (Net *net)
 {
   // the allocated data are freed with this function
   
@@ -1300,11 +1329,10 @@ void netEnd (Net *net, Vis *vis)
   free(net->from_proc_id_to_neigh_proc_index);
   net->from_proc_id_to_neigh_proc_index = NULL;
   
-  if (net->my_inner_sites + net->my_inter_sites > 0)
+  if (net->my_sites > 0)
     {
       free(flow_field);
     }
-  
   free(net->proc_id);
   net->proc_id = NULL;
   
@@ -1319,11 +1347,12 @@ void netEnd (Net *net, Vis *vis)
   free(net->map_block);
   net->map_block = NULL;
   
-  if (net->my_inner_sites + net->my_inter_sites > 0)
+  if (net->my_sites > 0)
     {
+#ifndef TD
       free(vel);
       vel = NULL;
-      
+#endif
       free(net->site_data);
       net->site_data = NULL;
       
@@ -1344,7 +1373,6 @@ void netEnd (Net *net, Vis *vis)
   free(net->req);
   net->req = NULL;
 #endif
-  
   free(net->procs_per_machine);
   free(net->machine_id);
 }
