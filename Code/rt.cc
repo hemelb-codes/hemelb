@@ -1,11 +1,11 @@
 #include "config.h"
 
 
-void (*rtRayAABBIntersection[8]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t);
+void (*rtRayAABBIntersection[2][2][2]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t);
 
-void (*rtTraverse[8]) (float org[],
-		       void (*rtAbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
-		       Cluster *cluster_p, Net *net, Vis *vis);
+void (*rtTraverse[2][2][2]) (float org[],
+			     void (*ColourPalette) (float value, float col[]),
+			     Cluster *cluster_p, Net *net, Vis *vis);
 
 
 void rtRayAABBIntersection000 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t)
@@ -154,10 +154,19 @@ void rtRayAABBIntersection111 (AABB *aabb, float inv_x, float inv_y, float inv_z
 }
 
 
-void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float t,
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float col[]), Vis *vis)
+void rtUpdateColour (float dt, float palette[], float col[])
 {
+  for (int l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      col[l] += dt * palette[l];
+    }
+}
+
+
+void rtTraverse000 (float block_min[], float block_x[], DataBlock *block_p, float t,
+		    void (*ColourPalette) (float value, float col[]), Vis *vis)
+{
+  float palette[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float value;
   
@@ -166,18 +175,16 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
   unsigned int site_data;
   
   
-///#pragma vector always
+  for (i = 0; i < 3; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, (int)block_x[i]));
+    }
   for (i = 0; i < VIS_VEC_SIZE; i++)
     {
-      i_vec[i] = max(0, min(block_size_1, block_i[i]));
       t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
     }
-  for (i = 0; i < 2; i++)
-    {
-      i_vec[i] *= block_size_vec[i];
-    }
-  i = i_vec[0];
-  j = i_vec[1];
+  i = i_vec[0] * block_size2;
+  j = i_vec[1] * block_size;
   k = i_vec[2];
   
   for (;;)
@@ -186,8 +193,7 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
       
       if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
-	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
-	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
+	  value = flow_field[ site_data ] * vis->flow_field_value_max_inv;
 	}
       if (t_max[0] < t_max[1])
 	{
@@ -195,9 +201,15 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 	    {
 	      if (value > vis->cutoff)
 	      	{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[0] - t, palette, ray_col);
+		  }
 		}
 	      if ((i -= block_size2) < 0) return;
 	      
@@ -207,10 +219,16 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (--k < 0) return;
 	      
@@ -223,10 +241,16 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[1] - t, palette, ray_col);
+		  }
 		}
 	      if ((j -= block_size) < 0) return;
 	      
@@ -236,10 +260,16 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (--k < 0) return;
 	      
@@ -250,10 +280,10 @@ void rtTraverse000 (float block_min[], int block_i[], DataBlock *block_p, float 
     }
 }
 
-void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float t,
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float col[]), Vis *vis)
+void rtTraverse001 (float block_min[], float block_x[], DataBlock *block_p, float t,
+		    void (*ColourPalette) (float value, float col[]), Vis *vis)
 {
+  float palette[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float value;
   
@@ -262,20 +292,18 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
   unsigned int site_data;
   
   
-///#pragma vector always
+  for (i = 0; i < 3; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, (int)block_x[i]));
+    }
   for (i = 0; i < VIS_VEC_SIZE; i++)
     {
-      i_vec[i] = max(0, min(block_size_1, block_i[i]));
       t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
-    }
-  for (i = 0; i < 2; i++)
-    {
-      i_vec[i] *= block_size_vec[i];
     }
   t_max[2] += ray_inv[2];
   
-  i = i_vec[0];
-  j = i_vec[1];
+  i = i_vec[0] * block_size2;
+  j = i_vec[1] * block_size;
   k = i_vec[2];
   
   for (;;)
@@ -284,18 +312,23 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
       
       if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
-	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
-	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
+	  value = flow_field[ site_data ] * vis->flow_field_value_max_inv;
 	}
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[0] - t, palette, ray_col);
+		  }
 		}
 	      if ((i -= block_size2) < 0) return;
 	      
@@ -305,10 +338,16 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (++k >= block_size) return;
 	      
@@ -321,10 +360,16 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[1] - t, palette, ray_col);
+		  }
 		}
 	      if ((j -= block_size) < 0) return;
 	      
@@ -334,10 +379,16 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (++k >= block_size) return;
 	      
@@ -348,10 +399,10 @@ void rtTraverse001 (float block_min[], int block_i[], DataBlock *block_p, float 
     }
 }
 
-void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float t,
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float col[]), Vis *vis)
+void rtTraverse010 (float block_min[], float block_x[], DataBlock *block_p, float t,
+		    void (*ColourPalette) (float value, float col[]), Vis *vis)
 {
+  float palette[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float value;
   
@@ -360,20 +411,18 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
   unsigned int site_data;
   
   
-///#pragma vector always
+  for (i = 0; i < 3; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, (int)block_x[i]));
+    }
   for (i = 0; i < VIS_VEC_SIZE; i++)
     {
-      i_vec[i] = max(0, min(block_size_1, block_i[i]));
       t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
-    }
-  for (i = 0; i < 2; i++)
-    {
-      i_vec[i] *= block_size_vec[i];
     }
   t_max[1] += ray_inv[1];
   
-  i = i_vec[0];
-  j = i_vec[1];
+  i = i_vec[0] * block_size2;
+  j = i_vec[1] * block_size;
   k = i_vec[2];
   
   for (;;)
@@ -382,18 +431,23 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
       
       if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
-	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
-	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
+	  value = flow_field[ site_data ] * vis->flow_field_value_max_inv;
 	}
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[0] - t, palette, ray_col);
+		  }
 		}
 	      if ((i -= block_size2) < 0) return;
 	      
@@ -403,10 +457,16 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (--k < 0) return;
 	      
@@ -419,10 +479,16 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[1] - t, palette, ray_col);
+		  }
 		}
 	      if ((j += block_size) >= block_size2) return;
 	      
@@ -432,10 +498,16 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (--k < 0) return;
 	      
@@ -446,10 +518,10 @@ void rtTraverse010 (float block_min[], int block_i[], DataBlock *block_p, float 
     }
 }
 
-void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float t,
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float col[]), Vis *vis)
+void rtTraverse011 (float block_min[], float block_x[], DataBlock *block_p, float t,
+		    void (*ColourPalette) (float value, float col[]), Vis *vis)
 {
+  float palette[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float value;
   
@@ -458,20 +530,18 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
   unsigned int site_data;
   
   
-///#pragma vector always
+  for (i = 0; i < 3; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, (int)block_x[i]));
+    }
   for (i = 0; i < VIS_VEC_SIZE; i++)
     {
-      i_vec[i] = max(0, min(block_size_1, block_i[i]));
       t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
-    }
-  for (i = 0; i < 2; i++)
-    {
-      i_vec[i] *= block_size_vec[i];
     }
   t_max[0] -= ray_inv[0];
   
-  i = i_vec[0];
-  j = i_vec[1];
+  i = i_vec[0] * block_size2;
+  j = i_vec[1] * block_size;
   k = i_vec[2];
   
   for (;;)
@@ -480,18 +550,23 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
       
       if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
-	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
-	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
+	  value = flow_field[ site_data ] * vis->flow_field_value_max_inv;
 	}
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[0] - t, palette, ray_col);
+		  }
 		}
 	      if ((i -= block_size2) < 0) return;
 	      
@@ -501,10 +576,16 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (++k >= block_size) return;
 	      
@@ -517,10 +598,16 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[1] - t, palette, ray_col);
+		  }
 		}
 	      if ((j += block_size) >= block_size2) return;
 	      
@@ -530,10 +617,16 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (++k >= block_size) return;
 	      
@@ -544,10 +637,10 @@ void rtTraverse011 (float block_min[], int block_i[], DataBlock *block_p, float 
     }
 }
 
-void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float t,
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float col[]), Vis *vis)
+void rtTraverse100 (float block_min[], float block_x[], DataBlock *block_p, float t,
+		    void (*ColourPalette) (float value, float col[]), Vis *vis)
 {
+  float palette[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float value;
   
@@ -556,20 +649,18 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
   unsigned int site_data;
   
   
-///#pragma vector always
+  for (i = 0; i < 3; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, (int)block_x[i]));
+    }
   for (i = 0; i < VIS_VEC_SIZE; i++)
     {
-      i_vec[i] = max(0, min(block_size_1, block_i[i]));
       t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
-    }
-  for (i = 0; i < 2; i++)
-    {
-      i_vec[i] *= block_size_vec[i];
     }
   t_max[0] += ray_inv[0];
   
-  i = i_vec[0];
-  j = i_vec[1];
+  i = i_vec[0] * block_size2;
+  j = i_vec[1] * block_size;
   k = i_vec[2];
   
   for (;;)
@@ -578,18 +669,23 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
       
       if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
-	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
-	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
+	  value = flow_field[ site_data ] * vis->flow_field_value_max_inv;
 	}
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[0] - t, palette, ray_col);
+		  }
 		}
 	      if ((i += block_size2) >= block_size3) return;
 	      
@@ -599,10 +695,16 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (--k < 0) return;
 	      
@@ -615,10 +717,16 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[1] - t, palette, ray_col);
+		  }
 		}
 	      if ((j -= block_size) < 0) return;
 	      
@@ -628,10 +736,16 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (--k < 0) return;
 	      
@@ -642,10 +756,10 @@ void rtTraverse100 (float block_min[], int block_i[], DataBlock *block_p, float 
     }
 }
 
-void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float t,
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float col[]), Vis *vis)
+void rtTraverse101 (float block_min[], float block_x[], DataBlock *block_p, float t,
+		    void (*ColourPalette) (float value, float col[]), Vis *vis)
 {
+  float palette[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float value;
   
@@ -654,20 +768,18 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
   unsigned int site_data;
   
   
-///#pragma vector always
+  for (i = 0; i < 3; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, (int)block_x[i]));
+    }
   for (i = 0; i < VIS_VEC_SIZE; i++)
     {
-      i_vec[i] = max(0, min(block_size_1, block_i[i]));
       t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
-    }
-  for (i = 0; i < 2; i++)
-    {
-      i_vec[i] *= block_size_vec[i];
     }
   t_max[1] -= ray_inv[1];
   
-  i = i_vec[0];
-  j = i_vec[1];
+  i = i_vec[0] * block_size2;
+  j = i_vec[1] * block_size;
   k = i_vec[2];
   
   for (;;)
@@ -676,18 +788,23 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
       
       if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
-	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
-	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
+	  value = flow_field[ site_data ] * vis->flow_field_value_max_inv;
 	}
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[0] - t, palette, ray_col);
+		  }
 		}
 	      if ((i += block_size2) >= block_size3) return;
 	      
@@ -697,10 +814,16 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
-		      
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+		  
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (++k >= block_size) return;
 	      
@@ -713,10 +836,16 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[1] - t, palette, ray_col);
+		  }
 		}
 	      if ((j -= block_size) < 0) return;
 	      
@@ -726,10 +855,16 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (++k >= block_size) return;
 	      
@@ -740,10 +875,10 @@ void rtTraverse101 (float block_min[], int block_i[], DataBlock *block_p, float 
     }
 }
 
-void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float t,
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float col[]), Vis *vis)
+void rtTraverse110 (float block_min[], float block_x[], DataBlock *block_p, float t,
+		    void (*ColourPalette) (float value, float col[]), Vis *vis)
 {
+  float palette[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float value;
   
@@ -752,20 +887,18 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
   unsigned int site_data;
   
   
-///#pragma vector always
+  for (i = 0; i < 3; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, (int)block_x[i]));
+    }
   for (i = 0; i < VIS_VEC_SIZE; i++)
     {
-      i_vec[i] = max(0, min(block_size_1, block_i[i]));
       t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
-    }
-  for (i = 0; i < 2; i++)
-    {
-      i_vec[i] *= block_size_vec[i];
     }
   t_max[2] -= ray_inv[2];
   
-  i = i_vec[0];
-  j = i_vec[1];
+  i = i_vec[0] * block_size2;
+  j = i_vec[1] * block_size;
   k = i_vec[2];
   
   for (;;)
@@ -774,18 +907,23 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
       
       if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
-	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
-	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
+	  value = flow_field[ site_data ] * vis->flow_field_value_max_inv;
 	}
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[0] - t, palette, ray_col);
+		  }
 		}
 	      if ((i += block_size2) >= block_size3) return;
 	      
@@ -795,10 +933,16 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
-		      
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (--k < 0) return;
 	      
@@ -811,10 +955,16 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[1] - t, palette, ray_col);
+		  }
 		}
 	      if ((j += block_size) >= block_size2) return;
 	      
@@ -824,10 +974,16 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (--k < 0) return;
 	      
@@ -838,10 +994,10 @@ void rtTraverse110 (float block_min[], int block_i[], DataBlock *block_p, float 
     }
 }
 
-void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float t,
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2,
-						    float col[]), Vis *vis)
+void rtTraverse111 (float block_min[], float block_x[], DataBlock *block_p, float t,
+		    void (*ColourPalette) (float value, float col[]), Vis *vis)
 {
+  float palette[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float value;
   
@@ -850,18 +1006,16 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
   unsigned int site_data;
   
   
-///#pragma vector always
+  for (i = 0; i < 3; i++)
+    {
+      i_vec[i] = max(0, min(block_size_1, (int)block_x[i]));
+    }
   for (i = 0; i < VIS_VEC_SIZE; i++)
     {
-      i_vec[i] = max(0, min(block_size_1, block_i[i]));
       t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
     }
-  for (i = 0; i < 2; i++)
-    {
-      i_vec[i] *= block_size_vec[i];
-    }
-  i = i_vec[0];
-  j = i_vec[1];
+  i = i_vec[0] * block_size2;
+  j = i_vec[1] * block_size;
   k = i_vec[2];
   
   for (;;)
@@ -870,18 +1024,23 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
       
       if ((site_data = block_p->site_data[ i + j + k ]) != (1U << 31U))
 	{
-	  value = flow_field[ 3 * site_data + vis->flow_field_type ] *
-	    vis->flow_field_value_max_inv[ vis->flow_field_type ];
+	  value = flow_field[ site_data ] * vis->flow_field_value_max_inv;
 	}
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[0], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[0] - t, palette, ray_col);
+		  }
 		}
 	      if ((i += block_size2) >= block_size3) return;
 	      
@@ -891,10 +1050,16 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
-		  
-		  if (vis->mode == 1) return;
+	      	{
+		  vis->t_min = t;
+
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (++k >= block_size) return;
 	      
@@ -907,10 +1072,16 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  if (t_max[1] < t_max[2])
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[1], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[1] - t, palette, ray_col);
+		  }
 		}
 	      if ((j += block_size) >= block_size2) return;
 	      
@@ -920,10 +1091,16 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 	  else
 	    {
 	      if (value > vis->cutoff)
-		{
-		  AbsorptionCoefficients (value, vis->t_min = t, t_max[2], ray_col);
+	      	{
+		  vis->t_min = t;
 		  
-		  if (vis->mode == 1) return;
+		  if (vis->mode == 1) {
+		    ColourPalette (value, ray_col);
+		    return;
+		  } else {
+		    ColourPalette (value, palette);
+		    rtUpdateColour (t_max[2] - t, palette, ray_col);
+		  }
 		}
 	      if (++k >= block_size) return;
 	      
@@ -935,17 +1112,17 @@ void rtTraverse111 (float block_min[], int block_i[], DataBlock *block_p, float 
 }
 
 void rtTraverse000 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
+		    void (*ColourPalette) (float value, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float t_delta[VIS_VEC_SIZE];
   float dx[VIS_VEC_SIZE];
+  float block_x[VIS_VEC_SIZE];
   
-  int block_i[VIS_VEC_SIZE];
-  int i_vec[VIS_VEC_SIZE], ii_vec[3];
-  int cluster_blocks_vec[3];
+  int i_vec[VIS_VEC_SIZE];
+  int cluster_blocks_vec[VIS_VEC_SIZE];
   int l;
   int ii, jj, kk;
 
@@ -956,28 +1133,29 @@ void rtTraverse000 (float org[],
   cluster_blocks_vec[1] = cluster_p->blocks_y;
   cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-///#pragma vector always
-  for (l = 0; l < VIS_VEC_SIZE; l++)
-    {
-      dx[l] = org[l] - cluster_p->x[l];
-      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
-    }
   for (l = 0; l < 3; l++)
     {
-      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
-      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+      dx[l] = org[l] - cluster_p->x[l];
     }
-  ii = ii_vec[0];
-  jj = ii_vec[1];
-  kk = ii_vec[2];
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      block_min[l] = (float)i_vec[l] * (float)block_size - dx[l];
+    }
+  ii = (i_vec[0] + cluster_p->block_min[0]) * blocks_yz;
+  jj = (i_vec[1] + cluster_p->block_min[1]) * blocks_z;
+  kk = (i_vec[2] + cluster_p->block_min[2]);
   
   if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
     {
-      for (l = 0; l < 3; l++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  block_i[l] = (int)(-block_min[l]);
+	  block_x[l] = -block_min[l];
 	}
-      rtTraverse000 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
+      rtTraverse000 (block_min, block_x, block_p, 0.F, ColourPalette, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
@@ -1000,11 +1178,11 @@ void rtTraverse000 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[0] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse000 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
+		  rtTraverse000 (block_min, block_x, block_p, t_max[0], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1019,11 +1197,11 @@ void rtTraverse000 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse000 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse000 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1041,11 +1219,11 @@ void rtTraverse000 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[1] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse000 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
+		  rtTraverse000 (block_min, block_x, block_p, t_max[1], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1060,11 +1238,11 @@ void rtTraverse000 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse000 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse000 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1075,17 +1253,17 @@ void rtTraverse000 (float org[],
 }
 
 void rtTraverse001 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
+		    void (*ColourPalette) (float value, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float t_delta[VIS_VEC_SIZE];
   float dx[VIS_VEC_SIZE];
+  float block_x[VIS_VEC_SIZE];
   
-  int block_i[VIS_VEC_SIZE];
-  int i_vec[VIS_VEC_SIZE], ii_vec[3];
-  int cluster_blocks_vec[3];
+  int i_vec[VIS_VEC_SIZE];
+  int cluster_blocks_vec[VIS_VEC_SIZE];
   int l;
   int ii, jj, kk;
 
@@ -1096,28 +1274,29 @@ void rtTraverse001 (float org[],
   cluster_blocks_vec[1] = cluster_p->blocks_y;
   cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-///#pragma vector always
-  for (l = 0; l < VIS_VEC_SIZE; l++)
-    {
-      dx[l] = org[l] - cluster_p->x[l];
-      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
-    }
   for (l = 0; l < 3; l++)
     {
-      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
-      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+      dx[l] = org[l] - cluster_p->x[l];
     }
-  ii = ii_vec[0];
-  jj = ii_vec[1];
-  kk = ii_vec[2];
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      block_min[l] = (float)i_vec[l] * (float)block_size - dx[l];
+    }
+  ii = (i_vec[0] + cluster_p->block_min[0]) * blocks_yz;
+  jj = (i_vec[1] + cluster_p->block_min[1]) * blocks_z;
+  kk = (i_vec[2] + cluster_p->block_min[2]);
   
   if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
     {
-      for (l = 0; l < 3; l++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  block_i[l] = (int)(-block_min[l]);
+	  block_x[l] = -block_min[l];
 	}
-      rtTraverse001 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
+      rtTraverse001 (block_min, block_x, block_p, 0.F, ColourPalette, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
@@ -1141,11 +1320,11 @@ void rtTraverse001 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[0] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse001 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
+		  rtTraverse001 (block_min, block_x, block_p, t_max[0], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1160,11 +1339,11 @@ void rtTraverse001 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse001 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse001 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1182,11 +1361,11 @@ void rtTraverse001 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[1] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse001 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
+		  rtTraverse001 (block_min, block_x, block_p, t_max[1], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1201,11 +1380,11 @@ void rtTraverse001 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse001 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse001 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1216,17 +1395,17 @@ void rtTraverse001 (float org[],
 }
 
 void rtTraverse010 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
+		    void (*ColourPalette) (float value, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float t_delta[VIS_VEC_SIZE];
   float dx[VIS_VEC_SIZE];
+  float block_x[VIS_VEC_SIZE];
   
-  int block_i[VIS_VEC_SIZE];
-  int i_vec[VIS_VEC_SIZE], ii_vec[3];
-  int cluster_blocks_vec[3];
+  int i_vec[VIS_VEC_SIZE];
+  int cluster_blocks_vec[VIS_VEC_SIZE];
   int l;
   int ii, jj, kk;
 
@@ -1237,28 +1416,29 @@ void rtTraverse010 (float org[],
   cluster_blocks_vec[1] = cluster_p->blocks_y;
   cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-///#pragma vector always
-  for (l = 0; l < VIS_VEC_SIZE; l++)
-    {
-      dx[l] = org[l] - cluster_p->x[l];
-      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
-    }
   for (l = 0; l < 3; l++)
     {
-      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
-      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+      dx[l] = org[l] - cluster_p->x[l];
     }
-  ii = ii_vec[0];
-  jj = ii_vec[1];
-  kk = ii_vec[2];
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      block_min[l] = (float)i_vec[l] * (float)block_size - dx[l];
+    }
+  ii = (i_vec[0] + cluster_p->block_min[0]) * blocks_yz;
+  jj = (i_vec[1] + cluster_p->block_min[1]) * blocks_z;
+  kk = (i_vec[2] + cluster_p->block_min[2]);
   
   if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
     {
-      for (l = 0; l < 3; l++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  block_i[l] = (int)(-block_min[l]);
+	  block_x[l] = -block_min[l];
 	}
-      rtTraverse010 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
+      rtTraverse010 (block_min, block_x, block_p, 0.F, ColourPalette, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
@@ -1282,11 +1462,11 @@ void rtTraverse010 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[0] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse010 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
+		  rtTraverse010 (block_min, block_x, block_p, t_max[0], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1301,11 +1481,11 @@ void rtTraverse010 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse010 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse010 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1323,11 +1503,11 @@ void rtTraverse010 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[1] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse010 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
+		  rtTraverse010 (block_min, block_x, block_p, t_max[1], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1342,11 +1522,11 @@ void rtTraverse010 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse010 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse010 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1357,17 +1537,16 @@ void rtTraverse010 (float org[],
 }
 
 void rtTraverse011 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
+		    void (*ColourPalette) (float value, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float t_delta[VIS_VEC_SIZE];
   float dx[VIS_VEC_SIZE];
-  
-  int block_i[VIS_VEC_SIZE];
-  int i_vec[VIS_VEC_SIZE], ii_vec[3];
-  int cluster_blocks_vec[3];
+  float block_x[VIS_VEC_SIZE];
+  int i_vec[VIS_VEC_SIZE];
+  int cluster_blocks_vec[VIS_VEC_SIZE];
   int l;
   int ii, jj, kk;
 
@@ -1378,38 +1557,38 @@ void rtTraverse011 (float org[],
   cluster_blocks_vec[1] = cluster_p->blocks_y;
   cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-///#pragma vector always
-  for (l = 0; l < VIS_VEC_SIZE; l++)
-    {
-      dx[l] = org[l] - cluster_p->x[l];
-      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
-    }
   for (l = 0; l < 3; l++)
     {
-      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
-      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+      dx[l] = org[l] - cluster_p->x[l];
     }
-  ii = ii_vec[0];
-  jj = ii_vec[1];
-  kk = ii_vec[2];
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      block_min[l] = (float)i_vec[l] * (float)block_size - dx[l];
+    }
+  ii = (i_vec[0] + cluster_p->block_min[0]) * blocks_yz;
+  jj = (i_vec[1] + cluster_p->block_min[1]) * blocks_z;
+  kk = (i_vec[2] + cluster_p->block_min[2]);
   
   if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
     {
-      for (l = 0; l < 3; l++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  block_i[l] = (int)(-block_min[l]);
+	  block_x[l] = -block_min[l];
 	}
-      rtTraverse011 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
+      rtTraverse011 (block_min, block_x, block_p, 0.F, ColourPalette, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
   for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      t_max[l] = block_min[l] * ray_inv[l];
+      t_max[l] = (block_min[l] + block_size) * ray_inv[l];
       t_delta[l] = block_size * ray_inv[l];
     }
-  t_max[1] += t_delta[1];
-  t_max[2] += t_delta[2];
+  t_max[0] -= t_delta[0];
   
   for (;;)
     {
@@ -1424,11 +1603,11 @@ void rtTraverse011 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[0] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse011 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
+		  rtTraverse011 (block_min, block_x, block_p, t_max[0], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1443,11 +1622,11 @@ void rtTraverse011 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse011 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse011 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1465,11 +1644,11 @@ void rtTraverse011 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[1] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse011 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
+		  rtTraverse011 (block_min, block_x, block_p, t_max[1], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1484,11 +1663,11 @@ void rtTraverse011 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse011 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse011 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1499,17 +1678,17 @@ void rtTraverse011 (float org[],
 }
 
 void rtTraverse100 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
+		    void (*ColourPalette) (float value, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float t_delta[VIS_VEC_SIZE];
   float dx[VIS_VEC_SIZE];
+  float block_x[VIS_VEC_SIZE];
   
-  int block_i[VIS_VEC_SIZE];
-  int i_vec[VIS_VEC_SIZE], ii_vec[3];
-  int cluster_blocks_vec[3];
+  int i_vec[VIS_VEC_SIZE];
+  int cluster_blocks_vec[VIS_VEC_SIZE];
   int l;
   int ii, jj, kk;
 
@@ -1520,28 +1699,29 @@ void rtTraverse100 (float org[],
   cluster_blocks_vec[1] = cluster_p->blocks_y;
   cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-///#pragma vector always
-  for (l = 0; l < VIS_VEC_SIZE; l++)
-    {
-      dx[l] = org[l] - cluster_p->x[l];
-      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
-    }
   for (l = 0; l < 3; l++)
     {
-      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
-      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+      dx[l] = org[l] - cluster_p->x[l];
     }
-  ii = ii_vec[0];
-  jj = ii_vec[1];
-  kk = ii_vec[2];
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      block_min[l] = (float)i_vec[l] * (float)block_size - dx[l];
+    }
+  ii = (i_vec[0] + cluster_p->block_min[0]) * blocks_yz;
+  jj = (i_vec[1] + cluster_p->block_min[1]) * blocks_z;
+  kk = (i_vec[2] + cluster_p->block_min[2]);
   
   if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
     {
-      for (l = 0; l < 3; l++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  block_i[l] = (int)(-block_min[l]);
+	  block_x[l] = -block_min[l];
 	}
-      rtTraverse100 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
+      rtTraverse100 (block_min, block_x, block_p, 0.F, ColourPalette, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
@@ -1565,11 +1745,11 @@ void rtTraverse100 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[0] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse100 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
+		  rtTraverse100 (block_min, block_x, block_p, t_max[0], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1584,11 +1764,11 @@ void rtTraverse100 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse100 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse100 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1606,11 +1786,11 @@ void rtTraverse100 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[1] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse100 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
+		  rtTraverse100 (block_min, block_x, block_p, t_max[1], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1625,11 +1805,11 @@ void rtTraverse100 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse100 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse100 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1640,17 +1820,17 @@ void rtTraverse100 (float org[],
 }
 
 void rtTraverse101 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
+		    void (*ColourPalette) (float value, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float t_delta[VIS_VEC_SIZE];
   float dx[VIS_VEC_SIZE];
+  float block_x[VIS_VEC_SIZE];
   
-  int block_i[VIS_VEC_SIZE];
-  int i_vec[VIS_VEC_SIZE], ii_vec[3];
-  int cluster_blocks_vec[3];
+  int i_vec[VIS_VEC_SIZE];
+  int cluster_blocks_vec[VIS_VEC_SIZE];
   int l;
   int ii, jj, kk;
 
@@ -1661,38 +1841,38 @@ void rtTraverse101 (float org[],
   cluster_blocks_vec[1] = cluster_p->blocks_y;
   cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-///#pragma vector always
-  for (l = 0; l < VIS_VEC_SIZE; l++)
-    {
-      dx[l] = org[l] - cluster_p->x[l];
-      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
-    }
   for (l = 0; l < 3; l++)
     {
-      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
-      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+      dx[l] = org[l] - cluster_p->x[l];
     }
-  ii = ii_vec[0];
-  jj = ii_vec[1];
-  kk = ii_vec[2];
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      block_min[l] = (float)i_vec[l] * (float)block_size - dx[l];
+    }
+  ii = (i_vec[0] + cluster_p->block_min[0]) * blocks_yz;
+  jj = (i_vec[1] + cluster_p->block_min[1]) * blocks_z;
+  kk = (i_vec[2] + cluster_p->block_min[2]);
   
   if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
     {
-      for (l = 0; l < 3; l++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  block_i[l] = (int)(-block_min[l]);
+	  block_x[l] = -block_min[l];
 	}
-      rtTraverse101 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
+      rtTraverse101 (block_min, block_x, block_p, 0.F, ColourPalette, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
   for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      t_max[l] = block_min[l] * ray_inv[l];
+      t_max[l] = (block_min[l] + block_size) * ray_inv[l];
       t_delta[l] = block_size * ray_inv[l];
     }
-  t_max[0] += t_delta[0];
-  t_max[2] += t_delta[2];
+  t_max[1] -= t_delta[1];
   
   for (;;)
     {
@@ -1707,11 +1887,11 @@ void rtTraverse101 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[0] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse101 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
+		  rtTraverse101 (block_min, block_x, block_p, t_max[0], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1726,11 +1906,11 @@ void rtTraverse101 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse101 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse101 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1748,11 +1928,11 @@ void rtTraverse101 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[1] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse101 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
+		  rtTraverse101 (block_min, block_x, block_p, t_max[1], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1767,11 +1947,11 @@ void rtTraverse101 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse101 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse101 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1782,17 +1962,17 @@ void rtTraverse101 (float org[],
 }
 
 void rtTraverse110 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
+		    void (*ColourPalette) (float value, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float t_delta[VIS_VEC_SIZE];
   float dx[VIS_VEC_SIZE];
+  float block_x[VIS_VEC_SIZE];
   
-  int block_i[VIS_VEC_SIZE];
-  int i_vec[VIS_VEC_SIZE], ii_vec[3];
-  int cluster_blocks_vec[3];
+  int i_vec[VIS_VEC_SIZE];
+  int cluster_blocks_vec[VIS_VEC_SIZE];
   int l;
   int ii, jj, kk;
 
@@ -1803,38 +1983,38 @@ void rtTraverse110 (float org[],
   cluster_blocks_vec[1] = cluster_p->blocks_y;
   cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-///#pragma vector always
-  for (l = 0; l < VIS_VEC_SIZE; l++)
-    {
-      dx[l] = org[l] - cluster_p->x[l];
-      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
-    }
   for (l = 0; l < 3; l++)
     {
-      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
-      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+      dx[l] = org[l] - cluster_p->x[l];
     }
-  ii = ii_vec[0];
-  jj = ii_vec[1];
-  kk = ii_vec[2];
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      block_min[l] = (float)i_vec[l] * (float)block_size - dx[l];
+    }
+  ii = (i_vec[0] + cluster_p->block_min[0]) * blocks_yz;
+  jj = (i_vec[1] + cluster_p->block_min[1]) * blocks_z;
+  kk = (i_vec[2] + cluster_p->block_min[2]);
   
   if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
     {
-      for (l = 0; l < 3; l++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  block_i[l] = (int)(-block_min[l]);
+	  block_x[l] = -block_min[l];
 	}
-      rtTraverse110 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
+      rtTraverse110 (block_min, block_x, block_p, 0.F, ColourPalette, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
   for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      t_max[l] = block_min[l] * ray_inv[l];
+      t_max[l] = (block_min[l] + block_size) * ray_inv[l];
       t_delta[l] = block_size * ray_inv[l];
     }
-  t_max[0] += t_delta[0];
-  t_max[1] += t_delta[1];
+  t_max[2] -= t_delta[2];
   
   for (;;)
     {
@@ -1849,11 +2029,11 @@ void rtTraverse110 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[0] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse110 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
+		  rtTraverse110 (block_min, block_x, block_p, t_max[0], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1868,11 +2048,11 @@ void rtTraverse110 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse110 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse110 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1890,11 +2070,11 @@ void rtTraverse110 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[1] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse110 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
+		  rtTraverse110 (block_min, block_x, block_p, t_max[1], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1909,11 +2089,11 @@ void rtTraverse110 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse110 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse110 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -1924,17 +2104,17 @@ void rtTraverse110 (float org[],
 }
 
 void rtTraverse111 (float org[],
-		    void (*AbsorptionCoefficients) (float flow_field_value, float t1, float t2, float col[]),
+		    void (*ColourPalette) (float value, float col[]),
 		    Cluster *cluster_p, Net *net, Vis *vis)
 {
   float block_min[VIS_VEC_SIZE];
   float t_max[VIS_VEC_SIZE];
   float t_delta[VIS_VEC_SIZE];
   float dx[VIS_VEC_SIZE];
+  float block_x[VIS_VEC_SIZE];
   
-  int block_i[VIS_VEC_SIZE];
-  int i_vec[VIS_VEC_SIZE], ii_vec[3];
-  int cluster_blocks_vec[3];
+  int i_vec[VIS_VEC_SIZE];
+  int cluster_blocks_vec[VIS_VEC_SIZE];
   int l;
   int ii, jj, kk;
 
@@ -1945,28 +2125,29 @@ void rtTraverse111 (float org[],
   cluster_blocks_vec[1] = cluster_p->blocks_y;
   cluster_blocks_vec[2] = cluster_p->blocks_z;
   
-///#pragma vector always
-  for (l = 0; l < VIS_VEC_SIZE; l++)
-    {
-      dx[l] = org[l] - cluster_p->x[l];
-      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
-    }
   for (l = 0; l < 3; l++)
     {
-      ii_vec[l] = (i_vec[l] + cluster_p->block_min[l]) * blocks_vec[l];
-      block_min[l] = (float)(i_vec[l] * block_size) - dx[l];
+      dx[l] = org[l] - cluster_p->x[l];
     }
-  ii = ii_vec[0];
-  jj = ii_vec[1];
-  kk = ii_vec[2];
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      i_vec[l] = max(0, min(cluster_blocks_vec[l] - 1, (int)(block_size_inv * dx[l])));
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      block_min[l] = (float)i_vec[l] * (float)block_size - dx[l];
+    }
+  ii = (i_vec[0] + cluster_p->block_min[0]) * blocks_yz;
+  jj = (i_vec[1] + cluster_p->block_min[1]) * blocks_z;
+  kk = (i_vec[2] + cluster_p->block_min[2]);
   
   if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
     {
-      for (l = 0; l < 3; l++)
+      for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  block_i[l] = (int)(-block_min[l]);
+	  block_x[l] = -block_min[l];
 	}
-      rtTraverse111 (block_min, block_i, block_p, 0.F, AbsorptionCoefficients, vis);
+      rtTraverse111 (block_min, block_x, block_p, 0.F, ColourPalette, vis);
       
       if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
     }
@@ -1989,11 +2170,11 @@ void rtTraverse111 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[0] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[0] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse111 (block_min, block_i, block_p, t_max[0], AbsorptionCoefficients, vis);
+		  rtTraverse111 (block_min, block_x, block_p, t_max[0], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -2008,11 +2189,11 @@ void rtTraverse111 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse111 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse111 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -2030,11 +2211,11 @@ void rtTraverse111 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[1] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[1] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse111 (block_min, block_i, block_p, t_max[1], AbsorptionCoefficients, vis);
+		  rtTraverse111 (block_min, block_x, block_p, t_max[1], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -2049,11 +2230,11 @@ void rtTraverse111 (float org[],
 	      
 	      if ((block_p = &net->map_block[ ii + jj + kk ])->site_data != NULL)
 		{
-		  for (l = 0; l < 3; l++)
+		  for (l = 0; l < VIS_VEC_SIZE; l++)
 		    {
-		      block_i[l] = (int)(t_max[2] * ray_dir[l] - block_min[l]);
+		      block_x[l] = t_max[2] * ray_dir[l] - block_min[l];
 		    }
-		  rtTraverse111 (block_min, block_i, block_p, t_max[2], AbsorptionCoefficients, vis);
+		  rtTraverse111 (block_min, block_x, block_p, t_max[2], ColourPalette, vis);
 		  
 		  if (vis->mode == 1 && vis->t_min < 1.e+30F) return;
 		}
@@ -2066,38 +2247,36 @@ void rtTraverse111 (float org[],
 
 void rtInit (Net *net, Vis *vis)
 {
-  rtRayAABBIntersection[0] = rtRayAABBIntersection000;
-  rtRayAABBIntersection[1] = rtRayAABBIntersection001;
-  rtRayAABBIntersection[2] = rtRayAABBIntersection010;
-  rtRayAABBIntersection[3] = rtRayAABBIntersection011;
-  rtRayAABBIntersection[4] = rtRayAABBIntersection100;
-  rtRayAABBIntersection[5] = rtRayAABBIntersection101;
-  rtRayAABBIntersection[6] = rtRayAABBIntersection110;
-  rtRayAABBIntersection[7] = rtRayAABBIntersection111;
+  rtRayAABBIntersection[0][0][0] = rtRayAABBIntersection000;
+  rtRayAABBIntersection[0][0][1] = rtRayAABBIntersection001;
+  rtRayAABBIntersection[0][1][0] = rtRayAABBIntersection010;
+  rtRayAABBIntersection[0][1][1] = rtRayAABBIntersection011;
+  rtRayAABBIntersection[1][0][0] = rtRayAABBIntersection100;
+  rtRayAABBIntersection[1][0][1] = rtRayAABBIntersection101;
+  rtRayAABBIntersection[1][1][0] = rtRayAABBIntersection110;
+  rtRayAABBIntersection[1][1][1] = rtRayAABBIntersection111;
   
-  rtTraverse[0] = rtTraverse000;
-  rtTraverse[1] = rtTraverse001;
-  rtTraverse[2] = rtTraverse010;
-  rtTraverse[3] = rtTraverse011;
-  rtTraverse[4] = rtTraverse100;
-  rtTraverse[5] = rtTraverse101;
-  rtTraverse[6] = rtTraverse110;
-  rtTraverse[7] = rtTraverse111;
+  rtTraverse[0][0][0] = rtTraverse000;
+  rtTraverse[0][0][1] = rtTraverse001;
+  rtTraverse[0][1][0] = rtTraverse010;
+  rtTraverse[0][1][1] = rtTraverse011;
+  rtTraverse[1][0][0] = rtTraverse100;
+  rtTraverse[1][0][1] = rtTraverse101;
+  rtTraverse[1][1][0] = rtTraverse110;
+  rtTraverse[1][1][1] = rtTraverse111;
 }
 
 
-void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float t1, float t2, float col[]),
-		   Net *net, Vis *vis)
+void rtRayTracing (void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis)
 {
   // here, the ray tracing is performed and the intra-machine communications take place
   
   float screen_max[4];
-  float screen_vtx[VIS_VEC_SIZE];
   float p0[VIS_VEC_SIZE], p1[VIS_VEC_SIZE], p2[VIS_VEC_SIZE];
   float dir[VIS_VEC_SIZE];
   float cluster_blocks_vec[VIS_VEC_SIZE];
   float t;
-  float temp1, temp2;
+  float temp1;
   
   float par1[VIS_VEC_SIZE], par2[VIS_VEC_SIZE], par3[VIS_VEC_SIZE];
   float subimage_vtx[4];
@@ -2109,7 +2288,7 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
   int cluster_id;
   int subimage_pix[4];
   int viewpoint_flag;
-  int ray_dir_code;
+  int ray_sign[3];
   
   AABB aabb;
   
@@ -2127,22 +2306,18 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
   for (l = 0; l < VIS_VEC_SIZE; l++)
     {
       p0[l] = viewpoint.x[l];
-      screen_vtx[l] = EPSILON + screen.ctr[l] - screen.dir1[l] - screen.dir2[l] - p0[l];
     }
-  temp1 = (2.F / (float)pixels_x);
-  temp2 = (2.F / (float)pixels_y);
-  
   for (l = 0; l < VIS_VEC_SIZE; l++)
     {
-      par1[l] = screen.dir1[l] * temp1;
-      par2[l] = screen.dir2[l] * temp2;
+      par1[l] = screen.dir1[l];
+      par2[l] = screen.dir2[l];
     }
-  scale_vec[0] = scale_vec[1] = 1.F / screen.par_x;
-  scale_vec[2] = scale_vec[3] = 1.F / screen.par_y;
+  scale_vec[0] = scale_vec[1] = screen.scale_x;
+  scale_vec[2] = scale_vec[3] = screen.scale_y;
 
-  for (cluster_id = 0; cluster_id < vis->clusters; cluster_id++)
+  for (cluster_id = 0; cluster_id < clusters; cluster_id++)
     {
-      cluster_p = &vis->cluster[ cluster_id ];
+      cluster_p = &cluster[ cluster_id ];
       
       // the image-based projection of the cluster bounding box is calculated here
       
@@ -2211,12 +2386,9 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
       aabb.acc_5 = v[1][2] - p0[2];
       aabb.acc_6 = v[0][2] - p0[2];
       
-      temp1 = (float)subimage_pix[0] + 0.5F;
-      temp2 = (float)subimage_pix[2] + 0.5F;
-      
       for (l = 0; l < VIS_VEC_SIZE; l++)
 	{
-	  par3[l] = screen_vtx[l] + temp1 * par1[l] + temp2 * par2[l];
+	  par3[l] = screen.vtx[l] + subimage_pix[0] * par1[l] + subimage_pix[2] * par2[l];
 	}
       
       for (i = subimage_pix[0]; i <= subimage_pix[1]; i++)
@@ -2235,14 +2407,14 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
 	      temp1 = 1.F / sqrtf(dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2]);
 	      
 	      for (l = 0; l < VIS_VEC_SIZE; l++)
-		{	      
+		{
 		  ray_dir[l] *= temp1;
 		  ray_inv[l] = 1.F / ray_dir[l];
 		}
-	      ray_dir_code = ray_dir[2] > 0.F;
-	      ray_dir_code |= (ray_dir[1] > 0.F) << 1;
-	      ray_dir_code |= (ray_dir[0] > 0.F) << 2;
-	      
+	      for (l = 0; l < 3; l++)
+		{
+		  ray_sign[l] = ray_dir[l] > 0.F;
+		}
 	      for (l = 0; l < VIS_VEC_SIZE; l++)
 		{
 		  dir[l] += par2[l];
@@ -2251,7 +2423,8 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
 	      
 	      if (!viewpoint_flag)
 		{
-		  (*rtRayAABBIntersection[ ray_dir_code ]) (&aabb, ray_inv[0], ray_inv[1], ray_inv[2], &t);
+		  (*rtRayAABBIntersection[ray_sign[0]][ray_sign[1]][ray_sign[2]])
+		    (&aabb, ray_inv[0], ray_inv[1], ray_inv[2], &t);
 		  
 		  if (t >= 1.e+30F) continue;
 		  
@@ -2260,19 +2433,18 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
 		      p1[l] += t * ray_dir[l];
 		    }
 		}
-	      
 	      for (l = 0; l < VIS_VEC_SIZE; l++)
 		{
 		  ray_col[l] = 0.F;
 		}
 	      vis->t_min = 1.e+30F;
 	      
-	      (*rtTraverse[ ray_dir_code ]) (p1, AbsorptionCoefficients, cluster_p, net, vis);
+	      (*rtTraverse[ray_sign[0]][ray_sign[1]][ray_sign[2]])
+		(p1, ColourPalette, cluster_p, net, vis);
 	      
 	      if (vis->t_min >= 1.e+30F) continue;
 	      
 	      visWritePixel (ray_col, vis->t_min + t, i, j, vis);
-	      
 	    }
 	  for (l = 0; l < VIS_VEC_SIZE; l++)
 	    {
@@ -2285,7 +2457,7 @@ void rtRayTracing (void (*AbsorptionCoefficients) (float flow_field_data, float 
 
 void rtEnd (Vis *vis)
 {
-  free(vis->cluster);
+  free(cluster);
 }
 
 
@@ -2369,8 +2541,7 @@ void slInit (Net *net, Vis *vis)
 }
 
 
-void slStreamlines (void ColourPalette (float vel_m, float col[]),
-		    Net *net, Vis *vis)
+void slStreamlines (void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis)
 {
   double density, v[VIS_VEC_SIZE];
   
@@ -2412,8 +2583,8 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
   pixels_x = screen.pixels_x;
   pixels_y = screen.pixels_y;
   
-  scale_x = 1.F / screen.par_x;
-  scale_y = 1.F / screen.par_y;
+  scale_x = 1.F / screen.scale_x;
+  scale_y = 1.F / screen.scale_y;
   
   for (cycles = 0; cycles < net->procs; cycles++)
     {
@@ -2423,7 +2594,6 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
 	}
       for (n = vis->streamlines - 1; n >= 0; n--)
 	{
-///#pragma vector always
 	  for (l = 0; l < VIS_VEC_SIZE; l++)
 	    {
 	      site_vec[l] = (int)(vis->streamline[ VIS_VEC_SIZE*n+l ] + vis->half_dim[l]);
@@ -2481,10 +2651,10 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
 		  --vis->streamlines;
 		  continue;
 		}
-	      ColourPalette (vel_m * vis->flow_field_value_max_inv[ VELOCITY ], col);
+	      ColourPalette (vel_m * vis->velocity_max_inv, col);
 	      
 	      vel_m = 1.F / vel_m;
-///#pragma vector always
+	      
 	      for (l = 0; l < VIS_VEC_SIZE; l++)
 		{
 		  vis->streamline[ VIS_VEC_SIZE*n+l ] += (float)v[l] * vel_m;
@@ -2585,7 +2755,7 @@ void slStreamlines (void ColourPalette (float vel_m, float col[]),
 		      j += m;
 		    }
 		}
-///#pragma vector always
+	      
 	      for (l = 0; l < VIS_VEC_SIZE; l++)
 		{
 		  site_vec[l] = (int)(vis->streamline[ VIS_VEC_SIZE*n+l ] + vis->half_dim[l]);
@@ -2725,7 +2895,7 @@ void visProject (float p1[], float p2[])
   
   p2[2] = -x2[2];
   
-  temp = screen.dist / p2[2];
+  temp = viewpoint.dist / p2[2];
   
   for (l = 0; l < VIS_VEC_SIZE; l++)
     {
@@ -2742,7 +2912,10 @@ void visProjection (float ortho_x, float ortho_y,
 		    float dist,
 		    float zoom)
 {
+  float ctr[VIS_VEC_SIZE];
   float temp;
+  
+  int l;
   
   
   screen.max_x = ortho_x / zoom;
@@ -2767,14 +2940,15 @@ void visProjection (float ortho_x, float ortho_y,
   viewpoint.x[1] = rad  * viewpoint.sin_2 + ctr_y;
   viewpoint.x[2] = temp * viewpoint.cos_1 + ctr_z;
   
+  viewpoint.dist = dist;
+  
   temp = dist / rad;
   
-  screen.ctr[0] = viewpoint.x[0] + temp * (ctr_x - viewpoint.x[0]);
-  screen.ctr[1] = viewpoint.x[1] + temp * (ctr_y - viewpoint.x[1]);
-  screen.ctr[2] = viewpoint.x[2] + temp * (ctr_z - viewpoint.x[2]);
+  ctr[0] = viewpoint.x[0] + temp * (ctr_x - viewpoint.x[0]);
+  ctr[1] = viewpoint.x[1] + temp * (ctr_y - viewpoint.x[1]);
+  ctr[2] = viewpoint.x[2] + temp * (ctr_z - viewpoint.x[2]);
   
   screen.zoom = zoom;
-  screen.dist = dist;
   
   visRotate (viewpoint.sin_1, viewpoint.cos_1,
 	     viewpoint.sin_2, viewpoint.cos_2,
@@ -2786,8 +2960,18 @@ void visProjection (float ortho_x, float ortho_y,
 	     0.0F, screen.max_y, 0.0F,
 	     &screen.dir2[0], &screen.dir2[1], &screen.dir2[2]);
   
-  screen.par_x = (2.F * screen.max_x) / (float)pixels_x;
-  screen.par_y = (2.F * screen.max_y) / (float)pixels_y;
+  screen.scale_x = (float)pixels_x / (2.F * screen.max_x);
+  screen.scale_y = (float)pixels_y / (2.F * screen.max_y);
+  
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      screen.vtx[l] = EPSILON + ctr[l] - screen.dir1[l] - screen.dir2[l] - viewpoint.x[l];
+    }
+  for (l = 0; l < VIS_VEC_SIZE; l++)
+    {
+      screen.dir1[l] *= (2.F / (float)pixels_x);
+      screen.dir2[l] *= (2.F / (float)pixels_y);
+    }
 }
 
 
@@ -2854,9 +3038,9 @@ void visWritePixel (float col[], float t, int i, int j, Vis *vis)
 
 
 #ifdef STEER
-void visReadParameters (char *parameters_file_name, Net *net, Vis *vis, SteerParams *steer)
+void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis, SteerParams *steer)
 #else
-void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
+void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis)
 #endif
 {
   FILE *parameters_file;
@@ -2895,7 +3079,7 @@ void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
       fscanf (parameters_file, "%e \n", &zoom);
       
       fscanf (parameters_file, "%i \n", &vis->image_freq);
-      fscanf (parameters_file, "%i \n", &vis->flow_field_type);
+      fscanf (parameters_file, "%i \n", &lbm->flow_field_type);
       fscanf (parameters_file, "%i \n", &vis->mode);
       fscanf (parameters_file, "%e \n", &vis->absorption_factor);
       fscanf (parameters_file, "%e \n", &vis->cutoff);
@@ -2912,7 +3096,7 @@ void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
       par_to_send[  4 ] = latitude;
       par_to_send[  5 ] = zoom;
       par_to_send[  6 ] = 0.1 + (float)vis->image_freq;
-      par_to_send[  7 ] = 0.1 + (float)vis->flow_field_type;
+      par_to_send[  7 ] = 0.1 + (float)lbm->flow_field_type;
       par_to_send[  8 ] = 0.1 + (float)vis->mode;
       par_to_send[  9 ] = vis->absorption_factor;
       par_to_send[ 10 ] = vis->cutoff;
@@ -2931,7 +3115,7 @@ void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
   latitude               =      par_to_send[  4 ];
   zoom                   =      par_to_send[  5 ];
   vis->image_freq        = (int)par_to_send[  6 ];
-  vis->flow_field_type   = (int)par_to_send[  7 ];
+  lbm->flow_field_type   = (int)par_to_send[  7 ];
   vis->mode              = (int)par_to_send[  8 ];
   vis->absorption_factor =      par_to_send[  9 ];
   vis->cutoff            =      par_to_send[ 10 ];
@@ -2947,9 +3131,19 @@ void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
 		 0.5F * (5.F * vis->system_size),
 		 zoom);
   
-  vis->flow_field_value_max_inv[ DENSITY  ] = 1.F / density_max;
-  vis->flow_field_value_max_inv[ VELOCITY ] = 1.F / velocity_max;
-  vis->flow_field_value_max_inv[ STRESS   ] = 1.F / stress_max;
+  if (lbm->flow_field_type == DENSITY)
+    {
+      vis->flow_field_value_max_inv = 1.F / density_max;
+    }
+  else if (lbm->flow_field_type == VELOCITY)
+    {
+      vis->flow_field_value_max_inv = 1.F / velocity_max;
+    }
+  else
+    {
+      vis->flow_field_value_max_inv = 1.F / stress_max;
+    }
+  vis->velocity_max_inv = 1.F / velocity_max;
   
 #ifdef STEER
   // set up the ReG struct
@@ -2958,7 +3152,7 @@ void visReadParameters (char *parameters_file_name, Net *net, Vis *vis)
   steer->latitude        = latitude;
   steer->zoom            = zoom;
   steer->image_freq      = vis->image_freq;
-  steer->flow_field_type = vis->flow_field_type;
+  steer->flow_field_type = lbm->flow_field_type;
   steer->mode            = vis->mode;
   steer->abs_factor      = vis->absorption_factor;
   steer->cutoff          = vis->cutoff;
@@ -2983,14 +3177,24 @@ void visUpdateParameters (Vis *vis, SteerParams *steer)
 		 steer->zoom);
   
   vis->image_freq        = steer->image_freq;
-  vis->flow_field_type   = steer->flow_field_type;
+  lbm->flow_field_type   = steer->flow_field_type;
   vis->mode              = steer->mode;
   vis->absorption_factor = steer->abs_factor;
   vis->cutoff            = steer->cutoff;
   
-  vis->flow_field_value_max_inv[ DENSITY  ] = 1.F / steer->max_density;
-  vis->flow_field_value_max_inv[ VELOCITY ] = 1.F / steer->max_velocity;
-  vis->flow_field_value_max_inv[ STRESS   ] = 1.F / steer->max_stress;
+  if (vis->flow_field_type == DENSITY)
+    {
+      vis->flow_field_value_max_inv = 1.F / density_max;
+    }
+  else if (vis->flow_field_type == VELOCITY)
+    {
+      vis->flow_field_value_max_inv = 1.F / velocity_max;
+    }
+  else
+    {
+      vis->flow_field_value_max_inv = 1.F / stress_max;
+    }
+  vis->velocity_max_inv = 1.F / velocity_max;
 }
 #endif
  
@@ -3011,17 +3215,6 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   
   block_size_inv = 1.F / (float)block_size;
   
-  blocks_vec[0] = blocks_y * blocks_z;
-  blocks_vec[1] = blocks_z;
-  blocks_vec[2] = 1;
-  blocks_vec[3] = 0;
-  
-  block_size_vec[0] = block_size * block_size;
-  block_size_vec[1] = block_size;
-  block_size_vec[2] = 1;
-  block_size_vec[3] = 0;
-  
-  
 #ifndef NOMPI
   int col_pixel_count = 7;
   int col_pixel_blocklengths[7] = {1, 1, 1, 1, 1, 1, 1};
@@ -3032,7 +3225,6 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   
   MPI_Aint col_pixel_disps[7];
 #endif
-  
   
   vis->image_file_name = image_file_name;
   
@@ -3045,7 +3237,6 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
   
   vis->pixels_max = IMAGE_SIZE;
   vis->col_pixel_id = (int *)malloc(sizeof(int) * vis->pixels_max);
-  
   
 #ifndef NOMPI
   // create the derived datatype for the MPI communications
@@ -3087,9 +3278,7 @@ void visInit (char *image_file_name, Net *net, Vis *vis)
 }
 
 
-void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float t1, float t2, float col[]),
-		 void (*slColourPalette) (float vel_m, float col[]),
-		 Net *net, Vis *vis)
+void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis)
 {
   int pixels_x, pixels_y;
   int i, j;
@@ -3119,11 +3308,11 @@ void visRenderA (void (*rtAbsorptionCoefficients) (float flow_field_data, float 
   
   if (vis->mode == 0 || vis->mode == 1)
     {
-      rtRayTracing (rtAbsorptionCoefficients, net, vis);
+      rtRayTracing (ColourPalette, net, vis);
     }
   else if (vis->mode == 2)
     {
-      slStreamlines (slColourPalette, net, vis);
+      slStreamlines (ColourPalette, net, vis);
     }
   
   // here, intra-machine communications are handled through a binary
@@ -3431,6 +3620,8 @@ void visRenderB (Net *net, Vis *vis)
   FILE *image_file;
   XDR	xdr_image_file;
   
+  int pixels_x;
+  
   short int pixel_i, pixel_j;
   
   unsigned char pixel_r, pixel_g, pixel_b;
@@ -3474,7 +3665,7 @@ void visRenderB (Net *net, Vis *vis)
 void visEnd (Net *net, Vis *vis)
 {
   rtEnd (vis);
-  
+   
   slEnd (vis);
   
   /// free(vis->col_pixel_send);
