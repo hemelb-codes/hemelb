@@ -1,10 +1,6 @@
 #include "config.h"
 
-
-float EPSILON = 1.0e-30;
-
-int STABLE   = 1;
-int UNSTABLE = 0;
+double PI = 2. * atan2(1., 0.);
 
 // the constants needed to define the configuration of the lattice
 // sites follow
@@ -71,13 +67,19 @@ double *f_old = NULL, *f_new = NULL;
 
 int *f_id = NULL;
 
+#ifndef TD
 double *vel = NULL;
+#endif
 
 float *flow_field = NULL;
 
+#ifndef BENCH
 double *d = NULL;
 
 double **nd_p = NULL;
+#endif
+
+Cluster *cluster = NULL;
 
 
 short int f_data[4*SHARED_DISTRIBUTIONS_MAX];
@@ -98,9 +100,7 @@ int streamlines_to_recv[NEIGHBOUR_PROCS_MAX];
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;
 int blocks_yz, blocks;
-int blocks_vec[4];
 int block_size, block_size2, block_size3, block_size_1;
-int block_size_vec[4];
 int shift;
 int sites_in_a_block;
 
@@ -110,6 +110,9 @@ float block_size_inv;
 float ray_dir[VIS_VEC_SIZE];
 float ray_inv[VIS_VEC_SIZE];
 float ray_col[VIS_VEC_SIZE];
+
+
+short int clusters;
 
 
 Screen screen;

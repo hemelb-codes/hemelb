@@ -80,7 +80,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
 
       ++shift;
     }
-
+  
   blocks = blocks_x * blocks_y * blocks_z;
   
   lbm->fluid_sites_per_block = (short int *)malloc(sizeof(short int) * blocks);
@@ -176,6 +176,8 @@ void lbmReadConfig (LBM *lbm, Net *net)
 #ifndef BENCH
 			  if (!lbm->is_checkpoint)
 			    {
+			      // the block density is accumulated for
+			      // each boundary block
 			      if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
 				{
 				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
@@ -220,11 +222,15 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      density_block_p->neighs = 0;
 	      ++density_blocks;
 	      
+	      // if the density block contains some inlets/outlets its
+	      // #neighbours is 0 (see previous lines)
 	      if (density_block_p->boundary_sites > 0)
 		{
 		  *block_density_p /= (float)density_block_p->boundary_sites;
 		  continue;
 		}
+	      // here the number of neighbouring density blocks is
+	      // calculated for each non-boundary block
 	      for (ii = max(0, i - 1); ii <= min(i + 1, blocks_x - 1); ii++)
 		{
 		  for (jj = max(0, j - 1); jj <= min(j + 1, blocks_y - 1); jj++)
@@ -246,6 +252,8 @@ void lbmReadConfig (LBM *lbm, Net *net)
   error = 1.e+30F;
   iters = 0;
   
+  // gauss-seidel iteration: each block density is the average of the
+  // neighbouring ones
   while (error > 1.e-5F)
     {
       ++iters;
@@ -312,10 +320,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       fscanf (parameters_file, "%le\n", &lbm->tau);
       fscanf (parameters_file, "%i\n", &lbm->inlets);
       
-      if (lbm->inlet_density == NULL)
-	{
-	  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
-	}
+      lbm->inlet_density = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
       
       for (n = 0; n < lbm->inlets; n++)
 	{
@@ -323,10 +328,8 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
       
-      if (lbm->outlet_density == NULL)
-	{
-	  lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
-	}
+      lbm->outlet_density = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      
       for (n = 0; n < lbm->outlets; n++)
 	{
 	  //int iters;
@@ -335,9 +338,13 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  //printf (" outlet id: %i, density: %f\n", n, lbm->outlet_density[ n ]);
 	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
 	}
-      fscanf (parameters_file, "%i\n", &lbm->time_steps_max);
+      fscanf (parameters_file, "%i\n", &lbm->cycles_max);
       fscanf (parameters_file, "%le\n", &lbm->tolerance);
+#ifndef TD
       fscanf (parameters_file, "%i\n", &lbm->checkpoint_freq);
+#else
+      fscanf (parameters_file, "%i\n", &lbm->period);
+#endif
       fscanf (parameters_file, "%i\n", &lbm->conv_freq);
       
       fclose (parameters_file);
@@ -363,14 +370,8 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       lbm->inlets  = (int)par_to_send[ 0 ];
       lbm->outlets = (int)par_to_send[ 1 ];
       
-      if (lbm->inlet_density == NULL)
-	{
-	  lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
-	}
-      if (lbm->outlet_density == NULL)
-	{
-	  lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
-	}
+      lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
     }
   else
     {
@@ -385,9 +386,13 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	{
 	  par_to_send[ 2 + lbm->inlets + n ] = lbm->outlet_density[ n ];
 	}
-      par_to_send[ 2 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->time_steps_max;
+      par_to_send[ 2 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->cycles_max;
       par_to_send[ 3 + lbm->inlets + lbm->outlets ] = lbm->tolerance;
+#ifndef TD
       par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->checkpoint_freq;
+#else
+      par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->period;
+#endif
       par_to_send[ 5 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->conv_freq;
     }
 #ifndef NOMPI
@@ -406,11 +411,18 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	{
 	  lbm->outlet_density[ n ] = par_to_send[ 2 + lbm->inlets + n ];
 	}
-      lbm->time_steps_max   = (int)par_to_send[ 2 + lbm->inlets + lbm->outlets ];
+      lbm->cycles_max       = (int)par_to_send[ 2 + lbm->inlets + lbm->outlets ];
       lbm->tolerance        =      par_to_send[ 3 + lbm->inlets + lbm->outlets ];
+#ifndef TD
       lbm->checkpoint_freq  = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
+#else
+      lbm->period           = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
+#endif
       lbm->conv_freq        = (int)par_to_send[ 5 + lbm->inlets + lbm->outlets ];
     }
+#ifndef TD
+  lbm->period = 1;
+#endif
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
   
   lbm->omega = -1.0 / lbm->tau;
@@ -419,7 +431,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 #ifdef STEER
   steer->tau            = lbm->tau;
   steer->tolerance      = lbm->tolerance;
-  steer->max_time_steps = lbm->time_steps_max;
+  steer->max_cycles     = lbm->cycles_max;
   steer->conv_freq      = lbm->conv_freq;
   steer->check_freq     = lbm->checkpoint_freq;
 #endif
@@ -431,7 +443,7 @@ void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
 {
   lbm->tau              = steer->tau;
   lbm->tolerance        = steer->tolerance;
-  lbm->time_steps_max   = steer->max_time_steps;
+  lbm->cycles_max       = steer->max_cycles;
   lbm->conv_freq        = steer->conv_freq;
   lbm->checkpoint_freq  = steer->check_freq;
   
@@ -510,9 +522,11 @@ void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net)
 	    {
 	      f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
 	    }
+#ifndef TD
 	  vel[ 3*i+0 ] = 1.e+30;
 	  vel[ 3*i+1 ] = 1.e+30;
 	  vel[ 3*i+2 ] = 1.e+30;
+#endif
 	}
     }
   xdr_destroy (&xdr_system_config);
