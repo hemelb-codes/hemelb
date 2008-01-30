@@ -3,6 +3,8 @@ import info.clearthought.layout.TableLayout;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.event.MenuListener;
+import javax.swing.event.MenuEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JButton;
@@ -85,8 +87,8 @@ public class VizStandalone extends javax.swing.JFrame {
 					jMenu2 = new JMenu();
 					jMenuBar1.add(jMenu2);
 					jMenu2.setText("Connection");
-					jMenu2.addActionListener(new ActionListener () {
-						public void actionPerformed (ActionEvent e) {
+					jMenu2.addMenuListener(new MenuListener () {
+						public void menuSelected (MenuEvent e) {
 							if (vg.isConnected() ){
 								jMenuItem1.setEnabled(false);
 								jMenuItem2.setEnabled(true);
@@ -95,6 +97,15 @@ public class VizStandalone extends javax.swing.JFrame {
 								jMenuItem2.setEnabled(false);
 							}
 						}
+						
+						public void menuCanceled (MenuEvent e) {
+							
+						}
+						
+						public void menuDeselected (MenuEvent e) {
+							
+						}
+						
 					});
 					{
 						jMenuItem3 = new JMenuItem();
