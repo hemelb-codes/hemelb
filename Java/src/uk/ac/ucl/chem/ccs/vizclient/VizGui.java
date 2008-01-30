@@ -39,7 +39,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		this.port = port;
 		this.hostname = hostname;
 		initGUI();
-
+		nr = new NetworkReceive (port, hostname);	
 	}
 	
 	public void setHostPort (int port, String hostname) {
@@ -275,6 +275,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					notificationArea.setBorder(BorderFactory
 						.createBevelBorder(BevelBorder.LOWERED));
 					notificationArea.setDoubleBuffered(true);
+					notificationArea.setEditable(false);
 				}
 			}
 
