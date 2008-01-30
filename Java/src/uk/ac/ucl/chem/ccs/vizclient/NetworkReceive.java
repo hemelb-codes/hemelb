@@ -9,6 +9,7 @@ public class NetworkReceive  {
 
 	private static final int BYTES_PER_PIXEL_DATA = 8;
 	private DataInputStream d;
+	private DataOutputStream dos;
 	private Socket listenSocket;	
 	
 	// data per pixel are colour id and pixel id (2 * sizeof(int) * bytes)
@@ -118,6 +119,7 @@ public class NetworkReceive  {
 			
        		BufferedInputStream bufff = new BufferedInputStream(listenSocket.getInputStream());
 			d = new DataInputStream(bufff);
+			dos = new DataOutputStream(listenSocket.getOutputStream());
 			connected = true;
 		} catch (UnknownHostException e) {
 			System.err.println("can't connect to host: " + hostname);
@@ -128,6 +130,17 @@ public class NetworkReceive  {
 		System.err.println("RecSize " + s);
 		}
 		return connected;
+	}
+	
+	public boolean writeOut (double dx, double dy) {
+		try {
+			dos.writeDouble(dx);
+			dos.writeDouble(dy);
+			return true;
+		} catch (Exception e) {
+			
+		}
+		return false;
 	}
 	
 	public boolean disconnect() {
