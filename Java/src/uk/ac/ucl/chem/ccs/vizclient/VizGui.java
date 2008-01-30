@@ -5,7 +5,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import com.sun.opengl.util.Animator;
 import javax.swing.BorderFactory;
-
+import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseListener;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
 import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.JFrame;
@@ -38,16 +42,23 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 	}
 	
+	public void setHostPort (int port, String hostname) {
+		this.port = port;
+		this.hostname = hostname;
+		notificationArea.append("Changed host " + hostname + ":" + port + "\n");
+		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+	}
+	
 	public boolean startReceive() {
 		if (!connected) {
 		nr = new NetworkReceive (port, hostname);
 		connected = nr.connect();
 		if (!connected) {
-			notificationArea.append("Connection error\n");
-			  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+			notificationArea.append("Connection error: Couldn't connect to host " + hostname + ":" + port +"\n");
+		 notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 			return connected;
 		}
-		notificationArea.append("Connection started\n");
+		notificationArea.append("Connection started to host " + hostname + ":" + port +"\n");
 		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 		thread = new NetThread();
 	    thread.start();
@@ -65,7 +76,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			connected = !nr.disconnect();
 			
 			//thread.stopThread();
-			notificationArea.append("Connection terminated\n");
+			notificationArea.append("Connection terminated to host " + hostname + ":" + port +"\n");
 			  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 		}
 		return !connected;
@@ -116,12 +127,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 	gl.glPointSize (1.F);
 	
-	int y = 512;
-	int x = 512;
+	int y = 1024;
+	int x = 1024;
 	scale_x = 1.0f / (float)x;
 	scale_y = 1.0f / (float)y;
 	
-
 	
     }
     
@@ -131,7 +141,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
 	GL gl = drawable.getGL();
 	gl.glViewport( 0, 0, width, height );
-	//gl.glMatrixMode( GL.GL_PROJECTION ); 
+	gl.glMatrixMode( GL.GL_PROJECTION ); 
 	gl.glLoadIdentity();
    //  
 	//gl.glOrtho(0, 400, 0, 300, -1, 1);
@@ -199,7 +209,60 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				canvas1 = new GLCanvas(cap);
 				this.add(canvas1, "0, 1, 0, 9");
 				canvas1.addGLEventListener(this);
-			}
+				canvas1.addMouseWheelListener(new MouseWheelListener () {
+					
+				    public void mouseWheelMoved(MouseWheelEvent e) {
+				        String message;
+				        String newline = "\n";
+				        int notches = e.getWheelRotation();
+				        if (notches < 0) {
+				            message = "Mouse wheel moved UP "
+				                         + -notches + " notch(es)" + newline;
+				        } else {
+				            message = "Mouse wheel moved DOWN "
+				                         + notches + " notch(es)" + newline;
+				        }
+				        System.err.print(message);
+				     }
+					
+				});
+				canvas1.addMouseListener(new MouseListener () {
+					Point start = null;
+					
+					public void mouseReleased(MouseEvent e) {
+						if (start != null) {
+							Point end = e.getPoint();
+							double dx = start.getX() - end.getX();
+							double dy = start.getY() - end.getY();
+							
+							if (dx != 0 && dy != 0) {
+								//scale 
+								dx = dx/50.d;
+								dy = dy/50.d;
+								
+							if (nr != null && nr.isConnected()) {
+								System.err.println (" dX = "  +  dx + " dy = " +dy);
+
+							nr.writeOut(dx, dy);
+							}
+							}
+						}
+					}
+					
+					public void mouseClicked(MouseEvent e) {
+					}
+					
+					public void mousePressed(MouseEvent e) {
+						start = e.getPoint();
+					}
+					
+					public void mouseExited(MouseEvent e) {
+					}
+					
+					public void mouseEntered(MouseEvent e) {
+					}
+				});
+			}	
 			{
 				jScrollPane1 = new JScrollPane();
 				this.add(jScrollPane1, "0, 0, 0, 0");
@@ -220,6 +283,10 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		}
 	}
 	
+	public boolean isConnected() {
+		return nr.isConnected();
+	}
+	
     private class NetThread extends Thread {
     	
 
@@ -231,6 +298,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     	public void stopThread () {
     		nr.disconnect();
     	}
+    	
+
     	
     	public void run() {
     		while(nr.isConnected()) {
