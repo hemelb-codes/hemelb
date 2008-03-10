@@ -630,7 +630,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
     {
       fluid_sites_max = max(fluid_sites_max, net->fluid_sites[ n ]);
     }
-  buffer_size = max(1000, fluid_sites_max * net->procs);
+  buffer_size = max(1000000, fluid_sites_max * net->procs);
   
   communication_period = (int)((double)buffer_size / net->procs);
   
