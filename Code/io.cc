@@ -18,14 +18,12 @@ void lbmReadConfig (LBM *lbm, Net *net)
   int density_blocks, density_blocks_max;
   int iters;
 #endif
-  int i, j, k, ii, jj, kk, n;
+  int i, j, k, ii, jj, kk, m, n;
   int flag;
 #ifndef BENCH
-  int m;
   int dummy = 0;
 #endif
   
-  unsigned int site_data;
   unsigned int site_i, site_j, site_k;
 #ifndef BENCH
   unsigned int boundary_id;
@@ -40,6 +38,9 @@ void lbmReadConfig (LBM *lbm, Net *net)
   DensityBlock *density_block = NULL;
   DensityBlock *density_block_p = NULL;
 #endif
+  
+  DataBlock *data_block_p;
+  ProcBlock *proc_block_p;
   
   
   fprintf(stderr, "opening system configuration file %s [rank %i]\n", lbm->system_file_name, net->id);
@@ -83,6 +84,10 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   blocks = blocks_x * blocks_y * blocks_z;
   
+  net->data_block = (DataBlock *)malloc(sizeof(DataBlock) * blocks);
+  
+  net->proc_block = (ProcBlock *)malloc(sizeof(ProcBlock) * blocks);
+  
   lbm->fluid_sites_per_block = (short int *)malloc(sizeof(short int) * blocks);
 
   lbm->total_fluid_sites = 0;
@@ -109,6 +114,8 @@ void lbmReadConfig (LBM *lbm, Net *net)
       density_block = (DensityBlock *)malloc(sizeof(DensityBlock) * density_blocks_max);
     }
 #endif
+  net->fr_time = myClock ();
+  
   n = -1;
   
   for (i = 0; i < blocks_x; i++)
@@ -117,13 +124,25 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	{
 	  for (k = 0; k < blocks_z; k++)
 	    {
-	      lbm->fluid_sites_per_block[ ++n ] = 0;
+	      ++n;
+	      
+	      data_block_p = &net->data_block[ n ];
+	      proc_block_p = &net->proc_block[ n ];
+	      
+	      data_block_p->site_data = NULL;
+	      proc_block_p->proc_id   = NULL;
+	      
+	      lbm->fluid_sites_per_block[ n ] = 0;
 	      
 	      xdr_int (&xdr_config, &flag);
 #ifndef BENCH
 	      if (!lbm->is_checkpoint) lbm->block_map[ n ] = -1;
 #endif
 	      if (flag == 0) continue;
+	      
+	      data_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
+	      proc_block_p->proc_id   = (short int *)malloc(sizeof(short int) * sites_in_a_block);
+	      
 #ifndef BENCH
 	      if (!lbm->is_checkpoint)
 		{
@@ -145,6 +164,8 @@ void lbmReadConfig (LBM *lbm, Net *net)
 		  ++density_blocks;
 		}
 #endif
+	      m = -1;
+	      
 	      for (ii = 0; ii < block_size; ii++)
 		{
 		  site_i = (i << shift) + ii;
@@ -157,12 +178,15 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			{
 			  site_k = (k << shift) + kk;
 			  
-			  xdr_u_int (&xdr_config, &site_data);
+			  ++m;
+			  xdr_u_int (&xdr_config, &data_block_p->site_data[ m ]);
 			  
-			  if ((site_data & SITE_TYPE_MASK) == SOLID_TYPE)
+			  if ((data_block_p->site_data[ m ] & SITE_TYPE_MASK) == SOLID_TYPE)
 			    {
+			      proc_block_p->proc_id[ m ] = 1 << 14;
 			      continue;
 			    }
+			  proc_block_p->proc_id[ m ] = -1;
 			  
 			  ++lbm->total_fluid_sites;
 			  ++lbm->fluid_sites_per_block[ n ];
@@ -178,19 +202,19 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			    {
 			      // the block density is accumulated for
 			      // each boundary block
-			      if ((site_data & SITE_TYPE_MASK) == INLET_TYPE)
+			      if ((data_block_p->site_data[ m ] & SITE_TYPE_MASK) == INLET_TYPE)
 				{
-				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+				  boundary_id = (data_block_p->site_data[ m ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
 				  
 				  ++density_block_p->boundary_sites;
-				  *block_density_p += lbm->inlet_density[ boundary_id ];
+				  *block_density_p += inlet_density[ boundary_id ];
 				}
-			      else if ((site_data & SITE_TYPE_MASK) == OUTLET_TYPE)
+			      else if ((data_block_p->site_data[ m ] & SITE_TYPE_MASK) == OUTLET_TYPE)
 				{
-				  boundary_id = (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+				  boundary_id = (data_block_p->site_data[ m ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
 				  
 				  ++density_block_p->boundary_sites;
-				  *block_density_p += lbm->outlet_density[ boundary_id ];
+				  *block_density_p += outlet_density[ boundary_id ];
 				}
 			    }
 #endif
@@ -202,6 +226,9 @@ void lbmReadConfig (LBM *lbm, Net *net)
     }
   xdr_destroy (&xdr_config);
   fclose (system_config);
+  
+  net->fr_time = myClock () - net->fr_time;
+  
 #ifndef BENCH
   if (lbm->is_checkpoint) return;
   
@@ -320,23 +347,23 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       fscanf (parameters_file, "%le\n", &lbm->tau);
       fscanf (parameters_file, "%i\n", &lbm->inlets);
       
-      lbm->inlet_density = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      inlet_density = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  fscanf (parameters_file, "%le\n", &lbm->inlet_density[ n ]);
+	  fscanf (parameters_file, "%le\n", &inlet_density[ n ]);
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
       
-      lbm->outlet_density = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      outlet_density = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
       
       for (n = 0; n < lbm->outlets; n++)
 	{
 	  //int iters;
 	  //fscanf (parameters_file, "%i\n", &iters);
-	  //lbm->outlet_density[ n ] = 0.5 - iters * 1.e-6;
-	  //printf (" outlet id: %i, density: %f\n", n, lbm->outlet_density[ n ]);
-	  fscanf (parameters_file, "%le\n", &lbm->outlet_density[ n ]);
+	  //outlet_density[ n ] = 0.5 - iters * 1.e-6;
+	  //printf (" outlet id: %i, density: %f\n", n, outlet_density[ n ]);
+	  fscanf (parameters_file, "%le\n", &outlet_density[ n ]);
 	}
       fscanf (parameters_file, "%i\n", &lbm->cycles_max);
       fscanf (parameters_file, "%le\n", &lbm->tolerance);
@@ -354,11 +381,11 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 #ifdef BENCH
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  lbm->inlet_density[ n ] = 1.;
+	  inlet_density[ n ] = 1.;
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  lbm->outlet_density[ n ] = 1.;
+	  outlet_density[ n ] = 1.;
 	}
 #endif
     }
@@ -370,8 +397,8 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       lbm->inlets  = (int)par_to_send[ 0 ];
       lbm->outlets = (int)par_to_send[ 1 ];
       
-      lbm->inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm->outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
+      inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
+      outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
     }
   else
     {
@@ -380,11 +407,11 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  par_to_send[ 2 + n ] = lbm->inlet_density[ n ];
+	  par_to_send[ 2 + n ] = inlet_density[ n ];
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  par_to_send[ 2 + lbm->inlets + n ] = lbm->outlet_density[ n ];
+	  par_to_send[ 2 + lbm->inlets + n ] = outlet_density[ n ];
 	}
       par_to_send[ 2 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->cycles_max;
       par_to_send[ 3 + lbm->inlets + lbm->outlets ] = lbm->tolerance;
@@ -405,11 +432,11 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  lbm->inlet_density[ n ] = par_to_send[ 2 + n ];
+	  inlet_density[ n ] = par_to_send[ 2 + n ];
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  lbm->outlet_density[ n ] = par_to_send[ 2 + lbm->inlets + n ];
+	  outlet_density[ n ] = par_to_send[ 2 + lbm->inlets + n ];
 	}
       lbm->cycles_max       = (int)par_to_send[ 2 + lbm->inlets + lbm->outlets ];
       lbm->tolerance        =      par_to_send[ 3 + lbm->inlets + lbm->outlets ];
@@ -534,30 +561,40 @@ void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net)
 }
 
 
+void lbmUpdateMinMaxFlowfield (float data[], LBM *lbm)
+{
+  lbm->density_min = fminf(lbm->density_min, data[ 0 ]);
+  lbm->density_max = fmaxf(lbm->density_max, data[ 0 ]);
+  
+  lbm->velocity_min = fminf(lbm->velocity_min, sqrtf(data[1] * data[1] + data[2] * data[2] + data[3] * data[3]));
+  lbm->velocity_max = fmaxf(lbm->velocity_max, sqrtf(data[1] * data[1] + data[2] * data[2] + data[3] * data[3]));
+  
+  lbm->stress_min = fmin(lbm->stress_min, data[ 4 ]);
+  lbm->stress_max = fmax(lbm->stress_max, data[ 4 ]);
+}
+
+
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 {
-  // this function writes the density, velocity and effective von
-  // Mises stress flow fields on "output_file_name"
-  
   FILE *system_config = NULL;
   XDR	xdr_system_config;
   
-  double density, density_min, density_max;
-  double velocity, velocity_min, velocity_max;
-  double stress, stress_min, stress_max;
+  float *local_flow_field, *gathered_flow_field;
+  
+  double density;
   double vx, vy, vz;
+  double stress;
   double f_eq[15], f_neq[15];
   double *f_old_p;
   
-  float macroscopic_par_buffer[ MACROSCOPIC_PARS * 16 * 16 * 16 ];
+  int *local_site_data, *gathered_site_data;
+  int buffer_size;
+  int fluid_sites_max;
+  int communication_period, communication_iters;
+  int period, iters;
+  int k, l, m, n;
   
-  int l, m, n;
-  int flag;
-  int my_site_id;
-  
-  unsigned int site_data;
-  
-  DataBlock *map_block_p;
+  unsigned int my_site_id;
   
   
   if (net->id == 0)
@@ -584,141 +621,197 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
       xdr_int    (&xdr_system_config, &blocks_y);
       xdr_int    (&xdr_system_config, &blocks_z);
       xdr_int    (&xdr_system_config, &block_size);
+      xdr_int    (&xdr_system_config, &lbm->total_fluid_sites);
     }
   
-  density_min = +1.e+30;
-  density_max = -1.e+30;
+  fluid_sites_max = 0;
   
-  velocity_min = +1.e+30;
-  velocity_max = -1.e+30;
+  for (n = 0; n < net->procs; n++)
+    {
+      fluid_sites_max = max(fluid_sites_max, net->fluid_sites[ n ]);
+    }
+  buffer_size = max(1000, fluid_sites_max * net->procs);
   
-  stress_min = +1.e+30;
-  stress_max = -1.e+30;
+  communication_period = (int)((double)buffer_size / net->procs);
+  
+  communication_iters = max(1, (int)ceil((double)fluid_sites_max / communication_period));
+  
+  local_flow_field    = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period);
+  gathered_flow_field = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period * net->procs);
+  
+  local_site_data    = (int *)malloc(sizeof(int) * 2 * communication_period);
+  gathered_site_data = (int *)malloc(sizeof(int) * 2 * communication_period * net->procs);
+  
+  lbm->density_min = +1.e+30;
+  lbm->density_max = -1.e+30;
+  
+  lbm->velocity_min = +1.e+30;
+  lbm->velocity_max = -1.e+30;
+  
+  lbm->stress_min = +1.e+30;
+  lbm->stress_max = -1.e+30;
+  
+  for (period = 0; period < communication_period; period++)
+    {
+      local_site_data[ 2*period ] = -1;
+    }
+  
+  iters = 0;
+  period = 0;
   
   for (n = 0; n < blocks; n++)
     {
-      if (net->proc_id[ n ] >= 1 << 14)
+      if (net->proc_block[ n ].proc_id == NULL)
 	{
-	  flag = 0;
+	  continue;
 	}
-      else
-	{
-	  flag = 1;
-	}
-      if (net->id == 0)
-	{
-	  xdr_int (&xdr_system_config, &flag);
-	}
-      if (flag == 0) continue;
-      
-      if (net->proc_id[ n ] == net->id)
-	{
-	  map_block_p = &net->map_block[ n ];
-	  
-	  for (m = 0; m < sites_in_a_block; m++)
-	    {
-	      my_site_id = map_block_p->site_data[ m ];
-	      
-	      if (my_site_id & (1U << 31U))
-		{
-		  macroscopic_par_buffer[m*MACROSCOPIC_PARS+0] = -1.e+30F;
-		  continue;
-		}
-	      
-	      f_old_p = &f_old[ my_site_id*15 ];
-	      site_data = net->site_data[ my_site_id ];
-	      
-	      if (site_data == FLUID_TYPE)
-		{
-		  lbmFeq (f_old_p, &density, &vx, &vy, &vz, f_eq);
-		  
-		  for (l = 0; l < 15; l++)
-		    {
-		      f_neq[ l ] = f_old_p[ l ] - f_eq[ l ];
-		    }
-		}
-	      else
-		{
-		  lbmCalculateBC (f_old_p, site_data, &density, &vx, &vy, &vz, lbm);
-		  
-		  for (l = 0; l < 15; l++)
-		    {
-		      f_neq[ l ] = 0.;
-		    }
-		}
-	      lbmStress (f_neq, &stress, lbm);
-	      
-	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+0] = (float)density;
-	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+1] = (float)vx;
-	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+2] = (float)vy;
-	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+3] = (float)vz;
-	      macroscopic_par_buffer[m*MACROSCOPIC_PARS+4] = (float)stress;
-	    }
-	}
-#ifndef NOMPI
-      if (net->id != 0 && net->proc_id[ n ] == net->id)
-	{
-	  net->err = MPI_Send (&macroscopic_par_buffer[ 0 ],
-			       MACROSCOPIC_PARS * sites_in_a_block, MPI_FLOAT,
-			       0, 10, MPI_COMM_WORLD);
-	}
-      else if (net->id == 0 && net->proc_id[ n ] != net->id)
-	{
-	  net->err = MPI_Recv (&macroscopic_par_buffer[ 0 ],
-			       MACROSCOPIC_PARS * sites_in_a_block, MPI_FLOAT,
-			       net->proc_id[ n ], 10, MPI_COMM_WORLD, net->status);
-	}
-      
-      net->err = MPI_Barrier (MPI_COMM_WORLD);
-#endif
-      if (net->id != 0) continue;
-      
       for (m = 0; m < sites_in_a_block; m++)
 	{
-	  if (macroscopic_par_buffer[ m * MACROSCOPIC_PARS ] < 0.F)
+	  if (net->proc_block[ n ].proc_id[ m ] != net->id) continue;
+	  
+	  my_site_id = net->map_block[ n ].site_data[ m ];
+	  
+	  if (my_site_id & (1U << 31U)) continue;
+	  
+	  f_old_p = &f_old[ my_site_id*15 ];
+	  
+	  if (net_site_data[ my_site_id ] == FLUID_TYPE)
 	    {
-	      flag = 0;
+	      lbmFeq (f_old_p, &density, &vx, &vy, &vz, f_eq);
+	      
+	      for (l = 0; l < 15; l++)
+		{
+		  f_neq[ l ] = f_old_p[ l ] - f_eq[ l ];
+		}
 	    }
 	  else
 	    {
-	      flag = 1;
+	      lbmCalculateBC (f_old_p, net_site_data[ my_site_id ], &density, &vx, &vy, &vz, lbm);
+	      
+	      for (l = 0; l < 15; l++)
+		{
+		  f_neq[ l ] = 0.;
+		}
 	    }
-	  xdr_int (&xdr_system_config, &flag);
+	  lbmStress (f_neq, &stress, lbm);
 	  
-	  if (flag == 0) continue;
+	  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)density;
+	  local_flow_field[ MACROSCOPIC_PARS * period + 1 ] = (float)vx;
+	  local_flow_field[ MACROSCOPIC_PARS * period + 2 ] = (float)vy;
+	  local_flow_field[ MACROSCOPIC_PARS * period + 3 ] = (float)vz;
+	  local_flow_field[ MACROSCOPIC_PARS * period + 4 ] = (float)stress;
 	  
-	  xdr_float (&xdr_system_config, &macroscopic_par_buffer[m*MACROSCOPIC_PARS+0]);
-	  xdr_float (&xdr_system_config, &macroscopic_par_buffer[m*MACROSCOPIC_PARS+1]);
-	  xdr_float (&xdr_system_config, &macroscopic_par_buffer[m*MACROSCOPIC_PARS+2]);
-	  xdr_float (&xdr_system_config, &macroscopic_par_buffer[m*MACROSCOPIC_PARS+3]);
-	  xdr_float (&xdr_system_config, &macroscopic_par_buffer[m*MACROSCOPIC_PARS+4]);
+	  local_site_data[ 2 * period + 0 ] = n;
+	  local_site_data[ 2 * period + 1 ] = m;
 	  
-	  density = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS];
-	  density_min = fmin(density_min, density);
-	  density_max = fmax(density_max, density);
-	  vx = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS+1];
-	  vy = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS+2];
-	  vz = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS+3];
-	  velocity = sqrt(vx * vx + vy * vy + vz * vz);
-	  velocity_min = fmin(velocity_min, velocity);
-	  velocity_max = fmax(velocity_max, velocity);
-	  stress = (double)macroscopic_par_buffer[m*MACROSCOPIC_PARS+4];
-	  stress_min = fmin(stress_min, stress);
-	  stress_max = fmax(stress_max, stress);
+	  if (++period != communication_period) continue;
+	  
+	  period = 0;
+	  ++iters;
+#ifndef NOMPI
+	  net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+				 gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+				 0, MPI_COMM_WORLD);
+	  
+	  net->err = MPI_Gather (local_site_data, 2 * communication_period, MPI_INT,
+				 gathered_site_data, 2 * communication_period, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+	  if (net->id == 0)
+	    {
+	      for (l = 0; l < net->procs * communication_period; l++)
+		{
+		  if (gathered_site_data[ 2 * l + 0 ] == -1) continue;
+		  
+		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 0 ]);
+		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 1 ]);
+		  
+		  for (k = 0; k < MACROSCOPIC_PARS; k++)
+		    {
+		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
+		    }
+		  lbmUpdateMinMaxFlowfield (&gathered_flow_field[ MACROSCOPIC_PARS * l ], lbm);
+		}
+	    }
+	  for (l = 0; l < communication_period; l++)
+	    {
+	      local_site_data[ 2*l ] = -1;
+	    }
 	}
     }
-  if (net->id == 0)
+  
+  if (iters != communication_iters && period != communication_period)
     {
-      xdr_destroy(&xdr_system_config);
-      fclose (system_config);
+      period = 0;
+      ++iters;
+#ifndef NOMPI
+      net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+			     gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+			     0, MPI_COMM_WORLD);
+      
+      net->err = MPI_Gather (local_site_data, 2 * communication_period, MPI_INT,
+			     gathered_site_data, 2 * communication_period, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+      if (net->id == 0)
+	{
+	  for (l = 0; l < net->procs * communication_period; l++)
+	    {
+	      if (gathered_site_data[ 2 * l + 0 ] == -1) continue;
+	      
+	      xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 0 ]);
+	      xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 1 ]);
+	      
+	      for (k = 0; k < MACROSCOPIC_PARS; k++)
+		{
+		  xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
+		}
+	      lbmUpdateMinMaxFlowfield (&gathered_flow_field[ MACROSCOPIC_PARS * l ], lbm);
+	    }
+	  for (l = 0; l < communication_period; l++)
+	    {
+	      local_site_data[ 2*l ] = -1;
+	    }
+	}
     }
-  lbm->density_min = density_min;
-  lbm->density_max = density_max;
+  if (iters != communication_iters)
+    {
+      ++iters;
+      
+      for (; iters <= communication_iters; iters++)
+	{
+#ifndef NOMPI
+	  net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+				 gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+				 0, MPI_COMM_WORLD);
+	  
+	  net->err = MPI_Gather (local_site_data, 2 * communication_period, MPI_INT,
+				 gathered_site_data, 2 * communication_period, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
+      	  if (net->id == 0)
+	    {
+	      for (l = 0; l < net->procs * communication_period; l++)
+		{
+		  if (gathered_site_data[ 2 * l + 0 ] == -1) continue;
+		  
+		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 0 ]);
+		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 1 ]);
+		  
+		  for (k = 0; k < MACROSCOPIC_PARS; k++)
+		    {
+		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
+		    }
+		  lbmUpdateMinMaxFlowfield (&gathered_flow_field[ MACROSCOPIC_PARS * l ], lbm);
+		}
+	    }
+	  for (l = 0; l < communication_period; l++)
+	    {
+	      local_site_data[ 2*l ] = -1;
+	    }
+	}
+    }
   
-  lbm->velocity_min = velocity_min;
-  lbm->velocity_max = velocity_max;
+  free(gathered_site_data);
+  free(local_site_data);
   
-  lbm->stress_min = stress_min;
-  lbm->stress_max = stress_max;
+  free(gathered_flow_field);
+  free(local_flow_field);
 }
-

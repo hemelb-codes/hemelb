@@ -71,8 +71,6 @@ int *f_id = NULL;
 double *vel = NULL;
 #endif
 
-float *flow_field = NULL;
-
 #ifndef BENCH
 double *d = NULL;
 
@@ -81,21 +79,36 @@ double **nd_p = NULL;
 
 Cluster *cluster = NULL;
 
+float **cluster_voxel = NULL;
 
-short int f_data[4*SHARED_DISTRIBUTIONS_MAX];
+float ***cluster_flow_field = NULL;
 
-double f_to_send[SHARED_DISTRIBUTIONS_MAX];
-double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
 
-int f_send_id[SHARED_DISTRIBUTIONS_MAX];
-int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
+short int *f_data = NULL;
+double *f_to_send = NULL;
+double *f_to_recv = NULL;
 
-float streamline_to_send[NEIGHBOUR_PROCS_MAX][VIS_VEC_SIZE*STREAMLINES_MAX];
-float streamline_to_recv[NEIGHBOUR_PROCS_MAX][1+VIS_VEC_SIZE*STREAMLINES_MAX];
+int *f_send_id = NULL;
+int *f_recv_iv = NULL;
 
-int streamlines_to_send[NEIGHBOUR_PROCS_MAX];
-int streamlines_to_recv[NEIGHBOUR_PROCS_MAX];
 
+int col_pixels, col_pixels_max, col_pixels_locked;
+int col_pixels_recv[ MACHINES_MAX-1 ];
+int *col_pixel_id = NULL;
+
+// ColPixel *col_pixel_send = NULL;
+ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
+ColPixel *col_pixel_recv = NULL;
+ColPixel *col_pixel_locked = NULL;
+
+
+unsigned int *net_site_data = NULL;
+
+double *inlet_density = NULL;
+double *outlet_density = NULL;
+
+
+int net_machines;
 
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;
@@ -103,16 +116,25 @@ int blocks_yz, blocks;
 int block_size, block_size2, block_size3, block_size_1;
 int shift;
 int sites_in_a_block;
+int mode;
 
+int cluster_blocks_vec[4];
+int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
+
+float block_size_f;
 float block_size_inv;
+float flow_field_value_max_inv;
+float cutoff;
+float flow_field_cutoff;
+float t_min;
 
 
-float ray_dir[VIS_VEC_SIZE];
-float ray_inv[VIS_VEC_SIZE];
-float ray_col[VIS_VEC_SIZE];
+float ray_dir[4];
+float ray_inv[4];
+float ray_col[4];
 
 
-short int clusters;
+int clusters;
 
 
 Screen screen;
