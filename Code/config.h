@@ -54,20 +54,23 @@
 #define STRESS             2
 
 #define NEIGHBOUR_PROCS_MAX            52
-#define SHARED_DISTRIBUTIONS_MAX       4000000
 #define COMMS_LEVELS                   2
 #define COLLISION_TYPES                6
 #define MACHINES_MAX                   4
-#define PROCS_MAX                      8 * 1024
-
-#define STREAMLINES_MAX                1000
 
 #define PIXELS_X                       1024
 #define PIXELS_Y                       1024
 #define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
 #define IMAGE_SIZE                     PIXELS_X * PIXELS_Y
+#define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
+
+#ifndef NOSIMD
 #define SIMD_SIZE                      2
-#define VIS_VEC_SIZE                   4
+#define VIS_SIMD_SIZE                  4
+#else
+#define SIMD_SIZE                      1
+#define VIS_SIMD_SIZE                  3
+#endif
 
 
 extern double PI;
@@ -178,7 +181,19 @@ struct DataBlock
 };
 
 
+struct ProcBlock
+{
+  short int *proc_id;
+};
+
+
 struct BlockLocation
+{
+  short int i, j, k;
+};
+
+
+struct SiteLocation
 {
   short int i, j, k;
 };
@@ -193,8 +208,6 @@ struct LBM
   double viscosity;
   double omega, stress_par;
   double lattice_to_system;
-  double *inlet_density;
-  double *outlet_density;
   double tolerance;
   double conv_error;
   double density_min, density_max;
@@ -244,7 +257,7 @@ struct NeighProc
 struct Net
 {
   int id;
-  int procs, machines;
+  int procs;
   int neigh_procs;
   int err;
   int my_inter_sites, my_inner_sites;
@@ -257,14 +270,16 @@ struct Net
   
   int *machine_id;
   int *procs_per_machine;
+  int *fluid_sites;
   
   short int *from_proc_id_to_neigh_proc_index;
   short int *proc_id;
-  
-  unsigned int *site_data;
+  short int *cluster_id;
   
   DataBlock *data_block;
   DataBlock *map_block;
+  
+  ProcBlock *proc_block;
   
   NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX];
   
@@ -288,7 +303,9 @@ struct ColPixel
 
 struct Cluster
 {
-  float x[VIS_VEC_SIZE];
+  float minmax_x[2], minmax_y[2], minmax_z[2];
+  
+  float x[4];
   
   unsigned short int blocks_x, blocks_y, blocks_z;
   unsigned short int block_min[3];
@@ -297,43 +314,30 @@ struct Cluster
 
 struct Vis
 {
-  float flow_field_value_max_inv;
-  float cutoff;
-  float t_min;
-  
-  int mode;
-  
   char *image_file_name;
   
   int image_freq;
-  int col_pixels, col_pixels_max, col_pixels_locked;
-  int col_pixels_recv[ MACHINES_MAX-1 ];
-  int *col_pixel_id;
   int pixels_max;
   int seeds, seeds_max;
   int streamlines, streamlines_max;
   
   float velocity_max_inv;
   float absorption_factor;
-  float half_dim[VIS_VEC_SIZE];
+  float half_dim[VIS_SIMD_SIZE];
   float system_size;
   
   double stress_par;
   
   float *seed;
   float *streamline;
-  
-  ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
-  ColPixel *col_pixel_recv;
-  ColPixel *col_pixel_locked;
 };
 
 
 struct Screen
 {
-  float vtx[VIS_VEC_SIZE];
-  float dir1[VIS_VEC_SIZE];
-  float dir2[VIS_VEC_SIZE];
+  float vtx[3];
+  float dir1[3];
+  float dir2[3];
   
   float max_x, max_y;
   float scale_x, scale_y;
@@ -346,7 +350,7 @@ struct Screen
 
 struct Viewpoint
 {
-  float x[VIS_VEC_SIZE];
+  float x[VIS_SIMD_SIZE];
   float sin_1, cos_1;
   float sin_2, cos_2;
   float dist;
@@ -367,8 +371,6 @@ extern int *f_id;
 extern double *vel;
 #endif
 
-extern float *flow_field;
-
 #ifndef BENCH
 extern double *d;
 
@@ -377,20 +379,36 @@ extern double **nd_p;
 
 extern Cluster *cluster;
 
+extern float **cluster_voxel;
 
-extern short int f_data[4*SHARED_DISTRIBUTIONS_MAX];
-extern double f_to_send[SHARED_DISTRIBUTIONS_MAX];
-extern double f_to_recv[SHARED_DISTRIBUTIONS_MAX];
+extern float ***cluster_flow_field;
 
-extern int f_send_id[SHARED_DISTRIBUTIONS_MAX];
-extern int f_recv_iv[SHARED_DISTRIBUTIONS_MAX];
 
-extern float streamline_to_send[NEIGHBOUR_PROCS_MAX][VIS_VEC_SIZE*STREAMLINES_MAX];
-extern float streamline_to_recv[NEIGHBOUR_PROCS_MAX][1+VIS_VEC_SIZE*STREAMLINES_MAX];
+extern short int *f_data;
+extern double *f_to_send;
+extern double *f_to_recv;
 
-extern int streamlines_to_send[NEIGHBOUR_PROCS_MAX];
-extern int streamlines_to_recv[NEIGHBOUR_PROCS_MAX];
+extern int *f_send_id;
+extern int *f_recv_iv;
 
+
+extern int col_pixels, col_pixels_max, col_pixels_locked;
+extern int col_pixels_recv[ MACHINES_MAX-1 ];
+extern int *col_pixel_id;
+
+// extern ColPixel *col_pixel_send;
+extern ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
+extern ColPixel *col_pixel_recv;
+extern ColPixel *col_pixel_locked;
+
+
+extern unsigned int *net_site_data;
+
+extern double *inlet_density;
+extern double *outlet_density;
+
+
+extern int net_machines;
 
 extern int sites_x, sites_y, sites_z;
 extern int blocks_x, blocks_y, blocks_z;
@@ -398,15 +416,24 @@ extern int blocks_yz, blocks;
 extern int block_size, block_size2, block_size3, block_size_1;
 extern int shift;
 extern int sites_in_a_block;
+extern int mode;
 
+extern int cluster_blocks_vec[4];
+extern int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
+
+extern float block_size_f;
 extern float block_size_inv;
+extern float flow_field_value_max_inv;
+extern float cutoff;
+extern float flow_field_cutoff;
+extern float t_min;
 
 
-extern float ray_dir[VIS_VEC_SIZE];
-extern float ray_inv[VIS_VEC_SIZE];
-extern float ray_col[VIS_VEC_SIZE];
+extern float ray_dir[4];
+extern float ray_inv[4];
+extern float ray_col[4];
 
-extern short int clusters;
+extern int clusters;
 
 
 extern Screen screen;
@@ -446,7 +473,7 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int perform_rt, int *
 void lbmEnd (LBM *lbm);
 
 int netFindTopology (Net *net, int *depths);
-void netInit (LBM *lbm, Net *net, int proc_sites[]);
+void netInit (LBM *lbm, Net *net);
 void netEnd (Net *net);
 
 void lbmReadConfig (LBM *lbm, Net *net);
@@ -466,7 +493,8 @@ void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net);
 
 void rtInit (Net *net, Vis *vis);
 void rtUpdateColour (float dt, float palette[], float col[]);
-void rtRayTracing (void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis);
+void rtRayTracingVR (void (*ColourPalette) (float value, float col[]));
+void rtRayTracingIS (void (*ColourPalette) (float value, float col[]));
 void rtEnd (Vis *vis);
 
 void slInit (Net *net, Vis *vis);
@@ -475,7 +503,7 @@ void slEnd (Vis *vis);
 
 
 void visProject (float p1[], float p2[]);
-void visWritePixel (float col[], float t, int i, int j, Vis *vis);
+void visWritePixel (float col[], float t, int i, int j);
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,
 		float  x1, float  y1, float  z1,
