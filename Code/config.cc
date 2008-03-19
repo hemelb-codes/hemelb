@@ -92,14 +92,19 @@ int *f_send_id = NULL;
 int *f_recv_iv = NULL;
 
 
-int col_pixels, col_pixels_max, col_pixels_locked;
+int col_pixels, col_pixels_max;
 int col_pixels_recv[ MACHINES_MAX-1 ];
+#ifdef RG
+int col_pixels_locked;
+#endif
 int *col_pixel_id = NULL;
 
 // ColPixel *col_pixel_send = NULL;
 ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
 ColPixel *col_pixel_recv = NULL;
+#ifdef RG
 ColPixel *col_pixel_locked = NULL;
+#endif
 
 
 unsigned int *net_site_data = NULL;
@@ -108,25 +113,37 @@ double *inlet_density = NULL;
 double *outlet_density = NULL;
 
 
-int net_machines;
-
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;
 int blocks_yz, blocks;
 int block_size, block_size2, block_size3, block_size_1;
 int shift;
 int sites_in_a_block;
-int mode;
 
-int cluster_blocks_vec[4];
-int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
+double lbm_stress_par;
+double lbm_density_min, lbm_density_max;
+double lbm_velocity_min, lbm_velocity_max;
+double lbm_stress_min, lbm_stress_max;
+
+int net_machines;
+
+int vis_mode;
+int vis_flow_field_type;
+int vis_image_freq;
+int vis_pixels_max;
 
 float block_size_f;
 float block_size_inv;
-float flow_field_value_max_inv;
-float cutoff;
-float flow_field_cutoff;
-float t_min;
+float vis_flow_field_value_max_inv;
+float vis_absorption_factor;
+float vis_cutoff;
+float vis_flow_field_cutoff;
+float vis_t_min;
+float vis_value;
+
+
+int cluster_blocks_vec[4];
+int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
 
 float ray_dir[4];
