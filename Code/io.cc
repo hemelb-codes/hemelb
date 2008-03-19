@@ -359,10 +359,10 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  //int iters;
-	  //fscanf (parameters_file, "%i\n", &iters);
-	  //outlet_density[ n ] = 0.5 - iters * 1.e-6;
-	  //printf (" outlet id: %i, density: %f\n", n, outlet_density[ n ]);
+	  // int iters;
+	  // fscanf (parameters_file, "%i\n", &iters);
+	  // outlet_density[ n ] = 1. - 3.38e-4 * iters / 600;
+	  // printf ("%le\n", outlet_density[ n ]);
 	  fscanf (parameters_file, "%le\n", &outlet_density[ n ]);
 	}
       fscanf (parameters_file, "%i\n", &lbm->cycles_max);
@@ -451,9 +451,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   lbm->period = 1;
 #endif
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
-  
   lbm->omega = -1.0 / lbm->tau;
-  lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
+  
+  lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
   
 #ifdef STEER
   steer->tau            = lbm->tau;
@@ -476,7 +476,8 @@ void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
   
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
   lbm->omega = -1.0 / lbm->tau;
-  lbm->stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
+  
+  lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
 }
 #endif
 
@@ -561,19 +562,6 @@ void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net)
 }
 
 
-void lbmUpdateMinMaxFlowfield (float data[], LBM *lbm)
-{
-  lbm->density_min = fminf(lbm->density_min, data[ 0 ]);
-  lbm->density_max = fmaxf(lbm->density_max, data[ 0 ]);
-  
-  lbm->velocity_min = fminf(lbm->velocity_min, sqrtf(data[1] * data[1] + data[2] * data[2] + data[3] * data[3]));
-  lbm->velocity_max = fmaxf(lbm->velocity_max, sqrtf(data[1] * data[1] + data[2] * data[2] + data[3] * data[3]));
-  
-  lbm->stress_min = fmin(lbm->stress_min, data[ 4 ]);
-  lbm->stress_max = fmax(lbm->stress_max, data[ 4 ]);
-}
-
-
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 {
   FILE *system_config = NULL;
@@ -585,7 +573,6 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   double vx, vy, vz;
   double stress;
   double f_eq[15], f_neq[15];
-  double *f_old_p;
   
   int *local_site_data, *gathered_site_data;
   int buffer_size;
@@ -642,15 +629,6 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   local_site_data    = (int *)malloc(sizeof(int) * 2 * communication_period);
   gathered_site_data = (int *)malloc(sizeof(int) * 2 * communication_period * net->procs);
   
-  lbm->density_min = +1.e+30;
-  lbm->density_max = -1.e+30;
-  
-  lbm->velocity_min = +1.e+30;
-  lbm->velocity_max = -1.e+30;
-  
-  lbm->stress_min = +1.e+30;
-  lbm->stress_max = -1.e+30;
-  
   for (period = 0; period < communication_period; period++)
     {
       local_site_data[ 2*period ] = -1;
@@ -673,27 +651,20 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 	  
 	  if (my_site_id & (1U << 31U)) continue;
 	  
-	  f_old_p = &f_old[ my_site_id*15 ];
-	  
 	  if (net_site_data[ my_site_id ] == FLUID_TYPE)
 	    {
-	      lbmFeq (f_old_p, &density, &vx, &vy, &vz, f_eq);
+	      lbmFeq (&f_old[ my_site_id*15 ], &density, &vx, &vy, &vz, f_eq);
 	      
 	      for (l = 0; l < 15; l++)
 		{
-		  f_neq[ l ] = f_old_p[ l ] - f_eq[ l ];
+		  f_neq[ l ] = f_old[ my_site_id*15+l ] - f_eq[ l ];
 		}
 	    }
 	  else
 	    {
-	      lbmCalculateBC (f_old_p, net_site_data[ my_site_id ], &density, &vx, &vy, &vz, lbm);
-	      
-	      for (l = 0; l < 15; l++)
-		{
-		  f_neq[ l ] = 0.;
-		}
+	      lbmCalculateBC (&f_old[ my_site_id*15 ], net_site_data[ my_site_id ], &density, &vx, &vy, &vz, f_neq);
 	    }
-	  lbmStress (f_neq, &stress, lbm);
+	  lbmStress (f_neq, &stress);
 	  
 	  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)density;
 	  local_flow_field[ MACROSCOPIC_PARS * period + 1 ] = (float)vx;
@@ -729,7 +700,6 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 		    {
 		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
 		    }
-		  lbmUpdateMinMaxFlowfield (&gathered_flow_field[ MACROSCOPIC_PARS * l ], lbm);
 		}
 	    }
 	  for (l = 0; l < communication_period; l++)
@@ -764,7 +734,6 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 		{
 		  xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
 		}
-	      lbmUpdateMinMaxFlowfield (&gathered_flow_field[ MACROSCOPIC_PARS * l ], lbm);
 	    }
 	  for (l = 0; l < communication_period; l++)
 	    {
@@ -799,7 +768,6 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 		    {
 		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
 		    }
-		  lbmUpdateMinMaxFlowfield (&gathered_flow_field[ MACROSCOPIC_PARS * l ], lbm);
 		}
 	    }
 	  for (l = 0; l < communication_period; l++)
