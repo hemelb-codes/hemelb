@@ -206,15 +206,11 @@ struct LBM
   
   double tau;
   double viscosity;
-  double omega, stress_par;
+  double omega;
   double lattice_to_system;
   double tolerance;
   double conv_error;
-  double density_min, density_max;
-  double velocity_min, velocity_max;
-  double stress_min, stress_max;
   
-  int flow_field_type;
   int total_fluid_sites;
   int site_min_x, site_min_y, site_min_z;
   int site_max_x, site_max_y, site_max_z;
@@ -316,20 +312,8 @@ struct Vis
 {
   char *image_file_name;
   
-  int image_freq;
-  int pixels_max;
-  int seeds, seeds_max;
-  int streamlines, streamlines_max;
-  
-  float velocity_max_inv;
-  float absorption_factor;
   float half_dim[VIS_SIMD_SIZE];
   float system_size;
-  
-  double stress_par;
-  
-  float *seed;
-  float *streamline;
 };
 
 
@@ -392,15 +376,19 @@ extern int *f_send_id;
 extern int *f_recv_iv;
 
 
-extern int col_pixels, col_pixels_max, col_pixels_locked;
+extern int col_pixels, col_pixels_max;
 extern int col_pixels_recv[ MACHINES_MAX-1 ];
+#ifdef RG
+extern int col_pixels_locked;
+#endif
 extern int *col_pixel_id;
 
 // extern ColPixel *col_pixel_send;
 extern ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
 extern ColPixel *col_pixel_recv;
+#ifdef RG
 extern ColPixel *col_pixel_locked;
-
+#endif
 
 extern unsigned int *net_site_data;
 
@@ -408,25 +396,44 @@ extern double *inlet_density;
 extern double *outlet_density;
 
 
-extern int net_machines;
-
 extern int sites_x, sites_y, sites_z;
 extern int blocks_x, blocks_y, blocks_z;
 extern int blocks_yz, blocks;
 extern int block_size, block_size2, block_size3, block_size_1;
 extern int shift;
 extern int sites_in_a_block;
-extern int mode;
+
+extern double lbm_stress_par;
+extern double lbm_density_min, lbm_density_max;
+extern double lbm_velocity_min, lbm_velocity_max;
+extern double lbm_stress_min, lbm_stress_max;
+
+extern int net_machines;
+
+extern int vis_mode;
+extern int vis_flow_field_type;
+extern int vis_image_freq;
+extern int vis_pixels_max;
+
+extern float block_size_f;
+extern float block_size_inv;
+extern float vis_flow_field_value_max_inv;
+extern float vis_absorption_factor;
+extern float vis_cutoff;
+extern float vis_flow_field_cutoff;
+extern float vis_t_min;
+extern float vis_value;
+
 
 extern int cluster_blocks_vec[4];
 extern int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
 extern float block_size_f;
 extern float block_size_inv;
-extern float flow_field_value_max_inv;
-extern float cutoff;
-extern float flow_field_cutoff;
-extern float t_min;
+extern float vis_flow_field_value_max_inv;
+extern float vis_cutoff;
+extern float vis_flow_field_cutoff;
+extern float vis_t_min;
 
 
 extern float ray_dir[4];
@@ -457,18 +464,16 @@ void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z,
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmVelocity (double f[], double *v_x, double *v_y, double *v_z);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
-void lbmStressSIMD (double f[], double stress[], LBM *lbm);
-void lbmStress (double f[], double *stress, LBM *lbm);
-void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, LBM *lbm);
+void lbmStress (double f[], double *stress);
+void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 int lbmCollisionType (unsigned int site_data);
 void lbmInit (char *system_file_name, char *checkpoint_file_name, LBM *lbm, Net *net);
-void lbmSetInitialConditions (LBM *lbm, Net *net);
-void lbmUpdateFlowFieldSIMD (int i, double f_neq[], double density[], double vx[], double vy[], double vz[], LBM *lbm);
-void lbmUpdateFlowField (int i, double f_neq[], double density, double vx, double vy, double vz, LBM *lbm);
+void lbmSetInitialConditions (Net *net);
+void lbmUpdateFlowField (int i, double density, double vx, double vy, double vz, double f_neq[]);
 #ifndef TD
-int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_converged, LBM *lbm, Net *net);
+int lbmCycle (int write_checkpoint, int check_conv, int *is_converged, LBM *lbm, Net *net);
 #else
-int lbmCycle (int cycle_id, int time_step, int check_conv, int perform_rt, int *is_converged, LBM *lbm, Net *net);
+int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LBM *lbm, Net *net);
 #endif
 void lbmEnd (LBM *lbm);
 
@@ -491,15 +496,11 @@ void lbmUpdateParameters (LBM *lbm, SteerParams *steer);
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net);
 
-void rtInit (Net *net, Vis *vis);
+void rtInit (Net *net);
 void rtUpdateColour (float dt, float palette[], float col[]);
 void rtRayTracingVR (void (*ColourPalette) (float value, float col[]));
 void rtRayTracingIS (void (*ColourPalette) (float value, float col[]));
-void rtEnd (Vis *vis);
-
-void slInit (Net *net, Vis *vis);
-void slStreamlines (Net *net, Vis *vis);
-void slEnd (Vis *vis);
+void rtEnd (void);
 
 
 void visProject (float p1[], float p2[]);
@@ -515,21 +516,21 @@ void visProjection (float ortho_x, float ortho_y,
 		    float longitude, float latitude,
 		    float dist,
 		    float zoom);
-void visInit (char *image_file_name, Net *net, Vis *vis);
+void visInit (Net *net, Vis *vis);
 void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis);
-void visRenderB (Net *net, Vis *vis);
+void visRenderB (char *image_file_name, Net *net, Vis *vis);
 
 #ifdef STEER
-void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis, SteerParams *steer);
+void visReadParameters (char *parameters_file_name, Net *net, Vis *vis, SteerParams *steer);
 #else
-void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
+void visReadParameters (char *parameters_file_name, Net *net, Vis *vis);
 #endif
 
 #ifdef STEER
 void visUpdateParameters (LBM *lbm, Vis *vis, SteerParams *steer);
 #endif
 
-void visEnd (Net *net, Vis *vis);
+void visEnd (void);
 
 #endif                  // __config_h__
 
