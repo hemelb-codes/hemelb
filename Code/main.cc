@@ -401,7 +401,10 @@ int main (int argc, char *argv[])
   double simulation_time;
 #else
   double minutes;
-  double fluid_solver_time, fluid_solver_and_vr_time, fluid_solver_and_is_time;
+  double fluid_solver_time;
+  double fluid_solver_and_vr_time;
+  double fluid_solver_and_is_time;
+  double vr_without_compositing_time;
 #endif // BENCH
   
 #ifndef BENCH
@@ -917,6 +920,8 @@ int main (int argc, char *argv[])
   
   double elapsed_time;
   
+  int time_steps_max;
+  
   // benchmarking HemeLB's fluid solver only
   
   fluid_solver_time = myClock ();
@@ -934,16 +939,25 @@ int main (int argc, char *argv[])
       
       if (time_step%100 == 1 && net.id == 0)
 	{
-	  fprintf (timings_ptr, " FS, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		   elapsed_time, time_step, time_step / elapsed_time);
-	  fprintf (stderr, " FS, time: %.3f, time step: %i, time steps/s: %.3f\n",
+	  fprintf (stderr, " FS, start up time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%net.procs == 1 &&
-	  IsBenckSectionFinished (minutes / 3., elapsed_time))
+	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
 	}
+    }
+  time_steps_max = (int)(time_step * minutes / (4. * 0.5) - time_step);
+  fluid_solver_time = myClock ();
+  
+  for (time_step = 1; time_step <= time_steps_max; time_step++)
+    {
+#ifndef TD
+      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
+#else
+      stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+#endif // TD
     }
   fluid_solver_time = myClock () - fluid_solver_time;
   fluid_solver_time_steps = time_step;
@@ -972,16 +986,27 @@ int main (int argc, char *argv[])
       
       if (time_step%100 == 1 && net.id == 0)
 	{
-	  fprintf (timings_ptr, " FS + VR, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		   elapsed_time, time_step, time_step / elapsed_time);
-	  fprintf (stderr, " FS + VR, time: %.3f, time step: %i, time steps/s: %.3f\n",
+	  fprintf (stderr, " FS + VR, start up time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%net.procs == 1 &&
-	  IsBenckSectionFinished (minutes / 3., elapsed_time))
+	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
 	}
+    }
+  time_steps_max = (int)(time_step * minutes / (4. * 0.5) - time_step);
+  fluid_solver_and_vr_time = myClock ();
+  
+  for (time_step = 1; time_step <= time_steps_max; time_step++)
+    {
+      visRenderA (ColourPalette, &net, &vis);
+#ifndef TD
+      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
+#else
+      stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+#endif // TD
+      visRenderB (image_name, &net, &vis);
     }
   fluid_solver_and_vr_time = myClock () - fluid_solver_and_vr_time;
   fluid_solver_and_vr_time_steps = time_step;
@@ -989,10 +1014,7 @@ int main (int argc, char *argv[])
   
   // benchmarking HemeLB's fluid solver and iso-surface
   
-  vis_flow_field_type = VELOCITY;
-  vis_image_freq = 1;
   vis_mode = 1;
-  vis_cutoff = -EPSILON;
   fluid_solver_and_is_time = myClock ();
   
   for (time_step = 1; time_step <= 1000000000; time_step++)
@@ -1010,20 +1032,68 @@ int main (int argc, char *argv[])
       
       if (time_step%100 == 1 && net.id == 0)
 	{
-	  fprintf (timings_ptr, " FS + IS, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		   elapsed_time, time_step, time_step / elapsed_time);
-	  fprintf (stderr, " FS + IS, time: %.3f, time step: %i, time steps/s: %.3f\n",
+	  fprintf (stderr, " FS + IS, start up time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
       if (time_step%net.procs == 1 &&
-	  IsBenckSectionFinished (minutes / 3., elapsed_time))
+	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
 	}
     }
+  time_steps_max = (int)(time_step * minutes / (4. * 0.5) - time_step);
+  fluid_solver_and_is_time = myClock ();
+  
+  for (time_step = 1; time_step <= time_steps_max; time_step++)
+    {
+      visRenderA (ColourPalette, &net, &vis);
+#ifndef TD
+      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
+#else
+      stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+#endif // TD
+      visRenderB (image_name, &net, &vis);
+    }
   fluid_solver_and_is_time = myClock () - fluid_solver_and_is_time;
   fluid_solver_and_is_time_steps = time_step;
 #endif // BENCH
+  
+  
+  // benchmarking HemeLB's volume rendering without image compositing
+  // and communications
+  
+  vis_mode = 0;
+  vr_without_compositing_time = myClock ();
+  
+  for (time_step = 1; time_step <= 1000000000; time_step++)
+    {
+      col_pixels = 0;
+      rtRayTracingVR (ColourPalette);
+      
+      // partial timings
+      elapsed_time = myClock () - vr_without_compositing_time;
+      
+      if (time_step%100 == 1 && net.id == 0)
+	{
+	  fprintf (stderr, " VR - COMMS, start up time: %.3f, time step: %i, time steps/s: %.3f\n",
+		   elapsed_time, time_step, time_step / elapsed_time);
+	}
+      if (time_step%net.procs == 1 &&
+	  IsBenckSectionFinished (0.5, elapsed_time))
+	{
+	  break;
+	}
+    }
+  time_steps_max = (int)(time_step * minutes / (4. * 0.5) - time_step);
+  vr_without_compositing_time = myClock ();
+  
+  for (time_step = 1; time_step <= time_steps_max; time_step++)
+    {
+      col_pixels = 0;
+      rtRayTracingVR (ColourPalette);
+    }
+  vr_without_compositing_time = myClock () - vr_without_compositing_time;
+  vr_without_compositing_time = time_step;
   
   
 #ifndef BENCH
@@ -1058,16 +1128,18 @@ int main (int argc, char *argv[])
       fprintf (timings_ptr, "threads: %i, machines checked: %i\n\n", net.procs, net_machines);
       fprintf (timings_ptr, "topology depths checked: %i\n\n", depths);
       fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
-      fprintf (timings_ptr, "time steps: %i \n\n", time_step);
-      fprintf (timings_ptr, "time steps per second: %.3f, MSUPS: %.3f, time: %.3f\n\n",
+      fprintf (timings_ptr, " FS only, time steps per second: %.3f, MSUPS: %.3f, time: %.3f\n\n",
 	       fluid_solver_time_steps / fluid_solver_time,
 	       1.e-6 * lbm.total_fluid_sites / (fluid_solver_time / fluid_solver_time_steps),
 	       fluid_solver_time);
       
-      fprintf (timings_ptr, "time steps per second with volume rendering: %.3f, time: %.3f\n\n",
+      fprintf (timings_ptr, " FS + VR, time steps per second: %.3f, time: %.3f\n\n",
 	       fluid_solver_and_vr_time_steps / fluid_solver_and_vr_time, fluid_solver_and_vr_time);
       
-      fprintf (timings_ptr, "time steps per second with isosurface: %.3f, time: %.3f\n\n",
+      fprintf (timings_ptr, " FS + IS, time steps per second: %.3f, time: %.3f\n\n",
+	       fluid_solver_and_is_time_steps / fluid_solver_and_is_time, fluid_solver_and_is_time);
+      
+      fprintf (timings_ptr, " VR - COMMS, time steps per second: %.3f, time: %.3f\n\n",
 	       fluid_solver_and_is_time_steps / fluid_solver_and_is_time, fluid_solver_and_is_time);
     }
 #endif
