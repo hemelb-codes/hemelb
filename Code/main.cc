@@ -329,7 +329,7 @@ void ColourPalette (float value, float col[])
   col[2] = 1.F - value;
 }
 
-
+/*
 void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
@@ -339,12 +339,12 @@ void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
   inlet_density[0]  = 1. + (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
   outlet_density[0] = 1. - (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
 }
+*/
 
-/*
 void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
-  double density_amp = 5.8e-5;
+  double density_amp = 1.45e-3;
   double w = 2. * PI / period;
   
   for (int i = 0; i < inlets; i++)
@@ -352,7 +352,7 @@ void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
       inlet_density[i] = 1. + density_amp * cos(w * (double)time_step + 0.5 * PI);
     }
 }
-*/
+
 
 int IsBenckSectionFinished (double minutes, double elapsed_time)
 {
@@ -886,7 +886,6 @@ int main (int argc, char *argv[])
 	      strcat ( image_name , time_step_string );
 	      strcat ( image_name , ".dat" );
 #endif
-	      
 	      visRenderB (image_name, ColourPalette, &net, &vis);
 #ifdef RG
 	      if (net.id == 0)
@@ -951,7 +950,7 @@ int main (int argc, char *argv[])
 	  fprintf (stderr, " FS, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
-      if (time_step%net.procs == 1 &&
+      if (time_step%100 == 1 &&
 	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
@@ -998,7 +997,7 @@ int main (int argc, char *argv[])
 	  fprintf (stderr, " FS + VR, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
-      if (time_step%net.procs == 1 &&
+      if (time_step%100 == 1 &&
 	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
@@ -1043,7 +1042,7 @@ int main (int argc, char *argv[])
 	  fprintf (stderr, " FS + IS, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
-      if (time_step%net.procs == 1 &&
+      if (time_step%100 == 1 &&
 	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
@@ -1083,7 +1082,7 @@ int main (int argc, char *argv[])
 	  fprintf (stderr, " VR - COMP, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
-      if (time_step%net.procs == 1 &&
+      if (time_step%100 == 1 &&
 	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
