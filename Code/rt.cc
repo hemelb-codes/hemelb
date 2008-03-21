@@ -3119,6 +3119,8 @@ void rtRayTracingVR (void (*ColourPalette) (float value, float col[]))
   
   Cluster *cluster_p;
   
+  ColPixel col_pixel;
+  
   
   pixels_x = screen.pixels_x;
   pixels_y = screen.pixels_y;
@@ -3295,7 +3297,12 @@ void rtRayTracingVR (void (*ColourPalette) (float value, float col[]))
 	      
 	      if (vis_t_min >= 1.e+30F) continue;
 	      
-	      visWritePixel (ray_col, t_near, i, j);
+	      col_pixel.r = ray_col[ 0 ];
+	      col_pixel.g = ray_col[ 1 ];
+	      col_pixel.b = ray_col[ 2 ];
+	      col_pixel.i = i * (1 << 16) + j;
+	      
+	      visWritePixel (&col_pixel);
 	    }
 	  par3[0] += par1[0];
 	  par3[1] += par1[1];
@@ -3337,6 +3344,8 @@ void rtRayTracingIS (void (*ColourPalette) (float value, float col[]))
   AABB aabb;
   
   Cluster *cluster_p;
+  
+  ColPixel col_pixel;
   
   
   pixels_x = screen.pixels_x;
@@ -3502,12 +3511,12 @@ void rtRayTracingIS (void (*ColourPalette) (float value, float col[]))
 		(ray_dx, block_flow_field, ColourPalette);
 	      
 	      if (vis_t_min >= 1.e+30F) continue;
-#ifndef RG
-	      ray_col[0] = ray_col[1] = ray_col[2] = vis_value;
-#else
-	      ColourPalette (vis_value * vis_flow_field_value_max_inv, ray_col);
-#endif
-	      visWritePixel (ray_col, vis_t_min + t_near, i, j);
+	      
+	      col_pixel.v = vis_value;
+	      col_pixel.t = vis_t_min + t_near;
+	      col_pixel.i = i * (1 << 16) + j;
+	      
+	      visWritePixel (&col_pixel);
 	    }
 	  par3[0] += par1[0];
 	  par3[1] += par1[1];
@@ -3660,15 +3669,16 @@ void visProjection (float ortho_x, float ortho_y,
 }
 
 
-void visWritePixel (float col[], float t, int i, int j)
+void visWritePixel (ColPixel *col_pixel_p)
 {
-  int *col_pixel_id_p;
+  int *col_pixel_id_p, i, j;
 #ifndef NOMPI
   int err;
 #endif
   
-  ColPixel *col_pixel_p;
   
+  i = PixelI(col_pixel_p->i);
+  j = PixelJ(col_pixel_p->i);
   
   if (*(col_pixel_id_p = &col_pixel_id[ i * screen.pixels_y + j ]) == -1)
     {
@@ -3692,33 +3702,35 @@ void visWritePixel (float col[], float t, int i, int j)
 	}
       *col_pixel_id_p = col_pixels;
       
-      col_pixel_p = &col_pixel_send[ *col_pixel_id_p ];
-      col_pixel_p->r = 0.F;
-      col_pixel_p->g = 0.F;
-      col_pixel_p->b = 0.F;
-      col_pixel_p->t = 1.e+30F;
-      col_pixel_p->i = (short int)i;
-      col_pixel_p->j = (short int)j;
+      if (vis_mode == 0)
+	{
+	  col_pixel_send[ col_pixels ].r = col_pixel_p->r;
+	  col_pixel_send[ col_pixels ].g = col_pixel_p->g;
+	  col_pixel_send[ col_pixels ].b = col_pixel_p->b;
+	}
+      else
+	{
+	  col_pixel_send[ col_pixels ].v = col_pixel_p->v;
+	  col_pixel_send[ col_pixels ].t = col_pixel_p->t;
+	}
+      col_pixel_send[ col_pixels ].i = col_pixel_p->i;
       ++col_pixels;
     }
   else
     {
-      col_pixel_p = &col_pixel_send[ *col_pixel_id_p ];
-    }
-  if (vis_mode == 0)
-    {
-      col_pixel_p->r += col[0];
-      col_pixel_p->g += col[1];
-      col_pixel_p->b += col[2];
-    }
-  else if (vis_mode == 1 || vis_mode == 2)
-    {
-      if (t < col_pixel_p->t)
+      if (vis_mode == 0)
 	{
-	  col_pixel_p->r = col[0];
-	  col_pixel_p->g = col[1];
-	  col_pixel_p->b = col[2];
-	  col_pixel_p->t = t;
+	  col_pixel_send[ *col_pixel_id_p ].r += col_pixel_p->r;
+	  col_pixel_send[ *col_pixel_id_p ].g += col_pixel_p->g;
+	  col_pixel_send[ *col_pixel_id_p ].b += col_pixel_p->b;
+	}
+      else
+	{
+	  if (col_pixel_p->t < col_pixel_send[ *col_pixel_id_p ].t)
+	    {
+	      col_pixel_send[ *col_pixel_id_p ].v = col_pixel_p->v;
+	      col_pixel_send[ *col_pixel_id_p ].t = col_pixel_p->t;
+	    }
 	}
     }
 }
@@ -3902,14 +3914,14 @@ void visInit (Net *net, Vis *vis)
   block_size_inv = 1.F / (float)block_size;
   
 #ifndef NOMPI
-  int col_pixel_count = 7;
-  int col_pixel_blocklengths[7] = {1, 1, 1, 1, 1, 1, 1};
+  int col_pixel_count = 5;
+  int col_pixel_blocklengths[5] = {1, 1, 1, 1, 1};
   
-  MPI_Datatype col_pixel_types[7] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-				     MPI_SHORT, MPI_SHORT,
+  MPI_Datatype col_pixel_types[5] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+				     MPI_INT,
 				     MPI_UB};
   
-  MPI_Aint col_pixel_disps[7];
+  MPI_Aint col_pixel_disps[5];
 #endif
   
   col_pixels_max = 512 * 512;
@@ -3939,19 +3951,17 @@ void visInit (Net *net, Vis *vis)
 	{
 	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float) * col_pixel_blocklengths[i - 1]);
 	}
-      else if (col_pixel_types[i - 1] == MPI_SHORT)
+      else if (col_pixel_types[i - 1] == MPI_INT)
 	{
-	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(short int) * col_pixel_blocklengths[i - 1]);
+	  col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(int) * col_pixel_blocklengths[i - 1]);
 	}
     }
   /*
-  MPI_Address( &col_pixel_send[0].r, col_pixel_disps + 0 ); 
-  MPI_Address( &col_pixel_send[0].g, col_pixel_disps + 1 ); 
-  MPI_Address( &col_pixel_send[0].b, col_pixel_disps + 2 ); 
-  MPI_Address( &col_pixel_send[0].t, col_pixel_disps + 3 ); 
-  MPI_Address( &col_pixel_send[0].i, col_pixel_disps + 4 );
-  MPI_Address( &col_pixel_send[0].j, col_pixel_disps + 5 );
-  MPI_Address( &col_pixel_send[0]+1, col_pixel_disps + 6 );
+  MPI_Address( &col_pixel_send[0].r, col_pixel_disps + 0 );
+  MPI_Address( &col_pixel_send[0].g, col_pixel_disps + 1 );
+  MPI_Address( &col_pixel_send[0].b, col_pixel_disps + 2 );
+  MPI_Address( &col_pixel_send[0].i, col_pixel_disps + 3 );
+  MPI_Address( &col_pixel_send[0]+1, col_pixel_disps + 4 );
   
   int base = col_pixel_disps[0];
 
@@ -3992,13 +4002,15 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
     }
   col_pixels = 0;
   
-  if (vis_mode == 0 || vis_mode == 1)
+  (*rtRayTracing[vis_mode]) (ColourPalette);
+  
+  if (!vis_compositing)
     {
-      (*rtRayTracing[vis_mode]) (ColourPalette);
-    }
-  else if (vis_mode == 2)
-    {
-      ;
+      for (m = 0; m < col_pixels; m++)
+	{
+	  col_pixel_id[ (PixelI (col_pixel_send[m].i)) * pixels_y + (PixelJ (col_pixel_send[m].i)) ] = -1;
+	}
+      return;
     }
   
   // here, intra-machine communications are handled through a binary
@@ -4073,8 +4085,8 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
 	      for (n = 0; n < col_pixels_temp; n++)
 		{
 		  col_pixel1 = &col_pixel_send[ n ];
-		  i = col_pixel1->i;
-		  j = col_pixel1->j;
+		  i = PixelI (col_pixel1->i);
+		  j = PixelJ (col_pixel1->i);
 		  
 		  if (*(col_pixel_id_p = &col_pixel_id[ i * pixels_y + j ]) == -1)
 		    {
@@ -4103,13 +4115,11 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
 			  col_pixel2->g += col_pixel1->g;
 			  col_pixel2->b += col_pixel1->b;
 			}
-		      else if (vis_mode == 1 || vis_mode == 2)
+		      else
 			{
 			  if (col_pixel1->t < col_pixel2->t)
 			    {
-			      col_pixel2->r = col_pixel1->r;
-			      col_pixel2->g = col_pixel1->g;
-			      col_pixel2->b = col_pixel1->b;
+			      col_pixel2->v = col_pixel1->v;
 			      col_pixel2->t = col_pixel1->t;
 			    }
 			}
@@ -4179,7 +4189,7 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
 }
 
 
-void visRenderB (char *image_file_name, Net *net, Vis *vis)
+void visRenderB (char *image_file_name, void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis)
 {
   // here, the intra-machine communications take place and the buffer
   // to stream to the client or the output image are set
@@ -4197,6 +4207,8 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
   
   pixels_y = screen.pixels_y;
   
+  if (!vis_compositing) return;
+  
   if (net_machines > 1)
     {
       master_proc_id = 0;
@@ -4209,7 +4221,7 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
 	{
 	  for (m = 0; m < col_pixels; m++)
 	    {
-	      col_pixel_id[ col_pixel_recv[m].i * pixels_y + col_pixel_recv[m].j ] = -1;
+	      col_pixel_id[ (PixelI (col_pixel_recv[m].i) * pixels_y + PixelJ (col_pixel_recv[m].i)) ] = -1;
 	    }
 	  return;
 	}
@@ -4240,8 +4252,8 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
 	      for (n = 0; n < col_pixels_recv[ m-1 ]; n++)
 		{
 		  col_pixel1 = &col_pixel_send[ offset + n ];
-		  i = col_pixel1->i;
-		  j = col_pixel1->j;
+		  i = PixelI (col_pixel1->i);
+		  j = PixelJ (col_pixel1->i);
 		  
 		  if (*(col_pixel_id_p = &col_pixel_id[ i * pixels_y + j ]) == -1)
 		    {
@@ -4266,13 +4278,11 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
 			  col_pixel2->g += col_pixel1->g;
 			  col_pixel2->b += col_pixel1->b;
 			}
-		      else if (vis_mode == 1 || vis_mode == 2)
+		      else
 			{
 			  if (col_pixel1->t < col_pixel2->t)
 			    {
-			      col_pixel2->r = col_pixel1->r;
-			      col_pixel2->g = col_pixel1->g;
-			      col_pixel2->b = col_pixel1->b;
+			      col_pixel2->v = col_pixel1->v;
 			      col_pixel2->t = col_pixel1->t;
 			    }
 			}
@@ -4284,7 +4294,7 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
   
   for (m = 0; m < col_pixels; m++)
     {
-      col_pixel_id[ col_pixel_recv[m].i * pixels_y + col_pixel_recv[m].j ] = -1;
+      col_pixel_id[ (PixelI (col_pixel_recv[m].i)) * pixels_y + (PixelJ (col_pixel_recv[m].i)) ] = -1;
     }
   
 #ifndef BENCH
@@ -4297,22 +4307,39 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
     {
       factor = 255.F * vis_absorption_factor;
     }
-  else if (vis_mode == 1 || vis_mode == 2)
+  else
     {
       factor = 255.F;
     }
   
 #ifdef RG
   
+  float col[3];
+  
+  
   memcpy (col_pixel_locked, col_pixel_recv,
   	  col_pixels * sizeof(ColPixel));
   col_pixels_locked = col_pixels;
   
-  for (n = 0; n < col_pixels; n++)
+  if (vis_mode == 0)
     {
-      col_pixel_locked[ n ].r *= factor;
-      col_pixel_locked[ n ].g *= factor;
-      col_pixel_locked[ n ].b *= factor;
+      for (n = 0; n < col_pixels; n++)
+	{
+	  col_pixel_locked[ n ].r *= factor;
+	  col_pixel_locked[ n ].g *= factor;
+	  col_pixel_locked[ n ].b *= factor;
+	}
+    }
+  else
+    {
+      for (n = 0; n < col_pixels; n++)
+	{
+	  ColourPalette (col_pixel_locked[ n ].v * vis_flow_field_value_max_inv, col);
+	  
+	  col_pixel_locked[ n ].r = col[0] * factor;
+	  col_pixel_locked[ n ].g = col[1] * factor;
+	  col_pixel_locked[ n ].b = col[2] * factor;
+	}
     }
   
 #else
@@ -4325,7 +4352,6 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
   int bits_per_char = sizeof(char) * 8;
   int bits_per_two_chars = 2 * bits_per_char;
   int colour_id, pixel_id;
-  int pixels_x;
   int pixel_i, pixel_j;
   
   unsigned char pixel_r, pixel_g, pixel_b;
@@ -4353,8 +4379,8 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
 	  pixel_g = (unsigned char)max(0, min(255, (int)(factor * col_pixel_p->g)));
 	  pixel_b = (unsigned char)max(0, min(255, (int)(factor * col_pixel_p->b)));
 	  
-	  pixel_i = (int)col_pixel_p->i;
-	  pixel_j = (int)col_pixel_p->j;
+	  pixel_i = PixelI (col_pixel_p->i);
+	  pixel_j = PixelJ (col_pixel_p->i);
 	  
 	  pixel_id = (pixel_i << bits_per_two_chars) + pixel_j;
 	  colour_id = (pixel_r << bits_per_two_chars) + (pixel_g << bits_per_char) + pixel_b;
@@ -4369,10 +4395,10 @@ void visRenderB (char *image_file_name, Net *net, Vis *vis)
 	{
 	  col_pixel_p = &col_pixel_recv[ n ];
 	  
-	  voxel_value = col_pixel_p->r;
+	  voxel_value = col_pixel_p->v;
 	  
-	  pixel_i = (int)col_pixel_p->i;
-	  pixel_j = (int)col_pixel_p->j;
+	  pixel_i = PixelI (col_pixel_p->i);
+	  pixel_j = PixelJ (col_pixel_p->i);
 	  
 	  pixel_id = (pixel_i << bits_per_two_chars) + pixel_j;
 	  

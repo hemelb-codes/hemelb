@@ -72,6 +72,9 @@
 #define VIS_SIMD_SIZE                  3
 #endif
 
+#define PixelI(i)   i >> 16
+#define PixelJ(i)   i & 65535
+
 
 extern double PI;
 
@@ -290,10 +293,11 @@ struct Net
 
 struct ColPixel
 {
-  float r, g, b;
-  float t;
+  union {float r, v;};
+  union {float g, t;};
+  float b;
   
-  short int i, j;
+  int i;
 };
 
 
@@ -414,6 +418,7 @@ extern int vis_mode;
 extern int vis_flow_field_type;
 extern int vis_image_freq;
 extern int vis_pixels_max;
+extern int vis_compositing;
 
 extern float block_size_f;
 extern float block_size_inv;
@@ -504,7 +509,7 @@ void rtEnd (void);
 
 
 void visProject (float p1[], float p2[]);
-void visWritePixel (float col[], float t, int i, int j);
+void visWritePixel (ColPixel *col_pixel);
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,
 		float  x1, float  y1, float  z1,
@@ -518,7 +523,8 @@ void visProjection (float ortho_x, float ortho_y,
 		    float zoom);
 void visInit (Net *net, Vis *vis);
 void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis);
-void visRenderB (char *image_file_name, Net *net, Vis *vis);
+void visRenderB (char *image_file_name, void (*ColourPalette) (float value, float col[]),
+		 Net *net, Vis *vis);
 
 #ifdef STEER
 void visReadParameters (char *parameters_file_name, Net *net, Vis *vis, SteerParams *steer);

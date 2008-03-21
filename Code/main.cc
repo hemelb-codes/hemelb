@@ -268,8 +268,8 @@ void *hemeLB_network (void *ptr)
 	      pixel_g = max(0, min(255, (int)col_pixel_p->g));
 	      pixel_b = max(0, min(255, (int)col_pixel_p->b));
 	      
-	      pixel_i = col_pixel_p->i;
-	      pixel_j = col_pixel_p->j;
+	      pixel_i = PixelI (col_pixel_p->i);
+	      pixel_j = PixelJ (col_pixel_p->i);
 	      
 	      colour_id = (pixel_r << bits_per_two_chars) + (pixel_g << bits_per_char) + pixel_b;
 	      pixel_id = (pixel_i << bits_per_two_chars) + pixel_j;
@@ -329,7 +329,7 @@ void ColourPalette (float value, float col[])
   col[2] = 1.F - value;
 }
 
-/*
+
 void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
@@ -339,8 +339,8 @@ void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
   inlet_density[0]  = 1. + (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
   outlet_density[0] = 1. - (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
 }
-*/
 
+/*
 void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
@@ -352,7 +352,7 @@ void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
       inlet_density[i] = 1. + density_amp * cos(w * (double)time_step + 0.5 * PI);
     }
 }
-
+*/
 
 int IsBenckSectionFinished (double minutes, double elapsed_time)
 {
@@ -873,12 +873,21 @@ int main (int argc, char *argv[])
 	      
 	      strcpy ( image_name , output_image_name );
 	      strcat ( image_name , "/Images/" );
+	      if (time_step + 1 < 10) {
+		strcat ( image_name , "0000" );
+	      } else if (time_step + 1 < 100) {
+		strcat ( image_name , "000" );
+	      } else if (time_step + 1 < 1000) {
+		strcat ( image_name , "00" );
+	      } else if (time_step + 1 < 10000) {
+		strcat ( image_name , "0" );
+	      }
 	      sprintf ( time_step_string, "%i", time_step + 1);
-	      strcat ( image_name ,  time_step_string );
+	      strcat ( image_name , time_step_string );
 	      strcat ( image_name , ".dat" );
 #endif
 	      
-	      visRenderB (image_name, &net, &vis);
+	      visRenderB (image_name, ColourPalette, &net, &vis);
 #ifdef RG
 	      if (net.id == 0)
 		{
@@ -921,7 +930,6 @@ int main (int argc, char *argv[])
   
   double elapsed_time;
   
-  int time_steps_max;
   
   // benchmarking HemeLB's fluid solver only
   
@@ -949,10 +957,10 @@ int main (int argc, char *argv[])
 	  break;
 	}
     }
-  time_steps_max = (int)(time_step * minutes / (4. * 0.5) - time_step);
+  fluid_solver_time_steps = (int)(time_step * minutes / (4. * 0.5) - time_step);
   fluid_solver_time = myClock ();
   
-  for (time_step = 1; time_step <= time_steps_max; time_step++)
+  for (time_step = 1; time_step <= fluid_solver_time_steps; time_step++)
     {
 #ifndef TD
       stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
@@ -961,7 +969,6 @@ int main (int argc, char *argv[])
 #endif // TD
     }
   fluid_solver_time = myClock () - fluid_solver_time;
-  fluid_solver_time_steps = time_step;
   
   
   // benchmarking HemeLB's fluid solver and volume rendering
@@ -970,6 +977,7 @@ int main (int argc, char *argv[])
   vis_image_freq = 1;
   vis_mode = 0;
   vis_cutoff = -EPSILON;
+  vis_compositing = 1;
   fluid_solver_and_vr_time = myClock ();
   
   for (time_step = 1; time_step <= 1000000000; time_step++)
@@ -980,7 +988,7 @@ int main (int argc, char *argv[])
 #else
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
 #endif // TD
-      visRenderB (image_name, &net, &vis);
+      visRenderB (image_name, ColourPalette, &net, &vis);
       
       // partial timings
       elapsed_time = myClock () - fluid_solver_and_vr_time;
@@ -996,10 +1004,10 @@ int main (int argc, char *argv[])
 	  break;
 	}
     }
-  time_steps_max = (int)(time_step * minutes / (4. * 0.5) - time_step);
+  fluid_solver_and_vr_time_steps = (int)(time_step * minutes / (4. * 0.5) - time_step);
   fluid_solver_and_vr_time = myClock ();
   
-  for (time_step = 1; time_step <= time_steps_max; time_step++)
+  for (time_step = 1; time_step <= fluid_solver_and_vr_time_steps; time_step++)
     {
       visRenderA (ColourPalette, &net, &vis);
 #ifndef TD
@@ -1007,10 +1015,9 @@ int main (int argc, char *argv[])
 #else
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
 #endif // TD
-      visRenderB (image_name, &net, &vis);
+      visRenderB (image_name, ColourPalette, &net, &vis);
     }
   fluid_solver_and_vr_time = myClock () - fluid_solver_and_vr_time;
-  fluid_solver_and_vr_time_steps = time_step;
   
   
   // benchmarking HemeLB's fluid solver and iso-surface
@@ -1026,7 +1033,7 @@ int main (int argc, char *argv[])
 #else
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
 #endif // TD
-      visRenderB (image_name, &net, &vis);
+      visRenderB (image_name, ColourPalette, &net, &vis);
       
       // partial timings
       elapsed_time = myClock () - fluid_solver_and_is_time;
@@ -1042,10 +1049,10 @@ int main (int argc, char *argv[])
 	  break;
 	}
     }
-  time_steps_max = (int)(time_step * minutes / (4. * 0.5) - time_step);
+  fluid_solver_and_is_time_steps = (int)(time_step * minutes / (4. * 0.5) - time_step);
   fluid_solver_and_is_time = myClock ();
   
-  for (time_step = 1; time_step <= time_steps_max; time_step++)
+  for (time_step = 1; time_step <= fluid_solver_and_is_time_steps; time_step++)
     {
       visRenderA (ColourPalette, &net, &vis);
 #ifndef TD
@@ -1053,22 +1060,20 @@ int main (int argc, char *argv[])
 #else
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
 #endif // TD
-      visRenderB (image_name, &net, &vis);
+      visRenderB (image_name, ColourPalette, &net, &vis);
     }
   fluid_solver_and_is_time = myClock () - fluid_solver_and_is_time;
-  fluid_solver_and_is_time_steps = time_step;
-#endif // BENCH
   
   
   // benchmarking HemeLB's volume rendering without compositing
   
   vis_mode = 0;
+  vis_compositing = 0;
   vr_without_compositing_time = myClock ();
   
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
-      col_pixels = 0;
-      rtRayTracingVR (ColourPalette);
+      visRenderA (ColourPalette, &net, &vis);
       
       // partial timings
       elapsed_time = myClock () - vr_without_compositing_time;
@@ -1084,16 +1089,15 @@ int main (int argc, char *argv[])
 	  break;
 	}
     }
-  time_steps_max = (int)(time_step * minutes / (4. * 0.5) - time_step);
+  vr_without_compositing_time_steps = (int)(time_step * minutes / (4. * 0.5) - time_step);
   vr_without_compositing_time = myClock ();
   
-  for (time_step = 1; time_step <= time_steps_max; time_step++)
+  for (time_step = 1; time_step <= vr_without_compositing_time_steps; time_step++)
     {
-      col_pixels = 0;
-      rtRayTracingVR (ColourPalette);
+      visRenderA (ColourPalette, &net, &vis);
     }
   vr_without_compositing_time = myClock () - vr_without_compositing_time;
-  vr_without_compositing_time_steps = time_step;
+#endif // BENCH
   
 #ifndef BENCH
   

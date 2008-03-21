@@ -131,6 +131,7 @@ int vis_mode;
 int vis_flow_field_type;
 int vis_image_freq;
 int vis_pixels_max;
+int vis_compositing = 1;
 
 float block_size_f;
 float block_size_inv;
