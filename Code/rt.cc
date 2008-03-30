@@ -4205,9 +4205,9 @@ void visRenderB (char *image_file_name, void (*ColourPalette) (float value, floa
   ColPixel *col_pixel1, *col_pixel2;
   
   
-  pixels_y = screen.pixels_y;
-  
   if (!vis_compositing) return;
+  
+  pixels_y = screen.pixels_y;
   
   if (net_machines > 1)
     {

@@ -815,9 +815,6 @@ void netInit (LBM *lbm, Net *net)
     {
       collision_offset[1][l] = collision_offset[1][l-1] + net->my_inter_collisions[l-1];
     }
-  
-  n = -1;
-  
   for (n = 0; n < blocks; n++)
     {
       map_block_p = &net->map_block[ n ];

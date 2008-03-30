@@ -400,6 +400,14 @@ extern double *inlet_density;
 extern double *outlet_density;
 
 
+#ifndef BENCH
+extern int is_unstable;
+#endif
+
+#ifdef TD
+extern int is_current;
+#endif
+
 extern int sites_x, sites_y, sites_z;
 extern int blocks_x, blocks_y, blocks_z;
 extern int blocks_yz, blocks;

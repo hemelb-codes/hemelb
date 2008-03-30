@@ -113,6 +113,14 @@ double *inlet_density = NULL;
 double *outlet_density = NULL;
 
 
+#ifndef BENCH
+int is_unstable;
+#endif
+
+#ifdef TD
+int is_current;
+#endif
+
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;
 int blocks_yz, blocks;
@@ -206,13 +214,13 @@ int nint (float a)
 double myClock ()
 {
 //#ifndef NOMPI
-  struct timeval time_data;
-  
-  gettimeofday (&time_data, NULL);
-  
-  return (double)time_data.tv_sec + (double)time_data.tv_usec / 1.e6;
+//  struct timeval time_data;
+//  
+//  gettimeofday (&time_data, NULL);
+//  
+//  return (double)time_data.tv_sec + (double)time_data.tv_usec / 1.e6;
 //#else
-//  return MPI_Wtime();
+  return MPI_Wtime();
 //#endif
   
   //double time;
