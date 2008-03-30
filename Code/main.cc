@@ -344,7 +344,7 @@ void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
-  double density_amp = 1.45e-3;
+  double density_amp = 2.32e-2;
   double w = 2. * PI / period;
   
   for (int i = 0; i < inlets; i++)
@@ -873,15 +873,14 @@ int main (int argc, char *argv[])
 	      
 	      strcpy ( image_name , output_image_name );
 	      strcat ( image_name , "/Images/" );
-	      if (time_step + 1 < 10) {
-		strcat ( image_name , "0000" );
-	      } else if (time_step + 1 < 100) {
-		strcat ( image_name , "000" );
-	      } else if (time_step + 1 < 1000) {
-		strcat ( image_name , "00" );
-	      } else if (time_step + 1 < 10000) {
-		strcat ( image_name , "0" );
-	      }
+	      
+	      int time_steps = time_step + 1;
+	      
+	      while (time_steps < 100000000)
+		{
+		  strcat ( image_name , "0" );
+		  time_steps *= 10;
+		}
 	      sprintf ( time_step_string, "%i", time_step + 1);
 	      strcat ( image_name , time_step_string );
 	      strcat ( image_name , ".dat" );
@@ -929,6 +928,8 @@ int main (int argc, char *argv[])
   
   double elapsed_time;
   
+  int bench_period = (int)fmax(1., (1e+6 * net.procs) / lbm.total_fluid_sites);
+  
   
   // benchmarking HemeLB's fluid solver only
   
@@ -945,12 +946,12 @@ int main (int argc, char *argv[])
       // partial timings
       elapsed_time = myClock () - fluid_solver_time;
       
-      if (time_step%100 == 1 && net.id == 0)
+      if (time_step%bench_period == 1 && net.id == 0)
 	{
 	  fprintf (stderr, " FS, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
-      if (time_step%100 == 1 &&
+      if (time_step%bench_period == 1 &&
 	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
@@ -992,12 +993,12 @@ int main (int argc, char *argv[])
       // partial timings
       elapsed_time = myClock () - fluid_solver_and_vr_time;
       
-      if (time_step%100 == 1 && net.id == 0)
+      if (time_step%bench_period == 1 && net.id == 0)
 	{
 	  fprintf (stderr, " FS + VR, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
-      if (time_step%100 == 1 &&
+      if (time_step%bench_period == 1 &&
 	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
@@ -1037,12 +1038,12 @@ int main (int argc, char *argv[])
       // partial timings
       elapsed_time = myClock () - fluid_solver_and_is_time;
       
-      if (time_step%100 == 1 && net.id == 0)
+      if (time_step%bench_period == 1 && net.id == 0)
 	{
 	  fprintf (stderr, " FS + IS, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
-      if (time_step%100 == 1 &&
+      if (time_step%bench_period == 1 &&
 	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
@@ -1077,12 +1078,12 @@ int main (int argc, char *argv[])
       // partial timings
       elapsed_time = myClock () - vr_without_compositing_time;
       
-      if (time_step%100 == 1 && net.id == 0)
+      if (time_step%bench_period == 1 && net.id == 0)
 	{
 	  fprintf (stderr, " VR - COMP, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		   elapsed_time, time_step, time_step / elapsed_time);
 	}
-      if (time_step%100 == 1 &&
+      if (time_step%bench_period == 1 &&
 	  IsBenckSectionFinished (0.5, elapsed_time))
 	{
 	  break;
@@ -1215,5 +1216,3 @@ int main (int argc, char *argv[])
   
   return(0);
 }
-
-

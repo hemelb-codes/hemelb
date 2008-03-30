@@ -4,8 +4,12 @@
 
 #include "config.h"
 
-void (*lbmCollision[COLLISION_TYPES]) (double omega, double f[], int site_id, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
-void (*lbmCollisionSIMD[COLLISION_TYPES]) (double omega, double f[], int site_id, double density[], double v_x[], double v_y[], double v_z[], double f_neq[]);
+
+void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
+void (*lbmInnerCollisionSIMD[COLLISION_TYPES]) (double omega, int i, double density[], double v_x[], double v_y[], double v_z[], double f_neq[]);
+
+void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
+void (*lbmInterCollisionSIMD[COLLISION_TYPES]) (double omega, int i, double density[], double v_x[], double v_y[], double v_z[], double f_neq[]);
 
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[])
@@ -120,13 +124,20 @@ void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
 }
 
 
-void lbmCollision0 (double omega, double f[], int site_id,
-		    double *density, double *v_x, double *v_y, double *v_z,
-		    double f_neq[])
+void lbmInnerCollision0 (double omega, int i,
+			 double *density, double *v_x, double *v_y, double *v_z,
+			 double f_neq[])
 {
+  double *f;
   double v_xx, v_yy, v_zz;
   double temp1, temp2;
   
+  
+#ifndef TD
+  f = &f_old[ i*15 ];
+#else
+  f = &f_old[ i*30+is_current*15 ];
+#endif
   
   *v_x = f[1] + (f[7] + f[9]) + (f[11] + f[13]);
   *v_y = f[3] + (f[12] + f[14]);
@@ -146,46 +157,196 @@ void lbmCollision0 (double omega, double f[], int site_id,
   
   temp2 = v_xx + v_yy + v_zz;
   
-  f[0] += omega * (f_neq[0] = f[0] - (temp1 - (1.0 / 3.0) * temp2));
-  
+#ifndef TD
+  f_new[ f_id[i*15+0]               ] = f[0] + omega * (f_neq[0] = f[0] - (temp1 - (1.0 / 3.0) * temp2));
+#else
+  f_new[ f_id[i*15+0]+is_current*15 ] = f[0] + omega * (f_neq[0] = f[0] - (temp1 - (1.0 / 3.0) * temp2));
+#endif
   temp1 -= (1.0 / 6.0) * temp2;
   
-  f[1] += omega * (f_neq[1] = f[1] - ((temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
-  f[2] += omega * (f_neq[2] = f[2] - ((temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
+#ifndef TD
+  f_new[ f_id[i*15+1]               ] = f[1] + omega * (f_neq[1] = f[1] - ((temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
+  f_new[ f_id[i*15+2]               ] = f[2] + omega * (f_neq[2] = f[2] - ((temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
   
-  f[3] += omega * (f_neq[3] = f[3] - ((temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * *v_y)));   // (0, +1, 0)
-  f[4] += omega * (f_neq[4] = f[4] - ((temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * *v_y)));   // (0, -1, 0)
+  f_new[ f_id[i*15+3]               ] = f[3] + omega * (f_neq[3] = f[3] - ((temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * *v_y)));   // (0, +1, 0)
+  f_new[ f_id[i*15+4]               ] = f[4] + omega * (f_neq[4] = f[4] - ((temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * *v_y)));   // (0, -1, 0)
   
-  f[5] += omega * (f_neq[5] = f[5] - ((temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * *v_z)));   // (0, 0, +1)
-  f[6] += omega * (f_neq[6] = f[6] - ((temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * *v_z)));   // (0, 0, -1)
+  f_new[ f_id[i*15+5]               ] = f[5] + omega * (f_neq[5] = f[5] - ((temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * *v_z)));   // (0, 0, +1)
+  f_new[ f_id[i*15+6]               ] = f[6] + omega * (f_neq[6] = f[6] - ((temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * *v_z)));   // (0, 0, -1)
+#else
+  f_new[ f_id[i*15+1]+is_current*15 ] = f[1] + omega * (f_neq[1] = f[1] - ((temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
+  f_new[ f_id[i*15+2]+is_current*15 ] = f[2] + omega * (f_neq[2] = f[2] - ((temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
   
+  f_new[ f_id[i*15+3]+is_current*15 ] = f[3] + omega * (f_neq[3] = f[3] - ((temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * *v_y)));   // (0, +1, 0)
+  f_new[ f_id[i*15+4]+is_current*15 ] = f[4] + omega * (f_neq[4] = f[4] - ((temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * *v_y)));   // (0, -1, 0)
+  
+  f_new[ f_id[i*15+5]+is_current*15 ] = f[5] + omega * (f_neq[5] = f[5] - ((temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * *v_z)));   // (0, 0, +1)
+  f_new[ f_id[i*15+6]+is_current*15 ] = f[6] + omega * (f_neq[6] = f[6] - ((temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * *v_z)));   // (0, 0, -1)
+#endif
   temp1 *= (1.0 / 8.0);
   
   temp2 = (*v_x + *v_y) + *v_z;
   
-  f[7] += omega * (f_neq[7] = f[7] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, +1)
-  f[8] += omega * (f_neq[8] = f[8] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, -1)
+#ifndef TD
+  f_new[ f_id[i*15+7]               ] = f[7] + omega * (f_neq[7] = f[7] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, +1)
+  f_new[ f_id[i*15+8]               ] = f[8] + omega * (f_neq[8] = f[8] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, -1)
+#else
+  f_new[ f_id[i*15+7]+is_current*15 ] = f[7] + omega * (f_neq[7] = f[7] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, +1)
+  f_new[ f_id[i*15+8]+is_current*15 ] = f[8] + omega * (f_neq[8] = f[8] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, -1)
+#endif
   
   temp2 = (*v_x + *v_y) - *v_z;
   
-  f[ 9] += omega * (f_neq[ 9] = f[ 9] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, -1)
-  f[10] += omega * (f_neq[10] = f[10] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, +1)
+#ifndef TD
+  f_new[ f_id[i*15+ 9]               ] = f[ 9] + omega * (f_neq[ 9] = f[ 9] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, -1)
+  f_new[ f_id[i*15+10]               ] = f[10] + omega * (f_neq[10] = f[10] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, +1)
+#else
+  f_new[ f_id[i*15+ 9]+is_current*15 ] = f[ 9] + omega * (f_neq[ 9] = f[ 9] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, -1)
+  f_new[ f_id[i*15+10]+is_current*15 ] = f[10] + omega * (f_neq[10] = f[10] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, +1)
+#endif
   
   temp2 = (*v_x - *v_y) + *v_z;
   
-  f[11] += omega * (f_neq[11] = f[11] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, +1)
-  f[12] += omega * (f_neq[12] = f[12] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, -1)
+#ifndef TD
+  f_new[ f_id[i*15+11]               ] = f[11] + omega * (f_neq[11] = f[11] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, +1)
+  f_new[ f_id[i*15+12]               ] = f[12] + omega * (f_neq[12] = f[12] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, -1)
+  #else
+  f_new[ f_id[i*15+11]+is_current*15 ] = f[11] + omega * (f_neq[11] = f[11] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, +1)
+  f_new[ f_id[i*15+12]+is_current*15 ] = f[12] + omega * (f_neq[12] = f[12] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, -1)
+#endif
   
-  temp2 = (*v_x - *v_y) - *v_z;	     
+  temp2 = (*v_x - *v_y) - *v_z;	 
   
-  f[13] += omega * (f_neq[13] = f[13] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
-  f[14] += omega * (f_neq[14] = f[14] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
+#ifndef TD
+  f_new[ f_id[i*15+13]               ] = f[13] + omega * (f_neq[13] = f[13] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
+  f_new[ f_id[i*15+14]               ] = f[14] + omega * (f_neq[14] = f[14] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
+#else
+  f_new[ f_id[i*15+13]+is_current*15 ] = f[13] + omega * (f_neq[13] = f[13] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
+  f_new[ f_id[i*15+14]+is_current*15 ] = f[14] + omega * (f_neq[14] = f[14] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
+#endif
+  
+#ifndef BENCH
+  for (int l = 0; l < 15; l++)
+    {
+      if (f[l] < 0.) is_unstable = 1;
+    }
+#endif
 }
 
 
-void lbmCollisionSIMD0 (double omega, double f[], int site_id,
-			double density[], double v_x[], double v_y[], double v_z[],
-			double f_neq[])
+void lbmInterCollision0 (double omega, int i,
+			 double *density, double *v_x, double *v_y, double *v_z,
+			 double f_neq[])
+{
+  double *f;
+  double v_xx, v_yy, v_zz;
+  double temp1, temp2;
+  
+  
+#ifndef TD
+  f = &f_old[ i*15 ];
+#else
+  f = &f_old[ i*30+is_current*15 ];
+#endif
+  
+  *v_x = f[1] + (f[7] + f[9]) + (f[11] + f[13]);
+  *v_y = f[3] + (f[12] + f[14]);
+  *v_z = f[5] + f[10];
+  
+  *density = f[0] + (f[2] + f[4]) + (f[6] + f[ 8 ]) + *v_x + *v_y + *v_z;
+  
+  *v_x -= f[2] + (f[8] + f[10]) + (f[12] + f[14]);
+  *v_y += (f[7] + f[9]) - (f[4] + (f[8] + f[10]) + (f[11] + f[13]));
+  *v_z += f[7] + f[11] + f[14] - ((f[6] + f[8]) + f[9] + f[12] + f[13]);
+
+  v_xx = *v_x * *v_x;
+  v_yy = *v_y * *v_y;
+  v_zz = *v_z * *v_z;
+  
+  temp1 = (1.0 / 8.0) * *density;
+  
+  temp2 = v_xx + v_yy + v_zz;
+  
+#ifndef TD
+  f_new[ f_id[i*15+0]               ] = f[0] + omega * (f_neq[0] = f[0] - (temp1 - (1.0 / 3.0) * temp2));
+#else
+  f_new[ f_id[i*15+0]+is_current*15 ] = f[0] + omega * (f_neq[0] = f[0] - (temp1 - (1.0 / 3.0) * temp2));
+#endif
+  temp1 -= (1.0 / 6.0) * temp2;
+  
+#ifndef TD
+  f_new[ f_id[i*15+1]               ] = f[1] += omega * (f_neq[1] = f[1] - ((temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
+  f_new[ f_id[i*15+2]               ] = f[2] += omega * (f_neq[2] = f[2] - ((temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
+  
+  f_new[ f_id[i*15+3]               ] = f[3] += omega * (f_neq[3] = f[3] - ((temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * *v_y)));   // (0, +1, 0)
+  f_new[ f_id[i*15+4]               ] = f[4] += omega * (f_neq[4] = f[4] - ((temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * *v_y)));   // (0, -1, 0)
+  
+  f_new[ f_id[i*15+5]               ] = f[5] += omega * (f_neq[5] = f[5] - ((temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * *v_z)));   // (0, 0, +1)
+  f_new[ f_id[i*15+6]               ] = f[6] += omega * (f_neq[6] = f[6] - ((temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * *v_z)));   // (0, 0, -1)
+#else
+  f_new[ f_id[i*15+1]+is_current*15 ] = f[1] += omega * (f_neq[1] = f[1] - ((temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
+  f_new[ f_id[i*15+2]+is_current*15 ] = f[2] += omega * (f_neq[2] = f[2] - ((temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * *v_x)));   // (+1, 0, 0)
+  
+  f_new[ f_id[i*15+3]+is_current*15 ] = f[3] += omega * (f_neq[3] = f[3] - ((temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * *v_y)));   // (0, +1, 0)
+  f_new[ f_id[i*15+4]+is_current*15 ] = f[4] += omega * (f_neq[4] = f[4] - ((temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * *v_y)));   // (0, -1, 0)
+  
+  f_new[ f_id[i*15+5]+is_current*15 ] = f[5] += omega * (f_neq[5] = f[5] - ((temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * *v_z)));   // (0, 0, +1)
+  f_new[ f_id[i*15+6]+is_current*15 ] = f[6] += omega * (f_neq[6] = f[6] - ((temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * *v_z)));   // (0, 0, -1)
+#endif
+  temp1 *= (1.0 / 8.0);
+  
+  temp2 = (*v_x + *v_y) + *v_z;
+  
+#ifndef TD
+  f_new[ f_id[i*15+7]               ] = f[7] += omega * (f_neq[7] = f[7] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, +1)
+  f_new[ f_id[i*15+8]               ] = f[8] += omega * (f_neq[8] = f[8] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, -1)
+#else
+  f_new[ f_id[i*15+7]+is_current*15 ] = f[7] += omega * (f_neq[7] = f[7] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, +1)
+  f_new[ f_id[i*15+8]+is_current*15 ] = f[8] += omega * (f_neq[8] = f[8] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, -1)
+#endif
+  
+  temp2 = (*v_x + *v_y) - *v_z;
+  
+#ifndef TD
+  f_new[ f_id[i*15+ 9]               ] = f[ 9] += omega * (f_neq[ 9] = f[ 9] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, -1)
+  f_new[ f_id[i*15+10]               ] = f[10] += omega * (f_neq[10] = f[10] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, +1)
+#else
+  f_new[ f_id[i*15+ 9]+is_current*15 ] = f[ 9] += omega * (f_neq[ 9] = f[ 9] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, -1)
+  f_new[ f_id[i*15+10]+is_current*15 ] = f[10] += omega * (f_neq[10] = f[10] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, +1)
+#endif
+  
+  temp2 = (*v_x - *v_y) + *v_z;
+  
+#ifndef TD
+  f_new[ f_id[i*15+11]               ] = f[11] += omega * (f_neq[11] = f[11] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, +1)
+  f_new[ f_id[i*15+12]               ] = f[12] += omega * (f_neq[12] = f[12] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, -1)
+  #else
+  f_new[ f_id[i*15+11]+is_current*15 ] = f[11] += omega * (f_neq[11] = f[11] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, +1)
+  f_new[ f_id[i*15+12]+is_current*15 ] = f[12] += omega * (f_neq[12] = f[12] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, -1)
+#endif
+  
+  temp2 = (*v_x - *v_y) - *v_z;	 
+  
+#ifndef TD
+  f_new[ f_id[i*15+13]               ] = f[13] += omega * (f_neq[13] = f[13] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
+  f_new[ f_id[i*15+14]               ] = f[14] += omega * (f_neq[14] = f[14] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
+#else
+  f_new[ f_id[i*15+13]+is_current*15 ] = f[13] += omega * (f_neq[13] = f[13] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
+  f_new[ f_id[i*15+14]+is_current*15 ] = f[14] += omega * (f_neq[14] = f[14] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
+#endif
+  
+#ifndef BENCH
+  for (int l = 0; l < 15; l++)
+    {
+      if (f[l] < 0.) is_unstable = 1;
+    }
+#endif
+}
+
+
+void lbmInnerCollisionSIMD0 (double omega, int i,
+			     double density[], double v_x[], double v_y[], double v_z[],
+			     double f_neq[])
 {
   double f_vec[15][SIMD_SIZE];
   double f_neq_vec[15][SIMD_SIZE];
@@ -200,9 +361,9 @@ void lbmCollisionSIMD0 (double omega, double f[], int site_id,
       for (l = 0; l < 15; l++)
 	{
 #ifndef TD
-	  f_vec[l][j] = f[ j*15+l ];
+	  f_vec[l][j] = f_old[ (i+j)*15+l ];
 #else
-	  f_vec[l][j] = f[ j*30+l ];
+	  f_vec[l][j] = f_old[ (i+j)*30+is_current*15+l ];
 #endif
 	}
     }
@@ -212,7 +373,7 @@ void lbmCollisionSIMD0 (double omega, double f[], int site_id,
       v_y[j] = f_vec[3][j] + (f_vec[12][j] + f_vec[14][j]);
       v_z[j] = f_vec[5][j] + f_vec[10][j];
       
-      density[j] = f_vec[0][j] + (f_vec[2][j] + f_vec[4][j]) + (f_vec[6][j] + f_vec[8][j]) + ((v_x[j] + v_y[j]) + v_z[j]);
+      density[j] = f_vec[0][j] + (f_vec[2][j] + f_vec[4][j]) + (f_vec[6][j] + f_vec[8][j]) + v_x[j] + v_y[j] + v_z[j];
       
       v_x[j] -= f_vec[2][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[12][j] + f_vec[14][j]);
       v_y[j] += (f_vec[7][j] + f_vec[9][j]) - (f_vec[4][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[11][j] + f_vec[13][j]));
@@ -265,10 +426,14 @@ void lbmCollisionSIMD0 (double omega, double f[], int site_id,
     {
       for (l = 0; l < 15; l++)
         {
+#ifndef BENCH
+	  if (f_vec[l][j] < 0.) is_unstable = 1;
+#endif
+	  
 #ifndef TD
-	  f[ j*15+l ] = f_vec[l][j];
+	  f_new[ f_id[(i+j)*15+l] ] = f_vec[l][j];
 #else
-	  f[ j*30+l ] = f_vec[l][j];
+	  f_new[ f_id[(i+j)*15+l]+is_current*15 ] = f_vec[l][j];
 #endif 
           f_neq[ j*15+l ] = f_neq_vec[l][j];
         }
@@ -276,14 +441,118 @@ void lbmCollisionSIMD0 (double omega, double f[], int site_id,
 }
 
 
-void lbmCollision1 (double omega, double f[], int site_id,
+void lbmInterCollisionSIMD0 (double omega, int i,
+			     double density[], double v_x[], double v_y[], double v_z[],
+			     double f_neq[])
+{
+  double f_vec[15][SIMD_SIZE];
+  double f_neq_vec[15][SIMD_SIZE];
+  double v_xx, v_yy, v_zz;
+  double temp1, temp2;
+  
+  int j, l;
+  
+  
+  for (j = 0; j < SIMD_SIZE; j++)
+    {
+      for (l = 0; l < 15; l++)
+	{
+#ifndef TD
+	  f_vec[l][j] = f_old[ (i+j)*15+l ];
+#else
+	  f_vec[l][j] = f_old[ (i+j)*30+is_current*15+l ];
+#endif
+	}
+    }
+  for (j = 0; j < SIMD_SIZE; j++)
+    {
+      v_x[j] = f_vec[1][j] + (f_vec[7][j] + f_vec[9][j]) + (f_vec[11][j] + f_vec[13][j]);
+      v_y[j] = f_vec[3][j] + (f_vec[12][j] + f_vec[14][j]);
+      v_z[j] = f_vec[5][j] + f_vec[10][j];
+      
+      density[j] = f_vec[0][j] + (f_vec[2][j] + f_vec[4][j]) + (f_vec[6][j] + f_vec[8][j]) + v_x[j] + v_y[j] + v_z[j];
+      
+      v_x[j] -= f_vec[2][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[12][j] + f_vec[14][j]);
+      v_y[j] += (f_vec[7][j] + f_vec[9][j]) - (f_vec[4][j] + (f_vec[8][j] + f_vec[10][j]) + (f_vec[11][j] + f_vec[13][j]));
+      v_z[j] += f_vec[7][j] + f_vec[11][j] + f_vec[14][j] - ((f_vec[6][j] + f_vec[8][j]) + f_vec[9][j] + f_vec[12][j] + f_vec[13][j]);
+      
+      v_xx = v_x[j] * v_x[j];
+      v_yy = v_y[j] * v_y[j];
+      v_zz = v_z[j] * v_z[j];
+      
+      temp1 = (1.0 / 8.0) * density[j];
+      
+      temp2 = v_xx + v_yy + v_zz;
+      
+      f_vec[0][j] += omega * (f_neq_vec[0][j] = f_vec[0][j] - (temp1 - (1.0 / 3.0) * temp2));
+      
+      temp1 -= (1.0 / 6.0) * temp2;
+      
+      f_vec[1][j] += omega * (f_neq_vec[1][j] = f_vec[1][j] - ((temp1 + 0.5 * v_xx) + ((1.0 / 3.0) * v_x[j])));   // (+1, 0, 0)
+      f_vec[2][j] += omega * (f_neq_vec[2][j] = f_vec[2][j] - ((temp1 + 0.5 * v_xx) - ((1.0 / 3.0) * v_x[j])));   // (+1, 0, 0)
+      
+      f_vec[3][j] += omega * (f_neq_vec[3][j] = f_vec[3][j] - ((temp1 + 0.5 * v_yy) + ((1.0 / 3.0) * v_y[j])));   // (0, +1, 0)
+      f_vec[4][j] += omega * (f_neq_vec[4][j] = f_vec[4][j] - ((temp1 + 0.5 * v_yy) - ((1.0 / 3.0) * v_y[j])));   // (0, -1, 0)
+      
+      f_vec[5][j] += omega * (f_neq_vec[5][j] = f_vec[5][j] - ((temp1 + 0.5 * v_zz) + ((1.0 / 3.0) * v_z[j])));   // (0, 0, +1)
+      f_vec[6][j] += omega * (f_neq_vec[6][j] = f_vec[6][j] - ((temp1 + 0.5 * v_zz) - ((1.0 / 3.0) * v_z[j])));   // (0, 0, -1)
+      
+      temp1 *= (1.0 / 8.0);
+      
+      temp2 = (v_x[j] + v_y[j]) + v_z[j];
+      
+      f_vec[7][ j] += omega * (f_neq_vec[ 7][j] = f_vec[7][ j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, +1)
+      f_vec[8][ j] += omega * (f_neq_vec[ 8][j] = f_vec[8][ j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, -1)
+      
+      temp2 = (v_x[j] + v_y[j]) - v_z[j];
+      
+      f_vec[9][ j] += omega * (f_neq_vec[ 9][j] = f_vec[9][ j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, +1, -1)
+      f_vec[10][j] += omega * (f_neq_vec[10][j] = f_vec[10][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, -1, +1)
+      
+      temp2 = (v_x[j] - v_y[j]) + v_z[j];
+      
+      f_vec[11][j] += omega * (f_neq_vec[11][j] = f_vec[11][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, +1)
+      f_vec[12][j] += omega * (f_neq_vec[12][j] = f_vec[12][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, -1)
+      
+      temp2 = (v_x[j] - v_y[j]) - v_z[j];
+      
+      f_vec[13][j] += omega * (f_neq_vec[13][j] = f_vec[13][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
+      f_vec[14][j] += omega * (f_neq_vec[14][j] = f_vec[14][j] - ((temp1 + (1.0 / 16.0) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
+    }
+  for (j = 0; j < SIMD_SIZE; j++)
+    {
+      for (l = 0; l < 15; l++)
+        {
+#ifndef BENCH
+	  if (f_vec[l][j] < 0.) is_unstable = 1;
+#endif
+	  
+#ifndef TD
+	  f_new[ f_id[(i+j)*15+l] ] = f_old[ (i+j)*15+l ] = f_vec[l][j];
+#else
+	  f_new[ f_id[(i+j)*15+l]+is_current*15 ] = f_old[ (i+j)*30+is_current*15+l ] = f_vec[l][j];
+#endif 
+          f_neq[ j*15+l ] = f_neq_vec[l][j];
+        }
+    }
+}
+
+
+void lbmCollision1 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
 {
+  double *f;
   double temp;
   
   int l;
   
+  
+#ifndef TD
+  f = &f_old[ i*15 ];
+#else
+  f = &f_old[ i*30+is_current*15 ];
+#endif
   
   for (l = 0; l < 15; l++)
     {
@@ -296,7 +565,7 @@ void lbmCollision1 (double omega, double f[], int site_id,
   for (l = 0; l < 15; l++) *density += f[l];
   
   temp = (1.0 / 8.0) * *density;
-  
+
   for (l = 0; l < 7; l++) f[l] = temp;
   
   temp *= (1.0 / 8.0);
@@ -305,76 +574,91 @@ void lbmCollision1 (double omega, double f[], int site_id,
   
   for (l = 0; l < 15; l++)
     {
-      f_neq[l] -= f[l];
+#ifndef BENCH
+      if (f[l] < 0.)  is_unstable = 1;
+#endif
+      
+#ifndef TD
+      f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l]);
+#else
+      f_neq[l] -= (f_new[ f_id[i*15+l]+is_current*15 ] = f[l]);
+#endif
     }
 }
 
 
-void lbmCollisionSIMD1 (double omega, double f[], int site_id,
+void lbmCollisionSIMD1 (double omega, int i,
 			double density[], double v_x[], double v_y[], double v_z[],
 			double f_neq[])
 {
+  double *f;
   double temp;
   
-  int l;
+  int j, l;
   
   
-  for (int j = 0; j < SIMD_SIZE; j++)
+  for (j = 0; j < SIMD_SIZE; j++)
     {
+#ifndef TD
+      f = &f_old[ (i+j)*15 ];
+#else
+      f = &f_old[ (i+j)*30+is_current*15 ];
+#endif
       for (l = 0; l < 15; l++)
 	{
-#ifndef TD
-	  f_neq[ j*15+l ] = f[ j*15+l ];
-#else
-	  f_neq[ j*15+l ] = f[ j*30+l ];
-#endif
+	  f_neq[ j*15+l ] = f[l];
 	}
       v_x[j] = v_y[j] = v_z[j] = 0.F;
       
       density[j] = 0.;
-#ifndef TD
-      for (l = 0; l < 15; l++) density[j] += f[ j*15+l ];
-#else
-      for (l = 0; l < 15; l++) density[j] += f[ j*30+l ];
-#endif
+      
+      for (l = 0; l < 15; l++) density[j] += f[l];
+      
       temp = (1.0 / 8.0) * density[j];
-#ifndef TD
-      for (l = 0; l < 7; l++) f[ j*15+l ] = temp;
-#else
-      for (l = 0; l < 7; l++) f[ j*30+l ] = temp;
-#endif
+      
+      for (l = 0; l < 7; l++) f[l] = temp;
+      
       temp *= (1.0 / 8.0);
-#ifndef TD
-      for (l = 7; l < 15; l++) f[ j*15+l ] = temp;
-#else
-      for (l = 7; l < 15; l++) f[ j*30+l ] = temp;
-#endif
+      
+      for (l = 7; l < 15; l++) f[l] = temp;
+      
       for (l = 0; l < 15; l++)
 	{
+#ifndef BENCH
+	  if (f[l] < 0.) is_unstable = 1;
+#endif
+	  
 #ifndef TD
-	  f_neq[ j*15+l ] -= f[ j*15+l ];
+	  f_neq[ j*15+l ] -= (f_new[ f_id[(i+j)*15+l] ] = f[l]);
 #else
-	  f_neq[ j*15+l ] -= f[ j*30+l ];
+	  f_neq[ j*15+l ] -= (f_new[ f_id[(i+j)*15+l]+is_current*15 ] = f[l]);
 #endif
 	}
     }
 }
 
 
-void lbmCollision2 (double omega, double f[], int site_id,
+void lbmCollision2 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
 {
+  double *f;
   double dummy_density;
   
   unsigned int boundary_id, l;
   
   
+#ifndef TD
+  f = &f_old[ i*15 ];
+#else
+  f = &f_old[ i*30+is_current*15 ];
+#endif
+  
   for (l = 0; l < 15; l++)
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ site_id ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = inlet_density[ boundary_id ];
   
@@ -383,12 +667,21 @@ void lbmCollision2 (double omega, double f[], int site_id,
   
   for (l = 0; l < 15; l++)
     {
+#ifndef BENCH
+      if (f[l] < 0.) is_unstable = 1;
+#endif
+      
+#ifndef TD
+      f_new[ f_id[i*15+l] ] = f[l];
+#else
+      f_new[ f_id[i*15+l]+is_current*15 ] = f[l];
+#endif
       f_neq[l] -= f[l];
     }
 }
 
 
-void lbmCollisionSIMD2 (double omega, double f[], int site_id,
+void lbmCollisionSIMD2 (double omega, int i,
 			double density[], double v_x[], double v_y[], double v_z[],
 			double f_neq[])
 {
@@ -406,16 +699,12 @@ void lbmCollisionSIMD2 (double omega, double f[], int site_id,
       for (l = 0; l < 15; l++)
 	{
 #ifndef TD
-	  f_vec[l][j] = f[ j*15+l ];
+	  f_neq[ j*15+l ] = f_vec[l][j] = f_old[ (i+j)*15+l ];
 #else
-	  f_vec[l][j] = f[ j*30+l ];
+	  f_neq[ j*15+l ] = f_vec[l][j] = f_old[ (i+j)*30+is_current*15+l ];
 #endif
 	}
-    }
-  for (j = 0; j < SIMD_SIZE; j++)
-    {
-      boundary_id = (net_site_data[ site_id+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-      
+      boundary_id = (net_site_data[ i+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       density[j] = inlet_density[ boundary_id ];
     }
   for (j = 0; j < SIMD_SIZE; j++)
@@ -475,32 +764,42 @@ void lbmCollisionSIMD2 (double omega, double f[], int site_id,
     {
       for (l = 0; l < 15; l++)
         {
-#ifndef TD
-	  f_neq[ j*15+l ] = f[ j*15+l ] - f_vec[l][j];
-          f[ j*15+l ] = f_vec[l][j];
-#else
-	  f_neq[ j*15+l ] = f[ j*30+l ] - f_vec[l][j];
-	  f[ j*30+l ] = f_vec[l][j];
+#ifndef BENCH
+	  if (f_vec[l][j] < 0.) is_unstable = 1;
 #endif
+	  
+#ifndef TD
+          f_new[ f_id[(i+j)*15+l] ] = f_old[ (i+j)*15+l ] = f_vec[l][j];
+#else
+	  f_new[ f_id[(i+j)*15+l]+is_current*15 ] = f_old[ (i+j)*30+is_current*15+l ] = f_vec[l][j];
+#endif
+	  f_neq[ j*15+l ] -= f_vec[l][j];
         }
     }
 }
 
 
-void lbmCollision3 (double omega, double f[], int site_id,
+void lbmCollision3 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
 {
+  double *f;
   double dummy_density;
   
   unsigned int boundary_id, l;
   
   
+#ifndef TD
+  f = &f_old[ i*15 ];
+#else
+  f = &f_old[ i*30+is_current*15 ];
+#endif
+  
   for (l = 0; l < 15; l++)
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ site_id ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = outlet_density[ boundary_id ];
   
@@ -509,12 +808,21 @@ void lbmCollision3 (double omega, double f[], int site_id,
   
   for (l = 0; l < 15; l++)
     {
+#ifndef BENCH
+      if (f[l] < 0.) is_unstable = 1;
+#endif
+      
+#ifndef TD
+      f_new[ f_id[i*15+l] ] = f[l];
+#else
+      f_new[ f_id[i*15+l]+is_current*15 ] = f[l];
+#endif
       f_neq[l] -= f[l];
     }
 }
 
 
-void lbmCollisionSIMD3 (double omega, double f[], int site_id,
+void lbmCollisionSIMD3 (double omega, int i,
 			double density[], double v_x[], double v_y[], double v_z[],
 			double f_neq[])
 {
@@ -532,16 +840,12 @@ void lbmCollisionSIMD3 (double omega, double f[], int site_id,
       for (l = 0; l < 15; l++)
 	{
 #ifndef TD
-	  f_vec[l][j] = f[ j*15+l ];
+	  f_neq[ j*15+l ] = f_vec[l][j] = f_old[ (i+j)*15+l ];
 #else
-	  f_vec[l][j] = f[ j*30+l ];
+	  f_neq[ j*15+l ] = f_vec[l][j] = f_old[ (i+j)*30+is_current*15+l ];
 #endif
 	}
-    }
-  for (j = 0; j < SIMD_SIZE; j++)
-    {
-      boundary_id = (net_site_data[ site_id+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-      
+      boundary_id = (net_site_data[ i+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       density[j] = outlet_density[ boundary_id ];
     }
   for (j = 0; j < SIMD_SIZE; j++)
@@ -601,22 +905,26 @@ void lbmCollisionSIMD3 (double omega, double f[], int site_id,
     {
       for (l = 0; l < 15; l++)
         {
-#ifndef TD
-	  f_neq[ j*15+l ] = f[ j*15+l ] - f_vec[l][j];
-          f[ j*15+l ] = f_vec[l][j];
-#else
-	  f_neq[ j*15+l ] = f[ j*30+l ] - f_vec[l][j];
-	  f[ j*30+l ] = f_vec[l][j];
+#ifndef BENCH
+	  if (f_vec[l][j] < 0.) is_unstable = 1;
 #endif
+	  
+#ifndef TD
+          f_new[ f_id[(i+j)*15+l] ] = f_old[ (i+j)*15+l ] = f_vec[l][j];
+#else
+	  f_new[ f_id[(i+j)*15+l]+is_current*15 ] = f_old[ (i+j)*30+is_current*15+l ] = f_vec[l][j];
+#endif
+	  f_neq[ j*15+l ] -= f_vec[l][j];
         }
     }
 }
 
 
-void lbmCollision4 (double omega, double f[], int site_id,
+void lbmCollision4 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
 {
+  double *f;
   double temp;
   
   int l;
@@ -624,104 +932,23 @@ void lbmCollision4 (double omega, double f[], int site_id,
   unsigned int boundary_id;
   
   
+#ifndef TD
+  f = &f_old[ i*15 ];
+#else
+  f = &f_old[ i*30+is_current*15 ];
+#endif
+  
   for (l = 0; l < 15; l++)
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ site_id ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = inlet_density[ boundary_id ];
   
   *v_x = *v_y = *v_z = 0.F;
   
-  temp = *density * (1.0 / 8.0);
-  
-  for (l = 0; l < 7; l++) f[l] = temp;
-  
-  temp *= (1.0 / 8.0);
-  
-  for (l = 7; l < 15; l++) f[l] = temp;
-  
- for (l = 0; l < 15; l++)
-    {
-      f_neq[l] -= f[l];
-    }
-}
-
-
-void lbmCollisionSIMD4 (double omega, double f[], int site_id,
-			double density[], double v_x[], double v_y[], double v_z[],
-			double f_neq[])
-{
-  double temp;
-  
-  int l;
-  
-  unsigned int boundary_id;
-  
-  
-  for (int j = 0; j < SIMD_SIZE; j++)
-    {
-      for (l = 0; l < 15; l++)
-	{
-#ifndef TD
-	  f_neq[ j*15+l ] = f[ j*15+l ];
-#else
-	  f_neq[ j*15+l ] = f[ j*30+l ];
-#endif
-	}
-      boundary_id = (net_site_data[ site_id+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-      
-      v_x[j] = v_y[j] = v_z[j] = 0.F;
-      
-      density[j] = inlet_density[ boundary_id ];
-      
-      temp = density[j] * (1.0 / 8.0);
-#ifndef TD
-      for (l = 0; l < 7; l++) f[ j*15+l ] = temp;
-#else
-      for (l = 0; l < 7; l++) f[ j*30+l ] = temp;
-#endif
-      temp *= (1.0 / 8.0);
-#ifndef TD
-      for (l = 7; l < 15; l++) f[ j*15+l ] = temp;
-#else
-      for (l = 7; l < 15; l++) f[ j*30+l ] = temp;
-#endif
-    for (l = 0; l < 15; l++)
-	{
-#ifndef TD
-	  f_neq[ j*15+l ] -= f[ j*15+l ];
-#else
-	  f_neq[ j*15+l ] -= f[ j*30+l ];
-#endif
-	}
-    }
-}
-
-
-void lbmCollision5 (double omega, double f[], int site_id,
-		    double *density, double *v_x, double *v_y, double *v_z,
-		    double f_neq[])
-{
-  double temp;
-  
-  int l;
-  
-  unsigned int boundary_id;
-  
-  
-  for (l = 0; l < 15; l++)
-    {
-      f_neq[l] = f[l];
-    }
-  boundary_id = (net_site_data[ site_id ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-  
-  *density = outlet_density[ boundary_id ];
-  
-  *v_x = *v_y = *v_z = 0.F;
-  
-  temp = *density * (1.0 / 8.0);
+  temp = (1.0 / 8.0) * *density;
   
   for (l = 0; l < 7; l++) f[l] = temp;
   
@@ -731,15 +958,24 @@ void lbmCollision5 (double omega, double f[], int site_id,
   
   for (l = 0; l < 15; l++)
     {
-      f_neq[l] -= f[l];
+#ifndef BENCH
+      if (f[l] < 0.) is_unstable = 1;
+#endif
+      
+#ifndef TD
+      f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l]);
+#else
+      f_neq[l] -= (f_new[ f_id[i*15+l]+is_current*15 ] = f[l]);
+#endif
     }
 }
 
 
-void lbmCollisionSIMD5 (double omega, double f[], int site_id,
+void lbmCollisionSIMD4 (double omega, int i,
 			double density[], double v_x[], double v_y[], double v_z[],
 			double f_neq[])
 {
+  double *f;
   double temp;
   
   int j, l;
@@ -749,44 +985,143 @@ void lbmCollisionSIMD5 (double omega, double f[], int site_id,
   
   for (j = 0; j < SIMD_SIZE; j++)
     {
+#ifndef TD
+      f = &f_old[ (i+j)*15 ];
+#else
+      f = &f_old[ (i+j)*30+is_current*15 ];
+#endif
       for (l = 0; l < 15; l++)
 	{
+	  f_neq[ j*15+l ] = f[l];
+	}
+      boundary_id = (net_site_data[ i+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+      
+      v_x[j] = v_y[j] = v_z[j] = 0.F;
+      
+      density[j] = inlet_density[ boundary_id ];
+      
+      temp = (1.0 / 8.0) * density[j];
+      
+      for (l = 0; l < 7; l++) f[l] = temp;
+      
+      temp *= (1.0 / 8.0);
+      
+      for (l = 7; l < 15; l++) f[l] = temp;
+      
+      for (l = 0; l < 15; l++)
+	{
+#ifndef BENCH
+	  if (f[l] < 0.) is_unstable = 1;
+#endif
+	  
 #ifndef TD
-	  f_neq[ j*15+l ] = f[ j*15+l ];
+	  f_neq[ j*15+l ] -= (f_new[ f_id[(i+j)*15+l] ] = f[l]);
 #else
-	  f_neq[ j*15+l ] = f[ j*30+l ];
+	  f_neq[ j*15+l ] -= (f_new[ f_id[(i+j)*15+l]+is_current*15 ] = f[l]);
 #endif
 	}
     }
+}
+
+
+void lbmCollision5 (double omega, int i,
+		    double *density, double *v_x, double *v_y, double *v_z,
+		    double f_neq[])
+{
+  double *f;
+  double temp;
+  
+  int l;
+  
+  unsigned int boundary_id;
+  
+  
+#ifndef TD
+  f = &f_old[ i*15 ];
+#else
+  f = &f_old[ i*30+is_current*15 ];
+#endif
+  
+  for (l = 0; l < 15; l++)
+    {
+      f_neq[l] = f[l];
+    }
+  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  
+  *density = outlet_density[ boundary_id ];
+  
+  *v_x = *v_y = *v_z = 0.F;
+  
+  temp = (1.0 / 8.0) * *density;
+  
+  for (l = 0; l < 7; l++) f[l] = temp;
+  
+  temp *= (1.0 / 8.0);
+  
+  for (l = 7; l < 15; l++) f[l] = temp;
+  
+  for (l = 0; l < 15; l++)
+    {
+#ifndef BENCH
+      if (f[l] < 0.) is_unstable = 1;
+#endif
+      
+#ifndef TD
+      f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l]);
+#else
+      f_neq[l] -= (f_new[ f_id[i*15+l]+is_current*15 ] = f[l]);
+#endif
+    }
+}
+
+
+void lbmCollisionSIMD5 (double omega, int i,
+			double density[], double v_x[], double v_y[], double v_z[],
+			double f_neq[])
+{
+  double *f;
+  double temp;
+  
+  int j, l;
+  
+  unsigned int boundary_id;
+  
+  
   for (j = 0; j < SIMD_SIZE; j++)
     {
-      boundary_id = (net_site_data[ site_id+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+#ifndef TD
+      f = &f_old[ (i+j)*15 ];
+#else
+      f = &f_old[ (i+j)*30+is_current*15 ];
+#endif
+      for (l = 0; l < 15; l++)
+	{
+	  f_neq[ j*15+l ] = f[ l ];
+	}
+      boundary_id = (net_site_data[ i+j ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
       v_x[j] = v_y[j] = v_z[j] = 0.F;
       
       density[j] = outlet_density[ boundary_id ];
       
-      temp = density[j] * (1.0 / 8.0);
-#ifndef TD
-      for (l = 0; l < 7; l++) f[ j*15+l ] = temp;
-#else
-      for (l = 0; l < 7; l++) f[ j*30+l ] = temp;
-#endif
+      temp = (1.0 / 8.0) * density[j];
+      
+      for (l = 0; l < 7; l++) f[l] = temp;
+      
       temp *= (1.0 / 8.0);
-#ifndef TD
-      for (l = 7; l < 15; l++) f[ j*15+l ] = temp;
-#else
-      for (l = 7; l < 15; l++) f[ j*30+l ] = temp;
-#endif
-    }
-  for (j = 0; j < SIMD_SIZE; j++)
-    {
+      
+      for (l = 7; l < 15; l++) f[l] = temp;
+      
       for (l = 0; l < 15; l++)
 	{
+#ifndef BENCH
+	  if (f[l] < 0.) is_unstable = 1;
+#endif
+	  
 #ifndef TD
-	  f_neq[ j*15+l ] -= f[ j*15+l ];
+	  f_neq[ j*15+l ] -= (f_new[ f_id[(i+j)*15+l] ] = f[l]);
 #else
-	  f_neq[ j*15+l ] -= f[ j*30+l ];
+	  f_neq[ j*15+l ] -= (f_new[ f_id[(i+j)*15+l]+is_current*15 ] = f[l]);
 #endif
 	}
     }
@@ -1013,19 +1348,33 @@ void lbmInit (char *system_file_name, char *checkpoint_file_name,
   
   lbmReadConfig (lbm, net);
   
-  lbmCollision[0] = lbmCollision0;
-  lbmCollision[1] = lbmCollision1;
-  lbmCollision[2] = lbmCollision2;
-  lbmCollision[3] = lbmCollision3;
-  lbmCollision[4] = lbmCollision4;
-  lbmCollision[5] = lbmCollision5;
+  lbmInnerCollision[0] = lbmInnerCollision0;
+  lbmInnerCollision[1] = lbmCollision1;
+  lbmInnerCollision[2] = lbmCollision2;
+  lbmInnerCollision[3] = lbmCollision3;
+  lbmInnerCollision[4] = lbmCollision4;
+  lbmInnerCollision[5] = lbmCollision5;
   
-  lbmCollisionSIMD[0] = lbmCollisionSIMD0;
-  lbmCollisionSIMD[1] = lbmCollisionSIMD1;
-  lbmCollisionSIMD[2] = lbmCollisionSIMD2;
-  lbmCollisionSIMD[3] = lbmCollisionSIMD3;
-  lbmCollisionSIMD[4] = lbmCollisionSIMD4;
-  lbmCollisionSIMD[5] = lbmCollisionSIMD5;
+  lbmInterCollision[0] = lbmInterCollision0;
+  lbmInterCollision[1] = lbmCollision1;
+  lbmInterCollision[2] = lbmCollision2;
+  lbmInterCollision[3] = lbmCollision3;
+  lbmInterCollision[4] = lbmCollision4;
+  lbmInterCollision[5] = lbmCollision5;
+  
+  lbmInnerCollisionSIMD[0] = lbmInnerCollisionSIMD0;
+  lbmInnerCollisionSIMD[1] = lbmCollisionSIMD1;
+  lbmInnerCollisionSIMD[2] = lbmCollisionSIMD2;
+  lbmInnerCollisionSIMD[3] = lbmCollisionSIMD3;
+  lbmInnerCollisionSIMD[4] = lbmCollisionSIMD4;
+  lbmInnerCollisionSIMD[5] = lbmCollisionSIMD5;
+  
+  lbmInterCollisionSIMD[0] = lbmInterCollisionSIMD0;
+  lbmInterCollisionSIMD[1] = lbmCollisionSIMD1;
+  lbmInterCollisionSIMD[2] = lbmCollisionSIMD2;
+  lbmInterCollisionSIMD[3] = lbmCollisionSIMD3;
+  lbmInterCollisionSIMD[4] = lbmCollisionSIMD4;
+  lbmInterCollisionSIMD[5] = lbmCollisionSIMD5;
 }
 
 
@@ -1473,27 +1822,26 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
   double *f_old_p;
   
 #ifndef BENCH
-#ifndef TD
-  double vel_x[SIMD_SIZE], vel_y[SIMD_SIZE], vel_z[SIMD_SIZE];
-#endif
   double sum1, sum2;
   double local_data[6];
   double global_data[6];
 #endif // BENCH
   
 #ifdef TD
-  int is_current_cycle, is_current;
+  int is_current_cycle;
+  int j;
+#else
+#ifndef BENCH
+  int j;
+#endif
 #endif
   int collision_type;
   int offset;
   int unit_level;
-  int i, j, l, m, n;
-  int is_unstable;
+  int i, m, n;
   
   NeighProc *neigh_proc_p;
   
-  
-  is_unstable = 0;
   
   *is_converged = 0;
   
@@ -1538,6 +1886,8 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 #endif
   
 #ifndef BENCH
+  is_unstable = 0;
+  
   sum1 = 0.;
   sum2 = 0.;
 #endif // BENCH
@@ -1557,8 +1907,8 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	    }
 	  for (is_current = is_current_cycle; is_current < 2; is_current++)
 	    {
-	      (*lbmCollisionSIMD[ collision_type ]) (omega, &f_old[ (i*2+is_current)*15 ],
-						     i, density, vx[is_current], vy[is_current], vz[is_current], f_neq);
+	      (*lbmInterCollisionSIMD[ collision_type ]) (omega, i, density,
+							  vx[is_current], vy[is_current], vz[is_current], f_neq);
 	    }
 #ifndef BENCH
 	  for (j = 0; j < SIMD_SIZE; j++)
@@ -1570,21 +1920,14 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	    }
 #endif // BENCH
 #else // TD
-	  (*lbmCollisionSIMD[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq);
+	  (*lbmInterCollisionSIMD[ collision_type ]) (omega, i, density, vx, vy, vz, f_neq);
+	  
 #ifndef BENCH
 	  for (j = 0; j < SIMD_SIZE; j++)
 	    {
-	      vel_x[j] = vel[ 3*(i+j)+0 ];
-	      vel_y[j] = vel[ 3*(i+j)+1 ];
-	      vel_z[j] = vel[ 3*(i+j)+2 ];
-	    }
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
-	      sum1 += fabs(vel_x[j]-vx[j]) + fabs(vel_y[j]-vy[j]) + fabs(vel_z[j]-vz[j]);
+	      sum1 += fabs(vel[3*(i+j)]-vx[j]) + fabs(vel[3*(i+j)+1]-vy[j]) + fabs(vel[3*(i+j)+2]-vz[j]);
 	      sum2 += fabs(vx[j]) + fabs(vy[j]) + fabs(vz[j]);
-	    }
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
+	      
 	      vel[ 3*(i+j)+0 ] = vx[j];
 	      vel[ 3*(i+j)+1 ] = vy[j];
 	      vel[ 3*(i+j)+2 ] = vz[j];
@@ -1611,8 +1954,8 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	  
 	  for (is_current = is_current_cycle; is_current < 2; is_current++)
 	    {
-	      (*lbmCollision[ collision_type ]) (omega, &f_old[ (i*2+is_current)*15 ],
-						 i, density, &vx[is_current][0], &vy[is_current][0], &vz[is_current][0], f_neq);
+	      (*lbmInterCollision[ collision_type ]) (omega, i, density,
+						      &vx[is_current][0], &vy[is_current][0], &vz[is_current][0], f_neq);
 	    }
 #ifndef BENCH
 	  sum1 += sqrt((vx[1][0] - vx[0][0]) * (vx[1][0] - vx[0][0]) +
@@ -1621,7 +1964,8 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	  sum2 += sqrt(vx[1][0] * vx[1][0] + vy[1][0] * vy[1][0] + vz[1][0] * vz[1][0]);
 #endif // BENCH
 #else // TD
-	  (*lbmCollision[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq);
+	  (*lbmInterCollision[ collision_type ]) (omega, i, density, vx, vy, vz, f_neq);
+	  
 #ifndef BENCH
 	  sum1 += fabs(vel[3*i+0]-vx[0]) + fabs(vel[3*i+1]-vy[0]) + fabs(vel[3*i+2]-vz[0]);
 	  sum2 += fabs(vx[0]) + fabs(vy[0]) + fabs(vz[0]);
@@ -1665,15 +2009,15 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	    }
 #ifndef NOMPI
 #ifndef TD
-	  l = neigh_proc_p->fs;
+	  n = neigh_proc_p->fs;
 #else
-	  l = neigh_proc_p->fs * 2;
+	  n = neigh_proc_p->fs * 2;
 #endif
-	  net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ], l, MPI_DOUBLE,
+	  net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ], n, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
 				&net->req[ 0 ][ net->id * net->procs + m ]);
 	  
-	  net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ], l, MPI_DOUBLE,
+	  net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ], n, MPI_DOUBLE,
 				 neigh_proc_p->id, 10, MPI_COMM_WORLD,
 				 &net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
 #endif
@@ -1693,19 +2037,8 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	    }
 	  for (is_current = is_current_cycle; is_current < 2; is_current++)
 	    {
-	      (*lbmCollisionSIMD[ collision_type ]) (omega, &f_old[ (i*2+is_current)*15 ],
-						     i, density, vx[is_current], vy[is_current], vz[is_current], f_neq);
-	      
-	      for (j = i; j < i + SIMD_SIZE; j++)
-		{
-		  for (l = 0; l < 15; l++)
-		    {
-#ifndef BENCH
-		      if (f_old[ (j*2+is_current)*15+l ] < 0.) is_unstable = 1;
-#endif // BENCH
-		      f_new[ f_id[j*15+l]+is_current*15 ] = f_old[ (j*2+is_current)*15+l ];
-		    }
-		}
+	      (*lbmInnerCollisionSIMD[ collision_type ]) (omega, i, density,
+							  vx[is_current], vy[is_current], vz[is_current], f_neq);
 	    }
 #ifndef BENCH
 	  for (j = 0; j < SIMD_SIZE; j++)
@@ -1717,32 +2050,14 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	    }
 #endif // BENCH
 #else // TD
-	  (*lbmCollisionSIMD[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq);
+	  (*lbmInnerCollisionSIMD[ collision_type ]) (omega, i, density, vx, vy, vz, f_neq);
 	  
-	  for (j = i; j < i + SIMD_SIZE; j++)
-	    {
-	      for (l = 0; l < 15; l++)
-		{
-#ifndef BENCH
-		  if (f_old[ j*15+l ] < 0.) is_unstable = 1;
-#endif // BENCH
-		  f_new[ f_id[j*15+l] ] = f_old[ j*15+l ];
-		}
-	    }
 #ifndef BENCH
 	  for (j = 0; j < SIMD_SIZE; j++)
 	    {
-	      vel_x[j] = vel[ 3*(i+j)+0 ];
-	      vel_y[j] = vel[ 3*(i+j)+1 ];
-	      vel_z[j] = vel[ 3*(i+j)+2 ];
-	    }
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
-	      sum1 += fabs(vel_x[j]-vx[j]) + fabs(vel_y[j]-vy[j]) + fabs(vel_z[j]-vz[j]);
+	      sum1 += fabs(vel[3*(i+j)]-vx[j]) + fabs(vel[3*(i+j)+1]-vy[j]) + fabs(vel[3*(i+j)+2]-vz[j]);
 	      sum2 += fabs(vx[j]) + fabs(vy[j]) + fabs(vz[j]);
-	    }
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
+	      
 	      vel[ 3*(i+j)+0 ] = vx[j];
 	      vel[ 3*(i+j)+1 ] = vy[j];
 	      vel[ 3*(i+j)+2 ] = vz[j];
@@ -1767,15 +2082,8 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 #ifdef TD
 	  for (is_current = is_current_cycle; is_current < 2; is_current++)
 	    {
-	      (*lbmCollision[ collision_type ]) (omega, &f_old[ (i*2+is_current)*15 ],
-						 i, density, vx[is_current], vy[is_current], vz[is_current], f_neq);
-	      for (l = 0; l < 15; l++)
-		{
-#ifndef BENCH
-		  if (f_old[ (i*2+is_current)*15+l ] < 0.) is_unstable = 1;
-#endif // BENCH
-		  f_new[ f_id[i*15+l]+is_current*15 ] = f_old[ (i*2+is_current)*15+l ];
-		}
+	      (*lbmInnerCollision[ collision_type ]) (omega, i, density,
+						      vx[is_current], vy[is_current], vz[is_current], f_neq);
 	    }
 #ifndef BENCH
 	  sum1 += sqrt((vx[1][0] - vx[0][0]) * (vx[1][0] - vx[0][0]) +
@@ -1784,15 +2092,8 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	  sum2 += sqrt(vx[1][0] * vx[1][0] + vy[1][0] * vy[1][0] + vz[1][0] * vz[1][0]);
 #endif // BENCH
 #else // TD
-	  (*lbmCollision[ collision_type ]) (omega, &f_old[ i*15 ], i, density, vx, vy, vz, f_neq);
+	  (*lbmInnerCollision[ collision_type ]) (omega, i, density, vx, vy, vz, f_neq);
 	  
-	  for (l = 0; l < 15; l++)
-	    {
-#ifndef BENCH
-	      if (f_old[ i*15+l ] < 0.) is_unstable = 1;
-#endif // BENCH
-	      f_new[ f_id[i*15+l] ] = f_old[ i*15+l ];
-	    }
 #ifndef BENCH
 	  sum1 += fabs(vel[ 3*i+0 ]-vx[0]) + fabs(vel[ 3*i+1 ]-vy[0]) + fabs(vel[ 3*i+2 ]-vz[0]);
 	  sum2 += fabs(vx[0]) + fabs(vy[0]) + fabs(vz[0]);
@@ -1839,35 +2140,6 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 #endif
 	    }
 	}
-    }
-  offset = net->my_inner_sites;
-  
-  for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-    {
-      for (i = offset; i < offset + net->my_inter_collisions[ collision_type ]; i++)
-	{
-#ifdef TD
-	  for (is_current = is_current_cycle; is_current < 2; is_current++)
-	    {
-	      for (l = 0; l < 15; l++)
-		{
-#ifndef BENCH
-		  if (f_old[ (i*2+is_current)*15+l ] < 0.) is_unstable = 1;
-#endif // BENCH
-		  f_new[ f_id[i*15+l]+is_current*15 ] = f_old[ (i*2+is_current)*15+l ];
-		}
-	    }
-#else // TD
-	  for (l = 0; l < 15; l++)
-	    {
-#ifndef BENCH
-	      if (f_old[ i*15+l ] < 0.) is_unstable = 1;
-#endif // BENCH
-	      f_new[ f_id[i*15+l] ] = f_old[ i*15+l ];
-	    }
-#endif // TD
-	}
-      offset += net->my_inter_collisions[ collision_type ];
     }
   
   f_old_p = f_old;
@@ -1963,9 +2235,7 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	}
     }
 #endif // TD
-  
-#endif // BENCH
-  
+
   if (is_unstable)
     {
       return UNSTABLE;
@@ -1974,6 +2244,10 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
     {
       return STABLE;
     }
+#else // BENCH
+  
+  return STABLE;
+#endif
 }
 
 
