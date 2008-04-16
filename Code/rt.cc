@@ -4160,7 +4160,7 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
 	  net->err = MPI_Isend (col_pixel_send,
 				col_pixels, MPI_col_pixel_type,
 				recv_id, 30, MPI_COMM_WORLD,
-				&net->req[ 1 ][ net->id * net->procs + recv_id ]);
+				&net->req[ 1 ][ recv_id ]);
 #endif
 	}
     }
@@ -4180,7 +4180,7 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
 	      net->err = MPI_Irecv (&col_pixel_send[ (m-1) * (COLOURED_PIXELS_PER_PROC_MAX * sizeof(ColPixel)) ],
 				    col_pixels_recv[ m-1 ], MPI_col_pixel_type,
 				    send_id, 30, MPI_COMM_WORLD,
-				    &net->req[ 1 ][ (net->id + net->procs) * net->procs + send_id ]);
+				    &net->req[ 1 ][ net_machines + send_id ]);
 #endif
 	    }
 	  send_id += net->procs_per_machine[ m ];
@@ -4230,7 +4230,7 @@ void visRenderB (char *image_file_name, void (*ColourPalette) (float value, floa
 	{
 	  recv_id = 0;
 #ifndef NOMPI
-	  net->err = MPI_Wait (&net->req[ 1 ][ net->id * net->procs + recv_id ], net->status);
+	  net->err = MPI_Wait (&net->req[ 1 ][ recv_id ], net->status);
 #endif
 	}
       else
@@ -4245,7 +4245,7 @@ void visRenderB (char *image_file_name, void (*ColourPalette) (float value, floa
 		  continue;
 		}
 #ifndef NOMPI
-	      net->err = MPI_Wait (&net->req[ 1 ][ (net->id + net->procs) * net->procs + send_id ], net->status);
+	      net->err = MPI_Wait (&net->req[ 1 ][ net_machines + send_id ], net->status);
 #endif
 	      offset = (m-1) * COLOURED_PIXELS_PER_PROC_MAX;
 	      
