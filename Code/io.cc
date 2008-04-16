@@ -361,7 +361,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	{
 	  // int iters;
 	  // fscanf (parameters_file, "%i\n", &iters);
-	  // outlet_density[ n ] = 1. - 2.32e-4 * iters / 703;
+	  // outlet_density[ n ] = 1. - 0.0056 * iters / 703;
 	  // printf ("%le\n", outlet_density[ n ]);
 	  fscanf (parameters_file, "%le\n", &outlet_density[ n ]);
 	}

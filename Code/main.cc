@@ -329,7 +329,7 @@ void ColourPalette (float value, float col[])
   col[2] = 1.F - value;
 }
 
-/*
+
 void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
@@ -339,12 +339,12 @@ void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
   inlet_density[0]  = 1. + (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
   outlet_density[0] = 1. - (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
 }
-*/
 
+/*
 void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
-  double density_amp = 2.32e-2;
+  double density_amp = 0.0056;
   double w = 2. * PI / period;
   
   for (int i = 0; i < inlets; i++)
@@ -352,7 +352,7 @@ void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
       inlet_density[i] = 1. + density_amp * cos(w * (double)time_step + 0.5 * PI);
     }
 }
-
+*/
 
 int IsBenckSectionFinished (double minutes, double elapsed_time)
 {
@@ -851,7 +851,10 @@ int main (int argc, char *argv[])
 	      is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
 	    }
 #ifndef NOMPI
-	  net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	  if (perform_vis == 1)
+	    {
+	      net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	    }
 #endif
 #endif // RG
 	  if (perform_vis == 1 && is_thread_locked == 0)
@@ -1216,3 +1219,87 @@ int main (int argc, char *argv[])
   
   return(0);
 }
+/*
+#ifndef NOOPENMP
+#ifndef TD
+#pragma omp parallel default(shared) private (thread_id,i_start,i_end,i,density,vx,vy,vz,f_neq,collision_type,collision_count)
+#else
+#pragma omp parallel private (i,density,vx,vy,vz,f_neq,is_current)
+#endif
+#endif // NOOPENMP
+  {
+#ifndef NOOPENMP
+  thread_id = omp_get_thread_num ();
+  threads = omp_get_num_threads ();
+  
+  i_start = (int)ceil(((double)net->my_inner_sites / (double)threads) * (double)thread_id);
+  i_end   = (int)ceil(((double)net->my_inner_sites / (double)threads) * (double)(thread_id + 1));
+  
+  i = 0;
+  
+  for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+    {
+      i += net->my_inner_collisions[ collision_type ];
+      
+      if (i > i_start)
+     	{
+	  i -= net->my_inner_collisions[ collision_type ];
+	  collision_count = i_start - i;
+	  break;
+     	}
+    }
+#else // NOOPENMP
+  i_start = 0;
+  i_end   = net->my_inner_sites;
+  
+  collision_type = 0;
+  collision_count = 0;
+#endif // NOOPENMP
+  
+#pragma omp parallel reduction(+: sum1, sum2)
+  {
+  for (i = i_start; i < i_end; i++)
+    {
+#ifdef TD
+      vx[0] = vy[0] = vz[0] = 1.e+30;
+      
+      for (is_current = is_current_cycle; is_current < 2; is_current++)
+	{
+	  (*lbmInnerCollision[ collision_type ]) (omega, i, density,
+						  vx[is_current], vy[is_current], vz[is_current], f_neq);
+	}
+#ifndef BENCH
+      sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
+		   (vy[1] - vy[0]) * (vy[1] - vy[0]) +
+		   (vz[1] - vz[0]) * (vz[1] - vz[0]));
+      sum2 += sqrt(vx[1] * vx[1] + vy[1] * vy[1] + vz[1] * vz[1]);
+#endif // BENCH
+#else // TD
+      (*lbmInnerCollision[ collision_type ]) (omega, i, &density, &vx, &vy, &vz, f_neq);
+      
+#ifndef BENCH
+      sum1 += fabs(vel[ 3*i+0 ]-vx) + fabs(vel[ 3*i+1 ]-vy) + fabs(vel[ 3*i+2 ]-vz);
+      sum2 += fabs(vx) + fabs(vy) + fabs(vz);
+      
+      vel[ 3*i+0 ] = vx;
+      vel[ 3*i+1 ] = vy;
+      vel[ 3*i+2 ] = vz;
+#endif // BENCH
+#endif // TD
+      
+#ifndef BENCH
+#ifndef TD
+      lbmUpdateFlowField (i, density, vx, vy, vz, f_neq);
+#else
+      lbmUpdateFlowField (i, density, vx[1], vy[1], vz[1], f_neq);
+#endif
+#endif // BENCH
+      if (++collision_count == net->my_inner_collisions[ collision_type ])
+	{
+	  collision_count = 0;
+	  while (net->my_inner_collisions[ ++collision_type ] == 0) {;}
+	}
+    }
+  }
+  }
+*/

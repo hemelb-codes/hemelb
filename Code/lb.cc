@@ -367,8 +367,10 @@ void lbmInnerCollisionSIMD0 (double omega, int i,
 #endif
 	}
     }
+#pragma ivdep
   for (j = 0; j < SIMD_SIZE; j++)
     {
+
       v_x[j] = f_vec[1][j] + (f_vec[7][j] + f_vec[9][j]) + (f_vec[11][j] + f_vec[13][j]);
       v_y[j] = f_vec[3][j] + (f_vec[12][j] + f_vec[14][j]);
       v_z[j] = f_vec[5][j] + f_vec[10][j];
@@ -1471,12 +1473,12 @@ void lbmSetInitialConditions (Net *net)
 	  net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ],
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-				&net->req[ 0 ][ net->id * net->procs + m ]);
+				&net->req[ 0 ][ m ]);
 	  
 	  net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ],
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-				&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+				&net->req[ 0 ][ net->neigh_procs + m ]);
 #endif
 	}
       for (i = 0; i < net->my_inner_sites; i++)
@@ -1510,8 +1512,8 @@ void lbmSetInitialConditions (Net *net)
       for (m = 0; m < net->neigh_procs; m++)
       	{
 #ifndef NOMPI
-      	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
-      	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
+      	  net->err = MPI_Wait (&net->req[ 0 ][ m ], net->status);
+      	  net->err = MPI_Wait (&net->req[ 0 ][ net->neigh_procs + m ], net->status);
 #endif
       	}
       for (i = net->my_inner_sites; i < net->my_sites; i++)
@@ -1677,12 +1679,12 @@ int lbmCycle (int write_checkpoint, int check_conv, int *is_converged, LBM *lbm,
 	  net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ],
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-				&net->req[ 0 ][ net->id * net->procs + m ]);
+				&net->req[ 0 ][ m ]);
 	  
 	  net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ],
 				neigh_proc_p->fs, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-				&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+				&net->req[ 0 ][ net->neigh_procs + m ]);
 #endif
 	}
     }
@@ -1734,8 +1736,8 @@ int lbmCycle (int write_checkpoint, int check_conv, int *is_converged, LBM *lbm,
 	      continue;
 	    }
 #ifndef NOMPI
-	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
-	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
+	  net->err = MPI_Wait (&net->req[ 0 ][ m ], net->status);
+	  net->err = MPI_Wait (&net->req[ 0 ][ net->neigh_procs + m ], net->status);
 #endif
 	  for (n = 0; n < neigh_proc_p->fs; n++)
 	    {
@@ -1811,13 +1813,13 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 {
   // the entire simulation time step takes place through this function
   
-  double f_neq[SIMD_SIZE*15];
+  double f_neq[15];
   double omega;
-  double density[SIMD_SIZE];
+  double density;
 #ifndef TD
-  double vx[SIMD_SIZE], vy[SIMD_SIZE], vz[SIMD_SIZE];
+  double vx, vy, vz;
 #else
-  double vx[2][SIMD_SIZE], vy[2][SIMD_SIZE], vz[2][SIMD_SIZE];
+  double vx[2], vy[2], vz[2];
 #endif
   double *f_old_p;
   
@@ -1829,19 +1831,30 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
   
 #ifdef TD
   int is_current_cycle;
-  int j;
-#else
-#ifndef BENCH
-  int j;
-#endif
 #endif
   int collision_type;
-  int offset;
+  int collision_count;
   int unit_level;
   int i, m, n;
   
   NeighProc *neigh_proc_p;
   
+  
+  for (m = 0; m < net->neigh_procs; m++)
+    {
+      neigh_proc_p = &net->neigh_proc[ m ];
+      
+#ifndef NOMPI
+#ifndef TD
+      n = neigh_proc_p->fs;
+#else
+      n = neigh_proc_p->fs * 2;
+#endif
+      net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ], n, MPI_DOUBLE,
+			    neigh_proc_p->id, 10, MPI_COMM_WORLD,
+			    &net->req[ 0 ][ net->neigh_procs + m ]);
+#endif
+    }
   
   *is_converged = 0;
   
@@ -1894,97 +1907,51 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
   
   omega = lbm->omega;
   
-  offset = net->my_inner_sites;
+  collision_type = 0;
+  collision_count = 0;
   
-  for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+  for (i = net->my_inner_sites; i < net->my_sites; i++)
     {
-      for (i = offset; i < offset + net->my_inter_collisions_simd[ collision_type ]; i+=SIMD_SIZE)
-	{
 #ifdef TD
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
-	      vx[0][j] = vy[0][j] = vz[0][j] = 1.e+30;
-	    }
-	  for (is_current = is_current_cycle; is_current < 2; is_current++)
-	    {
-	      (*lbmInterCollisionSIMD[ collision_type ]) (omega, i, density,
-							  vx[is_current], vy[is_current], vz[is_current], f_neq);
-	    }
+      vx[0] = vy[0] = vz[0] = 1.e+30;
+      
+      for (is_current = is_current_cycle; is_current < 2; is_current++)
+	{
+	  (*lbmInterCollision[ collision_type ]) (omega, i, density,
+						  &vx[is_current], &vy[is_current], &vz[is_current], f_neq);
+	}
 #ifndef BENCH
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
-	      sum1 += sqrt((vx[1][j] - vx[0][j]) * (vx[1][j] - vx[0][j]) +
-			   (vy[1][j] - vy[0][j]) * (vy[1][j] - vy[0][j]) +
-			   (vz[1][j] - vz[0][j]) * (vz[1][j] - vz[0][j]));
-	      sum2 += sqrt(vx[1][j] * vx[1][j] + vy[1][j] * vy[1][j] + vz[1][j] * vz[1][j]);
-	    }
+      sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
+		   (vy[1] - vy[0]) * (vy[1] - vy[0]) +
+		   (vz[1] - vz[0]) * (vz[1] - vz[0]));
+      sum2 += sqrt(vx[1] * vx[1] + vy[1] * vy[1] + vz[1] * vz[1]);
 #endif // BENCH
 #else // TD
-	  (*lbmInterCollisionSIMD[ collision_type ]) (omega, i, density, vx, vy, vz, f_neq);
-	  
+      (*lbmInterCollision[ collision_type ]) (omega, i, &density, &vx, &vy, &vz, f_neq);
+      
 #ifndef BENCH
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
-	      sum1 += fabs(vel[3*(i+j)]-vx[j]) + fabs(vel[3*(i+j)+1]-vy[j]) + fabs(vel[3*(i+j)+2]-vz[j]);
-	      sum2 += fabs(vx[j]) + fabs(vy[j]) + fabs(vz[j]);
-	      
-	      vel[ 3*(i+j)+0 ] = vx[j];
-	      vel[ 3*(i+j)+1 ] = vy[j];
-	      vel[ 3*(i+j)+2 ] = vz[j];
-	    }
+      sum1 += fabs(vel[3*i+0]-vx) + fabs(vel[3*i+1]-vy) + fabs(vel[3*i+2]-vz);
+      sum2 += fabs(vx) + fabs(vy) + fabs(vz);
+      
+      vel[ 3*i+0 ] = vx;
+      vel[ 3*i+1 ] = vy;
+      vel[ 3*i+2 ] = vz;
 #endif // BENCH
 #endif // TD
-	  
+      
 #ifndef BENCH
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
 #ifndef TD
-	      lbmUpdateFlowField (i + j, density[j], vx[j], vy[j], vz[j], &f_neq[j*15]);
+      lbmUpdateFlowField (i, density, vx, vy, vz, f_neq);
 #else
-	      lbmUpdateFlowField (i + j, density[j], vx[1][j], vy[1][j], vz[1][j], &f_neq[j*15]);
+      lbmUpdateFlowField (i, density, vx[1], vy[1], vz[1], f_neq);
 #endif
-	    }
 #endif // BENCH
-	}
-      for (i = offset + net->my_inter_collisions_simd[ collision_type ];
-	   i < offset + net->my_inter_collisions[ collision_type ]; i++)
+      if (++collision_count == net->my_inter_collisions[ collision_type ])
 	{
-#ifdef TD
-	  vx[0][0] = vy[0][0] = vz[0][0] = 1.e+30;
+	  collision_count = 0;
 	  
-	  for (is_current = is_current_cycle; is_current < 2; is_current++)
-	    {
-	      (*lbmInterCollision[ collision_type ]) (omega, i, density,
-						      &vx[is_current][0], &vy[is_current][0], &vz[is_current][0], f_neq);
-	    }
-#ifndef BENCH
-	  sum1 += sqrt((vx[1][0] - vx[0][0]) * (vx[1][0] - vx[0][0]) +
-		       (vy[1][0] - vy[0][0]) * (vy[1][0] - vy[0][0]) +
-		       (vz[1][0] - vz[0][0]) * (vz[1][0] - vz[0][0]));
-	  sum2 += sqrt(vx[1][0] * vx[1][0] + vy[1][0] * vy[1][0] + vz[1][0] * vz[1][0]);
-#endif // BENCH
-#else // TD
-	  (*lbmInterCollision[ collision_type ]) (omega, i, density, vx, vy, vz, f_neq);
-	  
-#ifndef BENCH
-	  sum1 += fabs(vel[3*i+0]-vx[0]) + fabs(vel[3*i+1]-vy[0]) + fabs(vel[3*i+2]-vz[0]);
-	  sum2 += fabs(vx[0]) + fabs(vy[0]) + fabs(vz[0]);
-	  
-	  vel[ 3*i+0 ] = vx[0];
-	  vel[ 3*i+1 ] = vy[0];
-	  vel[ 3*i+2 ] = vz[0];
-#endif // BENCH
-#endif // TD
-
-#ifndef BENCH
-#ifndef TD
-	  lbmUpdateFlowField (i, density[0], vx[0], vy[0], vz[0], f_neq);
-#else
-	  lbmUpdateFlowField (i, density[0], vx[1][0], vy[1][0], vz[1][0], f_neq);
-#endif
-#endif // BENCH
+	  while (net->my_inter_collisions[ ++collision_type ] == 0) {;}
 	}
-      offset += net->my_inter_collisions[ collision_type ];
     }
   
   for (unit_level = 1; unit_level >= 0; unit_level--)
@@ -2015,136 +1982,56 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 #endif
 	  net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ], n, MPI_DOUBLE,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-				&net->req[ 0 ][ net->id * net->procs + m ]);
-	  
-	  net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ], n, MPI_DOUBLE,
-				 neigh_proc_p->id, 10, MPI_COMM_WORLD,
-				 &net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+				&net->req[ 0 ][ m ]);
 #endif
 	}
     }
   
-  offset = 0;
-  
-  for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+  collision_type = 0;
+  collision_count = 0;
+
+  for (i = 0; i < net->my_inner_sites; i++)
     {
-      for (i = offset; i < offset + net->my_inner_collisions_simd[ collision_type ]; i+=SIMD_SIZE)
-	{
 #ifdef TD
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
-	      vx[0][j] = vy[0][j] = vz[0][j] = 1.e+30;
-	    }
-	  for (is_current = is_current_cycle; is_current < 2; is_current++)
-	    {
-	      (*lbmInnerCollisionSIMD[ collision_type ]) (omega, i, density,
-							  vx[is_current], vy[is_current], vz[is_current], f_neq);
-	    }
+      vx[0] = vy[0] = vz[0] = 1.e+30;
+      
+      for (is_current = is_current_cycle; is_current < 2; is_current++)
+	{
+	  (*lbmInnerCollision[ collision_type ]) (omega, i, density,
+						  vx[is_current], vy[is_current], vz[is_current], f_neq);
+	}
 #ifndef BENCH
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
-	      sum1 += sqrt((vx[1][j] - vx[0][j]) * (vx[1][j] - vx[0][j]) +
-			   (vy[1][j] - vy[0][j]) * (vy[1][j] - vy[0][j]) +
-			   (vz[1][j] - vz[0][j]) * (vz[1][j] - vz[0][j]));
-	      sum2 += sqrt(vx[1][j] * vx[1][j] + vy[1][j] * vy[1][j] + vz[1][j] * vz[1][j]);
-	    }
+      sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
+		   (vy[1] - vy[0]) * (vy[1] - vy[0]) +
+		   (vz[1] - vz[0]) * (vz[1] - vz[0]));
+      sum2 += sqrt(vx[1] * vx[1] + vy[1] * vy[1] + vz[1] * vz[1]);
 #endif // BENCH
 #else // TD
-	  (*lbmInnerCollisionSIMD[ collision_type ]) (omega, i, density, vx, vy, vz, f_neq);
-	  
+      (*lbmInnerCollision[ collision_type ]) (omega, i, &density, &vx, &vy, &vz, f_neq);
+      
 #ifndef BENCH
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
-	      sum1 += fabs(vel[3*(i+j)]-vx[j]) + fabs(vel[3*(i+j)+1]-vy[j]) + fabs(vel[3*(i+j)+2]-vz[j]);
-	      sum2 += fabs(vx[j]) + fabs(vy[j]) + fabs(vz[j]);
-	      
-	      vel[ 3*(i+j)+0 ] = vx[j];
-	      vel[ 3*(i+j)+1 ] = vy[j];
-	      vel[ 3*(i+j)+2 ] = vz[j];
-	    }
+      sum1 += fabs(vel[ 3*i+0 ]-vx) + fabs(vel[ 3*i+1 ]-vy) + fabs(vel[ 3*i+2 ]-vz);
+      sum2 += fabs(vx) + fabs(vy) + fabs(vz);
+      
+      vel[ 3*i+0 ] = vx;
+      vel[ 3*i+1 ] = vy;
+      vel[ 3*i+2 ] = vz;
 #endif // BENCH
 #endif // TD
-	  
+      
 #ifndef BENCH
-	  for (j = 0; j < SIMD_SIZE; j++)
-	    {
 #ifndef TD
-	      lbmUpdateFlowField (i + j, density[j], vx[j], vy[j], vz[j], &f_neq[j*15]);
+      lbmUpdateFlowField (i, density, vx, vy, vz, f_neq);
 #else
-	      lbmUpdateFlowField (i + j, density[j], vx[1][j], vy[1][j], vz[1][j], &f_neq[j*15]);
+      lbmUpdateFlowField (i, density, vx[1], vy[1], vz[1], f_neq);
 #endif
-	    }
 #endif // BENCH
-	}
-      for (i = offset + net->my_inner_collisions_simd[ collision_type ];
-	   i < offset + net->my_inner_collisions[ collision_type ]; i++)
+      if (++collision_count == net->my_inner_collisions[ collision_type ])
 	{
-#ifdef TD
-	  for (is_current = is_current_cycle; is_current < 2; is_current++)
-	    {
-	      (*lbmInnerCollision[ collision_type ]) (omega, i, density,
-						      vx[is_current], vy[is_current], vz[is_current], f_neq);
-	    }
-#ifndef BENCH
-	  sum1 += sqrt((vx[1][0] - vx[0][0]) * (vx[1][0] - vx[0][0]) +
-		       (vy[1][0] - vy[0][0]) * (vy[1][0] - vy[0][0]) +
-		       (vz[1][0] - vz[0][0]) * (vz[1][0] - vz[0][0]));
-	  sum2 += sqrt(vx[1][0] * vx[1][0] + vy[1][0] * vy[1][0] + vz[1][0] * vz[1][0]);
-#endif // BENCH
-#else // TD
-	  (*lbmInnerCollision[ collision_type ]) (omega, i, density, vx, vy, vz, f_neq);
-	  
-#ifndef BENCH
-	  sum1 += fabs(vel[ 3*i+0 ]-vx[0]) + fabs(vel[ 3*i+1 ]-vy[0]) + fabs(vel[ 3*i+2 ]-vz[0]);
-	  sum2 += fabs(vx[0]) + fabs(vy[0]) + fabs(vz[0]);
-	  
-	  vel[ 3*i+0 ] = vx[0];
-	  vel[ 3*i+1 ] = vy[0];
-	  vel[ 3*i+2 ] = vz[0];
-#endif // BENCH
-#endif // TD
-	  
-#ifndef BENCH
-#ifndef TD
-	  lbmUpdateFlowField (i, density[0], vx[0], vy[0], vz[0], f_neq);
-#else
-	  lbmUpdateFlowField (i, density[0], vx[1][0], vy[1][0], vz[1][0], f_neq);
-#endif
-#endif // BENCH
-	}
-      offset += net->my_inner_collisions[ collision_type ];
-    }
-  
-  for (unit_level = 1; unit_level >= 0; unit_level--)
-    {
-      for (m = 0; m < net->neigh_procs; m++)
-	{
-	  neigh_proc_p = &net->neigh_proc[ m ];
-	  
-	  if ((unit_level == 1 && net->machine_id[ neigh_proc_p->id ] == net->machine_id[ net->id ]) ||
-	      (unit_level == 0 && net->machine_id[ neigh_proc_p->id ] != net->machine_id[ net->id ]))
-	    {
-	      continue;
-	    }
-#ifndef NOMPI
-	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
-	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
-#endif
-	  for (n = 0; n < neigh_proc_p->fs; n++)
-	    {
-#ifndef TD
-	      f_new[ neigh_proc_p->f_recv_iv[n] ] = neigh_proc_p->f_to_recv[ n ];
-#else
-	      f_new[ neigh_proc_p->f_recv_iv[n]    ] = neigh_proc_p->f_to_recv[ n*2   ];
-	      f_new[ neigh_proc_p->f_recv_iv[n]+15 ] = neigh_proc_p->f_to_recv[ n*2+1 ];
-#endif
-	    }
+	  collision_count = 0;
+	  while (net->my_inner_collisions[ ++collision_type ] == 0) {;}
 	}
     }
-  
-  f_old_p = f_old;
-  f_old = f_new;
-  f_new = f_old_p;
   
 #ifndef BENCH
   if (check_conv)
@@ -2235,7 +2122,42 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 	}
     }
 #endif // TD
-
+#endif // BENCH
+  
+  for (unit_level = 1; unit_level >= 0; unit_level--)
+    {
+      for (m = 0; m < net->neigh_procs; m++)
+	{
+	  neigh_proc_p = &net->neigh_proc[ m ];
+	  
+	  if ((unit_level == 1 && net->machine_id[ neigh_proc_p->id ] == net->machine_id[ net->id ]) ||
+	      (unit_level == 0 && net->machine_id[ neigh_proc_p->id ] != net->machine_id[ net->id ]))
+	    {
+	      continue;
+	    }
+#ifndef NOMPI
+	  net->err = MPI_Wait (&net->req[ 0 ][ m ], net->status);
+	  net->err = MPI_Wait (&net->req[ 0 ][ net->neigh_procs + m ], net->status);
+#endif
+	  for (n = 0; n < neigh_proc_p->fs; n++)
+	    {
+#ifndef TD
+	      f_new[ neigh_proc_p->f_recv_iv[n] ] = neigh_proc_p->f_to_recv[ n ];
+#else
+	      f_new[ neigh_proc_p->f_recv_iv[n]    ] = neigh_proc_p->f_to_recv[ n*2   ];
+	      f_new[ neigh_proc_p->f_recv_iv[n]+15 ] = neigh_proc_p->f_to_recv[ n*2+1 ];
+#endif
+	    }
+	}
+    }
+  
+  f_old_p = f_old;
+  f_old = f_new;
+  f_new = f_old_p;
+  
+  
+#ifndef BENCH
+  
   if (is_unstable)
     {
       return UNSTABLE;

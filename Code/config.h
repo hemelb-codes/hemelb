@@ -7,6 +7,10 @@
 #include "mpi.h"
 #endif
 
+#ifndef NOOPENMP
+#include <omp.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -262,8 +266,6 @@ struct Net
   int my_inter_sites, my_inner_sites;
   int my_inner_collisions[COLLISION_TYPES];
   int my_inter_collisions[COLLISION_TYPES];
-  int my_inner_collisions_simd[COLLISION_TYPES];
-  int my_inter_collisions_simd[COLLISION_TYPES];
   int my_sites;
   int shared_fs;
   

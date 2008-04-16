@@ -792,17 +792,6 @@ void netInit (LBM *lbm, Net *net)
 	}
     }
   
-  for (m = 0; m < COLLISION_TYPES; m++)
-    {
-#ifndef NOSIMD
-      net->my_inter_collisions_simd[m] = (net->my_inter_collisions[m]/SIMD_SIZE)*SIMD_SIZE;
-      net->my_inner_collisions_simd[m] = (net->my_inner_collisions[m]/SIMD_SIZE)*SIMD_SIZE;
-#else
-      net->my_inter_collisions_simd[m] = 0;
-      net->my_inner_collisions_simd[m] = 0;
-#endif
-    }
-  
   collision_offset[0][0] = 0;
   
   for (l = 1; l < COLLISION_TYPES; l++)
@@ -1032,7 +1021,7 @@ void netInit (LBM *lbm, Net *net)
   
   for (m = 0; m < COMMS_LEVELS; m++)
     {
-      net->req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs * net->procs));
+      net->req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs));
     }
 #endif
   
@@ -1046,7 +1035,7 @@ void netInit (LBM *lbm, Net *net)
 	  net->err = MPI_Isend (&neigh_proc_p->f_data[ 0 ],
 				neigh_proc_p->fs * 4, MPI_SHORT,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-				&net->req[ 0 ][ net->id * net->procs + m ]);
+				&net->req[ 0 ][ m ]);
 #endif
   	}
       else
@@ -1055,7 +1044,7 @@ void netInit (LBM *lbm, Net *net)
   	  net->err = MPI_Irecv (&neigh_proc_p->f_data[ 0 ],
   				neigh_proc_p->fs * 4, MPI_SHORT,
   				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-  				&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ]);
+  				&net->req[ 0 ][ net->neigh_procs + m ]);
 #endif
   	}
     }
@@ -1066,13 +1055,13 @@ void netInit (LBM *lbm, Net *net)
       if (neigh_proc_p->id > net->id)
   	{
 #ifndef NOMPI
-  	  net->err = MPI_Wait (&net->req[ 0 ][ net->id * net->procs + m ], net->status);
+  	  net->err = MPI_Wait (&net->req[ 0 ][ m ], net->status);
 #endif
   	}
       else
   	{
 #ifndef NOMPI
-  	  net->err = MPI_Wait (&net->req[ 0 ][ (net->id + net->procs) * net->procs + m ], net->status);
+  	  net->err = MPI_Wait (&net->req[ 0 ][ net->neigh_procs + m ], net->status);
 #endif
   	  for (n = 0; n < neigh_proc_p->fs*4; n += 4)
   	    {
