@@ -163,6 +163,9 @@ float ray_col[4];
 int clusters;
 
 
+int threads;
+
+
 Screen screen;
 
 Viewpoint viewpoint;
