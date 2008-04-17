@@ -458,6 +458,9 @@ extern float ray_col[4];
 extern int clusters;
 
 
+extern int threads;
+
+
 extern Screen screen;
 
 extern Viewpoint viewpoint;
