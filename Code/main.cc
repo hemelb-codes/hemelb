@@ -467,6 +467,13 @@ int main (int argc, char *argv[])
   net.id = 0;
 #endif
   
+#ifndef NOOPENMP
+#pragma omp parallel default(shared)
+  {
+    threads = omp_get_num_threads ();
+  }
+#endif
+  
   double total_time = myClock ();
   
   char *input_file_path( argv[1] );

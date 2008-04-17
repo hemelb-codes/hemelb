@@ -1986,12 +1986,44 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
 #endif
 	}
     }
-  
+
+#ifdef NOOPENMP
   collision_type = 0;
   collision_count = 0;
-
+#else
+  int chunk = (int)ceil((double)net->my_inner_sites / (double)threads);
+  
+#ifndef BENCH
+#pragma omp parallel for \
+  default(shared) \
+  reduction(+: sum1, sum2) \
+  private(i, density, vx, vy, vz, f_neq, collision_type, collision_count) \
+  schedule(dynamic, chunk)
+#else // BENCH
+#pragma omp parallel for \
+  default(shared) \
+  private(i, density, vx, vy, vz, f_neq, collision_type, collision_count) \
+  schedule(dynamic, chunk)
+#endif // BENCH
+#endif // NOOPENMP
   for (i = 0; i < net->my_inner_sites; i++)
     {
+#ifndef NOOPENMP
+      collision_count = 0;
+      
+      for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+	{
+	  collision_count += net->my_inner_collisions[ collision_type ];
+	  
+	  if (collision_count > i)
+	    {
+	      collision_count -= net->my_inner_collisions[ collision_type ];
+	      collision_count = i - collision_count;
+	      break;
+	    }
+	}
+#endif // NOOPENMP
+
 #ifdef TD
       vx[0] = vy[0] = vz[0] = 1.e+30;
       
@@ -2026,11 +2058,14 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LB
       lbmUpdateFlowField (i, density, vx[1], vy[1], vz[1], f_neq);
 #endif
 #endif // BENCH
+      
+#ifdef NOOPENMP
       if (++collision_count == net->my_inner_collisions[ collision_type ])
 	{
 	  collision_count = 0;
 	  while (net->my_inner_collisions[ ++collision_type ] == 0) {;}
 	}
+#endif
     }
   
 #ifndef BENCH
