@@ -2783,8 +2783,8 @@ void rtBuildClusters (Net *net)
   
   bool *is_block_visited;
   
-  NodeLocation *node_location_a, *node_location_b;
-  NodeLocation *node_location_a_p, *node_location_b_p;
+  SiteLocation *site_location_a, *site_location_b;
+  SiteLocation *site_location_a_p, *site_location_b_p;
   
   DataBlock *map_block_p;
   
@@ -2809,8 +2809,8 @@ void rtBuildClusters (Net *net)
   is_block_visited = (bool *)malloc(sizeof(bool) * blocks);
   
   nodes_buffer_size = 10000;
-  node_location_a = (NodeLocation *)malloc(sizeof(NodeLocation) * nodes_buffer_size);
-  node_location_b = (NodeLocation *)malloc(sizeof(NodeLocation) * nodes_buffer_size);
+  site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * nodes_buffer_size);
+  site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * nodes_buffer_size);
   
   for (n = 0; n < blocks; n++)
     {
@@ -2843,20 +2843,20 @@ void rtBuildClusters (Net *net)
 		{
 		  if (net->proc_block[ n ].proc_id[ m ] == net->id)
 		    {
-		      node_location_a_p = &node_location_a[ 0 ];
-		      node_location_a_p->i = i;
-		      node_location_a_p->j = j;
-		      node_location_a_p->k = k;
+		      site_location_a_p = &site_location_a[ 0 ];
+		      site_location_a_p->i = i;
+		      site_location_a_p->j = j;
+		      site_location_a_p->k = k;
 		      blocks_a = 1;
 		      break;
 		    }
 		}
 	      if (blocks_a == 0) continue;
 #else // COARSE_DD
-	      node_location_a_p = &node_location_a[ 0 ];
-	      node_location_a_p->i = i;
-	      node_location_a_p->j = j;
-	      node_location_a_p->k = k;
+	      site_location_a_p = &site_location_a[ 0 ];
+	      site_location_a_p->i = i;
+	      site_location_a_p->j = j;
+	      site_location_a_p->k = k;
 	      blocks_a = 1;
 #endif // COARSE_DD
 	      
@@ -2887,13 +2887,13 @@ void rtBuildClusters (Net *net)
 		  
 		  for (index_a = 0; index_a < blocks_a; index_a++)
 		    {
-		      node_location_a_p = &node_location_a[ index_a ];
+		      site_location_a_p = &site_location_a[ index_a ];
 		      
 		      for (l = 0; l < 26; l++)
 			{
-			  neigh_i = node_location_a_p->i + n_x[ l ];
-			  neigh_j = node_location_a_p->j + n_y[ l ];
-			  neigh_k = node_location_a_p->k + n_z[ l ];
+			  neigh_i = site_location_a_p->i + n_x[ l ];
+			  neigh_j = site_location_a_p->j + n_y[ l ];
+			  neigh_k = site_location_a_p->k + n_z[ l ];
 			  
 			  if (neigh_i == -1 || neigh_i == blocks_x) continue;
 			  if (neigh_j == -1 || neigh_j == blocks_y) continue;
@@ -2929,15 +2929,15 @@ void rtBuildClusters (Net *net)
 			  if (blocks_b == nodes_buffer_size)
 			    {
 			      nodes_buffer_size *= 2;
-			      node_location_a = (NodeLocation *)realloc(node_location_a,
-									sizeof(NodeLocation) * nodes_buffer_size);
-			      node_location_b = (NodeLocation *)realloc(node_location_b,
-									sizeof(NodeLocation) * nodes_buffer_size); 
+			      site_location_a = (SiteLocation *)realloc(site_location_a,
+									sizeof(SiteLocation) * nodes_buffer_size);
+			      site_location_b = (SiteLocation *)realloc(site_location_b,
+									sizeof(SiteLocation) * nodes_buffer_size); 
 			    }
-			  node_location_b_p = &node_location_b[ blocks_b ];
-			  node_location_b_p->i = neigh_i;
-			  node_location_b_p->j = neigh_j;
-			  node_location_b_p->k = neigh_k;
+			  site_location_b_p = &site_location_b[ blocks_b ];
+			  site_location_b_p->i = neigh_i;
+			  site_location_b_p->j = neigh_j;
+			  site_location_b_p->k = neigh_k;
 			  ++blocks_b;
 			  
 			  cluster_p->block_min[0] = min((int)cluster_p->block_min[0], neigh_i);
@@ -2951,9 +2951,9 @@ void rtBuildClusters (Net *net)
 			  net->cluster_id[ block_id ] = clusters - 1;
 			}
 		    }
-		  node_location_a_p = node_location_a;
-		  node_location_a = node_location_b;
-		  node_location_b = node_location_a_p;
+		  site_location_a_p = site_location_a;
+		  site_location_a = site_location_b;
+		  site_location_b = site_location_a_p;
 		  blocks_a = blocks_b;
 		}
 	      cluster_p->x[0] = cluster_p->block_min[0] * block_size - 0.5F * sites_x;
@@ -2966,8 +2966,8 @@ void rtBuildClusters (Net *net)
 	    }
 	}
     }
-  free(node_location_b);
-  free(node_location_a);
+  free(site_location_b);
+  free(site_location_a);
   
   free(is_block_visited);
   
