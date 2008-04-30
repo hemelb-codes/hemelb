@@ -359,12 +359,9 @@ struct AABB
   float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
 };
 
-
-extern double *f;
-
 extern int *f_id;
-
-extern int *f_iters;
+extern double *f_old;
+extern double *f_new;
 
 #ifndef TD
 extern double *vel;
