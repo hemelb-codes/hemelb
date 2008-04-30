@@ -194,6 +194,12 @@ struct ProcBlock
 };
 
 
+struct FidBlock
+{
+  int *f_id;
+};
+
+
 struct BlockLocation
 {
   short int i, j, k;
@@ -267,6 +273,7 @@ struct Net
   int my_inner_collisions[COLLISION_TYPES];
   int my_inter_collisions[COLLISION_TYPES];
   int my_sites;
+  int my_streamings;
   int shared_fs;
   
   int *machine_id;
@@ -353,9 +360,11 @@ struct AABB
 };
 
 
-extern double *f_old, *f_new;
+extern double *f;
 
 extern int *f_id;
+
+extern int *f_iters;
 
 #ifndef TD
 extern double *vel;
@@ -475,6 +484,7 @@ int max (int a, int b);
 int nint (float a);
 double myClock ();
 
+void lbmTwoLevelGridIDs (int site_i, int site_j, int site_k, int *block_id, int *site_id);
 short int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
 
