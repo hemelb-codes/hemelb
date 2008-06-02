@@ -132,6 +132,26 @@ char *xdrSendBuffer_frame_details;
 int bits_per_char = sizeof(char) * 8;
 int bits_per_two_chars = 2 * bits_per_char;
 
+int recv_all (int sockid, char *buf, int *length)
+{
+  int received_bytes = 0;
+  int bytes_left_to_receive = *length;
+  int n;
+
+  while (received_bytes < *length)
+    {
+      n = recv(sockid, buf+received_bytes, bytes_left_to_receive, 0);
+      
+      if (n == -1) break;
+      
+      received_bytes += n;
+      bytes_left_to_receive -= n;
+    }
+  *length = received_bytes;
+  
+  return n == -1 ? -1 : 0;
+}
+
 
 int send_all(int sockid, char *buf, int *length ) {
   
@@ -150,6 +170,38 @@ int send_all(int sockid, char *buf, int *length ) {
   *length = sent_bytes;
 	
   return n==-1?-1:0;
+
+}
+
+void *hemeLB_steer (void *ptr)
+{
+  while(1) {
+
+  int read_fd = (int)ptr;
+  printf("Kicking off steering thread with FD %i\n",read_fd);
+
+  char* xdr_steering_data = (char*)malloc( sizeof(int) );
+  
+  XDR xdr_steering_stream;
+  
+  int bytes = 4;
+  
+  xdrmem_create(&xdr_steering_stream, xdr_steering_data, 4, XDR_DECODE);
+  
+  recv_all(read_fd, xdr_steering_data, &bytes);
+  
+  int view_type;
+  
+  xdr_int(&xdr_steering_stream, &view_type);
+  
+  printf("VIEW TYPE -> %i\n", view_type);
+  
+  vis_flow_field_type = view_type;
+  
+  }
+
+
+
 
 }
 
@@ -180,6 +232,12 @@ void *hemeLB_network (void *ptr)
   ColPixel *col_pixel_p;
   
   signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
+  
+  pthread_t steering_thread;
+  pthread_attr_t steering_thread_attrib; 
+  
+  pthread_attr_init (&steering_thread_attrib);
+  pthread_attr_setdetachstate (&steering_thread_attrib, PTHREAD_CREATE_JOINABLE);
   
   while (1)
     {
@@ -220,7 +278,7 @@ void *hemeLB_network (void *ptr)
 	  exit (1);
 	}
       
-      sin_size = sizeof their_addr;
+      sin_size = sizeof (their_addr);
       
       if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1)
 	{
@@ -229,8 +287,10 @@ void *hemeLB_network (void *ptr)
 	}
       
       fprintf (timings_ptr, "server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
-      printf ("RG thread: server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
+      printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
       
+	  pthread_create (&steering_thread, &steering_thread_attrib, hemeLB_steer, (void*)new_fd);	  
+	  
       close(sock_fd);
       
       is_broken_pipe = 0;
@@ -430,6 +490,7 @@ int main (int argc, char *argv[])
 #ifdef RG
   pthread_t network_thread;
   pthread_attr_t pthread_attrib;
+  
 #endif // RG
 
 #ifdef STEER
@@ -762,6 +823,8 @@ int main (int argc, char *argv[])
   for (cycle_id = 0; cycle_id < lbm.cycles_max && !is_finished; cycle_id++)
     {
 	
+	  sleep(0.5);
+	
       ray_tracing_count = 0;
       
       for (time_step = 0; time_step < lbm.period; time_step++)
@@ -851,6 +914,8 @@ int main (int argc, char *argv[])
 	  // parameters.
 	  
 	  is_thread_locked = 0;
+	  
+	  net.err = MPI_Bcast (&vis_flow_field_type, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	  
 #ifdef RG
 	  if (net.id == 0 && perform_rt == 1)
