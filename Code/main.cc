@@ -15,10 +15,9 @@
 
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
-#endif // RG
+#endif //RG
 
 FILE *timings_ptr;
-
 float globalLongitude = 0.;
 
 void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
@@ -326,10 +325,10 @@ void ColourPalette (float value, float col[])
 }
 
 
-void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
+void TimeVaryingDensities (int cycle_id, int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
-  double K = 0.00025;
+  double K = 2.50e-4;
   double w = 2. * PI / period;
   
   inlet_density[0]  = 1. + (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
@@ -337,15 +336,16 @@ void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
 }
 
 /*
-void TimeVaryingDensities (int period, int time_step, int inlets, int outlets,
+void TimeVaryingDensities (int cycle_id, int period, int time_step, int inlets, int outlets,
 			   double inlet_density[], double outlet_density[])
 {
-  double density_amp = 0.0056;
+  double density_amp = 2.953122e-02;
   double w = 2. * PI / period;
+
   
   for (int i = 0; i < inlets; i++)
     {
-      inlet_density[i] = 1. + density_amp * cos(w * (double)time_step + 0.5 * PI);
+      inlet_density[i] = 1. - density_amp * cos(w * (double)time_step);
     }
 }
 */
@@ -406,7 +406,7 @@ int main (int argc, char *argv[])
 #ifndef BENCH
   int cycle_id;
 #endif
-  int time_step, stability, is_converged;
+  int total_time_steps, time_step, stability, is_converged;
   int depths;
   
 #ifdef BENCH
@@ -415,15 +415,15 @@ int main (int argc, char *argv[])
   int fluid_solver_and_is_time_steps;
   int vr_without_compositing_time_steps;
 #else
-#ifndef TD
+#  ifndef TD
   int checkpoint_count = 0;
-#endif
+#  endif
   int conv_count = 0;
   int ray_tracing_count;
-#ifndef TD
+#  ifndef TD
   int write_checkpoint;
-#endif
-  int check_conv, perform_vis;
+#  endif
+  int check_conv, perform_rt;
   int is_thread_locked;
 #endif
   
@@ -448,7 +448,6 @@ int main (int argc, char *argv[])
   
   int reg_finished;
 #endif // STEER
-
   LBM lbm;
   
   Net net;
@@ -463,13 +462,6 @@ int main (int argc, char *argv[])
   net.id = 0;
 #endif
   
-#ifndef NOOPENMP
-#pragma omp parallel default(shared)
-  {
-    threads = omp_get_num_threads ();
-  }
-#endif
-  
   double total_time = myClock ();
   
   char *input_file_path( argv[1] );
@@ -481,7 +473,6 @@ int main (int argc, char *argv[])
   char vis_parameters_name[256];
   char output_image_name[256];
   char timings_name[256];
-
   char procs_string[256];
   char image_name[256];
   
@@ -508,7 +499,16 @@ int main (int argc, char *argv[])
   strcat ( timings_name , "/timings" );
   strcat ( timings_name , procs_string );
   strcat ( timings_name , ".asc" );
-  
+
+#ifdef TD
+#  ifdef print
+  strcpy (velocity_points_name, input_file_path);
+  strcat (velocity_points_name, "/velocity_points.asc");
+  strcpy (density_points_name, input_file_path);
+  strcat (density_points_name, "/density_points.asc");
+#  endif
+#endif
+
   if (net.id == 0)
     {
       timings_ptr = fopen (timings_name, "w");
@@ -755,6 +755,8 @@ int main (int argc, char *argv[])
 #ifndef BENCH
   int is_finished = 0;
   
+  total_time_steps = 0;
+  
   simulation_time = myClock ();
   
   for (cycle_id = 0; cycle_id < lbm.cycles_max && !is_finished; cycle_id++)
@@ -764,6 +766,8 @@ int main (int argc, char *argv[])
       
       for (time_step = 0; time_step < lbm.period; time_step++)
 	{
+	  ++total_time_steps;
+	  
 	  // globalLongitude += 1.F;
 	  // visUpdateLongitude (vis_parameters_name, &net, &vis);
 	  
@@ -771,7 +775,7 @@ int main (int argc, char *argv[])
 	  write_checkpoint = 0;
 #endif
 	  check_conv = 0;
-	  perform_vis = 0;
+	  perform_rt = 0;
 	  
 #ifdef STEER
 	  // call steering control
@@ -826,7 +830,7 @@ int main (int argc, char *argv[])
 #endif // STEER
 	  
 #ifndef TD
-	  if (++checkpoint_count >= lbm.checkpoint_freq)
+	  if (++checkpoint_count >= lbm.check_freq)
 	    {
 	      write_checkpoint = 1;
 	      checkpoint_count = 0;
@@ -839,7 +843,7 @@ int main (int argc, char *argv[])
 	    }
 	  if (++ray_tracing_count >= vis_image_freq)
 	    {
-	      perform_vis = 1;
+	      perform_rt = 1;
 	      ray_tracing_count = 0;
 	    }
 	  
@@ -849,31 +853,27 @@ int main (int argc, char *argv[])
 	  is_thread_locked = 0;
 	  
 #ifdef RG
-	  if (net.id == 0 && perform_vis == 1)
+	  if (net.id == 0 && perform_rt == 1)
 	    {
 	      // pthread_mutex_lock( &network_buffer_copy_lock );
 	      is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
 	    }
 #ifndef NOMPI
-	  if (perform_vis == 1)
-	    {
-	      net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
-	    }
+	  net.err = MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 #endif // RG
-	  if (perform_vis == 1 && is_thread_locked == 0)
+	  if (perform_rt == 1 && is_thread_locked == 0)
 	    {
 	      visRenderA (ColourPalette, &net, &vis);
 	    }
 #ifndef TD
-	  stability = lbmCycle (write_checkpoint, check_conv, &is_converged, &lbm, &net);
+	  stability = lbmCycle (write_checkpoint, check_conv, perform_rt, &is_converged, &lbm, &net);
 #else
-	  TimeVaryingDensities (lbm.period, time_step, lbm.inlets, lbm.outlets,
+	  TimeVaryingDensities (cycle_id, lbm.period, time_step, lbm.inlets, lbm.outlets,
 	  			inlet_density, outlet_density);
-	  
-	  stability = lbmCycle (cycle_id, time_step, check_conv, &is_converged, &lbm, &net);
+	  stability = lbmCycle (cycle_id, time_step, check_conv, perform_rt, &is_converged, &lbm, &net);
 #endif // TD
-	  if (perform_vis == 1 && is_thread_locked == 0)
+	  if (perform_rt == 1 && is_thread_locked == 0)
 	    {
 #ifndef RG
 	      char time_step_string[256];
@@ -902,11 +902,11 @@ int main (int argc, char *argv[])
 #endif
 	    }
 #ifdef TD
-	  if (net.id == 0)
-	    {
-	      // fprintf (timings_ptr, "time step: %i\n", time_step+1);
-	      // printf ("time step: %i\n", time_step+1);
-	    }
+	  //if (net.id == 0)
+	  //  {
+	  //    fprintf (timings_ptr, "time step: %i\n", time_step+1);
+	  //    printf ("time step: %i\n", time_step+1);
+	  //  }
 #endif
 	  if (stability == UNSTABLE || is_converged)
 	    {
@@ -945,9 +945,9 @@ int main (int argc, char *argv[])
   for (time_step = 1; time_step <= 1000000000; time_step++)
     {
 #ifndef TD
-      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
-#else
       stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+#else
+      stability = lbmCycle (0, 0, 0, 0, &is_converged, &lbm, &net);
 #endif // TD
       
       // partial timings
@@ -970,9 +970,9 @@ int main (int argc, char *argv[])
   for (time_step = 1; time_step <= fluid_solver_time_steps; time_step++)
     {
 #ifndef TD
-      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 1, &is_converged, &lbm, &net);
 #else
-      stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 0, 1, &is_converged, &lbm, &net);
 #endif // TD
     }
   fluid_solver_time = myClock () - fluid_solver_time;
@@ -991,9 +991,9 @@ int main (int argc, char *argv[])
     {
       visRenderA (ColourPalette, &net, &vis);
 #ifndef TD
-      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 1, &is_converged, &lbm, &net);
 #else
-      stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 0, 1, &is_converged, &lbm, &net);
 #endif // TD
       visRenderB (image_name, ColourPalette, &net, &vis);
       
@@ -1018,9 +1018,9 @@ int main (int argc, char *argv[])
     {
       visRenderA (ColourPalette, &net, &vis);
 #ifndef TD
-      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 1, &is_converged, &lbm, &net);
 #else
-      stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 0, 1, &is_converged, &lbm, &net);
 #endif // TD
       visRenderB (image_name, ColourPalette, &net, &vis);
     }
@@ -1036,9 +1036,9 @@ int main (int argc, char *argv[])
     {
       visRenderA (ColourPalette, &net, &vis);
 #ifndef TD
-      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 1, &is_converged, &lbm, &net);
 #else
-      stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 0, 1, &is_converged, &lbm, &net);
 #endif // TD
       visRenderB (image_name, ColourPalette, &net, &vis);
       
@@ -1063,9 +1063,9 @@ int main (int argc, char *argv[])
     {
       visRenderA (ColourPalette, &net, &vis);
 #ifndef TD
-      stability = lbmCycle (0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 1, &is_converged, &lbm, &net);
 #else
-      stability = lbmCycle (0, 0, 0, &is_converged, &lbm, &net);
+      stability = lbmCycle (0, 0, 0, 1, &is_converged, &lbm, &net);
 #endif // TD
       visRenderB (image_name, ColourPalette, &net, &vis);
     }
@@ -1120,14 +1120,18 @@ int main (int argc, char *argv[])
       else
   	{
   	  fprintf (timings_ptr, " ATTENTION: INSTABILITY CONDITION OCCURRED\n");
-  	  fprintf (timings_ptr, " AFTER %i time steps\n", time_step);
+  	  fprintf (timings_ptr, " AFTER %i total time steps\n", total_time_steps);
   	}
       fprintf (timings_ptr, "\n");
       fprintf (timings_ptr, "threads: %i, machines checked: %i\n\n", net.procs, net_machines);
       fprintf (timings_ptr, "topology depths checked: %i\n\n", depths);
       fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
-      fprintf (timings_ptr, "time steps: %i \n\n", time_step);
-      fprintf (timings_ptr, "time steps per second: %.3f\n\n", time_step / simulation_time);
+#ifndef TD
+      fprintf (timings_ptr, "time steps: %i \n\n", total_time_steps);
+#else
+      fprintf (timings_ptr, "cycles and total time steps: %i, %i \n\n", cycle_id, total_time_steps);
+#endif
+      fprintf (timings_ptr, "time steps per second: %.3f\n\n", total_time_steps / simulation_time);
     }
 #else // BENCH
   
@@ -1161,7 +1165,7 @@ int main (int argc, char *argv[])
     }
   net.fo_time = myClock ();
   
-  lbmWriteConfig (stability, output_config_name, &lbm, &net);
+  //lbmWriteConfig (stability, output_config_name, &lbm, &net);
   
   net.fo_time = myClock () - net.fo_time;
   

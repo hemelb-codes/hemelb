@@ -2770,8 +2770,9 @@ void rtBuildClusters (Net *net)
   int block_id;
   int blocks_a, blocks_b;
   int index_a;
-  int nodes_buffer_size;
+  int blocks_buffer_size;
   int are_blocks_incrementing;
+  int is_site_found;
   int i, j, k;
   int l, m, n;
   int clusters_max;
@@ -2783,10 +2784,11 @@ void rtBuildClusters (Net *net)
   
   bool *is_block_visited;
   
-  SiteLocation *site_location_a, *site_location_b;
-  SiteLocation *site_location_a_p, *site_location_b_p;
+  BlockLocation *block_location_a, *block_location_b;
+  BlockLocation *block_location_a_p, *block_location_b_p;
   
   DataBlock *map_block_p;
+  ProcBlock *proc_block_p;
   
   Cluster *cluster_p;
   
@@ -2808,9 +2810,9 @@ void rtBuildClusters (Net *net)
   
   is_block_visited = (bool *)malloc(sizeof(bool) * blocks);
   
-  nodes_buffer_size = 10000;
-  site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * nodes_buffer_size);
-  site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * nodes_buffer_size);
+  blocks_buffer_size = 10000;
+  block_location_a = (BlockLocation *)malloc(sizeof(BlockLocation) * blocks_buffer_size);
+  block_location_b = (BlockLocation *)malloc(sizeof(BlockLocation) * blocks_buffer_size);
   
   for (n = 0; n < blocks; n++)
     {
@@ -2824,41 +2826,28 @@ void rtBuildClusters (Net *net)
 	{
 	  for (k = 0; k < blocks_z; k++)
 	    {
-#ifndef COARSE_DD
-	      if (is_block_visited[ ++n ] || net->proc_block[ n ].proc_id == NULL)
+	      if (is_block_visited[ ++n ] ||
+		  (proc_block_p = &net->proc_block[ n ])->proc_id == NULL)
 		{
 		  continue;
 		}
-#else
-	      if (is_block_visited[ ++n ] || net->proc_id[ n ] != net->id)
-		{
-		  continue;
-		}
-#endif
 	      is_block_visited[ n ] = 1;
 	      
 	      blocks_a = 0;
-#ifndef COARSE_DD
+	      
 	      for (m = 0; m < sites_in_a_block; m++)
 		{
-		  if (net->proc_block[ n ].proc_id[ m ] == net->id)
+		  if (proc_block_p->proc_id[ m ] == net->id)
 		    {
-		      site_location_a_p = &site_location_a[ 0 ];
-		      site_location_a_p->i = i;
-		      site_location_a_p->j = j;
-		      site_location_a_p->k = k;
+		      block_location_a_p = &block_location_a[ 0 ];
+		      block_location_a_p->i = i;
+		      block_location_a_p->j = j;
+		      block_location_a_p->k = k;
 		      blocks_a = 1;
 		      break;
 		    }
 		}
 	      if (blocks_a == 0) continue;
-#else // COARSE_DD
-	      site_location_a_p = &site_location_a[ 0 ];
-	      site_location_a_p->i = i;
-	      site_location_a_p->j = j;
-	      site_location_a_p->k = k;
-	      blocks_a = 1;
-#endif // COARSE_DD
 	      
 	      if (clusters == clusters_max)
 		{
@@ -2887,57 +2876,53 @@ void rtBuildClusters (Net *net)
 		  
 		  for (index_a = 0; index_a < blocks_a; index_a++)
 		    {
-		      site_location_a_p = &site_location_a[ index_a ];
+		      block_location_a_p = &block_location_a[ index_a ];
 		      
 		      for (l = 0; l < 26; l++)
 			{
-			  neigh_i = site_location_a_p->i + n_x[ l ];
-			  neigh_j = site_location_a_p->j + n_y[ l ];
-			  neigh_k = site_location_a_p->k + n_z[ l ];
+			  neigh_i = block_location_a_p->i + n_x[ l ];
+			  neigh_j = block_location_a_p->j + n_y[ l ];
+			  neigh_k = block_location_a_p->k + n_z[ l ];
 			  
 			  if (neigh_i == -1 || neigh_i == blocks_x) continue;
 			  if (neigh_j == -1 || neigh_j == blocks_y) continue;
 			  if (neigh_k == -1 || neigh_k == blocks_z) continue;
 			  
 			  block_id = (neigh_i * blocks_y + neigh_j) * blocks_z + neigh_k;
-#ifndef COARSE_DD
-			  if (is_block_visited[ block_id ] || net->proc_block[ block_id ].proc_id == NULL)
+			  
+			  if (is_block_visited[ block_id ] ||
+			      (proc_block_p = &net->proc_block[ block_id ])->proc_id == NULL)
 			    {
 			      continue;
 			    }
-			  int is_site_found = 0;
+			  is_site_found = 0;
 			  
 			  for (m = 0; m < sites_in_a_block; m++)
 			    {
-			      if (net->proc_block[ block_id ].proc_id[ m ] == net->id)
+			      if (proc_block_p->proc_id[ m ] == net->id)
 				{
 				  is_site_found = 1;
 				  break;
 				}
 			    }
 			  if (!is_site_found) continue;
-#else // COARSE_DD
-			  if (is_block_visited[ block_id ] || net->proc_id[ block_id ] != net->id)
-			    {
-			      continue;
-			    }
-#endif // COARSE_DD
+			  
 			  is_block_visited[ block_id ] = 1;
 			  
 			  are_blocks_incrementing = 1;
 			  
-			  if (blocks_b == nodes_buffer_size)
+			  if (blocks_b == blocks_buffer_size)
 			    {
-			      nodes_buffer_size *= 2;
-			      site_location_a = (SiteLocation *)realloc(site_location_a,
-									sizeof(SiteLocation) * nodes_buffer_size);
-			      site_location_b = (SiteLocation *)realloc(site_location_b,
-									sizeof(SiteLocation) * nodes_buffer_size); 
+			      blocks_buffer_size *= 2;
+			      block_location_a = (BlockLocation *)realloc(block_location_a,
+									  sizeof(BlockLocation) * blocks_buffer_size);
+			      block_location_b = (BlockLocation *)realloc(block_location_b,
+									  sizeof(BlockLocation) * blocks_buffer_size); 
 			    }
-			  site_location_b_p = &site_location_b[ blocks_b ];
-			  site_location_b_p->i = neigh_i;
-			  site_location_b_p->j = neigh_j;
-			  site_location_b_p->k = neigh_k;
+			  block_location_b_p = &block_location_b[ blocks_b ];
+			  block_location_b_p->i = neigh_i;
+			  block_location_b_p->j = neigh_j;
+			  block_location_b_p->k = neigh_k;
 			  ++blocks_b;
 			  
 			  cluster_p->block_min[0] = min((int)cluster_p->block_min[0], neigh_i);
@@ -2951,9 +2936,9 @@ void rtBuildClusters (Net *net)
 			  net->cluster_id[ block_id ] = clusters - 1;
 			}
 		    }
-		  site_location_a_p = site_location_a;
-		  site_location_a = site_location_b;
-		  site_location_b = site_location_a_p;
+		  block_location_a_p = block_location_a;
+		  block_location_a = block_location_b;
+		  block_location_b = block_location_a_p;
 		  blocks_a = blocks_b;
 		}
 	      cluster_p->x[0] = cluster_p->block_min[0] * block_size - 0.5F * sites_x;
@@ -2966,8 +2951,8 @@ void rtBuildClusters (Net *net)
 	    }
 	}
     }
-  free(site_location_b);
-  free(site_location_a);
+  free(block_location_b);
+  free(block_location_a);
   
   free(is_block_visited);
   
@@ -4074,13 +4059,13 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
 	  if (net->id == send_id)
 	    {
 #ifndef NOMPI
-	      net->err = MPI_Ssend (&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
+	      net->err = MPI_Send (&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 #endif
 	      if (col_pixels > 0)
 		{
 #ifndef NOMPI
-		  net->err = MPI_Ssend (&col_pixel_send, col_pixels, MPI_col_pixel_type,
-					recv_id, 20, MPI_COMM_WORLD);
+		  net->err = MPI_Send (&col_pixel_send, col_pixels, MPI_col_pixel_type,
+				       recv_id, 20, MPI_COMM_WORLD);
 #endif
 		}
 	    }
@@ -4165,7 +4150,7 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
     {
       recv_id = 0;
 #ifndef NOMPI
-      net->err = MPI_Ssend (&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
+      net->err = MPI_Send (&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 #endif
       if (col_pixels > 0)
 	{
@@ -4234,9 +4219,9 @@ void visRenderB (char *image_file_name, void (*ColourPalette) (float value, floa
 	}
       if (net->id != 0 && net->id != master_proc_id)
 	{
-	  for (m = 0; m < col_pixels; m++)
+	  for (m = 0; m < IMAGE_SIZE; m++)
 	    {
-	      col_pixel_id[ (PixelI (col_pixel_recv[m].i) * pixels_y + PixelJ (col_pixel_recv[m].i)) ] = -1;
+	      col_pixel_id[ m ] = -1;
 	    }
 	  return;
 	}

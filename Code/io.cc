@@ -141,7 +141,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      if (flag == 0) continue;
 	      
 	      data_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
-	      proc_block_p->proc_id   = (short int *)malloc(sizeof(short int) * sites_in_a_block);
+	      proc_block_p->proc_id   = (int *)malloc(sizeof(int) * sites_in_a_block);
 	      
 #ifndef BENCH
 	      if (!lbm->is_checkpoint)
@@ -183,7 +183,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			  
 			  if ((data_block_p->site_data[ m ] & SITE_TYPE_MASK) == SOLID_TYPE)
 			    {
-			      proc_block_p->proc_id[ m ] = 1 << 14;
+			      proc_block_p->proc_id[ m ] = 1 << 30;
 			      continue;
 			    }
 			  proc_block_p->proc_id[ m ] = -1;
@@ -344,9 +344,11 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       fflush(NULL);
       
       fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
-      fscanf (parameters_file, "%le\n", &lbm->tau);
+
+      fscanf (parameters_file, "%le\n", &lbm->tau);///////
+
       fscanf (parameters_file, "%i\n", &lbm->inlets);
-      
+
       inlet_density = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
       
       for (n = 0; n < lbm->inlets; n++)
@@ -359,16 +361,16 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  // int iters;
-	  // fscanf (parameters_file, "%i\n", &iters);
-	  // outlet_density[ n ] = 1. - 0.0056 * iters / 703;
-	  // printf ("%le\n", outlet_density[ n ]);
+	  //int iters;
+	  //fscanf (parameters_file, "%i\n", &iters);
+	  //outlet_density[ n ] = 1. - 0.02376 * iters / 703;
+	  //printf ("%le\n", outlet_density[ n ]);
 	  fscanf (parameters_file, "%le\n", &outlet_density[ n ]);
 	}
       fscanf (parameters_file, "%i\n", &lbm->cycles_max);
       fscanf (parameters_file, "%le\n", &lbm->tolerance);
 #ifndef TD
-      fscanf (parameters_file, "%i\n", &lbm->checkpoint_freq);
+      fscanf (parameters_file, "%i\n", &lbm->check_freq);
 #else
       fscanf (parameters_file, "%i\n", &lbm->period);
 #endif
@@ -416,7 +418,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       par_to_send[ 2 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->cycles_max;
       par_to_send[ 3 + lbm->inlets + lbm->outlets ] = lbm->tolerance;
 #ifndef TD
-      par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->checkpoint_freq;
+      par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->check_freq;
 #else
       par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->period;
 #endif
@@ -441,7 +443,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       lbm->cycles_max       = (int)par_to_send[ 2 + lbm->inlets + lbm->outlets ];
       lbm->tolerance        =      par_to_send[ 3 + lbm->inlets + lbm->outlets ];
 #ifndef TD
-      lbm->checkpoint_freq  = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
+      lbm->check_freq       = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
 #else
       lbm->period           = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
 #endif
@@ -472,7 +474,7 @@ void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
   lbm->tolerance        = steer->tolerance;
   lbm->cycles_max       = steer->max_cycles;
   lbm->conv_freq        = steer->conv_freq;
-  lbm->checkpoint_freq  = steer->check_freq;
+  lbm->check_freq       = steer->check_freq;
   
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
   lbm->omega = -1.0 / lbm->tau;
