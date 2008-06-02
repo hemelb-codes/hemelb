@@ -7,10 +7,6 @@
 #include "mpi.h"
 #endif
 
-#ifndef NOOPENMP
-#include <omp.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,10 +65,8 @@
 #define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
 
 #ifndef NOSIMD
-#define SIMD_SIZE                      2
 #define VIS_SIMD_SIZE                  4
 #else
-#define SIMD_SIZE                      1
 #define VIS_SIMD_SIZE                  3
 #endif
 
@@ -190,13 +184,7 @@ struct DataBlock
 
 struct ProcBlock
 {
-  short int *proc_id;
-};
-
-
-struct FidBlock
-{
-  int *f_id;
+  int *proc_id;
 };
 
 
@@ -230,7 +218,7 @@ struct LBM
   int inlets, outlets;
   int cycles_max;
 #ifndef TD
-  int checkpoint_freq;
+  int check_freq;
 #endif
   int period;
   int conv_freq;
@@ -251,10 +239,14 @@ struct NeighProc
   
   short int *f_data;
   
+#ifndef TD
+  int f_head;
+#else
   double *f_to_send;
   double *f_to_recv;
   
   int *f_send_id;
+#endif
   int *f_recv_iv;
   
 #ifndef BENCH
@@ -273,7 +265,6 @@ struct Net
   int my_inner_collisions[COLLISION_TYPES];
   int my_inter_collisions[COLLISION_TYPES];
   int my_sites;
-  int my_streamings;
   int shared_fs;
   
   int *machine_id;
@@ -359,9 +350,10 @@ struct AABB
   float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
 };
 
+
+extern double *f_old, *f_new;
+
 extern int *f_id;
-extern double *f_old;
-extern double *f_new;
 
 #ifndef TD
 extern double *vel;
@@ -381,11 +373,18 @@ extern float ***cluster_flow_field;
 
 
 extern short int *f_data;
+#ifdef TD
 extern double *f_to_send;
 extern double *f_to_recv;
 
 extern int *f_send_id;
+#endif // TD
 extern int *f_recv_iv;
+
+extern unsigned int *net_site_data;
+
+extern double *inlet_density;
+extern double *outlet_density;
 
 
 extern int col_pixels, col_pixels_max;
@@ -401,11 +400,6 @@ extern ColPixel *col_pixel_recv;
 #ifdef RG
 extern ColPixel *col_pixel_locked;
 #endif
-
-extern unsigned int *net_site_data;
-
-extern double *inlet_density;
-extern double *outlet_density;
 
 
 #ifndef BENCH
@@ -464,9 +458,6 @@ extern float ray_col[4];
 extern int clusters;
 
 
-extern int threads;
-
-
 extern Screen screen;
 
 extern Viewpoint viewpoint;
@@ -481,24 +472,22 @@ int max (int a, int b);
 int nint (float a);
 double myClock ();
 
-void lbmTwoLevelGridIDs (int site_i, int site_j, int site_k, int *block_id, int *site_id);
-short int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
+int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
-void lbmVelocity (double f[], double *v_x, double *v_y, double *v_z);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
 void lbmStress (double f[], double *stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 int lbmCollisionType (unsigned int site_data);
 void lbmInit (char *system_file_name, char *checkpoint_file_name, LBM *lbm, Net *net);
 void lbmSetInitialConditions (Net *net);
-void lbmUpdateFlowField (int i, double density, double vx, double vy, double vz, double f_neq[]);
+void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 #ifndef TD
-int lbmCycle (int write_checkpoint, int check_conv, int *is_converged, LBM *lbm, Net *net);
+int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_converged, LBM *lbm, Net *net);
 #else
-int lbmCycle (int cycle_id, int time_step, int check_conv, int *is_converged, LBM *lbm, Net *net);
+int lbmCycle (int cycle_id, int time_step, int check_conv, int perform_rt, int *is_converged, LBM *lbm, Net *net);
 #endif
 void lbmEnd (LBM *lbm);
 
