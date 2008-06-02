@@ -87,7 +87,9 @@ char *xdrReceiveBuffer_size;
 
 double myClock ()
 {
-  return (double)clock () * (1. / (double)CLOCKS_PER_SEC);
+  struct timeval time_data;
+  gettimeofday (&time_data, NULL);
+  return (double)time_data.tv_sec + (double)time_data.tv_usec / 1.e6;
 }
 
 
@@ -152,7 +154,7 @@ void ReceiveFrame ()
   
   bytesReceived += frameBytes;
   
-  printf("received %i Bytes in %0.2fs (%0.2fKB/s)\n", bytesReceived, transfer_time, bytesReceived/(transfer_time*1024.));
+  printf("received %i Bytes in %0.4fs (%0.2fKB/s)\n", bytesReceived, transfer_time, bytesReceived/(transfer_time*1024.));
   
   col_pixels = frame_size / bytes_per_pixel_data;
   
