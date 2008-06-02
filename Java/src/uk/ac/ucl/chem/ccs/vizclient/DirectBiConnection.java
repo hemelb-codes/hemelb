@@ -2,10 +2,8 @@ package uk.ac.ucl.chem.ccs.vizclient;
 
 import java.io.*;
 import java.net.*;
-import java.nio.ByteBuffer;
-import java.util.Date;
 import java.util.Calendar;
-public class NetworkReceive  {
+public class DirectBiConnection implements SteeringConnection {
 
 	private static final int BYTES_PER_PIXEL_DATA = 8;
 	private DataInputStream d;
@@ -28,7 +26,7 @@ public class NetworkReceive  {
 	/**
 	 * 
 	 */
-	public NetworkReceive(int port, String hostname) {
+	public DirectBiConnection(int port, String hostname) {
 		// TODO Auto-generated method stub
 		this.hostname = hostname;
 		this.port = port;		
@@ -88,7 +86,8 @@ public class NetworkReceive  {
 				
 		System.err.println("bytes = " + frame_size + ", time = " + total_time +
 				", rate = " + data_rate + "KB/s");
-		
+		vizFrame.setDataRate(data_rate);
+		vizFrame.setRealFrameNo(0);
 		vizFrame.setFrameNo(frame_no);
 		vizFrame.setBufferSize(frame_size);
 		return vizFrame;
@@ -116,10 +115,10 @@ public class NetworkReceive  {
 			listenSocket.setReceiveBufferSize(1024*1024);
 			s=listenSocket.getReceiveBufferSize();
 			listenSocket.connect(new InetSocketAddress(hostname, port));
-			
+			dos = new DataOutputStream(listenSocket.getOutputStream());
        		BufferedInputStream bufff = new BufferedInputStream(listenSocket.getInputStream());
 			d = new DataInputStream(bufff);
-			dos = new DataOutputStream(listenSocket.getOutputStream());
+
 			connected = true;
 		} catch (UnknownHostException e) {
 			System.err.println("can't connect to host: " + hostname);
@@ -132,20 +131,11 @@ public class NetworkReceive  {
 		return connected;
 	}
 	
-	public boolean writeOut (double dx, double dy) {
-		try {
-			dos.writeDouble(dx);
-			dos.writeDouble(dy);
-			return true;
-		} catch (Exception e) {
-			
-		}
-		return false;
-	}
 	
 	public boolean disconnect() {
 		if (connected) {
 		try {
+			dos.close();
 			d.close();
 			listenSocket.close();
 			connected = false;
@@ -164,16 +154,31 @@ public class NetworkReceive  {
 		super.finalize();
 		disconnect();
 	}
-	/**
-	 * @param args
-	 * @throws IOException
-	 */
-	public static void main(String[] args) throws IOException {
-		NetworkReceive nr = new NetworkReceive (Integer.parseInt(args[1]), args[0]);
-		while (nr.isConnected()) {
-		nr.getFrame();
-		}
-	}
+
 	
+	public boolean magnify(int m) {
+		// TODO Auto-generated method stub
+		try {
+			dos.writeInt(2);
+			dos.writeInt(m);
+			return true;
+		} catch (Exception e) {
+			
+		}
+		return false;
+	}
+
+	public boolean rotate(double dx, double dy) {
+		// TODO Auto-generated method stub
+		try {
+			dos.writeInt(1);
+			dos.writeDouble(dx);
+			dos.writeDouble(dy);
+			return true;
+		} catch (Exception e) {
+			
+		}
+		return false;
+	}
 	
 }

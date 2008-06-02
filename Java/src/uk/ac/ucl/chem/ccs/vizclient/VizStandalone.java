@@ -1,12 +1,16 @@
 package uk.ac.ucl.chem.ccs.vizclient;
 import info.clearthought.layout.TableLayout;
 import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.event.MenuListener;
 import javax.swing.event.MenuEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -14,13 +18,14 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import javax.swing.WindowConstants;
-import javax.swing.SwingUtilities;
+import javax.swing.border.BevelBorder;
+
 
 
 /**
@@ -36,13 +41,16 @@ import javax.swing.SwingUtilities;
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
 public class VizStandalone extends javax.swing.JFrame {
-	private JMenuBar jMenuBar1;
-	private JMenu jMenu2;
-	private JMenuItem jMenuItem1;
-
-	private JMenuItem jMenuItem3;
+	private JMenuBar mainMenuBar;
+	private JMenu connectMenu;
+	private JMenuItem connectMenuItem;
+	private JPanel jPanel1;
+	private JPanel jPanel2;
+	private JMenuItem quitMenuItem;
+	private JSeparator jSeparator2;
+	private JMenuItem hostMenuItem;
 	private JSeparator jSeparator1;
-	private JMenuItem jMenuItem2;
+	private JMenuItem disconnectMenuItem;
 	private VizGui vg;
 	private String hostname;
 	private int port;
@@ -77,24 +85,42 @@ public class VizStandalone extends javax.swing.JFrame {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			{
-				vg=new VizGui(port, hostname);
-				getContentPane().add(vg);
+				jPanel1 = new JPanel();
+				GridBagLayout jPanel1Layout = new GridBagLayout();
+				jPanel1Layout.rowWeights = new double[] {0.1, 0.1};
+				jPanel1Layout.rowHeights = new int[] {7, 7};
+				jPanel1Layout.columnWeights = new double[] {0.1, 0.1};
+				jPanel1Layout.columnWidths = new int[] {7, 7};
+				jPanel1.setLayout(jPanel1Layout);
+				getContentPane().add(jPanel1, BorderLayout.CENTER);
+				jPanel1.setSize(700, 700);
+				{
+					vg=new VizGui(port, hostname);
+					jPanel1.add(vg, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+					vg.setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
+					vg.getInfoPanel().setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
+				}
+				{
+					jPanel2 = vg.getInfoPanel();
+					jPanel1.add(jPanel2, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+				}
+
 			}
 			{
-				jMenuBar1 = new JMenuBar();
-				setJMenuBar(jMenuBar1);
+				mainMenuBar = new JMenuBar();
+				setJMenuBar(mainMenuBar);
 				{
-					jMenu2 = new JMenu();
-					jMenuBar1.add(jMenu2);
-					jMenu2.setText("Connection");
-					jMenu2.addMenuListener(new MenuListener () {
+					connectMenu = new JMenu();
+					mainMenuBar.add(connectMenu);
+					connectMenu.setText("Connection");
+					connectMenu.addMenuListener(new MenuListener () {
 						public void menuSelected (MenuEvent e) {
 							if (vg.isConnected() ){
-								jMenuItem1.setEnabled(false);
-								jMenuItem2.setEnabled(true);
+								connectMenuItem.setEnabled(false);
+								disconnectMenuItem.setEnabled(true);
 							} else {
-								jMenuItem1.setEnabled(true);
-								jMenuItem2.setEnabled(false);
+								connectMenuItem.setEnabled(true);
+								disconnectMenuItem.setEnabled(false);
 							}
 						}
 						
@@ -108,18 +134,18 @@ public class VizStandalone extends javax.swing.JFrame {
 						
 					});
 					{
-						jMenuItem3 = new JMenuItem();
-						jMenu2.add(jMenuItem3);
-						jMenuItem3.setText("Host");
-						jMenuItem3.setEnabled(true);
-						jMenuItem3.addActionListener(new ActionListener (){ 
+						hostMenuItem = new JMenuItem();
+						connectMenu.add(hostMenuItem);
+						hostMenuItem.setText("Host");
+						hostMenuItem.setEnabled(true);
+						hostMenuItem.addActionListener(new ActionListener (){ 
 							public void actionPerformed (ActionEvent e) {
 								HostDialogue hostDia = new HostDialogue(VizStandalone.this);								
 								if (hostDia.showDialogue()) {
-									if (jMenuItem2.isEnabled()) {
+									if (disconnectMenuItem.isEnabled()) {
 										if (vg.stopReceive()) {
-											jMenuItem1.setEnabled(true);
-											jMenuItem2.setEnabled(false);
+											connectMenuItem.setEnabled(true);
+											disconnectMenuItem.setEnabled(false);
 											}
 									}
 									VizStandalone.this.vg.setHostPort(port, hostname);
@@ -130,39 +156,56 @@ public class VizStandalone extends javax.swing.JFrame {
 					}
 					{
 						jSeparator1 = new JSeparator();
-						jMenu2.add(jSeparator1);
+						connectMenu.add(jSeparator1);
 					}
 					{
-						jMenuItem1 = new JMenuItem();
-						jMenu2.add(jMenuItem1);
-						jMenuItem1.setText("Connect");
-						jMenuItem1.addActionListener(new ActionListener (){ 
+						connectMenuItem = new JMenuItem();
+						connectMenu.add(connectMenuItem);
+						connectMenuItem.setText("Connect");
+						connectMenuItem.addActionListener(new ActionListener (){ 
 							public void actionPerformed (ActionEvent e) {
 								if (vg.startReceive()) {
-								jMenuItem2.setEnabled(true);
-								jMenuItem1.setEnabled(false);
+								disconnectMenuItem.setEnabled(true);
+								connectMenuItem.setEnabled(false);
 								}
 							}
 						});
 					}
 					{
-						jMenuItem2 = new JMenuItem();
-						jMenu2.add(jMenuItem2);
-						jMenuItem2.setText("Disconnect");
-						jMenuItem2.setEnabled(false);
-						jMenuItem2.addActionListener(new ActionListener (){ 
+						disconnectMenuItem = new JMenuItem();
+						connectMenu.add(disconnectMenuItem);
+						disconnectMenuItem.setText("Disconnect");
+						disconnectMenuItem.setEnabled(false);
+						disconnectMenuItem.addActionListener(new ActionListener (){ 
 							public void actionPerformed (ActionEvent e) {
 								if (vg.stopReceive()) {
-								jMenuItem1.setEnabled(true);
-								jMenuItem2.setEnabled(false);
+								connectMenuItem.setEnabled(true);
+								disconnectMenuItem.setEnabled(false);
 								}
 							}
 						});
 					}
+					{
+						jSeparator2 = new JSeparator();
+						connectMenu.add(jSeparator2);
+					}
+					{
+						quitMenuItem = new JMenuItem();
+						connectMenu.add(quitMenuItem);
+						quitMenuItem.setText("Quit");
+						quitMenuItem.setEnabled(true);
+						quitMenuItem.addActionListener(new ActionListener (){ 
+							public void actionPerformed (ActionEvent e) {
+								VizStandalone.this.dispose();
+							}
+						});
+					}
+					
 				}
 			}
 
 			pack();
+			this.setSize(700, 687);
 			//setSize(400, 300);
 		} catch (Exception e) {
 			e.printStackTrace();
