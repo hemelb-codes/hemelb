@@ -1,6 +1,6 @@
 #include "config.h"
 
-double PI = 2. * atan2(1., 0.);
+double PI = 3.14159265358979323846264338327950288;
 
 // the constants needed to define the configuration of the lattice
 // sites follow
@@ -85,11 +85,19 @@ float ***cluster_flow_field = NULL;
 
 
 short int *f_data = NULL;
+#ifdef TD
 double *f_to_send = NULL;
 double *f_to_recv = NULL;
 
 int *f_send_id = NULL;
+#endif // TD
 int *f_recv_iv = NULL;
+
+
+unsigned int *net_site_data = NULL;
+
+double *inlet_density = NULL;
+double *outlet_density = NULL;
 
 
 int col_pixels, col_pixels_max;
@@ -105,12 +113,6 @@ ColPixel *col_pixel_recv = NULL;
 #ifdef RG
 ColPixel *col_pixel_locked = NULL;
 #endif
-
-
-unsigned int *net_site_data = NULL;
-
-double *inlet_density = NULL;
-double *outlet_density = NULL;
 
 
 #ifndef BENCH
@@ -134,6 +136,7 @@ double lbm_velocity_min, lbm_velocity_max;
 double lbm_stress_min, lbm_stress_max;
 
 int net_machines;
+
 
 int vis_mode;
 int vis_flow_field_type;
@@ -161,9 +164,6 @@ float ray_col[4];
 
 
 int clusters;
-
-
-int threads;
 
 
 Screen screen;
@@ -216,15 +216,15 @@ int nint (float a)
 
 double myClock ()
 {
-//#ifndef NOMPI
+#ifndef NOMPI
   struct timeval time_data;
   
   gettimeofday (&time_data, NULL);
   
   return (double)time_data.tv_sec + (double)time_data.tv_usec / 1.e6;
-//#else
-//  return MPI_Wtime();
-//#endif
+#else
+  return MPI_Wtime();
+#endif
   
   //double time;
   //
