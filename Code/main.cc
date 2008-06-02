@@ -3,7 +3,6 @@
 
 #include "config.h"
 
-
 #ifdef RG
 #include <unistd.h>
 #include <errno.h>
@@ -18,11 +17,9 @@
 #define CONNECTION_BACKLOG 10
 #endif // RG
 
-
 FILE *timings_ptr;
 
 float globalLongitude = 0.;
-
 
 void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
 {
@@ -34,7 +31,6 @@ void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
   float zoom;
   float density_max, velocity_max, stress_max;
   float dummy;
-  
   
   if (net->id == 0)
     {
@@ -171,8 +167,6 @@ void *hemeLB_network (void *ptr)
   fprintf (timings_ptr, "MPI 0 Hostname -> %s\n\n", host_name);
 // #endif
   
-  signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
-  
   int sock_fd;
   int new_fd;
   int yes = 1;
@@ -186,16 +180,17 @@ void *hemeLB_network (void *ptr)
   
   ColPixel *col_pixel_p;
   
+  signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
   
   while (1)
     {
+	
       pthread_mutex_lock ( &network_buffer_copy_lock );
-      
+	    
       struct sockaddr_in my_address;
       struct sockaddr_in their_addr; // client address
       
       socklen_t sin_size;
-      
       
       if ((sock_fd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
 	{
@@ -235,7 +230,7 @@ void *hemeLB_network (void *ptr)
 	}
       
       fprintf (timings_ptr, "server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
-      printf ("server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
+      printf ("RG thread: server: got connection from %s\n", inet_ntoa (their_addr.sin_addr));
       
       close(sock_fd);
       
@@ -252,7 +247,6 @@ void *hemeLB_network (void *ptr)
 	  
 	  XDR xdr_network_stream_frame_details;
 	  XDR xdr_network_stream_pixel_data;
-	  
 	  
 	  xdrmem_create (&xdr_network_stream_pixel_data, xdrSendBuffer_pixel_data,
 			 pixel_data_bytes, XDR_ENCODE);
@@ -296,14 +290,16 @@ void *hemeLB_network (void *ptr)
 	  ret = send_all(new_fd, xdrSendBuffer_pixel_data, &frameBytes);
 	  
           if (ret < 0) {
+		    printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
+			pthread_mutex_unlock ( &network_buffer_copy_lock );
             break;
           } else {
             bytesSent += frameBytes;
           }
 	  
 	  fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
-	  printf ("bytes sent %i\n", bytesSent);
+	  printf ("RG thread: bytes sent %i\n", bytesSent);
 	  
 	  xdr_destroy (&xdr_network_stream_frame_details);
 	  xdr_destroy (&xdr_network_stream_pixel_data);
@@ -763,6 +759,7 @@ int main (int argc, char *argv[])
   
   for (cycle_id = 0; cycle_id < lbm.cycles_max && !is_finished; cycle_id++)
     {
+	
       ray_tracing_count = 0;
       
       for (time_step = 0; time_step < lbm.period; time_step++)
