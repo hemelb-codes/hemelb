@@ -11,7 +11,7 @@ public class firstAttempt extends Frame implements GLEventListener{
 	
     public firstAttempt() {
     	
-    NetworkReceive nr = new NetworkReceive (65250, "fermi.chem.ucl.ac.uk");
+    DirectBiConnection nr = new DirectBiConnection (65250, "fermi.chem.ucl.ac.uk");
     vfd = nr.getFrame();
     	
 	GLCapabilities caps = new GLCapabilities();

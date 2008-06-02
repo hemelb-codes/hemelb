@@ -12,8 +12,10 @@ package uk.ac.ucl.chem.ccs.vizclient;
 public class VizFrameData {
 
 	private long frameNo = 0;
+	private long realFrameNo = 0;
 	private int bufferSize = 0;
 	private int length = 0;
+	private double dataRate = 0.f;
 	private int r[];
 	private int g[];
 	private int b[];
@@ -21,7 +23,7 @@ public class VizFrameData {
 	private int x[];
 	private int y[];
 	
-	
+
 	/**
 	 * @param length
 	 */
@@ -34,7 +36,18 @@ public class VizFrameData {
 		 y = new int[length];
 	}
 	
-	
+
+	public double getDataRate() {
+		return dataRate;
+	}
+
+
+
+	public void setDataRate(double dataRate) {
+		this.dataRate = dataRate;
+	}
+
+
 
 	/**
 	 * @return Returns the bufferSize.
@@ -48,6 +61,19 @@ public class VizFrameData {
 	public void setBufferSize(int bufferSize) {
 		this.bufferSize = bufferSize;
 	}
+	
+	
+	
+	public long getRealFrameNo() {
+		return realFrameNo;
+	}
+
+
+	public void setRealFrameNo(long realFrameNo) {
+		this.realFrameNo = realFrameNo;
+	}
+
+
 	/**
 	 * @return Returns the frameNo.
 	 */

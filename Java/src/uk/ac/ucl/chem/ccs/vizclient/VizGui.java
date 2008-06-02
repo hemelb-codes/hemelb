@@ -13,8 +13,12 @@ import java.awt.event.MouseEvent;
 import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.media.opengl.*;
 
@@ -31,7 +35,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private Animator animator = null;
     private boolean connected = false;
 	private ConcurrentLinkedQueue queue;
-	private NetworkReceive nr;
+	private SteeringConnection nr;
+	private InfoPanel ifp = null;
+
 	
 	public VizGui(int port, String hostname) {
 		super();
@@ -39,7 +45,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		this.port = port;
 		this.hostname = hostname;
 		initGUI();
-		nr = new NetworkReceive (port, hostname);	
+		nr = new DirectBiConnection (port, hostname);	
+	}
+
+	public VizGui () {
+		this(1, "foohost");
 	}
 	
 	public void setHostPort (int port, String hostname) {
@@ -51,7 +61,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	
 	public boolean startReceive() {
 		if (!connected) {
-		nr = new NetworkReceive (port, hostname);
+		nr = new DirectBiConnection (port, hostname);
 		connected = nr.connect();
 		if (!connected) {
 			notificationArea.append("Connection error: Couldn't connect to host " + hostname + ":" + port +"\n");
@@ -80,30 +90,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 		}
 		return !connected;
-	}
-	
-	/**
-	* Auto-generated main method to display this 
-	* JPanel inside a new JFrame.
-	*/
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		VizGui vg = new VizGui(Integer.parseInt(args[1]), args[0]);
-		frame.getContentPane().add(vg);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-		frame.addWindowListener( new WindowAdapter() {
-		    public void windowClosed(WindowEvent e){
-					System.exit(0);
-			    }
-				public void windowClosing(WindowEvent e) {
-				    windowClosed(e);
-				}
-			    }
-		);
-		vg.startReceive();
-
 	}
 	
 	
@@ -179,8 +165,13 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	    
 	    }
 	  gl.glEnd(); 
-	  notificationArea.append("Frame " + vfd.getFrameNo() + "  Buffer size " + vfd.getBufferSize() + "\n");
-	  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+	  
+	  if (ifp != null) {
+		  ifp.updatePanel(vfd.getBufferSize(), vfd.getRealFrameNo(), vfd.getFrameNo(), vfd.getDataRate());
+	  }
+	  
+	 // notificationArea.append("Frame " + vfd.getFrameNo() + "  Buffer size " + vfd.getBufferSize() + "\n");
+	 // notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 	  
 	
     }
@@ -243,7 +234,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							if (nr != null && nr.isConnected()) {
 								System.err.println (" dX = "  +  dx + " dy = " +dy);
 
-							nr.writeOut(dx, dy);
+							nr.rotate(dx, dy);
 							}
 							}
 						}
@@ -288,6 +279,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		return nr.isConnected();
 	}
 	
+	public JPanel getInfoPanel () {
+		ifp = new InfoPanel();
+		return ifp;
+	}
+	
     private class NetThread extends Thread {
     	
 
@@ -312,6 +308,93 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     			stopReceive();
 
     	}
+    }
+    
+    private class InfoPanel extends JPanel {
+    	
+    	private JLabel jLabel4;
+    	private JTextField dataRate;
+    	private JLabel jLabel5;
+    	private JTextField droppedFrames;
+    	private JTextField frameSize;
+    	private JTextField frameRecNo;
+    	private JTextField frameNo;
+    	private JLabel jLabel3;
+    	private JLabel jLabel2;
+    	private JLabel jLabel1;
+    	
+    	public InfoPanel () {
+    		super();
+   
+		TableLayout infoPanelLayout = new TableLayout(new double[][] {{TableLayout.FILL}, {TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL}});
+		infoPanelLayout.setHGap(5);
+		infoPanelLayout.setVGap(5);
+		this.setLayout(infoPanelLayout);
+		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		{
+			jLabel1 = new JLabel();
+			this.add(jLabel1, "0, 2");
+			jLabel1.setText("Frame Rec No");
+			jLabel1.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+			jLabel1.setFont(new java.awt.Font("Dialog",1,12));
+		}
+		{
+			jLabel2 = new JLabel();
+			this.add(jLabel2, "0, 0");
+			jLabel2.setText("Frame No");
+			jLabel2.setFont(new java.awt.Font("Dialog",1,12));
+		}
+		{
+			jLabel3 = new JLabel();
+			this.add(jLabel3, "0, 4");
+			jLabel3.setText("Frame Size");
+			jLabel3.setFont(new java.awt.Font("Dialog",1,12));
+		}
+		{
+			jLabel4 = new JLabel();
+			this.add(jLabel4, "0, 8");
+			jLabel4.setText("Data Rate");
+			jLabel4.setFont(new java.awt.Font("Dialog",1,12));
+		}
+		{
+			frameNo = new JTextField();
+			this.add(frameNo, "0, 1");
+		}
+		{
+			frameRecNo = new JTextField();
+			this.add(frameRecNo, "0, 3");
+			frameRecNo.setText("");
+		}
+		{
+			frameSize = new JTextField();
+			this.add(frameSize, "0, 5");
+			frameSize.setText("");
+		}
+		{
+			droppedFrames = new JTextField();
+			this.add(droppedFrames, "0, 7");
+			droppedFrames.setText("");
+		}
+		{
+			jLabel5 = new JLabel();
+			this.add(jLabel5, "0, 6");
+			jLabel5.setText("Frames Dropped");
+			jLabel5.setFont(new java.awt.Font("Dialog",1,12));
+		}
+		{
+			dataRate = new JTextField();
+			this.add(dataRate, "0, 9");
+		}
+    	}
+    
+    	public void updatePanel (int fSize, long fNo, long fRecNo, double dRate) {
+    		frameNo.setText(Long.toString(fNo));
+    		frameRecNo.setText(Long.toString(fRecNo));
+    		frameSize.setText(Integer.toString(fSize));
+    		droppedFrames.setText(Integer.toString(0));
+    		dataRate.setText(Double.toString(dRate));
+    	}
+    	
     }
 
 }
