@@ -3,7 +3,7 @@
 #include "config.h"
 
 
-short int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net)
+int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net)
 {
   int i, j, k, ii, jj, kk;
 
@@ -224,10 +224,10 @@ void netInit (LBM *lbm, Net *net)
   int is_inter_site, is_inner_site;
   int collision_offset[2][COLLISION_TYPES];
   int flag;
+  int *proc_id_p;
   
-  short int *proc_id_p;
   short int *f_data_p;
-
+  
   unsigned int *site_data, *site_data_p;
   unsigned int site_map;
   
@@ -250,8 +250,6 @@ void netInit (LBM *lbm, Net *net)
   site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
   site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
   
-  seconds = myClock ();
-  
   net->my_sites = 0;
   
   // a fast graph growing partitioning technique which spans the data
@@ -272,298 +270,299 @@ void netInit (LBM *lbm, Net *net)
   partial_visited_fluid_sites = 0;
   unvisited_fluid_sites = lbm->total_fluid_sites;
   
-  n = -1;
+  seconds = myClock ();
   
-  for (i = 0; i < blocks_x; i++)
+  if (net_machines == 1 || net_machines == net->procs)
     {
-      for (j = 0; j < blocks_y; j++)
+      n = -1;
+      
+      for (i = 0; i < blocks_x; i++)
 	{
-	  for (k = 0; k < blocks_z; k++)
+	  for (j = 0; j < blocks_y; j++)
 	    {
-	      proc_block_p = &net->proc_block[ ++n ];
-	      
-	      if (proc_block_p->proc_id == NULL)
+	      for (k = 0; k < blocks_z; k++)
 		{
-		  continue;
-		}
-	      m = -1;
-	      
-	      for (site_i = i * block_size; site_i < i * block_size + block_size; site_i++)
-		{
-		  for (site_j = j * block_size; site_j < j * block_size + block_size; site_j++)
+		  proc_block_p = &net->proc_block[ ++n ];
+		  
+		  if (proc_block_p->proc_id == NULL)
 		    {
-		      for (site_k = k * block_size; site_k < k * block_size + block_size; site_k++)
+		      continue;
+		    }
+		  m = -1;
+		  
+		  for (site_i = i * block_size; site_i < i * block_size + block_size; site_i++)
+		    {
+		      for (site_j = j * block_size; site_j < j * block_size + block_size; site_j++)
 			{
-			  if (proc_block_p->proc_id[ ++m ] != -1)
+			  for (site_k = k * block_size; site_k < k * block_size + block_size; site_k++)
+			    {
+			      if (proc_block_p->proc_id[ ++m ] != -1)
+				{
+				  continue;
+				}
+			      proc_block_p->proc_id[ m ] = proc_count;
+			      
+			      if (proc_count == net->id)
+				{
+				  ++net->my_sites;
+				}
+			      ++partial_visited_fluid_sites;
+			      
+			      ++net->fluid_sites[ proc_count ];
+			      
+			      sites_a = 1;
+			      site_location_a_p = &site_location_a[ 0 ];
+			      site_location_a_p->i = site_i;
+			      site_location_a_p->j = site_j;
+			      site_location_a_p->k = site_k;
+			      
+			      are_fluid_sites_incrementing = 1;
+			      
+			      while (partial_visited_fluid_sites < fluid_sites_per_unit &&
+				     are_fluid_sites_incrementing)
+				{
+				  sites_b = 0;
+				  are_fluid_sites_incrementing = 0;
+				  
+				  for (index_a = 0;
+				       index_a < sites_a && partial_visited_fluid_sites < fluid_sites_per_unit;
+				       index_a++)
+				    {
+				      site_location_a_p = &site_location_a[ index_a ];
+				      
+				      for (l = 1;
+					   l < 15 && partial_visited_fluid_sites < fluid_sites_per_unit;
+					   l++)
+					{
+					  neigh_i = site_location_a_p->i + e_x[ l ];
+					  neigh_j = site_location_a_p->j + e_y[ l ];
+					  neigh_k = site_location_a_p->k + e_z[ l ];
+					  
+					  if (neigh_i == -1 || neigh_i == sites_x) continue;
+					  if (neigh_j == -1 || neigh_j == sites_y) continue;
+					  if (neigh_k == -1 || neigh_k == sites_z) continue;
+					  
+					  proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
+					  
+					  if (proc_id_p == NULL || *proc_id_p != -1)
+					    {
+					      continue;
+					    }
+					  *proc_id_p = proc_count;
+					  
+					  ++partial_visited_fluid_sites;
+					  
+					  ++net->fluid_sites[ proc_count ];
+					  
+					  are_fluid_sites_incrementing = 1;
+					  
+					  if (sites_b == sites_buffer_size)
+					    {
+					      sites_buffer_size *= 2;
+					      site_location_a = (SiteLocation *)realloc(site_location_a,
+											sizeof(SiteLocation) * sites_buffer_size);
+					      site_location_b = (SiteLocation *)realloc(site_location_b,
+											sizeof(SiteLocation) * sites_buffer_size); 
+					    }
+					  site_location_b_p = &site_location_b[ sites_b ];
+					  site_location_b_p->i = neigh_i;
+					  site_location_b_p->j = neigh_j;
+					  site_location_b_p->k = neigh_k;
+					  ++sites_b;
+					  
+					  if (proc_count == net->id)
+					    {
+					      ++net->my_sites;
+					    }
+					}
+				    }
+				  site_location_a_p = site_location_a;
+				  site_location_a = site_location_b;
+				  site_location_b = site_location_a_p;
+				  sites_a = sites_b;
+				}
+			      if (partial_visited_fluid_sites >= fluid_sites_per_unit)
+				{
+				  ++proc_count;
+				  unvisited_fluid_sites -= partial_visited_fluid_sites;
+				  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - proc_count));
+				  partial_visited_fluid_sites = 0;
+				}
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+  else
+    {
+      for (int unit_level = 1; unit_level >= 0; unit_level--)
+	{
+	  int up_units_max, marker, machine_id;
+	  
+	  if (unit_level == 1)
+	    {
+	      up_units_max = 1;
+	      fluid_sites_per_unit = 0;
+	    }
+	  else
+	    {
+	      up_units_max = net_machines;
+	      
+#ifndef FREEROOT
+	      fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)net->procs);
+	      proc_count = 0;
+#else
+	      fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - 1));
+	      proc_count = 1;
+#endif
+	    }
+	  for (int up_unit = 0; up_unit < up_units_max; up_unit++)
+	    {
+	      if (unit_level == 1)
+		{
+		  marker = -1;
+		  
+		  proc_count = net->procs;
+		  
+		  machine_id = proc_count - net->procs;
+		  
+#ifndef FREEROOT
+		  fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites *
+						   (double)net->procs_per_machine[ machine_id ] / net->procs);
+#else
+		  double weight;
+		  
+		  weight = (double)(net->procs_per_machine[machine_id] * net->procs) / (double)(net->procs - 1);
+		  
+		  fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites * weight / net_machines);
+#endif
+		}
+	      else
+		{
+		  marker = net->procs + up_unit;
+		}
+	      partial_visited_fluid_sites = 0;
+	      
+	      n = -1;
+	      
+	      for (i = 0; i < blocks_x; i++)
+		{
+		  for (j = 0; j < blocks_y; j++)
+		    {
+		      for (k = 0; k < blocks_z; k++)
+			{
+			  proc_block_p = &net->proc_block[ ++n ];
+			  
+			  if (proc_block_p->proc_id == NULL)
 			    {
 			      continue;
 			    }
-			  proc_block_p->proc_id[ m ] = proc_count;
+			  m = -1;
 			  
-			  if (proc_count == net->id)
+			  for (site_i = i * block_size; site_i < i * block_size + block_size; site_i++)
 			    {
-			      ++net->my_sites;
-			    }
-			  ++partial_visited_fluid_sites;
-			  
-			  ++net->fluid_sites[ proc_count ];
-			  
-			  sites_a = 1;
-			  site_location_a_p = &site_location_a[ 0 ];
-			  site_location_a_p->i = site_i;
-			  site_location_a_p->j = site_j;
-			  site_location_a_p->k = site_k;
-			  
-			  are_fluid_sites_incrementing = 1;
-			  
-			  while (partial_visited_fluid_sites < fluid_sites_per_unit &&
-				 are_fluid_sites_incrementing)
-			    {
-			      sites_b = 0;
-			      are_fluid_sites_incrementing = 0;
-			      
-			      for (index_a = 0;
-				   index_a < sites_a && partial_visited_fluid_sites < fluid_sites_per_unit;
-				   index_a++)
+			      for (site_j = j * block_size; site_j < j * block_size + block_size; site_j++)
 				{
-				  site_location_a_p = &site_location_a[ index_a ];
-				  
-				  for (l = 1;
-				       l < 15 && partial_visited_fluid_sites < fluid_sites_per_unit;
-				       l++)
+				  for (site_k = k * block_size; site_k < k * block_size + block_size; site_k++)
 				    {
-				      neigh_i = site_location_a_p->i + e_x[ l ];
-				      neigh_j = site_location_a_p->j + e_y[ l ];
-				      neigh_k = site_location_a_p->k + e_z[ l ];
-				      
-				      if (neigh_i == -1 || neigh_i == sites_x) continue;
-				      if (neigh_j == -1 || neigh_j == sites_y) continue;
-				      if (neigh_k == -1 || neigh_k == sites_z) continue;
-				      
-				      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
-				      
-				      if (proc_id_p == NULL || *proc_id_p != -1)
+				      if (proc_block_p->proc_id[ ++m ] != marker)
 					{
 					  continue;
 					}
-				      *proc_id_p = proc_count;
-				      
-				      ++partial_visited_fluid_sites;
-				      
-				      ++net->fluid_sites[ proc_count ];
-				      
-				      are_fluid_sites_incrementing = 1;
-				      
-				      if (sites_b == sites_buffer_size)
-					{
-					  sites_buffer_size *= 2;
-					  site_location_a = (SiteLocation *)realloc(site_location_a,
-										    sizeof(SiteLocation) * sites_buffer_size);
-					  site_location_b = (SiteLocation *)realloc(site_location_b,
-										    sizeof(SiteLocation) * sites_buffer_size); 
-					}
-				      site_location_b_p = &site_location_b[ sites_b ];
-				      site_location_b_p->i = neigh_i;
-				      site_location_b_p->j = neigh_j;
-				      site_location_b_p->k = neigh_k;
-				      ++sites_b;
+				      proc_block_p->proc_id[ m ] = proc_count;
 				      
 				      if (proc_count == net->id)
 					{
 					  ++net->my_sites;
 					}
-				    }
-				}
-			      site_location_a_p = site_location_a;
-			      site_location_a = site_location_b;
-			      site_location_b = site_location_a_p;
-			      sites_a = sites_b;
-			    }
-			  if (partial_visited_fluid_sites >= fluid_sites_per_unit)
-			    {
-			      ++proc_count;
-			      unvisited_fluid_sites -= partial_visited_fluid_sites;
-			      fluid_sites_per_unit = (int)ceil((double)(unvisited_fluid_sites) / (double)(net->procs - proc_count));
-			      partial_visited_fluid_sites = 0;
-			    }
-			}
-		    }
-		}
-	    }
-	}
-    }
-  /*
-  for (n = 0; n < net->procs; n++)
-    {
-      net->fluid_sites[ n ] = 0;
-    }
-  unvisited_fluid_sites = lbm->total_fluid_sites;
-  
-  for (int unit_level = 1; unit_level >= 0; unit_level--)
-    {
-      int up_units_max, marker, machine_id;
-      
-      if (unit_level == 1)
-	{
-	  up_units_max = 1;
-	  fluid_sites_per_unit = 0;
-	}
-      else
-	{
-	  up_units_max = net_machines;
-	  
-#ifndef FREEROOT
-	  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)net->procs);
-	  proc_count = 0;
-#else
-	  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - 1));
-	  proc_count = 1;
-#endif
-	}
-      for (int up_unit = 0; up_unit < up_units_max; up_unit++)
-	{
-	  if (unit_level == 1)
-	    {
-	      marker = -1;
-	      
-	      proc_count = net->procs;
-	      
-	      machine_id = proc_count - net->procs;
-	      
-#ifndef FREEROOT
-	      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites *
-					       (double)net->procs_per_machine[ machine_id ] / net->procs);
-#else
-	      double weight;
-	      
-	      weight = (double)(net->procs_per_machine[machine_id] * net->procs) / (double)(net->procs - 1);
-	      
-	      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites * weight / net_machines);
-#endif
-	    }
-	  else
-	    {
-	      marker = net->procs + up_unit;
-	    }
-	  partial_visited_fluid_sites = 0;
-	  
-	  n = -1;
-	  
-	  for (i = 0; i < blocks_x; i++)
-	    {
-	      for (j = 0; j < blocks_y; j++)
-		{
-		  for (k = 0; k < blocks_z; k++)
-		    {
-		      proc_block_p = &net->proc_block[ ++n ];
-		      
-		      if (proc_block_p->proc_id == NULL)
-			{
-			  continue;
-			}
-		      m = -1;
-		      
-		      for (site_i = i * block_size; site_i < i * block_size + block_size; site_i++)
-			{
-			  for (site_j = j * block_size; site_j < j * block_size + block_size; site_j++)
-			    {
-			      for (site_k = k * block_size; site_k < k * block_size + block_size; site_k++)
-				{
-				  if (proc_block_p->proc_id[ ++m ] != marker)
-				    {
-				      continue;
-				    }
-				  proc_block_p->proc_id[ m ] = proc_count;
-				  
-				  if (proc_count == net->id)
-				    {
-				      ++net->my_sites;
-				    }
-				  ++partial_visited_fluid_sites;
-				  
-				  if (unit_level == 0) ++net->fluid_sites[ proc_count ];
-				  
-				  sites_a = 1;
-				  site_location_a_p = &site_location_a[ 0 ];
-				  site_location_a_p->i = site_i;
-				  site_location_a_p->j = site_j;
-				  site_location_a_p->k = site_k;
-				  
-				  are_fluid_sites_incrementing = 1;
-				  
-				  while (partial_visited_fluid_sites < fluid_sites_per_unit &&
-					 are_fluid_sites_incrementing)
-				    {
-				      sites_b = 0;
-				      are_fluid_sites_incrementing = 0;
+				      ++partial_visited_fluid_sites;
 				      
-				      for (index_a = 0;
-					   index_a < sites_a && partial_visited_fluid_sites < fluid_sites_per_unit;
-					   index_a++)
+				      if (unit_level == 0) ++net->fluid_sites[ proc_count ];
+				      
+				      sites_a = 1;
+				      site_location_a_p = &site_location_a[ 0 ];
+				      site_location_a_p->i = site_i;
+				      site_location_a_p->j = site_j;
+				      site_location_a_p->k = site_k;
+				      
+				      are_fluid_sites_incrementing = 1;
+				      
+				      while (partial_visited_fluid_sites < fluid_sites_per_unit &&
+					     are_fluid_sites_incrementing)
 					{
-					  site_location_a_p = &site_location_a[ index_a ];
+					  sites_b = 0;
+					  are_fluid_sites_incrementing = 0;
 					  
-					  for (l = 1;
-					       l < 15 && partial_visited_fluid_sites < fluid_sites_per_unit;
-					       l++)
+					  for (index_a = 0;
+					       index_a < sites_a && partial_visited_fluid_sites < fluid_sites_per_unit;
+					       index_a++)
 					    {
-					      neigh_i = site_location_a_p->i + e_x[ l ];
-					      neigh_j = site_location_a_p->j + e_y[ l ];
-					      neigh_k = site_location_a_p->k + e_z[ l ];
+					      site_location_a_p = &site_location_a[ index_a ];
 					      
-					      if (neigh_i == -1 || neigh_i == sites_x) continue;
-					      if (neigh_j == -1 || neigh_j == sites_y) continue;
-					      if (neigh_k == -1 || neigh_k == sites_z) continue;
-					      
-					      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
-					      
-					      if (proc_id_p == NULL || *proc_id_p != marker)
+					      for (l = 1;
+						   l < 15 && partial_visited_fluid_sites < fluid_sites_per_unit;
+						   l++)
 						{
-						  continue;
-						}
-					      *proc_id_p = proc_count;
-					      
-					      ++partial_visited_fluid_sites;
-					      
-					      if (unit_level == 0) ++net->fluid_sites[ proc_count ];
-					      
-					      are_fluid_sites_incrementing = 1;
-					      
-					      if (sites_b == sites_buffer_size)
-						{
-						  sites_buffer_size *= 2;
-						  site_location_a = (SiteLocation *)realloc(site_location_a,
-											    sizeof(SiteLocation) * sites_buffer_size);
-						  site_location_b = (SiteLocation *)realloc(site_location_b,
-											    sizeof(SiteLocation) * sites_buffer_size); 
-						}
-					      site_location_b_p = &site_location_b[ sites_b ];
-					      site_location_b_p->i = neigh_i;
-					      site_location_b_p->j = neigh_j;
-					      site_location_b_p->k = neigh_k;
-					      ++sites_b;
-					      
-					      if (proc_count == net->id)
-						{
-						  ++net->my_sites;
+						  neigh_i = site_location_a_p->i + e_x[ l ];
+						  neigh_j = site_location_a_p->j + e_y[ l ];
+						  neigh_k = site_location_a_p->k + e_z[ l ];
+						  
+						  if (neigh_i == -1 || neigh_i == sites_x) continue;
+						  if (neigh_j == -1 || neigh_j == sites_y) continue;
+						  if (neigh_k == -1 || neigh_k == sites_z) continue;
+						  
+						  proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
+						  
+						  if (proc_id_p == NULL || *proc_id_p != marker)
+						    {
+						      continue;
+						    }
+						  *proc_id_p = proc_count;
+						  
+						  ++partial_visited_fluid_sites;
+						  
+						  if (unit_level == 0) ++net->fluid_sites[ proc_count ];
+						  
+						  are_fluid_sites_incrementing = 1;
+						  
+						  if (sites_b == sites_buffer_size)
+						    {
+						      sites_buffer_size *= 2;
+						      site_location_a = (SiteLocation *)realloc(site_location_a,
+												sizeof(SiteLocation) * sites_buffer_size);
+						      site_location_b = (SiteLocation *)realloc(site_location_b,
+												sizeof(SiteLocation) * sites_buffer_size); 
+						    }
+						  site_location_b_p = &site_location_b[ sites_b ];
+						  site_location_b_p->i = neigh_i;
+						  site_location_b_p->j = neigh_j;
+						  site_location_b_p->k = neigh_k;
+						  ++sites_b;
+						  
+						  if (proc_count == net->id)
+						    {
+						      ++net->my_sites;
+						    }
 						}
 					    }
+					  site_location_a_p = site_location_a;
+					  site_location_a = site_location_b;
+					  site_location_b = site_location_a_p;
+					  sites_a = sites_b;
 					}
-				      site_location_a_p = site_location_a;
-				      site_location_a = site_location_b;
-				      site_location_b = site_location_a_p;
-				      sites_a = sites_b;
-				    }
-				  if (partial_visited_fluid_sites >= fluid_sites_per_unit)
-				    {
-				      ++proc_count;
-				      
-				      if (unit_level == 0)
+				      if (partial_visited_fluid_sites >= fluid_sites_per_unit)
 					{
-					  unvisited_fluid_sites -= partial_visited_fluid_sites;
-					  fluid_sites_per_unit = (int)ceil((double)(unvisited_fluid_sites) / (double)(net->procs - proc_count));
+					  ++proc_count;
+					  
+					  if (unit_level == 0)
+					    {
+					      unvisited_fluid_sites -= partial_visited_fluid_sites;
+					      fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - proc_count));
+					    }
+					  partial_visited_fluid_sites = 0;
 					}
-				      partial_visited_fluid_sites = 0;
 				    }
 				}
 			    }
@@ -573,7 +572,7 @@ void netInit (LBM *lbm, Net *net)
 	    }
 	}
     }
-  */
+
   free(site_location_b);
   free(site_location_a);
   
@@ -717,7 +716,7 @@ void netInit (LBM *lbm, Net *net)
 			      
 			      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
 			      
-			      if (proc_id_p == NULL || *proc_id_p == net->id || *proc_id_p == (1 << 14))
+			      if (proc_id_p == NULL || *proc_id_p == net->id || *proc_id_p == (1 << 30))
 				{
 				  continue;
 				}
@@ -841,20 +840,26 @@ void netInit (LBM *lbm, Net *net)
 	}
     }
   
+#ifndef TD
+  f_old = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
+  f_new = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
+#else
+  f_old = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
+  f_new = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
+#endif
+  
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
   // streamed between different partitions) are collected and the
   // buffers needed for the communications are set from here
   
   f_data = (short int *)malloc(sizeof(short int) * 4 * net->shared_fs);
-#ifndef TD
-  f_to_send = (double *)malloc(sizeof(double) * net->shared_fs);
-  f_to_recv = (double *)malloc(sizeof(double) * net->shared_fs);
-#else
+#ifdef TD
   f_to_send = (double *)malloc(sizeof(double) * net->shared_fs*2);
   f_to_recv = (double *)malloc(sizeof(double) * net->shared_fs*2);
-#endif
+  
   f_send_id = (int *)malloc(sizeof(int) * net->shared_fs);
+#endif
   f_recv_iv = (int *)malloc(sizeof(int) * net->shared_fs);
   
   net->shared_fs = 0;
@@ -863,13 +868,13 @@ void netInit (LBM *lbm, Net *net)
     {
       net->neigh_proc[ n ].f_data    = &f_data[ net->shared_fs<<2 ];
 #ifndef TD
-      net->neigh_proc[ n ].f_to_send = &f_to_send[ net->shared_fs ];
-      net->neigh_proc[ n ].f_to_recv = &f_to_recv[ net->shared_fs ];
+      net->neigh_proc[ n ].f_head    = net->my_sites * 15 + 1 + net->shared_fs;
 #else
       net->neigh_proc[ n ].f_to_send = &f_to_send[ net->shared_fs*2 ];
       net->neigh_proc[ n ].f_to_recv = &f_to_recv[ net->shared_fs*2 ];
-#endif
+      
       net->neigh_proc[ n ].f_send_id = &f_send_id[ net->shared_fs ];
+#endif
       net->neigh_proc[ n ].f_recv_iv = &f_recv_iv[ net->shared_fs ];
       
 #ifndef BENCH
@@ -879,14 +884,6 @@ void netInit (LBM *lbm, Net *net)
       net->shared_fs += net->neigh_proc[ n ].fs;
       net->neigh_proc[ n ].fs = 0;
     }
-  
-#ifndef TD
-  f_old = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1));
-  f_new = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1));
-#else
-  f_old = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
-  f_new = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
-#endif
   
   if (net->my_sites > 0)
     {
@@ -960,7 +957,7 @@ void netInit (LBM *lbm, Net *net)
 #endif
 			      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
 			      
-			      if (proc_id_p == NULL || *proc_id_p == 1 << 14)
+			      if (proc_id_p == NULL || *proc_id_p == 1 << 30)
 				{
 				  continue;
 				}
@@ -1075,6 +1072,11 @@ void netInit (LBM *lbm, Net *net)
   	    }
   	}
     }
+  
+#ifndef TD
+int f_count = net->my_sites * 15;
+#endif
+ 
   for (m = 0; m < net->neigh_procs; m++)
     {
       neigh_proc_p = &net->neigh_proc[ m ];
@@ -1089,18 +1091,24 @@ void netInit (LBM *lbm, Net *net)
 	  
 	  site_map = *netSiteMapPointer (i, j, k, net);
 #ifndef TD
-	  neigh_proc_p->f_send_id[ n ] = site_map * 15 + l;
+	  f_id[ site_map * 15 + l ] = ++f_count;
 	  neigh_proc_p->f_recv_iv[ n ] = site_map * 15 + inv_dir[ l ];
+#ifndef BENCH
+	  neigh_proc_p->d_to_send_p[ n ] = &d[ site_map ];
+	  nd_p[ site_map*14+l-1 ] = &f_new[ neigh_proc_p->f_head + n ];
+#endif
 #else
 	  neigh_proc_p->f_send_id[ n ] = site_map * 30 + l;
 	  neigh_proc_p->f_recv_iv[ n ] = site_map * 30 + inv_dir[ l ];
-#endif
 #ifndef BENCH
 	  neigh_proc_p->d_to_send_p[ n ] = &d[ site_map ];
 	  nd_p[ site_map*14+l-1 ] = &neigh_proc_p->f_to_recv[ n ];
 #endif
+#endif
 	}
     }
+  free(f_data);
+  
   net->bm_time = myClock () - seconds;
   
   if (net->my_sites > 0)
@@ -1138,12 +1146,12 @@ void netEnd (Net *net)
 	}
     }
   
-  
   free(f_recv_iv);
+#ifdef TD
   free(f_send_id);
   free(f_to_recv);
   free(f_to_send);
-  free(f_data);
+#endif
   
   
   free(net->map_block);
