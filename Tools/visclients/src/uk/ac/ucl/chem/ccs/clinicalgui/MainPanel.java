@@ -2,12 +2,15 @@ package uk.ac.ucl.chem.ccs.clinicalgui;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
-
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
+import uk.ac.ucl.chem.ccs.clinicalgui.res.ResPanel;
 
-
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 /**
 * This code was edited or generated using CloudGarden's Jigloo
 * SWT/Swing GUI Builder, which is free for non-commercial
@@ -22,10 +25,11 @@ import javax.swing.WindowConstants;
 */
 public class MainPanel extends javax.swing.JPanel {
 	private JTabbedPane jTabbedPane1;
-	private ReservationsPanel reservationPanel1;
+	private ResPanel reservationPanel1;
 	private ModelGenerationPanel modelGenerationPanel1;
 	private SimulationMonitoringPanel simulationMonitoringPanel1;
 	private SimulationLaunchPanel simulationLaunchPanel1;
+	private int guiStage = 0;
 
 	/**
 	* Auto-generated main method to display this 
@@ -56,8 +60,10 @@ public class MainPanel extends javax.swing.JPanel {
 				jTabbedPane1 = new JTabbedPane();
 				this.add(jTabbedPane1);
 				{
-					reservationPanel1 = new ReservationsPanel();
+					reservationPanel1 = new ResPanel(ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.resfile"));
+
 					jTabbedPane1.addTab("Reservation", null, reservationPanel1, null);
+					reservationPanel1.next.addActionListener(new NextListener());
 				}
 				{
 					modelGenerationPanel1 = new ModelGenerationPanel();
@@ -71,10 +77,24 @@ public class MainPanel extends javax.swing.JPanel {
 					simulationMonitoringPanel1 = new SimulationMonitoringPanel();
 					jTabbedPane1.addTab("Simulation Monitoring", null, simulationMonitoringPanel1, null);
 				}
+				jTabbedPane1.addChangeListener(new ChangeListener() {
+					public void stateChanged(ChangeEvent e) {
+						guiStage = jTabbedPane1.getSelectedIndex();
+					}
+				});
+				
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private class NextListener implements ActionListener {
+		public void actionPerformed (ActionEvent evt) {
+			guiStage++;
+			jTabbedPane1.setSelectedIndex(guiStage);
+		}
+		
 	}
 
 }

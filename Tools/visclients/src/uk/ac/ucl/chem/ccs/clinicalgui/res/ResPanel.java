@@ -17,6 +17,7 @@ import javax.swing.WindowConstants;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+import org.jdesktop.application.Application;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,21 +25,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.StreamTokenizer;
-import java.util.Comparator;
-import java.awt.event.MouseAdapter;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Collections;
+
 /**
 * This code was edited or generated using CloudGarden's Jigloo
 * SWT/Swing GUI Builder, which is free for non-commercial
@@ -55,6 +42,7 @@ public class ResPanel extends javax.swing.JPanel {
 	private JLabel jLabel1;
 	private JPanel holder;
 	private JButton view;
+	public JButton next;
 	private JTable resTable;
 	private JPanel jPanel1;
 	private JButton newRes;
@@ -68,6 +56,7 @@ public class ResPanel extends javax.swing.JPanel {
 	private JScrollPane resList;
 	private Vector tableData;
 	private String filename;
+	
 	
 	/**
 	* Auto-generated main method to display this 
@@ -162,7 +151,7 @@ public class ResPanel extends javax.swing.JPanel {
 					}
 					{
 						view = new JButton();
-						controlPanel.add(view, "3, 0");
+						controlPanel.add(view, "2, 0");
 						view.setText("View");
 						view.addActionListener(new ActionListener() {
 							public void actionPerformed (ActionEvent evt) {
@@ -173,13 +162,13 @@ public class ResPanel extends javax.swing.JPanel {
 					}
 					{
 						edit = new JButton();
-						controlPanel.add(edit, "3, 1");
+						controlPanel.add(edit, "3, 0");
 						edit.setText("Edit");
 						edit.setEnabled(false);
 					}
 					{
 						delete = new JButton();
-						controlPanel.add(delete, "3, 2");
+						controlPanel.add(delete, "3, 1");
 						delete.setText("Delete");
 						delete.addActionListener(new ActionListener() {
 							public void actionPerformed (ActionEvent evt) {
@@ -203,6 +192,11 @@ public class ResPanel extends javax.swing.JPanel {
 								}
 							}
 						});
+					}
+					{
+						next = new JButton();
+						controlPanel.add(next, "3, 3");
+						next.setName("next");
 					}
 				}
 				{
@@ -240,6 +234,7 @@ public class ResPanel extends javax.swing.JPanel {
 			}
 			this.setPreferredSize(new java.awt.Dimension(630, 623));
 			this.setSize(630, 623);
+			Application.getInstance().getContext().getResourceMap(getClass()).injectComponents(this);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -285,6 +280,15 @@ public class ResPanel extends javax.swing.JPanel {
 
 	private void saveData () {
 		ReservationPersistance.write(filename, tableData);
+	}
+	
+	private void clickedNext () {
+		int selectedRow = resTable.getSelectedRow();
+		System.out.println("Selected row is " + selectedRow);
+		if (selectedRow > -1){
+			System.out.println("So this is called");
+				ClinicalGuiClient.reservation = (AdvancedReservation)tableData.get(selectedRow);
+		}
 	}
 	
 	private void viewDetails () {
