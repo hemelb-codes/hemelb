@@ -384,7 +384,9 @@ extern int *f_recv_iv;
 extern unsigned int *net_site_data;
 
 extern double *inlet_density;
+extern double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;
 extern double *outlet_density;
+extern double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
 
 
 extern int col_pixels, col_pixels_max;
@@ -509,6 +511,7 @@ void lbmUpdateParameters (LBM *lbm, SteerParams *steer);
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net);
+void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
 
 void rtInit (Net *net);
 void rtUpdateColour (float dt, float palette[], float col[]);
