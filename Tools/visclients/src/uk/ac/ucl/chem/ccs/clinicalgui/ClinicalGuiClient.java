@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+import uk.ac.ucl.chem.ccs.aheclient.res.AdvancedReservation;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -38,16 +39,21 @@ public class ClinicalGuiClient extends SingleFrameApplication {
     private JPanel topPanel;
     private JMenuItem exit;
     private MainPanel mainPanel1;
+    private JMenuItem configureAG;
     private JSeparator jSeparator1;
     private JMenuItem manage;
     private JMenuItem change;
     private JMenu jMenu1;
     private JMenuBar jMenuBar1;
-    public static Properties prop;
     private static String propertiesFile;
+    private JMenuItem agToolKitLaunch;
+    private JMenu accessGridMenu;
 	private static Log cat;
 
-    //@Override
+    public static Properties prop;
+    public static AdvancedReservation reservation = null;
+    public static int patientID = 0;
+	//@Override
     protected void startup() {
     	loadProperties();
     	{
@@ -85,6 +91,23 @@ public class ClinicalGuiClient extends SingleFrameApplication {
 					});
     			}
     		}
+    		{
+    			accessGridMenu = new JMenu();
+    			jMenuBar1.add(accessGridMenu);
+    			accessGridMenu.setName("accessGridMenu");
+    			{
+    				agToolKitLaunch = new JMenuItem();
+    				accessGridMenu.add(agToolKitLaunch);
+    				agToolKitLaunch.setName("agToolKitLaunch");
+    				agToolKitLaunch.setEnabled(false);
+    			}
+    			{
+    				configureAG = new JMenuItem();
+    				accessGridMenu.add(configureAG);
+    				configureAG.setName("configureAG");
+    				configureAG.setEnabled(false);
+    			}
+    		}
     	}
         topPanel = new JPanel();
         GridLayout topPanelLayout = new GridLayout(1, 1);
@@ -109,6 +132,7 @@ public class ClinicalGuiClient extends SingleFrameApplication {
 			cat = LogFactory.getLog(ClinicalGuiClient.class);
         launch(ClinicalGuiClient.class, args);
     }
+    
     
     private static void loadProperties () {
     	String confprop = System.getProperty("uk.ac.ucl.chem.ccs.aheclient.conffile");
