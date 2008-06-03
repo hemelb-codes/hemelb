@@ -97,7 +97,9 @@ int *f_recv_iv = NULL;
 unsigned int *net_site_data = NULL;
 
 double *inlet_density = NULL;
+double *inlet_density_avg = NULL, *inlet_density_amp = NULL, *inlet_density_phs = NULL;
 double *outlet_density = NULL;
+double *outlet_density_avg = NULL, *outlet_density_amp = NULL, *outlet_density_phs = NULL;
 
 
 int col_pixels, col_pixels_max;

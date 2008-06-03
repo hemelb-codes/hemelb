@@ -849,6 +849,22 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
 }
 
 
+void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
+{
+  double w = 2. * PI / lbm->period;
+  
+  
+  for (int i = 0; i < lbm->inlets; i++)
+    {
+      inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double)time_step + inlet_density_phs[i]);
+    }
+  for (int i = 0; i < lbm->outlets; i++)
+    {
+      outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i] * cos(w * (double)time_step + outlet_density_phs[i]);
+    }
+}
+
+
 void lbmInit (char *system_file_name, char *checkpoint_file_name,
 	      LBM *lbm, Net *net)
 {
@@ -1439,12 +1455,15 @@ int lbmCycle (int cycle_id, int time_step, int check_conv, int perform_rt, int *
 
 void lbmEnd (LBM *lbm)
 {
+  free(outlet_density_avg);
+  free(outlet_density_amp);
+  free(outlet_density_phs);
   free(outlet_density);
-  outlet_density = NULL;
   
+  free(inlet_density_avg);
+  free(inlet_density_amp);
+  free(inlet_density_phs);
   free(inlet_density);
-  inlet_density = NULL;
   
   free(lbm->fluid_sites_per_block);
-  lbm->fluid_sites_per_block = NULL;
 }

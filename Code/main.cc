@@ -173,37 +173,36 @@ int send_all(int sockid, char *buf, int *length ) {
 
 }
 
+
 void *hemeLB_steer (void *ptr)
 {
   while(1) {
 
-  int read_fd = (int)ptr;
-  printf("Kicking off steering thread with FD %i\n",read_fd);
-
-  char* xdr_steering_data = (char*)malloc( sizeof(int) );
+  long int read_fd = (long int)ptr;
+  printf("Kicking off steering thread with FD %i\n", (int)read_fd);
+ 
+  int num_chars = sizeof(int) / sizeof(char);
+  int bytes = sizeof(char) * num_chars;
+ 
+  char* xdr_steering_data = (char *)malloc(bytes);
   
   XDR xdr_steering_stream;
   
-  int bytes = 4;
   
-  xdrmem_create(&xdr_steering_stream, xdr_steering_data, 4, XDR_DECODE);
-  
-  recv_all(read_fd, xdr_steering_data, &bytes);
+  xdrmem_create(&xdr_steering_stream, xdr_steering_data, bytes, XDR_DECODE);
+ 
+  recv_all (read_fd, xdr_steering_data, &num_chars);
   
   int view_type;
-  
-  xdr_int(&xdr_steering_stream, &view_type);
-  
-  printf("VIEW TYPE -> %i\n", view_type);
+ 
+  xdr_int (&xdr_steering_stream, &view_type);
+ 
+  printf ("VIEW TYPE -> %i\n", view_type);
   
   vis_flow_field_type = view_type;
-  
   }
-
-
-
-
 }
+
 
 void *hemeLB_network (void *ptr)
 {
@@ -385,44 +384,17 @@ void ColourPalette (float value, float col[])
 }
 
 
-void TimeVaryingDensities (int cycle_id, int period, int time_step, int inlets, int outlets,
-			   double inlet_density[], double outlet_density[])
-{
-  double K = 2.50e-4;
-  double w = 2. * PI / period;
-  
-  inlet_density[0]  = 1. + (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
-  outlet_density[0] = 1. - (((32.*0.5/Cs2) * K) * cos(w * (double)time_step + 0.5 * PI));
-}
-
-/*
-void TimeVaryingDensities (int cycle_id, int period, int time_step, int inlets, int outlets,
-			   double inlet_density[], double outlet_density[])
-{
-  double density_amp = 2.953122e-02;
-  double w = 2. * PI / period;
-
-  
-  for (int i = 0; i < inlets; i++)
-    {
-      inlet_density[i] = 1. - density_amp * cos(w * (double)time_step);
-    }
-}
-*/
-
 int IsBenckSectionFinished (double minutes, double elapsed_time)
 {
   int is_bench_section_finished = 0;
-#ifndef NOMPI
-  int err;
-#endif
+  
   
   if (elapsed_time > minutes * 60.)
     {
       is_bench_section_finished = 1;
     }
 #ifndef NOMPI
-  err = MPI_Bcast (&is_bench_section_finished, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast (&is_bench_section_finished, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
   
   if (is_bench_section_finished)
@@ -822,9 +794,6 @@ int main (int argc, char *argv[])
   
   for (cycle_id = 0; cycle_id < lbm.cycles_max && !is_finished; cycle_id++)
     {
-	
-	  sleep(0.5);
-	
       ray_tracing_count = 0;
       
       for (time_step = 0; time_step < lbm.period; time_step++)
@@ -934,8 +903,8 @@ int main (int argc, char *argv[])
 #ifndef TD
 	  stability = lbmCycle (write_checkpoint, check_conv, perform_rt, &is_converged, &lbm, &net);
 #else
-	  TimeVaryingDensities (cycle_id, lbm.period, time_step, lbm.inlets, lbm.outlets,
-	  			inlet_density, outlet_density);
+	  lbmVaryBoundaryDensities (cycle_id, time_step, &lbm);
+	  
 	  stability = lbmCycle (cycle_id, time_step, check_conv, perform_rt, &is_converged, &lbm, &net);
 #endif // TD
 	  if (perform_rt == 1 && is_thread_locked == 0)
