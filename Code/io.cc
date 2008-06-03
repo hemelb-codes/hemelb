@@ -344,28 +344,42 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       fflush(NULL);
       
       fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
-
-      fscanf (parameters_file, "%le\n", &lbm->tau);///////
-
+      fscanf (parameters_file, "%le\n", &lbm->tau);
       fscanf (parameters_file, "%i\n", &lbm->inlets);
-
-      inlet_density = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      
+      inlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      inlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      inlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      inlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  fscanf (parameters_file, "%le\n", &inlet_density[ n ]);
+	  fscanf (parameters_file, "%le %le %le\n",
+		  &inlet_density_avg[ n ], &inlet_density_amp[ n ], &inlet_density_phs[ n ]);
+	  inlet_density_phs[ n ] *= PI / 180.;
+#ifdef BENCH
+	  inlet_density_avg[ n ] = 1.0;
+	  inlet_density_amp[ n ] = 0.0;
+	  inlet_density_phs[ n ] = 0.0;
+#endif
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
       
-      outlet_density = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      outlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      outlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      outlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      outlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
       
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  //int iters;
-	  //fscanf (parameters_file, "%i\n", &iters);
-	  //outlet_density[ n ] = 1. - 0.02376 * iters / 703;
-	  //printf ("%le\n", outlet_density[ n ]);
-	  fscanf (parameters_file, "%le\n", &outlet_density[ n ]);
+	  fscanf (parameters_file, "%le %le %le\n",
+		  &outlet_density_avg[ n ], &outlet_density_amp[ n ], &outlet_density_phs[ n ]);
+	  outlet_density_phs[ n ] *= PI / 180.;
+#ifdef BENCH
+	  outlet_density_avg[ n ] = 1.0;
+	  outlet_density_amp[ n ] = 0.0;
+	  outlet_density_phs[ n ] = 0.0;
+#endif
 	}
       fscanf (parameters_file, "%i\n", &lbm->cycles_max);
       fscanf (parameters_file, "%le\n", &lbm->tolerance);
@@ -380,16 +394,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
       par_to_send[ 1 ] = 0.1 + (double)lbm->outlets;
-#ifdef BENCH
-      for (n = 0; n < lbm->inlets; n++)
-	{
-	  inlet_density[ n ] = 1.;
-	}
-      for (n = 0; n < lbm->outlets; n++)
-	{
-	  outlet_density[ n ] = 1.;
-	}
-#endif
     }
 #ifndef NOMPI
   net->err = MPI_Bcast (par_to_send, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -399,8 +403,15 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       lbm->inlets  = (int)par_to_send[ 0 ];
       lbm->outlets = (int)par_to_send[ 1 ];
       
-      inlet_density = (double *)malloc(sizeof(double) * lbm->inlets);
-      outlet_density = (double *)malloc(sizeof(double) * lbm->outlets);
+      inlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      inlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      inlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      inlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
+      
+      outlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      outlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      outlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      outlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
     }
   else
     {
@@ -409,23 +420,27 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  par_to_send[ 2 + n ] = inlet_density[ n ];
+	  par_to_send[ 2 + 3*n+0 ] = inlet_density_avg[ n ];
+	  par_to_send[ 2 + 3*n+1 ] = inlet_density_amp[ n ];
+	  par_to_send[ 2 + 3*n+2 ] = inlet_density_phs[ n ];
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  par_to_send[ 2 + lbm->inlets + n ] = outlet_density[ n ];
+	  par_to_send[ 2 + 3*lbm->inlets + 3*n+0 ] = outlet_density_avg[ n ];
+	  par_to_send[ 2 + 3*lbm->inlets + 3*n+1 ] = outlet_density_amp[ n ];
+	  par_to_send[ 2 + 3*lbm->inlets + 3*n+2 ] = outlet_density_phs[ n ];
 	}
-      par_to_send[ 2 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->cycles_max;
-      par_to_send[ 3 + lbm->inlets + lbm->outlets ] = lbm->tolerance;
+      par_to_send[ 2 + 3*(lbm->inlets+lbm->outlets) ] = 0.1 + (double)lbm->cycles_max;
+      par_to_send[ 3 + 3*(lbm->inlets+lbm->outlets) ] = lbm->tolerance;
 #ifndef TD
-      par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->check_freq;
+      par_to_send[ 4 + 3*(lbm->inlets+lbm->outlets) ] = 0.1 + (double)lbm->check_freq;
 #else
-      par_to_send[ 4 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->period;
+      par_to_send[ 4 + 3*(lbm->inlets+lbm->outlets) ] = 0.1 + (double)lbm->period;
 #endif
-      par_to_send[ 5 + lbm->inlets + lbm->outlets ] = 0.1 + (double)lbm->conv_freq;
+      par_to_send[ 5 + 3*(lbm->inlets+lbm->outlets) ] = 0.1 + (double)lbm->conv_freq;
     }
 #ifndef NOMPI
-  net->err = MPI_Bcast (par_to_send, 6 + lbm->inlets + lbm->outlets, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  net->err = MPI_Bcast (par_to_send, 6 + 3*(lbm->inlets+lbm->outlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
   if (net->id != 0)
     {
@@ -434,20 +449,33 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  inlet_density[ n ] = par_to_send[ 2 + n ];
+	  inlet_density_avg[ n ] = par_to_send[ 2 + 3*n+0 ];
+	  inlet_density_amp[ n ] = par_to_send[ 2 + 3*n+1 ];
+	  inlet_density_phs[ n ] = par_to_send[ 2 + 3*n+2 ];
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  outlet_density[ n ] = par_to_send[ 2 + lbm->inlets + n ];
+	  outlet_density_avg[ n ] = par_to_send[ 2 + 3*lbm->inlets + 3*n+0 ];
+	  outlet_density_amp[ n ] = par_to_send[ 2 + 3*lbm->inlets + 3*n+1 ];
+	  outlet_density_phs[ n ] = par_to_send[ 2 + 3*lbm->inlets + 3*n+2 ];
 	}
-      lbm->cycles_max       = (int)par_to_send[ 2 + lbm->inlets + lbm->outlets ];
-      lbm->tolerance        =      par_to_send[ 3 + lbm->inlets + lbm->outlets ];
+      lbm->cycles_max       = (int)par_to_send[ 2 + 3*(lbm->inlets+lbm->outlets) ];
+      lbm->tolerance        =      par_to_send[ 3 + 3*(lbm->inlets+lbm->outlets) ];
 #ifndef TD
-      lbm->check_freq       = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
+      lbm->check_freq       = (int)par_to_send[ 4 + 3*(lbm->inlets+lbm->outlets) ];
 #else
-      lbm->period           = (int)par_to_send[ 4 + lbm->inlets + lbm->outlets ];
+      lbm->period           = (int)par_to_send[ 4 + 3*(lbm->inlets+lbm->outlets) ];
 #endif
-      lbm->conv_freq        = (int)par_to_send[ 5 + lbm->inlets + lbm->outlets ];
+      lbm->conv_freq        = (int)par_to_send[ 5 + 3*(lbm->inlets+lbm->outlets) ];
+    }
+  
+  for (n = 0; n < lbm->inlets; n++)
+    {
+      inlet_density[ n ] = inlet_density_avg[ n ];
+    }
+  for (n = 0; n < lbm->outlets; n++)
+    {
+      outlet_density[ n ] = outlet_density_avg[ n ];
     }
 #ifndef TD
   lbm->period = 1;
