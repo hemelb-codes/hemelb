@@ -49,8 +49,6 @@ MPI_Datatype MPI_col_pixel_type;
 #endif
 
 
-#ifdef RG
-
 pthread_mutex_t network_buffer_copy_lock;
 pthread_cond_t network_send_frame;
 
@@ -60,22 +58,10 @@ int frame_size;
 
 unsigned char *pixel_data = NULL;
 
-#endif // RG
-
 
 double *f_old = NULL, *f_new = NULL;
 
 int *f_id = NULL;
-
-#ifndef TD
-double *vel = NULL;
-#endif
-
-#ifndef BENCH
-double *d = NULL;
-
-double **nd_p = NULL;
-#endif
 
 Cluster *cluster = NULL;
 
@@ -85,12 +71,7 @@ float ***cluster_flow_field = NULL;
 
 
 short int *f_data = NULL;
-#ifdef TD
-double *f_to_send = NULL;
-double *f_to_recv = NULL;
 
-int *f_send_id = NULL;
-#endif // TD
 int *f_recv_iv = NULL;
 
 
@@ -104,26 +85,17 @@ double *outlet_density_avg = NULL, *outlet_density_amp = NULL, *outlet_density_p
 
 int col_pixels, col_pixels_max;
 int col_pixels_recv[ MACHINES_MAX-1 ];
-#ifdef RG
-int col_pixels_locked;
-#endif
+//int col_pixels_locked;
+
 int *col_pixel_id = NULL;
 
 // ColPixel *col_pixel_send = NULL;
 ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
 ColPixel *col_pixel_recv = NULL;
-#ifdef RG
-ColPixel *col_pixel_locked = NULL;
-#endif
+//ColPixel *col_pixel_locked = NULL;
 
 
-#ifndef BENCH
-int is_unstable;
-#endif
-
-#ifdef TD
-int is_current;
-#endif
+int is_bench;
 
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;
@@ -156,13 +128,13 @@ float vis_t_min;
 float vis_value;
 
 
-int cluster_blocks_vec[4];
+int cluster_blocks_vec[3];
 int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
 
-float ray_dir[4];
-float ray_inv[4];
-float ray_col[4];
+float ray_dir[3];
+float ray_inv[3];
+float ray_col[3];
 
 
 int clusters;

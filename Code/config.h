@@ -26,15 +26,7 @@
 #endif
 
 
-#ifdef BENCH
-#undef RG
-#undef STEER
-#endif
-
-
-#ifdef RG
 #include <pthread.h>
-#endif // RG
 
 
 #ifdef STEER
@@ -64,11 +56,8 @@
 #define IMAGE_SIZE                     PIXELS_X * PIXELS_Y
 #define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
 
-#ifndef NOSIMD
-#define VIS_SIMD_SIZE                  4
-#else
 #define VIS_SIMD_SIZE                  3
-#endif
+
 
 #define PixelI(i)   i >> 16
 #define PixelJ(i)   i & 65535
@@ -122,17 +111,11 @@ extern int inv_dir[15];
 extern MPI_Datatype MPI_col_pixel_type;
 #endif
 
-// data structures useful to define the simulation set-up, construct
-// the system and partition it
-
-#ifdef RG
 
 extern pthread_mutex_t network_buffer_copy_lock;
 extern pthread_cond_t network_send_frame;
 
 extern int send_array_length;
-
-#endif // RG
 
 
 #ifdef STEER
@@ -152,11 +135,7 @@ struct SteerParams
   double tolerance;
   int    max_cycles;
   int    conv_freq;
-#ifndef TD
-  int    check_freq;
-#else
   int    period;
-#endif
   
   // vis
   float  ctr_x, ctr_y, ctr_z;
@@ -203,7 +182,6 @@ struct SiteLocation
 struct LBM
 {
   char *system_file_name;
-  char *checkpoint_file_name;
   
   double tau;
   double viscosity;
@@ -217,12 +195,8 @@ struct LBM
   int site_max_x, site_max_y, site_max_z;
   int inlets, outlets;
   int cycles_max;
-#ifndef TD
-  int check_freq;
-#endif
   int period;
   int conv_freq;
-  int is_checkpoint;
   
   float *block_density;
   
@@ -239,19 +213,8 @@ struct NeighProc
   
   short int *f_data;
   
-#ifndef TD
   int f_head;
-#else
-  double *f_to_send;
-  double *f_to_recv;
-  
-  int *f_send_id;
-#endif
   int *f_recv_iv;
-  
-#ifndef BENCH
-  double **d_to_send_p;
-#endif
 };
 
 
@@ -355,16 +318,6 @@ extern double *f_old, *f_new;
 
 extern int *f_id;
 
-#ifndef TD
-extern double *vel;
-#endif
-
-#ifndef BENCH
-extern double *d;
-
-extern double **nd_p;
-#endif
-
 extern Cluster *cluster;
 
 extern float **cluster_voxel;
@@ -373,12 +326,7 @@ extern float ***cluster_flow_field;
 
 
 extern short int *f_data;
-#ifdef TD
-extern double *f_to_send;
-extern double *f_to_recv;
 
-extern int *f_send_id;
-#endif // TD
 extern int *f_recv_iv;
 
 extern unsigned int *net_site_data;
@@ -391,26 +339,19 @@ extern double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
 
 extern int col_pixels, col_pixels_max;
 extern int col_pixels_recv[ MACHINES_MAX-1 ];
-#ifdef RG
-extern int col_pixels_locked;
-#endif
+//extern int col_pixels_locked;
+
 extern int *col_pixel_id;
 
 // extern ColPixel *col_pixel_send;
 extern ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
 extern ColPixel *col_pixel_recv;
-#ifdef RG
-extern ColPixel *col_pixel_locked;
-#endif
+
+//extern ColPixel *col_pixel_locked;
 
 
-#ifndef BENCH
-extern int is_unstable;
-#endif
+extern int is_bench;
 
-#ifdef TD
-extern int is_current;
-#endif
 
 extern int sites_x, sites_y, sites_z;
 extern int blocks_x, blocks_y, blocks_z;
@@ -442,7 +383,7 @@ extern float vis_t_min;
 extern float vis_value;
 
 
-extern int cluster_blocks_vec[4];
+extern int cluster_blocks_vec[3];
 extern int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
 extern float block_size_f;
@@ -453,9 +394,9 @@ extern float vis_flow_field_cutoff;
 extern float vis_t_min;
 
 
-extern float ray_dir[4];
-extern float ray_inv[4];
-extern float ray_col[4];
+extern float ray_dir[3];
+extern float ray_inv[3];
+extern float ray_col[3];
 
 extern int clusters;
 
@@ -483,14 +424,10 @@ void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_
 void lbmStress (double f[], double *stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 int lbmCollisionType (unsigned int site_data);
-void lbmInit (char *system_file_name, char *checkpoint_file_name, LBM *lbm, Net *net);
+void lbmInit (char *system_file_name, LBM *lbm, Net *net);
 void lbmSetInitialConditions (Net *net);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
-#ifndef TD
-int lbmCycle (int write_checkpoint, int check_conv, int perform_rt, int *is_converged, LBM *lbm, Net *net);
-#else
-int lbmCycle (int cycle_id, int time_step, int check_conv, int perform_rt, int *is_converged, LBM *lbm, Net *net);
-#endif
+int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 void lbmEnd (LBM *lbm);
 
 int netFindTopology (Net *net, int *depths);
@@ -501,16 +438,12 @@ void lbmReadConfig (LBM *lbm, Net *net);
 
 #ifdef STEER
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net, SteerParams *steer);
+void lbmUpdateParameters (LBM *lbm, SteerParams *steer);
 #else
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
 #endif
 
-#ifdef STEER
-void lbmUpdateParameters (LBM *lbm, SteerParams *steer);
-#endif
-
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
-void lbmSetInitialConditionsWithCheckpoint (LBM *lbm, Net *net);
 void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
 
 void rtInit (Net *net);
@@ -534,18 +467,15 @@ void visProjection (float ortho_x, float ortho_y,
 		    float dist,
 		    float zoom);
 void visInit (Net *net, Vis *vis);
-void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis);
-void visRenderB (char *image_file_name, void (*ColourPalette) (float value, float col[]),
-		 Net *net, Vis *vis);
+void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net);
+void visRenderB (int stream_image, int write_image, char *image_file_name, void (*ColourPalette) (float value, float col[]),
+		 Net *net);
 
 #ifdef STEER
 void visReadParameters (char *parameters_file_name, Net *net, Vis *vis, SteerParams *steer);
+void visUpdateParameters (LBM *lbm, Vis *vis, SteerParams *steer);
 #else
 void visReadParameters (char *parameters_file_name, Net *net, Vis *vis);
-#endif
-
-#ifdef STEER
-void visUpdateParameters (LBM *lbm, Vis *vis, SteerParams *steer);
 #endif
 
 void visEnd (void);
