@@ -1,5 +1,7 @@
 #include "config.h"
 
+#define NOSIMD
+
 
 void (*rtAABBvsRay[2][2][2]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far);
 
@@ -3672,9 +3674,6 @@ void visProjection (float ortho_x, float ortho_y,
 void visWritePixel (ColPixel *col_pixel_p)
 {
   int *col_pixel_id_p, i, j;
-#ifndef NOMPI
-  int err;
-#endif
   
   
   i = PixelI(col_pixel_p->i);
@@ -3687,7 +3686,7 @@ void visWritePixel (ColPixel *col_pixel_p)
 	  printf (" too many coloured pixels per proc\n");
 	  printf (" the execution is terminated\n");
 #ifndef NOMPI
-	  err = MPI_Abort (MPI_COMM_WORLD, 1);
+	  MPI_Abort (MPI_COMM_WORLD, 1);
 #else
 	  exit(1);
 #endif
@@ -3928,9 +3927,7 @@ void visInit (Net *net, Vis *vis)
   
   // col_pixel_send = (ColPixel *)malloc(sizeof(ColPixel) *  col_pixels_max * max(1, (net_machines - 1)));
   col_pixel_recv = (ColPixel *)malloc(sizeof(ColPixel) * col_pixels_max);
-#ifdef RG
-  col_pixel_locked = (ColPixel *)malloc(sizeof(ColPixel) * col_pixels_max);
-#endif
+  //col_pixel_locked = (ColPixel *)malloc(sizeof(ColPixel) * col_pixels_max);
   
   vis_pixels_max = IMAGE_SIZE;
   col_pixel_id = (int *)malloc(sizeof(int) * vis_pixels_max);
@@ -3976,7 +3973,7 @@ void visInit (Net *net, Vis *vis)
 }
 
 
-void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis)
+void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net)
 {
   int pixels_x, pixels_y;
   int i, j;
@@ -4095,10 +4092,8 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
 			  col_pixels_max <<= 1;
 			  col_pixel_recv = (ColPixel *)realloc(col_pixel_recv,
 							       sizeof(ColPixel) * col_pixels_max);
-#ifdef RG
-			  col_pixel_locked = (ColPixel *)realloc(col_pixel_locked,
-								 sizeof(ColPixel) * col_pixels_max);
-#endif
+			  //col_pixel_locked = (ColPixel *)realloc(col_pixel_locked,
+			  //					 sizeof(ColPixel) * col_pixels_max);
 			}
 		      col_pixel2 = &col_pixel_recv[ *col_pixel_id_p = col_pixels ];
 		      
@@ -4189,7 +4184,8 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, Vis
 }
 
 
-void visRenderB (char *image_file_name, void (*ColourPalette) (float value, float col[]), Net *net, Vis *vis)
+void visRenderB (int stream_image, int write_image, char *image_file_name,
+		 void (*ColourPalette) (float value, float col[]), Net *net)
 {
   // here, the intra-machine communications take place and the buffer
   // to stream to the client or the output image are set
@@ -4297,56 +4293,13 @@ void visRenderB (char *image_file_name, void (*ColourPalette) (float value, floa
       col_pixel_id[ (PixelI (col_pixel_recv[m].i)) * pixels_y + (PixelJ (col_pixel_recv[m].i)) ] = -1;
     }
   
-#ifndef BENCH
+  if (is_bench) return;
   
-  float factor;
-  
-  if (net->id != 0) return;
-  
-  if (vis_mode == 0)
-    {
-      factor = 255.F * vis_absorption_factor;
-    }
-  else
-    {
-      factor = 255.F;
-    }
-  
-#ifdef RG
-  
-  float col[3];
-  
-  
-  memcpy (col_pixel_locked, col_pixel_recv,
-  	  col_pixels * sizeof(ColPixel));
-  col_pixels_locked = col_pixels;
-  
-  if (vis_mode == 0)
-    {
-      for (n = 0; n < col_pixels; n++)
-	{
-	  col_pixel_locked[ n ].r *= factor;
-	  col_pixel_locked[ n ].g *= factor;
-	  col_pixel_locked[ n ].b *= factor;
-	}
-    }
-  else
-    {
-      for (n = 0; n < col_pixels; n++)
-	{
-	  ColourPalette (col_pixel_locked[ n ].v * vis_flow_field_value_max_inv, col);
-	  
-	  col_pixel_locked[ n ].r = col[0] * factor;
-	  col_pixel_locked[ n ].g = col[1] * factor;
-	  col_pixel_locked[ n ].b = col[2] * factor;
-	}
-    }
-  
-#else
-    
   FILE *image_file;
   XDR	xdr_image_file;
   
+  float col[3];
+  float factor;
   float voxel_value;
   
   int bits_per_char = sizeof(char) * 8;
@@ -4359,58 +4312,97 @@ void visRenderB (char *image_file_name, void (*ColourPalette) (float value, floa
   ColPixel *col_pixel_p;
   
   
-  image_file = fopen (image_file_name, "w");
-  xdrstdio_create (&xdr_image_file, image_file, XDR_ENCODE);
-  
-  xdr_int (&xdr_image_file, &vis_mode);
-  xdr_int (&xdr_image_file, &vis_flow_field_type);
-  
-  xdr_int (&xdr_image_file, &screen.pixels_x);
-  xdr_int (&xdr_image_file, &screen.pixels_y);
-  xdr_int (&xdr_image_file, &col_pixels);
+  if (net->id != 0) return;
   
   if (vis_mode == 0)
     {
-      for (n = 0; n < col_pixels; n++)
-	{
-	  col_pixel_p = &col_pixel_recv[ n ];
-	  
-	  pixel_r = (unsigned char)max(0, min(255, (int)(factor * col_pixel_p->r)));
-	  pixel_g = (unsigned char)max(0, min(255, (int)(factor * col_pixel_p->g)));
-	  pixel_b = (unsigned char)max(0, min(255, (int)(factor * col_pixel_p->b)));
-	  
-	  pixel_i = PixelI (col_pixel_p->i);
-	  pixel_j = PixelJ (col_pixel_p->i);
-	  
-	  pixel_id = (pixel_i << bits_per_two_chars) + pixel_j;
-	  colour_id = (pixel_r << bits_per_two_chars) + (pixel_g << bits_per_char) + pixel_b;
-	  
-	  xdr_int (&xdr_image_file, &pixel_id);
-	  xdr_int (&xdr_image_file, &colour_id);
-	}
+      factor = 255.F * vis_absorption_factor;
     }
   else
     {
-      for (n = 0; n < col_pixels; n++)
+      factor = 255.F;
+    }
+  
+  if (stream_image)
+    {
+      //memcpy (col_pixel_locked, col_pixel_recv,
+      //	      col_pixels * sizeof(ColPixel));
+      //col_pixels_locked = col_pixels;
+      
+      if (vis_mode == 0)
 	{
-	  col_pixel_p = &col_pixel_recv[ n ];
-	  
-	  voxel_value = col_pixel_p->v;
-	  
-	  pixel_i = PixelI (col_pixel_p->i);
-	  pixel_j = PixelJ (col_pixel_p->i);
-	  
-	  pixel_id = (pixel_i << bits_per_two_chars) + pixel_j;
-	  
-	  xdr_int   (&xdr_image_file, &pixel_id);
-	  xdr_float (&xdr_image_file, &voxel_value);
+	  for (n = 0; n < col_pixels; n++)
+	    {
+	      col_pixel_recv[ n ].r *= factor;
+	      col_pixel_recv[ n ].g *= factor;
+	      col_pixel_recv[ n ].b *= factor;
+	    }
+	}
+      else
+	{
+	  for (n = 0; n < col_pixels; n++)
+	    {
+	      ColourPalette (col_pixel_recv[ n ].v * vis_flow_field_value_max_inv, col);
+	      
+	      col_pixel_recv[ n ].r = col[0] * factor;
+	      col_pixel_recv[ n ].g = col[1] * factor;
+	      col_pixel_recv[ n ].b = col[2] * factor;
+	    }
 	}
     }
-  xdr_destroy (&xdr_image_file);
-  fclose (image_file);
   
-#endif // RG
-#endif // BENCH
+  if (write_image)
+    {
+      image_file = fopen (image_file_name, "w");
+      xdrstdio_create (&xdr_image_file, image_file, XDR_ENCODE);
+      
+      xdr_int (&xdr_image_file, &vis_mode);
+      xdr_int (&xdr_image_file, &vis_flow_field_type);
+      
+      xdr_int (&xdr_image_file, &screen.pixels_x);
+      xdr_int (&xdr_image_file, &screen.pixels_y);
+      xdr_int (&xdr_image_file, &col_pixels);
+      
+      if (vis_mode == 0)
+	{
+	  for (n = 0; n < col_pixels; n++)
+	    {
+	      col_pixel_p = &col_pixel_recv[ n ];
+	      
+	      pixel_r = (unsigned char)max(0, min(255, (int)(factor * col_pixel_p->r)));
+	      pixel_g = (unsigned char)max(0, min(255, (int)(factor * col_pixel_p->g)));
+	      pixel_b = (unsigned char)max(0, min(255, (int)(factor * col_pixel_p->b)));
+	      
+	      pixel_i = PixelI (col_pixel_p->i);
+	      pixel_j = PixelJ (col_pixel_p->i);
+	      
+	      pixel_id = (pixel_i << bits_per_two_chars) + pixel_j;
+	      colour_id = (pixel_r << bits_per_two_chars) + (pixel_g << bits_per_char) + pixel_b;
+	      
+	      xdr_int (&xdr_image_file, &pixel_id);
+	      xdr_int (&xdr_image_file, &colour_id);
+	    }
+	}
+      else
+	{
+	  for (n = 0; n < col_pixels; n++)
+	    {
+	      col_pixel_p = &col_pixel_recv[ n ];
+	      
+	      voxel_value = col_pixel_p->v;
+	      
+	      pixel_i = PixelI (col_pixel_p->i);
+	      pixel_j = PixelJ (col_pixel_p->i);
+	      
+	      pixel_id = (pixel_i << bits_per_two_chars) + pixel_j;
+	      
+	      xdr_int   (&xdr_image_file, &pixel_id);
+	      xdr_float (&xdr_image_file, &voxel_value);
+	    }
+	}
+      xdr_destroy (&xdr_image_file);
+      fclose (image_file);
+    }
 }
 
 
@@ -4419,9 +4411,7 @@ void visEnd (void)
   rtEnd ();
   
   free(col_pixel_id);
-#ifdef RG
-  free(col_pixel_locked);
-#endif
+  //free(col_pixel_locked);
   free(col_pixel_recv);
   // free(col_pixel_send);
 }

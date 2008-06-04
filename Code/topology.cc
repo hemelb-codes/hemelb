@@ -256,13 +256,16 @@ void netInit (LBM *lbm, Net *net)
   // set only once is implemented here; the data set is explored by
   // means of the arrays "site_location_a[]" and "site_location_b[]"
   
-#ifndef FREEROOT
-  fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
-  proc_count = 0;
-#else
-  fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)(net->procs - 1));
-  proc_count = 1;
-#endif
+  if (is_bench || net->procs == 1)
+    {
+      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
+      proc_count = 0;
+    }
+  else
+    {
+      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)(net->procs - 1));
+      proc_count = 1;
+    }
   for (n = 0; n < net->procs; n++)
     {
       net->fluid_sites[ n ] = 0;
@@ -410,13 +413,16 @@ void netInit (LBM *lbm, Net *net)
 	    {
 	      up_units_max = net_machines;
 	      
-#ifndef FREEROOT
-	      fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)net->procs);
-	      proc_count = 0;
-#else
-	      fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - 1));
-	      proc_count = 1;
-#endif
+	      if (is_bench)
+		{
+		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)net->procs);
+		  proc_count = 0;
+		}
+	      else
+		{
+		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - 1));
+		  proc_count = 1;
+		}
 	    }
 	  for (int up_unit = 0; up_unit < up_units_max; up_unit++)
 	    {
@@ -428,16 +434,19 @@ void netInit (LBM *lbm, Net *net)
 		  
 		  machine_id = proc_count - net->procs;
 		  
-#ifndef FREEROOT
-		  fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites *
-						   (double)net->procs_per_machine[ machine_id ] / net->procs);
-#else
-		  double weight;
-		  
-		  weight = (double)(net->procs_per_machine[machine_id] * net->procs) / (double)(net->procs - 1);
-		  
-		  fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites * weight / net_machines);
-#endif
+		  if (is_bench)
+		    {
+		      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites *
+						       (double)net->procs_per_machine[ machine_id ] / net->procs);
+		    }
+		  else
+		    {
+		      double weight;
+		      
+		      weight = (double)(net->procs_per_machine[machine_id] * net->procs) / (double)(net->procs - 1);
+		      
+		      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites * weight / net_machines);
+		    }
 		}
 	      else
 		{
@@ -840,13 +849,8 @@ void netInit (LBM *lbm, Net *net)
 	}
     }
   
-#ifndef TD
   f_old = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
   f_new = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
-#else
-  f_old = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
-  f_new = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
-#endif
   
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
@@ -854,12 +858,7 @@ void netInit (LBM *lbm, Net *net)
   // buffers needed for the communications are set from here
   
   f_data = (short int *)malloc(sizeof(short int) * 4 * net->shared_fs);
-#ifdef TD
-  f_to_send = (double *)malloc(sizeof(double) * net->shared_fs*2);
-  f_to_recv = (double *)malloc(sizeof(double) * net->shared_fs*2);
   
-  f_send_id = (int *)malloc(sizeof(int) * net->shared_fs);
-#endif
   f_recv_iv = (int *)malloc(sizeof(int) * net->shared_fs);
   
   net->shared_fs = 0;
@@ -867,20 +866,11 @@ void netInit (LBM *lbm, Net *net)
   for (n = 0; n < net->neigh_procs; n++)
     {
       net->neigh_proc[ n ].f_data    = &f_data[ net->shared_fs<<2 ];
-#ifndef TD
-      net->neigh_proc[ n ].f_head    = net->my_sites * 15 + 1 + net->shared_fs;
-#else
-      net->neigh_proc[ n ].f_to_send = &f_to_send[ net->shared_fs*2 ];
-      net->neigh_proc[ n ].f_to_recv = &f_to_recv[ net->shared_fs*2 ];
       
-      net->neigh_proc[ n ].f_send_id = &f_send_id[ net->shared_fs ];
-#endif
+      net->neigh_proc[ n ].f_head    = net->my_sites * 15 + 1 + net->shared_fs;
+      
       net->neigh_proc[ n ].f_recv_iv = &f_recv_iv[ net->shared_fs ];
       
-#ifndef BENCH
-      net->neigh_proc[ n ].d_to_send_p =
-	(double **)malloc(sizeof(double *) * net->neigh_proc[ n ].fs);
-#endif
       net->shared_fs += net->neigh_proc[ n ].fs;
       net->neigh_proc[ n ].fs = 0;
     }
@@ -891,11 +881,6 @@ void netInit (LBM *lbm, Net *net)
       
       net_site_data = (unsigned int *)malloc(sizeof(unsigned int) * net->my_sites);
     }
-#ifndef BENCH
-  d = (double *)malloc(sizeof(double) * (net->my_sites + 1));
-  
-  nd_p = (double **)malloc(sizeof(double *) * (net->my_sites * 14 + 1));
-#endif
   
   net->from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * net->procs);
   
@@ -937,24 +922,17 @@ void netInit (LBM *lbm, Net *net)
 			      continue;
 			    }
 			  site_map = map_block_p->site_data[ m ];
-#ifndef TD
+			  
 			  f_id[ site_map*15+0 ] = site_map * 15 + 0;
-#else
-			  f_id[ site_map*15+0 ] = site_map * 30 + 0;
-#endif
+			  
 			  for (l = 1; l < 15; l++)
 			    {
 			      neigh_i = site_i + e_x[ l ];
 			      neigh_j = site_j + e_y[ l ];
 			      neigh_k = site_k + e_z[ l ];
-#ifndef TD
+			      
 			      f_id[ site_map*15+l   ] = net->my_sites * 15;
-#else
-			      f_id[ site_map*15+l   ] = net->my_sites * 30;
-#endif
-#ifndef BENCH
-			      nd_p[ site_map*14+l-1 ] = &d[ net->my_sites ];
-#endif
+			      
 			      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
 			      
 			      if (proc_id_p == NULL || *proc_id_p == 1 << 30)
@@ -965,14 +943,7 @@ void netInit (LBM *lbm, Net *net)
 			      
 			      if (*proc_id_p == net->id)
 				{
-#ifndef TD
 				  f_id[ site_map*15+l   ] = *site_data_p * 15 + l;
-#else
-				  f_id[ site_map*15+l   ] = *site_data_p * 30 + l;
-#endif
-#ifndef BENCH
-				  nd_p[ site_map*14+l-1 ] = &d[ *site_data_p ];
-#endif
 				  continue;
 				}
 			      neigh_proc_index = net->from_proc_id_to_neigh_proc_index[ *proc_id_p ];
@@ -986,12 +957,6 @@ void netInit (LBM *lbm, Net *net)
 			      f_data_p[ 3 ] = l;
 			      ++neigh_proc_p->fs;
 			    }
-#ifndef BENCH
-			  if (!lbm->is_checkpoint)
-			    {
-			      d[ site_map ] = (double)lbm->block_density[ lbm->block_map[n] ];
-			    }
-#endif
 			  net_site_data[ site_map ] = site_data[ my_sites ];
 			  ++my_sites;
 			}
@@ -1002,10 +967,6 @@ void netInit (LBM *lbm, Net *net)
     }
   free(site_data);
   
-#ifndef BENCH
-  free(lbm->block_map);
-  free(lbm->block_density);
-#endif
   // point-to-point communications are performed to match data to be
   // sent to/receive from different partitions; in this way, the
   // communication of the locations of the interface-dependent fluid
@@ -1073,9 +1034,7 @@ void netInit (LBM *lbm, Net *net)
   	}
     }
   
-#ifndef TD
-int f_count = net->my_sites * 15;
-#endif
+  int f_count = net->my_sites * 15;
  
   for (m = 0; m < net->neigh_procs; m++)
     {
@@ -1090,40 +1049,14 @@ int f_count = net->my_sites * 15;
 	  l = f_data_p[ 3 ];
 	  
 	  site_map = *netSiteMapPointer (i, j, k, net);
-#ifndef TD
+	  
 	  f_id[ site_map * 15 + l ] = ++f_count;
 	  neigh_proc_p->f_recv_iv[ n ] = site_map * 15 + inv_dir[ l ];
-#ifndef BENCH
-	  neigh_proc_p->d_to_send_p[ n ] = &d[ site_map ];
-	  nd_p[ site_map*14+l-1 ] = &f_new[ neigh_proc_p->f_head + n ];
-#endif
-#else
-	  neigh_proc_p->f_send_id[ n ] = site_map * 30 + l;
-	  neigh_proc_p->f_recv_iv[ n ] = site_map * 30 + inv_dir[ l ];
-#ifndef BENCH
-	  neigh_proc_p->d_to_send_p[ n ] = &d[ site_map ];
-	  nd_p[ site_map*14+l-1 ] = &neigh_proc_p->f_to_recv[ n ];
-#endif
-#endif
 	}
     }
   free(f_data);
   
   net->bm_time = myClock () - seconds;
-  
-  if (net->my_sites > 0)
-    {
-#ifndef TD
-      vel = (double *)malloc(sizeof(double) * 3 * net->my_sites);
-      
-      for (i = 0; i < net->my_sites; i++)
-	{
-	  vel[ 3*i+0 ] = 1.e+30;
-	  vel[ 3*i+1 ] = 1.e+30;
-	  vel[ 3*i+2 ] = 1.e+30;
-	}
-#endif
-    }
 }
 
 
@@ -1147,11 +1080,6 @@ void netEnd (Net *net)
     }
   
   free(f_recv_iv);
-#ifdef TD
-  free(f_send_id);
-  free(f_to_recv);
-  free(f_to_send);
-#endif
   
   
   free(net->map_block);
@@ -1170,10 +1098,6 @@ void netEnd (Net *net)
   
   if (net->my_sites > 0)
     {
-#ifndef TD
-      free(vel);
-      vel = NULL;
-#endif
       free(net_site_data);
       net_site_data = NULL;
       
