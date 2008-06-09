@@ -1,4 +1,32 @@
-include make/Makefile.${MACHINE}
+#/home/steven/lammpi/bin/lamboot -v ~/lammpinodes
+#/home/steven/lammpi/bin/lamhalt
+
+CC=icpc
+
+EXE=hemelb
+#LIBS=-L/usr/lib64/lam -llammpio -llammpi++ -llamf77mpi -lmpi -llam -laio -laio -lutil -ldl 
+
+MPIRUN=/home/steven/lammpi/bin/mpirun
+INCLUDES=-I/home/steven/lammpi/include
+
+#REG_HOME=/home/steven/reg_steer_lib
+
+REG_CPPFLAGS=-I${REG_HOME}/include
+
+#REG_LDFLAGS=-L${REG_HOME}/lib64 -Wl,-Bstatic -lReG_Steer -lReG_Steer_Utils \
+#                -lReG_Steer_SOAP -Wl,-Bdynamic -lxml2
+
+MPICPUS=4
+
+TEST1INPUT=$(HOME)/hemelb/Input/square_duct_32x16x16     10  10000 0.001
+TEST2INPUT=$(HOME)/hemelb/Input/angio1                   10 200000 0.0001171875
+TEST3INPUT=$(HOME)/hemelb/Input/bifurcation_512x512x512  10 200000 0.0001
+TEST4INPUT=$(HOME)/hemelb/Input/angio4                   10 200000 0.0009375
+
+FLAGS=-O3 -xT -ipo -pthread -Wunused
+DEFS=
+
+LIBS=-L/home/steven/lammpi/lib -llammpio -llammpi++ -lmpi -llam -ldl 
 
 OBJ=config.o \
 	io.o \
@@ -8,7 +36,28 @@ OBJ=config.o \
 	topology.o 
 
 $(EXE): $(OBJ)
-	$(CC) $(FLAGS) $(LIBS) ${REG_LDFLAGS} $(OBJ) -o $(EXE)
+	$(CC) $(FLAGS) $(OBJ) $(LIBS) -o $(EXE)
+
+test1:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST1INPUT)
+
+test2:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST2INPUT)
+
+test3:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST3INPUT)
+
+test4:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST4INPUT)
+
+display:
+	g++ displayClient.cc -O3 -lGLU -lglut eVizRLEUtil.c -o displayClient
+
+mac-display:
+	g++ -O3 -framework OpenGL -framework GLUT -framework Foundation -o displayClient displayClient.cc eVizRLEUtil.c -DMAC_GLUT
+
+display-debug:
+	g++ displayClient.cc -g -lGLU -lglut eVizRLEUtil.c -o displayClient
 
 .cc.o:
 	$(CC) $(FLAGS) $(DEFS) $(INCLUDES) -c $<
@@ -18,4 +67,3 @@ clean:
 
 distclean: clean
 	find ./ -name \*~ -exec rm -f {} \;
-
