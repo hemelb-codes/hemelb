@@ -10,6 +10,37 @@ void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density
 void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
 
 
+void lbmConvertBoundaryData (double physical_data[], double lattice_data[], LBM *lbm)
+{
+  // convert pressure from physical units (mm Hg) to lattice units
+  // assuming a reference pressure of 80 mmHg (see config.h for
+  // constants setup
+  
+  double useful_factor = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
+  
+  
+  useful_factor *= useful_factor;
+  
+  lattice_data[0] = 1.0 + (physical_data[0] - REFERENCE_PRESSURE) * PASCAL_TO_mmHg *
+    useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
+  
+  lattice_data[1] = physical_data[1] * PASCAL_TO_mmHg *
+    useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
+  
+  lattice_data[2] = physical_data[2] * PI / 180.;
+}
+
+
+double lbmCalculateTau (LBM *lbm)
+{
+  double physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
+  
+  
+  return 0.5 + (PULSATILE_PERIOD * physical_kinematic_viscosity) /
+    (Cs2 * lbm->period * lbm->voxel_size * lbm->voxel_size);
+}
+
+
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[])
 {
   double density_1;
@@ -69,10 +100,6 @@ void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z,
   
   f_eq[13] = (temp1 + ((1.0 / 16.0) * density_1) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, -1)
   f_eq[14] = (temp1 + ((1.0 / 16.0) * density_1) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, +1)
-  
-  *v_x *= density_1;
-  *v_y *= density_1;
-  *v_z *= density_1;
 }
 
 
@@ -125,10 +152,6 @@ void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
   						     
   f_eq[13] = (temp1 + ((1.0 / 16.0) * density_1) * temp2 * temp2) + ((1.0 / 24.0) * temp2);   // (+1, -1, -1)
   f_eq[14] = (temp1 + ((1.0 / 16.0) * density_1) * temp2 * temp2) - ((1.0 / 24.0) * temp2);   // (-1, +1, +1)
-  
-  v_x *= density_1;
-  v_y *= density_1;
-  v_z *= density_1;
 }
 
 
@@ -196,10 +219,6 @@ void lbmInnerCollision0 (double omega, int i,
   
   f_new[ f_id[i*15+13] ] = f[13] + omega * (f_neq[13] = f[13] - ((temp1 + ((1.0 / 16.0) * density_1) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
   f_new[ f_id[i*15+14] ] = f[14] + omega * (f_neq[14] = f[14] - ((temp1 + ((1.0 / 16.0) * density_1) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
-  
-  *v_x *= density_1;
-  *v_y *= density_1;
-  *v_z *= density_1;
 }
 
 
@@ -267,10 +286,6 @@ void lbmInterCollision0 (double omega, int i,
   
   f_new[ f_id[i*15+13] ] = f[13] += omega * (f_neq[13] = f[13] - ((temp1 + ((1.0 / 16.0) * density_1) * temp2 * temp2) + ((1.0 / 24.0) * temp2)));   // (+1, -1, -1)
   f_new[ f_id[i*15+14] ] = f[14] += omega * (f_neq[14] = f[14] - ((temp1 + ((1.0 / 16.0) * density_1) * temp2 * temp2) - ((1.0 / 24.0) * temp2)));   // (-1, +1, +1)
-  
-  *v_x *= density_1;
-  *v_y *= density_1;
-  *v_z *= density_1;
 }
 
 
@@ -306,9 +321,7 @@ void lbmCollision1 (double omega, int i,
   
   for (l = 0; l < 15; l++)
     {
-      f_new[ f_id[i*15+l] ] = f[l];
-      
-      f_neq[l] -= f[l];
+      f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l]);
     }
 }
 
@@ -338,9 +351,7 @@ void lbmCollision2 (double omega, int i,
   
   for (l = 0; l < 15; l++)
     {
-      f_new[ f_id[i*15+l] ] = f[l];
-      
-      f_neq[l] -= f[l];
+      f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l]);
     }
 }
 
@@ -370,9 +381,7 @@ void lbmCollision3 (double omega, int i,
   
   for (l = 0; l < 15; l++)
     {
-      f_new[ f_id[i*15+l] ] = f[l];
-
-      f_neq[l] -= f[l];
+      f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l]);
     }
 }
 
@@ -411,9 +420,7 @@ void lbmCollision4 (double omega, int i,
   
   for (l = 0; l < 15; l++)
     {
-      f_new[ f_id[i*15+l] ] = f[l];
-
-      f_neq[l] -= f[l];
+      f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l]);
     }
 }
 
@@ -452,18 +459,13 @@ void lbmCollision5 (double omega, int i,
   
   for (l = 0; l < 15; l++)
     {
-      f_new[ f_id[i*15+l] ] = f[l];
-      
-      f_neq[l] -= f[l];
+      f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l]);
     }
 }
 
 
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z)
 {
-  double density_1;
-  
-  
   *v_x = f[1] + (f[7] + f[9]) + (f[11] + f[13]);
   *v_y = f[3] + (f[12] + f[14]);
   *v_z = f[5] + f[10];
@@ -473,12 +475,6 @@ void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_
   *v_x -= (f[2] + f[8] + f[10] + (f[12] + f[14]));
   *v_y += (f[7] + f[9]) - ((f[4] + f[8] + f[10] + (f[11] + f[13])));
   *v_z += f[7] + f[11] + f[14] - (((f[6] + f[8]) + f[9] + f[12] + f[13]));
-  
-  density_1 = 1. / *density;
-  
-  *v_x *= density_1;
-  *v_y *= density_1;
-  *v_z *= density_1;
 }
 
 
@@ -511,46 +507,24 @@ void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, doubl
   
   if (perform_rt)
     {
-      if (vis_flow_field_type == DENSITY)
-	{
-	  *cluster_voxel[ i ] = (float)density;
-	}
-      else if (vis_flow_field_type == VELOCITY)
-	{
-	  velocity = sqrt(vx * vx + vy * vy + vz * vz);
-	  
-	  *cluster_voxel[ i ] = (float)velocity;
-	}
-      else
-	{
-	  lbmStress (f_neq, &stress);
-	  
-	  *cluster_voxel[ i ] = (float)stress;
-	}
+      velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
+      
+      lbmStress (f_neq, &stress);
+      
+      *cluster_voxel[ 3*i   ] = (float)density;
+      *cluster_voxel[ 3*i+1 ] = (float)velocity;
+      *cluster_voxel[ 3*i+2 ] = (float)stress;
     }
 
   if (is_bench) return;
   
   if (!perform_rt)
     {
-      velocity = sqrt(vx * vx + vy * vy + vz * vz);
+      velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
       
       lbmStress (f_neq, &stress);
     }
-  else if (vis_flow_field_type == DENSITY)
-    {
-      velocity = sqrt(vx * vx + vy * vy + vz * vz);
-      
-      lbmStress (f_neq, &stress);
-    }
-  else if (vis_flow_field_type == VELOCITY)
-    {
-      lbmStress (f_neq, &stress);
-    }
-  else
-    {
-      velocity = sqrt(vx * vx + vy * vy + vz * vz);
-    }
+  
   lbm_density_min = (density < lbm_density_min) ? density : lbm_density_min;
   lbm_density_max = (density > lbm_density_max) ? density : lbm_density_max;
   

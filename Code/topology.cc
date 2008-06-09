@@ -866,9 +866,7 @@ void netInit (LBM *lbm, Net *net)
   for (n = 0; n < net->neigh_procs; n++)
     {
       net->neigh_proc[ n ].f_data    = &f_data[ net->shared_fs<<2 ];
-      
       net->neigh_proc[ n ].f_head    = net->my_sites * 15 + 1 + net->shared_fs;
-      
       net->neigh_proc[ n ].f_recv_iv = &f_recv_iv[ net->shared_fs ];
       
       net->shared_fs += net->neigh_proc[ n ].fs;

@@ -21,7 +21,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   
   fprintf(stderr, "opening system configuration file %s [rank %i]\n", lbm->system_file_name, net->id);
-
+  
   system_config = fopen (lbm->system_file_name, "r");
   
   //if( system_config == NULL ) {
@@ -149,16 +149,13 @@ void lbmReadConfig (LBM *lbm, Net *net)
 }
 
 
-#ifdef STEER
-void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net, SteerParams *steer)
-#else
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
-#endif
 {
   // through this function the processor 0 reads the LB parameters
   // and then communicate them to the other processors
   
-  double par_to_send[6+2000];
+  double par_to_send[10000];
+  double physical_data[3], lattice_data[3];
   
   int n;
   
@@ -179,8 +176,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 
       fflush(NULL);
       
-      //fscanf (parameters_file, "%i\n", &lbm->is_checkpoint);
-      fscanf (parameters_file, "%le\n", &lbm->tau);
       fscanf (parameters_file, "%i\n", &lbm->inlets);
       
       inlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
@@ -191,9 +186,14 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       for (n = 0; n < lbm->inlets; n++)
 	{
 	  fscanf (parameters_file, "%le %le %le\n",
-		  &inlet_density_avg[ n ], &inlet_density_amp[ n ], &inlet_density_phs[ n ]);
-	  inlet_density_phs[ n ] *= PI / 180.;
-
+		  &physical_data[0], &physical_data[1], &physical_data[2]);
+	  
+	  lbmConvertBoundaryData (physical_data, lattice_data, lbm);
+	  
+	  inlet_density_avg[ n ] = lattice_data[ 0 ];
+	  inlet_density_amp[ n ] = lattice_data[ 1 ];
+	  inlet_density_phs[ n ] = lattice_data[ 2 ];
+	  
 	  if (is_bench)
 	    {
 	      inlet_density_avg[ n ] = 1.0;
@@ -211,8 +211,13 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       for (n = 0; n < lbm->outlets; n++)
 	{
 	  fscanf (parameters_file, "%le %le %le\n",
-		  &outlet_density_avg[ n ], &outlet_density_amp[ n ], &outlet_density_phs[ n ]);
-	  outlet_density_phs[ n ] *= PI / 180.;
+		  &physical_data[0], &physical_data[1], &physical_data[2]);
+	  
+	  lbmConvertBoundaryData (physical_data, lattice_data, lbm);
+	  
+	  outlet_density_avg[ n ] = lattice_data[ 0 ];
+	  outlet_density_amp[ n ] = lattice_data[ 1 ];
+	  outlet_density_phs[ n ] = lattice_data[ 2 ];
 	  
 	  if (is_bench)
 	    {
@@ -221,11 +226,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	      outlet_density_phs[ n ] = 0.0;
 	    }
 	}
-      fscanf (parameters_file, "%i\n", &lbm->cycles_max);
-      //fscanf (parameters_file, "%le\n", &lbm->tolerance);
-      fscanf (parameters_file, "%i\n", &lbm->period);
-      //fscanf (parameters_file, "%i\n", &lbm->conv_freq);
-      
       fclose (parameters_file);
       
       par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
@@ -251,52 +251,37 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
     }
   else
     {
-      //par_to_send[ 0 ] = 0.1 + (double)lbm->is_checkpoint;
-      par_to_send[ 1 ] = lbm->tau;
-      
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  par_to_send[ 2 + 3*n+0 ] = inlet_density_avg[ n ];
-	  par_to_send[ 2 + 3*n+1 ] = inlet_density_amp[ n ];
-	  par_to_send[ 2 + 3*n+2 ] = inlet_density_phs[ n ];
+	  par_to_send[ 3*n+0 ] = inlet_density_avg[ n ];
+	  par_to_send[ 3*n+1 ] = inlet_density_amp[ n ];
+	  par_to_send[ 3*n+2 ] = inlet_density_phs[ n ];
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  par_to_send[ 2 + 3*lbm->inlets + 3*n+0 ] = outlet_density_avg[ n ];
-	  par_to_send[ 2 + 3*lbm->inlets + 3*n+1 ] = outlet_density_amp[ n ];
-	  par_to_send[ 2 + 3*lbm->inlets + 3*n+2 ] = outlet_density_phs[ n ];
+	  par_to_send[ 3*lbm->inlets + 3*n+0 ] = outlet_density_avg[ n ];
+	  par_to_send[ 3*lbm->inlets + 3*n+1 ] = outlet_density_amp[ n ];
+	  par_to_send[ 3*lbm->inlets + 3*n+2 ] = outlet_density_phs[ n ];
 	}
-      par_to_send[ 2 + 3*(lbm->inlets+lbm->outlets) ] = 0.1 + (double)lbm->cycles_max;
-      //par_to_send[ 3 + 3*(lbm->inlets+lbm->outlets) ] = lbm->tolerance;
-      par_to_send[ 4 + 3*(lbm->inlets+lbm->outlets) ] = 0.1 + (double)lbm->period;
-      par_to_send[ 5 + 3*(lbm->inlets+lbm->outlets) ] = 0.1 + (double)lbm->conv_freq;
     }
 #ifndef NOMPI
-  net->err = MPI_Bcast (par_to_send, 6 + 3*(lbm->inlets+lbm->outlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  net->err = MPI_Bcast (par_to_send, 3*(lbm->inlets+lbm->outlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
   if (net->id != 0)
     {
-      //lbm->is_checkpoint = (int)par_to_send[ 0 ];
-      lbm->tau           =      par_to_send[ 1 ];
-      
       for (n = 0; n < lbm->inlets; n++)
 	{
-	  inlet_density_avg[ n ] = par_to_send[ 2 + 3*n+0 ];
-	  inlet_density_amp[ n ] = par_to_send[ 2 + 3*n+1 ];
-	  inlet_density_phs[ n ] = par_to_send[ 2 + 3*n+2 ];
+	  inlet_density_avg[ n ] = par_to_send[ 3*n+0 ];
+	  inlet_density_amp[ n ] = par_to_send[ 3*n+1 ];
+	  inlet_density_phs[ n ] = par_to_send[ 3*n+2 ];
 	}
       for (n = 0; n < lbm->outlets; n++)
 	{
-	  outlet_density_avg[ n ] = par_to_send[ 2 + 3*lbm->inlets + 3*n+0 ];
-	  outlet_density_amp[ n ] = par_to_send[ 2 + 3*lbm->inlets + 3*n+1 ];
-	  outlet_density_phs[ n ] = par_to_send[ 2 + 3*lbm->inlets + 3*n+2 ];
+	  outlet_density_avg[ n ] = par_to_send[ 3*lbm->inlets + 3*n+0 ];
+	  outlet_density_amp[ n ] = par_to_send[ 3*lbm->inlets + 3*n+1 ];
+	  outlet_density_phs[ n ] = par_to_send[ 3*lbm->inlets + 3*n+2 ];
 	}
-      lbm->cycles_max       = (int)par_to_send[ 2 + 3*(lbm->inlets+lbm->outlets) ];
-      lbm->tolerance        =      par_to_send[ 3 + 3*(lbm->inlets+lbm->outlets) ];
-      lbm->period           = (int)par_to_send[ 4 + 3*(lbm->inlets+lbm->outlets) ];
-      lbm->conv_freq        = (int)par_to_send[ 5 + 3*(lbm->inlets+lbm->outlets) ];
     }
-  
   for (n = 0; n < lbm->inlets; n++)
     {
       inlet_density[ n ] = inlet_density_avg[ n ];
@@ -305,36 +290,13 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
     {
       outlet_density[ n ] = outlet_density_avg[ n ];
     }
-  lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
-  lbm->omega = -1.0 / lbm->tau;
-  
-  lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
-  
-#ifdef STEER
-  steer->tau            = lbm->tau;
-  steer->tolerance      = lbm->tolerance;
-  steer->max_cycles     = lbm->cycles_max;
-  steer->conv_freq      = lbm->conv_freq;
-  steer->check_freq     = lbm->checkpoint_freq;
-#endif
-}
-
-
-#ifdef STEER
-void lbmUpdateParameters (LBM *lbm, SteerParams *steer)
-{
-  lbm->tau              = steer->tau;
-  lbm->tolerance        = steer->tolerance;
-  lbm->cycles_max       = steer->max_cycles;
-  lbm->conv_freq        = steer->conv_freq;
-  lbm->check_freq       = steer->check_freq;
+  lbm->tau = lbmCalculateTau (lbm);
   
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
   lbm->omega = -1.0 / lbm->tau;
   
   lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
 }
-#endif
 
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
