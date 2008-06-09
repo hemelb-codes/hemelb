@@ -17,106 +17,27 @@
 #define CONNECTION_BACKLOG 10
 
 
+float steer_par[STEERABLE_PARAMETERS + 1];
+
+
 FILE *timings_ptr;
-float globalLongitude = 0.;
 
-void visUpdateLongitude (char *parameters_file_name, Net *net, Vis *vis)
+
+void ColourPalette (float value, float col[])
 {
-  FILE *parameters_file;
-
-  float par_to_send[14];
-  float ctr_x, ctr_y, ctr_z;
-  float longitude, latitude;
-  float zoom;
-  float density_max, velocity_max, stress_max;
-  float dummy;
-  
-  if (net->id == 0)
-    {
-      parameters_file = fopen (parameters_file_name, "r");
-      
-      fscanf (parameters_file, "%e \n", &dummy);
-      fscanf (parameters_file, "%e \n", &dummy);
-      fscanf (parameters_file, "%e \n", &ctr_x);
-      fscanf (parameters_file, "%e \n", &ctr_y);
-      fscanf (parameters_file, "%e \n", &ctr_z);
-      fscanf (parameters_file, "%e \n", &longitude);
-      fscanf (parameters_file, "%e \n", &latitude);
-      fscanf (parameters_file, "%e \n", &zoom);
-      
-      fscanf (parameters_file, "%i \n", &vis_image_freq);
-      fscanf (parameters_file, "%i \n", &vis_flow_field_type);
-      fscanf (parameters_file, "%i \n", &vis_mode);
-      fscanf (parameters_file, "%e \n", &vis_absorption_factor);
-      fscanf (parameters_file, "%e \n", &vis_cutoff);
-      fscanf (parameters_file, "%e \n", &density_max);
-      fscanf (parameters_file, "%e \n", &velocity_max);
-      fscanf (parameters_file, "%e \n", &stress_max);
-
-      fclose (parameters_file);
-      
-      par_to_send[  0 ] = ctr_x;
-      par_to_send[  1 ] = ctr_y;
-      par_to_send[  2 ] = ctr_z;
-      par_to_send[  3 ] = longitude;
-      par_to_send[  4 ] = latitude;
-      par_to_send[  5 ] = zoom;
-      par_to_send[  6 ] = 0.1 + (float)vis_image_freq;
-      par_to_send[  7 ] = 0.1 + (float)vis_flow_field_type;
-      par_to_send[  8 ] = 0.1 + (float)vis_mode;
-      par_to_send[  9 ] = vis_absorption_factor;
-      par_to_send[ 10 ] = vis_cutoff;
-      par_to_send[ 11 ] = density_max;
-      par_to_send[ 12 ] = velocity_max;
-      par_to_send[ 13 ] = stress_max;
-    }
-#ifndef NOMPI
-  net->err = MPI_Bcast (par_to_send, 14, MPI_FLOAT, 0, MPI_COMM_WORLD);
-#endif
-  
-  ctr_x                  =      par_to_send[  0 ];
-  ctr_y                  =      par_to_send[  1 ];
-  ctr_z                  =      par_to_send[  2 ];
-  longitude              =      par_to_send[  3 ];
-  latitude               =      par_to_send[  4 ];
-  zoom                   =      par_to_send[  5 ];
-  vis_image_freq         = (int)par_to_send[  6 ];
-  vis_flow_field_type    = (int)par_to_send[  7 ];
-  vis_mode               = (int)par_to_send[  8 ];
-  vis_absorption_factor  =      par_to_send[  9 ];
-  vis_cutoff             =      par_to_send[ 10 ];
-  density_max            =      par_to_send[ 11 ];
-  velocity_max           =      par_to_send[ 12 ];
-  stress_max             =      par_to_send[ 13 ];
-  
-  visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
-		 PIXELS_X, PIXELS_Y,
-		 ctr_x, ctr_y, ctr_z,
-		 5.F * vis->system_size,
-		 globalLongitude, latitude,
-		 0.5F * (5.F * vis->system_size),
-		 zoom);
-  
-  if (vis_flow_field_type == DENSITY)
-    {
-      vis_flow_field_value_max_inv = 1.F / density_max;
-    }
-  else if (vis_flow_field_type == VELOCITY)
-    {
-      vis_flow_field_value_max_inv = 1.F / velocity_max;
-    }
-  else
-    {
-      vis_flow_field_value_max_inv = 1.F / stress_max;
-    }
+  col[0] = fminf(1.F, value);
+  col[1] = 0.;
+  col[2] = fmaxf(0.F, 1.F - value);
 }
+
 
 
 char host_name[255];
 
-// data per pixel are colour id and pixel id (2 * sizeof(int) bytes)
-int data_per_pixel = 2;
-int bytes_per_pixel_data = data_per_pixel * sizeof(int);
+// data per pixel inlude the data for the pixel location and 4 colours
+//in RGB format, thus #bytes per pixel are (sizeof(int)+4
+//rgb)=sizeof(int)+4*3*sizeof(unsigned char))
+int bytes_per_pixel_data = sizeof(int) + 4 * sizeof(unsigned char);
 
 // one int for colour_id and one for pixel id
 u_int pixel_data_bytes = IMAGE_SIZE * bytes_per_pixel_data;
@@ -127,8 +48,6 @@ u_int frame_details_bytes = 1 * sizeof(int);
 char *xdrSendBuffer_pixel_data;
 char *xdrSendBuffer_frame_details;
 
-int bits_per_char = sizeof(char) * 8;
-int bits_per_two_chars = 2 * bits_per_char;
 
 
 int recv_all (int sockid, char *buf, int *length)
@@ -179,11 +98,11 @@ void *hemeLB_steer (void *ptr)
 
   long int read_fd = (long int)ptr;
   //printf("Kicking off steering thread with FD %i\n", (int)read_fd);
- 
-  int num_chars = sizeof(int) / sizeof(char);
+  
+  int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
   int bytes = sizeof(char) * num_chars;
  
-  char* xdr_steering_data = (char *)malloc(bytes);
+  char *xdr_steering_data = (char *)malloc(bytes);
   
   XDR xdr_steering_stream;
   
@@ -192,13 +111,11 @@ void *hemeLB_steer (void *ptr)
  
   recv_all (read_fd, xdr_steering_data, &num_chars);
   
-  int view_type;
- 
-  xdr_int (&xdr_steering_stream, &view_type);
- 
-  //printf ("VIEW TYPE -> %i\n", view_type);
-  
-  vis_flow_field_type = view_type;
+  for (int i = 0; i < STEERABLE_PARAMETERS; i++)
+    {
+      xdr_float (&xdr_steering_stream, &steer_par[i]);
+    }
+  free(xdr_steering_data);
   }
 }
 
@@ -206,15 +123,14 @@ void *hemeLB_steer (void *ptr)
 void *hemeLB_network (void *ptr)
 {
   gethostname (host_name, 255);
-
-// #ifndef STEER
+  
   FILE *f = fopen ("env_details.asc","w");
   
   fprintf (f, "%s\n", host_name);
   fclose (f);
   
   fprintf (timings_ptr, "MPI 0 Hostname -> %s\n\n", host_name);
-// #endif
+  
   
   int sock_fd;
   int new_fd;
@@ -223,23 +139,17 @@ void *hemeLB_network (void *ptr)
   int is_broken_pipe = 0;
   int frame_number = 0;
   
-  int pixel_r, pixel_g, pixel_b;
-  int pixel_i, pixel_j;
-  int colour_id, pixel_id;
-  
-  ColPixel *col_pixel_p;
-  
-  signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
-  
   pthread_t steering_thread;
   pthread_attr_t steering_thread_attrib; 
+  
+  
+  signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
   
   pthread_attr_init (&steering_thread_attrib);
   pthread_attr_setdetachstate (&steering_thread_attrib, PTHREAD_CREATE_JOINABLE);
   
   while (1)
     {
-	
       pthread_mutex_lock ( &network_buffer_copy_lock );
 	    
       struct sockaddr_in my_address;
@@ -284,7 +194,7 @@ void *hemeLB_network (void *ptr)
 	  continue;
 	}
       
-      fprintf (timings_ptr, "server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
+      //fprintf (timings_ptr, "server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
       printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
       
       pthread_create (&steering_thread, &steering_thread_attrib, hemeLB_steer, (void*)new_fd);	  
@@ -305,6 +215,7 @@ void *hemeLB_network (void *ptr)
 	  XDR xdr_network_stream_frame_details;
 	  XDR xdr_network_stream_pixel_data;
 	  
+	  
 	  xdrmem_create (&xdr_network_stream_pixel_data, xdrSendBuffer_pixel_data,
 			 pixel_data_bytes, XDR_ENCODE);
 	  
@@ -313,21 +224,7 @@ void *hemeLB_network (void *ptr)
 	  
 	  for (int i = 0; i < col_pixels; i++)
 	    {
-	      //col_pixel_p = &col_pixel_locked[ i ];
-	      col_pixel_p = &col_pixel_recv[ i ];
-	      
-	      pixel_r = max(0, min(255, (int)col_pixel_p->r));
-	      pixel_g = max(0, min(255, (int)col_pixel_p->g));
-	      pixel_b = max(0, min(255, (int)col_pixel_p->b));
-	      
-	      pixel_i = PixelI (col_pixel_p->i);
-	      pixel_j = PixelJ (col_pixel_p->i);
-	      
-	      colour_id = (pixel_r << bits_per_two_chars) + (pixel_g << bits_per_char) + pixel_b;
-	      pixel_id = (pixel_i << bits_per_two_chars) + pixel_j;
-	      
-	      xdr_int (&xdr_network_stream_pixel_data, &colour_id);
-	      xdr_int (&xdr_network_stream_pixel_data, &pixel_id);
+	      xdrWritePixel (&col_pixel_recv[ i ], &xdr_network_stream_pixel_data, ColourPalette);
 	    }
 	  
 	  int frameBytes = xdr_getpos(&xdr_network_stream_pixel_data);
@@ -374,11 +271,49 @@ void *hemeLB_network (void *ptr)
 }
 
 
-void ColourPalette (float value, float col[])
+void UpdateSteerableParameters (int *is_thread_locked, Vis *vis)
 {
-  col[0] = value;
-  col[1] = 0.;
-  col[2] = 1.F - value;
+  steer_par[STEERABLE_PARAMETERS] = (float)(*is_thread_locked) + 0.1;
+  
+#ifndef NOMPI
+  MPI_Bcast (steer_par, STEERABLE_PARAMETERS+1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+#endif
+  
+  *is_thread_locked = (int)steer_par[STEERABLE_PARAMETERS];
+  
+  if (*is_thread_locked) return;
+  /*
+  float ctr_x, ctr_y, ctr_z;
+  float longitude, latitude;
+  float zoom;
+  float velocity_max, stress_max;
+  float lattice_velocity_max, lattice_stress_max;
+  
+  
+  ctr_x          = steer_par[ 0 ];
+  ctr_y          = steer_par[ 1 ];
+  ctr_z          = steer_par[ 2 ];
+  longitude      = steer_par[ 3 ];
+  latitude       = steer_par[ 4 ];
+  zoom           = steer_par[ 5 ];
+  vis_brightness = steer_par[ 6 ];
+  velocity_max   = steer_par[ 7 ];
+  stress_max     = steer_par[ 8 ];
+
+  visConvertThresholds (velocity_max, stress_max,
+			&lattice_velocity_max, &lattice_stress_max, lbm);
+  
+  visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
+  		 PIXELS_X, PIXELS_Y,
+  		 ctr_x, ctr_y, ctr_z,
+  		 5.F * vis->system_size,
+  		 longitude, latitude,
+  		 0.5F * (5.F * vis->system_size),
+  		 zoom);
+  
+  vis_velocity_threshold_max_inv = 1.F / velocity_max;
+  vis_stress_threshold_max_inv   = 1.F / stress_max;
+  */
 }
 
 
@@ -421,38 +356,20 @@ int main (int argc, char *argv[])
   double simulation_time;
   double minutes;
   double fluid_solver_time;
-  double fluid_solver_and_vr_time;
-  double fluid_solver_and_is_time;
-  double vr_without_compositing_time;
+  double fluid_solver_and_vis_time;
+  double vis_without_compositing_time;
   
   int cycle_id;
-  int total_time_steps, time_step, stability;
+  int total_time_steps, time_step, stability = STABLE;
   int depths;
   
   int fluid_solver_time_steps;
-  int fluid_solver_and_vr_time_steps;
-  int fluid_solver_and_is_time_steps;
-  int vr_without_compositing_time_steps;
+  int fluid_solver_and_vis_time_steps;
+  int vis_without_compositing_time_steps;
   
   pthread_t network_thread;
   pthread_attr_t pthread_attrib;
   
-#ifdef STEER
-  int    reg_num_cmds;
-  int    reg_cmds[REG_INITIAL_NUM_CMDS];
-  char** steer_changed_param_labels;
-  char** steer_recvd_cmd_params;
-  
-  SteerParams steer;
-  
-  
-  steer_changed_param_labels = Alloc_string_array (REG_MAX_STRING_LENGTH,
-						   REG_MAX_NUM_STR_PARAMS);
-  steer_recvd_cmd_params = Alloc_string_array (REG_MAX_STRING_LENGTH,
-					       REG_MAX_NUM_STR_CMDS);
-  
-  int reg_finished;
-#endif // STEER
   LBM lbm;
   
   Net net;
@@ -506,7 +423,20 @@ int main (int argc, char *argv[])
       timings_ptr = fopen (timings_name, "w");
     }
   
-  if (argc != 2 && argc != 3)
+  if (argc == 3)
+    {
+      is_bench = 1;
+      minutes = atof( argv[2] );
+    }
+  else if (argc == 5)
+    {
+      lbm.cycles_max = (int)atof( argv[2] );
+      lbm.period     = (int)atof( argv[3] );
+      lbm.voxel_size = atof( argv[4] );
+      
+      is_bench = 0;
+    }
+  else
     {
       if (net.id == 0) usage(argv[0]);
       
@@ -518,16 +448,6 @@ int main (int argc, char *argv[])
 #endif
     }
   
-  if (argc == 3)
-    {
-      is_bench = 1;
-      minutes = atof( argv[2] );
-    }
-  else
-    {
-      is_bench = 0;
-    }
-  
   if (net.id == 0)
     {
       fprintf (timings_ptr, "***********************************************************\n");
@@ -536,11 +456,7 @@ int main (int argc, char *argv[])
       fprintf (timings_ptr, "Opening vis parameters file:\n %s\n\n", vis_parameters_name);
     }
   
-#ifdef STEER
-  lbmReadParameters (input_parameters_name, &lbm, &net, &steer);
-#else
   lbmReadParameters (input_parameters_name, &lbm, &net);
-#endif
   
   
   if(net.id == 0)
@@ -556,78 +472,6 @@ int main (int argc, char *argv[])
       
       pthread_create (&network_thread, &pthread_attrib, hemeLB_network, NULL);
     }
-  
-  
-#ifdef STEER
-  // create the derived datatype for the MPI_Bcast
-  int steer_count = 24;
-  int steer_blocklengths[24] = {1, 1, REG_MAX_NUM_STR_CMDS, 1,
-				1, 1, 1, 1, 1,
-				1, 1, 1,
-				1, 1, 1,
-				1, 1, 1,
-				1, 1, 1, 1, 1, 1, 1,
-				1};
-#ifndef NOMPI
-  MPI_Datatype steer_types[24] = {MPI_INT, MPI_INT, MPI_INT, MPI_INT,
-				  MPI_DOUBLE, MPI_DOUBLE, MPI_INT, MPI_INT, MPI_INT,
-				  MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-				  MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-				  MPI_INT, MPI_INT, MPI_INT,
-				  MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-				  MPI_UB};
-  
-  MPI_Aint steer_disps[24];
-  MPI_Datatype MPI_steer_type;
-  
-  // calculate displacements
-  
-  steer_disps[0] = 0;
-  
-  for(int i = 1; i < steer_count; i++) {
-    switch(steer_types[i - 1]) {
-    case MPI_INT:
-      steer_disps[i] = steer_disps[i - 1] + (sizeof(int) * steer_blocklengths[i - 1]);
-      break;
-    case MPI_DOUBLE:
-      steer_disps[i] = steer_disps[i - 1] + (sizeof(double) * steer_blocklengths[i - 1]);
-      break;
-    case MPI_FLOAT:
-      steer_disps[i] = steer_disps[i - 1] + (sizeof(float) * steer_blocklengths[i - 1]);
-      break;
-    }
-  }
-  
-  MPI_Type_struct (steer_count, steer_blocklengths, steer_disps, steer_types, &MPI_steer_type);
-  MPI_Type_commit (&MPI_steer_type);
-#endif
-  
-  
-  // initialize the steering library
-  if(net.id == 0)
-    {
-      Steering_enable (REG_TRUE);
-      
-      reg_num_cmds = 2;
-      reg_cmds[0] = REG_STR_STOP;
-      reg_cmds[1] = REG_STR_PAUSE_INTERNAL;
-      steer.status = Steering_initialize ("HemeLB", reg_num_cmds, reg_cmds);
-    }
-  
-  // broadcast/collect status
-#ifndef NOMPI
-  net.err = MPI_Bcast (&steer.status, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-  
-  // if broken, quit
-  if(steer.status == REG_FAILURE)
-    {
-#ifndef NOMPI
-      net.err = MPI_Finalize ();
-#endif
-      return REG_FAILURE;
-    }
-#endif // STEER
   
   lbmInit (input_config_name, &lbm, &net);
   
@@ -645,86 +489,8 @@ int main (int argc, char *argv[])
   
   visInit (&net, &vis);
   
-  stability = STABLE;
+  visReadParameters (vis_parameters_name, &lbm, &net, &vis);
   
-#ifdef STEER
-
-  // register params with RealityGrid here
-  if(net.id == 0)
-    {
-      // read only and only if displaying
-      
-//      steer.status = Register_param("Display Host", REG_FALSE,
-//				    (void*)(&host_name), REG_CHAR, "", "");
-      
-      // LBM params
-      steer.status = Register_param("Tau", REG_TRUE,
-				    (void*)(&steer.tau), REG_DBL, "0.5", "");
-      steer.status = Register_param("Tolerance", REG_TRUE,
-				    (void*)(&steer.tolerance), REG_DBL, "0.0", "0.1");
-      steer.status = Register_param("Max time steps",REG_TRUE,
-				    (void*)(&steer.max_cycles), REG_INT, "1", "");
-      steer.status = Register_param("Conv frequency", REG_TRUE,
-				    (void*)(&steer.conv_freq), REG_INT, "1", "");
-      steer.status = Register_param("Checkpoint frequency", REG_TRUE,
-				    (void*)(&steer.period), REG_INT, "1", "");
-      // Vis params
-      steer.status = Register_param("Longitude", REG_TRUE,
-				    (void *)(&steer.longitude), REG_FLOAT, "", "");
-      steer.status = Register_param("Latitude", REG_TRUE,
-				    (void *)(&steer.latitude), REG_FLOAT, "", "");
-      steer.status = Register_param("Zoom", REG_TRUE,
-				    (void *)(&steer.zoom), REG_FLOAT, "0.0", "");
-      steer.status = Register_param("Image output frequency", REG_TRUE,
-				    (void*)(&steer.image_freq), REG_INT, "1", "");
-      steer.status = Register_param("Flow field type", REG_TRUE,
-				    (void*)(&steer.flow_field_type), REG_INT, "0", "2");
-      steer.status = Register_param("Vis mode", REG_TRUE,
-				    (void*)(&steer.mode), REG_INT, "0", "2");
-      steer.status = Register_param("Absorption factor", REG_TRUE,
-				    (void *)(&steer.abs_factor), REG_FLOAT, "0.0", "");
-      steer.status = Register_param("Cutoff", REG_TRUE,
-				    (void *)(&steer.cutoff), REG_FLOAT, "0.0", "1.0");
-      steer.status = Register_param("Max density", REG_TRUE,
-				    (void *)(&steer.max_density), REG_FLOAT, "0.0", "");
-      steer.status = Register_param("Max velocity", REG_TRUE,
-				    (void *)(&steer.max_velocity), REG_FLOAT, "0.0", "");
-      steer.status = Register_param("Max stress", REG_TRUE,
-				    (void *)(&steer.max_stress), REG_FLOAT, "0.0", "");
-    }
-  
-#ifndef NOMPI
-  // broadcast/collect status
-  net.err = MPI_Bcast(&steer.status, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-  
-  // if broken, quit
-  if(steer.status == REG_FAILURE)
-    {
-#ifndef NOMPI
-      net.err = MPI_Finalize ();
-#endif
-      return REG_FAILURE;
-    }
-
-  reg_finished = 0;
-
-  if(net.id == 0)
-    {
-      fprintf (timings_ptr, "STEER: RealityGrid library initialized and parameters registered.\n");
-      fflush (timings_ptr);
-    }
-#endif // STEER
-  
-#ifdef STEER
-  visReadParameters (vis_parameters_name, &net, &vis, &steer);
-#else
-  visReadParameters (vis_parameters_name, &net, &vis);
-#endif
-  
-#ifdef STEER
-  int steering_time_step = 0;
-#endif
   
   if (!is_bench)
     {
@@ -738,75 +504,18 @@ int main (int argc, char *argv[])
 	{
 	  for (time_step = 0; time_step < lbm.period; time_step++)
 	    {
-	      ++total_time_steps;
-	      
-	      // globalLongitude += 1.F;
-	      // visUpdateLongitude (vis_parameters_name, &net, &vis);
-	      
 	      int perform_rt = 0;
-	      
-#ifdef STEER
-	      // call steering control
-	      if (net.id == 0)
-		{
-		  steer.status = Steering_control (++steering_time_step,
-						   &steer.num_params_changed,
-						   steer_changed_param_labels,
-						   &steer.num_recvd_cmds,
-						   steer.recvd_cmds,
-						   steer_recvd_cmd_params);
-		}
-	      
-#ifndef NOMPI
-	      // broadcast/collect everything
-	      net.err = MPI_Bcast (&steer, 1, MPI_steer_type, 0, MPI_COMM_WORLD);
-#endif
-	      if (steer.status != REG_SUCCESS)
-		{
-		  fprintf (stderr, "STEER: I am %d and I detected that Steering_control failed.\n", net.id);
-		  fflush(stderr);  
-		  continue;
-		}
-	      
-	      // process commands received
-	      for (int i = 0; i < steer.num_recvd_cmds; i++)
-		{
-		  switch (steer.recvd_cmds[i])
-		    {
-		    case REG_STR_STOP:
-		      fprintf (stderr, "STEER: I am %d and I've been told to STOP.\n", net.id);
-		      fflush(stderr);
-		      reg_finished = 1;
-		      break;
-		    }
-		} // end of command processing
-	      
-	      // process changed params
-	      // not bothered what changed, just copy across...
-	      
-	      if (steer.num_params_changed > 0)
-		{
-		  fprintf (stderr, "STEER: I am %d and I was told that %d params changed.\n", net.id, steer.num_params_changed);
-		  fflush(stderr);
-		  
-		  lbmUpdateParameters (&lbm, &steer);
-		  
-		  visUpdateParameters (&vis, &steer);
-		}
-	      // end of param processing
-	      
-#endif // STEER
-	      
 	      int write_image = 0;
 	      int stream_image = 0;
+	      int is_thread_locked = 0;
+	      
+	      
+	      ++total_time_steps;
 	      
 	      if ((time_step + 1)%vis_image_freq == 0)
 		{
 		  write_image = 1;
 		}
-	      	      
-	      int is_thread_locked = 0;
-	      
 	      if (total_time_steps%1 == 0)
 		{
 		  if (net.id == 0)
@@ -814,15 +523,12 @@ int main (int argc, char *argv[])
 		      //pthread_mutex_lock( &network_buffer_copy_lock );
 		      is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
 		    }
-#ifndef NOMPI
-		  MPI_Bcast (&vis_flow_field_type, 1, MPI_INT, 0, MPI_COMM_WORLD);
-		  MPI_Bcast (&is_thread_locked, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
+		  UpdateSteerableParameters (&is_thread_locked, &vis);
+		  
 		  if (!is_thread_locked)
 		    {
 		      stream_image = 1;
 		    }
-		  
 		}
 	      if (stream_image || write_image)
 		{
@@ -860,7 +566,7 @@ int main (int argc, char *argv[])
 		}
 	      if (perform_rt)
 		{
-		  visRenderB (stream_image, write_image, image_name, ColourPalette, &net);
+		  visRenderB (write_image, image_name, ColourPalette, &net);
 		}
 	      if (net.id == 0)
 		{
@@ -881,17 +587,14 @@ int main (int argc, char *argv[])
 		  is_finished = 1;
 		  break;
 		}
-#ifdef STEER
-	      if (reg_finished == 1)
+	      if (net.id == 0)
 		{
-		  is_finished = 1;
-		  break;
+		  //printf ("time step: %i\n", time_step+1);
 		}
-#endif // STEER
 	    }
 	  if (net.id == 0)
 	    {
-	      fprintf (timings_ptr, "cycle id: %i\n", cycle_id+1);
+	      //fprintf (timings_ptr, "cycle id: %i\n", cycle_id+1);
 	      printf ("cycle id: %i\n", cycle_id+1);
 	    }
 	}
@@ -927,7 +630,7 @@ int main (int argc, char *argv[])
 	      break;
 	    }
 	}
-      fluid_solver_time_steps = (int)(time_step * minutes / (4. * 0.5) - time_step);
+      fluid_solver_time_steps = (int)(time_step * minutes / (3. * 0.5) - time_step);
       fluid_solver_time = myClock ();
       
       for (time_step = 1; time_step <= fluid_solver_time_steps; time_step++)
@@ -937,14 +640,11 @@ int main (int argc, char *argv[])
       fluid_solver_time = myClock () - fluid_solver_time;
       
       
-      // benchmarking HemeLB's fluid solver and volume rendering
+      // benchmarking HemeLB's fluid solver and ray tracer
       
-      vis_flow_field_type = VELOCITY;
       vis_image_freq = 1;
-      vis_mode = 0;
-      vis_cutoff = -EPSILON;
       vis_compositing = 1;
-      fluid_solver_and_vr_time = myClock ();
+      fluid_solver_and_vis_time = myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
@@ -952,14 +652,14 @@ int main (int argc, char *argv[])
 	  
 	  stability = lbmCycle (0, 0, 1, &lbm, &net);
 	  
-	  visRenderB (0, 0, image_name, ColourPalette, &net);
+	  visRenderB (0, image_name, ColourPalette, &net);
 	  
 	  // partial timings
-	  elapsed_time = myClock () - fluid_solver_and_vr_time;
+	  elapsed_time = myClock () - fluid_solver_and_vis_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
-	      fprintf (stderr, " FS + VR, time: %.3f, time step: %i, time steps/s: %.3f\n",
+	      fprintf (stderr, " FS + VIS, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
@@ -968,77 +668,36 @@ int main (int argc, char *argv[])
 	      break;
 	    }
 	}
-      fluid_solver_and_vr_time_steps = (int)(time_step * minutes / (4. * 0.5) - time_step);
-      fluid_solver_and_vr_time = myClock ();
+      fluid_solver_and_vis_time_steps = (int)(time_step * minutes / (3. * 0.5) - time_step);
+      fluid_solver_and_vis_time = myClock ();
       
-      for (time_step = 1; time_step <= fluid_solver_and_vr_time_steps; time_step++)
+      for (time_step = 1; time_step <= fluid_solver_and_vis_time_steps; time_step++)
 	{
 	  visRenderA (ColourPalette, &net);
 	  
 	  stability = lbmCycle (0, 0, 1, &lbm, &net);
 	  
-	  visRenderB (0, 0, image_name, ColourPalette, &net);
+	  visRenderB (0, image_name, ColourPalette, &net);
 	}
-      fluid_solver_and_vr_time = myClock () - fluid_solver_and_vr_time;
+      fluid_solver_and_vis_time = myClock () - fluid_solver_and_vis_time;
       
       
-      // benchmarking HemeLB's fluid solver and iso-surface
       
-      vis_mode = 1;
-      fluid_solver_and_is_time = myClock ();
+      // benchmarking HemeLB's ray tracer without compositing
       
-      for (time_step = 1; time_step <= 1000000000; time_step++)
-	{
-	  visRenderA (ColourPalette, &net);
-	  
-	  stability = lbmCycle (0, 0, 1, &lbm, &net);
-	  
-	  visRenderB (0, 0, image_name, ColourPalette, &net);
-	  
-	  // partial timings
-	  elapsed_time = myClock () - fluid_solver_and_is_time;
-	  
-	  if (time_step%bench_period == 1 && net.id == 0)
-	    {
-	      fprintf (stderr, " FS + IS, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		       elapsed_time, time_step, time_step / elapsed_time);
-	    }
-	  if (time_step%bench_period == 1 &&
-	      IsBenckSectionFinished (0.5, elapsed_time))
-	    {
-	      break;
-	    }
-	}
-      fluid_solver_and_is_time_steps = (int)(time_step * minutes / (4. * 0.5) - time_step);
-      fluid_solver_and_is_time = myClock ();
-      
-      for (time_step = 1; time_step <= fluid_solver_and_is_time_steps; time_step++)
-	{
-	  visRenderA (ColourPalette, &net);
-	  
-	  stability = lbmCycle (0, 0, 1, &lbm, &net);
-	  
-	  visRenderB (0, 0, image_name, ColourPalette, &net);
-	}
-      fluid_solver_and_is_time = myClock () - fluid_solver_and_is_time;
-      
-      
-      // benchmarking HemeLB's volume rendering without compositing
-      
-      vis_mode = 0;
       vis_compositing = 0;
-      vr_without_compositing_time = myClock ();
+      vis_without_compositing_time = myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
 	  visRenderA (ColourPalette, &net);
 	  
 	  // partial timings
-	  elapsed_time = myClock () - vr_without_compositing_time;
+	  elapsed_time = myClock () - vis_without_compositing_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
-	      fprintf (stderr, " VR - COMP, time: %.3f, time step: %i, time steps/s: %.3f\n",
+	      fprintf (stderr, " VIS - COMP, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
@@ -1047,17 +706,16 @@ int main (int argc, char *argv[])
 	      break;
 	    }
 	}
-      vr_without_compositing_time_steps = (int)(time_step * minutes / (4. * 0.5) - time_step);
-      vr_without_compositing_time = myClock ();
+      vis_without_compositing_time_steps = (int)(time_step * minutes / (3. * 0.5) - time_step);
+      vis_without_compositing_time = myClock ();
       
-      for (time_step = 1; time_step <= vr_without_compositing_time_steps; time_step++)
+      for (time_step = 1; time_step <= vis_without_compositing_time_steps; time_step++)
 	{
 	  visRenderA (ColourPalette, &net);
 	}
-      vr_without_compositing_time = myClock () - vr_without_compositing_time;
+      vis_without_compositing_time = myClock () - vis_without_compositing_time;
     } // is_bench
   
-
   if (!is_bench)
     {  
       if (net.id == 0)
@@ -1084,14 +742,11 @@ int main (int argc, char *argv[])
 		   1.e-6 * lbm.total_fluid_sites / (fluid_solver_time / fluid_solver_time_steps),
 		   fluid_solver_time);
 	  
-	  fprintf (timings_ptr, " FS + VR, time steps per second: %.3f, time: %.3f\n\n",
-		   fluid_solver_and_vr_time_steps / fluid_solver_and_vr_time, fluid_solver_and_vr_time);
-	  
-	  fprintf (timings_ptr, " FS + IS, time steps per second: %.3f, time: %.3f\n\n",
-		   fluid_solver_and_is_time_steps / fluid_solver_and_is_time, fluid_solver_and_is_time);
+	  fprintf (timings_ptr, " FS + VIS, time steps per second: %.3f, time: %.3f\n\n",
+		   fluid_solver_and_vis_time_steps / fluid_solver_and_vis_time, fluid_solver_and_vis_time);
 	  
 	  fprintf (timings_ptr, " VR - COMP, time steps per second: %.3f, time: %.3f\n\n",
-		   vr_without_compositing_time_steps / vr_without_compositing_time, vr_without_compositing_time);
+		   vis_without_compositing_time_steps / vis_without_compositing_time, vis_without_compositing_time);
 	}
     }
   
@@ -1102,7 +757,7 @@ int main (int argc, char *argv[])
     }
   net.fo_time = myClock ();
   
-  //lbmWriteConfig (stability, output_config_name, &lbm, &net);
+  lbmWriteConfig (stability, output_config_name, &lbm, &net);
   
   net.fo_time = myClock () - net.fo_time;
   
@@ -1146,16 +801,6 @@ int main (int argc, char *argv[])
       free(xdrSendBuffer_pixel_data);
     }
   
-  
-#ifdef STEER
-  if (net.id == 0)
-    {
-      Steering_finalize ();
-      
-      fprintf (stderr, "STEER: Steering_finalize () called.\n");
-      fflush(stderr);
-    }
-#endif // STEER
   
 #ifndef NOMPI
   net.err = MPI_Finalize ();

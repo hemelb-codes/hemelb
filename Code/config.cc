@@ -85,14 +85,14 @@ double *outlet_density_avg = NULL, *outlet_density_amp = NULL, *outlet_density_p
 
 int col_pixels, col_pixels_max;
 int col_pixels_recv[ MACHINES_MAX-1 ];
-//int col_pixels_locked;
+//int col_pixels_lock;
 
 int *col_pixel_id = NULL;
 
 // ColPixel *col_pixel_send = NULL;
 ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
 ColPixel *col_pixel_recv = NULL;
-//ColPixel *col_pixel_locked = NULL;
+ColPixel *col_pixel_lock = NULL;
 
 
 int is_bench;
@@ -112,20 +112,17 @@ double lbm_stress_min, lbm_stress_max;
 int net_machines;
 
 
-int vis_mode;
-int vis_flow_field_type;
 int vis_image_freq;
 int vis_pixels_max;
 int vis_compositing = 1;
 
+
 float block_size_f;
 float block_size_inv;
-float vis_flow_field_value_max_inv;
-float vis_absorption_factor;
-float vis_cutoff;
-float vis_flow_field_cutoff;
-float vis_t_min;
-float vis_value;
+float vis_density_threshold_min, vis_density_threshold_minmax_inv;
+float vis_velocity_threshold_max_inv;
+float vis_stress_threshold_max_inv;
+float vis_brightness;
 
 
 int cluster_blocks_vec[3];
@@ -134,7 +131,11 @@ int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
 float ray_dir[3];
 float ray_inv[3];
-float ray_col[3];
+float ray_vel_col[3];
+float ray_stress_col[3];
+float ray_t_min;
+float ray_density;
+float ray_stress;
 
 
 int clusters;
