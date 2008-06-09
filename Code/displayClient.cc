@@ -43,7 +43,7 @@
 
 struct PixelData
 {
-  unsigned char r, g, b;
+  unsigned char r[4], g[4], b[4];
   
   short int i, j;
 };
@@ -63,18 +63,18 @@ unsigned int width;
 unsigned int height;
 unsigned int bpp;
 
-// data per pixel are colour id and pixel id (2 * sizeof(int) * bytes)
-int data_per_pixel = 2;
-int bytes_per_pixel_data = data_per_pixel * sizeof(int);
+// data per pixel inlude the data for the pixel location and 4 colours
+//in RGB format, thus #bytes per pixel are (sizeof(int)+4
+//rgb)=sizeof(int)+4*3*sizeof(unsigned char))
+int bytes_per_pixel_data = sizeof(int) + 4 * sizeof(unsigned char);
 
 int bits_per_char = sizeof(char) * 8;
-int bits_per_two_chars = 2 * bits_per_char;
 
 // r-, g-, b- pixel components need "bits_per_char" bits
-int colour_mask = (1 << bits_per_char) - 1;
+int colour_mask = (1 << (sizeof(char) * 8)) - 1;
 
-// x-, y- pixel components need "bits_per_two_chars" bits
-int pixel_mask = (1 << bits_per_two_chars) - 1;
+// x-, y- pixel components need "2*bits_per_char" bits
+int pixel_mask = (1 << (sizeof(char) * 16)) - 1;
 
 u_int pixel_data_bytes = IMAGE_SIZE * bytes_per_pixel_data;
 
@@ -88,7 +88,9 @@ char *xdrReceiveBuffer_size;
 double myClock ()
 {
   struct timeval time_data;
+  
   gettimeofday (&time_data, NULL);
+  
   return (double)time_data.tv_sec + (double)time_data.tv_usec / 1.e6;
 }
 
@@ -98,7 +100,6 @@ int recv_all (int sockid, char *buf, int *length)
   int received_bytes = 0;
   int bytes_left_to_receive = *length;
   int n;
-  
   
   while (received_bytes < *length)
     {
@@ -121,9 +122,9 @@ void ReceiveFrame ()
   
   int bytesReceived = 0;
   int detailsBytes, frameBytes;
-  int colour_id, pixel_id;
   
-  PixelData *pixel_data_p;
+  unsigned int pixel_id;
+  unsigned int col_data[3];
   
   
   XDR xdr_network_stream_size;
@@ -160,17 +161,27 @@ void ReceiveFrame ()
   
   for (int i = 0; i < col_pixels; i++)
     {
-      xdr_int (&xdr_network_stream, &colour_id);
-      xdr_int (&xdr_network_stream, &pixel_id);
+      xdr_u_int (&xdr_network_stream, &pixel_id);
       
-      pixel_data_p = &pixel_data[ i ];
+      xdr_u_int (&xdr_network_stream, &col_data[0]);
+      xdr_u_int (&xdr_network_stream, &col_data[1]);
+      xdr_u_int (&xdr_network_stream, &col_data[2]);
       
-      pixel_data_p->r = (colour_id >> bits_per_two_chars) & colour_mask;
-      pixel_data_p->g = (colour_id >> bits_per_char     ) & colour_mask;
-      pixel_data_p->b = (colour_id                      ) & colour_mask;
+      pixel_data[ i ].i = (pixel_id >> (2*bits_per_char)) & pixel_mask;
+      pixel_data[ i ].j = (pixel_id                     ) & pixel_mask;
       
-      pixel_data_p->i = (pixel_id >> bits_per_two_chars) & pixel_mask;
-      pixel_data_p->j = (pixel_id                      ) & pixel_mask;
+      pixel_data[ i ].r[0] = (col_data[0] >> (3*bits_per_char)) & colour_mask;
+      pixel_data[ i ].g[0] = (col_data[0] >> (2*bits_per_char)) & colour_mask;
+      pixel_data[ i ].b[0] = (col_data[0] >> (1*bits_per_char)) & colour_mask;
+      pixel_data[ i ].r[1] = (col_data[0] >> (0*bits_per_char)) & colour_mask;
+      pixel_data[ i ].g[1] = (col_data[1] >> (3*bits_per_char)) & colour_mask;
+      pixel_data[ i ].b[1] = (col_data[1] >> (2*bits_per_char)) & colour_mask;
+      pixel_data[ i ].r[2] = (col_data[1] >> (1*bits_per_char)) & colour_mask;
+      pixel_data[ i ].g[2] = (col_data[1] >> (0*bits_per_char)) & colour_mask;
+      pixel_data[ i ].b[2] = (col_data[2] >> (3*bits_per_char)) & colour_mask;
+      pixel_data[ i ].r[3] = (col_data[2] >> (2*bits_per_char)) & colour_mask;
+      pixel_data[ i ].g[3] = (col_data[2] >> (1*bits_per_char)) & colour_mask;
+      pixel_data[ i ].b[3] = (col_data[2] >> (0*bits_per_char)) & colour_mask;
     }
   
   xdr_destroy (&xdr_network_stream);
@@ -198,9 +209,30 @@ void DisplayFrame ()
     {
       pixel_data_p = &pixel_data[ i ];
       
-      glColor3f (pixel_data_p->r * (1.F / 255.F),
-		 pixel_data_p->g * (1.F / 255.F),
-		 pixel_data_p->b * (1.F / 255.F));
+      glColor3f (pixel_data_p->r[0] * (1.F / 255.F),
+		 pixel_data_p->g[0] * (1.F / 255.F),
+		 pixel_data_p->b[0] * (1.F / 255.F));
+      
+      glVertex2f (-0.5F + scale_x * (pixel_data_p->i + (PIXELS_X >> 1)),
+		  -0.5F + scale_y * (pixel_data_p->j + (PIXELS_Y >> 1)));
+      
+      glColor3f (pixel_data_p->r[1] * (1.F / 255.F),
+		 pixel_data_p->g[1] * (1.F / 255.F),
+		 pixel_data_p->b[1] * (1.F / 255.F));
+      
+      glVertex2f (-0.5F + scale_x * (pixel_data_p->i + (PIXELS_X >> 1)),
+		  -0.5F + scale_y * pixel_data_p->j);
+      
+      glColor3f (pixel_data_p->r[2] * (1.F / 255.F),
+		 pixel_data_p->g[2] * (1.F / 255.F),
+		 pixel_data_p->b[2] * (1.F / 255.F));
+      
+      glVertex2f (-0.5F + scale_x * pixel_data_p->i,
+		  -0.5F + scale_y * (pixel_data_p->j + (PIXELS_Y >> 1)));
+      
+      glColor3f (pixel_data_p->r[3] * (1.F / 255.F),
+		 pixel_data_p->g[3] * (1.F / 255.F),
+		 pixel_data_p->b[3] * (1.F / 255.F));
       
       glVertex2f (-0.5F + scale_x * pixel_data_p->i,
 		  -0.5F + scale_y * pixel_data_p->j);
@@ -353,8 +385,8 @@ int main(int argc, char *argv[])
   }
   
   
-  pixels_x = 1024;
-  pixels_y = 1024;
+  pixels_x = PIXELS_X;
+  pixels_y = PIXELS_Y;
   
   xdrReceiveBuffer = (char *)malloc(pixel_data_bytes);
   xdrReceiveBuffer_size = (char *)malloc(frame_details_bytes);
