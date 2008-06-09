@@ -29,12 +29,6 @@
 #include <pthread.h>
 
 
-#ifdef STEER
-#include "ReG_Steer_types.h"
-#include "ReG_Steer_Appside.h"
-#endif // STEER
-
-
 #define EPSILON    1.e-30
 
 #define STABLE     1
@@ -50,13 +44,20 @@
 #define COLLISION_TYPES                6
 #define MACHINES_MAX                   4
 
-#define PIXELS_X                       1024
-#define PIXELS_Y                       1024
+#define PIXELS_X                       512
+#define PIXELS_Y                       512
 #define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
 #define IMAGE_SIZE                     PIXELS_X * PIXELS_Y
-#define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
+#define STEERABLE_PARAMETERS           9
 
-#define VIS_SIMD_SIZE                  3
+
+#define REFERENCE_PRESSURE             80.0           // 80 mmHg
+#define PASCAL_TO_mmHg                 133.3223874
+#define BLOOD_DENSITY                  1000.0        // 1000 Kg m^(-3)
+#define BLOOD_VISCOSITY                0.004         // 0.004 Pascal s
+#define PULSATILE_PERIOD               0.857142857   // period of oscillation (in s) is
+					             // chosen to be 1 min / 70
+					             // beats per min
 
 
 #define PixelI(i)   i >> 16
@@ -118,43 +119,6 @@ extern pthread_cond_t network_send_frame;
 extern int send_array_length;
 
 
-#ifdef STEER
-
-// this is here so that I can transfer all params and data in one
-// chunk in one MPI_Bcast rather than loads of separate ones...
-struct SteerParams
-{
-  // reg
-  int    status;
-  int    num_recvd_cmds;
-  int    recvd_cmds[REG_MAX_NUM_STR_CMDS];
-  int    num_params_changed;
-  
-  // lbm
-  double tau;
-  double tolerance;
-  int    max_cycles;
-  int    conv_freq;
-  int    period;
-  
-  // vis
-  float  ctr_x, ctr_y, ctr_z;
-  float  longitude;
-  float  latitude;
-  float  zoom;
-  int    image_freq;
-  int    flow_field_type;
-  int    mode;
-  float  abs_factor;
-  float  cutoff;
-  float  max_density;
-  float  max_velocity;
-  float  max_stress;
-};
-
-#endif // STEER
-
-
 struct DataBlock
 {
   unsigned int *site_data;
@@ -183,12 +147,10 @@ struct LBM
 {
   char *system_file_name;
   
-  double tau;
-  double viscosity;
+  double tau, viscosity;
+  double voxel_size;
   double omega;
   double lattice_to_system;
-  double tolerance;
-  double conv_error;
   
   int total_fluid_sites;
   int site_min_x, site_min_y, site_min_z;
@@ -256,9 +218,11 @@ struct Net
 
 struct ColPixel
 {
-  union {float r, v;};
-  union {float g, t;};
-  float b;
+  float vel_r, vel_g, vel_b;
+  float stress_r, stress_g, stress_b;
+  float t;
+  float density;
+  float stress;
   
   int i;
 };
@@ -268,7 +232,7 @@ struct Cluster
 {
   float minmax_x[2], minmax_y[2], minmax_z[2];
   
-  float x[4];
+  float x[3];
   
   unsigned short int blocks_x, blocks_y, blocks_z;
   unsigned short int block_min[3];
@@ -279,7 +243,7 @@ struct Vis
 {
   char *image_file_name;
   
-  float half_dim[VIS_SIMD_SIZE];
+  float half_dim[3];
   float system_size;
 };
 
@@ -301,7 +265,7 @@ struct Screen
 
 struct Viewpoint
 {
-  float x[VIS_SIMD_SIZE];
+  float x[3];
   float sin_1, cos_1;
   float sin_2, cos_2;
   float dist;
@@ -339,15 +303,14 @@ extern double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
 
 extern int col_pixels, col_pixels_max;
 extern int col_pixels_recv[ MACHINES_MAX-1 ];
-//extern int col_pixels_locked;
+extern int col_pixels_lock;
 
 extern int *col_pixel_id;
 
 // extern ColPixel *col_pixel_send;
 extern ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
 extern ColPixel *col_pixel_recv;
-
-//extern ColPixel *col_pixel_locked;
+//extern ColPixel *col_pixel_lock;
 
 
 extern int is_bench;
@@ -367,36 +330,31 @@ extern double lbm_stress_min, lbm_stress_max;
 
 extern int net_machines;
 
-extern int vis_mode;
-extern int vis_flow_field_type;
+
 extern int vis_image_freq;
 extern int vis_pixels_max;
 extern int vis_compositing;
 
+
 extern float block_size_f;
 extern float block_size_inv;
-extern float vis_flow_field_value_max_inv;
-extern float vis_absorption_factor;
-extern float vis_cutoff;
-extern float vis_flow_field_cutoff;
-extern float vis_t_min;
-extern float vis_value;
+extern float vis_density_threshold_min, vis_density_threshold_minmax_inv;
+extern float vis_velocity_threshold_max_inv;
+extern float vis_stress_threshold_max_inv;
+extern float vis_brightness;
 
 
 extern int cluster_blocks_vec[3];
 extern int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
-extern float block_size_f;
-extern float block_size_inv;
-extern float vis_flow_field_value_max_inv;
-extern float vis_cutoff;
-extern float vis_flow_field_cutoff;
-extern float vis_t_min;
-
 
 extern float ray_dir[3];
 extern float ray_inv[3];
-extern float ray_col[3];
+extern float ray_vel_col[3];
+extern float ray_stress_col[3];
+extern float ray_t_min;
+extern float ray_density;
+extern float ray_stress;
 
 extern int clusters;
 
@@ -418,6 +376,7 @@ double myClock ();
 int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
 
+void lbmConvertBoundaryData (double physical_data[], double lattice_data[], LBM *lbm);
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
@@ -434,27 +393,23 @@ int netFindTopology (Net *net, int *depths);
 void netInit (LBM *lbm, Net *net);
 void netEnd (Net *net);
 
-void lbmReadConfig (LBM *lbm, Net *net);
 
-#ifdef STEER
-void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net, SteerParams *steer);
-void lbmUpdateParameters (LBM *lbm, SteerParams *steer);
-#else
+void lbmReadConfig (LBM *lbm, Net *net);
+double lbmCalculateTau (LBM *lbm);
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
-#endif
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
 
 void rtInit (Net *net);
-void rtUpdateColour (float dt, float palette[], float col[]);
-void rtRayTracingVR (void (*ColourPalette) (float value, float col[]));
-void rtRayTracingIS (void (*ColourPalette) (float value, float col[]));
+void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*ColourPalette) (float value, float col[]));
+void rtRayTracing (void (*ColourPalette) (float value, float col[]));
 void rtEnd (void);
 
 
 void visProject (float p1[], float p2[]);
 void visWritePixel (ColPixel *col_pixel);
+void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (float value, float col[]));
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,
 		float  x1, float  y1, float  z1,
@@ -468,15 +423,12 @@ void visProjection (float ortho_x, float ortho_y,
 		    float zoom);
 void visInit (Net *net, Vis *vis);
 void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net);
-void visRenderB (int stream_image, int write_image, char *image_file_name, void (*ColourPalette) (float value, float col[]),
-		 Net *net);
-
-#ifdef STEER
-void visReadParameters (char *parameters_file_name, Net *net, Vis *vis, SteerParams *steer);
-void visUpdateParameters (LBM *lbm, Vis *vis, SteerParams *steer);
-#else
-void visReadParameters (char *parameters_file_name, Net *net, Vis *vis);
-#endif
+void visRenderB (int write_image, char *image_file_name,
+		 void (*ColourPalette) (float value, float col[]), Net *net);
+void visConvertThresholds (float physical_velocity_max, float physical_stress_max,
+			   float *lattice_velocity_max, float *lattice_stress_max,
+			   LBM *lbm);
+void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
 
 void visEnd (void);
 
