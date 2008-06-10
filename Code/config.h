@@ -377,6 +377,9 @@ int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
 
 void lbmConvertBoundaryData (double physical_data[], double lattice_data[], LBM *lbm);
+double lbmConvertPressureToPhysicalUnits (double lattice_pressure, LBM *lbm);
+double lbmConvertVelocityToPhysicalUnits (double lattice_velocity, LBM *lbm);
+double lbmConvertStressToPhysicalUnits (double lattice_stress, LBM *lbm);
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);

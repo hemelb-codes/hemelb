@@ -14,7 +14,7 @@ void lbmConvertBoundaryData (double physical_data[], double lattice_data[], LBM 
 {
   // convert pressure from physical units (mm Hg) to lattice units
   // assuming a reference pressure of 80 mmHg (see config.h for
-  // constants setup
+  // constants setup)
   
   double useful_factor = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
   
@@ -31,6 +31,52 @@ void lbmConvertBoundaryData (double physical_data[], double lattice_data[], LBM 
 }
 
 
+double lbmConvertPressureToPhysicalUnits (double lattice_pressure, LBM *lbm)
+{
+  // convert pressure from lattice units to physical units (mm Hg) to lattice units
+  // assuming a reference pressure of 80 mmHg (see config.h for
+  // constants setup)
+  
+  double useful_factor = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
+  
+  
+  useful_factor *= useful_factor;
+  
+  return REFERENCE_PRESSURE + ((lattice_pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY /
+    (PASCAL_TO_mmHg * useful_factor * lbm->voxel_size * lbm->voxel_size);
+}
+
+
+double lbmConvertVelocityToPhysicalUnits (double lattice_velocity, LBM *lbm)
+{
+  // convert velocity from lattice units to physical units (m/s)
+  // (see config.h for constants setup)
+  
+  float physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
+  
+  float useful_factor = (lbm->tau - 0.5) * Cs2 / physical_kinematic_viscosity;
+  
+  
+  return lattice_velocity / useful_factor * lbm->voxel_size;
+}
+
+
+double lbmConvertStressToPhysicalUnits (double lattice_stress, LBM *lbm)
+{
+  // convert stress from lattice units to physical units (Pa)
+  // (see config.h for constants setup)
+  
+  float physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
+  
+  float useful_factor = (lbm->tau - 0.5) * Cs2 / physical_kinematic_viscosity;
+  
+  
+  return lattice_stress * BLOOD_DENSITY /
+    (useful_factor * useful_factor * lbm->voxel_size * lbm->voxel_size);
+}
+
+
+  
 double lbmCalculateTau (LBM *lbm)
 {
   double physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;

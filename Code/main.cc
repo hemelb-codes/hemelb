@@ -341,8 +341,10 @@ int IsBenckSectionFinished (double minutes, double elapsed_time)
 void usage (char *progname)
 {
   fprintf (timings_ptr, "Usage: %s path of the input files and minutes for benchmarking\n", progname);
-  fprintf (timings_ptr, "if one wants to do a benchmark\n");
-  fprintf (timings_ptr, "the following files must be present in the path specified:\n");
+  fprintf (timings_ptr, "if one wants to do a benchmark or\n");
+  fprintf (timings_ptr, "number of pulsaticle cycles, time steps per cycle and\n");
+  fprintf (timings_ptr, "voxel size in metres otherwise.\n");
+  fprintf (timings_ptr, "The following files must be present in the path specified:\n");
   fprintf (timings_ptr, "config.dat, pars.asc rt_pars.asc\n");
 }
 
@@ -765,9 +767,18 @@ int main (int argc, char *argv[])
     {
       if (!is_bench)
 	{
-	  fprintf (timings_ptr, "density  min, max: %le, %le\n", lbm_density_min, lbm_density_max);
-	  fprintf (timings_ptr, "velocity min, max: %le, %le\n", lbm_velocity_min, lbm_velocity_max);
-	  fprintf (timings_ptr, "stress   min, max: %le, %le\n", lbm_stress_min, lbm_stress_max);
+	  double pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, &lbm);
+	  double pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, &lbm);
+	  
+	  double velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, &lbm);
+	  double velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, &lbm);
+	  
+	  double stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, &lbm);
+	  double stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, &lbm);
+	  
+	  fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", pressure_min, pressure_max);
+	  fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", velocity_min, velocity_max);
+	  fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", stress_min, stress_max);
 	}
       fprintf (timings_ptr, "\n");
       fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);
