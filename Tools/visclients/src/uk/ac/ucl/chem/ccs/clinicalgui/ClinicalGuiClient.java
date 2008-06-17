@@ -6,6 +6,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 import uk.ac.ucl.chem.ccs.aheclient.res.AdvancedReservation;
+import uk.ac.ucl.chem.ccs.clinicalgui.res.ResPanel;
+import uk.ac.ucl.chem.ccs.clinicalgui.res.ViewReservation;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -53,6 +55,8 @@ public class ClinicalGuiClient extends SingleFrameApplication {
     public static Properties prop;
     public static AdvancedReservation reservation = null;
     public static int patientID = 0;
+    public static String PATIENT_ID = "NONE";
+    
 	//@Override
     protected void startup() {
     	loadProperties();
@@ -70,6 +74,13 @@ public class ClinicalGuiClient extends SingleFrameApplication {
     				change = new JMenuItem();
     				jMenu1.add(change);
     				change.setName("Change");
+    				change.addActionListener(new ActionListener() {
+						public void actionPerformed (ActionEvent evt) {
+						    PatientIdDialog pd = new PatientIdDialog(ClinicalGuiClient.this.getMainFrame());
+							pd.setModal(true);
+							pd.setVisible(true);
+						}
+					});
     			}
     			{
     				manage = new JMenuItem();
@@ -131,6 +142,7 @@ public class ClinicalGuiClient extends SingleFrameApplication {
 			}
 			cat = LogFactory.getLog(ClinicalGuiClient.class);
         launch(ClinicalGuiClient.class, args);
+        //ErrorMessage ems = new ErrorMessage(ClinicalGuiClient.this.get), "testing...");
     }
     
     
