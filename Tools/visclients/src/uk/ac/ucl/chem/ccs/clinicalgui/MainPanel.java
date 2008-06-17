@@ -68,6 +68,8 @@ public class MainPanel extends javax.swing.JPanel {
 				{
 					modelGenerationPanel1 = new ModelGenerationPanel();
 					jTabbedPane1.addTab("Model Generation", null, modelGenerationPanel1, null);
+					modelGenerationPanel1.NextButton.addActionListener(new NextListener());
+					modelGenerationPanel1.PrevButton.addActionListener(new PrevListener());
 				}
 				{
 					simulationLaunchPanel1 = new SimulationLaunchPanel();
@@ -92,6 +94,14 @@ public class MainPanel extends javax.swing.JPanel {
 	private class NextListener implements ActionListener {
 		public void actionPerformed (ActionEvent evt) {
 			guiStage++;
+			jTabbedPane1.setSelectedIndex(guiStage);
+		}
+		
+	}
+	
+	private class PrevListener implements ActionListener {
+		public void actionPerformed (ActionEvent evt) {
+			guiStage--;
 			jTabbedPane1.setSelectedIndex(guiStage);
 		}
 		
