@@ -13,6 +13,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include <sys/stat.h>
+
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
 
@@ -348,6 +350,22 @@ void usage (char *progname)
   fprintf (timings_ptr, "config.dat, pars.asc rt_pars.asc\n");
 }
 
+int file_exists(const char * filename) {
+        if (FILE * file = fopen(filename, "r")) {
+                fclose(file);
+                return 0;
+    }
+    return -1;
+}
+
+void check_file(const char * filename) {
+        if(file_exists(filename) < 0 ) {
+                fprintf(stderr,"Cannot open file %s\nExiting.\n", filename);
+                exit(0);
+        } else {
+                fprintf(stderr,"Located file %s\n", filename);
+	}
+}
 
 int main (int argc, char *argv[])
 {
@@ -376,7 +394,6 @@ int main (int argc, char *argv[])
   
   Net net;
   
-  
 #ifndef NOMPI
   net.err = MPI_Init (&argc, &argv);
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
@@ -386,9 +403,33 @@ int main (int argc, char *argv[])
   net.id = 0;
 #endif
   
-  double total_time = myClock ();
+  if (argc == 3) // Check command line arguments
+    {
+      is_bench = 1;
+      minutes = atof( argv[2] );
+    }
+  else if (argc == 5)
+    {
+      is_bench = 0;
+      lbm.cycles_max = atoi( argv[2] );
+      lbm.period     = atoi( argv[3] );
+      lbm.voxel_size = atof( argv[4] );
+    }
+  else
+    {
+      if (net.id == 0) usage(argv[0]);
+
+#ifndef NOMPI
+      net.err = MPI_Abort (MPI_COMM_WORLD, 1);
+      net.err = MPI_Finalize ();
+#else
+      exit(1);
+#endif
+    }
+
+  double total_time = myClock();
   
-  char *input_file_path( argv[1] );
+  char* input_file_path( argv[1] );
   
   char input_config_name[256];
   char input_parameters_name[256];
@@ -398,22 +439,29 @@ int main (int argc, char *argv[])
   char timings_name[256];
   char procs_string[256];
   char image_name[256];
-  
+  char output_directory[256];
   
   strcpy ( input_config_name , input_file_path );
   strcat ( input_config_name , "/config.dat" );
+  check_file(input_config_name);
 
   strcpy ( input_parameters_name , input_file_path );
   strcat ( input_parameters_name , "/pars.asc" );
-  
-  strcpy ( output_config_name , input_file_path );
-  strcat ( output_config_name , "/out.dat" );
+  check_file(input_parameters_name);
   
   strcpy ( vis_parameters_name , input_file_path );
   strcat ( vis_parameters_name , "/rt_pars.asc" );
+  check_file(vis_parameters_name);
+
+  strcpy ( output_config_name , input_file_path );
+  strcat ( output_config_name , "/out.dat" );
   
-  strcpy ( output_image_name , input_file_path );
-  
+  /* Create directory for Images */
+  strcpy(output_directory, input_file_path);
+  strcat(output_directory, "/Images/");
+  mkdir(output_directory, 0777);
+  strcpy(output_directory, output_image_name);
+
   sprintf ( procs_string, "%i", net.procs);
   strcpy ( timings_name , input_file_path );
   strcat ( timings_name , "/timings" );
@@ -425,31 +473,6 @@ int main (int argc, char *argv[])
       timings_ptr = fopen (timings_name, "w");
     }
   
-  if (argc == 3)
-    {
-      is_bench = 1;
-      minutes = atof( argv[2] );
-    }
-  else if (argc == 5)
-    {
-      lbm.cycles_max = (int)atof( argv[2] );
-      lbm.period     = (int)atof( argv[3] );
-      lbm.voxel_size = atof( argv[4] );
-      
-      is_bench = 0;
-    }
-  else
-    {
-      if (net.id == 0) usage(argv[0]);
-      
-#ifndef NOMPI
-      net.err = MPI_Abort (MPI_COMM_WORLD, 1);
-      net.err = MPI_Finalize ();
-#else
-      exit(1);
-#endif
-    }
-  
   if (net.id == 0)
     {
       fprintf (timings_ptr, "***********************************************************\n");
@@ -459,7 +482,6 @@ int main (int argc, char *argv[])
     }
   
   lbmReadParameters (input_parameters_name, &lbm, &net);
-  
   
   if(net.id == 0)
     {
@@ -552,20 +574,20 @@ int main (int argc, char *argv[])
 		{
 		  char time_step_string[256];
 		  
-		  strcpy ( image_name , output_image_name );
-		  strcat ( image_name , "/Images/" );
-		  
+		  strcpy ( image_name , output_image_name ); /* At this point output_image_name is appended with Images */
+
 		  int time_steps = time_step + 1;
 		  
 		  while (time_steps < 100000000)
 		    {
 		      strcat ( image_name , "0" );
 		      time_steps *= 10;
-		    }
+		    } /* WTF? */
 		  sprintf ( time_step_string, "%i", time_step + 1);
 		  strcat ( image_name , time_step_string );
 		  strcat ( image_name , ".dat" );
 		}
+
 	      if (perform_rt)
 		{
 		  visRenderB (write_image, image_name, ColourPalette, &net);
