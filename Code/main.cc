@@ -403,6 +403,8 @@ int main (int argc, char *argv[])
   net.id = 0;
 #endif
   
+  check_conv = 0;
+  
   if (argc == 3) // Check command line arguments
     {
       is_bench = 1;
@@ -414,6 +416,11 @@ int main (int argc, char *argv[])
       lbm.cycles_max = atoi( argv[2] );
       lbm.period     = atoi( argv[3] );
       lbm.voxel_size = atof( argv[4] );
+      
+      if (lbm.cycles_max > 100)
+	{
+	  check_conv = 1;
+	}
     }
   else
     {
@@ -456,11 +463,11 @@ int main (int argc, char *argv[])
   strcpy ( output_config_name , input_file_path );
   strcat ( output_config_name , "/out.dat" );
   
-  /* Create directory for Images */
-  strcpy(output_directory, input_file_path);
-  strcat(output_directory, "/Images/");
-  mkdir(output_directory, 0777);
-  strcpy(output_directory, output_image_name);
+  // Create directory for the output images
+  strcpy (output_directory, input_file_path);
+  strcat (output_directory, "/Images/");
+  mkdir  (output_directory, 0777);
+  strcpy (output_image_name, output_directory);
 
   sprintf ( procs_string, "%i", net.procs);
   strcpy ( timings_name , input_file_path );
@@ -568,13 +575,21 @@ int main (int argc, char *argv[])
 		}
 	      lbmVaryBoundaryDensities (cycle_id, time_step, &lbm);
 	      
-	      stability = lbmCycle (cycle_id, time_step, perform_rt, &lbm, &net);
-	      
+	      if (!check_conv)
+		{
+		  stability = lbmCycle (cycle_id, time_step, perform_rt, &lbm, &net);
+		}
+	      else
+		{
+		  stability = lbmCycleConv (cycle_id, time_step, perform_rt, &lbm, &net);
+		}
 	      if (write_image)
 		{
 		  char time_step_string[256];
 		  
-		  strcpy ( image_name , output_image_name ); /* At this point output_image_name is appended with Images */
+		  // At this point output_image_name is appended with
+		  // Images
+		  strcpy ( image_name , output_image_name );
 
 		  int time_steps = time_step + 1;
 		  
@@ -582,7 +597,7 @@ int main (int argc, char *argv[])
 		    {
 		      strcat ( image_name , "0" );
 		      time_steps *= 10;
-		    } /* WTF? */
+		    }
 		  sprintf ( time_step_string, "%i", time_step + 1);
 		  strcat ( image_name , time_step_string );
 		  strcat ( image_name , ".dat" );
@@ -602,12 +617,17 @@ int main (int argc, char *argv[])
 		{
 		  printf (" ATTENTION: INSTABILITY CONDITION OCCURRED\n");
 		  printf (" AFTER %i total time steps\n", total_time_steps);
-		  printf ("EXECUTION IS ABORTED\n");
+		  printf (" EXECUTION IS ABORTED\n");
 #ifndef NOMPI
 		  MPI_Abort (MPI_COMM_WORLD, 1);
 #else
 		  exit(1);
 #endif
+		  is_finished = 1;
+		  break;
+		}
+	      if (stability == STABLE_AND_CONVERGED)
+		{
 		  is_finished = 1;
 		  break;
 		}

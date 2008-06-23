@@ -31,8 +31,9 @@
 
 #define EPSILON    1.e-30
 
-#define STABLE     1
-#define UNSTABLE   0
+#define STABLE                 1
+#define UNSTABLE               0
+#define STABLE_AND_CONVERGED   2
 
 #define MACROSCOPIC_PARS   5
 #define DENSITY            0
@@ -58,6 +59,7 @@
 #define PULSATILE_PERIOD               0.857142857   // period of oscillation (in s) is
 					             // chosen to be 1 min / 70
 					             // beats per min
+#define TOL                            1.e-4
 
 
 #define PixelI(i)   i >> 16
@@ -177,6 +179,12 @@ struct NeighProc
   
   int f_head;
   int *f_recv_iv;
+  
+  // buffers needed for convergence-enabled simulations
+  double *f_to_send;
+  double *f_to_recv;
+  
+  int *f_send_id;
 };
 
 
@@ -289,9 +297,15 @@ extern float **cluster_voxel;
 extern float ***cluster_flow_field;
 
 
-extern short int *f_data;
+// 3 buffers needed for convergence-enabled simulations
+extern double *f_to_send;
+extern double *f_to_recv;
+
+extern int *f_send_id;
 
 extern int *f_recv_iv;
+
+extern short int *f_data;
 
 extern unsigned int *net_site_data;
 
@@ -314,6 +328,10 @@ extern ColPixel *col_pixel_recv;
 
 
 extern int is_bench;
+
+// 3 variables needed for convergence-enabled simulations
+extern double conv_error;
+extern int cycle_tag, check_conv;
 
 
 extern int sites_x, sites_y, sites_z;
@@ -390,6 +408,7 @@ void lbmInit (char *system_file_name, LBM *lbm, Net *net);
 void lbmSetInitialConditions (Net *net);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
+int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 void lbmEnd (LBM *lbm);
 
 int netFindTopology (Net *net, int *depths);

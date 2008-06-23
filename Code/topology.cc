@@ -849,9 +849,16 @@ void netInit (LBM *lbm, Net *net)
 	}
     }
   
-  f_old = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
-  f_new = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
-  
+  if (!check_conv)
+    {
+      f_old = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
+      f_new = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
+    }
+  else
+    {
+      f_old = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
+      f_new = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
+    }
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
   // streamed between different partitions) are collected and the
@@ -859,14 +866,32 @@ void netInit (LBM *lbm, Net *net)
   
   f_data = (short int *)malloc(sizeof(short int) * 4 * net->shared_fs);
   
+  if (check_conv)
+    {
+      f_to_send = (double *)malloc(sizeof(double) * net->shared_fs*2);
+      f_to_recv = (double *)malloc(sizeof(double) * net->shared_fs*2);
+      
+      f_send_id = (int *)malloc(sizeof(int) * net->shared_fs);
+    }
   f_recv_iv = (int *)malloc(sizeof(int) * net->shared_fs);
   
   net->shared_fs = 0;
   
   for (n = 0; n < net->neigh_procs; n++)
     {
-      net->neigh_proc[ n ].f_data    = &f_data[ net->shared_fs<<2 ];
-      net->neigh_proc[ n ].f_head    = net->my_sites * 15 + 1 + net->shared_fs;
+      net->neigh_proc[ n ].f_data = &f_data[ net->shared_fs<<2 ];
+      
+      if (!check_conv)
+	{
+	  net->neigh_proc[ n ].f_head = net->my_sites * 15 + 1 + net->shared_fs;
+	}
+      else
+	{
+	  net->neigh_proc[ n ].f_to_send = &f_to_send[ net->shared_fs*2 ];
+	  net->neigh_proc[ n ].f_to_recv = &f_to_recv[ net->shared_fs*2 ];
+	  
+	  net->neigh_proc[ n ].f_send_id = &f_send_id[ net->shared_fs ];
+	}
       net->neigh_proc[ n ].f_recv_iv = &f_recv_iv[ net->shared_fs ];
       
       net->shared_fs += net->neigh_proc[ n ].fs;
@@ -921,16 +946,28 @@ void netInit (LBM *lbm, Net *net)
 			    }
 			  site_map = map_block_p->site_data[ m ];
 			  
-			  f_id[ site_map*15+0 ] = site_map * 15 + 0;
-			  
+			  if (!check_conv)
+			    {
+			      f_id[ site_map*15+0 ] = site_map * 15 + 0;
+			    }
+			  else
+			    {
+			      f_id[ site_map*15+0 ] = site_map * 30 + 0;
+			    }
 			  for (l = 1; l < 15; l++)
 			    {
 			      neigh_i = site_i + e_x[ l ];
 			      neigh_j = site_j + e_y[ l ];
 			      neigh_k = site_k + e_z[ l ];
 			      
-			      f_id[ site_map*15+l   ] = net->my_sites * 15;
-			      
+			      if (!check_conv)
+				{
+				  f_id[ site_map*15+l ] = net->my_sites * 15;
+				}
+			      else
+				{
+				  f_id[ site_map*15+l ] = net->my_sites * 30;
+				}
 			      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
 			      
 			      if (proc_id_p == NULL || *proc_id_p == 1 << 30)
@@ -941,7 +978,14 @@ void netInit (LBM *lbm, Net *net)
 			      
 			      if (*proc_id_p == net->id)
 				{
-				  f_id[ site_map*15+l   ] = *site_data_p * 15 + l;
+				  if (!check_conv)
+				    {
+				      f_id[ site_map*15+l ] = *site_data_p * 15 + l;
+				    }
+				  else
+				    {
+				      f_id[ site_map*15+l ] = *site_data_p * 30 + l;
+				    }
 				  continue;
 				}
 			      neigh_proc_index = net->from_proc_id_to_neigh_proc_index[ *proc_id_p ];
@@ -1048,8 +1092,16 @@ void netInit (LBM *lbm, Net *net)
 	  
 	  site_map = *netSiteMapPointer (i, j, k, net);
 	  
-	  f_id[ site_map * 15 + l ] = ++f_count;
-	  neigh_proc_p->f_recv_iv[ n ] = site_map * 15 + inv_dir[ l ];
+	  if (!check_conv)
+	    {
+	      f_id[ site_map * 15 + l ] = ++f_count;
+	      neigh_proc_p->f_recv_iv[ n ] = site_map * 15 + inv_dir[ l ];
+	    }
+	  else
+	    {
+	      neigh_proc_p->f_send_id[ n ] = site_map * 30 + l;
+	      neigh_proc_p->f_recv_iv[ n ] = site_map * 30 + inv_dir[ l ];
+	    }
 	}
     }
   free(f_data);
@@ -1078,6 +1130,13 @@ void netEnd (Net *net)
     }
   
   free(f_recv_iv);
+  
+  if (check_conv)
+    {
+      free(f_send_id);
+      free(f_to_recv);
+      free(f_to_send);
+    }
   
   
   free(net->map_block);
