@@ -59,7 +59,7 @@
 #define PULSATILE_PERIOD               0.857142857   // period of oscillation (in s) is
 					             // chosen to be 1 min / 70
 					             // beats per min
-#define TOL                            1.e-4
+#define TOL                            1.e-6
 
 
 #define PixelI(i)   i >> 16
