@@ -70,9 +70,15 @@ float **cluster_voxel = NULL;
 float ***cluster_flow_field = NULL;
 
 
-short int *f_data = NULL;
+// 3 buffers needed for convergence-enabled simulations
+double *f_to_send = NULL;
+double *f_to_recv = NULL;
+
+int *f_send_id = NULL;
 
 int *f_recv_iv = NULL;
+
+short int *f_data = NULL;
 
 
 unsigned int *net_site_data = NULL;
@@ -96,6 +102,10 @@ ColPixel *col_pixel_lock = NULL;
 
 
 int is_bench;
+
+// 3 variables needed for convergence-enabled simulations
+double conv_error;
+int cycle_tag, check_conv;
 
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;

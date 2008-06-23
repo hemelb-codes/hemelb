@@ -388,18 +388,37 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 	  
 	  if (my_site_id & (1U << 31U)) continue;
 	  
-	  if (net_site_data[ my_site_id ] == FLUID_TYPE)
+	  if (!check_conv)
 	    {
-	      lbmFeq (&f_old[ my_site_id*15 ], &density, &vx, &vy, &vz, f_eq);
-	      
-	      for (l = 0; l < 15; l++)
+	      if (net_site_data[ my_site_id ] == FLUID_TYPE)
 		{
-		  f_neq[ l ] = f_old[ my_site_id*15+l ] - f_eq[ l ];
+		  lbmFeq (&f_old[ my_site_id*15 ], &density, &vx, &vy, &vz, f_eq);
+		  
+		  for (l = 0; l < 15; l++)
+		    {
+		      f_neq[ l ] = f_old[ my_site_id*15+l ] - f_eq[ l ];
+		    }
+		}
+	      else
+		{
+		  lbmCalculateBC (&f_old[ my_site_id*15 ], net_site_data[ my_site_id ], &density, &vx, &vy, &vz, f_neq);
 		}
 	    }
 	  else
 	    {
-	      lbmCalculateBC (&f_old[ my_site_id*15 ], net_site_data[ my_site_id ], &density, &vx, &vy, &vz, f_neq);
+	      if (net_site_data[ my_site_id ] == FLUID_TYPE)
+		{
+		  lbmFeq (&f_old[ my_site_id*30+15 ], &density, &vx, &vy, &vz, f_eq);
+		  
+		  for (l = 0; l < 15; l++)
+		    {
+		      f_neq[ l ] = f_old[ my_site_id*30+15+l ] - f_eq[ l ];
+		    }
+		}
+	      else
+		{
+		  lbmCalculateBC (&f_old[ my_site_id*30+15 ], net_site_data[ my_site_id ], &density, &vx, &vy, &vz, f_neq);
+		}
 	    }
 	  lbmStress (f_neq, &stress);
 	  
