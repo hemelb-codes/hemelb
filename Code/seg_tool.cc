@@ -668,7 +668,7 @@ int myglVoxelId (int i, int j, int k)
 
 
 void myglFromVoxelToSiteCoords (int pixel_i, int pixel_j, int slice_id,
-			    int *site_i, int *site_j, int *site_k)
+				int *site_i, int *site_j, int *site_k)
 {
   *site_i = (int)(pixel_i  * mygl.scale_x);
   *site_j = (int)(pixel_j  * mygl.scale_y);
@@ -677,7 +677,7 @@ void myglFromVoxelToSiteCoords (int pixel_i, int pixel_j, int slice_id,
 
 
 void myglFromSiteToVoxelCoords (int site_i, int site_j, int site_k,
-			    int *pixel_i, int *pixel_j, int *slice_id)
+				int *pixel_i, int *pixel_j, int *slice_id)
 {
   *pixel_i  = (int)(site_i * mygl.scale_inv_x);
   *pixel_j  = (int)(site_j * mygl.scale_inv_y);
@@ -1872,345 +1872,6 @@ void myglSetBoundaryConfigurations (void)
   fflush (stdout);
 }
 
-/*
-int myglCreateOptimizedTriangle (unsigned int site_type,
-				 int site_i, int site_j, int site_k)
-{
-  float segment_length = 0.25F;
-  float triangle_factor = 4.F;
-  float org_x, org_y, org_z;
-  float dir_x, dir_y, dir_z;
-  float x, y, z;
-  float nx, ny, nz;
-  float longitude, latitude;
-  float triangle_size;
-  float temp;
-  
-  int neigh_i, neigh_j, neigh_k;
-  int l, m, n;
-  int bi, bj, bk;
-  int si, sj, sk;
-  int block_id, site_id;
-  int sites_a;
-  int index_a;
-  int are_fluid_sites_incrementing;
-  int iterations, iterations_max;
-  int longitude_id, latitude_id;
-  int triangle_id;
-  
-  short int *site_label_p;
-  short int global_counter;
-  
-  unsigned int *site_data_p, *neigh_site_data_p;
-  
-  DataBlock *data_block_p;
-  
-  SiteLocation *site_location_a_p;
-  
-  Triangle *triangle_p;
-  
-  
-  if (mygl.boundary[ site_type ].triangles == (int)(1U << BOUNDARY_ID_BITS))
-    {
-      return -1;
-    }
-  triangle_id = mygl.boundary[ site_type ].triangles;
-  triangle_p = &mygl.boundary[ site_type ].triangle[ triangle_id ];
-  
-  global_counter = 1;
-  mygl.stored_blocks = 0;
-  
-  org_x = (float)site_i;
-  org_y = (float)site_j;
-  org_z = (float)site_k;
-  
-  dir_x = 0.F;
-  dir_y = 0.F;
-  dir_z = 0.F;
-  
-  site_location_a_p = &site_location_a[ 0 ];
-  site_location_a_p->i = site_i;
-  site_location_a_p->j = site_j;
-  site_location_a_p->k = site_k;
-  sites_a = 1;
-  
-  bi = site_i >> mygl.shift;
-  bj = site_j >> mygl.shift;
-  bk = site_k >> mygl.shift;
-  block_id = (bi * mygl.blocks_y + bj) * mygl.blocks_z + bk;
-  
-  data_block_p = &mygl.data_block[ block_id ];
-  data_block_p->site_label = (short int *)malloc(sizeof(short int) * mygl.sites_in_a_block);
-  
-  for (n = 0; n < mygl.sites_in_a_block; n++)
-    {
-      data_block_p->site_label[ n ] = 0;
-    }
-  si = site_i - (bi << mygl.shift);
-  sj = site_j - (bj << mygl.shift);
-  sk = site_k - (bk << mygl.shift);
-  site_id = (((si << mygl.shift) + sj) << mygl.shift) + sk;
-  
-  data_block_p->site_label[ site_id ] = global_counter;
-  
-  are_fluid_sites_incrementing = 1;
-  iterations = 0;
-  
-  while (++iterations <= 10 && are_fluid_sites_incrementing)
-    {
-      are_fluid_sites_incrementing = 0;
-      
-      for (index_a = 0; index_a < sites_a; index_a++)
-	{
-	  site_location_a_p = &site_location_a[ index_a ];
-	  
-	  for (l = 0; l < 14; l++)
-	    {
-	      neigh_i = site_location_a_p->i + e_x[ l ];
-	      neigh_j = site_location_a_p->j + e_y[ l ];
-	      neigh_k = site_location_a_p->k + e_z[ l ];
-	      
-	      if (neigh_i == -1 || neigh_i >= mygl.sites_x) continue;
-	      if (neigh_j == -1 || neigh_j >= mygl.sites_y) continue;
-	      if (neigh_k == -1 || neigh_k >= mygl.sites_z) continue;
-	      
-	      bi = neigh_i >> mygl.shift;
-	      bj = neigh_j >> mygl.shift;
-	      bk = neigh_k >> mygl.shift;
-	      block_id = (bi * mygl.blocks_y + bj) * mygl.blocks_z + bk;
-	      
-	      if ((data_block_p = &mygl.data_block[ block_id ])->site_data == NULL)
-		{
-		  continue;
-		}
-	      si = neigh_i - (bi << mygl.shift);
-	      sj = neigh_j - (bj << mygl.shift);
-	      sk = neigh_k - (bk << mygl.shift);
-	      site_id = (((si << mygl.shift) + sj) << mygl.shift) + sk;
-	      
-	      site_data_p = &data_block_p->site_data[ site_id ];
-	      
-	      if (*site_data_p == SOLID_TYPE || *site_data_p == NULL_TYPE)
-		{
-		  continue;
-		}
-	      if (!myglIsSuperficialSite (neigh_i, neigh_j, neigh_k))
-		{
-		  continue;
-		}
-	      if (data_block_p->site_label == NULL)
-		{
-		  data_block_p->site_label = (short int *)malloc(sizeof(short int) * mygl.sites_in_a_block);
-		  
-		  for (n = 0; n < mygl.sites_in_a_block; n++)
-		    {
-		      data_block_p->site_label[ n ] = 0;
-		    }
-		  if (mygl.stored_blocks == mygl.stored_blocks_max)
-		    {
-		      mygl.stored_blocks_max <<= 1;
-		      mygl.stored_block = (int *)realloc(mygl.stored_block, sizeof(int) * mygl.stored_blocks_max);
-		    }
-		  mygl.stored_block[ mygl.stored_blocks ] = block_id;
-		  ++mygl.stored_blocks;
-		}
-	      site_label_p = &data_block_p->site_label[ site_id ];
-	      
-	      if (*site_label_p == global_counter) continue;
-	      
-	      *site_label_p = global_counter;
-	      
-	      nx = (float)neigh_i - org_x;
-	      ny = (float)neigh_j - org_y;
-	      nz = (float)neigh_k - org_z;
-	      temp = 1.F / sqrtf(nx * nx + ny * ny + nz * nz);
-	      nx *= temp;
-	      ny *= temp;
-	      nz *= temp;
-	      
-	      dir_x += nx;
-	      dir_y += ny;
-	      dir_z += nz;
-	    }
-	}
-    }
-  for (n = 0; n < mygl.stored_blocks; n++)
-    {
-      block_id = mygl.stored_block[ n ];
-      
-      free(mygl.data_block[ block_id ].site_label);
-    }
-  
-  temp = 1.F / sqrtf(dir_x * dir_x + dir_y * dir_y + dir_z * dir_z);
-  dir_x *= temp;
-  dir_y *= temp;
-  dir_z *= temp;
-  
-  x = org_x + 2.F * dir_x;
-  y = org_y + 2.F * dir_y;
-  z = org_z + 2.F * dir_z;
-  
-  neigh_i = (int)x;
-  neigh_j = (int)y;
-  neigh_k = (int)z;
-  neigh_site_data_p = myglSiteDataPointer (neigh_i, neigh_j, neigh_k, &mygl);
-  
-  if (neigh_site_data_p == NULL ||
-      *neigh_site_data_p == SOLID_TYPE ||
-      *neigh_site_data_p == NULL_TYPE)
-    {
-      dir_x = -dir_x;
-      dir_y = -dir_y;
-      dir_z = -dir_z;
-    }
-  dir_x *= segment_length;
-  dir_y *= segment_length;
-  dir_z *= segment_length;
-  
-  x = org_x;
-  y = org_y;
-  z = org_z;
-  
-  iterations = 0;
-  
-  site_data_p = myglSiteDataPointer (site_i, site_j, site_k, &mygl);
-  
-  while (site_data_p != NULL &&
-	 *site_data_p != SOLID_TYPE &&
-	 *site_data_p != NULL_TYPE)
-    {
-      ++iterations;
-      
-      x += dir_x;
-      y += dir_y;
-      z += dir_z;
-      
-      neigh_i = (int)x;
-      neigh_j = (int)y;
-      neigh_k = (int)z;
-      
-      site_data_p = myglSiteDataPointer (neigh_i, neigh_j, neigh_k, &mygl);
-    }
-  --iterations;
-  
-  if (iterations == 0)
-    {
-      return -1;
-    }
-  
-  triangle_size = triangle_factor * (float)iterations * mygl.lattice_to_system * segment_length;
-  
-  // segment center
-  org_x = 0.5F * (org_x + (org_x + (float)iterations * dir_x));
-  org_y = 0.5F * (org_y + (org_y + (float)iterations * dir_y));
-  org_z = 0.5F * (org_z + (org_z + (float)iterations * dir_z));
-  
-  site_i = (int)org_x;
-  site_j = (int)org_y;
-  site_k = (int)org_z;
-  
-  site_data_p = myglSiteDataPointer (site_i, site_j, site_k, &mygl);
-  
-  iterations_max = 0;
-  longitude_id = 0;
-  latitude_id = 0;
-  
-  latitude = 0.F;
-  
-  for (n = 0; n < 180; n++)
-    {
-      longitude = 0.F;
-      
-      for (m = 0; m < 360; m++)
-	{
-	  myglRotate (0.F, 0.F, 1.F,
-		      longitude, latitude,
-		      &dir_x, &dir_y, &dir_z);
-	  
-	  // halved segment: it is more precise
-	  dir_x *= segment_length;
-	  dir_y *= segment_length;
-	  dir_z *= segment_length;
-	  
-	  x = org_x;
-	  y = org_y;
-	  z = org_z;
-	  
-	  iterations = 0;
-	  
-	  neigh_site_data_p = site_data_p;
-	  
-	  while (neigh_site_data_p != NULL &&
-		 *neigh_site_data_p != SOLID_TYPE &&
-		 *neigh_site_data_p != NULL_TYPE)
-	    {
-	      ++iterations;
-	  
-	      x += dir_x;
-	      y += dir_y;
-	      z += dir_z;
-	      
-	      neigh_i = (int)x;
-	      neigh_j = (int)y;
-	      neigh_k = (int)z;
-	      
-	      neigh_site_data_p = myglSiteDataPointer (neigh_i, neigh_j, neigh_k, &mygl);
-	    }
-	  --iterations;
-	  
-	  if (iterations > iterations_max)
-	    {
-	      iterations_max = iterations;
-	      longitude_id = m;
-	      latitude_id = n;
-	    }
-	  longitude += DEG_TO_RAD;
-	}
-      latitude += 2.F * DEG_TO_RAD;
-    }
-  if (iterations_max == 0)
-    {
-      return -1;
-    }
-  
-  longitude = longitude_id * DEG_TO_RAD;
-  latitude = latitude_id * 2.F * DEG_TO_RAD;
-  
-  myglRotate (0.F, 0.F, 1.F,
-	      longitude, latitude,
-	      &dir_x, &dir_y, &dir_z);
-  
-  org_x = org_x * mygl.lattice_to_system - mygl.half_dim_x;
-  org_y = org_y * mygl.lattice_to_system - mygl.half_dim_y;
-  org_z = org_z * mygl.lattice_to_system - mygl.half_dim_z;
-  
-  myglRotate (0.F, triangle_size, 0.F,
-	      longitude, latitude,
-	      &triangle_p->v[0].pos_x, &triangle_p->v[0].pos_y, &triangle_p->v[0].pos_z);
-  
-  myglRotate (-(triangle_size / sqrtf(2.F)), -(triangle_size / sqrtf(2.F)), 0.F,
-	      longitude, latitude,
-	      &triangle_p->v[1].pos_x, &triangle_p->v[1].pos_y, &triangle_p->v[1].pos_z);
-  
-  myglRotate (+(triangle_size / sqrtf(2.F)), -(triangle_size / sqrtf(2.F)), 0.F,
-	      longitude, latitude,
-	      &triangle_p->v[2].pos_x, &triangle_p->v[2].pos_y, &triangle_p->v[2].pos_z);
-  
-  for (l = 0; l < 3; l++)
-    {
-      triangle_p->v[l].pos_x += org_x;
-      triangle_p->v[l].pos_y += org_y;
-      triangle_p->v[l].pos_z += org_z;
-    }
-  triangle_p->pressure_avg = 80.0F;
-  triangle_p->pressure_amp = 0.0F;
-  triangle_p->pressure_phs = 0.0F;
-  
-  ++mygl.boundary[ site_type ].triangles;
-  
-  return triangle_id;
-}
-*/
 
 void EstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], float *length)
 {
@@ -2430,7 +2091,7 @@ void EstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], fl
 int myglCreateOptimizedTriangle (unsigned int site_type,
 				 int site_i, int site_j, int site_k)
 {
-  float triangle_factor = 4.F;
+  float triangle_factor = 1.F;
   float org[3], nor[3];
   float x, y, z;
   float longitude, latitude;
@@ -3333,9 +2994,9 @@ void ReadConfig (void)
   mygl.output_slices = (int)(mygl.input_slices * (slice_size / pixel_size) *
 			     (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x);
   
-  mygl.scale_x = (float)mygl.input_image_pix_x / (float)mygl.output_image_pix_x;
-  mygl.scale_y = (float)mygl.input_image_pix_y / (float)mygl.output_image_pix_y;
-  mygl.scale_z = (float)mygl.input_slices / (float)mygl.output_slices;
+  mygl.scale_x = (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x;
+  mygl.scale_y = (float)mygl.output_image_pix_y / (float)mygl.input_image_pix_y;
+  mygl.scale_z = (float)mygl.output_slices / (float)mygl.input_slices;
   
   mygl.scale_inv_x = 1.F / mygl.scale_x;
   mygl.scale_inv_y = 1.F / mygl.scale_y;
@@ -3546,9 +3207,9 @@ void ReadCheckpoint (char *file_name)
   mygl.output_slices = (int)(mygl.input_slices * (slice_size / pixel_size) *
 			     (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x);
   
-  mygl.scale_x = (float)mygl.input_image_pix_x / (float)mygl.output_image_pix_x;
-  mygl.scale_y = (float)mygl.input_image_pix_y / (float)mygl.output_image_pix_y;
-  mygl.scale_z = (float)mygl.input_slices / (float)mygl.output_slices;
+  mygl.scale_x = (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x;
+  mygl.scale_y = (float)mygl.output_image_pix_y / (float)mygl.input_image_pix_y;
+  mygl.scale_z = (float)mygl.output_slices / (float)mygl.input_slices;
   
   mygl.scale_inv_x = 1.F / mygl.scale_x;
   mygl.scale_inv_y = 1.F / mygl.scale_y;
