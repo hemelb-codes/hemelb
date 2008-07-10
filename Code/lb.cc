@@ -54,10 +54,10 @@ double lbmConvertVelocityToPhysicalUnits (double lattice_velocity, LBM *lbm)
   
   float physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
   
-  float useful_factor = (lbm->tau - 0.5) * Cs2 / physical_kinematic_viscosity;
+  float useful_factor = ((lbm->tau - 0.5) / 3.) / physical_kinematic_viscosity;
   
   
-  return lattice_velocity / useful_factor * lbm->voxel_size;
+  return lattice_velocity / (useful_factor * lbm->voxel_size);
 }
 
 
@@ -68,7 +68,7 @@ double lbmConvertStressToPhysicalUnits (double lattice_stress, LBM *lbm)
   
   float physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
   
-  float useful_factor = (lbm->tau - 0.5) * Cs2 / physical_kinematic_viscosity;
+  float useful_factor = ((lbm->tau - 0.5) / 3.) / physical_kinematic_viscosity;
   
   
   return lattice_stress * BLOOD_DENSITY /
@@ -1272,7 +1272,7 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
   
   double f_neq[15];
   double omega;
-  double density;
+  double density[2];
   double vx[2], vy[2], vz[2];
   double *f_old_p;
   
@@ -1340,15 +1340,22 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
 	{
 	  for (cycle_tag = cycle_tag_start; cycle_tag < 2; cycle_tag++)
 	    {
-	      (*lbmInterCollision[ collision_type ]) (omega, i, &density,
+	      (*lbmInterCollision[ collision_type ]) (omega, i, &density[cycle_tag],
 						      &vx[cycle_tag], &vy[cycle_tag], &vz[cycle_tag], f_neq);
 	    }
+	  vx[0] /= density[0];
+	  vy[0] /= density[0];
+	  vz[0] /= density[0];
+	  vx[1] /= density[1];
+	  vy[1] /= density[1];
+	  vz[1] /= density[1];
+	  
 	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
 		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
 		       (vz[1] - vz[0]) * (vz[1] - vz[0]));
 	  sum2 += sqrt(vx[1] * vx[1] + vy[1] * vy[1] + vz[1] * vz[1]);
 	  
-	  lbmUpdateFlowField (perform_rt, i, density, vx[1], vy[1], vz[1], f_neq);
+	  lbmUpdateFlowField (perform_rt, i, density[1], vx[1], vy[1], vz[1], f_neq);
 	}
       offset += net->my_inter_collisions[ collision_type ];
     }
@@ -1383,15 +1390,22 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
 	{
 	  for (cycle_tag = cycle_tag_start; cycle_tag < 2; cycle_tag++)
 	    {
-	      (*lbmInnerCollision[ collision_type ]) (omega, i, &density,
+	      (*lbmInnerCollision[ collision_type ]) (omega, i, &density[cycle_tag],
 						      &vx[cycle_tag], &vy[cycle_tag], &vz[cycle_tag], f_neq);
 	    }
+	  vx[0] /= density[0];
+	  vy[0] /= density[0];
+	  vz[0] /= density[0];
+	  vx[1] /= density[1];
+	  vy[1] /= density[1];
+	  vz[1] /= density[1];
+	  
 	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
 		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
 		       (vz[1] - vz[0]) * (vz[1] - vz[0]));
 	  sum2 += sqrt(vx[1] * vx[1] + vy[1] * vy[1] + vz[1] * vz[1]);
 	  
-	  lbmUpdateFlowField (perform_rt, i, density, vx[1], vy[1], vz[1], f_neq);
+	  lbmUpdateFlowField (perform_rt, i, density[1], vx[1], vy[1], vz[1], f_neq);
 	}
       offset += net->my_inner_collisions[ collision_type ];
     }
