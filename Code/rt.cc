@@ -2505,7 +2505,7 @@ void visConvertThresholds (float physical_velocity_max, float physical_stress_ma
 {
   float physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
   
-  float useful_factor = (lbm->tau - 0.5) * Cs2 / physical_kinematic_viscosity;
+  float useful_factor = ((lbm->tau - 0.5) / 3.) / physical_kinematic_viscosity;
   
   
   *lattice_velocity_max = physical_velocity_max * useful_factor * lbm->voxel_size;

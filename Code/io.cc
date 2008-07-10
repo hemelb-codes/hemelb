@@ -298,271 +298,57 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
 }
 
-/*
-void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
-{
-  FILE *system_config = NULL;
-  XDR	xdr_system_config;
-  
-  float *local_flow_field, *gathered_flow_field;
-  
-  double density;
-  double vx, vy, vz;
-  double stress;
-  double f_eq[15], f_neq[15];
-  
-  int *local_site_data, *gathered_site_data;
-  int buffer_size;
-  int fluid_sites_max;
-  int communication_period, communication_iters;
-  int period, iters;
-  int k, l, m, n;
-  
-  unsigned int my_site_id;
-  
-  
-  if (net->id == 0)
-    {
-      system_config = fopen (output_file_name, "w");
-      xdrstdio_create (&xdr_system_config, system_config, XDR_ENCODE);
-      xdr_int (&xdr_system_config, &stability);
-    }
-  
-  if (stability == UNSTABLE)
-    {
-      if (net->id == 0)
-	{
-	  xdr_destroy(&xdr_system_config);
-	  fclose (system_config);
-	}
-      return;
-    }
-  
-  if (net->id == 0)
-    {
-      xdr_double (&xdr_system_config, &lbm->lattice_to_system);
-      xdr_int    (&xdr_system_config, &blocks_x);
-      xdr_int    (&xdr_system_config, &blocks_y);
-      xdr_int    (&xdr_system_config, &blocks_z);
-      xdr_int    (&xdr_system_config, &block_size);
-      xdr_int    (&xdr_system_config, &lbm->total_fluid_sites);
-    }
-  
-  fluid_sites_max = 0;
-  
-  for (n = 0; n < net->procs; n++)
-    {
-      fluid_sites_max = max(fluid_sites_max, net->fluid_sites[ n ]);
-    }
-  buffer_size = max(1000000, fluid_sites_max * net->procs);
-  
-  communication_period = (int)((double)buffer_size / net->procs);
-  
-  communication_iters = max(1, (int)ceil((double)fluid_sites_max / communication_period));
-  
-  local_flow_field    = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period);
-  gathered_flow_field = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period * net->procs);
-  
-  local_site_data    = (int *)malloc(sizeof(int) * 2 * communication_period);
-  gathered_site_data = (int *)malloc(sizeof(int) * 2 * communication_period * net->procs);
-  
-  for (period = 0; period < communication_period; period++)
-    {
-      local_site_data[ 2*period ] = -1;
-    }
-  
-  iters = 0;
-  period = 0;
-  
-  for (n = 0; n < blocks; n++)
-    {
-      if (net->proc_block[ n ].proc_id == NULL)
-	{
-	  continue;
-	}
-      for (m = 0; m < sites_in_a_block; m++)
-	{
-	  if (net->proc_block[ n ].proc_id[ m ] != net->id) continue;
-	  
-	  my_site_id = net->map_block[ n ].site_data[ m ];
-	  
-	  if (my_site_id & (1U << 31U)) continue;
-	  
-	  if (!check_conv)
-	    {
-	      if (net_site_data[ my_site_id ] == FLUID_TYPE)
-		{
-		  lbmFeq (&f_old[ my_site_id*15 ], &density, &vx, &vy, &vz, f_eq);
-		  
-		  for (l = 0; l < 15; l++)
-		    {
-		      f_neq[ l ] = f_old[ my_site_id*15+l ] - f_eq[ l ];
-		    }
-		}
-	      else
-		{
-		  lbmCalculateBC (&f_old[ my_site_id*15 ], net_site_data[ my_site_id ], &density, &vx, &vy, &vz, f_neq);
-		}
-	    }
-	  else
-	    {
-	      if (net_site_data[ my_site_id ] == FLUID_TYPE)
-		{
-		  lbmFeq (&f_old[ my_site_id*30+15 ], &density, &vx, &vy, &vz, f_eq);
-		  
-		  for (l = 0; l < 15; l++)
-		    {
-		      f_neq[ l ] = f_old[ my_site_id*30+15+l ] - f_eq[ l ];
-		    }
-		}
-	      else
-		{
-		  lbmCalculateBC (&f_old[ my_site_id*30+15 ], net_site_data[ my_site_id ], &density, &vx, &vy, &vz, f_neq);
-		}
-	    }
-	  lbmStress (f_neq, &stress);
-	  
-	  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)density;
-	  local_flow_field[ MACROSCOPIC_PARS * period + 1 ] = (float)vx;
-	  local_flow_field[ MACROSCOPIC_PARS * period + 2 ] = (float)vy;
-	  local_flow_field[ MACROSCOPIC_PARS * period + 3 ] = (float)vz;
-	  local_flow_field[ MACROSCOPIC_PARS * period + 4 ] = (float)stress;
-	  
-	  local_site_data[ 2 * period + 0 ] = n;
-	  local_site_data[ 2 * period + 1 ] = m;
-	  
-	  if (++period != communication_period) continue;
-	  
-	  period = 0;
-	  ++iters;
-#ifndef NOMPI
-	  net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-				 gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-				 0, MPI_COMM_WORLD);
-	  
-	  net->err = MPI_Gather (local_site_data, 2 * communication_period, MPI_INT,
-				 gathered_site_data, 2 * communication_period, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-	  if (net->id == 0)
-	    {
-	      for (l = 0; l < net->procs * communication_period; l++)
-		{
-		  if (gathered_site_data[ 2 * l + 0 ] == -1) continue;
-		  
-		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 0 ]);
-		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 1 ]);
-		  
-		  for (k = 0; k < MACROSCOPIC_PARS; k++)
-		    {
-		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
-		    }
-		}
-	    }
-	  for (l = 0; l < communication_period; l++)
-	    {
-	      local_site_data[ 2*l ] = -1;
-	    }
-	}
-    }
-  
-  if (iters != communication_iters && period != communication_period)
-    {
-      period = 0;
-      ++iters;
-#ifndef NOMPI
-      net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-			     gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-			     0, MPI_COMM_WORLD);
-      
-      net->err = MPI_Gather (local_site_data, 2 * communication_period, MPI_INT,
-			     gathered_site_data, 2 * communication_period, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-      if (net->id == 0)
-	{
-	  for (l = 0; l < net->procs * communication_period; l++)
-	    {
-	      if (gathered_site_data[ 2 * l + 0 ] == -1) continue;
-	      
-	      xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 0 ]);
-	      xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 1 ]);
-	      
-	      for (k = 0; k < MACROSCOPIC_PARS; k++)
-		{
-		  xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
-		}
-	    }
-	  for (l = 0; l < communication_period; l++)
-	    {
-	      local_site_data[ 2*l ] = -1;
-	    }
-	}
-    }
-  if (iters != communication_iters)
-    {
-      ++iters;
-      
-      for (; iters <= communication_iters; iters++)
-	{
-#ifndef NOMPI
-	  net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-				 gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-				 0, MPI_COMM_WORLD);
-	  
-	  net->err = MPI_Gather (local_site_data, 2 * communication_period, MPI_INT,
-				 gathered_site_data, 2 * communication_period, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-      	  if (net->id == 0)
-	    {
-	      for (l = 0; l < net->procs * communication_period; l++)
-		{
-		  if (gathered_site_data[ 2 * l + 0 ] == -1) continue;
-		  
-		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 0 ]);
-		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 1 ]);
-		  
-		  for (k = 0; k < MACROSCOPIC_PARS; k++)
-		    {
-		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
-		    }
-		}
-	    }
-	  for (l = 0; l < communication_period; l++)
-	    {
-	      local_site_data[ 2*l ] = -1;
-	    }
-	}
-    }
-  
-  free(gathered_site_data);
-  free(local_site_data);
-  
-  free(gathered_flow_field);
-  free(local_flow_field);
-}
-*/
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 {
+  // this routine writes the flow field on file.
+  // the data are collected from the root processor (0 rank).
+  // The format comprises:
+  // 0- Flag for simulation stability, 0 or 1
+  // 1- Voxel size in physical units (units of m)
+  // 2- #voxels along the x, y, z axes (3 values)
+  // 3- total number of fluid voxels
+  // And then a list of the fluid voxels...
+  // for each fluid voxel:
+  //   a- the (x, y, z) coordinates in lattice units (3 values)
+  //   b- the pressure in physical units (mm.Hg)
+  //   c- (x,y,z) components of the velocity field in physical units (3 values, m/s)
+  //   d- the von Mises stress in physical units (Pa)
+  
   FILE *system_config = NULL;
   XDR	xdr_system_config;
   
   float *local_flow_field, *gathered_flow_field;
   
   double density;
+  double pressure;
   double vx, vy, vz;
   double stress;
   double f_eq[15], f_neq[15];
+  float pressure_par, velocity_par, stress_par;
   
-  int *local_site_data, *gathered_site_data;
   int buffer_size;
   int fluid_sites_max;
   int communication_period, communication_iters;
   int period, iters;
   int par;
-  int k, l, m, n;
+  int site_i, site_j, site_k;
+  int i, j, k;
+  int l, m, n;
+  int kk;
+  
+  short int *local_site_data, *gathered_site_data;
   
   unsigned int my_site_id;
   
+  
+  // parameters useful to convert pressure, velocity and stress from
+  // lattice to physical units
+  pressure_par = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
+  pressure_par = BLOOD_DENSITY / (PASCAL_TO_mmHg * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
+  velocity_par = 1. / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
+  stress_par = ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+  stress_par = BLOOD_DENSITY / (stress_par * stress_par * lbm->voxel_size * lbm->voxel_size);
   
   if (net->id == 0)
     {
@@ -583,11 +369,10 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   
   if (net->id == 0)
     {
-      xdr_double (&xdr_system_config, &lbm->lattice_to_system);
-      xdr_int    (&xdr_system_config, &blocks_x);
-      xdr_int    (&xdr_system_config, &blocks_y);
-      xdr_int    (&xdr_system_config, &blocks_z);
-      xdr_int    (&xdr_system_config, &block_size);
+      xdr_double (&xdr_system_config, &lbm->voxel_size);
+      xdr_int    (&xdr_system_config, &sites_x);
+      xdr_int    (&xdr_system_config, &sites_y);
+      xdr_int    (&xdr_system_config, &sites_z);
       xdr_int    (&xdr_system_config, &lbm->total_fluid_sites);
     }
   
@@ -612,12 +397,12 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   local_flow_field    = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period);
   gathered_flow_field = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period * net->procs);
   
-  local_site_data    = (int *)malloc(sizeof(int) * 2 * communication_period);
-  gathered_site_data = (int *)malloc(sizeof(int) * 2 * communication_period * net->procs);
+  local_site_data    = (short int *)malloc(sizeof(short int) * 3 * communication_period);
+  gathered_site_data = (short int *)malloc(sizeof(short int) * 3 * communication_period * net->procs);
   
   for (period = 0; period < communication_period; period++)
     {
-      local_site_data[ 2*period ] = -1;
+      local_site_data[ 3*period ] = -1;
     }
   iters = 0;
   period = 0;
@@ -630,77 +415,115 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
     {
       par = 1;
     }
-  for (n = 0; n < blocks; n++)
+  n = -1;
+  
+
+  // The following loops scan over every single macrocell (block). If the block is non-empty, it scans the fluid sites within that block
+  // If the site is fluid, it calculates the flow field and then is converted to physical units and stored in a buffer to send 
+  // to the root processor
+
+  for (i = 0; i < sites_x; i+=block_size)
     {
-      if (net->proc_block[ n ].proc_id == NULL)
+      for (j = 0; j < sites_y; j+=block_size)
 	{
-	  continue;
-	}
-      for (m = 0; m < sites_in_a_block; m++)
-	{
-	  if (net->proc_block[ n ].proc_id[ m ] != net->id) continue;
-	  
-	  my_site_id = net->map_block[ n ].site_data[ m ];
-	  
-	  if (my_site_id & (1U << 31U)) continue;
-	  
-	  if (net_site_data[ my_site_id ] == FLUID_TYPE)
+	  for (k = 0; k < sites_z; k+=block_size)
 	    {
-	      lbmFeq (&f_old[ (my_site_id*(par+1)+par)*15 ], &density, &vx, &vy, &vz, f_eq);
-	      
-	      for (l = 0; l < 15; l++)
+	      if (net->proc_block[ ++n ].proc_id == NULL)
 		{
-		  f_neq[ l ] = f_old[ (my_site_id*(par+1)+par)*15+l ] - f_eq[ l ];
+		  continue;
 		}
-	    }
-	  else
-	    {
-	      lbmCalculateBC (&f_old[ (my_site_id*(par+1)+par)*15 ], net_site_data[ my_site_id ], &density, &vx, &vy, &vz, f_neq);
-	    }
-	  lbmStress (f_neq, &stress);
-	  
-	  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)density;
-	  local_flow_field[ MACROSCOPIC_PARS * period + 1 ] = (float)vx;
-	  local_flow_field[ MACROSCOPIC_PARS * period + 2 ] = (float)vy;
-	  local_flow_field[ MACROSCOPIC_PARS * period + 3 ] = (float)vz;
-	  local_flow_field[ MACROSCOPIC_PARS * period + 4 ] = (float)stress;
-	  
-	  local_site_data[ 2 * period + 0 ] = n;
-	  local_site_data[ 2 * period + 1 ] = m;
-	  
-	  if (++period != communication_period) continue;
-	  
-	  period = 0;
-	  ++iters;
-#ifndef NOMPI
-	  net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-				 gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-				 0, MPI_COMM_WORLD);
-	  
-	  net->err = MPI_Gather (local_site_data, 2 * communication_period, MPI_INT,
-				 gathered_site_data, 2 * communication_period, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-	  if (net->id == 0)
-	    {
-	      for (l = 0; l < net->procs * communication_period; l++)
+	      m = -1;
+	      
+	      for (site_i = i; site_i < i + block_size; site_i++)
 		{
-		  if (gathered_site_data[ 2 * l + 0 ] == -1) continue;
-		  
-		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 0 ]);
-		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 1 ]);
-		  
-		  for (k = 0; k < MACROSCOPIC_PARS; k++)
+		  for (site_j = j; site_j < j + block_size; site_j++)
 		    {
-		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
+		      for (site_k = k; site_k < k + block_size; site_k++)
+			{
+			  if (net->proc_block[ n ].proc_id[ ++m ] != net->id) continue;
+			  
+			  my_site_id = net->map_block[ n ].site_data[ m ];
+			  
+			  if (my_site_id & (1U << 31U)) continue;
+			  
+			  if (net_site_data[ my_site_id ] == FLUID_TYPE)
+			    {
+			      lbmFeq (&f_old[ (my_site_id*(par+1)+par)*15 ], &density, &vx, &vy, &vz, f_eq);
+			      
+			      for (l = 0; l < 15; l++)
+				{
+				  f_neq[ l ] = f_old[ (my_site_id*(par+1)+par)*15+l ] - f_eq[ l ];
+				}
+			    }
+			  else
+			    {
+			      lbmCalculateBC (&f_old[ (my_site_id*(par+1)+par)*15 ], net_site_data[ my_site_id ],
+					      &density, &vx, &vy, &vz, f_neq);
+			    }
+			  lbmStress (f_neq, &stress);
+			  
+			  vx /= density;
+			  vy /= density;
+			  vz /= density;
+			  
+			  pressure = density * Cs2;
+			  
+			  // conversion from lattice to physical units
+			  pressure *= pressure_par;
+			  vx *= velocity_par;
+			  vy *= velocity_par;
+			  vy *= velocity_par;
+			  stress *= stress_par;
+			  
+			  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)pressure;
+			  local_flow_field[ MACROSCOPIC_PARS * period + 1 ] = (float)vx;
+			  local_flow_field[ MACROSCOPIC_PARS * period + 2 ] = (float)vy;
+			  local_flow_field[ MACROSCOPIC_PARS * period + 3 ] = (float)vz;
+			  local_flow_field[ MACROSCOPIC_PARS * period + 4 ] = (float)stress;
+			  
+			  local_site_data[ 3 * period + 0 ] = site_i;
+			  local_site_data[ 3 * period + 1 ] = site_j;
+			  local_site_data[ 3 * period + 2 ] = site_k;
+			  
+			  if (++period != communication_period) continue;
+			  
+			  period = 0;
+			  ++iters;
+#ifndef NOMPI
+			  net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+						 gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+						 0, MPI_COMM_WORLD);
+			  
+			  net->err = MPI_Gather (local_site_data, 3 * communication_period, MPI_SHORT,
+						 gathered_site_data, 3 * communication_period, MPI_SHORT, 0, MPI_COMM_WORLD);
+#endif
+			  if (net->id == 0)
+			    {
+			      for (l = 0; l < net->procs * communication_period; l++)
+				{
+				  if (gathered_site_data[ 3 * l + 0 ] == -1) continue;
+		  
+				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 0 ]);
+				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 1 ]);
+				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 2 ]);
+				  
+				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
+				    {
+				      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+				    }
+				}
+			    }
+			  for (l = 0; l < communication_period; l++)
+			    {
+			      local_site_data[ 3*l ] = -1;
+			    }
+			}
 		    }
 		}
 	    }
-	  for (l = 0; l < communication_period; l++)
-	    {
-	      local_site_data[ 2*l ] = -1;
-	    }
 	}
     }
+
   if (iters != communication_iters)
     {
       ++iters;
@@ -712,27 +535,28 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 				 gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
 				 0, MPI_COMM_WORLD);
 	  
-	  net->err = MPI_Gather (local_site_data, 2 * communication_period, MPI_INT,
-				 gathered_site_data, 2 * communication_period, MPI_INT, 0, MPI_COMM_WORLD);
+	  net->err = MPI_Gather (local_site_data, 3 * communication_period, MPI_SHORT,
+				 gathered_site_data, 3 * communication_period, MPI_SHORT, 0, MPI_COMM_WORLD);
 #endif
       	  if (net->id == 0)
 	    {
 	      for (l = 0; l < net->procs * communication_period; l++)
 		{
-		  if (gathered_site_data[ 2 * l + 0 ] == -1) continue;
+		  if (gathered_site_data[ 3 * l + 0 ] == -1) continue;
 		  
-		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 0 ]);
-		  xdr_int (&xdr_system_config, &gathered_site_data[ 2 * l + 1 ]);
+		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 0 ]);
+		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 1 ]);
+		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 2 ]);
 		  
-		  for (k = 0; k < MACROSCOPIC_PARS; k++)
+		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
-		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + k ]);
+		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
 		    }
 		}
 	    }
 	  for (l = 0; l < communication_period; l++)
 	    {
-	      local_site_data[ 2*l ] = -1;
+	      local_site_data[ 3*l ] = -1;
 	    }
 	}
     }

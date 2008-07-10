@@ -455,4 +455,3 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
 void visEnd (void);
 
 #endif                  // __config_h__
-
