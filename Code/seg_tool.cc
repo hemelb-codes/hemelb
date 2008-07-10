@@ -3781,7 +3781,7 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
 	  ChangeTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id, 0., 0.1, 0.);
 	}
     }
-  else if (key == 'k')
+  else if (key == 'K')
     {
       if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
 	{
