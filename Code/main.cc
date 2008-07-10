@@ -144,7 +144,6 @@ void *hemeLB_network (void *ptr)
   pthread_t steering_thread;
   pthread_attr_t steering_thread_attrib; 
   
-  
   signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
   
   pthread_attr_init (&steering_thread_attrib);
@@ -152,6 +151,7 @@ void *hemeLB_network (void *ptr)
   
   while (1)
     {
+
       pthread_mutex_lock ( &network_buffer_copy_lock );
 	    
       struct sockaddr_in my_address;
@@ -488,7 +488,6 @@ int main (int argc, char *argv[])
       fprintf (timings_ptr, "Opening vis parameters file:\n %s\n\n", vis_parameters_name);
     }
   
-  lbmReadParameters (input_parameters_name, &lbm, &net);
   
   if(net.id == 0)
     {
@@ -503,7 +502,9 @@ int main (int argc, char *argv[])
       
       pthread_create (&network_thread, &pthread_attrib, hemeLB_network, NULL);
     }
-  
+
+  lbmReadParameters (input_parameters_name, &lbm, &net);
+
   lbmInit (input_config_name, &lbm, &net);
   
   if (netFindTopology (&net, &depths) == 0)
@@ -539,7 +540,7 @@ int main (int argc, char *argv[])
 	      int write_image = 0;
 	      int stream_image = 0;
 	      int is_thread_locked = 0;
-	      
+
 	      
 	      ++total_time_steps;
 	      
@@ -554,11 +555,12 @@ int main (int argc, char *argv[])
 		      //pthread_mutex_lock( &network_buffer_copy_lock );
 		      is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
 		    }
+
 		  UpdateSteerableParameters (&is_thread_locked, &vis);
 		  
-		  if (!is_thread_locked)
+		  if (is_thread_locked == 0)
 		    {
-		      stream_image = 1;
+		      //stream_image = 1;
 		    }
 		}
 	      if (stream_image || write_image)
@@ -609,8 +611,8 @@ int main (int argc, char *argv[])
 		}
 	      if (net.id == 0)
 		{
-		  pthread_mutex_unlock (&network_buffer_copy_lock);
-		  pthread_cond_signal (&network_send_frame);
+		 pthread_mutex_unlock (&network_buffer_copy_lock);
+		 pthread_cond_signal (&network_send_frame);
 		}
 	      
 	      if (stability == UNSTABLE)
@@ -638,8 +640,16 @@ int main (int argc, char *argv[])
 	    }
 	  if (net.id == 0)
 	    {
-	      //fprintf (timings_ptr, "cycle id: %i\n", cycle_id+1);
-	      printf ("cycle id: %i\n", cycle_id+1);
+	      if (!check_conv)
+		{
+		  //fprintf (timings_ptr, "cycle id: %i\n", cycle_id+1);
+		  printf ("cycle id: %i\n", cycle_id+1);
+		}
+	      else
+		{
+		  //fprintf (timings_ptr, "cycle id: %i, conv_error: %le\n", cycle_id+1, conv_error);
+		  printf ("cycle id: %i, conv_error: %le\n", cycle_id+1, conv_error);
+		}
 	    }
 	}
       simulation_time = myClock () - simulation_time;

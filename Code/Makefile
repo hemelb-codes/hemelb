@@ -14,19 +14,20 @@ INCLUDES=-I/home/steven/lammpi/include
 REG_CPPFLAGS=-I${REG_HOME}/include
 
 #REG_LDFLAGS=-L${REG_HOME}/lib64 -Wl,-Bstatic -lReG_Steer -lReG_Steer_Utils \
-#                -lReG_Steer_SOAP -Wl,-Bdynamic -lxml2
+#                -lReG_Steer_SOAP -Wl,-Bdynamic -lxml2  1000  1000  0.001
 
 MPICPUS=4
 
-TEST1INPUT=$(HOME)/hemelb/Input/square_duct_32x16x16     10  10000 0.001
+TEST1INPUT=$(HOME)/hemelb/Input/square_duct_32x16x16     2 1000 0.01
 TEST2INPUT=$(HOME)/hemelb/Input/angio1                   10 200000 0.0001171875
 TEST3INPUT=$(HOME)/hemelb/Input/bifurcation_512x512x512  10 200000 0.0001
-TEST4INPUT=$(HOME)/hemelb/Input/angio4                   10 200000 0.0009375
+TEST4INPUT=$(HOME)/hemelb/Input/angio4                   1 2000 0.0009375
+TEST5INPUT=$(HOME)/hemelb/Input/angio2                   10 200000 0.00234375
+TEST6INPUT=$(HOME)/hemelb/Input/angio8                   10 200000 0.0002245
 
 FLAGS=-O3 -xT -ipo -pthread -Wunused
-DEFS=
 
-LIBS=-L/home/steven/lammpi/lib -llammpio -llammpi++ -lmpi -llam -ldl 
+LIBS=-L/home/steven/lammpi/lib -llammpio -llammpi++ -lmpi -llam -ldl
 
 OBJ=config.o \
 	io.o \
@@ -49,6 +50,12 @@ test3:
 
 test4:
 	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST4INPUT)
+
+test5:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST5INPUT)
+
+test6:
+	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST6INPUT)
 
 display:
 	g++ displayClient.cc -O3 -lGLU -lglut eVizRLEUtil.c -o displayClient
