@@ -1,0 +1,7 @@
+CC=mpicxx
+MPIRUN=
+EXE=hemelb
+DEFS=
+FLAGS=-O2 
+INCLUDES=
+LIBS=
