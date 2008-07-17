@@ -341,7 +341,6 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   
   unsigned int my_site_id;
   
-  
   // parameters useful to convert pressure, velocity and stress from
   // lattice to physical units
   pressure_par = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
@@ -375,6 +374,9 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
       xdr_int    (&xdr_system_config, &sites_z);
       xdr_int    (&xdr_system_config, &lbm->total_fluid_sites);
     }
+
+//  printf("voxel_size %0.4f\n", lbm->voxel_size);
+//  printf("sites x,y,z %i %i %i\n", sites_x, sites_y, sites_z);
   
   fluid_sites_max = 0;
   
@@ -506,11 +508,15 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 0 ]);
 				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 1 ]);
 				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 2 ]);
+
+			//	  printf("i j k %i %i %i ", gathered_site_data[ 3 * l + 0 ], gathered_site_data[ 3 * l + 1 ], gathered_site_data[ 3 * l + 2 ]);
 				  
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
 				      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+			//	printf("%0.4f ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
 				    }
+		//			printf("\n");
 				}
 			    }
 			  for (l = 0; l < communication_period; l++)
@@ -547,11 +553,14 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 0 ]);
 		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 1 ]);
 		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 2 ]);
+	//			  printf("i j k %i %i %i ", gathered_site_data[ 3 * l + 0 ], gathered_site_data[ 3 * l + 1 ], gathered_site_data[ 3 * l + 2 ]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
 		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+	//			printf("%0.4f ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
 		    }
+	//				printf("\n");
 		}
 	    }
 	  for (l = 0; l < communication_period; l++)

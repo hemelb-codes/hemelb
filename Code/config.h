@@ -116,6 +116,7 @@ extern MPI_Datatype MPI_col_pixel_type;
 
 
 extern pthread_mutex_t network_buffer_copy_lock;
+extern pthread_mutex_t LOCK;
 extern pthread_cond_t network_send_frame;
 
 extern int send_array_length;
