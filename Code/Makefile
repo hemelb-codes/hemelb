@@ -42,6 +42,7 @@ OBJ=config.o \
 	benchmark.o \
 	colourpalette.o \
 	visthread.o \
+	fileutils.o \
 	usage.o
 
 $(EXE): $(OBJ)
