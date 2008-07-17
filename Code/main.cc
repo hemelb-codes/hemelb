@@ -1,9 +1,6 @@
 // In this file, the functions useful to initiate/end the LB simulation
 // and perform the dynamics are reported
 
-#include "config.h"
-
-
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -15,25 +12,43 @@
 
 #include <sys/stat.h>
 
+#include "config.h"
+#include "network.h"
+#include "steering.h"
+#include "usage.h"
+#include "benchmark.h"
+#include "colourpalette.h"
+#include "visthread.h"
+
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
 
+// float steer_par[STEERABLE_PARAMETERS] = {0.0, 0.0, 0.0, 45.0, 45.0, 1.0, 0.03, 0.001, 0.01};
 
-float steer_par[STEERABLE_PARAMETERS + 1];
+FILE* timings_ptr;
 
-
-FILE *timings_ptr;
-
-
+/*
 void ColourPalette (float value, float col[])
 {
   col[0] = fminf(1.F, value);
   col[1] = 0.;
   col[2] = fmaxf(0.F, 1.F - value);
 }
+*/
 
+/*int doRendering = 0;
+int ShouldIRenderNow = 0;
 
+pthread_mutex_t var_lock = PTHREAD_MUTEX_INITIALIZER;
 
+void setRenderState(int val) {
+  pthread_mutex_lock(&var_lock);
+//  doRendering = val;
+  ShouldIRenderNow = val;
+  pthread_mutex_unlock(&var_lock);
+} */
+
+/*
 char host_name[255];
 
 // data per pixel inlude the data for the pixel location and 4 colours
@@ -50,80 +65,11 @@ u_int frame_details_bytes = 1 * sizeof(int);
 char *xdrSendBuffer_pixel_data;
 char *xdrSendBuffer_frame_details;
 
-
-
-int recv_all (int sockid, char *buf, int *length)
-{
-  int received_bytes = 0;
-  int bytes_left_to_receive = *length;
-  int n;
-
-  while (received_bytes < *length)
-    {
-      n = recv(sockid, buf+received_bytes, bytes_left_to_receive, 0);
-      
-      if (n == -1) break;
-      
-      received_bytes += n;
-      bytes_left_to_receive -= n;
-    }
-  *length = received_bytes;
-  
-  return n == -1 ? -1 : 0;
-}
-
-
-int send_all(int sockid, char *buf, int *length ) {
-  
-  int sent_bytes = 0;
-  int bytes_left_to_send = *length;
-  int n;
-	
-  while( sent_bytes < *length ) {
-    n = send(sockid, buf+sent_bytes, bytes_left_to_send, 0);
-    if (n == -1)
-      break;
-    sent_bytes += n;
-    bytes_left_to_send -= n;
-  }
-	
-  *length = sent_bytes;
-	
-  return n==-1?-1:0;
-
-}
-
-
-void *hemeLB_steer (void *ptr)
-{
-  while(1) {
-
-  long int read_fd = (long int)ptr;
-  //printf("Kicking off steering thread with FD %i\n", (int)read_fd);
-  
-  int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
-  int bytes = sizeof(char) * num_chars;
- 
-  char *xdr_steering_data = (char *)malloc(bytes);
-  
-  XDR xdr_steering_stream;
-  
-  
-  xdrmem_create(&xdr_steering_stream, xdr_steering_data, bytes, XDR_DECODE);
- 
-  recv_all (read_fd, xdr_steering_data, &num_chars);
-  
-  for (int i = 0; i < STEERABLE_PARAMETERS; i++)
-    {
-      xdr_float (&xdr_steering_stream, &steer_par[i]);
-    }
-  free(xdr_steering_data);
-  }
-}
-
-
 void *hemeLB_network (void *ptr)
 {
+
+  setRenderState(0);
+
   gethostname (host_name, 255);
   
   FILE *f = fopen ("env_details.asc","w");
@@ -132,7 +78,8 @@ void *hemeLB_network (void *ptr)
   fclose (f);
   
   fprintf (timings_ptr, "MPI 0 Hostname -> %s\n\n", host_name);
-  
+
+  printf("kicking off network thread.....\n"); fflush(0x0);
   
   int sock_fd;
   int new_fd;
@@ -143,16 +90,17 @@ void *hemeLB_network (void *ptr)
   
   pthread_t steering_thread;
   pthread_attr_t steering_thread_attrib; 
-  
-  signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
-  
   pthread_attr_init (&steering_thread_attrib);
   pthread_attr_setdetachstate (&steering_thread_attrib, PTHREAD_CREATE_JOINABLE);
+
+  signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
   
   while (1)
     {
 
-      pthread_mutex_lock ( &network_buffer_copy_lock );
+      setRenderState(0);
+
+      pthread_mutex_lock (&LOCK);
 	    
       struct sockaddr_in my_address;
       struct sockaddr_in their_addr; // client address
@@ -205,18 +153,30 @@ void *hemeLB_network (void *ptr)
       
       is_broken_pipe = 0;
       
-      pthread_mutex_unlock ( &network_buffer_copy_lock );
+      pthread_mutex_unlock ( &LOCK );
+
+      setRenderState(1);
+
+	// At this point we're ready to send a frame...
+	
+//	setRendering=1;
       
-      while (!is_broken_pipe)
-	{
-	  pthread_mutex_lock ( &network_buffer_copy_lock );
-	  pthread_cond_wait (&network_send_frame, &network_buffer_copy_lock);
-	  
+     while (!is_broken_pipe)
+	 {
+
+	  printf("THREAD: waiting for signal that frame is ready to send..\n"); fflush(0x0);
+
+	  pthread_mutex_lock ( &LOCK );
+	  pthread_cond_wait (&network_send_frame, &LOCK);
+
+      setRenderState(0);
+
+	  printf("THREAD: received signal that frame is ready to send..\n"); fflush(0x0);
+
 	  int bytesSent = 0;
 	  
 	  XDR xdr_network_stream_frame_details;
 	  XDR xdr_network_stream_pixel_data;
-	  
 	  
 	  xdrmem_create (&xdr_network_stream_pixel_data, xdrSendBuffer_pixel_data,
 			 pixel_data_bytes, XDR_ENCODE);
@@ -238,7 +198,10 @@ void *hemeLB_network (void *ptr)
 	  int ret = send_all(new_fd, xdrSendBuffer_frame_details, &detailsBytes);
 	  
           if (ret < 0) {
+		    printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
+			pthread_mutex_unlock ( &LOCK );
+            setRenderState(0);
             break;
           } else {
             bytesSent += detailsBytes;
@@ -249,7 +212,8 @@ void *hemeLB_network (void *ptr)
           if (ret < 0) {
 		    printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
-			pthread_mutex_unlock ( &network_buffer_copy_lock );
+			pthread_mutex_unlock ( &LOCK );
+            setRenderState(0);
             break;
           } else {
             bytesSent += frameBytes;
@@ -257,11 +221,13 @@ void *hemeLB_network (void *ptr)
 	  
 	  //fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
 	  printf ("RG thread: bytes sent %i\n", bytesSent);
+
+      setRenderState(1);
 	  
 	  xdr_destroy (&xdr_network_stream_frame_details);
 	  xdr_destroy (&xdr_network_stream_pixel_data);
-	  
-	  pthread_mutex_unlock ( &network_buffer_copy_lock );
+
+	  pthread_mutex_unlock ( &LOCK );
 	  
 	  frame_number++;
 	  
@@ -270,85 +236,7 @@ void *hemeLB_network (void *ptr)
       close(new_fd);
       
     } // while(1)
-}
-
-
-void UpdateSteerableParameters (int *is_thread_locked, Vis *vis)
-{
-  steer_par[STEERABLE_PARAMETERS] = (float)(*is_thread_locked) + 0.1;
-  
-#ifndef NOMPI
-  MPI_Bcast (steer_par, STEERABLE_PARAMETERS+1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-#endif
-  
-  *is_thread_locked = (int)steer_par[STEERABLE_PARAMETERS];
-  
-  if (*is_thread_locked) return;
-  /*
-  float ctr_x, ctr_y, ctr_z;
-  float longitude, latitude;
-  float zoom;
-  float velocity_max, stress_max;
-  float lattice_velocity_max, lattice_stress_max;
-  
-  
-  ctr_x          = steer_par[ 0 ];
-  ctr_y          = steer_par[ 1 ];
-  ctr_z          = steer_par[ 2 ];
-  longitude      = steer_par[ 3 ];
-  latitude       = steer_par[ 4 ];
-  zoom           = steer_par[ 5 ];
-  vis_brightness = steer_par[ 6 ];
-  velocity_max   = steer_par[ 7 ];
-  stress_max     = steer_par[ 8 ];
-
-  visConvertThresholds (velocity_max, stress_max,
-			&lattice_velocity_max, &lattice_stress_max, lbm);
-  
-  visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
-  		 PIXELS_X, PIXELS_Y,
-  		 ctr_x, ctr_y, ctr_z,
-  		 5.F * vis->system_size,
-  		 longitude, latitude,
-  		 0.5F * (5.F * vis->system_size),
-  		 zoom);
-  
-  vis_velocity_threshold_max_inv = 1.F / velocity_max;
-  vis_stress_threshold_max_inv   = 1.F / stress_max;
-  */
-}
-
-
-int IsBenckSectionFinished (double minutes, double elapsed_time)
-{
-  int is_bench_section_finished = 0;
-  
-  
-  if (elapsed_time > minutes * 60.)
-    {
-      is_bench_section_finished = 1;
-    }
-#ifndef NOMPI
-  MPI_Bcast (&is_bench_section_finished, 1, MPI_INT, 0, MPI_COMM_WORLD);
-#endif
-  
-  if (is_bench_section_finished)
-    {
-      return 1;
-    }
-  return 0;
-}
-
-
-void usage (char *progname)
-{
-  fprintf (timings_ptr, "Usage: %s path of the input files and minutes for benchmarking\n", progname);
-  fprintf (timings_ptr, "if one wants to do a benchmark or\n");
-  fprintf (timings_ptr, "number of pulsaticle cycles, time steps per cycle and\n");
-  fprintf (timings_ptr, "voxel size in metres otherwise.\n");
-  fprintf (timings_ptr, "The following files must be present in the path specified:\n");
-  fprintf (timings_ptr, "config.dat, pars.asc rt_pars.asc\n");
-}
+} */
 
 int file_exists(const char * filename) {
         if (FILE * file = fopen(filename, "r")) {
@@ -493,9 +381,11 @@ int main (int argc, char *argv[])
     {
       xdrSendBuffer_pixel_data = (char *)malloc(pixel_data_bytes);
       xdrSendBuffer_frame_details = (char *)malloc(frame_details_bytes);
-      
-      pthread_mutex_init (&network_buffer_copy_lock, NULL);
+
+      pthread_mutex_init (&LOCK, NULL);
       pthread_cond_init (&network_send_frame, NULL);
+
+  //    pthread_mutex_lock (&LOCK);
       
       pthread_attr_init (&pthread_attrib);
       pthread_attr_setdetachstate (&pthread_attrib, PTHREAD_CREATE_JOINABLE);
@@ -536,56 +426,75 @@ int main (int argc, char *argv[])
 	{
 	  for (time_step = 0; time_step < lbm.period; time_step++)
 	    {
+
+//		usleep(40000);
+
 	      int perform_rt = 0;
 	      int write_image = 0;
-	      int stream_image = 0;
-	      int is_thread_locked = 0;
-
+	      int stream_image = 0; 
+	      int lock_return = 0;
 	      
-	      ++total_time_steps;
+	      total_time_steps++;
 	      
 	      if ((time_step + 1)%vis_image_freq == 0)
 		{
-		  write_image = 1;
+		  // A write_image = 1;
 		}
-	      if (total_time_steps%1 == 0)
-		{
+
 		  if (net.id == 0)
 		    {
-		      //pthread_mutex_lock( &network_buffer_copy_lock );
-		      is_thread_locked = pthread_mutex_trylock ( &network_buffer_copy_lock );
+		      lock_return = pthread_mutex_trylock ( &LOCK );
+		      printf("attempting to aquire mutex lock -> %i -> ", lock_return); 
+		      if( lock_return == EBUSY ) { printf("lock busy\n"); } else { printf("aquired lock\n"); doRendering = 1; } printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
 		    }
 
-		  UpdateSteerableParameters (&is_thread_locked, &vis);
+	  UpdateSteerableParameters (&vis,&lbm);
+	  MPI_Bcast (&doRendering, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+	      if (total_time_steps%1 == 0)
+		{
+
+	 //    if(net.id==0) printf("cycle_id time_step setRendering doRendering %i %i %i %i\n", cycle_id, time_step, setRendering, doRendering); fflush(0x0); 
+
+		  //UpdateSteerableParameters (&is_thread_locked, &vis);
 		  
+		 /* if (!is_thread_locked)
+=======
 		  if (is_thread_locked == 0)
+>>>>>>> 1.31.2.9.2.28
 		    {
-		      //stream_image = 1;
-		    }
+<<<<<<< main.cc
+		      stream_image = 1;
+		    } */
 		}
+
 	      if (stream_image || write_image)
 		{
-		  perform_rt = 1;
+		  doRendering = 1;
 		}
 	      
 	      // Between the visRenderA/B calls, do not change any vis
 	      // parameters.
 	      
-	      if (perform_rt)
+	//	if(setRendering==1) { doRendering = 1; setRendering = 0; }
+
+	      if (doRendering)
 		{
 		  visRenderA (ColourPalette, &net);
 		}
+
 	      lbmVaryBoundaryDensities (cycle_id, time_step, &lbm);
 	      
 	      if (!check_conv)
 		{
-		  stability = lbmCycle (cycle_id, time_step, perform_rt, &lbm, &net);
+		  stability = lbmCycle (cycle_id, time_step, doRendering, &lbm, &net);
 		}
 	      else
 		{
-		  stability = lbmCycleConv (cycle_id, time_step, perform_rt, &lbm, &net);
+		  stability = lbmCycleConv (cycle_id, time_step, doRendering, &lbm, &net);
 		}
-	      if (write_image)
+
+	   /*   if (write_image)
 		{
 		  char time_step_string[256];
 		  
@@ -603,17 +512,31 @@ int main (int argc, char *argv[])
 		  sprintf ( time_step_string, "%i", time_step + 1);
 		  strcat ( image_name , time_step_string );
 		  strcat ( image_name , ".dat" );
-		}
+		} */
 
-	      if (perform_rt)
+	      if (doRendering)
 		{
 		  visRenderB (write_image, image_name, ColourPalette, &net);
 		}
+
+	     /* if ((time_step + 1) % 10 == 0 ) {
+                char snapshot_filename[255];
+                snprintf(snapshot_filename, 255, "snapshot_%06i.bin", time_step+1);
+                //if(net.id == 0) { printf("writing binary file %s....\n", snapshot_filename); fflush(NULL); }
+                lbmWriteConfig (stability, snapshot_filename, &lbm, &net);
+                //if(net.id == 0) { printf("done writing binary.\n"); fflush(NULL); }
+              } */
+
 	      if (net.id == 0)
 		{
-		 pthread_mutex_unlock (&network_buffer_copy_lock);
-		 pthread_cond_signal (&network_send_frame);
+		if(doRendering==1) {
+                  printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
+		  pthread_mutex_unlock (&LOCK);
+		  pthread_cond_signal (&network_send_frame);
+                  printf("...signal sent\n"); fflush(0x0);
+                  doRendering=0;
 		}
+		} 
 	      
 	      if (stability == UNSTABLE)
 		{
@@ -642,14 +565,15 @@ int main (int argc, char *argv[])
 	    {
 	      if (!check_conv)
 		{
-		  //fprintf (timings_ptr, "cycle id: %i\n", cycle_id+1);
+		  fprintf (timings_ptr, "cycle id: %i\n", cycle_id+1);
 		  printf ("cycle id: %i\n", cycle_id+1);
 		}
 	      else
 		{
-		  //fprintf (timings_ptr, "cycle id: %i, conv_error: %le\n", cycle_id+1, conv_error);
+		  fprintf (timings_ptr, "cycle id: %i, conv_error: %le\n", cycle_id+1, conv_error);
 		  printf ("cycle id: %i, conv_error: %le\n", cycle_id+1, conv_error);
 		}
+                fflush(NULL);
 	    }
 	}
       simulation_time = myClock () - simulation_time;
@@ -660,7 +584,6 @@ int main (int argc, char *argv[])
       double elapsed_time;
   
       int bench_period = (int)fmax(1., (1e+6 * net.procs) / lbm.total_fluid_sites);
-      
       
       // benchmarking HemeLB's fluid solver only
       
@@ -679,7 +602,7 @@ int main (int argc, char *argv[])
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenckSectionFinished (0.5, elapsed_time))
+	      IsBenchSectionFinished (0.5, elapsed_time))
 	    {
 	      break;
 	    }
@@ -717,7 +640,7 @@ int main (int argc, char *argv[])
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenckSectionFinished (0.5, elapsed_time))
+	      IsBenchSectionFinished (0.5, elapsed_time))
 	    {
 	      break;
 	    }
@@ -734,8 +657,6 @@ int main (int argc, char *argv[])
 	  visRenderB (0, image_name, ColourPalette, &net);
 	}
       fluid_solver_and_vis_time = myClock () - fluid_solver_and_vis_time;
-      
-      
       
       // benchmarking HemeLB's ray tracer without compositing
       
@@ -755,7 +676,7 @@ int main (int argc, char *argv[])
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenckSectionFinished (0.5, elapsed_time))
+	      IsBenchSectionFinished (0.5, elapsed_time))
 	    {
 	      break;
 	    }
@@ -871,3 +792,4 @@ int main (int argc, char *argv[])
   
   return(0);
 }
+
