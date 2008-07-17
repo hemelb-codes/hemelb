@@ -1,0 +1,7 @@
+CC=mpiCC
+MPIRUN=
+EXE=hemelb
+DEFS=
+FLAGS=-O3 -pthread -xT
+INCLUDES=
+LIBS=
