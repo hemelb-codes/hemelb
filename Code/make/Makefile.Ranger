@@ -1,4 +1,4 @@
-CC=mpiCC
+CC=mpicxx
 MPIRUN=
 EXE=hemelb
 DEFS=
