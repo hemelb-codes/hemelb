@@ -1,6 +1,0 @@
-CC=/home/steven/lammpi/bin/mpic++
-MPIRUN=/home/steven/lammpi/bin/mpirun
-FLAGS=-O2 -ipo -xT
-EXE=hemelb
-DEFS=-DBENCH -DNOOPENMP
-
