@@ -1,4 +1,4 @@
-include make/Makefile.CCS
+include make/Makefile.${HEMELB_MACHINE}
 
 OBJ=config.o \
 	io.o \
