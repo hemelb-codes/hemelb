@@ -16,9 +16,9 @@ public class VizFrameData {
 	private int bufferSize = 0;
 	private int length = 0;
 	private double dataRate = 0.f;
-	private int r[];
-	private int g[];
-	private int b[];
+	private int r[][];
+	private int g[][];
+	private int b[][];
 	
 	private int x[];
 	private int y[];
@@ -29,9 +29,9 @@ public class VizFrameData {
 	 */
 	public VizFrameData(int length) {
 		this.length = length;
-		r = new int[length];
-		 g = new int[length];
-		 b = new int[length];
+		r = new int[length][4];
+		 g = new int[length][4];
+		 b = new int[length][4];
 		 x = new int[length];
 		 y = new int[length];
 	}
@@ -89,38 +89,38 @@ public class VizFrameData {
 	/**
 	 * @return Returns the b.
 	 */
-	public int getB(int i) {
-		return b[i];
+	public int getB(int i, int view) {
+		return b[i][view];
 	}
 	/**
 	 * @param b The b to set.
 	 */
-	public void setB(int i, int b) {
-		this.b[i] = b;
+	public void setB(int i, int view, int b) {
+		this.b[i][view] = b;
 	}
 	/**
 	 * @return Returns the g.
 	 */
-	public int getG(int i) {
-		return g[i];
+	public int getG(int i, int view) {
+		return g[i][view];
 	}
 	/**
 	 * @param g The g to set.
 	 */
-	public void setG(int i, int g) {
-		this.g[i] = g;
+	public void setG(int i, int view, int g) {
+		this.g[i][view] = g;
 	}
 	/**
 	 * @return Returns the r.
 	 */
-	public int getR(int i) {
-		return r[i];
+	public int getR(int i, int view) {
+		return r[i][view];
 	}
 	/**
 	 * @param r The r to set.
 	 */
-	public void setR(int i, int r) {
-		this.r[i] = r;
+	public void setR(int i, int view, int r) {
+		this.r[i][view] = r;
 	}
 	/**
 	 * @return Returns the x.

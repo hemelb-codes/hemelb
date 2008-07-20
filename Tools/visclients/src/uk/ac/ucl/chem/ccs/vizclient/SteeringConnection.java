@@ -12,9 +12,7 @@ public interface SteeringConnection {
 	public boolean connect();
 
 	public boolean disconnect();
-
-	public boolean magnify (int m);
 	
-	public boolean rotate (double dx, double dy);
+	public boolean send (SteeringData sd);
 	
 }

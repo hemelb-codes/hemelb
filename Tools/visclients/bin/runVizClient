@@ -1,0 +1,25 @@
+#! /bin/bash
+
+case `uname -ms` in
+    "Linux x86_64")
+         JOGL_LIB="64blin";
+         ;;
+    "Linux i686")
+         JOGL_LIB="32blin";
+         ;;
+    "Darwin i386")
+         JOGL_LIB="32bmac";
+         ;;
+esac
+
+ 
+#case
+#  PATH=/usr/local64/bin:/usr/local/bin:$PATH 
+#  JAVA_HOME=/usr/local64/stow/jdk1.5.0_10/ 
+#case 
+#  PATH=/usr/local/bin:$PATH 
+#  JAVA_HOME=/usr/local/stow/jdk1.5.0_10/ 
+#default
+ 
+#export PATH 
+#export JAVA_HOME 

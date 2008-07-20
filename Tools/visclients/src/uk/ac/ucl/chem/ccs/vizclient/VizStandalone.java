@@ -53,13 +53,25 @@ public class VizStandalone extends javax.swing.JFrame {
 	private JMenuItem disconnectMenuItem;
 	private VizGui vg;
 	private String hostname;
-	private int port;
+	private int port, window;
 	/**
 	* Auto-generated main method to display this JFrame
 	*/
 	public static void main(String[] args) {
+		String h = "localhost";
+		int p = 65250;
+		int w = 1024*1024;
 		
-		VizStandalone vs = new VizStandalone(args[0],Integer.parseInt(args[1]));
+		switch (args.length) {
+		case 3:
+			w = Integer.parseInt(args[2]);
+		case 2:
+			p = Integer.parseInt(args[1]);
+		case 1:
+			h = args[0];
+		}
+		
+		VizStandalone vs = new VizStandalone(h,p,w);
 		vs.setLocationRelativeTo(null);
 		vs.setVisible(true);
 		vs.addWindowListener( new WindowAdapter() {
@@ -74,8 +86,9 @@ public class VizStandalone extends javax.swing.JFrame {
 
 	}
 	
-	public VizStandalone(String hostname, int port) {
+	public VizStandalone(String hostname, int port, int window) {
 		super();
+		this.window = window;
 		this.hostname = hostname;
 		this.port = port;
 		initGUI();
@@ -95,7 +108,7 @@ public class VizStandalone extends javax.swing.JFrame {
 				getContentPane().add(jPanel1, BorderLayout.CENTER);
 				jPanel1.setSize(700, 700);
 				{
-					vg=new VizGui(port, hostname);
+					vg=new VizGui(port, hostname, window);
 					jPanel1.add(vg, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 					vg.setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
 					vg.getInfoPanel().setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
