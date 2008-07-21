@@ -24,7 +24,6 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import java.util.EventObject;
 
 
 /**
@@ -49,6 +48,7 @@ public class ResPanel extends javax.swing.JPanel {
 	private JButton newRes;
 	private JButton delete;
 	private JButton edit;
+	private JButton select;
 	private JRadioButton gur;
 	private JRadioButton hard;
 	private JRadioButton add;
@@ -57,6 +57,7 @@ public class ResPanel extends javax.swing.JPanel {
 	private JScrollPane resList;
 	private Vector tableData;
 	private String filename;
+	private SimulationLaunchPanel simPanel;
 	
 	
 	/**
@@ -71,6 +72,10 @@ public class ResPanel extends javax.swing.JPanel {
 		this.filename = filename;
 		loadData();
 		initGUI();
+	}
+	
+	public void setSimPanel(SimulationLaunchPanel p){
+		simPanel = p;
 	}
 	
 	private void initGUI() {
@@ -161,6 +166,22 @@ public class ResPanel extends javax.swing.JPanel {
 						});
 						
 					}
+					    select = new JButton();
+					    controlPanel.add(select, "2,1");
+					    select.setText("Select");
+					    select.addActionListener(new ActionListener() {
+							public void actionPerformed (ActionEvent evt) {
+								int selectedRow = resTable.getSelectedRow();
+								System.out.println("Selected row is " + selectedRow);
+								if (selectedRow > -1){
+									System.out.println("So this is called");
+									AdvancedReservation selected = (AdvancedReservation)tableData.get(selectedRow);
+									ClinicalGuiClient.reservation = selected;
+									simPanel.updateReservationInfo();
+								}
+							}
+						});
+					    
 					{
 						edit = new JButton();
 						controlPanel.add(edit, "3, 0");
