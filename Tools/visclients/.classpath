@@ -32,8 +32,11 @@
 	<classpathentry kind="lib" path="lib/jogl/gluegen-rt.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/jogl.jar"/>
 	<classpathentry kind="lib" path="lib/clibwrapper_jiio.jar"/>
-	<classpathentry kind="lib" path="lib/dcm4che.jar"/>
-	<classpathentry kind="lib" path="lib/dcm4che-imageio-rle-2.0.14.jar"/>
 	<classpathentry kind="lib" path="lib/ij.jar"/>
+	<classpathentry kind="lib" path="lib/dcm4che-core-2.0.15.jar"/>
+	<classpathentry kind="lib" path="lib/dcm4che-net-2.0.15.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.4.3.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.4.3.jar"/>
+	<classpathentry kind="lib" path="lib/dcm4che-tool-dcmqr-2.0.15.jar"/>
 	<classpathentry kind="output" path="build"/>
 </classpath>
