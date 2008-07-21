@@ -3,6 +3,7 @@ package uk.ac.ucl.chem.ccs.clinicalgui;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeListener;
@@ -11,6 +12,8 @@ import uk.ac.ucl.chem.ccs.clinicalgui.res.ResPanel;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 /**
 * This code was edited or generated using CloudGarden's Jigloo
 * SWT/Swing GUI Builder, which is free for non-commercial
@@ -74,7 +77,11 @@ public class MainPanel extends javax.swing.JPanel {
 				{
 					simulationLaunchPanel1 = new SimulationLaunchPanel();
 					jTabbedPane1.addTab("Simulation Launch", null, simulationLaunchPanel1, null);
+					addButtons(simulationLaunchPanel1);
 				}
+				modelGenerationPanel1.setCompanionPanel(simulationLaunchPanel1);
+				modelGenerationPanel1.setParentPanel(this);
+				reservationPanel1.setSimPanel(simulationLaunchPanel1);
 				{
 					simulationMonitoringPanel1 = new SimulationMonitoringPanel();
 					jTabbedPane1.addTab("Simulation Monitoring", null, simulationMonitoringPanel1, null);
@@ -91,7 +98,25 @@ public class MainPanel extends javax.swing.JPanel {
 		}
 	}
 	
-	private class NextListener implements ActionListener {
+	public void disableTabPane(){
+		jTabbedPane1.setEnabled(false);
+	}
+	
+	public void enableTabPane(){
+		jTabbedPane1.setEnabled(true);
+	}
+	
+	public void addButtons(SimulationLaunchPanel p){
+		p.NextButton.addActionListener(new NextListener());
+		p.PrevButton.addActionListener(new PrevListener());
+	}
+	
+	public void advance(){
+		guiStage++;
+		jTabbedPane1.setSelectedIndex(guiStage);
+	}
+	
+	public class NextListener implements ActionListener {
 		public void actionPerformed (ActionEvent evt) {
 			guiStage++;
 			jTabbedPane1.setSelectedIndex(guiStage);
@@ -99,7 +124,7 @@ public class MainPanel extends javax.swing.JPanel {
 		
 	}
 	
-	private class PrevListener implements ActionListener {
+	public class PrevListener implements ActionListener {
 		public void actionPerformed (ActionEvent evt) {
 			guiStage--;
 			jTabbedPane1.setSelectedIndex(guiStage);
