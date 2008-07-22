@@ -28,6 +28,8 @@ import javax.swing.tree.TreeSelectionModel;
 import org.globus.ftp.GridFTPSession;
 import org.jdesktop.application.Application;
 import java.io.*;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 //import org.dcm4che2.imageio.*;
 import org.dcm4che2.io.DicomInputStream;
@@ -66,7 +68,10 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 	private JLabel resName;
 	private JLabel resStart;
 	private JLabel resEnd;
-	
+	private JLabel m1;
+	private JLabel m2;
+	private JLabel m3;
+	private JLabel m4;
 
 
 	/**
@@ -133,6 +138,17 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 			resName.setText("Name: " + ClinicalGuiClient.reservation.getResName());
 			resStart.setText("Start: " + ClinicalGuiClient.reservation.getStart().toString());
 			resEnd.setText("End: " + ClinicalGuiClient.reservation.getEnd().toString());
+			m1.setText("Resources:");
+			Hashtable res = ClinicalGuiClient.reservation.getRes();
+			Enumeration myEnum = res.keys();
+			if(myEnum.hasMoreElements())
+				m2.setText((String) myEnum.nextElement());
+			if(myEnum.hasMoreElements())
+				m3.setText((String) myEnum.nextElement());
+			if(res.size() > 3)
+				m4.setText("...");
+			else if(myEnum.hasMoreElements())
+				m4.setText((String) myEnum.nextElement());
 			//ClinicalGuiClient.reservation.getRes().
 		}
 	}
@@ -161,7 +177,7 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 			    
 			    reservationInfoPanel = new JPanel();
 			    this.add(reservationInfoPanel, "2, 2, 3, 3");
-			    reservationInfoPanel.setLayout(new TableLayout(new double[][] {{TableLayout.FILL}, {TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL}}));
+			    reservationInfoPanel.setLayout(new TableLayout(new double[][] {{TableLayout.FILL}, {TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL}}));
 			    
 			    resHeader = new JLabel();
 			    reservationInfoPanel.add(resHeader,"0,0");
@@ -175,6 +191,18 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 			    
 			    resEnd = new JLabel();
 			    reservationInfoPanel.add(resEnd,"0,3");
+			    
+			    m1 = new JLabel();
+			    reservationInfoPanel.add(m1,"0,4");
+			    
+			    m2= new JLabel();
+			    reservationInfoPanel.add(m2,"0,5");
+			    
+			    m3 = new JLabel();
+			    reservationInfoPanel.add(m3,"0,6");
+			    
+			    m4 = new JLabel();
+			    reservationInfoPanel.add(m4,"0,7");
 			    
 			    
 				

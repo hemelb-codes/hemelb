@@ -41,44 +41,48 @@ import org.dcm4che2.io.DicomInputStream;
 
 
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
+ * @author Konstantin Voevodski
+ *
+ * implements the UI compoenents and functionality of the "Model Generation" panel
+ */
 public class ModelGenerationPanel extends javax.swing.JPanel {
 	private JScrollPane treeView;
+	//contains the tree object representing DICOM data available on server
 	private JPanel attributePanel;
+	//panel containing l1,l2,...,l18 labels
 	private JLabel infoLabel;
+	//displays the status of the GUI (error messages / status)
 	private JButton LaunchGraphClientButton;
+	//button to launch the segmentation tool
 	private JButton GetDicomDataButton;
+	//button to download DICOM data from server
 	private JButton ViewDicomDataButton;
+	//button to view the downloaded DICOM slices inside a scrollable window
 	public JButton PrevButton;
+	//button to go back to previous panel
 	public JButton NextButton;
+	//button to go forward to next panel
 	private JLabel l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14,l15,l16,l17,l18;
+	//labels listing the attributes of the DICOM data
 	private SimulationLaunchPanel companionPanel;
-	//the next panel whose display needs to be updated when user uploads hemlb data from this panel
+	//the next panel whose display needs to be updated when user uploads hemlb input (seg tool output) data from this panel
 	private MainPanel parentPanel;
-	//the parent panel
+	//the parent panel (needed to disable the tab panel of the parent)
 	
 	
 	//****
 	public static String modelNote;
+	//holds the note entered for a particular model: set by NoteDialog
 	private String selectedPath;
+	//the currently selected path of the tree displaying the DICOM data
 	private String patientId, studyId, seriesId;
+	//the patient,study,series ids of currently selected data set
 	public static ImageStack dicomImageStack;
+	//the stack of dicom images used to create the scrollable window : set by DicomServerInterface
 	private boolean dicomDataLoaded = false;
-
-	/**
-	* Auto-generated main method to display this 
-	* JPanel inside a new JFrame.
-	*/
+	//true if DICOM data has been downloaded
+    //*****
+	
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(new ModelGenerationPanel());
@@ -101,19 +105,6 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 	
 	private void updateInfo(String m){
 		infoLabel.setText(m);
-		/*
-		message = m;
-		SwingUtilities.invokeLater(new Runnable() {
-	        public void run() {
-	          infoLabel.setText(message);
-	          infoLabel.repaint();
-	  		  ModelGenerationPanel.this.repaint();
-	        }});
-	        */
-		//System.out.println("updating info");
-		//infoLabel.setText(m);
-		//infoLabel.repaint();
-		//this.repaint();
 	}
 	
 	private void disableUI(){
