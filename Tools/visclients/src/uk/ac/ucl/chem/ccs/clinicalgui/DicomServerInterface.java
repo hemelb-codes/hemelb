@@ -34,10 +34,9 @@ import org.dcm4che2.data.Tag;
 
 
 /**
- * @author konstantin
+ * @author Konstantin Voevodski
  *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
+ * implements methods for querying and obtaining data from the DICOM server
  */
 public class DicomServerInterface {
 	
@@ -51,8 +50,8 @@ public class DicomServerInterface {
 	private static DefaultMutableTreeNode top = new DefaultMutableTreeNode("Available Data");
 	
 	public static int queryReceiveWrite(String patientId, String studyId, String seriesId) throws IOException{
-	    //queries, receives and writes DICOM files corresponding to a particular dataset
-		//returns {sliceThickness,pixelSpacing} of the DICOM images, {-1,-1} if query returns no results
+	//queries, receives and writes DICOM files corresponding to a particular dataset
+    //returns number of DICOM files received
 		tempDirectory.mkdir();
 		String[] a = new String[3];
 		a[0] = CLIENT_LOC;
@@ -103,7 +102,7 @@ public class DicomServerInterface {
 	}
 	
 	public static String[] getPatientAttributes(String patientId){
-	    //returns Patient Sex, Patient DOB of the data set given by (patientId)
+	//returns Patient Sex, Patient DOB of the data set given by (patientId)
 		
 		String[] a = new String[4];
 		a[0] = SERVER_LOC;
@@ -119,7 +118,7 @@ public class DicomServerInterface {
 	}
 	
 	public static String[] getStudyAttributes(String patientId, String studyId){
-	    //returns Study Description, Referring Physician of the data set given by (patientId, studyId)
+	//returns Study Description, Referring Physician of the data set given by (patientId, studyId)
 		
 		String[] a = new String[5];
 		a[0] = SERVER_LOC;
@@ -137,7 +136,7 @@ public class DicomServerInterface {
 	}
 	
 	public static String[] getSeriesAttributes(String patientId, String studyId, String seriesId){
-	    //returns Date, Time, Series Description, Institution Name, and Performing Physician name of the data set given by (patientId, studyId, seriesId)
+	//returns Date, Time, Series Description, Institution Name, and Performing Physician name of the data set given by (patientId, studyId, seriesId)
 		
 		String[] a = new String[10];
 		a[0] = SERVER_LOC;
@@ -162,6 +161,8 @@ public class DicomServerInterface {
 	}
 	
 	public static JTree populateServerData() {
+	//returns a tree object representing all data available on DICOM server
+	//tree organized by (patient,study,series)
 		String[] a = new String[5];
 		a[0] = SERVER_LOC;
 		a[1] = "-rPatientID";
@@ -206,6 +207,7 @@ public class DicomServerInterface {
 	}
 	
 	private static String parseBrackets(String s){
+	//parses out outermost brackets in s, returning what is inside: given [text_here] returns text_here
 		 Matcher m = p.matcher(s);
 		 m.find();
 		 String temp = m.group();
@@ -213,6 +215,8 @@ public class DicomServerInterface {
 	}
 	
 	private static void augmentTable(Hashtable table, String a, String b){
+	//adds b to a's hashset: used for keeping track of the DICOM data hierarchy, for example,
+	//keeping track of all studies associated with a particular patient
 		HashSet s;
 		if(table.containsKey(a))
 			s = (HashSet) table.get(a);
@@ -225,6 +229,8 @@ public class DicomServerInterface {
 
 	
 	private static void writeSlicesFile() throws IOException{
+	//subroutine of queryReceiveWrite: reads slice files received from server and creates one file
+	//containing the pixel data of all slices, which is used as input to seg tool
 		String[] filenames = tempDirectory.list();
 		Arrays.sort(filenames);
 		BufferedWriter writer = new BufferedWriter(new FileWriter(SLICES_FILE_PATH));

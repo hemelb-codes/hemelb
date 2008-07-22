@@ -9,7 +9,9 @@ import org.globus.gsi.gssapi.*;
 import org.ietf.jgss.GSSCredential;
 
 /**
- * Sample Java class to perform a transfer from a remote GRIDFTP host
+ * @author Konstantin Voevodski
+ *
+ * implements methods for getting/putting files and managing directories on the grid ftp server
  */
 public class MyGridFtp {
         private GSSCredential cred = null;
