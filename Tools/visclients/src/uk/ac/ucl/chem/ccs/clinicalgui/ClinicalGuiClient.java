@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 import uk.ac.ucl.chem.ccs.aheclient.res.AdvancedReservation;
-import uk.ac.ucl.chem.ccs.clinicalgui.res.ResPanel;
+import uk.ac.ucl.chem.ccs.clinicalgui.res.ResPanel; 
 import uk.ac.ucl.chem.ccs.clinicalgui.res.ViewReservation;
 
 import javax.swing.JMenu;
@@ -70,6 +70,7 @@ public class ClinicalGuiClient extends SingleFrameApplication {
     			jMenu1 = new JMenu();
     			jMenuBar1.add(jMenu1);
     			jMenu1.setName("jMenu1");
+    			/*
     			{
     				change = new JMenuItem();
     				jMenu1.add(change);
@@ -82,6 +83,7 @@ public class ClinicalGuiClient extends SingleFrameApplication {
 						}
 					});
     			}
+    			*/
     			{
     				manage = new JMenuItem();
     				jMenu1.add(manage);

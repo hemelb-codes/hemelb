@@ -5,13 +5,14 @@
  * Window - Preferences - Java - Code Style - Code Templates
  */
 package uk.ac.ucl.chem.ccs.clinicalgui;
-import InsightToolkit.*;
+//import InsightToolkit.*;
 
 /**
- * @author konstantin
+ * @author Konstantin Voevodski
  *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
+ * Failed attempt at using the itk library to handle DICOM files:
+ * it is unclear how the methods documented in the C++ itk library are mapped
+ * to the methods in the generated java "wrappings" 
  */
 public class TestItkFunctionality {
 
