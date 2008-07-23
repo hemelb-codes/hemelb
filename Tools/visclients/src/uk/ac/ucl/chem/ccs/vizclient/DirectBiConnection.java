@@ -100,15 +100,18 @@ public class DirectBiConnection implements SteeringConnection {
 		Calendar cal2 = Calendar.getInstance();
 		// PLZ CAN HAZ DATEZ PLS! k thnx bi.
 		long end_time = cal2.getTimeInMillis();
-		double total_time = (end_time - start_time)*1000;
-		double data_rate = 1024.0*(frame_size / total_time);
+
+		
+		double total_time = (end_time - start_time)/1000.f;
+		//System.out.println("Total time "+ total_time);
+		double data_rate = (frame_size/1024.f) / total_time;
 				
 		//System.err.println("bytes = " + frame_size + ", time = " + total_time + ", rate = " + data_rate + "KB/s");
 		vizFrame.setDataRate(data_rate);
 		vizFrame.setRealFrameNo(0);
 		vizFrame.setFrameNo(frame_no);
 		vizFrame.setBufferSize(frame_size);
-		vizFrame.setFramePerSec(1/total_time);
+		//vizFrame.setFramePerSec(1/total_time);
 		return vizFrame;
 		} 
 		return null;

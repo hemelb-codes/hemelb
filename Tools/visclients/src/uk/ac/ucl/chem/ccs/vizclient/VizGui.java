@@ -47,6 +47,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private int SCALE_X = 1024;
 	private int SCALE_Y = 1024;
 	
+	private long framesThisSec = 0;
+	private long framesLastSec = 0;
+	private long framesPerSec = 0;
+	
+	private double bytesRec = 0.d;
 	
 	private double panel_width;
 	private double panel_height;
@@ -243,7 +248,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	}
 	  
 	  if (ifp != null) {
-		  ifp.updatePanel(vfd.getBufferSize(), vfd.getRealFrameNo(), vfd.getFrameNo(), vfd.getDataRate(), vfd.getFramePerSec());
+		  ifp.updatePanel(vfd.getBufferSize(), vfd.getRealFrameNo(), vfd.getFrameNo());
+		 // System.err.println(vfd.getFramePerSec());
 	  }
 	  
 	 // notificationArea.append("Frame " + vfd.getFrameNo() + "  Buffer size " + vfd.getBufferSize() + "\n");
@@ -446,25 +452,59 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		return ifp;
 	}
 	
+	private class TimerThread extends Thread {
+
+		public TimerThread () {
+			
+		}
+    	public void stopThread () {
+    	
+    	}
+    	
+   	
+    	public void run() {
+    		while(nr.isConnected()) {
+    			try {
+    			Thread.sleep(250);    			
+    			framesPerSec = 4*(framesThisSec - framesLastSec);
+    			framesLastSec = framesThisSec;
+    			ifp.updateFPS(framesPerSec, 4*bytesRec);
+    			bytesRec = 0;
+    			} catch (Exception e) {
+    				
+    			}
+    		}
+    			
+
+    	}
+    
+		
+	}
+	
     private class NetThread extends Thread {
     	
-
+    	TimerThread timeFramesPerSec;
 
 		public NetThread () {
-    
+			timeFramesPerSec = new TimerThread();
     	}
     	
     	public void stopThread () {
     		nr.disconnect();
+    		timeFramesPerSec.stop();
     	}
     	
 
     	
     	public void run() {
+    		timeFramesPerSec.start();
+    		
     		while(nr.isConnected()) {
     			VizFrameData vfd =nr.getFrame();
     			if (vfd != null) {
     			queue.offer(vfd);
+    			framesThisSec=vfd.getFrameNo();
+    			bytesRec = bytesRec + vfd.getBufferSize();
     		}
     		}
     			stopReceive();
@@ -640,14 +680,19 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		
     	}
     
-    	public void updatePanel (int fSize, long fNo, long fRecNo, double dRate, double frameSec) {
+    	public void updateFPS (long fps, double bps) {
+    		framePerSec.setText(Long.toString(fps));
+    		DecimalFormat df= new DecimalFormat("#####0.###"); 
+    		dataRate.setText(df.format(bps));
+    	}
+    	
+    	public void updatePanel (int fSize, long fNo, long fRecNo) {
     		frameNo.setText(Long.toString(fNo));
     		frameRecNo.setText(Long.toString(fRecNo));
     		frameSize.setText(Integer.toString(fSize));
     		droppedFrames.setText(Integer.toString(0));
-    		DecimalFormat df= new DecimalFormat("#####0.###"); 
-    		dataRate.setText(df.format(dRate));
-    		framePerSec.setText(df.format(frameSec));
+
+    	
     		viewing.setText(Integer.toString(view));
     	}
     	
