@@ -114,8 +114,8 @@ public class SteeringData {
 
 	public void setZoom_factor(float zoom) {
 		//check bounds
-		if (zoom > 5.0f) {
-			this.zoom_factor = 5.0f;
+		if (zoom > 20.0f) {
+			this.zoom_factor = 20.0f;
 		} else if (zoom < 0.5f) {
 			this.zoom_factor = 0.5f;
 		} else {
