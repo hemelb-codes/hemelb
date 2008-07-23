@@ -243,7 +243,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	}
 	  
 	  if (ifp != null) {
-		  ifp.updatePanel(vfd.getBufferSize(), vfd.getRealFrameNo(), vfd.getFrameNo(), vfd.getDataRate());
+		  ifp.updatePanel(vfd.getBufferSize(), vfd.getRealFrameNo(), vfd.getFrameNo(), vfd.getDataRate(), vfd.getFramePerSec());
 	  }
 	  
 	 // notificationArea.append("Frame " + vfd.getFrameNo() + "  Buffer size " + vfd.getBufferSize() + "\n");
@@ -486,7 +486,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     	private JLabel jLabel3;
     	private JLabel jLabel2;
     	private JLabel jLabel1;
-    	
+    	private JTextField framePerSec;
+    	private JLabel jLabel10;
     	
     	//steered params
     	private JLabel jLabel7;
@@ -574,6 +575,16 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			this.add(viewing, "0, 11");			
 			viewing.setText("");
 		}
+		{
+			framePerSec = new JTextField();
+			this.add(framePerSec, "0, 13");
+		}
+		{
+			jLabel10 = new JLabel();
+			this.add(jLabel10, "0, 12");
+			jLabel10.setText("Frames Per Second");
+			jLabel10.setFont(new java.awt.Font("Dialog",1,12));
+		}
 		
 		{
 			jLabel7 = new JLabel();
@@ -629,13 +640,14 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		
     	}
     
-    	public void updatePanel (int fSize, long fNo, long fRecNo, double dRate) {
+    	public void updatePanel (int fSize, long fNo, long fRecNo, double dRate, double frameSec) {
     		frameNo.setText(Long.toString(fNo));
     		frameRecNo.setText(Long.toString(fRecNo));
     		frameSize.setText(Integer.toString(fSize));
     		droppedFrames.setText(Integer.toString(0));
     		DecimalFormat df= new DecimalFormat("#####0.###"); 
     		dataRate.setText(df.format(dRate));
+    		framePerSec.setText(df.format(frameSec));
     		viewing.setText(Integer.toString(view));
     	}
     	

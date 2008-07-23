@@ -16,6 +16,7 @@ public class VizFrameData {
 	private int bufferSize = 0;
 	private int length = 0;
 	private double dataRate = 0.f;
+	private double framePerSec = 0.f;
 	private int r[][];
 	private int g[][];
 	private int b[][];
@@ -43,6 +44,18 @@ public class VizFrameData {
 
 
 
+	/**
+	 * @return Returns the framePerSec.
+	 */
+	public double getFramePerSec() {
+		return framePerSec;
+	}
+	/**
+	 * @param framePerSec The framePerSec to set.
+	 */
+	public void setFramePerSec(double framePerSec) {
+		this.framePerSec = framePerSec;
+	}
 	public void setDataRate(double dataRate) {
 		this.dataRate = dataRate;
 	}

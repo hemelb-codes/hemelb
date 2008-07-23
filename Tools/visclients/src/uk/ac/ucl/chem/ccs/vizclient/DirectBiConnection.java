@@ -108,6 +108,7 @@ public class DirectBiConnection implements SteeringConnection {
 		vizFrame.setRealFrameNo(0);
 		vizFrame.setFrameNo(frame_no);
 		vizFrame.setBufferSize(frame_size);
+		vizFrame.setFramePerSec(1/total_time);
 		return vizFrame;
 		} 
 		return null;
