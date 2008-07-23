@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.KeyStore;
 import java.util.Properties;
 import uk.ac.ucl.chem.ccs.aheclient.res.AdvancedReservation;
 import uk.ac.ucl.chem.ccs.clinicalgui.res.ResPanel; 
@@ -183,7 +184,41 @@ public class ClinicalGuiClient extends SingleFrameApplication {
 	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.mpcheck", "false");
 	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.mpwarn", "false");
 	    }
+	    
+	    //unlock
+		String passwd = null;
+		passwd = prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.passwd");
+	    if (!checkKeystore(passwd)) {
+	    	System.err.println("Can't open keystore");
+	    }
+	    
     }
+    
+    //check the keystore can be opened.
+	private static boolean checkKeystore (String passwd) {
+		String keystoreloc = prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.keystore");
+		FileInputStream kis;
+		//try to load keystore
+		try {	
+			kis = new FileInputStream(keystoreloc);
+		} catch (Exception e) {
+			System.err.println("Couldn't open keystore " + keystoreloc);
+			return false;
+		}
+		//check password against keystore
+		try {
+			KeyStore ks = KeyStore.getInstance("JKS");
+			ks.load(kis, passwd.toCharArray());
+			System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+			System.setProperty("javax.net.ssl.trustStorePassword",passwd);
+			System.setProperty("javax.net.ssl.keyStore", keystoreloc);
+			System.setProperty("javax.net.ssl.trustStore", keystoreloc);
+			return true;
+		} catch (Exception e) {
+			System.err.println("Password incorrect");
+			return false;
+		}
+	}
     
 	private void closeApp() {
 		System.exit(0);
