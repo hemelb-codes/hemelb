@@ -7,8 +7,8 @@
 	<classpathentry kind="lib" path="lib/harc-client-api-1.9.5.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-httpclient-3.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/AHE_GUI.jar"/>
 	<classpathentry kind="lib" path="lib/axis.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/AHE_GUI.jar"/>
 	<classpathentry kind="lib" path="lib/backport-util-concurrent.jar"/>
 	<classpathentry kind="lib" path="lib/bouncycastle-jce-jdk13-119.jar"/>
 	<classpathentry kind="lib" path="lib/cog-jglobus-1.2-050621.jar"/>

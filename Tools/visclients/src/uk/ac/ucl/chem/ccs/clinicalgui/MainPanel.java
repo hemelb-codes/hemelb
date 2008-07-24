@@ -30,8 +30,9 @@ public class MainPanel extends javax.swing.JPanel {
 	private JTabbedPane jTabbedPane1;
 	private ResPanel reservationPanel1;
 	private ModelGenerationPanel modelGenerationPanel1;
-	private SimulationMonitoringPanel simulationMonitoringPanel1;
+	//private SimulationMonitoringPanel simulationMonitoringPanel1;
 	private SimulationLaunchPanel simulationLaunchPanel1;
+	private DisplayJobPanel djp;
 	private int guiStage = 0;
 
 	/**
@@ -83,9 +84,11 @@ public class MainPanel extends javax.swing.JPanel {
 				modelGenerationPanel1.setParentPanel(this);
 				reservationPanel1.setSimPanel(simulationLaunchPanel1);
 				{
-					simulationMonitoringPanel1 = new SimulationMonitoringPanel();
-					jTabbedPane1.addTab("Simulation Monitoring", null, simulationMonitoringPanel1, null);
+					//simulationMonitoringPanel1 = new SimulationMonitoringPanel();
+					djp = new DisplayJobPanel(null);
+					jTabbedPane1.addTab("Simulation Monitoring", null, djp, null);
 				}
+				simulationLaunchPanel1.setCompanionPanel(djp);
 				jTabbedPane1.addChangeListener(new ChangeListener() {
 					public void stateChanged(ChangeEvent e) {
 						guiStage = jTabbedPane1.getSelectedIndex();
