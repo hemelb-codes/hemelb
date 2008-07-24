@@ -23,6 +23,15 @@ public class GridServerInterface {
 	private static String HOST = "bunsen.chem.ucl.ac.uk";
 	private static String ROOT = "/home/konstantin/models";
 	public static String topString = "Available hemelb input";
+	private static String PARAMS_PATH = "/home/konstantin/rt_pars.asc";
+	
+	public static String getParamsPath(){
+		return HOST + ":" + PARAMS_PATH;
+	}
+	
+	public static String getRootPath(){
+		return HOST + ":" + ROOT;
+	}
 	
 	public static void uploadFiles(String path1, String path2, String path3, String patientId, String studyId, String seriesId, String dateTime) throws Exception{
 	//uploads the three files associated with a particular model (two output files of seg tool plus one note file) to the grid ftp server

@@ -34,7 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
 import java.util.Vector;
-
+import uk.ac.ucl.chem.ccs.aheclient.res.AdvancedReservation;
 import uk.ac.ucl.chem.ccs.aheclient.wsrf.PrepareCall;
 import uk.ac.ucl.chem.ccs.aheclient.wsrf.StartCall;
 //import uk.ac.ucl.chem.ccs.aheclient.confparser.AHEConfParser;
@@ -57,14 +57,23 @@ public class VLLaunch {
         private PrepareCall pc = null;
         private PrepareResponse pr = null;
         private JobRegistryElement jre;
+        private String rtParsPath;
+        private String parsPath;
+        private String configPath;
         //private AHEJobObject ajo = null;
     
        
         /**
          * Initialize
          */
-        public VLLaunch () {
-               System.setProperty("ahe.java.version", "1.6");
+        public VLLaunch (String s1, String s2, String s3) {
+        	   System.out.println(s1);
+        	   System.out.println(s2);
+        	   System.out.println(s3);
+        	   rtParsPath = s1;
+        	   parsPath = s2;
+        	   configPath = s3;
+               System.setProperty("ahe.java.version", "1.5");
         }
        
         /**
@@ -75,8 +84,9 @@ public class VLLaunch {
          * @param app
          * @return PrepareResponse
          */
-        public PrepareResponse prepare (int rmCPUCount, String simulationName, String app) {
-
+        public PrepareResponse prepare (String simulationName) {
+        		String app = "hemelb";
+        		int rmCPUCount = 1;
                 //Note, most of the parameters to this call are used for resource matching and aren't needed, hence the empty strings
                 //Only call once
                 if (pr == null) {
@@ -121,7 +131,8 @@ public class VLLaunch {
          * @param rmCPUCount
          * @return
          */
-        public AHEJobObject start (String app, String rm, int rmCPUCount) {
+        public AHEJobObject start (String rm, int rmCPUCount, AdvancedReservation ad) {
+        		String app = "hemelb";
                
                 AHEJobObject ajo = null;
                
@@ -149,18 +160,20 @@ public class VLLaunch {
                
                //set input files 
                 
-                inFiles.add(new JobFileElement ("data-file", "name", "local path", "remote path"));
+                inFiles.add(new JobFileElement ("par1", "rtPars", "foo", rtParsPath));
+                inFiles.add(new JobFileElement ("par2", "pars", "foo", parsPath));
+                inFiles.add(new JobFileElement ("par3", "config", "foo", configPath));
                 //gsiftp://bunsen.chem.ucl.ac.uk/tmp/...
                 
-
+                outFiles.add(new JobFileElement ("file1", "file1", "file1", "file1"));
   ///
 
                 //set up AJO with job details
                 ajo  = new AHEJobObject(app, resourceID, jre.getMemberServiceEPR(), inFiles,
-                                outFiles, rm, "", rmCPUCount);               
+                                outFiles, rm, "pars.asc", rmCPUCount);               
                 ajo.setAppServiceGroup(jre.getServiceGroupEntryEPR());
                 ajo.setSimName(jre.getComponentTaskDescription());
-               
+               ajo.setAdvancedReservation(ad);
                 //make call
                 StartCall sc = new StartCall(ajo,
                                 myproxylifetime,
@@ -176,48 +189,10 @@ public class VLLaunch {
                 return ajo;
         }
        
-        /**
-         * Launch an application. This does both the prepare and start operations
-         *
-         * @param app - application name
-         * @param jobName - job name
-         * @param procCount - number of processors to request
-         * @param machineName - name of machine to use
-         * @param confFile - full path to job configuration file
-         * @return
-         */
-        public AHEJobObject launch (String app, String jobName, int procCount, String machineName) {
-                //make prepare call
-                prepare(procCount, jobName, app);
-               
-                AHEJobObject ajo = null;
-               
-                //if job prepares ok, print out machine details
-                if (pr != null) {
-                        ajo = start(app, machineName, procCount);
-                        }
-                       
-                return ajo;
-               
-                }
+  
 
 
-       
-       
-        public AHEJobObject submit(String app, String jobName, int procCount, String machineName){
-                AHEJobObject job = this.launch(app, jobName, procCount, machineName);
-               
-                if (job != null) {
-                        cat.info(job.toString());
-                        Vector vec = job.getGridSAMOutput();
-                        Iterator it = vec.iterator ();
-                        while (it.hasNext ()) {
-                                GridSAMStateInfo je = (GridSAMStateInfo)it.next();
-                                cat.info(je);
-                        }
-                }
-                return job;
-        }
+     
                    
         }
 
