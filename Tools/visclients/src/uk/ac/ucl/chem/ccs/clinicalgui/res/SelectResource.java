@@ -1,5 +1,8 @@
 package uk.ac.ucl.chem.ccs.clinicalgui.res;
 import uk.ac.ucl.chem.ccs.aheclient.res.*;
+import uk.ac.ucl.chem.ccs.aheclient.util.AHEJobObject;
+import uk.ac.ucl.chem.ccs.aheclient.util.PrepareResponse;
+import uk.ac.ucl.chem.ccs.aheclient.util.ResourceElement;
 import uk.ac.ucl.chem.ccs.clinicalgui.*;
 import info.clearthought.layout.TableLayout;
 import java.awt.BorderLayout;
@@ -48,6 +51,10 @@ public class SelectResource extends javax.swing.JDialog {
 	private JButton finishButton;
 	private JTable resourceTable;
 	private JScrollPane jScrollPane1;
+	private VLLaunch v;
+	String patientId;
+	String dateTime;
+	DisplayJobPanel djp;
 
 	/**
 	* Auto-generated main method to display this JFrame
@@ -64,16 +71,21 @@ public class SelectResource extends javax.swing.JDialog {
 		initGUI();
 		}
 	
-	public SelectResource(Container parent) {
+	public SelectResource(Container parent,String patientId, String studyId, String seriesId, String dateTime, DisplayJobPanel djp) {
 		super();
+		this.djp = djp;
+		this.patientId = patientId;
+		this.dateTime = dateTime;
+		v = new VLLaunch(GridServerInterface.getParamsPath(), GridServerInterface.getRootPath() + "/" + patientId + "/" + studyId + "/" + seriesId + "/" + dateTime + "/pars.asc",
+				GridServerInterface.getRootPath() + "/" + patientId + "/" + studyId + "/" + seriesId + "/" + dateTime + "/config.dat");
 		initGUI();
 		this.setLocationRelativeTo(parent);
 		}	
 	
-	public AdvancedReservation showDialog() {
+	public void showDialog() {
 		this.setModal(true);
 		this.setVisible(true);
-		return new AdvancedReservation();
+		//return new AdvancedReservation();
 	}
 	
 	private void initGUI() {
@@ -124,10 +136,11 @@ public class SelectResource extends javax.swing.JDialog {
 								} catch (Exception e) {
 									//foo
 								}
-								Vector allComp = Resource
-									.getKnownResourcesOfType(SimpleComputeResource.class);
-					
-
+								//Vector allComp = Resource
+									//.getKnownResourcesOfType(SimpleComputeResource.class);
+								PrepareResponse pr = v.prepare(patientId + "|" + dateTime);
+								Vector allComp = pr.getResources();
+						
 								Object[][] rms = new Object[allComp.size()][4];
 								int x = 0;
 
@@ -135,8 +148,7 @@ public class SelectResource extends javax.swing.JDialog {
 								Iterator it = allComp.iterator();
 								while (it.hasNext()) {
 									rms[x][0] = new Boolean(false);
-									rms[x][1] = ((SimpleComputeResource) it
-										.next()).name();
+									rms[x][1] = ((ResourceElement) it.next()).getCommonName();
 									rms[x][2] = "Compute";
 									rms[x][3] = new Integer(0);
 									x++;
@@ -171,25 +183,27 @@ public class SelectResource extends javax.swing.JDialog {
 
 	private void finish() {
 		
-		//parse table selections
-		Hashtable rms = new Hashtable();
-
+		String resource = null;
+		int proc = -1;
 		
 		for (int k=0; k < resourceTable.getRowCount(); k++) {
 			Boolean bool = (Boolean)resourceTable.getValueAt(k, 0);
 			if (bool.booleanValue() == true) {
-				String resource = (String)resourceTable.getValueAt(k, 1);
-				int proc = ((Integer)resourceTable.getValueAt(k, 3)).intValue();
+				resource = (String)resourceTable.getValueAt(k, 1);
+				proc = ((Integer)resourceTable.getValueAt(k, 3)).intValue();
 				if (proc < 1) {
 					ErrorMessage ems = new ErrorMessage(this, "Processor count must be > 0");
 					return;
 				}
-				
-				ReservationElement re = new ReservationElement(resource,
-						proc);
-				rms.put(resource, re);				
+				break;			
 			}
 		}
+		if(resource == null){
+			ErrorMessage ems = new ErrorMessage(this, "You need to select a resource");
+			return;
+		}
+		djp.setJobObject(v.start(resource,proc, null));
+		System.out.println("reset the simulation monitoring panel");
 		cleanup();
 	}
 	

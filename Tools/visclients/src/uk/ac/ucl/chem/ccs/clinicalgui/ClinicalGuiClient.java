@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.KeyStore;
+import java.security.KeyStore; 
 import java.util.Properties;
 import uk.ac.ucl.chem.ccs.aheclient.res.AdvancedReservation;
 import uk.ac.ucl.chem.ccs.clinicalgui.res.ResPanel; 

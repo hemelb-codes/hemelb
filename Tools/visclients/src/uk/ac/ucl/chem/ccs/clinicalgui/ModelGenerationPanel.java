@@ -47,7 +47,9 @@ import org.dcm4che2.io.DicomInputStream;
  */
 public class ModelGenerationPanel extends javax.swing.JPanel {
 	private JScrollPane treeView;
-	//contains the tree object representing DICOM data available on server
+	//scrollabe window containing the DICOM data tree
+	private JTree tree;
+	//the tree object representing DICOM data available on server
 	private JPanel attributePanel;
 	//panel containing l1,l2,...,l18 labels
 	private JLabel infoLabel;
@@ -114,6 +116,7 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 		LaunchGraphClientButton.setEnabled(false);
 		NextButton.setEnabled(false);
 		parentPanel.disableTabPane();
+		tree.setEnabled(false);
 		System.out.println("disabled gui");
 	}
 	
@@ -126,6 +129,7 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 		}
 		NextButton.setEnabled(true);
 		parentPanel.enableTabPane();
+		tree.setEnabled(true);
 		System.out.println("enabled gui");
 	}
 	
@@ -200,7 +204,7 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 					 NoteDialog nt = new NoteDialog((JFrame) ModelGenerationPanel.this.getTopLevelAncestor());
 				     nt.setModal(true);
 					 nt.setVisible(true);
-					 //when NoteDialog is done modelNote contains the note entered by user
+					 //when NoteDialog is done modelNote is note entered by user
 					 ModelGenerationPanel.this.updateInfo("Uploading segmentation tool output to the grid");
 					 try{
 						 	BufferedWriter writer = new BufferedWriter(new FileWriter(("/tmp/notes.txt")));
@@ -294,7 +298,7 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 				attributePanel.add(l17,"1,7,2,7");
 				attributePanel.add(l18,"1,8,2,8");
 				
-				JTree tree = DicomServerInterface.populateServerData();
+				tree = DicomServerInterface.populateServerData();
 				treeView = new JScrollPane(tree);
 				this.add(treeView, "0, 0, 1, 3");
 				
