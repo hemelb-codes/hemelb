@@ -63,9 +63,15 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 	private JEditorPane noteLabel;
 	//displays the 
 	private JButton LaunchHemelbButton;
+	//button to launch hemelb (on model selected in the tree)
 	public JButton PrevButton;
+	//go back to prev panel
 	public JButton NextButton;
+	//go forward to next panel
 	private JPanel reservationInfoPanel;
+	//panel which contains reservation info (if a reservation is selected in ResPanel
+	//*****
+	//components of reservationPanel:
 	private JLabel resHeader;
 	private JLabel resName;
 	private JLabel resStart;
@@ -74,14 +80,23 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 	private JLabel m2;
 	private JLabel m3;
 	private JLabel m4;
+	//********
 	private String selectedPath;
+	//the selected path in the model tree
 	private JPanel reservationTypePanel;
+	//lets the user select between reservation types (have reservation, don't have reservation, SPRUCE)
+	//****
+	//components of reservationTypePanel:
 	private JLabel resTypeHeader;
 	private JRadioButton b1;
 	private JRadioButton b2;
 	private JRadioButton b3;
 	private ButtonGroup bGroup;
+	//*************
 	private DisplayJobPanel companionPanel;
+	//the next panel (simulation monitoring tab: DisplayJobPanel)
+	private MainPanel parentPanel;
+	//the parent panel (needed to advance to next panel when HemeLB is launched)
 
 
 	/**
@@ -99,6 +114,10 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 	public SimulationLaunchPanel() {
 		super();
 		initGUI(null);
+	}
+	
+	public void setParentPanel(MainPanel p){
+		parentPanel = p;
 	}
 	
 	public void setCompanionPanel(DisplayJobPanel djp){
@@ -277,13 +296,13 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 								GridServerInterface.getRootPath() + "/" + data[1].trim() + "/" + data[2].trim() + "/" + data[3].trim() + "/" + data[4].trim() + "/config.dat");
 								l.prepare(data[1].trim() + "|" + data[4].trim());
 								companionPanel.setJobObject(l.start("", 0, ClinicalGuiClient.reservation));
+								parentPanel.advance();
 							}
 						}
 						if(b2.isSelected()){
 							SelectResource sr = new SelectResource(SimulationLaunchPanel.this.getTopLevelAncestor(),data[1].trim(),data[2].trim(),data[3].trim(),data[4].trim(),companionPanel);
-							//sr.setModal(true);
-							//sr.setVisible(true);
 							sr.showDialog();
+							parentPanel.advance();
 						}
 						else if(b3.isSelected()){
 							updateInfo("Spruce refers to trees of the genus Picea, a genus of about 35 " +

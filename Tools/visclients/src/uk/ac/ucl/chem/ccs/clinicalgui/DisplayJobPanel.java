@@ -49,6 +49,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.JFileChooser;
 import javax.swing.Timer;
 import javax.swing.border.LineBorder;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -77,6 +78,8 @@ import uk.ac.ucl.chem.ccs.aheclient.util.AHEJobObject;
 import uk.ac.ucl.chem.ccs.aheclient.wsrf.MonitorSimCall;
 import uk.ac.ucl.chem.ccs.aheclient.wsrf.StartCall;
 import uk.ac.ucl.chem.ccs.aheclient.wsrf.TerminateSimCall;
+import uk.ac.ucl.chem.ccs.vizclient.VizSteererWindow;
+
 import java.awt.GraphicsEnvironment;
 
 
@@ -128,7 +131,7 @@ public class DisplayJobPanel extends javax.swing.JPanel {
         private JPanel jPanel3;
         private JScrollPane jobDetailsSP;
         private JCheckBox deleteFiles;
-        private JButton destroyJob;
+        private JButton vizButton;
         private JButton teminateJob;
         private JButton updateStatus;
         private JButton pollingButton;
@@ -465,7 +468,23 @@ public class DisplayJobPanel extends javax.swing.JPanel {
                                                         }
                                                 });
                                         }
-                                    
+                                        {
+                                        		vizButton = new JButton();
+                                        			 controls.add(vizButton, "0, 2");
+                                                     vizButton.setText("Visualize");
+                                                     
+                                                     vizButton.addActionListener(new ActionListener() {
+                                                         public void actionPerformed (ActionEvent evt) {
+                                                        		String h = "localhost";
+                                                        		int p = 65250;
+                                                        		int w = 1024*1024;
+                                                        		
+                                                        		VizSteererWindow vs = new VizSteererWindow(h,p,w, (JFrame) DisplayJobPanel.this.getTopLevelAncestor());
+                                                         }
+                                                     });
+                                        }
+                                
+                                        
                                         {
                                                 deleteFiles = new JCheckBox();
                                                 controls.add(deleteFiles, "0, 3");

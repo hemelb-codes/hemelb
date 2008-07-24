@@ -89,6 +89,7 @@ public class MainPanel extends javax.swing.JPanel {
 					jTabbedPane1.addTab("Simulation Monitoring", null, djp, null);
 				}
 				simulationLaunchPanel1.setCompanionPanel(djp);
+				simulationLaunchPanel1.setParentPanel(this);
 				jTabbedPane1.addChangeListener(new ChangeListener() {
 					public void stateChanged(ChangeEvent e) {
 						guiStage = jTabbedPane1.getSelectedIndex();
