@@ -38,6 +38,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private String hostname;
 	private int port, window;
     private NetThread thread=null; 
+    private TimerThread timeFramesPerSec;
 	private Animator animator = null;
     private boolean connected = false;
 	private ConcurrentLinkedQueue queue;
@@ -102,10 +103,17 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 		thread = new NetThread();
 	    thread.start();
-
+	    
+	    //start the timing thread
+	  //  timeFramesPerSec = new TimerThread();
+	   // timeFramesPerSec.start();
+	    
 		//start the animator thread
 		animator = new Animator(canvas1);
 		animator.start();
+		ifp.updateSteeredParams();
+		ifp.viewChanged();
+		send();
 		}
 		return connected;
 	}
@@ -216,7 +224,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		      				vfd.getG(i, VIEW1) * (1.0f / 255.0f),
 							vfd.getB(i, VIEW1) * (1.0f / 255.0f));
 		      
-		  gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i) + (SCALE_X/2.0f)),-0.5f + scale_y * vfd.getY(i));
+		  gl.glVertex2f (-0.5f + scale_x * vfd.getX(i),-0.5f + scale_y * (vfd.getY(i)+ (SCALE_Y/2.0f)));
 		  
 		  
 		//image 2
@@ -224,14 +232,14 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	      				vfd.getG(i, VIEW2) * (1.0f / 255.0f),
 						vfd.getB(i, VIEW2) * (1.0f / 255.0f));
 	      
-	  gl.glVertex2f (-0.5f + scale_x * vfd.getX(i),-0.5f + scale_y * (vfd.getY(i) + (SCALE_Y/2.0f)));
+	  gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i)+ (SCALE_X/2.0f)),-0.5f + scale_y * (vfd.getY(i) + (SCALE_Y/2.0f)));
 	  
 	//image 3
       gl.glColor3f (vfd.getR(i, VIEW3) * (1.0f / 255.0f),
       				vfd.getG(i, VIEW3) * (1.0f / 255.0f),
 					vfd.getB(i, VIEW3) * (1.0f / 255.0f));
       
-      gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i) + (SCALE_X/2.0f)),-0.5f + scale_y * (vfd.getY(i) + (SCALE_Y/2.0f)));
+      gl.glVertex2f (-0.5f + scale_x * vfd.getX(i) ,-0.5f + scale_y * vfd.getY(i));
   
   
   	//image 4
@@ -239,7 +247,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
   				vfd.getG(i, VIEW4) * (1.0f / 255.0f),
 				vfd.getB(i, VIEW4) * (1.0f / 255.0f));
   
-  	gl.glVertex2f (-0.5f + scale_x * vfd.getX(i),-0.5f + scale_y * vfd.getY(i));
+  	gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i)+ (SCALE_X/2.0f)),-0.5f + scale_y * vfd.getY(i));
 
 
 		    
@@ -272,6 +280,10 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							TableLayout.FILL, TableLayout.FILL,
 							TableLayout.FILL, TableLayout.FILL,
 							TableLayout.FILL, TableLayout.FILL,
+							TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL,
+							TableLayout.FILL, TableLayout.FILL,
+							TableLayout.FILL, TableLayout.FILL,
+							TableLayout.FILL, TableLayout.FILL,
 							TableLayout.FILL } });
 			this.setLayout(thisLayout);
 			thisLayout.setHGap(5);
@@ -280,7 +292,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				cap = new GLCapabilities(); 
 				canvas1 = new GLCanvas(cap);
-				this.add(canvas1, "0, 1, 0, 9");
+				this.add(canvas1, "0, 3, 0, 19");
 				canvas1.addGLEventListener(this);
 			
 				
@@ -301,30 +313,24 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 						view = VIEW1;
 						scale_x = 1.0f / (float)scale;
 						scale_y = 1.0f / (float)scale;	
-					}
-					if (e.getKeyChar() == '2') {
+					} else if (e.getKeyChar() == '2') {
 						view = VIEW2;
 						scale_x = 1.0f / (float)scale;
 						scale_y = 1.0f / (float)scale;	
-					}
-					if (e.getKeyChar() == '3') {
+					} else if (e.getKeyChar() == '3') {
 						view = VIEW3;
 						scale_x = 1.0f / (float)scale;
 						scale_y = 1.0f / (float)scale;	
-					}
-					if (e.getKeyChar() == '4') {
+					} else if (e.getKeyChar() == '4') {
 						view = VIEW4;
 						scale_x = 1.0f / (float)scale;
 						scale_y = 1.0f / (float)scale;	
-					}
-					if (e.getKeyChar() == '5') {
+					} else if (e.getKeyChar() == '5') {
 						view = VIEWALL;
 
 						scale_x = 1.0f / (float)SCALE_X;
 						scale_y = 1.0f / (float)SCALE_Y;
-					}
-					
-					if (e.getKeyChar() == 'b') {
+					} else	if (e.getKeyChar() == 'b') {
 						
 						if (scale > 256) {
 							scale = scale/2;
@@ -332,16 +338,14 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							scale_y = 1.0f / (float)scale;	
 						}
 						
-					}
-					
-					if (e.getKeyChar() == 's') {
+					} else if (e.getKeyChar() == 's') {
 						if (scale < 1024) {
 							scale = scale*2;
 							scale_x = 1.0f / (float)scale;
 							scale_y = 1.0f / (float)scale;	
 						}					}
-					
-					System.err.println("View " + view);
+					ifp.viewChanged();
+					//System.err.println("View " + view);
 				}
 				
 				
@@ -392,8 +396,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							panel_width = canvas1.getWidth();
 							panel_height = canvas1.getHeight();
 							
-							sd.setCtr_x((float)(dx/panel_width));
-							sd.setCtr_y((float)(dy/panel_height));
+							sd.setCtr_x(100*(float)(dx/panel_width));
+							sd.setCtr_y(100*(float)(dy/panel_height));
 							
 							System.err.println("Ctr x = " + sd.getCtr_x() + " crt y = " + sd.getCtr_y());
 							send();
@@ -417,7 +421,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			}	
 			{
 				jScrollPane1 = new JScrollPane();
-				this.add(jScrollPane1, "0, 0, 0, 0");
+				this.add(jScrollPane1, "0, 0, 0, 2");
 				jScrollPane1.setAutoscrolls(true);
 				{
 					notificationArea = new JTextArea();
@@ -434,6 +438,13 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public void resetSteering () {
+		sd = new SteeringData();
+		send();
+		ifp.updateSteeredParams();
+		view = VIEW1;
 	}
 	
 	private void send() {
@@ -454,13 +465,16 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	
 	private class TimerThread extends Thread {
 
+		private boolean shouldirun = true;
+		
 		public TimerThread () {
-			
+			shouldirun = true;
+
 		}
+   
     	public void stopThread () {
-    	
-    	}
-    	
+    		//private boolean shouldirun = true;
+    	} 	
    	
     	public void run() {
     		while(nr.isConnected()) {
@@ -486,7 +500,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     	TimerThread timeFramesPerSec;
 
 		public NetThread () {
-			timeFramesPerSec = new TimerThread();
+			
     	}
     	
     	public void stopThread () {
@@ -497,7 +511,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
     	
     	public void run() {
-    		timeFramesPerSec.start();
+    		//timeFramesPerSec.start();
     		
     		while(nr.isConnected()) {
     			VizFrameData vfd =nr.getFrame();
@@ -566,13 +580,13 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		{
 			jLabel3 = new JLabel();
 			this.add(jLabel3, "0, 4");
-			jLabel3.setText("Frame Size");
+			jLabel3.setText("Frame Size (bits)");
 			jLabel3.setFont(new java.awt.Font("Dialog",1,12));
 		}
 		{
 			jLabel4 = new JLabel();
 			this.add(jLabel4, "0, 8");
-			jLabel4.setText("Data Rate");
+			jLabel4.setText("Data Rate (Kbits/sec)");
 			jLabel4.setFont(new java.awt.Font("Dialog",1,12));
 		}
 		{
@@ -635,33 +649,33 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		{
 			vizBrightness = new JTextField();
 			this.add(vizBrightness, "0, 16");
-			vizBrightness.setText(Float.toString(sd.getVis_brightness()));
+			//vizBrightness.setText(Float.toString(sd.getVis_brightness()));
 		}
 		{
 			jLabel8 = new JLabel();
 			this.add(jLabel8, "0, 17");
-			jLabel8.setText("Velocity Max");
+			jLabel8.setText("Velocity Max (m/s)");
 			jLabel8.setFont(new java.awt.Font("Dialog",1,12));
 		}
 		{
 			velMax = new JTextField();
 			this.add(velMax, "0, 18");
-			velMax.setText(Float.toString(sd.getVelocity_max()));
+			//velMax.setText(Float.toString(sd.getVelocity_max()));
 		}
 		{
 			jLabel9 = new JLabel();
 			this.add(jLabel9, "0, 19");
-			jLabel9.setText("Stress Max");
+			jLabel9.setText("Stress Max (pascals)");
 			jLabel9.setFont(new java.awt.Font("Dialog",1,12));
 		}
 		{
 			stressMax = new JTextField();
 			this.add(stressMax, "0, 20");
-			stressMax.setText(Float.toString(sd.getStress_max()));
+			//stressMax.setText(Float.toString(sd.getStress_max()));
 		}
 		{
 			updateParams = new JButton("Update");
-			this.add(updateParams, "0, 21");
+			this.add(updateParams, "0, 22");
 			updateParams.addActionListener(new ActionListener () {
 				public void actionPerformed(ActionEvent evt) {
 				
@@ -680,10 +694,37 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		
     	}
     
+    	public void updateSteeredParams() {
+    		stressMax.setText(Float.toString(sd.getStress_max()));
+    		velMax.setText(Float.toString(sd.getVelocity_max()));
+    		vizBrightness.setText(Float.toString(sd.getVis_brightness()));
+    	}
+    	
     	public void updateFPS (long fps, double bps) {
     		framePerSec.setText(Long.toString(fps));
     		DecimalFormat df= new DecimalFormat("#####0.###"); 
     		dataRate.setText(df.format(bps));
+    	}
+    	
+    	public void viewChanged () {
+    		switch (view) {
+    			case 0:
+    				viewing.setText("External Pressure");
+    				break;	
+   				case 1:
+   					viewing.setText("Volume Rendering Velocity");
+    				break;
+    			case 2:
+    				viewing.setText("External Stress");
+    				break;
+    			case 3:
+    				viewing.setText("Volume Rendering Stress");
+    				break;
+    			case 4:
+    				viewing.setText("All Views");
+    				break;
+    		}
+    		
     	}
     	
     	public void updatePanel (int fSize, long fNo, long fRecNo) {
@@ -693,7 +734,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     		droppedFrames.setText(Integer.toString(0));
 
     	
-    		viewing.setText(Integer.toString(view));
+
     	}
     	
     }
