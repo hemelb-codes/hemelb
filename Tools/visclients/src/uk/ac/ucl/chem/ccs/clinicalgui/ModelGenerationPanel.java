@@ -85,6 +85,17 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 	//true if DICOM data has been downloaded
     //*****
 	
+	private String SEG_TOOL_PATH =  "/home/konstantin/Desktop/SegTool/st";
+	//path to seg tool
+	private String CONFIG_FILE_PATH = "/tmp/OutputConfig.dat";
+	//path to output file of seg tool (used as input to hemelb)
+	private String PARS_FILE_PATH = "/tmp/OutputPars.asc";
+	//path of output file of seg tool (used as input to hemelb)
+	private String CHECKPOINT_FILE_PATH = "/tmp/CheckPoint.dat";
+	//path of output file of seg tool
+	private String NOTE_FILE_PATH = "/tmp/notes.txt";
+	//path to file containing note entered by user
+	
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(new ModelGenerationPanel());
@@ -192,7 +203,7 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 			new Thread(){
 				public void run() {
 					try{
-						String cmd = "/home/konstantin/Desktop/SegTool/st /tmp/SlicesFile.txt /tmp/OutputConfig.dat /tmp/OutputPars.asc /tmp/CheckPoint.dat 1.0 1.0 1";
+						String cmd = SEG_TOOL_PATH + " " + DicomServerInterface.SLICES_FILE_PATH + " " + CONFIG_FILE_PATH + " " +  PARS_FILE_PATH + " " + CHECKPOINT_FILE_PATH + " 1.0 1.0 1";
 					 	Process p = Runtime.getRuntime().exec(cmd);
 					    p.waitFor();
 					 }
@@ -207,12 +218,12 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 					 //when NoteDialog is done modelNote is note entered by user
 					 ModelGenerationPanel.this.updateInfo("Uploading segmentation tool output to the grid");
 					 try{
-						 	BufferedWriter writer = new BufferedWriter(new FileWriter(("/tmp/notes.txt")));
+						 	BufferedWriter writer = new BufferedWriter(new FileWriter((NOTE_FILE_PATH)));
 						 	writer.write(modelNote);
 						 	writer.newLine();
 						 	writer.close();
 						 	String dateTime = new java.text.SimpleDateFormat("MM_dd_yyyy_HH_mm_ss").format(new java.util.Date());
-						    GridServerInterface.uploadFiles("/tmp/OutputConfig.dat", "/tmp/OutputPars.asc", "/tmp/notes.txt", patientId, studyId, seriesId, dateTime);
+						    GridServerInterface.uploadFiles(CONFIG_FILE_PATH, PARS_FILE_PATH, NOTE_FILE_PATH, patientId, studyId, seriesId, dateTime);
 						    String[] selectedPath = new String[4];
 						    selectedPath[0] = patientId;
 						    selectedPath[1] = studyId;
@@ -380,7 +391,7 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 				ViewDicomDataButton.setEnabled(false);
 				ViewDicomDataButton.addActionListener(new ActionListener() {
 					public void actionPerformed (ActionEvent evt){
-							new ImagePlus("slices",dicomImageStack).show();
+							new ImagePlus("Image Slices",dicomImageStack).show();
 							 
 					}
 				});
