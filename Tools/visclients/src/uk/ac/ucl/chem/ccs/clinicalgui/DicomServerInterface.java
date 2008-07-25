@@ -243,6 +243,7 @@ public class DicomServerInterface {
 		writer.write(width + "\t" + height);
 		writer.newLine();
 		ImageStack s = new ImageStack(width,height);
+		int counter = 1;
 		for(String filename : filenames){
 			System.out.println(filename);
 			d = new DICOM(new FileInputStream(TEMP_DIRECTORY + "/" + filename));
@@ -256,7 +257,7 @@ public class DicomServerInterface {
 						writer.write("\t");
 				}
 			}
-			s.addSlice("blah", d.getProcessor());
+			s.addSlice("slice" + Integer.toString(counter++), d.getProcessor());
 			writer.newLine();
 		}
 		writer.close();
