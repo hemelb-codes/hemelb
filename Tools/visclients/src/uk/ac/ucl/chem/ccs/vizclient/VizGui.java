@@ -39,6 +39,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private int port, window;
     private NetThread thread=null; 
     private TimerThread timeFramesPerSec;
+    private RotateThread rotateModel;
 	private Animator animator = null;
     private boolean connected = false;
 	private ConcurrentLinkedQueue queue;
@@ -105,8 +106,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	    thread.start();
 	    
 	    //start the timing thread
-	  //  timeFramesPerSec = new TimerThread();
-	   // timeFramesPerSec.start();
+	    // timeFramesPerSec = new TimerThread();
+	    // timeFramesPerSec.start();
+	   
 	    
 		//start the animator thread
 		animator = new Animator(canvas1);
@@ -440,6 +442,16 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		}
 	}
 	
+	public void rotate (boolean rot) {
+		if (rot) {
+			//System.out.println("rotate");
+			rotateModel = new RotateThread();
+			rotateModel.start();
+		} else {
+			rotateModel.stopThread();
+		}
+	}
+	
 	public void resetSteering () {
 		sd = new SteeringData();
 		send();
@@ -463,27 +475,58 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		return ifp;
 	}
 	
-	private class TimerThread extends Thread {
-
-		private boolean shouldirun = true;
-		
-		public TimerThread () {
-			shouldirun = true;
-
+	//thread to rotate the model
+	private class RotateThread extends Thread {
+		boolean run;
+		public RotateThread () {
+			run=true;
 		}
    
+		
     	public void stopThread () {
     		//private boolean shouldirun = true;
+    		run=false;
+    	} 	
+   	
+    	public void run() {
+    		while(nr.isConnected() && run==true) {
+    			try {
+    			Thread.sleep(250);    			
+    			sd.updateLongitude(0.5f);
+    			send();
+    			
+    			} catch (Exception e) {
+    				
+    			}
+    		}
+    			
+
+    	}
+	}
+	
+	//thread to time fps etc
+	private class TimerThread extends Thread {
+		private boolean run;
+		
+		public TimerThread () {
+			run=true;
+		}
+   
+		
+    	public void stopThread () {
+    		//private boolean shouldirun = true;
+    		run=false;
     	} 	
    	
     	public void run() {
     		while(nr.isConnected()) {
     			try {
-    			Thread.sleep(250);    			
-    			framesPerSec = 4*(framesThisSec - framesLastSec);
+    			Thread.sleep(1000);    			
+    			framesPerSec = (framesThisSec - framesLastSec);
     			framesLastSec = framesThisSec;
-    			ifp.updateFPS(framesPerSec, 4*bytesRec);
+    			ifp.updateFPS(framesPerSec, bytesRec);
     			bytesRec = 0;
+   			
     			} catch (Exception e) {
     				
     			}
@@ -495,9 +538,10 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		
 	}
 	
+	//thread to do the network receive
     private class NetThread extends Thread {
     	
-    	TimerThread timeFramesPerSec;
+    	//TimerThread timeFramesPerSec;
 
 		public NetThread () {
 			
@@ -505,7 +549,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     	
     	public void stopThread () {
     		nr.disconnect();
-    		timeFramesPerSec.stop();
+    		//timeFramesPerSec.stop();
     	}
     	
 
@@ -517,8 +561,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     			VizFrameData vfd =nr.getFrame();
     			if (vfd != null) {
     			queue.offer(vfd);
-    			framesThisSec=vfd.getFrameNo();
-    			bytesRec = bytesRec + vfd.getBufferSize();
+    		//	framesThisSec=vfd.getFrameNo();
+    		//	bytesRec = bytesRec + vfd.getBufferSize();
     		}
     		}
     			stopReceive();
@@ -526,6 +570,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     	}
     }
     
+    //side info panel 
     private class InfoPanel extends JPanel {
     	
     	private JLabel jLabel4;
@@ -665,7 +710,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		{
 			jLabel9 = new JLabel();
 			this.add(jLabel9, "0, 19");
-			jLabel9.setText("Stress Max (pascals)");
+			jLabel9.setText("Stress Max (Pa)");
 			jLabel9.setFont(new java.awt.Font("Dialog",1,12));
 		}
 		{
@@ -709,16 +754,16 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     	public void viewChanged () {
     		switch (view) {
     			case 0:
-    				viewing.setText("External Pressure");
+    				viewing.setText("Velocity Volume Rendering");
     				break;	
    				case 1:
-   					viewing.setText("Volume Rendering Velocity");
+   					viewing.setText("Stress Volume Rendering");
     				break;
     			case 2:
-    				viewing.setText("External Stress");
+    				viewing.setText("Wall Pressure");
     				break;
     			case 3:
-    				viewing.setText("Volume Rendering Stress");
+    				viewing.setText("Wall Stress");
     				break;
     			case 4:
     				viewing.setText("All Views");

@@ -23,7 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 
@@ -58,7 +58,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	private String hostname;
 	private int port, window;
 	private Component parent;
-	
+	private JCheckBoxMenuItem rotateMenuItem;
 	/**
 	* Auto-generated main method to display this JFrame
 	*/
@@ -221,6 +221,18 @@ public class VizSteererWindow extends javax.swing.JFrame {
 							}
 						});
 						
+					} 
+					{
+						rotateMenuItem = new JCheckBoxMenuItem();
+						rotateMenuItem.setText("Rotate");
+						steeringMenu.add(rotateMenuItem);
+						rotateMenuItem.addActionListener(new ActionListener() {
+							public void actionPerformed (ActionEvent e) {
+	
+									vg.rotate(rotateMenuItem.getState() );
+
+							}
+						});
 					}
 					
 				}
