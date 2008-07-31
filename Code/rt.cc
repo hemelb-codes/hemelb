@@ -1721,6 +1721,8 @@ void rtBuildClusters (Net *net)
   int i, j, k;
   int l, m, n;
   int clusters_max;
+  int block_min_x, block_min_y, block_min_z;
+  int block_max_x, block_max_y, block_max_z;
   int dummy = 0;
   
   unsigned int my_site_id;
@@ -1763,6 +1765,13 @@ void rtBuildClusters (Net *net)
     {
       is_block_visited[ n ] = 0;
     }
+  block_min_x = +1000000000;
+  block_min_y = +1000000000;
+  block_min_z = +1000000000;
+  block_max_x = -1000000000;
+  block_max_y = -1000000000;
+  block_max_z = -1000000000;
+  
   n = -1;
   
   for (i = 0; i < blocks_x; i++)
@@ -1771,11 +1780,17 @@ void rtBuildClusters (Net *net)
 	{
 	  for (k = 0; k < blocks_z; k++)
 	    {
-	      if (is_block_visited[ ++n ] ||
-		  (proc_block_p = &net->proc_block[ n ])->proc_id == NULL)
-		{
-		  continue;
-		}
+	      if ((proc_block_p = &net->proc_block[ ++n ])->proc_id == NULL) continue;
+	      
+	      block_min_x = min(block_min_x, i);
+	      block_min_y = min(block_min_y, j);
+	      block_min_z = min(block_min_z, k);
+	      block_max_x = max(block_max_x, i);
+	      block_max_y = max(block_max_y, j);
+	      block_max_z = max(block_max_z, k);
+	      
+	      if (is_block_visited[ n ]) continue;
+	      
 	      is_block_visited[ n ] = 1;
 	      
 	      blocks_a = 0;
@@ -1900,6 +1915,10 @@ void rtBuildClusters (Net *net)
   free(block_location_a);
   
   free(is_block_visited);
+  
+  vis_ctr_x = 0.5F * block_size * (block_min_x + block_max_x);
+  vis_ctr_y = 0.5F * block_size * (block_min_y + block_max_y);
+  vis_ctr_z = 0.5F * block_size * (block_min_z + block_max_z);
   
   
   cluster_voxel = (float **)malloc(sizeof(float *) * 3 * net->my_sites);
@@ -3061,6 +3080,14 @@ void visRenderB (int write_image, char *image_file_name,
     }
   xdr_destroy (&xdr_image_file);
   fclose (image_file);
+}
+
+
+void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
+{
+  vis_mouse_pressure = lbmConvertPressureToPhysicalUnits (col_pixel_p->density * Cs2, lbm);
+  
+  vis_stess_pressure = lbmConvertStressToPhysicalUnits (col_pixel_p->stress, lbm);
 }
 
 
