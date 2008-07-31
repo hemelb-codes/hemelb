@@ -47,12 +47,14 @@ char* xdrSendBuffer_frame_details;
 
 char host_name[255];
 
+
 void setRenderState(int val) {
   pthread_mutex_lock(&var_lock);
 //  doRendering = val;
   ShouldIRenderNow = val;
   pthread_mutex_unlock(&var_lock);
 }
+
 
 void *hemeLB_network (void *ptr) {
 
@@ -85,11 +87,10 @@ void *hemeLB_network (void *ptr) {
   
   while (1)
     {
-
       setRenderState(0);
-
+      
       pthread_mutex_lock (&LOCK);
-	    
+      
       struct sockaddr_in my_address;
       struct sockaddr_in their_addr; // client address
       
@@ -100,13 +101,11 @@ void *hemeLB_network (void *ptr) {
 	  perror("socket");
 	  exit (1);
 	}
-      
       if (setsockopt (sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
 	{
 	  perror("setsockopt");
 	  exit (1);
 	}
-      
       my_address.sin_family = AF_INET;
       my_address.sin_port = htons (MYPORT);
       my_address.sin_addr.s_addr = INADDR_ANY;
@@ -117,13 +116,11 @@ void *hemeLB_network (void *ptr) {
 	  perror ("bind");
 	  exit (1);
 	}
-      
       if (listen (sock_fd, CONNECTION_BACKLOG) == -1)
 	{
 	  perror ("listen");
 	  exit (1);
 	}
-      
       sin_size = sizeof (their_addr);
       
       if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1)
@@ -136,31 +133,31 @@ void *hemeLB_network (void *ptr) {
       printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
       
       pthread_create (&steering_thread, &steering_thread_attrib, hemeLB_steer, (void*)new_fd);	  
-	  
+      
       close(sock_fd);
       
       is_broken_pipe = 0;
       
       pthread_mutex_unlock ( &LOCK );
-
-      setRenderState(1);
-
-	// At this point we're ready to send a frame...
-	
-//	setRendering=1;
       
-     while (!is_broken_pipe)
-	 {
-
+      setRenderState(1);
+      
+      // At this point we're ready to send a frame...
+      
+      // setRendering=1;
+      
+      while (!is_broken_pipe)
+	{
+	  
 	  printf("THREAD: waiting for signal that frame is ready to send..\n"); fflush(0x0);
-
+	  
 	  pthread_mutex_lock ( &LOCK );
 	  pthread_cond_wait (&network_send_frame, &LOCK);
-
+	  
       setRenderState(0);
-
+	  
 	  printf("THREAD: received signal that frame is ready to send..\n"); fflush(0x0);
-
+	  
 	  int bytesSent = 0;
 	  
 	  XDR xdr_network_stream_frame_details;
@@ -186,9 +183,9 @@ void *hemeLB_network (void *ptr) {
 	  int ret = send_all(new_fd, xdrSendBuffer_frame_details, &detailsBytes);
 	  
           if (ret < 0) {
-		    printf("RG thread: broken network pipe...\n");
+	    printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
-			pthread_mutex_unlock ( &LOCK );
+	    pthread_mutex_unlock ( &LOCK );
             setRenderState(0);
             break;
           } else {
@@ -198,9 +195,9 @@ void *hemeLB_network (void *ptr) {
 	  ret = send_all(new_fd, xdrSendBuffer_pixel_data, &frameBytes);
 	  
           if (ret < 0) {
-		    printf("RG thread: broken network pipe...\n");
+	    printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
-			pthread_mutex_unlock ( &LOCK );
+	    pthread_mutex_unlock ( &LOCK );
             setRenderState(0);
             break;
           } else {
@@ -209,12 +206,12 @@ void *hemeLB_network (void *ptr) {
 	  
 	  //fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
 	  printf ("RG thread: bytes sent %i\n", bytesSent);
-
-      setRenderState(1);
 	  
-      xdr_destroy (&xdr_network_stream_frame_details);
+       setRenderState(1);
+	  
+	  xdr_destroy (&xdr_network_stream_frame_details);
 	  xdr_destroy (&xdr_network_stream_pixel_data);
-
+	  
 	  pthread_mutex_unlock ( &LOCK );
 	  
 	  frame_number++;

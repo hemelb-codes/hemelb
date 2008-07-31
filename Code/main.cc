@@ -23,6 +23,7 @@
 
 FILE* timings_ptr;
 
+
 int main (int argc, char *argv[])
 {
   // main function needed to perform the entire simulation. Some
@@ -189,61 +190,50 @@ int main (int argc, char *argv[])
       
       simulation_time = myClock ();
       
-      for (cycle_id = 0; cycle_id < lbm.cycles_max && !is_finished; cycle_id++)
+      for (cycle_id = 1; cycle_id <= lbm.cycles_max && !is_finished; cycle_id++)
 	{
-	  for (time_step = 0; time_step < lbm.period; time_step++)
+	  for (time_step = 1; time_step <= lbm.period; time_step++)
 	    {
-
-//		usleep(40000);
-
-	      int perform_rt = 0;
 	      int write_image = 0;
 	      int stream_image = 0; 
 	      int lock_return = 0;
 	      
 	      total_time_steps++;
 	      
-	      if ((time_step + 1)%vis_image_freq == 0)
+	      if (time_step%vis_image_freq == 0)
 		{
 		  // A write_image = 1;
 		}
-
-		  if (net.id == 0)
-		    {
-		      lock_return = pthread_mutex_trylock ( &LOCK );
-		      printf("attempting to aquire mutex lock -> %i -> ", lock_return); 
-		      if( lock_return == EBUSY ) { printf("lock busy\n"); } else { printf("aquired lock\n"); doRendering = 1; } printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
-		    }
-
-	  UpdateSteerableParameters (&vis,&lbm);
-	  MPI_Bcast (&doRendering, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+	      
+	      if (net.id == 0)
+		{
+		  lock_return = pthread_mutex_trylock ( &LOCK );
+		  
+		  printf("attempting to aquire mutex lock -> %i -> ", lock_return); 
+		  
+		  if (lock_return == EBUSY) {
+		    printf("lock busy\n");
+		  } else {
+		    printf("aquired lock\n");
+		    doRendering = 1;
+		  }
+		  printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
+		}
+	      
 	      if (total_time_steps%1 == 0)
 		{
-
-	 //    if(net.id==0) printf("cycle_id time_step setRendering doRendering %i %i %i %i\n", cycle_id, time_step, setRendering, doRendering); fflush(0x0); 
-
-		  //UpdateSteerableParameters (&is_thread_locked, &vis);
-		  
-		 /* if (!is_thread_locked)
-=======
-		  if (is_thread_locked == 0)
->>>>>>> 1.31.2.9.2.28
-		    {
-<<<<<<< main.cc
-		      stream_image = 1;
-		    } */
+		  UpdateSteerableParameters (&doRendering, &vis, &lbm);
 		}
-
+	      
 	      if (stream_image || write_image)
 		{
 		  doRendering = 1;
 		}
-	      
+	      printf (" doRendering: %i\n", doRendering);
 	      // Between the visRenderA/B calls, do not change any vis
 	      // parameters.
 	      
-	//	if(setRendering==1) { doRendering = 1; setRendering = 0; }
+	      // if(setRendering==1) { doRendering = 1; setRendering = 0; }
 
 	      if (doRendering)
 		{
@@ -269,26 +259,36 @@ int main (int argc, char *argv[])
 		  // Images
 		  strcpy ( image_name , output_image_name );
 
-		  int time_steps = time_step + 1;
+		  int time_steps = time_step;
 		  
 		  while (time_steps < 100000000)
 		    {
 		      strcat ( image_name , "0" );
 		      time_steps *= 10;
 		    }
-		  sprintf ( time_step_string, "%i", time_step + 1);
+		  sprintf ( time_step_string, "%i", time_step);
 		  strcat ( image_name , time_step_string );
 		  strcat ( image_name , ".dat" );
 		} */
-
+	      
 	      if (doRendering)
 		{
+		  lbmCalculateFlowFieldValues (cycle_id, time_step, &lbm);
+		  
 		  visRenderB (write_image, image_name, ColourPalette, &net);
+		  
+		  for (int i = 0; i < col_pixels; i++)
+		    {
+		      if (col_pixel_recv[ i ].i == vis_mouse_x*(1<<16)+vis_mouse_y)
+			{
+			  visCalculateMouseFlowField (&col_pixel_recv[ i ], &lbm);
+			}
+		    }
 		}
-
-	     /* if ((time_step + 1) % 10 == 0 ) {
+	      
+	      /* if (time_step%10 == 0 ) {
                 char snapshot_filename[255];
-                snprintf(snapshot_filename, 255, "snapshot_%06i.bin", time_step+1);
+                snprintf(snapshot_filename, 255, "snapshot_%06i.bin", time_step);
                 //if(net.id == 0) { printf("writing binary file %s....\n", snapshot_filename); fflush(NULL); }
                 lbmWriteConfig (stability, snapshot_filename, &lbm, &net);
                 //if(net.id == 0) { printf("done writing binary.\n"); fflush(NULL); }
@@ -296,13 +296,15 @@ int main (int argc, char *argv[])
 
 	      if (net.id == 0)
 		{
-		if(doRendering==1) {
-                  printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
-		  pthread_mutex_unlock (&LOCK);
-		  pthread_cond_signal (&network_send_frame);
-                  printf("...signal sent\n"); fflush(0x0);
-                  doRendering=0;
-		}
+		  if(doRendering==1) {
+		    printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
+		    pthread_mutex_unlock (&LOCK);
+		    pthread_cond_signal (&network_send_frame);
+		    printf("...signal sent\n");
+		    fflush(0x0);
+		    
+		    doRendering=0;
+		  }
 		} 
 	      
 	      if (stability == UNSTABLE)
@@ -323,28 +325,35 @@ int main (int argc, char *argv[])
 		  is_finished = 1;
 		  break;
 		}
+	      if (lbm_terminate_simulation)
+		{
+		  is_finished = 1;
+		  break;
+		}
 	      if (net.id == 0)
 		{
-		  //printf ("time step: %i\n", time_step+1);
+		  //printf ("time step: %i\n", time_step);
 		}
 	    }
+	  lbmCalculateFlowFieldValues (cycle_id, lbm.period, &lbm);
+	  
 	  if (net.id == 0)
 	    {
 	      if (!check_conv)
 		{
-		  fprintf (timings_ptr, "cycle id: %i\n", cycle_id+1);
-		  printf ("cycle id: %i\n", cycle_id+1);
+		  fprintf (timings_ptr, "cycle id: %i\n", cycle_id);
+		  printf ("cycle id: %i\n", cycle_id);
 		}
 	      else
 		{
-		  fprintf (timings_ptr, "cycle id: %i, conv_error: %le\n", cycle_id+1, conv_error);
-		  printf ("cycle id: %i, conv_error: %le\n", cycle_id+1, conv_error);
+		  fprintf (timings_ptr, "cycle id: %i, conv_error: %le\n", cycle_id, conv_error);
+		  printf ("cycle id: %i, conv_error: %le\n", cycle_id, conv_error);
 		}
-                fflush(NULL);
+	      fflush(NULL);
 	    }
 	}
       simulation_time = myClock () - simulation_time;
-      time_step = (1+min(time_step, lbm.period-1)) * min(cycle_id, lbm.cycles_max-1);
+      time_step = (min(time_step, lbm.period)) * min(cycle_id, lbm.cycles_max);
     }
   else // is_bench
     {
@@ -358,7 +367,7 @@ int main (int argc, char *argv[])
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
-	  stability = lbmCycle (0, 0, 0, &lbm, &net);
+	  stability = lbmCycle (1, 1, 0, &lbm, &net);
 	  
 	  // partial timings
 	  elapsed_time = myClock () - fluid_solver_time;
@@ -379,7 +388,7 @@ int main (int argc, char *argv[])
       
       for (time_step = 1; time_step <= fluid_solver_time_steps; time_step++)
 	{
-	  stability = lbmCycle (0, 0, 1, &lbm, &net);
+	  stability = lbmCycle (1, 1, 1, &lbm, &net);
 	}
       fluid_solver_time = myClock () - fluid_solver_time;
       
@@ -394,7 +403,7 @@ int main (int argc, char *argv[])
 	{
 	  visRenderA (ColourPalette, &net);
 	  
-	  stability = lbmCycle (0, 0, 1, &lbm, &net);
+	  stability = lbmCycle (1, 1, 1, &lbm, &net);
 	  
 	  visRenderB (0, image_name, ColourPalette, &net);
 	  
@@ -419,7 +428,7 @@ int main (int argc, char *argv[])
 	{
 	  visRenderA (ColourPalette, &net);
 	  
-	  stability = lbmCycle (0, 0, 1, &lbm, &net);
+	  stability = lbmCycle (1, 1, 1, &lbm, &net);
 	  
 	  visRenderB (0, image_name, ColourPalette, &net);
 	}
@@ -507,18 +516,9 @@ int main (int argc, char *argv[])
     {
       if (!is_bench)
 	{
-	  double pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, &lbm);
-	  double pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, &lbm);
-	  
-	  double velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, &lbm);
-	  double velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, &lbm);
-	  
-	  double stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, &lbm);
-	  double stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, &lbm);
-	  
-	  fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", pressure_min, pressure_max);
-	  fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", velocity_min, velocity_max);
-	  fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", stress_min, stress_max);
+	  fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", lbm_pressure_min, lbm_pressure_max);
+	  fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", lbm_velocity_min, lbm_velocity_max);
+	  fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", lbm_stress_min, lbm_stress_max);
 	}
       fprintf (timings_ptr, "\n");
       fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);

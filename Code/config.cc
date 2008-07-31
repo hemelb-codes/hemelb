@@ -117,8 +117,13 @@ int sites_in_a_block;
 
 double lbm_stress_par;
 double lbm_density_min, lbm_density_max;
+double lbm_pressure_min, lbm_pressure_max;
 double lbm_velocity_min, lbm_velocity_max;
 double lbm_stress_min, lbm_stress_max;
+double lbm_time;
+
+int lbm_time_step, lbm_cycle;
+int lbm_terminate_simulation;
 
 int net_machines;
 
@@ -134,6 +139,11 @@ float vis_density_threshold_min, vis_density_threshold_minmax_inv;
 float vis_velocity_threshold_max_inv;
 float vis_stress_threshold_max_inv;
 float vis_brightness;
+float vis_ctr_x, vis_ctr_y, vis_ctr_z;
+float vis_mouse_pressure, vis_stess_pressure;
+
+int vis_perform_rendering;
+int vis_mouse_x, vis_mouse_y;
 
 
 int cluster_blocks_vec[3];

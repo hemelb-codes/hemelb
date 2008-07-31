@@ -1072,6 +1072,7 @@ void lbmInit (char *system_file_name, LBM *lbm, Net *net)
       lbmInterCollision[4] = lbmCollisionConv4;
       lbmInterCollision[5] = lbmCollisionConv5;
     }
+  lbm_terminate_simulation = 0;
 }
 
 
@@ -1132,9 +1133,6 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
   double vx, vy, vz;
   double *f_old_p;
   
-  double local_data[6];
-  double global_data[6];
-  
   int collision_type;
   int offset;
   int i, m, n;
@@ -1153,7 +1151,7 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 #endif
     }
   
-  if (time_step == 0)
+  if (time_step == 1)
     {
       lbm_density_min = +1.e+30;
       lbm_density_max = +1.e-30;
@@ -1203,28 +1201,6 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 	}
       offset += net->my_inner_collisions[ collision_type ];
     }
-
-  if (!is_bench && time_step == lbm->period - 1)
-    {
-#ifndef NOMPI
-      local_data[ 0 ] = lbm_density_min;
-      local_data[ 1 ] = 1. / lbm_density_max;
-      local_data[ 2 ] = lbm_velocity_min;
-      local_data[ 3 ] = 1. / lbm_velocity_max;
-      local_data[ 4 ] = lbm_stress_min;
-      local_data[ 5 ] = 1. / lbm_stress_max;
-	  
-      MPI_Reduce (local_data, global_data, 6,
-		  MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-      
-      lbm_density_min  = global_data[ 0 ];
-      lbm_density_max  = 1. / global_data[ 1 ];
-      lbm_velocity_min = global_data[ 2 ];
-      lbm_velocity_max = 1. / global_data[ 3 ];
-      lbm_stress_min   = global_data[ 4 ];
-      lbm_stress_max   = 1. / global_data[ 5 ];
-#endif
-    }
   
   for (m = 0; m < net->neigh_procs; m++)
     {
@@ -1244,7 +1220,7 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
   
   int is_unstable = 0;
   
-  if (!is_bench && time_step == lbm->period - 1)
+  if (!is_bench && time_step == lbm->period)
     {
       for (i = 0; i < net->my_sites * 15; i++)
 	{
@@ -1277,8 +1253,8 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
   double *f_old_p;
   
   double sum1, sum2;
-  double local_data[6];
-  double global_data[6];
+  double local_data[3];
+  double global_data[3];
   
   int is_converged, cycle_tag_start;
   int collision_type;
@@ -1301,7 +1277,7 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
   
   is_converged = 0;
   
-  if (cycle_id == 0)
+  if (cycle_id == 1)
     {
       cycle_tag_start = 1;
       conv_error = 1.e+30;
@@ -1314,9 +1290,9 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
     {
       cycle_tag_start = 0;
       
-      if (time_step == 0) conv_error = 0.;
+      if (time_step == 1) conv_error = 0.;
     }
-  if (time_step == 0)
+  if (time_step == 1)
     {
       lbm_density_min = +1.e+30;
       lbm_density_max = +1.e-30;
@@ -1423,52 +1399,6 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
 	    }
 	}
     }
-  local_data[ 0 ] = (double)is_unstable;
-  local_data[ 1 ] = sum1;
-  local_data[ 2 ] = sum2;
-  
-#ifndef NOMPI
-  net->err = MPI_Allreduce (local_data, global_data, 3,
-			    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#endif
-  
-  is_unstable = (global_data[ 0 ] >= 1.);
-  sum1 = global_data[ 1 ];
-  sum2 = global_data[ 2 ];
-  
-  conv_error += sum1 / sum2;
-  
-  if (time_step == lbm->period - 1)
-    {
-      conv_error /= lbm->period;
-      
-      if (conv_error < TOL)
-	{
-	  is_converged = 1;
-	}
-    }
-  
-  if (time_step == lbm->period - 1)
-    {
-#ifndef NOMPI
-      local_data[ 0 ] = lbm_density_min;
-      local_data[ 1 ] = 1. / lbm_density_max;
-      local_data[ 2 ] = lbm_velocity_min;
-      local_data[ 3 ] = 1. / lbm_velocity_max;
-      local_data[ 4 ] = lbm_stress_min;
-      local_data[ 5 ] = 1. / lbm_stress_max;
-	  
-      MPI_Reduce (local_data, global_data, 6,
-		  MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-      
-      lbm_density_min  = global_data[ 0 ];
-      lbm_density_max  = 1. / global_data[ 1 ];
-      lbm_velocity_min = global_data[ 2 ];
-      lbm_velocity_max = 1. / global_data[ 3 ];
-      lbm_stress_min   = global_data[ 4 ];
-      lbm_stress_max   = 1. / global_data[ 5 ];
-#endif
-    }
   
   for (m = 0; m < net->neigh_procs; m++)
     {
@@ -1492,6 +1422,32 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
   f_old = f_new;
   f_new = f_old_p;
   
+  
+  local_data[ 0 ] = (double)is_unstable;
+  local_data[ 1 ] = sum1;
+  local_data[ 2 ] = sum2;
+  
+#ifndef NOMPI
+  net->err = MPI_Allreduce (local_data, global_data, 3,
+			    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+#endif
+  
+  is_unstable = (global_data[ 0 ] >= 1.);
+  sum1 = global_data[ 1 ];
+  sum2 = global_data[ 2 ];
+  
+  conv_error += sum1 / sum2;
+  
+  if (time_step == lbm->period)
+    {
+      conv_error /= lbm->period;
+      
+      if (conv_error < TOL)
+	{
+	  is_converged = 1;
+	}
+    }
+    
   if (is_unstable)
     {
       return UNSTABLE;
@@ -1504,6 +1460,48 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
     {
       return STABLE_AND_CONVERGED;
     }
+}
+
+
+void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
+{
+  double local_data[6];
+  double global_data[6];
+  
+  
+#ifndef NOMPI
+  local_data[ 0 ] = lbm_density_min;
+  local_data[ 1 ] = 1. / lbm_density_max;
+  local_data[ 2 ] = lbm_velocity_min;
+  local_data[ 3 ] = 1. / lbm_velocity_max;
+  local_data[ 4 ] = lbm_stress_min;
+  local_data[ 5 ] = 1. / lbm_stress_max;
+  
+  MPI_Reduce (local_data, global_data, 6,
+	      MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+  
+  lbm_density_min  = global_data[ 0 ];
+  lbm_density_max  = 1. / global_data[ 1 ];
+  lbm_velocity_min = global_data[ 2 ];
+  lbm_velocity_max = 1. / global_data[ 3 ];
+  lbm_stress_min   = global_data[ 4 ];
+  lbm_stress_max   = 1. / global_data[ 5 ];
+#endif
+  
+  lbm_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, lbm);
+  lbm_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, lbm);
+  
+  lbm_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, lbm);
+  lbm_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, lbm);
+  
+  lbm_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, lbm);
+  lbm_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, lbm);
+  
+  lbm_time_step = time_step;
+  
+  lbm_time = (PULSATILE_PERIOD * time_step) / lbm->period;
+  
+  lbm_cycle = cycle_id;
 }
 
 

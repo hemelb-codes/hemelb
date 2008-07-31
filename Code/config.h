@@ -49,7 +49,7 @@
 #define PIXELS_Y                       512
 #define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
 #define IMAGE_SIZE                     PIXELS_X * PIXELS_Y
-#define STEERABLE_PARAMETERS           9
+#define STEERABLE_PARAMETERS           12
 
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
@@ -62,8 +62,8 @@
 #define TOL                            1.e-6
 
 
-#define PixelI(i)   i >> 16
-#define PixelJ(i)   i & 65535
+#define PixelI(i)   (i >> 16)
+#define PixelJ(i)   (i & 65535)
 
 
 extern double PI;
@@ -344,8 +344,13 @@ extern int sites_in_a_block;
 
 extern double lbm_stress_par;
 extern double lbm_density_min, lbm_density_max;
+extern double lbm_pressure_min, lbm_pressure_max;
 extern double lbm_velocity_min, lbm_velocity_max;
 extern double lbm_stress_min, lbm_stress_max;
+extern double lbm_time;
+
+extern int lbm_time_step, lbm_cycle;
+extern int lbm_terminate_simulation;
 
 extern int net_machines;
 
@@ -361,6 +366,10 @@ extern float vis_density_threshold_min, vis_density_threshold_minmax_inv;
 extern float vis_velocity_threshold_max_inv;
 extern float vis_stress_threshold_max_inv;
 extern float vis_brightness;
+extern float vis_ctr_x, vis_ctr_y, vis_ctr_z;
+extern float vis_mouse_pressure, vis_stess_pressure;
+
+extern int vis_mouse_x, vis_mouse_y;
 
 
 extern int cluster_blocks_vec[3];
@@ -410,6 +419,7 @@ void lbmSetInitialConditions (Net *net);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
+void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm);
 void lbmEnd (LBM *lbm);
 
 int netFindTopology (Net *net, int *depths);
@@ -452,7 +462,7 @@ void visConvertThresholds (float physical_velocity_max, float physical_stress_ma
 			   float *lattice_velocity_max, float *lattice_stress_max,
 			   LBM *lbm);
 void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
-
+void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
 void visEnd (void);
 
 #endif                  // __config_h__
