@@ -468,10 +468,8 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 			  vy /= density;
 			  vz /= density;
 			  
-			  pressure = density * Cs2;
-			  
 			  // conversion from lattice to physical units
-			  pressure *= pressure_par;
+			  pressure *= REFERENCE_PRESSURE + ((density - 1.0) * Cs2) * pressure_par;
 			  vx *= velocity_par;
 			  vy *= velocity_par;
 			  vy *= velocity_par;
