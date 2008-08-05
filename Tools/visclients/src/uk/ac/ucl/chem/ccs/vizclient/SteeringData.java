@@ -30,10 +30,13 @@ public class SteeringData {
 	private float vis_brightness;
 	private float velocity_max;
 	private float stress_max;
+	private int vis_mouse_x;
+	private int vis_mouse_y;
+	private int kill;
 	
 	public SteeringData(float ctr_x, float ctr_y, float ctr_z, float latitude,
 			float longitude, float stress_max, float velocity_max,
-			float vis_brightness, float zoom_factor) {
+			float vis_brightness, float zoom_factor, int vis_mouse_x, int vis_mouse_y, int kill) {
 		super();
 		this.ctr_x = ctr_x;
 		this.ctr_y = ctr_y;
@@ -44,6 +47,9 @@ public class SteeringData {
 		this.velocity_max = velocity_max;
 		this.vis_brightness = vis_brightness;
 		this.zoom_factor = zoom_factor;
+		this.vis_mouse_x = vis_mouse_x;
+		this.vis_mouse_y = vis_mouse_y;
+		this.kill = kill;
 	}
 	
 	public SteeringData() {
@@ -57,7 +63,35 @@ public class SteeringData {
 		this.vis_brightness = 0.03f;
 		this.velocity_max = 0.001f;
 		this.stress_max = 0.001f;
+		this.vis_mouse_x = 0;
+		this.vis_mouse_y = 0;
+		this.kill = 0;
+	}
 
+	
+	
+	public int getVis_mouse_x() {
+		return vis_mouse_x;
+	}
+
+	public void setVis_mouse_x(int vis_mouse_x) {
+		this.vis_mouse_x = vis_mouse_x;
+	}
+
+	public int getVis_mouse_y() {
+		return vis_mouse_y;
+	}
+
+	public void setVis_mouse_y(int vis_mouse_y) {
+		this.vis_mouse_y = vis_mouse_y;
+	}
+
+	public int getKill() {
+		return kill;
+	}
+
+	public void setKill(int kill) {
+		this.kill = kill;
 	}
 
 	public float getCtr_x() {

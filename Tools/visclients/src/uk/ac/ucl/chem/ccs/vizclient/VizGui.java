@@ -392,7 +392,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							}
 							send();
 						} else if(start != null && e.getButton() == 3) {
-							Point end = e.getPoint();
+/*							Point end = e.getPoint();
 							double dx = start.getX() - end.getX();
 							double dy = start.getY() - end.getY();
 							panel_width = canvas1.getWidth();
@@ -402,11 +402,23 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							sd.setCtr_y(100*(float)(dy/panel_height));
 							
 							System.err.println("Ctr x = " + sd.getCtr_x() + " crt y = " + sd.getCtr_y());
-							send();
+							send();*/
  						}
 					}
 					
 					public void mouseClicked(MouseEvent e) {
+						if (e.getButton() == 2 && view != VIEWALL) {
+							Point point = e.getPoint();
+							double i = point.getX();
+							double j = point.getY();
+							
+							int offsetx = canvas1.getWidth();
+							int offsety = canvas1.getHeight();
+							
+							System.err.println("i=" + i + " j=" + j + " x offset=" + offsetx + " y offset=" +offsety);
+							
+						}
+						
 					}
 					
 					public void mousePressed(MouseEvent e) {
@@ -450,6 +462,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		} else {
 			rotateModel.stopThread();
 		}
+	}
+	
+	public void kill () {
+		sd.setKill(1);
+		send();
 	}
 	
 	public void resetSteering () {
