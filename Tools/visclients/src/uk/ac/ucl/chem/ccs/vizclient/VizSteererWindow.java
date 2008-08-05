@@ -50,6 +50,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	private JPanel jPanel1;
 	private JPanel jPanel2;
 	private JMenuItem quitMenuItem;
+	private JMenuItem killMenuItem;
 	private JSeparator jSeparator2;
 	private JMenuItem hostMenuItem;
 	private JSeparator jSeparator1;
@@ -222,6 +223,17 @@ public class VizSteererWindow extends javax.swing.JFrame {
 						});
 						
 					} 
+					{	
+					killMenuItem = new JMenuItem();
+					steeringMenu.add(killMenuItem);
+					killMenuItem.setText("Kill HemeLB");
+					killMenuItem.addActionListener(new ActionListener() {
+						public void actionPerformed (ActionEvent e) {
+							vg.kill();
+						}
+					});
+					
+				} 
 					{
 						rotateMenuItem = new JCheckBoxMenuItem();
 						rotateMenuItem.setText("Rotate");
