@@ -35,6 +35,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private GLCapabilities cap;
 	float scale_x;
 	float scale_y;
+	int frame_x = 512;
+	int frame_y = 512;
 	private String hostname;
 	private int port, window;
     private NetThread thread=null; 
@@ -409,11 +411,21 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					public void mouseClicked(MouseEvent e) {
 						if (e.getButton() == 2 && view != VIEWALL) {
 							Point point = e.getPoint();
-							double i = point.getX();
-							double j = point.getY();
+							int i = (int)point.getX();
+							int j = (int)point.getY();
 							
-							int offsetx = canvas1.getWidth();
-							int offsety = canvas1.getHeight();
+							int offsetx = (int)(canvas1.getWidth() - frame_x)/2;
+							int offsety = (int)(canvas1.getHeight() - frame_y)/2;
+
+							//transform
+							i = i - offsetx;
+							j = j - offsety;
+							
+							if (i >= 0 && i <= frame_x && j >= 0 && j <= frame_y) {
+								sd.setVis_mouse_x(i);
+								sd.setVis_mouse_y(j);
+								send();
+							}
 							
 							System.err.println("i=" + i + " j=" + j + " x offset=" + offsetx + " y offset=" +offsety);
 							
