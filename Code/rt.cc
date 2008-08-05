@@ -1916,9 +1916,9 @@ void rtBuildClusters (Net *net)
   
   free(is_block_visited);
   
-  vis_ctr_x = 0.5F * block_size * (block_min_x + block_max_x) - vis->half_dim[0];
-  vis_ctr_y = 0.5F * block_size * (block_min_y + block_max_y) - vis->half_dim[1];
-  vis_ctr_z = 0.5F * block_size * (block_min_z + block_max_z) - vis->half_dim[2];
+  vis_ctr_x = 0.5F * block_size * (block_min_x + block_max_x);
+  vis_ctr_y = 0.5F * block_size * (block_min_y + block_max_y);
+  vis_ctr_z = 0.5F * block_size * (block_min_z + block_max_z);
   
   
   cluster_voxel = (float **)malloc(sizeof(float *) * 3 * net->my_sites);
@@ -2702,6 +2702,10 @@ void visInit (Net *net, Vis *vis)
 #endif
   
   rtInit (net);
+  
+  vis_ctr_x -= vis->half_dim[0];
+  vis_ctr_y -= vis->half_dim[1];
+  vis_ctr_z -= vis->half_dim[2];
 }
 
 
