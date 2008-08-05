@@ -197,9 +197,9 @@ public class VizSteererWindow extends javax.swing.JFrame {
 						quitMenuItem = new JMenuItem();
 						connectMenu.add(quitMenuItem);
 						if (parent == null) {
-							quitMenuItem.setText("Close");
+							quitMenuItem.setText("Quit");
 						} else {
-						quitMenuItem.setText("Quit");
+							quitMenuItem.setText("Close");
 						}
 						quitMenuItem.setEnabled(true);
 						quitMenuItem.addActionListener(new ActionListener (){ 
