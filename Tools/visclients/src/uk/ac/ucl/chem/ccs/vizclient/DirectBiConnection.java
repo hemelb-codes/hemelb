@@ -191,7 +191,10 @@ public class DirectBiConnection implements SteeringConnection {
 			dos.writeFloat(sd.getVis_brightness());
 			dos.writeFloat(sd.getVelocity_max());
 			dos.writeFloat(sd.getStress_max());
-
+			dos.writeInt(sd.getVis_mouse_x());
+			dos.writeInt(sd.getVis_mouse_y());
+			dos.writeInt(sd.getKill());
+			
 			return true;
 		} catch (Exception e) {
 			
