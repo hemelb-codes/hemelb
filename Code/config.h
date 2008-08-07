@@ -432,6 +432,7 @@ double lbmCalculateTau (LBM *lbm);
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
+void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
 
 void rtInit (Net *net);
