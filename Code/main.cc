@@ -209,15 +209,15 @@ int main (int argc, char *argv[])
 		{
 		  lock_return = pthread_mutex_trylock ( &LOCK );
 		  
-		  printf("attempting to aquire mutex lock -> %i -> ", lock_return); 
+		  // printf("attempting to aquire mutex lock -> %i -> ", lock_return); 
 		  
 		  if (lock_return == EBUSY) {
-		    printf("lock busy\n");
+		    // printf("lock busy\n");
 		  } else {
-		    printf("aquired lock\n");
+		    // printf("aquired lock\n");
 		    doRendering = 1;
 		  }
-		  printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
+		  // printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
 		}
 	      
 	      if (total_time_steps%1 == 0)
@@ -229,7 +229,7 @@ int main (int argc, char *argv[])
 		{
 		  doRendering = 1;
 		}
-	      printf (" doRendering: %i\n", doRendering);
+	      // printf (" doRendering: %i\n", doRendering);
 	      // Between the visRenderA/B calls, do not change any vis
 	      // parameters.
 	      
@@ -290,18 +290,18 @@ int main (int argc, char *argv[])
                 char snapshot_filename[255];
 	snprintf(snapshot_filename, 255, "snapshot_%06i.asc", time_step);
                 //if(net.id == 0) { printf("writing binary file %s....\n", snapshot_filename); fflush(NULL); }
-                lbmWriteConfig (stability, snapshot_filename, &lbm, &net);
+                lbmWriteConfigASCII (stability, snapshot_filename, &lbm, &net);
                 //if(net.id == 0) { printf("done writing binary.\n"); fflush(NULL); }
-              } 
+              }  
 
 	      if (net.id == 0)
 		{
-		printf("done cycle...\n"); fflush(0x0);
+		// printf("done cycle...\n"); fflush(0x0);
 		if(doRendering==1) {
-                  printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
+                  //printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
 		  pthread_mutex_unlock (&LOCK);
 		  pthread_cond_signal (&network_send_frame);
-                  printf("...signal sent\n"); fflush(0x0);
+                  //printf("...signal sent\n"); fflush(0x0);
                   doRendering=0;
 		}
 		} 
