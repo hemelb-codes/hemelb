@@ -61,7 +61,6 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   float velocity_max, stress_max;
   float lattice_velocity_max, lattice_stress_max;
   
-  
   vis_ctr_x     += steer_par[ 0 ];
   vis_ctr_y     += steer_par[ 1 ];
   vis_ctr_z     += steer_par[ 2 ];
