@@ -2460,27 +2460,25 @@ void visWritePixel (ColPixel *col_pixel_p)
 }
 
 
-void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (float value, float col[]))
-{
+void rawWritePixel(ColPixel *col_pixel_p, unsigned int* pixel_index,
+		   unsigned char rgb_data[],
+		   void (*ColourPalette) (float value, float col[])) {
+
   float col[3];
   
   int bits_per_char = sizeof(char) * 8;
   int pixel_i, pixel_j;
-  
-  unsigned int pixel_id;
-  unsigned int col_data[3];
-  
+    
   unsigned char r1, g1, b1;
   unsigned char r2, g2, b2;
   unsigned char r3, g3, b3;
   unsigned char r4, g4, b4;
   
-  
   // store pixel id
   pixel_i = PixelI (col_pixel_p->i);
   pixel_j = PixelJ (col_pixel_p->i);
   
-  pixel_id = (pixel_i << (2*bits_per_char)) + pixel_j;
+  *pixel_index = (pixel_i << (2*bits_per_char)) + pixel_j;
   
   // store velocity flow field
   r1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_r));
@@ -2506,15 +2504,35 @@ void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (fl
   g4 = (unsigned char)max(0, min(255, (int)(255.F * col[1])));
   b4 = (unsigned char)max(0, min(255, (int)(255.F * col[2])));
   
-  xdr_u_int (xdr_p, &pixel_id);
   
-  col_data[0] = (r1<<(3*bits_per_char)) + (g1<<(2*bits_per_char)) + (b1<<bits_per_char) + r2;
-  col_data[1] = (g2<<(3*bits_per_char)) + (b2<<(2*bits_per_char)) + (r3<<bits_per_char) + g3;
-  col_data[2] = (b3<<(3*bits_per_char)) + (r4<<(2*bits_per_char)) + (g4<<bits_per_char) + b4;
+  rgb_data[0] = r1; rgb_data[1] = g1; rgb_data[2] = b1;
+  rgb_data[3] = r2; rgb_data[4] = g2; rgb_data[5] = b2;
+  rgb_data[6] = r3; rgb_data[7] = g3; rgb_data[8] = b3;
+  rgb_data[9] = r4; rgb_data[10] = g4; rgb_data[11] = b4;
+
+  //pix_data[1] = (r1<<(3*bits_per_char)) + (g1<<(2*bits_per_char)) + (b1<<bits_per_char) + r2;
+  //pix_data[2] = (g2<<(3*bits_per_char)) + (b2<<(2*bits_per_char)) + (r3<<bits_per_char) + g3;
+  //pix_data[3] = (b3<<(3*bits_per_char)) + (r4<<(2*bits_per_char)) + (g4<<bits_per_char) + b4;
+}
   
-  xdr_u_int (xdr_p, &col_data[0]);
-  xdr_u_int (xdr_p, &col_data[1]);
-  xdr_u_int (xdr_p, &col_data[2]);
+void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (float value, float col[]))
+{
+  unsigned int index;
+  unsigned int pix_data[3];
+  unsigned char rgb_data[12];
+  int bits_per_char = sizeof(char) * 8;
+
+  rawWritePixel(col_pixel_p, &index, rgb_data, ColourPalette);
+
+  xdr_u_int (xdr_p, &index);
+
+  pix_data[0] = (rgb_data[0]<<(3*bits_per_char)) + (rgb_data[1]<<(2*bits_per_char)) + (rgb_data[2]<<bits_per_char) + rgb_data[3];
+  pix_data[1] = (rgb_data[4]<<(3*bits_per_char)) + (rgb_data[5]<<(2*bits_per_char)) + (rgb_data[6]<<bits_per_char) + rgb_data[7];
+  pix_data[2] = (rgb_data[8]<<(3*bits_per_char)) + (rgb_data[9]<<(2*bits_per_char)) + (rgb_data[10]<<bits_per_char) + rgb_data[11];
+
+  xdr_u_int (xdr_p, &pix_data[0]);
+  xdr_u_int (xdr_p, &pix_data[1]);
+  xdr_u_int (xdr_p, &pix_data[2]);
 }
 
 

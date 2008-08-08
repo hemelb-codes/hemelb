@@ -443,6 +443,8 @@ void rtEnd (void);
 
 void visProject (float p1[], float p2[]);
 void visWritePixel (ColPixel *col_pixel);
+void rawWritePixel(ColPixel*, unsigned int*, unsigned char [],
+		   void (*ColourPalette) (float, float []));
 void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (float value, float col[]));
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,

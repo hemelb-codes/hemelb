@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <sys/types.h>
 
 extern int doRendering;
 extern int ShouldIRenderNow;
