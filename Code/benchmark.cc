@@ -1,5 +1,7 @@
 #include "benchmark.h"
+#ifndef NOMPI
 #include <mpi.h>
+#endif
 
 int IsBenchSectionFinished (double minutes, double elapsed_time)
 {

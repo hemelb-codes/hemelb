@@ -6,13 +6,15 @@ OBJ=config.o \
 	main.o \
 	rt.o \
 	topology.o \
-	steering.o \
 	network.o \
 	benchmark.o \
 	colourpalette.o \
 	visthread.o \
 	fileutils.o \
-	usage.o
+	usage.o \
+	steering-common.o \
+	steering.o
+#	realitygrid.o
 
 $(EXE): $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) $(LIBS) -o $(EXE)

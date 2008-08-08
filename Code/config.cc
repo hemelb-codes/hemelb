@@ -212,7 +212,7 @@ int nint (float a)
 
 double myClock ()
 {
-#ifndef NOMPI
+#ifdef NOMPI
   struct timeval time_data;
   
   gettimeofday (&time_data, NULL);
