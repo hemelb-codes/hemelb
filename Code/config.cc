@@ -117,17 +117,20 @@ int sites_in_a_block;
 
 double lbm_stress_par;
 double lbm_density_min, lbm_density_max;
-double lbm_pressure_min, lbm_pressure_max;
 double lbm_velocity_min, lbm_velocity_max;
 double lbm_stress_min, lbm_stress_max;
-double lbm_time;
 
-int lbm_time_step, lbm_cycle;
 int lbm_terminate_simulation;
 
 int net_machines;
 
 
+double vis_pressure_min, vis_pressure_max;
+double vis_velocity_min, vis_velocity_max;
+double vis_stress_min, vis_stress_max;
+double vis_time;
+
+int vis_time_step, vis_cycle;
 int vis_image_freq;
 int vis_pixels_max;
 int vis_compositing = 1;

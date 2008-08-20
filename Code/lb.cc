@@ -1488,20 +1488,20 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   lbm_stress_max   = 1. / global_data[ 5 ];
 #endif
   
-  lbm_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, lbm);
-  lbm_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, lbm);
+  vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, lbm);
+  vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, lbm);
   
-  lbm_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, lbm);
-  lbm_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, lbm);
+  vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, lbm);
+  vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, lbm);
   
-  lbm_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, lbm);
-  lbm_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, lbm);
+  vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, lbm);
+  vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, lbm);
   
-  lbm_time_step = time_step;
+  vis_time_step = time_step;
   
-  lbm_time = (PULSATILE_PERIOD * time_step) / lbm->period;
+  vis_time = (PULSATILE_PERIOD * time_step) / lbm->period;
   
-  lbm_cycle = cycle_id;
+  vis_cycle = cycle_id;
 }
 
 
