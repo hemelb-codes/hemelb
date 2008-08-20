@@ -472,7 +472,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 			  pressure *= REFERENCE_PRESSURE + ((density - 1.0) * Cs2) * pressure_par;
 			  vx *= velocity_par;
 			  vy *= velocity_par;
-			  vy *= velocity_par;
+			  vz *= velocity_par;
 			  stress *= stress_par;
 			  
 			  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)pressure;
@@ -506,15 +506,11 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 0 ]);
 				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 1 ]);
 				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 2 ]);
-
-			//	  printf("i j k %i %i %i ", gathered_site_data[ 3 * l + 0 ], gathered_site_data[ 3 * l + 1 ], gathered_site_data[ 3 * l + 2 ]);
 				  
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
 				      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
-			//	printf("%0.4f ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
 				    }
-		//			printf("\n");
 				}
 			    }
 			  for (l = 0; l < communication_period; l++)
@@ -551,14 +547,11 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 0 ]);
 		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 1 ]);
 		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 2 ]);
-	//			  printf("i j k %i %i %i ", gathered_site_data[ 3 * l + 0 ], gathered_site_data[ 3 * l + 1 ], gathered_site_data[ 3 * l + 2 ]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
 		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
-	//			printf("%0.4f ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
 		    }
-	//				printf("\n");
 		}
 	    }
 	  for (l = 0; l < communication_period; l++)
@@ -574,6 +567,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   free(gathered_flow_field);
   free(local_flow_field);
 }
+
 
 void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net)
 {
@@ -740,7 +734,7 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 			  pressure *= REFERENCE_PRESSURE + ((density - 1.0) * Cs2) * pressure_par;
 			  vx *= velocity_par;
 			  vy *= velocity_par;
-			  vy *= velocity_par;
+			  vz *= velocity_par;
 			  stress *= stress_par;
 			  
 			  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)pressure;
@@ -770,13 +764,13 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 			      for (l = 0; l < net->procs * communication_period; l++)
 				{
 				  if (gathered_site_data[ 3 * l + 0 ] == -1) continue;
-				fprintf(system_config, "%i %i %i ", gathered_site_data[ 3 * l + 0 ], gathered_site_data[ 3 * l + 1 ], gathered_site_data[ 3 * l + 2 ]);
+				  fprintf(system_config, "%i %i %i ", gathered_site_data[3*l+0], gathered_site_data[3*l+1], gathered_site_data[3*l+2]);
 
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
 			              fprintf(system_config, "%e ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
 				    }
-					fprintf(system_config, "\n");
+				  fprintf(system_config, "\n");
 				}
 			    }
 			  for (l = 0; l < communication_period; l++)
@@ -809,13 +803,13 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 	      for (l = 0; l < net->procs * communication_period; l++)
 		{
 		  if (gathered_site_data[ 3 * l + 0 ] == -1) continue;
-				fprintf(system_config, "%i %i %i ", gathered_site_data[ 3 * l + 0 ], gathered_site_data[ 3 * l + 1 ], gathered_site_data[ 3 * l + 2 ]);
+		  fprintf(system_config, "%i %i %i ", gathered_site_data[3*l+0], gathered_site_data[3*l+1], gathered_site_data[3*l+2]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
-			              fprintf(system_config, "%e ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+		      fprintf(system_config, "%e ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
 		    }
-					fprintf(system_config, "\n");
+		  fprintf(system_config, "\n");
 		}
 	    }
 	  for (l = 0; l < communication_period; l++)

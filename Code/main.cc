@@ -250,15 +250,15 @@ int main (int argc, char *argv[])
 		{
 		  stability = lbmCycleConv (cycle_id, time_step, doRendering, &lbm, &net);
 		}
-
-	   /*   if (write_image)
+	      /*
+	      if (write_image)
 		{
 		  char time_step_string[256];
 		  
 		  // At this point output_image_name is appended with
 		  // Images
 		  strcpy ( image_name , output_image_name );
-
+		  
 		  int time_steps = time_step;
 		  
 		  while (time_steps < 100000000)
@@ -269,8 +269,8 @@ int main (int argc, char *argv[])
 		  sprintf ( time_step_string, "%i", time_step);
 		  strcat ( image_name , time_step_string );
 		  strcat ( image_name , ".dat" );
-		} */
-	      
+		}
+	      */
 	      if (doRendering)
 		{
 		  lbmCalculateFlowFieldValues (cycle_id, time_step, &lbm);
@@ -286,24 +286,24 @@ int main (int argc, char *argv[])
 		    }
 		}
 	      
-	       if (time_step % 25000 == 0 ) {
+	      if (time_step % 25000 == 0 ) {
                 char snapshot_filename[255];
-	snprintf(snapshot_filename, 255, "snapshot_%06i.asc", time_step);
+		snprintf(snapshot_filename, 255, "snapshot_%06i.asc", time_step);
                 //if(net.id == 0) { printf("writing binary file %s....\n", snapshot_filename); fflush(NULL); }
                 lbmWriteConfigASCII (stability, snapshot_filename, &lbm, &net);
                 //if(net.id == 0) { printf("done writing binary.\n"); fflush(NULL); }
               }  
-
+	      
 	      if (net.id == 0)
 		{
-		// printf("done cycle...\n"); fflush(0x0);
-		if(doRendering==1) {
-                  //printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
-		  pthread_mutex_unlock (&LOCK);
-		  pthread_cond_signal (&network_send_frame);
-                  //printf("...signal sent\n"); fflush(0x0);
-                  doRendering=0;
-		}
+		  // printf("done cycle...\n"); fflush(0x0);
+		  if(doRendering==1) {
+		    //printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
+		    pthread_mutex_unlock (&LOCK);
+		    pthread_cond_signal (&network_send_frame);
+		    //printf("...signal sent\n"); fflush(0x0);
+		    doRendering=0;
+		  }
 		} 
 	      
 	      if (stability == UNSTABLE)
@@ -515,9 +515,18 @@ int main (int argc, char *argv[])
     {
       if (!is_bench)
 	{
-	  fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", lbm_pressure_min, lbm_pressure_max);
-	  fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", lbm_velocity_min, lbm_velocity_max);
-	  fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", lbm_stress_min, lbm_stress_max);
+	  vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, &lbm);
+	  vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, &lbm);
+	  
+	  vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, &lbm);
+	  vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, &lbm);
+	  
+	  vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, &lbm);
+	  vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, &lbm);
+	  
+	  fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis_pressure_min, vis_pressure_max);
+	  fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis_velocity_min, vis_velocity_max);
+	  fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis_stress_min, vis_stress_max);
 	}
       fprintf (timings_ptr, "\n");
       fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);
