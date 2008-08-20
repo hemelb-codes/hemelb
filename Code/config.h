@@ -344,17 +344,20 @@ extern int sites_in_a_block;
 
 extern double lbm_stress_par;
 extern double lbm_density_min, lbm_density_max;
-extern double lbm_pressure_min, lbm_pressure_max;
 extern double lbm_velocity_min, lbm_velocity_max;
 extern double lbm_stress_min, lbm_stress_max;
-extern double lbm_time;
 
-extern int lbm_time_step, lbm_cycle;
 extern int lbm_terminate_simulation;
 
 extern int net_machines;
 
 
+extern double vis_pressure_min, vis_pressure_max;
+extern double vis_velocity_min, vis_velocity_max;
+extern double vis_stress_min, vis_stress_max;
+extern double vis_time;
+
+extern int vis_time_step, vis_cycle;
 extern int vis_image_freq;
 extern int vis_pixels_max;
 extern int vis_compositing;
