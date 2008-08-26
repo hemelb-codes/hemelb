@@ -469,7 +469,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 			  vz /= density;
 			  
 			  // conversion from lattice to physical units
-			  pressure *= REFERENCE_PRESSURE + ((density - 1.0) * Cs2) * pressure_par;
+			  pressure = REFERENCE_PRESSURE + ((density - 1.0) * Cs2) * pressure_par;
 			  vx *= velocity_par;
 			  vy *= velocity_par;
 			  vz *= velocity_par;
@@ -731,12 +731,13 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 			  vz /= density;
 			  
 			  // conversion from lattice to physical units
-			  pressure *= REFERENCE_PRESSURE + ((density - 1.0) * Cs2) * pressure_par;
+			  pressure = REFERENCE_PRESSURE + ((density - 1.0) * Cs2) * pressure_par;
 			  vx *= velocity_par;
 			  vy *= velocity_par;
 			  vz *= velocity_par;
 			  stress *= stress_par;
 			  
+			  printf ("density and pressure: %le, %le %le\n", density, pressure, pressure_par);
 			  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)pressure;
 			  local_flow_field[ MACROSCOPIC_PARS * period + 1 ] = (float)vx;
 			  local_flow_field[ MACROSCOPIC_PARS * period + 2 ] = (float)vy;
