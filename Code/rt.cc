@@ -2085,7 +2085,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
     {
       par1[l] = screen.dir1[l];
       par2[l] = screen.dir2[l];
-      screen_vtx[l] = screen.vtx[l] + 0.5F * par1[l] + 0.5F * par2[l];
+      screen_vtx[l] = screen.vtx[l];
     }
   scale_vec[0] = scale_vec[1] = screen.scale_x;
   scale_vec[2] = scale_vec[3] = screen.scale_y;
@@ -2136,10 +2136,10 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 		}
 	    }
 	}
-      subimage_pix[0] = (int)(scale_vec[0] * (subimage_vtx[0] + screen_max[0]));
-      subimage_pix[1] = (int)(scale_vec[1] * (subimage_vtx[1] + screen_max[1]));
-      subimage_pix[2] = (int)(scale_vec[2] * (subimage_vtx[2] + screen_max[2]));
-      subimage_pix[3] = (int)(scale_vec[3] * (subimage_vtx[3] + screen_max[3]));
+      subimage_pix[0] = (int)(scale_vec[0] * (subimage_vtx[0] + screen_max[0]) + 0.5F);
+      subimage_pix[1] = (int)(scale_vec[1] * (subimage_vtx[1] + screen_max[1]) + 0.5F);
+      subimage_pix[2] = (int)(scale_vec[2] * (subimage_vtx[2] + screen_max[2]) + 0.5F);
+      subimage_pix[3] = (int)(scale_vec[3] * (subimage_vtx[3] + screen_max[3]) + 0.5F);
       
       if (subimage_pix[0] >= pixels_x || subimage_pix[1] < 0 ||
 	  subimage_pix[2] >= pixels_y || subimage_pix[3] < 0)
@@ -2244,6 +2244,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      col_pixel.density  = ray_density;
 	      col_pixel.stress   = ray_stress;
 	      col_pixel.i        = i * (1 << 16) + j;
+	      col_pixel.i        |= RT;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -2276,6 +2277,125 @@ void rtEnd (void)
   free(cluster_voxel);
   
   free(cluster);
+}
+
+
+void glyInit (Net *net)
+{
+  int glyphs_max;
+  int site_i, site_j, site_k;
+  int i, j, k;
+  int m, n;
+  
+  DataBlock *map_block_p;
+  
+  
+  glyphs_max = 0;
+  
+  for (n = 0; n < blocks; n++)
+    {
+      if (net->map_block[ n ].site_data != NULL)
+	{
+	  ++glyphs_max;
+	}
+    }
+  glyph = (Glyph *)malloc(sizeof(Glyph) * glyphs_max);
+  
+  glyphs = 0;
+  
+  n = -1;
+  
+  for (i = 0; i < sites_x; i += block_size)
+    {
+      for (j = 0; j < sites_y; j += block_size)
+	{
+	  for (k = 0; k < sites_z; k += block_size)
+	    {
+	      map_block_p = &net->map_block[ ++n ];
+	      
+	      if (map_block_p->site_data == NULL) continue;
+	      
+	      site_i = (block_size >> 1);
+	      site_j = (block_size >> 1);
+	      site_k = (block_size >> 1);
+	      
+	      m = (((site_i << shift) + site_j) << shift) + site_k;
+	      
+	      if (map_block_p->site_data[ m ] & (1U << 31U)) continue;
+	      
+	      glyph[ glyphs ].x = (float)(i + site_i) - 0.5F * (float)sites_x;
+	      glyph[ glyphs ].y = (float)(j + site_j) - 0.5F * (float)sites_y;
+	      glyph[ glyphs ].z = (float)(k + site_k) - 0.5F * (float)sites_z;
+	      
+	      glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*15 ];
+	      ++glyphs;
+	    }
+	}
+    }
+}
+
+
+void glyGlyphs (void)
+{
+  double density;
+  double vx, vy, vz;
+  double temp;
+  
+  float screen_max[4];
+  float scale_vec[4];
+  float p1[3], p2[3], p3[3], p4[3];
+  
+  int n;
+  
+  
+  screen_max[0] = screen.max_x;
+  screen_max[1] = screen.max_x;
+  screen_max[2] = screen.max_y;
+  screen_max[3] = screen.max_y;
+  
+  scale_vec[0] = scale_vec[1] = screen.scale_x;
+  scale_vec[2] = scale_vec[3] = screen.scale_y;
+  
+  for (n = 0; n < glyphs; n++)
+    {
+      lbmDensityAndVelocity (glyph[ n ].f, &density, &vx, &vy, &vz);
+      
+      temp = sqrt(vx * vx + vy * vy + vz * vz);
+      
+      if (temp < 1.e-30)
+	{
+	  continue;
+	}
+      temp = 0.01F * (block_size * vis_velocity_threshold_max_inv) / (density * temp);
+      
+      vx *= temp;
+      vy *= temp;
+      vz *= temp;
+      
+      p1[0] = glyph[n].x;
+      p1[1] = glyph[n].y;
+      p1[2] = glyph[n].z;
+      
+      p2[0] = glyph[n].x + vx;
+      p2[1] = glyph[n].y + vy;
+      p2[2] = glyph[n].z + vz;
+      
+      visProject (p1, p3);
+      visProject (p2, p4);
+      
+      p3[0] = (int)(scale_vec[0] * (p3[0] + screen_max[0]));
+      p3[1] = (int)(scale_vec[1] * (p3[1] + screen_max[1]));
+      p4[0] = (int)(scale_vec[2] * (p4[0] + screen_max[2]));
+      p4[1] = (int)(scale_vec[3] * (p4[1] + screen_max[3]));
+      
+      visRenderLine (p3, p4);
+    }
+}     
+
+
+void glyEnd (void)
+{
+  free(glyph);
 }
 
 
@@ -2395,30 +2515,55 @@ void visProjection (float ortho_x, float ortho_y,
 }
 
 
+void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
+{
+  int pixel_status1 = PixelStatus (col_pixel1->i);
+  int pixel_status2 = PixelStatus (col_pixel2->i);
+  
+  if ((pixel_status1 != GLYPH) && (pixel_status2 != GLYPH))
+    {
+      col_pixel2->vel_r += col_pixel1->vel_r;
+      col_pixel2->vel_g += col_pixel1->vel_g;
+      col_pixel2->vel_b += col_pixel1->vel_b;
+      
+      col_pixel2->stress_r += col_pixel1->stress_r;
+      col_pixel2->stress_g += col_pixel1->stress_g;
+      col_pixel2->stress_b += col_pixel1->stress_b;
+      
+      if (col_pixel1->t < col_pixel2->t)
+	{
+	  col_pixel2->t       = col_pixel1->t;
+	  col_pixel2->density = col_pixel1->density;
+	  col_pixel2->stress  = col_pixel1->stress;
+	}
+      if (pixel_status1 == RT_AND_GLYPH)
+	{
+	  col_pixel2->i |= GLYPH;
+	}
+    }
+  else if ((pixel_status1 == GLYPH) && (pixel_status2 != GLYPH))
+    {
+      col_pixel2->i |= GLYPH;
+    }
+  else if ((pixel_status1 != GLYPH) && (pixel_status2 == GLYPH))
+    {
+      memcpy (col_pixel2, col_pixel1, sizeof(ColPixel));
+      col_pixel2->i |= RT;
+    }
+}
+
+
 void visWritePixel (ColPixel *col_pixel_p)
 {
   int *col_pixel_id_p, i, j;
   
   
-  i = PixelI(col_pixel_p->i);
-  j = PixelJ(col_pixel_p->i);
+  i = PixelI (col_pixel_p->i);
+  j = PixelJ (col_pixel_p->i);
   
   if (*(col_pixel_id_p = &col_pixel_id[ i * screen.pixels_y + j ]) != -1)
     {
-      col_pixel_send[ *col_pixel_id_p ].vel_r += col_pixel_p->vel_r;
-      col_pixel_send[ *col_pixel_id_p ].vel_g += col_pixel_p->vel_g;
-      col_pixel_send[ *col_pixel_id_p ].vel_b += col_pixel_p->vel_b;
-      
-      col_pixel_send[ *col_pixel_id_p ].stress_r += col_pixel_p->stress_r;
-      col_pixel_send[ *col_pixel_id_p ].stress_g += col_pixel_p->stress_g;
-      col_pixel_send[ *col_pixel_id_p ].stress_b += col_pixel_p->stress_b;
-      
-      if (col_pixel_p->t < col_pixel_send[ *col_pixel_id_p ].t)
-	{
-	  col_pixel_send[ *col_pixel_id_p ].t       = col_pixel_p->t;
-	  col_pixel_send[ *col_pixel_id_p ].density = col_pixel_p->density;
-	  col_pixel_send[ *col_pixel_id_p ].stress  = col_pixel_p->stress;
-	}
+      visMergePixels (col_pixel_p, &col_pixel_send[ *col_pixel_id_p ]);
     }
   else
     {
@@ -2442,33 +2587,22 @@ void visWritePixel (ColPixel *col_pixel_p)
 	}
       *col_pixel_id_p = col_pixels;
       
-      col_pixel_send[ col_pixels ].vel_r = col_pixel_p->vel_r;
-      col_pixel_send[ col_pixels ].vel_g = col_pixel_p->vel_g;
-      col_pixel_send[ col_pixels ].vel_b = col_pixel_p->vel_b;
-      
-      col_pixel_send[ col_pixels ].stress_r = col_pixel_p->stress_r;
-      col_pixel_send[ col_pixels ].stress_g = col_pixel_p->stress_g;
-      col_pixel_send[ col_pixels ].stress_b = col_pixel_p->stress_b;
-      
-      col_pixel_send[ col_pixels ].t       = col_pixel_p->t;
-      col_pixel_send[ col_pixels ].density = col_pixel_p->density;
-      col_pixel_send[ col_pixels ].stress  = col_pixel_p->stress;
-      
-      col_pixel_send[ col_pixels ].i = col_pixel_p->i;
+      memcpy (&col_pixel_send[ col_pixels ], col_pixel_p, sizeof(ColPixel));
       ++col_pixels;
     }
 }
 
 
-void rawWritePixel(ColPixel *col_pixel_p, unsigned int* pixel_index,
-		   unsigned char rgb_data[],
-		   void (*ColourPalette) (float value, float col[])) {
-
+void rawWritePixel (ColPixel *col_pixel_p, unsigned int* pixel_index,
+		    unsigned char rgb_data[],
+		    void (*ColourPalette) (float value, float col[])) {
+  
   float col[3];
   
   int bits_per_char = sizeof(char) * 8;
   int pixel_i, pixel_j;
-    
+  int pixel_status;
+  
   unsigned char r1, g1, b1;
   unsigned char r2, g2, b2;
   unsigned char r3, g3, b3;
@@ -2478,51 +2612,87 @@ void rawWritePixel(ColPixel *col_pixel_p, unsigned int* pixel_index,
   pixel_i = PixelI (col_pixel_p->i);
   pixel_j = PixelJ (col_pixel_p->i);
   
+  pixel_status = PixelStatus (col_pixel_p->i);
+  
   *pixel_index = (pixel_i << (2*bits_per_char)) + pixel_j;
   
-  // store velocity flow field
-  r1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_r));
-  g1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_g));
-  b1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_b));
-  
-  // store von Mises stress flow field
-  r2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_r));
-  g2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_g));
-  b2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_b));
-  
-  // store external density flow field at the wall
-  ColourPalette (col_pixel_p->density, col);
-  
-  r3 = (unsigned char)max(0, min(255, (int)(255.F * col[0])));
-  g3 = (unsigned char)max(0, min(255, (int)(255.F * col[1])));
-  b3 = (unsigned char)max(0, min(255, (int)(255.F * col[2])));
-  
-  // store von Mises stress flow field at the wall
-  ColourPalette (col_pixel_p->stress, col);
-  
-  r4 = (unsigned char)max(0, min(255, (int)(255.F * col[0])));
-  g4 = (unsigned char)max(0, min(255, (int)(255.F * col[1])));
-  b4 = (unsigned char)max(0, min(255, (int)(255.F * col[2])));
-  
-  
+  if (pixel_status != GLYPH)
+    {
+      // store velocity flow field
+      r1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_r));
+      g1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_g));
+      b1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_b));
+      
+      // store von Mises stress flow field
+      r2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_r));
+      g2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_g));
+      b2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_b));
+      
+      // store external density flow field at the wall
+      ColourPalette (col_pixel_p->density, col);
+      
+      if (pixel_status == RT_AND_GLYPH)
+	{
+	  col[0] = 0.5F * col[0];
+	  col[1] = 0.5F * col[1];
+	  col[2] = 0.5F * col[2];
+	}
+      else
+      	{
+      	  col[0] = 0.5F * (col[0] + 1.F);
+      	  col[1] = 0.5F * (col[1] + 1.F);
+      	  col[2] = 0.5F * (col[2] + 1.F);
+      	}
+      r3 = (unsigned char)max(0, min(255, (int)(255.F * col[0])));
+      g3 = (unsigned char)max(0, min(255, (int)(255.F * col[1])));
+      b3 = (unsigned char)max(0, min(255, (int)(255.F * col[2])));
+      
+      // store von Mises stress flow field at the wall
+      ColourPalette (col_pixel_p->stress, col);
+      
+      if (pixel_status == RT_AND_GLYPH)
+	{
+	  col[0] = 0.5F * col[0];
+	  col[1] = 0.5F * col[1];
+	  col[2] = 0.5F * col[2];
+	}
+      else
+      	{
+      	  col[0] = 0.5F * (col[0] + 1.F);
+      	  col[1] = 0.5F * (col[1] + 1.F);
+      	  col[2] = 0.5F * (col[2] + 1.F);
+     	}
+      r4 = (unsigned char)max(0, min(255, (int)(255.F * col[0])));
+      g4 = (unsigned char)max(0, min(255, (int)(255.F * col[1])));
+      b4 = (unsigned char)max(0, min(255, (int)(255.F * col[2])));
+    }
+  else
+    {
+      r1 = g1 = b1 = 255;
+      r2 = g2 = b2 = 255;
+      r3 = g3 = b3 = 0;
+      r4 = g4 = b4 = 0;
+    }
   rgb_data[0] = r1; rgb_data[1] = g1; rgb_data[2] = b1;
   rgb_data[3] = r2; rgb_data[4] = g2; rgb_data[5] = b2;
   rgb_data[6] = r3; rgb_data[7] = g3; rgb_data[8] = b3;
   rgb_data[9] = r4; rgb_data[10] = g4; rgb_data[11] = b4;
-
+  
   //pix_data[1] = (r1<<(3*bits_per_char)) + (g1<<(2*bits_per_char)) + (b1<<bits_per_char) + r2;
   //pix_data[2] = (g2<<(3*bits_per_char)) + (b2<<(2*bits_per_char)) + (r3<<bits_per_char) + g3;
   //pix_data[3] = (b3<<(3*bits_per_char)) + (r4<<(2*bits_per_char)) + (g4<<bits_per_char) + b4;
 }
-  
+
+
 void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (float value, float col[]))
 {
   unsigned int index;
   unsigned int pix_data[3];
   unsigned char rgb_data[12];
   int bits_per_char = sizeof(char) * 8;
-
-  rawWritePixel(col_pixel_p, &index, rgb_data, ColourPalette);
+  
+  
+  rawWritePixel (col_pixel_p, &index, rgb_data, ColourPalette);
 
   xdr_u_int (xdr_p, &index);
 
@@ -2549,6 +2719,137 @@ void visConvertThresholds (float physical_velocity_max, float physical_stress_ma
   
   *lattice_stress_max = physical_stress_max * (useful_factor * useful_factor *
 					       lbm->voxel_size * lbm->voxel_size) / BLOOD_DENSITY;
+}
+
+
+void visRenderLine (float p1[], float p2[])
+{
+  int pixels_x, pixels_y;
+  int x, y;
+  int x1, y1;
+  int x2, y2;
+  int dx, dy;
+  int incE, incNE;
+  int d;
+  int m;
+  
+  ColPixel col_pixel;
+  
+  
+  pixels_x = screen.pixels_x;
+  pixels_y = screen.pixels_y;
+  
+  x1 = (int)p1[0];
+  y1 = (int)p1[1];
+  
+  x2 = (int)p2[0];
+  y2 = (int)p2[1];
+  
+  if (x2 < x1)
+    {
+      x = x1;
+      y = y1;
+      x1 = x2;
+      y1 = y2;
+      x2 = x;
+      y2 = y;
+    }
+  x = x1;
+  y = y1;
+  
+  if (y1 < y2)
+    {
+      dy = y2 - y1;
+      m = 1;
+    }
+  else
+    {
+      dy = y1 - y2;
+      m = -1;
+    }
+  dx = x2 - x1;
+    
+  if (dx > dy)
+    {
+      incE = dy;
+      d = dy - dx;
+      incNE = d;
+      
+      while (x <= x2)
+	{
+	  if (!(x < 0 || x >= pixels_x ||
+		y < 0 || y >= pixels_y))
+	    {
+	      col_pixel.i = (x * (1 << 16) + y) | GLYPH;
+	      
+	      visWritePixel (&col_pixel);
+	    }
+	  if (d < 0)
+	    {
+	      d += incE;
+	    }
+	  else
+	    {
+	      d += incNE;
+	      y += m;
+	    }
+	  ++x;
+	}
+    }
+  else if (y1 < y2)
+    {
+      incE = dx;
+      d = dx - dy;
+      incNE = d;
+      
+      while (y <= y2)
+	{
+	  if (!(x < 0 || x >= pixels_x ||
+		y < 0 || y >= pixels_y))
+	    {
+	      col_pixel.i = (x * (1 << 16) + y) | GLYPH;
+	      
+	      visWritePixel (&col_pixel);
+	    }
+	  if (d < 0)
+	    {
+	      d += incE;
+	    }
+	  else
+	    {
+	      d += incNE;
+	      ++x;
+	    }
+	  ++y;
+	}
+    }
+  else
+    {
+     incE = dx;
+      d = dx - dy;
+      incNE = d;
+      
+      while (y >= y2)
+	{
+	  if (!(x < 0 || x >= pixels_x ||
+		y < 0 || y >= pixels_y))
+	    {
+	      col_pixel.i = (x * (1 << 16) + y) | GLYPH;
+	      
+	      visWritePixel (&col_pixel);
+	    }
+	  if (d < 0)
+	    {
+	      d += incE;
+	    }
+	  else
+	    {
+	      d += incNE;
+	      ++x;
+	    }
+	  --y;
+	}
+    }
 }
 
 
@@ -2644,10 +2945,19 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
       density_max = fmaxf(density_max, outlet_density_avg[ i ] + outlet_density_amp[ i ]);
     }
   vis_density_threshold_min = density_min;
-  vis_density_threshold_minmax_inv = 1.F / (density_max - density_min);
   
-  vis_velocity_threshold_max_inv = 1.F / velocity_max;
-  vis_stress_threshold_max_inv   = 1.F / stress_max;
+  if (!is_bench)
+    {
+      vis_density_threshold_minmax_inv = 1.F / (density_max - density_min);
+      vis_velocity_threshold_max_inv = 1.F / velocity_max;
+      vis_stress_threshold_max_inv   = 1.F / stress_max;
+    }
+  else
+    {
+      vis_density_threshold_minmax_inv = 1.F;
+      vis_velocity_threshold_max_inv = 1.F;
+      vis_stress_threshold_max_inv = 1.F;
+    }
   
   vis_image_freq = lbm->period / 100;
 }
@@ -2720,6 +3030,8 @@ void visInit (Net *net, Vis *vis)
 #endif
   
   rtInit (net);
+  
+  glyInit (net);
   
   vis_ctr_x -= vis->half_dim[0];
   vis_ctr_y -= vis->half_dim[1];
@@ -2836,20 +3148,7 @@ void visCompositeImage (Net *net)
 		    {
 		      col_pixel2 = &col_pixel_recv[ *col_pixel_id_p ];
 		      
-		      col_pixel2->vel_r += col_pixel1->vel_r;
-		      col_pixel2->vel_g += col_pixel1->vel_g;
-		      col_pixel2->vel_b += col_pixel1->vel_b;
-		      
-		      col_pixel2->stress_r += col_pixel1->stress_r;
-		      col_pixel2->stress_g += col_pixel1->stress_g;
-		      col_pixel2->stress_b += col_pixel1->stress_b;
-		      
-		      if (col_pixel1->t < col_pixel2->t)
-			{
-			  col_pixel2->t       = col_pixel1->t;
-			  col_pixel2->density = col_pixel1->density;
-			  col_pixel2->stress  = col_pixel1->stress;
-			}
+		      visMergePixels (col_pixel1, col_pixel2);
 		    }
 		}
 	    }
@@ -2857,8 +3156,7 @@ void visCompositeImage (Net *net)
 	    {
 	      if (net->id == recv_id)
 		{
-		  memcpy (col_pixel_send, col_pixel_recv,
-			  col_pixels * sizeof(ColPixel));
+		  memcpy (col_pixel_send, col_pixel_recv, col_pixels * sizeof(ColPixel));
 		}
 	    }
 	  recv_id += comm_inc << 1;
@@ -2888,6 +3186,8 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net)
   col_pixels = 0;
   
   rtRayTracing (ColourPalette);
+  
+  glyGlyphs ();
   
   if (!vis_compositing)
     {
@@ -2922,8 +3222,7 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net)
 #endif
       if (col_pixels > 0)
 	{
-	  memcpy (col_pixel_send, col_pixel_recv,
-		  col_pixels * sizeof(ColPixel));
+	  memcpy (col_pixel_send, col_pixel_recv, col_pixels * sizeof(ColPixel));
 #ifndef NOMPI
 	  net->err = MPI_Isend (col_pixel_send,
 				col_pixels, MPI_col_pixel_type,
@@ -3041,20 +3340,7 @@ void visRenderB (int write_image, char *image_file_name,
 		    {
 		      col_pixel2 = &col_pixel_recv[ *col_pixel_id_p ];
 		      
-		      col_pixel2->vel_r += col_pixel1->vel_r;
-		      col_pixel2->vel_g += col_pixel1->vel_g;
-		      col_pixel2->vel_b += col_pixel1->vel_b;
-		      
-		      col_pixel2->stress_r += col_pixel1->stress_r;
-		      col_pixel2->stress_g += col_pixel1->stress_g;
-		      col_pixel2->stress_b += col_pixel1->stress_b;
-		      
-		      if (col_pixel1->t < col_pixel2->t)
-			{
-			  col_pixel2->t       = col_pixel1->t;
-			  col_pixel2->density = col_pixel1->density;
-			  col_pixel2->stress  = col_pixel1->stress;
-			}
+		      visMergePixels (col_pixel1, col_pixel2);
 		    }
 		}
 	    }
@@ -3075,6 +3361,10 @@ void visRenderB (int write_image, char *image_file_name,
   
   for (n = 0; n < col_pixels; n++)
     {
+      if (PixelStatus (col_pixel_recv[ n ].i) == GLYPH)
+	{
+	  continue;
+	}
       col_pixel_recv[ n ].vel_r *= (255.F * vis_brightness);
       col_pixel_recv[ n ].vel_g *= (255.F * vis_brightness);
       col_pixel_recv[ n ].vel_b *= (255.F * vis_brightness);
@@ -3115,6 +3405,8 @@ void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
 
 void visEnd (void)
 {
+  glyEnd ();
+  
   rtEnd ();
   
   free(col_pixel_id);

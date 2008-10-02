@@ -81,7 +81,6 @@ int *f_recv_iv = NULL;
 
 short int *f_data = NULL;
 
-
 unsigned int *net_site_data = NULL;
 
 double *inlet_density = NULL;
@@ -100,6 +99,9 @@ int *col_pixel_id = NULL;
 ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
 ColPixel *col_pixel_recv = NULL;
 ColPixel *col_pixel_lock = NULL;
+//ColPixel *col_pixel_lock;
+
+Glyph *glyph = NULL;
 
 
 int is_bench;
@@ -161,8 +163,10 @@ float ray_t_min;
 float ray_density;
 float ray_stress;
 
-
 int clusters;
+
+
+int glyphs;
 
 
 Screen screen;
