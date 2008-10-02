@@ -61,9 +61,16 @@
 					             // beats per min
 #define TOL                            1.e-6
 
+// the last two digits of the pixel identifier are used to indicate if
+// the pixel is coloured via the ray tracing technique or a glyph or
+// both
+#define RT               (1 << 29)
+#define GLYPH            (1 << 30)
+#define RT_AND_GLYPH     ((1 << 29) | (1 << 30))
 
-#define PixelI(i)   (i >> 16)
-#define PixelJ(i)   (i & 65535)
+#define PixelStatus(i)   (i & ((1 << 29) | (1 << 30)))
+#define PixelI(i)        ((i >> 16) & 8191)
+#define PixelJ(i)        (i & 65535)
 
 
 extern double PI;
@@ -248,6 +255,14 @@ struct Cluster
 };
 
 
+struct Glyph
+{
+  float x, y, z;
+  
+  double *f;
+};
+
+
 struct Vis
 {
   char *image_file_name;
@@ -327,6 +342,8 @@ extern ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
 extern ColPixel *col_pixel_recv;
 //extern ColPixel *col_pixel_lock;
 
+extern Glyph *glyph;
+
 
 extern int is_bench;
 
@@ -390,6 +407,9 @@ extern float ray_stress;
 extern int clusters;
 
 
+extern int glyphs;
+
+
 extern Screen screen;
 
 extern Viewpoint viewpoint;
@@ -444,11 +464,17 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]));
 void rtEnd (void);
 
 
+void glyInit (Net *net);
+void glyGlyphs (void);
+void glyEnd (void);
+
+
 void visProject (float p1[], float p2[]);
 void visWritePixel (ColPixel *col_pixel);
 void rawWritePixel(ColPixel*, unsigned int*, unsigned char [],
 		   void (*ColourPalette) (float, float []));
 void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (float value, float col[]));
+void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2);
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,
 		float  x1, float  y1, float  z1,
@@ -460,6 +486,7 @@ void visProjection (float ortho_x, float ortho_y,
 		    float longitude, float latitude,
 		    float dist,
 		    float zoom);
+void visRenderLine (float x1[], float x2[]);
 void visInit (Net *net, Vis *vis);
 void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net);
 void visRenderB (int write_image, char *image_file_name,
