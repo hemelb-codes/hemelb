@@ -443,6 +443,8 @@ void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, doubl
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm);
+int lbmIsUnstable (Net *net);
+void lbmRestart (LBM *lbm, Net *net);
 void lbmEnd (LBM *lbm);
 
 int netFindTopology (Net *net, int *depths);
