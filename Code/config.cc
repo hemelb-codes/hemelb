@@ -34,7 +34,7 @@ unsigned int CHARACTERISTIC_MASK  = 1U << 31U;
 
 // square of the speed of sound
 
-double Cs2 = 3.0 / 8.0;
+double Cs2 = 1.0 / 3.0;
 
 
 // parameters related to the lattice directions
