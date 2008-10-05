@@ -1,6 +1,3 @@
-// In this file, the functions useful to initiate/end the LB simulation
-// and perform the dynamics are reported
-
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -35,6 +32,9 @@ int main (int argc, char *argv[])
   double fluid_solver_time;
   double fluid_solver_and_vis_time;
   double vis_without_compositing_time;
+  double steering_and_vis_time;
+  double io_time, other_time;
+  double start_time, end_time;
   
   int cycle_id;
   int total_time_steps, time_step, stability = STABLE;
@@ -104,6 +104,8 @@ int main (int argc, char *argv[])
   char procs_string[256];
   char image_name[256];
   char output_directory[256];
+  char snapshot_directory[256];
+  char rm_files[256];
   
   strcpy ( input_config_name , input_file_path );
   strcat ( input_config_name , "/config.dat" );
@@ -123,9 +125,14 @@ int main (int argc, char *argv[])
   // Create directory for the output images
   strcpy (output_directory, input_file_path);
   strcat (output_directory, "/Images/");
-  mkdir  (output_directory, 0777);
+  if (net.id == 0) mkdir  (output_directory, 0777);
   strcpy (output_image_name, output_directory);
-
+  
+  //Create directory for the output snapshots
+  strcpy (snapshot_directory, input_file_path);
+  strcat (snapshot_directory, "/Snapshots/");
+  if (net.id == 0) mkdir  (snapshot_directory, 0777);
+  
   sprintf ( procs_string, "%i", net.procs);
   strcpy ( timings_name , input_file_path );
   strcat ( timings_name , "/timings" );
@@ -181,6 +188,18 @@ int main (int argc, char *argv[])
   
   visReadParameters (vis_parameters_name, &lbm, &net, &vis);
   
+  if (net.id == 0)
+    {
+      strcpy (rm_files, "rm ");
+      strcat (rm_files, snapshot_directory);
+      strcat (rm_files, "*");
+      system (rm_files);
+      
+      strcpy (rm_files, "rm ");
+      strcat (rm_files, output_directory);
+      strcat (rm_files, "*");
+      system (rm_files);
+    }
   
   if (!is_bench)
     {
@@ -189,21 +208,24 @@ int main (int argc, char *argv[])
       total_time_steps = 0;
       
       simulation_time = myClock ();
+      fluid_solver_time = 0.;
+      steering_and_vis_time = myClock ();
+      io_time = 0.;
+      other_time = 0.;
       
       for (cycle_id = 1; cycle_id <= lbm.cycles_max && !is_finished; cycle_id++)
 	{
+	  int restart = 0;
+	  
 	  for (time_step = 1; time_step <= lbm.period; time_step++)
 	    {
 	      int write_image = 0;
-	      int stream_image = 0; 
+	      // int stream_image = 0; 
 	      int lock_return = 0;
 	      
-	      total_time_steps++;
+	      ++total_time_steps;
 	      
-	      if (time_step%vis_image_freq == 0)
-		{
-		  // A write_image = 1;
-		}
+	      // if (time_step%vis_image_freq == 0) write_image = 1;
 	      
 	      if (net.id == 0)
 		{
@@ -219,18 +241,12 @@ int main (int argc, char *argv[])
 		  }
 		  // printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
 		}
+	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
 	      
-	      if (total_time_steps%1 == 0)
-		{
-		  UpdateSteerableParameters (&doRendering, &vis, &lbm);
-		}
+	      // if (write_image) doRendering = 1;
 	      
-	      if (stream_image || write_image)
-		{
-		  doRendering = 1;
-		}
-	      // printf (" doRendering: %i\n", doRendering);
-	      // Between the visRenderA/B calls, do not change any vis
+	      // printf (" doRendering: %i\n", doRendering); Between
+	      // the visRenderA/B calls, do not change any vis
 	      // parameters.
 	      
 	      // if(setRendering==1) { doRendering = 1; setRendering = 0; }
@@ -239,20 +255,43 @@ int main (int argc, char *argv[])
 		{
 		  visRenderA (ColourPalette, &net);
 		}
-
 	      lbmVaryBoundaryDensities (cycle_id, time_step, &lbm);
 	      
 	      if (!check_conv)
 		{
+		  start_time = myClock ();
+		  
 		  stability = lbmCycle (cycle_id, time_step, doRendering, &lbm, &net);
+		  
+		  if ((restart = lbmIsUnstable (&net)) != 0)
+		    {
+		      end_time = myClock ();
+		      fluid_solver_time += end_time - start_time;
+		      break;
+		    }
+		  end_time = myClock ();
+		  fluid_solver_time += end_time - start_time;
 		}
 	      else
 		{
+		  start_time = myClock ();
+		  
 		  stability = lbmCycleConv (cycle_id, time_step, doRendering, &lbm, &net);
+		  
+		  end_time = myClock ();
+		  fluid_solver_time += end_time - start_time;
+		  
+		  if (stability == UNSTABLE)
+		    {
+		      restart = 1;
+		      break;
+		    }
 		}
 	      /*
 	      if (write_image)
 		{
+		  start_time = myClock ();
+		  
 		  char time_step_string[256];
 		  
 		  // At this point output_image_name is appended with
@@ -269,6 +308,9 @@ int main (int argc, char *argv[])
 		  sprintf ( time_step_string, "%i", time_step);
 		  strcat ( image_name , time_step_string );
 		  strcat ( image_name , ".dat" );
+		  
+		  end_time = myClock ();
+		  io_time += end_time - start_time;
 		}
 	      */
 	      if (doRendering)
@@ -285,40 +327,32 @@ int main (int argc, char *argv[])
 			}
 		    }
 		}
-	      
-	      if (time_step % 25000 == 0 ) {
-                char snapshot_filename[255];
-		snprintf(snapshot_filename, 255, "snapshot_%06i.asc", time_step);
-                //if(net.id == 0) { printf("writing binary file %s....\n", snapshot_filename); fflush(NULL); }
-                lbmWriteConfigASCII (stability, snapshot_filename, &lbm, &net);
-                //if(net.id == 0) { printf("done writing binary.\n"); fflush(NULL); }
-              }  
-	      
+	      if (time_step%10000 == 0)
+		{
+		  start_time = myClock ();
+		  
+		  char snapshot_filename[255];
+		  char complete_snapshot_name[255];
+		  
+		  snprintf(snapshot_filename, 255, "snapshot_%06i.asc", time_step);
+		  strcpy ( complete_snapshot_name, snapshot_directory );
+		  strcat ( complete_snapshot_name, snapshot_filename );
+		  
+		  lbmWriteConfigASCII (stability, complete_snapshot_name, &lbm, &net);
+		  
+		  end_time = myClock ();
+		  io_time += end_time - start_time;
+		}
 	      if (net.id == 0)
 		{
-		  // printf("done cycle...\n"); fflush(0x0);
 		  if(doRendering==1) {
-		    //printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
+		    // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
 		    pthread_mutex_unlock (&LOCK);
 		    pthread_cond_signal (&network_send_frame);
-		    //printf("...signal sent\n"); fflush(0x0);
+		    // printf("...signal sent\n"); fflush(0x0);
 		    doRendering=0;
 		  }
 		} 
-	      
-	      if (stability == UNSTABLE)
-		{
-		  printf (" ATTENTION: INSTABILITY CONDITION OCCURRED\n");
-		  printf (" AFTER %i total time steps\n", total_time_steps);
-		  printf (" EXECUTION IS ABORTED\n");
-#ifndef NOMPI
-		  MPI_Abort (MPI_COMM_WORLD, 1);
-#else
-		  exit(1);
-#endif
-		  is_finished = 1;
-		  break;
-		}
 	      if (stability == STABLE_AND_CONVERGED)
 		{
 		  is_finished = 1;
@@ -331,9 +365,40 @@ int main (int argc, char *argv[])
 		}
 	      if (net.id == 0)
 		{
-		  //printf ("time step: %i\n", time_step);
+		  // printf ("time step: %i\n", time_step);
 		}
 	    }
+	  if (restart)
+	    {
+	      start_time = myClock ();
+	      
+	      lbmRestart (&lbm, &net);
+	      
+	      if (net.id == 0)
+		{
+		  strcpy (rm_files, "rm ");
+		  strcat (rm_files, snapshot_directory);
+		  strcat (rm_files, "*");
+		  system (rm_files);
+		  
+		  strcpy (rm_files, "rm ");
+		  strcat (rm_files, output_directory);
+		  strcat (rm_files, "*");
+		  system (rm_files);
+		}
+	      if (net.id == 0)
+		{
+		  printf ("restarting: period: %i\n", lbm.period);
+		  fflush (0x0);
+		}
+	      cycle_id = 1;
+	      
+	      end_time = myClock ();
+	      other_time += end_time - start_time;
+	      continue;
+	    }
+	  start_time = myClock ();
+	  
 	  lbmCalculateFlowFieldValues (cycle_id, lbm.period, &lbm);
 	  
 	  if (net.id == 0)
@@ -350,7 +415,22 @@ int main (int argc, char *argv[])
 		}
 	      fflush(NULL);
 	    }
+	  end_time = myClock ();
+	  other_time += end_time - start_time;
 	}
+      if (net.procs > 1)
+	{
+	  if (net.id == 1)
+	    {
+	      MPI_Send (&fluid_solver_time, 1, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
+	    }
+	  else if (net.id == 0)
+	    {
+	      MPI_Recv (&fluid_solver_time, 1, MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, net.status);
+	    }
+	}
+      steering_and_vis_time = myClock ()-steering_and_vis_time-fluid_solver_time-io_time-other_time;
+      
       simulation_time = myClock () - simulation_time;
       time_step = (min(time_step, lbm.period)) * min(cycle_id, lbm.cycles_max);
     }
@@ -537,6 +617,10 @@ int main (int argc, char *argv[])
       total_time = myClock () - total_time;
       fprintf (timings_ptr, "total time (s):                            %.3f\n\n", total_time);
       
+      if (net.procs > 1)
+	{
+	  fprintf (timings_ptr, "(vis+steering time) / fluid solver time: %.3e\n", steering_and_vis_time);
+	}
       fprintf (timings_ptr, "Sub-domains info:\n\n");
       
       for (int n = 0; n < net.procs; n++)
