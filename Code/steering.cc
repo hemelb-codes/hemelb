@@ -37,6 +37,12 @@ float steer_par[STEERABLE_PARAMETERS+1] = {0.,0.,0.,    // scene center (dx,dy,d
 					   0.,          // signal useful to terminate the simulation
 					   0.};         // doRendering
 
+double frameTiming() {
+  struct timeval time_data;
+  gettimeofday (&time_data, NULL);
+  return (double)time_data.tv_sec + (double)time_data.tv_usec / 1.e6;
+}
+
 void *hemeLB_network (void *ptr) {
 
   setRenderState(0);
@@ -138,6 +144,8 @@ void *hemeLB_network (void *ptr) {
       setRenderState(0);
 	  
 	  printf("THREAD: received signal that frame is ready to send..\n"); fflush(0x0);
+
+	double frameTimeStart = frameTiming();		
 	  
 	  int bytesSent = 0;
 	  
@@ -192,6 +200,20 @@ void *hemeLB_network (void *ptr) {
 	  
 	  xdr_destroy (&xdr_network_stream_frame_details);
 	  xdr_destroy (&xdr_network_stream_pixel_data);
+
+        double frameTimeSend = frameTiming() - frameTimeStart;
+
+        printf("Time to send frame = %0.6f s\n", frameTimeSend);
+
+        double timeDiff = (1.0/25.0) - frameTimeSend;
+
+        if( timeDiff > 0.0 ) {
+
+                printf("Sleeping for %0.6f s\n", timeDiff);
+
+                usleep(timeDiff*1.0e6);
+
+        }
 	  
 	  pthread_mutex_unlock ( &LOCK );
 	  
