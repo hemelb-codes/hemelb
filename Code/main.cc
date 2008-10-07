@@ -188,6 +188,7 @@ int main (int argc, char *argv[])
   
   visReadParameters (vis_parameters_name, &lbm, &net, &vis);
   
+  // OUCH!!!! This needs to be changed - SM
   if (net.id == 0)
     {
       strcpy (rm_files, "rm ");
@@ -365,7 +366,7 @@ int main (int argc, char *argv[])
 		}
 	      if (net.id == 0)
 		{
-		  // printf ("time step: %i\n", time_step);
+		   printf ("time step: %i\n", time_step);
 		}
 	    }
 	  if (restart)
