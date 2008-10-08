@@ -27,7 +27,7 @@ public class VizStandalone extends javax.swing.JFrame {
 		String h = "localhost";
 		int p = 65250;
 		int w = 1024*1024;
-		
+		String resourceID = null;
 		switch (args.length) {
 		case 3:
 			w = Integer.parseInt(args[2]);
@@ -35,9 +35,18 @@ public class VizStandalone extends javax.swing.JFrame {
 			p = Integer.parseInt(args[1]);
 		case 1:
 			h = args[0];
+			if (args[0].equals("-r")) {
+				resourceID = args[1];
+			}
 		}
 		
-		VizSteererWindow vs = new VizSteererWindow(h,p,w, null);
+		VizSteererWindow vs;
+		if (resourceID != null) {
+			vs = new VizSteererWindow(resourceID,w, null);
+
+		} else {
+			vs = new VizSteererWindow(h,p,w, null);
+		}
 		vs.setLocationRelativeTo(null);
 		vs.setVisible(true);
 		vs.addWindowListener( new WindowAdapter() {

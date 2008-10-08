@@ -59,6 +59,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	private String hostname;
 	private int port, window;
 	private Component parent;
+	private boolean rendezvousing = false;
 	private JCheckBoxMenuItem rotateMenuItem;
 	/**
 	* Auto-generated main method to display this JFrame
@@ -72,6 +73,32 @@ public class VizSteererWindow extends javax.swing.JFrame {
 
 
 
+	}
+
+	public VizSteererWindow(String resourceID, int window, Component parent) {
+		super();
+		this.window = window;
+		initGUI();
+		this.parent = parent;
+		this.setLocationRelativeTo(parent);
+		this.setVisible(true);
+		rendezvousing = true;
+		//poll for ID
+		String service = "http://bunsen.chem.ucl.ac.uk:28080/ahe/test/rendezvous";
+		HttpGetPoll hgp = new HttpGetPoll(service, resourceID);
+
+		vg.appendNotification("Polling rendezvous service for connection data\n");
+		
+		if (hgp.pollService(5)) {
+		port=hgp.getPort();
+		hostname= hgp.getHost();
+		vg.appendNotification("Found sim listening at " + hostname + ":" + port + "\n");
+		vg.setHostPort(port, hostname);
+		vg.startReceive();		
+		} else {
+			vg.appendNotification("Couldn't rendezvous with HemeLB simulation");
+		}
+		rendezvousing = false;
 	}
 	
 	public VizSteererWindow(String hostname, int port, int window, Component parent) {
@@ -119,12 +146,19 @@ public class VizSteererWindow extends javax.swing.JFrame {
 					connectMenu.setText("Connection");
 					connectMenu.addMenuListener(new MenuListener () {
 						public void menuSelected (MenuEvent e) {
-							if (vg.isConnected() ){
+							if (vg.isConnected() && rendezvousing == false){
 								connectMenuItem.setEnabled(false);
 								disconnectMenuItem.setEnabled(true);
-							} else {
+								hostMenuItem.setEnabled(true);
+							} else if (!vg.isConnected() && rendezvousing == false) {
 								connectMenuItem.setEnabled(true);
 								disconnectMenuItem.setEnabled(false);
+								hostMenuItem.setEnabled(true);
+							} else {
+								connectMenuItem.setEnabled(false);
+								disconnectMenuItem.setEnabled(false);
+								hostMenuItem.setEnabled(false);
+
 							}
 						}
 						
