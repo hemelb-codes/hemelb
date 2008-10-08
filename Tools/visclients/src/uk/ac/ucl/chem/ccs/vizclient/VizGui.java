@@ -93,6 +93,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 	}
 	
+	public void appendNotification (String message) {
+		notificationArea.append(message);
+		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+	}
+	
 	public boolean startReceive() {
 		if (!connected) {
 		nr = new DirectBiConnection (port, hostname, window);
