@@ -366,6 +366,7 @@ int main (int argc, char *argv[])
 		}
 	      if (net.id == 0)
 		{
+	      if (time_step%10 == 0)
 		   printf ("time step: %i\n", time_step);
 		}
 	    }

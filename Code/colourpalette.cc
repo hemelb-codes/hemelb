@@ -8,3 +8,4 @@ void ColourPalette (float value, float col[])
   col[2] = fmaxf(0.F, 1.F - value);
 }
 
+

@@ -5,6 +5,19 @@ void (*rtAABBvsRay[2][2][2]) (AABB *aabb, float inv_x, float inv_y, float inv_z,
 
 void (*rtTraverseBlocks[2][2][2]) (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]));
 
+void visUpdateImageSize (int pixels_x, int pixels_y)
+{
+  if (pixels_x * pixels_y > screen.pixels_x * screen.pixels_y)
+    {
+      vis_pixels_max = pixels_x * pixels_y;
+      col_pixel_id = (int *)realloc(col_pixel_id, sizeof(int) * vis_pixels_max);
+    }
+      
+    for (int i = 0; i < pixels_x * pixels_y; i++)
+	{
+	  col_pixel_id[ i ] = -1;
+	}
+}
 
 void rtAABBvsRay000 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
 {
@@ -2517,8 +2530,11 @@ void visProjection (float ortho_x, float ortho_y,
 
 void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 {
-  int pixel_status1 = PixelStatus (col_pixel1->i);
-  int pixel_status2 = PixelStatus (col_pixel2->i);
+//  int pixel_status1 = PixelStatus (col_pixel1->i);
+//  int pixel_status2 = PixelStatus (col_pixel2->i);
+
+	int pixel_status1 = (col_pixel1->i & ((1 << 29) | (1 << 30)));
+	int pixel_status2 = (col_pixel2->i & ((1 << 29) | (1 << 30)));
   
   if ((pixel_status1 != GLYPH) && (pixel_status2 != GLYPH))
     {
@@ -2569,17 +2585,13 @@ void visWritePixel (ColPixel *col_pixel_p)
     {
       if (col_pixels >= COLOURED_PIXELS_PER_PROC_MAX)
 	{
-	  printf (" too many coloured pixels per proc\n");
-	  printf (" the execution is terminated\n");
-#ifndef NOMPI
-	  MPI_Abort (MPI_COMM_WORLD, 1);
-#else
-	  exit(1);
-#endif
+          return;
 	}
+
       if (col_pixels == col_pixels_max)
 	{
 	  col_pixels_max *= 2;
+          col_pixels_max = min(col_pixels_max, COLOURED_PIXELS_PER_PROC_MAX);
 	  // col_pixel_send = (ColPixel *)realloc(col_pixel_send,
 	  // 				       sizeof(ColPixel) * col_pixels_max * max(1, (net_machines - 1)));
 	  col_pixel_recv = (ColPixel *)realloc(col_pixel_recv,
@@ -3272,7 +3284,6 @@ void visRenderB (int write_image, char *image_file_name,
 
   ColPixel *col_pixel1, *col_pixel2;
   
-  
   if (!vis_compositing) return;
   
   pixels_y = screen.pixels_y;
@@ -3287,7 +3298,7 @@ void visRenderB (int write_image, char *image_file_name,
 	}
       if (net->id != 0 && net->id != master_proc_id)
 	{
-	  for (m = 0; m < IMAGE_SIZE; m++)
+	  for (m = 0; m < screen.pixels_x * screen.pixels_y; m++)
 	    {
 	      col_pixel_id[ m ] = -1;
 	    }

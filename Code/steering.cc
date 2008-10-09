@@ -33,6 +33,9 @@ float steer_par[STEERABLE_PARAMETERS+1] = {0.,0.,0.,    // scene center (dx,dy,d
 					   45.0,45.0,   // longitude and latitude
 					   1., 0.03,    // zoom and brightness
 					   0.1, 0.1,    // velocity and stress ranges
+					   0.0, 0.1,    // Minimum pressure and maximum pressure for Colour mapping
+                                           0.0,         // Glyph length
+                                           512, 512,    // Rendered frame size, pixel x and pixel y
 					   -1., -1.,    // x-y position of the mouse of the client
 					   0.,          // signal useful to terminate the simulation
 					   0.};         // doRendering
@@ -231,13 +234,13 @@ void* hemeLB_steer (void* ptr)
   long int read_fd = (long int)ptr;
   
   printf("Kicking off steering thread with FD %i\n", (int)read_fd);
-  
+
+  int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
+  int bytes = sizeof(char) * num_chars;
+
+  char* xdr_steering_data = (char*)malloc(bytes);
+
   while(1) {
-    
-    int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
-    int bytes = sizeof(char) * num_chars;
-    
-    char* xdr_steering_data = (char*)malloc(bytes);
     
     XDR xdr_steering_stream;
     
@@ -253,12 +256,17 @@ void* hemeLB_steer (void* ptr)
     for (int i = 0; i < STEERABLE_PARAMETERS; i++)
       xdr_float(&xdr_steering_stream, &steer_par[i]);
     
-    // printf("Got steering params ");
-    // for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
-    //   printf("%0.4f ", steer_par[i]);
-    // printf("\n"); 
+    	 printf("Got steering params ");
+     for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
+       printf("%0.4f ", steer_par[i]);
+     printf("\n"); 
     
-    free(xdr_steering_data);
+    xdr_destroy(&xdr_steering_stream);
+
   }
+
+  free(xdr_steering_data);
+
   return 0;
+
 }
