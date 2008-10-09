@@ -49,7 +49,7 @@
 #define PIXELS_Y                       512
 #define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
 #define IMAGE_SIZE                     PIXELS_X * PIXELS_Y
-#define STEERABLE_PARAMETERS           12
+#define STEERABLE_PARAMETERS           17
 
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
@@ -490,6 +490,7 @@ void visProjection (float ortho_x, float ortho_y,
 		    float zoom);
 void visRenderLine (float x1[], float x2[]);
 void visInit (Net *net, Vis *vis);
+void visUpdateImageSize (int pixels_x, int pixels_y);
 void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net);
 void visRenderB (int write_image, char *image_file_name,
 		 void (*ColourPalette) (float value, float col[]), Net *net);
