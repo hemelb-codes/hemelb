@@ -5,19 +5,6 @@ void (*rtAABBvsRay[2][2][2]) (AABB *aabb, float inv_x, float inv_y, float inv_z,
 
 void (*rtTraverseBlocks[2][2][2]) (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]));
 
-void visUpdateImageSize (int pixels_x, int pixels_y)
-{
-  if (pixels_x * pixels_y > screen.pixels_x * screen.pixels_y)
-    {
-      vis_pixels_max = pixels_x * pixels_y;
-      col_pixel_id = (int *)realloc(col_pixel_id, sizeof(int) * vis_pixels_max);
-    }
-      
-    for (int i = 0; i < pixels_x * pixels_y; i++)
-	{
-	  col_pixel_id[ i ] = -1;
-	}
-}
 
 void rtAABBvsRay000 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
 {
@@ -2345,6 +2332,7 @@ void glyInit (Net *net)
 	    }
 	}
     }
+  vis_glyph_length = 1.F;
 }
 
 
@@ -2355,7 +2343,7 @@ void glyGlyphs (void)
   double temp;
   
   float screen_max[4];
-  float scale_vec[4];
+  float scale[4];
   float p1[3], p2[3], p3[3], p4[3];
   
   int n;
@@ -2366,20 +2354,14 @@ void glyGlyphs (void)
   screen_max[2] = screen.max_y;
   screen_max[3] = screen.max_y;
   
-  scale_vec[0] = scale_vec[1] = screen.scale_x;
-  scale_vec[2] = scale_vec[3] = screen.scale_y;
+  scale[0] = scale[1] = screen.scale_x;
+  scale[2] = scale[3] = screen.scale_y;
   
   for (n = 0; n < glyphs; n++)
     {
       lbmDensityAndVelocity (glyph[ n ].f, &density, &vx, &vy, &vz);
       
-      temp = sqrt(vx * vx + vy * vy + vz * vz);
-      
-      if (temp < 1.e-30)
-	{
-	  continue;
-	}
-      temp = 0.01F * (block_size * vis_velocity_threshold_max_inv) / (density * temp);
+      temp = vis_glyph_length * block_size * vis_velocity_threshold_max_inv / density;
       
       vx *= temp;
       vy *= temp;
@@ -2396,10 +2378,10 @@ void glyGlyphs (void)
       visProject (p1, p3);
       visProject (p2, p4);
       
-      p3[0] = (int)(scale_vec[0] * (p3[0] + screen_max[0]));
-      p3[1] = (int)(scale_vec[1] * (p3[1] + screen_max[1]));
-      p4[0] = (int)(scale_vec[2] * (p4[0] + screen_max[2]));
-      p4[1] = (int)(scale_vec[3] * (p4[1] + screen_max[3]));
+      p3[0] = scale[0] * (p3[0] + screen_max[0]);
+      p3[1] = scale[1] * (p3[1] + screen_max[1]);
+      p4[0] = scale[2] * (p4[0] + screen_max[2]);
+      p4[1] = scale[3] * (p4[1] + screen_max[3]);
       
       visRenderLine (p3, p4);
     }
@@ -2587,7 +2569,6 @@ void visWritePixel (ColPixel *col_pixel_p)
 	{
           return;
 	}
-
       if (col_pixels == col_pixels_max)
 	{
 	  col_pixels_max *= 2;
@@ -2719,7 +2700,9 @@ void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (fl
 
 
 void visConvertThresholds (float physical_velocity_max, float physical_stress_max,
+			   float physical_pressure_min, float physical_pressure_max,
 			   float *lattice_velocity_max, float *lattice_stress_max,
+			   float *lattice_density_min, float *lattice_density_max,
 			   LBM *lbm)
 {
   float physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
@@ -2731,6 +2714,14 @@ void visConvertThresholds (float physical_velocity_max, float physical_stress_ma
   
   *lattice_stress_max = physical_stress_max * (useful_factor * useful_factor *
 					       lbm->voxel_size * lbm->voxel_size) / BLOOD_DENSITY;
+  
+  useful_factor = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
+  useful_factor *= useful_factor;
+  
+  *lattice_density_min = 1.0 + (physical_pressure_min - REFERENCE_PRESSURE) * PASCAL_TO_mmHg *
+    useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
+  *lattice_density_max = 1.0 + (physical_pressure_max - REFERENCE_PRESSURE) * PASCAL_TO_mmHg *
+    useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
 }
 
 
@@ -2875,6 +2866,8 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
   float zoom;
   float density_min, density_max, velocity_max, stress_max;
   float physical_velocity_max, physical_stress_max;
+  float physical_pressure_min = REFERENCE_PRESSURE;
+  float physical_pressure_max = REFERENCE_PRESSURE;
   
   int i;
   
@@ -2908,7 +2901,9 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
       fclose (parameters_file);
       
       visConvertThresholds (physical_velocity_max, physical_stress_max,
-			    &velocity_max, &stress_max, lbm);
+			    physical_pressure_min, physical_pressure_max,
+			    &velocity_max, &stress_max,
+			    &density_min, &density_max, lbm);
       
       par_to_send[ 0 ] = ctr_x;
       par_to_send[ 1 ] = ctr_y;
@@ -3048,6 +3043,20 @@ void visInit (Net *net, Vis *vis)
   vis_ctr_x -= vis->half_dim[0];
   vis_ctr_y -= vis->half_dim[1];
   vis_ctr_z -= vis->half_dim[2];
+}
+
+
+void visUpdateImageSize (int pixels_x, int pixels_y)
+{
+  if (pixels_x * pixels_y > screen.pixels_x * screen.pixels_y)
+    {
+      vis_pixels_max = pixels_x * pixels_y;
+      col_pixel_id = (int *)realloc(col_pixel_id, sizeof(int) * vis_pixels_max);
+    }
+  for (int i = 0; i < pixels_x * pixels_y; i++)
+    {
+      col_pixel_id[ i ] = -1;
+    }
 }
 
 
@@ -3199,7 +3208,10 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net)
   
   rtRayTracing (ColourPalette);
   
-  glyGlyphs ();
+  if (!is_bench && vis_glyph_length > 0.F)
+    {
+      glyGlyphs ();
+    }
   
   if (!vis_compositing)
     {
