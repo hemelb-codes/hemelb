@@ -256,10 +256,10 @@ void* hemeLB_steer (void* ptr)
     for (int i = 0; i < STEERABLE_PARAMETERS; i++)
       xdr_float(&xdr_steering_stream, &steer_par[i]);
     
-    	 printf("Got steering params ");
-     for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
-       printf("%0.4f ", steer_par[i]);
-     printf("\n"); 
+    // printf("Got steering params ");
+    // for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
+    //   printf("%0.4f ", steer_par[i]);
+    // printf("\n"); 
     
     xdr_destroy(&xdr_steering_stream);
 

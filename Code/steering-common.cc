@@ -15,6 +15,10 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   float zoom;
   float velocity_max, stress_max;
   float lattice_velocity_max, lattice_stress_max;
+  float pressure_min, pressure_max;
+  float lattice_density_min, lattice_density_max;
+  
+  int pixels_x, pixels_y;
   
   vis_ctr_x     += steer_par[ 0 ];
   vis_ctr_y     += steer_par[ 1 ];
@@ -33,16 +37,16 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   // The minimum value here is by default 0.0 all the time
   stress_max     = steer_par[ 8 ];
 
-  int pressure_min_DUMMY   = steer_par[ 9 ];
-  int pressure_max_DUMMY   = steer_par[ 10 ];
+  pressure_min     = 80.F; // steer_par[ 9 ];
+  pressure_max     = 110.F; // steer_par[ 10 ];
 
-  int glyph_length_DUMMY   = steer_par[ 11 ];
+  vis_glyph_length = 1.F; // steer_par[ 11 ];
 
-  int pixels_x              = 512; // steer_par[ 12 ]; 
-  int pixels_y              = 512; // steer_par[ 13 ]; 
+  pixels_x         = 512; // steer_par[ 12 ]; 
+  pixels_y         = 512; // steer_par[ 13 ]; 
   
-  vis_mouse_x              = (int)steer_par[ 14 ];
-  vis_mouse_y              = (int)steer_par[ 15 ];
+  vis_mouse_x      = (int)steer_par[ 14 ];
+  vis_mouse_y      = (int)steer_par[ 15 ];
 
   lbm_terminate_simulation = (int)steer_par[ 16 ];
 
@@ -51,7 +55,9 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   visUpdateImageSize (pixels_x, pixels_y);
   
   visConvertThresholds (velocity_max, stress_max,
-			&lattice_velocity_max, &lattice_stress_max, lbm);
+			pressure_min, pressure_max,
+			&lattice_velocity_max, &lattice_stress_max,
+			&lattice_density_min, &lattice_density_max,lbm);
   
   visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
   		 pixels_x, pixels_y,
@@ -61,8 +67,9 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   		 0.5F * (5.F * vis->system_size),
   		 zoom);
   
-  vis_velocity_threshold_max_inv = 1.0/lattice_velocity_max;
-  vis_stress_threshold_max_inv   = 1.0/lattice_stress_max;
-
+  vis_velocity_threshold_max_inv   = 1.F / lattice_velocity_max;
+  vis_stress_threshold_max_inv     = 1.F / lattice_stress_max;
+  vis_density_threshold_min        = 1.F / lattice_density_min;
+  vis_density_threshold_minmax_inv = 1.F / (lattice_density_max - lattice_density_min);
 }
 
