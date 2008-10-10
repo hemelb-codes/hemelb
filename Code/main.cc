@@ -74,7 +74,7 @@ int main (int argc, char *argv[])
       lbm.period     = atoi( argv[3] );
       lbm.voxel_size = atof( argv[4] );
       
-      if (lbm.cycles_max > 100)
+      if (lbm.cycles_max > 1000)
 	{
 	  check_conv = 1;
 	}
