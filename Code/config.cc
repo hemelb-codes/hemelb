@@ -146,6 +146,7 @@ float vis_stress_threshold_max_inv;
 float vis_brightness;
 float vis_ctr_x, vis_ctr_y, vis_ctr_z;
 float vis_mouse_pressure, vis_stess_pressure;
+float vis_glyph_length;
 
 int vis_perform_rendering;
 int vis_mouse_x, vis_mouse_y;
