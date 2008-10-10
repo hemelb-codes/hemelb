@@ -900,7 +900,7 @@ int lbmCollisionType (unsigned int site_data)
     }
   if (boundary_type == INLET_TYPE)
     {
-      if (unknowns <= 5)
+      if (unknowns <= 1000000)
 	{
 	  return 2;
 	}
@@ -911,7 +911,7 @@ int lbmCollisionType (unsigned int site_data)
     }
   else
     {
-      if (unknowns <= 5)
+      if (unknowns <= 1000000)
 	{
 	  return 3;
 	}
