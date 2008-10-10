@@ -388,6 +388,7 @@ extern float vis_stress_threshold_max_inv;
 extern float vis_brightness;
 extern float vis_ctr_x, vis_ctr_y, vis_ctr_z;
 extern float vis_mouse_pressure, vis_stess_pressure;
+extern float vis_glyph_length;
 
 extern int vis_mouse_x, vis_mouse_y;
 
@@ -451,7 +452,6 @@ int netFindTopology (Net *net, int *depths);
 void netInit (LBM *lbm, Net *net);
 void netEnd (Net *net);
 
-
 void lbmReadConfig (LBM *lbm, Net *net);
 double lbmCalculateTau (LBM *lbm);
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
@@ -495,7 +495,9 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net);
 void visRenderB (int write_image, char *image_file_name,
 		 void (*ColourPalette) (float value, float col[]), Net *net);
 void visConvertThresholds (float physical_velocity_max, float physical_stress_max,
+			   float physical_pressure_min, float physical_pressure_max,
 			   float *lattice_velocity_max, float *lattice_stress_max,
+			   float *lattice_density_min, float *lattice_density_max,
 			   LBM *lbm);
 void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
 void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
