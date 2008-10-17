@@ -1457,9 +1457,14 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
 
 void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
 {
-  double local_data[6];
-  double global_data[6];
+  double *local_data;
+  double *global_data;
   
+  int i;
+  
+  
+  local_data = (double *)malloc(sizeof(double) * max(6,2*lbm->inlets));
+  global_data = (double *)malloc(sizeof(double) * max(6,2*lbm->inlets));
   
 #ifndef NOMPI
   local_data[ 0 ] = lbm_density_min;
@@ -1478,7 +1483,24 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   lbm_velocity_max = 1. / global_data[ 3 ];
   lbm_stress_min   = global_data[ 4 ];
   lbm_stress_max   = 1. / global_data[ 5 ];
-#endif
+  
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      local_data[ i ] = lbm_inlet_flux[ i ];
+      local_data[ lbm->inlets+i ] = lbm_inlet_count[ i ];
+    }
+  MPI_Reduce (local_data, global_data, 2*lbm->inlets,
+	      MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      lbm_inlet_flux[ i ] = global_data[ i ];
+      lbm_inlet_count[ i ] = global_data[ lbm->inlets+i ];
+    }
+#endif // NOMPI
+  
+  free(global_data);
+  free(local_data);
   
   vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, lbm);
   vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, lbm);
@@ -1494,6 +1516,12 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   vis_time = (PULSATILE_PERIOD * time_step) / lbm->period;
   
   vis_cycle = cycle_id;
+  
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      lbm_inlet_flux[i] /= lbm_inlet_count[i];
+      lbm_inlet_flux[i] = lbmConvertVelocityToPhysicalUnits (lbm_inlet_flux[i], lbm);
+    }
 }
 
 
@@ -1526,6 +1554,64 @@ int lbmIsUnstable (Net *net)
 }
 
 
+void lbmUpdateInletFluxes (int time_step, LBM *lbm, Net *net)
+{
+  double density;
+  double vx, vy, vz;
+  
+  int inlet_id;
+  int i, m;
+  
+  
+  if (time_step == 1)
+    {
+      for (i = 0; i < lbm->inlets; i++)
+	{
+	  lbm_inlet_flux[ i ] = 0.;
+	  lbm_inlet_count[ i ] = 0;
+	}
+    }
+  if (check_conv)
+    {
+      m = 30;
+    }
+  else
+    {
+      m = 15;
+    }
+  for (i = 0; i < net->my_inner_collisions[ 2 ]; i++)
+    {
+      lbmDensityAndVelocity (&f_old[ i*m ], &density, &vx, &vy, &vz);
+      
+      inlet_id = (net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+      
+      if (is_inlet_normal_available)
+	{
+	  vx *= lbm_inlet_normal[ 3*inlet_id+0 ];
+	  vy *= lbm_inlet_normal[ 3*inlet_id+1 ];
+	  vz *= lbm_inlet_normal[ 3*inlet_id+2 ];
+	}
+      lbm_inlet_flux[ inlet_id ] += sqrt(vx * vx + vy * vy + vz * vz) / density;
+      ++lbm_inlet_count[ inlet_id ];
+    }
+  for (i = 0; i < net->my_inter_collisions[ 2 ]; i++)
+    {
+      lbmDensityAndVelocity (&f_old[ i*m ], &density, &vx, &vy, &vz);
+      
+      inlet_id = (net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+      
+      if (is_inlet_normal_available)
+	{
+	  vx *= lbm_inlet_normal[ 3*inlet_id+0 ];
+	  vy *= lbm_inlet_normal[ 3*inlet_id+1 ];
+	  vz *= lbm_inlet_normal[ 3*inlet_id+2 ];
+	}
+      lbm_inlet_flux[ inlet_id ] += sqrt(vx * vx + vy * vy + vz * vz) / density;
+      ++lbm_inlet_count[ inlet_id ];
+    }
+}
+
+
 void lbmRestart (LBM *lbm, Net *net)
 {
   lbm->period *= 2;
@@ -1547,6 +1633,10 @@ void lbmEnd (LBM *lbm)
   free(inlet_density_amp);
   free(inlet_density_phs);
   free(inlet_density);
+  
+  free(lbm_inlet_count);
+  free(lbm_inlet_normal);
+  free(lbm_inlet_flux);
   
   free(lbm->fluid_sites_per_block);
 }

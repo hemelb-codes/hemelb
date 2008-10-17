@@ -61,16 +61,17 @@
 					             // beats per min
 #define TOL                            1.e-6
 
-// the last two digits of the pixel identifier are used to indicate if
-// the pixel is coloured via the ray tracing technique or a glyph or
-// both
-#define RT               (1 << 29)
-#define GLYPH            (1 << 30)
-#define RT_AND_GLYPH     ((1 << 29) | (1 << 30))
+// the last three digits of the pixel identifier are used to indicate
+// if the pixel is coloured via the ray tracing technique and/or a glyph
+// and/or a particle/pathlet
+#define RT               (1 << 28)
+#define GLYPH            (1 << 29)
+#define STREAKLINE       (1 << 30)
+#define PIXEL_ID_MASK    ((1 << 28) - 1)
 
-#define PixelStatus(i)   (i & ((1 << 29) | (1 << 30)))
-#define PixelI(i)        ((i >> 16) & 8191)
-#define PixelJ(i)        (i & 65535)
+#define PixelI(i)        ((i >> 14) & 8191)
+#define PixelJ(i)        (i & 16383)
+#define PixelId(i,j)     ((i << 14) | j)
 
 
 extern double PI;
@@ -240,6 +241,10 @@ struct ColPixel
   float density;
   float stress;
   
+  float particle_vel;
+  float particle_z;
+  
+  int particle_inlet_id;
   int i;
 };
 
@@ -260,6 +265,73 @@ struct Glyph
   float x, y, z;
   
   double *f;
+};
+
+
+struct Particle
+{
+  float x, y, z;
+  
+  float vel;
+  
+  int inlet_id;
+};
+
+
+struct VelSiteData
+{
+  int proc_id, counter, site_id;
+  
+  float vx, vy, vz;
+};
+
+
+struct VelocityField
+{
+  VelSiteData *vel_site_data;
+};
+
+
+struct SL
+{
+  int counter;
+  int particles, particles_max;
+  int particle_seeds, particle_seeds_max;
+  int particles_to_send_max, particles_to_recv_max;
+  int neigh_procs, neigh_procs_max;
+  int shared_vs;
+  
+  VelocityField *velocity_field;
+  
+  Particle *particle;
+  Particle *particle_seed;
+  
+  float *v_to_send, *v_to_recv;
+  
+  short int *s_to_send, *s_to_recv;
+  
+  short int *from_proc_id_to_neigh_proc_index;
+  
+  struct NeighProc
+  {
+    int id;
+    int send_ps, recv_ps;
+    int send_vs, recv_vs;
+    int send_is, recv_is;
+    
+    float *p_to_send, *p_to_recv;
+    float *v_to_send, *v_to_recv;
+    
+    short int *s_to_send, *s_to_recv;
+  };
+  
+  NeighProc *neigh_proc;
+  
+#ifndef NOMPI
+  MPI_Status status[4];
+  
+  MPI_Request *req;
+#endif
 };
 
 
@@ -350,6 +422,7 @@ extern int is_bench;
 // 3 variables needed for convergence-enabled simulations
 extern double conv_error;
 extern int cycle_tag, check_conv;
+extern int is_inlet_normal_available;
 
 
 extern int sites_x, sites_y, sites_z;
@@ -363,6 +436,9 @@ extern double lbm_stress_par;
 extern double lbm_density_min, lbm_density_max;
 extern double lbm_velocity_min, lbm_velocity_max;
 extern double lbm_stress_min, lbm_stress_max;
+extern double *lbm_inlet_flux;
+extern double *lbm_inlet_normal;
+extern long int *lbm_inlet_count;
 
 extern int lbm_terminate_simulation;
 
@@ -459,6 +535,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
+void lbmUpdateInletFluxes (int time_step, LBM *lbm, Net *net);
 
 void rtInit (Net *net);
 void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*ColourPalette) (float value, float col[]));
@@ -469,6 +546,11 @@ void rtEnd (void);
 void glyInit (Net *net);
 void glyGlyphs (void);
 void glyEnd (void);
+
+
+void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl);
+void slRender (SL *sl);
+void slRestart (SL *sl);
 
 
 void visProject (float p1[], float p2[]);
@@ -489,9 +571,9 @@ void visProjection (float ortho_x, float ortho_y,
 		    float dist,
 		    float zoom);
 void visRenderLine (float x1[], float x2[]);
-void visInit (Net *net, Vis *vis);
+void visInit (Net *net, Vis *vis, SL *sl);
 void visUpdateImageSize (int pixels_x, int pixels_y);
-void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net);
+void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, SL *sl);
 void visRenderB (int write_image, char *image_file_name,
 		 void (*ColourPalette) (float value, float col[]), Net *net);
 void visConvertThresholds (float physical_velocity_max, float physical_stress_max,
@@ -501,6 +583,6 @@ void visConvertThresholds (float physical_velocity_max, float physical_stress_ma
 			   LBM *lbm);
 void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
 void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
-void visEnd (void);
+void visEnd (SL *sl);
 
 #endif                  // __config_h__

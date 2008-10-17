@@ -226,18 +226,39 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	      outlet_density_phs[ n ] = 0.0;
 	    }
 	}
+      lbm_inlet_flux = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm_inlet_normal = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
+      lbm_inlet_count = (long int *)malloc(sizeof(long int) * lbm->inlets);
+      
+      if (feof (parameters_file) == 0)
+	{
+	  is_inlet_normal_available = 1;
+	  
+	  for (n = 0; n < lbm->inlets; n++)
+	    {
+	      fscanf (parameters_file, "%le %le %le\n",
+		      &lbm_inlet_normal[3*n], &lbm_inlet_normal[3*n+1], &lbm_inlet_normal[3*n+2]);
+	    }
+	}
+      else
+	{
+	  is_inlet_normal_available = 0;
+	}
+
       fclose (parameters_file);
       
       par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
       par_to_send[ 1 ] = 0.1 + (double)lbm->outlets;
+      par_to_send[ 2 ] = 0.1 + (double)is_inlet_normal_available;
     }
 #ifndef NOMPI
-  net->err = MPI_Bcast (par_to_send, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  net->err = MPI_Bcast (par_to_send, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
   if (net->id != 0)
     {
-      lbm->inlets  = (int)par_to_send[ 0 ];
-      lbm->outlets = (int)par_to_send[ 1 ];
+      lbm->inlets               = (int)par_to_send[ 0 ];
+      lbm->outlets              = (int)par_to_send[ 1 ];
+      is_inlet_normal_available = (int)par_to_send[ 2 ];
       
       inlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
       inlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
@@ -248,6 +269,10 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       outlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
       outlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
       outlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+      
+      lbm_inlet_flux = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm_inlet_normal = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
+      lbm_inlet_count = (long int *)malloc(sizeof(long int) * lbm->inlets);
     }
   else
     {
@@ -263,9 +288,18 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  par_to_send[ 3*lbm->inlets + 3*n+1 ] = outlet_density_amp[ n ];
 	  par_to_send[ 3*lbm->inlets + 3*n+2 ] = outlet_density_phs[ n ];
 	}
+      if (is_inlet_normal_available)
+	{
+	  for (n = 0; n < lbm->inlets; n++)
+	    {
+	      par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+0 ] = lbm_inlet_normal[ 3*n+0 ];
+	      par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+1 ] = lbm_inlet_normal[ 3*n+1 ];
+	      par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+2 ] = lbm_inlet_normal[ 3*n+2 ];
+	    }
+	}
     }
 #ifndef NOMPI
-  net->err = MPI_Bcast (par_to_send, 3*(lbm->inlets+lbm->outlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  net->err = MPI_Bcast (par_to_send, 3*(lbm->inlets+lbm->outlets+lbm->inlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
   if (net->id != 0)
     {
@@ -280,6 +314,15 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  outlet_density_avg[ n ] = par_to_send[ 3*lbm->inlets + 3*n+0 ];
 	  outlet_density_amp[ n ] = par_to_send[ 3*lbm->inlets + 3*n+1 ];
 	  outlet_density_phs[ n ] = par_to_send[ 3*lbm->inlets + 3*n+2 ];
+	}
+      if (is_inlet_normal_available)
+	{
+	  for (n = 0; n < lbm->inlets; n++)
+	    {
+	      lbm_inlet_normal[ 3*n+0 ] = par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+0 ];
+	      lbm_inlet_normal[ 3*n+1 ] = par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+1 ];
+	      lbm_inlet_normal[ 3*n+2 ] = par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+2 ];
+	    }
 	}
     }
   for (n = 0; n < lbm->inlets; n++)
@@ -332,6 +375,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   int communication_period, communication_iters;
   int period, iters;
   int par;
+  int shrinked_sites_x, shrinked_sites_y, shrinked_sites_z;
   int site_i, site_j, site_k;
   int i, j, k;
   int l, m, n;
@@ -368,10 +412,14 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   
   if (net->id == 0)
     {
+      shrinked_sites_x = 1 + lbm->site_max_x - lbm->site_min_x;
+      shrinked_sites_y = 1 + lbm->site_max_y - lbm->site_min_y;
+      shrinked_sites_z = 1 + lbm->site_max_z - lbm->site_min_z;
+      
       xdr_double (&xdr_system_config, &lbm->voxel_size);
-      xdr_int    (&xdr_system_config, &sites_x);
-      xdr_int    (&xdr_system_config, &sites_y);
-      xdr_int    (&xdr_system_config, &sites_z);
+      xdr_int    (&xdr_system_config, &shrinked_sites_x);
+      xdr_int    (&xdr_system_config, &shrinked_sites_y);
+      xdr_int    (&xdr_system_config, &shrinked_sites_z);
       xdr_int    (&xdr_system_config, &lbm->total_fluid_sites);
     }
 
@@ -501,11 +549,15 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 			    {
 			      for (l = 0; l < net->procs * communication_period; l++)
 				{
-				  if (gathered_site_data[ 3 * l + 0 ] == -1) continue;
-		  
-				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 0 ]);
-				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 1 ]);
-				  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 2 ]);
+				  if (gathered_site_data[ 3*l+0 ] == -1) continue;
+				  
+				  gathered_site_data[ 3*l+0 ] -= lbm->site_min_x;
+				  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
+				  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
+				  
+				  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+0 ]);
+				  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+1 ]);
+				  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+2 ]);
 				  
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
@@ -542,11 +594,15 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 	    {
 	      for (l = 0; l < net->procs * communication_period; l++)
 		{
-		  if (gathered_site_data[ 3 * l + 0 ] == -1) continue;
+		  if (gathered_site_data[ 3*l+0 ] == -1) continue;
 		  
-		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 0 ]);
-		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 1 ]);
-		  xdr_short (&xdr_system_config, &gathered_site_data[ 3 * l + 2 ]);
+		  gathered_site_data[ 3*l+0 ] -= lbm->site_min_x;
+		  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
+		  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
+		  
+		  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+0 ]);
+		  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+1 ]);
+		  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+2 ]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
@@ -601,6 +657,7 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   int communication_period, communication_iters;
   int period, iters;
   int par;
+  int shrinked_sites_x, shrinked_sites_y, shrinked_sites_z;
   int site_i, site_j, site_k;
   int i, j, k;
   int l, m, n;
@@ -635,9 +692,13 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   
   if (net->id == 0)
     {
-	fprintf(system_config, "%0.6f\n", lbm->voxel_size);
-	fprintf(system_config, "%i %i %i\n", sites_x, sites_y, sites_z);
-	fprintf(system_config, "%i\n", lbm->total_fluid_sites);
+      shrinked_sites_x = 1 + lbm->site_max_x - lbm->site_min_x;
+      shrinked_sites_y = 1 + lbm->site_max_y - lbm->site_min_y;
+      shrinked_sites_z = 1 + lbm->site_max_z - lbm->site_min_z;
+      
+      fprintf(system_config, "%0.6f\n", lbm->voxel_size);
+      fprintf(system_config, "%i %i %i\n", shrinked_sites_x, shrinked_sites_y, shrinked_sites_z);
+      fprintf(system_config, "%i\n", lbm->total_fluid_sites);
     }
 
   fluid_sites_max = 0;
@@ -763,8 +824,14 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 			    {
 			      for (l = 0; l < net->procs * communication_period; l++)
 				{
-				  if (gathered_site_data[ 3 * l + 0 ] == -1) continue;
-				  fprintf(system_config, "%i %i %i ", gathered_site_data[3*l+0], gathered_site_data[3*l+1], gathered_site_data[3*l+2]);
+				  if (gathered_site_data[ 3*l+0 ] == -1) continue;
+				  
+				  gathered_site_data[ 3*l+0 ] -= lbm->site_min_x;
+				  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
+				  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
+				  
+				  fprintf(system_config, "%i %i %i ",
+					  gathered_site_data[ 3*l+0 ], gathered_site_data[ 3*l+1 ], gathered_site_data[ 3*l+2 ]);
 
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
@@ -802,8 +869,14 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 	    {
 	      for (l = 0; l < net->procs * communication_period; l++)
 		{
-		  if (gathered_site_data[ 3 * l + 0 ] == -1) continue;
-		  fprintf(system_config, "%i %i %i ", gathered_site_data[3*l+0], gathered_site_data[3*l+1], gathered_site_data[3*l+2]);
+		  if (gathered_site_data[ 3*l+0 ] == -1) continue;
+		  
+		  gathered_site_data[ 3*l+0 ] -= lbm->site_min_x;
+		  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
+		  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
+		  
+		  fprintf(system_config, "%i %i %i ",
+			  gathered_site_data[ 3*l+0 ], gathered_site_data[ 3*l+1 ], gathered_site_data[ 3*l+2 ]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {

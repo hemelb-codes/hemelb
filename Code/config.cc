@@ -109,6 +109,8 @@ int is_bench;
 // 3 variables needed for convergence-enabled simulations
 double conv_error;
 int cycle_tag, check_conv;
+int is_inlet_normal_available;
+
 
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;
@@ -121,6 +123,9 @@ double lbm_stress_par;
 double lbm_density_min, lbm_density_max;
 double lbm_velocity_min, lbm_velocity_max;
 double lbm_stress_min, lbm_stress_max;
+double *lbm_inlet_flux = NULL;
+double *lbm_inlet_normal = NULL;
+long int *lbm_inlet_count = NULL;
 
 int lbm_terminate_simulation;
 
