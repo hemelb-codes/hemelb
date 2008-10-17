@@ -1018,12 +1018,12 @@ void DisplaySite (int site_i, int site_j, int site_k)
   char coord_i[256];
   char coord_j[256];
   char coord_k[256];
-
+  
   
   x1 = (float)site_i * mygl.lattice_to_system - mygl.half_dim_x;
   y1 = (float)site_j * mygl.lattice_to_system - mygl.half_dim_y;
   z1 = (float)site_k * mygl.lattice_to_system - mygl.half_dim_z;
-
+  
   myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
   
   sprintf (coord_i, "%i,", site_i);
@@ -1698,9 +1698,9 @@ void myglFluidSitesIterativeSearching (int selected_pixel_x,
 	  bk = k >> mygl.shift;
 	  block_id1 = (bi * mygl.blocks_y + bj) * mygl.blocks_z + bk;
 	  
-	  x = (i + 0.5F) * mygl.lattice_to_system - mygl.half_dim_x;
-	  y = (j + 0.5F) * mygl.lattice_to_system - mygl.half_dim_y;
-	  z = (k + 0.5F) * mygl.lattice_to_system - mygl.half_dim_z;
+	  x = (i + 0.0F) * mygl.lattice_to_system - mygl.half_dim_x;
+	  y = (j + 0.0F) * mygl.lattice_to_system - mygl.half_dim_y;
+	  z = (k + 0.0F) * mygl.lattice_to_system - mygl.half_dim_z;
 	  
 	  for (l = 1; l < 14; l++)
 	    {
@@ -2586,6 +2586,7 @@ void DisplaySystemSlow (void)
 			      glColor3f (0.F, 1.F, 0.F);
 			    }
 			  myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
+			  
 			  glVertex3f (x2, y2, z2);
 			  
 			  z1 += mygl.lattice_to_system;
@@ -3568,7 +3569,11 @@ void WritePars (char *file_name)
 {
   FILE *pars = fopen (file_name, "w");
   
+  float nx, ny, nz;
+  
   int n;
+  
+  Triangle *triangle_p;
   
   
   fprintf (pars, "%i\n", mygl.boundary[ INLET_BOUNDARY ].triangles);
@@ -3589,6 +3594,17 @@ void WritePars (char *file_name)
 	       mygl.boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_avg,
 	       mygl.boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_amp,
 	       mygl.boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_phs);
+    }
+  for (n = 0; n < mygl.boundary[ INLET_BOUNDARY ].triangles; n++)
+    {
+      triangle_p = &mygl.boundary[ INLET_BOUNDARY ].triangle[n];
+      
+      myglTriangleNormal (triangle_p->v[0].pos_x, triangle_p->v[0].pos_y, triangle_p->v[0].pos_z,
+			  triangle_p->v[1].pos_x, triangle_p->v[1].pos_y, triangle_p->v[1].pos_z,
+			  triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
+			  &nx, &ny, &nz);
+      
+      fprintf (pars, "%f %f %f\n", nx, ny, nz);
     }
   fclose (pars);
 }
