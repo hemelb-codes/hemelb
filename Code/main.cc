@@ -43,6 +43,8 @@ int main (int argc, char *argv[])
   int fluid_solver_time_steps;
   int fluid_solver_and_vis_time_steps;
   int vis_without_compositing_time_steps;
+  int snapshots, snapshots_period;
+  int images, images_period;
   
   pthread_t network_thread;
   pthread_attr_t pthread_attrib;
@@ -50,6 +52,8 @@ int main (int argc, char *argv[])
   LBM lbm;
   
   Net net;
+  
+  SL sl;
   
 #ifndef NOMPI
   net.err = MPI_Init (&argc, &argv);
@@ -67,12 +71,14 @@ int main (int argc, char *argv[])
       is_bench = 1;
       minutes = atof( argv[2] );
     }
-  else if (argc == 5)
+  else if (argc == 7)
     {
       is_bench = 0;
       lbm.cycles_max = atoi( argv[2] );
       lbm.period     = atoi( argv[3] );
       lbm.voxel_size = atof( argv[4] );
+      snapshots      = atoi( argv[5] );
+      images         = atoi( argv[6] );
       
       if (lbm.cycles_max > 1000)
 	{
@@ -99,12 +105,11 @@ int main (int argc, char *argv[])
   char input_parameters_name[256];
   char output_config_name[256];
   char vis_parameters_name[256];
-  char output_image_name[256];
   char timings_name[256];
   char procs_string[256];
-  char image_name[256];
-  char output_directory[256];
   char snapshot_directory[256];
+  char image_directory[256];
+  char complete_image_name[256];
   char rm_files[256];
   
   strcpy ( input_config_name , input_file_path );
@@ -123,10 +128,9 @@ int main (int argc, char *argv[])
   strcat ( output_config_name , "/out.dat" );
   
   // Create directory for the output images
-  strcpy (output_directory, input_file_path);
-  strcat (output_directory, "/Images/");
-  if (net.id == 0) mkdir  (output_directory, 0777);
-  strcpy (output_image_name, output_directory);
+  strcpy (image_directory, input_file_path);
+  strcat (image_directory, "/Images/");
+  if (net.id == 0) mkdir  (image_directory, 0777);
   
   //Create directory for the output snapshots
   strcpy (snapshot_directory, input_file_path);
@@ -184,7 +188,7 @@ int main (int argc, char *argv[])
   
   lbmSetInitialConditions (&net);
   
-  visInit (&net, &vis);
+  visInit (&net, &vis, &sl);
   
   visReadParameters (vis_parameters_name, &lbm, &net, &vis);
   
@@ -197,7 +201,7 @@ int main (int argc, char *argv[])
       system (rm_files);
       
       strcpy (rm_files, "rm ");
-      strcat (rm_files, output_directory);
+      strcat (rm_files, image_directory);
       strcat (rm_files, "*");
       system (rm_files);
     }
@@ -214,6 +218,16 @@ int main (int argc, char *argv[])
       io_time = 0.;
       other_time = 0.;
       
+      if (snapshots == 0)
+	snapshots_period = 1000000000;
+      else
+	snapshots_period = max(1, lbm.period / snapshots);
+      
+      if (images == 0)
+	images_period = 1000000000;
+      else
+	images_period = max(1, lbm.period / images);
+      
       for (cycle_id = 1; cycle_id <= lbm.cycles_max && !is_finished; cycle_id++)
 	{
 	  int restart = 0;
@@ -226,7 +240,7 @@ int main (int argc, char *argv[])
 	      
 	      ++total_time_steps;
 	      
-	      // if (time_step%vis_image_freq == 0) write_image = 1;
+	      // if (time_step%images_period == 0) write_image = 1;
 	      
 	      if (net.id == 0)
 		{
@@ -244,7 +258,7 @@ int main (int argc, char *argv[])
 		}
 	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
 	      
-	      // if (write_image) doRendering = 1;
+	      if (write_image) doRendering = 1;
 	      
 	      // printf (" doRendering: %i\n", doRendering); Between
 	      // the visRenderA/B calls, do not change any vis
@@ -254,7 +268,9 @@ int main (int argc, char *argv[])
 
 	      if (doRendering)
 		{
-		  visRenderA (ColourPalette, &net);
+		  visRenderA (ColourPalette, &net, &sl);
+		  
+		  slRender (&sl);
 		}
 	      lbmVaryBoundaryDensities (cycle_id, time_step, &lbm);
 	      
@@ -270,6 +286,8 @@ int main (int argc, char *argv[])
 		      fluid_solver_time += end_time - start_time;
 		      break;
 		    }
+		  lbmUpdateInletFluxes (time_step, &lbm, &net);
+		  
 		  end_time = myClock ();
 		  fluid_solver_time += end_time - start_time;
 		}
@@ -287,48 +305,42 @@ int main (int argc, char *argv[])
 		      restart = 1;
 		      break;
 		    }
+		  lbmUpdateInletFluxes (time_step, &lbm, &net);
+		  
+		  end_time = myClock ();
+		  fluid_solver_time += end_time - start_time;
 		}
-	      /*
 	      if (write_image)
 		{
 		  start_time = myClock ();
 		  
-		  char time_step_string[256];
+		  char image_filename[255];
 		  
-		  // At this point output_image_name is appended with
-		  // Images
-		  strcpy ( image_name , output_image_name );
-		  
-		  int time_steps = time_step;
-		  
-		  while (time_steps < 100000000)
-		    {
-		      strcat ( image_name , "0" );
-		      time_steps *= 10;
-		    }
-		  sprintf ( time_step_string, "%i", time_step);
-		  strcat ( image_name , time_step_string );
-		  strcat ( image_name , ".dat" );
+		  snprintf(image_filename, 255, "%08i.dat", time_step);
+		  strcpy ( complete_image_name, image_directory );
+		  strcat ( complete_image_name, image_filename );
 		  
 		  end_time = myClock ();
 		  io_time += end_time - start_time;
 		}
-	      */
+	      slStreakLines (time_step, lbm.period, &net, &sl);
+	      
 	      if (doRendering)
 		{
 		  lbmCalculateFlowFieldValues (cycle_id, time_step, &lbm);
 		  
-		  visRenderB (write_image, image_name, ColourPalette, &net);
+		  visRenderB (write_image, complete_image_name, ColourPalette, &net);
 		  
 		  for (int i = 0; i < col_pixels; i++)
 		    {
-		      if (col_pixel_recv[ i ].i == vis_mouse_x*(1<<16)+vis_mouse_y)
+		      if ((col_pixel_recv[ i ].i & RT) &&
+			  (col_pixel_recv[ i ].i & PIXEL_ID_MASK) == PixelId (vis_mouse_x, vis_mouse_y))
 			{
 			  visCalculateMouseFlowField (&col_pixel_recv[ i ], &lbm);
 			}
 		    }
 		}
-	      if (time_step%10000 == 0)
+	      if (time_step%snapshots_period == 0)
 		{
 		  start_time = myClock ();
 		  
@@ -366,8 +378,8 @@ int main (int argc, char *argv[])
 		}
 	      if (net.id == 0)
 		{
-	      if (time_step%10 == 0)
-		   printf ("time step: %i\n", time_step);
+		  if (time_step%10 == 0)
+		    printf ("time step: %i\n", time_step);
 		}
 	    }
 	  if (restart)
@@ -375,6 +387,8 @@ int main (int argc, char *argv[])
 	      start_time = myClock ();
 	      
 	      lbmRestart (&lbm, &net);
+	      
+	      slRestart (&sl);
 	      
 	      if (net.id == 0)
 		{
@@ -384,7 +398,7 @@ int main (int argc, char *argv[])
 		  system (rm_files);
 		  
 		  strcpy (rm_files, "rm ");
-		  strcat (rm_files, output_directory);
+		  strcat (rm_files, image_directory);
 		  strcat (rm_files, "*");
 		  system (rm_files);
 		}
@@ -393,6 +407,16 @@ int main (int argc, char *argv[])
 		  printf ("restarting: period: %i\n", lbm.period);
 		  fflush (0x0);
 		}
+	      if (snapshots == 0)
+		snapshots_period = 1000000000;
+	      else
+		snapshots_period = max(1, lbm.period / snapshots);
+	      
+	      if (images == 0)
+		images_period = 1000000000;
+	      else
+		images_period = max(1, lbm.period / images);
+	      
 	      cycle_id = 1;
 	      
 	      end_time = myClock ();
@@ -482,11 +506,11 @@ int main (int argc, char *argv[])
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
-	  visRenderA (ColourPalette, &net);
+	  visRenderA (ColourPalette, &net, &sl);
 	  
 	  stability = lbmCycle (1, 1, 1, &lbm, &net);
 	  
-	  visRenderB (0, image_name, ColourPalette, &net);
+	  visRenderB (0, complete_image_name, ColourPalette, &net);
 	  
 	  // partial timings
 	  elapsed_time = myClock () - fluid_solver_and_vis_time;
@@ -507,11 +531,11 @@ int main (int argc, char *argv[])
       
       for (time_step = 1; time_step <= fluid_solver_and_vis_time_steps; time_step++)
 	{
-	  visRenderA (ColourPalette, &net);
+	  visRenderA (ColourPalette, &net, &sl);
 	  
 	  stability = lbmCycle (1, 1, 1, &lbm, &net);
 	  
-	  visRenderB (0, image_name, ColourPalette, &net);
+	  visRenderB (0, complete_image_name, ColourPalette, &net);
 	}
       fluid_solver_and_vis_time = myClock () - fluid_solver_and_vis_time;
       
@@ -522,7 +546,7 @@ int main (int argc, char *argv[])
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
-	  visRenderA (ColourPalette, &net);
+	  visRenderA (ColourPalette, &net, &sl);
 	  
 	  // partial timings
 	  elapsed_time = myClock () - vis_without_compositing_time;
@@ -543,7 +567,7 @@ int main (int argc, char *argv[])
       
       for (time_step = 1; time_step <= vis_without_compositing_time_steps; time_step++)
 	{
-	  visRenderA (ColourPalette, &net);
+	  visRenderA (ColourPalette, &net, &sl);
 	}
       vis_without_compositing_time = myClock () - vis_without_compositing_time;
     } // is_bench
@@ -609,6 +633,13 @@ int main (int argc, char *argv[])
 	  fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis_pressure_min, vis_pressure_max);
 	  fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis_velocity_min, vis_velocity_max);
 	  fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis_stress_min, vis_stress_max);
+	  fprintf (timings_ptr, "\n");
+	  
+	  for (int n = 0; n < lbm.inlets; n++)
+	    {
+	      fprintf (timings_ptr, "inlet id: %i, (flow rate)x(inlet area) (m^3/s): %le", n, lbm_inlet_flux[ n ]);
+	    }
+	  fprintf (timings_ptr, "\n");
 	}
       fprintf (timings_ptr, "\n");
       fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);
@@ -633,7 +664,7 @@ int main (int argc, char *argv[])
       fclose (timings_ptr);
     }
   
-  visEnd ();
+  visEnd (&sl);
   netEnd (&net);
   lbmEnd (&lbm);
   
