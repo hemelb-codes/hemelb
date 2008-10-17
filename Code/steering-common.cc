@@ -40,7 +40,7 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   pressure_min     = 80.F; // steer_par[ 9 ];
   pressure_max     = 110.F; // steer_par[ 10 ];
 
-  vis_glyph_length = 1.F; // steer_par[ 11 ];
+  vis_glyph_length = -1.F; // steer_par[ 11 ];
 
   pixels_x         = 512; // steer_par[ 12 ]; 
   pixels_y         = 512; // steer_par[ 13 ]; 
