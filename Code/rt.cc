@@ -2243,7 +2243,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      col_pixel.t        = ray_t_min + t_near;
 	      col_pixel.density  = ray_density;
 	      col_pixel.stress   = ray_stress;
-	      col_pixel.i        = i * (1 << 16) + j;
+	      col_pixel.i        = PixelId (i, j);
 	      col_pixel.i        |= RT;
 	      
 	      visWritePixel (&col_pixel);
@@ -2327,12 +2327,19 @@ void glyInit (Net *net)
 	      glyph[ glyphs ].y = (float)(j + site_j) - 0.5F * (float)sites_y;
 	      glyph[ glyphs ].z = (float)(k + site_k) - 0.5F * (float)sites_z;
 	      
-	      glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*15 ];
+	      if (!check_conv)
+		{
+		  glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*15 ];
+		}
+	      else
+		{
+		  glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*30 ];
+		}
 	      ++glyphs;
 	    }
 	}
     }
-  vis_glyph_length = 1.F;
+  vis_glyph_length = -1.F;
 }
 
 
@@ -2391,6 +2398,807 @@ void glyGlyphs (void)
 void glyEnd (void)
 {
   free(glyph);
+}
+
+
+void slInitializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id,  SL *sl)
+{
+  if (site_i < 0 || site_i >= sites_x ||
+      site_j < 0 || site_j >= sites_y ||
+      site_k < 0 || site_k >= sites_z)
+    {
+      return;
+    }
+  int i = site_i >> shift;
+  int j = site_j >> shift;
+  int k = site_k >> shift;
+  
+  int block_id =  (i * blocks_y + j) * blocks_z + k;
+  int site_id;
+  
+  if (sl->velocity_field[ block_id ].vel_site_data == NULL)
+    {
+      sl->velocity_field[ block_id ].vel_site_data =
+	(VelSiteData *)malloc(sizeof(VelSiteData) * sites_in_a_block);
+      
+      for (site_id = 0; site_id < sites_in_a_block; site_id++)
+	{
+	  sl->velocity_field[ block_id ].vel_site_data[ site_id ].proc_id = -1;
+	  sl->velocity_field[ block_id ].vel_site_data[ site_id ].counter = 0;
+	}
+    }
+  int ii = site_i - (i << shift);
+  int jj = site_j - (j << shift);
+  int kk = site_k - (k << shift);
+  
+  site_id = (((ii << shift) + jj) << shift) + kk;
+  sl->velocity_field[ block_id ].vel_site_data[ site_id ].proc_id = proc_id;
+}
+
+
+VelSiteData *slVelSiteDataPointer (int site_i, int site_j, int site_k, SL *sl)
+{
+  if (site_i < 0 || site_i >= sites_x ||
+      site_j < 0 || site_j >= sites_y ||
+      site_k < 0 || site_k >= sites_z)
+    {
+      return NULL;
+    }
+  int i = site_i >> shift;
+  int j = site_j >> shift;
+  int k = site_k >> shift;
+  
+  int block_id = (i * blocks_y + j) * blocks_z + k;
+  
+  if (sl->velocity_field[ block_id ].vel_site_data == NULL)
+    {
+      return NULL;
+    }
+  int ii = site_i - (i << shift);
+  int jj = site_j - (j << shift);
+  int kk = site_k - (k << shift);
+  
+  int site_id = (((ii << shift) + jj) << shift) + kk;
+  
+  return &sl->velocity_field[ block_id ].vel_site_data[ site_id ];
+}
+
+
+void slParticleVelocity (Particle *particle_p, float v[2][2][2][3], float interp_v[3])
+{
+  float dx, dy, dz;
+  float v_00z, v_01z, v_10z, v_11z, v_0y, v_1y;
+  
+  
+  dx = particle_p->x - (int)particle_p->x;
+  dy = particle_p->y - (int)particle_p->y;
+  dz = particle_p->z - (int)particle_p->z;
+  
+  for (int l = 0; l < 3; l++)
+    {
+      v_00z = (1.F - dz) * v[0][0][0][l] + dz * v[0][0][1][l];
+      v_01z = (1.F - dz) * v[0][1][0][l] + dz * v[0][1][1][l];
+      v_10z = (1.F - dz) * v[1][0][0][l] + dz * v[1][0][1][l];
+      v_11z = (1.F - dz) * v[1][1][0][l] + dz * v[1][1][1][l];
+      
+      v_0y = (1.F - dy) * v_00z + dy * v_01z;
+      v_1y = (1.F - dy) * v_10z + dy * v_11z;
+      
+      interp_v[l] = (1.F - dx) * v_0y + dx * v_1y;
+    }
+}
+
+
+void slCreateParticle (float x, float y, float z, float vel, int inlet_id, SL *sl)
+{
+  if (sl->particles == sl->particles_max)
+    {
+      sl->particles_max *= 2;
+      sl->particle = (Particle *)realloc(sl->particle, sizeof(Particle) * sl->particles_max);
+    }
+  sl->particle[ sl->particles ].x        = x;
+  sl->particle[ sl->particles ].y        = y;
+  sl->particle[ sl->particles ].z        = z;
+  sl->particle[ sl->particles ].vel      = vel;
+  sl->particle[ sl->particles ].inlet_id = inlet_id;
+  ++sl->particles;
+}
+
+
+void slDeleteParticle (int p_index, SL *sl)
+{
+  if (--sl->particles <= 0) return;
+  
+  // its data are reslaced with those of the last particle;
+  if (p_index != sl->particles)
+    {
+      sl->particle[ p_index ].x        = sl->particle[ sl->particles ].x;
+      sl->particle[ p_index ].y        = sl->particle[ sl->particles ].y;
+      sl->particle[ p_index ].z        = sl->particle[ sl->particles ].z;
+      sl->particle[ p_index ].vel      = sl->particle[ sl->particles ].vel;
+      sl->particle[ p_index ].inlet_id = sl->particle[ sl->particles ].inlet_id;
+    }
+}
+
+
+void slCreateSeedParticles (SL *sl)
+{
+  for (int n = 0; n < sl->particle_seeds; n++)
+    {
+      slCreateParticle (sl->particle_seed[n].x,
+			sl->particle_seed[n].y,
+			sl->particle_seed[n].z,
+			0.F,
+			sl->particle_seed[n].inlet_id, sl);
+    }
+}
+
+
+void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *net, SL *sl)
+{
+  double density;
+  double vx, vy, vz;
+  
+  int site_i, site_j, site_k;
+  int neigh_i, neigh_j, neigh_k;
+  int i, j, k;
+  int m;
+  
+  VelSiteData *vel_site_data_p;
+  
+  
+  site_i = (int)sl->particle[ p_index ].x;
+  site_j = (int)sl->particle[ p_index ].y;
+  site_k = (int)sl->particle[ p_index ].z;
+  
+  *is_interior = 1;
+  
+  for (i = 0; i < 2; i++)
+    {
+      neigh_i = site_i + i;
+      
+      for (j = 0; j < 2; j++)
+	{
+	  neigh_j = site_j + j;
+	  
+	  for (k = 0; k < 2; k++)
+	    {
+	      neigh_k = site_k + k;
+	      
+	      vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k, sl);
+	      
+	      if (vel_site_data_p == NULL ||
+		  vel_site_data_p->proc_id == -1)
+		{
+		  // it is a solid site and the velocity is
+		  // assumed to be zero
+		  v[i][j][k][0] = v[i][j][k][1] = v[i][j][k][2] = 0.F;
+		  continue;
+		}
+	      if (vel_site_data_p->proc_id != net->id)
+		{
+		  *is_interior = 0;
+		}
+	      if (vel_site_data_p->counter == sl->counter)
+		{
+		  // it means that the local velocity has already been
+		  // calculated at the current time step if the the
+		  // site belongs to the current processor; if not,
+		  // the following instructions have no effect
+		  v[i][j][k][0] = vel_site_data_p->vx;
+		  v[i][j][k][1] = vel_site_data_p->vy;
+		  v[i][j][k][2] = vel_site_data_p->vz;
+		}
+	      else if (vel_site_data_p->proc_id == net->id)
+		{
+		  // the local counter is set equal to the global one
+		  // and the local velocity is calculated
+		  vel_site_data_p->counter = sl->counter;
+		  
+		  lbmDensityAndVelocity (&f_old[ vel_site_data_p->site_id*15 ],
+					 &density, &vx, &vy, &vz);
+		  
+		  v[i][j][k][0] = vel_site_data_p->vx = vx /= density;
+		  v[i][j][k][1] = vel_site_data_p->vy = vy /= density;
+		  v[i][j][k][2] = vel_site_data_p->vz = vz /= density;
+		}
+	      else if (vel_site_data_p->counter != sl->counter)
+		{
+		  vel_site_data_p->counter = sl->counter;
+		  
+		  m = sl->from_proc_id_to_neigh_proc_index[ vel_site_data_p->proc_id ];
+		  
+		  // the site ids to send are stored
+		  sl->neigh_proc[m].s_to_send[ 3*sl->neigh_proc[m].send_vs+0 ] = neigh_i;
+		  sl->neigh_proc[m].s_to_send[ 3*sl->neigh_proc[m].send_vs+1 ] = neigh_j;
+		  sl->neigh_proc[m].s_to_send[ 3*sl->neigh_proc[m].send_vs+2 ] = neigh_k;
+		  ++sl->neigh_proc[m].send_vs;
+		}
+	    }
+	}
+    }
+}
+
+
+void slInit (Net *net, SL *sl)
+{
+  int site_i, site_j, site_k;
+  int neigh_i, neigh_j, neigh_k;
+  int i, j, k;
+  int m, mm, n;
+  int flag;
+  int inlet_sites;
+  int *neigh_proc_id;
+  
+  unsigned int site_data;
+  
+  DataBlock *map_block_p;
+  
+  ProcBlock *proc_block_p;
+  
+  VelSiteData *vel_site_data_p;
+  
+  
+  sl->particles_max = 10000;
+  sl->particle = (Particle *)malloc(sizeof(Particle) * sl->particles_max);
+  sl->particles = 0;
+  
+  sl->velocity_field = (VelocityField *)malloc(sizeof(VelocityField) * blocks);
+  
+  for (n = 0; n < blocks; n++)
+    {
+      sl->velocity_field[ n ].vel_site_data = NULL;
+    }
+  sl->particle_seeds_max = 100;
+  sl->particle_seed = (Particle *)malloc(sizeof(Particle) * sl->particle_seeds_max);
+  sl->particle_seeds = 0;
+  
+  sl->neigh_procs_max = 10;
+  sl->neigh_proc = (SL::NeighProc *)malloc(sizeof(SL::NeighProc) * sl->neigh_procs_max);
+  sl->neigh_procs = 0;
+  
+  for (m = 0; m < sl->neigh_procs_max; m++)
+    {
+      sl->neigh_proc[ m ].send_vs = 0;
+    }
+  sl->counter = 1;
+  inlet_sites = 0;
+  n = -1;
+  
+  for (i = 0; i < sites_x; i += block_size)
+    {
+      for (j = 0; j < sites_y; j += block_size)
+	{
+	  for (k = 0; k < sites_z; k += block_size)
+	    {
+	      map_block_p = &net->map_block[ ++n ];
+	      
+	      if (map_block_p->site_data == NULL) continue;
+	      
+	      proc_block_p = &net->proc_block[ n ];
+	      
+	      m = -1;
+	      
+	      for (site_i = i; site_i < i + block_size; site_i++)
+		{
+		  for (site_j = j; site_j < j + block_size; site_j++)
+		    {
+		      for (site_k = k; site_k < k + block_size; site_k++)
+			{
+			  if (proc_block_p->proc_id[ ++m ] != net->id) continue;
+			  
+			  for (neigh_i = max(0, site_i-1); neigh_i <= min(sites_x, site_i+1); neigh_i++)
+			    {
+			      for (neigh_j = max(0, site_j-1); neigh_j <= min(sites_y, site_j+1); neigh_j++)
+				{
+				  for (neigh_k = max(0, site_k-1); neigh_k <= min(sites_z, site_k+1); neigh_k++)
+				    {
+				      neigh_proc_id = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
+				      
+				      if (neigh_proc_id == NULL || *neigh_proc_id == (1 << 30))
+					{
+					  slInitializeVelFieldBlock (neigh_i, neigh_j, neigh_k, -1, sl);
+					  continue;
+					}
+				      slInitializeVelFieldBlock (neigh_i, neigh_j, neigh_k, *neigh_proc_id, sl);
+				      
+				      if (*neigh_proc_id == net->id) continue;
+				      
+				      vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k, sl);
+				      
+				      if (vel_site_data_p->counter == sl->counter) continue;
+				      
+				      vel_site_data_p->counter = sl->counter;
+				      
+				      for (mm = 0, flag = 1; mm < sl->neigh_procs && flag; mm++)
+					{
+					  if (*neigh_proc_id == sl->neigh_proc[ mm ].id)
+					    {
+					      flag = 0;
+					      ++sl->neigh_proc[ mm ].send_vs;
+					    }
+					}
+				      if (!flag) continue;
+				      
+				      if (sl->neigh_procs == sl->neigh_procs_max)
+					{
+					  sl->neigh_procs_max *= 2;
+					  sl->neigh_proc = (SL::NeighProc *)realloc(sl->neigh_proc,
+										    sizeof(SL::NeighProc) * sl->neigh_procs_max);
+					  
+					  for (m = sl->neigh_procs; m < sl->neigh_procs_max; m++)
+					    {
+					      sl->neigh_proc[ m ].send_vs = 0;
+					    }
+					}
+				      sl->neigh_proc[ sl->neigh_procs ].id = *neigh_proc_id;
+				      sl->neigh_proc[ sl->neigh_procs ].send_vs = 1;
+				      ++sl->neigh_procs;
+				    }
+				}
+			    }
+			  site_data = net_site_data[ map_block_p->site_data[m] ];
+			  
+			  // if the lattice site is an not inlet one
+			  if ((site_data & SITE_TYPE_MASK) != INLET_TYPE)
+			    {
+			      continue;
+			    }
+			  ++inlet_sites;
+			  
+			  if (inlet_sites%20 != 0) continue;
+			  
+			  if (sl->particle_seeds == sl->particle_seeds_max)
+			    {
+			      sl->particle_seeds_max *= 2;
+			      sl->particle_seed = (Particle *)realloc(sl->particle_seed,
+								      sizeof(Particle) * sl->particle_seeds_max);
+			    }
+			  sl->particle_seed[ sl->particle_seeds ].x = (float)site_i;
+			  sl->particle_seed[ sl->particle_seeds ].y = (float)site_j;
+			  sl->particle_seed[ sl->particle_seeds ].z = (float)site_k;
+			  sl->particle_seed[ sl->particle_seeds ].inlet_id =
+			    (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+			  ++sl->particle_seeds;
+			}
+		    }
+		}
+	    }
+	}
+    }
+      
+  sl->shared_vs = 0;
+  
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      sl->shared_vs += sl->neigh_proc[ m ].send_vs;
+    }
+  if (sl->shared_vs > 0)
+    {
+      sl->s_to_send = (short int *)malloc(sizeof(short int) * 3 * sl->shared_vs);
+      sl->s_to_recv = (short int *)malloc(sizeof(short int) * 3 * sl->shared_vs);
+      
+      sl->v_to_send = (float *)malloc(sizeof(float) * 3 * sl->shared_vs);
+      sl->v_to_recv = (float *)malloc(sizeof(float) * 3 * sl->shared_vs);
+    }
+  sl->shared_vs = 0;
+  
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      sl->neigh_proc[ m ].s_to_send = &sl->s_to_send[ sl->shared_vs*3 ];
+      sl->neigh_proc[ m ].s_to_recv = &sl->s_to_recv[ sl->shared_vs*3 ];
+      
+      sl->neigh_proc[ m ].v_to_send = &sl->v_to_send[ sl->shared_vs*3 ];
+      sl->neigh_proc[ m ].v_to_recv = &sl->v_to_recv[ sl->shared_vs*3 ];
+      
+      sl->shared_vs += sl->neigh_proc[ m ].send_vs;
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      sl->neigh_proc[ m ].send_vs = 0;
+    }
+  sl->particles_to_send_max = 1000;
+  sl->particles_to_recv_max = 1000;
+  
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      sl->neigh_proc[ m ].p_to_send = (float *)malloc(sizeof(float) * 5 * sl->particles_to_send_max);
+      sl->neigh_proc[ m ].p_to_recv = (float *)malloc(sizeof(float) * 5 * sl->particles_to_recv_max);
+    }
+  
+  sl->req = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->neigh_procs));
+  
+  sl->from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * net->procs);
+  
+  for (m = 0; m < net->procs; m++)
+    {
+      sl->from_proc_id_to_neigh_proc_index[ m ] = -1;
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      sl->from_proc_id_to_neigh_proc_index[ sl->neigh_proc[m].id ] = m;
+    }
+  
+  sl->counter = 0;
+  
+  for (n = 0; n < blocks; n++)
+    {
+      if (sl->velocity_field[ n ].vel_site_data == NULL) continue;
+      
+      for (m = 0; m < sites_in_a_block; m++)
+	{
+	  sl->velocity_field[ n ].vel_site_data[ m ].counter = sl->counter;
+	}
+      if (net->map_block[ n ].site_data == NULL) continue;
+      
+      for (m = 0; m < sites_in_a_block; m++)
+	{
+	  sl->velocity_field[ n ].vel_site_data[ m ].site_id = net->map_block[ n ].site_data[ m ];
+	}
+    }
+}
+
+
+void slRestart (SL *sl)
+{
+  sl->particles = 0;
+}
+
+
+void slCommunicateSiteIds (SL *sl)
+{
+#ifndef NOMPI
+  int m;
+  
+  
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      MPI_Irecv (&sl->neigh_proc[ m ].recv_vs, 1, MPI_INT, sl->neigh_proc[ m ].id,
+		 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+      
+      MPI_Isend (&sl->neigh_proc[ m ].send_vs, 1, MPI_INT, sl->neigh_proc[ m ].id,
+		 30, MPI_COMM_WORLD, &sl->req[ m ]);
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      MPI_Wait (&sl->req[ m ], sl->status);
+      MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      if (sl->neigh_proc[ m ].recv_vs > 0)
+	{
+	  MPI_Irecv (sl->neigh_proc[ m ].s_to_recv, sl->neigh_proc[ m ].recv_vs * 3, MPI_SHORT,
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+	}
+      if (sl->neigh_proc[ m ].send_vs > 0)
+	{
+	  MPI_Isend (sl->neigh_proc[ m ].s_to_send, sl->neigh_proc[ m ].send_vs * 3, MPI_SHORT,
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ m ]);
+	}
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      if (sl->neigh_proc[ m ].send_vs > 0)
+	{
+	  MPI_Wait (&sl->req[ m ], sl->status);
+	}
+      if (sl->neigh_proc[ m ].recv_vs > 0)
+	{
+	  MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
+	}
+    }
+#endif // NOMPI
+}
+
+
+void slCommunicateVelocities (SL *sl)
+{
+#ifndef NOMPI
+  int site_i, site_j, site_k;
+  int neigh_i, neigh_j, neigh_k;
+  int m, n;
+  
+  VelSiteData *vel_site_data_p;
+  
+  
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      if (sl->neigh_proc[ m ].send_vs > 0)
+	{
+	  MPI_Irecv (sl->neigh_proc[ m ].v_to_recv, sl->neigh_proc[ m ].send_vs * 3, MPI_FLOAT,
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+	}
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      for (n = 0; n < sl->neigh_proc[ m ].recv_vs; n++)
+	{
+	  site_i = sl->neigh_proc[ m ].s_to_recv[ 3*n+0 ];
+	  site_j = sl->neigh_proc[ m ].s_to_recv[ 3*n+1 ];
+	  site_k = sl->neigh_proc[ m ].s_to_recv[ 3*n+2 ];
+	  
+	  vel_site_data_p = slVelSiteDataPointer (site_i, site_j, site_k, sl);
+	  
+	  sl->neigh_proc[ m ].v_to_send[ 3*n+0 ] = vel_site_data_p->vx;
+	  sl->neigh_proc[ m ].v_to_send[ 3*n+1 ] = vel_site_data_p->vy;
+	  sl->neigh_proc[ m ].v_to_send[ 3*n+2 ] = vel_site_data_p->vz;
+	}
+      if (sl->neigh_proc[ m ].recv_vs > 0)
+	{
+	  MPI_Isend (sl->neigh_proc[ m ].v_to_send, sl->neigh_proc[ m ].recv_vs * 3, MPI_FLOAT,
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ m ]);
+	}
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      if (sl->neigh_proc[ m ].recv_vs > 0)
+	{
+	  MPI_Wait (&sl->req[ m ], sl->status);
+	}
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      if (sl->neigh_proc[ m ].send_vs <= 0) continue;
+      
+      MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
+      
+      for (n = 0; n < sl->neigh_proc[ m ].send_vs; n++)
+	{
+	  neigh_i = sl->neigh_proc[ m ].s_to_send[ 3*n+0 ];
+	  neigh_j = sl->neigh_proc[ m ].s_to_send[ 3*n+1 ];
+	  neigh_k = sl->neigh_proc[ m ].s_to_send[ 3*n+2 ];
+	  
+	  vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k, sl);
+	  
+	  vel_site_data_p->vx = sl->neigh_proc[ m ].v_to_recv[ 3*n+0 ];
+	  vel_site_data_p->vy = sl->neigh_proc[ m ].v_to_recv[ 3*n+1 ];
+	  vel_site_data_p->vz = sl->neigh_proc[ m ].v_to_recv[ 3*n+2 ];
+	}
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      sl->neigh_proc[ m ].send_vs = 0;
+    }
+#endif // NOMPI
+}
+
+
+void slUpdateParticles (int stage_id, Net *net, SL *sl)
+{
+  float v[2][2][2][3], interp_v[3];
+  float vel;
+  
+  int particles_temp;
+  int is_interior;
+  int n;
+  
+  
+  particles_temp = sl->particles;
+  
+  for (n = particles_temp - 1; n >= 0; n--)
+    {
+      slLocalVelField (n, v, &is_interior, net, sl);
+      
+      if (stage_id == 0 && !is_interior) continue;
+      
+      slParticleVelocity (&sl->particle[n], v, interp_v);
+      vel = interp_v[0]*interp_v[0] + interp_v[1]*interp_v[1] + interp_v[2]*interp_v[2];
+      
+      if (vel > 1.e-30)
+	{
+	  // particle coords updating (dt = 1)
+	  sl->particle[n].x += interp_v[0];
+	  sl->particle[n].y += interp_v[1];
+	  sl->particle[n].z += interp_v[2];
+	  sl->particle[n].vel = sqrtf(vel);
+	}
+      else
+      	{
+      	  slDeleteParticle (n, sl);
+      	}
+    }
+}
+
+
+void slRender (SL *sl)
+{
+  float screen_max[2];
+  float scale[2];
+  float p1[3], p2[3];
+  
+  int pixels_x, pixels_y;
+  int i, j;
+  int n;
+  
+  ColPixel col_pixel;
+  
+  
+  pixels_x = screen.pixels_x;
+  pixels_y = screen.pixels_y;
+  
+  screen_max[0] = screen.max_x;
+  screen_max[1] = screen.max_y;
+  
+  scale[0] = screen.scale_x;
+  scale[1] = screen.scale_y;
+  
+  for (n = 0; n < sl->particles; n++)
+    {
+      p1[0] = sl->particle[n].x - (float)(sites_x>>1);
+      p1[1] = sl->particle[n].y - (float)(sites_y>>1);
+      p1[2] = sl->particle[n].z - (float)(sites_z>>1);
+      
+      visProject (p1, p2);
+      
+      p2[0] = (int)(scale[0] * (p2[0] + screen_max[0]));
+      p2[1] = (int)(scale[1] * (p2[1] + screen_max[1]));
+      
+      i = (int)p2[0];
+      j = (int)p2[1];
+      
+      if (!(i < 0 || i >= pixels_x ||
+	    j < 0 || j >= pixels_y))
+	{
+	  col_pixel.particle_vel      = sl->particle[n].vel;
+	  col_pixel.particle_z        = p2[2];
+	  col_pixel.particle_inlet_id = sl->particle[n].inlet_id;
+	  col_pixel.i                 = PixelId (i, j) | STREAKLINE;
+	  
+	  visWritePixel (&col_pixel);
+	}
+    }
+}
+
+
+void slCommunicateParticles (Net *net, SL *sl)
+{
+#ifndef NOMPI
+  int site_i, site_j, site_k;
+  int m, n;
+  int particles_temp;
+  
+  VelSiteData *vel_site_data_p;
+  
+  
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      MPI_Irecv (&sl->neigh_proc[ m ].recv_ps, 1, MPI_INT, sl->neigh_proc[ m ].id,
+		 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      sl->neigh_proc[ m ].send_ps = 0;
+    }
+  particles_temp = sl->particles;
+  
+  for (n = particles_temp - 1; n >= 0; n--)
+    {
+      site_i = (int)sl->particle[ n ].x;
+      site_j = (int)sl->particle[ n ].y;
+      site_k = (int)sl->particle[ n ].z;
+      
+      vel_site_data_p = slVelSiteDataPointer (site_i, site_j, site_k, sl);
+      
+      if (vel_site_data_p == NULL ||
+	  vel_site_data_p->proc_id == net->id ||
+	  vel_site_data_p->proc_id == -1)
+       {
+      	  continue;
+      	}
+      m = sl->from_proc_id_to_neigh_proc_index[ vel_site_data_p->proc_id ];
+      
+      if (sl->neigh_proc[ m ].send_ps == sl->particles_to_send_max)
+	{
+	  sl->particles_to_send_max *= 2;
+	  sl->neigh_proc[ m ].p_to_send =
+	    (float *)realloc(sl->neigh_proc[ m ].p_to_send, sizeof(float) * 5 * sl->particles_to_send_max);
+	}
+      sl->neigh_proc[ m ].p_to_send[ 5*sl->neigh_proc[m].send_ps+0 ] = sl->particle[ n ].x;
+      sl->neigh_proc[ m ].p_to_send[ 5*sl->neigh_proc[m].send_ps+1 ] = sl->particle[ n ].y;
+      sl->neigh_proc[ m ].p_to_send[ 5*sl->neigh_proc[m].send_ps+2 ] = sl->particle[ n ].z;
+      sl->neigh_proc[ m ].p_to_send[ 5*sl->neigh_proc[m].send_ps+3 ] = sl->particle[ n ].vel;
+      sl->neigh_proc[ m ].p_to_send[ 5*sl->neigh_proc[m].send_ps+4 ] = sl->particle[ n ].inlet_id + 0.1;
+      ++sl->neigh_proc[ m ].send_ps;
+      
+      slDeleteParticle (n, sl);
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      MPI_Isend (&sl->neigh_proc[ m ].send_ps, 1, MPI_INT, sl->neigh_proc[ m ].id,
+		 30, MPI_COMM_WORLD, &sl->req[ m ]);
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      MPI_Wait (&sl->req[ m ], net->status);
+      MPI_Wait (&sl->req[ sl->neigh_procs + m ], net->status);
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
+      if (sl->neigh_proc[ m ].send_ps > 0)
+	{
+	  MPI_Isend (sl->neigh_proc[ m ].p_to_send, sl->neigh_proc[ m ].send_ps * 5, MPI_FLOAT,
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ m ]);
+	  MPI_Wait (&sl->req[ m ], sl->status);
+	}
+      if (sl->neigh_proc[ m ].recv_ps > 0)
+	{
+	  if (sl->neigh_proc[ m ].recv_ps > sl->particles_to_recv_max)
+	    {
+	      sl->particles_to_recv_max *= 2;
+	      sl->particles_to_recv_max = max(sl->particles_to_recv_max, sl->neigh_proc[ m ].recv_ps);
+	      sl->neigh_proc[ m ].p_to_recv =
+		(float *)realloc(sl->neigh_proc[ m ].p_to_recv, sizeof(float) * 5 * sl->particles_to_recv_max);
+	    }
+	  MPI_Irecv (sl->neigh_proc[ m ].p_to_recv, sl->neigh_proc[ m ].recv_ps * 5, MPI_FLOAT,
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+	  MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
+	  
+	  for (n = 0; n < sl->neigh_proc[ m ].recv_ps; n++)
+	    {
+	      slCreateParticle (sl->neigh_proc[ m ].p_to_recv[ 5*n+0 ],
+				sl->neigh_proc[ m ].p_to_recv[ 5*n+1 ],
+				sl->neigh_proc[ m ].p_to_recv[ 5*n+2 ],
+				sl->neigh_proc[ m ].p_to_recv[ 5*n+3 ],
+				(int)sl->neigh_proc[ m ].p_to_recv[ 5*n+4 ], sl);
+	    }
+	}
+    }
+#endif // NOMPI
+}
+
+
+void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl)
+{
+  float particle_creation_percentage_time = 100.F;
+  float streaklines_per_pulsatile_period = 5.F;
+
+  int particle_creation_period = max(1, (int)(time_steps_per_cycle / 1000.F));
+  
+  
+  if (time_steps % (int)(time_steps_per_cycle / streaklines_per_pulsatile_period) <=
+      (particle_creation_percentage_time/100.F) * (time_steps_per_cycle / streaklines_per_pulsatile_period) &&
+      time_steps % particle_creation_period == 0)
+    {
+      slCreateSeedParticles (sl);
+    }
+  ++sl->counter;
+  
+  slUpdateParticles (0, net, sl);
+  slCommunicateSiteIds (sl);
+  slCommunicateVelocities (sl);
+  slUpdateParticles (1, net, sl);
+  slCommunicateParticles (net, sl);
+}
+
+
+void slEnd (SL *sl)
+{
+  free(sl->from_proc_id_to_neigh_proc_index);
+  
+  free(sl->req);
+  
+  for (int m = 0; m < sl->neigh_procs; m++)
+    {
+      free(sl->neigh_proc[ m ].p_to_recv);
+      free(sl->neigh_proc[ m ].p_to_send);
+    }
+  
+  if (sl->shared_vs > 0)
+    {
+      free(sl->v_to_recv);
+      free(sl->v_to_send);
+      
+      free(sl->s_to_recv);
+      free(sl->s_to_send);
+    }
+  free(sl->neigh_proc);
+  
+  free(sl->particle_seed);
+  
+  free(sl->velocity_field);
+  
+  free(sl->particle);
 }
 
 
@@ -2512,41 +3320,100 @@ void visProjection (float ortho_x, float ortho_y,
 
 void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 {
-//  int pixel_status1 = PixelStatus (col_pixel1->i);
-//  int pixel_status2 = PixelStatus (col_pixel2->i);
-
-	int pixel_status1 = (col_pixel1->i & ((1 << 29) | (1 << 30)));
-	int pixel_status2 = (col_pixel2->i & ((1 << 29) | (1 << 30)));
-  
-  if ((pixel_status1 != GLYPH) && (pixel_status2 != GLYPH))
+  if (vis_glyph_length > 0.F)
     {
-      col_pixel2->vel_r += col_pixel1->vel_r;
-      col_pixel2->vel_g += col_pixel1->vel_g;
-      col_pixel2->vel_b += col_pixel1->vel_b;
-      
-      col_pixel2->stress_r += col_pixel1->stress_r;
-      col_pixel2->stress_g += col_pixel1->stress_g;
-      col_pixel2->stress_b += col_pixel1->stress_b;
-      
-      if (col_pixel1->t < col_pixel2->t)
+      // merge raytracing data and/or glyph ones
+      if ((col_pixel1->i & RT) && (col_pixel2->i & RT))
 	{
+	  col_pixel2->vel_r += col_pixel1->vel_r;
+	  col_pixel2->vel_g += col_pixel1->vel_g;
+	  col_pixel2->vel_b += col_pixel1->vel_b;
+	  
+	  col_pixel2->stress_r += col_pixel1->stress_r;
+	  col_pixel2->stress_g += col_pixel1->stress_g;
+	  col_pixel2->stress_b += col_pixel1->stress_b;
+	  
+	  if (col_pixel1->t < col_pixel2->t)
+	    {
+	      col_pixel2->t       = col_pixel1->t;
+	      col_pixel2->density = col_pixel1->density;
+	      col_pixel2->stress  = col_pixel1->stress;
+	    }
+	}
+      else if ((col_pixel1->i & RT) && !(col_pixel2->i & RT))
+	{
+	  col_pixel2->vel_r = col_pixel1->vel_r;
+	  col_pixel2->vel_g = col_pixel1->vel_g;
+	  col_pixel2->vel_b = col_pixel1->vel_b;
+	  
+	  col_pixel2->stress_r = col_pixel1->stress_r;
+	  col_pixel2->stress_g = col_pixel1->stress_g;
+	  col_pixel2->stress_b = col_pixel1->stress_b;
+	  
 	  col_pixel2->t       = col_pixel1->t;
 	  col_pixel2->density = col_pixel1->density;
 	  col_pixel2->stress  = col_pixel1->stress;
+	  
+	  col_pixel2->i |= RT;
 	}
-      if (pixel_status1 == RT_AND_GLYPH)
+      if (col_pixel1->i & GLYPH)
 	{
 	  col_pixel2->i |= GLYPH;
 	}
     }
-  else if ((pixel_status1 == GLYPH) && (pixel_status2 != GLYPH))
+  else
     {
-      col_pixel2->i |= GLYPH;
-    }
-  else if ((pixel_status1 != GLYPH) && (pixel_status2 == GLYPH))
-    {
-      memcpy (col_pixel2, col_pixel1, sizeof(ColPixel));
-      col_pixel2->i |= RT;
+      // merge raytracing data and/or streakline ones
+      if ((col_pixel1->i & RT) && (col_pixel2->i & RT))
+	{
+	  col_pixel2->vel_r += col_pixel1->vel_r;
+	  col_pixel2->vel_g += col_pixel1->vel_g;
+	  col_pixel2->vel_b += col_pixel1->vel_b;
+	  
+	  col_pixel2->stress_r += col_pixel1->stress_r;
+	  col_pixel2->stress_g += col_pixel1->stress_g;
+	  col_pixel2->stress_b += col_pixel1->stress_b;
+	  
+	  if (col_pixel1->t < col_pixel2->t)
+	    {
+	      col_pixel2->t       = col_pixel1->t;
+	      col_pixel2->density = col_pixel1->density;
+	      col_pixel2->stress  = col_pixel1->stress;
+	    }
+	}
+      else if ((col_pixel1->i & RT) && !(col_pixel2->i & RT))
+	{
+	  col_pixel2->vel_r = col_pixel1->vel_r;
+	  col_pixel2->vel_g = col_pixel1->vel_g;
+	  col_pixel2->vel_b = col_pixel1->vel_b;
+	  
+	  col_pixel2->stress_r = col_pixel1->stress_r;
+	  col_pixel2->stress_g = col_pixel1->stress_g;
+	  col_pixel2->stress_b = col_pixel1->stress_b;
+	  
+	  col_pixel2->t       = col_pixel1->t;
+	  col_pixel2->density = col_pixel1->density;
+	  col_pixel2->stress  = col_pixel1->stress;
+	  
+	  col_pixel2->i |= RT;
+	}
+      if ((col_pixel1->i & STREAKLINE) && (col_pixel2->i & STREAKLINE))
+	{
+	  if (col_pixel1->particle_z < col_pixel2->particle_z)
+	    {
+	      col_pixel2->particle_z        = col_pixel1->particle_z;
+	      col_pixel2->particle_vel      = col_pixel1->particle_vel;
+	      col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
+	    }
+	}
+      else if ((col_pixel1->i & STREAKLINE) && !(col_pixel2->i & STREAKLINE))
+	{
+	  col_pixel2->particle_z        = col_pixel1->particle_z;
+	  col_pixel2->particle_vel      = col_pixel1->particle_vel;
+	  col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
+	  
+	  col_pixel2->i |= STREAKLINE;
+	}
     }
 }
 
@@ -2590,11 +3457,10 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int* pixel_index,
 		    unsigned char rgb_data[],
 		    void (*ColourPalette) (float value, float col[])) {
   
-  float col[3];
+  float density_col[3], stress_col[3], particle_col[3];
   
   int bits_per_char = sizeof(char) * 8;
   int pixel_i, pixel_j;
-  int pixel_status;
   
   unsigned char r1, g1, b1;
   unsigned char r2, g2, b2;
@@ -2605,13 +3471,22 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int* pixel_index,
   pixel_i = PixelI (col_pixel_p->i);
   pixel_j = PixelJ (col_pixel_p->i);
   
-  pixel_status = PixelStatus (col_pixel_p->i);
-  
   *pixel_index = (pixel_i << (2*bits_per_char)) + pixel_j;
   
-  if (pixel_status != GLYPH)
+  density_col[ 0 ] = 0.F;
+  density_col[ 1 ] = 0.F;
+  density_col[ 2 ] = 0.F;
+  
+  stress_col[ 0 ] = 0.F;
+  stress_col[ 1 ] = 0.F;
+  stress_col[ 2 ] = 0.F;
+  
+  r1 = g1 = b1 = 255;
+  r2 = g2 = b2 = 255;
+  
+  if (col_pixel_p->i & RT)
     {
-      // store velocity flow field
+    // store velocity flow field
       r1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_r));
       g1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_g));
       b1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_b));
@@ -2620,51 +3495,75 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int* pixel_index,
       r2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_r));
       g2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_g));
       b2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_b));
+    }
+  
+  if (vis_glyph_length > 0.F)
+    {
+      ColourPalette (col_pixel_p->density, density_col);
       
-      // store external density flow field at the wall
-      ColourPalette (col_pixel_p->density, col);
+      ColourPalette (col_pixel_p->stress, stress_col);
       
-      if (pixel_status == RT_AND_GLYPH)
+      if (col_pixel_p->i & RT)
 	{
-	  col[0] = 0.5F * col[0];
-	  col[1] = 0.5F * col[1];
-	  col[2] = 0.5F * col[2];
+	  if (!(col_pixel_p->i & GLYPH))
+	    {
+	      density_col[0] += 1.F;
+	      density_col[1] += 1.F;
+	      density_col[2] += 1.F;
+	      
+	      stress_col[0] += 1.F;
+	      stress_col[1] += 1.F;
+	      stress_col[2] += 1.F;
+	    }
+	  r3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[0])));
+	  g3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[1])));
+	  b3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[2])));
+	  
+	  r4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[0])));
+	  g4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[1])));
+	  b4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[2])));
 	}
       else
-      	{
-      	  col[0] = 0.5F * (col[0] + 1.F);
-      	  col[1] = 0.5F * (col[1] + 1.F);
-      	  col[2] = 0.5F * (col[2] + 1.F);
-      	}
-      r3 = (unsigned char)max(0, min(255, (int)(255.F * col[0])));
-      g3 = (unsigned char)max(0, min(255, (int)(255.F * col[1])));
-      b3 = (unsigned char)max(0, min(255, (int)(255.F * col[2])));
-      
-      // store von Mises stress flow field at the wall
-      ColourPalette (col_pixel_p->stress, col);
-      
-      if (pixel_status == RT_AND_GLYPH)
 	{
-	  col[0] = 0.5F * col[0];
-	  col[1] = 0.5F * col[1];
-	  col[2] = 0.5F * col[2];
+	  r3 = g3 = b3 = 0;
+	  r4 = g4 = b4 = 0;
 	}
-      else
-      	{
-      	  col[0] = 0.5F * (col[0] + 1.F);
-      	  col[1] = 0.5F * (col[1] + 1.F);
-      	  col[2] = 0.5F * (col[2] + 1.F);
-     	}
-      r4 = (unsigned char)max(0, min(255, (int)(255.F * col[0])));
-      g4 = (unsigned char)max(0, min(255, (int)(255.F * col[1])));
-      b4 = (unsigned char)max(0, min(255, (int)(255.F * col[2])));
     }
   else
     {
-      r1 = g1 = b1 = 255;
-      r2 = g2 = b2 = 255;
-      r3 = g3 = b3 = 0;
-      r4 = g4 = b4 = 0;
+      if (col_pixel_p->i & STREAKLINE)
+	{
+	  float scaled_vel = col_pixel_p->particle_vel * vis_velocity_threshold_max_inv;
+	  
+	  particle_col[0] = particle_col[1] = particle_col[2] = 0.F;
+	  
+	  particle_col[ min(col_pixel_p->particle_inlet_id, 2) ] = scaled_vel;
+	  
+	  density_col[0] = 1.F + particle_col[0];
+	  density_col[1] = 1.F + particle_col[1];
+	  density_col[2] = 1.F + particle_col[2];
+	  
+	  stress_col[0] = 1.F + particle_col[0];
+	  stress_col[1] = 1.F + particle_col[1];
+	  stress_col[2] = 1.F + particle_col[2];
+	}
+      else
+	{
+	  density_col[0] = fminf(1.F, col_pixel_p->density);
+	  density_col[1] = fminf(1.F, col_pixel_p->density);
+	  density_col[2] = fminf(1.F, col_pixel_p->density);
+	  
+	  stress_col[0] = fminf(1.F, col_pixel_p->stress);
+	  stress_col[1] = fminf(1.F, col_pixel_p->stress);
+	  stress_col[2] = fminf(1.F, col_pixel_p->stress);
+	}
+      r3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[0])));
+      g3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[1])));
+      b3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[2])));
+      
+      r4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[0])));
+      g4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[1])));
+      b4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[2])));
     }
   rgb_data[0] = r1; rgb_data[1] = g1; rgb_data[2] = b1;
   rgb_data[3] = r2; rgb_data[4] = g2; rgb_data[5] = b2;
@@ -2783,7 +3682,7 @@ void visRenderLine (float p1[], float p2[])
 	  if (!(x < 0 || x >= pixels_x ||
 		y < 0 || y >= pixels_y))
 	    {
-	      col_pixel.i = (x * (1 << 16) + y) | GLYPH;
+	      col_pixel.i = PixelId (x, y) | GLYPH;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -2810,7 +3709,7 @@ void visRenderLine (float p1[], float p2[])
 	  if (!(x < 0 || x >= pixels_x ||
 		y < 0 || y >= pixels_y))
 	    {
-	      col_pixel.i = (x * (1 << 16) + y) | GLYPH;
+	      col_pixel.i = PixelId (x, y) | GLYPH;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -2837,7 +3736,7 @@ void visRenderLine (float p1[], float p2[])
 	  if (!(x < 0 || x >= pixels_x ||
 		y < 0 || y >= pixels_y))
 	    {
-	      col_pixel.i = (x * (1 << 16) + y) | GLYPH;
+	      col_pixel.i = PixelId (x, y) | GLYPH;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -2970,7 +3869,7 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
 }
  
 
-void visInit (Net *net, Vis *vis)
+void visInit (Net *net, Vis *vis, SL *sl)
 {
   blocks_yz = blocks_y * blocks_z;
   
@@ -2988,21 +3887,24 @@ void visInit (Net *net, Vis *vis)
   block_size_inv = 1.F / (float)block_size;
   
 #ifndef NOMPI
-  int col_pixel_count = 11;
-  int col_pixel_blocklengths[11] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  int col_pixel_count = 14;
+  int col_pixel_blocklengths[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
   
-  MPI_Datatype col_pixel_types[11] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+  MPI_Datatype col_pixel_types[14] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
 				      MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
 				      MPI_FLOAT,
 				      MPI_FLOAT,
 				      MPI_FLOAT,
+				      MPI_FLOAT,
+				      MPI_FLOAT,
+				      MPI_INT,
 				      MPI_INT,
 				      MPI_UB};
   
-  MPI_Aint col_pixel_disps[11];
+  MPI_Aint col_pixel_disps[14];
 #endif
   
-  col_pixels_max = IMAGE_SIZE / 4;
+  col_pixels_max = IMAGE_SIZE;
   
   // col_pixel_send = (ColPixel *)malloc(sizeof(ColPixel) *  col_pixels_max * max(1, (net_machines - 1)));
   col_pixel_recv = (ColPixel *)malloc(sizeof(ColPixel) * col_pixels_max);
@@ -3038,8 +3940,12 @@ void visInit (Net *net, Vis *vis)
   
   rtInit (net);
   
-  glyInit (net);
-  
+  if (!is_bench)
+    {
+      glyInit (net);
+      
+      slInit (net, sl);
+    }
   vis_ctr_x -= vis->half_dim[0];
   vis_ctr_y -= vis->half_dim[1];
   vis_ctr_z -= vis->half_dim[2];
@@ -3187,7 +4093,7 @@ void visCompositeImage (Net *net)
 }
 
 
-void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net)
+void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, SL *sl)
 {
   int pixels_x, pixels_y;
   int send_id, recv_id;
@@ -3208,11 +4114,17 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net)
   
   rtRayTracing (ColourPalette);
   
-  if (!is_bench && vis_glyph_length > 0.F)
+  if (!is_bench)
     {
-      glyGlyphs ();
+      if (vis_glyph_length > 0.F)
+	{
+	  glyGlyphs ();
+	}
+      else
+	{
+	  slRender (sl);
+	}
     }
-  
   if (!vis_compositing)
     {
       for (m = 0; m < col_pixels; m++)
@@ -3384,7 +4296,7 @@ void visRenderB (int write_image, char *image_file_name,
   
   for (n = 0; n < col_pixels; n++)
     {
-      if (PixelStatus (col_pixel_recv[ n ].i) == GLYPH)
+      if ((col_pixel_recv[ n ].i & (RT | GLYPH | STREAKLINE)) == GLYPH)
 	{
 	  continue;
 	}
@@ -3426,10 +4338,14 @@ void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
 }
 
 
-void visEnd (void)
+void visEnd (SL *sl)
 {
-  glyEnd ();
-  
+  if (!is_bench)
+    {
+      slEnd (sl);
+      
+      glyEnd ();
+    }
   rtEnd ();
   
   free(col_pixel_id);
