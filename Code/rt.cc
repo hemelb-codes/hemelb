@@ -3320,7 +3320,7 @@ void visProjection (float ortho_x, float ortho_y,
 
 void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 {
-  if (vis_glyph_length > 0.F)
+  if (vis_mode == 0 || vis_mode == 1)
     {
       // merge raytracing data and/or glyph ones
       if ((col_pixel1->i & RT) && (col_pixel2->i & RT))
@@ -3497,7 +3497,21 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int* pixel_index,
       b2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_b));
     }
   
-  if (vis_glyph_length > 0.F)
+  if (vis_mode == 0)
+    {
+      ColourPalette (col_pixel_p->density, density_col);
+      
+      ColourPalette (col_pixel_p->stress, stress_col);
+      
+      r3 = (unsigned char)max(0, min(255, (int)(255.F * density_col[0])));
+      g3 = (unsigned char)max(0, min(255, (int)(255.F * density_col[1])));
+      b3 = (unsigned char)max(0, min(255, (int)(255.F * density_col[2])));
+      
+      r4 = (unsigned char)max(0, min(255, (int)(255.F * stress_col[0])));
+      g4 = (unsigned char)max(0, min(255, (int)(255.F * stress_col[1])));
+      b4 = (unsigned char)max(0, min(255, (int)(255.F * stress_col[2])));
+    }
+  else if (vis_mode == 1)
     {
       ColourPalette (col_pixel_p->density, density_col);
       
@@ -4116,11 +4130,11 @@ void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, SL 
   
   if (!is_bench)
     {
-      if (vis_glyph_length > 0.F)
+      if (vis_mode == 1)
 	{
 	  glyGlyphs ();
 	}
-      else
+      else if (vis_mode == 2)
 	{
 	  slRender (sl);
 	}
