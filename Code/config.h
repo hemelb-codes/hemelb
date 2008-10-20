@@ -49,7 +49,7 @@
 #define PIXELS_Y                       512
 #define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
 #define IMAGE_SIZE                     PIXELS_X * PIXELS_Y
-#define STEERABLE_PARAMETERS           17
+#define STEERABLE_PARAMETERS           20
 
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
@@ -465,8 +465,11 @@ extern float vis_brightness;
 extern float vis_ctr_x, vis_ctr_y, vis_ctr_z;
 extern float vis_mouse_pressure, vis_stess_pressure;
 extern float vis_glyph_length;
+extern float vis_streaklines_per_pulsatile_period, vis_streakline_length;
 
 extern int vis_mouse_x, vis_mouse_y;
+extern int vis_perform_rendering;
+extern int vis_mode;
 
 
 extern int cluster_blocks_vec[3];

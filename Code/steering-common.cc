@@ -37,21 +37,32 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   // The minimum value here is by default 0.0 all the time
   stress_max     = steer_par[ 8 ];
 
-  pressure_min     = 80.F; // steer_par[ 9 ];
-  pressure_max     = 110.F; // steer_par[ 10 ];
+  pressure_min     = steer_par[ 9 ];
+  pressure_max     = steer_par[ 10 ];
 
-  vis_glyph_length = -1.F; // steer_par[ 11 ];
+  vis_glyph_length = steer_par[ 11 ];
 
-  pixels_x         = 512; // steer_par[ 12 ]; 
-  pixels_y         = 512; // steer_par[ 13 ]; 
+  pixels_x         = steer_par[ 12 ]; 
+  pixels_y         = steer_par[ 13 ]; 
   
   vis_mouse_x      = (int)steer_par[ 14 ];
   vis_mouse_y      = (int)steer_par[ 15 ];
 
   lbm_terminate_simulation = (int)steer_par[ 16 ];
-
-  *vis_perform_rendering   = (int)steer_par[ 17 ];
-
+  
+  // To swap between glyphs and streak line rendering...
+  // 0 - Only display the isosurfaces (wall pressure and stress)
+  // 1 - Isosurface and glyphs
+  // 2 - Wall pattern streak lines
+  vis_mode = (int)steer_par[ 17 ];
+  
+  vis_streaklines_per_pulsatile_period = steer_par[ 18 ];   // 5.0
+  vis_streakline_length = steer_par[ 19 ];                  // 100.0 % length
+  
+  *vis_perform_rendering = (int)steer_par[ 20 ];
+  
+  // All the appropriate transformations are done below.
+  
   visUpdateImageSize (pixels_x, pixels_y);
   
   visConvertThresholds (velocity_max, stress_max,
