@@ -1,11 +1,11 @@
 MPICPUS=4
 
-TEST1INPUT=$(HOME)/hemelb/Input/square_duct_32x16x16     2 10000000 0.01
-TEST2INPUT=$(HOME)/hemelb/Input/angio1                   10 200000 0.0001171875
-TEST3INPUT=$(HOME)/hemelb/Input/bifurcation_512x512x512  10 200000 0.0001
-TEST4INPUT=$(HOME)/hemelb/Input/angio4                   1 2000 0.0009375
-TEST5INPUT=$(HOME)/hemelb/Input/angio2                   10 200000 0.00234375
-TEST6INPUT=$(HOME)/hemelb/Input/angio8                   10 200000 0.0002245
+TEST1INPUT=$(HOME)/hemelb/Input/square_duct_32x16x16     10 100 0.01 0 0
+TEST2INPUT=$(HOME)/hemelb/Input/angio1                   10 200000 0.0001171875 0 0
+TEST3INPUT=$(HOME)/hemelb/Input/bifurcation_512x512x512  10 200000 0.0001 0 0
+TEST4INPUT=$(HOME)/hemelb/Input/angio4                   1 2000 0.0009375 0 0
+TEST5INPUT=$(HOME)/hemelb/Input/angio2                   10 100000 0.000234375 0 0
+TEST6INPUT=$(HOME)/hemelb/Input/angio8                   10 25000 0.0002245 0 0
 
 test1:
 	$(MPIRUN) -np $(MPICPUS) ./$(EXE) $(TEST1INPUT)
