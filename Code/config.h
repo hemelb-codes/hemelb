@@ -451,6 +451,7 @@ extern double vis_stress_min, vis_stress_max;
 extern double vis_time;
 
 extern int vis_time_step, vis_cycle;
+extern int vis_period, vis_inlets;
 extern int vis_image_freq;
 extern int vis_pixels_max;
 extern int vis_compositing;
