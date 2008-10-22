@@ -298,7 +298,7 @@ struct SL
   int particles, particles_max;
   int particle_seeds, particle_seeds_max;
   int particles_to_send_max, particles_to_recv_max;
-  int neigh_procs, neigh_procs_max;
+  int neigh_procs;
   int shared_vs;
   
   VelocityField *velocity_field;
@@ -325,7 +325,7 @@ struct SL
     short int *s_to_send, *s_to_recv;
   };
   
-  NeighProc *neigh_proc;
+  NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX];
   
 #ifndef NOMPI
   MPI_Status status[4];

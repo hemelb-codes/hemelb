@@ -2647,8 +2647,6 @@ void slInit (Net *net, SL *sl)
   sl->particle_seed = (Particle *)malloc(sizeof(Particle) * sl->particle_seeds_max);
   sl->particle_seeds = 0;
   
-  sl->neigh_procs_max = 10;
-  sl->neigh_proc = (SL::NeighProc *)malloc(sizeof(SL::NeighProc) * sl->neigh_procs_max);
   sl->neigh_procs = 0;
   
   sl->velocity_field = (VelocityField *)malloc(sizeof(VelocityField) * blocks);
@@ -2657,7 +2655,7 @@ void slInit (Net *net, SL *sl)
     {
       sl->velocity_field[ n ].vel_site_data = NULL;
     }
-  for (m = 0; m < sl->neigh_procs_max; m++)
+  for (m = 0; m <  NEIGHBOUR_PROCS_MAX; m++)
     {
       sl->neigh_proc[ m ].send_vs = 0;
     }
@@ -2709,28 +2707,27 @@ void slInit (Net *net, SL *sl)
 				      if (vel_site_data_p->counter == sl->counter) continue;
 				      
 				      vel_site_data_p->counter = sl->counter;
-				      flag = 1;
-				      for (mm = 0; mm < sl->neigh_procs; mm++)
+				      
+				      for (mm = 0, flag = 1; mm < sl->neigh_procs && flag; mm++)
 					{
 					  if (*neigh_proc_id == sl->neigh_proc[ mm ].id)
 					    {
 					      flag = 0;
 					      ++sl->neigh_proc[ mm ].send_vs;
-					      break;
 					    }
 					}
 				      if (!flag) continue;
 				      
-				      if (sl->neigh_procs == sl->neigh_procs_max)
+				      if (sl->neigh_procs == NEIGHBOUR_PROCS_MAX)
 					{
-					  sl->neigh_procs_max *= 2;
-					  sl->neigh_proc = (SL::NeighProc *)realloc(sl->neigh_proc,
-										    sizeof(SL::NeighProc) * sl->neigh_procs_max);
-					  
-					  for (mm = sl->neigh_procs; mm < sl->neigh_procs_max; mm++)
-					    {
-					      sl->neigh_proc[ mm ].send_vs = 0;
-					    }
+					  continue;
+					  printf (" too many inter processor neighbours in slInit()\n");
+					  printf (" the execution is terminated\n");
+#ifndef NOMPI
+					  net->err = MPI_Abort (MPI_COMM_WORLD, 1);
+#else
+					  exit(1);
+#endif
 					}
 				      sl->neigh_proc[ sl->neigh_procs ].id = *neigh_proc_id;
 				      sl->neigh_proc[ sl->neigh_procs ].send_vs = 1;
