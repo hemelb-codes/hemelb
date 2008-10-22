@@ -2643,12 +2643,6 @@ void slInit (Net *net, SL *sl)
   sl->particle = (Particle *)malloc(sizeof(Particle) * sl->particles_max);
   sl->particles = 0;
   
-  sl->velocity_field = (VelocityField *)malloc(sizeof(VelocityField) * blocks);
-  
-  for (n = 0; n < blocks; n++)
-    {
-      sl->velocity_field[ n ].vel_site_data = NULL;
-    }
   sl->particle_seeds_max = 100;
   sl->particle_seed = (Particle *)malloc(sizeof(Particle) * sl->particle_seeds_max);
   sl->particle_seeds = 0;
@@ -2657,6 +2651,12 @@ void slInit (Net *net, SL *sl)
   sl->neigh_proc = (SL::NeighProc *)malloc(sizeof(SL::NeighProc) * sl->neigh_procs_max);
   sl->neigh_procs = 0;
   
+  sl->velocity_field = (VelocityField *)malloc(sizeof(VelocityField) * blocks);
+  
+  for (n = 0; n < blocks; n++)
+    {
+      sl->velocity_field[ n ].vel_site_data = NULL;
+    }
   for (m = 0; m < sl->neigh_procs_max; m++)
     {
       sl->neigh_proc[ m ].send_vs = 0;
@@ -2687,11 +2687,11 @@ void slInit (Net *net, SL *sl)
 			{
 			  if (proc_block_p->proc_id[ ++m ] != net->id) continue;
 			  
-			  for (neigh_i = max(0, site_i-1); neigh_i <= min(sites_x, site_i+1); neigh_i++)
+			  for (neigh_i = max(0, site_i-1); neigh_i <= min(sites_x-1, site_i+1); neigh_i++)
 			    {
-			      for (neigh_j = max(0, site_j-1); neigh_j <= min(sites_y, site_j+1); neigh_j++)
+			      for (neigh_j = max(0, site_j-1); neigh_j <= min(sites_y-1, site_j+1); neigh_j++)
 				{
-				  for (neigh_k = max(0, site_k-1); neigh_k <= min(sites_z, site_k+1); neigh_k++)
+				  for (neigh_k = max(0, site_k-1); neigh_k <= min(sites_z-1, site_k+1); neigh_k++)
 				    {
 				      neigh_proc_id = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
 				      
@@ -2709,13 +2709,14 @@ void slInit (Net *net, SL *sl)
 				      if (vel_site_data_p->counter == sl->counter) continue;
 				      
 				      vel_site_data_p->counter = sl->counter;
-				      
-				      for (mm = 0, flag = 1; mm < sl->neigh_procs && flag; mm++)
+				      flag = 1;
+				      for (mm = 0; mm < sl->neigh_procs; mm++)
 					{
 					  if (*neigh_proc_id == sl->neigh_proc[ mm ].id)
 					    {
 					      flag = 0;
 					      ++sl->neigh_proc[ mm ].send_vs;
+					      break;
 					    }
 					}
 				      if (!flag) continue;
@@ -2726,9 +2727,9 @@ void slInit (Net *net, SL *sl)
 					  sl->neigh_proc = (SL::NeighProc *)realloc(sl->neigh_proc,
 										    sizeof(SL::NeighProc) * sl->neigh_procs_max);
 					  
-					  for (m = sl->neigh_procs; m < sl->neigh_procs_max; m++)
+					  for (mm = sl->neigh_procs; mm < sl->neigh_procs_max; mm++)
 					    {
-					      sl->neigh_proc[ m ].send_vs = 0;
+					      sl->neigh_proc[ mm ].send_vs = 0;
 					    }
 					}
 				      sl->neigh_proc[ sl->neigh_procs ].id = *neigh_proc_id;
@@ -2766,7 +2767,7 @@ void slInit (Net *net, SL *sl)
 	    }
 	}
     }
-      
+  
   sl->shared_vs = 0;
   
   for (m = 0; m < sl->neigh_procs; m++)
@@ -2863,9 +2864,7 @@ void slCommunicateSiteIds (SL *sl)
     {
       MPI_Wait (&sl->req[ m ], sl->status);
       MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
-    }
-  for (m = 0; m < sl->neigh_procs; m++)
-    {
+      
       if (sl->neigh_proc[ m ].recv_vs > 0)
 	{
 	  MPI_Irecv (sl->neigh_proc[ m ].s_to_recv, sl->neigh_proc[ m ].recv_vs * 3, MPI_SHORT,
@@ -3001,56 +3000,6 @@ void slUpdateParticles (int stage_id, Net *net, SL *sl)
 }
 
 
-void slRender (SL *sl)
-{
-  float screen_max[2];
-  float scale[2];
-  float p1[3], p2[3];
-  
-  int pixels_x, pixels_y;
-  int i, j;
-  int n;
-  
-  ColPixel col_pixel;
-  
-  
-  pixels_x = screen.pixels_x;
-  pixels_y = screen.pixels_y;
-  
-  screen_max[0] = screen.max_x;
-  screen_max[1] = screen.max_y;
-  
-  scale[0] = screen.scale_x;
-  scale[1] = screen.scale_y;
-  
-  for (n = 0; n < sl->particles; n++)
-    {
-      p1[0] = sl->particle[n].x - (float)(sites_x>>1);
-      p1[1] = sl->particle[n].y - (float)(sites_y>>1);
-      p1[2] = sl->particle[n].z - (float)(sites_z>>1);
-      
-      visProject (p1, p2);
-      
-      p2[0] = (int)(scale[0] * (p2[0] + screen_max[0]));
-      p2[1] = (int)(scale[1] * (p2[1] + screen_max[1]));
-      
-      i = (int)p2[0];
-      j = (int)p2[1];
-      
-      if (!(i < 0 || i >= pixels_x ||
-	    j < 0 || j >= pixels_y))
-	{
-	  col_pixel.particle_vel      = sl->particle[n].vel;
-	  col_pixel.particle_z        = p2[2];
-	  col_pixel.particle_inlet_id = sl->particle[n].inlet_id;
-	  col_pixel.i                 = PixelId (i, j) | STREAKLINE;
-	  
-	  visWritePixel (&col_pixel);
-	}
-    }
-}
-
-
 void slCommunicateParticles (Net *net, SL *sl)
 {
 #ifndef NOMPI
@@ -3112,9 +3061,7 @@ void slCommunicateParticles (Net *net, SL *sl)
     {
       MPI_Wait (&sl->req[ m ], net->status);
       MPI_Wait (&sl->req[ sl->neigh_procs + m ], net->status);
-    }
-  for (m = 0; m < sl->neigh_procs; m++)
-    {
+      
       if (sl->neigh_proc[ m ].send_ps > 0)
 	{
 	  MPI_Isend (sl->neigh_proc[ m ].p_to_send, sl->neigh_proc[ m ].send_ps * 5, MPI_FLOAT,
@@ -3145,6 +3092,56 @@ void slCommunicateParticles (Net *net, SL *sl)
 	}
     }
 #endif // NOMPI
+}
+
+
+void slRender (SL *sl)
+{
+  float screen_max[2];
+  float scale[2];
+  float p1[3], p2[3];
+  
+  int pixels_x, pixels_y;
+  int i, j;
+  int n;
+  
+  ColPixel col_pixel;
+  
+  
+  pixels_x = screen.pixels_x;
+  pixels_y = screen.pixels_y;
+  
+  screen_max[0] = screen.max_x;
+  screen_max[1] = screen.max_y;
+  
+  scale[0] = screen.scale_x;
+  scale[1] = screen.scale_y;
+  
+  for (n = 0; n < sl->particles; n++)
+    {
+      p1[0] = sl->particle[n].x - (float)(sites_x>>1);
+      p1[1] = sl->particle[n].y - (float)(sites_y>>1);
+      p1[2] = sl->particle[n].z - (float)(sites_z>>1);
+      
+      visProject (p1, p2);
+      
+      p2[0] = (int)(scale[0] * (p2[0] + screen_max[0]));
+      p2[1] = (int)(scale[1] * (p2[1] + screen_max[1]));
+      
+      i = (int)p2[0];
+      j = (int)p2[1];
+      
+      if (!(i < 0 || i >= pixels_x ||
+	    j < 0 || j >= pixels_y))
+	{
+	  col_pixel.particle_vel      = sl->particle[n].vel;
+	  col_pixel.particle_z        = p2[2];
+	  col_pixel.particle_inlet_id = sl->particle[n].inlet_id;
+	  col_pixel.i                 = PixelId (i, j) | STREAKLINE;
+	  
+	  visWritePixel (&col_pixel);
+	}
+    }
 }
 
 
