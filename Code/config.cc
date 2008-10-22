@@ -138,6 +138,7 @@ double vis_stress_min, vis_stress_max;
 double vis_time;
 
 int vis_time_step, vis_cycle;
+int vis_period, vis_inlets;
 int vis_image_freq;
 int vis_pixels_max;
 int vis_compositing = 1;
