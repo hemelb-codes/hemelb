@@ -2720,7 +2720,6 @@ void slInit (Net *net, SL *sl)
 				      
 				      if (sl->neigh_procs == NEIGHBOUR_PROCS_MAX)
 					{
-					  continue;
 					  printf (" too many inter processor neighbours in slInit()\n");
 					  printf (" the execution is terminated\n");
 #ifndef NOMPI
