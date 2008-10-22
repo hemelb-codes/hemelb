@@ -1517,6 +1517,10 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   
   vis_cycle = cycle_id;
   
+  vis_period = lbm->period;
+  
+  vis_inlets = lbm->inlets;
+  
   for (i = 0; i < lbm->inlets; i++)
     {
       lbm_inlet_flux[i] /= lbm_inlet_count[i];
