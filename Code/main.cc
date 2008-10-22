@@ -240,7 +240,7 @@ int main (int argc, char *argv[])
 	      
 	      ++total_time_steps;
 	      
-	      if (time_step%images_period == 0) write_image = 1;
+	      // if (time_step%images_period == 0) write_image = 1;
 	      
 	      if (net.id == 0)
 		{
@@ -325,8 +325,6 @@ int main (int argc, char *argv[])
 	      
 	      if (doRendering)
 		{
-		  lbmCalculateFlowFieldValues (cycle_id, time_step, &lbm);
-		  
 		  visRenderB (write_image, complete_image_name, ColourPalette, &net);
 		  
 		  for (int i = 0; i < col_pixels; i++)
