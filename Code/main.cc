@@ -321,7 +321,7 @@ int main (int argc, char *argv[])
 		  end_time = myClock ();
 		  io_time += end_time - start_time;
 		}
-	      slStreakLines (time_step, lbm.period, &net, &sl);
+	      // slStreakLines (time_step, lbm.period, &net, &sl);
 	      
 	      if (doRendering)
 		{
@@ -440,6 +440,7 @@ int main (int argc, char *argv[])
 	  end_time = myClock ();
 	  other_time += end_time - start_time;
 	}
+      
       if (net.procs > 1)
 	{
 	  if (net.id == 1)
@@ -626,6 +627,7 @@ int main (int argc, char *argv[])
 	  vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, &lbm);
 	  vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, &lbm);
 	  
+	  fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
 	  fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis_pressure_min, vis_pressure_max);
 	  fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis_velocity_min, vis_velocity_max);
 	  fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis_stress_min, vis_stress_max);
@@ -633,7 +635,7 @@ int main (int argc, char *argv[])
 	  
 	  for (int n = 0; n < lbm.inlets; n++)
 	    {
-	      fprintf (timings_ptr, "inlet id: %i, (flow rate)x(inlet area) (m^3/s): %le", n, lbm_inlet_flux[ n ]);
+	      fprintf (timings_ptr, "inlet id: %i, (flow rate)x(inlet area) (m^3/s): %le\n", n, lbm_inlet_flux[ n ]);
 	    }
 	  fprintf (timings_ptr, "\n");
 	}
