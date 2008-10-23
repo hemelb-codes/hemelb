@@ -321,7 +321,7 @@ int main (int argc, char *argv[])
 		  end_time = myClock ();
 		  io_time += end_time - start_time;
 		}
-	      slStreakLines (time_step, lbm.period, &net, &sl);
+	      // slStreakLines (time_step, lbm.period, &net, &sl);
 	      
 	      if (doRendering)
 		{
