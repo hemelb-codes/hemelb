@@ -191,8 +191,8 @@ public class DirectBiConnection implements SteeringConnection {
 			dos.writeFloat(sd.getVis_brightness());
 			dos.writeFloat(sd.getVelocity_max());
 			dos.writeFloat(sd.getStress_max());
-			dos.writeFloat(sd.getPressure_max());
 			dos.writeFloat(sd.getPressure_min());
+			dos.writeFloat(sd.getPressure_max());
 			dos.writeFloat(sd.getVis_glyph_length());
 			dos.writeInt(sd.getPixels_x());
 			dos.writeInt(sd.getPixels_y());
