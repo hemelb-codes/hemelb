@@ -180,7 +180,7 @@ public class DirectBiConnection implements SteeringConnection {
 
 
 	public boolean send(SteeringData sd) {
-		// TODO Auto-generated method stub
+		// Write params in right order
 		try {
 			dos.writeFloat(sd.getCtr_x());
 			dos.writeFloat(sd.getCtr_y());
@@ -191,10 +191,17 @@ public class DirectBiConnection implements SteeringConnection {
 			dos.writeFloat(sd.getVis_brightness());
 			dos.writeFloat(sd.getVelocity_max());
 			dos.writeFloat(sd.getStress_max());
+			dos.writeFloat(sd.getPressure_max());
+			dos.writeFloat(sd.getPressure_min());
+			dos.writeFloat(sd.getVis_glyph_length());
+			dos.writeInt(sd.getPixels_x());
+			dos.writeInt(sd.getPixels_y());
 			dos.writeInt(sd.getVis_mouse_x());
 			dos.writeInt(sd.getVis_mouse_y());
 			dos.writeInt(sd.getKill());
-			
+			dos.writeInt(sd.getVis_mode());
+			dos.writeFloat(sd.getVis_streaklines_per_pulsatile_period());
+			dos.writeFloat(sd.getVis_streakline_length());
 			return true;
 		} catch (Exception e) {
 			

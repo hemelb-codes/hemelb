@@ -26,6 +26,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.media.opengl.*;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
 
 
 public class VizGui extends javax.swing.JPanel implements GLEventListener{
@@ -35,8 +39,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private GLCapabilities cap;
 	float scale_x;
 	float scale_y;
-	int frame_x = 512;
-	int frame_y = 512;
+	//int frame_x = 512;
+	//int frame_y = 512;
 	private String hostname;
 	private int port, window;
     private NetThread thread=null; 
@@ -48,8 +52,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private SteeringConnection nr;
 	private InfoPanel ifp = null;	
 	private SteeringData sd;
-	private int SCALE_X = 1024;
-	private int SCALE_Y = 1024;
+	//private int SCALE_X = 1024;
+	//private int SCALE_Y = 1024;
+	
+	int pixels_x = 512;
+	int pixels_y = 512;
 	
 	private long framesThisSec = 0;
 	private long framesLastSec = 0;
@@ -61,7 +68,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private double panel_height;
 
 	
-	private int scale = 512;
+	//private int scale = 512;
 	
 	static private final int VIEW1 =0;
 	static private final int VIEW2 =1;
@@ -69,6 +76,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	static private final int VIEW4 =3;
 	static private final int VIEWALL =4;
 	private int view;
+	
+	private ParamWindow1 paramWindow1;
+	private ParamWindow2 paramWindow2;
+	private ParamWindow3 paramWindow3;
+
 	
 	public VizGui(int port, String hostname, int window) {
 		super();
@@ -80,6 +92,60 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		nr = new DirectBiConnection (port, hostname, window);
 		sd = new SteeringData();
 		view = VIEW1;
+		paramWindow1 = new ParamWindow1(this);
+	    paramWindow1.updateButton.addActionListener(new ActionListener () {
+			public void actionPerformed(ActionEvent evt) {
+try {
+sd.setZoom_factor(Float.parseFloat(paramWindow1.zoomField.getText()));
+				sd.setLatitude(Float.parseFloat(paramWindow1.latitudeField.getText()));
+				sd.setLongitude(Float.parseFloat(paramWindow1.longtitudeField.getText()));
+				sd.setCtr_z(Float.parseFloat(paramWindow1.vis_ctr_zField.getText()));
+				sd.setCtr_y(Float.parseFloat(paramWindow1.vis_ctr_yField.getText()));
+				sd.setCtr_x(Float.parseFloat(paramWindow1.vis_ctr_xField.getText()));
+				send();
+} catch (Exception e) {
+	System.err.println("Can parse parameters");
+}
+				
+	    }
+	    });
+	    
+		paramWindow2 = new ParamWindow2(this);
+	    paramWindow2.updateButton.addActionListener(new ActionListener () {
+			public void actionPerformed(ActionEvent evt) {
+try {
+				pixels_x =Integer.parseInt(paramWindow2.pixels_xField.getText());
+				pixels_y = Integer.parseInt(paramWindow2.pixels_yField.getText());
+				sd.setPixels_x(pixels_x);
+				sd.setPixels_y(pixels_y);
+				send();
+ 
+} catch (Exception e) {
+	System.err.println("Can parse parameters");
+}
+	    }
+	    });
+	    
+		paramWindow3 = new ParamWindow3(this);
+	    paramWindow3.updateButton.addActionListener(new ActionListener () {
+			public void actionPerformed(ActionEvent evt) {
+				try {
+				sd.setVis_brightness(Float.parseFloat(paramWindow3.viz_brightnessField.getText()));
+				sd.setVelocity_max(Float.parseFloat(paramWindow3.velocity_maxField.getText()));
+				sd.setPressure_min(Float.parseFloat(paramWindow3.pressure_minField.getText()));
+				sd.setPressure_max(Float.parseFloat(paramWindow3.pressure_maxField.getText()));
+				sd.setStress_max(Float.parseFloat(paramWindow3.stress_maxField.getText()));
+				sd.setVis_glyph_length(Float.parseFloat(paramWindow3.vis_glyph_lengthField.getText()));
+				sd.setVis_streaklines_per_pulsatile_period(Float.parseFloat(paramWindow3.vis_streaklines_per_pulsatile_periodField.getText()));
+				sd.setVis_streakline_length(Float.parseFloat(paramWindow3.vis_streakline_lengthField.getText()));
+				send();
+				} catch (Exception e) {
+					System.err.println("Can parse parameters");
+	    }
+	    }
+	    });
+	    
+	    
 	}
 
 	public VizGui () {
@@ -91,6 +157,30 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		this.hostname = hostname;
 		notificationArea.append("Changed host " + hostname + ":" + port + "\n");
 		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+	}
+	
+	public void showParamWindow1 (boolean show) {
+		paramWindow1.setVisible(show);
+	}
+	
+	public boolean paramWindow1Visible () {
+		return paramWindow1.isVisible();
+	}
+	
+	public void showParamWindow2 (boolean show) {
+		paramWindow2.setVisible(show);
+	}
+	
+	public boolean paramWindow2Visible () {
+		return paramWindow2.isVisible();
+	}
+	
+	public void showParamWindow3 (boolean show) {
+		paramWindow3.setVisible(show);
+	}
+	
+	public boolean paramWindow3Visible () {
+		return paramWindow3.isVisible();
 	}
 	
 	public void appendNotification (String message) {
@@ -120,8 +210,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		//start the animator thread
 		animator = new Animator(canvas1);
 		animator.start();
-		ifp.updateSteeredParams();
-		ifp.viewChanged();
+
 		send();
 		}
 		return connected;
@@ -233,7 +322,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		      				vfd.getG(i, VIEW1) * (1.0f / 255.0f),
 							vfd.getB(i, VIEW1) * (1.0f / 255.0f));
 		      
-		  gl.glVertex2f (-0.5f + scale_x * vfd.getX(i),-0.5f + scale_y * (vfd.getY(i)+ (SCALE_Y/2.0f)));
+		  gl.glVertex2f (-0.5f + scale_x * vfd.getX(i),-0.5f + scale_y * (vfd.getY(i)+ (pixels_y)));
 		  
 		  
 		//image 2
@@ -241,7 +330,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	      				vfd.getG(i, VIEW2) * (1.0f / 255.0f),
 						vfd.getB(i, VIEW2) * (1.0f / 255.0f));
 	      
-	  gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i)+ (SCALE_X/2.0f)),-0.5f + scale_y * (vfd.getY(i) + (SCALE_Y/2.0f)));
+	  gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i)+ (pixels_x/2.0f)),-0.5f + scale_y * (vfd.getY(i) + (pixels_y/2.0f)));
 	  
 	//image 3
       gl.glColor3f (vfd.getR(i, VIEW3) * (1.0f / 255.0f),
@@ -256,7 +345,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
   				vfd.getG(i, VIEW4) * (1.0f / 255.0f),
 				vfd.getB(i, VIEW4) * (1.0f / 255.0f));
   
-  	gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i)+ (SCALE_X/2.0f)),-0.5f + scale_y * vfd.getY(i));
+  	gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i)+ (pixels_x/2.0f)),-0.5f + scale_y * vfd.getY(i));
 
 
 		    
@@ -320,26 +409,26 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				public void keyTyped(KeyEvent e) {
 					if (e.getKeyChar() == '1') {
 						view = VIEW1;
-						scale_x = 1.0f / (float)scale;
-						scale_y = 1.0f / (float)scale;	
+						scale_x = 1.0f / (float)pixels_x;
+						scale_y = 1.0f / (float)pixels_y;	
 					} else if (e.getKeyChar() == '2') {
 						view = VIEW2;
-						scale_x = 1.0f / (float)scale;
-						scale_y = 1.0f / (float)scale;	
+						scale_x = 1.0f / (float)pixels_x;
+						scale_y = 1.0f / (float)pixels_y;	
 					} else if (e.getKeyChar() == '3') {
 						view = VIEW3;
-						scale_x = 1.0f / (float)scale;
-						scale_y = 1.0f / (float)scale;	
+						scale_x = 1.0f / (float)pixels_x;
+						scale_y = 1.0f / (float)pixels_y;	
 					} else if (e.getKeyChar() == '4') {
 						view = VIEW4;
-						scale_x = 1.0f / (float)scale;
-						scale_y = 1.0f / (float)scale;	
+						scale_x = 1.0f / (float)pixels_x;
+						scale_y = 1.0f / (float)pixels_y;	
 					} else if (e.getKeyChar() == '5') {
 						view = VIEWALL;
 
-						scale_x = 1.0f / (float)SCALE_X;
-						scale_y = 1.0f / (float)SCALE_Y;
-					} else	if (e.getKeyChar() == 'b') {
+						scale_x = 1.0f / (float)2*pixels_x;
+						scale_y = 1.0f / (float)2*pixels_y;
+/*					} else	if (e.getKeyChar() == 'b') {
 						
 						if (scale > 256) {
 							scale = scale/2;
@@ -352,7 +441,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							scale = scale*2;
 							scale_x = 1.0f / (float)scale;
 							scale_y = 1.0f / (float)scale;	
-						}					}
+						}		*/			
+						}
 					ifp.viewChanged();
 					//System.err.println("View " + view);
 				}
@@ -419,14 +509,14 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							int i = (int)point.getX();
 							int j = (int)point.getY();
 							
-							int offsetx = (int)(canvas1.getWidth() - frame_x)/2;
-							int offsety = (int)(canvas1.getHeight() - frame_y)/2;
+							int offsetx = (int)(canvas1.getWidth() - pixels_x)/2;
+							int offsety = (int)(canvas1.getHeight() - pixels_y)/2;
 
 							//transform
 							i = i - offsetx;
 							j = j - offsety;
 							
-							if (i >= 0 && i <= frame_x && j >= 0 && j <= frame_y) {
+							if (i >= 0 && i <= pixels_x && j >= 0 && j <= pixels_y) {
 								sd.setVis_mouse_x(i);
 								sd.setVis_mouse_y(j);
 								send();
@@ -489,7 +579,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	public void resetSteering () {
 		sd = new SteeringData();
 		send();
-		ifp.updateSteeredParams();
+	//	ifp.updateSteeredParams();
 		view = VIEW1;
 	}
 	
@@ -497,7 +587,46 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		if (nr != null && nr.isConnected()) {
 			//System.err.println (" dX = "  +  dx + " dy = " +dy);
 		nr.send(sd);
+		ifp.viewChanged();
+		paramWindow1.update(sd);
+		paramWindow2.update(sd);
+		paramWindow3.update(sd);
 		}
+
+		
+		//ifp.updateSteeredParams();
+
+	}
+	
+	
+	public void saveParameters (String filename) {
+		  try {
+		      FileOutputStream fout = new FileOutputStream(filename);
+		      ObjectOutputStream oos = new ObjectOutputStream(fout);
+		      oos.writeObject(sd);
+		      oos.close();
+		      }
+		   catch (Exception e) { 
+			   e.printStackTrace(); 
+			 }
+
+	}
+
+	public void loadParameters (String filename) {
+		   try {
+			    FileInputStream fin = new FileInputStream(filename);
+			    ObjectInputStream ois = new ObjectInputStream(fin);
+			    sd = (SteeringData) ois.readObject();
+			    ois.close();
+			    send();
+			    }
+			   catch (Exception e) { e.printStackTrace(); }
+
+	}
+	
+	public void changeVisMode (int renView) {
+		sd.setVis_mode(renView);
+		send();
 	}
 	
 	public boolean isConnected() {
@@ -508,6 +637,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		ifp = new InfoPanel();
 		return ifp;
 	}
+	
+	
 	
 	//thread to rotate the model
 	private class RotateThread extends Thread {
@@ -604,6 +735,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
     	}
     }
     
+
+    
+    
     //side info panel 
     private class InfoPanel extends JPanel {
     	
@@ -659,7 +793,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		{
 			jLabel3 = new JLabel();
 			this.add(jLabel3, "0, 4");
-			jLabel3.setText("Frame Size (bits)");
+			jLabel3.setText("Frame Size (bytes)");
 			jLabel3.setFont(new java.awt.Font("Dialog",1,12));
 		}
 		{
@@ -719,7 +853,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			jLabel10.setFont(new java.awt.Font("Dialog",1,12));
 		}
 		
-		{
+/*		{
 			jLabel7 = new JLabel();
 			this.add(jLabel7, "0, 15");
 			jLabel7.setText("Viz Brightness");
@@ -769,15 +903,15 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					send();
 				}
 			});
-		}
+		}*/
 		
     	}
     
-    	public void updateSteeredParams() {
+/*    	public void updateSteeredParams() {
     		stressMax.setText(Float.toString(sd.getStress_max()));
     		velMax.setText(Float.toString(sd.getVelocity_max()));
     		vizBrightness.setText(Float.toString(sd.getVis_brightness()));
-    	}
+    	}*/
     	
     	public void updateFPS (long fps, double bps) {
     		framePerSec.setText(Long.toString(fps));

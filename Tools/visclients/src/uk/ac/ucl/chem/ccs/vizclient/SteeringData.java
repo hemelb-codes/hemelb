@@ -1,25 +1,8 @@
 package uk.ac.ucl.chem.ccs.vizclient;
 
-public class SteeringData {
-/*
-	1. ctr_x - X pan - [0.0, 1.0] - for now just send 0.0 and no need to  
-	steer this for now.
-	2. ctr_y - Y pan - [0.0, 1.0] - for now just send 0.0 and no need to  
-	steer this for now.
-	3. ctr_z - Z pan - [0.0, 1.0] - for now just send 0.0 and no need to  
-	steer this for now.
-	4. longitude - conversion of left click and y mouse movement into  
-	angle [-90.0,+90.0] degrees.
-	5. latitude - conversion of left click and x mouse movement into angle  
-	[-90.0,+90.0] degrees.
-	6. zoom factor - [0.5 5.0] - Controllable using the mouse wheel - each  
-	click on the wheel is a 0.1 increment
-	7. vis_brightness - 0.03 - settable inside an editable field in a GUI  
-	window
-	8. velocity_max - 0.001 - settable inside an editable field in a GUI  
-	window
-	9. stress_max - 0.01 - settable inside an editable field in a GUI window
-	*/
+import java.io.Serializable;
+
+public class SteeringData implements Serializable {
 	
 	private float ctr_x;
 	private float ctr_y;
@@ -32,25 +15,37 @@ public class SteeringData {
 	private float stress_max;
 	private int vis_mouse_x;
 	private int vis_mouse_y;
-	private int kill;
+	private int lbm_terminate;
+	private float pressure_min;		
+	private float pressure_max;		
+	private float vis_glyph_length;	
+	private int pixels_x;			
+	private int pixels_y;			
+	private int vis_mode;
+	private float vis_streaklines_per_pulsatile_period;
+	private float vis_streakline_length;
 	
-	public SteeringData(float ctr_x, float ctr_y, float ctr_z, float latitude,
-			float longitude, float stress_max, float velocity_max,
-			float vis_brightness, float zoom_factor, int vis_mouse_x, int vis_mouse_y, int kill) {
-		super();
-		this.ctr_x = ctr_x;
-		this.ctr_y = ctr_y;
-		this.ctr_z = ctr_z;
-		this.latitude = latitude;
-		this.longitude = longitude;
-		this.stress_max = stress_max;
-		this.velocity_max = velocity_max;
-		this.vis_brightness = vis_brightness;
-		this.zoom_factor = zoom_factor;
-		this.vis_mouse_x = vis_mouse_x;
-		this.vis_mouse_y = vis_mouse_y;
-		this.kill = kill;
-	}
+	
+//	public SteeringData(float ctr_x, float ctr_y, float ctr_z, float latitude,
+//			float longitude, float stress_max, float velocity_max,
+//			float vis_brightness, float zoom_factor, int vis_mouse_x, int vis_mouse_y, int kill) {
+//		super();
+//		this.ctr_x = ctr_x;
+//		this.ctr_y = ctr_y;
+//		this.ctr_z = ctr_z;
+//		this.latitude = latitude;
+//		this.longitude = longitude;
+//		this.stress_max = stress_max;
+//		this.velocity_max = velocity_max;
+//		this.vis_brightness = vis_brightness;
+//		this.zoom_factor = zoom_factor;
+//		
+//		
+//		
+//		this.vis_mouse_x = vis_mouse_x;
+//		this.vis_mouse_y = vis_mouse_y;
+//		this.lbm_terminate = kill;
+//	}
 	
 	public SteeringData() {
 		super();
@@ -60,16 +55,116 @@ public class SteeringData {
 		this.latitude = 45.0f;
 		this.longitude = 45.0f;
 		this.zoom_factor = 1.0f;
-		this.vis_brightness = 0.03f;
-		this.velocity_max = 0.001f;
-		this.stress_max = 0.001f;
+		this.vis_brightness = 0.1f;
+		this.velocity_max = 0.0f;
+		this.stress_max = 0.0f;
 		this.vis_mouse_x = 0;
 		this.vis_mouse_y = 0;
-		this.kill = 0;
+		this.lbm_terminate = 0;
+		this.pressure_min = 80.0f;		
+		this.pressure_max = 120.0f;		
+		this.vis_glyph_length = 1.0f;	
+		this.pixels_x = 512;			
+		this.pixels_y = 512;			
+		this.vis_mode = 0;
+		this.vis_streaklines_per_pulsatile_period = 5.0f;
+		this.vis_streakline_length = 100.0f;	
+	}
+	
+	public float getPressure_min() {
+		return pressure_min;
 	}
 
-	
-	
+
+	public void setPressure_min(float pressure_min) {
+		this.pressure_min = pressure_min;
+	}
+
+	public float getPressure_max() {
+		return pressure_max;
+	}
+
+
+
+	public void setPressure_max(float pressure_max) {
+		this.pressure_max = pressure_max;
+	}
+
+
+
+	public float getVis_glyph_length() {
+		return vis_glyph_length;
+	}
+
+
+
+	public void setVis_glyph_length(float vis_glyph_length) {
+		this.vis_glyph_length = vis_glyph_length;
+	}
+
+
+
+	public int getPixels_x() {
+		return pixels_x;
+	}
+
+
+
+	public void setPixels_x(int pixels_x) {
+		this.pixels_x = pixels_x;
+	}
+
+
+
+	public int getPixels_y() {
+		return pixels_y;
+	}
+
+
+
+	public void setPixels_y(int pixels_y) {
+		this.pixels_y = pixels_y;
+	}
+
+
+
+	public int getVis_mode() {
+		return vis_mode;
+	}
+
+
+
+	public void setVis_mode(int vis_mode) {
+		this.vis_mode = vis_mode;
+	}
+
+
+
+	public float getVis_streaklines_per_pulsatile_period() {
+		return vis_streaklines_per_pulsatile_period;
+	}
+
+
+
+	public void setVis_streaklines_per_pulsatile_period(
+			float vis_streaklines_per_pulsatile_period) {
+		this.vis_streaklines_per_pulsatile_period = vis_streaklines_per_pulsatile_period;
+	}
+
+
+
+	public float getVis_streakline_length() {
+		return vis_streakline_length;
+	}
+
+
+
+	public void setVis_streakline_length(float vis_streakline_length) {
+		this.vis_streakline_length = vis_streakline_length;
+	}
+
+
+
 	public int getVis_mouse_x() {
 		return vis_mouse_x;
 	}
@@ -87,11 +182,11 @@ public class SteeringData {
 	}
 
 	public int getKill() {
-		return kill;
+		return lbm_terminate;
 	}
 
 	public void setKill(int kill) {
-		this.kill = kill;
+		this.lbm_terminate = kill;
 	}
 
 	public float getCtr_x() {
