@@ -3167,11 +3167,14 @@ void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl)
 
 void slEnd (SL *sl)
 {
+  int m;
+  
+  
   free(sl->from_proc_id_to_neigh_proc_index);
   
   free(sl->req);
   
-  for (int m = 0; m < sl->neigh_procs; m++)
+  for (m = 0; m < sl->neigh_procs; m++)
     {
       free(sl->neigh_proc[ m ].p_to_recv);
       free(sl->neigh_proc[ m ].p_to_send);
@@ -3185,11 +3188,16 @@ void slEnd (SL *sl)
       free(sl->s_to_recv);
       free(sl->s_to_send);
     }
-  free(sl->neigh_proc);
+  for (m = 0; m < blocks; m++)
+    {
+      if (sl->velocity_field[ m ].vel_site_data != NULL)
+	{
+	  free(sl->velocity_field[ m ].vel_site_data);
+	}
+    }
+  free(sl->velocity_field);
   
   free(sl->particle_seed);
-  
-  free(sl->velocity_field);
   
   free(sl->particle);
 }
