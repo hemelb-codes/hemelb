@@ -8,18 +8,25 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.event.MenuListener;
+
+
 import javax.swing.event.MenuEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -27,7 +34,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 
-
+import uk.ac.ucl.chem.ccs.vizclient.ExampleFileFilter;
 
 /**
 * This code was edited or generated using CloudGarden's Jigloo
@@ -47,11 +54,21 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	private JMenu steeringMenu;
 	private JMenuItem resetMenuItem;
 	private JMenuItem connectMenuItem;
+	private JRadioButtonMenuItem view2MenuItem;
+	private JRadioButtonMenuItem view1MenuItem;
+	private JMenu viewMenu;
 	private JPanel jPanel1;
 	private JPanel jPanel2;
 	private JMenuItem quitMenuItem;
 	private JMenuItem killMenuItem;
+	private JMenuItem loadMenuItem;
+	private JMenuItem saveMenuItem;
+	private JSeparator jSeparator4;
+	private JCheckBoxMenuItem window3MenuItem;
+	private JCheckBoxMenuItem window2MenuItem;
+	private JRadioButtonMenuItem view3MenuItem;
 	private JSeparator jSeparator2;
+	private JSeparator jSeparator3;
 	private JMenuItem hostMenuItem;
 	private JSeparator jSeparator1;
 	private JMenuItem disconnectMenuItem;
@@ -61,6 +78,9 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	private Component parent;
 	private boolean rendezvousing = false;
 	private JCheckBoxMenuItem rotateMenuItem;
+	private JCheckBoxMenuItem window1MenuItem;
+	private ButtonGroup buttonGroup1;
+
 	/**
 	* Auto-generated main method to display this JFrame
 	*/
@@ -247,6 +267,48 @@ public class VizSteererWindow extends javax.swing.JFrame {
 						mainMenuBar.add(steeringMenu);
 						steeringMenu.setText("Steering");
 					}
+					{
+						viewMenu = new JMenu();
+						mainMenuBar.add(viewMenu);
+						viewMenu.setText("View");
+						{
+							view1MenuItem = new JRadioButtonMenuItem();
+							viewMenu.add(view1MenuItem);
+							view1MenuItem.setText("View 1");
+							view1MenuItem.setSelected(true);
+							view1MenuItem.addActionListener(new ActionListener (){ 
+								public void actionPerformed (ActionEvent e) {
+									vg.changeVisMode(1);
+								}
+							});
+						}
+						{
+							view2MenuItem = new JRadioButtonMenuItem();
+							viewMenu.add(view2MenuItem);
+							view2MenuItem.setText("View 2");
+							view2MenuItem.addActionListener(new ActionListener (){ 
+								public void actionPerformed (ActionEvent e) {
+									vg.changeVisMode(2);
+								}
+							});
+						}
+						{
+							view3MenuItem = new JRadioButtonMenuItem();
+							viewMenu.add(view3MenuItem);
+							view3MenuItem.setText("View 3");
+							view3MenuItem.addActionListener(new ActionListener (){ 
+								public void actionPerformed (ActionEvent e) {
+									vg.changeVisMode(3);
+								}
+							});
+						}
+						{
+							buttonGroup1 = new ButtonGroup();
+							buttonGroup1.add(view1MenuItem);
+							buttonGroup1.add(view3MenuItem);
+							buttonGroup1.add(view2MenuItem);
+						}
+					}
 					{	resetMenuItem = new JMenuItem();
 						steeringMenu.add(resetMenuItem);
 						resetMenuItem.setText("Reset");
@@ -280,6 +342,117 @@ public class VizSteererWindow extends javax.swing.JFrame {
 							}
 						});
 					}
+					{
+						jSeparator3 = new JSeparator();
+						steeringMenu.add(jSeparator3);
+					}
+					{
+						window1MenuItem = new JCheckBoxMenuItem();
+						window1MenuItem.setText("Show Param Window 1");
+						steeringMenu.add(window1MenuItem);
+						window1MenuItem.addActionListener(new ActionListener() {
+							public void actionPerformed (ActionEvent e) {
+									vg.showParamWindow1(window1MenuItem.getState());
+
+							}
+						});
+					}
+					{
+						window2MenuItem = new JCheckBoxMenuItem();
+						steeringMenu.add(window2MenuItem);
+						window2MenuItem.setText("Show Param Window 2");
+						window2MenuItem.addActionListener(new ActionListener() {
+							public void actionPerformed (ActionEvent e) {
+									vg.showParamWindow2(window2MenuItem.getState());
+
+							}
+						});
+					}
+					{
+						window3MenuItem = new JCheckBoxMenuItem();
+						steeringMenu.add(window3MenuItem);
+						window3MenuItem.setText("Show Param Window 3");
+						window3MenuItem.addActionListener(new ActionListener() {
+							public void actionPerformed (ActionEvent e) {
+									vg.showParamWindow3(window3MenuItem.getState());
+
+							}
+						});
+					}
+					{
+						jSeparator4 = new JSeparator();
+						steeringMenu.add(jSeparator4);
+					}
+					{
+						saveMenuItem = new JMenuItem();
+						steeringMenu.add(saveMenuItem);
+						saveMenuItem.setText("Save Parameters");
+						saveMenuItem.addActionListener(new ActionListener() {
+							public void actionPerformed (ActionEvent evt) {
+								JFileChooser fc = new JFileChooser();	
+								
+							    ExampleFileFilter filter = new ExampleFileFilter();
+							    filter.addExtension("hcd");
+							    filter.setDescription("HemeLB Client Data");
+							    fc.setFileFilter(filter);
+
+								fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES );
+								int returnVal = fc.showSaveDialog(VizSteererWindow.this);
+
+							    if (returnVal == JFileChooser.APPROVE_OPTION) {
+							    	String filename = fc.getSelectedFile().getAbsolutePath();
+							    	if (!filename.endsWith(".hcd")) {
+							    		filename = filename + ".hcd";
+							    	}
+							        vg.saveParameters(filename);
+							        //System.out.println(fileLocation);
+							    } 
+							}
+						});
+					}
+					{
+						loadMenuItem = new JMenuItem();
+						steeringMenu.add(loadMenuItem);
+						loadMenuItem.setText("Load Paramters");
+						loadMenuItem.addActionListener(new ActionListener() {
+							public void actionPerformed (ActionEvent evt) {
+								JFileChooser fc = new JFileChooser();	
+								
+							    ExampleFileFilter filter = new ExampleFileFilter();
+							    filter.addExtension("hcd");
+							    filter.setDescription("HemeLB Client Data");
+							    fc.setFileFilter(filter);
+
+								fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES );
+								int returnVal = fc.showOpenDialog(VizSteererWindow.this);
+
+							    if (returnVal == JFileChooser.APPROVE_OPTION) {
+							        vg.loadParameters(fc.getSelectedFile().getAbsolutePath());
+							        //System.out.println(fileLocation);
+							    } 
+							}
+						});
+					}
+					{
+						steeringMenu.addMenuListener(new MenuListener () {
+							public void menuSelected (MenuEvent e) {
+								window1MenuItem.setState(vg.paramWindow1Visible());
+								window2MenuItem.setState(vg.paramWindow2Visible());
+								window3MenuItem.setState(vg.paramWindow3Visible());
+
+							}
+						
+						
+						public void menuCanceled (MenuEvent e) {
+							
+						}
+						
+						public void menuDeselected (MenuEvent e) {
+							
+						}
+						
+					});
+					}
 					
 				}
 			}
@@ -287,6 +460,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 			pack();
 			this.setSize(1000, 800);
 			//setSize(400, 300);
+			//Application.getInstance().getContext().getResourceMap(getClass()).injectComponents(getContentPane());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
