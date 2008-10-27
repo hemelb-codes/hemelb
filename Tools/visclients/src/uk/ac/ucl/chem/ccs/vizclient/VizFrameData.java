@@ -11,18 +11,33 @@ package uk.ac.ucl.chem.ccs.vizclient;
 
 public class VizFrameData {
 
-	private long frameNo = 0;
-	private long realFrameNo = 0;
+	//private long frameNo = 0;
+	//private long realFrameNo = 0;
 	private int bufferSize = 0;
 	private int length = 0;
-	private double dataRate = 0.f;
-	private double framePerSec = 0.f;
+	//private double dataRate = 0.f;
+	//private double framePerSec = 0.f;
 	private int r[][];
 	private int g[][];
 	private int b[][];
 	
 	private int x[];
 	private int y[];
+	
+	
+    private double vis_pressure_min;
+    private double vis_pressure_max;
+    private double vis_velocity_min;
+   private  double vis_velocity_max;
+    private double vis_stress_min;
+    private double vis_stress_max;
+    private int vis_time_step;
+    private double vis_time;
+    private int vis_cycle;
+    private int n_inlets;
+    private double inlet_avg_vel[];
+    private double vis_mouse_pressure;
+    private double vis_stess_pressure;
 	
 
 	/**
@@ -38,27 +53,27 @@ public class VizFrameData {
 	}
 	
 
-	public double getDataRate() {
-		return dataRate;
-	}
+//	public double getDataRate() {
+//		return dataRate;
+//	}
 
 
 
+//	/**
+//	 * @return Returns the framePerSec.
+//	 */
+//	public double getFramePerSec() {
+//		return framePerSec;
+//	}
 	/**
-	 * @return Returns the framePerSec.
-	 */
-	public double getFramePerSec() {
-		return framePerSec;
-	}
-	/**
-	 * @param framePerSec The framePerSec to set.
-	 */
-	public void setFramePerSec(double framePerSec) {
-		this.framePerSec = framePerSec;
-	}
-	public void setDataRate(double dataRate) {
-		this.dataRate = dataRate;
-	}
+//	 * @param framePerSec The framePerSec to set.
+//	 */
+//	public void setFramePerSec(double framePerSec) {
+//		this.framePerSec = framePerSec;
+//	}
+//	public void setDataRate(double dataRate) {
+//		this.dataRate = dataRate;
+//	}
 
 
 
@@ -77,28 +92,159 @@ public class VizFrameData {
 	
 	
 	
-	public long getRealFrameNo() {
-		return realFrameNo;
+	public double getVis_pressure_min() {
+		return vis_pressure_min;
 	}
 
 
-	public void setRealFrameNo(long realFrameNo) {
-		this.realFrameNo = realFrameNo;
+	public void setVis_pressure_min(double vis_pressure_min) {
+		this.vis_pressure_min = vis_pressure_min;
 	}
 
 
-	/**
-	 * @return Returns the frameNo.
-	 */
-	public long getFrameNo() {
-		return frameNo;
+	public double getVis_pressure_max() {
+		return vis_pressure_max;
 	}
-	/**
-	 * @param frameNo The frameNo to set.
-	 */
-	public void setFrameNo(long frame_no) {
-		this.frameNo = frame_no;
+
+
+	public void setVis_pressure_max(double vis_pressure_max) {
+		this.vis_pressure_max = vis_pressure_max;
 	}
+
+
+	public double getVis_velocity_min() {
+		return vis_velocity_min;
+	}
+
+
+	public void setVis_velocity_min(double vis_velocity_min) {
+		this.vis_velocity_min = vis_velocity_min;
+	}
+
+
+	public double getVis_velocity_max() {
+		return vis_velocity_max;
+	}
+
+
+	public void setVis_velocity_max(double vis_velocity_max) {
+		this.vis_velocity_max = vis_velocity_max;
+	}
+
+
+	public double getVis_stress_min() {
+		return vis_stress_min;
+	}
+
+
+	public void setVis_stress_min(double vis_stress_min) {
+		this.vis_stress_min = vis_stress_min;
+	}
+
+
+	public double getVis_stress_max() {
+		return vis_stress_max;
+	}
+
+
+	public void setVis_stress_max(double vis_stress_max) {
+		this.vis_stress_max = vis_stress_max;
+	}
+
+
+	public int getVis_time_step() {
+		return vis_time_step;
+	}
+
+
+	public void setVis_time_step(int vis_time_step) {
+		this.vis_time_step = vis_time_step;
+	}
+
+
+	public double getVis_time() {
+		return vis_time;
+	}
+
+
+	public void setVis_time(double vis_time) {
+		this.vis_time = vis_time;
+	}
+
+
+	public int getVis_cycle() {
+		return vis_cycle;
+	}
+
+
+	public void setVis_cycle(int vis_cycle) {
+		this.vis_cycle = vis_cycle;
+	}
+
+
+	public int getN_inlets() {
+		return n_inlets;
+	}
+
+
+	public void setN_inlets(int n_inlets) {
+		this.n_inlets = n_inlets;
+		inlet_avg_vel = new double[n_inlets];
+	}
+
+
+	public double getInlet_avg_vel(int pos) {
+		return inlet_avg_vel[pos];
+	}
+
+
+	public void setInlet_avg_vel(double inlet_vel, int pos) {
+		this.inlet_avg_vel[pos] = inlet_vel;
+	}
+
+
+	public double getVis_mouse_pressure() {
+		return vis_mouse_pressure;
+	}
+
+
+	public void setVis_mouse_pressure(double vis_mouse_pressure) {
+		this.vis_mouse_pressure = vis_mouse_pressure;
+	}
+
+
+	public double getVis_stess_pressure() {
+		return vis_stess_pressure;
+	}
+
+
+	public void setVis_stess_pressure(double vis_stess_pressure) {
+		this.vis_stess_pressure = vis_stess_pressure;
+	}
+
+
+//	public long getRealFrameNo() {
+//		return realFrameNo;
+//	}
+
+
+//	public void setRealFrameNo(long realFrameNo) {
+//		this.realFrameNo = realFrameNo;
+//	}
+
+
+//	/**
+//	 * @return Returns the frameNo.
+//	 */
+//	public long getFrameNo() {
+//		return frameNo;
+//	}
+//	/**
+//	 * @param frameNo The frameNo to set.
+//	 */
+//	public void setFrameNo(long frame_no) {
+//		this.frameNo = frame_no;
+//	}
 	/**
 	 * @return Returns the b.
 	 */

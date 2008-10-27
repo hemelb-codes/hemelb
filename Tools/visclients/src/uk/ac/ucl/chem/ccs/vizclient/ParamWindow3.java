@@ -92,42 +92,42 @@ public class ParamWindow3 extends javax.swing.JDialog {
 				{
 					jLabel1 = new JLabel();
 					jPanel1.add(jLabel1, "0, 0");
-					jLabel1.setText("vis_brightness");
+					jLabel1.setText("Brightness");
 				}
 				{
 					jLabel2 = new JLabel();
 					jPanel1.add(jLabel2, "0, 2");
-					jLabel2.setText("velocity_max");
+					jLabel2.setText("Max velocity (m/s)");
 				}
 				{
 					jLabel3 = new JLabel();
-					jPanel1.add(jLabel3, "0, 4");
-					jLabel3.setText("pressure_max");
+					jPanel1.add(jLabel3, "0, 6");
+					jLabel3.setText("Max pressure (mm.Hg)");
 				}
 				{
 					jLabel4 = new JLabel();
-					jPanel1.add(jLabel4, "0, 6");
-					jLabel4.setText("pressure_min");
+					jPanel1.add(jLabel4, "0, 4");
+					jLabel4.setText("Min pressure (mm.Hg)");
 				}
 				{
 					jLabel5 = new JLabel();
 					jPanel1.add(jLabel5, "0, 8");
-					jLabel5.setText("stress_max");
+					jLabel5.setText("Max stress (Pa)");
 				}
 				{
 					jLabel6 = new JLabel();
 					jPanel1.add(jLabel6, "0, 10");
-					jLabel6.setText("vis_glyph_length");
+					jLabel6.setText("Glyph length");
 				}
 				{
 					jLabel7 = new JLabel();
 					jPanel1.add(jLabel7, "0, 12");
-					jLabel7.setText("vis_streaklines_per_period");
+					jLabel7.setText("Streaklines/period");
 				}
 				{
 					jLabel8 = new JLabel();
 					jPanel1.add(jLabel8, "0, 14");
-					jLabel8.setText("vis_streakline_length");
+					jLabel8.setText("Streakline length");
 				}
 				{
 					updateButton = new JButton();
@@ -140,11 +140,11 @@ public class ParamWindow3 extends javax.swing.JDialog {
 				}
 				{
 					pressure_maxField = new JTextField();
-					jPanel1.add(pressure_maxField, "0, 5");
+					jPanel1.add(pressure_maxField, "0, 7");
 				}
 				{
 					pressure_minField = new JTextField();
-					jPanel1.add(pressure_minField, "0, 7");
+					jPanel1.add(pressure_minField, "0, 5");
 				}
 				{
 					stress_maxField = new JTextField();
