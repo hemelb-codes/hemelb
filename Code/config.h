@@ -300,6 +300,7 @@ struct SL
   int particles_to_send_max, particles_to_recv_max;
   int neigh_procs;
   int shared_vs;
+  int procs;
   
   VelocityField *velocity_field;
   
