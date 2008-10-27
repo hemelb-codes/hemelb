@@ -10,6 +10,8 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import javax.swing.WindowConstants;
@@ -37,52 +39,44 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	static private JScrollPane jScrollPane1;
 	private GLCanvas canvas1;
 	private GLCapabilities cap;
-	float scale_x;
-	float scale_y;
-	//int frame_x = 512;
-	//int frame_y = 512;
+
 	private String hostname;
 	private int port, window;
-    private NetThread thread=null; 
-    private TimerThread timeFramesPerSec;
-    private RotateThread rotateModel;
+	private NetThread thread=null; 
+	private TimerThread timeFramesPerSec;
+	private RotateThread rotateModel;
 	private Animator animator = null;
-    private boolean connected = false;
+	private boolean connected = false;
 	private ConcurrentLinkedQueue queue;
 	private SteeringConnection nr;
 	private InfoPanel ifp = null;	
 	private SteeringData sd;
-	//private int SCALE_X = 1024;
-	//private int SCALE_Y = 1024;
-	
+
 	int pixels_x = 512;
 	int pixels_y = 512;
-	
-	private long framesThisSec = 0;
-	private long framesLastSec = 0;
-	private long framesPerSec = 0;
-	
-	private double bytesRec = 0.d;
+
+	private long totalFramesRec = 0;
+	private long totalDataRec = 0;
+
+
 	
 	private double panel_width;
 	private double panel_height;
 
-	
-	//private int scale = 512;
-	
+	//define the views
 	static private final int VIEW1 =0;
 	static private final int VIEW2 =1;
 	static private final int VIEW3 =2;
 	static private final int VIEW4 =3;
 	static private final int VIEWALL =4;
 	private int view;
-	
+
 	private ParamWindow1 paramWindow1;
 	private ParamWindow2 paramWindow2;
 	private ParamWindow3 paramWindow3;
 
-	
-	public VizGui(int port, String hostname, int window) {
+
+	public VizGui(int port, String hostname, int window, Container parent) {
 		super();
 		queue = new ConcurrentLinkedQueue();
 		this.port = port;
@@ -92,297 +86,295 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		nr = new DirectBiConnection (port, hostname, window);
 		sd = new SteeringData();
 		view = VIEW1;
-		paramWindow1 = new ParamWindow1(this);
-	    paramWindow1.updateButton.addActionListener(new ActionListener () {
-			public void actionPerformed(ActionEvent evt) {
-try {
-sd.setZoom_factor(Float.parseFloat(paramWindow1.zoomField.getText()));
-				sd.setLatitude(Float.parseFloat(paramWindow1.latitudeField.getText()));
-				sd.setLongitude(Float.parseFloat(paramWindow1.longtitudeField.getText()));
-				sd.setCtr_z(Float.parseFloat(paramWindow1.vis_ctr_zField.getText()));
-				sd.setCtr_y(Float.parseFloat(paramWindow1.vis_ctr_yField.getText()));
-				sd.setCtr_x(Float.parseFloat(paramWindow1.vis_ctr_xField.getText()));
-				send();
-} catch (Exception e) {
-	System.err.println("Can parse parameters");
-}
-				
-	    }
-	    });
-	    
-		paramWindow2 = new ParamWindow2(this);
-	    paramWindow2.updateButton.addActionListener(new ActionListener () {
-			public void actionPerformed(ActionEvent evt) {
-try {
-				pixels_x =Integer.parseInt(paramWindow2.pixels_xField.getText());
-				pixels_y = Integer.parseInt(paramWindow2.pixels_yField.getText());
-				sd.setPixels_x(pixels_x);
-				sd.setPixels_y(pixels_y);
-				send();
- 
-} catch (Exception e) {
-	System.err.println("Can parse parameters");
-}
-	    }
-	    });
-	    
-		paramWindow3 = new ParamWindow3(this);
-	    paramWindow3.updateButton.addActionListener(new ActionListener () {
+		paramWindow1 = new ParamWindow1(parent);
+		paramWindow1.updateButton.addActionListener(new ActionListener () {
 			public void actionPerformed(ActionEvent evt) {
 				try {
-				sd.setVis_brightness(Float.parseFloat(paramWindow3.viz_brightnessField.getText()));
-				sd.setVelocity_max(Float.parseFloat(paramWindow3.velocity_maxField.getText()));
-				sd.setPressure_min(Float.parseFloat(paramWindow3.pressure_minField.getText()));
-				sd.setPressure_max(Float.parseFloat(paramWindow3.pressure_maxField.getText()));
-				sd.setStress_max(Float.parseFloat(paramWindow3.stress_maxField.getText()));
-				sd.setVis_glyph_length(Float.parseFloat(paramWindow3.vis_glyph_lengthField.getText()));
-				sd.setVis_streaklines_per_pulsatile_period(Float.parseFloat(paramWindow3.vis_streaklines_per_pulsatile_periodField.getText()));
-				sd.setVis_streakline_length(Float.parseFloat(paramWindow3.vis_streakline_lengthField.getText()));
-				send();
+					sd.setZoom_factor(Float.parseFloat(paramWindow1.zoomField.getText()));
+					sd.setLatitude(Float.parseFloat(paramWindow1.latitudeField.getText()));
+					sd.setLongitude(Float.parseFloat(paramWindow1.longtitudeField.getText()));
+					sd.setCtr_z(Float.parseFloat(paramWindow1.vis_ctr_zField.getText()));
+					sd.setCtr_y(Float.parseFloat(paramWindow1.vis_ctr_yField.getText()));
+					sd.setCtr_x(Float.parseFloat(paramWindow1.vis_ctr_xField.getText()));
+					send();
 				} catch (Exception e) {
 					System.err.println("Can parse parameters");
-	    }
-	    }
-	    });
-	    
-	    
+				}
+
+			}
+		});
+
+		paramWindow2 = new ParamWindow2(this);
+		paramWindow2.updateButton.addActionListener(new ActionListener () {
+			public void actionPerformed(ActionEvent evt) {
+				try {
+					pixels_x =Integer.parseInt(paramWindow2.pixels_xField.getText());
+					pixels_y = Integer.parseInt(paramWindow2.pixels_yField.getText());
+					sd.setPixels_x(pixels_x);
+					sd.setPixels_y(pixels_y);
+					send();
+
+				} catch (Exception e) {
+					System.err.println("Can parse parameters");
+				}
+			}
+		});
+
+		paramWindow3 = new ParamWindow3(this);
+		paramWindow3.updateButton.addActionListener(new ActionListener () {
+			public void actionPerformed(ActionEvent evt) {
+				try {
+					sd.setVis_brightness(Float.parseFloat(paramWindow3.viz_brightnessField.getText()));
+					sd.setVelocity_max(Float.parseFloat(paramWindow3.velocity_maxField.getText()));
+					sd.setPressure_min(Float.parseFloat(paramWindow3.pressure_minField.getText()));
+					sd.setPressure_max(Float.parseFloat(paramWindow3.pressure_maxField.getText()));
+					sd.setStress_max(Float.parseFloat(paramWindow3.stress_maxField.getText()));
+					sd.setVis_glyph_length(Float.parseFloat(paramWindow3.vis_glyph_lengthField.getText()));
+					sd.setVis_streaklines_per_pulsatile_period(Float.parseFloat(paramWindow3.vis_streaklines_per_pulsatile_periodField.getText()));
+					sd.setVis_streakline_length(Float.parseFloat(paramWindow3.vis_streakline_lengthField.getText()));
+					send();
+				} catch (Exception e) {
+					System.err.println("Can parse parameters");
+				}
+			}
+		});
+
+
 	}
 
 	public VizGui () {
-		this(1, "foohost", 1024*1024);
+		this(1, "foohost", 1024*1024, null);
 	}
-	
+
 	public void setHostPort (int port, String hostname) {
 		this.port = port;
 		this.hostname = hostname;
 		notificationArea.append("Changed host " + hostname + ":" + port + "\n");
-		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+		notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 	}
-	
+
 	public void showParamWindow1 (boolean show) {
 		paramWindow1.setVisible(show);
 	}
-	
+
 	public boolean paramWindow1Visible () {
 		return paramWindow1.isVisible();
 	}
-	
+
 	public void showParamWindow2 (boolean show) {
 		paramWindow2.setVisible(show);
 	}
-	
+
 	public boolean paramWindow2Visible () {
 		return paramWindow2.isVisible();
 	}
-	
+
 	public void showParamWindow3 (boolean show) {
 		paramWindow3.setVisible(show);
 	}
-	
+
 	public boolean paramWindow3Visible () {
 		return paramWindow3.isVisible();
 	}
-	
+
 	public void appendNotification (String message) {
 		notificationArea.append(message);
-		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+		notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 	}
-	
+
 	public boolean startReceive() {
 		if (!connected) {
-		nr = new DirectBiConnection (port, hostname, window);
-		connected = nr.connect();
-		if (!connected) {
-			notificationArea.append("Connection error: Couldn't connect to host " + hostname + ":" + port +"\n");
-		 notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
-			return connected;
-		}
-		notificationArea.append("Connection started to host " + hostname + ":" + port +"\n");
-		  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
-		thread = new NetThread();
-	    thread.start();
-	    
-	    //start the timing thread
-	    // timeFramesPerSec = new TimerThread();
-	    // timeFramesPerSec.start();
-	   
-	    
-		//start the animator thread
-		animator = new Animator(canvas1);
-		animator.start();
+			nr = new DirectBiConnection (port, hostname, window);
+			connected = nr.connect();
+			if (!connected) {
+				notificationArea.append("Connection error: Couldn't connect to host " + hostname + ":" + port +"\n");
+				notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+				return connected;
+			}
+			notificationArea.append("Connection started to host " + hostname + ":" + port +"\n");
+			notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+			thread = new NetThread();
+			thread.start();
 
-		send();
+			//start the timing thread
+			timeFramesPerSec = new TimerThread();
+			timeFramesPerSec.start();
+
+
+			//start the animator thread
+			animator = new Animator(canvas1);
+			animator.start();
+
+			send();
 		}
 		return connected;
 	}
-	
+
 	public boolean stopReceive() {
 		if (connected){
 			animator.stop();
 			connected = !nr.disconnect();
-			
+			resetSteering();
 			//thread.stopThread();
+			timeFramesPerSec.stopThread();
 			notificationArea.append("Connection terminated to host " + hostname + ":" + port +"\n");
-			  notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
+			notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
 		}
 		return !connected;
 	}
-	
-	
+
+
 	/** 
-     * Executed exactly once to initialize the 
-     * associated GLDrawable
-     */ 
+	 * Executed exactly once to initialize the 
+	 * associated GLDrawable
+	 */ 
 
-    public void init(GLAutoDrawable drawable) {
+	public void init(GLAutoDrawable drawable) {
 
-        // print every openGL call for debugging purposes
-	//drawable.setGL(new TraceGL(drawable.getGL(), System.err));
-	GL gl = drawable.getGL();
-	
-	gl.glDisable (GL.GL_DEPTH_TEST);
-	gl.glDisable (GL.GL_BLEND);
-	gl.glShadeModel (GL.GL_FLAT);
-	gl.glDisable (GL.GL_DITHER);
+		// print every openGL call for debugging purposes
+		//drawable.setGL(new TraceGL(drawable.getGL(), System.err));
+		GL gl = drawable.getGL();
 
-	gl.glClearColor( 1.0f, 1.0f, 1.0f, 1.0f ); //white
+		gl.glDisable (GL.GL_DEPTH_TEST);
+		gl.glDisable (GL.GL_BLEND);
+		gl.glShadeModel (GL.GL_FLAT);
+		gl.glDisable (GL.GL_DITHER);
 
-	gl.glPointSize (1.F);
-	
-	int y = 512;
-	int x = 512;
-	scale_x = 1f / (float)x;
-	scale_y = 1f / (float)y;
-	
-	
-    }
-    
-    /** 
-     * Executed if the associated GLDrawable is resized
-     */ 
-    public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
-	GL gl = drawable.getGL();
-	gl.glViewport( 0, 0, width, height );
-	gl.glMatrixMode( GL.GL_PROJECTION ); 
-	gl.glLoadIdentity();
-   //  
-	//gl.glOrtho(0, 400, 0, 300, -1, 1);
-    	
-    	
-   	  float ortho_x = 0.5F * (float)width / (float)512;
-      float ortho_y = 0.5F * (float)height / (float)512;
-    	  
-    //gl.glViewport(0, 0, width, height);
-    	  
-    	  //gl.glLoadIdentity ();
-    	  gl.glOrtho(-ortho_x, ortho_x, -ortho_y, ortho_y, -1, 1);
-    }
+		gl.glClearColor( 1.0f, 1.0f, 1.0f, 1.0f ); //white
 
-    /** This method handles the painting of the GLDrawable */
-    
-    public void display(GLAutoDrawable drawable) {
-    VizFrameData vfd = (VizFrameData)queue.poll();
-    
-    if (vfd != null) {	
-    GL gl = drawable.getGL();
-	/** Clear the colour buffer */
-	gl.glClear( GL.GL_COLOR_BUFFER_BIT );
-	/** Draw some dots */ 
+		gl.glPointSize (1.F);
 
-	if (view < VIEWALL) {
-	
-	gl.glBegin( GL.GL_POINTS );	
-	  for (int i = 0; i < vfd.getLength(); i++)
-	    {
-
-	      gl.glColor3f (vfd.getR(i, view) * (1.0f / 255.0f),
-	      				vfd.getG(i, view) * (1.0f / 255.0f),
-						vfd.getB(i, view) * (1.0f / 255.0f));
-	      
-	      float a = -0.5f + (vfd.getX(i)/512f);
-	      float b = -0.5f + (vfd.getY(i)/512f);
-	      
-	    //  System.err.println ("a = " + a + " b = " + b);
-	      
-	  gl.glVertex2f (a,b);
-	    
-	  
-	  
-	    }
-	  gl.glEnd(); 
-	  
-	} else {
-		gl.glBegin( GL.GL_POINTS );	
-
-		
-		  for (int i = 0; i < vfd.getLength(); i++)
-		    {
-//image 1
-		      gl.glColor3f (vfd.getR(i, VIEW1) * (1.0f / 255.0f),
-		      				vfd.getG(i, VIEW1) * (1.0f / 255.0f),
-							vfd.getB(i, VIEW1) * (1.0f / 255.0f));
-		      
-		  gl.glVertex2f (-0.5f + scale_x * vfd.getX(i),-0.5f + scale_y * (vfd.getY(i)+ (pixels_y)));
-		  
-		  
-		//image 2
-	      gl.glColor3f (vfd.getR(i, VIEW2) * (1.0f / 255.0f),
-	      				vfd.getG(i, VIEW2) * (1.0f / 255.0f),
-						vfd.getB(i, VIEW2) * (1.0f / 255.0f));
-	      
-	  gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i)+ (pixels_x/2.0f)),-0.5f + scale_y * (vfd.getY(i) + (pixels_y/2.0f)));
-	  
-	//image 3
-      gl.glColor3f (vfd.getR(i, VIEW3) * (1.0f / 255.0f),
-      				vfd.getG(i, VIEW3) * (1.0f / 255.0f),
-					vfd.getB(i, VIEW3) * (1.0f / 255.0f));
-      
-      gl.glVertex2f (-0.5f + scale_x * vfd.getX(i) ,-0.5f + scale_y * vfd.getY(i));
-  
-  
-  	//image 4
-  	gl.glColor3f (vfd.getR(i, VIEW4) * (1.0f / 255.0f),
-  				vfd.getG(i, VIEW4) * (1.0f / 255.0f),
-				vfd.getB(i, VIEW4) * (1.0f / 255.0f));
-  
-  	gl.glVertex2f (-0.5f + scale_x * (vfd.getX(i)+ (pixels_x/2.0f)),-0.5f + scale_y * vfd.getY(i));
-
-
-		    
-		    }
-		  gl.glEnd();
 	}
-	  
-	  if (ifp != null) {
-		  ifp.updatePanel(vfd.getBufferSize(), vfd.getRealFrameNo(), vfd.getFrameNo());
-		 // System.err.println(vfd.getFramePerSec());
-	  }
-	  
-	 // notificationArea.append("Frame " + vfd.getFrameNo() + "  Buffer size " + vfd.getBufferSize() + "\n");
-	 // notificationArea.setCaretPosition(notificationArea.getDocument().getLength());
-	  
+
+	/** 
+	 * Executed if the associated GLDrawable is resized
+	 */ 
+	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
+		GL gl = drawable.getGL();
+		gl.glViewport( 0, 0, width, height );
+		gl.glMatrixMode( GL.GL_PROJECTION ); 
+		gl.glLoadIdentity();
+		//  
+		//gl.glOrtho(0, 400, 0, 300, -1, 1);
+
+
+		float ortho_x = 0.5F * (float)width / (float)pixels_x;
+		float ortho_y = 0.5F * (float)height / (float)pixels_y;
+
+		//gl.glViewport(0, 0, width, height);
+
+		//gl.glLoadIdentity ();
+		gl.glOrtho(-ortho_x, ortho_x, -ortho_y, ortho_y, -1, 1);
+	}
+
+	/** This method handles the painting of the GLDrawable */
+
+	public void display(GLAutoDrawable drawable) {
+		VizFrameData vfd = (VizFrameData)queue.poll();
+
+		if (vfd != null) {	
+			GL gl = drawable.getGL();
+			/** Clear the colour buffer */
+			gl.glClear( GL.GL_COLOR_BUFFER_BIT );
+			/** Draw some dots */ 
+
+			if (view < VIEWALL) {
+
+				gl.glBegin( GL.GL_POINTS );	
+				for (int i = 0; i < vfd.getLength(); i++)
+				{
+
+					gl.glColor3f (vfd.getR(i, view) * (1.0f / 255.0f),
+							vfd.getG(i, view) * (1.0f / 255.0f),
+							vfd.getB(i, view) * (1.0f / 255.0f));
+
+					float a = -0.5f + (vfd.getX(i)/(pixels_x*1.0f));
+					float b = -0.5f + (vfd.getY(i)/(pixels_y*1.0f));
+
+					gl.glVertex2f (a,b);
+
+
+
+				}
+				gl.glEnd(); 
+
+			} else {
+				gl.glBegin( GL.GL_POINTS );	
+
+
+				for (int i = 0; i < vfd.getLength(); i++)
+				{
+					//image 1
+					gl.glColor3f (vfd.getR(i, VIEW1) * (1.0f / 255.0f),
+							vfd.getG(i, VIEW1) * (1.0f / 255.0f),
+							vfd.getB(i, VIEW1) * (1.0f / 255.0f));
+
+					gl.glVertex2f (-0.5f + (vfd.getX(i)/(2.0f*pixels_x)), vfd.getY(i)/(2.0f*pixels_y));
+
+
+					//image 2
+					gl.glColor3f (vfd.getR(i, VIEW2) * (1.0f / 255.0f),
+							vfd.getG(i, VIEW2) * (1.0f / 255.0f),
+							vfd.getB(i, VIEW2) * (1.0f / 255.0f));
+
+					gl.glVertex2f ((vfd.getX(i)/(2.0f*pixels_x)), vfd.getY(i)/(2.0f*pixels_y));
+
+
+					//image 3
+					gl.glColor3f (vfd.getR(i, VIEW3) * (1.0f / 255.0f),
+							vfd.getG(i, VIEW3) * (1.0f / 255.0f),
+							vfd.getB(i, VIEW3) * (1.0f / 255.0f));
+
+					gl.glVertex2f (-0.5f + (vfd.getX(i)/(2.0f*pixels_x)),-0.5f + vfd.getY(i)/(2.0f*pixels_y));
+
+
+					//image 4
+					gl.glColor3f (vfd.getR(i, VIEW4) * (1.0f / 255.0f),
+							vfd.getG(i, VIEW4) * (1.0f / 255.0f),
+							vfd.getB(i, VIEW4) * (1.0f / 255.0f));
+
+					gl.glVertex2f ((vfd.getX(i)/(2.0f*pixels_x)),-0.5f + vfd.getY(i)/(2.0f*pixels_y));
+
+
+
+				}
+				gl.glEnd();
+			}
+
+			if (ifp != null) {
+				
+				ifp.updatePanel (vfd.getBufferSize(), vfd.getVis_cycle(), totalFramesRec, 
+						vfd.getVis_time_step(), vfd.getVis_time(), vfd.getVis_pressure_max(), vfd.getVis_pressure_min(), 
+						vfd.getVis_velocity_max(), vfd.getVis_velocity_min(), vfd.getVis_stress_max(), vfd.getVis_stress_min());
+
+				
+				//ifp.updatePanel(vfd.getBufferSize(), 0, totalFramesRec);
+				// System.err.println(vfd.getFramePerSec());
+			}
+
 	
-    }
-    }
-    /** This method handles things if display depth changes */
-    public void displayChanged(GLAutoDrawable drawable,
-			       boolean modeChanged,
-			       boolean deviceChanged){
-    }
-	
+
+		}
+	}
+	/** This method handles things if display depth changes */
+	public void displayChanged(GLAutoDrawable drawable,
+			boolean modeChanged,
+			boolean deviceChanged){
+	}
+
 	private void initGUI() {
 		try {
 			TableLayout thisLayout = new TableLayout(new double[][] {
 					{ TableLayout.FILL },
 					{ TableLayout.FILL, TableLayout.FILL, TableLayout.FILL,
-							TableLayout.FILL, TableLayout.FILL,
-							TableLayout.FILL, TableLayout.FILL,
-							TableLayout.FILL, TableLayout.FILL,
-							TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL,
-							TableLayout.FILL, TableLayout.FILL,
-							TableLayout.FILL, TableLayout.FILL,
-							TableLayout.FILL, TableLayout.FILL,
-							TableLayout.FILL } });
+						TableLayout.FILL, TableLayout.FILL,
+						TableLayout.FILL, TableLayout.FILL,
+						TableLayout.FILL, TableLayout.FILL,
+						TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL,
+						TableLayout.FILL, TableLayout.FILL,
+						TableLayout.FILL, TableLayout.FILL,
+						TableLayout.FILL, TableLayout.FILL,
+						TableLayout.FILL } });
 			this.setLayout(thisLayout);
 			thisLayout.setHGap(5);
 			thisLayout.setVGap(5);
@@ -392,91 +384,71 @@ try {
 				canvas1 = new GLCanvas(cap);
 				this.add(canvas1, "0, 3, 0, 19");
 				canvas1.addGLEventListener(this);
-			
-				
+
+
 
 				canvas1.addKeyListener(new KeyListener () {
-					
-					
-				public void keyPressed(KeyEvent e) {
-					
-				}
-				
-				public void keyReleased(KeyEvent e)  {
-					
-				}
-				
-				public void keyTyped(KeyEvent e) {
-					if (e.getKeyChar() == '1') {
-						view = VIEW1;
-						scale_x = 1.0f / (float)pixels_x;
-						scale_y = 1.0f / (float)pixels_y;	
-					} else if (e.getKeyChar() == '2') {
-						view = VIEW2;
-						scale_x = 1.0f / (float)pixels_x;
-						scale_y = 1.0f / (float)pixels_y;	
-					} else if (e.getKeyChar() == '3') {
-						view = VIEW3;
-						scale_x = 1.0f / (float)pixels_x;
-						scale_y = 1.0f / (float)pixels_y;	
-					} else if (e.getKeyChar() == '4') {
-						view = VIEW4;
-						scale_x = 1.0f / (float)pixels_x;
-						scale_y = 1.0f / (float)pixels_y;	
-					} else if (e.getKeyChar() == '5') {
-						view = VIEWALL;
 
-						scale_x = 1.0f / (float)2*pixels_x;
-						scale_y = 1.0f / (float)2*pixels_y;
-/*					} else	if (e.getKeyChar() == 'b') {
-						
-						if (scale > 256) {
-							scale = scale/2;
-							scale_x = 1.0f / (float)scale;
-							scale_y = 1.0f / (float)scale;	
+
+					public void keyPressed(KeyEvent e) {
+
+					}
+
+					public void keyReleased(KeyEvent e)  {
+
+					}
+
+					public void keyTyped(KeyEvent e) {
+						if (e.getKeyChar() == '1') {
+							view = VIEW1;
+
+						} else if (e.getKeyChar() == '2') {
+							view = VIEW2;
+
+						} else if (e.getKeyChar() == '3') {
+							view = VIEW3;
+
+						} else if (e.getKeyChar() == '4') {
+							view = VIEW4;
+
+						} else if (e.getKeyChar() == '5') {
+							view = VIEWALL;
+
 						}
-						
-					} else if (e.getKeyChar() == 's') {
-						if (scale < 1024) {
-							scale = scale*2;
-							scale_x = 1.0f / (float)scale;
-							scale_y = 1.0f / (float)scale;	
-						}		*/			
-						}
-					ifp.viewChanged();
-					//System.err.println("View " + view);
-				}
-				
-				
-				
+						ifp.viewChanged();
+						//System.err.println("View " + view);
+					}
+
+
+
 				});
-				
+
 				canvas1.addMouseWheelListener(new MouseWheelListener () {
-					
-				    public void mouseWheelMoved(MouseWheelEvent e) {
-				    	float mag = sd.getZoom_factor();	
-				        int notches = (e.getWheelRotation());
-				        mag = mag - (0.1f*notches);
-				        sd.setZoom_factor(mag);
-				        send();
-				       // System.err.println("Mag foactor= " + sd.getZoom_factor());
-				     }
-					
+
+					public void mouseWheelMoved(MouseWheelEvent e) {
+						float mag = sd.getZoom_factor();	
+						int notches = (e.getWheelRotation());
+						mag = mag - (0.1f*notches);
+						sd.setZoom_factor(mag);
+						send();
+						// System.err.println("Mag foactor= " + sd.getZoom_factor());
+					}
+
 				});
 				canvas1.addMouseListener(new MouseListener () {
 					Point start = null;
-					
+
 					public void mouseReleased(MouseEvent e) {
 						//System.err.println("Button " + e.getButton());
 						if (start != null && e.getButton() == 1) {
 							Point end = e.getPoint();
 							double dx = start.getX() - end.getX();
 							double dy = start.getY() - end.getY();
-							
+
 							//dddd
 							panel_width = canvas1.getWidth();
 							panel_height = canvas1.getHeight();
-							
+
 							if (dx != 0) {
 								//scale 
 								dx = (90.d/panel_width)*dx;
@@ -489,53 +461,53 @@ try {
 							}
 							send();
 						} else if(start != null && e.getButton() == 3) {
-/*							Point end = e.getPoint();
+	/*						Point end = e.getPoint();
 							double dx = start.getX() - end.getX();
 							double dy = start.getY() - end.getY();
 							panel_width = canvas1.getWidth();
 							panel_height = canvas1.getHeight();
-							
+
 							sd.setCtr_x(100*(float)(dx/panel_width));
 							sd.setCtr_y(100*(float)(dy/panel_height));
-							
+
 							System.err.println("Ctr x = " + sd.getCtr_x() + " crt y = " + sd.getCtr_y());
 							send();*/
- 						}
+						}
 					}
-					
+
 					public void mouseClicked(MouseEvent e) {
 						if (e.getButton() == 2 && view != VIEWALL) {
 							Point point = e.getPoint();
 							int i = (int)point.getX();
 							int j = (int)point.getY();
-							
+
 							int offsetx = (int)(canvas1.getWidth() - pixels_x)/2;
 							int offsety = (int)(canvas1.getHeight() - pixels_y)/2;
 
 							//transform
 							i = i - offsetx;
 							j = j - offsety;
-							
+
 							if (i >= 0 && i <= pixels_x && j >= 0 && j <= pixels_y) {
 								sd.setVis_mouse_x(i);
 								sd.setVis_mouse_y(j);
 								send();
 							}
-							
+
 							System.err.println("i=" + i + " j=" + j + " x offset=" + offsetx + " y offset=" +offsety);
-							
+
 						}
-						
+
 					}
-					
+
 					public void mousePressed(MouseEvent e) {
 						start = e.getPoint();
 						//System.err.println("startx = " + start.getX() + " starty = " + start.getY());
 					}
-					
+
 					public void mouseExited(MouseEvent e) {
 					}
-					
+
 					public void mouseEntered(MouseEvent e) {
 					}
 				});
@@ -550,7 +522,7 @@ try {
 					notificationArea.setText("-------Messages-------\n");
 					notificationArea.setVisible(true);
 					notificationArea.setBorder(BorderFactory
-						.createBevelBorder(BevelBorder.LOWERED));
+							.createBevelBorder(BevelBorder.LOWERED));
 					notificationArea.setDoubleBuffered(true);
 					notificationArea.setEditable(false);
 				}
@@ -560,7 +532,7 @@ try {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void rotate (boolean rot) {
 		if (rot) {
 			//System.out.println("rotate");
@@ -570,386 +542,381 @@ try {
 			rotateModel.stopThread();
 		}
 	}
-	
+
 	public void kill () {
 		sd.setKill(1);
 		send();
 	}
-	
+
 	public void resetSteering () {
 		sd = new SteeringData();
+		pixels_x = sd.getPixels_x();
+		pixels_y = sd.getPixels_y();
 		send();
-	//	ifp.updateSteeredParams();
+		//	ifp.updateSteeredParams();
 		view = VIEW1;
 	}
-	
+
 	private void send() {
 		if (nr != null && nr.isConnected()) {
 			//System.err.println (" dX = "  +  dx + " dy = " +dy);
-		nr.send(sd);
-		ifp.viewChanged();
-		paramWindow1.update(sd);
-		paramWindow2.update(sd);
-		paramWindow3.update(sd);
+			nr.send(sd);
+			ifp.viewChanged();
+			paramWindow1.update(sd);
+			paramWindow2.update(sd);
+			paramWindow3.update(sd);
 		}
 
-		
+
 		//ifp.updateSteeredParams();
 
 	}
-	
-	
+
+
 	public void saveParameters (String filename) {
-		  try {
-		      FileOutputStream fout = new FileOutputStream(filename);
-		      ObjectOutputStream oos = new ObjectOutputStream(fout);
-		      oos.writeObject(sd);
-		      oos.close();
-		      }
-		   catch (Exception e) { 
-			   e.printStackTrace(); 
-			 }
+		try {
+			FileOutputStream fout = new FileOutputStream(filename);
+			ObjectOutputStream oos = new ObjectOutputStream(fout);
+			oos.writeObject(sd);
+			oos.close();
+		}
+		catch (Exception e) { 
+			e.printStackTrace(); 
+		}
 
 	}
 
 	public void loadParameters (String filename) {
-		   try {
-			    FileInputStream fin = new FileInputStream(filename);
-			    ObjectInputStream ois = new ObjectInputStream(fin);
-			    sd = (SteeringData) ois.readObject();
-			    ois.close();
-			    send();
-			    }
-			   catch (Exception e) { e.printStackTrace(); }
+		try {
+			FileInputStream fin = new FileInputStream(filename);
+			ObjectInputStream ois = new ObjectInputStream(fin);
+			sd = (SteeringData) ois.readObject();
+			ois.close();
+			send();
+		}
+		catch (Exception e) { e.printStackTrace(); }
 
 	}
-	
+
 	public void changeVisMode (int renView) {
 		sd.setVis_mode(renView);
 		send();
 	}
-	
+
+	public int getVisMode () {
+		return sd.getVis_mode();
+	}
+
 	public boolean isConnected() {
 		return nr.isConnected();
 	}
-	
+
 	public JPanel getInfoPanel () {
 		ifp = new InfoPanel();
 		return ifp;
 	}
-	
-	
-	
+
+
+
 	//thread to rotate the model
 	private class RotateThread extends Thread {
 		boolean run;
 		public RotateThread () {
 			run=true;
 		}
-   
-		
-    	public void stopThread () {
-    		//private boolean shouldirun = true;
-    		run=false;
-    	} 	
-   	
-    	public void run() {
-    		while(nr.isConnected() && run==true) {
-    			try {
-    			Thread.sleep(250);    			
-    			sd.updateLongitude(0.5f);
-    			send();
-    			
-    			} catch (Exception e) {
-    				
-    			}
-    		}
-    			
 
-    	}
+
+		public void stopThread () {
+			//private boolean shouldirun = true;
+			run=false;
+		} 	
+
+		public void run() {
+			while(nr.isConnected() && run==true) {
+				try {
+					Thread.sleep(250);    			
+					sd.updateLongitude(0.5f);
+					send();
+
+				} catch (Exception e) {
+
+				}
+			}
+
+
+		}
 	}
-	
+
 	//thread to time fps etc
 	private class TimerThread extends Thread {
 		private boolean run;
-		
+		private long runTime;
 		public TimerThread () {
 			run=true;
+			runTime = 0;
 		}
-   
-		
-    	public void stopThread () {
-    		//private boolean shouldirun = true;
-    		run=false;
-    	} 	
-   	
-    	public void run() {
-    		while(nr.isConnected()) {
-    			try {
-    			Thread.sleep(1000);    			
-    			framesPerSec = (framesThisSec - framesLastSec);
-    			framesLastSec = framesThisSec;
-    			ifp.updateFPS(framesPerSec, bytesRec);
-    			bytesRec = 0;
-   			
-    			} catch (Exception e) {
-    				
-    			}
-    		}
-    			
 
-    	}
-    
-		
+
+		public void stopThread () {
+			//private boolean shouldirun = true;
+			run=false;
+			runTime = 0;
+		} 	
+
+		public void run() {
+			while(nr.isConnected() && run) {
+				try {
+					Thread.sleep(1000);	
+					runTime++;
+					double rate = (totalDataRec*1.0f)/(runTime*1024.0f);
+					double frames = (totalFramesRec*1.0f)/(runTime*1.0f);
+					ifp.updateFPS(frames, rate);
+
+					//System.err.println("Total data " + totalDataRec + " Total frames " + totalFramesRec + " Time " + runTime);
+					
+				} catch (Exception e) {
+
+				}
+			}
+
+
+		}
+
+
 	}
-	
+
 	//thread to do the network receive
-    private class NetThread extends Thread {
-    	
-    	//TimerThread timeFramesPerSec;
+	private class NetThread extends Thread {
+
+		//TimerThread timeFramesPerSec;
 
 		public NetThread () {
-			
-    	}
-    	
-    	public void stopThread () {
-    		nr.disconnect();
-    		//timeFramesPerSec.stop();
-    	}
-    	
 
-    	
-    	public void run() {
-    		//timeFramesPerSec.start();
-    		
-    		while(nr.isConnected()) {
-    			VizFrameData vfd =nr.getFrame();
-    			if (vfd != null) {
-    			queue.offer(vfd);
-    		//	framesThisSec=vfd.getFrameNo();
-    		//	bytesRec = bytesRec + vfd.getBufferSize();
-    		}
-    		}
-    			stopReceive();
+		}
 
-    	}
-    }
-    
+		public void stopThread () {
+			nr.disconnect();
+			//timeFramesPerSec.stop();
+		}
 
-    
-    
-    //side info panel 
-    private class InfoPanel extends JPanel {
-    	
-    	private JLabel jLabel4;
-    	private JTextField dataRate;
-    	private JLabel jLabel5;
-    	private JLabel jLabel6;
-    	private JTextField droppedFrames;
-    	private JTextField viewing;
-    	private JTextField frameSize;
-    	private JTextField frameRecNo;
-    	private JTextField frameNo;
-    	private JLabel jLabel3;
-    	private JLabel jLabel2;
-    	private JLabel jLabel1;
-    	private JTextField framePerSec;
-    	private JLabel jLabel10;
-    	
-    	//steered params
-    	private JLabel jLabel7;
-    	private JLabel jLabel8;
-    	private JLabel jLabel9;
-    	private JTextField vizBrightness;
-    	private JTextField velMax;
-    	private JTextField stressMax;
-    	private JButton updateParams;
-    	
 
-    	
-    	
-    	
-    	public InfoPanel () {
-    		super();
-   
-		TableLayout infoPanelLayout = new TableLayout(new double[][] {{TableLayout.FILL}, {TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL}});
-		infoPanelLayout.setHGap(5);
-		infoPanelLayout.setVGap(5);
-		this.setLayout(infoPanelLayout);
-		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		{
-			jLabel1 = new JLabel();
-			this.add(jLabel1, "0, 2");
-			jLabel1.setText("Frame Rec No");
-			jLabel1.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-			jLabel1.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			jLabel2 = new JLabel();
-			this.add(jLabel2, "0, 0");
-			jLabel2.setText("Frame No");
-			jLabel2.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			jLabel3 = new JLabel();
-			this.add(jLabel3, "0, 4");
-			jLabel3.setText("Frame Size (bytes)");
-			jLabel3.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			jLabel4 = new JLabel();
-			this.add(jLabel4, "0, 8");
-			jLabel4.setText("Data Rate (Kbits/sec)");
-			jLabel4.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			frameNo = new JTextField();
-			this.add(frameNo, "0, 1");
-		}
-		{
-			frameRecNo = new JTextField();
-			this.add(frameRecNo, "0, 3");
-			frameRecNo.setText("");
-		}
-		{
-			frameSize = new JTextField();
-			this.add(frameSize, "0, 5");
-			frameSize.setText("");
-		}
-		{
-			droppedFrames = new JTextField();
-			this.add(droppedFrames, "0, 7");
-			droppedFrames.setText("");
-		}
-		{
-			jLabel5 = new JLabel();
-			this.add(jLabel5, "0, 6");
-			jLabel5.setText("Frames Dropped");
-			jLabel5.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			jLabel6 = new JLabel();
-			this.add(jLabel6, "0, 10");
-			jLabel6.setText("View");
-			jLabel6.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			dataRate = new JTextField();
-			this.add(dataRate, "0, 9");
-		}
-		{
-			viewing = new JTextField();
-			this.add(viewing, "0, 11");			
-			viewing.setText("");
-		}
-		{
-			framePerSec = new JTextField();
-			this.add(framePerSec, "0, 13");
-		}
-		{
-			jLabel10 = new JLabel();
-			this.add(jLabel10, "0, 12");
-			jLabel10.setText("Frames Per Second");
-			jLabel10.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		
-/*		{
-			jLabel7 = new JLabel();
-			this.add(jLabel7, "0, 15");
-			jLabel7.setText("Viz Brightness");
-			jLabel7.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			vizBrightness = new JTextField();
-			this.add(vizBrightness, "0, 16");
-			//vizBrightness.setText(Float.toString(sd.getVis_brightness()));
-		}
-		{
-			jLabel8 = new JLabel();
-			this.add(jLabel8, "0, 17");
-			jLabel8.setText("Velocity Max (m/s)");
-			jLabel8.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			velMax = new JTextField();
-			this.add(velMax, "0, 18");
-			//velMax.setText(Float.toString(sd.getVelocity_max()));
-		}
-		{
-			jLabel9 = new JLabel();
-			this.add(jLabel9, "0, 19");
-			jLabel9.setText("Stress Max (Pa)");
-			jLabel9.setFont(new java.awt.Font("Dialog",1,12));
-		}
-		{
-			stressMax = new JTextField();
-			this.add(stressMax, "0, 20");
-			//stressMax.setText(Float.toString(sd.getStress_max()));
-		}
-		{
-			updateParams = new JButton("Update");
-			this.add(updateParams, "0, 22");
-			updateParams.addActionListener(new ActionListener () {
-				public void actionPerformed(ActionEvent evt) {
-				
-					try {
-						sd.setStress_max(Float.parseFloat(stressMax.getText()));
-						sd.setVelocity_max(Float.parseFloat(velMax.getText()));
-						sd.setVis_brightness(Float.parseFloat(vizBrightness.getText()));
-					} catch (Exception e) {
-						
-					}
-					
-					send();
+
+		public void run() {
+			//timeFramesPerSec.start();
+
+			while(nr.isConnected()) {
+				VizFrameData vfd =nr.getFrame();
+				if (vfd != null) {
+					queue.offer(vfd);
+					totalFramesRec++;
+					totalDataRec = totalDataRec + vfd.getBufferSize();
 				}
-			});
-		}*/
+			}
+			stopReceive();
+
+		}
+	}
+
+
+
+
+	//side info panel 
+	private class InfoPanel extends JPanel {
+
+		private JLabel jLabel4;
+		private JTextField dataRate;
+		private JLabel jLabel5;
+		private JLabel jLabel6;
+		private JTextField timeStep;
+		private JTextField viewing;
+		private JTextField frameSize;
+		private JTextField frameRecNo;
+		private JTextField cycle;
+		private JLabel jLabel3;
+		private JLabel jLabel2;
+		private JLabel jLabel1;
+		private JTextField framePerSec;
+		private JLabel jLabel10;
+		private JLabel jLabel7;
+		private JTextField visTime;
 		
-    	}
-    
-/*    	public void updateSteeredParams() {
-    		stressMax.setText(Float.toString(sd.getStress_max()));
-    		velMax.setText(Float.toString(sd.getVelocity_max()));
-    		vizBrightness.setText(Float.toString(sd.getVis_brightness()));
-    	}*/
-    	
-    	public void updateFPS (long fps, double bps) {
-    		framePerSec.setText(Long.toString(fps));
-    		DecimalFormat df= new DecimalFormat("#####0.###"); 
-    		dataRate.setText(df.format(bps));
-    	}
-    	
-    	public void viewChanged () {
-    		switch (view) {
-    			case 0:
-    				viewing.setText("Velocity Volume Rendering");
-    				break;	
-   				case 1:
-   					viewing.setText("Stress Volume Rendering");
-    				break;
-    			case 2:
-    				viewing.setText("Wall Pressure");
-    				break;
-    			case 3:
-    				viewing.setText("Wall Stress");
-    				break;
-    			case 4:
-    				viewing.setText("All Views");
-    				break;
-    		}
-    		
-    	}
-    	
-    	public void updatePanel (int fSize, long fNo, long fRecNo) {
-    		frameNo.setText(Long.toString(fNo));
-    		frameRecNo.setText(Long.toString(fRecNo));
-    		frameSize.setText(Integer.toString(fSize));
-    		droppedFrames.setText(Integer.toString(0));
+		private JLabel jLabel8;
+		private JTextField pressure;
+		private JLabel jLabel9;
+		private JTextField vel;
+		private JLabel jLabel11;
+		private JTextField stress;
+		
+		public InfoPanel () {
+			super();
 
-    	
+			TableLayout infoPanelLayout = new TableLayout(new double[][] {{TableLayout.FILL}, {TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL}});
+			infoPanelLayout.setHGap(5);
+			infoPanelLayout.setVGap(5);
+			this.setLayout(infoPanelLayout);
+			this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+			{
+				jLabel2 = new JLabel();
+				this.add(jLabel2, "0, 0");
+				jLabel2.setText("Cycle");
+				jLabel2.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				cycle = new JTextField();
+				this.add(cycle, "0, 1");
+			}
+			{
+				jLabel1 = new JLabel();
+				this.add(jLabel1, "0, 2");
+				jLabel1.setText("Frame Rec No");
+				jLabel1.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+				jLabel1.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				frameRecNo = new JTextField();
+				this.add(frameRecNo, "0, 3");
+				frameRecNo.setText("");
+			}
+			{
+				jLabel3 = new JLabel();
+				this.add(jLabel3, "0, 4");
+				jLabel3.setText("Frame Size (bytes)");
+				jLabel3.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				frameSize = new JTextField();
+				this.add(frameSize, "0, 5");
+				frameSize.setText("");
+			}
+			{
+				jLabel5 = new JLabel();
+				this.add(jLabel5, "0, 6");
+				jLabel5.setText("Time Step");
+				jLabel5.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				timeStep = new JTextField();
+				this.add(timeStep, "0, 7");
+				timeStep.setText("");
+			}
+			{
+				jLabel4 = new JLabel();
+				this.add(jLabel4, "0, 8");
+				jLabel4.setText("Data Rate (Kbytes/sec)");
+				jLabel4.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				dataRate = new JTextField();
+				this.add(dataRate, "0, 9");
+			}
+			{
+				jLabel6 = new JLabel();
+				this.add(jLabel6, "0, 10");
+				jLabel6.setText("View");
+				jLabel6.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				viewing = new JTextField();
+				this.add(viewing, "0, 11");			
+				viewing.setText("");
+			}
+			{
+				jLabel10 = new JLabel();
+				this.add(jLabel10, "0, 12");
+				jLabel10.setText("Frames Per Second");
+				jLabel10.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				framePerSec = new JTextField();
+				this.add(framePerSec, "0, 13");
+			}
+			{
+				jLabel7 = new JLabel();
+				this.add(jLabel7, "0, 14");
+				jLabel7.setText("Vis Time");
+				jLabel7.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				visTime = new JTextField();
+				this.add(visTime, "0, 15");
+			}
 
-    	}
-    	
-    }
+			{
+				jLabel8 = new JLabel();
+				this.add(jLabel8, "0, 16");
+				jLabel8.setText("Pressure Max/Min");
+				jLabel8.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				pressure = new JTextField();
+				this.add(pressure, "0, 17");
+			}
+			{
+				jLabel9 = new JLabel();
+				this.add(jLabel9, "0, 18");
+				jLabel9.setText("Velocity Max/Min");
+				jLabel9.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				vel = new JTextField();
+				this.add(vel, "0, 19");
+			}
+			{
+				jLabel11 = new JLabel();
+				this.add(jLabel11, "0, 20");
+				jLabel11.setText("Stress Max/Min");
+				jLabel11.setFont(new java.awt.Font("Dialog",1,12));
+			}
+			{
+				stress = new JTextField();
+				this.add(stress, "0, 21");
+			}
+			
+		}
+
+
+		public void updateFPS (double fps, double bps) {
+			DecimalFormat df= new DecimalFormat("#####0.###"); 
+			framePerSec.setText(df.format(fps));
+			dataRate.setText(df.format(bps));
+		}
+
+		public void viewChanged () {
+			switch (view) {
+			case 0:
+				viewing.setText("Velocity Volume Rendering");
+				break;	
+			case 1:
+				viewing.setText("Stress Volume Rendering");
+				break;
+			case 2:
+				viewing.setText("Wall Pressure");
+				break;
+			case 3:
+				viewing.setText("Wall Stress");
+				break;
+			case 4:
+				viewing.setText("All Views");
+				break;
+			}
+
+		}
+
+		public void updatePanel (int fSize, int cyc, long fRecNo, int timeS, double visT, double pMax, double pMin, double vMax, double vMin, double sMax, double sMin) {
+			cycle.setText(Integer.toString(cyc));
+			frameRecNo.setText(Long.toString(fRecNo));
+			frameSize.setText(Integer.toString(fSize));
+			timeStep.setText(Integer.toString(timeS));
+			visTime.setText(Double.toString(visT));
+			
+			DecimalFormat df= new DecimalFormat("#####0.###"); 
+			
+			pressure.setText(df.format(pMin) + "/" + df.format(pMax));
+			vel.setText(df.format(vMin) + "/" + df.format(vMax));
+			stress.setText(df.format(sMin) + "/" + df.format(sMax));
+
+		}
+
+	}
 
 }
