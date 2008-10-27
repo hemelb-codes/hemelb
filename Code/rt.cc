@@ -2582,9 +2582,9 @@ void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *n
 	      if (vel_site_data_p->counter == sl->counter)
 		{
 		  // it means that the local velocity has already been
-		  // calculated at the current time step if the the
-		  // site belongs to the current processor; if not,
-		  // the following instructions have no effect
+		  // calculated at the current time step if the site
+		  // belongs to the current processor; if not, the
+		  // following instructions have no effect
 		  v[i][j][k][0] = vel_site_data_p->vx;
 		  v[i][j][k][1] = vel_site_data_p->vy;
 		  v[i][j][k][2] = vel_site_data_p->vz;
@@ -2598,11 +2598,11 @@ void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *n
 		  lbmDensityAndVelocity (&f_old[ vel_site_data_p->site_id*15 ],
 					 &density, &vx, &vy, &vz);
 		  
-		  v[i][j][k][0] = vel_site_data_p->vx = vx /= density;
-		  v[i][j][k][1] = vel_site_data_p->vy = vy /= density;
-		  v[i][j][k][2] = vel_site_data_p->vz = vz /= density;
+		  v[i][j][k][0] = vel_site_data_p->vx = vx / density;
+		  v[i][j][k][1] = vel_site_data_p->vy = vy / density;
+		  v[i][j][k][2] = vel_site_data_p->vz = vz / density;
 		}
-	      else if (vel_site_data_p->counter != sl->counter)
+	      else
 		{
 		  vel_site_data_p->counter = sl->counter;
 		  
@@ -2695,7 +2695,6 @@ void slInit (Net *net, SL *sl)
 				      
 				      if (neigh_proc_id == NULL || *neigh_proc_id == (1 << 30))
 					{
-					  slInitializeVelFieldBlock (neigh_i, neigh_j, neigh_k, -1, sl);
 					  continue;
 					}
 				      slInitializeVelFieldBlock (neigh_i, neigh_j, neigh_k, *neigh_proc_id, sl);
@@ -2803,7 +2802,7 @@ void slInit (Net *net, SL *sl)
       sl->neigh_proc[ m ].p_to_recv = (float *)malloc(sizeof(float) * 5 * sl->particles_to_recv_max);
     }
   
-  sl->req = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->neigh_procs));
+  sl->req = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs));
   
   sl->from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * net->procs);
   
@@ -2833,6 +2832,7 @@ void slInit (Net *net, SL *sl)
 	  sl->velocity_field[ n ].vel_site_data[ m ].site_id = net->map_block[ n ].site_data[ m ];
 	}
     }
+  sl->procs = net->procs;
 }
 
 
@@ -2851,36 +2851,33 @@ void slCommunicateSiteIds (SL *sl)
   for (m = 0; m < sl->neigh_procs; m++)
     {
       MPI_Irecv (&sl->neigh_proc[ m ].recv_vs, 1, MPI_INT, sl->neigh_proc[ m ].id,
-		 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+		 30, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
       
       MPI_Isend (&sl->neigh_proc[ m ].send_vs, 1, MPI_INT, sl->neigh_proc[ m ].id,
-		 30, MPI_COMM_WORLD, &sl->req[ m ]);
+		 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
+      MPI_Wait (&sl->req[ sl->neigh_proc[m].id ], sl->status);
     }
   for (m = 0; m < sl->neigh_procs; m++)
     {
-      MPI_Wait (&sl->req[ m ], sl->status);
-      MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
+      MPI_Wait (&sl->req[ sl->procs + sl->neigh_proc[m].id ], sl->status);
       
       if (sl->neigh_proc[ m ].recv_vs > 0)
 	{
 	  MPI_Irecv (sl->neigh_proc[ m ].s_to_recv, sl->neigh_proc[ m ].recv_vs * 3, MPI_SHORT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
 	}
       if (sl->neigh_proc[ m ].send_vs > 0)
 	{
 	  MPI_Isend (sl->neigh_proc[ m ].s_to_send, sl->neigh_proc[ m ].send_vs * 3, MPI_SHORT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ m ]);
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
+	  MPI_Wait (&sl->req[ sl->neigh_proc[m].id ], sl->status);
 	}
     }
   for (m = 0; m < sl->neigh_procs; m++)
     {
-      if (sl->neigh_proc[ m ].send_vs > 0)
-	{
-	  MPI_Wait (&sl->req[ m ], sl->status);
-	}
       if (sl->neigh_proc[ m ].recv_vs > 0)
 	{
-	  MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
+	  MPI_Wait (&sl->req[ sl->procs + sl->neigh_proc[m].id ], sl->status);
 	}
     }
 #endif // NOMPI
@@ -2902,7 +2899,7 @@ void slCommunicateVelocities (SL *sl)
       if (sl->neigh_proc[ m ].send_vs > 0)
 	{
 	  MPI_Irecv (sl->neigh_proc[ m ].v_to_recv, sl->neigh_proc[ m ].send_vs * 3, MPI_FLOAT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
 	}
     }
   for (m = 0; m < sl->neigh_procs; m++)
@@ -2922,21 +2919,15 @@ void slCommunicateVelocities (SL *sl)
       if (sl->neigh_proc[ m ].recv_vs > 0)
 	{
 	  MPI_Isend (sl->neigh_proc[ m ].v_to_send, sl->neigh_proc[ m ].recv_vs * 3, MPI_FLOAT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ m ]);
-	}
-    }
-  for (m = 0; m < sl->neigh_procs; m++)
-    {
-      if (sl->neigh_proc[ m ].recv_vs > 0)
-	{
-	  MPI_Wait (&sl->req[ m ], sl->status);
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
+	  MPI_Wait (&sl->req[ sl->neigh_proc[m].id ], sl->status);
 	}
     }
   for (m = 0; m < sl->neigh_procs; m++)
     {
       if (sl->neigh_proc[ m ].send_vs <= 0) continue;
       
-      MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
+      MPI_Wait (&sl->req[ sl->procs + sl->neigh_proc[m].id ], sl->status);
       
       for (n = 0; n < sl->neigh_proc[ m ].send_vs; n++)
 	{
@@ -2980,7 +2971,7 @@ void slUpdateParticles (int stage_id, Net *net, SL *sl)
       slParticleVelocity (&sl->particle[n], v, interp_v);
       vel = interp_v[0]*interp_v[0] + interp_v[1]*interp_v[1] + interp_v[2]*interp_v[2];
       
-      if (vel > 1.e-30)
+      if (vel > 1.e-14)
 	{
 	  // particle coords updating (dt = 1)
 	  sl->particle[n].x += interp_v[0];
@@ -3009,7 +3000,7 @@ void slCommunicateParticles (Net *net, SL *sl)
   for (m = 0; m < sl->neigh_procs; m++)
     {
       MPI_Irecv (&sl->neigh_proc[ m ].recv_ps, 1, MPI_INT, sl->neigh_proc[ m ].id,
-		 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
+		 30, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
     }
   for (m = 0; m < sl->neigh_procs; m++)
     {
@@ -3028,7 +3019,7 @@ void slCommunicateParticles (Net *net, SL *sl)
       if (vel_site_data_p == NULL ||
 	  vel_site_data_p->proc_id == net->id ||
 	  vel_site_data_p->proc_id == -1)
-       {
+	{
       	  continue;
       	}
       m = sl->from_proc_id_to_neigh_proc_index[ vel_site_data_p->proc_id ];
@@ -3051,19 +3042,24 @@ void slCommunicateParticles (Net *net, SL *sl)
   for (m = 0; m < sl->neigh_procs; m++)
     {
       MPI_Isend (&sl->neigh_proc[ m ].send_ps, 1, MPI_INT, sl->neigh_proc[ m ].id,
-		 30, MPI_COMM_WORLD, &sl->req[ m ]);
+		 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
+      MPI_Wait (&sl->req[ sl->neigh_proc[m].id ], net->status);
     }
   for (m = 0; m < sl->neigh_procs; m++)
     {
-      MPI_Wait (&sl->req[ m ], net->status);
-      MPI_Wait (&sl->req[ sl->neigh_procs + m ], net->status);
-      
+      MPI_Wait (&sl->req[ sl->procs + sl->neigh_proc[m].id ], net->status);
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
       if (sl->neigh_proc[ m ].send_ps > 0)
 	{
 	  MPI_Isend (sl->neigh_proc[ m ].p_to_send, sl->neigh_proc[ m ].send_ps * 5, MPI_FLOAT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ m ]);
-	  MPI_Wait (&sl->req[ m ], sl->status);
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
+	  MPI_Wait (&sl->req[ sl->neigh_proc[m].id ], net->status);
 	}
+    }
+  for (m = 0; m < sl->neigh_procs; m++)
+    {
       if (sl->neigh_proc[ m ].recv_ps > 0)
 	{
 	  if (sl->neigh_proc[ m ].recv_ps > sl->particles_to_recv_max)
@@ -3074,8 +3070,8 @@ void slCommunicateParticles (Net *net, SL *sl)
 		(float *)realloc(sl->neigh_proc[ m ].p_to_recv, sizeof(float) * 5 * sl->particles_to_recv_max);
 	    }
 	  MPI_Irecv (sl->neigh_proc[ m ].p_to_recv, sl->neigh_proc[ m ].recv_ps * 5, MPI_FLOAT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_procs + m ]);
-	  MPI_Wait (&sl->req[ sl->neigh_procs + m ], sl->status);
+		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
+	  MPI_Wait (&sl->req[ sl->procs + sl->neigh_proc[m].id ], net->status);
 	  
 	  for (n = 0; n < sl->neigh_proc[ m ].recv_ps; n++)
 	    {
@@ -3143,14 +3139,11 @@ void slRender (SL *sl)
 
 void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl)
 {
-  float particle_creation_percentage_time = 100.F;
-  float streaklines_per_pulsatile_period = 5.F;
-
   int particle_creation_period = max(1, (int)(time_steps_per_cycle / 1000.F));
   
   
-  if (time_steps % (int)(time_steps_per_cycle / streaklines_per_pulsatile_period) <=
-      (particle_creation_percentage_time/100.F) * (time_steps_per_cycle / streaklines_per_pulsatile_period) &&
+  if (time_steps % (int)(time_steps_per_cycle / vis_streaklines_per_pulsatile_period) <=
+      (vis_streakline_length/100.F) * (time_steps_per_cycle / vis_streaklines_per_pulsatile_period) &&
       time_steps % particle_creation_period == 0)
     {
       slCreateSeedParticles (sl);
@@ -3742,7 +3735,7 @@ void visRenderLine (float p1[], float p2[])
     }
   else
     {
-     incE = dx;
+      incE = dx;
       d = dx - dy;
       incNE = d;
       
