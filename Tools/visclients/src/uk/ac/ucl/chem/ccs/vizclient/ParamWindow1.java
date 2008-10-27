@@ -57,6 +57,14 @@ public class ParamWindow1 extends javax.swing.JDialog {
 		super();
 		//this.sd = sd;
 		initGUI();
+//		int x = parent.getX() + parent.getWidth();
+//		//int y = parent.getLocationOnScreen().y;
+//		this.setLocation(x,y);
+//	 if (parent == null){
+//		 System.err.println("null");
+//	 }
+//	 System.err.println(x);
+
 		this.setLocationRelativeTo(parent);
 		}	
 		
@@ -87,32 +95,32 @@ public class ParamWindow1 extends javax.swing.JDialog {
 				{
 					jLabel1 = new JLabel();
 					jPanel1.add(jLabel1, "0, 0");
-					jLabel1.setText("vis_ctr_x");
+					jLabel1.setText("Scene centre x");
 				}
 				{
 					jLabel2 = new JLabel();
 					jPanel1.add(jLabel2, "0, 2");
-					jLabel2.setText("vis_ctr_y");
+					jLabel2.setText("Scene centre y");
 				}
 				{
 					jLabel3 = new JLabel();
 					jPanel1.add(jLabel3, "0, 4");
-					jLabel3.setText("vis_ctr_z");
+					jLabel3.setText("Scene centre z");
 				}
 				{
 					jLabel4 = new JLabel();
 					jPanel1.add(jLabel4, "0, 6");
-					jLabel4.setText("longitude");
+					jLabel4.setText("Longitude (deg)");
 				}
 				{
 					jLabel5 = new JLabel();
 					jPanel1.add(jLabel5, "0, 8");
-					jLabel5.setText("latitude");
+					jLabel5.setText("Latitude (deg)");
 				}
 				{
 					jLabel6 = new JLabel();
 					jPanel1.add(jLabel6, "0, 10");
-					jLabel6.setText("zoom");
+					jLabel6.setText("Zoom");
 				}
 				{
 					updateButton = new JButton();

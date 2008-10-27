@@ -99,9 +99,9 @@ public class VizSteererWindow extends javax.swing.JFrame {
 		super();
 		this.window = window;
 		initGUI();
-		this.parent = parent;
+		//this.parent = parent;
 		this.setLocationRelativeTo(parent);
-		this.setVisible(true);
+		//this.setVisible(true);
 		rendezvousing = true;
 		//poll for ID
 		String service = "http://bunsen.chem.ucl.ac.uk:28080/ahe/test/rendezvous";
@@ -126,9 +126,9 @@ public class VizSteererWindow extends javax.swing.JFrame {
 		this.window = window;
 		this.hostname = hostname;
 		this.port = port;
+		this.setLocationRelativeTo(null);
 		initGUI();
-		this.parent = parent;
-		this.setLocationRelativeTo(parent);
+		//this.parent = parent;
 		this.setVisible(true);
 	}
 	
@@ -146,7 +146,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 				getContentPane().add(jPanel1, BorderLayout.CENTER);
 				jPanel1.setSize(700, 700);
 				{
-					vg=new VizGui(port, hostname, window);
+					vg=new VizGui(port, hostname, window, this);
 					jPanel1.add(vg, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 					vg.setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
 					vg.getInfoPanel().setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
@@ -271,6 +271,8 @@ public class VizSteererWindow extends javax.swing.JFrame {
 						viewMenu = new JMenu();
 						mainMenuBar.add(viewMenu);
 						viewMenu.setText("View");
+						
+					//TODO Add view menu listener, so right option is chosen.
 						{
 							view1MenuItem = new JRadioButtonMenuItem();
 							viewMenu.add(view1MenuItem);
@@ -278,7 +280,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 							view1MenuItem.setSelected(true);
 							view1MenuItem.addActionListener(new ActionListener (){ 
 								public void actionPerformed (ActionEvent e) {
-									vg.changeVisMode(1);
+									vg.changeVisMode(0);
 								}
 							});
 						}
@@ -288,7 +290,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 							view2MenuItem.setText("View 2");
 							view2MenuItem.addActionListener(new ActionListener (){ 
 								public void actionPerformed (ActionEvent e) {
-									vg.changeVisMode(2);
+									vg.changeVisMode(1);
 								}
 							});
 						}
@@ -298,16 +300,46 @@ public class VizSteererWindow extends javax.swing.JFrame {
 							view3MenuItem.setText("View 3");
 							view3MenuItem.addActionListener(new ActionListener (){ 
 								public void actionPerformed (ActionEvent e) {
-									vg.changeVisMode(3);
+									vg.changeVisMode(2);
 								}
 							});
 						}
+
+						
 						{
 							buttonGroup1 = new ButtonGroup();
 							buttonGroup1.add(view1MenuItem);
 							buttonGroup1.add(view3MenuItem);
 							buttonGroup1.add(view2MenuItem);
 						}
+						
+						{
+							viewMenu.addMenuListener(new MenuListener () {
+								public void menuSelected (MenuEvent e) {
+										switch (vg.getVisMode()) {
+										case 0:
+											view1MenuItem.setSelected(true);
+											break;
+										case 1:
+											view2MenuItem.setSelected(true);
+											break;
+										case 2:
+											view3MenuItem.setSelected(true);
+											break;
+										}
+								}
+							
+							public void menuCanceled (MenuEvent e) {
+								
+							}
+							
+							public void menuDeselected (MenuEvent e) {
+								
+							}
+							
+						});
+						}
+						
 					}
 					{	resetMenuItem = new JMenuItem();
 						steeringMenu.add(resetMenuItem);
