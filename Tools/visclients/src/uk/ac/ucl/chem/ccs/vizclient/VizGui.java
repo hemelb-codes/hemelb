@@ -1,8 +1,6 @@
 package uk.ac.ucl.chem.ccs.vizclient;
 
 import info.clearthought.layout.TableLayout;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import com.sun.opengl.util.Animator;
 import javax.swing.BorderFactory;
 import java.awt.event.MouseWheelListener;
@@ -10,16 +8,12 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JButton;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -37,7 +31,10 @@ import java.io.ObjectInputStream;
 public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private JTextArea notificationArea;
 	static private JScrollPane jScrollPane1;
-	private GLCanvas canvas1;
+	//private GLCanvas canvas1;
+	private GLJPanel canvas1;
+
+	
 	private GLCapabilities cap;
 
 	private String hostname;
@@ -52,6 +49,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private InfoPanel ifp = null;	
 	private SteeringData sd;
 
+	private JLabel toolTip;
+	
 	int pixels_x = 512;
 	int pixels_y = 512;
 
@@ -261,6 +260,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		float ortho_x = 0.5F * (float)width / (float)pixels_x;
 		float ortho_y = 0.5F * (float)height / (float)pixels_y;
 
+
 		//gl.glViewport(0, 0, width, height);
 
 		//gl.glLoadIdentity ();
@@ -273,6 +273,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		VizFrameData vfd = (VizFrameData)queue.poll();
 
 		if (vfd != null) {	
+			
+			
+
+			
+			
 			GL gl = drawable.getGL();
 			/** Clear the colour buffer */
 			gl.glClear( GL.GL_COLOR_BUFFER_BIT );
@@ -297,7 +302,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 				}
 				gl.glEnd(); 
-
+				
 			} else {
 				gl.glBegin( GL.GL_POINTS );	
 
@@ -340,7 +345,25 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				}
 				gl.glEnd();
 			}
+			
+		
+			
+			if (vfd.getVis_mouse_pressure() > -1) {
+				//canvas1.setToolTipText(vfd.getVis_mouse_pressure() + " : " + vfd.getVis_stess_pressure());
+				System.err.println(vfd.getVis_mouse_pressure() + " : " + vfd.getVis_stess_pressure());
+				DecimalFormat df= new DecimalFormat("#####0.###"); 
 
+				toolTip.setText(df.format(vfd.getVis_mouse_pressure()) + " : " + df.format(vfd.getVis_stess_pressure()));
+
+				sd.setVis_mouse_x(-1);
+				sd.setVis_mouse_y(-1);
+				send();
+			}
+
+
+		
+	
+			
 			if (ifp != null) {
 				
 				ifp.updatePanel (vfd.getBufferSize(), vfd.getVis_cycle(), totalFramesRec, 
@@ -378,14 +401,19 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			this.setLayout(thisLayout);
 			thisLayout.setHGap(5);
 			thisLayout.setVGap(5);
-			this.setPreferredSize(new java.awt.Dimension(570, 677));
+			this.setMinimumSize(new java.awt.Dimension(570, 677));
+			//this.setPreferredSize(new java.awt.Dimension(570, 677));
 			{
 				cap = new GLCapabilities(); 
-				canvas1 = new GLCanvas(cap);
+				//canvas1 = new GLCanvas(cap);
+				canvas1 = new GLJPanel(cap);
+
 				this.add(canvas1, "0, 3, 0, 19");
 				canvas1.addGLEventListener(this);
 
-
+				toolTip = new JLabel();
+				toolTip.setVisible(false);
+				canvas1.add(toolTip);
 
 				canvas1.addKeyListener(new KeyListener () {
 
@@ -461,7 +489,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							}
 							send();
 						} else if(start != null && e.getButton() == 3) {
-	/*						Point end = e.getPoint();
+							Point end = e.getPoint();
 							double dx = start.getX() - end.getX();
 							double dy = start.getY() - end.getY();
 							panel_width = canvas1.getWidth();
@@ -470,23 +498,41 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							sd.setCtr_x(100*(float)(dx/panel_width));
 							sd.setCtr_y(100*(float)(dy/panel_height));
 
-							System.err.println("Ctr x = " + sd.getCtr_x() + " crt y = " + sd.getCtr_y());
-							send();*/
+							//System.err.println("Ctr x = " + sd.getCtr_x() + " crt y = " + sd.getCtr_y());
+							send();
 						}
 					}
 
 					public void mouseClicked(MouseEvent e) {
 						if (e.getButton() == 2 && view != VIEWALL) {
 							Point point = e.getPoint();
-							int i = (int)point.getX();
+							int i = (int)point.getX();	
 							int j = (int)point.getY();
 
-							int offsetx = (int)(canvas1.getWidth() - pixels_x)/2;
-							int offsety = (int)(canvas1.getHeight() - pixels_y)/2;
+							
+							
+							
+							int width = (int)canvas1.getWidth();
+							int height = (int)canvas1.getHeight();
 
-							//transform
-							i = i - offsetx;
-							j = j - offsety;
+							int offset_x = (width - pixels_x)/2;
+							int offset_y = (height - pixels_y)/2;
+							
+							j = height - j;
+
+							
+							//i = Math.round(((float)i/(float)width) * pixels_x);
+							//j = Math.round(((float)j/(float)height) * pixels_y);
+							
+							i = i - offset_x;
+							j = j - offset_y; 
+							
+							
+							System.err.println("i = " + i + " j = " + j);
+						
+							
+							toolTip.setLocation(point);
+							toolTip.setVisible(true);					
 
 							if (i >= 0 && i <= pixels_x && j >= 0 && j <= pixels_y) {
 								sd.setVis_mouse_x(i);
@@ -494,7 +540,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 								send();
 							}
 
-							System.err.println("i=" + i + " j=" + j + " x offset=" + offsetx + " y offset=" +offsety);
+							//System.err.println("i=" + i + " j=" + j + " x offset=" + offsetx + " y offset=" +offsety);
 
 						}
 
@@ -650,10 +696,13 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	//thread to time fps etc
 	private class TimerThread extends Thread {
 		private boolean run;
+		private int toolTipDisplayTime;
 		private long runTime;
 		public TimerThread () {
 			run=true;
 			runTime = 0;
+			toolTipDisplayTime = 0;
+
 		}
 
 
@@ -661,6 +710,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			//private boolean shouldirun = true;
 			run=false;
 			runTime = 0;
+			toolTipDisplayTime = 0;
 		} 	
 
 		public void run() {
@@ -673,6 +723,15 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					ifp.updateFPS(frames, rate);
 
 					//System.err.println("Total data " + totalDataRec + " Total frames " + totalFramesRec + " Time " + runTime);
+					if (toolTip.isVisible() && toolTipDisplayTime == 0) {
+						toolTipDisplayTime = 5;
+					} else if (toolTipDisplayTime > 0) {
+						toolTipDisplayTime--;
+						if (toolTipDisplayTime == 0) {
+							toolTip.setText("");
+							toolTip.setVisible(false);
+						}
+					}
 					
 				} catch (Exception e) {
 
