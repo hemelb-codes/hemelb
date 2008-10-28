@@ -57,9 +57,9 @@ public class SteeringData implements Serializable {
 		this.zoom_factor = 1.0f;
 		this.vis_brightness = 0.1f;
 		this.velocity_max = 0.1f;
-		this.stress_max = 0.0f;
-		this.vis_mouse_x = 0;
-		this.vis_mouse_y = 0;
+		this.stress_max = 0.1f;
+		this.vis_mouse_x = -1;
+		this.vis_mouse_y = -1;
 		this.lbm_terminate = 0;
 		this.pressure_min = 80.0f;		
 		this.pressure_max = 120.0f;		
