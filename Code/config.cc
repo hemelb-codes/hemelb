@@ -131,16 +131,15 @@ int lbm_terminate_simulation;
 
 int net_machines;
 
+double vis_pressure_min = 0.0, vis_pressure_max = 0.0;
+double vis_velocity_min = 0.0, vis_velocity_max = 0.0;
+double vis_stress_min = 0.0, vis_stress_max = 0.0;
+double vis_time = 0.0;
 
-double vis_pressure_min, vis_pressure_max;
-double vis_velocity_min, vis_velocity_max;
-double vis_stress_min, vis_stress_max;
-double vis_time;
-
-int vis_time_step, vis_cycle;
-int vis_period, vis_inlets;
-int vis_image_freq;
-int vis_pixels_max;
+int vis_time_step = 0, vis_cycle = 0;
+int vis_period = 0, vis_inlets = 0;
+int vis_image_freq = 0;
+int vis_pixels_max = 0;
 int vis_compositing = 1;
 
 
