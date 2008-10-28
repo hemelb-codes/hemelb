@@ -80,12 +80,12 @@ public class ParamWindow2 extends javax.swing.JDialog {
 				{
 					jLabel1 = new JLabel();
 					jPanel1.add(jLabel1, "0, 0");
-					jLabel1.setText("Render width");
+					jLabel1.setText("Render width (px)");
 				}
 				{
 					jLabel2 = new JLabel();
 					jPanel1.add(jLabel2, "0, 2");
-					jLabel2.setText("Render height");
+					jLabel2.setText("Render height (px)");
 				}
 				{
 					updateButton = new JButton();
