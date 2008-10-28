@@ -817,7 +817,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel2 = new JLabel();
 				this.add(jLabel2, "0, 0");
-				jLabel2.setText("Cycle");
+				jLabel2.setText("pulsatile cycle id");
 				jLabel2.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -827,7 +827,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel1 = new JLabel();
 				this.add(jLabel1, "0, 2");
-				jLabel1.setText("Frame Rec No");
+				jLabel1.setText("# frames received");
 				jLabel1.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 				jLabel1.setFont(new java.awt.Font("Dialog",1,12));
 			}
@@ -839,7 +839,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel3 = new JLabel();
 				this.add(jLabel3, "0, 4");
-				jLabel3.setText("Frame Size (bytes)");
+				jLabel3.setText("Frame size (bytes)");
 				jLabel3.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -850,7 +850,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel5 = new JLabel();
 				this.add(jLabel5, "0, 6");
-				jLabel5.setText("Time Step");
+				jLabel5.setText("HemeLB time step");
 				jLabel5.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -861,7 +861,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel4 = new JLabel();
 				this.add(jLabel4, "0, 8");
-				jLabel4.setText("Data Rate (Kbytes/sec)");
+				jLabel4.setText("Data rate (KB/s)");
 				jLabel4.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -882,7 +882,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel10 = new JLabel();
 				this.add(jLabel10, "0, 12");
-				jLabel10.setText("Frames Per Second");
+				jLabel10.setText("fps");
 				jLabel10.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -892,7 +892,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel7 = new JLabel();
 				this.add(jLabel7, "0, 14");
-				jLabel7.setText("Vis Time");
+				jLabel7.setText("Intra cycle time (s)");
 				jLabel7.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -903,7 +903,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel8 = new JLabel();
 				this.add(jLabel8, "0, 16");
-				jLabel8.setText("Pressure Max/Min");
+				jLabel8.setText("Pressure min/max (mm.Hg)");
 				jLabel8.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -913,7 +913,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel9 = new JLabel();
 				this.add(jLabel9, "0, 18");
-				jLabel9.setText("Velocity Max/Min");
+				jLabel9.setText("Velocity min/max (m/s)");
 				jLabel9.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -923,7 +923,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			{
 				jLabel11 = new JLabel();
 				this.add(jLabel11, "0, 20");
-				jLabel11.setText("Stress Max/Min");
+				jLabel11.setText("Stress min/max (Pa)");
 				jLabel11.setFont(new java.awt.Font("Dialog",1,12));
 			}
 			{
@@ -962,14 +962,16 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		}
 
 		public void updatePanel (int fSize, int cyc, long fRecNo, int timeS, double visT, double pMax, double pMin, double vMax, double vMin, double sMax, double sMin) {
+			
 			cycle.setText(Integer.toString(cyc));
 			frameRecNo.setText(Long.toString(fRecNo));
 			frameSize.setText(Integer.toString(fSize));
 			timeStep.setText(Integer.toString(timeS));
-			visTime.setText(Double.toString(visT));
 			
-			DecimalFormat df= new DecimalFormat("#####0.###"); 
+			DecimalFormat df2 = new DecimalFormat("#####0.####");
+			visTime.setText(df2.format(visT));
 			
+			DecimalFormat df = new DecimalFormat("#####0.###");
 			pressure.setText(df.format(pMin) + "/" + df.format(pMax));
 			vel.setText(df.format(vMin) + "/" + df.format(vMax));
 			stress.setText(df.format(sMin) + "/" + df.format(sMax));
