@@ -276,7 +276,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 						{
 							view1MenuItem = new JRadioButtonMenuItem();
 							viewMenu.add(view1MenuItem);
-							view1MenuItem.setText("View 1");
+							view1MenuItem.setText("Vessel wall");
 							view1MenuItem.setSelected(true);
 							view1MenuItem.addActionListener(new ActionListener (){ 
 								public void actionPerformed (ActionEvent e) {
@@ -287,7 +287,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 						{
 							view2MenuItem = new JRadioButtonMenuItem();
 							viewMenu.add(view2MenuItem);
-							view2MenuItem.setText("View 2");
+							view2MenuItem.setText("Velocity glyphs");
 							view2MenuItem.addActionListener(new ActionListener (){ 
 								public void actionPerformed (ActionEvent e) {
 									vg.changeVisMode(1);
@@ -297,7 +297,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 						{
 							view3MenuItem = new JRadioButtonMenuItem();
 							viewMenu.add(view3MenuItem);
-							view3MenuItem.setText("View 3");
+							view3MenuItem.setText("Streaklines");
 							view3MenuItem.addActionListener(new ActionListener (){ 
 								public void actionPerformed (ActionEvent e) {
 									vg.changeVisMode(2);
@@ -380,7 +380,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 					}
 					{
 						window1MenuItem = new JCheckBoxMenuItem();
-						window1MenuItem.setText("Show Param Window 1");
+						window1MenuItem.setText("Scene parameters");
 						steeringMenu.add(window1MenuItem);
 						window1MenuItem.addActionListener(new ActionListener() {
 							public void actionPerformed (ActionEvent e) {
@@ -392,7 +392,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 					{
 						window2MenuItem = new JCheckBoxMenuItem();
 						steeringMenu.add(window2MenuItem);
-						window2MenuItem.setText("Show Param Window 2");
+						window2MenuItem.setText("Resolution");
 						window2MenuItem.addActionListener(new ActionListener() {
 							public void actionPerformed (ActionEvent e) {
 									vg.showParamWindow2(window2MenuItem.getState());
@@ -403,7 +403,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 					{
 						window3MenuItem = new JCheckBoxMenuItem();
 						steeringMenu.add(window3MenuItem);
-						window3MenuItem.setText("Show Param Window 3");
+						window3MenuItem.setText("Render parameters");
 						window3MenuItem.addActionListener(new ActionListener() {
 							public void actionPerformed (ActionEvent e) {
 									vg.showParamWindow3(window3MenuItem.getState());
