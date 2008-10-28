@@ -50,13 +50,8 @@ public class DirectBiConnection implements SteeringConnection {
 
 			try {			
 
-
-
-
-	
-
 				frame_size = d.readInt();
-
+					//System.err.println("Frame size " + frame_size);
 				if (frame_size < 1) {
 					return null;
 				}
@@ -129,18 +124,19 @@ public class DirectBiConnection implements SteeringConnection {
 
 			//read inlet vels
 			int n_inlets = d.readInt();
+			
 			vizFrame.setN_inlets(n_inlets);
-			for (int n=0; n< n_inlets; n++) {
+/*			for (int n=0; n< n_inlets; n++) {
 				double inlet_avg_vel = d.readDouble();
 				vizFrame.setInlet_avg_vel(inlet_avg_vel, n);
-			}
+			}*/
 			
 			
 			//mouse parameters
 			vizFrame.setVis_mouse_pressure(d.readDouble());
 			vizFrame.setVis_stess_pressure(d.readDouble());
 
-			System.err.println(vizFrame.getVis_pressure_min() + " : " + vizFrame.getVis_stess_pressure());
+			//System.err.println(vizFrame.getVis_pressure_min() + " : " + vizFrame.getVis_stess_pressure());
 
 			
 			} catch (IOException e1) {
