@@ -32,9 +32,10 @@ display-debug:
 	$(CC) $(FLAGS) $(DEFS) $(INCLUDES) -c $<
 
 clean:
-	rm -f $(OBJ) $(EXE) displayClient
+	rm -f $(OBJ) $(EXE) displayClient env_details.asc
 
 distclean: clean
 	find ./ -name \*~ -exec rm -f {} \;
 
 include make/Makefile.Tests
+
