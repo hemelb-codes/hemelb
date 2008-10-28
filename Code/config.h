@@ -465,8 +465,8 @@ extern float vis_velocity_threshold_max_inv;
 extern float vis_stress_threshold_max_inv;
 extern float vis_brightness;
 extern float vis_ctr_x, vis_ctr_y, vis_ctr_z;
-extern float vis_mouse_pressure, vis_stess_pressure;
-extern float vis_glyph_length;
+extern double vis_mouse_pressure, vis_mouse_stress;
+extern double vis_glyph_length;
 extern float vis_streaklines_per_pulsatile_period, vis_streakline_length;
 
 extern int vis_mouse_x, vis_mouse_y;

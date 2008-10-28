@@ -150,14 +150,13 @@ float vis_velocity_threshold_max_inv;
 float vis_stress_threshold_max_inv;
 float vis_brightness;
 float vis_ctr_x, vis_ctr_y, vis_ctr_z;
-float vis_mouse_pressure, vis_stess_pressure;
-float vis_glyph_length;
+double vis_mouse_pressure, vis_mouse_stress;
+double vis_glyph_length;
 float vis_streaklines_per_pulsatile_period, vis_streakline_length;
 
 int vis_mouse_x, vis_mouse_y;
 int vis_perform_rendering;
 int vis_mode;
-
 
 int cluster_blocks_vec[3];
 int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
