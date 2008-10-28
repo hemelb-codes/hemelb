@@ -194,7 +194,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 					{
 						hostMenuItem = new JMenuItem();
 						connectMenu.add(hostMenuItem);
-						hostMenuItem.setText("Host");
+						hostMenuItem.setText("Set HemeLB host");
 						hostMenuItem.setEnabled(true);
 						hostMenuItem.addActionListener(new ActionListener (){ 
 							public void actionPerformed (ActionEvent e) {
@@ -364,7 +364,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 				} 
 					{
 						rotateMenuItem = new JCheckBoxMenuItem();
-						rotateMenuItem.setText("Rotate");
+						rotateMenuItem.setText("Auto-rotate");
 						steeringMenu.add(rotateMenuItem);
 						rotateMenuItem.addActionListener(new ActionListener() {
 							public void actionPerformed (ActionEvent e) {
