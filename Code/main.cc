@@ -20,7 +20,6 @@
 
 FILE* timings_ptr;
 
-
 int main (int argc, char *argv[])
 {
   // main function needed to perform the entire simulation. Some
@@ -43,8 +42,8 @@ int main (int argc, char *argv[])
   int fluid_solver_time_steps;
   int fluid_solver_and_vis_time_steps;
   int vis_without_compositing_time_steps;
-  int snapshots, snapshots_period;
-  int images, images_period;
+  int snapshots_per_cycle, snapshots_period;
+  int images_per_cycle, images_period;
   
   pthread_t network_thread;
   pthread_attr_t pthread_attrib;
@@ -74,11 +73,11 @@ int main (int argc, char *argv[])
   else if (argc == 7)
     {
       is_bench = 0;
-      lbm.cycles_max = atoi( argv[2] );
-      lbm.period     = atoi( argv[3] );
-      lbm.voxel_size = atof( argv[4] );
-      snapshots      = atoi( argv[5] );
-      images         = atoi( argv[6] );
+      lbm.cycles_max      = atoi( argv[2] );
+      lbm.period          = atoi( argv[3] );
+      lbm.voxel_size      = atof( argv[4] );
+      snapshots_per_cycle = atoi( argv[5] );
+      images_per_cycle    = atoi( argv[6] );
       
       if (lbm.cycles_max > 1000)
 	{
@@ -215,36 +214,38 @@ int main (int argc, char *argv[])
       simulation_time = myClock ();
       fluid_solver_time = 0.;
       steering_and_vis_time = myClock ();
-      io_time = 0.;
-      other_time = 0.;
-      
-      if (snapshots == 0)
-	snapshots_period = 1000000000;
+      io_time = 0.0;
+      other_time = 0.0;
+   
+      if (snapshots_per_cycle == 0)
+	snapshots_period = 1e9;
       else
-	snapshots_period = max(1, lbm.period / snapshots);
+	snapshots_period = max(1, lbm.period / snapshots_per_cycle);
       
-      if (images == 0)
-	images_period = 1000000000;
+      if (images_per_cycle == 0)
+	images_period = 1e9;
       else
-	images_period = max(1, lbm.period / images);
+	images_period = max(1, lbm.period / images_per_cycle);
       
       for (cycle_id = 1; cycle_id <= lbm.cycles_max && !is_finished; cycle_id++)
 	{
 	  int restart = 0;
 	  
-	  for (time_step = 1; time_step <= lbm.period; time_step++)
+	  for (time_step = 1; time_step <= lbm.period; time_step++, total_time_steps++)
 	    {
-	      int write_image = 0;
-	      // int stream_image = 0; 
-	      int lock_return = 0;
-	      
-	      ++total_time_steps;
-	      
-	      // if (time_step%images_period == 0) write_image = 1;
-	      
+
+              int render_for_network_stream = 0;
+	      int write_snapshot_image = 0;
+
+	      if (time_step % images_period == 0) {
+                write_snapshot_image = 1;
+                doRendering = 1;
+		printf("Setting write_snapshot_image -> 1, time step %i\n", time_step);
+              }
+
 	      if (net.id == 0)
 		{
-		  lock_return = pthread_mutex_trylock ( &LOCK );
+		  int lock_return = pthread_mutex_trylock ( &LOCK );
 		  
 		  // printf("attempting to aquire mutex lock -> %i -> ", lock_return); 
 		  
@@ -252,13 +253,14 @@ int main (int argc, char *argv[])
 		    // printf("lock busy\n");
 		  } else {
 		    // printf("aquired lock\n");
+		    render_for_network_stream = 1;
+		printf("Setting render_for_network_stream -> 1, time step %i\n", time_step);
 		    doRendering = 1;
 		  }
 		  // printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
 		}
+
 	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
-	      
-	      if (write_image) doRendering = 1;
 	      
 	      // printf (" doRendering: %i\n", doRendering); Between
 	      // the visRenderA/B calls, do not change any vis
@@ -270,6 +272,7 @@ int main (int argc, char *argv[])
 		{
 		  visRenderA (ColourPalette, &net, &sl);
 		}
+
 	      lbmVaryBoundaryDensities (cycle_id, time_step, &lbm);
 	      
 	      if (!check_conv)
@@ -308,7 +311,8 @@ int main (int argc, char *argv[])
 		  end_time = myClock ();
 		  fluid_solver_time += end_time - start_time;
 		}
-	      if (write_image)
+
+	      if (write_snapshot_image)
 		{
 		  start_time = myClock ();
 		  
@@ -321,11 +325,12 @@ int main (int argc, char *argv[])
 		  end_time = myClock ();
 		  io_time += end_time - start_time;
 		}
-	      // slStreakLines (time_step, lbm.period, &net, &sl);
+
+	      slStreakLines (time_step, lbm.period, &net, &sl);
 	      
 	      if (doRendering)
 		{
-		  visRenderB (write_image, complete_image_name, ColourPalette, &net);
+		  visRenderB (write_snapshot_image, complete_image_name, ColourPalette, &net);
 		  
 		  for (int i = 0; i < col_pixels; i++)
 		    {
@@ -336,6 +341,7 @@ int main (int argc, char *argv[])
 			}
 		    }
 		}
+
 	      if (time_step%snapshots_period == 0)
 		{
 		  start_time = myClock ();
@@ -352,21 +358,24 @@ int main (int argc, char *argv[])
 		  end_time = myClock ();
 		  io_time += end_time - start_time;
 		}
+
 	      if (net.id == 0)
 		{
-		  if(doRendering==1) {
+                  if( render_for_network_stream == 1 ) {
 		    // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
 		    pthread_mutex_unlock (&LOCK);
 		    pthread_cond_signal (&network_send_frame);
 		    // printf("...signal sent\n"); fflush(0x0);
-		    doRendering=0;
-		  }
+                  }
+                  if( doRendering == 1 ) doRendering = 0;
 		} 
+
 	      if (stability == STABLE_AND_CONVERGED)
 		{
 		  is_finished = 1;
 		  break;
 		}
+
 	      if (lbm_terminate_simulation)
 		{
 		  is_finished = 1;
@@ -374,10 +383,11 @@ int main (int argc, char *argv[])
 		}
 	      if (net.id == 0)
 		{
-		  if (time_step%10 == 0)
+		  if (time_step%1 == 0)
 		    printf ("time step: %i\n", time_step);
 		}
 	    }
+
 	  if (restart)
 	    {
 	      start_time = myClock ();
@@ -403,22 +413,23 @@ int main (int argc, char *argv[])
 		  printf ("restarting: period: %i\n", lbm.period);
 		  fflush (0x0);
 		}
-	      if (snapshots == 0)
-		snapshots_period = 1000000000;
+	      if (snapshots_per_cycle == 0)
+		snapshots_period = 1e9;
 	      else
-		snapshots_period = max(1, lbm.period / snapshots);
+		snapshots_period = max(1, lbm.period / snapshots_per_cycle);
 	      
-	      if (images == 0)
-		images_period = 1000000000;
+	      if (images_per_cycle == 0)
+		images_period = 1e9;
 	      else
-		images_period = max(1, lbm.period / images);
+		images_period = max(1, lbm.period / images_per_cycle);
 	      
 	      cycle_id = 1;
 	      
 	      end_time = myClock ();
-	      other_time += end_time - start_time;
+	      other_time += (end_time - start_time);
 	      continue;
 	    }
+
 	  start_time = myClock ();
 	  
 	  lbmCalculateFlowFieldValues (cycle_id, lbm.period, &lbm);
@@ -452,10 +463,11 @@ int main (int argc, char *argv[])
 	      MPI_Recv (&fluid_solver_time, 1, MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, net.status);
 	    }
 	}
-      steering_and_vis_time = myClock ()-steering_and_vis_time-fluid_solver_time-io_time-other_time;
-      
+
+      steering_and_vis_time = myClock () - steering_and_vis_time - fluid_solver_time - io_time-other_time;
       simulation_time = myClock () - simulation_time;
       time_step = (min(time_step, lbm.period)) * min(cycle_id, lbm.cycles_max);
+
     }
   else // is_bench
     {
@@ -485,6 +497,7 @@ int main (int argc, char *argv[])
 	      break;
 	    }
 	}
+
       fluid_solver_time_steps = (int)(time_step * minutes / (3. * 0.5) - time_step);
       fluid_solver_time = myClock ();
       
@@ -492,6 +505,7 @@ int main (int argc, char *argv[])
 	{
 	  stability = lbmCycle (1, 1, 1, &lbm, &net);
 	}
+
       fluid_solver_time = myClock () - fluid_solver_time;
       
       
