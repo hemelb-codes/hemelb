@@ -4340,11 +4340,17 @@ void visRenderB (int write_image, char *image_file_name,
 
 void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
 {
-  vis_mouse_pressure = lbmConvertPressureToPhysicalUnits (col_pixel_p->density * Cs2, lbm);
-  
-  vis_stess_pressure = lbmConvertStressToPhysicalUnits (col_pixel_p->stress, lbm);
-}
 
+  double _density = vis_density_threshold_min + col_pixel_p->density / vis_density_threshold_minmax_inv;
+  double _stress = col_pixel_p->stress / vis_stress_threshold_max_inv;
+
+  vis_mouse_pressure = lbmConvertPressureToPhysicalUnits (_density * Cs2, lbm);
+  vis_mouse_stress = lbmConvertStressToPhysicalUnits (_stress, lbm);
+
+  printf("****** vis_mouse_pressure = %0.8f\n", vis_mouse_pressure);
+  printf("****** vis_mouse_stress   = %0.8f\n", vis_mouse_stress);
+
+}
 
 void visEnd (SL *sl)
 {
