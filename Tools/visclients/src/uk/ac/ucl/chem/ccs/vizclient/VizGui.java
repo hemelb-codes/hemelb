@@ -82,6 +82,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		this.hostname = hostname;
 		this.window = window;
 		initGUI();
+		this.setFocusable( true );
+		
 		nr = new DirectBiConnection (port, hostname, window);
 		sd = new SteeringData();
 		view = VIEW1;
@@ -412,8 +414,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				toolTip.setVisible(false);
 				canvas1.add(toolTip);
 
-				canvas1.addKeyListener(new KeyListener () {
-
+				this.addKeyListener(new KeyListener () {
+				
 
 					public void keyPressed(KeyEvent e) {
 
@@ -424,6 +426,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					}
 
 					public void keyTyped(KeyEvent e) {
+						System.err.println("Key pressed");
+
 						if (e.getKeyChar() == '1') {
 							view = VIEW1;
 
