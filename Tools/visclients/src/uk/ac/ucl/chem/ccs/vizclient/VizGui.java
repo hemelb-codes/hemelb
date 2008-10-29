@@ -355,9 +355,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 				toolTip.setText(df.format(vfd.getVis_mouse_pressure()) + " : " + df.format(vfd.getVis_stess_pressure()));
 
-				sd.setVis_mouse_x(-1);
-				sd.setVis_mouse_y(-1);
-				send();
 			}
 
 
@@ -540,6 +537,10 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 								send();
 							}
 
+
+							sd.setVis_mouse_x(-1);
+							sd.setVis_mouse_y(-1);
+							
 							//System.err.println("i=" + i + " j=" + j + " x offset=" + offsetx + " y offset=" +offsety);
 
 						}
