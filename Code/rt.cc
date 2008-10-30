@@ -4347,9 +4347,6 @@ void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
   vis_mouse_pressure = lbmConvertPressureToPhysicalUnits (_density * Cs2, lbm);
   vis_mouse_stress = lbmConvertStressToPhysicalUnits (_stress, lbm);
 
-  printf("****** vis_mouse_pressure = %0.8f\n", vis_mouse_pressure);
-  printf("****** vis_mouse_stress   = %0.8f\n", vis_mouse_stress);
-
 }
 
 void visEnd (SL *sl)
