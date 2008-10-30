@@ -13,7 +13,8 @@ OBJ=config.o \
 	fileutils.o \
 	usage.o \
 	steering-common.o \
-	steering.o
+	steering.o \
+	steering-sim-params.o
 #	realitygrid.o
 
 $(EXE): $(OBJ)
