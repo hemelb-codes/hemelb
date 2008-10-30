@@ -204,6 +204,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 			//start the animator thread
 			animator = new Animator(canvas1);
+			animator.setRunAsFastAsPossible(true);  //??
 			animator.start();
 
 			send();
@@ -542,8 +543,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							}
 
 
-							sd.setVis_mouse_x(-1);
-							sd.setVis_mouse_y(-1);
+
+							
 							
 							//System.err.println("i=" + i + " j=" + j + " x offset=" + offsetx + " y offset=" +offsety);
 
@@ -616,6 +617,22 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			paramWindow1.update(sd);
 			paramWindow2.update(sd);
 			paramWindow3.update(sd);
+			
+			
+			//reset some values
+			if (sd.getVis_mouse_x() >= 0 || sd.getVis_mouse_y() >= 0) {
+				sd.setVis_mouse_x(-1);
+				sd.setVis_mouse_y(-1);
+			}
+			
+			if (sd.getCtr_x() != 0.0f || sd.getCtr_y() != 0.0f || sd.getCtr_z() != 0.0f) {
+				sd.setCtr_x(0.0f);
+				sd.setCtr_y(0.0f);
+				sd.setCtr_z(0.0f);
+
+			}
+			
+			
 		}
 
 
