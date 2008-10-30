@@ -23,9 +23,14 @@
 #include "steering.h"
 #include "colourpalette.h"
 #include "visthread.h"
+#include "steering-sim-params.h"
 
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
+
+pthread_mutex_t steer_param_lock = PTHREAD_MUTEX_INITIALIZER;
+
+extern bool updated_mouse_coords;
 
 char host_name[255];
 
@@ -36,7 +41,7 @@ float steer_par[ STEERABLE_PARAMETERS + 1 ] = {0.0, 0.0, 0.0,    // scene center
 					       80.0, 120.0,      // Minimum pressure and maximum pressure for Colour mapping
 					       1.0,              // Glyph length
 					       512, 512,         // Rendered frame size, pixel x and pixel y
-					       -1., -1.,         // x-y position of the mouse of the client
+					       -1.0, -1.0,         // x-y position of the mouse of the client
 					       0.0,              // signal useful to terminate the simulation
 					       0.0, 	         // Vis_mode 
 					       5.0,	         // vis_streaklines_per_pulsatile_period
@@ -46,7 +51,7 @@ float steer_par[ STEERABLE_PARAMETERS + 1 ] = {0.0, 0.0, 0.0,    // scene center
 double frameTiming() {
   struct timeval time_data;
   gettimeofday (&time_data, NULL);
-  return (double)time_data.tv_sec + (double)time_data.tv_usec / 1.e6;
+  return (double)time_data.tv_sec + (double)time_data.tv_usec / 1.0e6;
 }
 
 void *hemeLB_network (void *ptr) {
@@ -199,6 +204,13 @@ void *hemeLB_network (void *ptr) {
             bytesSent += frameBytes;
           }
 	  
+          simulationParameters* Sim = new simulationParameters();
+          Sim->collectGlobalVals();
+          int sizeToSend = Sim->sim_params_bytes;
+          send_all(new_fd, Sim->pack(), &sizeToSend);
+          printf ("Sim bytes sent %i\n", sizeToSend);
+          delete Sim;
+
 	  //fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
 	  printf ("RG thread: bytes sent %i\n", bytesSent);
 	  
@@ -256,13 +268,20 @@ void* hemeLB_steer (void* ptr)
       break;
     }
     
+ //   pthread_mutex_lock(&steer_param_lock);
+
     for (int i = 0; i < STEERABLE_PARAMETERS; i++)
       xdr_float(&xdr_steering_stream, &steer_par[i]);
-    
-    // printf("Got steering params ");
-    // for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
-    //   printf("%0.4f ", steer_par[i]);
-    // printf("\n"); 
+
+    printf("Got steering params ");
+    for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
+      printf("%0.4f ", steer_par[i]);
+    printf("\n"); 
+
+    if( steer_par[14] > -1.0 && steer_par[15] > -1.0 )
+      updated_mouse_coords = 1;  
+
+ //   pthread_mutex_unlock(&steer_param_lock);
     
     xdr_destroy(&xdr_steering_stream);
 
@@ -273,3 +292,4 @@ void* hemeLB_steer (void* ptr)
   return 0;
 
 }
+

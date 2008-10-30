@@ -27,3 +27,4 @@ void setRenderState(int val) {
   ShouldIRenderNow = val;
   pthread_mutex_unlock(&var_lock);
 }
+

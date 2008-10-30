@@ -18,6 +18,11 @@
 #include "visthread.h"
 #include "fileutils.h"
 
+int cycle_id;
+int time_step;
+double intra_cycle_time;
+bool updated_mouse_coords;
+
 FILE* timings_ptr;
 
 int main (int argc, char *argv[])
@@ -25,6 +30,8 @@ int main (int argc, char *argv[])
   // main function needed to perform the entire simulation. Some
   // simulation paramenters and performance statistics are outputted on
   // standard output
+
+  updated_mouse_coords = 0;
   
   double simulation_time;
   double minutes;
@@ -35,8 +42,9 @@ int main (int argc, char *argv[])
   double io_time, other_time;
   double start_time, end_time;
   
-  int cycle_id;
-  int total_time_steps, time_step, stability = STABLE;
+  //int cycle_id;
+  //int total_time_steps, time_step, stability = STABLE;
+  int total_time_steps, stability = STABLE;
   int depths;
   
   int fluid_solver_time_steps;
@@ -234,6 +242,8 @@ int main (int argc, char *argv[])
 	  for (time_step = 1; time_step <= lbm.period; time_step++, total_time_steps++)
 	    {
 
+              intra_cycle_time = (PULSATILE_PERIOD * time_step) / lbm.period;
+
               int render_for_network_stream = 0;
 	      int write_snapshot_image = 0;
 
@@ -332,15 +342,32 @@ int main (int argc, char *argv[])
 		{
 		  visRenderB (write_snapshot_image, complete_image_name, ColourPalette, &net);
 		  
-		  for (int i = 0; i < col_pixels; i++)
-		    {
-		      if ((col_pixel_recv[ i ].i & RT) &&
-			  (col_pixel_recv[ i ].i & PIXEL_ID_MASK) == PixelId (vis_mouse_x, vis_mouse_y))
+                 if( net.id == 0 ) {
+
+//		    pthread_mutex_lock(&steer_param_lock);
+		int _vis_mouse_x = vis_mouse_x;
+		int _vis_mouse_y = vis_mouse_y;
+//		    pthread_mutex_unlock(&steer_param_lock); 
+
+		printf("updated mouse coords %i MOUSE X %i MOUSE Y %i\n", int(updated_mouse_coords), vis_mouse_x, vis_mouse_y);
+
+                if( _vis_mouse_x >= 0 && _vis_mouse_y >= 0 && updated_mouse_coords ) {
+		    for (int i = 0; i < col_pixels; i++)
+		      {
+		       if ((col_pixel_recv[ i ].i & RT) &&
+		 	  (col_pixel_recv[ i ].i & PIXEL_ID_MASK) == PixelId (_vis_mouse_x, _vis_mouse_y))
 			{
 			  visCalculateMouseFlowField (&col_pixel_recv[ i ], &lbm);
+				break;
 			}
 		    }
-		}
+
+		updated_mouse_coords = 0;
+
+                  } // if( vis_mouse_x >= 0)
+//		    pthread_mutex_unlock(&steer_param_lock);
+		  } // if( net.id == 0)  
+		} 
 
 	      if (time_step%snapshots_period == 0)
 		{
@@ -386,6 +413,7 @@ int main (int argc, char *argv[])
 		  if (time_step%1 == 0)
 		    printf ("time step: %i\n", time_step);
 		}
+
 	    }
 
 	  if (restart)

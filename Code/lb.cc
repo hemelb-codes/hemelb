@@ -39,7 +39,6 @@ double lbmConvertPressureToPhysicalUnits (double lattice_pressure, LBM *lbm)
   
   double useful_factor = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
   
-  
   useful_factor *= useful_factor;
   
   return REFERENCE_PRESSURE + ((lattice_pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY /
@@ -1462,7 +1461,6 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   
   int i;
   
-  
   local_data = (double *)malloc(sizeof(double) * max(6,2*lbm->inlets));
   global_data = (double *)malloc(sizeof(double) * max(6,2*lbm->inlets));
   
@@ -1511,12 +1509,6 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, lbm);
   vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, lbm);
   
-  vis_time_step = time_step;
-  
-  vis_time = (PULSATILE_PERIOD * time_step) / lbm->period;
-  
-  vis_cycle = cycle_id;
-  
   vis_period = lbm->period;
   
   vis_inlets = lbm->inlets;
@@ -1532,14 +1524,12 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
 int lbmIsUnstable (Net *net)
 {
   int is_unstable, stability;
-  int i, l;
-  
   
   is_unstable = 0;
   
-  for (i = 0; i < net->my_sites; i++)
+  for (int i = 0; i < net->my_sites; i++)
     {
-      for (l = 0; l < 15; l++)
+      for (int l = 0; l < 15; l++)
 	{
 	  if (f_old[ i*15+l ] < 0.)
 	    {
