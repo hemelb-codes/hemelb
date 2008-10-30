@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
+
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-
-#include "config.h"
 
 #include "steering-sim-params.h"
 
