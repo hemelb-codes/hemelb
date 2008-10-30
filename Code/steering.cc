@@ -12,10 +12,6 @@
 #include <signal.h>
 
 #include <sys/stat.h>
-
-#include <rpc/types.h>
-#include <rpc/xdr.h>
-
 #include <string.h>
 
 #include "config.h"
@@ -24,6 +20,9 @@
 #include "colourpalette.h"
 #include "visthread.h"
 #include "steering-sim-params.h"
+
+#include <rpc/types.h>
+#include <rpc/xdr.h>
 
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
