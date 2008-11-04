@@ -5,8 +5,14 @@
 #include <GL/glut.h>
 #include <rpc/xdr.h>
 
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
+#include <string>
+
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 using namespace std;
 
@@ -51,7 +57,6 @@ int e_y[] = { 0, 0, 1,-1, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1};
 int e_z[] = { 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1};
 
 int inv_dir[] = {1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12};
-
 
 
 char *input_path;
@@ -136,6 +141,8 @@ struct Triangle
   unsigned int boundary_id, boundary_dir, boundary_config;
   
   float pressure_avg, pressure_amp, pressure_phs;
+  
+  int normal_sign;
 };
 
 
@@ -210,7 +217,7 @@ struct MyGL
   
   int selected_pixel_x, selected_pixel_y, selected_slice;
   
-  unsigned short int selected_gray;
+  float selected_gray;
   
   float system_size;
   float dim_x, dim_y, dim_z;
@@ -250,13 +257,13 @@ int passive_mouse_pixel_i = -1;
 int passive_mouse_pixel_j = -1;
 
 
-int viewport_pixels_x = 1024, viewport_pixels_y = 1024;
+int viewport_pixels_x = 512, viewport_pixels_y = 512;
 
 float background_r = 1.F, background_g = 1.F, background_b = 1.F;
 
 float ortho_x, ortho_y;
 
-float longitude = 0.F, latitude = 0.F;
+float longitude = 100.F, latitude = 40.F;
 float viewpoint_radius;
 
 float zoom = 1.5F;
@@ -272,6 +279,8 @@ int draw_triangles = 1;
 
 int display_id;
 
+int is_first_vis_change = 1;
+
 float screen_voxels_screen_max_inv_x, screen_voxels_screen_max_inv_y;
 
 
@@ -279,6 +288,14 @@ float slice_size, pixel_size;
 float res_factor, res_factor_par1, res_factor_par2;
 
 int voxel_di, voxel_dj, voxel_dk;
+int smoothing_range;
+
+float gray_min, gray_max;
+
+vector<string> fileList;
+
+
+void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], float *length);
 
 
 int min (int a, int b)
@@ -328,7 +345,7 @@ float myClock ()
 
 void myglDisplayString (int x, int y, char *string, void *font)
 {
-  char *allowed_char[] = {",",".","0","1","2","3","4","5","6","7","8","9"};
+  char *allowed_char[] = {",",".","0","1","2","3","4","5","6","7","8","9","m","N","a"," "};
   int length = (int)strlen(string);
   
   
@@ -338,7 +355,7 @@ void myglDisplayString (int x, int y, char *string, void *font)
   
   for (int i = 0; i < length; i++)
     {
-      for (int j = 0; j < 12; j++)//sizeof(allowed_char) / sizeof(char)
+      for (int j = 0; j < 16; j++)//sizeof(allowed_char) / sizeof(char)
   	{
   	  if (!strncmp (&string[i], allowed_char[j],1))
   	    {
@@ -719,7 +736,7 @@ void myglFromSiteToGridCoords (int site_i, int site_j, int site_k, int *block_id
 }
 
 /*
-unsigned short int myglInterpolatedGray (int site_i, int site_j, int site_k)
+float myglInterpolatedGray (int site_i, int site_j, int site_k)
 {
   float gray[2][2][2];
   float x, y, z;
@@ -765,11 +782,11 @@ unsigned short int myglInterpolatedGray (int site_i, int site_j, int site_k)
   
   interpolated_gray = (1.F - x) * gray_0y + x * gray_1y;
   
-  return (unsigned short int)max(0, min(1<<16, (int)interpolated_gray));
+  return interpolated_gray;
 }
 */
 
-unsigned short int myglInterpolatedGray (int site_i, int site_j, int site_k)
+float myglInterpolatedGray (int site_i, int site_j, int site_k)
 {
   float x, y, z;
   float dx, dy, dz;
@@ -817,7 +834,20 @@ unsigned short int myglInterpolatedGray (int site_i, int site_j, int site_k)
     }
   interpolated_gray = sum1 / sum2;
   
-  return (unsigned short int)max(0, min(1<<16, (int)interpolated_gray));
+  return interpolated_gray;
+}
+
+
+void myglSetSmoothingRange (int s_range, float res_factor)
+{
+  smoothing_range = s_range;
+  
+  voxel_di = smoothing_range;
+  voxel_dj = voxel_di;
+  voxel_dk = nint(voxel_di * pixel_size / slice_size);
+  
+  res_factor_par1 = voxel_di * voxel_di * res_factor * res_factor;
+  res_factor_par2 = 1.F / res_factor_par1;
 }
 
 
@@ -954,6 +984,16 @@ void EditLastTriangle (float t_x, float t_y, float longitude, float latitude, fl
 }
 
 
+void InvertLastTriangleNormal (void)
+{
+  Triangle *triangle_p;
+  
+  
+  triangle_p = &mygl.boundary[ last_triangle.boundary_id ].triangle[ last_triangle.triangle_id ];
+  triangle_p->normal_sign = -triangle_p->normal_sign;
+}
+
+
 void ChangeTrianglePars (int boundary_id, int triangle_id, float dp_avg, float dp_amp, float dp_phs)
 {
   Triangle *triangle_p = &mygl.boundary[ boundary_id ].triangle[ triangle_id ];
@@ -1009,15 +1049,18 @@ void DisplayTrianglePars (int boundary_id, int triangle_id)
 }
 
 
-void DisplaySite (int site_i, int site_j, int site_k)
+void DisplaySiteData (int site_i, int site_j, int site_k)
 {
   float x1, y1, z1;
   float x2, y2, z2;
+  float nor[3];
+  float calibre;
   
   char indices_string[256];
   char coord_i[256];
   char coord_j[256];
   char coord_k[256];
+  char length[256];
   
   
   x1 = (float)site_i * mygl.lattice_to_system - mygl.half_dim_x;
@@ -1026,13 +1069,25 @@ void DisplaySite (int site_i, int site_j, int site_k)
   
   myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
   
+  myglEstimateBoundaryNormal (site_i, site_j, site_k, nor, &calibre);
+  
+  if (calibre >= 0.F)
+    {
+      calibre *= pixel_size / res_factor;
+      sprintf (length, "%.3f mm", calibre);
+    }
+  else
+    {
+      sprintf (length, "NaN");
+    }
   sprintf (coord_i, "%i,", site_i);
   sprintf (coord_j, "%i,", site_j);
-  sprintf (coord_k, "%i", site_k);
+  sprintf (coord_k, "%i,", site_k);
   
   strcat (indices_string, coord_i);
   strcat (indices_string, coord_j);
   strcat (indices_string, coord_k);
+  strcat (indices_string, length);
   
   myglDisplayString ((int)x2, (int)y2, indices_string, GLUT_BITMAP_TIMES_ROMAN_24);
 }
@@ -1069,6 +1124,8 @@ void DeleteLastTriangle (void)
   triangle2->pressure_avg = triangle1->pressure_avg;
   triangle2->pressure_amp = triangle1->pressure_amp;
   triangle2->pressure_phs = triangle1->pressure_phs;
+  
+  triangle2->normal_sign = triangle1->normal_sign;
 }
 
 
@@ -1383,7 +1440,7 @@ void myglAddSuperficialSite (int iters, int site_i, int site_j, int site_k)
 }
 
 
-int myglInitialiseBlock (int site_i, int site_j, int site_k, int selected_gray, int iters)
+int myglInitialiseBlock (int site_i, int site_j, int site_k, float selected_gray, int iters)
 {
   int block_id, site_id;
   int i, j, k;
@@ -1475,7 +1532,7 @@ void myglDeallocateBlock (int n)
 void myglReconstructSystem (int selected_pixel_x,
 			    int selected_pixel_y,
 			    int selected_slice,
-			    unsigned short int selected_gray)
+			    float selected_gray)
 {
   float seconds;
   
@@ -1501,9 +1558,6 @@ void myglReconstructSystem (int selected_pixel_x,
   iterations = 0;
   
   myglFromVoxelToSiteCoords (selected_pixel_x, selected_pixel_y, selected_slice, &i, &j, &k);
-  
-  res_factor_par1 = 4.F * res_factor * res_factor;
-  res_factor_par2 = 1.F / res_factor_par1;
   
   if (!myglInitialiseBlock (i, j, k, selected_gray, iterations))
     {
@@ -1600,8 +1654,8 @@ void myglReconstructSystem (int selected_pixel_x,
 				  site_location_a[ index_a ].k);
 	}
     }
-  printf ("Reconstruction, gray: %i, sites: %i, superficial sites: %i, time: %.3f\n",
-	  selected_gray, fluid_sites, mygl.superficial_sites, myClock () - seconds);
+  printf ("Reconstruction, gray: %.3f, smoothing range: %i\n sites: %i, superficial sites: %i, time: %.3f\n",
+	  selected_gray, smoothing_range, fluid_sites, mygl.superficial_sites, myClock () - seconds);
   fflush (stdout);
 }
 
@@ -1609,7 +1663,7 @@ void myglReconstructSystem (int selected_pixel_x,
 void myglFluidSitesIterativeSearching (int selected_pixel_x,
 				       int selected_pixel_y,
 				       int selected_slice,
-				       unsigned short int selected_gray)
+				       float selected_gray)
 {
   float seconds;
   float x, y, z;
@@ -1800,7 +1854,7 @@ void myglFluidSitesIterativeSearching (int selected_pixel_x,
   
   myglEndRayTracing ();
   
-  printf ("Iterative searching, gray: %i, sites: %i, superficial sites: %i, time: %.3f\n",
+  printf ("Iterative searching, gray: %.3f \n sites: %i, superficial sites: %i, time: %.3f\n",
 	  mygl.selected_gray, fluid_sites, mygl.superficial_sites, myClock () - seconds);
   fflush (stdout);
 }
@@ -1948,7 +2002,6 @@ void myglRescaleSystemResolution ()
       myglDeallocateBlock (i);
     }
   
-  
   mygl.output_image_pix_x = (int)(mygl.input_image_pix_x * res_factor);
   mygl.output_image_pix_y = (int)(mygl.input_image_pix_y * res_factor);
   
@@ -1962,10 +2015,6 @@ void myglRescaleSystemResolution ()
   mygl.scale_inv_x = 1.F / mygl.scale_x;
   mygl.scale_inv_y = 1.F / mygl.scale_y;
   mygl.scale_inv_z = 1.F / mygl.scale_z;
-  
-  voxel_di = 2;
-  voxel_dj = 2;
-  voxel_dk = nint(2.F * pixel_size / slice_size);
   
   printf (" output_slices: %i\n", mygl.output_slices);
   fflush (stdout);
@@ -2041,7 +2090,7 @@ void myglRescaleTriangles (float scale)
 }
 
 
-void EstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], float *length)
+void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], float *length)
 {
   float segment_length = 0.25F;
   float org[3];
@@ -2098,6 +2147,8 @@ void EstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], fl
     {
       data_block_p->site_label[ n ] = 0;
     }
+  mygl.stored_block[ mygl.stored_blocks ] = block_id;
+  
   si = site_i - (bi << mygl.shift);
   sj = site_j - (bj << mygl.shift);
   sk = site_k - (bk << mygl.shift);
@@ -2146,6 +2197,11 @@ void EstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], fl
 		{
 		  continue;
 		}
+	      if ((*site_data_p & SITE_TYPE_MASK) == INLET_TYPE ||
+		  (*site_data_p & SITE_TYPE_MASK) == OUTLET_TYPE)
+		{
+		  continue;
+		}
 	      if (!myglIsSuperficialSite (neigh_i, neigh_j, neigh_k))
 		{
 		  continue;
@@ -2191,6 +2247,7 @@ void EstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], fl
       block_id = mygl.stored_block[ n ];
       
       free(mygl.data_block[ block_id ].site_label);
+      mygl.data_block[ block_id ].site_label = NULL;
     }
   
   temp = 1.F / sqrtf(nor[0] * nor[0] + nor[1] * nor[1] + nor[2] * nor[2]);
@@ -2251,7 +2308,7 @@ void EstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], fl
     }
   else
     {
-      *length = (float)iterations;
+      *length = (float)iterations * segment_length;
     }
 }
 
@@ -2259,7 +2316,7 @@ void EstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], fl
 int myglCreateOptimizedTriangle (unsigned int site_type,
 				 int site_i, int site_j, int site_k)
 {
-  float triangle_factor = 1.F;
+  float triangle_factor = 4.F;
   float org[3], nor[3];
   float x, y, z;
   float longitude, latitude;
@@ -2281,19 +2338,18 @@ int myglCreateOptimizedTriangle (unsigned int site_type,
     {
       return -1;
     }
+  myglEstimateBoundaryNormal (site_i, site_j, site_k, nor, &length);
+  
+  if (length < 0.F)
+    {
+      return -1;
+    }
   triangle_id = mygl.boundary[ site_type ].triangles;
   triangle_p = &mygl.boundary[ site_type ].triangle[ triangle_id ];
   
   org[0] = (float)site_i;
   org[1] = (float)site_j;
   org[2] = (float)site_k;
-  
-  EstimateBoundaryNormal (site_i, site_j, site_k, nor, &length);
-  
-  if (length < 0.F)
-    {
-      return -1;
-    }
   
   triangle_size = triangle_factor * length * mygl.lattice_to_system;
   
@@ -2398,6 +2454,8 @@ int myglCreateOptimizedTriangle (unsigned int site_type,
   triangle_p->pressure_amp = 0.0F;
   triangle_p->pressure_phs = 0.0F;
   
+  triangle_p->normal_sign = 1;
+  
   ++mygl.boundary[ site_type ].triangles;
   
   return triangle_id;
@@ -2408,6 +2466,7 @@ void DisplayNull (void)
 {
   ;
 }
+
 
 void DisplaySlice (void)
 {
@@ -2435,14 +2494,14 @@ void DisplaySlice (void)
       
       for (j = 0; j < mygl.input_image_pix_y; j++)
 	{
-	  gray = mygl.medical_data[ myglVoxelId(i,j,k) ] * (1.F / (1 << 8));
+	  gray = (mygl.medical_data[ myglVoxelId(i,j,k) ] - gray_min) / (gray_max - gray_min);
 	  
 	  glColor3f (gray, gray, gray);	  
   	  glVertex3f (x, y, 0.F);
   	  
-	  gray = mygl.medical_data[ myglVoxelId(i+1,j,k) ] * (1.F / (1 << 8));
-	  
-  	  glColor3f (gray, gray, gray);
+	  gray = (mygl.medical_data[ myglVoxelId(i+1,j,k) ] - gray_min) / (gray_max - gray_min);
+  	  
+	  glColor3f (gray, gray, gray);
   	  glVertex3f (x + delta_x, y, 0.F);
 	  
   	  y += delta_y;
@@ -2464,6 +2523,8 @@ void DisplaySystemSlow (void)
   float x0, y0, z0;
   float x1, y1, z1;
   float x2, y2, z2;
+  float nx, ny, nz;
+  float length;
   
   int pixel_i, pixel_j;
   int i, j, k;
@@ -2492,13 +2553,13 @@ void DisplaySystemSlow (void)
   glLineWidth (3.F);
   glBegin (GL_LINE_LOOP);
   
-  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
   
   glEnd ();
@@ -2641,6 +2702,44 @@ void DisplaySystemSlow (void)
 		  glVertex3f (x2, y2, z2);
 		}
 	      glEnd ();
+	      
+	      if (boundary_index == INLET_BOUNDARY)
+		{
+		  glBegin (GL_LINES);
+		  
+		  x0 = (triangle_p->v[0].pos_x + triangle_p->v[1].pos_x + triangle_p->v[2].pos_x) / 3;
+		  y0 = (triangle_p->v[0].pos_y + triangle_p->v[1].pos_y + triangle_p->v[2].pos_y) / 3;
+		  z0 = (triangle_p->v[0].pos_z + triangle_p->v[1].pos_z + triangle_p->v[2].pos_z) / 3;
+		  
+		  x1 = triangle_p->v[0].pos_x - x0;
+		  y1 = triangle_p->v[0].pos_y - y0;
+		  z1 = triangle_p->v[0].pos_z - z0;
+		  
+		  myglTriangleNormal (triangle_p->v[0].pos_x, triangle_p->v[0].pos_y, triangle_p->v[0].pos_z,
+				      triangle_p->v[1].pos_x, triangle_p->v[1].pos_y, triangle_p->v[1].pos_z,
+				      triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
+				      &nx, &ny, &nz);
+		  
+		  length = sqrtf(x1 * x1 + y1 * y1 + z1 * z1) / sqrtf(nx * nx + ny * ny + nz * nz);
+		  
+		  myglTransformVertex (x0, y0, z0, &x2, &y2, &z2);
+		  glVertex3f (x2, y2, z2);
+		  
+		  if (triangle_p->normal_sign == -1)
+		    {
+		      nx = -nx;
+		      ny = -ny;
+		      nz = -nz;
+		    }
+		  x1 = x0 + nx * length;
+		  y1 = y0 + ny * length;
+		  z1 = z0 + nz * length;
+		  
+		  myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
+		  glVertex3f (x2, y2, z2);
+		  
+		  glEnd ();
+		}
 	    }
 	}
     }
@@ -2678,7 +2777,7 @@ void DisplaySystemSlow (void)
     {
       screen_voxel_p = &mygl.screen_to_boundaries_map[ passive_mouse_pixel_i * screen_voxels + passive_mouse_pixel_j ];
       
-      DisplaySite (screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
+      DisplaySiteData (screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
       
       // site quadrant
       pixel_i = mygl.screen_voxel_coords.i;
@@ -2709,8 +2808,11 @@ void DisplaySystemFast (void)
 {
   // fast version!
   
+  float x0, y0, z0;
   float x1, y1, z1;
   float x2, y2, z2;
+  float nx, ny, nz;
+  float length;
   
   int pixel_i, pixel_j;
   int n;
@@ -2735,25 +2837,25 @@ void DisplaySystemFast (void)
   glLineWidth (3.F);
   glBegin (GL_LINE_LOOP);
   
-  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
   
   glEnd ();
   glBegin (GL_LINE_LOOP);
 
-  myglTransformVertex (-mygl.half_dim_x, +mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (-mygl.half_dim_x, +mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (-mygl.half_dim_x, +mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (-mygl.half_dim_x, +mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, +mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (+mygl.half_dim_x, +mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, +mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);	  
+  myglTransformVertex (+mygl.half_dim_x, +mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
   glVertex3f (x1, y1, z1);
   
   glEnd ();
@@ -2839,6 +2941,44 @@ void DisplaySystemFast (void)
 		  glVertex3f (x2, y2, z2);
 		}
 	      glEnd ();
+	      
+	      if (boundary_index == INLET_BOUNDARY)
+		{
+		  glBegin (GL_LINES);
+		  
+		  x0 = (triangle_p->v[0].pos_x + triangle_p->v[1].pos_x + triangle_p->v[2].pos_x) / 3;
+		  y0 = (triangle_p->v[0].pos_y + triangle_p->v[1].pos_y + triangle_p->v[2].pos_y) / 3;
+		  z0 = (triangle_p->v[0].pos_z + triangle_p->v[1].pos_z + triangle_p->v[2].pos_z) / 3;
+		  
+		  x1 = triangle_p->v[0].pos_x - x0;
+		  y1 = triangle_p->v[0].pos_y - y0;
+		  z1 = triangle_p->v[0].pos_z - z0;
+		  
+		  myglTriangleNormal (triangle_p->v[0].pos_x, triangle_p->v[0].pos_y, triangle_p->v[0].pos_z,
+				      triangle_p->v[1].pos_x, triangle_p->v[1].pos_y, triangle_p->v[1].pos_z,
+				      triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
+				      &nx, &ny, &nz);
+		  
+		  length = sqrtf(x1 * x1 + y1 * y1 + z1 * z1) / sqrtf(nx * nx + ny * ny + nz * nz);
+		  
+		  myglTransformVertex (x0, y0, z0, &x2, &y2, &z2);
+		  glVertex3f (x2, y2, z2);
+		  
+		  if (triangle_p->normal_sign == -1)
+		    {
+		      nx = -nx;
+		      ny = -ny;
+		      nz = -nz;
+		    }
+		  x1 = x0 + nx * length;
+		  y1 = y0 + ny * length;
+		  z1 = z0 + nz * length;
+		  
+		  myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
+		  glVertex3f (x2, y2, z2);
+		  
+		  glEnd ();
+		}
 	    }
 	}
     }
@@ -2877,27 +3017,30 @@ void DisplaySystemFast (void)
     {
       screen_voxel_p = &mygl.screen_to_boundaries_map[ passive_mouse_pixel_i * screen_voxels + passive_mouse_pixel_j ];
       
-      DisplaySite (screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
-      
-      // site quadrant
-      pixel_i = mygl.screen_voxel_coords.i;
-      pixel_j = mygl.screen_voxel_coords.j;
-      
-      x1 = (float)pixel_i * (screen.max_x * (2.F / screen_voxels)) - screen.max_x;
-      y1 = (float)pixel_j * (screen.max_y * (2.F / screen_voxels)) - screen.max_y;
-      
-      x2 = x1 + (screen.max_x * (2.F / screen_voxels));
-      y2 = y1 + (screen.max_y * (2.F / screen_voxels));
-      
-      glColor3f (0.F, 0.F, 1.F);
-      glBegin (GL_LINE_LOOP);
-      
-      glVertex3f (x1, y1, 1.0F);
-      glVertex3f (x1, y2, 1.0F);
-      glVertex3f (x2, y2, 1.0F);
-      glVertex3f (x2, y1, 1.0F);
-      
-      glEnd ();
+      if (screen_voxel_p->site_i >= 0)
+	{
+	  DisplaySiteData (screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
+	  
+	  // site quadrant
+	  pixel_i = mygl.screen_voxel_coords.i;
+	  pixel_j = mygl.screen_voxel_coords.j;
+	  
+	  x1 = (float)pixel_i * (screen.max_x * (2.F / screen_voxels)) - screen.max_x;
+	  y1 = (float)pixel_j * (screen.max_y * (2.F / screen_voxels)) - screen.max_y;
+	  
+	  x2 = x1 + (screen.max_x * (2.F / screen_voxels));
+	  y2 = y1 + (screen.max_y * (2.F / screen_voxels));
+	  
+	  glColor3f (0.F, 0.F, 1.F);
+	  glBegin (GL_LINE_LOOP);
+	  
+	  glVertex3f (x1, y1, 1.0F);
+	  glVertex3f (x1, y2, 1.0F);
+	  glVertex3f (x2, y2, 1.0F);
+	  glVertex3f (x2, y1, 1.0F);
+	  
+	  glEnd ();
+	}
     }
   
   glutSwapBuffers ();
@@ -2919,9 +3062,23 @@ void GLUTCALLBACK Display (void)
 
 void ReadFirstSlice (int *pixels_x, int *pixels_y, int *voxel_size)
 {
-  FILE *temp_file_ptr, *image_file_ptr;
+  string file_name = string(input_path) + fileList[2];
   
-  char partial_file_name[256], image_file_name_input[256], *image_file_name_output;
+  FILE *image_file_ptr = fopen(file_name.c_str(), "r");
+
+  
+  fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, pixels_x, pixels_y, voxel_size);
+  
+  printf ("input image pixels x, y: %i %i, voxel size: %i\n",
+	  *pixels_x, *pixels_y, *voxel_size);
+
+  fflush (stdout);
+  
+  fclose(image_file_ptr);
+
+/*  FILE *temp_file_ptr, *image_file_ptr;
+  
+  char partial_file_name[256], image_file_name_input[256], image_file_name_output[256];
   char *partial_command, total_command[256];
   
   
@@ -2930,14 +3087,16 @@ void ReadFirstSlice (int *pixels_x, int *pixels_y, int *voxel_size)
   fscanf (temp_file_ptr, "%s\n", partial_file_name);
   fclose (temp_file_ptr);
   
-  sprintf (image_file_name_input, "%s%s", input_path, partial_file_name);
-  
-  partial_command = "convert";
-  image_file_name_output = "temp_file.ppm";
-  
-  sprintf (total_command, "%s %s %s",
-	   partial_command, image_file_name_input, image_file_name_output);
-  system (total_command);
+  //sprintf (image_file_name_input, "%s%s", input_path, partial_file_name);
+  //
+  //partial_command = "convert";
+  //image_file_name_output = "temp_file.ppm";
+  //
+  //sprintf (total_command, "%s %s %s",
+  //	   partial_command, image_file_name_input, image_file_name_output);
+  //system (total_command);
+  //strcpy ( image_file_name_output , input_path );
+  //strcat ( image_file_name_output , partial_file_name );
   
   image_file_ptr = fopen (image_file_name_output, "r");
   
@@ -2947,11 +3106,11 @@ void ReadFirstSlice (int *pixels_x, int *pixels_y, int *voxel_size)
 	  *pixels_x, *pixels_y, *voxel_size);
   fflush (stdout);
   
-  fclose (image_file_ptr);
+  fclose (image_file_ptr); */
 }
 
 
-void ReadSlice255 (int slice_id, int gray_max, unsigned char slice_row_data[])
+void ReadSlice255 (int slice_id, int pixel_depth, unsigned char slice_row_data[])
 {
   FILE *temp_file_ptr, *image_file_ptr;
   
@@ -2960,7 +3119,6 @@ void ReadSlice255 (int slice_id, int gray_max, unsigned char slice_row_data[])
   
   int pixels_x, pixels_y;
   int i, j;
-  
   
   printf ("processing slice %i ...\n", slice_id);
   fflush (stdout);
@@ -2987,7 +3145,7 @@ void ReadSlice255 (int slice_id, int gray_max, unsigned char slice_row_data[])
     {
       image_file_ptr = fopen (image_file_name_output, "rb");
       
-      fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, &pixels_x, &pixels_y, &gray_max);
+      fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, &pixels_x, &pixels_y, &pixel_depth);
       
       for (j = 0; j < mygl.input_image_pix_y; j++)
 	{
@@ -3011,7 +3169,7 @@ void ReadSlice255 (int slice_id, int gray_max, unsigned char slice_row_data[])
       inputFile >> ppm_type;
       inputFile >> pixels_x;
       inputFile >> pixels_y;
-      inputFile >> gray_max;
+      inputFile >> pixel_depth;
       
       for (j = 0; j < mygl.input_image_pix_y; j++)
 	{
@@ -3033,12 +3191,12 @@ void ReadSlice255 (int slice_id, int gray_max, unsigned char slice_row_data[])
 }
 
 
-void ReadSlice65536 (int slice_id, int gray_max, unsigned short int slice_row_data[])
+void ReadSlice65536 (int slice_id, int pixel_depth, unsigned short int slice_row_data[])
 {
   FILE *temp_file_ptr, *image_file_ptr;
   
   char partial_file_name[256], image_file_name_input[256], *image_file_name_output;
-  char *partial_command, total_command[256];
+  char *partial_command, total_command[256]; 
   
   int pixels_x, pixels_y;
   int i, j;
@@ -3047,29 +3205,31 @@ void ReadSlice65536 (int slice_id, int gray_max, unsigned short int slice_row_da
   printf ("processing slice %i ...\n", slice_id);
   fflush (stdout);
   
-  temp_file_ptr = fopen ("temp_file.txt", "r");
+  //temp_file_ptr = fopen ("temp_file.txt", "r");
+  //
+  //for (i = 0; i < slice_id; i++)
+  //  {
+  //    fscanf (temp_file_ptr, "%s\n", partial_file_name);
+  //  }
+  //fclose (temp_file_ptr);
+  //
+  //sprintf (image_file_name_input, "%s%s", input_path, partial_file_name);
+  //
+  //partial_command = "convert";
+  //image_file_name_output = "temp_file.ppm";
+  //
+  //sprintf (total_command, "%s %s %s",
+  //	   partial_command, image_file_name_input, image_file_name_output);
+  //system (total_command);
   
-  for (i = 0; i < slice_id; i++)
+  string file_name = string(input_path) + fileList[ slice_id+2 ];
+
+ /* if (strcmp (ppm_type, "P3"))
     {
-      fscanf (temp_file_ptr, "%s\n", partial_file_name);
-    }
-  fclose (temp_file_ptr);
-  
-  sprintf (image_file_name_input, "%s%s", input_path, partial_file_name);
-  
-  partial_command = "convert";
-  image_file_name_output = "temp_file.ppm";
-  
-  sprintf (total_command, "%s %s %s",
-	   partial_command, image_file_name_input, image_file_name_output);
-  system (total_command);
-  
-  
-  if (strcmp (ppm_type, "P3"))
-    {
-      image_file_ptr = fopen (image_file_name_output, "rb");
+//      image_file_ptr = fopen (image_file_name_output, "rb");
+	  image_file_ptr = fopen(file_name.c_str(),"rb");
       
-      fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, &pixels_x, &pixels_y, &gray_max);
+      fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, &pixels_x, &pixels_y, &pixel_depth);
       
       for (j = 0; j < mygl.input_image_pix_y; j++)
 	{
@@ -3077,24 +3237,47 @@ void ReadSlice65536 (int slice_id, int gray_max, unsigned short int slice_row_da
 	  
 	  for (i = 0; i < mygl.input_image_pix_x; i++)
 	    {
+	      gray_min = fminf(gray_min, slice_row_data[ i*3 ]);
+	      gray_max = fmaxf(gray_max, slice_row_data[ i*3 ]);
+	      
 	      mygl.medical_data[ (i*mygl.input_image_pix_y+j)*mygl.input_slices+slice_id ] =
 		slice_row_data[ i*3 ];
 	    }
 	}
       fclose (image_file_ptr);
     }
-  else
+  else */
     {
-      image_file_ptr = fopen (image_file_name_output, "r");
+      //image_file_ptr = fopen (image_file_name_output, "r");
       
       ifstream inputFile;
-      inputFile.open(image_file_name_output);
+      //inputFile.open(image_file_name_output);
+      inputFile.open(file_name.c_str());
       
       inputFile >> ppm_type;
       inputFile >> pixels_x;
       inputFile >> pixels_y;
-      inputFile >> gray_max;
+      inputFile >> pixel_depth; 
       
+      for (j = 0; j < mygl.input_image_pix_y; j++)
+	{
+	  for (i = 0; i < mygl.input_image_pix_x; i++)
+	    {
+	      int temp;
+	      
+	      inputFile >> temp;
+	      slice_row_data[i] = temp;
+	      
+	      gray_min = fminf(gray_min, temp);
+	      gray_max = fmaxf(gray_max, temp);
+	    }
+	  for (i = 0; i < mygl.input_image_pix_x; i++)
+	    {
+	      mygl.medical_data[ (i*mygl.input_image_pix_y+j)*mygl.input_slices+slice_id ] =
+		slice_row_data[ i ];
+	    }
+	}
+      /*
       for (j = 0; j < mygl.input_image_pix_y; j++)
 	{
 	  for (i = 0; i < mygl.input_image_pix_x * 3; i++)
@@ -3103,15 +3286,50 @@ void ReadSlice65536 (int slice_id, int gray_max, unsigned short int slice_row_da
 	      
 	      inputFile >> temp;
 	      slice_row_data[i] = temp;
-	    }
+	      
+	      gray_min = fminf(gray_min, temp);
+	      gray_max = fmaxf(gray_max, temp);
+	      }
 	  for (i = 0; i < mygl.input_image_pix_x; i++)
 	    {
 	      mygl.medical_data[ (i*mygl.input_image_pix_y+j)*mygl.input_slices+slice_id ] =
 		slice_row_data[ i*3 ];
 	    }
 	}
+      */
       inputFile.close();
     }
+}
+
+
+int getdir (string dir, vector<string> &files)
+{
+  DIR *dp;
+  struct dirent *dirp;
+  
+  
+  if((dp  = opendir(dir.c_str())) == NULL) {
+    cout << "Error(" << errno << ") opening " << dir << endl;
+    return errno;
+  }
+  
+  while ((dirp = readdir(dp)) != NULL)
+    {
+      files.push_back(string(dirp->d_name));
+    }
+  closedir(dp);
+  
+  return 0;
+}
+
+
+void GetFileNames(void)
+{
+  string dir = string(input_path);
+  
+  fileList = vector<string>();
+  
+  getdir (dir,fileList);
 }
 
 
@@ -3121,38 +3339,42 @@ void ReadConfig (void)
   
   float seconds;
   
-  int pixels_x, pixels_y, gray_max;
+  int pixels_x, pixels_y, pixel_depth;
   int i;
   
   char *first_command_part, *last_command_part;
   char my_command[256];
   
   
+  GetFileNames();
+  
+  mygl.input_slices = fileList.size() - 2;
+  
   // the names of the files corresponding to the data slices are
   // written in a temporary file
   
-  first_command_part = "ls";
-  last_command_part  = "| less | wc > temp_file.txt";
+  //first_command_part = "ls";
+  //last_command_part  = "| less | wc > temp_file.txt";
+  //
+  //sprintf (my_command, "%s %s %s", first_command_part, input_path, last_command_part);
+  //system (my_command);
+  //
+  //temp_file_ptr = fopen ("temp_file.txt", "r");
+  //fscanf (temp_file_ptr, "%i ", &mygl.input_slices);
+  //fclose (temp_file_ptr);
+  //
+  //temp_file_ptr = fopen ("temp_file.txt", "r");
+  //
+  //first_command_part = "ls -1";
+  //last_command_part  = "> temp_file.txt";
+  //
+  //sprintf (my_command, "%s %s %s", first_command_part, input_path, last_command_part);
+  //system (my_command);
+  //
+  //fclose (temp_file_ptr);
   
-  sprintf (my_command, "%s %s %s", first_command_part, input_path, last_command_part);
-  system (my_command);
   
-  temp_file_ptr = fopen ("temp_file.txt", "r");
-  fscanf (temp_file_ptr, "%i ", &mygl.input_slices);
-  fclose (temp_file_ptr);
-  
-  temp_file_ptr = fopen ("temp_file.txt", "r");
-  
-  first_command_part = "ls -1";
-  last_command_part  = "> temp_file.txt";
-  
-  sprintf (my_command, "%s %s %s", first_command_part, input_path, last_command_part);
-  system (my_command);
-  
-  fclose (temp_file_ptr);
-  
-  
-  ReadFirstSlice (&pixels_x, &pixels_y, &gray_max);
+  ReadFirstSlice (&pixels_x, &pixels_y, &pixel_depth);
   
   mygl.input_image_pix_x = pixels_x;
   mygl.input_image_pix_y = pixels_y;
@@ -3220,38 +3442,44 @@ void ReadConfig (void)
       mygl.data_block[ i ].site_label = NULL;
       mygl.data_block[ i ].site_iters = NULL;
     }
-  
-  if (gray_max == 255)
+    
+ /* if (pixel_depth == 255)
     {
       mygl.slice_row_data = (unsigned char *)malloc(sizeof(unsigned short int) * pixels_x * 3);
     }
   else
-    {
+    { */
+//      mygl.slice_row_data = (unsigned short int *)malloc(sizeof(unsigned char) * pixels_x * 3);
       mygl.slice_row_data = (unsigned short int *)malloc(sizeof(unsigned char) * pixels_x * 3);
-    }
+  //  }
   
   // the medical dataset is filtered and stored in a bi-level data structure
   
   seconds = myClock ();
   
+  gray_max = -1.0e9;
+  gray_min = +1.0e9;
+  
   for (i = 0; i < mygl.input_slices; i++)
     {
-      if (gray_max == 255)
+ /*     if (pixel_depth == 255)
 	{
-	  ReadSlice255 (i, gray_max, (unsigned char *)mygl.slice_row_data);
+	  ReadSlice255 (i, pixel_depth, (unsigned char *)mygl.slice_row_data);
 	}
       else
-	{
-	  ReadSlice65536 (i, gray_max, (unsigned short int *)mygl.slice_row_data);
-	}
-    }
+	{  */
+
+	  ReadSlice65536 (i, pixel_depth, (unsigned short int *)mygl.slice_row_data);
+
+//	}
+    } 
   printf ("seconds to read: %.3f\n", myClock () - seconds);
   fflush (stdout);
   
   free(mygl.slice_row_data);
   
-  system ("rm temp_file.txt");
-  system ("rm temp_file.ppm");
+  //system ("rm temp_file.txt");
+  //system ("rm temp_file.ppm");
   
   
   mygl.superficial_sites_max = 100000;
@@ -3283,6 +3511,7 @@ void WriteCheckpoint (char *file_name)
   xdr_float (&xdr_config, &slice_size);
   xdr_float (&xdr_config, &pixel_size);
   xdr_float (&xdr_config, &res_factor);
+  xdr_int   (&xdr_config, &smoothing_range);
   
   xdr_int     (&xdr_config, &mygl.input_image_pix_x);
   xdr_int     (&xdr_config, &mygl.input_image_pix_y);
@@ -3291,7 +3520,7 @@ void WriteCheckpoint (char *file_name)
   xdr_int     (&xdr_config, &mygl.selected_pixel_x);
   xdr_int     (&xdr_config, &mygl.selected_pixel_y);
   xdr_int     (&xdr_config, &mygl.selected_slice);
-  xdr_u_short (&xdr_config, &mygl.selected_gray);
+  xdr_float   (&xdr_config, &mygl.selected_gray);
   
   lattice_to_system = (double)mygl.lattice_to_system;
   
@@ -3352,6 +3581,7 @@ void ReadCheckpoint (char *file_name)
   xdr_float (&xdr_config, &slice_size);
   xdr_float (&xdr_config, &pixel_size);
   xdr_float (&xdr_config, &res_factor);
+  xdr_int   (&xdr_config, &smoothing_range);
   
   xdr_int     (&xdr_config, &mygl.input_image_pix_x);
   xdr_int     (&xdr_config, &mygl.input_image_pix_y);
@@ -3360,7 +3590,7 @@ void ReadCheckpoint (char *file_name)
   xdr_int     (&xdr_config, &mygl.selected_pixel_x);
   xdr_int     (&xdr_config, &mygl.selected_pixel_y);
   xdr_int     (&xdr_config, &mygl.selected_slice);
-  xdr_u_short (&xdr_config, &mygl.selected_gray);
+  xdr_float   (&xdr_config, &mygl.selected_gray);
   
   xdr_double (&xdr_config, &lattice_to_system);
   xdr_int    (&xdr_config, &mygl.blocks_x);
@@ -3420,11 +3650,17 @@ void ReadCheckpoint (char *file_name)
   
   mygl.medical_data = (unsigned short int *)malloc(sizeof(unsigned short int) * mygl.input_slices * pixels_x * pixels_y);
   
+  gray_max = -1.0e9;
+  gray_min = +1.0e9;
+  
   for (n = 0; n < mygl.input_slices * pixels_x * pixels_y; n++)
     {
       xdr_u_int (&xdr_config, &data);
       
       mygl.medical_data[ n ] = data;
+      
+      gray_min = fminf(gray_min, data);
+      gray_max = fmaxf(gray_max, data);
     }
   
   mygl.data_block = (DataBlock *)malloc(sizeof(DataBlock) * mygl.blocks);
@@ -3476,6 +3712,8 @@ void ReadCheckpoint (char *file_name)
   site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * BUFFERS_SIZE);
   
   
+  myglSetSmoothingRange (smoothing_range, res_factor);
+
   myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
   
   myglFluidSitesIterativeSearching (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
@@ -3604,6 +3842,12 @@ void WritePars (char *file_name)
 			  triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
 			  &nx, &ny, &nz);
       
+      if (triangle_p->normal_sign == 1)
+	{
+	  nx = -nx;
+	  ny = -ny;
+	  nz = -nz;
+	}
       fprintf (pars, "%f %f %f\n", nx, ny, nz);
     }
   fclose (pars);
@@ -3851,6 +4095,13 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
 	  last_triangle.boundary_id = -1;
 	}
     }
+  else if (key == 'n')
+    {
+      if (last_triangle.triangle_id != -1)
+	{
+	  InvertLastTriangleNormal ();
+	}
+    }
   else if (key == '1')
     {
       if (passive_mouse_pixel_i == -1)
@@ -3923,6 +4174,8 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
       mygl.selected_gray = min(1 << 16, mygl.selected_gray);
       
       myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
+      
+      printf ("selected gray : %f\n", mygl.selected_gray);
     }
   else if (key == 'G')
     {
@@ -3930,6 +4183,8 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
       mygl.selected_gray = max(0, mygl.selected_gray);
       
       myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
+      
+      printf ("selected gray : %f\n", mygl.selected_gray);
     }
   if (key == 'h')
     {
@@ -3937,6 +4192,8 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
       mygl.selected_gray = min(1 << 16, mygl.selected_gray);
       
       myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
+      
+      printf ("selected gray : %f\n", mygl.selected_gray);
     }
   else if (key == 'H')
     {
@@ -3944,6 +4201,8 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
       mygl.selected_gray = max(0, mygl.selected_gray);
       
       myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
+      
+      printf ("selected gray : %f\n", mygl.selected_gray);
     }
   else if (key == 'j')
     {
@@ -3992,6 +4251,7 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
       res_factor += 1.;
       printf ("res factor: %.1f\n", res_factor);
       
+      myglSetSmoothingRange (smoothing_range, res_factor);
       myglRescaleSystemResolution ();
       myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
       myglRescaleTriangles (res_factor / (res_factor - 1.F));
@@ -4005,12 +4265,28 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
 	  res_factor -= 1.F;
 	  printf ("res factor: %.1f\n", res_factor);
 	  
+	  myglSetSmoothingRange (smoothing_range, res_factor);
 	  myglRescaleSystemResolution ();
 	  myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
 	  myglRescaleTriangles (res_factor / (res_factor + 1.F));
 	  
 	  myglRescaleViewpoint (res_factor / (res_factor + 1.F));
 	}
+    }
+  else if (key == 'f')
+    {
+      if (smoothing_range == 1)
+	{
+	  smoothing_range = 2;
+	}
+      else
+	{
+	  smoothing_range = 1;
+	}
+      printf ("smoothing range: %i\n", smoothing_range);
+      
+      myglSetSmoothingRange (smoothing_range, res_factor);
+      myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
     }
   display_id = 2;
 }
@@ -4086,6 +4362,15 @@ void GLUTCALLBACK MouseFunction (int button, int state, int x0, int y0)
 	  mygl.selected_pixel_x = max(0, min(mygl.input_image_pix_x - 1, (int)((float)(x0 * mygl.input_image_pix_x) / viewport_pixels_x)));
 	  mygl.selected_pixel_y = max(0, min(mygl.input_image_pix_y - 1, (int)((float)(y0 * mygl.input_image_pix_y) / viewport_pixels_y)));
 	  
+	  i = mygl.selected_pixel_x;
+	  j = mygl.selected_pixel_y;
+	  k = mygl.selected_slice;
+	  
+	  if (is_first_vis_change)
+	    {
+	      is_first_vis_change = 0;
+	      mygl.selected_gray = mygl.medical_data[ myglVoxelId(i,j,k) ];
+	    }
 	  myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
 	  
 	  display_id = 2;
@@ -4465,8 +4750,10 @@ int main (int argc, char *argv[])
       pixel_size = atof(argv[6]);
       res_factor = atof(argv[7]);
       
-      mygl.selected_slice = mygl.input_slices >> 1;
-      mygl.selected_gray = 245;
+      mygl.selected_slice = 0;
+      //mygl.selected_gray = 50000;
+      
+      myglSetSmoothingRange (1, res_factor);
       
       ReadConfig ();
       
