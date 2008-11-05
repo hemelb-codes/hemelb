@@ -22,6 +22,8 @@ public class DirectBiConnection implements SteeringConnection {
 	private boolean connected = false;
 	private String hostname;
 	private int port, window;
+	
+	int frameno = 0;
 	/**
 	 * 
 	 */
@@ -49,9 +51,9 @@ public class DirectBiConnection implements SteeringConnection {
 			//System.err.println("Frame no " + frame_no);
 
 			try {			
-
+				System.err.println("Waiting for frame " + ++frameno);
 				frame_size = d.readInt();
-					//System.err.println("Frame size " + frame_size);
+				System.err.println("Got frame size " + frame_size);
 				if (frame_size < 1) {
 					return null;
 				}
@@ -138,7 +140,7 @@ public class DirectBiConnection implements SteeringConnection {
 
 			//System.err.println(vizFrame.getVis_pressure_min() + " : " + vizFrame.getVis_stess_pressure());
 
-			
+			System.err.println("Finished getting frame");
 			} catch (IOException e1) {
 				connected = false;
 				return null;
