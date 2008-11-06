@@ -275,15 +275,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	public void display(GLAutoDrawable drawable) {
 		VizFrameData vfd = (VizFrameData)queue.poll();
 
-		if (vfd != null) {	
-			
-			
-
-			
-			
-			GL gl = drawable.getGL();
-			/** Clear the colour buffer */
-			gl.glClear( GL.GL_COLOR_BUFFER_BIT );
+		GL gl = drawable.getGL();
+		/** Clear the colour buffer */
+		gl.glClear( GL.GL_COLOR_BUFFER_BIT );
+		
+		if (vfd != null) {
 			/** Draw some dots */ 
 
 			if (view < VIEWALL) {
