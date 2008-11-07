@@ -73,7 +73,6 @@ public class VLLaunch {
         	   rtParsPath = s1;
         	   parsPath = s2;
         	   configPath = s3;
-               System.setProperty("ahe.java.version", "1.5");
         }
        
         /**
