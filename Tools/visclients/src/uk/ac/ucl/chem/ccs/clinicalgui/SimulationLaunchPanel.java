@@ -139,6 +139,7 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 			this.add(treeView, "0, 0, 1, 3");
 		}
 		catch(Exception ex){
+			ex.printStackTrace();
 			updateInfo("could not load data from the grid");
 		}
 	}
@@ -198,7 +199,6 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 				this.setLayout(thisLayout);
 				setPreferredSize(new Dimension(400, 300));
 			    
-			    createDataTree(highlightedPath);
 				
 				
 				
@@ -208,6 +208,9 @@ public class SimulationLaunchPanel extends javax.swing.JPanel {
 			    this.add(infoLabel, "0, 4, 1, 4");
 			    infoLabel.setText("select a data set above");
 			    infoLabel.setBorder(BorderFactory.createEtchedBorder());
+
+			    createDataTree(highlightedPath);
+
 			    
 			    noteLabel = new JEditorPane();
 			    this.add(noteLabel, "2, 0, 3, 1");
