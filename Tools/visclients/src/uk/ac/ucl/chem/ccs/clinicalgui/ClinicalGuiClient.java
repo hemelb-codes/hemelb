@@ -62,7 +62,10 @@ public class ClinicalGuiClient extends SingleFrameApplication {
     protected void startup() {
     	loadProperties();
     	{
-	    	getMainFrame().setSize(800, 600);
+	    	getMainFrame().setSize(800, 700);
+	    	//getMainFrame().setMinimumSize(new java.awt.Dimension(600, 600));
+	    	//getMainFrame().setMaximumSize(new java.awt.Dimension(600, 600));
+
     	}
     	{
     		jMenuBar1 = new JMenuBar();
@@ -128,7 +131,8 @@ public class ClinicalGuiClient extends SingleFrameApplication {
         topPanelLayout.setColumns(1);
         topPanelLayout.setHgap(5);
         topPanelLayout.setVgap(5);
-        topPanel.setPreferredSize(new java.awt.Dimension(800, 600));
+       // topPanel.setMinimumSize(new java.awt.Dimension(600, 600));
+        topPanel.setPreferredSize(new java.awt.Dimension(800, 700));
         topPanel.setLayout(topPanelLayout);
         {
         	mainPanel1 = new MainPanel();
@@ -183,7 +187,47 @@ public class ClinicalGuiClient extends SingleFrameApplication {
 	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.jobfactoryepr", "");
 	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.mpcheck", "false");
 	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.mpwarn", "false");
+	    	
+	    //some more
+	    	//proxy location
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.proxyfile", "/tmp/x501");
+	    	
+	    	//gridftp server
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.gridftpserver", "none");
+	    	
+	    	//gridftp port
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.gridftpport", "2811");
+	    	
+	    	//repository location
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.modelrep", "/models");
+	    	
+	    	//dicom server
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.dicomserver", "none");
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.dicomserverport", "none");
+	    	
+	    	//dicom client
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclient", "none");
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclientport", "none");
+
+	    	//dicom client name
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclientname", "false");
+	    	
+	    	//dicom tempdir
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.dicomtmpdir", "/tmp");
+	    	
+	    	//dicom slices
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.dicomslices", "/tmp");
+	    	
+	    	//harc-path
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.harcpath", "false");
+	    	
 	    }
+	    
+	    //set HARC client properties from file to system properties
+	    System.setProperty("harc.client.installpath", prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.harcpath"));
+	    System.setProperty("harc.client.secure.gsi_proxy_location", prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.proxyfile"));
+        System.setProperty("ahe.java.version", prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.javaversion"));
+
 	    
 	    //unlock
 		String passwd = null;

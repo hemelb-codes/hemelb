@@ -59,7 +59,7 @@ public class MainPanel extends javax.swing.JPanel {
 			thisLayout.setHgap(5);
 			thisLayout.setVgap(5);
 			this.setLayout(thisLayout);
-			setPreferredSize(new Dimension(400, 300));
+			setPreferredSize(new Dimension(800, 600));
 			{
 				jTabbedPane1 = new JTabbedPane();
 				this.add(jTabbedPane1);

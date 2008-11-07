@@ -39,12 +39,26 @@ import org.dcm4che2.data.Tag;
  * implements methods for querying and obtaining data from the DICOM server
  */
 public class DicomServerInterface {
-	
+	/*
 	private static String SERVER_LOC = "GENIUS@bunsen.chem.ucl.ac.uk:11112";
 	private static String CLIENT_LOC = "DCMRCV@128.40.177.220:11113";
 	private static String CLIENT_NAME = "DCMRCV";
 	private static String TEMP_DIRECTORY = "/tmp/dcmQueryOutput";
 	public static String SLICES_FILE_PATH = "/tmp/SlicesFile.txt";
+	*/
+	
+	private static String SERVER_LOC = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomservername") + "@" +
+		ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomserverhost") + ":" + 
+		ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomserverport");
+	
+	private static String CLIENT_LOC = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclientname") + "@" +
+		ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclienthost") + ":" + 
+		ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclientport");
+	
+	private static String CLIENT_NAME = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclientname");
+	private static String TEMP_DIRECTORY = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomtmpdir");
+	public static String SLICES_FILE_PATH = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomslices");
+	
 	private static File tempDirectory = new File(TEMP_DIRECTORY);
 	private static Pattern p = Pattern.compile("\\[.*\\]");
 	private static DefaultMutableTreeNode top = new DefaultMutableTreeNode("Available Data");
