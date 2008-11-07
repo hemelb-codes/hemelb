@@ -85,15 +85,17 @@ public class ModelGenerationPanel extends javax.swing.JPanel {
 	//true if DICOM data has been downloaded
     //*****
 	
-	private String SEG_TOOL_PATH =  "/home/konstantin/Desktop/SegTool/st";
+	private String tmpdir = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomtmpdir");
+	
+	private String SEG_TOOL_PATH =  ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.segtool");
 	//path to seg tool
-	private String CONFIG_FILE_PATH = "/tmp/OutputConfig.dat";
+	private String CONFIG_FILE_PATH = tmpdir +"/OutputConfig.dat";
 	//path to output file of seg tool (used as input to hemelb)
-	private String PARS_FILE_PATH = "/tmp/OutputPars.asc";
+	private String PARS_FILE_PATH = tmpdir +"/OutputPars.asc";
 	//path of output file of seg tool (used as input to hemelb)
-	private String CHECKPOINT_FILE_PATH = "/tmp/CheckPoint.dat";
+	private String CHECKPOINT_FILE_PATH = tmpdir +"/CheckPoint.dat";
 	//path of output file of seg tool
-	private String NOTE_FILE_PATH = "/tmp/notes.txt";
+	private String NOTE_FILE_PATH = tmpdir +"/notes.txt";
 	//path to file containing note entered by user
 	
 	public static void main(String[] args) {

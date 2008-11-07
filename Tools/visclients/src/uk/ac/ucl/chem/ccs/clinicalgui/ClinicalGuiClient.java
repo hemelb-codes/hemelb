@@ -221,6 +221,9 @@ public class ClinicalGuiClient extends SingleFrameApplication {
 	    	//harc-path
 	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.harcpath", "false");
 	    	
+	    	//harc-path
+	    	prop.setProperty("uk.ac.ucl.chem.ccs.aheclient.segtool", "/tmp/sg");
+	    	
 	    }
 	    
 	    //set HARC client properties from file to system properties

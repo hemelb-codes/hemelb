@@ -56,8 +56,8 @@ public class DicomServerInterface {
 		ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclientport");
 	
 	private static String CLIENT_NAME = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomclientname");
-	private static String TEMP_DIRECTORY = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomtmpdir");
-	public static String SLICES_FILE_PATH = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomslices");
+	private static String TEMP_DIRECTORY = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomtmpdir") + "/dcmQueryOutput";
+	public static String SLICES_FILE_PATH = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.dicomtmpdir") + "/SlicesFile.txt";
 	
 	private static File tempDirectory = new File(TEMP_DIRECTORY);
 	private static Pattern p = Pattern.compile("\\[.*\\]");
