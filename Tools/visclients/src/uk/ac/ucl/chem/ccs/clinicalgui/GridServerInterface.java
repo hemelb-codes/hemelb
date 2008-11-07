@@ -20,10 +20,11 @@ import org.globus.ftp.FileInfo;
  */
 public class GridServerInterface {
 	
-	private static String HOST = "bunsen.chem.ucl.ac.uk";
-	private static String ROOT = "/home/konstantin/models";
+	private static String HOST = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.gridftpserver");
+	private static String ROOT = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.modelrep");
 	public static String topString = "Available hemelb input";
-	private static String PARAMS_PATH = "/home/konstantin/rt_pars.asc";
+	private static String PARAMS_PATH = ROOT + "/rt_pars.asc";
+	private static int PORT = Integer.parseInt(ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.gridftpport"));
 	
 	public static String getParamsPath(){
 		return HOST + ":" + PARAMS_PATH;
@@ -48,7 +49,7 @@ public class GridServerInterface {
 	
 	private static void addDirectory(String workingDir, String dir) throws Exception {
 	//creates dir in workingDir on grid ftp server, if it is not already there
-		MyGridFtp ftp = new MyGridFtp(HOST, 2811);
+		MyGridFtp ftp = new MyGridFtp(HOST, PORT);
 		ftp.changeDir(workingDir);
 		Vector<FileInfo> v = ftp.list();
         for(FileInfo f : v){
@@ -61,7 +62,7 @@ public class GridServerInterface {
 	
 	private static void uploadToDirectory(String workingDir, String localFile, String remoteFile) throws Exception{
 	//uploads localFile to remoteFile in workingDir on grid ftp server
-		MyGridFtp ftp = new MyGridFtp(HOST, 2811);
+		MyGridFtp ftp = new MyGridFtp(HOST, PORT);
 		ftp.changeDir(workingDir);
 		ftp.upload(localFile, remoteFile);
 		ftp.close();
@@ -70,7 +71,7 @@ public class GridServerInterface {
 	private static Vector<String> listDirectory(String workingDir) throws Exception{
 	//lists contents of workingDir: subroutine of populateServerData()
 		Vector<String> o = new Vector<String>();
-		MyGridFtp ftp = new MyGridFtp(HOST, 2811);
+		MyGridFtp ftp = new MyGridFtp(HOST, PORT);
 		ftp.changeDir(workingDir);
 		Vector<FileInfo> v = ftp.list();
         for(FileInfo f : v){
@@ -165,7 +166,7 @@ public class GridServerInterface {
 	
 	public static String getModelNote(String patientId, String studyId, String seriesId, String dateTime) throws Exception{
 	//downloads the note file corresponding to a particular dataset on the grid ftp server, and returns its contents as a string
-		MyGridFtp ftp = new MyGridFtp(HOST, 2811);
+		MyGridFtp ftp = new MyGridFtp(HOST, PORT);
 		ftp.changeDir(ROOT + "/" + patientId + "/" + studyId + "/" + seriesId + "/" + dateTime);
 		ftp.download("/tmp/notes.txt", "notes.txt");
 		ftp.close();

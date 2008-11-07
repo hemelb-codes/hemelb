@@ -21,13 +21,15 @@ public class MyGridFtp {
         
         public MyGridFtp(String host, int port) {
         	try {
-               globusCred = new GlobusCredential("/tmp/x509up_u501");
+               globusCred = new GlobusCredential(ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.proxyfile"));
                cred = new GlobusGSSCredentialImpl(globusCred,GSSCredential.DEFAULT_LIFETIME);
-               client = new GridFTPClient("128.40.156.204" , port);
+               client = new GridFTPClient(host, port);
                client.setClientWaitParams(100000, 1000);
                client.authenticate(cred);
+               client.setPassiveMode(true);
+
         	} catch (Exception e) {
-        		System.err.println("got here");
+        	//	System.err.println("got here");
         		e.printStackTrace();
         	}
         }
@@ -57,7 +59,7 @@ public class MyGridFtp {
         	}
         
         public void changeDir(String path) throws Exception{
-        	System.out.println("changing dir to " + path);
+        	//System.out.println("changing dir to " + path);
         	try{
         	client.changeDir(path);
         	} catch (Exception e) {
