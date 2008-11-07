@@ -19,11 +19,17 @@ public class MyGridFtp {
         private GlobusCredential globusCred = null;
   
         
-        public MyGridFtp(String host, int port) throws Exception {
-               globusCred = new GlobusCredential("/home/konstantin/x509up_u8012");
+        public MyGridFtp(String host, int port) {
+        	try {
+               globusCred = new GlobusCredential("/tmp/x509up_u501");
                cred = new GlobusGSSCredentialImpl(globusCred,GSSCredential.DEFAULT_LIFETIME);
-               client = new GridFTPClient(host , port);
+               client = new GridFTPClient("128.40.156.204" , port);
+               client.setClientWaitParams(100000, 1000);
                client.authenticate(cred);
+        	} catch (Exception e) {
+        		System.err.println("got here");
+        		e.printStackTrace();
+        	}
         }
         
         public void upload(String localFile, String remoteFile) throws Exception{
@@ -39,12 +45,26 @@ public class MyGridFtp {
         }
         
         public Vector list() throws Exception{
-        	return client.list();
-        }
+        Vector v = new Vector();
+        	try {
+         v =client.list();
+        	} catch (Exception e) {
+        		System.err.println("execption on list");
+        		e.printStackTrace();
+        	}
+        	
+        	return v;
+        	}
         
         public void changeDir(String path) throws Exception{
+        	System.out.println("changing dir to " + path);
+        	try{
         	client.changeDir(path);
-        }
+        	} catch (Exception e) {
+        		System.err.println("execption on cd");
+
+        	}
+        	}
         
         public void close() throws Exception{
                 client.close();
