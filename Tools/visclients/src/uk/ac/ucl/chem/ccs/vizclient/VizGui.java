@@ -1,32 +1,38 @@
 package uk.ac.ucl.chem.ccs.vizclient;
 
 import info.clearthought.layout.TableLayout;
-import com.sun.opengl.util.Animator;
-import javax.swing.BorderFactory;
-import java.awt.event.MouseWheelListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseListener;
+
 import java.awt.Container;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
-import javax.swing.border.BevelBorder;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import javax.media.opengl.*;
-import java.awt.event.KeyListener;
-import java.awt.event.KeyEvent;
-import java.io.FileOutputStream;
-import java.io.FileInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
 
+import javax.media.opengl.GL;
+import javax.media.opengl.GLAutoDrawable;
+import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLEventListener;
+import javax.media.opengl.GLJPanel;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
+
+import com.sun.opengl.util.Animator;
 
 public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private JTextArea notificationArea;
@@ -57,7 +63,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private long totalFramesRec = 0;
 	private long totalDataRec = 0;
 
-
+	private int viewWidth;
+	private int viewHeight;
 	
 	private double panel_width;
 	private double panel_height;
@@ -243,31 +250,22 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		gl.glDisable (GL.GL_DITHER);
 
 		gl.glClearColor( 1.0f, 1.0f, 1.0f, 1.0f ); //white
-
-		gl.glPointSize (1.F);
-
 	}
 
 	/** 
 	 * Executed if the associated GLDrawable is resized
 	 */ 
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
+		this.viewWidth = width;
+		this.viewHeight = height;
+		
 		GL gl = drawable.getGL();
-		gl.glViewport( 0, 0, width, height );
-		gl.glMatrixMode( GL.GL_PROJECTION ); 
+
+		gl.glViewport(0, 0, width, height);
+		gl.glMatrixMode(GL.GL_PROJECTION); 
 		gl.glLoadIdentity();
-		//  
-		//gl.glOrtho(0, 400, 0, 300, -1, 1);
 
-
-		float ortho_x = 0.5F * (float)width / (float)pixels_x;
-		float ortho_y = 0.5F * (float)height / (float)pixels_y;
-
-
-		//gl.glViewport(0, 0, width, height);
-
-		//gl.glLoadIdentity ();
-		gl.glOrtho(-ortho_x, ortho_x, -ortho_y, ortho_y, -1, 1);
+		gl.glOrtho(0, width, 0, height, -1, 1);
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT);
 	}
 
@@ -275,81 +273,51 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 	public void display(GLAutoDrawable drawable) {
 		VizFrameData vfd = (VizFrameData)queue.poll();
-
 		
 		if (vfd != null) {
+			//Calendar cal = Calendar.getInstance();
+			//long start_time = cal.getTimeInMillis();
 
 			GL gl = drawable.getGL();
-			/** Clear the colour buffer */
 			gl.glClear(GL.GL_COLOR_BUFFER_BIT);
 
-			/** Draw some dots */ 
+			int imageWidth = vfd.getWidth();
+			int imageHeight = vfd.getHeight();
+
+			// calculate zoom required to fill panel
+			float widthZoom = (float) viewWidth / (float) imageWidth;
+			float heightZoom = (float) viewHeight / (float) imageHeight;
+			float zoom = widthZoom < heightZoom ? widthZoom : heightZoom;
 
 			if (view < VIEWALL) {
+				gl.glPixelZoom(zoom, zoom);
+				gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
+				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(view));
+			}
+			else {
+				// for viewing all frames zoom needs to be halved
+				float zoomAll = zoom * 0.5f;
+				gl.glPixelZoom(zoomAll, zoomAll);
 
-				gl.glBegin( GL.GL_POINTS );	
-				for (int i = 0; i < vfd.getLength(); i++)
-				{
-
-					gl.glColor3f (vfd.getR(i, view) * (1.0f / 255.0f),
-							vfd.getG(i, view) * (1.0f / 255.0f),
-							vfd.getB(i, view) * (1.0f / 255.0f));
-
-					float a = -0.5f + (vfd.getX(i)/(pixels_x*1.0f));
-					float b = -0.5f + (vfd.getY(i)/(pixels_y*1.0f));
-
-					gl.glVertex2f (a,b);
-
-
-
-				}
-				gl.glEnd(); 
+				gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) (viewHeight * 0.5));
+				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(0));
 				
-			} else {
-				gl.glBegin( GL.GL_POINTS );	
-
-
-				for (int i = 0; i < vfd.getLength(); i++)
-				{
-					//image 1
-					gl.glColor3f (vfd.getR(i, VIEW1) * (1.0f / 255.0f),
-							vfd.getG(i, VIEW1) * (1.0f / 255.0f),
-							vfd.getB(i, VIEW1) * (1.0f / 255.0f));
-
-					gl.glVertex2f (-0.5f + (vfd.getX(i)/(2.0f*pixels_x)), vfd.getY(i)/(2.0f*pixels_y));
-
-
-					//image 2
-					gl.glColor3f (vfd.getR(i, VIEW2) * (1.0f / 255.0f),
-							vfd.getG(i, VIEW2) * (1.0f / 255.0f),
-							vfd.getB(i, VIEW2) * (1.0f / 255.0f));
-
-					gl.glVertex2f ((vfd.getX(i)/(2.0f*pixels_x)), vfd.getY(i)/(2.0f*pixels_y));
-
-
-					//image 3
-					gl.glColor3f (vfd.getR(i, VIEW3) * (1.0f / 255.0f),
-							vfd.getG(i, VIEW3) * (1.0f / 255.0f),
-							vfd.getB(i, VIEW3) * (1.0f / 255.0f));
-
-					gl.glVertex2f (-0.5f + (vfd.getX(i)/(2.0f*pixels_x)),-0.5f + vfd.getY(i)/(2.0f*pixels_y));
-
-
-					//image 4
-					gl.glColor3f (vfd.getR(i, VIEW4) * (1.0f / 255.0f),
-							vfd.getG(i, VIEW4) * (1.0f / 255.0f),
-							vfd.getB(i, VIEW4) * (1.0f / 255.0f));
-
-					gl.glVertex2f ((vfd.getX(i)/(2.0f*pixels_x)),-0.5f + vfd.getY(i)/(2.0f*pixels_y));
-
-
-
-				}
-				gl.glEnd();
+				gl.glRasterPos2i((int) (viewWidth * 0.5f), (int) (viewHeight * 0.5));
+				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(1));
+				
+				gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
+				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(2));
+				
+				gl.glRasterPos2i((int) (viewWidth * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
+				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(3));
 			}
 			
-		
+			//Calendar cal2 = Calendar.getInstance();
+			//long end_time = cal2.getTimeInMillis();
 			
+			//double total_time = (end_time - start_time) / 1000.0d;
+			//System.out.println("Render time: " + total_time);
+					
 			if (vfd.getVis_mouse_pressure() > -1) {
 				//canvas1.setToolTipText(vfd.getVis_mouse_pressure() + " : " + vfd.getVis_stess_pressure());
 				System.err.println(vfd.getVis_mouse_pressure() + " : " + vfd.getVis_stess_pressure());

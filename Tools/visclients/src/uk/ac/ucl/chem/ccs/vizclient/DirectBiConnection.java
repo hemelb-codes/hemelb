@@ -1,8 +1,13 @@
 package uk.ac.ucl.chem.ccs.vizclient;
 
-import java.io.*;
-import java.net.*;
-import java.util.Calendar;
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
 public class DirectBiConnection implements SteeringConnection {
 
 	private static final int BYTES_PER_PIXEL_DATA = 16;
@@ -41,19 +46,24 @@ public class DirectBiConnection implements SteeringConnection {
 	public VizFrameData getFrame () {
 		//check if connected?
 		if (connected) {
+			int width = 0;
+			int height = 0;
 			int frame_size=0;
 
 			//frame_no++;		
-			//Calendar cal = Calendar.getInstance();
 			short x_data=0, y_data=0;
 
+			//Calendar cal = Calendar.getInstance();
 			//long start_time = cal.getTimeInMillis();
 			//System.err.println("Frame no " + frame_no);
 
 			try {			
-				System.err.println("Waiting for frame " + ++frameno);
+				//System.err.println("Waiting for frame " + ++frameno);
+				width = d.readInt();
+				height = d.readInt();
 				frame_size = d.readInt();
-				System.err.println("Got frame size " + frame_size);
+				//System.err.println("Got frame dimensions (" + width + ", " + height + ")");
+				//System.err.println("Got frame size " + frame_size);
 				if (frame_size < 1) {
 					return null;
 				}
@@ -63,7 +73,7 @@ public class DirectBiConnection implements SteeringConnection {
 			}
 
 			int col_pixels = frame_size/BYTES_PER_PIXEL_DATA;
-			VizFrameData vizFrame = new VizFrameData(col_pixels);
+			VizFrameData vizFrame = new VizFrameData(width, height);
 
 			for (int i =0; i < col_pixels; i++) {
 
@@ -84,25 +94,27 @@ public class DirectBiConnection implements SteeringConnection {
 					return null;
 				}
 
-				vizFrame.setR(i,0,(colour_data[0] >> (3*bits_per_char)) & colour_mask);
-				vizFrame.setG(i,0,(colour_data[0] >> (2*bits_per_char)) & colour_mask);
-				vizFrame.setB(i,0,(colour_data[0] >> (1*bits_per_char)) & colour_mask);
-				vizFrame.setR(i,1,(colour_data[0] >> (0*bits_per_char)) & colour_mask);
-				vizFrame.setG(i,1,(colour_data[1] >> (3*bits_per_char)) & colour_mask);
-				vizFrame.setB(i,1,(colour_data[1] >> (2*bits_per_char)) & colour_mask);	    
-				vizFrame.setR(i,2,(colour_data[1] >> (1*bits_per_char)) & colour_mask);
-				vizFrame.setG(i,2,(colour_data[1] >> (0*bits_per_char)) & colour_mask);
-				vizFrame.setB(i,2,(colour_data[2] >> (3*bits_per_char)) & colour_mask);
-				vizFrame.setR(i,3,(colour_data[2] >> (2*bits_per_char)) & colour_mask);
-				vizFrame.setG(i,3,(colour_data[2] >> (1*bits_per_char)) & colour_mask);
-				vizFrame.setB(i,3,(colour_data[2] >> (0*bits_per_char)) & colour_mask);
-
-				vizFrame.setX(i, x_data);
-				vizFrame.setY(i, y_data);	    
+				int pixel = (y_data * width) + x_data;
+				vizFrame.setPixel(pixel, 0,
+						(colour_data[0] >> (3*bits_per_char)) & colour_mask,
+						(colour_data[0] >> (2*bits_per_char)) & colour_mask,
+						(colour_data[0] >> (1*bits_per_char)) & colour_mask);
+				vizFrame.setPixel(pixel, 1,
+						(colour_data[0] >> (0*bits_per_char)) & colour_mask,
+						(colour_data[1] >> (3*bits_per_char)) & colour_mask,
+						(colour_data[1] >> (2*bits_per_char)) & colour_mask);
+				vizFrame.setPixel(pixel, 2,
+						(colour_data[1] >> (1*bits_per_char)) & colour_mask,
+						(colour_data[1] >> (0*bits_per_char)) & colour_mask,
+						(colour_data[2] >> (3*bits_per_char)) & colour_mask);
+				vizFrame.setPixel(pixel, 3,
+						(colour_data[2] >> (2*bits_per_char)) & colour_mask,
+						(colour_data[2] >> (1*bits_per_char)) & colour_mask,
+						(colour_data[2] >> (0*bits_per_char)) & colour_mask);
 			}
 
-			//Calendar cal2 = Calendar.getInstance();
 			// PLZ CAN HAZ DATEZ PLS! k thnx bi.
+			//Calendar cal2 = Calendar.getInstance();
 			//long end_time = cal2.getTimeInMillis();
 
 
@@ -140,7 +152,7 @@ public class DirectBiConnection implements SteeringConnection {
 
 			//System.err.println(vizFrame.getVis_pressure_min() + " : " + vizFrame.getVis_stess_pressure());
 
-			System.err.println("Finished getting frame");
+			//System.err.println("Finished getting frame");
 			} catch (IOException e1) {
 				connected = false;
 				return null;
