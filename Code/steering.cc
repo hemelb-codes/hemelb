@@ -100,9 +100,9 @@ void *hemeLB_network (void *ptr) {
   static char     ip_addr[16];
   static char rank_0_host_details[1024];
 
-//  get_host_details(rank_0_host_details, ip_addr);
+  get_host_details(rank_0_host_details, ip_addr);
 
-//  request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", "2", rank_0_host_details);
+  request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", steering_session_id_char, rank_0_host_details);
 
   while (1)
     {
