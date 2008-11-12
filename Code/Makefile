@@ -14,7 +14,8 @@ OBJ=config.o \
 	usage.o \
 	steering-common.o \
 	steering.o \
-	steering-sim-params.o
+	steering-sim-params.o \
+	http_post.o 
 #	realitygrid.o
 
 $(EXE): $(OBJ)
