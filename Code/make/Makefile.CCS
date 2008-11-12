@@ -4,7 +4,7 @@ MPIRUN=/home/steven/lammpi/bin/mpirun
 
 EXE=hemelb
 
-DEFS=
+DEFS=-DCCS
 
 FLAGS=-O3 -xT -ipo -pthread -Wunused
 
