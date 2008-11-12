@@ -137,23 +137,35 @@ public class VizSteererWindow extends javax.swing.JFrame {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			{
 				jPanel1 = new JPanel();
-				GridBagLayout jPanel1Layout = new GridBagLayout();
-				jPanel1Layout.rowWeights = new double[] {0.1, 0.1};
-				jPanel1Layout.rowHeights = new int[] {7, 7};
-				jPanel1Layout.columnWeights = new double[] {0.1, 0.1};
-				jPanel1Layout.columnWidths = new int[] {7, 7};
-				jPanel1.setLayout(jPanel1Layout);
+				
+				TableLayout tabPanelLayout = new TableLayout(new double[][] {{TableLayout.FILL, TableLayout.FILL, TableLayout.FILL, TableLayout.FILL}, {TableLayout.FILL}});
+				tabPanelLayout.setHGap(5);
+				tabPanelLayout.setVGap(5);
+				
+				//GridBagLayout jPanel1Layout = new GridBagLayout();
+				//jPanel1Layout.rowWeights = new double[] {0.1, 0.1};
+				//jPanel1Layout.rowHeights = new int[] {7, 7};
+				//jPanel1Layout.columnWeights = new double[] {0.1, 0.1};
+				//jPanel1Layout.columnWidths = new int[] {7, 7};
+				
+				
+				jPanel1.setLayout(tabPanelLayout);
 				getContentPane().add(jPanel1, BorderLayout.CENTER);
-				jPanel1.setSize(700, 700);
+				//jPanel1.setSize(700, 700);
 				{
 					vg=new VizGui(port, hostname, window, this);
-					jPanel1.add(vg, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+//					jPanel1.add(vg, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+
+					jPanel1.add(vg, "0, 0, 2, 0");
+
 					vg.setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
-					vg.getInfoPanel().setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
+				//	vg.getInfoPanel().setBorder(BorderFactory.createEtchedBorder(BevelBorder.LOWERED));
 				}
 				{
 					jPanel2 = vg.getInfoPanel();
-					jPanel1.add(jPanel2, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+//					jPanel1.add(jPanel2, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+					jPanel1.add(jPanel2, "3, 0, 3, 0");
+
 				}
 
 			}
