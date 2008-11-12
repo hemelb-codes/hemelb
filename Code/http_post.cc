@@ -21,6 +21,11 @@ void get_host_details(char* rank_0_host_details, char* ip_addr) {
 	gethostname(hostname, 256);
         sprintf(rank_0_host_details, "%s.ngs.leeds.ac.uk:%i", hostname, MYPORT);
 	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
+#elif CCS
+	char hostname[256];
+	gethostname(hostname, 256);
+        sprintf(rank_0_host_details, "%s.chem.ucl.ac.uk:%i", hostname, MYPORT);
+	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #else
 
         struct utsname  name;
