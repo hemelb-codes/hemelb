@@ -9,6 +9,8 @@
 
 #include <sys/stat.h>
 
+#include <sched.h>
+
 #include "config.h"
 #include "network.h"
 #include "steering.h"
@@ -30,6 +32,8 @@ int main (int argc, char *argv[])
   // main function needed to perform the entire simulation. Some
   // simulation paramenters and performance statistics are outputted on
   // standard output
+
+  int steering_session_id;
 
   updated_mouse_coords = 0;
   
@@ -63,7 +67,10 @@ int main (int argc, char *argv[])
   SL sl;
   
 #ifndef NOMPI
-  net.err = MPI_Init (&argc, &argv);
+  //net.err = MPI_Init (&argc, &argv);
+  int thread_level_provided;
+  net.err = MPI_Init_thread (&argc, &argv, MPI_THREAD_FUNNELED, &thread_level_provided);
+  printf("thread_level_provided %i\n", thread_level_provided);
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
   net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
 #else
@@ -78,7 +85,8 @@ int main (int argc, char *argv[])
       is_bench = 1;
       minutes = atof( argv[2] );
     }
-  else if (argc == 7)
+  //else if (argc == 7)
+  else if (argc == 8)
     {
       is_bench = 0;
       lbm.cycles_max      = atoi( argv[2] );
@@ -86,6 +94,7 @@ int main (int argc, char *argv[])
       lbm.voxel_size      = atof( argv[4] );
       snapshots_per_cycle = atoi( argv[5] );
       images_per_cycle    = atoi( argv[6] );
+      steering_session_id = atoi( argv[7] );
       
       if (lbm.cycles_max > 1000)
 	{
@@ -176,7 +185,7 @@ int main (int argc, char *argv[])
       pthread_attr_init (&pthread_attrib);
       pthread_attr_setdetachstate (&pthread_attrib, PTHREAD_CREATE_JOINABLE);
       
-      pthread_create (&network_thread, &pthread_attrib, hemeLB_network, NULL);
+      pthread_create (&network_thread, &pthread_attrib, hemeLB_network, (void*)&steering_session_id);
     }
 
   lbmReadParameters (input_parameters_name, &lbm, &net);
@@ -264,7 +273,7 @@ int main (int argc, char *argv[])
 		  } else {
 		    // printf("aquired lock\n");
 		    render_for_network_stream = 1;
-		printf("Setting render_for_network_stream -> 1, time step %i\n", time_step);
+//*******		printf("Setting render_for_network_stream -> 1, time step %i\n", time_step);
 		    doRendering = 1;
 		  }
 		  // printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
@@ -349,7 +358,7 @@ int main (int argc, char *argv[])
 		int _vis_mouse_y = vis_mouse_y;
 //		    pthread_mutex_unlock(&steer_param_lock); 
 
-		printf("updated mouse coords %i MOUSE X %i MOUSE Y %i\n", int(updated_mouse_coords), vis_mouse_x, vis_mouse_y);
+//******		printf("updated mouse coords %i MOUSE X %i MOUSE Y %i\n", int(updated_mouse_coords), vis_mouse_x, vis_mouse_y);
 
                 if( _vis_mouse_x >= 0 && _vis_mouse_y >= 0 && updated_mouse_coords ) {
 		    for (int i = 0; i < col_pixels; i++)
@@ -390,6 +399,7 @@ int main (int argc, char *argv[])
 		{
                   if( render_for_network_stream == 1 ) {
 		    // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
+		    sched_yield();
 		    pthread_mutex_unlock (&LOCK);
 		    pthread_cond_signal (&network_send_frame);
 		    // printf("...signal sent\n"); fflush(0x0);

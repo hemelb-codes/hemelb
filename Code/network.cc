@@ -35,18 +35,13 @@ int send_all(int sockid, char *buf, int *length ) {
 	int bytes_left_to_send = *length;
 	int n;
 
-	printf("\n"); fflush(0x0);
-	
 	while( sent_bytes < *length ) {
-		printf("*"); fflush(0x0);
 		n = send(sockid, buf+sent_bytes, bytes_left_to_send, 0);
 		if (n == -1) break;
 		sent_bytes += n;
 		bytes_left_to_send -= n;
 	}
-	printf(" done \n"); fflush(0x0);
 
-	
 	*length = sent_bytes;
 	
 	return n== -1 ? -1 : 0;

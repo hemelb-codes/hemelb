@@ -11,8 +11,15 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include <netdb.h>
+
+#include <sys/time.h>
+#include <sched.h>
+
 #include <sys/stat.h>
 #include <string.h>
+
+//#include <sys/utsname.h>
 
 #include "config.h"
 #include "network.h"
@@ -23,6 +30,8 @@
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+
+#include "http_post.h"
 
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
@@ -47,6 +56,7 @@ float steer_par[ STEERABLE_PARAMETERS + 1 ] = {0.0, 0.0, 0.0,    // scene center
 					       100.0,	         // vis_streakline_length					   
 					       0.0};             // doRendering
 
+
 double frameTiming() {
   struct timeval time_data;
   gettimeofday (&time_data, NULL);
@@ -54,6 +64,11 @@ double frameTiming() {
 }
 
 void *hemeLB_network (void *ptr) {
+
+  int steering_session_id = *(int*)ptr;
+
+  char steering_session_id_char[255];
+  snprintf(steering_session_id_char, 255, "%i", steering_session_id);
 
   setRenderState(0);
 
@@ -66,7 +81,7 @@ void *hemeLB_network (void *ptr) {
   
   // fprintf (timings_ptr, "MPI 0 Hostname -> %s\n\n", host_name);
 
-  printf("kicking off network thread.....\n"); fflush(0x0);
+  //printf("kicking off network thread.....\n"); fflush(0x0);
   
   int sock_fd;
   int new_fd;
@@ -81,7 +96,14 @@ void *hemeLB_network (void *ptr) {
   pthread_attr_setdetachstate (&steering_thread_attrib, PTHREAD_CREATE_JOINABLE);
 
   signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
-  
+
+  static char     ip_addr[16];
+  static char rank_0_host_details[1024];
+
+//  get_host_details(rank_0_host_details, ip_addr);
+
+//  request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", "2", rank_0_host_details);
+
   while (1)
     {
       setRenderState(0);
@@ -118,8 +140,14 @@ void *hemeLB_network (void *ptr) {
 	  perror ("listen");
 	  exit (1);
 	}
+
       sin_size = sizeof (their_addr);
-      
+
+//	socklen_t _length = sizeof(my_address);
+
+//	getsockname (sock_fd, (struct sockaddr *) &my_address,&_length);
+//	printf("Server Port is: %d\n", ntohs(my_address.sin_port));
+
       if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1)
 	{
 	  perror("accept");
@@ -129,7 +157,7 @@ void *hemeLB_network (void *ptr) {
       //fprintf (timings_ptr, "server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
       printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
       
-      pthread_create (&steering_thread, &steering_thread_attrib, hemeLB_steer, (void*)new_fd);	  
+      pthread_create (&steering_thread, &steering_thread_attrib, hemeLB_steer, (void*)&new_fd);	  
       
       close(sock_fd);
       
@@ -146,14 +174,14 @@ void *hemeLB_network (void *ptr) {
       while (!is_broken_pipe)
 	{
 	  
-	  printf("THREAD: waiting for signal that frame is ready to send..\n"); fflush(0x0);
+//	  printf("THREAD: waiting for signal that frame is ready to send..\n"); fflush(0x0);
 	  
 	  pthread_mutex_lock ( &LOCK );
 	  pthread_cond_wait (&network_send_frame, &LOCK);
 	  
       setRenderState(0);
 	  
-	  printf("THREAD: received signal that frame is ready to send..\n"); fflush(0x0);
+//  printf("THREAD: received signal that frame is ready to send..\n"); fflush(0x0);
 
 	double frameTimeStart = frameTiming();		
 	  
@@ -161,6 +189,16 @@ void *hemeLB_network (void *ptr) {
 	  
 	  XDR xdr_network_stream_frame_details;
 	  XDR xdr_network_stream_pixel_data;
+	
+	XDR xdr_network_pixel;
+	int pixeldatabytes = 8;
+	char xdr_pixel[pixeldatabytes];
+	xdrmem_create(&xdr_network_pixel, xdr_pixel, pixeldatabytes, XDR_ENCODE);
+	xdr_int(&xdr_network_pixel, &screen.pixels_x);
+	xdr_int(&xdr_network_pixel, &screen.pixels_y);
+	  send_all(new_fd, xdr_pixel, &pixeldatabytes);
+	//printf("packed and send %i %i bytes %i\n", screen.pixels_x, screen.pixels_y, pixeldatabytes);
+	xdr_destroy(&xdr_network_pixel);
 	  
 	  xdrmem_create (&xdr_network_stream_pixel_data, xdrSendBuffer_pixel_data,
 			 pixel_data_bytes, XDR_ENCODE);
@@ -182,7 +220,7 @@ void *hemeLB_network (void *ptr) {
 	  int ret = send_all(new_fd, xdrSendBuffer_frame_details, &detailsBytes);
 	  
           if (ret < 0) {
-	    printf("RG thread: broken network pipe...\n");
+	    //printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
 	    pthread_mutex_unlock ( &LOCK );
             setRenderState(0);
@@ -194,7 +232,7 @@ void *hemeLB_network (void *ptr) {
 	  ret = send_all(new_fd, xdrSendBuffer_pixel_data, &frameBytes);
 	  
           if (ret < 0) {
-	    printf("RG thread: broken network pipe...\n");
+	    //printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
 	    pthread_mutex_unlock ( &LOCK );
             setRenderState(0);
@@ -207,11 +245,11 @@ void *hemeLB_network (void *ptr) {
           Sim->collectGlobalVals();
           int sizeToSend = Sim->sim_params_bytes;
           send_all(new_fd, Sim->pack(), &sizeToSend);
-          printf ("Sim bytes sent %i\n", sizeToSend);
+          //printf ("Sim bytes sent %i\n", sizeToSend);
           delete Sim;
 
 	  //fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
-	  printf ("RG thread: bytes sent %i\n", bytesSent);
+	  //printf ("RG thread: bytes sent %i\n", bytesSent);
 	  
        setRenderState(1);
 	  
@@ -220,13 +258,13 @@ void *hemeLB_network (void *ptr) {
 
         double frameTimeSend = frameTiming() - frameTimeStart;
 
-        printf("Time to send frame = %0.6f s\n", frameTimeSend);
+        //printf("Time to send frame = %0.6f s\n", frameTimeSend);
 
         double timeDiff = (1.0/25.0) - frameTimeSend;
 
         if( timeDiff > 0.0 ) {
 
-                printf("Sleeping for %0.6f s\n", timeDiff);
+   //             printf("Sleeping for %0.6f s\n", timeDiff);
 
                 usleep(timeDiff*1.0e6);
 
@@ -238,57 +276,86 @@ void *hemeLB_network (void *ptr) {
 	  
 	} // while (is_broken_pipe == 0)
       
-      close(new_fd);
+	close(new_fd);
+
+//	pthread_join(steering_thread, NULL);
       
     } // while(1)
 }
 
-void* hemeLB_steer (void* ptr)
-{
-  long int read_fd = (long int)ptr;
+void* hemeLB_steer (void* ptr) {
+
+	int read_fd = *(int*)ptr;
   
-  printf("Kicking off steering thread with FD %i\n", (int)read_fd);
+//	printf("Kicking off steering thread with FD %i\n", read_fd);
 
-  int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
-  int bytes = sizeof(char) * num_chars;
+	int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
+	int bytes = sizeof(char) * num_chars;
 
-  char* xdr_steering_data = (char*)malloc(bytes);
+	char* xdr_steering_data = (char*)malloc(bytes);
 
-  while(1) {
+	while(1) {
+   
+		XDR xdr_steering_stream;
     
-    XDR xdr_steering_stream;
+		xdrmem_create(&xdr_steering_stream, xdr_steering_data, bytes, XDR_DECODE);
     
-    xdrmem_create(&xdr_steering_stream, xdr_steering_data, bytes, XDR_DECODE);
+		while(1) {
+
+			struct timeval tv;
+			fd_set readfds;
+			tv.tv_sec = 0;
+			tv.tv_usec = 0;
+
+			FD_ZERO(&readfds);
+			FD_SET(read_fd, &readfds);
+
+			select(read_fd+1, &readfds, NULL, NULL, &tv);
+//			printf("STEERING: Polling..\n"); fflush(0x0);  
+
+			int ret;	
+
+			if(FD_ISSET(read_fd, &readfds)) {
+//				printf("STEERING: Got data\n"); fflush(0x0);
+				sched_yield();
+				ret = recv_all(read_fd, xdr_steering_data, &num_chars);
+				break;
+			}
     
-    int ret = recv_all(read_fd, xdr_steering_data, &num_chars);
+			if (ret < 0) {
+				printf("Steering thread: broken network pipe...\n");
+				free(xdr_steering_data);
+				xdr_destroy(&xdr_steering_stream);
+				return NULL;
+			}
+
+			sched_yield();
+			usleep(5000);
+
+		}
     
-    if (ret < 0) {
-      // printf("Steering thread: broken network pipe...\n");
-      break;
-    }
+//		pthread_mutex_lock(&steer_param_lock);
+
+		for (int i = 0; i < STEERABLE_PARAMETERS; i++)
+			xdr_float(&xdr_steering_stream, &steer_par[i]);
+
+/*		printf("Got steering params ");
+		for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
+			printf("%0.4f ", steer_par[i]);
+		printf("\n"); */
+
+		if( steer_par[14] > -1.0 && steer_par[15] > -1.0 )
+			updated_mouse_coords = 1;  
+
+//		pthread_mutex_unlock(&steer_param_lock);
     
- //   pthread_mutex_lock(&steer_param_lock);
+		xdr_destroy(&xdr_steering_stream);
 
-    for (int i = 0; i < STEERABLE_PARAMETERS; i++)
-      xdr_float(&xdr_steering_stream, &steer_par[i]);
+	}
 
-    printf("Got steering params ");
-    for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
-      printf("%0.4f ", steer_par[i]);
-    printf("\n"); 
+	free(xdr_steering_data);
 
-    if( steer_par[14] > -1.0 && steer_par[15] > -1.0 )
-      updated_mouse_coords = 1;  
-
- //   pthread_mutex_unlock(&steer_param_lock);
-    
-    xdr_destroy(&xdr_steering_stream);
-
-  }
-
-  free(xdr_steering_data);
-
-  return 0;
+	return NULL;
 
 }
 
