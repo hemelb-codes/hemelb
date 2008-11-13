@@ -31,6 +31,10 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
+#ifdef _AIX
+#include <fcntl.h>
+#endif
+
 #include "http_post.h"
 
 #define MYPORT 65250
@@ -318,7 +322,20 @@ void* hemeLB_steer (void* ptr) {
 			if(FD_ISSET(read_fd, &readfds)) {
 //				printf("STEERING: Got data\n"); fflush(0x0);
 				sched_yield();
+
+#ifdef _AIX
+				/* So it looks like AIX blocks by default... So make the socket
+				* non-blocking as we can't control this with flags to recv() in AIX... */
+				fcntl(read_fd, F_SETFL, fcntl(read_fd, F_GETFL)|O_NONBLOCK);
+#endif
+
 				ret = recv_all(read_fd, xdr_steering_data, &num_chars);
+
+#ifdef _AIX
+				/* ...And turn off non-blocking again... */
+				fcntl(read_fd, F_SETFL, fcntl(read_fd, F_GETFL)&~O_NONBLOCK);
+#endif
+
 				break;
 			}
     
