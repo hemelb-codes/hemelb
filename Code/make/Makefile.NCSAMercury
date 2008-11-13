@@ -1,7 +1,7 @@
-CC=mpiCC
+CC=mpicxx
 MPIRUN=
 EXE=hemelb
-DEFS=
-FLAGS=-O3 -ipo -pthread
+DEFS=-DMPICH_IGNORE_CXX_SEEK
+FLAGS=-O2 -ipo -pthread
 INCLUDES=
-LIBS=
+LIBS=-static
