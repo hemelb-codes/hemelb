@@ -7,6 +7,9 @@
 #include <netdb.h>
 #include <cstring>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include <sys/utsname.h>
 
 #define MYPORT 65250
