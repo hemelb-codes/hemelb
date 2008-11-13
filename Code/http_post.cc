@@ -7,8 +7,16 @@
 #include <netdb.h>
 #include <cstring>
 
+
+#include <unistd.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <netdb.h>
 
 #include <sys/utsname.h>
 
@@ -28,6 +36,11 @@ void get_host_details(char* rank_0_host_details, char* ip_addr) {
 	char hostname[256];
 	gethostname(hostname, 256);
         sprintf(rank_0_host_details, "%s.chem.ucl.ac.uk:%i", hostname, MYPORT);
+	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
+#elif LONI
+	char hostname[256];
+	gethostname(hostname, 256);
+        sprintf(rank_0_host_details, "%s:%i", hostname, MYPORT);
 	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #else
 
