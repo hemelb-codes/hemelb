@@ -1,7 +1,7 @@
 CC=mpicxx
 MPIRUN=
 EXE=hemelb
-DEFS=
+DEFS=-DNGS2Manchester
 FLAGS=-O2 
 INCLUDES=
 LIBS=
