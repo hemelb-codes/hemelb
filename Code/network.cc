@@ -11,10 +11,6 @@
 
 #include <stdio.h>
 
-#ifdef _AIX
-#include <fcntl.h>
-#endif
-
 int recv_all (int sockid, char *buf, int *length) {
 
 	int received_bytes = 0;
@@ -22,11 +18,7 @@ int recv_all (int sockid, char *buf, int *length) {
 	int n;
 
 	while (received_bytes < *length) {
-#ifdef _AIX
-		n = recv(sockid, buf+received_bytes, bytes_left_to_receive, 0);
-#else
-		n = recv(sockid, buf+received_bytes, bytes_left_to_receive, MSG_DONTWAIT);
-#endif
+		n = recv(sockid, buf+received_bytes, bytes_left_to_receive, NULL);
 		if (n == -1) break;
 		received_bytes += n;
 		bytes_left_to_receive -= n;
