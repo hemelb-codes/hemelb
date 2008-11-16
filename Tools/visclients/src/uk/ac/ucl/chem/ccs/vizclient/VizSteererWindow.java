@@ -96,7 +96,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	}
 
 	public VizSteererWindow(String resourceID, int window, Component parent) {
-		super();
+		super("HemeLB Steering Client");
 		this.window = window;
 		initGUI();
 		//this.parent = parent;
@@ -122,7 +122,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	}
 	
 	public VizSteererWindow(String hostname, int port, int window, Component parent) {
-		super();
+		super("HemeLB Steering Client");
 		this.window = window;
 		this.hostname = hostname;
 		this.port = port;

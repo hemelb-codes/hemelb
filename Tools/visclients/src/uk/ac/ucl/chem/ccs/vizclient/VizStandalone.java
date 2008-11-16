@@ -4,7 +4,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 
-
+import javax.swing.SwingUtilities;
 
 /**
 * This code was edited or generated using CloudGarden's Jigloo
@@ -20,6 +20,37 @@ import java.awt.event.WindowEvent;
 */
 public class VizStandalone extends javax.swing.JFrame {
 
+	public VizStandalone (String resourceID, int w, String h, int p) {
+		
+		final String fresourceID = resourceID;
+		final int fw = w;
+		final String fh = h;
+		final int fp = p;
+	
+		SwingUtilities.invokeLater(new Runnable() {
+		    public void run() {
+		VizSteererWindow vs;
+		if (fresourceID != null) {
+			vs = new VizSteererWindow(fresourceID ,fw, null);
+
+		} else {
+			vs = new VizSteererWindow(fh,fp,fw, null);
+		}
+		vs.setLocationRelativeTo(null);
+		vs.setVisible(true);
+		vs.addWindowListener( new WindowAdapter() {
+		    public void windowClosed(WindowEvent e){
+					System.exit(0);
+			    }
+				public void windowClosing(WindowEvent e) {
+				    windowClosed(e);
+				}
+			    }
+		);
+		    }
+		});
+	}
+ 	
 	/**
 	* Auto-generated main method to display this JFrame
 	*/
@@ -40,24 +71,19 @@ public class VizStandalone extends javax.swing.JFrame {
 			}
 		}
 		
-		VizSteererWindow vs;
-		if (resourceID != null) {
-			vs = new VizSteererWindow(resourceID,w, null);
-
-		} else {
-			vs = new VizSteererWindow(h,p,w, null);
-		}
-		vs.setLocationRelativeTo(null);
-		vs.setVisible(true);
-		vs.addWindowListener( new WindowAdapter() {
-		    public void windowClosed(WindowEvent e){
-					System.exit(0);
-			    }
-				public void windowClosing(WindowEvent e) {
-				    windowClosed(e);
-				}
-			    }
-		);
+        // Use Apple Aqua L&F screen menu bar if available; set property before any frames created
+	       try {
+	           java.lang.System.setProperty("apple.laf.useScreenMenuBar", "true");
+	       } catch (Exception e) {
+	           // try the older menu bar property
+	    	   try {
+	           java.lang.System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+	    	   } catch (Exception e2) {
+	    		   //cant set
+	    	   }
+	       }
+		
+		VizStandalone vs = new VizStandalone (resourceID, w, h, p);
 
 	}
 	
