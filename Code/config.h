@@ -27,6 +27,7 @@
 
 
 #include <pthread.h>
+#include <semaphore.h>
 
 
 #define EPSILON    1.e-30
@@ -126,6 +127,14 @@ extern MPI_Datatype MPI_col_pixel_type;
 extern pthread_mutex_t network_buffer_copy_lock;
 extern pthread_mutex_t LOCK;
 extern pthread_cond_t network_send_frame;
+
+extern sem_t nrl;
+extern sem_t connected_sem;
+
+extern bool is_frame_ready;
+extern bool connected;
+extern bool sending_frame;
+
 
 extern int send_array_length;
 
@@ -520,7 +529,7 @@ void lbmStress (double f[], double *stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 int lbmCollisionType (unsigned int site_data);
 void lbmInit (char *system_file_name, LBM *lbm, Net *net);
-void lbmSetInitialConditions (Net *net);
+void lbmSetInitialConditions (LBM *lbm, Net *net);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
