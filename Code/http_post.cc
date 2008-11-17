@@ -27,25 +27,27 @@ using namespace std;
 
 void get_host_details(char* rank_0_host_details, char* ip_addr) {
 
-#ifdef NGS2Leeds
 	char hostname[256];
+
+#ifdef NGS2Leeds
 	gethostname(hostname, 256);
         sprintf(rank_0_host_details, "%s.ngs.leeds.ac.uk:%i", hostname, MYPORT);
 	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif NGS2Manchester
-	char hostname[256];
 	gethostname(hostname, 256);
         sprintf(rank_0_host_details, "%s.vidar.ngs.manchester.ac.uk:%i", hostname, MYPORT);
 	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif CCS
-	char hostname[256];
 	gethostname(hostname, 256);
         sprintf(rank_0_host_details, "%s.chem.ucl.ac.uk:%i", hostname, MYPORT);
 	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif LONI
-	char hostname[256];
 	gethostname(hostname, 256);
         sprintf(rank_0_host_details, "%s:%i", hostname, MYPORT);
+	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
+#elif NCSA
+	gethostname(hostname, 256);
+        sprintf(rank_0_host_details, "%s.ncsa.teragrid.org:%i", hostname, MYPORT);
 	fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #else
 
