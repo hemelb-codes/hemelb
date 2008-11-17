@@ -20,6 +20,8 @@
 #include "visthread.h"
 #include "fileutils.h"
 
+#include <semaphore.h>
+
 int cycle_id;
 int time_step;
 double intra_cycle_time;
@@ -32,6 +34,13 @@ int main (int argc, char *argv[])
   // main function needed to perform the entire simulation. Some
   // simulation paramenters and performance statistics are outputted on
   // standard output
+
+	sem_init(&nrl, 0, 1);
+	sem_init(&connected_sem, 0, 1);
+
+	is_frame_ready = 0;
+	connected = 0;
+	sending_frame = 0;
 
   int steering_session_id;
 
@@ -202,7 +211,7 @@ int main (int argc, char *argv[])
   
   netInit (&lbm, &net);
   
-  lbmSetInitialConditions (&net);
+  lbmSetInitialConditions (&lbm, &net);
   
   visInit (&net, &vis, &sl);
   
@@ -264,20 +273,45 @@ int main (int argc, char *argv[])
 
 	      if (net.id == 0)
 		{
-		  int lock_return = pthread_mutex_trylock ( &LOCK );
+		//  int lock_return = pthread_mutex_trylock ( &LOCK );
+
+			sem_wait(&connected_sem);
+			bool local_connected = connected;
+			sem_post(&connected_sem);
+
+			int lock_return;
+
+			if(local_connected) {
+				lock_return = sem_trywait ( &nrl );
+		  		 //printf("attempting to aquire lock -> %i", lock_return); 
+				if(lock_return == 0) {
+					// We have the lock
+					render_for_network_stream = 1;
+					doRendering = 1;
+					//printf("MAIN setting doRender = 1\n");
+				} else {
+					// We don't have the lock
+					doRendering = 0;
+					render_for_network_stream = 0;
+					//printf("MAIN setting doRender = 0\n");
+				}
+			} else {
+				doRendering = 0;
+				render_for_network_stream = 0;
+			} // if(local_connected) 
+		} // if (net.id == 0)
 		  
-		  // printf("attempting to aquire mutex lock -> %i -> ", lock_return); 
-		  
-		  if (lock_return == EBUSY) {
-		    // printf("lock busy\n");
+/*		  if (lock_return == EBUSY) {
+		     printf("lock busy\n");
 		  } else {
-		    // printf("aquired lock\n");
+		     printf("aquired lock\n");
 		    render_for_network_stream = 1;
-//*******		printf("Setting render_for_network_stream -> 1, time step %i\n", time_step);
+		printf("Setting render_for_network_stream -> 1, time step %i\n", time_step);
 		    doRendering = 1;
-		  }
-		  // printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
-		}
+		  } 
+		   printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
+		} */
+
 
 	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
 	      
@@ -289,6 +323,7 @@ int main (int argc, char *argv[])
 
 	      if (doRendering)
 		{
+		  //if(net.id==0) sem_wait(&nrl); // Grab the lock
 		  visRenderA (ColourPalette, &net, &sl);
 		}
 
@@ -374,9 +409,17 @@ int main (int argc, char *argv[])
 		updated_mouse_coords = 0;
 
                   } // if( vis_mouse_x >= 0)
+
 //		    pthread_mutex_unlock(&steer_param_lock);
+
 		  } // if( net.id == 0)  
+
+		if(net.id == 0) {
+			is_frame_ready = 1;
+			sem_post(&nrl); // let go of the lock
 		} 
+
+		} // doRendering
 
 	      if (time_step%snapshots_period == 0)
 		{
@@ -400,11 +443,12 @@ int main (int argc, char *argv[])
                   if( render_for_network_stream == 1 ) {
 		    // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
 		    sched_yield();
-		    pthread_mutex_unlock (&LOCK);
-		    pthread_cond_signal (&network_send_frame);
+		    //pthread_mutex_unlock (&LOCK);
+//			sem_post( &nrl);
+		    //pthread_cond_signal (&network_send_frame);
 		    // printf("...signal sent\n"); fflush(0x0);
                   }
-                  if( doRendering == 1 ) doRendering = 0;
+        //          if( doRendering == 1 ) doRendering = 0;
 		} 
 
 	      if (stability == STABLE_AND_CONVERGED)
@@ -420,7 +464,7 @@ int main (int argc, char *argv[])
 		}
 	      if (net.id == 0)
 		{
-		  if (time_step%1 == 0)
+		  if (time_step%100 == 0)
 		    printf ("time step: %i\n", time_step);
 		}
 

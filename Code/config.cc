@@ -52,6 +52,13 @@ MPI_Datatype MPI_col_pixel_type;
 pthread_mutex_t network_buffer_copy_lock;
 pthread_mutex_t LOCK;
 pthread_cond_t network_send_frame;
+sem_t nrl;
+sem_t connected_sem;
+
+bool is_frame_ready;
+bool connected;
+bool sending_frame;
+
 
 int send_array_length;
 

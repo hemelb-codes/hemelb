@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 
+#include "network.h"
+
 int recv_all (int sockid, char *buf, int *length) {
 
 	int received_bytes = 0;
@@ -26,6 +28,38 @@ int recv_all (int sockid, char *buf, int *length) {
 
 	*length = received_bytes;
 	return n == -1 ? -1 : 0;
+}
+
+
+int send_all2(int sockid, char *buf, int *length) {
+
+	int amount_to_send = *length;
+	int bytes_sent = 0;
+
+	int chunk_size = 1024;
+
+	while(1) {
+
+		int bytes_to_send_now;
+
+		int amount_left = amount_to_send - bytes_sent;
+
+		if( amount_left < chunk_size) {
+			bytes_to_send_now =  amount_left;
+			send_all(sockid, buf + bytes_sent, &bytes_to_send_now);
+			printf("sent %i\n", bytes_to_send_now);
+			break;
+		} else {
+			bytes_to_send_now = chunk_size;
+			send_all(sockid, buf + bytes_sent, &bytes_to_send_now);
+			printf("sent %i\n", bytes_to_send_now);
+			bytes_sent += bytes_to_send_now;
+		}
+
+	}
+
+	return 0;
+
 }
 
 

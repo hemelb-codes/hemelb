@@ -108,11 +108,12 @@ void *hemeLB_network (void *ptr) {
 
   request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", steering_session_id_char, rank_0_host_details);
 
-  while (1)
-    {
+//  while (1)
+ //   {
       setRenderState(0);
       
-      pthread_mutex_lock (&LOCK);
+  //    pthread_mutex_lock (&LOCK);
+//	sem_wait( &nrl );
       
       struct sockaddr_in my_address;
       struct sockaddr_in their_addr; // client address
@@ -155,11 +156,11 @@ void *hemeLB_network (void *ptr) {
       if ((new_fd = accept (sock_fd, (struct sockaddr *)&their_addr, &sin_size)) == -1)
 	{
 	  perror("accept");
-	  continue;
+	//  continue;
 	}
       
       //fprintf (timings_ptr, "server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
-      printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
+//      printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
       
       pthread_create (&steering_thread, &steering_thread_attrib, hemeLB_steer, (void*)&new_fd);	  
       
@@ -167,23 +168,42 @@ void *hemeLB_network (void *ptr) {
       
       is_broken_pipe = 0;
       
-      pthread_mutex_unlock ( &LOCK );
+    //  pthread_mutex_unlock ( &LOCK );
+	sem_wait(&connected_sem); // grab the semaphore
+	connected = 1;
+	sem_post(&connected_sem);
       
-      setRenderState(1);
+   //   setRenderState(1);
       
       // At this point we're ready to send a frame...
       
       // setRendering=1;
+
+//	sem_wait( &nrl );
       
       while (!is_broken_pipe)
 	{
 	  
 //	  printf("THREAD: waiting for signal that frame is ready to send..\n"); fflush(0x0);
 	  
-	  pthread_mutex_lock ( &LOCK );
-	  pthread_cond_wait (&network_send_frame, &LOCK);
+//	  pthread_mutex_lock ( &LOCK );
+
+	bool is_frame_ready_local = 0;
+	while(!is_frame_ready_local) {
+		usleep(5000);
+		sem_wait( &nrl );
+		is_frame_ready_local = is_frame_ready;
+		sem_post( &nrl );
+//		printf("THREAD is_frame_ready_local %i\n", is_frame_ready_local);
+	}
+
+	sem_wait( &nrl );
+	sending_frame = 1;
+//	printf("THREAD sending frame = 1\n");
+
+	  //pthread_cond_wait (&network_send_frame, &LOCK);
 	  
-      setRenderState(0);
+ //     setRenderState(0);
 	  
 //  printf("THREAD: received signal that frame is ready to send..\n"); fflush(0x0);
 
@@ -224,9 +244,10 @@ void *hemeLB_network (void *ptr) {
 	  int ret = send_all(new_fd, xdrSendBuffer_frame_details, &detailsBytes);
 	  
           if (ret < 0) {
-	    //printf("RG thread: broken network pipe...\n");
+	    printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
-	    pthread_mutex_unlock ( &LOCK );
+//	    pthread_mutex_unlock ( &LOCK );
+	sem_post(&nrl);
             setRenderState(0);
             break;
           } else {
@@ -236,9 +257,10 @@ void *hemeLB_network (void *ptr) {
 	  ret = send_all(new_fd, xdrSendBuffer_pixel_data, &frameBytes);
 	  
           if (ret < 0) {
-	    //printf("RG thread: broken network pipe...\n");
+	    printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
-	    pthread_mutex_unlock ( &LOCK );
+	//    pthread_mutex_unlock ( &LOCK );
+	sem_post(&nrl);
             setRenderState(0);
             break;
           } else {
@@ -249,11 +271,11 @@ void *hemeLB_network (void *ptr) {
           Sim->collectGlobalVals();
           int sizeToSend = Sim->sim_params_bytes;
           send_all(new_fd, Sim->pack(), &sizeToSend);
-          //printf ("Sim bytes sent %i\n", sizeToSend);
+       //   printf ("Sim bytes sent %i\n", sizeToSend);
           delete Sim;
 
 	  //fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
-	  //printf ("RG thread: bytes sent %i\n", bytesSent);
+//	  printf ("RG thread: bytes sent %i\n", bytesSent);
 	  
        setRenderState(1);
 	  
@@ -262,7 +284,7 @@ void *hemeLB_network (void *ptr) {
 
         double frameTimeSend = frameTiming() - frameTimeStart;
 
-        //printf("Time to send frame = %0.6f s\n", frameTimeSend);
+    //    printf("Time to send frame = %0.6f s\n", frameTimeSend);
 
         double timeDiff = (1.0/25.0) - frameTimeSend;
 
@@ -274,7 +296,12 @@ void *hemeLB_network (void *ptr) {
 
         }
 	  
-	  pthread_mutex_unlock ( &LOCK );
+	  //pthread_mutex_unlock ( &LOCK );
+//	sem_post(&nrl);
+
+	sending_frame = 0;
+	is_frame_ready = 0;
+	sem_post( &nrl );
 	  
 	  frame_number++;
 	  
@@ -282,9 +309,13 @@ void *hemeLB_network (void *ptr) {
       
 	close(new_fd);
 
+	sem_wait(&connected_sem); // grab the semaphore
+	connected = 0;
+	sem_post(&connected_sem);
+
 //	pthread_join(steering_thread, NULL);
       
-    } // while(1)
+  //  } // while(1)
 }
 
 void* hemeLB_steer (void* ptr) {

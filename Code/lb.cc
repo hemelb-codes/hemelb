@@ -1060,8 +1060,7 @@ void lbmInit (char *system_file_name, LBM *lbm, Net *net)
   lbm_terminate_simulation = 0;
 }
 
-
-void lbmSetInitialConditions (Net *net)
+void lbmSetInitialConditions (LBM *lbm, Net *net)
 {
   double *f_old_p, *f_new_p, f_eq[15];
   double density;
@@ -1070,10 +1069,16 @@ void lbmSetInitialConditions (Net *net)
   int i, l;
   
   
+  density = 0.;
+  
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      density += inlet_density_avg[i] - inlet_density_amp[i];
+    }
+  density /= lbm->inlets;
+  
   for (i = 0; i < net->my_sites; i++)
     {
-      density = 1.;
-      
       f_eq[ 0 ] = (2.0/9.0) * density;
       
       temp = (1.0/9.0) * density;
@@ -1109,7 +1114,6 @@ void lbmSetInitialConditions (Net *net)
 	}
     }
 }
-
 
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 {
@@ -1612,7 +1616,7 @@ void lbmRestart (LBM *lbm, Net *net)
   
   lbmCalculateTau (lbm);
   
-  lbmSetInitialConditions (net);
+  lbmSetInitialConditions (lbm, net);
 }
 
 
