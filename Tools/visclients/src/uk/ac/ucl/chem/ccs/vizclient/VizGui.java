@@ -54,6 +54,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private SteeringConnection nr;
 	private InfoPanel ifp = null;	
 	private SteeringData sd;
+	private VizFrameData currentFrame = null;
 
 	private JLabel toolTip;
 	
@@ -272,80 +273,83 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	/** This method handles the painting of the GLDrawable */
 
 	public void display(GLAutoDrawable drawable) {
-		VizFrameData vfd = (VizFrameData)queue.poll();
+		GL gl = drawable.getGL();
+		gl.glClear(GL.GL_COLOR_BUFFER_BIT);
+
+		VizFrameData vfd = (VizFrameData) queue.poll();
 		
-		if (vfd != null) {
-			//Calendar cal = Calendar.getInstance();
-			//long start_time = cal.getTimeInMillis();
-
-			GL gl = drawable.getGL();
-			gl.glClear(GL.GL_COLOR_BUFFER_BIT);
-
-			int imageWidth = vfd.getWidth();
-			int imageHeight = vfd.getHeight();
-
-			// calculate zoom required to fill panel
-			float widthZoom = (float) viewWidth / (float) imageWidth;
-			float heightZoom = (float) viewHeight / (float) imageHeight;
-			float zoom = widthZoom < heightZoom ? widthZoom : heightZoom;
-
-			if (view < VIEWALL) {
-				gl.glPixelZoom(zoom, zoom);
-				gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
-				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(view));
+		if(vfd == null) {
+			if(currentFrame == null) {
+				// just in case - might fall through here on the first few loops.
+				// won't happen if we've received at least one frame though.
+				return;
 			}
-			else {
-				// for viewing all frames zoom needs to be halved
-				float zoomAll = zoom * 0.5f;
-				gl.glPixelZoom(zoomAll, zoomAll);
-
-				gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) (viewHeight * 0.5));
-				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(0));
-				
-				gl.glRasterPos2i((int) (viewWidth * 0.5f), (int) (viewHeight * 0.5));
-				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(1));
-				
-				gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
-				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(2));
-				
-				gl.glRasterPos2i((int) (viewWidth * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
-				gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(3));
-			}
-			
-			//Calendar cal2 = Calendar.getInstance();
-			//long end_time = cal2.getTimeInMillis();
-			
-			//double total_time = (end_time - start_time) / 1000.0d;
-			//System.out.println("Render time: " + total_time);
-					
-			if (vfd.getVis_mouse_pressure() > -1) {
-				//canvas1.setToolTipText(vfd.getVis_mouse_pressure() + " : " + vfd.getVis_stess_pressure());
-				System.err.println(vfd.getVis_mouse_pressure() + " : " + vfd.getVis_stess_pressure());
-				DecimalFormat df= new DecimalFormat("#####0.###"); 
-
-				toolTip.setText(df.format(vfd.getVis_mouse_pressure()) + " : " + df.format(vfd.getVis_stess_pressure()));
-
-			}
-
-
+			// no new frame, use the current one.
+			vfd = currentFrame;
+		}
+		else {
+			// got a new frame, set it to be the current one from now on.
+			currentFrame = vfd;
+		}
 		
-	
-			
-			if (ifp != null) {
-				
-				ifp.updatePanel (vfd.getBufferSize(), vfd.getVis_cycle(), totalFramesRec, 
-						vfd.getVis_time_step(), vfd.getVis_time(), vfd.getVis_pressure_max(), vfd.getVis_pressure_min(), 
-						vfd.getVis_velocity_max(), vfd.getVis_velocity_min(), vfd.getVis_stress_max(), vfd.getVis_stress_min());
+		//Calendar cal = Calendar.getInstance();
+		//long start_time = cal.getTimeInMillis();
 
-				
-				//ifp.updatePanel(vfd.getBufferSize(), 0, totalFramesRec);
-				// System.err.println(vfd.getFramePerSec());
-			}
+		int imageWidth = vfd.getWidth();
+		int imageHeight = vfd.getHeight();
 
-	
+		// calculate zoom required to fill panel
+		float widthZoom = (float) viewWidth / (float) imageWidth;
+		float heightZoom = (float) viewHeight / (float) imageHeight;
+		float zoom = widthZoom < heightZoom ? widthZoom : heightZoom;
 
+		if (view < VIEWALL) {
+			gl.glPixelZoom(zoom, zoom);
+			gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
+			gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(view));
+		}
+		else {
+			// for viewing all frames zoom needs to be halved
+			float zoomAll = zoom * 0.5f;
+			gl.glPixelZoom(zoomAll, zoomAll);
+
+			gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) (viewHeight * 0.5));
+			gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(0));
+
+			gl.glRasterPos2i((int) (viewWidth * 0.5f), (int) (viewHeight * 0.5));
+			gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(1));
+
+			gl.glRasterPos2i((int) ((viewWidth - (imageWidth * zoom)) * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
+			gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(2));
+
+			gl.glRasterPos2i((int) (viewWidth * 0.5f), (int) ((viewHeight - (imageHeight * zoom)) * 0.5f));
+			gl.glDrawPixels(imageWidth, imageHeight, GL.GL_RGBA, GL.GL_UNSIGNED_INT_8_8_8_8, vfd.getBuffer(3));
+		}
+
+		//Calendar cal2 = Calendar.getInstance();
+		//long end_time = cal2.getTimeInMillis();
+
+		//double total_time = (end_time - start_time) / 1000.0d;
+		//System.out.println("Render time: " + total_time);
+
+		if (vfd.getVis_mouse_pressure() > -1) {
+			//canvas1.setToolTipText(vfd.getVis_mouse_pressure() + " : " + vfd.getVis_stess_pressure());
+			System.err.println(vfd.getVis_mouse_pressure() + " : " + vfd.getVis_stess_pressure());
+			DecimalFormat df= new DecimalFormat("#####0.###"); 
+
+			toolTip.setText(df.format(vfd.getVis_mouse_pressure()) + " : " + df.format(vfd.getVis_stess_pressure()));
+		}
+
+		if (ifp != null) {
+			ifp.updatePanel (vfd.getBufferSize(), vfd.getVis_cycle(), totalFramesRec, 
+					vfd.getVis_time_step(), vfd.getVis_time(), vfd.getVis_pressure_max(), vfd.getVis_pressure_min(), 
+					vfd.getVis_velocity_max(), vfd.getVis_velocity_min(), vfd.getVis_stress_max(), vfd.getVis_stress_min());
+
+			//ifp.updatePanel(vfd.getBufferSize(), 0, totalFramesRec);
+			// System.err.println(vfd.getFramePerSec());
 		}
 	}
+
 	/** This method handles things if display depth changes */
 	public void displayChanged(GLAutoDrawable drawable,
 			boolean modeChanged,
