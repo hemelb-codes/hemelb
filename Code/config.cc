@@ -130,7 +130,8 @@ double lbm_stress_par;
 double lbm_density_min, lbm_density_max;
 double lbm_velocity_min, lbm_velocity_max;
 double lbm_stress_min, lbm_stress_max;
-double *lbm_inlet_flux = NULL;
+double *lbm_average_inlet_velocity = NULL;
+double *lbm_peak_inlet_velocity = NULL;
 double *lbm_inlet_normal = NULL;
 long int *lbm_inlet_count = NULL;
 
@@ -152,6 +153,10 @@ int vis_compositing = 1;
 
 float block_size_f;
 float block_size_inv;
+float vis_physical_pressure_threshold_min;
+float vis_physical_pressure_threshold_max;
+float vis_physical_velocity_threshold_max;
+float vis_physical_stress_threshold_max;
 float vis_density_threshold_min, vis_density_threshold_minmax_inv;
 float vis_velocity_threshold_max_inv;
 float vis_stress_threshold_max_inv;

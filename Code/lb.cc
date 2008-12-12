@@ -21,10 +21,10 @@ void lbmConvertBoundaryData (double physical_data[], double lattice_data[], LBM 
   
   useful_factor *= useful_factor;
   
-  lattice_data[0] = 1.0 + (physical_data[0] - REFERENCE_PRESSURE) * PASCAL_TO_mmHg *
+  lattice_data[0] = 1.0 + (physical_data[0] - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
     useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
   
-  lattice_data[1] = physical_data[1] * PASCAL_TO_mmHg *
+  lattice_data[1] = physical_data[1] * mmHg_TO_PASCAL *
     useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
   
   lattice_data[2] = physical_data[2] * PI / 180.;
@@ -42,7 +42,7 @@ double lbmConvertPressureToPhysicalUnits (double lattice_pressure, LBM *lbm)
   useful_factor *= useful_factor;
   
   return REFERENCE_PRESSURE + ((lattice_pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY /
-    (PASCAL_TO_mmHg * useful_factor * lbm->voxel_size * lbm->voxel_size);
+    (mmHg_TO_PASCAL * useful_factor * lbm->voxel_size * lbm->voxel_size);
 }
 
 
@@ -872,6 +872,42 @@ void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, doubl
 }
 
 
+void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[])
+{
+  double velocity, stress;
+  
+  
+  if (perform_rt)
+    {
+      velocity = sqrt(vx * vx + vy * vy + vz * vz);
+      
+      lbmStress (f_neq, &stress);
+      
+      *cluster_voxel[ 3*i   ] = (float)density;
+      *cluster_voxel[ 3*i+1 ] = (float)velocity;
+      *cluster_voxel[ 3*i+2 ] = (float)stress;
+    }
+
+  if (is_bench) return;
+  
+  if (!perform_rt)
+    {
+      velocity = sqrt(vx * vx + vy * vy + vz * vz);
+      
+      lbmStress (f_neq, &stress);
+    }
+  
+  lbm_density_min = (density < lbm_density_min) ? density : lbm_density_min;
+  lbm_density_max = (density > lbm_density_max) ? density : lbm_density_max;
+  
+  lbm_velocity_min = (velocity < lbm_velocity_min) ? velocity : lbm_velocity_min;
+  lbm_velocity_max = (velocity > lbm_velocity_max) ? velocity : lbm_velocity_max;
+  
+  lbm_stress_min = (stress < lbm_stress_min) ? stress : lbm_stress_min;
+  lbm_stress_max = (stress > lbm_stress_max) ? stress : lbm_stress_max;
+}
+
+
 int lbmCollisionType (unsigned int site_data)
 {
   unsigned int boundary_type, boundary_config;
@@ -976,7 +1012,7 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
 	{
 	  *density = outlet_density[ boundary_id ];
 	}
-      if (unknowns <= 5)
+      if (unknowns <= 1000000)
 	{
 	  lbmDensityAndVelocity (f, &dummy_density, vx, vy, vz);
 	  lbmFeq (*density, *vx, *vy, *vz, f);
@@ -1060,6 +1096,7 @@ void lbmInit (char *system_file_name, LBM *lbm, Net *net)
   lbm_terminate_simulation = 0;
 }
 
+
 void lbmSetInitialConditions (LBM *lbm, Net *net)
 {
   double *f_old_p, *f_new_p, f_eq[15];
@@ -1071,11 +1108,11 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
   
   density = 0.;
   
-  for (i = 0; i < lbm->inlets; i++)
+  for (i = 0; i < lbm->outlets; i++)
     {
-      density += inlet_density_avg[i] - inlet_density_amp[i];
+      density += outlet_density_avg[i] - outlet_density_amp[i];
     }
-  density /= lbm->inlets;
+  density /= lbm->outlets;
   
   for (i = 0; i < net->my_sites; i++)
     {
@@ -1114,6 +1151,7 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
 	}
     }
 }
+
 
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 {
@@ -1322,7 +1360,7 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
 		       (vz[1] - vz[0]) * (vz[1] - vz[0]));
 	  sum2 += sqrt(vx[1] * vx[1] + vy[1] * vy[1] + vz[1] * vz[1]);
 	  
-	  lbmUpdateFlowField (perform_rt, i, density[1], vx[1], vy[1], vz[1], f_neq);
+	  lbmUpdateFlowFieldConv (perform_rt, i, density[1], vx[1], vy[1], vz[1], f_neq);
 	}
       offset += net->my_inter_collisions[ collision_type ];
     }
@@ -1372,7 +1410,7 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
 		       (vz[1] - vz[0]) * (vz[1] - vz[0]));
 	  sum2 += sqrt(vx[1] * vx[1] + vy[1] * vy[1] + vz[1] * vz[1]);
 	  
-	  lbmUpdateFlowField (perform_rt, i, density[1], vx[1], vy[1], vz[1], f_neq);
+	  lbmUpdateFlowFieldConv (perform_rt, i, density[1], vx[1], vy[1], vz[1], f_neq);
 	}
       offset += net->my_inner_collisions[ collision_type ];
     }
@@ -1465,8 +1503,8 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   
   int i;
   
-  local_data = (double *)malloc(sizeof(double) * max(6,2*lbm->inlets));
-  global_data = (double *)malloc(sizeof(double) * max(6,2*lbm->inlets));
+  local_data = (double *)malloc(sizeof(double) * max(6+lbm->inlets,2*lbm->inlets));
+  global_data = (double *)malloc(sizeof(double) * max(6+lbm->inlets,2*lbm->inlets));
   
 #ifndef NOMPI
   local_data[ 0 ] = lbm_density_min;
@@ -1476,7 +1514,12 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   local_data[ 4 ] = lbm_stress_min;
   local_data[ 5 ] = 1. / lbm_stress_max;
   
-  MPI_Reduce (local_data, global_data, 6,
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      local_data[ 6+i ] = 1. / lbm_peak_inlet_velocity[ i ];
+    }
+  
+  MPI_Reduce (local_data, global_data, 6+lbm->inlets,
 	      MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
   
   lbm_density_min  = global_data[ 0 ];
@@ -1488,7 +1531,12 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   
   for (i = 0; i < lbm->inlets; i++)
     {
-      local_data[ i ] = lbm_inlet_flux[ i ];
+      lbm_peak_inlet_velocity[ i ] = 1. / global_data[ 6+i ];
+    }
+  
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      local_data[ i ] = lbm_average_inlet_velocity[ i ];
       local_data[ lbm->inlets+i ] = lbm_inlet_count[ i ];
     }
   MPI_Reduce (local_data, global_data, 2*lbm->inlets,
@@ -1496,7 +1544,7 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   
   for (i = 0; i < lbm->inlets; i++)
     {
-      lbm_inlet_flux[ i ] = global_data[ i ];
+      lbm_average_inlet_velocity[ i ] = global_data[ i ];
       lbm_inlet_count[ i ] = global_data[ lbm->inlets+i ];
     }
 #endif // NOMPI
@@ -1519,8 +1567,9 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   
   for (i = 0; i < lbm->inlets; i++)
     {
-      lbm_inlet_flux[i] /= lbm_inlet_count[i];
-      lbm_inlet_flux[i] = lbmConvertVelocityToPhysicalUnits (lbm_inlet_flux[i], lbm);
+      lbm_average_inlet_velocity[i] /= lbm_inlet_count[i];
+      lbm_average_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_average_inlet_velocity[i], lbm);
+      lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i], lbm);
     }
 }
 
@@ -1552,34 +1601,42 @@ int lbmIsUnstable (Net *net)
 }
 
 
-void lbmUpdateInletFluxes (int time_step, LBM *lbm, Net *net)
+void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net)
 {
   double density;
   double vx, vy, vz;
+  double velocity;
   
+  int offset;
   int inlet_id;
   int i, m;
+  int c1, c2;
   
   
   if (time_step == 1)
     {
       for (i = 0; i < lbm->inlets; i++)
 	{
-	  lbm_inlet_flux[ i ] = 0.;
+	  lbm_peak_inlet_velocity[ i ] = -1e+30;
+	  lbm_average_inlet_velocity[ i ] = 0.;
 	  lbm_inlet_count[ i ] = 0;
 	}
     }
   if (check_conv)
     {
-      m = 30;
+      c1 = 30;
+      c2 = 15;
     }
   else
     {
-      m = 15;
+      c1 = 15;
+      c2 = 0;
     }
-  for (i = 0; i < net->my_inner_collisions[ 2 ]; i++)
+  offset = net->my_inner_collisions[ 0 ] + net->my_inner_collisions[ 1 ];
+  
+  for (i = offset; i < offset + net->my_inner_collisions[ 2 ]; i++)
     {
-      lbmDensityAndVelocity (&f_old[ i*m ], &density, &vx, &vy, &vz);
+      lbmDensityAndVelocity (&f_old[ i*c1+c2 ], &density, &vx, &vy, &vz);
       
       inlet_id = (net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
@@ -1588,13 +1645,31 @@ void lbmUpdateInletFluxes (int time_step, LBM *lbm, Net *net)
 	  vx *= lbm_inlet_normal[ 3*inlet_id+0 ];
 	  vy *= lbm_inlet_normal[ 3*inlet_id+1 ];
 	  vz *= lbm_inlet_normal[ 3*inlet_id+2 ];
+	  
+	  velocity = vx * vx + vy * vy + vz * vz;
+	  
+	  if (velocity > 0.)
+	    {
+	      velocity = sqrt(velocity) / density;
+	    }
+	  else
+	    {
+	      velocity = -sqrt(velocity) / density;
+	    }
 	}
-      lbm_inlet_flux[ inlet_id ] += sqrt(vx * vx + vy * vy + vz * vz) / density;
+      else
+	{
+	  velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
+	}
+      lbm_peak_inlet_velocity[ inlet_id ] = fmax(lbm_peak_inlet_velocity[ inlet_id ], velocity);
+      lbm_average_inlet_velocity[ inlet_id ] += velocity;
       ++lbm_inlet_count[ inlet_id ];
     }
-  for (i = 0; i < net->my_inter_collisions[ 2 ]; i++)
+  offset = net->my_inner_sites + net->my_inter_collisions[ 0 ] + net->my_inter_collisions[ 1 ];
+  
+  for (i = offset; i < offset + net->my_inter_collisions[ 2 ]; i++)
     {
-      lbmDensityAndVelocity (&f_old[ i*m ], &density, &vx, &vy, &vz);
+      lbmDensityAndVelocity (&f_old[ i*c1+c2 ], &density, &vx, &vy, &vz);
       
       inlet_id = (net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
@@ -1603,18 +1678,34 @@ void lbmUpdateInletFluxes (int time_step, LBM *lbm, Net *net)
 	  vx *= lbm_inlet_normal[ 3*inlet_id+0 ];
 	  vy *= lbm_inlet_normal[ 3*inlet_id+1 ];
 	  vz *= lbm_inlet_normal[ 3*inlet_id+2 ];
+	  
+	  velocity = vx * vx + vy * vy + vz * vz;
+	  
+	  if (velocity > 0.)
+	    {
+	      velocity = sqrt(velocity) / density;
+	    }
+	  else
+	    {
+	      velocity = -sqrt(velocity) / density;
+	    }
 	}
-      lbm_inlet_flux[ inlet_id ] += sqrt(vx * vx + vy * vy + vz * vz) / density;
+      else
+	{
+	  velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
+	}
+      lbm_peak_inlet_velocity[ inlet_id ] = fmax(lbm_peak_inlet_velocity[ inlet_id ], velocity);
+      lbm_average_inlet_velocity[ inlet_id ] += velocity;
       ++lbm_inlet_count[ inlet_id ];
     }
 }
 
 
-void lbmRestart (LBM *lbm, Net *net)
+void lbmRestart (char *parameters_file_name, LBM *lbm, Net *net)
 {
   lbm->period *= 2;
   
-  lbmCalculateTau (lbm);
+  lbmReadParameters (parameters_file_name, lbm, net);
   
   lbmSetInitialConditions (lbm, net);
 }
@@ -1634,7 +1725,8 @@ void lbmEnd (LBM *lbm)
   
   free(lbm_inlet_count);
   free(lbm_inlet_normal);
-  free(lbm_inlet_flux);
+  free(lbm_average_inlet_velocity);
+  free(lbm_peak_inlet_velocity);
   
   free(lbm->fluid_sites_per_block);
 }

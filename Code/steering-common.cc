@@ -13,9 +13,7 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   
   float longitude, latitude;
   float zoom;
-  float velocity_max, stress_max;
   float lattice_velocity_max, lattice_stress_max;
-  float pressure_min, pressure_max;
   float lattice_density_min, lattice_density_max;
   
   int pixels_x, pixels_y;
@@ -32,14 +30,14 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   vis_brightness = steer_par[ 6 ];
 
   // The minimum value here is by default 0.0 all the time
-  velocity_max   = steer_par[ 7 ];
+  vis_physical_velocity_threshold_max = steer_par[ 7 ];
 
   // The minimum value here is by default 0.0 all the time
-  stress_max     = steer_par[ 8 ];
-
-  pressure_min     = steer_par[ 9 ];
-  pressure_max     = steer_par[ 10 ];
-
+  vis_physical_stress_threshold_max = steer_par[ 8 ];
+  
+  vis_physical_pressure_threshold_min = steer_par[ 9 ];
+  vis_physical_pressure_threshold_max = steer_par[ 10 ];
+  
   vis_glyph_length = steer_par[ 11 ];
 
   pixels_x         = steer_par[ 12 ]; 
@@ -56,19 +54,19 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   // 2 - Wall pattern streak lines
   vis_mode = (int)steer_par[ 17 ];
   
-  vis_streaklines_per_pulsatile_period = steer_par[ 18 ];   // 5.0
-  vis_streakline_length = steer_par[ 19 ];                  // 100.0 % length
+  vis_streaklines_per_pulsatile_period = steer_par[ 18 ];
+  vis_streakline_length = steer_par[ 19 ];
   
   *vis_perform_rendering = (int)steer_par[ 20 ];
   
-  // All the appropriate transformations are done below.
-  
   visUpdateImageSize (pixels_x, pixels_y);
   
-  visConvertThresholds (velocity_max, stress_max,
-			pressure_min, pressure_max,
+  visConvertThresholds (vis_physical_velocity_threshold_max,
+			vis_physical_stress_threshold_max,
+			vis_physical_pressure_threshold_min,
+			vis_physical_pressure_threshold_max,
 			&lattice_velocity_max, &lattice_stress_max,
-			&lattice_density_min, &lattice_density_max,lbm);
+			&lattice_density_min, &lattice_density_max, lbm);
   
   visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
   		 pixels_x, pixels_y,

@@ -2286,6 +2286,7 @@ void glyInit (Net *net)
   int site_i, site_j, site_k;
   int i, j, k;
   int m, n;
+  int c1, c2;
   
   DataBlock *map_block_p;
   
@@ -2303,6 +2304,16 @@ void glyInit (Net *net)
   
   glyphs = 0;
   
+  if (check_conv)
+    {
+      c1 = 30;
+      c2 = 15;
+    }
+  else
+    {
+      c1 = 15;
+      c2 = 0;
+    }
   n = -1;
   
   for (i = 0; i < sites_x; i += block_size)
@@ -2327,14 +2338,7 @@ void glyInit (Net *net)
 	      glyph[ glyphs ].y = (float)(j + site_j) - 0.5F * (float)sites_y;
 	      glyph[ glyphs ].z = (float)(k + site_k) - 0.5F * (float)sites_z;
 	      
-	      if (!check_conv)
-		{
-		  glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*15 ];
-		}
-	      else
-		{
-		  glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*30 ];
-		}
+	      glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*c1+c2 ];
 	      ++glyphs;
 	    }
 	}
@@ -2401,7 +2405,7 @@ void glyEnd (void)
 }
 
 
-void slInitializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id,  SL *sl)
+void slInitializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id, SL *sl)
 {
   if (site_i < 0 || site_i >= sites_x ||
       site_j < 0 || site_j >= sites_y ||
@@ -2515,6 +2519,9 @@ void slDeleteParticle (int p_index, SL *sl)
       sl->particle[ p_index ].x        = sl->particle[ sl->particles ].x;
       sl->particle[ p_index ].y        = sl->particle[ sl->particles ].y;
       sl->particle[ p_index ].z        = sl->particle[ sl->particles ].z;
+      sl->particle[ p_index ].vx       = sl->particle[ sl->particles ].vx;
+      sl->particle[ p_index ].vy       = sl->particle[ sl->particles ].vy;
+      sl->particle[ p_index ].vz       = sl->particle[ sl->particles ].vz;
       sl->particle[ p_index ].vel      = sl->particle[ sl->particles ].vel;
       sl->particle[ p_index ].inlet_id = sl->particle[ sl->particles ].inlet_id;
     }
@@ -2543,6 +2550,7 @@ void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *n
   int neigh_i, neigh_j, neigh_k;
   int i, j, k;
   int m;
+  int c1, c2;
   
   VelSiteData *vel_site_data_p;
   
@@ -2553,6 +2561,16 @@ void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *n
   
   *is_interior = 1;
   
+  if (check_conv)
+    {
+      c1 = 30;
+      c2 = 15;
+    }
+  else
+    {
+      c1 = 15;
+      c2 = 0;
+    }
   for (i = 0; i < 2; i++)
     {
       neigh_i = site_i + i;
@@ -2595,7 +2613,7 @@ void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *n
 		  // and the local velocity is calculated
 		  vel_site_data_p->counter = sl->counter;
 		  
-		  lbmDensityAndVelocity (&f_old[ vel_site_data_p->site_id*15 ],
+		  lbmDensityAndVelocity (&f_old[ vel_site_data_p->site_id*c1+c2 ],
 					 &density, &vx, &vy, &vz);
 		  
 		  v[i][j][k][0] = vel_site_data_p->vx = vx / density;
@@ -2608,7 +2626,6 @@ void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *n
 		  
 		  m = sl->from_proc_id_to_neigh_proc_index[ vel_site_data_p->proc_id ];
 		  
-		  // the site ids to send are stored
 		  sl->neigh_proc[m].s_to_send[ 3*sl->neigh_proc[m].send_vs+0 ] = neigh_i;
 		  sl->neigh_proc[m].s_to_send[ 3*sl->neigh_proc[m].send_vs+1 ] = neigh_j;
 		  sl->neigh_proc[m].s_to_send[ 3*sl->neigh_proc[m].send_vs+2 ] = neigh_k;
@@ -2852,7 +2869,6 @@ void slCommunicateSiteIds (SL *sl)
     {
       MPI_Irecv (&sl->neigh_proc[ m ].recv_vs, 1, MPI_INT, sl->neigh_proc[ m ].id,
 		 30, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
-      
       MPI_Isend (&sl->neigh_proc[ m ].send_vs, 1, MPI_INT, sl->neigh_proc[ m ].id,
 		 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
       MPI_Wait (&sl->req[ sl->neigh_proc[m].id ], sl->status);
@@ -2864,12 +2880,12 @@ void slCommunicateSiteIds (SL *sl)
       if (sl->neigh_proc[ m ].recv_vs > 0)
 	{
 	  MPI_Irecv (sl->neigh_proc[ m ].s_to_recv, sl->neigh_proc[ m ].recv_vs * 3, MPI_SHORT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
+		     sl->neigh_proc[ m ].id, 40, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
 	}
       if (sl->neigh_proc[ m ].send_vs > 0)
 	{
 	  MPI_Isend (sl->neigh_proc[ m ].s_to_send, sl->neigh_proc[ m ].send_vs * 3, MPI_SHORT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
+		     sl->neigh_proc[ m ].id, 40, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
 	  MPI_Wait (&sl->req[ sl->neigh_proc[m].id ], sl->status);
 	}
     }
@@ -2912,9 +2928,18 @@ void slCommunicateVelocities (SL *sl)
 	  
 	  vel_site_data_p = slVelSiteDataPointer (site_i, site_j, site_k, sl);
 	  
-	  sl->neigh_proc[ m ].v_to_send[ 3*n+0 ] = vel_site_data_p->vx;
-	  sl->neigh_proc[ m ].v_to_send[ 3*n+1 ] = vel_site_data_p->vy;
-	  sl->neigh_proc[ m ].v_to_send[ 3*n+2 ] = vel_site_data_p->vz;
+	  if (vel_site_data_p != NULL)
+	    {
+	      sl->neigh_proc[ m ].v_to_send[ 3*n+0 ] = vel_site_data_p->vx;
+	      sl->neigh_proc[ m ].v_to_send[ 3*n+1 ] = vel_site_data_p->vy;
+	      sl->neigh_proc[ m ].v_to_send[ 3*n+2 ] = vel_site_data_p->vz;
+	    }
+	  else
+	    {
+	      sl->neigh_proc[ m ].v_to_send[ 3*n+0 ] = 0.;
+	      sl->neigh_proc[ m ].v_to_send[ 3*n+1 ] = 0.;
+	      sl->neigh_proc[ m ].v_to_send[ 3*n+2 ] = 0.;
+	    }
 	}
       if (sl->neigh_proc[ m ].recv_vs > 0)
 	{
@@ -2937,9 +2962,12 @@ void slCommunicateVelocities (SL *sl)
 	  
 	  vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k, sl);
 	  
-	  vel_site_data_p->vx = sl->neigh_proc[ m ].v_to_recv[ 3*n+0 ];
-	  vel_site_data_p->vy = sl->neigh_proc[ m ].v_to_recv[ 3*n+1 ];
-	  vel_site_data_p->vz = sl->neigh_proc[ m ].v_to_recv[ 3*n+2 ];
+	  if (vel_site_data_p != NULL)
+	    {
+	      vel_site_data_p->vx = sl->neigh_proc[ m ].v_to_recv[ 3*n+0 ];
+	      vel_site_data_p->vy = sl->neigh_proc[ m ].v_to_recv[ 3*n+1 ];
+	      vel_site_data_p->vz = sl->neigh_proc[ m ].v_to_recv[ 3*n+2 ];
+	    }
 	}
     }
   for (m = 0; m < sl->neigh_procs; m++)
@@ -2950,7 +2978,7 @@ void slCommunicateVelocities (SL *sl)
 }
 
 
-void slUpdateParticles (int stage_id, Net *net, SL *sl)
+void slUpdateVelField (int stage_id, Net *net, SL *sl)
 {
   float v[2][2][2][3], interp_v[3];
   float vel;
@@ -2973,16 +3001,27 @@ void slUpdateParticles (int stage_id, Net *net, SL *sl)
       
       if (vel > 1.e-14)
 	{
-	  // particle coords updating (dt = 1)
-	  sl->particle[n].x += interp_v[0];
-	  sl->particle[n].y += interp_v[1];
-	  sl->particle[n].z += interp_v[2];
 	  sl->particle[n].vel = sqrtf(vel);
+	  sl->particle[n].vx = interp_v[0];
+	  sl->particle[n].vy = interp_v[1];
+	  sl->particle[n].vz = interp_v[2];
 	}
       else
       	{
       	  slDeleteParticle (n, sl);
       	}
+    }
+}
+
+
+void slUpdateParticles (SL *sl)
+{
+  for (int n = 0; n < sl->particles; n++)
+    {
+      // particle coords updating (dt = 1)
+      sl->particle[n].x += sl->particle[n].vx;
+      sl->particle[n].y += sl->particle[n].vy;
+      sl->particle[n].z += sl->particle[n].vz;
     }
 }
 
@@ -3049,12 +3088,13 @@ void slCommunicateParticles (Net *net, SL *sl)
     {
       MPI_Wait (&sl->req[ sl->procs + sl->neigh_proc[m].id ], net->status);
     }
+  
   for (m = 0; m < sl->neigh_procs; m++)
     {
       if (sl->neigh_proc[ m ].send_ps > 0)
 	{
 	  MPI_Isend (sl->neigh_proc[ m ].p_to_send, sl->neigh_proc[ m ].send_ps * 5, MPI_FLOAT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
+		     sl->neigh_proc[ m ].id, 40, MPI_COMM_WORLD, &sl->req[ sl->neigh_proc[m].id ]);
 	  MPI_Wait (&sl->req[ sl->neigh_proc[m].id ], net->status);
 	}
     }
@@ -3067,10 +3107,10 @@ void slCommunicateParticles (Net *net, SL *sl)
 	      sl->particles_to_recv_max *= 2;
 	      sl->particles_to_recv_max = max(sl->particles_to_recv_max, sl->neigh_proc[ m ].recv_ps);
 	      sl->neigh_proc[ m ].p_to_recv =
-		(float *)realloc(sl->neigh_proc[ m ].p_to_recv, sizeof(float) * 5 * sl->particles_to_recv_max);
+	      	(float *)realloc(sl->neigh_proc[ m ].p_to_recv, sizeof(float) * 5 * sl->particles_to_recv_max);
 	    }
 	  MPI_Irecv (sl->neigh_proc[ m ].p_to_recv, sl->neigh_proc[ m ].recv_ps * 5, MPI_FLOAT,
-		     sl->neigh_proc[ m ].id, 30, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
+		     sl->neigh_proc[ m ].id, 40, MPI_COMM_WORLD, &sl->req[ sl->procs + sl->neigh_proc[m].id ]);
 	  MPI_Wait (&sl->req[ sl->procs + sl->neigh_proc[m].id ], net->status);
 	  
 	  for (n = 0; n < sl->neigh_proc[ m ].recv_ps; n++)
@@ -3139,7 +3179,7 @@ void slRender (SL *sl)
 
 void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl)
 {
-  int particle_creation_period = max(1, (int)(time_steps_per_cycle / 1000.F));
+  int particle_creation_period = max(1, (int)(time_steps_per_cycle / 10000.F));
   
   
   if (time_steps % (int)(time_steps_per_cycle / vis_streaklines_per_pulsatile_period) <=
@@ -3150,10 +3190,11 @@ void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl)
     }
   ++sl->counter;
   
-  slUpdateParticles (0, net, sl);
+  slUpdateVelField (0, net, sl);
   slCommunicateSiteIds (sl);
   slCommunicateVelocities (sl);
-  slUpdateParticles (1, net, sl);
+  slUpdateVelField (1, net, sl);
+  slUpdateParticles (sl);
   slCommunicateParticles (net, sl);
 }
 
@@ -3232,13 +3273,10 @@ void visProject (float p1[], float p2[])
   x2[1] = viewpoint.cos_2 * x1[1] - viewpoint.sin_2 * temp;
   x2[2] = viewpoint.cos_2 * temp + viewpoint.sin_2 * x1[1];
   
-  temp = viewpoint.dist / (-x2[2]);
+  temp = viewpoint.dist / (p2[2] = -x2[2]);
   
-  for (l = 0; l < 3; l++)
-    {
-      p2[l] = temp * x2[l];
-    }
-  p2[2] = -x2[2];
+  p2[0] = temp * x2[0];
+  p2[1] = temp * x2[1];
 }
 
 
@@ -3543,9 +3581,7 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int* pixel_index,
 	{
 	  float scaled_vel = col_pixel_p->particle_vel * vis_velocity_threshold_max_inv;
 	  
-	  particle_col[0] = particle_col[1] = particle_col[2] = 0.F;
-	  
-	  particle_col[ min(col_pixel_p->particle_inlet_id, 2) ] = scaled_vel;
+	  ColourPalette (scaled_vel, particle_col);
 	  
 	  density_col[0] = 1.F + particle_col[0];
 	  density_col[1] = 1.F + particle_col[1];
@@ -3557,13 +3593,13 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int* pixel_index,
 	}
       else
 	{
-	  density_col[0] = fminf(1.F, col_pixel_p->density);
-	  density_col[1] = fminf(1.F, col_pixel_p->density);
-	  density_col[2] = fminf(1.F, col_pixel_p->density);
+	  density_col[0] = fmaxf(0.F, fminf(1.F, col_pixel_p->density));
+	  density_col[1] = fmaxf(0.F, fminf(1.F, col_pixel_p->density));
+	  density_col[2] = fmaxf(0.F, fminf(1.F, col_pixel_p->density));
 	  
-	  stress_col[0] = fminf(1.F, col_pixel_p->stress);
-	  stress_col[1] = fminf(1.F, col_pixel_p->stress);
-	  stress_col[2] = fminf(1.F, col_pixel_p->stress);
+	  stress_col[0] = fmaxf(0.F, fminf(1.F, col_pixel_p->stress));
+	  stress_col[1] = fmaxf(0.F, fminf(1.F, col_pixel_p->stress));
+	  stress_col[2] = fmaxf(0.F, fminf(1.F, col_pixel_p->stress));
 	}
       r3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[0])));
       g3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[1])));
@@ -4316,7 +4352,7 @@ void visRenderB (int write_image, char *image_file_name,
       col_pixel_recv[ n ].stress_g *= (255.F * vis_brightness);
       col_pixel_recv[ n ].stress_b *= (255.F * vis_brightness);
       
-      col_pixel_recv[ n ].density = fmaxf(0.F, (col_pixel_recv[ n ].density - vis_density_threshold_min)) * vis_density_threshold_minmax_inv;
+      col_pixel_recv[ n ].density = (col_pixel_recv[ n ].density - vis_density_threshold_min) * vis_density_threshold_minmax_inv;
       col_pixel_recv[ n ].stress  = col_pixel_recv[ n ].stress * vis_stress_threshold_max_inv;
     }
   
@@ -4324,6 +4360,12 @@ void visRenderB (int write_image, char *image_file_name,
   
   image_file = fopen (image_file_name, "w");
   xdrstdio_create (&xdr_image_file, image_file, XDR_ENCODE);
+  
+  xdr_int (&xdr_image_file, &vis_mode);
+  xdr_float (&xdr_image_file, &vis_physical_pressure_threshold_min);
+  xdr_float (&xdr_image_file, &vis_physical_pressure_threshold_max);
+  xdr_float (&xdr_image_file, &vis_physical_velocity_threshold_max);
+  xdr_float (&xdr_image_file, &vis_physical_stress_threshold_max);
   
   xdr_int (&xdr_image_file, &screen.pixels_x);
   xdr_int (&xdr_image_file, &screen.pixels_y);
@@ -4340,14 +4382,13 @@ void visRenderB (int write_image, char *image_file_name,
 
 void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
 {
+  double density = vis_density_threshold_min + col_pixel_p->density / vis_density_threshold_minmax_inv;
+  double stress = col_pixel_p->stress / vis_stress_threshold_max_inv;
 
-  double _density = vis_density_threshold_min + col_pixel_p->density / vis_density_threshold_minmax_inv;
-  double _stress = col_pixel_p->stress / vis_stress_threshold_max_inv;
-
-  vis_mouse_pressure = lbmConvertPressureToPhysicalUnits (_density * Cs2, lbm);
-  vis_mouse_stress = lbmConvertStressToPhysicalUnits (_stress, lbm);
-
+  vis_mouse_pressure = lbmConvertPressureToPhysicalUnits (density * Cs2, lbm);
+  vis_mouse_stress = lbmConvertStressToPhysicalUnits (stress, lbm);
 }
+
 
 void visEnd (SL *sl)
 {

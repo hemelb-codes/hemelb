@@ -65,6 +65,7 @@ int main (int argc, char *argv[])
   int vis_without_compositing_time_steps;
   int snapshots_per_cycle, snapshots_period;
   int images_per_cycle, images_period;
+  int is_unstable;
   
   pthread_t network_thread;
   pthread_attr_t pthread_attrib;
@@ -257,9 +258,9 @@ int main (int argc, char *argv[])
 	{
 	  int restart = 0;
 	  
-	  for (time_step = 1; time_step <= lbm.period; time_step++, total_time_steps++)
+	  for (time_step = 1; time_step <= lbm.period; time_step++)
 	    {
-
+	      ++total_time_steps;
               intra_cycle_time = (PULSATILE_PERIOD * time_step) / lbm.period;
 
               int render_for_network_stream = 0;
@@ -341,7 +342,7 @@ int main (int argc, char *argv[])
 		      fluid_solver_time += end_time - start_time;
 		      break;
 		    }
-		  lbmUpdateInletFluxes (time_step, &lbm, &net);
+		  lbmUpdateInletVelocities (time_step, &lbm, &net);
 		  
 		  end_time = myClock ();
 		  fluid_solver_time += end_time - start_time;
@@ -360,7 +361,7 @@ int main (int argc, char *argv[])
 		      restart = 1;
 		      break;
 		    }
-		  lbmUpdateInletFluxes (time_step, &lbm, &net);
+		  lbmUpdateInletVelocities (time_step, &lbm, &net);
 		  
 		  end_time = myClock ();
 		  fluid_solver_time += end_time - start_time;
@@ -467,14 +468,18 @@ int main (int argc, char *argv[])
 		  if (time_step%100 == 0)
 		    printf ("time step: %i\n", time_step);
 		}
-
+	      if (lbm.period >= 1000000)
+		{
+		  is_unstable = 1;
+		  break;
+		}
 	    }
 
 	  if (restart)
 	    {
 	      start_time = myClock ();
 	      
-	      lbmRestart (&lbm, &net);
+	      lbmRestart (input_parameters_name, &lbm, &net);
 	      
 	      slRestart (&sl);
 	      
@@ -505,7 +510,7 @@ int main (int argc, char *argv[])
 	      else
 		images_period = max(1, lbm.period / images_per_cycle);
 	      
-	      cycle_id = 1;
+	      cycle_id = 0;
 	      
 	      end_time = myClock ();
 	      other_time += (end_time - start_time);
@@ -548,8 +553,10 @@ int main (int argc, char *argv[])
 
       steering_and_vis_time = myClock () - steering_and_vis_time - fluid_solver_time - io_time-other_time;
       simulation_time = myClock () - simulation_time;
-      time_step = (min(time_step, lbm.period)) * min(cycle_id, lbm.cycles_max);
-
+      
+      time_step = min(time_step, lbm.period);
+      cycle_id = min(cycle_id, lbm.cycles_max);
+      time_step = time_step * cycle_id;
     }
   else // is_bench
     {
@@ -699,65 +706,78 @@ int main (int argc, char *argv[])
 	}
     }
   
-  if (net.id == 0)
+  if (is_unstable)
     {
-      fprintf (timings_ptr, "Opening output config file:\n %s\n\n", output_config_name);
-      fflush (timings_ptr);
-    }
-  net.fo_time = myClock ();
-  
-  lbmWriteConfig (stability, output_config_name, &lbm, &net);
-  
-  net.fo_time = myClock () - net.fo_time;
-  
-  if (net.id == 0)
-    {
-      if (!is_bench)
+      if (net.id == 0)
 	{
-	  vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, &lbm);
-	  vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, &lbm);
-	  
-	  vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, &lbm);
-	  vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, &lbm);
-	  
-	  vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, &lbm);
-	  vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, &lbm);
-	  
-	  fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
-	  fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis_pressure_min, vis_pressure_max);
-	  fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis_velocity_min, vis_velocity_max);
-	  fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis_stress_min, vis_stress_max);
-	  fprintf (timings_ptr, "\n");
-	  
-	  for (int n = 0; n < lbm.inlets; n++)
+	  fprintf (timings_ptr, "Attention: simulation unstable with %i timesteps/cycle\n",
+		   lbm.period);
+	  fprintf (timings_ptr, "Simulation is terminated\n");
+	  fclose (timings_ptr);
+	}
+    }
+  else
+    {
+      if (net.id == 0)
+	{
+	  fprintf (timings_ptr, "Opening output config file:\n %s\n\n", output_config_name);
+	  fflush (timings_ptr);
+	}
+      net.fo_time = myClock ();
+      
+      lbmWriteConfig (stability, output_config_name, &lbm, &net);
+      
+      net.fo_time = myClock () - net.fo_time;
+      
+      if (net.id == 0)
+	{
+	  if (!is_bench)
 	    {
-	      fprintf (timings_ptr, "inlet id: %i, (flow rate)x(inlet area) (m^3/s): %le\n", n, lbm_inlet_flux[ n ]);
+	      vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, &lbm);
+	      vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, &lbm);
+	      
+	      vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, &lbm);
+	      vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, &lbm);
+	      
+	      vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, &lbm);
+	      vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, &lbm);
+	      
+	      fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
+	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis_pressure_min, vis_pressure_max);
+	      fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis_velocity_min, vis_velocity_max);
+	      fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis_stress_min, vis_stress_max);
+	      fprintf (timings_ptr, "\n");
+	      
+	      for (int n = 0; n < lbm.inlets; n++)
+		{
+		  fprintf (timings_ptr, "inlet id: %i, average / peak velocity (m/s): %le / %le\n",
+			   n, lbm_average_inlet_velocity[ n ], lbm_peak_inlet_velocity[ n ]);
+		}
+	      fprintf (timings_ptr, "\n");
 	    }
 	  fprintf (timings_ptr, "\n");
+	  fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);
+	  fprintf (timings_ptr, "pre-processing buffer management time (s): %.3f\n", net.bm_time);
+	  fprintf (timings_ptr, "input configuration reading time (s):      %.3f\n", net.fr_time);
+	  fprintf (timings_ptr, "flow field outputting time (s):            %.3f\n", net.fo_time);
+	  
+	  total_time = myClock () - total_time;
+	  fprintf (timings_ptr, "total time (s):                            %.3f\n\n", total_time);
+	  
+	  if (net.procs > 1)
+	    {
+	      fprintf (timings_ptr, "(vis+steering time) / fluid solver time: %.3e\n", steering_and_vis_time);
+	    }
+	  fprintf (timings_ptr, "Sub-domains info:\n\n");
+	  
+	  for (int n = 0; n < net.procs; n++)
+	    {
+	      fprintf (timings_ptr, "rank: %i, fluid sites: %i\n", n, net.fluid_sites[ n ]);
+	    }
+	  
+	  fclose (timings_ptr);
 	}
-      fprintf (timings_ptr, "\n");
-      fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);
-      fprintf (timings_ptr, "pre-processing buffer management time (s): %.3f\n", net.bm_time);
-      fprintf (timings_ptr, "input configuration reading time (s):      %.3f\n", net.fr_time);
-      fprintf (timings_ptr, "flow field outputting time (s):            %.3f\n", net.fo_time);
-      
-      total_time = myClock () - total_time;
-      fprintf (timings_ptr, "total time (s):                            %.3f\n\n", total_time);
-      
-      if (net.procs > 1)
-	{
-	  fprintf (timings_ptr, "(vis+steering time) / fluid solver time: %.3e\n", steering_and_vis_time);
-	}
-      fprintf (timings_ptr, "Sub-domains info:\n\n");
-      
-      for (int n = 0; n < net.procs; n++)
-	{
-	  fprintf (timings_ptr, "rank: %i, fluid sites: %i\n", n, net.fluid_sites[ n ]);
-	}
-      
-      fclose (timings_ptr);
     }
-  
   visEnd (&sl);
   netEnd (&net);
   lbmEnd (&lbm);
