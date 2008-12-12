@@ -54,7 +54,7 @@
 
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
-#define PASCAL_TO_mmHg                 133.3223874
+#define mmHg_TO_PASCAL                 133.3223874
 #define BLOOD_DENSITY                  1000.0        // 1000 Kg m^(-3)
 #define BLOOD_VISCOSITY                0.004         // 0.004 Pascal s
 #define PULSATILE_PERIOD               0.857142857   // period of oscillation (in s) is
@@ -280,7 +280,7 @@ struct Glyph
 struct Particle
 {
   float x, y, z;
-  
+  float vx, vy, vz;
   float vel;
   
   int inlet_id;
@@ -327,7 +327,6 @@ struct SL
     int id;
     int send_ps, recv_ps;
     int send_vs, recv_vs;
-    int send_is, recv_is;
     
     float *p_to_send, *p_to_recv;
     float *v_to_send, *v_to_recv;
@@ -446,7 +445,8 @@ extern double lbm_stress_par;
 extern double lbm_density_min, lbm_density_max;
 extern double lbm_velocity_min, lbm_velocity_max;
 extern double lbm_stress_min, lbm_stress_max;
-extern double *lbm_inlet_flux;
+extern double *lbm_average_inlet_velocity;
+extern double *lbm_peak_inlet_velocity;
 extern double *lbm_inlet_normal;
 extern long int *lbm_inlet_count;
 
@@ -469,6 +469,10 @@ extern int vis_compositing;
 
 extern float block_size_f;
 extern float block_size_inv;
+extern float vis_physical_pressure_threshold_min;
+extern float vis_physical_pressure_threshold_max;
+extern float vis_physical_velocity_threshold_max;
+extern float vis_physical_stress_threshold_max;
 extern float vis_density_threshold_min, vis_density_threshold_minmax_inv;
 extern float vis_velocity_threshold_max_inv;
 extern float vis_stress_threshold_max_inv;
@@ -531,11 +535,12 @@ int lbmCollisionType (unsigned int site_data);
 void lbmInit (char *system_file_name, LBM *lbm, Net *net);
 void lbmSetInitialConditions (LBM *lbm, Net *net);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
+void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm);
 int lbmIsUnstable (Net *net);
-void lbmRestart (LBM *lbm, Net *net);
+void lbmRestart (char *parameters_file_name, LBM *lbm, Net *net);
 void lbmEnd (LBM *lbm);
 
 int netFindTopology (Net *net, int *depths);
@@ -549,7 +554,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
-void lbmUpdateInletFluxes (int time_step, LBM *lbm, Net *net);
+void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net);
 
 void rtInit (Net *net);
 void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*ColourPalette) (float value, float col[]));

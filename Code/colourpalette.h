@@ -1,1 +1,1 @@
-void ColourPalette (float value, float col[]);
+void ColourPalette (float t, float col[]);
