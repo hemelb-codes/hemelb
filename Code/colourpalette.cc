@@ -1,11 +1,43 @@
 #include <math.h>
 #include "colourpalette.h"
 
-void ColourPalette (float value, float col[])
+
+void ColourPalette (float t, float col[])
 {
-  col[0] = fminf(1.F, value);
-  col[1] = 0.;
-  col[2] = fmaxf(0.F, 1.F - value);
+  if (t > 1.F)
+    {
+      col[0] = 1.F;
+      col[1] = 0.F;
+      col[2] = 0.F;
+    }
+  else if (t > 0.0F && t <= 0.25F)
+    {
+      col[0] = 0.F;
+      col[1] = 4.F * t;
+      col[2] = 1.F;
+    }
+  else if (t > 0.25F && t <= 0.5F)
+    {
+      col[0] = 0.F;
+      col[1] = 1.F;
+      col[2] = 2.F - 4.F * t;
+    }
+  else if (t > 0.5F && t <= 0.75F)
+    {
+      col[0] = 4.F * (t - 0.5F);
+      col[1] = 1.F;
+      col[2] = 0.F;
+    }
+  else if (t > 0.75F && t <= 1.0F)
+    {
+      col[0] = 1.F;
+      col[1] = 4.F - 4.F * t;
+      col[2] = 0.F;
+    }
+  else
+    {
+      col[0] = 0.F;
+      col[1] = 0.F;
+      col[2] = 1.F;
+    }
 }
-
-

@@ -226,7 +226,8 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	      outlet_density_phs[ n ] = 0.0;
 	    }
 	}
-      lbm_inlet_flux = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm_peak_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
       lbm_inlet_normal = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
       lbm_inlet_count = (long int *)malloc(sizeof(long int) * lbm->inlets);
       
@@ -270,7 +271,8 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       outlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
       outlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
       
-      lbm_inlet_flux = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm_peak_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
       lbm_inlet_normal = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
       lbm_inlet_count = (long int *)malloc(sizeof(long int) * lbm->inlets);
     }
@@ -349,12 +351,14 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   // The format comprises:
   // 0- Flag for simulation stability, 0 or 1
   // 1- Voxel size in physical units (units of m)
-  // 2- #voxels along the x, y, z axes (3 values)
-  // 3- total number of fluid voxels
+  // 2- vertex coords of the minimum bounding box with minimum values (x, y and z values)
+  // 3- vertex coords of the minimum bounding box with maximum values (x, y and z values)
+  // 4- #voxels within the minimum bounding box along the x, y, z axes (3 values)
+  // 5- total number of fluid voxels
   // And then a list of the fluid voxels...
   // for each fluid voxel:
   //   a- the (x, y, z) coordinates in lattice units (3 values)
-  //   b- the pressure in physical units (mm.Hg)
+  //   b- the pressure in physical units (mmHg)
   //   c- (x,y,z) components of the velocity field in physical units (3 values, m/s)
   //   d- the von Mises stress in physical units (Pa)
   
@@ -388,7 +392,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   // parameters useful to convert pressure, velocity and stress from
   // lattice to physical units
   pressure_par = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
-  pressure_par = BLOOD_DENSITY / (PASCAL_TO_mmHg * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
+  pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
   velocity_par = 1. / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
   stress_par = ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
   stress_par = BLOOD_DENSITY / (stress_par * stress_par * lbm->voxel_size * lbm->voxel_size);
@@ -417,6 +421,12 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
       shrinked_sites_z = 1 + lbm->site_max_z - lbm->site_min_z;
       
       xdr_double (&xdr_system_config, &lbm->voxel_size);
+      xdr_int    (&xdr_system_config, &lbm->site_min_x);
+      xdr_int    (&xdr_system_config, &lbm->site_min_y);
+      xdr_int    (&xdr_system_config, &lbm->site_min_z);
+      xdr_int    (&xdr_system_config, &lbm->site_max_x);
+      xdr_int    (&xdr_system_config, &lbm->site_max_y);
+      xdr_int    (&xdr_system_config, &lbm->site_max_z);
       xdr_int    (&xdr_system_config, &shrinked_sites_x);
       xdr_int    (&xdr_system_config, &shrinked_sites_y);
       xdr_int    (&xdr_system_config, &shrinked_sites_z);
@@ -632,12 +642,14 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   // The format comprises:
   // 0- Flag for simulation stability, 0 or 1
   // 1- Voxel size in physical units (units of m)
-  // 2- #voxels along the x, y, z axes (3 values)
-  // 3- total number of fluid voxels
+  // 2- vertex coords of the minimum bounding box with minimum values (x, y and z values)
+  // 3- vertex coords of the minimum bounding box with maximum values (x, y and z values)
+  // 4- #voxels within the minimum bounding box along the x, y, z axes (3 values)
+  // 5- total number of fluid voxels
   // And then a list of the fluid voxels...
   // for each fluid voxel:
   //   a- the (x, y, z) coordinates in lattice units (3 values)
-  //   b- the pressure in physical units (mm.Hg)
+  //   b- the pressure in physical units (mmHg)
   //   c- (x,y,z) components of the velocity field in physical units (3 values, m/s)
   //   d- the von Mises stress in physical units (Pa)
   
@@ -670,7 +682,7 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   // parameters useful to convert pressure, velocity and stress from
   // lattice to physical units
   pressure_par = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
-  pressure_par = BLOOD_DENSITY / (PASCAL_TO_mmHg * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
+  pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
   velocity_par = 1. / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
   stress_par = ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
   stress_par = BLOOD_DENSITY / (stress_par * stress_par * lbm->voxel_size * lbm->voxel_size);
@@ -678,7 +690,7 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   if (net->id == 0)
     {
       system_config = fopen (output_file_name, "w");
-	fprintf(system_config, "%i\n", stability);
+      fprintf(system_config, "%i\n", stability);
     }
   
   if (stability == UNSTABLE)
@@ -696,7 +708,9 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
       shrinked_sites_y = 1 + lbm->site_max_y - lbm->site_min_y;
       shrinked_sites_z = 1 + lbm->site_max_z - lbm->site_min_z;
       
-      fprintf(system_config, "%0.6f\n", lbm->voxel_size);
+      fprintf(system_config, "%e\n", lbm->voxel_size);
+      fprintf(system_config, "%i %i %i\n", lbm->site_min_x, lbm->site_min_y, lbm->site_min_z);
+      fprintf(system_config, "%i %i %i\n", lbm->site_max_x, lbm->site_max_y, lbm->site_max_z);
       fprintf(system_config, "%i %i %i\n", shrinked_sites_x, shrinked_sites_y, shrinked_sites_z);
       fprintf(system_config, "%i\n", lbm->total_fluid_sites);
     }
@@ -830,12 +844,12 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 				  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
 				  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
 				  
-				  fprintf(system_config, "%i %i %i ",
+				  fprintf(system_config, "%i %i %i",
 					  gathered_site_data[ 3*l+0 ], gathered_site_data[ 3*l+1 ], gathered_site_data[ 3*l+2 ]);
 
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
-			              fprintf(system_config, "%e ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+			              fprintf(system_config, " %e", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
 				    }
 				  fprintf(system_config, "\n");
 				}
