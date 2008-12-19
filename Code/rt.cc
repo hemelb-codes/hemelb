@@ -3661,9 +3661,9 @@ void visConvertThresholds (float physical_velocity_max, float physical_stress_ma
   useful_factor = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
   useful_factor *= useful_factor;
   
-  *lattice_density_min = 1.0 + (physical_pressure_min - REFERENCE_PRESSURE) * PASCAL_TO_mmHg *
+  *lattice_density_min = 1.0 + (physical_pressure_min - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
     useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
-  *lattice_density_max = 1.0 + (physical_pressure_max - REFERENCE_PRESSURE) * PASCAL_TO_mmHg *
+  *lattice_density_max = 1.0 + (physical_pressure_max - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
     useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
 }
 

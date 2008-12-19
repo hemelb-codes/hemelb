@@ -37,6 +37,7 @@ int main (int argc, char *argv[])
 
 	sem_init(&nrl, 0, 1);
 	sem_init(&connected_sem, 0, 1);
+	sem_init(&steering_var_lock, 0, 1);
 
 	is_frame_ready = 0;
 	connected = 0;
@@ -219,6 +220,8 @@ int main (int argc, char *argv[])
   visReadParameters (vis_parameters_name, &lbm, &net, &vis);
   
   // OUCH!!!! This needs to be changed - SM
+  // These system calls will Crash on particular implementations
+  // of MPI, e.g. MPIVACH used on QueenBee/LONI.
   if (net.id == 0)
     {
       strcpy (rm_files, "rm ");
@@ -266,6 +269,8 @@ int main (int argc, char *argv[])
               int render_for_network_stream = 0;
 	      int write_snapshot_image = 0;
 
+	//	doRendering = 0;
+
 	      if (time_step % images_period == 0) {
                 write_snapshot_image = 1;
                 doRendering = 1;
@@ -300,6 +305,9 @@ int main (int argc, char *argv[])
 				doRendering = 0;
 				render_for_network_stream = 0;
 			} // if(local_connected) 
+
+		//	if( render_for_network_stream ) doRendering = 1;
+
 		} // if (net.id == 0)
 		  
 /*		  if (lock_return == EBUSY) {
@@ -313,9 +321,10 @@ int main (int argc, char *argv[])
 		   printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
 		} */
 
+if(net.id==0) sem_wait(&steering_var_lock);
+              UpdateSteerableParameters (&doRendering, &vis, &lbm);
+if(net.id==0) sem_post(&steering_var_lock);
 
-	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
-	      
 	      // printf (" doRendering: %i\n", doRendering); Between
 	      // the visRenderA/B calls, do not change any vis
 	      // parameters.
@@ -369,6 +378,8 @@ int main (int argc, char *argv[])
 
 	      if (write_snapshot_image)
 		{
+		printf("WRITING IMAGE SNAPSHOT\n");
+
 		  start_time = myClock ();
 		  
 		  char image_filename[255];
@@ -465,7 +476,7 @@ int main (int argc, char *argv[])
 		}
 	      if (net.id == 0)
 		{
-		  if (time_step%100 == 0)
+		  if (time_step%1 == 0)
 		    printf ("time step: %i\n", time_step);
 		}
 	      if (lbm.period >= 1000000)

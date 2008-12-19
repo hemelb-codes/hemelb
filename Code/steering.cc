@@ -108,8 +108,8 @@ void *hemeLB_network (void *ptr) {
 
   request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", steering_session_id_char, rank_0_host_details);
 
-//  while (1)
- //   {
+  while (1)
+    {
       setRenderState(0);
       
   //    pthread_mutex_lock (&LOCK);
@@ -286,7 +286,7 @@ void *hemeLB_network (void *ptr) {
 
     //    printf("Time to send frame = %0.6f s\n", frameTimeSend);
 
-        double timeDiff = (1.0/25.0) - frameTimeSend;
+        double timeDiff = (1.0/5.0) - frameTimeSend;
 
         if( timeDiff > 0.0 ) {
 
@@ -315,7 +315,7 @@ void *hemeLB_network (void *ptr) {
 
 //	pthread_join(steering_thread, NULL);
       
-  //  } // while(1)
+    } // while(1)
 }
 
 void* hemeLB_steer (void* ptr) {
@@ -373,8 +373,10 @@ void* hemeLB_steer (void* ptr) {
     
 //		pthread_mutex_lock(&steer_param_lock);
 
+                        sem_wait(&steering_var_lock);
 		for (int i = 0; i < STEERABLE_PARAMETERS; i++)
 			xdr_float(&xdr_steering_stream, &steer_par[i]);
+                        sem_post(&steering_var_lock);
 
 /*		printf("Got steering params ");
 		for (int i = 0; i < STEERABLE_PARAMETERS; i++) 
