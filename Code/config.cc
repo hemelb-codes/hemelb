@@ -54,6 +54,7 @@ pthread_mutex_t LOCK;
 pthread_cond_t network_send_frame;
 sem_t nrl;
 sem_t connected_sem;
+sem_t steering_var_lock;
 
 bool is_frame_ready;
 bool connected;
