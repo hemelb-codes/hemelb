@@ -1,15 +1,15 @@
+#define GL_GLEXT_PROTOTYPES
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <GL/glut.h>
 #include <rpc/xdr.h>
-
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
 #include <string>
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -21,17 +21,48 @@ using namespace std;
 #define GLUTCALLBACK
 #endif
 
-#define BUFFERS_SIZE   1000000
+#define EPSILON       1.0e-30
+#define DEG_TO_RAD    0.01745329
+
+#define SUCCESS                 1
+#define COORDS_BUFFERS          4
+#define COORDS_BUFFERS_SIZE_A   100000
+#define COORDS_BUFFERS_SIZE_B   10000
+#define ITERS_MAX               10
+#define VOXELS_X                200
+#define VOXELS_Y                200
+
+#define NULL_MENU_OPTION               0
+#define SEGMENT_1X                (1<<0)
+#define SEGMENT_2X                (1<<1)
+#define SEGMENT_3X                (1<<2)
+#define SEGMENT_4X                (1<<3)
+#define SEGMENT_5X                (1<<4)
+#define SEGMENT_6X                (1<<5)
+#define CHANGE_THRESHOLD          (1<<6)
+#define CHANGE_SLICE              (1<<7)
+#define ZOOM_SCENE                (1<<8)
+#define ROTATE_SCENE              (1<<9)
+#define CREATE_INLET             (1<<10)
+#define CREATE_OUTLET            (1<<11)
+#define CREATE_WALL              (1<<12)
+#define ZOOM_BOUNDARY            (1<<13)
+#define ROTATE_BOUNDARY          (1<<14)
+#define REVERSE_INLET_NORMAL     (1<<15)
+#define DELETE_BOUNDARY          (1<<16)
+#define CHANGE_VIS_MODE          (1<<17)
+#define SAVE_DATA                (1<<18)
+#define QUIT                     (1<<19)
+#define ACTIVE                         1
 
 
-float EPSILON = 1.0e-30F;
-float DEG_TO_RAD = 0.01745329F;
+#define visVoxelId(i,j,k,vis) (k * vis->input_slices + j) * vis->input_pixels_x + i
+
 
 unsigned int SOLID_TYPE  = 0U;
 unsigned int FLUID_TYPE  = 1U;
 unsigned int INLET_TYPE  = 2U;
 unsigned int OUTLET_TYPE = 3U;
-unsigned int NULL_TYPE   = 4U;
 
 unsigned int BOUNDARIES              = 3U;
 unsigned int INLET_BOUNDARY          = 0U;
@@ -52,19 +83,24 @@ unsigned int BOUNDARY_CONFIG_MASK = ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUND
 unsigned int BOUNDARY_DIR_MASK    = ((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
 unsigned int BOUNDARY_ID_MASK     = ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT;
 
-int e_x[] = { 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1};
-int e_y[] = { 0, 0, 1,-1, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1};
-int e_z[] = { 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1};
+int e[] = {
+   1, 0, 0,
+  -1, 0, 0,
+   0, 1, 0,
+   0,-1, 0,
+   0, 0, 1,
+   0, 0,-1,
+   1, 1, 1,
+  -1,-1,-1,
+   1, 1,-1,
+  -1,-1, 1,
+   1,-1, 1,
+  -1, 1,-1,
+   1,-1,-1,
+  -1, 1, 1
+};
 
 int inv_dir[] = {1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12};
-
-
-char *input_path;
-char *output_config_name;
-char *output_pars_name;
-char *checkpoint_name;
-
-char ppm_type[20];
 
 
 struct Screen
@@ -86,8 +122,6 @@ struct Screen
   int   pix_y;
 };
 
-Screen screen;
-
 
 struct Viewpoint
 {
@@ -100,31 +134,28 @@ struct Viewpoint
   
   float sin_2;
   float cos_2;
-};
-
-Viewpoint viewpoint;
-
-
-struct LinkedTriangle
-{
-  short int boundary_id;
-  short int triangle_id;
   
-  LinkedTriangle *next;
+  float dist;
 };
 
 
-struct DataBlock
+struct Site
 {
-  unsigned int *site_data;
+  unsigned int data;
+  unsigned short int iters;
   
-  short int *site_label;
+  char label;
+  char x, y, z;
+};
+
+
+struct Block
+{
+  Site *site;
   
-  unsigned short int *site_iters;
-  
-  LinkedTriangle *linked_triangle;
-  
-  int is_void;
+  short int is_void;
+  short int stack_t_id;
+  short int x, y, z;
 };
 
 
@@ -134,11 +165,23 @@ struct Vertex
 };
 
 
+struct Disc
+{
+  float sin_longitude, cos_longitude;
+  float sin_latitude, cos_latitude;
+  
+  float r2;
+};
+
+
 struct Triangle
 {
   Vertex v[3];
   
-  unsigned int boundary_id, boundary_dir, boundary_config;
+  Disc d;
+  
+  float pos_x, pos_y, pos_z;
+  float nor_x, nor_y, nor_z;
   
   float pressure_avg, pressure_amp, pressure_phs;
   
@@ -154,148 +197,156 @@ struct Boundary
 };
 
 
+struct StackTriangle
+{
+  short int b_id, t_id;
+  
+  int next;
+};
+
+
+struct Coords
+{
+  short int x, y, z;
+};
+
+
 struct ScreenVoxel
 {
+  float v_z;
   float site_z;
-  float vertex_z;
   
+  short int t_id;
   short int site_i, site_j, site_k;
   
-  short int triangle_id;
+  char b_id;
+  char v_id;
+};
+
+
+struct Mouse
+{
+  short int t_id;
+  char b_id;
+  char v_id;
   
-  char boundary_id;
-  char vertex_id;
+  short int x, y;
+  
+  short int state;
 };
 
 
-struct ScreenVoxelCoords
+struct Menu
 {
-  int i, j;
+  int id;
+  int option;
 };
 
 
-struct LastTriangle
-{
-  int triangle_id;
-  int boundary_id;
-};
-
-
-struct SiteLocation
-{
-  short int i, j, k;
-};
-
-struct BlockLocation
-{
-  short int i, j, k;
-};
-
-struct SuperficialSite
-{
-  short int i, j, k;
-  short int iters;
-};
-
-
-struct MyGL
+struct Vis
 {
   float scale_x, scale_y, scale_z;
   float scale_inv_x, scale_inv_y, scale_inv_z;
   
-  int input_image_pix_x, input_image_pix_y;
+  int input_pixels_x, input_pixels_y;
   int output_image_pix_x, output_image_pix_y;
   int input_slices, output_slices;
+  int pixel_depth;
+  
   int sites_x, sites_y, sites_z;
   int blocks_x, blocks_y, blocks_z;
   int blocks;
   int block_size;
   int shift;
   int sites_in_a_block;
-  int superficial_sites, superficial_sites_max;
-  int stored_blocks, stored_blocks_max;
+  
+  int sites;
+  int boundary_sites;
+  int stack_sites, stack_sites_max;
+  int stack_triangles, stack_triangles_max;
+  int sites_a;
+  int iters;
+
   
   int selected_pixel_x, selected_pixel_y, selected_slice;
   
   float selected_gray;
+  float gray_min, gray_max;
+  
+  int viewport_pixels_x;
+  int viewport_pixels_y;
+  
+  float background_r;
+  float background_g;
+  float background_b;
+  
+  float ortho_x, ortho_y;
+  float longitude, latitude;
+  float viewpoint_radius;
+  float viewport_radius;
+  float zoom;
+  float scene_center_x;
+  float scene_center_y;
+  float scene_center_z;
   
   float system_size;
   float dim_x, dim_y, dim_z;
   float half_dim_x, half_dim_y, half_dim_z;
-  float lattice_to_system;
   
-  DataBlock *data_block;
+  float slice_size, pixel_size;
+  float res_factor_par1, res_factor_par2;
+  
+  int res_factor;
+  int screen_voxels;
+  int smoothing_range;
+  int voxel_di, voxel_dj, voxel_dk;
+  int point_size;
+  int visualise_boundaries;
+  int mode;
+  
+  float segmentation_time, fps;
+  
+  
+  Site *stack_site;
+  
+  Block *block;
+  
+  StackTriangle *stack_triangle;
   
   unsigned short int *medical_data;
-  void *slice_row_data;
   
-  SuperficialSite *superficial_site;
+  Coords *site_coords[COORDS_BUFFERS];
   
   Boundary boundary[4];
   
-  ScreenVoxel *screen_to_boundaries_map;
+  ScreenVoxel *screen_voxel;
   
-  ScreenVoxel *screen_voxel_pointed;
+  Mouse mouse;
   
-  ScreenVoxelCoords screen_voxel_coords;
+  Menu menu;
   
   int *stored_block;
+  
+  char *input_path;
+  char *output_config;
+  char *output_pars;
+  char *checkpoint;
+  
+  vector<string> file_list;
 };
 
 
-MyGL mygl;
+Screen screen;
+
+Viewpoint viewpoint;
+
+Vis vis;
 
 
-LastTriangle last_triangle;
-
-
-SiteLocation *site_location_a;
-SiteLocation *site_location_b;
-
-
-int passive_mouse_pixel_i = -1;
-int passive_mouse_pixel_j = -1;
-
-
-int viewport_pixels_x = 512, viewport_pixels_y = 512;
-
-float background_r = 1.F, background_g = 1.F, background_b = 1.F;
-
-float ortho_x, ortho_y;
-
-float longitude = 100.F, latitude = 40.F;
-float viewpoint_radius;
-
-float zoom = 1.5F;
-
-float scene_center_x = 0.F;
-float scene_center_y = 0.F;
-float scene_center_z = 0.F;
-
-int screen_voxels = 100;
-
-int point_size = 2;
-int draw_triangles = 1;
-
-int display_id;
-
-int is_first_vis_change = 1;
-
-float screen_voxels_screen_max_inv_x, screen_voxels_screen_max_inv_y;
-
-
-float slice_size, pixel_size;
-float res_factor, res_factor_par1, res_factor_par2;
-
-int voxel_di, voxel_dj, voxel_dk;
-int smoothing_range;
-
-float gray_min, gray_max;
-
-vector<string> fileList;
-
-
-void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], float *length);
+void visInit (int argc, char *argv[], Vis *vis);
+void visEnd (Vis *vis);
+int visEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], Vis *vis);
+void visEstimateDiameter (int site_i, int site_j, int site_k, float nor[], float *diameter, Vis *vis);
 
 
 int min (int a, int b)
@@ -337,557 +388,15 @@ int nint (float a)
 }
 
 
-float myClock ()
+double myClock ()
 {
-  return (float)clock () * (1. / (float)CLOCKS_PER_SEC);
+  return (double)clock () * (1. / (double)CLOCKS_PER_SEC);
 }
 
 
-void myglDisplayString (int x, int y, char *string, void *font)
-{
-  char *allowed_char[] = {",",".","0","1","2","3","4","5","6","7","8","9","m","N","a"," "};
-  int length = (int)strlen(string);
-  
-  
-  glColor3f (0.F, 0.F, 0.F);
-  glRasterPos2f (x, y);
-  
-  
-  for (int i = 0; i < length; i++)
-    {
-      for (int j = 0; j < 16; j++)//sizeof(allowed_char) / sizeof(char)
-  	{
-  	  if (!strncmp (&string[i], allowed_char[j],1))
-  	    {
-  	      glutBitmapCharacter (font, string[i]);
-  	    }
-  	}
-    }
-  glEnd ();
-}
-
-
-void myglTriangleNormal (float  x0, float  y0, float  z0,
-			 float  x1, float  y1, float  z1,
-			 float  x2, float  y2, float  z2,
-			 float *nx, float *ny, float *nz)
-{
-  float dx1, dy1, dz1;
-  float dx2, dy2, dz2;
-  
-  float temp;
-  
-  
-  dx1 = x1 - x0;
-  dy1 = y1 - y0;
-  dz1 = z1 - z0;
-  dx2 = x2 - x0;
-  dy2 = y2 - y0;
-  dz2 = z2 - z0;
-  
-  *nx = dy2 * dz1 - dz2 * dy1;
-  *ny = dz2 * dx1 - dx2 * dz1;
-  *nz = dx2 * dy1 - dy2 * dx1;
-  
-  temp = 1.F / fmaxf(1.0e-30F, sqrtf(*nx * *nx + *ny * *ny + *nz * *nz));
-  
-  *nx *= temp;
-  *ny *= temp;
-  *nz *= temp;
-}
-
-
-float myglTriangleArea (float x1, float y1, float z1,
-			float x2, float y2, float z2,
-			float x3, float y3, float z3)
-{
-  float vx1, vy1, vz1, vx2, vy2, vz2, vx3, vy3, vz3;
-  float a, b, c, p;
-  
-  
-  vx1 = x2 - x1;
-  vy1 = y2 - y1;
-  vz1 = z2 - z1;
-  vx2 = x3 - x1;
-  vy2 = y3 - y1;
-  vz2 = z3 - z1;
-  vx3 = x3 - x2;
-  vy3 = y3 - y2;
-  vz3 = z3 - z2;
-  
-  a = sqrtf(vx1 * vx1 + vy1 * vy1 + vz1 * vz1);
-  b = sqrtf(vx2 * vx2 + vy2 * vy2 + vz2 * vz2);
-  c = sqrtf(vx3 * vx3 + vy3 * vy3 + vz3 * vz3);
-  
-  p = 0.5F * (a + b + c);
-  
-  return sqrtf(p * (p - a) * (p - b) * (p - c));
-}
-
-
-int myglRayTriangleIntersection (float  px, float  py, float  pz,
-				 float  nx, float  ny, float  nz,
-				 float vx1, float vy1, float vz1,
-				 float vx2, float vy2, float vz2,
-				 float vx3, float vy3, float vz3,
-				 float  *t, float  *v, float  *w)
-{
-  float ex1, ey1, ez1, ex2, ey2, ez2;
-  float det;
-  float x1, y1, z1, x2, y2, z2, x3, y3, z3;
-  
-  
-  ex1 = vx2 - vx1;
-  ey1 = vy2 - vy1;
-  ez1 = vz2 - vz1;
-  
-  ex2 = vx3 - vx1;
-  ey2 = vy3 - vy1;
-  ez2 = vz3 - vz1;
-  
-  x1 = ny * ez2 - nz * ey2;
-  y1 = nz * ex2 - nx * ez2;
-  z1 = nx * ey2 - ny * ex2;
-  
-  det = ex1 * x1 + ey1 * y1 + ez1 * z1;
-  
-  if (det > -1.e-3F && det < 1.e-30F)
-    {
-      return 0;
-    }
-  det = 1.F / det;
-  
-  x2 = px - vx1;
-  y2 = py - vy1;
-  z2 = pz - vz1;
-  
-  *v = (x2 * x1 + y2 * y1 + z2 * z1) * det;
-  
-  if (*v < 0.F || *v > 1.F)
-    {
-      return 0;
-    }
-  
-  x3 = y2 * ez1 - z2 * ey1;
-  y3 = z2 * ex1 - x2 * ez1;
-  z3 = x2 * ey1 - y2 * ex1;
-  
-  *w = (nx * x3 + ny * y3 + nz * z3) * det;
-  
-  if (*w < 0.F || *v + *w > 1.F)
-    {
-      return 0;
-    }
-
-  if ((*t = (ex2 * x3 + ey2 * y3 + ez2 * z3) * det) < EPSILON)
-    {
-      return 0;
-    }
-  
-  return 1;
-}
-
-
-void myglOpenWindow (int pixels_x, int pixels_y)
-{
-  screen.pix_x = pixels_x;
-  screen.pix_y = pixels_y;
-  
-  glutInitDisplayMode (GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-  glutInitWindowPosition (0, 0);
-  glutInitWindowSize (pixels_x, pixels_y);
-  
-  glutCreateWindow (" ");
-  
-  glEnable (GL_DEPTH_TEST);
-  glDisable (GL_BLEND);
-  glShadeModel (GL_FLAT);
-  glDisable(GL_DITHER);
-  
-  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-
-void myglProjection (float ortho_r, float ortho_g, float ortho_b,
-		     float ortho_x, float ortho_y,
-		     int pixels_x, int pixels_y,
-		     float ctr_x, float ctr_y, float ctr_z,
-		     float rad,
-		     float longitude, float latitude,
-		     float dist,
-		     float zoom)
-{
-  float temp;
-  
-  
-  screen.col_r = ortho_r;
-  screen.col_g = ortho_g;
-  screen.col_b = ortho_b;
-  
-  screen.max_x = ortho_x / zoom;
-  screen.max_y = ortho_y / zoom;
-  
-  screen.pix_x = pixels_x;
-  screen.pix_y = pixels_y;
-  
-  temp = longitude * 0.01745329F;
-  
-  viewpoint.sin_1 = sinf(temp);
-  viewpoint.cos_1 = cosf(temp);
-  
-  temp = latitude * 0.01745329F;
-  
-  viewpoint.sin_2 = sinf(temp);
-  viewpoint.cos_2 = cosf(temp);
-  
-  temp = rad * viewpoint.cos_2;
-  
-  viewpoint.pos_x = temp * viewpoint.sin_1 + ctr_x;
-  viewpoint.pos_y = rad  * viewpoint.sin_2 + ctr_y;
-  viewpoint.pos_z = temp * viewpoint.cos_1 + ctr_z;
-  
-  temp = dist / rad;
-  
-  screen.ctr_x = viewpoint.pos_x + temp * (ctr_x - viewpoint.pos_x);
-  screen.ctr_y = viewpoint.pos_y + temp * (ctr_y - viewpoint.pos_y);
-  screen.ctr_z = viewpoint.pos_z + temp * (ctr_z - viewpoint.pos_z);
-  
-  screen.zoom = zoom;
-  
-  glLoadIdentity();
-  glOrtho (-screen.max_x, screen.max_x,
-	   -screen.max_y, screen.max_y,
-	   -1.F, 1.F);
-  
-  glClearColor (ortho_r, ortho_g, ortho_b, 0.F);
-  
-  screen_voxels_screen_max_inv_x = screen_voxels / (2.F * screen.max_x);
-  screen_voxels_screen_max_inv_y = screen_voxels / (2.F * screen.max_y);
-}
-
-
-void myglTransformVertex (float  px1, float  py1, float  pz1,
-			  float *px2, float *py2, float *pz2)
-{
-  float x1, y1, z1, x2, y2, z2;
-  float temp;
-  
-  
-  x1 = px1 - viewpoint.pos_x;
-  y1 = py1 - viewpoint.pos_y;
-  z1 = pz1 - viewpoint.pos_z;
-  
-  temp = viewpoint.cos_1 * z1 + viewpoint.sin_1 * x1;
-  
-  x2 = viewpoint.cos_1 * x1 - viewpoint.sin_1 * z1;
-  y2 = viewpoint.cos_2 * y1 - viewpoint.sin_2 * temp;
-  z2 = viewpoint.cos_2 * temp + viewpoint.sin_2 * y1;
-  
-  *px2 = x2;
-  *py2 = y2;
-
-  if (z2 < 0.F)
-    {
-      z2 = -z2;
-      *pz2 = 1.F / (1.F + z2);
-    }
-  else
-    {
-      *pz2 = 1.F;
-    }
-}
-
-
-void myglAntiTransformVertex (float  px1, float  py1, float  pz1,
-			      float *px2, float *py2, float *pz2)
-{
-  float x1, y1, z1, x2, y2, z2;
-  float temp;
-  
-  
-  x1 = px1;
-  y1 = py1;
-  z1 = 1.F - 1.F / pz1;
-
-  temp = viewpoint.cos_2 * z1 - viewpoint.sin_2 * y1;
-
-  x2 = viewpoint.sin_1 * temp + viewpoint.cos_1 * x1;
-  y2 = viewpoint.sin_2 * z1   + viewpoint.cos_2 * y1;
-  z2 = viewpoint.cos_1 * temp - viewpoint.sin_1 * x1;
-
-  *px2 = x2 + viewpoint.pos_x;
-  *py2 = y2 + viewpoint.pos_y;
-  *pz2 = z2 + viewpoint.pos_z;
-}
-
-
-void SaveWindowImage (char *file_name)
-{
-  FILE *ppm_image_file_ptr = fopen (file_name, "wb");
-  
-  int pix_x, pix_y;
-  int i, j;
-  
-  unsigned char *data = NULL;  
-  unsigned char *data_p = NULL;
-  unsigned char *buffer;
-  
-  
-  glReadBuffer (GL_FRONT);
-  
-  pix_x = screen.pix_x;
-  pix_y = screen.pix_y;
-  
-  data = (unsigned char *)malloc(sizeof(unsigned char) * pix_x * pix_y * 3);
-  
-  buffer = (unsigned char *)malloc(sizeof(unsigned char) * pix_x * 3);
-  
-  data_p = data;
-
-  for (j = 0; j < pix_y; j++)
-    {
-      glReadPixels (0, j, pix_x, 1, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-      
-      for (i = 0; i < pix_x; i++)
-	{
-	  *data_p = buffer[ i * 3     ]; data_p++;
-	  *data_p = buffer[ i * 3 + 1 ]; data_p++;
-	  *data_p = buffer[ i * 3 + 2 ]; data_p++;
-	}
-    }
-  
-  free((unsigned char *)buffer);
-  
-  fprintf (ppm_image_file_ptr, "P6\n%i %i\n255\n", pix_x, pix_y);
-  
-  for (j = pix_y - 1; j >= 0; j--)
-    {
-      fwrite (data + j * pix_x * 3, 1, pix_x * 3, ppm_image_file_ptr);
-    }
-  
-  free((unsigned char *)data);
-  
-  fclose (ppm_image_file_ptr);
-}
-
-
-void Projection (void)
-{
-    myglProjection (background_r, background_g, background_b,
-		    ortho_x, ortho_y,
-		    viewport_pixels_x, viewport_pixels_y,
-		    scene_center_x, scene_center_y, scene_center_z,
-		    viewpoint_radius,    // distance of the viewpoint from the scene center
-		    longitude, latitude,    // polar and vertical angles defined by the viewpoint position
-		    0.5F * viewpoint_radius,    // distance of the screen from the viewpoint position
-		    zoom);
-}
-
-
-float RedComponent (int iters)
-{
-  iters = iters%400;
-  
-  if (iters > 200) iters = 400 - iters;
-  
-  return 0.005F * (float)iters;
-}
-
-
-int myglVoxelId (int i, int j, int k)
-{
-  return (i * mygl.input_image_pix_y + j) * mygl.input_slices + k;
-}
-
-
-void myglFromVoxelToSiteCoords (int pixel_i, int pixel_j, int slice_id,
-				int *site_i, int *site_j, int *site_k)
-{
-  *site_i = (int)(pixel_i  * mygl.scale_x);
-  *site_j = (int)(pixel_j  * mygl.scale_y);
-  *site_k = (int)(slice_id * mygl.scale_z);
-}
-
-
-void myglFromSiteToVoxelCoords (int site_i, int site_j, int site_k,
-				int *pixel_i, int *pixel_j, int *slice_id)
-{
-  *pixel_i  = (int)(site_i * mygl.scale_inv_x);
-  *pixel_j  = (int)(site_j * mygl.scale_inv_y);
-  *slice_id = (int)(site_k * mygl.scale_inv_z);
-}
-
-
-void myglFromSiteToGridCoords (int site_i, int site_j, int site_k, int *block_id, int *site_id)
-{
-  int i, j, k;
-  int ii, jj, kk;
-  
-  
-  i = site_i >> mygl.shift;
-  j = site_j >> mygl.shift;
-  k = site_k >> mygl.shift;
-  *block_id = (i * mygl.blocks_y + j) * mygl.blocks_z + k;
-  
-  ii = site_i - (i << mygl.shift);
-  jj = site_j - (j << mygl.shift);
-  kk = site_k - (k << mygl.shift);
-  *site_id = (((ii << mygl.shift) + jj) << mygl.shift) + kk;
-}
-
-/*
-float myglInterpolatedGray (int site_i, int site_j, int site_k)
-{
-  float gray[2][2][2];
-  float x, y, z;
-  float interpolated_gray;
-  
-  int voxel_i[2], voxel_j[2], voxel_k[2];
-  int i, j, k;
-  
-  
-  x = (float)site_i * mygl.scale_inv_x;
-  y = (float)site_j * mygl.scale_inv_y;
-  z = (float)site_k * mygl.scale_inv_z;
-  
-  voxel_i[0] = (int)x;
-  voxel_j[0] = (int)y;
-  voxel_k[0] = (int)z;
-  
-  x -= (float)voxel_i[0];
-  y -= (float)voxel_j[0];
-  z -= (float)voxel_k[0];
-  
-  voxel_i[1] = min(voxel_i[0] + 1, mygl.input_image_pix_x - 1);
-  voxel_j[1] = min(voxel_j[0] + 1, mygl.input_image_pix_y - 1);
-  voxel_k[1] = min(voxel_k[0] + 1, mygl.input_slices - 1);
-  
-  for (i = 0; i < 2; i++)
-    {
-      for (j = 0; j < 2; j++)
-	{
-	  for (k = 0; k < 2; k++)
-	    {
-	      gray[i][j][k] = (float)mygl.medical_data[ myglVoxelId(voxel_i[i],voxel_j[j],voxel_k[k]) ];
-	    }
-	}
-    }
-  float gray_00z = (1.F - z) * gray[0][0][0] + z * gray[0][0][1];
-  float gray_01z = (1.F - z) * gray[0][1][0] + z * gray[0][1][1];
-  float gray_10z = (1.F - z) * gray[1][0][0] + z * gray[1][0][1];
-  float gray_11z = (1.F - z) * gray[1][1][0] + z * gray[1][1][1];
-  
-  float gray_0y = (1.F - y) * gray_00z + y * gray_01z;
-  float gray_1y = (1.F - y) * gray_10z + y * gray_11z;
-  
-  interpolated_gray = (1.F - x) * gray_0y + x * gray_1y;
-  
-  return interpolated_gray;
-}
-*/
-
-float myglInterpolatedGray (int site_i, int site_j, int site_k)
-{
-  float x, y, z;
-  float dx, dy, dz;
-  float weight, sum1, sum2;
-  float interpolated_gray;
-  
-  int voxel_i, voxel_j, voxel_k;
-  int i, j, k;
-  
-  
-  x = site_i + 0.5F;
-  y = site_j + 0.5F;
-  z = site_k + 0.5F;
-  
-  voxel_i = (int)((float)site_i * mygl.scale_inv_x);
-  voxel_j = (int)((float)site_j * mygl.scale_inv_y);
-  voxel_k = (int)((float)site_k * mygl.scale_inv_z);
-  
-  sum1 = sum2 = 0.F;
-  
-  for (i = max(0, voxel_i-voxel_di); i <= min(voxel_i+voxel_di, mygl.input_image_pix_x-1); i++)
-    {
-      dx = (float)(i + 0.5F) * mygl.scale_x - x;
-      dx *= dx;
-      
-      for (j = max(0, voxel_j-voxel_dj); j <= min(voxel_j+voxel_dj, mygl.input_image_pix_y-1); j++)
-	{
-	  dy = (float)(j + 0.5F) * mygl.scale_y - y;
-	  dy *= dy;
-	  
-	  for (k = max(0, voxel_k-voxel_dk); k <= min(voxel_k+voxel_dk, mygl.input_slices-1); k++)
-	    {
-	      dz = (float)(k + 0.5F) * mygl.scale_z - z;
-	      dz *= dz;
-	      
-	      weight = dx + dy + dz;
-	      
-	      if (weight > res_factor_par1) continue;
-	      
-	      weight = 1.F - weight * res_factor_par2;
-	      sum1 += weight * (float)mygl.medical_data[ myglVoxelId(i, j, k) ];
-	      sum2 += weight;
-	    }
-	}
-    }
-  interpolated_gray = sum1 / sum2;
-  
-  return interpolated_gray;
-}
-
-
-void myglSetSmoothingRange (int s_range, float res_factor)
-{
-  smoothing_range = s_range;
-  
-  voxel_di = smoothing_range;
-  voxel_dj = voxel_di;
-  voxel_dk = nint(voxel_di * pixel_size / slice_size);
-  
-  res_factor_par1 = voxel_di * voxel_di * res_factor * res_factor;
-  res_factor_par2 = 1.F / res_factor_par1;
-}
-
-
-unsigned int *myglSiteDataPointer (int site_i, int site_j, int site_k, MyGL *mygl)
-{
-  int i, j, k, ii, jj, kk;
-
-  DataBlock *data_block_p;
-
-  
-  if (site_i <= -1 || site_i >= mygl->sites_x ||
-      site_j <= -1 || site_j >= mygl->sites_y ||
-      site_k <= -1 || site_k >= mygl->sites_z)
-    {
-      return NULL;
-    }
-  i = site_i >> mygl->shift;
-  j = site_j >> mygl->shift;
-  k = site_k >> mygl->shift;
-  
-  data_block_p = &mygl->data_block[(i * mygl->blocks_y + j) * mygl->blocks_z + k];
-  
-  if (data_block_p->site_data == NULL)
-    {
-      return NULL;   // an empty block (solid nodes region) is addressed
-    }
-  else
-    {
-      ii = site_i - (i << mygl->shift);
-      jj = site_j - (j << mygl->shift);
-      kk = site_k - (k << mygl->shift);
-      
-      return &data_block_p->site_data[(((ii << mygl->shift) + jj) << mygl->shift) + kk];
-    }
-}
-
-
-void myglRotate (float x0, float y0, float z0,
-		 float longitude, float latitude,
-		 float *x1, float *y1, float *z1)
+void visRotate (float x0, float y0, float z0,
+		float longitude, float latitude,
+		float *x1, float *y1, float *z1)
 {
   float sn1, cs1;
   float sn2, cs2;
@@ -907,9 +416,9 @@ void myglRotate (float x0, float y0, float z0,
 }
 
 
-void myglRotate (float x0, float y0, float z0,
-		 float sn1, float cs1, float sn2, float cs2,
-		 float *x1, float *y1, float *z1)
+void visRotate (float x0, float y0, float z0,
+		float sn1, float cs1, float sn2, float cs2,
+		float *x1, float *y1, float *z1)
 {
   float temp;
   
@@ -922,9 +431,9 @@ void myglRotate (float x0, float y0, float z0,
 }
 
 
-void myglAntiRotate (float x0, float y0, float z0,
-		     float longitude, float latitude,
-		     float *x1, float *y1, float *z1)
+void visAntiRotate (float x0, float y0, float z0,
+		    float longitude, float latitude,
+		    float *x1, float *y1, float *z1)
 {
   float sn1, cs1;
   float sn2, cs2;
@@ -944,197 +453,661 @@ void myglAntiRotate (float x0, float y0, float z0,
 }
 
 
-void EditLastTriangle (float t_x, float t_y, float longitude, float latitude, float size_factor)
+void visAntiRotate (float x0, float y0, float z0,
+		    float sn1, float cs1, float sn2, float cs2,
+		    float *x1, float *y1, float *z1)
+{
+  float temp;
+  
+  
+  temp = cs1 * z0 + sn1 * x0;
+  
+  *x1 = cs1 * x0   - sn1 * z0;
+  *y1 = cs2 * y0   - sn2 * temp;
+  *z1 = cs2 * temp + sn2 * y0;
+}
+
+
+void visTriangleCenter (Triangle *t_p, float *cx, float *cy, float *cz)
+{
+  *cx = (1.F/3.F) * (t_p->v[0].pos_x + t_p->v[1].pos_x + t_p->v[2].pos_x);
+  *cy = (1.F/3.F) * (t_p->v[0].pos_y + t_p->v[1].pos_y + t_p->v[2].pos_y);
+  *cz = (1.F/3.F) * (t_p->v[0].pos_z + t_p->v[1].pos_z + t_p->v[2].pos_z);
+}
+
+
+void visTriangleNormal (Triangle *t_p, float *nx, float *ny, float *nz)
+{
+  float dx1, dy1, dz1;
+  float dx2, dy2, dz2;
+  
+  float temp;
+  
+  
+  dx1 = t_p->v[1].pos_x - t_p->v[0].pos_x;
+  dy1 = t_p->v[1].pos_y - t_p->v[0].pos_y;
+  dz1 = t_p->v[1].pos_z - t_p->v[0].pos_z;
+  dx2 = t_p->v[2].pos_x - t_p->v[0].pos_x;
+  dy2 = t_p->v[2].pos_y - t_p->v[0].pos_y;
+  dz2 = t_p->v[2].pos_z - t_p->v[0].pos_z;
+  
+  *nx = dy2 * dz1 - dz2 * dy1;
+  *ny = dz2 * dx1 - dx2 * dz1;
+  *nz = dx2 * dy1 - dy2 * dx1;
+  
+  temp = 1.F / fmaxf(1.0e-30F, sqrtf(*nx * *nx + *ny * *ny + *nz * *nz));
+  
+  *nx *= temp;
+  *ny *= temp;
+  *nz *= temp;
+}
+
+
+float visTriangleRadius (Triangle *t_p)
 {
   float cx, cy, cz;
-  float nx0, ny0, nz0;
-  float nx1, ny1, nz1;
-  float x, y, z;
-  
-  int i;
-  
-  Triangle *triangle_p;
+  float dx1, dy1, dz1, dx2, dy2, dz2, dx3, dy3, dz3;
+  float mx1, my1, mz1, mx2, my2, mz2, mx3, my3, mz3;
+  float d1, d2, d3;
   
   
-  triangle_p = &mygl.boundary[ last_triangle.boundary_id ].triangle[ last_triangle.triangle_id ];
+  mx1 = 0.5F * (t_p->v[1].pos_x + t_p->v[0].pos_x);
+  my1 = 0.5F * (t_p->v[1].pos_y + t_p->v[0].pos_y);
+  mz1 = 0.5F * (t_p->v[1].pos_z + t_p->v[0].pos_z);
+  mx2 = 0.5F * (t_p->v[2].pos_x + t_p->v[0].pos_x);
+  my2 = 0.5F * (t_p->v[2].pos_y + t_p->v[0].pos_y);
+  mz2 = 0.5F * (t_p->v[2].pos_z + t_p->v[0].pos_z);
+  mx3 = 0.5F * (t_p->v[2].pos_x + t_p->v[1].pos_x);
+  my3 = 0.5F * (t_p->v[2].pos_y + t_p->v[1].pos_y);
+  mz3 = 0.5F * (t_p->v[2].pos_z + t_p->v[1].pos_z);
   
-  cx = (1.F / 3.F) * (triangle_p->v[0].pos_x + triangle_p->v[1].pos_x + triangle_p->v[2].pos_x);
-  cy = (1.F / 3.F) * (triangle_p->v[0].pos_y + triangle_p->v[1].pos_y + triangle_p->v[2].pos_y);
-  cz = (1.F / 3.F) * (triangle_p->v[0].pos_z + triangle_p->v[1].pos_z + triangle_p->v[2].pos_z);
+  visTriangleCenter (t_p, &cx, &cy, &cz);
   
-  for (i = 0; i < 3; i++)
+  dx1 = mx1 - cx;
+  dy1 = my1 - cy;
+  dz1 = mz1 - cz;
+  dx2 = mx2 - cx;
+  dy2 = my2 - cy;
+  dz2 = mz2 - cz;
+  dx3 = mx3 - cx;
+  dy3 = my3 - cy;
+  dz3 = mz3 - cz;
+  
+  d1 = dx1 * dx1 + dy1 * dy1 + dy1 * dy1;
+  d2 = dx2 * dx2 + dy2 * dy2 + dy2 * dy2;
+  d3 = dx3 * dx3 + dy3 * dy3 + dy3 * dy3;
+  
+  
+  if (d1 < d2 && d1 < d3)
     {
-      nx0 = triangle_p->v[i].pos_x - cx;
-      ny0 = triangle_p->v[i].pos_y - cy;      
-      nz0 = triangle_p->v[i].pos_z - cz;
-      
-      myglRotate (nx0, ny0, nz0, longitude, latitude, &nx1, &ny1, &nz1);
-      
-      triangle_p->v[i].pos_x = size_factor * nx1 + cx;
-      triangle_p->v[i].pos_y = size_factor * ny1 + cy;
-      triangle_p->v[i].pos_z = size_factor * nz1 + cz;
-      
-      myglTransformVertex (triangle_p->v[i].pos_x, triangle_p->v[i].pos_y, triangle_p->v[i].pos_z, &x, &y, &z);
-      
-      x += t_x;
-      y += t_y;
-      
-      myglAntiTransformVertex (x, y, z, &triangle_p->v[i].pos_x, &triangle_p->v[i].pos_y, &triangle_p->v[i].pos_z);
+      return sqrtf(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
     }
-}
-
-
-void InvertLastTriangleNormal (void)
-{
-  Triangle *triangle_p;
-  
-  
-  triangle_p = &mygl.boundary[ last_triangle.boundary_id ].triangle[ last_triangle.triangle_id ];
-  triangle_p->normal_sign = -triangle_p->normal_sign;
-}
-
-
-void ChangeTrianglePars (int boundary_id, int triangle_id, float dp_avg, float dp_amp, float dp_phs)
-{
-  Triangle *triangle_p = &mygl.boundary[ boundary_id ].triangle[ triangle_id ];
-  
-  triangle_p->pressure_avg += dp_avg;
-  triangle_p->pressure_avg = fmaxf (0.0, triangle_p->pressure_avg);
-  
-  triangle_p->pressure_amp += dp_amp;
-  triangle_p->pressure_amp = fminf (triangle_p->pressure_avg, triangle_p->pressure_amp);
-  
-  triangle_p->pressure_phs += dp_phs;
-  triangle_p->pressure_phs = fmaxf (0.0, triangle_p->pressure_phs);
-  triangle_p->pressure_phs = fminf (180.0, triangle_p->pressure_phs);
-}
-
-
-void DisplayTrianglePars (int boundary_id, int triangle_id)
-{
-  float x1, y1, z1;
-  float x2, y2;
-  
-  int n;
-  
-  char pars_string[256];
-  char pressure_avg[256];
-  char pressure_amp[256];
-  char pressure_phs[256];
-  
-  Triangle *triangle_p;
-
-  
-  x2 = -1.e+30F;
-  y2 = -1.e+30F;
-  
-  triangle_p = &mygl.boundary[ boundary_id ].triangle[ triangle_id ];
-  
-  for (n = 0; n < 3; n++)
+  else if (d2 < d1 && d2 < d3)
     {
-      myglTransformVertex (triangle_p->v[n].pos_x, triangle_p->v[n].pos_y, triangle_p->v[n].pos_z, &x1, &y1, &z1);
-      
-      x2 = fmaxf(x2, x1);
-      y2 = fmaxf(y2, y1);
-    }
-  sprintf (pressure_avg, "%.0f,", triangle_p->pressure_avg);
-  sprintf (pressure_amp, "%.1f,", triangle_p->pressure_amp);
-  sprintf (pressure_phs, "%.0f", triangle_p->pressure_phs);
-  
-  strcpy (pars_string, pressure_avg);
-  strcat (pars_string, pressure_amp);
-  strcat (pars_string, pressure_phs);
-  
-  myglDisplayString ((int)x2, (int)y2, pars_string, GLUT_BITMAP_TIMES_ROMAN_24);
-}
-
-
-void DisplaySiteData (int site_i, int site_j, int site_k)
-{
-  float x1, y1, z1;
-  float x2, y2, z2;
-  float nor[3];
-  float calibre;
-  
-  char indices_string[256];
-  char coord_i[256];
-  char coord_j[256];
-  char coord_k[256];
-  char length[256];
-  
-  
-  x1 = (float)site_i * mygl.lattice_to_system - mygl.half_dim_x;
-  y1 = (float)site_j * mygl.lattice_to_system - mygl.half_dim_y;
-  z1 = (float)site_k * mygl.lattice_to_system - mygl.half_dim_z;
-  
-  myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
-  
-  myglEstimateBoundaryNormal (site_i, site_j, site_k, nor, &calibre);
-  
-  if (calibre >= 0.F)
-    {
-      calibre *= pixel_size / res_factor;
-      sprintf (length, "%.3f mm", calibre);
+      return sqrtf(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
     }
   else
     {
-      sprintf (length, "NaN");
+      return sqrtf(dx3 * dx3 + dy3 * dy3 + dz3 * dz3);
     }
-  sprintf (coord_i, "%i,", site_i);
-  sprintf (coord_j, "%i,", site_j);
-  sprintf (coord_k, "%i,", site_k);
-  
-  strcat (indices_string, coord_i);
-  strcat (indices_string, coord_j);
-  strcat (indices_string, coord_k);
-  strcat (indices_string, length);
-  
-  myglDisplayString ((int)x2, (int)y2, indices_string, GLUT_BITMAP_TIMES_ROMAN_24);
 }
-  
 
-void DeleteLastTriangle (void)
+
+float visTriangleArea (Triangle *t_p)
 {
-  int n;
-  
-  Boundary *boundary_p;
-  
-  Triangle *triangle1, *triangle2;
+  float dx1, dy1, dz1, dx2, dy2, dz2, dx3, dy3, dz3;
+  float a, b, c, p;
   
   
-  boundary_p = &mygl.boundary[ last_triangle.boundary_id ];
+  dx1 = t_p->v[1].pos_x - t_p->v[0].pos_x;
+  dy1 = t_p->v[1].pos_y - t_p->v[0].pos_y;
+  dz1 = t_p->v[1].pos_z - t_p->v[0].pos_z;
+  dx2 = t_p->v[2].pos_x - t_p->v[0].pos_x;
+  dy2 = t_p->v[2].pos_y - t_p->v[0].pos_y;
+  dz2 = t_p->v[2].pos_z - t_p->v[0].pos_z;
+  dx3 = t_p->v[2].pos_x - t_p->v[1].pos_x;
+  dy3 = t_p->v[2].pos_y - t_p->v[1].pos_y;
+  dz3 = t_p->v[2].pos_z - t_p->v[1].pos_z;
   
-  if (last_triangle.triangle_id == --boundary_p->triangles)
-    {
-      return;
-    }
-  triangle2 = &boundary_p->triangle[ last_triangle.triangle_id ];
-  triangle1 = &boundary_p->triangle[ boundary_p->triangles ];
+  a = sqrtf(dx1 * dx1 + dy1 * dy1 + dz1 * dz1);
+  b = sqrtf(dx2 * dx2 + dy2 * dy2 + dz2 * dz2);
+  c = sqrtf(dx3 * dx3 + dy3 * dy3 + dz3 * dz3);
   
-  for (n = 0; n < 3; n++)
-    {
-      triangle2->v[n].pos_x = triangle1->v[n].pos_x;
-      triangle2->v[n].pos_y = triangle1->v[n].pos_y;
-      triangle2->v[n].pos_z = triangle1->v[n].pos_z;
-    }
-  triangle2->boundary_id     = triangle1->boundary_id;
-  triangle2->boundary_dir    = triangle1->boundary_dir;
-  triangle2->boundary_config = triangle1->boundary_config;
+  p = 0.5F * (a + b + c);
   
-  triangle2->pressure_avg = triangle1->pressure_avg;
-  triangle2->pressure_amp = triangle1->pressure_amp;
-  triangle2->pressure_phs = triangle1->pressure_phs;
-  
-  triangle2->normal_sign = triangle1->normal_sign;
+  return sqrtf(p * (p - a) * (p - b) * (p - c));
 }
 
 
-void myglInitRayTracing (void)
+int visRayVsTriangle (Triangle *t_p,
+		      float px, float py, float pz,
+		      float nx, float ny, float nz,
+		      float t_max, float *t)
+{
+  float ex1, ey1, ez1, ex2, ey2, ez2;
+  float det;
+  float x1, y1, z1, x2, y2, z2, x3, y3, z3;
+  float v, w;
+  
+  
+  ex1 = t_p->v[1].pos_x - t_p->v[0].pos_x;
+  ey1 = t_p->v[1].pos_y - t_p->v[0].pos_y;
+  ez1 = t_p->v[1].pos_z - t_p->v[0].pos_z;
+  ex2 = t_p->v[2].pos_x - t_p->v[0].pos_x;
+  ey2 = t_p->v[2].pos_y - t_p->v[0].pos_y;
+  ez2 = t_p->v[2].pos_z - t_p->v[0].pos_z;
+  
+  x1 = ny * ez2 - nz * ey2;
+  y1 = nz * ex2 - nx * ez2;
+  z1 = nx * ey2 - ny * ex2;
+  
+  det = ex1 * x1 + ey1 * y1 + ez1 * z1;
+  
+  if (det > -1.e-3F && det < 1.e-30F)
+    {
+      return !SUCCESS;
+    }
+  det = 1.F / det;
+  
+  x2 = px - t_p->v[0].pos_x;
+  y2 = py - t_p->v[0].pos_y;
+  z2 = pz - t_p->v[0].pos_z;
+  
+  v = (x2 * x1 + y2 * y1 + z2 * z1) * det;
+  
+  if (v < 0.F || v > 1.F)
+    {
+      return !SUCCESS;
+    }
+  
+  x3 = y2 * ez1 - z2 * ey1;
+  y3 = z2 * ex1 - x2 * ez1;
+  z3 = x2 * ey1 - y2 * ex1;
+  
+  w = (nx * x3 + ny * y3 + nz * z3) * det;
+  
+  if (w < 0.F || v + w > 1.F)
+    {
+      return !SUCCESS;
+    }
+
+  if ((*t = (ex2 * x3 + ey2 * y3 + ez2 * z3) * det) < EPSILON)
+    {
+      return !SUCCESS;
+    }
+  if (*t > t_max)
+    {
+      return !SUCCESS;
+    }
+  return SUCCESS;
+}
+
+
+int visRayVsDisc (Triangle *t_p,
+		  float x1, float y1, float z1,
+		  float x2, float y2, float z2,
+		  float t_max, float *t)
+{
+  float x3, y3, z3;
+  float x4, y4, z4;
+  float x, y;
+  
+  
+  x1 -= t_p->pos_x;
+  y1 -= t_p->pos_y;
+  z1 -= t_p->pos_z;
+  
+  x2 -= t_p->pos_x;
+  y2 -= t_p->pos_y;
+  z2 -= t_p->pos_z;
+  
+  visAntiRotate (x1, y1, z1,
+		 t_p->d.sin_longitude, t_p->d.cos_longitude,
+		 t_p->d.sin_latitude,  t_p->d.cos_latitude,
+		 &x3, &y3, &z3);
+  
+  visAntiRotate (x2, y2, z2,
+		 t_p->d.sin_longitude, t_p->d.cos_longitude,
+		 t_p->d.sin_latitude,  t_p->d.cos_latitude,
+		 &x4, &y4, &z4);
+  
+  if ((z3 > 0.F && z4 > 0.F) ||
+      (z3 < 0.F && z4 < 0.F))
+    {
+      return !SUCCESS;
+    }
+  *t = z3 / (z3 - z4);
+  
+  if (*t >= t_max)
+    {
+      return !SUCCESS;
+    }
+  x = (1.F - *t) * x3 + *t * x4;
+  y = (1.F - *t) * y3 + *t * y4;
+  
+  if (x * x + y * y > t_p->d.r2)
+    {
+      return !SUCCESS;
+    }
+  return SUCCESS;
+}
+
+
+void visOpenWindow (int pixels_x, int pixels_y)
+{
+  screen.pix_x = pixels_x;
+  screen.pix_y = pixels_y;
+  
+  glutInitDisplayMode (GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
+  glutInitWindowPosition (0, 0);
+  glutInitWindowSize (pixels_x - 1, pixels_y - 1);
+  
+  glutCreateWindow (" ");
+  
+  glEnable (GL_DEPTH_TEST);
+  glDisable (GL_BLEND);
+  glShadeModel (GL_SMOOTH);
+  glDisable(GL_DITHER);
+  glDisable (GL_LIGHTING);
+  
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+
+void visProjection (Vis *vis)
+{
+  float temp;
+  
+  
+  screen.col_r = vis->background_r;
+  screen.col_g = vis->background_g;
+  screen.col_b = vis->background_b;
+  
+  screen.max_x = vis->ortho_x / vis->zoom;
+  screen.max_y = vis->ortho_y / vis->zoom;
+  
+  screen.pix_x = vis->viewport_pixels_x;
+  screen.pix_y = vis->viewport_pixels_y;
+  
+  temp = vis->longitude * DEG_TO_RAD;
+  
+  viewpoint.sin_1 = sinf(temp);
+  viewpoint.cos_1 = cosf(temp);
+  
+  temp = vis->latitude * DEG_TO_RAD;
+  
+  viewpoint.sin_2 = sinf(temp);
+  viewpoint.cos_2 = cosf(temp);
+  
+  temp = vis->viewpoint_radius * viewpoint.cos_2;
+  
+  viewpoint.pos_x = temp * viewpoint.sin_1 + vis->scene_center_x;
+  viewpoint.pos_y = vis->viewpoint_radius * viewpoint.sin_2 + vis->scene_center_y;
+  viewpoint.pos_z = temp * viewpoint.cos_1 + vis->scene_center_z;
+  
+  viewpoint.dist = vis->viewport_radius;
+  
+  temp = vis->viewport_radius / vis->viewpoint_radius;
+  
+  screen.ctr_x = viewpoint.pos_x + temp * (vis->scene_center_x - viewpoint.pos_x);
+  screen.ctr_y = viewpoint.pos_y + temp * (vis->scene_center_y - viewpoint.pos_y);
+  screen.ctr_z = viewpoint.pos_z + temp * (vis->scene_center_z - viewpoint.pos_z);
+  
+  screen.zoom = vis->zoom;
+  
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  
+  glFrustum (-screen.max_x, screen.max_x,
+	     -screen.max_y, screen.max_y,
+	     vis->viewport_radius, 1.0e+30F);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  
+  gluLookAt (viewpoint.pos_x, viewpoint.pos_y, viewpoint.pos_z, 
+	     screen.ctr_x, screen.ctr_y, screen.ctr_z,
+	     0.0F, 1.0F, 0.0F);
+  
+  glClearColor (screen.col_r, screen.col_g, screen.col_b, 0.F);
+}
+
+
+void visProject (float  px1, float  py1, float  pz1,
+		 float *px2, float *py2, float *pz2)
+{
+  float x1, y1, z1, x2, y2, z2;
+  float temp;
+  
+  
+  x1 = px1 - viewpoint.pos_x;
+  y1 = py1 - viewpoint.pos_y;
+  z1 = pz1 - viewpoint.pos_z;
+  
+  temp = viewpoint.cos_1 * z1 + viewpoint.sin_1 * x1;
+  
+  x2 = viewpoint.cos_1 * x1 - viewpoint.sin_1 * z1;
+  y2 = viewpoint.cos_2 * y1 - viewpoint.sin_2 * temp;
+  z2 = viewpoint.cos_2 * temp + viewpoint.sin_2 * y1;
+  
+  temp = viewpoint.dist / (*pz2 = -z2);
+  
+  *px2 = temp * x2;
+  *py2 = temp * y2;
+}
+
+
+void visAntiProject (float  px1, float  py1, float  pz1,
+		     float *px2, float *py2, float *pz2)
+{
+  float x1, y1, z1, x2, y2, z2;
+  float temp;
+  
+  
+  temp = pz1 / viewpoint.dist;
+  
+  x1 = temp * px1;
+  y1 = temp * py1;
+  z1 = -pz1;
+  
+  temp = viewpoint.cos_2 * z1 - viewpoint.sin_2 * y1;
+  
+  x2 = viewpoint.sin_1 * temp + viewpoint.cos_1 * x1;
+  y2 = viewpoint.sin_2 * z1   + viewpoint.cos_2 * y1;
+  z2 = viewpoint.cos_1 * temp - viewpoint.sin_1 * x1;
+  
+  *px2 = x2 + viewpoint.pos_x;
+  *py2 = y2 + viewpoint.pos_y;
+  *pz2 = z2 + viewpoint.pos_z;
+}
+
+
+void visSaveWindowImage (char *file_name)
+{
+  FILE *ppm_image_file = fopen (file_name, "wb");
+  
+  int pix_x, pix_y;
+  int i, j;
+  
+  unsigned char *image_data = NULL;  
+  unsigned char *image_data_p = NULL;
+  unsigned char *row_data;
+  
+  
+  glReadBuffer (GL_FRONT);
+  
+  pix_x = screen.pix_x;
+  pix_y = screen.pix_y;
+  
+  image_data = (unsigned char *)malloc(sizeof(unsigned char) * pix_x * pix_y * 3);
+  
+  row_data = (unsigned char *)malloc(sizeof(unsigned char) * pix_x * 3);
+  
+  image_data_p = image_data;
+
+  for (j = 0; j < pix_y; j++)
+    {
+      glReadPixels (0, j, pix_x, 1, GL_RGB, GL_UNSIGNED_BYTE, row_data);
+      
+      for (i = 0; i < pix_x; i++)
+	{
+	  *image_data_p++ = row_data[ i*3   ];
+	  *image_data_p++ = row_data[ i*3+1 ];
+	  *image_data_p++ = row_data[ i*3+2 ];
+	}
+    }
+  
+  free((unsigned char *)row_data);
+  
+  fprintf (ppm_image_file, "P6\n%i %i\n255\n", pix_x, pix_y);
+  
+  for (j = pix_y - 1; j >= 0; j--)
+    {
+      fwrite (image_data + j * pix_x * 3, 1, pix_x * 3, ppm_image_file);
+    }
+  
+  free((unsigned char *)image_data);
+  
+  fclose (ppm_image_file);
+}
+
+
+void visColorPalette (int iters, int res_factor, float *r, float *g, float *b)
+{
+  float t;
+  
+  
+  iters = (iters / res_factor) % 200;
+  
+  if (iters > 100) iters = 200 - iters;
+  
+  t = 0.01F * (float)iters;
+  
+  if (t > 1.F)
+    {
+      *r = 1.F;
+      *g = 0.F;
+      *b = 0.F;
+    }
+  else if (t > 0.0F && t <= 0.25F)
+    {
+      *r = 0.F;
+      *g = 4.F * t;
+      *b = 1.F;
+    }
+  else if (t > 0.25F && t <= 0.5F)
+    {
+      *r = 0.F;
+      *g = 1.F;
+      *b = 2.F - 4.F * t;
+    }
+  else if (t > 0.5F && t <= 0.75F)
+    {
+      *r = 4.F * (t - 0.5F);
+      *g = 1.F;
+      *b = 0.F;
+    }
+  else if (t > 0.75F && t <= 1.0F)
+    {
+      *r = 1.F;
+      *g = 4.F - 4.F * t;
+      *b = 0.F;
+    }
+  else
+    {
+      *r = 0.F;
+      *g = 0.F;
+      *b = 1.F;
+    }
+}
+
+
+void visFromVoxelToSiteCoords (int pixel_i, int pixel_j, int slice_id,
+			       int *site_i, int *site_j, int *site_k, Vis *vis)
+{
+  *site_i = (int)(pixel_i  * vis->scale_x);
+  *site_j = (int)(pixel_j  * vis->scale_y);
+  *site_k = (int)(slice_id * vis->scale_z);
+}
+
+
+void visFromSiteToVoxelCoords (int site_i, int site_j, int site_k,
+			       int *pixel_i, int *pixel_j, int *slice_id, Vis *vis)
+{
+  *pixel_i  = (int)(site_i * vis->scale_inv_x);
+  *pixel_j  = (int)(site_j * vis->scale_inv_y);
+  *slice_id = (int)(site_k * vis->scale_inv_z);
+}
+
+
+void visFromSiteToGridCoords (int site_i, int site_j, int site_k,
+			      int *si, int *sj, int *sk,
+			      int *block_id, int *site_id, Vis *vis)
+{
+  int i, j, k;
+  
+  
+  i = site_i >> vis->shift;
+  j = site_j >> vis->shift;
+  k = site_k >> vis->shift;
+  *block_id = (i * vis->blocks_y + j) * vis->blocks_z + k;
+  
+  *si = site_i - (i << vis->shift);
+  *sj = site_j - (j << vis->shift);
+  *sk = site_k - (k << vis->shift);
+  *site_id = (((*si << vis->shift) + *sj) << vis->shift) + *sk;
+}
+
+
+float visInterpolatedGray (int site_i, int site_j, int site_k, Vis *vis)
+{
+  float gray[2][2][2];
+  float x, y, z;
+  
+  int voxel_i[2], voxel_j[2], voxel_k[2];
+  int i, j, k;
+  
+  
+  voxel_i[0] = (int)(x = (float)site_i * vis->scale_inv_x);
+  voxel_j[0] = (int)(y = (float)site_j * vis->scale_inv_y);
+  voxel_k[0] = (int)(z = (float)site_k * vis->scale_inv_z);
+  
+  x -= (float)voxel_i[0];
+  y -= (float)voxel_j[0];
+  z -= (float)voxel_k[0];
+  
+  voxel_i[1] = min(voxel_i[0] + 1, vis->input_pixels_x - 1);
+  voxel_j[1] = min(voxel_j[0] + 1, vis->input_pixels_y - 1);
+  voxel_k[1] = min(voxel_k[0] + 1, vis->input_slices - 1);
+  
+  for (k = 0; k < 2; k++)
+    {
+      for (j = 0; j < 2; j++)
+        {
+          for (i = 0; i < 2; i++)
+            {
+	      gray[k][j][i] = (float)vis->medical_data[ visVoxelId(voxel_i[i],voxel_j[j],voxel_k[k],vis) ];
+	    }
+	}
+    }
+  float gray_00x = (1.F - x) * gray[0][0][0] + x * gray[0][0][1];
+  float gray_01x = (1.F - x) * gray[0][1][0] + x * gray[0][1][1];
+  float gray_10x = (1.F - x) * gray[1][0][0] + x * gray[1][0][1];
+  float gray_11x = (1.F - x) * gray[1][1][0] + x * gray[1][1][1];
+  
+  float gray_0y = (1.F - y) * gray_00x + y * gray_01x;
+  float gray_1y = (1.F - y) * gray_10x + y * gray_11x;
+  
+  return (1.F - z) * gray_0y + z * gray_1y;
+}
+
+
+//float visInterpolatedGray (int site_i, int site_j, int site_k, Vis *vis)
+//{
+//  float x, y, z;
+//  float dx, dy, dz;
+//  float weight, sum1, sum2;
+//  float interpolated_gray;
+//  
+//  int voxel_i, voxel_j, voxel_k;
+//  int i, j, k;
+//  
+//  
+//  x = site_i;
+//  y = site_j;
+//  z = site_k;
+//  
+//  voxel_i = (int)((float)site_i * vis->scale_inv_x);
+//  voxel_j = (int)((float)site_j * vis->scale_inv_y);
+//  voxel_k = (int)((float)site_k * vis->scale_inv_z);
+//  
+//  sum1 = sum2 = 0.F;
+//  
+//  for (i = max(0, voxel_i-vis->voxel_di); i <= min(voxel_i+vis->voxel_di, vis->input_pixels_x-1); i++)
+//    {
+//      dx = (float)i * vis->scale_x - x;
+//      dx *= dx;
+//      
+//      for (j = max(0, voxel_j-vis->voxel_dj); j <= min(voxel_j+vis->voxel_dj, vis->input_pixels_y-1); j++)
+//	{
+//	  dy = (float)j * vis->scale_y - y;
+//	  dy *= dy;
+//	  
+//	  for (k = max(0, voxel_k-vis->voxel_dk); k <= min(voxel_k+vis->voxel_dk, vis->input_slices-1); k++)
+//	    {
+//	      dz = (float)k * vis->scale_z - z;
+//	      dz *= dz;
+//	      
+//	      weight = dx + dy + dz;
+//	      
+//	      if (weight - 1.e-6 > vis->res_factor_par1) continue;
+//	      
+//	      weight = 1.F - weight * vis->res_factor_par2;
+//	      sum1 += weight * (float)vis->medical_data[ visVoxelId(i, j, k, vis) ];
+//	      sum2 += weight;
+//	    }
+//	}
+//    }
+//  interpolated_gray = sum1 / sum2;
+//  
+//  return interpolated_gray;
+//}
+
+
+void visSetSmoothingRange (int s_range, int res_factor, Vis *vis)
+{
+  vis->smoothing_range = s_range;
+  vis->res_factor = res_factor;
+  
+  vis->voxel_di = vis->smoothing_range;
+  vis->voxel_dj = vis->voxel_di;
+  vis->voxel_dk = nint(vis->voxel_di * vis->pixel_size / vis->slice_size);
+  
+  vis->res_factor_par1 = vis->voxel_di * vis->voxel_di * vis->res_factor * vis->res_factor;
+  vis->res_factor_par2 = 1.F / vis->res_factor_par1;
+}
+
+
+Site *visSitePointer (int site_i, int site_j, int site_k, Vis *vis)
+{
+  int i = site_i >> vis->shift;
+  int j = site_j >> vis->shift;
+  int k = site_k >> vis->shift;
+  
+  Block *block_p = &vis->block[(i * vis->blocks_y + j) * vis->blocks_z + k];
+  
+  if (block_p->site == NULL)
+    {
+      return NULL;
+    }
+  else
+    {
+      int ii = site_i - (i << vis->shift);
+      int jj = site_j - (j << vis->shift);
+      int kk = site_k - (k << vis->shift);
+      
+      return &block_p->site[(((ii << vis->shift) + jj) << vis->shift) + kk];
+    }
+}
+
+
+Site *visStackSitePointer (Vis *vis)
+{
+  vis->stack_sites += vis->sites_in_a_block;
+  
+  if (vis->stack_sites > vis->stack_sites_max)
+    {
+      vis->stack_sites -= vis->sites_in_a_block;
+      return NULL;
+    }
+  return &vis->stack_site[ vis->stack_sites - vis->sites_in_a_block ];
+}
+
+
+void visUpdateTrianglesGrid (Vis *vis)
 {
   float block_size_inv;
   
-  int triangle_index;
-  int n;
+  int m, n;
   int ii1, jj1, kk1;
   int ii2, jj2, kk2;
   int ii3, jj3, kk3;
@@ -1142,39 +1115,36 @@ void myglInitRayTracing (void)
   int iib, jjb, kkb;
   int ii0, jj0, kk0;
   
-  unsigned int boundary_index;
+  Triangle *t_p;
   
-  Triangle *triangle_p;
-  
-  LinkedTriangle *new_linked_triangle;
-  
-  DataBlock *data_block_p;
+  Block *block_p;
   
   
-  for (n = 0; n < mygl.blocks; n++)
+  vis->stack_triangles = 0;
+  
+  for (n = 0; n < vis->blocks; n++)
     {
-      mygl.data_block[ n ].linked_triangle = NULL;
+      vis->block[ n ].stack_t_id = -1;
     }
+  block_size_inv = vis->blocks_x / vis->dim_x;
   
-  block_size_inv = mygl.blocks_x / mygl.dim_x;
-  
-  for (boundary_index = 0; boundary_index < BOUNDARIES; boundary_index++)
+  for (n = 0; n < BOUNDARIES; n++)
     {
-      for (triangle_index = 0; triangle_index < mygl.boundary[ boundary_index ].triangles; triangle_index++)
+      for (m = 0; m < vis->boundary[ n ].triangles; m++)
 	{
-	  triangle_p = &mygl.boundary[ boundary_index ].triangle[ triangle_index ];
+	  t_p = &vis->boundary[ n ].triangle[ m ];
 	  
-	  ii1 = (int)(block_size_inv * (triangle_p->v[0].pos_x + mygl.half_dim_x));
-	  jj1 = (int)(block_size_inv * (triangle_p->v[0].pos_y + mygl.half_dim_y));
-	  kk1 = (int)(block_size_inv * (triangle_p->v[0].pos_z + mygl.half_dim_z));
+	  ii1 = (int)(block_size_inv * (t_p->v[0].pos_x + vis->half_dim_x));
+	  jj1 = (int)(block_size_inv * (t_p->v[0].pos_y + vis->half_dim_y));
+	  kk1 = (int)(block_size_inv * (t_p->v[0].pos_z + vis->half_dim_z));
 	  
-	  ii2 = (int)(block_size_inv * (triangle_p->v[1].pos_x + mygl.half_dim_x));
-	  jj2 = (int)(block_size_inv * (triangle_p->v[1].pos_y + mygl.half_dim_y));
-	  kk2 = (int)(block_size_inv * (triangle_p->v[1].pos_z + mygl.half_dim_z));
+	  ii2 = (int)(block_size_inv * (t_p->v[1].pos_x + vis->half_dim_x));
+	  jj2 = (int)(block_size_inv * (t_p->v[1].pos_y + vis->half_dim_y));
+	  kk2 = (int)(block_size_inv * (t_p->v[1].pos_z + vis->half_dim_z));
 	  
-	  ii3 = (int)(block_size_inv * (triangle_p->v[2].pos_x + mygl.half_dim_x));
-	  jj3 = (int)(block_size_inv * (triangle_p->v[2].pos_y + mygl.half_dim_y));
-	  kk3 = (int)(block_size_inv * (triangle_p->v[2].pos_z + mygl.half_dim_z));
+	  ii3 = (int)(block_size_inv * (t_p->v[2].pos_x + vis->half_dim_x));
+	  jj3 = (int)(block_size_inv * (t_p->v[2].pos_y + vis->half_dim_y));
+	  kk3 = (int)(block_size_inv * (t_p->v[2].pos_z + vis->half_dim_z));
 	  
 	  iia = min(ii1, min(ii2, ii3));
 	  iib = max(ii1, max(ii2, ii3));
@@ -1185,38 +1155,29 @@ void myglInitRayTracing (void)
 	  
 	  for (ii0 = iia; ii0 <= iib; ii0++)
 	    {
-	      if (ii0 < 0 || ii0 >= mygl.blocks_x) continue;
+	      if (ii0 < 0 || ii0 >= vis->blocks_x) continue;
 	      
 	      for (jj0 = jja; jj0 <= jjb; jj0++)
 		{
-		  if (jj0 < 0 || jj0 >= mygl.blocks_y) continue;
+		  if (jj0 < 0 || jj0 >= vis->blocks_y) continue;
 		  
 		  for (kk0 = kka; kk0 <= kkb; kk0++)
 		    {
-		      if (kk0 < 0 || kk0 >= mygl.blocks_z) continue;
+		      if (kk0 < 0 || kk0 >= vis->blocks_z) continue;
 		      
-		      data_block_p = &mygl.data_block[ (ii0 * mygl.blocks_y + jj0) * mygl.blocks_z + kk0 ];
+		      block_p = &vis->block[ (ii0 * vis->blocks_y + jj0) * vis->blocks_z + kk0 ];
 		      
-		      if (data_block_p->site_data == NULL)
+		      if (vis->stack_triangles == vis->stack_triangles_max)
 			{
-			  continue;
+			  vis->stack_triangles_max *= 2;
+			  vis->stack_triangle = (StackTriangle *)realloc(vis->stack_triangle,
+									 sizeof(StackTriangle) * vis->stack_triangles_max);
 			}
-		      if (data_block_p->linked_triangle == NULL)
-			{
-			  data_block_p->linked_triangle = (LinkedTriangle *)malloc(sizeof(LinkedTriangle));
-			  data_block_p->linked_triangle->boundary_id = boundary_index;
-			  data_block_p->linked_triangle->triangle_id = triangle_index;
-			  data_block_p->linked_triangle->next        = NULL;
-			}
-		      else
-			{
-			  new_linked_triangle = (LinkedTriangle *)malloc(sizeof(LinkedTriangle));
-			  new_linked_triangle->boundary_id = boundary_index;
-			  new_linked_triangle->triangle_id = triangle_index;
-			  new_linked_triangle->next        = data_block_p->linked_triangle->next;
-			  
-			  data_block_p->linked_triangle->next = new_linked_triangle;
-			}
+		      vis->stack_triangle[ vis->stack_triangles ].b_id = n;
+		      vis->stack_triangle[ vis->stack_triangles ].t_id = m;
+		      vis->stack_triangle[ vis->stack_triangles ].next = block_p->stack_t_id;
+		      block_p->stack_t_id = vis->stack_triangles;
+		      ++vis->stack_triangles;
 		    }
 		}
 	    }
@@ -1225,762 +1186,641 @@ void myglInitRayTracing (void)
 }
 
 
-int myglIsSegmentIntercepted (int block_id1, int block_id2,
-			      float x, float y, float z, float nx, float ny, float nz,
-			      unsigned int *site_data_p)
+int visIsSegmentIntercepted (int site_i, int site_j, int site_k, int l,
+			     Site *site_p, Vis *vis)
 {
-  float t, v, w;
-  float t_max;
-  
-  int is_intersected;
-  int n;
-  int block_id[2], blocks;
-  
-  Triangle *triangle_p;
-  
-  LinkedTriangle *lt_p;
-  
-  DataBlock *data_block_p;
-  
-  
-  blocks = 0;
-  
-  if (mygl.data_block[ block_id1 ].site_data != NULL)
-    {
-      block_id[ 0 ] = block_id1;
-      ++blocks;
-    }
-  if (mygl.data_block[ block_id2 ].site_data != NULL)
-    {
-      block_id[ blocks ] = block_id2;
-      ++blocks;
-    }
-  
-  is_intersected = 0;
-  
-  if (blocks == 0)
-    {
-      return is_intersected;
-    }
-  
-  t_max = 1.F * mygl.lattice_to_system;
-  
-  for (n = 0; n < blocks; n++)
-    {
-      data_block_p = &mygl.data_block[ block_id[n] ];
-      
-      for (lt_p = data_block_p->linked_triangle;
-	   lt_p != NULL;
-	   lt_p = lt_p->next)
-	{
-	  triangle_p = &mygl.boundary[ lt_p->boundary_id ].triangle[ lt_p->triangle_id ];
-	  
-	  if (!myglRayTriangleIntersection (x, y, z, nx, ny, nz,
-					    triangle_p->v[0].pos_x, triangle_p->v[0].pos_y, triangle_p->v[0].pos_z,
-					    triangle_p->v[1].pos_x, triangle_p->v[1].pos_y, triangle_p->v[1].pos_z,
-					    triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
-					    &t, &v, &w))
-	    {
-	      continue;
-	    }
-	  
-	  if (t > t_max) continue;
-	  
-	  is_intersected = 1;
-	  t_max = t;
-	  
-	  if (lt_p->boundary_id == (short int)INLET_BOUNDARY)
-	    {
-	      *site_data_p = INLET_TYPE;
-	      *site_data_p |= (triangle_p->boundary_dir << BOUNDARY_DIR_SHIFT);
-	      *site_data_p |= (triangle_p->boundary_id  << BOUNDARY_ID_SHIFT);
-	    }
-	  else if (lt_p->boundary_id == (short int)OUTLET_BOUNDARY)
-	    {
-	      *site_data_p = OUTLET_TYPE;
-	      *site_data_p |= (triangle_p->boundary_dir << BOUNDARY_DIR_SHIFT);
-	      *site_data_p |= (triangle_p->boundary_id  << BOUNDARY_ID_SHIFT);
-	    }
-	  else if (lt_p->boundary_id == (short int)WALL_BOUNDARY)
-	    {
-	      *site_data_p = NULL_TYPE;
-	    }
-	}
-    }
-  return is_intersected;
-}
-   
-void myglEndRayTracing (void)
-{
-  int n;
-  
-  LinkedTriangle *old_linked_triangle, *linked_triangle_p;
-  
-  DataBlock *data_block_p;
-  
-  
-  for (n = 0; n < mygl.blocks; n++)
-    {
-      data_block_p = &mygl.data_block[ n ];
-      
-      for (linked_triangle_p = data_block_p->linked_triangle;
-	   linked_triangle_p != NULL;)
-	{
-	  old_linked_triangle = linked_triangle_p;
-	  linked_triangle_p = linked_triangle_p->next;
-	  free(old_linked_triangle);
-	}
-    }
-}
-
-
-void myglNearestLatticeDirection (float nx0, float ny0, float nz0, unsigned int *boundary_dir)
-{
-  float nx1, ny1, nz1;
-  float s0, s1;
-  float temp;
-  
-  unsigned int l;
-  
-  
-  s0 = -1.e+30F;
-  
-  for (l = 0; l < 14; l++)
-    {
-      nx1 = (float)e_x[l];
-      ny1 = (float)e_y[l];
-      nz1 = (float)e_z[l];      
-      temp = 1.F / sqrtf(nx1 * nx1 + ny1 * ny1 + nz1 * nz1);
-      nx1 *= temp;
-      ny1 *= temp;
-      nz1 *= temp;
-      
-      s1 = fabsf(nx0 * nx1 + ny0 * ny1 + nz0 * nz1);
-      
-      if (s1 > s0)
-	{
-	  s0 = s1;
-	  
-	  *boundary_dir = l;
-	}
-    }
-}
-
-
-void myglSetBoundaryDirections (void)
-{
+  float x1, y1, z1;
+  float x2, y2, z2;
   float nx, ny, nz;
+  float t, t_max;
   
-  int l;
-  
-  unsigned int boundary_index;
-  
-  Triangle *triangle_p;
-  
-  
-  for (boundary_index = 0; boundary_index < BOUNDARIES; boundary_index++)
-    {
-      for (l = 0; l < mygl.boundary[ boundary_index ].triangles; l++)
-	{
-	  triangle_p = &mygl.boundary[ boundary_index ].triangle[ l ];
-	  
-	  myglTriangleNormal (triangle_p->v[0].pos_x, triangle_p->v[0].pos_y, triangle_p->v[0].pos_z,
-			      triangle_p->v[1].pos_x, triangle_p->v[1].pos_y, triangle_p->v[1].pos_z,
-			      triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
-			      &nx, &ny, &nz);
-	  
-	  myglNearestLatticeDirection (nx, ny, nz, &triangle_p->boundary_dir);
-	  
-	  triangle_p->boundary_id = l;
-	}
-    }
-}
-
-
-int myglIsSuperficialSite (int site_i, int site_j, int site_k)
-{
-  int neigh_i, neigh_j, neigh_k;
-  int l;
-  
-  unsigned int *site_data_p;
-  
-  
-  for (l = 0; l < 14; l++)
-    {
-      neigh_i = site_i + e_x[ l ];
-      neigh_j = site_j + e_y[ l ];
-      neigh_k = site_k + e_z[ l ];
-      
-      site_data_p = myglSiteDataPointer (neigh_i, neigh_j, neigh_k, &mygl);
-      
-      if (site_data_p == NULL ||
-	  *site_data_p == SOLID_TYPE ||
-	  *site_data_p == NULL_TYPE)
-	{
-	  return 1;
-	}
-    }
-  return 0;
-}
-
-
-void myglAddSuperficialSite (int iters, int site_i, int site_j, int site_k)
-{
-  if (mygl.superficial_sites == mygl.superficial_sites_max)
-    {
-      mygl.superficial_sites_max <<= 1;
-      mygl.superficial_site = (SuperficialSite *)realloc(mygl.superficial_site,
-							 sizeof(SuperficialSite) * mygl.superficial_sites_max);
-    }
-  mygl.superficial_site[ mygl.superficial_sites ].i = site_i;
-  mygl.superficial_site[ mygl.superficial_sites ].j = site_j;
-  mygl.superficial_site[ mygl.superficial_sites ].k = site_k;
-  mygl.superficial_site[ mygl.superficial_sites ].iters = iters;
-  ++mygl.superficial_sites;
-}
-
-
-int myglInitialiseBlock (int site_i, int site_j, int site_k, float selected_gray, int iters)
-{
-  int block_id, site_id;
-  int i, j, k;
-  int ii, jj, kk;
+  int bi, bj, bk;
+  int b_id, t_id;
+  int stack_t_id;
   int m;
   
-  unsigned int *site_data_p;
-  
-  DataBlock *data_block_p;
+  unsigned int n;
   
   
-  i = site_i >> mygl.shift;
-  j = site_j >> mygl.shift;
-  k = site_k >> mygl.shift;
-  block_id = (i * mygl.blocks_y + j) * mygl.blocks_z + k;
+  site_i = (int)((x1 = (float)site_i) + 0.5F * (nx = (float)e[ l*3+0 ]));
+  site_j = (int)((y1 = (float)site_j) + 0.5F * (ny = (float)e[ l*3+1 ]));
+  site_k = (int)((z1 = (float)site_k) + 0.5F * (nz = (float)e[ l*3+2 ]));
   
-  i <<= mygl.shift;
-  j <<= mygl.shift;
-  k <<= mygl.shift;
+  bi = site_i >> vis->shift;
+  bj = site_j >> vis->shift;
+  bk = site_k >> vis->shift;
   
-  data_block_p = &mygl.data_block[ block_id ];
+  stack_t_id = vis->block[ (bi*vis->blocks_y+bj)*vis->blocks_z+bk ].stack_t_id;
   
-  if (data_block_p->site_data == NULL)
+  if (stack_t_id == -1) return !SUCCESS;
+  
+  t_max = 1.F;
+  b_id = -1;
+  
+  x2 = (x1 -= vis->half_dim_x) + nx;
+  y2 = (y1 -= vis->half_dim_y) + ny;
+  z2 = (z1 -= vis->half_dim_z) + nz;
+  
+  while (stack_t_id != -1)
     {
-      data_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * mygl.sites_in_a_block);
+      n = vis->stack_triangle[ stack_t_id ].b_id;
+      m = vis->stack_triangle[ stack_t_id ].t_id;
       
-      data_block_p->site_iters = (unsigned short int *)malloc(sizeof(unsigned short int) * mygl.sites_in_a_block);
+      stack_t_id = vis->stack_triangle[ stack_t_id ].next;
       
-      m = -1;
-      
-      for (ii = i; ii < i + mygl.block_size; ii++)
+      if (!visRayVsDisc (&vis->boundary[ n ].triangle[ m ],
+			 x1, y1, z1, x2, y2, z2,
+			 t_max, &t))
 	{
-	  for (jj = j; jj < j + mygl.block_size; jj++)
-	    {
-	      for (kk = k; kk < k + mygl.block_size; kk++)
-		{
-		  if (myglInterpolatedGray (ii, jj, kk) > selected_gray)
-		    {
-		      data_block_p->site_data[ ++m ] = NULL_TYPE;
-		    }
-		  else
-		    {
-		      data_block_p->site_data[ ++m ] = SOLID_TYPE;
-		    }
-		}
-	    }
+	  continue;
 	}
-      data_block_p->is_void = 1;
+      t_max = t;
+      b_id = n;
+      t_id = m;
     }
-  ii = site_i - i;
-  jj = site_j - j;
-  kk = site_k - k;
-  site_id = (((ii << mygl.shift) + jj) << mygl.shift) + kk;
-  
-  site_data_p = &data_block_p->site_data[ site_id ];
-  
-  if (*site_data_p != NULL_TYPE)
+  if (b_id == -1)
     {
-      return 0;
+      return !SUCCESS;
     }
-  *site_data_p = FLUID_TYPE;
-  data_block_p->site_iters[ site_id ] = iters;
-  
-  data_block_p->is_void = 0;
-  
-  return 1;
+  else
+    {
+      if (b_id == INLET_BOUNDARY)
+	{
+	  site_p->data = INLET_TYPE | (t_id << BOUNDARY_ID_SHIFT);
+	}
+      else if (b_id == OUTLET_BOUNDARY)
+	{
+	  site_p->data = OUTLET_TYPE | (t_id << BOUNDARY_ID_SHIFT);
+	}
+      return SUCCESS;
+    }
 }
 
 
-void myglDeallocateBlock (int n)
+void visCalculateTriangleData (Triangle *t_p)
 {
-  DataBlock *data_block_p = &mygl.data_block[ n ];
+  float longitude, latitude;
+  float r;
   
-  if (data_block_p->site_data != NULL)
-    {
-      free(data_block_p->site_data);
-      data_block_p->site_data = NULL;
-    }
-  if (data_block_p->site_iters != NULL)
-    {
-      free(data_block_p->site_iters);
-      data_block_p->site_iters = NULL;
-    }
-  data_block_p->site_label = NULL;
-  data_block_p->is_void = 1;
+  
+  visTriangleCenter (t_p, &t_p->pos_x, &t_p->pos_y, &t_p->pos_z);
+  visTriangleNormal (t_p, &t_p->nor_x, &t_p->nor_y, &t_p->nor_z);
+  
+  longitude = atan2f(t_p->nor_x, t_p->nor_z);
+  latitude  = atan2f(t_p->nor_y, sqrtf(t_p->nor_x * t_p->nor_x + t_p->nor_z * t_p->nor_z));
+  
+  t_p->d.sin_longitude = sinf(longitude);
+  t_p->d.cos_longitude = cosf(longitude);
+  t_p->d.sin_latitude  = sinf(latitude);
+  t_p->d.cos_latitude  = cosf(latitude);
+  
+  r = visTriangleRadius (t_p);
+  
+  t_p->d.r2 = r * r;
 }
 
 
-void myglReconstructSystem (int selected_pixel_x,
-			    int selected_pixel_y,
-			    int selected_slice,
-			    float selected_gray)
+void visEditTriangle (float t_x, float t_y, float longitude, float latitude, float size_factor,
+		      int b_id, int t_id, Vis *vis)
 {
-  float seconds;
+  float cx, cy, cz;
+  float dx1, dy1, dz1;
+  float dx2, dy2, dz2;
+  float x, y, z;
   
-  int neigh_i, neigh_j, neigh_k;
-  int i, j, k;
-  int l, n;
-  int iterations;
-  int sites_a, sites_b;
-  int index_a;
-  int are_fluid_sites_incrementing;
-  int fluid_sites;
+  int i;
   
-  SiteLocation *site_location_a_p, *site_location_b_p;
+  Triangle *t_p;
   
   
-  seconds = myClock ();
+  t_p = &vis->boundary[ b_id ].triangle[ t_id ];
   
-  for (n = 0; n < mygl.blocks; n++)
+  visTriangleCenter (t_p, &cx, &cy, &cz);
+  
+  for (i = 0; i < 3; i++)
     {
-      myglDeallocateBlock (n);
+      dx1 = t_p->v[i].pos_x - cx;
+      dy1 = t_p->v[i].pos_y - cy;
+      dz1 = t_p->v[i].pos_z - cz;
+      
+      visRotate (dx1, dy1, dz1, longitude, latitude, &dx2, &dy2, &dz2);
+      
+      t_p->v[i].pos_x = size_factor * dx2 + cx;
+      t_p->v[i].pos_y = size_factor * dy2 + cy;
+      t_p->v[i].pos_z = size_factor * dz2 + cz;
+      
+      visProject (t_p->v[i].pos_x, t_p->v[i].pos_y, t_p->v[i].pos_z, &x, &y, &z);
+      
+      x += t_x;
+      y += t_y;
+      
+      visAntiProject (x, y, z, &t_p->v[i].pos_x, &t_p->v[i].pos_y, &t_p->v[i].pos_z);
     }
-  mygl.superficial_sites = 0;
-  iterations = 0;
+  visCalculateTriangleData (t_p);
+}
+
+
+void visDeleteTriangle (int b_id, int t_id, Vis *vis)
+{
+  Boundary *boundary_p = &vis->boundary[ b_id ];
   
-  myglFromVoxelToSiteCoords (selected_pixel_x, selected_pixel_y, selected_slice, &i, &j, &k);
-  
-  if (!myglInitialiseBlock (i, j, k, selected_gray, iterations))
+  if (t_id == --boundary_p->triangles)
     {
       return;
     }
-  site_location_a_p = &site_location_a[ 0 ];
-  site_location_a_p->i = i;
-  site_location_a_p->j = j;
-  site_location_a_p->k = k;
-  sites_a = 1;
+  memcpy (&boundary_p->triangle[ t_id ],
+	  &boundary_p->triangle[ boundary_p->triangles ], sizeof(Triangle));
+}
+
+
+void visInvertTriangleNormal (int b_id, int t_id, Vis *vis)
+{
+  Triangle *t_p = &vis->boundary[ b_id ].triangle[ t_id ];
   
-  fluid_sites = 1;
+  t_p->normal_sign = -t_p->normal_sign;
+}
+
+
+void visChangeTrianglePars (int b_id, int t_id, float dp_avg, float dp_amp, float dp_phs, Vis *vis)
+{
+  Triangle *t_p = &vis->boundary[ b_id ].triangle[ t_id ];
+  
+  t_p->pressure_avg += dp_avg;
+  t_p->pressure_avg = fmaxf (0.0, t_p->pressure_avg);
+  
+  t_p->pressure_amp += dp_amp;
+  t_p->pressure_amp = fminf (t_p->pressure_avg, t_p->pressure_amp);
+  
+  t_p->pressure_phs += dp_phs;
+  t_p->pressure_phs = fmaxf (0.0, t_p->pressure_phs);
+}
+
+
+int visSegmentation (Vis *vis)
+{
+  float seconds = myClock ();
+  
+  int site_i, site_j, site_k;
+  int neigh_i, neigh_j, neigh_k;
+  int si, sj, sk;
+  int block_id, site_id;
+  int sites_b;
+  int are_fluid_sites_incrementing;
+  int i, l, m;
+  
+  Site *site_p, *neigh_site_p;
+  
+  Block *block_p;
+  
+  Coords *site_coords_p;
+  
+  
+  for (m = 0; m < vis->blocks; m++)
+    {
+      vis->block[ m ].site = NULL;
+      vis->block[ m ].is_void = 1;
+    }
+  vis->sites = 0;
+  vis->boundary_sites = 0;
+  vis->stack_sites = 0;
+  vis->sites_a = 0;
+  vis->iters = 0;
+  
+  visFromVoxelToSiteCoords (vis->selected_pixel_x, vis->selected_pixel_y, vis->selected_slice,
+			    &site_i, &site_j, &site_k, vis);
+  
+  if (visInterpolatedGray (site_i, site_j, site_k, vis) < vis->selected_gray)
+    {
+      return !SUCCESS;
+    }
+  visUpdateTrianglesGrid (vis);
+  
+  visFromSiteToGridCoords (site_i, site_j, site_k, &si, &sj, &sk, &block_id, &site_id, vis);
+  
+  (block_p = &vis->block[ block_id ])->site = visStackSitePointer (vis);
+  
+  for (m = 0; m < vis->sites_in_a_block; m++)
+    {
+      block_p->site[ m ].data = SOLID_TYPE;
+    }
+  block_p->site[ site_id ].data = FLUID_TYPE;
+  block_p->site[ site_id ].iters = 0;
+  block_p->site[ site_id ].label = 0;
+  block_p->site[ site_id ].x = si;
+  block_p->site[ site_id ].y = sj;
+  block_p->site[ site_id ].z = sk;
+  block_p->is_void = 0;
+  
+  vis->sites = 1;
+  
+  vis->site_coords[ 0 ][ 0 ].x = site_i;
+  vis->site_coords[ 0 ][ 0 ].y = site_j;
+  vis->site_coords[ 0 ][ 0 ].z = site_k;
+  vis->sites_a = 1;
+
   are_fluid_sites_incrementing = 1;
   
   while (are_fluid_sites_incrementing)
     {
-      ++iterations;
-      sites_b = 0;
       are_fluid_sites_incrementing = 0;
+      ++vis->iters;
+      sites_b = 0;
       
-      for (index_a = 0; index_a < sites_a; index_a++)
+      for (i = 0; i < vis->sites_a; i++)
 	{
-	  site_location_a_p = &site_location_a[ index_a ];
-	  i = site_location_a_p->i;
-	  j = site_location_a_p->j;
-	  k = site_location_a_p->k;
+	  site_i = vis->site_coords[ 0 ][ i ].x;
+	  site_j = vis->site_coords[ 0 ][ i ].y;
+	  site_k = vis->site_coords[ 0 ][ i ].z;
+	  
+	  site_p = visSitePointer (site_i, site_j, site_k, vis);
 	  
 	  for (l = 0; l < 14; l++)
 	    {
-	      neigh_i = i + e_x[ l ];
-	      neigh_j = j + e_y[ l ];
-	      neigh_k = k + e_z[ l ];
+	      neigh_i = site_i + e[ l*3+0 ];
+	      neigh_j = site_j + e[ l*3+1 ];
+	      neigh_k = site_k + e[ l*3+2 ];
 	      
-	      if (neigh_i == -1 || neigh_i >= mygl.sites_x) continue;
-	      if (neigh_j == -1 || neigh_j >= mygl.sites_y) continue;
-	      if (neigh_k == -1 || neigh_k >= mygl.sites_z) continue;
+	      if (neigh_i == -1 || neigh_i >= vis->sites_x) continue;
+	      if (neigh_j == -1 || neigh_j >= vis->sites_y) continue;
+	      if (neigh_k == -1 || neigh_k >= vis->sites_z) continue;
 	      
-	      if (!myglInitialiseBlock (neigh_i, neigh_j, neigh_k, selected_gray, iterations))
+	      visFromSiteToGridCoords (neigh_i, neigh_j, neigh_k, &si, &sj, &sk, &block_id, &site_id, vis);
+	      
+	      block_p = &vis->block[ block_id ];
+	      
+	      if (block_p->site != NULL &&
+		  (neigh_site_p = &block_p->site[ site_id ])->data != SOLID_TYPE)
 		{
 		  continue;
 		}
+	      if (visInterpolatedGray (neigh_i, neigh_j, neigh_k, vis) < vis->selected_gray)
+		{
+		  continue;
+		}
+	      if (visIsSegmentIntercepted (site_i, site_j, site_k, l, site_p, vis) == SUCCESS)
+		{
+		  if ((site_p->data & SITE_TYPE_MASK) == INLET_TYPE ||
+		      (site_p->data & SITE_TYPE_MASK) == OUTLET_TYPE)
+		    {
+		      if (vis->boundary_sites >= COORDS_BUFFERS_SIZE_B)
+			{
+			  return !SUCCESS;
+			}
+		      vis->site_coords[ 2 ][ vis->boundary_sites ].x = site_i;
+		      vis->site_coords[ 2 ][ vis->boundary_sites ].y = site_j;
+		      vis->site_coords[ 2 ][ vis->boundary_sites ].z = site_k;
+		      ++vis->boundary_sites;
+		    }
+		  continue;
+		}
+	      if (sites_b >= COORDS_BUFFERS_SIZE_A)
+		{
+		  return !SUCCESS;
+		}
 	      are_fluid_sites_incrementing = 1;
 	      
-	      if (sites_b == BUFFERS_SIZE)
+	      if (block_p->site == NULL)
 		{
-		  printf (" buffer size too small\n");
-		  printf (" the execution is terminated\n");
-		  exit(1);
+		  if ((block_p->site = visStackSitePointer (vis)) == NULL)
+		    {
+		      return !SUCCESS;
+		    }
+		  for (m = 0; m < vis->sites_in_a_block; m++)
+		    {
+		      block_p->site[ m ].data = SOLID_TYPE;
+		    }
 		}
-	      ++fluid_sites;
+	      neigh_site_p = &block_p->site[ site_id ];
+	      neigh_site_p->data = FLUID_TYPE;
+	      neigh_site_p->iters = vis->iters;
+	      neigh_site_p->label = 0;
+	      neigh_site_p->x = si;
+	      neigh_site_p->y = sj;
+	      neigh_site_p->z = sk;
+	      block_p->is_void = 0;
 	      
-	      site_location_b_p = &site_location_b[ sites_b ];
-	      site_location_b_p->i = neigh_i;
-	      site_location_b_p->j = neigh_j;
-	      site_location_b_p->k = neigh_k;
+	      ++vis->sites;
+	      
+	      vis->site_coords[ 1 ][ sites_b ].x = neigh_i;
+	      vis->site_coords[ 1 ][ sites_b ].y = neigh_j;
+	      vis->site_coords[ 1 ][ sites_b ].z = neigh_k;
 	      ++sites_b;
 	    }
 	}
-      --iterations;
-      
-      for (index_a = 0; index_a < sites_a; index_a++)
-	{
-	  if (myglIsSuperficialSite (site_location_a[ index_a ].i,
-				     site_location_a[ index_a ].j,
-				     site_location_a[ index_a ].k))
-	    {
-	      myglAddSuperficialSite (iterations,
-				      site_location_a[ index_a ].i,
-				      site_location_a[ index_a ].j,
-				      site_location_a[ index_a ].k);
-	    }
-	}
-      ++iterations;
-      
-      if (are_fluid_sites_incrementing)
-	{
-	  site_location_a_p = site_location_a;
-	  site_location_a = site_location_b;
-	  site_location_b = site_location_a_p;
-	  sites_a = sites_b;
-	}
+      site_coords_p = vis->site_coords[ 0 ];
+      vis->site_coords[ 0 ] = vis->site_coords[ 1 ];
+      vis->site_coords[ 1 ] = site_coords_p;
+      vis->sites_a = sites_b;
     }
-  --iterations;
+  vis->segmentation_time = myClock () - seconds;
   
-  for (index_a = 0; index_a < sites_a; index_a++)
-    {
-      if (myglIsSuperficialSite (site_location_a[ index_a ].i,
-				 site_location_a[ index_a ].j,
-				 site_location_a[ index_a ].k))
-	{
-	  myglAddSuperficialSite (iterations,
-				  site_location_a[ index_a ].i,
-				  site_location_a[ index_a ].j,
-				  site_location_a[ index_a ].k);
-	}
-    }
-  printf ("Reconstruction, gray: %.3f, smoothing range: %i\n sites: %i, superficial sites: %i, time: %.3f\n",
-	  selected_gray, smoothing_range, fluid_sites, mygl.superficial_sites, myClock () - seconds);
-  fflush (stdout);
+  return SUCCESS;
 }
 
 
-void myglFluidSitesIterativeSearching (int selected_pixel_x,
-				       int selected_pixel_y,
-				       int selected_slice,
-				       float selected_gray)
+void visCreateSplitTriangle (int b_id, int t_id,
+			     float cx, float cy, float cz, float radius, Vis *vis)
 {
-  float seconds;
-  float x, y, z;
-  float nx, ny, nz;
+  Triangle *t1, *t2;
   
+  
+  t1 = &vis->boundary[ b_id ].triangle[ t_id ];
+  t2 = &vis->boundary[ b_id ].triangle[ vis->boundary[b_id].triangles ];
+  
+  memcpy (t2, t1, sizeof(Triangle));
+  
+  visRotate (0.F, radius * 2.F, 0.F,
+	     t2->d.sin_longitude, t2->d.cos_longitude,
+	     t2->d.sin_latitude,  t2->d.cos_latitude,
+	     &t2->v[0].pos_x, &t2->v[0].pos_y, &t2->v[0].pos_z);
+  
+  visRotate (-(radius * sqrtf(3.F)), -radius, 0.F,
+	     t2->d.sin_longitude, t2->d.cos_longitude,
+	     t2->d.sin_latitude,  t2->d.cos_latitude,
+	     &t2->v[1].pos_x, &t2->v[1].pos_y, &t2->v[1].pos_z);
+  
+  visRotate (+(radius * sqrtf(3.F)), -radius, 0.F,
+	     t2->d.sin_longitude, t2->d.cos_longitude,
+	     t2->d.sin_latitude,  t2->d.cos_latitude,
+	     &t2->v[2].pos_x, &t2->v[2].pos_y, &t2->v[2].pos_z);
+  
+  for (int l = 0; l < 3; l++)
+    {
+      t2->v[l].pos_x += cx;
+      t2->v[l].pos_y += cy;
+      t2->v[l].pos_z += cz;
+    }
+  t2->d.r2 = radius * radius;
+  
+  t2->pos_x = cx;
+  t2->pos_y = cy;
+  t2->pos_z = cz;
+  
+  ++vis->boundary[ b_id ].triangles;
+}
+
+
+int visOptimiseBoundaries (Vis *vis)
+{
+  float cx, cy, cz;
+  float dx, dy, dz;
+  float r;
+  
+  int is_split[2][(1<<BOUNDARY_ID_BITS)];
+  int old_inlet_triangles, old_outlet_triangles;
+  int boundary_sites;
+  int b_id, t_id;
+  int site_i, site_j, site_k;
   int neigh_i, neigh_j, neigh_k;
-  int i, j, k;
-  int l, m, n;
-  int bi, bj, bk;
   int si, sj, sk;
-  int block_id1, block_id2;
-  int site_id;
-  int iterations;
+  int block_id, site_id;
   int sites_a, sites_b;
-  int index_a;
   int are_fluid_sites_incrementing;
-  int fluid_sites;
+  int x, y, z;
+  int i, l, n;
   
-  unsigned int *site_data_p;
+  Site *site_p, *neigh_site_p;
+  
+  Block *block_p;
+  
+  Coords *site_coords_p;
+  
+  
+  old_inlet_triangles  = vis->boundary[ INLET_BOUNDARY ].triangles;
+  old_outlet_triangles = vis->boundary[ OUTLET_BOUNDARY ].triangles;
+  
+  for (n = 0; n < vis->boundary[ INLET_BOUNDARY ].triangles; n++)
+    {
+      is_split[ 0 ][ n ] = -1;
+    }
+  for (n = 0; n < vis->boundary[ OUTLET_BOUNDARY ].triangles; n++)
+    {
+      is_split[ 1 ][ n ] = -1;
+    }
+  for (int stage_id = 0; stage_id < 2; stage_id++)
+    {
+      for (n = 0; n < vis->boundary_sites; n++)
+	{
+	  site_i = vis->site_coords[ 2 ][ n ].x;
+	  site_j = vis->site_coords[ 2 ][ n ].y;
+	  site_k = vis->site_coords[ 2 ][ n ].z;
+	  
+	  site_p = visSitePointer (site_i, site_j, site_k, vis);
+	  
+	  if (site_p->label == 2+stage_id) continue;
+	  
+	  if ((site_p->data & SITE_TYPE_MASK) == INLET_TYPE)
+	    {
+	      b_id = INLET_BOUNDARY;
+	    }
+	  else
+	    {
+	      b_id = OUTLET_BOUNDARY;
+	    }
+	  t_id = (site_p->data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+	  
+	  memcpy (&vis->site_coords[0][0], &vis->site_coords[2][n], sizeof(Coords));
+	  
+	  if (stage_id == 1)
+	    {
+	      if (is_split[ b_id ][ t_id ] <= 0)
+		{
+		  site_p->label = 2+stage_id;
+		  continue;
+		}
+	      memcpy (&vis->site_coords[3][0], &vis->site_coords[2][n], sizeof(Coords));
+	      boundary_sites = 1;
+	    }
+	  sites_a = 1;
+	  are_fluid_sites_incrementing = 1;
+	  
+	  while (are_fluid_sites_incrementing)
+	    {
+	      are_fluid_sites_incrementing = 0;
+	      sites_b = 0;
+	      
+	      for (i = 0; i < sites_a; i++)
+		{
+		  for (l = 0; l < 14; l++)
+		    {
+		      neigh_i = vis->site_coords[ 0 ][ i ].x + e[ l*3+0 ];
+		      neigh_j = vis->site_coords[ 0 ][ i ].y + e[ l*3+1 ];
+		      neigh_k = vis->site_coords[ 0 ][ i ].z + e[ l*3+2 ];
+		      
+		      if (neigh_i == -1 || neigh_i >= vis->sites_x) continue;
+		      if (neigh_j == -1 || neigh_j >= vis->sites_y) continue;
+		      if (neigh_k == -1 || neigh_k >= vis->sites_z) continue;
+		      
+		      visFromSiteToGridCoords (neigh_i, neigh_j, neigh_k,
+					       &si, &sj, &sk, &block_id, &site_id, vis);
+		      
+		      if ((block_p = &vis->block[ block_id ])->site == NULL)
+			{
+			  continue;
+			}
+		      neigh_site_p = &block_p->site[ site_id ];
+		      
+		      if (neigh_site_p->label == (2+stage_id) ||
+			  (neigh_site_p->data & SITE_TYPE_MASK) != (site_p->data & SITE_TYPE_MASK) ||
+			  ((site_p->data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT) != t_id)
+			{
+			  continue;
+			}
+		      if (sites_b >= COORDS_BUFFERS_SIZE_B)
+			{
+			  return !SUCCESS;
+			}
+		      are_fluid_sites_incrementing = 1;
+		      
+		      neigh_site_p->label = 2+stage_id;
+		      
+		      vis->site_coords[ 1 ][ sites_b ].x = neigh_i;
+		      vis->site_coords[ 1 ][ sites_b ].y = neigh_j;
+		      vis->site_coords[ 1 ][ sites_b ].z = neigh_k;
+		      ++sites_b;
+		      
 
-  DataBlock *data_block_p;
-  
-  SiteLocation *site_location_a_p, *site_location_b_p;
-  
-  
-  seconds = myClock ();
-  
-  for (n = 0; n < mygl.blocks; n++)
-    {
-      mygl.data_block[ n ].is_void = 1;
-      
-      if (mygl.data_block[ n ].site_data == NULL) continue;
-      
-      for (m = 0; m < mygl.sites_in_a_block; m++)
-	{
-	  if (mygl.data_block[ n ].site_data[ m ] != SOLID_TYPE)
-	    {
-	      mygl.data_block[ n ].site_data[ m ] = NULL_TYPE;
+		    }
+		}
+	      if (are_fluid_sites_incrementing)
+		{
+		  site_coords_p = vis->site_coords[ 0 ];
+		  vis->site_coords[ 0 ] = vis->site_coords[ 1 ];
+		  vis->site_coords[ 1 ] = site_coords_p;
+		  sites_a = sites_b;
+		  
+		  if (stage_id == 1)
+		    {
+		      if (boundary_sites + sites_a >= COORDS_BUFFERS_SIZE_B)
+			{
+			  return !SUCCESS;
+			}
+		      memcpy (&vis->site_coords[3][boundary_sites],
+			      &vis->site_coords[0][0], sites_a * sizeof(Coords));
+		      boundary_sites += sites_a;
+		    }
+		}
 	    }
+	  if (stage_id == 0)
+	    {
+	      ++is_split[ b_id ][ t_id ];
+	      continue;
+	    }
+	  x = 0;
+	  y = 0;
+	  z = 0;
+	  
+	  for (i = 0; i < boundary_sites; i++)
+	    {
+	      x += vis->site_coords[ 3 ][ i ].x;
+	      y += vis->site_coords[ 3 ][ i ].y;
+	      z += vis->site_coords[ 3 ][ i ].z;
+	    }
+	  cx = (float)x / boundary_sites;
+	  cy = (float)y / boundary_sites;
+	  cz = (float)z / boundary_sites;
+	  
+	  dx = 0.F;
+	  dy = 0.F;
+	  dz = 0.F;
+	  
+	  for (i = 0; i < boundary_sites; i++)
+	    {
+	      dx = fmaxf(dx, vis->site_coords[ 3 ][ i ].x - cx);
+	      dy = fmaxf(dy, vis->site_coords[ 3 ][ i ].y - cy);
+	      dz = fmaxf(dz, vis->site_coords[ 3 ][ i ].z - cz);
+	    }
+	  cx -= vis->half_dim_x;
+	  cy -= vis->half_dim_y;
+	  cz -= vis->half_dim_z;
+	  
+	  r = 1.1F * sqrtf(dx * dx + dy * dy + dz * dz);
+      
+	  visCreateSplitTriangle (b_id, t_id, cx, cy, cz, r, vis);
 	}
     }
-  myglInitRayTracing ();
-  
-  myglSetBoundaryDirections ();
-  
-  mygl.superficial_sites = 0;
-  
-  myglFromVoxelToSiteCoords (selected_pixel_x, selected_pixel_y, selected_slice, &i, &j, &k);
-  
-  myglFromSiteToGridCoords (i, j, k, &block_id1, &site_id);
-  
-  data_block_p = &mygl.data_block[ block_id1 ];
-  
-  data_block_p->site_data[ site_id ] = FLUID_TYPE;
-  data_block_p->is_void = 0;
-  
-  site_location_a_p = &site_location_a[ 0 ];
-  site_location_a_p->i = i;
-  site_location_a_p->j = j;
-  site_location_a_p->k = k;
-  sites_a = 1;
-  
-  iterations = 0;
-  data_block_p->site_iters[ site_id ] = iterations;
-  
-  fluid_sites = 1;
-  are_fluid_sites_incrementing = 1;
-  
-  while (are_fluid_sites_incrementing)
+  for (n = 0; n < old_inlet_triangles; n++)
     {
-      ++iterations;
-      
-      sites_b = 0;
-      
-      are_fluid_sites_incrementing = 0;
-      
-      for (index_a = 0; index_a < sites_a; index_a++)
-	{
-	  site_location_a_p = &site_location_a[ index_a ];
-	  i = site_location_a_p->i;
-	  j = site_location_a_p->j;
-	  k = site_location_a_p->k;
-	  
-	  bi = i >> mygl.shift;
-	  bj = j >> mygl.shift;
-	  bk = k >> mygl.shift;
-	  block_id1 = (bi * mygl.blocks_y + bj) * mygl.blocks_z + bk;
-	  
-	  x = (i + 0.0F) * mygl.lattice_to_system - mygl.half_dim_x;
-	  y = (j + 0.0F) * mygl.lattice_to_system - mygl.half_dim_y;
-	  z = (k + 0.0F) * mygl.lattice_to_system - mygl.half_dim_z;
-	  
-	  for (l = 1; l < 14; l++)
-	    {
-	      neigh_i = i + e_x[ l ];
-	      neigh_j = j + e_y[ l ];
-	      neigh_k = k + e_z[ l ];
-	      
-	      if (neigh_i == -1 || neigh_i >= mygl.sites_x) continue;
-	      if (neigh_j == -1 || neigh_j >= mygl.sites_y) continue;
-	      if (neigh_k == -1 || neigh_k >= mygl.sites_z) continue;
-	      
-	      bi = neigh_i >> mygl.shift;
-	      bj = neigh_j >> mygl.shift;
-	      bk = neigh_k >> mygl.shift;
-	      block_id2 = (bi * mygl.blocks_y + bj) * mygl.blocks_z + bk;
-	      
-	      if ((data_block_p = &mygl.data_block[ block_id2 ])->site_data == NULL)
-		{
-		  continue;
-		}
-	      si = neigh_i - (bi << mygl.shift);
-	      sj = neigh_j - (bj << mygl.shift);
-	      sk = neigh_k - (bk << mygl.shift);
-	      site_id = (((si << mygl.shift) + sj) << mygl.shift) + sk;
-	      
-	      if (*(site_data_p = &data_block_p->site_data[ site_id ]) != NULL_TYPE)
-		{
-		  continue;
-		}
-	      nx = (float)e_x[ l ];
-	      ny = (float)e_y[ l ];
-	      nz = (float)e_z[ l ];
-	      
-	      if (myglIsSegmentIntercepted (block_id1, block_id2, x, y, z, nx, ny, nz, site_data_p))
-		{
-		  continue;
-		}
-	      *site_data_p = FLUID_TYPE;
-	      data_block_p->site_iters[ site_id ] = iterations;
-	      data_block_p->is_void = 0;
-	      
-	      are_fluid_sites_incrementing = 1;
-	      
-	      if (sites_b == BUFFERS_SIZE)
-		{
-		  printf (" buffer size too small\n");
-		  printf (" the execution is terminated\n");
-		  exit(1);
-		}
-	      ++fluid_sites;
-	      
-	      site_location_b_p = &site_location_b[ sites_b ];
-	      site_location_b_p->i = neigh_i;
-	      site_location_b_p->j = neigh_j;
-	      site_location_b_p->k = neigh_k;
-	      ++sites_b;
-	    }
-	}
-      --iterations;
-      
-      for (index_a = 0; index_a < sites_a; index_a++)
-	{
-	  if (myglIsSuperficialSite (site_location_a[ index_a ].i,
-				     site_location_a[ index_a ].j,
-				     site_location_a[ index_a ].k))
-	    {
-	      myglAddSuperficialSite (iterations,
-				      site_location_a[ index_a ].i,
-				      site_location_a[ index_a ].j,
-				      site_location_a[ index_a ].k);
-	    }
-	}
-      ++iterations;
-      
-      if (are_fluid_sites_incrementing)
-	{
-	  site_location_a_p = site_location_a;
-	  site_location_a = site_location_b;
-	  site_location_b = site_location_a_p;
-	  sites_a = sites_b;
-	}
+      if (is_split[ 0 ][ n ] == 1) visDeleteTriangle (INLET_BOUNDARY, n, vis);
     }
-  --iterations;
-  
-  for (index_a = 0; index_a < sites_a; index_a++)
+  for (n = 0; n < old_outlet_triangles; n++)
     {
-      if (myglIsSuperficialSite (site_location_a[ index_a ].i,
-				 site_location_a[ index_a ].j,
-				 site_location_a[ index_a ].k))
-	{
-	  myglAddSuperficialSite (iterations,
-				  site_location_a[ index_a ].i,
-				  site_location_a[ index_a ].j,
-				  site_location_a[ index_a ].k);
-	}
+      if (is_split[ 1 ][ n ] == 1) visDeleteTriangle (OUTLET_BOUNDARY, n, vis);
     }
-  
-  myglEndRayTracing ();
-  
-  printf ("Iterative searching, gray: %.3f \n sites: %i, superficial sites: %i, time: %.3f\n",
-	  mygl.selected_gray, fluid_sites, mygl.superficial_sites, myClock () - seconds);
-  fflush (stdout);
+  return SUCCESS;
 }
 
 
-void myglSetBoundaryConfigurations (void)
+void visSetBoundaryConfigurations (Vis *vis)
 {
-#define C 0.57735027F
-  
-  float seconds;
-  float norm_ex[] = { 1.F,-1.F, 0.F, 0.F, 0.F, 0.F, C,-C, C,-C, C,-C, C,-C};
-  float norm_ey[] = { 0.F, 0.F, 1.F,-1.F, 0.F, 0.F, C,-C, C,-C,-C, C,-C, C};
-  float norm_ez[] = { 0.F, 0.F, 0.F, 0.F, 1.F,-1.F, C,-C,-C, C, C,-C,-C, C};
-  float dir_x, dir_y, dir_z;
-  float score, scalar_product;
-  
-  int unknown[13], unknowns;
+  int unknowns;
   int site_i, site_j, site_k;
   int neigh_i, neigh_j, neigh_k;
   int i, j, k;
-  int l, m, n;
-  int u;
+  int m, n;
   
-  unsigned int *site_data_p;
-  unsigned int *neigh_site_data_p;
-  unsigned int boundary_config;
-  unsigned int boundary_dir;
+  unsigned int boundary_config, l;
   
-  DataBlock *data_block_p;
+  Site *site_p;
+  Site *neigh_site_p;
   
+  Block *block_p;
   
-  seconds = myClock ();
   
   n = -1;
   
-  for (i = 0; i < mygl.blocks_x; i++)
+  for (i = 0; i < vis->blocks_x; i++)
     {
-      for (j = 0; j < mygl.blocks_y; j++)
+      for (j = 0; j < vis->blocks_y; j++)
 	{
-	  for (k = 0; k < mygl.blocks_z; k++)
+	  for (k = 0; k < vis->blocks_z; k++)
 	    {
-	      if ((data_block_p = &mygl.data_block[ ++n ])->is_void) continue;
+	      if ((block_p = &vis->block[ ++n ])->is_void) continue;
 	      
 	      m = -1;
 	      
-	      for (site_i = i * mygl.block_size; site_i < i * mygl.block_size + mygl.block_size; site_i++)
+	      for (site_i = i * vis->block_size; site_i < i * vis->block_size + vis->block_size; site_i++)
 		{
-		  for (site_j = j * mygl.block_size; site_j < j * mygl.block_size + mygl.block_size; site_j++)
+		  for (site_j = j * vis->block_size; site_j < j * vis->block_size + vis->block_size; site_j++)
 		    {
-		      for (site_k = k * mygl.block_size; site_k < k * mygl.block_size + mygl.block_size; site_k++)
+		      for (site_k = k * vis->block_size; site_k < k * vis->block_size + vis->block_size; site_k++)
 			{
-			  site_data_p = &data_block_p->site_data[ ++m ];
+			  if ((site_p = &block_p->site[ ++m ])->data == SOLID_TYPE) continue;
 			  
-			  if (*site_data_p == SOLID_TYPE || *site_data_p == NULL_TYPE)
-			    {
-			      continue;
-			    }
 			  boundary_config = 0U;
 			  unknowns = 0;
 			  
-			  for (l = 0; l < 14; l++)
+			  for (l = 0U; l < 14U; l++)
 			    {
-			      neigh_i = site_i + e_x[ l ];
-			      neigh_j = site_j + e_y[ l ];
-			      neigh_k = site_k + e_z[ l ];
+			      neigh_i = site_i + e[ l*3+0 ];
+			      neigh_j = site_j + e[ l*3+1 ];
+			      neigh_k = site_k + e[ l*3+2 ];
 			      
-			      neigh_site_data_p = myglSiteDataPointer (neigh_i, neigh_j, neigh_k, &mygl);
+			      if (neigh_i == -1 || neigh_i >= vis->sites_x) continue;
+			      if (neigh_j == -1 || neigh_j >= vis->sites_y) continue;
+			      if (neigh_k == -1 || neigh_k >= vis->sites_z) continue;
 			      
-			      if (!(neigh_site_data_p == NULL ||
-				    *neigh_site_data_p == SOLID_TYPE ||
-				    *neigh_site_data_p == NULL_TYPE))
+			      neigh_site_p = visSitePointer (neigh_i, neigh_j, neigh_k, vis);
+			      
+			      if (!(neigh_site_p == NULL || neigh_site_p->data == SOLID_TYPE))
 				{
 				  boundary_config |= (1U << l);
 				}
 			      else
 				{
-				  unknown[ unknowns ] = inv_dir[ l ];
 				  ++unknowns;
 				}
 			    }
-			  if ((*site_data_p & SITE_TYPE_MASK) == FLUID_TYPE)
+			  if ((site_p->data & SITE_TYPE_MASK) == FLUID_TYPE)
 			    {
-			      if (unknowns == 0) continue;
-			      
-			      *site_data_p |= (boundary_config << BOUNDARY_CONFIG_SHIFT);
-			      
-			      dir_x = 0.F;
-			      dir_y = 0.F;
-			      dir_z = 0.F;
-			      
-			      for (l = 0; l < unknowns; l++)
+			      if (unknowns != 0)
 				{
-				  u = unknown[ l ];
-				  dir_x += norm_ex[ u ];
-				  dir_y += norm_ey[ u ];
-				  dir_z += norm_ez[ u ];
+				  site_p->data |= (boundary_config << BOUNDARY_CONFIG_SHIFT);
 				}
-			      boundary_dir = 0;
-			      
-			      score = 0.F;
-			      
-			      for (l = 0; l < unknowns; l++)
-				{
-				  u = unknown[ l ];
-				  scalar_product = dir_x * norm_ex[ u ] + dir_y * norm_ey[ u ] + dir_z * norm_ez[ u ];
-				  
-				  if (scalar_product > score)
-				    {
-				      score        = scalar_product;
-				      boundary_dir = u;
-				    }
-				}
-			      *site_data_p |= (boundary_dir << BOUNDARY_DIR_SHIFT);
 			    }
 			  else
 			    {
-			      *site_data_p |= (boundary_config << BOUNDARY_CONFIG_SHIFT);
-			      
-			      boundary_dir = (*site_data_p & BOUNDARY_DIR_MASK) >> BOUNDARY_DIR_SHIFT;
-			      
-			      if ((boundary_config & (1U << inv_dir[ boundary_dir ])))
-				{
-				  *site_data_p &= ~BOUNDARY_DIR_MASK;
-				  
-				  *site_data_p |= (inv_dir[ boundary_dir ] << BOUNDARY_DIR_SHIFT);
-				}
+			      site_p->data |= (boundary_config << BOUNDARY_CONFIG_SHIFT);
 			    }
 			}
 		    }
@@ -1988,134 +1828,153 @@ void myglSetBoundaryConfigurations (void)
 	    }
 	}
     }
-  printf ("Boundary configurations setup, time: %.3f\n", myClock () - seconds);
-  fflush (stdout);
 }
 
 
-void myglRescaleSystemResolution ()
+void visRescaleSystem (Vis *vis)
 {
-  int i;
+  vis->output_image_pix_x = vis->input_pixels_x * vis->res_factor;
+  vis->output_image_pix_y = vis->input_pixels_y * vis->res_factor;
   
-  for (i = 0; i < mygl.blocks; i++)
-    {
-      myglDeallocateBlock (i);
-    }
+  vis->output_slices = (int)(vis->input_slices * (vis->slice_size / vis->pixel_size) *
+			     (float)vis->output_image_pix_x / (float)vis->input_pixels_x);
   
-  mygl.output_image_pix_x = (int)(mygl.input_image_pix_x * res_factor);
-  mygl.output_image_pix_y = (int)(mygl.input_image_pix_y * res_factor);
+  vis->scale_x = vis->res_factor;
+  vis->scale_y = vis->res_factor;
+  vis->scale_z = vis->res_factor * vis->slice_size / vis->pixel_size;
   
-  mygl.output_slices = (int)(mygl.input_slices * (slice_size / pixel_size) *
-			     (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x);
-  
-  mygl.scale_x = (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x;
-  mygl.scale_y = (float)mygl.output_image_pix_y / (float)mygl.input_image_pix_y;
-  mygl.scale_z = (float)mygl.output_slices / (float)mygl.input_slices;
-  
-  mygl.scale_inv_x = 1.F / mygl.scale_x;
-  mygl.scale_inv_y = 1.F / mygl.scale_y;
-  mygl.scale_inv_z = 1.F / mygl.scale_z;
-  
-  printf (" output_slices: %i\n", mygl.output_slices);
-  fflush (stdout);
+  vis->scale_inv_x = 1.F / vis->scale_x;
+  vis->scale_inv_y = 1.F / vis->scale_y;
+  vis->scale_inv_z = 1.F / vis->scale_z;
   
   // system parameters setup
   
-  mygl.lattice_to_system = 1.F;
+  vis->block_size = 8;
+  vis->shift = 3;
   
-  mygl.block_size = 8;
-  mygl.shift = 3;
+  vis->blocks_x = vis->output_image_pix_x >> vis->shift;
+  vis->blocks_y = vis->output_image_pix_y >> vis->shift;
+  vis->blocks_z = vis->output_slices      >> vis->shift;
   
-  mygl.blocks_x = mygl.output_image_pix_x >> mygl.shift;
-  mygl.blocks_y = mygl.output_image_pix_y >> mygl.shift;
-  mygl.blocks_z = mygl.output_slices      >> mygl.shift;
+  if ((vis->blocks_x << vis->shift) < vis->output_image_pix_x) ++vis->blocks_x;
+  if ((vis->blocks_y << vis->shift) < vis->output_image_pix_y) ++vis->blocks_y;
+  if ((vis->blocks_z << vis->shift) < vis->output_slices     ) ++vis->blocks_z;
   
-  if ((mygl.blocks_x << mygl.shift) < mygl.output_image_pix_x) ++mygl.blocks_x;
-  if ((mygl.blocks_y << mygl.shift) < mygl.output_image_pix_y) ++mygl.blocks_y;
-  if ((mygl.blocks_z << mygl.shift) < mygl.output_slices     ) ++mygl.blocks_z;
+  vis->sites_x = vis->blocks_x * vis->block_size;
+  vis->sites_y = vis->blocks_y * vis->block_size;
+  vis->sites_z = vis->blocks_z * vis->block_size;
   
-  mygl.sites_x = mygl.blocks_x * mygl.block_size;
-  mygl.sites_y = mygl.blocks_y * mygl.block_size;
-  mygl.sites_z = mygl.blocks_z * mygl.block_size;
+  vis->dim_x = vis->output_image_pix_x;
+  vis->dim_y = vis->output_image_pix_y;
+  vis->dim_z = vis->output_slices;
   
-  mygl.dim_x = (float)mygl.sites_x * mygl.lattice_to_system;
-  mygl.dim_y = (float)mygl.sites_y * mygl.lattice_to_system;
-  mygl.dim_z = (float)mygl.sites_z * mygl.lattice_to_system;
+  vis->half_dim_x = 0.5F * vis->dim_x;
+  vis->half_dim_y = 0.5F * vis->dim_y;
+  vis->half_dim_z = 0.5F * vis->dim_z;
   
-  mygl.half_dim_x = 0.5F * mygl.dim_x;
-  mygl.half_dim_y = 0.5F * mygl.dim_y;
-  mygl.half_dim_z = 0.5F * mygl.dim_z;
+  vis->system_size = fmaxf(vis->dim_x, fmaxf(vis->dim_y, vis->dim_z));
   
-  mygl.system_size = fmaxf(mygl.dim_x, fmaxf(mygl.dim_y, mygl.dim_z));
+  vis->sites_in_a_block = vis->block_size * vis->block_size * vis->block_size;
   
-  mygl.sites_in_a_block = mygl.block_size * mygl.block_size * mygl.block_size;
+  vis->blocks = vis->blocks_x * vis->blocks_y * vis->blocks_z;
   
-  mygl.blocks = mygl.blocks_x * mygl.blocks_y * mygl.blocks_z;
+  vis->block = (Block *)realloc(vis->block, sizeof(Block) * vis->blocks);
   
+  int n = 0;
   
-  mygl.data_block = (DataBlock *)realloc(mygl.data_block, sizeof(DataBlock) * mygl.blocks);
-  
-  for (i = 0; i < mygl.blocks; i++)
+  for (int i = 0; i < vis->sites_x; i+=vis->block_size)
     {
-      mygl.data_block[ i ].site_data = NULL;
-      mygl.data_block[ i ].site_label = NULL;
-    }
-}
-
-
-void myglRescaleViewpoint (float scale)
-{
-  ortho_x *= scale;
-  ortho_y *= scale;
-  viewpoint_radius *= scale;
-  
-  Projection ();
-}
-
-
-void myglRescaleTriangles (float scale)
-{
-  for (int n = 0; n < BOUNDARIES; n++)
-    {
-      for (int m = 0; m < mygl.boundary[ n ].triangles; m++)
+      for (int j = 0; j < vis->sites_y; j+=vis->block_size)
 	{
-	  for (int l = 0; l < 3; l++)
+	  for (int k = 0; k < vis->sites_z; k+=vis->block_size)
 	    {
-	      mygl.boundary[ n ].triangle[ m ].v[l].pos_x *= scale;
-	      mygl.boundary[ n ].triangle[ m ].v[l].pos_y *= scale;
-	      mygl.boundary[ n ].triangle[ m ].v[l].pos_z *= scale;
+	      vis->block[ n ].x = i;
+	      vis->block[ n ].y = j;
+	      vis->block[ n ].z = k;
+	      ++n;
 	    }
 	}
     }
 }
 
 
-void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], float *length)
+void visRescaleViewpoint (float scale, Vis *vis)
 {
-  float segment_length = 0.25F;
+  vis->ortho_x *= scale;
+  vis->ortho_y *= scale;
+  vis->viewpoint_radius *= scale;
+  vis->viewport_radius = 0.5F * vis->viewpoint_radius;
+  
+  visProjection (vis);
+}
+
+
+void visRescaleTriangles (float scale, Vis *vis)
+{
+  for (int n = 0; n < BOUNDARIES; n++)
+    {
+      for (int m = 0; m < vis->boundary[ n ].triangles; m++)
+	{
+	  for (int l = 0; l < 3; l++)
+	    {
+	      vis->boundary[n].triangle[m].v[l].pos_x *= scale;
+	      vis->boundary[n].triangle[m].v[l].pos_y *= scale;
+	      vis->boundary[n].triangle[m].v[l].pos_z *= scale;
+	    }
+	  visCalculateTriangleData (&vis->boundary[ n ].triangle[ m ]);
+	}
+    }
+}
+
+
+int visIsSuperficialSite (int site_i, int site_j, int site_k, Vis *vis)
+{
+  int neigh_i, neigh_j, neigh_k;
+  int l;
+  
+  Site *site_p;
+  
+  
+  for (l = 0; l < 14; l++)
+    {
+      neigh_i = site_i + e[ l*3+0 ];
+      neigh_j = site_j + e[ l*3+1 ];
+      neigh_k = site_k + e[ l*3+2 ];
+      
+      if (neigh_i == -1 || neigh_i >= vis->sites_x) return SUCCESS;
+      if (neigh_j == -1 || neigh_j >= vis->sites_y) return SUCCESS;
+      if (neigh_k == -1 || neigh_k >= vis->sites_z) return SUCCESS;
+      
+      site_p = visSitePointer (neigh_i, neigh_j, neigh_k, vis);
+      
+      if (site_p == NULL || site_p->data == SOLID_TYPE)
+	{
+	  return SUCCESS;
+	}
+    }
+  return !SUCCESS;
+}
+
+
+int visEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[], Vis *vis)
+{
   float org[3];
-  float x, y, z;
   float nx, ny, nz;
   float temp;
   
   int neigh_i, neigh_j, neigh_k;
-  int l, n;
-  int bi, bj, bk;
   int si, sj, sk;
   int block_id, site_id;
-  int sites_a;
-  int index_a;
+  int sites_a, sites_b;
   int are_fluid_sites_incrementing;
-  int iterations;
+  int iters;
+  int i, l;
   
-  short int *site_label_p;
-  short int global_counter;
+  Site *site_p;
   
-  unsigned int *site_data_p, *neigh_site_data_p;
+  Block *block_p;
   
-  DataBlock *data_block_p;
-  
-  SiteLocation *site_location_a_p;
+  Coords *site_coords_p;
   
   
   org[0] = (float)site_i;
@@ -2126,107 +1985,68 @@ void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[]
   nor[1] = 0.F;
   nor[2] = 0.F;
   
-  global_counter = 1;
-  mygl.stored_blocks = 0;
+  visFromSiteToGridCoords (site_i, site_j, site_k, &si, &sj, &sk, &block_id, &site_id, vis);
   
-  site_location_a_p = &site_location_a[ 0 ];
-  site_location_a_p->i = site_i;
-  site_location_a_p->j = site_j;
-  site_location_a_p->k = site_k;
+  block_p = &vis->block[ block_id ];
+  
+  for (i = 0; i < vis->sites_in_a_block; i++)
+    {
+      block_p->site[ i ].label = 0;
+    }
+  block_p->site[ site_id ].label = 1;
+  
+  vis->site_coords[ 0 ][ 0 ].x = site_i;
+  vis->site_coords[ 0 ][ 0 ].y = site_j;
+  vis->site_coords[ 0 ][ 0 ].z = site_k;
   sites_a = 1;
   
-  bi = site_i >> mygl.shift;
-  bj = site_j >> mygl.shift;
-  bk = site_k >> mygl.shift;
-  block_id = (bi * mygl.blocks_y + bj) * mygl.blocks_z + bk;
-  
-  data_block_p = &mygl.data_block[ block_id ];
-  data_block_p->site_label = (short int *)malloc(sizeof(short int) * mygl.sites_in_a_block);
-  
-  for (n = 0; n < mygl.sites_in_a_block; n++)
-    {
-      data_block_p->site_label[ n ] = 0;
-    }
-  mygl.stored_block[ mygl.stored_blocks ] = block_id;
-  
-  si = site_i - (bi << mygl.shift);
-  sj = site_j - (bj << mygl.shift);
-  sk = site_k - (bk << mygl.shift);
-  site_id = (((si << mygl.shift) + sj) << mygl.shift) + sk;
-  
-  data_block_p->site_label[ site_id ] = global_counter;
-  
   are_fluid_sites_incrementing = 1;
-  iterations = 0;
+  iters = 0;
   
-  while (++iterations <= 10 && are_fluid_sites_incrementing)
+  while (++iters <= ITERS_MAX && are_fluid_sites_incrementing)
     {
       are_fluid_sites_incrementing = 0;
+      sites_b = 0;
       
-      for (index_a = 0; index_a < sites_a; index_a++)
+      for (i = 0; i < sites_a; i++)
 	{
-	  site_location_a_p = &site_location_a[ index_a ];
-	  
 	  for (l = 0; l < 14; l++)
 	    {
-	      neigh_i = site_location_a_p->i + e_x[ l ];
-	      neigh_j = site_location_a_p->j + e_y[ l ];
-	      neigh_k = site_location_a_p->k + e_z[ l ];
+	      neigh_i = vis->site_coords[ 0 ][ i ].x + e[ l*3+0 ];
+	      neigh_j = vis->site_coords[ 0 ][ i ].y + e[ l*3+1 ];
+	      neigh_k = vis->site_coords[ 0 ][ i ].z + e[ l*3+2 ];
 	      
-	      if (neigh_i == -1 || neigh_i >= mygl.sites_x) continue;
-	      if (neigh_j == -1 || neigh_j >= mygl.sites_y) continue;
-	      if (neigh_k == -1 || neigh_k >= mygl.sites_z) continue;
+	      if (neigh_i == -1 || neigh_i >= vis->sites_x) continue;
+	      if (neigh_j == -1 || neigh_j >= vis->sites_y) continue;
+	      if (neigh_k == -1 || neigh_k >= vis->sites_z) continue;
 	      
-	      bi = neigh_i >> mygl.shift;
-	      bj = neigh_j >> mygl.shift;
-	      bk = neigh_k >> mygl.shift;
-	      block_id = (bi * mygl.blocks_y + bj) * mygl.blocks_z + bk;
+	      visFromSiteToGridCoords (neigh_i, neigh_j, neigh_k,
+				       &si, &sj, &sk, &block_id, &site_id, vis);
 	      
-	      if ((data_block_p = &mygl.data_block[ block_id ])->site_data == NULL)
+	      if ((block_p = &vis->block[ block_id ])->site == NULL)
 		{
 		  continue;
 		}
-	      si = neigh_i - (bi << mygl.shift);
-	      sj = neigh_j - (bj << mygl.shift);
-	      sk = neigh_k - (bk << mygl.shift);
-	      site_id = (((si << mygl.shift) + sj) << mygl.shift) + sk;
+	      site_p = &block_p->site[ site_id ];
 	      
-	      site_data_p = &data_block_p->site_data[ site_id ];
-	      
-	      if (*site_data_p == SOLID_TYPE || *site_data_p == NULL_TYPE)
+	      if ((site_p->data & SITE_TYPE_MASK) != FLUID_TYPE ||
+		  site_p->label == 1 ||
+		  !visIsSuperficialSite (neigh_i, neigh_j, neigh_k, vis))
 		{
 		  continue;
 		}
-	      if ((*site_data_p & SITE_TYPE_MASK) == INLET_TYPE ||
-		  (*site_data_p & SITE_TYPE_MASK) == OUTLET_TYPE)
+	      if (sites_b >= COORDS_BUFFERS_SIZE_B)
 		{
-		  continue;
+		  return !SUCCESS;
 		}
-	      if (!myglIsSuperficialSite (neigh_i, neigh_j, neigh_k))
-		{
-		  continue;
-		}
-	      if (data_block_p->site_label == NULL)
-		{
-		  data_block_p->site_label = (short int *)malloc(sizeof(short int) * mygl.sites_in_a_block);
-		  
-		  for (n = 0; n < mygl.sites_in_a_block; n++)
-		    {
-		      data_block_p->site_label[ n ] = 0;
-		    }
-		  if (mygl.stored_blocks == mygl.stored_blocks_max)
-		    {
-		      mygl.stored_blocks_max <<= 1;
-		      mygl.stored_block = (int *)realloc(mygl.stored_block, sizeof(int) * mygl.stored_blocks_max);
-		    }
-		  mygl.stored_block[ mygl.stored_blocks ] = block_id;
-		  ++mygl.stored_blocks;
-		}
-	      site_label_p = &data_block_p->site_label[ site_id ];
+	      are_fluid_sites_incrementing = 1;
 	      
-	      if (*site_label_p == global_counter) continue;
+	      site_p->label = 1;
 	      
-	      *site_label_p = global_counter;
+	      vis->site_coords[ 1 ][ sites_b ].x = neigh_i;
+	      vis->site_coords[ 1 ][ sites_b ].y = neigh_j;
+	      vis->site_coords[ 1 ][ sites_b ].z = neigh_k;
+	      ++sites_b;
 	      
 	      nx = (float)neigh_i - org[0];
 	      ny = (float)neigh_j - org[1];
@@ -2241,19 +2061,35 @@ void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[]
 	      nor[2] += nz;
 	    }
 	}
+      site_coords_p = vis->site_coords[ 0 ];
+      vis->site_coords[ 0 ] = vis->site_coords[ 1 ];
+      vis->site_coords[ 1 ] = site_coords_p;
+      sites_a = sites_b;
     }
-  for (n = 0; n < mygl.stored_blocks; n++)
-    {
-      block_id = mygl.stored_block[ n ];
-      
-      free(mygl.data_block[ block_id ].site_label);
-      mygl.data_block[ block_id ].site_label = NULL;
-    }
-  
   temp = 1.F / sqrtf(nor[0] * nor[0] + nor[1] * nor[1] + nor[2] * nor[2]);
   nor[0] *= temp;
   nor[1] *= temp;
   nor[2] *= temp;
+  
+  return SUCCESS;
+}
+
+
+void visEstimateDiameter (int site_i, int site_j, int site_k, float nor[], float *diameter, Vis *vis)
+{
+  float segment_length = 0.25F;
+  float org[3];
+  float x, y, z;
+  
+  int neigh_i, neigh_j, neigh_k;
+  int iters;
+  
+  Site *neigh_site_p;
+  
+  
+  org[0] = (float)site_i;
+  org[1] = (float)site_j;
+  org[2] = (float)site_k;
   
   x = org[0] + 2.F * nor[0];
   y = org[1] + 2.F * nor[1];
@@ -2262,15 +2098,25 @@ void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[]
   neigh_i = (int)x;
   neigh_j = (int)y;
   neigh_k = (int)z;
-  neigh_site_data_p = myglSiteDataPointer (neigh_i, neigh_j, neigh_k, &mygl);
   
-  if (neigh_site_data_p == NULL ||
-      *neigh_site_data_p == SOLID_TYPE ||
-      *neigh_site_data_p == NULL_TYPE)
+  if (neigh_i < 0 || neigh_i >= vis->sites_x ||
+      neigh_j < 0 || neigh_j >= vis->sites_y ||
+      neigh_k < 0 || neigh_k >= vis->sites_z)
     {
       nor[0] = -nor[0];
       nor[1] = -nor[1];
       nor[2] = -nor[2];
+    }
+  else
+    {
+      neigh_site_p = visSitePointer (neigh_i, neigh_j, neigh_k, vis);
+      
+      if (neigh_site_p == NULL || neigh_site_p->data == SOLID_TYPE)
+	{
+	  nor[0] = -nor[0];
+	  nor[1] = -nor[1];
+	  nor[2] = -nor[2];
+	}
     }
   nor[0] *= segment_length;
   nor[1] *= segment_length;
@@ -2280,15 +2126,13 @@ void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[]
   y = org[1];
   z = org[2];
   
-  iterations = 0;
+  iters = 0;
   
-  site_data_p = myglSiteDataPointer (site_i, site_j, site_k, &mygl);
+  neigh_site_p = visSitePointer (site_i, site_j, site_k, vis);
   
-  while (site_data_p != NULL &&
-	 *site_data_p != SOLID_TYPE &&
-	 *site_data_p != NULL_TYPE)
+  while (neigh_site_p != NULL && neigh_site_p->data != SOLID_TYPE)
     {
-      ++iterations;
+      ++iters;
       
       x += nor[0];
       y += nor[1];
@@ -2298,73 +2142,81 @@ void myglEstimateBoundaryNormal (int site_i, int site_j, int site_k, float nor[]
       neigh_j = (int)y;
       neigh_k = (int)z;
       
-      site_data_p = myglSiteDataPointer (neigh_i, neigh_j, neigh_k, &mygl);
+      if (neigh_i < 0 || neigh_i >= vis->sites_x ||
+	  neigh_j < 0 || neigh_j >= vis->sites_y ||
+	  neigh_k < 0 || neigh_k >= vis->sites_z)
+	{
+	  neigh_site_p = NULL;
+	}
+      else
+	{
+	  neigh_site_p = visSitePointer (neigh_i, neigh_j, neigh_k, vis);
+	}
     }
-  --iterations;
+  --iters;
   
-  if (iterations == 0)
+  if (iters == 0)
     {
-      *length = -1.F;
+      *diameter = -1.F;
     }
   else
     {
-      *length = (float)iterations * segment_length;
+      *diameter = (float)iters * segment_length;
     }
 }
 
 
-int myglCreateOptimizedTriangle (unsigned int site_type,
-				 int site_i, int site_j, int site_k)
+int visCreateOptimisedTriangle (unsigned int site_type,
+				int site_i, int site_j, int site_k, Vis *vis)
 {
-  float triangle_factor = 4.F;
+  float triangle_factor = 2.F;
   float org[3], nor[3];
   float x, y, z;
   float longitude, latitude;
   float triangle_size;
-  float length;
+  float diameter;
   
   int neigh_i, neigh_j, neigh_k;
   int l, m, n;
-  int iterations, iterations_max;
+  int iters, iters_max;
   int longitude_id, latitude_id;
-  int triangle_id;
+  int t_id;
   
-  unsigned int *site_data_p, *neigh_site_data_p;
+  Site *site_p, *neigh_site_p;
   
-  Triangle *triangle_p;
+  Triangle *t_p;
   
   
-  if (mygl.boundary[ site_type ].triangles == (int)(1U << BOUNDARY_ID_BITS))
+  if (vis->boundary[ site_type ].triangles == (int)(1U << BOUNDARY_ID_BITS))
     {
       return -1;
     }
-  myglEstimateBoundaryNormal (site_i, site_j, site_k, nor, &length);
-  
-  if (length < 0.F)
+  if (visEstimateBoundaryNormal (site_i, site_j, site_k, nor, vis) == !SUCCESS)
     {
       return -1;
     }
-  triangle_id = mygl.boundary[ site_type ].triangles;
-  triangle_p = &mygl.boundary[ site_type ].triangle[ triangle_id ];
+  visEstimateDiameter (site_i, site_j, site_k, nor, &diameter, vis);
   
+  if (diameter < 0.F)
+    {
+      return -1;
+    }
   org[0] = (float)site_i;
   org[1] = (float)site_j;
   org[2] = (float)site_k;
   
-  triangle_size = triangle_factor * length * mygl.lattice_to_system;
-  
   // segment center
-  org[0] = 0.5F * (org[0] + (org[0] + length * nor[0]));
-  org[1] = 0.5F * (org[1] + (org[1] + length * nor[1]));
-  org[2] = 0.5F * (org[2] + (org[2] + length * nor[2]));
+  org[0] = 0.5F * (org[0] + (org[0] + diameter * nor[0]));
+  org[1] = 0.5F * (org[1] + (org[1] + diameter * nor[1]));
+  org[2] = 0.5F * (org[2] + (org[2] + diameter * nor[2]));
   
   site_i = (int)org[0];
   site_j = (int)org[1];
   site_k = (int)org[2];
   
-  site_data_p = myglSiteDataPointer (site_i, site_j, site_k, &mygl);
+  site_p = visSitePointer (site_i, site_j, site_k, vis);
   
-  iterations_max = 0;
+  iters_max = 0;
   longitude_id = 0;
   latitude_id = 0;
   
@@ -2376,23 +2228,21 @@ int myglCreateOptimizedTriangle (unsigned int site_type,
       
       for (m = 0; m < 360; m++)
 	{
-	  myglRotate (0.F, 0.F, 1.F,
-		      longitude, latitude,
-		      &nor[0], &nor[1], &nor[2]);
+	  visRotate (0.F, 0.F, 1.F,
+		     longitude, latitude,
+		     &nor[0], &nor[1], &nor[2]);
 	  
 	  x = org[0];
 	  y = org[1];
 	  z = org[2];
 	  
-	  iterations = 0;
+	  iters = 0;
 	  
-	  neigh_site_data_p = site_data_p;
+	  neigh_site_p = site_p;
 	  
-	  while (neigh_site_data_p != NULL &&
-		 *neigh_site_data_p != SOLID_TYPE &&
-		 *neigh_site_data_p != NULL_TYPE)
+	  while (neigh_site_p != NULL && neigh_site_p->data != SOLID_TYPE)
 	    {
-	      ++iterations;
+	      ++iters;
 	  
 	      x += nor[0];
 	      y += nor[1];
@@ -2402,13 +2252,22 @@ int myglCreateOptimizedTriangle (unsigned int site_type,
 	      neigh_j = (int)y;
 	      neigh_k = (int)z;
 	      
-	      neigh_site_data_p = myglSiteDataPointer (neigh_i, neigh_j, neigh_k, &mygl);
+	      if (neigh_i < 0 || neigh_i >= vis->sites_x ||
+		  neigh_j < 0 || neigh_j >= vis->sites_y ||
+		  neigh_k < 0 || neigh_k >= vis->sites_z)
+		{
+		  neigh_site_p = NULL;
+		}
+	      else
+		{
+		  neigh_site_p = visSitePointer (neigh_i, neigh_j, neigh_k, vis);
+		}
 	    }
-	  --iterations;
+	  --iters;
 	  
-	  if (iterations > iterations_max)
+	  if (iters > iters_max)
 	    {
-	      iterations_max = iterations;
+	      iters_max = iters;
 	      longitude_id = m;
 	      latitude_id = n;
 	    }
@@ -2416,902 +2275,950 @@ int myglCreateOptimizedTriangle (unsigned int site_type,
 	}
       latitude += 2.F * DEG_TO_RAD;
     }
-  if (iterations_max == 0)
+  if (iters_max == 0)
     {
       return -1;
     }
-  
   longitude = longitude_id * DEG_TO_RAD;
   latitude = latitude_id * 2.F * DEG_TO_RAD;
   
-  myglRotate (0.F, 0.F, 1.F,
-	      longitude, latitude,
-	      &nor[0], &nor[1], &nor[2]);
+  t_id = vis->boundary[ site_type ].triangles;
+  t_p = &vis->boundary[ site_type ].triangle[ t_id ];
+
+  triangle_size = triangle_factor * diameter;
   
-  org[0] = org[0] * mygl.lattice_to_system - mygl.half_dim_x;
-  org[1] = org[1] * mygl.lattice_to_system - mygl.half_dim_y;
-  org[2] = org[2] * mygl.lattice_to_system - mygl.half_dim_z;
+  org[0] = org[0] - vis->half_dim_x;
+  org[1] = org[1] - vis->half_dim_y;
+  org[2] = org[2] - vis->half_dim_z;
   
-  myglRotate (0.F, triangle_size, 0.F,
-	      longitude, latitude,
-	      &triangle_p->v[0].pos_x, &triangle_p->v[0].pos_y, &triangle_p->v[0].pos_z);
+  visRotate (0.F, triangle_size * 2.F, 0.F,
+	     longitude, latitude,
+	     &t_p->v[0].pos_x, &t_p->v[0].pos_y, &t_p->v[0].pos_z);
   
-  myglRotate (-(triangle_size / sqrtf(2.F)), -(triangle_size / sqrtf(2.F)), 0.F,
-	      longitude, latitude,
-	      &triangle_p->v[1].pos_x, &triangle_p->v[1].pos_y, &triangle_p->v[1].pos_z);
+  visRotate (-(triangle_size * sqrtf(3.F)), -triangle_size, 0.F,
+	     longitude, latitude,
+	     &t_p->v[1].pos_x, &t_p->v[1].pos_y, &t_p->v[1].pos_z);
   
-  myglRotate (+(triangle_size / sqrtf(2.F)), -(triangle_size / sqrtf(2.F)), 0.F,
-	      longitude, latitude,
-	      &triangle_p->v[2].pos_x, &triangle_p->v[2].pos_y, &triangle_p->v[2].pos_z);
+  visRotate (+(triangle_size / sqrtf(3.F)), -triangle_size, 0.F,
+	     longitude, latitude,
+	     &t_p->v[2].pos_x, &t_p->v[2].pos_y, &t_p->v[2].pos_z);
   
   for (l = 0; l < 3; l++)
     {
-      triangle_p->v[l].pos_x += org[0];
-      triangle_p->v[l].pos_y += org[1];
-      triangle_p->v[l].pos_z += org[2];
+      t_p->v[l].pos_x += org[0];
+      t_p->v[l].pos_y += org[1];
+      t_p->v[l].pos_z += org[2];
     }
-  triangle_p->pressure_avg = 80.0F;
-  triangle_p->pressure_amp = 0.0F;
-  triangle_p->pressure_phs = 0.0F;
+  t_p->pressure_avg = 80.0F;
+  t_p->pressure_amp = 0.0F;
+  t_p->pressure_phs = 0.0F;
   
-  triangle_p->normal_sign = 1;
+  t_p->normal_sign = 1;
   
-  ++mygl.boundary[ site_type ].triangles;
+  visCalculateTriangleData (t_p);
   
-  return triangle_id;
+  ++vis->boundary[ site_type ].triangles;
+  
+  return t_id;
 }
 
 
-void DisplayNull (void)
+ScreenVoxel *visScreenVoxelPointer (int x, int y, Vis *vis)
 {
-  ;
+  int voxel_x = (int)(vis->screen_voxels * (float)x / (float)vis->viewport_pixels_x);
+  int voxel_y = (int)(vis->screen_voxels * (float)y / (float)vis->viewport_pixels_y);
+  
+  return &vis->screen_voxel[ voxel_x * vis->screen_voxels + voxel_y ];
 }
 
 
-void DisplaySlice (void)
+void visProjectBoundariesToScreenVoxels (Vis *vis)
+{
+  float x, y, z;
+  
+  int voxel_i, voxel_j;
+  
+  ScreenVoxel *voxel_p;
+  
+  
+  for (int n = 0; n < vis->screen_voxels * vis->screen_voxels; n++)
+    {
+      vis->screen_voxel[ n ].v_z = 0.F;
+    }
+  for (int n = 0; n < BOUNDARIES; n++)
+    {
+      for (int m = 0; m < vis->boundary[ n ].triangles; m++)
+	{
+	  Triangle *t_p = &vis->boundary[ n ].triangle[ m ];
+	  
+	  for (int l = 0; l < 3; l++)
+	    {
+	      visProject (t_p->v[l].pos_x, t_p->v[l].pos_y, t_p->v[l].pos_z, &x, &y, &z);
+	      
+	      voxel_i = (int)((vis->screen_voxels / (2.F * screen.max_x)) * (x + screen.max_x));
+	      voxel_j = (int)((vis->screen_voxels / (2.F * screen.max_y)) * (y + screen.max_y));
+	      
+	      if (voxel_i < 0 || voxel_i >= vis->screen_voxels ||
+		  voxel_j < 0 || voxel_j >= vis->screen_voxels)
+		{
+		  continue;
+		}
+	      voxel_p = &vis->screen_voxel[ voxel_i * vis->screen_voxels + voxel_j ];
+	      
+	      if (z > voxel_p->v_z)
+		{
+		  voxel_p->b_id = n;
+		  voxel_p->t_id = m;
+		  voxel_p->v_id = l;
+		  voxel_p->v_z  = z;
+		}
+	    }
+	}
+    }
+}
+
+
+void visMoveTriangleVertexWithMouse (int x0, int y0, float z0, Vis *vis)
+{
+  float x1, y1, z1;
+  float x2, y2, z2;
+  
+  int i, j, k;
+  
+  
+  x1 = screen.max_x * (-1.F + (x0 << 1) / (float)vis->viewport_pixels_x);
+  y1 = screen.max_y * (-1.F + (y0 << 1) / (float)vis->viewport_pixels_y);
+  z1 = z0;
+  
+  visAntiProject (x1, y1, z1, &x2, &y2, &z2);
+  
+  i = vis->mouse.b_id;
+  j = vis->mouse.t_id;
+  k = vis->mouse.v_id;
+  
+  vis->boundary[i].triangle[j].v[k].pos_x = x2;
+  vis->boundary[i].triangle[j].v[k].pos_y = y2;
+  vis->boundary[i].triangle[j].v[k].pos_z = z2;
+  
+  visCalculateTriangleData (&vis->boundary[i].triangle[j]);
+}
+
+
+void visRotateTriangleWithMouse (float dx1, float dy1,
+				 int boundary_index, int triangle_index, Vis *vis)
+{
+  float cx, cy, cz;
+  float nx, ny, nz;
+  float dz1;
+  float dx2, dy2, dz2;
+  float dx3, dy3, dz3;
+  float longitude1, latitude1;
+  float longitude2, latitude2;
+  
+  int i;
+  
+  Triangle *t_p;
+  
+  
+  t_p = &vis->boundary[ boundary_index ].triangle[ triangle_index ];
+  
+  visTriangleCenter (t_p, &cx, &cy, &cz);
+  visTriangleNormal (t_p, &nx, &ny, &nz);
+  
+  longitude1 = atan2f(nx, nz);
+  latitude1  = atan2f(ny, sqrtf(nx * nx + nz * nz));
+  
+  visRotate (dx1, dy1, 1.F,
+	     longitude1, latitude1,
+	     &dx2, &dy2, &dz2);
+  
+  longitude2 = atan2f(dx2, dz2);
+  latitude2  = atan2f(dy2, sqrtf(dx2 * dx2 + dz2 * dz2));
+  
+  for (i = 0; i < 3; i++)
+    {
+      dx1 = t_p->v[i].pos_x - cx;
+      dy1 = t_p->v[i].pos_y - cy;
+      dz1 = t_p->v[i].pos_z - cz;
+      
+      visAntiRotate (dx1, dy1, dz1, longitude1, latitude1, &dx2, &dy2, &dz2);
+      
+      visRotate (dx2, dy2, dz2, longitude2, latitude2, &dx3, &dy3, &dz3);
+      
+      t_p->v[i].pos_x = dx3 + cx;
+      t_p->v[i].pos_y = dy3 + cy;
+      t_p->v[i].pos_z = dz3 + cz;
+    }
+  visCalculateTriangleData (t_p);
+}
+
+
+void visScaleTriangleWithMouse (float scaling_factor, int b_id, int t_id, Vis *vis)
+{
+  float cx, cy, cz;
+  float dx, dy, dz;
+  
+  int i;
+  
+  Triangle *t_p;
+  
+  
+  t_p = &vis->boundary[ b_id ].triangle[ t_id ];
+  
+  visTriangleCenter (t_p, &cx, &cy, &cz);
+  
+  for (i = 0; i < 3; i++)
+    {
+      dx = t_p->v[i].pos_x - cx;
+      dy = t_p->v[i].pos_y - cy;
+      dz = t_p->v[i].pos_z - cz;
+      
+      t_p->v[i].pos_x = (1.F + scaling_factor) * dx + cx;
+      t_p->v[i].pos_y = (1.F + scaling_factor) * dy + cy;
+      t_p->v[i].pos_z = (1.F + scaling_factor) * dz + cz;
+    }
+  visCalculateTriangleData (t_p);
+}
+
+
+void visRotateViewpointWithMouse (float dx1, float dy1, Vis *vis)
+{
+  float dx2, dy2, dz2;
+  
+  
+  visRotate (dx1, dy1, 1.F,
+	     vis->longitude * DEG_TO_RAD, vis->latitude * DEG_TO_RAD,
+	     &dx2, &dy2, &dz2);
+  
+  vis->longitude = atan2f(dx2, dz2) / DEG_TO_RAD;
+  vis->latitude  = atan2f(dy2, sqrtf(dx2 * dx2 + dz2 * dz2)) / DEG_TO_RAD;
+  
+  visProjection (vis);
+}
+
+
+void visMouseFunction (int button, int state, int x, int y, Vis *vis)
+{
+  int voxel_i, voxel_j;
+  
+  
+  vis->mouse.state = !ACTIVE;
+  
+  if (button != GLUT_LEFT_BUTTON) return;
+  
+  y = vis->viewport_pixels_y - y - 1;
+  
+  voxel_i = (x * vis->screen_voxels) / vis->viewport_pixels_x;
+  voxel_j = (y * vis->screen_voxels) / vis->viewport_pixels_y;
+  
+  if (voxel_i < 0 || voxel_i >= vis->screen_voxels ||
+      voxel_j < 0 || voxel_j >= vis->screen_voxels)
+    {
+      vis->mouse.b_id = -1;
+      return;
+    }
+  if (state == GLUT_DOWN)
+    {
+      vis->mouse.state = ACTIVE;
+    }
+  else if (state == GLUT_UP)
+    {
+      vis->mouse.state = !ACTIVE;
+    }
+  vis->mouse.x = x;
+  vis->mouse.y = y;
+}
+
+
+void visMotionFunction (int x, int y, Vis *vis)
+{
+  if (vis->mouse.state == !ACTIVE) return;
+  
+  y = vis->viewport_pixels_y - y - 1;
+  
+  int mouse_dx = x - vis->mouse.x;
+  int mouse_dy = y - vis->mouse.y;
+  
+  if (vis->menu.option == CHANGE_THRESHOLD)
+    {
+      if (mouse_dy > 0)
+	{
+	  vis->selected_gray += mouse_dy * mouse_dy;
+	}
+      else
+	{
+	  vis->selected_gray -= mouse_dy * mouse_dy;
+	}
+      vis->selected_gray = fmaxf(vis->gray_min, fminf(vis->gray_max, vis->selected_gray));
+    }
+  else if (vis->mode == 0)
+    {
+      if (vis->menu.option == CHANGE_SLICE)
+	{
+	  vis->selected_slice += mouse_dy;
+	  vis->selected_slice = max(0, min(vis->input_slices-1, vis->selected_slice));
+	}
+    }
+  else
+    {
+      if (vis->menu.option == ZOOM_SCENE)
+	{
+	  vis->zoom *= 1.F + (float)mouse_dy / vis->viewport_pixels_y;
+	  visProjection (vis);
+	}
+      else if (vis->menu.option == ROTATE_SCENE)
+	{
+	  visRotateViewpointWithMouse (-(float)mouse_dx / vis->viewport_pixels_x,
+				       -(float)mouse_dy / vis->viewport_pixels_y, vis);
+	}
+      else if (vis->menu.option == ZOOM_BOUNDARY && vis->mouse.b_id >= 0)
+	{
+	  visScaleTriangleWithMouse ((float)mouse_dy / vis->viewport_pixels_y,
+				     vis->mouse.b_id,
+				     vis->mouse.t_id,
+				     vis);
+	}
+      else if (vis->menu.option == ROTATE_BOUNDARY && vis->mouse.b_id >= 0)
+	{
+	  visRotateTriangleWithMouse ((float)mouse_dx / vis->viewport_pixels_x,
+				      (float)mouse_dy / vis->viewport_pixels_y,
+				      vis->mouse.b_id,
+				      vis->mouse.t_id,
+				      vis);
+	}
+    }
+  if (vis->mode == 2)
+    {
+      vis->mode = 1;
+    }
+  vis->mouse.x = x;
+  vis->mouse.y = y;
+}
+
+
+void visPassiveMotionFunction (int x, int y, Vis *vis)
+{
+  int voxel_i, voxel_j;
+  
+  ScreenVoxel *voxel_p;
+  
+  
+  y = vis->viewport_pixels_y - y - 1;
+  
+  vis->mouse.x = x;
+  vis->mouse.y = y;
+  
+  if (vis->mode == 0) return;
+  
+  voxel_i = x * vis->screen_voxels / vis->viewport_pixels_x;
+  voxel_j = y * vis->screen_voxels / vis->viewport_pixels_y;
+  
+  if (voxel_i < 0 || voxel_i >= vis->screen_voxels ||
+      voxel_j < 0 || voxel_j >= vis->screen_voxels)
+    {
+      vis->mouse.b_id = -1;
+      return;
+    }
+  if (vis->mouse.b_id >= 0) return;
+  
+  visProjectBoundariesToScreenVoxels (vis);
+  
+  voxel_p = visScreenVoxelPointer (vis->mouse.x, vis->mouse.y, vis);
+  
+  if (voxel_p->v_z > EPSILON)
+    {
+      vis->mouse.t_id = voxel_p->t_id;
+      vis->mouse.b_id = voxel_p->b_id;
+      vis->mouse.v_id = voxel_p->v_id;
+    }
+}
+
+
+void visCreateCubeDisplayList (void)
+{
+  glNewList (1, GL_COMPILE);
+  
+  glBegin (GL_QUAD_STRIP);
+  glVertex3f (0.F, 0.F, 0.F);
+  glVertex3f (0.F, 1.F, 0.F);
+  glVertex3f (0.F, 0.F, 1.F);
+  glVertex3f (0.F, 1.F, 1.F);
+  glVertex3f (1.F, 0.F, 1.F);
+  glVertex3f (1.F, 1.F, 1.F);
+  glVertex3f (1.F, 0.F, 0.F);
+  glVertex3f (1.F, 1.F, 0.F);
+  glVertex3f (0.F, 0.F, 0.F);
+  glVertex3f (0.F, 1.F, 0.F);
+  glEnd ();
+  
+  glBegin (GL_QUADS);
+  glVertex3f (0.F, 0.F, 0.F);
+  glVertex3f (0.F, 0.F, 1.F);
+  glVertex3f (1.F, 0.F, 1.F);
+  glVertex3f (1.F, 0.F, 0.F);
+  glVertex3f (0.F, 1.F, 0.F);
+  glVertex3f (0.F, 1.F, 1.F);
+  glVertex3f (1.F, 1.F, 1.F);
+  glVertex3f (1.F, 1.F, 0.F);
+  glEnd ();
+  
+  glEndList ();
+}
+
+
+void visDeleteCubeDisplayList (void)
+{
+  glDeleteLists (1, 1);
+}
+
+
+void visVisualiseString (float r, float g, float b, int x, int y, char *string, void *font)
+{
+  glColor3f (r, g, b);
+  glWindowPos2i (x, y);
+  
+  for (int i = 0; i < (int)strlen(string); i++)
+    {
+      glutBitmapCharacter (font, string[i]);
+    }
+  glEnd ();
+}
+
+
+void visVisualiseTrianglePars (int b_id, int t_id, Vis *vis)
+{
+  char pars_string[256];
+  
+  Triangle *t_p;
+  
+  
+  t_p = &vis->boundary[ b_id ].triangle[ t_id ];
+  
+  sprintf (pars_string, "pressure = %.1f + %.1f cos(w t + phase)  mmHg, phase = %.1f deg",
+	   t_p->pressure_avg, t_p->pressure_amp, t_p->pressure_phs);
+  
+  visVisualiseString (0.F, 0.F, 0.F, 10, 10,
+		      pars_string, GLUT_BITMAP_HELVETICA_12);
+}
+
+
+void visVisualiseSiteData (int site_i, int site_j, int site_k, Vis *vis)
+{
+  float nor[3];
+  float diameter;
+  
+  char pars_string[256];
+  
+  
+  if (visEstimateBoundaryNormal (site_i, site_j, site_k, nor, vis) == !SUCCESS)
+    {
+      return;
+    }
+  visEstimateDiameter (site_i, site_j, site_k, nor, &diameter, vis);
+  
+  if (diameter >= 0.F)
+    {
+      diameter *= vis->pixel_size / vis->res_factor;
+      sprintf (pars_string, "Lattice coords = (%i, %i, %i)  Diameter = %.3f mm",
+	       site_i, site_j, site_k, diameter);
+    }
+  else
+    {
+      sprintf (pars_string, "Lattice coords = (%i, %i, %i)  Diameter = NaN",
+	       site_i, site_j, site_k);
+    }
+  visVisualiseString (0.F, 0.F, 0.F, 10, 10,
+		      pars_string, GLUT_BITMAP_HELVETICA_12);
+}
+
+
+void visVisualiseVisData (Vis *vis)
+{
+  char data_string[256];
+  
+  
+  if (vis->mode == 0)
+    {
+      sprintf (data_string, "Pixel size (mm) = %.3f  Slice thickness (mm) = %.3f  Threshold = %.1f  ",
+	       vis->pixel_size, vis->slice_size, vis->selected_gray);
+      
+      visVisualiseString (0.F, 1.F, 0.F,
+			  10, vis->viewport_pixels_y-20,
+			  data_string, GLUT_BITMAP_HELVETICA_12);
+      
+      sprintf (data_string, "Resolution enhancement = %i  Sites = %i  Segmentation time = %.3f",
+	       vis->res_factor, vis->sites, vis->segmentation_time);
+      
+      visVisualiseString (0.F, 1.F, 0.F, 10, vis->viewport_pixels_y-40,
+			  data_string, GLUT_BITMAP_HELVETICA_12);
+    }
+  else
+    {
+      sprintf (data_string, "Pixel size (mm) = %.3f  Slice thickness (mm) = %.3f  Threshold = %.1f  ",
+	       vis->pixel_size, vis->slice_size, vis->selected_gray);
+      
+      visVisualiseString (0.F, 0.F, 0.F,
+			  10, vis->viewport_pixels_y-20,
+			  data_string, GLUT_BITMAP_HELVETICA_12);
+      
+      sprintf (data_string, "Resolution enhancement = %i  Sites = %i  Segmentation time = %.3f",
+	       vis->res_factor, vis->sites, vis->segmentation_time);
+      
+      visVisualiseString (0.F, 0.F, 0.F, 10, vis->viewport_pixels_y-40,
+			  data_string, GLUT_BITMAP_HELVETICA_12);
+      
+      sprintf (data_string, "FPS = %.2f", vis->fps);
+  
+      visVisualiseString (0.F, 0.F, 0.F,
+			  vis->viewport_pixels_x-100, 10,
+			  data_string, GLUT_BITMAP_HELVETICA_12);
+    }
+}
+
+
+void visVisualiseTriangles (Vis *vis)
+{
+  float x0, y0, z0;
+  float x1, y1, z1;
+  float nx, ny, nz;
+  float length;
+  
+  Triangle *t_p;
+  
+  
+  glLineWidth (3.F);
+  
+  for (unsigned int n = 0; n < BOUNDARIES; n++)
+    {
+      if (n == INLET_BOUNDARY)
+	{
+	  glColor3f (0.5F, 0.5F, 0.5F);
+	}
+      else if (n == OUTLET_BOUNDARY)
+	{
+	  glColor3f (0.0F, 0.5F, 0.0F);
+	}
+      else if (n == WALL_BOUNDARY)
+	{
+	  glColor3f (0.0F, 0.0F, 0.5F);
+	}
+      for (unsigned int m = 0; m < vis->boundary[ n ].triangles; m++)
+	{
+	  if (m == vis->mouse.t_id && n == vis->mouse.b_id)
+	    {
+	      glBegin (GL_TRIANGLES);
+	    }
+	  else
+	    {
+	      glBegin (GL_LINE_LOOP);
+	    }
+	  t_p = &vis->boundary[ n ].triangle[ m ];
+	  
+	  for (int i = 0; i < 3; i++)
+	    {
+	      glVertex3f (t_p->v[i].pos_x, t_p->v[i].pos_y, t_p->v[i].pos_z);
+	    }
+	  glEnd ();
+	  
+	  if (n != INLET_BOUNDARY) continue;
+	  
+	  glBegin (GL_LINES);
+	  
+	  x0 = t_p->pos_x;
+	  y0 = t_p->pos_y;
+	  z0 = t_p->pos_z;
+	  
+	  nx = t_p->nor_x;
+	  ny = t_p->nor_y;
+	  nz = t_p->nor_z;
+
+	  length = sqrtf(t_p->d.r2);
+	  
+	  if (t_p->normal_sign == -1)
+	    {
+	      nx = -nx;
+	      ny = -ny;
+	      nz = -nz;
+	    }
+	  x1 = x0 + nx * length;
+	  y1 = y0 + ny * length;
+	  z1 = z0 + nz * length;
+	  
+	  glVertex3f (x0, y0, z0);
+	  glVertex3f (x1, y1, z1);
+	  
+	  glEnd ();
+	}
+    }
+}
+
+
+void visVisualiseDiscs (Vis *vis)
+{
+  float v[2*37];
+  
+  float x1, y1, z1;
+  float x2, y2, z2;
+  
+  int i;
+  
+  Triangle *t_p;
+  
+  
+  for (i = 0; i <= 35; i++)
+    {
+      v[ 2*i   ] = sinf(i * 10 * DEG_TO_RAD);
+      v[ 2*i+1 ] = cosf(i * 10 * DEG_TO_RAD);
+    }
+  v[ 2*36   ] = v[ 0 ];
+  v[ 2*36+1 ] = v[ 1 ];
+  
+  for (unsigned int n = 0; n < BOUNDARIES; n++)
+    {
+      if (n == INLET_BOUNDARY)
+	{
+	  glColor3f (0.5F, 0.5F, 0.5F);
+	}
+      else if (n == OUTLET_BOUNDARY)
+	{
+	  glColor3f (0.0F, 0.5F, 0.0F);
+	}
+      else if (n == WALL_BOUNDARY)
+	{
+	  glColor3f (0.0F, 0.0F, 0.5F);
+	}
+      for (unsigned int m = 0; m < vis->boundary[ n ].triangles; m++)
+	{
+	  glBegin (GL_TRIANGLE_FAN);
+	  
+	  t_p = &vis->boundary[ n ].triangle[ m ];
+	  
+	  glVertex3f (t_p->pos_x, t_p->pos_y, t_p->pos_z);
+	  
+	  for (i = 0; i <= 36; i++)
+	    {
+	      x1 = sqrtf(t_p->d.r2) * v[ 2*i   ];
+	      y1 = sqrtf(t_p->d.r2) * v[ 2*i+1 ];
+	      
+	      visRotate (x1, y1, 0.F,
+			 t_p->d.sin_longitude, t_p->d.cos_longitude,
+			 t_p->d.sin_latitude,  t_p->d.cos_latitude,
+			 &x2, &y2, &z2);
+	      
+	      x1 = x2 + t_p->pos_x;
+	      y1 = y2 + t_p->pos_y;
+	      z1 = z2 + t_p->pos_z;
+	      
+	      glVertex3f (x1, y1, z1);
+	    }
+	  glEnd ();
+	}
+    }
+}
+
+
+void visVisualiseActiveBoundaryVoxel (Vis *vis)
+{
+  float x1, y1;
+  float x2, y2;
+  
+  int voxel_i, voxel_j;
+  int matrix_mode;
+  
+  
+  glGetIntegerv (GL_MATRIX_MODE, &matrix_mode);
+  glMatrixMode (GL_PROJECTION);
+  glPushMatrix ();
+  glLoadIdentity();
+  
+  gluOrtho2D (-screen.max_x, screen.max_x,
+	      -screen.max_y, screen.max_y);
+  
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix ();
+  glLoadIdentity();
+  
+  glDisable (GL_DEPTH_TEST);
+  
+  
+  voxel_i = (vis->screen_voxels * vis->mouse.x) / vis->viewport_pixels_x;
+  voxel_j = (vis->screen_voxels * vis->mouse.y) / vis->viewport_pixels_y;
+  
+  x1 = screen.max_x * (-1.F + (voxel_i << 1) / (float)vis->screen_voxels);
+  y1 = screen.max_y * (-1.F + (voxel_j << 1) / (float)vis->screen_voxels);
+  
+  x2 = x1 + (screen.max_x * (2.F / vis->screen_voxels));
+  y2 = y1 + (screen.max_y * (2.F / vis->screen_voxels));
+  
+  glColor3f (0.F, 0.F, 1.F);
+  glBegin (GL_LINE_LOOP);
+  
+  glVertex2f (x1, y1);
+  glVertex2f (x1, y2);
+  glVertex2f (x2, y2);
+  glVertex2f (x2, y1);
+  
+  glEnd ();
+  glEnable (GL_DEPTH_TEST);
+  
+  
+  glMatrixMode (GL_MODELVIEW);
+  glPopMatrix ();
+  
+  glMatrixMode (GL_PROJECTION);
+  glPopMatrix ();
+  glMatrixMode (matrix_mode);
+}
+
+
+void visVisualiseSelectedSlice (Vis *vis)
 {
   float x, y;
   float delta_x, delta_y;
   float gray;
   
+  int matrix_mode;
   int i, j, k;
   
   
-  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glGetIntegerv (GL_MATRIX_MODE, &matrix_mode);
+  glMatrixMode (GL_PROJECTION);
+  glPushMatrix ();
+  glLoadIdentity();
   
-  delta_x = 2.F * screen.max_x / (float)mygl.input_image_pix_x;
-  delta_y = 2.F * screen.max_y / (float)mygl.input_image_pix_y;
+  gluOrtho2D (-screen.max_x, screen.max_x,
+	      -screen.max_y, screen.max_y);
   
-  k = mygl.selected_slice;
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix ();
+  glLoadIdentity();
   
-  x = -screen.max_x + 0.5F * delta_x;
+  glDisable (GL_DEPTH_TEST);
+  glClear (GL_COLOR_BUFFER_BIT);
   
-  for (i = 0; i < mygl.input_image_pix_x - 1; i++)
+  delta_x = 2.F * screen.max_x * vis->viewport_pixels_x / (vis->input_pixels_x * (vis->viewport_pixels_x-2));
+  delta_y = 2.F * screen.max_y * vis->viewport_pixels_y / (vis->input_pixels_y * (vis->viewport_pixels_y-2));
+  
+  k = vis->selected_slice;
+  
+  y = -screen.max_y;
+  
+  for (j = 0; j < vis->input_pixels_y - 1; j++)
     {
-      glBegin (GL_TRIANGLE_STRIP);
+      glBegin (GL_QUAD_STRIP);
       
-      y = -screen.max_y + 0.5F * delta_y;
+      x = -screen.max_x;
       
-      for (j = 0; j < mygl.input_image_pix_y; j++)
+      for (i = 0; i < vis->input_pixels_x; i++)
 	{
-	  gray = (mygl.medical_data[ myglVoxelId(i,j,k) ] - gray_min) / (gray_max - gray_min);
+	  gray = (vis->medical_data[ visVoxelId(i,j,k,vis) ]-vis->gray_min) / (vis->gray_max-vis->gray_min);
 	  
 	  glColor3f (gray, gray, gray);	  
-  	  glVertex3f (x, y, 0.F);
+  	  glVertex2f (x, y);
   	  
-	  gray = (mygl.medical_data[ myglVoxelId(i+1,j,k) ] - gray_min) / (gray_max - gray_min);
-  	  
+	  gray = (vis->medical_data[ visVoxelId(i,j+1,k,vis) ]-vis->gray_min) /(vis->gray_max-vis->gray_min);
+	  
 	  glColor3f (gray, gray, gray);
-  	  glVertex3f (x + delta_x, y, 0.F);
+  	  glVertex2f (x, y + delta_y);
 	  
-  	  y += delta_y;
+	  x += delta_x;
   	}
-      x += delta_x;
+      y += delta_y;
       
       glEnd ();
     }
+  visVisualiseVisData (vis);
   
   glutSwapBuffers ();
+  
+  glEnable (GL_DEPTH_TEST);
+  
+  
+  glMatrixMode (GL_MODELVIEW);
+  glPopMatrix ();
+  
+  glMatrixMode (GL_PROJECTION);
+  glPopMatrix ();
+  glMatrixMode (matrix_mode);
 }
 
 
-void DisplaySystemSlow (void)
+void visVisualiseFluidSitesFast (Vis *vis)
 {
-  // slow version!
+  double seconds = myClock ();
   
-  float block_size;
-  float x0, y0, z0;
   float x1, y1, z1;
   float x2, y2, z2;
-  float nx, ny, nz;
-  float length;
+  float r, g, b;
   
-  int pixel_i, pixel_j;
+  int voxel_i, voxel_j;
   int i, j, k;
-  int ii, jj, kk;
   int m, n;
-  int triangle_index;
-  
-  unsigned int boundary_index;
-  
-  unsigned int site_data;
-
-  DataBlock *data_block_p;
-  
-  Triangle *triangle_p;
   
   ScreenVoxel *screen_voxel_p;
   
-  
-  //display_id = 0;
-  
-  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  Block *block_p;
   
   
-  glColor3f (0.F, 0.F, 0.F);
+  glShadeModel (GL_FLAT);
   
-  glLineWidth (3.F);
-  glBegin (GL_LINE_LOOP);
-  
-  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  
-  glEnd ();
-  glBegin (GL_LINE_LOOP);
-
-  myglTransformVertex (-mygl.half_dim_x, +mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);	  
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (-mygl.half_dim_x, +mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);	  
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, +mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);	  
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, +mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);	  
-  glVertex3f (x1, y1, z1);
-  
-  glEnd ();
-  
-  
-  block_size = (float)mygl.block_size * mygl.lattice_to_system;
-  
-  glPointSize ((float)point_size);
+  glPointSize (2.F);
   glBegin (GL_POINTS);
   
-  n = -1;
-  
-  x0 = -mygl.half_dim_x;
-
-  for (i = 0; i < mygl.blocks_x; i++)
+  for (n = 0; n < vis->screen_voxels * vis->screen_voxels; n++)
     {
-      y0 = -mygl.half_dim_y;
+      vis->screen_voxel[ n ].site_i = -1;
+      vis->screen_voxel[ n ].site_z = 0.F;
+    }
+  for (n = 0; n < vis->blocks; n++)
+    {
+      block_p = &vis->block[ n ];
       
-      for (j = 0; j < mygl.blocks_y; j++)
+      if (block_p->site == NULL || block_p->is_void) continue;
+      
+      for (m = 0; m < vis->sites_in_a_block; m++)
 	{
-	  z0 = -mygl.half_dim_z;
+	  if (block_p->site[ m ].data == SOLID_TYPE) continue;
 	  
-	  for (k = 0; k < mygl.blocks_z; k++)
+	  x1 = (float)(i = block_p->x + block_p->site[ m ].x) + (0.5F - vis->half_dim_x);
+	  y1 = (float)(j = block_p->y + block_p->site[ m ].y) + (0.5F - vis->half_dim_y);
+	  z1 = (float)(k = block_p->z + block_p->site[ m ].z) + (0.5F - vis->half_dim_z);
+	  
+	  visColorPalette (block_p->site[ m ].iters, vis->res_factor, &r, &g, &b);
+	  
+	  glColor3f (r, g, b);
+	  glVertex3f (x1, y1, z1);
+	  
+	  visProject (x1, y1, z1, &x2, &y2, &z2);
+	  
+	  voxel_i = (int)((vis->screen_voxels / (2.F * screen.max_x)) * (x2 + screen.max_x));
+	  voxel_j = (int)((vis->screen_voxels / (2.F * screen.max_y)) * (y2 + screen.max_y));
+	  
+	  if (voxel_i < 0 || voxel_i >= vis->screen_voxels ||
+	      voxel_j < 0 || voxel_j >= vis->screen_voxels)
 	    {
-	      data_block_p = &mygl.data_block[ ++n ];
-	      
-	      if (data_block_p->site_data == NULL ||
-		  data_block_p->is_void)
-		{
-		  z0 += block_size;
-		  continue;
-		}
-	      m = -1;
-	      
-	      x1 = x0;
-	      
-	      for (ii = 0; ii < mygl.block_size; ii++)
-		{
-		  if ((i << mygl.shift) + ii >= mygl.sites_x) break;
-	  
-		  y1 = y0;
-		  
-		  for (jj = 0; jj < mygl.block_size; jj++)
-		    {
-		      if ((j << mygl.shift) + jj >= mygl.sites_y) break;
-		      
-		      z1 = z0;
-		      
-		      for (kk = 0; kk < mygl.block_size; kk++)
-			{
-			  if ((k << mygl.shift) + kk >= mygl.sites_z) break;
-			  
-			  site_data = data_block_p->site_data[ ++m ];
-			  
-			  if (site_data == SOLID_TYPE ||
-			      site_data == NULL_TYPE)
-			    {
-			      z1 += mygl.lattice_to_system;
-			      continue;
-			    }
-			  site_data = (site_data & SITE_TYPE_MASK);
-			  
-			  if (site_data == FLUID_TYPE)
-			    {
-			      glColor3f (RedComponent (data_block_p->site_iters[m]), 0.F, 0.F);
-			    }
-			  else if (site_data == INLET_TYPE)
-			    {
-			      glColor3f (0.F, 0.F, 0.F);
-			    }
-			  else if (site_data == OUTLET_TYPE)
-			    {
-			      glColor3f (0.F, 1.F, 0.F);
-			    }
-			  myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
-			  
-			  glVertex3f (x2, y2, z2);
-			  
-			  z1 += mygl.lattice_to_system;
-			}
-		      y1 += mygl.lattice_to_system;
-		    }
-		  x1 += mygl.lattice_to_system;
-		}
-	      z0 += block_size;
+	      continue;
 	    }
-	  y0 += block_size;
+	  screen_voxel_p = &vis->screen_voxel[ voxel_i * vis->screen_voxels + voxel_j ];
+	  
+	  if (z2 > screen_voxel_p->site_z)
+	    {
+	      screen_voxel_p->site_z = z2;
+	      screen_voxel_p->site_i = i;
+	      screen_voxel_p->site_j = j;
+	      screen_voxel_p->site_k = k;
+	    }
 	}
-      x0 += block_size;
     }
   glEnd ();
   
+  glShadeModel (GL_SMOOTH);
   
-  if (draw_triangles)
-    {
-      glLineWidth (3.F);
-      
-      for (boundary_index = 0; boundary_index < BOUNDARIES; boundary_index++)
-	{
-	  if (boundary_index == INLET_BOUNDARY)
-	    {
-	      glColor3f (0.5F, 0.5F, 0.5F);
-	    }
-	  else if (boundary_index == OUTLET_BOUNDARY)
-	    {
-	      glColor3f (0.0F, 0.5F, 0.0F);
-	    }
-	  else if (boundary_index == WALL_BOUNDARY)
-	    {
-	      glColor3f (0.0F, 0.0F, 0.5F);
-	    }
-	  for (triangle_index = 0; triangle_index < mygl.boundary[ boundary_index ].triangles; triangle_index++)
-	    {
-	      if (last_triangle.triangle_id == triangle_index &&
-		  last_triangle.boundary_id == boundary_index)
-		{
-		  glBegin (GL_TRIANGLES);
-		}
-	      else
-		{
-		  glBegin (GL_LINE_LOOP);
-		}
-	      triangle_p = &mygl.boundary[ boundary_index ].triangle[ triangle_index ];
-	      
-	      for (n = 0; n < 3; n++)
-		{
-		  myglTransformVertex (triangle_p->v[n].pos_x, triangle_p->v[n].pos_y, triangle_p->v[n].pos_z, &x2, &y2, &z2);
-		  glVertex3f (x2, y2, z2);
-		}
-	      glEnd ();
-	      
-	      if (boundary_index == INLET_BOUNDARY)
-		{
-		  glBegin (GL_LINES);
-		  
-		  x0 = (triangle_p->v[0].pos_x + triangle_p->v[1].pos_x + triangle_p->v[2].pos_x) / 3;
-		  y0 = (triangle_p->v[0].pos_y + triangle_p->v[1].pos_y + triangle_p->v[2].pos_y) / 3;
-		  z0 = (triangle_p->v[0].pos_z + triangle_p->v[1].pos_z + triangle_p->v[2].pos_z) / 3;
-		  
-		  x1 = triangle_p->v[0].pos_x - x0;
-		  y1 = triangle_p->v[0].pos_y - y0;
-		  z1 = triangle_p->v[0].pos_z - z0;
-		  
-		  myglTriangleNormal (triangle_p->v[0].pos_x, triangle_p->v[0].pos_y, triangle_p->v[0].pos_z,
-				      triangle_p->v[1].pos_x, triangle_p->v[1].pos_y, triangle_p->v[1].pos_z,
-				      triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
-				      &nx, &ny, &nz);
-		  
-		  length = sqrtf(x1 * x1 + y1 * y1 + z1 * z1) / sqrtf(nx * nx + ny * ny + nz * nz);
-		  
-		  myglTransformVertex (x0, y0, z0, &x2, &y2, &z2);
-		  glVertex3f (x2, y2, z2);
-		  
-		  if (triangle_p->normal_sign == -1)
-		    {
-		      nx = -nx;
-		      ny = -ny;
-		      nz = -nz;
-		    }
-		  x1 = x0 + nx * length;
-		  y1 = y0 + ny * length;
-		  z1 = z0 + nz * length;
-		  
-		  myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
-		  glVertex3f (x2, y2, z2);
-		  
-		  glEnd ();
-		}
-	    }
-	}
-    }
+  vis->fps = 1.F / (myClock () - seconds);
   
-  if (mygl.screen_voxel_coords.i >= 0)
-   {
-     // vertex quadrant
-     pixel_i = mygl.screen_voxel_coords.i;
-     pixel_j = mygl.screen_voxel_coords.j;
-     
-     x1 = (float)pixel_i * (screen.max_x * (2.F / screen_voxels)) - screen.max_x;
-     y1 = (float)pixel_j * (screen.max_y * (2.F / screen_voxels)) - screen.max_y;
-     
-     x2 = x1 + (screen.max_x * (2.F / screen_voxels));
-     y2 = y1 + (screen.max_y * (2.F / screen_voxels));
-     
-     glColor3f (0.F, 0.F, 1.F);
-     glBegin (GL_LINE_LOOP);
-     
-     glVertex3f (x1, y1, 1.0F);
-     glVertex3f (x1, y2, 1.0F);
-     glVertex3f (x2, y2, 1.0F);
-     glVertex3f (x2, y1, 1.0F);
-     
-     glEnd ();
-     
-     mygl.screen_voxel_coords.i = -1;
-   }
-  
-  if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
-    {
-      DisplayTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id);
-    }
-  else if (passive_mouse_pixel_i >= 0)
-    {
-      screen_voxel_p = &mygl.screen_to_boundaries_map[ passive_mouse_pixel_i * screen_voxels + passive_mouse_pixel_j ];
-      
-      DisplaySiteData (screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
-      
-      // site quadrant
-      pixel_i = mygl.screen_voxel_coords.i;
-      pixel_j = mygl.screen_voxel_coords.j;
-      
-      x1 = (float)pixel_i * (screen.max_x * (2.F / screen_voxels)) - screen.max_x;
-      y1 = (float)pixel_j * (screen.max_y * (2.F / screen_voxels)) - screen.max_y;
-      
-      x2 = x1 + (screen.max_x * (2.F / screen_voxels));
-      y2 = y1 + (screen.max_y * (2.F / screen_voxels));
-      
-      glColor3f (0.F, 0.F, 1.F);
-      glBegin (GL_LINE_LOOP);
-      
-      glVertex3f (x1, y1, 1.0F);
-      glVertex3f (x1, y2, 1.0F);
-      glVertex3f (x2, y2, 1.0F);
-      glVertex3f (x2, y1, 1.0F);
-      
-      glEnd ();
-    }
-  
-  glutSwapBuffers ();
+  vis->mode = 2;
 }
 
 
-void DisplaySystemFast (void)
+void visVisualiseFluidSitesSlow (Vis *vis)
 {
-  // fast version!
+  double seconds = myClock ();
   
-  float x0, y0, z0;
-  float x1, y1, z1;
-  float x2, y2, z2;
-  float nx, ny, nz;
-  float length;
+  float x, y, z;
+  float r, g, b;
   
-  int pixel_i, pixel_j;
-  int n;
-  int triangle_index;
+  int m, n;
   
-  unsigned int boundary_index;
-  
-  Triangle *triangle_p;
-  
-  ScreenVoxel *screen_voxel_p;
-  
-  SuperficialSite *superficial_site_p;
+  Block *block_p;
   
   
-  display_id = 3;
+  glShadeModel (GL_FLAT);
   
+  for (n = 0; n < vis->blocks; n++)
+    {
+      block_p = &vis->block[ n ];
+      
+      if (block_p->site == NULL || block_p->is_void) continue;
+      
+      for (m = 0; m < vis->sites_in_a_block; m++)
+	{
+	  if (block_p->site[ m ].data == SOLID_TYPE) continue;
+	  
+	  x = (float)(block_p->x + block_p->site[ m ].x) - vis->half_dim_x;
+	  y = (float)(block_p->y + block_p->site[ m ].y) - vis->half_dim_y;
+	  z = (float)(block_p->z + block_p->site[ m ].z) - vis->half_dim_z;
+	  
+	  visColorPalette (block_p->site[ m ].iters, vis->res_factor, &r, &g, &b);
+	  
+	  glColor3f (r, g, b);
+	  glPushMatrix ();
+	  glTranslatef (x, y, z);
+	  glCallList (1);
+	  glPopMatrix ();
+	}
+    }
+  glShadeModel (GL_SMOOTH);
+  
+  vis->fps = 1.F / (myClock () - seconds);
+}
+
+
+void visVisualiseSystem (Vis *vis)
+{
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-  
-  glColor3f (0.F, 0.F, 0.F);
-  
-  glLineWidth (3.F);
-  glBegin (GL_LINE_LOOP);
-  
-  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (-mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, -mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  
-  glEnd ();
-  glBegin (GL_LINE_LOOP);
-
-  myglTransformVertex (-mygl.half_dim_x, +mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (-mygl.half_dim_x, +mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, +mygl.half_dim_y, +mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  myglTransformVertex (+mygl.half_dim_x, +mygl.half_dim_y, -mygl.half_dim_z, &x1, &y1, &z1);
-  glVertex3f (x1, y1, z1);
-  
-  glEnd ();
-  
-  
-  for (n = 0; n < screen_voxels * screen_voxels; n++)
+  if (vis->mode == 1)
     {
-      mygl.screen_to_boundaries_map[ n ].site_i = -1;
-      mygl.screen_to_boundaries_map[ n ].site_z = 0.F;
-    }
-  
-  glPointSize ((float)point_size);
-  glBegin (GL_POINTS);
-  
-  for (n = 0; n < mygl.superficial_sites; n++)
-    {
-      superficial_site_p = &mygl.superficial_site[ n ];
-      
-      x1 = (float)superficial_site_p->i * mygl.lattice_to_system - mygl.half_dim_x;
-      y1 = (float)superficial_site_p->j * mygl.lattice_to_system - mygl.half_dim_y;
-      z1 = (float)superficial_site_p->k * mygl.lattice_to_system - mygl.half_dim_z;
-      
-      glColor3f (RedComponent (superficial_site_p->iters), 0.F, 0.F);
-      
-      myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
-      glVertex3f (x2, y2, z2);
-      
-      pixel_i = (int)(screen_voxels_screen_max_inv_x * (x2 + screen.max_x));
-      pixel_j = (int)(screen_voxels_screen_max_inv_y * (y2 + screen.max_y));
-      
-      if (pixel_i < 0 || pixel_i >= screen_voxels ||
-	  pixel_j < 0 || pixel_j >= screen_voxels)
-	{
-	  continue;
-	}
-      screen_voxel_p = &mygl.screen_to_boundaries_map[ pixel_i * screen_voxels + pixel_j ];
-      
-      if (z2 > screen_voxel_p->site_z)
-	{
-	  screen_voxel_p->site_z  = z2;
-	  screen_voxel_p->site_i = superficial_site_p->i;
-	  screen_voxel_p->site_j = superficial_site_p->j;
-	  screen_voxel_p->site_k = superficial_site_p->k;
-	}
-    }
-  glEnd ();
-  
-  
-  if (draw_triangles)
-    {
-      glLineWidth (3.F);
-      
-      for (boundary_index = 0; boundary_index < BOUNDARIES; boundary_index++)
-	{
-	  if (boundary_index == INLET_BOUNDARY)
-	    {
-	      glColor3f (0.5F, 0.5F, 0.5F);
-	    }
-	  else if (boundary_index == OUTLET_BOUNDARY)
-	    {
-	      glColor3f (0.0F, 0.5F, 0.0F);
-	    }
-	  else if (boundary_index == WALL_BOUNDARY)
-	    {
-	      glColor3f (0.0F, 0.0F, 0.5F);
-	    }
-	  for (triangle_index = 0; triangle_index < mygl.boundary[ boundary_index ].triangles; triangle_index++)
-	    {
-	      if (last_triangle.triangle_id == triangle_index &&
-		  last_triangle.boundary_id == boundary_index)
-		{
-		  glBegin (GL_TRIANGLES);
-		}
-	      else
-		{
-		  glBegin (GL_LINE_LOOP);
-		}
-	      triangle_p = &mygl.boundary[ boundary_index ].triangle[ triangle_index ];
-	      
-	      for (n = 0; n < 3; n++)
-		{
-		  myglTransformVertex (triangle_p->v[n].pos_x, triangle_p->v[n].pos_y, triangle_p->v[n].pos_z, &x2, &y2, &z2);
-		  glVertex3f (x2, y2, z2);
-		}
-	      glEnd ();
-	      
-	      if (boundary_index == INLET_BOUNDARY)
-		{
-		  glBegin (GL_LINES);
-		  
-		  x0 = (triangle_p->v[0].pos_x + triangle_p->v[1].pos_x + triangle_p->v[2].pos_x) / 3;
-		  y0 = (triangle_p->v[0].pos_y + triangle_p->v[1].pos_y + triangle_p->v[2].pos_y) / 3;
-		  z0 = (triangle_p->v[0].pos_z + triangle_p->v[1].pos_z + triangle_p->v[2].pos_z) / 3;
-		  
-		  x1 = triangle_p->v[0].pos_x - x0;
-		  y1 = triangle_p->v[0].pos_y - y0;
-		  z1 = triangle_p->v[0].pos_z - z0;
-		  
-		  myglTriangleNormal (triangle_p->v[0].pos_x, triangle_p->v[0].pos_y, triangle_p->v[0].pos_z,
-				      triangle_p->v[1].pos_x, triangle_p->v[1].pos_y, triangle_p->v[1].pos_z,
-				      triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
-				      &nx, &ny, &nz);
-		  
-		  length = sqrtf(x1 * x1 + y1 * y1 + z1 * z1) / sqrtf(nx * nx + ny * ny + nz * nz);
-		  
-		  myglTransformVertex (x0, y0, z0, &x2, &y2, &z2);
-		  glVertex3f (x2, y2, z2);
-		  
-		  if (triangle_p->normal_sign == -1)
-		    {
-		      nx = -nx;
-		      ny = -ny;
-		      nz = -nz;
-		    }
-		  x1 = x0 + nx * length;
-		  y1 = y0 + ny * length;
-		  z1 = z0 + nz * length;
-		  
-		  myglTransformVertex (x1, y1, z1, &x2, &y2, &z2);
-		  glVertex3f (x2, y2, z2);
-		  
-		  glEnd ();
-		}
-	    }
-	}
-    }
-  
-
-  if (mygl.screen_voxel_coords.i >= 0)
-   {
-     // vertex quadrant
-     pixel_i = mygl.screen_voxel_coords.i;
-     pixel_j = mygl.screen_voxel_coords.j;
-     
-     x1 = (float)pixel_i * (screen.max_x * (2.F / screen_voxels)) - screen.max_x;
-     y1 = (float)pixel_j * (screen.max_y * (2.F / screen_voxels)) - screen.max_y;
-     
-     x2 = x1 + (screen.max_x * (2.F / screen_voxels));
-     y2 = y1 + (screen.max_y * (2.F / screen_voxels));
-     
-     glColor3f (0.F, 0.F, 1.F);
-     glBegin (GL_LINE_LOOP);
-     
-     glVertex3f (x1, y1, 1.0F);
-     glVertex3f (x1, y2, 1.0F);
-     glVertex3f (x2, y2, 1.0F);
-     glVertex3f (x2, y1, 1.0F);
-     
-     glEnd ();
-     
-     mygl.screen_voxel_coords.i = -1;
-   }
-  
-  if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
-    {
-      DisplayTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id);
-    }
-  else if (passive_mouse_pixel_i >= 0)
-    {
-      screen_voxel_p = &mygl.screen_to_boundaries_map[ passive_mouse_pixel_i * screen_voxels + passive_mouse_pixel_j ];
-      
-      if (screen_voxel_p->site_i >= 0)
-	{
-	  DisplaySiteData (screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
-	  
-	  // site quadrant
-	  pixel_i = mygl.screen_voxel_coords.i;
-	  pixel_j = mygl.screen_voxel_coords.j;
-	  
-	  x1 = (float)pixel_i * (screen.max_x * (2.F / screen_voxels)) - screen.max_x;
-	  y1 = (float)pixel_j * (screen.max_y * (2.F / screen_voxels)) - screen.max_y;
-	  
-	  x2 = x1 + (screen.max_x * (2.F / screen_voxels));
-	  y2 = y1 + (screen.max_y * (2.F / screen_voxels));
-	  
-	  glColor3f (0.F, 0.F, 1.F);
-	  glBegin (GL_LINE_LOOP);
-	  
-	  glVertex3f (x1, y1, 1.0F);
-	  glVertex3f (x1, y2, 1.0F);
-	  glVertex3f (x2, y2, 1.0F);
-	  glVertex3f (x2, y1, 1.0F);
-	  
-	  glEnd ();
-	}
-    }
-  
-  glutSwapBuffers ();
-}
-
-
-void GLUTCALLBACK Display (void)
-{
-  void (*DisplayPointer[4])(void);
-  
-  DisplayPointer[0] = DisplayNull;
-  DisplayPointer[1] = DisplaySlice;
-  DisplayPointer[2] = DisplaySystemFast;
-  DisplayPointer[3] = DisplaySystemSlow;
-  
-  (*DisplayPointer[ display_id ]) ();
-}
-
-
-void ReadFirstSlice (int *pixels_x, int *pixels_y, int *voxel_size)
-{
-  string file_name = string(input_path) + fileList[2];
-  
-  FILE *image_file_ptr = fopen(file_name.c_str(), "r");
-
-  
-  fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, pixels_x, pixels_y, voxel_size);
-  
-  printf ("input image pixels x, y: %i %i, voxel size: %i\n",
-	  *pixels_x, *pixels_y, *voxel_size);
-
-  fflush (stdout);
-  
-  fclose(image_file_ptr);
-
-/*  FILE *temp_file_ptr, *image_file_ptr;
-  
-  char partial_file_name[256], image_file_name_input[256], image_file_name_output[256];
-  char *partial_command, total_command[256];
-  
-  
-  temp_file_ptr = fopen ("temp_file.txt", "r");
-  
-  fscanf (temp_file_ptr, "%s\n", partial_file_name);
-  fclose (temp_file_ptr);
-  
-  //sprintf (image_file_name_input, "%s%s", input_path, partial_file_name);
-  //
-  //partial_command = "convert";
-  //image_file_name_output = "temp_file.ppm";
-  //
-  //sprintf (total_command, "%s %s %s",
-  //	   partial_command, image_file_name_input, image_file_name_output);
-  //system (total_command);
-  //strcpy ( image_file_name_output , input_path );
-  //strcat ( image_file_name_output , partial_file_name );
-  
-  image_file_ptr = fopen (image_file_name_output, "r");
-  
-  fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, pixels_x, pixels_y, voxel_size);
-  
-  printf ("input image pixels x, y: %i %i, voxel size: %i\n",
-	  *pixels_x, *pixels_y, *voxel_size);
-  fflush (stdout);
-  
-  fclose (image_file_ptr); */
-}
-
-
-void ReadSlice255 (int slice_id, int pixel_depth, unsigned char slice_row_data[])
-{
-  FILE *temp_file_ptr, *image_file_ptr;
-  
-  char partial_file_name[256], image_file_name_input[256], *image_file_name_output;
-  char *partial_command, total_command[256];
-  
-  int pixels_x, pixels_y;
-  int i, j;
-  
-  printf ("processing slice %i ...\n", slice_id);
-  fflush (stdout);
-  
-  temp_file_ptr = fopen ("temp_file.txt", "r");
-  
-  for (i = 0; i < slice_id; i++)
-    {
-      fscanf (temp_file_ptr, "%s\n", partial_file_name);
-    }
-  fclose (temp_file_ptr);
-  
-  sprintf (image_file_name_input, "%s%s", input_path, partial_file_name);
-  
-  partial_command = "convert";
-  image_file_name_output = "temp_file.ppm";
-  
-  sprintf (total_command, "%s %s %s",
-	   partial_command, image_file_name_input, image_file_name_output);
-  system (total_command);
-  
-  
-  if (strcmp (ppm_type, "P3"))
-    {
-      image_file_ptr = fopen (image_file_name_output, "rb");
-      
-      fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, &pixels_x, &pixels_y, &pixel_depth);
-      
-      for (j = 0; j < mygl.input_image_pix_y; j++)
-	{
-	  fread (slice_row_data, sizeof(unsigned char), mygl.input_image_pix_x * 3, image_file_ptr);
-	  
-	  for (i = 0; i < mygl.input_image_pix_x; i++)
-	    {
-	      mygl.medical_data[ (i*mygl.input_image_pix_y+j)*mygl.input_slices+slice_id ] =
-		slice_row_data[ i*3 ];
-	    }
-	}
-      fclose (image_file_ptr);
+      visVisualiseFluidSitesFast (vis);
     }
   else
     {
-      image_file_ptr = fopen (image_file_name_output, "r");
-      
-      ifstream inputFile;
-      inputFile.open(image_file_name_output);
-      
-      inputFile >> ppm_type;
-      inputFile >> pixels_x;
-      inputFile >> pixels_y;
-      inputFile >> pixel_depth;
-      
-      for (j = 0; j < mygl.input_image_pix_y; j++)
-	{
-	  for (i = 0; i < mygl.input_image_pix_x * 3; i++)
-	    {
-	      int temp;
-	      
-	      inputFile >> temp;
-	      slice_row_data[i] = temp;
-	    }
-	  for (i = 0; i < mygl.input_image_pix_x; i++)
-	    {
-	      mygl.medical_data[ (i*mygl.input_image_pix_y+j)*mygl.input_slices+slice_id ] =
-		slice_row_data[ i*3 ];
-	    }
-	}
-      inputFile.close();
+      visVisualiseFluidSitesSlow (vis);
     }
+  if (vis->mouse.b_id == INLET_BOUNDARY || vis->mouse.b_id == OUTLET_BOUNDARY)
+    {
+      visVisualiseTrianglePars (vis->mouse.b_id, vis->mouse.t_id, vis);
+    }
+  else if (vis->mouse.b_id < 0)
+    {
+      ScreenVoxel *voxel_p = visScreenVoxelPointer (vis->mouse.x, vis->mouse.y, vis);
+      
+      if (voxel_p->site_i != -1)
+	{
+	  visVisualiseSiteData (voxel_p->site_i, voxel_p->site_j, voxel_p->site_k, vis);
+	}
+    }
+  visVisualiseVisData (vis);
+  visVisualiseTriangles (vis);
+  visVisualiseDiscs (vis);
+  
+  glutSwapBuffers ();
 }
 
 
-void ReadSlice65536 (int slice_id, int pixel_depth, unsigned short int slice_row_data[])
+void GLUTCALLBACK Visualise (void)
 {
-  FILE *temp_file_ptr, *image_file_ptr;
+  void (*VisualisePointer[2]) (Vis *vis);
   
-  char partial_file_name[256], image_file_name_input[256], *image_file_name_output;
-  char *partial_command, total_command[256]; 
+  VisualisePointer[0] = visVisualiseSelectedSlice;
+  VisualisePointer[1] = visVisualiseSystem;
   
-  int pixels_x, pixels_y;
-  int i, j;
-  
-  
-  printf ("processing slice %i ...\n", slice_id);
-  fflush (stdout);
-  
-  //temp_file_ptr = fopen ("temp_file.txt", "r");
-  //
-  //for (i = 0; i < slice_id; i++)
-  //  {
-  //    fscanf (temp_file_ptr, "%s\n", partial_file_name);
-  //  }
-  //fclose (temp_file_ptr);
-  //
-  //sprintf (image_file_name_input, "%s%s", input_path, partial_file_name);
-  //
-  //partial_command = "convert";
-  //image_file_name_output = "temp_file.ppm";
-  //
-  //sprintf (total_command, "%s %s %s",
-  //	   partial_command, image_file_name_input, image_file_name_output);
-  //system (total_command);
-  
-  string file_name = string(input_path) + fileList[ slice_id+2 ];
-
- /* if (strcmp (ppm_type, "P3"))
-    {
-//      image_file_ptr = fopen (image_file_name_output, "rb");
-	  image_file_ptr = fopen(file_name.c_str(),"rb");
-      
-      fscanf (image_file_ptr, "%s\n%i %i\n%i\n", ppm_type, &pixels_x, &pixels_y, &pixel_depth);
-      
-      for (j = 0; j < mygl.input_image_pix_y; j++)
-	{
-	  fread (slice_row_data, sizeof(unsigned short int), mygl.input_image_pix_x * 3, image_file_ptr);
-	  
-	  for (i = 0; i < mygl.input_image_pix_x; i++)
-	    {
-	      gray_min = fminf(gray_min, slice_row_data[ i*3 ]);
-	      gray_max = fmaxf(gray_max, slice_row_data[ i*3 ]);
-	      
-	      mygl.medical_data[ (i*mygl.input_image_pix_y+j)*mygl.input_slices+slice_id ] =
-		slice_row_data[ i*3 ];
-	    }
-	}
-      fclose (image_file_ptr);
-    }
-  else */
-    {
-      //image_file_ptr = fopen (image_file_name_output, "r");
-      
-      ifstream inputFile;
-      //inputFile.open(image_file_name_output);
-      inputFile.open(file_name.c_str());
-      
-      inputFile >> ppm_type;
-      inputFile >> pixels_x;
-      inputFile >> pixels_y;
-      inputFile >> pixel_depth; 
-      
-      for (j = 0; j < mygl.input_image_pix_y; j++)
-	{
-	  for (i = 0; i < mygl.input_image_pix_x; i++)
-	    {
-	      int temp;
-	      
-	      inputFile >> temp;
-	      slice_row_data[i] = temp;
-	      
-	      gray_min = fminf(gray_min, temp);
-	      gray_max = fmaxf(gray_max, temp);
-	    }
-	  for (i = 0; i < mygl.input_image_pix_x; i++)
-	    {
-	      mygl.medical_data[ (i*mygl.input_image_pix_y+j)*mygl.input_slices+slice_id ] =
-		slice_row_data[ i ];
-	    }
-	}
-      /*
-      for (j = 0; j < mygl.input_image_pix_y; j++)
-	{
-	  for (i = 0; i < mygl.input_image_pix_x * 3; i++)
-	    {
-	      int temp;
-	      
-	      inputFile >> temp;
-	      slice_row_data[i] = temp;
-	      
-	      gray_min = fminf(gray_min, temp);
-	      gray_max = fmaxf(gray_max, temp);
-	      }
-	  for (i = 0; i < mygl.input_image_pix_x; i++)
-	    {
-	      mygl.medical_data[ (i*mygl.input_image_pix_y+j)*mygl.input_slices+slice_id ] =
-		slice_row_data[ i*3 ];
-	    }
-	}
-      */
-      inputFile.close();
-    }
+  (*VisualisePointer[ min(1, vis.mode) ]) (&vis);
 }
 
 
-int getdir (string dir, vector<string> &files)
+int visGetDir (string dir, vector<string> &files)
 {
   DIR *dp;
+  
   struct dirent *dirp;
   
   
-  if((dp  = opendir(dir.c_str())) == NULL) {
-    cout << "Error(" << errno << ") opening " << dir << endl;
-    return errno;
-  }
+  if ((dp = opendir(dir.c_str())) == NULL)
+    {
+      cout << "Error(" << errno << ") opening " << dir << endl;
+      return errno;
+    }
   
   while ((dirp = readdir(dp)) != NULL)
     {
@@ -3323,238 +3230,234 @@ int getdir (string dir, vector<string> &files)
 }
 
 
-void GetFileNames(void)
+void visGetFileNames (Vis *vis)
 {
-  string dir = string(input_path);
+  string dir = string(vis->input_path);
   
-  fileList = vector<string>();
+  vis->file_list = vector<string>();
   
-  getdir (dir,fileList);
+  visGetDir (dir, vis->file_list);
 }
 
 
-void ReadConfig (void)
+void visReadFirstSlice (Vis *vis)
 {
-  FILE *temp_file_ptr;
+  char ppm_type[16];
   
-  float seconds;
+  string file_name;
   
-  int pixels_x, pixels_y, pixel_depth;
-  int i;
+  ifstream input_file;
+
   
-  char *first_command_part, *last_command_part;
-  char my_command[256];
+  file_name = string(vis->input_path) + vis->file_list[2];
   
+  input_file.open(file_name.c_str());
   
-  GetFileNames();
+  input_file >> ppm_type;
+  input_file >> vis->input_pixels_x;
+  input_file >> vis->input_pixels_y;
+  input_file >> vis->pixel_depth;
   
-  mygl.input_slices = fileList.size() - 2;
+  input_file.close();
+}
+
+
+void visReadSlice (int slice_id, Vis *vis)
+{
+  char ppm_type[16];
   
-  // the names of the files corresponding to the data slices are
-  // written in a temporary file
+  string file_name;
   
-  //first_command_part = "ls";
-  //last_command_part  = "| less | wc > temp_file.txt";
-  //
-  //sprintf (my_command, "%s %s %s", first_command_part, input_path, last_command_part);
-  //system (my_command);
-  //
-  //temp_file_ptr = fopen ("temp_file.txt", "r");
-  //fscanf (temp_file_ptr, "%i ", &mygl.input_slices);
-  //fclose (temp_file_ptr);
-  //
-  //temp_file_ptr = fopen ("temp_file.txt", "r");
-  //
-  //first_command_part = "ls -1";
-  //last_command_part  = "> temp_file.txt";
-  //
-  //sprintf (my_command, "%s %s %s", first_command_part, input_path, last_command_part);
-  //system (my_command);
-  //
-  //fclose (temp_file_ptr);
+  ifstream input_file;
   
   
-  ReadFirstSlice (&pixels_x, &pixels_y, &pixel_depth);
+  file_name = string(vis->input_path) + vis->file_list[ slice_id+2 ];
   
-  mygl.input_image_pix_x = pixels_x;
-  mygl.input_image_pix_y = pixels_y;
+  input_file.open(file_name.c_str());
   
-  mygl.output_image_pix_x = (int)(mygl.input_image_pix_x * res_factor);
-  mygl.output_image_pix_y = (int)(mygl.input_image_pix_y * res_factor);
+  input_file >> ppm_type;
+  input_file >> vis->input_pixels_x;
+  input_file >> vis->input_pixels_y;
+  input_file >> vis->pixel_depth;
   
-  mygl.output_slices = (int)(mygl.input_slices * (slice_size / pixel_size) *
-			     (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x);
+  for (int j = 0; j < vis->input_pixels_y; j++)
+    {
+      for (int i = 0; i < vis->input_pixels_x; i++)
+	{
+	  int temp;
+	  
+	  input_file >> temp;
+	  vis->medical_data[ visVoxelId(i,j,slice_id,vis) ] = temp;
+	  
+	  vis->gray_min = fminf(vis->gray_min, temp);
+	  vis->gray_max = fmaxf(vis->gray_max, temp);
+	}
+    }
+  input_file.close();
+}
+
+
+void visReadConfig (Vis *vis)
+{
+  visGetFileNames (vis);
   
-  mygl.scale_x = res_factor;
-  mygl.scale_y = res_factor;
-  mygl.scale_z = res_factor * slice_size / pixel_size;
+  vis->input_slices = vis->file_list.size() - 2;
   
-  mygl.scale_inv_x = 1.F / mygl.scale_x;
-  mygl.scale_inv_y = 1.F / mygl.scale_y;
-  mygl.scale_inv_z = 1.F / mygl.scale_z;
+
+  visReadFirstSlice (vis);
   
-  printf (" output_slices: %i\n", mygl.output_slices);
-  fflush (stdout);
+  vis->output_image_pix_x = vis->input_pixels_x * vis->res_factor;
+  vis->output_image_pix_y = vis->input_pixels_y * vis->res_factor;
+  
+  vis->output_slices = (int)(vis->input_slices * (vis->slice_size / vis->pixel_size) *
+			     (float)vis->output_image_pix_x / (float)vis->input_pixels_x);
+  
+  vis->scale_x = vis->res_factor;
+  vis->scale_y = vis->res_factor;
+  vis->scale_z = vis->res_factor * vis->slice_size / vis->pixel_size;
+  
+  vis->scale_inv_x = 1.F / vis->scale_x;
+  vis->scale_inv_y = 1.F / vis->scale_y;
+  vis->scale_inv_z = 1.F / vis->scale_z;
   
   // system parameters setup
   
-  mygl.lattice_to_system = 1.F;
+  vis->block_size = 8;
+  vis->shift = 3;
   
-  mygl.block_size = 8;
-  mygl.shift = 3;
+  vis->blocks_x = vis->output_image_pix_x >> vis->shift;
+  vis->blocks_y = vis->output_image_pix_y >> vis->shift;
+  vis->blocks_z = vis->output_slices      >> vis->shift;
   
-  mygl.blocks_x = mygl.output_image_pix_x >> mygl.shift;
-  mygl.blocks_y = mygl.output_image_pix_y >> mygl.shift;
-  mygl.blocks_z = mygl.output_slices      >> mygl.shift;
+  if ((vis->blocks_x << vis->shift) < vis->output_image_pix_x) ++vis->blocks_x;
+  if ((vis->blocks_y << vis->shift) < vis->output_image_pix_y) ++vis->blocks_y;
+  if ((vis->blocks_z << vis->shift) < vis->output_slices     ) ++vis->blocks_z;
   
-  if ((mygl.blocks_x << mygl.shift) < mygl.output_image_pix_x) ++mygl.blocks_x;
-  if ((mygl.blocks_y << mygl.shift) < mygl.output_image_pix_y) ++mygl.blocks_y;
-  if ((mygl.blocks_z << mygl.shift) < mygl.output_slices     ) ++mygl.blocks_z;
+  vis->sites_x = vis->blocks_x * vis->block_size;
+  vis->sites_y = vis->blocks_y * vis->block_size;
+  vis->sites_z = vis->blocks_z * vis->block_size;
   
-  mygl.sites_x = mygl.blocks_x * mygl.block_size;
-  mygl.sites_y = mygl.blocks_y * mygl.block_size;
-  mygl.sites_z = mygl.blocks_z * mygl.block_size;
+  vis->dim_x = vis->output_image_pix_x;
+  vis->dim_y = vis->output_image_pix_y;
+  vis->dim_z = vis->output_slices;
   
-  mygl.dim_x = (float)mygl.sites_x * mygl.lattice_to_system;
-  mygl.dim_y = (float)mygl.sites_y * mygl.lattice_to_system;
-  mygl.dim_z = (float)mygl.sites_z * mygl.lattice_to_system;
+  vis->half_dim_x = 0.5F * vis->dim_x;
+  vis->half_dim_y = 0.5F * vis->dim_y;
+  vis->half_dim_z = 0.5F * vis->dim_z;
   
-  mygl.half_dim_x = 0.5F * mygl.dim_x;
-  mygl.half_dim_y = 0.5F * mygl.dim_y;
-  mygl.half_dim_z = 0.5F * mygl.dim_z;
+  vis->system_size = fmaxf(vis->dim_x, fmaxf(vis->dim_y, vis->dim_z));
   
-  mygl.system_size = fmaxf(mygl.dim_x, fmaxf(mygl.dim_y, mygl.dim_z));
+  vis->sites_in_a_block = vis->block_size * vis->block_size * vis->block_size;
   
-  mygl.sites_in_a_block = mygl.block_size * mygl.block_size * mygl.block_size;
+  vis->blocks = vis->blocks_x * vis->blocks_y * vis->blocks_z;
   
-  mygl.blocks = mygl.blocks_x * mygl.blocks_y * mygl.blocks_z;
+  vis->medical_data = (unsigned short int *)malloc(sizeof(unsigned short int) *
+						   vis->input_slices * vis->input_pixels_x * vis->input_pixels_y);
   
+  vis->block = (Block *)malloc(sizeof(Block) * vis->blocks);
   
-  // initial setup of the medical and system datasets
+  int n = 0;
   
-  mygl.medical_data = (unsigned short int *)malloc(sizeof(unsigned short int) * mygl.input_slices * pixels_x * pixels_y);
-  
-  mygl.data_block = (DataBlock *)malloc(sizeof(DataBlock) * mygl.blocks);
-  
-  for (i = 0; i < mygl.blocks; i++)
+  for (int i = 0; i < vis->sites_x; i+=vis->block_size)
     {
-      mygl.data_block[ i ].site_data = NULL;
-      mygl.data_block[ i ].site_label = NULL;
-      mygl.data_block[ i ].site_iters = NULL;
-    }
-    
- /* if (pixel_depth == 255)
-    {
-      mygl.slice_row_data = (unsigned char *)malloc(sizeof(unsigned short int) * pixels_x * 3);
-    }
-  else
-    { */
-//      mygl.slice_row_data = (unsigned short int *)malloc(sizeof(unsigned char) * pixels_x * 3);
-      mygl.slice_row_data = (unsigned short int *)malloc(sizeof(unsigned char) * pixels_x * 3);
-  //  }
-  
-  // the medical dataset is filtered and stored in a bi-level data structure
-  
-  seconds = myClock ();
-  
-  gray_max = -1.0e9;
-  gray_min = +1.0e9;
-  
-  for (i = 0; i < mygl.input_slices; i++)
-    {
- /*     if (pixel_depth == 255)
+      for (int j = 0; j < vis->sites_y; j+=vis->block_size)
 	{
-	  ReadSlice255 (i, pixel_depth, (unsigned char *)mygl.slice_row_data);
+	  for (int k = 0; k < vis->sites_z; k+=vis->block_size)
+	    {
+	      vis->block[ n ].site = NULL;
+	      vis->block[ n ].x = i;
+	      vis->block[ n ].y = j;
+	      vis->block[ n ].z = k;
+	      ++n;
+	    }
 	}
-      else
-	{  */
-
-	  ReadSlice65536 (i, pixel_depth, (unsigned short int *)mygl.slice_row_data);
-
-//	}
-    } 
-  printf ("seconds to read: %.3f\n", myClock () - seconds);
-  fflush (stdout);
+    }
+  vis->stack_sites_max = vis->sites_in_a_block * 100000;
   
-  free(mygl.slice_row_data);
+  vis->stack_site = (Site *)malloc(sizeof(Site) * vis->stack_sites_max);
   
-  //system ("rm temp_file.txt");
-  //system ("rm temp_file.ppm");
+  vis->stack_triangles_max = 1000;
+  vis->stack_triangle = (StackTriangle *)malloc(sizeof(StackTriangle) * vis->stack_triangles_max);
   
+  vis->gray_max = -1.0e9;
+  vis->gray_min = +1.0e9;
   
-  mygl.superficial_sites_max = 100000;
-  mygl.superficial_site = (SuperficialSite *)malloc(sizeof(SuperficialSite) * mygl.superficial_sites_max);
-  
-  mygl.stored_blocks_max = 1000;
-  mygl.stored_block = (int *)malloc(sizeof(int) * mygl.stored_blocks_max);
-  
-  site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * BUFFERS_SIZE);
-  site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * BUFFERS_SIZE);
+  for (int i = 0; i < vis->input_slices; i++)
+    {
+      visReadSlice (i, vis);
+    }
+  vis->site_coords[ 0 ] = (Coords *)malloc(sizeof(Coords) * COORDS_BUFFERS_SIZE_A);
+  vis->site_coords[ 1 ] = (Coords *)malloc(sizeof(Coords) * COORDS_BUFFERS_SIZE_A);
+  vis->site_coords[ 2 ] = (Coords *)malloc(sizeof(Coords) * COORDS_BUFFERS_SIZE_B);
+  vis->site_coords[ 3 ] = (Coords *)malloc(sizeof(Coords) * COORDS_BUFFERS_SIZE_B);
 }
 
 
-void WriteCheckpoint (char *file_name)
+void visWriteCheckpoint (Vis *vis)
 {
   FILE *system_config;
   XDR xdr_config;
   
-  double lattice_to_system;
+  double dummy;
   
   int i, m, n;
   
   unsigned int data;
   
   
-  system_config = fopen (file_name, "w");
+  system_config = fopen (vis->checkpoint, "w");
   xdrstdio_create (&xdr_config, system_config, XDR_ENCODE);
   
-  xdr_float (&xdr_config, &slice_size);
-  xdr_float (&xdr_config, &pixel_size);
-  xdr_float (&xdr_config, &res_factor);
-  xdr_int   (&xdr_config, &smoothing_range);
+  xdr_float  (&xdr_config, &vis->slice_size);
+  xdr_float  (&xdr_config, &vis->pixel_size);
   
-  xdr_int     (&xdr_config, &mygl.input_image_pix_x);
-  xdr_int     (&xdr_config, &mygl.input_image_pix_y);
-  xdr_int     (&xdr_config, &mygl.input_slices);
+  float res_factor = vis->res_factor;
   
-  xdr_int     (&xdr_config, &mygl.selected_pixel_x);
-  xdr_int     (&xdr_config, &mygl.selected_pixel_y);
-  xdr_int     (&xdr_config, &mygl.selected_slice);
-  xdr_float   (&xdr_config, &mygl.selected_gray);
+  xdr_float  (&xdr_config, &res_factor);
+  xdr_int    (&xdr_config, &vis->smoothing_range);
   
-  lattice_to_system = (double)mygl.lattice_to_system;
+  xdr_int    (&xdr_config, &vis->input_pixels_x);
+  xdr_int    (&xdr_config, &vis->input_pixels_y);
+  xdr_int    (&xdr_config, &vis->input_slices);
   
-  xdr_double (&xdr_config, &lattice_to_system);
-  xdr_int    (&xdr_config, &mygl.blocks_x);
-  xdr_int    (&xdr_config, &mygl.blocks_y);
-  xdr_int    (&xdr_config, &mygl.blocks_z);
-  xdr_int    (&xdr_config, &mygl.block_size);
+  xdr_int    (&xdr_config, &vis->selected_pixel_x);
+  xdr_int    (&xdr_config, &vis->selected_pixel_y);
+  xdr_int   (&xdr_config, &vis->selected_slice);
+  xdr_float  (&xdr_config, &vis->selected_gray);
+  
+  dummy = 1.F;
+  
+  xdr_double (&xdr_config, &dummy);
+  xdr_int    (&xdr_config, &vis->blocks_x);
+  xdr_int    (&xdr_config, &vis->blocks_y);
+  xdr_int    (&xdr_config, &vis->blocks_z);
+  xdr_int    (&xdr_config, &vis->block_size);
   
 
-  for (n = 0; n < mygl.input_slices * mygl.input_image_pix_x * mygl.input_image_pix_y; n++)
+  for (n = 0; n < vis->input_slices * vis->input_pixels_x * vis->input_pixels_y; n++)
     {
-      data = mygl.medical_data[ n ];
+      data = vis->medical_data[ n ];
       
       xdr_u_int (&xdr_config, &data);
     }
   
   for (n = 0; n < BOUNDARIES; n++)
     {
-      xdr_int (&xdr_config, &mygl.boundary[ n ].triangles);
+      xdr_int (&xdr_config, &vis->boundary[ n ].triangles);
       
-      for (m = 0; m < mygl.boundary[ n ].triangles; m++)
+      for (m = 0; m < vis->boundary[ n ].triangles; m++)
 	{
 	  for (i = 0; i < 3; i++)
 	    {
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].v[ i ].pos_x);
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].v[ i ].pos_y);
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].v[ i ].pos_z);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].v[ i ].pos_x);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].v[ i ].pos_y);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].v[ i ].pos_z);
 	    }
 	  if (n == INLET_BOUNDARY || n == OUTLET_BOUNDARY)
 	    {
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].pressure_avg);
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].pressure_amp);
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].pressure_phs);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].pressure_avg);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].pressure_amp);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].pressure_phs);
 	    }
 	}
     }
@@ -3562,172 +3465,170 @@ void WriteCheckpoint (char *file_name)
 }
 
 
-void ReadCheckpoint (char *file_name)
+void visReadCheckpoint (Vis *vis)
 {
   FILE *system_config;
   XDR xdr_config;
   
-  double lattice_to_system;
+  double dummy;
   
-  int pixels_x, pixels_y;
+  float res_factor;
+  
   int i, m, n;
   
   unsigned int data;
   
   
-  system_config = fopen (file_name, "r");
+  system_config = fopen (vis->checkpoint, "r");
   xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
   
-  xdr_float (&xdr_config, &slice_size);
-  xdr_float (&xdr_config, &pixel_size);
-  xdr_float (&xdr_config, &res_factor);
-  xdr_int   (&xdr_config, &smoothing_range);
+  xdr_float  (&xdr_config, &vis->slice_size);
+  xdr_float  (&xdr_config, &vis->pixel_size);
+  xdr_float  (&xdr_config, &res_factor);
   
-  xdr_int     (&xdr_config, &mygl.input_image_pix_x);
-  xdr_int     (&xdr_config, &mygl.input_image_pix_y);
-  xdr_int     (&xdr_config, &mygl.input_slices);
+  vis->res_factor = res_factor;
   
-  xdr_int     (&xdr_config, &mygl.selected_pixel_x);
-  xdr_int     (&xdr_config, &mygl.selected_pixel_y);
-  xdr_int     (&xdr_config, &mygl.selected_slice);
-  xdr_float   (&xdr_config, &mygl.selected_gray);
+  xdr_int    (&xdr_config, &vis->smoothing_range);
   
-  xdr_double (&xdr_config, &lattice_to_system);
-  xdr_int    (&xdr_config, &mygl.blocks_x);
-  xdr_int    (&xdr_config, &mygl.blocks_y);
-  xdr_int    (&xdr_config, &mygl.blocks_z);
-  xdr_int    (&xdr_config, &mygl.block_size);
+  xdr_int    (&xdr_config, &vis->input_pixels_x);
+  xdr_int    (&xdr_config, &vis->input_pixels_y);
+  xdr_int    (&xdr_config, &vis->input_slices);
   
-  pixels_x = mygl.input_image_pix_x;
-  pixels_y = mygl.input_image_pix_y;
+  xdr_int    (&xdr_config, &vis->selected_pixel_x);
+  xdr_int    (&xdr_config, &vis->selected_pixel_y);
+  xdr_int    (&xdr_config, &vis->selected_slice);
+  xdr_float  (&xdr_config, &vis->selected_gray);
   
-  mygl.output_image_pix_x = (int)(mygl.input_image_pix_x * res_factor);
-  mygl.output_image_pix_y = (int)(mygl.input_image_pix_y * res_factor);
+  xdr_double (&xdr_config, &dummy);
+  xdr_int    (&xdr_config, &vis->blocks_x);
+  xdr_int    (&xdr_config, &vis->blocks_y);
+  xdr_int    (&xdr_config, &vis->blocks_z);
+  xdr_int    (&xdr_config, &vis->block_size);
   
-  mygl.output_slices = (int)(mygl.input_slices * (slice_size / pixel_size) *
-			     (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x);
+  vis->output_image_pix_x = vis->input_pixels_x * vis->res_factor;
+  vis->output_image_pix_y = vis->input_pixels_y * vis->res_factor;
   
-  mygl.scale_x = (float)mygl.output_image_pix_x / (float)mygl.input_image_pix_x;
-  mygl.scale_y = (float)mygl.output_image_pix_y / (float)mygl.input_image_pix_y;
-  mygl.scale_z = (float)mygl.output_slices / (float)mygl.input_slices;
+  vis->output_slices = (int)(vis->input_slices * (vis->slice_size / vis->pixel_size) *
+			     (float)vis->output_image_pix_x / (float)vis->input_pixels_x);
   
-  mygl.scale_inv_x = 1.F / mygl.scale_x;
-  mygl.scale_inv_y = 1.F / mygl.scale_y;
-  mygl.scale_inv_z = 1.F / mygl.scale_z;
+  vis->scale_x = (float)vis->output_image_pix_x / (float)vis->input_pixels_x;
+  vis->scale_y = (float)vis->output_image_pix_y / (float)vis->input_pixels_y;
+  vis->scale_z = (float)vis->output_slices / (float)vis->input_slices;
   
-  mygl.lattice_to_system = lattice_to_system;
+  vis->scale_inv_x = 1.F / vis->scale_x;
+  vis->scale_inv_y = 1.F / vis->scale_y;
+  vis->scale_inv_z = 1.F / vis->scale_z;
   
-  mygl.sites_x = mygl.blocks_x * mygl.block_size;
-  mygl.sites_y = mygl.blocks_y * mygl.block_size;
-  mygl.sites_z = mygl.blocks_z * mygl.block_size;
+  vis->sites_x = vis->blocks_x * vis->block_size;
+  vis->sites_y = vis->blocks_y * vis->block_size;
+  vis->sites_z = vis->blocks_z * vis->block_size;
   
-  mygl.dim_x = (float)mygl.sites_x * lattice_to_system;
-  mygl.dim_y = (float)mygl.sites_y * lattice_to_system;
-  mygl.dim_z = (float)mygl.sites_z * lattice_to_system;
+  vis->dim_x = (float)vis->sites_x;
+  vis->dim_y = (float)vis->sites_y;
+  vis->dim_z = (float)vis->sites_z;
   
-  mygl.half_dim_x = 0.5F * mygl.dim_x;
-  mygl.half_dim_y = 0.5F * mygl.dim_y;
-  mygl.half_dim_z = 0.5F * mygl.dim_z;
+  vis->half_dim_x = 0.5F * vis->dim_x;
+  vis->half_dim_y = 0.5F * vis->dim_y;
+  vis->half_dim_z = 0.5F * vis->dim_z;
   
-  mygl.system_size = fmaxf(mygl.dim_x, fmaxf(mygl.dim_y, mygl.dim_z));
+  vis->system_size = fmaxf(vis->dim_x, fmaxf(vis->dim_y, vis->dim_z));
   
-  mygl.sites_in_a_block = mygl.block_size * mygl.block_size * mygl.block_size;
+  vis->sites_in_a_block = vis->block_size * vis->block_size * vis->block_size;
   
-  mygl.blocks = mygl.blocks_x * mygl.blocks_y * mygl.blocks_z;
+  vis->blocks = vis->blocks_x * vis->blocks_y * vis->blocks_z;
   
-  i = mygl.block_size;
+  i = vis->block_size;
   
-  mygl.shift = 0;
+  vis->shift = 0;
 
   while (i > 1)
     {
       i >>= 1;
 
-      ++mygl.shift;
+      ++vis->shift;
     }
   
   // initial setup of the medical and system datasets
   
-  mygl.medical_data = (unsigned short int *)malloc(sizeof(unsigned short int) * mygl.input_slices * pixels_x * pixels_y);
+  vis->medical_data = (unsigned short int *)malloc(sizeof(unsigned short int) *
+						   vis->input_slices * vis->input_pixels_x * vis->input_pixels_y);
   
-  gray_max = -1.0e9;
-  gray_min = +1.0e9;
+  vis->gray_max = -1.0e9;
+  vis->gray_min = +1.0e9;
   
-  for (n = 0; n < mygl.input_slices * pixels_x * pixels_y; n++)
+  for (n = 0; n < vis->input_slices * vis->input_pixels_x * vis->input_pixels_y; n++)
     {
       xdr_u_int (&xdr_config, &data);
       
-      mygl.medical_data[ n ] = data;
+      vis->medical_data[ n ] = data;
       
-      gray_min = fminf(gray_min, data);
-      gray_max = fmaxf(gray_max, data);
+      vis->gray_min = fminf(vis->gray_min, data);
+      vis->gray_max = fmaxf(vis->gray_max, data);
     }
   
-  mygl.data_block = (DataBlock *)malloc(sizeof(DataBlock) * mygl.blocks);
+  vis->block = (Block *)malloc(sizeof(Block) * vis->blocks);
   
-  for (n = 0; n < mygl.blocks; n++)
+  n = 0;
+  
+  for (int i = 0; i < vis->sites_x; i+=vis->block_size)
     {
-      mygl.data_block[ n ].site_data = NULL;
-      mygl.data_block[ n ].site_iters = NULL;
-      mygl.data_block[ n ].is_void = 1;
+      for (int j = 0; j < vis->sites_y; j+=vis->block_size)
+	{
+	  for (int k = 0; k < vis->sites_z; k+=vis->block_size)
+	    {
+	      vis->block[ n ].site = NULL;
+	      vis->block[ n ].x = i;
+	      vis->block[ n ].y = j;
+	      vis->block[ n ].z = k;
+	      ++n;
+	    }
+	}
     }
   
-  
-  mygl.boundary[ INLET_BOUNDARY  ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
-  mygl.boundary[ OUTLET_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
-  mygl.boundary[ WALL_BOUNDARY   ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
+  vis->boundary[ INLET_BOUNDARY  ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
+  vis->boundary[ OUTLET_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
+  vis->boundary[ WALL_BOUNDARY   ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
   
   for (n = 0; n < BOUNDARIES; n++)
     {
-      xdr_int (&xdr_config, &mygl.boundary[ n ].triangles);
+      xdr_int (&xdr_config, &vis->boundary[ n ].triangles);
       
-      for (m = 0; m < mygl.boundary[ n ].triangles; m++)
+      for (m = 0; m < vis->boundary[ n ].triangles; m++)
 	{
 	  for (i = 0; i < 3; i++)
 	    {
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].v[ i ].pos_x);
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].v[ i ].pos_y);
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].v[ i ].pos_z);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].v[ i ].pos_x);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].v[ i ].pos_y);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].v[ i ].pos_z);
 	    }
 	  if (n == INLET_BOUNDARY || n == OUTLET_BOUNDARY)
 	    {
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].pressure_avg);
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].pressure_amp);
-	      xdr_float (&xdr_config, &mygl.boundary[ n ].triangle[ m ].pressure_phs);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].pressure_avg);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].pressure_amp);
+	      xdr_float (&xdr_config, &vis->boundary[ n ].triangle[ m ].pressure_phs);
 	    }
 	}
     }
   xdr_destroy (&xdr_config);
   
+  vis->screen_voxel = (ScreenVoxel *)malloc(sizeof(ScreenVoxel) * vis->screen_voxels * vis->screen_voxels);
   
-  mygl.screen_to_boundaries_map = (ScreenVoxel *)malloc(sizeof(ScreenVoxel) * screen_voxels * screen_voxels);
+  vis->site_coords[ 0 ] = (Coords *)malloc(sizeof(Coords) * COORDS_BUFFERS_SIZE_A);
+  vis->site_coords[ 1 ] = (Coords *)malloc(sizeof(Coords) * COORDS_BUFFERS_SIZE_A);
+  vis->site_coords[ 2 ] = (Coords *)malloc(sizeof(Coords) * COORDS_BUFFERS_SIZE_B);
+  vis->site_coords[ 3 ] = (Coords *)malloc(sizeof(Coords) * COORDS_BUFFERS_SIZE_B);
   
-  mygl.superficial_sites_max = 100000;
-  mygl.superficial_site = (SuperficialSite *)malloc(sizeof(SuperficialSite) * mygl.superficial_sites_max);
-  
-  mygl.stored_blocks_max = 1000;
-  mygl.stored_block = (int *)malloc(sizeof(int) * mygl.stored_blocks_max);
-  
-  site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * BUFFERS_SIZE);
-  site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * BUFFERS_SIZE);
-  
-  
-  myglSetSmoothingRange (smoothing_range, res_factor);
-
-  myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-  
-  myglFluidSitesIterativeSearching (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-  
-  myglSetBoundaryConfigurations ();
+  visSetSmoothingRange (vis->smoothing_range, vis->res_factor, vis);
+  visSegmentation (vis);
 }
 
 
-void WriteConfig (char *file_name)
+void visWriteConfig (Vis *vis)
 {
   FILE *system_config;
   XDR xdr_config;
 
-  double lattice_to_system;
+  double dummy;
   
   int i, j, k;
   int m, n;
@@ -3736,43 +3637,42 @@ void WriteConfig (char *file_name)
   
   unsigned int site_data;
 
-  DataBlock *data_block_p;
+  Block *block_p;
   
   
-  system_config = fopen (file_name, "w");
+  system_config = fopen (vis->output_config, "w");
   xdrstdio_create (&xdr_config, system_config, XDR_ENCODE);
   
-  lattice_to_system = (double)mygl.lattice_to_system;
+  dummy = 1.;
   
-  xdr_double (&xdr_config, &lattice_to_system);
-  xdr_int    (&xdr_config, &mygl.blocks_x);
-  xdr_int    (&xdr_config, &mygl.blocks_y);
-  xdr_int    (&xdr_config, &mygl.blocks_z);
-  xdr_int    (&xdr_config, &mygl.block_size);
+  xdr_double (&xdr_config, &dummy);
+  xdr_int    (&xdr_config, &vis->blocks_x);
+  xdr_int    (&xdr_config, &vis->blocks_y);
+  xdr_int    (&xdr_config, &vis->blocks_z);
+  xdr_int    (&xdr_config, &vis->block_size);
   
   n = -1;
   
-  for (i = 0; i < mygl.blocks_x; i++)
+  for (i = 0; i < vis->blocks_x; i++)
     {
-      for (j = 0; j < mygl.blocks_y; j++)
+      for (j = 0; j < vis->blocks_y; j++)
 	{
-	  for (k = 0; k < mygl.blocks_z; k++)
+	  for (k = 0; k < vis->blocks_z; k++)
 	    {
-	      data_block_p = &mygl.data_block[ ++n ];
+	      block_p = &vis->block[ ++n ];
 	      
 	      flag = 0;
 	      
-	      if (data_block_p->site_data == NULL)
+	      if (block_p->site == NULL)
 		{
 		  xdr_int (&xdr_config, &flag);
 		  continue;
 		}
 	      are_all_solid_sites = 1;
 	      
-	      for (m = 0; m < mygl.sites_in_a_block; m++)
+	      for (m = 0; m < vis->sites_in_a_block; m++)
 		{
-		  if (data_block_p->site_data[ m ] != SOLID_TYPE &&
-		      data_block_p->site_data[ m ] != NULL_TYPE)
+		  if (block_p->site[ m ].data != SOLID_TYPE)
 		    {
 		      are_all_solid_sites = 0;
 		      break;
@@ -3786,14 +3686,8 @@ void WriteConfig (char *file_name)
 	      flag = 1;
 	      xdr_int (&xdr_config, &flag);
 	      
-	      for (m = 0; m < mygl.sites_in_a_block; m++)
+	      for (m = 0; m < vis->sites_in_a_block; m++)
 		{
-		  site_data = data_block_p->site_data[ m ];
-		  
-		  if (site_data == NULL_TYPE)
-		    {
-		      site_data = SOLID_TYPE;
-		    }
 		  xdr_u_int (&xdr_config, &site_data);
 		}
 	    }
@@ -3803,46 +3697,43 @@ void WriteConfig (char *file_name)
 }
 
 
-void WritePars (char *file_name)
+void visWritePars (Vis *vis)
 {
-  FILE *pars = fopen (file_name, "w");
+  FILE *pars = fopen (vis->output_pars, "w");
   
   float nx, ny, nz;
   
   int n;
   
-  Triangle *triangle_p;
+  Triangle *t_p;
   
   
-  fprintf (pars, "%i\n", mygl.boundary[ INLET_BOUNDARY ].triangles);
+  fprintf (pars, "%i\n", vis->boundary[ INLET_BOUNDARY ].triangles);
   
-  for (n = 0; n < mygl.boundary[ INLET_BOUNDARY ].triangles; n++)
+  for (n = 0; n < vis->boundary[ INLET_BOUNDARY ].triangles; n++)
     {
       fprintf (pars, "%f %f %f\n",
-	       mygl.boundary[ INLET_BOUNDARY ].triangle[n].pressure_avg,
-	       mygl.boundary[ INLET_BOUNDARY ].triangle[n].pressure_amp,
-	       mygl.boundary[ INLET_BOUNDARY ].triangle[n].pressure_phs);
+	       vis->boundary[ INLET_BOUNDARY ].triangle[n].pressure_avg,
+	       vis->boundary[ INLET_BOUNDARY ].triangle[n].pressure_amp,
+	       vis->boundary[ INLET_BOUNDARY ].triangle[n].pressure_phs);
     }
   
-  fprintf (pars, "%i\n", mygl.boundary[ OUTLET_BOUNDARY ].triangles);
+  fprintf (pars, "%i\n", vis->boundary[ OUTLET_BOUNDARY ].triangles);
   
-  for (n = 0; n < mygl.boundary[ OUTLET_BOUNDARY ].triangles; n++)
+  for (n = 0; n < vis->boundary[ OUTLET_BOUNDARY ].triangles; n++)
     {
       fprintf (pars, "%f %f %f\n",
-	       mygl.boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_avg,
-	       mygl.boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_amp,
-	       mygl.boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_phs);
+	       vis->boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_avg,
+	       vis->boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_amp,
+	       vis->boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_phs);
     }
-  for (n = 0; n < mygl.boundary[ INLET_BOUNDARY ].triangles; n++)
+  for (n = 0; n < vis->boundary[ INLET_BOUNDARY ].triangles; n++)
     {
-      triangle_p = &mygl.boundary[ INLET_BOUNDARY ].triangle[n];
+      t_p = &vis->boundary[ INLET_BOUNDARY ].triangle[n];
       
-      myglTriangleNormal (triangle_p->v[0].pos_x, triangle_p->v[0].pos_y, triangle_p->v[0].pos_z,
-			  triangle_p->v[1].pos_x, triangle_p->v[1].pos_y, triangle_p->v[1].pos_z,
-			  triangle_p->v[2].pos_x, triangle_p->v[2].pos_y, triangle_p->v[2].pos_z,
-			  &nx, &ny, &nz);
+      visTriangleNormal (t_p, &nx, &ny, &nz);
       
-      if (triangle_p->normal_sign == 1)
+      if (t_p->normal_sign == 1)
 	{
 	  nx = -nx;
 	  ny = -ny;
@@ -3854,878 +3745,234 @@ void WritePars (char *file_name)
 }
 
 
-void myglEnd (void)
+void visInitBoundaries (Vis *vis)
 {
-  free(site_location_a);
-  free(site_location_b);
+  vis->boundary[ INLET_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
+  vis->boundary[ INLET_BOUNDARY ].triangles = 0;
   
+  vis->boundary[ OUTLET_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
+  vis->boundary[ OUTLET_BOUNDARY ].triangles = 0;
   
-  free(mygl.stored_block);
-  mygl.stored_block = NULL;
+  vis->boundary[ WALL_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
+  vis->boundary[ WALL_BOUNDARY ].triangles = 0;
   
-  
-  free(mygl.superficial_site);
-  mygl.superficial_site = NULL;
-  
-  
-  for (int i = 0; i < mygl.blocks; i++)
-    {
-      if (mygl.data_block[ i ].site_data != NULL)
-	{
-	  free(mygl.data_block[ i ].site_data);
-	  mygl.data_block[ i ].site_data = NULL;
-	}
-    }
-  free(mygl.data_block);
-  mygl.data_block = NULL;
-  
-  
-  free(mygl.medical_data);
+  vis->screen_voxel = (ScreenVoxel *)malloc(sizeof(ScreenVoxel) * vis->screen_voxels * vis->screen_voxels);
 }
 
 
-void myglInitBoundaries (void)
+void visEndBoundaries (Vis *vis)
 {
-  mygl.boundary[ INLET_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
-  mygl.boundary[ INLET_BOUNDARY ].triangles = 0;
-  
-  mygl.boundary[ OUTLET_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
-  mygl.boundary[ OUTLET_BOUNDARY ].triangles = 0;
-  
-  mygl.boundary[ WALL_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U << BOUNDARY_ID_BITS));
-  mygl.boundary[ WALL_BOUNDARY ].triangles = 0;
-  
-  
-  mygl.screen_to_boundaries_map = (ScreenVoxel *)malloc(sizeof(ScreenVoxel) * screen_voxels * screen_voxels);
-}
-
-void myglEndBoundaries (void)
-{
-  free(mygl.screen_to_boundaries_map);
-  mygl.screen_to_boundaries_map = NULL;
-
-  
   for (unsigned int n = 0; n < BOUNDARIES; n++)
     {
-      free(mygl.boundary[ n ].triangle);
-      mygl.boundary[ n ].triangle = NULL;
+      free(vis->boundary[ n ].triangle);
+      vis->boundary[ n ].triangle = NULL;
       
-      mygl.boundary[ n ].triangles = 0;
+      vis->boundary[ n ].triangles = 0;
     }
 }
+ 
 
-
-void  MoveSceneCenter (float t_x, float t_y)
+void visProcessMenuEvents (int option)
 {
-  float x, y, z;
+  int b_id, t_id;
+  
+  ScreenVoxel *voxel_p;
   
   
-  myglTransformVertex (scene_center_x, scene_center_y, scene_center_z, &x, &y, &z);
-      
-  x += t_x;
-  y += t_y;
-  
-  myglAntiTransformVertex (x, y, z, &scene_center_x, &scene_center_y, &scene_center_z);
-}
-
-
-void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
-{
-  int triangle_id;
-  
-  ScreenVoxel *screen_voxel_p;
-  
-  
-  if (key == 'S')
+  if (option == CHANGE_SLICE)
     {
-      printf("Opening ppm file: ./image.ppm\n");
-      SaveWindowImage ("./image.ppm");
-      
-      if (display_id != 1)
-	{
-	  printf("Opening output pars file: %s\n", output_pars_name);
-	  WritePars (output_pars_name);
-	  
-	  printf("Opening output config file: %s\n", output_config_name);
-	  WriteConfig (output_config_name);
-	}
-      printf("Opening checkpoint file: %s\n", checkpoint_name);
-      WriteCheckpoint (checkpoint_name);
+      vis.menu.option = CHANGE_SLICE;
     }
-  else if (key == 'q')
+  else if (option == CHANGE_THRESHOLD)
+    {
+      vis.menu.option = CHANGE_THRESHOLD;
+    }
+  else if (option & (SEGMENT_1X|SEGMENT_2X|SEGMENT_3X|SEGMENT_4X|SEGMENT_5X|SEGMENT_6X))
+    {
+      float res_factor_temp = vis.res_factor;
+      
+      if      (option == SEGMENT_1X) { vis.res_factor = 1; }
+      else if (option == SEGMENT_2X) { vis.res_factor = 2; }
+      else if (option == SEGMENT_3X) { vis.res_factor = 3; }
+      else if (option == SEGMENT_4X) { vis.res_factor = 4; }
+      else if (option == SEGMENT_5X) { vis.res_factor = 5; }
+      else if (option == SEGMENT_6X) { vis.res_factor = 6; }
+      
+      if (vis.mode == 0)
+	{
+	  vis.selected_pixel_x = (vis.mouse.x * vis.input_pixels_x) / vis.viewport_pixels_x;
+	  vis.selected_pixel_y = (vis.mouse.y * vis.input_pixels_y) / vis.viewport_pixels_y;
+	  
+	  vis.selected_pixel_x = max(0, min(vis.input_pixels_x-1, vis.selected_pixel_x));
+	  vis.selected_pixel_y = max(0, min(vis.input_pixels_y-1, vis.selected_pixel_y));
+	}
+      visSetSmoothingRange (vis.smoothing_range, vis.res_factor, &vis);
+      visRescaleSystem (&vis);
+      visRescaleTriangles (vis.res_factor / res_factor_temp, &vis);
+      
+      if (visSegmentation (&vis) == SUCCESS &&
+	  visOptimiseBoundaries (&vis) == SUCCESS)
+	{
+	  visRescaleViewpoint (vis.res_factor / res_factor_temp, &vis);
+	}
+      else
+	{
+	  float temp = vis.res_factor;
+	  vis.res_factor = res_factor_temp;
+	  res_factor_temp = temp;
+	  
+	  visSetSmoothingRange (vis.smoothing_range, vis.res_factor, &vis);
+	  visRescaleSystem (&vis);
+	  visRescaleTriangles (vis.res_factor / res_factor_temp, &vis);
+	  visSegmentation (&vis);
+	  visOptimiseBoundaries (&vis);
+	}
+    }
+  else if (option & (ZOOM_SCENE|ROTATE_SCENE))
+    {
+      vis.menu.option = option;
+      vis.mouse.b_id = -1;
+    }
+  else if (option & (CREATE_INLET|CREATE_OUTLET|CREATE_WALL))
+    {
+      voxel_p = visScreenVoxelPointer (vis.mouse.x, vis.mouse.y, &vis);
+      
+      if (voxel_p->site_i < 0) return;
+      
+      if      (option == CREATE_INLET)  { b_id = INLET_BOUNDARY; }
+      else if (option == CREATE_OUTLET) { b_id = OUTLET_BOUNDARY; }
+      else if (option == CREATE_WALL)   { b_id = WALL_BOUNDARY; }
+      
+      t_id = visCreateOptimisedTriangle (b_id, voxel_p->site_i, voxel_p->site_j, voxel_p->site_k, &vis);
+      
+      if (t_id == -1) return;
+      
+      vis.mouse.b_id = b_id;
+      vis.mouse.t_id = t_id;
+    }
+  else if (option & (ZOOM_BOUNDARY|ROTATE_BOUNDARY))
+    {
+      vis.menu.option = option;
+      
+      if (vis.mouse.b_id < 0) return;
+    }
+  else if (option & (REVERSE_INLET_NORMAL|DELETE_BOUNDARY))
+    {
+      if (vis.mouse.b_id < 0) return;
+      
+      if (option == REVERSE_INLET_NORMAL && vis.mouse.b_id == INLET_BOUNDARY)
+	{
+	  visInvertTriangleNormal (vis.mouse.b_id, vis.mouse.t_id, &vis);
+	}
+      else if (option == DELETE_BOUNDARY)
+	{
+	  visDeleteTriangle (vis.mouse.b_id, vis.mouse.t_id, &vis);
+	  
+	  vis.mouse.b_id = -1;
+	}
+    }
+  else if (option == CHANGE_VIS_MODE)
+    {
+      vis.menu.option = NULL_MENU_OPTION;
+      
+      if (vis.mode == 0)
+	{
+	  vis.mode = 1;
+	  glutChangeToMenuEntry (8,  "Zoom scene", ZOOM_SCENE);
+	  glutChangeToMenuEntry (9,  "Rotate scene", ROTATE_SCENE);
+	  glutChangeToMenuEntry (10, "Create inlet", CREATE_INLET);
+	  glutChangeToMenuEntry (11, "Create outlet", CREATE_OUTLET);
+	  glutAddMenuEntry ("Create wall", CREATE_WALL);
+	  glutAddMenuEntry ("Scale boundary", ZOOM_BOUNDARY);
+	  glutAddMenuEntry ("Rotate boundary", ROTATE_BOUNDARY);
+	  glutAddMenuEntry ("Reverse inlet normal", REVERSE_INLET_NORMAL);
+	  glutAddMenuEntry ("Delete boundary", DELETE_BOUNDARY);
+	  glutAddMenuEntry ("2D rendering", CHANGE_VIS_MODE);
+	  glutAddMenuEntry ("Save data", SAVE_DATA);
+	  glutAddMenuEntry ("Quit", QUIT);
+	}
+      else
+	{
+	  vis.mode = 0;
+	  vis.mouse.state = !ACTIVE;
+	  vis.mouse.b_id = -1;
+	  
+	  glutChangeToMenuEntry (8,  "Change slice", CHANGE_SLICE);
+	  glutChangeToMenuEntry (9,  "3D rendering", CHANGE_VIS_MODE);
+	  glutChangeToMenuEntry (10, "Save data", SAVE_DATA);
+	  glutChangeToMenuEntry (11, "Quit", QUIT);
+	  
+	  for (int i = glutGet(GLUT_MENU_NUM_ITEMS); i >= 12; i--)
+	    {
+	      glutRemoveMenuItem (i);
+	    }
+	}
+    }
+  else if (option == SAVE_DATA)
     {
       printf("Opening ppm file: ./image.ppm\n");
-      SaveWindowImage ("./image.ppm");
+      visSaveWindowImage ("./image.ppm");
       
-      if (display_id != 1)
-	{
-	  printf("Opening output pars file: %s\n", output_pars_name);
-	  WritePars (output_pars_name);
-	  
-	  printf("Opening output config file: %s\n", output_config_name);
-	  WriteConfig (output_config_name);
-	}
-      printf("Opening checkpoint file: %s\n", checkpoint_name);
-      WriteCheckpoint (checkpoint_name);
+      visSetBoundaryConfigurations (&vis);
       
-      myglEndBoundaries ();
+      printf("Opening output pars file: %s\n", vis.output_pars);
+      visWritePars (&vis);
       
-      myglEnd ();
+      printf("Opening output config file: %s\n", vis.output_config);
+      visWriteConfig (&vis);
+      
+      printf("Opening checkpoint file: %s\n", vis.checkpoint);
+      visWriteCheckpoint (&vis);
+    }
+  else if (option == QUIT)
+    {
+      visEndBoundaries (&vis);
+      
+      visEnd (&vis);
       
       exit(0);
     }
-  else if (key == 'm')
-    {
-      display_id = 1;
-    }
-  
-  if (display_id == 1)
-    {
-      if (key == '>')
-	{
-	  ++mygl.selected_slice;
-	  mygl.selected_slice = min(mygl.input_slices - 1, mygl.selected_slice);
-	  printf (" slice selected: %i\n", mygl.selected_slice);
-	}
-      else if (key == '<')
-	{
-	  --mygl.selected_slice;
-	  mygl.selected_slice = max(0, mygl.selected_slice);
-	  printf (" slice selected: %i\n", mygl.selected_slice);
-	}
-      return;
-    }
-  
-  if (key == 'c')
-    {
-      ortho_x = 0.5F * mygl.system_size;
-      ortho_y = 0.5F * mygl.system_size;
-      
-      longitude = 0.F;
-      latitude = 0.F;
-      viewpoint_radius = 10.F * mygl.system_size;
-      
-      zoom = 1.5F;
-      
-      scene_center_x = 0.F;
-      scene_center_y = 0.F;
-      scene_center_z = 0.F;
-      
-      Projection ();
-    }
-  else if (key == 'z')
-    {
-      if (last_triangle.triangle_id == -1)
-	{
-	  zoom *= 1.1F;
-	  Projection ();
-	}
-      else
-	{
-	  EditLastTriangle (0.F, 0.F, 0.F, 0.F, 1.1F);
-	}
-    }
-  else if (key == 'Z')
-    {
-      if (last_triangle.triangle_id == -1)
-	{
-	  zoom /= 1.1F;
-	  Projection ();
-	}
-      else
-	{
-	  EditLastTriangle (0.F, 0.F, 0.F, 0.F, 1.F / 1.1F);
-	}
-    }
-  else if (key == 'a')
-    {
-      if (last_triangle.triangle_id == -1)
-	{
-	  MoveSceneCenter (5.F * mygl.lattice_to_system, 0.F);
-	  Projection ();
-	}
-      else
-	{
-	  EditLastTriangle (-0.5F * mygl.lattice_to_system, 0.F, 0.F, 0.F, 1.0F);
-	}
-    }
-  else if (key == 'd')
-    {
-      if (last_triangle.triangle_id == -1)
-	{
-	  MoveSceneCenter (-5.F * mygl.lattice_to_system, 0.F);
-	  Projection ();
-	}
-      else
-	{
-	  EditLastTriangle (0.5F * mygl.lattice_to_system, 0.F, 0.F, 0.F, 1.0F);
-	}
-    }
-  else if (key == 's')
-    {
-      if (last_triangle.triangle_id == -1)
-	{
-	  MoveSceneCenter (0.F, 5.F * mygl.lattice_to_system);
-	  Projection ();
-	}
-      else
-	{
-	  EditLastTriangle (0.F, -0.5F * mygl.lattice_to_system, 0.F, 0.F, 1.0F);
-	}
-    }
-  else if (key == 'w')
-    {
-      if (last_triangle.triangle_id == -1)
-	{
-	  MoveSceneCenter (0.F, -5.F * mygl.lattice_to_system);
-	  Projection ();
-	}
-      else
-	{
-	  EditLastTriangle (0.F, 0.5F * mygl.lattice_to_system, 0.F, 0.F, 1.0F);
-	}
-    }
-  else if (key == 'D')
-    {
-      if (last_triangle.triangle_id != -1)
-	{
-	  DeleteLastTriangle ();
-	  
-	  last_triangle.triangle_id = -1;
-	  last_triangle.boundary_id = -1;
-	}
-    }
-  else if (key == 'n')
-    {
-      if (last_triangle.triangle_id != -1)
-	{
-	  InvertLastTriangleNormal ();
-	}
-    }
-  else if (key == '1')
-    {
-      if (passive_mouse_pixel_i == -1)
-	{
-	  return;
-	}
-      screen_voxel_p = &mygl.screen_to_boundaries_map[ passive_mouse_pixel_i * screen_voxels +
-						       passive_mouse_pixel_j ];
-      
-      triangle_id = myglCreateOptimizedTriangle (INLET_BOUNDARY,
-						 screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
-      
-      if (triangle_id != -1)
-	{
-	  last_triangle.triangle_id = triangle_id;
-	  last_triangle.boundary_id = INLET_BOUNDARY;
-	}
-    }
-  else if (key == '2')
-    {
-     if (passive_mouse_pixel_i == -1)
-	{
-	  return;
-	}
-      screen_voxel_p = &mygl.screen_to_boundaries_map[ passive_mouse_pixel_i * screen_voxels +
-						       passive_mouse_pixel_j ];
-      
-      triangle_id = myglCreateOptimizedTriangle (OUTLET_BOUNDARY,
-						 screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
-      
-      if (triangle_id != -1)
-	{
-	  last_triangle.triangle_id = triangle_id;
-	  last_triangle.boundary_id = OUTLET_BOUNDARY;
-	}
-    }
-  else if (key == '3')
-    {
-     if (passive_mouse_pixel_i == -1)
-	{
-	  return;
-	}
-      screen_voxel_p = &mygl.screen_to_boundaries_map[ passive_mouse_pixel_i * screen_voxels +
-						       passive_mouse_pixel_j ];
-      
-      triangle_id = myglCreateOptimizedTriangle (WALL_BOUNDARY,
-						 screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k);
-    
-      if (triangle_id != -1)
-	{
-	  last_triangle.triangle_id = triangle_id;
-	  last_triangle.boundary_id = WALL_BOUNDARY;
-	}
-    }
-  else if (key == 't')
-    {
-      draw_triangles = !draw_triangles;
-    }
-  else if (key == 'p')
-    {
-      point_size = min(5, ++point_size);
-    }
-  else if (key == 'P')
-    {
-      point_size = max(1, --point_size);
-    }
-  if (key == 'g')
-    {
-      mygl.selected_gray += 1;
-      mygl.selected_gray = min(1 << 16, mygl.selected_gray);
-      
-      myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-      
-      printf ("selected gray : %f\n", mygl.selected_gray);
-    }
-  else if (key == 'G')
-    {
-      mygl.selected_gray -= 1;
-      mygl.selected_gray = max(0, mygl.selected_gray);
-      
-      myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-      
-      printf ("selected gray : %f\n", mygl.selected_gray);
-    }
-  if (key == 'h')
-    {
-      mygl.selected_gray += 1 << 4;
-      mygl.selected_gray = min(1 << 16, mygl.selected_gray);
-      
-      myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-      
-      printf ("selected gray : %f\n", mygl.selected_gray);
-    }
-  else if (key == 'H')
-    {
-      mygl.selected_gray -= 1 << 4;
-      mygl.selected_gray = max(0, mygl.selected_gray);
-      
-      myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-      
-      printf ("selected gray : %f\n", mygl.selected_gray);
-    }
-  else if (key == 'j')
-    {
-      if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
-	{
-	  ChangeTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id, 1.0, 0., 0.);
-	}
-    }
-  else if (key == 'J')
-    {
-      if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
-	{
-	  ChangeTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id, -1.0, 0., 0.);
-	}
-    }
-  else if (key == 'k')
-    {
-      if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
-	{
-	  ChangeTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id, 0., 0.1, 0.);
-	}
-    }
-  else if (key == 'K')
-    {
-      if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
-	{
-	  ChangeTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id, 0., -0.1, 0.);
-	}
-    }
-  else if (key == 'l')
-    {
-      if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
-	{
-	  ChangeTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id, 0., 0., 1.);
-	}
-    }
-  else if (key == 'L')
-    {
-      if (last_triangle.boundary_id == INLET_BOUNDARY || last_triangle.boundary_id == OUTLET_BOUNDARY)
-	{
-	  ChangeTrianglePars (last_triangle.boundary_id, last_triangle.triangle_id, 0., 0., -1.);
-	}
-    }
-  else if (key == 'r')
-    {
-      res_factor += 1.;
-      printf ("res factor: %.1f\n", res_factor);
-      
-      myglSetSmoothingRange (smoothing_range, res_factor);
-      myglRescaleSystemResolution ();
-      myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-      myglRescaleTriangles (res_factor / (res_factor - 1.F));
-      
-      myglRescaleViewpoint (res_factor / (res_factor - 1.F));
-    }
-  else if (key == 'R')
-    {
-      if (res_factor >= 1.999F)
-	{
-	  res_factor -= 1.F;
-	  printf ("res factor: %.1f\n", res_factor);
-	  
-	  myglSetSmoothingRange (smoothing_range, res_factor);
-	  myglRescaleSystemResolution ();
-	  myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-	  myglRescaleTriangles (res_factor / (res_factor + 1.F));
-	  
-	  myglRescaleViewpoint (res_factor / (res_factor + 1.F));
-	}
-    }
-  else if (key == 'f')
-    {
-      if (smoothing_range == 1)
-	{
-	  smoothing_range = 2;
-	}
-      else
-	{
-	  smoothing_range = 1;
-	}
-      printf ("smoothing range: %i\n", smoothing_range);
-      
-      myglSetSmoothingRange (smoothing_range, res_factor);
-      myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-    }
-  display_id = 2;
 }
 
-void GLUTCALLBACK SpecialKeybordFunction (int key, int x, int y)
+
+void visCreateMenu (Vis *vis)
 {
-  float longitude_inc = 0.F;
-  float latitude_inc  = 0.F;
+  vis->menu.option = NULL_MENU_OPTION;
+  vis->mouse.state = !ACTIVE;
+  vis->mouse.b_id = -1;
   
+  vis->menu.id = glutCreateMenu (visProcessMenuEvents);
   
-  if (display_id == 1)
-    {
-      return;
-    }
-  
-  if (key ==  GLUT_KEY_LEFT)
-    {
-      longitude_inc = -2.F;
-    }
-  else if (key == GLUT_KEY_RIGHT)
-    {
-      longitude_inc = 2.F;
-    }
-  else if (key == GLUT_KEY_DOWN)
-    {
-      latitude_inc = -2.F;
-    }
-  else if (key == GLUT_KEY_UP)
-    {
-      latitude_inc = 2.F;
-    }
-  
-  if (last_triangle.triangle_id == -1)
-    {
-      longitude -= longitude_inc;
-      latitude  -= latitude_inc;
-      
-      Projection ();
-    }
-  else
-    {
-      EditLastTriangle (0.F, 0.F, longitude_inc * DEG_TO_RAD, latitude_inc * DEG_TO_RAD, 1.F);
-    }
-  display_id = 2;
-}
-
-void GLUTCALLBACK MouseFunction (int button, int state, int x0, int y0)
-{
-  float x1, y1, z1;
-  float x2, y2, z2;
-  
-  int mouse_pixel_i, mouse_pixel_j;
-  int vertex_pixel_i, vertex_pixel_j;
-  int i, j, k, n;
-  int triangle_index;
-  
-  unsigned int boundary_index;
-  
-  Triangle *triangle_p;
-  
-  ScreenVoxel *screen_voxel_p;
-  
-  
-  y0 = viewport_pixels_y - y0;
-  
-  passive_mouse_pixel_i = -1;
-  passive_mouse_pixel_j = -1;
-  
-  if (display_id == 1)
-    {
-      if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-	{
-	  mygl.selected_pixel_x = max(0, min(mygl.input_image_pix_x - 1, (int)((float)(x0 * mygl.input_image_pix_x) / viewport_pixels_x)));
-	  mygl.selected_pixel_y = max(0, min(mygl.input_image_pix_y - 1, (int)((float)(y0 * mygl.input_image_pix_y) / viewport_pixels_y)));
-	  
-	  i = mygl.selected_pixel_x;
-	  j = mygl.selected_pixel_y;
-	  k = mygl.selected_slice;
-	  
-	  if (is_first_vis_change)
-	    {
-	      is_first_vis_change = 0;
-	      mygl.selected_gray = mygl.medical_data[ myglVoxelId(i,j,k) ];
-	    }
-	  myglReconstructSystem (mygl.selected_pixel_x, mygl.selected_pixel_y, mygl.selected_slice, mygl.selected_gray);
-	  
-	  display_id = 2;
-	}
-      return;
-    }
-  //display_id = 0;
-  
-  mouse_pixel_i = (int)(screen_voxels * (float)x0 / (float)viewport_pixels_x);
-  mouse_pixel_j = (int)(screen_voxels * (float)y0 / (float)viewport_pixels_y);
-  
-  if (mouse_pixel_i < 0 || mouse_pixel_i >= screen_voxels ||
-      mouse_pixel_j < 0 || mouse_pixel_j >= screen_voxels)
-    {
-      mygl.screen_voxel_pointed = NULL;
-      return;
-    }
-  
-  if (button == GLUT_MIDDLE_BUTTON)
-    {
-      mygl.screen_voxel_pointed = NULL;
-      return;
-    }
-  else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
-    {
-      mygl.screen_voxel_pointed = NULL;
-      
-      if (last_triangle.triangle_id != -1)
-	{
-	  display_id == 2;
-	}
-      last_triangle.boundary_id = -1;
-      last_triangle.triangle_id = -1;
-      return;
-    }
-  else if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-    {
-      for (n = 0; n < screen_voxels * screen_voxels; n++)
-	{
-	  mygl.screen_to_boundaries_map[ n ].vertex_z = 0.F;
-	}
-      for (boundary_index = 0; boundary_index < BOUNDARIES; boundary_index++)
-	{
-	  for (triangle_index = 0; triangle_index < mygl.boundary[ boundary_index ].triangles; triangle_index++)
-	    {
-	      triangle_p = &mygl.boundary[ boundary_index ].triangle[ triangle_index ];
-	      
-	      for (n = 0; n < 3; n++)
-		{
-		  myglTransformVertex (triangle_p->v[n].pos_x, triangle_p->v[n].pos_y, triangle_p->v[n].pos_z,
-				       &x1, &y1, &z1);
-		  
-		  vertex_pixel_i = (int)(screen_voxels_screen_max_inv_x * (x1 + screen.max_x));
-		  vertex_pixel_j = (int)(screen_voxels_screen_max_inv_y * (y1 + screen.max_y));
-		  
-		  if (vertex_pixel_i < 0 || vertex_pixel_i >= screen_voxels ||
-		      vertex_pixel_j < 0 || vertex_pixel_j >= screen_voxels)
-		    {
-		      continue;
-		    }
-		  screen_voxel_p = &mygl.screen_to_boundaries_map[ vertex_pixel_i * screen_voxels + vertex_pixel_j ];
-		  
-		  if (z1 > screen_voxel_p->vertex_z)
-		    {
-		      screen_voxel_p->boundary_id = boundary_index;
-		      screen_voxel_p->triangle_id = triangle_index;
-		      screen_voxel_p->vertex_id   = n;
-		      screen_voxel_p->vertex_z    = z1;
-		    }
-		}
-	    }
-	}
-      mygl.screen_voxel_pointed = NULL;
-      
-      screen_voxel_p = &mygl.screen_to_boundaries_map[ mouse_pixel_i * screen_voxels + mouse_pixel_j ];
-      
-      if (screen_voxel_p->vertex_z > EPSILON)
-	{
-	  mygl.screen_voxel_pointed = screen_voxel_p;
-	  
-	  mygl.screen_voxel_coords.i = mouse_pixel_i;
-	  mygl.screen_voxel_coords.j = mouse_pixel_j;
-	  
-	  passive_mouse_pixel_i = mouse_pixel_i;
-	  passive_mouse_pixel_j = mouse_pixel_j;
-	}
-      else
-	{
-	  return;
-	}
-    }
-  else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-    {
-      if (mygl.screen_voxel_pointed == NULL)
-	{
-	  if (display_id == 1)
-	    {
-	      display_id = 2;
-	    }
-	  return;
-	}
-      x1 = screen.max_x * (-1.F + (x0 << 1) / (float)viewport_pixels_x);
-      y1 = screen.max_y * (-1.F + (y0 << 1) / (float)viewport_pixels_y);
-      z1 = mygl.screen_voxel_pointed->vertex_z;
-      
-      myglAntiTransformVertex (x1, y1, z1, &x2, &y2, &z2);
-      
-      i = mygl.screen_voxel_pointed->vertex_id;
-      j = mygl.screen_voxel_pointed->triangle_id;
-      k = mygl.screen_voxel_pointed->boundary_id;
-      
-      triangle_p = &mygl.boundary[ k ].triangle[ j ];
-      triangle_p->v[ i ].pos_x = x2;
-      triangle_p->v[ i ].pos_y = y2;
-      triangle_p->v[ i ].pos_z = z2;
-      
-      mygl.screen_voxel_coords.i = (int)(screen_voxels * (float)x0 / (float)viewport_pixels_x);
-      mygl.screen_voxel_coords.j = (int)(screen_voxels * (float)y0 / (float)viewport_pixels_y);
-      
-      last_triangle.triangle_id = j;
-      last_triangle.boundary_id = k;
-      
-      passive_mouse_pixel_i = mouse_pixel_i;
-      passive_mouse_pixel_j = mouse_pixel_j;
-    }
-  else if (button == GLUT_RIGHT_BUTTON && state == GLUT_UP)
-    {
-      if (last_triangle.triangle_id != -1)
-	{
-	  display_id == 2;
-	}
-      last_triangle.boundary_id = -1;
-      last_triangle.triangle_id = -1;
-      
-      screen_voxel_p = &mygl.screen_to_boundaries_map[ mouse_pixel_i * screen_voxels + mouse_pixel_j ];
-      
-      if (screen_voxel_p->site_i < 0)
-	{
-	  return;
-	}
-      mygl.screen_voxel_pointed = screen_voxel_p;
-      
-      myglFromSiteToVoxelCoords (screen_voxel_p->site_i, screen_voxel_p->site_j, screen_voxel_p->site_k,
-				 &mygl.selected_pixel_x, &mygl.selected_pixel_y, &mygl.selected_slice);
-      
-      myglFluidSitesIterativeSearching (mygl.selected_pixel_x,
-					mygl.selected_pixel_y,
-					mygl.selected_slice,
-					mygl.selected_gray);
-      
-      myglSetBoundaryConfigurations ();
-    }
-  else
-    {
-      return;
-    }
-  display_id = 2;
-}
-
-void GLUTCALLBACK MotionFunction (int x0, int y0)
-{
-  float x1, y1, z1;
-  float x2, y2, z2;
-  
-  int mouse_pixel_i, mouse_pixel_j;
-  int i, j, k;
-  
-  Triangle *triangle_p;
-  
-  
-  if (display_id == 1) return;
-  
-  y0 = viewport_pixels_y - y0;
-  
-  mouse_pixel_i = (int)(screen_voxels * (float)x0 / (float)viewport_pixels_x);
-  mouse_pixel_j = (int)(screen_voxels * (float)y0 / (float)viewport_pixels_y);
-
-  if (mouse_pixel_i < 0 || mouse_pixel_i >= screen_voxels ||
-      mouse_pixel_j < 0 || mouse_pixel_j >= screen_voxels)
-    {
-      mygl.screen_voxel_pointed = NULL;
-      
-      //display_id = 0;
-    }
-  else if (mygl.screen_voxel_pointed != NULL &&
-	   mygl.screen_voxel_pointed->vertex_z >= EPSILON)
-    {
-      x1 = screen.max_x * (-1.F + (x0 << 1) / (float)viewport_pixels_x);
-      y1 = screen.max_y * (-1.F + (y0 << 1) / (float)viewport_pixels_y);
-      z1 = mygl.screen_voxel_pointed->vertex_z;
-      
-      myglAntiTransformVertex (x1, y1, z1, &x2, &y2, &z2);
-      
-      i = mygl.screen_voxel_pointed->vertex_id;
-      j = mygl.screen_voxel_pointed->triangle_id;
-      k = mygl.screen_voxel_pointed->boundary_id;
-      
-      triangle_p = &mygl.boundary[ k ].triangle[ j ];
-      triangle_p->v[ i ].pos_x = x2;
-      triangle_p->v[ i ].pos_y = y2;
-      triangle_p->v[ i ].pos_z = z2;
-      
-      mygl.screen_voxel_coords.i = (int)(screen_voxels * (float)x0 / (float)viewport_pixels_x);
-      mygl.screen_voxel_coords.j = (int)(screen_voxels * (float)y0 / (float)viewport_pixels_y);
-      
-      last_triangle.triangle_id = j;
-      last_triangle.boundary_id = k;
-      
-      display_id = 2;
-    }
+  glutAddMenuEntry ("Segmentation 1X", SEGMENT_1X);
+  glutAddMenuEntry ("Segmentation 2X", SEGMENT_2X);
+  glutAddMenuEntry ("Segmentation 3X", SEGMENT_3X);
+  glutAddMenuEntry ("Segmentation 4X", SEGMENT_4X);
+  glutAddMenuEntry ("Segmentation 5X", SEGMENT_5X);
+  glutAddMenuEntry ("Segmentation 6X", SEGMENT_6X);
+  glutAddMenuEntry ("Change threshold", CHANGE_THRESHOLD);
+  glutAddMenuEntry ("Change slice", CHANGE_SLICE);
+  glutAddMenuEntry ("3D rendering", CHANGE_VIS_MODE);
+  glutAddMenuEntry ("Save data", SAVE_DATA);
+  glutAddMenuEntry ("Quit", QUIT);
+  glutAttachMenu (GLUT_RIGHT_BUTTON);
 }
 
 
-void GLUTCALLBACK PassiveMotionFunction (int x0, int y0)
-{
-  float x1, y1, z1;
-  
-  int mouse_pixel_i, mouse_pixel_j;
-  int vertex_pixel_i, vertex_pixel_j;
-  int n;
-  int triangle_index;
-  
-  unsigned int boundary_index;
-  
-  Triangle *triangle_p;
-  
-  ScreenVoxel *screen_voxel_p;
-  
-  
-  if (display_id == 1) return;
-  
-  //display_id = 0;
-  
-  passive_mouse_pixel_i = -1;
-  passive_mouse_pixel_j = -1;
-  
-  y0 = viewport_pixels_y - y0;
-  
-  mouse_pixel_i = (int)(screen_voxels * (float)x0 / (float)viewport_pixels_x);
-  mouse_pixel_j = (int)(screen_voxels * (float)y0 / (float)viewport_pixels_y);
-  
-  if (mouse_pixel_i < 0 || mouse_pixel_i >= screen_voxels ||
-      mouse_pixel_j < 0 || mouse_pixel_j >= screen_voxels)
-    {
-      mygl.screen_voxel_pointed = NULL;
-      return;
-    }
-  
-  for (n = 0; n < screen_voxels * screen_voxels; n++)
-    {
-      mygl.screen_to_boundaries_map[ n ].vertex_z = 0.F;
-    }
-  for (boundary_index = 0; boundary_index < BOUNDARIES; boundary_index++)
-    {
-      for (triangle_index = 0; triangle_index < mygl.boundary[ boundary_index ].triangles; triangle_index++)
-	{
-	  triangle_p = &mygl.boundary[ boundary_index ].triangle[ triangle_index ];
-	  
-	  for (n = 0; n < 3; n++)
-	    {
-	      myglTransformVertex (triangle_p->v[n].pos_x, triangle_p->v[n].pos_y, triangle_p->v[n].pos_z,
-				   &x1, &y1, &z1);
-	      
-	      vertex_pixel_i = (int)(screen_voxels_screen_max_inv_x * (x1 + screen.max_x));
-	      vertex_pixel_j = (int)(screen_voxels_screen_max_inv_y * (y1 + screen.max_y));
-	      
-	      if (vertex_pixel_i < 0 || vertex_pixel_i >= screen_voxels ||
-		  vertex_pixel_j < 0 || vertex_pixel_j >= screen_voxels)
-		{
-		  continue;
-		}
-	      screen_voxel_p = &mygl.screen_to_boundaries_map[ vertex_pixel_i * screen_voxels + vertex_pixel_j ];
-	      
-	      if (z1 > screen_voxel_p->vertex_z)
-		{
-		  screen_voxel_p->boundary_id = boundary_index;
-		  screen_voxel_p->triangle_id = triangle_index;
-		  screen_voxel_p->vertex_id   = n;
-		  screen_voxel_p->vertex_z    = z1;
-		}
-	    }
-	}
-    }
-  screen_voxel_p = &mygl.screen_to_boundaries_map[ mouse_pixel_i * screen_voxels + mouse_pixel_j ];
-  
-  if (screen_voxel_p->site_i >= 0)
-    {
-      passive_mouse_pixel_i = mouse_pixel_i;
-      passive_mouse_pixel_j = mouse_pixel_j;
-    }
-  if (screen_voxel_p->vertex_z > EPSILON)
-    {
-      mygl.screen_voxel_coords.i = mouse_pixel_i;
-      mygl.screen_voxel_coords.j = mouse_pixel_j;
-      
-      mygl.screen_voxel_pointed = screen_voxel_p;
-      
-      last_triangle.triangle_id = mygl.screen_voxel_pointed->triangle_id;
-      last_triangle.boundary_id = mygl.screen_voxel_pointed->boundary_id;
-    }
-  else
-    {
-      return;
-    }
-  display_id = 2;
-}
-
-
-void GLUTCALLBACK Reshape (GLsizei w, GLsizei h)
-{
-  // the window is reshaped if necessary
-  
-  ortho_x *= (float)w / (float)viewport_pixels_x;
-  ortho_y *= (float)h / (float)viewport_pixels_y;
-  
-  viewport_pixels_x = w;
-  viewport_pixels_y = h;
-  
-  glViewport(0, 0, w, h);
-  
-  Projection ();
-}
-
-
-void myInit (void)
-{
-  mygl.screen_voxel_pointed = NULL;
-  mygl.screen_voxel_coords.i = -1;
-  
-  last_triangle.triangle_id = -1;
-  last_triangle.boundary_id = -1;
-  
-  ortho_x = 0.5F * mygl.system_size;
-  ortho_y = 0.5F * mygl.system_size;
-  viewpoint_radius = 10.F * mygl.system_size;
-  
-  Projection ();
-}
-
-
-void usage (char *progname)
+void visUsage (char *progname)
 {
   printf ("Usage: %s input path, output config, pars and checkpoint names\n", progname);
-  printf ("slice and pixel size (mm), dataset resolution factor\n");
+  printf ("slice and pixel size (mm)\n");
   printf ("    or\n");
   printf ("checkpoint file name, output config and pars file names\n");
 }
 
 
-int main (int argc, char *argv[])
+void visInit (int argc, char *argv[], Vis *vis)
 {
   int is_checkpoint;
   
   
-  if (argc == 8)
+  if (argc == 7)
     {
       is_checkpoint = 0;
     }
@@ -4735,56 +3982,226 @@ int main (int argc, char *argv[])
     }
   else
     {
-      usage(argv[0]);
+      visUsage(argv[0]);
       exit(1);
     }
   
   if (!is_checkpoint)
     {
-      input_path         = argv[1];
-      output_config_name = argv[2];
-      output_pars_name   = argv[3];
-      checkpoint_name    = argv[4];
+      vis->input_path    = argv[1];
+      vis->output_config = argv[2];
+      vis->output_pars   = argv[3];
+      vis->checkpoint    = argv[4];
       
-      slice_size = atof(argv[5]);
-      pixel_size = atof(argv[6]);
-      res_factor = atof(argv[7]);
+      vis->slice_size = atof(argv[5]);
+      vis->pixel_size = atof(argv[6]);
       
-      mygl.selected_slice = 0;
-      //mygl.selected_gray = 50000;
+      vis->res_factor = 1;
       
-      myglSetSmoothingRange (1, res_factor);
+      vis->selected_slice = 0;
+      vis->selected_gray = 3500;
       
-      ReadConfig ();
+      vis->screen_voxels = 100;
+      vis->mode = 0;
       
-      myglInitBoundaries ();
+      visSetSmoothingRange (1, vis->res_factor, vis);
       
-      display_id = 1;
+      visReadConfig (vis);
+      
+      visInitBoundaries (vis);
     }
   else
     {
-      checkpoint_name    = argv[1];
-      output_config_name = argv[2];
-      output_pars_name   = argv[3];
+      vis->checkpoint    = argv[1];
+      vis->output_config = argv[2];
+      vis->output_pars   = argv[3];
       
-      ReadCheckpoint (checkpoint_name);
+      vis->screen_voxels = 100;
+      vis->mode = 1;
       
-      display_id = 2;
+      visReadCheckpoint (vis);
     }
   
+  vis->viewport_pixels_x = 512;
+  vis->viewport_pixels_y = 512;
+  
+  vis->background_r = 1.F;
+  vis->background_g = 1.F;
+  vis->background_b = 1.F;
+  
+  vis->longitude = 90.F;
+  vis->latitude = 0.F;
+  
+  vis->zoom = 1.0F;
+  
+  vis->scene_center_x = 0.F;
+  vis->scene_center_y = 0.F;
+  vis->scene_center_z = 0.F;
+  
+  vis->ortho_x = 0.5F * vis->system_size;
+  vis->ortho_y = 0.5F * vis->system_size;
+  vis->viewpoint_radius = 2.F * vis->system_size;
+  vis->viewport_radius = 0.5F * vis->viewpoint_radius;
+  
+  vis->sites = 0;
+  vis->segmentation_time = 0.F;
+  
+  vis->point_size = 2;
+  vis->visualise_boundaries = 1;
   
   glutInit (&argc, argv);
   
-  myglOpenWindow (viewport_pixels_x, viewport_pixels_y);
+  visOpenWindow (vis->viewport_pixels_x, vis->viewport_pixels_y);
   
-  myInit ();
+  visProjection (vis);
+  
+  visCreateCubeDisplayList ();
+  
+  visCreateMenu (vis);
+}
+
+
+void visEnd (Vis *vis)
+{
+  visDeleteCubeDisplayList ();
+  
+  free(vis->screen_voxel);
+  
+  for (int i = 0; i < COORDS_BUFFERS; i++)
+    {
+      free(vis->site_coords[ i ]);
+    }
+  
+  free(vis->stack_site);
+  
+  free(vis->block);
+  
+  free(vis->medical_data);
+}
+
+
+void visMoveSceneCenter (float t_x, float t_y, Vis *vis)
+{
+  float x, y, z;
+  
+  
+  visProject (vis->scene_center_x, vis->scene_center_y, vis->scene_center_z, &x, &y, &z);
+      
+  x += t_x;
+  y += t_y;
+  
+  visAntiProject (x, y, z, &vis->scene_center_x, &vis->scene_center_y, &vis->scene_center_z);
+}
+
+
+void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
+{
+  if (key == 'c')
+    {
+      vis.ortho_x = 0.5F * vis.system_size;
+      vis.ortho_y = 0.5F * vis.system_size;
+      
+      vis.longitude = 45.F;
+      vis.latitude = 45.F;
+      vis.viewpoint_radius = 2.F * vis.system_size;
+      vis.viewport_radius = 0.5F * vis.viewpoint_radius;
+      
+      vis.zoom = 1.0F;
+      
+      vis.scene_center_x = 0.F;
+      vis.scene_center_y = 0.F;
+      vis.scene_center_z = 0.F;
+      
+      visProjection (&vis);
+    }
+  else if (key == 'j')
+    {
+      if (vis.mouse.b_id == INLET_BOUNDARY || vis.mouse.b_id == OUTLET_BOUNDARY)
+	{
+	  visChangeTrianglePars (vis.mouse.b_id, vis.mouse.t_id, 1.0, 0., 0., &vis);
+	}
+    }
+  else if (key == 'J')
+    {
+      if (vis.mouse.b_id == INLET_BOUNDARY || vis.mouse.b_id == OUTLET_BOUNDARY)
+	{
+	  visChangeTrianglePars (vis.mouse.b_id, vis.mouse.t_id, -1.0, 0., 0., &vis);
+	}
+    }
+  else if (key == 'k')
+    {
+      if (vis.mouse.b_id == INLET_BOUNDARY || vis.mouse.b_id == OUTLET_BOUNDARY)
+	{
+	  visChangeTrianglePars (vis.mouse.b_id, vis.mouse.t_id, 0., 0.1, 0., &vis);
+	}
+    }
+  else if (key == 'K')
+    {
+      if (vis.mouse.b_id == INLET_BOUNDARY || vis.mouse.b_id == OUTLET_BOUNDARY)
+	{
+	  visChangeTrianglePars (vis.mouse.b_id, vis.mouse.t_id, 0., -0.1, 0., &vis);
+	}
+    }
+  else if (key == 'l')
+    {
+      if (vis.mouse.b_id == INLET_BOUNDARY || vis.mouse.b_id == OUTLET_BOUNDARY)
+	{
+	  visChangeTrianglePars (vis.mouse.b_id, vis.mouse.t_id, 0., 0., 1., &vis);
+	}
+    }
+  else if (key == 'L')
+    {
+      if (vis.mouse.b_id == INLET_BOUNDARY || vis.mouse.b_id == OUTLET_BOUNDARY)
+	{
+	  visChangeTrianglePars (vis.mouse.b_id, vis.mouse.t_id, 0., 0., -1., &vis);
+	}
+    }
+}
+
+
+void GLUTCALLBACK MouseFunction (int button, int state, int x, int y)
+{
+  visMouseFunction (button, state, x, y, &vis);
+}
+
+
+void GLUTCALLBACK MotionFunction (int x, int y)
+{
+  visMotionFunction (x, y, &vis);
+}
+
+
+void GLUTCALLBACK PassiveMotionFunction (int x, int y)
+{
+  visPassiveMotionFunction (x, y, &vis);
+}
+
+
+void GLUTCALLBACK Reshape (GLsizei w, GLsizei h)
+{
+  // the window is reshaped if necessary
+  
+  vis.ortho_x *= (float)w / (float)vis.viewport_pixels_x;
+  vis.ortho_y *= (float)h / (float)vis.viewport_pixels_y;
+  
+  vis.viewport_pixels_x = w;
+  vis.viewport_pixels_y = h;
+  
+  glViewport(0, 0, w, h);
+  
+  visProjection (&vis);
+}
+
+
+int main (int argc, char *argv[])
+{
+  visInit (argc, argv, &vis);
   
   
   glutReshapeFunc (Reshape);
-  glutIdleFunc (Display);
-  glutDisplayFunc (Display);
+  glutIdleFunc (Visualise);
+  glutDisplayFunc (Visualise);
   glutKeyboardFunc (KeybordFunction);
-  glutSpecialFunc (SpecialKeybordFunction);
   glutMouseFunc (MouseFunction);
   glutMotionFunc (MotionFunction);
   glutPassiveMotionFunc (PassiveMotionFunction);
