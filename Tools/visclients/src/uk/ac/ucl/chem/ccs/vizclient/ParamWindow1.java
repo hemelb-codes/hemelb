@@ -175,7 +175,10 @@ public class ParamWindow1 extends javax.swing.JDialog {
 		vis_ctr_xField.setText(Float.toString(sd.getCtr_x()));
 	}
 	
-	
+	public void updateLon (SteeringData sd) {
+		this.sd = sd;
+		longtitudeField.setText(Float.toString(sd.getLongitude()));
+	}
 
 	private void cleanup() {
 		this.dispose();

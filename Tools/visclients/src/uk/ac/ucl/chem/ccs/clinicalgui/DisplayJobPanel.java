@@ -66,6 +66,7 @@ import javax.swing.BorderFactory;
 //import org.realitygrid.steerer.Steerer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import uk.ac.ucl.chem.ccs.aheclient.util.GridSAMStateInfo;
 import uk.ac.ucl.chem.ccs.aheclient.util.JobFileElement;
 import uk.ac.ucl.chem.ccs.aheclient.util.JobRegistryElement;
@@ -78,6 +79,7 @@ import uk.ac.ucl.chem.ccs.aheclient.util.AHEJobObject;
 import uk.ac.ucl.chem.ccs.aheclient.wsrf.MonitorSimCall;
 import uk.ac.ucl.chem.ccs.aheclient.wsrf.StartCall;
 import uk.ac.ucl.chem.ccs.aheclient.wsrf.TerminateSimCall;
+import uk.ac.ucl.chem.ccs.vizclient.HttpGetPoll;
 import uk.ac.ucl.chem.ccs.vizclient.VizSteererWindow;
 
 import java.awt.GraphicsEnvironment;
@@ -155,6 +157,15 @@ public class DisplayJobPanel extends javax.swing.JPanel {
         //private JobRegistryElement jre = null;
         private JPanel regSteering;
         private String fileLocation = null;
+    	private boolean steeredApp = false;
+    	private VizSteererWindow vs;
+    	private JButton steer;
+    	private String rID;
+    	private JTextField steerERP;
+    	private String h = "localhost";
+    	private int p = 65250;
+    	private int w = 1024*1024;
+        
         private static Log cat = LogFactory.getLog(DisplayJobPanel.class);
 
        
@@ -163,7 +174,21 @@ public class DisplayJobPanel extends javax.swing.JPanel {
                 this.ajo = ajo;
                 //this.jre = jre;
                 downloadFiles = new Vector();
+                
+                //hemelb should use a string
+        		rID=ajo.getResourceID();
+        		rID = rID.substring(0, 4);
+        		if (rID.startsWith("0")) {
+        			rID = 1+rID;
+        		}
+                
                 initGUI();
+                
+                //look for registered app
+        		if (steeredApp) {
+        			PollThread pt = new PollThread();
+        			pt.start();
+        		}
         }
         
         public void setJobObject(AHEJobObject job){
@@ -802,31 +827,34 @@ public class DisplayJobPanel extends javax.swing.JPanel {
                                         }
                                         {
                                                 if (ajo.getReGSWSEPR() != null) {
-                                                regSteering = new JPanel();
-                                                jTabbedPane1.addTab("ReG Steering", null, regSteering, null);
-                                                {
-                                                        JLabel look = new JLabel("Steering EPR");
-                                                        JTextField steerERP = new JTextField(ajo.getReGSWSEPR());
-                                                        JButton steer = new JButton("Start Steerer");
-                                                        steer.addActionListener(new ActionListener() {
-                                                                public void actionPerformed (ActionEvent evt) {
-                                                                        String command = "/usr/local/bin/java -jar /home/stefan/regsteering/reg_swing_steerer/SwingSteerer.jar " + ajo.getReGSWSEPR();
-                                                                        String arg [] = new String[1];
-                                                                        System.err.println("button clicked ");
-                                                                        arg[0] = ajo.getReGSWSEPR();
-                                                                        //Steerer st = new Steerer(null, arg, GraphicsEnvironment.
-                                                          //getLocalGraphicsEnvironment().
-                                                        //getDefaultScreenDevice().
-                                                          //getDefaultConfiguration());
-
-                                                                }});
-                                                               
-                                                        regSteering.add(look);
-                                                        regSteering.add(steerERP);
-                                                                        regSteering.add(steer);
-                                                       
-                                                       
-                                                }
+           
+                                					regSteering = new JPanel();
+                            						
+                            						TableLayout steerLayout = new TableLayout(new double[][] {
+                            								{ TableLayout.FILL },
+                            								{ TableLayout.FILL, TableLayout.FILL,
+                            										TableLayout.FILL, TableLayout.FILL,
+                            										TableLayout.FILL } });
+                            						regSteering.setLayout(steerLayout);
+                            						steeredApp = true;
+                            						jTabbedPane1.addTab("ReG Steering", null, regSteering, null);
+                            						{
+                            							JLabel look = new JLabel("Steering address");
+                            							steerERP = new JTextField();
+                            							steer = new JButton("Start Steerer");
+                            							steer.setEnabled(false);	
+                            							steer.addActionListener(new ActionListener() {
+                            								public void actionPerformed (ActionEvent evt) {
+                            									vs = new VizSteererWindow(h,p,w, DisplayJobPanel.this.getTopLevelAncestor());
+                            								}});
+                            								
+                            							regSteering.add(look, "0,1");
+                            							regSteering.add(steerERP, "0,2");
+                            									regSteering.add(steer, "0,3");
+                            							
+                            							
+                            						}
+                                                	
                                                 }
                                         }
                                        
@@ -1095,5 +1123,47 @@ public class DisplayJobPanel extends javax.swing.JPanel {
         }
        */
        
+        
+        private class PollThread extends Thread {
+    		private boolean run;
+
+    		public PollThread () {
+    			run=true;
+
+    		}
+
+
+    		public void stopThread () {
+    			//private boolean shouldirun = true;
+    			run=false;
+
+    		} 	
+
+    		public void run() {
+    			while(run) {
+    				String service = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.rendezvous");
+    				System.err.println("Polling: " + service +" for " + rID);
+    				HttpGetPoll hgp = new HttpGetPoll(service, rID);
+
+    				
+    				if (hgp.pollService(5)) {
+    				p=hgp.getPort();
+    				h= hgp.getHost();
+    				
+    				steer.setEnabled(true);
+    				steerERP.setText(h+":"+p);
+    				System.err.println("Found sim listening at " + h + ":" + p + "\n");
+
+    				} else {
+    					System.err.println("Couldn't rendezvous with HemeLB simulation");
+    				}
+    				run = false;
+    			}
+
+
+    		}
+
+
+    	}
        
 }

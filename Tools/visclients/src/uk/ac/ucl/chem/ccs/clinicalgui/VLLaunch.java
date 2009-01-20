@@ -84,7 +84,7 @@ public class VLLaunch {
          * @return PrepareResponse
          */
         public PrepareResponse prepare (String simulationName) {
-        		String app = "hemelb";
+        		String app = ClinicalGuiClient.prop.getProperty("uk.ac.ucl.chem.ccs.aheclient.appname");
         		int rmCPUCount = 1;
                 //Note, most of the parameters to this call are used for resource matching and aren't needed, hence the empty strings
                 //Only call once
@@ -162,6 +162,17 @@ public class VLLaunch {
                 inFiles.add(new JobFileElement ("par1", "rtPars", "foo", rtParsPath));
                 inFiles.add(new JobFileElement ("par2", "pars", "foo", parsPath));
                 inFiles.add(new JobFileElement ("par3", "config", "foo", configPath));
+                
+                //set up the rendezvous id
+        		String args = resourceID.substring(0, 4);
+        		System.err.print("resouce id is: " + args);
+        		if (args.startsWith("0")) {
+        			args = "1"+args;
+        		}
+        		
+        		inFiles.add(new JobFileElement("argument", args, null, null));
+        		
+                
                 //gsiftp://bunsen.chem.ucl.ac.uk/tmp/...
                 
                 outFiles.add(new JobFileElement ("file1", "file1", "file1", "file1"));

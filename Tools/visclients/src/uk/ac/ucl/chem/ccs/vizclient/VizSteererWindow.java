@@ -270,6 +270,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 						quitMenuItem.setEnabled(true);
 						quitMenuItem.addActionListener(new ActionListener (){ 
 							public void actionPerformed (ActionEvent e) {
+								vg.stopReceive();
 								VizSteererWindow.this.dispose();
 							}
 						});
