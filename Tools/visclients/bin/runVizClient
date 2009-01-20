@@ -1,25 +1,26 @@
 #! /bin/bash
 
+MYPATH=/usr/local/hemelbClient
+
 case `uname -ms` in
     "Linux x86_64")
-         JOGL_LIB="64blin";
-         ;;
+        #64 bit linux
+        JOGL_LIB=$MYPATH/lib/jogl/jogl-1.1.1-linux-amd64/lib;
+        JAVA_HOME=/usr/local64/stow/jdk1.5.0_10/ 
+        OPTS=;
+        ;;
     "Linux i686")
-         JOGL_LIB="32blin";
-         ;;
+        #32 bit linux
+        JAVA_HOME=/usr/local/stow/jdk1.5.0_10/;
+        JOGL_LIB=$MYPATH/lib/jogl/jogl-1.1.1-linux-i586/lib;
+        OPTS=;
+        ;;
     "Darwin i386")
-         JOGL_LIB="32bmac";
-         ;;
+        #macos intel
+        JAVA_HOME=/usr/;
+        JOGL_LIB=$MYPATH/lib/jogl/jogl-1.1.1-macosx-universal/lib;
+        OPTS=-Xdock:name="HemeLB Viz Client" -Xdock:icon=$MYPATH/lib/genius.png 
+        ;;
 esac
 
- 
-#case
-#  PATH=/usr/local64/bin:/usr/local/bin:$PATH 
-#  JAVA_HOME=/usr/local64/stow/jdk1.5.0_10/ 
-#case 
-#  PATH=/usr/local/bin:$PATH 
-#  JAVA_HOME=/usr/local/stow/jdk1.5.0_10/ 
-#default
- 
-#export PATH 
-#export JAVA_HOME 
+$JAVA_HOME/bin/java $OPTS -Djava.library.path=$JOGL_LIB -Xmx512m -jar $MYPATH/lib/hemelbVizClient.jar $@
