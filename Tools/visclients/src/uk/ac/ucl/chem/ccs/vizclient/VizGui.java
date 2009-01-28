@@ -751,14 +751,18 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			//timeFramesPerSec.stop();
 		}
 
-
-
 		public void run() {
 			//timeFramesPerSec.start();
 
 			while(nr.isConnected()) {
-				VizFrameData vfd =nr.getFrame();
+				VizFrameData vfd = nr.getFrame();
 				if (vfd != null) {
+					//System.out.println("Frames stacked " + queue.size());
+					if( queue.size() > 30 ) {
+						// Removed the oldest frame from the queue
+						queue.poll();
+						//System.out.println("Removing frame..." + queue.size());						
+					}
 					queue.offer(vfd);
 					totalFramesRec++;
 					totalDataRec = totalDataRec + vfd.getBufferSize();
@@ -768,9 +772,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 		}
 	}
-
-
-
 
 	//side info panel 
 	private class InfoPanel extends JPanel {
