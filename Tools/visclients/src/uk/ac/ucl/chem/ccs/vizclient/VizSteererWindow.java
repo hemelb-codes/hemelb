@@ -424,7 +424,8 @@ public class VizSteererWindow extends javax.swing.JFrame {
 											break;
 										}
 								}
-							
+			
+
 							public void menuCanceled (MenuEvent e) {
 								
 							}
