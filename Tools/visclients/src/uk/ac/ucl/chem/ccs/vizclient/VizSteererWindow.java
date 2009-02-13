@@ -60,6 +60,15 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	private JPanel jPanel1;
 	private JPanel jPanel2;
 	private JMenuItem quitMenuItem;
+	
+	private JRadioButtonMenuItem viewpoint1;
+	private JRadioButtonMenuItem viewpoint2;
+	private JRadioButtonMenuItem viewpoint3;
+	private JRadioButtonMenuItem viewpoint4;
+	private JRadioButtonMenuItem viewpoint5;
+
+	
+	
 	private JMenuItem killMenuItem;
 	private JMenuItem loadMenuItem;
 	private JMenuItem saveMenuItem;
@@ -80,6 +89,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 	private JCheckBoxMenuItem rotateMenuItem;
 	private JCheckBoxMenuItem window1MenuItem;
 	private ButtonGroup buttonGroup1;
+	private ButtonGroup buttonGroup2;
 
 	/**
 	* Auto-generated main method to display this JFrame
@@ -318,12 +328,67 @@ public class VizSteererWindow extends javax.swing.JFrame {
 							});
 						}
 
+						viewMenu.add(new JSeparator());
+						
+						viewpoint1 = new JRadioButtonMenuItem();
+						viewMenu.add(viewpoint1);
+						viewpoint1.setText("View 1");
+						viewpoint1.addActionListener(new ActionListener (){ 
+							public void actionPerformed (ActionEvent e) {
+								vg.viewChanged(VizGui.VIEW1);
+							}
+						});
+						
+						viewpoint2 = new JRadioButtonMenuItem();
+						viewMenu.add(viewpoint2);
+						viewpoint2.setText("View 2");
+						viewpoint2.addActionListener(new ActionListener (){ 
+							public void actionPerformed (ActionEvent e) {
+								vg.viewChanged(VizGui.VIEW2);
+							}
+						});
+						
+						viewpoint3 = new JRadioButtonMenuItem();
+						viewMenu.add(viewpoint3);
+						viewpoint3.setText("View 3");
+						viewpoint3.addActionListener(new ActionListener (){ 
+							public void actionPerformed (ActionEvent e) {
+								vg.viewChanged(VizGui.VIEW3);
+							}
+						});
+						
+						viewpoint4 = new JRadioButtonMenuItem();
+						viewMenu.add(viewpoint4);
+						viewpoint4.setText("View 4");
+						viewpoint4.addActionListener(new ActionListener (){ 
+							public void actionPerformed (ActionEvent e) {
+								vg.viewChanged(VizGui.VIEW4);
+							}
+						});
+
+						viewpoint5 = new JRadioButtonMenuItem();
+						viewMenu.add(viewpoint5);
+						viewpoint5.setText("View 5");
+						viewpoint5.addActionListener(new ActionListener (){ 
+							public void actionPerformed (ActionEvent e) {
+								vg.viewChanged(VizGui.VIEWALL);
+							}
+						});
 						
 						{
 							buttonGroup1 = new ButtonGroup();
 							buttonGroup1.add(view1MenuItem);
 							buttonGroup1.add(view3MenuItem);
 							buttonGroup1.add(view2MenuItem);
+						}
+						
+						{
+							buttonGroup2 = new ButtonGroup();
+							buttonGroup2.add(viewpoint1);
+							buttonGroup2.add(viewpoint2);
+							buttonGroup2.add(viewpoint3);
+							buttonGroup2.add(viewpoint4);
+							buttonGroup2.add(viewpoint5);
 						}
 						
 						{
@@ -338,6 +403,24 @@ public class VizSteererWindow extends javax.swing.JFrame {
 											break;
 										case 2:
 											view3MenuItem.setSelected(true);
+											break;
+										}
+										
+										switch (vg.getView()) {
+										case VizGui.VIEW1:
+											viewpoint1.setSelected(true);
+											break;
+										case VizGui.VIEW2:
+											viewpoint2.setSelected(true);
+											break;
+										case VizGui.VIEW3:
+											viewpoint3.setSelected(true);
+											break;
+										case VizGui.VIEW4:
+											viewpoint4.setSelected(true);
+											break;
+										case VizGui.VIEWALL:
+											viewpoint5.setSelected(true);
 											break;
 										}
 								}
