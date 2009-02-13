@@ -71,11 +71,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private double panel_height;
 
 	//define the views
-	static private final int VIEW1 =0;
-	static private final int VIEW2 =1;
-	static private final int VIEW3 =2;
-	static private final int VIEW4 =3;
-	static private final int VIEWALL =4;
+	static public final int VIEW1 =0;
+	static public final int VIEW2 =1;
+	static public final int VIEW3 =2;
+	static public final int VIEW4 =3;
+	static public final int VIEWALL =4;
 	private int view;
 
 	private ParamWindow1 paramWindow1;
@@ -397,6 +397,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 					}
 
+				
 					public void keyTyped(KeyEvent e) {
 						System.err.println("Key pressed");
 
@@ -556,6 +557,14 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		}
 	}
 
+	public void viewChanged (int v) {
+		view = v;
+	}
+	
+	public int getView () {
+		return view;
+	}
+	
 	public void rotate (boolean rot) {
 		if (rot) {
 			//System.out.println("rotate");
@@ -716,7 +725,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					ifp.updateFPS(frames, rate);
 
 					//System.err.println("Total data " + totalDataRec + " Total frames " + totalFramesRec + " Time " + runTime);
-					if (toolTip.isVisible() && toolTipDisplayTime == 0) {
+				/*	if (toolTip.isVisible() && toolTipDisplayTime == 0) {
 						toolTipDisplayTime = 5;
 					} else if (toolTipDisplayTime > 0) {
 						toolTipDisplayTime--;
@@ -724,7 +733,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							toolTip.setText("");
 							toolTip.setVisible(false);
 						}
-					}
+					}*/
 					
 				} catch (Exception e) {
 
