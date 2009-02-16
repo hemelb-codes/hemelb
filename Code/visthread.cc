@@ -14,7 +14,7 @@ pthread_mutex_t var_lock = PTHREAD_MUTEX_INITIALIZER;
 int bytes_per_pixel_data = sizeof(int) + 4 * sizeof(unsigned char);
 
 // one int for colour_id and one for pixel id
-u_int pixel_data_bytes = IMAGE_SIZE * bytes_per_pixel_data;
+u_int pixel_data_bytes = COLOURED_PIXELS_MAX * bytes_per_pixel_data;
 
 // it is assumed that the frame size is the only detail
 u_int frame_details_bytes = 1 * sizeof(int);

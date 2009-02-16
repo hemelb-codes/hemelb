@@ -61,12 +61,10 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   
   visUpdateImageSize (pixels_x, pixels_y);
   
-  visConvertThresholds (vis_physical_velocity_threshold_max,
-			vis_physical_stress_threshold_max,
-			vis_physical_pressure_threshold_min,
-			vis_physical_pressure_threshold_max,
-			&lattice_velocity_max, &lattice_stress_max,
-			&lattice_density_min, &lattice_density_max, lbm);
+  lattice_density_min  = lbmConvertPressureToLatticeUnits (vis_physical_pressure_threshold_min, lbm) / Cs2;
+  lattice_density_max  = lbmConvertPressureToLatticeUnits (vis_physical_pressure_threshold_max, lbm) / Cs2;
+  lattice_velocity_max = lbmConvertVelocityToLatticeUnits (vis_physical_velocity_threshold_max, lbm);
+  lattice_stress_max   = lbmConvertStressToLatticeUnits (vis_physical_stress_threshold_max, lbm);  
   
   visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
   		 pixels_x, pixels_y,
@@ -76,9 +74,9 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   		 0.5F * (5.F * vis->system_size),
   		 zoom);
   
-  vis_velocity_threshold_max_inv   = 1.F / lattice_velocity_max;
-  vis_stress_threshold_max_inv     = 1.F / lattice_stress_max;
-  vis_density_threshold_min        = 1.F / lattice_density_min;
-  vis_density_threshold_minmax_inv = 1.F / (lattice_density_max - lattice_density_min);
+  vis_density_threshold_min        = lattice_density_min;
+  vis_density_threshold_minmax_inv = 1.0F / (lattice_density_max - lattice_density_min);
+  vis_velocity_threshold_max_inv   = 1.0F / lattice_velocity_max;
+  vis_stress_threshold_max_inv     = 1.0F / lattice_stress_max;
 }
 

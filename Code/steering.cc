@@ -232,7 +232,7 @@ void *hemeLB_network (void *ptr) {
 	  
 	  for (int i = 0; i < col_pixels; i++)
 	    {
-	      xdrWritePixel (&col_pixel_recv[ i ], &xdr_network_stream_pixel_data, ColourPalette);
+	      xdrWritePixel (&col_pixel_recv[RECV_BUFFER_A][i], &xdr_network_stream_pixel_data, ColourPalette);
 	    }
 	  
 	  int frameBytes = xdr_getpos(&xdr_network_stream_pixel_data);
@@ -286,7 +286,7 @@ void *hemeLB_network (void *ptr) {
 
     //    printf("Time to send frame = %0.6f s\n", frameTimeSend);
 
-        double timeDiff = (1.0/5.0) - frameTimeSend;
+        double timeDiff = (1.0/25.0) - frameTimeSend;
 
         if( timeDiff > 0.0 ) {
 
