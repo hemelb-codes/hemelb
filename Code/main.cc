@@ -6,10 +6,15 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
-
 #include <sys/stat.h>
 
 #include <sched.h>
+#include <sys/dir.h>
+#include <sys/param.h>
+
+#include <cstdio>
+#include <iostream>
+#include <semaphore.h>
 
 #include "config.h"
 #include "network.h"
@@ -20,7 +25,6 @@
 #include "visthread.h"
 #include "fileutils.h"
 
-#include <semaphore.h>
 
 int cycle_id;
 int time_step;
@@ -28,6 +32,40 @@ double intra_cycle_time;
 bool updated_mouse_coords;
 
 FILE* timings_ptr;
+
+
+int SelectFile (const struct direct *entry)
+{
+  if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
+    {
+      return 0;
+    }
+  else
+    {
+      return 1;
+    }
+}
+
+
+int DeleteFiles (char *pathname)
+{
+  struct direct **files;
+  
+  int file_count = scandir(pathname, &files, SelectFile, alphasort);
+  
+  printf ("number of files %i\n", file_count);
+  
+  char filename[1024];
+  
+  for (int i = 0; i < file_count; i++)
+    {
+      snprintf (filename, 1024, "%s/%s", pathname, files[i]->d_name);	
+      printf ("deleting file %s\n", filename);
+      unlink (filename);
+    }
+  return 0;
+}
+
 
 int main (int argc, char *argv[])
 {
@@ -66,7 +104,7 @@ int main (int argc, char *argv[])
   int vis_without_compositing_time_steps;
   int snapshots_per_cycle, snapshots_period;
   int images_per_cycle, images_period;
-  int is_unstable;
+  int is_unstable = 0;
   
   pthread_t network_thread;
   pthread_attr_t pthread_attrib;
@@ -137,7 +175,6 @@ int main (int argc, char *argv[])
   char snapshot_directory[256];
   char image_directory[256];
   char complete_image_name[256];
-  char rm_files[256];
   
   strcpy ( input_config_name , input_file_path );
   strcat ( input_config_name , "/config.dat" );
@@ -219,21 +256,8 @@ int main (int argc, char *argv[])
   
   visReadParameters (vis_parameters_name, &lbm, &net, &vis);
   
-  // OUCH!!!! This needs to be changed - SM
-  // These system calls will Crash on particular implementations
-  // of MPI, e.g. MPIVACH used on QueenBee/LONI.
-  if (net.id == 0)
-    {
-      strcpy (rm_files, "rm ");
-      strcat (rm_files, snapshot_directory);
-      strcat (rm_files, "*");
-      system (rm_files);
-      
-      strcpy (rm_files, "rm ");
-      strcat (rm_files, image_directory);
-      strcat (rm_files, "*");
-      system (rm_files);
-    }
+  DeleteFiles (snapshot_directory);
+  DeleteFiles (image_directory);
   
   if (!is_bench)
     {
@@ -308,36 +332,8 @@ int main (int argc, char *argv[])
 
 		//	if( render_for_network_stream ) doRendering = 1;
 
-		} // if (net.id == 0)
-		  
-/*		  if (lock_return == EBUSY) {
-		     printf("lock busy\n");
-		  } else {
-		     printf("aquired lock\n");
-		    render_for_network_stream = 1;
-		printf("Setting render_for_network_stream -> 1, time step %i\n", time_step);
-		    doRendering = 1;
-		  } 
-		   printf("ShouldIRenderNow %i\n", ShouldIRenderNow); fflush(0x0);
-		} */
-
-if(net.id==0) sem_wait(&steering_var_lock);
-              UpdateSteerableParameters (&doRendering, &vis, &lbm);
-if(net.id==0) sem_post(&steering_var_lock);
-
-	      // printf (" doRendering: %i\n", doRendering); Between
-	      // the visRenderA/B calls, do not change any vis
-	      // parameters.
-	      
-	      // if(setRendering==1) { doRendering = 1; setRendering = 0; }
-
-	      if (doRendering)
-		{
-		  //if(net.id==0) sem_wait(&nrl); // Grab the lock
-		  visRenderA (ColourPalette, &net, &sl);
 		}
-
-	      lbmVaryBoundaryDensities (cycle_id, time_step, &lbm);
+	      lbmUpdateBoundaryDensities (cycle_id, time_step, &lbm);
 	      
 	      if (!check_conv)
 		{
@@ -375,64 +371,61 @@ if(net.id==0) sem_post(&steering_var_lock);
 		  end_time = myClock ();
 		  fluid_solver_time += end_time - start_time;
 		}
-
-	      if (write_snapshot_image)
-		{
-		printf("WRITING IMAGE SNAPSHOT\n");
-
-		  start_time = myClock ();
-		  
-		  char image_filename[255];
-		  
-		  snprintf(image_filename, 255, "%08i.dat", time_step);
-		  strcpy ( complete_image_name, image_directory );
-		  strcat ( complete_image_name, image_filename );
-		  
-		  end_time = myClock ();
-		  io_time += end_time - start_time;
-		}
-
 	      slStreakLines (time_step, lbm.period, &net, &sl);
 	      
+	      if (net.id == 0)
+		{
+		  sem_wait(&steering_var_lock);
+		}
+	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
+	      
+	      if (net.id == 0)
+		{
+		  sem_post(&steering_var_lock);
+		}
 	      if (doRendering)
 		{
-		  visRenderB (write_snapshot_image, complete_image_name, ColourPalette, &net);
+		  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 		  
-                 if( net.id == 0 ) {
-
-//		    pthread_mutex_lock(&steer_param_lock);
-		int _vis_mouse_x = vis_mouse_x;
-		int _vis_mouse_y = vis_mouse_y;
-//		    pthread_mutex_unlock(&steer_param_lock); 
-
-//******		printf("updated mouse coords %i MOUSE X %i MOUSE Y %i\n", int(updated_mouse_coords), vis_mouse_x, vis_mouse_y);
-
-                if( _vis_mouse_x >= 0 && _vis_mouse_y >= 0 && updated_mouse_coords ) {
-		    for (int i = 0; i < col_pixels; i++)
-		      {
-		       if ((col_pixel_recv[ i ].i & RT) &&
-		 	  (col_pixel_recv[ i ].i & PIXEL_ID_MASK) == PixelId (_vis_mouse_x, _vis_mouse_y))
+		  if (vis_mouse_x >= 0 && vis_mouse_y >= 0 && updated_mouse_coords)
+		    {
+		      for (int i = 0; i < col_pixels; i++)
 			{
-			  visCalculateMouseFlowField (&col_pixel_recv[ i ], &lbm);
-				break;
+			  if ((col_pixel_recv[RECV_BUFFER_A][i].i & RT) &&
+			      (col_pixel_recv[RECV_BUFFER_A][i].i & PIXEL_ID_MASK) == PixelId (vis_mouse_x,vis_mouse_y))
+			    {
+			      visCalculateMouseFlowField (&col_pixel_recv[RECV_BUFFER_A][i], &lbm);
+			      break;
+			    }
 			}
+		      updated_mouse_coords = 0;
 		    }
-
-		updated_mouse_coords = 0;
-
-                  } // if( vis_mouse_x >= 0)
-
-//		    pthread_mutex_unlock(&steer_param_lock);
-
-		  } // if( net.id == 0)  
-
-		if(net.id == 0) {
-			is_frame_ready = 1;
-			sem_post(&nrl); // let go of the lock
-		} 
-
-		} // doRendering
-
+		 if (net.id == 0)
+		   {
+		     is_frame_ready = 1;
+		     sem_post(&nrl); // let go of the lock
+		   }
+		}
+	      if (write_snapshot_image)
+		{
+		  visRender (RECV_BUFFER_B, ColourPalette, &net, &sl);
+		  
+		  if (net.id == 0)
+		    {
+		      start_time = myClock ();
+		      
+		      char image_filename[255];
+		      
+		      snprintf(image_filename, 255, "%08i.dat", time_step);
+		      strcpy ( complete_image_name, image_directory );
+		      strcat ( complete_image_name, image_filename );
+		      
+		      visWriteImage (RECV_BUFFER_B, complete_image_name, ColourPalette);
+		      
+		      end_time = myClock ();
+		      io_time += end_time - start_time;
+		    }
+		}
 	      if (time_step%snapshots_period == 0)
 		{
 		  start_time = myClock ();
@@ -476,7 +469,7 @@ if(net.id==0) sem_post(&steering_var_lock);
 		}
 	      if (net.id == 0)
 		{
-		  if (time_step%1 == 0)
+		  if (time_step%100 == 0)
 		    printf ("time step: %i\n", time_step);
 		}
 	      if (lbm.period >= 1000000)
@@ -490,36 +483,21 @@ if(net.id==0) sem_post(&steering_var_lock);
 	    {
 	      start_time = myClock ();
 	      
-	      lbmRestart (input_parameters_name, &lbm, &net);
+	      DeleteFiles (snapshot_directory);
+	      DeleteFiles (image_directory);
+	      
+	      lbmRestart (&lbm, &net);
 	      
 	      slRestart (&sl);
 	      
 	      if (net.id == 0)
 		{
-		  strcpy (rm_files, "rm ");
-		  strcat (rm_files, snapshot_directory);
-		  strcat (rm_files, "*");
-		  system (rm_files);
-		  
-		  strcpy (rm_files, "rm ");
-		  strcat (rm_files, image_directory);
-		  strcat (rm_files, "*");
-		  system (rm_files);
-		}
-	      if (net.id == 0)
-		{
 		  printf ("restarting: period: %i\n", lbm.period);
 		  fflush (0x0);
 		}
-	      if (snapshots_per_cycle == 0)
-		snapshots_period = 1e9;
-	      else
-		snapshots_period = max(1, lbm.period / snapshots_per_cycle);
+	      snapshots_period = (snapshots_per_cycle == 0) ? 1e9 : max(1, lbm.period/snapshots_per_cycle);
 	      
-	      if (images_per_cycle == 0)
-		images_period = 1e9;
-	      else
-		images_period = max(1, lbm.period / images_per_cycle);
+	      images_period = (images_per_cycle == 0) ? 1e9 : max(1, lbm.period/images_per_cycle);
 	      
 	      cycle_id = 0;
 	      
@@ -530,7 +508,7 @@ if(net.id==0) sem_post(&steering_var_lock);
 
 	  start_time = myClock ();
 	  
-	  lbmCalculateFlowFieldValues (cycle_id, lbm.period, &lbm);
+	  lbmCalculateFlowFieldValues (&lbm);
 	  
 	  if (net.id == 0)
 	    {
@@ -572,8 +550,8 @@ if(net.id==0) sem_post(&steering_var_lock);
   else // is_bench
     {
       double elapsed_time;
-  
-      int bench_period = (int)fmax(1., (1e+6 * net.procs) / lbm.total_fluid_sites);
+      
+      int bench_period = (int)fmax(1.0, (1e+6 * net.procs) / lbm.total_fluid_sites);
       
       // benchmarking HemeLB's fluid solver only
       
@@ -598,7 +576,7 @@ if(net.id==0) sem_post(&steering_var_lock);
 	    }
 	}
 
-      fluid_solver_time_steps = (int)(time_step * minutes / (3. * 0.5) - time_step);
+      fluid_solver_time_steps = (int)(time_step * minutes / (3 * 0.5) - time_step);
       fluid_solver_time = myClock ();
       
       for (time_step = 1; time_step <= fluid_solver_time_steps; time_step++)
@@ -617,11 +595,9 @@ if(net.id==0) sem_post(&steering_var_lock);
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
-	  visRenderA (ColourPalette, &net, &sl);
-	  
 	  stability = lbmCycle (1, 1, 1, &lbm, &net);
 	  
-	  visRenderB (0, complete_image_name, ColourPalette, &net);
+	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	  
 	  // partial timings
 	  elapsed_time = myClock () - fluid_solver_and_vis_time;
@@ -637,16 +613,14 @@ if(net.id==0) sem_post(&steering_var_lock);
 	      break;
 	    }
 	}
-      fluid_solver_and_vis_time_steps = (int)(time_step * minutes / (3. * 0.5) - time_step);
+      fluid_solver_and_vis_time_steps = (int)(time_step * minutes / (3 * 0.5) - time_step);
       fluid_solver_and_vis_time = myClock ();
       
       for (time_step = 1; time_step <= fluid_solver_and_vis_time_steps; time_step++)
 	{
-	  visRenderA (ColourPalette, &net, &sl);
-	  
 	  stability = lbmCycle (1, 1, 1, &lbm, &net);
 	  
-	  visRenderB (0, complete_image_name, ColourPalette, &net);
+	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	}
       fluid_solver_and_vis_time = myClock () - fluid_solver_and_vis_time;
       
@@ -657,7 +631,7 @@ if(net.id==0) sem_post(&steering_var_lock);
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
-	  visRenderA (ColourPalette, &net, &sl);
+	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	  
 	  // partial timings
 	  elapsed_time = myClock () - vis_without_compositing_time;
@@ -673,12 +647,12 @@ if(net.id==0) sem_post(&steering_var_lock);
 	      break;
 	    }
 	}
-      vis_without_compositing_time_steps = (int)(time_step * minutes / (3. * 0.5) - time_step);
+      vis_without_compositing_time_steps = (int)(time_step * minutes / (3 * 0.5) - time_step);
       vis_without_compositing_time = myClock ();
       
       for (time_step = 1; time_step <= vis_without_compositing_time_steps; time_step++)
 	{
-	  visRenderA (ColourPalette, &net, &sl);
+	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	}
       vis_without_compositing_time = myClock () - vis_without_compositing_time;
     } // is_bench
@@ -791,7 +765,7 @@ if(net.id==0) sem_post(&steering_var_lock);
     }
   visEnd (&sl);
   netEnd (&net);
-  lbmEnd (&lbm);
+  lbmEnd ();
   
   if (net.id == 0)
     {

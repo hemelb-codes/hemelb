@@ -30,7 +30,9 @@
 #include <semaphore.h>
 
 
-#define EPSILON    1.e-30
+#define PI           3.14159265358979323846264338327950288
+#define DEG_TO_RAD   PI / 180.0
+#define EPSILON      1.0e-30
 
 #define STABLE                 1
 #define UNSTABLE               0
@@ -41,17 +43,15 @@
 #define VELOCITY           1
 #define STRESS             2
 
-#define NEIGHBOUR_PROCS_MAX            52
+#define NEIGHBOUR_PROCS_MAX            32
 #define COMMS_LEVELS                   2
 #define COLLISION_TYPES                6
-#define MACHINES_MAX                   4
 
-#define PIXELS_X                       512
-#define PIXELS_Y                       512
-#define COLOURED_PIXELS_PER_PROC_MAX   PIXELS_X * PIXELS_Y
-#define IMAGE_SIZE                     PIXELS_X * PIXELS_Y
-#define STEERABLE_PARAMETERS           20
+#define RECV_BUFFER_A   0
+#define RECV_BUFFER_B   1
 
+#define COLOURED_PIXELS_MAX    1024 * 1024
+#define STEERABLE_PARAMETERS   20
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
 #define mmHg_TO_PASCAL                 133.3223874
@@ -74,8 +74,6 @@
 #define PixelJ(i)        (i & 16383)
 #define PixelId(i,j)     ((i << 14) | j)
 
-
-extern double PI;
 
 // the constants needed to define the configuration of the lattice
 // sites follow
@@ -184,8 +182,6 @@ struct LBM
   float *block_density;
   
   int *block_map;
-  
-  short int *fluid_sites_per_block;
 };
 
 
@@ -414,16 +410,12 @@ extern double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
 
 
 extern int col_pixels, col_pixels_max;
-extern int col_pixels_recv[ MACHINES_MAX-1 ];
-extern int col_pixels_lock;
+extern int col_pixels_recv[2];
 
 extern int *col_pixel_id;
 
-// extern ColPixel *col_pixel_send;
-extern ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
-extern ColPixel *col_pixel_recv;
-//extern ColPixel *col_pixel_lock;
-
+extern ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
+extern ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
 extern Glyph *glyph;
 
 
@@ -523,10 +515,14 @@ double myClock ();
 int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
 
-void lbmConvertBoundaryData (double physical_data[], double lattice_data[], LBM *lbm);
-double lbmConvertPressureToPhysicalUnits (double lattice_pressure, LBM *lbm);
-double lbmConvertVelocityToPhysicalUnits (double lattice_velocity, LBM *lbm);
-double lbmConvertStressToPhysicalUnits (double lattice_stress, LBM *lbm);
+double lbmConvertPressureToLatticeUnits (double pressure, LBM *lbm);
+double lbmConvertPressureToPhysicalUnits (double pressure, LBM *lbm);
+double lbmConvertPressureGradToLatticeUnits (double pressure_grad, LBM *lbm);
+double lbmConvertPressureGradToPhysicalUnits (double pressure_grad, LBM *lbm);
+double lbmConvertVelocityToLatticeUnits (double velocity, LBM *lbm);
+double lbmConvertVelocityToPhysicalUnits (double velocity, LBM *lbm);
+double lbmConvertStressToLatticeUnits (double stress, LBM *lbm);
+double lbmConvertStressToPhysicalUnits (double stress, LBM *lbm);
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
@@ -539,10 +535,10 @@ void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, doubl
 void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
-void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm);
+void lbmCalculateFlowFieldValues (LBM *lbm);
 int lbmIsUnstable (Net *net);
-void lbmRestart (char *parameters_file_name, LBM *lbm, Net *net);
-void lbmEnd (LBM *lbm);
+void lbmRestart (LBM *lbm, Net *net);
+void lbmEnd (void);
 
 int netFindTopology (Net *net, int *depths);
 void netInit (LBM *lbm, Net *net);
@@ -554,7 +550,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net);
-void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
+void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
 void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net);
 
 void rtInit (Net *net);
@@ -569,7 +565,7 @@ void glyEnd (void);
 
 
 void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl);
-void slRender (SL *sl);
+void slRender (int recv_buffer_id, SL *sl);
 void slRestart (SL *sl);
 
 
@@ -593,14 +589,9 @@ void visProjection (float ortho_x, float ortho_y,
 void visRenderLine (float x1[], float x2[]);
 void visInit (Net *net, Vis *vis, SL *sl);
 void visUpdateImageSize (int pixels_x, int pixels_y);
-void visRenderA (void (*ColourPalette) (float value, float col[]), Net *net, SL *sl);
-void visRenderB (int write_image, char *image_file_name,
-		 void (*ColourPalette) (float value, float col[]), Net *net);
-void visConvertThresholds (float physical_velocity_max, float physical_stress_max,
-			   float physical_pressure_min, float physical_pressure_max,
-			   float *lattice_velocity_max, float *lattice_stress_max,
-			   float *lattice_density_min, float *lattice_density_max,
-			   LBM *lbm);
+void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net, SL *sl);
+void visWriteImage (int recv_buffer_id, char *image_file_name,
+		    void (*ColourPalette) (float value, float col[]));
 void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
 void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
 void visEnd (SL *sl);

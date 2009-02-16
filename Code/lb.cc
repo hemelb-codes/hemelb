@@ -10,72 +10,69 @@ void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density
 void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
 
 
-void lbmConvertBoundaryData (double physical_data[], double lattice_data[], LBM *lbm)
+double lbmConvertPressureToLatticeUnits (double pressure, LBM *lbm)
 {
-  // convert pressure from physical units (mm Hg) to lattice units
-  // assuming a reference pressure of 80 mmHg (see config.h for
-  // constants setup)
-  
-  double useful_factor = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
-  
-  
-  useful_factor *= useful_factor;
-  
-  lattice_data[0] = 1.0 + (physical_data[0] - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
-    useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
-  
-  lattice_data[1] = physical_data[1] * mmHg_TO_PASCAL *
-    useful_factor * lbm->voxel_size * lbm->voxel_size / (BLOOD_DENSITY * Cs2);
-  
-  lattice_data[2] = physical_data[2] * PI / 180.;
+  return 1.0 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
+    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) *
+    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) / BLOOD_DENSITY;
 }
 
 
-double lbmConvertPressureToPhysicalUnits (double lattice_pressure, LBM *lbm)
+double lbmConvertPressureToPhysicalUnits (double pressure, LBM *lbm)
 {
-  // convert pressure from lattice units to physical units (mm Hg) to lattice units
-  // assuming a reference pressure of 80 mmHg (see config.h for
-  // constants setup)
-  
-  double useful_factor = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
-  
-  useful_factor *= useful_factor;
-  
-  return REFERENCE_PRESSURE + ((lattice_pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY /
-    (mmHg_TO_PASCAL * useful_factor * lbm->voxel_size * lbm->voxel_size);
+  return REFERENCE_PRESSURE + ((pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY *
+    ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) *
+    ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
 }
 
 
-double lbmConvertVelocityToPhysicalUnits (double lattice_velocity, LBM *lbm)
+double lbmConvertPressureGradToLatticeUnits (double pressure_grad, LBM *lbm)
+{
+  return pressure_grad * mmHg_TO_PASCAL *
+    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) *
+    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) / (BLOOD_DENSITY * Cs2);
+}
+
+
+double lbmConvertPressureGradToPhysicalUnits (double pressure_grad, LBM *lbm)
+{
+  return pressure_grad * (BLOOD_DENSITY * Cs2) *
+    ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) *
+    ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
+}
+
+
+double lbmConvertVelocityToLatticeUnits (double velocity, LBM *lbm)
+{
+  return velocity * (((lbm->tau-0.5)/3.0) * lbm->voxel_size) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+}
+
+
+double lbmConvertVelocityToPhysicalUnits (double velocity, LBM *lbm)
 {
   // convert velocity from lattice units to physical units (m/s)
-  // (see config.h for constants setup)
   
-  float physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
-  
-  float useful_factor = ((lbm->tau - 0.5) / 3.) / physical_kinematic_viscosity;
-  
-  
-  return lattice_velocity / (useful_factor * lbm->voxel_size);
+  return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / (((lbm->tau-0.5)/3.0) * lbm->voxel_size);
 }
 
 
-double lbmConvertStressToPhysicalUnits (double lattice_stress, LBM *lbm)
+double lbmConvertStressToLatticeUnits (double stress, LBM *lbm)
+{
+  return stress * (BLOOD_DENSITY / (BLOOD_VISCOSITY * BLOOD_VISCOSITY)) *
+    (((lbm->tau-0.5)/3.0) * lbm->voxel_size) *
+    (((lbm->tau-0.5)/3.0) * lbm->voxel_size);
+}
+
+
+double lbmConvertStressToPhysicalUnits (double stress, LBM *lbm)
 {
   // convert stress from lattice units to physical units (Pa)
-  // (see config.h for constants setup)
   
-  float physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
-  
-  float useful_factor = ((lbm->tau - 0.5) / 3.) / physical_kinematic_viscosity;
-  
-  
-  return lattice_stress * BLOOD_DENSITY /
-    (useful_factor * useful_factor * lbm->voxel_size * lbm->voxel_size);
+  return stress * BLOOD_VISCOSITY * BLOOD_VISCOSITY /
+    (BLOOD_DENSITY * (((lbm->tau-0.5)/3.0) * lbm->voxel_size) * (((lbm->tau-0.5)/3.0) * lbm->voxel_size));
 }
 
 
-  
 double lbmCalculateTau (LBM *lbm)
 {
   double physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
@@ -1039,9 +1036,9 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
 }
 
 
-void lbmVaryBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
+void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
 {
-  double w = 2. * PI / lbm->period;
+  double w = 2.0 * PI / lbm->period;
   
   
   for (int i = 0; i < lbm->inlets; i++)
@@ -1247,27 +1244,7 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
   f_old = f_new;
   f_new = f_old_p;
   
-  int is_unstable = 0;
-  
-  if (!is_bench && time_step == lbm->period)
-    {
-      for (i = 0; i < net->my_sites * 15; i++)
-	{
-	  if (f_old[ i ] < 0.)
-	    {
-	      is_unstable = 1;
-	    }
-	}
-    }
-  
-  if (is_unstable)
-    {
-      return UNSTABLE;
-    }
-  else
-    {
-      return STABLE;
-    }
+  return STABLE;
 }
 
 
@@ -1496,7 +1473,7 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
 }
 
 
-void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
+void lbmCalculateFlowFieldValues (LBM *lbm)
 {
   double *local_data;
   double *global_data;
@@ -1507,40 +1484,33 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   global_data = (double *)malloc(sizeof(double) * max(6+lbm->inlets,2*lbm->inlets));
   
 #ifndef NOMPI
-  local_data[ 0 ] = lbm_density_min;
-  local_data[ 1 ] = 1. / lbm_density_max;
-  local_data[ 2 ] = lbm_velocity_min;
-  local_data[ 3 ] = 1. / lbm_velocity_max;
-  local_data[ 4 ] = lbm_stress_min;
-  local_data[ 5 ] = 1. / lbm_stress_max;
+  local_data[0] = lbm_density_min;
+  local_data[1] = lbm_velocity_min;
+  local_data[2] = lbm_stress_min;
+  local_data[3] = lbm_velocity_max;
+  local_data[4] = lbm_density_max;
+  local_data[5] = lbm_stress_max;
   
-  for (i = 0; i < lbm->inlets; i++)
-    {
-      local_data[ 6+i ] = 1. / lbm_peak_inlet_velocity[ i ];
-    }
+  memcpy (&local_data[6], lbm_peak_inlet_velocity, sizeof(double) * lbm->inlets);
   
-  MPI_Reduce (local_data, global_data, 6+lbm->inlets,
-	      MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce (&local_data[0], &global_data[0], 3, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce (&local_data[3], &global_data[3], 3+lbm->inlets, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   
-  lbm_density_min  = global_data[ 0 ];
-  lbm_density_max  = 1. / global_data[ 1 ];
-  lbm_velocity_min = global_data[ 2 ];
-  lbm_velocity_max = 1. / global_data[ 3 ];
-  lbm_stress_min   = global_data[ 4 ];
-  lbm_stress_max   = 1. / global_data[ 5 ];
+  lbm_density_min  = global_data[0];
+  lbm_velocity_min = global_data[1];
+  lbm_stress_min   = global_data[2];
+  lbm_density_max  = global_data[3];
+  lbm_velocity_max = global_data[4];
+  lbm_stress_max   = global_data[5];
   
-  for (i = 0; i < lbm->inlets; i++)
-    {
-      lbm_peak_inlet_velocity[ i ] = 1. / global_data[ 6+i ];
-    }
+  memcpy (lbm_peak_inlet_velocity, &global_data[6], sizeof(double) * lbm->inlets);
   
   for (i = 0; i < lbm->inlets; i++)
     {
       local_data[ i ] = lbm_average_inlet_velocity[ i ];
       local_data[ lbm->inlets+i ] = lbm_inlet_count[ i ];
     }
-  MPI_Reduce (local_data, global_data, 2*lbm->inlets,
-	      MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce (local_data, global_data, 2*lbm->inlets, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   
   for (i = 0; i < lbm->inlets; i++)
     {
@@ -1551,6 +1521,13 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   
   free(global_data);
   free(local_data);
+  
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      lbm_average_inlet_velocity[i] /= lbm_inlet_count[i];
+      lbm_average_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_average_inlet_velocity[i], lbm);
+      lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i], lbm);
+    }
   
   vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, lbm);
   vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, lbm);
@@ -1564,13 +1541,6 @@ void lbmCalculateFlowFieldValues (int cycle_id, int time_step, LBM *lbm)
   vis_period = lbm->period;
   
   vis_inlets = lbm->inlets;
-  
-  for (i = 0; i < lbm->inlets; i++)
-    {
-      lbm_average_inlet_velocity[i] /= lbm_inlet_count[i];
-      lbm_average_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_average_inlet_velocity[i], lbm);
-      lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i], lbm);
-    }
 }
 
 
@@ -1609,7 +1579,7 @@ void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net)
   
   int offset;
   int inlet_id;
-  int i, m;
+  int i;
   int c1, c2;
   
   
@@ -1701,17 +1671,44 @@ void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net)
 }
 
 
-void lbmRestart (char *parameters_file_name, LBM *lbm, Net *net)
+void lbmRestart (LBM *lbm, Net *net)
 {
+  int i;
+  
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      inlet_density_avg[i] = lbmConvertPressureToLatticeUnits (inlet_density_avg[i], lbm);
+      inlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[i], lbm);
+    }
+  for (i = 0; i < lbm->outlets; i++)
+    {
+      outlet_density_avg[i] = lbmConvertPressureToLatticeUnits (outlet_density_avg[i], lbm);
+      outlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[i], lbm);
+    }
   lbm->period *= 2;
   
-  lbmReadParameters (parameters_file_name, lbm, net);
+  for (i = 0; i < lbm->inlets; i++)
+    {
+      inlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (inlet_density_avg[i], lbm);
+      inlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (inlet_density_amp[i], lbm);
+    }
+  for (i = 0; i < lbm->outlets; i++)
+    {
+      outlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (outlet_density_avg[i], lbm);
+      outlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (outlet_density_amp[i], lbm);
+    }
+  lbm->tau = lbmCalculateTau (lbm);
+  
+  lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
+  lbm->omega = -1.0 / lbm->tau;
+  
+  lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
   
   lbmSetInitialConditions (lbm, net);
 }
 
 
-void lbmEnd (LBM *lbm)
+void lbmEnd (void)
 {
   free(outlet_density_avg);
   free(outlet_density_amp);
@@ -1727,6 +1724,4 @@ void lbmEnd (LBM *lbm)
   free(lbm_inlet_normal);
   free(lbm_average_inlet_velocity);
   free(lbm_peak_inlet_velocity);
-  
-  free(lbm->fluid_sites_per_block);
 }

@@ -1,7 +1,5 @@
 #include "config.h"
 
-double PI = 3.14159265358979323846264338327950288;
-
 // the constants needed to define the configuration of the lattice
 // sites follow
 
@@ -98,16 +96,12 @@ double *outlet_density_avg = NULL, *outlet_density_amp = NULL, *outlet_density_p
 
 
 int col_pixels, col_pixels_max;
-int col_pixels_recv[ MACHINES_MAX-1 ];
-//int col_pixels_lock;
+int col_pixels_recv[2];
 
 int *col_pixel_id = NULL;
 
-// ColPixel *col_pixel_send = NULL;
-ColPixel col_pixel_send[ (MACHINES_MAX-1)*COLOURED_PIXELS_PER_PROC_MAX ];
-ColPixel *col_pixel_recv = NULL;
-ColPixel *col_pixel_lock = NULL;
-//ColPixel *col_pixel_lock;
+ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
+ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
 
 Glyph *glyph = NULL;
 

@@ -65,8 +65,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   net->proc_block = (ProcBlock *)malloc(sizeof(ProcBlock) * blocks);
   
-  lbm->fluid_sites_per_block = (short int *)malloc(sizeof(short int) * blocks);
-
   lbm->total_fluid_sites = 0;
   
   lbm->site_min_x = 1<<30;
@@ -93,8 +91,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
 	      
 	      data_block_p->site_data = NULL;
 	      proc_block_p->proc_id   = NULL;
-	      
-	      lbm->fluid_sites_per_block[ n ] = 0;
 	      
 	      xdr_int (&xdr_config, &flag);
 	      
@@ -128,7 +124,6 @@ void lbmReadConfig (LBM *lbm, Net *net)
 			  proc_block_p->proc_id[ m ] = -1;
 			  
 			  ++lbm->total_fluid_sites;
-			  ++lbm->fluid_sites_per_block[ n ];
 			  
 			  lbm->site_min_x = min(lbm->site_min_x, site_i);
 			  lbm->site_min_y = min(lbm->site_min_y, site_j);
@@ -155,7 +150,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   // and then communicate them to the other processors
   
   double par_to_send[10000];
-  double physical_data[3], lattice_data[3];
   
   int n;
   
@@ -186,19 +180,17 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       for (n = 0; n < lbm->inlets; n++)
 	{
 	  fscanf (parameters_file, "%le %le %le\n",
-		  &physical_data[0], &physical_data[1], &physical_data[2]);
+		  &inlet_density_avg[n], &inlet_density_amp[1], &inlet_density_phs[2]);
 	  
-	  lbmConvertBoundaryData (physical_data, lattice_data, lbm);
-	  
-	  inlet_density_avg[ n ] = lattice_data[ 0 ];
-	  inlet_density_amp[ n ] = lattice_data[ 1 ];
-	  inlet_density_phs[ n ] = lattice_data[ 2 ];
+	  inlet_density_avg[n] = lbmConvertPressureToLatticeUnits (inlet_density_avg[n], lbm);
+	  inlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[n], lbm);
+	  inlet_density_phs[n] *= DEG_TO_RAD;
 	  
 	  if (is_bench)
 	    {
-	      inlet_density_avg[ n ] = 1.0;
-	      inlet_density_amp[ n ] = 0.0;
-	      inlet_density_phs[ n ] = 0.0;
+	      inlet_density_avg[n] = 1.0;
+	      inlet_density_amp[n] = 0.0;
+	      inlet_density_phs[n] = 0.0;
 	    }
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
@@ -211,13 +203,11 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       for (n = 0; n < lbm->outlets; n++)
 	{
 	  fscanf (parameters_file, "%le %le %le\n",
-		  &physical_data[0], &physical_data[1], &physical_data[2]);
+		  &outlet_density_avg[n], &outlet_density_amp[1], &outlet_density_phs[2]);
 	  
-	  lbmConvertBoundaryData (physical_data, lattice_data, lbm);
-	  
-	  outlet_density_avg[ n ] = lattice_data[ 0 ];
-	  outlet_density_amp[ n ] = lattice_data[ 1 ];
-	  outlet_density_phs[ n ] = lattice_data[ 2 ];
+	  outlet_density_avg[n] = lbmConvertPressureToLatticeUnits (outlet_density_avg[n], lbm);
+	  outlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[n], lbm);
+	  outlet_density_phs[n] *= DEG_TO_RAD;
 	  
 	  if (is_bench)
 	    {
@@ -227,9 +217,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	    }
 	}
       lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm_peak_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm_inlet_normal = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
-      lbm_inlet_count = (long int *)malloc(sizeof(long int) * lbm->inlets);
+      lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm_inlet_normal           = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
+      lbm_inlet_count            = (long int *)malloc(sizeof(long int) * lbm->inlets);
       
       if (feof (parameters_file) == 0)
 	{
@@ -272,9 +262,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       outlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
       
       lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm_peak_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm_inlet_normal = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
-      lbm_inlet_count = (long int *)malloc(sizeof(long int) * lbm->inlets);
+      lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * lbm->inlets);
+      lbm_inlet_normal           = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
+      lbm_inlet_count            = (long int *)malloc(sizeof(long int) * lbm->inlets);
     }
   else
     {
@@ -327,14 +317,8 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	    }
 	}
     }
-  for (n = 0; n < lbm->inlets; n++)
-    {
-      inlet_density[ n ] = inlet_density_avg[ n ];
-    }
-  for (n = 0; n < lbm->outlets; n++)
-    {
-      outlet_density[ n ] = outlet_density_avg[ n ];
-    }
+  lbmUpdateBoundaryDensities (0, 0, lbm);
+  
   lbm->tau = lbmCalculateTau (lbm);
   
   lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
@@ -393,8 +377,8 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   // lattice to physical units
   pressure_par = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
   pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
-  velocity_par = 1. / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
-  stress_par = ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+  velocity_par = 1.0 / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
+  stress_par = ((lbm->tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
   stress_par = BLOOD_DENSITY / (stress_par * stress_par * lbm->voxel_size * lbm->voxel_size);
   
   if (net->id == 0)
@@ -683,8 +667,8 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   // lattice to physical units
   pressure_par = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
   pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
-  velocity_par = 1. / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
-  stress_par = ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+  velocity_par = 1.0 / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
+  stress_par = ((lbm->tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
   stress_par = BLOOD_DENSITY / (stress_par * stress_par * lbm->voxel_size * lbm->voxel_size);
   
   if (net->id == 0)
