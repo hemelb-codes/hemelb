@@ -62,8 +62,8 @@ public class DirectBiConnection implements SteeringConnection {
 				width = d.readInt();
 				height = d.readInt();
 				frame_size = d.readInt();
-				//System.err.println("Got frame dimensions (" + width + ", " + height + ")");
-				//System.err.println("Got frame size " + frame_size);
+				System.err.println("Got frame dimensions (" + width + ", " + height + ")");
+				System.err.println("Got frame size " + frame_size);
 				if (frame_size < 1) {
 					return null;
 				}
