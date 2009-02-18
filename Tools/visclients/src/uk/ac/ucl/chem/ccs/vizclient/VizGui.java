@@ -12,6 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseMotionListener;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
@@ -81,7 +82,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	private ParamWindow1 paramWindow1;
 	private ParamWindow2 paramWindow2;
 	private ParamWindow3 paramWindow3;
-
+	
+	Point startGlobal;
+	Point endGlobal;
 
 	public VizGui(int port, String hostname, int window, Container parent) {
 		super();
@@ -385,20 +388,15 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				toolTip = new JLabel();
 				toolTip.setVisible(false);
 				canvas1.add(toolTip);
-
+				
 				this.addKeyListener(new KeyListener () {
 				
+					public void keyPressed(KeyEvent e) { }
 
-					public void keyPressed(KeyEvent e) {
-
-					}
-
-					public void keyReleased(KeyEvent e)  {
-
-					}
-
+					public void keyReleased(KeyEvent e)  { }
 				
 					public void keyTyped(KeyEvent e) {
+						
 						System.err.println("Key pressed");
 
 						if (e.getKeyChar() == '1') {
@@ -421,8 +419,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 						//System.err.println("View " + view);
 					}
 
-
-
 				});
 
 				canvas1.addMouseWheelListener(new MouseWheelListener () {
@@ -437,12 +433,86 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					}
 
 				});
+				
+				canvas1.addMouseMotionListener(new MouseMotionListener () {
+					
+					public void mouseDragged(MouseEvent e) {
+						
+						Point start = e.getPoint();
+						Point end = startGlobal;
+						
+						if(start != null && end != null) {
+						
+							//System.out.println("start x pos " + start.x + " y pos " + start.y);
+							//System.out.println("end   x pos " + end.x + " y pos " + end.y);
+							
+							if (e.getButton() == 1) {
+
+								double dx = end.getX() - start.getX();
+								double dy = start.getY() - end.getY();
+
+								panel_width = canvas1.getWidth();
+								panel_height = canvas1.getHeight();
+								
+								dx = dx / panel_width;
+								dy = dy / panel_height;
+								
+								dx = dx / (Math.PI / 180.0);
+								dy = dy / (Math.PI / 180.0);
+							
+								sd.updateLongitudeLatitude(-dx, dy);
+								
+//								if (dx != 0) {
+//									//scale 
+//									dx = (90.d/panel_width)*dx;
+//									sd.updateLongitude((float)dx);
+//									System.err.println("dx = " + dx + " panel " + panel_width);
+//									
+//									
+//								} if (dy != 0) {
+//									dy = -1*(90.d/panel_height)*dy;
+//									sd.updateLatitude((float)dy);
+//									System.err.println("dy = " + dy);
+//								}
+								
+								send();
+								
+							} /* else if(start != null && e.getButton() == 3) {
+								Point end = e.getPoint();
+								double dx = start.getX() - end.getX();
+								double dy = start.getY() - end.getY();
+								panel_width = canvas1.getWidth();
+								panel_height = canvas1.getHeight();
+
+								sd.setCtr_x(100*(float)(dx/panel_width));
+								sd.setCtr_y(100*(float)(dy/panel_height));
+
+								//System.err.println("Ctr x = " + sd.getCtr_x() + " crt y = " + sd.getCtr_y());
+								send();
+							}	 */						
+	
+						}
+						
+					}
+					
+					public void mouseMoved(MouseEvent e) {
+						// leave blank
+					}
+					
+				});
+				
 				canvas1.addMouseListener(new MouseListener () {
 					Point start = null;
 
 					public void mouseReleased(MouseEvent e) {
+					
+						endGlobal = e.getPoint();
+						
+						//System.err.println("UNPRESSED");
+						
 						//System.err.println("Button " + e.getButton());
-						if (start != null && e.getButton() == 1) {
+						
+						/*if (start != null && e.getButton() == 1) {
 							Point end = e.getPoint();
 							double dx = start.getX() - end.getX();
 							double dy = start.getY() - end.getY();
@@ -474,7 +544,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 							//System.err.println("Ctr x = " + sd.getCtr_x() + " crt y = " + sd.getCtr_y());
 							send();
-						}
+						} */
 					}
 
 					public void mouseClicked(MouseEvent e) {
@@ -482,9 +552,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							Point point = e.getPoint();
 							int i = (int)point.getX();	
 							int j = (int)point.getY();
-
-							
-							
 							
 							int width = (int)canvas1.getWidth();
 							int height = (int)canvas1.getHeight();
@@ -493,17 +560,14 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							int offset_y = (height - pixels_y)/2;
 							
 							j = height - j;
-
 							
 							//i = Math.round(((float)i/(float)width) * pixels_x);
 							//j = Math.round(((float)j/(float)height) * pixels_y);
 							
 							i = i - offset_x;
 							j = j - offset_y; 
-							
-							
-							System.err.println("i = " + i + " j = " + j);
 						
+							System.err.println("i = " + i + " j = " + j);
 							
 							toolTip.setLocation(point);
 							toolTip.setVisible(true);					
@@ -513,10 +577,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 								sd.setVis_mouse_y(j);
 								send();
 							}
-
-
-
-							
 							
 							//System.err.println("i=" + i + " j=" + j + " x offset=" + offsetx + " y offset=" +offsety);
 
@@ -525,15 +585,19 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					}
 
 					public void mousePressed(MouseEvent e) {
-						start = e.getPoint();
+						
+						startGlobal = e.getPoint();
+						
+						//System.out.println("PRESSED");
 						//System.err.println("startx = " + start.getX() + " starty = " + start.getY());
 					}
-
+	
 					public void mouseExited(MouseEvent e) {
 					}
 
 					public void mouseEntered(MouseEvent e) {
 					}
+					
 				});
 			}	
 			{
