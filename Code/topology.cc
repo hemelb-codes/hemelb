@@ -1120,15 +1120,6 @@ void netEnd (Net *net)
   free(net->from_proc_id_to_neigh_proc_index);
   net->from_proc_id_to_neigh_proc_index = NULL;
   
-  for (i = 0; i < blocks; i++)
-    {
-      if (net->map_block[ i ].site_data != NULL)
-	{
-	  free(net->map_block[ i ].site_data);
-	  net->map_block[ i ].site_data = NULL;
-	}
-    }
-  
   free(f_recv_iv);
   
   if (check_conv)
@@ -1137,7 +1128,6 @@ void netEnd (Net *net)
       free(f_to_recv);
       free(f_to_send);
     }
-  
   
   free(net->map_block);
   net->map_block = NULL;

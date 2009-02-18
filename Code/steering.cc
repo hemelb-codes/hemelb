@@ -221,7 +221,7 @@ void *hemeLB_network (void *ptr) {
 	xdr_int(&xdr_network_pixel, &screen.pixels_x);
 	xdr_int(&xdr_network_pixel, &screen.pixels_y);
 	  send_all(new_fd, xdr_pixel, &pixeldatabytes);
-	//printf("packed and send %i %i bytes %i\n", screen.pixels_x, screen.pixels_y, pixeldatabytes);
+	printf("packed and send %i %i bytes %i\n", screen.pixels_x, screen.pixels_y, pixeldatabytes);
 	xdr_destroy(&xdr_network_pixel);
 	  
 	  xdrmem_create (&xdr_network_stream_pixel_data, xdrSendBuffer_pixel_data,

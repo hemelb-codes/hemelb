@@ -173,6 +173,7 @@ float ray_dir[3];
 float ray_inv[3];
 float ray_vel_col[3];
 float ray_stress_col[3];
+float ray_length;
 float ray_t_min;
 float ray_density;
 float ray_stress;
