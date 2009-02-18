@@ -234,17 +234,33 @@ public class SteeringData implements Serializable {
 	}
 	
 	public void updateLatitude(float newLatitude) {
+				
 		this.latitude = (latitude + newLatitude)%360;
 	}
 
+	public void updateLongitudeLatitude(double dx, double dy) {
+		
+		this.latitude += dy; 
+		
+		if( (int) Math.floor( Math.abs(this.latitude) + 90.0 ) % 2 == 0 ) {
+			this.longitude -= dx;
+		} else {
+			this.longitude += dx;
+		}
+		
+		//this.latitude = this.latitude%360;
+		//this.longitude = this.longitude%360;
+	}
+	
+	
 	public float getZoom_factor() {
 		return zoom_factor;
 	}
 
 	public void setZoom_factor(float zoom) {
 		//check bounds
-		if (zoom > 20.0f) {
-			this.zoom_factor = 20.0f;
+		if (zoom > 40.0f) {
+			this.zoom_factor = 40.0f;
 		} else if (zoom < 0.5f) {
 			this.zoom_factor = 0.5f;
 		} else {
