@@ -167,6 +167,8 @@ void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*
   ray_stress_col[1] += ray_segment * palette[1];
   ray_stress_col[2] += ray_segment * palette[2];
   
+  ray_length += ray_segment;
+  
   if (ray_density >= 0.0F) return;
   
   ray_t_min = ray_t;
@@ -2226,6 +2228,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      ray_stress_col[0] = 0.0F;
 	      ray_stress_col[1] = 0.0F;
 	      ray_stress_col[2] = 0.0F;
+	      ray_length = 0.0F;
 	      ray_t_min = 1.e+30F;
 	      ray_density = -1.F;
 	      
@@ -2234,12 +2237,13 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      
 	      if (ray_t_min >= 1.e+30F) continue;
 	      
-	      col_pixel.vel_r    = ray_vel_col[0] * (255.0F * vis_brightness);
-	      col_pixel.vel_g    = ray_vel_col[1] * (255.0F * vis_brightness);
-	      col_pixel.vel_b    = ray_vel_col[2] * (255.0F * vis_brightness);
-	      col_pixel.stress_r = ray_stress_col[0] * (255.0F * vis_brightness);
-	      col_pixel.stress_g = ray_stress_col[1] * (255.0F * vis_brightness);
-	      col_pixel.stress_b = ray_stress_col[2] * (255.0F * vis_brightness);
+	      col_pixel.vel_r    = ray_vel_col[0] * 255.0F;
+	      col_pixel.vel_g    = ray_vel_col[1] * 255.0F;
+	      col_pixel.vel_b    = ray_vel_col[2] * 255.0F;
+	      col_pixel.stress_r = ray_stress_col[0] * 255.0F;
+	      col_pixel.stress_g = ray_stress_col[1] * 255.0F;
+	      col_pixel.stress_b = ray_stress_col[2] * 255.0F;
+	      col_pixel.dt       = ray_length;
 	      col_pixel.t        = ray_t_min + t_near;
 	      col_pixel.density  = (ray_density - vis_density_threshold_min) * vis_density_threshold_minmax_inv;
 	      col_pixel.stress   = ray_stress * vis_stress_threshold_max_inv;
@@ -3371,6 +3375,8 @@ void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 	  col_pixel2->stress_g += col_pixel1->stress_g;
 	  col_pixel2->stress_b += col_pixel1->stress_b;
 	  
+	  col_pixel2->dt += col_pixel1->dt;
+	  
 	  if (col_pixel1->t < col_pixel2->t)
 	    {
 	      col_pixel2->t       = col_pixel1->t;
@@ -3389,6 +3395,7 @@ void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 	  col_pixel2->stress_b = col_pixel1->stress_b;
 	  
 	  col_pixel2->t       = col_pixel1->t;
+	  col_pixel2->dt      = col_pixel1->dt;
 	  col_pixel2->density = col_pixel1->density;
 	  col_pixel2->stress  = col_pixel1->stress;
 	  
@@ -3412,6 +3419,8 @@ void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 	  col_pixel2->stress_g += col_pixel1->stress_g;
 	  col_pixel2->stress_b += col_pixel1->stress_b;
 	  
+	  col_pixel2->dt += col_pixel1->dt;
+	  
 	  if (col_pixel1->t < col_pixel2->t)
 	    {
 	      col_pixel2->t       = col_pixel1->t;
@@ -3429,7 +3438,8 @@ void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 	  col_pixel2->stress_g = col_pixel1->stress_g;
 	  col_pixel2->stress_b = col_pixel1->stress_b;
 	  
-	  col_pixel2->t       = col_pixel1->t;
+	  col_pixel2->t      = col_pixel1->t;
+	  col_pixel2->dt       = col_pixel1->dt;
 	  col_pixel2->density = col_pixel1->density;
 	  col_pixel2->stress  = col_pixel1->stress;
 	  
@@ -3508,16 +3518,15 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
   if (col_pixel_p->i & RT)
     {
     // store velocity flow field
-      r1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_r));
-      g1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_g));
-      b1 = (unsigned char)max(0, min(255, (int)col_pixel_p->vel_b));
+      r1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_r / col_pixel_p->dt)));
+      g1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_g / col_pixel_p->dt)));
+      b1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_b / col_pixel_p->dt)));
       
       // store von Mises stress flow field
-      r2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_r));
-      g2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_g));
-      b2 = (unsigned char)max(0, min(255, (int)col_pixel_p->stress_b));
+      r2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_r / col_pixel_p->dt)));
+      g2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_g / col_pixel_p->dt)));
+      b2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_b / col_pixel_p->dt)));
     }
-  
   if (vis_mode == 0)
     {
       ColourPalette (col_pixel_p->density, density_col);
@@ -3884,12 +3893,12 @@ void visInit (Net *net, Vis *vis, SL *sl)
   block_size_inv = 1.F / (float)block_size;
   
 #ifndef NOMPI
-  int col_pixel_count = 14;
-  int col_pixel_blocklengths[14] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  int col_pixel_count = 15;
+  int col_pixel_blocklengths[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
   
-  MPI_Datatype col_pixel_types[14] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+  MPI_Datatype col_pixel_types[15] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
 				      MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-				      MPI_FLOAT,
+				      MPI_FLOAT, MPI_FLOAT,
 				      MPI_FLOAT,
 				      MPI_FLOAT,
 				      MPI_FLOAT,
@@ -3898,7 +3907,7 @@ void visInit (Net *net, Vis *vis, SL *sl)
 				      MPI_INT,
 				      MPI_UB};
   
-  MPI_Aint col_pixel_disps[14];
+  MPI_Aint col_pixel_disps[15];
 #endif
   
   col_pixels_max = COLOURED_PIXELS_MAX;
@@ -4145,10 +4154,11 @@ void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
 {
   double density = vis_density_threshold_min + col_pixel_p->density / vis_density_threshold_minmax_inv;
   double stress = col_pixel_p->stress / vis_stress_threshold_max_inv;
-
+  
   vis_mouse_pressure = lbmConvertPressureToPhysicalUnits (density * Cs2, lbm);
   vis_mouse_stress = lbmConvertStressToPhysicalUnits (stress, lbm);
 }
+
 
 void visEnd (SL *sl)
 {

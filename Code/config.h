@@ -243,7 +243,7 @@ struct ColPixel
 {
   float vel_r, vel_g, vel_b;
   float stress_r, stress_g, stress_b;
-  float t;
+  float t, dt;
   float density;
   float stress;
   
@@ -488,6 +488,7 @@ extern float ray_dir[3];
 extern float ray_inv[3];
 extern float ray_vel_col[3];
 extern float ray_stress_col[3];
+extern float ray_length;
 extern float ray_t_min;
 extern float ray_density;
 extern float ray_stress;

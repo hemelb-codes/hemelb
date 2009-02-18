@@ -31,7 +31,7 @@ int time_step;
 double intra_cycle_time;
 bool updated_mouse_coords;
 
-FILE* timings_ptr;
+FILE *timings_ptr;
 
 
 int SelectFile (const struct direct *entry)
@@ -72,17 +72,14 @@ int main (int argc, char *argv[])
   // main function needed to perform the entire simulation. Some
   // simulation paramenters and performance statistics are outputted on
   // standard output
-
-	sem_init(&nrl, 0, 1);
-	sem_init(&connected_sem, 0, 1);
-	sem_init(&steering_var_lock, 0, 1);
-
-	is_frame_ready = 0;
-	connected = 0;
-	sending_frame = 0;
-
-  int steering_session_id;
-
+  
+  sem_init(&nrl, 0, 1);
+  sem_init(&connected_sem, 0, 1);
+  sem_init(&steering_var_lock, 0, 1);
+  
+  is_frame_ready = 0;
+  connected = 0;
+  sending_frame = 0;
   updated_mouse_coords = 0;
   
   double simulation_time;
@@ -94,10 +91,9 @@ int main (int argc, char *argv[])
   double io_time, other_time;
   double start_time, end_time;
   
-  //int cycle_id;
-  //int total_time_steps, time_step, stability = STABLE;
   int total_time_steps, stability = STABLE;
   int depths;
+  int steering_session_id;
   
   int fluid_solver_time_steps;
   int fluid_solver_and_vis_time_steps;
@@ -134,7 +130,6 @@ int main (int argc, char *argv[])
       is_bench = 1;
       minutes = atof( argv[2] );
     }
-  //else if (argc == 7)
   else if (argc == 8)
     {
       is_bench = 0;
@@ -289,50 +284,44 @@ int main (int argc, char *argv[])
 	    {
 	      ++total_time_steps;
               intra_cycle_time = (PULSATILE_PERIOD * time_step) / lbm.period;
-
-              int render_for_network_stream = 0;
-	      int write_snapshot_image = 0;
-
-	//	doRendering = 0;
-
-	      if (time_step % images_period == 0) {
-                write_snapshot_image = 1;
-                doRendering = 1;
-		printf("Setting write_snapshot_image -> 1, time step %i\n", time_step);
-              }
-
+	      
+	      int render_for_network_stream = 0;
+	      int write_snapshot_image;
+	      
+	      write_snapshot_image = (time_step % images_period == 0) ? 1 : 0;
+	      
 	      if (net.id == 0)
 		{
-		//  int lock_return = pthread_mutex_trylock ( &LOCK );
-
-			sem_wait(&connected_sem);
-			bool local_connected = connected;
-			sem_post(&connected_sem);
-
-			int lock_return;
-
-			if(local_connected) {
-				lock_return = sem_trywait ( &nrl );
-		  		 //printf("attempting to aquire lock -> %i", lock_return); 
-				if(lock_return == 0) {
-					// We have the lock
-					render_for_network_stream = 1;
-					doRendering = 1;
-					//printf("MAIN setting doRender = 1\n");
-				} else {
-					// We don't have the lock
-					doRendering = 0;
-					render_for_network_stream = 0;
-					//printf("MAIN setting doRender = 0\n");
-				}
-			} else {
-				doRendering = 0;
-				render_for_network_stream = 0;
-			} // if(local_connected) 
-
-		//	if( render_for_network_stream ) doRendering = 1;
-
+		  //  int lock_return = pthread_mutex_trylock ( &LOCK );
+		  
+		  sem_wait (&connected_sem);
+		  bool local_connected = connected;
+		  sem_post (&connected_sem);
+		  
+		  if (local_connected)
+		    {
+		      int lock_return = sem_trywait ( &nrl );
+		      render_for_network_stream = (lock_return == 0) ? 1 : 0;
+		    }
+		  else
+		    {
+		      render_for_network_stream = 0;
+		    }
+		  if (render_for_network_stream || write_snapshot_image)
+		    {
+		      doRendering = 1;
+		    }
+		  else
+		    {
+		      doRendering = 0;
+		    }
 		}
+	      if (net.id == 0) sem_wait (&steering_var_lock);
+	      
+	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
+	      
+	      if (net.id == 0) sem_post (&steering_var_lock);
+	      
 	      lbmUpdateBoundaryDensities (cycle_id, time_step, &lbm);
 	      
 	      if (!check_conv)
@@ -373,17 +362,7 @@ int main (int argc, char *argv[])
 		}
 	      slStreakLines (time_step, lbm.period, &net, &sl);
 	      
-	      if (net.id == 0)
-		{
-		  sem_wait(&steering_var_lock);
-		}
-	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
-	      
-	      if (net.id == 0)
-		{
-		  sem_post(&steering_var_lock);
-		}
-	      if (doRendering)
+	      if (doRendering && !write_snapshot_image)
 		{
 		  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 		  
@@ -445,23 +424,20 @@ int main (int argc, char *argv[])
 
 	      if (net.id == 0)
 		{
-                  if( render_for_network_stream == 1 ) {
-		    // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
-		    sched_yield();
-		    //pthread_mutex_unlock (&LOCK);
-//			sem_post( &nrl);
-		    //pthread_cond_signal (&network_send_frame);
-		    // printf("...signal sent\n"); fflush(0x0);
-                  }
-        //          if( doRendering == 1 ) doRendering = 0;
-		} 
-
+                  if (render_for_network_stream == 1)
+		    {
+		      // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
+		      sched_yield();
+		      sem_post( &nrl );
+		      //pthread_mutex_unlock (&LOCK);
+		      //pthread_cond_signal (&network_send_frame);
+		    }
+		}
 	      if (stability == STABLE_AND_CONVERGED)
 		{
 		  is_finished = 1;
 		  break;
 		}
-
 	      if (lbm_terminate_simulation)
 		{
 		  is_finished = 1;
@@ -472,13 +448,14 @@ int main (int argc, char *argv[])
 		  if (time_step%100 == 0)
 		    printf ("time step: %i\n", time_step);
 		}
-	      if (lbm.period >= 1000000)
+	      if (lbm.period > 400000)
 		{
 		  is_unstable = 1;
 		  break;
 		}
+	      if (is_finished) break;
 	    }
-
+	  
 	  if (restart)
 	    {
 	      start_time = myClock ();
@@ -505,7 +482,6 @@ int main (int argc, char *argv[])
 	      other_time += (end_time - start_time);
 	      continue;
 	    }
-
 	  start_time = myClock ();
 	  
 	  lbmCalculateFlowFieldValues (&lbm);

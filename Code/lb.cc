@@ -12,7 +12,7 @@ void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density
 
 double lbmConvertPressureToLatticeUnits (double pressure, LBM *lbm)
 {
-  return 1.0 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
+  return Cs2 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
     (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) *
     (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) / BLOOD_DENSITY;
 }
@@ -30,13 +30,13 @@ double lbmConvertPressureGradToLatticeUnits (double pressure_grad, LBM *lbm)
 {
   return pressure_grad * mmHg_TO_PASCAL *
     (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) *
-    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) / (BLOOD_DENSITY * Cs2);
+    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) / BLOOD_DENSITY;
 }
 
 
 double lbmConvertPressureGradToPhysicalUnits (double pressure_grad, LBM *lbm)
 {
-  return pressure_grad * (BLOOD_DENSITY * Cs2) *
+  return pressure_grad * BLOOD_DENSITY *
     ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) *
     ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
 }
@@ -75,10 +75,7 @@ double lbmConvertStressToPhysicalUnits (double stress, LBM *lbm)
 
 double lbmCalculateTau (LBM *lbm)
 {
-  double physical_kinematic_viscosity = BLOOD_VISCOSITY / BLOOD_DENSITY;
-  
-  
-  return 0.5 + (PULSATILE_PERIOD * physical_kinematic_viscosity) /
+  return 0.5 + (PULSATILE_PERIOD * BLOOD_VISCOSITY / BLOOD_DENSITY) /
     (Cs2 * lbm->period * lbm->voxel_size * lbm->voxel_size);
 }
 
@@ -1179,14 +1176,14 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
   
   if (time_step == 1)
     {
-      lbm_density_min = +1.e+30;
-      lbm_density_max = +1.e-30;
+      lbm_density_min = +1.0e+30;
+      lbm_density_max = -1.0e+30;
       
-      lbm_velocity_min = +1.e+30;
-      lbm_velocity_max = +1.e-30;
+      lbm_velocity_min = +1.0e+30;
+      lbm_velocity_max = -1.0e+30;
       
-      lbm_stress_min = +1.e+30;
-      lbm_stress_max = +1.e-30;
+      lbm_stress_min = +1.0e+30;
+      lbm_stress_max = -1.0e+30;
     }
   
   omega = lbm->omega;
@@ -1286,7 +1283,7 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
   if (cycle_id == 1)
     {
       cycle_tag_start = 1;
-      conv_error = 1.e+30;
+      conv_error = 1.0e+30;
       
       vx[0] = 1.e+30;
       vy[0] = 1.e+30;
@@ -1296,18 +1293,18 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
     {
       cycle_tag_start = 0;
       
-      if (time_step == 1) conv_error = 0.;
+      if (time_step == 1) conv_error = 0.0;
     }
   if (time_step == 1)
     {
-      lbm_density_min = +1.e+30;
-      lbm_density_max = +1.e-30;
+      lbm_density_min = +1.0e+30;
+      lbm_density_max = -1.0e+30;
       
-      lbm_velocity_min = +1.e+30;
-      lbm_velocity_max = +1.e-30;
+      lbm_velocity_min = +1.0e+30;
+      lbm_velocity_max = -1.0e+30;
       
-      lbm_stress_min = +1.e+30;
-      lbm_stress_max = +1.e-30;
+      lbm_stress_min = +1.0e+30;
+      lbm_stress_max = -1.0e+30;
     }
   sum1 = 0.;
   sum2 = 0.;
@@ -1443,21 +1440,24 @@ int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *ne
 #endif
   
   is_unstable = (global_data[ 0 ] >= 1.);
-  sum1 = global_data[ 1 ];
-  sum2 = global_data[ 2 ];
   
-  conv_error += sum1 / sum2;
-  
-  if (time_step == lbm->period)
-    {
-      conv_error /= lbm->period;
+  if (cycle_id > 1)
+    {  
+      sum1 = global_data[ 1 ];
+      sum2 = global_data[ 2 ];
       
-      if (conv_error < TOL)
+      conv_error += sum1 / sum2;
+      
+      if (time_step == lbm->period)
 	{
-	  is_converged = 1;
+	  conv_error /= lbm->period;
+	  
+	  if (conv_error < TOL)
+	    {
+	      is_converged = 1;
+	    }
 	}
     }
-    
   if (is_unstable)
     {
       return UNSTABLE;
@@ -1487,8 +1487,8 @@ void lbmCalculateFlowFieldValues (LBM *lbm)
   local_data[0] = lbm_density_min;
   local_data[1] = lbm_velocity_min;
   local_data[2] = lbm_stress_min;
-  local_data[3] = lbm_velocity_max;
-  local_data[4] = lbm_density_max;
+  local_data[3] = lbm_density_max;
+  local_data[4] = lbm_velocity_max;
   local_data[5] = lbm_stress_max;
   
   memcpy (&local_data[6], lbm_peak_inlet_velocity, sizeof(double) * lbm->inlets);
@@ -1677,25 +1677,25 @@ void lbmRestart (LBM *lbm, Net *net)
   
   for (i = 0; i < lbm->inlets; i++)
     {
-      inlet_density_avg[i] = lbmConvertPressureToLatticeUnits (inlet_density_avg[i], lbm);
-      inlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[i], lbm);
+      inlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (inlet_density_avg[i] * Cs2, lbm);
+      inlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (inlet_density_amp[i] * Cs2, lbm);
     }
   for (i = 0; i < lbm->outlets; i++)
     {
-      outlet_density_avg[i] = lbmConvertPressureToLatticeUnits (outlet_density_avg[i], lbm);
-      outlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[i], lbm);
+      outlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (outlet_density_avg[i] * Cs2, lbm);
+      outlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (outlet_density_amp[i] * Cs2, lbm);
     }
   lbm->period *= 2;
   
   for (i = 0; i < lbm->inlets; i++)
     {
-      inlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (inlet_density_avg[i], lbm);
-      inlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (inlet_density_amp[i], lbm);
+      inlet_density_avg[i] = lbmConvertPressureToLatticeUnits (inlet_density_avg[i], lbm) / Cs2;
+      inlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[i], lbm) / Cs2;
     }
   for (i = 0; i < lbm->outlets; i++)
     {
-      outlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (outlet_density_avg[i], lbm);
-      outlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (outlet_density_amp[i], lbm);
+      outlet_density_avg[i] = lbmConvertPressureToLatticeUnits (outlet_density_avg[i], lbm) / Cs2;
+      outlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[i], lbm) / Cs2;
     }
   lbm->tau = lbmCalculateTau (lbm);
   
