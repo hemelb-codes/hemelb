@@ -4114,7 +4114,9 @@ void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float co
     {
       visCompositeImage (recv_buffer_id, net);
     }
-  for (int m = 0; m < col_pixels; m++)
+  col_pixels_recv[recv_buffer_id] = col_pixels;
+  
+  for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
     {
       col_pixel_id[ (PixelI (col_pixel_send[m].i)) * screen.pixels_y + (PixelJ (col_pixel_send[m].i)) ] = -1;
     }
@@ -4139,9 +4141,9 @@ void visWriteImage (int recv_buffer_id, char *image_file_name,
   
   xdr_int (&xdr_image_file, &screen.pixels_x);
   xdr_int (&xdr_image_file, &screen.pixels_y);
-  xdr_int (&xdr_image_file, &col_pixels);
+  xdr_int (&xdr_image_file, &col_pixels_recv[recv_buffer_id]);
   
-  for (int n = 0; n < col_pixels; n++)
+  for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
     {
       xdrWritePixel (&col_pixel_recv[recv_buffer_id][n], &xdr_image_file, ColourPalette);
     }
