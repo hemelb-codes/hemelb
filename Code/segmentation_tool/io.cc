@@ -1,5 +1,4 @@
 #include "io_dicom.h"
-
 #include "io.h"
 
 /*
@@ -100,17 +99,16 @@ void ioReadSlice (int slice_id, Vis *vis)
 
 void ioReadConfig (Vis *vis)
 {
-
   int i, l;
   
-  //ioGetFileNames (vis);
+  // ioGetFileNames (vis);
   
-  //vis->input_voxels[2] = vis->file_list.size() - 2;
-
+  // vis->input_voxels[2] = vis->file_list.size() - 2;
+  
   DICOM_read DICOM_input = DICOM_read(vis->input_path);
-
+  
   DICOM_input.DICOM_volume_size(vis->input_voxels[0], vis->input_voxels[1], vis->input_voxels[2]);
-
+  
   vis->output_voxels[0] = vis->input_voxels[0] * vis->res_factor;
   vis->output_voxels[1] = vis->input_voxels[1] * vis->res_factor;
   vis->output_voxels[2] = (int)(vis->input_voxels[2] * (vis->slice_size/vis->pixel_size) *
@@ -142,45 +140,49 @@ void ioReadConfig (Vis *vis)
   
   vis->tot_blocks = vis->blocks[0] * vis->blocks[1] * vis->blocks[2];
   
-  //vis->voxel = (unsigned short int *)malloc(sizeof(unsigned short int) *
-
-  vis->voxel = (signed short int *)malloc(sizeof(signed short int) *
-					    vis->input_voxels[0] *
-					    vis->input_voxels[1] *
-					    vis->input_voxels[2]);
+  vis->voxel = (short int *)malloc(sizeof(short int) *
+				   vis->input_voxels[0] *
+				   vis->input_voxels[1] *
+				   vis->input_voxels[2]);
   
   vis->block = (Block *)malloc(sizeof(Block) * vis->tot_blocks);
   
   vis->stack_sites_max = SITES_PER_BLOCK * 100000;
   
   vis->stack_site = (Site *)malloc(sizeof(Site) * vis->stack_sites_max);
-  
-  vis->grey_max = -1.0e9;
-  vis->grey_min = +1.0e9;
-  
-/*  for (i = 0; i < vis->input_voxels[2]; i++)
+  /*
+  for (i = 0; i < vis->input_voxels[2]; i++)
     {
       ioReadSlice (i, vis);
-    } */
-
+    }
+  */
   DICOM_input.DICOM_copy_data(vis->voxel, vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]);
-
-  for(l = 0; l<vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; l++) {
-    if( vis->voxel[l] > vis->grey_max ) vis->grey_max = vis->voxel[l];
-    if( vis->voxel[l] < vis->grey_min ) vis->grey_min = vis->voxel[l];
-  }
-
-  printf("grey min %0.2f\n", vis->grey_min);
-  printf("grey max %0.2f\n", vis->grey_max);
-
-  vis->grey_min = -2000.0;
-  vis->grey_max = 6000.0;
-
-
+  
+  int grey_min = +1000000000;
+  int grey_max = -1000000000;
+  
+  for (l = 0; l < vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; l++)
+    {
+      if (vis->voxel[l] < grey_min) grey_min = vis->voxel[l];
+      if (vis->voxel[l] > grey_max) grey_max = vis->voxel[l];
+    }
+  vis->grey_min = +1e9;
+  vis->grey_max = -1e9;
+  
+  for (l = 0; l < vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; l++)
+    {
+      if (vis->voxel[l] == grey_min || vis->voxel[l] == grey_max)
+	{
+	  continue;
+	}
+      if (vis->voxel[l] < vis->grey_min) vis->grey_min = vis->voxel[l];
+      if (vis->voxel[l] > vis->grey_max) vis->grey_max = vis->voxel[l];
+    }
+  
   vis->coord[A] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_A);
   vis->coord[B] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_B);
   vis->coord[C] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_C);
-
+  
 }
 
 
@@ -304,14 +306,11 @@ void ioReadCheckpoint (Vis *vis)
   
   vis->tot_blocks = vis->blocks[0] * vis->blocks[1] * vis->blocks[2];
   
-//  vis->voxel = (unsigned short int *)malloc(sizeof(unsigned short int) *
-//					    vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]);
-
-  vis->voxel = (signed short int *)malloc(sizeof(signed short int) *
-					    vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]);
+  vis->voxel = (short int *)malloc(sizeof(short int) *
+				   vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]);
   
-  vis->grey_max = -1.0e9;
-  vis->grey_min = +1.0e9;
+  int grey_min = +1000000000;
+  int grey_max = -1000000000;
   
   for (n = 0; n < vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; n++)
     {
@@ -319,10 +318,21 @@ void ioReadCheckpoint (Vis *vis)
       
       vis->voxel[n] = data;
       
-      vis->grey_min = fminf(vis->grey_min, data);
-      vis->grey_max = fmaxf(vis->grey_max, data);
+      if (vis->voxel[l] < grey_min) grey_min = vis->voxel[l];
+      if (vis->voxel[l] > grey_max) grey_max = vis->voxel[l];
     }
+  vis->grey_min = +1e9;
+  vis->grey_max = -1e9;
   
+  for (l = 0; l < vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; l++)
+    {
+      if (vis->voxel[l] == grey_min || vis->voxel[l] == grey_max)
+	{
+	  continue;
+	}
+      if (vis->voxel[l] < vis->grey_min) vis->grey_min = vis->voxel[l];
+      if (vis->voxel[l] > vis->grey_max) vis->grey_max = vis->voxel[l];
+    }
   vis->block = (Block *)malloc(sizeof(Block) * vis->tot_blocks);
   
   vis->stack_sites_max = SITES_PER_BLOCK * 100000;

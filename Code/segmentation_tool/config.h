@@ -132,7 +132,7 @@ struct Mouse
   char b_id;
   char v_id;
   
-  short int x[2];
+  short int x[2], dy;
   short int state;
 };
 
