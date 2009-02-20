@@ -115,13 +115,13 @@ void editChangeTrianglePars (int b_id, int t_id, float dp_avg, float dp_amp, flo
   Triangle *t_p = &vis->boundary[ b_id ].triangle[ t_id ];
   
   t_p->pressure_avg += dp_avg;
-  t_p->pressure_avg = fmaxf (0.0, t_p->pressure_avg);
+  t_p->pressure_avg = fmaxf(0.0, 0.1F * (int)(10.F * t_p->pressure_avg));
   
   t_p->pressure_amp += dp_amp;
-  t_p->pressure_amp = fminf (t_p->pressure_avg, t_p->pressure_amp);
+  t_p->pressure_amp = fminf(t_p->pressure_avg, fmaxf(0.0F, 0.1F * (int)(10.F * t_p->pressure_amp)));
   
   t_p->pressure_phs += dp_phs;
-  t_p->pressure_phs = fmaxf (0.0, t_p->pressure_phs);
+  t_p->pressure_phs = fmaxf(0.0, 0.1F * (int)(10.F * t_p->pressure_phs));
 }
 
 
@@ -390,54 +390,7 @@ void editMotionFunction (int x, int y, Vis *vis)
   
   if (vis->menu.option == CHANGE_THRESHOLD)
     {
-      float temp = vis->selected_grey;
-      
-      if (mouse_dy > 0)
-	{
-	  vis->selected_grey += mouse_dy * mouse_dy;
-	}
-      else
-	{
-	  vis->selected_grey -= mouse_dy * mouse_dy;
-	}
-      vis->selected_grey = fmaxf(vis->grey_min, fminf(vis->grey_max, vis->selected_grey));
-      
-      if (vis->coords[C] > 0)
-	{
-	  if (vis->selected_grey < temp)
-	    {
-	      if (segUpdateSegmentation (vis) == SUCCESS)
-		{
-		  visCalculateSceneCenter (vis);
-		  visProjection (vis);
-		}
-	      else
-		{
-		  vis->selected_grey = temp;
-		  segSegmentation (vis);
-		}
-	    }
-	  else if (segSegmentation (vis) == SUCCESS)
-	    {
-	      visCalculateSceneCenter (vis);
-	      visProjection (vis);
-	    }
-	  else
-	    {
-	      vis->selected_grey = temp;
-	      segSegmentation (vis);
-	    }
-	}
-      else if (segSegmentation (vis) == SUCCESS)
-	{
-	  visCalculateSceneCenter (vis);
-	  visProjection (vis);
-	}
-      else
-	{
-	  vis->selected_grey = temp;
-	  segSegmentation (vis);
-	}
+      vis->mouse.dy = mouse_dy;
     }
   else if (vis->mode == 0)
     {
@@ -478,7 +431,7 @@ void editMotionFunction (int x, int y, Vis *vis)
 	       vis->mouse.b_id >= 0 &&
 	       (vis->mouse.b_id == INLET_BOUNDARY || vis->mouse.b_id == OUTLET_BOUNDARY))
 	{
-	  float dy = 100.F * (float)mouse_dy / vis->viewport_pixels[1];
+	  float dy = 10.F * (float)mouse_dy / vis->viewport_pixels[1];
 	  
 	  if (vis->menu.option & CHANGE_MEAN_PRESSURE)
 	    {
@@ -486,8 +439,7 @@ void editMotionFunction (int x, int y, Vis *vis)
 	    }
 	  else if (vis->menu.option & CHANGE_PRESSURE_AMPLITUDE)
 	    {
-	      dy = fmaxf(0.F, dy);
-	      editChangeTrianglePars (vis->mouse.b_id, vis->mouse.t_id, 0.F, 0.1F * dy, 0.F, vis);
+	      editChangeTrianglePars (vis->mouse.b_id, vis->mouse.t_id, 0.F, dy, 0.F, vis);
 	    }
 	  else
 	    {

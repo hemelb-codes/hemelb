@@ -31,6 +31,7 @@ void visVisualiseTriangles (Vis *vis);
 void visVisualiseDiscs (Vis *vis);
 void visVisualiseActiveBoundaryVoxel (Vis *vis);
 void visVisualiseSelectedSlice (Vis *vis);
+void visUpdateSegmentation (Vis *vis);
 void visVisualiseFluidSitesWithPoints (Vis *vis);
 void visVisualiseFluidSitesWithCubes (Vis *vis);
 void visVisualiseSystem (Vis *vis);

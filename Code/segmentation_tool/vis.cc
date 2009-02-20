@@ -650,6 +650,59 @@ void visVisualiseSelectedSlice (Vis *vis)
 }
 
 
+void visUpdateSegmentation (Vis *vis)
+{
+  float temp = vis->selected_grey;
+  
+  if (vis->mouse.dy > 0)
+    {
+      vis->selected_grey += vis->mouse.dy * vis->mouse.dy;
+    }
+  else
+    {
+      vis->selected_grey -= vis->mouse.dy * vis->mouse.dy;
+    }
+  vis->selected_grey = fmaxf(vis->grey_min, fminf(vis->grey_max, vis->selected_grey));
+  
+  if (vis->coords[C] > 0)
+    {
+      if (vis->selected_grey < temp)
+	{
+	  if (segUpdateSegmentation (vis) == SUCCESS)
+	    {
+	      visCalculateSceneCenter (vis);
+	      visProjection (vis);
+	    }
+	  else
+	    {
+	      vis->selected_grey = temp;
+	      segSegmentation (vis);
+	    }
+	}
+      else if (segSegmentation (vis) == SUCCESS)
+	{
+	  visCalculateSceneCenter (vis);
+	  visProjection (vis);
+	}
+      else
+	{
+	  vis->selected_grey = temp;
+	  segSegmentation (vis);
+	}
+    }
+  else if (segSegmentation (vis) == SUCCESS)
+    {
+      visCalculateSceneCenter (vis);
+      visProjection (vis);
+    }
+  else
+    {
+      vis->selected_grey = temp;
+      segSegmentation (vis);
+    }
+}
+
+
 void visVisualiseFluidSitesWithPoints (Vis *vis)
 {
   double seconds = myClock ();
@@ -663,6 +716,10 @@ void visVisualiseFluidSitesWithPoints (Vis *vis)
   ScreenVoxel *screen_voxel_p;
   
   
+  if (vis->menu.option == CHANGE_THRESHOLD)
+    {
+      visUpdateSegmentation (vis);
+    }
   glShadeModel (GL_FLAT);
   
   glPointSize (2.0F);
