@@ -368,7 +368,7 @@ int main (int argc, char *argv[])
 		  
 		  if (vis_mouse_x >= 0 && vis_mouse_y >= 0 && updated_mouse_coords)
 		    {
-		      for (int i = 0; i < col_pixels; i++)
+		      for (int i = 0; i < col_pixels_recv[RECV_BUFFER_A]; i++)
 			{
 			  if ((col_pixel_recv[RECV_BUFFER_A][i].i & RT) &&
 			      (col_pixel_recv[RECV_BUFFER_A][i].i & PIXEL_ID_MASK) == PixelId (vis_mouse_x,vis_mouse_y))
@@ -421,7 +421,6 @@ int main (int argc, char *argv[])
 		  end_time = myClock ();
 		  io_time += end_time - start_time;
 		}
-
 	      if (net.id == 0)
 		{
                   if (render_for_network_stream == 1)
