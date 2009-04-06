@@ -135,12 +135,6 @@ int netFindTopology (Net *net, int *depths)
     }
   net_machines = max(1, net_machines);
   
-  if (net_machines > MACHINES_MAX)
-    {
-      printf (" too many checked machines\n");
-      printf (" the execution is terminated\n");
-      net->err = MPI_Abort (MPI_COMM_WORLD, 1);
-    }
   if (net_machines == 1)
     {
       for (i = 0; i < net->procs; i++)
@@ -255,7 +249,7 @@ void netInit (LBM *lbm, Net *net)
   // a fast graph growing partitioning technique which spans the data
   // set only once is implemented here; the data set is explored by
   // means of the arrays "site_location_a[]" and "site_location_b[]"
-  
+#ifndef NO_STEER
   if (is_bench || net->procs == 1)
     {
       fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
@@ -266,6 +260,10 @@ void netInit (LBM *lbm, Net *net)
       fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)(net->procs - 1));
       proc_count = 1;
     }
+#else
+  fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
+  proc_count = 0;
+#endif
   for (n = 0; n < net->procs; n++)
     {
       net->fluid_sites[ n ] = 0;

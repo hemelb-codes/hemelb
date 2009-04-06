@@ -1,3 +1,4 @@
+#ifndef NO_STEER
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -9,27 +10,35 @@
 #include <sys/stat.h>
 
 #include <sched.h>
-#include <sys/dir.h>
 #include <sys/param.h>
 
 #include <cstdio>
 #include <iostream>
 #include <semaphore.h>
 
-#include "config.h"
 #include "network.h"
+#include "visthread.h"
+#endif // NO_STEER
+
+#include <unistd.h>
+#include <sys/dir.h>
+#include <sys/stat.h>
+
+#include "config.h"
 #include "steering.h"
 #include "usage.h"
 #include "benchmark.h"
 #include "colourpalette.h"
-#include "visthread.h"
 #include "fileutils.h"
 
 
 int cycle_id;
 int time_step;
 double intra_cycle_time;
+
+#ifndef NO_STEER
 bool updated_mouse_coords;
+#endif
 
 FILE *timings_ptr;
 
@@ -53,14 +62,11 @@ int DeleteFiles (char *pathname)
   
   int file_count = scandir(pathname, &files, SelectFile, alphasort);
   
-  printf ("number of files %i\n", file_count);
-  
   char filename[1024];
   
   for (int i = 0; i < file_count; i++)
     {
       snprintf (filename, 1024, "%s/%s", pathname, files[i]->d_name);	
-      printf ("deleting file %s\n", filename);
       unlink (filename);
     }
   return 0;
@@ -73,6 +79,7 @@ int main (int argc, char *argv[])
   // simulation paramenters and performance statistics are outputted on
   // standard output
   
+#ifndef NO_STEER
   sem_init(&nrl, 0, 1);
   sem_init(&connected_sem, 0, 1);
   sem_init(&steering_var_lock, 0, 1);
@@ -81,29 +88,32 @@ int main (int argc, char *argv[])
   connected = 0;
   sending_frame = 0;
   updated_mouse_coords = 0;
+#endif
   
   double simulation_time;
   double minutes;
-  double fluid_solver_time;
-  double fluid_solver_and_vis_time;
-  double vis_without_compositing_time;
-  double steering_and_vis_time;
-  double io_time, other_time;
-  double start_time, end_time;
+  double FS_time;
+  double FS_plus_RT_time;
+  double FS_plus_RT_plus_SL_time;
   
   int total_time_steps, stability = STABLE;
   int depths;
   int steering_session_id;
+#ifdef NO_STEER
+  int doRendering;
+#endif
   
-  int fluid_solver_time_steps;
-  int fluid_solver_and_vis_time_steps;
-  int vis_without_compositing_time_steps;
+  int FS_time_steps;
+  int FS_plus_RT_time_steps;
+  int FS_plus_RT_plus_SL_time_steps;
   int snapshots_per_cycle, snapshots_period;
   int images_per_cycle, images_period;
   int is_unstable = 0;
   
+#ifndef NO_STEER
   pthread_t network_thread;
   pthread_attr_t pthread_attrib;
+#endif
   
   LBM lbm;
   
@@ -112,12 +122,16 @@ int main (int argc, char *argv[])
   SL sl;
   
 #ifndef NOMPI
-  //net.err = MPI_Init (&argc, &argv);
   int thread_level_provided;
+  
   net.err = MPI_Init_thread (&argc, &argv, MPI_THREAD_FUNNELED, &thread_level_provided);
-  printf("thread_level_provided %i\n", thread_level_provided);
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
   net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
+  
+  if (net.id == 0)
+    {
+      printf("thread_level_provided %i\n", thread_level_provided);
+    }
 #else
   net.procs = 1;
   net.id = 0;
@@ -125,10 +139,12 @@ int main (int argc, char *argv[])
   
   check_conv = 0;
   
-  if (argc == 3) // Check command line arguments
+  if (argc == 5) // Check command line arguments
     {
       is_bench = 1;
-      minutes = atof( argv[2] );
+      lbm.period     = atoi( argv[2] );
+      lbm.voxel_size = atof( argv[3] );
+      minutes        = atof( argv[4] );
     }
   else if (argc == 8)
     {
@@ -215,7 +231,8 @@ int main (int argc, char *argv[])
       fprintf (timings_ptr, "Opening vis parameters file:\n %s\n\n", vis_parameters_name);
     }
   
-  if(net.id == 0)
+#ifndef NO_STEER
+  if (!is_bench && net.id == 0)
     {
       xdrSendBuffer_pixel_data = (char *)malloc(pixel_data_bytes);
       xdrSendBuffer_frame_details = (char *)malloc(frame_details_bytes);
@@ -230,7 +247,10 @@ int main (int argc, char *argv[])
       
       pthread_create (&network_thread, &pthread_attrib, hemeLB_network, (void*)&steering_session_id);
     }
-
+#endif // NO_STEER
+  
+  // UpdateSteerableParameters (&doRendering, &vis, &lbm);
+  
   lbmReadParameters (input_parameters_name, &lbm, &net);
 
   lbmInit (input_config_name, &lbm, &net);
@@ -251,21 +271,19 @@ int main (int argc, char *argv[])
   
   visReadParameters (vis_parameters_name, &lbm, &net, &vis);
   
+  UpdateSteerableParameters (&doRendering, &vis, &lbm);
+  
   DeleteFiles (snapshot_directory);
   DeleteFiles (image_directory);
+  
+  total_time_steps = 0;
   
   if (!is_bench)
     {
       int is_finished = 0;
       
-      total_time_steps = 0;
-      
       simulation_time = myClock ();
-      fluid_solver_time = 0.;
-      steering_and_vis_time = myClock ();
-      io_time = 0.0;
-      other_time = 0.0;
-   
+      
       if (snapshots_per_cycle == 0)
 	snapshots_period = 1e9;
       else
@@ -280,15 +298,16 @@ int main (int argc, char *argv[])
 	{
 	  int restart = 0;
 	  
+	  lbmInitMinMaxValues ();
+	  
 	  for (time_step = 1; time_step <= lbm.period; time_step++)
 	    {
 	      ++total_time_steps;
               intra_cycle_time = (PULSATILE_PERIOD * time_step) / lbm.period;
 	      
+	      int write_snapshot_image = (time_step % images_period == 0) ? 1 : 0;
+#ifndef NO_STEER
 	      int render_for_network_stream = 0;
-	      int write_snapshot_image;
-	      
-	      write_snapshot_image = (time_step % images_period == 0) ? 1 : 0;
 	      
 	      if (net.id == 0)
 		{
@@ -307,48 +326,34 @@ int main (int argc, char *argv[])
 		    {
 		      render_for_network_stream = 0;
 		    }
-		  if (render_for_network_stream || write_snapshot_image)
-		    {
-		      doRendering = 1;
-		    }
-		  else
-		    {
-		      doRendering = 0;
-		    }
 		}
+	      doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
+		
 	      if (net.id == 0) sem_wait (&steering_var_lock);
 	      
 	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
 	      
 	      if (net.id == 0) sem_post (&steering_var_lock);
+#else // NO_STEER
+	      doRendering = write_snapshot_image;
 	      
+	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
+#endif // NO_STEER
 	      lbmUpdateBoundaryDensities (cycle_id, time_step, &lbm);
 	      
 	      if (!check_conv)
 		{
-		  start_time = myClock ();
-		  
-		  stability = lbmCycle (cycle_id, time_step, doRendering, &lbm, &net);
+		  stability = lbmCycle (doRendering, &lbm, &net);
 		  
 		  if ((restart = lbmIsUnstable (&net)) != 0)
 		    {
-		      end_time = myClock ();
-		      fluid_solver_time += end_time - start_time;
 		      break;
 		    }
 		  lbmUpdateInletVelocities (time_step, &lbm, &net);
-		  
-		  end_time = myClock ();
-		  fluid_solver_time += end_time - start_time;
 		}
 	      else
 		{
-		  start_time = myClock ();
-		  
-		  stability = lbmCycleConv (cycle_id, time_step, doRendering, &lbm, &net);
-		  
-		  end_time = myClock ();
-		  fluid_solver_time += end_time - start_time;
+		  stability = lbmCycle (cycle_id, time_step, doRendering, &lbm, &net);
 		  
 		  if (stability == UNSTABLE)
 		    {
@@ -356,12 +361,11 @@ int main (int argc, char *argv[])
 		      break;
 		    }
 		  lbmUpdateInletVelocities (time_step, &lbm, &net);
-		  
-		  end_time = myClock ();
-		  fluid_solver_time += end_time - start_time;
 		}
+#ifndef NO_STREAKLINES
 	      slStreakLines (time_step, lbm.period, &net, &sl);
-	      
+#endif
+#ifndef NO_STEER
 	      if (doRendering && !write_snapshot_image)
 		{
 		  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
@@ -385,14 +389,13 @@ int main (int argc, char *argv[])
 		     sem_post(&nrl); // let go of the lock
 		   }
 		}
+#endif // NO_STEER
 	      if (write_snapshot_image)
 		{
 		  visRender (RECV_BUFFER_B, ColourPalette, &net, &sl);
 		  
 		  if (net.id == 0)
 		    {
-		      start_time = myClock ();
-		      
 		      char image_filename[255];
 		      
 		      snprintf(image_filename, 255, "%08i.dat", time_step);
@@ -400,15 +403,10 @@ int main (int argc, char *argv[])
 		      strcat ( complete_image_name, image_filename );
 		      
 		      visWriteImage (RECV_BUFFER_B, complete_image_name, ColourPalette);
-		      
-		      end_time = myClock ();
-		      io_time += end_time - start_time;
 		    }
 		}
 	      if (time_step%snapshots_period == 0)
 		{
-		  start_time = myClock ();
-		  
 		  char snapshot_filename[255];
 		  char complete_snapshot_name[255];
 		  
@@ -417,10 +415,8 @@ int main (int argc, char *argv[])
 		  strcat ( complete_snapshot_name, snapshot_filename );
 		  
 		  lbmWriteConfigASCII (stability, complete_snapshot_name, &lbm, &net);
-		  
-		  end_time = myClock ();
-		  io_time += end_time - start_time;
 		}
+#ifndef NO_STEER
 	      if (net.id == 0)
 		{
                   if (render_for_network_stream == 1)
@@ -432,6 +428,7 @@ int main (int argc, char *argv[])
 		      //pthread_cond_signal (&network_send_frame);
 		    }
 		}
+#endif
 	      if (stability == STABLE_AND_CONVERGED)
 		{
 		  is_finished = 1;
@@ -442,30 +439,22 @@ int main (int argc, char *argv[])
 		  is_finished = 1;
 		  break;
 		}
-	      if (net.id == 0)
-		{
-		  if (time_step%100 == 0)
-		    printf ("time step: %i\n", time_step);
-		}
 	      if (lbm.period > 400000)
 		{
 		  is_unstable = 1;
 		  break;
 		}
-	      if (is_finished) break;
 	    }
 	  
 	  if (restart)
 	    {
-	      start_time = myClock ();
-	      
 	      DeleteFiles (snapshot_directory);
 	      DeleteFiles (image_directory);
 	      
 	      lbmRestart (&lbm, &net);
-	      
+#ifndef NO_STREAKLINES
 	      slRestart (&sl);
-	      
+#endif
 	      if (net.id == 0)
 		{
 		  printf ("restarting: period: %i\n", lbm.period);
@@ -476,13 +465,8 @@ int main (int argc, char *argv[])
 	      images_period = (images_per_cycle == 0) ? 1e9 : max(1, lbm.period/images_per_cycle);
 	      
 	      cycle_id = 0;
-	      
-	      end_time = myClock ();
-	      other_time += (end_time - start_time);
 	      continue;
 	    }
-	  start_time = myClock ();
-	  
 	  lbmCalculateFlowFieldValues (&lbm);
 	  
 	  if (net.id == 0)
@@ -499,23 +483,7 @@ int main (int argc, char *argv[])
 		}
 	      fflush(NULL);
 	    }
-	  end_time = myClock ();
-	  other_time += end_time - start_time;
 	}
-      
-      if (net.procs > 1)
-	{
-	  if (net.id == 1)
-	    {
-	      MPI_Send (&fluid_solver_time, 1, MPI_DOUBLE, 0, 10, MPI_COMM_WORLD);
-	    }
-	  else if (net.id == 0)
-	    {
-	      MPI_Recv (&fluid_solver_time, 1, MPI_DOUBLE, 1, 10, MPI_COMM_WORLD, net.status);
-	    }
-	}
-
-      steering_and_vis_time = myClock () - steering_and_vis_time - fluid_solver_time - io_time-other_time;
       simulation_time = myClock () - simulation_time;
       
       time_step = min(time_step, lbm.period);
@@ -530,14 +498,15 @@ int main (int argc, char *argv[])
       
       // benchmarking HemeLB's fluid solver only
       
-      fluid_solver_time = myClock ();
+      FS_time = myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
-	  stability = lbmCycle (1, 1, 0, &lbm, &net);
+	  ++total_time_steps;
+	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  stability = lbmCycle (0, &lbm, &net);
 	  
-	  // partial timings
-	  elapsed_time = myClock () - fluid_solver_time;
+	  elapsed_time = myClock () - FS_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
@@ -545,91 +514,104 @@ int main (int argc, char *argv[])
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenchSectionFinished (0.5, elapsed_time))
+	      IsBenchSectionFinished (1.0, elapsed_time))
 	    {
 	      break;
 	    }
 	}
 
-      fluid_solver_time_steps = (int)(time_step * minutes / (3 * 0.5) - time_step);
-      fluid_solver_time = myClock ();
+      FS_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
+      FS_time = myClock ();
       
-      for (time_step = 1; time_step <= fluid_solver_time_steps; time_step++)
+      for (time_step = 1; time_step <= FS_time_steps; time_step++)
 	{
-	  stability = lbmCycle (1, 1, 1, &lbm, &net);
+	  ++total_time_steps;
+	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  stability = lbmCycle (1, &lbm, &net);
 	}
-
-      fluid_solver_time = myClock () - fluid_solver_time;
+      FS_time = myClock () - FS_time;
       
       
       // benchmarking HemeLB's fluid solver and ray tracer
       
+      vis_mode = 0;
       vis_image_freq = 1;
-      vis_compositing = 1;
-      fluid_solver_and_vis_time = myClock ();
+      vis_streaklines = 0;
+      FS_plus_RT_time = myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
-	  stability = lbmCycle (1, 1, 1, &lbm, &net);
-	  
+	  ++total_time_steps;
+	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  stability = lbmCycle (1, &lbm, &net);
 	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	  
 	  // partial timings
-	  elapsed_time = myClock () - fluid_solver_and_vis_time;
+	  elapsed_time = myClock () - FS_plus_RT_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
-	      fprintf (stderr, " FS + VIS, time: %.3f, time step: %i, time steps/s: %.3f\n",
+	      fprintf (stderr, " FS + RT, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenchSectionFinished (0.5, elapsed_time))
+	      IsBenchSectionFinished (1.0, elapsed_time))
 	    {
 	      break;
 	    }
 	}
-      fluid_solver_and_vis_time_steps = (int)(time_step * minutes / (3 * 0.5) - time_step);
-      fluid_solver_and_vis_time = myClock ();
+      FS_plus_RT_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
+      FS_plus_RT_time = myClock ();
       
-      for (time_step = 1; time_step <= fluid_solver_and_vis_time_steps; time_step++)
+      for (time_step = 1; time_step <= FS_plus_RT_time_steps; time_step++)
 	{
-	  stability = lbmCycle (1, 1, 1, &lbm, &net);
-	  
+	  ++total_time_steps;
+	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  stability = lbmCycle (1, &lbm, &net);
 	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	}
-      fluid_solver_and_vis_time = myClock () - fluid_solver_and_vis_time;
+      FS_plus_RT_time = myClock () - FS_plus_RT_time;
       
-      // benchmarking HemeLB's ray tracer without compositing
+      // benchmarking HemeLB's fluid solver, ray tracer and streaklines
       
-      vis_compositing = 0;
-      vis_without_compositing_time = myClock ();
+      vis_mode = 2;
+      vis_streaklines = 1;
+      FS_plus_RT_plus_SL_time = myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
+	  ++total_time_steps;
+	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  stability = lbmCycle (1, &lbm, &net);
+          slStreakLines (time_step, lbm.period, &net, &sl);
 	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	  
 	  // partial timings
-	  elapsed_time = myClock () - vis_without_compositing_time;
+	  elapsed_time = myClock () - FS_plus_RT_plus_SL_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
-	      fprintf (stderr, " VIS - COMP, time: %.3f, time step: %i, time steps/s: %.3f\n",
+	      fprintf (stderr, " FS + RT + SL, time: %.3f, time step: %i, time steps/s: %.3f\n",
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenchSectionFinished (0.5, elapsed_time))
+	      IsBenchSectionFinished (1.0, elapsed_time))
 	    {
 	      break;
 	    }
 	}
-      vis_without_compositing_time_steps = (int)(time_step * minutes / (3 * 0.5) - time_step);
-      vis_without_compositing_time = myClock ();
+      FS_plus_RT_plus_SL_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
+      FS_plus_RT_plus_SL_time = myClock ();
       
-      for (time_step = 1; time_step <= vis_without_compositing_time_steps; time_step++)
+      for (time_step = 1; time_step <= FS_plus_RT_plus_SL_time_steps; time_step++)
 	{
+	  ++total_time_steps;
+	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  stability = lbmCycle (1, &lbm, &net);
+	  slStreakLines (time_step, lbm.period, &net, &sl);
 	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	}
-      vis_without_compositing_time = myClock () - vis_without_compositing_time;
+      FS_plus_RT_plus_SL_time = myClock () - FS_plus_RT_plus_SL_time;
     } // is_bench
   
   if (!is_bench)
@@ -654,15 +636,15 @@ int main (int argc, char *argv[])
 	  fprintf (timings_ptr, "topology depths checked: %i\n\n", depths);
 	  fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
 	  fprintf (timings_ptr, " FS, time steps per second: %.3f, MSUPS: %.3f, time: %.3f\n\n",
-		   fluid_solver_time_steps / fluid_solver_time,
-		   1.e-6 * lbm.total_fluid_sites / (fluid_solver_time / fluid_solver_time_steps),
-		   fluid_solver_time);
+		   FS_time_steps / FS_time,
+		   1.e-6 * lbm.total_fluid_sites / (FS_time / FS_time_steps),
+		   FS_time);
 	  
-	  fprintf (timings_ptr, " FS + VIS, time steps per second: %.3f, time: %.3f\n\n",
-		   fluid_solver_and_vis_time_steps / fluid_solver_and_vis_time, fluid_solver_and_vis_time);
+	  fprintf (timings_ptr, " FS + RT, time steps per second: %.3f, time: %.3f\n\n",
+		   FS_plus_RT_time_steps / FS_plus_RT_time, FS_plus_RT_time);
 	  
-	  fprintf (timings_ptr, " VR - COMP, time steps per second: %.3f, time: %.3f\n\n",
-		   vis_without_compositing_time_steps / vis_without_compositing_time, vis_without_compositing_time);
+	  fprintf (timings_ptr, " FS + RT + SL, time steps per second: %.3f, time: %.3f\n\n",
+		   FS_plus_RT_plus_SL_time_steps / FS_plus_RT_plus_SL_time, FS_plus_RT_plus_SL_time);
 	}
     }
   
@@ -678,17 +660,6 @@ int main (int argc, char *argv[])
     }
   else
     {
-      if (net.id == 0)
-	{
-	  fprintf (timings_ptr, "Opening output config file:\n %s\n\n", output_config_name);
-	  fflush (timings_ptr);
-	}
-      net.fo_time = myClock ();
-      
-      lbmWriteConfig (stability, output_config_name, &lbm, &net);
-      
-      net.fo_time = myClock () - net.fo_time;
-      
       if (net.id == 0)
 	{
 	  if (!is_bench)
@@ -719,15 +690,10 @@ int main (int argc, char *argv[])
 	  fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);
 	  fprintf (timings_ptr, "pre-processing buffer management time (s): %.3f\n", net.bm_time);
 	  fprintf (timings_ptr, "input configuration reading time (s):      %.3f\n", net.fr_time);
-	  fprintf (timings_ptr, "flow field outputting time (s):            %.3f\n", net.fo_time);
 	  
 	  total_time = myClock () - total_time;
 	  fprintf (timings_ptr, "total time (s):                            %.3f\n\n", total_time);
 	  
-	  if (net.procs > 1)
-	    {
-	      fprintf (timings_ptr, "(vis+steering time) / fluid solver time: %.3e\n", steering_and_vis_time);
-	    }
 	  fprintf (timings_ptr, "Sub-domains info:\n\n");
 	  
 	  for (int n = 0; n < net.procs; n++)
@@ -742,7 +708,8 @@ int main (int argc, char *argv[])
   netEnd (&net);
   lbmEnd ();
   
-  if (net.id == 0)
+#ifndef NO_STEER
+  if (!is_bench && net.id == 0)
     {
       // there are some problems if the following function is called
       
@@ -750,7 +717,7 @@ int main (int argc, char *argv[])
       free(xdrSendBuffer_frame_details);
       free(xdrSendBuffer_pixel_data);
     }
-  
+#endif
   
 #ifndef NOMPI
   net.err = MPI_Finalize ();

@@ -1,3 +1,5 @@
+#ifndef NO_STEER
+
 #include <semaphore.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -237,3 +239,5 @@ void* hemeLB_steer(void* ptr) {
 
   return 0;
 }
+
+#endif // NO_STEER

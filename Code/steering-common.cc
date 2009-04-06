@@ -3,6 +3,7 @@
 
 extern float steer_par[];
 
+
 void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
 {
   steer_par[ STEERABLE_PARAMETERS ] = *vis_perform_rendering;
@@ -24,9 +25,9 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
 
   longitude      = steer_par[ 3 ];
   latitude       = steer_par[ 4 ];
-
+  
   zoom           = steer_par[ 5 ];
-
+  
   vis_brightness = steer_par[ 6 ];
 
   // The minimum value here is by default 0.0 all the time

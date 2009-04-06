@@ -2247,7 +2247,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      col_pixel.t        = ray_t_min + t_near;
 	      col_pixel.density  = (ray_density - vis_density_threshold_min) * vis_density_threshold_minmax_inv;
 	      col_pixel.stress   = ray_stress * vis_stress_threshold_max_inv;
-	      col_pixel.i        = PixelId (i,j) | RT;
+	      col_pixel.i        = PixelId(i,j) | RT;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -2256,6 +2256,14 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	  par3[2] += par1[2];
 	}
     }
+}
+
+
+void rtUpdateClusterVoxel (int i, float density, float velocity, float stress)
+{
+  *cluster_voxel[ 3*i   ] = density;
+  *cluster_voxel[ 3*i+1 ] = velocity;
+  *cluster_voxel[ 3*i+2 ] = stress;
 }
 
 
@@ -2407,7 +2415,7 @@ void glyEnd (void)
   free(glyph);
 }
 
-
+#ifndef NO_STREAKLINES
 void slInitializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id, SL *sl)
 {
   if (site_i < 0 || site_i >= sites_x ||
@@ -3179,7 +3187,7 @@ void slRender (SL *sl)
 	  col_pixel.particle_vel      = sl->particle[n].vel;
 	  col_pixel.particle_z        = p2[2];
 	  col_pixel.particle_inlet_id = sl->particle[n].inlet_id;
-	  col_pixel.i                 = PixelId (i, j) | STREAKLINE;
+	  col_pixel.i                 = PixelId(i, j) | STREAKLINE;
 	  
 	  visWritePixel (&col_pixel);
 	}
@@ -3189,14 +3197,23 @@ void slRender (SL *sl)
 
 void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl)
 {
-  int particle_creation_period = max(1, (int)(time_steps_per_cycle / 10000.0F));
-  
-  
-  if (time_steps % (int)(time_steps_per_cycle / vis_streaklines_per_pulsatile_period) <=
-      (vis_streakline_length/100.F) * (time_steps_per_cycle / vis_streaklines_per_pulsatile_period) &&
-      time_steps % particle_creation_period == 0)
+  if (!is_bench)
     {
-      slCreateSeedParticles (sl);
+      int particle_creation_period = max(1, (int)(time_steps_per_cycle / 5000.0F));
+      
+      if (time_steps % (int)(time_steps_per_cycle / vis_streaklines_per_pulsatile_period) <=
+	  (vis_streakline_length/100.F) * (time_steps_per_cycle / vis_streaklines_per_pulsatile_period) &&
+	  time_steps % particle_creation_period == 0)
+	{
+	  slCreateSeedParticles (sl);
+	}
+    }
+  else
+    {
+      if (time_steps % 10 == 0)
+	{
+	  slCreateSeedParticles (sl);
+	}
     }
   ++sl->counter;
   
@@ -3245,7 +3262,7 @@ void slEnd (SL *sl)
   
   free(sl->particle);
 }
-
+#endif // NO_STREAKLINES
 
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,
@@ -3471,8 +3488,8 @@ void visWritePixel (ColPixel *col_pixel_p)
   int *col_pixel_id_p, i, j;
   
   
-  i = PixelI (col_pixel_p->i);
-  j = PixelJ (col_pixel_p->i);
+  i = PixelI(col_pixel_p->i);
+  j = PixelJ(col_pixel_p->i);
   
   if (*(col_pixel_id_p = &col_pixel_id[ i*screen.pixels_y+j ]) != -1)
     {
@@ -3507,8 +3524,8 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
   unsigned char r4, g4, b4;
   
   // store pixel id
-  pixel_i = PixelI (col_pixel_p->i);
-  pixel_j = PixelJ (col_pixel_p->i);
+  pixel_i = PixelI(col_pixel_p->i);
+  pixel_j = PixelJ(col_pixel_p->i);
   
   *pixel_index = (pixel_i << (2*bits_per_char)) + pixel_j;
   
@@ -3696,7 +3713,7 @@ void visRenderLine (float p1[], float p2[])
 	  if (!(x < 0 || x >= pixels_x ||
 		y < 0 || y >= pixels_y))
 	    {
-	      col_pixel.i = PixelId (x, y) | GLYPH;
+	      col_pixel.i = PixelId(x, y) | GLYPH;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -3723,7 +3740,7 @@ void visRenderLine (float p1[], float p2[])
 	  if (!(x < 0 || x >= pixels_x ||
 		y < 0 || y >= pixels_y))
 	    {
-	      col_pixel.i = PixelId (x, y) | GLYPH;
+	      col_pixel.i = PixelId(x, y) | GLYPH;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -3750,7 +3767,7 @@ void visRenderLine (float p1[], float p2[])
 	  if (!(x < 0 || x >= pixels_x ||
 		y < 0 || y >= pixels_y))
 	    {
-	      col_pixel.i = PixelId (x, y) | GLYPH;
+	      col_pixel.i = PixelId(x, y) | GLYPH;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -3919,7 +3936,6 @@ void visInit (Net *net, Vis *vis, SL *sl)
     {
       col_pixel_id[i] = -1;
     }
-  
 #ifndef NOMPI
   // create the derived datatype for the MPI communications
   
@@ -3945,9 +3961,10 @@ void visInit (Net *net, Vis *vis, SL *sl)
   if (!is_bench)
     {
       glyInit (net);
-      
-      slInit (net, sl);
     }
+#ifndef NO_STREAKLINES
+  slInit (net, sl);
+#endif
   vis_ctr_x -= vis->half_dim[0];
   vis_ctr_y -= vis->half_dim[1];
   vis_ctr_z -= vis->half_dim[2];
@@ -4055,8 +4072,8 @@ void visCompositeImage (int recv_buffer_id, Net *net)
 	      for (n = 0; n < col_pixels_temp; n++)
 		{
 		  col_pixel1 = &col_pixel_send[ n ];
-		  i = PixelI (col_pixel1->i);
-		  j = PixelJ (col_pixel1->i);
+		  i = PixelI(col_pixel1->i);
+		  j = PixelJ(col_pixel1->i);
 		  
 		  if (*(col_pixel_id_p = &col_pixel_id[ i * pixels_y + j ]) == -1)
 		    {
@@ -4091,7 +4108,7 @@ void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float co
 {
   if (screen.pixels_x * screen.pixels_y > vis_pixels_max)
     {
-      vis_pixels_max = screen.pixels_x * screen.pixels_y;
+      vis_pixels_max = max(2 * vis_pixels_max, screen.pixels_x * screen.pixels_y);
       
       col_pixel_id = (int *)realloc(col_pixel_id, sizeof(int) * vis_pixels_max);
     }
@@ -4099,26 +4116,23 @@ void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float co
   
   rtRayTracing (ColourPalette);
   
-  if (!is_bench)
+  if (!is_bench && vis_mode == 1)
     {
-      if (vis_mode == 1)
-	{
-	  glyGlyphs ();
-	}
-      else if (vis_mode == 2)
-	{
-	  slRender (sl);
-	}
+      glyGlyphs ();
     }
-  if (vis_compositing)
+#ifndef NO_STREAKLINES
+  if (vis_streaklines && vis_mode == 2)
     {
-      visCompositeImage (recv_buffer_id, net);
+      slRender (sl);
     }
+#endif
+  visCompositeImage (recv_buffer_id, net);
+  
   col_pixels_recv[recv_buffer_id] = col_pixels;
   
   for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
     {
-      col_pixel_id[ (PixelI (col_pixel_send[m].i)) * screen.pixels_y + (PixelJ (col_pixel_send[m].i)) ] = -1;
+      col_pixel_id[ (PixelI(col_pixel_send[m].i)) * screen.pixels_y + (PixelJ(col_pixel_send[m].i)) ] = -1;
     }
 }
 
@@ -4164,10 +4178,11 @@ void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
 
 void visEnd (SL *sl)
 {
+#ifndef NO_STREAKLINES
+  slEnd (sl);
+#endif
   if (!is_bench)
     {
-      slEnd (sl);
-
       glyEnd ();
     }
   rtEnd ();

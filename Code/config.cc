@@ -47,6 +47,7 @@ MPI_Datatype MPI_col_pixel_type;
 #endif
 
 
+#ifndef NO_STEER
 pthread_mutex_t network_buffer_copy_lock;
 pthread_mutex_t LOCK;
 pthread_cond_t network_send_frame;
@@ -58,10 +59,11 @@ bool is_frame_ready;
 bool connected;
 bool sending_frame;
 
-
 int send_array_length;
 
 int frame_size;
+#endif
+
 
 unsigned char *pixel_data = NULL;
 
@@ -143,7 +145,7 @@ int vis_time_step = 0, vis_cycle = 0;
 int vis_period = 0, vis_inlets = 0;
 int vis_image_freq = 0;
 int vis_pixels_max = 0;
-int vis_compositing = 1;
+int vis_streaklines = 1;
 
 
 float block_size_f;
