@@ -1,3 +1,5 @@
+#ifndef NO_STEER
+
 class simulationParameters {
 
 	public:
@@ -27,3 +29,4 @@ class simulationParameters {
 
 };
 
+#endif // NO_STEER

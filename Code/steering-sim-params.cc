@@ -1,3 +1,5 @@
+#ifndef NO_STEER
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -99,3 +101,4 @@ char* simulationParameters :: pack() {
 	return sim_params;
 }
 
+#endif // NO_STEER

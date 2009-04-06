@@ -4,7 +4,11 @@
 #define __config_h__
 
 #ifndef NOMPI
+#ifdef XT3
+#include <mpi.h>
+#else
 #include "mpi.h"
+#endif
 #endif
 
 #include <stdio.h>
@@ -12,22 +16,17 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <rpc/types.h>
+#include <rpc/xdr.h>
 
 #ifndef int64_t
 #define int64_t long int
 #endif
 
-#ifdef XT3
-#include "types.h"
-#include "xdr.h"
-#else
-#include <rpc/types.h>
-#include <rpc/xdr.h>
-#endif
-
-
+#ifndef NO_STEER
 #include <pthread.h>
 #include <semaphore.h>
+#endif
 
 
 #define PI           3.14159265358979323846264338327950288
@@ -43,7 +42,7 @@
 #define VELOCITY           1
 #define STRESS             2
 
-#define NEIGHBOUR_PROCS_MAX            32
+#define NEIGHBOUR_PROCS_MAX            64
 #define COMMS_LEVELS                   2
 #define COLLISION_TYPES                6
 
@@ -122,6 +121,7 @@ extern MPI_Datatype MPI_col_pixel_type;
 #endif
 
 
+#ifndef NO_STEER
 extern pthread_mutex_t network_buffer_copy_lock;
 extern pthread_mutex_t LOCK;
 extern pthread_cond_t network_send_frame;
@@ -134,8 +134,8 @@ extern bool is_frame_ready;
 extern bool connected;
 extern bool sending_frame;
 
-
 extern int send_array_length;
+#endif
 
 
 struct DataBlock
@@ -457,7 +457,7 @@ extern int vis_time_step, vis_cycle;
 extern int vis_period, vis_inlets;
 extern int vis_image_freq;
 extern int vis_pixels_max;
-extern int vis_compositing;
+extern int vis_streaklines;
 
 
 extern float block_size_f;
@@ -528,14 +528,16 @@ void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z,
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
 void lbmStress (double f[], double *stress);
+void lbmInitMinMaxValues (void);
+void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 int lbmCollisionType (unsigned int site_data);
 void lbmInit (char *system_file_name, LBM *lbm, Net *net);
 void lbmSetInitialConditions (LBM *lbm, Net *net);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
+int lbmCycle (int perform_rt, LBM *lbm, Net *net);
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
-int lbmCycleConv (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 void lbmCalculateFlowFieldValues (LBM *lbm);
 int lbmIsUnstable (Net *net);
 void lbmRestart (LBM *lbm, Net *net);
@@ -557,6 +559,7 @@ void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net);
 void rtInit (Net *net);
 void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*ColourPalette) (float value, float col[]));
 void rtRayTracing (void (*ColourPalette) (float value, float col[]));
+void rtUpdateClusterVoxel (int i, float density, float velocity, float stress);
 void rtEnd (void);
 
 

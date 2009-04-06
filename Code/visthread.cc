@@ -1,3 +1,5 @@
+#ifndef NO_STEER
+
 #include <pthread.h>
 
 #include "config.h"
@@ -21,10 +23,12 @@ u_int frame_details_bytes = 1 * sizeof(int);
 char* xdrSendBuffer_pixel_data;
 char* xdrSendBuffer_frame_details;
 
-void setRenderState(int val) {
+void setRenderState(int val)
+{
   pthread_mutex_lock(&var_lock);
-//  doRendering = val;
+  //  doRendering = val;
   ShouldIRenderNow = val;
   pthread_mutex_unlock(&var_lock);
 }
 
+#endif // NO_STEER

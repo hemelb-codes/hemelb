@@ -1,3 +1,5 @@
+#ifndef NO_STEER
+
 #include <pthread.h>
 #include <sys/types.h>
 
@@ -13,3 +15,4 @@ extern char* xdrSendBuffer_frame_details;
 void setRenderState(int val);
 void* hemeLB_network(void *ptr);
 
+#endif // NO_STEER

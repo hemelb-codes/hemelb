@@ -20,18 +20,15 @@ void lbmReadConfig (LBM *lbm, Net *net)
   ProcBlock *proc_block_p;
   
   
-  fprintf(stderr, "opening system configuration file %s [rank %i]\n", lbm->system_file_name, net->id);
-  
   system_config = fopen (lbm->system_file_name, "r");
   
-  //if( system_config == NULL ) {
-  //  fprintf(stderr, "unable to open file %s [rank %i], exiting\n", lbm->system_file_name, net->id);
-  //  fflush(0x0);
-  //  exit(0x0);
-  //} else {
-  //  fprintf(stderr, "done\n");
-  //}
-  
+  if (system_config == NULL) {
+    fprintf(stderr, "unable to open file %s [rank %i], exiting\n", lbm->system_file_name, net->id);
+    fflush(0x0);
+    exit(0x0);
+  } else {
+    fprintf(stderr, "done\n");
+  }
   fflush(NULL);
 
   xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
@@ -156,18 +153,15 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   
   if (net->id == 0)
     {
-      fprintf(stderr, "opening parameters file %s\n", parameters_file_name);
-
       FILE *parameters_file = fopen (parameters_file_name, "r");
 
-      if( parameters_file == NULL ) {
+      if (parameters_file == NULL) {
         fprintf(stderr, "unable to open file %s, exiting\n", parameters_file_name);
         fflush(NULL);
         exit(0x0);
       } else {
         fprintf(stderr, "done\n");
       }
-
       fflush(NULL);
       
       fscanf (parameters_file, "%i\n", &lbm->inlets);
@@ -186,12 +180,12 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  inlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[n], lbm) / Cs2;
 	  inlet_density_phs[n] *= DEG_TO_RAD;
 	  
-	  if (is_bench)
-	    {
-	      inlet_density_avg[n] = 1.0;
-	      inlet_density_amp[n] = 0.0;
-	      inlet_density_phs[n] = 0.0;
-	    }
+	  //if (is_bench)
+	  //  {
+	  //    inlet_density_avg[n] = 1.0;
+	  //    inlet_density_amp[n] = 0.0;
+	  //    inlet_density_phs[n] = 0.0;
+	  //  }
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
       
@@ -209,12 +203,12 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  outlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[n], lbm) / Cs2;
 	  outlet_density_phs[n] *= DEG_TO_RAD;
 	  
-	  if (is_bench)
-	    {
-	      outlet_density_avg[ n ] = 1.0;
-	      outlet_density_amp[ n ] = 0.0;
-	      outlet_density_phs[ n ] = 0.0;
-	    }
+	  //if (is_bench)
+	  //  {
+	  //    outlet_density_avg[ n ] = 1.0;
+	  //    outlet_density_amp[ n ] = 0.0;
+	  //    outlet_density_phs[ n ] = 0.0;
+	  //  }
 	}
       lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
       lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * lbm->inlets);
@@ -416,9 +410,6 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
       xdr_int    (&xdr_system_config, &shrinked_sites_z);
       xdr_int    (&xdr_system_config, &lbm->total_fluid_sites);
     }
-
-//  printf("voxel_size %0.4f\n", lbm->voxel_size);
-//  printf("sites x,y,z %i %i %i\n", sites_x, sites_y, sites_z);
   
   fluid_sites_max = 0;
   
@@ -446,7 +437,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   
   for (period = 0; period < communication_period; period++)
     {
-      local_site_data[ 3*period ] = -1;
+      local_site_data[ period*3 ] = -1;
     }
   iters = 0;
   period = 0;
@@ -517,15 +508,15 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 			  vz *= velocity_par;
 			  stress *= stress_par;
 			  
-			  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)pressure;
-			  local_flow_field[ MACROSCOPIC_PARS * period + 1 ] = (float)vx;
-			  local_flow_field[ MACROSCOPIC_PARS * period + 2 ] = (float)vy;
-			  local_flow_field[ MACROSCOPIC_PARS * period + 3 ] = (float)vz;
-			  local_flow_field[ MACROSCOPIC_PARS * period + 4 ] = (float)stress;
+			  local_flow_field[ MACROSCOPIC_PARS*period+0 ] = (float)pressure;
+			  local_flow_field[ MACROSCOPIC_PARS*period+1 ] = (float)vx;
+			  local_flow_field[ MACROSCOPIC_PARS*period+2 ] = (float)vy;
+			  local_flow_field[ MACROSCOPIC_PARS*period+3 ] = (float)vz;
+			  local_flow_field[ MACROSCOPIC_PARS*period+4 ] = (float)stress;
 			  
-			  local_site_data[ 3 * period + 0 ] = site_i;
-			  local_site_data[ 3 * period + 1 ] = site_j;
-			  local_site_data[ 3 * period + 2 ] = site_k;
+			  local_site_data[ period*3+0 ] = site_i;
+			  local_site_data[ period*3+1 ] = site_j;
+			  local_site_data[ period*3+2 ] = site_k;
 			  
 			  if (++period != communication_period) continue;
 			  
@@ -543,25 +534,25 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 			    {
 			      for (l = 0; l < net->procs * communication_period; l++)
 				{
-				  if (gathered_site_data[ 3*l+0 ] == -1) continue;
+				  if (gathered_site_data[ l*3+0 ] == -1) continue;
 				  
-				  gathered_site_data[ 3*l+0 ] -= lbm->site_min_x;
-				  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
-				  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
+				  gathered_site_data[ l*3+0 ] -= lbm->site_min_x;
+				  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
+				  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
 				  
-				  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+0 ]);
-				  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+1 ]);
-				  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+2 ]);
+				  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+0 ]);
+				  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+1 ]);
+				  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+2 ]);
 				  
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
-				      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+				      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
 				    }
 				}
 			    }
 			  for (l = 0; l < communication_period; l++)
 			    {
-			      local_site_data[ 3*l ] = -1;
+			      local_site_data[ l*3 ] = -1;
 			    }
 			}
 		    }
@@ -588,25 +579,25 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 	    {
 	      for (l = 0; l < net->procs * communication_period; l++)
 		{
-		  if (gathered_site_data[ 3*l+0 ] == -1) continue;
+		  if (gathered_site_data[ l*3+0 ] == -1) continue;
 		  
-		  gathered_site_data[ 3*l+0 ] -= lbm->site_min_x;
-		  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
-		  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
+		  gathered_site_data[ l*3+0 ] -= lbm->site_min_x;
+		  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
+		  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
 		  
-		  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+0 ]);
-		  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+1 ]);
-		  xdr_short (&xdr_system_config, &gathered_site_data[ 3*l+2 ]);
+		  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+0 ]);
+		  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+1 ]);
+		  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+2 ]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
-		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
 		    }
 		}
 	    }
 	  for (l = 0; l < communication_period; l++)
 	    {
-	      local_site_data[ 3*l ] = -1;
+	      local_site_data[ l*3 ] = -1;
 	    }
 	}
     }
@@ -725,7 +716,7 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   
   for (period = 0; period < communication_period; period++)
     {
-      local_site_data[ 3*period ] = -1;
+      local_site_data[ period*3 ] = -1;
     }
   iters = 0;
   period = 0;
@@ -796,15 +787,15 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 			  vz *= velocity_par;
 			  stress *= stress_par;
 			  
-			  local_flow_field[ MACROSCOPIC_PARS * period + 0 ] = (float)pressure;
-			  local_flow_field[ MACROSCOPIC_PARS * period + 1 ] = (float)vx;
-			  local_flow_field[ MACROSCOPIC_PARS * period + 2 ] = (float)vy;
-			  local_flow_field[ MACROSCOPIC_PARS * period + 3 ] = (float)vz;
-			  local_flow_field[ MACROSCOPIC_PARS * period + 4 ] = (float)stress;
+			  local_flow_field[ MACROSCOPIC_PARS*period+0 ] = (float)pressure;
+			  local_flow_field[ MACROSCOPIC_PARS*period+1 ] = (float)vx;
+			  local_flow_field[ MACROSCOPIC_PARS*period+2 ] = (float)vy;
+			  local_flow_field[ MACROSCOPIC_PARS*period+3 ] = (float)vz;
+			  local_flow_field[ MACROSCOPIC_PARS*period+4 ] = (float)stress;
 			  
-			  local_site_data[ 3 * period + 0 ] = site_i;
-			  local_site_data[ 3 * period + 1 ] = site_j;
-			  local_site_data[ 3 * period + 2 ] = site_k;
+			  local_site_data[ period*3+0 ] = site_i;
+			  local_site_data[ period*3+1 ] = site_j;
+			  local_site_data[ period*3+2 ] = site_k;
 			  
 			  if (++period != communication_period) continue;
 			  
@@ -822,25 +813,25 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 			    {
 			      for (l = 0; l < net->procs * communication_period; l++)
 				{
-				  if (gathered_site_data[ 3*l+0 ] == -1) continue;
+				  if (gathered_site_data[ l*3+0 ] == -1) continue;
 				  
-				  gathered_site_data[ 3*l+0 ] -= lbm->site_min_x;
-				  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
-				  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
+				  gathered_site_data[ l*3+0 ] -= lbm->site_min_x;
+				  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
+				  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
 				  
 				  fprintf(system_config, "%i %i %i",
-					  gathered_site_data[ 3*l+0 ], gathered_site_data[ 3*l+1 ], gathered_site_data[ 3*l+2 ]);
-
+					  gathered_site_data[ l*3+0 ], gathered_site_data[ l*3+1 ], gathered_site_data[ l*3+2 ]);
+				  
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
-			              fprintf(system_config, " %e", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+			              fprintf(system_config, " %e", gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
 				    }
 				  fprintf(system_config, "\n");
 				}
 			    }
 			  for (l = 0; l < communication_period; l++)
 			    {
-			      local_site_data[ 3*l ] = -1;
+			      local_site_data[ l*3 ] = -1;
 			    }
 			}
 		    }
@@ -867,25 +858,25 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 	    {
 	      for (l = 0; l < net->procs * communication_period; l++)
 		{
-		  if (gathered_site_data[ 3*l+0 ] == -1) continue;
+		  if (gathered_site_data[ l*3+0 ] == -1) continue;
 		  
-		  gathered_site_data[ 3*l+0 ] -= lbm->site_min_x;
-		  gathered_site_data[ 3*l+1 ] -= lbm->site_min_y;
-		  gathered_site_data[ 3*l+2 ] -= lbm->site_min_z;
+		  gathered_site_data[ l*3+0 ] -= lbm->site_min_x;
+		  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
+		  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
 		  
 		  fprintf(system_config, "%i %i %i ",
-			  gathered_site_data[ 3*l+0 ], gathered_site_data[ 3*l+1 ], gathered_site_data[ 3*l+2 ]);
+			  gathered_site_data[ l*3+0 ], gathered_site_data[ l*3+1 ], gathered_site_data[ l*3+2 ]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
-		      fprintf(system_config, "%e ", gathered_flow_field[ MACROSCOPIC_PARS * l + kk ]);
+		      fprintf(system_config, " %e", gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
 		    }
 		  fprintf(system_config, "\n");
 		}
 	    }
 	  for (l = 0; l < communication_period; l++)
 	    {
-	      local_site_data[ 3*l ] = -1;
+	      local_site_data[ l*3 ] = -1;
 	    }
 	}
     }
