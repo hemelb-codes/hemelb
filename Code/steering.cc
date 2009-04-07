@@ -50,8 +50,8 @@ extern bool updated_mouse_coords;
 char host_name[255];
 
 float steer_par[ STEERABLE_PARAMETERS + 1 ] = {0.0, 0.0, 0.0,    // scene center (dx,dy,dz)
-					       180.0, 90.0,          // longitude and latitude
-					       18.0, 0.03,        // zoom and brightness
+					       45.0, 45.0,       // longitude and latitude
+					       1.0, 0.1,         // zoom and brightness
 					       0.1, 0.1,         // velocity and stress ranges
 					       80.0, 120.0,      // Minimum pressure and maximum pressure for Colour mapping
 					       1.0,              // Glyph length
@@ -286,7 +286,7 @@ void *hemeLB_network (void *ptr)
 	
 	// printf("Time to send frame = %0.6f s\n", frameTimeSend);
 	
-        double timeDiff = (1.0/25.0) - frameTimeSend;
+        double timeDiff = (1.0/10.0) - frameTimeSend;
 	
         if (timeDiff > 0.0)
 	  {

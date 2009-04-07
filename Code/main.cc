@@ -327,17 +327,16 @@ int main (int argc, char *argv[])
 		      render_for_network_stream = 0;
 		    }
 		}
-	      doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
-		
-	      if (net.id == 0) sem_wait (&steering_var_lock);
-	      
-	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
-	      
-	      if (net.id == 0) sem_post (&steering_var_lock);
-#else // NO_STEER
-	      doRendering = write_snapshot_image;
-	      
-	      UpdateSteerableParameters (&doRendering, &vis, &lbm);
+	      if (total_time_steps%10 == 0)
+		{
+		  doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
+		  
+		  if (net.id == 0) sem_wait (&steering_var_lock);
+		  
+		  UpdateSteerableParameters (&doRendering, &vis, &lbm);
+		  
+		  if (net.id == 0) sem_post (&steering_var_lock);
+		}
 #endif // NO_STEER
 	      lbmUpdateBoundaryDensities (cycle_id, time_step, &lbm);
 	      
@@ -366,7 +365,7 @@ int main (int argc, char *argv[])
 	      slStreakLines (time_step, lbm.period, &net, &sl);
 #endif
 #ifndef NO_STEER
-	      if (doRendering && !write_snapshot_image)
+	      if (total_time_steps%10 == 0 && doRendering && !write_snapshot_image)
 		{
 		  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 		  
