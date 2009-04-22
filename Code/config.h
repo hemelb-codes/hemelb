@@ -11,6 +11,10 @@
 #endif
 #endif
 
+#ifndef int64_t
+#define int64_t long int
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,10 +22,6 @@
 #include <math.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
-
-#ifndef int64_t
-#define int64_t long int
-#endif
 
 #ifndef NO_STEER
 #include <pthread.h>
