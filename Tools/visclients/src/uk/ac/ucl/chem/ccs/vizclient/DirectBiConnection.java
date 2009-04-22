@@ -224,8 +224,6 @@ public class DirectBiConnection implements SteeringConnection {
 		disconnect();
 	}
 
-
-
 	public boolean send(SteeringData sd) {
 		// Write params in right order
 		try {
