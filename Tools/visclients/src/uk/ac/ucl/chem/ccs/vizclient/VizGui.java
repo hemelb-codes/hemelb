@@ -777,30 +777,47 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		} 	
 
 		public void run() {
+
+			long sleepTime = 1; // seconds
+			
 			while(nr.isConnected() && run) {
 				try {
 					
+					VizFrameData vfd = (VizFrameData) queue.poll();
+					
 					long instantDataInitial = totalDataRec;
 					long instantFramesInitial = totalFramesRec;
+					long instantStepInitial = vfd.getVis_time_step();
 					
-					long sleepTime = 5; // seconds
+					long startTime = System.nanoTime();
 					
 					Thread.sleep(sleepTime * 1000);
+					
+					vfd = (VizFrameData) queue.poll();
 
 					long instantDataFinal = totalDataRec;
-					long instantFramesFinal = totalFramesRec;					
+					long instantFramesFinal = totalFramesRec;
+					long instantStepFinal = vfd.getVis_time_step();
+					
+					double elapsedTime = ((System.nanoTime() - startTime) * 1.0e-9); // seconds
+
+					double stepRate = -1.0f;
+					
+					if(instantStepFinal >= instantStepInitial) {
+						stepRate = ((instantStepFinal-instantStepInitial) * 1.0f)/(sleepTime*1.0f);
+					}
 					
 					runTime++;
 					
 					//double rate = (totalDataRec * 1.0f)/(runTime*1024.0f);
 					//double frames = (totalFramesRec * 1.0f)/(runTime*1.0f);
 					
-					double rate = ((instantDataFinal-instantDataInitial) * 1.0f)/(sleepTime*1024.0f);
-					double frames = ((instantFramesFinal-instantFramesInitial) * 1.0f)/(sleepTime*1.0f);
+					double rate = ((instantDataFinal-instantDataInitial) * 1.0f)/(elapsedTime*1024.0f);
+					double frames = ((instantFramesFinal-instantFramesInitial) * 1.0f)/(elapsedTime*1.0f);
+					
+					System.out.println("Frame rate " + frames + " fps, Data rate " + rate + " KB/s " + " Step rate " + stepRate + " steps/s");					
 					
 					ifp.updateFPS(frames, rate);
-					
-					System.out.println("Frame rate " + frames + " fps, Data rate " + rate + " KB/s");
 
 					//System.err.println("Total data " + totalDataRec + " Total frames " + totalFramesRec + " Time " + runTime);
 				/*	if (toolTip.isVisible() && toolTipDisplayTime == 0) {

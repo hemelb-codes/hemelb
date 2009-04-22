@@ -141,7 +141,6 @@ public class DirectBiConnection implements SteeringConnection {
 				vizFrame.setInlet_avg_vel(inlet_avg_vel, n);
 			}*/
 			
-			
 			//mouse parameters
 			vizFrame.setVis_mouse_pressure(d.readDouble());
 			vizFrame.setVis_stess_pressure(d.readDouble());
