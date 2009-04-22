@@ -63,7 +63,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	int pixels_y = 512;
 
 	private long totalFramesRec = 0;
-	private long totalDataRec = 0;
+	private long totalDataRec = 0;	
 
 	private int viewWidth;
 	private int viewHeight;
@@ -150,7 +150,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				}
 			}
 		});
-
 
 	}
 
@@ -768,9 +767,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			run=true;
 			runTime = 0;
 			toolTipDisplayTime = 0;
-
 		}
-
 
 		public void stopThread () {
 			//private boolean shouldirun = true;
@@ -782,11 +779,28 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 		public void run() {
 			while(nr.isConnected() && run) {
 				try {
-					Thread.sleep(1000);	
+					
+					long instantDataInitial = totalDataRec;
+					long instantFramesInitial = totalFramesRec;
+					
+					long sleepTime = 5; // seconds
+					
+					Thread.sleep(sleepTime * 1000);
+
+					long instantDataFinal = totalDataRec;
+					long instantFramesFinal = totalFramesRec;					
+					
 					runTime++;
-					double rate = (totalDataRec*1.0f)/(runTime*1024.0f);
-					double frames = (totalFramesRec*1.0f)/(runTime*1.0f);
+					
+					//double rate = (totalDataRec * 1.0f)/(runTime*1024.0f);
+					//double frames = (totalFramesRec * 1.0f)/(runTime*1.0f);
+					
+					double rate = ((instantDataFinal-instantDataInitial) * 1.0f)/(sleepTime*1024.0f);
+					double frames = ((instantFramesFinal-instantFramesInitial) * 1.0f)/(sleepTime*1.0f);
+					
 					ifp.updateFPS(frames, rate);
+					
+					System.out.println("Frame rate " + frames + " fps, Data rate " + rate + " KB/s");
 
 					//System.err.println("Total data " + totalDataRec + " Total frames " + totalFramesRec + " Time " + runTime);
 				/*	if (toolTip.isVisible() && toolTipDisplayTime == 0) {
@@ -804,9 +818,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				}
 			}
 
-
 		}
-
 
 	}
 
