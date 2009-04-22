@@ -62,8 +62,8 @@ public class DirectBiConnection implements SteeringConnection {
 				width = d.readInt();
 				height = d.readInt();
 				frame_size = d.readInt();
-				System.err.println("Got frame dimensions (" + width + ", " + height + ")");
-				System.err.println("Got frame size " + frame_size);
+				//System.err.println("Got frame dimensions (" + width + ", " + height + ")");
+				//System.err.println("Got frame size " + frame_size);
 				if (frame_size < 1) {
 					return null;
 				}
@@ -85,8 +85,6 @@ public class DirectBiConnection implements SteeringConnection {
 					colour_data[0] = d.readInt();
 					colour_data[1] = d.readInt();
 					colour_data[2] = d.readInt();
-
-
 
 					//System.out.println("x= " + x_data + " y " + y_data);
 				} catch (IOException e1) {
@@ -117,13 +115,11 @@ public class DirectBiConnection implements SteeringConnection {
 			//Calendar cal2 = Calendar.getInstance();
 			//long end_time = cal2.getTimeInMillis();
 
-
 			//double total_time = (end_time - start_time)/1000.f;
 			//System.out.println("Total time "+ total_time);
 			//double data_rate = (frame_size/1024.f) / total_time;
 
 			//System.err.println("bytes = " + frame_size + ", time = " + total_time + ", rate = " + data_rate + "KB/s");
-
 
 			try {
 			vizFrame.setVis_pressure_min(d.readDouble());
