@@ -27,6 +27,15 @@ public class HttpGetPoll {
 		}
 	}
 	
+	public HttpGetPoll (String steeringServiceEPR) {
+		
+		try {
+			target = new URL (steeringServiceEPR);
+		} catch (Exception e) {
+			target = null;
+		}
+	}
+
 	public boolean pollService (int freq) {
 		return pollService (freq, 0);
 	}

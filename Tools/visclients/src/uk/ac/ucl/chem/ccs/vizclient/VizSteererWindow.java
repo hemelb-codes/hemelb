@@ -136,10 +136,19 @@ public class VizSteererWindow extends javax.swing.JFrame {
 		this.window = window;
 		this.hostname = hostname;
 		this.port = port;
-		this.setLocationRelativeTo(null);
+		this.parent = parent;
 		initGUI();
-		//this.parent = parent;
 		this.setVisible(true);
+		this.setLocationRelativeTo(parent);
+
+	}
+	
+	public VizSteererWindow(String hostname, int port, int window, Component parent, boolean connectAtOnce) {
+	
+		this(hostname, port, window, parent);
+		if (connectAtOnce) {
+			vg.startReceive();
+		}
 	}
 	
 	private void initGUI() {
@@ -272,6 +281,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 					{
 						quitMenuItem = new JMenuItem();
 						connectMenu.add(quitMenuItem);
+
 						if (parent == null) {
 							quitMenuItem.setText("Quit");
 						} else {
