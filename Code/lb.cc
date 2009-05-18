@@ -1073,6 +1073,7 @@ void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
   
   for (int i = 0; i < lbm->inlets; i++)
     {
+      /*
       double coef[]={434.661,-239.217,28.9842,0.810304,5.88148,-37.8293,-32.4343,33.1995,-25.3035};
       double inlet_pressure = coef[0];
       
@@ -1090,7 +1091,7 @@ void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
 	  inlet_pressure = (1.0 - t) * 90 + t * inlet_pressure;
 	}
       inlet_density[i] = lbmConvertPressureToLatticeUnits (inlet_pressure, lbm) / Cs2;
-      
+      */
       //inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double)time_step + inlet_density_phs[i]);
     }
   for (int i = 0; i < lbm->outlets; i++)
