@@ -32,6 +32,9 @@
 #include "fileutils.h"
 
 
+#define BCAST_FREQ   10
+
+
 int cycle_id;
 int time_step;
 double intra_cycle_time;
@@ -327,7 +330,7 @@ int main (int argc, char *argv[])
 		      render_for_network_stream = 0;
 		    }
 		}
-	      if (total_time_steps%10 == 0)
+	      if (total_time_steps%BCAST_FREQ == 0)
 		{
 		  doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
 		  
@@ -365,7 +368,7 @@ int main (int argc, char *argv[])
 	      slStreakLines (time_step, lbm.period, &net, &sl);
 #endif
 #ifndef NO_STEER
-	      if (total_time_steps%10 == 0 && doRendering && !write_snapshot_image)
+	      if (total_time_steps%BCAST_FREQ == 0 && doRendering && !write_snapshot_image)
 		{
 		  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 		  
@@ -571,6 +574,7 @@ int main (int argc, char *argv[])
 	}
       FS_plus_RT_time = myClock () - FS_plus_RT_time;
       
+#ifndef NO_STREAKLINES
       // benchmarking HemeLB's fluid solver, ray tracer and streaklines
       
       vis_mode = 2;
@@ -611,6 +615,7 @@ int main (int argc, char *argv[])
 	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
 	}
       FS_plus_RT_plus_SL_time = myClock () - FS_plus_RT_plus_SL_time;
+#endif // NO_STREAKLINES
     } // is_bench
   
   if (!is_bench)
@@ -641,9 +646,10 @@ int main (int argc, char *argv[])
 	  
 	  fprintf (timings_ptr, " FS + RT, time steps per second: %.3f, time: %.3f\n\n",
 		   FS_plus_RT_time_steps / FS_plus_RT_time, FS_plus_RT_time);
-	  
+#ifndef NO_STREAKLINES
 	  fprintf (timings_ptr, " FS + RT + SL, time steps per second: %.3f, time: %.3f\n\n",
 		   FS_plus_RT_plus_SL_time_steps / FS_plus_RT_plus_SL_time, FS_plus_RT_plus_SL_time);
+#endif
 	}
     }
   

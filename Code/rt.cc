@@ -3987,48 +3987,39 @@ void visUpdateImageSize (int pixels_x, int pixels_y)
 
 void visCompositeImage (int recv_buffer_id, Net *net)
 {
-  // here, intra-machine communications are handled through a binary
-  // tree pattern and parallel pairwise blocking communications. The
-  // master processor of the current machine gets the sub-images of
-  // all the processors of that machine. Inter-machine communications,
-  // needed if the number of machines is greater than one, take place
-  // in the routine visRenderB.
+  // here, the communications needed to composite the image are
+  // handled through a binary tree pattern and parallel pairwise
+  // blocking communications.
   
   int *col_pixel_id_p;
   int col_pixels_temp;
   int comm_inc, send_id, recv_id;
-  int machine_id, master_proc_id;
-  int pixels_y;
   int i, j;
   int m, n;
   
   ColPixel *col_pixel1, *col_pixel2;
   
   
-  pixels_y = screen.pixels_y;
-  
+#ifndef NEW_COMPOSITING
   memcpy (col_pixel_recv[recv_buffer_id], col_pixel_send, col_pixels * sizeof(ColPixel));
-  
-  // "master_proc_id" will be the identifier of the processor with
-  // lowest rank in its machine
-  
-  master_proc_id = 0;
-  
-  for (m = 0; m < net->machine_id[ net->id ]; m++)
+#else
+  if (net->id != 0)
     {
-      master_proc_id += net->procs_per_machine[ m ];
+      memcpy (col_pixel_recv[recv_buffer_id], col_pixel_send, col_pixels * sizeof(ColPixel));
     }
+#endif
   comm_inc = 1;
   m = 1;
   
-  machine_id = net->machine_id[ net->id ];
-  
-  while (m < net->procs_per_machine[ machine_id ])
+  while (m < net->procs)
     {
       m <<= 1;
-      
-      for (recv_id = master_proc_id;
-	   recv_id < master_proc_id + net->procs_per_machine[ machine_id ];)
+#ifndef NEW_COMPOSITING
+      int start_id = 0;
+#else
+      int start_id = 1;
+#endif
+      for (recv_id = start_id; recv_id < net->procs;)
 	{
 	  send_id = recv_id + comm_inc;
 	  
@@ -4037,8 +4028,7 @@ void visCompositeImage (int recv_buffer_id, Net *net)
 	      recv_id += comm_inc << 1;
 	      continue;
 	    }
-	  if (send_id >= master_proc_id + net->procs_per_machine[ machine_id ] ||
-	      recv_id == send_id)
+	  if (send_id >= net->procs || recv_id == send_id)
 	    {
 	      recv_id += comm_inc << 1;
 	      continue;
@@ -4046,25 +4036,25 @@ void visCompositeImage (int recv_buffer_id, Net *net)
 	  if (net->id == send_id)
 	    {
 #ifndef NOMPI
-	      net->err = MPI_Send (&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
+	      MPI_Send (&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 #endif
 	      if (col_pixels > 0)
 		{
 #ifndef NOMPI
-		  net->err = MPI_Send (&col_pixel_send, col_pixels, MPI_col_pixel_type,
-				       recv_id, 20, MPI_COMM_WORLD);
+		  MPI_Send (col_pixel_send, col_pixels, MPI_col_pixel_type,
+			    recv_id, 20, MPI_COMM_WORLD);
 #endif
 		}
 	    }
 	  else
 	    {
 #ifndef NOMPI
-	      net->err = MPI_Recv (&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD,
-				   net->status);
+	      MPI_Recv (&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD, net->status);
+	      
 	      if (col_pixels_temp > 0)
 		{
-		  net->err = MPI_Recv (&col_pixel_send, col_pixels_temp, MPI_col_pixel_type,
-				       send_id, 20, MPI_COMM_WORLD, net->status);
+		  MPI_Recv (col_pixel_send, col_pixels_temp, MPI_col_pixel_type,
+			    send_id, 20, MPI_COMM_WORLD, net->status);
 		}
 #else
 	      col_pixels_temp = 0;
@@ -4075,7 +4065,7 @@ void visCompositeImage (int recv_buffer_id, Net *net)
 		  i = PixelI(col_pixel1->i);
 		  j = PixelJ(col_pixel1->i);
 		  
-		  if (*(col_pixel_id_p = &col_pixel_id[ i * pixels_y + j ]) == -1)
+		  if (*(col_pixel_id_p = &col_pixel_id[ i * screen.pixels_y + j ]) == -1)
 		    {
 		      col_pixel2 = &col_pixel_recv[recv_buffer_id][ *col_pixel_id_p = col_pixels ];
 		      
@@ -4090,17 +4080,39 @@ void visCompositeImage (int recv_buffer_id, Net *net)
 		    }
 		}
 	    }
-	  if (m < net->procs_per_machine[ machine_id ])
+	  if (m < net->procs && net->id == recv_id)
 	    {
-	      if (net->id == recv_id)
-		{
-		  memcpy (col_pixel_send, col_pixel_recv[recv_buffer_id], col_pixels * sizeof(ColPixel));
-		}
+	      memcpy (col_pixel_send, col_pixel_recv[recv_buffer_id], col_pixels * sizeof(ColPixel));
 	    }
 	  recv_id += comm_inc << 1;
 	}
       comm_inc <<= 1;
     }
+#ifdef NEW_COMPOSITING
+  if (net->id == 1)
+    {
+#ifndef NOMPI
+      MPI_Send (&col_pixels, 1, MPI_INT, 0, 20, MPI_COMM_WORLD);
+#endif
+      if (col_pixels > 0)
+	{
+#ifndef NOMPI
+	  MPI_Send (col_pixel_recv[recv_buffer_id], col_pixels, MPI_col_pixel_type,
+		    0, 20, MPI_COMM_WORLD);
+#endif
+	}
+    }
+  else if (net->id == 0)
+    {
+      MPI_Recv (&col_pixels, 1, MPI_INT, 1, 20, MPI_COMM_WORLD, net->status);
+      
+      if (col_pixels > 0)
+	{
+	  MPI_Recv (col_pixel_recv[recv_buffer_id], col_pixels, MPI_col_pixel_type,
+		    1, 20, MPI_COMM_WORLD, net->status);
+	}
+    }
+#endif // NEW_COMPOSITING
 }
 
 
@@ -4129,7 +4141,12 @@ void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float co
   visCompositeImage (recv_buffer_id, net);
   
   col_pixels_recv[recv_buffer_id] = col_pixels;
-  
+#ifndef NEW_COMPOSITING
+  if (net->id == 0)
+    {
+      return;
+    }
+#endif
   for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
     {
       col_pixel_id[ (PixelI(col_pixel_send[m].i)) * screen.pixels_y + (PixelJ(col_pixel_send[m].i)) ] = -1;

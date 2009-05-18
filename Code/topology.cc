@@ -1126,7 +1126,14 @@ void netEnd (Net *net)
       free(f_to_recv);
       free(f_to_send);
     }
-  
+  for (i = 0; i < blocks; i++)
+    {
+      if (net->map_block[ i ].site_data != NULL)
+	{
+	  free(net->map_block[ i ].site_data);
+	  net->map_block[ i ].site_data = NULL;
+	}
+    }
   free(net->map_block);
   net->map_block = NULL;
   
