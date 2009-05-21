@@ -85,6 +85,10 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	
 	Point startGlobal;
 	Point endGlobal;
+	
+	// Default states
+	boolean mousePressed = false;
+	boolean mouseReleased = true;
 
 	public VizGui(int port, String hostname, int window, Container parent) {
 		super();
@@ -445,7 +449,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 							//System.out.println("start x pos " + start.x + " y pos " + start.y);
 							//System.out.println("end   x pos " + end.x + " y pos " + end.y);
 							
-							if (e.getButton() == 1) {
+							if (mousePressed) {
+								
+								//System.out.println("start x pos " + start.x + " y pos " + start.y);
 
 								double dx = end.getX() - start.getX();
 								double dy = start.getY() - end.getY();
@@ -504,6 +510,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					Point start = null;
 
 					public void mouseReleased(MouseEvent e) {
+						
+						mousePressed = false;
+						mouseReleased = true;
 					
 						endGlobal = e.getPoint();
 						
@@ -585,6 +594,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 					public void mousePressed(MouseEvent e) {
 						
+						mousePressed = true;
+						mouseReleased = false;
+						
 						startGlobal = e.getPoint();
 						
 						//System.out.println("PRESSED");
@@ -653,8 +665,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	}
 
 	private void send() {
+		if( nr == null) System.err.println("nr is NULL");
 		if (nr != null && nr.isConnected()) {
-			//System.err.println (" dX = "  +  dx + " dy = " +dy);
+			System.err.println ("Calling private void send() with (nr != null && nr.isConnected())");
 			nr.send(sd);
 			ifp.viewChanged();
 			paramWindow1.update(sd);
