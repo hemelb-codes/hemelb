@@ -322,25 +322,31 @@ int main (int argc, char *argv[])
 		  
 		  if (local_connected)
 		    {
-		      int lock_return = sem_trywait ( &nrl );
-		      render_for_network_stream = (lock_return == 0) ? 1 : 0;
+		      //int lock_return = sem_trywait ( &nrl );
+		      //render_for_network_stream = (lock_return == 0) ? 1 : 0;
+                      render_for_network_stream = (sending_frame == 0) ? 1 : 0;
 		    }
 		  else
 		    {
 		      render_for_network_stream = 0;
 		    }
 		}
+
 	      if (total_time_steps%BCAST_FREQ == 0)
 		{
-		  doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
-		  
+		  if (net.id == 0) doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
+
 		  if (net.id == 0) sem_wait (&steering_var_lock);
 		  
 		  UpdateSteerableParameters (&doRendering, &vis, &lbm);
 		  
 		  if (net.id == 0) sem_post (&steering_var_lock);
 		}
+
+                // if(net.id == 0) printf("time step %i render_netwokr_stream %i rendering %i\n", time_step, render_for_network_stream, doRendering);
+
 #endif // NO_STEER
+
 	      lbmUpdateBoundaryDensities (cycle_id, time_step, &lbm);
 	      
 	      if (!check_conv)
