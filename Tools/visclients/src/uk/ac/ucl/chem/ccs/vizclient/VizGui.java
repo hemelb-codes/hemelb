@@ -41,7 +41,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	//private GLCanvas canvas1;
 	private GLJPanel canvas1;
 
-	
 	private GLCapabilities cap;
 
 	private String hostname;
@@ -89,7 +88,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	// Default states
 	boolean mousePressed = false;
 	boolean mouseReleased = true;
+	
+	long currentTimeStep;
 
+	long steeringSignalCount = 0;
+	
 	public VizGui(int port, String hostname, int window, Container parent) {
 		super();
 		queue = new ConcurrentLinkedQueue();
@@ -120,7 +123,6 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			}
 		});
 
-		paramWindow2 = new ParamWindow2(this);
 		paramWindow2.updateButton.addActionListener(new ActionListener () {
 			public void actionPerformed(ActionEvent evt) {
 				try {
@@ -292,10 +294,12 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			}
 			// no new frame, use the current one.
 			vfd = currentFrame;
+			currentTimeStep = vfd.getVis_time_step();
 		}
 		else {
 			// got a new frame, set it to be the current one from now on.
 			currentFrame = vfd;
+			currentTimeStep = vfd.getVis_time_step();
 		}
 		
 		//Calendar cal = Calendar.getInstance();
@@ -400,7 +404,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				
 					public void keyTyped(KeyEvent e) {
 						
-						System.err.println("Key pressed");
+						//System.err.println("Key pressed");
 
 						if (e.getKeyChar() == '1') {
 							view = VIEW1;
@@ -455,6 +459,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 								double dx = end.getX() - start.getX();
 								double dy = start.getY() - end.getY();
+								
+								//System.out.println("dx " + dx + " dy " + dy);
 
 								panel_width = canvas1.getWidth();
 								panel_height = canvas1.getHeight();
@@ -479,6 +485,8 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 //									sd.updateLatitude((float)dy);
 //									System.err.println("dy = " + dy);
 //								}
+								
+								steeringSignalCount++;
 								
 								send();
 								
@@ -507,6 +515,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				});
 				
 				canvas1.addMouseListener(new MouseListener () {
+					
 					Point start = null;
 
 					public void mouseReleased(MouseEvent e) {
@@ -517,6 +526,9 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 						endGlobal = e.getPoint();
 						
 						//System.err.println("UNPRESSED");
+						
+						//System.err.println("Steering sig count " + steeringSignalCount);
+						steeringSignalCount = 0;
 						
 						//System.err.println("Button " + e.getButton());
 						
@@ -665,15 +677,14 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 	}
 
 	private void send() {
-		if( nr == null) System.err.println("nr is NULL");
+		//if( nr == null) System.err.println("nr is NULL");
 		if (nr != null && nr.isConnected()) {
-			System.err.println ("Calling private void send() with (nr != null && nr.isConnected())");
+			//System.err.println ("Calling private void send() with (nr != null && nr.isConnected())");
 			nr.send(sd);
 			ifp.viewChanged();
 			paramWindow1.update(sd);
 			paramWindow2.update(sd);
 			paramWindow3.update(sd);
-			
 			
 			//reset some values
 			if (sd.getVis_mouse_x() >= 0 || sd.getVis_mouse_y() >= 0) {
@@ -685,17 +696,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 				sd.setCtr_x(0.0f);
 				sd.setCtr_y(0.0f);
 				sd.setCtr_z(0.0f);
-
 			}
-			
-			
 		}
 
-
 		//ifp.updateSteeredParams();
-
 	}
-
 
 	public void saveParameters (String filename) {
 		try {
@@ -780,6 +785,11 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			run=true;
 			runTime = 0;
 			toolTipDisplayTime = 0;
+			
+			//int currentThreadPriority = this.getPriority();
+			//this.setPriority(currentThreadPriority+1);
+			
+			//System.out.println("Old thread priority " + currentThreadPriority + " new thread priority " + this.getPriority());
 		}
 
 		public void stopThread () {
@@ -794,23 +804,28 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 			long sleepTime = 1; // seconds
 			
 			while(nr.isConnected() && run) {
+				
 				try {
 					
-					VizFrameData vfd = (VizFrameData) queue.poll();
+					VizFrameData vfd = (VizFrameData) queue.peek();
+					
+					//if(vfd==null) System.err.println("vfd is null 1");
 					
 					long instantDataInitial = totalDataRec;
 					long instantFramesInitial = totalFramesRec;
-					long instantStepInitial = vfd.getVis_time_step();
+					long instantStepInitial = currentTimeStep; // vfd.getVis_time_step();
 					
 					long startTime = System.nanoTime();
 					
 					Thread.sleep(sleepTime * 1000);
 					
-					vfd = (VizFrameData) queue.poll();
+					vfd = (VizFrameData) queue.peek();
 
 					long instantDataFinal = totalDataRec;
 					long instantFramesFinal = totalFramesRec;
-					long instantStepFinal = vfd.getVis_time_step();
+					long instantStepFinal = currentTimeStep; //vfd.getVis_time_step();
+					
+					//if(vfd==null) System.err.println("vfd is null 2");
 					
 					double elapsedTime = ((System.nanoTime() - startTime) * 1.0e-9); // seconds
 
@@ -829,7 +844,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 					double frames = ((instantFramesFinal-instantFramesInitial) * 1.0f)/(elapsedTime*1.0f);
 					
 					System.out.println("Frame rate " + frames + " fps, Data rate " + rate + " KB/s " + " Step rate " + stepRate + " steps/s");					
-					
+					//System.err.flush();
 					ifp.updateFPS(frames, rate);
 
 					//System.err.println("Total data " + totalDataRec + " Total frames " + totalFramesRec + " Time " + runTime);

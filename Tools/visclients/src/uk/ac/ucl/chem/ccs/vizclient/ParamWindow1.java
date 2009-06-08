@@ -81,7 +81,7 @@ public class ParamWindow1 extends javax.swing.JDialog {
 			thisLayout.setHGap(5);
 			thisLayout.setVGap(5);
 			getContentPane().setLayout(thisLayout);
-			this.setTitle("Window 1");
+			this.setTitle("Scene parameters");
 			this.setResizable(false);
 			this.setUndecorated(false);
 			{
