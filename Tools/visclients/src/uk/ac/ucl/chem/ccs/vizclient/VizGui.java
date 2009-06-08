@@ -122,6 +122,7 @@ public class VizGui extends javax.swing.JPanel implements GLEventListener{
 
 			}
 		});
+		paramWindow2= new ParamWindow2(this);
 
 		paramWindow2.updateButton.addActionListener(new ActionListener () {
 			public void actionPerformed(ActionEvent evt) {
