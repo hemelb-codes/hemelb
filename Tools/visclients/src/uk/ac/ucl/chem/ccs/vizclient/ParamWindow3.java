@@ -78,7 +78,7 @@ public class ParamWindow3 extends javax.swing.JDialog {
 			thisLayout.setHGap(5);
 			thisLayout.setVGap(5);
 			getContentPane().setLayout(thisLayout);
-			this.setTitle("Window 3");
+			this.setTitle("Render parameters");
 			this.setResizable(false);
 			this.setUndecorated(false);
 			{
