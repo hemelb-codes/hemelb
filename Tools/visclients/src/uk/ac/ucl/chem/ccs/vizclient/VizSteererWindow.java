@@ -598,6 +598,7 @@ public class VizSteererWindow extends javax.swing.JFrame {
 
 			pack();
 			this.setSize(1000, 800);
+			
 			//setSize(400, 300);
 			//Application.getInstance().getContext().getResourceMap(getClass()).injectComponents(getContentPane());
 		} catch (Exception e) {

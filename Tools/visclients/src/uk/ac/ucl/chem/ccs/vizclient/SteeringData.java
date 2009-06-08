@@ -242,14 +242,18 @@ public class SteeringData implements Serializable {
 		
 		this.latitude += dy; 
 		
-		if( (int) Math.floor( Math.abs(this.latitude) + 90.0 ) % 2 == 0 ) {
-			this.longitude -= dx;
-		} else {
+	//	if( (int) Math.floor( Math.abs(this.latitude) + 90.0 ) % 2 == 0 ) {
+	//		this.longitude -= dx;
+	//	} else {
 			this.longitude += dx;
-		}
+		//}
+
+			this.latitude = this.latitude%360;
+			this.longitude = this.longitude%360;			
+			
+		//System.out.println("Latitude " + latitude + " Longitude " + longitude);
 		
-		//this.latitude = this.latitude%360;
-		//this.longitude = this.longitude%360;
+
 	}
 	
 	
@@ -261,8 +265,8 @@ public class SteeringData implements Serializable {
 		//check bounds
 		if (zoom > 40.0f) {
 			this.zoom_factor = 40.0f;
-		} else if (zoom < 0.5f) {
-			this.zoom_factor = 0.5f;
+		} else if (zoom < 0.1f) {
+			this.zoom_factor = 0.1f;
 		} else {
 			this.zoom_factor = zoom;
 		}	

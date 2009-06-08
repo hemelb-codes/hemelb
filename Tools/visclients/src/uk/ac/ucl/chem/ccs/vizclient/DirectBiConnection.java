@@ -122,32 +122,33 @@ public class DirectBiConnection implements SteeringConnection {
 			//System.err.println("bytes = " + frame_size + ", time = " + total_time + ", rate = " + data_rate + "KB/s");
 
 			try {
-			vizFrame.setVis_pressure_min(d.readDouble());
-			vizFrame.setVis_pressure_max(d.readDouble());
-			vizFrame.setVis_velocity_min(d.readDouble());
-			vizFrame.setVis_velocity_max(d.readDouble());
-			vizFrame.setVis_stress_min(d.readDouble());
-			vizFrame.setVis_stress_max(d.readDouble());
-			vizFrame.setVis_time_step(d.readInt());
-			vizFrame.setVis_time(d.readDouble());
-			vizFrame.setVis_cycle(d.readInt());
+				
+				vizFrame.setVis_pressure_min(d.readDouble());
+				vizFrame.setVis_pressure_max(d.readDouble());
+				vizFrame.setVis_velocity_min(d.readDouble());
+				vizFrame.setVis_velocity_max(d.readDouble());
+				vizFrame.setVis_stress_min(d.readDouble());
+				vizFrame.setVis_stress_max(d.readDouble());
+				vizFrame.setVis_time_step(d.readInt());
+				vizFrame.setVis_time(d.readDouble());
+				vizFrame.setVis_cycle(d.readInt());
 
-			//read inlet vels
-			int n_inlets = d.readInt();
+				//read inlet vels
+				int n_inlets = d.readInt();
 			
-			vizFrame.setN_inlets(n_inlets);
+				vizFrame.setN_inlets(n_inlets);
 /*			for (int n=0; n< n_inlets; n++) {
 				double inlet_avg_vel = d.readDouble();
 				vizFrame.setInlet_avg_vel(inlet_avg_vel, n);
 			}*/
 			
-			//mouse parameters
-			vizFrame.setVis_mouse_pressure(d.readDouble());
-			vizFrame.setVis_stess_pressure(d.readDouble());
+				//mouse parameters
+				vizFrame.setVis_mouse_pressure(d.readDouble());
+				vizFrame.setVis_stess_pressure(d.readDouble());
 
-			//System.err.println(vizFrame.getVis_pressure_min() + " : " + vizFrame.getVis_stess_pressure());
+				//System.err.println(vizFrame.getVis_pressure_min() + " : " + vizFrame.getVis_stess_pressure());
 
-			//System.err.println("Finished getting frame");
+				//System.err.println("Finished getting frame");
 			} catch (IOException e1) {
 				connected = false;
 				return null;

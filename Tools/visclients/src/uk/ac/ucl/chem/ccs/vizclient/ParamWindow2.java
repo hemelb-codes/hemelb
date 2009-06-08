@@ -66,7 +66,7 @@ public class ParamWindow2 extends javax.swing.JDialog {
 			thisLayout.setHGap(5);
 			thisLayout.setVGap(5);
 			getContentPane().setLayout(thisLayout);
-			this.setTitle("Window 2");
+			this.setTitle("Resolution");
 			this.setResizable(false);
 			this.setUndecorated(false);
 			{
