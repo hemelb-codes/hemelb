@@ -38,6 +38,7 @@ public class VizStandalone extends javax.swing.JFrame {
 		}
 		vs.setLocationRelativeTo(null);
 		vs.setVisible(true);
+		vs.showSideBars();
 		vs.addWindowListener( new WindowAdapter() {
 		    public void windowClosed(WindowEvent e){
 					System.exit(0);

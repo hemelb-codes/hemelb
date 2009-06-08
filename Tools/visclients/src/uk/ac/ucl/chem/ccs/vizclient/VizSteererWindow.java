@@ -151,6 +151,12 @@ public class VizSteererWindow extends javax.swing.JFrame {
 		}
 	}
 	
+	public void showSideBars() {
+		vg.showParamWindow1(true);
+		vg.showParamWindow2(true);
+		vg.showParamWindow3(true);
+	}
+	
 	private void initGUI() {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
