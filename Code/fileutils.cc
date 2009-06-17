@@ -16,7 +16,7 @@ void check_file(const char * filename) {
                 fprintf(stderr,"Cannot open file %s\nExiting.\n", filename);
                 exit(0);
         } else {
-                fprintf(stderr,"Located file %s\n", filename);
+               // fprintf(stderr,"Located file %s\n", filename);
         }
 }
 
