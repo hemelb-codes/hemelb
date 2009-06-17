@@ -49,7 +49,7 @@
 #define RECV_BUFFER_A   0
 #define RECV_BUFFER_B   1
 
-#define COLOURED_PIXELS_MAX    1024 * 1024
+#define COLOURED_PIXELS_MAX    2048 * 2048
 #define STEERABLE_PARAMETERS   20
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
