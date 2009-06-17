@@ -59,7 +59,7 @@ void simulationParameters :: collectGlobalVals() {
 	this->sim_n_inlets = vis_inlets;
 
 	//for(int i=0; i<sim_n_inlets; i++) this->sim_inlet_avg_vel[i] = lbm_inlet_flux[i];
-	for(int i=0; i<sim_n_inlets; i++) printf("avg vel %0.3f\n", this->sim_inlet_avg_vel[i]);
+	// for(int i=0; i<sim_n_inlets; i++) printf("avg vel %0.3f\n", this->sim_inlet_avg_vel[i]);
 
 	this->sim_mouse_pressure = vis_mouse_pressure;
 	this->sim_mouse_stress = vis_mouse_stress;
