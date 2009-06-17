@@ -27,7 +27,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
     fflush(0x0);
     exit(0x0);
   } else {
-    fprintf(stderr, "done\n");
+    //fprintf(stderr, "done\n");
   }
   fflush(NULL);
 
@@ -160,7 +160,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
         fflush(NULL);
         exit(0x0);
       } else {
-        fprintf(stderr, "done\n");
+        //fprintf(stderr, "done\n");
       }
       fflush(NULL);
       
