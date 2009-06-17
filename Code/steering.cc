@@ -286,7 +286,7 @@ void *hemeLB_network (void *ptr)
 	
 	// printf("Time to send frame = %0.6f s\n", frameTimeSend);
 	
-        double timeDiff = (1.0/10.0) - frameTimeSend;
+        double timeDiff = (1.0/25.0) - frameTimeSend;
 	
         if (timeDiff > 0.0)
 	  {
