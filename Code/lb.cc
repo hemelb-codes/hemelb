@@ -8,7 +8,7 @@
 void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
 void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
 
-void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *vx, double *vy, double *vz, double *velocity,
+void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity,
 				 void lbmCollision (double omega, int i,
 						    double *density, double *v_x, double *v_y, double *v_z,
 						    double f_neq[]));
@@ -860,79 +860,78 @@ void lbmUpdateMinMaxValues (double density, double velocity, double stress)
 }
 
 
-void lbmUpdateSiteDataBench (double omega, int i, double *vx,double *vy, double *vz, double *velocity,
+void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
 			     void lbmCollision (double omega, int i,
 						double *density, double *v_x, double *v_y, double *v_z,
 						double f_neq[]))
 {
   double f_neq[15];
-  double density;
   
-  lbmCollision (omega, i, &density, vx, vy, vz, f_neq);
+  lbmCollision (omega, i, density, vx, vy, vz, f_neq);
 }
 
 
-void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *vx,double *vy, double *vz, double *velocity,
+void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
 				    void lbmCollision (double omega, int i,
 						       double *density, double *v_x, double *v_y, double *v_z,
 						       double f_neq[]))
 {
   double f_neq[15];
-  double density, stress;
+  double stress;
   
   
-  lbmCollision (omega, i, &density, vx, vy, vz, f_neq);
+  lbmCollision (omega, i, density, vx, vy, vz, f_neq);
   
-  *vx *= (1.0 / density);
-  *vy *= (1.0 / density);
-  *vz *= (1.0 / density);
+  *vx *= (1.0 / *density);
+  *vy *= (1.0 / *density);
+  *vz *= (1.0 / *density);
   *velocity = sqrt(*vx * *vx + *vy * *vy + *vz * *vz);
   
   lbmStress (f_neq, &stress);
-  rtUpdateClusterVoxel (i, density, *velocity, stress);
+  rtUpdateClusterVoxel (i, *density, *velocity, stress);
 }
 
 
-void lbmUpdateSiteDataSim (double omega, int i, double *vx,double *vy, double *vz, double *velocity,
+void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
 			   void lbmCollision (double omega, int i,
 					      double *density, double *v_x, double *v_y, double *v_z,
 					      double f_neq[]))
 {
   double f_neq[15];
-  double density, stress;
+  double stress;
   
   
-  lbmCollision (omega, i, &density, vx, vy, vz, f_neq);
+  lbmCollision (omega, i, density, vx, vy, vz, f_neq);
   
-  *vx *= (1.0 / density);
-  *vy *= (1.0 / density);
-  *vz *= (1.0 / density);
+  *vx *= (1.0 / *density);
+  *vy *= (1.0 / *density);
+  *vz *= (1.0 / *density);
   *velocity = sqrt(*vx * *vx + *vy * *vy + *vz * *vz);
   
   lbmStress (f_neq, &stress);
-  lbmUpdateMinMaxValues (density, *velocity, stress);
+  lbmUpdateMinMaxValues (*density, *velocity, stress);
 }
 
 
-void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *vx,double *vy, double *vz, double *velocity,
+void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
 				  void lbmCollision (double omega, int i,
 						     double *density, double *v_x, double *v_y, double *v_z,
 						     double f_neq[]))
 {
   double f_neq[15];
-  double density, stress;
+  double stress;
   
   
-  lbmCollision (omega, i, &density, vx, vy, vz, f_neq);
+  lbmCollision (omega, i, density, vx, vy, vz, f_neq);
   
-  *vx *= (1.0 / density);
-  *vy *= (1.0 / density);
-  *vz *= (1.0 / density);
+  *vx *= (1.0 / *density);
+  *vy *= (1.0 / *density);
+  *vz *= (1.0 / *density);
   *velocity = sqrt(*vx * *vx + *vy * *vy + *vz * *vz);
   
   lbmStress (f_neq, &stress);
-  lbmUpdateMinMaxValues (density, *velocity, stress);
-  rtUpdateClusterVoxel (i, density, *velocity, stress);
+  lbmUpdateMinMaxValues (*density, *velocity, stress);
+  rtUpdateClusterVoxel (i, *density, *velocity, stress);
 }
 
 
@@ -1073,7 +1072,6 @@ void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
   
   for (int i = 0; i < lbm->inlets; i++)
     {
-      /*
       double coef[]={434.661,-239.217,28.9842,0.810304,5.88148,-37.8293,-32.4343,33.1995,-25.3035};
       double inlet_pressure = coef[0];
       
@@ -1083,16 +1081,16 @@ void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
 	inlet_pressure += coef[l] * sin((l-4) * w * (double)time_step);
       
       inlet_pressure = inlet_pressure / mmHg_TO_PASCAL + 90;
-      
+      /*
       if (cycle_id == 1)
 	{
 	  double t = time_step / lbm->period;
 	  
 	  inlet_pressure = (1.0 - t) * 90 + t * inlet_pressure;
 	}
-      inlet_density[i] = lbmConvertPressureToLatticeUnits (inlet_pressure, lbm) / Cs2;
       */
-      inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double)time_step + inlet_density_phs[i]);
+      inlet_density[i] = lbmConvertPressureToLatticeUnits (inlet_pressure, lbm) / Cs2;
+      //inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double)time_step + inlet_density_phs[i]);
     }
   for (int i = 0; i < lbm->outlets; i++)
     {
@@ -1209,7 +1207,7 @@ int lbmCycle (int perform_rt, LBM *lbm, Net *net)
   // the entire simulation time step takes place through this function
   
   double omega;
-  double vx, vy, vz, velocity;
+  double density, vx, vy, vz, velocity;
   
   int collision_type, offset;
   int i, m;
@@ -1236,7 +1234,7 @@ int lbmCycle (int perform_rt, LBM *lbm, Net *net)
     {
       for (i = offset; i < offset + net->my_inter_collisions[ collision_type ]; i++)
 	{
-	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &vx, &vy, &vz, &velocity,
+	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity,
 						      lbmInterCollision[ collision_type ]);
 	}
       offset += net->my_inter_collisions[ collision_type ];
@@ -1259,7 +1257,7 @@ int lbmCycle (int perform_rt, LBM *lbm, Net *net)
     {
       for (i = offset; i < offset + net->my_inner_collisions[ collision_type ]; i++)
 	{
-	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &vx, &vy, &vz, &velocity,
+	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity,
 						      lbmInnerCollision[ collision_type ]);
 	}
       offset += net->my_inner_collisions[ collision_type ];
@@ -1290,7 +1288,7 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
   // the entire simulation time step takes place through this function
   
   double omega;
-  double vx[2], vy[2], vz[2], velocity[2];
+  double density, vx[2], vy[2], vz[2], velocity[2];
   
   double sum1, sum2;
   double local_data[3];
@@ -1343,11 +1341,14 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 	  if (cycle_id != 1)
 	    {
 	      cycle_tag = 0;
-	      (*lbmUpdateSiteData[1][0]) (omega, i, &vx[0], &vy[0], &vz[0], &velocity[0],
+	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0],
 					  lbmInterCollision[ collision_type ]);
+	      vx[0] *= (1.0 / density);
+	      vy[0] *= (1.0 / density);
+	      vz[0] *= (1.0 / density);
 	    }
 	  cycle_tag = 1;
-	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &vx[1], &vy[1], &vz[1], &velocity[1],
+	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1],
 					       lbmInterCollision[ collision_type ]);
 	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
 		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
@@ -1388,11 +1389,14 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 	  if (cycle_id != 1)
 	    {
 	      cycle_tag = 0;
-	      (*lbmUpdateSiteData[1][0]) (omega, i, &vx[0], &vy[0], &vz[0], &velocity[0],
+	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0],
 					  lbmInnerCollision[ collision_type ]);
+	      vx[0] *= (1.0 / density);
+	      vy[0] *= (1.0 / density);
+	      vz[0] *= (1.0 / density);
 	    }
 	  cycle_tag = 1;
-	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &vx[1], &vy[1], &vz[1], &velocity[1],
+	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1],
 					       lbmInnerCollision[ collision_type ]);
 	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
 		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
@@ -1427,7 +1431,7 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
   for (m = 0; m < net->neigh_procs; m++)
     {
       neigh_proc_p = &net->neigh_proc[ m ];
-	  
+      
       for (i = 0; i < neigh_proc_p->fs; i++)
 	{
 	  f_new[ neigh_proc_p->f_recv_iv[i]    ] = neigh_proc_p->f_to_recv[ i*2   ];
