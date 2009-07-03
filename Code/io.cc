@@ -27,7 +27,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
     fflush(0x0);
     exit(0x0);
   } else {
-    //fprintf(stderr, "done\n");
+    fprintf(stderr, "done\n");
   }
   fflush(NULL);
 
@@ -160,7 +160,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
         fflush(NULL);
         exit(0x0);
       } else {
-        //fprintf(stderr, "done\n");
+        fprintf(stderr, "done\n");
       }
       fflush(NULL);
       
@@ -423,9 +423,9 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   // ("gathered_flow_field").  If "buffer_size" is larger the
   // frequency with which data communication to the root processor is
   // performed becomes lower and viceversa
-  buffer_size = max(1000000, fluid_sites_max * net->procs);
+  buffer_size = min(1000000, fluid_sites_max * net->procs);
   
-  communication_period = (int)((double)buffer_size / net->procs);
+  communication_period = (int)ceil((double)buffer_size / net->procs);
   
   communication_iters = max(1, (int)ceil((double)fluid_sites_max / communication_period));
   
@@ -601,7 +601,10 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 	    }
 	}
     }
-  
+  if (net->id == 0)
+    {
+      fclose (system_config);
+    }
   free(gathered_site_data);
   free(local_site_data);
   
@@ -702,9 +705,9 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   // ("gathered_flow_field").  If "buffer_size" is larger the
   // frequency with which data communication to the root processor is
   // performed becomes lower and viceversa
-  buffer_size = max(1000000, fluid_sites_max * net->procs);
+  buffer_size = min(1000000, fluid_sites_max * net->procs);
   
-  communication_period = (int)((double)buffer_size / net->procs);
+  communication_period = (int)ceil((double)buffer_size / net->procs);
   
   communication_iters = max(1, (int)ceil((double)fluid_sites_max / communication_period));
   
@@ -880,7 +883,10 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 	    }
 	}
     }
-  
+  if (net->id == 0)
+    {
+      fclose (system_config);
+    }
   free(gathered_site_data);
   free(local_site_data);
   
