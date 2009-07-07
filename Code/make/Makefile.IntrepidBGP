@@ -2,7 +2,7 @@ CC=/home/kazutomo/zepto-tools/bin/zmpixlcxx_r
 CC=/bgsys/drivers/ppcfloor/comm/bin/mpixlcxx_r
 MPIRUN=
 EXE=hemelb
-DEFS=-DMPICH_IGNORE_CXX_SEEK -DNO_STREAKLINE
+DEFS=-DMPICH_IGNORE_CXX_SEEK -DNO_STREAKLINES
 FLAGS=-O2 -qarch=450d -qtune=450 
 INCLUDES=
 LIBS=
