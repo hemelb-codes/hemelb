@@ -2,6 +2,6 @@ CC=mpicxx
 MPIRUN=
 EXE=hemelb
 DEFS=-DMPICH_IGNORE_CXX_SEEK
-FLAGS=-O2 -ipo -pthread
+FLAGS=-O3 -xT -ipo -pthread
 INCLUDES=
 LIBS=-static

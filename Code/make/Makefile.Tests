@@ -1,7 +1,7 @@
 MPICPUS=4
 STEERING_ID=1111
 
-TEST1INPUT=$(HOME)/hemelb/Input/square_duct_32x16x16     10 100 0.01 0 0 $(STEERING_ID)
+TEST1INPUT=$(HOME)/hemelb/Input/square_duct_32x16x16     500 100 0.01 0 0 $(STEERING_ID)
 TEST2INPUT=$(HOME)/hemelb/Input/angio1                   10 200000 0.0001171875 0 0 $(STEERING_ID)
 TEST3INPUT=$(HOME)/hemelb/Input/bifurcation_512x512x512  10 200000 0.0001 0 0 $(STEERING_ID)
 TEST4INPUT=$(HOME)/hemelb/Input/angio4                   1 2000 0.0009375 0 0  $(STEERING_ID)

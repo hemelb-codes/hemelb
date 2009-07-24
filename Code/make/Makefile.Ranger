@@ -2,6 +2,6 @@ CC=mpicxx
 MPIRUN=
 EXE=hemelb
 DEFS=
-FLAGS=-O3 -pthread -xT
+FLAGS=-O3 -xW -ipo -pthread
 INCLUDES=
 LIBS=
