@@ -201,9 +201,6 @@ int main (int argc, char *argv[])
   strcpy ( vis_parameters_name , input_file_path );
   strcat ( vis_parameters_name , "/rt_pars.asc" );
   check_file(vis_parameters_name);
-
-  strcpy ( output_config_name , input_file_path );
-  strcat ( output_config_name , "/out.dat" );
   
   // Create directory for the output images
   strcpy (image_directory, input_file_path);
@@ -258,6 +255,8 @@ int main (int argc, char *argv[])
 
   lbmInit (input_config_name, &lbm, &net);
   
+  lbmReadConfig (lbm, net);
+  
   if (netFindTopology (&net, &depths) == 0)
     {
       fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");
@@ -273,9 +272,9 @@ int main (int argc, char *argv[])
   visInit (&net, &vis, &sl);
   
   visReadParameters (vis_parameters_name, &lbm, &net, &vis);
-  
+#ifndef NO_STEER
   UpdateSteerableParameters (&doRendering, &vis, &lbm);
-  
+#endif
   DeleteFiles (snapshot_directory);
   DeleteFiles (image_directory);
   

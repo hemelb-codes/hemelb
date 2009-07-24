@@ -84,6 +84,10 @@ double lbmCalculateTau (LBM *lbm)
 }
 
 
+// Calculate density, velocity and the equilibrium distribution
+// functions according to the D3Q15 model.  The calculated v_x, v_y
+// and v_z are actually density * velocity, because we are using the
+// compressible model.
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[])
 {
   double density_1;
@@ -194,6 +198,8 @@ void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
 }
 
 
+// Collision + streaming for non-boundary fluid lattice sites non-adjacent
+// to neigbhouring subdomains.
 void lbmInnerCollision0 (double omega, int i,
 			 double *density, double *v_x, double *v_y, double *v_z,
 			 double f_neq[])
@@ -259,6 +265,8 @@ void lbmInnerCollision0 (double omega, int i,
 }
 
 
+// Collision + streaming for non-boundary fluid lattice sites adjacent
+// to neigbhouring subdomains.
 void lbmInterCollision0 (double omega, int i,
 			 double *density, double *v_x, double *v_y, double *v_z,
 			 double f_neq[])
@@ -324,6 +332,7 @@ void lbmInterCollision0 (double omega, int i,
 }
 
 
+// Collision + streaming for fluid lattice sites adjacent to the wall.
 void lbmCollision1 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
@@ -360,6 +369,7 @@ void lbmCollision1 (double omega, int i,
 }
 
 
+// Collision + streaming for inlet fluid lattice sites.
 void lbmCollision2 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
@@ -390,6 +400,7 @@ void lbmCollision2 (double omega, int i,
 }
 
 
+// Collision + streaming for outlet fluid lattice sites.
 void lbmCollision3 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
@@ -420,6 +431,7 @@ void lbmCollision3 (double omega, int i,
 }
 
 
+// Collision + streaming for fluid lattice sites and adjacent to the inlet and the wall.
 void lbmCollision4 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
@@ -458,6 +470,7 @@ void lbmCollision4 (double omega, int i,
 }
 
 
+// Collision + streaming for fluid lattice sites and adjacent to the outlet and the wall.
 void lbmCollision5 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[])
@@ -496,6 +509,7 @@ void lbmCollision5 (double omega, int i,
 }
 
 
+// The same as lbmInnerCollision0 but useful for convergence purposes.
 void lbmInnerCollisionConv0 (double omega, int i,
 			     double *density, double *v_x, double *v_y, double *v_z,
 			     double f_neq[])
@@ -561,6 +575,7 @@ void lbmInnerCollisionConv0 (double omega, int i,
 }
 
 
+// The same as lbmInterCollision0 but useful for convergence purposes.
 void lbmInterCollisionConv0 (double omega, int i,
 			     double *density, double *v_x, double *v_y, double *v_z,
 			     double f_neq[])
@@ -626,6 +641,7 @@ void lbmInterCollisionConv0 (double omega, int i,
 }
 
 
+// The same as lbmCollision1 but useful for convergence purposes.
 void lbmCollisionConv1 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[])
@@ -662,6 +678,7 @@ void lbmCollisionConv1 (double omega, int i,
 }
 
 
+// The same as lbmCollision2 but useful for convergence purposes.
 void lbmCollisionConv2 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[])
@@ -692,6 +709,7 @@ void lbmCollisionConv2 (double omega, int i,
 }
 
 
+// The same as lbmCollision3 but useful for convergence purposes.
 void lbmCollisionConv3 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[])
@@ -722,6 +740,7 @@ void lbmCollisionConv3 (double omega, int i,
 }
 
 
+// The same as lbmCollision4 but useful for convergence purposes.
 void lbmCollisionConv4 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[])
@@ -760,6 +779,7 @@ void lbmCollisionConv4 (double omega, int i,
 }
 
 
+// The same as lbmCollision5 but useful for convergence purposes.
 void lbmCollisionConv5 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[])
@@ -812,6 +832,7 @@ void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_
 }
 
 
+// von Mises stress computation given the non-equilibrium distribution functions.
 void lbmStress (double f[], double *stress)
 {
   double sigma_xx_yy, sigma_yy_zz, sigma_xx_zz;
@@ -834,6 +855,7 @@ void lbmStress (double f[], double *stress)
 }
 
 
+// Set up of min/max values at the beginning of each pulsatile cycle.
 void lbmInitMinMaxValues (void)
 {
   lbm_density_min = +1.0e+30;
@@ -847,6 +869,7 @@ void lbmInitMinMaxValues (void)
 }
 
 
+// Update the min/max values local to the current subdomain.
 void lbmUpdateMinMaxValues (double density, double velocity, double stress)
 {
   lbm_density_min = (density < lbm_density_min) ? density : lbm_density_min;
@@ -860,6 +883,7 @@ void lbmUpdateMinMaxValues (double density, double velocity, double stress)
 }
 
 
+// Fluid site updating for benchmarking purposes.
 void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
 			     void lbmCollision (double omega, int i,
 						double *density, double *v_x, double *v_y, double *v_z,
@@ -871,6 +895,7 @@ void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,do
 }
 
 
+// Fluid site updating for benchmarking plus computation of flow field values for visualisation purposes.
 void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
 				    void lbmCollision (double omega, int i,
 						       double *density, double *v_x, double *v_y, double *v_z,
@@ -892,6 +917,7 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
 }
 
 
+// Fluid site updating for full-production runs.
 void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
 			   void lbmCollision (double omega, int i,
 					      double *density, double *v_x, double *v_y, double *v_z,
@@ -913,6 +939,7 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
 }
 
 
+// Fluid site updating for full-production runs plus computation of flow field values for visualisation purposes.
 void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
 				  void lbmCollision (double omega, int i,
 						     double *density, double *v_x, double *v_y, double *v_z,
@@ -935,6 +962,8 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
 }
 
 
+// Returns the type of collision/streaming update for the fluid site
+// with data "site_data".
 int lbmCollisionType (unsigned int site_data)
 {
   unsigned int boundary_type, boundary_config;
@@ -985,6 +1014,8 @@ int lbmCollisionType (unsigned int site_data)
 }
 
 
+// Calculate the BCs for each boundary site type and the
+// non-equilibrium distribution functions.
 void lbmCalculateBC (double f[], unsigned int site_data, double *density,
 		     double *vx, double *vy, double *vz, double f_neq[])
 {
@@ -1103,8 +1134,6 @@ void lbmInit (char *system_file_name, LBM *lbm, Net *net)
 {
   lbm->system_file_name = system_file_name;
   
-  lbmReadConfig (lbm, net);
-  
   if (!check_conv)
     {
       lbmInnerCollision[0] = lbmInnerCollision0;
@@ -1202,10 +1231,12 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
 }
 
 
+// The entire simulation time step takes place through this function
+// when the convergence criterion is not applied. Communications
+// automatically handle the streaming stage pertaining to neighbouring
+// subdomains.
 int lbmCycle (int perform_rt, LBM *lbm, Net *net)
 {
-  // the entire simulation time step takes place through this function
-  
   double omega;
   double density, vx, vy, vz, velocity;
   
@@ -1271,6 +1302,8 @@ int lbmCycle (int perform_rt, LBM *lbm, Net *net)
 #endif
     }
   
+  // Copy the distribution functions received from the neighbouring
+  // processors into the destination buffer "f_new".
   for (i = 0; i < net->shared_fs; i++)
     {
       f_new[ f_recv_iv[i] ] = f_old[ net->neigh_proc[0].f_head + i ];
@@ -1283,10 +1316,12 @@ int lbmCycle (int perform_rt, LBM *lbm, Net *net)
 }
 
 
+// The entire simulation time step takes place through this function
+// when the convergence criterion is applied. Communications
+// automatically handle the streaming stage pertaining to neighbouring
+// subdomains.
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 {
-  // the entire simulation time step takes place through this function
-  
   double omega;
   double density, vx[2], vy[2], vz[2], velocity[2];
   
@@ -1358,6 +1393,8 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
       offset += net->my_inter_collisions[ collision_type ];
     }
   
+  // Copy the distribution functions from the source buffer "f_old"
+  // into the ones to be sent to neighbouring processors.
   for (m = 0; m < net->neigh_procs; m++)
     {
       neigh_proc_p = &net->neigh_proc[ m ];
@@ -1428,6 +1465,8 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 #endif
     }
   
+  // Copy the distribution functions received from the neighbouring
+  // processors into the destination buffer "f_new".
   for (m = 0; m < net->neigh_procs; m++)
     {
       neigh_proc_p = &net->neigh_proc[ m ];
@@ -1443,6 +1482,7 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
   f_new = temp;
   
   
+  // Combine stability and convergence-related values from all the processors.
   local_data[ 0 ] = (double)is_unstable;
   local_data[ 1 ] = sum1;
   local_data[ 2 ] = sum2;
@@ -1588,6 +1628,7 @@ int lbmIsUnstable (Net *net)
 }
 
 
+// Update peak and average inlet velocities local to the current subdomain. 
 void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net)
 {
   double density;
@@ -1688,6 +1729,9 @@ void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net)
 }
 
 
+// In the case of instability, this function restart the simulation
+// with twice as many time steps per period and update the parameters
+// that depends on this change.
 void lbmRestart (LBM *lbm, Net *net)
 {
   int i;
