@@ -855,6 +855,77 @@ void lbmStress (double f[], double *stress)
 }
 
 
+// Compute the shear stress, i.e. the magnitude of force per unit area
+// tangential to the surface with normal "nor[]".
+void lbmStress (double density, double f[], double nor[], double *stress)
+{
+  int e[] = {
+    0, 0, 0,
+    1, 0, 0,
+   -1, 0, 0,
+    0, 1, 0,
+    0,-1, 0,
+    0, 0, 1,
+    0, 0,-1,
+    1, 1, 1,
+   -1,-1,-1,
+    1, 1,-1,
+   -1,-1, 1,
+    1,-1, 1,
+   -1, 1,-1,
+    1,-1,-1,
+   -1, 1, 1
+  };
+  double sigma[9];                            // stress tensor;
+                                              // sigma_ij is the force
+                                              // per unit area in
+                                              // direction i on the
+                                              // plane with the normal
+                                              // in direction j
+  double stress_vector[] = {0.0, 0.0, 0.0};   // Force per unit area in
+                                              // direction i on the
+                                              // plane perpendicular to
+                                              // the surface normal
+  double square_stress_vector = 0.0;
+  double normal_stress = 0.0;                 // Magnitude of force per
+                                              // unit area normal to the
+                                              // surface
+  int i, j, l;
+  
+  
+  double temp = lbm_stress_par * (-sqrt(2.0));
+  
+  for (i = 0; i < 3; i++)
+    for (j = 0; j <= i; j++)
+      {
+	sigma[i*3+j] = 0.0;
+	
+	for (l = 0; l < 15; l++)
+	  {
+	    sigma[i*3+j] += f[l] * (e[l*3+i] * e[l*3+j]);
+	  }
+	sigma[i*3+j] *= temp;
+      }
+  //for (i = 0; i < 3; i++)
+  //  sigma[i*3+i] -= density * Cs2;
+  
+  for (i = 0; i < 3; i++)
+    for (j = 0; j < i; j++)
+      sigma[j*3+i] = sigma[i*3+j];
+  
+  for (i = 0; i < 3; i++)
+    {
+      for (j = 0; j < 3; j++)
+	stress_vector[i] += sigma[i*3+j] * nor[j];
+      
+      square_stress_vector += stress_vector[i] * stress_vector[i];
+      normal_stress        += stress_vector[i] * nor[i];
+    }
+  // shear_stress^2 + normal_stress^2 = stress_vector^2
+  *stress = sqrt(square_stress_vector - normal_stress * normal_stress);
+}
+
+
 // Set up of min/max values at the beginning of each pulsatile cycle.
 void lbmInitMinMaxValues (void)
 {
@@ -912,7 +983,21 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
   *vz *= (1.0 / *density);
   *velocity = sqrt(*vx * *vx + *vy * *vy + *vz * *vz);
   
-  lbmStress (f_neq, &stress);
+  if (lbm_stress_type == SHEAR_STRESS)
+    {
+      if (net_site_nor[ i*3 ] >= 1.0e+30)
+	{
+	  stress = 1.0e+30;
+	}
+      else
+	{
+	  lbmStress (*density, f_neq, &net_site_nor[ i*3 ], &stress);
+	}
+    }
+  else
+    {
+      lbmStress (f_neq, &stress);
+    }
   rtUpdateClusterVoxel (i, *density, *velocity, stress);
 }
 
@@ -934,7 +1019,21 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
   *vz *= (1.0 / *density);
   *velocity = sqrt(*vx * *vx + *vy * *vy + *vz * *vz);
   
-  lbmStress (f_neq, &stress);
+  if (lbm_stress_type == SHEAR_STRESS)
+    {
+      if (net_site_nor[ i*3 ] > 1.0e+30)
+	{
+	  stress = 0.0;
+	}
+      else
+	{
+	  lbmStress (*density, f_neq, &net_site_nor[ i*3 ], &stress);
+	}
+    }
+  else
+    {
+      lbmStress (f_neq, &stress);
+    }
   lbmUpdateMinMaxValues (*density, *velocity, stress);
 }
 
@@ -956,9 +1055,26 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
   *vz *= (1.0 / *density);
   *velocity = sqrt(*vx * *vx + *vy * *vy + *vz * *vz);
   
-  lbmStress (f_neq, &stress);
-  lbmUpdateMinMaxValues (*density, *velocity, stress);
-  rtUpdateClusterVoxel (i, *density, *velocity, stress);
+  if (lbm_stress_type == SHEAR_STRESS)
+    {
+      if (net_site_nor[ i*3 ] >= 1.0e+30)
+	{
+	  lbmUpdateMinMaxValues (*density, *velocity, 0.0);
+	  rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
+	}
+      else
+	{
+	  lbmStress (*density, f_neq, &net_site_nor[ i*3 ], &stress);
+	  lbmUpdateMinMaxValues (*density, *velocity, stress);
+	  rtUpdateClusterVoxel (i, *density, *velocity, stress);
+	}
+    }
+  else
+    {
+      lbmStress (f_neq, &stress);
+      lbmUpdateMinMaxValues (*density, *velocity, stress);
+      rtUpdateClusterVoxel (i, *density, *velocity, stress);
+    }
 }
 
 
@@ -1103,6 +1219,7 @@ void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
   
   for (int i = 0; i < lbm->inlets; i++)
     {
+      /*
       double coef[]={434.661,-239.217,28.9842,0.810304,5.88148,-37.8293,-32.4343,33.1995,-25.3035};
       double inlet_pressure = coef[0];
       
@@ -1112,16 +1229,16 @@ void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
 	inlet_pressure += coef[l] * sin((l-4) * w * (double)time_step);
       
       inlet_pressure = inlet_pressure / mmHg_TO_PASCAL + 90;
-      /*
-      if (cycle_id == 1)
-	{
-	  double t = time_step / lbm->period;
-	  
-	  inlet_pressure = (1.0 - t) * 90 + t * inlet_pressure;
-	}
-      */
+      
+      //if (cycle_id == 1)
+      //	{
+      //	  double t = time_step / lbm->period;
+      //	  
+      //	  inlet_pressure = (1.0 - t) * 90 + t * inlet_pressure;
+      //	}
       inlet_density[i] = lbmConvertPressureToLatticeUnits (inlet_pressure, lbm) / Cs2;
-      //inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double)time_step + inlet_density_phs[i]);
+      */
+      inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double)time_step + inlet_density_phs[i]);
     }
   for (int i = 0; i < lbm->outlets; i++)
     {

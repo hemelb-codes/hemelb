@@ -37,6 +37,9 @@
 #define DEG_TO_RAD   PI / 180.0
 #define EPSILON      1.0e-30
 
+#define VON_MISES_STRESS   +1.0
+#define SHEAR_STRESS       -1.0
+
 #define STABLE                 1
 #define UNSTABLE               0
 #define STABLE_AND_CONVERGED   2
@@ -63,7 +66,7 @@
 #define PULSATILE_PERIOD               0.857142857   // period of oscillation (in s) is
 					             // chosen to be 1 min / 70
 					             // beats per min
-#define TOL                            1.e-6
+#define TOL                            1.0e-6
 
 // the last three digits of the pixel identifier are used to indicate
 // if the pixel is coloured via the ray tracing technique and/or a glyph
@@ -154,17 +157,40 @@ struct DataBlock
 // ProcBlock has one member called proc_id. Later on in 
 // this file, an array called proc_block will be defined, which is a
 // member of the structure Net (allocated in main.cc).  For each global block,
-// *proc_id is an array containing the ranks on which individual lattice sites reside.
+// *proc_id is an array containing the ranks on which individual
+// lattice sites reside.
 struct ProcBlock
 {
   int *proc_id;
 };
+
 
 // Some sort of coordinates.
 struct BlockLocation
 {
   short int i, j, k;
 };
+
+// Superficial site data
+struct WallData
+{
+  // estimated normal
+  double surf_nor[3];
+  // cut distances along the 14 non-zero lattice vectors;
+  // each one is between 0 and 1 if the surface cuts the corresponding
+  // vector or is equal to 1e+30 otherwise
+  double cut_dist[14];
+  // estimated minimum distance (in lattice units) from the surface
+  double surf_dist;
+};
+
+// WallBlock is a member of the structure Net and is employed to store the data
+// regarding the wall, inlet and outlet sites.
+struct WallBlock
+{
+  WallData *wall_data;
+};
+
 
 // Some sort of coordinates.
 struct SiteLocation
@@ -180,7 +206,6 @@ struct LBM
   double tau, viscosity;
   double voxel_size;
   double omega;
-  double lattice_to_system;
   
   int total_fluid_sites;
   int site_min_x, site_min_y, site_min_z;
@@ -244,6 +269,8 @@ struct Net
   DataBlock *map_block;                      // See comment next to struct DataBlock. 
   
   ProcBlock *proc_block;                     // See comment next to struct ProcBlock.
+  
+  WallBlock *wall_block;                     // See comment next to struct WallBlock.
   
   NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
   
@@ -418,6 +445,7 @@ extern int *f_recv_iv;
 
 extern short int *f_data;
 
+extern double *net_site_nor;
 extern unsigned int *net_site_data;
 
 extern double *inlet_density;
@@ -451,6 +479,7 @@ extern int block_size, block_size2, block_size3, block_size_1;
 extern int shift;
 extern int sites_in_a_block;
 
+extern double lbm_stress_type;
 extern double lbm_stress_par;
 extern double lbm_density_min, lbm_density_max;
 extern double lbm_velocity_min, lbm_velocity_max;
@@ -545,6 +574,7 @@ void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z,
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
 void lbmStress (double f[], double *stress);
+void lbmStress (double density, double f[], double nor[], double *stress);
 void lbmInitMinMaxValues (void);
 void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);

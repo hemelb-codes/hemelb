@@ -182,7 +182,6 @@ int main (int argc, char *argv[])
   
   char input_config_name[256];
   char input_parameters_name[256];
-  char output_config_name[256];
   char vis_parameters_name[256];
   char timings_name[256];
   char procs_string[256];
@@ -249,13 +248,11 @@ int main (int argc, char *argv[])
     }
 #endif // NO_STEER
   
-  // UpdateSteerableParameters (&doRendering, &vis, &lbm);
-  
-  lbmReadParameters (input_parameters_name, &lbm, &net);
-
   lbmInit (input_config_name, &lbm, &net);
   
-  lbmReadConfig (lbm, net);
+  lbmReadConfig (&lbm, &net);
+  
+  lbmReadParameters (input_parameters_name, &lbm, &net);
   
   if (netFindTopology (&net, &depths) == 0)
     {

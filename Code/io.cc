@@ -11,13 +11,10 @@ void lbmReadConfig (LBM *lbm, Net *net)
   FILE *system_config;
   XDR xdr_config;
   
-  int i, j, k, ii, jj, kk, m, n;
+  int i, j, k, ii, jj, kk, l, m, n;
   int flag;
   
   unsigned int site_i, site_j, site_k;
-  
-  DataBlock *data_block_p;
-  ProcBlock *proc_block_p;
   
   
   system_config = fopen (lbm->system_file_name, "r");
@@ -30,10 +27,10 @@ void lbmReadConfig (LBM *lbm, Net *net)
     fprintf(stderr, "done\n");
   }
   fflush(NULL);
-
+  
   xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
   
-  xdr_double (&xdr_config, &lbm->lattice_to_system);
+  xdr_double (&xdr_config, &lbm_stress_type);
   xdr_int    (&xdr_config, &blocks_x);
   xdr_int    (&xdr_config, &blocks_y);
   xdr_int    (&xdr_config, &blocks_z);
@@ -62,6 +59,10 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   net->proc_block = (ProcBlock *)malloc(sizeof(ProcBlock) * blocks);
   
+  if (lbm_stress_type == SHEAR_STRESS)
+    {
+      net->wall_block = (WallBlock *)malloc(sizeof(WallBlock) * blocks);
+    }
   lbm->total_fluid_sites = 0;
   
   lbm->site_min_x = 1<<30;
@@ -76,64 +77,74 @@ void lbmReadConfig (LBM *lbm, Net *net)
   n = -1;
   
   for (i = 0; i < blocks_x; i++)
-    {
-      for (j = 0; j < blocks_y; j++)
+    for (j = 0; j < blocks_y; j++)
+      for (k = 0; k < blocks_z; k++)
 	{
-	  for (k = 0; k < blocks_z; k++)
+	  ++n;
+	  
+	  net->data_block[n].site_data = NULL;
+	  net->proc_block[n].proc_id   = NULL;
+	  net->wall_block[n].wall_data = NULL;
+	  
+	  xdr_int (&xdr_config, &flag);
+	  
+	  if (flag == 0) continue;
+	  
+	  net->data_block[n].site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
+	  net->proc_block[n].proc_id   = (int *)malloc(sizeof(int) * sites_in_a_block);
+	  
+	  m = -1;
+	  
+	  for (ii = 0; ii < block_size; ii++)
 	    {
-	      ++n;
+	      site_i = (i << shift) + ii;
 	      
-	      data_block_p = &net->data_block[ n ];
-	      proc_block_p = &net->proc_block[ n ];
-	      
-	      data_block_p->site_data = NULL;
-	      proc_block_p->proc_id   = NULL;
-	      
-	      xdr_int (&xdr_config, &flag);
-	      
-	      if (flag == 0) continue;
-	      
-	      data_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
-	      proc_block_p->proc_id   = (int *)malloc(sizeof(int) * sites_in_a_block);
-	      
-	      m = -1;
-	      
-	      for (ii = 0; ii < block_size; ii++)
+	      for (jj = 0; jj < block_size; jj++)
 		{
-		  site_i = (i << shift) + ii;
+		  site_j = (j << shift) + jj;
 		  
-		  for (jj = 0; jj < block_size; jj++)
+		  for (kk = 0; kk < block_size; kk++)
 		    {
-		      site_j = (j << shift) + jj;
+		      site_k = (k << shift) + kk;
 		      
-		      for (kk = 0; kk < block_size; kk++)
+		      ++m;
+		      xdr_u_int (&xdr_config, &net->data_block[n].site_data[m]);
+		      
+		      if ((net->data_block[n].site_data[m] & SITE_TYPE_MASK) == SOLID_TYPE)
 			{
-			  site_k = (k << shift) + kk;
-			  
-			  ++m;
-			  xdr_u_int (&xdr_config, &data_block_p->site_data[ m ]);
-			  
-			  if ((data_block_p->site_data[ m ] & SITE_TYPE_MASK) == SOLID_TYPE)
+			  net->proc_block[n].proc_id[m] = 1 << 30;
+			  continue;
+			}
+		      net->proc_block[n].proc_id[ m ] = -1;
+		      
+		      ++lbm->total_fluid_sites;
+		      
+		      lbm->site_min_x = min(lbm->site_min_x, site_i);
+		      lbm->site_min_y = min(lbm->site_min_y, site_j);
+		      lbm->site_min_z = min(lbm->site_min_z, site_k);
+		      lbm->site_max_x = max(lbm->site_max_x, site_i);
+		      lbm->site_max_y = max(lbm->site_max_y, site_j);
+		      lbm->site_max_z = max(lbm->site_max_z, site_k);
+		      
+		      if (lbm_stress_type == SHEAR_STRESS &&
+			  lbmCollisionType (net->data_block[n].site_data[m]) >= 1)
+			{
+			  if (net->wall_block[n].wall_data == NULL)
 			    {
-			      proc_block_p->proc_id[ m ] = 1 << 30;
-			      continue;
+			      net->wall_block[n].wall_data = (WallData *)malloc(sizeof(WallData) * sites_in_a_block);
 			    }
-			  proc_block_p->proc_id[ m ] = -1;
+			  for (l = 0; l < 3; l++)
+			    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].surf_nor[l]);
 			  
-			  ++lbm->total_fluid_sites;
+			  for (l = 0; l < 14; l++)
+			    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].cut_dist[l]);
 			  
-			  lbm->site_min_x = min(lbm->site_min_x, site_i);
-			  lbm->site_min_y = min(lbm->site_min_y, site_j);
-			  lbm->site_min_z = min(lbm->site_min_z, site_k);
-			  lbm->site_max_x = max(lbm->site_max_x, site_i);
-			  lbm->site_max_y = max(lbm->site_max_y, site_j);
-			  lbm->site_max_z = max(lbm->site_max_z, site_k);
+			  xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].surf_dist);
 			}
 		    }
 		}
 	    }
 	}
-    }
   xdr_destroy (&xdr_config);
   fclose (system_config);
   
@@ -147,7 +158,7 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   // and then communicate them to the other processors
   
   double par_to_send[10000];
-  
+  double nor[3], pos[3];
   int n;
   
   
@@ -179,13 +190,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  inlet_density_avg[n] = lbmConvertPressureToLatticeUnits (inlet_density_avg[n], lbm) / Cs2;
 	  inlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[n], lbm) / Cs2;
 	  inlet_density_phs[n] *= DEG_TO_RAD;
-	  
-	  //if (is_bench)
-	  //  {
-	  //    inlet_density_avg[n] = 1.0;
-	  //    inlet_density_amp[n] = 0.0;
-	  //    inlet_density_phs[n] = 0.0;
-	  //  }
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
       
@@ -202,13 +206,6 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  outlet_density_avg[n] = lbmConvertPressureToLatticeUnits (outlet_density_avg[n], lbm) / Cs2;
 	  outlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[n], lbm) / Cs2;
 	  outlet_density_phs[n] *= DEG_TO_RAD;
-	  
-	  //if (is_bench)
-	  //  {
-	  //    outlet_density_avg[ n ] = 1.0;
-	  //    outlet_density_amp[ n ] = 0.0;
-	  //    outlet_density_phs[ n ] = 0.0;
-	  //  }
 	}
       lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
       lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * lbm->inlets);
@@ -220,16 +217,28 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  is_inlet_normal_available = 1;
 	  
 	  for (n = 0; n < lbm->inlets; n++)
-	    {
-	      fscanf (parameters_file, "%le %le %le\n",
+	    fscanf (parameters_file, "%le %le %le\n",
 		      &lbm_inlet_normal[3*n], &lbm_inlet_normal[3*n+1], &lbm_inlet_normal[3*n+2]);
-	    }
 	}
       else
 	{
 	  is_inlet_normal_available = 0;
 	}
-
+      if (feof (parameters_file) == 0)
+	{
+	  for (n = 0; n < lbm->outlets; n++)
+	    fscanf (parameters_file, "%le %le %le\n", &nor[0], &nor[1], &nor[2]);
+	}
+      if (feof (parameters_file) == 0)
+	{
+	  for (n = 0; n < lbm->inlets; n++)
+	    fscanf (parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
+	}
+      if (feof (parameters_file) == 0)
+	{
+	  for (n = 0; n < lbm->outlets; n++)
+	    fscanf (parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
+	}
       fclose (parameters_file);
       
       par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
@@ -338,7 +347,8 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   //   a- the (x, y, z) coordinates in lattice units (3 values)
   //   b- the pressure in physical units (mmHg)
   //   c- (x,y,z) components of the velocity field in physical units (3 values, m/s)
-  //   d- the von Mises stress in physical units (Pa)
+  //   d- the von Mises stress or shear stress in physical units (Pa)
+  //      (the stored shear stress is equal to -1 if the fluid voxel is not at the wall)
   
   FILE *system_config = NULL;
   XDR	xdr_system_config;
@@ -495,8 +505,21 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 			      lbmCalculateBC (&f_old[ (my_site_id*(par+1)+par)*15 ], net_site_data[ my_site_id ],
 					      &density, &vx, &vy, &vz, f_neq);
 			    }
-			  lbmStress (f_neq, &stress);
-			  
+			  if (lbm_stress_type == SHEAR_STRESS)
+			    {
+			      if (net_site_nor[ my_site_id*3 ] >= 1.0e+30)
+				{
+				  stress = -1.0;
+				}
+			      else
+				{
+				  lbmStress (density, f_neq, &net_site_nor[ my_site_id*3 ], &stress);
+				}
+			    }
+			  else
+			    {
+			      lbmStress (f_neq, &stress);
+			    }
 			  vx /= density;
 			  vy /= density;
 			  vz /= density;
@@ -630,6 +653,7 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   //   b- the pressure in physical units (mmHg)
   //   c- (x,y,z) components of the velocity field in physical units (3 values, m/s)
   //   d- the von Mises stress in physical units (Pa)
+  //      (the stored shear stress is equal to -1 if the fluid voxel is not at the wall)
   
   FILE *system_config = NULL;
   
@@ -777,8 +801,21 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 			      lbmCalculateBC (&f_old[ (my_site_id*(par+1)+par)*15 ], net_site_data[ my_site_id ],
 					      &density, &vx, &vy, &vz, f_neq);
 			    }
-			  lbmStress (f_neq, &stress);
-			  
+			  if (lbm_stress_type == SHEAR_STRESS)
+			    {
+			      if (net_site_nor[ my_site_id*3 ] >= 1.0e+30)
+				{
+				  stress = -1.0;
+				}
+			      else
+				{
+				  lbmStress (density, f_neq, &net_site_nor[ my_site_id*3 ], &stress);
+				}
+			    }
+			  else
+			    {
+			      lbmStress (f_neq, &stress);
+			    }
 			  vx /= density;
 			  vy /= density;
 			  vz /= density;

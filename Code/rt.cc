@@ -158,15 +158,17 @@ void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*
   ray_vel_col[1] += ray_segment * palette[1];
   ray_vel_col[2] += ray_segment * palette[2];
   
-  // update the volume rendering of the von Mises stress flow field
-  float scaled_stress = *(flow_field+2) * vis_stress_threshold_max_inv;
-  
-  ColourPalette (scaled_stress, palette);
-  
-  ray_stress_col[0] += ray_segment * palette[0];
-  ray_stress_col[1] += ray_segment * palette[1];
-  ray_stress_col[2] += ray_segment * palette[2];
-  
+  if (lbm_stress_type != SHEAR_STRESS)
+    {
+      // update the volume rendering of the von Mises stress flow field
+      float scaled_stress = *(flow_field+2) * vis_stress_threshold_max_inv;
+      
+      ColourPalette (scaled_stress, palette);
+      
+      ray_stress_col[0] += ray_segment * palette[0];
+      ray_stress_col[1] += ray_segment * palette[1];
+      ray_stress_col[2] += ray_segment * palette[2];
+    }
   ray_length += ray_segment;
   
   if (ray_density >= 0.0F) return;
@@ -176,7 +178,7 @@ void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*
   // keep track of the density nearest to the view point
   ray_density = *flow_field;
   
-  // keep track of the von Mises stress nearest to the view point
+  // keep track of the stress nearest to the view point
   ray_stress = *(flow_field+2);
 }
 
@@ -1971,35 +1973,31 @@ void rtBuildClusters (Net *net)
 		  m = -1;
 		  
 		  for (ii[0] = 0; ii[0] < block_size; ii[0]++)
-		    {
-		      for (ii[1] = 0; ii[1] < block_size; ii[1]++)
+		    for (ii[1] = 0; ii[1] < block_size; ii[1]++)
+		      for (ii[2] = 0; ii[2] < block_size; ii[2]++)
 			{
-			  for (ii[2] = 0; ii[2] < block_size; ii[2]++)
+			  my_site_id = map_block_p->site_data[ ++m ];
+			  
+			  if (my_site_id & (1U << 31U))
 			    {
-			      my_site_id = map_block_p->site_data[ ++m ];
-			      
-			      if (my_site_id & (1U << 31U))
-				{
-				  cluster_flow_field[ cluster_id ][n][ 3*m+0 ] = -1.F;
-				  cluster_flow_field[ cluster_id ][n][ 3*m+1 ] = -1.F;
-				  cluster_flow_field[ cluster_id ][n][ 3*m+2 ] = -1.F;
-				  continue;
-				}
-			      cluster_flow_field[ cluster_id ][n][ 3*m+0 ] = 1.F;
-			      cluster_flow_field[ cluster_id ][n][ 3*m+1 ] = 1.F;
-			      cluster_flow_field[ cluster_id ][n][ 3*m+2 ] = 1.F;
-			      cluster_voxel[ 3*my_site_id+0 ] = &cluster_flow_field[ cluster_id ][n][ 3*m+0 ];
-			      cluster_voxel[ 3*my_site_id+1 ] = &cluster_flow_field[ cluster_id ][n][ 3*m+1 ];
-			      cluster_voxel[ 3*my_site_id+2 ] = &cluster_flow_field[ cluster_id ][n][ 3*m+2 ];
-				  
-			      for (l = 0; l < 3; l++)
-				{
-				  voxel_min[l] = min(voxel_min[l], ii[l] + block_coord[l]);
-				  voxel_max[l] = max(voxel_max[l], ii[l] + block_coord[l]);
-				}
+			      cluster_flow_field[ cluster_id ][n][ 3*m+0 ] = -1.0F;
+			      cluster_flow_field[ cluster_id ][n][ 3*m+1 ] = -1.0F;
+			      cluster_flow_field[ cluster_id ][n][ 3*m+2 ] = -1.0F;
+			      continue;
+			    }
+			  cluster_flow_field[ cluster_id ][n][ 3*m+0 ] = 1.0F;
+			  cluster_flow_field[ cluster_id ][n][ 3*m+1 ] = 1.0F;
+			  cluster_flow_field[ cluster_id ][n][ 3*m+2 ] = 1.0F;
+			  cluster_voxel[ 3*my_site_id+0 ] = &cluster_flow_field[ cluster_id ][n][ 3*m+0 ];
+			  cluster_voxel[ 3*my_site_id+1 ] = &cluster_flow_field[ cluster_id ][n][ 3*m+1 ];
+			  cluster_voxel[ 3*my_site_id+2 ] = &cluster_flow_field[ cluster_id ][n][ 3*m+2 ];
+			  
+			  for (l = 0; l < 3; l++)
+			    {
+			      voxel_min[l] = min(voxel_min[l], ii[l] + block_coord[l]);
+			      voxel_max[l] = max(voxel_max[l], ii[l] + block_coord[l]);
 			    }
 			}
-		    }
 		}
 	    }
 	}
@@ -2112,10 +2110,10 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
       
       block_flow_field = cluster_flow_field[ cluster_id ];
       
-      subimage_vtx[0] =  1.e+30F;
-      subimage_vtx[1] = -1.e+30F;
-      subimage_vtx[2] =  1.e+30F;
-      subimage_vtx[3] = -1.e+30F;
+      subimage_vtx[0] =  1.0e+30F;
+      subimage_vtx[1] = -1.0e+30F;
+      subimage_vtx[2] =  1.0e+30F;
+      subimage_vtx[3] = -1.0e+30F;
       
       for (i = 0; i < 2; i++)
 	{
@@ -2185,25 +2183,25 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      ray_dir[1] = dir[1];
 	      ray_dir[2] = dir[2];
 	      
-	      temp1 = 1.F / sqrtf(dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2]);
+	      temp1 = 1.0F / sqrtf(dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2]);
 	      
 	      ray_dir[0] *= temp1;
 	      ray_dir[1] *= temp1;
 	      ray_dir[2] *= temp1;
 	      
-	      ray_inv[0] = 1.F / ray_dir[0];
-	      ray_inv[1] = 1.F / ray_dir[1];
-	      ray_inv[2] = 1.F / ray_dir[2];
+	      ray_inv[0] = 1.0F / ray_dir[0];
+	      ray_inv[1] = 1.0F / ray_dir[1];
+	      ray_inv[2] = 1.0F / ray_dir[2];
 	      
-	      ray_sign[0] = ray_dir[0] > 0.F;
-	      ray_sign[1] = ray_dir[1] > 0.F;
-	      ray_sign[2] = ray_dir[2] > 0.F;
+	      ray_sign[0] = ray_dir[0] > 0.0F;
+	      ray_sign[1] = ray_dir[1] > 0.0F;
+	      ray_sign[2] = ray_dir[2] > 0.0F;
 	      
 	      dir[0] += par2[0];
 	      dir[1] += par2[1];
 	      dir[2] += par2[2];
 	      
-	      // t_near = 0.F;
+	      // t_near = 0.0F;
 	      
 	      // if (!viewpoint_flag)
 		{
@@ -2225,29 +2223,45 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      ray_vel_col[0] = 0.0F;
 	      ray_vel_col[1] = 0.0F;
 	      ray_vel_col[2] = 0.0F;
-	      ray_stress_col[0] = 0.0F;
-	      ray_stress_col[1] = 0.0F;
-	      ray_stress_col[2] = 0.0F;
+	      
+	      if (lbm_stress_type != SHEAR_STRESS)
+		{
+		  ray_stress_col[0] = 0.0F;
+		  ray_stress_col[1] = 0.0F;
+		  ray_stress_col[2] = 0.0F;
+		}
 	      ray_length = 0.0F;
-	      ray_t_min = 1.e+30F;
-	      ray_density = -1.F;
+	      ray_t_min = 1.0e+30F;
+	      ray_density = -1.0F;
 	      
 	      (*rtTraverseBlocks[ray_sign[0]][ray_sign[1]][ray_sign[2]])
 		(ray_dx, block_flow_field, ColourPalette);
 	      
 	      if (ray_t_min >= 1.e+30F) continue;
 	      
-	      col_pixel.vel_r    = ray_vel_col[0] * 255.0F;
-	      col_pixel.vel_g    = ray_vel_col[1] * 255.0F;
-	      col_pixel.vel_b    = ray_vel_col[2] * 255.0F;
-	      col_pixel.stress_r = ray_stress_col[0] * 255.0F;
-	      col_pixel.stress_g = ray_stress_col[1] * 255.0F;
-	      col_pixel.stress_b = ray_stress_col[2] * 255.0F;
+	      col_pixel.vel_r = ray_vel_col[0] * 255.0F;
+	      col_pixel.vel_g = ray_vel_col[1] * 255.0F;
+	      col_pixel.vel_b = ray_vel_col[2] * 255.0F;
+	      
+	      if (lbm_stress_type != SHEAR_STRESS)
+		{
+		  col_pixel.stress_r = ray_stress_col[0] * 255.0F;
+		  col_pixel.stress_g = ray_stress_col[1] * 255.0F;
+		  col_pixel.stress_b = ray_stress_col[2] * 255.0F;
+		}
 	      col_pixel.dt       = ray_length;
 	      col_pixel.t        = ray_t_min + t_near;
 	      col_pixel.density  = (ray_density - vis_density_threshold_min) * vis_density_threshold_minmax_inv;
-	      col_pixel.stress   = ray_stress * vis_stress_threshold_max_inv;
-	      col_pixel.i        = PixelId(i,j) | RT;
+	      
+	      if (ray_stress < 1.0e+30F)
+		{
+		  col_pixel.stress = ray_stress * vis_stress_threshold_max_inv;
+		}
+	      else
+		{
+		  col_pixel.stress = 1.0e+30F;
+		}
+	      col_pixel.i = PixelId(i,j) | RT;
 	      
 	      visWritePixel (&col_pixel);
 	    }
@@ -2692,105 +2706,92 @@ void slInit (Net *net, SL *sl)
   n = -1;
   
   for (i = 0; i < sites_x; i += block_size)
-    {
-      for (j = 0; j < sites_y; j += block_size)
+    for (j = 0; j < sites_y; j += block_size)
+      for (k = 0; k < sites_z; k += block_size)
 	{
-	  for (k = 0; k < sites_z; k += block_size)
-	    {
-	      map_block_p = &net->map_block[ ++n ];
-	      
-	      if (map_block_p->site_data == NULL) continue;
-	      
-	      proc_block_p = &net->proc_block[ n ];
-	      
-	      m = -1;
-	      
-	      for (site_i = i; site_i < i + block_size; site_i++)
+	  map_block_p = &net->map_block[ ++n ];
+	  
+	  if (map_block_p->site_data == NULL) continue;
+	  
+	  proc_block_p = &net->proc_block[ n ];
+	  
+	  m = -1;
+	  
+	  for (site_i = i; site_i < i + block_size; site_i++)
+	    for (site_j = j; site_j < j + block_size; site_j++)
+	      for (site_k = k; site_k < k + block_size; site_k++)
 		{
-		  for (site_j = j; site_j < j + block_size; site_j++)
-		    {
-		      for (site_k = k; site_k < k + block_size; site_k++)
+		  if (proc_block_p->proc_id[ ++m ] != net->id) continue;
+		  
+		  for (neigh_i = max(0, site_i-1); neigh_i <= min(sites_x-1, site_i+1); neigh_i++)
+		    for (neigh_j = max(0, site_j-1); neigh_j <= min(sites_y-1, site_j+1); neigh_j++)
+		      for (neigh_k = max(0, site_k-1); neigh_k <= min(sites_z-1, site_k+1); neigh_k++)
 			{
-			  if (proc_block_p->proc_id[ ++m ] != net->id) continue;
+			  neigh_proc_id = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
 			  
-			  for (neigh_i = max(0, site_i-1); neigh_i <= min(sites_x-1, site_i+1); neigh_i++)
-			    {
-			      for (neigh_j = max(0, site_j-1); neigh_j <= min(sites_y-1, site_j+1); neigh_j++)
-				{
-				  for (neigh_k = max(0, site_k-1); neigh_k <= min(sites_z-1, site_k+1); neigh_k++)
-				    {
-				      neigh_proc_id = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
-				      
-				      if (neigh_proc_id == NULL || *neigh_proc_id == (1 << 30))
-					{
-					  continue;
-					}
-				      slInitializeVelFieldBlock (neigh_i, neigh_j, neigh_k, *neigh_proc_id, sl);
-				      
-				      if (*neigh_proc_id == net->id) continue;
-				      
-				      vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k, sl);
-				      
-				      if (vel_site_data_p->counter == sl->counter) continue;
-				      
-				      vel_site_data_p->counter = sl->counter;
-				      
-				      for (mm = 0, flag = 1; mm < sl->neigh_procs && flag; mm++)
-					{
-					  if (*neigh_proc_id == sl->neigh_proc[ mm ].id)
-					    {
-					      flag = 0;
-					      ++sl->neigh_proc[ mm ].send_vs;
-					    }
-					}
-				      if (!flag) continue;
-				      
-				      if (sl->neigh_procs == NEIGHBOUR_PROCS_MAX)
-					{
-					  printf (" too many inter processor neighbours in slInit()\n");
-					  printf (" the execution is terminated\n");
-#ifndef NOMPI
-					  net->err = MPI_Abort (MPI_COMM_WORLD, 1);
-#else
-					  exit(1);
-#endif
-					}
-				      sl->neigh_proc[ sl->neigh_procs ].id = *neigh_proc_id;
-				      sl->neigh_proc[ sl->neigh_procs ].send_vs = 1;
-				      ++sl->neigh_procs;
-				    }
-				}
-			    }
-			  site_data = net_site_data[ map_block_p->site_data[m] ];
-			  
-			  // if the lattice site is an not inlet one
-			  if ((site_data & SITE_TYPE_MASK) != INLET_TYPE)
+			  if (neigh_proc_id == NULL || *neigh_proc_id == (1 << 30))
 			    {
 			      continue;
 			    }
-			  ++inlet_sites;
+			  slInitializeVelFieldBlock (neigh_i, neigh_j, neigh_k, *neigh_proc_id, sl);
 			  
-			  if (inlet_sites%50 != 0) continue;
+			  if (*neigh_proc_id == net->id) continue;
 			  
-			  if (sl->particle_seeds == sl->particle_seeds_max)
+			  vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k, sl);
+			  
+			  if (vel_site_data_p->counter == sl->counter) continue;
+			  
+			  vel_site_data_p->counter = sl->counter;
+			  
+			  for (mm = 0, flag = 1; mm < sl->neigh_procs && flag; mm++)
 			    {
-			      sl->particle_seeds_max *= 2;
-			      sl->particle_seed = (Particle *)realloc(sl->particle_seed,
-								      sizeof(Particle) * sl->particle_seeds_max);
+			      if (*neigh_proc_id == sl->neigh_proc[ mm ].id)
+				{
+				  flag = 0;
+				  ++sl->neigh_proc[ mm ].send_vs;
+				}
 			    }
-			  sl->particle_seed[ sl->particle_seeds ].x = (float)site_i;
-			  sl->particle_seed[ sl->particle_seeds ].y = (float)site_j;
-			  sl->particle_seed[ sl->particle_seeds ].z = (float)site_k;
-			  sl->particle_seed[ sl->particle_seeds ].inlet_id =
-			    (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-			  ++sl->particle_seeds;
+			  if (!flag) continue;
+			  
+			  if (sl->neigh_procs == NEIGHBOUR_PROCS_MAX)
+			    {
+			      printf (" too many inter processor neighbours in slInit()\n");
+			      printf (" the execution is terminated\n");
+#ifndef NOMPI
+			      net->err = MPI_Abort (MPI_COMM_WORLD, 1);
+#else
+			      exit(1);
+#endif
+			    }
+			  sl->neigh_proc[ sl->neigh_procs ].id = *neigh_proc_id;
+			  sl->neigh_proc[ sl->neigh_procs ].send_vs = 1;
+			  ++sl->neigh_procs;
 			}
+		  site_data = net_site_data[ map_block_p->site_data[m] ];
+		  
+		  // if the lattice site is an not inlet one
+		  if ((site_data & SITE_TYPE_MASK) != INLET_TYPE)
+		    {
+		      continue;
 		    }
+		  ++inlet_sites;
+		  
+		  if (inlet_sites%50 != 0) continue;
+		  
+		  if (sl->particle_seeds == sl->particle_seeds_max)
+		    {
+		      sl->particle_seeds_max *= 2;
+		      sl->particle_seed = (Particle *)realloc(sl->particle_seed,
+							      sizeof(Particle) * sl->particle_seeds_max);
+		    }
+		  sl->particle_seed[ sl->particle_seeds ].x = (float)site_i;
+		  sl->particle_seed[ sl->particle_seeds ].y = (float)site_j;
+		  sl->particle_seed[ sl->particle_seeds ].z = (float)site_k;
+		  sl->particle_seed[ sl->particle_seeds ].inlet_id =
+		    (site_data & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+		  ++sl->particle_seeds;
 		}
-	    }
 	}
-    }
-  
   sl->shared_vs = 0;
   
   for (m = 0; m < sl->neigh_procs; m++)
@@ -3264,6 +3265,7 @@ void slEnd (SL *sl)
 }
 #endif // NO_STREAKLINES
 
+
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,
 		float  x1, float  y1, float  z1,
@@ -3379,45 +3381,50 @@ void visProjection (float ortho_x, float ortho_y,
 
 void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 {
-  if (vis_mode == 0 || vis_mode == 1)
+  // merge raytracing data
+  if ((col_pixel1->i & RT) && (col_pixel2->i & RT))
     {
-      // merge raytracing data and/or glyph ones
-      if ((col_pixel1->i & RT) && (col_pixel2->i & RT))
+      col_pixel2->vel_r += col_pixel1->vel_r;
+      col_pixel2->vel_g += col_pixel1->vel_g;
+      col_pixel2->vel_b += col_pixel1->vel_b;
+      
+      if (lbm_stress_type != SHEAR_STRESS)
 	{
-	  col_pixel2->vel_r += col_pixel1->vel_r;
-	  col_pixel2->vel_g += col_pixel1->vel_g;
-	  col_pixel2->vel_b += col_pixel1->vel_b;
-	  
 	  col_pixel2->stress_r += col_pixel1->stress_r;
 	  col_pixel2->stress_g += col_pixel1->stress_g;
 	  col_pixel2->stress_b += col_pixel1->stress_b;
-	  
-	  col_pixel2->dt += col_pixel1->dt;
-	  
-	  if (col_pixel1->t < col_pixel2->t)
-	    {
-	      col_pixel2->t       = col_pixel1->t;
-	      col_pixel2->density = col_pixel1->density;
-	      col_pixel2->stress  = col_pixel1->stress;
-	    }
 	}
-      else if ((col_pixel1->i & RT) && !(col_pixel2->i & RT))
+      col_pixel2->dt += col_pixel1->dt;
+      
+      if (col_pixel1->t < col_pixel2->t)
 	{
-	  col_pixel2->vel_r = col_pixel1->vel_r;
-	  col_pixel2->vel_g = col_pixel1->vel_g;
-	  col_pixel2->vel_b = col_pixel1->vel_b;
-	  
+	  col_pixel2->t       = col_pixel1->t;
+	  col_pixel2->density = col_pixel1->density;
+	  col_pixel2->stress  = col_pixel1->stress;
+	}
+    }
+  else if ((col_pixel1->i & RT) && !(col_pixel2->i & RT))
+    {
+      col_pixel2->vel_r = col_pixel1->vel_r;
+      col_pixel2->vel_g = col_pixel1->vel_g;
+      col_pixel2->vel_b = col_pixel1->vel_b;
+      
+      if (lbm_stress_type != SHEAR_STRESS)
+	{
 	  col_pixel2->stress_r = col_pixel1->stress_r;
 	  col_pixel2->stress_g = col_pixel1->stress_g;
 	  col_pixel2->stress_b = col_pixel1->stress_b;
-	  
-	  col_pixel2->t       = col_pixel1->t;
-	  col_pixel2->dt      = col_pixel1->dt;
-	  col_pixel2->density = col_pixel1->density;
-	  col_pixel2->stress  = col_pixel1->stress;
-	  
-	  col_pixel2->i |= RT;
 	}
+      col_pixel2->t       = col_pixel1->t;
+      col_pixel2->dt      = col_pixel1->dt;
+      col_pixel2->density = col_pixel1->density;
+      col_pixel2->stress  = col_pixel1->stress;
+      
+      col_pixel2->i |= RT;
+    }
+  if (lbm_stress_type != SHEAR_STRESS && (vis_mode == 0 || vis_mode == 1))
+    {
+      // merge glyph data
       if (col_pixel1->i & GLYPH)
 	{
 	  col_pixel2->i |= GLYPH;
@@ -3425,43 +3432,8 @@ void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
     }
   else
     {
-      // merge raytracing data and/or streakline ones
-      if ((col_pixel1->i & RT) && (col_pixel2->i & RT))
-	{
-	  col_pixel2->vel_r += col_pixel1->vel_r;
-	  col_pixel2->vel_g += col_pixel1->vel_g;
-	  col_pixel2->vel_b += col_pixel1->vel_b;
-	  
-	  col_pixel2->stress_r += col_pixel1->stress_r;
-	  col_pixel2->stress_g += col_pixel1->stress_g;
-	  col_pixel2->stress_b += col_pixel1->stress_b;
-	  
-	  col_pixel2->dt += col_pixel1->dt;
-	  
-	  if (col_pixel1->t < col_pixel2->t)
-	    {
-	      col_pixel2->t       = col_pixel1->t;
-	      col_pixel2->density = col_pixel1->density;
-	      col_pixel2->stress  = col_pixel1->stress;
-	    }
-	}
-      else if ((col_pixel1->i & RT) && !(col_pixel2->i & RT))
-	{
-	  col_pixel2->vel_r = col_pixel1->vel_r;
-	  col_pixel2->vel_g = col_pixel1->vel_g;
-	  col_pixel2->vel_b = col_pixel1->vel_b;
-	  
-	  col_pixel2->stress_r = col_pixel1->stress_r;
-	  col_pixel2->stress_g = col_pixel1->stress_g;
-	  col_pixel2->stress_b = col_pixel1->stress_b;
-	  
-	  col_pixel2->t      = col_pixel1->t;
-	  col_pixel2->dt       = col_pixel1->dt;
-	  col_pixel2->density = col_pixel1->density;
-	  col_pixel2->stress  = col_pixel1->stress;
-	  
-	  col_pixel2->i |= RT;
-	}
+#ifndef NO_STREAKLINES
+      // merge streakline data
       if ((col_pixel1->i & STREAKLINE) && (col_pixel2->i & STREAKLINE))
 	{
 	  if (col_pixel1->particle_z < col_pixel2->particle_z)
@@ -3479,6 +3451,7 @@ void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 	  
 	  col_pixel2->i |= STREAKLINE;
 	}
+#endif
     }
 }
 
@@ -3523,6 +3496,7 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
   unsigned char r3, g3, b3;
   unsigned char r4, g4, b4;
   
+  
   // store pixel id
   pixel_i = PixelI(col_pixel_p->i);
   pixel_j = PixelJ(col_pixel_p->i);
@@ -3534,30 +3508,48 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
   
   if (col_pixel_p->i & RT)
     {
-    // store velocity flow field
+      // store velocity volume rendering colour
       r1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_r / col_pixel_p->dt)));
       g1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_g / col_pixel_p->dt)));
       b1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_b / col_pixel_p->dt)));
       
-      // store von Mises stress flow field
-      r2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_r / col_pixel_p->dt)));
-      g2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_g / col_pixel_p->dt)));
-      b2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_b / col_pixel_p->dt)));
+      if (lbm_stress_type != SHEAR_STRESS)
+	{
+	  // store von Mises stress volume rendering colour
+	  r2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_r / col_pixel_p->dt)));
+	  g2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_g / col_pixel_p->dt)));
+	  b2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_b / col_pixel_p->dt)));
+	}
+      else if (col_pixel_p->stress < 1.0e+30F)
+	{
+	  ColourPalette (col_pixel_p->stress, stress_col);
+	  
+	  // store wall shear stress colour
+	  r2 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[0])));
+	  g2 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[1])));
+	  b2 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[2])));
+	}
+      else
+	{
+	  r2 = g2 = b2 = 0;
+	}
     }
-  if (vis_mode == 0)
+  if (lbm_stress_type != SHEAR_STRESS && vis_mode == 0)
     {
       ColourPalette (col_pixel_p->density, density_col);
       ColourPalette (col_pixel_p->stress, stress_col);
       
+      // store wall pressure colour
       r3 = (unsigned char)max(0, min(255, (int)(255.0F * density_col[0])));
       g3 = (unsigned char)max(0, min(255, (int)(255.0F * density_col[1])));
       b3 = (unsigned char)max(0, min(255, (int)(255.0F * density_col[2])));
       
+      // store von Mises stress colour
       r4 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[0])));
       g4 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[1])));
       b4 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[2])));
     }
-  else if (vis_mode == 1)
+  else if (lbm_stress_type != SHEAR_STRESS && vis_mode == 1)
     {
       ColourPalette (col_pixel_p->density, density_col);
       ColourPalette (col_pixel_p->stress, stress_col);
@@ -3574,10 +3566,12 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
 	      stress_col[1] += 1.0F;
 	      stress_col[2] += 1.0F;
 	    }
+	  // store wall pressure (+glyph) colour 
 	  r3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[0])));
 	  g3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[1])));
 	  b3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[2])));
 	  
+	  // store von Mises stress (+glyph) colour 
 	  r4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[0])));
 	  g4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[1])));
 	  b4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[2])));
@@ -3596,31 +3590,26 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
 	  
 	  ColourPalette (scaled_vel, particle_col);
 	  
-	  density_col[0] = 1.0F + particle_col[0];
-	  density_col[1] = 1.0F + particle_col[1];
-	  density_col[2] = 1.0F + particle_col[2];
-	  
-	  stress_col[0] = 1.0F + particle_col[0];
-	  stress_col[1] = 1.0F + particle_col[1];
-	  stress_col[2] = 1.0F + particle_col[2];
+	  // store particle colour
+	  r4 = r3 = (unsigned char)max(0, min(255, (int)(255.0F * particle_col[0])));
+	  g4 = g3 = (unsigned char)max(0, min(255, (int)(255.0F * particle_col[1])));
+	  b4 = b3 = (unsigned char)max(0, min(255, (int)(255.0F * particle_col[2])));
 	}
       else
 	{
-	  density_col[0] = fmaxf(0.0F, fminf(1.0F, col_pixel_p->density));
-	  density_col[1] = fmaxf(0.0F, fminf(1.0F, col_pixel_p->density));
-	  density_col[2] = fmaxf(0.0F, fminf(1.0F, col_pixel_p->density));
+	  // store pressure colour
+	  r3 = g3 = b3 = (unsigned char)max(0, min(127, (int)(127.5F * col_pixel_p->density)));
 	  
-	  stress_col[0] = fmaxf(0.0F, fminf(1.0F, col_pixel_p->stress));
-	  stress_col[1] = fmaxf(0.0F, fminf(1.0F, col_pixel_p->stress));
-	  stress_col[2] = fmaxf(0.0F, fminf(1.0F, col_pixel_p->stress));
-	}
-      r3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[0])));
-      g3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[1])));
-      b3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[2])));
-      
-      r4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[0])));
-      g4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[1])));
-      b4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[2])));
+	  // store shear stress or von Mises stress
+	  if (col_pixel_p->stress < 1.0e+30F)
+	    {
+	      r4 = g4 = b4 = (unsigned char)max(0, min(127, (int)(127.5F * col_pixel_p->stress)));
+	    }
+	  else
+	    {
+	      r4 = g4 = b4 = 0;
+	    }
+	} 
     }
   rgb_data[0] = r1; rgb_data[1] = g1; rgb_data[2] = b1;
   rgb_data[3] = r2; rgb_data[4] = g2; rgb_data[5] = b2;
@@ -3862,8 +3851,8 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
 		 0.5F * (5.F * vis->system_size),
 		 zoom);
   
-  density_min = +1.e+30F;
-  density_max = -1.e+30F;
+  density_min = +1.0e+30F;
+  density_max = -1.0e+30F;
   
   for (i = 0; i < lbm->inlets; i++)
     {
@@ -3880,14 +3869,14 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
   if (!is_bench)
     {
       vis_density_threshold_minmax_inv = 1.0F / (density_max - density_min);
-      vis_velocity_threshold_max_inv = 1.0F / velocity_max;
-      vis_stress_threshold_max_inv   = 1.0F / stress_max;
+      vis_velocity_threshold_max_inv   = 1.0F / velocity_max;
+      vis_stress_threshold_max_inv     = 1.0F / stress_max;
     }
   else
     {
       vis_density_threshold_minmax_inv = 1.0F;
-      vis_velocity_threshold_max_inv = 1.0F;
-      vis_stress_threshold_max_inv = 1.0F;
+      vis_velocity_threshold_max_inv   = 1.0F;
+      vis_stress_threshold_max_inv     = 1.0F;
     }
 }
  
@@ -4133,7 +4122,8 @@ void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float co
       glyGlyphs ();
     }
 #ifndef NO_STREAKLINES
-  if (vis_streaklines && vis_mode == 2)
+  if (vis_streaklines &&
+      (lbm_stress_type == SHEAR_STRESS || vis_mode == 2))
     {
       slRender (sl);
     }
