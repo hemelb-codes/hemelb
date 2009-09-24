@@ -90,6 +90,7 @@ int *f_recv_iv = NULL;
 
 short int *f_data = NULL;
 
+double *net_site_nor = NULL;
 unsigned int *net_site_data = NULL;
 
 double *inlet_density = NULL;
@@ -124,6 +125,7 @@ int block_size, block_size2, block_size3, block_size_1;
 int shift;
 int sites_in_a_block;
 
+double lbm_stress_type;
 double lbm_stress_par;
 double lbm_density_min, lbm_density_max;
 double lbm_velocity_min, lbm_velocity_max;
