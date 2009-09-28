@@ -21,6 +21,9 @@ OBJ=config.o \
 $(EXE): $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) $(LIBS) -o $(EXE)
 
+doc:
+	doxygen 
+
 display:
 	g++ displayClient.cc -O3 -lGLU -lglut eVizRLEUtil.c -o displayClient
 
