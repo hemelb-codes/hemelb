@@ -1,17 +1,22 @@
-// In this file the functions useful to discover the topology used and
-// to create and delete the domain decomposition and the various
-// buffers are reported
+/*! \file topology.cc
+    \brief In this file the functions useful to discover the topology used and
+    to create and delete the domain decomposition and the various
+    buffers are defined.
+
+    Structs are defined in config.h.  Global variables (including those
+    of the struct types) are declared in config.cc.  Global coordinate
+    means coordinate within the entire system, not the coordinate on
+    one procesor.
+*/
+
 #include "config.h"
 
-// Structs are defined in config.h.  Global variables (including those
-// of the struct types) are declared in config.cc.  Global coordinate
-// means coordinate within the entire system, not the coordinate on
-// one procesor.
-
-// Low level function that finds the pointer to the rank on which a
-// particular site resides.  proc_id is the only member of proc_block
-// (member of Net) for the site at global coordinate (site_i, site_j,
-// site_k).  If the site is in an empty block, return NULL.
+/*!
+Low level function that finds the pointer to the rank on which a
+particular site resides.  proc_id is the only member of proc_block
+(member of Net) for the site at global coordinate (site_i, site_j,
+site_k).  If the site is in an empty block, return NULL.
+*/
 int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net)
 {
   int i, j, k;                               // Coordinates of a cubic block
@@ -45,11 +50,12 @@ int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net)
     }
 }
 
-// Low level function that finds a pointer to site_data (the only
-// member of map_block (member of net)) for the site eith global
-// coordinate (site_i, site_j, site_k).  If the site is in an empty
-// block, return NULL.
-
+/*!
+Low level function that finds a pointer to site_data (the only
+member of map_block (member of net)) for the site eith global
+coordinate (site_i, site_j, site_k).  If the site is in an empty
+block, return NULL.
+*/
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
 {
   int i, j, k;                               // Coordinates of a block
@@ -85,18 +91,17 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
 //#undef MPICHX_TOPOLOGY_DEPTHS
 #ifdef MPICHX_TOPOLOGY_DEPTHS
 
-//If one has more than one machine.
+/*!
+If one has more than one machine. The topology discovery mechanism is implemented in this function
+*/
 int netFindTopology (Net *net, int *depths)
 {
-  // the topology discovery mechanism is implemented in this
-  // function.
   
   int *depth, **color;
   int machine_id, flag, is_found;
   int i, j, sum;
   
   *depths = 0;
-  
   
   net->err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag);
   
@@ -178,6 +183,9 @@ int netFindTopology (Net *net, int *depths)
 
 #else
 
+/*!
+If one has more than one machine. The topology discovery mechanism is implemented in this function
+*/
 int netFindTopology (Net *net, int *depths)
 {
   // the machine is assumed to be only one if this function is
@@ -201,15 +209,15 @@ int netFindTopology (Net *net, int *depths)
 #endif
 
 
-// Called from the main function.  First function to deal with
-// processors
+/*!
+This is called from the main function.  First function to deal with processors.
+The domain partitioning technique and the management of the
+buffers useful for the inter-processor communications are
+implemented in this function.  The domain decomposition is based
+on a graph growing partitioning technique.
+*/
 void netInit (LBM *lbm, Net *net)
 {
-  // The domain partitioning technique and the management of the
-  // buffers useful for the inter-processor communications are
-  // implemented in this function.  The domain decomposition is based
-  // on a graph growing partitioning technique.
-  
   double seconds;
   
   int site_i, site_j, site_k;                // Global coordinates of a site.
@@ -1243,7 +1251,9 @@ void netInit (LBM *lbm, Net *net)
   net->bm_time = myClock () - seconds;
 }
 
-// Free the allocated data.
+/*!
+Free the allocated data.
+*/
 void netEnd (Net *net)
 {
   int i;
