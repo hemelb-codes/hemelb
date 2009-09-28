@@ -1,12 +1,15 @@
-// In this file, the functions useful for the input/output are reported
+/*! \file config.cc
+ \brief In this file, the functions useful for the input/output are reported
+*/
 
 #include "config.h"
 
-
+/*!
+this function reads the XDR configuration file but does not store the system
+and calculate some parameters
+*/
 void lbmReadConfig (LBM *lbm, Net *net)
 {
-  // this function reads the XDR configuration file but does not store the system
-  // and calculate some parameters
   
   FILE *system_config;
   XDR xdr_config;
@@ -151,11 +154,12 @@ void lbmReadConfig (LBM *lbm, Net *net)
   net->fr_time = myClock () - net->fr_time;
 }
 
-
+/*!
+through this function the processor 0 reads the LB parameters
+and then communicate them to the other processors
+*/
 void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 {
-  // through this function the processor 0 reads the LB parameters
-  // and then communicate them to the other processors
   
   double par_to_send[10000];
   double nor[3], pos[3];
