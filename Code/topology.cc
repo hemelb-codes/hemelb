@@ -792,7 +792,7 @@ void netInit (LBM *lbm, Net *net)
 		      if (proc_id_p == NULL || *proc_id_p == net->id || *proc_id_p == (1 << 30))
 			{
 			  continue;
-				}
+			}
 		      is_inner_site = 0;
 		      is_inter_site = 1;
 		      
@@ -835,7 +835,30 @@ void netInit (LBM *lbm, Net *net)
 		    }
 		  // Collision Type set here. map_block site data is renumbered according to 
 		  // fluid site numbers within a particular collision type.
-		  l = lbmCollisionType (site_data[ my_sites ]);
+		  if (lbmCollisionType (site_data[ my_sites ]) == FLUID)
+		    {
+		      l = 0;
+		    }
+		  else if (lbmCollisionType (site_data[ my_sites ]) == EDGE)
+		    {
+		      l = 1;
+		    }
+		  else if (lbmCollisionType (site_data[ my_sites ]) == INLET)
+		    {
+		      l = 2;
+		    }
+		  else if (lbmCollisionType (site_data[ my_sites ]) == OUTLET)
+		    {
+		      l = 3;
+		    }
+		  else if (lbmCollisionType (site_data[ my_sites ]) == (INLET | EDGE))
+		    {
+		      l = 4;
+		    }
+		  else if (lbmCollisionType (site_data[ my_sites ]) == (OUTLET | EDGE))
+		    {
+		      l = 5;
+		    }
 		  ++my_sites;
 		  
 		  if (is_inner_site)
@@ -900,7 +923,6 @@ void netInit (LBM *lbm, Net *net)
 	    {
 	      continue;
 	    }
-
 	  // Renumber the sites in map_block so that the numbers are compacted together.  We have
 	  // collision offset to tell us when one collision type ends and another starts.
 	  for (l = 1; l < COLLISION_TYPES; l++)
@@ -1115,10 +1137,12 @@ void netInit (LBM *lbm, Net *net)
 		    
 		    if (lbm_stress_type == SHEAR_STRESS)
 		      {
-			if (lbmCollisionType (net_site_data[ site_map ]) == 1)
+			net_site_nor[ site_map*3 ] = 1.0e+30;
+			
+			if (lbmCollisionType (net_site_data[ site_map ]) & EDGE)
 			  {
-			    for (l = 1; l < 3; l++)
-			      net_site_nor[ site_map*3+l ] = net->wall_block[n].wall_data[m].surf_nor[l];
+			    for (l = 0; l < 3; l++)
+			      net_site_nor[ site_map*3+l ] = net->wall_block[n].wall_data[m].wall_nor[l];
 			  }
 			else
 			  {
