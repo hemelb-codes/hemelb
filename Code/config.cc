@@ -29,7 +29,13 @@ unsigned int SITE_TYPE_MASK       = ((1U <<  2U) - 1U);         // ((1U << SITE_
 unsigned int BOUNDARY_CONFIG_MASK = ((1U << 14U) - 1U) << 2U;   // ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUNDARY_CONFIG_SHIFT;
 unsigned int BOUNDARY_DIR_MASK    = ((1U <<  4U) - 1U) << 16U;  //((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
 unsigned int BOUNDARY_ID_MASK     = ((1U << 10U) - 1U) << 20U;  // ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT
-unsigned int CHARACTERISTIC_MASK  = 1U << 31U;
+unsigned int PRESSURE_EDGE_MASK   = 1U << 31U;
+
+unsigned int FLUID  = 1U;
+unsigned int INLET  = 2U;
+unsigned int OUTLET = 4U;
+unsigned int EDGE   = 8U;
+
 
 // square of the speed of sound
 
