@@ -1,6 +1,9 @@
 #ifndef MENU
 #define MENU
 
+#ifdef MESH
+#include "rt.h"
+#endif
 #include "vis.h"
 
 
@@ -11,21 +14,25 @@
 #define SEGMENT_4X                  (1<<3)
 #define SEGMENT_5X                  (1<<4)
 #define SEGMENT_6X                  (1<<5)
+#ifndef MESH
 #define CHANGE_THRESHOLD            (1<<6)
 #define CHANGE_SLICE                (1<<7)
+#endif
 #define ZOOM_SCENE                  (1<<8)
 #define ROTATE_SCENE                (1<<9)
 #define CREATE_INLET                (1<<10)
 #define CREATE_OUTLET               (1<<11)
 #define CREATE_WALL                 (1<<12)
-#define ZOOM_BOUNDARY               (1<<13)
+#define SCALE_BOUNDARY              (1<<13)
 #define ROTATE_BOUNDARY             (1<<14)
 #define REVERSE_INLET_NORMAL        (1<<15)
 #define CHANGE_PRESSURE_AMPLITUDE   (1<<16)
 #define CHANGE_MEAN_PRESSURE        (1<<17)
 #define CHANGE_PRESSURE_PHASE       (1<<18)
 #define DELETE_BOUNDARY             (1<<19)
+#ifndef MESH
 #define CHANGE_VIS_MODE             (1<<20)
+#endif
 #define SAVE_DATA                   (1<<21)
 #define QUIT                        (1<<22)
 #define ACTIVE                      1

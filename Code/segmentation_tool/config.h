@@ -1,9 +1,12 @@
 #ifndef CONFIG
 #define CONFIG
 
-
+#include <GL/glut.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <fstream>
 #include <vector>
+#include "math.h"
 
 using namespace std;
 
@@ -12,7 +15,11 @@ using namespace std;
 #endif
 
 
+#define EPSILON       1.0e-30
 #define DEG_TO_RAD    0.01745329
+
+#define VON_MISES_STRESS   +1.0
+#define SHEAR_STRESS       -1.0
 
 #define BLOCK_SIZE        8
 #define SITES_PER_BLOCK   (BLOCK_SIZE * BLOCK_SIZE * BLOCK_SIZE)
@@ -34,10 +41,10 @@ using namespace std;
 
 struct Screen
 {
-  float col[3];
-  float ctr[3];
-  float dim[2];
-  float zoom;
+  double col[3];
+  double ctr[3];
+  double dim[2];
+  double zoom;
   
   int pixels[2];
 };
@@ -45,15 +52,10 @@ struct Screen
 
 struct Viewpoint
 {
-  float pos[3];
-  
-  float sin_longitude;
-  float cos_longitude;
-  
-  float sin_latitude;
-  float cos_latitude;
-  
-  float dist;
+  double pos[3];
+  double sin_longitude, cos_longitude;
+  double sin_latitude,  cos_latitude;
+  double dist;
 };
 
 
@@ -61,6 +63,9 @@ struct Site
 {
   unsigned int cfg;
   unsigned int label;
+#ifdef MESH
+  int triangle_id;
+#endif
 };
 
 
@@ -72,28 +77,28 @@ struct Block
 
 struct Vertex
 {
-  float pos[3];
+  double pos[3];
 };
 
 
 struct Disc
 {
-  float sin_longitude, cos_longitude;
-  float sin_latitude, cos_latitude;
-  float r2;
+  double sin_longitude, cos_longitude;
+  double sin_latitude, cos_latitude;
+  double r2;
 };
 
 
-struct Triangle
+struct BoundaryTriangle
 {
   Vertex v[3];
   
   Disc d;
   
-  float pos[3];
-  float nor[3];
+  double pos[3];
+  double nor[3];
   
-  float pressure_avg, pressure_amp, pressure_phs;
+  double pressure_avg, pressure_amp, pressure_phs;
   
   int normal_sign;
 };
@@ -101,10 +106,58 @@ struct Triangle
 
 struct Boundary
 {
-  Triangle *triangle;
+  BoundaryTriangle *triangle;
   
   int triangles;
 };
+
+
+#ifdef MESH
+struct Hit
+{
+  double pos[3];
+  double t;
+  
+  int triangle_id, previous_triangle_id;
+};
+
+
+struct Ray
+{
+  double org[3], dir[3];
+  
+  double t_max, t_near, t_far;
+};
+
+
+struct MeshTriangle
+{
+  Vertex v[3];
+  
+  double nor[3];
+};
+
+
+struct Voxel
+{
+  int *triangle_id;
+  int triangles;
+};
+
+
+struct Mesh
+{
+  MeshTriangle *triangle;
+  
+  Voxel *voxel;
+  
+  double dim[3], half_dim[3];
+  double voxel_size;
+  
+  int voxels[4];
+  int triangles, triangles_max;
+};
+#endif // MESH
 
 
 struct Coord
@@ -116,10 +169,10 @@ struct Coord
 
 struct ScreenVoxel
 {
-  float z[2];
+  double z[2];
   
-  short int t_id;
   short int site[3];
+  short int t_id;
   
   char b_id;
   char v_id;
@@ -132,7 +185,8 @@ struct Mouse
   char b_id;
   char v_id;
   
-  short int x[2], dy;
+  short int x[2];
+  short int dy;
   short int state;
 };
 
@@ -146,51 +200,58 @@ struct Menu
 
 struct Vis
 {
-  float scale[3], inv_scale[3];
-  
   int input_voxels[3];
   int output_voxels[3];
+#ifndef MESH
   int pixel_depth;
-  
+#endif
   int sites[3];
   int blocks[3];
   int tot_sites, tot_blocks;
   int stack_sites, stack_sites_max;
   int coords[COORD_BUFFERS];
-  
+#ifndef MESH
   short int selected_voxel[3];
   
-  float selected_grey;
-  float grey_min, grey_max;
+  double selected_grey;
+  double grey_min, grey_max;
+#else
+  double seed_pos[3];
   
+  short int seed_site[3];
+#endif
   int viewport_pixels[2];
   
-  float background[3];
+  double background[3];
+  double ortho[2];
+  double longitude, latitude;
+  double viewpoint_radius;
+  double viewport_radius;
+  double zoom;
+  double scene_center[3];
   
-  float ortho[2];
-  float longitude, latitude;
-  float viewpoint_radius;
-  float viewport_radius;
-  float zoom;
-  float scene_center[3];
-  
-  float dim[3], half_dim[3];
-  float system_size;
-  
-  float slice_size, pixel_size;
+  double dim[3], half_dim[3];
+  double system_size;
+#ifndef MESH
+  double slice_size, pixel_size;
+#else
+  double voxel_size;
+#endif
+  double stress_type;
   
   int res_factor;
   int screen_voxels;
   int mode;
   
-  float segmentation_time, fps;  
-  
+  double segmentation_time, fps;  
+#ifndef MESH
+  short int *voxel;
+#else
+  Mesh mesh;
+#endif
   Site *stack_site;
   
   Block *block;
-  
-  // unsigned short int *voxel;
-  signed short int *voxel;
   
   Coord *coord[COORD_BUFFERS];
   
@@ -202,12 +263,17 @@ struct Vis
   
   Menu menu;
   
+#ifndef MESH
   char *input_path;
+#else
+  char *input_file;
+#endif
   char *output_config;
   char *output_pars;
   char *checkpoint;
-  
+#ifndef MESH
   vector<string> file_list;
+#endif
 
 };
 

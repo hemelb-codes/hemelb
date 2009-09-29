@@ -2,6 +2,7 @@
 #define IO
 
 
+#include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <dirent.h>
 #include <errno.h>
@@ -11,15 +12,20 @@
 #include <vector>
 #include "config.h"
 #include "editing.h"
+#include "segmentation.h"
 
 using namespace std;
 
 
-int ioGetDir (string dir, vector<string> &files);
-void ioGetFileNames (Vis *vis);
-void ioReadFirstSlice (Vis *vis);
-void ioReadSlice (int slice_id, Vis *vis);
+#ifndef MESH
+// int ioGetDir (string dir, vector<string> &files);
+// void ioGetFileNames (Vis *vis);
+// void ioReadFirstSlice (Vis *vis);
+// void ioReadSlice (int slice_id, Vis *vis);
 void ioReadConfig (Vis *vis);
+#else
+void ioReadConfig (Vis *vis);
+#endif
 void ioWriteCheckpoint (Vis *vis);
 void ioReadCheckpoint (Vis *vis);
 void ioWriteConfig (Vis *vis);

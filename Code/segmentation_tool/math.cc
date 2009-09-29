@@ -27,7 +27,7 @@ int max (int a, int b)
 }
 
 
-int nint (float a)
+int nint (double a)
 {
   if (a > (int)(a + 0.5F))
     {
@@ -40,67 +40,39 @@ int nint (float a)
 }
 
 
-void Rotate (float x1[3], float longitude, float latitude, float x2[3])
+void Rotate (double x1, double y1, double z1,
+	     double sn1, double cs1, double sn2, double cs2,
+	     double *x2, double *y2, double *z2)
 {
-  float sn1, cs1;
-  float sn2, cs2;
-  float temp;
+  double temp = z1 * cs2 - y1 * sn2;
   
-  
-  sn1 = sinf(longitude);
-  cs1 = cosf(longitude);
-  sn2 = sinf(latitude);
-  cs2 = cosf(latitude);
-
-  temp = cs2 * x1[2] - sn2 * x1[1];
-
-  x2[0] = sn1 * temp  + cs1 * x1[0];
-  x2[1] = sn2 * x1[2] + cs2 * x1[1];
-  x2[2] = cs1 * temp  - sn1 * x1[0];
+  *x2 = temp * sn1 + x1 * cs1;
+  *y2 =   z1 * sn2 + y1 * cs2;
+  *z2 = temp * cs1 - x1 * sn1;
 }
 
 
-void Rotate (float x1[3], float sn1, float cs1, float sn2, float cs2, float x2[3])
+void AntiRotate (double x1, double y1, double z1,
+		 double sn1, double cs1, double sn2, double cs2,
+		 double *x2, double *y2, double *z2)
 {
-  float temp;
+  double temp = cs1 * z1 + sn1 * x1;
   
-  
-  temp = cs2 * x1[2] - sn2 * x1[1];
-
-  x2[0] = sn1 * temp  + cs1 * x1[0];
-  x2[1] = sn2 * x1[2] + cs2 * x1[1];
-  x2[2] = cs1 * temp  - sn1 * x1[0];
+  *x2 = cs1 * x1   - sn1 * z1;
+  *y2 = cs2 * y1   - sn2 * temp;
+  *z2 = cs2 * temp + sn2 * y1;
 }
 
 
-void AntiRotate (float x1[3], float longitude, float latitude, float x2[3])
+double ScalarProd (double x1[3], double x2[3])
 {
-  float sn1, cs1;
-  float sn2, cs2;
-  float temp;
-  
-  
-  sn1 = sinf(longitude);
-  cs1 = cosf(longitude);
-  sn2 = sinf(latitude);
-  cs2 = cosf(latitude);
-  
-  temp = cs1 * x1[2] + sn1 * x1[0];
-
-  x2[0] = cs1 * x1[0] - sn1 * x1[2];
-  x2[1] = cs2 * x1[1] - sn2 * temp;
-  x2[2] = cs2 * temp  + sn2 * x1[1];
+  return x1[0]*x2[0] + x1[1]*x2[1] + x1[2]*x2[2];
 }
 
 
-void AntiRotate (float x1[3], float sn1, float cs1, float sn2, float cs2, float x2[3])
+void VectorProd (double x1[3], double x2[3], double x3[3])
 {
-  float temp;
-  
-  
-  temp = cs1 * x1[2] + sn1 * x1[0];
-  
-  x2[0] = cs1 * x1[0] - sn1 * x1[2];
-  x2[1] = cs2 * x1[1] - sn2 * temp;
-  x2[2] = cs2 * temp  + sn2 * x1[1];
+  x3[0] = x2[1] * x1[2] - x2[2] * x1[1];
+  x3[1] = x2[2] * x1[0] - x2[0] * x1[2];
+  x3[2] = x2[0] * x1[1] - x2[1] * x1[0];
 }
