@@ -68,6 +68,8 @@
 					             // beats per min
 #define TOL                            1.0e-6
 
+#define VIS_FIELDS                     3
+
 // the last three digits of the pixel identifier are used to indicate
 // if the pixel is coloured via the ray tracing technique and/or a glyph
 // and/or a particle/pathlet
@@ -109,7 +111,12 @@ extern unsigned int SITE_TYPE_MASK;         // ((1U << SITE_TYPE_BITS) - 1U);
 extern unsigned int BOUNDARY_CONFIG_MASK;   // ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUNDARY_CONFIG_SHIFT;
 extern unsigned int BOUNDARY_DIR_MASK;  //((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
 extern unsigned int BOUNDARY_ID_MASK;  // ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT
-extern unsigned int CHARACTERISTIC_MASK;
+extern unsigned int PRESSURE_EDGE_MASK;
+
+extern unsigned int FLUID;
+extern unsigned int INLET;
+extern unsigned int OUTLET;
+extern unsigned int EDGE;
 
 // square of the speed of sound
 
@@ -174,14 +181,21 @@ struct BlockLocation
 // Superficial site data
 struct WallData
 {
-  // estimated normal
-  double surf_nor[3];
+  // estimated boundary normal (if the site is an inlet/outlet site)
+  double boundary_nor[3];
+  // estimated minimum distance (in lattice units) from the
+  // inlet/outlet boundary;
+  double boundary_dist;
+  // estimated wall normal (if the site is close to the wall);
+  double wall_nor[3];
+  // estimated minimum distance (in lattice units) from the wall;
+  // if the site is close to the wall surface
+  double wall_dist;
   // cut distances along the 14 non-zero lattice vectors;
   // each one is between 0 and 1 if the surface cuts the corresponding
   // vector or is equal to 1e+30 otherwise
   double cut_dist[14];
-  // estimated minimum distance (in lattice units) from the surface
-  double surf_dist;
+
 };
 
 // WallBlock is a member of the structure Net and is employed to store the data

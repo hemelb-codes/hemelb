@@ -906,9 +906,6 @@ void lbmStress (double density, double f[], double nor[], double *stress)
 	  }
 	sigma[i*3+j] *= temp;
       }
-  //for (i = 0; i < 3; i++)
-  //  sigma[i*3+i] -= density * Cs2;
-  
   for (i = 0; i < 3; i++)
     for (j = 0; j < i; j++)
       sigma[j*3+i] = sigma[i*3+j];
@@ -1082,49 +1079,39 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
 // with data "site_data".
 int lbmCollisionType (unsigned int site_data)
 {
-  unsigned int boundary_type, boundary_config;
-  
-  int unknowns, i;
+  unsigned int boundary_type;
   
   
   if (site_data == FLUID_TYPE)
     {
-      return 0;
+      return FLUID;
     }
   boundary_type = site_data & SITE_TYPE_MASK;
   
   if (boundary_type == FLUID_TYPE)
     {
-      return 1;
+      return EDGE;
     }
-  boundary_config = (site_data & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;
-  
-  unknowns = 0;
-  
-  for (i = 0; i < 14; i++)
+  if (!(site_data & PRESSURE_EDGE_MASK))
     {
-      if (!(boundary_config & (1U << i))) ++unknowns;
-    }
-  if (boundary_type == INLET_TYPE)
-    {
-      if (unknowns <= 1000000)
+      if (boundary_type == INLET_TYPE)
 	{
-	  return 2;
+	  return INLET;
 	}
       else
 	{
-	  return 4;
+	  return OUTLET;
 	}
     }
   else
     {
-      if (unknowns <= 1000000)
+      if (boundary_type == INLET_TYPE)
 	{
-	  return 3;
+	  return INLET | EDGE;
 	}
       else
 	{
-	  return 5;
+	  return OUTLET | EDGE;
 	}
     }
 }
