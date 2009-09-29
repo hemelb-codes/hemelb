@@ -130,19 +130,29 @@ void lbmReadConfig (LBM *lbm, Net *net)
 		      lbm->site_max_z = max(lbm->site_max_z, site_k);
 		      
 		      if (lbm_stress_type == SHEAR_STRESS &&
-			  lbmCollisionType (net->data_block[n].site_data[m]) >= 1)
+			  lbmCollisionType (net->data_block[n].site_data[m]) != FLUID)
 			{
 			  if (net->wall_block[n].wall_data == NULL)
 			    {
 			      net->wall_block[n].wall_data = (WallData *)malloc(sizeof(WallData) * sites_in_a_block);
 			    }
-			  for (l = 0; l < 3; l++)
-			    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].surf_nor[l]);
-			  
+			  if (lbmCollisionType (net->data_block[n].site_data[m]) & INLET ||
+			      lbmCollisionType (net->data_block[n].site_data[m]) & OUTLET)
+			    {
+			      for (l = 0; l < 3; l++)
+				xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].boundary_nor[l]);
+			      
+			      xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].boundary_dist);
+			    }
+			  if (lbmCollisionType (net->data_block[n].site_data[m]) & EDGE)
+			    {
+			      for (l = 0; l < 3; l++)
+				xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].wall_nor[l]);
+			      
+			      xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].wall_dist);
+			    }
 			  for (l = 0; l < 14; l++)
 			    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].cut_dist[l]);
-			  
-			  xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].surf_dist);
 			}
 		    }
 		}
