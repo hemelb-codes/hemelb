@@ -1,6 +1,13 @@
 #include "io_dicom.h"
 #include "io.h"
 
+
+#ifdef MESH
+unsigned int PRESSURE_EDGE_MASK = 1U << 31U;
+#endif
+
+
+#ifndef MESH
 /*
 int ioGetDir (string dir, vector<string> &files)
 {
@@ -23,16 +30,16 @@ int ioGetDir (string dir, vector<string> &files)
   
   return 0;
 }
-*/
 
-/*
+
+
 void ioGetFileNames (Vis *vis)
 {
   string dir = string(vis->input_path);
   
   ioGetDir (dir, vis->file_list);
 }
-*/
+
 
 
 void ioReadFirstSlice (Vis *vis)
@@ -87,19 +94,20 @@ void ioReadSlice (int slice_id, Vis *vis)
 	  input_file >> temp;
 	  vis->voxel[ VoxelId(voxel,vis->input_voxels) ] = temp;
 	  
-	  vis->grey_min = fminf(vis->grey_min, temp);
-	  vis->grey_max = fmaxf(vis->grey_max, temp);
+	  vis->grey_min = fmin(vis->grey_min, temp);
+	  vis->grey_max = fmax(vis->grey_max, temp);
 	}
     }
 
   input_file.close();
 
 }
+*/
 
 
 void ioReadConfig (Vis *vis)
 {
-  int i, l;
+  int l;
   
   // ioGetFileNames (vis);
   
@@ -112,14 +120,7 @@ void ioReadConfig (Vis *vis)
   vis->output_voxels[0] = vis->input_voxels[0] * vis->res_factor;
   vis->output_voxels[1] = vis->input_voxels[1] * vis->res_factor;
   vis->output_voxels[2] = (int)(vis->input_voxels[2] * (vis->slice_size/vis->pixel_size) *
-				(float)vis->output_voxels[0]/(float)vis->input_voxels[0]);
-  
-  vis->scale[0] = vis->res_factor;
-  vis->scale[1] = vis->res_factor;
-  vis->scale[2] = vis->res_factor * vis->slice_size / vis->pixel_size;
-  
-  for (l = 0; l < 3; l++)
-    vis->inv_scale[l] = 1.F / vis->scale[l];
+				(double)vis->output_voxels[0]/(double)vis->input_voxels[0]);
   
   for (l = 0; l < 3; l++)
     vis->blocks[l] = vis->output_voxels[l] >> SHIFT;
@@ -131,12 +132,12 @@ void ioReadConfig (Vis *vis)
     vis->sites[l] = vis->blocks[l] * BLOCK_SIZE;
   
   for (l = 0; l < 3; l++)
-    vis->dim[l] = vis->output_voxels[l];
+    vis->dim[l] = vis->output_voxels[l] / vis->res_factor;
   
   for (l = 0; l < 3; l++)
-    vis->half_dim[l] = 0.5F * vis->dim[l];
+    vis->half_dim[l] = 0.5 * vis->dim[l];
   
-  vis->system_size = fmaxf(vis->dim[0], fmaxf(vis->dim[1], vis->dim[2]));
+  vis->system_size = fmax(vis->dim[0], fmax(vis->dim[1], vis->dim[2]));
   
   vis->tot_blocks = vis->blocks[0] * vis->blocks[1] * vis->blocks[2];
   
@@ -158,31 +159,251 @@ void ioReadConfig (Vis *vis)
   */
   DICOM_input.DICOM_copy_data(vis->voxel, vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]);
   
-  int grey_min = +1000000000;
-  int grey_max = -1000000000;
-  
-  for (l = 0; l < vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; l++)
-    {
-      if (vis->voxel[l] < grey_min) grey_min = vis->voxel[l];
-      if (vis->voxel[l] > grey_max) grey_max = vis->voxel[l];
-    }
   vis->grey_min = +1e9;
   vis->grey_max = -1e9;
   
   for (l = 0; l < vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; l++)
     {
-      if (vis->voxel[l] == grey_min || vis->voxel[l] == grey_max)
+      if (vis->voxel[l] < -30000 || vis->voxel[l] > 30000)
 	{
 	  continue;
 	}
       if (vis->voxel[l] < vis->grey_min) vis->grey_min = vis->voxel[l];
       if (vis->voxel[l] > vis->grey_max) vis->grey_max = vis->voxel[l];
     }
+  vis->coord[A] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_A);
+  vis->coord[B] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_B);
+  vis->coord[C] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_C);
+  
+  vis->stress_type = VON_MISES_STRESS;
+}
+#else // MESH
+
+
+void ioReadConfig (Vis *vis)
+{
+  double min_x[3], max_x[3];
+  double ctr_x[3];
+  double dx[3];
+  
+  int l, m, n;
+  
+  char key_word[16];
+  
+  ifstream input_file;
+  
+  
+  vis->mesh.triangles_max = 10000;
+  vis->mesh.triangle = (MeshTriangle *)malloc(sizeof(MeshTriangle) * vis->mesh.triangles_max);
+  vis->mesh.triangles = 0;
+  
+  for (l = 0; l < 3; l++)
+    {
+      min_x[l] =  1.0e+30;
+      max_x[l] = -1.0e+30;
+      ctr_x[l] =  0.0;
+    }
+  input_file.open(vis->input_file);
+  
+  while (strcmp(key_word, "facet"))
+    input_file >> key_word;
+  
+  while (strcmp(key_word, "endsolid"))
+    {
+      if (vis->mesh.triangles == vis->mesh.triangles_max)
+	{
+	  vis->mesh.triangles_max *= 2;
+	  vis->mesh.triangle = (MeshTriangle *)realloc(vis->mesh.triangle,
+						       sizeof(MeshTriangle) * vis->mesh.triangles_max);
+	}
+      while (strcmp(key_word, "normal"))
+	input_file >> key_word;
+      
+      input_file >> vis->mesh.triangle[ vis->mesh.triangles ].nor[0];
+      input_file >> vis->mesh.triangle[ vis->mesh.triangles ].nor[1];
+      input_file >> vis->mesh.triangle[ vis->mesh.triangles ].nor[2];
+      
+      for (l = 0; l < 3; l++)
+	vis->mesh.triangle[ vis->mesh.triangles ].nor[l] /=
+	  sqrt(ScalarProd (vis->mesh.triangle[ vis->mesh.triangles ].nor, vis->mesh.triangle[ vis->mesh.triangles ].nor));
+      
+      while (strcmp(key_word, "loop"))
+	input_file >> key_word;
+      
+      for (m = 0; m < 3; m++)
+	{
+	  input_file >> key_word;
+	  input_file >> vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[0];
+	  input_file >> vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[1];
+	  input_file >> vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[2];
+	}
+      float triangle_ctr_x[3];
+      
+      for (l = 0; l < 3; l++)
+	triangle_ctr_x[l] = 0.0;
+      
+      for (m = 0; m < 3; m++)
+	for (l = 0; l < 3; l++)
+	  {
+	    triangle_ctr_x[l] += vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l];
+	  }
+      for (l = 0; l < 3; l++)
+	triangle_ctr_x[l] /= 3.0;
+      
+      for (m = 0; m < 3; m++)
+	for (l = 0; l < 3; l++)
+	  {
+	    vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l] = triangle_ctr_x[l] +
+	      1.01 * (vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l] - triangle_ctr_x[l]);
+	  }
+      for (m = 0; m < 3; m++)
+	{
+	  for (l = 0; l < 3; l++)
+	    {
+	      min_x[l] = fmin(min_x[l], vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l]);
+	      max_x[l] = fmax(max_x[l], vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l]);
+	      ctr_x[l] += vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l];
+	    }
+	}
+      ++vis->mesh.triangles;
+      
+      input_file >> key_word;
+      input_file >> key_word;
+      input_file >> key_word;
+    }
+  input_file.close();
+  
+  for (l = 0; l < 3; l++)
+    ctr_x[l] /= vis->mesh.triangles * 3;
+  
+  vis->mesh.voxel_size = 0.0;
+  
+  for (n = 0; n < vis->mesh.triangles; n++)
+    {
+      for (m = 0; m < 3; m++)
+	for (l = 0; l < 3; l++)
+	  vis->mesh.triangle[n].v[m].pos[l] -= ctr_x[l];
+      
+      for (l = 0; l < 3; l++)
+	dx[l] = vis->mesh.triangle[n].v[1].pos[l] - vis->mesh.triangle[n].v[0].pos[l];
+      
+      vis->mesh.voxel_size += sqrtf(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
+      
+      for (l = 0; l < 3; l++)
+	dx[l] = vis->mesh.triangle[n].v[2].pos[l] - vis->mesh.triangle[n].v[0].pos[l];
+      
+      vis->mesh.voxel_size += sqrtf(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
+      
+      for (l = 0; l < 3; l++)
+	dx[l] = vis->mesh.triangle[n].v[2].pos[l] - vis->mesh.triangle[n].v[1].pos[l];
+      
+      vis->mesh.voxel_size += sqrtf(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
+    }
+  vis->mesh.voxel_size /= (vis->mesh.triangles * 3);
+  
+  for (l = 0; l < 3; l++)
+    vis->mesh.voxels[l] = (int)ceil(1.5 * (max_x[l] - min_x[l]) / vis->mesh.voxel_size);
+  
+  vis->mesh.voxels[3] = vis->mesh.voxels[0] * vis->mesh.voxels[1] * vis->mesh.voxels[2];
+  
+  vis->mesh.voxel = (Voxel *)malloc(sizeof(Voxel) * vis->mesh.voxels[3]);
+  
+  for (l = 0; l < 3; l++)
+    vis->mesh.dim[l] = vis->mesh.voxel_size * vis->mesh.voxels[l];
+  
+  for (l = 0; l < 3; l++)
+    vis->mesh.half_dim[l] = 0.5 * vis->mesh.dim[l];
+      
+  for (l = 0; l < 3; l++)
+    vis->input_voxels[l] = vis->mesh.voxels[l];
+  
+  for (l = 0; l < 3; l++)
+    vis->output_voxels[l] = vis->input_voxels[l] * vis->res_factor;
+  
+  for (l = 0; l < 3; l++)
+    vis->blocks[l] = vis->output_voxels[l] >> SHIFT;
+  
+  for (l = 0; l < 3; l++)
+    if ((vis->blocks[l] << SHIFT) < vis->output_voxels[l]) ++vis->blocks[l];
+  
+  for (l = 0; l < 3; l++)
+    vis->sites[l] = vis->blocks[l] * BLOCK_SIZE;
+  
+  for (l = 0; l < 3; l++)
+    vis->dim[l] = vis->mesh.dim[l];
+  
+  for (l = 0; l < 3; l++)
+    vis->half_dim[l] = 0.5 * vis->dim[l];
+  
+  vis->system_size = fmax(vis->dim[0], fmax(vis->dim[1], vis->dim[2]));
+  
+  vis->tot_blocks = vis->blocks[0] * vis->blocks[1] * vis->blocks[2];
+  
+  vis->block = (Block *)malloc(sizeof(Block) * vis->tot_blocks);
+  
+  for (n = 0; n < vis->tot_blocks; n++)
+    vis->block[n].site = NULL;
+  
+  vis->stack_sites_max = SITES_PER_BLOCK * 100000;
+  
+  vis->stack_site = (Site *)malloc(sizeof(Site) * vis->stack_sites_max);
   
   vis->coord[A] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_A);
   vis->coord[B] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_B);
   vis->coord[C] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_C);
   
+  vis->stress_type = SHEAR_STRESS;
+}
+#endif // MESH
+
+
+void ioReadCheckpoint (Vis *vis)
+{
+  FILE *system_config;
+  XDR xdr_config;  
+  
+  
+  system_config = fopen (vis->checkpoint, "r");
+  xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
+#ifndef MESH
+  xdr_short  (&xdr_config, &vis->selected_voxel[0]);
+  xdr_short  (&xdr_config, &vis->selected_voxel[1]);
+  xdr_short  (&xdr_config, &vis->selected_voxel[2]);
+  xdr_double (&xdr_config, &vis->selected_grey);
+  xdr_int    (&xdr_config, &vis->res_factor);
+#else
+  xdr_double (&xdr_config, &vis->seed_pos[0]);
+  xdr_double (&xdr_config, &vis->seed_pos[1]);
+  xdr_double (&xdr_config, &vis->seed_pos[2]);
+  xdr_int    (&xdr_config, &vis->res_factor);
+  
+  segFromMeshCoordsToSiteCoords (vis->seed_pos, vis->seed_site, vis);
+#endif
+  for (unsigned int n = 0; n < BOUNDARIES; n++)
+    {
+      xdr_int (&xdr_config, &vis->boundary[n].triangles);
+      
+      for (int m = 0; m < vis->boundary[n].triangles; m++)
+	{
+	  for (int k = 0; k < 3; k++)
+	    for (int l = 0; l < 3; l++)
+	      xdr_double (&xdr_config, &vis->boundary[n].triangle[m].v[k].pos[l]);
+	  
+	  editCalculateTriangleData (&vis->boundary[n].triangle[m]);
+	  
+	  if (n == INLET_BOUNDARY || n == OUTLET_BOUNDARY)
+	    {
+	      xdr_double (&xdr_config, &vis->boundary[n].triangle[m].pressure_avg);
+	      xdr_double (&xdr_config, &vis->boundary[n].triangle[m].pressure_amp);
+	      xdr_double (&xdr_config, &vis->boundary[n].triangle[m].pressure_phs);
+	    }
+	  if (n == INLET_BOUNDARY)
+	    {
+	      xdr_int (&xdr_config, &vis->boundary[n].triangle[m].normal_sign);
+	    }
+	}
+    }
+  xdr_destroy (&xdr_config);
 }
 
 
@@ -191,181 +412,40 @@ void ioWriteCheckpoint (Vis *vis)
   FILE *system_config;
   XDR xdr_config;
   
-  int k, l, m, n;
-  
-  unsigned int data;
-  
   
   system_config = fopen (vis->checkpoint, "w");
   xdrstdio_create (&xdr_config, system_config, XDR_ENCODE);
-  
-  xdr_float  (&xdr_config, &vis->slice_size);
-  xdr_float  (&xdr_config, &vis->pixel_size);
-  
-  float res_factor = vis->res_factor;
-  
-  xdr_float  (&xdr_config, &res_factor);
-  
-  xdr_int    (&xdr_config, &vis->input_voxels[0]);
-  xdr_int    (&xdr_config, &vis->input_voxels[1]);
-  xdr_int    (&xdr_config, &vis->input_voxels[2]);
-  
+#ifndef MESH
   xdr_short  (&xdr_config, &vis->selected_voxel[0]);
   xdr_short  (&xdr_config, &vis->selected_voxel[1]);
   xdr_short  (&xdr_config, &vis->selected_voxel[2]);
-  xdr_float  (&xdr_config, &vis->selected_grey);
-  
-  xdr_int    (&xdr_config, &vis->blocks[0]);
-  xdr_int    (&xdr_config, &vis->blocks[1]);
-  xdr_int    (&xdr_config, &vis->blocks[2]);
-  
-  for (n = 0; n < vis->input_voxels[0]*vis->input_voxels[1]*vis->input_voxels[2]; n++)
-    {
-      data = vis->voxel[n];
-      
-      xdr_u_int (&xdr_config, &data);
-    }
-  
-  for (n = 0; n < BOUNDARIES; n++)
+  xdr_double (&xdr_config, &vis->selected_grey);
+  xdr_int    (&xdr_config, &vis->res_factor);
+#else
+  xdr_double (&xdr_config, &vis->seed_pos[0]);
+  xdr_double (&xdr_config, &vis->seed_pos[1]);
+  xdr_double (&xdr_config, &vis->seed_pos[2]);
+  xdr_int    (&xdr_config, &vis->res_factor);
+#endif
+  for (unsigned int n = 0; n < BOUNDARIES; n++)
     {
       xdr_int (&xdr_config, &vis->boundary[n].triangles);
       
-      for (m = 0; m < vis->boundary[ n ].triangles; m++)
+      for (int m = 0; m < vis->boundary[ n ].triangles; m++)
 	{
-	  for (k = 0; k < 3; k++)
-	    for (l = 0; l < 3; l++)
-	      xdr_float (&xdr_config, &vis->boundary[n].triangle[m].v[k].pos[l]);
+	  for (int k = 0; k < 3; k++)
+	    for (int l = 0; l < 3; l++)
+	      xdr_double (&xdr_config, &vis->boundary[n].triangle[m].v[k].pos[l]);
 	  
 	  if (n == INLET_BOUNDARY || n == OUTLET_BOUNDARY)
 	    {
-	      xdr_float (&xdr_config, &vis->boundary[n].triangle[m].pressure_avg);
-	      xdr_float (&xdr_config, &vis->boundary[n].triangle[m].pressure_amp);
-	      xdr_float (&xdr_config, &vis->boundary[n].triangle[m].pressure_phs);
+	      xdr_double (&xdr_config, &vis->boundary[n].triangle[m].pressure_avg);
+	      xdr_double (&xdr_config, &vis->boundary[n].triangle[m].pressure_amp);
+	      xdr_double (&xdr_config, &vis->boundary[n].triangle[m].pressure_phs);
 	    }
-	}
-    }
-  xdr_destroy (&xdr_config);
-}
-
-
-void ioReadCheckpoint (Vis *vis)
-{
-  FILE *system_config;
-  XDR xdr_config;
-  
-  float res_factor;
-  
-  int k, l, m, n;
-  
-  unsigned int data;
-  
-  
-  system_config = fopen (vis->checkpoint, "r");
-  xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
-  
-  xdr_float  (&xdr_config, &vis->slice_size);
-  xdr_float  (&xdr_config, &vis->pixel_size);
-  xdr_float  (&xdr_config, &res_factor);
-  
-  vis->res_factor = res_factor;
-  
-  xdr_int    (&xdr_config, &vis->input_voxels[0]);
-  xdr_int    (&xdr_config, &vis->input_voxels[1]);
-  xdr_int    (&xdr_config, &vis->input_voxels[2]);
-  
-  xdr_short  (&xdr_config, &vis->selected_voxel[0]);
-  xdr_short  (&xdr_config, &vis->selected_voxel[1]);
-  xdr_short  (&xdr_config, &vis->selected_voxel[2]);
-  xdr_float  (&xdr_config, &vis->selected_grey);
-  
-  xdr_int    (&xdr_config, &vis->blocks[0]);
-  xdr_int    (&xdr_config, &vis->blocks[1]);
-  xdr_int    (&xdr_config, &vis->blocks[2]);
-  
-  vis->output_voxels[0] = vis->input_voxels[0] * vis->res_factor;
-  vis->output_voxels[1] = vis->input_voxels[1] * vis->res_factor;
-  vis->output_voxels[2] = (int)(vis->input_voxels[2] * (vis->slice_size/vis->pixel_size) *
-				(float)vis->output_voxels[0]/(float)vis->input_voxels[0]);
-  
-  for (l = 0; l < 3; l++)
-    vis->scale[l] = (float)vis->output_voxels[l] / (float)vis->input_voxels[l];
-  
-  for (l = 0; l < 3; l++)
-    vis->inv_scale[l] = 1.F / vis->scale[l];
-  
-  for (l = 0; l < 3; l++)
-    vis->sites[l] = vis->blocks[l] * BLOCK_SIZE;
-  
-  for (l = 0; l < 3; l++)
-    vis->dim[l] = vis->output_voxels[l];
-  
-  for (l = 0; l < 3; l++)
-    vis->half_dim[l] = 0.5F * vis->dim[l];
-  
-  vis->system_size = fmaxf(vis->dim[0], fmaxf(vis->dim[1], vis->dim[2]));
-  
-  vis->tot_blocks = vis->blocks[0] * vis->blocks[1] * vis->blocks[2];
-  
-  vis->voxel = (short int *)malloc(sizeof(short int) *
-				   vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]);
-  
-  int grey_min = +1000000000;
-  int grey_max = -1000000000;
-  
-  for (n = 0; n < vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; n++)
-    {
-      xdr_u_int (&xdr_config, &data);
-      
-      vis->voxel[n] = data;
-      
-      if (vis->voxel[l] < grey_min) grey_min = vis->voxel[l];
-      if (vis->voxel[l] > grey_max) grey_max = vis->voxel[l];
-    }
-  vis->grey_min = +1e9;
-  vis->grey_max = -1e9;
-  
-  for (l = 0; l < vis->input_voxels[0] * vis->input_voxels[1] * vis->input_voxels[2]; l++)
-    {
-      if (vis->voxel[l] == grey_min || vis->voxel[l] == grey_max)
-	{
-	  continue;
-	}
-      if (vis->voxel[l] < vis->grey_min) vis->grey_min = vis->voxel[l];
-      if (vis->voxel[l] > vis->grey_max) vis->grey_max = vis->voxel[l];
-    }
-  vis->block = (Block *)malloc(sizeof(Block) * vis->tot_blocks);
-  
-  vis->stack_sites_max = SITES_PER_BLOCK * 100000;
-  
-  vis->stack_site = (Site *)malloc(sizeof(Site) * vis->stack_sites_max);
-  
-  vis->screen_voxel = (ScreenVoxel *)malloc(sizeof(ScreenVoxel) * vis->screen_voxels * vis->screen_voxels);
-  
-  vis->coord[A] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_A);
-  vis->coord[B] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_B);
-  vis->coord[C] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_C);
-  
-  vis->boundary[ INLET_BOUNDARY  ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U<<BOUNDARY_ID_BITS));
-  vis->boundary[ OUTLET_BOUNDARY ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U<<BOUNDARY_ID_BITS));
-  vis->boundary[ WALL_BOUNDARY   ].triangle = (Triangle *)malloc(sizeof(Triangle) * (1U<<BOUNDARY_ID_BITS));
-  
-  for (n = 0; n < BOUNDARIES; n++)
-    {
-      xdr_int (&xdr_config, &vis->boundary[n].triangles);
-      
-      for (m = 0; m < vis->boundary[n].triangles; m++)
-	{
-	  for (k = 0; k < 3; k++)
-	    for (l = 0; l < 3; l++)
-	      xdr_float (&xdr_config, &vis->boundary[n].triangle[m].v[k].pos[l]);
-	  
-	  editCalculateTriangleData (&vis->boundary[n].triangle[m]);
-	  
-	  if (n == INLET_BOUNDARY || n == OUTLET_BOUNDARY)
+	  if (n == INLET_BOUNDARY)
 	    {
-	      xdr_float (&xdr_config, &vis->boundary[n].triangle[m].pressure_avg);
-	      xdr_float (&xdr_config, &vis->boundary[n].triangle[m].pressure_amp);
-	      xdr_float (&xdr_config, &vis->boundary[n].triangle[m].pressure_phs);
+	      xdr_int (&xdr_config, &vis->boundary[n].triangle[m].normal_sign);
 	    }
 	}
     }
@@ -377,11 +457,19 @@ void ioWriteConfig (Vis *vis)
 {
   FILE *system_config;
   XDR xdr_config;
-
+  
+#ifdef MESH
+  double boundary_nor[3], boundary_dist;
+  double wall_nor[3], wall_dist, cut_dist[14];
+#endif
+  double stress_type;
+  
   int i, j, k;
   int m, n;
   int are_all_solid_sites;
   int flag;
+  
+  short int site[3];
   
   Block *block_p;
   
@@ -389,9 +477,12 @@ void ioWriteConfig (Vis *vis)
   system_config = fopen (vis->output_config, "w");
   xdrstdio_create (&xdr_config, system_config, XDR_ENCODE);
   
-  double dummy = 1.0;
-  
-  xdr_double (&xdr_config, &dummy);
+#ifndef MESH
+  stress_type = VON_MISES_STRESS;
+#else
+  stress_type = SHEAR_STRESS;
+#endif
+  xdr_double (&xdr_config, &stress_type);
   xdr_int    (&xdr_config, &vis->blocks[0]);
   xdr_int    (&xdr_config, &vis->blocks[1]);
   xdr_int    (&xdr_config, &vis->blocks[2]);
@@ -401,9 +492,9 @@ void ioWriteConfig (Vis *vis)
   
   n = -1;
   
-  for (i = 0; i < vis->blocks[0]; i++)
-    for (j = 0; j < vis->blocks[1]; j++)
-      for (k = 0; k < vis->blocks[2]; k++)
+  for (i = 0; i < vis->blocks[0] * BLOCK_SIZE; i+=BLOCK_SIZE)
+    for (j = 0; j < vis->blocks[1] * BLOCK_SIZE; j+=BLOCK_SIZE)
+      for (k = 0; k < vis->blocks[2] * BLOCK_SIZE; k+=BLOCK_SIZE)
 	{
 	  block_p = &vis->block[++n];
 	  
@@ -432,10 +523,56 @@ void ioWriteConfig (Vis *vis)
 	  flag = 1;
 	  xdr_int (&xdr_config, &flag);
 	  
-	  for (m = 0; m < SITES_PER_BLOCK; m++)
-	    {
-	      xdr_u_int (&xdr_config, &block_p->site[m].cfg);
-	    }
+	  m = -1;
+	  
+	  for (site[0] = i; site[0] < i + BLOCK_SIZE; site[0]++)
+	    for (site[1] = j; site[1] < j + BLOCK_SIZE; site[1]++)
+	      for (site[2] = k; site[2] < k + BLOCK_SIZE; site[2]++)
+		{
+#ifndef MESH
+		  xdr_u_int (&xdr_config, &block_p->site[++m].cfg);
+#else
+		  int l;
+		  
+		  ++m;
+		  
+		  if (block_p->site[m].cfg != SOLID_TYPE &&
+		      block_p->site[m].cfg != FLUID_TYPE)
+		    {
+		      segCalculateBoundarySiteData (block_p->site[m].cfg, site,
+						    boundary_nor, &boundary_dist,
+						    wall_nor, &wall_dist, cut_dist, vis);
+		      
+		      if ((block_p->site[m].cfg & SITE_TYPE_MASK) != FLUID_TYPE &&
+			  wall_dist < sqrt(3.0))
+			{
+			  block_p->site[m].cfg |= PRESSURE_EDGE_MASK;
+			}
+		    }
+		  xdr_u_int (&xdr_config, &block_p->site[m].cfg);
+		  
+		  if (block_p->site[m].cfg != SOLID_TYPE &&
+		      block_p->site[m].cfg != FLUID_TYPE)
+		    {
+		      if (boundary_dist < sqrt(3.0))
+			{
+			  for (l = 0; l < 3; l++)
+			    xdr_double (&xdr_config, &boundary_nor[l]);
+			  
+			  xdr_double (&xdr_config, &boundary_dist);
+			}
+		      if (wall_dist < sqrt(3.0))
+			{
+			  for (l = 0; l < 3; l++)
+			    xdr_double (&xdr_config, &wall_nor[l]);
+			  
+			  xdr_double (&xdr_config, &wall_dist);
+			}
+		      for (l = 0; l < 14; l++)
+			xdr_double (&xdr_config, &cut_dist[l]);
+		    }
+#endif // MESH
+		}
 	}
   xdr_destroy (&xdr_config);
 }
@@ -445,31 +582,38 @@ void ioWritePars (Vis *vis)
 {
   FILE *pars = fopen (vis->output_pars, "w");
   
-  float nor[3];
+  double nor[3], pos[3];
   
   int l, n;
   
-  Triangle *t_p;
+  BoundaryTriangle *t_p;
   
   
   fprintf (pars, "%i\n", vis->boundary[ INLET_BOUNDARY ].triangles);
   
   for (n = 0; n < vis->boundary[ INLET_BOUNDARY ].triangles; n++)
     {
-      fprintf (pars, "%f %f %f\n",
-	       vis->boundary[ INLET_BOUNDARY ].triangle[n].pressure_avg,
-	       vis->boundary[ INLET_BOUNDARY ].triangle[n].pressure_amp,
-	       vis->boundary[ INLET_BOUNDARY ].triangle[n].pressure_phs);
+      t_p = &vis->boundary[ INLET_BOUNDARY ].triangle[n];
+      
+      editTriangleNormal (t_p, nor);
+      
+      if (t_p->normal_sign == 1)
+	{
+	  for (l = 0; l < 3; l++)
+	    nor[l] = -nor[l];
+	}
+      fprintf (pars, "%le %le %le\n", t_p->pressure_avg, t_p->pressure_amp, t_p->pressure_phs);
     }
   
   fprintf (pars, "%i\n", vis->boundary[ OUTLET_BOUNDARY ].triangles);
   
   for (n = 0; n < vis->boundary[ OUTLET_BOUNDARY ].triangles; n++)
     {
-      fprintf (pars, "%f %f %f\n",
-	       vis->boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_avg,
-	       vis->boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_amp,
-	       vis->boundary[ OUTLET_BOUNDARY ].triangle[n].pressure_phs);
+      t_p = &vis->boundary[ OUTLET_BOUNDARY ].triangle[n];
+      
+      editTriangleNormal (t_p, nor);
+      
+      fprintf (pars, "%le %le %le\n", t_p->pressure_avg, t_p->pressure_amp, t_p->pressure_phs);
     }
   for (n = 0; n < vis->boundary[ INLET_BOUNDARY ].triangles; n++)
     {
@@ -482,7 +626,31 @@ void ioWritePars (Vis *vis)
 	  for (l = 0; l < 3; l++)
 	    nor[l] = -nor[l];
 	}
-      fprintf (pars, "%f %f %f\n", nor[0], nor[1], nor[2]);
+      fprintf (pars, "%e %e %e\n", nor[0], nor[1], nor[2]);
+    }
+  for (n = 0; n < vis->boundary[ OUTLET_BOUNDARY ].triangles; n++)
+    {
+      t_p = &vis->boundary[ OUTLET_BOUNDARY ].triangle[n];
+      
+      editTriangleNormal (t_p, nor);
+      
+      fprintf (pars, "%e %e %e\n", nor[0], nor[1], nor[2]);
+    }
+ for (n = 0; n < vis->boundary[ INLET_BOUNDARY ].triangles; n++)
+    {
+      t_p = &vis->boundary[ INLET_BOUNDARY ].triangle[n];
+      
+      editTriangleCenter (t_p, pos);
+      
+      fprintf (pars, "%e %e %e\n", pos[0], pos[1], pos[2]);
+    }
+  for (n = 0; n < vis->boundary[ OUTLET_BOUNDARY ].triangles; n++)
+    {
+      t_p = &vis->boundary[ OUTLET_BOUNDARY ].triangle[n];
+      
+      editTriangleCenter (t_p, pos);
+      
+      fprintf (pars, "%e %e %e\n", pos[0], pos[1], pos[2]);
     }
   fclose (pars);
 }

@@ -1,3 +1,4 @@
+#ifndef MESH
 #ifndef DCM_INPUT
 #define DCM_INPUT
 
@@ -51,4 +52,4 @@ class DICOM_read {
 };
 
 #endif // DCM_INPUT
-
+#endif // MESH

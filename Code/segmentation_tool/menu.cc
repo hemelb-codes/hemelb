@@ -4,25 +4,20 @@
 void menuProcessMenuEvents (int option)
 {
   int b_id, t_id;
-  
+#ifndef MESH
   ScreenVoxel *voxel_p;
+#endif
   
   
-  if (option == CHANGE_SLICE)
+  if (option & (SEGMENT_1X|SEGMENT_2X|SEGMENT_3X|SEGMENT_4X|SEGMENT_5X|SEGMENT_6X))
     {
-      vis.menu.option = CHANGE_SLICE;
-    }
-  else if (option & (SEGMENT_1X|SEGMENT_2X|SEGMENT_3X|SEGMENT_4X|SEGMENT_5X|SEGMENT_6X))
-    {
-      float res_factor_temp = vis.res_factor;
-      
       if      (option == SEGMENT_1X) { vis.res_factor = 1; }
       else if (option == SEGMENT_2X) { vis.res_factor = 2; }
       else if (option == SEGMENT_3X) { vis.res_factor = 3; }
       else if (option == SEGMENT_4X) { vis.res_factor = 4; }
       else if (option == SEGMENT_5X) { vis.res_factor = 5; }
       else if (option == SEGMENT_6X) { vis.res_factor = 6; }
-      
+#ifndef MESH
       if (vis.mode == 0)
 	{
 	  vis.selected_voxel[0] = (vis.mouse.x[0] * vis.input_voxels[0]) / vis.viewport_pixels[0];
@@ -33,29 +28,34 @@ void menuProcessMenuEvents (int option)
 	  
 	  vis.selected_grey = vis.voxel[ VoxelId(vis.selected_voxel,vis.input_voxels) ];
 	}
-      editRescaleSystem (&vis);
-      editRescaleTriangles (vis.res_factor / res_factor_temp, &vis);
+#endif
+      editRescaleGrid (&vis);
       
       if (segSegmentation (&vis) == SUCCESS)
 	{
+#ifndef MESH
 	  visCalculateSceneCenter (&vis);
-	  visRescaleViewpoint (vis.res_factor / res_factor_temp, &vis);
+	  visProjection (&vis);
+#endif
+	  visDeleteCubeDisplayList ();
+	  visCreateCubeDisplayList (&vis);
 	}
       else
 	{
-	  float temp = vis.res_factor;
-	  vis.res_factor = res_factor_temp;
-	  res_factor_temp = temp;
-	  
-	  editRescaleSystem (&vis);
-	  editRescaleTriangles (vis.res_factor / res_factor_temp, &vis);
+	  editRescaleGrid (&vis);
 	  segSegmentation (&vis);
 	}
+    }
+#ifndef MESH
+  else if (option == CHANGE_SLICE)
+    {
+      vis.menu.option = CHANGE_SLICE;
     }
   else if (option == CHANGE_THRESHOLD)
     {
       vis.menu.option = CHANGE_THRESHOLD;
     }
+#endif
   else if (option & (ZOOM_SCENE|ROTATE_SCENE))
     {
       vis.menu.option = option;
@@ -63,22 +63,26 @@ void menuProcessMenuEvents (int option)
     }
   else if (option & (CREATE_INLET|CREATE_OUTLET|CREATE_WALL))
     {
+#ifndef MESH
       voxel_p = visScreenVoxelPtr (vis.mouse.x, &vis);
       
       if (voxel_p->site[0] < 0) return;
-      
+#endif
       if      (option == CREATE_INLET)  { b_id = INLET_BOUNDARY; }
       else if (option == CREATE_OUTLET) { b_id = OUTLET_BOUNDARY; }
       else if (option == CREATE_WALL)   { b_id = WALL_BOUNDARY; }
-      
+#ifndef MESH
       t_id = segCreateOptimisedTriangle (b_id, voxel_p->site, &vis);
-      
+#else
+      t_id = segCreateOptimisedTriangle (b_id, &vis);
+#endif
       if (t_id == -1) return;
-      
+      /*
       vis.mouse.b_id = b_id;
       vis.mouse.t_id = t_id;
+      */
     }
-  else if (option & (ZOOM_BOUNDARY|ROTATE_BOUNDARY))
+  else if (option & (SCALE_BOUNDARY|ROTATE_BOUNDARY))
     {
       vis.menu.option = option;
       
@@ -103,6 +107,7 @@ void menuProcessMenuEvents (int option)
     {
       vis.menu.option = option;
     }
+#ifndef MESH
   else if (option == CHANGE_VIS_MODE)
     {
       vis.menu.option = NULL_MENU_OPTION;
@@ -115,7 +120,7 @@ void menuProcessMenuEvents (int option)
 	  glutChangeToMenuEntry (10, "Create inlet", CREATE_INLET);
 	  glutChangeToMenuEntry (11, "Create outlet", CREATE_OUTLET);
 	  glutAddMenuEntry ("Create wall", CREATE_WALL);
-	  glutAddMenuEntry ("Scale boundary", ZOOM_BOUNDARY);
+	  glutAddMenuEntry ("Scale boundary", SCALE_BOUNDARY);
 	  glutAddMenuEntry ("Rotate boundary", ROTATE_BOUNDARY);
 	  glutAddMenuEntry ("Reverse inlet normal", REVERSE_INLET_NORMAL);
 	  glutAddMenuEntry ("Change pressure amplitude", CHANGE_PRESSURE_AMPLITUDE);
@@ -143,6 +148,7 @@ void menuProcessMenuEvents (int option)
 	    }
 	}
     }
+#endif
   else if (option == SAVE_DATA)
     {
       printf("Opening ppm file: ./snapshot.ppm\n");
@@ -162,7 +168,9 @@ void menuProcessMenuEvents (int option)
   else if (option == QUIT)
     {
       visEndBoundaries (&vis);
-      
+#ifdef MESH
+      rtEndRayTracing (&vis.mesh);
+#endif
       visEnd (&vis);
       
       exit(0);
@@ -177,7 +185,7 @@ void menuCreateMenu (Vis *vis)
   vis->mouse.b_id = -1;
   
   vis->menu.id = glutCreateMenu (menuProcessMenuEvents);
-  
+#ifndef MESH
   if (vis->mode == 0)
     {
       glutAddMenuEntry ("Segmentation 1X", SEGMENT_1X);
@@ -193,6 +201,7 @@ void menuCreateMenu (Vis *vis)
       glutAddMenuEntry ("Quit", QUIT);
     }
   else
+#endif
     {
       glutAddMenuEntry ("Segmentation 1X", SEGMENT_1X);
       glutAddMenuEntry ("Segmentation 2X", SEGMENT_2X);
@@ -200,20 +209,24 @@ void menuCreateMenu (Vis *vis)
       glutAddMenuEntry ("Segmentation 4X", SEGMENT_4X);
       glutAddMenuEntry ("Segmentation 5X", SEGMENT_5X);
       glutAddMenuEntry ("Segmentation 6X", SEGMENT_6X);
+#ifndef MESH
       glutAddMenuEntry ("Change threshold", CHANGE_THRESHOLD);
+#endif
       glutAddMenuEntry ("Zoom scene", ZOOM_SCENE);
       glutAddMenuEntry ("Rotate scene", ROTATE_SCENE);
       glutAddMenuEntry ("Create inlet", CREATE_INLET);
       glutAddMenuEntry ("Create outlet", CREATE_OUTLET);
       glutAddMenuEntry ("Create wall", CREATE_WALL);
-      glutAddMenuEntry ("Scale boundary", ZOOM_BOUNDARY);
+      glutAddMenuEntry ("Scale boundary", SCALE_BOUNDARY);
       glutAddMenuEntry ("Rotate boundary", ROTATE_BOUNDARY);
       glutAddMenuEntry ("Reverse inlet normal", REVERSE_INLET_NORMAL);
       glutAddMenuEntry ("Change pressure amplitude", CHANGE_PRESSURE_AMPLITUDE);
       glutAddMenuEntry ("Change mean pressure", CHANGE_MEAN_PRESSURE);
       glutAddMenuEntry ("Change pressure phase", CHANGE_PRESSURE_PHASE);
       glutAddMenuEntry ("Delete boundary", DELETE_BOUNDARY);
+#ifndef MESH
       glutAddMenuEntry ("2D rendering", CHANGE_VIS_MODE);
+#endif
       glutAddMenuEntry ("Save data", SAVE_DATA);
       glutAddMenuEntry ("Quit", QUIT);
     }

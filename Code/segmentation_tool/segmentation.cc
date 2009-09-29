@@ -1,18 +1,35 @@
 #include "segmentation.h"
 
 
+#ifndef MESH
 void segFromVoxelCoordsToSiteCoords (short int voxel[3], short int site[3], Vis *vis)
 {
   for (int l = 0; l < 3; l++)
-    site[l] = (int)(voxel[l] * vis->scale[l]);
+    site[l] = (int)(voxel[l] * vis->res_factor);
 }
 
 
 void segFromSiteCoordsToVoxelCoords (short int site[3], short int voxel[3], Vis *vis)
 {
   for (int l = 0; l < 3; l++)
-    voxel[l] = (int)(site[l] * vis->inv_scale[l]);
+    voxel[l] = (int)(site[l] / vis->res_factor);
 }
+
+#else // MESH
+
+void segFromMeshCoordsToSiteCoords (double pos[3], short int site[3], Vis *vis)
+{
+  for (int l = 0; l < 3; l++)
+    site[l] = (int)((pos[l] + vis->half_dim[l]) * vis->res_factor / vis->mesh.voxel_size);
+}
+
+
+void segFromSiteCoordsToMeshCoords (short int site[3], double pos[3], Vis *vis)
+{
+  for (int l = 0; l < 3; l++)
+    pos[l] = site[l] * vis->mesh.voxel_size / vis->res_factor - vis->half_dim[l];
+}
+#endif // MESH
 
 
 void segFromSiteCoordsToGridCoords (short int site[3], int *b_id, int *s_id, Vis *vis)
@@ -102,11 +119,11 @@ int segIsSuperficialSite (short int site[3], Vis *vis)
 }
 
 
-int segRayVsDisc (Triangle *t_p, float x1[3], float x2[3], float t_max, float *t)
+int segRayVsDisc (BoundaryTriangle *t_p, double x1[3], double x2[3], double t_max, double *t)
 {
-  float px1[3], px2[3];
-  float px3[3], px4[3];
-  float x[2];
+  double px1[3], px2[3];
+  double px3[3], px4[3];
+  double x[2];
   
   
   for (int l = 0; l < 3; l++)
@@ -114,18 +131,18 @@ int segRayVsDisc (Triangle *t_p, float x1[3], float x2[3], float t_max, float *t
       px1[l] = x1[l] - t_p->pos[l];
       px2[l] = x2[l] - t_p->pos[l];
     }
-  AntiRotate (px1,
+  AntiRotate (px1[0], px1[1], px1[2],
 	      t_p->d.sin_longitude, t_p->d.cos_longitude,
 	      t_p->d.sin_latitude,  t_p->d.cos_latitude,
-	      px3);
+	      &px3[0], &px3[1], &px3[2]);
   
-  AntiRotate (px2,
+  AntiRotate (px2[0], px2[1], px2[2],
 	      t_p->d.sin_longitude, t_p->d.cos_longitude,
 	      t_p->d.sin_latitude,  t_p->d.cos_latitude,
-	      px4);
+	      &px4[0], &px4[1], &px4[2]);
   
-  if ((px3[2] > 0.0F && px4[2] > 0.0F) ||
-      (px3[2] < 0.0F && px4[2] < 0.0F))
+  if ((px3[2] > 0.0 && px4[2] > 0.0) ||
+      (px3[2] < 0.0 && px4[2] < 0.0))
     {
       return !SUCCESS;
     }
@@ -135,8 +152,8 @@ int segRayVsDisc (Triangle *t_p, float x1[3], float x2[3], float t_max, float *t
     {
       return !SUCCESS;
     }
-  x[0] = (1.0F - *t) * px3[0] + *t * px4[0];
-  x[1] = (1.0F - *t) * px3[1] + *t * px4[1];
+  x[0] = (1.0 - *t) * px3[0] + *t * px4[0];
+  x[1] = (1.0 - *t) * px3[1] + *t * px4[1];
   
   if (x[0]*x[0] + x[1]*x[1] > t_p->d.r2)
     {
@@ -146,7 +163,8 @@ int segRayVsDisc (Triangle *t_p, float x1[3], float x2[3], float t_max, float *t
 }
 
 
-float segInterpolatedGrey (short int site[3], Vis *vis)
+#ifndef MESH
+double segInterpolatedGrey (short int site[3], Vis *vis)
 {
   if (vis->res_factor == 1)
     {
@@ -154,12 +172,12 @@ float segInterpolatedGrey (short int site[3], Vis *vis)
 	  site[1] >= vis->input_voxels[1] ||
 	  site[2] >= vis->input_voxels[2])
 	{
-	  return 1.0e+30F;
+	  return 1.0e+30;
 	}
-      return (float)vis->voxel[ VoxelId(site,vis->input_voxels) ];
+      return (double)vis->voxel[ VoxelId(site,vis->input_voxels) ];
     }
-  float grey[2][2][2];
-  float x[3];
+  double grey[2][2][2];
+  double x[3];
   
   int voxel[2][3], v[3];
   int i, j, k, l;
@@ -167,8 +185,8 @@ float segInterpolatedGrey (short int site[3], Vis *vis)
   
   for (l = 0; l < 3; l++)
     {
-      voxel[0][l] = (int)(x[l] = (float)site[l] * vis->inv_scale[l]);
-      x[l] -= (float)voxel[0][l];
+      voxel[0][l] = (int)(x[l] = site[l] / vis->res_factor);
+      x[l] -= (double)voxel[0][l];
       voxel[1][l] = min(voxel[0][l] + 1, vis->input_voxels[l] - 1);
     }
   for (k = 0; k < 2; k++)
@@ -183,27 +201,27 @@ float segInterpolatedGrey (short int site[3], Vis *vis)
             {
 	      v[0] = voxel[i][0];
 	      
-	      grey[k][j][i] = (float)vis->voxel[ VoxelId(v,vis->input_voxels) ];
+	      grey[k][j][i] = (double)vis->voxel[ VoxelId(v,vis->input_voxels) ];
 	    }
 	}
     }
-  float grey_00x = (1.0F - x[0]) * grey[0][0][0] + x[0] * grey[0][0][1];
-  float grey_01x = (1.0F - x[0]) * grey[0][1][0] + x[0] * grey[0][1][1];
-  float grey_10x = (1.0F - x[0]) * grey[1][0][0] + x[0] * grey[1][0][1];
-  float grey_11x = (1.0F - x[0]) * grey[1][1][0] + x[0] * grey[1][1][1];
+  double grey_00x = (1.0 - x[0]) * grey[0][0][0] + x[0] * grey[0][0][1];
+  double grey_01x = (1.0 - x[0]) * grey[0][1][0] + x[0] * grey[0][1][1];
+  double grey_10x = (1.0 - x[0]) * grey[1][0][0] + x[0] * grey[1][0][1];
+  double grey_11x = (1.0 - x[0]) * grey[1][1][0] + x[0] * grey[1][1][1];
   
-  float grey_0y = (1.0F - x[1]) * grey_00x + x[1] * grey_01x;
-  float grey_1y = (1.0F - x[1]) * grey_10x + x[1] * grey_11x;
+  double grey_0y = (1.0 - x[1]) * grey_00x + x[1] * grey_01x;
+  double grey_1y = (1.0 - x[1]) * grey_10x + x[1] * grey_11x;
   
-  return (1.0F - x[2]) * grey_0y + x[2] * grey_1y;
+  return (1.0 - x[2]) * grey_0y + x[2] * grey_1y;
 }
 
 
-int segEstimateNormal (short int site[3], float nor[], Vis *vis)
+int segEstimateNormal (short int site[3], double nor[], Vis *vis)
 {
-  float org[3];
-  float x[3];
-  float temp;
+  double org[3];
+  double x[3];
+  double temp;
   
   int block_id, site_id;
   int is_front_advancing;
@@ -231,8 +249,8 @@ int segEstimateNormal (short int site[3], float nor[], Vis *vis)
   
   for (l = 0; l < 3; l++)
     {
-      org[l] = (float)site[l];
-      nor[l] = 0.F;
+      org[l] = (double)site[l];
+      nor[l] = 0.0;
     }
   for (l = 0; l < 3; l++)
     vis->coord[A][0].x[l] = site[l];
@@ -289,9 +307,9 @@ int segEstimateNormal (short int site[3], float nor[], Vis *vis)
 	      ++vis->coords[B];
 	      
 	      for (l = 0; l < 3; l++)
-		x[l] = (float)neigh[l] - org[l];
+		x[l] = (double)neigh[l] - org[l];
 	      
-	      temp = 1.0 / sqrtf(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
+	      temp = 1.0 / sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
 	      
 	      for (l = 0; l < 3; l++)
 		nor[l] += x[l] * temp;
@@ -302,7 +320,7 @@ int segEstimateNormal (short int site[3], float nor[], Vis *vis)
       vis->coord[B] = temp;
       vis->coords[A] = vis->coords[B];
     }
-  temp = 1.0 / sqrtf(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
+  temp = 1.0 / sqrt(nor[0]*nor[0] + nor[1]*nor[1] + nor[2]*nor[2]);
   
   for (l = 0; l < 3; l++)
     nor[l] *= temp;
@@ -311,10 +329,10 @@ int segEstimateNormal (short int site[3], float nor[], Vis *vis)
 }
 
 
-void segEstimateDiameter (short int site[3], float nor[3], float *diameter, Vis *vis)
+void segEstimateDiameter (short int site[3], double nor[3], double *diameter, Vis *vis)
 {
-  float segment_length = 0.25F;
-  float org[3], x[3];
+  double segment_length = 0.5;
+  double org[3], x[3];
   
   int iters;
   int l;
@@ -326,8 +344,8 @@ void segEstimateDiameter (short int site[3], float nor[3], float *diameter, Vis 
   
   for (l = 0; l < 3; l++)
     {
-      org[l] = (float)site[l];
-      neigh[l] = (int)(org[l] + 2.0F * nor[l]);
+      org[l] = (double)site[l];
+      neigh[l] = (int)(org[l] + 2.0 * nor[l]);
     }
   if (neigh[0] < 0 || neigh[0] >= vis->sites[0] ||
       neigh[1] < 0 || neigh[1] >= vis->sites[1] ||
@@ -386,18 +404,63 @@ void segEstimateDiameter (short int site[3], float nor[3], float *diameter, Vis 
       *diameter = iters * segment_length;
     }
 }
+#else // MESH
 
 
+int segEstimateExtrema (Hit *first_hit, Hit *second_hit, Vis *vis)
+{
+  first_hit->previous_triangle_id = -1;
+  
+  if (rtTracePrimaryRay (first_hit, vis) != SUCCESS)
+    {
+      return !SUCCESS;
+    }
+  second_hit->previous_triangle_id = first_hit->triangle_id;
+  
+  if (rtTraceSecondaryRay (first_hit, second_hit, vis) != SUCCESS)
+    {
+      return !SUCCESS;
+    }
+  return SUCCESS;
+}
+
+
+void segEstimateDiameter (double *diameter, Vis *vis)
+{
+  double dx[3];
+  
+  int l;
+  
+  Hit first_hit, second_hit;
+  
+  
+  first_hit.previous_triangle_id = -1;
+  
+  rtTracePrimaryRay (&first_hit, vis);
+  
+  second_hit.previous_triangle_id = first_hit.triangle_id;
+  
+  rtTraceSecondaryRay (&first_hit, &second_hit, vis);
+  
+  for (l = 0; l < 3; l++)
+    dx[l] = second_hit.pos[l] - first_hit.pos[l];
+  
+  *diameter = sqrt(ScalarProd (dx, dx));
+}
+#endif // MESH
+
+
+#ifndef MESH
 int segCreateOptimisedTriangle (unsigned int site_type, short int site[3], Vis *vis)
 {
-  float triangle_factor = 2.F;
-  float org[3], nor[3];
-  float x[3];
-  float longitude, latitude;
-  float triangle_size;
-  float diameter;
+  double triangle_factor = 2.5;
+  double org[3], nor[3];
+  double x[3];
+  double longitude, latitude;
+  double triangle_size;
+  double diameter;
   
-  int k, l, m, n;
+  int l, m, n;
   int iters, iters_max;
   int longitude_id, latitude_id;
   int t_id;
@@ -406,7 +469,7 @@ int segCreateOptimisedTriangle (unsigned int site_type, short int site[3], Vis *
   
   Site *site_p, *neigh_site_p;
   
-  Triangle *t_p;
+  BoundaryTriangle *t_p;
   
   
   if (vis->boundary[ site_type ].triangles == (int)(1U << BOUNDARY_ID_BITS))
@@ -419,14 +482,14 @@ int segCreateOptimisedTriangle (unsigned int site_type, short int site[3], Vis *
     }
   segEstimateDiameter (site, nor, &diameter, vis);
   
-  if (diameter < 0.F)
+  if (diameter < 0.0)
     {
       return -1;
     }
   for (l = 0; l < 3; l++)
     {
-      org[l] = (float)site[l];
-      org[l] = 0.5F * (org[l] + (org[l] + diameter * nor[l]));
+      org[l] = (double)site[l];
+      org[l] = 0.5 * (org[l] + (org[l] + diameter * nor[l]));
       site[l] = (int)org[l];
     }
   site_p = segSitePtr (site, vis);
@@ -435,19 +498,22 @@ int segCreateOptimisedTriangle (unsigned int site_type, short int site[3], Vis *
   longitude_id = 0;
   latitude_id = 0;
   
-  latitude = 0.F;
+  latitude = 0.0;
   
   for (n = 0; n < 180; n++)
     {
-      longitude = 0.F;
+      longitude = 0.0;
       
       for (m = 0; m < 360; m++)
 	{
-	  x[0] = 0.0F;
-	  x[1] = 0.0F;
-	  x[2] = 1.0F;
+	  x[0] = 0.0;
+	  x[1] = 0.0;
+	  x[2] = 1.0;
 	  
-	  Rotate (x, longitude, latitude, nor);
+	  Rotate (x[0], x[1], x[2],
+		  sin(longitude), cos(longitude),
+		  sin(latitude), cos(latitude),
+		  &nor[0], &nor[1], &nor[2]);
 	  
 	  for (l = 0; l < 3; l++)
 	    x[l] = org[l];
@@ -485,14 +551,14 @@ int segCreateOptimisedTriangle (unsigned int site_type, short int site[3], Vis *
 	    }
 	  longitude += DEG_TO_RAD;
 	}
-      latitude += 2.0F * DEG_TO_RAD;
+      latitude += 2.0 * DEG_TO_RAD;
     }
   if (iters_max == 0)
     {
       return -1;
     }
   longitude = longitude_id * DEG_TO_RAD;
-  latitude = latitude_id * 2.0F * DEG_TO_RAD;
+  latitude = latitude_id * 2.0 * DEG_TO_RAD;
   
   t_id = vis->boundary[ site_type ].triangles;
   t_p = &vis->boundary[ site_type ].triangle[ t_id ];
@@ -502,31 +568,153 @@ int segCreateOptimisedTriangle (unsigned int site_type, short int site[3], Vis *
   for (l = 0; l < 3; l++)
     org[l] -= vis->half_dim[l];
   
-  x[0] = 0.0F;
-  x[1] = 2.0F * triangle_size;
-  x[2] = 0.0F;
+  Rotate (0.0, 2.0 * triangle_size, 0.0,
+	  sin(longitude), cos(longitude),
+	  sin(latitude), cos(latitude),
+	  &t_p->v[0].pos[0], &t_p->v[0].pos[1], &t_p->v[0].pos[2]);
   
-  Rotate (x, longitude, latitude, t_p->v[0].pos);
+  Rotate (-(triangle_size * sqrt(3.0)), -triangle_size, 0.0,
+	  sin(longitude), cos(longitude),
+	  sin(latitude), cos(latitude),
+	  &t_p->v[1].pos[0], &t_p->v[1].pos[1], &t_p->v[1].pos[2]);
   
-  x[0] = -(triangle_size * sqrtf(3.0F));
-  x[1] = -triangle_size;
-  x[2] = 0.0F;
+  Rotate (+(triangle_size / sqrt(3.0)), -triangle_size, 0.0,
+	  sin(longitude), cos(longitude),
+	  sin(latitude), cos(latitude),
+	  &t_p->v[2].pos[0], &t_p->v[2].pos[1], &t_p->v[2].pos[2]);
   
-  Rotate (x, longitude, latitude, t_p->v[1].pos);
-  
-  x[0] = +(triangle_size / sqrtf(3.0F));
-  x[1] = -triangle_size;
-  x[2] = 0.0F;
-  
-  Rotate (x, longitude, latitude, t_p->v[2].pos);
-  
-  for (k = 0; k < 3; k++)
+  for (m = 0; m < 3; m++)
     for (l = 0; l < 3; l++)
-      t_p->v[k].pos[l] += org[l];
+      t_p->v[m].pos[l] += org[l];
   
-  t_p->pressure_avg = 80.0F;
-  t_p->pressure_amp = 0.0F;
-  t_p->pressure_phs = 0.0F;
+  t_p->pressure_avg = 80.0;
+  t_p->pressure_amp = 0.0;
+  t_p->pressure_phs = 0.0;
+  
+  t_p->normal_sign = 1;
+  
+  editCalculateTriangleData (t_p);
+  
+  ++vis->boundary[ site_type ].triangles;
+  
+  return t_id;
+}
+#else // MESH
+
+
+int segCreateOptimisedTriangle (unsigned int site_type, Vis *vis)
+{
+  double triangle_factor = 2.5;
+  double dx[3];
+  double longitude, latitude;
+  double triangle_size;
+  double diameter;
+  double t_max;
+  
+  int l, m, n;
+  int longitude_id, latitude_id;
+  int t_id;
+  
+  BoundaryTriangle *t_p;
+  
+  Hit hit, first_hit, second_hit;
+  
+  Ray ray;
+  
+  
+  if (vis->boundary[ site_type ].triangles == (int)(1U << BOUNDARY_ID_BITS))
+    {
+      return -1;
+    }
+  first_hit.previous_triangle_id = -1;
+  
+  if (rtTracePrimaryRay (&first_hit, vis) != SUCCESS)
+    {
+      return -1;
+    }
+  second_hit.previous_triangle_id = first_hit.triangle_id;
+  
+  if (rtTraceSecondaryRay (&first_hit, &second_hit, vis) != SUCCESS)
+    {
+      return -1;
+    }
+  for (l = 0; l < 3; l++)
+    ray.org[l] = 0.5 * (first_hit.pos[l] + second_hit.pos[l]);
+  
+  for (l = 0; l < 3; l++)
+    dx[l] = second_hit.pos[l] - first_hit.pos[l];
+  
+  diameter = sqrt(ScalarProd (dx, dx));
+  
+  t_max = -1.0;
+  longitude_id = 0;
+  latitude_id = 0;
+  
+  latitude = 0.0;
+  
+  for (n = 0; n < 180; n++)
+    {
+      longitude = 0.0;
+      
+      for (m = 0; m < 360; m++)
+	{
+	  Rotate (0.0, 0.0, 1.0,
+		  sin(longitude), cos(longitude),
+		  sin(latitude), cos(latitude),
+		  &ray.dir[0], &ray.dir[1], &ray.dir[2]);
+	  
+	  ray.t_max = 1.0e+30;
+	  ray.t_near = 0.0;
+	  
+	  hit.triangle_id = -1;
+	  
+	  if (rtTraceRay (&ray, &hit, &vis->mesh) == SUCCESS)
+	    {
+	      if (hit.t > t_max)
+		{
+		  t_max = hit.t;
+		  longitude_id = m;
+		  latitude_id = n;
+		}
+	    }
+	  longitude += DEG_TO_RAD;
+	}
+      latitude += 2.0 * DEG_TO_RAD;
+    }
+  if (t_max < 0.0)
+    {
+      return -1;
+    }
+  longitude = longitude_id * DEG_TO_RAD;
+  latitude = latitude_id * 2.0 * DEG_TO_RAD;
+  
+  t_id = vis->boundary[ site_type ].triangles;
+  t_p = &vis->boundary[ site_type ].triangle[ t_id ];
+
+  triangle_size = triangle_factor * diameter;
+  
+  Rotate (0.0, 2.0 * triangle_size, 0.0,
+	  sin(longitude), cos(longitude),
+	  sin(latitude), cos(latitude),
+	  &t_p->v[0].pos[0], &t_p->v[0].pos[1], &t_p->v[0].pos[2]);
+  
+  Rotate (-(triangle_size * sqrt(3.0)), -triangle_size, 0.0,
+	  sin(longitude), cos(longitude),
+	  sin(latitude), cos(latitude),
+	  &t_p->v[1].pos[0], &t_p->v[1].pos[1], &t_p->v[1].pos[2]);
+  
+  Rotate (+(triangle_size / sqrt(3.0)), -triangle_size, 0.0,
+	  sin(longitude), cos(longitude),
+	  sin(latitude), cos(latitude),
+	  &t_p->v[2].pos[0], &t_p->v[2].pos[1], &t_p->v[2].pos[2]);
+  
+  for (m = 0; m < 3; m++)
+    for (l = 0; l < 3; l++)
+      t_p->v[m].pos[l] += ray.org[l];
+  
+  t_p->pressure_avg = 80.0;
+  t_p->pressure_amp = 0.0;
+  t_p->pressure_phs = 0.0;
   
   t_p->normal_sign = 1;
   
@@ -538,35 +726,184 @@ int segCreateOptimisedTriangle (unsigned int site_type, short int site[3], Vis *
 }
 
 
-int segIsSegmentIntercepted (short int site[3], int dir, Site *site_p, Vis *vis)
+void segCalculateBoundarySiteData (unsigned int site_cfg, short int site[3], double boundary_nor[3],
+				   double *boundary_dist, double wall_nor[3], double *wall_dist,
+				   double cut_dist[14], Vis *vis)
 {
-  float x1[3], x2[3];
-  float t, t_max;
+  double triangle_nor[3], hit_dir[3], ray_end[3];
+  double dist, scale;
+  
+  int is_close_to_wall;
+  int dir, l;
+  
+  unsigned int boundary_id;
+  
+  BoundaryTriangle *t_p;
+  
+  Ray ray;
+  
+  Hit hit;
+  
+  
+  for (l = 0; l < 3; l++)
+    wall_nor[l] = 0.0;
+  
+  *boundary_dist = 1.0e+30;
+  *wall_dist = 1.0e+30;
+  
+  is_close_to_wall = 0;
+  
+  if ((site_cfg & SITE_TYPE_MASK) != FLUID_TYPE)
+    {
+      boundary_id = (site_cfg & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+      
+      if ((site_cfg & SITE_TYPE_MASK) == INLET_TYPE)
+	{
+	  t_p = &vis->boundary[INLET_BOUNDARY].triangle[boundary_id];
+	}
+      else
+	{
+	  t_p = &vis->boundary[OUTLET_BOUNDARY].triangle[boundary_id];
+	}
+    }
+  scale = vis->mesh.voxel_size / vis->res_factor;
+  
+  for (l = 0; l < 3; l++)
+    ray.org[l] = vis->seed_pos[l] + (site[l] - vis->seed_site[l]) * scale;
+  
+  for (dir = 0; dir < 14; dir++)
+    {
+      cut_dist[dir] = 1.0e+30;
+      
+      if ((site_cfg & SITE_TYPE_MASK) != FLUID_TYPE)
+	{
+	  for (l = 0; l < 3; l++)
+	    ray_end[l] = ray.org[l] + e[ dir*3+l ] * scale;
+	  
+	  if (segRayVsDisc (t_p, ray.org, ray_end, 1.0, &dist) == SUCCESS)
+	    {
+	      cut_dist[dir] = dist;
+	    }
+	}
+      for (l = 0; l < 3; l++)
+	ray.dir[l] = e[ dir*3+l ] * scale;
+      
+      ray.t_max = fmin(1.0, cut_dist[dir]);
+      ray.t_near = 0.0;
+      
+      hit.previous_triangle_id = -1;
+      
+      if (rtTraceRay (&ray, &hit, &vis->mesh) == SUCCESS)
+	{
+	  is_close_to_wall = 1;
+	  
+	  cut_dist[dir] = hit.t;
+	  
+	  for (l = 0; l < 3; l++)
+	    triangle_nor[l] = vis->mesh.triangle[ hit.triangle_id ].nor[l];
+	  
+	  if (ScalarProd (triangle_nor, ray.dir) < 0.0)
+	    {
+	      for (l = 0; l < 3; l++)
+		triangle_nor[l] = -triangle_nor[l];
+	    }
+	  for (l = 0; l < 3; l++)
+	    wall_nor[l] += triangle_nor[l];
+	}
+    }
+  if ((site_cfg & SITE_TYPE_MASK) != FLUID_TYPE)
+    {
+      for (l = 0; l < 3; l++)
+	boundary_nor[l] = t_p->nor[l];
+      
+      for (l = 0; l < 3; l++)
+	hit_dir[l] = t_p->pos[l] - ray.org[l];
+      
+      *boundary_dist = fabs(ScalarProd (hit_dir, t_p->nor)) / scale;
+    }
+  if (is_close_to_wall)
+    {
+      ray.t_max = 1.0e+30;
+      ray.t_near = 0.0;
+      
+      for (l = 0; l < 3; l++)
+	ray.dir[l] = wall_nor[l];
+      
+      for (l = 0; l < 3; l++)
+	wall_nor[l] /= sqrt(ScalarProd (wall_nor, wall_nor));
+      
+      hit.previous_triangle_id = -1;
+      
+      rtTraceRay (&ray, &hit, &vis->mesh);
+      
+      for (l = 0; l < 3; l++)
+	hit_dir[l] = hit.pos[l] - ray.org[l];
+      
+      *wall_dist = sqrt(ScalarProd (hit_dir, hit_dir)) / scale;
+    }
+}
+#endif // MESH
+
+
+#ifndef MESH
+int segIsSegmentIntercepted (short int site[3], int dir, Site *site_p, Vis *vis)
+#else
+int segIsSegmentIntercepted (short int site[3], int dir, Site *site_p, Hit *hit, Vis *vis)
+#endif
+{
+  double x1[3], x2[3];
+  double t, t_max;
   
   int b_id, t_id;
+  int l, m, n;
   
   
-  for (int l = 0; l < 3; l++)
-    x2[l] = (x1[l] = site[l] - vis->half_dim[l]) + e[ dir*3+l ];
-  
+#ifndef MESH
+  for (l = 0; l < 3; l++)
+    {
+      x1[l] = site[l] / vis->res_factor - vis->half_dim[l];
+      x2[l] = x1[l] + e[ dir*3+l ] / vis->res_factor;
+    }
+#else
+  for (l = 0; l < 3; l++)
+    {
+      x1[l] = vis->seed_pos[l] + (site[l] - vis->seed_site[l]) * (vis->mesh.voxel_size / vis->res_factor);
+      x2[l] = x1[l] + e[ dir*3+l ] * (vis->mesh.voxel_size / vis->res_factor);
+    }
+#endif
   t_max = 1.0;
   b_id = -1;
   
-  for (int n = 0; n < BOUNDARIES; n++)
-    for (int m = 0; m < vis->boundary[ n ].triangles; m++)
+  for (n = 0; n < BOUNDARIES; n++)
+    for (m = 0; m < vis->boundary[ n ].triangles; m++)
       {
-	if (segRayVsDisc (&vis->boundary[n].triangle[m], x1, x2, t_max, &t))
-	{
-	  t_max = t;
-	  b_id = n;
-	  t_id = m;
-	}
-    }
-  if (b_id == -1)
+	if (segRayVsDisc (&vis->boundary[n].triangle[m], x1, x2, t_max, &t) == SUCCESS)
+	  {
+	    t_max = t;
+	    b_id = n;
+	    t_id = m;
+	  }
+      }
+#ifdef MESH
+  Ray ray;
+  
+  for (l = 0; l < 3; l++)
+    ray.org[l] = x1[l];
+  
+  for (l = 0; l < 3; l++)
+    ray.dir[l] = x2[l] - x1[l];
+  
+  ray.t_max = t_max;
+  ray.t_near = 0.0;
+  
+  hit->previous_triangle_id = -1;
+  
+  if (rtTraceRay (&ray, hit, &vis->mesh) == SUCCESS)
     {
-      return !SUCCESS;
+      return SUCCESS;
     }
-  else
+#endif
+  if (b_id != -1)
     {
       if (b_id == INLET_BOUNDARY)
 	{
@@ -578,12 +915,13 @@ int segIsSegmentIntercepted (short int site[3], int dir, Site *site_p, Vis *vis)
 	}
       return SUCCESS;
     }
+  return !SUCCESS;
 }
 
 
 int segSegmentation (Vis *vis)
 {
-  float seconds = myClock ();
+  double seconds = myClock ();
   
   int block_id, site_id;
   int is_front_advancing, iters;
@@ -594,6 +932,9 @@ int segSegmentation (Vis *vis)
   Site *site_p;
   
   Block *block_p;
+#ifdef MESH
+  Hit hit, first_hit, second_hit;
+#endif
   
   
   for (i = 0; i < vis->tot_blocks; i++)
@@ -604,7 +945,7 @@ int segSegmentation (Vis *vis)
   vis->stack_sites = 0;
   vis->coords[A] = 0;
   vis->coords[C] = 0;
-  
+#ifndef MESH
   segFromVoxelCoordsToSiteCoords (vis->selected_voxel, site, vis);
   
   if (segInterpolatedGrey (site, vis) < vis->selected_grey)
@@ -612,6 +953,20 @@ int segSegmentation (Vis *vis)
       vis->segmentation_time = myClock () - seconds;
       return SUCCESS;
     }
+#else // MESH
+  if (rtTracePrimaryRay (&first_hit, vis) != SUCCESS ||
+      rtTraceSecondaryRay (&first_hit, &second_hit, vis) != SUCCESS)
+    {
+      return !SUCCESS;
+    }
+  for (l = 0; l < 3; l++)
+    vis->seed_pos[l] = 0.5 * (first_hit.pos[l] + second_hit.pos[l]);
+  
+  segFromMeshCoordsToSiteCoords (vis->seed_pos, vis->seed_site, vis);
+  
+  for (l = 0; l < 3; l++)
+    site[l] = vis->seed_site[l];
+#endif // MESH
   segFromSiteCoordsToGridCoords (site, &block_id, &site_id, vis);
   
   (block_p = &vis->block[ block_id ])->site = segStackSitePtr (vis);
@@ -663,11 +1018,18 @@ int segSegmentation (Vis *vis)
 		{
 		  continue;
 		}
+#ifndef MESH
 	      if (segInterpolatedGrey (neigh, vis) < vis->selected_grey ||
 		  segIsSegmentIntercepted (site, dir, site_p, vis) == SUCCESS)
 		{
 		  continue;
 		}
+#else
+	      if (segIsSegmentIntercepted (site, dir, site_p, &hit, vis) == SUCCESS)
+		{
+		  continue;
+		}
+#endif
 	      if (vis->coords[B] >= COORD_BUFFER_SIZE_B) return !SUCCESS;
 	      
 	      is_front_advancing = 1;
@@ -710,9 +1072,10 @@ int segSegmentation (Vis *vis)
 }
 
 
+#ifndef MESH
 int segUpdateSegmentation (Vis *vis)
 {
-  float seconds = myClock ();
+  double seconds = myClock ();
   
   int block_id, site_id;
   int is_front_advancing;
@@ -810,6 +1173,7 @@ int segUpdateSegmentation (Vis *vis)
   
   return SUCCESS;
 }
+#endif // MESH
 
 
 void segSetBoundaryConfigurations (Vis *vis)
