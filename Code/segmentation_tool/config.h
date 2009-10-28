@@ -3,7 +3,8 @@
 
 #include <GL/glut.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <vector>
 #include "math.h"
