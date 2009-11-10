@@ -31,9 +31,7 @@
 #include "colourpalette.h"
 #include "fileutils.h"
 
-
-#define BCAST_FREQ   10
-
+#define BCAST_FREQ   1
 
 int cycle_id;
 int time_step;
@@ -44,7 +42,6 @@ bool updated_mouse_coords;
 #endif
 
 FILE *timings_ptr;
-
 
 int SelectFile (const struct direct *entry)
 {
@@ -57,7 +54,6 @@ int SelectFile (const struct direct *entry)
       return 1;
     }
 }
-
 
 int DeleteFiles (char *pathname)
 {
@@ -74,7 +70,6 @@ int DeleteFiles (char *pathname)
     }
   return 0;
 }
-
 
 int main (int argc, char *argv[])
 {
@@ -308,38 +303,37 @@ int main (int argc, char *argv[])
 #ifndef NO_STEER
 	      int render_for_network_stream = 0;
 	      
-	      if (net.id == 0)
-		{
-		  //  int lock_return = pthread_mutex_trylock ( &LOCK );
-		  
-		  sem_wait (&connected_sem);
-		  bool local_connected = connected;
-		  sem_post (&connected_sem);
-		  
-		  if (local_connected)
-		    {
-		      //int lock_return = sem_trywait ( &nrl );
-		      //render_for_network_stream = (lock_return == 0) ? 1 : 0;
-                      render_for_network_stream = (sending_frame == 0) ? 1 : 0;
-		    }
-		  else
-		    {
-		      render_for_network_stream = 0;
-		    }
-		}
+			/* In the following two if blocks we do the core magic to ensure we only render
+			 when (1) we are not sending a frame or (2) we need to output to disk */
+			
+			if(net.id == 0) {		  
+				sem_wait (&connected_sem);
+				bool local_connected = connected;
+				sem_post (&connected_sem);
+				if(local_connected) {
+					render_for_network_stream = (sending_frame == 0) ? 1 : 0;
+				} else {
+					render_for_network_stream = 0;
+				}
+			}
 
-	      if (total_time_steps%BCAST_FREQ == 0)
-		{
-		  if (net.id == 0) doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
+			if(total_time_steps%BCAST_FREQ == 0) {
+				if(net.id == 0)
+					doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
+				if(net.id == 0)
+					sem_wait (&steering_var_lock);
+				UpdateSteerableParameters (&doRendering, &vis, &lbm);
+				if(net.id == 0)
+					sem_post (&steering_var_lock);
+			}
 
-		  if (net.id == 0) sem_wait (&steering_var_lock);
-		  
-		  UpdateSteerableParameters (&doRendering, &vis, &lbm);
-		  
-		  if (net.id == 0) sem_post (&steering_var_lock);
-		}
-
-                // if(net.id == 0) printf("time step %i render_netwokr_stream %i rendering %i\n", time_step, render_for_network_stream, doRendering);
+			/* for debugging purposes we want to ensure we capture the variables in a single
+			 instant of time since variables might be altered by the thread half way through?
+			 This is to be done. */			
+			
+			if(net.id == 0 && time_step%100==0)
+				printf("time step %i sending_frame %i render_network_stream %i write_snapshot_image %i rendering %i\n",
+					   time_step, sending_frame, render_for_network_stream, write_snapshot_image, doRendering);
 
 #endif // NO_STEER
 
