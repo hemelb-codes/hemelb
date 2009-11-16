@@ -1,8 +1,15 @@
 #ifndef CONFIG
 #define CONFIG
 
-#include <GL/glut.h>
-#include <stdio.h>
+#ifdef HEMELB_OSX
+	#include <GLUT/glut.h>
+	#include <OpenGL/gl.h>
+	#include <OpenGL/glu.h>
+#else
+	#include <GL/glut.h>
+#endif
+
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
