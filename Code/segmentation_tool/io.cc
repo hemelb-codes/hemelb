@@ -1,3 +1,6 @@
+#include <cstdio>
+#include <rpc/rpc.h>
+
 #include "io_dicom.h"
 #include "io.h"
 
