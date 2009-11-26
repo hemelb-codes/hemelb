@@ -4,6 +4,12 @@
 #include "io_dicom.h"
 #include "io.h"
 
+#ifdef USE_TIFFLIB
+#include <tiffio.h>
+#include <cstdlib>
+#include <cstring>
+#endif // USE_TIFFLIB
+
 
 #ifdef MESH
 unsigned int PRESSURE_EDGE_MASK = 1U << 31U;
@@ -659,6 +665,58 @@ void ioWritePars (Vis *vis)
 }
 
 
+#ifdef USE_TIFFLIB
+
+void ioSaveWindowImage (char *file_name) {
+	
+	TIFF *tif = TIFFOpen(file_name, "w");
+	
+	int pix_x, pix_y;
+	int i, j;
+	
+	char *image_data = NULL;  
+	char *image_data_p = NULL;
+	char *row_data;
+	
+	glReadBuffer (GL_FRONT);
+	
+	pix_x = screen.pixels[0];
+	pix_y = screen.pixels[1];
+	
+	image_data = (char *)malloc(sizeof(char) * pix_x * pix_y * 3);
+	
+	row_data = (char *)malloc(sizeof(char) * pix_x * 3);
+	
+	image_data_p = image_data;
+	
+	for (j = 0; j < pix_y; j++) {
+		glReadPixels (0, j, pix_x, 1, GL_RGB, GL_UNSIGNED_BYTE, row_data);
+		for (i = pix_x-1; i >=0; i--) {
+			*image_data_p++ = row_data[ i*3+2 ];
+			*image_data_p++ = row_data[ i*3+1 ];
+			*image_data_p++ = row_data[ i*3 ];
+		}
+    }
+	
+	free((char *)row_data);
+	
+	TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, pix_x);
+	TIFFSetField(tif, TIFFTAG_IMAGELENGTH, pix_y);
+	TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 3);
+	TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 8);
+	TIFFSetField(tif, TIFFTAG_ORIENTATION, ORIENTATION_BOTRIGHT);
+	TIFFSetField(tif, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
+	TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);	
+	
+	TIFFWriteEncodedStrip(tif, 0, image_data, pix_x*pix_y*3);
+
+	free((char *)image_data);
+	
+	TIFFClose(tif);
+}
+
+#else // USE_TIFFLIB
+
 void ioSaveWindowImage (char *file_name)
 {
   FILE *ppm_image_file = fopen (file_name, "wb");
@@ -669,7 +727,6 @@ void ioSaveWindowImage (char *file_name)
   unsigned char *image_data = NULL;  
   unsigned char *image_data_p = NULL;
   unsigned char *row_data;
-  
   
   glReadBuffer (GL_FRONT);
   
@@ -706,3 +763,8 @@ void ioSaveWindowImage (char *file_name)
   
   fclose (ppm_image_file);
 }
+
+#endif // USE_TIFFLIB
+
+
+
