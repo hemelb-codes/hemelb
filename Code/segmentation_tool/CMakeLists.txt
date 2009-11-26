@@ -2,7 +2,7 @@ PROJECT(segtool C CXX)
 
 IF(UNIX)
 	IF(APPLE)
-		ADD_DEFINITIONS(-DHEMELB_OSX)
+		ADD_DEFINITIONS(-DHEMELB_OSX -DUSE_TIFFLIB)
 	ENDIF(APPLE)
 ENDIF(UNIX)
 		
@@ -12,6 +12,7 @@ ENDIF(UNIX)
 cmake_minimum_required(VERSION 2.6)
 INCLUDE(FindGLUT)
 INCLUDE(FindOpenGL)
+INCLUDE(FindTIFF)
 ADD_DEFINITIONS(-DMESH)
 
 #FIND_PACKAGE(ITK)
@@ -29,5 +30,5 @@ rt.cc segmentation.cc timing.cc usage.cc vis.cc io_dicom.cc)
 #TARGET_LINK_LIBRARIES(segtool ITKAlgorithms ITKBasicFilters ITKCommon ITKFEM
 #ITKIO ITKNrrdIO ITKNumerics ITKSpatialObject ITKStatistics ITKniftiio ITKznz)
 
-target_link_libraries(segtool ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
+target_link_libraries(segtool ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${TIFF_LIBRARIES})
 
