@@ -669,7 +669,7 @@ void ioWritePars (Vis *vis)
 
 void ioSaveWindowImage (char *file_name) {
 	
-	TIFF *tif = TIFFOpen(file_name, "w");
+	TIFF *tif = TIFFOpen("snapshot.tif", "w");
 	
 	int pix_x, pix_y;
 	int i, j;
