@@ -823,23 +823,30 @@ void segCalculateBoundarySiteData (unsigned int site_cfg, short int site[3], dou
     }
   if (is_close_to_wall)
     {
-      ray.t_max = 1.0e+30;
-      ray.t_near = 0.0;
+      float norm = sqrt(ScalarProd (wall_nor, wall_nor));
+      
+      for (l = 0; l < 3; l++)
+	wall_nor[l] /= norm;
       
       for (l = 0; l < 3; l++)
 	ray.dir[l] = wall_nor[l];
-      
-      for (l = 0; l < 3; l++)
-	wall_nor[l] /= sqrt(ScalarProd (wall_nor, wall_nor));
-      
+     
+      ray.t_max = 1.0e+30;
+      ray.t_near = 0.0;
+       
       hit.previous_triangle_id = -1;
       
-      rtTraceRay (&ray, &hit, &vis->mesh);
-      
-      for (l = 0; l < 3; l++)
-	hit_dir[l] = hit.pos[l] - ray.org[l];
-      
-      *wall_dist = sqrt(ScalarProd (hit_dir, hit_dir)) / scale;
+      if (rtTraceRay (&ray, &hit, &vis->mesh) == SUCCESS)
+        {
+          for (l = 0; l < 3; l++)
+	    hit_dir[l] = hit.pos[l] - ray.org[l];
+          
+          *wall_dist = sqrt(ScalarProd (hit_dir, hit_dir)) / scale;
+        }
+      else
+        {
+          *wall_dist = 1.0e+30F;
+        }
     }
 }
 #endif // MESH
@@ -1226,7 +1233,7 @@ void segSetBoundaryConfigurations (Vis *vis)
 		      
 		      neigh_site_p = segSitePtr (neigh, vis);
 		      
-		      if (!(neigh_site_p == NULL || neigh_site_p->cfg == SOLID_TYPE))
+		      if (neigh_site_p != NULL && neigh_site_p->cfg == SOLID_TYPE)
 			{
 			  boundary_config |= (1U << dir);
 			}

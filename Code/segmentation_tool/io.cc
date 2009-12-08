@@ -541,45 +541,45 @@ void ioWriteConfig (Vis *vis)
 #ifndef MESH
 		  xdr_u_int (&xdr_config, &block_p->site[++m].cfg);
 #else
-		  int l;
-		  
-		  ++m;
-		  
-		  if (block_p->site[m].cfg != SOLID_TYPE &&
-		      block_p->site[m].cfg != FLUID_TYPE)
+		  if (block_p->site[++m].cfg == SOLID_TYPE)
+		    {
+                      continue;
+                    }
+                  if (block_p->site[m].cfg != FLUID_TYPE)
 		    {
 		      segCalculateBoundarySiteData (block_p->site[m].cfg, site,
 						    boundary_nor, &boundary_dist,
 						    wall_nor, &wall_dist, cut_dist, vis);
 		      
-		      if ((block_p->site[m].cfg & SITE_TYPE_MASK) != FLUID_TYPE &&
-			  wall_dist < sqrt(3.0))
+		      if (wall_dist < sqrt(3.0))
 			{
 			  block_p->site[m].cfg |= PRESSURE_EDGE_MASK;
 			}
 		    }
 		  xdr_u_int (&xdr_config, &block_p->site[m].cfg);
 		  
-		  if (block_p->site[m].cfg != SOLID_TYPE &&
-		      block_p->site[m].cfg != FLUID_TYPE)
+		  if (block_p->site[m].cfg == FLUID_TYPE)
 		    {
-		      if (boundary_dist < sqrt(3.0))
-			{
-			  for (l = 0; l < 3; l++)
-			    xdr_double (&xdr_config, &boundary_nor[l]);
-			  
-			  xdr_double (&xdr_config, &boundary_dist);
-			}
-		      if (wall_dist < sqrt(3.0))
-			{
-			  for (l = 0; l < 3; l++)
-			    xdr_double (&xdr_config, &wall_nor[l]);
-			  
-			  xdr_double (&xdr_config, &wall_dist);
-			}
-		      for (l = 0; l < 14; l++)
-			xdr_double (&xdr_config, &cut_dist[l]);
+                      continue;
+                    }
+		  if ((block_p->site[m].cfg & SITE_TYPE_MASK) == INLET_TYPE ||
+                      (block_p->site[m].cfg & SITE_TYPE_MASK) == OUTLET_TYPE)
+	            {
+	              for (int l = 0; l < 3; l++)
+			xdr_double (&xdr_config, &boundary_nor[l]);
+	              
+	              xdr_double (&xdr_config, &boundary_dist);
+	            }
+		  if ((block_p->site[m].cfg & SITE_TYPE_MASK) == FLUID_TYPE ||
+                      (block_p->site[m].cfg & PRESSURE_EDGE_MASK))
+	            {
+	              for (int l = 0; l < 3; l++)
+			xdr_double (&xdr_config, &wall_nor[l]);
+		      
+		      xdr_double (&xdr_config, &wall_dist);
 		    }
+		  for (int l = 0; l < 14; l++)
+	            xdr_double (&xdr_config, &cut_dist[l]);
 #endif // MESH
 		}
 	}
