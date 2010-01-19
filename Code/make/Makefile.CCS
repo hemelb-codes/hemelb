@@ -1,14 +1,14 @@
-CC=icpc
+CC=mpic++.openmpi
 
-MPIRUN=/home/steven/lammpi/bin/mpirun
+#MPIRUN=/home/steven/lammpi/bin/mpirun
 
 EXE=hemelb
 
 DEFS=-DCCS
 
-FLAGS=-O3 -xT -ipo -pthread -Wunused
+FLAGS=-O3 -pthread -Wunused
 
-INCLUDES=-I/home/steven/lammpi/include
+#INCLUDES=-I/home/steven/lammpi/include
 
-LIBS=-L/home/steven/lammpi/lib -llammpio -llammpi++ -lmpi -llam -ldl
+#LIBS=-L/home/steven/lammpi/lib -llammpio -llammpi++ -lmpi -llam -ldl
 
