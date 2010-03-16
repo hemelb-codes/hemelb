@@ -562,8 +562,8 @@ void ioWriteConfig (Vis *vis)
 		    {
                       continue;
                     }
-		  if ((block_p->site[m].cfg & SITE_TYPE_MASK) == INLET_TYPE ||
-                      (block_p->site[m].cfg & SITE_TYPE_MASK) == OUTLET_TYPE)
+		  if (((block_p->site[m].cfg & SITE_TYPE_MASK) & INLET_TYPE) ||
+                      ((block_p->site[m].cfg & SITE_TYPE_MASK) & OUTLET_TYPE))
 	            {
 	              for (int l = 0; l < 3; l++)
 			xdr_double (&xdr_config, &boundary_nor[l]);
