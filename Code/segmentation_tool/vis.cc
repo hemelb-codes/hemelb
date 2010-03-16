@@ -69,7 +69,7 @@ void visOpenWindow (int pixels_x, int pixels_y)
   
   glutInitDisplayMode (GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
   glutInitWindowPosition (0, 0);
-  glutInitWindowSize (pixels_x - 1, pixels_y - 1);
+  glutInitWindowSize (pixels_x, pixels_y);
   
   glutCreateWindow (" ");
   
@@ -1026,6 +1026,8 @@ void visInit (int argc, char *argv[], Vis *vis)
   
   visInitBoundaries (vis);
   
+  ioReadConfig (vis);
+  
   if (is_checkpoint)
     {
       ioReadCheckpoint (vis);
@@ -1034,7 +1036,6 @@ void visInit (int argc, char *argv[], Vis *vis)
     {
       vis->res_factor = 1;
     }
-  ioReadConfig (vis);
 #ifdef MESH
   rtInitRayTracing (&vis->mesh);
 #endif
