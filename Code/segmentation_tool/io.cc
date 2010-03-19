@@ -538,10 +538,9 @@ void ioWriteConfig (Vis *vis)
 	    for (site[1] = j; site[1] < j + BLOCK_SIZE; site[1]++)
 	      for (site[2] = k; site[2] < k + BLOCK_SIZE; site[2]++)
 		{
-#ifndef MESH
 		  xdr_u_int (&xdr_config, &block_p->site[++m].cfg);
-#else
-		  if (block_p->site[++m].cfg == SOLID_TYPE)
+#ifdef MESH
+		  if (block_p->site[m].cfg == SOLID_TYPE)
 		    {
                       continue;
                     }
@@ -556,8 +555,6 @@ void ioWriteConfig (Vis *vis)
 			  block_p->site[m].cfg |= PRESSURE_EDGE_MASK;
 			}
 		    }
-		  xdr_u_int (&xdr_config, &block_p->site[m].cfg);
-		  
 		  if (block_p->site[m].cfg == FLUID_TYPE)
 		    {
                       continue;
