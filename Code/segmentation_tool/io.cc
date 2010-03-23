@@ -191,11 +191,31 @@ void ioReadConfig (Vis *vis)
 
 void ioReadConfig (Vis *vis)
 {
-  double min_x[3], max_x[3];
-  double ctr_x[3];
-  double dx[3];
+  /* Read triangles from the STL file, into vis->mesh. The triangles
+   * are scaled up by 1% (presumably to prevent leaks?) and translated
+   * such that the centre of mass (assuming equal triangle mass) is at
+   * the origin.
+   *  
+   * It then does some set up for the voxels that I don't yet
+   * understand.
+   *  
+   * An STL file looks like:
+   *  
+   * solid ascii
+   *   facet normal -0.518317 -0.799163 -0.304445
+   *     outer loop
+   *       vertex 36.9201 20.5062 0.419999
+   *       vertex 36.8551 20.5519 0.410923
+   *       vertex 36.8745 20.5816 0.299708
+   *     endloop
+   *   endfacet
+   *   ... more facets ...
+   * endsolid
+   */
+  double min_x[3], max_x[3];	// Bounding box of mesh?
+  double dx[3];			// Unknown
   
-  int l, m, n;
+  int l, m, n;			// Indices
   
   char key_word[16];
   
@@ -204,27 +224,31 @@ void ioReadConfig (Vis *vis)
   
   vis->mesh.triangles_max = 10000;
   vis->mesh.triangle = (MeshTriangle *)malloc(sizeof(MeshTriangle) * vis->mesh.triangles_max);
-  vis->mesh.triangles = 0;
+  vis->mesh.triangles = 0;	// This counts the number of triangles
   
   for (l = 0; l < 3; l++)
     {
       min_x[l] =  1.0e+30;
       max_x[l] = -1.0e+30;
-      ctr_x[l] =  0.0;
+      vis->mesh.centre[l] =  0.0;
     }
   input_file.open(vis->input_file);
   
+  // Scan to the first facet
   while (strcmp(key_word, "facet"))
     input_file >> key_word;
   
+  // Until the end of the STL
   while (strcmp(key_word, "endsolid"))
     {
+      // If we've run out of triangle space, alloc some more
       if (vis->mesh.triangles == vis->mesh.triangles_max)
 	{
 	  vis->mesh.triangles_max *= 2;
 	  vis->mesh.triangle = (MeshTriangle *)realloc(vis->mesh.triangle,
 						       sizeof(MeshTriangle) * vis->mesh.triangles_max);
 	}
+      // Scan to the normal entry
       while (strcmp(key_word, "normal"))
 	input_file >> key_word;
       
@@ -232,67 +256,79 @@ void ioReadConfig (Vis *vis)
       input_file >> vis->mesh.triangle[ vis->mesh.triangles ].nor[1];
       input_file >> vis->mesh.triangle[ vis->mesh.triangles ].nor[2];
       
+      // Normalise the normal
       for (l = 0; l < 3; l++)
 	vis->mesh.triangle[ vis->mesh.triangles ].nor[l] /=
 	  sqrt(ScalarProd (vis->mesh.triangle[ vis->mesh.triangles ].nor, vis->mesh.triangle[ vis->mesh.triangles ].nor));
       
+      // Scan to loop
       while (strcmp(key_word, "loop"))
 	input_file >> key_word;
       
-      for (m = 0; m < 3; m++)
+      for (m = 0; m < 3; m++)	// Must be a triangle
 	{
-	  input_file >> key_word;
+	  input_file >> key_word; // Ditch "vertex", the read the coords
 	  input_file >> vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[0];
 	  input_file >> vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[1];
 	  input_file >> vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[2];
 	}
-      float triangle_ctr_x[3];
+      float triangle_ctr_x[3];	// This is the centroid, strictly
       
       for (l = 0; l < 3; l++)
 	triangle_ctr_x[l] = 0.0;
       
-      for (m = 0; m < 3; m++)
-	for (l = 0; l < 3; l++)
+      for (m = 0; m < 3; m++)	// vertices
+	for (l = 0; l < 3; l++)	// dimensions
 	  {
 	    triangle_ctr_x[l] += vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l];
 	  }
       for (l = 0; l < 3; l++)
 	triangle_ctr_x[l] /= 3.0;
-      
-      for (m = 0; m < 3; m++)
-	for (l = 0; l < 3; l++)
+      // Got the centroid
+
+      for (m = 0; m < 3; m++) // vertices
+	{
+	for (l = 0; l < 3; l++)	// dimensions
 	  {
+	    // I think this makes the triangle 1% larger, keeping the same centroid
 	    vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l] = triangle_ctr_x[l] +
 	      1.01 * (vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l] - triangle_ctr_x[l]);
 	  }
+	}
+      
       for (m = 0; m < 3; m++)
 	{
 	  for (l = 0; l < 3; l++)
 	    {
+	      // Update the min & max
 	      min_x[l] = fmin(min_x[l], vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l]);
 	      max_x[l] = fmax(max_x[l], vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l]);
-	      ctr_x[l] += vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l];
+	      // Increment running total of positions.
+	      vis->mesh.centre[l] += vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l];
 	    }
 	}
       ++vis->mesh.triangles;
       
-      input_file >> key_word;
-      input_file >> key_word;
-      input_file >> key_word;
+      input_file >> key_word;	// endloop
+      input_file >> key_word;	// endfacet
+      input_file >> key_word;	// facet
     }
   input_file.close();
   
+  // Compute average from running tot.
   for (l = 0; l < 3; l++)
-    ctr_x[l] /= vis->mesh.triangles * 3;
+    vis->mesh.centre[l] /= vis->mesh.triangles * 3;
   
   vis->mesh.voxel_size = 0.0;
   
-  for (n = 0; n < vis->mesh.triangles; n++)
+  for (n = 0; n < vis->mesh.triangles; n++) // for each tri
     {
-      for (m = 0; m < 3; m++)
-	for (l = 0; l < 3; l++)
-	  vis->mesh.triangle[n].v[m].pos[l] -= ctr_x[l];
+      // Translate such that vis->mesh.centre is the origin
+      for (m = 0; m < 3; m++)	// vertex
+	for (l = 0; l < 3; l++)	// dimen
+	  vis->mesh.triangle[n].v[m].pos[l] -= vis->mesh.centre[l];
       
+      // Add perimeter of tri to vis->mesh.voxel_size
       for (l = 0; l < 3; l++)
 	dx[l] = vis->mesh.triangle[n].v[1].pos[l] - vis->mesh.triangle[n].v[0].pos[l];
       
@@ -308,32 +344,42 @@ void ioReadConfig (Vis *vis)
       
       vis->mesh.voxel_size += sqrtf(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
     }
+  // Now the average side length of a tri
   vis->mesh.voxel_size /= (vis->mesh.triangles * 3);
-  
+    
+  // Set number of voxels in along each axis to 1.5 * extent of
+  // surface, over the size of a voxel.
   for (l = 0; l < 3; l++)
     vis->mesh.voxels[l] = (int)ceil(1.5 * (max_x[l] - min_x[l]) / vis->mesh.voxel_size);
   
+  // This is the total number of voxels
   vis->mesh.voxels[3] = vis->mesh.voxels[0] * vis->mesh.voxels[1] * vis->mesh.voxels[2];
   
   vis->mesh.voxel = (Voxel *)malloc(sizeof(Voxel) * vis->mesh.voxels[3]);
   
+  // Dimensions of voxels in STL units
   for (l = 0; l < 3; l++)
     vis->mesh.dim[l] = vis->mesh.voxel_size * vis->mesh.voxels[l];
-  
+
   for (l = 0; l < 3; l++)
     vis->mesh.half_dim[l] = 0.5 * vis->mesh.dim[l];
-      
+       
   for (l = 0; l < 3; l++)
     vis->input_voxels[l] = vis->mesh.voxels[l];
   
   for (l = 0; l < 3; l++)
     vis->output_voxels[l] = vis->input_voxels[l] * vis->res_factor;
   
+  // Number of superblocks
   for (l = 0; l < 3; l++)
     vis->blocks[l] = vis->output_voxels[l] >> SHIFT;
   
-  for (l = 0; l < 3; l++)
-    if ((vis->blocks[l] << SHIFT) < vis->output_voxels[l]) ++vis->blocks[l];
+  // Deal with the fact that bit shifting right is implicitly integer
+  // division by a power of 2 (i.e. truncates)
+  for (l = 0; l < 3; l++) {
+    if ((vis->blocks[l] << SHIFT) < vis->output_voxels[l])
+      ++vis->blocks[l];
+  }
   
   for (l = 0; l < 3; l++)
     vis->sites[l] = vis->blocks[l] * BLOCK_SIZE;
@@ -661,6 +707,35 @@ void ioWritePars (Vis *vis)
   fclose (pars);
 }
 
+
+void ioWriteCoords(Vis *vis) {
+  // Write the required information to translate between output
+  // coordinate system and the input STL file.
+  FILE *coords = fopen (vis->output_coords, "w");
+  if (coords == NULL) {
+    printf("Cannot open output file for coordinates: '%s'\n", vis->output_coords);
+    return;
+  }
+  
+  fprintf(coords, "voxel_size = %e\n",
+	  vis->mesh.voxel_size);
+  fprintf(coords, "res_factor = %d\n",
+	  vis->res_factor);
+  fprintf(coords, "voxels =  %d, %d, %d\n",
+	  vis->mesh.voxels[0], vis->mesh.voxels[1], vis->mesh.voxels[2]);
+  fprintf(coords, "dim =  %e, %e, %e\n", 
+	  vis->mesh.dim[0], vis->mesh.dim[1], vis->mesh.dim[2]);
+  fprintf(coords, "half_dim = %e, %e, %e\n", 
+	  vis->mesh.half_dim[0], vis->mesh.half_dim[1], vis->mesh.half_dim[2]);
+  fprintf(coords, "mesh_centre = %e, %e, %e\n",
+	  vis->mesh.centre[0], vis->mesh.centre[1], vis->mesh.centre[2]);
+  fprintf(coords, "seed_pos = %e, %e, %e\n",
+	  vis->seed_pos[0], vis->seed_pos[1], vis->seed_pos[2]);
+  fprintf(coords, "seed_site = %d, %d, %d\n",
+	  vis->seed_site[0], vis->seed_site[1], vis->seed_site[2]);
+
+  fclose(coords);
+}
 
 #ifdef USE_TIFFLIB
 

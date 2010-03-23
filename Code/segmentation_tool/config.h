@@ -164,6 +164,8 @@ struct Mesh
   
   int voxels[4];
   int triangles, triangles_max;
+  
+  double centre[3];
 };
 #endif // MESH
 
@@ -279,6 +281,7 @@ struct Vis
   char *output_config;
   char *output_pars;
   char *checkpoint;
+  char *output_coords;
 #ifndef MESH
   vector<string> file_list;
 #endif

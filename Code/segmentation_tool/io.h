@@ -29,6 +29,7 @@ void ioReadConfig (Vis *vis);
 void ioWriteCheckpoint (Vis *vis);
 void ioReadCheckpoint (Vis *vis);
 void ioWriteConfig (Vis *vis);
+void ioWriteCoords (Vis *vis);
 void ioWritePars (Vis *vis);
 void ioSaveWindowImage (char *file_name);
 
