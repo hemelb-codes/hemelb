@@ -162,6 +162,9 @@ void menuProcessMenuEvents (int option)
       printf("Opening output config file: %s\n", vis.output_config);
       ioWriteConfig (&vis);
       
+      printf("Opening output coordinates file: %s\n", vis.output_coords);
+      ioWriteCoords (&vis);
+      
       printf("Opening checkpoint file: %s\n", vis.checkpoint);
       ioWriteCheckpoint (&vis);
     }

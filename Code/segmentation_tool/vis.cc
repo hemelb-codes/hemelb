@@ -1010,7 +1010,7 @@ void visInit (int argc, char *argv[], Vis *vis)
   
   vis->mode = 0;
 #else
-  if (argc != 6)
+  if (argc != 7)
     {
       visUsage(argv[0]);
       exit(1);
@@ -1018,14 +1018,16 @@ void visInit (int argc, char *argv[], Vis *vis)
   vis->input_file    = argv[1];
   vis->output_config = argv[2];
   vis->output_pars   = argv[3];
-  vis->checkpoint    = argv[4];
-  is_checkpoint      = atoi(argv[5]);
+  vis->output_coords = argv[4];
+  vis->checkpoint    = argv[5];
+  is_checkpoint      = atoi(argv[6]);
   
   vis->mode = 1;
 #endif
   
   visInitBoundaries (vis);
   
+  vis->res_factor = 1;
   ioReadConfig (vis);
   
   if (is_checkpoint)
@@ -1036,6 +1038,7 @@ void visInit (int argc, char *argv[], Vis *vis)
     {
       vis->res_factor = 1;
     }
+  
 #ifdef MESH
   rtInitRayTracing (&vis->mesh);
 #endif
