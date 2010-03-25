@@ -508,8 +508,46 @@ void ioWriteCheckpoint (Vis *vis)
 }
 
 
-void ioWriteConfig (Vis *vis)
-{
+void ioWriteConfig (Vis *vis) {
+  /* Write the config data for HemeLB.  Format (from reverse
+   * engineering HemeLB code) is as follows.
+   *
+   * All values encoded using XDR format. Uses int, double and u_int.
+   * 
+   * System parameters:
+   *   double stress_type
+   *   int blocks_x
+   *   int blocks_y
+   *   int blocks_z
+   *   int block_size 
+   *
+   * For each block (all blocks_x * blocks_y * blocks_z of them): 
+   *
+   *   int flag (indicates presence of non-solid sites in the block)
+   *   
+   *   If flag == 0 go to next block
+   *
+   *   Otherwise for each site in the block (all block_size^3):
+   *
+   *     u_int site_data -- this is a bit field which indicates site
+   *     type (OR with SITE_TYPE_MASK to get bits zero and one; 00 =
+   *     solid, 01 = fluid, 10 = inlet, 11 = outlet) or edgeness (set
+   *     bit with PRESSURE_EDGE_MASK)
+   * 
+   *     If solid or simple fluid, go to next site
+   *     
+   *     If inlet or outlet (irrespective of edge state) {
+   *       double boundary_normal[3]
+   *       double boundary_dist
+   *     }
+   *
+   *     If edge bit set {
+   *       double wall_normal[3]
+   *       double wall_dist
+   *     }
+   *     
+   *     double cut_distances[14]
+   */
   FILE *system_config;
   XDR xdr_config;
   
@@ -523,7 +561,8 @@ void ioWriteConfig (Vis *vis)
   int m, n;
   int are_all_solid_sites;
   int flag;
-  
+
+  unsigned int *site_type;
   short int site[3];
   
   Block *block_p;
@@ -547,88 +586,103 @@ void ioWriteConfig (Vis *vis)
   
   n = -1;
   
-  for (i = 0; i < vis->blocks[0] * BLOCK_SIZE; i+=BLOCK_SIZE)
-    for (j = 0; j < vis->blocks[1] * BLOCK_SIZE; j+=BLOCK_SIZE)
-      for (k = 0; k < vis->blocks[2] * BLOCK_SIZE; k+=BLOCK_SIZE)
-	{
-	  block_p = &vis->block[++n];
-	  
+  for (i = 0; i < vis->blocks[0] * BLOCK_SIZE; i+=BLOCK_SIZE) {
+    for (j = 0; j < vis->blocks[1] * BLOCK_SIZE; j+=BLOCK_SIZE) {
+      for (k = 0; k < vis->blocks[2] * BLOCK_SIZE; k+=BLOCK_SIZE) {
+	n++;
+	
+	/* flag == 1 indicates that the current macro block contains
+	 * non-solid sites (i.e. ones where we have to something).
+	 */
+	block_p = &vis->block[n];
+	if (block_p->site == NULL) {
+	  /* If block pointer is null, there are no fluid sites.
+	   */
 	  flag = 0;
-	  
-	  if (block_p->site == NULL)
-	    {
-	      xdr_int (&xdr_config, &flag);
-	      continue;
-	    }
+	} else {
+	  /* If not, we must check the whole block.*/
 	  are_all_solid_sites = 1;
-	  
-	  for (m = 0; m < SITES_PER_BLOCK; m++)
-	    {
-	      if (block_p->site[m].cfg != SOLID_TYPE)
-		{
-		  are_all_solid_sites = 0;
-		  break;
-		}
-	    }	      
-	  if (are_all_solid_sites)
-	    {
-	      xdr_int (&xdr_config, &flag);
-	      continue;
+	  for (m = 0; m < SITES_PER_BLOCK; m++) {
+	    if (block_p->site[m].cfg != SOLID_TYPE) {
+	      are_all_solid_sites = 0;
+	      break;
 	    }
-	  flag = 1;
-	  xdr_int (&xdr_config, &flag);
-	  
-	  m = -1;
-	  
-	  for (site[0] = i; site[0] < i + BLOCK_SIZE; site[0]++)
-	    for (site[1] = j; site[1] < j + BLOCK_SIZE; site[1]++)
-	      for (site[2] = k; site[2] < k + BLOCK_SIZE; site[2]++)
-		{
-		  xdr_u_int (&xdr_config, &block_p->site[++m].cfg);
-#ifdef MESH
-		  if (block_p->site[m].cfg == SOLID_TYPE)
-		    {
-                      continue;
-                    }
-                  if (block_p->site[m].cfg != FLUID_TYPE)
-		    {
-		      segCalculateBoundarySiteData (block_p->site[m].cfg, site,
-						    boundary_nor, &boundary_dist,
-						    wall_nor, &wall_dist, cut_dist, vis);
-		      
-		      if (wall_dist < sqrt(3.0))
-			{
-			  block_p->site[m].cfg |= PRESSURE_EDGE_MASK;
-			}
-		    }
-		  if (block_p->site[m].cfg == FLUID_TYPE)
-		    {
-                      continue;
-                    }
-		  if (((block_p->site[m].cfg & SITE_TYPE_MASK) == INLET_TYPE) ||
-                      ((block_p->site[m].cfg & SITE_TYPE_MASK) == OUTLET_TYPE))
-	            {
-	              for (int l = 0; l < 3; l++)
-			xdr_double (&xdr_config, &boundary_nor[l]);
-	              
-	              xdr_double (&xdr_config, &boundary_dist);
-	            }
-		  if ((block_p->site[m].cfg & SITE_TYPE_MASK) == FLUID_TYPE ||
-                      (block_p->site[m].cfg & PRESSURE_EDGE_MASK))
-	            {
-	              for (int l = 0; l < 3; l++)
-			xdr_double (&xdr_config, &wall_nor[l]);
-		      
-		      xdr_double (&xdr_config, &wall_dist);
-		    }
-		  for (int l = 0; l < 14; l++)
-	            xdr_double (&xdr_config, &cut_dist[l]);
-#endif // MESH
-		}
+	  }	      
+	  if (are_all_solid_sites) {
+	    flag = 0;
+	  } else {
+	    flag = 1;
+	  }
 	}
+	
+	xdr_int (&xdr_config, &flag);
+	
+	// No fluid site, skip.
+	if (flag == 0)
+	  continue;
+	
+	m = -1;
+	for (site[0] = i; site[0] < i + BLOCK_SIZE; site[0]++) {
+	  for (site[1] = j; site[1] < j + BLOCK_SIZE; site[1]++) {
+	    for (site[2] = k; site[2] < k + BLOCK_SIZE; site[2]++){ 
+	      m++;
+	      
+#ifdef MESH
+	      site_type = &(block_p->site[m].cfg);
+	      
+	      if (*site_type == SOLID_TYPE) {
+		// Site is solid, no further data needed
+		xdr_u_int (&xdr_config, site_type);
+		
+		
+	      } else if (*site_type == FLUID_TYPE) {
+		// Site is fluid, no further data needed
+		xdr_u_int (&xdr_config, site_type);
+		
+		
+	      } else {
+		// Site is complicated!
+		segCalculateBoundarySiteData (*site_type, site,
+					      boundary_nor, &boundary_dist,
+					      wall_nor, &wall_dist, cut_dist, vis);
+		
+		// Note this alters site[m].cfg, which is reason for
+		// deferring its output. (Set PRESSURE_EDGE_MASK
+		// bit(s) to on)
+		if (wall_dist < sqrt(3.0)) {
+		  *site_type |= PRESSURE_EDGE_MASK;
+		}
+		xdr_u_int (&xdr_config, site_type);
+		
+		if (((*site_type & SITE_TYPE_MASK) == INLET_TYPE) ||
+		    ((*site_type & SITE_TYPE_MASK) == OUTLET_TYPE)) {
+		  for (int l = 0; l < 3; l++)
+		    xdr_double (&xdr_config, &boundary_nor[l]);
+		  
+		  xdr_double (&xdr_config, &boundary_dist);
+		}
+		
+		if ((*site_type & SITE_TYPE_MASK) == FLUID_TYPE ||
+		    (*site_type & PRESSURE_EDGE_MASK)) {
+		  for (int l = 0; l < 3; l++)
+		    xdr_double (&xdr_config, &wall_nor[l]);
+		  
+		  xdr_double (&xdr_config, &wall_dist);
+		}
+		for (int l = 0; l < 14; l++)
+		  xdr_double (&xdr_config, &cut_dist[l]);
+	      }
+#else // no MESH
+	      xdr_u_int (&xdr_config, &block_p->site[m].cfg);
+#endif // MESH
+	    } // site[2]
+	  }   // site[1]
+	}     // site[0]
+      }	// k
+    }   // j
+  }     // i
   xdr_destroy (&xdr_config);
 }
-
 
 void ioWritePars (Vis *vis)
 {

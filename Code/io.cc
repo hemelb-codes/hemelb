@@ -3,14 +3,53 @@
 */
 
 #include "config.h"
+#include <limits.h>
 
 /*!
 this function reads the XDR configuration file but does not store the system
 and calculate some parameters
 */
-void lbmReadConfig (LBM *lbm, Net *net)
-{
-  
+
+void lbmReadConfig (LBM *lbm, Net *net) {
+  /* Read the config file written by the segtool.
+   *
+   * All values encoded using XDR format. Uses int, double and u_int.
+   * 
+   * System parameters:
+   *   double stress_type
+   *   int blocks_x
+   *   int blocks_y
+   *   int blocks_z
+   *   int block_size 
+   *
+   * For each block (all blocks_x * blocks_y * blocks_z of them): 
+   *
+   *   int flag (indicates presence of non-solid sites in the block)
+   *   
+   *   If flag == 0 go to next block
+   *
+   *   Otherwise for each site in the block (all block_size^3):
+   *
+   *     u_int site_data -- this is a bit field which indicates site
+   *     type (OR with SITE_TYPE_MASK to get bits zero and one; 00 =
+   *     solid, 01 = fluid, 10 = inlet, 11 = outlet) or edgeness (set
+   *     bit with PRESSURE_EDGE_MASK)
+   * 
+   *     If solid or simple fluid, go to next site
+   *     
+   *     If inlet or outlet (irrespective of edge state) {
+   *       double boundary_normal[3]
+   *       double boundary_dist
+   *     }
+   *
+   *     If edge bit set {
+   *       double wall_normal[3]
+   *       double wall_dist
+   *     }
+   *     
+   *     double cut_distances[14]
+   */
+
   FILE *system_config;
   XDR xdr_config;
   
@@ -18,7 +57,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
   int flag;
   
   unsigned int site_i, site_j, site_k;
-  
+  unsigned int *site_type;
   
   system_config = fopen (lbm->system_file_name, "r");
   
@@ -27,7 +66,7 @@ void lbmReadConfig (LBM *lbm, Net *net)
     fflush(0x0);
     exit(0x0);
   } else {
-    fprintf(stderr, "done\n");
+    fprintf(stderr, "Opened config file '%s' [rank %d]\n", lbm->system_file_name, net->id);
   }
   fflush(NULL);
   
@@ -45,16 +84,13 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   sites_in_a_block = block_size * block_size * block_size;
 
-  i = block_size;
-  
+  // shift = log_2(block_size)
+  i = block_size;  
   shift = 0;
-
-  while (i > 1)
-    {
-      i >>= 1;
-
-      ++shift;
-    }
+  while (i > 1) {
+    i >>= 1;
+    ++shift;
+  }
   
   blocks = blocks_x * blocks_y * blocks_z;
   
@@ -62,102 +98,104 @@ void lbmReadConfig (LBM *lbm, Net *net)
   
   net->proc_block = (ProcBlock *)malloc(sizeof(ProcBlock) * blocks);
   
-  if (lbm_stress_type == SHEAR_STRESS)
-    {
-      net->wall_block = (WallBlock *)malloc(sizeof(WallBlock) * blocks);
-    }
+  if (lbm_stress_type == SHEAR_STRESS) {
+    net->wall_block = (WallBlock *)malloc(sizeof(WallBlock) * blocks);
+  }
   lbm->total_fluid_sites = 0;
   
-  lbm->site_min_x = 1<<30;
-  lbm->site_min_y = 1<<30;
-  lbm->site_min_z = 1<<30;
-  lbm->site_max_x = 0;
-  lbm->site_max_y = 0;
-  lbm->site_max_z = 0;
+  lbm->site_min_x = INT_MAX;
+  lbm->site_min_y = INT_MAX;
+  lbm->site_min_z = INT_MAX;
+  lbm->site_max_x = INT_MIN;
+  lbm->site_max_y = INT_MIN;
+  lbm->site_max_z = INT_MIN;
   
   net->fr_time = myClock ();
   
   n = -1;
   
-  for (i = 0; i < blocks_x; i++)
-    for (j = 0; j < blocks_y; j++)
-      for (k = 0; k < blocks_z; k++)
-	{
-	  ++n;
+  for (i = 0; i < blocks_x; i++) {
+    for (j = 0; j < blocks_y; j++) {
+      for (k = 0; k < blocks_z; k++) {
+	++n;
+	
+	net->data_block[n].site_data = NULL;
+	net->proc_block[n].proc_id   = NULL;
+	net->wall_block[n].wall_data = NULL;
+	
+	xdr_int (&xdr_config, &flag);
+	
+	if (flag == 0) continue;
+	// Block contains some non-solid sites
+	
+	net->data_block[n].site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
+	net->proc_block[n].proc_id   = (int *)malloc(sizeof(int) * sites_in_a_block);
+	
+	m = -1;
+	
+	for (ii = 0; ii < block_size; ii++) {
+	  site_i = (i << shift) + ii;
 	  
-	  net->data_block[n].site_data = NULL;
-	  net->proc_block[n].proc_id   = NULL;
-	  net->wall_block[n].wall_data = NULL;
-	  
-	  xdr_int (&xdr_config, &flag);
-	  
-	  if (flag == 0) continue;
-	  
-	  net->data_block[n].site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
-	  net->proc_block[n].proc_id   = (int *)malloc(sizeof(int) * sites_in_a_block);
-	  
-	  m = -1;
-	  
-	  for (ii = 0; ii < block_size; ii++)
-	    {
-	      site_i = (i << shift) + ii;
+	  for (jj = 0; jj < block_size; jj++) {
+	    site_j = (j << shift) + jj;
+	    
+	    for (kk = 0; kk < block_size; kk++) {
+	      site_k = (k << shift) + kk;
 	      
-	      for (jj = 0; jj < block_size; jj++)
-		{
-		  site_j = (j << shift) + jj;
-		  
-		  for (kk = 0; kk < block_size; kk++)
-		    {
-		      site_k = (k << shift) + kk;
-		      
-		      ++m;
-		      xdr_u_int (&xdr_config, &net->data_block[n].site_data[m]);
-		      
-		      if ((net->data_block[n].site_data[m] & SITE_TYPE_MASK) == SOLID_TYPE)
-			{
-			  net->proc_block[n].proc_id[m] = 1 << 30;
-			  continue;
-			}
-		      net->proc_block[n].proc_id[ m ] = -1;
-		      
-		      ++lbm->total_fluid_sites;
-		      
-		      lbm->site_min_x = min(lbm->site_min_x, site_i);
-		      lbm->site_min_y = min(lbm->site_min_y, site_j);
-		      lbm->site_min_z = min(lbm->site_min_z, site_k);
-		      lbm->site_max_x = max(lbm->site_max_x, site_i);
-		      lbm->site_max_y = max(lbm->site_max_y, site_j);
-		      lbm->site_max_z = max(lbm->site_max_z, site_k);
-		      
-		      if (lbm_stress_type == SHEAR_STRESS &&
-			  lbmCollisionType (net->data_block[n].site_data[m]) != FLUID)
-			{
-			  if (net->wall_block[n].wall_data == NULL)
-			    {
-			      net->wall_block[n].wall_data = (WallData *)malloc(sizeof(WallData) * sites_in_a_block);
-			    }
-			  if (lbmCollisionType (net->data_block[n].site_data[m]) & INLET ||
-			      lbmCollisionType (net->data_block[n].site_data[m]) & OUTLET)
-			    {
-			      for (l = 0; l < 3; l++)
-				xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].boundary_nor[l]);
-			      
-			      xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].boundary_dist);
-			    }
-			  if (lbmCollisionType (net->data_block[n].site_data[m]) & EDGE)
-			    {
-			      for (l = 0; l < 3; l++)
-				xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].wall_nor[l]);
-			      
-			      xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].wall_dist);
-			    }
-			  for (l = 0; l < 14; l++)
-			    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].cut_dist[l]);
-			}
-		    }
+	      ++m;
+	      
+	      site_type =  &net->data_block[n].site_data[m];
+	      xdr_u_int (&xdr_config, site_type);
+	      
+	      if ((*site_type & SITE_TYPE_MASK) == SOLID_TYPE) {
+		net->proc_block[n].proc_id[m] = 1 << 30;
+		continue;
+	      }
+	      net->proc_block[n].proc_id[ m ] = -1;
+	      
+	      ++lbm->total_fluid_sites;
+	      
+	      lbm->site_min_x = min(lbm->site_min_x, site_i);
+	      lbm->site_min_y = min(lbm->site_min_y, site_j);
+	      lbm->site_min_z = min(lbm->site_min_z, site_k);
+	      lbm->site_max_x = max(lbm->site_max_x, site_i);
+	      lbm->site_max_y = max(lbm->site_max_y, site_j);
+	      lbm->site_max_z = max(lbm->site_max_z, site_k);
+	      
+	      if (lbm_stress_type == SHEAR_STRESS &&
+		  lbmCollisionType (*site_type) != FLUID) {
+		// Neither solid nor simple fluid
+		if (net->wall_block[n].wall_data == NULL) {
+		  net->wall_block[n].wall_data = (WallData *)malloc(sizeof(WallData) * sites_in_a_block);
 		}
-	    }
-	}
+		
+		if (lbmCollisionType (*site_type) & INLET ||
+		    lbmCollisionType (*site_type) & OUTLET) {
+		  // INLET or OUTLET or both
+		  for (l = 0; l < 3; l++)
+		    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].boundary_nor[l]);
+		  
+		  xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].boundary_dist);
+		}
+		
+		if (lbmCollisionType(*site_type) & EDGE) {
+		  // EDGE bit set
+		  for (l = 0; l < 3; l++)
+		    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].wall_nor[l]);
+		  
+		  xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].wall_dist);
+		}
+		
+		for (l = 0; l < 14; l++)
+		  xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].cut_dist[l]);
+	      }
+	    } // kk
+	  }   // jj
+	}     // ii
+      } // k
+    }   // j
+  }     // i
+  
   xdr_destroy (&xdr_config);
   fclose (system_config);
   
