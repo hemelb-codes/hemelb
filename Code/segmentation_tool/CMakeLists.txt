@@ -22,7 +22,8 @@ FIND_PACKAGE(GLUT REQUIRED)
 
 #INCLUDE(${ITK_USE_FILE}) 
 
-include_directories(${OPENGL_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${TIFF_INCLUDE_DIR})
 
 ADD_EXECUTABLE(segtool config.cc  editing.cc  io.cc  main.cc  math.cc  menu.cc
 rt.cc segmentation.cc timing.cc usage.cc vis.cc io_dicom.cc)
