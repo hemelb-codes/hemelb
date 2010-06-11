@@ -161,7 +161,7 @@ int main (int argc, char *argv[])
     }
   else
     {
-      if (net.id == 0) usage(argv[0]);
+      if (net.id == 0) Usage::printUsage(argv[0]);
 
 #ifndef NOMPI
       net.err = MPI_Abort (MPI_COMM_WORLD, 1);
@@ -186,15 +186,15 @@ int main (int argc, char *argv[])
   
   strcpy ( input_config_name , input_file_path );
   strcat ( input_config_name , "/config.dat" );
-  check_file(input_config_name);
+  FileUtils::check_file(input_config_name);
 
   strcpy ( input_parameters_name , input_file_path );
   strcat ( input_parameters_name , "/pars.asc" );
-  check_file(input_parameters_name);
+  FileUtils::check_file(input_parameters_name);
   
   strcpy ( vis_parameters_name , input_file_path );
   strcat ( vis_parameters_name , "/rt_pars.asc" );
-  check_file(vis_parameters_name);
+  FileUtils::check_file(vis_parameters_name);
   
   // Create directory for the output images
   strcpy (image_directory, input_file_path);
@@ -512,7 +512,7 @@ int main (int argc, char *argv[])
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenchSectionFinished (1.0, elapsed_time))
+	      BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
 	    {
 	      break;
 	    }
@@ -553,7 +553,7 @@ int main (int argc, char *argv[])
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenchSectionFinished (1.0, elapsed_time))
+	      BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
 	    {
 	      break;
 	    }
@@ -594,7 +594,7 @@ int main (int argc, char *argv[])
 		       elapsed_time, time_step, time_step / elapsed_time);
 	    }
 	  if (time_step%bench_period == 1 &&
-	      IsBenchSectionFinished (1.0, elapsed_time))
+	      BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
 	    {
 	      break;
 	    }

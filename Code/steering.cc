@@ -111,9 +111,9 @@ void *hemeLB_network (void *ptr)
   
   signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
   
-  get_host_details(rank_0_host_details, ip_addr);
+  HTTP::get_host_details(rank_0_host_details, ip_addr);
   
-  request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", steering_session_id_char, rank_0_host_details);
+  HTTP::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", steering_session_id_char, rank_0_host_details);
   
   while (1)
     {
@@ -221,7 +221,7 @@ void *hemeLB_network (void *ptr)
 	xdrmem_create(&xdr_network_pixel, xdr_pixel, pixeldatabytes, XDR_ENCODE);
 	xdr_int(&xdr_network_pixel, &screen.pixels_x);
 	xdr_int(&xdr_network_pixel, &screen.pixels_y);
-	send_all(new_fd, xdr_pixel, &pixeldatabytes);
+	Network::send_all(new_fd, xdr_pixel, &pixeldatabytes);
 	xdr_destroy(&xdr_network_pixel);
 	
 	xdrmem_create (&xdr_network_stream_pixel_data, xdrSendBuffer_pixel_data,
@@ -241,7 +241,7 @@ void *hemeLB_network (void *ptr)
 	
 	int detailsBytes = xdr_getpos(&xdr_network_stream_frame_details);
 	
-	int ret = send_all(new_fd, xdrSendBuffer_frame_details, &detailsBytes);
+	int ret = Network::send_all(new_fd, xdrSendBuffer_frame_details, &detailsBytes);
 	
 	if (ret < 0) {
 	  printf("RG thread: broken network pipe...\n");
@@ -254,7 +254,7 @@ void *hemeLB_network (void *ptr)
 	  bytesSent += detailsBytes;
 	}
 	
-	ret = send_all(new_fd, xdrSendBuffer_pixel_data, &frameBytes);
+	ret = Network::send_all(new_fd, xdrSendBuffer_pixel_data, &frameBytes);
 	
 	if (ret < 0) {
 	  printf("RG thread: broken network pipe...\n");
@@ -270,7 +270,7 @@ void *hemeLB_network (void *ptr)
 	simulationParameters* Sim = new simulationParameters();
 	Sim->collectGlobalVals();
 	int sizeToSend = Sim->sim_params_bytes;
-	send_all(new_fd, Sim->pack(), &sizeToSend);
+	Network::send_all(new_fd, Sim->pack(), &sizeToSend);
 	// printf ("Sim bytes sent %i\n", sizeToSend);
 	delete Sim;
 	
@@ -354,7 +354,7 @@ void* hemeLB_steer (void* ptr)
 	    {
 	      /* If there's something to read, read it... */
 	      //				printf("STEERING: Got data\n"); fflush(0x0);
-	      ret = recv_all(read_fd, xdr_steering_data, &num_chars);
+	      ret = Network::recv_all(read_fd, xdr_steering_data, &num_chars);
 	      sched_yield();
 	      break;
 	    } else {
