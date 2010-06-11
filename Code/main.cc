@@ -43,7 +43,11 @@ bool updated_mouse_coords;
 
 FILE *timings_ptr;
 
+#ifdef DARWIN
+int SelectFile (struct direct *entry)
+#else
 int SelectFile (const struct direct *entry)
+#endif
 {
   if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
     {
