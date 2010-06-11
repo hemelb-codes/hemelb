@@ -26,11 +26,13 @@
 
 using namespace std;
 
+#include "http_post.h"
 
-void get_host_details(char* rank_0_host_details, char* ip_addr)
+void HTTP::get_host_details(char* rank_0_host_details, char* ip_addr)
 {
   char hostname[256];
 
+  // On specific machines, just get the host name and insert it into the rank_0_host_details parameter
 #ifdef NGS2Leeds
   gethostname(hostname, 256);
   sprintf(rank_0_host_details, "%s.ngs.leeds.ac.uk:%i", hostname, MYPORT);
@@ -53,6 +55,7 @@ void get_host_details(char* rank_0_host_details, char* ip_addr)
   fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #else
   
+  // If not on a specific known machine, need to do something more clever.
   struct utsname  name;
   struct hostent *host;
   
@@ -64,6 +67,7 @@ void get_host_details(char* rank_0_host_details, char* ip_addr)
   
   host = gethostbyname(name.nodename);
   
+  // Now go through every associated IP adress, and use the first valid, public one.
   for (int address_id = 0; address_id < 4; address_id++)
     {
       if (host->h_addr_list[address_id] == NULL) break;
@@ -128,7 +132,7 @@ void get_host_details(char* rank_0_host_details, char* ip_addr)
                 /*cout<<send_str;*/ \
   send(sock,MSG,strlen(MSG),0);
 
-int request (char* hostname, short port, char* api, char* resourceid, char* parameters) {
+int HTTP::request (char* hostname, short port, char* api, char* resourceid, char* parameters) {
   
   sockaddr_in sin;
   int sock = socket (AF_INET, SOCK_STREAM, 0);
@@ -167,7 +171,7 @@ int request (char* hostname, short port, char* api, char* resourceid, char* para
   
   char content_header[100];
   
-  sprintf(content_header,"Content-Length: %d\r\n",strlen(parameters));
+  sprintf(content_header,"Content-Length: %d\r\n",(int)strlen(parameters));
   SEND_RQ(content_header);
   SEND_RQ("Accept-Language: en-us\r\n");
   SEND_RQ("Accept-Encoding: gzip, deflate\r\n");

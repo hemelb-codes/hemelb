@@ -3,19 +3,19 @@ include make/Makefile.${HEMELB_MACHINE}
 OBJ=config.o \
 	io.o \
 	lb.o \
-	main.o \
-	rt.o \
+	benchmark.o \
+	http_post.o \
+	fileutils.o \
+        rt.o \
 	topology.o \
 	network.o \
-	benchmark.o \
 	colourpalette.o \
 	visthread.o \
-	fileutils.o \
 	usage.o \
 	steering-common.o \
 	steering.o \
 	steering-sim-params.o \
-	http_post.o 
+	main.o
 #	realitygrid.o
 
 $(EXE): $(OBJ)

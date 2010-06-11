@@ -1,7 +1,11 @@
 #ifndef NO_STEER
 
-int recv_all (int sockid, char *buf, int *length);
-int send_all (int sockid, char *buf, int *length);
-int send_all2 (int sockid, char *buf, int *length);
-
+class Network
+{
+  public:
+    // Receive a bytestream of known length from a socket into a buffer.
+    static int recv_all (int sockid, char *buf, int *length);
+    // Send all bytes from a buffer of known length over a socket.
+    static int send_all (int sockid, char *buf, int *length);
+};
 #endif

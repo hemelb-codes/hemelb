@@ -1,139 +1,33 @@
 #include "config.h"
 
-
-void (*rtAABBvsRay[2][2][2]) (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far);
-
-void (*rtTraverseBlocks[2][2][2]) (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]));
-
-
-void rtAABBvsRay000 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
+// TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
+void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[])
 {
   float tx0, ty0, tz0;
   float tx1, ty1, tz1;
   
-  tx0 = aabb->acc_1 * inv_x;
-  tx1 = aabb->acc_2 * inv_x;
-  ty0 = aabb->acc_3 * inv_y;
-  ty1 = aabb->acc_4 * inv_y;
-  tz0 = aabb->acc_5 * inv_z;
-  tz1 = aabb->acc_6 * inv_z;
+  tx0 = (xyz_sign_is_1[0] ? 
+           aabb->acc_2 : 
+           aabb->acc_1) * inv_x;
+  tx1 = (xyz_sign_is_1[0] ? 
+           aabb->acc_1 :
+           aabb->acc_2) * inv_x;
+  ty0 = (xyz_sign_is_1[1] ?
+           aabb->acc_4 : 
+           aabb->acc_3) * inv_y;
+  ty1 = (xyz_sign_is_1[1] ? 
+           aabb->acc_3 : 
+           aabb->acc_4) * inv_y;
+  tz0 = (xyz_sign_is_1[2] ? 
+           aabb->acc_6 :
+           aabb->acc_5) * inv_z;
+  tz1 = (xyz_sign_is_1[2] ?
+           aabb->acc_5 :
+           aabb->acc_6) * inv_z;
   
   *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
   *t_far  = fminf(tx1, fminf(ty1, tz1));
 }
-
-void rtAABBvsRay001 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
-{
-  float tx0, ty0, tz0;
-  float tx1, ty1, tz1;
-  
-  tx0 = aabb->acc_1 * inv_x;
-  tx1 = aabb->acc_2 * inv_x;
-  ty0 = aabb->acc_3 * inv_y;
-  ty1 = aabb->acc_4 * inv_y;
-  tz0 = aabb->acc_6 * inv_z;
-  tz1 = aabb->acc_5 * inv_z;
-  
-  *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-  *t_far  = fminf(tx1, fminf(ty1, tz1));
-}
-
-void rtAABBvsRay010 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
-{
-  float tx0, ty0, tz0;
-  float tx1, ty1, tz1;
-  
-  tx0 = aabb->acc_1 * inv_x;
-  tx1 = aabb->acc_2 * inv_x;
-  ty0 = aabb->acc_4 * inv_y;
-  ty1 = aabb->acc_3 * inv_y;
-  tz0 = aabb->acc_5 * inv_z;
-  tz1 = aabb->acc_6 * inv_z;
-  
-  *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-  *t_far  = fminf(tx1, fminf(ty1, tz1));
-}
-
-void rtAABBvsRay011 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
-{
-  float tx0, ty0, tz0;
-  float tx1, ty1, tz1;
-  
-  tx0 = aabb->acc_1 * inv_x;
-  tx1 = aabb->acc_2 * inv_x;
-  ty0 = aabb->acc_4 * inv_y;
-  ty1 = aabb->acc_3 * inv_y;
-  tz0 = aabb->acc_6 * inv_z;
-  tz1 = aabb->acc_5 * inv_z;
-  
-  *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-  *t_far  = fminf(tx1, fminf(ty1, tz1));
-}
-
-void rtAABBvsRay100 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
-{
-  float tx0, ty0, tz0;
-  float tx1, ty1, tz1;
-  
-  tx0 = aabb->acc_2 * inv_x;
-  tx1 = aabb->acc_1 * inv_x;
-  ty0 = aabb->acc_3 * inv_y;
-  ty1 = aabb->acc_4 * inv_y;
-  tz0 = aabb->acc_5 * inv_z;
-  tz1 = aabb->acc_6 * inv_z;
-  
-  *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-  *t_far  = fminf(tx1, fminf(ty1, tz1));
-}
-
-void rtAABBvsRay101 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
-{
-  float tx0, ty0, tz0;
-  float tx1, ty1, tz1;
-  
-  tx0 = aabb->acc_2 * inv_x;
-  tx1 = aabb->acc_1 * inv_x;
-  ty0 = aabb->acc_3 * inv_y;
-  ty1 = aabb->acc_4 * inv_y;
-  tz0 = aabb->acc_6 * inv_z;
-  tz1 = aabb->acc_5 * inv_z;
-  
-  *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-  *t_far  = fminf(tx1, fminf(ty1, tz1));
-}
-
-void rtAABBvsRay110 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
-{
-  float tx0, ty0, tz0;
-  float tx1, ty1, tz1;
-  
-  tx0 = aabb->acc_2 * inv_x;
-  tx1 = aabb->acc_1 * inv_x;
-  ty0 = aabb->acc_4 * inv_y;
-  ty1 = aabb->acc_3 * inv_y;
-  tz0 = aabb->acc_5 * inv_z;
-  tz1 = aabb->acc_6 * inv_z;
-  
-  *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-  *t_far  = fminf(tx1, fminf(ty1, tz1));
-}
-
-void rtAABBvsRay111 (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far)
-{
-  float tx0, ty0, tz0;
-  float tx1, ty1, tz1;
-  
-  tx0 = aabb->acc_2 * inv_x;
-  tx1 = aabb->acc_1 * inv_x;
-  ty0 = aabb->acc_4 * inv_y;
-  ty1 = aabb->acc_3 * inv_y;
-  tz0 = aabb->acc_6 * inv_z;
-  tz1 = aabb->acc_5 * inv_z;
-  
-  *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-  *t_far  = fminf(tx1, fminf(ty1, tz1));
-}
-
 
 void rtUpdateColour (float dt, float palette[], float col[])
 {
@@ -141,7 +35,6 @@ void rtUpdateColour (float dt, float palette[], float col[])
   col[1] += dt * palette[1];
   col[2] += dt * palette[2];
 }
-
 
 void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*ColourPalette) (float value, float col[]))
 {
@@ -182,12 +75,10 @@ void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*
   ray_stress = *(flow_field+2);
 }
 
-
-void rtTraverseVoxels000 (float block_min[], float block_x[], float voxel_flow_field[], float t,
-			  void (*ColourPalette) (float value, float col[]))
+void rtTraverseVoxels(float block_min[], float block_x[], float voxel_flow_field[], float t,
+			  void (*ColourPalette) (float value, float col[]), bool xyz_is_1[])
 {
   float t_max[3];
-  
   int i_vec[3];
   int i, j, k;
   
@@ -201,35 +92,53 @@ void rtTraverseVoxels000 (float block_min[], float block_x[], float voxel_flow_f
       i_vec[i] = (i_vec[i] < 0) ? 0 : i_vec[i];
       i_vec[i] = (i_vec[i] > block_size_1) ? block_size_1 : i_vec[i];
     }
+  
   for (i = 0; i < 3; i++)
-    {
-      t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
-    }
+  {
+    t_max[i] = (block_min[i] + (float)(xyz_is_1[i] ? i_vec[i] + 1 : i_vec[i])) * ray_inv[i];
+  }
+  
   i = i_vec[0] * block_size2;
   j = i_vec[1] * block_size;
   k = i_vec[2];
   
-  for (;;)
+  while(true)
     {
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
 	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[0]-t, ColourPalette);
-	      
-	      if ((i -= block_size2) < 0) return;
-	      
-	      t = t_max[0];
-	      t_max[0] -= ray_inv[0];
+
+              if(xyz_is_1[0])
+              {
+                if ((i += block_size2) >= block_size3) return;
+                t = t_max[0];
+                t_max[0] += ray_inv[0];
+              }
+              else
+              {              
+	        if ((i -= block_size2) < 0) return;
+	        t = t_max[0];
+                t_max[0] -= ray_inv[0];
+              }
 	    }
 	  else
 	    {
 	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (--k < 0) return;
-	      
-	      t = t_max[2];
-	      t_max[2] -= ray_inv[2];
+
+              if(xyz_is_1[2])
+              {
+                if (++k >= block_size) return;
+                t = t_max[2];
+                t_max[2] += ray_inv[2]; 
+              }
+              else
+              {
+                if (--k < 0) return;
+                t = t_max[2];
+                t_max[2] -= ray_inv[2];
+              }
 	    }
 	}
       else
@@ -238,556 +147,41 @@ void rtTraverseVoxels000 (float block_min[], float block_x[], float voxel_flow_f
 	    {
 	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[1]-t, ColourPalette);
 	      
-	      if ((j -= block_size) < 0) return;
-	      
-	      t = t_max[1];
-	      t_max[1] -= ray_inv[1];
+		if(xyz_is_1[1])
+		{
+		  if ((j += block_size) >= block_size2) return;
+                  t = t_max[1];
+                  t_max[1] += ray_inv[1];
+ 		}
+		else
+		{
+		  if ((j -= block_size) < 0) return; 
+   	          t = t_max[1];
+	          t_max[1] -= ray_inv[1];
+		}
 	    }
 	  else
 	    {
 	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
 	      
-	      if (--k < 0) return;
-	      
-	      t = t_max[2];
-	      t_max[2] -= ray_inv[2];
+	      if(xyz_is_1[2])
+              {
+                if (++k >= block_size) return;
+                t = t_max[2];
+                t_max[2] += ray_inv[2];
+              }
+              else
+              {
+                if (--k < 0) return;
+   	        t = t_max[2];
+	  	t_max[2] -= ray_inv[2];
+              }
 	    }
 	}
     }
 }
 
-
-void rtTraverseVoxels001 (float block_min[], float block_x[], float voxel_flow_field[], float t,
-			  void (*ColourPalette) (float value, float col[]))
-{
-  float t_max[3];
-  
-  int i_vec[3];
-  int i, j, k;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (int)block_x[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (i_vec[i] < 0) ? 0 : i_vec[i];
-      i_vec[i] = (i_vec[i] > block_size_1) ? block_size_1 : i_vec[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
-    }
-  t_max[2] += ray_inv[2];
-  
-  i = i_vec[0] * block_size2;
-  j = i_vec[1] * block_size;
-  k = i_vec[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[0]-t, ColourPalette);
-	      
-	      if ((i -= block_size2) < 0) return;
-	      
-	      t = t_max[0];
-	      t_max[0] -= ray_inv[0];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (++k >= block_size) return;
-	      
-	      t = t_max[2];
-	      t_max[2] += ray_inv[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[1]-t, ColourPalette);
-	      
-	      if ((j -= block_size) < 0) return;
-	      
-	      t = t_max[1];
-	      t_max[1] -= ray_inv[1];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (++k >= block_size) return;
-	      
-	      t = t_max[2];
-	      t_max[2] += ray_inv[2];
-	    }
-	}
-    }
-}
-
-
-void rtTraverseVoxels010 (float block_min[], float block_x[], float voxel_flow_field[], float t,
-			  void (*ColourPalette) (float value, float col[]))
-{
-  float t_max[3];
-  
-  int i_vec[3];
-  int i, j, k;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (int)block_x[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (i_vec[i] < 0) ? 0 : i_vec[i];
-      i_vec[i] = (i_vec[i] > block_size_1) ? block_size_1 : i_vec[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
-    }
-  t_max[1] += ray_inv[1];
- 
-  i = i_vec[0] * block_size2;
-  j = i_vec[1] * block_size;
-  k = i_vec[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[0]-t, ColourPalette);
-	      
-	      if ((i -= block_size2) < 0) return;
-	      
-	      t = t_max[0];
-	      t_max[0] -= ray_inv[0];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (--k < 0) return;
-	      
-	      t = t_max[2];
-	      t_max[2] -= ray_inv[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[1]-t, ColourPalette);
-	      
-	      if ((j += block_size) >= block_size2) return;
-	      
-	      t = t_max[1];
-	      t_max[1] += ray_inv[1];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (--k < 0) return;
-	      
-	      t = t_max[2];
-	      t_max[2] -= ray_inv[2];
-	    }
-	}
-    }
-}
-
-
-void rtTraverseVoxels011 (float block_min[], float block_x[], float voxel_flow_field[], float t,
-			  void (*ColourPalette) (float value, float col[]))
-{
-  float t_max[3];
-  
-  int i_vec[3];
-  int i, j, k;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (int)block_x[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (i_vec[i] < 0) ? 0 : i_vec[i];
-      i_vec[i] = (i_vec[i] > block_size_1) ? block_size_1 : i_vec[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
-    }
-  t_max[0] -= ray_inv[0];
-  
-  i = i_vec[0] * block_size2;
-  j = i_vec[1] * block_size;
-  k = i_vec[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[0]-t, ColourPalette);
-	      
-	      if ((i -= block_size2) < 0) return;
-	      
-	      t = t_max[0];
-	      t_max[0] -= ray_inv[0];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (++k >= block_size) return;
-	      
-	      t = t_max[2];
-	      t_max[2] += ray_inv[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[1]-t, ColourPalette);
-	      
-	      if ((j += block_size) >= block_size2) return;
-	      
-	      t = t_max[1];
-	      t_max[1] += ray_inv[1];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (++k >= block_size) return;
-	      
-	      t = t_max[2];
-	      t_max[2] += ray_inv[2];
-	    }
-	}
-    }
-}
-
-
-void rtTraverseVoxels100 (float block_min[], float block_x[], float voxel_flow_field[], float t,
-			  void (*ColourPalette) (float value, float col[]))
-{
-  float t_max[3];
-  
-  int i_vec[3];
-  int i, j, k;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (int)block_x[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (i_vec[i] < 0) ? 0 : i_vec[i];
-      i_vec[i] = (i_vec[i] > block_size_1) ? block_size_1 : i_vec[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      t_max[i] = (block_min[i] + (float)i_vec[i]) * ray_inv[i];
-    }
-  t_max[0] += ray_inv[0];
-  
-  i = i_vec[0] * block_size2;
-  j = i_vec[1] * block_size;
-  k = i_vec[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[0]-t, ColourPalette);
-	      
-	      if ((i += block_size2) >= block_size3) return;
-	      
-	      t = t_max[0];
-	      t_max[0] += ray_inv[0];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (--k < 0) return;
-	      
-	      t = t_max[2];
-	      t_max[2] -= ray_inv[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[1]-t, ColourPalette);
-	      
-	      if ((j -= block_size) < 0) return;
-	      
-	      t = t_max[1];
-	      t_max[1] -= ray_inv[1];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (--k < 0) return;
-	      
-	      t = t_max[2];
-	      t_max[2] -= ray_inv[2];
-	    }
-	}
-    }
-}
-
-
-void rtTraverseVoxels101 (float block_min[], float block_x[], float voxel_flow_field[], float t,
-			  void (*ColourPalette) (float value, float col[]))
-{
-  float t_max[3];
-  
-  int i_vec[3];
-  int i, j, k;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (int)block_x[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (i_vec[i] < 0) ? 0 : i_vec[i];
-      i_vec[i] = (i_vec[i] > block_size_1) ? block_size_1 : i_vec[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
-    }
-  t_max[1] -= ray_inv[1];
-  
-  i = i_vec[0] * block_size2;
-  j = i_vec[1] * block_size;
-  k = i_vec[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[0]-t, ColourPalette);
-	      
-	      if ((i += block_size2) >= block_size3) return;
-	      
-	      t = t_max[0];
-	      t_max[0] += ray_inv[0];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (++k >= block_size) return;
-	      
-	      t = t_max[2];
-	      t_max[2] += ray_inv[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[1]-t, ColourPalette);
-	      
-	      if ((j -= block_size) < 0) return;
-	      
-	      t = t_max[1];
-	      t_max[1] -= ray_inv[1];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (++k >= block_size) return;
-	      
-	      t = t_max[2];
-	      t_max[2] += ray_inv[2];
-	    }
-	}
-    }
-}
-
-
-void rtTraverseVoxels110 (float block_min[], float block_x[], float voxel_flow_field[], float t,
-			  void (*ColourPalette) (float value, float col[]))
-{
-  float t_max[3];
-  
-  int i_vec[3];
-  int i, j, k;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (int)block_x[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (i_vec[i] < 0) ? 0 : i_vec[i];
-      i_vec[i] = (i_vec[i] > block_size_1) ? block_size_1 : i_vec[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
-    }
-  t_max[2] -= ray_inv[2];
-  
-  i = i_vec[0] * block_size2;
-  j = i_vec[1] * block_size;
-  k = i_vec[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[0]-t, ColourPalette);
-	      
-	      if ((i += block_size2) >= block_size3) return;
-	      
-	      t = t_max[0];
-	      t_max[0] += ray_inv[0];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (--k < 0) return;
-	      
-	      t = t_max[2];
-	      t_max[2] -= ray_inv[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[1]-t, ColourPalette);
-	      
-	      if ((j += block_size) >= block_size2) return;
-	      
-	      t = t_max[1];
-	      t_max[1] += ray_inv[1];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (--k < 0) return;
-	      
-	      t = t_max[2];
-	      t_max[2] -= ray_inv[2];
-	    }
-	}
-    }
-}
-
-
-void rtTraverseVoxels111 (float block_min[], float block_x[], float voxel_flow_field[], float t,
-			  void (*ColourPalette) (float value, float col[]))
-{
-  float t_max[3];
-  
-  int i_vec[3];
-  int i, j, k;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (int)block_x[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      i_vec[i] = (i_vec[i] < 0) ? 0 : i_vec[i];
-      i_vec[i] = (i_vec[i] > block_size_1) ? block_size_1 : i_vec[i];
-    }
-  for (i = 0; i < 3; i++)
-    {
-      t_max[i] = (block_min[i] + (float)(i_vec[i] + 1)) * ray_inv[i];
-    }
-  i = i_vec[0] * block_size2;
-  j = i_vec[1] * block_size;
-  k = i_vec[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[0]-t, ColourPalette);
-	      
-	      if ((i += block_size2) >= block_size3) return;
-	      
-	      t = t_max[0];
-	      t_max[0] += ray_inv[0];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (++k >= block_size) return;
-	      
-	      t = t_max[2];
-	      t_max[2] += ray_inv[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[1]-t, ColourPalette);
-	      
-	      if ((j += block_size) >= block_size2) return;
-	      
-	      t = t_max[1];
-	      t_max[1] += ray_inv[1];
-	    }
-	  else
-	    {
-	      rtUpdateRayData (&voxel_flow_field[ (i+j+k)*VIS_FIELDS ], t, t_max[2]-t, ColourPalette);
-	      
-	      if (++k >= block_size) return;
-	      
-	      t = t_max[2];
-	      t_max[2] += ray_inv[2];
-	    }
-	}
-    }
-}
-
-
-void rtTraverseBlocks000 (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]))
+void rtTraverseBlocksFn(float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]), bool xyz_Is_1[])
 {
   float block_min[3];
   float t_max[3];
@@ -797,7 +191,6 @@ void rtTraverseBlocks000 (float ray_dx[], float **block_flow_field, void (*Colou
   
   int i_vec[3];
   int i, j, k, l;
-  
   
   for (i = 0; i < 3; i++)
     {
@@ -818,39 +211,58 @@ void rtTraverseBlocks000 (float ray_dx[], float **block_flow_field, void (*Colou
       block_x[1] = -block_min[1];
       block_x[2] = -block_min[2];
       
-      rtTraverseVoxels000 (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette);
+      rtTraverseVoxels (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette, xyz_Is_1);
     }
   for (l = 0; l < 3; l++)
     {
-      t_max[l] = block_min[l] * ray_inv[l];
+      t_max[l] = (xyz_Is_1[l] ? 
+                    block_min[l] + block_size_f : 
+                    block_min[l]) * ray_inv[l];
       t_delta[l] = block_size_f * ray_inv[l];
     }
-  
-  for (;;)
+
+  while(true)
     {
       if (t_max[0] < t_max[1])
 	{
 	  if (t_max[0] < t_max[2])
 	    {
-	      if ((i -= cluster_blocks_yz) < 0) return;
-	      
-	      block_min[0] -= block_size_f;
-	      
+              if(xyz_Is_1[0])
+              {
+                if ((i += cluster_blocks_yz) >= cluster_blocks) return;
+	        block_min[0] += block_size_f;
+              }
+	      else
+              {
+                if ((i -= cluster_blocks_yz) < 0) return;
+	        block_min[0] -= block_size_f;
+              }
+
 	      if (block_flow_field[ i+j+k ] != NULL)
 		{
 		  block_x[0] = t_max[0] * ray_dir[0] - block_min[0];
 		  block_x[1] = t_max[0] * ray_dir[1] - block_min[1];
 		  block_x[2] = t_max[0] * ray_dir[2] - block_min[2];
 		  
-		  rtTraverseVoxels000 (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette);
+		  rtTraverseVoxels (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette, xyz_Is_1);
 		}
-	      t_max[0] -= t_delta[0];
+
+              t_max[0] = xyz_Is_1[0] ? 
+                           t_max[0] + t_delta[0] :
+                           t_max[0] - t_delta[0];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
-	      
-	      block_min[2] -= block_size_f;
+              if(xyz_Is_1[2])
+              {
+                if (++k >= cluster_blocks_z) return;
+	        block_min[2] += block_size_f;
+              }
+              else
+              {
+  	        if (--k < 0) return;
+	        block_min[2] -= block_size_f;
+              }
 	      
 	      if (block_flow_field[ i+j+k ] != NULL)
 		{
@@ -858,18 +270,28 @@ void rtTraverseBlocks000 (float ray_dx[], float **block_flow_field, void (*Colou
 		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
 		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
 		  
-		  rtTraverseVoxels000 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
+		  rtTraverseVoxels (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette, xyz_Is_1);
 		}
-	      t_max[2] -= t_delta[2];
+
+              t_max[2] = xyz_Is_1[2] ?
+                           t_max[2] + t_delta[2] :
+       	                   t_max[2] - t_delta[2];
 	    }
 	}
       else
 	{
 	  if (t_max[1] < t_max[2])
 	    {
-	      if ((j -= cluster_blocks_z) < 0) return;
-	      
-	      block_min[1] -= block_size_f;
+              if(xyz_Is_1[1])
+              {
+                if ((j += cluster_blocks_z) >= cluster_blocks_yz) return;
+	        block_min[1] += block_size_f;
+              }
+              else
+              {
+   	        if ((j -= cluster_blocks_z) < 0) return;
+  	        block_min[1] -= block_size_f;
+              }
 	      
 	      if (block_flow_field[ i+j+k ] != NULL)
 		{
@@ -877,15 +299,25 @@ void rtTraverseBlocks000 (float ray_dx[], float **block_flow_field, void (*Colou
 		  block_x[1] = t_max[1] * ray_dir[1] - block_min[1];
 		  block_x[2] = t_max[1] * ray_dir[2] - block_min[2];
 		  
-		  rtTraverseVoxels000 (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette);
+		  rtTraverseVoxels (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette, xyz_Is_1);
 		}
-	      t_max[1] -= t_delta[1];
+
+	      t_max[1] = xyz_Is_1[1] ?
+                           t_max[1] + t_delta[1] :
+                           t_max[1] - t_delta[1];
 	    }
 	  else
 	    {
-	      if (--k < 0) return;
-	      
-	      block_min[2] -= block_size_f;
+              if(xyz_Is_1[2])
+              {
+	        if (++k >= cluster_blocks_z) return;
+	        block_min[2] += block_size_f;
+              }
+              else
+              {
+   	        if (--k < 0) return;
+ 	        block_min[2] -= block_size_f;
+              }
 	      
 	      if (block_flow_field[ i+j+k ] != NULL)
 		{
@@ -893,818 +325,16 @@ void rtTraverseBlocks000 (float ray_dx[], float **block_flow_field, void (*Colou
 		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
 		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
 		  
-		  rtTraverseVoxels000 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
+		  rtTraverseVoxels (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette, xyz_Is_1);
 		}
-	      t_max[2] -= t_delta[2];
-	    }
+
+	      t_max[2] = xyz_Is_1[2] ?
+                           t_max[2] + t_delta[2] :
+ 	                   t_max[2] - t_delta[2];
+             }
 	}
     }
 }
-
-void rtTraverseBlocks001 (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]))
-{
-  float block_min[3];
-  float t_max[3];
-  float block_x[3];
-  float t_delta[3];
-  float dx[3];
-  
-  int i_vec[3];
-  int i, j, k, l;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      dx[i] = ray_dx[i];
-    }
-  for (l = 0; l < 3; l++)
-    {
-      i_vec[l] = max(0, min(cluster_blocks_vec[l], (int)(block_size_inv * dx[l])));
-      block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
-    }
-  i = i_vec[0] * cluster_blocks_yz;
-  j = i_vec[1] * cluster_blocks_z;
-  k = i_vec[2];
-  
-  if (block_flow_field[ i+j+k ] != NULL)
-    {
-      block_x[0] = -block_min[0];
-      block_x[1] = -block_min[1];
-      block_x[2] = -block_min[2];
-      
-      rtTraverseVoxels001 (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette);
-    }
-  for (l = 0; l < 3; l++)
-    {
-      t_max[l] = block_min[l] * ray_inv[l];
-      t_delta[l] = block_size_f * ray_inv[l];
-    }
-  t_max[2] += t_delta[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      if ((i -= cluster_blocks_yz) < 0) return;
-	      
-	      block_min[0] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[0] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[0] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[0] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels001 (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette);
-		}
-	      t_max[0] -= t_delta[0];
-	    }
-	  else
-	    {
-	      if (++k >= cluster_blocks_z) return;
-	      
-	      block_min[2] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels001 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] += t_delta[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      if ((j -= cluster_blocks_z) < 0) return;
-	      
-	      block_min[1] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[1] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[1] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[1] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels001 (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette);
-		}
-	      t_max[1] -= t_delta[1];
-	    }
-	  else
-	    {
-	      if (++k >= cluster_blocks_z) return;
-	      
-	      block_min[2] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels001 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] += t_delta[2];
-	    }
-	}
-    }
-}
-
-void rtTraverseBlocks010 (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]))
-{
-  float block_min[3];
-  float t_max[3];
-  float block_x[3];
-  float t_delta[3];
-  float dx[3];
-  
-  int i_vec[3];
-  int i, j, k, l;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      dx[i] = ray_dx[i];
-    }
-  for (l = 0; l < 3; l++)
-    {
-      i_vec[l] = max(0, min(cluster_blocks_vec[l], (int)(block_size_inv * dx[l])));
-      block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
-    }
-  i = i_vec[0] * cluster_blocks_yz;
-  j = i_vec[1] * cluster_blocks_z;
-  k = i_vec[2];
-  
-  if (block_flow_field[ i+j+k ] != NULL)
-    {
-      block_x[0] = -block_min[0];
-      block_x[1] = -block_min[1];
-      block_x[2] = -block_min[2];
-      
-      rtTraverseVoxels010 (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette);
-    }
-  for (l = 0; l < 3; l++)
-    {
-      t_max[l] = block_min[l] * ray_inv[l];
-      t_delta[l] = block_size_f * ray_inv[l];
-    }
-  t_max[1] += t_delta[1];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      if ((i -= cluster_blocks_yz) < 0) return;
-	      
-	      block_min[0] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[0] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[0] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[0] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels010 (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette);
-		}
-	      t_max[0] -= t_delta[0];
-	    }
-	  else
-	    {
-	      if (--k < 0) return;
-	      
-	      block_min[2] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels010 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] -= t_delta[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      if ((j += cluster_blocks_z) >= cluster_blocks_yz) return;
-	      
-	      block_min[1] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[1] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[1] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[1] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels010 (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette);
-		}
-	      t_max[1] += t_delta[1];
-	    }
-	  else
-	    {
-	      if (--k < 0) return;
-	      
-	      block_min[2] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels010 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] -= t_delta[2];
-	    }
-	}
-    }
-}
-
-void rtTraverseBlocks011 (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]))
-{
-  float block_min[3];
-  float t_max[3];
-  float block_x[3];
-  float t_delta[3];
-  float dx[3];
-  
-  int i_vec[3];
-  int i, j, k, l;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      dx[i] = ray_dx[i];
-    }
-  for (l = 0; l < 3; l++)
-    {
-      i_vec[l] = max(0, min(cluster_blocks_vec[l], (int)(block_size_inv * dx[l])));
-      block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
-    }
-  i = i_vec[0] * cluster_blocks_yz;
-  j = i_vec[1] * cluster_blocks_z;
-  k = i_vec[2];
-  
-  if (block_flow_field[ i+j+k ] != NULL)
-    {
-      block_x[0] = -block_min[0];
-      block_x[1] = -block_min[1];
-      block_x[2] = -block_min[2];
-      
-      rtTraverseVoxels011 (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette);
-    }
-  for (l = 0; l < 3; l++)
-    {
-      t_max[l] = (block_min[l] + block_size_f) * ray_inv[l];
-      t_delta[l] = block_size_f * ray_inv[l];
-    }
-  t_max[0] -= t_delta[0];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      if ((i -= cluster_blocks_yz) < 0) return;
-	      
-	      block_min[0] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[0] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[0] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[0] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels011 (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette);
-		}
-	      t_max[0] -= t_delta[0];
-	    }
-	  else
-	    {
-	      if (++k >= cluster_blocks_z) return;
-	      
-	      block_min[2] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels011 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] += t_delta[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      if ((j += cluster_blocks_z) >= cluster_blocks_yz) return;
-	      
-	      block_min[1] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[1] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[1] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[1] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels011 (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette);
-		}
-	      t_max[1] += t_delta[1];
-	    }
-	  else
-	    {
-	      if (++k >= cluster_blocks_z) return;
-	      
-	      block_min[2] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels011 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] += t_delta[2];
-	    }
-	}
-    }
-}
-
-void rtTraverseBlocks100 (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]))
-{
-  float block_min[3];
-  float t_max[3];
-  float block_x[3];
-  float t_delta[3];
-  float dx[3];
-  
-  int i_vec[3];
-  int i, j, k, l;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      dx[i] = ray_dx[i];
-    }
-  for (l = 0; l < 3; l++)
-    {
-      i_vec[l] = max(0, min(cluster_blocks_vec[l], (int)(block_size_inv * dx[l])));
-      block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
-    }
-  i = i_vec[0] * cluster_blocks_yz;
-  j = i_vec[1] * cluster_blocks_z;
-  k = i_vec[2];
-  
-  if (block_flow_field[ i+j+k ] != NULL)
-    {
-      block_x[0] = -block_min[0];
-      block_x[1] = -block_min[1];
-      block_x[2] = -block_min[2];
-      
-      rtTraverseVoxels100 (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette);
-    }
-  for (l = 0; l < 3; l++)
-    {
-      t_max[l] = block_min[l] * ray_inv[l];
-      t_delta[l] = block_size_f * ray_inv[l];
-    }
-  t_max[0] += t_delta[0];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      if ((i += cluster_blocks_yz) >= cluster_blocks) return;
-	      
-	      block_min[0] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[0] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[0] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[0] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels100 (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette);
-		}
-	      t_max[0] += t_delta[0];
-	    }
-	  else
-	    {
-	      if (--k < 0) return;
-	      
-	      block_min[2] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels100 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] -= t_delta[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      if ((j -= cluster_blocks_z) < 0) return;
-	      
-	      block_min[1] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[1] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[1] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[1] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels100 (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette);
-		}
-	      t_max[1] -= t_delta[1];
-	    }
-	  else
-	    {
-	      if (--k < 0) return;
-	      
-	      block_min[2] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels100 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] -= t_delta[2];
-	    }
-	}
-    }
-}
-
-void rtTraverseBlocks101 (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]))
-{
-  float block_min[3];
-  float t_max[3];
-  float block_x[3];
-  float t_delta[3];
-  float dx[3];
-  
-  int i_vec[3];
-  int i, j, k, l;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      dx[i] = ray_dx[i];
-    }
-  for (l = 0; l < 3; l++)
-    {
-      i_vec[l] = max(0, min(cluster_blocks_vec[l], (int)(block_size_inv * dx[l])));
-      block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
-    }
-  i = i_vec[0] * cluster_blocks_yz;
-  j = i_vec[1] * cluster_blocks_z;
-  k = i_vec[2];
-  
-  if (block_flow_field[ i+j+k ] != NULL)
-    {
-      block_x[0] = -block_min[0];
-      block_x[1] = -block_min[1];
-      block_x[2] = -block_min[2];
-      
-      rtTraverseVoxels101 (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette);
-    }
-  for (l = 0; l < 3; l++)
-    {
-      t_max[l] = (block_min[l] + block_size_f) * ray_inv[l];
-      t_delta[l] = block_size_f * ray_inv[l];
-    }
-  t_max[1] -= t_delta[1];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      if ((i += cluster_blocks_yz) >= cluster_blocks) return;
-	      
-	      block_min[0] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[0] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[0] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[0] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels101 (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette);
-		}
-	      t_max[0] += t_delta[0];
-	    }
-	  else
-	    {
-	      if (++k >= cluster_blocks_z) return;
-	      
-	      block_min[2] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels101 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] += t_delta[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      if ((j -= cluster_blocks_z) < 0) return;
-	      
-	      block_min[1] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[1] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[1] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[1] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels101 (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette);
-		}
-	      t_max[1] -= t_delta[1];
-	    }
-	  else
-	    {
-	      if (++k >= cluster_blocks_z) return;
-	      
-	      block_min[2] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels101 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] += t_delta[2];
-	    }
-	}
-    }
-}
-
-void rtTraverseBlocks110 (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]))
-{
-  float block_min[3];
-  float t_max[3];
-  float block_x[3];
-  float t_delta[3];
-  float dx[3];
-  
-  int i_vec[3];
-  int i, j, k, l;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      dx[i] = ray_dx[i];
-    }
-  for (l = 0; l < 3; l++)
-    {
-      i_vec[l] = max(0, min(cluster_blocks_vec[l], (int)(block_size_inv * dx[l])));
-      block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
-    }
-  i = i_vec[0] * cluster_blocks_yz;
-  j = i_vec[1] * cluster_blocks_z;
-  k = i_vec[2];
-  
-  if (block_flow_field[ i+j+k ] != NULL)
-    {
-      block_x[0] = -block_min[0];
-      block_x[1] = -block_min[1];
-      block_x[2] = -block_min[2];
-      
-      rtTraverseVoxels110 (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette);
-    }
-  for (l = 0; l < 3; l++)
-    {
-      t_max[l] = (block_min[l] + block_size_f) * ray_inv[l];
-      t_delta[l] = block_size_f * ray_inv[l];
-    }
-  t_max[2] -= t_delta[2];
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      if ((i += cluster_blocks_yz) >= cluster_blocks) return;
-	      
-	      block_min[0] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[0] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[0] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[0] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels110 (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette);
-		}
-	      t_max[0] += t_delta[0];
-	    }
-	  else
-	    {
-	      if (--k < 0) return;
-	      
-	      block_min[2] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels110 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] -= t_delta[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      if ((j += cluster_blocks_z) >= cluster_blocks_yz) return;
-	      
-	      block_min[1] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[1] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[1] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[1] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels110 (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette);
-		}
-	      t_max[1] += t_delta[1];
-	    }
-	  else
-	    {
-	      if (--k < 0) return;
-	      
-	      block_min[2] -= block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels110 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] -= t_delta[2];
-	    }
-	}
-    }
-}
-
-void rtTraverseBlocks111 (float ray_dx[], float **block_flow_field, void (*ColourPalette) (float value, float col[]))
-{
-  float block_min[3];
-  float t_max[3];
-  float block_x[3];
-  float t_delta[3];
-  float dx[3];
-  
-  int i_vec[3];
-  int i, j, k, l;
-  
-  
-  for (i = 0; i < 3; i++)
-    {
-      dx[i] = ray_dx[i];
-    }
-  for (l = 0; l < 3; l++)
-    {
-      i_vec[l] = max(0, min(cluster_blocks_vec[l], (int)(block_size_inv * dx[l])));
-      block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
-    }
-  i = i_vec[0] * cluster_blocks_yz;
-  j = i_vec[1] * cluster_blocks_z;
-  k = i_vec[2];
-  
-  if (block_flow_field[ i+j+k ] != NULL)
-    {
-      block_x[0] = -block_min[0];
-      block_x[1] = -block_min[1];
-      block_x[2] = -block_min[2];
-      
-      rtTraverseVoxels111 (block_min, block_x, block_flow_field[ i+j+k ], 0.0F, ColourPalette);
-    }
-  for (l = 0; l < 3; l++)
-    {
-      t_max[l] = (block_min[l] + block_size_f) * ray_inv[l];
-      t_delta[l] = block_size_f * ray_inv[l];
-    }
-  
-  for (;;)
-    {
-      if (t_max[0] < t_max[1])
-	{
-	  if (t_max[0] < t_max[2])
-	    {
-	      if ((i += cluster_blocks_yz) >= cluster_blocks) return;
-	      
-	      block_min[0] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[0] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[0] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[0] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels111 (block_min, block_x, block_flow_field[ i+j+k ], t_max[0], ColourPalette);
-		}
-	      t_max[0] += t_delta[0];
-	    }
-	  else
-	    {
-	      if (++k >= cluster_blocks_z) return;
-	      
-	      block_min[2] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels111 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] += t_delta[2];
-	    }
-	}
-      else
-	{
-	  if (t_max[1] < t_max[2])
-	    {
-	      if ((j += cluster_blocks_z) >= cluster_blocks_yz) return;
-	      
-	      block_min[1] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[1] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[1] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[1] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels111 (block_min, block_x, block_flow_field[ i+j+k ], t_max[1], ColourPalette);
-		}
-	      t_max[1] += t_delta[1];
-	    }
-	  else
-	    {
-	      if (++k >= cluster_blocks_z) return;
-	      
-	      block_min[2] += block_size_f;
-	      
-	      if (block_flow_field[ i+j+k ] != NULL)
-		{
-		  block_x[0] = t_max[2] * ray_dir[0] - block_min[0];
-		  block_x[1] = t_max[2] * ray_dir[1] - block_min[1];
-		  block_x[2] = t_max[2] * ray_dir[2] - block_min[2];
-		  
-		  rtTraverseVoxels111 (block_min, block_x, block_flow_field[ i+j+k ], t_max[2], ColourPalette);
-		}
-	      t_max[2] += t_delta[2];
-	    }
-	}
-    }
-}
-
 
 void rtBuildClusters (Net *net)
 {
@@ -2012,25 +642,7 @@ void rtBuildClusters (Net *net)
 
 
 void rtInit (Net *net)
-{
-  rtAABBvsRay[0][0][0] = rtAABBvsRay000;
-  rtAABBvsRay[0][0][1] = rtAABBvsRay001;
-  rtAABBvsRay[0][1][0] = rtAABBvsRay010;
-  rtAABBvsRay[0][1][1] = rtAABBvsRay011;
-  rtAABBvsRay[1][0][0] = rtAABBvsRay100;
-  rtAABBvsRay[1][0][1] = rtAABBvsRay101;
-  rtAABBvsRay[1][1][0] = rtAABBvsRay110;
-  rtAABBvsRay[1][1][1] = rtAABBvsRay111;
-  
-  rtTraverseBlocks[0][0][0] = rtTraverseBlocks000;
-  rtTraverseBlocks[0][0][1] = rtTraverseBlocks001;
-  rtTraverseBlocks[0][1][0] = rtTraverseBlocks010;
-  rtTraverseBlocks[0][1][1] = rtTraverseBlocks011;
-  rtTraverseBlocks[1][0][0] = rtTraverseBlocks100;
-  rtTraverseBlocks[1][0][1] = rtTraverseBlocks101;
-  rtTraverseBlocks[1][1][0] = rtTraverseBlocks110;
-  rtTraverseBlocks[1][1][1] = rtTraverseBlocks111;
-  
+{ 
   rtBuildClusters (net);
 }
 
@@ -2053,7 +665,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
   float temp1;
   
   int subimage_pix[4];
-  int ray_sign[3];
+  bool ray_sign[3];
 
   int pixels_x, pixels_y;
   int cluster_id;
@@ -2203,8 +815,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      
 	      // if (!viewpoint_flag)
 		{
-		  (*rtAABBvsRay[ray_sign[0]][ray_sign[1]][ray_sign[2]])
-		    (&aabb, ray_inv[0], ray_inv[1], ray_inv[2], &t_near, &t_far);
+                  rtAABBvsRayFn(&aabb, ray_inv[0], ray_inv[1], ray_inv[2], &t_near, &t_far, ray_sign);
 		  
 		  if (t_near > t_far) continue;
 		  
@@ -2232,8 +843,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	      ray_t_min = 1.0e+30F;
 	      ray_density = -1.0F;
 	      
-	      (*rtTraverseBlocks[ray_sign[0]][ray_sign[1]][ray_sign[2]])
-		(ray_dx, block_flow_field, ColourPalette);
+	      rtTraverseBlocksFn(ray_dx, block_flow_field, ColourPalette, ray_sign);
 	      
 	      if (ray_t_min >= 1.e+30F) continue;
 	      
