@@ -267,15 +267,9 @@ void *hemeLB_network (void *ptr)
 	  bytesSent += frameBytes;
 	}
 	
-	simulationParameters* Sim = new simulationParameters();
-	Sim->collectGlobalVals();
-	int sizeToSend = Sim->getPackedSizeInBytes();
-	Network::send_all(new_fd, Sim->pack(), &sizeToSend);
-	// printf ("Sim bytes sent %i\n", sizeToSend);
-	delete Sim;
-	
-	// fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
-	// printf ("RG thread: bytes sent %i\n", bytesSent);
+	simParams.collectGlobalVals();
+	int sizeToSend = simParams.getPackedSizeInBytes();
+	Network::send_all(new_fd, simParams.pack(), &sizeToSend);
 	
 	setRenderState(1);
 	
