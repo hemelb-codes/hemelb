@@ -232,7 +232,7 @@ void *hemeLB_network (void *ptr)
 	
 	for (int i = 0; i < col_pixels_recv[RECV_BUFFER_A]; i++)
 	  {
-	    xdrWritePixel (&col_pixel_recv[RECV_BUFFER_A][i], &xdr_network_stream_pixel_data, ColourPalette);
+	    xdrWritePixel (&col_pixel_recv[RECV_BUFFER_A][i], &xdr_network_stream_pixel_data, ColourPalette::Populate);
 	  }
 	
 	int frameBytes = xdr_getpos(&xdr_network_stream_pixel_data);
@@ -269,7 +269,7 @@ void *hemeLB_network (void *ptr)
 	
 	simulationParameters* Sim = new simulationParameters();
 	Sim->collectGlobalVals();
-	int sizeToSend = Sim->sim_params_bytes;
+	int sizeToSend = Sim->getPackedSizeInBytes();
 	Network::send_all(new_fd, Sim->pack(), &sizeToSend);
 	// printf ("Sim bytes sent %i\n", sizeToSend);
 	delete Sim;
