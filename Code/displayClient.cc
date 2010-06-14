@@ -7,12 +7,6 @@
 #include <time.h>
 #include <math.h>
 
-//#ifndef XT3
-//#include <sys/types.h>
-//#include <netinet/in.h>
-//#include <sys/socket.h>
-//#endif
-
 #ifdef XT3
 #include "types.h"
 #include "xdr.h"

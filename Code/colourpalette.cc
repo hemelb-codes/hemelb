@@ -1,8 +1,8 @@
-#include <math.h>
+//#include <math.h>
 #include "colourpalette.h"
 
-
-void ColourPalette (float t, float col[])
+// Populates the array, col, with colours depending on the value of t.
+void ColourPalette::Populate(float t, float col[])
 {
   if (t > 1.F)
     {

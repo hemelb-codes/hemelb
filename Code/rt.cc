@@ -789,15 +789,11 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	    }
 	  for (j = subimage_pix[2]; j <= subimage_pix[3]; j++)
 	    {
-	      ray_dir[0] = dir[0];
-	      ray_dir[1] = dir[1];
-	      ray_dir[2] = dir[2];
-	      
 	      temp1 = 1.0F / sqrtf(dir[0]*dir[0] + dir[1]*dir[1] + dir[2]*dir[2]);
 	      
-	      ray_dir[0] *= temp1;
-	      ray_dir[1] *= temp1;
-	      ray_dir[2] *= temp1;
+	      ray_dir[0] = dir[0]*temp1;
+	      ray_dir[1] = dir[1]*temp1;
+	      ray_dir[2] = dir[2]*temp1;
 	      
 	      ray_inv[0] = 1.0F / ray_dir[0];
 	      ray_inv[1] = 1.0F / ray_dir[1];
@@ -823,12 +819,7 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 		  ray_dx[1] = t_near * ray_dir[1] - cluster_x[1];
 		  ray_dx[2] = t_near * ray_dir[2] - cluster_x[2];
 		}
-	      // else
-	      // 	{
-	      // 	  ray_dx[0] = cluster_x[0];
-	      // 	  ray_dx[1] = cluster_x[1];
-	      // 	  ray_dx[2] = cluster_x[2];
-	      // 	}
+
 	      ray_vel_col[0] = 0.0F;
 	      ray_vel_col[1] = 0.0F;
 	      ray_vel_col[2] = 0.0F;
@@ -880,14 +871,12 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
     }
 }
 
-
 void rtUpdateClusterVoxel (int i, float density, float velocity, float stress)
 {
   *cluster_voxel[ 3*i   ] = density;
   *cluster_voxel[ 3*i+1 ] = velocity;
   *cluster_voxel[ 3*i+2 ] = stress;
 }
-
 
 void rtEnd (void)
 {
