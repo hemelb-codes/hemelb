@@ -1690,20 +1690,23 @@ void lbmCalculateFlowFieldValues (LBM *lbm)
       lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i], lbm);
     }
   
-  vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, lbm);
-  vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, lbm);
-  
-  vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, lbm);
-  vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, lbm);
-  
-  vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, lbm);
-  vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, lbm);
+  updateSimulationFlowParams(lbm);
   
   vis_period = lbm->period;
-  
-  vis_inlets = lbm->inlets;
+  simParams.set_Sim_Inlets (lbm->inlets);
 }
 
+void updateSimulationFlowParams(LBM *lbm)
+{
+  simParams.set_Min_Sim_Pressure (lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, lbm));
+  simParams.set_Max_Sim_Pressure (lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, lbm));
+
+  simParams.set_Min_Sim_Velocity (lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, lbm));
+  simParams.set_Max_Sim_Velocity (lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, lbm));
+  
+  simParams.set_Min_Sim_Stress (lbmConvertStressToPhysicalUnits (lbm_stress_min, lbm));
+  simParams.set_Max_Sim_Stress (lbmConvertStressToPhysicalUnits (lbm_stress_max, lbm));
+}
 
 int lbmIsUnstable (Net *net)
 {

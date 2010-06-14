@@ -32,6 +32,7 @@
 #include <semaphore.h>
 #endif
 
+#include "steering-sim-params.h"
 
 #define PI           3.14159265358979323846264338327950288
 #define DEG_TO_RAD   PI / 180.0
@@ -507,18 +508,12 @@ extern int lbm_terminate_simulation;
 
 extern int net_machines;
 
+extern simulationParameters simParams;
 
-extern double vis_pressure_min, vis_pressure_max;
-extern double vis_velocity_min, vis_velocity_max;
-extern double vis_stress_min, vis_stress_max;
-extern double vis_time;
-
-extern int vis_time_step, vis_cycle;
-extern int vis_period, vis_inlets;
+extern int vis_period;
 extern int vis_image_freq;
 extern int vis_pixels_max;
 extern int vis_streaklines;
-
 
 extern float block_size_f;
 extern float block_size_inv;
@@ -531,7 +526,6 @@ extern float vis_velocity_threshold_max_inv;
 extern float vis_stress_threshold_max_inv;
 extern float vis_brightness;
 extern float vis_ctr_x, vis_ctr_y, vis_ctr_z;
-extern double vis_mouse_pressure, vis_mouse_stress;
 extern double vis_glyph_length;
 extern float vis_streaklines_per_pulsatile_period, vis_streakline_length;
 
@@ -601,6 +595,7 @@ int lbmCycle (int perform_rt, LBM *lbm, Net *net);
 int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
 void lbmCalculateFlowFieldValues (LBM *lbm);
 int lbmIsUnstable (Net *net);
+void updateSimulationFlowParams(LBM *lbm);
 void lbmRestart (LBM *lbm, Net *net);
 void lbmEnd (void);
 

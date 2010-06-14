@@ -665,19 +665,12 @@ int main (int argc, char *argv[])
 	{
 	  if (!is_bench)
 	    {
-	      vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, &lbm);
-	      vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, &lbm);
-	      
-	      vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, &lbm);
-	      vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, &lbm);
-	      
-	      vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, &lbm);
-	      vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, &lbm);
+              updateSimulationFlowParams(&lbm);
 	      
 	      fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
-	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis_pressure_min, vis_pressure_max);
-	      fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis_velocity_min, vis_velocity_max);
-	      fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis_stress_min, vis_stress_max);
+	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", simParams.get_Min_Sim_Pressure(), simParams.get_Max_Sim_Pressure());
+	      fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", simParams.get_Min_Sim_Velocity(), simParams.get_Max_Sim_Velocity());
+	      fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", simParams.get_Min_Sim_Stress(), simParams.get_Max_Sim_Stress());
 	      fprintf (timings_ptr, "\n");
 	      
 	      for (int n = 0; n < lbm.inlets; n++)

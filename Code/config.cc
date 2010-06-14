@@ -145,17 +145,10 @@ int lbm_terminate_simulation;
 
 int net_machines;
 
-double vis_pressure_min = 0.0, vis_pressure_max = 0.0;
-double vis_velocity_min = 0.0, vis_velocity_max = 0.0;
-double vis_stress_min = 0.0, vis_stress_max = 0.0;
-double vis_time = 0.0;
-
-int vis_time_step = 0, vis_cycle = 0;
-int vis_period = 0, vis_inlets = 0;
+int vis_period = 0;
 int vis_image_freq = 0;
 int vis_pixels_max = 0;
 int vis_streaklines = 1;
-
 
 float block_size_f;
 float block_size_inv;
@@ -168,7 +161,6 @@ float vis_velocity_threshold_max_inv;
 float vis_stress_threshold_max_inv;
 float vis_brightness;
 float vis_ctr_x, vis_ctr_y, vis_ctr_z;
-double vis_mouse_pressure, vis_mouse_stress;
 double vis_glyph_length;
 float vis_streaklines_per_pulsatile_period, vis_streakline_length;
 
@@ -179,6 +171,7 @@ int vis_mode;
 int cluster_blocks_vec[3];
 int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
+simulationParameters simParams = simulationParameters();
 
 float ray_dir[3];
 float ray_inv[3];

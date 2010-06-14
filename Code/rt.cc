@@ -2775,8 +2775,8 @@ void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
   double density = vis_density_threshold_min + col_pixel_p->density / vis_density_threshold_minmax_inv;
   double stress = col_pixel_p->stress / vis_stress_threshold_max_inv;
   
-  vis_mouse_pressure = lbmConvertPressureToPhysicalUnits (density * Cs2, lbm);
-  vis_mouse_stress = lbmConvertStressToPhysicalUnits (stress, lbm);
+  simParams.set_Sim_Mouse_Pressure(lbmConvertPressureToPhysicalUnits (density * Cs2, lbm));
+  simParams.set_Sim_Mouse_Stress(lbmConvertStressToPhysicalUnits (stress, lbm));
 }
 
 
