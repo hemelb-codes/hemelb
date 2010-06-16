@@ -232,7 +232,7 @@ void *hemeLB_network (void *ptr)
 	
 	for (int i = 0; i < col_pixels_recv[RECV_BUFFER_A]; i++)
 	  {
-	    xdrWritePixel (&col_pixel_recv[RECV_BUFFER_A][i], &xdr_network_stream_pixel_data, ColourPalette);
+	    xdrWritePixel (&col_pixel_recv[RECV_BUFFER_A][i], &xdr_network_stream_pixel_data, ColourPalette::PickColour);
 	  }
 	
 	int frameBytes = xdr_getpos(&xdr_network_stream_pixel_data);
