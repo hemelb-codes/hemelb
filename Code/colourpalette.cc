@@ -1,8 +1,9 @@
 #include <math.h>
 #include "colourpalette.h"
 
-
-void ColourPalette (float t, float col[])
+// Function to get an RGB colour in col, based on the value of the parameter t.
+// The colour is piece-wise linear in t.
+void ColourPalette::PickColour (float t, float col[])
 {
   if (t > 1.F)
     {

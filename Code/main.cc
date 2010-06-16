@@ -370,7 +370,7 @@ int main (int argc, char *argv[])
 #ifndef NO_STEER
 	      if (total_time_steps%BCAST_FREQ == 0 && doRendering && !write_snapshot_image)
 		{
-		  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
+		  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 		  
 		  if (vis_mouse_x >= 0 && vis_mouse_y >= 0 && updated_mouse_coords)
 		    {
@@ -394,7 +394,7 @@ int main (int argc, char *argv[])
 #endif // NO_STEER
 	      if (write_snapshot_image)
 		{
-		  visRender (RECV_BUFFER_B, ColourPalette, &net, &sl);
+		  visRender (RECV_BUFFER_B, ColourPalette::PickColour, &net, &sl);
 		  
 		  if (net.id == 0)
 		    {
@@ -404,7 +404,7 @@ int main (int argc, char *argv[])
 		      strcpy ( complete_image_name, image_directory );
 		      strcat ( complete_image_name, image_filename );
 		      
-		      visWriteImage (RECV_BUFFER_B, complete_image_name, ColourPalette);
+		      visWriteImage (RECV_BUFFER_B, complete_image_name, ColourPalette::PickColour);
 		    }
 		}
 	      if (time_step%snapshots_period == 0)
@@ -546,7 +546,7 @@ int main (int argc, char *argv[])
 	  ++total_time_steps;
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
 	  stability = lbmCycle (1, &lbm, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
+	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	  
 	  // partial timings
 	  elapsed_time = myClock () - FS_plus_RT_time;
@@ -570,7 +570,7 @@ int main (int argc, char *argv[])
 	  ++total_time_steps;
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
 	  stability = lbmCycle (1, &lbm, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
+	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	}
       FS_plus_RT_time = myClock () - FS_plus_RT_time;
       
@@ -587,7 +587,7 @@ int main (int argc, char *argv[])
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
 	  stability = lbmCycle (1, &lbm, &net);
           slStreakLines (time_step, lbm.period, &net, &sl);
-	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
+	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	  
 	  // partial timings
 	  elapsed_time = myClock () - FS_plus_RT_plus_SL_time;
@@ -612,7 +612,7 @@ int main (int argc, char *argv[])
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
 	  stability = lbmCycle (1, &lbm, &net);
 	  slStreakLines (time_step, lbm.period, &net, &sl);
-	  visRender (RECV_BUFFER_A, ColourPalette, &net, &sl);
+	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	}
       FS_plus_RT_plus_SL_time = myClock () - FS_plus_RT_plus_SL_time;
 #endif // NO_STREAKLINES
