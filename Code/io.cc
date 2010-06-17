@@ -5,8 +5,12 @@
 #include "config.h"
 #include "utilityFunctions.h"
 #include "io.h"
+#include "xdrReader.h"
 
 #include <limits.h>
+#include <sstream>
+
+using namespace std;
 
 /*!
 this function reads the XDR configuration file but does not store the system
@@ -53,8 +57,18 @@ void lbmReadConfig (LBM *lbm, Net *net) {
    *     double cut_distances[14]
    */
 
-  FILE *system_config;
-  XDR xdr_config;
+  FILE* xdrFile = fopen(lbm->system_file_name, "r");
+
+  if (xdrFile == NULL) {
+    fprintf(stderr, "Unable to open file %s [rank %i], exiting\n", lbm->system_file_name, net->id);
+    fflush(0x0);
+    exit(0x0);
+  } else {
+    fprintf(stderr, "Opened config file %s [rank %i]\n", lbm->system_file_name , net->id);
+  }
+  fflush(NULL);
+
+  XdrReader myReader = XdrReader(xdrFile);
   
   int i, j, k, ii, jj, kk, l, m, n;
   int flag;
@@ -62,24 +76,11 @@ void lbmReadConfig (LBM *lbm, Net *net) {
   unsigned int site_i, site_j, site_k;
   unsigned int *site_type;
   
-  system_config = fopen (lbm->system_file_name, "r");
-  
-  if (system_config == NULL) {
-    fprintf(stderr, "unable to open file %s [rank %i], exiting\n", lbm->system_file_name, net->id);
-    fflush(0x0);
-    exit(0x0);
-  } else {
-    fprintf(stderr, "Opened config file '%s' [rank %d]\n", lbm->system_file_name, net->id);
-  }
-  fflush(NULL);
-  
-  xdrstdio_create (&xdr_config, system_config, XDR_DECODE);
-  
-  xdr_double (&xdr_config, &lbm_stress_type);
-  xdr_int    (&xdr_config, &blocks_x);
-  xdr_int    (&xdr_config, &blocks_y);
-  xdr_int    (&xdr_config, &blocks_z);
-  xdr_int    (&xdr_config, &block_size);
+  myReader.readDouble(lbm_stress_type);
+  myReader.readInt(blocks_x);
+  myReader.readInt(blocks_y);
+  myReader.readInt(blocks_z);
+  myReader.readInt(block_size);
   
   sites_x = blocks_x * block_size;
   sites_y = blocks_y * block_size;
@@ -126,7 +127,7 @@ void lbmReadConfig (LBM *lbm, Net *net) {
 	net->proc_block[n].proc_id   = NULL;
 	net->wall_block[n].wall_data = NULL;
 	
-	xdr_int (&xdr_config, &flag);
+	myReader.readInt(flag);
 	
 	if (flag == 0) continue;
 	// Block contains some non-solid sites
@@ -148,7 +149,7 @@ void lbmReadConfig (LBM *lbm, Net *net) {
 	      ++m;
 	      
 	      site_type =  &net->data_block[n].site_data[m];
-	      xdr_u_int (&xdr_config, site_type);
+	      myReader.readUnsignedInt(*site_type);
 	      
 	      if ((*site_type & SITE_TYPE_MASK) == SOLID_TYPE) {
 		net->proc_block[n].proc_id[m] = 1 << 30;
@@ -176,21 +177,21 @@ void lbmReadConfig (LBM *lbm, Net *net) {
 		    lbmCollisionType (*site_type) & OUTLET) {
 		  // INLET or OUTLET or both
 		  for (l = 0; l < 3; l++)
-		    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].boundary_nor[l]);
+		    myReader.readDouble(net->wall_block[n].wall_data[m].boundary_nor[l]);
 		  
-		  xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].boundary_dist);
+		  myReader.readDouble(net->wall_block[n].wall_data[m].boundary_dist);
 		}
 		
 		if (lbmCollisionType(*site_type) & EDGE) {
 		  // EDGE bit set
 		  for (l = 0; l < 3; l++)
-		    xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].wall_nor[l]);
+		    myReader.readDouble(net->wall_block[n].wall_data[m].wall_nor[l]);
 		  
-		  xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].wall_dist);
+		  myReader.readDouble(net->wall_block[n].wall_data[m].wall_dist);
 		}
 		
 		for (l = 0; l < 14; l++)
-		  xdr_double (&xdr_config, &net->wall_block[n].wall_data[m].cut_dist[l]);
+		  myReader.readDouble(net->wall_block[n].wall_data[m].cut_dist[l]);
 	      }
 	    } // kk
 	  }   // jj
@@ -199,9 +200,8 @@ void lbmReadConfig (LBM *lbm, Net *net) {
     }   // j
   }     // i
   
-  xdr_destroy (&xdr_config);
-  fclose (system_config);
-  
+  fclose (xdrFile);
+
   net->fr_time = UtilityFunctions::myClock () - net->fr_time;
 }
 

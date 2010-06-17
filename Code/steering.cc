@@ -1,4 +1,5 @@
 #include "config.h"
+#include "xdrWriter.h"
 
 #ifndef NO_STEER
 
@@ -22,8 +23,6 @@
 
 #include <sys/stat.h>
 #include <string.h>
-
-//#include <sys/utsname.h>
 
 #include "network.h"
 #include "steering.h"
@@ -232,7 +231,7 @@ void *hemeLB_network (void *ptr)
 	
 	for (int i = 0; i < col_pixels_recv[RECV_BUFFER_A]; i++)
 	  {
-	    xdrWritePixel (&col_pixel_recv[RECV_BUFFER_A][i], &xdr_network_stream_pixel_data, ColourPalette::PickColour);
+	    XdrWriter::xdrWritePixel (&col_pixel_recv[RECV_BUFFER_A][i], &xdr_network_stream_pixel_data, ColourPalette::PickColour);
 	  }
 	
 	int frameBytes = xdr_getpos(&xdr_network_stream_pixel_data);

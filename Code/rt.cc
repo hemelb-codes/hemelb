@@ -1,6 +1,7 @@
 #include "config.h"
 #include "utilityFunctions.h"
 #include "rt.h"
+#include "xdrWriter.h"
 
 // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
 void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[])
@@ -2251,28 +2252,6 @@ void makePixelColour(unsigned char& red, unsigned char& green, unsigned char& bl
   blue  = (unsigned char)UtilityFunctions::enforceBounds(rawBlue, 0, 255);
 }
 
-void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (float value, float col[]))
-{
-  unsigned int index;
-  unsigned int pix_data[3];
-  unsigned char rgb_data[12];
-  int bits_per_char = sizeof(char) * 8;
-  
-  
-  rawWritePixel (col_pixel_p, &index, rgb_data, ColourPalette);
-
-  xdr_u_int (xdr_p, &index);
-
-  pix_data[0] = (rgb_data[0]<<(3*bits_per_char)) + (rgb_data[1]<<(2*bits_per_char)) + (rgb_data[2]<<bits_per_char) + rgb_data[3];
-  pix_data[1] = (rgb_data[4]<<(3*bits_per_char)) + (rgb_data[5]<<(2*bits_per_char)) + (rgb_data[6]<<bits_per_char) + rgb_data[7];
-  pix_data[2] = (rgb_data[8]<<(3*bits_per_char)) + (rgb_data[9]<<(2*bits_per_char)) + (rgb_data[10]<<bits_per_char) + rgb_data[11];
-
-  xdr_u_int (xdr_p, &pix_data[0]);
-  xdr_u_int (xdr_p, &pix_data[1]);
-  xdr_u_int (xdr_p, &pix_data[2]);
-}
-
-
 void visRenderLine (float p1[], float p2[])
 {
   int pixels_x, pixels_y;
@@ -2795,7 +2774,7 @@ void visWriteImage (int recv_buffer_id, char *image_file_name,
   
   for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
     {
-      xdrWritePixel (&col_pixel_recv[recv_buffer_id][n], &xdr_image_file, ColourPalette);
+      XdrWriter::xdrWritePixel (&col_pixel_recv[recv_buffer_id][n], &xdr_image_file, ColourPalette);
     }
   xdr_destroy (&xdr_image_file);
   fclose (image_file);
