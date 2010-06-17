@@ -30,6 +30,7 @@
 #include "benchmark.h"
 #include "colourpalette.h"
 #include "fileutils.h"
+#include "utilityFunctions.h"
 
 #define BCAST_FREQ   1
 
@@ -175,7 +176,7 @@ int main (int argc, char *argv[])
 #endif
     }
 
-  double total_time = myClock();
+  double total_time = UtilityFunctions::myClock();
   
   char* input_file_path( argv[1] );
   
@@ -280,17 +281,17 @@ int main (int argc, char *argv[])
     {
       int is_finished = 0;
       
-      simulation_time = myClock ();
+      simulation_time = UtilityFunctions::myClock ();
       
       if (snapshots_per_cycle == 0)
 	snapshots_period = 1e9;
       else
-	snapshots_period = max(1, lbm.period / snapshots_per_cycle);
+	snapshots_period = UtilityFunctions::max(1, lbm.period / snapshots_per_cycle);
       
       if (images_per_cycle == 0)
 	images_period = 1e9;
       else
-	images_period = max(1, lbm.period / images_per_cycle);
+	images_period = UtilityFunctions::max(1, lbm.period / images_per_cycle);
       
       for (cycle_id = 1; cycle_id <= lbm.cycles_max && !is_finished; cycle_id++)
 	{
@@ -462,9 +463,9 @@ int main (int argc, char *argv[])
 		  printf ("restarting: period: %i\n", lbm.period);
 		  fflush (0x0);
 		}
-	      snapshots_period = (snapshots_per_cycle == 0) ? 1e9 : max(1, lbm.period/snapshots_per_cycle);
+	      snapshots_period = (snapshots_per_cycle == 0) ? 1e9 : UtilityFunctions::max(1, lbm.period/snapshots_per_cycle);
 	      
-	      images_period = (images_per_cycle == 0) ? 1e9 : max(1, lbm.period/images_per_cycle);
+	      images_period = (images_per_cycle == 0) ? 1e9 : UtilityFunctions::max(1, lbm.period/images_per_cycle);
 	      
 	      cycle_id = 0;
 	      continue;
@@ -486,10 +487,10 @@ int main (int argc, char *argv[])
 	      fflush(NULL);
 	    }
 	}
-      simulation_time = myClock () - simulation_time;
+      simulation_time = UtilityFunctions::myClock () - simulation_time;
       
-      time_step = min(time_step, lbm.period);
-      cycle_id = min(cycle_id, lbm.cycles_max);
+      time_step = UtilityFunctions::min(time_step, lbm.period);
+      cycle_id = UtilityFunctions::min(cycle_id, lbm.cycles_max);
       time_step = time_step * cycle_id;
     }
   else // is_bench
@@ -500,7 +501,7 @@ int main (int argc, char *argv[])
       
       // benchmarking HemeLB's fluid solver only
       
-      FS_time = myClock ();
+      FS_time = UtilityFunctions::myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
@@ -508,7 +509,7 @@ int main (int argc, char *argv[])
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
 	  stability = lbmCycle (0, &lbm, &net);
 	  
-	  elapsed_time = myClock () - FS_time;
+	  elapsed_time = UtilityFunctions::myClock () - FS_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
@@ -523,7 +524,7 @@ int main (int argc, char *argv[])
 	}
 
       FS_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_time = myClock ();
+      FS_time = UtilityFunctions::myClock ();
       
       for (time_step = 1; time_step <= FS_time_steps; time_step++)
 	{
@@ -531,7 +532,7 @@ int main (int argc, char *argv[])
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
 	  stability = lbmCycle (1, &lbm, &net);
 	}
-      FS_time = myClock () - FS_time;
+      FS_time = UtilityFunctions::myClock () - FS_time;
       
       
       // benchmarking HemeLB's fluid solver and ray tracer
@@ -539,7 +540,7 @@ int main (int argc, char *argv[])
       vis_mode = 0;
       vis_image_freq = 1;
       vis_streaklines = 0;
-      FS_plus_RT_time = myClock ();
+      FS_plus_RT_time = UtilityFunctions::myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
@@ -549,7 +550,7 @@ int main (int argc, char *argv[])
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	  
 	  // partial timings
-	  elapsed_time = myClock () - FS_plus_RT_time;
+	  elapsed_time = UtilityFunctions::myClock () - FS_plus_RT_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
@@ -563,7 +564,7 @@ int main (int argc, char *argv[])
 	    }
 	}
       FS_plus_RT_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_plus_RT_time = myClock ();
+      FS_plus_RT_time = UtilityFunctions::myClock ();
       
       for (time_step = 1; time_step <= FS_plus_RT_time_steps; time_step++)
 	{
@@ -572,14 +573,14 @@ int main (int argc, char *argv[])
 	  stability = lbmCycle (1, &lbm, &net);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	}
-      FS_plus_RT_time = myClock () - FS_plus_RT_time;
+      FS_plus_RT_time = UtilityFunctions::myClock () - FS_plus_RT_time;
       
 #ifndef NO_STREAKLINES
       // benchmarking HemeLB's fluid solver, ray tracer and streaklines
       
       vis_mode = 2;
       vis_streaklines = 1;
-      FS_plus_RT_plus_SL_time = myClock ();
+      FS_plus_RT_plus_SL_time = UtilityFunctions::myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
@@ -590,7 +591,7 @@ int main (int argc, char *argv[])
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	  
 	  // partial timings
-	  elapsed_time = myClock () - FS_plus_RT_plus_SL_time;
+	  elapsed_time = UtilityFunctions::myClock () - FS_plus_RT_plus_SL_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
@@ -604,7 +605,7 @@ int main (int argc, char *argv[])
 	    }
 	}
       FS_plus_RT_plus_SL_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_plus_RT_plus_SL_time = myClock ();
+      FS_plus_RT_plus_SL_time = UtilityFunctions::myClock ();
       
       for (time_step = 1; time_step <= FS_plus_RT_plus_SL_time_steps; time_step++)
 	{
@@ -614,7 +615,7 @@ int main (int argc, char *argv[])
 	  slStreakLines (time_step, lbm.period, &net, &sl);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	}
-      FS_plus_RT_plus_SL_time = myClock () - FS_plus_RT_plus_SL_time;
+      FS_plus_RT_plus_SL_time = UtilityFunctions::myClock () - FS_plus_RT_plus_SL_time;
 #endif // NO_STREAKLINES
     } // is_bench
   
@@ -696,7 +697,7 @@ int main (int argc, char *argv[])
 	  fprintf (timings_ptr, "pre-processing buffer management time (s): %.3f\n", net.bm_time);
 	  fprintf (timings_ptr, "input configuration reading time (s):      %.3f\n", net.fr_time);
 	  
-	  total_time = myClock () - total_time;
+	  total_time = UtilityFunctions::myClock () - total_time;
 	  fprintf (timings_ptr, "total time (s):                            %.3f\n\n", total_time);
 	  
 	  fprintf (timings_ptr, "Sub-domains info:\n\n");

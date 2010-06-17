@@ -7,6 +7,7 @@ OBJ=config.o \
 	http_post.o \
 	fileutils.o \
         rt.o \
+        rt2.o \
 	topology.o \
 	network.o \
 	colourpalette.o \
@@ -15,6 +16,7 @@ OBJ=config.o \
 	steering-common.o \
 	steering.o \
 	steering-sim-params.o \
+        utilityFunctions.o \
 	main.o
 #	realitygrid.o
 

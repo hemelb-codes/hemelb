@@ -3,7 +3,8 @@
 // are reported
 
 #include "config.h"
-
+#include "lb.h"
+#include "utilityFunctions.h"
 
 void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
 void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
@@ -1640,9 +1641,11 @@ void lbmCalculateFlowFieldValues (LBM *lbm)
   double *global_data;
   
   int i;
-  
-  local_data = (double *)malloc(sizeof(double) * max(6+lbm->inlets,2*lbm->inlets));
-  global_data = (double *)malloc(sizeof(double) * max(6+lbm->inlets,2*lbm->inlets));
+
+  int lMaxInlets = UtilityFunctions::max(6+lbm->inlets,2*lbm->inlets);
+
+  local_data = (double *)malloc(sizeof(double) * lMaxInlets);
+  global_data = (double *)malloc(sizeof(double) * lMaxInlets);
   
 #ifndef NOMPI
   local_data[0] = lbm_density_min;
