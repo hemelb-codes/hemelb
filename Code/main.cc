@@ -1,5 +1,5 @@
 #ifndef NO_STEER
-#include <unistd.h>
+
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -12,17 +12,11 @@
 #include <sched.h>
 #include <sys/param.h>
 
-#include <cstdio>
-#include <iostream>
 #include <semaphore.h>
 
 #include "network.h"
 #include "visthread.h"
 #endif // NO_STEER
-
-#include <unistd.h>
-#include <sys/dir.h>
-#include <sys/stat.h>
 
 #include "config.h"
 #include "steering.h"
@@ -43,38 +37,6 @@ bool updated_mouse_coords;
 #endif
 
 FILE *timings_ptr;
-
-#ifdef DARWIN
-int SelectFile (struct direct *entry)
-#else
-int SelectFile (const struct direct *entry)
-#endif
-{
-  if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
-    {
-      return 0;
-    }
-  else
-    {
-      return 1;
-    }
-}
-
-int DeleteFiles (char *pathname)
-{
-  struct direct **files;
-  
-  int file_count = scandir(pathname, &files, SelectFile, alphasort);
-  
-  char filename[1024];
-  
-  for (int i = 0; i < file_count; i++)
-    {
-      snprintf (filename, 1024, "%s/%s", pathname, files[i]->d_name);	
-      unlink (filename);
-    }
-  return 0;
-}
 
 int main (int argc, char *argv[])
 {
@@ -201,15 +163,20 @@ int main (int argc, char *argv[])
   strcat ( vis_parameters_name , "/rt_pars.asc" );
   FileUtils::check_file(vis_parameters_name);
   
-  // Create directory for the output images
+  // Create directory path for the output images
   strcpy (image_directory, input_file_path);
   strcat (image_directory, "/Images/");
-  if (net.id == 0) mkdir  (image_directory, 0777);
   
-  //Create directory for the output snapshots
+  //Create directory path for the output snapshots
   strcpy (snapshot_directory, input_file_path);
   strcat (snapshot_directory, "/Snapshots/");
-  if (net.id == 0) mkdir  (snapshot_directory, 0777);
+
+  // Actually create the directories.
+  if (net.id == 0)
+  {
+    FileUtils::MakeDirAllRXW(image_directory);
+    FileUtils::MakeDirAllRXW(snapshot_directory);
+  }
   
   sprintf ( procs_string, "%i", net.procs);
   strcpy ( timings_name , input_file_path );
@@ -272,8 +239,9 @@ int main (int argc, char *argv[])
 #ifndef NO_STEER
   UpdateSteerableParameters (&doRendering, &vis, &lbm);
 #endif
-  DeleteFiles (snapshot_directory);
-  DeleteFiles (image_directory);
+
+  FileUtils::DeleteDirContents (snapshot_directory);
+  FileUtils::DeleteDirContents (image_directory);
   
   total_time_steps = 0;
   
@@ -451,8 +419,8 @@ int main (int argc, char *argv[])
 	  
 	  if (restart)
 	    {
-	      DeleteFiles (snapshot_directory);
-	      DeleteFiles (image_directory);
+	      FileUtils::DeleteDirContents (snapshot_directory);
+              FileUtils::DeleteDirContents (image_directory);
 	      
 	      lbmRestart (&lbm, &net);
 #ifndef NO_STREAKLINES
