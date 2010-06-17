@@ -3,6 +3,9 @@
 */
 
 #include "config.h"
+#include "utilityFunctions.h"
+#include "io.h"
+
 #include <limits.h>
 
 /*!
@@ -110,7 +113,7 @@ void lbmReadConfig (LBM *lbm, Net *net) {
   lbm->site_max_y = INT_MIN;
   lbm->site_max_z = INT_MIN;
   
-  net->fr_time = myClock ();
+  net->fr_time = UtilityFunctions::myClock ();
   
   n = -1;
   
@@ -155,12 +158,12 @@ void lbmReadConfig (LBM *lbm, Net *net) {
 	      
 	      ++lbm->total_fluid_sites;
 	      
-	      lbm->site_min_x = min(lbm->site_min_x, site_i);
-	      lbm->site_min_y = min(lbm->site_min_y, site_j);
-	      lbm->site_min_z = min(lbm->site_min_z, site_k);
-	      lbm->site_max_x = max(lbm->site_max_x, site_i);
-	      lbm->site_max_y = max(lbm->site_max_y, site_j);
-	      lbm->site_max_z = max(lbm->site_max_z, site_k);
+	      lbm->site_min_x = UtilityFunctions::min(lbm->site_min_x, site_i);
+	      lbm->site_min_y = UtilityFunctions::min(lbm->site_min_y, site_j);
+	      lbm->site_min_z = UtilityFunctions::min(lbm->site_min_z, site_k);
+	      lbm->site_max_x = UtilityFunctions::max(lbm->site_max_x, site_i);
+	      lbm->site_max_y = UtilityFunctions::max(lbm->site_max_y, site_j);
+	      lbm->site_max_z = UtilityFunctions::max(lbm->site_max_z, site_k);
 	      
 	      if (lbm_stress_type == SHEAR_STRESS &&
 		  lbmCollisionType (*site_type) != FLUID) {
@@ -199,7 +202,7 @@ void lbmReadConfig (LBM *lbm, Net *net) {
   xdr_destroy (&xdr_config);
   fclose (system_config);
   
-  net->fr_time = myClock () - net->fr_time;
+  net->fr_time = UtilityFunctions::myClock () - net->fr_time;
 }
 
 /*!
@@ -228,12 +231,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       fflush(NULL);
       
       fscanf (parameters_file, "%i\n", &lbm->inlets);
-      
-      inlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
-      inlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
-      inlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
-      inlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
-      
+
+      lbmInitialiseInlets(lbm->inlets);
+
       for (n = 0; n < lbm->inlets; n++)
 	{
 	  fscanf (parameters_file, "%le %le %le\n",
@@ -244,11 +244,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  inlet_density_phs[n] *= DEG_TO_RAD;
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
-      
-      outlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
-      outlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
-      outlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
-      outlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+
+
+      lbmInitialiseOutlets(lbm->outlets);
       
       for (n = 0; n < lbm->outlets; n++)
 	{
@@ -305,16 +303,9 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       lbm->inlets               = (int)par_to_send[ 0 ];
       lbm->outlets              = (int)par_to_send[ 1 ];
       is_inlet_normal_available = (int)par_to_send[ 2 ];
-      
-      inlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
-      inlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
-      inlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
-      inlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->inlets));
-      
-      outlet_density     = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
-      outlet_density_avg = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
-      outlet_density_amp = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
-      outlet_density_phs = (double *)malloc(sizeof(double) * max(1, lbm->outlets));
+
+      lbmInitialiseInlets(lbm->inlets); 
+      lbmInitialiseOutlets(lbm->outlets);
       
       lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
       lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * lbm->inlets);
@@ -382,6 +373,21 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
   lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
 }
 
+void lbmInitialiseInlets(int numberOfInlets)
+{     
+  inlet_density     = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
+  inlet_density_avg = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
+  inlet_density_amp = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
+  inlet_density_phs = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
+}
+
+void lbmInitialiseOutlets(int numberOfOutlets)
+{
+  outlet_density     = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
+  outlet_density_avg = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
+  outlet_density_amp = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
+  outlet_density_phs = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
+}
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 {
@@ -477,7 +483,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   
   for (n = 0; n < net->procs; n++)
     {
-      fluid_sites_max = max(fluid_sites_max, net->fluid_sites[ n ]);
+      fluid_sites_max = UtilityFunctions::max(fluid_sites_max, net->fluid_sites[ n ]);
     }
   // "buffer_size" is the size of the flow field buffer to send to the
   // root processor ("local_flow_field") and that to accommodate the
@@ -485,11 +491,11 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   // ("gathered_flow_field").  If "buffer_size" is larger the
   // frequency with which data communication to the root processor is
   // performed becomes lower and viceversa
-  buffer_size = min(1000000, fluid_sites_max * net->procs);
+  buffer_size = UtilityFunctions::min(1000000, fluid_sites_max * net->procs);
   
   communication_period = (int)ceil((double)buffer_size / net->procs);
   
-  communication_iters = max(1, (int)ceil((double)fluid_sites_max / communication_period));
+  communication_iters = UtilityFunctions::max(1, (int)ceil((double)fluid_sites_max / communication_period));
   
   local_flow_field    = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period);
   gathered_flow_field = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period * net->procs);
@@ -773,7 +779,7 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   
   for (n = 0; n < net->procs; n++)
     {
-      fluid_sites_max = max(fluid_sites_max, net->fluid_sites[ n ]);
+      fluid_sites_max = UtilityFunctions::max(fluid_sites_max, net->fluid_sites[ n ]);
     }
   // "buffer_size" is the size of the flow field buffer to send to the
   // root processor ("local_flow_field") and that to accommodate the
@@ -781,11 +787,11 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   // ("gathered_flow_field").  If "buffer_size" is larger the
   // frequency with which data communication to the root processor is
   // performed becomes lower and viceversa
-  buffer_size = min(1000000, fluid_sites_max * net->procs);
+  buffer_size = UtilityFunctions::min(1000000, fluid_sites_max * net->procs);
   
   communication_period = (int)ceil((double)buffer_size / net->procs);
   
-  communication_iters = max(1, (int)ceil((double)fluid_sites_max / communication_period));
+  communication_iters = UtilityFunctions::max(1, (int)ceil((double)fluid_sites_max / communication_period));
   
   local_flow_field    = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period);
   gathered_flow_field = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period * net->procs);

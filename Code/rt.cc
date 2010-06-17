@@ -1,4 +1,6 @@
 #include "config.h"
+#include "utilityFunctions.h"
+#include "rt.h"
 
 // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
 void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[])
@@ -198,7 +200,7 @@ void rtTraverseBlocksFn(float ray_dx[], float **block_flow_field, void (*ColourP
     }
   for (l = 0; l < 3; l++)
     {
-      i_vec[l] = max(0, min(cluster_blocks_vec[l], (int)(block_size_inv * dx[l])));
+      i_vec[l] = UtilityFunctions::enforceBounds(cluster_blocks_vec[l], 0, (int)(block_size_inv * dx[l]) );
       block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
     }
   i = i_vec[0] * cluster_blocks_yz;
@@ -416,12 +418,12 @@ void rtBuildClusters (Net *net)
 	    {
 	      if ((proc_block_p = &net->proc_block[ ++n ])->proc_id == NULL) continue;
 	      
-	      block_min_x = min(block_min_x, i);
-	      block_min_y = min(block_min_y, j);
-	      block_min_z = min(block_min_z, k);
-	      block_max_x = max(block_max_x, i);
-	      block_max_y = max(block_max_y, j);
-	      block_max_z = max(block_max_z, k);
+	      block_min_x = UtilityFunctions::min(block_min_x, i);
+	      block_min_y = UtilityFunctions::min(block_min_y, j);
+	      block_min_z = UtilityFunctions::min(block_min_z, k);
+	      block_max_x = UtilityFunctions::max(block_max_x, i);
+	      block_max_y = UtilityFunctions::max(block_max_y, j);
+	      block_max_z = UtilityFunctions::max(block_max_z, k);
 	      
 	      if (is_block_visited[ n ]) continue;
 	      
@@ -519,13 +521,13 @@ void rtBuildClusters (Net *net)
 			  block_location_b_p->k = neigh_k;
 			  ++blocks_b;
 			  
-			  cluster_p->block_min[0] = min((int)cluster_p->block_min[0], neigh_i);
-			  cluster_p->block_min[1] = min((int)cluster_p->block_min[1], neigh_j);
-			  cluster_p->block_min[2] = min((int)cluster_p->block_min[2], neigh_k);
+			  cluster_p->block_min[0] = UtilityFunctions::min((int)cluster_p->block_min[0], neigh_i);
+			  cluster_p->block_min[1] = UtilityFunctions::min((int)cluster_p->block_min[1], neigh_j);
+			  cluster_p->block_min[2] = UtilityFunctions::min((int)cluster_p->block_min[2], neigh_k);
 			  
-			  cluster_block_max_i = max((int)cluster_block_max_i, neigh_i);
-			  cluster_block_max_j = max((int)cluster_block_max_j, neigh_j);
-			  cluster_block_max_k = max((int)cluster_block_max_k, neigh_k);
+			  cluster_block_max_i = UtilityFunctions::max((int)cluster_block_max_i, neigh_i);
+			  cluster_block_max_j = UtilityFunctions::max((int)cluster_block_max_j, neigh_j);
+			  cluster_block_max_k = UtilityFunctions::max((int)cluster_block_max_k, neigh_k);
 			  
 			  net->cluster_id[ block_id ] = clusters - 1;
 			}
@@ -622,8 +624,8 @@ void rtBuildClusters (Net *net)
 			  
 			  for (l = 0; l < 3; l++)
 			    {
-			      voxel_min[l] = min(voxel_min[l], ii[l] + block_coord[l]);
-			      voxel_max[l] = max(voxel_max[l], ii[l] + block_coord[l]);
+			      voxel_min[l] = UtilityFunctions::min(voxel_min[l], ii[l] + block_coord[l]);
+			      voxel_max[l] = UtilityFunctions::max(voxel_max[l], ii[l] + block_coord[l]);
 			    }
 			}
 		}
@@ -756,10 +758,10 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	{
 	  continue;
 	}
-      subimage_pix[0] = max(subimage_pix[0], 0);
-      subimage_pix[1] = min(subimage_pix[1], pixels_x - 1);
-      subimage_pix[2] = max(subimage_pix[2], 0);
-      subimage_pix[3] = min(subimage_pix[3], pixels_y - 1);
+      subimage_pix[0] = UtilityFunctions::max(subimage_pix[0], 0);
+      subimage_pix[1] = UtilityFunctions::min(subimage_pix[1], pixels_x - 1);
+      subimage_pix[2] = UtilityFunctions::max(subimage_pix[2], 0);
+      subimage_pix[3] = UtilityFunctions::min(subimage_pix[3], pixels_y - 1);
       
       // if (p0[0] >= v[0][0] && p0[1] >= v[0][1] && p0[2] >= v[0][2] &&
       // 	  p0[0] <= v[1][0] && p0[1] <= v[1][1] && p0[2] <= v[1][2])
@@ -1331,9 +1333,9 @@ void slInit (Net *net, SL *sl)
 		{
 		  if (proc_block_p->proc_id[ ++m ] != net->id) continue;
 		  
-		  for (neigh_i = max(0, site_i-1); neigh_i <= min(sites_x-1, site_i+1); neigh_i++)
-		    for (neigh_j = max(0, site_j-1); neigh_j <= min(sites_y-1, site_j+1); neigh_j++)
-		      for (neigh_k = max(0, site_k-1); neigh_k <= min(sites_z-1, site_k+1); neigh_k++)
+		  for (neigh_i = UtilityFunctions::max(0, site_i-1); neigh_i <= UtilityFunctions::min(sites_x-1, site_i+1); neigh_i++)
+		    for (neigh_j = UtilityFunctions::max(0, site_j-1); neigh_j <= UtilityFunctions::min(sites_y-1, site_j+1); neigh_j++)
+		      for (neigh_k = UtilityFunctions::max(0, site_k-1); neigh_k <= UtilityFunctions::min(sites_z-1, site_k+1); neigh_k++)
 			{
 			  neigh_proc_id = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
 			  
@@ -1732,7 +1734,7 @@ void slCommunicateParticles (Net *net, SL *sl)
 	  if (sl->neigh_proc[ m ].recv_ps > sl->particles_to_recv_max)
 	    {
 	      sl->particles_to_recv_max *= 2;
-	      sl->particles_to_recv_max = max(sl->particles_to_recv_max, sl->neigh_proc[ m ].recv_ps);
+	      sl->particles_to_recv_max = UtilityFunctions::max(sl->particles_to_recv_max, sl->neigh_proc[ m ].recv_ps);
 	      sl->neigh_proc[ m ].p_to_recv =
 	      	(float *)realloc(sl->neigh_proc[ m ].p_to_recv, sizeof(float) * 5 * sl->particles_to_recv_max);
 	    }
@@ -1808,7 +1810,7 @@ void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl)
 {
   if (!is_bench)
     {
-      int particle_creation_period = max(1, (int)(time_steps_per_cycle / 5000.0F));
+      int particle_creation_period = UtilityFunctions::max(1, (int)(time_steps_per_cycle / 5000.0F));
       
       if (time_steps % (int)(time_steps_per_cycle / vis_streaklines_per_pulsatile_period) <=
 	  (vis_streakline_length/100.0F) * (time_steps_per_cycle / vis_streaklines_per_pulsatile_period) &&
@@ -2117,25 +2119,28 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
   if (col_pixel_p->i & RT)
     {
       // store velocity volume rendering colour
-      r1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_r / col_pixel_p->dt)));
-      g1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_g / col_pixel_p->dt)));
-      b1 = (unsigned char)max(0, min(255, (int)(col_pixel_p->vel_b / col_pixel_p->dt)));
+      makePixelColour(r1, g1, b1, 
+        (int)(col_pixel_p->vel_r / col_pixel_p->dt),
+        (int)(col_pixel_p->vel_g / col_pixel_p->dt),
+        (int)(col_pixel_p->vel_b / col_pixel_p->dt));
       
       if (lbm_stress_type != SHEAR_STRESS)
 	{
 	  // store von Mises stress volume rendering colour
-	  r2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_r / col_pixel_p->dt)));
-	  g2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_g / col_pixel_p->dt)));
-	  b2 = (unsigned char)max(0, min(255, (int)(col_pixel_p->stress_b / col_pixel_p->dt)));
+          makePixelColour(r2, g2, b2,
+	    (int)(col_pixel_p->stress_r / col_pixel_p->dt),
+	    (int)(col_pixel_p->stress_g / col_pixel_p->dt),
+	    (int)(col_pixel_p->stress_b / col_pixel_p->dt));
 	}
       else if (col_pixel_p->stress < 1.0e+30F)
 	{
 	  ColourPalette (col_pixel_p->stress, stress_col);
-	  
+
 	  // store wall shear stress colour
-	  r2 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[0])));
-	  g2 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[1])));
-	  b2 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[2])));
+	  makePixelColour(r2, g2, b2,
+            (int)(255.0F * stress_col[0]),
+	    (int)(255.0F * stress_col[1]),
+	    (int)(255.0F * stress_col[2]));
 	}
       else
 	{
@@ -2148,14 +2153,16 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
       ColourPalette (col_pixel_p->stress, stress_col);
       
       // store wall pressure colour
-      r3 = (unsigned char)max(0, min(255, (int)(255.0F * density_col[0])));
-      g3 = (unsigned char)max(0, min(255, (int)(255.0F * density_col[1])));
-      b3 = (unsigned char)max(0, min(255, (int)(255.0F * density_col[2])));
+      makePixelColour(r3, g3, b3,
+        (int)(255.0F * density_col[0]),
+        (int)(255.0F * density_col[1]),
+        (int)(255.0F * density_col[2]));
       
       // store von Mises stress colour
-      r4 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[0])));
-      g4 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[1])));
-      b4 = (unsigned char)max(0, min(255, (int)(255.0F * stress_col[2])));
+      makePixelColour(r4, g4, b4,
+        (int)(255.0F * stress_col[0]),
+        (int)(255.0F * stress_col[1]),
+        (int)(255.0F * stress_col[2]));
     }
   else if (lbm_stress_type != SHEAR_STRESS && vis_mode == 1)
     {
@@ -2174,15 +2181,17 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
 	      stress_col[1] += 1.0F;
 	      stress_col[2] += 1.0F;
 	    }
-	  // store wall pressure (+glyph) colour 
-	  r3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[0])));
-	  g3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[1])));
-	  b3 = (unsigned char)max(0, min(255, (int)(127.5F * density_col[2])));
+	  // store wall pressure (+glyph) colour
+          makePixelColour(r3, g3, b3,
+            (int)(127.5F * density_col[0]),
+	    (int)(127.5F * density_col[1]),
+	    (int)(127.5F * density_col[2]));
 	  
 	  // store von Mises stress (+glyph) colour 
-	  r4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[0])));
-	  g4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[1])));
-	  b4 = (unsigned char)max(0, min(255, (int)(127.5F * stress_col[2])));
+          makePixelColour(r4, g4, b4,
+            (int)(127.5F * stress_col[0]),
+	    (int)(127.5F * stress_col[1]),
+	    (int)(127.5F * stress_col[2]));
 	}
       else
 	{
@@ -2199,19 +2208,24 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
 	  ColourPalette (scaled_vel, particle_col);
 	  
 	  // store particle colour
-	  r4 = r3 = (unsigned char)max(0, min(255, (int)(255.0F * particle_col[0])));
-	  g4 = g3 = (unsigned char)max(0, min(255, (int)(255.0F * particle_col[1])));
-	  b4 = b3 = (unsigned char)max(0, min(255, (int)(255.0F * particle_col[2])));
+          makePixelColour(r3, g3, b3,
+            (int)(255.0F * particle_col[0]),
+	    (int)(255.0F * particle_col[1]),
+	    (int)(255.0F * particle_col[2]));
+
+          r4 = r3;
+          g4 = g3;
+          b4 = b3;
 	}
       else
 	{
 	  // store pressure colour
-	  r3 = g3 = b3 = (unsigned char)max(0, min(127, (int)(127.5F * col_pixel_p->density)));
+	  r3 = g3 = b3 = (unsigned char)UtilityFunctions::enforceBounds((int)(127.5F * col_pixel_p->density), 0, 127);
 	  
 	  // store shear stress or von Mises stress
 	  if (col_pixel_p->stress < 1.0e+30F)
 	    {
-	      r4 = g4 = b4 = (unsigned char)max(0, min(127, (int)(127.5F * col_pixel_p->stress)));
+	      r4 = g4 = b4 = (unsigned char)UtilityFunctions::enforceBounds((int)(127.5F * col_pixel_p->stress), 0, 127);
 	    }
 	  else
 	    {
@@ -2229,6 +2243,13 @@ void rawWritePixel (ColPixel *col_pixel_p, unsigned int *pixel_index,
   //pix_data[3] = (b3<<(3*bits_per_char)) + (r4<<(2*bits_per_char)) + (g4<<bits_per_char) + b4;
 }
 
+void makePixelColour(unsigned char& red, unsigned char& green, unsigned char& blue,
+  int rawRed, int rawGreen, int rawBlue)
+{
+  red   = (unsigned char)UtilityFunctions::enforceBounds(rawRed, 0, 255);
+  green = (unsigned char)UtilityFunctions::enforceBounds(rawGreen, 0, 255);
+  blue  = (unsigned char)UtilityFunctions::enforceBounds(rawBlue, 0, 255);
+}
 
 void xdrWritePixel (ColPixel *col_pixel_p, XDR *xdr_p, void (*ColourPalette) (float value, float col[]))
 {
@@ -2717,7 +2738,7 @@ void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float co
 {
   if (screen.pixels_x * screen.pixels_y > vis_pixels_max)
     {
-      vis_pixels_max = max(2 * vis_pixels_max, screen.pixels_x * screen.pixels_y);
+      vis_pixels_max = UtilityFunctions::max(2 * vis_pixels_max, screen.pixels_x * screen.pixels_y);
       
       col_pixel_id = (int *)realloc(col_pixel_id, sizeof(int) * vis_pixels_max);
     }

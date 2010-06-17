@@ -567,12 +567,6 @@ extern Vis vis;
 
 
 // declarations of all the functions used
-
-int min (int a, int b);
-int max (int a, int b);
-int nint (float a);
-double myClock ();
-
 int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
 

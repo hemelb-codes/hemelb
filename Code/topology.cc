@@ -10,6 +10,7 @@
 */
 
 #include "config.h"
+#include "utilityFunctions.h"
 
 /*!
 Low level function that finds the pointer to the rank on which a
@@ -306,7 +307,7 @@ void netInit (LBM *lbm, Net *net)
   partial_visited_fluid_sites = 0;
   unvisited_fluid_sites = lbm->total_fluid_sites;
   
-  seconds = myClock ();
+  seconds = UtilityFunctions::myClock ();
 
   if (net_machines == 1 || net_machines == net->procs) // If one machine or one machine per proc.
     {
@@ -634,8 +635,8 @@ void netInit (LBM *lbm, Net *net)
   free(site_location_b);
   free(site_location_a);
   
-  net->dd_time = myClock () - seconds;
-  seconds = myClock ();
+  net->dd_time = UtilityFunctions::myClock () - seconds;
+  seconds = UtilityFunctions::myClock ();
   
   // A map between the two-level data representation and the 1D
   // compact one is created here.
@@ -1272,7 +1273,7 @@ void netInit (LBM *lbm, Net *net)
   // are freeing both of those.
   free(f_data);
   
-  net->bm_time = myClock () - seconds;
+  net->bm_time = UtilityFunctions::myClock () - seconds;
 }
 
 /*!
