@@ -1,6 +1,8 @@
 include make/Makefile.${HEMELB_MACHINE}
 
 OBJ=config.o \
+        xdrReader.o \
+        xdrWriter.o \
 	io.o \
 	lb.o \
 	benchmark.o \
