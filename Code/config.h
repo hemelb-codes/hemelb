@@ -15,9 +15,10 @@
 #endif
 #endif
 
-#ifndef int64_t
-#define int64_t long int
-#endif
+// These 3 lines break things on many machines
+// #ifndef int64_t
+// #define int64_t long int
+// #endif
 
 #include <stdio.h>
 #include <stdlib.h>
