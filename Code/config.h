@@ -25,9 +25,6 @@
 #include <time.h>
 #include <math.h>
 
-#include <rpc/types.h>
-#include <rpc/xdr.h>
-
 #ifndef NO_STEER
 #include <pthread.h>
 #include <semaphore.h>

@@ -4,21 +4,23 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-// TODO REMOVE THIS INCLUDE - TEMP HACK
+//TODO TEMP HACK TO MAKE ColPixel usage below valid
 #include "config.h"
 #include "xdrWriter.h"
 
 class XdrWriter
 {
-  private:
-//    XDR *myXdr;
-    FILE *myFile;
+  protected:
+    XDR myXdr;
+    XdrWriter();
 
   public:
-    XdrWriter(char* fileName, char* failureString, char* successString);
-    ~XdrWriter();
-
-    void static xdrWritePixel (ColPixel *col_pixel_p, XDR* myXdr, void (*ColourPalette) (float value, float col[]));
+    void writePixel (ColPixel *col_pixel_p, void (*ColourPalette) (float value, float col[]));
+    void writeInt(int* intToWrite);
+    void writeDouble(double* doubleToWrite);
+    void writeShort(short* shortToWrite);
+    void writeFloat(float* floatToWrite);
+    void writeUnsignedInt(unsigned int* unsignedIntToWrite);
 };
 
 #endif //__xdrWriter_h_
