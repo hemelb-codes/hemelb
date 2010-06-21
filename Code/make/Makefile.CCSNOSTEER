@@ -1,0 +1,7 @@
+CC=mpic++.openmpi
+
+EXE=hemelb
+
+DEFS=-DCCS -DNO_STEER
+
+FLAGS=-O3 -pthread -Wunused
