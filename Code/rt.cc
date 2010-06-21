@@ -1,7 +1,7 @@
 #include "config.h"
 #include "utilityFunctions.h"
 #include "rt.h"
-#include "xdrWriter.h"
+#include "xdrFileWriter.h"
 
 // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
 void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[])
@@ -2755,29 +2755,23 @@ void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float co
 void visWriteImage (int recv_buffer_id, char *image_file_name,
 		    void (*ColourPalette) (float value, float col[]))
 {
-  FILE *image_file;
-  XDR	xdr_image_file;
+  XdrFileWriter myWriter = XdrFileWriter(image_file_name);
   
+  myWriter.writeInt(&vis_mode);
+
+  myWriter.writeFloat(&vis_physical_pressure_threshold_min);
+  myWriter.writeFloat(&vis_physical_pressure_threshold_max);
+  myWriter.writeFloat(&vis_physical_velocity_threshold_max);
+  myWriter.writeFloat(&vis_physical_stress_threshold_max);
   
-  image_file = fopen (image_file_name, "w");
-  xdrstdio_create (&xdr_image_file, image_file, XDR_ENCODE);
-  
-  xdr_int (&xdr_image_file, &vis_mode);
-  xdr_float (&xdr_image_file, &vis_physical_pressure_threshold_min);
-  xdr_float (&xdr_image_file, &vis_physical_pressure_threshold_max);
-  xdr_float (&xdr_image_file, &vis_physical_velocity_threshold_max);
-  xdr_float (&xdr_image_file, &vis_physical_stress_threshold_max);
-  
-  xdr_int (&xdr_image_file, &screen.pixels_x);
-  xdr_int (&xdr_image_file, &screen.pixels_y);
-  xdr_int (&xdr_image_file, &col_pixels_recv[recv_buffer_id]);
+  myWriter.writeInt(&screen.pixels_x);
+  myWriter.writeInt(&screen.pixels_y);
+  myWriter.writeInt(&col_pixels_recv[recv_buffer_id]);
   
   for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
-    {
-      XdrWriter::xdrWritePixel (&col_pixel_recv[recv_buffer_id][n], &xdr_image_file, ColourPalette);
-    }
-  xdr_destroy (&xdr_image_file);
-  fclose (image_file);
+  {
+    myWriter.writePixel (&col_pixel_recv[recv_buffer_id][n], ColourPalette);
+  }
 }
 
 

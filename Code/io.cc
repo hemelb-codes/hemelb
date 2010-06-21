@@ -6,6 +6,7 @@
 #include "utilityFunctions.h"
 #include "io.h"
 #include "xdrReader.h"
+#include "xdrFileWriter.h"
 
 #include <limits.h>
 #include <sstream>
@@ -408,8 +409,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   //   d- the von Mises stress or shear stress in physical units (Pa)
   //      (the stored shear stress is equal to -1 if the fluid voxel is not at the wall)
   
-  FILE *system_config = NULL;
-  XDR	xdr_system_config;
+  XdrWriter* myWriter;
   
   float *local_flow_field, *gathered_flow_field;
   
@@ -445,38 +445,30 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   
   if (net->id == 0)
     {
-      system_config = fopen (output_file_name, "w");
-      xdrstdio_create (&xdr_system_config, system_config, XDR_ENCODE);
-      xdr_int (&xdr_system_config, &stability);
-    }
+      myWriter = new XdrFileWriter(output_file_name);
+
+      myWriter->writeInt(&stability);
   
-  if (stability == UNSTABLE)
-    {
-      if (net->id == 0)
-	{
-	  xdr_destroy(&xdr_system_config);
-	  fclose (system_config);
-	}
-      return;
-    }
+      if (stability == UNSTABLE)
+      {
+        return;
+      }
   
-  if (net->id == 0)
-    {
       shrinked_sites_x = 1 + lbm->site_max_x - lbm->site_min_x;
       shrinked_sites_y = 1 + lbm->site_max_y - lbm->site_min_y;
       shrinked_sites_z = 1 + lbm->site_max_z - lbm->site_min_z;
       
-      xdr_double (&xdr_system_config, &lbm->voxel_size);
-      xdr_int    (&xdr_system_config, &lbm->site_min_x);
-      xdr_int    (&xdr_system_config, &lbm->site_min_y);
-      xdr_int    (&xdr_system_config, &lbm->site_min_z);
-      xdr_int    (&xdr_system_config, &lbm->site_max_x);
-      xdr_int    (&xdr_system_config, &lbm->site_max_y);
-      xdr_int    (&xdr_system_config, &lbm->site_max_z);
-      xdr_int    (&xdr_system_config, &shrinked_sites_x);
-      xdr_int    (&xdr_system_config, &shrinked_sites_y);
-      xdr_int    (&xdr_system_config, &shrinked_sites_z);
-      xdr_int    (&xdr_system_config, &lbm->total_fluid_sites);
+      myWriter->writeDouble(&lbm->voxel_size);
+      myWriter->writeInt(&lbm->site_min_x);
+      myWriter->writeInt(&lbm->site_min_y);
+      myWriter->writeInt(&lbm->site_min_z);
+      myWriter->writeInt(&lbm->site_max_x);
+      myWriter->writeInt(&lbm->site_max_y);
+      myWriter->writeInt(&lbm->site_max_z);
+      myWriter->writeInt(&shrinked_sites_x);
+      myWriter->writeInt(&shrinked_sites_y);
+      myWriter->writeInt(&shrinked_sites_z);
+      myWriter->writeInt(&lbm->total_fluid_sites);
     }
   
   fluid_sites_max = 0;
@@ -621,13 +613,13 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 				  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
 				  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
 				  
-				  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+0 ]);
-				  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+1 ]);
-				  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+2 ]);
+				  myWriter->writeShort(&gathered_site_data[ l*3+0 ]);
+				  myWriter->writeShort(&gathered_site_data[ l*3+1 ]);
+				  myWriter->writeShort(&gathered_site_data[ l*3+2 ]);
 				  
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
-				      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
+				      myWriter->writeFloat(&gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
 				    }
 				}
 			    }
@@ -666,13 +658,13 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 		  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
 		  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
 		  
-		  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+0 ]);
-		  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+1 ]);
-		  xdr_short (&xdr_system_config, &gathered_site_data[ l*3+2 ]);
+		  myWriter->writeShort(&gathered_site_data[ l*3+0 ]);
+		  myWriter->writeShort(&gathered_site_data[ l*3+1 ]);
+		  myWriter->writeShort(&gathered_site_data[ l*3+2 ]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
-		      xdr_float (&xdr_system_config, &gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
+		      myWriter->writeFloat(&gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
 		    }
 		}
 	    }
@@ -682,15 +674,14 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 	    }
 	}
     }
-  if (net->id == 0)
-    {
-      fclose (system_config);
-    }
+
   free(gathered_site_data);
   free(local_site_data);
   
   free(gathered_flow_field);
   free(local_flow_field);
+
+  delete myWriter;
 }
 
 

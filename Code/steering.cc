@@ -1,5 +1,6 @@
 #include "config.h"
 #include "xdrWriter.h"
+#include "xdrMemWriter.h"
 
 #ifndef NO_STEER
 
@@ -29,9 +30,6 @@
 #include "colourpalette.h"
 #include "visthread.h"
 #include "steering-sim-params.h"
-
-#include <rpc/types.h>
-#include <rpc/xdr.h>
 
 #ifdef _AIX
 #include <fcntl.h>
@@ -209,36 +207,29 @@ void *hemeLB_network (void *ptr)
 	  
 	  int bytesSent = 0;
 	  
-	  XDR xdr_network_stream_frame_details;
-	  XDR xdr_network_stream_pixel_data;
-	  
-	XDR xdr_network_pixel;
 	int pixeldatabytes = 8;
 	char xdr_pixel[pixeldatabytes];
+	XdrMemWriter pixelWriter = XdrMemWriter(xdr_pixel, pixeldatabytes);
 	
-	
-	xdrmem_create(&xdr_network_pixel, xdr_pixel, pixeldatabytes, XDR_ENCODE);
-	xdr_int(&xdr_network_pixel, &screen.pixels_x);
-	xdr_int(&xdr_network_pixel, &screen.pixels_y);
+	pixelWriter.writeInt(&screen.pixels_x);
+	pixelWriter.writeInt(&screen.pixels_y);
+
+        
 	Network::send_all(new_fd, xdr_pixel, &pixeldatabytes);
-	xdr_destroy(&xdr_network_pixel);
-	
-	xdrmem_create (&xdr_network_stream_pixel_data, xdrSendBuffer_pixel_data,
-		       pixel_data_bytes, XDR_ENCODE);
-	
-	xdrmem_create (&xdr_network_stream_frame_details, xdrSendBuffer_frame_details,
-		       frame_details_bytes, XDR_ENCODE);
+
+        XdrMemWriter pixelDataWriter = XdrMemWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
+        XdrMemWriter frameDetailsWriter = XdrMemWriter(xdrSendBuffer_frame_details, frame_details_bytes);
 	
 	for (int i = 0; i < col_pixels_recv[RECV_BUFFER_A]; i++)
-	  {
-	    XdrWriter::xdrWritePixel (&col_pixel_recv[RECV_BUFFER_A][i], &xdr_network_stream_pixel_data, ColourPalette::PickColour);
-	  }
+	{
+          pixelDataWriter.writePixel (&col_pixel_recv[RECV_BUFFER_A][i], ColourPalette::PickColour);
+	}
 	
-	int frameBytes = xdr_getpos(&xdr_network_stream_pixel_data);
+	int frameBytes = pixelDataWriter.getCurrentStreamPosition();
 	
-	xdr_int (&xdr_network_stream_frame_details, &frameBytes);
+	frameDetailsWriter.writeInt(&frameBytes);
 	
-	int detailsBytes = xdr_getpos(&xdr_network_stream_frame_details);
+	int detailsBytes = frameDetailsWriter.getCurrentStreamPosition();
 	
 	int ret = Network::send_all(new_fd, xdrSendBuffer_frame_details, &detailsBytes);
 	
@@ -277,9 +268,6 @@ void *hemeLB_network (void *ptr)
 	// printf ("RG thread: bytes sent %i\n", bytesSent);
 	
 	setRenderState(1);
-	
-	xdr_destroy (&xdr_network_stream_frame_details);
-	xdr_destroy (&xdr_network_stream_pixel_data);
 	
         double frameTimeSend = frameTiming() - frameTimeStart;
 	
