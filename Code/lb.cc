@@ -2,6 +2,7 @@
 // function, momentums, the effective von Mises stress and the boundary conditions
 // are reported
 
+// TODO: We shouldn't really be including config.h in here, but we have to at the moment.
 #include "config.h"
 #include "lb.h"
 #include "utilityFunctions.h"

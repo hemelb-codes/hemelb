@@ -7,6 +7,7 @@ XdrWriter::XdrWriter()
 {
 }
 
+// Functions to write simple types out to the Xdr stream.
 void XdrWriter::writeInt(int* intToWrite)
 {
   xdr_int(&myXdr, intToWrite);
@@ -39,6 +40,7 @@ void XdrWriter::writePixel (ColPixel *col_pixel_p, void (*ColourPalette) (float 
   unsigned char rgb_data[12];
   int bits_per_char = sizeof(char) * 8;
   
+  // Use a ray-tracer function to get the necessary pixel data.
   rawWritePixel (col_pixel_p, &index, rgb_data, ColourPalette);
 
   writeUnsignedInt(&index);
@@ -52,9 +54,7 @@ void XdrWriter::writePixel (ColPixel *col_pixel_p, void (*ColourPalette) (float 
   writeUnsignedInt(&pix_data[2]);
 }
 
-
-// Method to get the current position in the stream. NOTE: this could be used
-// for all XdrWriter types, but is only currently used by this class.
+// Method to get the current position in the stream.
 unsigned int XdrWriter::getCurrentStreamPosition()
 {
   return xdr_getpos(&myXdr);
