@@ -25,6 +25,10 @@
 #include <time.h>
 #include <math.h>
 
+#include "colpixel.h"
+#include "configconstants.h"
+#include "lb.h"
+
 #ifndef NO_STEER
 #include <pthread.h>
 #include <semaphore.h>
@@ -47,14 +51,12 @@
 #define VELOCITY           1
 #define STRESS             2
 
-#define NEIGHBOUR_PROCS_MAX            64
 #define COMMS_LEVELS                   2
-#define COLLISION_TYPES                6
+
 
 #define RECV_BUFFER_A   0
 #define RECV_BUFFER_B   1
 
-#define COLOURED_PIXELS_MAX    2048 * 2048
 #define STEERABLE_PARAMETERS   20
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
@@ -79,47 +81,6 @@
 #define PixelI(i)        ((i >> 14) & 8191)
 #define PixelJ(i)        (i & 16383)
 #define PixelId(i,j)     ((i << 14) | j)
-
-
-// the constants needed to define the configuration of the lattice
-// sites follow
-
-extern unsigned int SOLID_TYPE;
-extern unsigned int FLUID_TYPE;
-extern unsigned int INLET_TYPE;
-extern unsigned int OUTLET_TYPE;
-extern unsigned int NULL_TYPE;
-
-extern unsigned int BOUNDARIES;
-extern unsigned int INLET_BOUNDARY;
-extern unsigned int OUTLET_BOUNDARY;
-extern unsigned int WALL_BOUNDARY;
-extern unsigned int CHARACTERISTIC_BOUNDARY;
-
-extern unsigned int SITE_TYPE_BITS;
-extern unsigned int BOUNDARY_CONFIG_BITS;
-extern unsigned int BOUNDARY_DIR_BITS;
-extern unsigned int BOUNDARY_ID_BITS;
-
-extern unsigned int BOUNDARY_CONFIG_SHIFT ;   // SITE_TYPE_BITS;
-extern unsigned int BOUNDARY_DIR_SHIFT;  // BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
-extern unsigned int BOUNDARY_ID_SHIFT;  // BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
-
-extern unsigned int SITE_TYPE_MASK;         // ((1U << SITE_TYPE_BITS) - 1U);
-extern unsigned int BOUNDARY_CONFIG_MASK;   // ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUNDARY_CONFIG_SHIFT;
-extern unsigned int BOUNDARY_DIR_MASK;  //((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
-extern unsigned int BOUNDARY_ID_MASK;  // ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT
-extern unsigned int PRESSURE_EDGE_MASK;
-
-extern unsigned int FLUID;
-extern unsigned int INLET;
-extern unsigned int OUTLET;
-extern unsigned int EDGE;
-
-// square of the speed of sound
-
-extern double Cs2;
-
 
 // parameters related to the lattice directions
 
@@ -149,165 +110,18 @@ extern bool sending_frame;
 extern int send_array_length;
 #endif
 
-// DataBlock has one member called site_data. Block means macrocell of fluid sites (voxels).
-// Later on in this file, two arrays, map_block[] and data_block[], will be defined,
-// which are members of the structure Net (allocated in main.cc).  These arrays contain
-// *site_data of global blocks. site_data[] is an array containing individual lattice site data
-// within a global block.
-struct DataBlock
-{
-  unsigned int *site_data;                   
-};
-
-// ProcBlock has one member called proc_id. Later on in 
-// this file, an array called proc_block will be defined, which is a
-// member of the structure Net (allocated in main.cc).  For each global block,
-// *proc_id is an array containing the ranks on which individual
-// lattice sites reside.
-struct ProcBlock
-{
-  int *proc_id;
-};
-
-
 // Some sort of coordinates.
 struct BlockLocation
 {
   short int i, j, k;
 };
 
-// Superficial site data
-struct WallData
-{
-  // estimated boundary normal (if the site is an inlet/outlet site)
-  double boundary_nor[3];
-  // estimated minimum distance (in lattice units) from the
-  // inlet/outlet boundary;
-  double boundary_dist;
-  // estimated wall normal (if the site is close to the wall);
-  double wall_nor[3];
-  // estimated minimum distance (in lattice units) from the wall;
-  // if the site is close to the wall surface
-  double wall_dist;
-  // cut distances along the 14 non-zero lattice vectors;
-  // each one is between 0 and 1 if the surface cuts the corresponding
-  // vector or is equal to 1e+30 otherwise
-  double cut_dist[14];
-
-};
-
-// WallBlock is a member of the structure Net and is employed to store the data
-// regarding the wall, inlet and outlet sites.
-struct WallBlock
-{
-  WallData *wall_data;
-};
 
 
 // Some sort of coordinates.
 struct SiteLocation
 {
   short int i, j, k;
-};
-
-
-struct LBM
-{
-  char *system_file_name;
-  
-  double tau, viscosity;
-  double voxel_size;
-  double omega;
-  
-  int total_fluid_sites;
-  int site_min_x, site_min_y, site_min_z;
-  int site_max_x, site_max_y, site_max_z;
-  int inlets, outlets;
-  int cycles_max;
-  int period;
-  int conv_freq;
-  
-  float *block_density;
-  
-  int *block_map;
-};
-
-// NeighProc is part of the Net (defined later in this file).  This object is an element of an array
-// (called neigh_proc[]) and comprises information about the neighbouring processes to this process.  
-struct NeighProc
-{
-  int id;                                    // Rank of the neighbouring processor.
-  int fs;                                    // Number of distributions shared with neighbouring
-                                             // processors.
-  
-  short int *f_data;                         // Coordinates of a fluid site that streams to the on
-                                             // neighbouring processor "id" and 
-                                             // streaming direction
-  
-  int f_head;
-  int *f_recv_iv;
-  
-  // buffers needed for convergence-enabled simulations
-  double *f_to_send;
-  double *f_to_recv;
-  
-  int *f_send_id;
-};
-
-
-struct Net
-{
-  int id;                                    // Processor rank
-  int procs;                                 // Number of processors.
-  int neigh_procs;                           // Number of neighbouring rocessors.
-  int err;
-  int my_inter_sites, my_inner_sites;        // Site on this process that do and do not need
-                                             // information from neighbouring processors.
-  int my_inner_collisions[COLLISION_TYPES];  // Number of collisions that only use data on this rank.
-  int my_inter_collisions[COLLISION_TYPES];  // Number of collisions that require information from
-                                             // other processors.
-  int my_sites;                              // Number of fluid sites on this rank.
-  int shared_fs;                             // Number of distributions shared with neighbouring
-                                             // processors.
-  int *machine_id;
-  int *procs_per_machine;
-  int *fluid_sites;                          // Array containing numbers of fluid sites on 
-                                             // each process.
-  
-  short int *from_proc_id_to_neigh_proc_index;  // Turns proc_id to neigh_proc_iindex.
-  short int *cluster_id;
-  
-  DataBlock *data_block;                     // See comment next to struct DataBlock.
-  DataBlock *map_block;                      // See comment next to struct DataBlock. 
-  
-  ProcBlock *proc_block;                     // See comment next to struct ProcBlock.
-  
-  WallBlock *wall_block;                     // See comment next to struct WallBlock.
-  
-  NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
-  
-#ifndef NOMPI
-  MPI_Status status[4];                      // Define variables for MPI non-blocking sends, receives.
-  
-  MPI_Request **req;
-#endif
-  double dd_time, bm_time, fr_time, fo_time;
-};
-
-
-struct ColPixel
-{
-  float vel_r, vel_g, vel_b;
-  float stress_r, stress_g, stress_b;
-  float t, dt;
-  float density;
-  float stress;
-  
-  float particle_vel;
-  float particle_z;
-  
-  int particle_inlet_id;
-  int i;
 };
 
 
@@ -470,9 +284,6 @@ extern int col_pixels, col_pixels_max;
 extern int col_pixels_recv[2];
 
 extern int *col_pixel_id;
-
-extern ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
-extern ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
 extern Glyph *glyph;
 
 
@@ -491,17 +302,6 @@ extern int block_size, block_size2, block_size3, block_size_1;
 extern int shift;
 extern int sites_in_a_block;
 
-extern double lbm_stress_type;
-extern double lbm_stress_par;
-extern double lbm_density_min, lbm_density_max;
-extern double lbm_velocity_min, lbm_velocity_max;
-extern double lbm_stress_min, lbm_stress_max;
-extern double *lbm_average_inlet_velocity;
-extern double *lbm_peak_inlet_velocity;
-extern double *lbm_inlet_normal;
-extern long int *lbm_inlet_count;
-
-extern int lbm_terminate_simulation;
 
 extern int net_machines;
 
@@ -568,46 +368,11 @@ extern Vis vis;
 int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
 
-double lbmConvertPressureToLatticeUnits (double pressure, LBM *lbm);
-double lbmConvertPressureToPhysicalUnits (double pressure, LBM *lbm);
-double lbmConvertPressureGradToLatticeUnits (double pressure_grad, LBM *lbm);
-double lbmConvertPressureGradToPhysicalUnits (double pressure_grad, LBM *lbm);
-double lbmConvertVelocityToLatticeUnits (double velocity, LBM *lbm);
-double lbmConvertVelocityToPhysicalUnits (double velocity, LBM *lbm);
-double lbmConvertStressToLatticeUnits (double stress, LBM *lbm);
-double lbmConvertStressToPhysicalUnits (double stress, LBM *lbm);
-void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
-void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
-void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
-void lbmStress (double f[], double *stress);
-void lbmStress (double density, double f[], double nor[], double *stress);
-void lbmInitMinMaxValues (void);
-void lbmUpdateMinMaxValues (double density, double velocity, double stress);
-void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
-int lbmCollisionType (unsigned int site_data);
-void lbmInit (char *system_file_name, LBM *lbm, Net *net);
-void lbmSetInitialConditions (LBM *lbm, Net *net);
-void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
-void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
-int lbmCycle (int perform_rt, LBM *lbm, Net *net);
-int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net);
-void lbmCalculateFlowFieldValues (LBM *lbm);
-int lbmIsUnstable (Net *net);
-void lbmRestart (LBM *lbm, Net *net);
-void lbmEnd (void);
+
 
 int netFindTopology (Net *net, int *depths);
 void netInit (LBM *lbm, Net *net);
 void netEnd (Net *net);
-
-void lbmReadConfig (LBM *lbm, Net *net);
-double lbmCalculateTau (LBM *lbm);
-void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net);
-
-void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
-void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net);
-void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
-void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net);
 
 void rtInit (Net *net);
 void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*ColourPalette) (float value, float col[]));

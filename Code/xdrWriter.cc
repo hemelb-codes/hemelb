@@ -51,3 +51,11 @@ void XdrWriter::writePixel (ColPixel *col_pixel_p, void (*ColourPalette) (float 
   writeUnsignedInt(&pix_data[1]);
   writeUnsignedInt(&pix_data[2]);
 }
+
+
+// Method to get the current position in the stream. NOTE: this could be used
+// for all XdrWriter types, but is only currently used by this class.
+unsigned int XdrWriter::getCurrentStreamPosition()
+{
+  return xdr_getpos(&myXdr);
+}
