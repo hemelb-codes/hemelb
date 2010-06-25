@@ -14,7 +14,6 @@ void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *v
 						    double *density, double *v_x, double *v_y, double *v_z,
 						    double f_neq[]));
 
-
 double lbmConvertPressureToLatticeUnits (double pressure, LBM *lbm)
 {
   return Cs2 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *

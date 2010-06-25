@@ -20,7 +20,8 @@ class XdrWriter
     void writeDouble(double* doubleToWrite);
     void writeShort(short* shortToWrite);
     void writeFloat(float* floatToWrite);
-    void writeUnsignedInt(unsigned int* unsignedIntToWrite);
+    void writeUnsignedInt(unsigned int* unsignedIntToWrite);    
+    unsigned int getCurrentStreamPosition();
 };
 
 #endif //__xdrWriter_h_
