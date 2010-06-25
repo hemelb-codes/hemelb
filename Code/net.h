@@ -1,4 +1,16 @@
-#include "configconstants.h"
+#ifndef __net_h_
+#define __net_h_
+
+#include "constants.h"
+
+// TODO this include is probably bad. Should work towards getting rid of it at some point.
+#ifndef NOMPI
+#ifdef XT3
+#include <mpi.h>
+#else
+#include "mpi.h"
+#endif
+#endif
 
 // Superficial site data
 struct WallData
@@ -112,3 +124,61 @@ struct Net
 #endif
   double dd_time, bm_time, fr_time, fo_time;
 };
+
+extern double *net_site_nor;
+extern unsigned int *net_site_data;
+
+
+extern int is_bench;
+
+// declarations of all the functions used
+int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
+unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
+
+
+// Some sort of coordinates.
+struct SiteLocation
+{
+  short int i, j, k;
+};
+
+
+
+// TODO Ugh. Will get rid of these to somewhere else at some point.
+extern int sites_x, sites_y, sites_z;
+extern int blocks_x, blocks_y, blocks_z;
+extern int blocks_yz, blocks;
+extern int block_size, block_size2, block_size3, block_size_1;
+extern int shift;
+extern int sites_in_a_block;
+
+extern int net_machines;
+
+// parameters related to the lattice directions
+
+extern int e_x[15];
+extern int e_y[15];
+extern int e_z[15];
+extern int inv_dir[15];
+
+#ifndef NOMPI
+extern MPI_Datatype MPI_col_pixel_type;
+#endif
+
+extern double *f_old, *f_new;
+
+extern int *f_id;
+
+// 3 buffers needed for convergence-enabled simulations
+extern double *f_to_send;
+extern double *f_to_recv;
+
+extern int *f_send_id;
+
+extern int *f_recv_iv;
+
+extern short int *f_data;
+
+
+
+#endif //__net_h_

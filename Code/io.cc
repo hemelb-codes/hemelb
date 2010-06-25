@@ -2,7 +2,8 @@
  \brief In this file, the functions useful for the input/output are reported
 */
 
-#include "config.h"
+#include "lb.h"
+#include "net.h"
 #include "utilityFunctions.h"
 #include "io.h"
 #include "xdrReader.h"
@@ -10,6 +11,7 @@
 
 #include <limits.h>
 #include <sstream>
+#include <math.h>
 
 using namespace std;
 

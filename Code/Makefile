@@ -12,7 +12,7 @@ OBJ=config.o \
 	fileutils.o \
         rt.o \
         rt2.o \
-	topology.o \
+	net.o \
 	network.o \
 	colourpalette.o \
 	visthread.o \

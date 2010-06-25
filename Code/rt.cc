@@ -1,7 +1,8 @@
-#include "config.h"
 #include "utilityFunctions.h"
 #include "rt.h"
+#include "lb.h"
 #include "xdrFileWriter.h"
+#include <math.h>
 
 // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
 void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[])
