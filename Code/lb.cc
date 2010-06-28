@@ -1837,44 +1837,44 @@ void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net)
 // In the case of instability, this function restart the simulation
 // with twice as many time steps per period and update the parameters
 // that depends on this change.
-void lbmRestart (LBM *lbm, Net *net)
+void LBM::lbmRestart (Net *net)
 {
   int i;
   
-  for (i = 0; i < lbm->inlets; i++)
+  for (i = 0; i < inlets; i++)
     {
-      inlet_density_avg[i] = lbm->lbmConvertPressureToPhysicalUnits (inlet_density_avg[i] * Cs2);
-      inlet_density_amp[i] = lbm->lbmConvertPressureGradToPhysicalUnits (inlet_density_amp[i] * Cs2);
+      inlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (inlet_density_avg[i] * Cs2);
+      inlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (inlet_density_amp[i] * Cs2);
     }
-  for (i = 0; i < lbm->outlets; i++)
+  for (i = 0; i < outlets; i++)
     {
-      outlet_density_avg[i] = lbm->lbmConvertPressureToPhysicalUnits (outlet_density_avg[i] * Cs2);
-      outlet_density_amp[i] = lbm->lbmConvertPressureGradToPhysicalUnits (outlet_density_amp[i] * Cs2);
+      outlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (outlet_density_avg[i] * Cs2);
+      outlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (outlet_density_amp[i] * Cs2);
     }
-  lbm->period *= 2;
+  period *= 2;
   
-  for (i = 0; i < lbm->inlets; i++)
+  for (i = 0; i < inlets; i++)
     {
-      inlet_density_avg[i] = lbm->lbmConvertPressureToLatticeUnits (inlet_density_avg[i]) / Cs2;
-      inlet_density_amp[i] = lbm->lbmConvertPressureGradToLatticeUnits (inlet_density_amp[i]) / Cs2;
+      inlet_density_avg[i] = lbmConvertPressureToLatticeUnits (inlet_density_avg[i]) / Cs2;
+      inlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[i]) / Cs2;
     }
-  for (i = 0; i < lbm->outlets; i++)
+  for (i = 0; i < outlets; i++)
     {
-      outlet_density_avg[i] = lbm->lbmConvertPressureToLatticeUnits (outlet_density_avg[i]) / Cs2;
-      outlet_density_amp[i] = lbm->lbmConvertPressureGradToLatticeUnits (outlet_density_amp[i]) / Cs2;
+      outlet_density_avg[i] = lbmConvertPressureToLatticeUnits (outlet_density_avg[i]) / Cs2;
+      outlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[i]) / Cs2;
     }
-  lbm->tau = lbmCalculateTau (lbm);
+  tau = lbmCalculateTau (this);
   
-  lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
-  lbm->omega = -1.0 / lbm->tau;
+  viscosity = ((2.0 * tau - 1.0) / 6.0);
+  omega = -1.0 / tau;
   
-  lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
+  lbm_stress_par = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
   
-  lbm->lbmSetInitialConditions (net);
+  lbmSetInitialConditions (net);
 }
 
 
-void lbmEnd (void)
+void LBM::lbmEnd (void)
 {
   free(outlet_density_avg);
   free(outlet_density_amp);

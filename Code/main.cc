@@ -217,9 +217,9 @@ int main (int argc, char *argv[])
   
   lbm.lbmInit (input_config_name, &net);
   
-  lbmReadConfig (&lbm, &net);
+  lbm.lbmReadConfig (&net);
   
-  lbmReadParameters (input_parameters_name, &lbm, &net);
+  lbm.lbmReadParameters (input_parameters_name, &net);
   
   if (netFindTopology (&net, &depths) == 0)
     {
@@ -422,7 +422,7 @@ int main (int argc, char *argv[])
 	      FileUtils::DeleteDirContents (snapshot_directory);
               FileUtils::DeleteDirContents (image_directory);
 	      
-	      lbmRestart (&lbm, &net);
+	      lbm.lbmRestart (&net);
 #ifndef NO_STREAKLINES
 	      slRestart (&sl);
 #endif
@@ -680,7 +680,7 @@ int main (int argc, char *argv[])
     }
   visEnd (&sl);
   netEnd (&net);
-  lbmEnd ();
+  lbm.lbmEnd ();
   
 #ifndef NO_STEER
   if (!is_bench && net.id == 0)
