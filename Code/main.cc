@@ -385,7 +385,7 @@ int main (int argc, char *argv[])
 		  strcpy ( complete_snapshot_name, snapshot_directory );
 		  strcat ( complete_snapshot_name, snapshot_filename );
 		  
-		  lbmWriteConfigASCII (stability, complete_snapshot_name, &lbm, &net);
+		  lbm.lbmWriteConfigASCII (stability, complete_snapshot_name, &net);
 		}
 #ifndef NO_STEER
 	      if (net.id == 0)
