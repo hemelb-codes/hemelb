@@ -4,6 +4,9 @@
 #include "net.h"
 #include "lb.h"
 
+// the last three digits of the pixel identifier are used to indicate
+// if the pixel is coloured via the ray tracing technique and/or a glyph
+// and/or a particle/pathlet
 #define RT               (1 << 28)
 #define GLYPH            (1 << 29)
 #define STREAKLINE       (1 << 30)

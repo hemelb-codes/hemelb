@@ -34,9 +34,7 @@
 #include <semaphore.h>
 #endif
 
-// the last three digits of the pixel identifier are used to indicate
-// if the pixel is coloured via the ray tracing technique and/or a glyph
-// and/or a particle/pathlet
+
 
 
 
