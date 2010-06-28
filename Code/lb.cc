@@ -76,10 +76,10 @@ double LBM::lbmConvertStressToPhysicalUnits (double stress)
 }
 
 
-double lbmCalculateTau (LBM *lbm)
+void LBM::RecalculateTau ()
 {
-  return 0.5 + (PULSATILE_PERIOD * BLOOD_VISCOSITY / BLOOD_DENSITY) /
-    (Cs2 * lbm->period * lbm->voxel_size * lbm->voxel_size);
+  tau = 0.5 + (PULSATILE_PERIOD * BLOOD_VISCOSITY / BLOOD_DENSITY) /
+    (Cs2 * period * voxel_size * voxel_size);
 }
 
 
@@ -1857,7 +1857,7 @@ void LBM::lbmRestart (Net *net)
       outlet_density_avg[i] = lbmConvertPressureToLatticeUnits (outlet_density_avg[i]) / Cs2;
       outlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[i]) / Cs2;
     }
-  tau = lbmCalculateTau (this);
+  RecalculateTau ();
   
   viscosity = ((2.0 * tau - 1.0) / 6.0);
   omega = -1.0 / tau;
