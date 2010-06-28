@@ -80,10 +80,9 @@ int main (int argc, char *argv[])
   pthread_attr_t pthread_attrib;
 #endif
   
-  LBM lbm;
-  
   Net net;
-  
+  LBM lbm(&net);
+   
   SL sl;
   
 #ifndef NOMPI
@@ -215,9 +214,7 @@ int main (int argc, char *argv[])
     }
 #endif // NO_STEER
   
-  lbm.lbmInit (input_config_name, &net);
-  
-  lbm.lbmReadConfig (&net);
+  lbm.lbmReadConfig (input_config_name, &net);
   
   lbm.lbmReadParameters (input_parameters_name, &net);
   
@@ -680,7 +677,6 @@ int main (int argc, char *argv[])
     }
   visEnd (&sl);
   netEnd (&net);
-  lbm.lbmEnd ();
   
 #ifndef NO_STEER
   if (!is_bench && net.id == 0)
