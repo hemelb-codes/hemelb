@@ -641,11 +641,11 @@ int main (int argc, char *argv[])
 	      vis_pressure_min = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
 	      vis_pressure_max = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
 	      
-	      vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, &lbm);
-	      vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, &lbm);
+	      vis_velocity_min = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
+	      vis_velocity_max = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
 	      
-	      vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, &lbm);
-	      vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, &lbm);
+	      vis_stress_min = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_min);
+	      vis_stress_max = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_max);
 	      
 	      fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
 	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis_pressure_min, vis_pressure_max);
