@@ -35,6 +35,8 @@ public:
   double lbmConvertStressToLatticeUnits (double stress);
   double lbmConvertStressToPhysicalUnits (double stress);
 
+  void lbmInit (char *system_file_name_in, Net *net);
+  void lbmSetInitialConditions (Net *net);
 };
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
@@ -46,8 +48,6 @@ void lbmInitMinMaxValues (void);
 void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 int lbmCollisionType (unsigned int site_data);
-void lbmInit (char *system_file_name, LBM *lbm, Net *net);
-void lbmSetInitialConditions (LBM *lbm, Net *net);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmCycle (int perform_rt, LBM *lbm, Net *net);

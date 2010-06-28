@@ -1233,9 +1233,9 @@ void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
 }
 
 
-void lbmInit (char *system_file_name, LBM *lbm, Net *net)
+void LBM::lbmInit (char *system_file_name_in, Net *net)
 {
-  lbm->system_file_name = system_file_name;
+  system_file_name = system_file_name_in;
   
   if (!check_conv)
     {
@@ -1278,7 +1278,7 @@ void lbmInit (char *system_file_name, LBM *lbm, Net *net)
 }
 
 
-void lbmSetInitialConditions (LBM *lbm, Net *net)
+void LBM::lbmSetInitialConditions (Net *net)
 {
   double *f_old_p, *f_new_p, f_eq[15];
   double density;
@@ -1289,11 +1289,11 @@ void lbmSetInitialConditions (LBM *lbm, Net *net)
   
   density = 0.;
   
-  for (i = 0; i < lbm->outlets; i++)
+  for (i = 0; i < outlets; i++)
     {
       density += outlet_density_avg[i] - outlet_density_amp[i];
     }
-  density /= lbm->outlets;
+  density /= outlets;
   
   for (i = 0; i < net->my_sites; i++)
     {
@@ -1870,7 +1870,7 @@ void lbmRestart (LBM *lbm, Net *net)
   
   lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
   
-  lbmSetInitialConditions (lbm, net);
+  lbm->lbmSetInitialConditions (net);
 }
 
 

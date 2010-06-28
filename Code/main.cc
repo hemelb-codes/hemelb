@@ -215,7 +215,7 @@ int main (int argc, char *argv[])
     }
 #endif // NO_STEER
   
-  lbmInit (input_config_name, &lbm, &net);
+  lbm.lbmInit (input_config_name, &net);
   
   lbmReadConfig (&lbm, &net);
   
@@ -231,7 +231,7 @@ int main (int argc, char *argv[])
   
   netInit (&lbm, &net);
   
-  lbmSetInitialConditions (&lbm, &net);
+  lbm.lbmSetInitialConditions (&net);
   
   visInit (&net, &vis, &sl);
   
