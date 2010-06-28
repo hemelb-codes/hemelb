@@ -15,35 +15,35 @@ void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *v
 						    double *density, double *v_x, double *v_y, double *v_z,
 						    double f_neq[]));
 
-double lbmConvertPressureToLatticeUnits (double pressure, LBM *lbm)
+double LBM::lbmConvertPressureToLatticeUnits (double pressure)
 {
   return Cs2 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
-    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) *
-    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) / BLOOD_DENSITY;
+    (PULSATILE_PERIOD / (period * voxel_size)) *
+    (PULSATILE_PERIOD / (period * voxel_size)) / BLOOD_DENSITY;
 }
 
 
-double lbmConvertPressureToPhysicalUnits (double pressure, LBM *lbm)
+double LBM::lbmConvertPressureToPhysicalUnits (double pressure)
 {
   return REFERENCE_PRESSURE + ((pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY *
-    ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) *
-    ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
+    ((period * voxel_size) / PULSATILE_PERIOD) *
+    ((period * voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
 }
 
 
-double lbmConvertPressureGradToLatticeUnits (double pressure_grad, LBM *lbm)
+double LBM::lbmConvertPressureGradToLatticeUnits (double pressure_grad)
 {
   return pressure_grad * mmHg_TO_PASCAL *
-    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) *
-    (PULSATILE_PERIOD / (lbm->period * lbm->voxel_size)) / BLOOD_DENSITY;
+    (PULSATILE_PERIOD / (period * voxel_size)) *
+    (PULSATILE_PERIOD / (period * voxel_size)) / BLOOD_DENSITY;
 }
 
 
-double lbmConvertPressureGradToPhysicalUnits (double pressure_grad, LBM *lbm)
+double LBM::lbmConvertPressureGradToPhysicalUnits (double pressure_grad)
 {
   return pressure_grad * BLOOD_DENSITY *
-    ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) *
-    ((lbm->period * lbm->voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
+    ((period * voxel_size) / PULSATILE_PERIOD) *
+    ((period * voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
 }
 
 
@@ -1693,8 +1693,8 @@ void lbmCalculateFlowFieldValues (LBM *lbm)
       lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i], lbm);
     }
   
-  vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2, lbm);
-  vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2, lbm);
+  vis_pressure_min = lbm->lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
+  vis_pressure_max = lbm->lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
   
   vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, lbm);
   vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, lbm);
@@ -1845,25 +1845,25 @@ void lbmRestart (LBM *lbm, Net *net)
   
   for (i = 0; i < lbm->inlets; i++)
     {
-      inlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (inlet_density_avg[i] * Cs2, lbm);
-      inlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (inlet_density_amp[i] * Cs2, lbm);
+      inlet_density_avg[i] = lbm->lbmConvertPressureToPhysicalUnits (inlet_density_avg[i] * Cs2);
+      inlet_density_amp[i] = lbm->lbmConvertPressureGradToPhysicalUnits (inlet_density_amp[i] * Cs2);
     }
   for (i = 0; i < lbm->outlets; i++)
     {
-      outlet_density_avg[i] = lbmConvertPressureToPhysicalUnits (outlet_density_avg[i] * Cs2, lbm);
-      outlet_density_amp[i] = lbmConvertPressureGradToPhysicalUnits (outlet_density_amp[i] * Cs2, lbm);
+      outlet_density_avg[i] = lbm->lbmConvertPressureToPhysicalUnits (outlet_density_avg[i] * Cs2);
+      outlet_density_amp[i] = lbm->lbmConvertPressureGradToPhysicalUnits (outlet_density_amp[i] * Cs2);
     }
   lbm->period *= 2;
   
   for (i = 0; i < lbm->inlets; i++)
     {
-      inlet_density_avg[i] = lbmConvertPressureToLatticeUnits (inlet_density_avg[i], lbm) / Cs2;
-      inlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[i], lbm) / Cs2;
+      inlet_density_avg[i] = lbm->lbmConvertPressureToLatticeUnits (inlet_density_avg[i]) / Cs2;
+      inlet_density_amp[i] = lbm->lbmConvertPressureGradToLatticeUnits (inlet_density_amp[i]) / Cs2;
     }
   for (i = 0; i < lbm->outlets; i++)
     {
-      outlet_density_avg[i] = lbmConvertPressureToLatticeUnits (outlet_density_avg[i], lbm) / Cs2;
-      outlet_density_amp[i] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[i], lbm) / Cs2;
+      outlet_density_avg[i] = lbm->lbmConvertPressureToLatticeUnits (outlet_density_avg[i]) / Cs2;
+      outlet_density_amp[i] = lbm->lbmConvertPressureGradToLatticeUnits (outlet_density_amp[i]) / Cs2;
     }
   lbm->tau = lbmCalculateTau (lbm);
   

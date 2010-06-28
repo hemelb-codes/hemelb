@@ -24,12 +24,14 @@ public:
   float *block_density;
   
   int *block_map;
+
+  double lbmConvertPressureToLatticeUnits (double pressure);  
+  double lbmConvertPressureToPhysicalUnits (double pressure);
+  double lbmConvertPressureGradToLatticeUnits (double pressure_grad);
+  double lbmConvertPressureGradToPhysicalUnits (double pressure_grad);
 };
 
-double lbmConvertPressureToLatticeUnits (double pressure, LBM *lbm);
-double lbmConvertPressureToPhysicalUnits (double pressure, LBM *lbm);
-double lbmConvertPressureGradToLatticeUnits (double pressure_grad, LBM *lbm);
-double lbmConvertPressureGradToPhysicalUnits (double pressure_grad, LBM *lbm);
+
 double lbmConvertVelocityToLatticeUnits (double velocity, LBM *lbm);
 double lbmConvertVelocityToPhysicalUnits (double velocity, LBM *lbm);
 double lbmConvertStressToLatticeUnits (double stress, LBM *lbm);

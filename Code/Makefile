@@ -11,7 +11,6 @@ OBJ=config.o \
 	http_post.o \
 	fileutils.o \
         rt.o \
-        rt2.o \
 	net.o \
 	network.o \
 	colourpalette.o \

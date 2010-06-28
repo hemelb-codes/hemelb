@@ -242,8 +242,8 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  fscanf (parameters_file, "%le %le %le\n",
 		  &inlet_density_avg[n], &inlet_density_amp[n], &inlet_density_phs[n]);
 	  
-	  inlet_density_avg[n] = lbmConvertPressureToLatticeUnits (inlet_density_avg[n], lbm) / Cs2;
-	  inlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[n], lbm) / Cs2;
+	  inlet_density_avg[n] = lbm->lbmConvertPressureToLatticeUnits (inlet_density_avg[n]) / Cs2;
+	  inlet_density_amp[n] = lbm->lbmConvertPressureGradToLatticeUnits (inlet_density_amp[n]) / Cs2;
 	  inlet_density_phs[n] *= DEG_TO_RAD;
 	}
       fscanf (parameters_file, "%i\n", &lbm->outlets);
@@ -256,8 +256,8 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	  fscanf (parameters_file, "%le %le %le\n",
 		  &outlet_density_avg[n], &outlet_density_amp[n], &outlet_density_phs[n]);
 	  
-	  outlet_density_avg[n] = lbmConvertPressureToLatticeUnits (outlet_density_avg[n], lbm) / Cs2;
-	  outlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[n], lbm) / Cs2;
+	  outlet_density_avg[n] = lbm->lbmConvertPressureToLatticeUnits (outlet_density_avg[n]) / Cs2;
+	  outlet_density_amp[n] = lbm->lbmConvertPressureGradToLatticeUnits (outlet_density_amp[n]) / Cs2;
 	  outlet_density_phs[n] *= DEG_TO_RAD;
 	}
       lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
