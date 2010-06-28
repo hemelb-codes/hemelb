@@ -314,7 +314,7 @@ int main (int argc, char *argv[])
 	      
 	      if (!check_conv)
 		{
-		  stability = lbmCycle (doRendering, &lbm, &net);
+		  stability = lbm.lbmCycle (doRendering, &net);
 		  
 		  if ((restart = lbmIsUnstable (&net)) != 0)
 		    {
@@ -324,7 +324,7 @@ int main (int argc, char *argv[])
 		}
 	      else
 		{
-		  stability = lbmCycle (cycle_id, time_step, doRendering, &lbm, &net);
+		  stability = lbm.lbmCycle (cycle_id, time_step, doRendering, &net);
 		  
 		  if (stability == UNSTABLE)
 		    {
@@ -438,7 +438,7 @@ int main (int argc, char *argv[])
 	      cycle_id = 0;
 	      continue;
 	    }
-	  lbmCalculateFlowFieldValues (&lbm);
+	  lbm.lbmCalculateFlowFieldValues ();
 	  
 	  if (net.id == 0)
 	    {
@@ -475,7 +475,7 @@ int main (int argc, char *argv[])
 	{
 	  ++total_time_steps;
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
-	  stability = lbmCycle (0, &lbm, &net);
+	  stability = lbm.lbmCycle (0, &net);
 	  
 	  elapsed_time = UtilityFunctions::myClock () - FS_time;
 	  
@@ -498,7 +498,7 @@ int main (int argc, char *argv[])
 	{
 	  ++total_time_steps;
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
-	  stability = lbmCycle (1, &lbm, &net);
+	  stability = lbm.lbmCycle (1, &net);
 	}
       FS_time = UtilityFunctions::myClock () - FS_time;
       
@@ -514,7 +514,7 @@ int main (int argc, char *argv[])
 	{
 	  ++total_time_steps;
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
-	  stability = lbmCycle (1, &lbm, &net);
+	  stability = lbm.lbmCycle (1, &net);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	  
 	  // partial timings
@@ -538,7 +538,7 @@ int main (int argc, char *argv[])
 	{
 	  ++total_time_steps;
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
-	  stability = lbmCycle (1, &lbm, &net);
+	  stability = lbm.lbmCycle (1, &net);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	}
       FS_plus_RT_time = UtilityFunctions::myClock () - FS_plus_RT_time;
@@ -554,7 +554,7 @@ int main (int argc, char *argv[])
 	{
 	  ++total_time_steps;
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
-	  stability = lbmCycle (1, &lbm, &net);
+	  stability = lbm.lbmCycle (1, &net);
           slStreakLines (time_step, lbm.period, &net, &sl);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	  
@@ -579,7 +579,7 @@ int main (int argc, char *argv[])
 	{
 	  ++total_time_steps;
 	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
-	  stability = lbmCycle (1, &lbm, &net);
+	  stability = lbm.lbmCycle (1, &net);
 	  slStreakLines (time_step, lbm.period, &net, &sl);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	}

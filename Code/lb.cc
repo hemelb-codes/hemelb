@@ -1338,9 +1338,8 @@ void LBM::lbmSetInitialConditions (Net *net)
 // when the convergence criterion is not applied. Communications
 // automatically handle the streaming stage pertaining to neighbouring
 // subdomains.
-int lbmCycle (int perform_rt, LBM *lbm, Net *net)
+int LBM::lbmCycle (int perform_rt, Net *net)
 {
-  double omega;
   double density, vx, vy, vz, velocity;
   
   int collision_type, offset;
@@ -1359,8 +1358,6 @@ int lbmCycle (int perform_rt, LBM *lbm, Net *net)
 			    &net->req[ 0 ][ m ]);
 #endif
     }
-  
-  omega = lbm->omega;
   
   offset = net->my_inner_sites;
   
@@ -1423,9 +1420,8 @@ int lbmCycle (int perform_rt, LBM *lbm, Net *net)
 // when the convergence criterion is applied. Communications
 // automatically handle the streaming stage pertaining to neighbouring
 // subdomains.
-int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
+int LBM::lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net)
 {
-  double omega;
   double density, vx[2], vy[2], vz[2], velocity[2];
   
   double sum1, sum2;
@@ -1467,8 +1463,6 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
     }
   sum1 = 0.0;
   sum2 = 0.0;
-  
-  omega = lbm->omega;
   
   offset = net->my_inner_sites;
   
@@ -1608,9 +1602,9 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
       
       conv_error += sum1 / sum2;
       
-      if (time_step == lbm->period)
+      if (time_step == period)
 	{
-	  conv_error /= lbm->period;
+	  conv_error /= period;
 	  
 	  if (conv_error < TOL)
 	    {
@@ -1633,14 +1627,14 @@ int lbmCycle (int cycle_id, int time_step, int perform_rt, LBM *lbm, Net *net)
 }
 
 
-void lbmCalculateFlowFieldValues (LBM *lbm)
+void LBM::lbmCalculateFlowFieldValues ()
 {
   double *local_data;
   double *global_data;
   
   int i;
 
-  int lMaxInlets = UtilityFunctions::max(6+lbm->inlets,2*lbm->inlets);
+  int lMaxInlets = UtilityFunctions::max(6+inlets,2*inlets);
 
   local_data = (double *)malloc(sizeof(double) * lMaxInlets);
   global_data = (double *)malloc(sizeof(double) * lMaxInlets);
@@ -1653,10 +1647,10 @@ void lbmCalculateFlowFieldValues (LBM *lbm)
   local_data[4] = lbm_velocity_max;
   local_data[5] = lbm_stress_max;
   
-  memcpy (&local_data[6], lbm_peak_inlet_velocity, sizeof(double) * lbm->inlets);
+  memcpy (&local_data[6], lbm_peak_inlet_velocity, sizeof(double) * inlets);
   
   MPI_Reduce (&local_data[0], &global_data[0], 3, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-  MPI_Reduce (&local_data[3], &global_data[3], 3+lbm->inlets, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce (&local_data[3], &global_data[3], 3+inlets, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   
   lbm_density_min  = global_data[0];
   lbm_velocity_min = global_data[1];
@@ -1665,44 +1659,44 @@ void lbmCalculateFlowFieldValues (LBM *lbm)
   lbm_velocity_max = global_data[4];
   lbm_stress_max   = global_data[5];
   
-  memcpy (lbm_peak_inlet_velocity, &global_data[6], sizeof(double) * lbm->inlets);
+  memcpy (lbm_peak_inlet_velocity, &global_data[6], sizeof(double) * inlets);
   
-  for (i = 0; i < lbm->inlets; i++)
+  for (i = 0; i < inlets; i++)
     {
       local_data[ i ] = lbm_average_inlet_velocity[ i ];
-      local_data[ lbm->inlets+i ] = lbm_inlet_count[ i ];
+      local_data[ inlets+i ] = lbm_inlet_count[ i ];
     }
-  MPI_Reduce (local_data, global_data, 2*lbm->inlets, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce (local_data, global_data, 2*inlets, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   
-  for (i = 0; i < lbm->inlets; i++)
+  for (i = 0; i < inlets; i++)
     {
       lbm_average_inlet_velocity[ i ] = global_data[ i ];
-      lbm_inlet_count[ i ] = global_data[ lbm->inlets+i ];
+      lbm_inlet_count[ i ] = global_data[ inlets+i ];
     }
 #endif // NOMPI
   
   free(global_data);
   free(local_data);
   
-  for (i = 0; i < lbm->inlets; i++)
+  for (i = 0; i < inlets; i++)
     {
       lbm_average_inlet_velocity[i] /= lbm_inlet_count[i];
-      lbm_average_inlet_velocity[i] = lbm->lbmConvertVelocityToPhysicalUnits (lbm_average_inlet_velocity[i]);
-      lbm_peak_inlet_velocity[i] = lbm->lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i]);
+      lbm_average_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_average_inlet_velocity[i]);
+      lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i]);
     }
   
-  vis_pressure_min = lbm->lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
-  vis_pressure_max = lbm->lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
+  vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
+  vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
   
-  vis_velocity_min = lbm->lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
-  vis_velocity_max = lbm->lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
+  vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
+  vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
   
-  vis_stress_min = lbm->lbmConvertStressToPhysicalUnits (lbm_stress_min);
-  vis_stress_max = lbm->lbmConvertStressToPhysicalUnits (lbm_stress_max);
+  vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min);
+  vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max);
   
-  vis_period = lbm->period;
+  vis_period = period;
   
-  vis_inlets = lbm->inlets;
+  vis_inlets = inlets;
 }
 
 
