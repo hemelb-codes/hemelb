@@ -5,10 +5,17 @@
 
 class LBM
 {
+  private:
+    void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
+    void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
+    void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity,
+				 void lbmCollision (double omega, int i,
+						    double *density, double *v_x, double *v_y, double *v_z,
+						    double f_neq[]));
 
-public:
+  public:
   char *system_file_name;
-  
+
   double tau, viscosity;
   double voxel_size;
   double omega;
@@ -22,8 +29,11 @@ public:
   int conv_freq;
   
   float *block_density;
-  
   int *block_map;
+
+  LBM (Net *net);
+  ~LBM();
+
 
   double lbmConvertPressureToLatticeUnits (double pressure);  
   double lbmConvertPressureToPhysicalUnits (double pressure);
@@ -34,12 +44,10 @@ public:
   double lbmConvertStressToLatticeUnits (double stress);
   double lbmConvertStressToPhysicalUnits (double stress);
 
-  void lbmInit (char *system_file_name_in, Net *net);
   void lbmSetInitialConditions (Net *net);
   void lbmRestart (Net *net);
-  void lbmEnd (void);
 
-  void lbmReadConfig (Net *net);
+  void lbmReadConfig (char *system_file_name_in, Net *net);
   void lbmReadParameters (char *parameters_file_name, Net *net);
 
   int lbmCycle (int perform_rt, Net *net);
