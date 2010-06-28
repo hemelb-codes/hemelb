@@ -47,34 +47,32 @@ double LBM::lbmConvertPressureGradToPhysicalUnits (double pressure_grad)
 }
 
 
-double lbmConvertVelocityToLatticeUnits (double velocity, LBM *lbm)
+double LBM::lbmConvertVelocityToLatticeUnits (double velocity)
 {
-  return velocity * (((lbm->tau-0.5)/3.0) * lbm->voxel_size) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+  return velocity * (((tau-0.5)/3.0) * voxel_size) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
 }
 
 
-double lbmConvertVelocityToPhysicalUnits (double velocity, LBM *lbm)
+double LBM::lbmConvertVelocityToPhysicalUnits (double velocity)
 {
   // convert velocity from lattice units to physical units (m/s)
-  
-  return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / (((lbm->tau-0.5)/3.0) * lbm->voxel_size);
+  return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / (((tau-0.5)/3.0) * voxel_size);
 }
 
 
-double lbmConvertStressToLatticeUnits (double stress, LBM *lbm)
+double LBM::lbmConvertStressToLatticeUnits (double stress)
 {
   return stress * (BLOOD_DENSITY / (BLOOD_VISCOSITY * BLOOD_VISCOSITY)) *
-    (((lbm->tau-0.5)/3.0) * lbm->voxel_size) *
-    (((lbm->tau-0.5)/3.0) * lbm->voxel_size);
+    (((tau-0.5)/3.0) * voxel_size) *
+    (((tau-0.5)/3.0) * voxel_size);
 }
 
 
-double lbmConvertStressToPhysicalUnits (double stress, LBM *lbm)
+double LBM::lbmConvertStressToPhysicalUnits (double stress)
 {
   // convert stress from lattice units to physical units (Pa)
-  
   return stress * BLOOD_VISCOSITY * BLOOD_VISCOSITY /
-    (BLOOD_DENSITY * (((lbm->tau-0.5)/3.0) * lbm->voxel_size) * (((lbm->tau-0.5)/3.0) * lbm->voxel_size));
+    (BLOOD_DENSITY * (((tau-0.5)/3.0) * voxel_size) * (((tau-0.5)/3.0) * voxel_size));
 }
 
 
@@ -1689,18 +1687,18 @@ void lbmCalculateFlowFieldValues (LBM *lbm)
   for (i = 0; i < lbm->inlets; i++)
     {
       lbm_average_inlet_velocity[i] /= lbm_inlet_count[i];
-      lbm_average_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_average_inlet_velocity[i], lbm);
-      lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i], lbm);
+      lbm_average_inlet_velocity[i] = lbm->lbmConvertVelocityToPhysicalUnits (lbm_average_inlet_velocity[i]);
+      lbm_peak_inlet_velocity[i] = lbm->lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i]);
     }
   
   vis_pressure_min = lbm->lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
   vis_pressure_max = lbm->lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
   
-  vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min, lbm);
-  vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max, lbm);
+  vis_velocity_min = lbm->lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
+  vis_velocity_max = lbm->lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
   
-  vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min, lbm);
-  vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max, lbm);
+  vis_stress_min = lbm->lbmConvertStressToPhysicalUnits (lbm_stress_min);
+  vis_stress_max = lbm->lbmConvertStressToPhysicalUnits (lbm_stress_max);
   
   vis_period = lbm->period;
   

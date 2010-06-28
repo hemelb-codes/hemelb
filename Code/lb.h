@@ -29,13 +29,14 @@ public:
   double lbmConvertPressureToPhysicalUnits (double pressure);
   double lbmConvertPressureGradToLatticeUnits (double pressure_grad);
   double lbmConvertPressureGradToPhysicalUnits (double pressure_grad);
+
+  double lbmConvertVelocityToLatticeUnits (double velocity);
+  double lbmConvertVelocityToPhysicalUnits (double velocity);
+  double lbmConvertStressToLatticeUnits (double stress);
+  double lbmConvertStressToPhysicalUnits (double stress);
+
 };
 
-
-double lbmConvertVelocityToLatticeUnits (double velocity, LBM *lbm);
-double lbmConvertVelocityToPhysicalUnits (double velocity, LBM *lbm);
-double lbmConvertStressToLatticeUnits (double stress, LBM *lbm);
-double lbmConvertStressToPhysicalUnits (double stress, LBM *lbm);
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
@@ -77,8 +78,6 @@ extern double *lbm_inlet_normal;
 extern long int *lbm_inlet_count;
 
 extern int lbm_terminate_simulation;
-
-
 
 extern double *inlet_density;
 extern double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;

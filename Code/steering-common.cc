@@ -64,8 +64,8 @@ void UpdateSteerableParameters (int *vis_perform_rendering, Vis *vis, LBM* lbm)
   
   lattice_density_min  = lbm->lbmConvertPressureToLatticeUnits (vis_physical_pressure_threshold_min) / Cs2;
   lattice_density_max  = lbm->lbmConvertPressureToLatticeUnits (vis_physical_pressure_threshold_max) / Cs2;
-  lattice_velocity_max = lbmConvertVelocityToLatticeUnits (vis_physical_velocity_threshold_max, lbm);
-  lattice_stress_max   = lbmConvertStressToLatticeUnits (vis_physical_stress_threshold_max, lbm);  
+  lattice_velocity_max = lbm->lbmConvertVelocityToLatticeUnits (vis_physical_velocity_threshold_max);
+  lattice_stress_max   = lbm->lbmConvertStressToLatticeUnits (vis_physical_stress_threshold_max);  
   
   visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
   		 pixels_x, pixels_y,

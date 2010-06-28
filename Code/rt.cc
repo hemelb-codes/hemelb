@@ -2425,8 +2425,8 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
       fscanf (parameters_file, "%e \n", &physical_stress_max);
       fclose (parameters_file);
       
-      velocity_max = lbmConvertVelocityToLatticeUnits (physical_velocity_max, lbm);
-      stress_max   = lbmConvertStressToLatticeUnits (physical_stress_max, lbm);
+      velocity_max = lbm->lbmConvertVelocityToLatticeUnits (physical_velocity_max);
+      stress_max   = lbm->lbmConvertStressToLatticeUnits (physical_stress_max);
       
       par_to_send[ 0 ] = ctr_x;
       par_to_send[ 1 ] = ctr_y;
@@ -2782,7 +2782,7 @@ void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
   double stress = col_pixel_p->stress / vis_stress_threshold_max_inv;
   
   vis_mouse_pressure = lbm->lbmConvertPressureToPhysicalUnits (density * Cs2);
-  vis_mouse_stress = lbmConvertStressToPhysicalUnits (stress, lbm);
+  vis_mouse_stress = lbm->lbmConvertStressToPhysicalUnits (stress);
 }
 
 
