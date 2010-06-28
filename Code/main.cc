@@ -310,7 +310,7 @@ int main (int argc, char *argv[])
 
 #endif // NO_STEER
 
-	      lbmUpdateBoundaryDensities (cycle_id, time_step, &lbm);
+	      lbm.lbmUpdateBoundaryDensities (cycle_id, time_step);
 	      
 	      if (!check_conv)
 		{
@@ -320,7 +320,7 @@ int main (int argc, char *argv[])
 		    {
 		      break;
 		    }
-		  lbmUpdateInletVelocities (time_step, &lbm, &net);
+		  lbm.lbmUpdateInletVelocities (time_step, &net);
 		}
 	      else
 		{
@@ -331,7 +331,7 @@ int main (int argc, char *argv[])
 		      restart = 1;
 		      break;
 		    }
-		  lbmUpdateInletVelocities (time_step, &lbm, &net);
+		  lbm.lbmUpdateInletVelocities (time_step, &net);
 		}
 #ifndef NO_STREAKLINES
 	      slStreakLines (time_step, lbm.period, &net, &sl);
@@ -474,7 +474,7 @@ int main (int argc, char *argv[])
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
 	  ++total_time_steps;
-	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (0, &net);
 	  
 	  elapsed_time = UtilityFunctions::myClock () - FS_time;
@@ -497,7 +497,7 @@ int main (int argc, char *argv[])
       for (time_step = 1; time_step <= FS_time_steps; time_step++)
 	{
 	  ++total_time_steps;
-	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
 	}
       FS_time = UtilityFunctions::myClock () - FS_time;
@@ -513,7 +513,7 @@ int main (int argc, char *argv[])
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
 	  ++total_time_steps;
-	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period );
 	  stability = lbm.lbmCycle (1, &net);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	  
@@ -537,7 +537,7 @@ int main (int argc, char *argv[])
       for (time_step = 1; time_step <= FS_plus_RT_time_steps; time_step++)
 	{
 	  ++total_time_steps;
-	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
 	}
@@ -553,7 +553,7 @@ int main (int argc, char *argv[])
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
 	  ++total_time_steps;
-	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
           slStreakLines (time_step, lbm.period, &net, &sl);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
@@ -578,7 +578,7 @@ int main (int argc, char *argv[])
       for (time_step = 1; time_step <= FS_plus_RT_plus_SL_time_steps; time_step++)
 	{
 	  ++total_time_steps;
-	  lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period, &lbm);
+	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
 	  slStreakLines (time_step, lbm.period, &net, &sl);
 	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);

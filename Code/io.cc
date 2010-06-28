@@ -366,7 +366,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
 	    }
 	}
     }
-  lbmUpdateBoundaryDensities (0, 0, this);
+  lbmUpdateBoundaryDensities (0, 0);
   
   RecalculateTau ();
   
