@@ -1199,11 +1199,11 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
 }
 
 
-void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
+void LBM::lbmUpdateBoundaryDensities (int cycle_id, int time_step)
 {
-  double w = 2.0 * PI / lbm->period;
+  double w = 2.0 * PI / period;
   
-  for (int i = 0; i < lbm->inlets; i++)
+  for (int i = 0; i < inlets; i++)
     {
       /*
       double coef[]={434.661,-239.217,28.9842,0.810304,5.88148,-37.8293,-32.4343,33.1995,-25.3035};
@@ -1226,7 +1226,7 @@ void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm)
       */
       inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double)time_step + inlet_density_phs[i]);
     }
-  for (int i = 0; i < lbm->outlets; i++)
+  for (int i = 0; i < outlets; i++)
     {
       outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i] * cos(w * (double)time_step + outlet_density_phs[i]);
     }
@@ -1728,7 +1728,7 @@ int lbmIsUnstable (Net *net)
 
 
 // Update peak and average inlet velocities local to the current subdomain. 
-void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net)
+void LBM::lbmUpdateInletVelocities (int time_step, Net *net)
 {
   double density;
   double vx, vy, vz;
@@ -1742,7 +1742,7 @@ void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net)
   
   if (time_step == 1)
     {
-      for (i = 0; i < lbm->inlets; i++)
+      for (i = 0; i < inlets; i++)
 	{
 	  lbm_peak_inlet_velocity[ i ] = -1e+30;
 	  lbm_average_inlet_velocity[ i ] = 0.;

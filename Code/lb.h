@@ -46,6 +46,8 @@ public:
   int lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net);
   void lbmCalculateFlowFieldValues ();
   void RecalculateTau ();
+  void lbmUpdateBoundaryDensities (int cycle_id, int time_step);
+  void lbmUpdateInletVelocities (int time_step, Net *net);
 };
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
@@ -64,10 +66,6 @@ int lbmIsUnstable (Net *net);
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net);
-void lbmUpdateBoundaryDensities (int cycle_id, int time_step, LBM *lbm);
-void lbmUpdateInletVelocities (int time_step, LBM *lbm, Net *net);
-
-
 
 extern double lbm_stress_type;
 extern double lbm_stress_par;
