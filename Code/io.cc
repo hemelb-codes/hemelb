@@ -368,7 +368,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
     }
   lbmUpdateBoundaryDensities (0, 0, this);
   
-  tau = lbmCalculateTau (this);
+  RecalculateTau ();
   
   viscosity = ((2.0 * tau - 1.0) / 6.0);
   omega = -1.0 / tau;

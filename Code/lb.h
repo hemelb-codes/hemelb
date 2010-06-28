@@ -45,6 +45,7 @@ public:
   int lbmCycle (int perform_rt, Net *net);
   int lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net);
   void lbmCalculateFlowFieldValues ();
+  void RecalculateTau ();
 };
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
@@ -59,7 +60,7 @@ int lbmCollisionType (unsigned int site_data);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmIsUnstable (Net *net);
-double lbmCalculateTau (LBM *lbm);
+
 
 void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net);
 void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net);
