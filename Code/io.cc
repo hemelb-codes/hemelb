@@ -20,7 +20,7 @@ this function reads the XDR configuration file but does not store the system
 and calculate some parameters
 */
 
-void lbmReadConfig (LBM *lbm, Net *net) {
+void LBM::lbmReadConfig (Net *net) {
   /* Read the config file written by the segtool.
    *
    * All values encoded using XDR format. Uses int, double and u_int.
@@ -60,14 +60,14 @@ void lbmReadConfig (LBM *lbm, Net *net) {
    *     double cut_distances[14]
    */
 
-  FILE* xdrFile = fopen(lbm->system_file_name, "r");
+  FILE* xdrFile = fopen(system_file_name, "r");
 
   if (xdrFile == NULL) {
-    fprintf(stderr, "Unable to open file %s [rank %i], exiting\n", lbm->system_file_name, net->id);
+    fprintf(stderr, "Unable to open file %s [rank %i], exiting\n", system_file_name, net->id);
     fflush(0x0);
     exit(0x0);
   } else {
-    fprintf(stderr, "Opened config file %s [rank %i]\n", lbm->system_file_name , net->id);
+    fprintf(stderr, "Opened config file %s [rank %i]\n", system_file_name , net->id);
   }
   fflush(NULL);
 
@@ -108,14 +108,14 @@ void lbmReadConfig (LBM *lbm, Net *net) {
   if (lbm_stress_type == SHEAR_STRESS) {
     net->wall_block = (WallBlock *)malloc(sizeof(WallBlock) * blocks);
   }
-  lbm->total_fluid_sites = 0;
+  total_fluid_sites = 0;
   
-  lbm->site_min_x = INT_MAX;
-  lbm->site_min_y = INT_MAX;
-  lbm->site_min_z = INT_MAX;
-  lbm->site_max_x = INT_MIN;
-  lbm->site_max_y = INT_MIN;
-  lbm->site_max_z = INT_MIN;
+  site_min_x = INT_MAX;
+  site_min_y = INT_MAX;
+  site_min_z = INT_MAX;
+  site_max_x = INT_MIN;
+  site_max_y = INT_MIN;
+  site_max_z = INT_MIN;
   
   net->fr_time = UtilityFunctions::myClock ();
   
@@ -160,14 +160,14 @@ void lbmReadConfig (LBM *lbm, Net *net) {
 	      }
 	      net->proc_block[n].proc_id[ m ] = -1;
 	      
-	      ++lbm->total_fluid_sites;
+	      ++total_fluid_sites;
 	      
-	      lbm->site_min_x = UtilityFunctions::min(lbm->site_min_x, site_i);
-	      lbm->site_min_y = UtilityFunctions::min(lbm->site_min_y, site_j);
-	      lbm->site_min_z = UtilityFunctions::min(lbm->site_min_z, site_k);
-	      lbm->site_max_x = UtilityFunctions::max(lbm->site_max_x, site_i);
-	      lbm->site_max_y = UtilityFunctions::max(lbm->site_max_y, site_j);
-	      lbm->site_max_z = UtilityFunctions::max(lbm->site_max_z, site_k);
+	      site_min_x = UtilityFunctions::min(site_min_x, site_i);
+	      site_min_y = UtilityFunctions::min(site_min_y, site_j);
+	      site_min_z = UtilityFunctions::min(site_min_z, site_k);
+	      site_max_x = UtilityFunctions::max(site_max_x, site_i);
+	      site_max_y = UtilityFunctions::max(site_max_y, site_j);
+	      site_max_z = UtilityFunctions::max(site_max_z, site_k);
 	      
 	      if (lbm_stress_type == SHEAR_STRESS &&
 		  lbmCollisionType (*site_type) != FLUID) {
@@ -212,7 +212,7 @@ void lbmReadConfig (LBM *lbm, Net *net) {
 through this function the processor 0 reads the LB parameters
 and then communicate them to the other processors
 */
-void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
+void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
 {
   
   double par_to_send[10000];
@@ -233,43 +233,43 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
       }
       fflush(NULL);
       
-      fscanf (parameters_file, "%i\n", &lbm->inlets);
+      fscanf (parameters_file, "%i\n", &inlets);
 
-      lbmInitialiseInlets(lbm->inlets);
+      lbmInitialiseInlets(inlets);
 
-      for (n = 0; n < lbm->inlets; n++)
+      for (n = 0; n < inlets; n++)
 	{
 	  fscanf (parameters_file, "%le %le %le\n",
 		  &inlet_density_avg[n], &inlet_density_amp[n], &inlet_density_phs[n]);
 	  
-	  inlet_density_avg[n] = lbm->lbmConvertPressureToLatticeUnits (inlet_density_avg[n]) / Cs2;
-	  inlet_density_amp[n] = lbm->lbmConvertPressureGradToLatticeUnits (inlet_density_amp[n]) / Cs2;
+	  inlet_density_avg[n] = lbmConvertPressureToLatticeUnits (inlet_density_avg[n]) / Cs2;
+	  inlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (inlet_density_amp[n]) / Cs2;
 	  inlet_density_phs[n] *= DEG_TO_RAD;
 	}
-      fscanf (parameters_file, "%i\n", &lbm->outlets);
+      fscanf (parameters_file, "%i\n", &outlets);
 
 
-      lbmInitialiseOutlets(lbm->outlets);
+      lbmInitialiseOutlets(outlets);
       
-      for (n = 0; n < lbm->outlets; n++)
+      for (n = 0; n < outlets; n++)
 	{
 	  fscanf (parameters_file, "%le %le %le\n",
 		  &outlet_density_avg[n], &outlet_density_amp[n], &outlet_density_phs[n]);
 	  
-	  outlet_density_avg[n] = lbm->lbmConvertPressureToLatticeUnits (outlet_density_avg[n]) / Cs2;
-	  outlet_density_amp[n] = lbm->lbmConvertPressureGradToLatticeUnits (outlet_density_amp[n]) / Cs2;
+	  outlet_density_avg[n] = lbmConvertPressureToLatticeUnits (outlet_density_avg[n]) / Cs2;
+	  outlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[n]) / Cs2;
 	  outlet_density_phs[n] *= DEG_TO_RAD;
 	}
-      lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm_inlet_normal           = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
-      lbm_inlet_count            = (long int *)malloc(sizeof(long int) * lbm->inlets);
+      lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * inlets);
+      lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * inlets);
+      lbm_inlet_normal           = (double *)malloc(sizeof(double) * 3 * inlets);
+      lbm_inlet_count            = (long int *)malloc(sizeof(long int) * inlets);
       
       if (feof (parameters_file) == 0)
 	{
 	  is_inlet_normal_available = 1;
 	  
-	  for (n = 0; n < lbm->inlets; n++)
+	  for (n = 0; n < inlets; n++)
 	    fscanf (parameters_file, "%le %le %le\n",
 		      &lbm_inlet_normal[3*n], &lbm_inlet_normal[3*n+1], &lbm_inlet_normal[3*n+2]);
 	}
@@ -279,23 +279,23 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 	}
       if (feof (parameters_file) == 0)
 	{
-	  for (n = 0; n < lbm->outlets; n++)
+	  for (n = 0; n < outlets; n++)
 	    fscanf (parameters_file, "%le %le %le\n", &nor[0], &nor[1], &nor[2]);
 	}
       if (feof (parameters_file) == 0)
 	{
-	  for (n = 0; n < lbm->inlets; n++)
+	  for (n = 0; n < inlets; n++)
 	    fscanf (parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
 	}
       if (feof (parameters_file) == 0)
 	{
-	  for (n = 0; n < lbm->outlets; n++)
+	  for (n = 0; n < outlets; n++)
 	    fscanf (parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
 	}
       fclose (parameters_file);
       
-      par_to_send[ 0 ] = 0.1 + (double)lbm->inlets;
-      par_to_send[ 1 ] = 0.1 + (double)lbm->outlets;
+      par_to_send[ 0 ] = 0.1 + (double)inlets;
+      par_to_send[ 1 ] = 0.1 + (double)outlets;
       par_to_send[ 2 ] = 0.1 + (double)is_inlet_normal_available;
     }
 #ifndef NOMPI
@@ -303,77 +303,77 @@ void lbmReadParameters (char *parameters_file_name, LBM *lbm, Net *net)
 #endif
   if (net->id != 0)
     {
-      lbm->inlets               = (int)par_to_send[ 0 ];
-      lbm->outlets              = (int)par_to_send[ 1 ];
+      inlets               = (int)par_to_send[ 0 ];
+      outlets              = (int)par_to_send[ 1 ];
       is_inlet_normal_available = (int)par_to_send[ 2 ];
 
-      lbmInitialiseInlets(lbm->inlets); 
-      lbmInitialiseOutlets(lbm->outlets);
+      lbmInitialiseInlets(inlets); 
+      lbmInitialiseOutlets(outlets);
       
-      lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * lbm->inlets);
-      lbm_inlet_normal           = (double *)malloc(sizeof(double) * 3 * lbm->inlets);
-      lbm_inlet_count            = (long int *)malloc(sizeof(long int) * lbm->inlets);
+      lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * inlets);
+      lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * inlets);
+      lbm_inlet_normal           = (double *)malloc(sizeof(double) * 3 * inlets);
+      lbm_inlet_count            = (long int *)malloc(sizeof(long int) * inlets);
     }
   else
     {
-      for (n = 0; n < lbm->inlets; n++)
+      for (n = 0; n < inlets; n++)
 	{
 	  par_to_send[ 3*n+0 ] = inlet_density_avg[ n ];
 	  par_to_send[ 3*n+1 ] = inlet_density_amp[ n ];
 	  par_to_send[ 3*n+2 ] = inlet_density_phs[ n ];
 	}
-      for (n = 0; n < lbm->outlets; n++)
+      for (n = 0; n < outlets; n++)
 	{
-	  par_to_send[ 3*lbm->inlets + 3*n+0 ] = outlet_density_avg[ n ];
-	  par_to_send[ 3*lbm->inlets + 3*n+1 ] = outlet_density_amp[ n ];
-	  par_to_send[ 3*lbm->inlets + 3*n+2 ] = outlet_density_phs[ n ];
+	  par_to_send[ 3*inlets + 3*n+0 ] = outlet_density_avg[ n ];
+	  par_to_send[ 3*inlets + 3*n+1 ] = outlet_density_amp[ n ];
+	  par_to_send[ 3*inlets + 3*n+2 ] = outlet_density_phs[ n ];
 	}
       if (is_inlet_normal_available)
 	{
-	  for (n = 0; n < lbm->inlets; n++)
+	  for (n = 0; n < inlets; n++)
 	    {
-	      par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+0 ] = lbm_inlet_normal[ 3*n+0 ];
-	      par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+1 ] = lbm_inlet_normal[ 3*n+1 ];
-	      par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+2 ] = lbm_inlet_normal[ 3*n+2 ];
+	      par_to_send[ 3*(inlets+outlets) + 3*n+0 ] = lbm_inlet_normal[ 3*n+0 ];
+	      par_to_send[ 3*(inlets+outlets) + 3*n+1 ] = lbm_inlet_normal[ 3*n+1 ];
+	      par_to_send[ 3*(inlets+outlets) + 3*n+2 ] = lbm_inlet_normal[ 3*n+2 ];
 	    }
 	}
     }
 #ifndef NOMPI
-  net->err = MPI_Bcast (par_to_send, 3*(lbm->inlets+lbm->outlets+lbm->inlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  net->err = MPI_Bcast (par_to_send, 3*(inlets+outlets+inlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
   if (net->id != 0)
     {
-      for (n = 0; n < lbm->inlets; n++)
+      for (n = 0; n < inlets; n++)
 	{
 	  inlet_density_avg[ n ] = par_to_send[ 3*n+0 ];
 	  inlet_density_amp[ n ] = par_to_send[ 3*n+1 ];
 	  inlet_density_phs[ n ] = par_to_send[ 3*n+2 ];
 	}
-      for (n = 0; n < lbm->outlets; n++)
+      for (n = 0; n < outlets; n++)
 	{
-	  outlet_density_avg[ n ] = par_to_send[ 3*lbm->inlets + 3*n+0 ];
-	  outlet_density_amp[ n ] = par_to_send[ 3*lbm->inlets + 3*n+1 ];
-	  outlet_density_phs[ n ] = par_to_send[ 3*lbm->inlets + 3*n+2 ];
+	  outlet_density_avg[ n ] = par_to_send[ 3*inlets + 3*n+0 ];
+	  outlet_density_amp[ n ] = par_to_send[ 3*inlets + 3*n+1 ];
+	  outlet_density_phs[ n ] = par_to_send[ 3*inlets + 3*n+2 ];
 	}
       if (is_inlet_normal_available)
 	{
-	  for (n = 0; n < lbm->inlets; n++)
+	  for (n = 0; n < inlets; n++)
 	    {
-	      lbm_inlet_normal[ 3*n+0 ] = par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+0 ];
-	      lbm_inlet_normal[ 3*n+1 ] = par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+1 ];
-	      lbm_inlet_normal[ 3*n+2 ] = par_to_send[ 3*(lbm->inlets+lbm->outlets) + 3*n+2 ];
+	      lbm_inlet_normal[ 3*n+0 ] = par_to_send[ 3*(inlets+outlets) + 3*n+0 ];
+	      lbm_inlet_normal[ 3*n+1 ] = par_to_send[ 3*(inlets+outlets) + 3*n+1 ];
+	      lbm_inlet_normal[ 3*n+2 ] = par_to_send[ 3*(inlets+outlets) + 3*n+2 ];
 	    }
 	}
     }
-  lbmUpdateBoundaryDensities (0, 0, lbm);
+  lbmUpdateBoundaryDensities (0, 0, this);
   
-  lbm->tau = lbmCalculateTau (lbm);
+  tau = lbmCalculateTau (this);
   
-  lbm->viscosity = ((2.0 * lbm->tau - 1.0) / 6.0);
-  lbm->omega = -1.0 / lbm->tau;
+  viscosity = ((2.0 * tau - 1.0) / 6.0);
+  omega = -1.0 / tau;
   
-  lbm_stress_par = (1.0 - 1.0 / (2.0 * lbm->tau)) / sqrt(2.0);
+  lbm_stress_par = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
 }
 
 void lbmInitialiseInlets(int numberOfInlets)
