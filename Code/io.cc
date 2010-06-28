@@ -392,7 +392,7 @@ void lbmInitialiseOutlets(int numberOfOutlets)
   outlet_density_phs = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
 }
 
-void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
+void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
 {
   // this routine writes the flow field on file.
   // the data are collected from the root processor (0 rank).
@@ -439,11 +439,11 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
   
   // parameters useful to convert pressure, velocity and stress from
   // lattice to physical units
-  pressure_par = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
-  pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
-  velocity_par = 1.0 / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
-  stress_par = ((lbm->tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
-  stress_par = BLOOD_DENSITY / (stress_par * stress_par * lbm->voxel_size * lbm->voxel_size);
+  pressure_par = PULSATILE_PERIOD / (period * voxel_size * voxel_size);
+  pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par * voxel_size * voxel_size);
+  velocity_par = 1.0 / (voxel_size * ((tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
+  stress_par = ((tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+  stress_par = BLOOD_DENSITY / (stress_par * stress_par * voxel_size * voxel_size);
   
   if (net->id == 0)
     {
@@ -456,21 +456,21 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
         return;
       }
   
-      shrinked_sites_x = 1 + lbm->site_max_x - lbm->site_min_x;
-      shrinked_sites_y = 1 + lbm->site_max_y - lbm->site_min_y;
-      shrinked_sites_z = 1 + lbm->site_max_z - lbm->site_min_z;
+      shrinked_sites_x = 1 + site_max_x - site_min_x;
+      shrinked_sites_y = 1 + site_max_y - site_min_y;
+      shrinked_sites_z = 1 + site_max_z - site_min_z;
       
-      myWriter->writeDouble(&lbm->voxel_size);
-      myWriter->writeInt(&lbm->site_min_x);
-      myWriter->writeInt(&lbm->site_min_y);
-      myWriter->writeInt(&lbm->site_min_z);
-      myWriter->writeInt(&lbm->site_max_x);
-      myWriter->writeInt(&lbm->site_max_y);
-      myWriter->writeInt(&lbm->site_max_z);
+      myWriter->writeDouble(&voxel_size);
+      myWriter->writeInt(&site_min_x);
+      myWriter->writeInt(&site_min_y);
+      myWriter->writeInt(&site_min_z);
+      myWriter->writeInt(&site_max_x);
+      myWriter->writeInt(&site_max_y);
+      myWriter->writeInt(&site_max_z);
       myWriter->writeInt(&shrinked_sites_x);
       myWriter->writeInt(&shrinked_sites_y);
       myWriter->writeInt(&shrinked_sites_z);
-      myWriter->writeInt(&lbm->total_fluid_sites);
+      myWriter->writeInt(&total_fluid_sites);
     }
   
   fluid_sites_max = 0;
@@ -611,9 +611,9 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 				{
 				  if (gathered_site_data[ l*3+0 ] == -1) continue;
 				  
-				  gathered_site_data[ l*3+0 ] -= lbm->site_min_x;
-				  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
-				  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
+				  gathered_site_data[ l*3+0 ] -= site_min_x;
+				  gathered_site_data[ l*3+1 ] -= site_min_y;
+				  gathered_site_data[ l*3+2 ] -= site_min_z;
 				  
 				  myWriter->writeShort(&gathered_site_data[ l*3+0 ]);
 				  myWriter->writeShort(&gathered_site_data[ l*3+1 ]);
@@ -656,9 +656,9 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 		{
 		  if (gathered_site_data[ l*3+0 ] == -1) continue;
 		  
-		  gathered_site_data[ l*3+0 ] -= lbm->site_min_x;
-		  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
-		  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
+		  gathered_site_data[ l*3+0 ] -= site_min_x;
+		  gathered_site_data[ l*3+1 ] -= site_min_y;
+		  gathered_site_data[ l*3+2 ] -= site_min_z;
 		  
 		  myWriter->writeShort(&gathered_site_data[ l*3+0 ]);
 		  myWriter->writeShort(&gathered_site_data[ l*3+1 ]);
@@ -687,7 +687,7 @@ void lbmWriteConfig (int stability, char *output_file_name, LBM *lbm, Net *net)
 }
 
 
-void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *net)
+void LBM::lbmWriteConfigASCII (int stability, char *output_file_name, Net *net)
 {
   // this routine writes the flow field on file.
   // the data are collected from the root processor (0 rank).
@@ -720,7 +720,7 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   int buffer_size;
   int fluid_sites_max;
   int communication_period, communication_iters;
-  int period, iters;
+  int comPeriodDelta, iters;
   int par;
   int shrinked_sites_x, shrinked_sites_y, shrinked_sites_z;
   int site_i, site_j, site_k;
@@ -734,11 +734,11 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   
   // parameters useful to convert pressure, velocity and stress from
   // lattice to physical units
-  pressure_par = PULSATILE_PERIOD / (lbm->period * lbm->voxel_size * lbm->voxel_size);
-  pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par * lbm->voxel_size * lbm->voxel_size);
-  velocity_par = 1.0 / (lbm->voxel_size * ((lbm->tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
-  stress_par = ((lbm->tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
-  stress_par = BLOOD_DENSITY / (stress_par * stress_par * lbm->voxel_size * lbm->voxel_size);
+  pressure_par = PULSATILE_PERIOD / (period * voxel_size * voxel_size);
+  pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par * voxel_size * voxel_size);
+  velocity_par = 1.0 / (voxel_size * ((tau - 0.5) / 3.) / (BLOOD_VISCOSITY / BLOOD_DENSITY));
+  stress_par = ((tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+  stress_par = BLOOD_DENSITY / (stress_par * stress_par * voxel_size * voxel_size);
   
   if (net->id == 0)
     {
@@ -757,15 +757,15 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   
   if (net->id == 0)
     {
-      shrinked_sites_x = 1 + lbm->site_max_x - lbm->site_min_x;
-      shrinked_sites_y = 1 + lbm->site_max_y - lbm->site_min_y;
-      shrinked_sites_z = 1 + lbm->site_max_z - lbm->site_min_z;
+      shrinked_sites_x = 1 + site_max_x - site_min_x;
+      shrinked_sites_y = 1 + site_max_y - site_min_y;
+      shrinked_sites_z = 1 + site_max_z - site_min_z;
       
-      fprintf(system_config, "%e\n", lbm->voxel_size);
-      fprintf(system_config, "%i %i %i\n", lbm->site_min_x, lbm->site_min_y, lbm->site_min_z);
-      fprintf(system_config, "%i %i %i\n", lbm->site_max_x, lbm->site_max_y, lbm->site_max_z);
+      fprintf(system_config, "%e\n", voxel_size);
+      fprintf(system_config, "%i %i %i\n", site_min_x, site_min_y, site_min_z);
+      fprintf(system_config, "%i %i %i\n", site_max_x, site_max_y, site_max_z);
       fprintf(system_config, "%i %i %i\n", shrinked_sites_x, shrinked_sites_y, shrinked_sites_z);
-      fprintf(system_config, "%i\n", lbm->total_fluid_sites);
+      fprintf(system_config, "%i\n", total_fluid_sites);
     }
 
   fluid_sites_max = 0;
@@ -792,12 +792,12 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
   local_site_data    = (short int *)malloc(sizeof(short int) * 3 * communication_period);
   gathered_site_data = (short int *)malloc(sizeof(short int) * 3 * communication_period * net->procs);
   
-  for (period = 0; period < communication_period; period++)
+  for (comPeriodDelta = 0; comPeriodDelta < communication_period; comPeriodDelta++)
     {
-      local_site_data[ period*3 ] = -1;
+      local_site_data[ comPeriodDelta*3 ] = -1;
     }
   iters = 0;
-  period = 0;
+  comPeriodDelta = 0;
   
   if (!check_conv)
     {
@@ -878,19 +878,19 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 			  vz *= velocity_par;
 			  stress *= stress_par;
 			  
-			  local_flow_field[ MACROSCOPIC_PARS*period+0 ] = (float)pressure;
-			  local_flow_field[ MACROSCOPIC_PARS*period+1 ] = (float)vx;
-			  local_flow_field[ MACROSCOPIC_PARS*period+2 ] = (float)vy;
-			  local_flow_field[ MACROSCOPIC_PARS*period+3 ] = (float)vz;
-			  local_flow_field[ MACROSCOPIC_PARS*period+4 ] = (float)stress;
+			  local_flow_field[ MACROSCOPIC_PARS*comPeriodDelta+0 ] = (float)pressure;
+			  local_flow_field[ MACROSCOPIC_PARS*comPeriodDelta+1 ] = (float)vx;
+			  local_flow_field[ MACROSCOPIC_PARS*comPeriodDelta+2 ] = (float)vy;
+			  local_flow_field[ MACROSCOPIC_PARS*comPeriodDelta+3 ] = (float)vz;
+			  local_flow_field[ MACROSCOPIC_PARS*comPeriodDelta+4 ] = (float)stress;
 			  
-			  local_site_data[ period*3+0 ] = site_i;
-			  local_site_data[ period*3+1 ] = site_j;
-			  local_site_data[ period*3+2 ] = site_k;
+			  local_site_data[ comPeriodDelta*3+0 ] = site_i;
+			  local_site_data[ comPeriodDelta*3+1 ] = site_j;
+			  local_site_data[ comPeriodDelta*3+2 ] = site_k;
 			  
-			  if (++period != communication_period) continue;
+			  if (++comPeriodDelta != communication_period) continue;
 			  
-			  period = 0;
+			  comPeriodDelta = 0;
 			  ++iters;
 #ifndef NOMPI
 			  net->err = MPI_Gather (local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
@@ -906,9 +906,9 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 				{
 				  if (gathered_site_data[ l*3+0 ] == -1) continue;
 				  
-				  gathered_site_data[ l*3+0 ] -= lbm->site_min_x;
-				  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
-				  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
+				  gathered_site_data[ l*3+0 ] -= site_min_x;
+				  gathered_site_data[ l*3+1 ] -= site_min_y;
+				  gathered_site_data[ l*3+2 ] -= site_min_z;
 				  
 				  fprintf(system_config, "%i %i %i",
 					  gathered_site_data[ l*3+0 ], gathered_site_data[ l*3+1 ], gathered_site_data[ l*3+2 ]);
@@ -951,9 +951,9 @@ void lbmWriteConfigASCII (int stability, char *output_file_name, LBM *lbm, Net *
 		{
 		  if (gathered_site_data[ l*3+0 ] == -1) continue;
 		  
-		  gathered_site_data[ l*3+0 ] -= lbm->site_min_x;
-		  gathered_site_data[ l*3+1 ] -= lbm->site_min_y;
-		  gathered_site_data[ l*3+2 ] -= lbm->site_min_z;
+		  gathered_site_data[ l*3+0 ] -= site_min_x;
+		  gathered_site_data[ l*3+1 ] -= site_min_y;
+		  gathered_site_data[ l*3+2 ] -= site_min_z;
 		  
 		  fprintf(system_config, "%i %i %i ",
 			  gathered_site_data[ l*3+0 ], gathered_site_data[ l*3+1 ], gathered_site_data[ l*3+2 ]);
