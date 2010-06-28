@@ -3,8 +3,10 @@
 
 #include "net.h"
 
-struct LBM
+class LBM
 {
+
+public:
   char *system_file_name;
   
   double tau, viscosity;
