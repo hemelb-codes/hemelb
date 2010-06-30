@@ -136,6 +136,9 @@ int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
 unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
 
 
+int netFindTopology (Net *net, int *depths);
+void netEnd (Net *net);
+
 // Some sort of coordinates.
 struct SiteLocation
 {

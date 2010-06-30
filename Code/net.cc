@@ -1184,24 +1184,22 @@ void netInit (LBM *lbm, Net *net)
       // It seems that, for each pair of processors, the lower numbered one ends up with its own
       // edge sites and directions stored and the higher numbered one ends up with those on the
       // other processor.
+#ifndef NOMPI
       if (neigh_proc_p->id > net->id)
   	{
-#ifndef NOMPI
 	  net->err = MPI_Isend (&neigh_proc_p->f_data[ 0 ],
 				neigh_proc_p->fs * 4, MPI_SHORT,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
 				&net->req[ 0 ][ m ]);
-#endif
   	}
       else
   	{
-#ifndef NOMPI
   	  net->err = MPI_Irecv (&neigh_proc_p->f_data[ 0 ],
   				neigh_proc_p->fs * 4, MPI_SHORT,
   				neigh_proc_p->id, 10, MPI_COMM_WORLD,
   				&net->req[ 0 ][ net->neigh_procs + m ]);
-#endif
   	}
+#endif
     }
   for (m = 0; m < net->neigh_procs; m++)
     {
