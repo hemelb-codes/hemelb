@@ -7,6 +7,8 @@ OBJ=config.o \
         xdrMemWriter.o \
 	io.o \
 	lb.o \
+        visualisationControl.o \
+        glyphDrawer.o \
 	benchmark.o \
 	http_post.o \
 	fileutils.o \
@@ -20,7 +22,7 @@ OBJ=config.o \
 	steering.o \
 	steering-sim-params.o \
         utilityFunctions.o \
-	main.o
+	main.o \
 #	realitygrid.o
 
 $(EXE): $(OBJ)

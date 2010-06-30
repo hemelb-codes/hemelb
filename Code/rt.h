@@ -3,6 +3,7 @@
 
 #include "net.h"
 #include "lb.h"
+#include "glyphDrawer.h"
 
 // the last three digits of the pixel identifier are used to indicate
 // if the pixel is coloured via the ray tracing technique and/or a glyph
@@ -49,7 +50,6 @@ extern float vis_stress_threshold_max_inv;
 extern float vis_brightness;
 extern float vis_ctr_x, vis_ctr_y, vis_ctr_z;
 extern double vis_mouse_pressure, vis_mouse_stress;
-extern double vis_glyph_length;
 extern float vis_streaklines_per_pulsatile_period, vis_streakline_length;
 
 extern int vis_mouse_x, vis_mouse_y;
@@ -62,8 +62,6 @@ extern int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
 extern int clusters;
 
-
-extern int glyphs;
 
 
 
@@ -132,14 +130,6 @@ struct Viewpoint
   float sin_1, cos_1;
   float sin_2, cos_2;
   float dist;
-};
-
-
-struct Glyph
-{
-  float x, y, z;
-  
-  double *f;
 };
 
 
@@ -238,9 +228,7 @@ struct Vis
   float system_size;
 };
 
-
 extern Vis vis;
-extern Glyph *glyph;
 
 void visProject (float p1[], float p2[]);
 void visWritePixel (ColPixel *col_pixel);
