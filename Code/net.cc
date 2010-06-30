@@ -22,7 +22,7 @@ particular site resides.  proc_id is the only member of proc_block
 (member of Net) for the site at global coordinate (site_i, site_j,
 site_k).  If the site is in an empty block, return NULL.
 */
-int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net)
+int * Net::netProcIdPointer (int site_i, int site_j, int site_k)
 {
   int i, j, k;                               // Coordinates of a cubic block
   int ii, jj, kk;                            // Coordinates of a site within the block
@@ -38,7 +38,7 @@ int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net)
   j = site_j >> shift;
   k = site_k >> shift;
   
-  proc_block_p = &net->proc_block[(i * blocks_y + j) * blocks_z + k];
+  proc_block_p = &proc_block[(i * blocks_y + j) * blocks_z + k];
   
   if (proc_block_p->proc_id == NULL)   // If an empty (solid) block is addressed
     return NULL;   
@@ -61,7 +61,7 @@ member of map_block (member of net)) for the site eith global
 coordinate (site_i, site_j, site_k).  If the site is in an empty
 block, return NULL.
 */
-unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
+unsigned int *Net::netSiteMapPointer (int site_i, int site_j, int site_k)
 {
   int i, j, k;                               // Coordinates of a block
   int ii, jj, kk;                            // Coordinates of a site within the block
@@ -77,7 +77,7 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
   j = site_j >> shift;
   k = site_k >> shift;
 
-  map_block_p = &net->map_block[(i * blocks_y + j) * blocks_z + k];
+  map_block_p = &map_block[(i * blocks_y + j) * blocks_z + k];
 
   if (map_block_p->site_data == NULL)  // if an empty (solid) block is addressed
     return NULL;   
@@ -99,7 +99,7 @@ unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net)
 /*!
 If one has more than one machine. The topology discovery mechanism is implemented in this function
 */
-int netFindTopology (Net *net, int *depths)
+int Net::netFindTopology (int *depths)
 {
   
   int *depth, **color;
@@ -108,30 +108,30 @@ int netFindTopology (Net *net, int *depths)
   
   *depths = 0;
   
-  net->err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag);
+  err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag);
   
-  if (net->err != MPI_SUCCESS || flag == 0)
+  if (err != MPI_SUCCESS || flag == 0)
     {
       return 0;
     }
   
-  net->err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag);
+  err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag);
   
-  if (net->err != MPI_SUCCESS || flag == 0)
+  if (err != MPI_SUCCESS || flag == 0)
     {
       return 0;
     }
 
   net_machines = 0;
   
-  net->machine_id = (int *)malloc(sizeof(int)* net->procs);
-  net->procs_per_machine = (int *)malloc(sizeof(int)* net->procs);
+  machine_id = (int *)malloc(sizeof(int)* procs);
+  procs_per_machine = (int *)malloc(sizeof(int)* procs);
   
-  for (i = 0; i < net->procs; i++)
+  for (i = 0; i < procs; i++)
     {
-      net->procs_per_machine[ i ] = 0;
+      procs_per_machine[ i ] = 0;
     }
-  for (i = 0; i < net->procs; i++)
+  for (i = 0; i < procs; i++)
     {
       if (depth[ i ] != 4) continue;
 
@@ -139,31 +139,31 @@ int netFindTopology (Net *net, int *depths)
       
       for (j = 0, is_found = 0; j < net_machines && is_found == 0; j++)
 	{
-	  if (color[ i ][ 3 ] == net->machine_id[ j ])
+	  if (color[ i ][ 3 ] == machine_id[ j ])
 	    {
 	      is_found = 1;
-	      ++net->procs_per_machine[ net->machine_id[j] ];
+	      ++procs_per_machine[ machine_id[j] ];
 	    }
 	}
       if (is_found == 1) continue;
       
-      net->machine_id[ net_machines ] = color[ i ][ 3 ];
-      ++net->procs_per_machine[ net_machines ];
+      machine_id[ net_machines ] = color[ i ][ 3 ];
+      ++procs_per_machine[ net_machines ];
       ++net_machines;
     }
   net_machines = max(1, net_machines);
   
   if (net_machines == 1)
     {
-      for (i = 0; i < net->procs; i++)
+      for (i = 0; i < procs; i++)
 	{
-	  net->machine_id[ i ] = 0;
+	  machine_id[ i ] = 0;
 	}
-        net->procs_per_machine[ 0 ] = net->procs;
+        procs_per_machine[ 0 ] = procs;
     }
   else
     {
-      for (i = 0; i < net->procs; i++)
+      for (i = 0; i < procs; i++)
 	{
 	  sum = 0;
 	  machine_id = 0;
@@ -172,15 +172,15 @@ int netFindTopology (Net *net, int *depths)
 	  
 	  while (!is_found)
 	    {
-	      if (sum + net->procs_per_machine[ machine_id ] > i)
+	      if (sum + procs_per_machine[ machine_id ] > i)
 		{
 		  is_found = 1;
 		  continue;
 		}
-	      sum += net->procs_per_machine[ machine_id ];
+	      sum += procs_per_machine[ machine_id ];
 	      ++machine_id;
 	    }
-	  net->machine_id[ i ] = machine_id;
+	  machine_id[ i ] = machine_id;
 	}
     }
   return 1;
@@ -191,7 +191,7 @@ int netFindTopology (Net *net, int *depths)
 /*!
 If one has more than one machine. The topology discovery mechanism is implemented in this function
 */
-int netFindTopology (Net *net, int *depths)
+int Net::netFindTopology (int *depths)
 {
   // the machine is assumed to be only one if this function is
   // used instead of the previous one
@@ -200,14 +200,14 @@ int netFindTopology (Net *net, int *depths)
   
   net_machines = 1;
   
-  net->machine_id = (int *)malloc(sizeof(int) * net->procs);
-  net->procs_per_machine = (int *)malloc(sizeof(int) * net_machines);
+  machine_id = (int *)malloc(sizeof(int) * procs);
+  procs_per_machine = (int *)malloc(sizeof(int) * net_machines);
   
-  for (int i = 0; i < net->procs; i++)
+  for (int i = 0; i < procs; i++)
     {
-      net->machine_id[ i ] = 0;
+      machine_id[ i ] = 0;
     }
-  net->procs_per_machine[ 0 ] = net->procs;
+  procs_per_machine[ 0 ] = procs;
   
   return 1;
 }
@@ -221,7 +221,7 @@ buffers useful for the inter-processor communications are
 implemented in this function.  The domain decomposition is based
 on a graph growing partitioning technique.
 */
-void netInit (LBM *lbm, Net *net)
+void Net::netInit (int totalFluidSites)
 {
   double seconds;
   
@@ -243,7 +243,7 @@ void netInit (LBM *lbm, Net *net)
   int proc_count;                            // Rank we are looking at.
   int fluid_sites_per_unit;                  // Fluid sites per rank.
   int neigh_proc_index;                      
-  int my_sites;                              // Sites residing on this rank.
+  int my_sites_p;                              // Sites residing on this rank.
   int are_fluid_sites_incrementing;          // Region is not bound by solid or visited sites.
   int is_inter_site, is_inner_site;          // Whether the site is on the edge of the subdomain of a rank.
   int collision_offset[2][COLLISION_TYPES];
@@ -270,16 +270,19 @@ void netInit (LBM *lbm, Net *net)
   ProcBlock *proc_block_p;                   // Pointer fitting into ProcBlock type struct (a single-member struct).
   NeighProc *neigh_proc_p;                   // Pointer fitting into NeighProc type struct.
 
-  // Allocations.  net->fluid sites will store actual number of fluid
+  // Allocations.  fluid sites will store actual number of fluid
   // sites per proc.  Site location will store up to 10000 of some
   // sort of coordinate.
-  net->fluid_sites = (int *)malloc(sizeof(int) * net->procs);
+  fluid_sites = (int *)malloc(sizeof(int) * procs);
   
+  net_site_nor  = NULL;
+  net_site_data = NULL;
+
   sites_buffer_size = 10000;
   site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
   site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
   
-  net->my_sites = 0;
+  my_sites = 0;
   
   // a fast graph growing partitioning technique which spans the data
   // set only once is implemented here; the data set is explored by
@@ -288,32 +291,32 @@ void netInit (LBM *lbm, Net *net)
   // Find the maximum number of fluid sites per process.  If steering,
   // leave one process out.
 #ifndef NO_STEER 
-  if (is_bench || net->procs == 1)
+  if (is_bench || procs == 1)
     {
-      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
+      fluid_sites_per_unit = (int)ceil((double)totalFluidSites / (double)procs);
       proc_count = 0;
     }
   else
     {
-      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)(net->procs - 1));
+      fluid_sites_per_unit = (int)ceil((double)totalFluidSites / (double)(procs - 1));
       proc_count = 1;
     }
 #else
-  fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites / (double)net->procs);
+  fluid_sites_per_unit = (int)ceil((double)totalFluidSites / (double)procs);
   proc_count = 0;
 #endif
 
 
-  for (n = 0; n < net->procs; n++)
+  for (n = 0; n < procs; n++)
     {
-      net->fluid_sites[ n ] = 0;
+      fluid_sites[ n ] = 0;
     }
   partial_visited_fluid_sites = 0;
-  unvisited_fluid_sites = lbm->total_fluid_sites;
+  unvisited_fluid_sites = totalFluidSites;
   
   seconds = UtilityFunctions::myClock ();
 
-  if (net_machines == 1 || net_machines == net->procs) // If one machine or one machine per proc.
+  if (net_machines == 1 || net_machines == procs) // If one machine or one machine per proc.
     {
       n = -1;
      
@@ -331,7 +334,7 @@ void netInit (LBM *lbm, Net *net)
 	  for (k = 0; k < blocks_z; k++)
 	    {
 	      // Point to a block of proc_id.  If we are in a block of solids, move on.
-	      proc_block_p = &net->proc_block[ ++n ];
+	      proc_block_p = &proc_block[ ++n ];
 	      
 	      if (proc_block_p->proc_id == NULL)
 		{
@@ -354,12 +357,12 @@ void netInit (LBM *lbm, Net *net)
 		      // Assign it to the rank and update the fluid site counters.
 		      proc_block_p->proc_id[ m ] = proc_count;
 		      
-		      if (proc_count == net->id)
+		      if (proc_count == id)
 			{
-			  ++net->my_sites;
+			  ++my_sites;
 			}
 		      ++partial_visited_fluid_sites;			      
-		      ++net->fluid_sites[ proc_count ];			      
+		      ++fluid_sites[ proc_count ];			      
 		      sites_a = 1;
 		      
 		      // Record the location of this initial site.
@@ -404,7 +407,7 @@ void netInit (LBM *lbm, Net *net)
 				  // the pointer to proc_id is NULL) or it is solid or has already
 				  // been assigned to a rank (in which case proc_id != -1).  proc_id
 				  // was initialized in lbmReadConfig in io.cc.
-				  proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
+				  proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k);
 				  
 				  if (proc_id_p == NULL || *proc_id_p != -1)
 				    {
@@ -413,11 +416,11 @@ void netInit (LBM *lbm, Net *net)
 				  // Set the rank for a neighbour and update the fluid site counters.
 				  *proc_id_p = proc_count;					  
 				  ++partial_visited_fluid_sites;				  
-				  ++net->fluid_sites[ proc_count ];
+				  ++fluid_sites[ proc_count ];
 				  
-				  if (proc_count == net->id)
+				  if (proc_count == id)
 				    {
-				      ++net->my_sites;
+				      ++my_sites;
 				    }
 				  // Neighbour was found, so the region can grow.
 				  are_fluid_sites_incrementing = 1;
@@ -453,7 +456,7 @@ void netInit (LBM *lbm, Net *net)
 			{
 			  ++proc_count;
 			  unvisited_fluid_sites -= partial_visited_fluid_sites;
-			  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - proc_count));
+			  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(procs - proc_count));
 			  partial_visited_fluid_sites = 0;
 			}
 		      // If not, we have to start growing a different region for the same rank:
@@ -478,12 +481,12 @@ void netInit (LBM *lbm, Net *net)
 	      
 	      if (is_bench)
 		{
-		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)net->procs);
+		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)procs);
 		  proc_count = 0;
 		}
 	      else
 		{
-		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - 1));
+		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(procs - 1));
 		  proc_count = 1;
 		}
 	    }
@@ -493,27 +496,27 @@ void netInit (LBM *lbm, Net *net)
 		{
 		  marker = -1;
 		  
-		  proc_count = net->procs;
+		  proc_count = procs;
 		  
-		  machine_id = proc_count - net->procs;
+		  machine_id = proc_count - procs;
 		  
 		  if (is_bench)
 		    {
-		      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites *
-						       (double)net->procs_per_machine[ machine_id ] / net->procs);
+		      fluid_sites_per_unit = (int)ceil((double)totalFluidSites *
+						       (double)procs_per_machine[ machine_id ] / procs);
 		    }
 		  else
 		    {
 		      double weight;
 		      
-		      weight = (double)(net->procs_per_machine[machine_id] * net->procs) / (double)(net->procs - 1);
+		      weight = (double)(procs_per_machine[machine_id] * procs) / (double)(procs - 1);
 		      
-		      fluid_sites_per_unit = (int)ceil((double)lbm->total_fluid_sites * weight / net_machines);
+		      fluid_sites_per_unit = (int)ceil((double)totalFluidSites * weight / net_machines);
 		    }
 		}
 	      else
 		{
-		  marker = net->procs + up_unit;
+		  marker = procs + up_unit;
 		}
 	      partial_visited_fluid_sites = 0;
 	      
@@ -523,7 +526,7 @@ void netInit (LBM *lbm, Net *net)
 		for (j = 0; j < blocks_y; j++)
 		  for (k = 0; k < blocks_z; k++)
 		    {
-		      proc_block_p = &net->proc_block[ ++n ];
+		      proc_block_p = &proc_block[ ++n ];
 		      
 		      if (proc_block_p->proc_id == NULL)
 			{
@@ -541,13 +544,13 @@ void netInit (LBM *lbm, Net *net)
 				}
 			      proc_block_p->proc_id[ m ] = proc_count;
 			      
-			      if (proc_count == net->id)
+			      if (proc_count == id)
 				{
-				  ++net->my_sites;
+				  ++my_sites;
 				}
 			      ++partial_visited_fluid_sites;
 			      
-			      if (unit_level == 0) ++net->fluid_sites[ proc_count ];
+			      if (unit_level == 0) ++fluid_sites[ proc_count ];
 			      
 			      sites_a = 1;
 			      site_location_a_p = &site_location_a[ 0 ];
@@ -581,7 +584,7 @@ void netInit (LBM *lbm, Net *net)
 					  if (neigh_j == -1 || neigh_j == sites_y) continue;
 					  if (neigh_k == -1 || neigh_k == sites_z) continue;
 					  
-					  proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
+					  proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k);
 					  
 					  if (proc_id_p == NULL || *proc_id_p != marker)
 					    {
@@ -591,7 +594,7 @@ void netInit (LBM *lbm, Net *net)
 					  
 					  ++partial_visited_fluid_sites;
 					  
-					  if (unit_level == 0) ++net->fluid_sites[ proc_count ];
+					  if (unit_level == 0) ++fluid_sites[ proc_count ];
 					  
 					  are_fluid_sites_incrementing = 1;
 					  
@@ -609,9 +612,9 @@ void netInit (LBM *lbm, Net *net)
 					  site_location_b_p->k = neigh_k;
 					  ++sites_b;
 					  
-					  if (proc_count == net->id)
+					  if (proc_count == id)
 					    {
-					      ++net->my_sites;
+					      ++my_sites;
 					    }
 					}
 				    }
@@ -627,7 +630,7 @@ void netInit (LBM *lbm, Net *net)
 				  if (unit_level == 0)
 				    {
 				      unvisited_fluid_sites -= partial_visited_fluid_sites;
-				      fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(net->procs - proc_count));
+				      fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(procs - proc_count));
 				    }
 				  partial_visited_fluid_sites = 0;
 				}
@@ -639,22 +642,22 @@ void netInit (LBM *lbm, Net *net)
   free(site_location_b);
   free(site_location_a);
   
-  net->dd_time = UtilityFunctions::myClock () - seconds;
+  dd_time = UtilityFunctions::myClock () - seconds;
   seconds = UtilityFunctions::myClock ();
   
   // A map between the two-level data representation and the 1D
   // compact one is created here.
 
   // Allocate an array of structures to store the fluid site identifiers for each block.
-  net->map_block = (DataBlock *)malloc(sizeof(DataBlock) * blocks);
+  map_block = (DataBlock *)malloc(sizeof(DataBlock) * blocks);
   
   for (n = 0; n < blocks; n++)
     {
-      net->map_block[ n ].site_data = NULL;
+      map_block[ n ].site_data = NULL;
     }
   
   // Local array to store site data for this rank.
-  site_data = (unsigned int *)malloc(sizeof(unsigned int) * net->my_sites);
+  site_data = (unsigned int *)malloc(sizeof(unsigned int) * my_sites);
  
   // Allocate blocks.
   is_my_block = (bool *)malloc(sizeof(bool) * blocks);
@@ -663,33 +666,33 @@ void netInit (LBM *lbm, Net *net)
     {
       is_my_block[ n ] = 0;
     }
-  my_sites = 0;
+  my_sites_p = 0;
   
   for (n = 0; n < blocks; n++)
     {
       // If we are in a block of solids, move to the next block.
-      data_block_p = &net->data_block[ n ];
+      data_block_p = &data_block[ n ];
       
       if (data_block_p->site_data == NULL)
 	{
 	  continue;
 	}
       // If we have some fluid sites, point to proc_block and map_block.
-      proc_block_p = &net->proc_block[ n ];      
-      map_block_p = &net->map_block[ n ];
+      proc_block_p = &proc_block[ n ];      
+      map_block_p = &map_block[ n ];
       map_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
       
       // map_block[n].site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
       // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
       for (m = 0; m < sites_in_a_block; m++)
 	{
-	  if (proc_block_p->proc_id[ m ] == net->id)
+	  if (proc_block_p->proc_id[ m ] == id)
 	    {
 	      if ((data_block_p->site_data[ m ] & SITE_TYPE_MASK) != SOLID_TYPE)
 		{
-		  map_block_p->site_data[ m ] = my_sites;
-		  site_data[ my_sites ] = data_block_p->site_data[ m ];
-		  ++my_sites;
+		  map_block_p->site_data[ m ] = my_sites_p;
+		  site_data[ my_sites_p ] = data_block_p->site_data[ m ];
+		  ++my_sites_p;
 		}
 	      else
 		{
@@ -704,30 +707,30 @@ void netInit (LBM *lbm, Net *net)
 	}
     }
   
-  // Free net->data_block.
+  // Free data_block.
   for (n = 0; n < blocks; n++)
     {
-      if (net->data_block[n].site_data != NULL)
+      if (data_block[n].site_data != NULL)
 	{
-	  free(net->data_block[n].site_data);
-	  net->data_block[n].site_data = NULL;
+	  free(data_block[n].site_data);
+	  data_block[n].site_data = NULL;
 	}
     }
-  free(net->data_block);
-  net->data_block = NULL;
+  free(data_block);
+  data_block = NULL;
   
   // If we are in a block of solids, we set map_block[n].site_data to NULL.
   for (n = 0; n < blocks; n++)
     {
       if (is_my_block[n]) continue;
       
-      free(net->map_block[n].site_data);
-      net->map_block[n].site_data = NULL;
+      free(map_block[n].site_data);
+      map_block[n].site_data = NULL;
       
-      if (net->wall_block[n].wall_data != NULL)
+      if (wall_block[n].wall_data != NULL)
 	{
-	  free(net->wall_block[n].wall_data);
-	  net->wall_block[n].wall_data = NULL;
+	  free(wall_block[n].wall_data);
+	  wall_block[n].wall_data = NULL;
 	}
     }
   free(is_my_block);
@@ -737,24 +740,24 @@ void netInit (LBM *lbm, Net *net)
   // distribution functions of the reference processor are calculated
   // here.  neigh_proc is a static array that is declared in config.h.
   
-  net->neigh_procs = 0;
+  neigh_procs = 0;
   
   for (m = 0; m < NEIGHBOUR_PROCS_MAX; m++)
     {
-      net->neigh_proc[ m ].fs = 0;   // fs within NeighProc struct within the net struct.
+      neigh_proc[ m ].fs = 0;   // fs within NeighProc struct within the net struct.
     }
   
-  net->my_inter_sites = 0;
-  net->my_inner_sites = 0;
+  my_inter_sites = 0;
+  my_inner_sites = 0;
   
   for (m = 0; m < COLLISION_TYPES; m++)
     {
-      net->my_inter_collisions[ m ] = 0;
-      net->my_inner_collisions[ m ] = 0;
+      my_inter_collisions[ m ] = 0;
+      my_inner_collisions[ m ] = 0;
     }
-  net->shared_fs = 0;   // shared fs within Net struct.
+  shared_fs = 0;   // shared fs within Net struct.
   
-  my_sites = 0;
+  my_sites_p = 0;
   
   n = -1;
   
@@ -763,11 +766,11 @@ void netInit (LBM *lbm, Net *net)
     for (j = 0; j < sites_y; j += block_size)
       for (k = 0; k < sites_z; k += block_size)
 	{
-	  map_block_p = &net->map_block[ ++n ];
+	  map_block_p = &map_block[ ++n ];
 	  
 	  if (map_block_p->site_data == NULL) continue;
 	  
-	  proc_block_p = &net->proc_block[ n ];
+	  proc_block_p = &proc_block[ n ];
 	  
 	  m = -1;
 	  
@@ -775,7 +778,7 @@ void netInit (LBM *lbm, Net *net)
 	    for (site_j = j; site_j < j + block_size; site_j++)
 	      for (site_k = k; site_k < k + block_size; site_k++)
 		{
-		  if (proc_block_p->proc_id[ ++m ] != net->id)
+		  if (proc_block_p->proc_id[ ++m ] != id)
 		    {
 		      continue;
 		    }
@@ -788,13 +791,13 @@ void netInit (LBM *lbm, Net *net)
 		      neigh_j = site_j + e_y[ l ];
 		      neigh_k = site_k + e_z[ l ];
 		      
-		      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
+		      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k);
 		      
 		      // Move on if the neighbour is in a block of solids (in which case
 		      // the pointer to proc_id is NULL) or it is solid (in which case proc_id ==
 		      // 1 << 30) or the neighbour is also on this rank.  proc_id was initialized
 		      // in lbmReadConfig in io.cc.
-		      if (proc_id_p == NULL || *proc_id_p == net->id || *proc_id_p == (1 << 30))
+		      if (proc_id_p == NULL || *proc_id_p == id || *proc_id_p == (1 << 30))
 			{
 			  continue;
 			}
@@ -803,96 +806,96 @@ void netInit (LBM *lbm, Net *net)
 		      
 		      // The first time, we set mm = 0, flag = 1, but net_neigh_procs = 0, so
 		      // the loop is not executed.
-		      for (mm = 0, flag = 1; mm < net->neigh_procs && flag; mm++)
+		      for (mm = 0, flag = 1; mm < neigh_procs && flag; mm++)
 			{
 			  // Check whether the rank for a particular neighbour has already been
 			  // used for this processor.  If it has, set flag to zero.
-			  neigh_proc_p = &net->neigh_proc[ mm ];
+			  neigh_proc_p = &neigh_proc[ mm ];
 			  
 			  // If proc_id is equal to a neigh_proc that has alredy been listed.
 			  if (*proc_id_p == neigh_proc_p->id)
 			    {
 			      flag = 0;
 			      ++neigh_proc_p->fs;
-			      ++net->shared_fs;
+			      ++shared_fs;
 			    }
 			}
 		      // If flag is 1, we need a new neighbouring processor.
 		      if (flag)
 			{
-			  if (net->neigh_procs == NEIGHBOUR_PROCS_MAX)
+			  if (neigh_procs == NEIGHBOUR_PROCS_MAX)
 			    {
 			      printf (" too many intra machine, inter processor neighbours\n");
 			      printf (" the execution is terminated\n");
 #ifndef NOMPI
-			      net->err = MPI_Abort (MPI_COMM_WORLD, 1);
+			      err = MPI_Abort (MPI_COMM_WORLD, 1);
 #else
 			      exit(1);
 #endif
 			    }
-			  // Store rank of neighbour in net->>neigh_proc[net->neigh_procs]
-			  neigh_proc_p = &net->neigh_proc[ net->neigh_procs ];
+			  // Store rank of neighbour in >neigh_proc[neigh_procs]
+			  neigh_proc_p = &neigh_proc[ neigh_procs ];
 			  neigh_proc_p->id = *proc_id_p;
 			  ++neigh_proc_p->fs;
-			  ++net->neigh_procs;
-			  ++net->shared_fs;
+			  ++neigh_procs;
+			  ++shared_fs;
 			}
 		    }
 		  // Collision Type set here. map_block site data is renumbered according to 
 		  // fluid site numbers within a particular collision type.
-		  if (lbmCollisionType (site_data[ my_sites ]) == FLUID)
+		  if (lbmCollisionType (site_data[ my_sites_p ]) == FLUID)
 		    {
 		      l = 0;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites ]) == EDGE)
+		  else if (lbmCollisionType (site_data[ my_sites_p ]) == EDGE)
 		    {
 		      l = 1;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites ]) == INLET)
+		  else if (lbmCollisionType (site_data[ my_sites_p ]) == INLET)
 		    {
 		      l = 2;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites ]) == OUTLET)
+		  else if (lbmCollisionType (site_data[ my_sites_p ]) == OUTLET)
 		    {
 		      l = 3;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites ]) == (INLET | EDGE))
+		  else if (lbmCollisionType (site_data[ my_sites_p ]) == (INLET | EDGE))
 		    {
 		      l = 4;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites ]) == (OUTLET | EDGE))
+		  else if (lbmCollisionType (site_data[ my_sites_p ]) == (OUTLET | EDGE))
 		    {
 		      l = 5;
 		    }
-		  ++my_sites;
+		  ++my_sites_p;
 		  
 		  if (is_inner_site)
 		    {
-		      ++net->my_inner_sites;
+		      ++my_inner_sites;
 		      
 		      if (l == 0)
 			{
-			  map_block_p->site_data[ m ] = net->my_inner_collisions[l];
+			  map_block_p->site_data[ m ] = my_inner_collisions[l];
 			}
 		      else
 			{
-			  map_block_p->site_data[ m ] = 50000000 * (10 + (l-1)) + net->my_inner_collisions[l];
+			  map_block_p->site_data[ m ] = 50000000 * (10 + (l-1)) + my_inner_collisions[l];
 			}
-		      ++net->my_inner_collisions[ l ];
+		      ++my_inner_collisions[ l ];
 		    }
 		  else if (is_inter_site)
 		    {
-		      ++net->my_inter_sites;
+		      ++my_inter_sites;
 		      
 		      if (l == 0)
 			{
-			  map_block_p->site_data[ m ] = 1000000000 + net->my_inter_collisions[l];
+			  map_block_p->site_data[ m ] = 1000000000 + my_inter_collisions[l];
 			}
 		      else
 			{
-			  map_block_p->site_data[ m ] = 50000000 * (20 + l) + net->my_inter_collisions[l];
+			  map_block_p->site_data[ m ] = 50000000 * (20 + l) + my_inter_collisions[l];
 			}
-		      ++net->my_inter_collisions[ l ];
+		      ++my_inter_collisions[ l ];
 		    }
 		}
 	}
@@ -901,17 +904,17 @@ void netInit (LBM *lbm, Net *net)
   
   for (l = 1; l < COLLISION_TYPES; l++)
     {
-      collision_offset[0][l] = collision_offset[0][l-1] + net->my_inner_collisions[l-1];
+      collision_offset[0][l] = collision_offset[0][l-1] + my_inner_collisions[l-1];
     }
-  collision_offset[1][0] = net->my_inner_sites;
+  collision_offset[1][0] = my_inner_sites;
   
   for (l = 1; l < COLLISION_TYPES; l++)
     {
-      collision_offset[1][l] = collision_offset[1][l-1] + net->my_inter_collisions[l-1];
+      collision_offset[1][l] = collision_offset[1][l-1] + my_inter_collisions[l-1];
     }
   for (n = 0; n < blocks; n++)
     {
-      map_block_p = &net->map_block[ n ];
+      map_block_p = &map_block[ n ];
       
       // If we are in a block of solids, continue.
       if (map_block_p->site_data == NULL) continue;
@@ -958,85 +961,85 @@ void netInit (LBM *lbm, Net *net)
   // and the extra distribution functions are
   if (!check_conv)
     {
-      f_old = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
-      f_new = (double *)malloc(sizeof(double) * (net->my_sites * 15 + 1 + net->shared_fs));
+      f_old = (double *)malloc(sizeof(double) * (my_sites * 15 + 1 + shared_fs));
+      f_new = (double *)malloc(sizeof(double) * (my_sites * 15 + 1 + shared_fs));
     }
   else
     {
-      f_old = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
-      f_new = (double *)malloc(sizeof(double) * (net->my_sites * 30 + 15 + 1));
+      f_old = (double *)malloc(sizeof(double) * (my_sites * 30 + 15 + 1));
+      f_new = (double *)malloc(sizeof(double) * (my_sites * 30 + 15 + 1));
     }
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
   // streamed between different partitions) are collected and the
   // buffers needed for the communications are set from here
   
-  f_data = (short int *)malloc(sizeof(short int) * 4 * net->shared_fs);
+  f_data = (short int *)malloc(sizeof(short int) * 4 * shared_fs);
   
   if (check_conv)
     {
-      f_to_send = (double *)malloc(sizeof(double) * net->shared_fs*2);
-      f_to_recv = (double *)malloc(sizeof(double) * net->shared_fs*2);
+      f_to_send = (double *)malloc(sizeof(double) * shared_fs*2);
+      f_to_recv = (double *)malloc(sizeof(double) * shared_fs*2);
       
-      f_send_id = (int *)malloc(sizeof(int) * net->shared_fs);
+      f_send_id = (int *)malloc(sizeof(int) * shared_fs);
     }
 
   // Allocate the index in which to put the distribution functions received from the other
   // process.
-  f_recv_iv = (int *)malloc(sizeof(int) * net->shared_fs);
+  f_recv_iv = (int *)malloc(sizeof(int) * shared_fs);
   
   // Reset to zero again.
-  net->shared_fs = 0;
+  shared_fs = 0;
   
-  for (n = 0; n < net->neigh_procs; n++)
+  for (n = 0; n < neigh_procs; n++)
     {
       // f_data compacted according to number of shared f_s on each process.
       // f_data will be set later.
-      net->neigh_proc[ n ].f_data = &f_data[ net->shared_fs<<2 ];
+      neigh_proc[ n ].f_data = &f_data[ shared_fs<<2 ];
       
       // Pointing to a few things, but not setting any variables.
       if (!check_conv)
 	{
 	  // f_head points to start of shared_fs.
-	  net->neigh_proc[ n ].f_head = net->my_sites * 15 + 1 + net->shared_fs;
+	  neigh_proc[ n ].f_head = my_sites * 15 + 1 + shared_fs;
 	}
       else
 	{
 	  // Points to the start of the shared_fs.  
-	  net->neigh_proc[ n ].f_to_send = &f_to_send[ net->shared_fs*2 ];
-	  net->neigh_proc[ n ].f_to_recv = &f_to_recv[ net->shared_fs*2 ];
+	  neigh_proc[ n ].f_to_send = &f_to_send[ shared_fs*2 ];
+	  neigh_proc[ n ].f_to_recv = &f_to_recv[ shared_fs*2 ];
 	  
-	  net->neigh_proc[ n ].f_send_id = &f_send_id[ net->shared_fs ];
+	  neigh_proc[ n ].f_send_id = &f_send_id[ shared_fs ];
 	}
-      net->neigh_proc[ n ].f_recv_iv = &f_recv_iv[ net->shared_fs ];
+      neigh_proc[ n ].f_recv_iv = &f_recv_iv[ shared_fs ];
       
-      net->shared_fs += net->neigh_proc[ n ].fs;
-      net->neigh_proc[ n ].fs = 0;// This is set back to 0.
+      shared_fs += neigh_proc[ n ].fs;
+      neigh_proc[ n ].fs = 0;// This is set back to 0.
     }
-  if (net->my_sites > 0)
+  if (my_sites > 0)
     {
       // f_id is allocated so we know which sites to get information from.
-      f_id = (int *)malloc(sizeof(int) * (net->my_sites * 15));
+      f_id = (int *)malloc(sizeof(int) * (my_sites * 15));
       
-      net_site_data = (unsigned int *)malloc(sizeof(unsigned int) * net->my_sites);
+      net_site_data = (unsigned int *)malloc(sizeof(unsigned int) * my_sites);
       
       if (lbm_stress_type == SHEAR_STRESS)
 	{
-	  net_site_nor = (double *)malloc(sizeof(double) * net->my_sites*3);
+	  net_site_nor = (double *)malloc(sizeof(double) * my_sites*3);
 	}
     }
-  net->from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * net->procs);
+  from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * procs);
   
-  for (m = 0; m < net->procs; m++)
+  for (m = 0; m < procs; m++)
     {
-      net->from_proc_id_to_neigh_proc_index[ m ] = -1;
+      from_proc_id_to_neigh_proc_index[ m ] = -1;
     }
   // Get neigh_proc_index from proc_id.
-  for (m = 0; m < net->neigh_procs; m++)
+  for (m = 0; m < neigh_procs; m++)
     {
-      net->from_proc_id_to_neigh_proc_index[ net->neigh_proc[m].id ] = m;
+      from_proc_id_to_neigh_proc_index[ neigh_proc[m].id ] = m;
     }
-  my_sites = 0;
+  my_sites_p = 0;
   
   n = -1;
   
@@ -1044,11 +1047,11 @@ void netInit (LBM *lbm, Net *net)
     for (j = 0; j < sites_y; j += block_size)
 	for (k = 0; k < sites_z; k += block_size)
 	  {
-	    map_block_p = &net->map_block[ ++n ];
+	    map_block_p = &map_block[ ++n ];
 	    
 	    if (map_block_p->site_data == NULL) continue;
 	    
-	    proc_block_p = &net->proc_block[ n ];
+	    proc_block_p = &proc_block[ n ];
 	    
 	    m = -1;
 	    
@@ -1057,7 +1060,7 @@ void netInit (LBM *lbm, Net *net)
 		for (site_k = k; site_k < k + block_size; site_k++)
 		  {
 		    // If a site is not on this process, continue.
-		    if (proc_block_p->proc_id[ ++m ] != net->id)
+		    if (proc_block_p->proc_id[ ++m ] != id)
 		      {
 			continue;
 		      }
@@ -1083,21 +1086,21 @@ void netInit (LBM *lbm, Net *net)
 			// initialize f_id to the rubbish site.
 			if (!check_conv)
 			  {
-			    f_id[ site_map*15+l ] = net->my_sites * 15;
+			    f_id[ site_map*15+l ] = my_sites * 15;
 			  }
 			else
 			  {
-			    f_id[ site_map*15+l ] = net->my_sites * 30;
+			    f_id[ site_map*15+l ] = my_sites * 30;
 			  }
 			// You know which process the neighbour is on.
-			proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
+			proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k);
 			
 			if (proc_id_p == NULL || *proc_id_p == 1 << 30)
 			  {
 			    continue;
 			  }
 			// Pointer to the neihgbour.
-			site_data_p = netSiteMapPointer (neigh_i, neigh_j, neigh_k, net);
+			site_data_p = netSiteMapPointer (neigh_i, neigh_j, neigh_k);
 			
 			// If on the same proc, set f_id of the
 			// current site and direction to the
@@ -1105,7 +1108,7 @@ void netInit (LBM *lbm, Net *net)
 			// If we check convergence, the data for
 			// each site is split into that for the
 			// current and previous cycles.
-			if (*proc_id_p == net->id)
+			if (*proc_id_p == id)
 			  {
 			    if (!check_conv)
 			      {
@@ -1117,14 +1120,14 @@ void netInit (LBM *lbm, Net *net)
 			      }
 			    continue;
 			  }
-			neigh_proc_index = net->from_proc_id_to_neigh_proc_index[ *proc_id_p ];
+			neigh_proc_index = from_proc_id_to_neigh_proc_index[ *proc_id_p ];
 			
 			// You have neigh proc again.
-			neigh_proc_p = &net->neigh_proc[ neigh_proc_index ];
+			neigh_proc_p = &neigh_proc[ neigh_proc_index ];
 			
 			// This stores some coordinates.  We
 			// still need to know the site number.
-			// net->neigh_proc[ n ].f_data is now
+			// neigh_proc[ n ].f_data is now
 			// set as well, since this points to
 			// f_data.  Every process has data for
 			// its neighbours which say which sites
@@ -1138,7 +1141,7 @@ void netInit (LBM *lbm, Net *net)
 			++neigh_proc_p->fs; // We recount this again.
 		      }
 		    // This is used in Calculate BC in IO.
-		    net_site_data[ site_map ] = site_data[ my_sites ];
+		    net_site_data[ site_map ] = site_data[ my_sites_p ];
 		    
 		    if (lbm_stress_type == SHEAR_STRESS)
 		      {
@@ -1147,14 +1150,14 @@ void netInit (LBM *lbm, Net *net)
 			if (lbmCollisionType (net_site_data[ site_map ]) & EDGE)
 			  {
 			    for (l = 0; l < 3; l++)
-			      net_site_nor[ site_map*3+l ] = net->wall_block[n].wall_data[m].wall_nor[l];
+			      net_site_nor[ site_map*3+l ] = wall_block[n].wall_data[m].wall_nor[l];
 			  }
 			else
 			  {
 			    net_site_nor[ site_map*3 ] = 1.0e+30;
 			  }
 		      }
-		    ++my_sites;
+		    ++my_sites_p;
 		  }
 	  }
   free(site_data);
@@ -1168,53 +1171,53 @@ void netInit (LBM *lbm, Net *net)
   
   // Allocate the request variable.
 #ifndef NOMPI
-  net->req = (MPI_Request **)malloc(sizeof(MPI_Request *) * COMMS_LEVELS);
+  req = (MPI_Request **)malloc(sizeof(MPI_Request *) * COMMS_LEVELS);
   
   for (m = 0; m < COMMS_LEVELS; m++)
     {
-      net->req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * net->procs));
+      req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * procs));
     }
 #endif
   
-  for (m = 0; m < net->neigh_procs; m++)
+  for (m = 0; m < neigh_procs; m++)
     {
-      neigh_proc_p = &net->neigh_proc[ m ];
+      neigh_proc_p = &neigh_proc[ m ];
    
       // One way send receive.  The lower numbered procs send and the higher numbered ones receive.
       // It seems that, for each pair of processors, the lower numbered one ends up with its own
       // edge sites and directions stored and the higher numbered one ends up with those on the
       // other processor.
 #ifndef NOMPI
-      if (neigh_proc_p->id > net->id)
+      if (neigh_proc_p->id > id)
   	{
-	  net->err = MPI_Isend (&neigh_proc_p->f_data[ 0 ],
+	  err = MPI_Isend (&neigh_proc_p->f_data[ 0 ],
 				neigh_proc_p->fs * 4, MPI_SHORT,
 				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-				&net->req[ 0 ][ m ]);
+				&req[ 0 ][ m ]);
   	}
       else
   	{
-  	  net->err = MPI_Irecv (&neigh_proc_p->f_data[ 0 ],
+  	  err = MPI_Irecv (&neigh_proc_p->f_data[ 0 ],
   				neigh_proc_p->fs * 4, MPI_SHORT,
   				neigh_proc_p->id, 10, MPI_COMM_WORLD,
-  				&net->req[ 0 ][ net->neigh_procs + m ]);
+  				&req[ 0 ][ neigh_procs + m ]);
   	}
 #endif
     }
-  for (m = 0; m < net->neigh_procs; m++)
+  for (m = 0; m < neigh_procs; m++)
     {
-      neigh_proc_p = &net->neigh_proc[ m ];
+      neigh_proc_p = &neigh_proc[ m ];
       
-      if (neigh_proc_p->id > net->id)
+      if (neigh_proc_p->id > id)
   	{
 #ifndef NOMPI
-  	  net->err = MPI_Wait (&net->req[ 0 ][ m ], net->status);
+  	  err = MPI_Wait (&req[ 0 ][ m ], status);
 #endif
   	}
       else
   	{
 #ifndef NOMPI
-  	  net->err = MPI_Wait (&net->req[ 0 ][ net->neigh_procs + m ], net->status);
+  	  err = MPI_Wait (&req[ 0 ][ neigh_procs + m ], status);
 #endif
 	  // Now we sort the situation so that each process has its own sites.
   	  for (n = 0; n < neigh_proc_p->fs*4; n += 4)
@@ -1230,11 +1233,11 @@ void netInit (LBM *lbm, Net *net)
   	}
     }
 
-  int f_count = net->my_sites * 15;
+  int f_count = my_sites * 15;
  
-  for (m = 0; m < net->neigh_procs; m++)
+  for (m = 0; m < neigh_procs; m++)
     {
-      neigh_proc_p = &net->neigh_proc[ m ];
+      neigh_proc_p = &neigh_proc[ m ];
       
       for (n = 0; n < neigh_proc_p->fs; n++)
 	{
@@ -1246,7 +1249,7 @@ void netInit (LBM *lbm, Net *net)
 	  l = f_data_p[ 3 ];
 	  
 	  // Get the fluid site number of site that will send data to another process.
-	  site_map = *netSiteMapPointer (i, j, k, net);
+	  site_map = *netSiteMapPointer (i, j, k);
 	  
 	  if (!check_conv)
 	    {
@@ -1275,19 +1278,19 @@ void netInit (LBM *lbm, Net *net)
   // are freeing both of those.
   free(f_data);
   
-  net->bm_time = UtilityFunctions::myClock () - seconds;
+  bm_time = UtilityFunctions::myClock () - seconds;
 }
 
 /*!
 Free the allocated data.
 */
-void netEnd (Net *net)
+void Net::netEnd ()
 {
   int i;
   
   
-  free(net->from_proc_id_to_neigh_proc_index);
-  net->from_proc_id_to_neigh_proc_index = NULL;
+  free(from_proc_id_to_neigh_proc_index);
+  from_proc_id_to_neigh_proc_index = NULL;
   
   free(f_recv_iv);
   
@@ -1298,38 +1301,38 @@ void netEnd (Net *net)
       free(f_to_send);
     }
   
-  if (lbm_stress_type == SHEAR_STRESS && net->my_sites > 0)
+  if (lbm_stress_type == SHEAR_STRESS && my_sites > 0)
     {
       free(net_site_nor);
       
       for (i = 0; i < blocks; i++)
 	{
-	  if (net->wall_block[ i ].wall_data != NULL)
+	  if (wall_block[ i ].wall_data != NULL)
 	    {
-	      free(net->wall_block[ i ].wall_data);
+	      free(wall_block[ i ].wall_data);
 	    }
 	}
-      free(net->wall_block);
+      free(wall_block);
     }
   for (i = 0; i < blocks; i++)
     {
-      if (net->map_block[ i ].site_data != NULL)
+      if (map_block[ i ].site_data != NULL)
 	{
-	  free(net->map_block[ i ].site_data);
+	  free(map_block[ i ].site_data);
 	}
     }
-  free(net->map_block);
+  free(map_block);
   
   for (i = 0; i < blocks; i++)
     {
-      if (net->proc_block[ i ].proc_id != NULL)
+      if (proc_block[ i ].proc_id != NULL)
 	{
-	  free(net->proc_block[ i ].proc_id);
+	  free(proc_block[ i ].proc_id);
 	}
     }
-  free(net->proc_block);
+  free(proc_block);
   
-  if (net->my_sites > 0)
+  if (my_sites > 0)
     {
       free(net_site_data);
       free(f_id);
@@ -1339,13 +1342,13 @@ void netEnd (Net *net)
   
 #ifndef NOMPI
   for (i = 0; i < COMMS_LEVELS; i++)
-    free(net->req[ i ]);
-  free(net->req);
+    free(req[ i ]);
+  free(req);
 #endif
   
-  free(net->fluid_sites);
+  free(fluid_sites);
   
-  free(net->procs_per_machine);
-  free(net->machine_id);
+  free(procs_per_machine);
+  free(machine_id);
 }
 

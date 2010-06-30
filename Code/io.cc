@@ -544,7 +544,7 @@ void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
 			  
 			  if (my_site_id & (1U << 31U)) continue;
 			  
-			  if (net_site_data[ my_site_id ] == FLUID_TYPE)
+			  if (net->net_site_data[ my_site_id ] == FLUID_TYPE)
 			    {
 			      lbmFeq (&f_old[ (my_site_id*(par+1)+par)*15 ], &density, &vx, &vy, &vz, f_eq);
 			      
@@ -555,18 +555,18 @@ void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
 			    }
 			  else
 			    {
-			      lbmCalculateBC (&f_old[ (my_site_id*(par+1)+par)*15 ], net_site_data[ my_site_id ],
+			      lbmCalculateBC (&f_old[ (my_site_id*(par+1)+par)*15 ], net->net_site_data[ my_site_id ],
 					      &density, &vx, &vy, &vz, f_neq);
 			    }
 			  if (lbm_stress_type == SHEAR_STRESS)
 			    {
-			      if (net_site_nor[ my_site_id*3 ] >= 1.0e+30)
+			      if (net->net_site_nor[ my_site_id*3 ] >= 1.0e+30)
 				{
 				  stress = -1.0;
 				}
 			      else
 				{
-				  lbmStress (density, f_neq, &net_site_nor[ my_site_id*3 ], &stress);
+				  lbmStress (density, f_neq, &net->net_site_nor[ my_site_id*3 ], &stress);
 				}
 			    }
 			  else
@@ -839,7 +839,7 @@ void LBM::lbmWriteConfigASCII (int stability, char *output_file_name, Net *net)
 			  
 			  if (my_site_id & (1U << 31U)) continue;
 			  
-			  if (net_site_data[ my_site_id ] == FLUID_TYPE)
+			  if (net->net_site_data[ my_site_id ] == FLUID_TYPE)
 			    {
 			      lbmFeq (&f_old[ (my_site_id*(par+1)+par)*15 ], &density, &vx, &vy, &vz, f_eq);
 			      
@@ -850,18 +850,18 @@ void LBM::lbmWriteConfigASCII (int stability, char *output_file_name, Net *net)
 			    }
 			  else
 			    {
-			      lbmCalculateBC (&f_old[ (my_site_id*(par+1)+par)*15 ], net_site_data[ my_site_id ],
+			      lbmCalculateBC (&f_old[ (my_site_id*(par+1)+par)*15 ], net->net_site_data[ my_site_id ],
 					      &density, &vx, &vy, &vz, f_neq);
 			    }
 			  if (lbm_stress_type == SHEAR_STRESS)
 			    {
-			      if (net_site_nor[ my_site_id*3 ] >= 1.0e+30)
+			      if (net->net_site_nor[ my_site_id*3 ] >= 1.0e+30)
 				{
 				  stress = -1.0;
 				}
 			      else
 				{
-				  lbmStress (density, f_neq, &net_site_nor[ my_site_id*3 ], &stress);
+				  lbmStress (density, f_neq, &net->net_site_nor[ my_site_id*3 ], &stress);
 				}
 			    }
 			  else

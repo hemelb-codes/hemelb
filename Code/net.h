@@ -86,58 +86,59 @@ struct NeighProc
 };
 
 
-struct Net
+class Net
 {
-  int id;                                    // Processor rank
-  int procs;                                 // Number of processors.
-  int neigh_procs;                           // Number of neighbouring rocessors.
-  int err;
-  int my_inter_sites, my_inner_sites;        // Site on this process that do and do not need
-                                             // information from neighbouring processors.
-  int my_inner_collisions[COLLISION_TYPES];  // Number of collisions that only use data on this rank.
-  int my_inter_collisions[COLLISION_TYPES];  // Number of collisions that require information from
+
+  public:
+
+    int id;                                    // Processor rank
+    int procs;                                 // Number of processors.
+    int neigh_procs;                           // Number of neighbouring rocessors.
+    int err;
+    int my_inter_sites, my_inner_sites;       // Site on this process that do and do not need
+                                              // information from neighbouring processors.
+    int my_inner_collisions[COLLISION_TYPES];  // Number of collisions that only use data on this rank.
+    int my_inter_collisions[COLLISION_TYPES];  // Number of collisions that require information from
                                              // other processors.
-  int my_sites;                              // Number of fluid sites on this rank.
-  int shared_fs;                             // Number of distributions shared with neighbouring
+    int my_sites;                              // Number of fluid sites on this rank.
+    int shared_fs;                             // Number of distributions shared with neighbouring
                                              // processors.
-  int *machine_id;
-  int *procs_per_machine;
-  int *fluid_sites;                          // Array containing numbers of fluid sites on 
+    int *machine_id;
+    int *procs_per_machine;
+    int *fluid_sites;                          // Array containing numbers of fluid sites on 
                                              // each process.
   
-  short int *from_proc_id_to_neigh_proc_index;  // Turns proc_id to neigh_proc_iindex.
-  short int *cluster_id;
+    short int *from_proc_id_to_neigh_proc_index;  // Turns proc_id to neigh_proc_iindex.
+    short int *cluster_id;
   
-  DataBlock *data_block;                     // See comment next to struct DataBlock.
-  DataBlock *map_block;                      // See comment next to struct DataBlock. 
+    DataBlock *data_block;                     // See comment next to struct DataBlock.
+    DataBlock *map_block;                      // See comment next to struct DataBlock. 
   
-  ProcBlock *proc_block;                     // See comment next to struct ProcBlock.
+    ProcBlock *proc_block;                     // See comment next to struct ProcBlock.
   
-  WallBlock *wall_block;                     // See comment next to struct WallBlock.
+    WallBlock *wall_block;                     // See comment next to struct WallBlock.
   
-  NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
+    NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
   
 #ifndef NOMPI
-  MPI_Status status[4];                      // Define variables for MPI non-blocking sends, receives.
+    MPI_Status status[4];                      // Define variables for MPI non-blocking sends, receives.
   
-  MPI_Request **req;
+    MPI_Request **req;
 #endif
-  double dd_time, bm_time, fr_time, fo_time;
+    double dd_time, bm_time, fr_time, fo_time;
+
+    double *net_site_nor;
+    unsigned int *net_site_data;
+
+    // declarations of all the functions used
+    int *netProcIdPointer (int site_i, int site_j, int site_k);
+    unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k);
+    int netFindTopology (int *depths);
+    void netEnd ();
+    void netInit (int totalFluidSites);
 };
 
-extern double *net_site_nor;
-extern unsigned int *net_site_data;
-
-
 extern int is_bench;
-
-// declarations of all the functions used
-int *netProcIdPointer (int site_i, int site_j, int site_k, Net *net);
-unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k, Net *net);
-
-
-int netFindTopology (Net *net, int *depths);
-void netEnd (Net *net);
 
 // Some sort of coordinates.
 struct SiteLocation

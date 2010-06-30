@@ -3,6 +3,7 @@
 #include "lb.h"
 #include "xdrFileWriter.h"
 #include <math.h>
+#include <string.h>
 
 // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
 void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[])
@@ -1339,7 +1340,7 @@ void slInit (Net *net, SL *sl)
 		    for (neigh_j = UtilityFunctions::max(0, site_j-1); neigh_j <= UtilityFunctions::min(sites_y-1, site_j+1); neigh_j++)
 		      for (neigh_k = UtilityFunctions::max(0, site_k-1); neigh_k <= UtilityFunctions::min(sites_z-1, site_k+1); neigh_k++)
 			{
-			  neigh_proc_id = netProcIdPointer (neigh_i, neigh_j, neigh_k, net);
+			  neigh_proc_id = net->netProcIdPointer (neigh_i, neigh_j, neigh_k);
 			  
 			  if (neigh_proc_id == NULL || *neigh_proc_id == (1 << 30))
 			    {
@@ -1379,7 +1380,7 @@ void slInit (Net *net, SL *sl)
 			  sl->neigh_proc[ sl->neigh_procs ].send_vs = 1;
 			  ++sl->neigh_procs;
 			}
-		  site_data = net_site_data[ map_block_p->site_data[m] ];
+		  site_data = net->net_site_data[ map_block_p->site_data[m] ];
 		  
 		  // if the lattice site is an not inlet one
 		  if ((site_data & SITE_TYPE_MASK) != INLET_TYPE)
