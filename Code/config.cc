@@ -68,9 +68,6 @@ int *col_pixel_id = NULL;
 ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
 ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
 
-Glyph *glyph = NULL;
-
-
 int is_bench;
 
 // 3 variables needed for convergence-enabled simulations
@@ -145,10 +142,6 @@ float ray_density;
 float ray_stress;
 
 int clusters;
-
-
-int glyphs;
-
 
 Screen screen;
 
