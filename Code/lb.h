@@ -49,9 +49,6 @@ public:
   void lbmUpdateBoundaryDensities (int cycle_id, int time_step);
   void lbmUpdateInletVelocities (int time_step, Net *net);
 
-
-
-
   void lbmWriteConfig (int stability, char *output_file_name, Net *net);
   void lbmWriteConfigASCII (int stability, char *output_file_name, Net *net);
 };
@@ -89,12 +86,8 @@ extern double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
 
 extern int is_inlet_normal_available;
 
-
 // TODO Judging by the name, these shouldn't be in here.
-
-int netFindTopology (Net *net, int *depths);
 void netInit (LBM *lbm, Net *net);
-void netEnd (Net *net);
 
 // TODO: prob don't belong here... 3 variables needed for convergence-enabled simulations
 extern double conv_error;
