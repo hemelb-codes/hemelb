@@ -7,6 +7,14 @@
 #include "lb.h"
 #include "utilityFunctions.h"
 
+void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
+void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
+
+void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity,
+				 void lbmCollision (double omega, int i,
+						    double *density, double *v_x, double *v_y, double *v_z,
+						    double f_neq[]));
+
 double LBM::lbmConvertPressureToLatticeUnits (double pressure)
 {
   return Cs2 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL *
@@ -1197,6 +1205,25 @@ void LBM::lbmUpdateBoundaryDensities (int cycle_id, int time_step)
   
   for (int i = 0; i < inlets; i++)
     {
+      /*
+      double coef[]={434.661,-239.217,28.9842,0.810304,5.88148,-37.8293,-32.4343,33.1995,-25.3035};
+      double inlet_pressure = coef[0];
+      
+      for (int l = 1; l <= 4; l++)
+	inlet_pressure += coef[l] * cos(l * w * (double)time_step);
+      for (int l = 5; l < 9; l++)
+	inlet_pressure += coef[l] * sin((l-4) * w * (double)time_step);
+      
+      inlet_pressure = inlet_pressure / mmHg_TO_PASCAL + 90;
+      
+      //if (cycle_id == 1)
+      //	{
+      //	  double t = time_step / lbm->period;
+      //	  
+      //	  inlet_pressure = (1.0 - t) * 90 + t * inlet_pressure;
+      //	}
+      inlet_density[i] = lbmConvertPressureToLatticeUnits (inlet_pressure, lbm) / Cs2;
+      */
       inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double)time_step + inlet_density_phs[i]);
     }
   for (int i = 0; i < outlets; i++)
@@ -1205,8 +1232,11 @@ void LBM::lbmUpdateBoundaryDensities (int cycle_id, int time_step)
     }
 }
 
-LBM::LBM (Net *net)
+
+void LBM::lbmInit (char *system_file_name_in, Net *net)
 {
+  system_file_name = system_file_name_in;
+  
   if (!check_conv)
     {
       lbmInnerCollision[0] = lbmInnerCollision0;
@@ -1838,7 +1868,7 @@ void LBM::lbmRestart (Net *net)
 }
 
 
-LBM::~LBM()
+void LBM::lbmEnd (void)
 {
   free(outlet_density_avg);
   free(outlet_density_amp);
