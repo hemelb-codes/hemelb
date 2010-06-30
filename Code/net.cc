@@ -14,6 +14,7 @@
 #include "utilityFunctions.h"
 #include <stdlib.h>
 #include <math.h>
+#include <stdio.h>
 
 /*!
 Low level function that finds the pointer to the rank on which a

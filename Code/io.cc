@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <sstream>
 #include <math.h>
+#include <string.h>
 
 using namespace std;
 
