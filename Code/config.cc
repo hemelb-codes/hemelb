@@ -54,9 +54,6 @@ int *f_recv_iv = NULL;
 
 short int *f_data = NULL;
 
-double *net_site_nor = NULL;
-unsigned int *net_site_data = NULL;
-
 double *inlet_density = NULL;
 double *inlet_density_avg = NULL, *inlet_density_amp = NULL, *inlet_density_phs = NULL;
 double *outlet_density = NULL;

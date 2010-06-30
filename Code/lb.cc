@@ -7,13 +7,13 @@
 #include "lb.h"
 #include "utilityFunctions.h"
 
-void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
-void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[]);
+void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
+void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 
-void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity,
+void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity, Net* net,
 				 void lbmCollision (double omega, int i,
 						    double *density, double *v_x, double *v_y, double *v_z,
-						    double f_neq[]));
+						    double f_neq[], Net* net));
 
 double LBM::lbmConvertPressureToLatticeUnits (double pressure)
 {
@@ -201,7 +201,7 @@ void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
 // to neigbhouring subdomains.
 void lbmInnerCollision0 (double omega, int i,
 			 double *density, double *v_x, double *v_y, double *v_z,
-			 double f_neq[])
+			 double f_neq[], Net* net)
 {
   double density_1;
   double *f;
@@ -268,7 +268,7 @@ void lbmInnerCollision0 (double omega, int i,
 // to neigbhouring subdomains.
 void lbmInterCollision0 (double omega, int i,
 			 double *density, double *v_x, double *v_y, double *v_z,
-			 double f_neq[])
+			 double f_neq[], Net* net)
 {
   double density_1;
   double *f;
@@ -334,7 +334,7 @@ void lbmInterCollision0 (double omega, int i,
 // Collision + streaming for fluid lattice sites adjacent to the wall.
 void lbmCollision1 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
-		    double f_neq[])
+		    double f_neq[], Net* net)
 {
   double *f;
   double temp;
@@ -371,7 +371,7 @@ void lbmCollision1 (double omega, int i,
 // Collision + streaming for inlet fluid lattice sites.
 void lbmCollision2 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
-		    double f_neq[])
+		    double f_neq[], Net* net)
 {
   double *f;
   double dummy_density;
@@ -385,7 +385,7 @@ void lbmCollision2 (double omega, int i,
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net->net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = inlet_density[ boundary_id ];
   
@@ -402,7 +402,7 @@ void lbmCollision2 (double omega, int i,
 // Collision + streaming for outlet fluid lattice sites.
 void lbmCollision3 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
-		    double f_neq[])
+		    double f_neq[], Net* net)
 {
   double *f;
   double dummy_density;
@@ -416,7 +416,7 @@ void lbmCollision3 (double omega, int i,
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net->net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = outlet_density[ boundary_id ];
   
@@ -433,7 +433,7 @@ void lbmCollision3 (double omega, int i,
 // Collision + streaming for fluid lattice sites and adjacent to the inlet and the wall.
 void lbmCollision4 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
-		    double f_neq[])
+		    double f_neq[], Net* net)
 {
   double *f;
   double temp;
@@ -449,7 +449,7 @@ void lbmCollision4 (double omega, int i,
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net->net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = inlet_density[ boundary_id ];
   
@@ -472,7 +472,7 @@ void lbmCollision4 (double omega, int i,
 // Collision + streaming for fluid lattice sites and adjacent to the outlet and the wall.
 void lbmCollision5 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
-		    double f_neq[])
+		    double f_neq[], Net* net)
 {
   double *f;
   double temp;
@@ -488,7 +488,7 @@ void lbmCollision5 (double omega, int i,
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net->net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = outlet_density[ boundary_id ];
   
@@ -511,7 +511,7 @@ void lbmCollision5 (double omega, int i,
 // The same as lbmInnerCollision0 but useful for convergence purposes.
 void lbmInnerCollisionConv0 (double omega, int i,
 			     double *density, double *v_x, double *v_y, double *v_z,
-			     double f_neq[])
+			     double f_neq[], Net* net)
 {
   double density_1;
   double *f;
@@ -577,7 +577,7 @@ void lbmInnerCollisionConv0 (double omega, int i,
 // The same as lbmInterCollision0 but useful for convergence purposes.
 void lbmInterCollisionConv0 (double omega, int i,
 			     double *density, double *v_x, double *v_y, double *v_z,
-			     double f_neq[])
+			     double f_neq[], Net* net)
 {
   double density_1;
   double *f;
@@ -643,7 +643,7 @@ void lbmInterCollisionConv0 (double omega, int i,
 // The same as lbmCollision1 but useful for convergence purposes.
 void lbmCollisionConv1 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
-			double f_neq[])
+			double f_neq[], Net* net)
 {
   double *f;
   double temp;
@@ -680,7 +680,7 @@ void lbmCollisionConv1 (double omega, int i,
 // The same as lbmCollision2 but useful for convergence purposes.
 void lbmCollisionConv2 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
-			double f_neq[])
+			double f_neq[], Net* net)
 {
   double *f;
   double dummy_density;
@@ -694,7 +694,7 @@ void lbmCollisionConv2 (double omega, int i,
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net->net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = inlet_density[ boundary_id ];
   
@@ -711,7 +711,7 @@ void lbmCollisionConv2 (double omega, int i,
 // The same as lbmCollision3 but useful for convergence purposes.
 void lbmCollisionConv3 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
-			double f_neq[])
+			double f_neq[], Net* net)
 {
   double *f;
   double dummy_density;
@@ -725,7 +725,7 @@ void lbmCollisionConv3 (double omega, int i,
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net->net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = outlet_density[ boundary_id ];
   
@@ -742,7 +742,7 @@ void lbmCollisionConv3 (double omega, int i,
 // The same as lbmCollision4 but useful for convergence purposes.
 void lbmCollisionConv4 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
-			double f_neq[])
+			double f_neq[], Net* net)
 {
   double *f;
   double temp;
@@ -758,7 +758,7 @@ void lbmCollisionConv4 (double omega, int i,
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net->net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = inlet_density[ boundary_id ];
   
@@ -781,7 +781,7 @@ void lbmCollisionConv4 (double omega, int i,
 // The same as lbmCollision5 but useful for convergence purposes.
 void lbmCollisionConv5 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
-			double f_neq[])
+			double f_neq[], Net* net)
 {
   double *f;
   double temp;
@@ -797,7 +797,7 @@ void lbmCollisionConv5 (double omega, int i,
     {
       f_neq[l] = f[l];
     }
-  boundary_id = (net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+  boundary_id = (net->net_site_data[ i ] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
   
   *density = outlet_density[ boundary_id ];
   
@@ -951,28 +951,28 @@ void lbmUpdateMinMaxValues (double density, double velocity, double stress)
 
 
 // Fluid site updating for benchmarking purposes.
-void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
+void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
 			     void lbmCollision (double omega, int i,
 						double *density, double *v_x, double *v_y, double *v_z,
-						double f_neq[]))
+						double f_neq[], Net* net))
 {
   double f_neq[15];
   
-  lbmCollision (omega, i, density, vx, vy, vz, f_neq);
+  lbmCollision (omega, i, density, vx, vy, vz, f_neq, net);
 }
 
 
 // Fluid site updating for benchmarking plus computation of flow field values for visualisation purposes.
-void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
+void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
 				    void lbmCollision (double omega, int i,
 						       double *density, double *v_x, double *v_y, double *v_z,
-						       double f_neq[]))
+						       double f_neq[], Net* net))
 {
   double f_neq[15];
   double stress;
   
   
-  lbmCollision (omega, i, density, vx, vy, vz, f_neq);
+  lbmCollision (omega, i, density, vx, vy, vz, f_neq, net);
   
   *vx *= (1.0 / *density);
   *vy *= (1.0 / *density);
@@ -981,13 +981,13 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
   
   if (lbm_stress_type == SHEAR_STRESS)
     {
-      if (net_site_nor[ i*3 ] >= 1.0e+30)
+      if (net->net_site_nor[ i*3 ] >= 1.0e+30)
 	{
 	  stress = 1.0e+30;
 	}
       else
 	{
-	  lbmStress (*density, f_neq, &net_site_nor[ i*3 ], &stress);
+	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	}
     }
   else
@@ -999,16 +999,16 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
 
 
 // Fluid site updating for full-production runs.
-void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
+void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net, 
 			   void lbmCollision (double omega, int i,
 					      double *density, double *v_x, double *v_y, double *v_z,
-					      double f_neq[]))
+					      double f_neq[], Net* net))
 {
   double f_neq[15];
   double stress;
   
   
-  lbmCollision (omega, i, density, vx, vy, vz, f_neq);
+  lbmCollision (omega, i, density, vx, vy, vz, f_neq, net);
   
   *vx *= (1.0 / *density);
   *vy *= (1.0 / *density);
@@ -1017,13 +1017,13 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
   
   if (lbm_stress_type == SHEAR_STRESS)
     {
-      if (net_site_nor[ i*3 ] > 1.0e+30)
+      if (net->net_site_nor[ i*3 ] > 1.0e+30)
 	{
 	  stress = 0.0;
 	}
       else
 	{
-	  lbmStress (*density, f_neq, &net_site_nor[ i*3 ], &stress);
+	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	}
     }
   else
@@ -1035,16 +1035,16 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
 
 
 // Fluid site updating for full-production runs plus computation of flow field values for visualisation purposes.
-void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity,
+void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
 				  void lbmCollision (double omega, int i,
 						     double *density, double *v_x, double *v_y, double *v_z,
-						     double f_neq[]))
+						     double f_neq[], Net* net))
 {
   double f_neq[15];
   double stress;
   
   
-  lbmCollision (omega, i, density, vx, vy, vz, f_neq);
+  lbmCollision (omega, i, density, vx, vy, vz, f_neq, net);
   
   *vx *= (1.0 / *density);
   *vy *= (1.0 / *density);
@@ -1053,14 +1053,14 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
   
   if (lbm_stress_type == SHEAR_STRESS)
     {
-      if (net_site_nor[ i*3 ] >= 1.0e+30)
+      if (net->net_site_nor[ i*3 ] >= 1.0e+30)
 	{
 	  lbmUpdateMinMaxValues (*density, *velocity, 0.0);
 	  rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
 	}
       else
 	{
-	  lbmStress (*density, f_neq, &net_site_nor[ i*3 ], &stress);
+	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	  lbmUpdateMinMaxValues (*density, *velocity, stress);
 	  rtUpdateClusterVoxel (i, *density, *velocity, stress);
 	}
@@ -1365,7 +1365,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     {
       for (i = offset; i < offset + net->my_inter_collisions[ collision_type ]; i++)
 	{
-	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity,
+	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
 						      lbmInterCollision[ collision_type ]);
 	}
       offset += net->my_inter_collisions[ collision_type ];
@@ -1388,7 +1388,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     {
       for (i = offset; i < offset + net->my_inner_collisions[ collision_type ]; i++)
 	{
-	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity,
+	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
 						      lbmInnerCollision[ collision_type ]);
 	}
       offset += net->my_inner_collisions[ collision_type ];
@@ -1473,14 +1473,14 @@ int LBM::lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net)
 	  if (cycle_id != 1)
 	    {
 	      cycle_tag = 0;
-	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0],
+	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0], net,
 					  lbmInterCollision[ collision_type ]);
 	      vx[0] *= (1.0 / density);
 	      vy[0] *= (1.0 / density);
 	      vz[0] *= (1.0 / density);
 	    }
 	  cycle_tag = 1;
-	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1],
+	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1], net,
 					       lbmInterCollision[ collision_type ]);
 	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
 		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
@@ -1523,14 +1523,14 @@ int LBM::lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net)
 	  if (cycle_id != 1)
 	    {
 	      cycle_tag = 0;
-	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0],
+	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0], net,
 					  lbmInnerCollision[ collision_type ]);
 	      vx[0] *= (1.0 / density);
 	      vy[0] *= (1.0 / density);
 	      vz[0] *= (1.0 / density);
 	    }
 	  cycle_tag = 1;
-	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1],
+	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1], net,
 					       lbmInnerCollision[ collision_type ]);
 	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
 		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
@@ -1765,7 +1765,7 @@ void LBM::lbmUpdateInletVelocities (int time_step, Net *net)
     {
       lbmDensityAndVelocity (&f_old[ i*c1+c2 ], &density, &vx, &vy, &vz);
       
-      inlet_id = (net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+      inlet_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
       if (is_inlet_normal_available)
 	{
@@ -1798,7 +1798,7 @@ void LBM::lbmUpdateInletVelocities (int time_step, Net *net)
     {
       lbmDensityAndVelocity (&f_old[ i*c1+c2 ], &density, &vx, &vy, &vz);
       
-      inlet_id = (net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+      inlet_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
       if (is_inlet_normal_available)
 	{

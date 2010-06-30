@@ -221,7 +221,7 @@ int main (int argc, char *argv[])
   
   lbm.lbmReadParameters (input_parameters_name, &net);
   
-  if (netFindTopology (&net, &depths) == 0)
+  if (net.netFindTopology (&depths) == 0)
     {
       fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");
 #ifndef NOMPI
@@ -229,7 +229,7 @@ int main (int argc, char *argv[])
 #endif
     }
   
-  netInit (&lbm, &net);
+  net.netInit (lbm.total_fluid_sites);
   
   lbm.lbmSetInitialConditions (&net);
   
@@ -679,7 +679,7 @@ int main (int argc, char *argv[])
 	}
     }
   visEnd (&sl);
-  netEnd (&net);
+  net.netEnd ();
   lbm.lbmEnd ();
   
 #ifndef NO_STEER
