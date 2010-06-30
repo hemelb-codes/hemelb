@@ -20,7 +20,7 @@ this function reads the XDR configuration file but does not store the system
 and calculate some parameters
 */
 
-void LBM::lbmReadConfig (char *system_file_name, Net *net) {
+void LBM::lbmReadConfig (Net *net) {
   /* Read the config file written by the segtool.
    *
    * All values encoded using XDR format. Uses int, double and u_int.
