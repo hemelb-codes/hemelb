@@ -1,3 +1,6 @@
+#ifndef __visualisationControl_h_
+#define __visualisationControl_h_
+
 #include <vector>
 
 // Base class for any method of adding to the visualisation, e.g. Glyphs, Streamlines, Ray-tracing etc.
@@ -25,3 +28,5 @@ class visualisationControl
     // Combines the output of all visualisation methods in the order added.
     void render();      
 };
+
+#endif //__visualisationControl_h_

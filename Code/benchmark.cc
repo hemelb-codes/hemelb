@@ -1,7 +1,5 @@
 #include "benchmark.h"
-#ifndef NOMPI
-#include <mpi.h>
-#endif
+#include "mpiInclude.h"
 
 // Returns true if elapsed time ? target amount of time.
 bool BenchmarkTimer::IsBenchSectionFinished (double minutes, double elapsed_time_in_seconds)

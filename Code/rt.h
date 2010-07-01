@@ -3,7 +3,13 @@
 
 #include "net.h"
 #include "lb.h"
+
 #include "glyphDrawer.h"
+
+#ifndef NO_STREAKLINES
+  #include "streaklineDrawer.h"
+#endif // NO_STREAKLINES
+
 
 // the last three digits of the pixel identifier are used to indicate
 // if the pixel is coloured via the ray tracing technique and/or a glyph
@@ -133,71 +139,6 @@ struct Viewpoint
 };
 
 
-struct Particle
-{
-  float x, y, z;
-  float vx, vy, vz;
-  float vel;
-  
-  int inlet_id;
-};
-
-
-struct VelSiteData
-{
-  int proc_id, counter, site_id;
-  
-  float vx, vy, vz;
-};
-
-
-struct VelocityField
-{
-  VelSiteData *vel_site_data;
-};
-
-
-struct SL
-{
-  int counter;
-  int particles, particles_max;
-  int particle_seeds, particle_seeds_max;
-  int particles_to_send_max, particles_to_recv_max;
-  int neigh_procs;
-  int shared_vs;
-  int procs;
-  
-  VelocityField *velocity_field;
-  
-  Particle *particle;
-  Particle *particle_seed;
-  
-  float *v_to_send, *v_to_recv;
-  
-  short int *s_to_send, *s_to_recv;
-  
-  short int *from_proc_id_to_neigh_proc_index;
-  
-  struct NeighProc
-  {
-    int id;
-    int send_ps, recv_ps;
-    int send_vs, recv_vs;
-    
-    float *p_to_send, *p_to_recv;
-    float *v_to_send, *v_to_recv;
-    
-    short int *s_to_send, *s_to_recv;
-  };
-  
-  NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX];
-  
-#ifndef NOMPI
-  MPI_Status status[4];
-  
-  MPI_Request *req;
-#endif
-};
 
 void rawWritePixel(ColPixel*, unsigned int*, unsigned char [],
 		   void (*ColourPalette) (float, float []));
@@ -213,12 +154,6 @@ void rtEnd (void);
 void glyInit (Net *net);
 void glyGlyphs (void);
 void glyEnd (void);
-
-
-void slStreakLines (int time_steps, int time_steps_per_cycle, Net *net, SL *sl);
-void slRender (int recv_buffer_id, SL *sl);
-void slRestart (SL *sl);
-
 
 struct Vis
 {
@@ -245,14 +180,14 @@ void visProjection (float ortho_x, float ortho_y,
 		    float dist,
 		    float zoom);
 void visRenderLine (float x1[], float x2[]);
-void visInit (Net *net, Vis *vis, SL *sl);
+void visInit (Net *net, Vis *vis, streaklineDrawer *sl);
 void visUpdateImageSize (int pixels_x, int pixels_y);
-void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net, SL *sl);
+void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net, streaklineDrawer *sl);
 void visWriteImage (int recv_buffer_id, char *image_file_name,
 		    void (*ColourPalette) (float value, float col[]));
 void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
 void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
-void visEnd (SL *sl);
+void visEnd (streaklineDrawer *sl);
 
 
 

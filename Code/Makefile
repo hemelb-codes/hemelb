@@ -9,6 +9,7 @@ OBJ=config.o \
 	lb.o \
         visualisationControl.o \
         glyphDrawer.o \
+        streaklineDrawer.o \
 	benchmark.o \
 	http_post.o \
 	fileutils.o \

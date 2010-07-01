@@ -2,15 +2,7 @@
 #define __net_h_
 
 #include "constants.h"
-
-// TODO this include is probably bad. Should work towards getting rid of it at some point.
-#ifndef NOMPI
-#ifdef XT3
-#include <mpi.h>
-#else
-#include "mpi.h"
-#endif
-#endif
+#include "mpiInclude.h"
 
 // Superficial site data
 struct WallData
