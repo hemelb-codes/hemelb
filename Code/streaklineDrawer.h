@@ -64,20 +64,21 @@ class streaklineDrawer : public visualisationLayer
       MPI_Request *req;
     #endif
 
-  private:
+    void slCreateSeedParticles ();
+    void slCreateParticle (float x, float y, float z, float vel, int inlet_id);
+    void slDeleteParticle (int p_index);
+  
     void slInitializeVelFieldBlock(int site_i, int site_j, int site_k, int proc_id);
     VelSiteData *slVelSiteDataPointer (int site_i, int site_j, int site_k);
+    void slParticleVelocity (Particle *particle_p, float v[2][2][2][3], float interp_v[3]);
+    void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *net);
+  
+    void slUpdateVelField (int stage_id, Net *net);
+    void slUpdateParticles ();
 
-void slParticleVelocity (Particle *particle_p, float v[2][2][2][3], float interp_v[3]);
-void slCreateParticle (float x, float y, float z, float vel, int inlet_id);
-void slDeleteParticle (int p_index);
-void slCreateSeedParticles ();
-void slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *net);
-void slCommunicateSiteIds ();
-void slCommunicateVelocities ();
-void slUpdateVelField (int stage_id, Net *net);
-void slUpdateParticles ();
-void slCommunicateParticles (Net *net);
+    void slCommunicateSiteIds ();
+    void slCommunicateVelocities ();
+    void slCommunicateParticles (Net *net);
 
 
   public:
