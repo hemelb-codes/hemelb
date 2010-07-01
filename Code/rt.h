@@ -5,6 +5,8 @@
 #include "lb.h"
 
 #include "glyphDrawer.h"
+#include "colpixel.h"
+#include "rayTracer.h"
 
 #ifndef NO_STREAKLINES
   #include "streaklineDrawer.h"
@@ -43,9 +45,6 @@ extern int vis_image_freq;
 extern int vis_pixels_max;
 extern int vis_streaklines;
 
-
-extern float block_size_f;
-extern float block_size_inv;
 extern float vis_physical_pressure_threshold_min;
 extern float vis_physical_pressure_threshold_max;
 extern float vis_physical_velocity_threshold_max;
@@ -62,58 +61,9 @@ extern int vis_mouse_x, vis_mouse_y;
 extern int vis_perform_rendering;
 extern int vis_mode;
 
-
-extern int cluster_blocks_vec[3];
-extern int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
-
-extern int clusters;
-
-
-
-
-
-
-
-struct AABB
-{
-  float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
-};
-
-
-struct ColPixel
-{
-  float vel_r, vel_g, vel_b;
-  float stress_r, stress_g, stress_b;
-  float t, dt;
-  float density;
-  float stress;
-  
-  float particle_vel;
-  float particle_z;
-  
-  int particle_inlet_id;
-  int i;
-};
-
 extern ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
 extern ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
 
-
-// Some sort of coordinates.
-struct BlockLocation
-{
-  short int i, j, k;
-};
-
-struct Cluster
-{
-  float minmax_x[2], minmax_y[2], minmax_z[2];
-  
-  float x[3];
-  
-  unsigned short int blocks_x, blocks_y, blocks_z;
-  unsigned short int block_min[3];
-};
 
 struct Screen
 {
@@ -144,16 +94,6 @@ void rawWritePixel(ColPixel*, unsigned int*, unsigned char [],
 		   void (*ColourPalette) (float, float []));
 void makePixelColour(unsigned char& red, unsigned char& green, unsigned char& blue,
   int rawRed, int rawGreen, int rawBlue);
-
-void rtInit (Net *net);
-void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*ColourPalette) (float value, float col[]));
-void rtRayTracing (void (*ColourPalette) (float value, float col[]));
-void rtUpdateClusterVoxel (int i, float density, float velocity, float stress);
-void rtEnd (void);
-
-void glyInit (Net *net);
-void glyGlyphs (void);
-void glyEnd (void);
 
 struct Vis
 {
@@ -189,17 +129,6 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
 void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
 void visEnd (streaklineDrawer *sl);
 
-
-
-extern float ray_dir[3];
-extern float ray_inv[3];
-extern float ray_vel_col[3];
-extern float ray_stress_col[3];
-extern float ray_length;
-extern float ray_t_min;
-extern float ray_density;
-extern float ray_stress;
-extern Cluster *cluster;
 extern Screen screen;
 extern Viewpoint viewpoint;
 

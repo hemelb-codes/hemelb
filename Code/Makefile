@@ -10,6 +10,7 @@ OBJ=config.o \
         visualisationControl.o \
         glyphDrawer.o \
         streaklineDrawer.o \
+        rayTracer.o \
 	benchmark.o \
 	http_post.o \
 	fileutils.o \

@@ -37,11 +37,6 @@ double *f_old = NULL, *f_new = NULL;
 
 int *f_id = NULL;
 
-Cluster *cluster = NULL;
-
-float **cluster_voxel = NULL;
-
-float ***cluster_flow_field = NULL;
 
 
 // 3 buffers needed for convergence-enabled simulations
