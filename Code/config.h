@@ -7,13 +7,7 @@
 #ifndef __config_h__
 #define __config_h__
 
-#ifndef NOMPI
-#ifdef XT3
-#include <mpi.h>
-#else
-#include "mpi.h"
-#endif
-#endif
+#include "mpiInclude.h"
 
 #ifndef int64_t
 #define int64_t long int

@@ -1,11 +1,4 @@
-#ifndef NOMPI
-#ifdef XT3
-#include <mpi.h>
-#else
-#include "mpi.h"
-#endif
-#endif
-
+#include "mpiInclude.h"
 #include "utilityFunctions.h"
 
 // Return the smaller of the two ints
