@@ -10,6 +10,20 @@ Cluster *cluster = NULL;
 float **cluster_voxel = NULL;
 float ***cluster_flow_field = NULL;
 
+int clusters;
+
+float ray_dir[3];
+float ray_inv[3];
+float ray_vel_col[3];
+float ray_stress_col[3];
+float ray_length;
+float ray_t_min;
+float ray_density;
+float ray_stress;
+
+int cluster_blocks_vec[3];
+int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
+
 
 // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
 void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[])

@@ -35,22 +35,9 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]));
 void rtUpdateClusterVoxel (int i, float density, float velocity, float stress);
 void rtEnd (void);
 
-// TODO UGH get rid of them.
-extern int cluster_blocks_vec[3];
-extern int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
-extern int clusters;
+//TODO Put these somewhere else
 extern float block_size_f;
 extern float block_size_inv;
-extern float ray_dir[3];
-extern float ray_inv[3];
-extern float ray_vel_col[3];
-extern float ray_stress_col[3];
-extern float ray_length;
-extern float ray_t_min;
-extern float ray_density;
-extern float ray_stress;
-
-
 
 
 class rayTracer : public visualisationLayer
