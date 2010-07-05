@@ -1,10 +1,13 @@
 #include "visualisationControl.h"
 
+// Constructor for the controller.
 visualisationControl::visualisationControl()
 {
   myLayers = std::vector<visualisationLayer*>();
 }
 
+// Destructor, which includes deleting all added layers.
+// This is done in reverse order of addition.
 visualisationControl::~visualisationControl()
 {
   for(int ii = myLayers.size() - 1; ii >= 0; ii--)

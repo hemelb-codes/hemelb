@@ -1,19 +1,15 @@
 #include "glyphDrawer.h"
 
+
 double glyphDrawer::vis_glyph_length = -1.F;
 
+// Constructor
 glyphDrawer::glyphDrawer(Net *net)
 {
-  int glyphs_max;
-  int site_i, site_j, site_k;
-  int i, j, k;
-  int m, n;
-  int c1, c2;
-  
   DataBlock *map_block_p;
-  
-  glyphs_max = 0;
-  
+  int glyphs_max = 0;
+  int n;
+
   for (n = 0; n < blocks; n++)
     {
       if (net->map_block[ n ].site_data != NULL)
@@ -21,37 +17,26 @@ glyphDrawer::glyphDrawer(Net *net)
 	  ++glyphs_max;
 	}
     }
+
   glyph = new Glyph[glyphs_max];
-  
   glyphs = 0;
-  
-  if (check_conv)
+  n=-1;
+
+  for (int i = 0; i < sites_x; i += block_size)
     {
-      c1 = 30;
-      c2 = 15;
-    }
-  else
-    {
-      c1 = 15;
-      c2 = 0;
-    }
-  n = -1;
-  
-  for (i = 0; i < sites_x; i += block_size)
-    {
-      for (j = 0; j < sites_y; j += block_size)
+      for (int j = 0; j < sites_y; j += block_size)
 	{
-	  for (k = 0; k < sites_z; k += block_size)
+	  for (int k = 0; k < sites_z; k += block_size)
 	    {
 	      map_block_p = &net->map_block[ ++n ];
 	      
 	      if (map_block_p->site_data == NULL) continue;
 	      
-	      site_i = (block_size >> 1);
-	      site_j = (block_size >> 1);
-	      site_k = (block_size >> 1);
+	      int site_i = (block_size >> 1);
+	      int site_j = (block_size >> 1);
+	      int site_k = (block_size >> 1);
 	      
-	      m = (((site_i << shift) + site_j) << shift) + site_k;
+	      int m = (((site_i << shift) + site_j) << shift) + site_k;
 	      
 	      if (map_block_p->site_data[ m ] & (1U << 31U)) continue;
 	      
@@ -59,40 +44,41 @@ glyphDrawer::glyphDrawer(Net *net)
 	      glyph[ glyphs ].y = (float)(j + site_j) - 0.5F * (float)sites_y;
 	      glyph[ glyphs ].z = (float)(k + site_k) - 0.5F * (float)sites_z;
 	      
-	      glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*c1+c2 ];
+              int c1Plusc2 = check_conv ? 45 : 15;
+
+	      glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*c1Plusc2];
 	      ++glyphs;
 	    }
 	}
     }
 }
 
+// Destructor
 glyphDrawer::~glyphDrawer()
 {
   delete[] glyph;
 }
 
+// Function to perform the rendering.
 void glyphDrawer::render()
 {
-  double density;
-  double vx, vy, vz;
-  double temp;
-  
-  float screen_max[4];
-  float scale[4];
-  float p1[3], p2[3], p3[3], p4[3];
-  
-  int n;
-  
-  
+  float screen_max[4];  
   screen_max[0] = screen.max_x;
   screen_max[1] = screen.max_x;
   screen_max[2] = screen.max_y;
   screen_max[3] = screen.max_y;
-  
+
+  float scale[4];
   scale[0] = scale[1] = screen.scale_x;
   scale[2] = scale[3] = screen.scale_y;
+
+  double density;
+  double vx, vy, vz;
+  double temp;
   
-  for (n = 0; n < glyphs; n++)
+  float p1[3], p2[3], p3[3], p4[3];
+  
+  for (int n = 0; n < glyphs; n++)
     {
       lbmDensityAndVelocity (glyph[ n ].f, &density, &vx, &vy, &vz);
       

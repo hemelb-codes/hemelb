@@ -369,12 +369,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
     }
   lbmUpdateBoundaryDensities (0, 0);
   
-  RecalculateTau ();
-  
-  viscosity = ((2.0 * tau - 1.0) / 6.0);
-  omega = -1.0 / tau;
-  
-  lbm_stress_par = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
+  RecalculateTauViscosityOmega ();
 }
 
 void lbmInitialiseInlets(int numberOfInlets)

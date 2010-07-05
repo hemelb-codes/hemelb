@@ -16,6 +16,13 @@
 #include <math.h>
 #include <stdio.h>
 
+// TODO find a better way to do this.
+const int e_x[] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1};
+const int e_y[] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1};
+const int e_z[] = { 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1};
+const int inv_dir[] = {0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13};
+
+
 /*!
 Low level function that finds the pointer to the rank on which a
 particular site resides.  proc_id is the only member of proc_block

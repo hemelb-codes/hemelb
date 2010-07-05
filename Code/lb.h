@@ -45,7 +45,7 @@ public:
   int lbmCycle (int perform_rt, Net *net);
   int lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net);
   void lbmCalculateFlowFieldValues ();
-  void RecalculateTau ();
+  void RecalculateTauViscosityOmega ();
   void lbmUpdateBoundaryDensities (int cycle_id, int time_step);
   void lbmUpdateInletVelocities (int time_step, Net *net);
 

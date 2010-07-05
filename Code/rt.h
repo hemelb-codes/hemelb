@@ -120,14 +120,18 @@ void visProjection (float ortho_x, float ortho_y,
 		    float dist,
 		    float zoom);
 void visRenderLine (float x1[], float x2[]);
-void visInit (Net *net, Vis *vis, streaklineDrawer *sl);
+void visInit (Net *net, Vis *vis);
+
+void visStreaklines(int time_step, int period, Net *net);
+void visRestart();
+
 void visUpdateImageSize (int pixels_x, int pixels_y);
-void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net, streaklineDrawer *sl);
+void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net);
 void visWriteImage (int recv_buffer_id, char *image_file_name,
 		    void (*ColourPalette) (float value, float col[]));
 void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
 void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
-void visEnd (streaklineDrawer *sl);
+void visEnd ();
 
 extern Screen screen;
 extern Viewpoint viewpoint;

@@ -2,11 +2,13 @@
 // TODO this could probably be reduced to the net class and some visualisation class.
 #include "rt.h"
 #include "utilityFunctions.h"
-// TODO: Mixture of malloc and new is a bad smell, and just using new / delete would be much nicer.
+// TODO: Mixture of malloc and new is a bad smell, and just using new / delete would be much nicer. 
+// Vectors might be a good way of getting round the need to use realloc.
 #include <stdlib.h>
 #include <math.h>
 
-void streaklineDrawer::slInitializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id)
+// Function to initialise the velocity field at given coordinates.
+void streaklineDrawer::initializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id)
 {
   if (site_i < 0 || site_i >= sites_x ||
       site_j < 0 || site_j >= sites_y ||
@@ -39,8 +41,9 @@ void streaklineDrawer::slInitializeVelFieldBlock (int site_i, int site_j, int si
   velocity_field[ block_id ].vel_site_data[ site_id ].proc_id = proc_id;
 }
 
-
-streaklineDrawer::VelSiteData *streaklineDrawer::slVelSiteDataPointer (int site_i, int site_j, int site_k)
+// Returns the velocity site data for a given index, or NULL if the index isn't valid / has
+// no data.
+streaklineDrawer::VelSiteData *streaklineDrawer::velSiteDataPointer (int site_i, int site_j, int site_k)
 {
   if (site_i < 0 || site_i >= sites_x ||
       site_j < 0 || site_j >= sites_y ||
@@ -67,12 +70,11 @@ streaklineDrawer::VelSiteData *streaklineDrawer::slVelSiteDataPointer (int site_
   return &velocity_field[ block_id ].vel_site_data[ site_id ];
 }
 
-
-void streaklineDrawer::slParticleVelocity (Particle *particle_p, float v[2][2][2][3], float interp_v[3])
+// Interpolates a velocity field to get the velocity at the position of a particle.
+void streaklineDrawer::particleVelocity (Particle *particle_p, float v[2][2][2][3], float interp_v[3])
 {
   float dx, dy, dz;
   float v_00z, v_01z, v_10z, v_11z, v_0y, v_1y;
-  
   
   dx = particle_p->x - (int)particle_p->x;
   dy = particle_p->y - (int)particle_p->y;
@@ -92,8 +94,8 @@ void streaklineDrawer::slParticleVelocity (Particle *particle_p, float v[2][2][2
     }
 }
 
-
-void streaklineDrawer::slCreateParticle (float x, float y, float z, float vel, int inlet_id)
+// Create a particle with given position, velocity and inlet_id.
+void streaklineDrawer::createParticle (float x, float y, float z, float vel, int inlet_id)
 {
   if (particles == particles_max)
     {
@@ -108,12 +110,13 @@ void streaklineDrawer::slCreateParticle (float x, float y, float z, float vel, i
   ++particles;
 }
 
-
-void streaklineDrawer::slDeleteParticle (int p_index)
+// Delete the particle at given index. Do something a bit budget to ensure that 
+// the particles remain in the first <particles> elements of an array,
+void streaklineDrawer::deleteParticle (int p_index)
 {
   if (--particles <= 0) return;
   
-  // its data are reslaced with those of the last particle;
+  // its data are replaced with those of the last particle;
   if (p_index != particles)
     {
       particle[ p_index ].x        = particle[ particles ].x;
@@ -127,12 +130,12 @@ void streaklineDrawer::slDeleteParticle (int p_index)
     }
 }
 
-
-void streaklineDrawer::slCreateSeedParticles ()
+// Create seed particles to begin the streaklines.
+void streaklineDrawer::createSeedParticles ()
 {
   for (int n = 0; n < particle_seeds; n++)
     {
-      slCreateParticle (particle_seed[n].x,
+      createParticle (particle_seed[n].x,
 			particle_seed[n].y,
 			particle_seed[n].z,
 			0.0F,
@@ -140,50 +143,34 @@ void streaklineDrawer::slCreateSeedParticles ()
     }
 }
 
-
-void streaklineDrawer::slLocalVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *net)
+// Populate the matrix v with all the velocity field data at each index.
+void streaklineDrawer::localVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *net)
 {
-  double density;
   double vx, vy, vz;
   
-  int site_i, site_j, site_k;
-  int neigh_i, neigh_j, neigh_k;
-  int i, j, k;
-  int m;
-  int c1, c2;
-  
   VelSiteData *vel_site_data_p;
-  
-  
-  site_i = (int)particle[ p_index ].x;
-  site_j = (int)particle[ p_index ].y;
-  site_k = (int)particle[ p_index ].z;
+    
+  int site_i = (int)particle[ p_index ].x;
+  int site_j = (int)particle[ p_index ].y;
+  int site_k = (int)particle[ p_index ].z;
   
   *is_interior = 1;
   
-  if (check_conv)
+  int c1Plusc2 = check_conv ? 45 : 15;
+
+  for (int i = 0; i < 2; i++)
     {
-      c1 = 30;
-      c2 = 15;
-    }
-  else
-    {
-      c1 = 15;
-      c2 = 0;
-    }
-  for (i = 0; i < 2; i++)
-    {
-      neigh_i = site_i + i;
+      int neigh_i = site_i + i;
       
-      for (j = 0; j < 2; j++)
+      for (int j = 0; j < 2; j++)
 	{
-	  neigh_j = site_j + j;
+	  int neigh_j = site_j + j;
 	  
-	  for (k = 0; k < 2; k++)
+	  for (int k = 0; k < 2; k++)
 	    {
-	      neigh_k = site_k + k;
+	      int neigh_k = site_k + k;
 	      
-	      vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k);
+	      vel_site_data_p = velSiteDataPointer (neigh_i, neigh_j, neigh_k);
 	      
 	      if (vel_site_data_p == NULL ||
 		  vel_site_data_p->proc_id == -1)
@@ -199,7 +186,7 @@ void streaklineDrawer::slLocalVelField (int p_index, float v[2][2][2][3], int *i
 		}
 	      if (vel_site_data_p->counter == counter)
 		{
-		  // it means that the local velocity has already been
+		  // This means that the local velocity has already been
 		  // calculated at the current time step if the site
 		  // belongs to the current processor; if not, the
 		  // following instructions have no effect
@@ -212,8 +199,9 @@ void streaklineDrawer::slLocalVelField (int p_index, float v[2][2][2][3], int *i
 		  // the local counter is set equal to the global one
 		  // and the local velocity is calculated
 		  vel_site_data_p->counter = counter;
-		  
-		  lbmDensityAndVelocity (&f_old[ vel_site_data_p->site_id*c1+c2 ],
+		  double density;
+
+		  lbmDensityAndVelocity (&f_old[ vel_site_data_p->site_id*c1Plusc2 ],
 					 &density, &vx, &vy, &vz);
 		  
 		  v[i][j][k][0] = vel_site_data_p->vx = vx / density;
@@ -224,7 +212,7 @@ void streaklineDrawer::slLocalVelField (int p_index, float v[2][2][2][3], int *i
 		{
 		  vel_site_data_p->counter = counter;
 		  
-		  m = from_proc_id_to_neigh_proc_index[ vel_site_data_p->proc_id ];
+		  int m = from_proc_id_to_neigh_proc_index[ vel_site_data_p->proc_id ];
 		  
 		  neigh_proc[m].s_to_send[ 3*neigh_proc[m].send_vs+0 ] = neigh_i;
 		  neigh_proc[m].s_to_send[ 3*neigh_proc[m].send_vs+1 ] = neigh_j;
@@ -236,25 +224,19 @@ void streaklineDrawer::slLocalVelField (int p_index, float v[2][2][2][3], int *i
     }
 }
 
-
-void streaklineDrawer::slInit (Net *net)
+// Constructor, populating fields from a Net object.
+streaklineDrawer::streaklineDrawer (Net *net)
 {
-  int site_i, site_j, site_k;
-  int neigh_i, neigh_j, neigh_k;
-  int i, j, k;
   int m, mm, n;
-  int flag;
+
   int inlet_sites;
   int *neigh_proc_id;
   
   unsigned int site_data;
   
   DataBlock *map_block_p;
-  
   ProcBlock *proc_block_p;
-  
   VelSiteData *vel_site_data_p;
-  
   
   particles_max = 10000;
   particle = new Particle[particles_max];
@@ -280,9 +262,9 @@ void streaklineDrawer::slInit (Net *net)
   inlet_sites = 0;
   n = -1;
   
-  for (i = 0; i < sites_x; i += block_size)
-    for (j = 0; j < sites_y; j += block_size)
-      for (k = 0; k < sites_z; k += block_size)
+  for (int i = 0; i < sites_x; i += block_size)
+    for (int j = 0; j < sites_y; j += block_size)
+      for (int k = 0; k < sites_z; k += block_size)
 	{
 	  map_block_p = &net->map_block[ ++n ];
 	  
@@ -292,15 +274,15 @@ void streaklineDrawer::slInit (Net *net)
 	  
 	  m = -1;
 	  
-	  for (site_i = i; site_i < i + block_size; site_i++)
-	    for (site_j = j; site_j < j + block_size; site_j++)
-	      for (site_k = k; site_k < k + block_size; site_k++)
+	  for (int site_i = i; site_i < i + block_size; site_i++)
+	    for (int site_j = j; site_j < j + block_size; site_j++)
+	      for (int site_k = k; site_k < k + block_size; site_k++)
 		{
 		  if (proc_block_p->proc_id[ ++m ] != net->id) continue;
 		  
-		  for (neigh_i = UtilityFunctions::max(0, site_i-1); neigh_i <= UtilityFunctions::min(sites_x-1, site_i+1); neigh_i++)
-		    for (neigh_j = UtilityFunctions::max(0, site_j-1); neigh_j <= UtilityFunctions::min(sites_y-1, site_j+1); neigh_j++)
-		      for (neigh_k = UtilityFunctions::max(0, site_k-1); neigh_k <= UtilityFunctions::min(sites_z-1, site_k+1); neigh_k++)
+		  for (int neigh_i = UtilityFunctions::max(0, site_i-1); neigh_i <= UtilityFunctions::min(sites_x-1, site_i+1); neigh_i++)
+		    for (int neigh_j = UtilityFunctions::max(0, site_j-1); neigh_j <= UtilityFunctions::min(sites_y-1, site_j+1); neigh_j++)
+		      for (int neigh_k = UtilityFunctions::max(0, site_k-1); neigh_k <= UtilityFunctions::min(sites_z-1, site_k+1); neigh_k++)
 			{
 			  neigh_proc_id = net->netProcIdPointer (neigh_i, neigh_j, neigh_k);
 			  
@@ -308,29 +290,30 @@ void streaklineDrawer::slInit (Net *net)
 			    {
 			      continue;
 			    }
-			  slInitializeVelFieldBlock (neigh_i, neigh_j, neigh_k, *neigh_proc_id);
+			  initializeVelFieldBlock (neigh_i, neigh_j, neigh_k, *neigh_proc_id);
 			  
 			  if (*neigh_proc_id == net->id) continue;
 			  
-			  vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k);
+			  vel_site_data_p = velSiteDataPointer (neigh_i, neigh_j, neigh_k);
 			  
 			  if (vel_site_data_p->counter == counter) continue;
 			  
 			  vel_site_data_p->counter = counter;
 			  
-			  for (mm = 0, flag = 1; mm < neigh_procs && flag; mm++)
+                          bool seenSelf = false;
+			  for (mm = 0; mm < neigh_procs && !seenSelf; mm++)
 			    {
 			      if (*neigh_proc_id == neigh_proc[ mm ].id)
 				{
-				  flag = 0;
+				  seenSelf = true;
 				  ++neigh_proc[ mm ].send_vs;
 				}
 			    }
-			  if (!flag) continue;
+			  if (seenSelf) continue;
 			  
 			  if (neigh_procs == NEIGHBOUR_PROCS_MAX)
 			    {
-			      printf (" too many inter processor neighbours in slInit()\n");
+			      printf (" too many inter processor neighbours in streakline constructor()\n");
 			      printf (" the execution is terminated\n");
 #ifndef NOMPI
 			      net->err = MPI_Abort (MPI_COMM_WORLD, 1);
@@ -439,14 +422,14 @@ void streaklineDrawer::slInit (Net *net)
   procs = net->procs;
 }
 
-
-void streaklineDrawer::slRestart ()
+// Reset the streakline drawer.
+void streaklineDrawer::restart ()
 {
   particles = 0;
 }
 
-
-void streaklineDrawer::slCommunicateSiteIds ()
+// Communicate site ids to other processors.
+void streaklineDrawer::communicateSiteIds ()
 {
 #ifndef NOMPI
   int m;
@@ -486,8 +469,8 @@ void streaklineDrawer::slCommunicateSiteIds ()
 #endif // NOMPI
 }
 
-
-void streaklineDrawer::slCommunicateVelocities ()
+// Communicate velocities to other processors.
+void streaklineDrawer::communicateVelocities ()
 {
 #ifndef NOMPI
   int site_i, site_j, site_k;
@@ -513,7 +496,7 @@ void streaklineDrawer::slCommunicateVelocities ()
 	  site_j = neigh_proc[ m ].s_to_recv[ 3*n+1 ];
 	  site_k = neigh_proc[ m ].s_to_recv[ 3*n+2 ];
 	  
-	  vel_site_data_p = slVelSiteDataPointer (site_i, site_j, site_k);
+	  vel_site_data_p = velSiteDataPointer (site_i, site_j, site_k);
 	  
 	  if (vel_site_data_p != NULL)
 	    {
@@ -547,7 +530,7 @@ void streaklineDrawer::slCommunicateVelocities ()
 	  neigh_j = neigh_proc[ m ].s_to_send[ 3*n+1 ];
 	  neigh_k = neigh_proc[ m ].s_to_send[ 3*n+2 ];
 	  
-	  vel_site_data_p = slVelSiteDataPointer (neigh_i, neigh_j, neigh_k);
+	  vel_site_data_p = velSiteDataPointer (neigh_i, neigh_j, neigh_k);
 	  
 	  if (vel_site_data_p != NULL)
 	    {
@@ -564,8 +547,8 @@ void streaklineDrawer::slCommunicateVelocities ()
 #endif // NOMPI
 }
 
-
-void streaklineDrawer::slUpdateVelField (int stage_id, Net *net)
+// Update the velocity field.
+void streaklineDrawer::updateVelField (int stage_id, Net *net)
 {
   float v[2][2][2][3], interp_v[3];
   float vel;
@@ -579,11 +562,11 @@ void streaklineDrawer::slUpdateVelField (int stage_id, Net *net)
   
   for (n = particles_temp - 1; n >= 0; n--)
     {
-      slLocalVelField (n, v, &is_interior, net);
+      localVelField (n, v, &is_interior, net);
       
       if (stage_id == 0 && !is_interior) continue;
       
-      slParticleVelocity (&particle[n], v, interp_v);
+      particleVelocity (&particle[n], v, interp_v);
       vel = interp_v[0]*interp_v[0] + interp_v[1]*interp_v[1] + interp_v[2]*interp_v[2];
       
       if (vel > 1.0F)
@@ -602,13 +585,13 @@ void streaklineDrawer::slUpdateVelField (int stage_id, Net *net)
 	}
       else
       	{
-      	  slDeleteParticle (n);
+      	  deleteParticle (n);
       	}
     }
 }
 
-
-void streaklineDrawer::slUpdateParticles ()
+// Update the particles.
+void streaklineDrawer::updateParticles ()
 {
   for (int n = 0; n < particles; n++)
     {
@@ -619,8 +602,8 @@ void streaklineDrawer::slUpdateParticles ()
     }
 }
 
-
-void streaklineDrawer::slCommunicateParticles (Net *net)
+// Communicate that particles current state to other processors.
+void streaklineDrawer::communicateParticles (Net *net)
 {
 #ifndef NOMPI
   int site_i, site_j, site_k;
@@ -647,7 +630,7 @@ void streaklineDrawer::slCommunicateParticles (Net *net)
       site_j = (int)particle[ n ].y;
       site_k = (int)particle[ n ].z;
       
-      vel_site_data_p = slVelSiteDataPointer (site_i, site_j, site_k);
+      vel_site_data_p = velSiteDataPointer (site_i, site_j, site_k);
       
       if (vel_site_data_p == NULL ||
 	  vel_site_data_p->proc_id == net->id ||
@@ -670,7 +653,7 @@ void streaklineDrawer::slCommunicateParticles (Net *net)
       neigh_proc[ m ].p_to_send[ 5*neigh_proc[m].send_ps+4 ] = particle[ n ].inlet_id + 0.1;
       ++neigh_proc[ m ].send_ps;
       
-      slDeleteParticle (n);
+      deleteParticle (n);
     }
   for (m = 0; m < neigh_procs; m++)
     {
@@ -709,7 +692,7 @@ void streaklineDrawer::slCommunicateParticles (Net *net)
 	  
 	  for (n = 0; n < neigh_proc[ m ].recv_ps; n++)
 	    {
-	      slCreateParticle (neigh_proc[ m ].p_to_recv[ 5*n+0 ],
+	      createParticle (neigh_proc[ m ].p_to_recv[ 5*n+0 ],
 				neigh_proc[ m ].p_to_recv[ 5*n+1 ],
 				neigh_proc[ m ].p_to_recv[ 5*n+2 ],
 				neigh_proc[ m ].p_to_recv[ 5*n+3 ],
@@ -720,22 +703,17 @@ void streaklineDrawer::slCommunicateParticles (Net *net)
 #endif // NOMPI
 }
 
-
+// Render the streaklines
 void streaklineDrawer::render ()
 {
   float screen_max[2];
   float scale[2];
   float p1[3], p2[3];
   
-  int pixels_x, pixels_y;
-  int i, j;
-  int n;
-  
   ColPixel col_pixel;
   
-  
-  pixels_x = screen.pixels_x;
-  pixels_y = screen.pixels_y;
+  int pixels_x = screen.pixels_x;
+  int pixels_y = screen.pixels_y;
   
   screen_max[0] = screen.max_x;
   screen_max[1] = screen.max_y;
@@ -743,7 +721,7 @@ void streaklineDrawer::render ()
   scale[0] = screen.scale_x;
   scale[1] = screen.scale_y;
   
-  for (n = 0; n < particles; n++)
+  for (int n = 0; n < particles; n++)
     {
       p1[0] = particle[n].x - (float)(sites_x>>1);
       p1[1] = particle[n].y - (float)(sites_y>>1);
@@ -754,8 +732,8 @@ void streaklineDrawer::render ()
       p2[0] = (int)(scale[0] * (p2[0] + screen_max[0]));
       p2[1] = (int)(scale[1] * (p2[1] + screen_max[1]));
       
-      i = (int)p2[0];
-      j = (int)p2[1];
+      int i = (int)p2[0];
+      int j = (int)p2[1];
       
       if (!(i < 0 || i >= pixels_x ||
 	    j < 0 || j >= pixels_y))
@@ -770,8 +748,8 @@ void streaklineDrawer::render ()
     }
 }
 
-
-void streaklineDrawer::slStreakLines (int time_steps, int time_steps_per_cycle, Net *net)
+// Draw streaklines
+void streaklineDrawer::streakLines (int time_steps, int time_steps_per_cycle, Net *net)
 {
   if (!is_bench)
     {
@@ -781,37 +759,33 @@ void streaklineDrawer::slStreakLines (int time_steps, int time_steps_per_cycle, 
 	  (vis_streakline_length/100.0F) * (time_steps_per_cycle / vis_streaklines_per_pulsatile_period) &&
 	  time_steps % particle_creation_period == 0)
 	{
-	  slCreateSeedParticles ();
+	  createSeedParticles ();
 	}
     }
   else
     {
       if (time_steps % 10 == 0)
 	{
-	  slCreateSeedParticles ();
+	  createSeedParticles ();
 	}
     }
   ++counter;
   
-  slUpdateVelField (0, net);
-  slCommunicateSiteIds ();
-  slCommunicateVelocities ();
-  slUpdateVelField (1, net);
-  slUpdateParticles ();
-  slCommunicateParticles (net);
+  updateVelField (0, net);
+  communicateSiteIds ();
+  communicateVelocities ();
+  updateVelField (1, net);
+  updateParticles ();
+  communicateParticles (net);
 }
 
-
-void streaklineDrawer::slEnd ()
+// Destructor
+streaklineDrawer::~streaklineDrawer ()
 {
-  int m;
-  
-  
   free(from_proc_id_to_neigh_proc_index);
-  
   free(req);
   
-  for (m = 0; m < neigh_procs; m++)
+  for (int m = 0; m < neigh_procs; m++)
     {
       free(neigh_proc[ m ].p_to_recv);
       free(neigh_proc[ m ].p_to_send);
@@ -825,16 +799,15 @@ void streaklineDrawer::slEnd ()
       free(s_to_recv);
       free(s_to_send);
     }
-  for (m = 0; m < blocks; m++)
+  for (int m = 0; m < blocks; m++)
     {
       if (velocity_field[ m ].vel_site_data != NULL)
 	{
 	  free(velocity_field[ m ].vel_site_data);
 	}
     }
+
   free(velocity_field);
-  
   free(particle_seed);
-  
   free(particle);
 }
