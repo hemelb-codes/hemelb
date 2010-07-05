@@ -6,6 +6,7 @@
 #include <string.h>
 
 glyphDrawer *myGlypher;
+streaklineDrawer *myStreaker;
 
 void visRotate (float sin_1, float cos_1,
 		float sin_2, float cos_2,
@@ -181,14 +182,14 @@ void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 	    {
 	      col_pixel2->particle_z        = col_pixel1->particle_z;
 	      col_pixel2->particle_vel      = col_pixel1->particle_vel;
-	      col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
+//	      col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
 	    }
 	}
       else if ((col_pixel1->i & STREAKLINE) && !(col_pixel2->i & STREAKLINE))
 	{
 	  col_pixel2->particle_z        = col_pixel1->particle_z;
 	  col_pixel2->particle_vel      = col_pixel1->particle_vel;
-	  col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
+//	  col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
 	  
 	  col_pixel2->i |= STREAKLINE;
 	}
@@ -619,7 +620,7 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
 }
  
 
-void visInit (Net *net, Vis *vis, streaklineDrawer *sl)
+void visInit (Net *net, Vis *vis)
 {
   blocks_yz = blocks_y * blocks_z;
   
@@ -690,7 +691,7 @@ void visInit (Net *net, Vis *vis, streaklineDrawer *sl)
       myGlypher = new glyphDrawer(net);
     }
 #ifndef NO_STREAKLINES
-  sl->slInit (net);
+  myStreaker = new streaklineDrawer (net);
 #endif
   vis_ctr_x -= vis->half_dim[0];
   vis_ctr_y -= vis->half_dim[1];
@@ -843,7 +844,7 @@ void visCompositeImage (int recv_buffer_id, Net *net)
 }
 
 
-void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net, streaklineDrawer *sl)
+void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net)
 {
   if (screen.pixels_x * screen.pixels_y > vis_pixels_max)
     {
@@ -863,7 +864,7 @@ void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float co
   if (vis_streaklines &&
       (lbm_stress_type == SHEAR_STRESS || vis_mode == 2))
     {
-      sl->render();
+      myStreaker->render();
     }
 #endif
   visCompositeImage (recv_buffer_id, net);
@@ -914,11 +915,20 @@ void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
   vis_mouse_stress = lbm->lbmConvertStressToPhysicalUnits (stress);
 }
 
+void visStreaklines(int time_step, int period, Net *net)
+{
+  myStreaker->streakLines (time_step, period, net);
+}
 
-void visEnd (streaklineDrawer*sl)
+void visRestart()
+{
+  myStreaker->restart();
+}
+
+void visEnd ()
 {
 #ifndef NO_STREAKLINES
-  sl->slEnd ();
+  delete myStreaker;
 #endif
   if (!is_bench)
     {

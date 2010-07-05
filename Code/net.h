@@ -80,7 +80,6 @@ struct NeighProc
 
 class Net
 {
-
   public:
 
     int id;                                    // Processor rank
@@ -138,8 +137,6 @@ struct SiteLocation
   short int i, j, k;
 };
 
-
-
 // TODO Ugh. Will get rid of these to somewhere else at some point.
 extern int sites_x, sites_y, sites_z;
 extern int blocks_x, blocks_y, blocks_z;
@@ -149,13 +146,6 @@ extern int shift;
 extern int sites_in_a_block;
 
 extern int net_machines;
-
-// parameters related to the lattice directions
-
-extern int e_x[15];
-extern int e_y[15];
-extern int e_z[15];
-extern int inv_dir[15];
 
 #ifndef NOMPI
 extern MPI_Datatype MPI_col_pixel_type;

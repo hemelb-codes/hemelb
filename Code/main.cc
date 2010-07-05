@@ -84,8 +84,6 @@ int main (int argc, char *argv[])
   
   Net net;
   
-  streaklineDrawer sl;
-  
 #ifndef NOMPI
   int thread_level_provided;
   
@@ -233,7 +231,7 @@ int main (int argc, char *argv[])
   
   lbm.lbmSetInitialConditions (&net);
   
-  visInit (&net, &vis, &sl);
+  visInit (&net, &vis);
   
   visReadParameters (vis_parameters_name, &lbm, &net, &vis);
 #ifndef NO_STEER
@@ -334,12 +332,12 @@ int main (int argc, char *argv[])
 		  lbm.lbmUpdateInletVelocities (time_step, &net);
 		}
 #ifndef NO_STREAKLINES
-	      sl.slStreakLines (time_step, lbm.period, &net);
+	      visStreaklines(time_step, lbm.period, &net);
 #endif
 #ifndef NO_STEER
 	      if (total_time_steps%BCAST_FREQ == 0 && doRendering && !write_snapshot_image)
 		{
-		  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
+		  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
 		  
 		  if (vis_mouse_x >= 0 && vis_mouse_y >= 0 && updated_mouse_coords)
 		    {
@@ -363,7 +361,7 @@ int main (int argc, char *argv[])
 #endif // NO_STEER
 	      if (write_snapshot_image)
 		{
-		  visRender (RECV_BUFFER_B, ColourPalette::PickColour, &net, &sl);
+		  visRender (RECV_BUFFER_B, ColourPalette::PickColour, &net);
 		  
 		  if (net.id == 0)
 		    {
@@ -424,7 +422,7 @@ int main (int argc, char *argv[])
 	      
 	      lbm.lbmRestart (&net);
 #ifndef NO_STREAKLINES
-	      sl.slRestart ();
+	      visRestart();
 #endif
 	      if (net.id == 0)
 		{
@@ -515,7 +513,7 @@ int main (int argc, char *argv[])
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period );
 	  stability = lbm.lbmCycle (1, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
+	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
 	  
 	  // partial timings
 	  elapsed_time = UtilityFunctions::myClock () - FS_plus_RT_time;
@@ -539,7 +537,7 @@ int main (int argc, char *argv[])
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
+	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
 	}
       FS_plus_RT_time = UtilityFunctions::myClock () - FS_plus_RT_time;
       
@@ -555,8 +553,8 @@ int main (int argc, char *argv[])
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
-          sl.slStreakLines (time_step, lbm.period, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
+          visStreaklines(time_step, lbm.period, &net);
+	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
 	  
 	  // partial timings
 	  elapsed_time = UtilityFunctions::myClock () - FS_plus_RT_plus_SL_time;
@@ -580,8 +578,8 @@ int main (int argc, char *argv[])
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
-	  sl.slStreakLines (time_step, lbm.period, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net, &sl);
+	  visStreaklines (time_step, lbm.period, &net);
+	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
 	}
       FS_plus_RT_plus_SL_time = UtilityFunctions::myClock () - FS_plus_RT_plus_SL_time;
 #endif // NO_STREAKLINES
@@ -678,7 +676,7 @@ int main (int argc, char *argv[])
 	  fclose (timings_ptr);
 	}
     }
-  visEnd (&sl);
+  visEnd ();
   net.netEnd ();
   lbm.lbmEnd ();
   
