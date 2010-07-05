@@ -5,9 +5,11 @@
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
-#include "io.h"
 #include "xdrReader.h"
 #include "xdrFileWriter.h"
+
+//TODO UGH delete when possible
+#include "config.h"
 
 #include <limits.h>
 #include <sstream>
@@ -372,7 +374,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
   RecalculateTauViscosityOmega ();
 }
 
-void lbmInitialiseInlets(int numberOfInlets)
+void LBM::lbmInitialiseInlets(int numberOfInlets)
 {     
   inlet_density     = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
   inlet_density_avg = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
@@ -380,7 +382,7 @@ void lbmInitialiseInlets(int numberOfInlets)
   inlet_density_phs = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
 }
 
-void lbmInitialiseOutlets(int numberOfOutlets)
+void LBM::lbmInitialiseOutlets(int numberOfOutlets)
 {
   outlet_density     = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
   outlet_density_avg = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));

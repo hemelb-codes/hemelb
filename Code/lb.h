@@ -5,8 +5,16 @@
 
 class LBM
 {
+private:
+
+void lbmInitialiseInlets(int numberOfInlets);
+void lbmInitialiseOutlets(int numberOfOutlets);
 
 public:
+
+double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;
+double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
+
   char *system_file_name;
   
   double tau, viscosity;
@@ -67,6 +75,9 @@ void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, d
 int lbmIsUnstable (Net *net);
 
 
+// TODO moving these requires making the collision / streaming functions non-static, which is potentially a big deal.
+extern double* inlet_density, *outlet_density;
+
 extern double lbm_stress_type;
 extern double lbm_stress_par;
 extern double lbm_density_min, lbm_density_max;
@@ -78,11 +89,6 @@ extern double *lbm_inlet_normal;
 extern long int *lbm_inlet_count;
 
 extern int lbm_terminate_simulation;
-
-extern double *inlet_density;
-extern double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;
-extern double *outlet_density;
-extern double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
 
 extern int is_inlet_normal_available;
 
