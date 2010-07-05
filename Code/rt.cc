@@ -595,13 +595,13 @@ void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis
   
   for (i = 0; i < lbm->inlets; i++)
     {
-      density_min = fminf(density_min, inlet_density_avg[ i ] - inlet_density_amp[ i ]);
-      density_max = fmaxf(density_max, inlet_density_avg[ i ] + inlet_density_amp[ i ]);
+      density_min = fminf(density_min, lbm->inlet_density_avg[ i ] - lbm->inlet_density_amp[ i ]);
+      density_max = fmaxf(density_max, lbm->inlet_density_avg[ i ] + lbm->inlet_density_amp[ i ]);
     }
   for (i = 0; i < lbm->outlets; i++)
     {
-      density_min = fminf(density_min, outlet_density_avg[ i ] - outlet_density_amp[ i ]);
-      density_max = fmaxf(density_max, outlet_density_avg[ i ] + outlet_density_amp[ i ]);
+      density_min = fminf(density_min, lbm->outlet_density_avg[ i ] - lbm->outlet_density_amp[ i ]);
+      density_max = fmaxf(density_max, lbm->outlet_density_avg[ i ] + lbm->outlet_density_amp[ i ]);
     }
   vis_density_threshold_min = density_min;
   

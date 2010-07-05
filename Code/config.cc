@@ -36,6 +36,15 @@ int *f_id = NULL;
 
 
 
+
+
+
+// TODO moving these requires making the collision / streaming functions non-static, which is potentially a big deal.
+//double *inlet_density;
+//double *outlet_density;
+double* inlet_density, *outlet_density;
+
+
 // 3 buffers needed for convergence-enabled simulations
 double *f_to_send = NULL;
 double *f_to_recv = NULL;
@@ -45,12 +54,6 @@ int *f_send_id = NULL;
 int *f_recv_iv = NULL;
 
 short int *f_data = NULL;
-
-double *inlet_density = NULL;
-double *inlet_density_avg = NULL, *inlet_density_amp = NULL, *inlet_density_phs = NULL;
-double *outlet_density = NULL;
-double *outlet_density_avg = NULL, *outlet_density_amp = NULL, *outlet_density_phs = NULL;
-
 
 int col_pixels, col_pixels_max;
 int col_pixels_recv[2];
