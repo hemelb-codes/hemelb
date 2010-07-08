@@ -395,6 +395,26 @@ void simpleBounceBack (double omega, int i,
   f_neq[0] -= (f_new[ f_id[i*15] ] = f[0]);// = (2.0/9.0) * *density);
   
   // The actual bounce-back lines. Basically swap the non-equilibrium components of f in each of the opposing pairs of directions.
+
+  unsigned int boundary_config = (net->net_site_data[ i ] & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;  
+
+  for (l = 0; l < 14; l++)
+  {
+    if (!(boundary_config & (1U << l)))
+    {
+      f_new[ f_id[i*15+l] ] = f[l] = f_neq[l];
+    }
+  }
+	
+// These lines represent the equilibrium distribution, useful if we don't know much about the boundary position I think.
+// f[0] = (2.0/9.0) * *density;
+// temp = (1.0/9.0) * *density;
+// for (l = 1; l < 7; l++) f[l] = temp;
+// // temp *= (1.0/8.0);
+// for (l = 7; l < 15; l++) f[l] = temp;
+// *vx = *vy = *vz = 0.F;
+
+
   for(l = 1; l < 15; l+=2)
     f_new[ f_id[i*15+l] ] = f[l] = f_neq[l+1];
 
@@ -1160,10 +1180,9 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
   double dummy_density;
   double temp;
   
-  int unknowns, l;
+  int l;
   
-  unsigned int boundary_type, boundary_config, boundary_id;
-  
+  unsigned int boundary_type, boundary_id;
   
   for (l = 0; l < 15; l++)
     {
@@ -1191,15 +1210,8 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
     }
   else
     {
-      boundary_config = (site_data & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;
       boundary_id     = (site_data & BOUNDARY_ID_MASK)     >> BOUNDARY_ID_SHIFT;
       
-      unknowns = 0;
-      
-      for (l = 0; l < 14; l++)
-	{
-	  if (!(boundary_config & (1U << l))) ++unknowns;
-	}
       if (boundary_type == INLET_TYPE)
 	{
 	  *density = inlet_density[ boundary_id ];
@@ -1208,25 +1220,10 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
 	{
 	  *density = outlet_density[ boundary_id ];
 	}
-      if (unknowns <= 1000000)
-	{
-	  lbmDensityAndVelocity (f, &dummy_density, vx, vy, vz);
-	  lbmFeq (*density, *vx, *vy, *vz, f);
-	}
-      else
-	{
-	  f[0] = (2.0/9.0) * *density;
-	  
-	  temp = (1.0/9.0) * *density;
-	  
-	  for (l = 1; l < 7; l++) f[l] = temp;
-	  
-	  temp *= (1.0/8.0);
-	  
-	  for (l = 7; l < 15; l++) f[l] = temp;
-	  
-	  *vx = *vy = *vz = 0.F;
-	}
+
+      lbmDensityAndVelocity (f, &dummy_density, vx, vy, vz);
+      lbmFeq (*density, *vx, *vy, *vz, f);
+
     }
   for (l = 0; l < 15; l++)
     {
@@ -1257,14 +1254,14 @@ void LBM::lbmInit (char *system_file_name_in, Net *net)
   if (!check_conv)
     {
       lbmInnerCollision[0] = lbmInnerCollision0;
-      lbmInnerCollision[1] = lbmCollision1;
+      lbmInnerCollision[1] = simpleBounceBack;//lbmCollision1;
       lbmInnerCollision[2] = lbmCollision2;
       lbmInnerCollision[3] = lbmCollision3;
       lbmInnerCollision[4] = lbmCollision4;
       lbmInnerCollision[5] = lbmCollision5;
       
       lbmInterCollision[0] = lbmInterCollision0;
-      lbmInterCollision[1] = lbmCollision1;
+      lbmInterCollision[1] = simpleBounceBack;//lbmCollision1;
       lbmInterCollision[2] = lbmCollision2;
       lbmInterCollision[3] = lbmCollision3;
       lbmInterCollision[4] = lbmCollision4;
