@@ -46,7 +46,6 @@ const unsigned int SOLID_TYPE  = 0U;
 const unsigned int FLUID_TYPE  = 1U;
 const unsigned int INLET_TYPE  = 2U;
 const unsigned int OUTLET_TYPE = 3U;
-const unsigned int NULL_TYPE   = 4U;
 
 const unsigned int BOUNDARIES              = 4U;
 const unsigned int INLET_BOUNDARY          = 0U;
