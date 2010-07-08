@@ -16,7 +16,7 @@ class XdrWriter
     XdrWriter();
 
   public:
-    // Functions to write basix types to the Xdr object.
+    // Functions to write basic types to the Xdr object.
     void writePixel (ColPixel *col_pixel_p, void (*ColourPalette) (float value, float col[]));
     void writeInt(int* intToWrite);
     void writeDouble(double* doubleToWrite);

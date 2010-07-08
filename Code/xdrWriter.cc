@@ -33,6 +33,7 @@ void XdrWriter::writeUnsignedInt(unsigned int* unsignedIntToWrite)
   xdr_u_int (&myXdr, unsignedIntToWrite);
 }
 
+// Function to write out our struct, ColPixel.
 void XdrWriter::writePixel (ColPixel *col_pixel_p, void (*ColourPalette) (float value, float col[]))
 {
   unsigned int index;

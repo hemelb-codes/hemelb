@@ -14,6 +14,7 @@ OBJ=config.o \
 	benchmark.o \
 	http_post.o \
 	fileutils.o \
+        colpixel.o \
         rt.o \
 	net.o \
 	network.o \

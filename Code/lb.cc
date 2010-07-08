@@ -373,6 +373,37 @@ void lbmCollision1 (double omega, int i,
 }
 
 
+// Implementation of simple bounce-back
+void simpleBounceBack (double omega, int i,
+		    double *density, double *v_x, double *v_y, double *v_z,
+		    double f_neq[], Net* net)
+{
+  int l;
+  
+  double *f = &f_old[ i*15 ];
+  
+  for (l = 0; l < 15; l++)
+    {
+      f_neq[l] = f[l];
+    }
+  *v_x = *v_y = *v_z = 0.F;
+  
+  *density = 0.;
+  
+  for (l = 0; l < 15; l++) *density += f[l];
+  
+  f_neq[0] -= (f_new[ f_id[i*15] ] = f[0]);// = (2.0/9.0) * *density);
+  
+  // The actual bounce-back lines. Basically swap the non-equilibrium components of f in each of the opposing pairs of directions.
+  for(l = 1; l < 15; l+=2)
+    f_new[ f_id[i*15+l] ] = f[l] = f_neq[l+1];
+
+  for(l = 2; l < 15; l+=2)
+    f_new[ f_id[i*15+l] ] = f[l] = f_neq[l-1];
+
+}
+
+
 // Collision + streaming for inlet fluid lattice sites.
 void lbmCollision2 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,

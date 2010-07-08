@@ -182,14 +182,14 @@ void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
 	    {
 	      col_pixel2->particle_z        = col_pixel1->particle_z;
 	      col_pixel2->particle_vel      = col_pixel1->particle_vel;
-//	      col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
+	      col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
 	    }
 	}
       else if ((col_pixel1->i & STREAKLINE) && !(col_pixel2->i & STREAKLINE))
 	{
 	  col_pixel2->particle_z        = col_pixel1->particle_z;
 	  col_pixel2->particle_vel      = col_pixel1->particle_vel;
-//	  col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
+	  col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
 	  
 	  col_pixel2->i |= STREAKLINE;
 	}
