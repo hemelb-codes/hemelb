@@ -2,13 +2,6 @@
 
 // parameters related to the lattice directions
 
-
-
-#ifndef NOMPI
-MPI_Datatype MPI_col_pixel_type;
-#endif
-
-
 #ifndef NO_STEER
 pthread_mutex_t network_buffer_copy_lock;
 pthread_mutex_t LOCK;

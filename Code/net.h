@@ -80,6 +80,10 @@ struct NeighProc
 
 class Net
 {
+private:
+
+
+
   public:
 
     int id;                                    // Processor rank
@@ -147,10 +151,6 @@ extern int sites_in_a_block;
 
 extern int net_machines;
 
-#ifndef NOMPI
-extern MPI_Datatype MPI_col_pixel_type;
-#endif
-
 extern double *f_old, *f_new;
 
 extern int *f_id;
@@ -164,7 +164,5 @@ extern int *f_send_id;
 extern int *f_recv_iv;
 
 extern short int *f_data;
-
-
 
 #endif //__net_h_
