@@ -34,20 +34,12 @@ $(EXE): $(OBJ)
 doc:
 	doxygen 
 
-display:
-	g++ displayClient.cc -O3 -lGLU -lglut eVizRLEUtil.c -o displayClient
-
-mac-display:
-	g++ -O3 -framework OpenGL -framework GLUT -framework Foundation -o displayClient displayClient.cc eVizRLEUtil.c -DMAC_GLUT
-
-display-debug:
-	g++ displayClient.cc -g -lGLU -lglut eVizRLEUtil.c -o displayClient
-
 .cc.o:
 	$(CC) $(FLAGS) $(DEFS) $(INCLUDES) -c $<
 
 clean:
-	rm -f $(OBJ) $(EXE) displayClient env_details.asc
+	-rm -f $(OBJ) $(EXE) env_details.asc
+	cd client && make clean
 
 distclean: clean
 	find ./ -name \*~ -exec rm -f {} \;
