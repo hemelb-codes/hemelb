@@ -1,5 +1,7 @@
-#include "config.h"
+
 #include "steering.h"
+#include "rt.h"
+#include "lb.h"
 
 extern float steer_par[];
 

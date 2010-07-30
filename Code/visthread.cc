@@ -1,8 +1,7 @@
 #ifndef NO_STEER
 
 #include <pthread.h>
-
-#include "config.h"
+#include "colpixel.h"
 #include "visthread.h"
 
 int doRendering = 0;

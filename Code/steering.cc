@@ -1,4 +1,3 @@
-#include "config.h"
 #include "xdrWriter.h"
 #include "xdrMemWriter.h"
 

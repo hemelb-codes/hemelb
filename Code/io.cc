@@ -1,20 +1,16 @@
 /*! \file config.cc
  \brief In this file, the functions useful for the input/output are reported
 */
+#include <limits.h>
+#include <sstream>
+#include <math.h>
+#include <string.h>
 
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
 #include "xdrReader.h"
 #include "xdrFileWriter.h"
-
-//TODO UGH delete when possible
-#include "config.h"
-
-#include <limits.h>
-#include <sstream>
-#include <math.h>
-#include <string.h>
 
 using namespace std;
 

@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <math.h>
+
 #ifndef NO_STEER
 
 #include <errno.h>
@@ -18,13 +21,16 @@
 #include "visthread.h"
 #endif // NO_STEER
 
-#include "config.h"
+#include "constants.h"
 #include "steering.h"
 #include "usage.h"
 #include "benchmark.h"
 #include "colourpalette.h"
 #include "fileutils.h"
 #include "utilityFunctions.h"
+#include "lb.h"
+#include "net.h"
+#include "rt.h"
 
 #define BCAST_FREQ   1
 
