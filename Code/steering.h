@@ -1,4 +1,9 @@
 #ifndef NO_STEER
+#include <pthread.h>
+#include <semaphore.h>
+
+#include "rt.h"
+#include "lb.h"
 
 extern pthread_mutex_t network_buffer_copy_lock;
 extern pthread_mutex_t LOCK;

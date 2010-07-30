@@ -2,13 +2,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "config.h"
-
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
 #include "steering-sim-params.h"
+#include "rt.h"
 
 using namespace std;
 

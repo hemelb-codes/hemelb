@@ -1,14 +1,10 @@
-#include <rpc/xdr.h>
-#include <string>
+#include <stdio.h>
 
-using namespace std;
+#include <rpc/types.h>
+#include <rpc/xdr.h>
 
 // Class to read an Xdr-style file from disk.
-class XdrReader
-{
-  private:
-    XDR  myXdr;
-
+class XdrReader {
   public:
     // Constructor and destructor.
     XdrReader(FILE* xdrFile);
@@ -18,4 +14,8 @@ class XdrReader
     void readDouble(double& outDouble);
     void readInt(int& outInt);
     void readUnsignedInt(unsigned int& outUInt);
+    
+  private:
+    XDR  myXdr;
+
 };

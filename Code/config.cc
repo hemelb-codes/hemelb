@@ -1,8 +1,12 @@
-#include "config.h"
-
-// parameters related to the lattice directions
+/* This file contains the globals.
+ * Should be removed ASAP
+ */
+#include "colpixel.h"
+#include "rt.h"
 
 #ifndef NO_STEER
+#include <semaphore.h>
+
 pthread_mutex_t network_buffer_copy_lock;
 pthread_mutex_t LOCK;
 pthread_cond_t network_send_frame;
@@ -17,7 +21,7 @@ bool sending_frame;
 int send_array_length;
 
 int frame_size;
-#endif
+#endif //NO_STEER
 
 
 unsigned char *pixel_data = NULL;

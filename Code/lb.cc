@@ -2,10 +2,11 @@
 // function, momentums, the effective von Mises stress and the boundary conditions
 // are reported
 
-// TODO: We shouldn't really be including config.h in here, but we have to at the moment.
-#include "config.h"
+#include <math.h>
+
 #include "lb.h"
 #include "utilityFunctions.h"
+#include "raytracer.h"
 
 void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
