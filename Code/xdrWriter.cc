@@ -1,62 +1,45 @@
+#include <rpc/types.h>
+#include <rpc/xdr.h>
+
 #include "xdrWriter.h"
 
-// This constructor only exists so it can be set to protected to prevent instances of the base class being made.
-// The alternative of declaring a pure virtual constructor or destructor doesn't work. Factory methods might be a 
-// potential improvement here.
-XdrWriter::XdrWriter()
-{
+// This constructor only exists so it can be set to protected to
+// prevent instances of the base class being made.  The alternative of
+// declaring a pure virtual constructor or destructor doesn't
+// work. Factory methods might be a potential improvement here.
+XdrWriter::XdrWriter() {
 }
 
 // Functions to write simple types out to the Xdr stream.
-void XdrWriter::writeInt(int* intToWrite)
-{
-  xdr_int(&myXdr, intToWrite);
+// Sadly templating is non-trivial due to XDR's naming.
+void XdrWriter::_write(int const& value) {
+  xdr_int(myXdr, const_cast<int *>(&value));
 }
 
-void XdrWriter::writeDouble(double* doubleToWrite)
-{
-  xdr_double (&myXdr, doubleToWrite);
+void XdrWriter::_write(double const& doubleToWrite) {
+  xdr_double (myXdr, const_cast<double *>(&doubleToWrite));
 }
 
-void XdrWriter::writeShort(short* shortToWrite)
-{
-  xdr_short (&myXdr, shortToWrite);
+void XdrWriter::_write(short const& shortToWrite) {
+  xdr_short (myXdr, const_cast<short *>(&shortToWrite));
 }
 
-void XdrWriter::writeFloat(float* floatToWrite)
-{
-  xdr_float (&myXdr, floatToWrite);
+void XdrWriter::_write(float const& floatToWrite) {
+  xdr_float(myXdr, const_cast<float *>(&floatToWrite));
 }
 
-void XdrWriter::writeUnsignedInt(unsigned int* unsignedIntToWrite)
-{
-  xdr_u_int (&myXdr, unsignedIntToWrite);
+void XdrWriter::_write(unsigned int const& uIntToWrite) {
+  xdr_u_int (myXdr, const_cast<unsigned int *>(&uIntToWrite));
 }
 
-// Function to write out our struct, ColPixel.
-void XdrWriter::writePixel (ColPixel *col_pixel_p, void (*ColourPalette) (float value, float col[]))
-{
-  unsigned int index;
-  unsigned int pix_data[3];
-  unsigned char rgb_data[12];
-  int bits_per_char = sizeof(char) * 8;
-  
-  // Use a ray-tracer function to get the necessary pixel data.
-  rawWritePixel (col_pixel_p, &index, rgb_data, ColourPalette);
-
-  writeUnsignedInt(&index);
-
-  pix_data[0] = (rgb_data[0]<<(3*bits_per_char)) + (rgb_data[1]<<(2*bits_per_char)) + (rgb_data[2]<<bits_per_char) + rgb_data[3];
-  pix_data[1] = (rgb_data[4]<<(3*bits_per_char)) + (rgb_data[5]<<(2*bits_per_char)) + (rgb_data[6]<<bits_per_char) + rgb_data[7];
-  pix_data[2] = (rgb_data[8]<<(3*bits_per_char)) + (rgb_data[9]<<(2*bits_per_char)) + (rgb_data[10]<<bits_per_char) + rgb_data[11];
-
-  writeUnsignedInt(&pix_data[0]);
-  writeUnsignedInt(&pix_data[1]);
-  writeUnsignedInt(&pix_data[2]);
-}
 
 // Method to get the current position in the stream.
-unsigned int XdrWriter::getCurrentStreamPosition()
-{
-  return xdr_getpos(&myXdr);
+unsigned int XdrWriter::getCurrentStreamPosition() const {
+  return xdr_getpos(myXdr);
+}
+
+// No field/record separators in XDR files
+void XdrWriter::writeFieldSeparator() {
+}
+void XdrWriter::writeRecordSeparator() {
 }
