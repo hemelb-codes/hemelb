@@ -100,12 +100,12 @@ void LBM::lbmReadConfig (Net *net) {
   
   blocks = blocks_x * blocks_y * blocks_z;
   
-  net->data_block = (DataBlock *)malloc(sizeof(DataBlock) * blocks);
+  net->data_block = new DataBlock[blocks];
   
-  net->proc_block = (ProcBlock *)malloc(sizeof(ProcBlock) * blocks);
+  net->proc_block = new ProcBlock[blocks];
   
   if (lbm_stress_type == SHEAR_STRESS) {
-    net->wall_block = (WallBlock *)malloc(sizeof(WallBlock) * blocks);
+    net->wall_block = new WallBlock[blocks];
   }
   total_fluid_sites = 0;
   
@@ -134,8 +134,8 @@ void LBM::lbmReadConfig (Net *net) {
 	if (flag == 0) continue;
 	// Block contains some non-solid sites
 	
-	net->data_block[n].site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
-	net->proc_block[n].proc_id   = (int *)malloc(sizeof(int) * sites_in_a_block);
+	net->data_block[n].site_data = new unsigned int[sites_in_a_block];
+	net->proc_block[n].proc_id   = new int[sites_in_a_block];
 	
 	m = -1;
 	
@@ -172,7 +172,7 @@ void LBM::lbmReadConfig (Net *net) {
 		  lbmCollisionType (*site_type) != FLUID) {
 		// Neither solid nor simple fluid
 		if (net->wall_block[n].wall_data == NULL) {
-		  net->wall_block[n].wall_data = (WallData *)malloc(sizeof(WallData) * sites_in_a_block);
+		  net->wall_block[n].wall_data = new WallData[sites_in_a_block];
 		}
 		
 		if (lbmCollisionType (*site_type) & INLET ||
@@ -259,10 +259,10 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
 	  outlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits (outlet_density_amp[n]) / Cs2;
 	  outlet_density_phs[n] *= DEG_TO_RAD;
 	}
-      lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * inlets);
-      lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * inlets);
-      lbm_inlet_normal           = (double *)malloc(sizeof(double) * 3 * inlets);
-      lbm_inlet_count            = (long int *)malloc(sizeof(long int) * inlets);
+      lbm_average_inlet_velocity = new double[inlets];
+      lbm_peak_inlet_velocity    = new double[inlets];
+      lbm_inlet_normal           = new double[3*inlets];
+      lbm_inlet_count            = new long int[inlets];
       
       if (feof (parameters_file) == 0)
 	{
@@ -309,10 +309,10 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
       lbmInitialiseInlets(inlets); 
       lbmInitialiseOutlets(outlets);
       
-      lbm_average_inlet_velocity = (double *)malloc(sizeof(double) * inlets);
-      lbm_peak_inlet_velocity    = (double *)malloc(sizeof(double) * inlets);
-      lbm_inlet_normal           = (double *)malloc(sizeof(double) * 3 * inlets);
-      lbm_inlet_count            = (long int *)malloc(sizeof(long int) * inlets);
+      lbm_average_inlet_velocity = new double[inlets];
+      lbm_peak_inlet_velocity    = new double[inlets];
+      lbm_inlet_normal           = new double[3 * inlets];
+      lbm_inlet_count            = new long int[inlets];
     }
   else
     {
@@ -370,20 +370,20 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
   RecalculateTauViscosityOmega ();
 }
 
-void LBM::lbmInitialiseInlets(int numberOfInlets)
-{     
-  inlet_density     = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
-  inlet_density_avg = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
-  inlet_density_amp = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
-  inlet_density_phs = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfInlets));
+void LBM::lbmInitialiseInlets(int nInlets) {
+  nInlets = UtilityFunctions::max(1, nInlets);
+  inlet_density     = new double[nInlets];
+  inlet_density_avg = new double[nInlets];
+  inlet_density_amp = new double[nInlets];
+  inlet_density_phs = new double[nInlets];
 }
 
-void LBM::lbmInitialiseOutlets(int numberOfOutlets)
-{
-  outlet_density     = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
-  outlet_density_avg = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
-  outlet_density_amp = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
-  outlet_density_phs = (double *)malloc(sizeof(double) * UtilityFunctions::max(1, numberOfOutlets));
+void LBM::lbmInitialiseOutlets(int nOutlets) {
+  nOutlets = UtilityFunctions::max(1, nOutlets);
+  outlet_density     = new double[nOutlets];
+  outlet_density_avg = new double[nOutlets];
+  outlet_density_amp = new double[nOutlets];
+  outlet_density_phs = new double[nOutlets];
 }
 
 void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
@@ -443,7 +443,7 @@ void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
     {
       myWriter = new XdrFileWriter(output_file_name);
 
-      myWriter->writeInt(&stability);
+      myWriter->write<int>(stability);
   
       if (stability == UNSTABLE)
       {
@@ -454,17 +454,17 @@ void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
       shrinked_sites_y = 1 + site_max_y - site_min_y;
       shrinked_sites_z = 1 + site_max_z - site_min_z;
       
-      myWriter->writeDouble(&voxel_size);
-      myWriter->writeInt(&site_min_x);
-      myWriter->writeInt(&site_min_y);
-      myWriter->writeInt(&site_min_z);
-      myWriter->writeInt(&site_max_x);
-      myWriter->writeInt(&site_max_y);
-      myWriter->writeInt(&site_max_z);
-      myWriter->writeInt(&shrinked_sites_x);
-      myWriter->writeInt(&shrinked_sites_y);
-      myWriter->writeInt(&shrinked_sites_z);
-      myWriter->writeInt(&total_fluid_sites);
+      myWriter->write(voxel_size);
+      myWriter->write(site_min_x);
+      myWriter->write(site_min_y);
+      myWriter->write(site_min_z);
+      myWriter->write(site_max_x);
+      myWriter->write(site_max_y);
+      myWriter->write(site_max_z);
+      myWriter->write(shrinked_sites_x);
+      myWriter->write(shrinked_sites_y);
+      myWriter->write(shrinked_sites_z);
+      myWriter->write(total_fluid_sites);
     }
   
   fluid_sites_max = 0;
@@ -485,27 +485,26 @@ void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
   
   communication_iters = UtilityFunctions::max(1, (int)ceil((double)fluid_sites_max / communication_period));
   
-  local_flow_field    = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period);
-  gathered_flow_field = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period * net->procs);
+  local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
+  gathered_flow_field = new float[MACROSCOPIC_PARS * 
+				  communication_period * 
+				  net->procs];
   
-  local_site_data    = (short int *)malloc(sizeof(short int) * 3 * communication_period);
-  gathered_site_data = (short int *)malloc(sizeof(short int) * 3 * communication_period * net->procs);
+  local_site_data    = new short int[3 * communication_period];
+  gathered_site_data = new short int[3 * communication_period * 
+				     net->procs];
   
-  for (period = 0; period < communication_period; period++)
-    {
-      local_site_data[ period*3 ] = -1;
-    }
+  for (period = 0; period < communication_period; period++) {
+    local_site_data[ period*3 ] = -1;
+  }
   iters = 0;
   period = 0;
   
-  if (!check_conv)
-    {
-      par = 0;
-    }
-  else
-    {
-      par = 1;
-    }
+  if (!check_conv) {
+    par = 0;
+  } else {
+    par = 1;
+  }
   n = -1;
   
 
@@ -609,13 +608,13 @@ void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
 				  gathered_site_data[ l*3+1 ] -= site_min_y;
 				  gathered_site_data[ l*3+2 ] -= site_min_z;
 				  
-				  myWriter->writeShort(&gathered_site_data[ l*3+0 ]);
-				  myWriter->writeShort(&gathered_site_data[ l*3+1 ]);
-				  myWriter->writeShort(&gathered_site_data[ l*3+2 ]);
+				  myWriter->write(gathered_site_data[ l*3+0 ]);
+				  myWriter->write(gathered_site_data[ l*3+1 ]);
+				  myWriter->write(gathered_site_data[ l*3+2 ]);
 				  
 				  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 				    {
-				      myWriter->writeFloat(&gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
+				      myWriter->write(gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
 				    }
 				}
 			    }
@@ -654,13 +653,13 @@ void LBM::lbmWriteConfig (int stability, char *output_file_name, Net *net)
 		  gathered_site_data[ l*3+1 ] -= site_min_y;
 		  gathered_site_data[ l*3+2 ] -= site_min_z;
 		  
-		  myWriter->writeShort(&gathered_site_data[ l*3+0 ]);
-		  myWriter->writeShort(&gathered_site_data[ l*3+1 ]);
-		  myWriter->writeShort(&gathered_site_data[ l*3+2 ]);
+		  myWriter->write(gathered_site_data[ l*3+0 ]);
+		  myWriter->write(gathered_site_data[ l*3+1 ]);
+		  myWriter->write(gathered_site_data[ l*3+2 ]);
 		  
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
 		    {
-		      myWriter->writeFloat(&gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
+		      myWriter->write(gathered_flow_field[ MACROSCOPIC_PARS*l+kk ]);
 		    }
 		}
 	    }
@@ -780,11 +779,14 @@ void LBM::lbmWriteConfigASCII (int stability, char *output_file_name, Net *net)
   
   communication_iters = UtilityFunctions::max(1, (int)ceil((double)fluid_sites_max / communication_period));
   
-  local_flow_field    = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period);
-  gathered_flow_field = (float *)malloc(sizeof(float) * MACROSCOPIC_PARS * communication_period * net->procs);
+  local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
+  gathered_flow_field = new float[MACROSCOPIC_PARS * 
+				  communication_period *
+				  net->procs];
   
-  local_site_data    = (short int *)malloc(sizeof(short int) * 3 * communication_period);
-  gathered_site_data = (short int *)malloc(sizeof(short int) * 3 * communication_period * net->procs);
+  local_site_data    = new short int[3 * communication_period];
+  gathered_site_data = new short int[3 * communication_period *
+				     net->procs];
   
   for (comPeriodDelta = 0; comPeriodDelta < communication_period; comPeriodDelta++)
     {

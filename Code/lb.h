@@ -3,18 +3,12 @@
 
 #include "net.h"
 
-class LBM
-{
-private:
-
-void lbmInitialiseInlets(int numberOfInlets);
-void lbmInitialiseOutlets(int numberOfOutlets);
-
-public:
-
-double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;
-double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
-
+class LBM {
+ public:
+  
+  double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;
+  double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
+  
   char *system_file_name;
   
   double tau, viscosity;
@@ -59,6 +53,14 @@ double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
 
   void lbmWriteConfig (int stability, char *output_file_name, Net *net);
   void lbmWriteConfigASCII (int stability, char *output_file_name, Net *net);
+  
+ private:
+  
+  void lbmInitialiseInlets(int numberOfInlets);
+  void lbmInitialiseOutlets(int numberOfOutlets);
+  
+  AsciiFileWriter createSnapshotWriter(char *filename);
+  
 };
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);

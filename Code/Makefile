@@ -1,10 +1,13 @@
 include make/Makefile.${HEMELB_MACHINE}
 
 OBJ=config.o \
+	writer.o \
         xdrReader.o \
         xdrWriter.o \
         xdrFileWriter.o \
         xdrMemWriter.o \
+	asciiStreamWriter.o \
+	asciiFileWriter.o \
 	io.o \
 	lb.o \
         visualisationControl.o \
