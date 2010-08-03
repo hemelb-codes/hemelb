@@ -7,13 +7,16 @@
 
 // Class to write Xdr to a file. The actual write functions are implemented in the base class, XdrWriter.
 class XdrFileWriter : public XdrWriter {
- private:
-  FILE *myFile;
   
-  // Implement the constructor and destructor to deal with the FILE and Xdr objects.
+  // Implement the constructor and destructor to deal with the FILE
+  // and XDR objects.
  public:
   XdrFileWriter(char* fileName);
   ~XdrFileWriter();
+  
+ private:
+  FILE *myFile;
+  
 };
 
 #endif //__xdrFileWriter_h_
