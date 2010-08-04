@@ -88,7 +88,7 @@ AUTO_TGTS := %.o
 # Where to put the compiled objects.  You can e.g. make it different
 # depending on the target platform (e.g. for cross-compilation a good
 # choice would be OBJDIR := obj/$(HOST_ARCH)) or debugging being on/off.
-OBJDIR := obj
+OBJDIR := build
 OBJPATH = $(d)/$(OBJDIR)
 
 # This variable contains a list of subdirectories where to look for
