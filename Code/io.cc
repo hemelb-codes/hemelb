@@ -234,7 +234,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
       
       fscanf (parameters_file, "%i\n", &inlets);
 
-      lbmInitialiseInlets(inlets);
+      allocateInlets(inlets);
 
       for (n = 0; n < inlets; n++)
 	{
@@ -248,7 +248,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
       fscanf (parameters_file, "%i\n", &outlets);
 
 
-      lbmInitialiseOutlets(outlets);
+      allocateOutlets(outlets);
       
       for (n = 0; n < outlets; n++)
 	{
@@ -306,8 +306,8 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
       outlets              = (int)par_to_send[ 1 ];
       is_inlet_normal_available = (int)par_to_send[ 2 ];
 
-      lbmInitialiseInlets(inlets); 
-      lbmInitialiseOutlets(outlets);
+      allocateInlets(inlets); 
+      allocateOutlets(outlets);
       
       lbm_average_inlet_velocity = new double[inlets];
       lbm_peak_inlet_velocity    = new double[inlets];
@@ -370,7 +370,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
   RecalculateTauViscosityOmega ();
 }
 
-void LBM::lbmInitialiseInlets(int nInlets) {
+void LBM::allocateInlets(int nInlets) {
   nInlets = UtilityFunctions::max(1, nInlets);
   inlet_density     = new double[nInlets];
   inlet_density_avg = new double[nInlets];
@@ -378,7 +378,7 @@ void LBM::lbmInitialiseInlets(int nInlets) {
   inlet_density_phs = new double[nInlets];
 }
 
-void LBM::lbmInitialiseOutlets(int nOutlets) {
+void LBM::allocateOutlets(int nOutlets) {
   nOutlets = UtilityFunctions::max(1, nOutlets);
   outlet_density     = new double[nOutlets];
   outlet_density_avg = new double[nOutlets];
@@ -386,7 +386,18 @@ void LBM::lbmInitialiseOutlets(int nOutlets) {
   outlet_density_phs = new double[nOutlets];
 }
 
-
+void LBM::deleteInlets() {
+  delete[] inlet_density;
+  delete[] inlet_density_avg;
+  delete[] inlet_density_amp;
+  delete[] inlet_density_phs;
+}
+void LBM::deleteOutlets() {
+  delete[] outlet_density;
+  delete[] outlet_density_avg;
+  delete[] outlet_density_amp;
+  delete[] outlet_density_phs;
+}
 
 void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
   /* This routine writes the flow field on file. The data are gathered
