@@ -6,7 +6,7 @@
 
 #include "lb.h"
 #include "utilityFunctions.h"
-#include "raytracer.h"
+#include "rayTracer.h"
 
 void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
@@ -1651,8 +1651,8 @@ void LBM::lbmCalculateFlowFieldValues ()
 
   int lMaxInlets = UtilityFunctions::max(6+inlets,2*inlets);
 
-  local_data = (double *)malloc(sizeof(double) * lMaxInlets);
-  global_data = (double *)malloc(sizeof(double) * lMaxInlets);
+  local_data = new double[lMaxInlets];
+  global_data = new double[lMaxInlets];
   
 #ifndef NOMPI
   local_data[0] = lbm_density_min;
@@ -1690,8 +1690,8 @@ void LBM::lbmCalculateFlowFieldValues ()
     }
 #endif // NOMPI
   
-  free(global_data);
-  free(local_data);
+  delete [] global_data;
+  delete [] local_data;
   
   for (i = 0; i < inlets; i++)
     {
@@ -1881,15 +1881,8 @@ void LBM::lbmRestart (Net *net)
 
 void LBM::lbmEnd (void)
 {
-  free(outlet_density_avg);
-  free(outlet_density_amp);
-  free(outlet_density_phs);
-  free(outlet_density);
-  
-  free(inlet_density_avg);
-  free(inlet_density_amp);
-  free(inlet_density_phs);
-  free(inlet_density);
+  deleteInlets();
+  deleteOutlets();
   
   free(lbm_inlet_count);
   free(lbm_inlet_normal);
