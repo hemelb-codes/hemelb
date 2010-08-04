@@ -17,8 +17,8 @@ DIR_INCLUDES = $(addprefix -I,$(INCLUDES_$(<D)))
 DIR_CFLAGS = $(CFLAGS_$(<D))
 DIR_CXXFLAGS = $(CXXFLAGS_$(<D))
 
-CFLAGS = -g -W -Wall $(DIR_CFLAGS)
-CXXFLAGS = -g -W -Wall $(DIR_CXXFLAGS)
+CFLAGS = $(HEMELB_CFLAGS) $(DIR_CFLAGS)
+CXXFLAGS = $(HEMELB_CXXFLAGS) $(DIR_CXXFLAGS)
 
 # List of includes that all (or at least majority) needs
 INCLUDES :=
@@ -32,7 +32,7 @@ INCLUDES :=
 # INCLUDES so that they have precedence.
 # CPPFLAGS = -MMD -D_REENTRANT -D_POSIX_C_SOURCE=200112L -D__EXTENSIONS__ \
 # 	   -DDEBUG $(DIR_INCLUDES) $(addprefix -I,$(INCLUDES))
-CPPFLAGS = -MMD $(DIR_INCLUDES) $(addprefix -I,$(INCLUDES)) $(DEFS)
+CPPFLAGS = -MMD $(DIR_INCLUDES) $(addprefix -I,$(INCLUDES)) $(addprefix -D, $(HEMELB_DEFS))
 
 # Linker flags.  The values below will use what you've specified for
 # particular target or directory but if you have some flags or
@@ -45,21 +45,22 @@ LDLIBS = $(LIBS_$(@))
 
 # Now we suck in configuration ...
 include $(MK)/config.mk
+
 # ... host and build specific settings ...
-ifneq ($(wildcard $(MK)/config-$(BUILD_ARCH)_$(HOST_ARCH).mk),)
-  include $(MK)/config-$(BUILD_ARCH)_$(HOST_ARCH).mk
-else
-  include $(MK)/config-default.mk
+# ifneq ($(wildcard $(MK)/config-$(BUILD_ARCH)_$(HOST_ARCH).mk),)
+#   include $(MK)/config-$(BUILD_ARCH)_$(HOST_ARCH).mk
+ifneq ($(wildcard $(MK)/config-$(HEMELB_MACHINE).mk),)
+  include $(MK)/config-$(HEMELB_MACHINE).mk
 endif
 
 # ... and here's a good place to translate some of these settings into
 # compilation flags/variables.  As an example a preprocesor macro for
 # target endianess
-ifeq ($(ENDIAN),big)
-  CPPFLAGS += -DBIG_ENDIAN
-else
-  CPPFLAGS += -DLITTLE_ENDIAN
-endif
+# ifeq ($(ENDIAN),big)
+#   CPPFLAGS += -DBIG_ENDIAN
+# else
+#   CPPFLAGS += -DLITTLE_ENDIAN
+# endif
 
 # Use host/build specific config files to override default extension
 # for shared libraries 

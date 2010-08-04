@@ -1,6 +1,9 @@
-CC := gcc
-CXX := g++
+CXX := mpic++
 
-# AR is a make default but won't hurt spelling it out :)
-AR := ar
-RANLIB := ranlib
+EXE := hemelb
+
+HEMELB_CFLAGS :=
+HEMELB_CXXFLAGS := -g -Wall
+HEMELB_DEFS := CCS
+HEMELB_INCLUDEPATHS :=
+HEMELB_LIBPATHS :=
