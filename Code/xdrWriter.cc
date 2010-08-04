@@ -3,13 +3,6 @@
 
 #include "xdrWriter.h"
 
-// This constructor only exists so it can be set to protected to
-// prevent instances of the base class being made.  The alternative of
-// declaring a pure virtual constructor or destructor doesn't
-// work. Factory methods might be a potential improvement here.
-XdrWriter::XdrWriter() {
-}
-
 // Functions to write simple types out to the Xdr stream.
 // Sadly templating is non-trivial due to XDR's naming.
 void XdrWriter::_write(int const& value) {

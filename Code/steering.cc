@@ -210,10 +210,8 @@ void *hemeLB_network (void *ptr)
 	char xdr_pixel[pixeldatabytes];
 	XdrMemWriter pixelWriter = XdrMemWriter(xdr_pixel, pixeldatabytes);
 	
-	pixelWriter.write(screen.pixels_x);
-	pixelWriter.write(screen.pixels_y);
-
-        
+	pixelWriter << screen.pixels_x << screen.pixels_y;
+	
 	Network::send_all(new_fd, xdr_pixel, &pixeldatabytes);
 
         XdrMemWriter pixelDataWriter = XdrMemWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
@@ -226,7 +224,7 @@ void *hemeLB_network (void *ptr)
 	
 	int frameBytes = pixelDataWriter.getCurrentStreamPosition();
 	
-	frameDetailsWriter.write(frameBytes);
+	frameDetailsWriter << frameBytes;
 	
 	int detailsBytes = frameDetailsWriter.getCurrentStreamPosition();
 	

@@ -888,20 +888,20 @@ void visWriteImage (int recv_buffer_id, char *image_file_name,
 {
   XdrFileWriter myWriter = XdrFileWriter(image_file_name);
   
-  myWriter.write(vis_mode);
-
-  myWriter.write(vis_physical_pressure_threshold_min);
-  myWriter.write(vis_physical_pressure_threshold_max);
-  myWriter.write(vis_physical_velocity_threshold_max);
-  myWriter.write(vis_physical_stress_threshold_max);
+  myWriter << vis_mode;
   
-  myWriter.write(screen.pixels_x);
-  myWriter.write(screen.pixels_y);
-  myWriter.write(col_pixels_recv[recv_buffer_id]);
+  myWriter << vis_physical_pressure_threshold_min 
+	   << vis_physical_pressure_threshold_max
+	   << vis_physical_velocity_threshold_max
+	   << vis_physical_stress_threshold_max;
+  
+  myWriter << screen.pixels_x
+	   << screen.pixels_y
+	   << col_pixels_recv[recv_buffer_id];
   
   for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
   {
-    myWriter.writePixel (&col_pixel_recv[recv_buffer_id][n], ColourPalette);
+    myWriter.writePixel(&col_pixel_recv[recv_buffer_id][n], ColourPalette);
   }
 }
 
