@@ -26,13 +26,7 @@ void FileUtils::check_file(const char * filename) {
 }
 
 // Function to select directory contents that are not "." or ".."
-// The hack is necessary because of different versions of 'scandir'
-// used by different compilers.
-#ifdef DARWIN
-int FileUtils::SelectOnlyContents (struct direct *entry)
-#else
-int FileUtils::SelectOnlyContents (const struct direct *entry)
-#endif
+int FileUtils::SelectOnlyContents (direct_t *entry)
 {
   if ((strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
     {

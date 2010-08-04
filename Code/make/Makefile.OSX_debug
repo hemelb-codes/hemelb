@@ -1,4 +1,4 @@
-CC=mpic++
+CXX=mpic++
 
 #MPIRUN=/home/steven/lammpi/bin/mpirun
 
@@ -6,11 +6,11 @@ EXE=hemelb
 
 DEFS=-DCCS -DBSD -DDARWIN -DDEBUG
 
-FLAGS=-g  -pthread -Wunused
+CXXFLAGS=-g  -pthread -Wunused
 
 
 #INCLUDES=-I/home/steven/lammpi/include
-INCLUDES=-I/usr/local/include
+INCLUDES=/usr/local/include
 
 #LIBS=-L/home/steven/lammpi/lib -llammpio -llammpi++ -lmpi -llam -ldl
 LIBS=-L/usr/local/lib 

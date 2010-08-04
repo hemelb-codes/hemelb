@@ -1,5 +1,5 @@
-#include "xdrWriter.h"
-#include "xdrMemWriter.h"
+#include "io/xdrWriter.h"
+#include "io/xdrMemWriter.h"
 
 #ifndef NO_STEER
 
