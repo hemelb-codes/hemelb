@@ -9,7 +9,7 @@
 class XdrMemWriter : public XdrWriter {
  public:
   // Constructor and destructor for the in-memory Xdr writer.
-  XdrMemWriter(char* dataBuffer, uint dataLength);
+  XdrMemWriter(char* dataBuffer, unsigned int dataLength);
   ~XdrMemWriter();
 };
 

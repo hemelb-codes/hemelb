@@ -1,4 +1,5 @@
 #include "writer.h"
+#include "../rt.h"
 
 // Function to write out our struct, ColPixel.
 void Writer::writePixel (ColPixel *col_pixel_p,

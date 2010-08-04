@@ -1,51 +1,27 @@
-include make/Makefile.${HEMELB_MACHINE}
+# Non-recursive makefile from
+# http://code.google.com/p/nonrec-make/
+# version 0.3
 
-OBJ=config.o \
-	writer.o \
-        xdrReader.o \
-        xdrWriter.o \
-        xdrFileWriter.o \
-        xdrMemWriter.o \
-	asciiStreamWriter.o \
-	asciiFileWriter.o \
-	io.o \
-	lb.o \
-        visualisationControl.o \
-        glyphDrawer.o \
-        streaklineDrawer.o \
-        rayTracer.o \
-	benchmark.o \
-	http_post.o \
-	fileutils.o \
-        colpixel.o \
-        rt.o \
-	net.o \
-	network.o \
-	colourpalette.o \
-	visthread.o \
-	usage.o \
-	steering-common.o \
-	steering.o \
-	steering-sim-params.o \
-        utilityFunctions.o \
-	main.o \
-#	realitygrid.o
+SHELL := /bin/bash
+RUNDIR := $(shell pwd)
+ifndef TOP
+TOP := $(shell rd=$(RUNDIR); top=$$rd; \
+               until [ -r $$top/Rules.top ]; do \
+                 oldtop=$$top; \
+                 cd ..; top=`pwd`; \
+                 if [ $$oldtop = $$top ]; then \
+                   top=$$rd; break; \
+                 fi; \
+               done; \
+               echo $$top)
+endif
 
-$(EXE): $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) $(LIBS) -o $(EXE)
+MK := $(TOP)/make
 
-doc:
-	doxygen 
+.PHONY: all clean clean_all clean_tree
 
-.cc.o:
-	$(CC) $(FLAGS) $(DEFS) $(INCLUDES) -c $<
+.DEFAULT_GOAL := dir_$(RUNDIR)
+clean : clean_$(RUNDIR)
+clean_tree : clean_tree_$(RUNDIR)
 
-clean:
-	-rm -f $(OBJ) $(EXE) env_details.asc
-	cd client && make clean
-
-distclean: clean
-	find ./ -name \*~ -exec rm -f {} \;
-
-include make/Makefile.Tests
-
+include $(TOP)/Rules.top
