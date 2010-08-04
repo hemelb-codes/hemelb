@@ -17,7 +17,19 @@ void AsciiStreamWriter::writeRecordSeparator() {
   *outStream << endl;
 }
 
-template <typename T>
-void AsciiStreamWriter::_write(T const & value) {
-  *outStream << value;
+
+void AsciiStreamWriter::_write(int const & value) {
+  this->_write<int>(value);
+}
+void AsciiStreamWriter::_write(double const & value) {
+  this->_write<double>(value);
+}
+void AsciiStreamWriter::_write(float const & value) {
+  this->_write<float>(value);
+}
+void AsciiStreamWriter::_write(short const & value) {
+  this->_write<short>(value);
+}
+void AsciiStreamWriter::_write(unsigned int const & value) {
+  this->_write<unsigned int>(value);
 }

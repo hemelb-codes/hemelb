@@ -16,11 +16,7 @@ class XdrWriter : public Writer {
   void writeRecordSeparator();
   
  protected:
-  // Constructor and member variable. This class should never be
-  // instantiated directly, so the constructor is only available to
-  // subclasses.
   XDR *myXdr;
-  XdrWriter();
   
   // Methods to write basic types to the Xdr object.
   void _write(int const& intToWrite);

@@ -15,14 +15,21 @@ class AsciiStreamWriter : public Writer {
   void writeRecordSeparator();
 
  protected:
-  // Constructor and member variable. This class should never be
-  // instantiated directly, so the constructor is only available to
-  // subclasses.
   std::ostream * outStream;
-  //AsciiStreamWriter();
   
   // Template for the simple write methods.
-  template <typename T> void _write(T const & value);
+  template <typename T>
+  void _write(T const & value) {
+    *outStream << value;
+  }
+  
+  // These necessary since can't override a virtual method with a
+  // template member.
+  void _write(int const & value);
+  void _write(double const & value);
+  void _write(float const & value);
+  void _write(short const & value);
+  void _write(unsigned int const & value);
 
 };
 

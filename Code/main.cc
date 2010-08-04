@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <math.h>
 
@@ -389,7 +390,7 @@ int main (int argc, char *argv[])
 		  strcpy ( complete_snapshot_name, snapshot_directory );
 		  strcat ( complete_snapshot_name, snapshot_filename );
 		  
-		  lbm.lbmWriteConfigASCII (stability, complete_snapshot_name, &net);
+		  lbm.lbmWriteConfig(stability, complete_snapshot_name, &net);
 		}
 #ifndef NO_STEER
 	      if (net.id == 0)

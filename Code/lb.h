@@ -52,14 +52,11 @@ class LBM {
   void lbmUpdateInletVelocities (int time_step, Net *net);
 
   void lbmWriteConfig (int stability, char *output_file_name, Net *net);
-  void lbmWriteConfigASCII (int stability, char *output_file_name, Net *net);
   
  private:
   
   void lbmInitialiseInlets(int numberOfInlets);
   void lbmInitialiseOutlets(int numberOfOutlets);
-  
-  AsciiFileWriter createSnapshotWriter(char *filename);
   
 };
 
