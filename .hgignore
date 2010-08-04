@@ -3,4 +3,5 @@ syntax: glob
 *.o
 *.d
 *~
-Code/hemelb
+build/*
+.DS_Store

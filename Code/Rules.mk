@@ -1,3 +1,4 @@
+# -*- mode: makefile;-*-
 include $(MK)/header.mk
 
 include $(MK)/Makefile.${HEMELB_MACHINE}
@@ -28,7 +29,8 @@ hemelb_DEPS = config.o \
         utilityFunctions.o \
 	main.o \
 	$(SUBDIRS_TGTS)
-app.exe_LIBS = $(LIBS)
+INCLUDES_$(d) = $(INCLUDEPATHS)
+LIBDIRS_$(d) = $(LIBPATHS)
 
 
 include $(MK)/footer.mk
