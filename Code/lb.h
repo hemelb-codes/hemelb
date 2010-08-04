@@ -55,9 +55,11 @@ class LBM {
   
  private:
   
-  void lbmInitialiseInlets(int numberOfInlets);
-  void lbmInitialiseOutlets(int numberOfOutlets);
+  void allocateInlets(int nInlets);
+  void allocateOutlets(int nOutlets);
   
+  void deleteInlets();
+  void deleteOutlets();
 };
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
