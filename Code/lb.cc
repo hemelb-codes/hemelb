@@ -1884,8 +1884,8 @@ void LBM::lbmEnd (void)
   deleteInlets();
   deleteOutlets();
   
-  free(lbm_inlet_count);
-  free(lbm_inlet_normal);
-  free(lbm_average_inlet_velocity);
-  free(lbm_peak_inlet_velocity);
+  delete[] lbm_inlet_count;
+  delete[] lbm_inlet_normal;
+  delete[] lbm_average_inlet_velocity;
+  delete[] lbm_peak_inlet_velocity;
 }
