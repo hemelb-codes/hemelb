@@ -9,8 +9,8 @@
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
-#include "xdrReader.h"
-#include "asciiFileWriter.h"
+#include "io/xdrReader.h"
+#include "io/asciiFileWriter.h"
 
 //using namespace std;
 

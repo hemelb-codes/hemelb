@@ -1,3 +1,6 @@
+#ifndef __xdrReader_h_
+#define __xdrReader_h_
+
 #include <stdio.h>
 
 #include <rpc/types.h>
@@ -19,3 +22,5 @@ class XdrReader {
     XDR  myXdr;
 
 };
+
+#endif// __xdrReader_h_

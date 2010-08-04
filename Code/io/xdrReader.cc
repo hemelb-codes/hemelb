@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <rpc/types.h>
+#include <rpc/xdr.h>
+
 #include "xdrReader.h"
 
 // Constructor to create an Xdr object based on a file.

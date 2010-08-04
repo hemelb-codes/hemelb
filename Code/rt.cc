@@ -1,9 +1,10 @@
+#include <math.h>
+#include <string.h>
+
 #include "utilityFunctions.h"
 #include "rt.h"
 #include "lb.h"
-#include "xdrFileWriter.h"
-#include <math.h>
-#include <string.h>
+#include "io/xdrFileWriter.h"
 
 glyphDrawer *myGlypher;
 streaklineDrawer *myStreaker;
