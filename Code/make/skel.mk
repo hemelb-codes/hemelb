@@ -24,19 +24,20 @@ CXXFLAGS = -g -W -Wall $(DIR_CXXFLAGS)
 INCLUDES :=
 
 # Here's an example of settings for preprocessor.  -MMD is to
-# automatically build dependency files as a side effect of compilation.
-# This has some drawbacks (e.g. when you move/rename a file) but it is
-# good enough for me.  You can improve this by using a special script
-# that builds the dependency files (one can find examples on the web).
-# Note that I'm adding DIR_INCLUDES before INCLUDES so that they have
-# precedence.
+# automatically build dependency files as a side effect of
+# compilation.  This has some drawbacks (e.g. when you move/rename a
+# file) but it is good enough for me.  You can improve this by using a
+# special script that builds the dependency files (one can find
+# examples on the web).  Note that I'm adding DIR_INCLUDES before
+# INCLUDES so that they have precedence.
 # CPPFLAGS = -MMD -D_REENTRANT -D_POSIX_C_SOURCE=200112L -D__EXTENSIONS__ \
 # 	   -DDEBUG $(DIR_INCLUDES) $(addprefix -I,$(INCLUDES))
 CPPFLAGS = -MMD $(DIR_INCLUDES) $(addprefix -I,$(INCLUDES)) $(DEFS)
 
 # Linker flags.  The values below will use what you've specified for
-# particular target or directory but if you have some flags or libraries
-# that should be used for all targets/directories just append them at end.
+# particular target or directory but if you have some flags or
+# libraries that should be used for all targets/directories just
+# append them at end.
 LDFLAGS = $(LDFLAGS_$(@)) $(addprefix -L,$(LIBDIRS_$(subst /$(OBJDIR),,$(@D))))
 LDLIBS = $(LIBS_$(@))
 

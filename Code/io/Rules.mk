@@ -8,5 +8,6 @@ SRCS := writer.cc \
 	asciiStreamWriter.cc \
 	asciiFileWriter.cc
 
+INCLUDES_$(d) := $(INCLUDES_$(parent))
 
 include $(MK)/footer.mk

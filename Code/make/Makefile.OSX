@@ -1,17 +1,14 @@
-CC=/usr/local/bin/mpic++
-
-#MPIRUN=/home/steven/lammpi/bin/mpirun
+# -*- mode: makefile; -*-
+CXX=/usr/local/bin/mpic++
 
 EXE=hemelb
 
-DEFS=-DCCS -DBSD -DDARWIN
+DEFS=$(addprefix -D, CCS BSD DARWIN)
 
-FLAGS=-O3 -pthread -Wunused
+CXXFLAGS=-O3 -pthread -Wunused
 
+INCLUDEPATHS=/usr/local/include
 
-#INCLUDES=-I/home/steven/lammpi/include
-INCLUDES=-I/usr/local/include
+LIBPATHS=/usr/local/lib 
 
-#LIBS=-L/home/steven/lammpi/lib -llammpio -llammpi++ -lmpi -llam -ldl
-LIBS=-L/usr/local/lib 
-
+# vim: set ft=make :

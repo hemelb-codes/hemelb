@@ -1,7 +1,10 @@
-CC=mpic++.openmpi
+# -*- mode: makefile; -*-
+CXX=mpic++.openmpi
 
 EXE=hemelb
 
 DEFS=-DCCS -DNO_STEER
 
-FLAGS=-O3 -pthread -Wunused
+CXXFLAGS=-O3 -pthread -Wunused
+
+# vim: set ft=make :
