@@ -1,4 +1,4 @@
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -205,8 +205,8 @@ int main (int argc, char *argv[])
 #ifndef NO_STEER
   if (!is_bench && net.id == 0)
     {
-      xdrSendBuffer_pixel_data = (char *)malloc(pixel_data_bytes);
-      xdrSendBuffer_frame_details = (char *)malloc(frame_details_bytes);
+      xdrSendBuffer_pixel_data = new char[pixel_data_bytes];
+      xdrSendBuffer_frame_details = new char[frame_details_bytes];
 
       pthread_mutex_init (&LOCK, NULL);
       pthread_cond_init (&network_send_frame, NULL);
@@ -693,8 +693,8 @@ int main (int argc, char *argv[])
       // there are some problems if the following function is called
       
       //pthread_join (network_thread, NULL);
-      free(xdrSendBuffer_frame_details);
-      free(xdrSendBuffer_pixel_data);
+      delete[] xdrSendBuffer_frame_details;
+      delete[] xdrSendBuffer_pixel_data;
     }
 #endif
   
