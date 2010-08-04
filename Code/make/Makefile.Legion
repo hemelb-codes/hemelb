@@ -1,5 +1,0 @@
-CC=mpicxx
-FLAGS=-O0
-FLAGS=-O3 -xT -ipo
-EXE=hemelb
-DEFS=-DBENCH -DNOOPENMP

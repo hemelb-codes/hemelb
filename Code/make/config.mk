@@ -16,6 +16,6 @@ ENDIAN := $(shell perl -le 'print unpack(N,pack(L,0x01020304)) == 0x01020304 ? b
 VERBOSE := false
 
 # Uncomment if you don't like coloring of the output
-#COLOR_TTY := false
+COLOR_TTY := false
 
 # Any additional settings should go here
