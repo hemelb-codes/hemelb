@@ -1,3 +1,6 @@
+#ifndef __steer_network_h_
+#define __steer_network_h_
+
 #ifndef NO_STEER
 
 class Network
@@ -8,4 +11,7 @@ class Network
     // Send all bytes from a buffer of known length over a socket.
     static int send_all (int sockid, char *buf, int *length);
 };
-#endif
+
+#endif// NO_STEER
+
+#endif//__steer_network_h_
