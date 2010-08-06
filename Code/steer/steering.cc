@@ -25,16 +25,16 @@
 #include <string.h>
 
 #include "network.h"
-#include "steering.h"
+#include "steer/steering.h"
 #include "vis/colourpalette.h"
 #include "vis/visthread.h"
-#include "steering-sim-params.h"
+#include "steer/steering-sim-params.h"
 
 #ifdef _AIX
 #include <fcntl.h>
 #endif
 
-#include "http_post.h"
+#include "steer/http_post.h"
 
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10

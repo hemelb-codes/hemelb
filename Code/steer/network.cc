@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
-#include "network.h"
+#include "steer/network.h"
 
 // Receive a bytestream of known length from a socket into a buffer.
 int Network::recv_all (int sockid, char *buf, int *length)

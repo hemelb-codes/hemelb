@@ -1,3 +1,6 @@
+#ifndef __steer_steering_h_
+#define __steer_steering_h_
+
 #ifndef NO_STEER
 #include <pthread.h>
 #include <semaphore.h>
@@ -26,3 +29,5 @@ extern pthread_mutex_t steer_param_lock;
 void  *hemeLB_steer (void*);
 void UpdateSteerableParameters (int*, vis::Vis*, LBM*);
 #endif
+
+#endif//__steer_steering_h_

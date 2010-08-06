@@ -5,7 +5,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "steering-sim-params.h"
+#include "steer/steering-sim-params.h"
 #include "vis/rt.h"
 
 using namespace std;
