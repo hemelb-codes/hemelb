@@ -26,9 +26,9 @@
 
 using namespace std;
 
-#include "steer/http_post.h"
+#include "steering/HttpPost.h"
 
-void HTTP::get_host_details(char* rank_0_host_details, char* ip_addr)
+void HttpPost::get_host_details(char* rank_0_host_details, char* ip_addr)
 {
   char hostname[256];
 
@@ -128,11 +128,11 @@ void HTTP::get_host_details(char* rank_0_host_details, char* ip_addr)
 
 /* It's OK, this was written by a Java developer */
 
-#define SEND_RQ(MSG)		    \
-                /*cout<<send_str;*/ \
+#define SEND_RQ(MSG)				\
+  /*cout<<send_str;*/				\
   send(sock,MSG,strlen(MSG),0);
 
-int HTTP::request (char* hostname, short port, char* api, char* resourceid, char* parameters) {
+int HttpPost::request (char* hostname, short port, char* api, char* resourceid, char* parameters) {
   
   sockaddr_in sin;
   int sock = socket (AF_INET, SOCK_STREAM, 0);
@@ -242,7 +242,7 @@ int HTTP::request (char* hostname, short port, char* api, char* resourceid, char
     return -102;
   }
   
- return 0;
+  return 0;
 }
 
 #endif // NO_STEER

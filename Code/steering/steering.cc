@@ -24,17 +24,18 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#include "network.h"
-#include "steer/steering.h"
 #include "vis/colourpalette.h"
 #include "vis/visthread.h"
-#include "steer/steering-sim-params.h"
+
+#include "steering/Network.h"
+#include "steering/steering.h"
+#include "steering/SimulationParameters.h"
+#include "steering/HttpPost.h"
 
 #ifdef _AIX
 #include <fcntl.h>
 #endif
 
-#include "steer/http_post.h"
 
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
@@ -107,9 +108,9 @@ void *hemeLB_network (void *ptr)
   
   signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe 
   
-  HTTP::get_host_details(rank_0_host_details, ip_addr);
+  HttpPost::get_host_details(rank_0_host_details, ip_addr);
   
-  HTTP::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", steering_session_id_char, rank_0_host_details);
+  HttpPost::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/", steering_session_id_char, rank_0_host_details);
   
   while (1)
     {
@@ -259,12 +260,12 @@ void *hemeLB_network (void *ptr)
 	  bytesSent += frameBytes;
 	}
 	
-	simulationParameters* Sim = new simulationParameters();
-	Sim->collectGlobalVals();
-	int sizeToSend = Sim->sim_params_bytes;
-	Network::send_all(new_fd, Sim->pack(), &sizeToSend);
+	SimulationParameters* sim = new SimulationParameters();
+	sim->collectGlobalVals();
+	int sizeToSend = sim->sim_params_bytes;
+	Network::send_all(new_fd, sim->pack(), &sizeToSend);
 	// printf ("Sim bytes sent %i\n", sizeToSend);
-	delete Sim;
+	delete sim;
 	
 	// fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
 	// printf ("RG thread: bytes sent %i\n", bytesSent);
