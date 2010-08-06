@@ -1,15 +1,17 @@
-#ifndef __streaklineDrawer_h_
-#define __streaklineDrawer_h_
+#ifndef __vis_streaklineDrawer_h_
+#define __vis_streaklineDrawer_h_
 
 #include "constants.h"
 #include "mpiInclude.h"
-#include "visualisationControl.h"
+#include "vis/visualisationControl.h"
 #include "net.h"
 
-// Class that controls the drawing of streaklines - lines that trace the path of an
-// imaginary particle were it dropped into the fluid.
-class streaklineDrawer : public visualisationLayer
-{
+namespace vis {
+
+  // Class that controls the drawing of streaklines - lines that trace the path of an
+  // imaginary particle were it dropped into the fluid.
+  class streaklineDrawer : public visualisationLayer
+  {
   private:
 
     // Struct for a particle dropped into the fluid.
@@ -75,10 +77,10 @@ class streaklineDrawer : public visualisationLayer
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX];
   
     // If using MPI, require these for inter-processor comms.
-    #ifndef NOMPI
-      MPI_Status status[4];
-      MPI_Request *req;
-    #endif
+#ifndef NOMPI
+    MPI_Status status[4];
+    MPI_Request *req;
+#endif
 
     // Private functions for the creation / deletion of particles.
     void createSeedParticles ();
@@ -111,6 +113,8 @@ class streaklineDrawer : public visualisationLayer
     // Drawing methods.
     void streakLines (int time_steps, int time_steps_per_cycle, Net *net);
     virtual void render ();
-};
+  };
 
-#endif //__streaklineDrawer_h_
+}
+
+#endif //__vis_streaklineDrawer_h_

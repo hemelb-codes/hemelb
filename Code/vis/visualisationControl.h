@@ -1,5 +1,5 @@
-#ifndef __visualisationControl_h_
-#define __visualisationControl_h_
+#ifndef __vis_visualisationControl_h_
+#define __vis_visualisationControl_h_
 
 #include <vector>
 
@@ -29,4 +29,4 @@ class visualisationControl
     void render();      
 };
 
-#endif //__visualisationControl_h_
+#endif //__vis_visualisationControl_h_

@@ -21,7 +21,7 @@ CFLAGS = $(HEMELB_CFLAGS) $(DIR_CFLAGS)
 CXXFLAGS = $(HEMELB_CXXFLAGS) $(DIR_CXXFLAGS)
 
 # List of includes that all (or at least majority) needs
-INCLUDES :=
+INCLUDES = $(HEMELB_INCLUDEPATHS)
 
 # Here's an example of settings for preprocessor.  -MMD is to
 # automatically build dependency files as a side effect of

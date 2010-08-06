@@ -26,8 +26,8 @@
 
 #include "network.h"
 #include "steering.h"
-#include "colourpalette.h"
-#include "visthread.h"
+#include "vis/colourpalette.h"
+#include "vis/visthread.h"
 #include "steering-sim-params.h"
 
 #ifdef _AIX
@@ -208,18 +208,23 @@ void *hemeLB_network (void *ptr)
 	  
 	int pixeldatabytes = 8;
 	char xdr_pixel[pixeldatabytes];
-	XdrMemWriter pixelWriter = XdrMemWriter(xdr_pixel, pixeldatabytes);
+	io::XdrMemWriter pixelWriter =io::XdrMemWriter(xdr_pixel,
+						       pixeldatabytes);
 	
-	pixelWriter << screen.pixels_x << screen.pixels_y;
+	pixelWriter << vis::screen.pixels_x << vis::screen.pixels_y;
 	
 	Network::send_all(new_fd, xdr_pixel, &pixeldatabytes);
 
-        XdrMemWriter pixelDataWriter = XdrMemWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
-        XdrMemWriter frameDetailsWriter = XdrMemWriter(xdrSendBuffer_frame_details, frame_details_bytes);
+        io::XdrMemWriter pixelDataWriter = 
+	  io::XdrMemWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
+        io::XdrMemWriter frameDetailsWriter = 
+	  io::XdrMemWriter(xdrSendBuffer_frame_details,
+			   frame_details_bytes);
 	
-	for (int i = 0; i < col_pixels_recv[RECV_BUFFER_A]; i++)
+	for (int i = 0; i < vis::col_pixels_recv[RECV_BUFFER_A]; i++)
 	{
-          pixelDataWriter.writePixel (&col_pixel_recv[RECV_BUFFER_A][i], ColourPalette::PickColour);
+          pixelDataWriter.writePixel (&vis::col_pixel_recv[RECV_BUFFER_A][i],
+				      vis::ColourPalette::PickColour);
 	}
 	
 	int frameBytes = pixelDataWriter.getCurrentStreamPosition();

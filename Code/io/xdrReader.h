@@ -1,13 +1,14 @@
-#ifndef __xdrReader_h_
-#define __xdrReader_h_
+#ifndef __io_xdrReader_h_
+#define __io_xdrReader_h_
 
 #include <stdio.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-// Class to read an Xdr-style file from disk.
-class XdrReader {
+namespace io {
+  // Class to read an Xdr-style file from disk.
+  class XdrReader {
   public:
     // Constructor and destructor.
     XdrReader(FILE* xdrFile);
@@ -21,6 +22,7 @@ class XdrReader {
   private:
     XDR  myXdr;
 
-};
+  };
+}
 
-#endif// __xdrReader_h_
+#endif// __io_xdrReader_h_

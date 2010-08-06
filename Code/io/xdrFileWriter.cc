@@ -2,8 +2,9 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "xdrFileWriter.h"
+#include "io/xdrFileWriter.h"
 
+using namespace io;
 // Implement a constructor that opens the file and creates the Xdr
 // object to write to it.
 XdrFileWriter::XdrFileWriter(char* fileName) {

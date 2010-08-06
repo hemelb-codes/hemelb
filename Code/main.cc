@@ -19,19 +19,19 @@
 #include <semaphore.h>
 
 #include "network.h"
-#include "visthread.h"
+#include "vis/visthread.h"
 #endif // NO_STEER
 
 #include "constants.h"
 #include "steering.h"
 #include "usage.h"
 #include "benchmark.h"
-#include "colourpalette.h"
+#include "vis/colourpalette.h"
 #include "fileutils.h"
 #include "utilityFunctions.h"
 #include "lb.h"
 #include "net.h"
-#include "rt.h"
+#include "vis/rt.h"
 
 #define BCAST_FREQ   1
 
@@ -143,7 +143,7 @@ int main (int argc, char *argv[])
 #endif
     }
 
-  double total_time = UtilityFunctions::myClock();
+  double total_time = util::myClock();
   
   char* input_file_path( argv[1] );
   
@@ -238,11 +238,11 @@ int main (int argc, char *argv[])
   
   lbm.lbmSetInitialConditions (&net);
   
-  visInit (&net, &vis);
+  vis::visInit (&net, &vis::vis);
   
-  visReadParameters (vis_parameters_name, &lbm, &net, &vis);
+  vis::visReadParameters (vis_parameters_name, &lbm, &net, &vis::vis);
 #ifndef NO_STEER
-  UpdateSteerableParameters (&doRendering, &vis, &lbm);
+  UpdateSteerableParameters (&doRendering, &vis::vis, &lbm);
 #endif
 
   FileUtils::DeleteDirContents (snapshot_directory);
@@ -254,17 +254,17 @@ int main (int argc, char *argv[])
     {
       int is_finished = 0;
       
-      simulation_time = UtilityFunctions::myClock ();
+      simulation_time = util::myClock ();
       
       if (snapshots_per_cycle == 0)
 	snapshots_period = 1e9;
       else
-	snapshots_period = UtilityFunctions::max(1, lbm.period / snapshots_per_cycle);
+	snapshots_period = util::max(1, lbm.period / snapshots_per_cycle);
       
       if (images_per_cycle == 0)
 	images_period = 1e9;
       else
-	images_period = UtilityFunctions::max(1, lbm.period / images_per_cycle);
+	images_period = util::max(1, lbm.period / images_per_cycle);
       
       for (cycle_id = 1; cycle_id <= lbm.cycles_max && !is_finished; cycle_id++)
 	{
@@ -300,7 +300,7 @@ int main (int argc, char *argv[])
 					doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
 				if(net.id == 0)
 					sem_wait (&steering_var_lock);
-				UpdateSteerableParameters (&doRendering, &vis, &lbm);
+				UpdateSteerableParameters (&doRendering, &vis::vis, &lbm);
 				if(net.id == 0)
 					sem_post (&steering_var_lock);
 			}
@@ -339,21 +339,21 @@ int main (int argc, char *argv[])
 		  lbm.lbmUpdateInletVelocities (time_step, &net);
 		}
 #ifndef NO_STREAKLINES
-	      visStreaklines(time_step, lbm.period, &net);
+	      vis::visStreaklines(time_step, lbm.period, &net);
 #endif
 #ifndef NO_STEER
 	      if (total_time_steps%BCAST_FREQ == 0 && doRendering && !write_snapshot_image)
 		{
-		  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
+		  vis::visRender (RECV_BUFFER_A, vis::ColourPalette::PickColour, &net);
 		  
-		  if (vis_mouse_x >= 0 && vis_mouse_y >= 0 && updated_mouse_coords)
+		  if (vis::mouse_x >= 0 && vis::mouse_y >= 0 && updated_mouse_coords)
 		    {
-		      for (int i = 0; i < col_pixels_recv[RECV_BUFFER_A]; i++)
+		      for (int i = 0; i < vis::col_pixels_recv[RECV_BUFFER_A]; i++)
 			{
-			  if ((col_pixel_recv[RECV_BUFFER_A][i].i & RT) &&
-			      (col_pixel_recv[RECV_BUFFER_A][i].i & PIXEL_ID_MASK) == PixelId (vis_mouse_x,vis_mouse_y))
+			  if ((vis::col_pixel_recv[RECV_BUFFER_A][i].i & RT) &&
+			      (vis::col_pixel_recv[RECV_BUFFER_A][i].i & PIXEL_ID_MASK) == PixelId (vis::mouse_x,vis::mouse_y))
 			    {
-			      visCalculateMouseFlowField (&col_pixel_recv[RECV_BUFFER_A][i], &lbm);
+			      vis::visCalculateMouseFlowField (&vis::col_pixel_recv[RECV_BUFFER_A][i], &lbm);
 			      break;
 			    }
 			}
@@ -368,7 +368,8 @@ int main (int argc, char *argv[])
 #endif // NO_STEER
 	      if (write_snapshot_image)
 		{
-		  visRender (RECV_BUFFER_B, ColourPalette::PickColour, &net);
+		  vis::visRender (RECV_BUFFER_B, 
+				  vis::ColourPalette::PickColour, &net);
 		  
 		  if (net.id == 0)
 		    {
@@ -378,7 +379,7 @@ int main (int argc, char *argv[])
 		      strcpy ( complete_image_name, image_directory );
 		      strcat ( complete_image_name, image_filename );
 		      
-		      visWriteImage (RECV_BUFFER_B, complete_image_name, ColourPalette::PickColour);
+		      vis::visWriteImage (RECV_BUFFER_B, complete_image_name, vis::ColourPalette::PickColour);
 		    }
 		}
 	      if (time_step%snapshots_period == 0)
@@ -429,16 +430,16 @@ int main (int argc, char *argv[])
 	      
 	      lbm.lbmRestart (&net);
 #ifndef NO_STREAKLINES
-	      visRestart();
+	      vis::visRestart();
 #endif
 	      if (net.id == 0)
 		{
 		  printf ("restarting: period: %i\n", lbm.period);
 		  fflush (0x0);
 		}
-	      snapshots_period = (snapshots_per_cycle == 0) ? 1e9 : UtilityFunctions::max(1, lbm.period/snapshots_per_cycle);
+	      snapshots_period = (snapshots_per_cycle == 0) ? 1e9 : util::max(1, lbm.period/snapshots_per_cycle);
 	      
-	      images_period = (images_per_cycle == 0) ? 1e9 : UtilityFunctions::max(1, lbm.period/images_per_cycle);
+	      images_period = (images_per_cycle == 0) ? 1e9 : util::max(1, lbm.period/images_per_cycle);
 	      
 	      cycle_id = 0;
 	      continue;
@@ -460,10 +461,10 @@ int main (int argc, char *argv[])
 	      fflush(NULL);
 	    }
 	}
-      simulation_time = UtilityFunctions::myClock () - simulation_time;
+      simulation_time = util::myClock () - simulation_time;
       
-      time_step = UtilityFunctions::min(time_step, lbm.period);
-      cycle_id = UtilityFunctions::min(cycle_id, lbm.cycles_max);
+      time_step = util::min(time_step, lbm.period);
+      cycle_id = util::min(cycle_id, lbm.cycles_max);
       time_step = time_step * cycle_id;
     }
   else // is_bench
@@ -474,7 +475,7 @@ int main (int argc, char *argv[])
       
       // benchmarking HemeLB's fluid solver only
       
-      FS_time = UtilityFunctions::myClock ();
+      FS_time = util::myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
@@ -482,7 +483,7 @@ int main (int argc, char *argv[])
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (0, &net);
 	  
-	  elapsed_time = UtilityFunctions::myClock () - FS_time;
+	  elapsed_time = util::myClock () - FS_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
@@ -497,7 +498,7 @@ int main (int argc, char *argv[])
 	}
 
       FS_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_time = UtilityFunctions::myClock ();
+      FS_time = util::myClock ();
       
       for (time_step = 1; time_step <= FS_time_steps; time_step++)
 	{
@@ -505,25 +506,26 @@ int main (int argc, char *argv[])
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
 	}
-      FS_time = UtilityFunctions::myClock () - FS_time;
+      FS_time = util::myClock () - FS_time;
       
       
       // benchmarking HemeLB's fluid solver and ray tracer
       
-      vis_mode = 0;
-      vis_image_freq = 1;
-      vis_streaklines = 0;
-      FS_plus_RT_time = UtilityFunctions::myClock ();
+      vis::mode = 0;
+      vis::image_freq = 1;
+      vis::streaklines = 0;
+      FS_plus_RT_time = util::myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period );
 	  stability = lbm.lbmCycle (1, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
+	  vis::visRender (RECV_BUFFER_A,
+			  vis::ColourPalette::PickColour, &net);
 	  
 	  // partial timings
-	  elapsed_time = UtilityFunctions::myClock () - FS_plus_RT_time;
+	  elapsed_time = util::myClock () - FS_plus_RT_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
@@ -537,34 +539,36 @@ int main (int argc, char *argv[])
 	    }
 	}
       FS_plus_RT_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_plus_RT_time = UtilityFunctions::myClock ();
+      FS_plus_RT_time = util::myClock ();
       
       for (time_step = 1; time_step <= FS_plus_RT_time_steps; time_step++)
 	{
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
+	  vis::visRender(RECV_BUFFER_A, 
+			 vis::ColourPalette::PickColour, &net);
 	}
-      FS_plus_RT_time = UtilityFunctions::myClock () - FS_plus_RT_time;
+      FS_plus_RT_time = util::myClock () - FS_plus_RT_time;
       
 #ifndef NO_STREAKLINES
       // benchmarking HemeLB's fluid solver, ray tracer and streaklines
       
-      vis_mode = 2;
-      vis_streaklines = 1;
-      FS_plus_RT_plus_SL_time = UtilityFunctions::myClock ();
+      vis::mode = 2;
+      vis::streaklines = 1;
+      FS_plus_RT_plus_SL_time = util::myClock ();
       
       for (time_step = 1; time_step <= 1000000000; time_step++)
 	{
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
-          visStreaklines(time_step, lbm.period, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
+	  vis::visStreaklines(time_step, lbm.period, &net);
+	  vis::visRender (RECV_BUFFER_A,
+			  vis::ColourPalette::PickColour, &net);
 	  
 	  // partial timings
-	  elapsed_time = UtilityFunctions::myClock () - FS_plus_RT_plus_SL_time;
+	  elapsed_time = util::myClock () - FS_plus_RT_plus_SL_time;
 	  
 	  if (time_step%bench_period == 1 && net.id == 0)
 	    {
@@ -578,17 +582,18 @@ int main (int argc, char *argv[])
 	    }
 	}
       FS_plus_RT_plus_SL_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_plus_RT_plus_SL_time = UtilityFunctions::myClock ();
+      FS_plus_RT_plus_SL_time = util::myClock ();
       
       for (time_step = 1; time_step <= FS_plus_RT_plus_SL_time_steps; time_step++)
 	{
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
-	  visStreaklines (time_step, lbm.period, &net);
-	  visRender (RECV_BUFFER_A, ColourPalette::PickColour, &net);
+	  vis::visStreaklines (time_step, lbm.period, &net);
+	  vis::visRender (RECV_BUFFER_A,
+			  vis::ColourPalette::PickColour, &net);
 	}
-      FS_plus_RT_plus_SL_time = UtilityFunctions::myClock () - FS_plus_RT_plus_SL_time;
+      FS_plus_RT_plus_SL_time = util::myClock () - FS_plus_RT_plus_SL_time;
 #endif // NO_STREAKLINES
     } // is_bench
   
@@ -643,19 +648,19 @@ int main (int argc, char *argv[])
 	{
 	  if (!is_bench)
 	    {
-	      vis_pressure_min = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
-	      vis_pressure_max = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
+	      vis::pressure_min = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
+	      vis::pressure_max = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
 	      
-	      vis_velocity_min = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
-	      vis_velocity_max = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
+	      vis::velocity_min = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
+	      vis::velocity_max = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
 	      
-	      vis_stress_min = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_min);
-	      vis_stress_max = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_max);
+	      vis::stress_min = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_min);
+	      vis::stress_max = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_max);
 	      
 	      fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
-	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis_pressure_min, vis_pressure_max);
-	      fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis_velocity_min, vis_velocity_max);
-	      fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis_stress_min, vis_stress_max);
+	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis::pressure_min, vis::pressure_max);
+	      fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis::velocity_min, vis::velocity_max);
+	      fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis::stress_min, vis::stress_max);
 	      fprintf (timings_ptr, "\n");
 	      
 	      for (int n = 0; n < lbm.inlets; n++)
@@ -670,7 +675,7 @@ int main (int argc, char *argv[])
 	  fprintf (timings_ptr, "pre-processing buffer management time (s): %.3f\n", net.bm_time);
 	  fprintf (timings_ptr, "input configuration reading time (s):      %.3f\n", net.fr_time);
 	  
-	  total_time = UtilityFunctions::myClock () - total_time;
+	  total_time = util::myClock () - total_time;
 	  fprintf (timings_ptr, "total time (s):                            %.3f\n\n", total_time);
 	  
 	  fprintf (timings_ptr, "Sub-domains info:\n\n");
@@ -683,7 +688,7 @@ int main (int argc, char *argv[])
 	  fclose (timings_ptr);
 	}
     }
-  visEnd ();
+  vis::visEnd ();
   net.netEnd ();
   lbm.lbmEnd ();
   
