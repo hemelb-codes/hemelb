@@ -21,6 +21,9 @@ bool sending_frame;
 int send_array_length;
 
 int frame_size;
+
+bool updated_mouse_coords;
+
 #endif //NO_STEER
 
 

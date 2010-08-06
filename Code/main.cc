@@ -1,36 +1,19 @@
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
-#ifndef NO_STEER
-
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <sys/stat.h>
-
-#include <sched.h>
-#include <sys/param.h>
-
-#include <semaphore.h>
-
-#include "steer/network.h"
-#include "vis/visthread.h"
-#endif // NO_STEER
-
 #include "constants.h"
-#include "steer/steering.h"
 #include "usage.h"
 #include "benchmark.h"
-#include "vis/colourpalette.h"
 #include "fileutils.h"
 #include "utilityFunctions.h"
 #include "lb.h"
 #include "net.h"
+
+#include "steer/steering.h"
+#include "steer/network.h"
+#include "vis/visthread.h"
+#include "vis/colourpalette.h"
 #include "vis/rt.h"
 
 #define BCAST_FREQ   1
@@ -40,7 +23,7 @@ int time_step;
 double intra_cycle_time;
 
 #ifndef NO_STEER
-bool updated_mouse_coords;
+
 #endif
 
 FILE *timings_ptr;
