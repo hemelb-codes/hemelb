@@ -1,5 +1,5 @@
-#ifndef HTTP_POST
-#define HTTP_POST
+#ifndef __steer_http_post_h_
+#define __steer_http_post_h_
 
 class HTTP
 {
@@ -11,4 +11,4 @@ class HTTP
     static void get_host_details(char* rank_0_host_details, char* ip_addr);
 };
 
-#endif
+#endif//__steer_http_post_h_

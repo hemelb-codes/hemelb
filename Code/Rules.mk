@@ -2,20 +2,15 @@
 include $(MK)/header.mk
 
 TARGETS = $(EXE)
-SUBDIRS = io vis
+SUBDIRS = io vis steer
 
 $(EXE)_DEPS = config.o \
 	io.o \
 	lb.o \
 	benchmark.o \
-	http_post.o \
 	fileutils.o \
 	net.o \
-	network.o \
 	usage.o \
-	steering-common.o \
-	steering.o \
-	steering-sim-params.o \
         utilityFunctions.o \
 	main.o \
 	$(SUBDIRS_TGTS)

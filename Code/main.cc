@@ -18,12 +18,12 @@
 
 #include <semaphore.h>
 
-#include "network.h"
+#include "steer/network.h"
 #include "vis/visthread.h"
 #endif // NO_STEER
 
 #include "constants.h"
-#include "steering.h"
+#include "steer/steering.h"
 #include "usage.h"
 #include "benchmark.h"
 #include "vis/colourpalette.h"

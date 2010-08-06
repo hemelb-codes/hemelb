@@ -1,3 +1,5 @@
+#ifndef __steer_steering_sim_params_h_
+#define __steer_steering_sim_params_h_
 #ifndef NO_STEER
 
 class simulationParameters {
@@ -30,3 +32,5 @@ class simulationParameters {
 };
 
 #endif // NO_STEER
+
+#endif//__steer_steering_sim_params_h_
