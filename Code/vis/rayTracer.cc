@@ -902,7 +902,8 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 		{
 		  col_pixel.stress = 1.0e+30F;
 		}
-	      col_pixel.i = PixelId(i,j) | RT;
+	      col_pixel.i = PixelId(i,j);
+	      col_pixel.i.isRt = true;
 	      
 	      visWritePixel (&col_pixel);
 	    }

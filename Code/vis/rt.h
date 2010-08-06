@@ -16,14 +16,6 @@
 // the last three digits of the pixel identifier are used to indicate
 // if the pixel is coloured via the ray tracing technique and/or a glyph
 // and/or a particle/pathlet
-#define RT               (1 << 28)
-#define GLYPH            (1 << 29)
-#define STREAKLINE       (1 << 30)
-#define PIXEL_ID_MASK    ((1 << 28) - 1)
-
-#define PixelI(i)        ((i >> 14) & 8191)
-#define PixelJ(i)        (i & 16383)
-#define PixelId(i,j)     ((i << 14) | j)
 
 namespace vis {
   extern float **cluster_voxel;
