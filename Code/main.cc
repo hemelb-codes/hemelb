@@ -10,8 +10,8 @@
 #include "lb.h"
 #include "net.h"
 
-#include "steer/steering.h"
-#include "steer/network.h"
+#include "steering/steering.h"
+#include "steering/Network.h"
 #include "vis/visthread.h"
 #include "vis/colourpalette.h"
 #include "vis/rt.h"

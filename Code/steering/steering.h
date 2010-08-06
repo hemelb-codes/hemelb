@@ -1,5 +1,5 @@
-#ifndef __steer_steering_h_
-#define __steer_steering_h_
+#ifndef __steering_steering_h_
+#define __steering_steering_h_
 
 #ifndef NO_STEER
 #include <pthread.h>
@@ -31,4 +31,4 @@ void  *hemeLB_steer (void*);
 void UpdateSteerableParameters (int*, vis::Vis*, LBM*);
 #endif
 
-#endif//__steer_steering_h_
+#endif//__steering_steering_h_
