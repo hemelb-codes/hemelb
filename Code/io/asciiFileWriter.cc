@@ -1,6 +1,8 @@
 #include <fstream>
 
-#include "asciiFileWriter.h"
+#include "io/asciiFileWriter.h"
+
+using namespace io;
 
 // Implement a constructor that opens the file and creates the Xdr
 // object to write to it.

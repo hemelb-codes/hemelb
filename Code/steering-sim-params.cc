@@ -6,7 +6,7 @@
 #include <rpc/xdr.h>
 
 #include "steering-sim-params.h"
-#include "rt.h"
+#include "vis/rt.h"
 
 using namespace std;
 
@@ -45,58 +45,58 @@ simulationParameters :: simulationParameters() {
 }
 
 void simulationParameters :: collectGlobalVals() {
-
-	this->sim_pressure_min = vis_pressure_min;
-	this->sim_pressure_max = vis_pressure_max;
-	this->sim_velocity_min = vis_velocity_min;
-	this->sim_velocity_max = vis_velocity_max;
-	this->sim_stress_max = vis_stress_max;
-	this->sim_time_step = time_step;
-	this->sim_time = intra_cycle_time;
-	this->sim_cycle = cycle_id;
-	this->sim_n_inlets = vis_inlets;
-
-	//for(int i=0; i<sim_n_inlets; i++) this->sim_inlet_avg_vel[i] = lbm_inlet_flux[i];
-	// for(int i=0; i<sim_n_inlets; i++) printf("avg vel %0.3f\n", this->sim_inlet_avg_vel[i]);
-
-	this->sim_mouse_pressure = vis_mouse_pressure;
-	this->sim_mouse_stress = vis_mouse_stress;
+  
+  this->sim_pressure_min = vis::pressure_min;
+  this->sim_pressure_max = vis::pressure_max;
+  this->sim_velocity_min = vis::velocity_min;
+  this->sim_velocity_max = vis::velocity_max;
+  this->sim_stress_max = vis::stress_max;
+  this->sim_time_step = time_step;
+  this->sim_time = intra_cycle_time;
+  this->sim_cycle = cycle_id;
+  this->sim_n_inlets = vis::inlets;
+  
+  //for(int i=0; i<sim_n_inlets; i++) this->sim_inlet_avg_vel[i] = lbm_inlet_flux[i];
+  // for(int i=0; i<sim_n_inlets; i++) printf("avg vel %0.3f\n", this->sim_inlet_avg_vel[i]);
+  
+  this->sim_mouse_pressure = vis::mouse_pressure;
+  this->sim_mouse_stress = vis::mouse_stress;
 
 }
 
 simulationParameters :: ~simulationParameters() {
-	xdr_destroy(&xdr_sim_params);
-	delete[] sim_inlet_avg_vel;
-//	delete[] sim_params;
+  xdr_destroy(&xdr_sim_params);
+  delete[] sim_inlet_avg_vel;
+  //	delete[] sim_params;
 }
 
 char* simulationParameters :: pack() {
 
-	xdr_double(&xdr_sim_params, &sim_pressure_min);
-	xdr_double(&xdr_sim_params, &sim_pressure_max);
+  xdr_double(&xdr_sim_params, &sim_pressure_min);
+  xdr_double(&xdr_sim_params, &sim_pressure_max);
 
-	xdr_double(&xdr_sim_params, &sim_velocity_min);
-	xdr_double(&xdr_sim_params, &sim_velocity_max);
+  xdr_double(&xdr_sim_params, &sim_velocity_min);
+  xdr_double(&xdr_sim_params, &sim_velocity_max);
 
-	xdr_double(&xdr_sim_params, &sim_stress_min);
-	xdr_double(&xdr_sim_params, &sim_stress_max);
+  xdr_double(&xdr_sim_params, &sim_stress_min);
+  xdr_double(&xdr_sim_params, &sim_stress_max);
 
-	xdr_int(&xdr_sim_params, &sim_time_step);
+  xdr_int(&xdr_sim_params, &sim_time_step);
 
-	xdr_double(&xdr_sim_params, &sim_time);
+  xdr_double(&xdr_sim_params, &sim_time);
 
-	xdr_int(&xdr_sim_params, &sim_cycle);
-	xdr_int(&xdr_sim_params, &sim_n_inlets);
+  xdr_int(&xdr_sim_params, &sim_cycle);
+  xdr_int(&xdr_sim_params, &sim_n_inlets);
 
-//	for(int i=0; i<sim_n_inlets; i++) xdr_double(&xdr_sim_params, &sim_inlet_avg_vel[i]);
+  //	for(int i=0; i<sim_n_inlets; i++) xdr_double(&xdr_sim_params, &sim_inlet_avg_vel[i]);
 
-	xdr_double(&xdr_sim_params, &sim_mouse_pressure);
-	xdr_double(&xdr_sim_params, &sim_mouse_stress);
+  xdr_double(&xdr_sim_params, &sim_mouse_pressure);
+  xdr_double(&xdr_sim_params, &sim_mouse_stress);
 
-	vis_mouse_pressure = -1.0;
-	vis_mouse_stress = -1.0;
+  vis::mouse_pressure = -1.0;
+  vis::mouse_stress = -1.0;
 
-	return sim_params;
+  return sim_params;
 }
 
 #endif // NO_STEER

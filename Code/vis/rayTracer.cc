@@ -1,12 +1,14 @@
-#include "rayTracer.h"
-#include "utilityFunctions.h"
 #include <math.h>
-//TODO Get rid of this include - it sucks.
 #include <stdlib.h>
+#include <vector>
 
+#include "vis/rayTracer.h"
+#include "utilityFunctions.h"
+
+namespace vis {
 
 //TODO put these somewhere more sensible.
-Cluster *cluster = NULL;
+std::vector<Cluster> cluster;
 float **cluster_voxel = NULL;
 float ***cluster_flow_field = NULL;
 
@@ -26,8 +28,7 @@ int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
 
 // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
-void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[])
-{
+void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[]) {
   float tx0, ty0, tz0;
   float tx1, ty1, tz1;
   
@@ -68,7 +69,7 @@ void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*
   float palette[3];
   
   // update the volume rendering of the velocity flow field
-  float scaled_velocity = *(flow_field+1) * vis_velocity_threshold_max_inv;
+  float scaled_velocity = *(flow_field+1) * velocity_threshold_max_inv;
   
   ColourPalette (scaled_velocity, palette);
   
@@ -79,7 +80,7 @@ void rtUpdateRayData (float *flow_field, float ray_t, float ray_segment, void (*
   if (lbm_stress_type != SHEAR_STRESS)
     {
       // update the volume rendering of the von Mises stress flow field
-      float scaled_stress = *(flow_field+2) * vis_stress_threshold_max_inv;
+      float scaled_stress = *(flow_field+2) * stress_threshold_max_inv;
       
       ColourPalette (scaled_stress, palette);
       
@@ -223,7 +224,7 @@ void rtTraverseBlocksFn(float ray_dx[], float **block_flow_field, void (*ColourP
     }
   for (l = 0; l < 3; l++)
     {
-      i_vec[l] = UtilityFunctions::enforceBounds(cluster_blocks_vec[l], 0, (int)(block_size_inv * dx[l]) );
+      i_vec[l] = util::enforceBounds(cluster_blocks_vec[l], 0, (int)(block_size_inv * dx[l]) );
       block_min[l] = (float)i_vec[l] * block_size_f - dx[l];
     }
   i = i_vec[0] * cluster_blocks_yz;
@@ -361,8 +362,7 @@ void rtTraverseBlocksFn(float ray_dx[], float **block_flow_field, void (*ColourP
     }
 }
 
-void rtBuildClusters (Net *net)
-{
+void rtBuildClusters (Net *net) {
   int n_x[] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, +0, +0, +0, +0, +0, +0, +0, +0, +1, +1, +1, +1, +1, +1, +1, +1, +1};
   int n_y[] = {-1, -1, -1, +0, +0, +0, +1, +1, +1, -1, -1, -1, +0, +0, +1, +1, +1, -1, -1, -1, +0, +0, +0, +1, +1, +1};  
   int n_z[] = {-1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1};
@@ -390,8 +390,7 @@ void rtBuildClusters (Net *net)
   
   bool *is_block_visited;
   
-  BlockLocation *block_location_a, *block_location_b;
-  BlockLocation *block_location_a_p, *block_location_b_p;
+  std::vector<BlockLocation> *block_location_a, *block_location_b;
   
   DataBlock *map_block_p;
   ProcBlock *proc_block_p;
@@ -399,31 +398,31 @@ void rtBuildClusters (Net *net)
   Cluster *cluster_p;
   
   
-  net->cluster_id = (short int *)malloc(sizeof(short int) * blocks);
+  net->cluster_id = new short int[blocks];
   
   clusters_max = 20;
   clusters = 0;
-  cluster = (Cluster *)malloc(sizeof(Cluster) * clusters_max);
+  cluster = std::vector<Cluster>(clusters_max);
   
-  for (n = 0; n < blocks; n++)
-    {
-      net->cluster_id[ n ] = -1;
-    }
+  for (n = 0; n < blocks; n++)     {
+    net->cluster_id[ n ] = -1;
+  }
+  
   cluster_p = NULL;
   cluster_block_max_i = dummy;
   cluster_block_max_j = dummy;
   cluster_block_max_k = dummy;
   
-  is_block_visited = (bool *)malloc(sizeof(bool) * blocks);
+  is_block_visited = new bool[blocks];
   
   blocks_buffer_size = 10000;
-  block_location_a = (BlockLocation *)malloc(sizeof(BlockLocation) * blocks_buffer_size);
-  block_location_b = (BlockLocation *)malloc(sizeof(BlockLocation) * blocks_buffer_size);
+  block_location_a = new std::vector<BlockLocation>(blocks_buffer_size);
+  block_location_b = new std::vector<BlockLocation>(blocks_buffer_size);
   
-  for (n = 0; n < blocks; n++)
-    {
-      is_block_visited[ n ] = 0;
-    }
+  for (n = 0; n < blocks; n++) {
+    is_block_visited[ n ] = 0;
+  }
+  
   block_min_x = +1000000000;
   block_min_y = +1000000000;
   block_min_z = +1000000000;
@@ -433,236 +432,245 @@ void rtBuildClusters (Net *net)
   
   n = -1;
   
-  for (i = 0; i < blocks_x; i++)
-    {
-      for (j = 0; j < blocks_y; j++)
-	{
-	  for (k = 0; k < blocks_z; k++)
-	    {
-	      if ((proc_block_p = &net->proc_block[ ++n ])->proc_id == NULL) continue;
+  for (i = 0; i < blocks_x; i++) {
+    for (j = 0; j < blocks_y; j++) {
+      for (k = 0; k < blocks_z; k++) {
+	if ((proc_block_p = &net->proc_block[ ++n ])->proc_id == NULL)
+	  continue;
+	
+	block_min_x = util::min(block_min_x, i);
+	block_min_y = util::min(block_min_y, j);
+	block_min_z = util::min(block_min_z, k);
+	block_max_x = util::max(block_max_x, i);
+	block_max_y = util::max(block_max_y, j);
+	block_max_z = util::max(block_max_z, k);
+	
+	if (is_block_visited[ n ]) 
+	  continue;
+	
+	is_block_visited[ n ] = 1;
+	
+	blocks_a = 0;
+	
+	for (m = 0; m < sites_in_a_block; m++) {
+	  if (proc_block_p->proc_id[ m ] == net->id) {
+	    BlockLocation& tempBlockLoc = block_location_a->at(0);
+	    tempBlockLoc.i = i;
+	    tempBlockLoc.j = j;
+	    tempBlockLoc.k = k;
+	    blocks_a = 1;
+	    break;
+	  }
+	}
+	
+	if (blocks_a == 0)
+	  continue;
 	      
-	      block_min_x = UtilityFunctions::min(block_min_x, i);
-	      block_min_y = UtilityFunctions::min(block_min_y, j);
-	      block_min_z = UtilityFunctions::min(block_min_z, k);
-	      block_max_x = UtilityFunctions::max(block_max_x, i);
-	      block_max_y = UtilityFunctions::max(block_max_y, j);
-	      block_max_z = UtilityFunctions::max(block_max_z, k);
+	if (clusters == clusters_max) {
+	  clusters_max <<= 1;
+	  cluster.resize(clusters_max);
+	}
+	
+	cluster_p = &cluster[ clusters ];
+	++clusters;
+	
+	cluster_p->block_min[0] = i;
+	cluster_p->block_min[1] = j;
+	cluster_p->block_min[2] = k;
+	
+	cluster_block_max_i = i;
+	cluster_block_max_j = j;
+	cluster_block_max_k = k;
+	
+	net->cluster_id[ n ] = clusters - 1;
+	
+	are_blocks_incrementing = 1;
+	
+	while (are_blocks_incrementing) {
+	  blocks_b = 0;
+	  are_blocks_incrementing = 0;
+	  
+	  for (index_a = 0; index_a < blocks_a; index_a++) {
+	    const BlockLocation& tempBlockLoc = block_location_a->at(index_a);
+	    
+	    for (l = 0; l < 26; l++) {
+	      neigh_i = tempBlockLoc.i + n_x[ l ];
+	      neigh_j = tempBlockLoc.j + n_y[ l ];
+	      neigh_k = tempBlockLoc.k + n_z[ l ];
 	      
-	      if (is_block_visited[ n ]) continue;
+	      if (neigh_i == -1 || neigh_i == blocks_x) continue;
+	      if (neigh_j == -1 || neigh_j == blocks_y) continue;
+	      if (neigh_k == -1 || neigh_k == blocks_z) continue;
 	      
-	      is_block_visited[ n ] = 1;
+	      block_id = (neigh_i * blocks_y + 
+			  neigh_j) * blocks_z +
+		neigh_k;
 	      
-	      blocks_a = 0;
+	      if (is_block_visited[ block_id ] ||
+		  (proc_block_p = &net->proc_block[ block_id ])->proc_id == NULL) {
+		continue;
+	      }
 	      
-	      for (m = 0; m < sites_in_a_block; m++)
-		{
-		  if (proc_block_p->proc_id[ m ] == net->id)
-		    {
-		      block_location_a_p = &block_location_a[ 0 ];
-		      block_location_a_p->i = i;
-		      block_location_a_p->j = j;
-		      block_location_a_p->k = k;
-		      blocks_a = 1;
-		      break;
-		    }
+	      is_site_found = 0;
+	      
+	      for (m = 0; m < sites_in_a_block; m++) {
+		if (proc_block_p->proc_id[ m ] == net->id) {
+		  is_site_found = 1;
+		  break;
 		}
-	      if (blocks_a == 0) continue;
+	      }
 	      
-	      if (clusters == clusters_max)
-		{
-		  clusters_max <<= 1;
-		  cluster = (Cluster *)realloc(cluster, sizeof(Cluster) * clusters_max);
-		}
-	      cluster_p = &cluster[ clusters ];
-	      ++clusters;
+	      if (!is_site_found) continue;
 	      
-	      cluster_p->block_min[0] = i;
-	      cluster_p->block_min[1] = j;
-	      cluster_p->block_min[2] = k;
-	      
-	      cluster_block_max_i = i;
-	      cluster_block_max_j = j;
-	      cluster_block_max_k = k;
-	      
-	      net->cluster_id[ n ] = clusters - 1;
+	      is_block_visited[ block_id ] = 1;
 	      
 	      are_blocks_incrementing = 1;
 	      
-	      while (are_blocks_incrementing)
-		{
-		  blocks_b = 0;
-		  are_blocks_incrementing = 0;
-		  
-		  for (index_a = 0; index_a < blocks_a; index_a++)
-		    {
-		      block_location_a_p = &block_location_a[ index_a ];
-		      
-		      for (l = 0; l < 26; l++)
-			{
-			  neigh_i = block_location_a_p->i + n_x[ l ];
-			  neigh_j = block_location_a_p->j + n_y[ l ];
-			  neigh_k = block_location_a_p->k + n_z[ l ];
-			  
-			  if (neigh_i == -1 || neigh_i == blocks_x) continue;
-			  if (neigh_j == -1 || neigh_j == blocks_y) continue;
-			  if (neigh_k == -1 || neigh_k == blocks_z) continue;
-			  
-			  block_id = (neigh_i * blocks_y + neigh_j) * blocks_z + neigh_k;
-			  
-			  if (is_block_visited[ block_id ] ||
-			      (proc_block_p = &net->proc_block[ block_id ])->proc_id == NULL)
-			    {
-			      continue;
-			    }
-			  is_site_found = 0;
-			  
-			  for (m = 0; m < sites_in_a_block; m++)
-			    {
-			      if (proc_block_p->proc_id[ m ] == net->id)
-				{
-				  is_site_found = 1;
-				  break;
-				}
-			    }
-			  if (!is_site_found) continue;
-			  
-			  is_block_visited[ block_id ] = 1;
-			  
-			  are_blocks_incrementing = 1;
-			  
-			  if (blocks_b == blocks_buffer_size)
-			    {
-			      blocks_buffer_size *= 2;
-			      block_location_a = (BlockLocation *)realloc(block_location_a,
-									  sizeof(BlockLocation) * blocks_buffer_size);
-			      block_location_b = (BlockLocation *)realloc(block_location_b,
-									  sizeof(BlockLocation) * blocks_buffer_size); 
-			    }
-			  block_location_b_p = &block_location_b[ blocks_b ];
-			  block_location_b_p->i = neigh_i;
-			  block_location_b_p->j = neigh_j;
-			  block_location_b_p->k = neigh_k;
-			  ++blocks_b;
-			  
-			  cluster_p->block_min[0] = UtilityFunctions::min((int)cluster_p->block_min[0], neigh_i);
-			  cluster_p->block_min[1] = UtilityFunctions::min((int)cluster_p->block_min[1], neigh_j);
-			  cluster_p->block_min[2] = UtilityFunctions::min((int)cluster_p->block_min[2], neigh_k);
-			  
-			  cluster_block_max_i = UtilityFunctions::max((int)cluster_block_max_i, neigh_i);
-			  cluster_block_max_j = UtilityFunctions::max((int)cluster_block_max_j, neigh_j);
-			  cluster_block_max_k = UtilityFunctions::max((int)cluster_block_max_k, neigh_k);
-			  
-			  net->cluster_id[ block_id ] = clusters - 1;
-			}
-		    }
-		  block_location_a_p = block_location_a;
-		  block_location_a = block_location_b;
-		  block_location_b = block_location_a_p;
-		  blocks_a = blocks_b;
-		}
-	      cluster_p->x[0] = cluster_p->block_min[0] * block_size - 0.5F * sites_x;
-	      cluster_p->x[1] = cluster_p->block_min[1] * block_size - 0.5F * sites_y;
-	      cluster_p->x[2] = cluster_p->block_min[2] * block_size - 0.5F * sites_z;
+	      if (blocks_b == blocks_buffer_size) {
+		blocks_buffer_size *= 2;
+		
+		block_location_a->resize(blocks_buffer_size);
+		block_location_b->resize(blocks_buffer_size);
+	      }
 	      
-	      cluster_p->blocks_x = 1 + cluster_block_max_i - cluster_p->block_min[0];
-	      cluster_p->blocks_y = 1 + cluster_block_max_j - cluster_p->block_min[1];
-	      cluster_p->blocks_z = 1 + cluster_block_max_k - cluster_p->block_min[2];
+	      BlockLocation& tempBlockLoc = block_location_b->at(blocks_b);
+	      tempBlockLoc.i = neigh_i;
+	      tempBlockLoc.j = neigh_j;
+	      tempBlockLoc.k = neigh_k;
+	      ++blocks_b;
+	      
+	      cluster_p->block_min[0] = util::min((int)cluster_p->block_min[0], neigh_i);
+	      cluster_p->block_min[1] = util::min((int)cluster_p->block_min[1], neigh_j);
+	      cluster_p->block_min[2] = util::min((int)cluster_p->block_min[2], neigh_k);
+	      
+	      cluster_block_max_i = util::max((int)cluster_block_max_i, neigh_i);
+	      cluster_block_max_j = util::max((int)cluster_block_max_j, neigh_j);
+	      cluster_block_max_k = util::max((int)cluster_block_max_k, neigh_k);
+	      
+	      net->cluster_id[ block_id ] = clusters - 1;
 	    }
-	}
-    }
-  free(block_location_b);
-  free(block_location_a);
-  
-  free(is_block_visited);
-  
-  vis_ctr_x = 0.5F * block_size * (block_min_x + block_max_x);
-  vis_ctr_y = 0.5F * block_size * (block_min_y + block_max_y);
-  vis_ctr_z = 0.5F * block_size * (block_min_z + block_max_z);
-  
-  
-  cluster_voxel = (float **)malloc(sizeof(float *) * net->my_sites*VIS_FIELDS);
-  
-  cluster_flow_field = (float ***)malloc(sizeof(float **) * clusters);
-  
-  for (cluster_id = 0; cluster_id < clusters; cluster_id++)
-    {
-      cluster_p = &cluster[ cluster_id ];
-      
-      cluster_flow_field[ cluster_id ] = (float **)malloc(sizeof(float *) *
-							  cluster_p->blocks_x *
-							  cluster_p->blocks_y *
-							  cluster_p->blocks_z);
-      for (l = 0; l < 3; l++)
-	{
-	  voxel_min[l] = +1000000000;
-	  voxel_max[l] = -1000000000;
-	}
-      n = -1;
-      
-      for (i = 0; i < cluster_p->blocks_x; i++)
-	{
-	  block_coord[0] = (i + cluster_p->block_min[0]) * block_size;
+	  }
 	  
-	  for (j = 0; j < cluster_p->blocks_y; j++)
-	    {
-	      block_coord[1] = (j + cluster_p->block_min[1]) * block_size;
-	      
-	      for (k = 0; k < cluster_p->blocks_z; k++)
-		{
-		  block_coord[2] = (k + cluster_p->block_min[2]) * block_size;
-		  
-		  block_id = ((i + cluster_p->block_min[0]) * blocks_y +
-			      (j + cluster_p->block_min[1])) * blocks_z +
-		    (k + cluster_p->block_min[2]);
-		  
-		  cluster_flow_field[ cluster_id ][ ++n ] = NULL;
-		  
-		  if (net->cluster_id[ block_id ] != cluster_id)
-		    {
-		      continue;
-		    }
-		  map_block_p = &net->map_block[ block_id ];
-		  
-		  cluster_flow_field[ cluster_id ][n] = (float *)malloc(sizeof(float) * sites_in_a_block*VIS_FIELDS);
-		  
-		  m = -1;
-		  
-		  for (ii[0] = 0; ii[0] < block_size; ii[0]++)
-		    for (ii[1] = 0; ii[1] < block_size; ii[1]++)
-		      for (ii[2] = 0; ii[2] < block_size; ii[2]++)
-			{
-			  my_site_id = map_block_p->site_data[ ++m ];
-			  
-			  if (my_site_id & (1U << 31U))
-			    {
-			      for (l = 0; l < VIS_FIELDS; l++)
-				cluster_flow_field[ cluster_id ][n][ m*VIS_FIELDS+l ] = -1.0F;
-			      continue;
-			    }
-			  for (l = 0; l < VIS_FIELDS; l++)
-			    cluster_flow_field[ cluster_id ][n][ m*VIS_FIELDS+l ] = 1.0F;
-			  
-			  for (l = 0; l < VIS_FIELDS; l++)
-			    cluster_voxel[ my_site_id*VIS_FIELDS+l ] = &cluster_flow_field[ cluster_id ][n][ m*VIS_FIELDS+l ];
-			  
-			  for (l = 0; l < 3; l++)
-			    {
-			      voxel_min[l] = UtilityFunctions::min(voxel_min[l], ii[l] + block_coord[l]);
-			      voxel_max[l] = UtilityFunctions::max(voxel_max[l], ii[l] + block_coord[l]);
-			    }
-			}
-		}
-	    }
+	  // swap pointers in block_location_a/_b
+	  std::vector<BlockLocation>* tempBlockLocation =
+	    block_location_a;
+	  block_location_a = block_location_b;
+	  block_location_b = tempBlockLocation;
+	  
+	  blocks_a = blocks_b;
 	}
-      cluster_p->minmax_x[0] = (float)voxel_min[0] - 0.5F * (float)sites_x;
-      cluster_p->minmax_y[0] = (float)voxel_min[1] - 0.5F * (float)sites_y;
-      cluster_p->minmax_z[0] = (float)voxel_min[2] - 0.5F * (float)sites_z;
-      
-      cluster_p->minmax_x[1] = (float)(voxel_max[0] + 1) - 0.5F * (float)sites_x;
-      cluster_p->minmax_y[1] = (float)(voxel_max[1] + 1) - 0.5F * (float)sites_y;
-      cluster_p->minmax_z[1] = (float)(voxel_max[2] + 1) - 0.5F * (float)sites_z;
+	
+	cluster_p->x[0] = cluster_p->block_min[0] * block_size -
+	  0.5F * sites_x;
+	cluster_p->x[1] = cluster_p->block_min[1] * block_size -
+	  0.5F * sites_y;
+	cluster_p->x[2] = cluster_p->block_min[2] * block_size -
+	  0.5F * sites_z;
+	
+	cluster_p->blocks_x = 1 + cluster_block_max_i -
+	  cluster_p->block_min[0];
+	cluster_p->blocks_y = 1 + cluster_block_max_j -
+	  cluster_p->block_min[1];
+	cluster_p->blocks_z = 1 + cluster_block_max_k -
+	  cluster_p->block_min[2];
+      }
     }
-  free(net->cluster_id);
+  }
+  
+  delete block_location_b;
+  delete block_location_a;
+  
+  delete[] is_block_visited;
+  
+  ctr_x = 0.5F * block_size * (block_min_x + block_max_x);
+  ctr_y = 0.5F * block_size * (block_min_y + block_max_y);
+  ctr_z = 0.5F * block_size * (block_min_z + block_max_z);
+  
+  cluster_voxel = new float *[net->my_sites*VIS_FIELDS];
+  
+  cluster_flow_field = new float **[clusters];
+  
+  for (cluster_id = 0; cluster_id < clusters; cluster_id++) {
+    cluster_p = &cluster[ cluster_id ];
+    
+    cluster_flow_field[ cluster_id ] = new float *[cluster_p->blocks_x *
+						   cluster_p->blocks_y *
+						   cluster_p->blocks_z];
+    
+    for (l = 0; l < 3; l++) {
+      voxel_min[l] = +1000000000;
+      voxel_max[l] = -1000000000;
+    }
+    
+    n = -1;
+    
+    for (i = 0; i < cluster_p->blocks_x; i++) {
+      block_coord[0] = (i + cluster_p->block_min[0]) * block_size;
+      
+      for (j = 0; j < cluster_p->blocks_y; j++) {
+	block_coord[1] = (j + cluster_p->block_min[1]) * block_size;
+	
+	for (k = 0; k < cluster_p->blocks_z; k++) {
+	  block_coord[2] = (k + cluster_p->block_min[2]) * block_size;
+	  
+	  block_id = ((i + cluster_p->block_min[0]) * blocks_y +
+		      (j + cluster_p->block_min[1])) * blocks_z +
+	    (k + cluster_p->block_min[2]);
+	  
+	  cluster_flow_field[ cluster_id ][ ++n ] = NULL;
+	  
+	  if (net->cluster_id[ block_id ] != cluster_id) {
+	    continue;
+	  }
+	  
+	  map_block_p = &net->map_block[ block_id ];
+	  
+	  cluster_flow_field[ cluster_id ][n] = new float[sites_in_a_block *
+							  VIS_FIELDS];
+	  
+	  m = -1;
+	  
+	  for (ii[0] = 0; ii[0] < block_size; ii[0]++)
+	    for (ii[1] = 0; ii[1] < block_size; ii[1]++)
+	      for (ii[2] = 0; ii[2] < block_size; ii[2]++) {
+		
+		my_site_id = map_block_p->site_data[ ++m ];
+		
+		if (my_site_id & (1U << 31U)) {
+		  for (l = 0; l < VIS_FIELDS; l++)
+		    cluster_flow_field[ cluster_id ][n][ m*VIS_FIELDS+l ] = -1.0F;
+		  
+		  continue;
+		}
+		
+		for (l = 0; l < VIS_FIELDS; l++)
+		  cluster_flow_field[ cluster_id ][n][ m*VIS_FIELDS+l ] = 1.0F;
+		
+		for (l = 0; l < VIS_FIELDS; l++)
+		  cluster_voxel[ my_site_id*VIS_FIELDS+l ] = &cluster_flow_field[ cluster_id ][n][ m*VIS_FIELDS+l ];
+			  
+		for (l = 0; l < 3; l++) {
+		  voxel_min[l] = util::min(voxel_min[l],
+						       ii[l] + block_coord[l]);
+		  voxel_max[l] = util::max(voxel_max[l],
+						       ii[l] + block_coord[l]);
+		}
+		
+	      } // for ii[0..2]
+	  
+	} // for k
+      }   // for j
+    }     // for i
+    
+    cluster_p->minmax_x[0] = (float)voxel_min[0] - 0.5F * (float)sites_x;
+    cluster_p->minmax_y[0] = (float)voxel_min[1] - 0.5F * (float)sites_y;
+    cluster_p->minmax_z[0] = (float)voxel_min[2] - 0.5F * (float)sites_z;
+    
+    cluster_p->minmax_x[1] = (float)(voxel_max[0] + 1) - 0.5F * (float)sites_x;
+    cluster_p->minmax_y[1] = (float)(voxel_max[1] + 1) - 0.5F * (float)sites_y;
+    cluster_p->minmax_z[1] = (float)(voxel_max[2] + 1) - 0.5F * (float)sites_z;
+  }
+  delete[] net->cluster_id;
 }
 
 
@@ -781,10 +789,10 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 	{
 	  continue;
 	}
-      subimage_pix[0] = UtilityFunctions::max(subimage_pix[0], 0);
-      subimage_pix[1] = UtilityFunctions::min(subimage_pix[1], pixels_x - 1);
-      subimage_pix[2] = UtilityFunctions::max(subimage_pix[2], 0);
-      subimage_pix[3] = UtilityFunctions::min(subimage_pix[3], pixels_y - 1);
+      subimage_pix[0] = util::max(subimage_pix[0], 0);
+      subimage_pix[1] = util::min(subimage_pix[1], pixels_x - 1);
+      subimage_pix[2] = util::max(subimage_pix[2], 0);
+      subimage_pix[3] = util::min(subimage_pix[3], pixels_y - 1);
       
       // if (p0[0] >= v[0][0] && p0[1] >= v[0][1] && p0[2] >= v[0][2] &&
       // 	  p0[0] <= v[1][0] && p0[1] <= v[1][1] && p0[2] <= v[1][2])
@@ -884,11 +892,11 @@ void rtRayTracing (void (*ColourPalette) (float value, float col[]))
 		}
 	      col_pixel.dt       = ray_length;
 	      col_pixel.t        = ray_t_min + t_near;
-	      col_pixel.density  = (ray_density - vis_density_threshold_min) * vis_density_threshold_minmax_inv;
+	      col_pixel.density  = (ray_density - density_threshold_min) * density_threshold_minmax_inv;
 	      
 	      if (ray_stress < 1.0e+30F)
 		{
-		  col_pixel.stress = ray_stress * vis_stress_threshold_max_inv;
+		  col_pixel.stress = ray_stress * stress_threshold_max_inv;
 		}
 	      else
 		{
@@ -914,25 +922,27 @@ void rtUpdateClusterVoxel (int i, float density, float velocity, float stress)
 }
 
 
-void rtEnd (void)
-{
+void rtEnd (void) {
   int m, n;
   
-  
-  for (n = 0; n < clusters; n++)
-    {
-      for (m = 0; m < cluster[n].blocks_x * cluster[n].blocks_y * cluster[n].blocks_z; m++)
-  	{
-  	  if (cluster_flow_field[ n ][ m ] != NULL)
-  	    {
-  	      free(cluster_flow_field[ n ][ m ]);
-  	    }
-  	}
-      free(cluster_flow_field[ n ]);
+  for (n = 0; n < clusters; n++) {
+    for (m = 0;
+	 m < (cluster[n].blocks_x * cluster[n].blocks_y * cluster[n].blocks_z);
+	 m++) {
+      
+      if (cluster_flow_field[ n ][ m ] != NULL) {
+	delete[] cluster_flow_field[ n ][ m ];
+      }
+      
     }
-  free(cluster_flow_field);
+    delete[] cluster_flow_field[ n ];
+  }
   
-  free(cluster_voxel);
+  delete[] cluster_flow_field;
   
-  free(cluster);
+  delete[] cluster_voxel;
+  
+  cluster.clear();
+}
+
 }

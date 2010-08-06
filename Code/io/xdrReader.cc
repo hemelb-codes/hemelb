@@ -2,7 +2,9 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "xdrReader.h"
+#include "io/xdrReader.h"
+
+using namespace io;
 
 // Constructor to create an Xdr object based on a file.
 XdrReader::XdrReader(FILE* xdrFile) {

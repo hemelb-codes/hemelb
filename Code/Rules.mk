@@ -1,27 +1,17 @@
 # -*- mode: makefile;-*-
 include $(MK)/header.mk
 
-include $(MK)/Makefile.${HEMELB_MACHINE}
-
 TARGETS = $(EXE)
-SUBDIRS = io
+SUBDIRS = io vis
 
-hemelb_DEPS = config.o \
+$(EXE)_DEPS = config.o \
 	io.o \
 	lb.o \
-        visualisationControl.o \
-        glyphDrawer.o \
-        streaklineDrawer.o \
-        rayTracer.o \
 	benchmark.o \
 	http_post.o \
 	fileutils.o \
-        colpixel.o \
-        rt.o \
 	net.o \
 	network.o \
-	colourpalette.o \
-	visthread.o \
 	usage.o \
 	steering-common.o \
 	steering.o \
@@ -29,9 +19,8 @@ hemelb_DEPS = config.o \
         utilityFunctions.o \
 	main.o \
 	$(SUBDIRS_TGTS)
-INCLUDES_$(d) = $(INCLUDEPATHS)
-LIBDIRS_$(d) = $(LIBPATHS)
 
+HEMELB_INCLUDEPATHS += $(TOP)
 
 include $(MK)/footer.mk
 # This is just a convenience - to let you know when make has stopped
