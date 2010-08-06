@@ -158,15 +158,15 @@ int main (int argc, char *argv[])
   
   strcpy ( input_config_name , input_file_path );
   strcat ( input_config_name , "/config.dat" );
-  FileUtils::check_file(input_config_name);
+  util::check_file(input_config_name);
 
   strcpy ( input_parameters_name , input_file_path );
   strcat ( input_parameters_name , "/pars.asc" );
-  FileUtils::check_file(input_parameters_name);
+  util::check_file(input_parameters_name);
   
   strcpy ( vis_parameters_name , input_file_path );
   strcat ( vis_parameters_name , "/rt_pars.asc" );
-  FileUtils::check_file(vis_parameters_name);
+  util::check_file(vis_parameters_name);
   
   // Create directory path for the output images
   strcpy (image_directory, input_file_path);
@@ -179,8 +179,8 @@ int main (int argc, char *argv[])
   // Actually create the directories.
   if (net.id == 0)
   {
-    FileUtils::MakeDirAllRXW(image_directory);
-    FileUtils::MakeDirAllRXW(snapshot_directory);
+    util::MakeDirAllRXW(image_directory);
+    util::MakeDirAllRXW(snapshot_directory);
   }
   
   sprintf ( procs_string, "%i", net.procs);
@@ -245,8 +245,8 @@ int main (int argc, char *argv[])
   UpdateSteerableParameters (&doRendering, &vis::vis, &lbm);
 #endif
 
-  FileUtils::DeleteDirContents (snapshot_directory);
-  FileUtils::DeleteDirContents (image_directory);
+  util::DeleteDirContents (snapshot_directory);
+  util::DeleteDirContents (image_directory);
   
   total_time_steps = 0;
   
@@ -423,8 +423,8 @@ int main (int argc, char *argv[])
 	  
 	  if (restart)
 	    {
-	      FileUtils::DeleteDirContents (snapshot_directory);
-              FileUtils::DeleteDirContents (image_directory);
+	      util::DeleteDirContents (snapshot_directory);
+              util::DeleteDirContents (image_directory);
 	      
 	      lbm.lbmRestart (&net);
 #ifndef NO_STREAKLINES
