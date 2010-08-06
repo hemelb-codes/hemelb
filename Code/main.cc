@@ -342,17 +342,15 @@ int main (int argc, char *argv[])
 	      vis::visStreaklines(time_step, lbm.period, &net);
 #endif
 #ifndef NO_STEER
-	      if (total_time_steps%BCAST_FREQ == 0 && doRendering && !write_snapshot_image)
-		{
-		  vis::visRender (RECV_BUFFER_A, vis::ColourPalette::PickColour, &net);
-		  
-		  if (vis::mouse_x >= 0 && vis::mouse_y >= 0 && updated_mouse_coords)
-		    {
-		      for (int i = 0; i < vis::col_pixels_recv[RECV_BUFFER_A]; i++)
-			{
-			  if ((vis::col_pixel_recv[RECV_BUFFER_A][i].i & RT) &&
-			      (vis::col_pixel_recv[RECV_BUFFER_A][i].i & PIXEL_ID_MASK) == PixelId (vis::mouse_x,vis::mouse_y))
-			    {
+	      if (total_time_steps%BCAST_FREQ == 0 && doRendering && !write_snapshot_image) {
+		vis::visRender (RECV_BUFFER_A, vis::ColourPalette::PickColour, &net);
+		
+		if (vis::mouse_x >= 0 && vis::mouse_y >= 0 && updated_mouse_coords) {
+		  for (int i = 0; i < vis::col_pixels_recv[RECV_BUFFER_A]; i++) {
+		    if (vis::col_pixel_recv[RECV_BUFFER_A][i].i.isRt &&
+			vis::col_pixel_recv[RECV_BUFFER_A][i].i.i == vis::mouse_x &&
+			vis::col_pixel_recv[RECV_BUFFER_A][i].i.j == vis::mouse_y)
+		      {
 			      vis::visCalculateMouseFlowField (&vis::col_pixel_recv[RECV_BUFFER_A][i], &lbm);
 			      break;
 			    }

@@ -744,7 +744,8 @@ void streaklineDrawer::render ()
 	  col_pixel.particle_vel      = particle[n].vel;
 	  col_pixel.particle_z        = p2[2];
 	  col_pixel.particle_inlet_id = particle[n].inlet_id;
-	  col_pixel.i                 = PixelId(i, j) | STREAKLINE;
+	  col_pixel.i                 = PixelId(i, j);
+	  col_pixel.i.isStreakline    = true;
 	  
 	  visWritePixel (&col_pixel);
 	}
