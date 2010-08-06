@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "asciiStreamWriter.h"
+#include "io/asciiStreamWriter.h"
 
-using namespace std;
+using namespace io;
 
 // Method to get the current position in the stream.
 unsigned int AsciiStreamWriter::getCurrentStreamPosition() const {
@@ -14,7 +14,7 @@ void AsciiStreamWriter::writeFieldSeparator() {
   *outStream << ' ';
 }
 void AsciiStreamWriter::writeRecordSeparator() {
-  *outStream << endl;
+  *outStream << std::endl;
 }
 
 

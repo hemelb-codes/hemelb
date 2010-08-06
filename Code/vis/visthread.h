@@ -1,3 +1,6 @@
+#ifndef __vis_visthread_h_
+#define __vis_visthread_h_
+
 #ifndef NO_STEER
 
 #include <pthread.h>
@@ -16,3 +19,5 @@ void setRenderState(int val);
 void* hemeLB_network(void *ptr);
 
 #endif // NO_STEER
+
+#endif //__vis_visthread_h_

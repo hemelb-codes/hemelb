@@ -1,16 +1,18 @@
-#ifndef __xdrMemWriter_h_
-#define __xdrMemWriter_h_
+#ifndef __io_xdrMemWriter_h_
+#define __io_xdrMemWriter_h_
 
-#include "xdrWriter.h"
+#include "io/xdrWriter.h"
 
-// Class for writing to an Xdr object in memory. Derives from a base
-// XdrWriter which implements all the reading functions.
+namespace io {
+  // Class for writing to an Xdr object in memory. Derives from a base
+  // XdrWriter which implements all the reading functions.
 
-class XdrMemWriter : public XdrWriter {
- public:
-  // Constructor and destructor for the in-memory Xdr writer.
-  XdrMemWriter(char* dataBuffer, unsigned int dataLength);
-  ~XdrMemWriter();
-};
+  class XdrMemWriter : public XdrWriter {
+  public:
+    // Constructor and destructor for the in-memory Xdr writer.
+    XdrMemWriter(char* dataBuffer, unsigned int dataLength);
+    ~XdrMemWriter();
+  };
+}
 
-#endif //__xdrMemWriter_h_
+#endif //__io_xdrMemWriter_h_

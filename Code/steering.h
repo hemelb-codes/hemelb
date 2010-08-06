@@ -2,7 +2,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#include "rt.h"
+#include "vis/rt.h"
 #include "lb.h"
 
 extern pthread_mutex_t network_buffer_copy_lock;
@@ -24,5 +24,5 @@ extern pthread_mutex_t steer_param_lock;
 
 
 void  *hemeLB_steer (void*);
-void UpdateSteerableParameters (int*, Vis*, LBM*);
+void UpdateSteerableParameters (int*, vis::Vis*, LBM*);
 #endif

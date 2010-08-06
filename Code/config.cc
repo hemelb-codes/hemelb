@@ -1,8 +1,8 @@
 /* This file contains the globals.
  * Should be removed ASAP
  */
-#include "colpixel.h"
-#include "rt.h"
+#include "vis/colpixel.h"
+#include "vis/rt.h"
 
 #ifndef NO_STEER
 #include <semaphore.h>
@@ -52,14 +52,6 @@ int *f_recv_iv = NULL;
 
 short int *f_data = NULL;
 
-int col_pixels, col_pixels_max;
-int col_pixels_recv[2];
-
-int *col_pixel_id = NULL;
-
-ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
-ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
-
 int is_bench;
 
 // 3 variables needed for convergence-enabled simulations
@@ -89,42 +81,51 @@ int lbm_terminate_simulation;
 
 int net_machines;
 
-double vis_pressure_min = 0.0, vis_pressure_max = 0.0;
-double vis_velocity_min = 0.0, vis_velocity_max = 0.0;
-double vis_stress_min = 0.0, vis_stress_max = 0.0;
-double vis_time = 0.0;
+namespace vis {
+  int col_pixels, col_pixels_max;
+  int col_pixels_recv[2];
+  
+  int *col_pixel_id = NULL;
+  
+  ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
+  ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
+  
+  double pressure_min = 0.0, pressure_max = 0.0;
+  double velocity_min = 0.0, velocity_max = 0.0;
+  double stress_min = 0.0, stress_max = 0.0;
+  double time = 0.0;
 
-int vis_time_step = 0, vis_cycle = 0;
-int vis_period = 0, vis_inlets = 0;
-int vis_image_freq = 0;
-int vis_pixels_max = 0;
-int vis_streaklines = 1;
+  int time_step = 0, cycle = 0;
+  int period = 0, inlets = 0;
+  int image_freq = 0;
+  int pixels_max = 0;
+  int streaklines = 1;
 
-float block_size_f;
-float block_size_inv;
+  float block_size_f;
+  float block_size_inv;
 
-float vis_physical_pressure_threshold_min;
-float vis_physical_pressure_threshold_max;
-float vis_physical_velocity_threshold_max;
-float vis_physical_stress_threshold_max;
-float vis_density_threshold_min, vis_density_threshold_minmax_inv;
-float vis_velocity_threshold_max_inv;
-float vis_stress_threshold_max_inv;
-float vis_brightness;
-float vis_ctr_x, vis_ctr_y, vis_ctr_z;
-double vis_mouse_pressure, vis_mouse_stress;
-float vis_streaklines_per_pulsatile_period, vis_streakline_length;
+  float physical_pressure_threshold_min;
+  float physical_pressure_threshold_max;
+  float physical_velocity_threshold_max;
+  float physical_stress_threshold_max;
+  float density_threshold_min, density_threshold_minmax_inv;
+  float velocity_threshold_max_inv;
+  float stress_threshold_max_inv;
+  float brightness;
+  float ctr_x, ctr_y, ctr_z;
+  double mouse_pressure, mouse_stress;
+  float streaklines_per_pulsatile_period, streakline_length;
 
-int vis_mouse_x, vis_mouse_y;
-int vis_perform_rendering;
-int vis_mode;
+  int mouse_x, mouse_y;
+  int perform_rendering;
+  int mode;
 
 
-Screen screen;
+  Screen screen;
 
-Viewpoint viewpoint;
+  Viewpoint viewpoint;
 
-Vis vis;
-
+  Vis vis;
+}
 
 

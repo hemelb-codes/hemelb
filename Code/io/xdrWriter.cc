@@ -1,8 +1,9 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "xdrWriter.h"
+#include "io/xdrWriter.h"
 
+using namespace io;
 // Functions to write simple types out to the Xdr stream.
 // Sadly templating is non-trivial due to XDR's naming.
 void XdrWriter::_write(int const& value) {

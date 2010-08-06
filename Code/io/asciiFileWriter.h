@@ -1,18 +1,21 @@
-#ifndef __asciiFileWriter_h_
-#define __asciiFileWriter_h_
+#ifndef __io_asciiFileWriter_h_
+#define __io_asciiFileWriter_h_
 
 #include <iostream>
 
-#include "asciiStreamWriter.h"
+#include "io/asciiStreamWriter.h"
 
-// Class to write a file. The actual write functions are implemented
-// in the base class.
-class AsciiFileWriter : public AsciiStreamWriter {
+namespace io {
+  // Class to write a file. The actual write functions are implemented
+  // in the base class.
+  class AsciiFileWriter : public AsciiStreamWriter {
   
- public:
-  AsciiFileWriter(char* fileName);
-  ~AsciiFileWriter();
+  public:
+    AsciiFileWriter(char* fileName);
+    ~AsciiFileWriter();
   
-};
+  };
+  
+}
 
-#endif //__asciiFileWriter_h_
+#endif //__io_asciiFileWriter_h_

@@ -6,7 +6,7 @@
 
 #include "lb.h"
 #include "utilityFunctions.h"
-#include "rayTracer.h"
+#include "vis/rayTracer.h"
 
 void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
@@ -1051,7 +1051,7 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
     {
       lbmStress (f_neq, &stress);
     }
-  rtUpdateClusterVoxel (i, *density, *velocity, stress);
+  vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 }
 
 
@@ -1113,20 +1113,20 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
       if (net->net_site_nor[ i*3 ] >= 1.0e+30)
 	{
 	  lbmUpdateMinMaxValues (*density, *velocity, 0.0);
-	  rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
+	  vis::rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
 	}
       else
 	{
 	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	  lbmUpdateMinMaxValues (*density, *velocity, stress);
-	  rtUpdateClusterVoxel (i, *density, *velocity, stress);
+	  vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 	}
     }
   else
     {
       lbmStress (f_neq, &stress);
       lbmUpdateMinMaxValues (*density, *velocity, stress);
-      rtUpdateClusterVoxel (i, *density, *velocity, stress);
+      vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
     }
 }
 
@@ -1649,7 +1649,7 @@ void LBM::lbmCalculateFlowFieldValues ()
   
   int i;
 
-  int lMaxInlets = UtilityFunctions::max(6+inlets,2*inlets);
+  int lMaxInlets = util::max(6+inlets,2*inlets);
 
   local_data = new double[lMaxInlets];
   global_data = new double[lMaxInlets];
@@ -1700,18 +1700,18 @@ void LBM::lbmCalculateFlowFieldValues ()
       lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i]);
     }
   
-  vis_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
-  vis_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
+  vis::pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
+  vis::pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
   
-  vis_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
-  vis_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
+  vis::velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
+  vis::velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
   
-  vis_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min);
-  vis_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max);
+  vis::stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min);
+  vis::stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max);
   
-  vis_period = period;
+  period = period;
   
-  vis_inlets = inlets;
+  inlets = inlets;
 }
 
 

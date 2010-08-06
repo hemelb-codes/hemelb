@@ -1,9 +1,12 @@
-#include "writer.h"
-#include "../rt.h"
+#include "io/writer.h"
+#include "vis/colPixel.h"
+#include "vis/colourPalette.h"
+
+using namespace io;
 
 // Function to write out our struct, ColPixel.
-void Writer::writePixel (ColPixel *col_pixel_p,
-			 void (*colourPalette)(float value, float col[])) {
+void Writer::writePixel (vis::ColPixel *col_pixel_p,
+			 vis::ColourPaletteFunction*colourPalette) {
   // TODO: make this deal with spaces/newlines for general writer
   
   unsigned int index;
@@ -12,7 +15,7 @@ void Writer::writePixel (ColPixel *col_pixel_p,
   int bits_per_char = sizeof(char) * 8;
   
   // Use a ray-tracer function to get the necessary pixel data.
-  rawWritePixel(col_pixel_p, &index, rgb_data, colourPalette);
+  col_pixel_p->rawWritePixel(&index, rgb_data, colourPalette);
 
   *this << index;
   

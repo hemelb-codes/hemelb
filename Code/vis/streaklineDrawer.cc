@@ -1,11 +1,14 @@
-#include "streaklineDrawer.h"
-// TODO this could probably be reduced to the net class and some visualisation class.
-#include "rt.h"
-#include "utilityFunctions.h"
 // TODO: Mixture of malloc and new is a bad smell, and just using new / delete would be much nicer. 
 // Vectors might be a good way of getting round the need to use realloc.
 #include <stdlib.h>
 #include <math.h>
+
+#include "vis/streaklineDrawer.h"
+// TODO this could probably be reduced to the net class and some visualisation class.
+#include "vis/rt.h"
+#include "utilityFunctions.h"
+
+using namespace vis;
 
 // Function to initialise the velocity field at given coordinates.
 void streaklineDrawer::initializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id)
@@ -280,9 +283,9 @@ streaklineDrawer::streaklineDrawer (Net *net)
 		{
 		  if (proc_block_p->proc_id[ ++m ] != net->id) continue;
 		  
-		  for (int neigh_i = UtilityFunctions::max(0, site_i-1); neigh_i <= UtilityFunctions::min(sites_x-1, site_i+1); neigh_i++)
-		    for (int neigh_j = UtilityFunctions::max(0, site_j-1); neigh_j <= UtilityFunctions::min(sites_y-1, site_j+1); neigh_j++)
-		      for (int neigh_k = UtilityFunctions::max(0, site_k-1); neigh_k <= UtilityFunctions::min(sites_z-1, site_k+1); neigh_k++)
+		  for (int neigh_i = util::max(0, site_i-1); neigh_i <= util::min(sites_x-1, site_i+1); neigh_i++)
+		    for (int neigh_j = util::max(0, site_j-1); neigh_j <= util::min(sites_y-1, site_j+1); neigh_j++)
+		      for (int neigh_k = util::max(0, site_k-1); neigh_k <= util::min(sites_z-1, site_k+1); neigh_k++)
 			{
 			  neigh_proc_id = net->netProcIdPointer (neigh_i, neigh_j, neigh_k);
 			  
@@ -682,7 +685,7 @@ void streaklineDrawer::communicateParticles (Net *net)
 	  if (neigh_proc[ m ].recv_ps > particles_to_recv_max)
 	    {
 	      particles_to_recv_max *= 2;
-	      particles_to_recv_max = UtilityFunctions::max(particles_to_recv_max, neigh_proc[ m ].recv_ps);
+	      particles_to_recv_max = util::max(particles_to_recv_max, neigh_proc[ m ].recv_ps);
 	      neigh_proc[ m ].p_to_recv =
 	      	(float *)realloc(neigh_proc[ m ].p_to_recv, sizeof(float) * 5 * particles_to_recv_max);
 	    }
@@ -753,10 +756,10 @@ void streaklineDrawer::streakLines (int time_steps, int time_steps_per_cycle, Ne
 {
   if (!is_bench)
     {
-      int particle_creation_period = UtilityFunctions::max(1, (int)(time_steps_per_cycle / 5000.0F));
+      int particle_creation_period = util::max(1, (int)(time_steps_per_cycle / 5000.0F));
       
-      if (time_steps % (int)(time_steps_per_cycle / vis_streaklines_per_pulsatile_period) <=
-	  (vis_streakline_length/100.0F) * (time_steps_per_cycle / vis_streaklines_per_pulsatile_period) &&
+      if (time_steps % (int)(time_steps_per_cycle / streaklines_per_pulsatile_period) <=
+	  (streakline_length/100.0F) * (time_steps_per_cycle / streaklines_per_pulsatile_period) &&
 	  time_steps % particle_creation_period == 0)
 	{
 	  createSeedParticles ();
