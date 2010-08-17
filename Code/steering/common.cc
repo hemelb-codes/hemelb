@@ -3,16 +3,17 @@
 #include "vis/rt.h"
 #include "lb.h"
 
-extern float steer_par[];
-
+namespace steering {
+  extern float steer_par[];
+}
 
 void UpdateSteerableParameters (int *perform_rendering,
 				vis::Vis *vis, LBM* lbm)
 {
-  steer_par[ STEERABLE_PARAMETERS ] = *perform_rendering;
+  steering::steer_par[ STEERABLE_PARAMETERS ] = *perform_rendering;
 
 #ifndef NOMPI
-    MPI_Bcast (steer_par, STEERABLE_PARAMETERS+1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  MPI_Bcast (steering::steer_par, STEERABLE_PARAMETERS+1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #endif
   
   float longitude, latitude;
@@ -22,46 +23,46 @@ void UpdateSteerableParameters (int *perform_rendering,
   
   int pixels_x, pixels_y;
   
-  vis::ctr_x     += steer_par[ 0 ];
-  vis::ctr_y     += steer_par[ 1 ];
-  vis::ctr_z     += steer_par[ 2 ];
+  vis::ctr_x     += steering::steer_par[ 0 ];
+  vis::ctr_y     += steering::steer_par[ 1 ];
+  vis::ctr_z     += steering::steer_par[ 2 ];
 
-  longitude      = steer_par[ 3 ];
-  latitude       = steer_par[ 4 ];
+  longitude      = steering::steer_par[ 3 ];
+  latitude       = steering::steer_par[ 4 ];
   
-  zoom           = steer_par[ 5 ];
+  zoom           = steering::steer_par[ 5 ];
   
-  vis::brightness = steer_par[ 6 ];
-
-  // The minimum value here is by default 0.0 all the time
-  vis::physical_velocity_threshold_max = steer_par[ 7 ];
+  vis::brightness = steering::steer_par[ 6 ];
 
   // The minimum value here is by default 0.0 all the time
-  vis::physical_stress_threshold_max = steer_par[ 8 ];
-  
-  vis::physical_pressure_threshold_min = steer_par[ 9 ];
-  vis::physical_pressure_threshold_max = steer_par[ 10 ];
-  
-  vis::glyphDrawer::glyph_length = steer_par[ 11 ];
+  vis::physical_velocity_threshold_max = steering::steer_par[ 7 ];
 
-  pixels_x         = steer_par[ 12 ]; 
-  pixels_y         = steer_par[ 13 ]; 
+  // The minimum value here is by default 0.0 all the time
+  vis::physical_stress_threshold_max = steering::steer_par[ 8 ];
   
-  vis::mouse_x      = (int)steer_par[ 14 ];
-  vis::mouse_y      = (int)steer_par[ 15 ];
+  vis::physical_pressure_threshold_min = steering::steer_par[ 9 ];
+  vis::physical_pressure_threshold_max = steering::steer_par[ 10 ];
+  
+  vis::glyphDrawer::glyph_length = steering::steer_par[ 11 ];
 
-  lbm_terminate_simulation = (int)steer_par[ 16 ];
+  pixels_x         = steering::steer_par[ 12 ]; 
+  pixels_y         = steering::steer_par[ 13 ]; 
+  
+  vis::mouse_x      = int(steering::steer_par[ 14 ]);
+  vis::mouse_y      = int(steering::steer_par[ 15 ]);
+
+  lbm_terminate_simulation = int(steering::steer_par[ 16 ]);
   
   // To swap between glyphs and streak line rendering...
   // 0 - Only display the isosurfaces (wall pressure and stress)
   // 1 - Isosurface and glyphs
   // 2 - Wall pattern streak lines
-  vis::mode = (int)steer_par[ 17 ];
+  vis::mode = int(steering::steer_par[ 17 ]);
   
-  vis::streaklines_per_pulsatile_period = steer_par[ 18 ];
-  vis::streakline_length = steer_par[ 19 ];
+  vis::streaklines_per_pulsatile_period = steering::steer_par[ 18 ];
+  vis::streakline_length = steering::steer_par[ 19 ];
   
-  *perform_rendering = (int)steer_par[ 20 ];
+  *perform_rendering = int(steering::steer_par[ 20 ]);
   
   vis::visUpdateImageSize (pixels_x, pixels_y);
   
@@ -71,12 +72,12 @@ void UpdateSteerableParameters (int *perform_rendering,
   lattice_stress_max   = lbm->lbmConvertStressToLatticeUnits (vis::physical_stress_threshold_max);  
   
   vis::visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
-  		 pixels_x, pixels_y,
-  		 vis::ctr_x, vis::ctr_y, vis::ctr_z,
-  		 5.F * vis->system_size,
-  		 longitude, latitude,
-  		 0.5F * (5.F * vis->system_size),
-  		 zoom);
+		      pixels_x, pixels_y,
+		      vis::ctr_x, vis::ctr_y, vis::ctr_z,
+		      5.F * vis->system_size,
+		      longitude, latitude,
+		      0.5F * (5.F * vis->system_size),
+		      zoom);
   
   vis::density_threshold_min        = lattice_density_min;
   vis::density_threshold_minmax_inv = 1.0F / (lattice_density_max - lattice_density_min);
