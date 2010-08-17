@@ -1,4 +1,4 @@
-#include "vis/colPixel.h"
+#include "vis/ColPixel.h"
 #include "vis/rt.h"
 #include "utilityFunctions.h"
 

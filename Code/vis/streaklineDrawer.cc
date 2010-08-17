@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "vis/streaklineDrawer.h"
+#include "vis/StreaklineDrawer.h"
 // TODO this could probably be reduced to the net class and some visualisation class.
 #include "vis/rt.h"
 #include "utilityFunctions.h"
@@ -11,7 +11,7 @@
 using namespace vis;
 
 // Function to initialise the velocity field at given coordinates.
-void streaklineDrawer::initializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id)
+void StreaklineDrawer::initializeVelFieldBlock (int site_i, int site_j, int site_k, int proc_id)
 {
   if (site_i < 0 || site_i >= sites_x ||
       site_j < 0 || site_j >= sites_y ||
@@ -46,7 +46,7 @@ void streaklineDrawer::initializeVelFieldBlock (int site_i, int site_j, int site
 
 // Returns the velocity site data for a given index, or NULL if the index isn't valid / has
 // no data.
-streaklineDrawer::VelSiteData *streaklineDrawer::velSiteDataPointer (int site_i, int site_j, int site_k)
+StreaklineDrawer::VelSiteData *StreaklineDrawer::velSiteDataPointer (int site_i, int site_j, int site_k)
 {
   if (site_i < 0 || site_i >= sites_x ||
       site_j < 0 || site_j >= sites_y ||
@@ -74,7 +74,7 @@ streaklineDrawer::VelSiteData *streaklineDrawer::velSiteDataPointer (int site_i,
 }
 
 // Interpolates a velocity field to get the velocity at the position of a particle.
-void streaklineDrawer::particleVelocity (Particle *particle_p, float v[2][2][2][3], float interp_v[3])
+void StreaklineDrawer::particleVelocity (Particle *particle_p, float v[2][2][2][3], float interp_v[3])
 {
   float dx, dy, dz;
   float v_00z, v_01z, v_10z, v_11z, v_0y, v_1y;
@@ -98,7 +98,7 @@ void streaklineDrawer::particleVelocity (Particle *particle_p, float v[2][2][2][
 }
 
 // Create a particle with given position, velocity and inlet_id.
-void streaklineDrawer::createParticle (float x, float y, float z, float vel, int inlet_id)
+void StreaklineDrawer::createParticle (float x, float y, float z, float vel, int inlet_id)
 {
   if (particles == particles_max)
     {
@@ -115,7 +115,7 @@ void streaklineDrawer::createParticle (float x, float y, float z, float vel, int
 
 // Delete the particle at given index. Do something a bit budget to ensure that 
 // the particles remain in the first <particles> elements of an array,
-void streaklineDrawer::deleteParticle (int p_index)
+void StreaklineDrawer::deleteParticle (int p_index)
 {
   if (--particles <= 0) return;
   
@@ -134,7 +134,7 @@ void streaklineDrawer::deleteParticle (int p_index)
 }
 
 // Create seed particles to begin the streaklines.
-void streaklineDrawer::createSeedParticles ()
+void StreaklineDrawer::createSeedParticles ()
 {
   for (int n = 0; n < particle_seeds; n++)
     {
@@ -147,7 +147,7 @@ void streaklineDrawer::createSeedParticles ()
 }
 
 // Populate the matrix v with all the velocity field data at each index.
-void streaklineDrawer::localVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *net)
+void StreaklineDrawer::localVelField (int p_index, float v[2][2][2][3], int *is_interior, Net *net)
 {
   double vx, vy, vz;
   
@@ -228,7 +228,7 @@ void streaklineDrawer::localVelField (int p_index, float v[2][2][2][3], int *is_
 }
 
 // Constructor, populating fields from a Net object.
-streaklineDrawer::streaklineDrawer (Net *net)
+StreaklineDrawer::StreaklineDrawer (Net *net)
 {
   int m, mm, n;
 
@@ -426,13 +426,13 @@ streaklineDrawer::streaklineDrawer (Net *net)
 }
 
 // Reset the streakline drawer.
-void streaklineDrawer::restart ()
+void StreaklineDrawer::restart ()
 {
   particles = 0;
 }
 
 // Communicate site ids to other processors.
-void streaklineDrawer::communicateSiteIds ()
+void StreaklineDrawer::communicateSiteIds ()
 {
 #ifndef NOMPI
   int m;
@@ -473,7 +473,7 @@ void streaklineDrawer::communicateSiteIds ()
 }
 
 // Communicate velocities to other processors.
-void streaklineDrawer::communicateVelocities ()
+void StreaklineDrawer::communicateVelocities ()
 {
 #ifndef NOMPI
   int site_i, site_j, site_k;
@@ -551,7 +551,7 @@ void streaklineDrawer::communicateVelocities ()
 }
 
 // Update the velocity field.
-void streaklineDrawer::updateVelField (int stage_id, Net *net)
+void StreaklineDrawer::updateVelField (int stage_id, Net *net)
 {
   float v[2][2][2][3], interp_v[3];
   float vel;
@@ -594,7 +594,7 @@ void streaklineDrawer::updateVelField (int stage_id, Net *net)
 }
 
 // Update the particles.
-void streaklineDrawer::updateParticles ()
+void StreaklineDrawer::updateParticles ()
 {
   for (int n = 0; n < particles; n++)
     {
@@ -606,7 +606,7 @@ void streaklineDrawer::updateParticles ()
 }
 
 // Communicate that particles current state to other processors.
-void streaklineDrawer::communicateParticles (Net *net)
+void StreaklineDrawer::communicateParticles (Net *net)
 {
 #ifndef NOMPI
   int site_i, site_j, site_k;
@@ -707,7 +707,7 @@ void streaklineDrawer::communicateParticles (Net *net)
 }
 
 // Render the streaklines
-void streaklineDrawer::render ()
+void StreaklineDrawer::render ()
 {
   float screen_max[2];
   float scale[2];
@@ -753,7 +753,7 @@ void streaklineDrawer::render ()
 }
 
 // Draw streaklines
-void streaklineDrawer::streakLines (int time_steps, int time_steps_per_cycle, Net *net)
+void StreaklineDrawer::streakLines (int time_steps, int time_steps_per_cycle, Net *net)
 {
   if (!is_bench)
     {
@@ -784,7 +784,7 @@ void streaklineDrawer::streakLines (int time_steps, int time_steps_per_cycle, Ne
 }
 
 // Destructor
-streaklineDrawer::~streaklineDrawer ()
+StreaklineDrawer::~StreaklineDrawer ()
 {
   free(from_proc_id_to_neigh_proc_index);
   free(req);

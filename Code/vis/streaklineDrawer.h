@@ -1,16 +1,17 @@
-#ifndef __vis_streaklineDrawer_h_
-#define __vis_streaklineDrawer_h_
+#ifndef __vis_StreaklineDrawer_h_
+#define __vis_StreaklineDrawer_h_
 
 #include "constants.h"
 #include "mpiInclude.h"
-#include "vis/visualisationControl.h"
+#include "vis/Control.h"
+#include "vis/Layer.h"
 #include "net.h"
 
 namespace vis {
 
   // Class that controls the drawing of streaklines - lines that trace the path of an
   // imaginary particle were it dropped into the fluid.
-  class streaklineDrawer : public visualisationLayer
+  class StreaklineDrawer : public Layer
   {
   private:
 
@@ -104,8 +105,8 @@ namespace vis {
 
   public:
     // Constructor and destructor.
-    streaklineDrawer (Net *net);
-    ~streaklineDrawer ();
+    StreaklineDrawer (Net *net);
+    ~StreaklineDrawer ();
 
     // Method to reset streakline drawer
     void restart ();
@@ -117,4 +118,4 @@ namespace vis {
 
 }
 
-#endif //__vis_streaklineDrawer_h_
+#endif //__vis_StreaklineDrawer_h_

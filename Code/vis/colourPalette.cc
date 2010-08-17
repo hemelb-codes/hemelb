@@ -1,5 +1,5 @@
 #include <math.h>
-#include "colourPalette.h"
+#include "vis/ColourPalette.h"
 
 using namespace vis;
 

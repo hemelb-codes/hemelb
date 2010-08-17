@@ -4,12 +4,12 @@
 #include "net.h"
 #include "lb.h"
 
-#include "glyphDrawer.h"
-#include "colpixel.h"
-#include "rayTracer.h"
+#include "vis/GlyphDrawer.h"
+#include "vis/Colpixel.h"
+#include "vis/RayTracer.h"
 
 #ifndef NO_STREAKLINES
-  #include "streaklineDrawer.h"
+#include "StreaklineDrawer.h"
 #endif // NO_STREAKLINES
 
 

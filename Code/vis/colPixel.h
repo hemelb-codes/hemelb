@@ -1,5 +1,5 @@
-#ifndef __vis_colpixel_h_
-#define __vis_colpixel_h_
+#ifndef __vis_ColPixel_h_
+#define __vis_ColPixel_h_
 
 #define COLOURED_PIXELS_MAX    2048 * 2048
 #include "mpiInclude.h"
@@ -47,4 +47,4 @@ namespace vis {
 #endif
 }
 
-#endif // __vis_colpixel_h_
+#endif // __vis_ColPixel_h_
