@@ -43,7 +43,7 @@ void UpdateSteerableParameters (int *perform_rendering,
   vis::physical_pressure_threshold_min = steering::steer_par[ 9 ];
   vis::physical_pressure_threshold_max = steering::steer_par[ 10 ];
   
-  vis::glyphDrawer::glyph_length = steering::steer_par[ 11 ];
+  vis::GlyphDrawer::glyph_length = steering::steer_par[ 11 ];
 
   pixels_x         = steering::steer_par[ 12 ]; 
   pixels_y         = steering::steer_par[ 13 ]; 

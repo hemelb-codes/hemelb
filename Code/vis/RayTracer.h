@@ -3,7 +3,7 @@
 #define __vis_rayTracer_h_
 
 #include "constants.h"
-#include "vis/visualisationControl.h"
+#include "vis/Control.h"
 #include "net.h"
 // TODO this could probably be reduced to the net class and some visualisation class.
 #include "vis/rt.h"
@@ -39,7 +39,7 @@ namespace vis {
   extern float block_size_inv;
 
 
-  class rayTracer : public visualisationLayer {
+  class rayTracer : public Layer {
   public:
   
   };
