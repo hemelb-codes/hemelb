@@ -1,6 +1,6 @@
 #include <fstream>
 
-#include "io/asciiFileWriter.h"
+#include "io/AsciiFileWriter.h"
 
 using namespace io;
 

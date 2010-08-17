@@ -1,9 +1,9 @@
-#ifndef __io_asciiStreamWriter_h_
-#define __io_asciiStreamWriter_h_
+#ifndef __io_AsciiStreamWriter_h_
+#define __io_AsciiStreamWriter_h_
 
 #include <ostream>
 
-#include "io/writer.h"
+#include "io/Writer.h"
 
 namespace io {
   class AsciiStreamWriter : public Writer {
@@ -35,4 +35,4 @@ namespace io {
   };
 }
 
-#endif //__io_asciiStreamWriter_h_
+#endif //__io_AsciiStreamWriter_h_

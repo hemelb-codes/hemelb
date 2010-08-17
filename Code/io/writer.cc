@@ -1,6 +1,6 @@
-#include "io/writer.h"
-#include "vis/colPixel.h"
-#include "vis/colourPalette.h"
+#include "io/Writer.h"
+#include "vis/ColPixel.h"
+#include "vis/ColourPalette.h"
 
 using namespace io;
 

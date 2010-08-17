@@ -2,7 +2,7 @@
 
 #include "steering/SimulationParameters.h"
 #include "vis/rt.h"
-#include "io/xdrMemWriter.h"
+#include "io/XdrMemWriter.h"
 
 using namespace std;
 

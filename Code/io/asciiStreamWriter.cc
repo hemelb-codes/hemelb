@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "io/asciiStreamWriter.h"
+#include "io/AsciiStreamWriter.h"
 
 using namespace io;
 

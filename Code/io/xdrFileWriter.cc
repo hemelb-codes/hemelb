@@ -2,7 +2,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "io/xdrFileWriter.h"
+#include "io/XdrFileWriter.h"
 
 using namespace io;
 // Implement a constructor that opens the file and creates the Xdr

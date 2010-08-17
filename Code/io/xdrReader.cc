@@ -2,7 +2,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "io/xdrReader.h"
+#include "io/XdrReader.h"
 
 using namespace io;
 

@@ -1,5 +1,5 @@
-#ifndef __io_writer_h_
-#define __io_writer_h_
+#ifndef __io_Writer_h_
+#define __io_Writer_h_
 
 #include "vis/colPixel.h"
 #include "vis/colourPalette.h"
@@ -47,5 +47,5 @@ namespace io
   };
   
 }
-#endif //__io_writer_h_
+#endif //__io_Writer_h_
   
