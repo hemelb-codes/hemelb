@@ -45,7 +45,7 @@ pthread_mutex_t steer_param_lock = PTHREAD_MUTEX_INITIALIZER;
 extern bool updated_mouse_coords;
 
 char host_name[255];
-
+namespace steering {
 float steer_par[ STEERABLE_PARAMETERS + 1 ] = {0.0, 0.0, 0.0,    // scene center (dx,dy,dz)
 					       45.0, 45.0,       // longitude and latitude
 					       1.0, 0.1,         // zoom and brightness
@@ -59,7 +59,7 @@ float steer_par[ STEERABLE_PARAMETERS + 1 ] = {0.0, 0.0, 0.0,    // scene center
 					       5.0,	         // vis_streaklines_per_pulsatile_period
 					       100.0,	         // vis_streakline_length					   
 					       0.0};             // doRendering
-
+}
 
 double frameTiming()
 {
@@ -214,7 +214,7 @@ void *hemeLB_network (void *ptr)
 	
 	pixelWriter << vis::screen.pixels_x << vis::screen.pixels_y;
 	
-	Network::send_all(new_fd, xdr_pixel, &pixeldatabytes);
+	Network::send_all(new_fd, xdr_pixel, pixeldatabytes);
 
         io::XdrMemWriter pixelDataWriter = 
 	  io::XdrMemWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
@@ -234,9 +234,11 @@ void *hemeLB_network (void *ptr)
 	
 	int detailsBytes = frameDetailsWriter.getCurrentStreamPosition();
 	
-	int ret = Network::send_all(new_fd, xdrSendBuffer_frame_details, &detailsBytes);
+	int detailsBytesSent = Network::send_all(new_fd,
+						 xdrSendBuffer_frame_details,
+						 detailsBytes);
 	
-	if (ret < 0) {
+	if (detailsBytesSent < 0) {
 	  printf("RG thread: broken network pipe...\n");
 	  is_broken_pipe = 1;
 	  // pthread_mutex_unlock ( &LOCK );
@@ -244,12 +246,14 @@ void *hemeLB_network (void *ptr)
 	  setRenderState(0);
 	  break;
 	} else {
-	  bytesSent += detailsBytes;
+	  bytesSent += detailsBytesSent;
 	}
 	
-	ret = Network::send_all(new_fd, xdrSendBuffer_pixel_data, &frameBytes);
+	int frameBytesSent = Network::send_all(new_fd,
+					       xdrSendBuffer_pixel_data,
+					       frameBytes);
 	
-	if (ret < 0) {
+	if (frameBytesSent < 0) {
 	  printf("RG thread: broken network pipe...\n");
 	  is_broken_pipe = 1;
 	  // pthread_mutex_unlock ( &LOCK );
@@ -257,13 +261,13 @@ void *hemeLB_network (void *ptr)
 	  setRenderState(0);
 	  break;
 	} else {
-	  bytesSent += frameBytes;
+	  bytesSent += frameBytesSent;
 	}
 	
 	SimulationParameters* sim = new SimulationParameters();
 	sim->collectGlobalVals();
-	int sizeToSend = sim->sim_params_bytes;
-	Network::send_all(new_fd, sim->pack(), &sizeToSend);
+	int sizeToSend = sim->paramsSizeB;
+	Network::send_all(new_fd, sim->pack(), sizeToSend);
 	// printf ("Sim bytes sent %i\n", sizeToSend);
 	delete sim;
 	
@@ -328,6 +332,7 @@ void* hemeLB_steer (void* ptr)
 	{
 	  struct timeval tv;
 	  fd_set readfds;
+	  int steerDataRecvB;
 	  
 	  tv.tv_sec = 0;
 	  tv.tv_usec = 0;
@@ -338,20 +343,20 @@ void* hemeLB_steer (void* ptr)
 	  select(read_fd+1, &readfds, NULL, NULL, &tv);
 	  // printf("STEERING: Polling..\n"); fflush(0x0);  
 	  
-	  int ret;	
-	  
 	  if(FD_ISSET(read_fd, &readfds))
 	    {
 	      /* If there's something to read, read it... */
 	      //				printf("STEERING: Got data\n"); fflush(0x0);
-	      ret = Network::recv_all(read_fd, xdr_steering_data, &num_chars);
+	      steerDataRecvB = Network::recv_all(read_fd,
+						 xdr_steering_data,
+						 num_chars);
 	      sched_yield();
 	      break;
 	    } else {
 	    usleep(5000);	
 	  }
 	  
-	  if (ret < 0)
+	  if (steerDataRecvB < 0)
 	    {
 	      printf("Steering thread: broken network pipe...\n");
 	      free(xdr_steering_data);
@@ -365,7 +370,7 @@ void* hemeLB_steer (void* ptr)
       sem_wait(&steering_var_lock);
       
       for (int i = 0; i < STEERABLE_PARAMETERS; i++)
-	xdr_float(&xdr_steering_stream, &steer_par[i]);
+	xdr_float(&xdr_steering_stream, &steering::steer_par[i]);
       
       sem_post(&steering_var_lock);
       
@@ -374,7 +379,7 @@ void* hemeLB_steer (void* ptr)
 	 printf("%0.4f ", steer_par[i]);
 	 printf("\n"); */
       
-      if (steer_par[14] > -1.0 && steer_par[15] > -1.0)
+      if (steering::steer_par[14] > -1.0 && steering::steer_par[15] > -1.0)
 	updated_mouse_coords = 1;  
       
       // pthread_mutex_unlock(&steer_param_lock);
