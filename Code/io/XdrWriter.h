@@ -1,10 +1,10 @@
-#ifndef __io_xdrWriter_h_
-#define __io_xdrWriter_h_
+#ifndef __io_XdrWriter_h_
+#define __io_XdrWriter_h_
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "io/writer.h"
+#include "io/Writer.h"
 
 namespace io
 {
@@ -29,4 +29,4 @@ namespace io
 
   };
 }
-#endif //__io_xdrWriter_h_
+#endif //__io_XdrWriter_h_

@@ -1,7 +1,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "io/xdrMemWriter.h"
+#include "io/XdrMemWriter.h"
 
 using namespace io;
 

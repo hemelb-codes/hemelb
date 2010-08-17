@@ -1,7 +1,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include "io/xdrWriter.h"
+#include "io/XdrWriter.h"
 
 using namespace io;
 // Functions to write simple types out to the Xdr stream.

@@ -4,7 +4,7 @@
 #include "utilityFunctions.h"
 #include "vis/rt.h"
 #include "lb.h"
-#include "io/xdrFileWriter.h"
+#include "io/XdrFileWriter.h"
 
 namespace vis {
 
