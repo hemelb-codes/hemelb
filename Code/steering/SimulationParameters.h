@@ -2,7 +2,7 @@
 #define __steering_simulationParameters_h_
 #ifndef NO_STEER
 
-#include "io/xdrMemWriter.h"
+#include "io/XdrMemWriter.h"
 
 class SimulationParameters {
   

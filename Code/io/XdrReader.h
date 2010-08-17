@@ -1,5 +1,5 @@
-#ifndef __io_xdrReader_h_
-#define __io_xdrReader_h_
+#ifndef __io_XdrReader_h_
+#define __io_XdrReader_h_
 
 #include <stdio.h>
 
@@ -25,4 +25,4 @@ namespace io {
   };
 }
 
-#endif// __io_xdrReader_h_
+#endif// __io_XdrReader_h_

@@ -1,12 +1,12 @@
 include $(MK)/header.mk
 
-SRCS := writer.cc \
-	xdrReader.cc \
-	xdrWriter.cc \
-	xdrFileWriter.cc \
-	xdrMemWriter.cc \
-	asciiStreamWriter.cc \
-	asciiFileWriter.cc
+SRCS := Writer.cc \
+	XdrReader.cc \
+	XdrWriter.cc \
+	XdrFileWriter.cc \
+	XdrMemWriter.cc \
+	AsciiStreamWriter.cc \
+	AsciiFileWriter.cc
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

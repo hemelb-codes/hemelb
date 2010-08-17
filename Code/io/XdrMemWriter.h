@@ -1,7 +1,7 @@
-#ifndef __io_xdrMemWriter_h_
-#define __io_xdrMemWriter_h_
+#ifndef __io_XdrMemWriter_h_
+#define __io_XdrMemWriter_h_
 
-#include "io/xdrWriter.h"
+#include "io/XdrWriter.h"
 
 namespace io {
   // Class for writing to an Xdr object in memory. Derives from a base
@@ -15,4 +15,4 @@ namespace io {
   };
 }
 
-#endif //__io_xdrMemWriter_h_
+#endif //__io_XdrMemWriter_h_

@@ -1,9 +1,9 @@
-#ifndef __io_asciiFileWriter_h_
-#define __io_asciiFileWriter_h_
+#ifndef __io_AsciiFileWriter_h_
+#define __io_AsciiFileWriter_h_
 
 #include <iostream>
 
-#include "io/asciiStreamWriter.h"
+#include "io/AsciiStreamWriter.h"
 
 namespace io {
   // Class to write a file. The actual write functions are implemented
@@ -18,4 +18,4 @@ namespace io {
   
 }
 
-#endif //__io_asciiFileWriter_h_
+#endif //__io_AsciiFileWriter_h_
