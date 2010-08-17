@@ -1,13 +1,14 @@
 include $(MK)/header.mk
 
-SRCS := colPixel.cc \
-	colourPalette.cc \
-	glyphDrawer.cc \
-	rayTracer.cc \
+SRCS := ColPixel.cc \
+	ColourPalette.cc \
+	GlyphDrawer.cc \
+	RayTracer.cc \
 	rt.cc \
-	streaklineDrawer.cc \
+	StreaklineDrawer.cc \
 	visthread.cc \
-	visualisationControl.cc
+	Control.cc
+
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

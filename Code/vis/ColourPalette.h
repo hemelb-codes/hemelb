@@ -1,5 +1,5 @@
-#ifndef __vis_colourPalette_h_
-#define __vis_colourPalette_h_
+#ifndef __vis_ColourPalette_h_
+#define __vis_ColourPalette_h_
 
 namespace vis {
   
@@ -15,4 +15,4 @@ namespace vis {
   };
   
 }
-#endif //__vis_colourPalette.h_
+#endif //__vis_ColourPalette.h_

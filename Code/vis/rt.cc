@@ -2,14 +2,14 @@
 #include <string.h>
 
 #include "utilityFunctions.h"
-#include "rt.h"
+#include "vis/rt.h"
 #include "lb.h"
 #include "io/xdrFileWriter.h"
 
 namespace vis {
 
-  glyphDrawer *myGlypher;
-  streaklineDrawer *myStreaker;
+  GlyphDrawer *myGlypher;
+  StreaklineDrawer *myStreaker;
 
   void visRotate (float sin_1, float cos_1,
 		  float sin_2, float cos_2,
@@ -538,10 +538,10 @@ namespace vis {
   
     if (!is_bench)
       {
-	myGlypher = new glyphDrawer(net);
+	myGlypher = new GlyphDrawer(net);
       }
 #ifndef NO_STREAKLINES
-    myStreaker = new streaklineDrawer (net);
+    myStreaker = new StreaklineDrawer (net);
 #endif
     ctr_x -= vis->half_dim[0];
     ctr_y -= vis->half_dim[1];
