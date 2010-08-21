@@ -1,32 +1,36 @@
-#ifndef __io_XdrWriter_h_
-#define __io_XdrWriter_h_
+#ifndef HEME_IO_XDRWRITER_H
+#define HEME_IO_XDRWRITER_H
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
 #include "io/Writer.h"
 
-namespace io
+namespace heme
 {
-  class XdrWriter : public Writer {
-  public:  
-    // Method to get the current position of writing in the stream.
-    unsigned int getCurrentStreamPosition() const;
+  namespace io
+  {
+    class XdrWriter : public Writer {
+    public:  
+      // Method to get the current position of writing in the stream.
+      unsigned int getCurrentStreamPosition() const;
   
-    // Methods for formatting control
-    void writeFieldSeparator();
-    void writeRecordSeparator();
+      // Methods for formatting control
+      void writeFieldSeparator();
+      void writeRecordSeparator();
   
-  protected:
-    XDR *myXdr;
+    protected:
+      XDR *myXdr;
   
-    // Methods to write basic types to the Xdr object.
-    void _write(int const& intToWrite);
-    void _write(double const& doubleToWrite);
-    void _write(short const& shortToWrite);
-    void _write(float const& floatToWrite);
-    void _write(unsigned int const& uIntToWrite);
+      // Methods to write basic types to the Xdr object.
+      void _write(int const& intToWrite);
+      void _write(double const& doubleToWrite);
+      void _write(short const& shortToWrite);
+      void _write(float const& floatToWrite);
+      void _write(unsigned int const& uIntToWrite);
 
-  };
+    };
+  }
 }
-#endif //__io_XdrWriter_h_
+
+#endif //HEME_IO_XDRWRITER_H

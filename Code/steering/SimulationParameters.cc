@@ -37,7 +37,7 @@ SimulationParameters::SimulationParameters() {
   // params_bytes += n_inlets * sizeof(double);
 
   params = new char[paramsSizeB];
-  paramWriter = new io::XdrMemWriter(params, paramsSizeB);
+  paramWriter = new heme::io::XdrMemWriter(params, paramsSizeB);
 
 }
 
@@ -66,7 +66,7 @@ SimulationParameters::~SimulationParameters() {
 }
 
 char* SimulationParameters::pack() {
-  io::XdrMemWriter& paramWriter = *(this->paramWriter);
+  heme::io::XdrMemWriter& paramWriter = *(this->paramWriter);
   paramWriter << pressureMin;
   paramWriter << pressureMax;
 

@@ -209,17 +209,17 @@ void *hemeLB_network (void *ptr)
 	  
 	int pixeldatabytes = 8;
 	char xdr_pixel[pixeldatabytes];
-	io::XdrMemWriter pixelWriter =io::XdrMemWriter(xdr_pixel,
-						       pixeldatabytes);
+	heme::io::XdrMemWriter pixelWriter = heme::io::XdrMemWriter(xdr_pixel,
+								    pixeldatabytes);
 	
 	pixelWriter << vis::screen.pixels_x << vis::screen.pixels_y;
 	
 	Network::send_all(new_fd, xdr_pixel, pixeldatabytes);
 
-        io::XdrMemWriter pixelDataWriter = 
-	  io::XdrMemWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
-        io::XdrMemWriter frameDetailsWriter = 
-	  io::XdrMemWriter(xdrSendBuffer_frame_details,
+        heme::io::XdrMemWriter pixelDataWriter = 
+	  heme::io::XdrMemWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
+        heme::io::XdrMemWriter frameDetailsWriter = 
+	  heme::io::XdrMemWriter(xdrSendBuffer_frame_details,
 			   frame_details_bytes);
 	
 	for (int i = 0; i < vis::col_pixels_recv[RECV_BUFFER_A]; i++)
