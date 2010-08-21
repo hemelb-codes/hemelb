@@ -1,5 +1,5 @@
-#ifndef __vis_visthread_h_
-#define __vis_visthread_h_
+#ifndef HEME_VIS_VISTHREAD_H
+#define HEME_VIS_VISTHREAD_H
 
 #ifndef NO_STEER
 
@@ -20,4 +20,4 @@ void* hemeLB_network(void *ptr);
 
 #endif // NO_STEER
 
-#endif //__vis_visthread_h_
+#endif // HEME_VIS_VISTHREAD_H

@@ -1,11 +1,12 @@
 #include <math.h>
 #include "vis/ColourPalette.h"
 
-using namespace vis;
+using namespace heme::vis;
 
 // Function to get an RGB colour in col, based on the value of the
 // parameter t.  The colour is piece-wise linear in t.
-void ColourPalette::PickColour (float t, float *col){
+void ColourPalette::PickColour (float t, float *col)
+{
   if (t > 1.F) {
     col[0] = 1.F;
     col[1] = 0.F;
