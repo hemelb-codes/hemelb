@@ -4,7 +4,7 @@
 
 #include "io/XdrReader.h"
 
-using namespace io;
+using namespace heme::io;
 
 // Constructor to create an Xdr object based on a file.
 XdrReader::XdrReader(FILE* xdrFile) {

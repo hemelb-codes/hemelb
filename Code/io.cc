@@ -70,7 +70,7 @@ void LBM::lbmReadConfig (Net *net) {
   }
   fflush(NULL);
 
-  io::XdrReader myReader = io::XdrReader(xdrFile);
+  heme::io::XdrReader myReader = heme::io::XdrReader(xdrFile);
   
   int i, j, k, ii, jj, kk, l, m, n;
   int flag;
@@ -429,7 +429,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
       stress is equal to -1 if the fluid voxel is not at the wall)
 
   */
-  io::AsciiFileWriter *realSnap = NULL;
+  heme::io::AsciiFileWriter *realSnap = NULL;
   
   float *local_flow_field, *gathered_flow_field;
   
@@ -473,12 +473,12 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
     / (stress_par * stress_par * voxel_size * voxel_size);
   
   if (net->id == 0) {
-    realSnap = new io::AsciiFileWriter(outputFileName);
+    realSnap = new heme::io::AsciiFileWriter(outputFileName);
     //snap << stability << snap->eol;
     (*realSnap << stability) << realSnap->eol;
     //snap->write(stability); snap->writeRecordSeparator();
   }
-  io::Writer& snap = *realSnap;
+  heme::io::Writer& snap = *realSnap;
   
   if (stability == UNSTABLE) {
     if (net->id == 0) {
@@ -492,11 +492,11 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
     shrinked_sites_y = 1 + site_max_y - site_min_y;
     shrinked_sites_z = 1 + site_max_z - site_min_z;
     
-    snap << voxel_size << io::Writer::eol;
-    snap << site_min_x << site_min_y << site_min_z << io::Writer::eol;
-    snap << site_max_x << site_max_y << site_max_z << io::Writer::eol;
-    snap << shrinked_sites_x << shrinked_sites_y << shrinked_sites_z << io::Writer::eol;
-    snap << total_fluid_sites << io::Writer::eol;
+    snap << voxel_size << heme::io::Writer::eol;
+    snap << site_min_x << site_min_y << site_min_z << heme::io::Writer::eol;
+    snap << site_max_x << site_max_y << site_max_z << heme::io::Writer::eol;
+    snap << shrinked_sites_x << shrinked_sites_y << shrinked_sites_z << heme::io::Writer::eol;
+    snap << total_fluid_sites << heme::io::Writer::eol;
   }
   
   fluid_sites_max = 0;
@@ -659,7 +659,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++) {
 		    snap << gathered_flow_field[ MACROSCOPIC_PARS*l+kk ];
 		  }
-		  snap << io::Writer::eol;
+		  snap << heme::io::Writer::eol;
 		}
 		
 	      }
@@ -713,7 +713,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 	  for (kk = 0; kk < MACROSCOPIC_PARS; kk++) {
 	    snap << gathered_flow_field[ MACROSCOPIC_PARS*l+kk ];
 	  }
-	  snap << io::Writer::eol;
+	  snap << heme::io::Writer::eol;
 	}
       }
       

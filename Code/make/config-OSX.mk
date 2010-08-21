@@ -1,5 +1,5 @@
 # -*- mode: makefile; -*-
-CXX := /usr/local/bin/mpic++
+CXX := mpic++
 
 EXE := hemelb
 

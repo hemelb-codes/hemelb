@@ -731,7 +731,7 @@ namespace vis {
   void visWriteImage (int recv_buffer_id, char *image_file_name,
 		      void (*ColourPalette) (float value, float col[]))
   {
-    io::XdrFileWriter writer = io::XdrFileWriter(image_file_name);
+    heme::io::XdrFileWriter writer = heme::io::XdrFileWriter(image_file_name);
   
     writer << mode;
   
