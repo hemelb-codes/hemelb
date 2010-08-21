@@ -2,7 +2,7 @@
 #include "vis/ColPixel.h"
 #include "vis/ColourPalette.h"
 
-using namespace io;
+using namespace heme::io;
 
 // Function to write out our struct, ColPixel.
 void Writer::writePixel (vis::ColPixel *col_pixel_p,

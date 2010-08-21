@@ -32,7 +32,7 @@ class SimulationParameters {
   void collectGlobalVals();
 
  private:
-  io::XdrMemWriter *paramWriter;
+  heme::io::XdrMemWriter *paramWriter;
 
 };
 

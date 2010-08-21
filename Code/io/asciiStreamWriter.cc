@@ -2,7 +2,7 @@
 
 #include "io/AsciiStreamWriter.h"
 
-using namespace io;
+using namespace heme::io;
 
 // Method to get the current position in the stream.
 unsigned int AsciiStreamWriter::getCurrentStreamPosition() const {

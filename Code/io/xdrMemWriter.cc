@@ -3,7 +3,7 @@
 
 #include "io/XdrMemWriter.h"
 
-using namespace io;
+using namespace heme::io;
 
 // Constructor for a Xdr writer held in a memory buffer.
 XdrMemWriter::XdrMemWriter(char* dataBuffer, unsigned int dataLength) {
