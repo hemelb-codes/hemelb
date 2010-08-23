@@ -10,7 +10,7 @@ extern int cycle_id;
 extern int time_step;
 extern double intra_cycle_time;
 
-SimulationParameters::SimulationParameters() {
+heme::steering::SimulationParameters::SimulationParameters() {
   // C'tor initialises to the following defaults.
   
   pressureMin = 0.001;
@@ -41,31 +41,31 @@ SimulationParameters::SimulationParameters() {
 
 }
 
-void SimulationParameters :: collectGlobalVals() {
+void heme::steering::SimulationParameters :: collectGlobalVals() {
   
-  this->pressureMin = vis::pressure_min;
-  this->pressureMax = vis::pressure_max;
-  this->velocityMin = vis::velocity_min;
-  this->velocityMax = vis::velocity_max;
-  this->stressMax = vis::stress_max;
+  this->pressureMin = heme::vis::pressure_min;
+  this->pressureMax = heme::vis::pressure_max;
+  this->velocityMin = heme::vis::velocity_min;
+  this->velocityMax = heme::vis::velocity_max;
+  this->stressMax = heme::vis::stress_max;
   this->timeStep = time_step;
   this->time = intra_cycle_time;
   this->cycle = cycle_id;
-  this->nInlets = vis::inlets;
+  this->nInlets = heme::vis::inlets;
   
-  this->mousePressure = vis::mouse_pressure;
-  this->mouseStress = vis::mouse_stress;
+  this->mousePressure = heme::vis::mouse_pressure;
+  this->mouseStress = heme::vis::mouse_stress;
   
 }
 
-SimulationParameters::~SimulationParameters() {
+heme::steering::SimulationParameters::~SimulationParameters() {
   delete paramWriter;
   delete[] inletAvgVel;
   // TODO: find out if there's a good reason this isn't deleted
   // delete[] params;
 }
 
-char* SimulationParameters::pack() {
+char* heme::steering::SimulationParameters::pack() {
   heme::io::XdrMemWriter& paramWriter = *(this->paramWriter);
   paramWriter << pressureMin;
   paramWriter << pressureMax;
@@ -88,8 +88,8 @@ char* SimulationParameters::pack() {
   paramWriter << mousePressure;
   paramWriter << mouseStress;
 
-  vis::mouse_pressure = -1.0;
-  vis::mouse_stress = -1.0;
+  heme::vis::mouse_pressure = -1.0;
+  heme::vis::mouse_stress = -1.0;
 
   return params;
 }

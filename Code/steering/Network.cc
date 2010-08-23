@@ -15,7 +15,7 @@
 
 // Receive a bytestream of known length from a socket into a buffer.
 // Returns the number of bytes recieved or -1 on failure.
-int Network::recv_all (int sockid, char *buf, const int length)
+int heme::steering::Network::recv_all (int sockid, char *buf, const int length)
 {
   int received_bytes = 0;
   int bytes_left_to_receive = length;
@@ -37,7 +37,8 @@ int Network::recv_all (int sockid, char *buf, const int length)
 
 // Send all bytes from a buffer of known length over a socket.
 // Returns the number of bytes sent or -1 on failure.
-int Network::send_all (int sockid, const char *buf, const int length)
+int heme::steering::Network::send_all (int sockid,
+				       const char *buf, const int length)
 {
   int sent_bytes = 0;
   int bytes_left_to_send = length;
