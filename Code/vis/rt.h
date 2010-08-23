@@ -39,7 +39,7 @@ namespace heme
     extern int period, inlets;
     extern int image_freq;
     extern int pixels_max;
-    extern int streaklines;
+    extern int shouldDrawStreaklines;
 
     extern float physical_pressure_threshold_min;
     extern float physical_pressure_threshold_max;
@@ -101,33 +101,33 @@ namespace heme
 
     extern Vis vis;
 
-    void visProject (float p1[], float p2[]);
-    void visWritePixel (ColPixel *col_pixel);
-    void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2);
-    void visRotate (float sin_1, float cos_1,
-		    float sin_2, float cos_2,
-		    float  x1, float  y1, float  z1,
-		    float *x2, float *y2, float *z2);
-    void visProjection (float ortho_x, float ortho_y,
-			int pixels_x, int pixels_y,
-			float ctr_x, float ctr_y, float ctr_z,
-			float rad,
-			float longitude, float latitude,
-			float dist,
-			float zoom);
-    void visRenderLine (float x1[], float x2[]);
-    void visInit (Net *net, Vis *vis);
+    void project (float p1[], float p2[]);
+    void writePixel (ColPixel *col_pixel);
+    void mergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2);
+    void rotate (float sin_1, float cos_1,
+		 float sin_2, float cos_2,
+		 float  x1, float  y1, float  z1,
+		 float *x2, float *y2, float *z2);
+    void projection (float ortho_x, float ortho_y,
+		     int pixels_x, int pixels_y,
+		     float ctr_x, float ctr_y, float ctr_z,
+		     float rad,
+		     float longitude, float latitude,
+		     float dist,
+		     float zoom);
+    void renderLine (float x1[], float x2[]);
+    void init (Net *net, Vis *vis);
 
-    void visStreaklines(int time_step, int period, Net *net);
-    void visRestart();
+    void streaklines(int time_step, int period, Net *net);
+    void restart();
 
-    void visUpdateImageSize (int pixels_x, int pixels_y);
-    void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net);
-    void visWriteImage (int recv_buffer_id, char *image_file_name,
-			void (*ColourPalette) (float value, float col[]));
-    void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
-    void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
-    void visEnd ();
+    void updateImageSize (int pixels_x, int pixels_y);
+    void render (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net);
+    void writeImage (int recv_buffer_id, char *image_file_name,
+		     void (*ColourPalette) (float value, float col[]));
+    void readParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis);
+    void calculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm);
+    void end ();
 
     extern Screen screen;
     extern Viewpoint viewpoint;
