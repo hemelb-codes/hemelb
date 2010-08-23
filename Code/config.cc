@@ -6,24 +6,28 @@
 
 #ifndef NO_STEER
 #include <semaphore.h>
-
-pthread_mutex_t network_buffer_copy_lock;
-pthread_mutex_t LOCK;
-pthread_cond_t network_send_frame;
-sem_t nrl;
-sem_t connected_sem;
-sem_t steering_var_lock;
-
-bool is_frame_ready;
-bool connected;
-bool sending_frame;
-
-int send_array_length;
-
-int frame_size;
-
-bool updated_mouse_coords;
-
+namespace heme
+{
+  namespace steering
+  {
+    pthread_mutex_t network_buffer_copy_lock;
+    pthread_mutex_t LOCK;
+    pthread_cond_t network_send_frame;
+    sem_t nrl;
+    sem_t connected_sem;
+    sem_t steering_var_lock;
+    
+    bool is_frame_ready;
+    bool connected;
+    bool sending_frame;
+    
+    int send_array_length;
+    
+    int frame_size;
+    
+    bool updated_mouse_coords;
+  }
+}
 #endif //NO_STEER
 
 
@@ -84,51 +88,54 @@ int lbm_terminate_simulation;
 
 int net_machines;
 
-namespace vis {
-  int col_pixels, col_pixels_max;
-  int col_pixels_recv[2];
+namespace heme
+{
+  namespace vis
+  {
+    int col_pixels, col_pixels_max;
+    int col_pixels_recv[2];
   
-  int *col_pixel_id = NULL;
+    int *col_pixel_id = NULL;
   
-  ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
-  ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
+    ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
+    ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
   
-  double pressure_min = 0.0, pressure_max = 0.0;
-  double velocity_min = 0.0, velocity_max = 0.0;
-  double stress_min = 0.0, stress_max = 0.0;
-  double time = 0.0;
+    double pressure_min = 0.0, pressure_max = 0.0;
+    double velocity_min = 0.0, velocity_max = 0.0;
+    double stress_min = 0.0, stress_max = 0.0;
+    double time = 0.0;
 
-  int time_step = 0, cycle = 0;
-  int period = 0, inlets = 0;
-  int image_freq = 0;
-  int pixels_max = 0;
-  int streaklines = 1;
+    int time_step = 0, cycle = 0;
+    int period = 0, inlets = 0;
+    int image_freq = 0;
+    int pixels_max = 0;
+    int streaklines = 1;
 
-  float block_size_f;
-  float block_size_inv;
+    float block_size_f;
+    float block_size_inv;
 
-  float physical_pressure_threshold_min;
-  float physical_pressure_threshold_max;
-  float physical_velocity_threshold_max;
-  float physical_stress_threshold_max;
-  float density_threshold_min, density_threshold_minmax_inv;
-  float velocity_threshold_max_inv;
-  float stress_threshold_max_inv;
-  float brightness;
-  float ctr_x, ctr_y, ctr_z;
-  double mouse_pressure, mouse_stress;
-  float streaklines_per_pulsatile_period, streakline_length;
+    float physical_pressure_threshold_min;
+    float physical_pressure_threshold_max;
+    float physical_velocity_threshold_max;
+    float physical_stress_threshold_max;
+    float density_threshold_min, density_threshold_minmax_inv;
+    float velocity_threshold_max_inv;
+    float stress_threshold_max_inv;
+    float brightness;
+    float ctr_x, ctr_y, ctr_z;
+    double mouse_pressure, mouse_stress;
+    float streaklines_per_pulsatile_period, streakline_length;
 
-  int mouse_x, mouse_y;
-  int perform_rendering;
-  int mode;
+    int mouse_x, mouse_y;
+    int perform_rendering;
+    int mode;
 
 
-  Screen screen;
+    Screen screen;
 
-  Viewpoint viewpoint;
+    Viewpoint viewpoint;
 
-  Vis vis;
+    Vis vis;
+  }
+
 }
-
-

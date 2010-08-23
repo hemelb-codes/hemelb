@@ -35,14 +35,14 @@ int main (int argc, char *argv[])
   // standard output
   
 #ifndef NO_STEER
-  sem_init(&nrl, 0, 1);
-  sem_init(&connected_sem, 0, 1);
-  sem_init(&steering_var_lock, 0, 1);
+  sem_init(&heme::steering::nrl, 0, 1);
+  sem_init(&heme::steering::connected_sem, 0, 1);
+  sem_init(&heme::steering::steering_var_lock, 0, 1);
   
-  is_frame_ready = 0;
-  connected = 0;
-  sending_frame = 0;
-  updated_mouse_coords = 0;
+  heme::steering::is_frame_ready = 0;
+  heme::steering::connected = 0;
+  heme::steering::sending_frame = 0;
+  heme::steering::updated_mouse_coords = 0;
 #endif
   
   double simulation_time;
@@ -54,6 +54,7 @@ int main (int argc, char *argv[])
   int total_time_steps, stability = STABLE;
   int depths;
   int steering_session_id;
+
 #ifdef NO_STEER
   int doRendering;
 #endif
@@ -161,10 +162,10 @@ int main (int argc, char *argv[])
 
   // Actually create the directories.
   if (net.id == 0)
-  {
-    util::MakeDirAllRXW(image_directory);
-    util::MakeDirAllRXW(snapshot_directory);
-  }
+    {
+      util::MakeDirAllRXW(image_directory);
+      util::MakeDirAllRXW(snapshot_directory);
+    }
   
   sprintf ( procs_string, "%i", net.procs);
   strcpy ( timings_name , input_file_path );
@@ -188,18 +189,20 @@ int main (int argc, char *argv[])
 #ifndef NO_STEER
   if (!is_bench && net.id == 0)
     {
-      xdrSendBuffer_pixel_data = new char[pixel_data_bytes];
-      xdrSendBuffer_frame_details = new char[frame_details_bytes];
+      heme::vis::xdrSendBuffer_pixel_data = new char[heme::vis::pixel_data_bytes];
+      heme::vis::xdrSendBuffer_frame_details = new char[heme::vis::frame_details_bytes];
 
-      pthread_mutex_init (&LOCK, NULL);
-      pthread_cond_init (&network_send_frame, NULL);
+      pthread_mutex_init (&heme::steering::LOCK, NULL);
+      pthread_cond_init (&heme::steering::network_send_frame, NULL);
 
-  //    pthread_mutex_lock (&LOCK);
+      //    pthread_mutex_lock (&LOCK);
       
       pthread_attr_init (&pthread_attrib);
       pthread_attr_setdetachstate (&pthread_attrib, PTHREAD_CREATE_JOINABLE);
       
-      pthread_create (&network_thread, &pthread_attrib, hemeLB_network, (void*)&steering_session_id);
+      pthread_create (&network_thread, &pthread_attrib,
+		      heme::steering::hemeLB_network,
+		      (void*)&steering_session_id);
     }
 #endif // NO_STEER
   
@@ -221,11 +224,12 @@ int main (int argc, char *argv[])
   
   lbm.lbmSetInitialConditions (&net);
   
-  vis::visInit (&net, &vis::vis);
+  heme::vis::visInit (&net, &heme::vis::vis);
   
-  vis::visReadParameters (vis_parameters_name, &lbm, &net, &vis::vis);
+  heme::vis::visReadParameters (vis_parameters_name, &lbm, &net,
+				&heme::vis::vis);
 #ifndef NO_STEER
-  UpdateSteerableParameters (&doRendering, &vis::vis, &lbm);
+  heme::steering::UpdateSteerableParameters (&doRendering, &heme::vis::vis, &lbm);
 #endif
 
   util::DeleteDirContents (snapshot_directory);
@@ -264,37 +268,39 @@ int main (int argc, char *argv[])
 #ifndef NO_STEER
 	      int render_for_network_stream = 0;
 	      
-			/* In the following two if blocks we do the core magic to ensure we only render
-			 when (1) we are not sending a frame or (2) we need to output to disk */
+	      /* In the following two if blocks we do the core magic to ensure we only render
+		 when (1) we are not sending a frame or (2) we need to output to disk */
 			
-			if(net.id == 0) {		  
-				sem_wait (&connected_sem);
-				bool local_connected = connected;
-				sem_post (&connected_sem);
-				if(local_connected) {
-					render_for_network_stream = (sending_frame == 0) ? 1 : 0;
-				} else {
-					render_for_network_stream = 0;
-				}
-			}
+	      if(net.id == 0) {		  
+		sem_wait (&heme::steering::connected_sem);
+		bool local_connected = heme::steering::connected;
+		sem_post (&heme::steering::connected_sem);
+		if(local_connected) {
+		  render_for_network_stream = (heme::steering::sending_frame == 0) ? 1 : 0;
+		} else {
+		  render_for_network_stream = 0;
+		}
+	      }
 
-			if(total_time_steps%BCAST_FREQ == 0) {
-				if(net.id == 0)
-					doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
-				if(net.id == 0)
-					sem_wait (&steering_var_lock);
-				UpdateSteerableParameters (&doRendering, &vis::vis, &lbm);
-				if(net.id == 0)
-					sem_post (&steering_var_lock);
-			}
+	      if(total_time_steps%BCAST_FREQ == 0) {
+		if(net.id == 0)
+		  doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
+		if(net.id == 0)
+		  sem_wait (&heme::steering::steering_var_lock);
+		heme::steering::UpdateSteerableParameters (&doRendering,
+							   &heme::vis::vis,
+							   &lbm);
+		if(net.id == 0)
+		  sem_post (&heme::steering::steering_var_lock);
+	      }
 
-			/* for debugging purposes we want to ensure we capture the variables in a single
-			 instant of time since variables might be altered by the thread half way through?
-			 This is to be done. */			
+	      /* for debugging purposes we want to ensure we capture the variables in a single
+		 instant of time since variables might be altered by the thread half way through?
+		 This is to be done. */			
 			
-			if(net.id == 0 && time_step%100==0)
-				printf("time step %i sending_frame %i render_network_stream %i write_snapshot_image %i rendering %i\n",
-					   time_step, sending_frame, render_for_network_stream, write_snapshot_image, doRendering);
+	      if(net.id == 0 && time_step%100==0)
+		printf("time step %i sending_frame %i render_network_stream %i write_snapshot_image %i rendering %i\n",
+		       time_step, heme::steering::sending_frame, render_for_network_stream, write_snapshot_image, doRendering);
 
 #endif // NO_STEER
 
@@ -322,35 +328,36 @@ int main (int argc, char *argv[])
 		  lbm.lbmUpdateInletVelocities (time_step, &net);
 		}
 #ifndef NO_STREAKLINES
-	      vis::visStreaklines(time_step, lbm.period, &net);
+	      heme::vis::visStreaklines(time_step, lbm.period, &net);
 #endif
 #ifndef NO_STEER
 	      if (total_time_steps%BCAST_FREQ == 0 && doRendering && !write_snapshot_image) {
-		vis::visRender (RECV_BUFFER_A, vis::ColourPalette::PickColour, &net);
+		heme::vis::visRender (RECV_BUFFER_A, heme::vis::ColourPalette::PickColour, &net);
 		
-		if (vis::mouse_x >= 0 && vis::mouse_y >= 0 && updated_mouse_coords) {
-		  for (int i = 0; i < vis::col_pixels_recv[RECV_BUFFER_A]; i++) {
-		    if (vis::col_pixel_recv[RECV_BUFFER_A][i].i.isRt &&
-			vis::col_pixel_recv[RECV_BUFFER_A][i].i.i == vis::mouse_x &&
-			vis::col_pixel_recv[RECV_BUFFER_A][i].i.j == vis::mouse_y)
+		if (heme::vis::mouse_x >= 0 && heme::vis::mouse_y >= 0 && heme::steering::updated_mouse_coords) {
+		  for (int i = 0; i < heme::vis::col_pixels_recv[RECV_BUFFER_A]; i++) {
+		    if (heme::vis::col_pixel_recv[RECV_BUFFER_A][i].i.isRt &&
+			heme::vis::col_pixel_recv[RECV_BUFFER_A][i].i.i == heme::vis::mouse_x &&
+			heme::vis::col_pixel_recv[RECV_BUFFER_A][i].i.j == heme::vis::mouse_y)
 		      {
-			      vis::visCalculateMouseFlowField (&vis::col_pixel_recv[RECV_BUFFER_A][i], &lbm);
-			      break;
-			    }
-			}
-		      updated_mouse_coords = 0;
-		    }
-		 if (net.id == 0)
-		   {
-		     is_frame_ready = 1;
-		     sem_post(&nrl); // let go of the lock
-		   }
+			heme::vis::visCalculateMouseFlowField (&heme::vis::col_pixel_recv[RECV_BUFFER_A][i], &lbm);
+			break;
+		      }
+		  }
+		  heme::steering::updated_mouse_coords = 0;
 		}
+		if (net.id == 0)
+		  {
+		    heme::steering::is_frame_ready = 1;
+		    sem_post(&heme::steering::nrl); // let go of the lock
+		  }
+	      }
 #endif // NO_STEER
 	      if (write_snapshot_image)
 		{
-		  vis::visRender (RECV_BUFFER_B, 
-				  vis::ColourPalette::PickColour, &net);
+		  heme::vis::visRender (RECV_BUFFER_B, 
+					heme::vis::ColourPalette::PickColour,
+					&net);
 		  
 		  if (net.id == 0)
 		    {
@@ -360,7 +367,9 @@ int main (int argc, char *argv[])
 		      strcpy ( complete_image_name, image_directory );
 		      strcat ( complete_image_name, image_filename );
 		      
-		      vis::visWriteImage (RECV_BUFFER_B, complete_image_name, vis::ColourPalette::PickColour);
+		      heme::vis::visWriteImage (RECV_BUFFER_B,
+						complete_image_name,
+						heme::vis::ColourPalette::PickColour);
 		    }
 		}
 	      if (time_step%snapshots_period == 0)
@@ -381,7 +390,7 @@ int main (int argc, char *argv[])
 		    {
 		      // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
 		      sched_yield();
-		      sem_post( &nrl );
+		      sem_post( &heme::steering::nrl );
 		      //pthread_mutex_unlock (&LOCK);
 		      //pthread_cond_signal (&network_send_frame);
 		    }
@@ -411,7 +420,7 @@ int main (int argc, char *argv[])
 	      
 	      lbm.lbmRestart (&net);
 #ifndef NO_STREAKLINES
-	      vis::visRestart();
+	      heme::vis::visRestart();
 #endif
 	      if (net.id == 0)
 		{
@@ -492,33 +501,32 @@ int main (int argc, char *argv[])
       
       // benchmarking HemeLB's fluid solver and ray tracer
       
-      vis::mode = 0;
-      vis::image_freq = 1;
-      vis::streaklines = 0;
+      heme::vis::mode = 0;
+      heme::vis::image_freq = 1;
+      heme::vis::streaklines = 0;
       FS_plus_RT_time = util::myClock ();
       
-      for (time_step = 1; time_step <= 1000000000; time_step++)
-	{
-	  ++total_time_steps;
-	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period );
-	  stability = lbm.lbmCycle (1, &net);
-	  vis::visRender (RECV_BUFFER_A,
-			  vis::ColourPalette::PickColour, &net);
+      for (time_step = 1; time_step <= 1000000000; time_step++) {
+	++total_time_steps;
+	lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period );
+	stability = lbm.lbmCycle (1, &net);
+	heme::vis::visRender (RECV_BUFFER_A,
+			      heme::vis::ColourPalette::PickColour, &net);
 	  
-	  // partial timings
-	  elapsed_time = util::myClock () - FS_plus_RT_time;
+	// partial timings
+	elapsed_time = util::myClock () - FS_plus_RT_time;
 	  
-	  if (time_step%bench_period == 1 && net.id == 0)
-	    {
-	      fprintf (stderr, " FS + RT, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		       elapsed_time, time_step, time_step / elapsed_time);
-	    }
-	  if (time_step%bench_period == 1 &&
-	      BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
-	    {
-	      break;
-	    }
-	}
+	if (time_step%bench_period == 1 && net.id == 0)
+	  {
+	    fprintf (stderr, " FS + RT, time: %.3f, time step: %i, time steps/s: %.3f\n",
+		     elapsed_time, time_step, time_step / elapsed_time);
+	  }
+	if (time_step%bench_period == 1 &&
+	    BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
+	  {
+	    break;
+	  }
+      }
       FS_plus_RT_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
       FS_plus_RT_time = util::myClock ();
       
@@ -527,41 +535,40 @@ int main (int argc, char *argv[])
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
-	  vis::visRender(RECV_BUFFER_A, 
-			 vis::ColourPalette::PickColour, &net);
+	  heme::vis::visRender(RECV_BUFFER_A, 
+			       heme::vis::ColourPalette::PickColour, &net);
 	}
       FS_plus_RT_time = util::myClock () - FS_plus_RT_time;
       
 #ifndef NO_STREAKLINES
       // benchmarking HemeLB's fluid solver, ray tracer and streaklines
       
-      vis::mode = 2;
-      vis::streaklines = 1;
+      heme::vis::mode = 2;
+      heme::vis::streaklines = 1;
       FS_plus_RT_plus_SL_time = util::myClock ();
       
-      for (time_step = 1; time_step <= 1000000000; time_step++)
-	{
-	  ++total_time_steps;
-	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
-	  stability = lbm.lbmCycle (1, &net);
-	  vis::visStreaklines(time_step, lbm.period, &net);
-	  vis::visRender (RECV_BUFFER_A,
-			  vis::ColourPalette::PickColour, &net);
+      for (time_step = 1; time_step <= 1000000000; time_step++) {
+	++total_time_steps;
+	lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
+	stability = lbm.lbmCycle (1, &net);
+	heme::vis::visStreaklines(time_step, lbm.period, &net);
+	heme::vis::visRender (RECV_BUFFER_A,
+			      heme::vis::ColourPalette::PickColour, &net);
 	  
-	  // partial timings
-	  elapsed_time = util::myClock () - FS_plus_RT_plus_SL_time;
+	// partial timings
+	elapsed_time = util::myClock () - FS_plus_RT_plus_SL_time;
 	  
-	  if (time_step%bench_period == 1 && net.id == 0)
-	    {
-	      fprintf (stderr, " FS + RT + SL, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		       elapsed_time, time_step, time_step / elapsed_time);
-	    }
-	  if (time_step%bench_period == 1 &&
-	      BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
-	    {
-	      break;
-	    }
-	}
+	if (time_step%bench_period == 1 && net.id == 0)
+	  {
+	    fprintf (stderr, " FS + RT + SL, time: %.3f, time step: %i, time steps/s: %.3f\n",
+		     elapsed_time, time_step, time_step / elapsed_time);
+	  }
+	if (time_step%bench_period == 1 &&
+	    BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
+	  {
+	    break;
+	  }
+      }
       FS_plus_RT_plus_SL_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
       FS_plus_RT_plus_SL_time = util::myClock ();
       
@@ -570,9 +577,9 @@ int main (int argc, char *argv[])
 	  ++total_time_steps;
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
-	  vis::visStreaklines (time_step, lbm.period, &net);
-	  vis::visRender (RECV_BUFFER_A,
-			  vis::ColourPalette::PickColour, &net);
+	  heme::vis::visStreaklines (time_step, lbm.period, &net);
+	  heme::vis::visRender (RECV_BUFFER_A,
+				heme::vis::ColourPalette::PickColour, &net);
 	}
       FS_plus_RT_plus_SL_time = util::myClock () - FS_plus_RT_plus_SL_time;
 #endif // NO_STREAKLINES
@@ -629,26 +636,25 @@ int main (int argc, char *argv[])
 	{
 	  if (!is_bench)
 	    {
-	      vis::pressure_min = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
-	      vis::pressure_max = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
+	      heme::vis::pressure_min = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
+	      heme::vis::pressure_max = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
 	      
-	      vis::velocity_min = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
-	      vis::velocity_max = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
+	      heme::vis::velocity_min = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
+	      heme::vis::velocity_max = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
 	      
-	      vis::stress_min = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_min);
-	      vis::stress_max = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_max);
+	      heme::vis::stress_min = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_min);
+	      heme::vis::stress_max = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_max);
 	      
 	      fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
-	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", vis::pressure_min, vis::pressure_max);
-	      fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", vis::velocity_min, vis::velocity_max);
-	      fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", vis::stress_min, vis::stress_max);
+	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", heme::vis::pressure_min, heme::vis::pressure_max);
+	      fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", heme::vis::velocity_min, heme::vis::velocity_max);
+	      fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", heme::vis::stress_min, heme::vis::stress_max);
 	      fprintf (timings_ptr, "\n");
 	      
-	      for (int n = 0; n < lbm.inlets; n++)
-		{
-		  fprintf (timings_ptr, "inlet id: %i, average / peak velocity (m/s): %le / %le\n",
-			   n, lbm_average_inlet_velocity[ n ], lbm_peak_inlet_velocity[ n ]);
-		}
+	      for (int n = 0; n < lbm.inlets; n++) {
+		fprintf (timings_ptr, "inlet id: %i, average / peak velocity (m/s): %le / %le\n",
+			 n, lbm_average_inlet_velocity[ n ], lbm_peak_inlet_velocity[ n ]);
+	      }
 	      fprintf (timings_ptr, "\n");
 	    }
 	  fprintf (timings_ptr, "\n");
@@ -669,7 +675,7 @@ int main (int argc, char *argv[])
 	  fclose (timings_ptr);
 	}
     }
-  vis::visEnd ();
+  heme::vis::visEnd ();
   net.netEnd ();
   lbm.lbmEnd ();
   
@@ -679,8 +685,8 @@ int main (int argc, char *argv[])
       // there are some problems if the following function is called
       
       //pthread_join (network_thread, NULL);
-      delete[] xdrSendBuffer_frame_details;
-      delete[] xdrSendBuffer_pixel_data;
+      delete[] heme::vis::xdrSendBuffer_frame_details;
+      delete[] heme::vis::xdrSendBuffer_pixel_data;
     }
 #endif
   

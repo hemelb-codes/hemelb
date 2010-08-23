@@ -1,15 +1,23 @@
-#ifndef __steering_HttpPost_h_
-#define __steering_HttpPost_h_
+#ifndef HEME_STEERING_HTTPPOST_H
+#define HEME_STEERING_HTTPPOST_H
 
-class HttpPost
+namespace heme
 {
- public:
-  // Send an HTTP request
-  static int request (char* hostname, short port,
-		      char* api, char* resourceid, char* parameters);
-  
-  // Get host details
-  static void get_host_details(char* rank_0_host_details, char* ip_addr);
-};
+  namespace steering
+  {
 
-#endif//__steering_HttpPost_h_
+    class HttpPost
+    {
+    public:
+      // Send an HTTP request
+      static int request (char* hostname, short port,
+			  char* api, char* resourceid, char* parameters);
+  
+      // Get host details
+      static void get_host_details(char* rank_0_host_details, char* ip_addr);
+    };
+
+  }
+}
+
+#endif // HEME_STEERING_HTTPPOST_H
