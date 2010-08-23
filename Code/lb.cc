@@ -1051,7 +1051,7 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
     {
       lbmStress (f_neq, &stress);
     }
-  vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
+  heme::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 }
 
 
@@ -1113,20 +1113,20 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
       if (net->net_site_nor[ i*3 ] >= 1.0e+30)
 	{
 	  lbmUpdateMinMaxValues (*density, *velocity, 0.0);
-	  vis::rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
+	  heme::vis::rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
 	}
       else
 	{
 	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	  lbmUpdateMinMaxValues (*density, *velocity, stress);
-	  vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
+	  heme::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 	}
     }
   else
     {
       lbmStress (f_neq, &stress);
       lbmUpdateMinMaxValues (*density, *velocity, stress);
-      vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
+      heme::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
     }
 }
 
@@ -1700,14 +1700,14 @@ void LBM::lbmCalculateFlowFieldValues ()
       lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i]);
     }
   
-  vis::pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
-  vis::pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
+  heme::vis::pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
+  heme::vis::pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
   
-  vis::velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
-  vis::velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
+  heme::vis::velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
+  heme::vis::velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
   
-  vis::stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min);
-  vis::stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max);
+  heme::vis::stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min);
+  heme::vis::stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max);
   
   period = period;
   
