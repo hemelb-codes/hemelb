@@ -1,11 +1,11 @@
 # -*- mode: makefile; -*-
-CXX := mpic++
+CXX := /usr/local/bin/mpic++
 
 EXE := hemelb
 
-HEMELB_DEFS := CCS BSD DARWIN DEBUG
+HEMELB_DEFS := CCS BSD DARWIN
 
-HEMELB_CXXFLAGS := -g -pthread -Wunused
+HEMELB_CXXFLAGS := -O3 -pthread -Wunused
 
 HEMELB_INCLUDEPATHS := /usr/local/include
 
