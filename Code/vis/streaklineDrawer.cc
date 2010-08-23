@@ -728,7 +728,7 @@ void StreaklineDrawer::render ()
     p1[1] = particleVec[n].y - float(sites_y>>1);
     p1[2] = particleVec[n].z - float(sites_z>>1);
     
-    visProject (p1, p2);
+    project (p1, p2);
     
     p2[0] = int(scale[0] * (p2[0] + screen_max[0]));
     p2[1] = int(scale[1] * (p2[1] + screen_max[1]));
@@ -745,7 +745,7 @@ void StreaklineDrawer::render ()
 	  col_pixel.i                 = PixelId(i, j);
 	  col_pixel.i.isStreakline    = true;
 	  
-	  visWritePixel (&col_pixel);
+	  writePixel (&col_pixel);
 	}
     }
 }

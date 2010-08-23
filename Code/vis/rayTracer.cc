@@ -773,7 +773,7 @@ namespace heme
 		    {
 		      p1[2] = cluster_p->minmax_z[k];
 		  
-		      visProject (p1, p2);
+		      project (p1, p2);
 		  
 		      subimage_vtx[0] = fminf(subimage_vtx[0], p2[0]);
 		      subimage_vtx[1] = fmaxf(subimage_vtx[1], p2[0]);
@@ -908,7 +908,7 @@ namespace heme
 		  col_pixel.i = PixelId(i,j);
 		  col_pixel.i.isRt = true;
 	      
-		  visWritePixel (&col_pixel);
+		  writePixel (&col_pixel);
 		}
 	      par3[0] += par1[0];
 	      par3[1] += par1[1];
