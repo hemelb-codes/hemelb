@@ -228,7 +228,7 @@ namespace heme
 	    for (int i = 0; i < heme::vis::col_pixels_recv[RECV_BUFFER_A]; i++)
 	      {
 		pixelDataWriter.writePixel (&heme::vis::col_pixel_recv[RECV_BUFFER_A][i],
-					    heme::vis::ColourPalette::PickColour);
+					    heme::vis::ColourPalette::pickColour);
 	      }
 	
 	    int frameBytes = pixelDataWriter.getCurrentStreamPosition();
