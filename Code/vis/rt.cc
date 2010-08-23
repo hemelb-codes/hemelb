@@ -14,10 +14,10 @@ namespace heme
     GlyphDrawer *myGlypher;
     StreaklineDrawer *myStreaker;
 
-    void visRotate (float sin_1, float cos_1,
-		    float sin_2, float cos_2,
-		    float  x1, float  y1, float  z1,
-		    float *x2, float *y2, float *z2)
+    void rotate (float sin_1, float cos_1,
+		 float sin_2, float cos_2,
+		 float  x1, float  y1, float  z1,
+		 float *x2, float *y2, float *z2)
     {
       //sin_1 = sin(longitude), cos_1 = cos(longitude)
       //sin_2 = sin(latitude) , cos_2 = cos(latitude)
@@ -32,7 +32,7 @@ namespace heme
     }
 
 
-    void visProject (float p1[], float p2[])
+    void project (float p1[], float p2[])
     {
       float x1[3], x2[3];
       float temp;
@@ -57,7 +57,7 @@ namespace heme
     }
 
 
-    void visProjection (float ortho_x, float ortho_y,
+    void projection (float ortho_x, float ortho_y,
 			int pixels_x, int pixels_y,
 			float ctr_x, float ctr_y, float ctr_z,
 			float rad,
@@ -100,15 +100,15 @@ namespace heme
   
       screen.zoom = zoom;
   
-      visRotate (viewpoint.sin_1, viewpoint.cos_1,
-		 viewpoint.sin_2, viewpoint.cos_2,
-		 screen.max_x, 0.0F, 0.0F,
-		 &screen.dir1[0], &screen.dir1[1], &screen.dir1[2]);
+      rotate (viewpoint.sin_1, viewpoint.cos_1,
+	      viewpoint.sin_2, viewpoint.cos_2,
+	      screen.max_x, 0.0F, 0.0F,
+	      &screen.dir1[0], &screen.dir1[1], &screen.dir1[2]);
   
-      visRotate (viewpoint.sin_1, viewpoint.cos_1,
-		 viewpoint.sin_2, viewpoint.cos_2,
-		 0.0F, screen.max_y, 0.0F,
-		 &screen.dir2[0], &screen.dir2[1], &screen.dir2[2]);
+      rotate (viewpoint.sin_1, viewpoint.cos_1,
+	      viewpoint.sin_2, viewpoint.cos_2,
+	      0.0F, screen.max_y, 0.0F,
+	      &screen.dir2[0], &screen.dir2[1], &screen.dir2[2]);
   
       screen.scale_x = (float)pixels_x / (2.F * screen.max_x);
       screen.scale_y = (float)pixels_y / (2.F * screen.max_y);
@@ -127,7 +127,7 @@ namespace heme
     }
 
 
-    void visMergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
+    void mergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2)
     {
       // Merge raytracing data
     
@@ -206,7 +206,7 @@ namespace heme
     }
 
 
-    void visWritePixel (ColPixel *col_pixel_p) {
+    void writePixel (ColPixel *col_pixel_p) {
       int *col_pixel_id_p, i, j;
     
     
@@ -216,7 +216,7 @@ namespace heme
       col_pixel_id_p = &col_pixel_id[ i*screen.pixels_y+j ];
     
       if (*col_pixel_id_p != -1) {
-	visMergePixels(col_pixel_p,
+	mergePixels(col_pixel_p,
 		       &col_pixel_send[ *col_pixel_id_p ]);
       
       } else { // col_pixel_id_p == -1
@@ -245,7 +245,7 @@ namespace heme
       blue  = (unsigned char)util::enforceBounds(rawBlue, 0, 255);
     }
 
-    void visRenderLine (float p1[], float p2[]) {
+    void renderLine (float p1[], float p2[]) {
       int pixels_x, pixels_y;
       int x, y;
       int x1, y1;
@@ -301,7 +301,7 @@ namespace heme
 	    col_pixel.i = PixelId(x, y);
 	    col_pixel.i.isGlyph = true;
 	  
-	    visWritePixel (&col_pixel);
+	    writePixel (&col_pixel);
 	  }
 	
 	  if (d < 0) {
@@ -326,7 +326,7 @@ namespace heme
 	    col_pixel.i = PixelId(x, y);
 	    col_pixel.i.isGlyph = true;
 	  
-	    visWritePixel (&col_pixel);
+	    writePixel (&col_pixel);
 	  }
 	
 	  if (d < 0) {
@@ -351,7 +351,7 @@ namespace heme
 	    col_pixel.i = PixelId(x, y);
 	    col_pixel.i.isGlyph = true;
 	  
-	    visWritePixel (&col_pixel);
+	    writePixel (&col_pixel);
 	  }
 	
 	  if (d < 0) {
@@ -367,7 +367,7 @@ namespace heme
     }
 
 
-    void visReadParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis)
+    void readParameters (char *parameters_file_name, LBM *lbm, Net *net, Vis *vis)
     {
       FILE *parameters_file;
   
@@ -435,7 +435,7 @@ namespace heme
       velocity_max   = par_to_send[ 7 ];
       stress_max     = par_to_send[ 8 ];
   
-      visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
+      projection (0.5F * vis->system_size, 0.5F * vis->system_size,
 		     512, 512,
 		     ctr_x, ctr_y, ctr_z,
 		     5.F * vis->system_size,
@@ -473,7 +473,7 @@ namespace heme
     }
  
 
-    void visInit (Net *net, Vis *vis)
+    void init (Net *net, Vis *vis)
     {
       blocks_yz = blocks_y * blocks_z;
   
@@ -552,7 +552,7 @@ namespace heme
     }
 
 
-    void visUpdateImageSize (int pixels_x, int pixels_y)
+    void updateImageSize (int pixels_x, int pixels_y)
     {
       if (pixels_x * pixels_y > screen.pixels_x * screen.pixels_y)
 	{
@@ -566,7 +566,7 @@ namespace heme
     }
 
 
-    void visCompositeImage (int recv_buffer_id, Net *net)
+    void compositeImage (int recv_buffer_id, Net *net)
     {
       // here, the communications needed to composite the image are
       // handled through a binary tree pattern and parallel pairwise
@@ -652,7 +652,7 @@ namespace heme
 	      } else {
 		col_pixel2 = &col_pixel_recv[recv_buffer_id][ *col_pixel_id_p ];
 	      
-		visMergePixels (col_pixel1, col_pixel2);
+		mergePixels (col_pixel1, col_pixel2);
 	      }
 	    
 	    }
@@ -692,7 +692,7 @@ namespace heme
     }
   
 
-    void visRender (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net)
+    void render (int recv_buffer_id, void (*ColourPalette) (float value, float col[]), Net *net)
     {
       if (screen.pixels_x * screen.pixels_y > pixels_max)
 	{
@@ -709,13 +709,13 @@ namespace heme
 	  myGlypher->render();
 	}
 #ifndef NO_STREAKLINES
-      if (streaklines &&
+      if (shouldDrawStreaklines &&
 	  (lbm_stress_type == SHEAR_STRESS || mode == 2))
 	{
 	  myStreaker->render();
 	}
 #endif
-      visCompositeImage (recv_buffer_id, net);
+      compositeImage (recv_buffer_id, net);
   
       col_pixels_recv[recv_buffer_id] = col_pixels;
 #ifndef NEW_COMPOSITING
@@ -731,7 +731,7 @@ namespace heme
     }
 
 
-    void visWriteImage (int recv_buffer_id, char *image_file_name,
+    void writeImage (int recv_buffer_id, char *image_file_name,
 			void (*ColourPalette) (float value, float col[]))
     {
       io::XdrFileWriter writer = io::XdrFileWriter(image_file_name);
@@ -755,7 +755,7 @@ namespace heme
     }
 
 
-    void visCalculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
+    void calculateMouseFlowField (ColPixel *col_pixel_p, LBM *lbm)
     {
       double density = density_threshold_min + col_pixel_p->density / density_threshold_minmax_inv;
       double stress = col_pixel_p->stress / stress_threshold_max_inv;
@@ -764,17 +764,17 @@ namespace heme
       mouse_stress = lbm->lbmConvertStressToPhysicalUnits (stress);
     }
 
-    void visStreaklines(int time_step, int period, Net *net)
+    void streaklines(int time_step, int period, Net *net)
     {
       myStreaker->streakLines (time_step, period, net);
     }
 
-    void visRestart()
+    void restart()
     {
       myStreaker->restart();
     }
 
-    void visEnd ()
+    void end ()
     {
 #ifndef NO_STREAKLINES
       delete myStreaker;

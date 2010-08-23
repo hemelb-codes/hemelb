@@ -97,15 +97,15 @@ namespace heme
 	p2[1] = glyph[n].y + vy;
 	p2[2] = glyph[n].z + vz;
     
-	visProject (p1, p3);
-	visProject (p2, p4);
+	project (p1, p3);
+	project (p2, p4);
     
 	p3[0] = scale[0] * (p3[0] + screen_max[0]);
 	p3[1] = scale[1] * (p3[1] + screen_max[1]);
 	p4[0] = scale[2] * (p4[0] + screen_max[2]);
 	p4[1] = scale[3] * (p4[1] + screen_max[3]);
     
-	visRenderLine (p3, p4);
+	renderLine (p3, p4);
       }
     }     
 
