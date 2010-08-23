@@ -332,7 +332,7 @@ int main (int argc, char *argv[])
 #endif
 #ifndef NO_STEER
 	      if (total_time_steps%BCAST_FREQ == 0 && doRendering && !write_snapshot_image) {
-		heme::vis::visRender (RECV_BUFFER_A, heme::vis::ColourPalette::PickColour, &net);
+		heme::vis::visRender (RECV_BUFFER_A, heme::vis::ColourPalette::pickColour, &net);
 		
 		if (heme::vis::mouse_x >= 0 && heme::vis::mouse_y >= 0 && heme::steering::updated_mouse_coords) {
 		  for (int i = 0; i < heme::vis::col_pixels_recv[RECV_BUFFER_A]; i++) {
@@ -356,7 +356,7 @@ int main (int argc, char *argv[])
 	      if (write_snapshot_image)
 		{
 		  heme::vis::visRender (RECV_BUFFER_B, 
-					heme::vis::ColourPalette::PickColour,
+					heme::vis::ColourPalette::pickColour,
 					&net);
 		  
 		  if (net.id == 0)
@@ -369,7 +369,7 @@ int main (int argc, char *argv[])
 		      
 		      heme::vis::visWriteImage (RECV_BUFFER_B,
 						complete_image_name,
-						heme::vis::ColourPalette::PickColour);
+						heme::vis::ColourPalette::pickColour);
 		    }
 		}
 	      if (time_step%snapshots_period == 0)
@@ -511,7 +511,7 @@ int main (int argc, char *argv[])
 	lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period );
 	stability = lbm.lbmCycle (1, &net);
 	heme::vis::visRender (RECV_BUFFER_A,
-			      heme::vis::ColourPalette::PickColour, &net);
+			      heme::vis::ColourPalette::pickColour, &net);
 	  
 	// partial timings
 	elapsed_time = util::myClock () - FS_plus_RT_time;
@@ -536,7 +536,7 @@ int main (int argc, char *argv[])
 	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
 	  stability = lbm.lbmCycle (1, &net);
 	  heme::vis::visRender(RECV_BUFFER_A, 
-			       heme::vis::ColourPalette::PickColour, &net);
+			       heme::vis::ColourPalette::pickColour, &net);
 	}
       FS_plus_RT_time = util::myClock () - FS_plus_RT_time;
       
@@ -553,7 +553,7 @@ int main (int argc, char *argv[])
 	stability = lbm.lbmCycle (1, &net);
 	heme::vis::visStreaklines(time_step, lbm.period, &net);
 	heme::vis::visRender (RECV_BUFFER_A,
-			      heme::vis::ColourPalette::PickColour, &net);
+			      heme::vis::ColourPalette::pickColour, &net);
 	  
 	// partial timings
 	elapsed_time = util::myClock () - FS_plus_RT_plus_SL_time;
@@ -579,7 +579,7 @@ int main (int argc, char *argv[])
 	  stability = lbm.lbmCycle (1, &net);
 	  heme::vis::visStreaklines (time_step, lbm.period, &net);
 	  heme::vis::visRender (RECV_BUFFER_A,
-				heme::vis::ColourPalette::PickColour, &net);
+				heme::vis::ColourPalette::pickColour, &net);
 	}
       FS_plus_RT_plus_SL_time = util::myClock () - FS_plus_RT_plus_SL_time;
 #endif // NO_STREAKLINES

@@ -109,7 +109,7 @@ namespace heme
     int period = 0, inlets = 0;
     int image_freq = 0;
     int pixels_max = 0;
-    int streaklines = 1;
+    int shouldDrawStreaklines = 1;
 
     float block_size_f;
     float block_size_inv;

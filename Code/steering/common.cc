@@ -66,14 +66,14 @@ namespace heme
   
       *perform_rendering = int(steer_par[ 20 ]);
   
-      vis::visUpdateImageSize (pixels_x, pixels_y);
+      vis::updateImageSize (pixels_x, pixels_y);
   
       lattice_density_min  = lbm->lbmConvertPressureToLatticeUnits (vis::physical_pressure_threshold_min) / Cs2;
       lattice_density_max  = lbm->lbmConvertPressureToLatticeUnits (vis::physical_pressure_threshold_max) / Cs2;
       lattice_velocity_max = lbm->lbmConvertVelocityToLatticeUnits (vis::physical_velocity_threshold_max);
       lattice_stress_max   = lbm->lbmConvertStressToLatticeUnits (vis::physical_stress_threshold_max);  
   
-      vis::visProjection (0.5F * vis->system_size, 0.5F * vis->system_size,
+      vis::projection (0.5F * vis->system_size, 0.5F * vis->system_size,
 			  pixels_x, pixels_y,
 			  vis::ctr_x, vis::ctr_y, vis::ctr_z,
 			  5.F * vis->system_size,
