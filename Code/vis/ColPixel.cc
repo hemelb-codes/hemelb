@@ -1,6 +1,8 @@
 #include "vis/ColPixel.h"
-#include "vis/rt.h"
+
+#include "lb.h"
 #include "utilityFunctions.h"
+#include "vis/Control.h"
 
 namespace heme
 {
@@ -21,6 +23,14 @@ namespace heme
     {
     }
   
+    void ColPixel::makePixelColour(unsigned char& red, unsigned char& green, unsigned char& blue,
+				   int rawRed, int rawGreen, int rawBlue)
+    {
+      red   = (unsigned char)util::enforceBounds(rawRed, 0, 255);
+      green = (unsigned char)util::enforceBounds(rawGreen, 0, 255);
+      blue  = (unsigned char)util::enforceBounds(rawBlue, 0, 255);
+    }
+    
     void ColPixel::rawWritePixel (unsigned int *pixel_index,
 				  unsigned char rgb_data[],
 				  ColourPaletteFunction *colourPalette)
@@ -74,7 +84,7 @@ namespace heme
       
       } // if (isRt)
     
-      if (lbm_stress_type != SHEAR_STRESS && mode == 0) {
+      if (lbm_stress_type != SHEAR_STRESS && controller->mode == 0) {
 	colourPalette(density, density_col);
 	colourPalette(stress, stress_col);
       
@@ -92,7 +102,7 @@ namespace heme
 			int(255.0F * stress_col[2])
 			);
       
-      } else if (lbm_stress_type != SHEAR_STRESS && mode == 1) {
+      } else if (lbm_stress_type != SHEAR_STRESS && controller->mode == 1) {
 	colourPalette(density, density_col);
 	colourPalette(stress, stress_col);
       
@@ -126,7 +136,7 @@ namespace heme
       } else {
       
 	if (i.isStreakline) {
-	  float scaled_vel = particle_vel * velocity_threshold_max_inv;
+	  float scaled_vel = particle_vel * controller->velocity_threshold_max_inv;
 	
 	  colourPalette(scaled_vel, particle_col);
 	

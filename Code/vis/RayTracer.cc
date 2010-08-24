@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <vector>
 
-#include "vis/rayTracer.h"
 #include "utilityFunctions.h"
+
+#include "vis/rayTracer.h"
+#include "vis/Control.h"
 
 namespace heme
 {
@@ -28,8 +30,12 @@ namespace heme
 
     int cluster_blocks_vec[3];
     int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
-
-
+    
+    float block_size_f;
+    float block_size_inv;
+    int block_size2, block_size3, block_size_1;
+    int blocks_yz;
+    
     // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
     void rtAABBvsRayFn (AABB *aabb, float inv_x, float inv_y, float inv_z, float *t_near, float *t_far, bool xyz_sign_is_1[]) {
       float tx0, ty0, tz0;
@@ -72,7 +78,7 @@ namespace heme
       float palette[3];
   
       // update the volume rendering of the velocity flow field
-      float scaled_velocity = *(flow_field+1) * velocity_threshold_max_inv;
+      float scaled_velocity = *(flow_field+1) * vis::controller->velocity_threshold_max_inv;
   
       ColourPalette (scaled_velocity, palette);
   
@@ -83,7 +89,7 @@ namespace heme
       if (lbm_stress_type != SHEAR_STRESS)
 	{
 	  // update the volume rendering of the von Mises stress flow field
-	  float scaled_stress = *(flow_field+2) * stress_threshold_max_inv;
+	  float scaled_stress = *(flow_field+2) * vis::controller->stress_threshold_max_inv;
       
 	  ColourPalette (scaled_stress, palette);
       
@@ -584,10 +590,10 @@ namespace heme
       delete block_location_a;
   
       delete[] is_block_visited;
-  
-      ctr_x = 0.5F * block_size * (block_min_x + block_max_x);
-      ctr_y = 0.5F * block_size * (block_min_y + block_max_y);
-      ctr_z = 0.5F * block_size * (block_min_z + block_max_z);
+      
+      vis::controller->ctr_x = 0.5F * block_size * (block_min_x + block_max_x);
+      vis::controller->ctr_y = 0.5F * block_size * (block_min_y + block_max_y);
+      vis::controller->ctr_z = 0.5F * block_size * (block_min_z + block_max_z);
   
       cluster_voxel = new float *[net->my_sites*VIS_FIELDS];
   
@@ -679,6 +685,15 @@ namespace heme
 
     void rtInit (Net *net)
     { 
+      // Init globals
+      blocks_yz = blocks_y * blocks_z;
+      block_size_f = float(block_size);
+      block_size2 = block_size * block_size;
+      block_size3 = block_size * block_size2;
+      block_size_1 = block_size - 1;
+      
+      block_size_inv = 1.F / (float)block_size;
+ 
       rtBuildClusters (net);
     }
 
@@ -715,26 +730,26 @@ namespace heme
       ColPixel col_pixel;
   
   
-      pixels_x = screen.pixels_x;
-      pixels_y = screen.pixels_y;
+      pixels_x = vis::controller->screen.pixels_x;
+      pixels_y = vis::controller->screen.pixels_y;
   
-      screen_max[0] = screen.max_x;
-      screen_max[1] = screen.max_x;
-      screen_max[2] = screen.max_y;
-      screen_max[3] = screen.max_y;
+      screen_max[0] = vis::controller->screen.max_x;
+      screen_max[1] = vis::controller->screen.max_x;
+      screen_max[2] = vis::controller->screen.max_y;
+      screen_max[3] = vis::controller->screen.max_y;
   
       for (l = 0; l < 3; l++)
 	{
-	  p0[l] = viewpoint.x[l];
+	  p0[l] = vis::controller->viewpoint.x[l];
 	}
       for (l = 0; l < 3; l++)
 	{
-	  par1[l] = screen.dir1[l];
-	  par2[l] = screen.dir2[l];
-	  screen_vtx[l] = screen.vtx[l];
+	  par1[l] = vis::controller->screen.dir1[l];
+	  par2[l] = vis::controller->screen.dir2[l];
+	  screen_vtx[l] = vis::controller->screen.vtx[l];
 	}
-      scale_vec[0] = scale_vec[1] = screen.scale_x;
-      scale_vec[2] = scale_vec[3] = screen.scale_y;
+      scale_vec[0] = scale_vec[1] = vis::controller->screen.scale_x;
+      scale_vec[2] = scale_vec[3] = vis::controller->screen.scale_y;
   
       for (cluster_id = 0; cluster_id < clusters; cluster_id++)
 	{
@@ -773,7 +788,7 @@ namespace heme
 		    {
 		      p1[2] = cluster_p->minmax_z[k];
 		  
-		      project (p1, p2);
+		      vis::controller->project (p1, p2);
 		  
 		      subimage_vtx[0] = fminf(subimage_vtx[0], p2[0]);
 		      subimage_vtx[1] = fmaxf(subimage_vtx[1], p2[0]);
@@ -895,11 +910,11 @@ namespace heme
 		    }
 		  col_pixel.dt       = ray_length;
 		  col_pixel.t        = ray_t_min + t_near;
-		  col_pixel.density  = (ray_density - density_threshold_min) * density_threshold_minmax_inv;
+		  col_pixel.density  = (ray_density - vis::controller->density_threshold_min) * vis::controller->density_threshold_minmax_inv;
 	      
 		  if (ray_stress < 1.0e+30F)
 		    {
-		      col_pixel.stress = ray_stress * stress_threshold_max_inv;
+		      col_pixel.stress = ray_stress * vis::controller->stress_threshold_max_inv;
 		    }
 		  else
 		    {
@@ -908,7 +923,7 @@ namespace heme
 		  col_pixel.i = PixelId(i,j);
 		  col_pixel.i.isRt = true;
 	      
-		  writePixel (&col_pixel);
+		  vis::controller->writePixel (&col_pixel);
 		}
 	      par3[0] += par1[0];
 	      par3[1] += par1[1];

@@ -1,9 +1,9 @@
 #ifndef HEME_VIS_GLYPHDRAWER_H
 #define HEME_VIS_GLYPHDRAWER_H
 
-#include "vis/Control.h"
-// TODO this could probably be reduced to the net class and some visualisation class.
-#include "vis/rt.h"
+//#include "vis/Control.h"
+#include "vis/Layer.h"
+#include "net.h"
 
 namespace heme
 {

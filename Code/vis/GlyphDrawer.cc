@@ -1,4 +1,7 @@
 #include "vis/GlyphDrawer.h"
+// include lb to get check_conv symbol
+#include "lb.h"
+#include "vis/Control.h"
 
 namespace heme
 {
@@ -63,14 +66,14 @@ namespace heme
     // Function to perform the rendering.
     void GlyphDrawer::render() {
       float screen_max[4];
-      screen_max[0] = screen.max_x;
-      screen_max[1] = screen.max_x;
-      screen_max[2] = screen.max_y;
-      screen_max[3] = screen.max_y;
+      screen_max[0] = vis::controller->screen.max_x;
+      screen_max[1] = vis::controller->screen.max_x;
+      screen_max[2] = vis::controller->screen.max_y;
+      screen_max[3] = vis::controller->screen.max_y;
   
       float scale[4];
-      scale[0] = scale[1] = screen.scale_x;
-      scale[2] = scale[3] = screen.scale_y;
+      scale[0] = scale[1] = vis::controller->screen.scale_x;
+      scale[2] = scale[3] = vis::controller->screen.scale_y;
   
       double density;
       double vx, vy, vz;
@@ -83,7 +86,7 @@ namespace heme
 			      &density, &vx, &vy, &vz);
     
 	temp = glyph_length * block_size *
-	  velocity_threshold_max_inv / density;
+	  vis::controller->velocity_threshold_max_inv / density;
     
 	vx *= temp;
 	vy *= temp;
@@ -97,15 +100,15 @@ namespace heme
 	p2[1] = glyph[n].y + vy;
 	p2[2] = glyph[n].z + vz;
     
-	project (p1, p3);
-	project (p2, p4);
+	vis::controller->project (p1, p3);
+	vis::controller->project (p2, p4);
     
 	p3[0] = scale[0] * (p3[0] + screen_max[0]);
 	p3[1] = scale[1] * (p3[1] + screen_max[1]);
 	p4[0] = scale[2] * (p4[0] + screen_max[2]);
 	p4[1] = scale[3] * (p4[1] + screen_max[3]);
     
-	renderLine (p3, p4);
+	vis::controller->renderLine (p3, p4);
       }
     }     
 
