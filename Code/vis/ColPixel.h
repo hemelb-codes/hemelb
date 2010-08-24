@@ -3,7 +3,7 @@
 
 #define COLOURED_PIXELS_MAX    2048 * 2048
 #include "mpiInclude.h"
-#include "vis/colourPalette.h"
+#include "vis/ColourPalette.h"
 
 namespace heme
 {
@@ -40,10 +40,10 @@ namespace heme
 			 unsigned char rgb_data[],
 			 ColourPaletteFunction* palette);
     
+      void makePixelColour(unsigned char& red, unsigned char& green, unsigned char& blue,
+			   int rawRed, int rawGreen, int rawBlue);
     };
 
-    extern ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
-    extern ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
   
 #ifndef NOMPI
     extern MPI_Datatype MPI_col_pixel_type;

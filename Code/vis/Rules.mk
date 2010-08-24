@@ -4,7 +4,6 @@ SRCS := ColPixel.cc \
 	ColourPalette.cc \
 	GlyphDrawer.cc \
 	RayTracer.cc \
-	rt.cc \
 	StreaklineDrawer.cc \
 	visthread.cc \
 	Control.cc

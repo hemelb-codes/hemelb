@@ -1700,14 +1700,14 @@ void LBM::lbmCalculateFlowFieldValues ()
       lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i]);
     }
   
-  heme::vis::pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
-  heme::vis::pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
+  lbm_phys_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
+  lbm_phys_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
   
-  heme::vis::velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
-  heme::vis::velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
+  lbm_phys_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
+  lbm_phys_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
   
-  heme::vis::stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min);
-  heme::vis::stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max);
+  lbm_phys_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min);
+  lbm_phys_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max);
   
   period = period;
   
