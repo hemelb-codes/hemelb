@@ -5,7 +5,7 @@
 
 #include "constants.h"
 #include "mpiInclude.h"
-#include "vis/Control.h"
+//#include "vis/Control.h"
 #include "vis/Layer.h"
 #include "net.h"
 

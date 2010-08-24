@@ -3,6 +3,7 @@
 #ifndef NO_STEER
 
 #include "io/XdrMemWriter.h"
+#include "lb.h"
 
 namespace heme
 {
@@ -27,14 +28,13 @@ namespace heme
       double mousePressure;
       double mouseStress;
 
-      XDR xdr_sim_params;
       char* params;
       u_int paramsSizeB;
 
       SimulationParameters();
       ~SimulationParameters();
       char* pack();
-      void collectGlobalVals();
+      void collectGlobalVals(LBM* lbm);
 
     private:
       heme::io::XdrMemWriter *paramWriter;

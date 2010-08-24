@@ -5,8 +5,8 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#include "vis/rt.h"
 #include "lb.h"
+#include "vis/Control.h"
 
 namespace heme
 {
@@ -33,7 +33,7 @@ namespace heme
     extern bool updated_mouse_coords;
 
     void  *hemeLB_steer (void*);
-    void UpdateSteerableParameters (int*, vis::Vis*, LBM*);
+    void UpdateSteerableParameters (int*, vis::Control*, LBM*);
     void* hemeLB_network(void *ptr);
   }
 }

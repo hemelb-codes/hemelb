@@ -1,8 +1,9 @@
 #ifndef NO_STEER
 
 #include "steering/SimulationParameters.h"
-#include "vis/rt.h"
 #include "io/XdrMemWriter.h"
+#include "lb.h"
+#include "vis/control.h"
 
 using namespace std;
 
@@ -41,20 +42,21 @@ heme::steering::SimulationParameters::SimulationParameters() {
 
 }
 
-void heme::steering::SimulationParameters :: collectGlobalVals() {
-  
-  this->pressureMin = heme::vis::pressure_min;
-  this->pressureMax = heme::vis::pressure_max;
-  this->velocityMin = heme::vis::velocity_min;
-  this->velocityMax = heme::vis::velocity_max;
-  this->stressMax = heme::vis::stress_max;
+void heme::steering::SimulationParameters::collectGlobalVals
+(LBM* lbm)
+{
+  this->pressureMin = lbm_phys_pressure_min;
+  this->pressureMax = lbm_phys_pressure_max;
+  this->velocityMin = lbm_phys_velocity_min;
+  this->velocityMax = lbm_phys_velocity_max;
+  this->stressMax = lbm_phys_stress_max;
   this->timeStep = time_step;
   this->time = intra_cycle_time;
   this->cycle = cycle_id;
-  this->nInlets = heme::vis::inlets;
+  this->nInlets = lbm->inlets;
   
-  this->mousePressure = heme::vis::mouse_pressure;
-  this->mouseStress = heme::vis::mouse_stress;
+  this->mousePressure = vis::controller->mouse_pressure;
+  this->mouseStress = vis::controller->mouse_stress;
   
 }
 
@@ -88,8 +90,8 @@ char* heme::steering::SimulationParameters::pack() {
   paramWriter << mousePressure;
   paramWriter << mouseStress;
 
-  heme::vis::mouse_pressure = -1.0;
-  heme::vis::mouse_stress = -1.0;
+  vis::controller->mouse_pressure = -1.0;
+  vis::controller->mouse_stress = -1.0;
 
   return params;
 }

@@ -2,15 +2,22 @@
 #define HEME_VIS_RAYTRACER_H
 
 #include "constants.h"
-#include "vis/Control.h"
 #include "net.h"
+
+//#include "vis/Control.h"
+#include "vis/Layer.h"
+
 // TODO this could probably be reduced to the net class and some visualisation class.
-#include "vis/rt.h"
 
 namespace heme
 {
   namespace vis
   {
+    // Horrifying globals
+    extern float block_size_f;
+    extern float block_size_inv;
+    extern int block_size2, block_size3, block_size_1;
+    
     // Some sort of coordinates.
     struct BlockLocation {
       short int i, j, k;
@@ -35,11 +42,6 @@ namespace heme
     void rtRayTracing (void (*ColourPalette) (float value, float col[]));
     void rtUpdateClusterVoxel (int i, float density, float velocity, float stress);
     void rtEnd (void);
-
-    //TODO Put these somewhere else
-    extern float block_size_f;
-    extern float block_size_inv;
-
 
     class rayTracer : public Layer {
     public:

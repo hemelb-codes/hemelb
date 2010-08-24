@@ -5,6 +5,7 @@
 
 class LBM {
  public:
+  int steering_session_id;
   
   double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;
   double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
@@ -84,6 +85,9 @@ extern double lbm_stress_par;
 extern double lbm_density_min, lbm_density_max;
 extern double lbm_velocity_min, lbm_velocity_max;
 extern double lbm_stress_min, lbm_stress_max;
+extern double lbm_phys_pressure_min, lbm_phys_pressure_max;
+extern double lbm_phys_velocity_min, lbm_phys_velocity_max;
+extern double lbm_phys_stress_min, lbm_phys_stress_max;
 extern double *lbm_average_inlet_velocity;
 extern double *lbm_peak_inlet_velocity;
 extern double *lbm_inlet_normal;

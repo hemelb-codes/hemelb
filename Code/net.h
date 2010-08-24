@@ -144,8 +144,8 @@ struct SiteLocation
 // TODO Ugh. Will get rid of these to somewhere else at some point.
 extern int sites_x, sites_y, sites_z;
 extern int blocks_x, blocks_y, blocks_z;
-extern int blocks_yz, blocks;
-extern int block_size, block_size2, block_size3, block_size_1;
+extern int blocks;
+extern int block_size;
 extern int shift;
 extern int sites_in_a_block;
 
