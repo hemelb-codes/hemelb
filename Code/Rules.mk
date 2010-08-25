@@ -2,7 +2,7 @@
 include $(MK)/header.mk
 
 TARGETS = $(EXE)
-SUBDIRS = io vis steering
+SUBDIRS = io vis steering dbg
 
 $(EXE)_DEPS = config.o \
 	io.o \
@@ -15,7 +15,8 @@ $(EXE)_DEPS = config.o \
 	main.o \
 	$(SUBDIRS_TGTS)
 
-HEMELB_INCLUDEPATHS += $(TOP)
+
+HEME_INCLUDEPATHS += $(TOP)
 
 include $(MK)/footer.mk
 # This is just a convenience - to let you know when make has stopped

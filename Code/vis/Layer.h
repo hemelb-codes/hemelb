@@ -13,6 +13,9 @@ namespace heme
     public:
       // Method to render the layer's output to a visualisation.
       virtual void render() = 0;
+      virtual ~Layer() = 0;
+    protected:
+      Layer();
     };
   
   }

@@ -2,6 +2,7 @@ include $(MK)/header.mk
 
 SRCS := ColPixel.cc \
 	ColourPalette.cc \
+	Layer.cc \
 	GlyphDrawer.cc \
 	RayTracer.cc \
 	StreaklineDrawer.cc \
