@@ -121,10 +121,15 @@ namespace heme
 
     // Delete the particle at given index. Do something a bit budget to ensure that 
     // the particles remain in the first <particles> elements of an array,
-    void StreaklineDrawer::deleteParticle (int p_index)
+    void StreaklineDrawer::deleteParticle (unsigned int p_index)
     {
-      if (--nParticles <= 0) return;
-  
+      if (nParticles == 0)
+	return;
+      
+      nParticles--;
+      if (nParticles == 0)
+	return;
+      
       // its data are replaced with those of the last particle;
       if (p_index != nParticles) {
 	particleVec[ p_index ].x        = particleVec[ nParticles ].x;
@@ -142,7 +147,7 @@ namespace heme
     // Create seed particles to begin the streaklines.
     void StreaklineDrawer::createSeedParticles ()
     {
-      for (int n = 0; n < nParticleSeeds; n++)
+      for (unsigned int n = 0; n < nParticleSeeds; n++)
 	{
 	  createParticle (particleSeedVec[n].x,
 			  particleSeedVec[n].y,
@@ -598,7 +603,7 @@ namespace heme
     // Update the particles.
     void StreaklineDrawer::updateParticles ()
     {
-      for (int n = 0; n < nParticles; n++) {
+      for (unsigned int n = 0; n < nParticles; n++) {
 	// particle coords updating (dt = 1)
 	particleVec[n].x += particleVec[n].vx;
 	particleVec[n].y += particleVec[n].vy;
@@ -728,7 +733,7 @@ namespace heme
       scale[0] = vis::controller->screen.scale_x;
       scale[1] = vis::controller->screen.scale_y;
   
-      for (int n = 0; n < nParticles; n++) {
+      for (unsigned int n = 0; n < nParticles; n++) {
 	p1[0] = particleVec[n].x - float(sites_x>>1);
 	p1[1] = particleVec[n].y - float(sites_y>>1);
 	p1[2] = particleVec[n].z - float(sites_z>>1);

@@ -1,5 +1,5 @@
-#ifndef __fileutils_h_
-#define __fileutils_h_
+#ifndef HEME_FILEUTILS_H
+#define HEME_FILEUTILS_H
 
 #include <dirent.h>
 
@@ -7,11 +7,11 @@
 // (scandir has slightly different definitions on different
 // architectures)
 namespace util {
-#ifdef DARWIN
+#ifdef HEME_CFG_ON_BSD
   typedef struct direct direct_t;
-#else
+#else // HEME_CFG_ON_BSD
   typedef const struct direct direct_t;
-#endif // DARWIN
+#endif // HEME_CFG_ON_BSD
   
   // Exits if the named file doesn't exist or can't be opened for
   // reading.
@@ -26,4 +26,4 @@ namespace util {
   
 }
 
-#endif // __fileutils_h_
+#endif // HEME_FILEUTILS_H

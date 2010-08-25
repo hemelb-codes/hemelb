@@ -75,8 +75,8 @@ namespace heme
 
       // Variables for tracking the actual numbers of particles, and the maximum number 
       //(i.e. the number for which memory has been allocated).
-      int nParticles;
-      int nParticleSeeds;
+      unsigned int nParticles;
+      unsigned int nParticleSeeds;
       int particles_to_send_max, particles_to_recv_max;
 
       // Variables for counting the processors involved etc.
@@ -105,7 +105,7 @@ namespace heme
       // Private functions for the creation / deletion of particles.
       void createSeedParticles ();
       void createParticle (float x, float y, float z, float vel, int inlet_id);
-      void deleteParticle (int p_index);
+      void deleteParticle (unsigned int p_index);
 
       // Private functions for initialising the velocity field.  
       void initializeVelFieldBlock(int site_i, int site_j, int site_k, int proc_id);

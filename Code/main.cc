@@ -15,6 +15,8 @@
 #include "vis/visthread.h"
 #include "vis/colourpalette.h"
 
+#include "dbg/debug.h"
+
 #define BCAST_FREQ   1
 
 int cycle_id;
@@ -88,7 +90,7 @@ int main (int argc, char *argv[])
   net.procs = 1;
   net.id = 0;
 #endif
-  
+  heme::dbg::attach();
   check_conv = 0;
   
   if (argc == 5) // Check command line arguments
