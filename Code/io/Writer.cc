@@ -4,6 +4,15 @@
 
 using namespace heme::io;
 
+Writer::Writer()
+{
+}
+
+Writer::~Writer()
+{
+// Pure virtual destructor
+}
+
 // Function to write out our struct, ColPixel.
 void Writer::writePixel (vis::ColPixel *col_pixel_p,
 			 vis::ColourPaletteFunction*colourPalette) {
