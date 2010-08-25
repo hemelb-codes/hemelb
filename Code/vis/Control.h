@@ -128,9 +128,6 @@ namespace heme {
       /* int nLayers; */
       /* std::vector<Layer *> myLayers; */
       
-      float **cluster_voxel; // should be pushed to RayTracer
-      float ***cluster_flow_field; // ditto
-
       int col_pixels, // number of ColPixels (?)
 	col_pixels_max; // max permitted of above
       

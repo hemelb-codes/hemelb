@@ -30,9 +30,6 @@ namespace heme
 #endif //NO_STEER
 
 
-unsigned char *pixel_data = 0;
-
-
 double *f_old = 0, *f_new = 0;
 
 int *f_id = 0;
@@ -91,48 +88,3 @@ double lbm_phys_pressure_min = 0.0, lbm_phys_pressure_max = 0.0;
 double lbm_phys_velocity_min = 0.0, lbm_phys_velocity_max = 0.0;
 double lbm_phys_stress_min = 0.0, lbm_phys_stress_max = 0.0;
 
-namespace heme
-{
-  namespace vis
-  {
-    //int col_pixels, col_pixels_max;
-    //int col_pixels_recv[2];
-  
-    //int *col_pixel_id = NULL;
-  
-    // ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
-    // ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
-  
-    // //double time = 0.0;
-
-    // int time_step = 0, cycle = 0;
-    // int period = 0, inlets = 0;
-    // int image_freq = 0;
-    // int pixels_max = 0;
-    // int shouldDrawStreaklines = 1;
-
-
-    // float physical_pressure_threshold_min;
-    // float physical_pressure_threshold_max;
-    // float physical_velocity_threshold_max;
-    // float physical_stress_threshold_max;
-    // float density_threshold_min, density_threshold_minmax_inv;
-    // float velocity_threshold_max_inv;
-    // float stress_threshold_max_inv;
-    // float brightness;
-    // double mouse_pressure, mouse_stress;
-    // float streaklines_per_pulsatile_period, streakline_length;
-
-    // int mouse_x, mouse_y;
-    // int perform_rendering;
-    // int mode;
-
-
-    // Screen screen;
-
-    // Viewpoint viewpoint;
-
-    // Vis vis;
-  }
-
-}
