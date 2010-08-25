@@ -11,7 +11,8 @@ namespace heme
     class Writer
     {
     public:
-    
+      
+      
       enum Separator {
 	eol
       };
@@ -25,7 +26,7 @@ namespace heme
       }
       // Special version for eol
       Writer& operator<< (enum Separator & value);
-    
+      
       void writePixel (vis::ColPixel *col_pixel_p,
 		       vis::ColourPaletteFunction* colourPalette);
       //void (*colourPalette)(float value, float col[]));
@@ -34,7 +35,9 @@ namespace heme
       virtual unsigned int getCurrentStreamPosition() const = 0;
     
     protected:
-    
+      Writer();
+      virtual ~Writer() =0;
+      
       // Functions for formatting control
       virtual void writeFieldSeparator() = 0;
       virtual void writeRecordSeparator() = 0;
