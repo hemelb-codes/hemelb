@@ -1,5 +1,3 @@
-#ifndef NO_STEER
-
 #define _DEBUG_PRINT(X)   /* X */
 
 #include <iostream>
@@ -24,11 +22,11 @@
 
 #define MYPORT 65250
 
-#include "steering/HttpPost.h"
+#include "steering/on/HttpPost.h"
 
 using namespace std;
 
-namespace heme
+namespace hemelb
 {
   namespace steering
   {
@@ -253,4 +251,3 @@ namespace heme
   }
 }
 
-#endif // NO_STEER

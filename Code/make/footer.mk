@@ -9,7 +9,7 @@ ifneq ($(or $(findstring *,$(SRCS)),$(findstring ?,$(SRCS)),$(findstring ],$(SRC
   SRCS := $(notdir $(foreach sd,. $(SRCS_VPATH),$(wildcard $(addprefix $(d)/$(sd)/,$(SRCS)))))
 endif
 
-OBJS_$(d) := $(addprefix $(OBJPATH)/,$(addsuffix .o,$(basename $(SRCS))))
+OBJS_$(d) := $(addprefix $(OBJPATH)/,$(addsuffix .$(OBJEXT),$(basename $(SRCS))))
 endif
 
 CLEAN_$(d) := $(CLEAN_$(d)) $(addprefix $(d)/,$(CLEAN))

@@ -1,7 +1,7 @@
-#ifndef HEME_STEERING_HTTPPOST_H
-#define HEME_STEERING_HTTPPOST_H
+#ifndef HEMELB_STEERING_ON_HTTPPOST_H
+#define HEMELB_STEERING_ON_HTTPPOST_H
 
-namespace heme
+namespace hemelb
 {
   namespace steering
   {
@@ -20,4 +20,4 @@ namespace heme
   }
 }
 
-#endif // HEME_STEERING_HTTPPOST_H
+#endif // HEMELB_STEERING_ON_HTTPPOST_H
