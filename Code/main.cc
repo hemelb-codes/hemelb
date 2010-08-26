@@ -90,7 +90,7 @@ int main (int argc, char *argv[])
   net.procs = 1;
   net.id = 0;
 #endif
-  heme::dbg::attach();
+  hemelb::dbg::attach();
   check_conv = 0;
   
   if (argc == 5) // Check command line arguments
@@ -341,8 +341,8 @@ int main (int argc, char *argv[])
 		if (heme::vis::controller->mouse_x >= 0 && heme::vis::controller->mouse_y >= 0 && heme::steering::updated_mouse_coords) {
 		  for (int i = 0; i < heme::vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++) {
 		    if (heme::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.isRt &&
-			heme::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.i == heme::vis::controller->mouse_x &&
-			heme::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.j == heme::vis::controller->mouse_y)
+			int(heme::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.i) == heme::vis::controller->mouse_x &&
+			int(heme::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.j) == heme::vis::controller->mouse_y)
 		      {
 			heme::vis::controller->calculateMouseFlowField (&heme::vis::controller->col_pixel_recv[RECV_BUFFER_A][i], &lbm);
 			break;

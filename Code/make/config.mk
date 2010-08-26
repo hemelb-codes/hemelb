@@ -2,6 +2,10 @@
 # cosmetics in case of Cygwin :)).
 BUILD_ARCH := $(patsubst CYGWIN_%,Cygwin,$(shell uname -s))-$(shell uname -m)
 
+RANLIB := ranlib
+OBJEXT := o
+LIBEXT := a
+
 # Target platform (where the code will be executed).  I'm not using
 # TARGET_ARCH for this since this variable is already used in builtin
 # make rules and I want to be able to use those built in rules.  By

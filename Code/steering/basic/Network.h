@@ -1,9 +1,7 @@
-#ifndef HEME_STEERING_NETWORK_H
-#define HEME_STEERING_NETWORK_H
+#ifndef HEMELB_STEERING_ON_NETWORK_H
+#define HEMELB_STEERING_ON_NETWORK_H
 
-#ifndef NO_STEER
-
-namespace heme
+namespace hemelb
 {
   namespace steering
   {
@@ -20,6 +18,4 @@ namespace heme
   }
 }
 
-#endif// NO_STEER
-
-#endif // HEME_STEERING_NETWORK_H
+#endif // HEMELB_STEERING_ON_NETWORK_H

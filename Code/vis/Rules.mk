@@ -1,5 +1,6 @@
 include $(MK)/header.mk
 
+TARGETS := libHemeLbVis.$(LIBEXT)
 SRCS := ColPixel.cc \
 	ColourPalette.cc \
 	Layer.cc \
@@ -9,6 +10,7 @@ SRCS := ColPixel.cc \
 	visthread.cc \
 	Control.cc
 
+$(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

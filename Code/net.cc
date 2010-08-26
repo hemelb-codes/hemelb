@@ -235,7 +235,7 @@ void Net::netInit (int totalFluidSites)
   int site_i, site_j, site_k;                // Global coordinates of a site.
   int neigh_i, neigh_j, neigh_k;             // Global coordinates of a neighbour site.
   int i, j, k;                               // Global block index.
-  int l;                                     // Index for neighbours of a site.
+  unsigned int l;                            // Index for neighbours of a site.
   int m;                                     // Site index on a paricular block.
   int n;                                     // Global block index.
   int mm;                                    // Index of processors surrounding this one.

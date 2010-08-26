@@ -1,5 +1,3 @@
-#ifndef NO_STEER
-
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -11,11 +9,11 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
-#include "steering/Network.h"
+#include "steering/on/Network.h"
 
 // Receive a bytestream of known length from a socket into a buffer.
 // Returns the number of bytes recieved or -1 on failure.
-int heme::steering::Network::recv_all (int sockid, char *buf, const int length)
+int hemelb::steering::Network::recv_all (int sockid, char *buf, const int length)
 {
   int received_bytes = 0;
   int bytes_left_to_receive = length;
@@ -37,7 +35,7 @@ int heme::steering::Network::recv_all (int sockid, char *buf, const int length)
 
 // Send all bytes from a buffer of known length over a socket.
 // Returns the number of bytes sent or -1 on failure.
-int heme::steering::Network::send_all (int sockid,
+int hemelb::steering::Network::send_all (int sockid,
 				       const char *buf, const int length)
 {
   int sent_bytes = 0;
@@ -57,4 +55,3 @@ int heme::steering::Network::send_all (int sockid,
   return n== -1 ? -1 : sent_bytes;
 }
 
-#endif // NO_STEER
