@@ -6,11 +6,11 @@ SRCS := common.cc
 
 ifeq ($(HEMELB_STEERING_LIB), none)
 # no steering - use "off"
-SUBDIRS := off
+SUBDIRS := none
 
 else ifeq ($(HEMELB_STEERING_LIB), basic)
 # Steering enabled, use "on"
-SUBDIRS := on
+SUBDIRS := basic
 
 endif
 

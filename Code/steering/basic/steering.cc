@@ -33,10 +33,10 @@
 
 #include "steering/common/common.h"
 
-#include "steering/on/steering.h"
-#include "steering/on/Network.h"
-#include "steering/on/SimulationParameters.h"
-#include "steering/on/HttpPost.h"
+#include "steering/basic/steering.h"
+#include "steering/basic/Network.h"
+#include "steering/basic/SimulationParameters.h"
+#include "steering/basic/HttpPost.h"
 
 
 #define MYPORT 65250
