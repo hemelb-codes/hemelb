@@ -1,10 +1,22 @@
 include $(MK)/header.mk
 
-SRCS := SimulationParameters.cc \
-	common.cc \
-	HttpPost.cc \
-	Network.cc \
-	steering.cc
+TARGETS := libHemeLbSteering.$(LIBEXT)
+
+SRCS := common.cc
+
+ifeq ($(HEMELB_STEERING_LIB), none)
+# no steering - use "off"
+SUBDIRS := off
+
+else ifeq ($(HEMELB_STEERING_LIB), basic)
+# Steering enabled, use "on"
+SUBDIRS := on
+
+endif
+
+SUBDIRS += common
+
+$(TARGETS)_DEPS = $(SUBDIRS_TGTS)
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

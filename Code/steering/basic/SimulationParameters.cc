@@ -1,9 +1,11 @@
-#ifndef NO_STEER
-
-#include "steering/SimulationParameters.h"
-#include "io/XdrMemWriter.h"
 #include "lb.h"
+
+#include "io/XdrMemWriter.h"
+
 #include "vis/control.h"
+
+#include "steering/on/SimulationParameters.h"
+
 
 using namespace std;
 
@@ -11,7 +13,7 @@ extern int cycle_id;
 extern int time_step;
 extern double intra_cycle_time;
 
-heme::steering::SimulationParameters::SimulationParameters() {
+hemelb::steering::SimulationParameters::SimulationParameters() {
   // C'tor initialises to the following defaults.
   
   pressureMin = 0.001;
@@ -42,7 +44,7 @@ heme::steering::SimulationParameters::SimulationParameters() {
 
 }
 
-void heme::steering::SimulationParameters::collectGlobalVals
+void hemelb::steering::SimulationParameters::collectGlobalVals
 (LBM* lbm)
 {
   this->pressureMin = lbm_phys_pressure_min;
@@ -55,19 +57,19 @@ void heme::steering::SimulationParameters::collectGlobalVals
   this->cycle = cycle_id;
   this->nInlets = lbm->inlets;
   
-  this->mousePressure = vis::controller->mouse_pressure;
-  this->mouseStress = vis::controller->mouse_stress;
+  this->mousePressure = heme::vis::controller->mouse_pressure;
+  this->mouseStress = heme::vis::controller->mouse_stress;
   
 }
 
-heme::steering::SimulationParameters::~SimulationParameters() {
+hemelb::steering::SimulationParameters::~SimulationParameters() {
   delete paramWriter;
   delete[] inletAvgVel;
   // TODO: find out if there's a good reason this isn't deleted
   // delete[] params;
 }
 
-char* heme::steering::SimulationParameters::pack() {
+char* hemelb::steering::SimulationParameters::pack() {
   heme::io::XdrMemWriter& paramWriter = *(this->paramWriter);
   paramWriter << pressureMin;
   paramWriter << pressureMax;
@@ -90,10 +92,9 @@ char* heme::steering::SimulationParameters::pack() {
   paramWriter << mousePressure;
   paramWriter << mouseStress;
 
-  vis::controller->mouse_pressure = -1.0;
-  vis::controller->mouse_stress = -1.0;
+  heme::vis::controller->mouse_pressure = -1.0;
+  heme::vis::controller->mouse_stress = -1.0;
 
   return params;
 }
 
-#endif // NO_STEER

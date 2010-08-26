@@ -1,11 +1,10 @@
-#ifndef HEME_STEERING_SIMULATIONPARAMETERS_H
-#define HEME_STEERING_SIMULATIONPARAMETERS_H
-#ifndef NO_STEER
+#ifndef HEMELB_STEERING_ON_SIMULATIONPARAMETERS_H
+#define HEMELB_STEERING_ON_SIMULATIONPARAMETERS_H
 
 #include "io/XdrMemWriter.h"
 #include "lb.h"
 
-namespace heme
+namespace hemelb
 {
   namespace steering
   {
@@ -44,6 +43,5 @@ namespace heme
   }
 }
 
-#endif // NO_STEER
 
-#endif//__steering_simulationParameters_h_
+#endif // HEMELB_STEERING_ON_SIMULATIONPARAMETERS_H

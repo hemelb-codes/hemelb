@@ -1133,7 +1133,7 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
 
 // Returns the type of collision/streaming update for the fluid site
 // with data "site_data".
-int lbmCollisionType (unsigned int site_data)
+unsigned int lbmCollisionType (unsigned int site_data)
 {
   unsigned int boundary_type;
   

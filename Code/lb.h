@@ -71,7 +71,7 @@ void lbmStress (double density, double f[], double nor[], double *stress);
 void lbmInitMinMaxValues (void);
 void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
-int lbmCollisionType (unsigned int site_data);
+unsigned int lbmCollisionType (unsigned int site_data);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmIsUnstable (Net *net);

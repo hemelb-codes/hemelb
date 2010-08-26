@@ -16,7 +16,7 @@ $(EXE)_DEPS = config.o \
 	$(SUBDIRS_TGTS)
 
 
-HEME_INCLUDEPATHS += $(TOP)
+HEMELB_INCLUDEPATHS += $(TOP)
 
 include $(MK)/footer.mk
 # This is just a convenience - to let you know when make has stopped
