@@ -22,8 +22,7 @@ void hemelb::dbg::attach() {
   if (rank==0) {
     std::ostringstream oStream;
     std::string include (__FILE__);
-    std::string osxDebugDir =
-      include.substr(0, include.rfind('/')) + "/dbg/OSX";
+    std::string osxDebugDir = include.substr(0, include.rfind('/'));
     std::string binaryPath
       ("/Users/rupert/working/hemelb/Code/build/hemelb");
     

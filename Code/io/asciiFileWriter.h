@@ -1,12 +1,14 @@
-#ifndef HEME_IO_ASCIIFILEWRITER_H
-#define HEME_IO_ASCIIFILEWRITER_H
+#ifndef HEMELB_IO_ASCIIFILEWRITER_H
+#define HEMELB_IO_ASCIIFILEWRITER_H
 
 #include <iostream>
 
 #include "io/AsciiStreamWriter.h"
 
-namespace heme {
-  namespace io {
+namespace hemelb
+{
+  namespace io
+  {
     
     // Class to write a file. The actual write functions are implemented
     // in the base class.
@@ -21,4 +23,4 @@ namespace heme {
   }
 
 }
-#endif // HEME_IO_ASCIIFILEWRITER_H
+#endif // HEMELB_IO_ASCIIFILEWRITER_H

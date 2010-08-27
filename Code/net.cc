@@ -321,7 +321,7 @@ void Net::netInit (int totalFluidSites)
   partial_visited_fluid_sites = 0;
   unvisited_fluid_sites = totalFluidSites;
   
-  seconds = util::myClock ();
+  seconds = hemelb::util::myClock ();
 
   if (net_machines == 1 || net_machines == procs) // If one machine or one machine per proc.
     {
@@ -649,8 +649,8 @@ void Net::netInit (int totalFluidSites)
   free(site_location_b);
   free(site_location_a);
   
-  dd_time = util::myClock () - seconds;
-  seconds = util::myClock ();
+  dd_time = hemelb::util::myClock () - seconds;
+  seconds = hemelb::util::myClock ();
   
   // A map between the two-level data representation and the 1D
   // compact one is created here.
@@ -1285,7 +1285,7 @@ void Net::netInit (int totalFluidSites)
   // are freeing both of those.
   free(f_data);
   
-  bm_time = util::myClock () - seconds;
+  bm_time = hemelb::util::myClock () - seconds;
 }
 
 /*!

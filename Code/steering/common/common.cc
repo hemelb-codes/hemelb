@@ -27,7 +27,7 @@ namespace hemelb
       0.0};             // doRendering
 
     void UpdateSteerableParameters(int *perform_rendering,
-				   heme::vis::Control *visControl, LBM* lbm)
+				   vis::Control *visControl, LBM* lbm)
     {
       steer_par[ STEERABLE_PARAMETERS ] = *perform_rendering;
 
@@ -62,7 +62,7 @@ namespace hemelb
       visControl->physical_pressure_threshold_min = steer_par[ 9 ];
       visControl->physical_pressure_threshold_max = steer_par[ 10 ];
   
-      heme::vis::GlyphDrawer::glyph_length = steer_par[ 11 ];
+      vis::GlyphDrawer::glyph_length = steer_par[ 11 ];
 
       pixels_x         = steer_par[ 12 ]; 
       pixels_y         = steer_par[ 13 ]; 

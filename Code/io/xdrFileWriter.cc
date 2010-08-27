@@ -4,7 +4,8 @@
 
 #include "io/XdrFileWriter.h"
 
-using namespace heme::io;
+using namespace hemelb::io;
+
 // Implement a constructor that opens the file and creates the Xdr
 // object to write to it.
 XdrFileWriter::XdrFileWriter(char* fileName) {

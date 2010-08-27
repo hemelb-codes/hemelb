@@ -9,7 +9,7 @@
 #include "vis/Control.h"
 #include "vis/ColPixel.h"
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {

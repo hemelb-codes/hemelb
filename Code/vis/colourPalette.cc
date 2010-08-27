@@ -1,7 +1,7 @@
 #include <math.h>
 #include "vis/ColourPalette.h"
 
-using namespace heme::vis;
+using namespace hemelb::vis;
 
 // Function to get an RGB colour in col, based on the value of the
 // parameter t.  The colour is piece-wise linear in t.

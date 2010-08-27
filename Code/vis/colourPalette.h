@@ -1,7 +1,7 @@
-#ifndef HEME_VIS_COLOURPALETTE_H
-#define HEME_VIS_COLOURPALETTE_H
+#ifndef HEMELB_VIS_COLOURPALETTE_H
+#define HEMELB_VIS_COLOURPALETTE_H
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {
@@ -19,4 +19,4 @@ namespace heme
   }
 }
 
-#endif // HEME_VIS_COLOURPALETTE_H
+#endif // HEMELB_VIS_COLOURPALETTE_H

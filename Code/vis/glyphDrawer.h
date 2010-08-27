@@ -1,11 +1,11 @@
-#ifndef HEME_VIS_GLYPHDRAWER_H
-#define HEME_VIS_GLYPHDRAWER_H
+#ifndef HEMELB_VIS_GLYPHDRAWER_H
+#define HEMELB_VIS_GLYPHDRAWER_H
 
 //#include "vis/Control.h"
 #include "vis/Layer.h"
 #include "net.h"
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {
@@ -41,4 +41,4 @@ namespace heme
   }
 }
 
-#endif //HEME_VIS_GLYPHDRAWER_H
+#endif //HEMELB_VIS_GLYPHDRAWER_H
