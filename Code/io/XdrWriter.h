@@ -1,12 +1,12 @@
-#ifndef HEME_IO_XDRWRITER_H
-#define HEME_IO_XDRWRITER_H
+#ifndef HEMELB_IO_XDRWRITER_H
+#define HEMELB_IO_XDRWRITER_H
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
 #include "io/Writer.h"
 
-namespace heme
+namespace hemelb
 {
   namespace io
   {
@@ -33,4 +33,4 @@ namespace heme
   }
 }
 
-#endif //HEME_IO_XDRWRITER_H
+#endif //HEMELB_IO_XDRWRITER_H

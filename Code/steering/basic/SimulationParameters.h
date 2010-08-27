@@ -36,7 +36,7 @@ namespace hemelb
       void collectGlobalVals(LBM* lbm);
 
     private:
-      heme::io::XdrMemWriter *paramWriter;
+      io::XdrMemWriter *paramWriter;
 
     };
 

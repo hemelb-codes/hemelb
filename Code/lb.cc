@@ -1051,7 +1051,7 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
     {
       lbmStress (f_neq, &stress);
     }
-  heme::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
+  hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 }
 
 
@@ -1113,20 +1113,20 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
       if (net->net_site_nor[ i*3 ] >= 1.0e+30)
 	{
 	  lbmUpdateMinMaxValues (*density, *velocity, 0.0);
-	  heme::vis::rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
+	  hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
 	}
       else
 	{
 	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	  lbmUpdateMinMaxValues (*density, *velocity, stress);
-	  heme::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
+	  hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 	}
     }
   else
     {
       lbmStress (f_neq, &stress);
       lbmUpdateMinMaxValues (*density, *velocity, stress);
-      heme::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
+      hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
     }
 }
 
@@ -1649,7 +1649,7 @@ void LBM::lbmCalculateFlowFieldValues ()
   
   int i;
 
-  int lMaxInlets = util::max(6+inlets,2*inlets);
+  int lMaxInlets = hemelb::util::max(6+inlets,2*inlets);
 
   local_data = new double[lMaxInlets];
   global_data = new double[lMaxInlets];

@@ -1,12 +1,15 @@
-#ifndef HEME_IO_ASCIISTREAMWRITER_H
-#define HEME_IO_ASCIISTREAMWRITER_H
+#ifndef HEMELB_IO_ASCIISTREAMWRITER_H
+#define HEMELB_IO_ASCIISTREAMWRITER_H
 
 #include <ostream>
 
 #include "io/Writer.h"
 
-namespace heme {
-  namespace io {
+namespace hemelb
+{
+  namespace io
+  {
+    
     class AsciiStreamWriter : public Writer {
     public:
       // Method to get the current position of writing in the stream.
@@ -36,4 +39,4 @@ namespace heme {
     };
   }
 }
-#endif // HEME_IO_ASCIISTREAMWRITER_H
+#endif // HEMELB_IO_ASCIISTREAMWRITER_H

@@ -42,14 +42,14 @@ void Control::render()
 }
 */
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {
     // make a global controller
     Control *controller;
     
-    Control::Control(Net *net)
+    Control::Control()
     {
       
       //this->vis = *vis;
@@ -80,7 +80,10 @@ namespace heme
 #endif
   
       col_pixels_max = COLOURED_PIXELS_MAX;
-  
+      
+      col_pixel_recv[0] = new ColPixel[col_pixels_max];
+      col_pixel_recv[1] = new ColPixel[col_pixels_max];
+      
       pixels_max = COLOURED_PIXELS_MAX;
       col_pixel_id = (int *)malloc(sizeof(int) * pixels_max);
   
@@ -107,7 +110,11 @@ namespace heme
       MPI_Type_struct (col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types, &MPI_col_pixel_type);
       MPI_Type_commit (&MPI_col_pixel_type);
 #endif
+    }
   
+    
+    void Control::initLayers(Net *net)
+    {
       rtInit (net);
   
       if (!is_bench)
@@ -806,8 +813,11 @@ namespace heme
 	}
       rtEnd ();
 
+      delete col_pixel_recv[0];
+      delete col_pixel_recv[1];
+
       free(col_pixel_id);
     }
 
   } // namespace vis
-} // namespace heme
+} // namespace hemelb

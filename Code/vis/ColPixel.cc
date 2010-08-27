@@ -4,7 +4,7 @@
 #include "utilityFunctions.h"
 #include "vis/Control.h"
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {

@@ -1,10 +1,10 @@
-#ifndef HEME_IO_WRITER_H
-#define HEME_IO_WRITER_H
+#ifndef HEMELB_IO_WRITER_H
+#define HEMELB_IO_WRITER_H
 
 #include "vis/colPixel.h"
 #include "vis/colourPalette.h"
 
-namespace heme 
+namespace hemelb
 {
   namespace io
   {
@@ -17,6 +17,9 @@ namespace heme
 	eol
       };
     
+      // Special version for eol, using function overloading
+      Writer& operator<< (enum Separator const & value);
+      
       // Overload << to write basic types and any necessary separators
       template <typename T>
 	Writer& operator<< (T const & value) {
@@ -24,8 +27,6 @@ namespace heme
 	writeFieldSeparator();
 	return *this;
       }
-      // Special version for eol
-      Writer& operator<< (enum Separator & value);
       
       void writePixel (vis::ColPixel *col_pixel_p,
 		       vis::ColourPaletteFunction* colourPalette);
@@ -51,8 +52,14 @@ namespace heme
       virtual void _write(unsigned int const & value) = 0;
     
     };
-  
+    
+    /*template <>
+      inline Writer& Writer::operator<< <enum Writer::Separator> (enum Writer::Separator const & value) {
+      writeRecordSeparator();
+      return *this;
+      }*/
+    
   }
 }
 
-#endif // HEME_IO_WRITER_H
+#endif // HEMELB_IO_WRITER_H

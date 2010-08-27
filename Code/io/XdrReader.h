@@ -1,12 +1,12 @@
-#ifndef HEME_IO_XDRREADER_H
-#define HEME_IO_XDRREADER_H
+#ifndef HEMELB_IO_XDRREADER_H
+#define HEMELB_IO_XDRREADER_H
 
 #include <stdio.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-namespace heme
+namespace hemelb
 {
   namespace io
   {
@@ -29,4 +29,4 @@ namespace heme
   }
 }
 
-#endif // HEME_IO_XDRREADER_H
+#endif // HEMELB_IO_XDRREADER_H

@@ -32,7 +32,7 @@ namespace hemelb
     extern bool updated_mouse_coords;
 
     void  *hemeLB_steer (void*);
-    void UpdateSteerableParameters (int*, heme::vis::Control*, LBM*);
+    void UpdateSteerableParameters (int*, vis::Control*, LBM*);
     void* hemeLB_network(void *ptr);
   }
 }

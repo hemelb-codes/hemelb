@@ -1,7 +1,7 @@
-#ifndef HEME_VIS_LAYER_H
-#define HEME_VIS_LAYER_H
+#ifndef HEMELB_VIS_LAYER_H
+#define HEMELB_VIS_LAYER_H
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {
@@ -21,4 +21,4 @@ namespace heme
   }
 }
 
-#endif // HEME_VIS_LAYER_H
+#endif // HEMELB_VIS_LAYER_H

@@ -8,8 +8,9 @@ SUBDIRS := none
 # SRCS := none/debug.cc
 
 else # HEMELB_DBG_LEVEL nonzero
+$(info Building in debug mode.)
 
-ifdef $(HEMELB_CFG_ON_OSX)
+ifdef HEMELB_CFG_ON_OSX
 SUBDIRS := OSX
 # SRCS := OSX/debug.cc
 

@@ -3,32 +3,6 @@
  */
 //#include "vis/colpixel.h"
 
-#ifndef NO_STEER
-#include <semaphore.h>
-namespace heme
-{
-  namespace steering
-  {
-    pthread_mutex_t network_buffer_copy_lock;
-    pthread_mutex_t LOCK;
-    pthread_cond_t network_send_frame;
-    sem_t nrl;
-    sem_t connected_sem;
-    sem_t steering_var_lock;
-    
-    bool is_frame_ready;
-    bool connected;
-    bool sending_frame;
-    
-    int send_array_length;
-    
-    int frame_size;
-    
-    bool updated_mouse_coords;
-  }
-}
-#endif //NO_STEER
-
 
 double *f_old = 0, *f_new = 0;
 

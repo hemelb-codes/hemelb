@@ -1,5 +1,5 @@
-#ifndef HEME_VIS_CONTROL_H
-#define HEME_VIS_CONTROL_H
+#ifndef HEMELB_VIS_CONTROL_H
+#define HEMELB_VIS_CONTROL_H
 
 #include <vector>
 
@@ -9,7 +9,7 @@
 #include "vis/ColPixel.h"
 #include "vis/GlyphDrawer.h"
 #include "vis/StreaklineDrawer.h"
-namespace heme {
+namespace hemelb {
   namespace vis {
     /* the last three digits of the pixel identifier are used to
        indicate if the pixel is coloured via the ray tracing technique
@@ -54,9 +54,9 @@ namespace heme {
 	float system_size;
       };
 
-      Control(Net *net);
+      Control();
       ~Control();
-      
+      void initLayers(Net* net);
       /* This next bit was Hywel's incomplete attempt to refactor the
 	 vis Control subsystem. I'm going to remove it for now and
 	 reintegrate it later. */
@@ -114,7 +114,8 @@ namespace heme {
       Viewpoint viewpoint;
       
       int col_pixels_recv[2]; // number received?
-      ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
+      //ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
+      ColPixel* col_pixel_recv[2];
 
       float physical_pressure_threshold_min;
       float physical_pressure_threshold_max;
@@ -159,4 +160,4 @@ namespace heme {
   }
 }
 
-#endif // HEME_VIS_CONTROL_H
+#endif // HEMELB_VIS_CONTROL_H

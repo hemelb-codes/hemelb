@@ -40,7 +40,7 @@ hemelb::steering::SimulationParameters::SimulationParameters() {
   // params_bytes += n_inlets * sizeof(double);
 
   params = new char[paramsSizeB];
-  paramWriter = new heme::io::XdrMemWriter(params, paramsSizeB);
+  paramWriter = new io::XdrMemWriter(params, paramsSizeB);
 
 }
 
@@ -57,8 +57,8 @@ void hemelb::steering::SimulationParameters::collectGlobalVals
   this->cycle = cycle_id;
   this->nInlets = lbm->inlets;
   
-  this->mousePressure = heme::vis::controller->mouse_pressure;
-  this->mouseStress = heme::vis::controller->mouse_stress;
+  this->mousePressure = vis::controller->mouse_pressure;
+  this->mouseStress = vis::controller->mouse_stress;
   
 }
 
@@ -70,7 +70,7 @@ hemelb::steering::SimulationParameters::~SimulationParameters() {
 }
 
 char* hemelb::steering::SimulationParameters::pack() {
-  heme::io::XdrMemWriter& paramWriter = *(this->paramWriter);
+  io::XdrMemWriter& paramWriter = *(this->paramWriter);
   paramWriter << pressureMin;
   paramWriter << pressureMax;
 
@@ -92,8 +92,8 @@ char* hemelb::steering::SimulationParameters::pack() {
   paramWriter << mousePressure;
   paramWriter << mouseStress;
 
-  heme::vis::controller->mouse_pressure = -1.0;
-  heme::vis::controller->mouse_stress = -1.0;
+  vis::controller->mouse_pressure = -1.0;
+  vis::controller->mouse_stress = -1.0;
 
   return params;
 }

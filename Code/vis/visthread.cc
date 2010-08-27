@@ -6,7 +6,7 @@
 #include "vis/colpixel.h"
 #include "vis/visthread.h"
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {

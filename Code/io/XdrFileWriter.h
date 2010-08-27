@@ -1,11 +1,11 @@
-#ifndef HEME_IO_XDRFILEWRITER_H
-#define HEME_IO_XDRFILEWRITER_H
+#ifndef HEMELB_IO_XDRFILEWRITER_H
+#define HEMELB_IO_XDRFILEWRITER_H
 
 #include <stdio.h>
 
 #include "io/XdrWriter.h"
 
-namespace heme
+namespace hemelb
 {
   namespace io 
   {
@@ -24,4 +24,4 @@ namespace heme
     };
   }
 }
-#endif // HEME_IO_XDRFILEWRITER_H
+#endif // HEMELB_IO_XDRFILEWRITER_H

@@ -1,6 +1,6 @@
 #include "vis/Layer.h"
 
-using namespace heme::vis;
+using namespace hemelb::vis;
 
 Layer::Layer()
 {

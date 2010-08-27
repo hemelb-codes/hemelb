@@ -3,7 +3,7 @@
 
 #include "io/XdrWriter.h"
 
-using namespace heme::io;
+using namespace hemelb::io;
 // Functions to write simple types out to the Xdr stream.
 // Sadly templating is non-trivial due to XDR's naming.
 void XdrWriter::_write(int const& value) {

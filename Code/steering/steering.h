@@ -3,13 +3,12 @@
 
 #include "steering/common/common.h"
 
-#include "steering/" ## HEMELB_STEERING_LIB ## "/steering.h"
-/* #ifdef NO_STEER */
-/* #include "steering/none/steering.h" */
+#if HEMELB_STEERING_LIB == basic
+  #include "steering/basic/steering.h"
 
-/* #else // NO_STEER is undefined */
-/* #include "steering/basic/steering.h" */
+#else
+  #include "steering/none/steering.h"
 
-/* #endif // NO_STEER */
+#endif
 
 #endif // HEMELB_STEERING_STEERING_H
