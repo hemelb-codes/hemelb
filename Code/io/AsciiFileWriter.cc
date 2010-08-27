@@ -2,7 +2,7 @@
 
 #include "io/AsciiFileWriter.h"
 
-using namespace heme::io;
+using namespace hemelb::io;
 
 // Implement a constructor that opens the file and creates the Xdr
 // object to write to it.

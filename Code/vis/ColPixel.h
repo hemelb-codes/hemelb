@@ -1,11 +1,11 @@
-#ifndef HEME_VIS_COLPIXEL_H
-#define HEME_VIS_COLPIXEL_H
+#ifndef HEMELB_VIS_COLPIXEL_H
+#define HEMELB_VIS_COLPIXEL_H
 
 #define COLOURED_PIXELS_MAX    2048 * 2048
 #include "mpiInclude.h"
 #include "vis/ColourPalette.h"
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {
@@ -51,4 +51,4 @@ namespace heme
   }
 }
 
-#endif // HEME_VIS_COLPIXEL_H
+#endif // HEMELB_VIS_COLPIXEL_H

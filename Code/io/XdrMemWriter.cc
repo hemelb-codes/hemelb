@@ -3,10 +3,11 @@
 
 #include "io/XdrMemWriter.h"
 
-using namespace heme::io;
+using namespace hemelb::io;
 
 // Constructor for a Xdr writer held in a memory buffer.
 XdrMemWriter::XdrMemWriter(char* dataBuffer, unsigned int dataLength) {
+  myXdr = new XDR;
   xdrmem_create(myXdr, dataBuffer, dataLength, XDR_ENCODE);
 }
 
@@ -14,4 +15,5 @@ XdrMemWriter::XdrMemWriter(char* dataBuffer, unsigned int dataLength) {
 XdrMemWriter::~XdrMemWriter()
 {
   xdr_destroy(myXdr);
+  delete myXdr;
 }

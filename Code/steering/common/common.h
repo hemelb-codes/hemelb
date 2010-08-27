@@ -9,7 +9,7 @@ namespace hemelb
   namespace steering
   {
     void UpdateSteerableParameters(int *perform_rendering,
-				   heme::vis::Control *visControl, LBM* lbm);
+				   vis::Control *visControl, LBM* lbm);
 
     extern float steer_par[ STEERABLE_PARAMETERS + 1 ];
   }

@@ -198,29 +198,36 @@ namespace hemelb
       _DEBUG_PRINT(cout<<"####HEADER####"<<endl);
   
       char c1[1];
-      int l,line_length;
+      
+      int l,line_length = 0;
       bool loop = true;
       bool bHeader = false;
-  
+      
       string message;
   
       while (loop) {
-    
+	// receive 1 char from the socket
 	l = recv(sock, c1, 1, 0);
     
-	if (l<0) loop = false;
-    
-	if (c1[0]=='\n')
-	  {
-	    if (line_length == 0) loop = false;
+	if (l<0) // an error occured
+	  loop = false;
 	
-	    line_length = 0;
+	if (c1[0] == '\n') {
+	  // received a newline
+	  if (line_length == 0)
+	    loop = false;
+	  
+	  line_length = 0;
+	  
+	  if (message.find("201 Created") != string::npos)
+	    // found the text in the message
+	    bHeader = true;
+	  
+	} else if (c1[0] != '\r') {
+	  // didn't get newline and didn't get carriage return
+	  line_length++;
+	}
 	
-	    if (message.find("201 Created") != string::npos)
-	      bHeader = true;
-	  }
-	else if(c1[0]!='\r') line_length++;
-    
 	_DEBUG_PRINT( cout<<c1[0]);
 	message += c1[0];
       }

@@ -2,7 +2,7 @@
 #include "vis/ColPixel.h"
 #include "vis/ColourPalette.h"
 
-using namespace heme::io;
+using namespace hemelb::io;
 
 Writer::Writer()
 {
@@ -49,8 +49,7 @@ void Writer::writePixel (vis::ColPixel *col_pixel_p,
   *this << eol;
 }
 
-
-Writer& Writer::operator<< (enum Writer::Separator & value){
+Writer& Writer::operator<< (enum Writer::Separator const & value) {
   writeRecordSeparator();
   return *this;
 }

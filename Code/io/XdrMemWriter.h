@@ -1,9 +1,9 @@
-#ifndef HEME_IO_XDRMEMWRITER_H
-#define HEME_IO_XDRMEMWRITER_H
+#ifndef HEMELB_IO_XDRMEMWRITER_H
+#define HEMELB_IO_XDRMEMWRITER_H
 
 #include "io/XdrWriter.h"
 
-namespace heme
+namespace hemelb
 {
   namespace io
   {
@@ -18,4 +18,4 @@ namespace heme
     };
   }
 }
-#endif // HEME_IO_XDRMEMWRITER_H
+#endif // HEMELB_IO_XDRMEMWRITER_H

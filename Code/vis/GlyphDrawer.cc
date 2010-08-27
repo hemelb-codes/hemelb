@@ -3,7 +3,7 @@
 #include "lb.h"
 #include "vis/Control.h"
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {

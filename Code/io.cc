@@ -12,6 +12,8 @@
 #include "io/XdrReader.h"
 #include "io/AsciiFileWriter.h"
 
+#include "dbg/debug.h"
+
 //using namespace std;
 
 /*!
@@ -70,7 +72,7 @@ void LBM::lbmReadConfig (Net *net) {
   }
   fflush(NULL);
 
-  heme::io::XdrReader myReader = heme::io::XdrReader(xdrFile);
+  hemelb::io::XdrReader myReader = hemelb::io::XdrReader(xdrFile);
   
   int i, j, k, ii, jj, kk, l, m, n;
   int flag;
@@ -116,7 +118,7 @@ void LBM::lbmReadConfig (Net *net) {
   site_max_y = INT_MIN;
   site_max_z = INT_MIN;
   
-  net->fr_time = util::myClock ();
+  net->fr_time = hemelb::util::myClock ();
   
   n = -1;
   
@@ -161,12 +163,12 @@ void LBM::lbmReadConfig (Net *net) {
 	      
 	      ++total_fluid_sites;
 	      
-	      site_min_x = util::min(site_min_x, site_i);
-	      site_min_y = util::min(site_min_y, site_j);
-	      site_min_z = util::min(site_min_z, site_k);
-	      site_max_x = util::max(site_max_x, site_i);
-	      site_max_y = util::max(site_max_y, site_j);
-	      site_max_z = util::max(site_max_z, site_k);
+	      site_min_x = hemelb::util::min(site_min_x, site_i);
+	      site_min_y = hemelb::util::min(site_min_y, site_j);
+	      site_min_z = hemelb::util::min(site_min_z, site_k);
+	      site_max_x = hemelb::util::max(site_max_x, site_i);
+	      site_max_y = hemelb::util::max(site_max_y, site_j);
+	      site_max_z = hemelb::util::max(site_max_z, site_k);
 	      
 	      if (lbm_stress_type == SHEAR_STRESS &&
 		  lbmCollisionType (*site_type) != FLUID) {
@@ -204,7 +206,7 @@ void LBM::lbmReadConfig (Net *net) {
   
   fclose (xdrFile);
 
-  net->fr_time = util::myClock () - net->fr_time;
+  net->fr_time = hemelb::util::myClock () - net->fr_time;
 }
 
 /*!
@@ -371,7 +373,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
 }
 
 void LBM::allocateInlets(int nInlets) {
-  nInlets = util::max(1, nInlets);
+  nInlets = hemelb::util::max(1, nInlets);
   inlet_density     = new double[nInlets];
   inlet_density_avg = new double[nInlets];
   inlet_density_amp = new double[nInlets];
@@ -379,7 +381,7 @@ void LBM::allocateInlets(int nInlets) {
 }
 
 void LBM::allocateOutlets(int nOutlets) {
-  nOutlets = util::max(1, nOutlets);
+  nOutlets = hemelb::util::max(1, nOutlets);
   outlet_density     = new double[nOutlets];
   outlet_density_avg = new double[nOutlets];
   outlet_density_amp = new double[nOutlets];
@@ -429,7 +431,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
       stress is equal to -1 if the fluid voxel is not at the wall)
 
   */
-  heme::io::AsciiFileWriter *realSnap = NULL;
+  hemelb::io::AsciiFileWriter *realSnap = NULL;
   
   float *local_flow_field, *gathered_flow_field;
   
@@ -473,12 +475,12 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
     / (stress_par * stress_par * voxel_size * voxel_size);
   
   if (net->id == 0) {
-    realSnap = new heme::io::AsciiFileWriter(outputFileName);
+    realSnap = new hemelb::io::AsciiFileWriter(outputFileName);
     //snap << stability << snap->eol;
     (*realSnap << stability) << realSnap->eol;
     //snap->write(stability); snap->writeRecordSeparator();
   }
-  heme::io::Writer& snap = *realSnap;
+  hemelb::io::Writer& snap = *realSnap;
   
   if (stability == UNSTABLE) {
     if (net->id == 0) {
@@ -492,17 +494,17 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
     shrinked_sites_y = 1 + site_max_y - site_min_y;
     shrinked_sites_z = 1 + site_max_z - site_min_z;
     
-    snap << voxel_size << heme::io::Writer::eol;
-    snap << site_min_x << site_min_y << site_min_z << heme::io::Writer::eol;
-    snap << site_max_x << site_max_y << site_max_z << heme::io::Writer::eol;
-    snap << shrinked_sites_x << shrinked_sites_y << shrinked_sites_z << heme::io::Writer::eol;
-    snap << total_fluid_sites << heme::io::Writer::eol;
+    snap << voxel_size << hemelb::io::Writer::eol;
+    snap << site_min_x << site_min_y << site_min_z << hemelb::io::Writer::eol;
+    snap << site_max_x << site_max_y << site_max_z << hemelb::io::Writer::eol;
+    snap << shrinked_sites_x << shrinked_sites_y << shrinked_sites_z << hemelb::io::Writer::eol;
+    snap << total_fluid_sites << hemelb::io::Writer::eol;
   }
   
   fluid_sites_max = 0;
   
   for (n = 0; n < net->procs; n++) {
-    fluid_sites_max = util::max(fluid_sites_max, net->fluid_sites[ n ]);
+    fluid_sites_max = hemelb::util::max(fluid_sites_max, net->fluid_sites[ n ]);
   }
   
   // "buffer_size" is the size of the flow field buffer to send to the
@@ -511,12 +513,12 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
   // ("gathered_flow_field").  If "buffer_size" is larger the
   // frequency with which data communication to the root processor is
   // performed becomes lower and viceversa
-  buffer_size = util::min(1000000,
+  buffer_size = hemelb::util::min(1000000,
 				      fluid_sites_max * net->procs);
   
   communication_period = int(ceil(double(buffer_size) / net->procs));
   
-  communication_iters = util::max(1, int(ceil(double(fluid_sites_max) / communication_period)));
+  communication_iters = hemelb::util::max(1, int(ceil(double(fluid_sites_max) / communication_period)));
   
   local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
   gathered_flow_field = new float[MACROSCOPIC_PARS * 
@@ -659,7 +661,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 		  for (kk = 0; kk < MACROSCOPIC_PARS; kk++) {
 		    snap << gathered_flow_field[ MACROSCOPIC_PARS*l+kk ];
 		  }
-		  snap << heme::io::Writer::eol;
+		  snap << hemelb::io::Writer::eol;
 		}
 		
 	      }
@@ -713,7 +715,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 	  for (kk = 0; kk < MACROSCOPIC_PARS; kk++) {
 	    snap << gathered_flow_field[ MACROSCOPIC_PARS*l+kk ];
 	  }
-	  snap << heme::io::Writer::eol;
+	  snap << hemelb::io::Writer::eol;
 	}
       }
       

@@ -1,5 +1,5 @@
-#ifndef HEME_VIS_RAYTRACER_H
-#define HEME_VIS_RAYTRACER_H
+#ifndef HEMELB_VIS_RAYTRACER_H
+#define HEMELB_VIS_RAYTRACER_H
 
 #include "constants.h"
 #include "net.h"
@@ -9,7 +9,7 @@
 
 // TODO this could probably be reduced to the net class and some visualisation class.
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {
@@ -51,4 +51,4 @@ namespace heme
   }
 }
 
-#endif // HEME_VIS_RAYTRACER_H
+#endif // HEMELB_VIS_RAYTRACER_H

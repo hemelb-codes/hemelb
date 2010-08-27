@@ -17,7 +17,7 @@ int hemelb::steering::Network::recv_all (int sockid, char *buf, const int length
 {
   int received_bytes = 0;
   int bytes_left_to_receive = length;
-  int n;
+  int n = 0;
   
   while (received_bytes < length) {
     
@@ -40,7 +40,7 @@ int hemelb::steering::Network::send_all (int sockid,
 {
   int sent_bytes = 0;
   int bytes_left_to_send = length;
-  int n;
+  int n = 0;
   
   while (sent_bytes < length)
     {

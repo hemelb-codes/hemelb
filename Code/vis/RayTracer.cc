@@ -7,7 +7,7 @@
 #include "vis/rayTracer.h"
 #include "vis/Control.h"
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {

@@ -1,5 +1,5 @@
-#ifndef __lb_h_
-#define __lb_h_
+#ifndef HEMELB_LB_H
+#define HEMELB_LB_H
 
 #include "net.h"
 
@@ -103,4 +103,4 @@ void netInit (LBM *lbm, Net *net);
 // TODO: prob don't belong here... 3 variables needed for convergence-enabled simulations
 extern double conv_error;
 extern int cycle_tag, check_conv;
-#endif //__lb_h_
+#endif // HEMELB_LB_H

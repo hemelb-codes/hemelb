@@ -1,5 +1,5 @@
-#ifndef __net_h_
-#define __net_h_
+#ifndef HEMELB_NET_H
+#define HEMELB_NET_H
 
 #include "constants.h"
 #include "mpiInclude.h"
@@ -165,4 +165,4 @@ extern int *f_recv_iv;
 
 extern short int *f_data;
 
-#endif //__net_h_
+#endif // HEMELB_NET_H

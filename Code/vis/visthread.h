@@ -1,5 +1,5 @@
-#ifndef HEME_VIS_VISTHREAD_H
-#define HEME_VIS_VISTHREAD_H
+#ifndef HEMELB_VIS_VISTHREAD_H
+#define HEMELB_VIS_VISTHREAD_H
 
 #ifndef NO_STEER
 #include <pthread.h>
@@ -7,7 +7,7 @@
 
 #include <sys/types.h>
 
-namespace heme
+namespace hemelb
 {
   namespace vis
   {
@@ -26,4 +26,4 @@ namespace heme
   }
 }
 
-#endif // HEME_VIS_VISTHREAD_H
+#endif // HEMELB_VIS_VISTHREAD_H
