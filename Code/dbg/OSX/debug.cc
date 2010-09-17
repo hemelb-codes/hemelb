@@ -9,7 +9,7 @@
 #include "dbg/debug.h"
 #include "dbg/OSX/debug.h"
 
-void hemelb::dbg::attach() {
+void hemelb::dbg::attach(char *executable) {
   int amWaiting = 1;
   int rank; MPI_Comm_rank (MPI_COMM_WORLD, &rank);
   int nProcs; MPI_Comm_size(MPI_COMM_WORLD, &nProcs);
@@ -23,8 +23,13 @@ void hemelb::dbg::attach() {
     std::ostringstream oStream;
     std::string include (__FILE__);
     std::string osxDebugDir = include.substr(0, include.rfind('/'));
-    std::string binaryPath
-      ("/Users/rupert/working/hemelb/Code/build/hemelb");
+    char *cwd = getcwd(NULL, 0);
+    std::string binaryPath (cwd);
+    binaryPath += "/";
+    binaryPath += executable;
+    std::free(cwd);
+    
+    //("/Users/rupert/working/hemelb-clean/Code/build/hemelb");
     
     oStream << "osascript "
 	    << osxDebugDir << "/MPIdebug.scpt "

@@ -5,7 +5,7 @@ namespace hemelb
 {
   namespace dbg
   {
-    void attach();
+    void attach(char *executable);
   }
 }
 
