@@ -92,7 +92,7 @@ int main (int argc, char *argv[])
   net.procs = 1;
   net.id = 0;
 #endif
-
+  hemelb::dbg::attach(argv[0]);
   check_conv = 0;
   
   if (argc == 5) // Check command line arguments
@@ -241,7 +241,7 @@ int main (int argc, char *argv[])
   hemelb::util::DeleteDirContents (image_directory);
   
   total_time_steps = 0;
-  hemelb::dbg::attach();
+
   if (!is_bench)
     {
       int is_finished = 0;
