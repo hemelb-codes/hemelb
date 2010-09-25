@@ -30,9 +30,11 @@ namespace hemelb
 {
   namespace steering
   {
-
+    
     void HttpPost::get_host_details(char* rank_0_host_details, char* ip_addr)
     {
+      // This really does modify the strings passed in. Without
+      // checking their lengths, of course.
       char hostname[256];
 
       // On specific machines, just get the host name and insert it into the rank_0_host_details parameter
@@ -135,7 +137,9 @@ namespace hemelb
     /*cout<<send_str;*/				\
     send(sock,MSG,strlen(MSG),0);
 
-    int HttpPost::request (char* hostname, short port, char* api, char* resourceid, char* parameters) {
+    int HttpPost::request (const char* hostname, const short port,
+			   const char* api, const char* resourceid,
+			   const char* parameters) {
   
       sockaddr_in sin;
       int sock = socket (AF_INET, SOCK_STREAM, 0);
@@ -174,7 +178,9 @@ namespace hemelb
   
       char content_header[100];
   
-      sprintf(content_header,"Content-Length: %d\r\n",(int)strlen(parameters));
+      sprintf(content_header,
+	      "Content-Length: %d\r\n",
+	      int(strlen(parameters)));
       SEND_RQ(content_header);
       SEND_RQ("Accept-Language: en-us\r\n");
       SEND_RQ("Accept-Encoding: gzip, deflate\r\n");
