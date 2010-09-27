@@ -12,16 +12,17 @@ namespace hemelb
 #ifndef NOMPI
     MPI_Datatype MPI_col_pixel_type;
 #endif
-
-    PixelId::PixelId(int i, int j)
-    {
-      this->i = i;
-      this->j = j;
-    }
-  
-    PixelId::PixelId()
-    {
-    }
+    PixelId::PixelId(int i_, int j_) :isRt(false),
+				      isGlyph(false),
+				      isStreakline(false),
+				      i(i_),
+				      j(j_) {}
+    
+    PixelId::PixelId() :  isRt(false),
+			  isGlyph(false),
+			  isStreakline(false),
+			  i(0),
+			  j(0) { }
   
     void ColPixel::makePixelColour(unsigned char& red, unsigned char& green, unsigned char& blue,
 				   int rawRed, int rawGreen, int rawBlue)
