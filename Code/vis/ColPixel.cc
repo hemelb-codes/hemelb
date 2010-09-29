@@ -23,7 +23,60 @@ namespace hemelb
 			  isStreakline(false),
 			  i(0),
 			  j(0) { }
+    
+#ifndef NOMPI
+    MPI_Datatype ColPixel::mpiType = MPI_DATATYPE_NULL;
+#endif// NOMPI
+    
+    // create the derived datatype for the MPI communications
+    void ColPixel::registerMpiType() {
+#ifndef NOMPI
+      int col_pixel_count = 15;
+      int col_pixel_blocklengths[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+, 1};
   
+      MPI_Datatype col_pixel_types[15] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+                                          MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+                                          MPI_FLOAT, MPI_FLOAT,
+                                          MPI_FLOAT,
+                                          MPI_FLOAT,
+                                          MPI_FLOAT,
+                                          MPI_FLOAT,
+                                          MPI_INT,
+                                          MPI_INT,
+                                          MPI_UB};
+  
+      MPI_Aint col_pixel_disps[15];
+      
+      col_pixel_disps[0] = 0;
+  
+      for (int i = 1; i < col_pixel_count; i++)
+        {
+          if (col_pixel_types[i - 1] == MPI_FLOAT)
+            {
+              col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float) * col_pixel_blocklengths[i - 1]);
+            }
+          else if (col_pixel_types[i - 1] == MPI_INT)
+            {
+              col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(int) * col_pixel_blocklengths[i - 1]);
+            }
+        }
+      MPI_Type_struct (col_pixel_count, col_pixel_blocklengths,
+                       col_pixel_disps, col_pixel_types,
+                       &mpiType);
+      MPI_Type_commit (&mpiType);
+#endif
+    }
+    
+    const MPI_Datatype& ColPixel::getMpiType()
+    {
+      if (mpiType == MPI_DATATYPE_NULL) {
+        registerMpiType();
+      }
+      return mpiType;
+    }
+
+
     void ColPixel::makePixelColour(unsigned char& red, unsigned char& green, unsigned char& blue,
 				   int rawRed, int rawGreen, int rawBlue)
     {

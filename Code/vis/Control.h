@@ -149,7 +149,7 @@ namespace hemelb {
 
       ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
 
-      Vis vis;
+      Vis* vis;
 
       GlyphDrawer *myGlypher;
       StreaklineDrawer *myStreaker;
