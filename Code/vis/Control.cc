@@ -52,33 +52,15 @@ namespace hemelb
     Control::Control()
     {
       
-      //this->vis = *vis;
+      this->vis = new Vis;
       
       //sites_x etc are globals declared in net.h
-      vis.half_dim[0] = 0.5F * float(sites_x);
-      vis.half_dim[1] = 0.5F * float(sites_y);
-      vis.half_dim[2] = 0.5F * float(sites_z);
+      vis->half_dim[0] = 0.5F * float(sites_x);
+      vis->half_dim[1] = 0.5F * float(sites_y);
+      vis->half_dim[2] = 0.5F * float(sites_z);
       
-      vis.system_size = 2.F * fmaxf(vis.half_dim[0], fmaxf(vis.half_dim[1], vis.half_dim[2]));
-  
-#ifndef NOMPI
-      int col_pixel_count = 15;
-      int col_pixel_blocklengths[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-  
-      MPI_Datatype col_pixel_types[15] = {MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-					  MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-					  MPI_FLOAT, MPI_FLOAT,
-					  MPI_FLOAT,
-					  MPI_FLOAT,
-					  MPI_FLOAT,
-					  MPI_FLOAT,
-					  MPI_INT,
-					  MPI_INT,
-					  MPI_UB};
-  
-      MPI_Aint col_pixel_disps[15];
-#endif
-  
+      vis->system_size = 2.F * fmaxf(vis->half_dim[0],
+				     fmaxf(vis->half_dim[1], vis->half_dim[2]));
       col_pixels_max = COLOURED_PIXELS_MAX;
       
       col_pixel_recv[0] = new ColPixel[col_pixels_max];
@@ -91,25 +73,7 @@ namespace hemelb
 	{
 	  col_pixel_id[i] = -1;
 	}
-#ifndef NOMPI
-      // create the derived datatype for the MPI communications
-  
-      col_pixel_disps[0] = 0;
-  
-      for (int i = 1; i < col_pixel_count; i++)
-	{
-	  if (col_pixel_types[i - 1] == MPI_FLOAT)
-	    {
-	      col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float) * col_pixel_blocklengths[i - 1]);
-	    }
-	  else if (col_pixel_types[i - 1] == MPI_INT)
-	    {
-	      col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(int) * col_pixel_blocklengths[i - 1]);
-	    }
-	}
-      MPI_Type_struct (col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types, &MPI_col_pixel_type);
-      MPI_Type_commit (&MPI_col_pixel_type);
-#endif
+
     }
   
     
@@ -124,9 +88,9 @@ namespace hemelb
 #ifndef NO_STREAKLINES
       myStreaker = new StreaklineDrawer (net);
 #endif
-      ctr_x -= vis.half_dim[0];
-      ctr_y -= vis.half_dim[1];
-      ctr_z -= vis.half_dim[2];
+      ctr_x -= vis->half_dim[0];
+      ctr_y -= vis->half_dim[1];
+      ctr_z -= vis->half_dim[2];
     }
     
     
@@ -178,9 +142,9 @@ namespace hemelb
 				 float zoom)
     {
       float temp;
-      float ortho_x = 0.5 * vis.system_size;
-      float ortho_y = 0.5 * vis.system_size;
-      float rad = 5.F * vis.system_size;
+      float ortho_x = 0.5 * vis->system_size;
+      float ortho_y = 0.5 * vis->system_size;
+      float rad = 5.F * vis->system_size;
       float dist = 0.5 * rad;
       
       screen.max_x = ortho_x / zoom;
@@ -650,7 +614,7 @@ namespace hemelb
 #endif
 	    if (col_pixels > 0) {
 #ifndef NOMPI
-	      MPI_Send (col_pixel_send, col_pixels, MPI_col_pixel_type,
+	      MPI_Send (col_pixel_send, col_pixels, ColPixel::getMpiType(),
 			recv_id, 20, MPI_COMM_WORLD);
 #endif
 	    }
@@ -660,7 +624,7 @@ namespace hemelb
 	    MPI_Recv (&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD, net->status);
 	  
 	    if (col_pixels_temp > 0) {
-	      MPI_Recv (col_pixel_send, col_pixels_temp, MPI_col_pixel_type,
+	      MPI_Recv (col_pixel_send, col_pixels_temp, ColPixel::getMpiType(),
 			send_id, 20, MPI_COMM_WORLD, net->status);
 	    }
 #else

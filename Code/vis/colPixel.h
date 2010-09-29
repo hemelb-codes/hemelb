@@ -22,7 +22,8 @@ namespace hemelb
       PixelId(int i, int j);
     };
 
-    struct ColPixel {
+    class ColPixel {
+    public:
       float vel_r, vel_g, vel_b;
       float stress_r, stress_g, stress_b;
       float t, dt;
@@ -39,15 +40,21 @@ namespace hemelb
       void rawWritePixel(unsigned int *pixel_index,
 			 unsigned char rgb_data[],
 			 ColourPaletteFunction* palette);
-    
+#ifndef NOMPI
+      static const MPI_Datatype& getMpiType();
+#endif
+      
+    protected:
+#ifndef NOMPI
+      static void registerMpiType();
+      static MPI_Datatype mpiType;
+#endif
+      
       void makePixelColour(unsigned char& red, unsigned char& green, unsigned char& blue,
 			   int rawRed, int rawGreen, int rawBlue);
     };
 
   
-#ifndef NOMPI
-    extern MPI_Datatype MPI_col_pixel_type;
-#endif
   }
 }
 
