@@ -80,6 +80,7 @@ namespace hemelb {
 		   float *x2, float *y2, float *z2);
       
       void setProjection (int pixels_x, int pixels_y,
+			  float ctr_x, float ctr_y, float ctr_z,
 			  float longitude, float latitude,
 			  float zoom);
       

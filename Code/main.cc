@@ -92,7 +92,7 @@ int main (int argc, char *argv[])
   net.procs = 1;
   net.id = 0;
 #endif
-  hemelb::dbg::attach(argv[0]);
+  
   check_conv = 0;
   
   if (argc == 5) // Check command line arguments
@@ -452,8 +452,8 @@ int main (int argc, char *argv[])
 		}
 	      else
 		{
-		  fprintf (timings_ptr, "cycle id: %i, conv_error: %le\n", cycle_id, conv_error);
-		  printf ("cycle id: %i, conv_error: %le\n", cycle_id, conv_error);
+		  fprintf (timings_ptr, "cycle id: %i, conv_error: %e\n", cycle_id, conv_error);
+		  printf ("cycle id: %i, conv_error: %e\n", cycle_id, conv_error);
 		}
 	      fflush(NULL);
 	    }
@@ -653,13 +653,13 @@ int main (int argc, char *argv[])
 	      lbm_phys_stress_max = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_max);
 	      
 	      fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
-	      fprintf (timings_ptr, "pressure min, max (mmHg): %le, %le\n", lbm_phys_pressure_min, lbm_phys_pressure_max);
-	      fprintf (timings_ptr, "velocity min, max (m/s) : %le, %le\n", lbm_phys_velocity_min, lbm_phys_velocity_max);
-	      fprintf (timings_ptr, "stress   min, max (Pa)  : %le, %le\n", lbm_phys_stress_min, lbm_phys_stress_max);
+	      fprintf (timings_ptr, "pressure min, max (mmHg): %e, %e\n", lbm_phys_pressure_min, lbm_phys_pressure_max);
+	      fprintf (timings_ptr, "velocity min, max (m/s) : %e, %e\n", lbm_phys_velocity_min, lbm_phys_velocity_max);
+	      fprintf (timings_ptr, "stress   min, max (Pa)  : %e, %e\n", lbm_phys_stress_min, lbm_phys_stress_max);
 	      fprintf (timings_ptr, "\n");
 	      
 	      for (int n = 0; n < lbm.inlets; n++) {
-		fprintf (timings_ptr, "inlet id: %i, average / peak velocity (m/s): %le / %le\n",
+		fprintf (timings_ptr, "inlet id: %i, average / peak velocity (m/s): %e / %e\n",
 			 n, lbm_average_inlet_velocity[ n ], lbm_peak_inlet_velocity[ n ]);
 	      }
 	      fprintf (timings_ptr, "\n");

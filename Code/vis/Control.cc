@@ -88,9 +88,11 @@ namespace hemelb
 #ifndef NO_STREAKLINES
       myStreaker = new StreaklineDrawer (net);
 #endif
-      ctr_x -= vis->half_dim[0];
-      ctr_y -= vis->half_dim[1];
-      ctr_z -= vis->half_dim[2];
+      // Note that rtInit does stuff to this->ctr_x (because this has
+      // to be global)
+      this->ctr_x -= vis->half_dim[0];
+      this->ctr_y -= vis->half_dim[1];
+      this->ctr_z -= vis->half_dim[2];
     }
     
     
@@ -138,6 +140,7 @@ namespace hemelb
 
 
     void Control::setProjection (int pixels_x, int pixels_y,
+				 float local_ctr_x, float local_ctr_y, float local_ctr_z,
 				 float longitude, float latitude,
 				 float zoom)
     {
@@ -167,17 +170,17 @@ namespace hemelb
   
       temp = rad * viewpoint.cos_2;
   
-      viewpoint.x[0] = temp * viewpoint.sin_1 + ctr_x;
-      viewpoint.x[1] = rad  * viewpoint.sin_2 + ctr_y;
-      viewpoint.x[2] = temp * viewpoint.cos_1 + ctr_z;
+      viewpoint.x[0] = temp * viewpoint.sin_1 + local_ctr_x;
+      viewpoint.x[1] = rad  * viewpoint.sin_2 + local_ctr_y;
+      viewpoint.x[2] = temp * viewpoint.cos_1 + local_ctr_z;
   
       viewpoint.dist = dist;
   
       temp = dist / rad;
   
-      ctr_x = viewpoint.x[0] + temp * (ctr_x - viewpoint.x[0]);
-      ctr_y = viewpoint.x[1] + temp * (ctr_y - viewpoint.x[1]);
-      ctr_z = viewpoint.x[2] + temp * (ctr_z - viewpoint.x[2]);
+      local_ctr_x = viewpoint.x[0] + temp * (local_ctr_x - viewpoint.x[0]);
+      local_ctr_y = viewpoint.x[1] + temp * (local_ctr_y - viewpoint.x[1]);
+      local_ctr_z = viewpoint.x[2] + temp * (local_ctr_z - viewpoint.x[2]);
   
       screen.zoom = zoom;
   
@@ -194,9 +197,9 @@ namespace hemelb
       screen.scale_x = (float)pixels_x / (2.F * screen.max_x);
       screen.scale_y = (float)pixels_y / (2.F * screen.max_y);
   
-      screen.vtx[0] = ctr_x - screen.dir1[0] - screen.dir2[0] - viewpoint.x[0];
-      screen.vtx[1] = ctr_y - screen.dir1[1] - screen.dir2[1] - viewpoint.x[1];
-      screen.vtx[2] = ctr_z - screen.dir1[2] - screen.dir2[2] - viewpoint.x[2];
+      screen.vtx[0] = local_ctr_x - screen.dir1[0] - screen.dir2[0] - viewpoint.x[0];
+      screen.vtx[1] = local_ctr_y - screen.dir1[1] - screen.dir2[1] - viewpoint.x[1];
+      screen.vtx[2] = local_ctr_z - screen.dir1[2] - screen.dir2[2] - viewpoint.x[2];
   
       screen.dir1[0] *= (2.F / (float)pixels_x);
       screen.dir1[1] *= (2.F / (float)pixels_x);
@@ -447,7 +450,7 @@ namespace hemelb
       FILE *parameters_file;
   
       float par_to_send[9];
-      float ctr_x, ctr_y, ctr_z;
+      float local_ctr_x, local_ctr_y, local_ctr_z;
       float longitude, latitude;
       float zoom;
       float density_min, density_max, velocity_max, stress_max;
@@ -472,9 +475,9 @@ namespace hemelb
 
 	  fflush(NULL);
       
-	  fscanf (parameters_file, "%e \n", &ctr_x);
-	  fscanf (parameters_file, "%e \n", &ctr_y);
-	  fscanf (parameters_file, "%e \n", &ctr_z);
+	  fscanf (parameters_file, "%e \n", &local_ctr_x);
+	  fscanf (parameters_file, "%e \n", &local_ctr_y);
+	  fscanf (parameters_file, "%e \n", &local_ctr_z);
 	  fscanf (parameters_file, "%e \n", &longitude);
 	  fscanf (parameters_file, "%e \n", &latitude);
 	  fscanf (parameters_file, "%e \n", &zoom);
@@ -486,9 +489,9 @@ namespace hemelb
 	  velocity_max = lbm->lbmConvertVelocityToLatticeUnits (physical_velocity_max);
 	  stress_max   = lbm->lbmConvertStressToLatticeUnits (physical_stress_max);
       
-	  par_to_send[ 0 ] = ctr_x;
-	  par_to_send[ 1 ] = ctr_y;
-	  par_to_send[ 2 ] = ctr_z;
+	  par_to_send[ 0 ] = local_ctr_x;
+	  par_to_send[ 1 ] = local_ctr_y;
+	  par_to_send[ 2 ] = local_ctr_z;
 	  par_to_send[ 3 ] = longitude;
 	  par_to_send[ 4 ] = latitude;
 	  par_to_send[ 5 ] = zoom;
@@ -500,17 +503,18 @@ namespace hemelb
       net->err = MPI_Bcast (par_to_send, 9, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #endif
   
-      ctr_x          = par_to_send[ 0 ];
-      ctr_y          = par_to_send[ 1 ];
-      ctr_z          = par_to_send[ 2 ];
+      local_ctr_x    = par_to_send[ 0 ];
+      local_ctr_y    = par_to_send[ 1 ];
+      local_ctr_z    = par_to_send[ 2 ];
       longitude      = par_to_send[ 3 ];
       latitude       = par_to_send[ 4 ];
       zoom           = par_to_send[ 5 ];
-      brightness = par_to_send[ 6 ];
+      brightness     = par_to_send[ 6 ];
       velocity_max   = par_to_send[ 7 ];
       stress_max     = par_to_send[ 8 ];
   
       setProjection(512, 512,
+		    local_ctr_x, local_ctr_y, local_ctr_z,
 		    longitude, latitude,
 		    zoom);
   
