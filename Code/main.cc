@@ -1,4 +1,4 @@
-//#include <stdlib.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
@@ -13,7 +13,7 @@
 #include "steering/steering.h"
 
 #include "vis/visthread.h"
-#include "vis/colourpalette.h"
+#include "vis/ColourPalette.h"
 
 #include "dbg/debug.h"
 

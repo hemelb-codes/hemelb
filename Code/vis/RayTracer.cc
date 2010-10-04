@@ -4,7 +4,7 @@
 
 #include "utilityFunctions.h"
 
-#include "vis/rayTracer.h"
+#include "vis/RayTracer.h"
 #include "vis/Control.h"
 
 namespace hemelb

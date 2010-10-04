@@ -1,8 +1,8 @@
 #ifndef HEMELB_IO_WRITER_H
 #define HEMELB_IO_WRITER_H
 
-#include "vis/colPixel.h"
-#include "vis/colourPalette.h"
+#include "vis/ColPixel.h"
+#include "vis/ColourPalette.h"
 
 namespace hemelb
 {

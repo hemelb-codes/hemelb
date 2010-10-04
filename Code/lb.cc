@@ -6,7 +6,7 @@
 
 #include "lb.h"
 #include "utilityFunctions.h"
-#include "vis/rayTracer.h"
+#include "vis/RayTracer.h"
 
 unsigned int getBoundaryConfig(Net* net, int i)
 {

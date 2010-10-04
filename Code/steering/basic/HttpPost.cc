@@ -6,7 +6,7 @@
 #include <cassert>
 #include <netdb.h>
 #include <cstring>
-
+#include <cstdio>
 
 #include <unistd.h>
 #include <errno.h>
@@ -48,7 +48,7 @@ namespace hemelb
       fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif CCS
       gethostname(hostname, 256);
-      sprintf(rank_0_host_details, "%s.chem.ucl.ac.uk:%i", hostname, MYPORT);
+      std::sprintf(rank_0_host_details, "%s.chem.ucl.ac.uk:%i", hostname, MYPORT);
       fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif LONI
       gethostname(hostname, 256);
