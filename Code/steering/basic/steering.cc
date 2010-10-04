@@ -28,7 +28,7 @@
 #include "io/XdrWriter.h"
 #include "io/XdrMemWriter.h"
 
-#include "vis/colourpalette.h"
+#include "vis/ColourPalette.h"
 #include "vis/visthread.h"
 
 #include "steering/common/common.h"
