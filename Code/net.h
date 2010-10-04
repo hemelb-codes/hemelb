@@ -122,9 +122,10 @@ private:
 #endif
     double dd_time, bm_time, fr_time, fo_time;
 
-    double *net_site_nor;
+    double* net_site_nor;
+    double* cut_distances;
     unsigned int *net_site_data;
-
+    
     // declarations of all the functions used
     int *netProcIdPointer (int site_i, int site_j, int site_k);
     unsigned int *netSiteMapPointer (int site_i, int site_j, int site_k);
