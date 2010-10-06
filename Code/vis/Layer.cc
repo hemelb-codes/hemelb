@@ -1,13 +1,19 @@
 #include "vis/Layer.h"
 
-using namespace hemelb::vis;
-
-Layer::Layer()
+namespace hemelb
 {
-  // empty c'tor
-}
+  namespace vis
+  {
 
-Layer::~Layer()
-{
-  // Pure virtual d'tor
+    Layer::Layer()
+    {
+      // empty c'tor
+    }
+
+    Layer::~Layer()
+    {
+      // Pure virtual d'tor
+    }
+
+  }
 }
