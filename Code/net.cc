@@ -14,7 +14,6 @@
 #include "utilityFunctions.h"
 #include <stdlib.h>
 #include <math.h>
-#include <stdio.h>
 
 // TODO find a better way to do this.
 const int e_x[] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1};
@@ -284,6 +283,7 @@ void Net::netInit (int totalFluidSites)
   
   net_site_nor  = NULL;
   net_site_data = NULL;
+  cut_distances = NULL;
 
   sites_buffer_size = 10000;
   site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
@@ -874,6 +874,7 @@ void Net::netInit (int totalFluidSites)
 		    {
 		      l = 5;
 		    }
+
 		  ++my_sites_p;
 		  
 		  if (is_inner_site)
@@ -1032,7 +1033,8 @@ void Net::netInit (int totalFluidSites)
       
       if (lbm_stress_type == SHEAR_STRESS)
 	{
-	  net_site_nor = (double *)malloc(sizeof(double) * my_sites*3);
+          net_site_nor = new double[my_sites*3];
+          cut_distances = new double[my_sites*14];
 	}
     }
   from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * procs);
@@ -1152,12 +1154,13 @@ void Net::netInit (int totalFluidSites)
 		    
 		    if (lbm_stress_type == SHEAR_STRESS)
 		      {
-			net_site_nor[ site_map*3 ] = 1.0e+30;
-			
 			if (lbmCollisionType (net_site_data[ site_map ]) & EDGE)
 			  {
 			    for (l = 0; l < 3; l++)
 			      net_site_nor[ site_map*3+l ] = wall_block[n].wall_data[m].wall_nor[l];
+ 
+                            for(l = 0; l < 14; l++)
+                              cut_distances[ site_map*14 + l] = wall_block[n].wall_data[m].cut_dist[l];
 			  }
 			else
 			  {
@@ -1310,8 +1313,9 @@ void Net::netEnd ()
   
   if (lbm_stress_type == SHEAR_STRESS && my_sites > 0)
     {
-      free(net_site_nor);
-      
+      delete[] net_site_nor;
+      delete[] cut_distances;
+
       for (i = 0; i < blocks; i++)
 	{
 	  if (wall_block[ i ].wall_data != NULL)

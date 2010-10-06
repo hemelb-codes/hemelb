@@ -2,7 +2,7 @@
 
 #include "io/XdrMemWriter.h"
 
-#include "vis/control.h"
+#include "vis/Control.h"
 
 #include "steering/basic/SimulationParameters.h"
 
