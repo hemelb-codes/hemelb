@@ -2,7 +2,7 @@
 include $(MK)/header.mk
 
 TARGETS = $(EXE)
-SUBDIRS = io vis steering dbg
+SUBDIRS = vis steering io dbg
 
 $(EXE)_DEPS = config.o \
 	io.o \
