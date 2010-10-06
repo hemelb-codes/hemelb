@@ -1,4 +1,6 @@
 # -*- mode: makefile; -*-
+include $(MK)/config-default.mk
+
 CXX := mpic++.openmpi
 
 EXE := hemelb
