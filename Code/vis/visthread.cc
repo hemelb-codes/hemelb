@@ -3,7 +3,7 @@
 #endif
 #include <sys/types.h>
 
-#include "vis/colpixel.h"
+#include "vis/ColPixel.h"
 #include "vis/visthread.h"
 
 namespace hemelb

@@ -6,10 +6,16 @@
 
 #include "lb.h"
 #include "utilityFunctions.h"
-#include "vis/rayTracer.h"
+#include "vis/RayTracer.h"
+
+unsigned int getBoundaryConfig(Net* net, int i)
+{
+  return (net->net_site_data[ i ] & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;  
+}
 
 void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
+void (*lbmPostTimeStep) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net) = NULL;
 
 void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity, Net* net,
 				 void lbmCollision (double omega, int i,
@@ -84,7 +90,6 @@ void LBM::RecalculateTauViscosityOmega ()
 
   viscosity = ((2.0 * tau - 1.0) / 6.0);
   omega = -1.0 / tau;
-  
   lbm_stress_par = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
 }
 
@@ -201,7 +206,6 @@ void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
   f_eq[13] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, -1, -1)
   f_eq[14] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, +1, +1)
 }
-
 
 // Collision + streaming for non-boundary fluid lattice sites non-adjacent
 // to neigbhouring subdomains.
@@ -373,57 +377,380 @@ void lbmCollision1 (double omega, int i,
     f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l] = temp);
 }
 
-
 // Implementation of simple bounce-back
 void simpleBounceBack (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[], Net* net)
 {
-  int l;
-  
   double *f = &f_old[ i*15 ];
-  
-  for (l = 0; l < 15; l++)
-    {
-      f_neq[l] = f[l];
-    }
-  *v_x = *v_y = *v_z = 0.F;
-  
-  *density = 0.;
-  
-  for (l = 0; l < 15; l++) *density += f[l];
-  
-  f_neq[0] -= (f_new[ f_id[i*15] ] = f[0]);// = (2.0/9.0) * *density);
-  
-  // The actual bounce-back lines. Basically swap the non-equilibrium components of f in each of the opposing pairs of directions.
 
-  unsigned int boundary_config = (net->net_site_data[ i ] & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;  
+  lbmDensityAndVelocity (f, density, v_x, v_y, v_z);
 
-  for (l = 0; l < 14; l++)
+  double density_1 = 1. / *density;
+  double v_xx = *v_x * *v_x;
+  double v_yy = *v_y * *v_y;
+  double v_zz = *v_z * *v_z;
+
+  // The actual bounce-back lines, including streaming and collision. Basically swap the non-equilibrium components of f in each of the opposing pairs of directions.
+  unsigned int boundary_config = getBoundaryConfig(net, i); 
+
+  int lStreamedIndex[15];
+
+  lStreamedIndex[0] =  f_id[i*15+0];
+
+  for (int l = 1; l < 15; l++)
   {
-    if (!(boundary_config & (1U << l)))
+    if (0 == (boundary_config & (1U << (l-1))))
     {
-      f_new[ f_id[i*15+l] ] = f[l] = f_neq[l];
+      // No boundary
+      lStreamedIndex[l] = f_id[i*15+l];
+    }
+    else
+    {
+      // Yes boundary
+      // if direction goes into boundary, do bouce-back. I.e. the f_neq at the current point becomes the f_new in the opposing direction.
+      lStreamedIndex[l] = i*15 + (((l % 2) == 0) ? l-1 : l+1);
     }
   }
-	
-// These lines represent the equilibrium distribution, useful if we don't know much about the boundary position I think.
-// f[0] = (2.0/9.0) * *density;
-// temp = (1.0/9.0) * *density;
-// for (l = 1; l < 7; l++) f[l] = temp;
-// // temp *= (1.0/8.0);
-// for (l = 7; l < 15; l++) f[l] = temp;
-// *vx = *vy = *vz = 0.F;
 
-
-  for(l = 1; l < 15; l+=2)
-    f_new[ f_id[i*15+l] ] = f[l] = f_neq[l+1];
-
-  for(l = 2; l < 15; l+=2)
-    f_new[ f_id[i*15+l] ] = f[l] = f_neq[l-1];
-
+  f_new[ lStreamedIndex[0] ] = f[0] + omega * (f_neq[0] = f[0] - ((2.0/9.0) * *density - (1.0/3.0) * ((v_xx + v_yy + v_zz) * density_1)));
+  
+  double temp1 = (1.0/9.0) * *density - (1.0/6.0) * ((v_xx + v_yy + v_zz) * density_1);
+  
+  f_new[ lStreamedIndex[1] ] = f[1] + omega * (f_neq[1] = f[1] - ((temp1 + (0.5 * density_1) * v_xx) + ((1.0/3.0) * *v_x)));   // (+1, 0, 0)
+  f_new[ lStreamedIndex[2] ] = f[2] + omega * (f_neq[2] = f[2] - ((temp1 + (0.5 * density_1) * v_xx) - ((1.0/3.0) * *v_x)));   // (+1, 0, 0)
+    
+  f_new[ lStreamedIndex[3] ] = f[3] + omega * (f_neq[3] = f[3] - ((temp1 + (0.5 * density_1) * v_yy) + ((1.0/3.0) * *v_y)));   // (0, +1, 0)
+  f_new[ lStreamedIndex[4] ] = f[4] + omega * (f_neq[4] = f[4] - ((temp1 + (0.5 * density_1) * v_yy) - ((1.0/3.0) * *v_y)));   // (0, -1, 0)
+  
+  f_new[ lStreamedIndex[5] ] = f[5] + omega * (f_neq[5] = f[5] - ((temp1 + (0.5 * density_1) * v_zz) + ((1.0/3.0) * *v_z)));   // (0, 0, +1)
+  f_new[ lStreamedIndex[6] ] = f[6] + omega * (f_neq[6] = f[6] - ((temp1 + (0.5 * density_1) * v_zz) - ((1.0/3.0) * *v_z)));   // (0, 0, -1)
+  
+  temp1 *= (1.0/8.0);
+  
+  double temp2 = (*v_x + *v_y) + *v_z;
+  
+  f_new[ lStreamedIndex[7] ] = f[7] + omega * (f_neq[7] = f[7] - ((temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2)));   // (+1, +1, +1)
+  f_new[ lStreamedIndex[8] ] = f[8] + omega * (f_neq[8] = f[8] - ((temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2)));   // (-1, -1, -1)
+  
+  temp2 = (*v_x + *v_y) - *v_z;
+  
+  f_new[ lStreamedIndex[9] ] = f[ 9] + omega * (f_neq[ 9] = f[ 9] - ((temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2)));   // (+1, +1, -1)
+  f_new[ lStreamedIndex[10] ] = f[10] + omega * (f_neq[10] = f[10] - ((temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2)));   // (-1, -1, +1)
+  
+  temp2 = (*v_x - *v_y) + *v_z;
+  
+  f_new[ lStreamedIndex[11] ] = f[11] + omega * (f_neq[11] = f[11] - ((temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2)));   // (+1, -1, +1)
+  f_new[ lStreamedIndex[12] ] = f[12] + omega * (f_neq[12] = f[12] - ((temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2)));   // (-1, +1, -1)
+  
+  temp2 = (*v_x - *v_y) - *v_z;	 
+  
+  f_new[ lStreamedIndex[13] ] = f[13] + omega * (f_neq[13] = f[13] - ((temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2)));   // (+1, -1, -1)
+  f_new[ lStreamedIndex[14] ] = f[14] + omega * (f_neq[14] = f[14] - ((temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2)));   // (-1, +1, +1)
 }
 
+// Implementation of BC3 from Chopard 2008
+void regularised (double omega, int i,
+		    double *density, double *v_x, double *v_y, double *v_z,
+		    double f_neq[], Net* net)
+{
+  double *f = &f_old[ i*15 ];
+
+  // First calculate the density and macro-velocity
+  // TEMPORARILY STORE f_eq IN f_neq BUT THE FUNCTION RETURNS f_eq. THIS IS SORTED 
+  // OUT IN THE SUBSEQUENT FOR LOOP.
+  lbmFeq (f, density, v_x, v_y, v_z, f_neq);
+
+  // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts 
+  // (fi = fiEq + fopp(i) - fopp(i)Eq)
+  unsigned int boundary_config = getBoundaryConfig(net, i);
+ 
+  double fTemp[15];
+
+  for(int l =0; l<15; l++)
+    fTemp[l] = f[l];
+
+  if (0 != (boundary_config & (1U << (0))))
+  {
+    fTemp[1] = f[2] + (2.0/3.0) * *v_x;
+  }
+  if (0 != (boundary_config & (1U << (1))))
+  {
+    fTemp[2] = f[1] - (2.0/3.0) * *v_x;
+  }
+  if (0 != (boundary_config & (1U << (2))))
+  {
+    fTemp[3] = f[4] + (2.0/3.0) * *v_y;
+  }
+  if (0 != (boundary_config & (1U << (3))))
+  {
+    fTemp[4] = f[3] - (2.0/3.0) * *v_y;
+  }
+  if (0 != (boundary_config & (1U << (4))))
+  {
+    fTemp[5] = f[6] + (2.0/3.0) * *v_z;
+  }
+  if (0 != (boundary_config & (1U << (5))))
+  {
+    fTemp[6] = f[5] - (2.0/3.0) * *v_z;
+  }
+  if (0 != (boundary_config & (1U << (6))))
+  {
+    fTemp[7] = f[8] + (2.0/24.0) * ((*v_x + *v_y) + *v_z);
+  }
+  if (0 != (boundary_config & (1U << (7))))
+  {
+    fTemp[8] = f[7] - (2.0/24.0) * ((*v_x + *v_y) + *v_z);
+  }
+  if (0 != (boundary_config & (1U << (8))))
+  {
+    fTemp[9] = f[10] + (2.0/24.0) * ((*v_x + *v_y) - *v_z);
+  }
+  if (0 != (boundary_config & (1U << (9))))
+  {
+    fTemp[10] = f[9] - (2.0/24.0) * ((*v_x + *v_y) - *v_z);
+  }
+  if (0 != (boundary_config & (1U << (10))))
+  {
+    fTemp[11] = f[12] + (2.0/24.0) * ((*v_x - *v_y) + *v_z);
+  }
+  if (0 != (boundary_config & (1U << (11))))
+  {
+    fTemp[12] = f[11] - (2.0/24.0) * ((*v_x - *v_y) + *v_z);
+  }
+  if (0 != (boundary_config & (1U << (12))))
+  {
+    fTemp[13] = f[14] + (2.0/24.0) * ((*v_x - *v_y) - *v_z);
+  }
+  if (0 != (boundary_config & (1U << (13))))
+  {
+    fTemp[14] = f[13] - (2.0/24.0) * ((*v_x - *v_y) - *v_z);
+  }
+
+  // UP TO THIS POINT, F_NEQ ACTUALLY CONTAINS F_EQ. AT THIS
+  // STAGE WE REPLACE IT WITH THE ACTUAL NON-EQ VALUE, POST
+  // BOUNCING_BACK WHERE NEEDED.
+  for(int l = 0; l < 15; l++)
+  {
+    f_neq[l] = fTemp[l] - f_neq[l];
+  }
+
+  double density_1 = 1. / *density;
+  double v_xx = *v_x * *v_x;
+  double v_yy = *v_y * *v_y;
+  double v_zz = *v_z * *v_z;
+
+  // PI = sum_i e_i e_i f_i
+  double piMatrix[3][3];
+
+  double diagSum = f_neq[7] + f_neq[8] + f_neq[9] + f_neq[10] + f_neq[11] + f_neq[12] + f_neq[13] + f_neq[14];
+
+  piMatrix[0][0] = f_neq[1] + f_neq[2] + diagSum;
+  piMatrix[0][1] = f_neq[7] + f_neq[8] + f_neq[9] + f_neq[10] - (f_neq[11] + f_neq[12] + f_neq[13] + f_neq[14]);
+  piMatrix[0][2] = f_neq[7] + f_neq[8]  + f_neq[11] + f_neq[12] - (f_neq[9] + f_neq[10] + f_neq[13] + f_neq[14]);
+  piMatrix[1][0] = piMatrix[0][1];
+  piMatrix[1][1] = f_neq[3] + f_neq[4] + diagSum;
+  piMatrix[1][2] = f_neq[7] + f_neq[8] + f_neq[13] + f_neq[14] - (f_neq[9] + f_neq[10] + f_neq[11] + f_neq[12]);
+  piMatrix[2][0] = piMatrix[0][2];
+  piMatrix[2][1] = piMatrix[1][2];
+  piMatrix[2][2] = f_neq[5] + f_neq[6] + diagSum;
+
+  for(int m=0; m<3; m++)
+    for(int n=0; n<3; n++)
+      piMatrix[m][n] /= (2.0 * Cs2 * Cs2);
+
+  // Qi = e_i e_i - (speed of sound ^ 2) * Identity
+  // Then gi = fiEq + t_i (the 2/9, 1/9, 1/72 stuff) (Qi . PI (inner product)) / 2 * speed of sound^4
+  // Or:  gi = fiEq + t_i (the 2/9, 1/9, 1/72 stuff) ((e_i e_i . PI (inner product)) / 2 * speed of sound^4 - specialNumber)
+  double specialNumber = (2.0/9.0) * Cs2 * (piMatrix[0][0] + piMatrix[1][1] + piMatrix[2][2]);
+  double piMatrixSum = piMatrix[0][0] + piMatrix[0][1] + piMatrix[0][2] + 
+                       piMatrix[1][0] + piMatrix[1][1] + piMatrix[1][2] + 
+                       piMatrix[2][0] + piMatrix[2][1] + piMatrix[2][2];
+
+  // The gi (here; f) are then collided and streamed
+  f_new[ f_id[i*15] ] = ((2.0/9.0) * *density - (1.0/3.0) * ((v_xx + v_yy + v_zz) * density_1)) + (1.0 + omega) * (f_neq[0] = - specialNumber);
+  
+  double temp1 = (1.0/9.0) * *density - (1.0/6.0) * ((v_xx + v_yy + v_zz) * density_1);
+  specialNumber *= 1.0/2.0;
+
+  // Now apply bounce-back to the components that require it, from fTemp
+  int lStreamTo[15];
+  for(int l = 1; l < 15; l++)
+  {
+    int oppL = ((l % 2) == 0) ? (l-1) : (l+1);
+    if (0 != (boundary_config & (1U << (l-1))))
+    {
+      lStreamTo[l] = i*15 + oppL;
+    }
+    else
+    {
+      lStreamTo[l] = f_id[i*15+l];
+    }
+  }
+
+  f_new[ lStreamTo[1] ] = temp1 + (0.5 * density_1) * v_xx + (1.0/3.0) * *v_x + (1.0 + omega) * (f_neq[1] = (1.0/9.0) * piMatrix[0][0] - specialNumber);   // (+1, 0, 0)
+  f_new[ lStreamTo[2] ] = temp1 + (0.5 * density_1) * v_xx - (1.0/3.0) * *v_x + (1.0 + omega) * (f_neq[2] = (1.0/9.0) * piMatrix[0][0] - specialNumber);   // (+1, 0, 0)
+    
+  f_new[ lStreamTo[3] ] = temp1 + (0.5 * density_1) * v_yy + (1.0/3.0) * *v_y + (1.0 + omega) * (f_neq[3] = (1.0/9.0) * piMatrix[1][1] - specialNumber);   // (0, +1, 0)
+  f_new[ lStreamTo[4] ] = temp1 + (0.5 * density_1) * v_yy - (1.0/3.0) * *v_y + (1.0 + omega) * (f_neq[4] = (1.0/9.0) * piMatrix[1][1] - specialNumber);   // (0, +1, 0)
+  
+  f_new[ lStreamTo[5] ] = temp1 + (0.5 * density_1) * v_zz + (1.0/3.0) * *v_z + (1.0 + omega) * (f_neq[5] = (1.0/9.0) * piMatrix[2][2] - specialNumber);   // (0, +1, 0)
+  f_new[ lStreamTo[6] ] = temp1 + (0.5 * density_1) * v_zz - (1.0/3.0) * *v_z + (1.0 + omega) * (f_neq[6] = (1.0/9.0) * piMatrix[2][2] - specialNumber);   // (0, +1, 0)
+  
+  temp1 *= (1.0/8.0);
+  specialNumber *= (1.0/8.0);
+
+  double temp2 = (*v_x + *v_y) + *v_z;
+  
+  f_new[ lStreamTo[7] ] = temp1 + (1.0/16.0) * density_1 * temp2 * temp2 + (1.0/24.0) * temp2 + (1.0 + omega) * (f_neq[7] = ((1.0/72.0) * piMatrixSum - specialNumber ));   // (+1, +1, +1)
+  f_new[ lStreamTo[8] ] = temp1 + (1.0/16.0) * density_1 * temp2 * temp2 + (-1.0/24.0) * temp2 + (1.0 + omega) * (f_neq[8] = ((1.0/72.0) * piMatrixSum - specialNumber ));   // (-1, -1, -1)
+  
+  temp2 = (*v_x + *v_y) - *v_z;
+  
+  f_new[ lStreamTo[9] ] = temp1 + (1.0/16.0) * density_1 * temp2 * temp2 + (1.0/24.0) * temp2 + (1.0 + omega) * (f_neq[9] = ((1.0/72.0) * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2]))- specialNumber ));   // (+1, +1, -1)
+  f_new[ lStreamTo[10] ] = temp1 + (1.0/16.0) * density_1 * temp2 * temp2 + (-1.0/24.0) * temp2 + (1.0 + omega) * (f_neq[10] = ((1.0/72.0) * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2]))- specialNumber ));   // (-1, -1, +1)
+  
+  temp2 = (*v_x - *v_y) + *v_z;
+  
+  f_new[ lStreamTo[11] ] = temp1 + (1.0/16.0) * density_1 * temp2 * temp2 + (1.0/24.0) * temp2 + (1.0 + omega) * (f_neq[11] = ((1.0/72.0) * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2]))- specialNumber ));   // (+1, -1, +1)
+  f_new[ lStreamTo[12] ] = temp1 + (1.0/16.0) * density_1 * temp2 * temp2 + (-1.0/24.0) * temp2 + (1.0 + omega) * (f_neq[12] = ((1.0/72.0) * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2]))- specialNumber ));   // (-1, +1, -1)
+  
+  temp2 = (*v_x - *v_y) - *v_z;	 
+  
+  f_new[ lStreamTo[13] ] = temp1 + (1.0/16.0) * density_1 * temp2 * temp2 + (1.0/24.0) * temp2 + (1.0 + omega) * (f_neq[13] = ((1.0/72.0) * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2]))- specialNumber ));   // (+1, -1, -1)
+  f_new[ lStreamTo[14] ] = temp1 + (1.0/16.0) * density_1 * temp2 * temp2 + (-1.0/24.0) * temp2 + (1.0 + omega) * (f_neq[14] = ((1.0/72.0) * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2]))- specialNumber ));   // (-1, +1, +1)
+}
+
+// Implementation of interpolation of f values based on distance to boundary.
+void fInterpolation (double omega, int i,
+		    double *density, double *v_x, double *v_y, double *v_z,
+		    double f_neq[], Net* net)
+{
+  lbmInterCollision0(omega, i, density, v_x, v_y, v_z, f_neq, net);
+}
+
+// Implementation of interpolation of f values based on distance to boundary.
+void fInterpolationPostStep (double omega, int i,
+		    double *density, double *v_x, double *v_y, double *v_z,
+		    double f_neq[], Net* net)
+{
+  // Fill in the unknown distributions
+
+  // Ready to go. net->cut_distances[i*14 + l] is your friend.
+  unsigned int boundary_config = getBoundaryConfig(net, i);
+
+  double* cut_dists = &(net->cut_distances[i*14]);
+
+  // Handle odd indices, then evens - it's slightly easier to take the odd
+  // and even cases separately.
+  for (int l = 1; l < 15; l+= 2)
+  {
+    // Only do it if there's no boundary in the opposite direction, otherwise, just leave at eqm
+    if ((0 != (boundary_config & (1U << (l-1)))))// && (0 == (boundary_config & (1U << (l)))))
+    {
+      double twoQ = 2.0 * cut_dists[l-1];
+      if(twoQ < 1.0)
+      {
+        f_new[ i*15 + l + 1 ] = f_new[ i*15 + l ] + twoQ * (f_old[ i*15 + l] - f_new[ i*15 + l ]) ;
+      }
+      else
+      {
+        f_new[ i*15 + l + 1 ] = f_old[ i*15 + l + 1 ] + (1. / twoQ) * (f_old[ i*15 + l] - f_old[ i*15 + l + 1 ]);
+      }
+    }
+  }
+
+  for (int l = 2; l < 15; l+=2)
+  {
+    if ((0 != (boundary_config & (1U << (l-1)))))// && (0 == (boundary_config & (1U << (l-2)))))
+    {
+      double twoQ = 2.0 * cut_dists[l-1];
+      if(twoQ < 1.0)
+      {
+        f_new[ i*15 + l - 1 ] = f_new[ i*15 + l ] + twoQ * (f_old[ i*15 + l] - f_new[ i*15 + l ]) ;
+      }
+      else
+      {
+        f_new[ i*15 + l - 1 ] = f_old[ i*15 + l - 1 ] + (1. / twoQ) * (f_old[ i*15 + l] - f_old[ i*15 + l - 1 ]);
+      }
+    }
+  }
+}
+
+// Implementation of the Guo, Zheng, Shi boundary condition (2002).
+void gzsBoundary (double omega, int i,
+		    double *density, double *v_x, double *v_y, double *v_z,
+		    double f_neq[], Net* net)
+{
+  // First do a normal collision & streaming step, as if we were mid-fluid.
+  // NOTE that we use the version that preserves f_old.
+  // NOTE that this handily works out the equilibrium density, v_x, v_y and v_z for us
+  lbmInnerCollision0(omega, i, density, v_x, v_y, v_z, f_neq, net);
+
+  // Now fill in the un-streamed to distributions (those that point away from boundaries).
+  unsigned int boundary_config = getBoundaryConfig(net, i);
+
+  double* cut_dists = &(net->cut_distances[i*14]);
+
+  // Handle odd indices, then evens - it's slightly easier to take the odd
+  // and even cases separately.
+  for (int l = 1; l < 15; l++)
+  {
+    if (0 != (boundary_config & (1U << (l-1))))
+    {
+      int awayFromWallIndex = ((l%2) == 0) ? (l-1) : (l+1);
+      double delta = cut_dists[l-1];
+      double uWall[3];
+      double fNeq;
+
+      // Work out uw1 (noting that ub is 0 until we implement moving walls)
+      uWall[0] = (1 - 1./delta) * *v_x;
+      uWall[1] = (1 - 1./delta) * *v_y;
+      uWall[2] = (1 - 1./delta) * *v_z;
+      fNeq = f_neq[awayFromWallIndex];      
+
+      // Interpolate with uw2 if delta < 0.75
+      if(delta < 0.75)
+      {
+      // Only do the extra interpolation if there's gonna be a point there to interpolate from, i.e. there's no boundary
+      // in the direction of awayFromWallIndex
+        if(0 == (boundary_config & (1U << (awayFromWallIndex - 1))))
+        {
+          // Need some info about the next node away from the wall in this direction...
+          int nextIOut = f_id[i*15 + awayFromWallIndex] / 15;
+            double nextNodeDensity, nextNodeV[3], nextNodeFEq[15];
+            lbmFeq (&f_old[nextIOut * 15], 
+            &nextNodeDensity, 
+            &nextNodeV[0], 
+            &nextNodeV[1], 
+            &nextNodeV[2], 
+            &nextNodeFEq[0]);
+
+            for(int a = 0; a < 3; a++)
+              uWall[a] = delta * uWall[a] + (1. - delta) * (delta - 1.) * nextNodeV[a] / (1. + delta);
+
+            fNeq = delta * fNeq + (1. - delta) * (f_old[nextIOut*15 + awayFromWallIndex] - nextNodeFEq[awayFromWallIndex]);
+        }
+        // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
+        else
+        {
+          for(int a = 0; a < 3; a++)
+              uWall[a] = 0.0;//delta * uWall[a];
+
+          fNeq = 0.0;//delta * fNeq;
+        }
+      }
+
+      // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
+      // Note that we assume that the density is the same as at this node
+      double fEqTemp[15];
+      lbmFeq (*density, uWall[0], uWall[1], uWall[2], fEqTemp);
+
+      // Collide and stream!
+      f_new[i*15 + awayFromWallIndex] = fEqTemp[awayFromWallIndex] + (1.0 + omega) * fNeq;
+    }
+  }
+}
 
 // Collision + streaming for inlet fluid lattice sites.
 void lbmCollision2 (double omega, int i,
@@ -563,7 +890,6 @@ void lbmCollision5 (double omega, int i,
   for (l = 7; l < 15; l++)
     f_neq[l] -= (f_new[ f_id[i*15+l] ] = f[l] = temp);
 }
-
 
 // The same as lbmInnerCollision0 but useful for convergence purposes.
 void lbmInnerCollisionConv0 (double omega, int i,
@@ -1179,7 +1505,6 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
 		     double *vx, double *vy, double *vz, double f_neq[])
 {
   double dummy_density;
-  double temp;
   
   int l;
   
@@ -1193,21 +1518,7 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
   
   if (boundary_type == FLUID_TYPE)
     {
-      *density = 0.;
-
-      for (l = 0; l < 15; l++) *density += f[ l ];
-      
-      f[0] = (2.0/9.0) * *density;
-      
-      temp = (1.0/9.0) * *density;
-      
-      for (l = 1; l < 7; l++) f[l] = temp;
-      
-      temp *= (1.0/8.0);
-      
-      for (l = 7; l < 15; l++) f[l] = temp;
-      
-      *vx = *vy = *vz = 0.F;
+      lbmDensityAndVelocity (f, density, vx, vy, vz);
     }
   else
     {
@@ -1255,18 +1566,20 @@ void LBM::lbmInit (char *system_file_name_in, Net *net)
   if (!check_conv)
     {
       lbmInnerCollision[0] = lbmInnerCollision0;
-      lbmInnerCollision[1] = simpleBounceBack;//lbmCollision1;
+      lbmInnerCollision[1] = lbmCollision1;
       lbmInnerCollision[2] = lbmCollision2;
       lbmInnerCollision[3] = lbmCollision3;
       lbmInnerCollision[4] = lbmCollision4;
       lbmInnerCollision[5] = lbmCollision5;
       
       lbmInterCollision[0] = lbmInterCollision0;
-      lbmInterCollision[1] = simpleBounceBack;//lbmCollision1;
+      lbmInterCollision[1] = lbmCollision1;
       lbmInterCollision[2] = lbmCollision2;
       lbmInterCollision[3] = lbmCollision3;
       lbmInterCollision[4] = lbmCollision4;
       lbmInterCollision[5] = lbmCollision5;
+
+      lbmPostTimeStep = NULL;
     }
   else
     {
@@ -1415,14 +1728,38 @@ int LBM::lbmCycle (int perform_rt, Net *net)
       net->err = MPI_Wait (&net->req[ 0 ][ m ], net->status);
       net->err = MPI_Wait (&net->req[ 0 ][ net->neigh_procs + m ], net->status);
 #endif
-    }
-  
+    }  
+
   // Copy the distribution functions received from the neighbouring
   // processors into the destination buffer "f_new".
   for (i = 0; i < net->shared_fs; i++)
     {
       f_new[ f_recv_iv[i] ] = f_old[ net->neigh_proc[0].f_head + i ];
     }
+
+  // Do any cleanup steps necessary on boundary nodes
+  // NOTE that 1 is the collision type referring to boundary nodes.
+  // One day, this will be a constant.
+  if(lbmPostTimeStep != NULL)
+  {
+    offset = net->my_inner_sites + net->my_inter_collisions[0];
+  
+    for (i = offset; i < offset + net->my_inter_collisions[ 1 ]; i++)
+    {
+      (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+					      lbmPostTimeStep);
+    }
+  
+    offset = net->my_inner_collisions[ 0 ];
+  
+    for (i = offset; i < offset + net->my_inner_collisions[ 1 ]; i++)
+    {
+      (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+                        lbmPostTimeStep);
+    }
+  }
+
+  // Swap f_old and f_new ready for the next timestep.
   double *temp = f_old;
   f_old = f_new;
   f_new = temp;
