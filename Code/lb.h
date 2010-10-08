@@ -97,9 +97,6 @@ extern int lbm_terminate_simulation;
 
 extern int is_inlet_normal_available;
 
-// TODO Judging by the name, these shouldn't be in here.
-void netInit (LBM *lbm, Net *net);
-
 // TODO: prob don't belong here... 3 variables needed for convergence-enabled simulations
 extern double conv_error;
 extern int cycle_tag, check_conv;
