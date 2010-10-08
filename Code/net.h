@@ -80,9 +80,12 @@ struct NeighProc
 
 class Net
 {
-private:
-
-
+  private:
+    // 3 buffers needed for convergence-enabled simulations
+    double *f_to_send;
+    double *f_to_recv;
+    int *f_send_id;
+    short int *f_data;
 
   public:
 
