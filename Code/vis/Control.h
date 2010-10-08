@@ -115,7 +115,6 @@ namespace hemelb {
       Viewpoint viewpoint;
 
       int col_pixels_recv[2]; // number received?
-      //ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
       ColPixel* col_pixel_recv[2];
 
       float physical_pressure_threshold_min;
