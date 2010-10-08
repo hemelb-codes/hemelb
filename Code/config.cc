@@ -1,33 +1,12 @@
 /* This file contains the globals.
  * Should be removed ASAP
  */
-//#include "vis/colpixel.h"
 
-
-double *f_old = 0, *f_new = 0;
-
-int *f_id = 0;
-
-
-
-
-
-
-// TODO moving these requires making the collision / streaming functions non-static, which is potentially a big deal.
-//double *inlet_density;
-//double *outlet_density;
 double* inlet_density, *outlet_density;
 
-
-// 3 buffers needed for convergence-enabled simulations
-double *f_to_send = 0;
-double *f_to_recv = 0;
-
-int *f_send_id = 0;
-
+double *f_old = 0, *f_new = 0;
+int *f_id = 0;
 int *f_recv_iv = 0;
-
-short int *f_data = 0;
 
 int is_bench;
 
@@ -35,7 +14,6 @@ int is_bench;
 double conv_error;
 int cycle_tag, check_conv;
 int is_inlet_normal_available;
-
 
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;

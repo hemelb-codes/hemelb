@@ -14,7 +14,7 @@ namespace hemelb {
     /* the last three digits of the pixel identifier are used to
        indicate if the pixel is coloured via the ray tracing technique
        and/or a glyph and/or a particle/pathlet */
-    
+
 
     // Class to control and use the effects of different visualisation
     // methods.
@@ -26,12 +26,12 @@ namespace hemelb {
 	float vtx[3];
 	float dir1[3];
 	float dir2[3];
-  
+
 	float max_x, max_y;
 	float scale_x, scale_y;
-  
+
 	float zoom;
-  
+
 	int pixels_x, pixels_y;
       };
 
@@ -49,7 +49,7 @@ namespace hemelb {
       {
 	// As far as I can tell image_file_name member is never used
 	char *image_file_name;
-  
+
 	float half_dim[3];
 	float system_size;
       };
@@ -64,13 +64,13 @@ namespace hemelb {
       /* // Adds a layer to the visualisation. Note that rendering is done */
       /* // in the order in which layers are added. */
       /* void addLayer(Layer *newLayer); */
-    
+
       /* // Combines the output of all visualisation methods in the order */
       /* // added. */
       /* void render(); */
 
-      
-      
+
+
       void project (float p1[], float p2[]);
       void writePixel (ColPixel *col_pixel);
       void mergePixels (ColPixel *col_pixel1, ColPixel *col_pixel2);
@@ -78,14 +78,14 @@ namespace hemelb {
 		   float sin_2, float cos_2,
 		   float  x1, float  y1, float  z1,
 		   float *x2, float *y2, float *z2);
-      
+
       void setProjection (int pixels_x, int pixels_y,
 			  float ctr_x, float ctr_y, float ctr_z,
 			  float longitude, float latitude,
 			  float zoom);
-      
+
       void renderLine (float x1[], float x2[]);
-      
+
 
       void streaklines(int time_step, int period, Net *net);
       void restart();
@@ -113,7 +113,7 @@ namespace hemelb {
 
       Screen screen;
       Viewpoint viewpoint;
-      
+
       int col_pixels_recv[2]; // number received?
       //ColPixel col_pixel_recv[2][COLOURED_PIXELS_MAX];
       ColPixel* col_pixel_recv[2];
@@ -122,19 +122,19 @@ namespace hemelb {
       float physical_pressure_threshold_max;
       float physical_velocity_threshold_max;
       float physical_stress_threshold_max;
-      
+
       int mouse_x, mouse_y;
-      
+
     private:
       /* Hywel's partial refactor */
       /* int nLayers; */
       /* std::vector<Layer *> myLayers; */
-      
+
       int col_pixels, // number of ColPixels (?)
 	col_pixels_max; // max permitted of above
-      
+
       int *col_pixel_id; // array of pixel IDs
-      
+
       // These don't belong in vis:: namespace
       /*double pressure_min, pressure_max;
 	double velocity_min, velocity_max;
@@ -156,7 +156,7 @@ namespace hemelb {
       StreaklineDrawer *myStreaker;
 
     };
-    
+
     extern Control *controller;
   }
 }
