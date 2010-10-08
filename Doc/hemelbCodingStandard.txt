@@ -1,0 +1,12 @@
+HEADER FILES
+------------
+The definitions within a class should be in the order of 
+ - public internal classes / structs
+ - public constructors
+ - public destructor
+ - public methods
+ - public variables
+ - private methods
+ - private variables
+
+
