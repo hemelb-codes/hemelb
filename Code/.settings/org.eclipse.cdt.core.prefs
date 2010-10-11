@@ -1,4 +1,4 @@
-#Mon Oct 11 10:59:57 BST 2010
+#Mon Oct 11 16:26:51 BST 2010
 eclipse.preferences.version=1
 org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=18
 org.eclipse.cdt.core.formatter.alignment_for_base_clause_in_type_declaration=83
@@ -8,7 +8,7 @@ org.eclipse.cdt.core.formatter.alignment_for_declarator_list=16
 org.eclipse.cdt.core.formatter.alignment_for_enumerator_list=49
 org.eclipse.cdt.core.formatter.alignment_for_expression_list=0
 org.eclipse.cdt.core.formatter.alignment_for_expressions_in_array_initializer=18
-org.eclipse.cdt.core.formatter.alignment_for_parameters_in_method_declaration=18
+org.eclipse.cdt.core.formatter.alignment_for_parameters_in_method_declaration=20
 org.eclipse.cdt.core.formatter.alignment_for_throws_clause_in_method_declaration=18
 org.eclipse.cdt.core.formatter.brace_position_for_array_initializer=end_of_line
 org.eclipse.cdt.core.formatter.brace_position_for_block=next_line
