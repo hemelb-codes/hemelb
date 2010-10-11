@@ -9,4 +9,10 @@ The definitions within a class should be in the order of
  - private methods
  - private variables
 
+All include-guards must take form of "HEMELB_<MODULENAME>_<CLASS>_H"
 
+All code must be in the namespace "hemelb::<module>"
+
+CODE FILES
+----------
+All code must be in the right namespace (as per the header file)

@@ -13,8 +13,11 @@ unsigned int getBoundaryConfig(Net* net, int i)
   return (net->net_site_data[ i ] & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;  
 }
 
-void (*lbmPostTimeStep) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net) = NULL;
-void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity, Net* net, Collision* iCollision);
+void (*lbmPostTimeStep)(double omega, int i, double *density, double *v_x, double *v_y,
+  double *v_z, double f_neq[], Net* net) = NULL;
+void (*lbmUpdateSiteData[2][2])(double omega, int i, double *density, double *vx,
+  double *vy, double *vz, double *velocity, Net* net,
+  hemelb::lb::collisions::Collision* iCollision);
 
 double LBM::lbmConvertPressureToLatticeUnits (double pressure)
 {
@@ -1029,7 +1032,7 @@ void lbmUpdateMinMaxValues (double density, double velocity, double stress)
 
 // Fluid site updating for benchmarking purposes.
 void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-			     Collision* iCollision)
+			     hemelb::lb::collisions::Collision* iCollision)
 {
   double f_neq[15];
   
@@ -1039,7 +1042,7 @@ void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,do
 
 // Fluid site updating for benchmarking plus computation of flow field values for visualisation purposes.
 void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-				    Collision* iCollision)
+  hemelb::lb::collisions::Collision* iCollision)
 {
   double f_neq[15];
   double stress;
@@ -1073,7 +1076,7 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
 
 // Fluid site updating for full-production runs.
 void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net, 
-			   Collision* iCollision)
+  hemelb::lb::collisions::Collision* iCollision)
 {
   double f_neq[15];
   double stress;
@@ -1107,7 +1110,7 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
 
 // Fluid site updating for full-production runs plus computation of flow field values for visualisation purposes.
 void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-				  Collision* iCollision)
+  hemelb::lb::collisions::Collision* iCollision)
 {
   double f_neq[15];
   double stress;
@@ -1269,12 +1272,16 @@ void LBM::lbmInitCollisions()
   // It'd be nice to do this with something like
   // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
-  mMidFluidCollision = new SimpleCollideAndStream();
-  mWallCollision = new ZeroVelocityEquilibrium();
-  mInletCollision = new NonZeroVelocityBoundaryDensity(inlet_density);
-  mOutletCollision = new NonZeroVelocityBoundaryDensity(outlet_density);
-  mInletWallCollision = new ZeroVelocitySetBoundaryDensity(inlet_density);
-  mOutletWallCollision = new ZeroVelocitySetBoundaryDensity(outlet_density);
+  mMidFluidCollision = new hemelb::lb::collisions::ImplSimpleCollideAndStream();
+  mWallCollision = new hemelb::lb::collisions::ImplZeroVelocityEquilibrium();
+  mInletCollision
+      = new hemelb::lb::collisions::ImplNonZeroVelocityBoundaryDensity(inlet_density);
+  mOutletCollision
+      = new hemelb::lb::collisions::ImplNonZeroVelocityBoundaryDensity(outlet_density);
+  mInletWallCollision
+      = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(inlet_density);
+  mOutletWallCollision
+      = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
 
   // TODO: This will eventually be cleverly replaced.
   // Probably with something like a cycle for each boundary condition
@@ -1338,7 +1345,7 @@ void LBM::lbmSetInitialConditions (Net *net)
 }
 
 // TODO HACK
-Collision* LBM::GetCollision(int i)
+hemelb::lb::collisions::Collision* LBM::GetCollision(int i)
     {
   switch(i)
   {

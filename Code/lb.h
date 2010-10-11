@@ -2,7 +2,7 @@
 #define HEMELB_LB_H
 
 #include "net.h"
-#include "lbm_collisions/Collisions.h"
+#include "lb/collisions/Collisions.h"
 
 class LBM {
  public:
@@ -67,15 +67,15 @@ class LBM {
   void deleteInlets();
   void deleteOutlets();
 
-  MidFluidCollision* mMidFluidCollision;
-  WallCollision* mWallCollision;
-  InletOutletCollision* mInletCollision;
-  InletOutletCollision* mOutletCollision;
-  InletOutletWallCollision* mInletWallCollision;
-  InletOutletWallCollision* mOutletWallCollision;
+  hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
+  hemelb::lb::collisions::WallCollision* mWallCollision;
+  hemelb::lb::collisions::InletOutletCollision* mInletCollision;
+  hemelb::lb::collisions::InletOutletCollision* mOutletCollision;
+  hemelb::lb::collisions::InletOutletWallCollision* mInletWallCollision;
+  hemelb::lb::collisions::InletOutletWallCollision* mOutletWallCollision;
 
   //TODO Get rid of this hack
-  Collision* GetCollision(int i);
+  hemelb::lb::collisions::Collision* GetCollision(int i);
 };
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
