@@ -1255,7 +1255,7 @@ void LBM::lbmInit (char *system_file_name_in, char *parameters_file_name, Net *n
 
   lbm_terminate_simulation = 0;
 
-  lbmReadConfig (&net);
+  lbmReadConfig (net);
 
   lbmReadParameters(parameters_file_name, net);
 
