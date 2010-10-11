@@ -9,11 +9,13 @@
     one procesor.
 */
 
+#include <cstdlib>
+#include <cmath>
+#include <cstdio>
+
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
-#include <stdlib.h>
-#include <math.h>
 
 // TODO find a better way to do this.
 const int e_x[] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1};
@@ -130,8 +132,8 @@ int Net::netFindTopology (int *depths)
 
   net_machines = 0;
   
-  machine_id = (int *)malloc(sizeof(int)* procs);
-  procs_per_machine = (int *)malloc(sizeof(int)* procs);
+  machine_id = (int *)std::malloc(sizeof(int)* procs);
+  procs_per_machine = (int *)std::malloc(sizeof(int)* procs);
   
   for (i = 0; i < procs; i++)
     {
@@ -206,8 +208,8 @@ int Net::netFindTopology (int *depths)
   
   net_machines = 1;
   
-  machine_id = (int *)malloc(sizeof(int) * procs);
-  procs_per_machine = (int *)malloc(sizeof(int) * net_machines);
+  machine_id = (int *)std::malloc(sizeof(int) * procs);
+  procs_per_machine = (int *)std::malloc(sizeof(int) * net_machines);
   
   for (int i = 0; i < procs; i++)
     {
@@ -279,15 +281,15 @@ void Net::netInit (int totalFluidSites)
   // Allocations.  fluid sites will store actual number of fluid
   // sites per proc.  Site location will store up to 10000 of some
   // sort of coordinate.
-  fluid_sites = (int *)malloc(sizeof(int) * procs);
+  fluid_sites = (int *)std::malloc(sizeof(int) * procs);
   
   net_site_nor  = NULL;
   net_site_data = NULL;
   cut_distances = NULL;
 
   sites_buffer_size = 10000;
-  site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
-  site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
+  site_location_a = (SiteLocation *)std::malloc(sizeof(SiteLocation) * sites_buffer_size);
+  site_location_b = (SiteLocation *)std::malloc(sizeof(SiteLocation) * sites_buffer_size);
   
   my_sites = 0;
   
@@ -300,16 +302,16 @@ void Net::netInit (int totalFluidSites)
 #ifndef NO_STEER 
   if (is_bench || procs == 1)
     {
-      fluid_sites_per_unit = (int)ceil((double)totalFluidSites / (double)procs);
+      fluid_sites_per_unit = (int)std::ceil((double)totalFluidSites / (double)procs);
       proc_count = 0;
     }
   else
     {
-      fluid_sites_per_unit = (int)ceil((double)totalFluidSites / (double)(procs - 1));
+      fluid_sites_per_unit = (int)std::ceil((double)totalFluidSites / (double)(procs - 1));
       proc_count = 1;
     }
 #else
-  fluid_sites_per_unit = (int)ceil((double)totalFluidSites / (double)procs);
+  fluid_sites_per_unit = (int)std::ceil((double)totalFluidSites / (double)procs);
   proc_count = 0;
 #endif
 
@@ -463,7 +465,7 @@ void Net::netInit (int totalFluidSites)
 			{
 			  ++proc_count;
 			  unvisited_fluid_sites -= partial_visited_fluid_sites;
-			  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(procs - proc_count));
+			  fluid_sites_per_unit = (int)std::ceil((double)unvisited_fluid_sites / (double)(procs - proc_count));
 			  partial_visited_fluid_sites = 0;
 			}
 		      // If not, we have to start growing a different region for the same rank:
@@ -488,12 +490,12 @@ void Net::netInit (int totalFluidSites)
 	      
 	      if (is_bench)
 		{
-		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)procs);
+		  fluid_sites_per_unit = (int)std::ceil((double)unvisited_fluid_sites / (double)procs);
 		  proc_count = 0;
 		}
 	      else
 		{
-		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(procs - 1));
+		  fluid_sites_per_unit = (int)std::ceil((double)unvisited_fluid_sites / (double)(procs - 1));
 		  proc_count = 1;
 		}
 	    }
@@ -509,7 +511,7 @@ void Net::netInit (int totalFluidSites)
 		  
 		  if (is_bench)
 		    {
-		      fluid_sites_per_unit = (int)ceil((double)totalFluidSites *
+		      fluid_sites_per_unit = (int)std::ceil((double)totalFluidSites *
 						       (double)procs_per_machine[ machine_id ] / procs);
 		    }
 		  else
@@ -518,7 +520,7 @@ void Net::netInit (int totalFluidSites)
 		      
 		      weight = (double)(procs_per_machine[machine_id] * procs) / (double)(procs - 1);
 		      
-		      fluid_sites_per_unit = (int)ceil((double)totalFluidSites * weight / net_machines);
+		      fluid_sites_per_unit = (int)std::ceil((double)totalFluidSites * weight / net_machines);
 		    }
 		}
 	      else
@@ -637,7 +639,7 @@ void Net::netInit (int totalFluidSites)
 				  if (unit_level == 0)
 				    {
 				      unvisited_fluid_sites -= partial_visited_fluid_sites;
-				      fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(procs - proc_count));
+				      fluid_sites_per_unit = (int)std::ceil((double)unvisited_fluid_sites / (double)(procs - proc_count));
 				    }
 				  partial_visited_fluid_sites = 0;
 				}
@@ -646,8 +648,8 @@ void Net::netInit (int totalFluidSites)
 	    }
 	}
     }
-  free(site_location_b);
-  free(site_location_a);
+  std::free(site_location_b);
+  std::free(site_location_a);
   
   dd_time = hemelb::util::myClock () - seconds;
   seconds = hemelb::util::myClock ();
@@ -656,7 +658,7 @@ void Net::netInit (int totalFluidSites)
   // compact one is created here.
 
   // Allocate an array of structures to store the fluid site identifiers for each block.
-  map_block = (DataBlock *)malloc(sizeof(DataBlock) * blocks);
+  map_block = (DataBlock *)std::malloc(sizeof(DataBlock) * blocks);
   
   for (n = 0; n < blocks; n++)
     {
@@ -664,10 +666,10 @@ void Net::netInit (int totalFluidSites)
     }
   
   // Local array to store site data for this rank.
-  site_data = (unsigned int *)malloc(sizeof(unsigned int) * my_sites);
+  site_data = (unsigned int *)std::malloc(sizeof(unsigned int) * my_sites);
  
   // Allocate blocks.
-  is_my_block = (bool *)malloc(sizeof(bool) * blocks);
+  is_my_block = (bool *)std::malloc(sizeof(bool) * blocks);
   
   for (n = 0; n < blocks; n++)
     {
@@ -687,7 +689,7 @@ void Net::netInit (int totalFluidSites)
       // If we have some fluid sites, point to proc_block and map_block.
       proc_block_p = &proc_block[ n ];      
       map_block_p = &map_block[ n ];
-      map_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
+      map_block_p->site_data = (unsigned int *)std::malloc(sizeof(unsigned int) * sites_in_a_block);
       
       // map_block[n].site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
       // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
@@ -719,11 +721,11 @@ void Net::netInit (int totalFluidSites)
     {
       if (data_block[n].site_data != NULL)
 	{
-	  free(data_block[n].site_data);
+	  std::free(data_block[n].site_data);
 	  data_block[n].site_data = NULL;
 	}
     }
-  free(data_block);
+  std::free(data_block);
   data_block = NULL;
   
   // If we are in a block of solids, we set map_block[n].site_data to NULL.
@@ -731,16 +733,16 @@ void Net::netInit (int totalFluidSites)
     {
       if (is_my_block[n]) continue;
       
-      free(map_block[n].site_data);
+      std::free(map_block[n].site_data);
       map_block[n].site_data = NULL;
       
       if (wall_block[n].wall_data != NULL)
 	{
-	  free(wall_block[n].wall_data);
+	  std::free(wall_block[n].wall_data);
 	  wall_block[n].wall_data = NULL;
 	}
     }
-  free(is_my_block);
+  std::free(is_my_block);
   
   // The numbers of inter- and intra-machine neighbouring processors,
   // interface-dependent and independent fluid sites and shared
@@ -832,8 +834,8 @@ void Net::netInit (int totalFluidSites)
 			{
 			  if (neigh_procs == NEIGHBOUR_PROCS_MAX)
 			    {
-			      printf (" too many intra machine, inter processor neighbours\n");
-			      printf (" the execution is terminated\n");
+			      std::printf (" too many intra machine, inter processor neighbours\n");
+			      std::printf (" the execution is terminated\n");
 #ifndef NOMPI
 			      err = MPI_Abort (MPI_COMM_WORLD, 1);
 #else
@@ -969,32 +971,32 @@ void Net::netInit (int totalFluidSites)
   // and the extra distribution functions are
   if (!check_conv)
     {
-      f_old = (double *)malloc(sizeof(double) * (my_sites * 15 + 1 + shared_fs));
-      f_new = (double *)malloc(sizeof(double) * (my_sites * 15 + 1 + shared_fs));
+      f_old = (double *)std::malloc(sizeof(double) * (my_sites * 15 + 1 + shared_fs));
+      f_new = (double *)std::malloc(sizeof(double) * (my_sites * 15 + 1 + shared_fs));
     }
   else
     {
-      f_old = (double *)malloc(sizeof(double) * (my_sites * 30 + 15 + 1));
-      f_new = (double *)malloc(sizeof(double) * (my_sites * 30 + 15 + 1));
+      f_old = (double *)std::malloc(sizeof(double) * (my_sites * 30 + 15 + 1));
+      f_new = (double *)std::malloc(sizeof(double) * (my_sites * 30 + 15 + 1));
     }
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
   // streamed between different partitions) are collected and the
   // buffers needed for the communications are set from here
   
-  f_data = (short int *)malloc(sizeof(short int) * 4 * shared_fs);
+  f_data = (short int *)std::malloc(sizeof(short int) * 4 * shared_fs);
   
   if (check_conv)
     {
-      f_to_send = (double *)malloc(sizeof(double) * shared_fs*2);
-      f_to_recv = (double *)malloc(sizeof(double) * shared_fs*2);
+      f_to_send = (double *)std::malloc(sizeof(double) * shared_fs*2);
+      f_to_recv = (double *)std::malloc(sizeof(double) * shared_fs*2);
       
-      f_send_id = (int *)malloc(sizeof(int) * shared_fs);
+      f_send_id = (int *)std::malloc(sizeof(int) * shared_fs);
     }
 
   // Allocate the index in which to put the distribution functions received from the other
   // process.
-  f_recv_iv = (int *)malloc(sizeof(int) * shared_fs);
+  f_recv_iv = (int *)std::malloc(sizeof(int) * shared_fs);
   
   // Reset to zero again.
   shared_fs = 0;
@@ -1027,9 +1029,9 @@ void Net::netInit (int totalFluidSites)
   if (my_sites > 0)
     {
       // f_id is allocated so we know which sites to get information from.
-      f_id = (int *)malloc(sizeof(int) * (my_sites * 15));
+      f_id = (int *)std::malloc(sizeof(int) * (my_sites * 15));
       
-      net_site_data = (unsigned int *)malloc(sizeof(unsigned int) * my_sites);
+      net_site_data = (unsigned int *)std::malloc(sizeof(unsigned int) * my_sites);
       
       if (lbm_stress_type == SHEAR_STRESS)
 	{
@@ -1037,7 +1039,7 @@ void Net::netInit (int totalFluidSites)
           cut_distances = new double[my_sites*14];
 	}
     }
-  from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * procs);
+  from_proc_id_to_neigh_proc_index = (short int *)std::malloc(sizeof(short int) * procs);
   
   for (m = 0; m < procs; m++)
     {
@@ -1170,7 +1172,7 @@ void Net::netInit (int totalFluidSites)
 		    ++my_sites_p;
 		  }
 	  }
-  free(site_data);
+  std::free(site_data);
   
   // point-to-point communications are performed to match data to be
   // sent to/receive from different partitions; in this way, the
@@ -1181,11 +1183,11 @@ void Net::netInit (int totalFluidSites)
   
   // Allocate the request variable.
 #ifndef NOMPI
-  req = (MPI_Request **)malloc(sizeof(MPI_Request *) * COMMS_LEVELS);
+  req = (MPI_Request **)std::malloc(sizeof(MPI_Request *) * COMMS_LEVELS);
   
   for (m = 0; m < COMMS_LEVELS; m++)
     {
-      req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * procs));
+      req[ m ] = (MPI_Request *)std::malloc(sizeof(MPI_Request) * (2 * procs));
     }
 #endif
   
@@ -1286,7 +1288,7 @@ void Net::netInit (int totalFluidSites)
     }
   // neigh_prc->f_data was only set as a pointer to f_data, not allocated.  In this line, we 
   // are freeing both of those.
-  free(f_data);
+  std::free(f_data);
   
   bm_time = hemelb::util::myClock () - seconds;
 }
@@ -1299,16 +1301,16 @@ void Net::netEnd ()
   int i;
   
   
-  free(from_proc_id_to_neigh_proc_index);
+  std::free(from_proc_id_to_neigh_proc_index);
   from_proc_id_to_neigh_proc_index = NULL;
   
-  free(f_recv_iv);
+  std::free(f_recv_iv);
   
   if (check_conv)
     {
-      free(f_send_id);
-      free(f_to_recv);
-      free(f_to_send);
+      std::free(f_send_id);
+      std::free(f_to_recv);
+      std::free(f_to_send);
     }
   
   if (lbm_stress_type == SHEAR_STRESS && my_sites > 0)
@@ -1320,46 +1322,46 @@ void Net::netEnd ()
 	{
 	  if (wall_block[ i ].wall_data != NULL)
 	    {
-	      free(wall_block[ i ].wall_data);
+	      std::free(wall_block[ i ].wall_data);
 	    }
 	}
-      free(wall_block);
+      std::free(wall_block);
     }
   for (i = 0; i < blocks; i++)
     {
       if (map_block[ i ].site_data != NULL)
 	{
-	  free(map_block[ i ].site_data);
+	  std::free(map_block[ i ].site_data);
 	}
     }
-  free(map_block);
+  std::free(map_block);
   
   for (i = 0; i < blocks; i++)
     {
       if (proc_block[ i ].proc_id != NULL)
 	{
-	  free(proc_block[ i ].proc_id);
+	  std::free(proc_block[ i ].proc_id);
 	}
     }
-  free(proc_block);
+  std::free(proc_block);
   
   if (my_sites > 0)
     {
-      free(net_site_data);
-      free(f_id);
+      std::free(net_site_data);
+      std::free(f_id);
     }
-  free(f_new);
-  free(f_old);
+  std::free(f_new);
+  std::free(f_old);
   
 #ifndef NOMPI
   for (i = 0; i < COMMS_LEVELS; i++)
-    free(req[ i ]);
-  free(req);
+    std::free(req[ i ]);
+  std::free(req);
 #endif
   
-  free(fluid_sites);
+  std::free(fluid_sites);
   
-  free(procs_per_machine);
-  free(machine_id);
+  std::free(procs_per_machine);
+  std::free(machine_id);
 }
 
