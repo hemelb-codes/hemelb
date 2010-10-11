@@ -375,7 +375,7 @@ namespace hemelb
 	      if (steerDataRecvB < 0)
 		{
 		  printf("Steering thread: broken network pipe...\n");
-		  free(xdr_steering_data);
+		  delete[] xdr_steering_data;
 		  xdr_destroy(&xdr_steering_stream);
 		  return NULL;
 		}
@@ -402,7 +402,7 @@ namespace hemelb
       
 	  xdr_destroy(&xdr_steering_stream);
 	}
-      free(xdr_steering_data);
+      delete[] xdr_steering_data;
   
       return NULL;
     }

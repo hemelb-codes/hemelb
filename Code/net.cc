@@ -646,8 +646,8 @@ void Net::netInit (int totalFluidSites)
 	    }
 	}
     }
-  free(site_location_b);
-  free(site_location_a);
+  delete[] site_location_b;
+  delete[] site_location_a;
   
   dd_time = hemelb::util::myClock () - seconds;
   seconds = hemelb::util::myClock ();
@@ -719,11 +719,11 @@ void Net::netInit (int totalFluidSites)
     {
       if (data_block[n].site_data != NULL)
 	{
-	  free(data_block[n].site_data);
+	  delete[] data_block[n].site_data;
 	  data_block[n].site_data = NULL;
 	}
     }
-  free(data_block);
+  delete []data_block;
   data_block = NULL;
   
   // If we are in a block of solids, we set map_block[n].site_data to NULL.
@@ -731,16 +731,16 @@ void Net::netInit (int totalFluidSites)
     {
       if (is_my_block[n]) continue;
       
-      free(map_block[n].site_data);
+      delete []map_block[n].site_data;
       map_block[n].site_data = NULL;
       
       if (wall_block[n].wall_data != NULL)
 	{
-	  free(wall_block[n].wall_data);
+	  delete[] wall_block[n].wall_data;
 	  wall_block[n].wall_data = NULL;
 	}
     }
-  free(is_my_block);
+  delete[] is_my_block;
   
   // The numbers of inter- and intra-machine neighbouring processors,
   // interface-dependent and independent fluid sites and shared
@@ -1170,7 +1170,7 @@ void Net::netInit (int totalFluidSites)
 		    ++my_sites_p;
 		  }
 	  }
-  free(site_data);
+  delete[] site_data;
   
   // point-to-point communications are performed to match data to be
   // sent to/receive from different partitions; in this way, the
@@ -1286,7 +1286,7 @@ void Net::netInit (int totalFluidSites)
     }
   // neigh_prc->f_data was only set as a pointer to f_data, not allocated.  In this line, we 
   // are freeing both of those.
-  free(f_data);
+  delete[] f_data;
   
   bm_time = hemelb::util::myClock () - seconds;
 }
@@ -1299,16 +1299,16 @@ void Net::netEnd ()
   int i;
   
   
-  free(from_proc_id_to_neigh_proc_index);
+  delete[] from_proc_id_to_neigh_proc_index;
   from_proc_id_to_neigh_proc_index = NULL;
   
-  free(f_recv_iv);
+  delete[] f_recv_iv;
   
   if (check_conv)
     {
-      free(f_send_id);
-      free(f_to_recv);
-      free(f_to_send);
+      delete[] f_send_id;
+      delete[] f_to_recv;
+      delete[] f_to_send;
     }
   
   if (lbm_stress_type == SHEAR_STRESS && my_sites > 0)
@@ -1320,46 +1320,46 @@ void Net::netEnd ()
 	{
 	  if (wall_block[ i ].wall_data != NULL)
 	    {
-	      free(wall_block[ i ].wall_data);
+	    delete[] wall_block[ i ].wall_data;
 	    }
 	}
-      free(wall_block);
+      delete[] wall_block;
     }
   for (i = 0; i < blocks; i++)
     {
       if (map_block[ i ].site_data != NULL)
 	{
-	  free(map_block[ i ].site_data);
+        delete[] map_block[ i ].site_data;
 	}
     }
-  free(map_block);
+  delete[] map_block;
   
   for (i = 0; i < blocks; i++)
     {
       if (proc_block[ i ].proc_id != NULL)
 	{
-	  free(proc_block[ i ].proc_id);
+        delete[] proc_block[ i ].proc_id;
 	}
     }
-  free(proc_block);
+  delete[] proc_block;
   
   if (my_sites > 0)
-    {
-      free(net_site_data);
-      free(f_id);
-    }
-  free(f_new);
-  free(f_old);
+  {
+    delete[] net_site_data;
+    delete[] f_id;
+  }
+  delete[] f_new;
+  delete[] f_old;
   
 #ifndef NOMPI
   for (i = 0; i < COMMS_LEVELS; i++)
-    free(req[ i ]);
-  free(req);
+    delete[] req[ i ];
+  delete[] req;
 #endif
   
-  free(fluid_sites);
+  delete[] fluid_sites;
   
-  free(procs_per_machine);
-  free(machine_id);
+  delete[] procs_per_machine;
+  delete[] machine_id;
 }
 
