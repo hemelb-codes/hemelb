@@ -822,7 +822,7 @@ void ioSaveWindowImage (char *file_name) {
 		}
     }
 	
-	free((char *)row_data);
+	delete[] row_data;
 	
 	TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, pix_x);
 	TIFFSetField(tif, TIFFTAG_IMAGELENGTH, pix_y);
@@ -834,7 +834,7 @@ void ioSaveWindowImage (char *file_name) {
 	
 	TIFFWriteEncodedStrip(tif, 0, image_data, pix_x*pix_y*3);
 
-	free((char *)image_data);
+	delete[] image_data;
 	
 	TIFFClose(tif);
 }
@@ -874,7 +874,7 @@ void ioSaveWindowImage (char *file_name)
 	  *image_data_p++ = row_data[ i*3+2 ];
 	}
     }
-  free((unsigned char *)row_data);
+  delete[] row_data;
   
   fprintf (ppm_image_file, "P6\n%i %i\n255\n", pix_x, pix_y);
   
@@ -883,7 +883,7 @@ void ioSaveWindowImage (char *file_name)
       fwrite (image_data + j * pix_x * 3, 1, pix_x * 3, ppm_image_file);
     }
   
-  free((unsigned char *)image_data);
+  delete[] image_data;
   
   fclose (ppm_image_file);
 }

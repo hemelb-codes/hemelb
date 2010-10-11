@@ -784,7 +784,7 @@ namespace hemelb
       delete col_pixel_recv[0];
       delete col_pixel_recv[1];
 
-      free(col_pixel_id);
+      delete []col_pixel_id;
     }
 
   } // namespace vis
