@@ -38,14 +38,11 @@ class LBM {
   double lbmConvertStressToLatticeUnits (double stress);
   double lbmConvertStressToPhysicalUnits (double stress);
 
-  void lbmInit (char *system_file_name_in, Net *net);
+  void lbmInit (char *system_file_name_in, char *parameters_file_name, Net *net);
   void lbmInitCollisions();
   void lbmSetInitialConditions (Net *net);
   void lbmRestart (Net *net);
   void lbmEnd (void);
-
-  void lbmReadConfig (Net *net);
-  void lbmReadParameters (char *parameters_file_name, Net *net);
 
   int lbmCycle (int perform_rt, Net *net);
   int lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net);
@@ -60,6 +57,9 @@ class LBM {
   void gzsBoundary (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 
  private:
+
+  void lbmReadConfig (Net *net);
+  void lbmReadParameters (char *parameters_file_name, Net *net);
 
   void allocateInlets(int nInlets);
   void allocateOutlets(int nOutlets);

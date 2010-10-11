@@ -208,13 +208,7 @@ int main (int argc, char *argv[])
     }
 #endif // NO_STEER
   
-  lbm.lbmInit (input_config_name, &net);
-
-  lbm.lbmReadConfig (&net);
-  
-  lbm.lbmReadParameters (input_parameters_name, &net);
-  
-  lbm.lbmInitCollisions();
+  lbm.lbmInit (input_config_name, input_parameters_name, &net);
 
   if (net.netFindTopology (&depths) == 0)
     {
