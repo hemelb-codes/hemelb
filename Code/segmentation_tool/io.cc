@@ -150,16 +150,14 @@ void ioReadConfig (Vis *vis)
   
   vis->tot_blocks = vis->blocks[0] * vis->blocks[1] * vis->blocks[2];
   
-  vis->voxel = (short int *)malloc(sizeof(short int) *
-				   vis->input_voxels[0] *
-				   vis->input_voxels[1] *
-				   vis->input_voxels[2]);
+  vis->voxel = new short int[vis->input_voxels[0] * vis->input_voxels[1]
+      * vis->input_voxels[2]];
   
-  vis->block = (Block *)malloc(sizeof(Block) * vis->tot_blocks);
+  vis->block = new Block[vis->tot_blocks];
   
   vis->stack_sites_max = SITES_PER_BLOCK * 100000;
   
-  vis->stack_site = (Site *)malloc(sizeof(Site) * vis->stack_sites_max);
+  vis->stack_site = new Site[vis->stack_sites_max];
   /*
   for (i = 0; i < vis->input_voxels[2]; i++)
     {
@@ -180,9 +178,9 @@ void ioReadConfig (Vis *vis)
       if (vis->voxel[l] < vis->grey_min) vis->grey_min = vis->voxel[l];
       if (vis->voxel[l] > vis->grey_max) vis->grey_max = vis->voxel[l];
     }
-  vis->coord[A] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_A);
-  vis->coord[B] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_B);
-  vis->coord[C] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_C);
+  vis->coord[A] = new Coord[COORD_BUFFER_SIZE_A];
+  vis->coord[B] = new Coord[COORD_BUFFER_SIZE_B];
+  vis->coord[C] = new Coord[COORD_BUFFER_SIZE_C];
   
   vis->stress_type = VON_MISES_STRESS;
 }
@@ -223,7 +221,7 @@ void ioReadConfig (Vis *vis)
   
   
   vis->mesh.triangles_max = 10000;
-  vis->mesh.triangle = (MeshTriangle *)malloc(sizeof(MeshTriangle) * vis->mesh.triangles_max);
+  vis->mesh.triangle = new MeshTriangle[vis->mesh.triangles_max];
   vis->mesh.triangles = 0;	// This counts the number of triangles
   
   for (l = 0; l < 3; l++)
@@ -355,7 +353,7 @@ void ioReadConfig (Vis *vis)
   // This is the total number of voxels
   vis->mesh.voxels[3] = vis->mesh.voxels[0] * vis->mesh.voxels[1] * vis->mesh.voxels[2];
   
-  vis->mesh.voxel = (Voxel *)malloc(sizeof(Voxel) * vis->mesh.voxels[3]);
+  vis->mesh.voxel = new Voxel [vis->mesh.voxels[3]];
   
   // Dimensions of voxels in STL units
   for (l = 0; l < 3; l++)
@@ -394,18 +392,18 @@ void ioReadConfig (Vis *vis)
   
   vis->tot_blocks = vis->blocks[0] * vis->blocks[1] * vis->blocks[2];
   
-  vis->block = (Block *)malloc(sizeof(Block) * vis->tot_blocks);
+  vis->block = new Block[vis->tot_blocks];
   
   for (n = 0; n < vis->tot_blocks; n++)
     vis->block[n].site = NULL;
   
   vis->stack_sites_max = SITES_PER_BLOCK * 100000;
   
-  vis->stack_site = (Site *)malloc(sizeof(Site) * vis->stack_sites_max);
+  vis->stack_site = new Site[vis->stack_sites_max];
   
-  vis->coord[A] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_A);
-  vis->coord[B] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_B);
-  vis->coord[C] = (Coord *)malloc(sizeof(Coord) * COORD_BUFFER_SIZE_C);
+  vis->coord[A] = new Coord [COORD_BUFFER_SIZE_A];
+  vis->coord[B] = new Coord [COORD_BUFFER_SIZE_B];
+  vis->coord[C] = new Coord [COORD_BUFFER_SIZE_C];
   
   vis->stress_type = SHEAR_STRESS;
 }
@@ -809,9 +807,9 @@ void ioSaveWindowImage (char *file_name) {
 	pix_x = screen.pixels[0];
 	pix_y = screen.pixels[1];
 	
-	image_data = (char *)malloc(sizeof(char) * pix_x * pix_y * 3);
+	image_data = new char [pix_x * pix_y * 3];
 	
-	row_data = (char *)malloc(sizeof(char) * pix_x * 3);
+	row_data = new char[pix_x * 3];
 	
 	image_data_p = image_data;
 	
@@ -859,9 +857,9 @@ void ioSaveWindowImage (char *file_name)
   pix_x = screen.pixels[0];
   pix_y = screen.pixels[1];
   
-  image_data = (unsigned char *)malloc(sizeof(unsigned char) * pix_x * pix_y * 3);
+  image_data = new unsigned char[pix_x * pix_y * 3];
   
-  row_data = (unsigned char *)malloc(sizeof(unsigned char) * pix_x * 3);
+  row_data = new unsigned char[pix_x * 3];
   
   image_data_p = image_data;
 

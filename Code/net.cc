@@ -130,8 +130,8 @@ int Net::netFindTopology (int *depths)
 
   net_machines = 0;
   
-  machine_id = (int *)malloc(sizeof(int)* procs);
-  procs_per_machine = (int *)malloc(sizeof(int)* procs);
+  machine_id = new int [procs];
+  procs_per_machine = new int [procs];
   
   for (i = 0; i < procs; i++)
     {
@@ -206,8 +206,8 @@ int Net::netFindTopology (int *depths)
   
   net_machines = 1;
   
-  machine_id = (int *)malloc(sizeof(int) * procs);
-  procs_per_machine = (int *)malloc(sizeof(int) * net_machines);
+  machine_id = new int[procs];
+  procs_per_machine = new int[net_machines];
   
   for (int i = 0; i < procs; i++)
     {
@@ -279,15 +279,15 @@ void Net::netInit (int totalFluidSites)
   // Allocations.  fluid sites will store actual number of fluid
   // sites per proc.  Site location will store up to 10000 of some
   // sort of coordinate.
-  fluid_sites = (int *)malloc(sizeof(int) * procs);
+  fluid_sites = new int[procs];
   
   net_site_nor  = NULL;
   net_site_data = NULL;
   cut_distances = NULL;
 
   sites_buffer_size = 10000;
-  site_location_a = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
-  site_location_b = (SiteLocation *)malloc(sizeof(SiteLocation) * sites_buffer_size);
+  site_location_a = new SiteLocation[sites_buffer_size];
+  site_location_b = new SiteLocation[sites_buffer_size];
   
   my_sites = 0;
   
@@ -656,7 +656,7 @@ void Net::netInit (int totalFluidSites)
   // compact one is created here.
 
   // Allocate an array of structures to store the fluid site identifiers for each block.
-  map_block = (DataBlock *)malloc(sizeof(DataBlock) * blocks);
+  map_block = new DataBlock [blocks];
   
   for (n = 0; n < blocks; n++)
     {
@@ -664,10 +664,10 @@ void Net::netInit (int totalFluidSites)
     }
   
   // Local array to store site data for this rank.
-  site_data = (unsigned int *)malloc(sizeof(unsigned int) * my_sites);
+  site_data = new unsigned int[my_sites];
  
   // Allocate blocks.
-  is_my_block = (bool *)malloc(sizeof(bool) * blocks);
+  is_my_block = new bool[blocks];
   
   for (n = 0; n < blocks; n++)
     {
@@ -687,7 +687,7 @@ void Net::netInit (int totalFluidSites)
       // If we have some fluid sites, point to proc_block and map_block.
       proc_block_p = &proc_block[ n ];      
       map_block_p = &map_block[ n ];
-      map_block_p->site_data = (unsigned int *)malloc(sizeof(unsigned int) * sites_in_a_block);
+      map_block_p->site_data = new unsigned int [sites_in_a_block];
       
       // map_block[n].site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
       // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
@@ -969,32 +969,32 @@ void Net::netInit (int totalFluidSites)
   // and the extra distribution functions are
   if (!check_conv)
     {
-      f_old = (double *)malloc(sizeof(double) * (my_sites * 15 + 1 + shared_fs));
-      f_new = (double *)malloc(sizeof(double) * (my_sites * 15 + 1 + shared_fs));
+      f_old = new double[my_sites * 15 + 1 + shared_fs];
+      f_new = new double[my_sites * 15 + 1 + shared_fs];
     }
   else
     {
-      f_old = (double *)malloc(sizeof(double) * (my_sites * 30 + 15 + 1));
-      f_new = (double *)malloc(sizeof(double) * (my_sites * 30 + 15 + 1));
+      f_old = new double [my_sites * 30 + 15 + 1];
+      f_new = new double [my_sites * 30 + 15 + 1];
     }
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
   // streamed between different partitions) are collected and the
   // buffers needed for the communications are set from here
   
-  f_data = (short int *)malloc(sizeof(short int) * 4 * shared_fs);
+  f_data = new short int [4 * shared_fs];
   
   if (check_conv)
     {
-      f_to_send = (double *)malloc(sizeof(double) * shared_fs*2);
-      f_to_recv = (double *)malloc(sizeof(double) * shared_fs*2);
+      f_to_send = new double[shared_fs * 2];
+      f_to_recv = new double[shared_fs * 2];
       
-      f_send_id = (int *)malloc(sizeof(int) * shared_fs);
+      f_send_id = new int[shared_fs];
     }
 
   // Allocate the index in which to put the distribution functions received from the other
   // process.
-  f_recv_iv = (int *)malloc(sizeof(int) * shared_fs);
+  f_recv_iv = new int[shared_fs];
   
   // Reset to zero again.
   shared_fs = 0;
@@ -1027,9 +1027,9 @@ void Net::netInit (int totalFluidSites)
   if (my_sites > 0)
     {
       // f_id is allocated so we know which sites to get information from.
-      f_id = (int *)malloc(sizeof(int) * (my_sites * 15));
+      f_id = new int [my_sites * 15];
       
-      net_site_data = (unsigned int *)malloc(sizeof(unsigned int) * my_sites);
+      net_site_data = new unsigned int [my_sites];
       
       if (lbm_stress_type == SHEAR_STRESS)
 	{
@@ -1037,7 +1037,7 @@ void Net::netInit (int totalFluidSites)
           cut_distances = new double[my_sites*14];
 	}
     }
-  from_proc_id_to_neigh_proc_index = (short int *)malloc(sizeof(short int) * procs);
+  from_proc_id_to_neigh_proc_index = new short int [procs];
   
   for (m = 0; m < procs; m++)
     {
@@ -1181,11 +1181,11 @@ void Net::netInit (int totalFluidSites)
   
   // Allocate the request variable.
 #ifndef NOMPI
-  req = (MPI_Request **)malloc(sizeof(MPI_Request *) * COMMS_LEVELS);
+  req = new MPI_Request* [COMMS_LEVELS];
   
   for (m = 0; m < COMMS_LEVELS; m++)
     {
-      req[ m ] = (MPI_Request *)malloc(sizeof(MPI_Request) * (2 * procs));
+      req[m] = new MPI_Request[2 * procs];
     }
 #endif
   

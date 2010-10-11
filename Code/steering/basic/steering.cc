@@ -336,7 +336,7 @@ namespace hemelb
       int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
       int bytes = sizeof(char) * num_chars;
   
-      char* xdr_steering_data = (char*)malloc(bytes);
+      char* xdr_steering_data = new char [bytes];
   
       while(1)
 	{

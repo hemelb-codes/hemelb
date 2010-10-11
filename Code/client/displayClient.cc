@@ -255,9 +255,9 @@ void SaveWindowImage (int pixels_x, int pixels_y, char *file_name)
   
   glReadBuffer (GL_FRONT);
   
-  data = (unsigned char *)malloc(sizeof(unsigned char) * pixels_x * pixels_y * 3);
-  
-  buffer = (unsigned char *)malloc(sizeof(unsigned char) * pixels_x * 3);
+  data = new unsigned char[pixels_x * pixels_y * 3];
+
+  buffer = new unsigned char[pixels_x * 3];
   
   data_p = data;
 
@@ -388,8 +388,8 @@ int main(int argc, char *argv[])
   pixels_x = PIXELS_X;
   pixels_y = PIXELS_Y;
   
-  xdrReceiveBuffer = (char *)malloc(pixel_data_bytes);
-  xdrReceiveBuffer_size = (char *)malloc(frame_details_bytes);
+  xdrReceiveBuffer = new char[pixel_data_bytes];
+  xdrReceiveBuffer_size = new char[frame_details_bytes];
   
   glutInit (&argc, argv);
   OpenWindow (pixels_x, pixels_y);

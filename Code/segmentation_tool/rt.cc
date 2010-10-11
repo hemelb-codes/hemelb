@@ -139,7 +139,7 @@ void rtInitRayTracing (Mesh *mesh)
     {
       if (mesh->voxel[n].triangles == 0) continue;
       
-      mesh->voxel[n].triangle_id = (int *)malloc(sizeof(int) * mesh->voxel[n].triangles);
+      mesh->voxel[n].triangle_id = new int [mesh->voxel[n].triangles];
       mesh->voxel[n].triangles = 0;
     }
   for (n = 0; n < mesh->triangles; n++)
