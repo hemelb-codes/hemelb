@@ -680,7 +680,6 @@ int main (int argc, char *argv[])
     }
   delete hemelb::vis::controller;
   net.netEnd ();
-  lbm.lbmEnd ();
   
 #ifndef NO_STEER
   if (!is_bench && net.id == 0)

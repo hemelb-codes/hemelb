@@ -1912,11 +1912,21 @@ void LBM::lbmRestart (Net *net)
 }
 
 
-void LBM::lbmEnd (void)
+LBM::~LBM()
 {
-  deleteInlets();
-  deleteOutlets();
+  // Delete arrays allocated for the inlets
+  delete[] inlet_density;
+  delete[] inlet_density_avg;
+  delete[] inlet_density_amp;
+  delete[] inlet_density_phs;
+
+  // Delete arrays allocated for the outlets
+  delete[] outlet_density;
+  delete[] outlet_density_avg;
+  delete[] outlet_density_amp;
+  delete[] outlet_density_phs;
   
+  // Delete the collision and stream objects we've been using
   delete mMidFluidCollision;
   delete mWallCollision;
   delete mInletCollision;
@@ -1924,6 +1934,7 @@ void LBM::lbmEnd (void)
   delete mInletWallCollision;
   delete mOutletWallCollision;
 
+  // Delete various other arrays used
   delete[] lbm_inlet_count;
   delete[] lbm_inlet_normal;
   delete[] lbm_average_inlet_velocity;
