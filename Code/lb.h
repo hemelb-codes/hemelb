@@ -31,18 +31,14 @@ class LBM {
 
   double lbmConvertPressureToLatticeUnits (double pressure);
   double lbmConvertPressureToPhysicalUnits (double pressure);
-  double lbmConvertPressureGradToLatticeUnits (double pressure_grad);
-  double lbmConvertPressureGradToPhysicalUnits (double pressure_grad);
   double lbmConvertVelocityToLatticeUnits (double velocity);
-  double lbmConvertVelocityToPhysicalUnits (double velocity);
   double lbmConvertStressToLatticeUnits (double stress);
   double lbmConvertStressToPhysicalUnits (double stress);
+  double lbmConvertVelocityToPhysicalUnits (double velocity);
 
   void lbmInit (char *system_file_name_in, char *parameters_file_name, Net *net);
-  void lbmInitCollisions();
-  void lbmSetInitialConditions (Net *net);
   void lbmRestart (Net *net);
-  void lbmEnd (void);
+  ~LBM();
 
   int lbmCycle (int perform_rt, Net *net);
   int lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net);
@@ -51,6 +47,8 @@ class LBM {
   void lbmUpdateBoundaryDensities (int cycle_id, int time_step);
   void lbmUpdateInletVelocities (int time_step, Net *net);
 
+  void lbmSetInitialConditions (Net *net);
+
   void lbmWriteConfig (int stability, char *output_file_name, Net *net);
 
   void fInterpolation (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
@@ -58,14 +56,15 @@ class LBM {
 
  private:
 
+  void lbmInitCollisions();
   void lbmReadConfig (Net *net);
   void lbmReadParameters (char *parameters_file_name, Net *net);
 
   void allocateInlets(int nInlets);
   void allocateOutlets(int nOutlets);
 
-  void deleteInlets();
-  void deleteOutlets();
+  double lbmConvertPressureGradToLatticeUnits (double pressure_grad);
+  double lbmConvertPressureGradToPhysicalUnits (double pressure_grad);
 
   hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
   hemelb::lb::collisions::WallCollision* mWallCollision;

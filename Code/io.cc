@@ -388,19 +388,6 @@ void LBM::allocateOutlets(int nOutlets) {
   outlet_density_phs = new double[nOutlets];
 }
 
-void LBM::deleteInlets() {
-  delete[] inlet_density;
-  delete[] inlet_density_avg;
-  delete[] inlet_density_amp;
-  delete[] inlet_density_phs;
-}
-void LBM::deleteOutlets() {
-  delete[] outlet_density;
-  delete[] outlet_density_avg;
-  delete[] outlet_density_amp;
-  delete[] outlet_density_phs;
-}
-
 void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
   /* This routine writes the flow field on file. The data are gathered
     to the root processor and written from there.  The format
