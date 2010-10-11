@@ -67,7 +67,7 @@ namespace hemelb
       col_pixel_recv[1] = new ColPixel[col_pixels_max];
       
       pixels_max = COLOURED_PIXELS_MAX;
-      col_pixel_id = (int *)malloc(sizeof(int) * pixels_max);
+      col_pixel_id = new int [pixels_max];
   
       for (int i = 0; i < COLOURED_PIXELS_MAX; i++)
 	{

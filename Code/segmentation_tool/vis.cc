@@ -965,17 +965,17 @@ void GLUTCALLBACK Visualise (void)
 
 void visInitBoundaries (Vis *vis)
 {
-  vis->boundary[ INLET_BOUNDARY ].triangle = (BoundaryTriangle *)malloc(sizeof(BoundaryTriangle) * (1U<<BOUNDARY_ID_BITS));
+  vis->boundary[ INLET_BOUNDARY ].triangle = new BoundaryTriangle [1U<<BOUNDARY_ID_BITS];
   vis->boundary[ INLET_BOUNDARY ].triangles = 0;
   
-  vis->boundary[ OUTLET_BOUNDARY ].triangle = (BoundaryTriangle *)malloc(sizeof(BoundaryTriangle) * (1U<<BOUNDARY_ID_BITS));
+  vis->boundary[ OUTLET_BOUNDARY ].triangle = new BoundaryTriangle [1U<<BOUNDARY_ID_BITS];
   vis->boundary[ OUTLET_BOUNDARY ].triangles = 0;
   
-  vis->boundary[ WALL_BOUNDARY ].triangle = (BoundaryTriangle *)malloc(sizeof(BoundaryTriangle) * (1U<<BOUNDARY_ID_BITS));
+  vis->boundary[ WALL_BOUNDARY ].triangle = new BoundaryTriangle [1U<<BOUNDARY_ID_BITS];
   vis->boundary[ WALL_BOUNDARY ].triangles = 0;
   
   vis->screen_voxels = 100;
-  vis->screen_voxel = (ScreenVoxel *)malloc(sizeof(ScreenVoxel) * vis->screen_voxels * vis->screen_voxels);
+  vis->screen_voxel = new ScreenVoxel[vis->screen_voxels * vis->screen_voxels];
 }
 
 
