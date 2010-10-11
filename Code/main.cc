@@ -209,11 +209,13 @@ int main (int argc, char *argv[])
 #endif // NO_STEER
   
   lbm.lbmInit (input_config_name, &net);
-  
+
   lbm.lbmReadConfig (&net);
   
   lbm.lbmReadParameters (input_parameters_name, &net);
   
+  lbm.lbmInitCollisions();
+
   if (net.netFindTopology (&depths) == 0)
     {
       fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");

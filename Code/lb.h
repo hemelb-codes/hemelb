@@ -2,20 +2,21 @@
 #define HEMELB_LB_H
 
 #include "net.h"
+#include "lbm_collisions/Collisions.h"
 
 class LBM {
  public:
   int steering_session_id;
-  
+
   double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;
   double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
-  
+
   char *system_file_name;
-  
+
   double tau, viscosity;
   double voxel_size;
   double omega;
-  
+
   int total_fluid_sites;
   int site_min_x, site_min_y, site_min_z;
   int site_max_x, site_max_y, site_max_z;
@@ -23,12 +24,12 @@ class LBM {
   int cycles_max;
   int period;
   int conv_freq;
-  
+
   float *block_density;
-  
+
   int *block_map;
 
-  double lbmConvertPressureToLatticeUnits (double pressure);  
+  double lbmConvertPressureToLatticeUnits (double pressure);
   double lbmConvertPressureToPhysicalUnits (double pressure);
   double lbmConvertPressureGradToLatticeUnits (double pressure_grad);
   double lbmConvertPressureGradToPhysicalUnits (double pressure_grad);
@@ -38,6 +39,7 @@ class LBM {
   double lbmConvertStressToPhysicalUnits (double stress);
 
   void lbmInit (char *system_file_name_in, Net *net);
+  void lbmInitCollisions();
   void lbmSetInitialConditions (Net *net);
   void lbmRestart (Net *net);
   void lbmEnd (void);
@@ -53,14 +55,27 @@ class LBM {
   void lbmUpdateInletVelocities (int time_step, Net *net);
 
   void lbmWriteConfig (int stability, char *output_file_name, Net *net);
-  
+
+  void fInterpolation (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
+  void gzsBoundary (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
+
  private:
-  
+
   void allocateInlets(int nInlets);
   void allocateOutlets(int nOutlets);
-  
+
   void deleteInlets();
   void deleteOutlets();
+
+  MidFluidCollision* mMidFluidCollision;
+  WallCollision* mWallCollision;
+  InletOutletCollision* mInletCollision;
+  InletOutletCollision* mOutletCollision;
+  InletOutletWallCollision* mInletWallCollision;
+  InletOutletWallCollision* mOutletWallCollision;
+
+  //TODO Get rid of this hack
+  Collision* GetCollision(int i);
 };
 
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);

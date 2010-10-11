@@ -13,14 +13,8 @@ unsigned int getBoundaryConfig(Net* net, int i)
   return (net->net_site_data[ i ] & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;  
 }
 
-void (*lbmInnerCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
-void (*lbmInterCollision[COLLISION_TYPES]) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 void (*lbmPostTimeStep) (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net) = NULL;
-
-void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity, Net* net,
-				 void lbmCollision (double omega, int i,
-						    double *density, double *v_x, double *v_y, double *v_z,
-						    double f_neq[], Net* net));
+void (*lbmUpdateSiteData[2][2]) (double omega, int i, double *density, double *vx, double *vy, double *vz, double *velocity, Net* net, Collision* iCollision);
 
 double LBM::lbmConvertPressureToLatticeUnits (double pressure)
 {
@@ -207,9 +201,18 @@ void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
   f_eq[14] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, +1, +1)
 }
 
+
+
+//TODO: A lot of this commented-out code doesn't exist anywhere else. Or at
+// least some of it doesn't. We should move it all into the class hierarchy
+// for collision cases and test it all before removing it here. This needs
+// to also be done for the convergence case (which in the new system will simply
+// mean calling a certain function with a different variables (like &f_new[whatever + cycle_tag * 15] rather than &f_new[whatever])
+
 // Collision + streaming for non-boundary fluid lattice sites non-adjacent
 // to neigbhouring subdomains.
-void lbmInnerCollision0 (double omega, int i,
+/*
+void LBM::lbmInnerCollision0 (double omega, int i,
 			 double *density, double *v_x, double *v_y, double *v_z,
 			 double f_neq[], Net* net)
 {
@@ -276,7 +279,7 @@ void lbmInnerCollision0 (double omega, int i,
 
 // Collision + streaming for non-boundary fluid lattice sites adjacent
 // to neigbhouring subdomains.
-void lbmInterCollision0 (double omega, int i,
+void LBM::lbmInterCollision0 (double omega, int i,
 			 double *density, double *v_x, double *v_y, double *v_z,
 			 double f_neq[], Net* net)
 {
@@ -342,7 +345,7 @@ void lbmInterCollision0 (double omega, int i,
 
 
 // Collision + streaming for fluid lattice sites adjacent to the wall.
-void lbmCollision1 (double omega, int i,
+void LBM::lbmCollision1 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[], Net* net)
 {
@@ -622,7 +625,7 @@ void regularised (double omega, int i,
 }
 
 // Implementation of interpolation of f values based on distance to boundary.
-void fInterpolation (double omega, int i,
+void LBM::fInterpolation (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[], Net* net)
 {
@@ -678,7 +681,7 @@ void fInterpolationPostStep (double omega, int i,
 }
 
 // Implementation of the Guo, Zheng, Shi boundary condition (2002).
-void gzsBoundary (double omega, int i,
+void LBM::gzsBoundary (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[], Net* net)
 {
@@ -753,7 +756,7 @@ void gzsBoundary (double omega, int i,
 }
 
 // Collision + streaming for inlet fluid lattice sites.
-void lbmCollision2 (double omega, int i,
+void LBM::lbmCollision2 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[], Net* net)
 {
@@ -784,7 +787,7 @@ void lbmCollision2 (double omega, int i,
 
 
 // Collision + streaming for outlet fluid lattice sites.
-void lbmCollision3 (double omega, int i,
+void LBM::lbmCollision3 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[], Net* net)
 {
@@ -815,7 +818,7 @@ void lbmCollision3 (double omega, int i,
 
 
 // Collision + streaming for fluid lattice sites and adjacent to the inlet and the wall.
-void lbmCollision4 (double omega, int i,
+void LBM::lbmCollision4 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[], Net* net)
 {
@@ -854,7 +857,7 @@ void lbmCollision4 (double omega, int i,
 
 
 // Collision + streaming for fluid lattice sites and adjacent to the outlet and the wall.
-void lbmCollision5 (double omega, int i,
+void LBM::lbmCollision5 (double omega, int i,
 		    double *density, double *v_x, double *v_y, double *v_z,
 		    double f_neq[], Net* net)
 {
@@ -892,7 +895,7 @@ void lbmCollision5 (double omega, int i,
 }
 
 // The same as lbmInnerCollision0 but useful for convergence purposes.
-void lbmInnerCollisionConv0 (double omega, int i,
+void LBM::lbmInnerCollisionConv0 (double omega, int i,
 			     double *density, double *v_x, double *v_y, double *v_z,
 			     double f_neq[], Net* net)
 {
@@ -958,7 +961,7 @@ void lbmInnerCollisionConv0 (double omega, int i,
 
 
 // The same as lbmInterCollision0 but useful for convergence purposes.
-void lbmInterCollisionConv0 (double omega, int i,
+void LBM::lbmInterCollisionConv0 (double omega, int i,
 			     double *density, double *v_x, double *v_y, double *v_z,
 			     double f_neq[], Net* net)
 {
@@ -1024,7 +1027,7 @@ void lbmInterCollisionConv0 (double omega, int i,
 
 
 // The same as lbmCollision1 but useful for convergence purposes.
-void lbmCollisionConv1 (double omega, int i,
+void LBM::lbmCollisionConv1 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[], Net* net)
 {
@@ -1061,7 +1064,7 @@ void lbmCollisionConv1 (double omega, int i,
 
 
 // The same as lbmCollision2 but useful for convergence purposes.
-void lbmCollisionConv2 (double omega, int i,
+void LBM::lbmCollisionConv2 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[], Net* net)
 {
@@ -1092,7 +1095,7 @@ void lbmCollisionConv2 (double omega, int i,
 
 
 // The same as lbmCollision3 but useful for convergence purposes.
-void lbmCollisionConv3 (double omega, int i,
+void LBM::lbmCollisionConv3 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[], Net* net)
 {
@@ -1123,7 +1126,7 @@ void lbmCollisionConv3 (double omega, int i,
 
 
 // The same as lbmCollision4 but useful for convergence purposes.
-void lbmCollisionConv4 (double omega, int i,
+void LBM::lbmCollisionConv4 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[], Net* net)
 {
@@ -1162,7 +1165,7 @@ void lbmCollisionConv4 (double omega, int i,
 
 
 // The same as lbmCollision5 but useful for convergence purposes.
-void lbmCollisionConv5 (double omega, int i,
+void LBM::lbmCollisionConv5 (double omega, int i,
 			double *density, double *v_x, double *v_y, double *v_z,
 			double f_neq[], Net* net)
 {
@@ -1198,7 +1201,7 @@ void lbmCollisionConv5 (double omega, int i,
   for (l = 7; l < 15; l++)
     f_neq[l] -= (f_new[ f_id[i*15+l]+cycle_tag*15 ] = f[l] = temp);
 }
-
+*/
 
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z)
 {
@@ -1332,30 +1335,25 @@ void lbmUpdateMinMaxValues (double density, double velocity, double stress)
   lbm_stress_max = (stress > lbm_stress_max) ? stress : lbm_stress_max;
 }
 
-
 // Fluid site updating for benchmarking purposes.
 void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-			     void lbmCollision (double omega, int i,
-						double *density, double *v_x, double *v_y, double *v_z,
-						double f_neq[], Net* net))
+			     Collision* iCollision)
 {
   double f_neq[15];
   
-  lbmCollision (omega, i, density, vx, vy, vz, f_neq, net);
+  iCollision->DoCollisions(omega, i, density, vx, vy, vz, f_neq, net);
 }
 
 
 // Fluid site updating for benchmarking plus computation of flow field values for visualisation purposes.
 void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-				    void lbmCollision (double omega, int i,
-						       double *density, double *v_x, double *v_y, double *v_z,
-						       double f_neq[], Net* net))
+				    Collision* iCollision)
 {
   double f_neq[15];
   double stress;
   
   
-  lbmCollision (omega, i, density, vx, vy, vz, f_neq, net);
+  iCollision->DoCollisions(omega, i, density, vx, vy, vz, f_neq, net);
   
   *vx *= (1.0 / *density);
   *vy *= (1.0 / *density);
@@ -1383,15 +1381,13 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
 
 // Fluid site updating for full-production runs.
 void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net, 
-			   void lbmCollision (double omega, int i,
-					      double *density, double *v_x, double *v_y, double *v_z,
-					      double f_neq[], Net* net))
+			   Collision* iCollision)
 {
   double f_neq[15];
   double stress;
   
   
-  lbmCollision (omega, i, density, vx, vy, vz, f_neq, net);
+  iCollision->DoCollisions(omega, i, density, vx, vy, vz, f_neq, net);
   
   *vx *= (1.0 / *density);
   *vy *= (1.0 / *density);
@@ -1419,15 +1415,13 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
 
 // Fluid site updating for full-production runs plus computation of flow field values for visualisation purposes.
 void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-				  void lbmCollision (double omega, int i,
-						     double *density, double *v_x, double *v_y, double *v_z,
-						     double f_neq[], Net* net))
+				  Collision* iCollision)
 {
   double f_neq[15];
   double stress;
   
   
-  lbmCollision (omega, i, density, vx, vy, vz, f_neq, net);
+  iCollision->DoCollisions(omega, i, density, vx, vy, vz, f_neq, net);
   
   *vx *= (1.0 / *density);
   *vy *= (1.0 / *density);
@@ -1455,7 +1449,6 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
       hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
     }
 }
-
 
 // Returns the type of collision/streaming update for the fluid site
 // with data "site_data".
@@ -1562,49 +1555,34 @@ void LBM::lbmUpdateBoundaryDensities (int cycle_id, int time_step)
 void LBM::lbmInit (char *system_file_name_in, Net *net)
 {
   system_file_name = system_file_name_in;
-  
-  if (!check_conv)
-    {
-      lbmInnerCollision[0] = lbmInnerCollision0;
-      lbmInnerCollision[1] = lbmCollision1;
-      lbmInnerCollision[2] = lbmCollision2;
-      lbmInnerCollision[3] = lbmCollision3;
-      lbmInnerCollision[4] = lbmCollision4;
-      lbmInnerCollision[5] = lbmCollision5;
-      
-      lbmInterCollision[0] = lbmInterCollision0;
-      lbmInterCollision[1] = lbmCollision1;
-      lbmInterCollision[2] = lbmCollision2;
-      lbmInterCollision[3] = lbmCollision3;
-      lbmInterCollision[4] = lbmCollision4;
-      lbmInterCollision[5] = lbmCollision5;
 
-      lbmPostTimeStep = NULL;
-    }
-  else
-    {
-      lbmInnerCollision[0] = lbmInnerCollisionConv0;
-      lbmInnerCollision[1] = lbmCollisionConv1;
-      lbmInnerCollision[2] = lbmCollisionConv2;
-      lbmInnerCollision[3] = lbmCollisionConv3;
-      lbmInnerCollision[4] = lbmCollisionConv4;
-      lbmInnerCollision[5] = lbmCollisionConv5;
-      
-      lbmInterCollision[0] = lbmInterCollisionConv0;
-      lbmInterCollision[1] = lbmCollisionConv1;
-      lbmInterCollision[2] = lbmCollisionConv2;
-      lbmInterCollision[3] = lbmCollisionConv3;
-      lbmInterCollision[4] = lbmCollisionConv4;
-      lbmInterCollision[5] = lbmCollisionConv5;
-    }
   lbmUpdateSiteData[0][0] = lbmUpdateSiteDataSim;
   lbmUpdateSiteData[0][1] = lbmUpdateSiteDataSimPlusVis;
   lbmUpdateSiteData[1][0] = lbmUpdateSiteDataBench;
   lbmUpdateSiteData[1][1] = lbmUpdateSiteDataBenchPlusVis;
-  
+
   lbm_terminate_simulation = 0;
 }
 
+void LBM::lbmInitCollisions()
+{
+  // TODO Note that the convergence checking is not yet implemented in the
+  // new boundary condition hierarchy system.
+  // It'd be nice to do this with something like
+  // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
+
+  mMidFluidCollision = new SimpleCollideAndStream();
+  mWallCollision = new ZeroVelocityEquilibrium();
+  mInletCollision = new NonZeroVelocityBoundaryDensity(inlet_density);
+  mOutletCollision = new NonZeroVelocityBoundaryDensity(outlet_density);
+  mInletWallCollision = new ZeroVelocitySetBoundaryDensity(inlet_density);
+  mOutletWallCollision = new ZeroVelocitySetBoundaryDensity(outlet_density);
+
+  // TODO: This will eventually be cleverly replaced.
+  // Probably with something like a cycle for each boundary condition
+  // doing something like Collision->DoPostTimeStep().
+  lbmPostTimeStep = NULL;
+}
 
 void LBM::lbmSetInitialConditions (Net *net)
 {
@@ -1661,6 +1639,20 @@ void LBM::lbmSetInitialConditions (Net *net)
     }
 }
 
+// TODO HACK
+Collision* LBM::GetCollision(int i)
+    {
+  switch(i)
+  {
+    case 0: return mMidFluidCollision;
+    case 1: return mWallCollision;
+    case 2: return mInletCollision;
+    case 3: return mOutletCollision;
+    case 4: return mInletWallCollision;
+    case 5: return mOutletWallCollision;
+  }
+  return NULL;
+    }
 
 // The entire simulation time step takes place through this function
 // when the convergence criterion is not applied. Communications
@@ -1669,7 +1661,6 @@ void LBM::lbmSetInitialConditions (Net *net)
 int LBM::lbmCycle (int perform_rt, Net *net)
 {
   double density, vx, vy, vz, velocity;
-  
   int collision_type, offset;
   int i, m;
   
@@ -1690,14 +1681,14 @@ int LBM::lbmCycle (int perform_rt, Net *net)
   offset = net->my_inner_sites;
   
   for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+  {
+    for (i = offset; i < offset + net->my_inter_collisions[collision_type]; i++)
     {
-      for (i = offset; i < offset + net->my_inter_collisions[ collision_type ]; i++)
-	{
-	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
-						      lbmInterCollision[ collision_type ]);
-	}
-      offset += net->my_inter_collisions[ collision_type ];
+      (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+      GetCollision(collision_type));
     }
+    offset += net->my_inter_collisions[collision_type];
+  }
   
   for (m = 0; m < net->neigh_procs; m++)
     {
@@ -1716,8 +1707,8 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     {
       for (i = offset; i < offset + net->my_inner_collisions[ collision_type ]; i++)
 	{
-	  (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
-						      lbmInnerCollision[ collision_type ]);
+        (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+        GetCollision(collision_type));
 	}
       offset += net->my_inner_collisions[ collision_type ];
     }
@@ -1747,7 +1738,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     for (i = offset; i < offset + net->my_inter_collisions[ 1 ]; i++)
     {
       (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
-					      lbmPostTimeStep);
+      GetCollision(collision_type));
     }
   
     offset = net->my_inner_collisions[ 0 ];
@@ -1755,7 +1746,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     for (i = offset; i < offset + net->my_inner_collisions[ 1 ]; i++)
     {
       (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
-                        lbmPostTimeStep);
+      GetCollision(collision_type));
     }
   }
 
@@ -1826,14 +1817,14 @@ int LBM::lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net)
 	    {
 	      cycle_tag = 0;
 	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0], net,
-					  lbmInterCollision[ collision_type ]);
+	      GetCollision(collision_type));
 	      vx[0] *= (1.0 / density);
 	      vy[0] *= (1.0 / density);
 	      vz[0] *= (1.0 / density);
 	    }
 	  cycle_tag = 1;
 	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1], net,
-					       lbmInterCollision[ collision_type ]);
+	  GetCollision(collision_type));
 	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
 		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
 		       (vz[1] - vz[0]) * (vz[1] - vz[0]));
@@ -1876,14 +1867,14 @@ int LBM::lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net)
 	    {
 	      cycle_tag = 0;
 	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0], net,
-					  lbmInnerCollision[ collision_type ]);
+	      GetCollision(collision_type));
 	      vx[0] *= (1.0 / density);
 	      vy[0] *= (1.0 / density);
 	      vz[0] *= (1.0 / density);
 	    }
 	  cycle_tag = 1;
 	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1], net,
-					       lbmInnerCollision[ collision_type ]);
+	  GetCollision(collision_type));
 	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
 		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
 		       (vz[1] - vz[0]) * (vz[1] - vz[0]));
@@ -2221,6 +2212,13 @@ void LBM::lbmEnd (void)
   deleteInlets();
   deleteOutlets();
   
+  delete mMidFluidCollision;
+  delete mWallCollision;
+  delete mInletCollision;
+  delete mOutletCollision;
+  delete mInletWallCollision;
+  delete mOutletWallCollision;
+
   delete[] lbm_inlet_count;
   delete[] lbm_inlet_normal;
   delete[] lbm_average_inlet_velocity;
