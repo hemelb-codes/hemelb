@@ -273,7 +273,7 @@ void SaveWindowImage (int pixels_x, int pixels_y, char *file_name)
 	}
     }
   
-  free((unsigned char *)buffer);
+  delete[] buffer;
   
   fprintf (ppm_image_file_ptr, "P6\n%i %i\n255\n", pixels_x, pixels_y);
   
@@ -282,7 +282,7 @@ void SaveWindowImage (int pixels_x, int pixels_y, char *file_name)
       fwrite (data + j * pixels_x * 3, 1, pixels_x * 3, ppm_image_file_ptr);
     }
   
-  free((unsigned char *)data);
+  delete[] data;
   
   fclose (ppm_image_file_ptr);
 }
@@ -342,8 +342,8 @@ void GLUTCALLBACK KeybordFunction (unsigned char key, int x, int y)
     {
       close (sockfd);
       
-      free(xdrReceiveBuffer_size);
-      free(xdrReceiveBuffer);
+      delete[] xdrReceiveBuffer_size;
+      delete[] xdrReceiveBuffer;
       
       exit(0);
     }
