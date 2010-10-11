@@ -48,7 +48,18 @@ void hemelb::dbg::attach(char *executable) {
       
       args.push_back(std::string("osascript"));
       args.push_back(osxDebugDir + "/MPIdebug.scpt");
-      args.push_back(osxDebugDir + "/resume.gdb");
+      std::string gdbScript;
+      
+      {
+	char* gdbScriptEnv = std::getenv("HEMELB_DEBUG_SCRIPT");
+	if (gdbScriptEnv == NULL) {
+	  gdbScript = osxDebugDir + "/resume.gdb";
+	} else {
+	  gdbScript = std::string(gdbScriptEnv);
+	}
+      }
+      
+      args.push_back(gdbScript);
       args.push_back(binaryPath);
       
       for (int i=0; i<nProcs; i++) {
