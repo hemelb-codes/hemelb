@@ -8,8 +8,6 @@ double *f_old = 0, *f_new = 0;
 int *f_id = 0;
 int *f_recv_iv = 0;
 
-int is_inlet_normal_available;
-
 int sites_x, sites_y, sites_z;
 int blocks_x, blocks_y, blocks_z;
 int blocks;
