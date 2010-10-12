@@ -1,4 +1,4 @@
-#Mon Oct 11 16:26:51 BST 2010
+#Mon Oct 11 18:31:11 BST 2010
 eclipse.preferences.version=1
 org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=18
 org.eclipse.cdt.core.formatter.alignment_for_base_clause_in_type_declaration=83
@@ -23,7 +23,7 @@ org.eclipse.cdt.core.formatter.continuation_indentation_for_array_initializer=2
 org.eclipse.cdt.core.formatter.format_guardian_clause_on_one_line=false
 org.eclipse.cdt.core.formatter.indent_access_specifier_compare_to_type_header=true
 org.eclipse.cdt.core.formatter.indent_body_declarations_compare_to_access_specifier=true
-org.eclipse.cdt.core.formatter.indent_body_declarations_compare_to_namespace_header=false
+org.eclipse.cdt.core.formatter.indent_body_declarations_compare_to_namespace_header=true
 org.eclipse.cdt.core.formatter.indent_breaks_compare_to_cases=true
 org.eclipse.cdt.core.formatter.indent_declaration_compare_to_template_header=false
 org.eclipse.cdt.core.formatter.indent_empty_lines=false
