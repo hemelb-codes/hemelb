@@ -84,8 +84,6 @@ int main (int argc, char *argv[])
   net.id = 0;
 #endif
   
-  check_conv = 0;
-  
   if (argc == 8)
     {
       lbm.cycles_max      = atoi( argv[2] );
@@ -94,11 +92,6 @@ int main (int argc, char *argv[])
       snapshots_per_cycle = atoi( argv[5] );
       images_per_cycle    = atoi( argv[6] );
       lbm.steering_session_id = atoi( argv[7] );
-      
-      if (lbm.cycles_max > 1000)
-	{
-	  check_conv = 1;
-	}
     }
   else
     {
@@ -288,8 +281,6 @@ int main (int argc, char *argv[])
 
 	      lbm.lbmUpdateBoundaryDensities (cycle_id, time_step);
 	      
-	      if (!check_conv)
-		{
 		  stability = lbm.lbmCycle (hemelb::vis::doRendering, &net);
 		  
 		  if ((restart = lbmIsUnstable (&net)) != 0)
@@ -297,18 +288,7 @@ int main (int argc, char *argv[])
 		      break;
 		    }
 		  lbm.lbmUpdateInletVelocities (time_step, &net);
-		}
-	      else
-		{
-		  stability = lbm.lbmCycle (cycle_id, time_step, hemelb::vis::doRendering, &net);
-		  
-		  if (stability == UNSTABLE)
-		    {
-		      restart = 1;
-		      break;
-		    }
-		  lbm.lbmUpdateInletVelocities (time_step, &net);
-		}
+
 #ifndef NO_STREAKLINES
 	      hemelb::vis::controller->streaklines(time_step, lbm.period, &net);
 #endif
@@ -422,16 +402,9 @@ int main (int argc, char *argv[])
 	  
 	  if (net.id == 0)
 	    {
-	      if (!check_conv)
-		{
 		  fprintf (timings_ptr, "cycle id: %i\n", cycle_id);
 		  printf ("cycle id: %i\n", cycle_id);
-		}
-	      else
-		{
-		  fprintf (timings_ptr, "cycle id: %i, conv_error: %e\n", cycle_id, conv_error);
-		  printf ("cycle id: %i, conv_error: %e\n", cycle_id, conv_error);
-		}
+
 	      fflush(NULL);
 	    }
 	}

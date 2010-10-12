@@ -170,7 +170,7 @@ namespace hemelb
   
       *is_interior = 1;
   
-      int c1Plusc2 = check_conv ? 45 : 15;
+      int c1Plusc2 = 15;
 
       for (int i = 0; i < 2; i++)
 	{

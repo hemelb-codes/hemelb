@@ -952,30 +952,15 @@ void Net::netInit (int totalFluidSites)
   // an if condition at every timestep at every boundary site.  We also allocate space for the
   // shared distribution functions.  We need twice as much space when we check the convergence
   // and the extra distribution functions are
-  if (!check_conv)
-    {
       f_old = new double[my_sites * 15 + 1 + shared_fs];
       f_new = new double[my_sites * 15 + 1 + shared_fs];
-    }
-  else
-    {
-      f_old = new double [my_sites * 30 + 15 + 1];
-      f_new = new double [my_sites * 30 + 15 + 1];
-    }
+
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
   // streamed between different partitions) are collected and the
   // buffers needed for the communications are set from here
   
   f_data = new short int [4 * shared_fs];
-  
-  if (check_conv)
-    {
-      f_to_send = new double[shared_fs * 2];
-      f_to_recv = new double[shared_fs * 2];
-      
-      f_send_id = new int[shared_fs];
-    }
 
   // Allocate the index in which to put the distribution functions received from the other
   // process.
@@ -991,20 +976,10 @@ void Net::netInit (int totalFluidSites)
       neigh_proc[ n ].f_data = &f_data[ shared_fs<<2 ];
       
       // Pointing to a few things, but not setting any variables.
-      if (!check_conv)
-	{
 	  // f_head points to start of shared_fs.
 	  neigh_proc[ n ].f_head = my_sites * 15 + 1 + shared_fs;
-	}
-      else
-	{
-	  // Points to the start of the shared_fs.  
-	  neigh_proc[ n ].f_to_send = &f_to_send[ shared_fs*2 ];
-	  neigh_proc[ n ].f_to_recv = &f_to_recv[ shared_fs*2 ];
-	  
-	  neigh_proc[ n ].f_send_id = &f_send_id[ shared_fs ];
-	}
-      neigh_proc[ n ].f_recv_iv = &f_recv_iv[ shared_fs ];
+
+	  neigh_proc[ n ].f_recv_iv = &f_recv_iv[ shared_fs ];
       
       shared_fs += neigh_proc[ n ].fs;
       neigh_proc[ n ].fs = 0;// This is set back to 0.
@@ -1062,14 +1037,8 @@ void Net::netInit (int totalFluidSites)
 		    site_map = map_block_p->site_data[ m ];
 		    
 		    // set f_id.
-		    if (!check_conv)
-		      {
 			f_id[ site_map*15+0 ] = site_map * 15 + 0;
-		      }
-		    else
-		      {
-			f_id[ site_map*15+0 ] = site_map * 30 + 0;
-		      }
+
 		    for (l = 1; l < 15; l++)
 		      {
 			// Work out positions of neighbours.
@@ -1078,14 +1047,8 @@ void Net::netInit (int totalFluidSites)
 			neigh_k = site_k + e_z[ l ];
 			
 			// initialize f_id to the rubbish site.
-			if (!check_conv)
-			  {
 			    f_id[ site_map*15+l ] = my_sites * 15;
-			  }
-			else
-			  {
-			    f_id[ site_map*15+l ] = my_sites * 30;
-			  }
+
 			// You know which process the neighbour is on.
 			proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k);
 			
@@ -1104,14 +1067,8 @@ void Net::netInit (int totalFluidSites)
 			// current and previous cycles.
 			if (*proc_id_p == id)
 			  {
-			    if (!check_conv)
-			      {
 				f_id[ site_map*15+l ] = *site_data_p * 15 + l;
-			      }
-			    else
-			      {
-				f_id[ site_map*15+l ] = *site_data_p * 30 + l;
-			      }
+
 			    continue;
 			  }
 			neigh_proc_index = from_proc_id_to_neigh_proc_index[ *proc_id_p ];
@@ -1246,8 +1203,6 @@ void Net::netInit (int totalFluidSites)
 	  // Get the fluid site number of site that will send data to another process.
 	  site_map = *netSiteMapPointer (i, j, k);
 	  
-	  if (!check_conv)
-	    {
 	      // Set f_id to the element in the send buffer that we put the updated
 	      // distribution functions in.
 	      f_id[ site_map * 15 + l ] = ++f_count;
@@ -1255,18 +1210,6 @@ void Net::netInit (int totalFluidSites)
 	      // Set the place where we put the received distribution functions, which is
 	      // f_new[number of fluid site that sends, inverse direction].
 	      neigh_proc_p->f_recv_iv[ n ] = site_map * 15 + inv_dir[ l ];
-	    }
-	  else
-	    {
-	      // Set f_send_id to the element of f_old that we pull the post-collisional
-	      // distributions from.  f_id will send the updated distribution functions to the
-	      // rubbish site instead of automatically putting them in the send buffer.
-	      neigh_proc_p->f_send_id[ n ] = site_map * 30 + l;
-
-	      // Set the place where we put the received distribution functions, which is
-	      // f_new[number of fluid site that sends, inverse direction].
-	      neigh_proc_p->f_recv_iv[ n ] = site_map * 30 + inv_dir[ l ];
-	    }
 	}
     }
   // neigh_prc->f_data was only set as a pointer to f_data, not allocated.  In this line, we 
@@ -1288,13 +1231,6 @@ void Net::netEnd ()
   from_proc_id_to_neigh_proc_index = NULL;
   
   delete[] f_recv_iv;
-  
-  if (check_conv)
-    {
-      delete[] f_send_id;
-      delete[] f_to_recv;
-      delete[] f_to_send;
-    }
   
   if (lbm_stress_type == SHEAR_STRESS && my_sites > 0)
     {

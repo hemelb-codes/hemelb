@@ -15,7 +15,7 @@ unsigned int getBoundaryConfig(Net* net, int i)
 
 void (*lbmPostTimeStep)(double omega, int i, double *density, double *v_x, double *v_y,
   double *v_z, double f_neq[], Net* net) = NULL;
-void (*lbmUpdateSiteData[2][2])(double omega, int i, double *density, double *vx,
+void (*lbmUpdateSiteData[2])(double omega, int i, double *density, double *vx,
   double *vy, double *vz, double *velocity, Net* net,
   hemelb::lb::collisions::Collision* iCollision);
 
@@ -934,9 +934,8 @@ void lbmVonMisesStress (double f[], double *stress)
   *stress = lbm_stress_par * sqrt(a + 6.0 * b);
 }
 
-
-// Compute the shear stress, i.e. the magnitude of force per unit area
-// tangential to the surface with normal "nor[]".
+// The magnitude of the tangential component of the shear stress acting on the
+// wall.
 void lbmShearStress (double density, double f[], double nor[], double *stress)
 {
   int e[] = {
@@ -1029,50 +1028,6 @@ void lbmUpdateMinMaxValues (double density, double velocity, double stress)
   lbm_stress_min = (stress < lbm_stress_min) ? stress : lbm_stress_min;
   lbm_stress_max = (stress > lbm_stress_max) ? stress : lbm_stress_max;
 }
-
-// Fluid site updating for benchmarking purposes.
-void lbmUpdateSiteDataBench (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-			     hemelb::lb::collisions::Collision* iCollision)
-{
-  double f_neq[15];
-  
-  iCollision->DoCollisions(omega, i, density, vx, vy, vz, f_neq, net);
-}
-
-
-// Fluid site updating for benchmarking plus computation of flow field values for visualisation purposes.
-void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-  hemelb::lb::collisions::Collision* iCollision)
-{
-  double f_neq[15];
-  double stress;
-  
-  
-  iCollision->DoCollisions(omega, i, density, vx, vy, vz, f_neq, net);
-  
-  *vx *= (1.0 / *density);
-  *vy *= (1.0 / *density);
-  *vz *= (1.0 / *density);
-  *velocity = sqrt(*vx * *vx + *vy * *vy + *vz * *vz);
-  
-  if (lbm_stress_type == SHEAR_STRESS)
-    {
-      if (net->net_site_nor[ i*3 ] >= 1.0e+30)
-	{
-	  stress = 1.0e+30;
-	}
-      else
-	{
-	  lbmShearStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
-	}
-    }
-  else
-    {
-      lbmVonMisesStress (f_neq, &stress);
-    }
-  hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
-}
-
 
 // Fluid site updating for full-production runs.
 void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net, 
@@ -1251,10 +1206,8 @@ void LBM::lbmInit (char *system_file_name_in, char *parameters_file_name, Net *n
 {
   system_file_name = system_file_name_in;
 
-  lbmUpdateSiteData[0][0] = lbmUpdateSiteDataSim;
-  lbmUpdateSiteData[0][1] = lbmUpdateSiteDataSimPlusVis;
-  lbmUpdateSiteData[1][0] = lbmUpdateSiteDataBench;
-  lbmUpdateSiteData[1][1] = lbmUpdateSiteDataBenchPlusVis;
+  lbmUpdateSiteData[0] = lbmUpdateSiteDataSim;
+  lbmUpdateSiteData[1] = lbmUpdateSiteDataSimPlusVis;
 
   lbm_terminate_simulation = 0;
 
@@ -1318,8 +1271,6 @@ void LBM::lbmSetInitialConditions (Net *net)
       
       for (l = 7; l < 15; l++) f_eq[ l ] = temp;
       
-      if (!check_conv)
-	{
 	  f_old_p = &f_old[ i*15 ];
 	  f_new_p = &f_new[ i*15 ];
 	  
@@ -1327,20 +1278,6 @@ void LBM::lbmSetInitialConditions (Net *net)
 	    {
 	      f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
 	    }
-	}
-      else
-	{
-	  for (cycle_tag = 0; cycle_tag < 2; cycle_tag++)
-	    {
-	      f_old_p = &f_old[ (i*2+cycle_tag)*15 ];
-	      f_new_p = &f_new[ (i*2+cycle_tag)*15 ];
-	      
-	      for (l = 0; l < 15; l++)
-		{
-		  f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
-		}
-	    }
-	}
     }
 }
 
@@ -1389,7 +1326,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
   {
     for (i = offset; i < offset + net->my_inter_collisions[collision_type]; i++)
     {
-      (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+      (*lbmUpdateSiteData[perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
       GetCollision(collision_type));
     }
     offset += net->my_inter_collisions[collision_type];
@@ -1412,7 +1349,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     {
       for (i = offset; i < offset + net->my_inner_collisions[ collision_type ]; i++)
 	{
-        (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+        (*lbmUpdateSiteData[perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
         GetCollision(collision_type));
 	}
       offset += net->my_inner_collisions[ collision_type ];
@@ -1442,7 +1379,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
   
     for (i = offset; i < offset + net->my_inter_collisions[ 1 ]; i++)
     {
-      (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+      (*lbmUpdateSiteData[perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
       GetCollision(collision_type));
     }
   
@@ -1450,7 +1387,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
   
     for (i = offset; i < offset + net->my_inner_collisions[ 1 ]; i++)
     {
-      (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+      (*lbmUpdateSiteData[perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
       GetCollision(collision_type));
     }
   }
@@ -1462,218 +1399,6 @@ int LBM::lbmCycle (int perform_rt, Net *net)
   
   return STABLE;
 }
-
-
-// The entire simulation time step takes place through this function
-// when the convergence criterion is applied. Communications
-// automatically handle the streaming stage pertaining to neighbouring
-// subdomains.
-int LBM::lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net)
-{
-  double density, vx[2], vy[2], vz[2], velocity[2];
-  
-  double sum1, sum2;
-  double local_data[3];
-  double global_data[3];
-  
-  int is_converged;
-  int collision_type;
-  int offset;
-  int i, m;
-  
-  NeighProc *neigh_proc_p;
-  
-  
-  for (m = 0; m < net->neigh_procs; m++)
-    {
-      neigh_proc_p = &net->neigh_proc[ m ];
-#ifndef NOMPI
-      net->err = MPI_Irecv (&neigh_proc_p->f_to_recv[ 0 ],
-			    neigh_proc_p->fs * 2, MPI_DOUBLE,
-			    neigh_proc_p->id, 10, MPI_COMM_WORLD,
-			    &net->req[ 0 ][ m ]);
-#endif
-    }
-  
-  is_converged = 0;
-  
-  if (cycle_id == 1)
-    {
-      conv_error = 1.0e+30;
-      
-      vx[0] = 1.0e+30;
-      vy[0] = 1.0e+30;
-      vz[0] = 1.0e+30;
-    }
-  else
-    {
-      if (time_step == 1) conv_error = 0.0;
-    }
-  sum1 = 0.0;
-  sum2 = 0.0;
-  
-  offset = net->my_inner_sites;
-  
-  for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-    {
-      for (i = offset; i < offset + net->my_inter_collisions[ collision_type ]; i++)
-	{
-	  if (cycle_id != 1)
-	    {
-	      cycle_tag = 0;
-	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0], net,
-	      GetCollision(collision_type));
-	      vx[0] *= (1.0 / density);
-	      vy[0] *= (1.0 / density);
-	      vz[0] *= (1.0 / density);
-	    }
-	  cycle_tag = 1;
-	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1], net,
-	  GetCollision(collision_type));
-	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
-		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
-		       (vz[1] - vz[0]) * (vz[1] - vz[0]));
-	  sum2 += velocity[1];
-	}
-      offset += net->my_inter_collisions[ collision_type ];
-    }
-  
-  // Copy the distribution functions from the source buffer "f_old"
-  // into the ones to be sent to neighbouring processors.
-  for (m = 0; m < net->neigh_procs; m++)
-    {
-      neigh_proc_p = &net->neigh_proc[ m ];
-      
-      for (i = 0; i < neigh_proc_p->fs; i++)
-	{
-	  neigh_proc_p->f_to_send[ i*2   ] = f_old[ neigh_proc_p->f_send_id[i]    ];
-	  neigh_proc_p->f_to_send[ i*2+1 ] = f_old[ neigh_proc_p->f_send_id[i]+15 ];
-	}
-    }
-  
-  for (m = 0; m < net->neigh_procs; m++)
-    {
-      neigh_proc_p = &net->neigh_proc[ m ];
-#ifndef NOMPI
-      net->err = MPI_Isend (&neigh_proc_p->f_to_send[ 0 ],
-			    neigh_proc_p->fs * 2, MPI_DOUBLE,
-			    neigh_proc_p->id, 10, MPI_COMM_WORLD,
-			    &net->req[ 0 ][ net->neigh_procs + m ]);
-#endif
-    }
-  
-  offset = 0;
-  
-  for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-    {
-      for (i = offset; i < offset + net->my_inner_collisions[ collision_type ]; i++)
-	{
-	  if (cycle_id != 1)
-	    {
-	      cycle_tag = 0;
-	      (*lbmUpdateSiteData[1][0]) (omega, i, &density, &vx[0], &vy[0], &vz[0], &velocity[0], net,
-	      GetCollision(collision_type));
-	      vx[0] *= (1.0 / density);
-	      vy[0] *= (1.0 / density);
-	      vz[0] *= (1.0 / density);
-	    }
-	  cycle_tag = 1;
-	  (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx[1], &vy[1], &vz[1], &velocity[1], net,
-	  GetCollision(collision_type));
-	  sum1 += sqrt((vx[1] - vx[0]) * (vx[1] - vx[0]) +
-		       (vy[1] - vy[0]) * (vy[1] - vy[0]) +
-		       (vz[1] - vz[0]) * (vz[1] - vz[0]));
-	  sum2 += velocity[1];
-	}
-      offset += net->my_inner_collisions[ collision_type ];
-    }
-  
-  // stability and convergence error checking
-  int is_unstable = 0;
-    
-  for (i = 0; i < net->my_sites; i++)
-    {
-      for (m = 0; m < 15; m++)
-	{
-	  if (f_old[ i*30+15+m ] < 0.)
-	    {
-	      is_unstable = 1;
-	    }
-	}
-    }
-  
-  for (m = 0; m < net->neigh_procs; m++)
-    {
-#ifndef NOMPI
-      net->err = MPI_Wait (&net->req[ 0 ][ m ], net->status);
-      net->err = MPI_Wait (&net->req[ 0 ][ net->neigh_procs + m ], net->status);
-#endif
-    }
-  
-  // Copy the distribution functions received from the neighbouring
-  // processors into the destination buffer "f_new".
-  for (m = 0; m < net->neigh_procs; m++)
-    {
-      neigh_proc_p = &net->neigh_proc[ m ];
-      
-      for (i = 0; i < neigh_proc_p->fs; i++)
-	{
-	  f_new[ neigh_proc_p->f_recv_iv[i]    ] = neigh_proc_p->f_to_recv[ i*2   ];
-	  f_new[ neigh_proc_p->f_recv_iv[i]+15 ] = neigh_proc_p->f_to_recv[ i*2+1 ];
-	}
-    }
-  double *temp = f_old;
-  f_old = f_new;
-  f_new = temp;
-  
-  
-  // Combine stability and convergence-related values from all the processors.
-  local_data[ 0 ] = (double)is_unstable;
-  local_data[ 1 ] = sum1;
-  local_data[ 2 ] = sum2;
-  
-#ifndef NOMPI
-  net->err = MPI_Allreduce (local_data, global_data, 3,
-			    MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#else
-  global_data[0] = local_data[0];
-  global_data[1] = local_data[1];
-  global_data[2] = local_data[2];
-#endif
-  
-  is_unstable = (global_data[ 0 ] >= 1.0);
-  
-  if (cycle_id > 1)
-    {  
-      sum1 = global_data[ 1 ];
-      sum2 = global_data[ 2 ];
-      
-      conv_error += sum1 / sum2;
-      
-      if (time_step == period)
-	{
-	  conv_error /= period;
-	  
-	  if (conv_error < TOL)
-	    {
-	      is_converged = 1;
-	    }
-	}
-    }
-  if (is_unstable)
-    {
-      return UNSTABLE;
-    }
-  else if (!is_converged)
-    {
-      return STABLE;
-    }
-  else
-    {
-      return STABLE_AND_CONVERGED;
-    }
-}
-
 
 void LBM::lbmCalculateFlowFieldValues ()
 {
@@ -1797,17 +1522,11 @@ void LBM::lbmUpdateInletVelocities (int time_step, Net *net)
 	  lbm_inlet_count[ i ] = 0;
 	}
     }
-  if (check_conv)
-    {
-      c1 = 30;
-      c2 = 15;
-    }
-  else
-    {
+
       c1 = 15;
       c2 = 0;
-    }
-  offset = net->my_inner_collisions[ 0 ] + net->my_inner_collisions[ 1 ];
+
+      offset = net->my_inner_collisions[ 0 ] + net->my_inner_collisions[ 1 ];
   
   for (i = offset; i < offset + net->my_inner_collisions[ 2 ]; i++)
     {

@@ -8,9 +8,6 @@ double *f_old = 0, *f_new = 0;
 int *f_id = 0;
 int *f_recv_iv = 0;
 
-// 3 variables needed for convergence-enabled simulations
-double conv_error;
-int cycle_tag, check_conv;
 int is_inlet_normal_available;
 
 int sites_x, sites_y, sites_z;
