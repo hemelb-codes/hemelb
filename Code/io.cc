@@ -576,11 +576,11 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 		if (net->net_site_nor[ my_site_id*3 ] >= 1.0e+30) {
 		  stress = -1.0;
 		} else {
-		  lbmStress(density, f_neq,
+		  lbmShearStress(density, f_neq,
 			    &net->net_site_nor[ my_site_id*3 ], &stress);
 		}
 	      } else {
-		lbmStress(f_neq, &stress);
+		lbmVonMisesStress(f_neq, &stress);
 	      }
 	      
 	      vx /= density;
