@@ -137,8 +137,6 @@ class Net
     void netInit (int totalFluidSites);
 };
 
-extern int is_bench;
-
 // Some sort of coordinates.
 struct SiteLocation
 {

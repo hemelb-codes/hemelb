@@ -4,7 +4,6 @@
 
 #include "constants.h"
 #include "usage.h"
-#include "benchmark.h"
 #include "fileutils.h"
 #include "utilityFunctions.h"
 #include "lb.h"
@@ -47,11 +46,6 @@ int main (int argc, char *argv[])
 #endif
   
   double simulation_time = 0.;
-  double minutes = 0.;
-  double FS_time = 0.;
-  double FS_plus_RT_time = 0.;
-  double FS_plus_RT_plus_SL_time = 0.;
-  
   int total_time_steps, stability = STABLE;
   int depths;
 
@@ -59,9 +53,6 @@ int main (int argc, char *argv[])
 //   int doRendering;
 // #endif
   
-  int FS_time_steps = 0;
-  int FS_plus_RT_time_steps = 0.;
-  int FS_plus_RT_plus_SL_time_steps = 0.;
   int snapshots_per_cycle = 0,
     snapshots_period;
   int images_per_cycle = 0,
@@ -95,16 +86,8 @@ int main (int argc, char *argv[])
   
   check_conv = 0;
   
-  if (argc == 5) // Check command line arguments
+  if (argc == 8)
     {
-      is_bench = 1;
-      lbm.period     = atoi( argv[2] );
-      lbm.voxel_size = atof( argv[3] );
-      minutes        = atof( argv[4] );
-    }
-  else if (argc == 8)
-    {
-      is_bench = 0;
       lbm.cycles_max      = atoi( argv[2] );
       lbm.period          = atoi( argv[3] );
       lbm.voxel_size      = atof( argv[4] );
@@ -189,7 +172,7 @@ int main (int argc, char *argv[])
     }
   
 #ifndef NO_STEER
-  if (!is_bench && net.id == 0)
+  if (net.id == 0)
     {
       hemelb::vis::xdrSendBuffer_pixel_data = new char[hemelb::vis::pixel_data_bytes];
       hemelb::vis::xdrSendBuffer_frame_details = new char[hemelb::vis::frame_details_bytes];
@@ -238,8 +221,6 @@ int main (int argc, char *argv[])
   
   total_time_steps = 0;
 
-  if (!is_bench)
-    {
       int is_finished = 0;
       
       simulation_time = hemelb::util::myClock ();
@@ -459,137 +440,7 @@ int main (int argc, char *argv[])
       time_step = hemelb::util::min(time_step, lbm.period);
       cycle_id = hemelb::util::min(cycle_id, lbm.cycles_max);
       time_step = time_step * cycle_id;
-    }
-  else // is_bench
-    {
-      double elapsed_time;
-      
-      int bench_period = (int)fmax(1.0, (1e+6 * net.procs) / lbm.total_fluid_sites);
-      
-      // benchmarking HemeLB's fluid solver only
-      
-      FS_time = hemelb::util::myClock ();
-      
-      for (time_step = 1; time_step <= 1000000000; time_step++)
-	{
-	  ++total_time_steps;
-	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
-	  stability = lbm.lbmCycle (0, &net);
-	  
-	  elapsed_time = hemelb::util::myClock () - FS_time;
-	  
-	  if (time_step%bench_period == 1 && net.id == 0)
-	    {
-	      fprintf (stderr, " FS, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		       elapsed_time, time_step, time_step / elapsed_time);
-	    }
-	  if (time_step%bench_period == 1 &&
-	      BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
-	    {
-	      break;
-	    }
-	}
-
-      FS_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_time = hemelb::util::myClock ();
-      
-      for (time_step = 1; time_step <= FS_time_steps; time_step++)
-	{
-	  ++total_time_steps;
-	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
-	  stability = lbm.lbmCycle (1, &net);
-	}
-      FS_time = hemelb::util::myClock () - FS_time;
-      
-      
-      // benchmarking HemeLB's fluid solver and ray tracer
-      
-      hemelb::vis::controller->mode = 0;
-      hemelb::vis::controller->image_freq = 1;
-      hemelb::vis::controller->shouldDrawStreaklines = 0;
-      FS_plus_RT_time = hemelb::util::myClock ();
-      
-      for (time_step = 1; time_step <= 1000000000; time_step++) {
-	++total_time_steps;
-	lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period );
-	stability = lbm.lbmCycle (1, &net);
-	hemelb::vis::controller->render (RECV_BUFFER_A,
-				       hemelb::vis::ColourPalette::pickColour, &net);
-	  
-	// partial timings
-	elapsed_time = hemelb::util::myClock () - FS_plus_RT_time;
-	  
-	if (time_step%bench_period == 1 && net.id == 0)
-	  {
-	    fprintf (stderr, " FS + RT, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		     elapsed_time, time_step, time_step / elapsed_time);
-	  }
-	if (time_step%bench_period == 1 &&
-	    BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
-	  {
-	    break;
-	  }
-      }
-      FS_plus_RT_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_plus_RT_time = hemelb::util::myClock ();
-      
-      for (time_step = 1; time_step <= FS_plus_RT_time_steps; time_step++)
-	{
-	  ++total_time_steps;
-	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
-	  stability = lbm.lbmCycle (1, &net);
-	  hemelb::vis::controller->render(RECV_BUFFER_A, 
-			       hemelb::vis::ColourPalette::pickColour, &net);
-	}
-      FS_plus_RT_time = hemelb::util::myClock () - FS_plus_RT_time;
-      
-#ifndef NO_STREAKLINES
-      // benchmarking HemeLB's fluid solver, ray tracer and streaklines
-      
-      hemelb::vis::controller->mode = 2;
-      hemelb::vis::controller->shouldDrawStreaklines = 1;
-      FS_plus_RT_plus_SL_time = hemelb::util::myClock ();
-      
-      for (time_step = 1; time_step <= 1000000000; time_step++) {
-	++total_time_steps;
-	lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
-	stability = lbm.lbmCycle (1, &net);
-	hemelb::vis::controller->streaklines(time_step, lbm.period, &net);
-	hemelb::vis::controller->render (RECV_BUFFER_A,
-			      hemelb::vis::ColourPalette::pickColour, &net);
-	  
-	// partial timings
-	elapsed_time = hemelb::util::myClock () - FS_plus_RT_plus_SL_time;
-	  
-	if (time_step%bench_period == 1 && net.id == 0)
-	  {
-	    fprintf (stderr, " FS + RT + SL, time: %.3f, time step: %i, time steps/s: %.3f\n",
-		     elapsed_time, time_step, time_step / elapsed_time);
-	  }
-	if (time_step%bench_period == 1 &&
-	    BenchmarkTimer::IsBenchSectionFinished (1.0, elapsed_time))
-	  {
-	    break;
-	  }
-      }
-      FS_plus_RT_plus_SL_time_steps = (int)(time_step * minutes / (3 * 1.0) - time_step);
-      FS_plus_RT_plus_SL_time = hemelb::util::myClock ();
-      
-      for (time_step = 1; time_step <= FS_plus_RT_plus_SL_time_steps; time_step++)
-	{
-	  ++total_time_steps;
-	  lbm.lbmUpdateBoundaryDensities (total_time_steps/lbm.period, total_time_steps%lbm.period);
-	  stability = lbm.lbmCycle (1, &net);
-	  hemelb::vis::controller->streaklines (time_step, lbm.period, &net);
-	  hemelb::vis::controller->render (RECV_BUFFER_A,
-					 hemelb::vis::ColourPalette::pickColour, &net);
-	}
-      FS_plus_RT_plus_SL_time = hemelb::util::myClock () - FS_plus_RT_plus_SL_time;
-#endif // NO_STREAKLINES
-    } // is_bench
   
-  if (!is_bench)
-    {  
       if (net.id == 0)
 	{
 	  fprintf (timings_ptr, "\n");
@@ -599,29 +450,6 @@ int main (int argc, char *argv[])
 	  fprintf (timings_ptr, "cycles and total time steps: %i, %i \n\n", cycle_id, total_time_steps);
 	  fprintf (timings_ptr, "time steps per second: %.3f\n\n", total_time_steps / simulation_time);
 	}
-    }
-  else  // is_bench
-    {
-      if (net.id == 0)
-	{
-	  fprintf (timings_ptr, "\n---------- BENCHMARK RESULTS ----------\n");
-	  
-	  fprintf (timings_ptr, "threads: %i, machines checked: %i\n\n", net.procs, net_machines);
-	  fprintf (timings_ptr, "topology depths checked: %i\n\n", depths);
-	  fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
-	  fprintf (timings_ptr, " FS, time steps per second: %.3f, MSUPS: %.3f, time: %.3f\n\n",
-		   FS_time_steps / FS_time,
-		   1.e-6 * lbm.total_fluid_sites / (FS_time / FS_time_steps),
-		   FS_time);
-	  
-	  fprintf (timings_ptr, " FS + RT, time steps per second: %.3f, time: %.3f\n\n",
-		   FS_plus_RT_time_steps / FS_plus_RT_time, FS_plus_RT_time);
-#ifndef NO_STREAKLINES
-	  fprintf (timings_ptr, " FS + RT + SL, time steps per second: %.3f, time: %.3f\n\n",
-		   FS_plus_RT_plus_SL_time_steps / FS_plus_RT_plus_SL_time, FS_plus_RT_plus_SL_time);
-#endif
-	}
-    }
   
   if (is_unstable)
     {
@@ -637,8 +465,6 @@ int main (int argc, char *argv[])
     {
       if (net.id == 0)
 	{
-	  if (!is_bench)
-	    {
 	      lbm_phys_pressure_min = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
 	      lbm_phys_pressure_max = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
 	      
@@ -659,7 +485,7 @@ int main (int argc, char *argv[])
 			 n, lbm_average_inlet_velocity[ n ], lbm_peak_inlet_velocity[ n ]);
 	      }
 	      fprintf (timings_ptr, "\n");
-	    }
+
 	  fprintf (timings_ptr, "\n");
 	  fprintf (timings_ptr, "domain decomposition time (s):             %.3f\n", net.dd_time);
 	  fprintf (timings_ptr, "pre-processing buffer management time (s): %.3f\n", net.bm_time);
@@ -682,7 +508,7 @@ int main (int argc, char *argv[])
   net.netEnd ();
   
 #ifndef NO_STEER
-  if (!is_bench && net.id == 0)
+  if (net.id == 0)
     {
       // there are some problems if the following function is called
       

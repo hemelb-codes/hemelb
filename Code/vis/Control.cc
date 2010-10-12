@@ -81,11 +81,9 @@ namespace hemelb
     {
       rtInit (net);
   
-      if (!is_bench)
-	{
 	  myGlypher = new GlyphDrawer(net);
-	}
-#ifndef NO_STREAKLINES
+
+	  #ifndef NO_STREAKLINES
       myStreaker = new StreaklineDrawer (net);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
@@ -533,18 +531,9 @@ namespace hemelb
 	}
       density_threshold_min = density_min;
   
-      if (!is_bench)
-	{
 	  density_threshold_minmax_inv = 1.0F / (density_max - density_min);
 	  velocity_threshold_max_inv   = 1.0F / velocity_max;
 	  stress_threshold_max_inv     = 1.0F / stress_max;
-	}
-      else
-	{
-	  density_threshold_minmax_inv = 1.0F;
-	  velocity_threshold_max_inv   = 1.0F;
-	  stress_threshold_max_inv     = 1.0F;
-	}
     }
     
 
@@ -700,7 +689,7 @@ namespace hemelb
   
       rtRayTracing (ColourPalette);
   
-      if (!is_bench && mode == 1)
+      if (mode == 1)
 	{
 	  myGlypher->render();
 	}
@@ -775,10 +764,8 @@ namespace hemelb
 #ifndef NO_STREAKLINES
       delete myStreaker;
 #endif
-      if (!is_bench)
-	{
+
 	  delete myGlypher;
-	}
       rtEnd ();
 
       delete col_pixel_recv[0];

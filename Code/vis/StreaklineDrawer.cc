@@ -763,8 +763,6 @@ namespace hemelb
     // Draw streaklines
     void StreaklineDrawer::streakLines (int time_steps, int time_steps_per_cycle, Net *net)
     {
-      if (!is_bench)
-	{
 	  int particle_creation_period = util::max(1, (int)(time_steps_per_cycle / 5000.0F));
       
 	  if (time_steps % (int)(time_steps_per_cycle / vis::controller->streaklines_per_pulsatile_period) <=
@@ -773,15 +771,8 @@ namespace hemelb
 	    {
 	      createSeedParticles ();
 	    }
-	}
-      else
-	{
-	  if (time_steps % 10 == 0)
-	    {
-	      createSeedParticles ();
-	    }
-	}
-      ++counter;
+
+	  ++counter;
   
       updateVelField (0, net);
       communicateSiteIds ();

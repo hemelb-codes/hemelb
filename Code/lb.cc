@@ -1389,7 +1389,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
   {
     for (i = offset; i < offset + net->my_inter_collisions[collision_type]; i++)
     {
-      (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+      (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
       GetCollision(collision_type));
     }
     offset += net->my_inter_collisions[collision_type];
@@ -1412,7 +1412,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     {
       for (i = offset; i < offset + net->my_inner_collisions[ collision_type ]; i++)
 	{
-        (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+        (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
         GetCollision(collision_type));
 	}
       offset += net->my_inner_collisions[ collision_type ];
@@ -1442,7 +1442,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
   
     for (i = offset; i < offset + net->my_inter_collisions[ 1 ]; i++)
     {
-      (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+      (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
       GetCollision(collision_type));
     }
   
@@ -1450,7 +1450,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
   
     for (i = offset; i < offset + net->my_inner_collisions[ 1 ]; i++)
     {
-      (*lbmUpdateSiteData[is_bench][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
+      (*lbmUpdateSiteData[0][perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
       GetCollision(collision_type));
     }
   }
