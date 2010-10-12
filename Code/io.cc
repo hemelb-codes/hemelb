@@ -522,11 +522,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
   iters = 0;
   comPeriodDelta = 0;
   
-  if (!check_conv) {
     par = 0;
-  } else {
-    par = 1;
-  }
   n = -1;
   
   /* The following loops scan over every single macrocell (block). If
