@@ -298,7 +298,7 @@ void Net::netInit (int totalFluidSites)
   // Find the maximum number of fluid sites per process.  If steering,
   // leave one process out.
 #ifndef NO_STEER 
-  if (is_bench || procs == 1)
+  if (procs == 1)
     {
       fluid_sites_per_unit = (int)ceil((double)totalFluidSites / (double)procs);
       proc_count = 0;
@@ -486,16 +486,9 @@ void Net::netInit (int totalFluidSites)
 	    {
 	      up_units_max = net_machines;
 	      
-	      if (is_bench)
-		{
-		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)procs);
-		  proc_count = 0;
-		}
-	      else
-		{
 		  fluid_sites_per_unit = (int)ceil((double)unvisited_fluid_sites / (double)(procs - 1));
 		  proc_count = 1;
-		}
+
 	    }
 	  for (int up_unit = 0; up_unit < up_units_max; up_unit++)
 	    {
@@ -507,19 +500,11 @@ void Net::netInit (int totalFluidSites)
 		  
 		  machine_id = proc_count - procs;
 		  
-		  if (is_bench)
-		    {
-		      fluid_sites_per_unit = (int)ceil((double)totalFluidSites *
-						       (double)procs_per_machine[ machine_id ] / procs);
-		    }
-		  else
-		    {
 		      double weight;
 		      
 		      weight = (double)(procs_per_machine[machine_id] * procs) / (double)(procs - 1);
 		      
 		      fluid_sites_per_unit = (int)ceil((double)totalFluidSites * weight / net_machines);
-		    }
 		}
 	      else
 		{

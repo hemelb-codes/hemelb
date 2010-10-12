@@ -8,8 +8,6 @@ double *f_old = 0, *f_new = 0;
 int *f_id = 0;
 int *f_recv_iv = 0;
 
-int is_bench;
-
 // 3 variables needed for convergence-enabled simulations
 double conv_error;
 int cycle_tag, check_conv;
