@@ -47,7 +47,7 @@ namespace hemelb
 	    glyph[ glyphs ].y = float(j + site_j) - 0.5F * float(sites_y);
 	    glyph[ glyphs ].z = float(k + site_k) - 0.5F * float(sites_z);
 	
-	    int c1Plusc2 = check_conv ? 45 : 15;
+	    int c1Plusc2 = 15;
 	
 	    glyph[ glyphs ].f = &f_old[ map_block_p->site_data[m]*c1Plusc2];
 	    ++glyphs;

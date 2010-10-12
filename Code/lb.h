@@ -112,6 +112,5 @@ extern int lbm_terminate_simulation;
 extern int is_inlet_normal_available;
 
 // TODO: prob don't belong here... 3 variables needed for convergence-enabled simulations
-extern double conv_error;
-extern int cycle_tag, check_conv;
+extern int cycle_tag;
 #endif // HEMELB_LB_H
