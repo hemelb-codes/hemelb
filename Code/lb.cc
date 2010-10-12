@@ -913,7 +913,7 @@ void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_
 
 
 // von Mises stress computation given the non-equilibrium distribution functions.
-void lbmStress (double f[], double *stress)
+void lbmVonMisesStress (double f[], double *stress)
 {
   double sigma_xx_yy, sigma_yy_zz, sigma_xx_zz;
   double sigma_xy, sigma_xz, sigma_yz;
@@ -937,7 +937,7 @@ void lbmStress (double f[], double *stress)
 
 // Compute the shear stress, i.e. the magnitude of force per unit area
 // tangential to the surface with normal "nor[]".
-void lbmStress (double density, double f[], double nor[], double *stress)
+void lbmShearStress (double density, double f[], double nor[], double *stress)
 {
   int e[] = {
     0, 0, 0,
@@ -1063,12 +1063,12 @@ void lbmUpdateSiteDataBenchPlusVis (double omega, int i, double *density, double
 	}
       else
 	{
-	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
+	  lbmShearStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	}
     }
   else
     {
-      lbmStress (f_neq, &stress);
+      lbmVonMisesStress (f_neq, &stress);
     }
   hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 }
@@ -1097,12 +1097,12 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
 	}
       else
 	{
-	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
+	  lbmShearStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	}
     }
   else
     {
-      lbmStress (f_neq, &stress);
+      lbmVonMisesStress (f_neq, &stress);
     }
   lbmUpdateMinMaxValues (*density, *velocity, stress);
 }
@@ -1132,14 +1132,14 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
 	}
       else
 	{
-	  lbmStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
+	  lbmShearStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
 	  lbmUpdateMinMaxValues (*density, *velocity, stress);
 	  hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 	}
     }
   else
     {
-      lbmStress (f_neq, &stress);
+      lbmVonMisesStress (f_neq, &stress);
       lbmUpdateMinMaxValues (*density, *velocity, stress);
       hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
     }

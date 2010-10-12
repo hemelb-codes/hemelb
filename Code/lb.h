@@ -80,8 +80,8 @@ class LBM {
 void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
 void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
 void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
-void lbmStress (double f[], double *stress);
-void lbmStress (double density, double f[], double nor[], double *stress);
+void lbmVonMisesStress (double f[], double *stress);
+void lbmShearStress (double density, double f[], double nor[], double *stress);
 void lbmInitMinMaxValues (void);
 void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
