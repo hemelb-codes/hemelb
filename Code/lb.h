@@ -41,7 +41,6 @@ class LBM {
   ~LBM();
 
   int lbmCycle (int perform_rt, Net *net);
-  int lbmCycle (int cycle_id, int time_step, int perform_rt, Net *net);
   void lbmCalculateFlowFieldValues ();
   void RecalculateTauViscosityOmega ();
   void lbmUpdateBoundaryDensities (int cycle_id, int time_step);
@@ -55,6 +54,8 @@ class LBM {
   void gzsBoundary (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 
  private:
+
+  int is_inlet_normal_available;
 
   void lbmInitCollisions();
   void lbmReadConfig (Net *net);
