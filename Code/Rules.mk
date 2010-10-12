@@ -7,7 +7,6 @@ SUBDIRS = vis steering io dbg lb
 $(EXE)_DEPS = config.o \
 	io.o \
 	lb.o \
-	benchmark.o \
 	fileutils.o \
 	net.o \
 	usage.o \
