@@ -569,11 +569,11 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 	      }
 	      
 	      if (lbm_stress_type == SHEAR_STRESS) {
-		if (net->net_site_nor[ my_site_id*3 ] >= 1.0e+30) {
+		if (net->GetNormalToWall(my_site_id)[0] >= 1.0e+30) {
 		  stress = -1.0;
 		} else {
 		  D3Q15::CalculateShearStress(density, f_neq,
-			    &net->net_site_nor[ my_site_id*3 ], &stress, lbm_stress_par);
+			    &net->GetNormalToWall(my_site_id)[0], &stress, lbm_stress_par);
 		}
 	      } else {
 	        D3Q15::CalculateVonMisesStress(f_neq, &stress, lbm_stress_par);
