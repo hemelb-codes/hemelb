@@ -28,15 +28,13 @@ namespace hemelb
         // Now fill in the un-streamed-to distributions (those that point away from boundaries).
         unsigned int boundary_config = GetBoundaryConfig(net, i);
 
-        double* cut_dists = & (net->cut_distances[i * (D3Q15::NUMVECTORS)]);
-
         for (int l = 1; l < D3Q15::NUMVECTORS; l++)
         {
           int lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
 
           if (0 != (boundary_config & (1U << (l - 1))))
           {
-            double delta = cut_dists[l - 1];
+            double delta = net->GetCutDistance(i, l);
             double uWall[3];
             double fNeq;
 

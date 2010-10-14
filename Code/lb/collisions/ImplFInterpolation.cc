@@ -27,8 +27,6 @@ namespace hemelb
       {
         unsigned int boundary_config = GetBoundaryConfig(net, i);
 
-        double* cut_dists = & (net->cut_distances[i * (D3Q15::NUMVECTORS - 1)]);
-
         // Handle odd indices, then evens - it's slightly easier to take the odd
         // and even cases separately.
         for (int l = 1; l < D3Q15::NUMVECTORS; l++)
@@ -36,7 +34,7 @@ namespace hemelb
           // Only do it if there's no boundary in the opposite direction, otherwise, just leave at eqm
           if ( (0 != (boundary_config & (1U << (l - 1)))))// && (0 == (boundary_config & (1U << (l)))))
           {
-            double twoQ = 2.0 * cut_dists[l - 1];
+            double twoQ = 2.0 * net->GetCutDistance(i, l);
             if (twoQ < 1.0)
             {
               f_new[i * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]] = f_new[i
