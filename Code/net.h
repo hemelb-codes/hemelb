@@ -161,13 +161,6 @@ extern double *f_old, *f_new;
 extern int *f_id;
 
 // 3 buffers needed for convergence-enabled simulations
-extern double *f_to_send;
-extern double *f_to_recv;
-
-extern int *f_send_id;
-
 extern int *f_recv_iv;
-
-extern short int *f_data;
 
 #endif // HEMELB_NET_H
