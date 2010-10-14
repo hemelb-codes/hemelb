@@ -2,12 +2,12 @@
 
 namespace hemelb
 {
-namespace lb
-{
-namespace collisions
-{
+  namespace lb
+  {
+    namespace collisions
+    {
 
 
-}
-}
+    }
+  }
 }

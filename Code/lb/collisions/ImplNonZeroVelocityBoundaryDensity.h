@@ -5,25 +5,25 @@
 
 namespace hemelb
 {
-namespace lb
-{
-namespace collisions
-{
+  namespace lb
+  {
+    namespace collisions
+    {
 
-class ImplNonZeroVelocityBoundaryDensity : public InletOutletCollision
-{
-  public:
-    ImplNonZeroVelocityBoundaryDensity(double* iBounaryDensityArray);
+      class ImplNonZeroVelocityBoundaryDensity : public InletOutletCollision
+      {
+        public:
+          ImplNonZeroVelocityBoundaryDensity(double* iBounaryDensityArray);
 
-    void DoCollisions(double omega, int i, double *density, double *v_x, double *v_y,
-                      double *v_z, double f_neq[], Net* net);
+          void DoCollisions(double omega, int i, double *density, double *v_x,
+            double *v_y, double *v_z, double f_neq[], Net* net);
 
-  private:
-    double* mBoundaryDensityArray;
-};
+        private:
+          double* mBoundaryDensityArray;
+      };
 
-}
-}
+    }
+  }
 }
 
 #endif /* HEMELB_LB_COLLISIONS_IMPLNONZEROVELOCITYBOUNDARYDENSITY_H */

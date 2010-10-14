@@ -21,9 +21,7 @@ class LBM {
   int site_min_x, site_min_y, site_min_z;
   int site_max_x, site_max_y, site_max_z;
   int inlets, outlets;
-  int cycles_max;
   int period;
-  int conv_freq;
 
   float *block_density;
 
@@ -53,9 +51,17 @@ class LBM {
   void fInterpolation (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
   void gzsBoundary (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
 
- private:
+  double GetMinPhysicalPressure();
+  double GetMaxPhysicalPressure();
+  double GetMinPhysicalVelocity();
+  double GetMaxPhysicalVelocity();
+  double GetMinPhysicalStress();
+  double GetMaxPhysicalStress();
 
-  int is_inlet_normal_available;
+  void lbmInitMinMaxValues (void);
+  void lbmUpdateMinMaxValues (double density, double velocity, double stress);
+
+ private:
 
   void lbmInitCollisions();
   void lbmReadConfig (Net *net);
@@ -76,27 +82,25 @@ class LBM {
 
   //TODO Get rid of this hack
   hemelb::lb::collisions::Collision* GetCollision(int i);
+
+  int is_inlet_normal_available;
+  double lbm_density_min, lbm_density_max;
+  double lbm_velocity_min, lbm_velocity_max;
+  double lbm_stress_min, lbm_stress_max;
 };
 
-void lbmInitMinMaxValues (void);
-void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 unsigned int lbmCollisionType (unsigned int site_data);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmIsUnstable (Net *net);
 
+
 // TODO moving these requires making the collision / streaming functions non-static, which is potentially a big deal.
 extern double* inlet_density, *outlet_density;
 
 extern double lbm_stress_type;
 extern double lbm_stress_par;
-extern double lbm_density_min, lbm_density_max;
-extern double lbm_velocity_min, lbm_velocity_max;
-extern double lbm_stress_min, lbm_stress_max;
-extern double lbm_phys_pressure_min, lbm_phys_pressure_max;
-extern double lbm_phys_velocity_min, lbm_phys_velocity_max;
-extern double lbm_phys_stress_min, lbm_phys_stress_max;
 extern double *lbm_average_inlet_velocity;
 extern double *lbm_peak_inlet_velocity;
 extern double *lbm_inlet_normal;
@@ -106,4 +110,6 @@ extern int lbm_terminate_simulation;
 
 extern int is_inlet_normal_available;
 
+// TODO: prob don't belong here... 3 variables needed for convergence-enabled simulations
+extern int cycle_tag;
 #endif // HEMELB_LB_H
