@@ -2,6 +2,7 @@
 #define HEMELB_LB_COLLISIONS_COLLISION_H
 
 #include "net.h"
+#include "D3Q15.h"
 
 namespace hemelb
 {
@@ -15,12 +16,6 @@ namespace hemelb
         public:
           virtual void DoCollisions(double omega, int i, double *density, double *v_x,
             double *v_y, double *v_z, double f_neq[], Net* net) = 0;
-
-        protected:
-          void DensityAndVelocity(double f[], double *density, double *v_x, double *v_y,
-            double *v_z);
-          void CalculateFeq(double density, double v_x, double v_y, double v_z,
-            double f_eq[]);
       };
 
     }

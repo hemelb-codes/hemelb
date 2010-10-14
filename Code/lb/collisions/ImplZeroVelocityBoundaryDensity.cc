@@ -25,29 +25,23 @@ void ImplZeroVelocityBoundaryDensity::DoCollisions(double omega, int i, double *
 
   unsigned int boundary_id;
 
-  f = &f_old[i * 15];
+  f = &f_old[i * D3Q15::NUMVECTORS];
 
-  for (l = 0; l < 15; l++)
+  for (l = 0; l < D3Q15::NUMVECTORS; l++)
   {
     f_neq[l] = f[l];
   }
   boundary_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
 
   *density = mBoundaryDensityArray[boundary_id];
-
   *v_x = *v_y = *v_z = 0.F;
 
-  f_neq[0] -= (f_new[f_id[i * 15]] = f[0] = (2.0 / 9.0) * *density);
+  D3Q15::CalculateFeq(*density, 0.0, 0.0, 0.0, f);
 
-  temp = (1.0 / 9.0) * *density;
-
-  for (l = 1; l < 7; l++)
-    f_neq[l] -= (f_new[f_id[i * 15 + l]] = f[l] = temp);
-
-  temp *= (1.0 / 8.0);
-
-  for (l = 7; l < 15; l++)
-    f_neq[l] -= (f_new[f_id[i * 15 + l]] = f[l] = temp);
+  for(int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+  {
+    f_neq[ii] -= f_new[f_id[i * D3Q15::NUMVECTORS]] = f[ii];
+  }
 }
 
 }

@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include "mpiInclude.h"
+#include "D3Q15.h"
 
 // Superficial site data
 struct WallData
@@ -20,7 +21,7 @@ struct WallData
   // cut distances along the 14 non-zero lattice vectors;
   // each one is between 0 and 1 if the surface cuts the corresponding
   // vector or is equal to 1e+30 otherwise
-  double cut_dist[14];
+  double cut_dist[D3Q15::NUMVECTORS - 1];
 
 };
 

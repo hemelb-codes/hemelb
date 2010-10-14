@@ -215,7 +215,7 @@ namespace hemelb
 		      vel_site_data_p->counter = counter;
 		      double density;
 
-		      lbmDensityAndVelocity (&f_old[ vel_site_data_p->site_id*c1Plusc2 ],
+		      D3Q15::CalculateDensityAndVelocity(&f_old[ vel_site_data_p->site_id*c1Plusc2 ],
 					     &density, &vx, &vy, &vz);
 		  
 		      v[i][j][k][0] = vel_site_data_p->vx = vx / density;

@@ -15,12 +15,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-// TODO find a better way to do this.
-const int e_x[] = { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1};
-const int e_y[] = { 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1};
-const int e_z[] = { 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1};
-const int inv_dir[] = {0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13};
-
 
 /*!
 Low level function that finds the pointer to the rank on which a
@@ -397,13 +391,13 @@ void Net::netInit (int totalFluidSites)
 			      site_location_a_p = &site_location_a[ index_a ];
 			      
 			      for (l = 1;
-				   l < 15 && partial_visited_fluid_sites < fluid_sites_per_unit;
+				   l < D3Q15::NUMVECTORS && partial_visited_fluid_sites < fluid_sites_per_unit;
 				   l++)
 				{
 				  // Record neighbour location.
-				  neigh_i = site_location_a_p->i + e_x[ l ];
-				  neigh_j = site_location_a_p->j + e_y[ l ];
-				  neigh_k = site_location_a_p->k + e_z[ l ];
+				  neigh_i = site_location_a_p->i + D3Q15::CX[ l ];
+				  neigh_j = site_location_a_p->j + D3Q15::CY[ l ];
+				  neigh_k = site_location_a_p->k + D3Q15::CZ[ l ];
 				  
 				  // Move on if neighbour is outside the bounding box.
 				  if (neigh_i == -1 || neigh_i == sites_x) continue;
@@ -565,12 +559,12 @@ void Net::netInit (int totalFluidSites)
 				      site_location_a_p = &site_location_a[ index_a ];
 				      
 				      for (l = 1;
-					   l < 15 && partial_visited_fluid_sites < fluid_sites_per_unit;
+					   l < D3Q15::NUMVECTORS && partial_visited_fluid_sites < fluid_sites_per_unit;
 					   l++)
 					{
-					  neigh_i = site_location_a_p->i + e_x[ l ];
-					  neigh_j = site_location_a_p->j + e_y[ l ];
-					  neigh_k = site_location_a_p->k + e_z[ l ];
+					  neigh_i = site_location_a_p->i + D3Q15::CX[ l ];
+					  neigh_j = site_location_a_p->j + D3Q15::CY[ l ];
+					  neigh_k = site_location_a_p->k + D3Q15::CZ[ l ];
 					  
 					  if (neigh_i == -1 || neigh_i == sites_x) continue;
 					  if (neigh_j == -1 || neigh_j == sites_y) continue;
@@ -777,11 +771,11 @@ void Net::netInit (int totalFluidSites)
 		  is_inter_site = 0;
 		  is_inner_site = 1;
 		  
-		  for (l = 1; l < 15; l++)
+		  for (l = 1; l < D3Q15::NUMVECTORS; l++)
 		    {
-		      neigh_i = site_i + e_x[ l ];
-		      neigh_j = site_j + e_y[ l ];
-		      neigh_k = site_k + e_z[ l ];
+		      neigh_i = site_i + D3Q15::CX[ l ];
+		      neigh_j = site_j + D3Q15::CY[ l ];
+		      neigh_k = site_k + D3Q15::CZ[ l ];
 		      
 		      proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k);
 		      
@@ -952,8 +946,8 @@ void Net::netInit (int totalFluidSites)
   // an if condition at every timestep at every boundary site.  We also allocate space for the
   // shared distribution functions.  We need twice as much space when we check the convergence
   // and the extra distribution functions are
-      f_old = new double[my_sites * 15 + 1 + shared_fs];
-      f_new = new double[my_sites * 15 + 1 + shared_fs];
+      f_old = new double[my_sites * D3Q15::NUMVECTORS + 1 + shared_fs];
+      f_new = new double[my_sites * D3Q15::NUMVECTORS + 1 + shared_fs];
 
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
@@ -977,7 +971,7 @@ void Net::netInit (int totalFluidSites)
       
       // Pointing to a few things, but not setting any variables.
 	  // f_head points to start of shared_fs.
-	  neigh_proc[ n ].f_head = my_sites * 15 + 1 + shared_fs;
+	  neigh_proc[ n ].f_head = my_sites * D3Q15::NUMVECTORS + 1 + shared_fs;
 
 	  neigh_proc[ n ].f_recv_iv = &f_recv_iv[ shared_fs ];
       
@@ -987,14 +981,14 @@ void Net::netInit (int totalFluidSites)
   if (my_sites > 0)
     {
       // f_id is allocated so we know which sites to get information from.
-      f_id = new int [my_sites * 15];
+      f_id = new int [my_sites * D3Q15::NUMVECTORS];
       
       net_site_data = new unsigned int [my_sites];
       
       if (lbm_stress_type == SHEAR_STRESS)
 	{
           net_site_nor = new double[my_sites*3];
-          cut_distances = new double[my_sites*14];
+          cut_distances = new double[my_sites*(D3Q15::NUMVECTORS - 1)];
 	}
     }
   from_proc_id_to_neigh_proc_index = new short int [procs];
@@ -1037,17 +1031,17 @@ void Net::netInit (int totalFluidSites)
 		    site_map = map_block_p->site_data[ m ];
 		    
 		    // set f_id.
-			f_id[ site_map*15+0 ] = site_map * 15 + 0;
+			f_id[ site_map*D3Q15::NUMVECTORS+0 ] = site_map * D3Q15::NUMVECTORS + 0;
 
-		    for (l = 1; l < 15; l++)
+		    for (l = 1; l < D3Q15::NUMVECTORS; l++)
 		      {
 			// Work out positions of neighbours.
-			neigh_i = site_i + e_x[ l ];
-			neigh_j = site_j + e_y[ l ];
-			neigh_k = site_k + e_z[ l ];
+			neigh_i = site_i + D3Q15::CX[ l ];
+			neigh_j = site_j + D3Q15::CY[ l ];
+			neigh_k = site_k + D3Q15::CZ[ l ];
 			
 			// initialize f_id to the rubbish site.
-			    f_id[ site_map*15+l ] = my_sites * 15;
+			    f_id[ site_map*D3Q15::NUMVECTORS+l ] = my_sites * D3Q15::NUMVECTORS;
 
 			// You know which process the neighbour is on.
 			proc_id_p = netProcIdPointer (neigh_i, neigh_j, neigh_k);
@@ -1067,7 +1061,7 @@ void Net::netInit (int totalFluidSites)
 			// current and previous cycles.
 			if (*proc_id_p == id)
 			  {
-				f_id[ site_map*15+l ] = *site_data_p * 15 + l;
+				f_id[ site_map*D3Q15::NUMVECTORS + l ] = *site_data_p * D3Q15::NUMVECTORS + l;
 
 			    continue;
 			  }
@@ -1101,8 +1095,8 @@ void Net::netInit (int totalFluidSites)
 			    for (l = 0; l < 3; l++)
 			      net_site_nor[ site_map*3+l ] = wall_block[n].wall_data[m].wall_nor[l];
  
-                            for(l = 0; l < 14; l++)
-                              cut_distances[ site_map*14 + l] = wall_block[n].wall_data[m].cut_dist[l];
+                            for (l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
+                              cut_distances[ site_map*(D3Q15::NUMVECTORS - 1) + l] = wall_block[n].wall_data[m].cut_dist[l];
 			  }
 			else
 			  {
@@ -1177,15 +1171,15 @@ void Net::netInit (int totalFluidSites)
 	      f_data_p = &neigh_proc_p->f_data[ n ];
 	      
   	      l = f_data_p[ 3 ];
-  	      f_data_p[ 0 ] += e_x[ l ];
-  	      f_data_p[ 1 ] += e_y[ l ];
-  	      f_data_p[ 2 ] += e_z[ l ];
-  	      f_data_p[ 3 ] = inv_dir[ l ];
+  	      f_data_p[ 0 ] += D3Q15::CX[ l ];
+  	      f_data_p[ 1 ] += D3Q15::CY[ l ];
+  	      f_data_p[ 2 ] += D3Q15::CZ[ l ];
+  	      f_data_p[ 3 ] = D3Q15::INVERSEDIRECTIONS[ l ];
   	    }
   	}
     }
 
-  int f_count = my_sites * 15;
+  int f_count = my_sites * D3Q15::NUMVECTORS;
  
   for (m = 0; m < neigh_procs; m++)
     {
@@ -1205,11 +1199,11 @@ void Net::netInit (int totalFluidSites)
 	  
 	      // Set f_id to the element in the send buffer that we put the updated
 	      // distribution functions in.
-	      f_id[ site_map * 15 + l ] = ++f_count;
+	      f_id[ site_map * D3Q15::NUMVECTORS + l ] = ++f_count;
 
 	      // Set the place where we put the received distribution functions, which is
 	      // f_new[number of fluid site that sends, inverse direction].
-	      neigh_proc_p->f_recv_iv[ n ] = site_map * 15 + inv_dir[ l ];
+	      neigh_proc_p->f_recv_iv[ n ] = site_map * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[ l ];
 	}
     }
   // neigh_prc->f_data was only set as a pointer to f_data, not allocated.  In this line, we 
