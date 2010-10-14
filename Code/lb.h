@@ -38,6 +38,8 @@ class LBM {
   void lbmRestart (Net *net);
   ~LBM();
 
+  int IsUnstable (Net *net);
+
   int lbmCycle (int perform_rt, Net *net);
   void lbmCalculateFlowFieldValues ();
   void RecalculateTauViscosityOmega ();
@@ -90,11 +92,6 @@ class LBM {
   double lbm_velocity_min, lbm_velocity_max;
   double lbm_stress_min, lbm_stress_max;
 };
-
-unsigned int lbmCollisionType (unsigned int site_data);
-void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
-void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
-int lbmIsUnstable (Net *net);
 
 extern double lbm_stress_type;
 extern double lbm_stress_par;

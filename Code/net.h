@@ -119,6 +119,8 @@ class Net
   
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
   
+    unsigned int GetCollisionType (unsigned int site_data);
+
 #ifndef NOMPI
     MPI_Status status[4];                      // Define variables for MPI non-blocking sends, receives.
   

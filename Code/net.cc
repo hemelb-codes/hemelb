@@ -213,6 +213,45 @@ int Net::netFindTopology (int *depths)
 }
 #endif
 
+// Returns the type of collision/streaming update for the fluid site
+// with data "site_data".
+unsigned int Net::GetCollisionType(unsigned int site_data)
+{
+  unsigned int boundary_type;
+
+  if (site_data == FLUID_TYPE)
+    {
+      return FLUID;
+    }
+  boundary_type = site_data & SITE_TYPE_MASK;
+
+  if (boundary_type == FLUID_TYPE)
+    {
+      return EDGE;
+    }
+  if (!(site_data & PRESSURE_EDGE_MASK))
+    {
+      if (boundary_type == INLET_TYPE)
+  {
+    return INLET;
+  }
+      else
+  {
+    return OUTLET;
+  }
+    }
+  else
+    {
+      if (boundary_type == INLET_TYPE)
+  {
+    return INLET | EDGE;
+  }
+      else
+  {
+    return OUTLET | EDGE;
+  }
+    }
+}
 
 /*!
 This is called from the main function.  First function to deal with processors.
@@ -829,27 +868,27 @@ void Net::netInit (int totalFluidSites)
 		    }
 		  // Collision Type set here. map_block site data is renumbered according to 
 		  // fluid site numbers within a particular collision type.
-		  if (lbmCollisionType (site_data[ my_sites_p ]) == FLUID)
+		  if (GetCollisionType (site_data[ my_sites_p ]) == FLUID)
 		    {
 		      l = 0;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites_p ]) == EDGE)
+		  else if (GetCollisionType (site_data[ my_sites_p ]) == EDGE)
 		    {
 		      l = 1;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites_p ]) == INLET)
+		  else if (GetCollisionType (site_data[ my_sites_p ]) == INLET)
 		    {
 		      l = 2;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites_p ]) == OUTLET)
+		  else if (GetCollisionType (site_data[ my_sites_p ]) == OUTLET)
 		    {
 		      l = 3;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites_p ]) == (INLET | EDGE))
+		  else if (GetCollisionType (site_data[ my_sites_p ]) == (INLET | EDGE))
 		    {
 		      l = 4;
 		    }
-		  else if (lbmCollisionType (site_data[ my_sites_p ]) == (OUTLET | EDGE))
+		  else if (GetCollisionType (site_data[ my_sites_p ]) == (OUTLET | EDGE))
 		    {
 		      l = 5;
 		    }
@@ -1090,7 +1129,7 @@ void Net::netInit (int totalFluidSites)
 		    
 		    if (lbm_stress_type == SHEAR_STRESS)
 		      {
-			if (lbmCollisionType (net_site_data[ site_map ]) & EDGE)
+			if (GetCollisionType (net_site_data[ site_map ]) & EDGE)
 			  {
 			    for (l = 0; l < 3; l++)
 			      net_site_nor[ site_map*3+l ] = wall_block[n].wall_data[m].wall_nor[l];
