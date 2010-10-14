@@ -426,7 +426,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
   double pressure;
   double vx, vy, vz;
   double stress;
-  double f_eq[15], f_neq[15];
+  double f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS];
   float pressure_par, velocity_par, stress_par;
   
   int buffer_size;
@@ -556,14 +556,14 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 	      
 	      if (net->net_site_data[ my_site_id ] == FLUID_TYPE) {
                 D3Q15::CalculateDensityVelocityFEq(&f_old[ (my_site_id * (par + 1) + par)
-                    * 15], &density, &vx, &vy, &vz, f_eq);
+                    * D3Q15::NUMVECTORS], &density, &vx, &vy, &vz, f_eq);
 		
-		for (l = 0; l < 15; l++) {
-		  f_neq[ l ] = f_old[ (my_site_id*(par+1)+par)*15+l ] - f_eq[ l ];
+		for (l = 0; l < D3Q15::NUMVECTORS; l++) {
+		  f_neq[ l ] = f_old[ (my_site_id*(par+1)+par)*D3Q15::NUMVECTORS+l ] - f_eq[ l ];
 		}
 		
 	      } else { // not FLUID_TYPE
-		lbmCalculateBC(&f_old[ (my_site_id*(par+1)+par)*15 ],
+		lbmCalculateBC(&f_old[ (my_site_id*(par+1)+par)*D3Q15::NUMVECTORS ],
 			       net->net_site_data[ my_site_id ],
 			       &density, &vx, &vy, &vz, f_neq);
 	      }

@@ -177,8 +177,6 @@ void D3Q15::CalculateVonMisesStress(double f[], double *stress, double iStressPa
 void D3Q15::CalculateShearStress(double density, double f[], double nor[],
   double *stress, double iStressParameter)
 {
-  int e[] = { 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 1, 0, 0, -1, 1, 1, 1,
-              -1, -1, -1, 1, 1, -1, -1, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1, -1, -1, 1, 1 };
   double sigma[9]; // stress tensor;
   // sigma_ij is the force
   // per unit area in
@@ -206,7 +204,7 @@ void D3Q15::CalculateShearStress(double density, double f[], double nor[],
     {
       sigma[i * 3 + j] = 0.0;
 
-      for (l = 0; l < 15; l++)
+      for (l = 0; l < NUMVECTORS; l++)
       {
         sigma[i * 3 + j] += f[l] * (Cs[i][l] * Cs[j][l]);
       }

@@ -16,3 +16,9 @@ All code must be in the namespace "hemelb::<module>"
 CODE FILES
 ----------
 All code must be in the right namespace (as per the header file)
+
+All function and class names to begin with a capital letter.
+Function names should always start with a verb.
+All variables to begin with a small letter - for member variables a 'm', for input variables an 'i', for variables that are only 
+written to an 'o', and for variables that are both written to and read from a 'b'.
+Constants should be entirely in capitals.

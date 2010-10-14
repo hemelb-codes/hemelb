@@ -84,9 +84,11 @@ int main (int argc, char *argv[])
   net.id = 0;
 #endif
   
+  int lCyclesMax = 0;
+
   if (argc == 8)
     {
-      lbm.cycles_max      = atoi( argv[2] );
+    lCyclesMax      = atoi( argv[2] );
       lbm.period          = atoi( argv[3] );
       lbm.voxel_size      = atof( argv[4] );
       snapshots_per_cycle = atoi( argv[5] );
@@ -228,11 +230,11 @@ int main (int argc, char *argv[])
       else
 	images_period = hemelb::util::max(1, lbm.period / images_per_cycle);
       
-      for (cycle_id = 1; cycle_id <= lbm.cycles_max && !is_finished; cycle_id++)
+      for (cycle_id = 1; cycle_id <= lCyclesMax && !is_finished; cycle_id++)
 	{
 	  int restart = 0;
 	  
-	  lbmInitMinMaxValues ();
+	  lbm.lbmInitMinMaxValues ();
 	  
 	  for (time_step = 1; time_step <= lbm.period; time_step++)
 	    {
@@ -411,7 +413,7 @@ int main (int argc, char *argv[])
       simulation_time = hemelb::util::myClock () - simulation_time;
       
       time_step = hemelb::util::min(time_step, lbm.period);
-      cycle_id = hemelb::util::min(cycle_id, lbm.cycles_max);
+      cycle_id = hemelb::util::min(cycle_id, lCyclesMax);
       time_step = time_step * cycle_id;
   
       if (net.id == 0)
@@ -438,19 +440,11 @@ int main (int argc, char *argv[])
     {
       if (net.id == 0)
 	{
-	      lbm_phys_pressure_min = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
-	      lbm_phys_pressure_max = lbm.lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
-	      
-	      lbm_phys_velocity_min = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
-	      lbm_phys_velocity_max = lbm.lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
-	      
-	      lbm_phys_stress_min = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_min);
-	      lbm_phys_stress_max = lbm.lbmConvertStressToPhysicalUnits (lbm_stress_max);
 	      
 	      fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
-	      fprintf (timings_ptr, "pressure min, max (mmHg): %e, %e\n", lbm_phys_pressure_min, lbm_phys_pressure_max);
-	      fprintf (timings_ptr, "velocity min, max (m/s) : %e, %e\n", lbm_phys_velocity_min, lbm_phys_velocity_max);
-	      fprintf (timings_ptr, "stress   min, max (Pa)  : %e, %e\n", lbm_phys_stress_min, lbm_phys_stress_max);
+	      fprintf (timings_ptr, "pressure min, max (mmHg): %e, %e\n", lbm.GetMinPhysicalPressure(), lbm.GetMaxPhysicalPressure());
+	      fprintf (timings_ptr, "velocity min, max (m/s) : %e, %e\n", lbm.GetMinPhysicalVelocity(), lbm.GetMaxPhysicalVelocity());
+	      fprintf (timings_ptr, "stress   min, max (Pa)  : %e, %e\n", lbm.GetMinPhysicalStress(), lbm.GetMaxPhysicalStress());
 	      fprintf (timings_ptr, "\n");
 	      
 	      for (int n = 0; n < lbm.inlets; n++) {

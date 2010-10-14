@@ -2,7 +2,6 @@
 #define HEMELB_LB_COLLISIONS_COLLISION_H
 
 #include "net.h"
-#include "D3Q15.h"
 
 namespace hemelb
 {
