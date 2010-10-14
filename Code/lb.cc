@@ -137,13 +137,13 @@ void lbmUpdateSiteDataSim (const bool isPostStep, double omega, int i, double *d
 
     if (lbm_stress_type == SHEAR_STRESS)
     {
-      if (net->net_site_nor[i * 3] > 1.0e+30)
+      if (net->GetNormalToWall(i)[0] > 1.0e+30)
       {
         stress = 0.0;
       }
       else
       {
-        D3Q15::CalculateShearStress(*density, f_neq, &net->net_site_nor[i * 3], &stress,
+        D3Q15::CalculateShearStress(*density, f_neq, net->GetNormalToWall(i), &stress,
                                     lbm_stress_par);
       }
     }
@@ -182,14 +182,14 @@ void lbmUpdateSiteDataSimPlusVis (const bool isPostStep, double omega, int i, do
 
     if (lbm_stress_type == SHEAR_STRESS)
     {
-      if (net->net_site_nor[i * 3] >= 1.0e+30)
+      if (net->GetNormalToWall(i)[0] >= 1.0e+30)
       {
         iLbm->lbmUpdateMinMaxValues(*density, *velocity, 0.0);
         hemelb::vis::rtUpdateClusterVoxel(i, *density, *velocity, 1.0e+30F);
       }
       else
       {
-        D3Q15::CalculateShearStress(*density, f_neq, &net->net_site_nor[i * 3], &stress,
+        D3Q15::CalculateShearStress(*density, f_neq, net->GetNormalToWall(i), &stress,
                                     lbm_stress_par);
         iLbm->lbmUpdateMinMaxValues(*density, *velocity, stress);
         hemelb::vis::rtUpdateClusterVoxel(i, *density, *velocity, stress);

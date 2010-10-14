@@ -472,7 +472,6 @@ int main (int argc, char *argv[])
 	}
     }
   delete hemelb::vis::controller;
-  net.netEnd ();
   
 #ifndef NO_STEER
   if (net.id == 0)
