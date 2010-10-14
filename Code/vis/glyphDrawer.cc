@@ -82,7 +82,7 @@ namespace hemelb
       float p1[3], p2[3], p3[3], p4[3];
   
       for (int n = 0; n < glyphs; n++) {
-	lbmDensityAndVelocity(glyph[ n ].f,
+D3Q15::CalculateDensityAndVelocity(glyph[ n ].f,
 			      &density, &vx, &vy, &vz);
     
 	temp = glyph_length * block_size *

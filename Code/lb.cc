@@ -90,122 +90,6 @@ void LBM::RecalculateTauViscosityOmega ()
   lbm_stress_par = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
 }
 
-
-// Calculate density, velocity and the equilibrium distribution
-// functions according to the D3Q15 model.  The calculated v_x, v_y
-// and v_z are actually density * velocity, because we are using the
-// compressible model.
-void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[])
-{
-  double density_1;
-  double v_xx, v_yy, v_zz;
-  double temp1, temp2;
-  
-  
-  *v_x = f[1] + (f[7] + f[9]) + (f[11] + f[13]);
-  *v_y = f[3] + (f[12] + f[14]);
-  *v_z = f[5] + f[10];
-  
-  *density = f[0] + (f[2] + f[4]) + (f[6] + f[8]) + *v_x + *v_y + *v_z;
-  
-  *v_x -= f[2] + (f[8] + f[10]) + (f[12] + f[14]);
-  *v_y += (f[7] + f[9]) - (f[4] + (f[8] + f[10]) + (f[11] + f[13]));
-  *v_z += f[7] + f[11] + f[14] - ((f[6] + f[8]) + f[9] + f[12] + f[13]);
-  
-  density_1 = 1. / *density;
-  
-  v_xx = *v_x * *v_x;
-  v_yy = *v_y * *v_y;
-  v_zz = *v_z * *v_z;
-  
-  f_eq[ 0 ] = (2.0/9.0) * *density - (1.0/3.0) * ((v_xx + v_yy + v_zz) * density_1);
-  
-  temp1 = (1.0/9.0) * *density - (1.0/6.0) * ((v_xx + v_yy + v_zz) * density_1);
-  
-  f_eq[1] = (temp1 + (0.5 * density_1) * v_xx) + ((1.0/3.0) * *v_x);   // (+1, 0, 0)
-  f_eq[2] = (temp1 + (0.5 * density_1) * v_xx) - ((1.0/3.0) * *v_x);   // (+1, 0, 0)
-  
-  f_eq[3] = (temp1 + (0.5 * density_1) * v_yy) + ((1.0/3.0) * *v_y);   // (0, +1, 0)
-  f_eq[4] = (temp1 + (0.5 * density_1) * v_yy) - ((1.0/3.0) * *v_y);   // (0, -1, 0)
-  
-  f_eq[5] = (temp1 + (0.5 * density_1) * v_zz) + ((1.0/3.0) * *v_z);   // (0, 0, +1)
-  f_eq[6] = (temp1 + (0.5 * density_1) * v_zz) - ((1.0/3.0) * *v_z);   // (0, 0, -1)
-  
-  temp1 *= (1.0/8.0);
-  
-  temp2 = (*v_x + *v_y) + *v_z;
-  
-  f_eq[ 7] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, +1, +1)
-  f_eq[ 8] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, -1, -1)
-  
-  temp2 = (*v_x + *v_y) - *v_z;
-  
-  f_eq[ 9] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, +1, -1)
-  f_eq[10] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, -1, +1)
-  
-  temp2 = (*v_x - *v_y) + *v_z;
-  
-  f_eq[11] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, -1, +1)
-  f_eq[12] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, +1, -1)
-  
-  temp2 = (*v_x - *v_y) - *v_z;
-  
-  f_eq[13] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, -1, -1)
-  f_eq[14] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, +1, +1)
-}
-
-
-void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[])
-{
-  double density_1;
-  double v_xx, v_yy, v_zz;
-  double temp1, temp2;
-  
-  
-  density_1 = 1. / density;
-  
-  v_xx = v_x * v_x;
-  v_yy = v_y * v_y;
-  v_zz = v_z * v_z;
-  
-  f_eq[ 0 ] = (2.0/9.0) * density - (1.0/3.0) * ((v_xx + v_yy + v_zz) * density_1);
-  
-  temp1 = (1.0/9.0) * density - (1.0/6.0) * ((v_xx + v_yy + v_zz) * density_1);
-  
-  f_eq[1] = (temp1 + (0.5 * density_1) * v_xx) + ((1.0/3.0) * v_x);   // (+1, 0, 0)
-  f_eq[2] = (temp1 + (0.5 * density_1) * v_xx) - ((1.0/3.0) * v_x);   // (+1, 0, 0)
-  
-  f_eq[3] = (temp1 + (0.5 * density_1) * v_yy) + ((1.0/3.0) * v_y);   // (0, +1, 0)
-  f_eq[4] = (temp1 + (0.5 * density_1) * v_yy) - ((1.0/3.0) * v_y);   // (0, -1, 0)
-  
-  f_eq[5] = (temp1 + (0.5 * density_1) * v_zz) + ((1.0/3.0) * v_z);   // (0, 0, +1)
-  f_eq[6] = (temp1 + (0.5 * density_1) * v_zz) - ((1.0/3.0) * v_z);   // (0, 0, -1)
-  
-  temp1 *= (1.0/8.0);
-  
-  temp2 = (v_x + v_y) + v_z;
-  
-  f_eq[ 7] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, +1, +1)
-  f_eq[ 8] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, -1, -1)
-  
-  temp2 = (v_x + v_y) - v_z;
-  
-  f_eq[ 9] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, +1, -1)
-  f_eq[10] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, -1, +1)
-  
-  temp2 = (v_x - v_y) + v_z;
-  
-  f_eq[11] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, -1, +1)
-  f_eq[12] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, +1, -1)
-  
-  temp2 = (v_x - v_y) - v_z;
-  
-  f_eq[13] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) + ((1.0/24.0) * temp2);   // (+1, -1, -1)
-  f_eq[14] = (temp1 + ((1.0/16.0) * density_1) * temp2 * temp2) - ((1.0/24.0) * temp2);   // (-1, +1, +1)
-}
-
-
-
 //TODO: A lot of this commented-out code doesn't exist anywhere else. Or at
 // least some of it doesn't. We should move it all into the class hierarchy
 // for collision cases and test it all before removing it here. This needs
@@ -898,110 +782,6 @@ void LBM::lbmCollisionConv5 (double omega, int i,
 }
 */
 
-void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z)
-{
-  *v_x = f[1] + (f[7] + f[9]) + (f[11] + f[13]);
-  *v_y = f[3] + (f[12] + f[14]);
-  *v_z = f[5] + f[10];
-  
-  *density = f[0] + (f[2] + f[4]) + (f[6] + f[8]) + *v_x + *v_y + *v_z;
-  
-  *v_x -= (f[2] + f[8] + f[10] + (f[12] + f[14]));
-  *v_y += (f[7] + f[9]) - ((f[4] + f[8] + f[10] + (f[11] + f[13])));
-  *v_z += f[7] + f[11] + f[14] - (((f[6] + f[8]) + f[9] + f[12] + f[13]));
-}
-
-
-// von Mises stress computation given the non-equilibrium distribution functions.
-void lbmVonMisesStress (double f[], double *stress)
-{
-  double sigma_xx_yy, sigma_yy_zz, sigma_xx_zz;
-  double sigma_xy, sigma_xz, sigma_yz;
-  double a, b;
-  
-  
-  sigma_xx_yy = (f[1] + f[2]) - (f[3] + f[4]);
-  sigma_yy_zz = (f[3] + f[4]) - (f[5] + f[6]);
-  sigma_xx_zz = (f[1] + f[2]) - (f[5] + f[6]);
-  
-  sigma_xy = (f[7] + f[8]) + (f[9] + f[10]) - (f[11] + f[12]) - (f[13] + f[14]);
-  sigma_xz = (f[7] + f[8]) - (f[9] + f[10]) + (f[11] + f[12]) - (f[13] + f[14]);
-  sigma_yz = (f[7] + f[8]) - (f[9] + f[10]) - (f[11] + f[12]) + (f[13] + f[14]);
-  
-  a = sigma_xx_yy * sigma_xx_yy + sigma_yy_zz * sigma_yy_zz + sigma_xx_zz * sigma_xx_zz;
-  b = sigma_xy * sigma_xy + sigma_xz * sigma_xz + sigma_yz * sigma_yz;
-  
-  *stress = lbm_stress_par * sqrt(a + 6.0 * b);
-}
-
-// The magnitude of the tangential component of the shear stress acting on the
-// wall.
-void lbmShearStress (double density, double f[], double nor[], double *stress)
-{
-  int e[] = {
-    0, 0, 0,
-    1, 0, 0,
-   -1, 0, 0,
-    0, 1, 0,
-    0,-1, 0,
-    0, 0, 1,
-    0, 0,-1,
-    1, 1, 1,
-   -1,-1,-1,
-    1, 1,-1,
-   -1,-1, 1,
-    1,-1, 1,
-   -1, 1,-1,
-    1,-1,-1,
-   -1, 1, 1
-  };
-  double sigma[9];                            // stress tensor;
-                                              // sigma_ij is the force
-                                              // per unit area in
-                                              // direction i on the
-                                              // plane with the normal
-                                              // in direction j
-  double stress_vector[] = {0.0, 0.0, 0.0};   // Force per unit area in
-                                              // direction i on the
-                                              // plane perpendicular to
-                                              // the surface normal
-  double square_stress_vector = 0.0;
-  double normal_stress = 0.0;                 // Magnitude of force per
-                                              // unit area normal to the
-                                              // surface
-  int i, j, l;
-  
-  
-  double temp = lbm_stress_par * (-sqrt(2.0));
-  
-  for (i = 0; i < 3; i++)
-    for (j = 0; j <= i; j++)
-      {
-	sigma[i*3+j] = 0.0;
-	
-	for (l = 0; l < 15; l++)
-	  {
-	    sigma[i*3+j] += f[l] * (e[l*3+i] * e[l*3+j]);
-	  }
-	sigma[i*3+j] *= temp;
-      }
-  for (i = 0; i < 3; i++)
-    for (j = 0; j < i; j++)
-      sigma[j*3+i] = sigma[i*3+j];
-  
-  for (i = 0; i < 3; i++)
-    {
-      for (j = 0; j < 3; j++)
-	stress_vector[i] += sigma[i*3+j] * nor[j];
-      
-      square_stress_vector += stress_vector[i] * stress_vector[i];
-      normal_stress        += stress_vector[i] * nor[i];
-    }
-  // shear_stress^2 + normal_stress^2 = stress_vector^2
-  *stress = sqrt(square_stress_vector - normal_stress * normal_stress);
-}
-
-
 // Set up of min/max values at the beginning of each pulsatile cycle.
 void lbmInitMinMaxValues (void)
 {
@@ -1033,7 +813,7 @@ void lbmUpdateMinMaxValues (double density, double velocity, double stress)
 void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net, 
   hemelb::lb::collisions::Collision* iCollision)
 {
-  double f_neq[15];
+  double f_neq[D3Q15::NUMVECTORS];
   double stress;
   
   
@@ -1052,12 +832,12 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
 	}
       else
 	{
-	  lbmShearStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
+	  D3Q15::CalculateShearStress(*density, f_neq, &net->net_site_nor[ i*3 ], &stress, lbm_stress_par);
 	}
     }
   else
     {
-      lbmVonMisesStress (f_neq, &stress);
+      D3Q15::CalculateVonMisesStress(f_neq, &stress, lbm_stress_par);
     }
   lbmUpdateMinMaxValues (*density, *velocity, stress);
 }
@@ -1067,7 +847,7 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
 void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
   hemelb::lb::collisions::Collision* iCollision)
 {
-  double f_neq[15];
+  double f_neq[D3Q15::NUMVECTORS];
   double stress;
   
   
@@ -1087,14 +867,14 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
 	}
       else
 	{
-	  lbmShearStress (*density, f_neq, &net->net_site_nor[ i*3 ], &stress);
+	  D3Q15::CalculateShearStress(*density, f_neq, &net->net_site_nor[ i*3 ], &stress, lbm_stress_par);
 	  lbmUpdateMinMaxValues (*density, *velocity, stress);
 	  hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 	}
     }
   else
     {
-      lbmVonMisesStress (f_neq, &stress);
+      D3Q15::CalculateVonMisesStress(f_neq, &stress, lbm_stress_par);
       lbmUpdateMinMaxValues (*density, *velocity, stress);
       hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
     }
@@ -1153,7 +933,7 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
   
   unsigned int boundary_type, boundary_id;
   
-  for (l = 0; l < 15; l++)
+  for (l = 0; l < D3Q15::NUMVECTORS; l++)
     {
       f_neq[ l ] = f[ l ];
     }
@@ -1161,7 +941,7 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
   
   if (boundary_type == FLUID_TYPE)
     {
-      lbmDensityAndVelocity (f, density, vx, vy, vz);
+      D3Q15::CalculateDensityAndVelocity(f, density, vx, vy, vz);
     }
   else
     {
@@ -1176,11 +956,11 @@ void lbmCalculateBC (double f[], unsigned int site_data, double *density,
 	  *density = outlet_density[ boundary_id ];
 	}
 
-      lbmDensityAndVelocity (f, &dummy_density, vx, vy, vz);
-      lbmFeq (*density, *vx, *vy, *vz, f);
+      D3Q15::CalculateDensityAndVelocity(f, &dummy_density, vx, vy, vz);
+      D3Q15::CalculateFeq(*density, *vx, *vy, *vz, f);
 
     }
-  for (l = 0; l < 15; l++)
+  for (l = 0; l < D3Q15::NUMVECTORS; l++)
     {
       f_neq[ l ] -= f[ l ];
     }
@@ -1244,7 +1024,7 @@ void LBM::lbmInitCollisions()
 
 void LBM::lbmSetInitialConditions (Net *net)
 {
-  double *f_old_p, *f_new_p, f_eq[15];
+  double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
   double density;
   double temp;
   
@@ -1261,20 +1041,12 @@ void LBM::lbmSetInitialConditions (Net *net)
   
   for (i = 0; i < net->my_sites; i++)
     {
-      f_eq[ 0 ] = (2.0/9.0) * density;
-      
-      temp = (1.0/9.0) * density;
-      
-      for (l = 1; l < 7; l++) f_eq[ l ] = temp;
-      
-      temp *= (1.0/8.0);
-      
-      for (l = 7; l < 15; l++) f_eq[ l ] = temp;
+    D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
       
 	  f_old_p = &f_old[ i*15 ];
 	  f_new_p = &f_new[ i*15 ];
 	  
-	  for (l = 0; l < 15; l++)
+	  for (l = 0; l < D3Q15::NUMVECTORS; l++)
 	    {
 	      f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
 	    }
@@ -1481,9 +1253,9 @@ int lbmIsUnstable (Net *net)
   
   for (int i = 0; i < net->my_sites; i++)
     {
-      for (int l = 0; l < 15; l++)
+      for (int l = 0; l < D3Q15::NUMVECTORS; l++)
 	{
-	  if (f_old[ i*15+l ] < 0.)
+	  if (f_old[ i*D3Q15::NUMVECTORS+l ] < 0.)
 	    {
 	      is_unstable = 1;
 	    }
@@ -1530,7 +1302,7 @@ void LBM::lbmUpdateInletVelocities (int time_step, Net *net)
   
   for (i = offset; i < offset + net->my_inner_collisions[ 2 ]; i++)
     {
-      lbmDensityAndVelocity (&f_old[ i*c1+c2 ], &density, &vx, &vy, &vz);
+      D3Q15::CalculateDensityAndVelocity(&f_old[ i*c1+c2 ], &density, &vx, &vy, &vz);
       
       inlet_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
@@ -1563,7 +1335,7 @@ void LBM::lbmUpdateInletVelocities (int time_step, Net *net)
   
   for (i = offset; i < offset + net->my_inter_collisions[ 2 ]; i++)
     {
-      lbmDensityAndVelocity (&f_old[ i*c1+c2 ], &density, &vx, &vy, &vz);
+      D3Q15::CalculateDensityAndVelocity(&f_old[ i*c1+c2 ], &density, &vx, &vy, &vz);
       
       inlet_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
       
