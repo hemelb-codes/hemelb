@@ -2,8 +2,6 @@
  * Should be removed ASAP
  */
 
-double* inlet_density, *outlet_density;
-
 double *f_old = 0, *f_new = 0;
 int *f_id = 0;
 int *f_recv_iv = 0;
