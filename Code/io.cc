@@ -171,14 +171,14 @@ void LBM::lbmReadConfig (Net *net) {
 	      site_max_z = hemelb::util::max(site_max_z, site_k);
 	      
 	      if (lbm_stress_type == SHEAR_STRESS &&
-		  lbmCollisionType (*site_type) != FLUID) {
+		  net->GetCollisionType(*site_type) != FLUID) {
 		// Neither solid nor simple fluid
 		if (net->wall_block[n].wall_data == NULL) {
 		  net->wall_block[n].wall_data = new WallData[sites_in_a_block];
 		}
 		
-		if (lbmCollisionType (*site_type) & INLET ||
-		    lbmCollisionType (*site_type) & OUTLET) {
+		if (net->GetCollisionType (*site_type) & INLET ||
+		    net->GetCollisionType (*site_type) & OUTLET) {
 		  // INLET or OUTLET or both
 		  for (l = 0; l < 3; l++)
 		    myReader.readDouble(net->wall_block[n].wall_data[m].boundary_nor[l]);
@@ -186,7 +186,7 @@ void LBM::lbmReadConfig (Net *net) {
 		  myReader.readDouble(net->wall_block[n].wall_data[m].boundary_dist);
 		}
 		
-		if (lbmCollisionType(*site_type) & EDGE) {
+		if (net->GetCollisionType(*site_type) & EDGE) {
 		  // EDGE bit set
 		  for (l = 0; l < 3; l++)
 		    myReader.readDouble(net->wall_block[n].wall_data[m].wall_nor[l]);
