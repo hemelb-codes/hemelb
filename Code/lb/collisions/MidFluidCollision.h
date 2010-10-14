@@ -5,16 +5,16 @@
 
 namespace hemelb
 {
-namespace lb
-{
-namespace collisions
-{
+  namespace lb
+  {
+    namespace collisions
+    {
 
-class MidFluidCollision : public Collision
-{
-};
+      class MidFluidCollision : public Collision
+      {
+      };
 
-}
-}
+    }
+  }
 }
 #endif /* HEMELB_LB_COLLISIONS_MIDFLUIDCOLLISION_H */

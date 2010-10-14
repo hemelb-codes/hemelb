@@ -18,8 +18,6 @@ namespace hemelb
         double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net)
       {
         double *f;
-        double temp;
-
         int l;
 
         unsigned int boundary_id;

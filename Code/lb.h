@@ -62,6 +62,7 @@ class LBM {
   void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 
  private:
+  void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 
   void lbmInitCollisions();
   void lbmReadConfig (Net *net);
@@ -84,20 +85,16 @@ class LBM {
   hemelb::lb::collisions::Collision* GetCollision(int i);
 
   int is_inlet_normal_available;
+  double* inlet_density, *outlet_density;
   double lbm_density_min, lbm_density_max;
   double lbm_velocity_min, lbm_velocity_max;
   double lbm_stress_min, lbm_stress_max;
 };
 
-void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
 unsigned int lbmCollisionType (unsigned int site_data);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmIsUnstable (Net *net);
-
-
-// TODO moving these requires making the collision / streaming functions non-static, which is potentially a big deal.
-extern double* inlet_density, *outlet_density;
 
 extern double lbm_stress_type;
 extern double lbm_stress_par;
