@@ -5,6 +5,7 @@ TARGETS = $(EXE)
 SUBDIRS = vis steering io dbg lb
 
 $(EXE)_DEPS = config.o \
+        D3Q15.o \
 	io.o \
 	lb.o \
 	fileutils.o \

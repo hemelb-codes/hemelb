@@ -78,11 +78,6 @@ class LBM {
   hemelb::lb::collisions::Collision* GetCollision(int i);
 };
 
-void lbmFeq (double f[], double *density, double *v_x, double *v_y, double *v_z, double f_eq[]);
-void lbmFeq (double density, double v_x, double v_y, double v_z, double f_eq[]);
-void lbmDensityAndVelocity (double f[], double *density, double *v_x, double *v_y, double *v_z);
-void lbmVonMisesStress (double f[], double *stress);
-void lbmShearStress (double density, double f[], double nor[], double *stress);
 void lbmInitMinMaxValues (void);
 void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
@@ -90,7 +85,6 @@ unsigned int lbmCollisionType (unsigned int site_data);
 void lbmUpdateFlowField (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 void lbmUpdateFlowFieldConv (int perform_rt, int i, double density, double vx, double vy, double vz, double f_neq[]);
 int lbmIsUnstable (Net *net);
-
 
 // TODO moving these requires making the collision / streaming functions non-static, which is potentially a big deal.
 extern double* inlet_density, *outlet_density;
@@ -112,6 +106,4 @@ extern int lbm_terminate_simulation;
 
 extern int is_inlet_normal_available;
 
-// TODO: prob don't belong here... 3 variables needed for convergence-enabled simulations
-extern int cycle_tag;
 #endif // HEMELB_LB_H

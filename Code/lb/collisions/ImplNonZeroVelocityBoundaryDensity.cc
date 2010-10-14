@@ -23,9 +23,9 @@ void ImplNonZeroVelocityBoundaryDensity::DoCollisions(double omega, int i, doubl
 
   unsigned int boundary_id, l;
 
-  f = &f_old[i * 15];
+  f = &f_old[i * D3Q15::NUMVECTORS];
 
-  for (l = 0; l < 15; l++)
+  for (l = 0; l < D3Q15::NUMVECTORS; l++)
   {
     f_neq[l] = f[l];
   }
@@ -33,12 +33,12 @@ void ImplNonZeroVelocityBoundaryDensity::DoCollisions(double omega, int i, doubl
 
   *density = mBoundaryDensityArray[boundary_id];
 
-  DensityAndVelocity(f, &dummy_density, v_x, v_y, v_z);
-  CalculateFeq(*density, *v_x, *v_y, *v_z, f);
+  D3Q15::CalculateDensityAndVelocity(f, &dummy_density, v_x, v_y, v_z);
+  D3Q15::CalculateFeq(*density, *v_x, *v_y, *v_z, f);
 
-  for (l = 0; l < 15; l++)
+  for (l = 0; l < D3Q15::NUMVECTORS; l++)
   {
-    f_neq[l] -= (f_new[f_id[i * 15 + l]] = f[l]);
+    f_neq[l] -= (f_new[f_id[i * D3Q15::NUMVECTORS + l]] = f[l]);
   }
 }
 
