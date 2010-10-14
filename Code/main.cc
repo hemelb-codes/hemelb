@@ -285,7 +285,7 @@ int main (int argc, char *argv[])
 	      
 		  stability = lbm.lbmCycle (hemelb::vis::doRendering, &net);
 		  
-		  if ((restart = lbmIsUnstable (&net)) != 0)
+		  if ((restart = lbm.IsUnstable (&net)) != 0)
 		    {
 		      break;
 		    }

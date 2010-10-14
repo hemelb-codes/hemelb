@@ -204,48 +204,6 @@ void lbmUpdateSiteDataSimPlusVis (const bool isPostStep, double omega, int i, do
   }
 }
 
-// Returns the type of collision/streaming update for the fluid site
-// with data "site_data".
-unsigned int lbmCollisionType (unsigned int site_data)
-{
-  unsigned int boundary_type;
-
-
-  if (site_data == FLUID_TYPE)
-    {
-      return FLUID;
-    }
-  boundary_type = site_data & SITE_TYPE_MASK;
-
-  if (boundary_type == FLUID_TYPE)
-    {
-      return EDGE;
-    }
-  if (!(site_data & PRESSURE_EDGE_MASK))
-    {
-      if (boundary_type == INLET_TYPE)
-	{
-	  return INLET;
-	}
-      else
-	{
-	  return OUTLET;
-	}
-    }
-  else
-    {
-      if (boundary_type == INLET_TYPE)
-	{
-	  return INLET | EDGE;
-	}
-      else
-	{
-	  return OUTLET | EDGE;
-	}
-    }
-}
-
-
 // Calculate the BCs for each boundary site type and the
 // non-equilibrium distribution functions.
 void LBM::lbmCalculateBC (double f[], unsigned int site_data, double *density,
@@ -549,26 +507,25 @@ void LBM::lbmCalculateFlowFieldValues ()
 }
 
 
-int lbmIsUnstable (Net *net)
+int LBM::IsUnstable(Net *net)
 {
   int is_unstable, stability;
 
   is_unstable = 0;
 
   for (int i = 0; i < net->my_sites; i++)
+  {
+    for (int l = 0; l < D3Q15::NUMVECTORS; l++)
     {
-      for (int l = 0; l < D3Q15::NUMVECTORS; l++)
-	{
-	  if (f_old[ i*D3Q15::NUMVECTORS+l ] < 0.)
-	    {
-	      is_unstable = 1;
-	    }
-	}
+      if (f_old[i * D3Q15::NUMVECTORS + l] < 0.)
+      {
+        is_unstable = 1;
+      }
     }
+  }
 
 #ifndef NOMPI
-  net->err = MPI_Allreduce (&is_unstable, &stability, 1,
-			    MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  net->err = MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   is_unstable = stability;
 #endif
 
