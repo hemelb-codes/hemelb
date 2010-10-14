@@ -16,7 +16,7 @@ unsigned int getBoundaryConfig(Net* net, int i)
 void (*lbmPostTimeStep)(double omega, int i, double *density, double *v_x, double *v_y,
   double *v_z, double f_neq[], Net* net) = NULL;
 void (*lbmUpdateSiteData[2])(double omega, int i, double *density, double *vx,
-  double *vy, double *vz, double *velocity, Net* net,
+  double *vy, double *vz, double *velocity, Net* net, LBM* iLbm,
   hemelb::lb::collisions::Collision* iCollision);
 
 double LBM::lbmConvertPressureToLatticeUnits (double pressure)
@@ -783,7 +783,7 @@ void LBM::lbmCollisionConv5 (double omega, int i,
 */
 
 // Set up of min/max values at the beginning of each pulsatile cycle.
-void lbmInitMinMaxValues (void)
+void LBM::lbmInitMinMaxValues (void)
 {
   lbm_density_min = +1.0e+30;
   lbm_density_max = +1.0e-30;
@@ -797,7 +797,7 @@ void lbmInitMinMaxValues (void)
 
 
 // Update the min/max values local to the current subdomain.
-void lbmUpdateMinMaxValues (double density, double velocity, double stress)
+void LBM::lbmUpdateMinMaxValues (double density, double velocity, double stress)
 {
   lbm_density_min = (density < lbm_density_min) ? density : lbm_density_min;
   lbm_density_max = (density > lbm_density_max) ? density : lbm_density_max;
@@ -811,7 +811,7 @@ void lbmUpdateMinMaxValues (double density, double velocity, double stress)
 
 // Fluid site updating for full-production runs.
 void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net, 
-  hemelb::lb::collisions::Collision* iCollision)
+  LBM* iLbm, hemelb::lb::collisions::Collision* iCollision)
 {
   double f_neq[D3Q15::NUMVECTORS];
   double stress;
@@ -839,13 +839,13 @@ void lbmUpdateSiteDataSim (double omega, int i, double *density, double *vx,doub
     {
       D3Q15::CalculateVonMisesStress(f_neq, &stress, lbm_stress_par);
     }
-  lbmUpdateMinMaxValues (*density, *velocity, stress);
+  iLbm->lbmUpdateMinMaxValues (*density, *velocity, stress);
 }
 
 
 // Fluid site updating for full-production runs plus computation of flow field values for visualisation purposes.
 void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *vx,double *vy, double *vz, double *velocity, Net* net,
-  hemelb::lb::collisions::Collision* iCollision)
+  LBM *iLbm, hemelb::lb::collisions::Collision* iCollision)
 {
   double f_neq[D3Q15::NUMVECTORS];
   double stress;
@@ -862,20 +862,20 @@ void lbmUpdateSiteDataSimPlusVis (double omega, int i, double *density, double *
     {
       if (net->net_site_nor[ i*3 ] >= 1.0e+30)
 	{
-	  lbmUpdateMinMaxValues (*density, *velocity, 0.0);
+	  iLbm->lbmUpdateMinMaxValues (*density, *velocity, 0.0);
 	  hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, 1.0e+30F);
 	}
       else
 	{
 	  D3Q15::CalculateShearStress(*density, f_neq, &net->net_site_nor[ i*3 ], &stress, lbm_stress_par);
-	  lbmUpdateMinMaxValues (*density, *velocity, stress);
+	  iLbm->lbmUpdateMinMaxValues (*density, *velocity, stress);
 	  hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
 	}
     }
   else
     {
       D3Q15::CalculateVonMisesStress(f_neq, &stress, lbm_stress_par);
-      lbmUpdateMinMaxValues (*density, *velocity, stress);
+      iLbm->lbmUpdateMinMaxValues (*density, *velocity, stress);
       hemelb::vis::rtUpdateClusterVoxel (i, *density, *velocity, stress);
     }
 }
@@ -1026,10 +1026,7 @@ void LBM::lbmSetInitialConditions (Net *net)
 {
   double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
   double density;
-  double temp;
-  
   int i, l;
-  
   
   density = 0.;
   
@@ -1043,8 +1040,8 @@ void LBM::lbmSetInitialConditions (Net *net)
     {
     D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
       
-	  f_old_p = &f_old[ i*15 ];
-	  f_new_p = &f_new[ i*15 ];
+	  f_old_p = &f_old[ i*D3Q15::NUMVECTORS ];
+	  f_new_p = &f_new[ i*D3Q15::NUMVECTORS ];
 	  
 	  for (l = 0; l < D3Q15::NUMVECTORS; l++)
 	    {
@@ -1099,7 +1096,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     for (i = offset; i < offset + net->my_inter_collisions[collision_type]; i++)
     {
       (*lbmUpdateSiteData[perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
-      GetCollision(collision_type));
+      this, GetCollision(collision_type));
     }
     offset += net->my_inter_collisions[collision_type];
   }
@@ -1122,7 +1119,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
       for (i = offset; i < offset + net->my_inner_collisions[ collision_type ]; i++)
 	{
         (*lbmUpdateSiteData[perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
-        GetCollision(collision_type));
+        this, GetCollision(collision_type));
 	}
       offset += net->my_inner_collisions[ collision_type ];
     }
@@ -1152,7 +1149,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     for (i = offset; i < offset + net->my_inter_collisions[ 1 ]; i++)
     {
       (*lbmUpdateSiteData[perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
-      GetCollision(collision_type));
+      this, GetCollision(collision_type));
     }
   
     offset = net->my_inner_collisions[ 0 ];
@@ -1160,7 +1157,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     for (i = offset; i < offset + net->my_inner_collisions[ 1 ]; i++)
     {
       (*lbmUpdateSiteData[perform_rt]) (omega, i, &density, &vx, &vy, &vz, &velocity, net,
-      GetCollision(collision_type));
+      this, GetCollision(collision_type));
     }
   }
 
@@ -1229,15 +1226,6 @@ void LBM::lbmCalculateFlowFieldValues ()
       lbm_average_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_average_inlet_velocity[i]);
       lbm_peak_inlet_velocity[i] = lbmConvertVelocityToPhysicalUnits (lbm_peak_inlet_velocity[i]);
     }
-  
-  lbm_phys_pressure_min = lbmConvertPressureToPhysicalUnits (lbm_density_min * Cs2);
-  lbm_phys_pressure_max = lbmConvertPressureToPhysicalUnits (lbm_density_max * Cs2);
-  
-  lbm_phys_velocity_min = lbmConvertVelocityToPhysicalUnits (lbm_velocity_min);
-  lbm_phys_velocity_max = lbmConvertVelocityToPhysicalUnits (lbm_velocity_max);
-  
-  lbm_phys_stress_min = lbmConvertStressToPhysicalUnits (lbm_stress_min);
-  lbm_phys_stress_max = lbmConvertStressToPhysicalUnits (lbm_stress_max);
   
   period = period;
   
@@ -1366,7 +1354,6 @@ void LBM::lbmUpdateInletVelocities (int time_step, Net *net)
     }
 }
 
-
 // In the case of instability, this function restart the simulation
 // with twice as many time steps per period and update the parameters
 // that depends on this change.
@@ -1402,6 +1389,30 @@ void LBM::lbmRestart (Net *net)
   lbmSetInitialConditions (net);
 }
 
+double LBM::GetMinPhysicalPressure()
+{
+  return lbmConvertPressureToPhysicalUnits(lbm_density_min * Cs2);
+}
+double LBM::GetMaxPhysicalPressure()
+{
+  return lbmConvertPressureToPhysicalUnits(lbm_density_max * Cs2);
+}
+double LBM::GetMinPhysicalVelocity()
+{
+  return lbmConvertVelocityToPhysicalUnits(lbm_velocity_min);
+}
+double LBM::GetMaxPhysicalVelocity()
+{
+  return lbmConvertVelocityToPhysicalUnits(lbm_velocity_max);
+}
+double LBM::GetMinPhysicalStress()
+{
+  return lbmConvertStressToPhysicalUnits(lbm_stress_min);
+}
+double LBM::GetMaxPhysicalStress()
+{
+  return lbmConvertStressToPhysicalUnits(lbm_stress_max);
+}
 
 LBM::~LBM()
 {

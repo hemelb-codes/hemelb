@@ -47,11 +47,11 @@ hemelb::steering::SimulationParameters::SimulationParameters() {
 void hemelb::steering::SimulationParameters::collectGlobalVals
 (LBM* lbm)
 {
-  this->pressureMin = lbm_phys_pressure_min;
-  this->pressureMax = lbm_phys_pressure_max;
-  this->velocityMin = lbm_phys_velocity_min;
-  this->velocityMax = lbm_phys_velocity_max;
-  this->stressMax = lbm_phys_stress_max;
+  this->pressureMin = lbm->GetMinPhysicalPressure();
+  this->pressureMax = lbm->GetMaxPhysicalPressure();
+  this->velocityMin = lbm->GetMinPhysicalVelocity();
+  this->velocityMax = lbm->GetMaxPhysicalVelocity();
+  this->stressMax = lbm->GetMaxPhysicalStress();
   this->timeStep = time_step;
   this->time = intra_cycle_time;
   this->cycle = cycle_id;
