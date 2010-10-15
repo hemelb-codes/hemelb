@@ -66,24 +66,8 @@ int main (int argc, char *argv[])
   
   LBM lbm;
   
-  Net net;
-  
-#ifndef NOMPI
-  int thread_level_provided;
-  
-  net.err = MPI_Init_thread (&argc, &argv, MPI_THREAD_FUNNELED, &thread_level_provided);
-  net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
-  net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
-  
-  if (net.id == 0)
-    {
-      printf("thread_level_provided %i\n", thread_level_provided);
-    }
-#else
-  net.procs = 1;
-  net.id = 0;
-#endif
-  
+  Net net = Net(argc, argv);
+
   int lCyclesMax = 0;
 
   if (argc == 8)
@@ -97,11 +81,13 @@ int main (int argc, char *argv[])
     }
   else
     {
-      if (net.id == 0) Usage::printUsage(argv[0]);
+      if (net.IsCurrentProcTheIOProc())
+        {
+        Usage::printUsage(argv[0]);
+        }
 
 #ifndef NOMPI
-      net.err = MPI_Abort (MPI_COMM_WORLD, 1);
-      net.err = MPI_Finalize ();
+      net.Abort();
 #else
       exit(1);
 #endif
@@ -141,7 +127,7 @@ int main (int argc, char *argv[])
   strcat (snapshot_directory, "/Snapshots/");
 
   // Actually create the directories.
-  if (net.id == 0)
+  if (net.IsCurrentProcTheIOProc())
     {
       hemelb::util::MakeDirAllRXW(image_directory);
       hemelb::util::MakeDirAllRXW(snapshot_directory);
@@ -153,13 +139,10 @@ int main (int argc, char *argv[])
   strcat ( timings_name , procs_string );
   strcat ( timings_name , ".asc" );
 
-  if (net.id == 0)
+  if (net.IsCurrentProcTheIOProc())
     {
       timings_ptr = fopen (timings_name, "w");
-    }
-  
-  if (net.id == 0)
-    {
+
       fprintf (timings_ptr, "***********************************************************\n");
       fprintf (timings_ptr, "Opening parameters file:\n %s\n", input_parameters_name);
       fprintf (timings_ptr, "Opening config file:\n %s\n", input_config_name);
@@ -167,7 +150,7 @@ int main (int argc, char *argv[])
     }
   
 #ifndef NO_STEER
-  if (net.id == 0)
+  if (net.IsCurrentProcTheIOProc())
     {
       hemelb::vis::xdrSendBuffer_pixel_data = new char[hemelb::vis::pixel_data_bytes];
       hemelb::vis::xdrSendBuffer_frame_details = new char[hemelb::vis::frame_details_bytes];
@@ -191,9 +174,7 @@ int main (int argc, char *argv[])
   if (net.netFindTopology (&depths) == 0)
     {
       fprintf (timings_ptr, "MPI_Attr_get failed, aborting\n");
-#ifndef NOMPI
-      MPI_Abort(MPI_COMM_WORLD, 1);
-#endif
+      net.Abort();
     }
   
   net.netInit (lbm.total_fluid_sites);
@@ -248,7 +229,7 @@ int main (int argc, char *argv[])
 	      /* In the following two if blocks we do the core magic to ensure we only render
 		 when (1) we are not sending a frame or (2) we need to output to disk */
 			
-	      if(net.id == 0) {		  
+	      if(net.IsCurrentProcTheIOProc()) {
 		sem_wait (&hemelb::steering::connected_sem);
 		bool local_connected = hemelb::steering::connected;
 		sem_post (&hemelb::steering::connected_sem);
@@ -260,14 +241,15 @@ int main (int argc, char *argv[])
 	      }
 
 	      if(total_time_steps%BCAST_FREQ == 0) {
-		if(net.id == 0)
+		if(net.IsCurrentProcTheIOProc())
+		{
 		  hemelb::vis::doRendering = (render_for_network_stream || write_snapshot_image) ? 1 : 0;
-		if(net.id == 0)
 		  sem_wait (&hemelb::steering::steering_var_lock);
+		}
 		hemelb::steering::UpdateSteerableParameters (&hemelb::vis::doRendering,
 							   hemelb::vis::controller,
 							   &lbm);
-		if(net.id == 0)
+		if(net.IsCurrentProcTheIOProc())
 		  sem_post (&hemelb::steering::steering_var_lock);
 	      }
 
@@ -275,7 +257,7 @@ int main (int argc, char *argv[])
 		 instant of time since variables might be altered by the thread half way through?
 		 This is to be done. */			
 			
-	      if(net.id == 0 && time_step%100==0)
+	      if(net.IsCurrentProcTheIOProc() && time_step%100==0)
 		printf("time step %i sending_frame %i render_network_stream %i write_snapshot_image %i rendering %i\n",
 		       time_step, hemelb::steering::sending_frame, render_for_network_stream, write_snapshot_image, hemelb::vis::doRendering);
 
@@ -312,7 +294,7 @@ int main (int argc, char *argv[])
 		  }
 		  hemelb::steering::updated_mouse_coords = 0;
 		}
-		if (net.id == 0)
+		if (net.IsCurrentProcTheIOProc())
 		  {
 		    hemelb::steering::is_frame_ready = 1;
 		    sem_post(&hemelb::steering::nrl); // let go of the lock
@@ -325,7 +307,7 @@ int main (int argc, char *argv[])
 						    hemelb::vis::ColourPalette::pickColour,
 						    &net);
 		  
-		  if (net.id == 0)
+		  if (net.IsCurrentProcTheIOProc())
 		    {
 		      char image_filename[255];
 		      
@@ -350,7 +332,7 @@ int main (int argc, char *argv[])
 		  lbm.lbmWriteConfig(stability, complete_snapshot_name, &net);
 		}
 #ifndef NO_STEER
-	      if (net.id == 0)
+	      if (net.IsCurrentProcTheIOProc())
 		{
                   if (render_for_network_stream == 1)
 		    {
@@ -388,7 +370,7 @@ int main (int argc, char *argv[])
 #ifndef NO_STREAKLINES
 	      hemelb::vis::controller->restart();
 #endif
-	      if (net.id == 0)
+	      if (net.IsCurrentProcTheIOProc())
 		{
 		  printf ("restarting: period: %i\n", lbm.period);
 		  fflush (0x0);
@@ -402,7 +384,7 @@ int main (int argc, char *argv[])
 	    }
 	  lbm.lbmCalculateFlowFieldValues ();
 	  
-	  if (net.id == 0)
+	  if (net.IsCurrentProcTheIOProc())
 	    {
 		  fprintf (timings_ptr, "cycle id: %i\n", cycle_id);
 		  printf ("cycle id: %i\n", cycle_id);
@@ -416,7 +398,7 @@ int main (int argc, char *argv[])
       cycle_id = hemelb::util::min(cycle_id, lCyclesMax);
       time_step = time_step * cycle_id;
   
-      if (net.id == 0)
+      if (net.IsCurrentProcTheIOProc())
 	{
 	  fprintf (timings_ptr, "\n");
 	  fprintf (timings_ptr, "threads: %i, machines checked: %i\n\n", net.procs, net_machines);
@@ -428,7 +410,7 @@ int main (int argc, char *argv[])
   
   if (is_unstable)
     {
-      if (net.id == 0)
+      if (net.IsCurrentProcTheIOProc())
 	{
 	  fprintf (timings_ptr, "Attention: simulation unstable with %i timesteps/cycle\n",
 		   lbm.period);
@@ -438,7 +420,7 @@ int main (int argc, char *argv[])
     }
   else
     {
-      if (net.id == 0)
+      if (net.IsCurrentProcTheIOProc())
 	{
 	      
 	      fprintf (timings_ptr, "time steps per cycle: %i\n", lbm.period);
@@ -474,7 +456,7 @@ int main (int argc, char *argv[])
   delete hemelb::vis::controller;
   
 #ifndef NO_STEER
-  if (net.id == 0)
+  if (net.IsCurrentProcTheIOProc())
     {
       // there are some problems if the following function is called
       
@@ -482,10 +464,6 @@ int main (int argc, char *argv[])
       delete[] hemelb::vis::xdrSendBuffer_frame_details;
       delete[] hemelb::vis::xdrSendBuffer_pixel_data;
     }
-#endif
-  
-#ifndef NOMPI
-  net.err = MPI_Finalize ();
 #endif
   
   return(0);

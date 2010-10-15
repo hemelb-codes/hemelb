@@ -20,7 +20,7 @@ struct WallData
     double wall_dist;
     // cut distances along the 14 non-zero lattice vectors;
     // each one is between 0 and 1 if the surface cuts the corresponding
-    // vector or is equal to 1e+30 otherwise
+    // vector or is equal to 1e+30 otherWallDatawise
     double cut_dist[D3Q15::NUMVECTORS - 1];
 
 };
@@ -77,7 +77,22 @@ struct NeighProc
 class Net
 {
   public:
-    int id; // Processor rank
+    Net(int &iArgumentCount, char* iArgumentList[]);
+    ~Net();
+
+    void Abort();
+    bool IsCurrentProcRank(int iRank);
+    bool IsCurrentProcTheIOProc();
+    char *GetCurrentProcIdentifier();
+
+    // declarations of all the functions used
+    int *netProcIdPointer(int site_i, int site_j, int site_k);
+    int netFindTopology(int *depths);
+    void netInit(int totalFluidSites);
+
+    double GetCutDistance(int iSiteIndex, int iDirection);
+    double* GetNormalToWall(int iSiteIndex);
+
     int procs; // Number of processors.
     int neigh_procs; // Number of neighbouring rocessors.
     int err;
@@ -113,38 +128,29 @@ class Net
     double dd_time, bm_time, fr_time, fo_time;
     unsigned int *net_site_data;
 
-    // declarations of all the functions used
-    int *netProcIdPointer(int site_i, int site_j, int site_k);
-    int netFindTopology(int *depths);
-    ~Net();
-    void netInit(int totalFluidSites);
-
-    double GetCutDistance(int iSiteIndex, int iDirection);
-    double* GetNormalToWall(int iSiteIndex);
-
   private:
-    double* cut_distances;
-    double* net_site_nor;
-
-    int *machine_id;
-    int *procs_per_machine;
-
-    unsigned int *netSiteMapPointer(int site_i, int site_j, int site_k);
-
-    short int *from_proc_id_to_neigh_proc_index; // Turns proc_id to neigh_proc_iindex.
-
     // Some sort of coordinates.
     struct SiteLocation
     {
         short int i, j, k;
     };
 
+    unsigned int *netSiteMapPointer(int site_i, int site_j, int site_k);
+
+    double* cut_distances;
+    double* net_site_nor;
+
+    int *machine_id;
+    int *procs_per_machine;
+    short int *from_proc_id_to_neigh_proc_index; // Turns proc_id to neigh_proc_iindex.
+
+    int mRank; // Processor rank
+
     // 3 buffers needed for convergence-enabled simulations
     double *f_to_send;
     double *f_to_recv;
     int *f_send_id;
     short int *f_data;
-
 };
 
 // TODO Ugh. Will get rid of these to somewhere else at some point.
