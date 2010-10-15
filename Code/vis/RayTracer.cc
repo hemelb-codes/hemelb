@@ -462,7 +462,7 @@ namespace hemelb
 	    blocks_a = 0;
 	
 	    for (m = 0; m < sites_in_a_block; m++) {
-	      if (proc_block_p->proc_id[ m ] == net->id) {
+	      if (net->IsCurrentProcRank(proc_block_p->proc_id[ m ])) {
 		BlockLocation& tempBlockLoc = block_location_a->at(0);
 		tempBlockLoc.i = i;
 		tempBlockLoc.j = j;
@@ -523,7 +523,7 @@ namespace hemelb
 		  is_site_found = 0;
 	      
 		  for (m = 0; m < sites_in_a_block; m++) {
-		    if (proc_block_p->proc_id[ m ] == net->id) {
+		    if (net->IsCurrentProcRank(proc_block_p->proc_id[ m ])) {
 		      is_site_found = 1;
 		      break;
 		    }

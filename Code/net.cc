@@ -100,6 +100,25 @@ unsigned int *Net::netSiteMapPointer(int site_i, int site_j, int site_k)
   }
 }
 
+bool Net::IsCurrentProcRank(int iRank)
+{
+  return (mRank == iRank);
+}
+
+bool Net::IsCurrentProcTheIOProc()
+{
+  return mRank == 0;
+}
+
+char *Net::GetCurrentProcIdentifier()
+{
+  // Note that this has enough space for an integer of 9 digits, so we're good up to a billion
+  // processors.
+  char* lRet = new char[15];
+  sprintf(lRet, "rank %i", mRank);
+  return lRet;
+}
+
 //#undef MPICHX_TOPOLOGY_DEPTHS
 #ifdef MPICHX_TOPOLOGY_DEPTHS
 
@@ -260,6 +279,13 @@ unsigned int Net::GetCollisionType(unsigned int site_data)
   }
 }
 
+void Net::Abort()
+{
+#ifndef NOMPI
+  err = MPI_Abort (MPI_COMM_WORLD, 1);
+#endif
+}
+
 /*!
  This is called from the main function.  First function to deal with processors.
  The domain partitioning technique and the management of the
@@ -403,7 +429,7 @@ void Net::netInit(int totalFluidSites)
                 // Assign it to the rank and update the fluid site counters.
                 proc_block_p->proc_id[m] = proc_count;
 
-                if (proc_count == id)
+                if (IsCurrentProcRank(proc_count))
                 {
                   ++my_sites;
                 }
@@ -465,7 +491,7 @@ void Net::netInit(int totalFluidSites)
                       ++partial_visited_fluid_sites;
                       ++fluid_sites[proc_count];
 
-                      if (proc_count == id)
+                      if (IsCurrentProcRank(proc_count))
                       {
                         ++my_sites;
                       }
@@ -584,7 +610,7 @@ void Net::netInit(int totalFluidSites)
                     }
                     proc_block_p->proc_id[m] = proc_count;
 
-                    if (proc_count == id)
+                    if (IsCurrentProcRank(proc_count))
                     {
                       ++my_sites;
                     }
@@ -659,7 +685,7 @@ void Net::netInit(int totalFluidSites)
                           site_location_b_p->k = neigh_k;
                           ++sites_b;
 
-                          if (proc_count == id)
+                          if (IsCurrentProcRank(proc_count))
                           {
                             ++my_sites;
                           }
@@ -734,7 +760,7 @@ void Net::netInit(int totalFluidSites)
     // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
     for (m = 0; m < sites_in_a_block; m++)
     {
-      if (proc_block_p->proc_id[m] == id)
+      if (IsCurrentProcRank(proc_block_p->proc_id[m]))
       {
         if ( (data_block_p->site_data[m] & SITE_TYPE_MASK) != SOLID_TYPE)
         {
@@ -828,7 +854,8 @@ void Net::netInit(int totalFluidSites)
           for (site_j = j; site_j < j + block_size; site_j++)
             for (site_k = k; site_k < k + block_size; site_k++)
             {
-              if (proc_block_p->proc_id[++m] != id)
+              m++;
+              if (!IsCurrentProcRank(proc_block_p->proc_id[m]))
               {
                 continue;
               }
@@ -847,7 +874,9 @@ void Net::netInit(int totalFluidSites)
                 // the pointer to proc_id is NULL) or it is solid (in which case proc_id ==
                 // 1 << 30) or the neighbour is also on this rank.  proc_id was initialized
                 // in lbmReadConfig in io.cc.
-                if (proc_id_p == NULL || *proc_id_p == id || *proc_id_p == (1 << 30))
+                if (proc_id_p == NULL ||
+                    IsCurrentProcRank(*proc_id_p) ||
+                    *proc_id_p == (1 << 30))
                 {
                   continue;
                 }
@@ -877,9 +906,8 @@ void Net::netInit(int totalFluidSites)
                   {
                     printf(" too many intra machine, inter processor neighbours\n");
                     printf(" the execution is terminated\n");
-#ifndef NOMPI
-                    err = MPI_Abort(MPI_COMM_WORLD, 1);
-#else
+                    Abort();
+#ifdef NOMPI
                     exit(1);
 #endif
                   }
@@ -1092,7 +1120,8 @@ void Net::netInit(int totalFluidSites)
             for (site_k = k; site_k < k + block_size; site_k++)
             {
               // If a site is not on this process, continue.
-              if (proc_block_p->proc_id[++m] != id)
+              m++;
+              if (!IsCurrentProcRank(proc_block_p->proc_id[m]))
               {
                 continue;
               }
@@ -1128,7 +1157,7 @@ void Net::netInit(int totalFluidSites)
                 // If we check convergence, the data for
                 // each site is split into that for the
                 // current and previous cycles.
-                if (*proc_id_p == id)
+                if (IsCurrentProcRank(*proc_id_p))
                 {
                   f_id[site_map * D3Q15::NUMVECTORS + l] = *site_data_p
                       * D3Q15::NUMVECTORS + l;
@@ -1206,7 +1235,7 @@ void Net::netInit(int totalFluidSites)
     // edge sites and directions stored and the higher numbered one ends up with those on the
     // other processor.
 #ifndef NOMPI
-    if (neigh_proc_p->id > id)
+    if (neigh_proc_p->id > mRank)
     {
       err = MPI_Isend(&neigh_proc_p->f_data[0], neigh_proc_p->fs * 4, MPI_SHORT,
                       neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][m]);
@@ -1222,7 +1251,7 @@ void Net::netInit(int totalFluidSites)
   {
     neigh_proc_p = &neigh_proc[m];
 
-    if (neigh_proc_p->id > id)
+    if (neigh_proc_p->id > mRank)
     {
 #ifndef NOMPI
       err = MPI_Wait(&req[0][m], status);
@@ -1282,11 +1311,35 @@ void Net::netInit(int totalFluidSites)
   bm_time = hemelb::util::myClock() - seconds;
 }
 
+Net::Net(int &iArgumentCount, char* iArgumentList[])
+{
+#ifndef NOMPI
+  int thread_level_provided;
+
+  err = MPI_Init_thread (&iArgumentCount, &iArgumentList, MPI_THREAD_FUNNELED, &thread_level_provided);
+  err = MPI_Comm_size (MPI_COMM_WORLD, &procs);
+  err = MPI_Comm_rank (MPI_COMM_WORLD, &mRank);
+
+  if (IsCurrentProcTheIOProc())
+    {
+      printf("thread_level_provided %i\n", thread_level_provided);
+    }
+#else
+  procs = 1;
+  id = 0;
+#endif
+}
+
 /*!
  Free the allocated data.
  */
 Net::~Net()
 {
+
+#ifndef NOMPI
+  err = MPI_Finalize ();
+#endif
+
   delete[] from_proc_id_to_neigh_proc_index;
 
   delete[] f_recv_iv;

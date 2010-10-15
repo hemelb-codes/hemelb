@@ -194,7 +194,7 @@ namespace hemelb
 		      v[i][j][k][0] = v[i][j][k][1] = v[i][j][k][2] = 0.0F;
 		      continue;
 		    }
-		  if (vel_site_data_p->proc_id != net->id)
+		  if (!net->IsCurrentProcRank(vel_site_data_p->proc_id))
 		    {
 		      *is_interior = 0;
 		    }
@@ -208,7 +208,7 @@ namespace hemelb
 		      v[i][j][k][1] = vel_site_data_p->vy;
 		      v[i][j][k][2] = vel_site_data_p->vz;
 		    }
-		  else if (vel_site_data_p->proc_id == net->id)
+		  else if (net->IsCurrentProcRank(vel_site_data_p->proc_id))
 		    {
 		      // the local counter is set equal to the global one
 		      // and the local velocity is calculated
@@ -291,7 +291,8 @@ namespace hemelb
 	      for (int site_j = j; site_j < j + block_size; site_j++)
 		for (int site_k = k; site_k < k + block_size; site_k++) {
 	      
-		  if (proc_block_p->proc_id[ ++m ] != net->id) continue;
+		  m++;
+		  if (!net->IsCurrentProcRank(proc_block_p->proc_id[ m ])) continue;
 	      
 		  for (int neigh_i = util::max(0, site_i-1); neigh_i <= util::min(sites_x-1, site_i+1); neigh_i++)
 		    for (int neigh_j = util::max(0, site_j-1); neigh_j <= util::min(sites_y-1, site_j+1); neigh_j++)
@@ -307,7 +308,7 @@ namespace hemelb
 			initializeVelFieldBlock (neigh_i, neigh_j, neigh_k,
 						 *neigh_proc_id);
 			  
-			if (*neigh_proc_id == net->id) continue;
+			if (net->IsCurrentProcRank(*neigh_proc_id)) continue;
 		    
 			vel_site_data_p = velSiteDataPointer (neigh_i,
 							      neigh_j,
@@ -329,9 +330,10 @@ namespace hemelb
 			if (neigh_procs == NEIGHBOUR_PROCS_MAX) {
 			  printf (" too many inter processor neighbours in streakline constructor()\n");
 			  printf (" the execution is terminated\n");
-#ifndef NOMPI
-			  net->err = MPI_Abort (MPI_COMM_WORLD, 1);
-#else
+
+			  net->Abort();
+
+#ifdef NOMPI
 			  exit(1);
 #endif
 			}
@@ -641,7 +643,7 @@ namespace hemelb
 	  vel_site_data_p = velSiteDataPointer (site_i, site_j, site_k);
       
 	  if (vel_site_data_p == NULL ||
-	      vel_site_data_p->proc_id == net->id ||
+	      net->IsCurrentProcRank(vel_site_data_p->proc_id) ||
 	      vel_site_data_p->proc_id == -1)
 	    {
 	      continue;

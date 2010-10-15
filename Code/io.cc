@@ -63,14 +63,18 @@ void LBM::lbmReadConfig (Net *net) {
 
   FILE* xdrFile = fopen(system_file_name, "r");
 
+  char* lProcIdentifier = net->GetCurrentProcIdentifier();
+
   if (xdrFile == NULL) {
-    fprintf(stderr, "Unable to open file %s [rank %i], exiting\n", system_file_name, net->id);
+    fprintf(stderr, "Unable to open file %s [%s], exiting\n", system_file_name, lProcIdentifier);
     fflush(0x0);
     exit(0x0);
   } else {
-    fprintf(stderr, "Opened config file %s [rank %i]\n", system_file_name , net->id);
+    fprintf(stderr, "Opened config file %s [%s]\n", system_file_name , lProcIdentifier);
   }
   fflush(NULL);
+
+  delete[] lProcIdentifier;
 
   hemelb::io::XdrReader myReader = hemelb::io::XdrReader(xdrFile);
   
@@ -221,7 +225,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
   int n;
   
   
-  if (net->id == 0)
+  if (net->IsCurrentProcTheIOProc())
     {
       FILE *parameters_file = fopen (parameters_file_name, "r");
 
@@ -302,7 +306,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
 #ifndef NOMPI
   net->err = MPI_Bcast (par_to_send, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-  if (net->id != 0)
+  if (!net->IsCurrentProcTheIOProc())
     {
       inlets               = (int)par_to_send[ 0 ];
       outlets              = (int)par_to_send[ 1 ];
@@ -343,7 +347,7 @@ void LBM::lbmReadParameters (char *parameters_file_name, Net *net)
 #ifndef NOMPI
   net->err = MPI_Bcast (par_to_send, 3*(inlets+outlets+inlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-  if (net->id != 0)
+  if (!net->IsCurrentProcTheIOProc())
     {
       for (n = 0; n < inlets; n++)
 	{
@@ -461,7 +465,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
   stress_par = BLOOD_DENSITY 
     / (stress_par * stress_par * voxel_size * voxel_size);
   
-  if (net->id == 0) {
+  if (net->IsCurrentProcTheIOProc()) {
     realSnap = new hemelb::io::AsciiFileWriter(outputFileName);
     //snap << stability << snap->eol;
     (*realSnap << stability) << realSnap->eol;
@@ -470,13 +474,13 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
   hemelb::io::Writer& snap = *realSnap;
   
   if (stability == UNSTABLE) {
-    if (net->id == 0) {
+    if (net->IsCurrentProcTheIOProc()) {
       delete realSnap;
     }
     return;
   }
   
-  if (net->id == 0) {
+  if (net->IsCurrentProcTheIOProc()) {
     shrinked_sites_x = 1 + site_max_x - site_min_x;
     shrinked_sites_y = 1 + site_max_y - site_min_y;
     shrinked_sites_z = 1 + site_max_z - site_min_z;
@@ -544,7 +548,8 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 	  for (site_j = j; site_j < j + block_size; site_j++) {
 	    for (site_k = k; site_k < k + block_size; site_k++) {
 	      
-	      if (net->proc_block[ n ].proc_id[ ++m ] != net->id) {
+	      m++;
+	      if (!net->IsCurrentProcRank(net->proc_block[ n ].proc_id[m])) {
 		continue;
 	      }
 	      
@@ -629,7 +634,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 				    MPI_SHORT,
 				    0, MPI_COMM_WORLD);
 #endif
-	      if (net->id == 0) {
+	      if (net->IsCurrentProcTheIOProc()) {
 		
 		for (l = 0; l < net->procs * communication_period; l++) {
 		  if (gathered_site_data[ l*3+0 ] == -1)
@@ -683,7 +688,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 			    0, MPI_COMM_WORLD);
 #endif
       
-      if (net->id == 0) {
+      if (net->IsCurrentProcTheIOProc()) {
 	for (l = 0; l < net->procs * communication_period; l++) {
 	  
 	  if (gathered_site_data[ l*3+0 ] == -1) 
@@ -710,7 +715,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
     
   }
   
-  if (net->id == 0) {
+  if (net->IsCurrentProcTheIOProc()) {
     delete realSnap;
   }
   

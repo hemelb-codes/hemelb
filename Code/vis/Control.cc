@@ -457,7 +457,7 @@ namespace hemelb
       int i;
   
   
-      if (net->id == 0)
+      if (net->IsCurrentProcTheIOProc())
 	{
 	  fprintf(stderr, "opening ray tracing configuration file %s\n", parameters_file_name);
 
@@ -590,7 +590,7 @@ namespace hemelb
 	for (recv_id = start_id; recv_id < net->procs;) {
 	  send_id = recv_id + comm_inc;
 	
-	  if (net->id != recv_id && net->id != send_id) {
+	  if (!net->IsCurrentProcRank(recv_id) && !net->IsCurrentProcRank(send_id)) {
 	    recv_id += comm_inc << 1;
 	    continue;
 	  }
@@ -600,7 +600,7 @@ namespace hemelb
 	    continue;
 	  }
 	
-	  if (net->id == send_id) {
+	  if (net->IsCurrentProcRank(send_id)) {
 #ifndef NOMPI
 	    MPI_Send(&col_pixels, 1,
 		     MPI_INT, recv_id, 20, MPI_COMM_WORLD);
@@ -642,7 +642,7 @@ namespace hemelb
 	    
 	    }
 	  }
-	  if (m < net->procs && net->id == recv_id) {
+	  if (m < net->procs && net->IsCurrentProcRank(recv_id)) {
 	    memcpy(col_pixel_send,
 		   col_pixel_recv[recv_buffer_id],
 		   col_pixels * sizeof(ColPixel));
@@ -704,7 +704,7 @@ namespace hemelb
   
       col_pixels_recv[recv_buffer_id] = col_pixels;
 #ifndef NEW_COMPOSITING
-      if (net->id == 0)
+      if (net->IsCurrentProcTheIOProc())
 	{
 	  return;
 	}
