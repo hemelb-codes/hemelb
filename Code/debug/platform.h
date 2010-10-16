@@ -6,14 +6,14 @@
  * file.
  */
 
-#ifdef HEMELB_DBG_LIBRARY_OSX
-#include "dbg/OSX/OsxDebugger.h"
+#ifdef HEMELB_DEBUG_LIBRARY_OSX
+#include "debug/OSX/OsxDebugger.h"
 
-#elif defined(HEMELB_DBG_LIBRARY_LINUX)
-#include "dbg/linux/LinuxDebugger.h"
+#elif defined(HEMELB_DEBUG_LIBRARY_LINUX)
+#include "debug/linux/LinuxDebugger.h"
 
 #else
-#include "dbg/none/NullDebugger.h"
+#include "debug/none/NullDebugger.h"
 
 #endif
 

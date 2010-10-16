@@ -1,11 +1,11 @@
-#ifndef HEMELB_DBG_NONE_DEBUGGER_H
-#define HEMELB_DBG_NONE_DEBUGGER_H
+#ifndef HEMELB_DEBUG_NONE_DEBUGGER_H
+#define HEMELB_DEBUG_NONE_DEBUGGER_H
 
-#include "dbg/Debugger.h"
+#include "debug/Debugger.h"
 
 namespace hemelb
 {
-  namespace dbg
+  namespace debug
   {
     class NullDebugger : public Debugger {
     public:
@@ -21,4 +21,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_DBG_NONE_DEBUGGER_H
+#endif // HEMELB_DEBUG_NONE_DEBUGGER_H

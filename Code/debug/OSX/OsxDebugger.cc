@@ -1,10 +1,10 @@
 #include <string>
 
-#include "dbg/OSX/OsxDebugger.h"
+#include "debug/OSX/OsxDebugger.h"
 
 namespace hemelb
 {
-  namespace dbg
+  namespace debug
   {
     OsxDebugger::OsxDebugger(char* executable) : ActiveDebugger(executable) {}
     
@@ -14,14 +14,14 @@ namespace hemelb
     
     const std::string OsxDebugger::GetPlatformScript(void) const {
       std::string include (__FILE__);
-      std::string dbgOsxDir = include.substr(0, include.rfind('/'));
+      std::string debugOsxDir = include.substr(0, include.rfind('/'));
       
-      return dbgOsxDir + "/MPIdebug.scpt";
+      return debugOsxDir + "/MPIdebug.scpt";
     }
     
     Debugger* PlatformDebuggerFactory(char *executable) {
       return new OsxDebugger(executable);
     }
  
-  }
-}
+  } // namespace debug
+} // namespace hemelb
