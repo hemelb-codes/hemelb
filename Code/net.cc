@@ -1311,6 +1311,50 @@ void Net::netInit(int totalFluidSites)
   bm_time = hemelb::util::myClock() - seconds;
 }
 
+void Net::ReceiveFromNeighbouringProcessors()
+{
+#ifndef NOMPI
+  for (int m = 0; m < neigh_procs; m++)
+  {
+    NeighProc *neigh_proc_p = &neigh_proc[m];
+
+    err = MPI_Irecv(&f_old[neigh_proc_p->f_head], neigh_proc_p->fs, MPI_DOUBLE,
+                         neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][m]);
+  }
+#endif
+}
+
+void Net::SendToNeighbouringProcessors()
+{
+#ifndef NOMPI
+  for (int m = 0; m < neigh_procs; m++)
+  {
+    NeighProc *neigh_proc_p = &neigh_proc[m];
+
+    err = MPI_Isend(&f_new[neigh_proc_p->f_head], neigh_proc_p->fs, MPI_DOUBLE,
+                    neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][neigh_procs + m]);
+  }
+#endif
+}
+
+void Net::UseDataFromNeighbouringProcs()
+{
+#ifndef NOMPI
+  for (int m = 0; m < neigh_procs; m++)
+  {
+    err = MPI_Wait(&req[0][m], status);
+    err = MPI_Wait(&req[0][neigh_procs + m], status);
+  }
+#endif
+
+  // Copy the distribution functions received from the neighbouring
+  // processors into the destination buffer "f_new".
+  for (int i = 0; i < shared_fs; i++)
+  {
+    f_new[f_recv_iv[i]] = f_old[neigh_proc[0].f_head + i];
+  }
+}
+
 Net::Net(int &iArgumentCount, char* iArgumentList[])
 {
 #ifndef NOMPI
@@ -1326,7 +1370,7 @@ Net::Net(int &iArgumentCount, char* iArgumentList[])
     }
 #else
   procs = 1;
-  id = 0;
+  mRank = 0;
 #endif
 }
 
