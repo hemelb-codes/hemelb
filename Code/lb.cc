@@ -349,26 +349,13 @@ hemelb::lb::collisions::Collision* LBM::GetCollision(int i)
 int LBM::lbmCycle (int perform_rt, Net *net)
 {
   double density, vx, vy, vz, velocity;
-  int collision_type, offset;
-  int i, m;
+  int i;
 
-  NeighProc *neigh_proc_p;
+  net->ReceiveFromNeighbouringProcessors();
 
+  int offset = net->my_inner_sites;
 
-  for (m = 0; m < net->neigh_procs; m++)
-    {
-      neigh_proc_p = &net->neigh_proc[ m ];
-#ifndef NOMPI
-      net->err = MPI_Irecv (&f_old[ neigh_proc_p->f_head ],
-			    neigh_proc_p->fs, MPI_DOUBLE,
-			    neigh_proc_p->id, 10, MPI_COMM_WORLD,
-			    &net->req[ 0 ][ m ]);
-#endif
-    }
-
-  offset = net->my_inner_sites;
-
-  for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+  for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
   {
     for (i = offset; i < offset + net->my_inter_collisions[collision_type]; i++)
     {
@@ -378,20 +365,11 @@ int LBM::lbmCycle (int perform_rt, Net *net)
     offset += net->my_inter_collisions[collision_type];
   }
 
-  for (m = 0; m < net->neigh_procs; m++)
-    {
-      neigh_proc_p = &net->neigh_proc[ m ];
-#ifndef NOMPI
-      net->err = MPI_Isend (&f_new[ neigh_proc_p->f_head ],
-			    neigh_proc_p->fs, MPI_DOUBLE,
-			    neigh_proc_p->id, 10, MPI_COMM_WORLD,
-			    &net->req[ 0 ][ net->neigh_procs + m ]);
-#endif
-    }
+  net->SendToNeighbouringProcessors();
 
   offset = 0;
 
-  for (collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+  for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
     {
       for (i = offset; i < offset + net->my_inner_collisions[ collision_type ]; i++)
 	{
@@ -401,20 +379,7 @@ int LBM::lbmCycle (int perform_rt, Net *net)
       offset += net->my_inner_collisions[ collision_type ];
     }
 
-  for (m = 0; m < net->neigh_procs; m++)
-    {
-#ifndef NOMPI
-      net->err = MPI_Wait (&net->req[ 0 ][ m ], net->status);
-      net->err = MPI_Wait (&net->req[ 0 ][ net->neigh_procs + m ], net->status);
-#endif
-    }
-
-  // Copy the distribution functions received from the neighbouring
-  // processors into the destination buffer "f_new".
-  for (i = 0; i < net->shared_fs; i++)
-    {
-      f_new[ f_recv_iv[i] ] = f_old[ net->neigh_proc[0].f_head + i ];
-    }
+  net->UseDataFromNeighbouringProcs();
 
   // Do any cleanup steps necessary on boundary nodes
   // TODO: We should probably do this for all collision types
