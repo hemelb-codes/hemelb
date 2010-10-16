@@ -12,8 +12,6 @@
 #include "io/XdrReader.h"
 #include "io/AsciiFileWriter.h"
 
-#include "dbg/debug.h"
-
 //using namespace std;
 
 /*!
