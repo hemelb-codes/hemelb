@@ -15,7 +15,7 @@
 #include "vis/visthread.h"
 #include "vis/ColourPalette.h"
 
-#include "dbg/Debugger.h"
+#include "debug/Debugger.h"
 
 #define BCAST_FREQ   1
 
@@ -83,7 +83,7 @@ int main (int argc, char *argv[])
   net.err = MPI_Init_thread (&argc, &argv, MPI_THREAD_FUNNELED, &thread_level_provided);
   net.err = MPI_Comm_size (MPI_COMM_WORLD, &net.procs);
   net.err = MPI_Comm_rank (MPI_COMM_WORLD, &net.id);
-  hemelb::dbg::Debugger::Init(argv[0])->BreakHere();
+  hemelb::debug::Debugger::Init(argv[0])->BreakHere();
   
   if (net.id == 0)
     {

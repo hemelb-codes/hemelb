@@ -1,33 +1,33 @@
 include $(MK)/header.mk
 
-TARGETS := libHemeLbDbg.$(LIBEXT)
+TARGETS := libHemeLbDebug.$(LIBEXT)
 #SRCS := Debugger.cc
 
-ifeq ($(HEMELB_DBG_LEVEL), 0)
+ifeq ($(HEMELB_DEBUG_LEVEL), 0)
 # I.e. no debugging
 SUBDIRS := none
-HEMELB_DBG_LIBRARY := none
+HEMELB_DEBUG_LIBRARY := none
 
-else # HEMELB_DBG_LEVEL nonzero
+else # HEMELB_DEBUG_LEVEL nonzero
 $(info Building in debug mode.)
 
 ifdef HEMELB_CFG_ON_OSX
 SUBDIRS := common OSX
-HEMELB_DBG_LIBRARY := OSX
+HEMELB_DEBUG_LIBRARY := OSX
 
 else ifdef HEMELB_CFG_ON_LINUX
 SUBDIRS := common linux
-HEMELB_DBG_LIBRARY := linux
+HEMELB_DEBUG_LIBRARY := linux
 
 else # non OSX/Linux debug interfaces not implemented
 SUBDIRS := none
-HEMELB_DBG_LIBRARY := none
+HEMELB_DEBUG_LIBRARY := none
 
 endif
 
-endif # HEMELB_DBG_LEVEL==0
+endif # HEMELB_DEBUG_LEVEL==0
 
-HEMELB_DEFS += HEMELB_DBG_LIBRARY=$(HEMELB_DBG_LIBRARY) HEMELB_DBG_LIBRARY_$(HEMELB_DBG_LIBRARY)
+HEMELB_DEFS += HEMELB_DEBUG_LIBRARY=$(HEMELB_DEBUG_LIBRARY) HEMELB_DEBUG_LIBRARY_$(HEMELB_DEBUG_LIBRARY)
 
 $(TARGETS)_DEPS = Debugger.o $(SUBDIRS_TGTS)
 

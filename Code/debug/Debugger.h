@@ -5,7 +5,7 @@
 
 namespace hemelb
 {
-  namespace dbg
+  namespace debug
   {
 
     class Debugger {

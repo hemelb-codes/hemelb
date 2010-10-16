@@ -3,11 +3,11 @@
 
 #include <vector>
 
-#include <dbg/Debugger.h>
+#include <debug/Debugger.h>
 
 namespace hemelb
 {
-  namespace dbg
+  namespace debug
   {
     
     class ActiveDebugger : public Debugger {
@@ -43,7 +43,7 @@ namespace hemelb
 
     };
     
-  }
-}
+  } // namespace debug
+} // namespace hemelb
 
 #endif // HEMELB_DEBUG_ACTIVE_DEBUGGER_H

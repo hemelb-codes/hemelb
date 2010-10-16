@@ -1,11 +1,11 @@
 #ifndef HEMELB_DEBUG_OSX_OSXDEBUGGER_H
 #define HEMELB_DEBUG_OSX_OSXDEBUGGER_H
 
-#include <dbg/common/ActiveDebugger.h>
+#include <debug/common/ActiveDebugger.h>
 
 namespace hemelb
 {
-  namespace dbg
+  namespace debug
   {
     
     class OsxDebugger : public ActiveDebugger {

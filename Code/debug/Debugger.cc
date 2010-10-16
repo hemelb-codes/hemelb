@@ -1,9 +1,9 @@
-#include "dbg/Debugger.h"
-#include "dbg/platform.h"
+#include "debug/Debugger.h"
+#include "debug/platform.h"
 
 namespace hemelb
 {
-  namespace dbg
+  namespace debug
   {
     
     Debugger* Debugger::Init(char *executable) {
@@ -35,5 +35,5 @@ namespace hemelb
     // Dtor
     Debugger::~Debugger() {}
     
-  } // namespace dbg
+  } // namespace debug
 } // namespace hemelb

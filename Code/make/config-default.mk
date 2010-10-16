@@ -2,7 +2,7 @@ CXX := mpic++
 
 EXE := hemelb
 
-HEMELB_DBG_LEVEL := 0
+HEMELB_DEBUG_LEVEL := 0
 HEMELB_STEERING_LIB := $(or $(HEMELB_STEERING_LIB),basic)
 
 HEMELB_CFLAGS :=
