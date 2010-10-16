@@ -7,13 +7,13 @@
 #include <cerrno>
 #include "mpiInclude.h"
 
-#include "dbg/common/ActiveDebugger.h"
+#include "debug/common/ActiveDebugger.h"
 
 namespace hemelb
 {
-  
-  namespace dbg
+  namespace debug
   {
+    
     ActiveDebugger::ActiveDebugger(char* executable) : Debugger(executable),
 						       mAmAttached(false),
 						       mPIds(NULL) {}
@@ -88,7 +88,7 @@ namespace hemelb
       // processes.  We're the child, so we are DOOMED.  (Either to
       // exec() or if that fails exit().)
       std::string srcFile (__FILE__);
-      std::string dbgCommonDir = srcFile.substr(0, srcFile.rfind('/'));
+      std::string debugCommonDir = srcFile.substr(0, srcFile.rfind('/'));
       
       std::string binaryPath (getcwd(NULL, 0)); // This will leak, 
                                                 // but don't care
@@ -109,7 +109,7 @@ namespace hemelb
       {
 	char* gdbScriptEnv = std::getenv("HEMELB_DEBUG_SCRIPT");
 	if (gdbScriptEnv == NULL) {
-	  gdbScript = dbgCommonDir + "/resume.gdb";
+	  gdbScript = debugCommonDir + "/resume.gdb";
 	} else {
 	  gdbScript = std::string(gdbScriptEnv);
 	}
@@ -152,5 +152,5 @@ namespace hemelb
       exit(1);
     }
 
-  }
-}
+  } // namespace debug
+} // namespace hemelb
