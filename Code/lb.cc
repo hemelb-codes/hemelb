@@ -592,6 +592,16 @@ void LBM::lbmUpdateInletVelocities (int time_step, Net *net)
     }
 }
 
+double LBM::GetAverageInletVelocity(int iInletNumber)
+{
+  return lbm_average_inlet_velocity[iInletNumber];
+}
+double LBM::GetPeakInletVelocity(int iInletNumber)
+{
+  return lbm_peak_inlet_velocity[iInletNumber];
+}
+
+
 // In the case of instability, this function restart the simulation
 // with twice as many time steps per period and update the parameters
 // that depends on this change.

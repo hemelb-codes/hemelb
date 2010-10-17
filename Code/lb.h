@@ -50,9 +50,6 @@ class LBM {
 
   void lbmWriteConfig (int stability, char *output_file_name, Net *net);
 
-  void fInterpolation (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
-  void gzsBoundary (double omega, int i, double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net);
-
   double GetMinPhysicalPressure();
   double GetMaxPhysicalPressure();
   double GetMinPhysicalVelocity();
@@ -62,6 +59,9 @@ class LBM {
 
   void lbmInitMinMaxValues (void);
   void lbmUpdateMinMaxValues (double density, double velocity, double stress);
+
+  double GetAverageInletVelocity(int iInletNumber);
+  double GetPeakInletVelocity(int iInletNumber);
 
  private:
   void lbmCalculateBC (double f[], unsigned int site_data, double *density, double *vx, double *vy, double *vz, double f_neq[]);
@@ -91,19 +91,15 @@ class LBM {
   double lbm_density_min, lbm_density_max;
   double lbm_velocity_min, lbm_velocity_max;
   double lbm_stress_min, lbm_stress_max;
+  double *lbm_inlet_normal;
+  long int *lbm_inlet_count;
+
+  double *lbm_average_inlet_velocity;
+  double *lbm_peak_inlet_velocity;
 };
 
 extern double lbm_stress_type;
 extern double lbm_stress_par;
-extern double *lbm_average_inlet_velocity;
-extern double *lbm_peak_inlet_velocity;
-extern double *lbm_inlet_normal;
-extern long int *lbm_inlet_count;
-
 extern int lbm_terminate_simulation;
 
-extern int is_inlet_normal_available;
-
-// TODO: prob don't belong here... 3 variables needed for convergence-enabled simulations
-extern int cycle_tag;
 #endif // HEMELB_LB_H

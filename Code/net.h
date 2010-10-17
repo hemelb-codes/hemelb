@@ -75,6 +75,8 @@ class Net
     void SendToNeighbouringProcessors();
     void UseDataFromNeighbouringProcs();
 
+    int GetMachineCount();
+
     int procs; // Number of processors.
     int err;
     int my_inner_sites; // Site on this process that do and do not need
@@ -157,6 +159,8 @@ class Net
     double *f_to_recv;
     int *f_send_id;
     short int *f_data;
+
+    int net_machines;
 };
 
 // TODO Ugh. Will get rid of these to somewhere else at some point.
@@ -166,7 +170,6 @@ extern int blocks;
 extern int block_size;
 extern int shift;
 extern int sites_in_a_block;
-extern int net_machines;
 extern double *f_old, *f_new;
 extern int *f_id;
 extern int *f_recv_iv;

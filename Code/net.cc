@@ -1324,6 +1324,11 @@ void Net::ReceiveFromNeighbouringProcessors()
 #endif
 }
 
+int Net::GetMachineCount()
+{
+  return net_machines;
+}
+
 void Net::SendToNeighbouringProcessors()
 {
 #ifndef NOMPI
