@@ -401,7 +401,7 @@ int main (int argc, char *argv[])
       if (net.IsCurrentProcTheIOProc())
 	{
 	  fprintf (timings_ptr, "\n");
-	  fprintf (timings_ptr, "threads: %i, machines checked: %i\n\n", net.procs, net_machines);
+	  fprintf (timings_ptr, "threads: %i, machines checked: %i\n\n", net.procs, net.GetMachineCount());
 	  fprintf (timings_ptr, "topology depths checked: %i\n\n", depths);
 	  fprintf (timings_ptr, "fluid sites: %i\n\n", lbm.total_fluid_sites);
 	  fprintf (timings_ptr, "cycles and total time steps: %i, %i \n\n", cycle_id, total_time_steps);
@@ -431,7 +431,7 @@ int main (int argc, char *argv[])
 	      
 	      for (int n = 0; n < lbm.inlets; n++) {
 		fprintf (timings_ptr, "inlet id: %i, average / peak velocity (m/s): %e / %e\n",
-			 n, lbm_average_inlet_velocity[ n ], lbm_peak_inlet_velocity[ n ]);
+			 n, lbm.GetAverageInletVelocity(n), lbm.GetPeakInletVelocity(n));
 	      }
 	      fprintf (timings_ptr, "\n");
 

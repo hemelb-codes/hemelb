@@ -195,8 +195,7 @@ void D3Q15::CalculateShearStress(double density, double f[], double nor[],
 
   double temp = iStressParameter * (-sqrt(2.0));
 
-  const int *Cs[3] =
-  { CX, CY, CZ};
+  const int *Cs[3] = { CX, CY, CZ };
 
   for (i = 0; i < 3; i++)
   {
