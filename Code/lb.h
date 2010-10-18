@@ -8,24 +8,13 @@ class LBM {
  public:
   int steering_session_id;
 
-  double *inlet_density_avg, *inlet_density_amp, *inlet_density_phs;
-  double *outlet_density_avg, *outlet_density_amp, *outlet_density_phs;
-
-  char *system_file_name;
-
-  double tau, viscosity;
+  double *inlet_density_avg, *inlet_density_amp;
+  double *outlet_density_avg, *outlet_density_amp;
   double voxel_size;
-  double omega;
 
   int total_fluid_sites;
-  int site_min_x, site_min_y, site_min_z;
-  int site_max_x, site_max_y, site_max_z;
   int inlets, outlets;
   int period;
-
-  float *block_density;
-
-  int *block_map;
 
   double lbmConvertPressureToLatticeUnits (double pressure);
   double lbmConvertPressureToPhysicalUnits (double pressure);
@@ -86,6 +75,11 @@ class LBM {
   //TODO Get rid of this hack
   hemelb::lb::collisions::Collision* GetCollision(int i);
 
+  double  *inlet_density_phs, *outlet_density_phs;
+
+  int site_min_x, site_min_y, site_min_z;
+  int site_max_x, site_max_y, site_max_z;
+  char *system_file_name;
   int is_inlet_normal_available;
   double* inlet_density, *outlet_density;
   double lbm_density_min, lbm_density_max;
@@ -93,6 +87,7 @@ class LBM {
   double lbm_stress_min, lbm_stress_max;
   double *lbm_inlet_normal;
   long int *lbm_inlet_count;
+  double tau, viscosity, omega;
 
   double *lbm_average_inlet_velocity;
   double *lbm_peak_inlet_velocity;
