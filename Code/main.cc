@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
   //   int doRendering;
   // #endif
 
-  int snapshots_per_cycle = 0, snapshots_period;
-  int images_per_cycle = 0, images_period;
+  int snapshots_period;
+  int images_period;
   int is_unstable = 0;
 
 #ifndef NO_STEER
@@ -164,16 +164,16 @@ int main(int argc, char *argv[])
 
   simulation_time = hemelb::util::myClock();
 
-  if (snapshots_per_cycle == 0)
+  if (lMaster.mSnapshotsPerCycle == 0)
     snapshots_period = 1e9;
   else
     snapshots_period = hemelb::util::max(1, lMaster.GetLBM()->period
-        / snapshots_per_cycle);
+        / lMaster.mSnapshotsPerCycle);
 
-  if (images_per_cycle == 0)
+  if (lMaster.mImagesPerCycle == 0)
     images_period = 1e9;
   else
-    images_period = hemelb::util::max(1, lMaster.GetLBM()->period / images_per_cycle);
+    images_period = hemelb::util::max(1, lMaster.GetLBM()->period / lMaster.mImagesPerCycle);
 
   for (cycle_id = 1; cycle_id <= lMaster.mMaxCycleCount && !is_finished; cycle_id++)
   {
@@ -361,13 +361,13 @@ int main(int argc, char *argv[])
         printf("restarting: period: %i\n", lMaster.GetLBM()->period);
         fflush(0x0);
       }
-      snapshots_period = (snapshots_per_cycle == 0)
+      snapshots_period = (lMaster.mSnapshotsPerCycle == 0)
         ? 1e9
-        : hemelb::util::max(1, lMaster.GetLBM()->period / snapshots_per_cycle);
+        : hemelb::util::max(1, lMaster.GetLBM()->period / lMaster.mSnapshotsPerCycle);
 
-      images_period = (images_per_cycle == 0)
+      images_period = (lMaster.mImagesPerCycle == 0)
         ? 1e9
-        : hemelb::util::max(1, lMaster.GetLBM()->period / images_per_cycle);
+        : hemelb::util::max(1, lMaster.GetLBM()->period / lMaster.mImagesPerCycle);
 
       cycle_id = 0;
       continue;

@@ -9,18 +9,14 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mLbm = new LBM();
   mNet = new Net(iArgCount, iArgList);
 
-  int lLbmPeriod;
-  int lLbmVoxelSize;
-  int lLbmSteeringSessionId;
-
   if (iArgCount == 8)
   {
     mMaxCycleCount = atoi(iArgList[2]);
-    lLbmPeriod = atoi(iArgList[3]);
-    lLbmVoxelSize = atof(iArgList[4]);
+    mLbm->period = atoi(iArgList[3]);
+    mLbm->voxel_size = atof(iArgList[4]);
     mSnapshotsPerCycle = atoi(iArgList[5]);
     mImagesPerCycle = atoi(iArgList[6]);
-    lLbmSteeringSessionId = atoi(iArgList[7]);
+    mLbm->steering_session_id = atoi(iArgList[7]);
   }
   else
   {
