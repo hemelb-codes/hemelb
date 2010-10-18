@@ -332,10 +332,6 @@ namespace hemelb
 			  printf (" the execution is terminated\n");
 
 			  net->Abort();
-
-#ifdef NOMPI
-			  exit(1);
-#endif
 			}
 		    
 			neigh_proc[ neigh_procs ].id = *neigh_proc_id;
