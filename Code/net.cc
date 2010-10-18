@@ -12,8 +12,10 @@
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
+#include <cstdio>
+
 
 double Net::GetCutDistance(int iSiteIndex, int iDirection)
 {

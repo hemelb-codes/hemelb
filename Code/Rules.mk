@@ -2,7 +2,7 @@
 include $(MK)/header.mk
 
 TARGETS = $(EXE)
-SUBDIRS = vis steering io dbg lb
+SUBDIRS = vis steering io debug lb
 
 $(EXE)_DEPS = config.o \
         D3Q15.o \
