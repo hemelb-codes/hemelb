@@ -1,5 +1,5 @@
-#ifndef __constants_h_
-#define __constants_h_
+#ifndef HEMELB_CONSTANTS_H
+#define HEMELB_CONSTANTS_H
 
 #define COLOURED_PIXELS_MAX    2048 * 2048
 
@@ -76,4 +76,4 @@ const unsigned int EDGE   = 8U;
 // square of the speed of sound
 const double Cs2 = 1.0 / 3.0;
 
-#endif //__constants_h_
+#endif //HEMELB_CONSTANTS_H

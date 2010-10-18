@@ -14,7 +14,7 @@
 #include "vis/visthread.h"
 #include "vis/ColourPalette.h"
 
-#include "dbg/debug.h"
+#include "debug/Debugger.h"
 
 #define BCAST_FREQ   1
 
