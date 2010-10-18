@@ -10,6 +10,7 @@ $(EXE)_DEPS = config.o \
 	lb.o \
 	fileutils.o \
 	net.o \
+        SimulationMaster.o \
 	usage.o \
         utilityFunctions.o \
 	main.o \

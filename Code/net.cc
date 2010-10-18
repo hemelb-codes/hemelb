@@ -285,6 +285,8 @@ void Net::Abort()
 {
 #ifndef NOMPI
   err = MPI_Abort (MPI_COMM_WORLD, 1);
+#else
+  exit(1);
 #endif
 }
 
@@ -909,9 +911,6 @@ void Net::netInit(int totalFluidSites)
                     printf(" too many intra machine, inter processor neighbours\n");
                     printf(" the execution is terminated\n");
                     Abort();
-#ifdef NOMPI
-                    exit(1);
-#endif
                   }
                   // Store rank of neighbour in >neigh_proc[neigh_procs]
                   neigh_proc_p = &neigh_proc[neigh_procs];
