@@ -7,18 +7,65 @@ namespace hemelb
     namespace collisions
     {
 
-      void ImplSimpleCollideAndStream::DoCollisions(double omega, int i, double *density,
-        double *v_x, double *v_y, double *v_z, double f_neq[], Net* net)
+      void ImplSimpleCollideAndStream::DoCollisions(const bool iDoRayTracing,
+                                                    const double iOmega,
+                                                    double iFOldAll[],
+                                                    double iFNewAll[],
+                                                    const int iFIdAll[],
+                                                    const int iFirstIndex,
+                                                    const int iSiteCount,
+                                                    MinsAndMaxes* bMinimaAndMaxima,
+                                                    const Net* net,
+                                                    const double iStressType,
+                                                    const double iStressParam)
       {
-        double *f = &f_old[i * D3Q15::NUMVECTORS];
-
-        // Temporarily store f_eq in f_neq (rectified in next statement)
-        D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_neq);
-
-        for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+        if (iDoRayTracing)
         {
-          f_new[f_id[i * D3Q15::NUMVECTORS + ii]] = f[ii] += omega * (f_neq[ii] = f[ii]
-              - f_neq[ii]);
+          DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
+                                      iFirstIndex, iSiteCount,
+                                      bMinimaAndMaxima, net, iStressType,
+                                      iStressParam);
+        }
+        else
+        {
+          DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
+                                       iFirstIndex, iSiteCount,
+                                       bMinimaAndMaxima, net, iStressType,
+                                       iStressParam);
+        }
+      }
+
+      template<bool tDoRayTracing>
+      void ImplSimpleCollideAndStream::DoCollisionsInternal(const double iOmega,
+                                                            double iFOldAll[],
+                                                            double iFNewAll[],
+                                                            const int iFIdAll[],
+                                                            const int iFirstIndex,
+                                                            const int iSiteCount,
+                                                            MinsAndMaxes* bMinimaAndMaxima,
+                                                            const Net* net,
+                                                            const double iStressType,
+                                                            const double iStressParam)
+      {
+        for (int iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
+        {
+          double *lFOld = &iFOldAll[iIndex * D3Q15::NUMVECTORS];
+          double lDensity, lVx, lVy, lVz;
+          double lFNeq[15];
+
+          // Temporarily store f_eq in f_neq (rectified in next statement)
+          D3Q15::CalculateDensityVelocityFEq(lFOld, lDensity, lVx, lVy, lVz,
+                                             lFNeq);
+
+          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            iFNewAll[iFIdAll[iIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii]
+                += iOmega * (lFNeq[ii] = lFOld[ii] - lFNeq[ii]);
+          }
+
+          UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, iIndex, lFNeq,
+                                             lDensity, bMinimaAndMaxima, net,
+                                             iStressType, iStressParam);
         }
       }
 

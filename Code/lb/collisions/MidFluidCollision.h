@@ -12,6 +12,8 @@ namespace hemelb
 
       class MidFluidCollision : public Collision
       {
+        protected:
+          MidFluidCollision();
       };
 
     }

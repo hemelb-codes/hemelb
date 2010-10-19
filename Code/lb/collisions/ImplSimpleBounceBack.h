@@ -13,8 +13,31 @@ namespace hemelb
       class ImplSimpleBounceBack : public WallCollision
       {
         public:
-          void DoCollisions(double omega, int i, double *density, double *v_x,
-            double *v_y, double *v_z, double f_neq[], Net* net);
+          void DoCollisions(const bool iDoRayTracing,
+                            const double iOmega,
+                            double iFOldAll[],
+                            double iFNewAll[],
+                            const int iFIdAll[],
+                            const int iFirstIndex,
+                            const int iSiteCount,
+                            MinsAndMaxes* bMinimaAndMaxima,
+                            const Net* net,
+                            const double iStressType,
+                            const double iStressParam);
+
+        private:
+          template<bool tDoRayTracing>
+          void DoCollisionsInternal(const double iOmega,
+                                    double iFOldAll[],
+                                    double iFNewAll[],
+                                    const int iFIdAll[],
+                                    const int iFirstIndex,
+                                    const int iSiteCount,
+                                    MinsAndMaxes* bMinimaAndMaxima,
+                                    const Net* net,
+                                    const double iStressType,
+                                    const double iStressParam);
+
       };
 
     }

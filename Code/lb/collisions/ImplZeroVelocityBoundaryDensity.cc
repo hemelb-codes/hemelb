@@ -7,38 +7,77 @@ namespace hemelb
     namespace collisions
     {
 
-      ImplZeroVelocityBoundaryDensity::ImplZeroVelocityBoundaryDensity(
-        double* iOutletDensityArray)
+      ImplZeroVelocityBoundaryDensity::ImplZeroVelocityBoundaryDensity(double* iOutletDensityArray)
       {
         mBoundaryDensityArray = iOutletDensityArray;
       }
 
-      // Collision + streaming for fluid lattice sites and adjacent to the outlet and the wall.
-      void ImplZeroVelocityBoundaryDensity::DoCollisions(double omega, int i,
-        double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net)
+      void ImplZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,
+                                                         const double iOmega,
+                                                         double iFOldAll[],
+                                                         double iFNewAll[],
+                                                         const int iFIdAll[],
+                                                         const int iFirstIndex,
+                                                         const int iSiteCount,
+                                                         MinsAndMaxes* bMinimaAndMaxima,
+                                                         const Net* net,
+                                                         const double iStressType,
+                                                         const double iStressParam)
       {
-        double *f;
-        int l;
-
-        unsigned int boundary_id;
-
-        f = &f_old[i * D3Q15::NUMVECTORS];
-
-        for (l = 0; l < D3Q15::NUMVECTORS; l++)
+        if (iDoRayTracing)
         {
-          f_neq[l] = f[l];
+          DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
+                                      iFirstIndex, iSiteCount,
+                                      bMinimaAndMaxima, net, iStressType,
+                                      iStressParam);
         }
-        boundary_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-
-        *density = mBoundaryDensityArray[boundary_id];
-
-        *v_x = *v_y = *v_z = 0.F;
-
-        D3Q15::CalculateFeq(*density, *v_x, *v_y, *v_z, f);
-
-        for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+        else
         {
-          f_neq[ii] -= (f_new[f_id[i * D3Q15::NUMVECTORS + ii]] = f[ii]);
+          DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
+                                       iFirstIndex, iSiteCount,
+                                       bMinimaAndMaxima, net, iStressType,
+                                       iStressParam);
+        }
+      }
+
+      // Collision + streaming for fluid lattice sites and adjacent to the outlet and the wall.
+      template<bool tDoRayTracing>
+      void ImplZeroVelocityBoundaryDensity::DoCollisionsInternal(const double iOmega,
+                                                                 double iFOldAll[],
+                                                                 double iFNewAll[],
+                                                                 const int iFIdAll[],
+                                                                 const int iFirstIndex,
+                                                                 const int iSiteCount,
+                                                                 MinsAndMaxes* bMinimaAndMaxima,
+                                                                 const Net* net,
+                                                                 const double iStressType,
+                                                                 const double iStressParam)
+      {
+        for (int iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
+        {
+          double *lFOld = &iFOldAll[iIndex * D3Q15::NUMVECTORS];
+          double lFNeq[15];
+          double lDensity;
+
+          lDensity = mBoundaryDensityArray[net->GetBoundaryId(iIndex)];
+
+          for(int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            lFNeq[ii] = lFOld[ii];
+          }
+
+          // Temporarily store FEq in FNeq
+          D3Q15::CalculateFeq(lDensity, 0.0, 0.0, 0.0, lFOld);
+
+          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            iFNewAll[iFIdAll[iIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii];
+            lFNeq[ii]-= lFOld[ii];
+          }
+
+          Collision::UpdateMinsAndMaxes<tDoRayTracing> (0.0, 0.0, 0.0, iIndex, lFNeq,
+                                             lDensity, bMinimaAndMaxima, net,
+                                             iStressType, iStressParam);
         }
       }
     }

@@ -47,7 +47,6 @@ class LBM {
   double GetMaxPhysicalStress();
 
   void lbmInitMinMaxValues (void);
-  void lbmUpdateMinMaxValues (double density, double velocity, double stress);
 
   double GetAverageInletVelocity(int iInletNumber);
   double GetPeakInletVelocity(int iInletNumber);
@@ -82,9 +81,7 @@ class LBM {
   char *system_file_name;
   int is_inlet_normal_available;
   double* inlet_density, *outlet_density;
-  double lbm_density_min, lbm_density_max;
-  double lbm_velocity_min, lbm_velocity_max;
-  double lbm_stress_min, lbm_stress_max;
+  hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;
   double *lbm_inlet_normal;
   long int *lbm_inlet_count;
   double tau, viscosity, omega;

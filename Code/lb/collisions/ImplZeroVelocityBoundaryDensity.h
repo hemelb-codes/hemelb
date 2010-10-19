@@ -5,24 +5,47 @@
 
 namespace hemelb
 {
-namespace lb
-{
-namespace collisions
-{
+  namespace lb
+  {
+    namespace collisions
+    {
 
-class ImplZeroVelocityBoundaryDensity : public InletOutletWallCollision
-{
-  public:
-    ImplZeroVelocityBoundaryDensity(double* iBoundaryDensityArray);
-    void DoCollisions(double omega, int i, double *density, double *v_x, double *v_y,
-                      double *v_z, double f_neq[], Net* net);
+      class ImplZeroVelocityBoundaryDensity : public InletOutletWallCollision
+      {
+        public:
+          ImplZeroVelocityBoundaryDensity(double* iBoundaryDensityArray);
 
-  private:
-    double* mBoundaryDensityArray;
-};
+          void DoCollisions(const bool iDoRayTracing,
+                            const double iOmega,
+                            double iFOldAll[],
+                            double iFNewAll[],
+                            const int iFIdAll[],
+                            int iFirstIndex,
+                            const int iSiteCount,
+                            MinsAndMaxes* bMinimaAndMaxima,
+                            const Net* net,
+                            const double iStressType,
+                            const double iStressParam);
 
-}
-}
+        private:
+          template<bool tDoRayTracing>
+          void DoCollisionsInternal(const double iOmega,
+                                    double iFOldAll[],
+                                    double iFNewAll[],
+                                    const int iFIdAll[],
+                                    int iFirstIndex,
+                                    const int iSiteCount,
+                                    MinsAndMaxes* bMinimaAndMaxima,
+                                    const Net* net,
+                                    const double iStressType,
+                                    const double iStressParam);
+
+          double* mBoundaryDensityArray;
+
+      };
+
+    }
+  }
 }
 
 #endif /* HEMELB_LB_COLLISIONS_IMPLZEROVELOCITYBOUNDARYDENSITY_H */

@@ -68,8 +68,10 @@ class Net
     int netFindTopology(int *depths);
     void netInit(int totalFluidSites);
 
-    double GetCutDistance(int iSiteIndex, int iDirection);
-    double* GetNormalToWall(int iSiteIndex);
+    double GetCutDistance(int iSiteIndex, int iDirection) const;
+    bool HasBoundary(int iSiteIndex, int iDirection) const;
+    int GetBoundaryId(int iSiteIndex) const;
+    double* GetNormalToWall(int iSiteIndex) const;
 
     void ReceiveFromNeighbouringProcessors();
     void SendToNeighbouringProcessors();
