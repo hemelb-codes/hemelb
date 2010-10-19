@@ -205,17 +205,16 @@ void LBM::lbmSetInitialConditions(Net *net)
 
   for (int i = 0; i < net->my_sites; i++)
     {
-    D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
-
-    f_old_p = &f_old[i * D3Q15::NUMVECTORS];
-    f_new_p = &f_new[i * D3Q15::NUMVECTORS];
-
-    for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
-      {
-	f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
-      }
+      D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
+      
+      f_old_p = &f_old[i * D3Q15::NUMVECTORS];
+      f_new_p = &f_new[i * D3Q15::NUMVECTORS];
+      
+      for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+	{
+	  f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
+	}
     }
-  }
 }
 
 // TODO HACK
