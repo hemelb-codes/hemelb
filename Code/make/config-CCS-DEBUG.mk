@@ -1,13 +1,7 @@
-# -*- mode: makefile; -*-
-include $(MK)/config-default.mk
-
-CXX := mpic++.openmpi
-
-EXE := hemelb
+include $(MK)/config-CCS-base.mk
 
 HEMELB_DEBUG_LEVEL := 1
-HEMELB_DEFS := CCS
+HEMELB_DEFS += DEBUG
 
-HEMELB_CXXFLAGS :=-O4 -pthread -Wunused -g
+HEMELB_CXXFLAGS += -O0 -g
 
-# vim: set ft=make :
