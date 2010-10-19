@@ -559,7 +559,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 	      
 	      if (net->net_site_data[ my_site_id ] == FLUID_TYPE) {
                 D3Q15::CalculateDensityVelocityFEq(&f_old[ (my_site_id * (par + 1) + par)
-                    * D3Q15::NUMVECTORS], &density, &vx, &vy, &vz, f_eq);
+                    * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
 		
 		for (l = 0; l < D3Q15::NUMVECTORS; l++) {
 		  f_neq[ l ] = f_old[ (my_site_id*(par+1)+par)*D3Q15::NUMVECTORS+l ] - f_eq[ l ];
@@ -576,10 +576,10 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net) {
 		  stress = -1.0;
 		} else {
 		  D3Q15::CalculateShearStress(density, f_neq,
-			    &net->GetNormalToWall(my_site_id)[0], &stress, lbm_stress_par);
+			    &net->GetNormalToWall(my_site_id)[0], stress, lbm_stress_par);
 		}
 	      } else {
-	        D3Q15::CalculateVonMisesStress(f_neq, &stress, lbm_stress_par);
+	        D3Q15::CalculateVonMisesStress(f_neq, stress, lbm_stress_par);
 	      }
 	      
 	      vx /= density;

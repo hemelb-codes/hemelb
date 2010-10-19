@@ -91,7 +91,7 @@ namespace hemelb
 
       for (int n = 0; n < glyphs; n++)
       {
-        D3Q15::CalculateDensityAndVelocity(glyph[n].f, &density, &vx, &vy, &vz);
+        D3Q15::CalculateDensityAndVelocity(glyph[n].f, density, vx, vy, vz);
 
         temp = glyph_length * block_size * vis::controller->velocity_threshold_max_inv
             / density;

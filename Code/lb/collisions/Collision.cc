@@ -7,17 +7,41 @@ namespace hemelb
     namespace collisions
     {
 
-      bool Collision::PostStep(double omega, int i, double *density, double *v_x,
-        double *v_y, double *v_z, double f_neq[], Net* net)
+      // Default constructor, implemented so we can make it protected
+      // and prevent instantiation of this base class.
+      Collision::Collision()
       {
-        // Standard implementation - do nothing. Return false to show that we've
-        // done nothing.
-        return false;
+
       }
 
-      unsigned int Collision::GetBoundaryConfig(Net* net, int i)
+      void Collision::DoCollisions(const bool iDoRayTracing,
+                                   const double iOmega,
+                                   double iFOldAll[],
+                                   double iFNewAll[],
+                                   const int iFIdAll[],
+                                   int iFirstIndex,
+                                   const int iSiteCount,
+                                   MinsAndMaxes* bMinimaAndMaxima,
+                                   const Net* net,
+                                   const double iStressType,
+                                   const double iStressParam)
       {
-        return (net->net_site_data[i] & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;
+        // Standard implementation - do nothing.
+      }
+
+      void Collision::PostStep(const bool iDoRayTracing,
+                               const double iOmega,
+                               double iFOldAll[],
+                               double iFNewAll[],
+                               const int iFIdAll[],
+                               int iFirstIndex,
+                               const int iSiteCount,
+                               MinsAndMaxes* bMinimaAndMaxima,
+                               const Net* net,
+                               const double iStressType,
+                               const double iStressParam)
+      {
+        // Standard implementation - do nothing.
       }
     }
   }

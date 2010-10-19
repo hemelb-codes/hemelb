@@ -5,16 +5,18 @@
 
 namespace hemelb
 {
-namespace lb
-{
-namespace collisions
-{
+  namespace lb
+  {
+    namespace collisions
+    {
 
-class InletOutletCollision : public Collision
-{
-};
+      class InletOutletCollision : public Collision
+      {
+        protected:
+          InletOutletCollision();
+      };
 
-}
-}
+    }
+  }
 }
 #endif /* HEMELB_LB_COLLISIONS_INLETOUTLETCOLLISION_H */

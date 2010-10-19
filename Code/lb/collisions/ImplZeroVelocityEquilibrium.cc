@@ -6,31 +6,78 @@ namespace hemelb
   {
     namespace collisions
     {
-
-      void ImplZeroVelocityEquilibrium::DoCollisions(double omega, int i,
-        double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net)
+      void ImplZeroVelocityEquilibrium::DoCollisions(const bool iDoRayTracing,
+                                                     const double iOmega,
+                                                     double iFOldAll[],
+                                                     double iFNewAll[],
+                                                     const int iFIdAll[],
+                                                     const int iFirstIndex,
+                                                     const int iSiteCount,
+                                                     MinsAndMaxes* bMinimaAndMaxima,
+                                                     const Net* net,
+                                                     const double iStressType,
+                                                     const double iStressParam)
       {
-        double *f;
-        int l;
-
-        f = &f_old[i * D3Q15::NUMVECTORS];
-
-        for (l = 0; l < D3Q15::NUMVECTORS; l++)
+        if (iDoRayTracing)
         {
-          f_neq[l] = f[l];
+          DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
+                                      iFirstIndex, iSiteCount,
+                                      bMinimaAndMaxima, net, iStressType,
+                                      iStressParam);
         }
-        *v_x = *v_y = *v_z = 0.F;
-
-        *density = 0.;
-
-        for (l = 0; l < D3Q15::NUMVECTORS; l++)
-          *density += f[l];
-
-        D3Q15::CalculateFeq(*density, 0.0, 0.0, 0.0, f);
-
-        for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+        else
         {
-          f_neq[ii] -= (f_new[f_id[i * D3Q15::NUMVECTORS + ii]] = f[ii]);
+          DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
+                                       iFirstIndex, iSiteCount,
+                                       bMinimaAndMaxima, net, iStressType,
+                                       iStressParam);
+        }
+      }
+
+      template<bool tDoRayTracing>
+      void ImplZeroVelocityEquilibrium::DoCollisionsInternal(const double iOmega,
+                                                             double iFOldAll[],
+                                                             double iFNewAll[],
+                                                             const int iFIdAll[],
+                                                             const int iFirstIndex,
+                                                             const int iSiteCount,
+                                                             MinsAndMaxes* bMinimaAndMaxima,
+                                                             const Net* net,
+                                                             const double iStressType,
+                                                             const double iStressParam)
+      {
+        for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+        {
+          double *lFOld = &iFOldAll[lIndex * D3Q15::NUMVECTORS];
+          double lFNeq[15];
+          double lDensity;
+
+          lDensity = 0.0;
+
+          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            lDensity += lFOld[ii];
+          }
+
+          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            lFNeq[ii] = lFOld[ii];
+          }
+
+          // Temporarily store FEq in lFNeq
+          D3Q15::CalculateFeq(lDensity, 0.0, 0.0, 0.0, lFOld);
+
+          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            iFNewAll[iFIdAll[lIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii];
+            lFNeq[ii] -= lFOld[ii];
+          }
+
+          Collision::UpdateMinsAndMaxes<tDoRayTracing>(0.0, 0.0, 0.0, lIndex,
+                                                       lFNeq, lDensity,
+                                                       bMinimaAndMaxima, net,
+                                                       iStressType,
+                                                       iStressParam);
         }
       }
     }

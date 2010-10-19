@@ -16,13 +16,24 @@
 #include <cmath>
 #include <cstdio>
 
-
-double Net::GetCutDistance(int iSiteIndex, int iDirection)
+double Net::GetCutDistance(int iSiteIndex, int iDirection) const
 {
   return cut_distances[iSiteIndex * (D3Q15::NUMVECTORS - 1) + iDirection - 1];
 }
 
-double *Net::GetNormalToWall(int iSiteIndex)
+bool Net::HasBoundary(int iSiteIndex, int iDirection) const
+{
+  unsigned int lBoundaryConfig = (net_site_data[iSiteIndex] & BOUNDARY_CONFIG_MASK)
+      >> BOUNDARY_CONFIG_SHIFT;
+  return (lBoundaryConfig & (1U << (iDirection - 1))) != 0;
+}
+
+int Net::GetBoundaryId(int iSiteIndex) const
+{
+  return (net_site_data[iSiteIndex] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+}
+
+double *Net::GetNormalToWall(int iSiteIndex) const
 {
   return &net_site_nor[iSiteIndex * 3];
 }
@@ -39,8 +50,8 @@ int * Net::netProcIdPointer(int site_i, int site_j, int site_k)
   int ii, jj, kk; // Coordinates of a site within the block
   ProcBlock *proc_block_p; // Pointer to the block
 
-  if (site_i < 0 || site_i >= sites_x || site_j < 0 || site_j >= sites_y || site_k < 0
-      || site_k >= sites_z) // Out of the bounding box.
+  if (site_i < 0 || site_i >= sites_x || site_j < 0 || site_j >= sites_y
+      || site_k < 0 || site_k >= sites_z) // Out of the bounding box.
     return NULL;
 
   // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
@@ -77,8 +88,8 @@ unsigned int *Net::netSiteMapPointer(int site_i, int site_j, int site_k)
   int ii, jj, kk; // Coordinates of a site within the block
   DataBlock *map_block_p; // Pointer to the block
 
-  if (site_i < 0 || site_i >= sites_x || site_j < 0 || site_j >= sites_y || site_k < 0
-      || site_k >= sites_z) // If site is out of the bounding box.
+  if (site_i < 0 || site_i >= sites_x || site_j < 0 || site_j >= sites_y
+      || site_k < 0 || site_k >= sites_z) // If site is out of the bounding box.
     return NULL;
 
   // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
@@ -284,7 +295,7 @@ unsigned int Net::GetCollisionType(unsigned int site_data)
 void Net::Abort()
 {
 #ifndef NOMPI
-  err = MPI_Abort (MPI_COMM_WORLD, 1);
+  err = MPI_Abort(MPI_COMM_WORLD, 1);
 #else
   exit(1);
 #endif
@@ -370,12 +381,14 @@ void Net::netInit(int totalFluidSites)
 #ifndef NO_STEER 
   if (procs == 1)
   {
-    fluid_sites_per_unit = (int) ceil((double) totalFluidSites / (double) procs);
+    fluid_sites_per_unit
+        = (int) ceil((double) totalFluidSites / (double) procs);
     proc_count = 0;
   }
   else
   {
-    fluid_sites_per_unit = (int) ceil((double) totalFluidSites / (double) (procs - 1));
+    fluid_sites_per_unit = (int) ceil((double) totalFluidSites
+        / (double) (procs - 1));
     proc_count = 1;
   }
 #else
@@ -420,7 +433,8 @@ void Net::netInit(int totalFluidSites)
 
           for (site_i = i * block_size; site_i < i * block_size + block_size; site_i++)
             for (site_j = j * block_size; site_j < j * block_size + block_size; site_j++)
-              for (site_k = k * block_size; site_k < k * block_size + block_size; site_k++)
+              for (site_k = k * block_size; site_k < k * block_size
+                  + block_size; site_k++)
               {
                 // Move on if the site is solid (proc_id = 1 << 30) or has already been assigned
                 // to a rank (0 <= proc_id < 1 << 30).  proc_id is allocated and initialised
@@ -459,13 +473,13 @@ void Net::netInit(int totalFluidSites)
                   are_fluid_sites_incrementing = 0;
 
                   // For sites on the edge of the domain (sites_a), deal with the neighbours.
-                  for (index_a = 0; index_a < sites_a && partial_visited_fluid_sites
-                      < fluid_sites_per_unit; index_a++)
+                  for (index_a = 0; index_a < sites_a
+                      && partial_visited_fluid_sites < fluid_sites_per_unit; index_a++)
                   {
                     site_location_a_p = &site_location_a[index_a];
 
-                    for (l = 1; l < D3Q15::NUMVECTORS && partial_visited_fluid_sites
-                        < fluid_sites_per_unit; l++)
+                    for (l = 1; l < D3Q15::NUMVECTORS
+                        && partial_visited_fluid_sites < fluid_sites_per_unit; l++)
                     {
                       // Record neighbour location.
                       neigh_i = site_location_a_p->i + D3Q15::CX[l];
@@ -537,8 +551,9 @@ void Net::netInit(int totalFluidSites)
                 {
                   ++proc_count;
                   unvisited_fluid_sites -= partial_visited_fluid_sites;
-                  fluid_sites_per_unit = (int) ceil((double) unvisited_fluid_sites
-                      / (double) (procs - proc_count));
+                  fluid_sites_per_unit
+                      = (int) ceil((double) unvisited_fluid_sites
+                          / (double) (procs - proc_count));
                   partial_visited_fluid_sites = 0;
                 }
                 // If not, we have to start growing a different region for the same rank:
@@ -604,9 +619,12 @@ void Net::netInit(int totalFluidSites)
               }
               m = -1;
 
-              for (site_i = i * block_size; site_i < i * block_size + block_size; site_i++)
-                for (site_j = j * block_size; site_j < j * block_size + block_size; site_j++)
-                  for (site_k = k * block_size; site_k < k * block_size + block_size; site_k++)
+              for (site_i = i * block_size; site_i < i * block_size
+                  + block_size; site_i++)
+                for (site_j = j * block_size; site_j < j * block_size
+                    + block_size; site_j++)
+                  for (site_k = k * block_size; site_k < k * block_size
+                      + block_size; site_k++)
                   {
                     if (proc_block_p->proc_id[++m] != marker)
                     {
@@ -637,13 +655,14 @@ void Net::netInit(int totalFluidSites)
                       sites_b = 0;
                       are_fluid_sites_incrementing = 0;
 
-                      for (index_a = 0; index_a < sites_a && partial_visited_fluid_sites
-                          < fluid_sites_per_unit; index_a++)
+                      for (index_a = 0; index_a < sites_a
+                          && partial_visited_fluid_sites < fluid_sites_per_unit; index_a++)
                       {
                         site_location_a_p = &site_location_a[index_a];
 
-                        for (l = 1; l < D3Q15::NUMVECTORS && partial_visited_fluid_sites
-                            < fluid_sites_per_unit; l++)
+                        for (l = 1; l < D3Q15::NUMVECTORS
+                            && partial_visited_fluid_sites
+                                < fluid_sites_per_unit; l++)
                         {
                           neigh_i = site_location_a_p->i + D3Q15::CX[l];
                           neigh_j = site_location_a_p->j + D3Q15::CY[l];
@@ -656,7 +675,8 @@ void Net::netInit(int totalFluidSites)
                           if (neigh_k == -1 || neigh_k == sites_z)
                             continue;
 
-                          proc_id_p = netProcIdPointer(neigh_i, neigh_j, neigh_k);
+                          proc_id_p = netProcIdPointer(neigh_i, neigh_j,
+                                                       neigh_k);
 
                           if (proc_id_p == NULL || *proc_id_p != marker)
                           {
@@ -675,11 +695,13 @@ void Net::netInit(int totalFluidSites)
                           {
                             sites_buffer_size *= 2;
                             site_location_a
-                                = (SiteLocation *) realloc(site_location_a,
+                                = (SiteLocation *) realloc(
+                                                           site_location_a,
                                                            sizeof(SiteLocation)
                                                                * sites_buffer_size);
                             site_location_b
-                                = (SiteLocation *) realloc(site_location_b,
+                                = (SiteLocation *) realloc(
+                                                           site_location_b,
                                                            sizeof(SiteLocation)
                                                                * sites_buffer_size);
                           }
@@ -707,8 +729,9 @@ void Net::netInit(int totalFluidSites)
                       if (unit_level == 0)
                       {
                         unvisited_fluid_sites -= partial_visited_fluid_sites;
-                        fluid_sites_per_unit = (int) ceil((double) unvisited_fluid_sites
-                            / (double) (procs - proc_count));
+                        fluid_sites_per_unit
+                            = (int) ceil((double) unvisited_fluid_sites
+                                / (double) (procs - proc_count));
                       }
                       partial_visited_fluid_sites = 0;
                     }
@@ -878,9 +901,8 @@ void Net::netInit(int totalFluidSites)
                 // the pointer to proc_id is NULL) or it is solid (in which case proc_id ==
                 // 1 << 30) or the neighbour is also on this rank.  proc_id was initialized
                 // in lbmReadConfig in io.cc.
-                if (proc_id_p == NULL ||
-                    IsCurrentProcRank(*proc_id_p) ||
-                    *proc_id_p == (1 << 30))
+                if (proc_id_p == NULL || IsCurrentProcRank(*proc_id_p)
+                    || *proc_id_p == (1 << 30))
                 {
                   continue;
                 }
@@ -908,7 +930,8 @@ void Net::netInit(int totalFluidSites)
                 {
                   if (neigh_procs == NEIGHBOUR_PROCS_MAX)
                   {
-                    printf(" too many intra machine, inter processor neighbours\n");
+                    printf(
+                           " too many intra machine, inter processor neighbours\n");
                     printf(" the execution is terminated\n");
                     Abort();
                   }
@@ -938,11 +961,13 @@ void Net::netInit(int totalFluidSites)
               {
                 l = 3;
               }
-              else if (GetCollisionType(site_data[my_sites_p]) == (INLET | EDGE))
+              else if (GetCollisionType(site_data[my_sites_p])
+                  == (INLET | EDGE))
               {
                 l = 4;
               }
-              else if (GetCollisionType(site_data[my_sites_p]) == (OUTLET | EDGE))
+              else if (GetCollisionType(site_data[my_sites_p]) == (OUTLET
+                  | EDGE))
               {
                 l = 5;
               }
@@ -970,7 +995,8 @@ void Net::netInit(int totalFluidSites)
 
                 if (l == 0)
                 {
-                  map_block_p->site_data[m] = 1000000000 + my_inter_collisions[l];
+                  map_block_p->site_data[m] = 1000000000
+                      + my_inter_collisions[l];
                 }
                 else
                 {
@@ -986,13 +1012,15 @@ void Net::netInit(int totalFluidSites)
 
   for (l = 1; l < COLLISION_TYPES; l++)
   {
-    collision_offset[0][l] = collision_offset[0][l - 1] + my_inner_collisions[l - 1];
+    collision_offset[0][l] = collision_offset[0][l - 1] + my_inner_collisions[l
+        - 1];
   }
   collision_offset[1][0] = my_inner_sites;
 
   for (l = 1; l < COLLISION_TYPES; l++)
   {
-    collision_offset[1][l] = collision_offset[1][l - 1] + my_inter_collisions[l - 1];
+    collision_offset[1][l] = collision_offset[1][l - 1] + my_inter_collisions[l
+        - 1];
   }
   for (n = 0; n < blocks; n++)
   {
@@ -1019,8 +1047,8 @@ void Net::netInit(int totalFluidSites)
       // collision offset to tell us when one collision type ends and another starts.
       for (l = 1; l < COLLISION_TYPES; l++)
       {
-        if (*site_data_p >= 50000000 * (10 + (l - 1)) && *site_data_p < 50000000 * (10
-            + l))
+        if (*site_data_p >= 50000000 * (10 + (l - 1)) && *site_data_p
+            < 50000000 * (10 + l))
         {
           *site_data_p += collision_offset[0][l] - 50000000 * (10 + (l - 1));
           break;
@@ -1028,8 +1056,8 @@ void Net::netInit(int totalFluidSites)
       }
       for (l = 0; l < COLLISION_TYPES; l++)
       {
-        if (*site_data_p >= 50000000 * (20 + l) && *site_data_p < 50000000 * (20
-            + (l + 1)))
+        if (*site_data_p >= 50000000 * (20 + l) && *site_data_p < 50000000
+            * (20 + (l + 1)))
         {
           *site_data_p += collision_offset[1][l] - 50000000 * (20 + l);
           break;
@@ -1130,7 +1158,8 @@ void Net::netInit(int totalFluidSites)
               site_map = map_block_p->site_data[m];
 
               // set f_id.
-              f_id[site_map * D3Q15::NUMVECTORS + 0] = site_map * D3Q15::NUMVECTORS + 0;
+              f_id[site_map * D3Q15::NUMVECTORS + 0] = site_map
+                  * D3Q15::NUMVECTORS + 0;
 
               for (l = 1; l < D3Q15::NUMVECTORS; l++)
               {
@@ -1140,7 +1169,8 @@ void Net::netInit(int totalFluidSites)
                 neigh_k = site_k + D3Q15::CZ[l];
 
                 // initialize f_id to the rubbish site.
-                f_id[site_map * D3Q15::NUMVECTORS + l] = my_sites * D3Q15::NUMVECTORS;
+                f_id[site_map * D3Q15::NUMVECTORS + l] = my_sites
+                    * D3Q15::NUMVECTORS;
 
                 // You know which process the neighbour is on.
                 proc_id_p = netProcIdPointer(neigh_i, neigh_j, neigh_k);
@@ -1238,13 +1268,15 @@ void Net::netInit(int totalFluidSites)
 #ifndef NOMPI
     if (neigh_proc_p->id > mRank)
     {
-      err = MPI_Isend(&neigh_proc_p->f_data[0], neigh_proc_p->fs * 4, MPI_SHORT,
-                      neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][m]);
+      err = MPI_Isend(&neigh_proc_p->f_data[0], neigh_proc_p->fs * 4,
+                      MPI_SHORT, neigh_proc_p->id, 10, MPI_COMM_WORLD,
+                      &req[0][m]);
     }
     else
     {
-      err = MPI_Irecv(&neigh_proc_p->f_data[0], neigh_proc_p->fs * 4, MPI_SHORT,
-                      neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][neigh_procs + m]);
+      err = MPI_Irecv(&neigh_proc_p->f_data[0], neigh_proc_p->fs * 4,
+                      MPI_SHORT, neigh_proc_p->id, 10, MPI_COMM_WORLD,
+                      &req[0][neigh_procs + m]);
     }
 #endif
   }
@@ -1320,7 +1352,7 @@ void Net::ReceiveFromNeighbouringProcessors()
     NeighProc *neigh_proc_p = &neigh_proc[m];
 
     err = MPI_Irecv(&f_old[neigh_proc_p->f_head], neigh_proc_p->fs, MPI_DOUBLE,
-                         neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][m]);
+                    neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][m]);
   }
 #endif
 }
@@ -1338,7 +1370,8 @@ void Net::SendToNeighbouringProcessors()
     NeighProc *neigh_proc_p = &neigh_proc[m];
 
     err = MPI_Isend(&f_new[neigh_proc_p->f_head], neigh_proc_p->fs, MPI_DOUBLE,
-                    neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][neigh_procs + m]);
+                    neigh_proc_p->id, 10, MPI_COMM_WORLD, &req[0][neigh_procs
+                        + m]);
   }
 #endif
 }
@@ -1366,14 +1399,15 @@ Net::Net(int &iArgumentCount, char* iArgumentList[])
 #ifndef NOMPI
   int thread_level_provided;
 
-  err = MPI_Init_thread (&iArgumentCount, &iArgumentList, MPI_THREAD_FUNNELED, &thread_level_provided);
-  err = MPI_Comm_size (MPI_COMM_WORLD, &procs);
-  err = MPI_Comm_rank (MPI_COMM_WORLD, &mRank);
+  err = MPI_Init_thread(&iArgumentCount, &iArgumentList, MPI_THREAD_FUNNELED,
+                        &thread_level_provided);
+  err = MPI_Comm_size(MPI_COMM_WORLD, &procs);
+  err = MPI_Comm_rank(MPI_COMM_WORLD, &mRank);
 
   if (IsCurrentProcTheIOProc())
-    {
-      printf("thread_level_provided %i\n", thread_level_provided);
-    }
+  {
+    printf("thread_level_provided %i\n", thread_level_provided);
+  }
 #else
   procs = 1;
   mRank = 0;
@@ -1387,7 +1421,7 @@ Net::~Net()
 {
 
 #ifndef NOMPI
-  err = MPI_Finalize ();
+  err = MPI_Finalize();
 #endif
 
   delete[] from_proc_id_to_neigh_proc_index;

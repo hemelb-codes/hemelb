@@ -12,6 +12,8 @@ namespace hemelb
 
       class WallCollision : public Collision
       {
+        protected:
+          WallCollision();
       };
 
     }
