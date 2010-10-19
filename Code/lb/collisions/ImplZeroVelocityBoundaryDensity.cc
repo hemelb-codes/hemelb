@@ -61,7 +61,7 @@ namespace hemelb
 
           lDensity = mBoundaryDensityArray[net->GetBoundaryId(iIndex)];
 
-          for(int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for(unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             lFNeq[ii] = lFOld[ii];
           }
@@ -69,7 +69,7 @@ namespace hemelb
           // Temporarily store FEq in FNeq
           D3Q15::CalculateFeq(lDensity, 0.0, 0.0, 0.0, lFOld);
 
-          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             iFNewAll[iFIdAll[iIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii];
             lFNeq[ii]-= lFOld[ii];

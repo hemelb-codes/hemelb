@@ -54,12 +54,12 @@ namespace hemelb
 
           lDensity = 0.0;
 
-          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             lDensity += lFOld[ii];
           }
 
-          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             lFNeq[ii] = lFOld[ii];
           }
@@ -67,7 +67,7 @@ namespace hemelb
           // Temporarily store FEq in lFNeq
           D3Q15::CalculateFeq(lDensity, 0.0, 0.0, 0.0, lFOld);
 
-          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             iFNewAll[iFIdAll[lIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii];
             lFNeq[ii] -= lFOld[ii];
