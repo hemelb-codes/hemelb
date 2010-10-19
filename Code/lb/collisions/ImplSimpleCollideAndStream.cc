@@ -15,7 +15,7 @@ namespace hemelb
         // Temporarily store f_eq in f_neq (rectified in next statement)
         D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_neq);
 
-        for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+        for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
         {
           f_new[f_id[i * D3Q15::NUMVECTORS + ii]] = f[ii] += omega * (f_neq[ii] = f[ii]
               - f_neq[ii]);

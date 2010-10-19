@@ -18,13 +18,12 @@ namespace hemelb
         double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net)
       {
         double *f;
-        int l;
 
         unsigned int boundary_id;
 
         f = &f_old[i * D3Q15::NUMVECTORS];
 
-        for (l = 0; l < D3Q15::NUMVECTORS; l++)
+        for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
         {
           f_neq[l] = f[l];
         }
@@ -36,7 +35,7 @@ namespace hemelb
 
         D3Q15::CalculateFeq(*density, *v_x, *v_y, *v_z, f);
 
-        for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+        for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
         {
           f_neq[ii] -= (f_new[f_id[i * D3Q15::NUMVECTORS + ii]] = f[ii]);
         }

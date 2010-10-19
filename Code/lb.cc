@@ -211,11 +211,9 @@ void LBM::lbmCalculateBC (double f[], unsigned int site_data, double *density,
 {
   double dummy_density;
 
-  int l;
-
   unsigned int boundary_type, boundary_id;
 
-  for (l = 0; l < D3Q15::NUMVECTORS; l++)
+  for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
     {
       f_neq[ l ] = f[ l ];
     }
@@ -242,7 +240,7 @@ void LBM::lbmCalculateBC (double f[], unsigned int site_data, double *density,
       D3Q15::CalculateFeq(*density, *vx, *vy, *vz, f);
 
     }
-  for (l = 0; l < D3Q15::NUMVECTORS; l++)
+  for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
     {
       f_neq[ l ] -= f[ l ];
     }
@@ -303,24 +301,23 @@ void LBM::lbmSetInitialConditions (Net *net)
 {
   double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
   double density;
-  int i, l;
 
   density = 0.;
 
-  for (i = 0; i < outlets; i++)
+  for (int i = 0; i < outlets; i++)
     {
       density += outlet_density_avg[i] - outlet_density_amp[i];
     }
   density /= outlets;
 
-  for (i = 0; i < net->my_sites; i++)
+  for (int i = 0; i < net->my_sites; i++)
     {
     D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
 	  f_old_p = &f_old[ i*D3Q15::NUMVECTORS ];
 	  f_new_p = &f_new[ i*D3Q15::NUMVECTORS ];
 
-	  for (l = 0; l < D3Q15::NUMVECTORS; l++)
+	  for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
 	    {
 	      f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
 	    }
@@ -480,7 +477,7 @@ int LBM::IsUnstable(Net *net)
 
   for (int i = 0; i < net->my_sites; i++)
   {
-    for (int l = 0; l < D3Q15::NUMVECTORS; l++)
+    for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
     {
       if (f_old[i * D3Q15::NUMVECTORS + l] < 0.)
       {
