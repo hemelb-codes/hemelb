@@ -467,23 +467,40 @@ namespace hemelb
 	    fprintf(stderr, "unable to open file %s, exiting\n", parameters_file_name);
 	    fflush(0x0);
 	    exit(0x0);
-	  } else {
-	    fprintf(stderr, "done\n");
 	  }
 
 	  fflush(NULL);
-      
-	  fscanf (parameters_file, "%e \n", &local_ctr_x);
-	  fscanf (parameters_file, "%e \n", &local_ctr_y);
-	  fscanf (parameters_file, "%e \n", &local_ctr_z);
-	  fscanf (parameters_file, "%e \n", &longitude);
-	  fscanf (parameters_file, "%e \n", &latitude);
-	  fscanf (parameters_file, "%e \n", &zoom);
-	  fscanf (parameters_file, "%e \n", &brightness);
-	  fscanf (parameters_file, "%e \n", &physical_velocity_max);
-	  fscanf (parameters_file, "%e \n", &physical_stress_max);
+	  
+	  int nParamsRead = 0;
+	  nParamsRead += fscanf (parameters_file, "%e \n", &local_ctr_x);
+	  nParamsRead += fscanf (parameters_file, "%e \n", &local_ctr_y);
+	  nParamsRead += fscanf (parameters_file, "%e \n", &local_ctr_z);
+	  nParamsRead += fscanf (parameters_file, "%e \n", &longitude);
+	  nParamsRead += fscanf (parameters_file, "%e \n", &latitude);
+	  nParamsRead += fscanf (parameters_file, "%e \n", &zoom);
+	  nParamsRead += fscanf (parameters_file, "%e \n", &brightness);
+	  nParamsRead += fscanf (parameters_file,
+				 "%e \n", &physical_velocity_max);
+	  nParamsRead += fscanf (parameters_file,
+				 "%e \n", &physical_stress_max);
 	  fclose (parameters_file);
-      
+	  if (nParamsRead != 9) {
+	    fprintf(stderr, "Could not parse ray tracing configuration file, "
+		    "format is (all floats):\n"
+		    "ctr_x\n"
+		    "ctr_y\n"
+		    "ctr_z\n"
+		    "longitude\n"
+		    "latitude\n"
+		    "zoome\n"
+		    "brightness\n"
+		    "physical_velocity_max\n"
+		    "physical_stress_max\n"
+		    "\nExiting...\n");
+	    fflush(0x0);
+	    exit(0x0);
+	  }
+	  
 	  velocity_max = lbm->lbmConvertVelocityToLatticeUnits (physical_velocity_max);
 	  stress_max   = lbm->lbmConvertStressToLatticeUnits (physical_stress_max);
       

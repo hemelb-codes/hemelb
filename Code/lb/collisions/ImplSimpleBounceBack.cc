@@ -53,7 +53,7 @@ namespace hemelb
           double lFNeq[D3Q15::NUMVECTORS];
           double lVx, lVy, lVz, lDensity;
 
-          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             lFNeq[ii] = lFOld[ii];
           }
@@ -61,7 +61,7 @@ namespace hemelb
           D3Q15::CalculateDensityVelocityFEq(lFNeq, lDensity, lVx, lVy, lVz,
                                              lFOld);
 
-          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             // The actual bounce-back lines, including streaming and collision. Basically swap the non-equilibrium components of f in each of the opposing pairs of directions.
             int lStreamTo = (net->HasBoundary(lIndex, ii))

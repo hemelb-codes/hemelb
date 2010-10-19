@@ -57,7 +57,7 @@ namespace hemelb
           D3Q15::CalculateDensityVelocityFEq(lFOld, lDensity, lVx, lVy, lVz,
                                              lFNeq);
 
-          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             iFNewAll[iFIdAll[iIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii]
                 += iOmega * (lFNeq[ii] = lFOld[ii] - lFNeq[ii]);

@@ -202,7 +202,7 @@ void D3Q15::CalculateShearStress(const double &density,
   double normal_stress = 0.0; // Magnitude of force per
   // unit area normal to the
   // surface
-  int i, j, l;
+  unsigned int i, j, l;
 
   double temp = iStressParameter * (-sqrt(2.0));
 
