@@ -15,7 +15,7 @@ namespace hemelb
         // Temporarily store f_eq in f_neq. Rectified later.
         D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_neq);
 
-        for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+        for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
         {
           f_new[f_id[i * D3Q15::NUMVECTORS + ii]] = f[ii] += omega * (f_neq[ii] = f[ii]
               - f_neq[ii]);
@@ -29,7 +29,7 @@ namespace hemelb
 
         // Handle odd indices, then evens - it's slightly easier to take the odd
         // and even cases separately.
-        for (int l = 1; l < D3Q15::NUMVECTORS; l++)
+        for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
         {
           // Only do it if there's no boundary in the opposite direction, otherwise, just leave at eqm
           if ( (0 != (boundary_config & (1U << (l - 1)))))// && (0 == (boundary_config & (1U << (l)))))

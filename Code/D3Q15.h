@@ -5,7 +5,7 @@ class D3Q15
 {
   public:
     // The number of discrete velocity vectors
-    static const int NUMVECTORS = 15;
+    static const unsigned int NUMVECTORS = 15;
 
     // The x, y and z components of each of the discrete velocity vectors
     static const int CX[NUMVECTORS];
