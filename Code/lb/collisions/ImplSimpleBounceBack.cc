@@ -17,7 +17,7 @@ namespace hemelb
 
         unsigned int boundary_config = GetBoundaryConfig(iNet, iIndex);
 
-        for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+        for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
         {
           // The actual bounce-back lines, including streaming and collision. Basically swap the non-equilibrium components of f in each of the opposing pairs of directions.
           int lStreamTo = (0 == (boundary_config & (1U << (ii - 1))))

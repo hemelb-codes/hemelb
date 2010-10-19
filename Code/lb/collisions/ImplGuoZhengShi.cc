@@ -19,7 +19,7 @@ namespace hemelb
 
         D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, lFEq);
 
-        for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+        for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
         {
           f_new[f_id[i * D3Q15::NUMVECTORS + ii]] = f[ii] + omega * (f_neq[ii] = f[ii]
               - lFEq[ii]);
@@ -28,7 +28,7 @@ namespace hemelb
         // Now fill in the un-streamed-to distributions (those that point away from boundaries).
         unsigned int boundary_config = GetBoundaryConfig(net, i);
 
-        for (int l = 1; l < D3Q15::NUMVECTORS; l++)
+        for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
         {
           int lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
 
