@@ -1,14 +1,18 @@
 include $(MK)/header.mk
 
 SRCS := Collision.cc \
-        ImplFInterpolation.cc \
-        ImplGuoZhengShi.cc \
+        InletOutletCollision.cc \
+        InletOutletWallCollision.cc \
+        MidFluidCollision.cc \
+        WallCollision.cc \
         ImplNonZeroVelocityBoundaryDensity.cc \
-        ImplRegularised.cc \
-        ImplSimpleBounceBack.cc \
         ImplSimpleCollideAndStream.cc \
         ImplZeroVelocityBoundaryDensity.cc \
-        ImplZeroVelocityEquilibrium.cc 
+        ImplZeroVelocityEquilibrium.cc \
+        ImplFInterpolation.cc \
+        ImplGuoZhengShi.cc \
+        ImplRegularised.cc \
+        ImplSimpleBounceBack.cc \
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

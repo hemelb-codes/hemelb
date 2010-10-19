@@ -7,36 +7,83 @@ namespace hemelb
     namespace collisions
     {
 
-      ImplNonZeroVelocityBoundaryDensity::ImplNonZeroVelocityBoundaryDensity(
-        double* iOutletDensityArray)
+      ImplNonZeroVelocityBoundaryDensity::ImplNonZeroVelocityBoundaryDensity(double* iOutletDensityArray)
       {
         mBoundaryDensityArray = iOutletDensityArray;
       }
 
-      void ImplNonZeroVelocityBoundaryDensity::DoCollisions(double omega, int i,
-        double *density, double *v_x, double *v_y, double *v_z, double f_neq[], Net* net)
+      void ImplNonZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,
+                                                            const double iOmega,
+                                                            double iFOldAll[],
+                                                            double iFNewAll[],
+                                                            const int iFIdAll[],
+                                                            const int iFirstIndex,
+                                                            const int iSiteCount,
+                                                            MinsAndMaxes* bMinimaAndMaxima,
+                                                            const Net* net,
+                                                            const double iStressType,
+                                                            const double iStressParam)
       {
-        double *f;
-        double dummy_density;
-
-        unsigned int boundary_id, l;
-
-        f = &f_old[i * D3Q15::NUMVECTORS];
-
-        for (l = 0; l < D3Q15::NUMVECTORS; l++)
+        if (iDoRayTracing)
         {
-          f_neq[l] = f[l];
+          DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
+                                      iFirstIndex, iSiteCount,
+                                      bMinimaAndMaxima, net, iStressType,
+                                      iStressParam);
         }
-        boundary_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-
-        *density = mBoundaryDensityArray[boundary_id];
-
-        D3Q15::CalculateDensityAndVelocity(f, &dummy_density, v_x, v_y, v_z);
-        D3Q15::CalculateFeq(*density, *v_x, *v_y, *v_z, f);
-
-        for (l = 0; l < D3Q15::NUMVECTORS; l++)
+        else
         {
-          f_neq[l] -= (f_new[f_id[i * D3Q15::NUMVECTORS + l]] = f[l]);
+          DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
+                                       iFirstIndex, iSiteCount,
+                                       bMinimaAndMaxima, net, iStressType,
+                                       iStressParam);
+        }
+      }
+
+      template<bool tDoRayTracing>
+      void ImplNonZeroVelocityBoundaryDensity::DoCollisionsInternal(const double iOmega,
+                                                                    double iFOldAll[],
+                                                                    double iFNewAll[],
+                                                                    const int iFIdAll[],
+                                                                    const int iFirstIndex,
+                                                                    const int iSiteCount,
+                                                                    MinsAndMaxes* bMinimaAndMaxima,
+                                                                    const Net* net,
+                                                                    const double iStressType,
+                                                                    const double iStressParam)
+      {
+        for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+        {
+          double *lFOld = &iFOldAll[lIndex * D3Q15::NUMVECTORS];
+          double lFNeq[15];
+          double lVx, lVy, lVz, lDummyDensity, lDensity;
+
+          lDensity = mBoundaryDensityArray[net->GetBoundaryId(lIndex)];
+
+          D3Q15::CalculateDensityAndVelocity(lFOld, lDummyDensity, lVx, lVy,
+                                             lVz);
+
+          for(int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            lFNeq[ii] = lFOld[ii];
+          }
+
+          // Temporarily store FEq in lFNeq (rectified later).
+          D3Q15::CalculateFeq(lDensity, lVx, lVy, lVz, lFOld);
+
+          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            iFNewAll[iFIdAll[lIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii];
+          }
+
+          for (int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          {
+            lFNeq[ii] -= lFOld[ii];
+          }
+
+          UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, lIndex, lFNeq,
+                                             lDensity, bMinimaAndMaxima, net,
+                                             iStressType, iStressParam);
         }
       }
 

@@ -17,16 +17,30 @@ class D3Q15
 
     // Functions to calculate the density and velocity from an array of fs and to calculate the
     // equilibrium f array from density and velocity.
-    static void CalculateDensityAndVelocity(double f[], double *density, double *v_x,
-      double *v_y, double *v_z);
-    static void CalculateFeq(double density, double v_x, double v_y, double v_z,
-      double f_eq[]);
-    static void CalculateDensityVelocityFEq(double f[], double *density, double *v_x,
-      double *v_y, double *v_z, double f_eq[]);
-    static void CalculateVonMisesStress(double f[], double *stress,
-      double iStressParameter);
-    static void CalculateShearStress(double density, double f[], double nor[],
-      double *stress, double iStressParameter);
+    static void CalculateDensityAndVelocity(const double f[],
+                                            double &density,
+                                            double &v_x,
+                                            double &v_y,
+                                            double &v_z);
+    static void CalculateFeq(const double &density,
+                             const double &v_x,
+                             const double &v_y,
+                             const double &v_z,
+                             double f_eq[]);
+    static void CalculateDensityVelocityFEq(const double f[],
+                                            double &density,
+                                            double &v_x,
+                                            double &v_y,
+                                            double &v_z,
+                                            double f_eq[]);
+    static void CalculateVonMisesStress(const double f[],
+                                        double &stress,
+                                        const double iStressParameter);
+    static void CalculateShearStress(const double &density,
+                                     const double f[],
+                                     const double nor[],
+                                     double &stress,
+                                     const double &iStressParameter);
 };
 
 #endif /* HEMELB_D3Q15_H */
