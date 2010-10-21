@@ -12,32 +12,8 @@ namespace hemelb
   namespace vis
   {
 
-    //TODO put these somewhere more sensible.
-    std::vector<Cluster> cluster;
-    float **cluster_voxel = NULL;
-    float ***cluster_flow_field = NULL;
-
-    int clusters;
-
-    float ray_dir[3];
-    float ray_inv[3];
-    float ray_vel_col[3];
-    float ray_stress_col[3];
-    float ray_length;
-    float ray_t_min;
-    float ray_density;
-    float ray_stress;
-
-    int cluster_blocks_vec[3];
-    int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
-
-    float block_size_f;
-    float block_size_inv;
-    int block_size2, block_size3, block_size_1;
-    int blocks_yz;
-
     // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
-    void rtAABBvsRayFn(AABB *aabb,
+    void rayTracer::rtAABBvsRayFn(AABB *aabb,
                        float inv_x,
                        float inv_y,
                        float inv_z,
@@ -71,7 +47,7 @@ namespace hemelb
       *t_far = fminf(tx1, fminf(ty1, tz1));
     }
 
-    void rtUpdateColour(float dt, float palette[], float col[])
+    void rayTracer::rtUpdateColour(float dt, float palette[], float col[])
     {
       col[0] += dt * palette[0];
       col[1] += dt * palette[1];
@@ -433,7 +409,7 @@ namespace hemelb
       }
     }
 
-    void rtBuildClusters(Net *net)
+    void rayTracer::rtBuildClusters(Net *net)
     {
       int n_x[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, +0, +0, +0, +0, +0, +0,
                     +0, +0, +1, +1, +1, +1, +1, +1, +1, +1, +1 };
@@ -1049,7 +1025,7 @@ namespace hemelb
       }
     }
 
-    void rtUpdateClusterVoxel(int i,
+    void rayTracer::rtUpdateClusterVoxel(int i,
                               float density,
                               float velocity,
                               float stress)
