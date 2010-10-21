@@ -24,7 +24,8 @@ namespace hemelb
                                    MinsAndMaxes* bMinimaAndMaxima,
                                    const Net* net,
                                    const double iStressType,
-                                   const double iStressParam)
+                                   const double iStressParam,
+                                   hemelb::vis::Control *iControl)
       {
         // Standard implementation - do nothing.
       }
@@ -39,7 +40,8 @@ namespace hemelb
                                MinsAndMaxes* bMinimaAndMaxima,
                                const Net* net,
                                const double iStressType,
-                               const double iStressParam)
+                               const double iStressParam,
+                               hemelb::vis::Control *iControl)
       {
         // Standard implementation - do nothing.
       }

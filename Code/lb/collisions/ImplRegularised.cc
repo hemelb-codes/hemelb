@@ -17,21 +17,22 @@ namespace hemelb
                                          MinsAndMaxes* bMinimaAndMaxima,
                                          const Net* net,
                                          const double iStressType,
-                                         const double iStressParam)
+                                         const double iStressParam,
+                                         hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
           DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
                                       iFirstIndex, iSiteCount,
                                       bMinimaAndMaxima, net, iStressType,
-                                      iStressParam);
+                                      iStressParam, iControl);
         }
         else
         {
           DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
                                        iFirstIndex, iSiteCount,
                                        bMinimaAndMaxima, net, iStressType,
-                                       iStressParam);
+                                       iStressParam, iControl);
         }
       }
 
@@ -45,7 +46,8 @@ namespace hemelb
                                                  MinsAndMaxes* bMinimaAndMaxima,
                                                  const Net* net,
                                                  const double iStressType,
-                                                 const double iStressParam)
+                                                 const double iStressParam,
+                                                 hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
@@ -258,7 +260,7 @@ namespace hemelb
 
           UpdateMinsAndMaxes<tDoRayTracing> (v_x, v_y, v_z, lIndex, f_neq,
                                              density, bMinimaAndMaxima, net,
-                                             iStressType, iStressParam);
+                                             iStressType, iStressParam, iControl);
         }
       }
     }

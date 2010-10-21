@@ -1,5 +1,3 @@
-#include "lb.h"
-
 #include "io/XdrMemWriter.h"
 
 #include "vis/Control.h"

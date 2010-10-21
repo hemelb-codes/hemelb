@@ -1,9 +1,8 @@
 #ifndef HEMELB_LB_COLLISIONS_COLLISION_H
 #define HEMELB_LB_COLLISIONS_COLLISION_H
 
-// TODO BOO AND HISS. Find some other way.
 #include "net.h"
-#include "vis/RayTracer.h"
+#include "vis/Control.h"
 
 #include <math.h>
 
@@ -38,7 +37,8 @@ namespace hemelb
                                     MinsAndMaxes* bMinimaAndMaxima,
                                     const Net* net,
                                     const double iStressType,
-                                    const double iStressParam);
+                                    const double iStressParam,
+                                    hemelb::vis::Control *iControl);
 
           virtual void PostStep(const bool iDoRayTracing,
                                 const double iOmega,
@@ -50,7 +50,8 @@ namespace hemelb
                                 MinsAndMaxes* bMinimaAndMaxima,
                                 const Net* net,
                                 const double iStressType,
-                                const double iStressParam);
+                                const double iStressParam,
+                                hemelb::vis::Control *iControl);
 
         protected:
           // Use a protected constructor to ensure the class is never instantiated.
@@ -66,7 +67,8 @@ namespace hemelb
                                   MinsAndMaxes *bMinimaAndMaxima,
                                   const Net* net,
                                   const double &iStressType,
-                                  const double &iStressParam)
+                                  const double &iStressParam,
+                                  hemelb::vis::Control *iControl)
           {
             if (iDensity < bMinimaAndMaxima->MinDensity)
             {
@@ -128,8 +130,7 @@ namespace hemelb
 
             if (tDoRayTracing)
             {
-              hemelb::vis::rtUpdateClusterVoxel(iSiteIndex, iDensity,
-                                                lVelocity, rtStress);
+              iControl->RegisterSite(iSiteIndex, iDensity, lVelocity, rtStress);
             }
           }
       };

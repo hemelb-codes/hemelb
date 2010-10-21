@@ -168,6 +168,21 @@ void LBM::lbmInit(char *system_file_name_in,
   lbmInitCollisions();
 }
 
+void LBM::CalculateMouseFlowField(hemelb::vis::ColPixel *col_pixel_p,
+                                  double &mouse_pressure,
+                                  double &mouse_stress,
+                                  double density_threshold_min,
+                                  double density_threshold_minmax_inv,
+                                  double stress_threshold_max_inv)
+{
+  double density = density_threshold_min + col_pixel_p->density
+      / density_threshold_minmax_inv;
+  double stress = col_pixel_p->stress / stress_threshold_max_inv;
+
+  mouse_pressure = lbmConvertPressureToPhysicalUnits(density * Cs2);
+  mouse_stress = lbmConvertStressToPhysicalUnits(stress);
+}
+
 void LBM::lbmInitCollisions()
 {
   // TODO Note that the convergence checking is not yet implemented in the
@@ -252,7 +267,8 @@ int LBM::lbmCycle(int perform_rt, Net *net)
 
   for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
   {
-    GetCollision(collision_type)->DoCollisions(perform_rt,
+    GetCollision(collision_type)->DoCollisions(
+                                               perform_rt,
                                                omega,
                                                f_old,
                                                f_new,
@@ -260,7 +276,8 @@ int LBM::lbmCycle(int perform_rt, Net *net)
                                                offset,
                                                net->my_inter_collisions[collision_type],
                                                &mMinsAndMaxes, net,
-                                               lbm_stress_type, lbm_stress_par);
+                                               lbm_stress_type, lbm_stress_par,
+                                               hemelb::vis::controller);
     offset += net->my_inter_collisions[collision_type];
   }
 
@@ -270,7 +287,8 @@ int LBM::lbmCycle(int perform_rt, Net *net)
 
   for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
   {
-    GetCollision(collision_type)->DoCollisions(perform_rt,
+    GetCollision(collision_type)->DoCollisions(
+                                               perform_rt,
                                                omega,
                                                f_old,
                                                f_new,
@@ -278,7 +296,8 @@ int LBM::lbmCycle(int perform_rt, Net *net)
                                                offset,
                                                net->my_inner_collisions[collision_type],
                                                &mMinsAndMaxes, net,
-                                               lbm_stress_type, lbm_stress_par);
+                                               lbm_stress_type, lbm_stress_par,
+                                               hemelb::vis::controller);
     offset += net->my_inner_collisions[collision_type];
   }
 
@@ -286,37 +305,37 @@ int LBM::lbmCycle(int perform_rt, Net *net)
 
   // Do any cleanup steps necessary on boundary nodes
   // TODO: Remove comments
-/*
-  offset = 0;
+  /*
+   offset = 0;
 
-  for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-  {
-    GetCollision(collision_type)->PostStep(perform_rt,
-                                               omega,
-                                               f_old,
-                                               f_new,
-                                               f_id,
-                                               offset,
-                                               net->my_inner_collisions[collision_type],
-                                               &mMinsAndMaxes, net,
-                                               lbm_stress_type, lbm_stress_par);
-    offset += net->my_inner_collisions[collision_type];
-  }
+   for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+   {
+   GetCollision(collision_type)->PostStep(perform_rt,
+   omega,
+   f_old,
+   f_new,
+   f_id,
+   offset,
+   net->my_inner_collisions[collision_type],
+   &mMinsAndMaxes, net,
+   lbm_stress_type, lbm_stress_par);
+   offset += net->my_inner_collisions[collision_type];
+   }
 
-  for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-  {
-    GetCollision(collision_type)->PostStep(perform_rt,
-                                               omega,
-                                               f_old,
-                                               f_new,
-                                               f_id,
-                                               offset,
-                                               net->my_inter_collisions[collision_type],
-                                               &mMinsAndMaxes, net,
-                                               lbm_stress_type, lbm_stress_par);
-    offset += net->my_inter_collisions[collision_type];
-  }
-*/
+   for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+   {
+   GetCollision(collision_type)->PostStep(perform_rt,
+   omega,
+   f_old,
+   f_new,
+   f_id,
+   offset,
+   net->my_inter_collisions[collision_type],
+   &mMinsAndMaxes, net,
+   lbm_stress_type, lbm_stress_par);
+   offset += net->my_inter_collisions[collision_type];
+   }
+   */
   // Swap f_old and f_new ready for the next timestep.
   double *temp = f_old;
   f_old = f_new;

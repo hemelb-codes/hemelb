@@ -23,7 +23,8 @@ namespace hemelb
                             MinsAndMaxes* bMinimaAndMaxima,
                             const Net* net,
                             const double iStressType,
-                            const double iStressParam);
+                            const double iStressParam,
+                            hemelb::vis::Control *iControl);
 
           void PostStep(const bool iDoRayTracing,
                         const double iOmega,
@@ -35,7 +36,8 @@ namespace hemelb
                         MinsAndMaxes* bMinimaAndMaxima,
                         const Net* net,
                         const double iStressType,
-                        const double iStressParam);
+                        const double iStressParam,
+                        hemelb::vis::Control *iControl);
 
         private:
           template<bool tDoRayTracing>
@@ -48,7 +50,8 @@ namespace hemelb
                                     MinsAndMaxes* bMinimaAndMaxima,
                                     const Net* net,
                                     const double iStressType,
-                                    const double iStressParam);
+                                    const double iStressParam,
+                                    hemelb::vis::Control *iControl);
 
           template<bool tDoRayTracing>
           void PostStepInternal(const double iOmega,
@@ -60,7 +63,8 @@ namespace hemelb
                                 MinsAndMaxes* bMinimaAndMaxima,
                                 const Net* net,
                                 const double iStressType,
-                                const double iStressParam);
+                                const double iStressParam,
+                                hemelb::vis::Control *iControl);
       };
 
     }
