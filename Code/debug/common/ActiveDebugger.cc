@@ -1,10 +1,15 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include <cstdlib>
 #include <vector>
-#include <unistd.h>
+
+#include <cstdlib>
+#include <cstring>
 #include <cerrno>
+
+#include <unistd.h>
+#include <sys/wait.h>
+
 #include "mpiInclude.h"
 
 #include "debug/common/ActiveDebugger.h"
@@ -51,6 +56,7 @@ namespace hemelb
 	
 	if (childPid == 0) {
 	  // This function won't return.
+	  std::cerr << "I'm the child" << std::endl;
 	  SpawnDebuggers();
 	}
       } // if rank 0
@@ -95,7 +101,6 @@ namespace hemelb
       binaryPath += "/";
       binaryPath += mExecutable;
       
-      
       VoS args;
       
       args.push_back(GetPlatformInterpreter());
@@ -105,17 +110,10 @@ namespace hemelb
       // Get the GDB script to exec
       // This will either be the value of the environment variable
       // HEMELB_DEBUG_SCRIPT or resume.gdb
-      std::string gdbScript;
-      {
-	char* gdbScriptEnv = std::getenv("HEMELB_DEBUG_SCRIPT");
-	if (gdbScriptEnv == NULL) {
-	  gdbScript = debugCommonDir + "/resume.gdb";
-	} else {
-	  gdbScript = std::string(gdbScriptEnv);
-	}
-      }
+      args.push_back(GetPlatformGdbScript());
       
-      args.push_back(gdbScript);
+      //args.push_back(GetEnvironmentDebugScript());
+      
       args.push_back(binaryPath);
       
       for (VoI::iterator i = mPIds->begin(); i<mPIds->end(); ++i) {
@@ -125,16 +123,26 @@ namespace hemelb
       
       // +1 to include required NULL pointer for execvp()
       char **argv = new char *[args.size()+1];
-      int i = 0;
+      //int i = 0;
+      std::cerr << "Before" << std::endl;
       
       // convert to C array of char arrays.
-      for(VoS::iterator it = args.begin(); it < args.end(); it++) {
+      for (unsigned int i=0; i < args.size(); ++i) {
+	std::cerr << "Loop " << i << std::endl;
+	argv[i]  = new char[args[i].length()+1]; // for terminating null
+	std::strcpy(argv[i], args[i].c_str());
+      }
+      /*for(VoS::iterator it = args.begin(); it < args.end(); it++) {
+	std::cerr << "Loop " << i << std::endl;
 	argv[i]  = new char[it->length()]; // for terminating null
 	std::strcpy(argv[i], it->c_str());
 	++i;
-      }
+	}*/
+      std::cerr << "After" << std::endl;
+      
       // Terminating NULL
-      argv[i] = NULL;
+      //argv[i] = NULL;
+      argv[args.size()] = NULL;
       
       // Exec to replace hemelb with osascript
       int code = execvp(argv[0], argv);

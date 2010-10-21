@@ -12,7 +12,6 @@ namespace hemelb
     NullDebugger::NullDebugger(char* executable) : Debugger(executable) {}
     
     Debugger* PlatformDebuggerFactory(char *executable) {
-      std::cerr << "Construct OsxDebugger" << std::endl;
       return new NullDebugger(executable);
     }
   }
