@@ -17,21 +17,22 @@ namespace hemelb
                                                     MinsAndMaxes* bMinimaAndMaxima,
                                                     const Net* net,
                                                     const double iStressType,
-                                                    const double iStressParam)
+                                                    const double iStressParam,
+                                                    hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
           DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
                                       iFirstIndex, iSiteCount,
                                       bMinimaAndMaxima, net, iStressType,
-                                      iStressParam);
+                                      iStressParam, iControl);
         }
         else
         {
           DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
                                        iFirstIndex, iSiteCount,
                                        bMinimaAndMaxima, net, iStressType,
-                                       iStressParam);
+                                       iStressParam, iControl);
         }
       }
 
@@ -45,7 +46,8 @@ namespace hemelb
                                                             MinsAndMaxes* bMinimaAndMaxima,
                                                             const Net* net,
                                                             const double iStressType,
-                                                            const double iStressParam)
+                                                            const double iStressParam,
+                                                            hemelb::vis::Control *iControl)
       {
         for (int iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
         {
@@ -65,7 +67,7 @@ namespace hemelb
 
           UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, iIndex, lFNeq,
                                              lDensity, bMinimaAndMaxima, net,
-                                             iStressType, iStressParam);
+                                             iStressType, iStressParam, iControl);
         }
       }
 

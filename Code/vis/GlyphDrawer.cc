@@ -1,6 +1,4 @@
 #include "vis/GlyphDrawer.h"
-// include lb to get check_conv symbol
-#include "lb.h"
 #include "vis/Control.h"
 
 namespace hemelb

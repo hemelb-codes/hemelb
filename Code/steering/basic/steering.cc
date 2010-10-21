@@ -239,7 +239,7 @@ namespace hemelb
 		 i < vis::controller->col_pixels_recv[RECV_BUFFER_A];
 		 i++) {
 	      pixelDataWriter.writePixel(&vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
-					 vis::ColourPalette::pickColour);
+					 vis::ColourPalette::pickColour, lbm_stress_type);
 	    }
 	    
 	    int frameBytes = pixelDataWriter.getCurrentStreamPosition();
