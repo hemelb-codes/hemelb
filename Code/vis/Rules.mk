@@ -3,7 +3,6 @@ include $(MK)/header.mk
 TARGETS := libHemeLbVis.$(LIBEXT)
 SRCS := ColPixel.cc \
 	ColourPalette.cc \
-	Layer.cc \
 	GlyphDrawer.cc \
 	RayTracer.cc \
 	StreaklineDrawer.cc \

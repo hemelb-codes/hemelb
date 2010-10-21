@@ -24,7 +24,8 @@ namespace hemelb
                             MinsAndMaxes* bMinimaAndMaxima,
                             const Net* net,
                             const double iStressType,
-                            const double iStressParam);
+                            const double iStressParam,
+                            hemelb::vis::Control *iControl);
 
         private:
           template<bool tDoRayTracing>
@@ -37,7 +38,8 @@ namespace hemelb
                                     MinsAndMaxes* bMinimaAndMaxima,
                                     const Net* net,
                                     const double iStressType,
-                                    const double iStressParam);
+                                    const double iStressParam,
+                                    hemelb::vis::Control *iControl);
 
       };
 

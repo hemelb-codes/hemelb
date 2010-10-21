@@ -111,14 +111,19 @@ int main(int argc, char *argv[])
 
     timings_ptr = fopen(timings_name, "w");
 
-    fprintf(timings_ptr, "***********************************************************\n");
-    fprintf(timings_ptr, "Opening parameters file:\n %s\n", input_parameters_name);
+    fprintf(timings_ptr,
+            "***********************************************************\n");
+    fprintf(timings_ptr, "Opening parameters file:\n %s\n",
+            input_parameters_name);
     fprintf(timings_ptr, "Opening config file:\n %s\n", input_config_name);
-    fprintf(timings_ptr, "Opening vis parameters file:\n %s\n\n", vis_parameters_name);
+    fprintf(timings_ptr, "Opening vis parameters file:\n %s\n\n",
+            vis_parameters_name);
 
 #ifndef NO_STEER
-    hemelb::vis::xdrSendBuffer_pixel_data = new char[hemelb::vis::pixel_data_bytes];
-    hemelb::vis::xdrSendBuffer_frame_details = new char[hemelb::vis::frame_details_bytes];
+    hemelb::vis::xdrSendBuffer_pixel_data
+        = new char[hemelb::vis::pixel_data_bytes];
+    hemelb::vis::xdrSendBuffer_frame_details
+        = new char[hemelb::vis::frame_details_bytes];
 
     pthread_mutex_init(&hemelb::steering::LOCK, NULL);
     pthread_cond_init(&hemelb::steering::network_send_frame, NULL);
@@ -128,12 +133,13 @@ int main(int argc, char *argv[])
     pthread_attr_init(&pthread_attrib);
     pthread_attr_setdetachstate(&pthread_attrib, PTHREAD_CREATE_JOINABLE);
 
-    pthread_create(&network_thread, &pthread_attrib, hemelb::steering::hemeLB_network,
-                   (void*) lMaster.GetLBM());
+    pthread_create(&network_thread, &pthread_attrib,
+                   hemelb::steering::hemeLB_network, (void*) lMaster.GetLBM());
 #endif // NO_STEER
   }
 
-  lMaster.GetLBM()->lbmInit(input_config_name, input_parameters_name, lMaster.GetNet());
+  lMaster.GetLBM()->lbmInit(input_config_name, input_parameters_name,
+                            lMaster.GetNet());
 
   if (lMaster.GetNet()->netFindTopology(&depths) == 0)
   {
@@ -145,14 +151,17 @@ int main(int argc, char *argv[])
 
   lMaster.GetLBM()->lbmSetInitialConditions(lMaster.GetNet());
 
-  hemelb::vis::controller = new hemelb::vis::Control();
+  hemelb::vis::controller = new hemelb::vis::Control(lbm_stress_type);
+
   hemelb::vis::controller->initLayers(lMaster.GetNet());
 
-  hemelb::vis::controller->readParameters(vis_parameters_name, lMaster.GetLBM(),
-                                          lMaster.GetNet());
+  lMaster.GetLBM()->ReadVisParameters(vis_parameters_name, lMaster.GetNet(),
+                                      hemelb::vis::controller);
+
 #ifndef NO_STEER
   hemelb::steering::UpdateSteerableParameters(&hemelb::vis::doRendering,
-                                              hemelb::vis::controller, lMaster.GetLBM());
+                                              hemelb::vis::controller,
+                                              lMaster.GetLBM());
 #endif
 
   hemelb::util::DeleteDirContents(snapshot_directory);
@@ -173,7 +182,8 @@ int main(int argc, char *argv[])
   if (lMaster.mImagesPerCycle == 0)
     images_period = 1e9;
   else
-    images_period = hemelb::util::max(1, lMaster.GetLBM()->period / lMaster.mImagesPerCycle);
+    images_period = hemelb::util::max(1, lMaster.GetLBM()->period
+        / lMaster.mImagesPerCycle);
 
   for (cycle_id = 1; cycle_id <= lMaster.mMaxCycleCount && !is_finished; cycle_id++)
   {
@@ -184,7 +194,8 @@ int main(int argc, char *argv[])
     for (time_step = 1; time_step <= lMaster.GetLBM()->period; time_step++)
     {
       ++total_time_steps;
-      intra_cycle_time = (PULSATILE_PERIOD * time_step) / lMaster.GetLBM()->period;
+      intra_cycle_time = (PULSATILE_PERIOD * time_step)
+          / lMaster.GetLBM()->period;
 
       int write_snapshot_image = (time_step % images_period == 0)
         ? 1
@@ -216,7 +227,8 @@ int main(int argc, char *argv[])
       {
         if (lMaster.GetNet()->IsCurrentProcTheIOProc())
         {
-          hemelb::vis::doRendering = (render_for_network_stream || write_snapshot_image)
+          hemelb::vis::doRendering = (render_for_network_stream
+              || write_snapshot_image)
             ? 1
             : 0;
           sem_wait(&hemelb::steering::steering_var_lock);
@@ -235,13 +247,15 @@ int main(int argc, char *argv[])
       if (lMaster.GetNet()->IsCurrentProcTheIOProc() && time_step % 100 == 0)
         printf(
                "time step %i sending_frame %i render_network_stream %i write_snapshot_image %i rendering %i\n",
-               time_step, hemelb::steering::sending_frame, render_for_network_stream,
-               write_snapshot_image, hemelb::vis::doRendering);
+               time_step, hemelb::steering::sending_frame,
+               render_for_network_stream, write_snapshot_image,
+               hemelb::vis::doRendering);
 
 #endif // NO_STEER
       lMaster.GetLBM()->lbmUpdateBoundaryDensities(cycle_id, time_step);
 
-      stability = lMaster.GetLBM()->lbmCycle(hemelb::vis::doRendering, lMaster.GetNet());
+      stability = lMaster.GetLBM()->lbmCycle(hemelb::vis::doRendering,
+                                             lMaster.GetNet());
 
       if ( (restart = lMaster.GetLBM()->IsUnstable(lMaster.GetNet())) != 0)
       {
@@ -257,24 +271,35 @@ int main(int argc, char *argv[])
       if (total_time_steps % BCAST_FREQ == 0 && hemelb::vis::doRendering
           && !write_snapshot_image)
       {
-        hemelb::vis::controller->render(RECV_BUFFER_A,
-                                        hemelb::vis::ColourPalette::pickColour,
-                                        lMaster.GetNet());
+        hemelb::vis::controller->render(RECV_BUFFER_A, lMaster.GetNet());
 
-        if (hemelb::vis::controller->mouse_x >= 0 && hemelb::vis::controller->mouse_y
-            >= 0 && hemelb::steering::updated_mouse_coords)
+        if (hemelb::vis::controller->mouse_x >= 0
+            && hemelb::vis::controller->mouse_y >= 0
+            && hemelb::steering::updated_mouse_coords)
         {
-          for (int i = 0; i < hemelb::vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
+          for (int i = 0; i
+              < hemelb::vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
           {
             if (hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.isRt
-                && int(hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.i)
+                && int(
+                       hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.i)
                     == hemelb::vis::controller->mouse_x
-                && int(hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.j)
+                && int(
+                       hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.j)
                     == hemelb::vis::controller->mouse_y)
             {
-              hemelb::vis::controller->calculateMouseFlowField(
-                                                               &hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
-                                                               lMaster.GetLBM());
+              double mouse_pressure, mouse_stress;
+              lMaster.GetLBM()->CalculateMouseFlowField(
+                                                        &hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
+                                                        mouse_pressure,
+                                                        mouse_stress,
+                                                        hemelb::vis::controller->density_threshold_min,
+                                                        hemelb::vis::controller->density_threshold_minmax_inv,
+                                                        hemelb::vis::controller->stress_threshold_max_inv);
+
+              hemelb::vis::controller->setMouseParams(mouse_pressure,
+                                                      mouse_stress);
+
               break;
             }
           }
@@ -289,9 +314,7 @@ int main(int argc, char *argv[])
 #endif // NO_STEER
       if (write_snapshot_image)
       {
-        hemelb::vis::controller->render(RECV_BUFFER_B,
-                                        hemelb::vis::ColourPalette::pickColour,
-                                        lMaster.GetNet());
+        hemelb::vis::controller->render(RECV_BUFFER_B, lMaster.GetNet());
 
         if (lMaster.GetNet()->IsCurrentProcTheIOProc())
         {
@@ -301,7 +324,9 @@ int main(int argc, char *argv[])
           strcpy(complete_image_name, image_directory);
           strcat(complete_image_name, image_filename);
 
-          hemelb::vis::controller->writeImage(RECV_BUFFER_B, complete_image_name,
+          hemelb::vis::controller->writeImage(
+                                              RECV_BUFFER_B,
+                                              complete_image_name,
                                               hemelb::vis::ColourPalette::pickColour);
         }
       }
@@ -363,11 +388,13 @@ int main(int argc, char *argv[])
       }
       snapshots_period = (lMaster.mSnapshotsPerCycle == 0)
         ? 1e9
-        : hemelb::util::max(1, lMaster.GetLBM()->period / lMaster.mSnapshotsPerCycle);
+        : hemelb::util::max(1, lMaster.GetLBM()->period
+            / lMaster.mSnapshotsPerCycle);
 
       images_period = (lMaster.mImagesPerCycle == 0)
         ? 1e9
-        : hemelb::util::max(1, lMaster.GetLBM()->period / lMaster.mImagesPerCycle);
+        : hemelb::util::max(1, lMaster.GetLBM()->period
+            / lMaster.mImagesPerCycle);
 
       cycle_id = 0;
       continue;
@@ -394,7 +421,8 @@ int main(int argc, char *argv[])
     fprintf(timings_ptr, "threads: %i, machines checked: %i\n\n",
             lMaster.GetNet()->procs, lMaster.GetNet()->GetMachineCount());
     fprintf(timings_ptr, "topology depths checked: %i\n\n", depths);
-    fprintf(timings_ptr, "fluid sites: %i\n\n", lMaster.GetLBM()->total_fluid_sites);
+    fprintf(timings_ptr, "fluid sites: %i\n\n",
+            lMaster.GetLBM()->total_fluid_sites);
     fprintf(timings_ptr, "cycles and total time steps: %i, %i \n\n", cycle_id,
             total_time_steps);
     fprintf(timings_ptr, "time steps per second: %.3f\n\n", total_time_steps
@@ -405,7 +433,8 @@ int main(int argc, char *argv[])
   {
     if (lMaster.GetNet()->IsCurrentProcTheIOProc())
     {
-      fprintf(timings_ptr, "Attention: simulation unstable with %i timesteps/cycle\n",
+      fprintf(timings_ptr,
+              "Attention: simulation unstable with %i timesteps/cycle\n",
               lMaster.GetLBM()->period);
       fprintf(timings_ptr, "Simulation is terminated\n");
       fclose(timings_ptr);
@@ -416,7 +445,8 @@ int main(int argc, char *argv[])
     if (lMaster.GetNet()->IsCurrentProcTheIOProc())
     {
 
-      fprintf(timings_ptr, "time steps per cycle: %i\n", lMaster.GetLBM()->period);
+      fprintf(timings_ptr, "time steps per cycle: %i\n",
+              lMaster.GetLBM()->period);
       fprintf(timings_ptr, "pressure min, max (mmHg): %e, %e\n",
               lMaster.GetLBM()->GetMinPhysicalPressure(),
               lMaster.GetLBM()->GetMaxPhysicalPressure());
@@ -430,7 +460,8 @@ int main(int argc, char *argv[])
 
       for (int n = 0; n < lMaster.GetLBM()->inlets; n++)
       {
-        fprintf(timings_ptr, "inlet id: %i, average / peak velocity (m/s): %e / %e\n", n,
+        fprintf(timings_ptr,
+                "inlet id: %i, average / peak velocity (m/s): %e / %e\n", n,
                 lMaster.GetLBM()->GetAverageInletVelocity(n),
                 lMaster.GetLBM()->GetPeakInletVelocity(n));
       }
@@ -445,8 +476,8 @@ int main(int argc, char *argv[])
               lMaster.GetNet()->fr_time);
 
       total_time = hemelb::util::myClock() - total_time;
-      fprintf(timings_ptr, "total time (s):                            %.3f\n\n",
-              total_time);
+      fprintf(timings_ptr,
+              "total time (s):                            %.3f\n\n", total_time);
 
       fprintf(timings_ptr, "Sub-domains info:\n\n");
 

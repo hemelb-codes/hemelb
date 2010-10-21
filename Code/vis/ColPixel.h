@@ -11,50 +11,56 @@ namespace hemelb
   {
     // TODO: This should really be a temporary header file that grows to have more common stuff in it.
 
-    struct PixelId {
-      unsigned int isRt : 1;
-      unsigned int isGlyph : 1;
-      unsigned int isStreakline : 1;
-      unsigned int i : 14;
-      unsigned int j : 14;
-    
-      PixelId();
-      PixelId(int i, int j);
+    struct PixelId
+    {
+        unsigned int isRt :1;
+        unsigned int isGlyph :1;
+        unsigned int isStreakline :1;
+        unsigned int i :14;
+        unsigned int j :14;
+
+        PixelId();
+        PixelId(int i, int j);
     };
 
-    class ColPixel {
-    public:
-      float vel_r, vel_g, vel_b;
-      float stress_r, stress_g, stress_b;
-      float t, dt;
-      float density;
-      float stress;
-  
-      float particle_vel;
-      float particle_z;
-  
-      int particle_inlet_id;
-    
-      struct PixelId i;
-    
-      void rawWritePixel(unsigned int *pixel_index,
-			 unsigned char rgb_data[],
-			 ColourPaletteFunction* palette);
+    class ColPixel
+    {
+      public:
+        float vel_r, vel_g, vel_b;
+        float stress_r, stress_g, stress_b;
+        float t, dt;
+        float density;
+        float stress;
+
+        float particle_vel;
+        float particle_z;
+
+        int particle_inlet_id;
+
+        struct PixelId i;
+
+        void rawWritePixel(unsigned int *pixel_index,
+                           unsigned char rgb_data[],
+                           ColourPaletteFunction* palette,
+                           const float iLbmStressType);
 #ifndef NOMPI
-      static const MPI_Datatype& getMpiType();
+        static const MPI_Datatype& getMpiType();
 #endif
-      
-    protected:
+
+      protected:
 #ifndef NOMPI
-      static void registerMpiType();
-      static MPI_Datatype mpiType;
+        static void registerMpiType();
+        static MPI_Datatype mpiType;
 #endif
-      
-      void makePixelColour(unsigned char& red, unsigned char& green, unsigned char& blue,
-			   int rawRed, int rawGreen, int rawBlue);
+
+        void makePixelColour(unsigned char& red,
+                             unsigned char& green,
+                             unsigned char& blue,
+                             int rawRed,
+                             int rawGreen,
+                             int rawBlue);
     };
 
-  
   }
 }
 
