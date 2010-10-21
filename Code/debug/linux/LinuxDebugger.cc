@@ -20,6 +20,13 @@ namespace hemelb
       return debugLinuxDir + "/launchGdbs.sh";
     }
     
+    const std::string LinuxDebugger::GetPlatformGdbScript(void) const {
+      std::string include (__FILE__);
+      std::string debugLinuxDir = include.substr(0, include.rfind('/'));
+      
+      return debugLinuxDir + "/resume.gdb";
+    }
+    
     Debugger* PlatformDebuggerFactory(char *executable) {
       return new LinuxDebugger(executable);
     }
