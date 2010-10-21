@@ -277,7 +277,7 @@ namespace hemelb
                                float velocity,
                                float stress)
     {
-      rtUpdateClusterVoxel(i, density, velocity, stress);
+      myRayTracer->rtUpdateClusterVoxel(i, density, velocity, stress);
     }
 
     void Control::writePixel(ColPixel *col_pixel_p)
