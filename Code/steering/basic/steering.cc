@@ -42,9 +42,7 @@
 #define MYPORT 65250
 #define CONNECTION_BACKLOG 10
 
-pthread_mutex_t steer_param_lock = PTHREAD_MUTEX_INITIALIZER;
-
-extern bool updated_mouse_coords;
+//pthread_mutex_t steer_param_lock = PTHREAD_MUTEX_INITIALIZER;
 
 char host_name[255];
 namespace hemelb
