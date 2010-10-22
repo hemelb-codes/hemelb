@@ -4,31 +4,41 @@
 #include "constants.h"
 #include "net.h"
 
-// TODO this could probably be reduced to the net class and some visualisation class.
-
 namespace hemelb
 {
   namespace vis
   {
-    // Horrifying globals
-    extern float block_size_f;
-    extern float block_size_inv;
-    extern int block_size2, block_size3, block_size_1;
-
     class rayTracer
     {
       public:
+        // Constructor and destructor do all the usual stuff.
         rayTracer(Net *net);
         ~rayTracer();
 
+        // Method to update the voxel corresponding to site i with its
+        // newly calculated density, velocity and stress.
         void rtUpdateClusterVoxel(int i,
                                   float density,
                                   float velocity,
                                   float stress);
 
+        // Render the current state into an image.
         void render(const float iLbmStressType);
 
       private:
+
+
+        struct Ray
+        {
+            float Direction[3];
+            float InverseDirection[3];
+            float Length;
+
+            float VelocityColour[3];
+            float StressColour[3];
+            float Stress;
+            float Density;
+        };
 
         struct AABB
         {
@@ -54,6 +64,7 @@ namespace hemelb
         void rtUpdateRayData(float *flow_field,
                              float ray_t,
                              float ray_segment,
+                             Ray *bCurrentRay,
                              void(*ColourPalette)(float value, float col[]),
                              const float iLbmStressType);
 
@@ -61,12 +72,14 @@ namespace hemelb
                               float block_x[],
                               float voxel_flow_field[],
                               float t,
+                              Ray *bCurrentRay,
                               void(*ColourPalette)(float value, float col[]),
                               bool xyz_is_1[],
                               const float iLbmStressType);
 
         void rtTraverseBlocksFn(float ray_dx[],
                                 float **block_flow_field,
+                                Ray *bCurrentRay,
                                 void(*ColourPalette)(float value, float col[]),
                                 bool xyz_Is_1[],
                                 const double iLbmStressType);
@@ -83,20 +96,11 @@ namespace hemelb
 
         void rtBuildClusters(Net *net);
 
-        std::vector<Cluster> cluster;
+        std::vector<Cluster*> mClusters;
         float **cluster_voxel;
         float ***cluster_flow_field;
 
-        int clusters;
-
-        float ray_dir[3];
-        float ray_inv[3];
-        float ray_vel_col[3];
-        float ray_stress_col[3];
-        float ray_length;
         float ray_t_min;
-        float ray_density;
-        float ray_stress;
 
         int cluster_blocks_vec[3];
         int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;

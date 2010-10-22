@@ -92,8 +92,6 @@ class Net
     int *fluid_sites; // Array containing numbers of fluid sites on
     // each process.
 
-    short int *cluster_id;
-
     DataBlock *data_block; // See comment next to struct DataBlock.
     DataBlock *map_block; // See comment next to struct DataBlock.
 
