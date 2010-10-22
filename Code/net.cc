@@ -319,9 +319,9 @@ void Net::netInit(int totalFluidSites)
   int m; // Site index on a paricular block.
   int n; // Global block index.
   int mm; // Index of processors surrounding this one.
-  int sites_a; // Sites on the edge of the cluster at the start of the
+  int sites_a; // Sites on the edge of the mClusters at the start of the
   // current graph growing partitioning step.
-  int sites_b; // Sites added to the edge of the cluster during the iteration.
+  int sites_b; // Sites added to the edge of the mClusters during the iteration.
 
   int index_a; // Site we are starting from.
   int sites_buffer_size;
