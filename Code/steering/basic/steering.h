@@ -27,7 +27,7 @@ namespace hemelb
     extern int send_array_length;
 
 
-    extern pthread_mutex_t steer_param_lock;
+    //extern pthread_mutex_t steer_param_lock;
 
     extern bool updated_mouse_coords;
 
