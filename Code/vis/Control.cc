@@ -47,7 +47,7 @@ namespace hemelb
 
     void Control::initLayers(Net *net)
     {
-      myRayTracer = new rayTracer(net);
+      myRayTracer = new RayTracer(net);
       myGlypher = new GlyphDrawer(net);
 
 #ifndef NO_STREAKLINES
@@ -60,45 +60,49 @@ namespace hemelb
       this->ctr_z -= vis->half_dim[2];
     }
 
-    void Control::rotate(float sin_1,
-                         float cos_1,
-                         float sin_2,
-                         float cos_2,
-                         float x1,
-                         float y1,
-                         float z1,
-                         float *x2,
-                         float *y2,
-                         float *z2)
+    void Control::RotateAboutXThenY(const float &iSinThetaX,
+                                    const float &iCosThetaX,
+                                    const float &iSinThetaY,
+                                    const float &iCosThetaY,
+                                    const float &iXIn,
+                                    const float &iYIn,
+                                    const float &iZIn,
+                                    float &oXOut,
+                                    float &oYOut,
+                                    float &oZOut)
     {
-      //sin_1 = sin(longitude), cos_1 = cos(longitude)
-      //sin_2 = sin(latitude) , cos_2 = cos(latitude)
-      //rotation of latitude  DEG around the X axis followed by a
-      //rotation of longitude DEG around the Y axis
+      // A rotation of iThetaX clockwise about the x-axis
+      // Followed by a rotation of iThetaY anticlockwise about the y-axis.
+      // In matrices:
+      //       (cos(iThetaY)  0 sin(iThetaY)) (1 0            0              )
+      // Out = (0             1 0           ) (0 cos(-iThetaX) -sin(-iThetaX)) In
+      //       (-sin(iThetaY) 0 cos(iThetaY)) (0 sin(-iThetaX) cos(-iThetaX) )
+      //
+      //       (Xcos(iThetaY) + Zsin(iThetaY)cos(iThetaX) - Ysin(iThetaY)sin(iThetaX))
+      // Out = (Ycos(iThetaX) + Zsin(iThetaX)                                        )
+      //       (Zcos(iThetaX)cos(iThetaY) - Ysin(iThetaX)cos(iThetaY) - Xsin(iThetaY))
 
-      float temp = z1 * cos_2 - y1 * sin_2;
+      const float lTemp = iZIn * iCosThetaX - iYIn * iSinThetaX;
 
-      *x2 = temp * sin_1 + x1 * cos_1;
-      *y2 = z1 * sin_2 + y1 * cos_2;
-      *z2 = temp * cos_1 - x1 * sin_1;
+      oXOut = lTemp * iSinThetaY + iXIn * iCosThetaY;
+      oYOut = iZIn * iSinThetaX + iYIn * iCosThetaX;
+      oZOut = lTemp * iCosThetaY - iXIn * iSinThetaY;
     }
 
     void Control::project(float p1[], float p2[])
     {
       float x1[3], x2[3];
-      float temp;
 
-      int l;
-
-      for (l = 0; l < 3; l++)
+      for (int l = 0; l < 3; l++)
       {
         x1[l] = p1[l] - viewpoint.x[l];
       }
-      temp = viewpoint.cos_1 * x1[2] + viewpoint.sin_1 * x1[0];
+      float temp = viewpoint.CosYRotation * x1[2] + viewpoint.SinYRotation
+          * x1[0];
 
-      x2[0] = viewpoint.cos_1 * x1[0] - viewpoint.sin_1 * x1[2];
-      x2[1] = viewpoint.cos_2 * x1[1] - viewpoint.sin_2 * temp;
-      x2[2] = viewpoint.cos_2 * temp + viewpoint.sin_2 * x1[1];
+      x2[0] = viewpoint.CosYRotation * x1[0] - viewpoint.SinYRotation * x1[2];
+      x2[1] = viewpoint.CosXRotation * x1[1] - viewpoint.SinXRotation * temp;
+      x2[2] = viewpoint.CosXRotation * temp + viewpoint.SinXRotation * x1[1];
 
       temp = viewpoint.dist / (p2[2] = -x2[2]);
 
@@ -106,80 +110,79 @@ namespace hemelb
       p2[1] = temp * x2[1];
     }
 
-    void Control::setProjection(int pixels_x,
-                                int pixels_y,
-                                float local_ctr_x,
-                                float local_ctr_y,
-                                float local_ctr_z,
-                                float longitude,
-                                float latitude,
-                                float zoom)
+    void Control::setProjection(int iPixels_x,
+                                int iPixels_y,
+                                float iLocal_ctr_x,
+                                float iLocal_ctr_y,
+                                float iLocal_ctr_z,
+                                float iLongitude,
+                                float iLatitude,
+                                float iZoom)
     {
-      float temp;
-      float ortho_x = 0.5 * vis->system_size;
-      float ortho_y = 0.5 * vis->system_size;
+      screen.max_x = (0.5 * vis->system_size) / iZoom;
+      screen.max_y = (0.5 * vis->system_size) / iZoom;
+
+      screen.pixels_x = iPixels_x;
+      screen.pixels_y = iPixels_y;
+
+      // Convert to radians
+      float temp = iLongitude * 0.01745329F;
+
+      viewpoint.SinYRotation = sinf(temp);
+      viewpoint.CosYRotation = cosf(temp);
+
+      // Convert to radians
+      temp = iLatitude * 0.01745329F;
+
+      viewpoint.SinXRotation = sinf(temp);
+      viewpoint.CosXRotation = cosf(temp);
+
       float rad = 5.F * vis->system_size;
       float dist = 0.5 * rad;
 
-      screen.max_x = ortho_x / zoom;
-      screen.max_y = ortho_y / zoom;
+      temp = rad * viewpoint.CosXRotation;
 
-      screen.pixels_x = pixels_x;
-      screen.pixels_y = pixels_y;
-
-      // Convert to radians
-      temp = longitude * 0.01745329F;
-
-      viewpoint.sin_1 = sinf(temp);
-      viewpoint.cos_1 = cosf(temp);
-
-      // Convert to radians
-      temp = latitude * 0.01745329F;
-
-      viewpoint.sin_2 = sinf(temp);
-      viewpoint.cos_2 = cosf(temp);
-
-      temp = rad * viewpoint.cos_2;
-
-      viewpoint.x[0] = temp * viewpoint.sin_1 + local_ctr_x;
-      viewpoint.x[1] = rad * viewpoint.sin_2 + local_ctr_y;
-      viewpoint.x[2] = temp * viewpoint.cos_1 + local_ctr_z;
+      viewpoint.x[0] = temp * viewpoint.SinYRotation + iLocal_ctr_x;
+      viewpoint.x[1] = rad * viewpoint.SinXRotation + iLocal_ctr_y;
+      viewpoint.x[2] = temp * viewpoint.CosYRotation + iLocal_ctr_z;
 
       viewpoint.dist = dist;
 
       temp = dist / rad;
 
-      local_ctr_x = viewpoint.x[0] + temp * (local_ctr_x - viewpoint.x[0]);
-      local_ctr_y = viewpoint.x[1] + temp * (local_ctr_y - viewpoint.x[1]);
-      local_ctr_z = viewpoint.x[2] + temp * (local_ctr_z - viewpoint.x[2]);
+      iLocal_ctr_x = viewpoint.x[0] + temp * (iLocal_ctr_x - viewpoint.x[0]);
+      iLocal_ctr_y = viewpoint.x[1] + temp * (iLocal_ctr_y - viewpoint.x[1]);
+      iLocal_ctr_z = viewpoint.x[2] + temp * (iLocal_ctr_z - viewpoint.x[2]);
 
-      screen.zoom = zoom;
+      screen.zoom = iZoom;
 
-      rotate(viewpoint.sin_1, viewpoint.cos_1, viewpoint.sin_2,
-             viewpoint.cos_2, screen.max_x, 0.0F, 0.0F, &screen.dir1[0],
-             &screen.dir1[1], &screen.dir1[2]);
+      RotateAboutXThenY(viewpoint.SinXRotation, viewpoint.CosXRotation,
+                        viewpoint.SinYRotation, viewpoint.CosYRotation,
+                        screen.max_x, 0.0F, 0.0F, screen.dir1[0],
+                        screen.dir1[1], screen.dir1[2]);
 
-      rotate(viewpoint.sin_1, viewpoint.cos_1, viewpoint.sin_2,
-             viewpoint.cos_2, 0.0F, screen.max_y, 0.0F, &screen.dir2[0],
-             &screen.dir2[1], &screen.dir2[2]);
+      RotateAboutXThenY(viewpoint.SinXRotation, viewpoint.CosXRotation,
+                        viewpoint.SinYRotation, viewpoint.CosYRotation, 0.0F,
+                        screen.max_y, 0.0F, screen.dir2[0], screen.dir2[1],
+                        screen.dir2[2]);
 
-      screen.scale_x = (float) pixels_x / (2.F * screen.max_x);
-      screen.scale_y = (float) pixels_y / (2.F * screen.max_y);
+      screen.scale_x = (float) iPixels_x / (2.F * screen.max_x);
+      screen.scale_y = (float) iPixels_y / (2.F * screen.max_y);
 
-      screen.vtx[0] = local_ctr_x - screen.dir1[0] - screen.dir2[0]
+      screen.vtx[0] = iLocal_ctr_x - screen.dir1[0] - screen.dir2[0]
           - viewpoint.x[0];
-      screen.vtx[1] = local_ctr_y - screen.dir1[1] - screen.dir2[1]
+      screen.vtx[1] = iLocal_ctr_y - screen.dir1[1] - screen.dir2[1]
           - viewpoint.x[1];
-      screen.vtx[2] = local_ctr_z - screen.dir1[2] - screen.dir2[2]
+      screen.vtx[2] = iLocal_ctr_z - screen.dir1[2] - screen.dir2[2]
           - viewpoint.x[2];
 
-      screen.dir1[0] *= (2.F / (float) pixels_x);
-      screen.dir1[1] *= (2.F / (float) pixels_x);
-      screen.dir1[2] *= (2.F / (float) pixels_x);
+      screen.dir1[0] *= (2.F / (float) iPixels_x);
+      screen.dir1[1] *= (2.F / (float) iPixels_x);
+      screen.dir1[2] *= (2.F / (float) iPixels_x);
 
-      screen.dir2[0] *= (2.F / (float) pixels_y);
-      screen.dir2[1] *= (2.F / (float) pixels_y);
-      screen.dir2[2] *= (2.F / (float) pixels_y);
+      screen.dir2[0] *= (2.F / (float) iPixels_y);
+      screen.dir2[1] *= (2.F / (float) iPixels_y);
+      screen.dir2[2] *= (2.F / (float) iPixels_y);
     }
 
     void Control::mergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2)
