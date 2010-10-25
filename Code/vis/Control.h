@@ -60,6 +60,16 @@ namespace hemelb
                                float &oXOut,
                                float &oYOut,
                                float &oZOut);
+        void UndoRotateAboutXThenY(const float &iSinThetaX,
+                                   const float &iCosThetaX,
+                                   const float &iSinThetaY,
+                                   const float &iCosSinThetaY,
+                                   const float &iXIn,
+                                   const float &iYIn,
+                                   const float &iZIn,
+                                   float &oXOut,
+                                   float &oYOut,
+                                   float &oZOut);
 
         void setSomeParams(float iBrightness,
                            float iDensityThresholdMin,
