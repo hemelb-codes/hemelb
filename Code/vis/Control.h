@@ -51,15 +51,15 @@ namespace hemelb
         void writePixel(ColPixel *col_pixel);
         void mergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2);
         void RotateAboutXThenY(const float &iSinThetaX,
-                    const float &iCosThetaX,
-                    const float &iSinThetaY,
-                    const float &iCosSinThetaY,
-                    const float &iXIn,
-                    const float &iYIn,
-                    const float &iZIn,
-                    float &oXOut,
-                    float &oYOut,
-                    float &oZOut);
+                               const float &iCosThetaX,
+                               const float &iSinThetaY,
+                               const float &iCosSinThetaY,
+                               const float &iXIn,
+                               const float &iYIn,
+                               const float &iZIn,
+                               float &oXOut,
+                               float &oYOut,
+                               float &oZOut);
 
         void setSomeParams(float iBrightness,
                            float iDensityThresholdMin,
@@ -104,8 +104,8 @@ namespace hemelb
         double mouse_pressure, mouse_stress;
         float brightness;
 
-        Screen screen;
-        Viewpoint viewpoint;
+        Screen mScreen;
+        Viewpoint mViewpoint;
 
         int col_pixels_recv[2]; // number received?
         ColPixel* col_pixel_recv[2];

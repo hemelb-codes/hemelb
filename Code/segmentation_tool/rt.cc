@@ -307,26 +307,26 @@ int rtTracePrimaryRay (Hit *first_hit, Vis *vis)
   Ray ray;
   
   
-  Rotate (screen.dim[0], 0.0, 0.0,
-	  viewpoint.sin_longitude, viewpoint.cos_longitude,
-	  viewpoint.sin_latitude, viewpoint.cos_latitude,
+  Rotate (mScreen.dim[0], 0.0, 0.0,
+	  mViewpoint.sin_longitude, mViewpoint.cos_longitude,
+	  mViewpoint.sin_latitude, mViewpoint.cos_latitude,
 	  &screen_dir_x[0], &screen_dir_x[1], &screen_dir_x[2]);
   
-  Rotate (0.0, screen.dim[1], 0.0,
-	  viewpoint.sin_longitude, viewpoint.cos_longitude,
-	  viewpoint.sin_latitude, viewpoint.cos_latitude,
+  Rotate (0.0, mScreen.dim[1], 0.0,
+	  mViewpoint.sin_longitude, mViewpoint.cos_longitude,
+	  mViewpoint.sin_latitude, mViewpoint.cos_latitude,
 	  &screen_dir_y[0], &screen_dir_y[1], &screen_dir_y[2]);
   
   for (l = 0; l < 3; l++)
     {
-      screen_vtx[l] = (-viewpoint.dist / vis->viewpoint_radius) * viewpoint.pos[l] -
+      screen_vtx[l] = (-mViewpoint.dist / vis->viewpoint_radius) * mViewpoint.pos[l] -
 	screen_dir_x[l] - screen_dir_y[l];
       
-      screen_dir_x[l] *= (2.0 / screen.pixels[0]);
-      screen_dir_y[l] *= (2.0 / screen.pixels[1]);
+      screen_dir_x[l] *= (2.0 / mScreen.pixels[0]);
+      screen_dir_y[l] *= (2.0 / mScreen.pixels[1]);
     }
   for (l = 0; l < 3; l++)
-    ray.org[l] = viewpoint.pos[l];
+    ray.org[l] = mViewpoint.pos[l];
   
   for (l = 0; l < 3; l++)
     ray.dir[l] = screen_vtx[l] + vis->mouse.x[0]*screen_dir_x[l] + vis->mouse.x[1]*screen_dir_y[l];
@@ -366,7 +366,7 @@ int rtTraceSecondaryRay (Hit *first_hit, Hit *second_hit, Vis *vis)
     ray.org[l] = first_hit->pos[l];
   
   for (l = 0; l < 3; l++)
-    primary_dir[l] = first_hit->pos[l] - viewpoint.pos[l];
+    primary_dir[l] = first_hit->pos[l] - mViewpoint.pos[l];
   
   for (l = 0; l < 3; l++)
     ray.dir[l] = vis->mesh.triangle[ first_hit->triangle_id ].nor[l];

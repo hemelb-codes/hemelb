@@ -72,14 +72,14 @@ namespace hemelb
     void GlyphDrawer::render()
     {
       float screen_max[4];
-      screen_max[0] = vis::controller->screen.max_x;
-      screen_max[1] = vis::controller->screen.max_x;
-      screen_max[2] = vis::controller->screen.max_y;
-      screen_max[3] = vis::controller->screen.max_y;
+      screen_max[0] = vis::controller->mScreen.max_x;
+      screen_max[1] = vis::controller->mScreen.max_x;
+      screen_max[2] = vis::controller->mScreen.max_y;
+      screen_max[3] = vis::controller->mScreen.max_y;
 
       float scale[4];
-      scale[0] = scale[1] = vis::controller->screen.scale_x;
-      scale[2] = scale[3] = vis::controller->screen.scale_y;
+      scale[0] = scale[1] = vis::controller->mScreen.scale_x;
+      scale[2] = scale[3] = vis::controller->mScreen.scale_y;
 
       double density;
       double vx, vy, vz;
