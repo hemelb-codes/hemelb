@@ -22,16 +22,15 @@ namespace hemelb
         ~StreaklineDrawer();
 
         // Method to reset streakline drawer
-        void restart();
+        void Restart();
 
         // Drawing methods.
-        void streakLines(int time_steps, int time_steps_per_cycle, Net *net);
+        void StreakLines(int time_steps, int time_steps_per_cycle, Net *net);
         void render();
 
       private:
 
         // Struct for a particle dropped into the fluid.
-        // TODO: Get rid of inlet_id because I think it's never meaningfully used.
         struct Particle
         {
             float x, y, z;

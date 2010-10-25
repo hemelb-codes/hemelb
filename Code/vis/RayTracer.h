@@ -17,16 +17,15 @@ namespace hemelb
 
         // Method to update the voxel corresponding to site i with its
         // newly calculated density, velocity and stress.
-        void rtUpdateClusterVoxel(int i,
-                                  float density,
-                                  float velocity,
-                                  float stress);
+        void UpdateClusterVoxel(const int &i,
+                                const float &density,
+                                const float &velocity,
+                                const float &stress);
 
         // Render the current state into an image.
         void render(const float iLbmStressType);
 
       private:
-
 
         struct Ray
         {

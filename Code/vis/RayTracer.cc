@@ -784,33 +784,33 @@ namespace hemelb
 
     void RayTracer::render(const float iLbmStressType)
     {
-      int pixels_x = vis::controller->screen.pixels_x;
-      int pixels_y = vis::controller->screen.pixels_y;
+      int pixels_x = vis::controller->mScreen.pixels_x;
+      int pixels_y = vis::controller->mScreen.pixels_y;
 
       float screen_max[4];
-      screen_max[0] = vis::controller->screen.max_x;
-      screen_max[1] = vis::controller->screen.max_x;
-      screen_max[2] = vis::controller->screen.max_y;
-      screen_max[3] = vis::controller->screen.max_y;
+      screen_max[0] = vis::controller->mScreen.max_x;
+      screen_max[1] = vis::controller->mScreen.max_x;
+      screen_max[2] = vis::controller->mScreen.max_y;
+      screen_max[3] = vis::controller->mScreen.max_y;
 
       float p0[3];
       for (int l = 0; l < 3; l++)
       {
-        p0[l] = vis::controller->viewpoint.x[l];
+        p0[l] = vis::controller->mViewpoint.x[l];
       }
 
       float par1[3], par2[3];
       float screen_vtx[4];
       for (int l = 0; l < 3; l++)
       {
-        par1[l] = vis::controller->screen.dir1[l];
-        par2[l] = vis::controller->screen.dir2[l];
-        screen_vtx[l] = vis::controller->screen.vtx[l];
+        par1[l] = vis::controller->mScreen.dir1[l];
+        par2[l] = vis::controller->mScreen.dir2[l];
+        screen_vtx[l] = vis::controller->mScreen.vtx[l];
       }
 
       float scale_vec[4];
-      scale_vec[0] = scale_vec[1] = vis::controller->screen.scale_x;
-      scale_vec[2] = scale_vec[3] = vis::controller->screen.scale_y;
+      scale_vec[0] = scale_vec[1] = vis::controller->mScreen.scale_x;
+      scale_vec[2] = scale_vec[3] = vis::controller->mScreen.scale_y;
 
       for (unsigned int cluster_id = 0; cluster_id < mClusters.size(); cluster_id++)
       {
@@ -834,7 +834,6 @@ namespace hemelb
         cluster_blocks_yz = (int) cluster_p->blocks_y
             * (int) cluster_p->blocks_z;
         cluster_blocks = (int) cluster_p->blocks_x * cluster_blocks_yz;
-
 
         float **block_flow_field = cluster_flow_field[cluster_id];
 
@@ -918,7 +917,8 @@ namespace hemelb
             lRay.Direction[1] = lRayDirection[1];
             lRay.Direction[2] = lRayDirection[2];
 
-            float lInverseDirectionMagnitude = 1.0F / sqrtf(lRayDirection[0] * lRayDirection[0] + lRayDirection[1] * lRayDirection[1]
+            float lInverseDirectionMagnitude = 1.0F / sqrtf(lRayDirection[0]
+                * lRayDirection[0] + lRayDirection[1] * lRayDirection[1]
                 + lRayDirection[2] * lRayDirection[2]);
 
             lRay.Direction[0] *= lInverseDirectionMagnitude;
@@ -968,8 +968,8 @@ namespace hemelb
             lRay.Density = -1.0F;
 
             rtTraverseBlocksFn(ray_dx, block_flow_field, &lRay,
-                               ColourPalette::pickColour, lRayInPositiveDirection,
-                               iLbmStressType);
+                               ColourPalette::pickColour,
+                               lRayInPositiveDirection, iLbmStressType);
 
             if (lRay.MinT >= 1.0e+30F)
             {
@@ -1014,14 +1014,14 @@ namespace hemelb
       }
     }
 
-    void RayTracer::rtUpdateClusterVoxel(int i,
-                                         float density,
-                                         float velocity,
-                                         float stress)
+    void RayTracer::UpdateClusterVoxel(const int i,
+                                       const float density,
+                                       const float velocity,
+                                       const float stress)
     {
-      *cluster_voxel[3 * i] = density;
-      *cluster_voxel[3 * i + 1] = velocity;
-      *cluster_voxel[3 * i + 2] = stress;
+      cluster_voxel[3 * i][0] = density;
+      cluster_voxel[3 * i][1] = velocity;
+      cluster_voxel[3 * i][2] = stress;
     }
 
     RayTracer::~RayTracer()
