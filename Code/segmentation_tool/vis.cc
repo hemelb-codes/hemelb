@@ -119,7 +119,7 @@ void visProjection (Vis *vis)
   for (int l = 0; l < 3; l++)
     screen.ctr[l] = viewpoint.pos[l] + temp*(vis->scene_center[l] - viewpoint.pos[l]);
   
-  screen.zoom = vis->zoom;
+  screen.Zoom = vis->zoom;
   
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();

@@ -210,7 +210,7 @@ void ioReadConfig (Vis *vis)
    *   ... more facets ...
    * endsolid
    */
-  double min_x[3], max_x[3];	// Bounding box of mesh?
+  double min_x[3], MaxXValue[3];	// Bounding box of mesh?
   double dx[3];			// Unknown
   
   int l, m, n;			// Indices
@@ -227,7 +227,7 @@ void ioReadConfig (Vis *vis)
   for (l = 0; l < 3; l++)
     {
       min_x[l] =  1.0e+30;
-      max_x[l] = -1.0e+30;
+      MaxXValue[l] = -1.0e+30;
       vis->mesh.centre[l] =  0.0;
     }
   input_file.open(vis->input_file);
@@ -300,7 +300,7 @@ void ioReadConfig (Vis *vis)
 	    {
 	      // Update the min & max
 	      min_x[l] = fmin(min_x[l], vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l]);
-	      max_x[l] = fmax(max_x[l], vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l]);
+	      MaxXValue[l] = fmax(MaxXValue[l], vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l]);
 	      // Increment running total of positions.
 	      vis->mesh.centre[l] += vis->mesh.triangle[ vis->mesh.triangles ].v[m].pos[l];
 	    }
@@ -348,7 +348,7 @@ void ioReadConfig (Vis *vis)
   // Set number of voxels in along each axis to 1.5 * extent of
   // surface, over the size of a voxel.
   for (l = 0; l < 3; l++)
-    vis->mesh.voxels[l] = (int)ceil(1.5 * (max_x[l] - min_x[l]) / vis->mesh.voxel_size);
+    vis->mesh.voxels[l] = (int)ceil(1.5 * (MaxXValue[l] - min_x[l]) / vis->mesh.voxel_size);
   
   // This is the total number of voxels
   vis->mesh.voxels[3] = vis->mesh.voxels[0] * vis->mesh.voxels[1] * vis->mesh.voxels[2];
