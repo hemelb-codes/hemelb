@@ -126,20 +126,20 @@ namespace hemelb
       p2[1] = temp * x2[1];
     }
 
-    void Control::setProjection(int iPixels_x,
-                                int iPixels_y,
-                                float iLocal_ctr_x,
-                                float iLocal_ctr_y,
-                                float iLocal_ctr_z,
-                                float iLongitude,
-                                float iLatitude,
-                                float iZoom)
+    void Control::SetProjection(const int &iPixels_x,
+                                const int &iPixels_y,
+                                const float &iLocal_ctr_x,
+                                const float &iLocal_ctr_y,
+                                const float &iLocal_ctr_z,
+                                const float &iLongitude,
+                                const float &iLatitude,
+                                const float &iZoom)
     {
-      mScreen.max_x = (0.5 * vis->system_size) / iZoom;
-      mScreen.max_y = (0.5 * vis->system_size) / iZoom;
+      mScreen.MaxXValue = (0.5 * vis->system_size) / iZoom;
+      mScreen.MaxYValue = (0.5 * vis->system_size) / iZoom;
 
-      mScreen.pixels_x = iPixels_x;
-      mScreen.pixels_y = iPixels_y;
+      mScreen.PixelsX = iPixels_x;
+      mScreen.PixelsY = iPixels_y;
 
       // Convert to radians
       float temp = iLongitude * 0.01745329F;
@@ -164,41 +164,42 @@ namespace hemelb
 
       mViewpoint.dist = dist;
 
-      temp = dist / rad;
-
-      iLocal_ctr_x = mViewpoint.x[0] + temp * (iLocal_ctr_x - mViewpoint.x[0]);
-      iLocal_ctr_y = mViewpoint.x[1] + temp * (iLocal_ctr_y - mViewpoint.x[1]);
-      iLocal_ctr_z = mViewpoint.x[2] + temp * (iLocal_ctr_z - mViewpoint.x[2]);
-
-      mScreen.zoom = iZoom;
-
       RotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation,
                         mViewpoint.SinYRotation, mViewpoint.CosYRotation,
-                        mScreen.max_x, 0.0F, 0.0F, mScreen.dir1[0],
-                        mScreen.dir1[1], mScreen.dir1[2]);
+                        mScreen.MaxXValue, 0.0F, 0.0F,
+                        mScreen.UnitVectorProjectionX[0],
+                        mScreen.UnitVectorProjectionX[1],
+                        mScreen.UnitVectorProjectionX[2]);
 
       RotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation,
                         mViewpoint.SinYRotation, mViewpoint.CosYRotation, 0.0F,
-                        mScreen.max_y, 0.0F, mScreen.dir2[0], mScreen.dir2[1],
-                        mScreen.dir2[2]);
+                        mScreen.MaxYValue, 0.0F,
+                        mScreen.UnitVectorProjectionY[0],
+                        mScreen.UnitVectorProjectionY[1],
+                        mScreen.UnitVectorProjectionY[2]);
 
-      mScreen.scale_x = (float) iPixels_x / (2.F * mScreen.max_x);
-      mScreen.scale_y = (float) iPixels_y / (2.F * mScreen.max_y);
+      mScreen.ScaleX = (float) iPixels_x / (2.F * mScreen.MaxXValue);
+      mScreen.ScaleY = (float) iPixels_y / (2.F * mScreen.MaxYValue);
 
-      mScreen.vtx[0] = iLocal_ctr_x - mScreen.dir1[0] - mScreen.dir2[0]
-          - mViewpoint.x[0];
-      mScreen.vtx[1] = iLocal_ctr_y - mScreen.dir1[1] - mScreen.dir2[1]
-          - mViewpoint.x[1];
-      mScreen.vtx[2] = iLocal_ctr_z - mScreen.dir1[2] - mScreen.dir2[2]
-          - mViewpoint.x[2];
+      temp = dist / rad;
 
-      mScreen.dir1[0] *= (2.F / (float) iPixels_x);
-      mScreen.dir1[1] *= (2.F / (float) iPixels_x);
-      mScreen.dir1[2] *= (2.F / (float) iPixels_x);
+      mScreen.vtx[0] = (mViewpoint.x[0] + temp * (iLocal_ctr_x
+          - mViewpoint.x[0])) - mScreen.UnitVectorProjectionX[0]
+          - mScreen.UnitVectorProjectionY[0] - mViewpoint.x[0];
+      mScreen.vtx[1] = (mViewpoint.x[1] + temp * (iLocal_ctr_y
+          - mViewpoint.x[1])) - mScreen.UnitVectorProjectionX[1]
+          - mScreen.UnitVectorProjectionY[1] - mViewpoint.x[1];
+      mScreen.vtx[2] = (mViewpoint.x[2] + temp * (iLocal_ctr_z
+          - mViewpoint.x[2])) - mScreen.UnitVectorProjectionX[2]
+          - mScreen.UnitVectorProjectionY[2] - mViewpoint.x[2];
 
-      mScreen.dir2[0] *= (2.F / (float) iPixels_y);
-      mScreen.dir2[1] *= (2.F / (float) iPixels_y);
-      mScreen.dir2[2] *= (2.F / (float) iPixels_y);
+      mScreen.UnitVectorProjectionX[0] *= (2.F / (float) iPixels_x);
+      mScreen.UnitVectorProjectionX[1] *= (2.F / (float) iPixels_x);
+      mScreen.UnitVectorProjectionX[2] *= (2.F / (float) iPixels_x);
+
+      mScreen.UnitVectorProjectionY[0] *= (2.F / (float) iPixels_y);
+      mScreen.UnitVectorProjectionY[1] *= (2.F / (float) iPixels_y);
+      mScreen.UnitVectorProjectionY[2] *= (2.F / (float) iPixels_y);
     }
 
     void Control::mergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2)
@@ -306,7 +307,7 @@ namespace hemelb
       i = col_pixel_p->i.i;
       j = col_pixel_p->i.j;
 
-      col_pixel_id_p = &col_pixel_id[i * mScreen.pixels_y + j];
+      col_pixel_id_p = &col_pixel_id[i * mScreen.PixelsY + j];
 
       if (*col_pixel_id_p != -1)
       {
@@ -342,8 +343,8 @@ namespace hemelb
 
       ColPixel col_pixel;
 
-      pixels_x = mScreen.pixels_x;
-      pixels_y = mScreen.pixels_y;
+      pixels_x = mScreen.PixelsX;
+      pixels_y = mScreen.PixelsY;
 
       x1 = int(p1[0]);
       y1 = int(p1[1]);
@@ -472,11 +473,11 @@ namespace hemelb
       }
     }
 
-    void Control::setSomeParams(float iBrightness,
-                                float iDensityThresholdMin,
-                                float iDensityThresholdMinMaxInv,
-                                float iVelocityThresholdMaxInv,
-                                float iStressThresholdMaxInv)
+    void Control::SetSomeParams(const float iBrightness,
+                                const float iDensityThresholdMin,
+                                const float iDensityThresholdMinMaxInv,
+                                const float iVelocityThresholdMaxInv,
+                                const float iStressThresholdMaxInv)
     {
       brightness = iBrightness;
       density_threshold_min = iDensityThresholdMin;
@@ -488,7 +489,7 @@ namespace hemelb
 
     void Control::updateImageSize(int pixels_x, int pixels_y)
     {
-      if (pixels_x * pixels_y > mScreen.pixels_x * mScreen.pixels_y)
+      if (pixels_x * pixels_y > mScreen.PixelsX * mScreen.PixelsY)
       {
         pixels_max = pixels_x * pixels_y;
         col_pixel_id = (int *) realloc(col_pixel_id, sizeof(int) * pixels_max);
@@ -587,7 +588,7 @@ namespace hemelb
               i = col_pixel1->i.i;
               j = col_pixel1->i.j;
 
-              if (* (col_pixel_id_p = &col_pixel_id[i * mScreen.pixels_y + j])
+              if (* (col_pixel_id_p = &col_pixel_id[i * mScreen.PixelsY + j])
                   == -1)
               {
                 col_pixel2 = &col_pixel_recv[recv_buffer_id][*col_pixel_id_p
@@ -647,10 +648,10 @@ namespace hemelb
 
     void Control::render(int recv_buffer_id, Net *net)
     {
-      if (mScreen.pixels_x * mScreen.pixels_y > pixels_max)
+      if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
       {
-        pixels_max = util::max(2 * pixels_max, mScreen.pixels_x
-            * mScreen.pixels_y);
+        pixels_max = util::max(2 * pixels_max, mScreen.PixelsX
+            * mScreen.PixelsY);
 
         col_pixel_id = (int *) realloc(col_pixel_id, sizeof(int) * pixels_max);
       }
@@ -679,7 +680,7 @@ namespace hemelb
 #endif
       for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
       {
-        col_pixel_id[col_pixel_send[m].i.i * mScreen.pixels_y
+        col_pixel_id[col_pixel_send[m].i.i * mScreen.PixelsY
             + col_pixel_send[m].i.j] = -1;
       }
     }
@@ -696,7 +697,7 @@ namespace hemelb
           << physical_pressure_threshold_max << physical_velocity_threshold_max
           << physical_stress_threshold_max;
 
-      writer << mScreen.pixels_x << mScreen.pixels_y
+      writer << mScreen.PixelsX << mScreen.PixelsY
           << col_pixels_recv[recv_buffer_id];
 
       for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)

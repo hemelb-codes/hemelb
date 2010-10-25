@@ -24,15 +24,15 @@ namespace hemelb
         struct Screen
         {
             float vtx[3];
-            float dir1[3];
-            float dir2[3];
 
-            float max_x, max_y;
-            float scale_x, scale_y;
+            // Projection of unit vectors along screen axes into normal space.
+            float UnitVectorProjectionX[3];
+            float UnitVectorProjectionY[3];
 
-            float zoom;
+            float MaxXValue, MaxYValue;
+            float ScaleX, ScaleY;
 
-            int pixels_x, pixels_y;
+            int PixelsX, PixelsY;
         };
 
         struct Viewpoint
@@ -71,20 +71,20 @@ namespace hemelb
                                    float &oYOut,
                                    float &oZOut);
 
-        void setSomeParams(float iBrightness,
-                           float iDensityThresholdMin,
-                           float iDensityThresholdMinMaxInv,
-                           float iVelocityThresholdMaxInv,
-                           float iStressThresholdMaxInv);
+        void SetSomeParams(const float iBrightness,
+                           const float iDensityThresholdMin,
+                           const float iDensityThresholdMinMaxInv,
+                           const float iVelocityThresholdMaxInv,
+                           const float iStressThresholdMaxInv);
 
-        void setProjection(int pixels_x,
-                           int pixels_y,
-                           float ctr_x,
-                           float ctr_y,
-                           float ctr_z,
-                           float longitude,
-                           float latitude,
-                           float zoom);
+        void SetProjection(const int &pixels_x,
+                           const int &pixels_y,
+                           const float &ctr_x,
+                           const float &ctr_y,
+                           const float &ctr_z,
+                           const float &longitude,
+                           const float &latitude,
+                           const float &zoom);
 
         void renderLine(float x1[], float x2[]);
 

@@ -11,21 +11,7 @@ namespace hemelb
     // Constructor
     GlyphDrawer::GlyphDrawer(Net *net)
     {
-      DataBlock *map_block_p;
-      int glyphs_max = 0;
-      int n;
-
-      for (n = 0; n < blocks; n++)
-      {
-        if (net->map_block[n].site_data != NULL)
-        {
-          ++glyphs_max;
-        }
-      }
-
-      glyph = new Glyph[glyphs_max];
-      glyphs = 0;
-      n = -1;
+      int n = -1;
 
       for (int i = 0; i < sites_x; i += block_size)
       {
@@ -33,10 +19,13 @@ namespace hemelb
         {
           for (int k = 0; k < sites_z; k += block_size)
           {
-            map_block_p = &net->map_block[++n];
+            n++;
+            DataBlock *map_block_p = &net->map_block[n];
 
             if (map_block_p->site_data == NULL)
+            {
               continue;
+            }
 
             int site_i = (block_size >> 1);
             int site_j = (block_size >> 1);
@@ -45,16 +34,21 @@ namespace hemelb
             int m = ( ( (site_i << shift) + site_j) << shift) + site_k;
 
             if (map_block_p->site_data[m] & (1U << 31U))
+            {
               continue;
+            }
 
-            glyph[glyphs].x = float(i + site_i) - 0.5F * float(sites_x);
-            glyph[glyphs].y = float(j + site_j) - 0.5F * float(sites_y);
-            glyph[glyphs].z = float(k + site_k) - 0.5F * float(sites_z);
+            Glyph *lGlyph = new Glyph();
+
+            lGlyph->x = float(i + site_i) - 0.5F * float(sites_x);
+            lGlyph->y = float(j + site_j) - 0.5F * float(sites_y);
+            lGlyph->z = float(k + site_k) - 0.5F * float(sites_z);
 
             int c1Plusc2 = 15;
 
-            glyph[glyphs].f = &f_old[map_block_p->site_data[m] * c1Plusc2];
-            ++glyphs;
+            lGlyph->f = &f_old[map_block_p->site_data[m] * c1Plusc2];
+
+            mGlyphs.push_back(lGlyph);
 
           } // for k
         } // for j
@@ -65,21 +59,24 @@ namespace hemelb
     // Destructor
     GlyphDrawer::~GlyphDrawer()
     {
-      delete[] glyph;
+      for (unsigned int ii = 0; ii < mGlyphs.size(); ii++)
+      {
+        delete mGlyphs[ii];
+      }
     }
 
     // Function to perform the rendering.
     void GlyphDrawer::render()
     {
       float screen_max[4];
-      screen_max[0] = vis::controller->mScreen.max_x;
-      screen_max[1] = vis::controller->mScreen.max_x;
-      screen_max[2] = vis::controller->mScreen.max_y;
-      screen_max[3] = vis::controller->mScreen.max_y;
+      screen_max[0] = vis::controller->mScreen.MaxXValue;
+      screen_max[1] = vis::controller->mScreen.MaxXValue;
+      screen_max[2] = vis::controller->mScreen.MaxYValue;
+      screen_max[3] = vis::controller->mScreen.MaxYValue;
 
       float scale[4];
-      scale[0] = scale[1] = vis::controller->mScreen.scale_x;
-      scale[2] = scale[3] = vis::controller->mScreen.scale_y;
+      scale[0] = scale[1] = vis::controller->mScreen.ScaleX;
+      scale[2] = scale[3] = vis::controller->mScreen.ScaleY;
 
       double density;
       double vx, vy, vz;
@@ -87,24 +84,24 @@ namespace hemelb
 
       float p1[3], p2[3], p3[3], p4[3];
 
-      for (int n = 0; n < glyphs; n++)
+      for (unsigned int n = 0; n < mGlyphs.size(); n++)
       {
-        D3Q15::CalculateDensityAndVelocity(glyph[n].f, density, vx, vy, vz);
+        D3Q15::CalculateDensityAndVelocity(mGlyphs[n]->f, density, vx, vy, vz);
 
-        temp = glyph_length * block_size * vis::controller->velocity_threshold_max_inv
-            / density;
+        temp = glyph_length * block_size
+            * vis::controller->velocity_threshold_max_inv / density;
 
         vx *= temp;
         vy *= temp;
         vz *= temp;
 
-        p1[0] = glyph[n].x;
-        p1[1] = glyph[n].y;
-        p1[2] = glyph[n].z;
+        p1[0] = mGlyphs[n]->x;
+        p1[1] = mGlyphs[n]->y;
+        p1[2] = mGlyphs[n]->z;
 
-        p2[0] = glyph[n].x + vx;
-        p2[1] = glyph[n].y + vy;
-        p2[2] = glyph[n].z + vz;
+        p2[0] = mGlyphs[n]->x + vx;
+        p2[1] = mGlyphs[n]->y + vy;
+        p2[2] = mGlyphs[n]->z + vz;
 
         vis::controller->project(p1, p3);
         vis::controller->project(p2, p4);
