@@ -9,7 +9,7 @@
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
-#include "io/XdrReader.h"
+#include "io/XdrFileReader.h"
 #include "io/AsciiFileWriter.h"
 
 //using namespace std;
@@ -74,7 +74,7 @@ void LBM::lbmReadConfig (Net *net) {
 
   delete[] lProcIdentifier;
 
-  hemelb::io::XdrReader myReader = hemelb::io::XdrReader(xdrFile);
+  hemelb::io::XdrFileReader myReader = hemelb::io::XdrFileReader(xdrFile);
   
   int i, j, k, ii, jj, kk, l, m, n;
   int flag;
