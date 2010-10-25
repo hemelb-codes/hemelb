@@ -89,6 +89,24 @@ namespace hemelb
       oZOut = lTemp * iCosThetaY - iXIn * iSinThetaY;
     }
 
+    void Control::UndoRotateAboutXThenY(const float &iSinThetaX,
+                                        const float &iCosThetaX,
+                                        const float &iSinThetaY,
+                                        const float &iCosThetaY,
+                                        const float &iXIn,
+                                        const float &iYIn,
+                                        const float &iZIn,
+                                        float &oXOut,
+                                        float &oYOut,
+                                        float &oZOut)
+    {
+      // Just do using the other Rotate function, swapping for x and y
+      // (to swap order) and giving the inverse of the sine values
+      // (to swap direction).
+      RotateAboutXThenY(-iSinThetaY, iCosThetaY, -iSinThetaX, iCosThetaX, iYIn,
+                        iXIn, iZIn, oYOut, oXOut, oZOut);
+    }
+
     void Control::project(float p1[], float p2[])
     {
       float x1[3], x2[3];
@@ -97,14 +115,12 @@ namespace hemelb
       {
         x1[l] = p1[l] - mViewpoint.x[l];
       }
-      float temp = mViewpoint.CosYRotation * x1[2] + mViewpoint.SinYRotation
-          * x1[0];
 
-      x2[0] = mViewpoint.CosYRotation * x1[0] - mViewpoint.SinYRotation * x1[2];
-      x2[1] = mViewpoint.CosXRotation * x1[1] - mViewpoint.SinXRotation * temp;
-      x2[2] = mViewpoint.CosXRotation * temp + mViewpoint.SinXRotation * x1[1];
+      UndoRotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation,
+                            mViewpoint.SinYRotation, mViewpoint.CosYRotation,
+                            x1[0], x1[1], x1[2], x2[0], x2[1], x2[2]);
 
-      temp = mViewpoint.dist / (p2[2] = -x2[2]);
+      float temp = mViewpoint.dist / (p2[2] = -x2[2]);
 
       p2[0] = temp * x2[0];
       p2[1] = temp * x2[1];

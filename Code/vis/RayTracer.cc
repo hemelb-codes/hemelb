@@ -1014,10 +1014,10 @@ namespace hemelb
       }
     }
 
-    void RayTracer::UpdateClusterVoxel(const int i,
-                                       const float density,
-                                       const float velocity,
-                                       const float stress)
+    void RayTracer::UpdateClusterVoxel(const int &i,
+                                       const float &density,
+                                       const float &velocity,
+                                       const float &stress)
     {
       cluster_voxel[3 * i][0] = density;
       cluster_voxel[3 * i][1] = velocity;
