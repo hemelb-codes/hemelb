@@ -95,16 +95,16 @@ namespace hemelb
 
       for (int l = 0; l < 3; l++)
       {
-        x1[l] = p1[l] - viewpoint.x[l];
+        x1[l] = p1[l] - mViewpoint.x[l];
       }
-      float temp = viewpoint.CosYRotation * x1[2] + viewpoint.SinYRotation
+      float temp = mViewpoint.CosYRotation * x1[2] + mViewpoint.SinYRotation
           * x1[0];
 
-      x2[0] = viewpoint.CosYRotation * x1[0] - viewpoint.SinYRotation * x1[2];
-      x2[1] = viewpoint.CosXRotation * x1[1] - viewpoint.SinXRotation * temp;
-      x2[2] = viewpoint.CosXRotation * temp + viewpoint.SinXRotation * x1[1];
+      x2[0] = mViewpoint.CosYRotation * x1[0] - mViewpoint.SinYRotation * x1[2];
+      x2[1] = mViewpoint.CosXRotation * x1[1] - mViewpoint.SinXRotation * temp;
+      x2[2] = mViewpoint.CosXRotation * temp + mViewpoint.SinXRotation * x1[1];
 
-      temp = viewpoint.dist / (p2[2] = -x2[2]);
+      temp = mViewpoint.dist / (p2[2] = -x2[2]);
 
       p2[0] = temp * x2[0];
       p2[1] = temp * x2[1];
@@ -119,70 +119,70 @@ namespace hemelb
                                 float iLatitude,
                                 float iZoom)
     {
-      screen.max_x = (0.5 * vis->system_size) / iZoom;
-      screen.max_y = (0.5 * vis->system_size) / iZoom;
+      mScreen.max_x = (0.5 * vis->system_size) / iZoom;
+      mScreen.max_y = (0.5 * vis->system_size) / iZoom;
 
-      screen.pixels_x = iPixels_x;
-      screen.pixels_y = iPixels_y;
+      mScreen.pixels_x = iPixels_x;
+      mScreen.pixels_y = iPixels_y;
 
       // Convert to radians
       float temp = iLongitude * 0.01745329F;
 
-      viewpoint.SinYRotation = sinf(temp);
-      viewpoint.CosYRotation = cosf(temp);
+      mViewpoint.SinYRotation = sinf(temp);
+      mViewpoint.CosYRotation = cosf(temp);
 
       // Convert to radians
       temp = iLatitude * 0.01745329F;
 
-      viewpoint.SinXRotation = sinf(temp);
-      viewpoint.CosXRotation = cosf(temp);
+      mViewpoint.SinXRotation = sinf(temp);
+      mViewpoint.CosXRotation = cosf(temp);
 
       float rad = 5.F * vis->system_size;
       float dist = 0.5 * rad;
 
-      temp = rad * viewpoint.CosXRotation;
+      temp = rad * mViewpoint.CosXRotation;
 
-      viewpoint.x[0] = temp * viewpoint.SinYRotation + iLocal_ctr_x;
-      viewpoint.x[1] = rad * viewpoint.SinXRotation + iLocal_ctr_y;
-      viewpoint.x[2] = temp * viewpoint.CosYRotation + iLocal_ctr_z;
+      mViewpoint.x[0] = temp * mViewpoint.SinYRotation + iLocal_ctr_x;
+      mViewpoint.x[1] = rad * mViewpoint.SinXRotation + iLocal_ctr_y;
+      mViewpoint.x[2] = temp * mViewpoint.CosYRotation + iLocal_ctr_z;
 
-      viewpoint.dist = dist;
+      mViewpoint.dist = dist;
 
       temp = dist / rad;
 
-      iLocal_ctr_x = viewpoint.x[0] + temp * (iLocal_ctr_x - viewpoint.x[0]);
-      iLocal_ctr_y = viewpoint.x[1] + temp * (iLocal_ctr_y - viewpoint.x[1]);
-      iLocal_ctr_z = viewpoint.x[2] + temp * (iLocal_ctr_z - viewpoint.x[2]);
+      iLocal_ctr_x = mViewpoint.x[0] + temp * (iLocal_ctr_x - mViewpoint.x[0]);
+      iLocal_ctr_y = mViewpoint.x[1] + temp * (iLocal_ctr_y - mViewpoint.x[1]);
+      iLocal_ctr_z = mViewpoint.x[2] + temp * (iLocal_ctr_z - mViewpoint.x[2]);
 
-      screen.zoom = iZoom;
+      mScreen.zoom = iZoom;
 
-      RotateAboutXThenY(viewpoint.SinXRotation, viewpoint.CosXRotation,
-                        viewpoint.SinYRotation, viewpoint.CosYRotation,
-                        screen.max_x, 0.0F, 0.0F, screen.dir1[0],
-                        screen.dir1[1], screen.dir1[2]);
+      RotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation,
+                        mViewpoint.SinYRotation, mViewpoint.CosYRotation,
+                        mScreen.max_x, 0.0F, 0.0F, mScreen.dir1[0],
+                        mScreen.dir1[1], mScreen.dir1[2]);
 
-      RotateAboutXThenY(viewpoint.SinXRotation, viewpoint.CosXRotation,
-                        viewpoint.SinYRotation, viewpoint.CosYRotation, 0.0F,
-                        screen.max_y, 0.0F, screen.dir2[0], screen.dir2[1],
-                        screen.dir2[2]);
+      RotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation,
+                        mViewpoint.SinYRotation, mViewpoint.CosYRotation, 0.0F,
+                        mScreen.max_y, 0.0F, mScreen.dir2[0], mScreen.dir2[1],
+                        mScreen.dir2[2]);
 
-      screen.scale_x = (float) iPixels_x / (2.F * screen.max_x);
-      screen.scale_y = (float) iPixels_y / (2.F * screen.max_y);
+      mScreen.scale_x = (float) iPixels_x / (2.F * mScreen.max_x);
+      mScreen.scale_y = (float) iPixels_y / (2.F * mScreen.max_y);
 
-      screen.vtx[0] = iLocal_ctr_x - screen.dir1[0] - screen.dir2[0]
-          - viewpoint.x[0];
-      screen.vtx[1] = iLocal_ctr_y - screen.dir1[1] - screen.dir2[1]
-          - viewpoint.x[1];
-      screen.vtx[2] = iLocal_ctr_z - screen.dir1[2] - screen.dir2[2]
-          - viewpoint.x[2];
+      mScreen.vtx[0] = iLocal_ctr_x - mScreen.dir1[0] - mScreen.dir2[0]
+          - mViewpoint.x[0];
+      mScreen.vtx[1] = iLocal_ctr_y - mScreen.dir1[1] - mScreen.dir2[1]
+          - mViewpoint.x[1];
+      mScreen.vtx[2] = iLocal_ctr_z - mScreen.dir1[2] - mScreen.dir2[2]
+          - mViewpoint.x[2];
 
-      screen.dir1[0] *= (2.F / (float) iPixels_x);
-      screen.dir1[1] *= (2.F / (float) iPixels_x);
-      screen.dir1[2] *= (2.F / (float) iPixels_x);
+      mScreen.dir1[0] *= (2.F / (float) iPixels_x);
+      mScreen.dir1[1] *= (2.F / (float) iPixels_x);
+      mScreen.dir1[2] *= (2.F / (float) iPixels_x);
 
-      screen.dir2[0] *= (2.F / (float) iPixels_y);
-      screen.dir2[1] *= (2.F / (float) iPixels_y);
-      screen.dir2[2] *= (2.F / (float) iPixels_y);
+      mScreen.dir2[0] *= (2.F / (float) iPixels_y);
+      mScreen.dir2[1] *= (2.F / (float) iPixels_y);
+      mScreen.dir2[2] *= (2.F / (float) iPixels_y);
     }
 
     void Control::mergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2)
@@ -280,7 +280,7 @@ namespace hemelb
                                float velocity,
                                float stress)
     {
-      myRayTracer->rtUpdateClusterVoxel(i, density, velocity, stress);
+      myRayTracer->UpdateClusterVoxel(i, density, velocity, stress);
     }
 
     void Control::writePixel(ColPixel *col_pixel_p)
@@ -290,7 +290,7 @@ namespace hemelb
       i = col_pixel_p->i.i;
       j = col_pixel_p->i.j;
 
-      col_pixel_id_p = &col_pixel_id[i * screen.pixels_y + j];
+      col_pixel_id_p = &col_pixel_id[i * mScreen.pixels_y + j];
 
       if (*col_pixel_id_p != -1)
       {
@@ -326,8 +326,8 @@ namespace hemelb
 
       ColPixel col_pixel;
 
-      pixels_x = screen.pixels_x;
-      pixels_y = screen.pixels_y;
+      pixels_x = mScreen.pixels_x;
+      pixels_y = mScreen.pixels_y;
 
       x1 = int(p1[0]);
       y1 = int(p1[1]);
@@ -472,7 +472,7 @@ namespace hemelb
 
     void Control::updateImageSize(int pixels_x, int pixels_y)
     {
-      if (pixels_x * pixels_y > screen.pixels_x * screen.pixels_y)
+      if (pixels_x * pixels_y > mScreen.pixels_x * mScreen.pixels_y)
       {
         pixels_max = pixels_x * pixels_y;
         col_pixel_id = (int *) realloc(col_pixel_id, sizeof(int) * pixels_max);
@@ -571,7 +571,7 @@ namespace hemelb
               i = col_pixel1->i.i;
               j = col_pixel1->i.j;
 
-              if (* (col_pixel_id_p = &col_pixel_id[i * screen.pixels_y + j])
+              if (* (col_pixel_id_p = &col_pixel_id[i * mScreen.pixels_y + j])
                   == -1)
               {
                 col_pixel2 = &col_pixel_recv[recv_buffer_id][*col_pixel_id_p
@@ -631,10 +631,10 @@ namespace hemelb
 
     void Control::render(int recv_buffer_id, Net *net)
     {
-      if (screen.pixels_x * screen.pixels_y > pixels_max)
+      if (mScreen.pixels_x * mScreen.pixels_y > pixels_max)
       {
-        pixels_max = util::max(2 * pixels_max, screen.pixels_x
-            * screen.pixels_y);
+        pixels_max = util::max(2 * pixels_max, mScreen.pixels_x
+            * mScreen.pixels_y);
 
         col_pixel_id = (int *) realloc(col_pixel_id, sizeof(int) * pixels_max);
       }
@@ -663,7 +663,7 @@ namespace hemelb
 #endif
       for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
       {
-        col_pixel_id[col_pixel_send[m].i.i * screen.pixels_y
+        col_pixel_id[col_pixel_send[m].i.i * mScreen.pixels_y
             + col_pixel_send[m].i.j] = -1;
       }
     }
@@ -680,7 +680,7 @@ namespace hemelb
           << physical_pressure_threshold_max << physical_velocity_threshold_max
           << physical_stress_threshold_max;
 
-      writer << screen.pixels_x << screen.pixels_y
+      writer << mScreen.pixels_x << mScreen.pixels_y
           << col_pixels_recv[recv_buffer_id];
 
       for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
@@ -699,12 +699,12 @@ namespace hemelb
 
     void Control::streaklines(int time_step, int period, Net *net)
     {
-      myStreaker->streakLines(time_step, period, net);
+      myStreaker->StreakLines(time_step, period, net);
     }
 
     void Control::restart()
     {
-      myStreaker->restart();
+      myStreaker->Restart();
     }
 
     Control::~Control()

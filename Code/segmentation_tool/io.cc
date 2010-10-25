@@ -804,8 +804,8 @@ void ioSaveWindowImage (char *file_name) {
 	
 	glReadBuffer (GL_FRONT);
 	
-	pix_x = screen.pixels[0];
-	pix_y = screen.pixels[1];
+	pix_x = mScreen.pixels[0];
+	pix_y = mScreen.pixels[1];
 	
 	image_data = new char [pix_x * pix_y * 3];
 	
