@@ -784,14 +784,14 @@ namespace hemelb
 
     void RayTracer::render(const float iLbmStressType)
     {
-      int pixels_x = vis::controller->mScreen.pixels_x;
-      int pixels_y = vis::controller->mScreen.pixels_y;
+      int pixels_x = vis::controller->mScreen.PixelsX;
+      int pixels_y = vis::controller->mScreen.PixelsY;
 
       float screen_max[4];
-      screen_max[0] = vis::controller->mScreen.max_x;
-      screen_max[1] = vis::controller->mScreen.max_x;
-      screen_max[2] = vis::controller->mScreen.max_y;
-      screen_max[3] = vis::controller->mScreen.max_y;
+      screen_max[0] = vis::controller->mScreen.MaxXValue;
+      screen_max[1] = vis::controller->mScreen.MaxXValue;
+      screen_max[2] = vis::controller->mScreen.MaxYValue;
+      screen_max[3] = vis::controller->mScreen.MaxYValue;
 
       float p0[3];
       for (int l = 0; l < 3; l++)
@@ -803,14 +803,14 @@ namespace hemelb
       float screen_vtx[4];
       for (int l = 0; l < 3; l++)
       {
-        par1[l] = vis::controller->mScreen.dir1[l];
-        par2[l] = vis::controller->mScreen.dir2[l];
+        par1[l] = vis::controller->mScreen.UnitVectorProjectionX[l];
+        par2[l] = vis::controller->mScreen.UnitVectorProjectionY[l];
         screen_vtx[l] = vis::controller->mScreen.vtx[l];
       }
 
       float scale_vec[4];
-      scale_vec[0] = scale_vec[1] = vis::controller->mScreen.scale_x;
-      scale_vec[2] = scale_vec[3] = vis::controller->mScreen.scale_y;
+      scale_vec[0] = scale_vec[1] = vis::controller->mScreen.ScaleX;
+      scale_vec[2] = scale_vec[3] = vis::controller->mScreen.ScaleY;
 
       for (unsigned int cluster_id = 0; cluster_id < mClusters.size(); cluster_id++)
       {

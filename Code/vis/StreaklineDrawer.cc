@@ -770,14 +770,14 @@ namespace hemelb
 
       ColPixel col_pixel;
 
-      int pixels_x = vis::controller->mScreen.pixels_x;
-      int pixels_y = vis::controller->mScreen.pixels_y;
+      int pixels_x = vis::controller->mScreen.PixelsX;
+      int pixels_y = vis::controller->mScreen.PixelsY;
 
-      screen_max[0] = vis::controller->mScreen.max_x;
-      screen_max[1] = vis::controller->mScreen.max_y;
+      screen_max[0] = vis::controller->mScreen.MaxXValue;
+      screen_max[1] = vis::controller->mScreen.MaxYValue;
 
-      scale[0] = vis::controller->mScreen.scale_x;
-      scale[1] = vis::controller->mScreen.scale_y;
+      scale[0] = vis::controller->mScreen.ScaleX;
+      scale[1] = vis::controller->mScreen.ScaleY;
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
