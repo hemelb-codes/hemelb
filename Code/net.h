@@ -98,13 +98,9 @@ class Net
     WallBlock *wall_block; // See comment next to struct WallBlock.
 
     unsigned int GetCollisionType(unsigned int site_data);
-
-#ifndef NOMPI
-    MPI_Status status[4]; // Define variables for MPI non-blocking sends, receives.
-#endif
+    MPI_Status status[4];
     double dd_time, bm_time, fr_time;
     unsigned int *net_site_data;
-
   private:
     // NeighProc is part of the Net (defined later in this file).  This object is an element of an array
     // (called neigh_proc[]) and comprises information about the neighbouring processes to this process.
@@ -113,41 +109,35 @@ class Net
         int id; // Rank of the neighbouring processor.
         int fs; // Number of distributions shared with neighbouring
         // processors.
-
         short int *f_data; // Coordinates of a fluid site that streams to the on
         // neighbouring processor "id" and
         // streaming direction
-
         int f_head;
         int *f_recv_iv;
     };
-
     // Some sort of coordinates.
     struct SiteLocation
     {
         short int i, j, k;
     };
-
     int my_inter_sites;
     unsigned int *netSiteMapPointer(int site_i, int site_j, int site_k);
+    void ThisNeedsRenaming(int & proc_count,
+                           int & fluid_sites_per_unit,
+                           int & unvisited_fluid_sites,
+                           int marker,
+                           int unitLevel);
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
-
     int shared_fs; // Number of distributions shared with neighbouring
     // processors.
-
-    double* cut_distances;
-    double* net_site_nor;
-
+    double *cut_distances;
+    double *net_site_nor;
     int *machine_id;
     int *procs_per_machine;
     short int *from_proc_id_to_neigh_proc_index; // Turns proc_id to neigh_proc_iindex.
-
     int neigh_procs; // Number of neighbouring processors.
-    int mRank; // Processor rank
-#ifndef NOMPI
+    int mRank;
     MPI_Request **req;
-#endif
-
     // 3 buffers needed for convergence-enabled simulations
     short int *f_data;
 
