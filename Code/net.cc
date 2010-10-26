@@ -35,7 +35,7 @@ double *Net::GetNormalToWall(int iSiteIndex) const
 
 /*!
  Low level function that finds the pointer to the rank on which a
- particular site resides.  proc_id is the only member of proc_block
+ particular site resides.  ProcessorRankForEachBlockSite is the only member of mProcessorsForEachBlock
  (member of Net) for the site at global coordinate (site_i, site_j,
  site_k).  If the site is in an empty block, return NULL.
  */
@@ -58,9 +58,9 @@ int * Net::GetProcIdFromGlobalCoords(int iSiteI, int iSiteJ, int iSiteK)
   int j = iSiteJ >> shift;
   int k = iSiteK >> shift;
 
-  proc_block_p = &proc_block[ (i * blocks_y + j) * blocks_z + k];
+  proc_block_p = &mProcessorsForEachBlock[ (i * blocks_y + j) * blocks_z + k];
 
-  if (proc_block_p->proc_id == NULL) // If an empty (solid) block is addressed
+  if (proc_block_p->ProcessorRankForEachBlockSite == NULL) // If an empty (solid) block is addressed
     return NULL;
   else
   {
@@ -69,9 +69,10 @@ int * Net::GetProcIdFromGlobalCoords(int iSiteI, int iSiteJ, int iSiteK)
     jj = iSiteJ - (j << shift);
     kk = iSiteK - (k << shift);
 
-    // Return pointer to proc_id[site] (the only member of
-    // proc_block)
-    return &proc_block_p->proc_id[ ( ( (ii << shift) + jj) << shift) + kk];
+    // Return pointer to ProcessorRankForEachBlockSite[site] (the only member of
+    // mProcessorsForEachBlock)
+    return &proc_block_p->ProcessorRankForEachBlockSite[ ( ( (ii << shift) + jj)
+        << shift) + kk];
   }
 }
 
@@ -306,35 +307,13 @@ void Net::ThisNeedsRenaming(int & proc_count,
                             int marker,
                             int unitLevel)
 {
-  // Sites on the edge of the mClusters at the start of the
-  // current graph growing partitioning step.
-  int sites_a;
 
   int sites_buffer_size = 10000;
   SiteLocation *site_location_a = new SiteLocation[sites_buffer_size];
   SiteLocation *site_location_b = new SiteLocation[sites_buffer_size];
 
-  //Pointers fitting into SiteLocation type struct (a struct to store coordinates of a block).
-  SiteLocation * site_location_a_p;
-  SiteLocation * site_location_b_p;
+  int lBlockNumber = -1;
 
-  // Region is not bound by solid or visited sites.
-  int are_fluid_sites_incrementing;
-  int partial_visited_fluid_sites = 0;
-
-  // Sites added to the edge of the mClusters during the iteration.
-  int sites_b;
-  // Site we are starting from.
-  int index_a;
-  unsigned int l;
-  int neigh_i;
-  int neigh_j;
-  int neigh_k;
-  // Pointer to the rank on which a particular fluid site
-  // resides.
-  int * proc_id_p;
-
-  int n = -1;
   // Domain Decomposition.  Pick a site. Set it to the rank we are
   // looking at. Find its neighbours and put those on the same
   // rank, then find the next-nearest neighbours, etc. until we
@@ -343,37 +322,46 @@ void Net::ThisNeedsRenaming(int & proc_count,
   // another site. In the latter case, move on to the next rank.
   // Do this until all sites are assigned to a rank. There is a
   // high chance of of all sites on a rank being joined.
-  for (int i = 0; i < blocks_x; i++)
-    for (int j = 0; j < blocks_y; j++)
-      for (int k = 0; k < blocks_z; k++)
-      {
-        n++;
-        // Point to a block of proc_id.  If we are in a block of solids, move on.
-        ProcBlock *proc_block_p = &proc_block[n];
 
-        if (proc_block_p->proc_id == NULL)
+  // Iterate over all blocks.
+  for (int lBlockCoordI = 0; lBlockCoordI < blocks_x; lBlockCoordI++)
+  {
+    for (int lBlockCoordJ = 0; lBlockCoordJ < blocks_y; lBlockCoordJ++)
+    {
+      for (int lBlockCoordK = 0; lBlockCoordK < blocks_z; lBlockCoordK++)
+      {
+        lBlockNumber++;
+
+        // Point to a block of ProcessorRankForEachBlockSite.  If we are in a block of solids, move on.
+        int *lProcRankForSite = mProcessorsForEachBlock[lBlockNumber].ProcessorRankForEachBlockSite;
+
+        if (lProcRankForSite == NULL)
         {
           continue;
         }
 
         int m = -1;
+        int partial_visited_fluid_sites = 0;
 
-        for (int site_i = i * block_size; site_i < i * block_size + block_size; site_i++)
-          for (int site_j = j * block_size; site_j < j * block_size
-              + block_size; site_j++)
-            for (int site_k = k * block_size; site_k < k * block_size
-                + block_size; site_k++)
+        for (int site_i = lBlockCoordI * block_size; site_i < lBlockCoordI
+            * block_size + block_size; site_i++)
+        {
+          for (int site_j = lBlockCoordJ * block_size; site_j < lBlockCoordJ
+              * block_size + block_size; site_j++)
+          {
+            for (int site_k = lBlockCoordK * block_size; site_k < lBlockCoordK
+                * block_size + block_size; site_k++)
             {
-              // Move on if the site is solid (proc_id = 1 << 30) or has already been assigned
-              // to a rank (0 <= proc_id < 1 << 30).  proc_id is allocated and initialised
+              // Move on if the site is solid (ProcessorRankForEachBlockSite = 1 << 30) or has already been assigned
+              // to a rank (0 <= ProcessorRankForEachBlockSite < 1 << 30).  ProcessorRankForEachBlockSite is allocated and initialised
               // in lbmReadConfig in io.cc.
-              if (proc_block_p->proc_id[++m] != marker)
+              if (lProcRankForSite[++m] != marker)
               {
                 continue;
               }
               // We have found an unvisited fluid site to start growing the subdomain from.
               // Assign it to the rank and update the fluid site counters.
-              proc_block_p->proc_id[m] = proc_count;
+              lProcRankForSite[m] = proc_count;
 
               if (IsCurrentProcRank(proc_count))
               {
@@ -385,38 +373,41 @@ void Net::ThisNeedsRenaming(int & proc_count,
               {
                 ++mFluidSitesOnEachProcessor[proc_count];
               }
-              sites_a = 1;
+
+              // Sites on the edge of the mClusters at the start of the current graph growing partitioning step.
+              int sites_a = 1;
 
               // Record the location of this initial site.
-              site_location_a_p = &site_location_a[0];
+              SiteLocation *site_location_a_p = &site_location_a[0];
               site_location_a_p->i = site_i;
               site_location_a_p->j = site_j;
               site_location_a_p->k = site_k;
 
               // The subdomain can grow.
-              are_fluid_sites_incrementing = 1;
+              bool are_fluid_sites_incrementing = true;
 
               // While the region can grow (i.e. it is not bounded by solids or visited
               // sites), and we need more sites on this particular rank.
               while (partial_visited_fluid_sites < fluid_sites_per_unit
                   && are_fluid_sites_incrementing)
               {
-                sites_b = 0;
-                are_fluid_sites_incrementing = 0;
+                // Sites added to the edge of the mClusters during the iteration.
+                int sites_b = 0;
+                are_fluid_sites_incrementing = false;
 
                 // For sites on the edge of the domain (sites_a), deal with the neighbours.
-                for (index_a = 0; index_a < sites_a
+                for (int index_a = 0; index_a < sites_a
                     && partial_visited_fluid_sites < fluid_sites_per_unit; index_a++)
                 {
                   site_location_a_p = &site_location_a[index_a];
 
-                  for (l = 1; l < D3Q15::NUMVECTORS
+                  for (unsigned int l = 1; l < D3Q15::NUMVECTORS
                       && partial_visited_fluid_sites < fluid_sites_per_unit; l++)
                   {
                     // Record neighbour location.
-                    neigh_i = site_location_a_p->i + D3Q15::CX[l];
-                    neigh_j = site_location_a_p->j + D3Q15::CY[l];
-                    neigh_k = site_location_a_p->k + D3Q15::CZ[l];
+                    int neigh_i = site_location_a_p->i + D3Q15::CX[l];
+                    int neigh_j = site_location_a_p->j + D3Q15::CY[l];
+                    int neigh_k = site_location_a_p->k + D3Q15::CZ[l];
 
                     // Move on if neighbour is outside the bounding box.
                     if (neigh_i == -1 || neigh_i == sites_x)
@@ -427,11 +418,15 @@ void Net::ThisNeedsRenaming(int & proc_count,
                       continue;
 
                     // Move on if the neighbour is in a block of solids (in which case
-                    // the pointer to proc_id is NULL) or it is solid or has already
-                    // been assigned to a rank (in which case proc_id != -1).  proc_id
+                    // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid or has already
+                    // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
                     // was initialized in lbmReadConfig in io.cc.
-                    proc_id_p = GetProcIdFromGlobalCoords(neigh_i, neigh_j,
-                                                          neigh_k);
+
+                    // Pointer to the rank on which a particular fluid site
+                    // resides.
+                    int * proc_id_p = GetProcIdFromGlobalCoords(neigh_i,
+                                                                neigh_j,
+                                                                neigh_k);
 
                     if (proc_id_p == NULL || *proc_id_p != marker)
                     {
@@ -451,7 +446,7 @@ void Net::ThisNeedsRenaming(int & proc_count,
                       ++my_sites;
                     }
                     // Neighbour was found, so the region can grow.
-                    are_fluid_sites_incrementing = 1;
+                    are_fluid_sites_incrementing = true;
 
                     // If the new layer of neighbours is too large, allocate more
                     // memory.
@@ -469,7 +464,8 @@ void Net::ThisNeedsRenaming(int & proc_count,
                     }
 
                     // Record the location of the neighbour.
-                    site_location_b_p = &site_location_b[sites_b];
+                    SiteLocation * site_location_b_p =
+                        &site_location_b[sites_b];
                     site_location_b_p->i = neigh_i;
                     site_location_b_p->j = neigh_j;
                     site_location_b_p->k = neigh_k;
@@ -499,7 +495,11 @@ void Net::ThisNeedsRenaming(int & proc_count,
               // If not, we have to start growing a different region for the same rank:
               // region expansions could get trapped.
             }
+          }
+        }
       }
+    }
+  }
 
   delete[] site_location_b;
   delete[] site_location_a;
@@ -528,7 +528,6 @@ void Net::Initialise(int iTotalFluidSites)
   int n; // Global block index.
   int mm; // Index of processors surrounding this one.
   int unvisited_fluid_sites; // Fluid sites not yet visited.
-  int partial_visited_fluid_sites; // Fluid sites visited on a particular processor.
   int proc_count; // Rank we are looking at.
   int fluid_sites_per_unit; // Fluid sites per rank.
   int neigh_proc_index;
@@ -584,7 +583,7 @@ void Net::Initialise(int iTotalFluidSites)
   {
     mFluidSitesOnEachProcessor[n] = 0;
   }
-  partial_visited_fluid_sites = 0;
+
   unvisited_fluid_sites = iTotalFluidSites;
 
   seconds = hemelb::util::myClock();
@@ -598,7 +597,7 @@ void Net::Initialise(int iTotalFluidSites)
   {
     for (int unit_level = 1; unit_level >= 0; unit_level--)
     {
-      int up_units_max, marker, machine_id;
+      int up_units_max;
 
       if (unit_level == 1)
       {
@@ -616,13 +615,15 @@ void Net::Initialise(int iTotalFluidSites)
       }
       for (int up_unit = 0; up_unit < up_units_max; up_unit++)
       {
+        int marker;
+
         if (unit_level == 1)
         {
           marker = -1;
 
           proc_count = mProcessorCount;
 
-          machine_id = proc_count - mProcessorCount;
+          int machine_id = proc_count - mProcessorCount;
 
           double weight;
 
@@ -636,7 +637,6 @@ void Net::Initialise(int iTotalFluidSites)
         {
           marker = mProcessorCount + up_unit;
         }
-        partial_visited_fluid_sites = 0;
 
         ThisNeedsRenaming(proc_count, fluid_sites_per_unit,
                           unvisited_fluid_sites, marker, unit_level);
@@ -679,8 +679,8 @@ void Net::Initialise(int iTotalFluidSites)
     {
       continue;
     }
-    // If we have some fluid sites, point to proc_block and map_block.
-    proc_block_p = &proc_block[n];
+    // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
+    proc_block_p = &mProcessorsForEachBlock[n];
     map_block_p = &map_block[n];
     map_block_p->site_data = new unsigned int[sites_in_a_block];
 
@@ -688,7 +688,7 @@ void Net::Initialise(int iTotalFluidSites)
     // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
     for (m = 0; m < sites_in_a_block; m++)
     {
-      if (IsCurrentProcRank(proc_block_p->proc_id[m]))
+      if (IsCurrentProcRank(proc_block_p->ProcessorRankForEachBlockSite[m]))
       {
         if ( (data_block_p->site_data[m] & SITE_TYPE_MASK) != SOLID_TYPE)
         {
@@ -774,7 +774,7 @@ void Net::Initialise(int iTotalFluidSites)
         if (map_block_p->site_data == NULL)
           continue;
 
-        proc_block_p = &proc_block[n];
+        proc_block_p = &mProcessorsForEachBlock[n];
 
         m = -1;
 
@@ -783,7 +783,8 @@ void Net::Initialise(int iTotalFluidSites)
             for (site_k = k; site_k < k + block_size; site_k++)
             {
               m++;
-              if (!IsCurrentProcRank(proc_block_p->proc_id[m]))
+              if (!IsCurrentProcRank(
+                                     proc_block_p->ProcessorRankForEachBlockSite[m]))
               {
                 continue;
               }
@@ -796,12 +797,12 @@ void Net::Initialise(int iTotalFluidSites)
                 neigh_j = site_j + D3Q15::CY[l];
                 neigh_k = site_k + D3Q15::CZ[l];
 
-                int *proc_id_p
-                    = GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                int *proc_id_p = GetProcIdFromGlobalCoords(neigh_i, neigh_j,
+                                                           neigh_k);
 
                 // Move on if the neighbour is in a block of solids (in which case
-                // the pointer to proc_id is NULL) or it is solid (in which case proc_id ==
-                // 1 << 30) or the neighbour is also on this rank.  proc_id was initialized
+                // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
+                // 1 << 30) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
                 // in lbmReadConfig in io.cc.
                 if (proc_id_p == NULL || IsCurrentProcRank(*proc_id_p)
                     || *proc_id_p == (1 << 30))
@@ -819,7 +820,7 @@ void Net::Initialise(int iTotalFluidSites)
                   // used for this processor.  If it has, set flag to zero.
                   neigh_proc_p = &neigh_proc[mm];
 
-                  // If proc_id is equal to a neigh_proc that has alredy been listed.
+                  // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
                   if (*proc_id_p == neigh_proc_p->id)
                   {
                     flag = 0;
@@ -1024,7 +1025,7 @@ void Net::Initialise(int iTotalFluidSites)
   {
     from_proc_id_to_neigh_proc_index[m] = -1;
   }
-  // Get neigh_proc_index from proc_id.
+  // Get neigh_proc_index from ProcessorRankForEachBlockSite.
   for (m = 0; m < neigh_procs; m++)
   {
     from_proc_id_to_neigh_proc_index[neigh_proc[m].id] = m;
@@ -1042,7 +1043,7 @@ void Net::Initialise(int iTotalFluidSites)
         if (map_block_p->site_data == NULL)
           continue;
 
-        proc_block_p = &proc_block[n];
+        proc_block_p = &mProcessorsForEachBlock[n];
 
         m = -1;
 
@@ -1052,7 +1053,8 @@ void Net::Initialise(int iTotalFluidSites)
             {
               // If a site is not on this process, continue.
               m++;
-              if (!IsCurrentProcRank(proc_block_p->proc_id[m]))
+              if (!IsCurrentProcRank(
+                                     proc_block_p->ProcessorRankForEachBlockSite[m]))
               {
                 continue;
               }
@@ -1075,8 +1077,8 @@ void Net::Initialise(int iTotalFluidSites)
                     * D3Q15::NUMVECTORS;
 
                 // You know which process the neighbour is on.
-                int *proc_id_p
-                    = GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                int *proc_id_p = GetProcIdFromGlobalCoords(neigh_i, neigh_j,
+                                                           neigh_k);
 
                 if (proc_id_p == NULL || *proc_id_p == 1 << 30)
                 {
@@ -1357,12 +1359,12 @@ Net::~Net()
 
   for (int i = 0; i < blocks; i++)
   {
-    if (proc_block[i].proc_id != NULL)
+    if (mProcessorsForEachBlock[i].ProcessorRankForEachBlockSite != NULL)
     {
-      delete[] proc_block[i].proc_id;
+      delete[] mProcessorsForEachBlock[i].ProcessorRankForEachBlockSite;
     }
   }
-  delete[] proc_block;
+  delete[] mProcessorsForEachBlock;
 
   if (my_sites > 0)
   {
