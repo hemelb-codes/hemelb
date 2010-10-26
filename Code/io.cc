@@ -113,7 +113,7 @@ void LBM::lbmReadConfig(Net *net)
 
   net->data_block = new DataBlock[blocks];
 
-  net->proc_block = new ProcBlock[blocks];
+  net->mProcessorsForEachBlock = new ProcBlock[blocks];
 
   if (lbm_stress_type == SHEAR_STRESS)
   {
@@ -141,7 +141,7 @@ void LBM::lbmReadConfig(Net *net)
         ++n;
 
         net->data_block[n].site_data = NULL;
-        net->proc_block[n].proc_id = NULL;
+        net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite = NULL;
         net->wall_block[n].wall_data = NULL;
 
         myReader.readInt(flag);
@@ -151,7 +151,7 @@ void LBM::lbmReadConfig(Net *net)
         // Block contains some non-solid sites
 
         net->data_block[n].site_data = new unsigned int[sites_in_a_block];
-        net->proc_block[n].proc_id = new int[sites_in_a_block];
+        net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite = new int[sites_in_a_block];
 
         m = -1;
 
@@ -174,10 +174,10 @@ void LBM::lbmReadConfig(Net *net)
 
               if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
               {
-                net->proc_block[n].proc_id[m] = 1 << 30;
+                net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite[m] = 1 << 30;
                 continue;
               }
-              net->proc_block[n].proc_id[m] = -1;
+              net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite[m] = -1;
 
               ++total_fluid_sites;
 
@@ -581,7 +581,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
       for (k = 0; k < sites_z; k += block_size)
       {
 
-        if (net->proc_block[++n].proc_id == NULL)
+        if (net->mProcessorsForEachBlock[++n].ProcessorRankForEachBlockSite == NULL)
         {
           continue;
         }
@@ -595,7 +595,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
             {
 
               m++;
-              if (!net->IsCurrentProcRank(net->proc_block[n].proc_id[m]))
+              if (!net->IsCurrentProcRank(net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite[m]))
               {
                 continue;
               }
