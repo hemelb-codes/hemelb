@@ -221,8 +221,8 @@ namespace hemelb
 	      io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel,
 							      pixeldatabytes);
 	
-	      pixelWriter << vis::controller->screen.pixels_x 
-			  << vis::controller->screen.pixels_y;
+	      pixelWriter << vis::controller->mScreen.PixelsX 
+			  << vis::controller->mScreen.PixelsY;
 	
 	      Network::send_all(new_fd, xdr_pixel, pixeldatabytes);
 	      delete xdr_pixel;

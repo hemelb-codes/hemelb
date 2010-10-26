@@ -863,7 +863,7 @@ void LBM::ReadVisParameters(char *parameters_file_name,
   velocity_max = par_to_send[7];
   stress_max = par_to_send[8];
 
-  bControl->setProjection(512, 512, local_ctr_x, local_ctr_y, local_ctr_z,
+  bControl->SetProjection(512, 512, local_ctr_x, local_ctr_y, local_ctr_z,
                           longitude, latitude, zoom);
 
   density_min = +1.0e+30F;
@@ -889,7 +889,7 @@ void LBM::ReadVisParameters(char *parameters_file_name,
   lVelocity_threshold_max_inv = 1.0F / velocity_max;
   lStress_threshold_max_inv = 1.0F / stress_max;
 
-  hemelb::vis::controller->setSomeParams(lBrightness, lDensity_threshold_min,
+  hemelb::vis::controller->SetSomeParams(lBrightness, lDensity_threshold_min,
                                          lDensity_threshold_minmax_inv,
                                          lVelocity_threshold_max_inv,
                                          lStress_threshold_max_inv);

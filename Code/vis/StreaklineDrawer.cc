@@ -466,7 +466,7 @@ namespace hemelb
     }
 
     // Reset the streakline drawer.
-    void StreaklineDrawer::restart()
+    void StreaklineDrawer::Restart()
     {
       nParticles = 0;
     }
@@ -770,14 +770,14 @@ namespace hemelb
 
       ColPixel col_pixel;
 
-      int pixels_x = vis::controller->screen.pixels_x;
-      int pixels_y = vis::controller->screen.pixels_y;
+      int pixels_x = vis::controller->mScreen.PixelsX;
+      int pixels_y = vis::controller->mScreen.PixelsY;
 
-      screen_max[0] = vis::controller->screen.max_x;
-      screen_max[1] = vis::controller->screen.max_y;
+      screen_max[0] = vis::controller->mScreen.MaxXValue;
+      screen_max[1] = vis::controller->mScreen.MaxYValue;
 
-      scale[0] = vis::controller->screen.scale_x;
-      scale[1] = vis::controller->screen.scale_y;
+      scale[0] = vis::controller->mScreen.ScaleX;
+      scale[1] = vis::controller->mScreen.ScaleY;
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
@@ -807,7 +807,7 @@ namespace hemelb
     }
 
     // Draw streaklines
-    void StreaklineDrawer::streakLines(int time_steps,
+    void StreaklineDrawer::StreakLines(int time_steps,
                                        int time_steps_per_cycle,
                                        Net *net)
     {

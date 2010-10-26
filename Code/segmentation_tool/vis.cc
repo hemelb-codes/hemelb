@@ -119,7 +119,7 @@ void visProjection (Vis *vis)
   for (int l = 0; l < 3; l++)
     screen.ctr[l] = viewpoint.pos[l] + temp*(vis->scene_center[l] - viewpoint.pos[l]);
   
-  screen.zoom = vis->zoom;
+  screen.Zoom = vis->zoom;
   
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -777,7 +777,7 @@ void visVisualiseMesh (Vis *vis)
   for (n = 0; n < vis->mesh.triangles; n++)
     {
       for (l = 0; l < 3; l++)
-	dx[l] = viewpoint.pos[l] - vis->mesh.triangle[n].v[0].pos[l];
+	dx[l] = mViewpoint.pos[l] - vis->mesh.triangle[n].v[0].pos[l];
       
       grey = fabs(ScalarProd (dx, vis->mesh.triangle[n].nor) / sqrt(ScalarProd (dx, dx)));
       
