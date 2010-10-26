@@ -12,38 +12,38 @@ namespace hemelb
   namespace vis
   {
     // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
-    void rayTracer::rtAABBvsRayFn(AABB *aabb,
-                                  float inv_x,
-                                  float inv_y,
-                                  float inv_z,
-                                  float *t_near,
-                                  float *t_far,
-                                  bool xyz_sign_is_1[])
+    void rayTracer::rtAABBvsRayFn(const AABB &aabb,
+                                  const float &inv_x,
+                                  const float &inv_y,
+                                  const float &inv_z,
+                                  const bool xyz_sign_is_1[],
+                                  float &t_near,
+                                  float &t_far)
     {
       float tx0, ty0, tz0;
       float tx1, ty1, tz1;
 
       tx0 = (xyz_sign_is_1[0]
-        ? aabb->acc_2
-        : aabb->acc_1) * inv_x;
+        ? aabb.acc_2
+        : aabb.acc_1) * inv_x;
       tx1 = (xyz_sign_is_1[0]
-        ? aabb->acc_1
-        : aabb->acc_2) * inv_x;
+        ? aabb.acc_1
+        : aabb.acc_2) * inv_x;
       ty0 = (xyz_sign_is_1[1]
-        ? aabb->acc_4
-        : aabb->acc_3) * inv_y;
+        ? aabb.acc_4
+        : aabb.acc_3) * inv_y;
       ty1 = (xyz_sign_is_1[1]
-        ? aabb->acc_3
-        : aabb->acc_4) * inv_y;
+        ? aabb.acc_3
+        : aabb.acc_4) * inv_y;
       tz0 = (xyz_sign_is_1[2]
-        ? aabb->acc_6
-        : aabb->acc_5) * inv_z;
+        ? aabb.acc_6
+        : aabb.acc_5) * inv_z;
       tz1 = (xyz_sign_is_1[2]
-        ? aabb->acc_5
-        : aabb->acc_6) * inv_z;
+        ? aabb.acc_5
+        : aabb.acc_6) * inv_z;
 
-      *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-      *t_far = fminf(tx1, fminf(ty1, tz1));
+      t_near = fmaxf(tx0, fmaxf(ty0, tz0));
+      t_far = fminf(tx1, fminf(ty1, tz1));
     }
 
     void rayTracer::rtUpdateColour(float dt, float palette[], float col[])
@@ -773,24 +773,6 @@ namespace hemelb
 
     void rayTracer::render(const float iLbmStressType)
     {
-      // the volume rendering is performed here
-      float screen_vtx[4];
-      float p0[3], p1[3], p2[3];
-      float ray_dx[3];
-      float cluster_x[3];
-      float dir[3];
-      float par1[3], par2[3], par3[3];
-      float subimage_vtx[4];
-      float scale_vec[4];
-      float t_near, t_far;
-      float **block_flow_field;
-      float temp1;
-
-      int subimage_pix[4];
-      bool ray_sign[3];
-
-      ColPixel col_pixel;
-
       int pixels_x = vis::controller->screen.pixels_x;
       int pixels_y = vis::controller->screen.pixels_y;
 
@@ -800,28 +782,32 @@ namespace hemelb
       screen_max[2] = vis::controller->screen.max_y;
       screen_max[3] = vis::controller->screen.max_y;
 
+      float p0[3];
       for (int l = 0; l < 3; l++)
       {
         p0[l] = vis::controller->viewpoint.x[l];
       }
+
+      float par1[3], par2[3];
+      float screen_vtx[3];
       for (int l = 0; l < 3; l++)
       {
         par1[l] = vis::controller->screen.dir1[l];
         par2[l] = vis::controller->screen.dir2[l];
         screen_vtx[l] = vis::controller->screen.vtx[l];
       }
+
+      float scale_vec[4];
       scale_vec[0] = scale_vec[1] = vis::controller->screen.scale_x;
       scale_vec[2] = scale_vec[3] = vis::controller->screen.scale_y;
 
       for (unsigned int cluster_id = 0; cluster_id < mClusters.size(); cluster_id++)
       {
-        AABB aabb;
-
         Cluster *cluster_p = mClusters[cluster_id];
 
         // the image-based projection of the mClusters bounding box is
         // calculated here
-
+        float cluster_x[3];
         for (int l = 0; l < 3; l++)
         {
           cluster_x[l] = cluster_p->x[l] - p0[l];
@@ -834,13 +820,15 @@ namespace hemelb
             * (int) cluster_p->blocks_z;
         cluster_blocks = (int) cluster_p->blocks_x * cluster_blocks_yz;
 
-        block_flow_field = cluster_flow_field[cluster_id];
+        float **block_flow_field = cluster_flow_field[cluster_id];
 
+        float subimage_vtx[4];
         subimage_vtx[0] = 1.0e+30F;
         subimage_vtx[1] = -1.0e+30F;
         subimage_vtx[2] = 1.0e+30F;
         subimage_vtx[3] = -1.0e+30F;
 
+        float p1[3], p2[3];
         for (int i = 0; i < 2; i++)
         {
           p1[0] = cluster_p->minmax_x[i];
@@ -862,6 +850,8 @@ namespace hemelb
             }
           }
         }
+
+        int subimage_pix[4];
         subimage_pix[0] = (int) (scale_vec[0] * (subimage_vtx[0]
             + screen_max[0]) + 0.5F);
         subimage_pix[1] = (int) (scale_vec[1] * (subimage_vtx[1]
@@ -881,6 +871,7 @@ namespace hemelb
         subimage_pix[2] = util::max(subimage_pix[2], 0);
         subimage_pix[3] = util::min(subimage_pix[3], pixels_y - 1);
 
+        AABB aabb;
         aabb.acc_1 = cluster_p->minmax_x[1] - p0[0];
         aabb.acc_2 = cluster_p->minmax_x[0] - p0[0];
         aabb.acc_3 = cluster_p->minmax_y[1] - p0[1];
@@ -888,13 +879,16 @@ namespace hemelb
         aabb.acc_5 = cluster_p->minmax_z[1] - p0[2];
         aabb.acc_6 = cluster_p->minmax_z[0] - p0[2];
 
+        float par3[3];
         for (int l = 0; l < 3; l++)
         {
           par3[l] = screen_vtx[l] + subimage_pix[0] * par1[l] + subimage_pix[2]
               * par2[l];
         }
+
         for (int i = subimage_pix[0]; i <= subimage_pix[1]; i++)
         {
+          float dir[3];
           for (int l = 0; l < 3; l++)
           {
             dir[l] = par3[l];
@@ -907,8 +901,8 @@ namespace hemelb
             lRay.Direction[1] = dir[1];
             lRay.Direction[2] = dir[2];
 
-            temp1 = 1.0F / sqrtf(dir[0] * dir[0] + dir[1] * dir[1] + dir[2]
-                * dir[2]);
+            float temp1 = 1.0F / sqrtf(dir[0] * dir[0] + dir[1] * dir[1]
+                + dir[2] * dir[2]);
 
             lRay.Direction[0] *= temp1;
             lRay.Direction[1] *= temp1;
@@ -918,6 +912,7 @@ namespace hemelb
             lRay.InverseDirection[1] = 1.0F / lRay.Direction[1];
             lRay.InverseDirection[2] = 1.0F / lRay.Direction[2];
 
+            bool ray_sign[3];
             ray_sign[0] = lRay.Direction[0] > 0.0F;
             ray_sign[1] = lRay.Direction[1] > 0.0F;
             ray_sign[2] = lRay.Direction[2] > 0.0F;
@@ -926,13 +921,15 @@ namespace hemelb
             dir[1] += par2[1];
             dir[2] += par2[2];
 
-            rtAABBvsRayFn(&aabb, lRay.InverseDirection[0],
+            float t_near, t_far;
+            rtAABBvsRayFn(aabb, lRay.InverseDirection[0],
                           lRay.InverseDirection[1], lRay.InverseDirection[2],
-                          &t_near, &t_far, ray_sign);
+                          ray_sign, t_near, t_far);
 
             if (t_near > t_far)
               continue;
 
+            float ray_dx[3];
             ray_dx[0] = t_near * lRay.Direction[0] - cluster_x[0];
             ray_dx[1] = t_near * lRay.Direction[1] - cluster_x[1];
             ray_dx[2] = t_near * lRay.Direction[2] - cluster_x[2];
@@ -958,6 +955,7 @@ namespace hemelb
             if (ray_t_min >= 1.e+30F)
               continue;
 
+            ColPixel col_pixel;
             col_pixel.vel_r = lRay.VelocityColour[0] * 255.0F;
             col_pixel.vel_g = lRay.VelocityColour[1] * 255.0F;
             col_pixel.vel_b = lRay.VelocityColour[2] * 255.0F;

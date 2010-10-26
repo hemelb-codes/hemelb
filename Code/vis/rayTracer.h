@@ -27,7 +27,6 @@ namespace hemelb
 
       private:
 
-
         struct Ray
         {
             float Direction[3];
@@ -84,13 +83,13 @@ namespace hemelb
                                 bool xyz_Is_1[],
                                 const double iLbmStressType);
 
-        void rtAABBvsRayFn(AABB *aabb,
-                           float inv_x,
-                           float inv_y,
-                           float inv_z,
-                           float *t_near,
-                           float *t_far,
-                           bool xyz_sign_is_1[]);
+        void rtAABBvsRayFn(const AABB &aabb,
+                           const float &inv_x,
+                           const float &inv_y,
+                           const float &inv_z,
+                           const bool xyz_sign_is_1[],
+                           float &t_near,
+                           float &t_far);
 
         void rtUpdateColour(float dt, float palette[], float col[]);
 
