@@ -3,6 +3,8 @@ include $(MK)/header.mk
 TARGETS := libHemeLbIo.$(LIBEXT)
 SRCS := Writer.cc \
 	XdrReader.cc \
+	XdrMemReader.cc \
+	XdrFileReader.cc \
 	XdrWriter.cc \
 	XdrFileWriter.cc \
 	XdrMemWriter.cc \

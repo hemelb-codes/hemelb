@@ -1,8 +1,6 @@
 #ifndef HEMELB_IO_XDRREADER_H
 #define HEMELB_IO_XDRREADER_H
 
-#include <stdio.h>
-
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
@@ -13,17 +11,17 @@ namespace hemelb
     // Class to read an Xdr-style file from disk.
     class XdrReader {
     public:
-      // Constructor and destructor.
-      XdrReader(FILE* xdrFile);
-      ~XdrReader();
+      // destructor.
+      virtual ~XdrReader();
 
-      // Functions for reading the next bit of the file.
+      // Functions for reading the next bit of the stream.
       void readDouble(double& outDouble);
       void readInt(int& outInt);
       void readUnsignedInt(unsigned int& outUInt);
-    
-    private:
-      XDR  myXdr;
+
+    protected:
+      XdrReader();
+      XDR*  mXdr;
 
     };
   }

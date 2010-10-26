@@ -56,7 +56,6 @@ namespace hemelb
 	
 	if (childPid == 0) {
 	  // This function won't return.
-	  std::cerr << "I'm the child" << std::endl;
 	  SpawnDebuggers();
 	}
       } // if rank 0
@@ -123,25 +122,14 @@ namespace hemelb
       
       // +1 to include required NULL pointer for execvp()
       char **argv = new char *[args.size()+1];
-      //int i = 0;
-      std::cerr << "Before" << std::endl;
       
       // convert to C array of char arrays.
       for (unsigned int i=0; i < args.size(); ++i) {
-	std::cerr << "Loop " << i << std::endl;
 	argv[i]  = new char[args[i].length()+1]; // for terminating null
 	std::strcpy(argv[i], args[i].c_str());
       }
-      /*for(VoS::iterator it = args.begin(); it < args.end(); it++) {
-	std::cerr << "Loop " << i << std::endl;
-	argv[i]  = new char[it->length()]; // for terminating null
-	std::strcpy(argv[i], it->c_str());
-	++i;
-	}*/
-      std::cerr << "After" << std::endl;
       
       // Terminating NULL
-      //argv[i] = NULL;
       argv[args.size()] = NULL;
       
       // Exec to replace hemelb with osascript
