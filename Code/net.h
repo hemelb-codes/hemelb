@@ -64,9 +64,9 @@ class Net
     char *GetCurrentProcIdentifier();
 
     // declarations of all the functions used
-    int *netProcIdPointer(int site_i, int site_j, int site_k);
+    int *GetProcIdFromGlobalCoords(int site_i, int site_j, int site_k);
     int netFindTopology(int *depths);
-    void netInit(int totalFluidSites);
+    void Initialise(int totalFluidSites);
 
     double GetCutDistance(int iSiteIndex, int iDirection) const;
     bool HasBoundary(int iSiteIndex, int iDirection) const;
@@ -79,7 +79,7 @@ class Net
 
     int GetMachineCount();
 
-    int procs; // Number of processors.
+    int mProcessorCount; // Number of processors.
     int err;
     int my_inner_sites; // Site on this process that do and do not need
     // information from neighbouring processors.
@@ -87,9 +87,7 @@ class Net
     int my_inter_collisions[COLLISION_TYPES]; // Number of collisions that require information from
     // other processors.
     int my_sites; // Number of fluid sites on this rank.
-    int shared_fs; // Number of distributions shared with neighbouring
-    // processors.
-    int *fluid_sites; // Array containing numbers of fluid sites on
+    int *mFluidSitesOnEachProcessor; // Array containing numbers of fluid sites on
     // each process.
 
     DataBlock *data_block; // See comment next to struct DataBlock.
@@ -104,11 +102,10 @@ class Net
 #ifndef NOMPI
     MPI_Status status[4]; // Define variables for MPI non-blocking sends, receives.
 #endif
-    double dd_time, bm_time, fr_time, fo_time;
+    double dd_time, bm_time, fr_time;
     unsigned int *net_site_data;
 
   private:
-
     // NeighProc is part of the Net (defined later in this file).  This object is an element of an array
     // (called neigh_proc[]) and comprises information about the neighbouring processes to this process.
     struct NeighProc
@@ -123,12 +120,6 @@ class Net
 
         int f_head;
         int *f_recv_iv;
-
-        // buffers needed for convergence-enabled simulations
-        double *f_to_send;
-        double *f_to_recv;
-
-        int *f_send_id;
     };
 
     // Some sort of coordinates.
@@ -140,6 +131,9 @@ class Net
     int my_inter_sites;
     unsigned int *netSiteMapPointer(int site_i, int site_j, int site_k);
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
+
+    int shared_fs; // Number of distributions shared with neighbouring
+    // processors.
 
     double* cut_distances;
     double* net_site_nor;
@@ -155,9 +149,6 @@ class Net
 #endif
 
     // 3 buffers needed for convergence-enabled simulations
-    double *f_to_send;
-    double *f_to_recv;
-    int *f_send_id;
     short int *f_data;
 
     int net_machines;
