@@ -8,19 +8,19 @@ namespace hemelb
 {
   namespace vis
   {
-    class rayTracer
+    class RayTracer
     {
       public:
         // Constructor and destructor do all the usual stuff.
-        rayTracer(Net *net);
-        ~rayTracer();
+        RayTracer(Net *net);
+        ~RayTracer();
 
         // Method to update the voxel corresponding to site i with its
         // newly calculated density, velocity and stress.
-        void rtUpdateClusterVoxel(int i,
-                                  float density,
-                                  float velocity,
-                                  float stress);
+        void UpdateClusterVoxel(const int &i,
+                                const float &density,
+                                const float &velocity,
+                                const float &stress);
 
         // Render the current state into an image.
         void render(const float iLbmStressType);
@@ -37,6 +37,7 @@ namespace hemelb
             float StressColour[3];
             float Stress;
             float Density;
+            float MinT;
         };
 
         struct AABB
@@ -99,13 +100,11 @@ namespace hemelb
         float **cluster_voxel;
         float ***cluster_flow_field;
 
-        float ray_t_min;
-
         int cluster_blocks_vec[3];
         int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
-        float block_size_f;
-        float block_size_inv;
+        float mBlockSizeFloat;
+        float mBlockSizeInverse;
         int block_size2, block_size3, block_size_1;
         int blocks_yz;
     };

@@ -1,8 +1,8 @@
 #ifndef HEMELB_VIS_GLYPHDRAWER_H
 #define HEMELB_VIS_GLYPHDRAWER_H
 
-//#include "vis/Control.h"
 #include "net.h"
+#include <vector>
 
 namespace hemelb
 {
@@ -33,10 +33,7 @@ namespace hemelb
             double *f;
         };
 
-        // A pointer for an array of glyphs.
-        Glyph *glyph;
-        int glyphs;
-
+        std::vector<Glyph*> mGlyphs;
     };
 
   }

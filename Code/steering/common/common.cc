@@ -91,7 +91,7 @@ namespace hemelb
       lattice_velocity_max = lbm->lbmConvertVelocityToLatticeUnits (visControl->physical_velocity_threshold_max);
       lattice_stress_max   = lbm->lbmConvertStressToLatticeUnits (visControl->physical_stress_threshold_max);  
   
-      visControl->setProjection(pixels_x, pixels_y,
+      visControl->SetProjection(pixels_x, pixels_y,
 				visControl->ctr_x, visControl->ctr_y, visControl->ctr_z,
 				longitude, latitude,
 				zoom);
