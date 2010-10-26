@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     char timings_name[256];
     char procs_string[256];
 
-    sprintf(procs_string, "%i", lMaster.GetNet()->procs);
+    sprintf(procs_string, "%i", lMaster.GetNet()->mProcessorCount);
     strcpy(timings_name, input_file_path);
     strcat(timings_name, "/timings");
     strcat(timings_name, procs_string);
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
     lMaster.GetNet()->Abort();
   }
 
-  lMaster.GetNet()->netInit(lMaster.GetLBM()->total_fluid_sites);
+  lMaster.GetNet()->Initialise(lMaster.GetLBM()->total_fluid_sites);
 
   lMaster.GetLBM()->lbmSetInitialConditions(lMaster.GetNet());
 
@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
   {
     fprintf(timings_ptr, "\n");
     fprintf(timings_ptr, "threads: %i, machines checked: %i\n\n",
-            lMaster.GetNet()->procs, lMaster.GetNet()->GetMachineCount());
+            lMaster.GetNet()->mProcessorCount, lMaster.GetNet()->GetMachineCount());
     fprintf(timings_ptr, "topology depths checked: %i\n\n", depths);
     fprintf(timings_ptr, "fluid sites: %i\n\n",
             lMaster.GetLBM()->total_fluid_sites);
@@ -481,10 +481,10 @@ int main(int argc, char *argv[])
 
       fprintf(timings_ptr, "Sub-domains info:\n\n");
 
-      for (int n = 0; n < lMaster.GetNet()->procs; n++)
+      for (int n = 0; n < lMaster.GetNet()->mProcessorCount; n++)
       {
         fprintf(timings_ptr, "rank: %i, fluid sites: %i\n", n,
-                lMaster.GetNet()->fluid_sites[n]);
+                lMaster.GetNet()->mFluidSitesOnEachProcessor[n]);
       }
 
       fclose(timings_ptr);

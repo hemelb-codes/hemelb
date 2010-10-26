@@ -529,7 +529,7 @@ namespace hemelb
       comm_inc = 1;
       m = 1;
 
-      while (m < net->procs)
+      while (m < net->mProcessorCount)
       {
         m <<= 1;
 #ifndef NEW_COMPOSITING
@@ -537,7 +537,7 @@ namespace hemelb
 #else
         int start_id = 1;
 #endif
-        for (recv_id = start_id; recv_id < net->procs;)
+        for (recv_id = start_id; recv_id < net->mProcessorCount;)
         {
           send_id = recv_id + comm_inc;
 
@@ -548,7 +548,7 @@ namespace hemelb
             continue;
           }
 
-          if (send_id >= net->procs || recv_id == send_id)
+          if (send_id >= net->mProcessorCount || recv_id == send_id)
           {
             recv_id += comm_inc << 1;
             continue;
@@ -607,7 +607,7 @@ namespace hemelb
 
             }
           }
-          if (m < net->procs && net->IsCurrentProcRank(recv_id))
+          if (m < net->mProcessorCount && net->IsCurrentProcRank(recv_id))
           {
             memcpy(col_pixel_send, col_pixel_recv[recv_buffer_id], col_pixels
                 * sizeof(ColPixel));
