@@ -23,7 +23,7 @@ namespace hemelb
                                 const float &stress);
 
         // Render the current state into an image.
-        void render(const float iLbmStressType);
+        void Render(const float iLbmStressType);
 
       private:
 

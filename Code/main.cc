@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 #ifndef NO_STEER
       int render_for_network_stream = 0;
 
-      /* In the following two if blocks we do the core magic to ensure we only render
+      /* In the following two if blocks we do the core magic to ensure we only Render
        when (1) we are not sending a frame or (2) we need to output to disk */
 
       if (lMaster.GetNet()->IsCurrentProcTheIOProc())

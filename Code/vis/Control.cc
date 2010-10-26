@@ -657,7 +657,7 @@ namespace hemelb
       }
       col_pixels = 0;
 
-      myRayTracer->render(mStressType);
+      myRayTracer->Render(mStressType);
 
       if (mode == 1)
       {
