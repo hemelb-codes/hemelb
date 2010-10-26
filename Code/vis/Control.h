@@ -24,22 +24,22 @@ namespace hemelb
         struct Screen
         {
             float vtx[3];
-            float dir1[3];
-            float dir2[3];
 
-            float max_x, max_y;
-            float scale_x, scale_y;
+            // Projection of unit vectors along screen axes into normal space.
+            float UnitVectorProjectionX[3];
+            float UnitVectorProjectionY[3];
 
-            float zoom;
+            float MaxXValue, MaxYValue;
+            float ScaleX, ScaleY;
 
-            int pixels_x, pixels_y;
+            int PixelsX, PixelsY;
         };
 
         struct Viewpoint
         {
             float x[3];
-            float sin_1, cos_1;
-            float sin_2, cos_2;
+            float SinYRotation, CosYRotation;
+            float SinXRotation, CosXRotation;
             float dist;
         };
 
@@ -50,31 +50,41 @@ namespace hemelb
         void project(float p1[], float p2[]);
         void writePixel(ColPixel *col_pixel);
         void mergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2);
-        void rotate(float sin_1,
-                    float cos_1,
-                    float sin_2,
-                    float cos_2,
-                    float x1,
-                    float y1,
-                    float z1,
-                    float *x2,
-                    float *y2,
-                    float *z2);
+        void RotateAboutXThenY(const float &iSinThetaX,
+                               const float &iCosThetaX,
+                               const float &iSinThetaY,
+                               const float &iCosSinThetaY,
+                               const float &iXIn,
+                               const float &iYIn,
+                               const float &iZIn,
+                               float &oXOut,
+                               float &oYOut,
+                               float &oZOut);
+        void UndoRotateAboutXThenY(const float &iSinThetaX,
+                                   const float &iCosThetaX,
+                                   const float &iSinThetaY,
+                                   const float &iCosSinThetaY,
+                                   const float &iXIn,
+                                   const float &iYIn,
+                                   const float &iZIn,
+                                   float &oXOut,
+                                   float &oYOut,
+                                   float &oZOut);
 
-        void setSomeParams(float iBrightness,
-                           float iDensityThresholdMin,
-                           float iDensityThresholdMinMaxInv,
-                           float iVelocityThresholdMaxInv,
-                           float iStressThresholdMaxInv);
+        void SetSomeParams(const float iBrightness,
+                           const float iDensityThresholdMin,
+                           const float iDensityThresholdMinMaxInv,
+                           const float iVelocityThresholdMaxInv,
+                           const float iStressThresholdMaxInv);
 
-        void setProjection(int pixels_x,
-                           int pixels_y,
-                           float ctr_x,
-                           float ctr_y,
-                           float ctr_z,
-                           float longitude,
-                           float latitude,
-                           float zoom);
+        void SetProjection(const int &pixels_x,
+                           const int &pixels_y,
+                           const float &ctr_x,
+                           const float &ctr_y,
+                           const float &ctr_z,
+                           const float &longitude,
+                           const float &latitude,
+                           const float &zoom);
 
         void renderLine(float x1[], float x2[]);
 
@@ -104,8 +114,8 @@ namespace hemelb
         double mouse_pressure, mouse_stress;
         float brightness;
 
-        Screen screen;
-        Viewpoint viewpoint;
+        Screen mScreen;
+        Viewpoint mViewpoint;
 
         int col_pixels_recv[2]; // number received?
         ColPixel* col_pixel_recv[2];
@@ -140,7 +150,7 @@ namespace hemelb
 
         Vis* vis;
 
-        rayTracer *myRayTracer;
+        RayTracer *myRayTracer;
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
 
