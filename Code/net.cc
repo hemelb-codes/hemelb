@@ -301,11 +301,11 @@ void Net::Abort()
 #endif
 }
 
-void Net::ThisNeedsRenaming(int & proc_count,
-                            int & fluid_sites_per_unit,
-                            int & unvisited_fluid_sites,
-                            int marker,
-                            int unitLevel)
+void Net::ThisNeedsRenaming(int &proc_count,
+                            int &fluid_sites_per_unit,
+                            int &unvisited_fluid_sites,
+                            const int marker,
+                            const int unitLevel)
 {
 
   int sites_buffer_size = 10000;
@@ -330,44 +330,54 @@ void Net::ThisNeedsRenaming(int & proc_count,
     {
       for (int lBlockCoordK = 0; lBlockCoordK < blocks_z; lBlockCoordK++)
       {
+        // Block number is the number of the block we're currently on.
         lBlockNumber++;
 
         // Point to a block of ProcessorRankForEachBlockSite.  If we are in a block of solids, move on.
-        int *lProcRankForSite = mProcessorsForEachBlock[lBlockNumber].ProcessorRankForEachBlockSite;
+        int *lProcRankForSite =
+            mProcessorsForEachBlock[lBlockNumber].ProcessorRankForEachBlockSite;
 
+        // If the array of proc rank for each site is NULL, we're on an all-solid block.
         if (lProcRankForSite == NULL)
         {
           continue;
         }
 
-        int m = -1;
-        int partial_visited_fluid_sites = 0;
+        // Create variables for the index of this site on the block and the number of fluid sites
+        // that have been assigned to the current processor.
+        int lSiteNumber = -1;
+        int lFluidSitesOnCurrentProcessor = 0;
 
-        for (int site_i = lBlockCoordI * block_size; site_i < lBlockCoordI
-            * block_size + block_size; site_i++)
+        // For each dimension of the site co-ordinates, iterate over all values of the site
+        // co-ordinates on the current block.
+        for (int lSiteCoordI = lBlockCoordI * block_size; lSiteCoordI
+            < lBlockCoordI * block_size + block_size; lSiteCoordI++)
         {
-          for (int site_j = lBlockCoordJ * block_size; site_j < lBlockCoordJ
-              * block_size + block_size; site_j++)
+          for (int lSiteCoordJ = lBlockCoordJ * block_size; lSiteCoordJ
+              < lBlockCoordJ * block_size + block_size; lSiteCoordJ++)
           {
-            for (int site_k = lBlockCoordK * block_size; site_k < lBlockCoordK
-                * block_size + block_size; site_k++)
+            for (int lSiteCoordK = lBlockCoordK * block_size; lSiteCoordK
+                < lBlockCoordK * block_size + block_size; lSiteCoordK++)
             {
-              // Move on if the site is solid (ProcessorRankForEachBlockSite = 1 << 30) or has already been assigned
-              // to a rank (0 <= ProcessorRankForEachBlockSite < 1 << 30).  ProcessorRankForEachBlockSite is allocated and initialised
-              // in lbmReadConfig in io.cc.
-              if (lProcRankForSite[++m] != marker)
+              // Keep track of the site number.
+              lSiteNumber++;
+
+              //TODO comments from here.
+              // Move on if the site is solid (ProcessorRankForEachBlockSite = 1 << 30) or has
+              // already been assigned to a rank (0 <= ProcessorRankForEachBlockSite < 1 << 30).
+              if (lProcRankForSite[lSiteNumber] != marker)
               {
                 continue;
               }
               // We have found an unvisited fluid site to start growing the subdomain from.
               // Assign it to the rank and update the fluid site counters.
-              lProcRankForSite[m] = proc_count;
+              lProcRankForSite[lSiteNumber] = proc_count;
 
               if (IsCurrentProcRank(proc_count))
               {
                 ++my_sites;
               }
-              ++partial_visited_fluid_sites;
+              ++lFluidSitesOnCurrentProcessor;
 
               if (unitLevel == 0)
               {
@@ -379,30 +389,30 @@ void Net::ThisNeedsRenaming(int & proc_count,
 
               // Record the location of this initial site.
               SiteLocation *site_location_a_p = &site_location_a[0];
-              site_location_a_p->i = site_i;
-              site_location_a_p->j = site_j;
-              site_location_a_p->k = site_k;
+              site_location_a_p->i = lSiteCoordI;
+              site_location_a_p->j = lSiteCoordJ;
+              site_location_a_p->k = lSiteCoordK;
 
               // The subdomain can grow.
-              bool are_fluid_sites_incrementing = true;
+              bool lAreFluidSitesIncrementing = true;
 
               // While the region can grow (i.e. it is not bounded by solids or visited
               // sites), and we need more sites on this particular rank.
-              while (partial_visited_fluid_sites < fluid_sites_per_unit
-                  && are_fluid_sites_incrementing)
+              while (lFluidSitesOnCurrentProcessor < fluid_sites_per_unit
+                  && lAreFluidSitesIncrementing)
               {
                 // Sites added to the edge of the mClusters during the iteration.
                 int sites_b = 0;
-                are_fluid_sites_incrementing = false;
+                lAreFluidSitesIncrementing = false;
 
                 // For sites on the edge of the domain (sites_a), deal with the neighbours.
                 for (int index_a = 0; index_a < sites_a
-                    && partial_visited_fluid_sites < fluid_sites_per_unit; index_a++)
+                    && lFluidSitesOnCurrentProcessor < fluid_sites_per_unit; index_a++)
                 {
                   site_location_a_p = &site_location_a[index_a];
 
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS
-                      && partial_visited_fluid_sites < fluid_sites_per_unit; l++)
+                      && lFluidSitesOnCurrentProcessor < fluid_sites_per_unit; l++)
                   {
                     // Record neighbour location.
                     int neigh_i = site_location_a_p->i + D3Q15::CX[l];
@@ -434,19 +444,20 @@ void Net::ThisNeedsRenaming(int & proc_count,
                     }
                     // Set the rank for a neighbour and update the fluid site counters.
                     *proc_id_p = proc_count;
-                    ++partial_visited_fluid_sites;
+                    lFluidSitesOnCurrentProcessor++;
 
                     if (unitLevel == 0)
                     {
-                      ++mFluidSitesOnEachProcessor[proc_count];
+                      mFluidSitesOnEachProcessor[proc_count]++;
                     }
 
                     if (IsCurrentProcRank(proc_count))
                     {
                       ++my_sites;
                     }
+
                     // Neighbour was found, so the region can grow.
-                    are_fluid_sites_incrementing = true;
+                    lAreFluidSitesIncrementing = true;
 
                     // If the new layer of neighbours is too large, allocate more
                     // memory.
@@ -479,18 +490,19 @@ void Net::ThisNeedsRenaming(int & proc_count,
                 site_location_b = site_location_a_p;
                 sites_a = sites_b;
               }
+
               // If we have enough sites, we have finished.
-              if (partial_visited_fluid_sites >= fluid_sites_per_unit)
+              if (lFluidSitesOnCurrentProcessor >= fluid_sites_per_unit)
               {
                 ++proc_count;
                 if (unitLevel == 0)
                 {
-                  unvisited_fluid_sites -= partial_visited_fluid_sites;
+                  unvisited_fluid_sites -= lFluidSitesOnCurrentProcessor;
                   fluid_sites_per_unit
                       = (int) ceil((double) unvisited_fluid_sites
                           / (double) (mProcessorCount - proc_count));
                 }
-                partial_visited_fluid_sites = 0;
+                lFluidSitesOnCurrentProcessor = 0;
               }
               // If not, we have to start growing a different region for the same rank:
               // region expansions could get trapped.
@@ -595,52 +607,23 @@ void Net::Initialise(int iTotalFluidSites)
   }
   else
   {
-    for (int unit_level = 1; unit_level >= 0; unit_level--)
+    // TODO Haven't worked out exactly why this is necessary.
+    proc_count = mProcessorCount;
+    double weight = (double) (procs_per_machine[proc_count - mProcessorCount]
+        * mProcessorCount) / (double) (mProcessorCount - 1);
+    fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites * weight
+        / net_machines);
+    ThisNeedsRenaming(proc_count, fluid_sites_per_unit, unvisited_fluid_sites,
+                      -1, 1);
+
+    // TODO and... this is the second half. Not exactly sure what either bit does.
+    fluid_sites_per_unit = (int) ceil((double) unvisited_fluid_sites
+        / (double) (mProcessorCount - 1));
+    proc_count = 1;
+    for (int up_unit = 0; up_unit < net_machines; up_unit++)
     {
-      int up_units_max;
-
-      if (unit_level == 1)
-      {
-        up_units_max = 1;
-        fluid_sites_per_unit = 0;
-      }
-      else
-      {
-        up_units_max = net_machines;
-
-        fluid_sites_per_unit = (int) ceil((double) unvisited_fluid_sites
-            / (double) (mProcessorCount - 1));
-        proc_count = 1;
-
-      }
-      for (int up_unit = 0; up_unit < up_units_max; up_unit++)
-      {
-        int marker;
-
-        if (unit_level == 1)
-        {
-          marker = -1;
-
-          proc_count = mProcessorCount;
-
-          int machine_id = proc_count - mProcessorCount;
-
-          double weight;
-
-          weight = (double) (procs_per_machine[machine_id] * mProcessorCount)
-              / (double) (mProcessorCount - 1);
-
-          fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites * weight
-              / net_machines);
-        }
-        else
-        {
-          marker = mProcessorCount + up_unit;
-        }
-
-        ThisNeedsRenaming(proc_count, fluid_sites_per_unit,
-                          unvisited_fluid_sites, marker, unit_level);
-      }
+      ThisNeedsRenaming(proc_count, fluid_sites_per_unit,
+                        unvisited_fluid_sites, mProcessorCount + up_unit, 0);
     }
   }
 
