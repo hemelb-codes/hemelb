@@ -103,9 +103,9 @@ void LBM::lbmCalculateBC(double f[],
   unsigned int boundary_type, boundary_id;
 
   for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
-    {
-      f_neq[ l ] = f[ l ];
-    }
+  {
+    f_neq[l] = f[l];
+  }
   boundary_type = site_data & SITE_TYPE_MASK;
 
   if (boundary_type == FLUID_TYPE)
@@ -127,13 +127,13 @@ void LBM::lbmCalculateBC(double f[],
 
     D3Q15::CalculateDensityAndVelocity(f, dummy_density, *vx, *vy, *vz);
     D3Q15::CalculateFeq(*density, *vx, *vy, *vz, f);
-    
+
   }
   for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
-    {
-      f_neq[ l ] -= f[ l ];
-    }
-  
+  {
+    f_neq[l] -= f[l];
+  }
+
 }
 
 void LBM::lbmUpdateBoundaryDensities(int cycle_id, int time_step)
@@ -213,23 +213,23 @@ void LBM::lbmSetInitialConditions(Net *net)
   density = 0.;
 
   for (int i = 0; i < outlets; i++)
-    {
-      density += outlet_density_avg[i] - outlet_density_amp[i];
-    }
+  {
+    density += outlet_density_avg[i] - outlet_density_amp[i];
+  }
   density /= outlets;
 
   for (int i = 0; i < net->my_sites; i++)
+  {
+    D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
+
+    f_old_p = &f_old[i * D3Q15::NUMVECTORS];
+    f_new_p = &f_new[i * D3Q15::NUMVECTORS];
+
+    for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
     {
-      D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
-      
-      f_old_p = &f_old[i * D3Q15::NUMVECTORS];
-      f_new_p = &f_new[i * D3Q15::NUMVECTORS];
-      
-      for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
-	{
-	  f_new_p[ l ] = f_old_p[ l ] = f_eq[ l ];
-	}
+      f_new_p[l] = f_old_p[l] = f_eq[l];
     }
+  }
 }
 
 // TODO HACK
@@ -302,38 +302,39 @@ int LBM::lbmCycle(int perform_rt, Net *net)
   net->UseDataFromNeighbouringProcs();
 
   // Do any cleanup steps necessary on boundary nodes
-  // TODO: Remove comments
-  /*
-   offset = 0;
+  offset = 0;
 
-   for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-   {
-   GetCollision(collision_type)->PostStep(perform_rt,
-   omega,
-   f_old,
-   f_new,
-   f_id,
-   offset,
-   net->my_inner_collisions[collision_type],
-   &mMinsAndMaxes, net,
-   lbm_stress_type, lbm_stress_par);
-   offset += net->my_inner_collisions[collision_type];
-   }
+  for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+  {
+    GetCollision(collision_type)->PostStep(
+                                           perform_rt,
+                                           omega,
+                                           f_old,
+                                           f_new,
+                                           f_id,
+                                           offset,
+                                           net->my_inner_collisions[collision_type],
+                                           &mMinsAndMaxes, net,
+                                           lbm_stress_type, lbm_stress_par,
+                                           hemelb::vis::controller);
+    offset += net->my_inner_collisions[collision_type];
+  }
 
-   for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-   {
-   GetCollision(collision_type)->PostStep(perform_rt,
-   omega,
-   f_old,
-   f_new,
-   f_id,
-   offset,
-   net->my_inter_collisions[collision_type],
-   &mMinsAndMaxes, net,
-   lbm_stress_type, lbm_stress_par);
-   offset += net->my_inter_collisions[collision_type];
-   }
-   */
+  for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+  {
+    GetCollision(collision_type)->PostStep(
+                                           perform_rt,
+                                           omega,
+                                           f_old,
+                                           f_new,
+                                           f_id,
+                                           offset,
+                                           net->my_inter_collisions[collision_type],
+                                           &mMinsAndMaxes, net,
+                                           lbm_stress_type, lbm_stress_par,
+                                           hemelb::vis::controller);
+    offset += net->my_inter_collisions[collision_type];
+  }
   // Swap f_old and f_new ready for the next timestep.
   double *temp = f_old;
   f_old = f_new;
