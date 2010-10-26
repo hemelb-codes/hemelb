@@ -121,8 +121,8 @@ class Net
     void ThisNeedsRenaming(int & proc_count,
                            int & fluid_sites_per_unit,
                            int & unvisited_fluid_sites,
-                           int marker,
-                           int unitLevel);
+                           const int marker,
+                           const int unitLevel);
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
     int shared_fs; // Number of distributions shared with neighbouring
     // processors.
