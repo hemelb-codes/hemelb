@@ -1,5 +1,5 @@
-#ifndef HEMELB_STEERING_ON_STEERING_H
-#define HEMELB_STEERING_ON_STEERING_H
+#ifndef HEMELB_STEERING_BASIC_STEERING_H
+#define HEMELB_STEERING_BASIC_STEERING_H
 
 #include <pthread.h>
 #include <semaphore.h>
@@ -27,7 +27,7 @@ namespace hemelb
     extern int send_array_length;
 
 
-    extern pthread_mutex_t steer_param_lock;
+    //extern pthread_mutex_t steer_param_lock;
 
     extern bool updated_mouse_coords;
 
@@ -38,4 +38,4 @@ namespace hemelb
 }
 
 
-#endif // HEME_STEERING_STEERING_H
+#endif // HEME_STEERING_BASIC_STEERING_H
