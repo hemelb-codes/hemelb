@@ -474,8 +474,8 @@ namespace hemelb
           {
             n++;
 
-            ProcBlock *proc_block_p = &net->proc_block[n];
-            if (proc_block_p->proc_id == NULL)
+            ProcBlock *proc_block_p = &net->mProcessorsForEachBlock[n];
+            if (proc_block_p->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
             }
@@ -498,7 +498,7 @@ namespace hemelb
 
             for (int m = 0; m < sites_in_a_block; m++)
             {
-              if (net->IsCurrentProcRank(proc_block_p->proc_id[m]))
+              if (net->IsCurrentProcRank(proc_block_p->ProcessorRankForEachBlockSite[m]))
               {
                 BlockLocation& tempBlockLoc = block_location_a->at(0);
                 tempBlockLoc.i = i;
@@ -554,7 +554,7 @@ namespace hemelb
                       + neigh_k;
 
                   if (is_block_visited[block_id] || (proc_block_p
-                      = &net->proc_block[block_id])->proc_id == NULL)
+                      = &net->mProcessorsForEachBlock[block_id])->ProcessorRankForEachBlockSite == NULL)
                   {
                     continue;
                   }
@@ -562,7 +562,7 @@ namespace hemelb
                   bool is_site_found = false;
                   for (int m = 0; m < sites_in_a_block; m++)
                   {
-                    if (net->IsCurrentProcRank(proc_block_p->proc_id[m]))
+                    if (net->IsCurrentProcRank(proc_block_p->ProcessorRankForEachBlockSite[m]))
                     {
                       is_site_found = true;
                       break;

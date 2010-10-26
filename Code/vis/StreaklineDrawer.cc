@@ -297,7 +297,7 @@ namespace hemelb
             if (map_block_p->site_data == NULL)
               continue;
 
-            proc_block_p = &net->proc_block[n];
+            proc_block_p = &net->mProcessorsForEachBlock[n];
 
             m = -1;
 
@@ -307,7 +307,7 @@ namespace hemelb
                 {
 
                   m++;
-                  if (!net->IsCurrentProcRank(proc_block_p->proc_id[m]))
+                  if (!net->IsCurrentProcRank(proc_block_p->ProcessorRankForEachBlockSite[m]))
                     continue;
 
                   for (int neigh_i = util::max(0, site_i - 1); neigh_i

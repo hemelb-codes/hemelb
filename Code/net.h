@@ -32,20 +32,16 @@ struct WallBlock
     WallData *wall_data;
 };
 
-// ProcBlock has one member called proc_id. Later on in 
-// this file, an array called proc_block will be defined, which is a
-// member of the structure Net (allocated in main.cc).  For each global block,
-// *proc_id is an array containing the ranks on which individual
+// For each global block,
+// *ProcessorRankForEachBlockSite is an array containing the ranks on which individual
 // lattice sites reside.
 struct ProcBlock
 {
-    int *proc_id;
+    int *ProcessorRankForEachBlockSite;
 };
 
-// DataBlock has one member called site_data. Block means macrocell of fluid sites (voxels).
-// Later on in this file, two arrays, map_block[] and data_block[], will be defined,
-// which are members of the structure Net (allocated in main.cc).  These arrays contain
-// *site_data of global blocks. site_data[] is an array containing individual lattice site data
+// Block means macrocell of fluid sites (voxels).
+// site_data[] is an array containing individual lattice site data
 // within a global block.
 struct DataBlock
 {
@@ -93,7 +89,7 @@ class Net
     DataBlock *data_block; // See comment next to struct DataBlock.
     DataBlock *map_block; // See comment next to struct DataBlock.
 
-    ProcBlock *proc_block; // See comment next to struct ProcBlock.
+    ProcBlock *mProcessorsForEachBlock; // See comment next to struct ProcBlock.
 
     WallBlock *wall_block; // See comment next to struct WallBlock.
 
@@ -134,7 +130,7 @@ class Net
     double *net_site_nor;
     int *machine_id;
     int *procs_per_machine;
-    short int *from_proc_id_to_neigh_proc_index; // Turns proc_id to neigh_proc_iindex.
+    short int *from_proc_id_to_neigh_proc_index; // Turns ProcessorRankForEachBlockSite to neigh_proc_iindex.
     int neigh_procs; // Number of neighbouring processors.
     int mRank;
     MPI_Request **req;
