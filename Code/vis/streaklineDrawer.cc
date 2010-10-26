@@ -318,7 +318,7 @@ namespace hemelb
                           <= util::min(sites_z - 1, site_k + 1); neigh_k++)
                       {
 
-                        neigh_proc_id = net->netProcIdPointer(neigh_i, neigh_j,
+                        neigh_proc_id = net->GetProcIdFromGlobalCoords(neigh_i, neigh_j,
                                                               neigh_k);
 
                         if (neigh_proc_id == NULL || *neigh_proc_id
@@ -429,11 +429,11 @@ namespace hemelb
         neigh_proc[m].p_to_recv.reserve(5 * particles_to_recv_max);
       }
 
-      req = new MPI_Request[2 * net->procs];
+      req = new MPI_Request[2 * net->mProcessorCount];
 
-      from_proc_id_to_neigh_proc_index = new short int[net->procs];
+      from_proc_id_to_neigh_proc_index = new short int[net->mProcessorCount];
 
-      for (m = 0; m < net->procs; m++)
+      for (m = 0; m < net->mProcessorCount; m++)
       {
         from_proc_id_to_neigh_proc_index[m] = -1;
       }
@@ -462,7 +462,7 @@ namespace hemelb
               = net->map_block[n].site_data[m];
         }
       }
-      procs = net->procs;
+      procs = net->mProcessorCount;
     }
 
     // Reset the streakline drawer.

@@ -533,9 +533,9 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 
   fluid_sites_max = 0;
 
-  for (n = 0; n < net->procs; n++)
+  for (n = 0; n < net->mProcessorCount; n++)
   {
-    fluid_sites_max = hemelb::util::max(fluid_sites_max, net->fluid_sites[n]);
+    fluid_sites_max = hemelb::util::max(fluid_sites_max, net->mFluidSitesOnEachProcessor[n]);
   }
 
   // "buffer_size" is the size of the flow field buffer to send to the
@@ -544,19 +544,19 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
   // ("gathered_flow_field").  If "buffer_size" is larger the
   // frequency with which data communication to the root processor is
   // performed becomes lower and viceversa
-  buffer_size = hemelb::util::min(1000000, fluid_sites_max * net->procs);
+  buffer_size = hemelb::util::min(1000000, fluid_sites_max * net->mProcessorCount);
 
-  communication_period = int(ceil(double(buffer_size) / net->procs));
+  communication_period = int(ceil(double(buffer_size) / net->mProcessorCount));
 
   communication_iters = hemelb::util::max(1, int(ceil(double(fluid_sites_max)
       / communication_period)));
 
   local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
   gathered_flow_field = new float[MACROSCOPIC_PARS * communication_period
-      * net->procs];
+      * net->mProcessorCount];
 
   local_site_data = new short int[3 * communication_period];
-  gathered_site_data = new short int[3 * communication_period * net->procs];
+  gathered_site_data = new short int[3 * communication_period * net->mProcessorCount];
 
   for (comPeriodDelta = 0; comPeriodDelta < communication_period; comPeriodDelta++)
   {
@@ -692,7 +692,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
               if (net->IsCurrentProcTheIOProc())
               {
 
-                for (l = 0; l < net->procs * communication_period; l++)
+                for (l = 0; l < net->mProcessorCount * communication_period; l++)
                 {
                   if (gathered_site_data[l * 3 + 0] == -1)
                     continue;
@@ -747,7 +747,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 
       if (net->IsCurrentProcTheIOProc())
       {
-        for (l = 0; l < net->procs * communication_period; l++)
+        for (l = 0; l < net->mProcessorCount * communication_period; l++)
         {
 
           if (gathered_site_data[l * 3 + 0] == -1)

@@ -1,12 +1,7 @@
-/*! \file topology.cc
+/*! \file net.cc
  \brief In this file the functions useful to discover the topology used and
  to create and delete the domain decomposition and the various
  buffers are defined.
-
- Structs are defined in config.h.  Global variables (including those
- of the struct types) are declared in config.cc.  Global coordinate
- means coordinate within the entire system, not the coordinate on
- one procesor.
  */
 
 #include "lb.h"
@@ -23,8 +18,8 @@ double Net::GetCutDistance(int iSiteIndex, int iDirection) const
 
 bool Net::HasBoundary(int iSiteIndex, int iDirection) const
 {
-  unsigned int lBoundaryConfig = (net_site_data[iSiteIndex] & BOUNDARY_CONFIG_MASK)
-      >> BOUNDARY_CONFIG_SHIFT;
+  unsigned int lBoundaryConfig = (net_site_data[iSiteIndex]
+      & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;
   return (lBoundaryConfig & (1U << (iDirection - 1))) != 0;
 }
 
@@ -44,20 +39,24 @@ double *Net::GetNormalToWall(int iSiteIndex) const
  (member of Net) for the site at global coordinate (site_i, site_j,
  site_k).  If the site is in an empty block, return NULL.
  */
-int * Net::netProcIdPointer(int site_i, int site_j, int site_k)
+int * Net::GetProcIdFromGlobalCoords(int iSiteI, int iSiteJ, int iSiteK)
 {
-  int i, j, k; // Coordinates of a cubic block
+  // If the given site location is outside the bounding box return a NULL
+  // pointer.
+  if (iSiteI < 0 || iSiteI >= sites_x || iSiteJ < 0 || iSiteJ >= sites_y
+      || iSiteK < 0 || iSiteK >= sites_z)
+  {
+    return NULL;
+  }
+
   int ii, jj, kk; // Coordinates of a site within the block
   ProcBlock *proc_block_p; // Pointer to the block
 
-  if (site_i < 0 || site_i >= sites_x || site_j < 0 || site_j >= sites_y
-      || site_k < 0 || site_k >= sites_z) // Out of the bounding box.
-    return NULL;
 
   // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-  i = site_i >> shift;
-  j = site_j >> shift;
-  k = site_k >> shift;
+  int i = iSiteI >> shift;
+  int j = iSiteJ >> shift;
+  int k = iSiteK >> shift;
 
   proc_block_p = &proc_block[ (i * blocks_y + j) * blocks_z + k];
 
@@ -66,9 +65,9 @@ int * Net::netProcIdPointer(int site_i, int site_j, int site_k)
   else
   {
     // Find site coordinates within the block
-    ii = site_i - (i << shift);
-    jj = site_j - (j << shift);
-    kk = site_k - (k << shift);
+    ii = iSiteI - (i << shift);
+    jj = iSiteJ - (j << shift);
+    kk = iSiteK - (k << shift);
 
     // Return pointer to proc_id[site] (the only member of
     // proc_block)
@@ -163,14 +162,14 @@ int Net::netFindTopology (int *depths)
 
   net_machines = 0;
 
-  machine_id = new int [procs];
-  procs_per_machine = new int [procs];
+  machine_id = new int [mProcessorCount];
+  procs_per_machine = new int [mProcessorCount];
 
-  for (i = 0; i < procs; i++)
+  for (i = 0; i < mProcessorCount; i++)
   {
     procs_per_machine[ i ] = 0;
   }
-  for (i = 0; i < procs; i++)
+  for (i = 0; i < mProcessorCount; i++)
   {
     if (depth[ i ] != 4) continue;
 
@@ -194,15 +193,15 @@ int Net::netFindTopology (int *depths)
 
   if (net_machines == 1)
   {
-    for (i = 0; i < procs; i++)
+    for (i = 0; i < mProcessorCount; i++)
     {
       machine_id[ i ] = 0;
     }
-    procs_per_machine[ 0 ] = procs;
+    procs_per_machine[ 0 ] = mProcessorCount;
   }
   else
   {
-    for (i = 0; i < procs; i++)
+    for (i = 0; i < mProcessorCount; i++)
     {
       sum = 0;
       machine_id = 0;
@@ -239,14 +238,14 @@ int Net::netFindTopology(int *depths)
 
   net_machines = 1;
 
-  machine_id = new int[procs];
+  machine_id = new int[mProcessorCount];
   procs_per_machine = new int[net_machines];
 
-  for (int i = 0; i < procs; i++)
+  for (int i = 0; i < mProcessorCount; i++)
   {
     machine_id[i] = 0;
   }
-  procs_per_machine[0] = procs;
+  procs_per_machine[0] = mProcessorCount;
 
   return 1;
 }
@@ -308,10 +307,14 @@ void Net::Abort()
  implemented in this function.  The domain decomposition is based
  on a graph growing partitioning technique.
  */
-void Net::netInit(int totalFluidSites)
+void Net::Initialise(int iTotalFluidSites)
 {
-  double seconds;
+  // Allocations.  fluid sites will store actual number of fluid
+  // sites per proc.  Site location will store up to 10000 of some
+  // sort of coordinate.
+  mFluidSitesOnEachProcessor = new int[mProcessorCount];
 
+  double seconds;
   int site_i, site_j, site_k; // Global coordinates of a site.
   int neigh_i, neigh_j, neigh_k; // Global coordinates of a neighbour site.
   int i, j, k; // Global block index.
@@ -322,9 +325,7 @@ void Net::netInit(int totalFluidSites)
   int sites_a; // Sites on the edge of the mClusters at the start of the
   // current graph growing partitioning step.
   int sites_b; // Sites added to the edge of the mClusters during the iteration.
-
   int index_a; // Site we are starting from.
-  int sites_buffer_size;
   int unvisited_fluid_sites; // Fluid sites not yet visited.
   int partial_visited_fluid_sites; // Fluid sites visited on a particular processor.
   int proc_count; // Rank we are looking at.
@@ -338,37 +339,25 @@ void Net::netInit(int totalFluidSites)
   // not (1).
   int *proc_id_p; // Pointer to the rank on which a particular fluid site
   // resides.
-
   short int *f_data_p;
-
   unsigned int *site_data; // Local variable to store data for sites on this rank.
   unsigned int *site_data_p;
   unsigned int site_map;
-
   bool *is_my_block; // Array to store whether any sites on a block are fluid
   // sites residing on this rank.
-
   //Pointers fitting into SiteLocation type struct (a struct to store coordinates of a block).
-  SiteLocation *site_location_a, *site_location_b;
   SiteLocation *site_location_a_p, *site_location_b_p;
-
   DataBlock *data_block_p; // Pointer fitting into DataBlock type struct (a single-member struct).
   DataBlock *map_block_p; // Pointer fitting into DataBlock type struct (a single-member struct).
   ProcBlock *proc_block_p; // Pointer fitting into ProcBlock type struct (a single-member struct).
   NeighProc *neigh_proc_p; // Pointer fitting into NeighProc type struct.
-
-  // Allocations.  fluid sites will store actual number of fluid
-  // sites per proc.  Site location will store up to 10000 of some
-  // sort of coordinate.
-  fluid_sites = new int[procs];
-
   net_site_nor = NULL;
   net_site_data = NULL;
   cut_distances = NULL;
 
-  sites_buffer_size = 10000;
-  site_location_a = new SiteLocation[sites_buffer_size];
-  site_location_b = new SiteLocation[sites_buffer_size];
+  int sites_buffer_size = 10000;
+  SiteLocation *site_location_a = new SiteLocation[sites_buffer_size];
+  SiteLocation *site_location_b = new SiteLocation[sites_buffer_size];
 
   my_sites = 0;
 
@@ -379,33 +368,33 @@ void Net::netInit(int totalFluidSites)
   // Find the maximum number of fluid sites per process.  If steering,
   // leave one process out.
 #ifndef NO_STEER 
-  if (procs == 1)
+  if (mProcessorCount == 1)
   {
-    fluid_sites_per_unit
-        = (int) ceil((double) totalFluidSites / (double) procs);
+    fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
+        / (double) mProcessorCount);
     proc_count = 0;
   }
   else
   {
-    fluid_sites_per_unit = (int) ceil((double) totalFluidSites
-        / (double) (procs - 1));
+    fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
+        / (double) (mProcessorCount - 1));
     proc_count = 1;
   }
 #else
-  fluid_sites_per_unit = (int)ceil((double)totalFluidSites / (double)procs);
+  fluid_sites_per_unit = (int)ceil((double)iTotalFluidSites / (double)mProcessorCount);
   proc_count = 0;
 #endif
 
-  for (n = 0; n < procs; n++)
+  for (n = 0; n < mProcessorCount; n++)
   {
-    fluid_sites[n] = 0;
+    mFluidSitesOnEachProcessor[n] = 0;
   }
   partial_visited_fluid_sites = 0;
-  unvisited_fluid_sites = totalFluidSites;
+  unvisited_fluid_sites = iTotalFluidSites;
 
   seconds = hemelb::util::myClock();
 
-  if (net_machines == 1 || net_machines == procs) // If one machine or one machine per proc.
+  if (net_machines == 1 || net_machines == mProcessorCount) // If one machine or one machine per proc.
   {
     n = -1;
 
@@ -452,7 +441,7 @@ void Net::netInit(int totalFluidSites)
                   ++my_sites;
                 }
                 ++partial_visited_fluid_sites;
-                ++fluid_sites[proc_count];
+                ++mFluidSitesOnEachProcessor[proc_count];
                 sites_a = 1;
 
                 // Record the location of this initial site.
@@ -498,7 +487,8 @@ void Net::netInit(int totalFluidSites)
                       // the pointer to proc_id is NULL) or it is solid or has already
                       // been assigned to a rank (in which case proc_id != -1).  proc_id
                       // was initialized in lbmReadConfig in io.cc.
-                      proc_id_p = netProcIdPointer(neigh_i, neigh_j, neigh_k);
+                      proc_id_p = GetProcIdFromGlobalCoords(neigh_i, neigh_j,
+                                                            neigh_k);
 
                       if (proc_id_p == NULL || *proc_id_p != -1)
                       {
@@ -507,7 +497,7 @@ void Net::netInit(int totalFluidSites)
                       // Set the rank for a neighbour and update the fluid site counters.
                       *proc_id_p = proc_count;
                       ++partial_visited_fluid_sites;
-                      ++fluid_sites[proc_count];
+                      ++mFluidSitesOnEachProcessor[proc_count];
 
                       if (IsCurrentProcRank(proc_count))
                       {
@@ -553,7 +543,7 @@ void Net::netInit(int totalFluidSites)
                   unvisited_fluid_sites -= partial_visited_fluid_sites;
                   fluid_sites_per_unit
                       = (int) ceil((double) unvisited_fluid_sites
-                          / (double) (procs - proc_count));
+                          / (double) (mProcessorCount - proc_count));
                   partial_visited_fluid_sites = 0;
                 }
                 // If not, we have to start growing a different region for the same rank:
@@ -577,7 +567,7 @@ void Net::netInit(int totalFluidSites)
         up_units_max = net_machines;
 
         fluid_sites_per_unit = (int) ceil((double) unvisited_fluid_sites
-            / (double) (procs - 1));
+            / (double) (mProcessorCount - 1));
         proc_count = 1;
 
       }
@@ -587,21 +577,21 @@ void Net::netInit(int totalFluidSites)
         {
           marker = -1;
 
-          proc_count = procs;
+          proc_count = mProcessorCount;
 
-          machine_id = proc_count - procs;
+          machine_id = proc_count - mProcessorCount;
 
           double weight;
 
-          weight = (double) (procs_per_machine[machine_id] * procs)
-              / (double) (procs - 1);
+          weight = (double) (procs_per_machine[machine_id] * mProcessorCount)
+              / (double) (mProcessorCount - 1);
 
-          fluid_sites_per_unit = (int) ceil((double) totalFluidSites * weight
+          fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites * weight
               / net_machines);
         }
         else
         {
-          marker = procs + up_unit;
+          marker = mProcessorCount + up_unit;
         }
         partial_visited_fluid_sites = 0;
 
@@ -639,7 +629,7 @@ void Net::netInit(int totalFluidSites)
                     ++partial_visited_fluid_sites;
 
                     if (unit_level == 0)
-                      ++fluid_sites[proc_count];
+                      ++mFluidSitesOnEachProcessor[proc_count];
 
                     sites_a = 1;
                     site_location_a_p = &site_location_a[0];
@@ -675,8 +665,9 @@ void Net::netInit(int totalFluidSites)
                           if (neigh_k == -1 || neigh_k == sites_z)
                             continue;
 
-                          proc_id_p = netProcIdPointer(neigh_i, neigh_j,
-                                                       neigh_k);
+                          proc_id_p = GetProcIdFromGlobalCoords(neigh_i,
+                                                                neigh_j,
+                                                                neigh_k);
 
                           if (proc_id_p == NULL || *proc_id_p != marker)
                           {
@@ -687,7 +678,7 @@ void Net::netInit(int totalFluidSites)
                           ++partial_visited_fluid_sites;
 
                           if (unit_level == 0)
-                            ++fluid_sites[proc_count];
+                            ++mFluidSitesOnEachProcessor[proc_count];
 
                           are_fluid_sites_incrementing = 1;
 
@@ -731,7 +722,7 @@ void Net::netInit(int totalFluidSites)
                         unvisited_fluid_sites -= partial_visited_fluid_sites;
                         fluid_sites_per_unit
                             = (int) ceil((double) unvisited_fluid_sites
-                                / (double) (procs - proc_count));
+                                / (double) (mProcessorCount - proc_count));
                       }
                       partial_visited_fluid_sites = 0;
                     }
@@ -895,7 +886,8 @@ void Net::netInit(int totalFluidSites)
                 neigh_j = site_j + D3Q15::CY[l];
                 neigh_k = site_k + D3Q15::CZ[l];
 
-                proc_id_p = netProcIdPointer(neigh_i, neigh_j, neigh_k);
+                proc_id_p
+                    = GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
                 // Move on if the neighbour is in a block of solids (in which case
                 // the pointer to proc_id is NULL) or it is solid (in which case proc_id ==
@@ -1116,9 +1108,9 @@ void Net::netInit(int totalFluidSites)
       cut_distances = new double[my_sites * (D3Q15::NUMVECTORS - 1)];
     }
   }
-  from_proc_id_to_neigh_proc_index = new short int[procs];
+  from_proc_id_to_neigh_proc_index = new short int[mProcessorCount];
 
-  for (m = 0; m < procs; m++)
+  for (m = 0; m < mProcessorCount; m++)
   {
     from_proc_id_to_neigh_proc_index[m] = -1;
   }
@@ -1173,7 +1165,8 @@ void Net::netInit(int totalFluidSites)
                     * D3Q15::NUMVECTORS;
 
                 // You know which process the neighbour is on.
-                proc_id_p = netProcIdPointer(neigh_i, neigh_j, neigh_k);
+                proc_id_p
+                    = GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
                 if (proc_id_p == NULL || *proc_id_p == 1 << 30)
                 {
@@ -1253,7 +1246,7 @@ void Net::netInit(int totalFluidSites)
 
   for (m = 0; m < COMMS_LEVELS; m++)
   {
-    req[m] = new MPI_Request[2 * procs];
+    req[m] = new MPI_Request[2 * mProcessorCount];
   }
 #endif
 
@@ -1261,7 +1254,7 @@ void Net::netInit(int totalFluidSites)
   {
     neigh_proc_p = &neigh_proc[m];
 
-    // One way send receive.  The lower numbered procs send and the higher numbered ones receive.
+    // One way send receive.  The lower numbered mProcessorCount send and the higher numbered ones receive.
     // It seems that, for each pair of processors, the lower numbered one ends up with its own
     // edge sites and directions stored and the higher numbered one ends up with those on the
     // other processor.
@@ -1401,7 +1394,7 @@ Net::Net(int &iArgumentCount, char* iArgumentList[])
 
   err = MPI_Init_thread(&iArgumentCount, &iArgumentList, MPI_THREAD_FUNNELED,
                         &thread_level_provided);
-  err = MPI_Comm_size(MPI_COMM_WORLD, &procs);
+  err = MPI_Comm_size(MPI_COMM_WORLD, &mProcessorCount);
   err = MPI_Comm_rank(MPI_COMM_WORLD, &mRank);
 
   if (IsCurrentProcTheIOProc())
@@ -1409,7 +1402,7 @@ Net::Net(int &iArgumentCount, char* iArgumentList[])
     printf("thread_level_provided %i\n", thread_level_provided);
   }
 #else
-  procs = 1;
+  mProcessorCount = 1;
   mRank = 0;
 #endif
 }
@@ -1475,7 +1468,7 @@ Net::~Net()
   delete[] req;
 #endif
 
-  delete[] fluid_sites;
+  delete[] mFluidSitesOnEachProcessor;
 
   delete[] procs_per_machine;
   delete[] machine_id;
