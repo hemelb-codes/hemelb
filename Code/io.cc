@@ -9,7 +9,7 @@
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
-#include "io/XdrReader.h"
+#include "io/XdrFileReader.h"
 #include "io/AsciiFileWriter.h"
 
 //using namespace std;
@@ -80,7 +80,7 @@ void LBM::lbmReadConfig(Net *net)
 
   delete[] lProcIdentifier;
 
-  hemelb::io::XdrReader myReader = hemelb::io::XdrReader(xdrFile);
+  hemelb::io::XdrReader myReader = hemelb::io::XdrFileReader(xdrFile);
 
   int i, j, k, ii, jj, kk, l, m, n;
   int flag;
@@ -245,6 +245,7 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
   double par_to_send[10000];
   double nor[3], pos[3];
   int n;
+  int nParamsRead = 0;
 
   if (net->IsCurrentProcTheIOProc())
   {
@@ -262,14 +263,14 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
     }
     fflush(NULL);
 
-    fscanf(parameters_file, "%i\n", &inlets);
+      nParamsRead = fscanf (parameters_file, "%i\n", &inlets);
 
     allocateInlets(inlets);
 
     for (n = 0; n < inlets; n++)
     {
-      fscanf(parameters_file, "%le %le %le\n", &inlet_density_avg[n],
-             &inlet_density_amp[n], &inlet_density_phs[n]);
+	  nParamsRead = fscanf (parameters_file, "%le %le %le\n",
+				&inlet_density_avg[n], &inlet_density_amp[n], &inlet_density_phs[n]);
 
       inlet_density_avg[n]
           = lbmConvertPressureToLatticeUnits(inlet_density_avg[n]) / Cs2;
@@ -277,14 +278,15 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
           = lbmConvertPressureGradToLatticeUnits(inlet_density_amp[n]) / Cs2;
       inlet_density_phs[n] *= DEG_TO_RAD;
     }
-    fscanf(parameters_file, "%i\n", &outlets);
+      nParamsRead = fscanf (parameters_file, "%i\n", &outlets);
+
 
     allocateOutlets(outlets);
 
     for (n = 0; n < outlets; n++)
     {
-      fscanf(parameters_file, "%le %le %le\n", &outlet_density_avg[n],
-             &outlet_density_amp[n], &outlet_density_phs[n]);
+	  nParamsRead = fscanf (parameters_file, "%le %le %le\n",
+				&outlet_density_avg[n], &outlet_density_amp[n], &outlet_density_phs[n]);
 
       outlet_density_avg[n]
           = lbmConvertPressureToLatticeUnits(outlet_density_avg[n]) / Cs2;
@@ -302,8 +304,8 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
       is_inlet_normal_available = 1;
 
       for (n = 0; n < inlets; n++)
-        fscanf(parameters_file, "%le %le %le\n", &lbm_inlet_normal[3 * n],
-               &lbm_inlet_normal[3 * n + 1], &lbm_inlet_normal[3 * n + 2]);
+	    nParamsRead = fscanf (parameters_file, "%le %le %le\n",
+		      &lbm_inlet_normal[3*n], &lbm_inlet_normal[3*n+1], &lbm_inlet_normal[3*n+2]);
     }
     else
     {
@@ -312,17 +314,17 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
     if (feof(parameters_file) == 0)
     {
       for (n = 0; n < outlets; n++)
-        fscanf(parameters_file, "%le %le %le\n", &nor[0], &nor[1], &nor[2]);
+	    nParamsRead  = fscanf (parameters_file, "%le %le %le\n", &nor[0], &nor[1], &nor[2]);
     }
     if (feof(parameters_file) == 0)
     {
       for (n = 0; n < inlets; n++)
-        fscanf(parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
+	    nParamsRead = fscanf (parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
     }
     if (feof(parameters_file) == 0)
     {
       for (n = 0; n < outlets; n++)
-        fscanf(parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
+	    nParamsRead = fscanf (parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
     }
     fclose(parameters_file);
 
@@ -476,10 +478,6 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
   int comPeriodDelta, iters;
   int par;
   int shrinked_sites_x, shrinked_sites_y, shrinked_sites_z;
-  int site_i, site_j, site_k;
-  int i, j, k;
-  int l, m, n;
-  int kk;
 
   short int *local_site_data, *gathered_site_data;
 
@@ -533,7 +531,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 
   fluid_sites_max = 0;
 
-  for (n = 0; n < net->mProcessorCount; n++)
+  for (int n = 0; n < net->mProcessorCount; n++)
   {
     fluid_sites_max = hemelb::util::max(fluid_sites_max, net->mFluidSitesOnEachProcessor[n]);
   }
@@ -566,7 +564,6 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
   comPeriodDelta = 0;
 
   par = 0;
-  n = -1;
 
   /* The following loops scan over every single macrocell (block). If
    the block is non-empty, it scans the fluid sites within that block
@@ -574,25 +571,21 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
    converted to physical units and stored in a buffer to send to the
    root processor */
 
-  for (i = 0; i < sites_x; i += block_size)
-  {
-    for (j = 0; j < sites_y; j += block_size)
-    {
-      for (k = 0; k < sites_z; k += block_size)
-      {
+  int n = -1; // net->proc_block counter
+  for (int i = 0; i < sites_x; i+=block_size) {
+    for (int j = 0; j < sites_y; j+=block_size) {
+      for (int k = 0; k < sites_z; k+=block_size) {
 
-        if (net->mProcessorsForEachBlock[++n].ProcessorRankForEachBlockSite == NULL)
-        {
+	++n;
+	
+	if (net->mProcessorsForEachBlock[ n ].ProcessorRankForEachBlockSite == NULL) {
           continue;
         }
-        m = -1;
+	int m = -1;
 
-        for (site_i = i; site_i < i + block_size; site_i++)
-        {
-          for (site_j = j; site_j < j + block_size; site_j++)
-          {
-            for (site_k = k; site_k < k + block_size; site_k++)
-            {
+	for (int site_i = i; site_i < i + block_size; site_i++) {
+	  for (int site_j = j; site_j < j + block_size; site_j++) {
+	    for (int site_k = k; site_k < k + block_size; site_k++) {
 
               m++;
               if (!net->IsCurrentProcRank(net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite[m]))
@@ -606,22 +599,17 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
               if (my_site_id & (1U << 31U))
                 continue;
 
-              if (net->net_site_data[my_site_id] == FLUID_TYPE)
-              {
-                D3Q15::CalculateDensityVelocityFEq(&f_old[ (my_site_id * (par
-                    + 1) + par) * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
-
-                for (l = 0; l < D3Q15::NUMVECTORS; l++)
-                {
-                  f_neq[l] = f_old[ (my_site_id * (par + 1) + par)
-                      * D3Q15::NUMVECTORS + l] - f_eq[l];
-                }
-
-              }
-              else
-              { // not FLUID_TYPE
-                lbmCalculateBC(&f_old[ (my_site_id * (par + 1) + par)
-                    * D3Q15::NUMVECTORS], net->net_site_data[my_site_id],
+	      if (net->net_site_data[ my_site_id ] == FLUID_TYPE) {
+                D3Q15::CalculateDensityVelocityFEq(&f_old[ (my_site_id * (par + 1) + par)
+                    * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
+		
+		for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++) {
+		  f_neq[ l ] = f_old[ (my_site_id*(par+1)+par)*D3Q15::NUMVECTORS+l ] - f_eq[ l ];
+		}
+		
+	      } else { // not FLUID_TYPE
+		lbmCalculateBC(&f_old[ (my_site_id*(par+1)+par)*D3Q15::NUMVECTORS ],
+			       net->net_site_data[ my_site_id ],
                                &density, &vx, &vy, &vz, f_neq);
               }
 
@@ -692,7 +680,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
               if (net->IsCurrentProcTheIOProc())
               {
 
-                for (l = 0; l < net->mProcessorCount * communication_period; l++)
+                for (int l = 0; l < net->mProcessorCount * communication_period; l++)
                 {
                   if (gathered_site_data[l * 3 + 0] == -1)
                     continue;
@@ -701,11 +689,9 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
                   gathered_site_data[l * 3 + 1] -= site_min_y;
                   gathered_site_data[l * 3 + 2] -= site_min_z;
 
-                  snap << gathered_site_data[l * 3 + 0] << gathered_site_data[l
-                      * 3 + 1] << gathered_site_data[l * 3 + 2];
-
-                  for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
-                  {
+		  snap << gathered_site_data[ l*3+0 ] << gathered_site_data[ l*3+1 ]<< gathered_site_data[ l*3+2 ];
+		  
+		  for (int kk = 0; kk < MACROSCOPIC_PARS; kk++) {
                     snap << gathered_flow_field[MACROSCOPIC_PARS * l + kk];
                   }
                   snap << hemelb::io::Writer::eol;
@@ -713,8 +699,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 
               }
 
-              for (l = 0; l < communication_period; l++)
-              {
+	      for (int l = 0; l < communication_period; l++) {
                 local_site_data[l * 3] = -1;
               }
 
@@ -747,7 +732,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 
       if (net->IsCurrentProcTheIOProc())
       {
-        for (l = 0; l < net->mProcessorCount * communication_period; l++)
+        for (int l = 0; l < net->mProcessorCount * communication_period; l++)
         {
 
           if (gathered_site_data[l * 3 + 0] == -1)
@@ -760,7 +745,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
           snap << gathered_site_data[l * 3 + 0]
               << gathered_site_data[l * 3 + 1] << gathered_site_data[l * 3 + 2];
 
-          for (kk = 0; kk < MACROSCOPIC_PARS; kk++)
+          for (int kk = 0; kk < MACROSCOPIC_PARS; kk++)
           {
             snap << gathered_flow_field[MACROSCOPIC_PARS * l + kk];
           }
@@ -768,7 +753,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
         }
       }
 
-      for (l = 0; l < communication_period; l++)
+      for (int l = 0; l < communication_period; l++)
       {
         local_site_data[l * 3] = -1;
       }

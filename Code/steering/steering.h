@@ -3,7 +3,7 @@
 
 #include "steering/common/common.h"
 
-#if HEMELB_STEERING_LIB == basic
+#ifdef HEMELB_STEERING_LIB_basic
   #include "steering/basic/steering.h"
 
 #else
