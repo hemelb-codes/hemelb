@@ -609,14 +609,6 @@ void Net::Initialise(int iTotalFluidSites)
   // Create a map between the two-level data representation and the 1D
   // compact one is created here.
 
-  // Allocate an array of structures to store the fluid site identifiers for each block.
-  map_block = new DataBlock[blocks];
-
-  for (int n = 0; n < blocks; n++)
-  {
-    map_block[n].site_data = NULL;
-  }
-
   // This rank's site data.
   unsigned int *lThisRankSiteData = new unsigned int[my_sites];
 
@@ -633,7 +625,7 @@ void Net::Initialise(int iTotalFluidSites)
 
   for (int n = 0; n < blocks; n++)
   {
-    DataBlock *lCurrentDataBlock = &data_block[n];
+    DataBlock *lCurrentDataBlock = &map_block[n];
 
     // If we are in a block of solids, move to the next block.
     if (lCurrentDataBlock->site_data == NULL)
@@ -644,7 +636,6 @@ void Net::Initialise(int iTotalFluidSites)
     // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
     ProcBlock *proc_block_p = &mProcessorsForEachBlock[n];
     DataBlock *map_block_p = &map_block[n];
-    map_block_p->site_data = new unsigned int[sites_in_a_block];
 
     // map_block[n].site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
     // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
@@ -654,8 +645,8 @@ void Net::Initialise(int iTotalFluidSites)
       {
         if ( (lCurrentDataBlock->site_data[m] & SITE_TYPE_MASK) != SOLID_TYPE)
         {
-          map_block_p->site_data[m] = lSitesOnThisRank;
           lThisRankSiteData[lSitesOnThisRank] = lCurrentDataBlock->site_data[m];
+          map_block_p->site_data[m] = lSitesOnThisRank;
           ++lSitesOnThisRank;
         }
         else
@@ -670,18 +661,6 @@ void Net::Initialise(int iTotalFluidSites)
       }
     }
   }
-
-  // Free data_block.
-  for (int n = 0; n < blocks; n++)
-  {
-    if (data_block[n].site_data != NULL)
-    {
-      delete[] data_block[n].site_data;
-      data_block[n].site_data = NULL;
-    }
-  }
-  delete[] data_block;
-  data_block = NULL;
 
   // If we are in a block of solids, we set map_block[n].site_data to NULL.
   for (int n = 0; n < blocks; n++)
