@@ -202,7 +202,7 @@ namespace hemelb
       mScreen.UnitVectorProjectionY[2] *= (2.F / (float) iPixels_y);
     }
 
-    void Control::mergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2)
+    void Control::MergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2)
     {
       // Merge raytracing data
 
@@ -311,7 +311,7 @@ namespace hemelb
 
       if (*col_pixel_id_p != -1)
       {
-        mergePixels(col_pixel_p, &col_pixel_send[*col_pixel_id_p]);
+        MergePixels(col_pixel_p, &col_pixel_send[*col_pixel_id_p]);
 
       }
       else
@@ -602,7 +602,7 @@ namespace hemelb
               {
                 col_pixel2 = &col_pixel_recv[recv_buffer_id][*col_pixel_id_p];
 
-                mergePixels(col_pixel1, col_pixel2);
+                MergePixels(col_pixel1, col_pixel2);
               }
 
             }

@@ -118,11 +118,11 @@ class Net
     };
     int my_inter_sites;
     unsigned int *netSiteMapPointer(int site_i, int site_j, int site_k);
-    void ThisNeedsRenaming(int & proc_count,
-                           int & fluid_sites_per_unit,
-                           int & unvisited_fluid_sites,
-                           const int marker,
-                           const int unitLevel);
+    void AssignFluidSitesToProcessors(int & proc_count,
+                                      int & fluid_sites_per_unit,
+                                      int & unvisited_fluid_sites,
+                                      const int marker,
+                                      const int unitLevel);
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
     int shared_fs; // Number of distributions shared with neighbouring
     // processors.
@@ -137,7 +137,7 @@ class Net
     // 3 buffers needed for convergence-enabled simulations
     short int *f_data;
 
-    int net_machines;
+    int mMachineCount;
 };
 
 // TODO Ugh. Will get rid of these to somewhere else at some point.
