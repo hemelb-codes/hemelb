@@ -261,7 +261,6 @@ namespace hemelb
       unsigned int site_data;
 
       DataBlock *map_block_p;
-      ProcBlock *proc_block_p;
       VelSiteData *vel_site_data_p;
 
       particleVec.reserve(10000);
@@ -297,8 +296,6 @@ namespace hemelb
             if (map_block_p->site_data == NULL)
               continue;
 
-            proc_block_p = &net->mProcessorsForEachBlock[n];
-
             m = -1;
 
             for (int site_i = i; site_i < i + block_size; site_i++)
@@ -307,7 +304,8 @@ namespace hemelb
                 {
 
                   m++;
-                  if (!net->IsCurrentProcRank(proc_block_p->ProcessorRankForEachBlockSite[m]))
+                  if (!net->IsCurrentProcRank(
+                                              map_block_p->ProcessorRankForEachBlockSite[m]))
                     continue;
 
                   for (int neigh_i = util::max(0, site_i - 1); neigh_i
@@ -318,8 +316,9 @@ namespace hemelb
                           <= util::min(sites_z - 1, site_k + 1); neigh_k++)
                       {
 
-                        neigh_proc_id = net->GetProcIdFromGlobalCoords(neigh_i, neigh_j,
-                                                              neigh_k);
+                        neigh_proc_id = net->GetProcIdFromGlobalCoords(neigh_i,
+                                                                       neigh_j,
+                                                                       neigh_k);
 
                         if (neigh_proc_id == NULL || *neigh_proc_id
                             == (1 << 30))

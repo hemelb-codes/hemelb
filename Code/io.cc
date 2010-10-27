@@ -113,12 +113,6 @@ void LBM::lbmReadConfig(Net *net)
 
   net->map_block = new DataBlock[blocks];
 
-  net->mProcessorsForEachBlock = new ProcBlock[blocks];
-
-  if (lbm_stress_type == SHEAR_STRESS)
-  {
-    net->wall_block = new WallBlock[blocks];
-  }
   total_fluid_sites = 0;
 
   site_min_x = INT_MAX;
@@ -141,8 +135,8 @@ void LBM::lbmReadConfig(Net *net)
         ++n;
 
         net->map_block[n].site_data = NULL;
-        net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite = NULL;
-        net->wall_block[n].wall_data = NULL;
+        net->map_block[n].ProcessorRankForEachBlockSite = NULL;
+        net->map_block[n].wall_data = NULL;
 
         myReader.readInt(flag);
 
@@ -151,7 +145,7 @@ void LBM::lbmReadConfig(Net *net)
         // Block contains some non-solid sites
 
         net->map_block[n].site_data = new unsigned int[sites_in_a_block];
-        net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite = new int[sites_in_a_block];
+        net->map_block[n].ProcessorRankForEachBlockSite = new int[sites_in_a_block];
 
         m = -1;
 
@@ -174,10 +168,10 @@ void LBM::lbmReadConfig(Net *net)
 
               if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
               {
-                net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite[m] = 1 << 30;
+                net->map_block[n].ProcessorRankForEachBlockSite[m] = 1 << 30;
                 continue;
               }
-              net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite[m] = -1;
+              net->map_block[n].ProcessorRankForEachBlockSite[m] = -1;
 
               ++total_fluid_sites;
 
@@ -192,9 +186,9 @@ void LBM::lbmReadConfig(Net *net)
                   && net->GetCollisionType(*site_type) != FLUID)
               {
                 // Neither solid nor simple fluid
-                if (net->wall_block[n].wall_data == NULL)
+                if (net->map_block[n].wall_data == NULL)
                 {
-                  net->wall_block[n].wall_data = new WallData[sites_in_a_block];
+                  net->map_block[n].wall_data = new WallData[sites_in_a_block];
                 }
 
                 if (net->GetCollisionType(*site_type) & INLET
@@ -203,10 +197,10 @@ void LBM::lbmReadConfig(Net *net)
                   // INLET or OUTLET or both
                   for (l = 0; l < 3; l++)
                     myReader.readDouble(
-                                        net->wall_block[n].wall_data[m].boundary_nor[l]);
+                                        net->map_block[n].wall_data[m].boundary_nor[l]);
 
                   myReader.readDouble(
-                                      net->wall_block[n].wall_data[m].boundary_dist);
+                                      net->map_block[n].wall_data[m].boundary_dist);
                 }
 
                 if (net->GetCollisionType(*site_type) & EDGE)
@@ -214,14 +208,14 @@ void LBM::lbmReadConfig(Net *net)
                   // EDGE bit set
                   for (l = 0; l < 3; l++)
                     myReader.readDouble(
-                                        net->wall_block[n].wall_data[m].wall_nor[l]);
+                                        net->map_block[n].wall_data[m].wall_nor[l]);
 
-                  myReader.readDouble(net->wall_block[n].wall_data[m].wall_dist);
+                  myReader.readDouble(net->map_block[n].wall_data[m].wall_dist);
                 }
 
                 for (l = 0; l < 14; l++)
                   myReader.readDouble(
-                                      net->wall_block[n].wall_data[m].cut_dist[l]);
+                                      net->map_block[n].wall_data[m].cut_dist[l]);
               }
             } // kk
           } // jj
@@ -578,7 +572,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 
 	++n;
 	
-	if (net->mProcessorsForEachBlock[ n ].ProcessorRankForEachBlockSite == NULL) {
+	if (net->map_block[ n ].ProcessorRankForEachBlockSite == NULL) {
           continue;
         }
 	int m = -1;
@@ -588,7 +582,7 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 	    for (int site_k = k; site_k < k + block_size; site_k++) {
 
               m++;
-              if (!net->IsCurrentProcRank(net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite[m]))
+              if (!net->IsCurrentProcRank(net->map_block[n].ProcessorRankForEachBlockSite[m]))
               {
                 continue;
               }

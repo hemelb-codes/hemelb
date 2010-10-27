@@ -25,26 +25,18 @@ struct WallData
 
 };
 
-// WallBlock is a member of the structure Net and is employed to store the data
-// regarding the wall, inlet and outlet sites.
-struct WallBlock
-{
-    WallData *wall_data;
-};
-
 // For each global block,
 // *ProcessorRankForEachBlockSite is an array containing the ranks on which individual
 // lattice sites reside.
-struct ProcBlock
-{
-    int *ProcessorRankForEachBlockSite;
-};
-
+// WallBlock is a member of the structure Net and is employed to store the data
+// regarding the wall, inlet and outlet sites.
 // Block means macrocell of fluid sites (voxels).
 // site_data[] is an array containing individual lattice site data
 // within a global block.
 struct DataBlock
 {
+    int *ProcessorRankForEachBlockSite;
+    WallData *wall_data;
     unsigned int *site_data;
 };
 
@@ -87,10 +79,6 @@ class Net
     // each process.
 
     DataBlock *map_block; // See comment next to struct DataBlock.
-
-    ProcBlock *mProcessorsForEachBlock; // See comment next to struct ProcBlock.
-
-    WallBlock *wall_block; // See comment next to struct WallBlock.
 
     unsigned int GetCollisionType(unsigned int site_data);
     MPI_Status status[4];
