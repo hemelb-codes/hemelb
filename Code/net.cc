@@ -55,8 +55,7 @@ int * Net::GetProcIdFromGlobalCoords(int iSiteI, int iSiteJ, int iSiteK)
   int k = iSiteK >> shift;
 
   // Get the block from the block identifiers.
-  ProcBlock *proc_block_p = &mProcessorsForEachBlock[ (i * blocks_y + j)
-      * blocks_z + k]; // Pointer to the block
+  DataBlock *proc_block_p = &map_block[ (i * blocks_y + j) * blocks_z + k]; // Pointer to the block
 
   // If an empty (solid) block is addressed, return a NULL pointer.
   if (proc_block_p->ProcessorRankForEachBlockSite == NULL)
@@ -336,7 +335,7 @@ void Net::AssignFluidSitesToProcessors(int &proc_count,
 
         // Point to a block of ProcessorRankForEachBlockSite.  If we are in a block of solids, move on.
         int *lProcRankForSite =
-            mProcessorsForEachBlock[lBlockNumber].ProcessorRankForEachBlockSite;
+            map_block[lBlockNumber].ProcessorRankForEachBlockSite;
 
         // If the array of proc rank for each site is NULL, we're on an all-solid block.
         if (lProcRankForSite == NULL)
@@ -634,22 +633,27 @@ void Net::Initialise(int iTotalFluidSites)
     }
 
     // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
-    ProcBlock *proc_block_p = &mProcessorsForEachBlock[lBlockNumber];
+    DataBlock *proc_block_p = &map_block[lBlockNumber];
 
     // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
     // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
-    for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock < sites_in_a_block; lSiteIndexWithinBlock++)
+    for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock
+        < sites_in_a_block; lSiteIndexWithinBlock++)
     {
-      if (IsCurrentProcRank(proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock]))
+      if (IsCurrentProcRank(
+                            proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock]))
       {
         // If the current site is non-solid, copy the site data into the array for
         // this rank (in the whole-processor location), then set the site data
         // for this site within the current block to be the site index over the whole
         // processor.
-        if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock] & SITE_TYPE_MASK) != SOLID_TYPE)
+        if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock]
+            & SITE_TYPE_MASK) != SOLID_TYPE)
         {
-          lThisRankSiteData[lSiteIndexOnProc] = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
-          lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = lSiteIndexOnProc;
+          lThisRankSiteData[lSiteIndexOnProc]
+              = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
+          lCurrentDataBlock->site_data[lSiteIndexWithinBlock]
+              = lSiteIndexOnProc;
           ++lSiteIndexOnProc;
         }
         else
@@ -682,10 +686,10 @@ void Net::Initialise(int iTotalFluidSites)
     delete[] map_block[n].site_data;
     map_block[n].site_data = NULL;
 
-    if (wall_block[n].wall_data != NULL)
+    if (map_block[n].wall_data != NULL)
     {
-      delete[] wall_block[n].wall_data;
-      wall_block[n].wall_data = NULL;
+      delete[] map_block[n].wall_data;
+      map_block[n].wall_data = NULL;
     }
   }
   delete[] lBlockIsOnThisRank;
@@ -728,7 +732,7 @@ void Net::Initialise(int iTotalFluidSites)
           continue;
         }
 
-        ProcBlock *proc_block_p = &mProcessorsForEachBlock[n];
+        DataBlock *proc_block_p = &map_block[n];
 
         int m = -1;
 
@@ -1017,7 +1021,7 @@ void Net::Initialise(int iTotalFluidSites)
           continue;
         }
 
-        ProcBlock *proc_block_p = &mProcessorsForEachBlock[n];
+        DataBlock *proc_block_p = &map_block[n];
 
         int m = -1;
 
@@ -1106,11 +1110,11 @@ void Net::Initialise(int iTotalFluidSites)
                 {
                   for (unsigned int l = 0; l < 3; l++)
                     net_site_nor[site_map * 3 + l]
-                        = wall_block[n].wall_data[m].wall_nor[l];
+                        = map_block[n].wall_data[m].wall_nor[l];
 
                   for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
                     cut_distances[site_map * (D3Q15::NUMVECTORS - 1) + l]
-                        = wall_block[n].wall_data[m].cut_dist[l];
+                        = map_block[n].wall_data[m].cut_dist[l];
                 }
                 else
                 {
@@ -1317,12 +1321,19 @@ Net::~Net()
 
     for (int i = 0; i < blocks; i++)
     {
-      if (wall_block[i].wall_data != NULL)
+      if (map_block[i].wall_data != NULL)
       {
-        delete[] wall_block[i].wall_data;
+        delete[] map_block[i].wall_data;
       }
     }
-    delete[] wall_block;
+  }
+
+  for (int i = 0; i < blocks; i++)
+  {
+    if (map_block[i].ProcessorRankForEachBlockSite != NULL)
+    {
+      delete[] map_block[i].ProcessorRankForEachBlockSite;
+    }
   }
 
   for (int i = 0; i < blocks; i++)
@@ -1333,15 +1344,6 @@ Net::~Net()
     }
   }
   delete[] map_block;
-
-  for (int i = 0; i < blocks; i++)
-  {
-    if (mProcessorsForEachBlock[i].ProcessorRankForEachBlockSite != NULL)
-    {
-      delete[] mProcessorsForEachBlock[i].ProcessorRankForEachBlockSite;
-    }
-  }
-  delete[] mProcessorsForEachBlock;
 
   if (my_sites > 0)
   {
