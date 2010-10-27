@@ -474,7 +474,7 @@ namespace hemelb
           {
             n++;
 
-            ProcBlock *proc_block_p = &net->mProcessorsForEachBlock[n];
+            DataBlock *proc_block_p = &net->map_block[n];
             if (proc_block_p->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
@@ -554,7 +554,7 @@ namespace hemelb
                       + neigh_k;
 
                   if (is_block_visited[block_id] || (proc_block_p
-                      = &net->mProcessorsForEachBlock[block_id])->ProcessorRankForEachBlockSite == NULL)
+                      = &net->map_block[block_id])->ProcessorRankForEachBlockSite == NULL)
                   {
                     continue;
                   }
