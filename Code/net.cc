@@ -621,11 +621,11 @@ void Net::Initialise(int iTotalFluidSites)
     lBlockIsOnThisRank[n] = false;
   }
 
-  int lSitesOnThisRank = 0;
+  int lSiteIndexOnProc = 0;
 
-  for (int n = 0; n < blocks; n++)
+  for (int lBlockNumber = 0; lBlockNumber < blocks; lBlockNumber++)
   {
-    DataBlock *lCurrentDataBlock = &map_block[n];
+    DataBlock *lCurrentDataBlock = &map_block[lBlockNumber];
 
     // If we are in a block of solids, move to the next block.
     if (lCurrentDataBlock->site_data == NULL)
@@ -634,30 +634,39 @@ void Net::Initialise(int iTotalFluidSites)
     }
 
     // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
-    ProcBlock *proc_block_p = &mProcessorsForEachBlock[n];
-    DataBlock *map_block_p = &map_block[n];
+    ProcBlock *proc_block_p = &mProcessorsForEachBlock[lBlockNumber];
 
-    // map_block[n].site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
+    // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
     // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
-    for (int m = 0; m < sites_in_a_block; m++)
+    for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock < sites_in_a_block; lSiteIndexWithinBlock++)
     {
-      if (IsCurrentProcRank(proc_block_p->ProcessorRankForEachBlockSite[m]))
+      if (IsCurrentProcRank(proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock]))
       {
-        if ( (lCurrentDataBlock->site_data[m] & SITE_TYPE_MASK) != SOLID_TYPE)
+        // If the current site is non-solid, copy the site data into the array for
+        // this rank (in the whole-processor location), then set the site data
+        // for this site within the current block to be the site index over the whole
+        // processor.
+        if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock] & SITE_TYPE_MASK) != SOLID_TYPE)
         {
-          lThisRankSiteData[lSitesOnThisRank] = lCurrentDataBlock->site_data[m];
-          map_block_p->site_data[m] = lSitesOnThisRank;
-          ++lSitesOnThisRank;
+          lThisRankSiteData[lSiteIndexOnProc] = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
+          lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = lSiteIndexOnProc;
+          ++lSiteIndexOnProc;
         }
         else
         {
-          map_block_p->site_data[m] = (1U << 31U);
+          // If this is a solid, set the site data on the current block to
+          // some massive value.
+          lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = (1U << 31U);
         }
-        lBlockIsOnThisRank[n] = 1;
+        // Set the array to notify that the current block has sites on this
+        // rank.
+        lBlockIsOnThisRank[lBlockNumber] = true;
       }
+      // If this site is not on the current processor, set its whole processor
+      // index within the per-block store to a nonsense value.
       else
       {
-        map_block_p->site_data[m] = (1U << 31U);
+        lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = (1U << 31U);
       }
     }
   }
@@ -703,7 +712,7 @@ void Net::Initialise(int iTotalFluidSites)
   }
   shared_fs = 0; // shared fs within Net struct.
 
-  lSitesOnThisRank = 0;
+  lSiteIndexOnProc = 0;
 
   int n = -1;
 
@@ -799,38 +808,38 @@ void Net::Initialise(int iTotalFluidSites)
 
               int l;
 
-              if (GetCollisionType(lThisRankSiteData[lSitesOnThisRank])
+              if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
                   == FLUID)
               {
                 l = 0;
               }
-              else if (GetCollisionType(lThisRankSiteData[lSitesOnThisRank])
+              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
                   == EDGE)
               {
                 l = 1;
               }
-              else if (GetCollisionType(lThisRankSiteData[lSitesOnThisRank])
+              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
                   == INLET)
               {
                 l = 2;
               }
-              else if (GetCollisionType(lThisRankSiteData[lSitesOnThisRank])
+              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
                   == OUTLET)
               {
                 l = 3;
               }
-              else if (GetCollisionType(lThisRankSiteData[lSitesOnThisRank])
+              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
                   == (INLET | EDGE))
               {
                 l = 4;
               }
-              else if (GetCollisionType(lThisRankSiteData[lSitesOnThisRank])
+              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
                   == (OUTLET | EDGE))
               {
                 l = 5;
               }
 
-              ++lSitesOnThisRank;
+              ++lSiteIndexOnProc;
 
               if (is_inner_site)
               {
@@ -993,7 +1002,7 @@ void Net::Initialise(int iTotalFluidSites)
   {
     from_proc_id_to_neigh_proc_index[neigh_proc[m].id] = m;
   }
-  lSitesOnThisRank = 0;
+  lSiteIndexOnProc = 0;
 
   n = -1;
 
@@ -1089,7 +1098,7 @@ void Net::Initialise(int iTotalFluidSites)
                 ++neigh_proc_p->fs; // We recount this again.
               }
               // This is used in Calculate BC in IO.
-              net_site_data[site_map] = lThisRankSiteData[lSitesOnThisRank];
+              net_site_data[site_map] = lThisRankSiteData[lSiteIndexOnProc];
 
               if (lbm_stress_type == SHEAR_STRESS)
               {
@@ -1108,7 +1117,7 @@ void Net::Initialise(int iTotalFluidSites)
                   net_site_nor[site_map * 3] = 1.0e+30;
                 }
               }
-              ++lSitesOnThisRank;
+              ++lSiteIndexOnProc;
             }
       }
   delete[] lThisRankSiteData;
