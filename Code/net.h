@@ -86,7 +86,6 @@ class Net
     int *mFluidSitesOnEachProcessor; // Array containing numbers of fluid sites on
     // each process.
 
-    DataBlock *data_block; // See comment next to struct DataBlock.
     DataBlock *map_block; // See comment next to struct DataBlock.
 
     ProcBlock *mProcessorsForEachBlock; // See comment next to struct ProcBlock.
