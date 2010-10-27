@@ -111,7 +111,7 @@ void LBM::lbmReadConfig(Net *net)
 
   blocks = blocks_x * blocks_y * blocks_z;
 
-  net->data_block = new DataBlock[blocks];
+  net->map_block = new DataBlock[blocks];
 
   net->mProcessorsForEachBlock = new ProcBlock[blocks];
 
@@ -140,7 +140,7 @@ void LBM::lbmReadConfig(Net *net)
       {
         ++n;
 
-        net->data_block[n].site_data = NULL;
+        net->map_block[n].site_data = NULL;
         net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite = NULL;
         net->wall_block[n].wall_data = NULL;
 
@@ -150,7 +150,7 @@ void LBM::lbmReadConfig(Net *net)
           continue;
         // Block contains some non-solid sites
 
-        net->data_block[n].site_data = new unsigned int[sites_in_a_block];
+        net->map_block[n].site_data = new unsigned int[sites_in_a_block];
         net->mProcessorsForEachBlock[n].ProcessorRankForEachBlockSite = new int[sites_in_a_block];
 
         m = -1;
@@ -169,7 +169,7 @@ void LBM::lbmReadConfig(Net *net)
 
               ++m;
 
-              site_type = &net->data_block[n].site_data[m];
+              site_type = &net->map_block[n].site_data[m];
               myReader.readUnsignedInt(*site_type);
 
               if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
