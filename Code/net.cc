@@ -699,11 +699,11 @@ void Net::Initialise(int iTotalFluidSites)
   // distribution functions of the reference processor are calculated
   // here.  neigh_proc is a static array that is declared in config.h.
 
+  // Initialise various things to 0.
   neigh_procs = 0;
-
   for (int m = 0; m < NEIGHBOUR_PROCS_MAX; m++)
   {
-    neigh_proc[m].fs = 0; // fs within NeighProc struct within the net struct.
+    neigh_proc[m].fs = 0;
   }
 
   my_inter_sites = 0;
@@ -720,9 +720,11 @@ void Net::Initialise(int iTotalFluidSites)
 
   int n = -1;
 
-  // Here, i, j and k are not the block coordinates, but the block coords * block_size.
+  // Iterate over all blocks in site units
   for (int i = 0; i < sites_x; i += block_size)
+  {
     for (int j = 0; j < sites_y; j += block_size)
+    {
       for (int k = 0; k < sites_z; k += block_size)
       {
         DataBlock *map_block_p = &map_block[++n];
@@ -732,17 +734,19 @@ void Net::Initialise(int iTotalFluidSites)
           continue;
         }
 
-        DataBlock *proc_block_p = &map_block[n];
-
         int m = -1;
 
+        // Iterate over all sites within the current block.
         for (int site_i = i; site_i < i + block_size; site_i++)
+        {
           for (int site_j = j; site_j < j + block_size; site_j++)
+          {
             for (int site_k = k; site_k < k + block_size; site_k++)
             {
               m++;
+              // If the site is not on this processor, continue.
               if (!IsCurrentProcRank(
-                                     proc_block_p->ProcessorRankForEachBlockSite[m]))
+                                     map_block_p->ProcessorRankForEachBlockSite[m]))
               {
                 continue;
               }
@@ -750,12 +754,15 @@ void Net::Initialise(int iTotalFluidSites)
               int is_inter_site = 0;
               int is_inner_site = 1;
 
+              // Iterate over all direction vectors.
               for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
               {
+                // Find the neighbour site co-ords in this direction.
                 int neigh_i = site_i + D3Q15::CX[l];
                 int neigh_j = site_j + D3Q15::CY[l];
                 int neigh_k = site_k + D3Q15::CZ[l];
 
+                // Find the processor Id for that neighbour.
                 int *proc_id_p = GetProcIdFromGlobalCoords(neigh_i, neigh_j,
                                                            neigh_k);
 
@@ -775,6 +782,8 @@ void Net::Initialise(int iTotalFluidSites)
                 // the loop is not executed.
                 int mm, flag;
 
+                // Iterate over neighbouring processors until we find the one with the
+                // neighbouring site on it.
                 for (mm = 0, flag = 1; mm < neigh_procs && flag; mm++)
                 {
                   // Check whether the rank for a particular neighbour has already been
@@ -789,7 +798,8 @@ void Net::Initialise(int iTotalFluidSites)
                     ++shared_fs;
                   }
                 }
-                // If flag is 1, we need a new neighbouring processor.
+                // If flag is 1, we didn't find a neighbour-proc with the neighbour-site on it
+                // so we need a new neighbouring processor.
                 if (flag)
                 {
                   if (neigh_procs == NEIGHBOUR_PROCS_MAX)
@@ -807,7 +817,8 @@ void Net::Initialise(int iTotalFluidSites)
                   ++shared_fs;
                 }
               }
-              // Collision Type set here. map_block site data is renumbered according to
+
+              // Set the collision type data. map_block site data is renumbered according to
               // fluid site numbers within a particular collision type.
 
               int l;
@@ -877,7 +888,11 @@ void Net::Initialise(int iTotalFluidSites)
                 ++my_inter_collisions[l];
               }
             }
+          }
+        }
       }
+    }
+  }
 
   int collision_offset[2][COLLISION_TYPES];
   // Calculate the number of each type of collision.
@@ -895,6 +910,7 @@ void Net::Initialise(int iTotalFluidSites)
         - 1];
   }
 
+  // Iterate over blocks
   for (int n = 0; n < blocks; n++)
   {
     DataBlock *map_block_p = &map_block[n];
@@ -905,6 +921,7 @@ void Net::Initialise(int iTotalFluidSites)
       continue;
     }
 
+    // Iterate over sites within the block.
     for (int m = 0; m < sites_in_a_block; m++)
     {
       unsigned int *site_data_p = &map_block_p->site_data[m];
@@ -966,6 +983,7 @@ void Net::Initialise(int iTotalFluidSites)
   // Reset to zero again.
   shared_fs = 0;
 
+  // Set the remaining neighbouring processor data.
   for (int n = 0; n < neigh_procs; n++)
   {
     // f_data compacted according to number of shared f_s on each process.
@@ -1010,8 +1028,11 @@ void Net::Initialise(int iTotalFluidSites)
 
   n = -1;
 
+  // Iterate over blocks in global co-ords.
   for (int i = 0; i < sites_x; i += block_size)
+  {
     for (int j = 0; j < sites_y; j += block_size)
+    {
       for (int k = 0; k < sites_z; k += block_size)
       {
         DataBlock *map_block_p = &map_block[++n];
@@ -1025,8 +1046,11 @@ void Net::Initialise(int iTotalFluidSites)
 
         int m = -1;
 
+// Iterate over sites within the block.
         for (int site_i = i; site_i < i + block_size; site_i++)
+        {
           for (int site_j = j; site_j < j + block_size; site_j++)
+          {
             for (int site_k = k; site_k < k + block_size; site_k++)
             {
               // If a site is not on this process, continue.
@@ -1123,7 +1147,11 @@ void Net::Initialise(int iTotalFluidSites)
               }
               ++lSiteIndexOnProc;
             }
+          }
+        }
       }
+    }
+  }
   delete[] lThisRankSiteData;
 
   // point-to-point communications are performed to match data to be
@@ -1334,10 +1362,6 @@ Net::~Net()
     {
       delete[] map_block[i].ProcessorRankForEachBlockSite;
     }
-  }
-
-  for (int i = 0; i < blocks; i++)
-  {
     if (map_block[i].site_data != NULL)
     {
       delete[] map_block[i].site_data;
