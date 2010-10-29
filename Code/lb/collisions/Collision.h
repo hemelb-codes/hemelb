@@ -56,6 +56,7 @@ namespace hemelb
         protected:
           // Use a protected constructor to ensure the class is never instantiated.
           Collision();
+          virtual ~Collision();
 
           template<bool tDoRayTracing>
           void UpdateMinsAndMaxes(double iVx,

@@ -31,7 +31,7 @@ namespace hemelb
   namespace steering
   {
     
-    void HttpPost::get_host_details(char* rank_0_host_details, char* ip_addr)
+    void HttpPost::get_host_details(char* rank_0_host_details, char* ip_addr __attribute__((unused)))
     {
       // This really does modify the strings passed in. Without
       // checking their lengths, of course.

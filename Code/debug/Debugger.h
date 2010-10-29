@@ -21,7 +21,7 @@ namespace hemelb
 
     protected:
       Debugger(char* executable);
-      ~Debugger();
+      virtual ~Debugger();
       
       virtual void Attach() = 0;
       
