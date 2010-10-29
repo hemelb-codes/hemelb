@@ -1,17 +1,12 @@
-#ifndef HEMELB_STEERING_COMMON_H
-#define HEMELB_STEERING_COMMON_H
-
-#include "lb.h"
-#include "vis/Control.h"
+#ifndef HEMELB_STEERING_COMMON_COMMON_H
+#define HEMELB_STEERING_COMMON_COMMON_H
 
 namespace hemelb
 {
   namespace steering
   {
-    void UpdateSteerableParameters(int *perform_rendering,
-				   vis::Control *visControl, LBM* lbm);
-
+    // Global steerable parameter list
     extern float steer_par[ STEERABLE_PARAMETERS + 1 ];
   }
 }
-#endif // HEMELB_STEERING_COMMON_H
+#endif // HEMELB_STEERING_COMMON_COMMON_H
