@@ -12,7 +12,7 @@ namespace hemelb
     /*
      * Wrap a variable with locking through semaphores.
      * Construct with Lockable<type>(value).
-     * Get a copy of the value with CopyValue().
+     * Get a copy of the value with GetValue().
      * Set value with SetValue(newValue).
      * Hold/release the lock with Lock()/Unlock.
      *
@@ -34,7 +34,7 @@ namespace hemelb
           sem_destroy(&mSem);
         }
 
-        T CopyValue(void)
+        T GetValue(void)
         {
           sem_wait(&mSem);
           T copy = mValue;

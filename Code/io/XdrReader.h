@@ -9,19 +9,21 @@ namespace hemelb
   namespace io
   {
     // Class to read an Xdr-style file from disk.
-    class XdrReader {
-    public:
-      // destructor.
-      virtual ~XdrReader();
+    class XdrReader
+    {
+      public:
+        // destructor.
+        virtual ~XdrReader();
 
-      // Functions for reading the next bit of the stream.
-      void readDouble(double& outDouble);
-      void readInt(int& outInt);
-      void readUnsignedInt(unsigned int& outUInt);
+        // Functions for reading the next bit of the stream.
+        void readDouble(double& outDouble);
+        void readFloat(float& outDouble);
+        void readInt(int& outInt);
+        void readUnsignedInt(unsigned int& outUInt);
 
-    protected:
-      XdrReader();
-      XDR*  mXdr;
+      protected:
+        XdrReader();
+        XDR* mXdr;
 
     };
   }

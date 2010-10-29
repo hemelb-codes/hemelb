@@ -7,6 +7,7 @@
 #include "lb.h"
 #include "vis/Control.h"
 #include "steering/basic/NetworkThread.h"
+#include "steering/basic/Lockable.h"
 
 namespace hemelb
 {
@@ -36,12 +37,13 @@ namespace hemelb
         pthread_cond_t network_send_frame;
 
         sem_t nrl;
-        sem_t connected_sem;
+        //sem_t connected_sem;
         sem_t steering_var_lock;
 
         bool is_frame_ready;
         bool sending_frame;
-        bool connected;
+        //bool connected;
+        Lockable<bool> isConnected;
 
         int send_array_length;
 
