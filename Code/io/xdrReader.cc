@@ -20,6 +20,11 @@ namespace hemelb
       xdr_double(mXdr, &outDouble);
     }
 
+    void XdrReader::readFloat(float& outDouble)
+    {
+      xdr_float(mXdr, &outDouble);
+    }
+
     void XdrReader::readInt(int& outInt)
     {
       xdr_int(mXdr, &outInt);

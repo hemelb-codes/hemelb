@@ -3,10 +3,10 @@ include $(MK)/header.mk
 SRCS := HttpPost.cc \
 	Network.cc \
 	SimulationParameters.cc \
-	steering.cc \
 	Control.cc \
 	Threadable.cc \
-	NetworkThread.cc
+	NetworkThread.cc \
+	SteeringThread.cc
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

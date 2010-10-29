@@ -14,6 +14,7 @@ namespace hemelb
     {
       public:
         XdrMemReader(char* dataBuffer, unsigned int dataLength);
+
     };
 
   }

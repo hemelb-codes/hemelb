@@ -19,7 +19,6 @@ namespace hemelb
       xdrmem_create(mXdr, dataBuffer, dataLength, XDR_DECODE);
     }
 
-
   }
 
 }

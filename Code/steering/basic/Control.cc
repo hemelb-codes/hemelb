@@ -9,7 +9,6 @@
 
 #include "lb.h"
 #include "steering/basic/Control.h"
-#include "steering/basic/steering.h"
 #include "steering/common/common.h"
 
 #include "vis/visthread.h"
@@ -21,20 +20,20 @@ namespace hemelb
   {
 
     Control::Control(bool isCurrentProcTheSteeringProc) :
-      is_frame_ready(false), sending_frame(false), connected(false),
+      is_frame_ready(false), sending_frame(false), isConnected(false),
           updated_mouse_coords(false),
           mIsCurrentProcTheSteeringProc(isCurrentProcTheSteeringProc)
     {
       // From main()
       sem_init(&nrl, 0, 1);
-      sem_init(&connected_sem, 0, 1);
+      //sem_init(&connected_sem, 0, 1);
       sem_init(&steering_var_lock, 0, 1);
     }
 
     Control::~Control()
     {
       sem_destroy(&nrl);
-      sem_destroy(&connected_sem);
+      //sem_destroy(&connected_sem);
       sem_destroy(&steering_var_lock);
     }
 
@@ -196,22 +195,9 @@ namespace hemelb
     // Do we need to render a frame for the client?
     bool Control::ShouldRenderForNetwork()
     {
-      bool ans;
-      sem_wait(&connected_sem);
-      bool local_connected = connected;
-      sem_post(&connected_sem);
-      if (local_connected)
-      {
-        // If we're connected and not sending a
-        // frame, we'd better render a new one!
-        ans = !sending_frame;
-      }
-      else
-      {
-        // Noone's connected, so don't need to render.
-        ans = false;
-      }
-      return ans;
+      // Iff we're connected and not sending a
+      // frame, we'd better render a new one!
+      return isConnected.GetValue() && !sending_frame;
     }
 
   }

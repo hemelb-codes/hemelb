@@ -8,9 +8,9 @@
 #include "io/XdrMemWriter.h"
 
 #include "steering/basic/NetworkThread.h"
+#include "steering/basic/SteeringThread.h"
 #include "steering/basic/Control.h"
 #include "steering/basic/HttpPost.h"
-#include "steering/basic/steering.h"
 #include "steering/basic/Network.h"
 #include "steering/basic/SimulationParameters.h"
 
@@ -77,15 +77,10 @@ namespace hemelb
       int is_broken_pipe = 0;
       int frame_number = 0;
 
-      pthread_t steering_thread;
-      pthread_attr_t steering_thread_attrib;
+      SteeringThread* steering_thread = NULL;
 
       static char ip_addr[16];
       static char rank_0_host_details[1024];
-
-      pthread_attr_init(&steering_thread_attrib);
-      pthread_attr_setdetachstate(&steering_thread_attrib,
-                                  PTHREAD_CREATE_JOINABLE);
 
       signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
 
@@ -150,18 +145,14 @@ namespace hemelb
 
         // fprintf (timings_ptr, "server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
         // printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
-
-        pthread_create(&steering_thread, &steering_thread_attrib, hemeLB_steer,
-                       (void*) &new_fd);
+        steering_thread = new SteeringThread(new_fd, mSteeringController);
+        steering_thread->Run();
 
         close(sock_fd);
 
         is_broken_pipe = 0;
 
-        // pthread_mutex_unlock ( &LOCK );
-        sem_wait(&Control::Get()->connected_sem); // grab the semaphore
-        Control::Get()->connected = 1;
-        sem_post(&Control::Get()->connected_sem);
+        Control::Get()->isConnected.SetValue(true);
 
         // setRenderState(1);
         // At this point we're ready to send a frame...
@@ -301,9 +292,7 @@ namespace hemelb
 
         close(new_fd);
 
-        sem_wait(&Control::Get()->connected_sem); // grab the semaphore
-        Control::Get()->connected = 0;
-        sem_post(&Control::Get()->connected_sem);
+        Control::Get()->isConnected.SetValue(false);
 
         // pthread_join(steering_thread, NULL);
 

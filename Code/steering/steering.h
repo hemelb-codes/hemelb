@@ -4,7 +4,7 @@
 #include "steering/common/common.h"
 
 #ifdef HEMELB_STEERING_LIB_basic
-  #include "steering/basic/steering.h"
+  #include "steering/basic/Control.h"
 
 #else
   #include "steering/none/steering.h"
