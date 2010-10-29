@@ -13,6 +13,9 @@ namespace hemelb
       {
 
       }
+      Collision::~Collision()
+      {
+      }
 
       void Collision::DoCollisions(const bool iDoRayTracing,
                                    const double iOmega,

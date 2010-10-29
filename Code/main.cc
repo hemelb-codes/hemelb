@@ -21,10 +21,6 @@ int cycle_id;
 int time_step;
 double intra_cycle_time;
 
-#ifndef NO_STEER
-
-#endif
-
 FILE *timings_ptr;
 
 int main(int argc, char *argv[])
@@ -33,16 +29,6 @@ int main(int argc, char *argv[])
   // simulation paramenters and performance statistics are outputted on
   // standard output
 
-#ifndef NO_STEER
-  sem_init(&hemelb::steering::nrl, 0, 1);
-  sem_init(&hemelb::steering::connected_sem, 0, 1);
-  sem_init(&hemelb::steering::steering_var_lock, 0, 1);
-
-  hemelb::steering::is_frame_ready = 0;
-  hemelb::steering::connected = 0;
-  hemelb::steering::sending_frame = 0;
-  hemelb::steering::updated_mouse_coords = 0;
-#endif
 
   double simulation_time = 0.;
   int total_time_steps, stability = STABLE;
@@ -56,12 +42,11 @@ int main(int argc, char *argv[])
   int images_period;
   int is_unstable = 0;
 
-#ifndef NO_STEER
-  pthread_t network_thread;
-  pthread_attr_t pthread_attrib;
-#endif
-
   SimulationMaster lMaster = SimulationMaster(argc, argv);
+  hemelb::steering::Control
+      * steeringController =
+          hemelb::steering::Control::Init(
+                                          lMaster.GetNet()->IsCurrentProcTheIOProc());
 
   double total_time = hemelb::util::myClock();
 
@@ -119,23 +104,8 @@ int main(int argc, char *argv[])
     fprintf(timings_ptr, "Opening vis parameters file:\n %s\n\n",
             vis_parameters_name);
 
-#ifndef NO_STEER
-    hemelb::vis::xdrSendBuffer_pixel_data
-        = new char[hemelb::vis::pixel_data_bytes];
-    hemelb::vis::xdrSendBuffer_frame_details
-        = new char[hemelb::vis::frame_details_bytes];
+    steeringController->StartNetworkThread(lMaster.GetLBM());
 
-    pthread_mutex_init(&hemelb::steering::LOCK, NULL);
-    pthread_cond_init(&hemelb::steering::network_send_frame, NULL);
-
-    //    pthread_mutex_lock (&LOCK);
-
-    pthread_attr_init(&pthread_attrib);
-    pthread_attr_setdetachstate(&pthread_attrib, PTHREAD_CREATE_JOINABLE);
-
-    pthread_create(&network_thread, &pthread_attrib,
-                   hemelb::steering::hemeLB_network, (void*) lMaster.GetLBM());
-#endif // NO_STEER
   }
 
   lMaster.GetLBM()->lbmInit(input_config_name, input_parameters_name,
@@ -158,11 +128,10 @@ int main(int argc, char *argv[])
   lMaster.GetLBM()->ReadVisParameters(vis_parameters_name, lMaster.GetNet(),
                                       hemelb::vis::controller);
 
-#ifndef NO_STEER
-  hemelb::steering::UpdateSteerableParameters(&hemelb::vis::doRendering,
-                                              hemelb::vis::controller,
-                                              lMaster.GetLBM());
-#endif
+  steeringController->UpdateSteerableParameters(false,
+                                                &hemelb::vis::doRendering,
+                                                hemelb::vis::controller,
+                                                lMaster.GetLBM());
 
   hemelb::util::DeleteDirContents(snapshot_directory);
   hemelb::util::DeleteDirContents(image_directory);
@@ -200,44 +169,25 @@ int main(int argc, char *argv[])
       int write_snapshot_image = (time_step % images_period == 0)
         ? 1
         : 0;
-#ifndef NO_STEER
-      int render_for_network_stream = 0;
 
       /* In the following two if blocks we do the core magic to ensure we only Render
        when (1) we are not sending a frame or (2) we need to output to disk */
 
+      int render_for_network_stream = 0;
       if (lMaster.GetNet()->IsCurrentProcTheIOProc())
       {
-        sem_wait(&hemelb::steering::connected_sem);
-        bool local_connected = hemelb::steering::connected;
-        sem_post(&hemelb::steering::connected_sem);
-        if (local_connected)
-        {
-          render_for_network_stream = (hemelb::steering::sending_frame == 0)
-            ? 1
-            : 0;
-        }
-        else
-        {
-          render_for_network_stream = 0;
-        }
+        render_for_network_stream
+            = steeringController->ShouldRenderForNetwork();
       }
 
-      if (total_time_steps % BCAST_FREQ == 0)
+      if (time_step % BCAST_FREQ == 0)
       {
-        if (lMaster.GetNet()->IsCurrentProcTheIOProc())
-        {
-          hemelb::vis::doRendering = (render_for_network_stream
-              || write_snapshot_image)
-            ? 1
-            : 0;
-          sem_wait(&hemelb::steering::steering_var_lock);
-        }
-        hemelb::steering::UpdateSteerableParameters(&hemelb::vis::doRendering,
-                                                    hemelb::vis::controller,
-                                                    lMaster.GetLBM());
-        if (lMaster.GetNet()->IsCurrentProcTheIOProc())
-          sem_post(&hemelb::steering::steering_var_lock);
+        steeringController->UpdateSteerableParameters(
+                                                      write_snapshot_image,
+                                                      &hemelb::vis::doRendering,
+                                                      hemelb::vis::controller,
+                                                      lMaster.GetLBM());
+
       }
 
       /* for debugging purposes we want to ensure we capture the variables in a single
@@ -247,11 +197,10 @@ int main(int argc, char *argv[])
       if (lMaster.GetNet()->IsCurrentProcTheIOProc() && time_step % 100 == 0)
         printf(
                "time step %i sending_frame %i render_network_stream %i write_snapshot_image %i rendering %i\n",
-               time_step, hemelb::steering::sending_frame,
+               time_step, steeringController->sending_frame,
                render_for_network_stream, write_snapshot_image,
                hemelb::vis::doRendering);
 
-#endif // NO_STEER
       lMaster.GetLBM()->lbmUpdateBoundaryDensities(cycle_id, time_step);
 
       stability = lMaster.GetLBM()->lbmCycle(hemelb::vis::doRendering,
@@ -268,6 +217,7 @@ int main(int argc, char *argv[])
                                            lMaster.GetNet());
 #endif
 #ifndef NO_STEER
+
       if (total_time_steps % BCAST_FREQ == 0 && hemelb::vis::doRendering
           && !write_snapshot_image)
       {
@@ -275,7 +225,7 @@ int main(int argc, char *argv[])
 
         if (hemelb::vis::controller->mouse_x >= 0
             && hemelb::vis::controller->mouse_y >= 0
-            && hemelb::steering::updated_mouse_coords)
+            && steeringController->updated_mouse_coords)
         {
           for (int i = 0; i
               < hemelb::vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
@@ -303,12 +253,12 @@ int main(int argc, char *argv[])
               break;
             }
           }
-          hemelb::steering::updated_mouse_coords = 0;
+          steeringController->updated_mouse_coords = 0;
         }
         if (lMaster.GetNet()->IsCurrentProcTheIOProc())
         {
-          hemelb::steering::is_frame_ready = 1;
-          sem_post(&hemelb::steering::nrl); // let go of the lock
+          steeringController->is_frame_ready = 1;
+          sem_post(&steeringController->nrl); // let go of the lock
         }
       }
 #endif // NO_STEER
@@ -349,7 +299,7 @@ int main(int argc, char *argv[])
         {
           // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
           sched_yield();
-          sem_post(&hemelb::steering::nrl);
+          sem_post(&steeringController->nrl);
           //pthread_mutex_unlock (&LOCK);
           //pthread_cond_signal (&network_send_frame);
         }
@@ -419,7 +369,8 @@ int main(int argc, char *argv[])
   {
     fprintf(timings_ptr, "\n");
     fprintf(timings_ptr, "threads: %i, machines checked: %i\n\n",
-            lMaster.GetNet()->mProcessorCount, lMaster.GetNet()->GetMachineCount());
+            lMaster.GetNet()->mProcessorCount,
+            lMaster.GetNet()->GetMachineCount());
     fprintf(timings_ptr, "topology depths checked: %i\n\n", depths);
     fprintf(timings_ptr, "fluid sites: %i\n\n",
             lMaster.GetLBM()->total_fluid_sites);
@@ -491,17 +442,7 @@ int main(int argc, char *argv[])
     }
   }
   delete hemelb::vis::controller;
-
-#ifndef NO_STEER
-  if (lMaster.GetNet()->IsCurrentProcTheIOProc())
-  {
-    // there are some problems if the following function is called
-
-    //pthread_join (network_thread, NULL);
-    delete[] hemelb::vis::xdrSendBuffer_frame_details;
-    delete[] hemelb::vis::xdrSendBuffer_pixel_data;
-  }
-#endif
+  steeringController->StopNetworkThread();
 
   return (0);
 }
