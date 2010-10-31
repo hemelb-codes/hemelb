@@ -1,5 +1,13 @@
-#Tue Oct 19 11:16:17 BST 2010
+#Fri Oct 29 12:05:03 BST 2010
 eclipse.preferences.version=1
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/delimiter=\:
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/operation=append
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/value=CCS
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/TIXML_USE_TICPP/delimiter=\:
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/TIXML_USE_TICPP/operation=append
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/TIXML_USE_TICPP/value=
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/append=true
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/appendContributed=true
 org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=18
 org.eclipse.cdt.core.formatter.alignment_for_base_clause_in_type_declaration=83
 org.eclipse.cdt.core.formatter.alignment_for_compact_if=0
