@@ -1,12 +1,7 @@
 #include "SimConfig.h"
-#include "xml/xpath_processor.h"
-#include "xml/tinyxpath_conf.h"
-#include "xml/ticpp.h"
-#include "xml/xpath_static.h"
 
 #include <string>
 #include <iostream>
-#include <sstream>
 #include <unistd.h>
 #include "fileutils.h"
 #include <cstdlib>
@@ -41,7 +36,7 @@ namespace hemelb
 
     SimConfig *lRet = new SimConfig();
 
-    lRet->DoIO(lConfigFile->LastChild(), true);
+    lRet->DoIO(lConfigFile->FirstChildElement(), true);
 
     delete lConfigFile;
 
@@ -50,125 +45,157 @@ namespace hemelb
 
   void SimConfig::Save(char *iPath)
   {
-    TiXmlDocument *lConfigFile = new TiXmlDocument(iPath);
+    TiXmlDocument lConfigFile;
+    TiXmlDeclaration * lDeclaration = new TiXmlDeclaration("1.0", "", "");
+    TiXmlElement *lTopElement = new TiXmlElement("hemelbsettings");
 
-    DoIO(lConfigFile, false);
+    lConfigFile.LinkEndChild(lDeclaration);
+    lConfigFile.LinkEndChild(lTopElement);
 
-    delete lConfigFile;
+    DoIO(lTopElement, false);
+
+    lConfigFile.SaveFile(iPath);
   }
 
-  void SimConfig::DoIO(TiXmlNode *iTopNode, bool iIsLoading)
+  void SimConfig::DoIO(TiXmlElement *iTopNode, bool iIsLoading)
   {
-    DoIO(TinyXPath::XAp_xpath_attribute(iTopNode, "//geometry/@voxelsize"),
-         iIsLoading, VoxelSize);
-    DoIO(TinyXPath::XAp_xpath_attribute(iTopNode, "//geometry/datafile/@path"),
+    TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
+    TiXmlElement* lVisualisationElement = GetChild(iTopNode, "visualisation",
+                                                   iIsLoading);
+
+    DoIO(lGeometryElement, "voxelsize", iIsLoading, VoxelSize);
+
+    DoIO(GetChild(lGeometryElement, "datafile", iIsLoading), "path",
          iIsLoading, DataFilePath);
 
-    DoIO(TinyXPath::XNp_xpath_node(iTopNode, "//inlets"), iIsLoading, Inlets);
-    DoIO(TinyXPath::XNp_xpath_node(iTopNode, "//outlets"), iIsLoading, Outlets);
-    DoIO(TinyXPath::XNp_xpath_node(iTopNode, "//visualisation/centre"),
-         iIsLoading, VisCentre);
-    DoIO(
-         TinyXPath::XAp_xpath_attribute(iTopNode,
-                                        "//visualisation/orientation/@longitude"),
-         iIsLoading, VisLongitude);
-    DoIO(
-         TinyXPath::XAp_xpath_attribute(iTopNode,
-                                        "//visualisation/orientation/@latitude"),
-         iIsLoading, VisLatitude);
-    DoIO(TinyXPath::XAp_xpath_attribute(iTopNode,
-                                        "//visualisation/display/@zoom"),
-         iIsLoading, VisZoom);
-    DoIO(TinyXPath::XAp_xpath_attribute(iTopNode,
-                                        "//visualisation/display/@brightness"),
-         iIsLoading, VisBrightness);
-    DoIO(TinyXPath::XAp_xpath_attribute(iTopNode,
-                                        "//visualisation/range/@maxvelocity"),
-         iIsLoading, MaxVelocity);
-    DoIO(TinyXPath::XAp_xpath_attribute(iTopNode,
-                                        "//visualisation/range/@maxstress"),
-         iIsLoading, MaxStress);
+    DoIO(GetChild(iTopNode, "inlets", iIsLoading), iIsLoading, Inlets, "inlet");
+
+    DoIO(GetChild(iTopNode, "outlets", iIsLoading), iIsLoading, Outlets,
+         "outlet");
+
+    DoIO(GetChild(lVisualisationElement, "centre", iIsLoading), iIsLoading,
+         VisCentre);
+
+    TiXmlElement *lOrientationElement = GetChild(lVisualisationElement,
+                                                 "orientation", iIsLoading);
+
+    DoIO(lOrientationElement, "longitude", iIsLoading, VisLongitude);
+    DoIO(lOrientationElement, "latitude", iIsLoading, VisLatitude);
+
+    TiXmlElement *lDisplayElement = GetChild(lVisualisationElement, "display",
+                                             iIsLoading);
+
+    DoIO(lDisplayElement, "zoom", iIsLoading, VisZoom);
+    DoIO(lDisplayElement, "brightness", iIsLoading, VisBrightness);
+
+    TiXmlElement *lRangeElement = GetChild(lVisualisationElement, "range",
+                                           iIsLoading);
+
+    DoIO(lRangeElement, "maxvelocity", iIsLoading, MaxVelocity);
+    DoIO(lRangeElement, "maxstress", iIsLoading, MaxStress);
   }
 
-  void SimConfig::DoIO(TiXmlAttribute *iXmlDoc, bool iIsLoading, float &value)
+  void SimConfig::DoIO(TiXmlElement* iParent,
+                       std::string iAttributeName,
+                       bool iIsLoading,
+                       float &value)
   {
     if (iIsLoading)
     {
       char *dummy;
-      value = strtof(iXmlDoc->Value(), &dummy);
+      value = strtof(iParent->Attribute(iAttributeName)->c_str(), &dummy);
     }
     else
     {
-      std::stringstream lTemp(std::stringstream::in);
-      lTemp << value;
-      iXmlDoc->SetValue(lTemp.str());
+      debug::Debugger::Get()->BreakHere();
+
+      // This should be ample.
+      char lStringValue[20];
+
+      // %g uses the shorter of decimal / mantissa-exponent notations.
+      // 6 significant figures will be written.
+      sprintf(lStringValue, "%.6g", value);
+
+      iParent->SetAttribute(iAttributeName, lStringValue);
     }
   }
 
-  void SimConfig::DoIO(TiXmlAttribute *iXmlDoc,
+  void SimConfig::DoIO(TiXmlElement* iParent,
+                       std::string iAttributeName,
                        bool iIsLoading,
-                       std::string &value)
+                       std::string &iValue)
   {
     if (iIsLoading)
     {
-      value = std::string(iXmlDoc->Value());
+      iValue = std::string(iParent->Attribute(iAttributeName)->c_str());
     }
     else
     {
-      iXmlDoc->SetValue(value);
+      iParent->SetAttribute(iAttributeName, iValue);
     }
   }
 
-  void SimConfig::DoIO(TiXmlNode *iXmlDoc, bool iIsLoading, std::vector<
-      InOutLet*> &bResult)
+  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, std::vector<
+      InOutLet*> &bResult, std::string iChildNodeName)
   {
     if (iIsLoading)
     {
-      const TiXmlNode *lCurrentLet = iXmlDoc->FirstChild();
+      TiXmlElement *lCurrentLet = iParent->FirstChildElement(iChildNodeName);
 
       while (lCurrentLet != NULL)
       {
         InOutLet *lNew = new InOutLet();
         bResult.push_back(lNew);
-        DoIO((TiXmlNode *) lCurrentLet, iIsLoading, lNew);
-        lCurrentLet = lCurrentLet->NextSibling();
+        DoIO(lCurrentLet, iIsLoading, lNew);
+        lCurrentLet = lCurrentLet->NextSiblingElement(iChildNodeName);
       }
     }
     else
     {
-      for (int ii = 0; ii < bResult.size(); ii++)
+      for (unsigned int ii = 0; ii < bResult.size(); ii++)
       {
         // NB we're good up to 99 inlets here.
-        char lTempString[11];
-        sprintf(lTempString, "/inlet[%i]", ii + 1);
-        TiXmlNode *lNew = TinyXPath::XNp_xpath_node(iXmlDoc, lTempString);
-        DoIO(lNew, iIsLoading, bResult[ii]);
+        DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading,
+             bResult[ii]);
       }
     }
   }
 
-  void SimConfig::DoIO(TiXmlNode *iXmlDoc, bool iIsLoading, InOutLet *value)
+  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, InOutLet *value)
   {
-    TiXmlNode * lPositionElement = TinyXPath::XNp_xpath_node(iXmlDoc,
-                                                             "//position");
-    TiXmlNode *lNormalElement = TinyXPath::XNp_xpath_node(iXmlDoc, "//normal");
+    TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
+    TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
+    TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
-    DoIO(TinyXPath::XAp_xpath_attribute(iXmlDoc, "//pressure/@mean"),
-         iIsLoading, value->PMean);
-    DoIO(TinyXPath::XAp_xpath_attribute(iXmlDoc, "//pressure/@amplitude"),
-         iIsLoading, value->PAmp);
-    DoIO(TinyXPath::XAp_xpath_attribute(iXmlDoc, "//pressure/@phase"),
-         iIsLoading, value->PPhase);
+    DoIO(lPressureElement, "mean", iIsLoading, value->PMean);
+    DoIO(lPressureElement, "amplitude", iIsLoading, value->PAmp);
+    DoIO(lPressureElement, "phase", iIsLoading, value->PPhase);
 
     DoIO(lPositionElement, iIsLoading, value->Position);
     DoIO(lNormalElement, iIsLoading, value->Normal);
   }
 
-  void SimConfig::DoIO(TiXmlNode *iXmlDoc, bool iIsLoading, Vector &iValue)
+  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, Vector &iValue)
   {
-    DoIO(TinyXPath::XAp_xpath_attribute(iXmlDoc, "//@x"), iIsLoading, iValue.x);
-    DoIO(TinyXPath::XAp_xpath_attribute(iXmlDoc, "//@y"), iIsLoading, iValue.y);
-    DoIO(TinyXPath::XAp_xpath_attribute(iXmlDoc, "//@z"), iIsLoading, iValue.z);
+    DoIO(iParent, "x", iIsLoading, iValue.x);
+    DoIO(iParent, "y", iIsLoading, iValue.y);
+    DoIO(iParent, "z", iIsLoading, iValue.z);
+  }
+
+  TiXmlElement *SimConfig::GetChild(TiXmlElement *iParent,
+                                    std::string iChildNodeName,
+                                    bool iIsLoading)
+  {
+    if (iIsLoading)
+    {
+      return iParent->FirstChildElement(iChildNodeName);
+    }
+    else
+    {
+      TiXmlElement* lNewChild = new TiXmlElement(iChildNodeName);
+      iParent->LinkEndChild(lNewChild);
+      return lNewChild;
+    }
   }
 
 }
