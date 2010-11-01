@@ -49,7 +49,7 @@ namespace hemelb
 
         void project(float p1[], float p2[]);
         void writePixel(ColPixel *col_pixel);
-        void mergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2);
+        void MergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2);
         void RotateAboutXThenY(const float &iSinThetaX,
                                const float &iCosThetaX,
                                const float &iSinThetaY,
