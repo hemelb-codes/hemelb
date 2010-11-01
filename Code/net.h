@@ -25,26 +25,18 @@ struct WallData
 
 };
 
-// WallBlock is a member of the structure Net and is employed to store the data
-// regarding the wall, inlet and outlet sites.
-struct WallBlock
-{
-    WallData *wall_data;
-};
-
 // For each global block,
 // *ProcessorRankForEachBlockSite is an array containing the ranks on which individual
 // lattice sites reside.
-struct ProcBlock
-{
-    int *ProcessorRankForEachBlockSite;
-};
-
+// WallBlock is a member of the structure Net and is employed to store the data
+// regarding the wall, inlet and outlet sites.
 // Block means macrocell of fluid sites (voxels).
 // site_data[] is an array containing individual lattice site data
 // within a global block.
 struct DataBlock
 {
+    int *ProcessorRankForEachBlockSite;
+    WallData *wall_data;
     unsigned int *site_data;
 };
 
@@ -86,12 +78,7 @@ class Net
     int *mFluidSitesOnEachProcessor; // Array containing numbers of fluid sites on
     // each process.
 
-    DataBlock *data_block; // See comment next to struct DataBlock.
     DataBlock *map_block; // See comment next to struct DataBlock.
-
-    ProcBlock *mProcessorsForEachBlock; // See comment next to struct ProcBlock.
-
-    WallBlock *wall_block; // See comment next to struct WallBlock.
 
     unsigned int GetCollisionType(unsigned int site_data);
     MPI_Status status[4];
@@ -118,11 +105,11 @@ class Net
     };
     int my_inter_sites;
     unsigned int *netSiteMapPointer(int site_i, int site_j, int site_k);
-    void ThisNeedsRenaming(int & proc_count,
-                           int & fluid_sites_per_unit,
-                           int & unvisited_fluid_sites,
-                           const int marker,
-                           const int unitLevel);
+    void AssignFluidSitesToProcessors(int & proc_count,
+                                      int & fluid_sites_per_unit,
+                                      int & unvisited_fluid_sites,
+                                      const int marker,
+                                      const int unitLevel);
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
     int shared_fs; // Number of distributions shared with neighbouring
     // processors.
@@ -137,7 +124,7 @@ class Net
     // 3 buffers needed for convergence-enabled simulations
     short int *f_data;
 
-    int net_machines;
+    int mMachineCount;
 };
 
 // TODO Ugh. Will get rid of these to somewhere else at some point.

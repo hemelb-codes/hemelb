@@ -1,4 +1,5 @@
 #include "SimulationMaster.h"
+#include "SimConfig.h"
 
 #include "usage.h"
 #include "debug/Debugger.h"

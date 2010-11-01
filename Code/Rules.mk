@@ -2,7 +2,7 @@
 include $(MK)/header.mk
 
 TARGETS = $(EXE)
-SUBDIRS = vis steering io debug lb
+SUBDIRS = vis steering io debug lb xml
 
 $(EXE)_DEPS = config.o \
         D3Q15.o \
@@ -11,6 +11,7 @@ $(EXE)_DEPS = config.o \
 	fileutils.o \
 	net.o \
         SimulationMaster.o \
+        SimConfig.o \
 	usage.o \
         utilityFunctions.o \
 	main.o \
