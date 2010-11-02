@@ -20,19 +20,19 @@ namespace hemelb
 
       struct InOutLet
       {
-          float PMean;
-          float PAmp;
-          float PPhase;
+          double PMean;
+          double PAmp;
+          double PPhase;
           Vector Position;
           Vector Normal;
       };
 
-      static SimConfig *Load(char *iPath);
+      static SimConfig *Load(const char *iPath);
       ~SimConfig();
 
       void Save(char *iPath);
 
-      float VoxelSize;
+      double VoxelSize;
       std::string DataFilePath;
       std::vector<InOutLet*> Inlets;
       std::vector<InOutLet*> Outlets;
@@ -43,6 +43,8 @@ namespace hemelb
       float VisBrightness;
       float MaxVelocity;
       float MaxStress;
+      long NumCycles;
+      long StepsPerCycle;
 
     private:
       SimConfig();
@@ -50,7 +52,15 @@ namespace hemelb
       void DoIO(TiXmlElement* iXmlNode,
                 std::string iAttributeName,
                 bool iIsLoading,
+                long &value);
+      void DoIO(TiXmlElement* iXmlNode,
+                std::string iAttributeName,
+                bool iIsLoading,
                 float &value);
+      void DoIO(TiXmlElement* iXmlNode,
+                std::string iAttributeName,
+                bool iIsLoading,
+                double &value);
       void DoIO(TiXmlElement *iXmlNode,
                 std::string iAttributeName,
                 bool iIsLoading,
