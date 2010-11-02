@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "debug/Debugger.h"
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
@@ -60,21 +61,21 @@ void LBM::lbmReadConfig(Net *net)
    *     double cut_distances[14]
    */
 
-  FILE* xdrFile = fopen(system_file_name, "r");
+  FILE* xdrFile = fopen(mSimConfig->DataFilePath.c_str(), "r");
 
   char* lProcIdentifier = net->GetCurrentProcIdentifier();
 
   if (xdrFile == NULL)
   {
-    fprintf(stderr, "Unable to open file %s [%s], exiting\n", system_file_name,
-            lProcIdentifier);
+    fprintf(stderr, "Unable to open file %s [%s], exiting\n",
+            mSimConfig->DataFilePath.c_str(), lProcIdentifier);
     fflush(0x0);
     exit(0x0);
   }
   else
   {
-    fprintf(stderr, "Opened config file %s [%s]\n", system_file_name,
-            lProcIdentifier);
+    fprintf(stderr, "Opened config file %s [%s]\n",
+            mSimConfig->DataFilePath.c_str(), lProcIdentifier);
   }
   fflush(NULL);
 
@@ -145,7 +146,8 @@ void LBM::lbmReadConfig(Net *net)
         // Block contains some non-solid sites
 
         net->map_block[n].site_data = new unsigned int[sites_in_a_block];
-        net->map_block[n].ProcessorRankForEachBlockSite = new int[sites_in_a_block];
+        net->map_block[n].ProcessorRankForEachBlockSite
+            = new int[sites_in_a_block];
 
         m = -1;
 
@@ -233,94 +235,54 @@ void LBM::lbmReadConfig(Net *net)
  through this function the processor 0 reads the LB parameters
  and then communicate them to the other processors
  */
-void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
+void LBM::lbmReadParameters(Net *net)
 {
 
   double par_to_send[10000];
-  double nor[3], pos[3];
-  int n;
   int nParamsRead = 0;
 
   if (net->IsCurrentProcTheIOProc())
   {
-    FILE *parameters_file = fopen(parameters_file_name, "r");
-
-    if (parameters_file == NULL)
-    {
-      fprintf(stderr, "unable to open file %s, exiting\n", parameters_file_name);
-      fflush(NULL);
-      exit(0x0);
-    }
-    else
-    {
-      fprintf(stderr, "done\n");
-    }
-    fflush(NULL);
-
-      nParamsRead = fscanf (parameters_file, "%i\n", &inlets);
-
+    inlets = mSimConfig->Inlets.size();
     allocateInlets(inlets);
 
-    for (n = 0; n < inlets; n++)
+    for (int n = 0; n < inlets; n++)
     {
-	  nParamsRead = fscanf (parameters_file, "%le %le %le\n",
-				&inlet_density_avg[n], &inlet_density_amp[n], &inlet_density_phs[n]);
+      hemelb::SimConfig::InOutLet *lInlet = mSimConfig->Inlets[n];
 
-      inlet_density_avg[n]
-          = lbmConvertPressureToLatticeUnits(inlet_density_avg[n]) / Cs2;
-      inlet_density_amp[n]
-          = lbmConvertPressureGradToLatticeUnits(inlet_density_amp[n]) / Cs2;
-      inlet_density_phs[n] *= DEG_TO_RAD;
+      inlet_density_avg[n] = lbmConvertPressureToLatticeUnits(lInlet->PMean)
+          / Cs2;
+      inlet_density_amp[n] = lbmConvertPressureGradToLatticeUnits(lInlet->PAmp)
+          / Cs2;
+      inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
     }
-      nParamsRead = fscanf (parameters_file, "%i\n", &outlets);
 
-
+    outlets = mSimConfig->Outlets.size();
     allocateOutlets(outlets);
 
-    for (n = 0; n < outlets; n++)
+    for (int n = 0; n < outlets; n++)
     {
-	  nParamsRead = fscanf (parameters_file, "%le %le %le\n",
-				&outlet_density_avg[n], &outlet_density_amp[n], &outlet_density_phs[n]);
-
-      outlet_density_avg[n]
-          = lbmConvertPressureToLatticeUnits(outlet_density_avg[n]) / Cs2;
+      hemelb::SimConfig::InOutLet *lOutlet = mSimConfig->Outlets[n];
+      outlet_density_avg[n] = lbmConvertPressureToLatticeUnits(lOutlet->PMean)
+          / Cs2;
       outlet_density_amp[n]
-          = lbmConvertPressureGradToLatticeUnits(outlet_density_amp[n]) / Cs2;
-      outlet_density_phs[n] *= DEG_TO_RAD;
+          = lbmConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
+      outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
     }
+
     lbm_average_inlet_velocity = new double[inlets];
     lbm_peak_inlet_velocity = new double[inlets];
     lbm_inlet_normal = new double[3 * inlets];
     lbm_inlet_count = new long int[inlets];
 
-    if (feof(parameters_file) == 0)
-    {
-      is_inlet_normal_available = 1;
+    is_inlet_normal_available = 1;
 
-      for (n = 0; n < inlets; n++)
-	    nParamsRead = fscanf (parameters_file, "%le %le %le\n",
-		      &lbm_inlet_normal[3*n], &lbm_inlet_normal[3*n+1], &lbm_inlet_normal[3*n+2]);
-    }
-    else
+    for (int ii = 0; ii < inlets; ii++)
     {
-      is_inlet_normal_available = 0;
+      lbm_inlet_normal[3 * ii] = mSimConfig->Inlets[ii]->Normal.x;
+      lbm_inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
+      lbm_inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
     }
-    if (feof(parameters_file) == 0)
-    {
-      for (n = 0; n < outlets; n++)
-	    nParamsRead  = fscanf (parameters_file, "%le %le %le\n", &nor[0], &nor[1], &nor[2]);
-    }
-    if (feof(parameters_file) == 0)
-    {
-      for (n = 0; n < inlets; n++)
-	    nParamsRead = fscanf (parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
-    }
-    if (feof(parameters_file) == 0)
-    {
-      for (n = 0; n < outlets; n++)
-	    nParamsRead = fscanf (parameters_file, "%le %le %le\n", &pos[0], &pos[1], &pos[2]);
-    }
-    fclose(parameters_file);
 
     par_to_send[0] = 0.1 + (double) inlets;
     par_to_send[1] = 0.1 + (double) outlets;
@@ -345,13 +307,13 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
   }
   else
   {
-    for (n = 0; n < inlets; n++)
+    for (int n = 0; n < inlets; n++)
     {
       par_to_send[3 * n + 0] = inlet_density_avg[n];
       par_to_send[3 * n + 1] = inlet_density_amp[n];
       par_to_send[3 * n + 2] = inlet_density_phs[n];
     }
-    for (n = 0; n < outlets; n++)
+    for (int n = 0; n < outlets; n++)
     {
       par_to_send[3 * inlets + 3 * n + 0] = outlet_density_avg[n];
       par_to_send[3 * inlets + 3 * n + 1] = outlet_density_amp[n];
@@ -359,7 +321,7 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
     }
     if (is_inlet_normal_available)
     {
-      for (n = 0; n < inlets; n++)
+      for (int n = 0; n < inlets; n++)
       {
         par_to_send[3 * (inlets + outlets) + 3 * n + 0] = lbm_inlet_normal[3
             * n + 0];
@@ -376,13 +338,13 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
 #endif
   if (!net->IsCurrentProcTheIOProc())
   {
-    for (n = 0; n < inlets; n++)
+    for (int n = 0; n < inlets; n++)
     {
       inlet_density_avg[n] = par_to_send[3 * n + 0];
       inlet_density_amp[n] = par_to_send[3 * n + 1];
       inlet_density_phs[n] = par_to_send[3 * n + 2];
     }
-    for (n = 0; n < outlets; n++)
+    for (int n = 0; n < outlets; n++)
     {
       outlet_density_avg[n] = par_to_send[3 * inlets + 3 * n + 0];
       outlet_density_amp[n] = par_to_send[3 * inlets + 3 * n + 1];
@@ -390,7 +352,7 @@ void LBM::lbmReadParameters(char *parameters_file_name, Net *net)
     }
     if (is_inlet_normal_available)
     {
-      for (n = 0; n < inlets; n++)
+      for (int n = 0; n < inlets; n++)
       {
         lbm_inlet_normal[3 * n + 0] = par_to_send[3 * (inlets + outlets) + 3
             * n + 0];
@@ -527,7 +489,8 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 
   for (int n = 0; n < net->mProcessorCount; n++)
   {
-    fluid_sites_max = hemelb::util::max(fluid_sites_max, net->mFluidSitesOnEachProcessor[n]);
+    fluid_sites_max = hemelb::util::max(fluid_sites_max,
+                                        net->mFluidSitesOnEachProcessor[n]);
   }
 
   // "buffer_size" is the size of the flow field buffer to send to the
@@ -536,7 +499,8 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
   // ("gathered_flow_field").  If "buffer_size" is larger the
   // frequency with which data communication to the root processor is
   // performed becomes lower and viceversa
-  buffer_size = hemelb::util::min(1000000, fluid_sites_max * net->mProcessorCount);
+  buffer_size = hemelb::util::min(1000000, fluid_sites_max
+      * net->mProcessorCount);
 
   communication_period = int(ceil(double(buffer_size) / net->mProcessorCount));
 
@@ -548,7 +512,8 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
       * net->mProcessorCount];
 
   local_site_data = new short int[3 * communication_period];
-  gathered_site_data = new short int[3 * communication_period * net->mProcessorCount];
+  gathered_site_data = new short int[3 * communication_period
+      * net->mProcessorCount];
 
   for (comPeriodDelta = 0; comPeriodDelta < communication_period; comPeriodDelta++)
   {
@@ -566,23 +531,31 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
    root processor */
 
   int n = -1; // net->proc_block counter
-  for (int i = 0; i < sites_x; i+=block_size) {
-    for (int j = 0; j < sites_y; j+=block_size) {
-      for (int k = 0; k < sites_z; k+=block_size) {
+  for (int i = 0; i < sites_x; i += block_size)
+  {
+    for (int j = 0; j < sites_y; j += block_size)
+    {
+      for (int k = 0; k < sites_z; k += block_size)
+      {
 
-	++n;
-	
-	if (net->map_block[ n ].ProcessorRankForEachBlockSite == NULL) {
+        ++n;
+
+        if (net->map_block[n].ProcessorRankForEachBlockSite == NULL)
+        {
           continue;
         }
-	int m = -1;
+        int m = -1;
 
-	for (int site_i = i; site_i < i + block_size; site_i++) {
-	  for (int site_j = j; site_j < j + block_size; site_j++) {
-	    for (int site_k = k; site_k < k + block_size; site_k++) {
+        for (int site_i = i; site_i < i + block_size; site_i++)
+        {
+          for (int site_j = j; site_j < j + block_size; site_j++)
+          {
+            for (int site_k = k; site_k < k + block_size; site_k++)
+            {
 
               m++;
-              if (!net->IsCurrentProcRank(net->map_block[n].ProcessorRankForEachBlockSite[m]))
+              if (!net->IsCurrentProcRank(
+                                          net->map_block[n].ProcessorRankForEachBlockSite[m]))
               {
                 continue;
               }
@@ -593,17 +566,22 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
               if (my_site_id & (1U << 31U))
                 continue;
 
-	      if (net->net_site_data[ my_site_id ] == FLUID_TYPE) {
-                D3Q15::CalculateDensityVelocityFEq(&f_old[ (my_site_id * (par + 1) + par)
-                    * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
-		
-		for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++) {
-		  f_neq[ l ] = f_old[ (my_site_id*(par+1)+par)*D3Q15::NUMVECTORS+l ] - f_eq[ l ];
-		}
-		
-	      } else { // not FLUID_TYPE
-		lbmCalculateBC(&f_old[ (my_site_id*(par+1)+par)*D3Q15::NUMVECTORS ],
-			       net->net_site_data[ my_site_id ],
+              if (net->net_site_data[my_site_id] == FLUID_TYPE)
+              {
+                D3Q15::CalculateDensityVelocityFEq(&f_old[ (my_site_id * (par
+                    + 1) + par) * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
+
+                for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+                {
+                  f_neq[l] = f_old[ (my_site_id * (par + 1) + par)
+                      * D3Q15::NUMVECTORS + l] - f_eq[l];
+                }
+
+              }
+              else
+              { // not FLUID_TYPE
+                lbmCalculateBC(&f_old[ (my_site_id * (par + 1) + par)
+                    * D3Q15::NUMVECTORS], net->net_site_data[my_site_id],
                                &density, &vx, &vy, &vz, f_neq);
               }
 
@@ -683,9 +661,11 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
                   gathered_site_data[l * 3 + 1] -= site_min_y;
                   gathered_site_data[l * 3 + 2] -= site_min_z;
 
-		  snap << gathered_site_data[ l*3+0 ] << gathered_site_data[ l*3+1 ]<< gathered_site_data[ l*3+2 ];
-		  
-		  for (int kk = 0; kk < MACROSCOPIC_PARS; kk++) {
+                  snap << gathered_site_data[l * 3 + 0] << gathered_site_data[l
+                      * 3 + 1] << gathered_site_data[l * 3 + 2];
+
+                  for (int kk = 0; kk < MACROSCOPIC_PARS; kk++)
+                  {
                     snap << gathered_flow_field[MACROSCOPIC_PARS * l + kk];
                   }
                   snap << hemelb::io::Writer::eol;
@@ -693,7 +673,8 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
 
               }
 
-	      for (int l = 0; l < communication_period; l++) {
+              for (int l = 0; l < communication_period; l++)
+              {
                 local_site_data[l * 3] = -1;
               }
 
@@ -767,64 +748,27 @@ void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
   delete[] local_flow_field;
 }
 
-void LBM::ReadVisParameters(char *parameters_file_name,
-                            Net *net,
-                            hemelb::vis::Control *bControl)
+void LBM::ReadVisParameters(Net *net, hemelb::vis::Control *bControl)
 {
-  FILE *parameters_file;
-
-  float lBrightness, lDensity_threshold_min, lDensity_threshold_minmax_inv,
+  float lDensity_threshold_min, lDensity_threshold_minmax_inv,
       lVelocity_threshold_max_inv, lStress_threshold_max_inv;
   float par_to_send[9];
-  float local_ctr_x, local_ctr_y, local_ctr_z;
-  float longitude, latitude;
-  float zoom;
   float density_min, density_max, velocity_max, stress_max;
-  float physical_velocity_max, physical_stress_max;
 
   int i;
 
   if (net->IsCurrentProcTheIOProc())
   {
-    fprintf(stderr, "opening ray tracing configuration file %s\n",
-            parameters_file_name);
+    velocity_max = lbmConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
+    stress_max = lbmConvertStressToLatticeUnits(mSimConfig->MaxStress);
 
-    parameters_file = fopen(parameters_file_name, "r");
-
-    if (parameters_file == NULL)
-    {
-      fprintf(stderr, "unable to open file %s, exiting\n", parameters_file_name);
-      fflush(0x0);
-      exit(0x0);
-    }
-    else
-    {
-      fprintf(stderr, "done\n");
-    }
-
-    fflush(NULL);
-
-    fscanf(parameters_file, "%e \n", &local_ctr_x);
-    fscanf(parameters_file, "%e \n", &local_ctr_y);
-    fscanf(parameters_file, "%e \n", &local_ctr_z);
-    fscanf(parameters_file, "%e \n", &longitude);
-    fscanf(parameters_file, "%e \n", &latitude);
-    fscanf(parameters_file, "%e \n", &zoom);
-    fscanf(parameters_file, "%e \n", &lBrightness);
-    fscanf(parameters_file, "%e \n", &physical_velocity_max);
-    fscanf(parameters_file, "%e \n", &physical_stress_max);
-    fclose(parameters_file);
-
-    velocity_max = lbmConvertVelocityToLatticeUnits(physical_velocity_max);
-    stress_max = lbmConvertStressToLatticeUnits(physical_stress_max);
-
-    par_to_send[0] = local_ctr_x;
-    par_to_send[1] = local_ctr_y;
-    par_to_send[2] = local_ctr_z;
-    par_to_send[3] = longitude;
-    par_to_send[4] = latitude;
-    par_to_send[5] = zoom;
-    par_to_send[6] = lBrightness;
+    par_to_send[0] = mSimConfig->VisCentre.x;
+    par_to_send[1] = mSimConfig->VisCentre.y;
+    par_to_send[2] = mSimConfig->VisCentre.z;
+    par_to_send[3] = mSimConfig->VisLongitude;
+    par_to_send[4] = mSimConfig->VisLatitude;
+    par_to_send[5] = mSimConfig->VisZoom;
+    par_to_send[6] = mSimConfig->VisBrightness;
     par_to_send[7] = velocity_max;
     par_to_send[8] = stress_max;
   }
@@ -832,18 +776,20 @@ void LBM::ReadVisParameters(char *parameters_file_name,
   net->err = MPI_Bcast(par_to_send, 9, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #endif
 
-  local_ctr_x = par_to_send[0];
-  local_ctr_y = par_to_send[1];
-  local_ctr_z = par_to_send[2];
-  longitude = par_to_send[3];
-  latitude = par_to_send[4];
-  zoom = par_to_send[5];
-  lBrightness = par_to_send[6];
+  mSimConfig->VisCentre.x = par_to_send[0];
+  mSimConfig->VisCentre.y = par_to_send[1];
+  mSimConfig->VisCentre.z = par_to_send[2];
+  mSimConfig->VisLongitude = par_to_send[3];
+  mSimConfig->VisLatitude = par_to_send[4];
+  mSimConfig->VisZoom = par_to_send[5];
+  mSimConfig->VisBrightness = par_to_send[6];
   velocity_max = par_to_send[7];
   stress_max = par_to_send[8];
 
-  bControl->SetProjection(512, 512, local_ctr_x, local_ctr_y, local_ctr_z,
-                          longitude, latitude, zoom);
+  bControl->SetProjection(512, 512, mSimConfig->VisCentre.x,
+                          mSimConfig->VisCentre.y, mSimConfig->VisCentre.z,
+                          mSimConfig->VisLongitude, mSimConfig->VisLatitude,
+                          mSimConfig->VisZoom);
 
   density_min = +1.0e+30F;
   density_max = -1.0e+30F;
@@ -868,7 +814,8 @@ void LBM::ReadVisParameters(char *parameters_file_name,
   lVelocity_threshold_max_inv = 1.0F / velocity_max;
   lStress_threshold_max_inv = 1.0F / stress_max;
 
-  hemelb::vis::controller->SetSomeParams(lBrightness, lDensity_threshold_min,
+  hemelb::vis::controller->SetSomeParams(mSimConfig->VisBrightness,
+                                         lDensity_threshold_min,
                                          lDensity_threshold_minmax_inv,
                                          lVelocity_threshold_max_inv,
                                          lStress_threshold_max_inv);

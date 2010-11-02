@@ -28,7 +28,7 @@ namespace hemelb
     }
   }
 
-  SimConfig *SimConfig::Load(char *iPath)
+  SimConfig *SimConfig::Load(const char *iPath)
   {
     util::check_file(iPath);
     TiXmlDocument *lConfigFile = new TiXmlDocument();
@@ -59,12 +59,13 @@ namespace hemelb
 
   void SimConfig::DoIO(TiXmlElement *iTopNode, bool iIsLoading)
   {
+    TiXmlElement* lSimulationElement = GetChild(iTopNode, "simulation",
+                                                iIsLoading);
+    DoIO(lSimulationElement, "cycles", iIsLoading, NumCycles);
+    DoIO(lSimulationElement, "cyclesteps", iIsLoading, StepsPerCycle);
+
     TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
-    TiXmlElement* lVisualisationElement = GetChild(iTopNode, "visualisation",
-                                                   iIsLoading);
-
     DoIO(lGeometryElement, "voxelsize", iIsLoading, VoxelSize);
-
     DoIO(GetChild(lGeometryElement, "datafile", iIsLoading), "path",
          iIsLoading, DataFilePath);
 
@@ -73,12 +74,12 @@ namespace hemelb
     DoIO(GetChild(iTopNode, "outlets", iIsLoading), iIsLoading, Outlets,
          "outlet");
 
+    TiXmlElement* lVisualisationElement = GetChild(iTopNode, "visualisation",
+                                                   iIsLoading);
     DoIO(GetChild(lVisualisationElement, "centre", iIsLoading), iIsLoading,
          VisCentre);
-
     TiXmlElement *lOrientationElement = GetChild(lVisualisationElement,
                                                  "orientation", iIsLoading);
-
     DoIO(lOrientationElement, "longitude", iIsLoading, VisLongitude);
     DoIO(lOrientationElement, "latitude", iIsLoading, VisLatitude);
 
@@ -107,8 +108,29 @@ namespace hemelb
     }
     else
     {
-      debug::Debugger::Get()->BreakHere();
+      // This should be ample.
+      char lStringValue[20];
 
+      // %g uses the shorter of decimal / mantissa-exponent notations.
+      // 6 significant figures will be written.
+      sprintf(lStringValue, "%.6g", value);
+
+      iParent->SetAttribute(iAttributeName, lStringValue);
+    }
+  }
+
+  void SimConfig::DoIO(TiXmlElement* iParent,
+                       std::string iAttributeName,
+                       bool iIsLoading,
+                       double &value)
+  {
+    if (iIsLoading)
+    {
+      char *dummy;
+      value = strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
+    }
+    else
+    {
       // This should be ample.
       char lStringValue[20];
 
@@ -132,6 +154,29 @@ namespace hemelb
     else
     {
       iParent->SetAttribute(iAttributeName, iValue);
+    }
+  }
+
+  void SimConfig::DoIO(TiXmlElement* iParent,
+                       std::string iAttributeName,
+                       bool iIsLoading,
+                       long &bValue)
+  {
+    if (iIsLoading)
+    {
+      char *dummy;
+      // Read in, in base 10.
+      bValue = strtol(iParent->Attribute(iAttributeName)->c_str(), &dummy, 10);
+    }
+    else
+    {
+      // This should be ample.
+      char lStringValue[20];
+
+      // %ld specifies long integer style.
+      sprintf(lStringValue, "%ld", bValue);
+
+      iParent->SetAttribute(iAttributeName, lStringValue);
     }
   }
 
