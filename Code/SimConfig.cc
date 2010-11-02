@@ -18,11 +18,11 @@ namespace hemelb
 
   SimConfig::~SimConfig()
   {
-    for (int ii = 0; ii < Inlets.size(); ii++)
+    for (unsigned int ii = 0; ii < Inlets.size(); ii++)
     {
       delete Inlets[ii];
     }
-    for (int jj = 0; jj < Outlets.size(); jj++)
+    for (unsigned int jj = 0; jj < Outlets.size(); jj++)
     {
       delete Outlets[jj];
     }
