@@ -14,11 +14,6 @@ class SimulationMaster
     LBM *GetLBM();
     Net *GetNet();
 
-    //TODO: It will eventually be fine for these to be private
-    int mMaxCycleCount;
-    int mSnapshotsPerCycle;
-    int mImagesPerCycle;
-
   private:
 
     LBM *mLbm;
