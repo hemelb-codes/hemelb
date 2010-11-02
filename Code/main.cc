@@ -88,11 +88,10 @@ int main(int argc, char *argv[])
     }
   }
 
-  // TODO delete this object at some point
   hemelb::SimConfig *lSimulationConfig =
       hemelb::SimConfig::Load(lInputFile.c_str());
 
-  int lLastForwardSlash = lInputFile.rfind('/');
+  unsigned long lLastForwardSlash = lInputFile.rfind('/');
 
   std::string lFileNameComponent = std::string( (lLastForwardSlash
       == std::string::npos)
