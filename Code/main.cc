@@ -8,6 +8,7 @@
 #include "utilityFunctions.h"
 #include "lb.h"
 
+#include "SimConfig.h"
 #include "SimulationMaster.h"
 
 #include "steering/steering.h"
@@ -29,6 +30,91 @@ int main(int argc, char *argv[])
   // simulation paramenters and performance statistics are outputted on
   // standard output
 
+  SimulationMaster lMaster = SimulationMaster(argc, argv);
+
+  // This is currently where all default command-line arguments are.
+  std::string lInputFile = "config.xml";
+  std::string lOutputDir = "";
+  unsigned int lSnapshotsPerCycle = 10;
+  unsigned int lImagesPerCycle = 10;
+  unsigned int lSteeringSessionId = 1;
+
+  // There should be an odd number of arguments since the parameters occur in pairs.
+  if ( (argc % 2) == 0)
+  {
+    if (lMaster.GetNet()->IsCurrentProcTheIOProc())
+    {
+      Usage::printUsage(argv[0]);
+    }
+    lMaster.GetNet()->Abort();
+  }
+
+  // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
+  // is the <parametervalue>.
+  for (int ii = 1; ii < argc; ii += 2)
+  {
+    char* lParamName = argv[ii];
+    char* lParamValue = argv[ii + 1];
+    if (strcmp(lParamName, "-in") == 0)
+    {
+      lInputFile = std::string(lParamValue);
+    }
+    else if (strcmp(lParamName, "-out") == 0)
+    {
+      lOutputDir = std::string(lParamValue);
+    }
+    else if (strcmp(lParamName, "-s") == 0)
+    {
+      char * dummy;
+      lSnapshotsPerCycle = (unsigned int) strtoul(lParamValue, &dummy, 10);
+    }
+    else if (strcmp(lParamName, "-i") == 0)
+    {
+      char * dummy;
+      lImagesPerCycle = (unsigned int) strtoul(lParamValue, &dummy, 10);
+    }
+    else if (strcmp(lParamName, "-ss") == 0)
+    {
+      char * dummy;
+      lSteeringSessionId = (unsigned int) strtoul(lParamValue, &dummy, 10);
+    }
+    else
+    {
+      if (lMaster.GetNet()->IsCurrentProcTheIOProc())
+      {
+        Usage::printUsage(argv[0]);
+      }
+      lMaster.GetNet()->Abort();
+    }
+  }
+
+  // TODO delete this object at some point
+  hemelb::SimConfig *lSimulationConfig =
+      hemelb::SimConfig::Load(lInputFile.c_str());
+
+  if (lOutputDir.length() == 0)
+  {
+    int lLastForwardSlash = lInputFile.rfind('/');
+
+    std::string lFileNameComponent = std::string( (lLastForwardSlash
+        == std::string::npos)
+      ? lInputFile
+      : lInputFile.substr(lLastForwardSlash));
+
+    // Replace all '.' characters in the string with underscores.
+    for (int ii = 0; ii < lFileNameComponent.length(); ii++)
+    {
+      if (lFileNameComponent[ii] == '.')
+      {
+        lFileNameComponent[ii] = '_';
+      }
+    }
+
+    lOutputDir = std::string( (lLastForwardSlash == std::string::npos)
+      ? lFileNameComponent + "_results"
+      : lInputFile.substr(0, lLastForwardSlash) + lFileNameComponent
+          + "_results");
+  }
 
   double simulation_time = 0.;
   int total_time_steps, stability = STABLE;
@@ -42,7 +128,6 @@ int main(int argc, char *argv[])
   int images_period;
   int is_unstable = 0;
 
-  SimulationMaster lMaster = SimulationMaster(argc, argv);
   hemelb::steering::Control
       * steeringController =
           hemelb::steering::Control::Init(
@@ -50,38 +135,22 @@ int main(int argc, char *argv[])
 
   double total_time = hemelb::util::myClock();
 
-  char* input_file_path(argv[1]);
-
-  char input_config_name[256];
-  char input_parameters_name[256];
-  char vis_parameters_name[256];
   char snapshot_directory[256];
   char image_directory[256];
   char complete_image_name[256];
 
-  strcpy(input_config_name, input_file_path);
-  strcat(input_config_name, "/config.dat");
-  hemelb::util::check_file(input_config_name);
-
-  strcpy(input_parameters_name, input_file_path);
-  strcat(input_parameters_name, "/pars.asc");
-  hemelb::util::check_file(input_parameters_name);
-
-  strcpy(vis_parameters_name, input_file_path);
-  strcat(vis_parameters_name, "/rt_pars.asc");
-  hemelb::util::check_file(vis_parameters_name);
-
   // Create directory path for the output images
-  strcpy(image_directory, input_file_path);
+  strcpy(image_directory, lOutputDir.c_str());
   strcat(image_directory, "/Images/");
 
   //Create directory path for the output snapshots
-  strcpy(snapshot_directory, input_file_path);
+  strcpy(snapshot_directory, lOutputDir.c_str());
   strcat(snapshot_directory, "/Snapshots/");
 
   // Actually create the directories.
   if (lMaster.GetNet()->IsCurrentProcTheIOProc())
   {
+    hemelb::util::MakeDirAllRXW(lOutputDir.c_str());
     hemelb::util::MakeDirAllRXW(image_directory);
     hemelb::util::MakeDirAllRXW(snapshot_directory);
 
@@ -89,7 +158,7 @@ int main(int argc, char *argv[])
     char procs_string[256];
 
     sprintf(procs_string, "%i", lMaster.GetNet()->mProcessorCount);
-    strcpy(timings_name, input_file_path);
+    strcpy(timings_name, lOutputDir.c_str());
     strcat(timings_name, "/timings");
     strcat(timings_name, procs_string);
     strcat(timings_name, ".asc");
@@ -98,18 +167,15 @@ int main(int argc, char *argv[])
 
     fprintf(timings_ptr,
             "***********************************************************\n");
-    fprintf(timings_ptr, "Opening parameters file:\n %s\n",
-            input_parameters_name);
-    fprintf(timings_ptr, "Opening config file:\n %s\n", input_config_name);
-    fprintf(timings_ptr, "Opening vis parameters file:\n %s\n\n",
-            vis_parameters_name);
+    fprintf(timings_ptr, "Opening config file:\n %s\n", lInputFile.c_str());
 
     steeringController->StartNetworkThread(lMaster.GetLBM());
 
   }
 
-  lMaster.GetLBM()->lbmInit(input_config_name, input_parameters_name,
-                            lMaster.GetNet());
+  lMaster.GetLBM()->lbmInit(lSimulationConfig, (int) lSteeringSessionId,
+                            (int) lSimulationConfig->StepsPerCycle,
+                            lSimulationConfig->VoxelSize, lMaster.GetNet());
 
   if (lMaster.GetNet()->netFindTopology(&depths) == 0)
   {
@@ -125,8 +191,7 @@ int main(int argc, char *argv[])
 
   hemelb::vis::controller->initLayers(lMaster.GetNet());
 
-  lMaster.GetLBM()->ReadVisParameters(vis_parameters_name, lMaster.GetNet(),
-                                      hemelb::vis::controller);
+  lMaster.GetLBM()->ReadVisParameters(lMaster.GetNet(), hemelb::vis::controller);
 
   steeringController->UpdateSteerableParameters(false,
                                                 &hemelb::vis::doRendering,
@@ -142,19 +207,19 @@ int main(int argc, char *argv[])
 
   simulation_time = hemelb::util::myClock();
 
-  if (lMaster.mSnapshotsPerCycle == 0)
+  if (lSnapshotsPerCycle == 0)
     snapshots_period = 1e9;
   else
     snapshots_period = hemelb::util::max(1, lMaster.GetLBM()->period
-        / lMaster.mSnapshotsPerCycle);
+        / lSnapshotsPerCycle);
 
-  if (lMaster.mImagesPerCycle == 0)
+  if (lImagesPerCycle == 0)
     images_period = 1e9;
   else
     images_period = hemelb::util::max(1, lMaster.GetLBM()->period
-        / lMaster.mImagesPerCycle);
+        / lImagesPerCycle);
 
-  for (cycle_id = 1; cycle_id <= lMaster.mMaxCycleCount && !is_finished; cycle_id++)
+  for (cycle_id = 1; cycle_id <= lSimulationConfig->NumCycles && !is_finished; cycle_id++)
   {
     int restart = 0;
 
@@ -166,7 +231,7 @@ int main(int argc, char *argv[])
       intra_cycle_time = (PULSATILE_PERIOD * time_step)
           / lMaster.GetLBM()->period;
 
-      int write_snapshot_image = (time_step % images_period == 0)
+      int write_snapshot_image = ( (time_step % images_period) == 0)
         ? 1
         : 0;
 
@@ -264,6 +329,8 @@ int main(int argc, char *argv[])
 #endif // NO_STEER
       if (write_snapshot_image)
       {
+        hemelb::debug::Debugger::Get()->BreakHere();
+
         hemelb::vis::controller->render(RECV_BUFFER_B, lMaster.GetNet());
 
         if (lMaster.GetNet()->IsCurrentProcTheIOProc())
@@ -336,15 +403,13 @@ int main(int argc, char *argv[])
         printf("restarting: period: %i\n", lMaster.GetLBM()->period);
         fflush(0x0);
       }
-      snapshots_period = (lMaster.mSnapshotsPerCycle == 0)
+      snapshots_period = (lSnapshotsPerCycle == 0)
         ? 1e9
-        : hemelb::util::max(1, lMaster.GetLBM()->period
-            / lMaster.mSnapshotsPerCycle);
+        : hemelb::util::max(1, lMaster.GetLBM()->period / lSnapshotsPerCycle);
 
-      images_period = (lMaster.mImagesPerCycle == 0)
+      images_period = (lImagesPerCycle == 0)
         ? 1e9
-        : hemelb::util::max(1, lMaster.GetLBM()->period
-            / lMaster.mImagesPerCycle);
+        : hemelb::util::max(1, lMaster.GetLBM()->period / lImagesPerCycle);
 
       cycle_id = 0;
       continue;
@@ -362,7 +427,7 @@ int main(int argc, char *argv[])
   simulation_time = hemelb::util::myClock() - simulation_time;
 
   time_step = hemelb::util::min(time_step, lMaster.GetLBM()->period);
-  cycle_id = hemelb::util::min(cycle_id, lMaster.mMaxCycleCount);
+  cycle_id = hemelb::util::min(cycle_id, lSimulationConfig->NumCycles);
   time_step = time_step * cycle_id;
 
   if (lMaster.GetNet()->IsCurrentProcTheIOProc())

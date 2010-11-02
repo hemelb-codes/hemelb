@@ -4,6 +4,7 @@
 #include "constants.h"
 #include "mpiInclude.h"
 #include "D3Q15.h"
+#include "SimConfig.h"
 
 // Superficial site data
 struct WallData
@@ -114,6 +115,7 @@ class Net
     int shared_fs; // Number of distributions shared with neighbouring
     // processors.
     double *cut_distances;
+    hemelb::SimConfig* mSimConfig;
     double *net_site_nor;
     int *machine_id;
     int *procs_per_machine;
