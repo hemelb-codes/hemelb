@@ -4,18 +4,18 @@
 #include "net.h"
 #include "lb/collisions/Collisions.h"
 #include "vis/ColPixel.h"
+#include "SimConfig.h"
 
 class LBM
 {
   public:
-    int steering_session_id;
-
     double *inlet_density_avg, *inlet_density_amp;
     double *outlet_density_avg, *outlet_density_amp;
-    double voxel_size;
 
     int total_fluid_sites;
     int inlets, outlets;
+    int steering_session_id;
+    double voxel_size;
     int period;
 
     double lbmConvertPressureToLatticeUnits(double pressure);
@@ -25,8 +25,10 @@ class LBM
     double lbmConvertStressToPhysicalUnits(double stress);
     double lbmConvertVelocityToPhysicalUnits(double velocity);
 
-    void lbmInit(char *system_file_name_in,
-                 char *parameters_file_name,
+    void lbmInit(hemelb::SimConfig *iSimulationConfig,
+                 int iSteeringSessionId,
+                 int iPeriod,
+                 double voxel_size,
                  Net *net);
     void lbmRestart(Net *net);
     ~LBM();
@@ -55,9 +57,7 @@ class LBM
     double GetAverageInletVelocity(int iInletNumber);
     double GetPeakInletVelocity(int iInletNumber);
 
-    void ReadVisParameters(char *parameters_file_name,
-                           Net *net,
-                           hemelb::vis::Control *bController);
+    void ReadVisParameters(Net *net, hemelb::vis::Control *bController);
 
     void CalculateMouseFlowField(hemelb::vis::ColPixel *col_pixel_p,
                                  double &mouse_pressure,
@@ -77,7 +77,7 @@ class LBM
 
     void lbmInitCollisions();
     void lbmReadConfig(Net *net);
-    void lbmReadParameters(char *parameters_file_name, Net *net);
+    void lbmReadParameters(Net *net);
 
     void allocateInlets(int nInlets);
     void allocateOutlets(int nOutlets);
@@ -99,13 +99,15 @@ class LBM
 
     int site_min_x, site_min_y, site_min_z;
     int site_max_x, site_max_y, site_max_z;
-    char *system_file_name;
     int is_inlet_normal_available;
     double* inlet_density, *outlet_density;
     hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;
     double *lbm_inlet_normal;
     long int *lbm_inlet_count;
     double tau, viscosity, omega;
+
+    // TODO Eventually we should be able to make this private.
+    hemelb::SimConfig *mSimConfig;
 
     double *lbm_average_inlet_velocity;
     double *lbm_peak_inlet_velocity;

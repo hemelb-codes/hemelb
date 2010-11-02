@@ -1,5 +1,6 @@
 <?xml version="1.0" ?>
 <hemelbsettings>
+ <simulation cycles="10" cyclesteps="1000" />
  <geometry voxelsize="0.000397">
   <datafile path="./config.dat" />
  </geometry>
