@@ -92,28 +92,18 @@ int main(int argc, char *argv[])
   hemelb::SimConfig *lSimulationConfig =
       hemelb::SimConfig::Load(lInputFile.c_str());
 
+  int lLastForwardSlash = lInputFile.rfind('/');
+
+  std::string lFileNameComponent = std::string( (lLastForwardSlash
+      == std::string::npos)
+    ? lInputFile
+    : lInputFile.substr(lLastForwardSlash));
+
   if (lOutputDir.length() == 0)
   {
-    int lLastForwardSlash = lInputFile.rfind('/');
-
-    std::string lFileNameComponent = std::string( (lLastForwardSlash
-        == std::string::npos)
-      ? lInputFile
-      : lInputFile.substr(lLastForwardSlash));
-
-    // Replace all '.' characters in the string with underscores.
-    for (int ii = 0; ii < lFileNameComponent.length(); ii++)
-    {
-      if (lFileNameComponent[ii] == '.')
-      {
-        lFileNameComponent[ii] = '_';
-      }
-    }
-
-    lOutputDir = std::string( (lLastForwardSlash == std::string::npos)
-      ? lFileNameComponent + "_results"
-      : lInputFile.substr(0, lLastForwardSlash) + lFileNameComponent
-          + "_results");
+    lOutputDir = ( (lLastForwardSlash == std::string::npos)
+      ? "./"
+      : lInputFile.substr(0, lLastForwardSlash)) + "results";
   }
 
   double simulation_time = 0.;
@@ -150,9 +140,25 @@ int main(int argc, char *argv[])
   // Actually create the directories.
   if (lMaster.GetNet()->IsCurrentProcTheIOProc())
   {
+    if (hemelb::util::DoesDirectoryExist(lOutputDir.c_str()))
+    {
+      printf("\nOutput directory \"%s\" already exists. Exiting.\n\n",
+             lOutputDir.c_str());
+      lMaster.GetNet()->Abort();
+    }
+
     hemelb::util::MakeDirAllRXW(lOutputDir.c_str());
     hemelb::util::MakeDirAllRXW(image_directory);
     hemelb::util::MakeDirAllRXW(snapshot_directory);
+
+    // Save the computed config out to disk in the output directory so we have
+    // a record of the total state used.
+    char* lConfigCopyName = new char[lOutputDir.length()
+        + lFileNameComponent.length() + 3];
+    sprintf(lConfigCopyName, "%s/%s", lOutputDir.c_str(),
+            lFileNameComponent.c_str());
+    lSimulationConfig->Save(lConfigCopyName);
+    delete lConfigCopyName;
 
     char timings_name[256];
     char procs_string[256];
@@ -197,9 +203,6 @@ int main(int argc, char *argv[])
                                                 &hemelb::vis::doRendering,
                                                 hemelb::vis::controller,
                                                 lMaster.GetLBM());
-
-  hemelb::util::DeleteDirContents(snapshot_directory);
-  hemelb::util::DeleteDirContents(image_directory);
 
   total_time_steps = 0;
 
@@ -506,6 +509,8 @@ int main(int argc, char *argv[])
       fclose(timings_ptr);
     }
   }
+
+  delete lSimulationConfig;
   delete hemelb::vis::controller;
   steeringController->StopNetworkThread();
 
