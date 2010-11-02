@@ -152,17 +152,23 @@ void LBM::lbmUpdateBoundaryDensities(int cycle_id, int time_step)
   }
 }
 
-void LBM::lbmInit(char *system_file_name_in,
-                  char *parameters_file_name,
+void LBM::lbmInit(hemelb::SimConfig *iSimulationConfig,
+                  int iSteeringSessionId,
+                  int iPeriod,
+                  double iVoxelSize,
                   Net *net)
 {
-  system_file_name = system_file_name_in;
+  steering_session_id = iSteeringSessionId;
+  period = iPeriod;
+  voxel_size = iVoxelSize;
+
+  mSimConfig = iSimulationConfig;
 
   lbm_terminate_simulation = 0;
 
   lbmReadConfig(net);
 
-  lbmReadParameters(parameters_file_name, net);
+  lbmReadParameters(net);
 
   lbmInitCollisions();
 }

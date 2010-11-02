@@ -25,7 +25,7 @@ namespace hemelb
   
     // Function to create the directory of given path, which user group
     // and anyone can read write and execute.
-    void MakeDirAllRXW(char* dirPath);
+    void MakeDirAllRXW(const char* dirPath);
   
   }
 }
