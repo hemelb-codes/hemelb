@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <fstream>
 #include <unistd.h>
 #include <dirent.h>
 
@@ -77,6 +78,35 @@ namespace hemelb
         unlink(filename);
       }
       return 0;
+    }
+
+    // Detect whether a directory exists.
+    bool DoesDirectoryExist(const char *pathname)
+    {
+      struct stat st;
+      return stat(pathname, &st) == 0;
+    }
+
+    bool FileCopy(const char* iOriginalPath, const char* iNewPath)
+    {
+      std::ifstream lSource;
+      std::ofstream lDestination;
+
+      // open in binary to prevent jargon at the end of the buffer
+      lSource.open(iOriginalPath, std::ios::binary);
+      lDestination.open(iNewPath, std::ios::binary);
+
+      if (!lSource.is_open() || !lDestination.is_open())
+      {
+        return false;
+      }
+
+      lDestination << lSource.rdbuf();
+
+      lDestination.close();
+      lSource.close();
+
+      return true;
     }
 
     // Function to create the directory of given path, which user group and anyone
