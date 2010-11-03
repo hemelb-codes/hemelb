@@ -43,7 +43,7 @@ class LBM
 
     void lbmSetInitialConditions(Net *net);
 
-    void lbmWriteConfig(int stability, char *output_file_name, Net *net);
+    void lbmWriteConfig(int stability, std::string output_file_name, Net *net);
 
     double GetMinPhysicalPressure();
     double GetMaxPhysicalPressure();

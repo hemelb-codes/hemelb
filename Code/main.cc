@@ -18,8 +18,6 @@
 
 #include "debug/Debugger.h"
 
-FILE *timings_ptr;
-
 int main(int argc, char *argv[])
 {
   // main function needed to perform the entire simulation. Some
@@ -82,7 +80,6 @@ int main(int argc, char *argv[])
       }
       lMaster.GetNet()->Abort();
     }
-
   }
 
   hemelb::SimConfig *lSimulationConfig =
@@ -97,15 +94,13 @@ int main(int argc, char *argv[])
   }
 
   double total_time = hemelb::util::myClock();
-  char snapshot_directory[256];
-  char image_directory[256];
-  // Create directory path for the output images
-  strcpy(image_directory, lOutputDir.c_str());
-  strcat(image_directory, "/Images/");
-  //Create directory path for the output snapshots
-  strcpy(snapshot_directory, lOutputDir.c_str());
-  strcat(snapshot_directory, "/Snapshots/");
+
+  FILE *timings_ptr;
+  std::string image_directory = lOutputDir + "/Images/";
+  std::string snapshot_directory = lOutputDir + "/Snapshots/";
+
   // Actually create the directories.
+
 
   if (lMaster.GetNet()->IsCurrentProcTheIOProc())
   {
@@ -115,23 +110,22 @@ int main(int argc, char *argv[])
              lOutputDir.c_str());
       lMaster.GetNet()->Abort();
     }
-    hemelb::util::MakeDirAllRXW(lOutputDir.c_str());
+
+    hemelb::util::MakeDirAllRXW(lOutputDir);
     hemelb::util::MakeDirAllRXW(image_directory);
     hemelb::util::MakeDirAllRXW(snapshot_directory);
+
     // Save the computed config out to disk in the output directory so we have
     // a record of the total state used.
     std::string lFileNameComponent = std::string( (lLastForwardSlash
         == std::string::npos)
       ? lInputFile
       : lInputFile.substr(lLastForwardSlash));
-    char *lConfigCopyName = new char[lOutputDir.length()
-        + lFileNameComponent.length() + 3];
-    sprintf(lConfigCopyName, "%s/%s", lOutputDir.c_str(),
-            lFileNameComponent.c_str());
-    lSimulationConfig->Save(lConfigCopyName);
-    delete lConfigCopyName;
+    lSimulationConfig->Save(lOutputDir + "/" + lFileNameComponent);
     char timings_name[256];
     char procs_string[256];
+
+    std::string lProcs = std::string();
     sprintf(procs_string, "%i", lMaster.GetNet()->mProcessorCount);
     strcpy(timings_name, lOutputDir.c_str());
     strcat(timings_name, "/timings");

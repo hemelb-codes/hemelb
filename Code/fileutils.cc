@@ -64,17 +64,17 @@ namespace hemelb
     }
 
     // Delete all files within a directory.
-    int DeleteDirContents(char *pathname)
+    int DeleteDirContents(std::string pathname)
     {
       struct direct **files;
 
-      int file_count = scandir(pathname, &files, selectOnlyContents, alphasort);
+      int file_count = scandir(pathname.c_str(), &files, selectOnlyContents, alphasort);
 
       char filename[1024];
 
       for (int i = 0; i < file_count; i++)
       {
-        snprintf(filename, 1024, "%s/%s", pathname, files[i]->d_name);
+        snprintf(filename, 1024, "%s/%s", pathname.c_str(), files[i]->d_name);
         unlink(filename);
       }
       return 0;
@@ -111,9 +111,9 @@ namespace hemelb
 
     // Function to create the directory of given path, which user group and anyone
     // can read write and execute.
-    void MakeDirAllRXW(const char* dirPath)
+    void MakeDirAllRXW(std::string &dirPath)
     {
-      mkdir(dirPath, 0777);
+      mkdir(dirPath.c_str(), 0777);
     }
 
   }

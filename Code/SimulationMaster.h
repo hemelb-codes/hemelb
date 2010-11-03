@@ -18,8 +18,8 @@ class SimulationMaster
     void RunSimulation(FILE *iTimingsFile,
                        hemelb::SimConfig *& lSimulationConfig,
                        double iStartTime,
-                       char image_directory[256],
-                       char snapshot_directory[256],
+                       std::string image_directory,
+                       std::string snapshot_directory,
                        unsigned int lSnapshotsPerCycle,
                        unsigned int lImagesPerCycle);
 
