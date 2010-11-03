@@ -1,19 +1,14 @@
 #include "io/XdrMemWriter.h"
 
 #include "vis/Control.h"
-
 #include "steering/basic/SimulationParameters.h"
-
 
 using namespace std;
 
-extern int cycle_id;
-extern int time_step;
-extern double intra_cycle_time;
-
-hemelb::steering::SimulationParameters::SimulationParameters() {
+hemelb::steering::SimulationParameters::SimulationParameters()
+{
   // C'tor initialises to the following defaults.
-  
+
   pressureMin = 0.001;
   pressureMax = 1.0;
   velocityMin = 0.0;
@@ -29,7 +24,7 @@ hemelb::steering::SimulationParameters::SimulationParameters() {
 
   inletAvgVel = new double[nInlets];
 
-  for(int i=0; i<nInlets; i++)
+  for (int i = 0; i < nInlets; i++)
     inletAvgVel[i] = 1.0;
 
   // Assumption here is that sizeof(char) is 1B;
@@ -42,33 +37,35 @@ hemelb::steering::SimulationParameters::SimulationParameters() {
 
 }
 
-void hemelb::steering::SimulationParameters::collectGlobalVals
-(LBM* lbm)
+void hemelb::steering::SimulationParameters::collectGlobalVals(LBM* lbm,
+                                                               lb::SimulationState *iSimState)
 {
   this->pressureMin = lbm->GetMinPhysicalPressure();
   this->pressureMax = lbm->GetMaxPhysicalPressure();
   this->velocityMin = lbm->GetMinPhysicalVelocity();
   this->velocityMax = lbm->GetMaxPhysicalVelocity();
   this->stressMax = lbm->GetMaxPhysicalStress();
-  this->timeStep = time_step;
-  this->time = intra_cycle_time;
-  this->cycle = cycle_id;
+  this->timeStep = iSimState->TimeStep;
+  this->time = iSimState->IntraCycleTime;
+  this->cycle = iSimState->CycleId;
   this->nInlets = lbm->inlets;
-  
+
   this->mousePressure = vis::controller->mouse_pressure;
   this->mouseStress = vis::controller->mouse_stress;
-  
+
 }
 
-hemelb::steering::SimulationParameters::~SimulationParameters() {
+hemelb::steering::SimulationParameters::~SimulationParameters()
+{
   delete paramWriter;
   delete[] inletAvgVel;
   // TODO: find out if there's a good reason this isn't deleted
   // delete[] params;
 }
 
-char* hemelb::steering::SimulationParameters::pack() {
-  io::XdrMemWriter& paramWriter = *(this->paramWriter);
+char* hemelb::steering::SimulationParameters::pack()
+{
+  io::XdrMemWriter& paramWriter = * (this->paramWriter);
   paramWriter << pressureMin;
   paramWriter << pressureMax;
 
@@ -84,7 +81,7 @@ char* hemelb::steering::SimulationParameters::pack() {
 
   paramWriter << cycle;
   paramWriter << nInlets;
-  
+
   //	for(int i=0; i<n_inlets; i++) xdr_double(&xdr_params, &inlet_avg_vel[i]);
 
   paramWriter << mousePressure;

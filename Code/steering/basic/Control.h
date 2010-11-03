@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#include "lb/SimulationState.h"
 #include "lb.h"
 #include "vis/Control.h"
 #include "steering/basic/NetworkThread.h"
@@ -21,9 +22,7 @@ namespace hemelb
         static Control* Init(bool isCurrentProcTheSteeringProc);
         static Control* Get(void);
 
-        //
-        void StartNetworkThread(LBM* lbm);
-        void StopNetworkThread(void);
+        void StartNetworkThread(LBM* lbm, lb::SimulationState *iSimState);
 
         void UpdateSteerableParameters(bool shouldRenderForSnapshot,
                                        int* perform_rendering,

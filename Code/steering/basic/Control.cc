@@ -32,6 +32,12 @@ namespace hemelb
 
     Control::~Control()
     {
+      if (mIsCurrentProcTheSteeringProc)
+      {
+        delete[] hemelb::vis::xdrSendBuffer_frame_details;
+        delete[] hemelb::vis::xdrSendBuffer_pixel_data;
+        delete mNetworkThread;
+      }
       sem_destroy(&nrl);
       //sem_destroy(&connected_sem);
       sem_destroy(&steering_var_lock);
@@ -59,7 +65,7 @@ namespace hemelb
     Control* Control::singleton = 0;
 
     // Kick off the networking thread
-    void Control::StartNetworkThread(LBM* lbm)
+    void Control::StartNetworkThread(LBM* lbm, lb::SimulationState *iSimState)
     {
       if (mIsCurrentProcTheSteeringProc)
       {
@@ -71,17 +77,8 @@ namespace hemelb
         pthread_mutex_init(&LOCK, NULL);
         pthread_cond_init(&network_send_frame, NULL);
 
-        mNetworkThread = new NetworkThread(lbm, this);
+        mNetworkThread = new NetworkThread(lbm, this, iSimState);
         mNetworkThread->Run();
-      }
-    }
-
-    void Control::StopNetworkThread(void)
-    {
-      if (mIsCurrentProcTheSteeringProc)
-      {
-        delete[] hemelb::vis::xdrSendBuffer_frame_details;
-        delete[] hemelb::vis::xdrSendBuffer_pixel_data;
       }
     }
 
