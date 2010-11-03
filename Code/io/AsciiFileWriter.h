@@ -15,7 +15,7 @@ namespace hemelb
     class AsciiFileWriter : public AsciiStreamWriter {
   
     public:
-      AsciiFileWriter(char* fileName);
+      AsciiFileWriter(std::string fileName);
       ~AsciiFileWriter();
   
     };

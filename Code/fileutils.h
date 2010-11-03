@@ -2,6 +2,7 @@
 #define HEMELB_FILEUTILS_H
 
 #include <dirent.h>
+#include <string>
 
 // Define a suitable type for the system we're on
 // (scandir has slightly different definitions on different
@@ -24,14 +25,14 @@ namespace hemelb
     void check_file(const char * filename);
 
     // Delete all files within a directory.
-    int DeleteDirContents(char *pathname);
+    int DeleteDirContents(std::string pathname);
 
     // Check whether a directory exists.
     bool DoesDirectoryExist(const char *pathname);
 
     // Function to create the directory of given path, which user group
     // and anyone can read write and execute.
-    void MakeDirAllRXW(const char* dirPath);
+    void MakeDirAllRXW(std::string &dirPath);
 
   }
 }

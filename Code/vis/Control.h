@@ -94,7 +94,7 @@ namespace hemelb
         void updateImageSize(int pixels_x, int pixels_y);
         void render(int recv_buffer_id, Net *net);
         void writeImage(int recv_buffer_id,
-                        char *image_file_name,
+                        std::string image_file_name,
                         void(*ColourPalette)(float value, float col[]));
         void setMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void compositeImage(int recv_buffer_id, Net *net);
