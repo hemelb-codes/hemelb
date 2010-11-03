@@ -138,14 +138,14 @@ char *Net::GetCurrentProcIdentifier()
 /*!
  If one has more than one machine. The topology discovery mechanism is implemented in this function
  */
-int Net::netFindTopology (int *depths)
+int Net::netFindTopology ()
 {
 
   int *depth, **color;
   int machine_id, flag, is_found;
   int i, j, sum;
 
-  *depths = 0;
+  depths = 0;
 
   err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag);
 
@@ -174,7 +174,7 @@ int Net::netFindTopology (int *depths)
   {
     if (depth[ i ] != 4) continue;
 
-    *depths = max(*depths, depth[ i ]);
+    depths = max(depths, depth[ i ]);
 
     for (j = 0, is_found = 0; j < mMachineCount && is_found == 0; j++)
     {
@@ -230,12 +230,12 @@ int Net::netFindTopology (int *depths)
 /*!
  If one has more than one machine. The topology discovery mechanism is implemented in this function
  */
-int Net::netFindTopology(int *depths)
+int Net::netFindTopology()
 {
   // the machine is assumed to be only one if this function is
   // used instead of the previous one
 
-  *depths = 1;
+  depths = 1;
 
   mMachineCount = 1;
 
@@ -251,6 +251,11 @@ int Net::netFindTopology(int *depths)
   return 1;
 }
 #endif
+
+int Net::GetDepths()
+{
+  return depths;
+}
 
 // Returns the type of collision/streaming update for the fluid site
 // with data "site_data".

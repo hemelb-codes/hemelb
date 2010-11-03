@@ -23,8 +23,10 @@ namespace hemelb
     const unsigned int NetworkThread::CONNECTION_BACKLOG = 10;
 
     // Use initialisation list to do the work.
-    NetworkThread::NetworkThread(LBM* lbm, Control* steeringController) :
-      mLbm(lbm), mSteeringController(steeringController)
+    NetworkThread::NetworkThread(LBM* lbm,
+                                 Control* steeringController,
+                                 lb::SimulationState* iSimState) :
+      mLbm(lbm), mSteeringController(steeringController), mSimState(iSimState)
     {
       /* Storing references to lbm and steeringController; we
        * won't want to destroy them.
@@ -55,7 +57,8 @@ namespace hemelb
     {
       char steering_session_id_char[255];
 
-      std::snprintf(steering_session_id_char, 255, "%i", mLbm->steering_session_id);
+      std::snprintf(steering_session_id_char, 255, "%i",
+                    mLbm->steering_session_id);
 
       vis::setRenderState(0);
 
@@ -209,7 +212,8 @@ namespace hemelb
           {
             pixelDataWriter.writePixel(
                                        &vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
-                                       vis::ColourPalette::pickColour, lbm_stress_type);
+                                       vis::ColourPalette::pickColour,
+                                       lbm_stress_type);
           }
 
           int frameBytes = pixelDataWriter.getCurrentStreamPosition();
@@ -255,7 +259,7 @@ namespace hemelb
           }
 
           SimulationParameters* sim = new SimulationParameters();
-          sim->collectGlobalVals(mLbm);
+          sim->collectGlobalVals(mLbm, mSimState);
           int sizeToSend = sim->paramsSizeB;
           Network::send_all(new_fd, sim->pack(), sizeToSend);
           // printf ("Sim bytes sent %i\n", sizeToSend);
