@@ -58,8 +58,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 void SimulationMaster::RunSimulation(FILE *iTimingsFile,
                                      hemelb::SimConfig *& lSimulationConfig,
                                      double iStartTime,
-                                     char image_directory[256],
-                                     char snapshot_directory[256],
+                                     std::string image_directory,
+                                     std::string snapshot_directory,
                                      unsigned int lSnapshotsPerCycle,
                                      unsigned int lImagesPerCycle)
 {
@@ -77,7 +77,6 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
 
   bool is_finished = false;
   int stability = STABLE;
-  char complete_image_name[256];
 
   for (mSimulationState.CycleId = 1; mSimulationState.CycleId
       <= lSimulationConfig->NumCycles && !is_finished; mSimulationState.CycleId++)
@@ -198,28 +197,23 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
         if (GetNet()->IsCurrentProcTheIOProc())
         {
           char image_filename[255];
-
           snprintf(image_filename, 255, "%08i.dat", mSimulationState.TimeStep);
-          strcpy(complete_image_name, image_directory);
-          strcat(complete_image_name, image_filename);
 
           hemelb::vis::controller->writeImage(
                                               RECV_BUFFER_B,
-                                              complete_image_name,
+                                              image_directory
+                                                  + std::string(image_filename),
                                               hemelb::vis::ColourPalette::pickColour);
         }
       }
       if (mSimulationState.TimeStep % snapshots_period == 0)
       {
         char snapshot_filename[255];
-        char complete_snapshot_name[255];
-
         snprintf(snapshot_filename, 255, "snapshot_%06i.asc",
                  mSimulationState.TimeStep);
-        strcpy(complete_snapshot_name, snapshot_directory);
-        strcat(complete_snapshot_name, snapshot_filename);
 
-        GetLBM()->lbmWriteConfig(stability, complete_snapshot_name, GetNet());
+        GetLBM()->lbmWriteConfig(stability, snapshot_directory
+            + std::string(snapshot_filename), GetNet());
       }
 #ifndef NO_STEER
       if (GetNet()->IsCurrentProcTheIOProc())

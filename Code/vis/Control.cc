@@ -686,7 +686,7 @@ namespace hemelb
     }
 
     void Control::writeImage(int recv_buffer_id,
-                             char *image_file_name,
+                             std::string image_file_name,
                              void(*ColourPalette)(float value, float col[]))
     {
       io::XdrFileWriter writer = io::XdrFileWriter(image_file_name);

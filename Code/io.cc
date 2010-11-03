@@ -386,7 +386,7 @@ void LBM::allocateOutlets(int nOutlets)
   outlet_density_phs = new double[nOutlets];
 }
 
-void LBM::lbmWriteConfig(int stability, char *outputFileName, Net *net)
+void LBM::lbmWriteConfig(int stability, std::string outputFileName, Net *net)
 {
   /* This routine writes the flow field on file. The data are gathered
    to the root processor and written from there.  The format

@@ -30,7 +30,7 @@ namespace hemelb
       static SimConfig *Load(const char *iPath);
       ~SimConfig();
 
-      void Save(char *iPath);
+      void Save(std::string iPath);
 
       double VoxelSize;
       std::string DataFilePath;

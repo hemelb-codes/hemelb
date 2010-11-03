@@ -11,8 +11,9 @@ namespace hemelb
 
     // Implement a constructor that opens the file and creates the Xdr
     // object to write to it.
-    XdrFileWriter::XdrFileWriter(char* fileName) {
-      myFile = fopen(fileName, "w");
+    XdrFileWriter::XdrFileWriter(std::string fileName)
+    {
+      myFile = fopen(fileName.c_str(), "w");
       mXdr = new XDR;
       xdrstdio_create(mXdr, myFile, XDR_ENCODE);
     }
@@ -20,7 +21,8 @@ namespace hemelb
     // A destructor that ends the work of the Xdr object (including a
     // flush to file, so the order is important here), then frees the
     // memory and closes the file.
-    XdrFileWriter::~XdrFileWriter() {
+    XdrFileWriter::~XdrFileWriter()
+    {
       xdr_destroy(mXdr);
       delete mXdr;
       fclose(myFile);

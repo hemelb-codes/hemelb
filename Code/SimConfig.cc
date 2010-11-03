@@ -43,7 +43,7 @@ namespace hemelb
     return lRet;
   }
 
-  void SimConfig::Save(char *iPath)
+  void SimConfig::Save(std::string iPath)
   {
     TiXmlDocument lConfigFile;
     TiXmlDeclaration * lDeclaration = new TiXmlDeclaration("1.0", "", "");
