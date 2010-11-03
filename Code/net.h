@@ -54,7 +54,7 @@ class Net
 
     // declarations of all the functions used
     int *GetProcIdFromGlobalCoords(int site_i, int site_j, int site_k);
-    int netFindTopology(int *depths);
+    int netFindTopology();
     void Initialise(int totalFluidSites);
 
     double GetCutDistance(int iSiteIndex, int iDirection) const;
@@ -85,6 +85,8 @@ class Net
     MPI_Status status[4];
     double dd_time, bm_time, fr_time;
     unsigned int *net_site_data;
+
+    int GetDepths();
   private:
     // NeighProc is part of the Net (defined later in this file).  This object is an element of an array
     // (called neigh_proc[]) and comprises information about the neighbouring processes to this process.
@@ -125,7 +127,7 @@ class Net
     MPI_Request **req;
     // 3 buffers needed for convergence-enabled simulations
     short int *f_data;
-
+    int depths;
     int mMachineCount;
 };
 

@@ -2,7 +2,7 @@
 #define HEMELB_STEERING_BASIC_NETWORKTHREAD
 
 #include "steering/basic/Threadable.h"
-
+#include "lb/SimulationState.h"
 #include "lb.h"
 
 namespace hemelb
@@ -14,12 +14,15 @@ namespace hemelb
     class NetworkThread : public Threadable
     {
       public:
-        NetworkThread(LBM* lbm, Control* steeringController);
+        NetworkThread(LBM* lbm,
+                      Control* steeringController,
+                      lb::SimulationState* iSimState);
       private:
         void DoWork(void);
 
         LBM* mLbm;
         Control* mSteeringController;
+        lb::SimulationState* mSimState;
 
         pthread_attr_t* GetPthreadAttributes(void);
         double frameTiming(void);
