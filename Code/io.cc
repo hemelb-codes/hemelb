@@ -20,7 +20,8 @@
  and calculate some parameters
  */
 
-void LBM::lbmReadConfig(Net *net)
+void LBM::lbmReadConfig(Net *net,
+                        hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
 {
   /* Read the config file written by the segtool.
    *
@@ -83,36 +84,41 @@ void LBM::lbmReadConfig(Net *net)
 
   hemelb::io::XdrReader myReader = hemelb::io::XdrFileReader(xdrFile);
 
-  int i, j, k, ii, jj, kk, l, m, n;
+  int j, k, ii, jj, kk, l, m, n;
   int flag;
 
   unsigned int site_i, site_j, site_k;
   unsigned int *site_type;
 
   myReader.readDouble(lbm_stress_type);
-  myReader.readInt(blocks_x);
-  myReader.readInt(blocks_y);
-  myReader.readInt(blocks_z);
-  myReader.readInt(block_size);
+  myReader.readInt(bGlobalLatticeData.BlocksX);
+  myReader.readInt(bGlobalLatticeData.BlocksY);
+  myReader.readInt(bGlobalLatticeData.BlocksZ);
+  myReader.readInt(bGlobalLatticeData.BlockSize);
 
-  sites_x = blocks_x * block_size;
-  sites_y = blocks_y * block_size;
-  sites_z = blocks_z * block_size;
+  bGlobalLatticeData.SitesX = bGlobalLatticeData.BlocksX
+      * bGlobalLatticeData.BlockSize;
+  bGlobalLatticeData.SitesY = bGlobalLatticeData.BlocksY
+      * bGlobalLatticeData.BlockSize;
+  bGlobalLatticeData.SitesZ = bGlobalLatticeData.BlocksZ
+      * bGlobalLatticeData.BlockSize;
 
-  sites_in_a_block = block_size * block_size * block_size;
+  bGlobalLatticeData.SitesPerBlockVolumeUnit = bGlobalLatticeData.BlockSize
+      * bGlobalLatticeData.BlockSize * bGlobalLatticeData.BlockSize;
 
   // shift = log_2(block_size)
-  i = block_size;
-  shift = 0;
+  int i = bGlobalLatticeData.BlockSize;
+  bGlobalLatticeData.Log2BlockSize = 0;
   while (i > 1)
   {
     i >>= 1;
-    ++shift;
+    ++bGlobalLatticeData.Log2BlockSize;
   }
 
-  blocks = blocks_x * blocks_y * blocks_z;
+  bGlobalLatticeData.BlockCount = bGlobalLatticeData.BlocksX
+      * bGlobalLatticeData.BlocksY * bGlobalLatticeData.BlocksZ;
 
-  net->map_block = new DataBlock[blocks];
+  net->map_block = new DataBlock[bGlobalLatticeData.BlockCount];
 
   total_fluid_sites = 0;
 
@@ -127,11 +133,11 @@ void LBM::lbmReadConfig(Net *net)
 
   n = -1;
 
-  for (i = 0; i < blocks_x; i++)
+  for (i = 0; i < bGlobalLatticeData.BlocksX; i++)
   {
-    for (j = 0; j < blocks_y; j++)
+    for (j = 0; j < bGlobalLatticeData.BlocksY; j++)
     {
-      for (k = 0; k < blocks_z; k++)
+      for (k = 0; k < bGlobalLatticeData.BlocksZ; k++)
       {
         ++n;
 
@@ -145,23 +151,24 @@ void LBM::lbmReadConfig(Net *net)
           continue;
         // Block contains some non-solid sites
 
-        net->map_block[n].site_data = new unsigned int[sites_in_a_block];
+        net->map_block[n].site_data
+            = new unsigned int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
         net->map_block[n].ProcessorRankForEachBlockSite
-            = new int[sites_in_a_block];
+            = new int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
 
         m = -1;
 
-        for (ii = 0; ii < block_size; ii++)
+        for (ii = 0; ii < bGlobalLatticeData.BlockSize; ii++)
         {
-          site_i = (i << shift) + ii;
+          site_i = (i << bGlobalLatticeData.Log2BlockSize) + ii;
 
-          for (jj = 0; jj < block_size; jj++)
+          for (jj = 0; jj < bGlobalLatticeData.BlockSize; jj++)
           {
-            site_j = (j << shift) + jj;
+            site_j = (j << bGlobalLatticeData.Log2BlockSize) + jj;
 
-            for (kk = 0; kk < block_size; kk++)
+            for (kk = 0; kk < bGlobalLatticeData.BlockSize; kk++)
             {
-              site_k = (k << shift) + kk;
+              site_k = (k << bGlobalLatticeData.Log2BlockSize) + kk;
 
               ++m;
 
@@ -190,7 +197,8 @@ void LBM::lbmReadConfig(Net *net)
                 // Neither solid nor simple fluid
                 if (net->map_block[n].wall_data == NULL)
                 {
-                  net->map_block[n].wall_data = new WallData[sites_in_a_block];
+                  net->map_block[n].wall_data
+                      = new WallData[bGlobalLatticeData.SitesPerBlockVolumeUnit];
                 }
 
                 if (net->GetCollisionType(*site_type) & INLET
@@ -386,7 +394,11 @@ void LBM::allocateOutlets(int nOutlets)
   outlet_density_phs = new double[nOutlets];
 }
 
-void LBM::lbmWriteConfig(int stability, std::string outputFileName, Net *net)
+void LBM::lbmWriteConfig(int stability,
+                         std::string output_file_name,
+                         Net *net,
+                         hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                         hemelb::lb::LocalLatticeData &iLocalLatticeData)
 {
   /* This routine writes the flow field on file. The data are gathered
    to the root processor and written from there.  The format
@@ -455,7 +467,7 @@ void LBM::lbmWriteConfig(int stability, std::string outputFileName, Net *net)
 
   if (net->IsCurrentProcTheIOProc())
   {
-    realSnap = new hemelb::io::AsciiFileWriter(outputFileName);
+    realSnap = new hemelb::io::AsciiFileWriter(output_file_name);
     //snap << stability << snap->eol;
     (*realSnap << stability) << realSnap->eol;
     //snap->write(stability); snap->writeRecordSeparator();
@@ -531,11 +543,14 @@ void LBM::lbmWriteConfig(int stability, std::string outputFileName, Net *net)
    root processor */
 
   int n = -1; // net->proc_block counter
-  for (int i = 0; i < sites_x; i += block_size)
+  for (int i = 0; i < iGlobalLatticeData.SitesX; i
+      += iGlobalLatticeData.BlockSize)
   {
-    for (int j = 0; j < sites_y; j += block_size)
+    for (int j = 0; j < iGlobalLatticeData.SitesY; j
+        += iGlobalLatticeData.BlockSize)
     {
-      for (int k = 0; k < sites_z; k += block_size)
+      for (int k = 0; k < iGlobalLatticeData.SitesZ; k
+          += iGlobalLatticeData.BlockSize)
       {
 
         ++n;
@@ -546,11 +561,11 @@ void LBM::lbmWriteConfig(int stability, std::string outputFileName, Net *net)
         }
         int m = -1;
 
-        for (int site_i = i; site_i < i + block_size; site_i++)
+        for (int site_i = i; site_i < i + iGlobalLatticeData.BlockSize; site_i++)
         {
-          for (int site_j = j; site_j < j + block_size; site_j++)
+          for (int site_j = j; site_j < j + iGlobalLatticeData.BlockSize; site_j++)
           {
-            for (int site_k = k; site_k < k + block_size; site_k++)
+            for (int site_k = k; site_k < k + iGlobalLatticeData.BlockSize; site_k++)
             {
 
               m++;
@@ -568,21 +583,25 @@ void LBM::lbmWriteConfig(int stability, std::string outputFileName, Net *net)
 
               if (net->net_site_data[my_site_id] == FLUID_TYPE)
               {
-                D3Q15::CalculateDensityVelocityFEq(&f_old[ (my_site_id * (par
-                    + 1) + par) * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
+                D3Q15::CalculateDensityVelocityFEq(
+                                                   &iLocalLatticeData.FOld[ (my_site_id
+                                                       * (par + 1) + par)
+                                                       * D3Q15::NUMVECTORS],
+                                                   density, vx, vy, vz, f_eq);
 
                 for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                 {
-                  f_neq[l] = f_old[ (my_site_id * (par + 1) + par)
-                      * D3Q15::NUMVECTORS + l] - f_eq[l];
+                  f_neq[l] = iLocalLatticeData.FOld[ (my_site_id * (par + 1)
+                      + par) * D3Q15::NUMVECTORS + l] - f_eq[l];
                 }
 
               }
               else
               { // not FLUID_TYPE
-                lbmCalculateBC(&f_old[ (my_site_id * (par + 1) + par)
-                    * D3Q15::NUMVECTORS], net->net_site_data[my_site_id],
-                               &density, &vx, &vy, &vz, f_neq);
+                lbmCalculateBC(&iLocalLatticeData.FOld[ (my_site_id * (par + 1)
+                    + par) * D3Q15::NUMVECTORS],
+                               net->net_site_data[my_site_id], &density, &vx,
+                               &vy, &vz, f_neq);
               }
 
               if (lbm_stress_type == SHEAR_STRESS)
@@ -748,7 +767,7 @@ void LBM::lbmWriteConfig(int stability, std::string outputFileName, Net *net)
   delete[] local_flow_field;
 }
 
-void LBM::ReadVisParameters(Net *net, hemelb::vis::Control *bControl)
+void LBM::ReadVisParameters(Net *net)
 {
   float lDensity_threshold_min, lDensity_threshold_minmax_inv,
       lVelocity_threshold_max_inv, lStress_threshold_max_inv;
@@ -785,11 +804,6 @@ void LBM::ReadVisParameters(Net *net, hemelb::vis::Control *bControl)
   mSimConfig->VisBrightness = par_to_send[6];
   velocity_max = par_to_send[7];
   stress_max = par_to_send[8];
-
-  bControl->SetProjection(512, 512, mSimConfig->VisCentre.x,
-                          mSimConfig->VisCentre.y, mSimConfig->VisCentre.z,
-                          mSimConfig->VisLongitude, mSimConfig->VisLatitude,
-                          mSimConfig->VisZoom);
 
   density_min = +1.0e+30F;
   density_max = -1.0e+30F;

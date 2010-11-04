@@ -17,16 +17,16 @@ namespace hemelb
     // make a global controller
     Control *controller;
 
-    Control::Control(float iStressType)
+    Control::Control(float iStressType, lb::GlobalLatticeData &iGlobLatDat)
     {
       mStressType = iStressType;
 
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float(sites_x);
-      vis->half_dim[1] = 0.5F * float(sites_y);
-      vis->half_dim[2] = 0.5F * float(sites_z);
+      vis->half_dim[0] = 0.5F * float(iGlobLatDat.SitesX);
+      vis->half_dim[1] = 0.5F * float(iGlobLatDat.SitesY);
+      vis->half_dim[2] = 0.5F * float(iGlobLatDat.SitesZ);
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1],
                                                              vis->half_dim[2]));
@@ -45,13 +45,15 @@ namespace hemelb
 
     }
 
-    void Control::initLayers(Net *net)
+    void Control::initLayers(lb::GlobalLatticeData &iGlobLatDat,
+                             lb::LocalLatticeData &iLocalLatDat,
+                             Net *net)
     {
-      myRayTracer = new RayTracer(net);
-      myGlypher = new GlyphDrawer(net);
+      myRayTracer = new RayTracer(net, &iGlobLatDat);
+      myGlypher = new GlyphDrawer(net, &iGlobLatDat, &iLocalLatDat);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(net);
+      myStreaker = new StreaklineDrawer(net, iGlobLatDat);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -646,7 +648,9 @@ namespace hemelb
 #endif // NEW_COMPOSITING
     }
 
-    void Control::render(int recv_buffer_id, Net *net)
+    void Control::render(int recv_buffer_id,
+                         lb::GlobalLatticeData &iGlobLatDat,
+                         Net *net)
     {
       if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
       {
@@ -666,7 +670,7 @@ namespace hemelb
 #ifndef NO_STREAKLINES
       if (shouldDrawStreaklines && (mStressType == SHEAR_STRESS || mode == 2))
       {
-        myStreaker->render();
+        myStreaker->render(iGlobLatDat);
       }
 #endif
       compositeImage(recv_buffer_id, net);
@@ -714,9 +718,14 @@ namespace hemelb
       mouse_stress = iPhysicalStress;
     }
 
-    void Control::streaklines(int time_step, int period, Net *net)
+    void Control::streaklines(int time_step,
+                              int period,
+                              lb::GlobalLatticeData &iGlobLatDat,
+                              lb::LocalLatticeData &iLocalLatDat,
+                              Net *net)
     {
-      myStreaker->StreakLines(time_step, period, net);
+      myStreaker ->StreakLines(time_step, period, iGlobLatDat, iLocalLatDat,
+                               net);
     }
 
     void Control::restart()

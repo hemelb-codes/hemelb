@@ -153,6 +153,7 @@ void LBM::lbmUpdateBoundaryDensities(int cycle_id, int time_step)
 }
 
 void LBM::lbmInit(hemelb::SimConfig *iSimulationConfig,
+                  hemelb::lb::GlobalLatticeData &bGlobLatDat,
                   int iSteeringSessionId,
                   int iPeriod,
                   double iVoxelSize,
@@ -166,7 +167,7 @@ void LBM::lbmInit(hemelb::SimConfig *iSimulationConfig,
 
   lbm_terminate_simulation = 0;
 
-  lbmReadConfig(net);
+  lbmReadConfig(net, bGlobLatDat);
 
   lbmReadParameters(net);
 
@@ -211,7 +212,8 @@ void LBM::lbmInitCollisions()
                                                                     outlet_density);
 }
 
-void LBM::lbmSetInitialConditions(Net *net)
+void LBM::lbmSetInitialConditions(Net *net,
+                                  hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
   double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
   double density;
@@ -228,8 +230,8 @@ void LBM::lbmSetInitialConditions(Net *net)
   {
     D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
-    f_old_p = &f_old[i * D3Q15::NUMVECTORS];
-    f_new_p = &f_new[i * D3Q15::NUMVECTORS];
+    f_old_p = &bLocalLatDat.FOld[i * D3Q15::NUMVECTORS];
+    f_new_p = &bLocalLatDat.FNew[i * D3Q15::NUMVECTORS];
 
     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
     {
@@ -263,9 +265,11 @@ hemelb::lb::collisions::Collision* LBM::GetCollision(int i)
 // when the convergence criterion is not applied. Communications
 // automatically handle the streaming stage pertaining to neighbouring
 // subdomains.
-int LBM::lbmCycle(int perform_rt, Net *net)
+int LBM::lbmCycle(int perform_rt,
+                  Net *net,
+                  hemelb::lb::LocalLatticeData &bLocallatDat)
 {
-  net->ReceiveFromNeighbouringProcessors();
+  net->ReceiveFromNeighbouringProcessors(bLocallatDat);
 
   int offset = net->my_inner_sites;
 
@@ -274,9 +278,9 @@ int LBM::lbmCycle(int perform_rt, Net *net)
     GetCollision(collision_type)->DoCollisions(
                                                perform_rt,
                                                omega,
-                                               f_old,
-                                               f_new,
-                                               f_id,
+                                               bLocallatDat.FOld,
+                                               bLocallatDat.FNew,
+                                               bLocallatDat.FNeighbours,
                                                offset,
                                                net->my_inter_collisions[collision_type],
                                                &mMinsAndMaxes, net,
@@ -285,7 +289,7 @@ int LBM::lbmCycle(int perform_rt, Net *net)
     offset += net->my_inter_collisions[collision_type];
   }
 
-  net->SendToNeighbouringProcessors();
+  net->SendToNeighbouringProcessors(bLocallatDat);
 
   offset = 0;
 
@@ -294,9 +298,9 @@ int LBM::lbmCycle(int perform_rt, Net *net)
     GetCollision(collision_type)->DoCollisions(
                                                perform_rt,
                                                omega,
-                                               f_old,
-                                               f_new,
-                                               f_id,
+                                               bLocallatDat.FOld,
+                                               bLocallatDat.FNew,
+                                               bLocallatDat.FNeighbours,
                                                offset,
                                                net->my_inner_collisions[collision_type],
                                                &mMinsAndMaxes, net,
@@ -305,7 +309,7 @@ int LBM::lbmCycle(int perform_rt, Net *net)
     offset += net->my_inner_collisions[collision_type];
   }
 
-  net->UseDataFromNeighbouringProcs();
+  net->UseDataFromNeighbouringProcs(bLocallatDat);
 
   // Do any cleanup steps necessary on boundary nodes
   offset = 0;
@@ -315,9 +319,9 @@ int LBM::lbmCycle(int perform_rt, Net *net)
     GetCollision(collision_type)->PostStep(
                                            perform_rt,
                                            omega,
-                                           f_old,
-                                           f_new,
-                                           f_id,
+                                           bLocallatDat.FOld,
+                                           bLocallatDat.FNew,
+                                           bLocallatDat.FNeighbours,
                                            offset,
                                            net->my_inner_collisions[collision_type],
                                            &mMinsAndMaxes, net,
@@ -331,9 +335,9 @@ int LBM::lbmCycle(int perform_rt, Net *net)
     GetCollision(collision_type)->PostStep(
                                            perform_rt,
                                            omega,
-                                           f_old,
-                                           f_new,
-                                           f_id,
+                                           bLocallatDat.FOld,
+                                           bLocallatDat.FNew,
+                                           bLocallatDat.FNeighbours,
                                            offset,
                                            net->my_inter_collisions[collision_type],
                                            &mMinsAndMaxes, net,
@@ -342,9 +346,9 @@ int LBM::lbmCycle(int perform_rt, Net *net)
     offset += net->my_inter_collisions[collision_type];
   }
   // Swap f_old and f_new ready for the next timestep.
-  double *temp = f_old;
-  f_old = f_new;
-  f_new = temp;
+  double *temp = bLocallatDat.FOld;
+  bLocallatDat.FOld = bLocallatDat.FNew;
+  bLocallatDat.FNew = temp;
 
   return STABLE;
 }
@@ -416,7 +420,7 @@ void LBM::lbmCalculateFlowFieldValues()
   inlets = inlets;
 }
 
-int LBM::IsUnstable(Net *net)
+int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
 {
   int is_unstable, stability;
 
@@ -426,7 +430,7 @@ int LBM::IsUnstable(Net *net)
   {
     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
     {
-      if (f_old[i * D3Q15::NUMVECTORS + l] < 0.)
+      if (iLocalLatDat.FOld[i * D3Q15::NUMVECTORS + l] < 0.)
       {
         is_unstable = 1;
       }
@@ -443,7 +447,9 @@ int LBM::IsUnstable(Net *net)
 }
 
 // Update peak and average inlet velocities local to the current subdomain. 
-void LBM::lbmUpdateInletVelocities(int time_step, Net *net)
+void LBM::lbmUpdateInletVelocities(int time_step,
+                                   hemelb::lb::LocalLatticeData &iLocalLatDat,
+                                   Net *net)
 {
   double density;
   double vx, vy, vz;
@@ -471,7 +477,8 @@ void LBM::lbmUpdateInletVelocities(int time_step, Net *net)
 
   for (i = offset; i < offset + net->my_inner_collisions[2]; i++)
   {
-    D3Q15::CalculateDensityAndVelocity(&f_old[i * c1 + c2], density, vx, vy, vz);
+    D3Q15::CalculateDensityAndVelocity(&iLocalLatDat.FOld[i * c1 + c2],
+                                       density, vx, vy, vz);
 
     inlet_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
 
@@ -506,7 +513,8 @@ void LBM::lbmUpdateInletVelocities(int time_step, Net *net)
 
   for (i = offset; i < offset + net->my_inter_collisions[2]; i++)
   {
-    D3Q15::CalculateDensityAndVelocity(&f_old[i * c1 + c2], density, vx, vy, vz);
+    D3Q15::CalculateDensityAndVelocity(&iLocalLatDat.FOld[i * c1 + c2],
+                                       density, vx, vy, vz);
 
     inlet_id = (net->net_site_data[i] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
 
@@ -550,7 +558,7 @@ double LBM::GetPeakInletVelocity(int iInletNumber)
 // In the case of instability, this function restart the simulation
 // with twice as many time steps per period and update the parameters
 // that depends on this change.
-void LBM::lbmRestart(Net *net)
+void LBM::lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
 {
   int i;
 
@@ -587,7 +595,7 @@ void LBM::lbmRestart(Net *net)
 
   RecalculateTauViscosityOmega();
 
-  lbmSetInitialConditions(net);
+  lbmSetInitialConditions(net, iLocalLatDat);
 }
 
 double LBM::GetMinPhysicalPressure()

@@ -9,15 +9,20 @@ namespace hemelb
     double GlyphDrawer::glyph_length = -1.F;
 
     // Constructor
-    GlyphDrawer::GlyphDrawer(Net *net)
+    GlyphDrawer::GlyphDrawer(Net* net,
+                             hemelb::lb::GlobalLatticeData* iGlobalLatDat,
+                             hemelb::lb::LocalLatticeData* iLocalLatDat)
     {
+      mGlobalLatDat = iGlobalLatDat;
       int n = -1;
 
-      for (int i = 0; i < sites_x; i += block_size)
+      for (int i = 0; i < iGlobalLatDat->SitesX; i += iGlobalLatDat->BlockSize)
       {
-        for (int j = 0; j < sites_y; j += block_size)
+        for (int j = 0; j < iGlobalLatDat->SitesY; j
+            += iGlobalLatDat->BlockSize)
         {
-          for (int k = 0; k < sites_z; k += block_size)
+          for (int k = 0; k < iGlobalLatDat->SitesZ; k
+              += iGlobalLatDat->BlockSize)
           {
             n++;
             DataBlock *map_block_p = &net->map_block[n];
@@ -27,11 +32,12 @@ namespace hemelb
               continue;
             }
 
-            int site_i = (block_size >> 1);
-            int site_j = (block_size >> 1);
-            int site_k = (block_size >> 1);
+            int site_i = (iGlobalLatDat->BlockSize >> 1);
+            int site_j = (iGlobalLatDat->BlockSize >> 1);
+            int site_k = (iGlobalLatDat->BlockSize >> 1);
 
-            int m = ( ( (site_i << shift) + site_j) << shift) + site_k;
+            int m = ( ( (site_i << iGlobalLatDat->Log2BlockSize) + site_j)
+                << iGlobalLatDat->Log2BlockSize) + site_k;
 
             if (map_block_p->site_data[m] & (1U << 31U))
             {
@@ -40,13 +46,14 @@ namespace hemelb
 
             Glyph *lGlyph = new Glyph();
 
-            lGlyph->x = float(i + site_i) - 0.5F * float(sites_x);
-            lGlyph->y = float(j + site_j) - 0.5F * float(sites_y);
-            lGlyph->z = float(k + site_k) - 0.5F * float(sites_z);
+            lGlyph->x = float(i + site_i) - 0.5F * float(iGlobalLatDat->SitesX);
+            lGlyph->y = float(j + site_j) - 0.5F * float(iGlobalLatDat->SitesY);
+            lGlyph->z = float(k + site_k) - 0.5F * float(iGlobalLatDat->SitesZ);
 
             int c1Plusc2 = 15;
 
-            lGlyph->f = &f_old[map_block_p->site_data[m] * c1Plusc2];
+            lGlyph->f = &iLocalLatDat->FOld[map_block_p->site_data[m]
+                * c1Plusc2];
 
             mGlyphs.push_back(lGlyph);
 
@@ -88,7 +95,7 @@ namespace hemelb
       {
         D3Q15::CalculateDensityAndVelocity(mGlyphs[n]->f, density, vx, vy, vz);
 
-        temp = glyph_length * block_size
+        temp = glyph_length * mGlobalLatDat->BlockSize
             * vis::controller->velocity_threshold_max_inv / density;
 
         vx *= temp;

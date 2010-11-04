@@ -64,7 +64,7 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            f_new[f_id[lIndex * D3Q15::NUMVECTORS + ii]] = f[ii] + iOmega
+            iFNewAll[iFIdAll[lIndex * D3Q15::NUMVECTORS + ii]] = f[ii] + iOmega
                 * (f_neq[ii] = f[ii] - lFEq[ii]);
           }
 
@@ -93,7 +93,7 @@ namespace hemelb
                 if (!net->HasBoundary(lIndex, lAwayFromWallIndex))
                 {
                   // Need some info about the next node away from the wall in this direction...
-                  int nextIOut = f_id[lIndex * D3Q15::NUMVECTORS
+                  int nextIOut = iFIdAll[lIndex * D3Q15::NUMVECTORS
                       + lAwayFromWallIndex] / D3Q15::NUMVECTORS;
                   double nextNodeDensity, nextNodeV[3],
                       nextNodeFEq[D3Q15::NUMVECTORS];
@@ -107,7 +107,7 @@ namespace hemelb
                     uWall[a] = delta * uWall[a] + (1. - delta) * (delta - 1.)
                         * nextNodeV[a] / (1. + delta);
 
-                  fNeq = delta * fNeq + (1. - delta) * (f_old[nextIOut
+                  fNeq = delta * fNeq + (1. - delta) * (iFOldAll[nextIOut
                       * D3Q15::NUMVECTORS + lAwayFromWallIndex]
                       - nextNodeFEq[lAwayFromWallIndex]);
                 }

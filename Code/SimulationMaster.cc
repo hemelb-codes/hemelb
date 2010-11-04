@@ -20,6 +20,16 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
 
 SimulationMaster::~SimulationMaster()
 {
+  if (!mNet->IsCurrentProcTheIOProc())
+  {
+    if (mLocalLatDat.FNeighbours != NULL)
+      delete[] mLocalLatDat.FNeighbours;
+    if (mLocalLatDat.FNew != NULL)
+      delete[] mLocalLatDat.FNew;
+    if (mLocalLatDat.FOld != NULL)
+      delete[] mLocalLatDat.FOld;
+  }
+
   delete mNet;
   delete mLbm;
 }
@@ -36,7 +46,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     steeringController->StartNetworkThread(GetLBM(), &mSimulationState);
   }
 
-  GetLBM()->lbmInit(iSimConfig, iSteeringSessionid,
+  GetLBM()->lbmInit(iSimConfig, mGlobLatDat, iSteeringSessionid,
                     (int) (iSimConfig->StepsPerCycle), iSimConfig->VoxelSize,
                     GetNet());
   if (GetNet()->netFindTopology() == 0)
@@ -44,11 +54,20 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     fprintf(bTimingsFile, "MPI_Attr_get failed, aborting\n");
     GetNet()->Abort();
   }
-  GetNet()->Initialise(GetLBM()->total_fluid_sites);
-  GetLBM()->lbmSetInitialConditions(GetNet());
-  hemelb::vis::controller = new hemelb::vis::Control(lbm_stress_type);
-  hemelb::vis::controller->initLayers(GetNet());
-  GetLBM()->ReadVisParameters(GetNet(), hemelb::vis::controller);
+  GetNet()->Initialise(GetLBM()->total_fluid_sites, mGlobLatDat, mLocalLatDat);
+  GetLBM()->lbmSetInitialConditions(GetNet(), mLocalLatDat);
+  hemelb::vis::controller = new hemelb::vis::Control(lbm_stress_type,
+                                                     mGlobLatDat);
+  hemelb::vis::controller->initLayers(mGlobLatDat, mLocalLatDat, GetNet());
+  GetLBM()->ReadVisParameters(GetNet());
+
+  hemelb::vis::controller->SetProjection(512, 512, iSimConfig->VisCentre.x,
+                                         iSimConfig->VisCentre.y,
+                                         iSimConfig->VisCentre.z,
+                                         iSimConfig->VisLongitude,
+                                         iSimConfig->VisLatitude,
+                                         iSimConfig->VisZoom);
+
   steeringController->UpdateSteerableParameters(false,
                                                 &hemelb::vis::doRendering,
                                                 hemelb::vis::controller,
@@ -132,24 +151,27 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
       GetLBM()->lbmUpdateBoundaryDensities(mSimulationState.CycleId,
                                            mSimulationState.TimeStep);
 
-      stability = GetLBM()->lbmCycle(hemelb::vis::doRendering, GetNet());
+      stability = GetLBM()->lbmCycle(hemelb::vis::doRendering, GetNet(),
+                                     mLocalLatDat);
 
-      if ( (restart = GetLBM()->IsUnstable(GetNet())) != false)
+      if ( (restart = GetLBM()->IsUnstable(mLocalLatDat, GetNet())) != false)
       {
         break;
       }
-      GetLBM()->lbmUpdateInletVelocities(mSimulationState.TimeStep, GetNet());
+      GetLBM()->lbmUpdateInletVelocities(mSimulationState.TimeStep,
+                                         mLocalLatDat, GetNet());
 
 #ifndef NO_STREAKLINES
       hemelb::vis::controller->streaklines(mSimulationState.TimeStep,
-                                           GetLBM()->period, GetNet());
+                                           GetLBM()->period, mGlobLatDat,
+                                           mLocalLatDat, GetNet());
 #endif
 #ifndef NO_STEER
 
       if (total_time_steps % BCAST_FREQ == 0 && hemelb::vis::doRendering
           && !write_snapshot_image)
       {
-        hemelb::vis::controller->render(RECV_BUFFER_A, GetNet());
+        hemelb::vis::controller->render(RECV_BUFFER_A, mGlobLatDat, GetNet());
 
         if (hemelb::vis::controller->mouse_x >= 0
             && hemelb::vis::controller->mouse_y >= 0
@@ -192,7 +214,7 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
 #endif // NO_STEER
       if (write_snapshot_image)
       {
-        hemelb::vis::controller->render(RECV_BUFFER_B, GetNet());
+        hemelb::vis::controller->render(RECV_BUFFER_B, mGlobLatDat, GetNet());
 
         if (GetNet()->IsCurrentProcTheIOProc())
         {
@@ -213,7 +235,8 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
                  mSimulationState.TimeStep);
 
         GetLBM()->lbmWriteConfig(stability, snapshot_directory
-            + std::string(snapshot_filename), GetNet());
+            + std::string(snapshot_filename), GetNet(), mGlobLatDat,
+                                 mLocalLatDat);
       }
 #ifndef NO_STEER
       if (GetNet()->IsCurrentProcTheIOProc())
@@ -250,7 +273,7 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
       hemelb::util::DeleteDirContents(snapshot_directory);
       hemelb::util::DeleteDirContents(image_directory);
 
-      GetLBM()->lbmRestart(GetNet());
+      GetLBM()->lbmRestart(mLocalLatDat, GetNet());
 #ifndef NO_STREAKLINES
       hemelb::vis::controller->restart();
 #endif
@@ -280,6 +303,8 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
       fflush(NULL);
     }
   }
+
+  hemelb::debug::Debugger::Get()->BreakHere();
 
   mSimulationState.CycleId = hemelb::util::min(mSimulationState.CycleId,
                                                lSimulationConfig->NumCycles);
