@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include "net.h"
+#include "lb/GlobalLatticeData.h"
 
 namespace hemelb
 {
@@ -12,7 +13,7 @@ namespace hemelb
     {
       public:
         // Constructor and destructor do all the usual stuff.
-        RayTracer(Net *net);
+        RayTracer(Net *net, lb::GlobalLatticeData* iGlobLatDat);
         ~RayTracer();
 
         // Method to update the voxel corresponding to site i with its
@@ -96,6 +97,7 @@ namespace hemelb
 
         void rtBuildClusters(Net *net);
 
+        lb::GlobalLatticeData* mGlobLatDat;
         std::vector<Cluster*> mClusters;
         float **cluster_voxel;
         float ***cluster_flow_field;
