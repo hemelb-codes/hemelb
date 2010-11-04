@@ -34,6 +34,9 @@ class SimulationMaster
                         bool iIsUnstable,
                         double iStartTime);
 
+    hemelb::lb::GlobalLatticeData mGlobLatDat;
+    hemelb::lb::LocalLatticeData mLocalLatDat;
+
     hemelb::steering::Control *steeringController;
     hemelb::lb::SimulationState mSimulationState;
     LBM *mLbm;

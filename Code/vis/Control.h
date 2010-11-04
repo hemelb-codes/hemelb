@@ -3,6 +3,9 @@
 
 #include "net.h"
 
+#include "lb/GlobalLatticeData.h"
+#include "lb/LocalLatticeData.h"
+
 #include "vis/ColPixel.h"
 #include "vis/GlyphDrawer.h"
 #include "vis/StreaklineDrawer.h"
@@ -43,9 +46,11 @@ namespace hemelb
             float dist;
         };
 
-        Control(float iStressType);
+        Control(float iStressType, lb::GlobalLatticeData &iGlobLatDat);
         ~Control();
-        void initLayers(Net* net);
+        void initLayers(lb::GlobalLatticeData &iGlobLatDat,
+                        lb::LocalLatticeData &iLocalLatDat,
+                        Net* net);
 
         void project(float p1[], float p2[]);
         void writePixel(ColPixel *col_pixel);
@@ -88,11 +93,17 @@ namespace hemelb
 
         void renderLine(float x1[], float x2[]);
 
-        void streaklines(int time_step, int period, Net *net);
+        void streaklines(int time_step,
+                         int period,
+                         lb::GlobalLatticeData &iGlobLatDat,
+                         lb::LocalLatticeData &iLocalLatDat,
+                         Net *net);
         void restart();
 
         void updateImageSize(int pixels_x, int pixels_y);
-        void render(int recv_buffer_id, Net *net);
+        void render(int recv_buffer_id,
+                    lb::GlobalLatticeData &iGlobLatDat,
+                    Net *net);
         void writeImage(int recv_buffer_id,
                         std::string image_file_name,
                         void(*ColourPalette)(float value, float col[]));

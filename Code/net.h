@@ -6,6 +6,8 @@
 #include "D3Q15.h"
 #include "SimConfig.h"
 
+#include "lb/GlobalLatticeData.h"
+#include "lb/LocalLatticeData.h"
 // Superficial site data
 struct WallData
 {
@@ -53,20 +55,28 @@ class Net
     char *GetCurrentProcIdentifier();
 
     // declarations of all the functions used
-    int *GetProcIdFromGlobalCoords(int site_i, int site_j, int site_k);
+    int *GetProcIdFromGlobalCoords(int iSiteI,
+                                   int iSiteJ,
+                                   int iSiteK,
+                                   hemelb::lb::GlobalLatticeData &iGlobLatDat);
     int netFindTopology();
-    void Initialise(int totalFluidSites);
+    void Initialise(int iTotalFluidSites,
+                    hemelb::lb::GlobalLatticeData &iGlobLatDat,
+                    hemelb::lb::LocalLatticeData &iLocalLatDat);
 
     double GetCutDistance(int iSiteIndex, int iDirection) const;
     bool HasBoundary(int iSiteIndex, int iDirection) const;
     int GetBoundaryId(int iSiteIndex) const;
     double* GetNormalToWall(int iSiteIndex) const;
 
-    void ReceiveFromNeighbouringProcessors();
-    void SendToNeighbouringProcessors();
-    void UseDataFromNeighbouringProcs();
+    void ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
+    void SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
+    void UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
     int GetMachineCount();
+
+    // Currently needed for the destructor. TODO should probably do via vector or similar.
+    int block_count;
 
     int mProcessorCount; // Number of processors.
     int err;
@@ -106,13 +116,19 @@ class Net
     {
         short int i, j, k;
     };
+    int *f_recv_iv;
     int my_inter_sites;
-    unsigned int *netSiteMapPointer(int site_i, int site_j, int site_k);
-    void AssignFluidSitesToProcessors(int & proc_count,
-                                      int & fluid_sites_per_unit,
-                                      int & unvisited_fluid_sites,
-                                      const int marker,
-                                      const int unitLevel);
+    unsigned int *netSiteMapPointer(int site_i,
+                                    int site_j,
+                                    int site_k,
+                                    hemelb::lb::GlobalLatticeData &iGlobLatDat);
+    void
+    AssignFluidSitesToProcessors(int & proc_count,
+                                 int & fluid_sites_per_unit,
+                                 int & unvisited_fluid_sites,
+                                 const int marker,
+                                 const int unitLevel,
+                                 hemelb::lb::GlobalLatticeData &iGlobLatDat);
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
     int shared_fs; // Number of distributions shared with neighbouring
     // processors.
@@ -130,16 +146,5 @@ class Net
     int depths;
     int mMachineCount;
 };
-
-// TODO Ugh. Will get rid of these to somewhere else at some point.
-extern int sites_x, sites_y, sites_z;
-extern int blocks_x, blocks_y, blocks_z;
-extern int blocks;
-extern int block_size;
-extern int shift;
-extern int sites_in_a_block;
-extern double *f_old, *f_new;
-extern int *f_id;
-extern int *f_recv_iv;
 
 #endif // HEMELB_NET_H

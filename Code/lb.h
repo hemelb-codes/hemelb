@@ -9,13 +9,9 @@
 class LBM
 {
   public:
-    double *inlet_density_avg, *inlet_density_amp;
-    double *outlet_density_avg, *outlet_density_amp;
-
     int total_fluid_sites;
     int inlets, outlets;
     int steering_session_id;
-    double voxel_size;
     int period;
 
     double lbmConvertPressureToLatticeUnits(double pressure);
@@ -26,24 +22,34 @@ class LBM
     double lbmConvertVelocityToPhysicalUnits(double velocity);
 
     void lbmInit(hemelb::SimConfig *iSimulationConfig,
+                 hemelb::lb::GlobalLatticeData &bGlobLatDat,
                  int iSteeringSessionId,
                  int iPeriod,
-                 double voxel_size,
+                 double iVoxelSize,
                  Net *net);
-    void lbmRestart(Net *net);
+    void lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net);
     ~LBM();
 
-    int IsUnstable(Net *net);
+    int IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net);
 
-    int lbmCycle(int perform_rt, Net *net);
+    int lbmCycle(int perform_rt,
+                 Net *net,
+                 hemelb::lb::LocalLatticeData &bLocallatDat);
     void lbmCalculateFlowFieldValues();
     void RecalculateTauViscosityOmega();
     void lbmUpdateBoundaryDensities(int cycle_id, int time_step);
-    void lbmUpdateInletVelocities(int time_step, Net *net);
+    void lbmUpdateInletVelocities(int time_step,
+                                  hemelb::lb::LocalLatticeData &iLocalLatDat,
+                                  Net *net);
 
-    void lbmSetInitialConditions(Net *net);
+    void lbmSetInitialConditions(Net *net,
+                                 hemelb::lb::LocalLatticeData &bLocalLatDat);
 
-    void lbmWriteConfig(int stability, std::string output_file_name, Net *net);
+    void lbmWriteConfig(int stability,
+                        std::string output_file_name,
+                        Net *net,
+                        hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                        hemelb::lb::LocalLatticeData &lLocalLatticeData);
 
     double GetMinPhysicalPressure();
     double GetMaxPhysicalPressure();
@@ -57,7 +63,7 @@ class LBM
     double GetAverageInletVelocity(int iInletNumber);
     double GetPeakInletVelocity(int iInletNumber);
 
-    void ReadVisParameters(Net *net, hemelb::vis::Control *bController);
+    void ReadVisParameters(Net *net);
 
     void CalculateMouseFlowField(hemelb::vis::ColPixel *col_pixel_p,
                                  double &mouse_pressure,
@@ -76,7 +82,8 @@ class LBM
                         double f_neq[]);
 
     void lbmInitCollisions();
-    void lbmReadConfig(Net *net);
+    void lbmReadConfig(Net *net,
+                       hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
     void lbmReadParameters(Net *net);
 
     void allocateInlets(int nInlets);
@@ -95,8 +102,10 @@ class LBM
     //TODO Get rid of this hack
     hemelb::lb::collisions::Collision* GetCollision(int i);
 
+    double *inlet_density_avg, *inlet_density_amp;
+    double *outlet_density_avg, *outlet_density_amp;
     double *inlet_density_phs, *outlet_density_phs;
-
+    double lbm_stress_par;
     int site_min_x, site_min_y, site_min_z;
     int site_max_x, site_max_y, site_max_z;
     int is_inlet_normal_available;
@@ -105,6 +114,7 @@ class LBM
     double *lbm_inlet_normal;
     long int *lbm_inlet_count;
     double tau, viscosity, omega;
+    double voxel_size;
 
     // TODO Eventually we should be able to make this private.
     hemelb::SimConfig *mSimConfig;
@@ -114,7 +124,6 @@ class LBM
 };
 
 extern double lbm_stress_type;
-extern double lbm_stress_par;
 extern int lbm_terminate_simulation;
 
 #endif // HEMELB_LB_H

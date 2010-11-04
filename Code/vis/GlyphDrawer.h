@@ -2,6 +2,8 @@
 #define HEMELB_VIS_GLYPHDRAWER_H
 
 #include "net.h"
+#include "lb/LocalLatticeData.h"
+#include "lb/GlobalLatticeData.h"
 #include <vector>
 
 namespace hemelb
@@ -19,7 +21,9 @@ namespace hemelb
         static double glyph_length;
 
         // Constructor and destructor
-        GlyphDrawer(Net* net);
+        GlyphDrawer(Net* net,
+                    hemelb::lb::GlobalLatticeData* iGlobalLatDat,
+                    hemelb::lb::LocalLatticeData* iLocalLatDat);
         ~GlyphDrawer();
 
         // Function to perform the rendering.
@@ -34,6 +38,7 @@ namespace hemelb
         };
 
         std::vector<Glyph*> mGlyphs;
+        hemelb::lb::GlobalLatticeData* mGlobalLatDat;
     };
 
   }

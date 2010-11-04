@@ -91,7 +91,8 @@ namespace hemelb
 
           UpdateMinsAndMaxes<tDoRayTracing> (v_x, v_y, v_z, lIndex, f_neq,
                                              density, bMinimaAndMaxima, net,
-                                             iStressType, iStressParam, iControl);
+                                             iStressType, iStressParam,
+                                             iControl);
         }
       }
 
@@ -121,18 +122,19 @@ namespace hemelb
               double twoQ = 2.0 * net->GetCutDistance(lIndex, l);
               if (twoQ < 1.0)
               {
-                f_new[lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]]
-                    = f_new[lIndex * D3Q15::NUMVECTORS + l] + twoQ
-                        * (f_old[lIndex * D3Q15::NUMVECTORS + l] - f_new[lIndex
-                            * D3Q15::NUMVECTORS + l]);
+                iFNewAll[lIndex * D3Q15::NUMVECTORS
+                    + D3Q15::INVERSEDIRECTIONS[l]] = iFNewAll[lIndex
+                    * D3Q15::NUMVECTORS + l] + twoQ * (iFOldAll[lIndex
+                    * D3Q15::NUMVECTORS + l] - iFNewAll[lIndex
+                    * D3Q15::NUMVECTORS + l]);
               }
               else
               {
-                f_new[lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]]
-                    = f_old[lIndex * D3Q15::NUMVECTORS
-                        + D3Q15::INVERSEDIRECTIONS[l]] + (1. / twoQ)
-                        * (f_old[lIndex * D3Q15::NUMVECTORS + l] - f_old[lIndex
-                            * 15 + D3Q15::INVERSEDIRECTIONS[l]]);
+                iFNewAll[lIndex * D3Q15::NUMVECTORS
+                    + D3Q15::INVERSEDIRECTIONS[l]] = iFOldAll[lIndex
+                    * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]] + (1.
+                    / twoQ) * (iFOldAll[lIndex * D3Q15::NUMVECTORS + l]
+                    - iFOldAll[lIndex * 15 + D3Q15::INVERSEDIRECTIONS[l]]);
               }
             }
           }
