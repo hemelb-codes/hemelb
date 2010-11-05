@@ -59,7 +59,7 @@ void LBM::lbmReadConfig(Net *net,
    *       double wall_dist
    *     }
    *     
-   *     double cut_distances[14]
+   *     double mDistanceToWall[14]
    */
 
   FILE* xdrFile = fopen(mSimConfig->DataFilePath.c_str(), "r");
@@ -175,7 +175,7 @@ void LBM::lbmReadConfig(Net *net,
               site_type = &net->map_block[n].site_data[m];
               myReader.readUnsignedInt(*site_type);
 
-              if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
+              if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
               {
                 net->map_block[n].ProcessorRankForEachBlockSite[m] = 1 << 30;
                 continue;
@@ -581,7 +581,14 @@ void LBM::lbmWriteConfig(int stability,
               if (my_site_id & (1U << 31U))
                 continue;
 
-              if (net->net_site_data[my_site_id] == FLUID_TYPE)
+              if (my_site_id == 31702)
+                hemelb::debug::Debugger::Get()->BreakHere();
+
+              // TODO Utter filth. The cases where the whole site data is exactly equal
+              // to "FLUID_TYPE" and where just the type-component of the whole site data
+              // is equal to "FLUID_TYPE" are handled differently.
+              if (iLocalLatticeData.mSiteData[my_site_id]
+                  == hemelb::lb::FLUID_TYPE)
               {
                 D3Q15::CalculateDensityVelocityFEq(
                                                    &iLocalLatticeData.FOld[ (my_site_id
@@ -600,13 +607,17 @@ void LBM::lbmWriteConfig(int stability,
               { // not FLUID_TYPE
                 lbmCalculateBC(&iLocalLatticeData.FOld[ (my_site_id * (par + 1)
                     + par) * D3Q15::NUMVECTORS],
-                               net->net_site_data[my_site_id], &density, &vx,
-                               &vy, &vz, f_neq);
+                               iLocalLatticeData.GetSiteType(my_site_id),
+                               iLocalLatticeData.GetBoundaryId(my_site_id),
+                               &density, &vx, &vy, &vz, f_neq);
               }
+
+              if (my_site_id == 31702)
+                hemelb::debug::Debugger::Get()->BreakHere();
 
               if (lbm_stress_type == SHEAR_STRESS)
               {
-                if (net->GetNormalToWall(my_site_id)[0] >= 1.0e+30)
+                if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= 1.0e+30)
                 {
                   stress = -1.0;
                 }
@@ -615,7 +626,8 @@ void LBM::lbmWriteConfig(int stability,
                   D3Q15::CalculateShearStress(
                                               density,
                                               f_neq,
-                                              &net->GetNormalToWall(my_site_id)[0],
+                                              &iLocalLatticeData.GetNormalToWall(
+                                                                                 my_site_id)[0],
                                               stress, lbm_stress_par);
                 }
               }
@@ -635,6 +647,7 @@ void LBM::lbmWriteConfig(int stability,
               vx *= velocity_par;
               vy *= velocity_par;
               vz *= velocity_par;
+
               stress *= stress_par;
 
               local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0]

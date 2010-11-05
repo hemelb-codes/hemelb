@@ -14,58 +14,50 @@ namespace hemelb
 
       void ImplNonZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,
                                                             const double iOmega,
-                                                            double iFOldAll[],
-                                                            double iFNewAll[],
-                                                            const int iFIdAll[],
                                                             const int iFirstIndex,
                                                             const int iSiteCount,
                                                             MinsAndMaxes* bMinimaAndMaxima,
-                                                            const Net* net,
+                                                            LocalLatticeData &bLocalLatDat,
                                                             const double iStressType,
                                                             const double iStressParam,
                                                             hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
-                                      iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, net, iStressType,
-                                      iStressParam, iControl);
+          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
+                                      bMinimaAndMaxima, bLocalLatDat,
+                                      iStressType, iStressParam, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
-                                       iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, net, iStressType,
-                                       iStressParam, iControl);
+          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
+                                       bMinimaAndMaxima, bLocalLatDat,
+                                       iStressType, iStressParam, iControl);
         }
       }
 
       template<bool tDoRayTracing>
       void ImplNonZeroVelocityBoundaryDensity::DoCollisionsInternal(const double iOmega,
-                                                                    double iFOldAll[],
-                                                                    double iFNewAll[],
-                                                                    const int iFIdAll[],
                                                                     const int iFirstIndex,
                                                                     const int iSiteCount,
                                                                     MinsAndMaxes* bMinimaAndMaxima,
-                                                                    const Net* net,
+                                                                    LocalLatticeData &bLocalLatDat,
                                                                     const double iStressType,
                                                                     const double iStressParam,
                                                                     hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *lFOld = &iFOldAll[lIndex * D3Q15::NUMVECTORS];
+          double *lFOld = &bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS];
           double lFNeq[15];
           double lVx, lVy, lVz, lDummyDensity, lDensity;
 
-          lDensity = mBoundaryDensityArray[net->GetBoundaryId(lIndex)];
+          lDensity = mBoundaryDensityArray[bLocalLatDat.GetBoundaryId(lIndex)];
 
           D3Q15::CalculateDensityAndVelocity(lFOld, lDummyDensity, lVx, lVy,
                                              lVz);
 
-          for(unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             lFNeq[ii] = lFOld[ii];
           }
@@ -75,7 +67,8 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            iFNewAll[iFIdAll[lIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii];
+            bLocalLatDat.FNew[bLocalLatDat.GetStreamedIndex(lIndex, ii)]
+                = lFOld[ii];
           }
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
@@ -84,8 +77,9 @@ namespace hemelb
           }
 
           UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, lIndex, lFNeq,
-                                             lDensity, bMinimaAndMaxima, net,
-                                             iStressType, iStressParam, iControl);
+                                             lDensity, bMinimaAndMaxima,
+                                             bLocalLatDat, iStressType,
+                                             iStressParam, iControl);
         }
       }
 

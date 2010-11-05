@@ -257,16 +257,15 @@ namespace hemelb
       }
     }
 
-    // Constructor, populating fields from a Net object.
-    StreaklineDrawer::StreaklineDrawer(Net *net,
+    // Constructor, populating fields from lattice data objects.
+    StreaklineDrawer::StreaklineDrawer(Net* net,
+                                       lb::LocalLatticeData &iLocalLatDat,
                                        lb::GlobalLatticeData &iGlobLatDat)
     {
       int m, mm, n;
 
       int inlet_sites;
       int *neigh_proc_id;
-
-      unsigned int site_data;
 
       DataBlock *map_block_p;
       VelSiteData *vel_site_data_p;
@@ -376,10 +375,11 @@ namespace hemelb
                         neigh_proc[neigh_procs].send_vs = 1;
                         ++neigh_procs;
                       }
-                  site_data = net->net_site_data[map_block_p->site_data[m]];
+
+                  int lSiteIndex = map_block_p->site_data[m];
 
                   // if the lattice site is an not inlet one
-                  if ( (site_data & SITE_TYPE_MASK) != INLET_TYPE)
+                  if (iLocalLatDat.GetSiteType(lSiteIndex) != lb::INLET_TYPE)
                   {
                     continue;
                   }
@@ -395,8 +395,8 @@ namespace hemelb
                   particleSeedVec[nParticleSeeds].x = (float) site_i;
                   particleSeedVec[nParticleSeeds].y = (float) site_j;
                   particleSeedVec[nParticleSeeds].z = (float) site_k;
-                  particleSeedVec[nParticleSeeds].inlet_id = (site_data
-                      & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
+                  particleSeedVec[nParticleSeeds].inlet_id
+                      = iLocalLatDat.GetBoundaryId(lSiteIndex);
                   ++nParticleSeeds;
                 }
           }

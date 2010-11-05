@@ -9,42 +9,34 @@ namespace hemelb
 
       void ImplGuoZhengShi::DoCollisions(const bool iDoRayTracing,
                                          const double iOmega,
-                                         double iFOldAll[],
-                                         double iFNewAll[],
-                                         const int iFIdAll[],
                                          const int iFirstIndex,
                                          const int iSiteCount,
                                          MinsAndMaxes* bMinimaAndMaxima,
-                                         const Net* net,
+                                         LocalLatticeData &bLocalLatDat,
                                          const double iStressType,
                                          const double iStressParam,
                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
-                                      iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, net, iStressType,
-                                      iStressParam, iControl);
+          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
+                                      bMinimaAndMaxima, bLocalLatDat,
+                                      iStressType, iStressParam, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
-                                       iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, net, iStressType,
-                                       iStressParam, iControl);
+          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
+                                       bMinimaAndMaxima, bLocalLatDat,
+                                       iStressType, iStressParam, iControl);
         }
       }
 
       template<bool tRayTracing>
       void ImplGuoZhengShi::DoCollisionsInternal(const double iOmega,
-                                                 double iFOldAll[],
-                                                 double iFNewAll[],
-                                                 const int iFIdAll[],
                                                  const int iFirstIndex,
                                                  const int iSiteCount,
                                                  MinsAndMaxes* bMinimaAndMaxima,
-                                                 const Net* net,
+                                                 LocalLatticeData &bLocalLatDat,
                                                  const double iStressType,
                                                  const double iStressParam,
                                                  hemelb::vis::Control *iControl)
@@ -58,14 +50,14 @@ namespace hemelb
           double lFEq[15];
           double f_neq[15];
           double density, v_x, v_y, v_z;
-          double *f = &iFOldAll[lIndex * D3Q15::NUMVECTORS];
+          double *f = &bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS];
 
           D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, lFEq);
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            iFNewAll[iFIdAll[lIndex * D3Q15::NUMVECTORS + ii]] = f[ii] + iOmega
-                * (f_neq[ii] = f[ii] - lFEq[ii]);
+            bLocalLatDat.FNew[bLocalLatDat.GetStreamedIndex(lIndex, ii)]
+                = f[ii] + iOmega * (f_neq[ii] = f[ii] - lFEq[ii]);
           }
 
           // Now fill in the un-streamed-to distributions (those that point away from boundaries).
@@ -73,9 +65,9 @@ namespace hemelb
           {
             int lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
 
-            if (net->HasBoundary(lIndex, l))
+            if (bLocalLatDat.HasBoundary(lIndex, l))
             {
-              double delta = net->GetCutDistance(lIndex, l);
+              double delta = bLocalLatDat.GetCutDistance(lIndex, l);
               double uWall[3];
               double fNeq;
 
@@ -90,16 +82,20 @@ namespace hemelb
               {
                 // Only do the extra interpolation if there's gonna be a point there to interpolate from, i.e. there's no boundary
                 // in the direction of awayFromWallIndex
-                if (!net->HasBoundary(lIndex, lAwayFromWallIndex))
+                if (!bLocalLatDat.HasBoundary(lIndex, lAwayFromWallIndex))
                 {
                   // Need some info about the next node away from the wall in this direction...
-                  int nextIOut = iFIdAll[lIndex * D3Q15::NUMVECTORS
-                      + lAwayFromWallIndex] / D3Q15::NUMVECTORS;
+                  int nextIOut =
+                      bLocalLatDat.GetStreamedIndex(lIndex, lAwayFromWallIndex)
+                          / D3Q15::NUMVECTORS;
                   double nextNodeDensity, nextNodeV[3],
                       nextNodeFEq[D3Q15::NUMVECTORS];
 
-                  D3Q15::CalculateDensityVelocityFEq(&iFOldAll[nextIOut
-                      * D3Q15::NUMVECTORS], nextNodeDensity, nextNodeV[0],
+                  D3Q15::CalculateDensityVelocityFEq(
+                                                     &bLocalLatDat.FOld[nextIOut
+                                                         * D3Q15::NUMVECTORS],
+                                                     nextNodeDensity,
+                                                     nextNodeV[0],
                                                      nextNodeV[1],
                                                      nextNodeV[2], nextNodeFEq);
 
@@ -107,9 +103,10 @@ namespace hemelb
                     uWall[a] = delta * uWall[a] + (1. - delta) * (delta - 1.)
                         * nextNodeV[a] / (1. + delta);
 
-                  fNeq = delta * fNeq + (1. - delta) * (iFOldAll[nextIOut
-                      * D3Q15::NUMVECTORS + lAwayFromWallIndex]
-                      - nextNodeFEq[lAwayFromWallIndex]);
+                  fNeq = delta * fNeq + (1. - delta)
+                      * (bLocalLatDat.FOld[nextIOut * D3Q15::NUMVECTORS
+                          + lAwayFromWallIndex]
+                          - nextNodeFEq[lAwayFromWallIndex]);
                 }
                 // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
                 else
@@ -128,14 +125,15 @@ namespace hemelb
                                   fEqTemp);
 
               // Collide and stream!
-              iFNewAll[lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex]
+              bLocalLatDat.FNew[lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex]
                   = fEqTemp[lAwayFromWallIndex] + (1.0 + iOmega) * fNeq;
             }
           }
 
           UpdateMinsAndMaxes<tRayTracing> (v_x, v_y, v_z, lIndex, f_neq,
-                                           density, bMinimaAndMaxima, net,
-                                           iStressType, iStressParam, iControl);
+                                           density, bMinimaAndMaxima,
+                                           bLocalLatDat, iStressType,
+                                           iStressParam, iControl);
         }
       }
     }

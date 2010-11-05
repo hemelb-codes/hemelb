@@ -21,7 +21,9 @@ namespace hemelb
     {
       public:
         // Constructor and destructor.
-        StreaklineDrawer(Net *net, lb::GlobalLatticeData &iGlobLatDat);
+        StreaklineDrawer(Net* net,
+                         lb::LocalLatticeData &iLocalLatDat,
+                         lb::GlobalLatticeData &iGlobLatDat);
         ~StreaklineDrawer();
 
         // Method to reset streakline drawer
