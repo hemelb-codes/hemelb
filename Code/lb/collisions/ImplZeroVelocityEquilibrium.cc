@@ -8,50 +8,42 @@ namespace hemelb
     {
       void ImplZeroVelocityEquilibrium::DoCollisions(const bool iDoRayTracing,
                                                      const double iOmega,
-                                                     double iFOldAll[],
-                                                     double iFNewAll[],
-                                                     const int iFIdAll[],
                                                      const int iFirstIndex,
                                                      const int iSiteCount,
                                                      MinsAndMaxes* bMinimaAndMaxima,
-                                                     const Net* net,
+                                                     LocalLatticeData &bLocalLatDat,
                                                      const double iStressType,
                                                      const double iStressParam,
                                                      hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
-                                      iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, net, iStressType,
-                                      iStressParam, iControl);
+          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
+                                      bMinimaAndMaxima, bLocalLatDat,
+                                      iStressType, iStressParam, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
-                                       iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, net, iStressType,
-                                       iStressParam, iControl);
+          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
+                                       bMinimaAndMaxima, bLocalLatDat,
+                                       iStressType, iStressParam, iControl);
         }
       }
 
       template<bool tDoRayTracing>
       void ImplZeroVelocityEquilibrium::DoCollisionsInternal(const double iOmega,
-                                                             double iFOldAll[],
-                                                             double iFNewAll[],
-                                                             const int iFIdAll[],
                                                              const int iFirstIndex,
                                                              const int iSiteCount,
                                                              MinsAndMaxes* bMinimaAndMaxima,
-                                                             const Net* net,
+                                                             LocalLatticeData &bLocalLatDat,
                                                              const double iStressType,
                                                              const double iStressParam,
                                                              hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *lFOld = &iFOldAll[lIndex * D3Q15::NUMVECTORS];
-          double lFNeq[15];
+          double *lFOld = &bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS];
+          double lFNeq[D3Q15::NUMVECTORS];
           double lDensity;
 
           lDensity = 0.0;
@@ -71,13 +63,15 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            iFNewAll[iFIdAll[lIndex * D3Q15::NUMVECTORS + ii]] = lFOld[ii];
+            bLocalLatDat.FNew[bLocalLatDat.GetStreamedIndex(lIndex, ii)]
+                = lFOld[ii];
             lFNeq[ii] -= lFOld[ii];
           }
 
           Collision::UpdateMinsAndMaxes<tDoRayTracing>(0.0, 0.0, 0.0, lIndex,
                                                        lFNeq, lDensity,
-                                                       bMinimaAndMaxima, net,
+                                                       bMinimaAndMaxima,
+                                                       bLocalLatDat,
                                                        iStressType,
                                                        iStressParam, iControl);
         }

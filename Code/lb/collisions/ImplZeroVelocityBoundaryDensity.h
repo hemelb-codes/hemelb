@@ -17,13 +17,10 @@ namespace hemelb
 
           void DoCollisions(const bool iDoRayTracing,
                             const double iOmega,
-                            double iFOldAll[],
-                            double iFNewAll[],
-                            const int iFIdAll[],
-                            int iFirstIndex,
+                            const int iFirstIndex,
                             const int iSiteCount,
                             MinsAndMaxes* bMinimaAndMaxima,
-                            const Net* net,
+                            LocalLatticeData &bLocalLatDat,
                             const double iStressType,
                             const double iStressParam,
                             hemelb::vis::Control *iControl);
@@ -31,13 +28,10 @@ namespace hemelb
         private:
           template<bool tDoRayTracing>
           void DoCollisionsInternal(const double iOmega,
-                                    double iFOldAll[],
-                                    double iFNewAll[],
-                                    const int iFIdAll[],
-                                    int iFirstIndex,
+                                    const int iFirstIndex,
                                     const int iSiteCount,
                                     MinsAndMaxes* bMinimaAndMaxima,
-                                    const Net* net,
+                                    LocalLatticeData &bLocalLatDat,
                                     const double iStressType,
                                     const double iStressParam,
                                     hemelb::vis::Control *iControl);

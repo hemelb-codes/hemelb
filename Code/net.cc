@@ -11,28 +11,6 @@
 #include <cmath>
 #include <cstdio>
 
-double Net::GetCutDistance(int iSiteIndex, int iDirection) const
-{
-  return cut_distances[iSiteIndex * (D3Q15::NUMVECTORS - 1) + iDirection - 1];
-}
-
-bool Net::HasBoundary(int iSiteIndex, int iDirection) const
-{
-  unsigned int lBoundaryConfig = (net_site_data[iSiteIndex]
-      & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT;
-  return (lBoundaryConfig & (1U << (iDirection - 1))) != 0;
-}
-
-int Net::GetBoundaryId(int iSiteIndex) const
-{
-  return (net_site_data[iSiteIndex] & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT;
-}
-
-double *Net::GetNormalToWall(int iSiteIndex) const
-{
-  return &net_site_nor[iSiteIndex * 3];
-}
-
 /*!
  Low level function that finds the pointer to the rank on which a
  particular site resides.  ProcessorRankForEachBlockSite is the only member of mProcessorsForEachBlock
@@ -272,19 +250,19 @@ unsigned int Net::GetCollisionType(unsigned int site_data)
 {
   unsigned int boundary_type;
 
-  if (site_data == FLUID_TYPE)
+  if (site_data == hemelb::lb::FLUID_TYPE)
   {
     return FLUID;
   }
   boundary_type = site_data & SITE_TYPE_MASK;
 
-  if (boundary_type == FLUID_TYPE)
+  if (boundary_type == hemelb::lb::FLUID_TYPE)
   {
     return EDGE;
   }
   if (! (site_data & PRESSURE_EDGE_MASK))
   {
-    if (boundary_type == INLET_TYPE)
+    if (boundary_type == hemelb::lb::INLET_TYPE)
     {
       return INLET;
     }
@@ -295,7 +273,7 @@ unsigned int Net::GetCollisionType(unsigned int site_data)
   }
   else
   {
-    if (boundary_type == INLET_TYPE)
+    if (boundary_type == hemelb::lb::INLET_TYPE)
     {
       return INLET | EDGE;
     }
@@ -550,9 +528,6 @@ void Net::Initialise(int iTotalFluidSites,
   // sites per proc.  Site location will store up to 10000 of some
   // sort of coordinate.
   mFluidSitesOnEachProcessor = new int[mProcessorCount];
-  net_site_nor = NULL;
-  net_site_data = NULL;
-  cut_distances = NULL;
   my_sites = 0;
 
   // a fast graph growing partitioning technique which spans the data
@@ -668,12 +643,12 @@ void Net::Initialise(int iTotalFluidSites,
         // for this site within the current block to be the site index over the whole
         // processor.
         if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock]
-            & SITE_TYPE_MASK) != SOLID_TYPE)
+                & SITE_TYPE_MASK) != hemelb::lb::SOLID_TYPE)
         {
           lThisRankSiteData[lSiteIndexOnProc]
-              = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
+          = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
           lCurrentDataBlock->site_data[lSiteIndexWithinBlock]
-              = lSiteIndexOnProc;
+          = lSiteIndexOnProc;
           ++lSiteIndexOnProc;
         }
         else
@@ -982,20 +957,12 @@ void Net::Initialise(int iTotalFluidSites,
     }
   }
 
-  // Allocate f_old and f_new according to the number of sites on the process.  The extra site
-  // is there for when we would stream into a solid site during the simulation, which avoids
-  // an if condition at every timestep at every boundary site.  We also allocate space for the
-  // shared distribution functions.  We need twice as much space when we check the convergence
-  // and the extra distribution functions are
-  bLocalLatDat.FOld = new double[my_sites * D3Q15::NUMVECTORS + 1 + shared_fs];
-  bLocalLatDat.FNew = new double[my_sites * D3Q15::NUMVECTORS + 1 + shared_fs];
-
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
   // streamed between different partitions) are collected and the
   // buffers needed for the communications are set from here
 
-  f_data = new short int[4 * shared_fs];
+  short int *f_data = new short int[4 * shared_fs];
 
   // Allocate the index in which to put the distribution functions received from the other
   // process.
@@ -1021,19 +988,7 @@ void Net::Initialise(int iTotalFluidSites,
     neigh_proc[n].fs = 0;// This is set back to 0.
   }
 
-  if (my_sites > 0)
-  {
-    // f_id is allocated so we know which sites to get information from.
-    bLocalLatDat.FNeighbours = new int[my_sites * D3Q15::NUMVECTORS];
 
-    net_site_data = new unsigned int[my_sites];
-
-    if (lbm_stress_type == SHEAR_STRESS)
-    {
-      net_site_nor = new double[my_sites * 3];
-      cut_distances = new double[my_sites * (D3Q15::NUMVECTORS - 1)];
-    }
-  }
   from_proc_id_to_neigh_proc_index = new short int[mProcessorCount];
 
   for (int m = 0; m < mProcessorCount; m++)
@@ -1045,6 +1000,31 @@ void Net::Initialise(int iTotalFluidSites,
   {
     from_proc_id_to_neigh_proc_index[neigh_proc[m].id] = m;
   }
+
+
+  // Allocate f_old and f_new according to the number of sites on the process.  The extra site
+  // is there for when we would stream into a solid site during the simulation, which avoids
+  // an if condition at every timestep at every boundary site.  We also allocate space for the
+  // shared distribution functions.  We need twice as much space when we check the convergence
+  // and the extra distribution functions are
+  bLocalLatDat.FOld = new double[my_sites * D3Q15::NUMVECTORS + 1 + shared_fs];
+  bLocalLatDat.FNew = new double[my_sites * D3Q15::NUMVECTORS + 1 + shared_fs];
+
+  if (my_sites > 0)
+  {
+    // f_id is allocated so we know which sites to get information from.
+    bLocalLatDat.mFNeighbours = new int[my_sites * D3Q15::NUMVECTORS];
+
+    bLocalLatDat.mSiteData = new unsigned int[my_sites];
+
+    if (lbm_stress_type == SHEAR_STRESS)
+    {
+      bLocalLatDat.mWallNormalAtSite = new double[my_sites * 3];
+      bLocalLatDat.mDistanceToWall = new double[my_sites * (D3Q15::NUMVECTORS
+          - 1)];
+    }
+  }
+
   lSiteIndexOnProc = 0;
 
   n = -1;
@@ -1085,7 +1065,7 @@ void Net::Initialise(int iTotalFluidSites,
               unsigned int site_map = map_block_p->site_data[m];
 
               // set f_id.
-              bLocalLatDat.FNeighbours[site_map * D3Q15::NUMVECTORS + 0]
+              bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + 0]
                   = site_map * D3Q15::NUMVECTORS + 0;
 
               for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
@@ -1096,7 +1076,7 @@ void Net::Initialise(int iTotalFluidSites,
                 int neigh_k = site_k + D3Q15::CZ[l];
 
                 // initialize f_id to the rubbish site.
-                bLocalLatDat.FNeighbours[site_map * D3Q15::NUMVECTORS + l]
+                bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + l]
                     = my_sites * D3Q15::NUMVECTORS;
 
                 // You know which process the neighbour is on.
@@ -1121,7 +1101,7 @@ void Net::Initialise(int iTotalFluidSites,
                 // current and previous cycles.
                 if (IsCurrentProcRank(*proc_id_p))
                 {
-                  bLocalLatDat.FNeighbours[site_map * D3Q15::NUMVECTORS + l]
+                  bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + l]
                       = *site_data_p * D3Q15::NUMVECTORS + l;
 
                   continue;
@@ -1149,23 +1129,24 @@ void Net::Initialise(int iTotalFluidSites,
                 ++neigh_proc_p->fs; // We recount this again.
               }
               // This is used in Calculate BC in IO.
-              net_site_data[site_map] = lThisRankSiteData[lSiteIndexOnProc];
+              bLocalLatDat.mSiteData[site_map]
+                  = lThisRankSiteData[lSiteIndexOnProc];
 
               if (lbm_stress_type == SHEAR_STRESS)
               {
-                if (GetCollisionType(net_site_data[site_map]) & EDGE)
+                if (GetCollisionType(bLocalLatDat.mSiteData[site_map]) & EDGE)
                 {
                   for (unsigned int l = 0; l < 3; l++)
-                    net_site_nor[site_map * 3 + l]
+                    bLocalLatDat.mWallNormalAtSite[site_map * 3 + l]
                         = map_block[n].wall_data[m].wall_nor[l];
 
                   for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-                    cut_distances[site_map * (D3Q15::NUMVECTORS - 1) + l]
-                        = map_block[n].wall_data[m].cut_dist[l];
+                    bLocalLatDat.mDistanceToWall[site_map * (D3Q15::NUMVECTORS
+                        - 1) + l] = map_block[n].wall_data[m].cut_dist[l];
                 }
                 else
                 {
-                  net_site_nor[site_map * 3] = 1.0e+30;
+                  bLocalLatDat.mWallNormalAtSite[site_map * 3] = 1.0e+30;
                 }
               }
               ++lSiteIndexOnProc;
@@ -1266,7 +1247,7 @@ void Net::Initialise(int iTotalFluidSites,
 
       // Set f_id to the element in the send buffer that we put the updated
       // distribution functions in.
-      bLocalLatDat.FNeighbours[site_map * D3Q15::NUMVECTORS + l] = ++f_count;
+      bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + l] = ++f_count;
 
       // Set the place where we put the received distribution functions, which is
       // f_new[number of fluid site that sends, inverse direction].
@@ -1369,9 +1350,6 @@ Net::~Net()
 
   if (lbm_stress_type == SHEAR_STRESS && my_sites > 0)
   {
-    delete[] net_site_nor;
-    delete[] cut_distances;
-
     for (int i = 0; i < block_count; i++)
     {
       if (map_block[i].wall_data != NULL)
@@ -1393,11 +1371,6 @@ Net::~Net()
     }
   }
   delete[] map_block;
-
-  if (my_sites > 0)
-  {
-    delete[] net_site_data;
-  }
 
 #ifndef NOMPI
   for (int i = 0; i < COMMS_LEVELS; i++)

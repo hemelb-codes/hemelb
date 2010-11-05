@@ -74,7 +74,8 @@ class LBM
 
   private:
     void lbmCalculateBC(double f[],
-                        unsigned int site_data,
+                        hemelb::lb::SiteType iSiteType,
+                        unsigned int iBoundaryId,
                         double *density,
                         double *vx,
                         double *vy,
@@ -113,10 +114,9 @@ class LBM
     hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;
     double *lbm_inlet_normal;
     long int *lbm_inlet_count;
-    double tau, viscosity, omega;
+    double tau, omega;
     double voxel_size;
 
-    // TODO Eventually we should be able to make this private.
     hemelb::SimConfig *mSimConfig;
 
     double *lbm_average_inlet_velocity;

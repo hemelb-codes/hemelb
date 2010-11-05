@@ -64,11 +64,6 @@ class Net
                     hemelb::lb::GlobalLatticeData &iGlobLatDat,
                     hemelb::lb::LocalLatticeData &iLocalLatDat);
 
-    double GetCutDistance(int iSiteIndex, int iDirection) const;
-    bool HasBoundary(int iSiteIndex, int iDirection) const;
-    int GetBoundaryId(int iSiteIndex) const;
-    double* GetNormalToWall(int iSiteIndex) const;
-
     void ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
     void SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
     void UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
@@ -94,7 +89,6 @@ class Net
     unsigned int GetCollisionType(unsigned int site_data);
     MPI_Status status[4];
     double dd_time, bm_time, fr_time;
-    unsigned int *net_site_data;
 
     int GetDepths();
   private:
@@ -132,17 +126,14 @@ class Net
     NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX]; // See comment next to struct NeighProc.
     int shared_fs; // Number of distributions shared with neighbouring
     // processors.
-    double *cut_distances;
     hemelb::SimConfig* mSimConfig;
-    double *net_site_nor;
+
     int *machine_id;
     int *procs_per_machine;
     short int *from_proc_id_to_neigh_proc_index; // Turns ProcessorRankForEachBlockSite to neigh_proc_iindex.
     int neigh_procs; // Number of neighbouring processors.
     int mRank;
     MPI_Request **req;
-    // 3 buffers needed for convergence-enabled simulations
-    short int *f_data;
     int depths;
     int mMachineCount;
 };

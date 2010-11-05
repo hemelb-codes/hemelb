@@ -1,8 +1,8 @@
 #ifndef HEMELB_LB_COLLISIONS_COLLISION_H
 #define HEMELB_LB_COLLISIONS_COLLISION_H
 
-#include "net.h"
 #include "vis/Control.h"
+#include "lb/LocalLatticeData.h"
 
 #include <math.h>
 
@@ -29,26 +29,20 @@ namespace hemelb
         public:
           virtual void DoCollisions(const bool iDoRayTracing,
                                     const double iOmega,
-                                    double iFOldAll[],
-                                    double iFNewAll[],
-                                    const int iFIdAll[],
                                     const int iFirstIndex,
                                     const int iSiteCount,
                                     MinsAndMaxes* bMinimaAndMaxima,
-                                    const Net* net,
+                                    LocalLatticeData &bLocalLatDat,
                                     const double iStressType,
                                     const double iStressParam,
                                     hemelb::vis::Control *iControl);
 
           virtual void PostStep(const bool iDoRayTracing,
                                 const double iOmega,
-                                double iFOldAll[],
-                                double iFNewAll[],
-                                const int iFIdAll[],
                                 const int iFirstIndex,
                                 const int iSiteCount,
                                 MinsAndMaxes* bMinimaAndMaxima,
-                                const Net* net,
+                                LocalLatticeData &bLocalLatDat,
                                 const double iStressType,
                                 const double iStressParam,
                                 hemelb::vis::Control *iControl);
@@ -66,7 +60,7 @@ namespace hemelb
                                   const double *f_neq,
                                   const double &iDensity,
                                   MinsAndMaxes *bMinimaAndMaxima,
-                                  const Net* net,
+                                  const LocalLatticeData &iLocalLatDat,
                                   const double &iStressType,
                                   const double &iStressParam,
                                   hemelb::vis::Control *iControl)
@@ -101,15 +95,18 @@ namespace hemelb
 
             if (iStressType == SHEAR_STRESS)
             {
-              if (net->GetNormalToWall(iSiteIndex)[0] > 1.0e+30)
+              if (iLocalLatDat.GetNormalToWall(iSiteIndex)[0] > 1.0e+30)
               {
                 stress = 0.0;
                 rtStress = 1.0e+30;
               }
               else
               {
-                D3Q15::CalculateShearStress(iDensity, f_neq,
-                                            net->GetNormalToWall(iSiteIndex),
+                D3Q15::CalculateShearStress(
+                                            iDensity,
+                                            f_neq,
+                                            iLocalLatDat.GetNormalToWall(
+                                                                         iSiteIndex),
                                             stress, iStressParam);
                 rtStress = stress;
               }
