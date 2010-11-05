@@ -20,16 +20,6 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
 
 SimulationMaster::~SimulationMaster()
 {
-  if (!mNet->IsCurrentProcTheIOProc())
-  {
-    if (mLocalLatDat.FNeighbours != NULL)
-      delete[] mLocalLatDat.FNeighbours;
-    if (mLocalLatDat.FNew != NULL)
-      delete[] mLocalLatDat.FNew;
-    if (mLocalLatDat.FOld != NULL)
-      delete[] mLocalLatDat.FOld;
-  }
-
   delete mNet;
   delete mLbm;
 }

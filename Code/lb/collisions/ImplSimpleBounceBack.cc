@@ -9,49 +9,41 @@ namespace hemelb
 
       void ImplSimpleBounceBack::DoCollisions(const bool iDoRayTracing,
                                               const double iOmega,
-                                              double iFOldAll[],
-                                              double iFNewAll[],
-                                              const int iFIdAll[],
                                               const int iFirstIndex,
                                               const int iSiteCount,
                                               MinsAndMaxes* bMinimaAndMaxima,
-                                              const Net* net,
+                                              LocalLatticeData &bLocalLatDat,
                                               const double iStressType,
                                               const double iStressParam,
                                               hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFOldAll, iFNewAll, iFIdAll,
-                                      iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, net, iStressType,
-                                      iStressParam, iControl);
+          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
+                                      bMinimaAndMaxima, bLocalLatDat,
+                                      iStressType, iStressParam, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFOldAll, iFNewAll, iFIdAll,
-                                       iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, net, iStressType,
-                                       iStressParam, iControl);
+          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
+                                       bMinimaAndMaxima, bLocalLatDat,
+                                       iStressType, iStressParam, iControl);
         }
       }
 
       template<bool tDoRayTracing>
       void ImplSimpleBounceBack::DoCollisionsInternal(const double iOmega,
-                                                      double iFOldAll[],
-                                                      double iFNewAll[],
-                                                      const int iFIdAll[],
                                                       const int iFirstIndex,
                                                       const int iSiteCount,
                                                       MinsAndMaxes* bMinimaAndMaxima,
-                                                      const Net* net,
+                                                      LocalLatticeData &bLocalLatDat,
                                                       const double iStressType,
                                                       const double iStressParam,
                                                       hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *lFOld = &iFOldAll[lIndex * D3Q15::NUMVECTORS];
+          double *lFOld = &bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS];
           double lFNeq[D3Q15::NUMVECTORS];
           double lVx, lVy, lVz, lDensity;
 
@@ -66,18 +58,20 @@ namespace hemelb
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             // The actual bounce-back lines, including streaming and collision. Basically swap the non-equilibrium components of f in each of the opposing pairs of directions.
-            int lStreamTo = (net->HasBoundary(lIndex, ii))
+            int lStreamTo = (bLocalLatDat.HasBoundary(lIndex, ii))
               ? ( (lIndex * D3Q15::NUMVECTORS) + D3Q15::INVERSEDIRECTIONS[ii])
-              : iFIdAll[lIndex * D3Q15::NUMVECTORS + ii];
+              : bLocalLatDat.GetStreamedIndex(lIndex, ii);
 
             // Remember, oFNeq currently hold the equilibrium distribution. We
             // simultaneously use this and correct it, here.
-            iFNewAll[lStreamTo] = lFOld[ii] += iOmega * (lFNeq[ii] -= lFOld[ii]);
+            bLocalLatDat.FNew[lStreamTo] = lFOld[ii] += iOmega * (lFNeq[ii]
+                -= lFOld[ii]);
           }
 
           UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, lIndex, lFNeq,
-                                             lDensity, bMinimaAndMaxima, net,
-                                             iStressType, iStressParam, iControl);
+                                             lDensity, bMinimaAndMaxima,
+                                             bLocalLatDat, iStressType,
+                                             iStressParam, iControl);
         }
       }
 

@@ -544,7 +544,7 @@ void ioWriteConfig (Vis *vis) {
    *       double wall_dist
    *     }
    *     
-   *     double cut_distances[14]
+   *     double mDistanceToWall[14]
    */
   FILE *system_config;
   XDR xdr_config;

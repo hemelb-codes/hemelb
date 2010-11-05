@@ -53,7 +53,7 @@ namespace hemelb
       myGlypher = new GlyphDrawer(net, &iGlobLatDat, &iLocalLatDat);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(net, iGlobLatDat);
+      myStreaker = new StreaklineDrawer(net, iLocalLatDat, iGlobLatDat);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
