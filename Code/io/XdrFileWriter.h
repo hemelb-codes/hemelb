@@ -2,6 +2,7 @@
 #define HEMELB_IO_XDRFILEWRITER_H
 
 #include <stdio.h>
+#include <string>
 
 #include "io/XdrWriter.h"
 
