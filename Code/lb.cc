@@ -278,7 +278,7 @@ int LBM::lbmCycle(int perform_rt,
                                                perform_rt,
                                                offset,
                                                net->my_inter_collisions[collision_type],
-                                               mParams, &mMinsAndMaxes,
+                                               mParams, mMinsAndMaxes,
                                                bLocalLatDat,
                                                hemelb::vis::controller);
     offset += net->my_inter_collisions[collision_type];
@@ -294,7 +294,7 @@ int LBM::lbmCycle(int perform_rt,
                                                perform_rt,
                                                offset,
                                                net->my_inner_collisions[collision_type],
-                                               mParams, &mMinsAndMaxes,
+                                               mParams, mMinsAndMaxes,
                                                bLocalLatDat,
                                                hemelb::vis::controller);
     offset += net->my_inner_collisions[collision_type];
@@ -311,7 +311,7 @@ int LBM::lbmCycle(int perform_rt,
                                            perform_rt,
                                            offset,
                                            net->my_inner_collisions[collision_type],
-                                           mParams, &mMinsAndMaxes,
+                                           mParams, mMinsAndMaxes,
                                            bLocalLatDat,
                                            hemelb::vis::controller);
     offset += net->my_inner_collisions[collision_type];
@@ -323,7 +323,7 @@ int LBM::lbmCycle(int perform_rt,
                                            perform_rt,
                                            offset,
                                            net->my_inter_collisions[collision_type],
-                                           mParams, &mMinsAndMaxes,
+                                           mParams, mMinsAndMaxes,
                                            bLocalLatDat,
                                            hemelb::vis::controller);
     offset += net->my_inter_collisions[collision_type];

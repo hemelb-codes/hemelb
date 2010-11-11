@@ -32,7 +32,7 @@ namespace hemelb
                                     const int iFirstIndex,
                                     const int iSiteCount,
                                     const LbmParameters &iLbmParams,
-                                    MinsAndMaxes* bMinimaAndMaxima,
+                                    MinsAndMaxes &bMinimaAndMaxima,
                                     LocalLatticeData &bLocalLatDat,
                                     hemelb::vis::Control *iControl);
 
@@ -40,7 +40,7 @@ namespace hemelb
                                 const int iFirstIndex,
                                 const int iSiteCount,
                                 const LbmParameters &iLbmParams,
-                                MinsAndMaxes* bMinimaAndMaxima,
+                                MinsAndMaxes &bMinimaAndMaxima,
                                 LocalLatticeData &bLocalLatDat,
                                 hemelb::vis::Control *iControl);
 
@@ -56,18 +56,18 @@ namespace hemelb
                                   const int &iSiteIndex,
                                   const double *f_neq,
                                   const double &iDensity,
-                                  MinsAndMaxes *bMinimaAndMaxima,
+                                  MinsAndMaxes &bMinimaAndMaxima,
                                   const LocalLatticeData &iLocalLatDat,
                                   const LbmParameters &iLbmParams,
                                   hemelb::vis::Control *iControl)
           {
-            if (iDensity < bMinimaAndMaxima->MinDensity)
+            if (iDensity < bMinimaAndMaxima.MinDensity)
             {
-              bMinimaAndMaxima->MinDensity = iDensity;
+              bMinimaAndMaxima.MinDensity = iDensity;
             }
-            if (iDensity > bMinimaAndMaxima->MaxDensity)
+            if (iDensity > bMinimaAndMaxima.MaxDensity)
             {
-              bMinimaAndMaxima->MaxDensity = iDensity;
+              bMinimaAndMaxima.MaxDensity = iDensity;
             }
 
             double stress;
@@ -80,13 +80,13 @@ namespace hemelb
 
             double lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz);
 
-            if (lVelocity < bMinimaAndMaxima->MinVelocity)
+            if (lVelocity < bMinimaAndMaxima.MinVelocity)
             {
-              bMinimaAndMaxima->MinVelocity = lVelocity;
+              bMinimaAndMaxima.MinVelocity = lVelocity;
             }
-            if (lVelocity > bMinimaAndMaxima->MaxVelocity)
+            if (lVelocity > bMinimaAndMaxima.MaxVelocity)
             {
-              bMinimaAndMaxima->MaxVelocity = lVelocity;
+              bMinimaAndMaxima.MaxVelocity = lVelocity;
             }
 
             if (iLbmParams.StressType == ShearStress)
@@ -114,13 +114,13 @@ namespace hemelb
               rtStress = stress;
             }
 
-            if (stress < bMinimaAndMaxima->MinStress)
+            if (stress < bMinimaAndMaxima.MinStress)
             {
-              bMinimaAndMaxima->MinStress = stress;
+              bMinimaAndMaxima.MinStress = stress;
             }
-            if (stress > bMinimaAndMaxima->MaxStress)
+            if (stress > bMinimaAndMaxima.MaxStress)
             {
-              bMinimaAndMaxima->MaxStress = stress;
+              bMinimaAndMaxima.MaxStress = stress;
             }
 
             if (tDoRayTracing)

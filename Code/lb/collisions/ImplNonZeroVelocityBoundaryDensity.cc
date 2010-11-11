@@ -16,7 +16,7 @@ namespace hemelb
                                                             const int iFirstIndex,
                                                             const int iSiteCount,
                                                             const LbmParameters &iLbmParams,
-                                                            MinsAndMaxes* bMinimaAndMaxima,
+                                                            MinsAndMaxes &bMinimaAndMaxima,
                                                             LocalLatticeData &bLocalLatDat,
                                                             hemelb::vis::Control *iControl)
       {
@@ -36,7 +36,7 @@ namespace hemelb
       void ImplNonZeroVelocityBoundaryDensity::DoCollisionsInternal(const int iFirstIndex,
                                                                     const int iSiteCount,
                                                                     const LbmParameters &iLbmParams,
-                                                                    MinsAndMaxes* bMinimaAndMaxima,
+                                                                    MinsAndMaxes &bMinimaAndMaxima,
                                                                     LocalLatticeData &bLocalLatDat,
                                                                     hemelb::vis::Control *iControl)
       {
