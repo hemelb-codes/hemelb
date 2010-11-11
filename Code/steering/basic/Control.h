@@ -22,12 +22,16 @@ namespace hemelb
         static Control* Init(bool isCurrentProcTheSteeringProc);
         static Control* Get(void);
 
-        void StartNetworkThread(LBM* lbm, lb::SimulationState *iSimState);
+        void StartNetworkThread(LBM* lbm,
+                                lb::SimulationState *iSimState,
+                                const lb::LbmParameters *iLbmParams);
 
-        void UpdateSteerableParameters(bool shouldRenderForSnapshot,
-                                       int* perform_rendering,
-                                       hemelb::vis::Control* visController,
-                                       LBM* lbm);
+        void
+            UpdateSteerableParameters(bool shouldRenderForSnapshot,
+                                      int* perform_rendering,
+                                      hemelb::lb::SimulationState &iSimulationState,
+                                      hemelb::vis::Control* visController,
+                                      LBM* lbm);
         bool ShouldRenderForNetwork();
 
         char host_name[255];
@@ -64,9 +68,11 @@ namespace hemelb
         bool mIsCurrentProcTheSteeringProc;
 
         // Do the MPI send to spread the params
-        void BroadcastSteerableParameters(int *perform_rendering,
-                                          vis::Control *visControl,
-                                          LBM* lbm);
+        void
+            BroadcastSteerableParameters(int *perform_rendering,
+                                         hemelb::lb::SimulationState &lSimulationState,
+                                         vis::Control *visControl,
+                                         LBM* lbm);
 
         NetworkThread* mNetworkThread;
     };

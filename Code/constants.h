@@ -9,9 +9,6 @@
 #define DEG_TO_RAD   (PI / 180.0)
 #define EPSILON      1.0e-30
 
-#define VON_MISES_STRESS   +1.0
-#define SHEAR_STRESS       -1.0
-
 #define STABLE                 1
 #define UNSTABLE               0
 #define STABLE_AND_CONVERGED   2

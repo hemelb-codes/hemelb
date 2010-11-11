@@ -19,7 +19,7 @@ namespace hemelb
     // Function to write out our struct, ColPixel.
     void Writer::writePixel(vis::ColPixel *col_pixel_p,
                             vis::ColourPaletteFunction*colourPalette,
-                            const float iLbmStressType)
+                            const lb::StressTypes iLbmStressType)
     {
       // TODO: make this deal with spaces/newlines for general writer
 
