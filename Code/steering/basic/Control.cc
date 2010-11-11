@@ -65,7 +65,9 @@ namespace hemelb
     Control* Control::singleton = 0;
 
     // Kick off the networking thread
-    void Control::StartNetworkThread(LBM* lbm, lb::SimulationState *iSimState)
+    void Control::StartNetworkThread(LBM* lbm,
+                                     lb::SimulationState *iSimState,
+                                     const lb::LbmParameters *iLbmParams)
     {
       if (mIsCurrentProcTheSteeringProc)
       {
@@ -77,7 +79,7 @@ namespace hemelb
         pthread_mutex_init(&LOCK, NULL);
         pthread_cond_init(&network_send_frame, NULL);
 
-        mNetworkThread = new NetworkThread(lbm, this, iSimState);
+        mNetworkThread = new NetworkThread(lbm, this, iSimState, iLbmParams);
         mNetworkThread->Run();
       }
     }
@@ -85,6 +87,7 @@ namespace hemelb
     // Broadcast the steerable parameters to all tasks.
     void Control::UpdateSteerableParameters(bool shouldRenderForSnapshot,
                                             int* perform_rendering,
+                                            hemelb::lb::SimulationState &iSimulationState,
                                             hemelb::vis::Control* visController,
                                             LBM* lbm)
     {
@@ -95,7 +98,8 @@ namespace hemelb
         sem_wait(&steering_var_lock);
       }
 
-      BroadcastSteerableParameters(perform_rendering, visController, lbm);
+      BroadcastSteerableParameters(perform_rendering, iSimulationState,
+                                   visController, lbm);
 
       if (mIsCurrentProcTheSteeringProc)
         sem_post(&steering_var_lock);
@@ -103,6 +107,7 @@ namespace hemelb
 
     // Broadcast the steerable parameters to all tasks.
     void Control::BroadcastSteerableParameters(int *perform_rendering,
+                                               hemelb::lb::SimulationState &lSimulationState,
                                                vis::Control *visControl,
                                                LBM* lbm)
     {
@@ -148,7 +153,7 @@ namespace hemelb
       visControl->mouse_x = int(steer_par[14]);
       visControl->mouse_y = int(steer_par[15]);
 
-      lbm_terminate_simulation = int(steer_par[16]);
+      lSimulationState.IsTerminating = int(steer_par[16]);
 
       // To swap between glyphs and streak line rendering...
       // 0 - Only display the isosurfaces (wall pressure and stress)

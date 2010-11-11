@@ -5,6 +5,7 @@
 
 #include "lb/GlobalLatticeData.h"
 #include "lb/LocalLatticeData.h"
+#include "lb/LbmParameters.h"
 
 #include "vis/ColPixel.h"
 #include "vis/GlyphDrawer.h"
@@ -46,7 +47,8 @@ namespace hemelb
             float dist;
         };
 
-        Control(float iStressType, lb::GlobalLatticeData &iGlobLatDat);
+            Control(lb::StressTypes iStressType,
+                    lb::GlobalLatticeData &iGlobLatDat);
         ~Control();
         void initLayers(lb::GlobalLatticeData &iGlobLatDat,
                         lb::LocalLatticeData &iLocalLatDat,
@@ -165,7 +167,7 @@ namespace hemelb
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
 
-        float mStressType;
+        lb::StressTypes mStressType;
 
     };
 
