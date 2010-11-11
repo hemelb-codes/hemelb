@@ -85,7 +85,7 @@ namespace hemelb
     void ColPixel::rawWritePixel(unsigned int *pixel_index,
                                  unsigned char rgb_data[],
                                  ColourPaletteFunction *colourPalette,
-                                 const float iLbmStressType)
+                                 lb::StressTypes iLbmStressType)
     {
       float density_col[3], stress_col[3], particle_col[3];
 
@@ -112,7 +112,7 @@ namespace hemelb
         makePixelColour(r1, g1, b1, int(vel_r / dt), int(vel_g / dt), int(vel_b
             / dt));
 
-        if (iLbmStressType != SHEAR_STRESS)
+        if (iLbmStressType != lb::ShearStress)
         {
           // store von Mises stress volume rendering colour
           makePixelColour(r2, g2, b2, int(stress_r / dt), int(stress_g / dt),
@@ -135,7 +135,8 @@ namespace hemelb
 
       } // if (isRt)
 
-      if (iLbmStressType != SHEAR_STRESS && controller->mode == 0)
+      if (iLbmStressType != lb::ShearStress && controller->mode
+          == 0)
       {
         colourPalette(density, density_col);
         colourPalette(stress, stress_col);
@@ -149,7 +150,8 @@ namespace hemelb
             * stress_col[1]), int(255.0F * stress_col[2]));
 
       }
-      else if (iLbmStressType != SHEAR_STRESS && controller->mode == 1)
+      else if (iLbmStressType != lb::ShearStress
+          && controller->mode == 1)
       {
         colourPalette(density, density_col);
         colourPalette(stress, stress_col);
