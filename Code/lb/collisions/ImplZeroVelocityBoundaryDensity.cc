@@ -13,38 +13,32 @@ namespace hemelb
       }
 
       void ImplZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,
-                                                         const double iOmega,
                                                          const int iFirstIndex,
                                                          const int iSiteCount,
-                                                         MinsAndMaxes* bMinimaAndMaxima,
+                                                         const LbmParameters &iLbmParams,
+                                                         MinsAndMaxes &bMinimaAndMaxima,
                                                          LocalLatticeData &bLocalLatDat,
-                                                         const double iStressType,
-                                                         const double iStressParam,
                                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, bLocalLatDat,
-                                      iStressType, iStressParam, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams,
+                                      bMinimaAndMaxima, bLocalLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, bLocalLatDat,
-                                       iStressType, iStressParam, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams,
+                                       bMinimaAndMaxima, bLocalLatDat, iControl);
         }
       }
 
       // Collision + streaming for fluid lattice sites and adjacent to the outlet and the wall.
       template<bool tDoRayTracing>
-      void ImplZeroVelocityBoundaryDensity::DoCollisionsInternal(const double iOmega,
-                                                                 const int iFirstIndex,
+      void ImplZeroVelocityBoundaryDensity::DoCollisionsInternal(const int iFirstIndex,
                                                                  const int iSiteCount,
-                                                                 MinsAndMaxes* bMinimaAndMaxima,
+                                                                 const LbmParameters &iLbmParams,
+                                                                 MinsAndMaxes &bMinimaAndMaxima,
                                                                  LocalLatticeData &bLocalLatDat,
-                                                                 const double iStressType,
-                                                                 const double iStressParam,
                                                                  hemelb::vis::Control *iControl)
       {
         for (int iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
@@ -74,8 +68,7 @@ namespace hemelb
                                                        lFNeq, lDensity,
                                                        bMinimaAndMaxima,
                                                        bLocalLatDat,
-                                                       iStressType,
-                                                       iStressParam, iControl);
+                                                       iLbmParams, iControl);
         }
       }
     }

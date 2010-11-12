@@ -3,6 +3,7 @@
 #include <vector>
 #include <limits>
 
+#include "lb/LbmParameters.h"
 #include "utilityFunctions.h"
 #include "vis/RayTracer.h"
 // TODO ideally this wouldn't be here.
@@ -57,7 +58,7 @@ namespace hemelb
                                     Ray *bCurrentRay,
                                     void(*ColourPalette)(float value,
                                                          float col[]),
-                                    const float iLbmStressType)
+                                    const lb::StressTypes iLbmStressType)
     {
       if (*flow_field < 0.0F)
         return; // solid voxel
@@ -74,7 +75,7 @@ namespace hemelb
       bCurrentRay->VelocityColour[1] += ray_segment * palette[1];
       bCurrentRay->VelocityColour[2] += ray_segment * palette[2];
 
-      if (iLbmStressType != SHEAR_STRESS)
+      if (iLbmStressType != lb::ShearStress)
       {
         // update the volume rendering of the von Mises stress flow field
         float scaled_stress = * (flow_field + 2)
@@ -108,7 +109,7 @@ namespace hemelb
                                      void(*ColourPalette)(float value,
                                                           float col[]),
                                      bool xyz_is_1[],
-                                     const float iLbmStressType)
+                                     const lb::StressTypes iLbmStressType)
     {
       float t_max[3];
       int i_vec[3];
@@ -255,7 +256,7 @@ namespace hemelb
                                        void(*ColourPalette)(float value,
                                                             float col[]),
                                        bool xyz_Is_1[],
-                                       const double iLbmStressType)
+                                       const lb::StressTypes iLbmStressType)
     {
       float block_min[3];
       float t_max[3];
@@ -782,7 +783,7 @@ namespace hemelb
       rtBuildClusters(net);
     }
 
-    void RayTracer::Render(const float iLbmStressType)
+    void RayTracer::Render(const lb::StressTypes iLbmStressType)
     {
       float lScreenMaxX = vis::controller->mScreen.MaxXValue;
       float lScreenMaxY = vis::controller->mScreen.MaxYValue;
@@ -949,7 +950,7 @@ namespace hemelb
             lRay.VelocityColour[1] = 0.0F;
             lRay.VelocityColour[2] = 0.0F;
 
-            if (iLbmStressType != SHEAR_STRESS)
+            if (iLbmStressType != lb::ShearStress)
             {
               lRay.StressColour[0] = 0.0F;
               lRay.StressColour[1] = 0.0F;
@@ -973,7 +974,7 @@ namespace hemelb
             col_pixel.vel_g = lRay.VelocityColour[1] * 255.0F;
             col_pixel.vel_b = lRay.VelocityColour[2] * 255.0F;
 
-            if (iLbmStressType != SHEAR_STRESS)
+            if (iLbmStressType != lb::ShearStress)
             {
               col_pixel.stress_r = lRay.StressColour[0] * 255.0F;
               col_pixel.stress_g = lRay.StressColour[1] * 255.0F;

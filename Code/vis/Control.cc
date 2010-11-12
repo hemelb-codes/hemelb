@@ -17,7 +17,8 @@ namespace hemelb
     // make a global controller
     Control *controller;
 
-    Control::Control(float iStressType, lb::GlobalLatticeData &iGlobLatDat)
+    Control::Control(lb::StressTypes iStressType,
+                     lb::GlobalLatticeData &iGlobLatDat)
     {
       mStressType = iStressType;
 
@@ -215,7 +216,7 @@ namespace hemelb
         col_pixel2->vel_g += col_pixel1->vel_g;
         col_pixel2->vel_b += col_pixel1->vel_b;
 
-        if (mStressType != SHEAR_STRESS)
+        if (mStressType != lb::ShearStress)
         {
           col_pixel2->stress_r += col_pixel1->stress_r;
           col_pixel2->stress_g += col_pixel1->stress_g;
@@ -239,7 +240,7 @@ namespace hemelb
         col_pixel2->vel_g = col_pixel1->vel_g;
         col_pixel2->vel_b = col_pixel1->vel_b;
 
-        if (mStressType != SHEAR_STRESS)
+        if (mStressType != lb::ShearStress)
         {
           col_pixel2->stress_r = col_pixel1->stress_r;
           col_pixel2->stress_g = col_pixel1->stress_g;
@@ -256,7 +257,7 @@ namespace hemelb
       // Done merging ray-tracing
 
       // Now merge glyph data
-      if (mStressType != SHEAR_STRESS && (mode == 0 || mode == 1))
+      if (mStressType != lb::ShearStress && (mode == 0 || mode == 1))
       {
 
         if (col_pixel1->i.isGlyph)
@@ -668,7 +669,8 @@ namespace hemelb
         myGlypher->render();
       }
 #ifndef NO_STREAKLINES
-      if (shouldDrawStreaklines && (mStressType == SHEAR_STRESS || mode == 2))
+      if (shouldDrawStreaklines
+          && (mStressType == lb::ShearStress || mode == 2))
       {
         myStreaker->render(iGlobLatDat);
       }

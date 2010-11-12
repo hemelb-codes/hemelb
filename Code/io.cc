@@ -90,7 +90,20 @@ void LBM::lbmReadConfig(Net *net,
   unsigned int site_i, site_j, site_k;
   unsigned int *site_type;
 
-  myReader.readDouble(lbm_stress_type);
+  // Not the ideal way to do this, but has to be this way as the old system used
+  // doubles for the stress type. -1.0 signified shear stress, 1.0 meant von Mises.
+  double lTempStressType;
+
+  myReader.readDouble(lTempStressType);
+
+  hemelb::debug::Debugger::Get()->BreakHere();
+
+  mParams.StressType = (lTempStressType == -1.0)
+    ? hemelb::lb::ShearStress
+    : ( (lTempStressType == 1.0)
+      ? hemelb::lb::VonMises
+      : hemelb::lb::IgnoreStress);
+
   myReader.readInt(bGlobalLatticeData.BlocksX);
   myReader.readInt(bGlobalLatticeData.BlocksY);
   myReader.readInt(bGlobalLatticeData.BlocksZ);
@@ -191,8 +204,7 @@ void LBM::lbmReadConfig(Net *net,
               site_max_y = hemelb::util::max(site_max_y, site_j);
               site_max_z = hemelb::util::max(site_max_z, site_k);
 
-              if (lbm_stress_type == SHEAR_STRESS
-                  && net->GetCollisionType(*site_type) != FLUID)
+              if (net->GetCollisionType(*site_type) != FLUID)
               {
                 // Neither solid nor simple fluid
                 if (net->map_block[n].wall_data == NULL)
@@ -458,10 +470,10 @@ void LBM::lbmWriteConfig(int stability,
   pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par
       * voxel_size * voxel_size);
 
-  velocity_par = 1.0 / (voxel_size * ( (tau - 0.5) / 3.) / (BLOOD_VISCOSITY
-      / BLOOD_DENSITY));
+  velocity_par = 1.0 / (voxel_size * ( (mParams.Tau - 0.5) / 3.)
+      / (BLOOD_VISCOSITY / BLOOD_DENSITY));
 
-  stress_par = ( (tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+  stress_par = ( (mParams.Tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
   stress_par = BLOOD_DENSITY / (stress_par * stress_par * voxel_size
       * voxel_size);
 
@@ -581,9 +593,6 @@ void LBM::lbmWriteConfig(int stability,
               if (my_site_id & (1U << 31U))
                 continue;
 
-              if (my_site_id == 31702)
-                hemelb::debug::Debugger::Get()->BreakHere();
-
               // TODO Utter filth. The cases where the whole site data is exactly equal
               // to "FLUID_TYPE" and where just the type-component of the whole site data
               // is equal to "FLUID_TYPE" are handled differently.
@@ -615,7 +624,7 @@ void LBM::lbmWriteConfig(int stability,
               if (my_site_id == 31702)
                 hemelb::debug::Debugger::Get()->BreakHere();
 
-              if (lbm_stress_type == SHEAR_STRESS)
+              if (mParams.StressType == hemelb::lb::ShearStress)
               {
                 if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= 1.0e+30)
                 {
@@ -628,12 +637,13 @@ void LBM::lbmWriteConfig(int stability,
                                               f_neq,
                                               &iLocalLatticeData.GetNormalToWall(
                                                                                  my_site_id)[0],
-                                              stress, lbm_stress_par);
+                                              stress, mParams.StressParameter);
                 }
               }
               else
               {
-                D3Q15::CalculateVonMisesStress(f_neq, stress, lbm_stress_par);
+                D3Q15::CalculateVonMisesStress(f_neq, stress,
+                                               mParams.StressParameter);
               }
 
               vx /= density;

@@ -16,13 +16,15 @@ namespace hemelb
       public:
         NetworkThread(LBM* lbm,
                       Control* steeringController,
-                      lb::SimulationState* iSimState);
+                      lb::SimulationState* iSimState,
+                      const lb::LbmParameters* iLbmParams);
       private:
         void DoWork(void);
 
         LBM* mLbm;
         Control* mSteeringController;
         lb::SimulationState* mSimState;
+        const lb::LbmParameters* mLbmParams;
 
         pthread_attr_t* GetPthreadAttributes(void);
         double frameTiming(void);

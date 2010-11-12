@@ -4,8 +4,7 @@ include $(MK)/header.mk
 TARGETS = $(EXE)
 SUBDIRS = vis steering io debug lb xml
 
-$(EXE)_DEPS = config.o \
-        D3Q15.o \
+$(EXE)_DEPS = D3Q15.o \
 	io.o \
 	lb.o \
 	fileutils.o \

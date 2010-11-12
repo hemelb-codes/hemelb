@@ -8,37 +8,31 @@ namespace hemelb
     {
 
       void ImplRegularised::DoCollisions(const bool iDoRayTracing,
-                                         const double iOmega,
                                          const int iFirstIndex,
                                          const int iSiteCount,
-                                         MinsAndMaxes* bMinimaAndMaxima,
+                                         const LbmParameters &iLbmParams,
+                                         MinsAndMaxes &bMinimaAndMaxima,
                                          LocalLatticeData &bLocalLatDat,
-                                         const double iStressType,
-                                         const double iStressParam,
                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, bLocalLatDat,
-                                      iStressType, iStressParam, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams,
+                                      bMinimaAndMaxima, bLocalLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, bLocalLatDat,
-                                       iStressType, iStressParam, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams,
+                                       bMinimaAndMaxima, bLocalLatDat, iControl);
         }
       }
 
       template<bool tDoRayTracing>
-      void ImplRegularised::DoCollisionsInternal(const double iOmega,
-                                                 const int iFirstIndex,
+      void ImplRegularised::DoCollisionsInternal(const int iFirstIndex,
                                                  const int iSiteCount,
-                                                 MinsAndMaxes* bMinimaAndMaxima,
+                                                 const LbmParameters &iLbmParams,
+                                                 MinsAndMaxes &bMinimaAndMaxima,
                                                  LocalLatticeData &bLocalLatDat,
-                                                 const double iStressType,
-                                                 const double iStressParam,
                                                  hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
@@ -164,7 +158,8 @@ namespace hemelb
           // The gi (here; f) are then collided and streamed
           bLocalLatDat.FNew[bLocalLatDat.GetStreamedIndex(lIndex, 0)] = ( (2.0
               / 9.0) * density - (1.0 / 3.0) * ( (v_xx + v_yy + v_zz)
-              * density_1)) + (1.0 + iOmega) * (f_neq[0] = -specialNumber);
+              * density_1)) + (1.0 + iLbmParams.Omega) * (f_neq[0]
+              = -specialNumber);
 
           double temp1 = (1.0 / 9.0) * density - (1.0 / 6.0) * ( (v_xx + v_yy
               + v_zz) * density_1);
@@ -185,25 +180,25 @@ namespace hemelb
           }
 
           bLocalLatDat.FNew[lStreamTo[1]] = temp1 + (0.5 * density_1) * v_xx
-              + (1.0 / 3.0) * v_x + (1.0 + iOmega) * (f_neq[1] = (1.0 / 9.0)
-              * piMatrix[0][0] - specialNumber); // (+1, 0, 0)
+              + (1.0 / 3.0) * v_x + (1.0 + iLbmParams.Omega) * (f_neq[1] = (1.0
+              / 9.0) * piMatrix[0][0] - specialNumber); // (+1, 0, 0)
           bLocalLatDat.FNew[lStreamTo[2]] = temp1 + (0.5 * density_1) * v_xx
-              - (1.0 / 3.0) * v_x + (1.0 + iOmega) * (f_neq[2] = (1.0 / 9.0)
-              * piMatrix[0][0] - specialNumber); // (+1, 0, 0)
+              - (1.0 / 3.0) * v_x + (1.0 + iLbmParams.Omega) * (f_neq[2] = (1.0
+              / 9.0) * piMatrix[0][0] - specialNumber); // (+1, 0, 0)
 
           bLocalLatDat.FNew[lStreamTo[3]] = temp1 + (0.5 * density_1) * v_yy
-              + (1.0 / 3.0) * v_y + (1.0 + iOmega) * (f_neq[3] = (1.0 / 9.0)
-              * piMatrix[1][1] - specialNumber); // (0, +1, 0)
+              + (1.0 / 3.0) * v_y + (1.0 + iLbmParams.Omega) * (f_neq[3] = (1.0
+              / 9.0) * piMatrix[1][1] - specialNumber); // (0, +1, 0)
           bLocalLatDat.FNew[lStreamTo[4]] = temp1 + (0.5 * density_1) * v_yy
-              - (1.0 / 3.0) * v_y + (1.0 + iOmega) * (f_neq[4] = (1.0 / 9.0)
-              * piMatrix[1][1] - specialNumber); // (0, +1, 0)
+              - (1.0 / 3.0) * v_y + (1.0 + iLbmParams.Omega) * (f_neq[4] = (1.0
+              / 9.0) * piMatrix[1][1] - specialNumber); // (0, +1, 0)
 
           bLocalLatDat.FNew[lStreamTo[5]] = temp1 + (0.5 * density_1) * v_zz
-              + (1.0 / 3.0) * v_z + (1.0 + iOmega) * (f_neq[5] = (1.0 / 9.0)
-              * piMatrix[2][2] - specialNumber); // (0, +1, 0)
+              + (1.0 / 3.0) * v_z + (1.0 + iLbmParams.Omega) * (f_neq[5] = (1.0
+              / 9.0) * piMatrix[2][2] - specialNumber); // (0, +1, 0)
           bLocalLatDat.FNew[lStreamTo[6]] = temp1 + (0.5 * density_1) * v_zz
-              - (1.0 / 3.0) * v_z + (1.0 + iOmega) * (f_neq[6] = (1.0 / 9.0)
-              * piMatrix[2][2] - specialNumber); // (0, +1, 0)
+              - (1.0 / 3.0) * v_z + (1.0 + iLbmParams.Omega) * (f_neq[6] = (1.0
+              / 9.0) * piMatrix[2][2] - specialNumber); // (0, +1, 0)
 
           temp1 *= (1.0 / 8.0);
           specialNumber *= (1.0 / 8.0);
@@ -211,49 +206,52 @@ namespace hemelb
           double temp2 = (v_x + v_y) + v_z;
 
           bLocalLatDat.FNew[lStreamTo[7]] = temp1 + (1.0 / 16.0) * density_1
-              * temp2 * temp2 + (1.0 / 24.0) * temp2 + (1.0 + iOmega)
+              * temp2 * temp2 + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams.Omega)
               * (f_neq[7] = ( (1.0 / 72.0) * piMatrixSum - specialNumber)); // (+1, +1, +1)
           bLocalLatDat.FNew[lStreamTo[8]] = temp1 + (1.0 / 16.0) * density_1
-              * temp2 * temp2 + (-1.0 / 24.0) * temp2 + (1.0 + iOmega)
-              * (f_neq[8] = ( (1.0 / 72.0) * piMatrixSum - specialNumber)); // (-1, -1, -1)
+              * temp2 * temp2 + (-1.0 / 24.0) * temp2
+              + (1.0 + iLbmParams.Omega) * (f_neq[8] = ( (1.0 / 72.0)
+                  * piMatrixSum - specialNumber)); // (-1, -1, -1)
 
           temp2 = (v_x + v_y) - v_z;
 
           bLocalLatDat.FNew[lStreamTo[9]] = temp1 + (1.0 / 16.0) * density_1
-              * temp2 * temp2 + (1.0 / 24.0) * temp2 + (1.0 + iOmega)
+              * temp2 * temp2 + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams.Omega)
               * (f_neq[9] = ( (1.0 / 72.0) * (piMatrixSum - 4.0
                   * (piMatrix[0][2] + piMatrix[1][2])) - specialNumber)); // (+1, +1, -1)
           bLocalLatDat.FNew[lStreamTo[10]] = temp1 + (1.0 / 16.0) * density_1
-              * temp2 * temp2 + (-1.0 / 24.0) * temp2 + (1.0 + iOmega)
-              * (f_neq[10] = ( (1.0 / 72.0) * (piMatrixSum - 4.0
-                  * (piMatrix[0][2] + piMatrix[1][2])) - specialNumber)); // (-1, -1, +1)
+              * temp2 * temp2 + (-1.0 / 24.0) * temp2
+              + (1.0 + iLbmParams.Omega) * (f_neq[10] = ( (1.0 / 72.0)
+                  * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2]))
+                  - specialNumber)); // (-1, -1, +1)
 
           temp2 = (v_x - v_y) + v_z;
 
           bLocalLatDat.FNew[lStreamTo[11]] = temp1 + (1.0 / 16.0) * density_1
-              * temp2 * temp2 + (1.0 / 24.0) * temp2 + (1.0 + iOmega)
+              * temp2 * temp2 + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams.Omega)
               * (f_neq[11] = ( (1.0 / 72.0) * (piMatrixSum - 4.0
                   * (piMatrix[0][1] + piMatrix[1][2])) - specialNumber)); // (+1, -1, +1)
           bLocalLatDat.FNew[lStreamTo[12]] = temp1 + (1.0 / 16.0) * density_1
-              * temp2 * temp2 + (-1.0 / 24.0) * temp2 + (1.0 + iOmega)
-              * (f_neq[12] = ( (1.0 / 72.0) * (piMatrixSum - 4.0
-                  * (piMatrix[0][1] + piMatrix[1][2])) - specialNumber)); // (-1, +1, -1)
+              * temp2 * temp2 + (-1.0 / 24.0) * temp2
+              + (1.0 + iLbmParams.Omega) * (f_neq[12] = ( (1.0 / 72.0)
+                  * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2]))
+                  - specialNumber)); // (-1, +1, -1)
 
           temp2 = (v_x - v_y) - v_z;
 
           bLocalLatDat.FNew[lStreamTo[13]] = temp1 + (1.0 / 16.0) * density_1
-              * temp2 * temp2 + (1.0 / 24.0) * temp2 + (1.0 + iOmega)
+              * temp2 * temp2 + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams.Omega)
               * (f_neq[13] = ( (1.0 / 72.0) * (piMatrixSum - 4.0
                   * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (+1, -1, -1)
           bLocalLatDat.FNew[lStreamTo[14]] = temp1 + (1.0 / 16.0) * density_1
-              * temp2 * temp2 + (-1.0 / 24.0) * temp2 + (1.0 + iOmega)
-              * (f_neq[14] = ( (1.0 / 72.0) * (piMatrixSum - 4.0
-                  * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (-1, +1, +1)
+              * temp2 * temp2 + (-1.0 / 24.0) * temp2
+              + (1.0 + iLbmParams.Omega) * (f_neq[14] = ( (1.0 / 72.0)
+                  * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2]))
+                  - specialNumber)); // (-1, +1, +1)
 
           UpdateMinsAndMaxes<tDoRayTracing> (v_x, v_y, v_z, lIndex, f_neq,
                                              density, bMinimaAndMaxima,
-                                             bLocalLatDat, iStressType,
-                                             iStressParam, iControl);
+                                             bLocalLatDat, iLbmParams, iControl);
         }
       }
     }

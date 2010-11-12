@@ -8,61 +8,51 @@ namespace hemelb
     {
 
       void ImplFInterpolation::DoCollisions(const bool iDoRayTracing,
-                                            const double iOmega,
                                             const int iFirstIndex,
                                             const int iSiteCount,
-                                            MinsAndMaxes* bMinimaAndMaxima,
+                                            const LbmParameters &iLbmParams,
+                                            MinsAndMaxes &bMinimaAndMaxima,
                                             LocalLatticeData &bLocalLatDat,
-                                            const double iStressType,
-                                            const double iStressParam,
                                             hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, bLocalLatDat,
-                                      iStressType, iStressParam, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams,
+                                      bMinimaAndMaxima, bLocalLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, bLocalLatDat,
-                                       iStressType, iStressParam, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams,
+                                       bMinimaAndMaxima, bLocalLatDat, iControl);
         }
       }
 
       void ImplFInterpolation::PostStep(const bool iDoRayTracing,
-                                        const double iOmega,
                                         const int iFirstIndex,
                                         const int iSiteCount,
-                                        MinsAndMaxes* bMinimaAndMaxima,
+                                        const LbmParameters &iLbmParams,
+                                        MinsAndMaxes &bMinimaAndMaxima,
                                         LocalLatticeData &bLocalLatDat,
-                                        const double iStressType,
-                                        const double iStressParam,
                                         hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          PostStepInternal<true> (iOmega, iFirstIndex, iSiteCount,
-                                  bMinimaAndMaxima, bLocalLatDat, iStressType,
-                                  iStressParam, iControl);
+          PostStepInternal<true> (iFirstIndex, iSiteCount, iLbmParams,
+                                  bMinimaAndMaxima, bLocalLatDat, iControl);
         }
         else
         {
-          PostStepInternal<false> (iOmega, iFirstIndex, iSiteCount,
-                                   bMinimaAndMaxima, bLocalLatDat, iStressType,
-                                   iStressParam, iControl);
+          PostStepInternal<false> (iFirstIndex, iSiteCount, iLbmParams,
+                                   bMinimaAndMaxima, bLocalLatDat, iControl);
         }
       }
 
       template<bool tDoRayTracing>
-      void ImplFInterpolation::DoCollisionsInternal(const double iOmega,
-                                                    const int iFirstIndex,
+      void ImplFInterpolation::DoCollisionsInternal(const int iFirstIndex,
                                                     const int iSiteCount,
-                                                    MinsAndMaxes* bMinimaAndMaxima,
+                                                    const LbmParameters &iLbmParams,
+                                                    MinsAndMaxes &bMinimaAndMaxima,
                                                     LocalLatticeData &bLocalLatDat,
-                                                    const double iStressType,
-                                                    const double iStressParam,
                                                     hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
@@ -75,26 +65,23 @@ namespace hemelb
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             bLocalLatDat.FNew[bLocalLatDat.GetStreamedIndex(lIndex, ii)]
-                = f[ii] += iOmega * (f_neq[ii] = f[ii] - f_neq[ii]);
+                = f[ii] += iLbmParams.Omega * (f_neq[ii] = f[ii] - f_neq[ii]);
           }
 
           UpdateMinsAndMaxes<tDoRayTracing> (v_x, v_y, v_z, lIndex, f_neq,
                                              density, bMinimaAndMaxima,
-                                             bLocalLatDat, iStressType,
-                                             iStressParam, iControl);
+                                             bLocalLatDat, iLbmParams, iControl);
         }
       }
 
       //TODO: Does this change velocity / density / stress? Need to update mins and maxes if so.
 
       template<bool tDoRayTracing>
-      void ImplFInterpolation::PostStepInternal(const double iOmega,
-                                                const int iFirstIndex,
+      void ImplFInterpolation::PostStepInternal(const int iFirstIndex,
                                                 const int iSiteCount,
-                                                MinsAndMaxes* bMinimaAndMaxima,
+                                                const LbmParameters &iLbmParams,
+                                                MinsAndMaxes &bMinimaAndMaxima,
                                                 LocalLatticeData &bLocalLatDat,
-                                                const double iStressType,
-                                                const double iStressParam,
                                                 hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
