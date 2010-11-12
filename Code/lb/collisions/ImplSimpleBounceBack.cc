@@ -8,37 +8,31 @@ namespace hemelb
     {
 
       void ImplSimpleBounceBack::DoCollisions(const bool iDoRayTracing,
-                                              const double iOmega,
                                               const int iFirstIndex,
                                               const int iSiteCount,
-                                              MinsAndMaxes* bMinimaAndMaxima,
+                                              const LbmParameters &iLbmParams,
+                                              MinsAndMaxes &bMinimaAndMaxima,
                                               LocalLatticeData &bLocalLatDat,
-                                              const double iStressType,
-                                              const double iStressParam,
                                               hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, bLocalLatDat,
-                                      iStressType, iStressParam, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams,
+                                      bMinimaAndMaxima, bLocalLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, bLocalLatDat,
-                                       iStressType, iStressParam, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams,
+                                       bMinimaAndMaxima, bLocalLatDat, iControl);
         }
       }
 
       template<bool tDoRayTracing>
-      void ImplSimpleBounceBack::DoCollisionsInternal(const double iOmega,
-                                                      const int iFirstIndex,
+      void ImplSimpleBounceBack::DoCollisionsInternal(const int iFirstIndex,
                                                       const int iSiteCount,
-                                                      MinsAndMaxes* bMinimaAndMaxima,
+                                                      const LbmParameters &iLbmParams,
+                                                      MinsAndMaxes &bMinimaAndMaxima,
                                                       LocalLatticeData &bLocalLatDat,
-                                                      const double iStressType,
-                                                      const double iStressParam,
                                                       hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
@@ -64,14 +58,13 @@ namespace hemelb
 
             // Remember, oFNeq currently hold the equilibrium distribution. We
             // simultaneously use this and correct it, here.
-            bLocalLatDat.FNew[lStreamTo] = lFOld[ii] += iOmega * (lFNeq[ii]
-                -= lFOld[ii]);
+            bLocalLatDat.FNew[lStreamTo] = lFOld[ii] += iLbmParams.Omega
+                * (lFNeq[ii] -= lFOld[ii]);
           }
 
           UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, lIndex, lFNeq,
                                              lDensity, bMinimaAndMaxima,
-                                             bLocalLatDat, iStressType,
-                                             iStressParam, iControl);
+                                             bLocalLatDat, iLbmParams, iControl);
         }
       }
 

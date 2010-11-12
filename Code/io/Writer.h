@@ -1,6 +1,7 @@
 #ifndef HEMELB_IO_WRITER_H
 #define HEMELB_IO_WRITER_H
 
+#include "lb/LbmParameters.h"
 #include "vis/ColPixel.h"
 #include "vis/ColourPalette.h"
 
@@ -31,7 +32,7 @@ namespace hemelb
 
         void writePixel(vis::ColPixel *col_pixel_p,
                         vis::ColourPaletteFunction* colourPalette,
-                        const float iLbmStressType);
+                        const lb::StressTypes iLbmStressType);
 
         // Function to get the current position of writing in the stream.
         virtual unsigned int getCurrentStreamPosition() const = 0;

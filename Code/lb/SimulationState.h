@@ -10,6 +10,7 @@ namespace hemelb
         int CycleId;
         int TimeStep;
         double IntraCycleTime;
+        int IsTerminating;
     };
   }
 }
