@@ -8,6 +8,7 @@
 
 #include "lb/GlobalLatticeData.h"
 #include "lb/LocalLatticeData.h"
+
 // Superficial site data
 struct WallData
 {

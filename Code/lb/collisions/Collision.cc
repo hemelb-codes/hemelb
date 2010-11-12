@@ -18,26 +18,22 @@ namespace hemelb
       }
 
       void Collision::DoCollisions(const bool iDoRayTracing,
-                                   const double iOmega,
                                    const int iFirstIndex,
                                    const int iSiteCount,
-                                   MinsAndMaxes* bMinimaAndMaxima,
+                                   const LbmParameters &iLbmParams,
+                                   MinsAndMaxes &bMinimaAndMaxima,
                                    LocalLatticeData &bLocalLatDat,
-                                   const double iStressType,
-                                   const double iStressParam,
                                    hemelb::vis::Control *iControl)
       {
         // Standard implementation - do nothing.
       }
 
       void Collision::PostStep(const bool iDoRayTracing,
-                               const double iOmega,
                                const int iFirstIndex,
                                const int iSiteCount,
-                               MinsAndMaxes* bMinimaAndMaxima,
+                               const LbmParameters &iLbmParams,
+                               MinsAndMaxes &bMinimaAndMaxima,
                                LocalLatticeData &bLocalLatDat,
-                               const double iStressType,
-                               const double iStressParam,
                                hemelb::vis::Control *iControl)
       {
         // Standard implementation - do nothing.

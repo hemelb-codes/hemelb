@@ -72,6 +72,8 @@ class LBM
                                  double density_threshold_minmax_inv,
                                  double stress_threshold_max_inv);
 
+    const hemelb::lb::LbmParameters *GetLbmParams();
+
   private:
     void lbmCalculateBC(double f[],
                         hemelb::lb::SiteType iSiteType,
@@ -106,7 +108,6 @@ class LBM
     double *inlet_density_avg, *inlet_density_amp;
     double *outlet_density_avg, *outlet_density_amp;
     double *inlet_density_phs, *outlet_density_phs;
-    double lbm_stress_par;
     int site_min_x, site_min_y, site_min_z;
     int site_max_x, site_max_y, site_max_z;
     int is_inlet_normal_available;
@@ -114,16 +115,14 @@ class LBM
     hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;
     double *lbm_inlet_normal;
     long int *lbm_inlet_count;
-    double tau, omega;
     double voxel_size;
+
+    hemelb::lb::LbmParameters mParams;
 
     hemelb::SimConfig *mSimConfig;
 
     double *lbm_average_inlet_velocity;
     double *lbm_peak_inlet_velocity;
 };
-
-extern double lbm_stress_type;
-extern int lbm_terminate_simulation;
 
 #endif // HEMELB_LB_H

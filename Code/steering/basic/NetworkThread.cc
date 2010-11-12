@@ -27,8 +27,10 @@ namespace hemelb
     // Use initialisation list to do the work.
     NetworkThread::NetworkThread(LBM* lbm,
                                  Control* steeringController,
-                                 lb::SimulationState* iSimState) :
-      mLbm(lbm), mSteeringController(steeringController), mSimState(iSimState)
+                                 lb::SimulationState* iSimState,
+                                 const lb::LbmParameters* iLbmParams) :
+      mLbm(lbm), mSteeringController(steeringController), mSimState(iSimState),
+          mLbmParams(iLbmParams)
     {
       /* Storing references to lbm and steeringController; we
        * won't want to destroy them.
@@ -220,7 +222,7 @@ namespace hemelb
             pixelDataWriter.writePixel(
                                        &vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
                                        vis::ColourPalette::pickColour,
-                                       lbm_stress_type);
+                                       mLbmParams->StressType);
           }
 
           int frameBytes = pixelDataWriter.getCurrentStreamPosition();

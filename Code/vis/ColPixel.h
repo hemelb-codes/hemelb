@@ -4,6 +4,7 @@
 #define COLOURED_PIXELS_MAX    2048 * 2048
 #include "mpiInclude.h"
 #include "vis/ColourPalette.h"
+#include "lb/LbmParameters.h"
 
 namespace hemelb
 {
@@ -41,8 +42,8 @@ namespace hemelb
 
         void rawWritePixel(unsigned int *pixel_index,
                            unsigned char rgb_data[],
-                           ColourPaletteFunction* palette,
-                           const float iLbmStressType);
+                           ColourPaletteFunction *colourPalette,
+                           lb::StressTypes iLbmStressType);
 #ifndef NOMPI
         static const MPI_Datatype& getMpiType();
 #endif

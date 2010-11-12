@@ -28,12 +28,15 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                   int iSteeringSessionid,
                                   FILE *bTimingsFile)
 {
+  mSimulationState.IsTerminating = 0;
+
   steeringController
       = hemelb::steering::Control::Init(GetNet()->IsCurrentProcTheIOProc());
 
   if (GetNet()->IsCurrentProcTheIOProc())
   {
-    steeringController->StartNetworkThread(GetLBM(), &mSimulationState);
+    steeringController->StartNetworkThread(GetLBM(), &mSimulationState,
+                                           GetLBM()->GetLbmParams());
   }
 
   GetLBM()->lbmInit(iSimConfig, mGlobLatDat, iSteeringSessionid,
@@ -46,8 +49,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   }
   GetNet()->Initialise(GetLBM()->total_fluid_sites, mGlobLatDat, mLocalLatDat);
   GetLBM()->lbmSetInitialConditions(GetNet(), mLocalLatDat);
-  hemelb::vis::controller = new hemelb::vis::Control(lbm_stress_type,
-                                                     mGlobLatDat);
+  hemelb::vis::controller
+      = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mGlobLatDat);
   hemelb::vis::controller->initLayers(mGlobLatDat, mLocalLatDat, GetNet());
   GetLBM()->ReadVisParameters(GetNet());
 
@@ -60,6 +63,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   steeringController->UpdateSteerableParameters(false,
                                                 &hemelb::vis::doRendering,
+                                                mSimulationState,
                                                 hemelb::vis::controller,
                                                 GetLBM());
 }
@@ -121,6 +125,7 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
         steeringController->UpdateSteerableParameters(
                                                       write_snapshot_image,
                                                       &hemelb::vis::doRendering,
+                                                      mSimulationState,
                                                       hemelb::vis::controller,
                                                       GetLBM());
 
@@ -246,7 +251,7 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
         is_finished = true;
         break;
       }
-      if (lbm_terminate_simulation)
+      if (mSimulationState.IsTerminating)
       {
         is_finished = true;
         break;

@@ -3,6 +3,7 @@
 
 #include "vis/Control.h"
 #include "lb/LocalLatticeData.h"
+#include "lb/LbmParameters.h"
 
 #include <math.h>
 
@@ -28,23 +29,19 @@ namespace hemelb
       {
         public:
           virtual void DoCollisions(const bool iDoRayTracing,
-                                    const double iOmega,
                                     const int iFirstIndex,
                                     const int iSiteCount,
-                                    MinsAndMaxes* bMinimaAndMaxima,
+                                    const LbmParameters &iLbmParams,
+                                    MinsAndMaxes &bMinimaAndMaxima,
                                     LocalLatticeData &bLocalLatDat,
-                                    const double iStressType,
-                                    const double iStressParam,
                                     hemelb::vis::Control *iControl);
 
           virtual void PostStep(const bool iDoRayTracing,
-                                const double iOmega,
                                 const int iFirstIndex,
                                 const int iSiteCount,
-                                MinsAndMaxes* bMinimaAndMaxima,
+                                const LbmParameters &iLbmParams,
+                                MinsAndMaxes &bMinimaAndMaxima,
                                 LocalLatticeData &bLocalLatDat,
-                                const double iStressType,
-                                const double iStressParam,
                                 hemelb::vis::Control *iControl);
 
         protected:
@@ -59,19 +56,18 @@ namespace hemelb
                                   const int &iSiteIndex,
                                   const double *f_neq,
                                   const double &iDensity,
-                                  MinsAndMaxes *bMinimaAndMaxima,
+                                  MinsAndMaxes &bMinimaAndMaxima,
                                   const LocalLatticeData &iLocalLatDat,
-                                  const double &iStressType,
-                                  const double &iStressParam,
+                                  const LbmParameters &iLbmParams,
                                   hemelb::vis::Control *iControl)
           {
-            if (iDensity < bMinimaAndMaxima->MinDensity)
+            if (iDensity < bMinimaAndMaxima.MinDensity)
             {
-              bMinimaAndMaxima->MinDensity = iDensity;
+              bMinimaAndMaxima.MinDensity = iDensity;
             }
-            if (iDensity > bMinimaAndMaxima->MaxDensity)
+            if (iDensity > bMinimaAndMaxima.MaxDensity)
             {
-              bMinimaAndMaxima->MaxDensity = iDensity;
+              bMinimaAndMaxima.MaxDensity = iDensity;
             }
 
             double stress;
@@ -84,16 +80,16 @@ namespace hemelb
 
             double lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz);
 
-            if (lVelocity < bMinimaAndMaxima->MinVelocity)
+            if (lVelocity < bMinimaAndMaxima.MinVelocity)
             {
-              bMinimaAndMaxima->MinVelocity = lVelocity;
+              bMinimaAndMaxima.MinVelocity = lVelocity;
             }
-            if (lVelocity > bMinimaAndMaxima->MaxVelocity)
+            if (lVelocity > bMinimaAndMaxima.MaxVelocity)
             {
-              bMinimaAndMaxima->MaxVelocity = lVelocity;
+              bMinimaAndMaxima.MaxVelocity = lVelocity;
             }
 
-            if (iStressType == SHEAR_STRESS)
+            if (iLbmParams.StressType == ShearStress)
             {
               if (iLocalLatDat.GetNormalToWall(iSiteIndex)[0] > 1.0e+30)
               {
@@ -107,23 +103,24 @@ namespace hemelb
                                             f_neq,
                                             iLocalLatDat.GetNormalToWall(
                                                                          iSiteIndex),
-                                            stress, iStressParam);
+                                            stress, iLbmParams.StressParameter);
                 rtStress = stress;
               }
             }
             else
             {
-              D3Q15::CalculateVonMisesStress(f_neq, stress, iStressParam);
+              D3Q15::CalculateVonMisesStress(f_neq, stress,
+                                             iLbmParams.StressParameter);
               rtStress = stress;
             }
 
-            if (stress < bMinimaAndMaxima->MinStress)
+            if (stress < bMinimaAndMaxima.MinStress)
             {
-              bMinimaAndMaxima->MinStress = stress;
+              bMinimaAndMaxima.MinStress = stress;
             }
-            if (stress > bMinimaAndMaxima->MaxStress)
+            if (stress > bMinimaAndMaxima.MaxStress)
             {
-              bMinimaAndMaxima->MaxStress = stress;
+              bMinimaAndMaxima.MaxStress = stress;
             }
 
             if (tDoRayTracing)

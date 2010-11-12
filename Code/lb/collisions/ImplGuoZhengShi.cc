@@ -8,37 +8,31 @@ namespace hemelb
     {
 
       void ImplGuoZhengShi::DoCollisions(const bool iDoRayTracing,
-                                         const double iOmega,
                                          const int iFirstIndex,
                                          const int iSiteCount,
-                                         MinsAndMaxes* bMinimaAndMaxima,
+                                         const LbmParameters &iLbmParams,
+                                         MinsAndMaxes &bMinimaAndMaxima,
                                          LocalLatticeData &bLocalLatDat,
-                                         const double iStressType,
-                                         const double iStressParam,
                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iOmega, iFirstIndex, iSiteCount,
-                                      bMinimaAndMaxima, bLocalLatDat,
-                                      iStressType, iStressParam, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams,
+                                      bMinimaAndMaxima, bLocalLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iOmega, iFirstIndex, iSiteCount,
-                                       bMinimaAndMaxima, bLocalLatDat,
-                                       iStressType, iStressParam, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams,
+                                       bMinimaAndMaxima, bLocalLatDat, iControl);
         }
       }
 
       template<bool tRayTracing>
-      void ImplGuoZhengShi::DoCollisionsInternal(const double iOmega,
-                                                 const int iFirstIndex,
+      void ImplGuoZhengShi::DoCollisionsInternal(const int iFirstIndex,
                                                  const int iSiteCount,
-                                                 MinsAndMaxes* bMinimaAndMaxima,
+                                                 const LbmParameters &iLbmParams,
+                                                 MinsAndMaxes &bMinimaAndMaxima,
                                                  LocalLatticeData &bLocalLatDat,
-                                                 const double iStressType,
-                                                 const double iStressParam,
                                                  hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
@@ -57,7 +51,7 @@ namespace hemelb
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             bLocalLatDat.FNew[bLocalLatDat.GetStreamedIndex(lIndex, ii)]
-                = f[ii] + iOmega * (f_neq[ii] = f[ii] - lFEq[ii]);
+                = f[ii] + iLbmParams.Omega * (f_neq[ii] = f[ii] - lFEq[ii]);
           }
 
           // Now fill in the un-streamed-to distributions (those that point away from boundaries).
@@ -126,14 +120,14 @@ namespace hemelb
 
               // Collide and stream!
               bLocalLatDat.FNew[lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex]
-                  = fEqTemp[lAwayFromWallIndex] + (1.0 + iOmega) * fNeq;
+                  = fEqTemp[lAwayFromWallIndex] + (1.0 + iLbmParams.Omega)
+                      * fNeq;
             }
           }
 
           UpdateMinsAndMaxes<tRayTracing> (v_x, v_y, v_z, lIndex, f_neq,
                                            density, bMinimaAndMaxima,
-                                           bLocalLatDat, iStressType,
-                                           iStressParam, iControl);
+                                           bLocalLatDat, iLbmParams, iControl);
         }
       }
     }

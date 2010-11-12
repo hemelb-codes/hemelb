@@ -643,12 +643,12 @@ void Net::Initialise(int iTotalFluidSites,
         // for this site within the current block to be the site index over the whole
         // processor.
         if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock]
-                & SITE_TYPE_MASK) != hemelb::lb::SOLID_TYPE)
+            & SITE_TYPE_MASK) != hemelb::lb::SOLID_TYPE)
         {
           lThisRankSiteData[lSiteIndexOnProc]
-          = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
+              = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
           lCurrentDataBlock->site_data[lSiteIndexWithinBlock]
-          = lSiteIndexOnProc;
+              = lSiteIndexOnProc;
           ++lSiteIndexOnProc;
         }
         else
@@ -988,7 +988,6 @@ void Net::Initialise(int iTotalFluidSites,
     neigh_proc[n].fs = 0;// This is set back to 0.
   }
 
-
   from_proc_id_to_neigh_proc_index = new short int[mProcessorCount];
 
   for (int m = 0; m < mProcessorCount; m++)
@@ -1000,7 +999,6 @@ void Net::Initialise(int iTotalFluidSites,
   {
     from_proc_id_to_neigh_proc_index[neigh_proc[m].id] = m;
   }
-
 
   // Allocate f_old and f_new according to the number of sites on the process.  The extra site
   // is there for when we would stream into a solid site during the simulation, which avoids
@@ -1016,13 +1014,9 @@ void Net::Initialise(int iTotalFluidSites,
     bLocalLatDat.mFNeighbours = new int[my_sites * D3Q15::NUMVECTORS];
 
     bLocalLatDat.mSiteData = new unsigned int[my_sites];
-
-    if (lbm_stress_type == SHEAR_STRESS)
-    {
-      bLocalLatDat.mWallNormalAtSite = new double[my_sites * 3];
-      bLocalLatDat.mDistanceToWall = new double[my_sites * (D3Q15::NUMVECTORS
-          - 1)];
-    }
+    bLocalLatDat.mWallNormalAtSite = new double[my_sites * 3];
+    bLocalLatDat.mDistanceToWall = new double[my_sites
+        * (D3Q15::NUMVECTORS - 1)];
   }
 
   lSiteIndexOnProc = 0;
@@ -1132,22 +1126,21 @@ void Net::Initialise(int iTotalFluidSites,
               bLocalLatDat.mSiteData[site_map]
                   = lThisRankSiteData[lSiteIndexOnProc];
 
-              if (lbm_stress_type == SHEAR_STRESS)
-              {
-                if (GetCollisionType(bLocalLatDat.mSiteData[site_map]) & EDGE)
-                {
-                  for (unsigned int l = 0; l < 3; l++)
-                    bLocalLatDat.mWallNormalAtSite[site_map * 3 + l]
-                        = map_block[n].wall_data[m].wall_nor[l];
+              hemelb::debug::Debugger::Get()->BreakHere();
 
-                  for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-                    bLocalLatDat.mDistanceToWall[site_map * (D3Q15::NUMVECTORS
-                        - 1) + l] = map_block[n].wall_data[m].cut_dist[l];
-                }
-                else
-                {
-                  bLocalLatDat.mWallNormalAtSite[site_map * 3] = 1.0e+30;
-                }
+              if (GetCollisionType(bLocalLatDat.mSiteData[site_map]) & EDGE)
+              {
+                for (unsigned int l = 0; l < 3; l++)
+                  bLocalLatDat.mWallNormalAtSite[site_map * 3 + l]
+                      = map_block[n].wall_data[m].wall_nor[l];
+
+                for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
+                  bLocalLatDat.mDistanceToWall[site_map * (D3Q15::NUMVECTORS
+                      - 1) + l] = map_block[n].wall_data[m].cut_dist[l];
+              }
+              else
+              {
+                bLocalLatDat.mWallNormalAtSite[site_map * 3] = 1.0e+30;
               }
               ++lSiteIndexOnProc;
             }
@@ -1348,7 +1341,7 @@ Net::~Net()
 
   delete[] f_recv_iv;
 
-  if (lbm_stress_type == SHEAR_STRESS && my_sites > 0)
+  if (my_sites > 0)
   {
     for (int i = 0; i < block_count; i++)
     {

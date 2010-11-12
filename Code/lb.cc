@@ -39,38 +39,39 @@ double LBM::lbmConvertPressureGradToPhysicalUnits(double pressure_grad)
 
 double LBM::lbmConvertVelocityToLatticeUnits(double velocity)
 {
-  return velocity * ( ( (tau - 0.5) / 3.0) * voxel_size) / (BLOOD_VISCOSITY
-      / BLOOD_DENSITY);
+  return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size)
+      / (BLOOD_VISCOSITY / BLOOD_DENSITY);
 }
 
 double LBM::lbmConvertVelocityToPhysicalUnits(double velocity)
 {
   // convert velocity from lattice units to physical units (m/s)
-  return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / ( ( (tau - 0.5) / 3.0)
-      * voxel_size);
+  return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / ( ( (mParams.Tau - 0.5)
+      / 3.0) * voxel_size);
 }
 
 double LBM::lbmConvertStressToLatticeUnits(double stress)
 {
   return stress * (BLOOD_DENSITY / (BLOOD_VISCOSITY * BLOOD_VISCOSITY))
-      * ( ( (tau - 0.5) / 3.0) * voxel_size) * ( ( (tau - 0.5) / 3.0)
-      * voxel_size);
+      * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5)
+      / 3.0) * voxel_size);
 }
 
 double LBM::lbmConvertStressToPhysicalUnits(double stress)
 {
   // convert stress from lattice units to physical units (Pa)
-  return stress * BLOOD_VISCOSITY * BLOOD_VISCOSITY / (BLOOD_DENSITY * ( ( (tau
-      - 0.5) / 3.0) * voxel_size) * ( ( (tau - 0.5) / 3.0) * voxel_size));
+  return stress * BLOOD_VISCOSITY * BLOOD_VISCOSITY / (BLOOD_DENSITY
+      * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5)
+      / 3.0) * voxel_size));
 }
 
 void LBM::RecalculateTauViscosityOmega()
 {
-  tau = 0.5 + (PULSATILE_PERIOD * BLOOD_VISCOSITY / BLOOD_DENSITY) / (Cs2
-      * period * voxel_size * voxel_size);
+  mParams.Tau = 0.5 + (PULSATILE_PERIOD * BLOOD_VISCOSITY / BLOOD_DENSITY)
+      / (Cs2 * period * voxel_size * voxel_size);
 
-  omega = -1.0 / tau;
-  lbm_stress_par = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
+  mParams.Omega = -1.0 / mParams.Tau;
+  mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
 }
 
 // Set up of min/max values at the beginning of each pulsatile cycle.
@@ -147,6 +148,11 @@ void LBM::lbmUpdateBoundaryDensities(int cycle_id, int time_step)
   }
 }
 
+const hemelb::lb::LbmParameters *LBM::GetLbmParams()
+{
+  return &mParams;
+}
+
 void LBM::lbmInit(hemelb::SimConfig *iSimulationConfig,
                   hemelb::lb::GlobalLatticeData &bGlobLatDat,
                   int iSteeringSessionId,
@@ -159,8 +165,6 @@ void LBM::lbmInit(hemelb::SimConfig *iSimulationConfig,
   voxel_size = iVoxelSize;
 
   mSimConfig = iSimulationConfig;
-
-  lbm_terminate_simulation = 0;
 
   lbmReadConfig(net, bGlobLatDat);
 
@@ -272,11 +276,10 @@ int LBM::lbmCycle(int perform_rt,
   {
     GetCollision(collision_type)->DoCollisions(
                                                perform_rt,
-                                               omega,
                                                offset,
                                                net->my_inter_collisions[collision_type],
-                                               &mMinsAndMaxes, bLocalLatDat,
-                                               lbm_stress_type, lbm_stress_par,
+                                               mParams, mMinsAndMaxes,
+                                               bLocalLatDat,
                                                hemelb::vis::controller);
     offset += net->my_inter_collisions[collision_type];
   }
@@ -289,11 +292,10 @@ int LBM::lbmCycle(int perform_rt,
   {
     GetCollision(collision_type)->DoCollisions(
                                                perform_rt,
-                                               omega,
                                                offset,
                                                net->my_inner_collisions[collision_type],
-                                               &mMinsAndMaxes, bLocalLatDat,
-                                               lbm_stress_type, lbm_stress_par,
+                                               mParams, mMinsAndMaxes,
+                                               bLocalLatDat,
                                                hemelb::vis::controller);
     offset += net->my_inner_collisions[collision_type];
   }
@@ -307,11 +309,10 @@ int LBM::lbmCycle(int perform_rt,
   {
     GetCollision(collision_type)->PostStep(
                                            perform_rt,
-                                           omega,
                                            offset,
                                            net->my_inner_collisions[collision_type],
-                                           &mMinsAndMaxes, bLocalLatDat,
-                                           lbm_stress_type, lbm_stress_par,
+                                           mParams, mMinsAndMaxes,
+                                           bLocalLatDat,
                                            hemelb::vis::controller);
     offset += net->my_inner_collisions[collision_type];
   }
@@ -320,11 +321,10 @@ int LBM::lbmCycle(int perform_rt,
   {
     GetCollision(collision_type)->PostStep(
                                            perform_rt,
-                                           omega,
                                            offset,
                                            net->my_inter_collisions[collision_type],
-                                           &mMinsAndMaxes, bLocalLatDat,
-                                           lbm_stress_type, lbm_stress_par,
+                                           mParams, mMinsAndMaxes,
+                                           bLocalLatDat,
                                            hemelb::vis::controller);
     offset += net->my_inter_collisions[collision_type];
   }
