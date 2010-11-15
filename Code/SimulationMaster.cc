@@ -8,6 +8,7 @@
 #include "debug/Debugger.h"
 #include "fileutils.h"
 
+#include <limits>
 #include <stdlib.h>
 
 SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
@@ -16,6 +17,15 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mNet = new Net(iArgCount, iArgList);
 
   hemelb::debug::Debugger::Init(iArgList[0]);
+
+  mLbTime = 0.0;
+  mMPISendTime = 0.0;
+  mMPIWaitTime = 0.0;
+  mImagingTime = 0.0;
+  mSnapshotTime = 0.0;
+
+  mImagesWritten = 0;
+  mSnapshotsWritten = 0;
 }
 
 SimulationMaster::~SimulationMaster()
@@ -28,6 +38,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                   int iSteeringSessionid,
                                   FILE *bTimingsFile)
 {
+  mTimingsFile = bTimingsFile;
   mSimulationState.IsTerminating = 0;
 
   steeringController
@@ -68,8 +79,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                 GetLBM());
 }
 
-void SimulationMaster::RunSimulation(FILE *iTimingsFile,
-                                     hemelb::SimConfig *& lSimulationConfig,
+void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                                      double iStartTime,
                                      std::string image_directory,
                                      std::string snapshot_directory,
@@ -147,7 +157,8 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
                                            mSimulationState.TimeStep);
 
       stability = GetLBM()->lbmCycle(hemelb::vis::doRendering, GetNet(),
-                                     mLocalLatDat);
+                                     mLocalLatDat, mLbTime, mMPISendTime,
+                                     mMPIWaitTime);
 
       if ( (restart = GetLBM()->IsUnstable(mLocalLatDat, GetNet())) != false)
       {
@@ -155,6 +166,10 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
       }
       GetLBM()->lbmUpdateInletVelocities(mSimulationState.TimeStep,
                                          mLocalLatDat, GetNet());
+
+#ifndef NOMPI
+      double lPreImageTime = MPI_Wtime();
+#endif
 
 #ifndef NO_STREAKLINES
       hemelb::vis::controller->streaklines(mSimulationState.TimeStep,
@@ -210,6 +225,7 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
       if (write_snapshot_image)
       {
         hemelb::vis::controller->render(RECV_BUFFER_B, mGlobLatDat, GetNet());
+        mImagesWritten++;
 
         if (GetNet()->IsCurrentProcTheIOProc())
         {
@@ -223,16 +239,28 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
                                               hemelb::vis::ColourPalette::pickColour);
         }
       }
+
+#ifndef NOMPI
+      double lPreSnapshotTime = MPI_Wtime();
+      mImagingTime += (lPreSnapshotTime - lPreImageTime);
+#endif
+
       if (mSimulationState.TimeStep % snapshots_period == 0)
       {
         char snapshot_filename[255];
         snprintf(snapshot_filename, 255, "snapshot_%06i.asc",
                  mSimulationState.TimeStep);
 
+        mSnapshotsWritten++;
         GetLBM()->lbmWriteConfig(stability, snapshot_directory
             + std::string(snapshot_filename), GetNet(), mGlobLatDat,
                                  mLocalLatDat);
       }
+
+#ifndef NOMPI
+      mSnapshotTime += (MPI_Wtime() - lPreSnapshotTime);
+#endif
+
 #ifndef NO_STEER
       if (GetNet()->IsCurrentProcTheIOProc())
       {
@@ -292,7 +320,7 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
 
     if (GetNet()->IsCurrentProcTheIOProc())
     {
-      fprintf(iTimingsFile, "cycle id: %i\n", mSimulationState.CycleId);
+      fprintf(mTimingsFile, "cycle id: %i\n", mSimulationState.CycleId);
       printf("cycle id: %i\n", mSimulationState.CycleId);
 
       fflush(NULL);
@@ -305,25 +333,24 @@ void SimulationMaster::RunSimulation(FILE *iTimingsFile,
                                                lSimulationConfig->NumCycles);
 
   PostSimulation(total_time_steps, hemelb::util::myClock() - simulation_time,
-                 iTimingsFile, is_unstable, iStartTime);
+                 is_unstable, iStartTime);
 }
 
 void SimulationMaster::PostSimulation(int iTotalTimeSteps,
                                       double iSimulationTime,
-                                      FILE *timings_ptr,
                                       bool iIsUnstable,
                                       double iStartTime)
 {
   if (GetNet()->IsCurrentProcTheIOProc())
   {
-    fprintf(timings_ptr, "\n");
-    fprintf(timings_ptr, "threads: %i, machines checked: %i\n\n",
+    fprintf(mTimingsFile, "\n");
+    fprintf(mTimingsFile, "threads: %i, machines checked: %i\n\n",
             GetNet()->mProcessorCount, GetNet()->GetMachineCount());
-    fprintf(timings_ptr, "topology depths checked: %i\n\n", mNet->GetDepths());
-    fprintf(timings_ptr, "fluid sites: %i\n\n", GetLBM()->total_fluid_sites);
-    fprintf(timings_ptr, "cycles and total time steps: %i, %i \n\n",
+    fprintf(mTimingsFile, "topology depths checked: %i\n\n", mNet->GetDepths());
+    fprintf(mTimingsFile, "fluid sites: %i\n\n", GetLBM()->total_fluid_sites);
+    fprintf(mTimingsFile, "cycles and total time steps: %i, %i \n\n",
             mSimulationState.CycleId, iTotalTimeSteps);
-    fprintf(timings_ptr, "time steps per second: %.3f\n\n", iTotalTimeSteps
+    fprintf(mTimingsFile, "time steps per second: %.3f\n\n", iTotalTimeSteps
         / iSimulationTime);
   }
 
@@ -331,10 +358,10 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
   {
     if (GetNet()->IsCurrentProcTheIOProc())
     {
-      fprintf(timings_ptr,
+      fprintf(mTimingsFile,
               "Attention: simulation unstable with %i timesteps/cycle\n",
               GetLBM()->period);
-      fprintf(timings_ptr, "Simulation is terminated\n");
+      fprintf(mTimingsFile, "Simulation is terminated\n");
     }
   }
   else
@@ -342,48 +369,124 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
     if (GetNet()->IsCurrentProcTheIOProc())
     {
 
-      fprintf(timings_ptr, "time steps per cycle: %i\n", GetLBM()->period);
-      fprintf(timings_ptr, "pressure min, max (mmHg): %e, %e\n",
+      fprintf(mTimingsFile, "time steps per cycle: %i\n", GetLBM()->period);
+      fprintf(mTimingsFile, "pressure min, max (mmHg): %e, %e\n",
               GetLBM()->GetMinPhysicalPressure(),
               GetLBM()->GetMaxPhysicalPressure());
-      fprintf(timings_ptr, "velocity min, max (m/s) : %e, %e\n",
+      fprintf(mTimingsFile, "velocity min, max (m/s) : %e, %e\n",
               GetLBM()->GetMinPhysicalVelocity(),
               GetLBM()->GetMaxPhysicalVelocity());
-      fprintf(timings_ptr, "stress   min, max (Pa)  : %e, %e\n",
+      fprintf(mTimingsFile, "stress   min, max (Pa)  : %e, %e\n",
               GetLBM()->GetMinPhysicalStress(),
               GetLBM()->GetMaxPhysicalStress());
-      fprintf(timings_ptr, "\n");
+      fprintf(mTimingsFile, "\n");
 
       for (int n = 0; n < GetLBM()->inlets; n++)
       {
-        fprintf(timings_ptr,
+        fprintf(mTimingsFile,
                 "inlet id: %i, average / peak velocity (m/s): %e / %e\n", n,
                 GetLBM()->GetAverageInletVelocity(n),
                 GetLBM()->GetPeakInletVelocity(n));
       }
-      fprintf(timings_ptr, "\n");
+      fprintf(mTimingsFile, "\n");
 
-      fprintf(timings_ptr, "\n");
-      fprintf(timings_ptr, "domain decomposition time (s):             %.3f\n",
+      fprintf(mTimingsFile, "\n");
+      fprintf(mTimingsFile,
+              "domain decomposition time (s):             %.3f\n",
               GetNet()->dd_time);
-      fprintf(timings_ptr, "pre-processing buffer management time (s): %.3f\n",
+      fprintf(mTimingsFile,
+              "pre-processing buffer management time (s): %.3f\n",
               GetNet()->bm_time);
-      fprintf(timings_ptr, "input configuration reading time (s):      %.3f\n",
+      fprintf(mTimingsFile,
+              "input configuration reading time (s):      %.3f\n",
               GetNet()->fr_time);
 
-      fprintf(timings_ptr,
+      fprintf(mTimingsFile,
               "total time (s):                            %.3f\n\n",
                (hemelb::util::myClock() - iStartTime));
 
-      fprintf(timings_ptr, "Sub-domains info:\n\n");
+      fprintf(mTimingsFile, "Sub-domains info:\n\n");
 
       for (int n = 0; n < GetNet()->mProcessorCount; n++)
       {
-        fprintf(timings_ptr, "rank: %i, fluid sites: %i\n", n,
+        fprintf(mTimingsFile, "rank: %i, fluid sites: %i\n", n,
                 GetNet()->mFluidSitesOnEachProcessor[n]);
       }
     }
   }
+
+  PrintTimingData(-1);
+}
+
+// NB. This function takes into account that the process numbered 0
+// does not always carry data.
+void SimulationMaster::PrintTimingData(int iSignal)
+{
+#ifndef NOMPI
+  double lTimings[5] = { mLbTime, mMPISendTime, mMPIWaitTime, mImagingTime,
+                         mSnapshotTime };
+  std::string lNames[5] = { "LBM", "MPISend", "MPIWait", "Images", "Snaps" };
+
+  if (mSimulationState.CycleId > 0)
+  {
+    mLbTime /= (double) mSimulationState.CycleId;
+    mMPISendTime /= (double) mSimulationState.CycleId;
+    mMPIWaitTime /= (double) mSimulationState.CycleId;
+  }
+
+  if (mImagesWritten > 0)
+  {
+    mImagingTime /= (double) mImagesWritten;
+  }
+
+  if (mSnapshotsWritten > 0)
+  {
+    mSnapshotTime /= (double) mSnapshotsWritten;
+  }
+
+  double lMins[5];
+  double lMaxes[5];
+  double lMeans[5];
+
+  if (mNet->IsCurrentProcTheIOProc())
+  {
+    for (int ii = 0; ii < 3; ii++)
+      lTimings[ii] = 0.0;
+  }
+
+  MPI_Reduce(lTimings, lMaxes, 5, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(lTimings, lMeans, 5, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  // Change the values for LBM and MPI on process 0 so they don't interfere with the min
+  // operation (previously values were 0.0 so they won't affect max / mean
+  // calc).
+  if (mNet->IsCurrentProcTheIOProc())
+  {
+    for (int ii = 0; ii < 3; ii++)
+      lTimings[ii] = std::numeric_limits<double>::max();
+  }
+  MPI_Reduce(lTimings, lMins, 5, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+
+  if (mNet->IsCurrentProcTheIOProc())
+  {
+    if (mNet->mProcessorCount > 1)
+    {
+      for (int ii = 0; ii < 3; ii++)
+        lMeans[ii] /= (double) (mNet->mProcessorCount - 1);
+      for (int ii = 3; ii < 5; ii++)
+        lMeans[ii] /= (double) mNet->mProcessorCount;
+    }
+
+    fprintf(mTimingsFile,
+            "\n\nPer-proc timing data (secs per [cycle,image,snapshot]): \n\n");
+    fprintf(mTimingsFile, "\t\tMin \t\tMean \t\tMax\n");
+    for (int ii = 0; ii < 5; ii++)
+    {
+      fprintf(mTimingsFile, "%s \t\t%.3g \t\t%.3g \t\t%.3g\n",
+              lNames[ii].c_str(), lMins[ii], lMeans[ii], lMaxes[ii]);
+    }
+  }
+#endif //NOMPI
 }
 
 LBM *SimulationMaster::GetLBM()
