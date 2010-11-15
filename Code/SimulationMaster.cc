@@ -479,10 +479,10 @@ void SimulationMaster::PrintTimingData(int iSignal)
 
     fprintf(mTimingsFile,
             "\n\nPer-proc timing data (secs per [cycle,image,snapshot]): \n\n");
-    fprintf(mTimingsFile, "\t\tMin \t\tMean \t\tMax\n");
+    fprintf(mTimingsFile, "\t\tMin \tMean \tMax\n");
     for (int ii = 0; ii < 5; ii++)
     {
-      fprintf(mTimingsFile, "%s \t\t%.3g \t\t%.3g \t\t%.3g\n",
+      fprintf(mTimingsFile, "%s\t\t%.3g\t%.3g\t%.3g\n",
               lNames[ii].c_str(), lMins[ii], lMeans[ii], lMaxes[ii]);
     }
   }
