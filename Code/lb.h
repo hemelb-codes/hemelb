@@ -34,7 +34,10 @@ class LBM
 
     int lbmCycle(int perform_rt,
                  Net *net,
-                 hemelb::lb::LocalLatticeData &bLocallatDat);
+                 hemelb::lb::LocalLatticeData &bLocallatDat,
+                 double &bLbTime,
+                 double &bMPISendTime,
+                 double &bMPIWaitTime);
     void lbmCalculateFlowFieldValues();
     void RecalculateTauViscosityOmega();
     void lbmUpdateBoundaryDensities(int cycle_id, int time_step);
