@@ -1,6 +1,8 @@
 #include <cstdio>
+#include <cstring>
 #include <netinet/in.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include <signal.h>
 
 #include "vis/visthread.h"
@@ -59,8 +61,13 @@ namespace hemelb
     {
       char steering_session_id_char[255];
 
-      std::snprintf(steering_session_id_char, 255, "%i",
-                    mLbm->steering_session_id);
+      // PG compiler sticks to the letter of the standard: snprintf should not
+      // be exported in std:: namespace as GCC does.
+      // std::snprintf(steering_session_id_char, 255, "%i",
+      // mLbm->steering_session_id);
+      
+      std::sprintf(steering_session_id_char, "%i",
+		   mLbm->steering_session_id);
 
       vis::setRenderState(0);
 

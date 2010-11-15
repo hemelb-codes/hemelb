@@ -104,7 +104,7 @@ namespace hemelb
     if (iIsLoading)
     {
       char *dummy;
-      value = strtof(iParent->Attribute(iAttributeName)->c_str(), &dummy);
+      value = std::strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
     }
     else
     {
@@ -127,7 +127,7 @@ namespace hemelb
     if (iIsLoading)
     {
       char *dummy;
-      value = strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
+      value = std::strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
     }
     else
     {
@@ -166,7 +166,7 @@ namespace hemelb
     {
       char *dummy;
       // Read in, in base 10.
-      bValue = strtol(iParent->Attribute(iAttributeName)->c_str(), &dummy, 10);
+      bValue = std::strtol(iParent->Attribute(iAttributeName)->c_str(), &dummy, 10);
     }
     else
     {
