@@ -15,8 +15,7 @@ class SimulationMaster
     LBM *GetLBM();
     Net *GetNet();
 
-    void RunSimulation(FILE *iTimingsFile,
-                       hemelb::SimConfig *& lSimulationConfig,
+    void RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                        double iStartTime,
                        std::string image_directory,
                        std::string snapshot_directory,
@@ -30,9 +29,12 @@ class SimulationMaster
   private:
     void PostSimulation(int iTotalTimeSteps,
                         double iSimulationTime,
-                        FILE *timings_ptr,
                         bool iIsUnstable,
                         double iStartTime);
+
+    void PrintTimingData(int iSignal);
+
+    FILE *mTimingsFile;
 
     hemelb::lb::GlobalLatticeData mGlobLatDat;
     hemelb::lb::LocalLatticeData mLocalLatDat;
@@ -41,6 +43,15 @@ class SimulationMaster
     hemelb::lb::SimulationState mSimulationState;
     LBM *mLbm;
     Net *mNet;
+
+    int mImagesWritten;
+    int mSnapshotsWritten;
+
+    double mLbTime;
+    double mMPISendTime;
+    double mMPIWaitTime;
+    double mImagingTime;
+    double mSnapshotTime;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */

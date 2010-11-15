@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 
   double total_time = hemelb::util::myClock();
 
-  FILE *timings_ptr;
+  FILE *timings_ptr = NULL;
   std::string image_directory = lOutputDir + "/Images/";
   std::string snapshot_directory = lOutputDir + "/Snapshots/";
 
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
   lMaster.Initialise(lSimulationConfig, (int) lSteeringSessionId, timings_ptr);
 
-  lMaster.RunSimulation(timings_ptr, lSimulationConfig, total_time,
+  lMaster.RunSimulation(lSimulationConfig, total_time,
                         image_directory, snapshot_directory,
                         lSnapshotsPerCycle, lImagesPerCycle);
 

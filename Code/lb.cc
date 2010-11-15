@@ -266,11 +266,18 @@ hemelb::lb::collisions::Collision* LBM::GetCollision(int i)
 // subdomains.
 int LBM::lbmCycle(int perform_rt,
                   Net *net,
-                  hemelb::lb::LocalLatticeData &bLocalLatDat)
+                  hemelb::lb::LocalLatticeData &bLocalLatDat,
+                  double &bLbTime,
+                  double &bMPISendTime,
+                  double &bMPIWaitTime)
 {
   net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
 
   int offset = net->my_inner_sites;
+
+#ifndef NOMPI
+  double lPreLbTimeOne = MPI_Wtime();
+#endif
 
   for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
   {
@@ -284,7 +291,17 @@ int LBM::lbmCycle(int perform_rt,
     offset += net->my_inter_collisions[collision_type];
   }
 
+#ifndef NOMPI
+  double lPreSendTime = MPI_Wtime();
+  bLbTime += (lPreSendTime - lPreLbTimeOne);
+#endif
+
   net->SendToNeighbouringProcessors(bLocalLatDat);
+
+#ifndef NOMPI
+  double lPreLbTimeTwo = MPI_Wtime();
+  bMPISendTime += (lPreLbTimeTwo - lPreSendTime);
+#endif
 
   offset = 0;
 
@@ -300,7 +317,17 @@ int LBM::lbmCycle(int perform_rt,
     offset += net->my_inner_collisions[collision_type];
   }
 
+#ifndef NOMPI
+  double lPreMPIWaitTime = MPI_Wtime();
+  bLbTime += (lPreMPIWaitTime - lPreLbTimeTwo);
+#endif
+
   net->UseDataFromNeighbouringProcs(bLocalLatDat);
+
+#ifndef NOMPI
+  double lPrePostStepTime = MPI_Wtime();
+  bMPIWaitTime += (lPrePostStepTime - lPreMPIWaitTime);
+#endif
 
   // Do any cleanup steps necessary on boundary nodes
   offset = 0;
@@ -328,6 +355,11 @@ int LBM::lbmCycle(int perform_rt,
                                            hemelb::vis::controller);
     offset += net->my_inter_collisions[collision_type];
   }
+
+#ifndef NOMPI
+  bLbTime += (MPI_Wtime() - lPrePostStepTime);
+#endif
+
   // Swap f_old and f_new ready for the next timestep.
   double *temp = bLocalLatDat.FOld;
   bLocalLatDat.FOld = bLocalLatDat.FNew;
