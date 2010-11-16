@@ -2,6 +2,7 @@
 #define HEMELB_LB_H
 
 #include "net.h"
+#include "topology/NetworkTopology.h"
 #include "lb/collisions/Collisions.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
@@ -22,12 +23,13 @@ class LBM
     double lbmConvertVelocityToPhysicalUnits(double velocity);
 
     void lbmInit(hemelb::SimConfig *iSimulationConfig,
+                 const hemelb::topology::NetworkTopology * iNetTop,
                  hemelb::lb::GlobalLatticeData &bGlobLatDat,
                  int iSteeringSessionId,
                  int iPeriod,
                  double iVoxelSize,
                  Net *net);
-    void lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net);
+    void lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat);
     ~LBM();
 
     int IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net);
@@ -45,14 +47,13 @@ class LBM
                                   hemelb::lb::LocalLatticeData &iLocalLatDat,
                                   Net *net);
 
-    void lbmSetInitialConditions(Net *net,
-                                 hemelb::lb::LocalLatticeData &bLocalLatDat);
+    void lbmSetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
-    void lbmWriteConfig(int stability,
-                        std::string output_file_name,
-                        Net *net,
-                        hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                        hemelb::lb::LocalLatticeData &lLocalLatticeData);
+    void
+    lbmWriteConfig(int stability,
+                   std::string output_file_name,
+                   const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                   const hemelb::lb::LocalLatticeData &iLocalLatticeData);
 
     double GetMinPhysicalPressure();
     double GetMaxPhysicalPressure();
@@ -66,7 +67,7 @@ class LBM
     double GetAverageInletVelocity(int iInletNumber);
     double GetPeakInletVelocity(int iInletNumber);
 
-    void ReadVisParameters(Net *net);
+    void ReadVisParameters();
 
     void CalculateMouseFlowField(hemelb::vis::ColPixel *col_pixel_p,
                                  double &mouse_pressure,
@@ -88,9 +89,10 @@ class LBM
                         double f_neq[]);
 
     void lbmInitCollisions();
-    void lbmReadConfig(Net *net,
-                       hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
-    void lbmReadParameters(Net *net);
+    void
+    lbmReadConfig(Net *net, hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
+
+    void lbmReadParameters();
 
     void allocateInlets(int nInlets);
     void allocateOutlets(int nOutlets);
@@ -121,7 +123,7 @@ class LBM
     double voxel_size;
 
     hemelb::lb::LbmParameters mParams;
-
+    const hemelb::topology::NetworkTopology * mNetTopology;
     hemelb::SimConfig *mSimConfig;
 
     double *lbm_average_inlet_velocity;

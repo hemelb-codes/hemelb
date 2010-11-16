@@ -2,7 +2,7 @@
 include $(MK)/header.mk
 
 TARGETS = $(EXE)
-SUBDIRS = vis steering io debug lb xml
+SUBDIRS = vis steering io debug lb topology xml
 
 $(EXE)_DEPS = D3Q15.o \
 	io.o \

@@ -2,8 +2,9 @@
 #define HEMELB_VIS_RAYTRACER_H
 
 #include "constants.h"
-#include "net.h"
+#include "lb/LocalLatticeData.h"
 #include "lb/GlobalLatticeData.h"
+#include "topology/NetworkTopology.h"
 
 namespace hemelb
 {
@@ -13,7 +14,9 @@ namespace hemelb
     {
       public:
         // Constructor and destructor do all the usual stuff.
-        RayTracer(Net *net, lb::GlobalLatticeData* iGlobLatDat);
+        RayTracer(const topology::NetworkTopology * iNetworkTopology,
+                  const lb::LocalLatticeData* iLocalLatDat,
+                  const lb::GlobalLatticeData* iGlobLatDat);
         ~RayTracer();
 
         // Method to update the voxel corresponding to site i with its
@@ -95,9 +98,12 @@ namespace hemelb
 
         void rtUpdateColour(float dt, float palette[], float col[]);
 
-        void rtBuildClusters(Net *net);
+        void rtBuildClusters();
 
-        lb::GlobalLatticeData* mGlobLatDat;
+        const topology::NetworkTopology * mNetworkTopology;
+        const lb::LocalLatticeData* mLocalLatDat;
+        const lb::GlobalLatticeData* mGlobLatDat;
+
         std::vector<Cluster*> mClusters;
         float **cluster_voxel;
         float ***cluster_flow_field;

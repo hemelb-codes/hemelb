@@ -154,6 +154,7 @@ const hemelb::lb::LbmParameters *LBM::GetLbmParams()
 }
 
 void LBM::lbmInit(hemelb::SimConfig *iSimulationConfig,
+                  const hemelb::topology::NetworkTopology * iNetTop,
                   hemelb::lb::GlobalLatticeData &bGlobLatDat,
                   int iSteeringSessionId,
                   int iPeriod,
@@ -164,11 +165,12 @@ void LBM::lbmInit(hemelb::SimConfig *iSimulationConfig,
   period = iPeriod;
   voxel_size = iVoxelSize;
 
+  mNetTopology = iNetTop;
   mSimConfig = iSimulationConfig;
 
   lbmReadConfig(net, bGlobLatDat);
 
-  lbmReadParameters(net);
+  lbmReadParameters();
 
   lbmInitCollisions();
 }
@@ -211,8 +213,7 @@ void LBM::lbmInitCollisions()
                                                                     outlet_density);
 }
 
-void LBM::lbmSetInitialConditions(Net *net,
-                                  hemelb::lb::LocalLatticeData &bLocalLatDat)
+void LBM::lbmSetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
   double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
   double density;
@@ -225,7 +226,7 @@ void LBM::lbmSetInitialConditions(Net *net,
   }
   density /= outlets;
 
-  for (int i = 0; i < net->my_sites; i++)
+  for (int i = 0; i < bLocalLatDat.LocalFluidSites; i++)
   {
     D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
@@ -441,7 +442,7 @@ int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
 
   is_unstable = 0;
 
-  for (int i = 0; i < net->my_sites; i++)
+  for (int i = 0; i < iLocalLatDat.LocalFluidSites; i++)
   {
     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
     {
@@ -573,7 +574,7 @@ double LBM::GetPeakInletVelocity(int iInletNumber)
 // In the case of instability, this function restart the simulation
 // with twice as many time steps per period and update the parameters
 // that depends on this change.
-void LBM::lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
+void LBM::lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat)
 {
   int i;
 
@@ -610,7 +611,7 @@ void LBM::lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
 
   RecalculateTauViscosityOmega();
 
-  lbmSetInitialConditions(net, iLocalLatDat);
+  lbmSetInitialConditions(iLocalLatDat);
 }
 
 double LBM::GetMinPhysicalPressure()
