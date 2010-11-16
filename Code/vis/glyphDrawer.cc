@@ -9,8 +9,7 @@ namespace hemelb
     double GlyphDrawer::glyph_length = -1.F;
 
     // Constructor
-    GlyphDrawer::GlyphDrawer(Net* net,
-                             hemelb::lb::GlobalLatticeData* iGlobalLatDat,
+    GlyphDrawer::GlyphDrawer(hemelb::lb::GlobalLatticeData* iGlobalLatDat,
                              hemelb::lb::LocalLatticeData* iLocalLatDat)
     {
       mGlobalLatDat = iGlobalLatDat;
@@ -25,7 +24,7 @@ namespace hemelb
               += iGlobalLatDat->BlockSize)
           {
             n++;
-            DataBlock *map_block_p = &net->map_block[n];
+            lb::BlockData * map_block_p = &iGlobalLatDat->Blocks[n];
 
             if (map_block_p->site_data == NULL)
             {

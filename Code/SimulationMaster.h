@@ -26,6 +26,10 @@ class SimulationMaster
                     int iSteeringSessionid,
                     FILE *bTimingsFile);
 
+    // TODO Temporary hack while refactoring, so the main method can find out if it's
+    // on the IO rank or not.
+    hemelb::topology::NetworkTopology mNetworkTopology;
+
   private:
     void PostSimulation(int iTotalTimeSteps,
                         double iSimulationTime,
@@ -38,6 +42,8 @@ class SimulationMaster
 
     hemelb::lb::GlobalLatticeData mGlobLatDat;
     hemelb::lb::LocalLatticeData mLocalLatDat;
+
+    hemelb::topology::TopologyManager mTopologyManger;
 
     hemelb::steering::Control *steeringController;
     hemelb::lb::SimulationState mSimulationState;

@@ -13,7 +13,6 @@ namespace hemelb
   namespace vis
   {
     // TODO ye gods.
-
     // make a global controller
     Control *controller;
 
@@ -46,15 +45,19 @@ namespace hemelb
 
     }
 
-    void Control::initLayers(lb::GlobalLatticeData &iGlobLatDat,
+    void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
+                             lb::GlobalLatticeData &iGlobLatDat,
                              lb::LocalLatticeData &iLocalLatDat,
-                             Net *net)
+                             bool & oSuccess)
     {
-      myRayTracer = new RayTracer(net, &iGlobLatDat);
-      myGlypher = new GlyphDrawer(net, &iGlobLatDat, &iLocalLatDat);
+      myRayTracer = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
+      myGlypher = new GlyphDrawer(&iGlobLatDat, &iLocalLatDat);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(net, iLocalLatDat, iGlobLatDat);
+      bool lSuccess;
+      myStreaker = new StreaklineDrawer(iNetworkTopology, iLocalLatDat,
+                                        iGlobLatDat, lSuccess);
+      oSuccess = lSuccess;
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -503,11 +506,14 @@ namespace hemelb
       }
     }
 
-    void Control::compositeImage(int recv_buffer_id, Net *net)
+    void Control::compositeImage(int recv_buffer_id,
+                                 const topology::NetworkTopology * iNetTopology)
     {
       // here, the communications needed to composite the image are
       // handled through a binary tree pattern and parallel pairwise
       // blocking communications.
+
+      MPI_Status status;
 
       int *col_pixel_id_p;
       int col_pixels_temp;
@@ -532,7 +538,7 @@ namespace hemelb
       comm_inc = 1;
       m = 1;
 
-      while (m < net->mProcessorCount)
+      while (m < iNetTopology->ProcessorCount)
       {
         m <<= 1;
 #ifndef NEW_COMPOSITING
@@ -540,24 +546,24 @@ namespace hemelb
 #else
         int start_id = 1;
 #endif
-        for (recv_id = start_id; recv_id < net->mProcessorCount;)
+        for (recv_id = start_id; recv_id < iNetTopology->ProcessorCount;)
         {
           send_id = recv_id + comm_inc;
 
-          if (!net->IsCurrentProcRank(recv_id)
-              && !net->IsCurrentProcRank(send_id))
+          if (iNetTopology->LocalRank != recv_id && iNetTopology->LocalRank
+              != send_id)
           {
             recv_id += comm_inc << 1;
             continue;
           }
 
-          if (send_id >= net->mProcessorCount || recv_id == send_id)
+          if (send_id >= iNetTopology->ProcessorCount || recv_id == send_id)
           {
             recv_id += comm_inc << 1;
             continue;
           }
 
-          if (net->IsCurrentProcRank(send_id))
+          if (iNetTopology->LocalRank == send_id)
           {
 #ifndef NOMPI
             MPI_Send(&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
@@ -575,12 +581,12 @@ namespace hemelb
           {
 #ifndef NOMPI
             MPI_Recv(&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD,
-                     net->status);
+                     &status);
 
             if (col_pixels_temp > 0)
             {
               MPI_Recv(col_pixel_send, col_pixels_temp, ColPixel::getMpiType(),
-                       send_id, 20, MPI_COMM_WORLD, net->status);
+                       send_id, 20, MPI_COMM_WORLD, &status);
             }
 #else
             col_pixels_temp = 0;
@@ -610,7 +616,8 @@ namespace hemelb
 
             }
           }
-          if (m < net->mProcessorCount && net->IsCurrentProcRank(recv_id))
+          if (m < iNetTopology->ProcessorCount && iNetTopology->LocalRank
+              == recv_id)
           {
             memcpy(col_pixel_send, col_pixel_recv[recv_buffer_id], col_pixels
                 * sizeof(ColPixel));
@@ -621,7 +628,7 @@ namespace hemelb
         comm_inc <<= 1;
       }
 #ifdef NEW_COMPOSITING
-      if (net->id == 1)
+      if (iNetTopology->LocalRank == 1)
       {
 #ifndef NOMPI
         MPI_Send (&col_pixels, 1, MPI_INT, 0, 20, MPI_COMM_WORLD);
@@ -635,14 +642,14 @@ namespace hemelb
         }
 
       }
-      else if (net->id == 0)
+      else if (iNetTopology->LocalRank == 0)
       {
-        MPI_Recv (&col_pixels, 1, MPI_INT, 1, 20, MPI_COMM_WORLD, net->status);
+        MPI_Recv (&col_pixels, 1, MPI_INT, 1, 20, MPI_COMM_WORLD, &status);
 
         if (col_pixels > 0)
         {
           MPI_Recv (col_pixel_recv[recv_buffer_id], col_pixels, MPI_col_pixel_type,
-              1, 20, MPI_COMM_WORLD, net->status);
+              1, 20, MPI_COMM_WORLD, &status);
         }
 
       }
@@ -651,7 +658,7 @@ namespace hemelb
 
     void Control::render(int recv_buffer_id,
                          lb::GlobalLatticeData &iGlobLatDat,
-                         Net *net)
+                         const topology::NetworkTopology * iNetTopology)
     {
       if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
       {
@@ -675,11 +682,11 @@ namespace hemelb
         myStreaker->render(iGlobLatDat);
       }
 #endif
-      compositeImage(recv_buffer_id, net);
+      compositeImage(recv_buffer_id, iNetTopology);
 
       col_pixels_recv[recv_buffer_id] = col_pixels;
 #ifndef NEW_COMPOSITING
-      if (net->IsCurrentProcTheIOProc())
+      if (iNetTopology->IsCurrentProcTheIOProc())
       {
         return;
       }
@@ -723,11 +730,9 @@ namespace hemelb
     void Control::streaklines(int time_step,
                               int period,
                               lb::GlobalLatticeData &iGlobLatDat,
-                              lb::LocalLatticeData &iLocalLatDat,
-                              Net *net)
+                              lb::LocalLatticeData &iLocalLatDat)
     {
-      myStreaker ->StreakLines(time_step, period, iGlobLatDat, iLocalLatDat,
-                               net);
+      myStreaker ->StreakLines(time_step, period, iGlobLatDat, iLocalLatDat);
     }
 
     void Control::restart()

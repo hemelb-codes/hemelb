@@ -1,6 +1,8 @@
 #ifndef HEMELB_LB_LOCALLATTICEDATA_H
 #define HEMELB_LB_LOCALLATTICEDATA_H
 
+#include "constants.h"
+#include "D3Q15.h"
 #include "debug/Debugger.h"
 
 namespace hemelb
@@ -22,6 +24,7 @@ namespace hemelb
         {
           FOld = NULL;
           FNew = NULL;
+          LocalFluidSites = 0;
           mSiteData = NULL;
           mFNeighbours = NULL;
           mDistanceToWall = NULL;
@@ -30,8 +33,6 @@ namespace hemelb
 
         ~LocalLatticeData()
         {
-          hemelb::debug::Debugger::Get()->BreakHere();
-
           if (FOld != NULL)
           {
             delete[] FOld;
@@ -87,13 +88,14 @@ namespace hemelb
           return &mWallNormalAtSite[iSiteIndex * 3];
         }
 
-        SiteType GetSiteType(int iSiteIndex)
+        SiteType GetSiteType(int iSiteIndex) const
         {
           return (SiteType) (mSiteData[iSiteIndex] & SITE_TYPE_MASK);
         }
 
         double *FOld;
         double *FNew;
+        int LocalFluidSites;
 
         friend class Net;
 

@@ -64,7 +64,7 @@ void LBM::lbmReadConfig(Net *net,
 
   FILE* xdrFile = fopen(mSimConfig->DataFilePath.c_str(), "r");
 
-  char* lProcIdentifier = net->GetCurrentProcIdentifier();
+  char* lProcIdentifier = mNetTopology->GetCurrentProcIdentifier();
 
   if (xdrFile == NULL)
   {
@@ -95,8 +95,6 @@ void LBM::lbmReadConfig(Net *net,
   double lTempStressType;
 
   myReader.readDouble(lTempStressType);
-
-  hemelb::debug::Debugger::Get()->BreakHere();
 
   mParams.StressType = (lTempStressType == -1.0)
     ? hemelb::lb::ShearStress
@@ -131,7 +129,8 @@ void LBM::lbmReadConfig(Net *net,
   bGlobalLatticeData.BlockCount = bGlobalLatticeData.BlocksX
       * bGlobalLatticeData.BlocksY * bGlobalLatticeData.BlocksZ;
 
-  net->map_block = new DataBlock[bGlobalLatticeData.BlockCount];
+  bGlobalLatticeData.Blocks
+      = new hemelb::lb::BlockData[bGlobalLatticeData.BlockCount];
 
   total_fluid_sites = 0;
 
@@ -154,9 +153,9 @@ void LBM::lbmReadConfig(Net *net,
       {
         ++n;
 
-        net->map_block[n].site_data = NULL;
-        net->map_block[n].ProcessorRankForEachBlockSite = NULL;
-        net->map_block[n].wall_data = NULL;
+        bGlobalLatticeData.Blocks[n].site_data = NULL;
+        bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite = NULL;
+        bGlobalLatticeData.Blocks[n].wall_data = NULL;
 
         myReader.readInt(flag);
 
@@ -164,9 +163,9 @@ void LBM::lbmReadConfig(Net *net,
           continue;
         // Block contains some non-solid sites
 
-        net->map_block[n].site_data
+        bGlobalLatticeData.Blocks[n].site_data
             = new unsigned int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
-        net->map_block[n].ProcessorRankForEachBlockSite
+        bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite
             = new int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
 
         m = -1;
@@ -185,15 +184,17 @@ void LBM::lbmReadConfig(Net *net,
 
               ++m;
 
-              site_type = &net->map_block[n].site_data[m];
+              site_type = &bGlobalLatticeData.Blocks[n].site_data[m];
               myReader.readUnsignedInt(*site_type);
 
               if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
               {
-                net->map_block[n].ProcessorRankForEachBlockSite[m] = 1 << 30;
+                bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m]
+                    = 1 << 30;
                 continue;
               }
-              net->map_block[n].ProcessorRankForEachBlockSite[m] = -1;
+              bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m]
+                  = -1;
 
               ++total_fluid_sites;
 
@@ -207,10 +208,10 @@ void LBM::lbmReadConfig(Net *net,
               if (net->GetCollisionType(*site_type) != FLUID)
               {
                 // Neither solid nor simple fluid
-                if (net->map_block[n].wall_data == NULL)
+                if (bGlobalLatticeData.Blocks[n].wall_data == NULL)
                 {
-                  net->map_block[n].wall_data
-                      = new WallData[bGlobalLatticeData.SitesPerBlockVolumeUnit];
+                  bGlobalLatticeData.Blocks[n].wall_data
+                      = new hemelb::lb::WallData[bGlobalLatticeData.SitesPerBlockVolumeUnit];
                 }
 
                 if (net->GetCollisionType(*site_type) & INLET
@@ -219,10 +220,10 @@ void LBM::lbmReadConfig(Net *net,
                   // INLET or OUTLET or both
                   for (l = 0; l < 3; l++)
                     myReader.readDouble(
-                                        net->map_block[n].wall_data[m].boundary_nor[l]);
+                                        bGlobalLatticeData.Blocks[n].wall_data[m].boundary_nor[l]);
 
                   myReader.readDouble(
-                                      net->map_block[n].wall_data[m].boundary_dist);
+                                      bGlobalLatticeData.Blocks[n].wall_data[m].boundary_dist);
                 }
 
                 if (net->GetCollisionType(*site_type) & EDGE)
@@ -230,14 +231,15 @@ void LBM::lbmReadConfig(Net *net,
                   // EDGE bit set
                   for (l = 0; l < 3; l++)
                     myReader.readDouble(
-                                        net->map_block[n].wall_data[m].wall_nor[l]);
+                                        bGlobalLatticeData.Blocks[n].wall_data[m].wall_nor[l]);
 
-                  myReader.readDouble(net->map_block[n].wall_data[m].wall_dist);
+                  myReader.readDouble(
+                                      bGlobalLatticeData.Blocks[n].wall_data[m].wall_dist);
                 }
 
                 for (l = 0; l < 14; l++)
                   myReader.readDouble(
-                                      net->map_block[n].wall_data[m].cut_dist[l]);
+                                      bGlobalLatticeData.Blocks[n].wall_data[m].cut_dist[l]);
               }
             } // kk
           } // jj
@@ -255,13 +257,14 @@ void LBM::lbmReadConfig(Net *net,
  through this function the processor 0 reads the LB parameters
  and then communicate them to the other processors
  */
-void LBM::lbmReadParameters(Net *net)
+void LBM::lbmReadParameters()
 {
 
   double par_to_send[10000];
   int nParamsRead = 0;
+  int err;
 
-  if (net->IsCurrentProcTheIOProc())
+  if (mNetTopology->IsCurrentProcTheIOProc())
   {
     inlets = mSimConfig->Inlets.size();
     allocateInlets(inlets);
@@ -309,9 +312,9 @@ void LBM::lbmReadParameters(Net *net)
     par_to_send[2] = 0.1 + (double) is_inlet_normal_available;
   }
 #ifndef NOMPI
-  net->err = MPI_Bcast(par_to_send, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  err = MPI_Bcast(par_to_send, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-  if (!net->IsCurrentProcTheIOProc())
+  if (!mNetTopology->IsCurrentProcTheIOProc())
   {
     inlets = (int) par_to_send[0];
     outlets = (int) par_to_send[1];
@@ -353,10 +356,10 @@ void LBM::lbmReadParameters(Net *net)
     }
   }
 #ifndef NOMPI
-  net->err = MPI_Bcast(par_to_send, 3 * (inlets + outlets + inlets),
-                       MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  err = MPI_Bcast(par_to_send, 3 * (inlets + outlets + inlets), MPI_DOUBLE, 0,
+                  MPI_COMM_WORLD);
 #endif
-  if (!net->IsCurrentProcTheIOProc())
+  if (!mNetTopology->IsCurrentProcTheIOProc())
   {
     for (int n = 0; n < inlets; n++)
     {
@@ -408,9 +411,8 @@ void LBM::allocateOutlets(int nOutlets)
 
 void LBM::lbmWriteConfig(int stability,
                          std::string output_file_name,
-                         Net *net,
-                         hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                         hemelb::lb::LocalLatticeData &iLocalLatticeData)
+                         const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                         const hemelb::lb::LocalLatticeData &iLocalLatticeData)
 {
   /* This routine writes the flow field on file. The data are gathered
    to the root processor and written from there.  The format
@@ -445,6 +447,8 @@ void LBM::lbmWriteConfig(int stability,
 
   float *local_flow_field, *gathered_flow_field;
 
+  int err;
+
   double density;
   double pressure;
   double vx, vy, vz;
@@ -477,7 +481,7 @@ void LBM::lbmWriteConfig(int stability,
   stress_par = BLOOD_DENSITY / (stress_par * stress_par * voxel_size
       * voxel_size);
 
-  if (net->IsCurrentProcTheIOProc())
+  if (mNetTopology->IsCurrentProcTheIOProc())
   {
     realSnap = new hemelb::io::AsciiFileWriter(output_file_name);
     //snap << stability << snap->eol;
@@ -488,14 +492,14 @@ void LBM::lbmWriteConfig(int stability,
 
   if (stability == UNSTABLE)
   {
-    if (net->IsCurrentProcTheIOProc())
+    if (mNetTopology->IsCurrentProcTheIOProc())
     {
       delete realSnap;
     }
     return;
   }
 
-  if (net->IsCurrentProcTheIOProc())
+  if (mNetTopology->IsCurrentProcTheIOProc())
   {
     shrinked_sites_x = 1 + site_max_x - site_min_x;
     shrinked_sites_y = 1 + site_max_y - site_min_y;
@@ -511,10 +515,11 @@ void LBM::lbmWriteConfig(int stability,
 
   fluid_sites_max = 0;
 
-  for (int n = 0; n < net->mProcessorCount; n++)
+  for (int n = 0; n < mNetTopology->ProcessorCount; n++)
   {
-    fluid_sites_max = hemelb::util::max(fluid_sites_max,
-                                        net->mFluidSitesOnEachProcessor[n]);
+    fluid_sites_max
+        = hemelb::util::max(fluid_sites_max,
+                            mNetTopology->FluidSitesOnEachProcessor[n]);
   }
 
   // "buffer_size" is the size of the flow field buffer to send to the
@@ -524,20 +529,21 @@ void LBM::lbmWriteConfig(int stability,
   // frequency with which data communication to the root processor is
   // performed becomes lower and viceversa
   buffer_size = hemelb::util::min(1000000, fluid_sites_max
-      * net->mProcessorCount);
+      * mNetTopology->ProcessorCount);
 
-  communication_period = int(ceil(double(buffer_size) / net->mProcessorCount));
+  communication_period = int(ceil(double(buffer_size)
+      / mNetTopology->ProcessorCount));
 
   communication_iters = hemelb::util::max(1, int(ceil(double(fluid_sites_max)
       / communication_period)));
 
   local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
   gathered_flow_field = new float[MACROSCOPIC_PARS * communication_period
-      * net->mProcessorCount];
+      * mNetTopology->ProcessorCount];
 
   local_site_data = new short int[3 * communication_period];
   gathered_site_data = new short int[3 * communication_period
-      * net->mProcessorCount];
+      * mNetTopology->ProcessorCount];
 
   for (comPeriodDelta = 0; comPeriodDelta < communication_period; comPeriodDelta++)
   {
@@ -567,7 +573,7 @@ void LBM::lbmWriteConfig(int stability,
 
         ++n;
 
-        if (net->map_block[n].ProcessorRankForEachBlockSite == NULL)
+        if (iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite == NULL)
         {
           continue;
         }
@@ -581,13 +587,13 @@ void LBM::lbmWriteConfig(int stability,
             {
 
               m++;
-              if (!net->IsCurrentProcRank(
-                                          net->map_block[n].ProcessorRankForEachBlockSite[m]))
+              if (mNetTopology->LocalRank
+                  != iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m])
               {
                 continue;
               }
 
-              my_site_id = net->map_block[n].site_data[m];
+              my_site_id = iGlobalLatticeData.Blocks[n].site_data[m];
 
               /* No idea what this does */
               if (my_site_id & (1U << 31U))
@@ -620,9 +626,6 @@ void LBM::lbmWriteConfig(int stability,
                                iLocalLatticeData.GetBoundaryId(my_site_id),
                                &density, &vx, &vy, &vz, f_neq);
               }
-
-              if (my_site_id == 31702)
-                hemelb::debug::Debugger::Get()->BreakHere();
 
               if (mParams.StressType == hemelb::lb::ShearStress)
               {
@@ -681,20 +684,21 @@ void LBM::lbmWriteConfig(int stability,
               comPeriodDelta = 0;
               ++iters;
 #ifndef NOMPI
-              net->err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS
+              err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS
                   * communication_period, MPI_FLOAT, gathered_flow_field,
-                                    MACROSCOPIC_PARS * communication_period,
-                                    MPI_FLOAT, 0, MPI_COMM_WORLD);
+                               MACROSCOPIC_PARS * communication_period,
+                               MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-              net->err = MPI_Gather(local_site_data, 3 * communication_period,
-                                    MPI_SHORT, gathered_site_data, 3
-                                        * communication_period, MPI_SHORT, 0,
-                                    MPI_COMM_WORLD);
+              err = MPI_Gather(local_site_data, 3 * communication_period,
+                               MPI_SHORT, gathered_site_data, 3
+                                   * communication_period, MPI_SHORT, 0,
+                               MPI_COMM_WORLD);
 #endif
-              if (net->IsCurrentProcTheIOProc())
+              if (mNetTopology->IsCurrentProcTheIOProc())
               {
 
-                for (int l = 0; l < net->mProcessorCount * communication_period; l++)
+                for (int l = 0; l < mNetTopology->ProcessorCount
+                    * communication_period; l++)
                 {
                   if (gathered_site_data[l * 3 + 0] == -1)
                     continue;
@@ -736,20 +740,19 @@ void LBM::lbmWriteConfig(int stability,
     for (; iters <= communication_iters; iters++)
     {
 #ifndef NOMPI
-      net->err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS
+      err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS
           * communication_period, MPI_FLOAT, gathered_flow_field,
-                            MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
-                            0, MPI_COMM_WORLD);
+                       MACROSCOPIC_PARS * communication_period, MPI_FLOAT, 0,
+                       MPI_COMM_WORLD);
 
-      net->err = MPI_Gather(local_site_data, 3 * communication_period,
-                            MPI_SHORT, gathered_site_data, 3
-                                * communication_period, MPI_SHORT, 0,
-                            MPI_COMM_WORLD);
+      err = MPI_Gather(local_site_data, 3 * communication_period, MPI_SHORT,
+                       gathered_site_data, 3 * communication_period, MPI_SHORT,
+                       0, MPI_COMM_WORLD);
 #endif
 
-      if (net->IsCurrentProcTheIOProc())
+      if (mNetTopology->IsCurrentProcTheIOProc())
       {
-        for (int l = 0; l < net->mProcessorCount * communication_period; l++)
+        for (int l = 0; l < mNetTopology->ProcessorCount * communication_period; l++)
         {
 
           if (gathered_site_data[l * 3 + 0] == -1)
@@ -779,7 +782,7 @@ void LBM::lbmWriteConfig(int stability,
 
   }
 
-  if (net->IsCurrentProcTheIOProc())
+  if (mNetTopology->IsCurrentProcTheIOProc())
   {
     delete realSnap;
   }
@@ -790,7 +793,7 @@ void LBM::lbmWriteConfig(int stability,
   delete[] local_flow_field;
 }
 
-void LBM::ReadVisParameters(Net *net)
+void LBM::ReadVisParameters()
 {
   float lDensity_threshold_min, lDensity_threshold_minmax_inv,
       lVelocity_threshold_max_inv, lStress_threshold_max_inv;
@@ -799,7 +802,7 @@ void LBM::ReadVisParameters(Net *net)
 
   int i;
 
-  if (net->IsCurrentProcTheIOProc())
+  if (mNetTopology->IsCurrentProcTheIOProc())
   {
     velocity_max = lbmConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
     stress_max = lbmConvertStressToLatticeUnits(mSimConfig->MaxStress);
@@ -815,7 +818,7 @@ void LBM::ReadVisParameters(Net *net)
     par_to_send[8] = stress_max;
   }
 #ifndef NOMPI
-  net->err = MPI_Bcast(par_to_send, 9, MPI_FLOAT, 0, MPI_COMM_WORLD);
+  int err = MPI_Bcast(par_to_send, 9, MPI_FLOAT, 0, MPI_COMM_WORLD);
 #endif
 
   mSimConfig->VisCentre.x = par_to_send[0];

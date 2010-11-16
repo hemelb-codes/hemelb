@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
   // There should be an odd number of arguments since the parameters occur in pairs.
   if ( (argc % 2) == 0)
   {
-    if (lMaster.GetNet()->IsCurrentProcTheIOProc())
+    if (lMaster.mNetworkTopology.IsCurrentProcTheIOProc())
     {
       Usage::printUsage(argv[0]);
     }
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-      if (lMaster.GetNet()->IsCurrentProcTheIOProc())
+      if (lMaster.mNetworkTopology.IsCurrentProcTheIOProc())
       {
         Usage::printUsage(argv[0]);
       }
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
   // Actually create the directories.
 
 
-  if (lMaster.GetNet()->IsCurrentProcTheIOProc())
+  if (lMaster.mNetworkTopology.IsCurrentProcTheIOProc())
   {
     if (hemelb::util::DoesDirectoryExist(lOutputDir.c_str()))
     {
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     char procs_string[256];
 
     std::string lProcs = std::string();
-    sprintf(procs_string, "%i", lMaster.GetNet()->mProcessorCount);
+    sprintf(procs_string, "%i", lMaster.mNetworkTopology.ProcessorCount);
     strcpy(timings_name, lOutputDir.c_str());
     strcat(timings_name, "/timings");
     strcat(timings_name, procs_string);
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
                         image_directory, snapshot_directory,
                         lSnapshotsPerCycle, lImagesPerCycle);
 
-  if (lMaster.GetNet()->IsCurrentProcTheIOProc())
+  if (lMaster.mNetworkTopology.IsCurrentProcTheIOProc())
   {
     fclose(timings_ptr);
   }
