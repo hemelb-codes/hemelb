@@ -1,146 +1,22 @@
-#include "topology/TopologyManager.h"
-
-#include <cmath>
+#include "topology/BaseTopologyManager.h"
 
 namespace hemelb
 {
   namespace topology
   {
-
-    //#undef MPICHX_TOPOLOGY_DEPTHS
-#ifdef MPICHX_TOPOLOGY_DEPTHS
-
-    /*!
-     If one has more than one machine. The topology discovery mechanism is implemented in this function
-     */
-    void TopologyManager::FindTopology(NetworkTopology &bNetworkTopology,
-        bool & oWasSuccessful)
+    BaseTopologyManager::BaseTopologyManager()
     {
-      int err;
-      int *depth, **color;
-      int machine_id, flag, is_found;
-      int i, j, sum;
-
-      bNetworkTopology.Depths = 0;
-
-      err = MPI_Attr_get(MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag);
-
-      if (err != MPI_SUCCESS || flag == 0)
-      {
-        oWasSuccessful = false;
-      }
-
-      err = MPI_Attr_get(MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag);
-
-      if (err != MPI_SUCCESS || flag == 0)
-      {
-        oWasSuccessful = false;
-      }
-
-      bNetworkTopology.MachineCount = 0;
-
-      bNetworkTopology.MachineIdOfEachProc = new int[bNetworkTopology.ProcessorCount];
-      bNetworkTopology.ProcCountOnEachMachine = new int[bNetworkTopology.ProcessorCount];
-
-      for (i = 0; i < bNetworkTopology.ProcessorCount; i++)
-      {
-        bNetworkTopology.ProcCountOnEachMachine[i] = 0;
-      }
-      for (i = 0; i < bNetworkTopology.ProcessorCount; i++)
-      {
-        if (depth[i] != 4)
-        continue;
-
-        bNetworkTopology.Depths = max(bNetworkTopology.Depths, depth[i]);
-
-        for (j = 0, is_found = 0; j < bNetworkTopology.MachineCount && is_found == 0; j++)
-        {
-          if (color[i][3] == bNetworkTopology.MachineIdOfEachProc[j])
-          {
-            is_found = 1;
-            ++bNetworkTopology.ProcCountOnEachMachine[bNetworkTopology.MachineIdOfEachProc[j]];
-          }
-        }
-        if (is_found == 1)
-        continue;
-
-        bNetworkTopology.MachineIdOfEachProc[bNetworkTopology.MachineCount] = color[i][3];
-        ++bNetworkTopology.ProcCountOnEachMachine[bNetworkTopology.MachineCount];
-        ++bNetworkTopology.MachineCount;
-      }
-      bNetworkTopology.MachineCount = max(1, bNetworkTopology.MachineCount);
-
-      if (bNetworkTopology.MachineCount == 1)
-      {
-        for (i = 0; i < bNetworkTopology.ProcessorCount; i++)
-        {
-          bNetworkTopology.MachineIdOfEachProc[i] = 0;
-        }
-        bNetworkTopology.ProcCountOnEachMachine[0] = bNetworkTopology.ProcessorCount;
-      }
-      else
-      {
-        for (i = 0; i < bNetworkTopology.ProcessorCount; i++)
-        {
-          sum = 0;
-          machine_id = 0;
-
-          is_found = 0;
-
-          while (!is_found)
-          {
-            if (sum + bNetworkTopology.ProcCountOnEachMachine[machine_id] > i)
-            {
-              is_found = 1;
-              continue;
-            }
-            sum += bNetworkTopology.ProcCountOnEachMachine[machine_id];
-            ++machine_id;
-          }
-          bNetworkTopology.MachineIdOfEachProc[i] = machine_id;
-        }
-      }
-      return 1;
+      // This exists to prevent instantiation.
     }
 
-#else
-
-    /*!
-     If one has more than one machine. The topology discovery mechanism is implemented in this function
-     */
-    void TopologyManager::FindTopology(NetworkTopology &bNetworkTopology,
-                                       bool & oWasSuccessful)
-    {
-      // the machine is assumed to be only one if this function is
-      // used instead of the previous one
-
-      bNetworkTopology.Depths = 1;
-      bNetworkTopology.MachineCount = 1;
-
-      bNetworkTopology.MachineIdOfEachProc
-          = new int[bNetworkTopology.ProcessorCount];
-      bNetworkTopology.ProcCountOnEachMachine
-          = new int[bNetworkTopology.MachineCount];
-
-      for (int i = 0; i < bNetworkTopology.ProcessorCount; i++)
-      {
-        bNetworkTopology.MachineIdOfEachProc[i] = 0;
-      }
-      bNetworkTopology.ProcCountOnEachMachine[0]
-          = bNetworkTopology.ProcessorCount;
-
-      oWasSuccessful = true;
-    }
-#endif
-
-    void TopologyManager::AssignFluidSitesToProcessors(int & proc_count,
-                                                       int & fluid_sites_per_unit,
-                                                       int & unvisited_fluid_sites,
-                                                       const int iCurrentProcId,
-                                                       const int unitLevel,
-                                                       lb::LocalLatticeData * iLocalLatDat,
-                                                       lb::GlobalLatticeData &iGlobLatDat,
-                                                       NetworkTopology * bNetTopology)
+    void BaseTopologyManager::AssignFluidSitesToProcessors(int & proc_count,
+                                                           int & fluid_sites_per_unit,
+                                                           int & unvisited_fluid_sites,
+                                                           const int iCurrentProcId,
+                                                           const int unitLevel,
+                                                           lb::LocalLatticeData * iLocalLatDat,
+                                                           lb::GlobalLatticeData &iGlobLatDat,
+                                                           NetworkTopology * bNetTopology)
     {
 
       int sites_buffer_size = 10000;
@@ -360,4 +236,3 @@ namespace hemelb
     }
   }
 }
-
