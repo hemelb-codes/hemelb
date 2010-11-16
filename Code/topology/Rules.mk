@@ -1,6 +1,12 @@
 include $(MK)/header.mk
 
-SRCS := TopologyManager.cc \
+SRCS := BaseTopologyManager.cc
+
+ifdef HEMELB_CFG_MULTIMACHINE
+  SRCS += MultiMachineTopologyManager.cc
+else
+  SRCS += SingleMachineTopologyManager.cc
+endif
 
 TARGETS := libHemeLbTopology.$(LIBEXT)
 
