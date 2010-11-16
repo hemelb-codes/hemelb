@@ -1,8 +1,6 @@
 #ifndef HEMELB_VIS_CONTROL_H
 #define HEMELB_VIS_CONTROL_H
 
-#include "net.h"
-
 #include "lb/GlobalLatticeData.h"
 #include "lb/LocalLatticeData.h"
 #include "lb/LbmParameters.h"
@@ -50,9 +48,10 @@ namespace hemelb
             Control(lb::StressTypes iStressType,
                     lb::GlobalLatticeData &iGlobLatDat);
         ~Control();
-        void initLayers(lb::GlobalLatticeData &iGlobLatDat,
+        void initLayers(topology::NetworkTopology * iNetworkTopology,
+                        lb::GlobalLatticeData &iGlobLatDat,
                         lb::LocalLatticeData &iLocalLatDat,
-                        Net* net);
+                        bool & oSuccess);
 
         void project(float p1[], float p2[]);
         void writePixel(ColPixel *col_pixel);
@@ -98,19 +97,19 @@ namespace hemelb
         void streaklines(int time_step,
                          int period,
                          lb::GlobalLatticeData &iGlobLatDat,
-                         lb::LocalLatticeData &iLocalLatDat,
-                         Net *net);
+                         lb::LocalLatticeData &iLocalLatDat);
         void restart();
 
         void updateImageSize(int pixels_x, int pixels_y);
         void render(int recv_buffer_id,
                     lb::GlobalLatticeData &iGlobLatDat,
-                    Net *net);
+                    const topology::NetworkTopology * iNetTopology);
         void writeImage(int recv_buffer_id,
                         std::string image_file_name,
                         void(*ColourPalette)(float value, float col[]));
         void setMouseParams(double iPhysicalPressure, double iPhysicalStress);
-        void compositeImage(int recv_buffer_id, Net *net);
+        void compositeImage(int recv_buffer_id,
+                            const topology::NetworkTopology * iNetTopology);
 
         void RegisterSite(int i, float density, float velocity, float stress);
 

@@ -1,19 +1,24 @@
 #ifndef HEMELB_VIS_STREAKLINEDRAWER_H
 #define HEMELB_VIS_STREAKLINEDRAWER_H
 
+//TODO REMOVE! Moved here from the constants file to try to limit scope.
+#define NEIGHBOUR_PROCS_MAX 64
+
 #include <vector>
 
 #include "constants.h"
 #include "mpiInclude.h"
-#include "net.h"
 
 #include "lb/GlobalLatticeData.h"
 #include "lb/LocalLatticeData.h"
+#include "topology/NetworkTopology.h"
 
 namespace hemelb
 {
   namespace vis
   {
+    //TODO Some of this classes members could be combined with the topology-aware classes
+    // (and obv be initialised when they are).
 
     // Class that controls the drawing of streaklines - lines that trace
     // the path of an imaginary particle were it dropped into the fluid.
@@ -21,9 +26,10 @@ namespace hemelb
     {
       public:
         // Constructor and destructor.
-        StreaklineDrawer(Net* net,
+        StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
                          lb::LocalLatticeData &iLocalLatDat,
-                         lb::GlobalLatticeData &iGlobLatDat);
+                         lb::GlobalLatticeData &iGlobLatDat,
+                         bool & oSuccess);
         ~StreaklineDrawer();
 
         // Method to reset streakline drawer
@@ -33,8 +39,7 @@ namespace hemelb
         void StreakLines(int time_steps,
                          int time_steps_per_cycle,
                          lb::GlobalLatticeData &iGlobLatDat,
-                         lb::LocalLatticeData &iLocalLatDat,
-                         Net *net);
+                         lb::LocalLatticeData &iLocalLatDat);
         void render(lb::GlobalLatticeData &iGlobLatDat);
 
       private:
@@ -134,20 +139,20 @@ namespace hemelb
                            float v[2][2][2][3],
                            int *is_interior,
                            lb::GlobalLatticeData &iGlobLatDat,
-                           lb::LocalLatticeData &iLocalLatDat,
-                           Net *net);
+                           lb::LocalLatticeData &iLocalLatDat);
 
         // Private functions for updating the velocity field and the particles in it.
         void updateVelField(int stage_id,
                             lb::GlobalLatticeData &iGlobLatDat,
-                            lb::LocalLatticeData &iLocalLatDat,
-                            Net *net);
+                            lb::LocalLatticeData &iLocalLatDat);
         void updateParticles();
 
         // Private functions for inter-proc communication.
         void communicateSiteIds();
         void communicateVelocities(lb::GlobalLatticeData &iGlobLatDat);
-        void communicateParticles(lb::GlobalLatticeData &iGlobLatDat, Net *net);
+        void communicateParticles(lb::GlobalLatticeData &iGlobLatDat);
+
+        const topology::NetworkTopology * mNetworkTopology;
 
     };
 

@@ -4,7 +4,6 @@
 #define COLOURED_PIXELS_MAX    2048 * 2048
 
 #define COLLISION_TYPES                6
-#define NEIGHBOUR_PROCS_MAX            64
 #define PI           3.14159265358979323846264338327950288
 #define DEG_TO_RAD   (PI / 180.0)
 #define EPSILON      1.0e-30

@@ -15,7 +15,7 @@ class D3Q15
     // The index of the inverse direction of each discrete velocity vector
     static const int INVERSEDIRECTIONS[NUMVECTORS];
 
-    // Functions to calculate the density and velocity from an array of fs and to calculate the
+    // Functions to calculate the density and velocity from an array of SharedFCount and to calculate the
     // equilibrium f array from density and velocity.
     static void CalculateDensityAndVelocity(const double f[],
                                             double &density,

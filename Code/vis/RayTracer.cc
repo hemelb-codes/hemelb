@@ -428,7 +428,7 @@ namespace hemelb
       }
     }
 
-    void RayTracer::rtBuildClusters(Net *net)
+    void RayTracer::rtBuildClusters()
     {
       const int n_x[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, +0, +0, +0, +0,
                           +0, +0, +0, +0, +1, +1, +1, +1, +1, +1, +1, +1, +1 };
@@ -476,8 +476,8 @@ namespace hemelb
           {
             n++;
 
-            DataBlock *proc_block_p = &net->map_block[n];
-            if (proc_block_p->ProcessorRankForEachBlockSite == NULL)
+            lb::BlockData * lBlock = &mGlobLatDat->Blocks[n];
+            if (lBlock->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
             }
@@ -500,8 +500,8 @@ namespace hemelb
 
             for (int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
             {
-              if (net->IsCurrentProcRank(
-                                         proc_block_p->ProcessorRankForEachBlockSite[m]))
+              if (mNetworkTopology->LocalRank
+                  == lBlock->ProcessorRankForEachBlockSite[m])
               {
                 BlockLocation& tempBlockLoc = block_location_a->at(0);
                 tempBlockLoc.i = i;
@@ -557,7 +557,7 @@ namespace hemelb
                       * mGlobLatDat->BlocksZ + neigh_k;
 
                   if (is_block_visited[block_id]
-                      || (proc_block_p = &net->map_block[block_id])->ProcessorRankForEachBlockSite
+                      || (lBlock = &mGlobLatDat->Blocks[block_id])->ProcessorRankForEachBlockSite
                           == NULL)
                   {
                     continue;
@@ -566,8 +566,8 @@ namespace hemelb
                   bool is_site_found = false;
                   for (int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
                   {
-                    if (net->IsCurrentProcRank(
-                                               proc_block_p->ProcessorRankForEachBlockSite[m]))
+                    if (mNetworkTopology->LocalRank
+                        == lBlock->ProcessorRankForEachBlockSite[m])
                     {
                       is_site_found = true;
                       break;
@@ -652,7 +652,7 @@ namespace hemelb
       vis::controller->ctr_z = 0.5F * mGlobLatDat->BlockSize * (block_min_z
           + block_max_z);
 
-      cluster_voxel = new float *[net->my_sites * VIS_FIELDS];
+      cluster_voxel = new float *[mLocalLatDat->LocalFluidSites * VIS_FIELDS];
 
       cluster_flow_field = new float **[mClusters.size()];
 
@@ -699,7 +699,7 @@ namespace hemelb
                 continue;
               }
 
-              DataBlock *map_block_p = &net->map_block[block_id];
+              lb::BlockData * lBlock = &mGlobLatDat->Blocks[block_id];
 
               cluster_flow_field[lThisClusterId][n]
                   = new float[mGlobLatDat->SitesPerBlockVolumeUnit * VIS_FIELDS];
@@ -712,7 +712,7 @@ namespace hemelb
                   for (ii[2] = 0; ii[2] < mGlobLatDat->BlockSize; ii[2]++)
                   {
                     unsigned int my_site_id;
-                    my_site_id = map_block_p->site_data[++m];
+                    my_site_id = lBlock->site_data[++m];
 
                     if (my_site_id & (1U << 31U))
                     {
@@ -767,8 +767,12 @@ namespace hemelb
       delete[] cluster_id;
     }
 
-    RayTracer::RayTracer(Net *net, lb::GlobalLatticeData* iGlobLatDat)
+    RayTracer::RayTracer(const topology::NetworkTopology * iNetworkTopology,
+                         const lb::LocalLatticeData* iLocalLatDat,
+                         const lb::GlobalLatticeData* iGlobLatDat)
     {
+      mNetworkTopology = iNetworkTopology;
+      mLocalLatDat = iLocalLatDat;
       mGlobLatDat = iGlobLatDat;
 
       // Init globals
@@ -780,7 +784,7 @@ namespace hemelb
 
       mBlockSizeInverse = 1.F / mBlockSizeFloat;
 
-      rtBuildClusters(net);
+      rtBuildClusters();
     }
 
     void RayTracer::Render(const lb::StressTypes iLbmStressType)

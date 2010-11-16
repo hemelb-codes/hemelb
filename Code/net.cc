@@ -11,239 +11,6 @@
 #include <cmath>
 #include <cstdio>
 
-/*!
- Low level function that finds the pointer to the rank on which a
- particular site resides.  ProcessorRankForEachBlockSite is the only member of mProcessorsForEachBlock
- (member of Net) for the site at global coordinate (site_i, site_j,
- site_k).  If the site is in an empty block, return NULL.
- */
-int * Net::GetProcIdFromGlobalCoords(int iSiteI,
-                                     int iSiteJ,
-                                     int iSiteK,
-                                     hemelb::lb::GlobalLatticeData &iGlobLatDat)
-{
-  // If the given site location is outside the bounding box return a NULL
-  // pointer.
-  if (iSiteI < 0 || iSiteI >= iGlobLatDat.SitesX || iSiteJ < 0 || iSiteJ
-      >= iGlobLatDat.SitesY || iSiteK < 0 || iSiteK >= iGlobLatDat.SitesZ)
-  {
-    return NULL;
-  }
-
-  // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-  int i = iSiteI >> iGlobLatDat.Log2BlockSize;
-  int j = iSiteJ >> iGlobLatDat.Log2BlockSize;
-  int k = iSiteK >> iGlobLatDat.Log2BlockSize;
-
-  // Get the block from the block identifiers.
-  DataBlock *proc_block_p = &map_block[ (i * iGlobLatDat.BlocksY + j)
-      * iGlobLatDat.BlocksZ + k]; // Pointer to the block
-
-  // If an empty (solid) block is addressed, return a NULL pointer.
-  if (proc_block_p->ProcessorRankForEachBlockSite == NULL)
-  {
-    return NULL;
-  }
-  else
-  {
-    // Find site coordinates within the block
-    int ii = iSiteI - (i << iGlobLatDat.Log2BlockSize);
-    int jj = iSiteJ - (j << iGlobLatDat.Log2BlockSize);
-    int kk = iSiteK - (k << iGlobLatDat.Log2BlockSize);
-
-    // Return pointer to ProcessorRankForEachBlockSite[site] (the only member of
-    // mProcessorsForEachBlock)
-    return &proc_block_p->ProcessorRankForEachBlockSite[ ( ( (ii
-        << iGlobLatDat.Log2BlockSize) + jj) << iGlobLatDat.Log2BlockSize) + kk];
-  }
-}
-
-/*!
- Low level function that finds a pointer to site_data (the only
- member of map_block (member of net)) for the site eith global
- coordinate (site_i, site_j, site_k).  If the site is in an empty
- block, return NULL.
- */
-unsigned int *Net::netSiteMapPointer(int site_i,
-                                     int site_j,
-                                     int site_k,
-                                     hemelb::lb::GlobalLatticeData &iGlobLatDat)
-{
-  int i, j, k; // Coordinates of a block
-  int ii, jj, kk; // Coordinates of a site within the block
-  DataBlock *map_block_p; // Pointer to the block
-
-  if (site_i < 0 || site_i >= iGlobLatDat.SitesX || site_j < 0 || site_j
-      >= iGlobLatDat.SitesY || site_k < 0 || site_k >= iGlobLatDat.SitesZ) // If site is out of the bounding box.
-    return NULL;
-
-  // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-  i = site_i >> iGlobLatDat.Log2BlockSize;
-  j = site_j >> iGlobLatDat.Log2BlockSize;
-  k = site_k >> iGlobLatDat.Log2BlockSize;
-
-  map_block_p = &map_block[ (i * iGlobLatDat.BlocksY + j) * iGlobLatDat.BlocksZ
-      + k];
-
-  if (map_block_p->site_data == NULL) // if an empty (solid) block is addressed
-    return NULL;
-  else
-  {
-    // Find site coordinates within the block
-    ii = site_i - (i << iGlobLatDat.Log2BlockSize);
-    jj = site_j - (j << iGlobLatDat.Log2BlockSize);
-    kk = site_k - (k << iGlobLatDat.Log2BlockSize);
-
-    // Return pointer to site_data[site]
-    return &map_block_p->site_data[ ( ( (ii << iGlobLatDat.Log2BlockSize) + jj)
-        << iGlobLatDat.Log2BlockSize) + kk];
-  }
-}
-
-bool Net::IsCurrentProcRank(int iRank)
-{
-  return (mRank == iRank);
-}
-
-bool Net::IsCurrentProcTheIOProc()
-{
-  return mRank == 0;
-}
-
-char *Net::GetCurrentProcIdentifier()
-{
-  // Note that this has enough space for an integer of 9 digits, so we're good up to a billion
-  // processors.
-  char* lRet = new char[15];
-  sprintf(lRet, "rank %i", mRank);
-  return lRet;
-}
-
-//#undef MPICHX_TOPOLOGY_DEPTHS
-#ifdef MPICHX_TOPOLOGY_DEPTHS
-
-/*!
- If one has more than one machine. The topology discovery mechanism is implemented in this function
- */
-int Net::netFindTopology ()
-{
-
-  int *depth, **color;
-  int machine_id, flag, is_found;
-  int i, j, sum;
-
-  depths = 0;
-
-  err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag);
-
-  if (err != MPI_SUCCESS || flag == 0)
-  {
-    return 0;
-  }
-
-  err = MPI_Attr_get (MPI_COMM_WORLD, MPICHX_TOPOLOGY_COLORS, &color, &flag);
-
-  if (err != MPI_SUCCESS || flag == 0)
-  {
-    return 0;
-  }
-
-  mMachineCount = 0;
-
-  machine_id = new int [mProcessorCount];
-  procs_per_machine = new int [mProcessorCount];
-
-  for (i = 0; i < mProcessorCount; i++)
-  {
-    procs_per_machine[ i ] = 0;
-  }
-  for (i = 0; i < mProcessorCount; i++)
-  {
-    if (depth[ i ] != 4) continue;
-
-    depths = max(depths, depth[ i ]);
-
-    for (j = 0, is_found = 0; j < mMachineCount && is_found == 0; j++)
-    {
-      if (color[ i ][ 3 ] == machine_id[ j ])
-      {
-        is_found = 1;
-        ++procs_per_machine[ machine_id[j] ];
-      }
-    }
-    if (is_found == 1) continue;
-
-    machine_id[ mMachineCount ] = color[ i ][ 3 ];
-    ++procs_per_machine[ mMachineCount ];
-    ++mMachineCount;
-  }
-  mMachineCount = max(1, mMachineCount);
-
-  if (mMachineCount == 1)
-  {
-    for (i = 0; i < mProcessorCount; i++)
-    {
-      machine_id[ i ] = 0;
-    }
-    procs_per_machine[ 0 ] = mProcessorCount;
-  }
-  else
-  {
-    for (i = 0; i < mProcessorCount; i++)
-    {
-      sum = 0;
-      machine_id = 0;
-
-      is_found = 0;
-
-      while (!is_found)
-      {
-        if (sum + procs_per_machine[ machine_id ] > i)
-        {
-          is_found = 1;
-          continue;
-        }
-        sum += procs_per_machine[ machine_id ];
-        ++machine_id;
-      }
-      machine_id[ i ] = machine_id;
-    }
-  }
-  return 1;
-}
-
-#else
-
-/*!
- If one has more than one machine. The topology discovery mechanism is implemented in this function
- */
-int Net::netFindTopology()
-{
-  // the machine is assumed to be only one if this function is
-  // used instead of the previous one
-
-  depths = 1;
-
-  mMachineCount = 1;
-
-  machine_id = new int[mProcessorCount];
-  procs_per_machine = new int[mMachineCount];
-
-  for (int i = 0; i < mProcessorCount; i++)
-  {
-    machine_id[i] = 0;
-  }
-  procs_per_machine[0] = mProcessorCount;
-
-  return 1;
-}
-#endif
-
-int Net::GetDepths()
-{
-  return depths;
-}
-
 // Returns the type of collision/streaming update for the fluid site
 // with data "site_data".
 unsigned int Net::GetCollisionType(unsigned int site_data)
@@ -293,224 +60,6 @@ void Net::Abort()
 #endif
 }
 
-void Net::AssignFluidSitesToProcessors(int & proc_count,
-                                       int & fluid_sites_per_unit,
-                                       int & unvisited_fluid_sites,
-                                       const int iCurrentProcId,
-                                       const int unitLevel,
-                                       hemelb::lb::GlobalLatticeData &iGlobLatDat)
-{
-
-  int sites_buffer_size = 10000;
-  SiteLocation *site_location_a = new SiteLocation[sites_buffer_size];
-  SiteLocation *site_location_b = new SiteLocation[sites_buffer_size];
-
-  int lBlockNumber = -1;
-
-  // Domain Decomposition.  Pick a site. Set it to the rank we are
-  // looking at. Find its neighbours and put those on the same
-  // rank, then find the next-nearest neighbours, etc. until we
-  // have a completely joined region, or there are enough fluid
-  // sites on the rank.  In the former case, start again at
-  // another site. In the latter case, move on to the next rank.
-  // Do this until all sites are assigned to a rank. There is a
-  // high chance of of all sites on a rank being joined.
-
-  // Iterate over all blocks.
-  for (int lBlockCoordI = 0; lBlockCoordI < iGlobLatDat.BlocksX; lBlockCoordI++)
-  {
-    for (int lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat.BlocksY; lBlockCoordJ++)
-    {
-      for (int lBlockCoordK = 0; lBlockCoordK < iGlobLatDat.BlocksZ; lBlockCoordK++)
-      {
-        // Block number is the number of the block we're currently on.
-        lBlockNumber++;
-
-        // Point to a block of ProcessorRankForEachBlockSite.  If we are in a block of solids, move on.
-        int *lProcRankForSite =
-            map_block[lBlockNumber].ProcessorRankForEachBlockSite;
-
-        // If the array of proc rank for each site is NULL, we're on an all-solid block.
-        if (lProcRankForSite == NULL)
-        {
-          continue;
-        }
-
-        // Create variables for the index of this site on the block and the number of fluid sites
-        // that have been assigned to the current processor.
-        int lSiteNumber = -1;
-        int lFluidSitesOnCurrentProcessor = 0;
-
-        // For each dimension of the site co-ordinates, iterate over all values of the site
-        // co-ordinates on the current block.
-        for (int lSiteCoordI = lBlockCoordI * iGlobLatDat.BlockSize; lSiteCoordI
-            < lBlockCoordI * iGlobLatDat.BlockSize + iGlobLatDat.BlockSize; lSiteCoordI++)
-        {
-          for (int lSiteCoordJ = lBlockCoordJ * iGlobLatDat.BlockSize; lSiteCoordJ
-              < lBlockCoordJ * iGlobLatDat.BlockSize + iGlobLatDat.BlockSize; lSiteCoordJ++)
-          {
-            for (int lSiteCoordK = lBlockCoordK * iGlobLatDat.BlockSize; lSiteCoordK
-                < lBlockCoordK * iGlobLatDat.BlockSize + iGlobLatDat.BlockSize; lSiteCoordK++)
-            {
-              // Keep track of the site number.
-              lSiteNumber++;
-
-              //TODO comments from here.
-              // Move on if the site is solid (ProcessorRankForEachBlockSite = 1 << 30) or has
-              // already been assigned to a rank (0 <= ProcessorRankForEachBlockSite < 1 << 30).
-              if (lProcRankForSite[lSiteNumber] != iCurrentProcId)
-              {
-                continue;
-              }
-              // We have found an unvisited fluid site to start growing the subdomain from.
-              // Assign it to the rank and update the fluid site counters.
-              lProcRankForSite[lSiteNumber] = proc_count;
-
-              if (IsCurrentProcRank(proc_count))
-              {
-                ++my_sites;
-              }
-              ++lFluidSitesOnCurrentProcessor;
-
-              if (unitLevel == 0)
-              {
-                ++mFluidSitesOnEachProcessor[proc_count];
-              }
-
-              // Sites on the edge of the mClusters at the start of the current graph growing partitioning step.
-              int sites_a = 1;
-
-              // Record the location of this initial site.
-              SiteLocation *site_location_a_p = &site_location_a[0];
-              site_location_a_p->i = lSiteCoordI;
-              site_location_a_p->j = lSiteCoordJ;
-              site_location_a_p->k = lSiteCoordK;
-
-              // The subdomain can grow.
-              bool lAreFluidSitesIncrementing = true;
-
-              // While the region can grow (i.e. it is not bounded by solids or visited
-              // sites), and we need more sites on this particular rank.
-              while (lFluidSitesOnCurrentProcessor < fluid_sites_per_unit
-                  && lAreFluidSitesIncrementing)
-              {
-                // Sites added to the edge of the mClusters during the iteration.
-                int sites_b = 0;
-                lAreFluidSitesIncrementing = false;
-
-                // For sites on the edge of the domain (sites_a), deal with the neighbours.
-                for (int index_a = 0; index_a < sites_a
-                    && lFluidSitesOnCurrentProcessor < fluid_sites_per_unit; index_a++)
-                {
-                  site_location_a_p = &site_location_a[index_a];
-
-                  for (unsigned int l = 1; l < D3Q15::NUMVECTORS
-                      && lFluidSitesOnCurrentProcessor < fluid_sites_per_unit; l++)
-                  {
-                    // Record neighbour location.
-                    int neigh_i = site_location_a_p->i + D3Q15::CX[l];
-                    int neigh_j = site_location_a_p->j + D3Q15::CY[l];
-                    int neigh_k = site_location_a_p->k + D3Q15::CZ[l];
-
-                    // Move on if neighbour is outside the bounding box.
-                    if (neigh_i == -1 || neigh_i == iGlobLatDat.SitesX)
-                      continue;
-                    if (neigh_j == -1 || neigh_j == iGlobLatDat.SitesY)
-                      continue;
-                    if (neigh_k == -1 || neigh_k == iGlobLatDat.SitesZ)
-                      continue;
-
-                    // Move on if the neighbour is in a block of solids (in which case
-                    // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid or has already
-                    // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
-                    // was initialized in lbmReadConfig in io.cc.
-
-                    // Pointer to the rank on which a particular fluid site
-                    // resides.
-                    int * proc_id_p = GetProcIdFromGlobalCoords(neigh_i,
-                                                                neigh_j,
-                                                                neigh_k,
-                                                                iGlobLatDat);
-
-                    if (proc_id_p == NULL || *proc_id_p != iCurrentProcId)
-                    {
-                      continue;
-                    }
-                    // Set the rank for a neighbour and update the fluid site counters.
-                    *proc_id_p = proc_count;
-                    lFluidSitesOnCurrentProcessor++;
-
-                    if (unitLevel == 0)
-                    {
-                      mFluidSitesOnEachProcessor[proc_count]++;
-                    }
-
-                    if (IsCurrentProcRank(proc_count))
-                    {
-                      ++my_sites;
-                    }
-
-                    // Neighbour was found, so the region can grow.
-                    lAreFluidSitesIncrementing = true;
-
-                    // If the new layer of neighbours is too large, allocate more
-                    // memory.
-                    if (sites_b == sites_buffer_size)
-                    {
-                      sites_buffer_size *= 2;
-                      site_location_a
-                          = (SiteLocation *) realloc(site_location_a,
-                                                     sizeof(SiteLocation)
-                                                         * sites_buffer_size);
-                      site_location_b
-                          = (SiteLocation *) realloc(site_location_b,
-                                                     sizeof(SiteLocation)
-                                                         * sites_buffer_size);
-                    }
-
-                    // Record the location of the neighbour.
-                    SiteLocation * site_location_b_p =
-                        &site_location_b[sites_b];
-                    site_location_b_p->i = neigh_i;
-                    site_location_b_p->j = neigh_j;
-                    site_location_b_p->k = neigh_k;
-                    ++sites_b;
-                  }
-                }
-                // When the new layer of edge sites has been found, swap the buffers for
-                // the current and new layers of edge sites.
-                site_location_a_p = site_location_a;
-                site_location_a = site_location_b;
-                site_location_b = site_location_a_p;
-                sites_a = sites_b;
-              }
-
-              // If we have enough sites, we have finished.
-              if (lFluidSitesOnCurrentProcessor >= fluid_sites_per_unit)
-              {
-                ++proc_count;
-                if (unitLevel == 0)
-                {
-                  unvisited_fluid_sites -= lFluidSitesOnCurrentProcessor;
-                  fluid_sites_per_unit
-                      = (int) ceil((double) unvisited_fluid_sites
-                          / (double) (mProcessorCount - proc_count));
-                }
-                lFluidSitesOnCurrentProcessor = 0;
-              }
-              // If not, we have to start growing a different region for the same rank:
-              // region expansions could get trapped.
-            }
-          }
-        }
-      }
-    }
-  }
-
-  delete[] site_location_b;
-  delete[] site_location_a;
-}
-
 /*!
  This is called from the main function.  First function to deal with processors.
  The domain partitioning technique and the management of the
@@ -519,6 +68,8 @@ void Net::AssignFluidSitesToProcessors(int & proc_count,
  on a graph growing partitioning technique.
  */
 void Net::Initialise(int iTotalFluidSites,
+                     hemelb::topology::TopologyManager &iTopologyManager,
+                     hemelb::topology::NetworkTopology &iNetTop,
                      hemelb::lb::GlobalLatticeData &iGlobLatDat,
                      hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
@@ -527,8 +78,8 @@ void Net::Initialise(int iTotalFluidSites,
   // Allocations.  fluid sites will store actual number of fluid
   // sites per proc.  Site location will store up to 10000 of some
   // sort of coordinate.
-  mFluidSitesOnEachProcessor = new int[mProcessorCount];
-  my_sites = 0;
+  iNetTop.FluidSitesOnEachProcessor = new int[iNetTop.ProcessorCount];
+  bLocalLatDat.LocalFluidSites = 0;
 
   // a fast graph growing partitioning technique which spans the data
   // set only once is implemented here; the data set is explored by
@@ -540,26 +91,26 @@ void Net::Initialise(int iTotalFluidSites,
   int fluid_sites_per_unit; // Fluid sites per rank.
 
 #ifndef NO_STEER 
-  if (mProcessorCount == 1)
+  if (iNetTop.ProcessorCount == 1)
   {
     fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-        / (double) mProcessorCount);
+        / (double) iNetTop.ProcessorCount);
     proc_count = 0;
   }
   else
   {
     fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-        / (double) (mProcessorCount - 1));
+        / (double) (iNetTop.ProcessorCount - 1));
     proc_count = 1;
   }
 #else
-  fluid_sites_per_unit = (int)ceil((double)iTotalFluidSites / (double)mProcessorCount);
+  fluid_sites_per_unit = (int)ceil((double)iTotalFluidSites / (double)iNetTop.ProcessorCount);
   proc_count = 0;
 #endif
 
-  for (int n = 0; n < mProcessorCount; n++)
+  for (int n = 0; n < iNetTop.ProcessorCount; n++)
   {
-    mFluidSitesOnEachProcessor[n] = 0;
+    iNetTop.FluidSitesOnEachProcessor[n] = 0;
   }
 
   // Count of fluid sites not yet visited.
@@ -568,31 +119,44 @@ void Net::Initialise(int iTotalFluidSites,
   // Count of time elapsed.
   double seconds = hemelb::util::myClock();
 
-  if (mMachineCount == 1 || mMachineCount == mProcessorCount) // If one machine or one machine per proc.
+  // If one machine or one machine per proc.
+  if (iNetTop.MachineCount == 1 || iNetTop.MachineCount
+      == iNetTop.ProcessorCount)
   {
-    AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
-                                 lUnvisitedFluidSiteCount, -1, 0, iGlobLatDat);
+    iTopologyManager.AssignFluidSitesToProcessors(proc_count,
+                                                  fluid_sites_per_unit,
+                                                  lUnvisitedFluidSiteCount, -1,
+                                                  0, &bLocalLatDat,
+                                                  iGlobLatDat, &iNetTop);
   }
   else
   {
     // TODO Haven't worked out exactly why this is necessary.
-    proc_count = mProcessorCount;
-    double weight = (double) (procs_per_machine[proc_count - mProcessorCount]
-        * mProcessorCount) / (double) (mProcessorCount - 1);
+    proc_count = iNetTop.ProcessorCount;
+    double weight = (double) (iNetTop.ProcCountOnEachMachine[proc_count
+        - iNetTop.ProcessorCount] * iNetTop.ProcessorCount)
+        / (double) (iNetTop.ProcessorCount - 1);
     fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites * weight
-        / mMachineCount);
-    AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
-                                 lUnvisitedFluidSiteCount, -1, 1, iGlobLatDat);
+        / iNetTop.MachineCount);
+    iTopologyManager.AssignFluidSitesToProcessors(proc_count,
+                                                  fluid_sites_per_unit,
+                                                  lUnvisitedFluidSiteCount, -1,
+                                                  1, &bLocalLatDat,
+                                                  iGlobLatDat, &iNetTop);
 
     // TODO and... this is the second half. Not exactly sure what either bit does.
     fluid_sites_per_unit = (int) ceil((double) lUnvisitedFluidSiteCount
-        / (double) (mProcessorCount - 1));
+        / (double) (iNetTop.ProcessorCount - 1));
     proc_count = 1;
-    for (int lMachineNumber = 0; lMachineNumber < mMachineCount; lMachineNumber++)
+    for (int lMachineNumber = 0; lMachineNumber < iNetTop.MachineCount; lMachineNumber++)
     {
-      AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
-                                   lUnvisitedFluidSiteCount, mProcessorCount
-                                       + lMachineNumber, 0, iGlobLatDat);
+      iTopologyManager.AssignFluidSitesToProcessors(proc_count,
+                                                    fluid_sites_per_unit,
+                                                    lUnvisitedFluidSiteCount,
+                                                    iNetTop.ProcessorCount
+                                                        + lMachineNumber, 0,
+                                                    &bLocalLatDat, iGlobLatDat,
+                                                    &iNetTop);
     }
   }
 
@@ -604,7 +168,8 @@ void Net::Initialise(int iTotalFluidSites,
   // compact one is created here.
 
   // This rank's site data.
-  unsigned int *lThisRankSiteData = new unsigned int[my_sites];
+  unsigned int *lThisRankSiteData =
+      new unsigned int[bLocalLatDat.LocalFluidSites];
 
   // Array of booleans to store whether any sites on a block are fluid
   // sites residing on this rank.
@@ -619,7 +184,8 @@ void Net::Initialise(int iTotalFluidSites,
 
   for (int lBlockNumber = 0; lBlockNumber < iGlobLatDat.BlockCount; lBlockNumber++)
   {
-    DataBlock *lCurrentDataBlock = &map_block[lBlockNumber];
+    hemelb::lb::BlockData * lCurrentDataBlock =
+        &iGlobLatDat.Blocks[lBlockNumber];
 
     // If we are in a block of solids, move to the next block.
     if (lCurrentDataBlock->site_data == NULL)
@@ -628,15 +194,15 @@ void Net::Initialise(int iTotalFluidSites,
     }
 
     // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
-    DataBlock *proc_block_p = &map_block[lBlockNumber];
+    hemelb::lb::BlockData * proc_block_p = &iGlobLatDat.Blocks[lBlockNumber];
 
     // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
     // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
     for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock
         < iGlobLatDat.SitesPerBlockVolumeUnit; lSiteIndexWithinBlock++)
     {
-      if (IsCurrentProcRank(
-                            proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock]))
+      if (iNetTop.LocalRank
+          == proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock])
       {
         // If the current site is non-solid, copy the site data into the array for
         // this rank (in the whole-processor location), then set the site data
@@ -678,13 +244,13 @@ void Net::Initialise(int iTotalFluidSites,
       continue;
     }
 
-    delete[] map_block[n].site_data;
-    map_block[n].site_data = NULL;
+    delete[] iGlobLatDat.Blocks[n].site_data;
+    iGlobLatDat.Blocks[n].site_data = NULL;
 
-    if (map_block[n].wall_data != NULL)
+    if (iGlobLatDat.Blocks[n].wall_data != NULL)
     {
-      delete[] map_block[n].wall_data;
-      map_block[n].wall_data = NULL;
+      delete[] iGlobLatDat.Blocks[n].wall_data;
+      iGlobLatDat.Blocks[n].wall_data = NULL;
     }
   }
   delete[] lBlockIsOnThisRank;
@@ -695,12 +261,6 @@ void Net::Initialise(int iTotalFluidSites,
   // here.  neigh_proc is a static array that is declared in config.h.
 
   // Initialise various things to 0.
-  neigh_procs = 0;
-  for (int m = 0; m < NEIGHBOUR_PROCS_MAX; m++)
-  {
-    neigh_proc[m].fs = 0;
-  }
-
   my_inter_sites = 0;
   my_inner_sites = 0;
 
@@ -709,7 +269,8 @@ void Net::Initialise(int iTotalFluidSites,
     my_inter_collisions[m] = 0;
     my_inner_collisions[m] = 0;
   }
-  shared_fs = 0; // shared fs within Net struct.
+
+  iNetTop.TotalSharedFs = 0; // shared SharedFCount within Net struct.
 
   lSiteIndexOnProc = 0;
 
@@ -722,7 +283,7 @@ void Net::Initialise(int iTotalFluidSites,
     {
       for (int k = 0; k < iGlobLatDat.SitesZ; k += iGlobLatDat.BlockSize)
       {
-        DataBlock *map_block_p = &map_block[++n];
+        hemelb::lb::BlockData * map_block_p = &iGlobLatDat.Blocks[++n];
 
         if (map_block_p->site_data == NULL)
         {
@@ -740,8 +301,8 @@ void Net::Initialise(int iTotalFluidSites,
             {
               m++;
               // If the site is not on this processor, continue.
-              if (!IsCurrentProcRank(
-                                     map_block_p->ProcessorRankForEachBlockSite[m]))
+              if (iNetTop.LocalRank
+                  != map_block_p->ProcessorRankForEachBlockSite[m])
               {
                 continue;
               }
@@ -758,15 +319,15 @@ void Net::Initialise(int iTotalFluidSites,
                 int neigh_k = site_k + D3Q15::CZ[l];
 
                 // Find the processor Id for that neighbour.
-                int *proc_id_p =
-                    GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k,
-                                              iGlobLatDat);
+                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
+                                                                       neigh_j,
+                                                                       neigh_k);
 
                 // Move on if the neighbour is in a block of solids (in which case
                 // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
                 // 1 << 30) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
                 // in lbmReadConfig in io.cc.
-                if (proc_id_p == NULL || IsCurrentProcRank(*proc_id_p)
+                if (proc_id_p == NULL || iNetTop.LocalRank == (*proc_id_p)
                     || *proc_id_p == (1 << 30))
                 {
                   continue;
@@ -780,37 +341,33 @@ void Net::Initialise(int iTotalFluidSites,
 
                 // Iterate over neighbouring processors until we find the one with the
                 // neighbouring site on it.
-                for (mm = 0, flag = 1; mm < neigh_procs && flag; mm++)
+                int lNeighbouringProcs = iNetTop.NeighbouringProcs.size();
+                for (mm = 0, flag = 1; mm < lNeighbouringProcs && flag; mm++)
                 {
                   // Check whether the rank for a particular neighbour has already been
                   // used for this processor.  If it has, set flag to zero.
-                  NeighProc *neigh_proc_p = &neigh_proc[mm];
+                  hemelb::topology::NeighbouringProcessor * neigh_proc_p =
+                      iNetTop.NeighbouringProcs[mm];
 
                   // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
-                  if (*proc_id_p == neigh_proc_p->id)
+                  if (*proc_id_p == neigh_proc_p->Rank)
                   {
                     flag = 0;
-                    ++neigh_proc_p->fs;
-                    ++shared_fs;
+                    ++neigh_proc_p->SharedFCount;
+                    ++iNetTop.TotalSharedFs;
                   }
                 }
                 // If flag is 1, we didn't find a neighbour-proc with the neighbour-site on it
                 // so we need a new neighbouring processor.
                 if (flag)
                 {
-                  if (neigh_procs == NEIGHBOUR_PROCS_MAX)
-                  {
-                    printf(
-                           " too many intra machine, inter processor neighbours\n");
-                    printf(" the execution is terminated\n");
-                    Abort();
-                  }
                   // Store rank of neighbour in >neigh_proc[neigh_procs]
-                  NeighProc *neigh_proc_p = &neigh_proc[neigh_procs];
-                  neigh_proc_p->id = *proc_id_p;
-                  ++neigh_proc_p->fs;
-                  ++neigh_procs;
-                  ++shared_fs;
+                  hemelb::topology::NeighbouringProcessor * lNewNeighbour =
+                      new hemelb::topology::NeighbouringProcessor();
+                  lNewNeighbour->SharedFCount = 1;
+                  lNewNeighbour->Rank = *proc_id_p;
+                  iNetTop.NeighbouringProcs.push_back(lNewNeighbour);
+                  ++iNetTop.TotalSharedFs;
                 }
               }
 
@@ -909,7 +466,7 @@ void Net::Initialise(int iTotalFluidSites,
   // Iterate over blocks
   for (int n = 0; n < iGlobLatDat.BlockCount; n++)
   {
-    DataBlock *map_block_p = &map_block[n];
+    hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
 
     // If we are in a block of solids, continue.
     if (map_block_p->site_data == NULL)
@@ -962,42 +519,45 @@ void Net::Initialise(int iTotalFluidSites,
   // streamed between different partitions) are collected and the
   // buffers needed for the communications are set from here
 
-  short int *f_data = new short int[4 * shared_fs];
+  short int *f_data = new short int[4 * iNetTop.TotalSharedFs];
 
   // Allocate the index in which to put the distribution functions received from the other
   // process.
-  f_recv_iv = new int[shared_fs];
+  f_recv_iv = new int[iNetTop.TotalSharedFs];
 
   // Reset to zero again.
-  shared_fs = 0;
+  iNetTop.TotalSharedFs = 0;
 
   // Set the remaining neighbouring processor data.
-  for (int n = 0; n < neigh_procs; n++)
+  for (unsigned int n = 0; n < iNetTop.NeighbouringProcs.size(); n++)
   {
     // f_data compacted according to number of shared f_s on each process.
     // f_data will be set later.
-    neigh_proc[n].f_data = &f_data[shared_fs << 2];
+    iNetTop.NeighbouringProcs[n]->SharedFLocation
+        = &f_data[iNetTop.TotalSharedFs << 2];
 
     // Pointing to a few things, but not setting any variables.
-    // f_head points to start of shared_fs.
-    neigh_proc[n].f_head = my_sites * D3Q15::NUMVECTORS + 1 + shared_fs;
+    // FirstSharedF points to start of shared_fs.
+    iNetTop.NeighbouringProcs[n]->FirstSharedF = bLocalLatDat.LocalFluidSites
+        * D3Q15::NUMVECTORS + 1 + iNetTop.TotalSharedFs;
 
-    neigh_proc[n].f_recv_iv = &f_recv_iv[shared_fs];
+    iNetTop.NeighbouringProcs[n]->SharedFReceivingIndex
+        = &f_recv_iv[iNetTop.TotalSharedFs];
 
-    shared_fs += neigh_proc[n].fs;
-    neigh_proc[n].fs = 0;// This is set back to 0.
+    iNetTop.TotalSharedFs += iNetTop.NeighbouringProcs[n]->SharedFCount;
+    iNetTop.NeighbouringProcs[n]->SharedFCount = 0;// This is set back to 0.
   }
 
-  from_proc_id_to_neigh_proc_index = new short int[mProcessorCount];
+  iNetTop.NeighbourIndexFromProcRank = new short int[iNetTop.ProcessorCount];
 
-  for (int m = 0; m < mProcessorCount; m++)
+  for (int m = 0; m < iNetTop.ProcessorCount; m++)
   {
-    from_proc_id_to_neigh_proc_index[m] = -1;
+    iNetTop.NeighbourIndexFromProcRank[m] = -1;
   }
   // Get neigh_proc_index from ProcessorRankForEachBlockSite.
-  for (int m = 0; m < neigh_procs; m++)
+  for (unsigned int m = 0; m < iNetTop.NeighbouringProcs.size(); m++)
   {
-    from_proc_id_to_neigh_proc_index[neigh_proc[m].id] = m;
+    iNetTop.NeighbourIndexFromProcRank[iNetTop.NeighbouringProcs[m]->Rank] = m;
   }
 
   // Allocate f_old and f_new according to the number of sites on the process.  The extra site
@@ -1005,17 +565,21 @@ void Net::Initialise(int iTotalFluidSites,
   // an if condition at every timestep at every boundary site.  We also allocate space for the
   // shared distribution functions.  We need twice as much space when we check the convergence
   // and the extra distribution functions are
-  bLocalLatDat.FOld = new double[my_sites * D3Q15::NUMVECTORS + 1 + shared_fs];
-  bLocalLatDat.FNew = new double[my_sites * D3Q15::NUMVECTORS + 1 + shared_fs];
+  bLocalLatDat.FOld = new double[bLocalLatDat.LocalFluidSites
+      * D3Q15::NUMVECTORS + 1 + iNetTop.TotalSharedFs];
+  bLocalLatDat.FNew = new double[bLocalLatDat.LocalFluidSites
+      * D3Q15::NUMVECTORS + 1 + iNetTop.TotalSharedFs];
 
-  if (my_sites > 0)
+  if (bLocalLatDat.LocalFluidSites > 0)
   {
     // f_id is allocated so we know which sites to get information from.
-    bLocalLatDat.mFNeighbours = new int[my_sites * D3Q15::NUMVECTORS];
+    bLocalLatDat.mFNeighbours = new int[bLocalLatDat.LocalFluidSites
+        * D3Q15::NUMVECTORS];
 
-    bLocalLatDat.mSiteData = new unsigned int[my_sites];
-    bLocalLatDat.mWallNormalAtSite = new double[my_sites * 3];
-    bLocalLatDat.mDistanceToWall = new double[my_sites
+    bLocalLatDat.mSiteData = new unsigned int[bLocalLatDat.LocalFluidSites];
+    bLocalLatDat.mWallNormalAtSite = new double[bLocalLatDat.LocalFluidSites
+        * 3];
+    bLocalLatDat.mDistanceToWall = new double[bLocalLatDat.LocalFluidSites
         * (D3Q15::NUMVECTORS - 1)];
   }
 
@@ -1030,14 +594,14 @@ void Net::Initialise(int iTotalFluidSites,
     {
       for (int k = 0; k < iGlobLatDat.SitesZ; k += iGlobLatDat.BlockSize)
       {
-        DataBlock *map_block_p = &map_block[++n];
+        hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[++n];
 
         if (map_block_p->site_data == NULL)
         {
           continue;
         }
 
-        DataBlock *proc_block_p = &map_block[n];
+        hemelb::lb::BlockData *proc_block_p = &iGlobLatDat.Blocks[n];
 
         int m = -1;
 
@@ -1050,8 +614,8 @@ void Net::Initialise(int iTotalFluidSites,
             {
               // If a site is not on this process, continue.
               m++;
-              if (!IsCurrentProcRank(
-                                     proc_block_p->ProcessorRankForEachBlockSite[m]))
+              if (iNetTop.LocalRank
+                  != proc_block_p->ProcessorRankForEachBlockSite[m])
               {
                 continue;
               }
@@ -1071,21 +635,21 @@ void Net::Initialise(int iTotalFluidSites,
 
                 // initialize f_id to the rubbish site.
                 bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + l]
-                    = my_sites * D3Q15::NUMVECTORS;
+                    = bLocalLatDat.LocalFluidSites * D3Q15::NUMVECTORS;
 
                 // You know which process the neighbour is on.
-                int *proc_id_p =
-                    GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k,
-                                              iGlobLatDat);
+                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
+                                                                       neigh_j,
+                                                                       neigh_k);
 
                 if (proc_id_p == NULL || *proc_id_p == 1 << 30)
                 {
                   continue;
                 }
                 // Pointer to the neihgbour.
-                unsigned int *site_data_p = netSiteMapPointer(neigh_i, neigh_j,
-                                                              neigh_k,
-                                                              iGlobLatDat);
+                unsigned int *site_data_p = iGlobLatDat.GetSiteData(neigh_i,
+                                                                    neigh_j,
+                                                                    neigh_k);
 
                 // If on the same proc, set f_id of the
                 // current site and direction to the
@@ -1093,7 +657,7 @@ void Net::Initialise(int iTotalFluidSites,
                 // If we check convergence, the data for
                 // each site is split into that for the
                 // current and previous cycles.
-                if (IsCurrentProcRank(*proc_id_p))
+                if (iNetTop.LocalRank == *proc_id_p)
                 {
                   bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + l]
                       = *site_data_p * D3Q15::NUMVECTORS + l;
@@ -1101,10 +665,11 @@ void Net::Initialise(int iTotalFluidSites,
                   continue;
                 }
                 short int neigh_proc_index =
-                    from_proc_id_to_neigh_proc_index[*proc_id_p];
+                    iNetTop.NeighbourIndexFromProcRank[*proc_id_p];
 
                 // You have neigh proc again.
-                NeighProc *neigh_proc_p = &neigh_proc[neigh_proc_index];
+                hemelb::topology::NeighbouringProcessor * neigh_proc_p =
+                    iNetTop.NeighbouringProcs[neigh_proc_index];
 
                 // This stores some coordinates.  We
                 // still need to know the site number.
@@ -1114,29 +679,29 @@ void Net::Initialise(int iTotalFluidSites,
                 // its neighbours which say which sites
                 // on this process are shared with the
                 // neighbour.
-                short int *f_data_p = &neigh_proc_p->f_data[neigh_proc_p->fs
-                    << 2];
+                short int *f_data_p =
+                    &neigh_proc_p->SharedFLocation[neigh_proc_p->SharedFCount
+                        << 2];
                 f_data_p[0] = site_i;
                 f_data_p[1] = site_j;
                 f_data_p[2] = site_k;
                 f_data_p[3] = l;
-                ++neigh_proc_p->fs; // We recount this again.
+                ++neigh_proc_p->SharedFCount; // We recount this again.
               }
               // This is used in Calculate BC in IO.
               bLocalLatDat.mSiteData[site_map]
                   = lThisRankSiteData[lSiteIndexOnProc];
 
-              hemelb::debug::Debugger::Get()->BreakHere();
-
               if (GetCollisionType(bLocalLatDat.mSiteData[site_map]) & EDGE)
               {
                 for (unsigned int l = 0; l < 3; l++)
                   bLocalLatDat.mWallNormalAtSite[site_map * 3 + l]
-                      = map_block[n].wall_data[m].wall_nor[l];
+                      = iGlobLatDat.Blocks[n].wall_data[m].wall_nor[l];
 
                 for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
                   bLocalLatDat.mDistanceToWall[site_map * (D3Q15::NUMVECTORS
-                      - 1) + l] = map_block[n].wall_data[m].cut_dist[l];
+                      - 1) + l]
+                      = iGlobLatDat.Blocks[n].wall_data[m].cut_dist[l];
               }
               else
               {
@@ -1164,38 +729,41 @@ void Net::Initialise(int iTotalFluidSites,
 
   for (int m = 0; m < COMMS_LEVELS; m++)
   {
-    req[m] = new MPI_Request[2 * mProcessorCount];
+    req[m] = new MPI_Request[2 * iNetTop.ProcessorCount];
   }
 #endif
 
-  for (int m = 0; m < neigh_procs; m++)
+  for (unsigned int m = 0; m < iNetTop.NeighbouringProcs.size(); m++)
   {
-    NeighProc *neigh_proc_p = &neigh_proc[m];
+    hemelb::topology::NeighbouringProcessor * neigh_proc_p =
+        iNetTop.NeighbouringProcs[m];
 
-    // One way send receive.  The lower numbered mProcessorCount send and the higher numbered ones receive.
+    // One way send receive.  The lower numbered iNetTop.ProcessorCount send and the higher numbered ones receive.
     // It seems that, for each pair of processors, the lower numbered one ends up with its own
     // edge sites and directions stored and the higher numbered one ends up with those on the
     // other processor.
 #ifndef NOMPI
-    if (neigh_proc_p->id > mRank)
+    if (neigh_proc_p->Rank > iNetTop.LocalRank)
     {
-      err = MPI_Isend(&neigh_proc_p->f_data[0], neigh_proc_p->fs * 4,
-                      MPI_SHORT, neigh_proc_p->id, 10, MPI_COMM_WORLD,
-                      &req[0][m]);
+      err = MPI_Isend(&neigh_proc_p->SharedFLocation[0],
+                      neigh_proc_p->SharedFCount * 4, MPI_SHORT,
+                      neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
     }
     else
     {
-      err = MPI_Irecv(&neigh_proc_p->f_data[0], neigh_proc_p->fs * 4,
-                      MPI_SHORT, neigh_proc_p->id, 10, MPI_COMM_WORLD,
-                      &req[0][neigh_procs + m]);
+      err = MPI_Irecv(&neigh_proc_p->SharedFLocation[0],
+                      neigh_proc_p->SharedFCount * 4, MPI_SHORT,
+                      neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
+                      &req[0][iNetTop.NeighbouringProcs.size() + m]);
     }
 #endif
   }
-  for (int m = 0; m < neigh_procs; m++)
+  for (unsigned int m = 0; m < iNetTop.NeighbouringProcs.size(); m++)
   {
-    NeighProc *neigh_proc_p = &neigh_proc[m];
+    hemelb::topology::NeighbouringProcessor * neigh_proc_p =
+        iNetTop.NeighbouringProcs[m];
 
-    if (neigh_proc_p->id > mRank)
+    if (neigh_proc_p->Rank > iNetTop.LocalRank)
     {
 #ifndef NOMPI
       err = MPI_Wait(&req[0][m], status);
@@ -1204,12 +772,12 @@ void Net::Initialise(int iTotalFluidSites,
     else
     {
 #ifndef NOMPI
-      err = MPI_Wait(&req[0][neigh_procs + m], status);
+      err = MPI_Wait(&req[0][iNetTop.NeighbouringProcs.size() + m], status);
 #endif
       // Now we sort the situation so that each process has its own sites.
-      for (int n = 0; n < neigh_proc_p->fs * 4; n += 4)
+      for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
       {
-        short int *f_data_p = &neigh_proc_p->f_data[n];
+        short int *f_data_p = &neigh_proc_p->SharedFLocation[n];
 
         short int l = f_data_p[3];
         f_data_p[0] += D3Q15::CX[l];
@@ -1220,23 +788,24 @@ void Net::Initialise(int iTotalFluidSites,
     }
   }
 
-  int f_count = my_sites * D3Q15::NUMVECTORS;
+  int f_count = bLocalLatDat.LocalFluidSites * D3Q15::NUMVECTORS;
 
-  for (int m = 0; m < neigh_procs; m++)
+  for (unsigned int m = 0; m < iNetTop.NeighbouringProcs.size(); m++)
   {
-    NeighProc *neigh_proc_p = &neigh_proc[m];
+    hemelb::topology::NeighbouringProcessor *neigh_proc_p =
+        iNetTop.NeighbouringProcs[m];
 
-    for (int n = 0; n < neigh_proc_p->fs; n++)
+    for (int n = 0; n < neigh_proc_p->SharedFCount; n++)
     {
       // Get coordinates and direction of the distribution function to be sent to another process.
-      short int *f_data_p = &neigh_proc_p->f_data[n * 4];
+      short int *f_data_p = &neigh_proc_p->SharedFLocation[n * 4];
       short int i = f_data_p[0];
       short int j = f_data_p[1];
       short int k = f_data_p[2];
       short int l = f_data_p[3];
 
       // Get the fluid site number of site that will send data to another process.
-      unsigned int site_map = *netSiteMapPointer(i, j, k, iGlobLatDat);
+      unsigned int site_map = *iGlobLatDat.GetSiteData(i, j, k);
 
       // Set f_id to the element in the send buffer that we put the updated
       // distribution functions in.
@@ -1244,11 +813,11 @@ void Net::Initialise(int iTotalFluidSites,
 
       // Set the place where we put the received distribution functions, which is
       // f_new[number of fluid site that sends, inverse direction].
-      neigh_proc_p->f_recv_iv[n] = site_map * D3Q15::NUMVECTORS
+      neigh_proc_p->SharedFReceivingIndex[n] = site_map * D3Q15::NUMVECTORS
           + D3Q15::INVERSEDIRECTIONS[l];
     }
   }
-  // neigh_prc->f_data was only set as a pointer to f_data, not allocated.  In this line, we 
+  // neigh_prc->f_data was only set as a pointer to f_data, not allocated.  In this line, we
   // are freeing both of those.
   delete[] f_data;
 
@@ -1258,32 +827,35 @@ void Net::Initialise(int iTotalFluidSites,
 void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
 #ifndef NOMPI
-  for (int m = 0; m < neigh_procs; m++)
+  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
-    NeighProc *neigh_proc_p = &neigh_proc[m];
+    hemelb::topology::NeighbouringProcessor * neigh_proc_p =
+        mNetworkTopology->NeighbouringProcs[m];
 
-    err = MPI_Irecv(&bLocalLatDat.FOld[neigh_proc_p->f_head], neigh_proc_p->fs,
-                    MPI_DOUBLE, neigh_proc_p->id, 10, MPI_COMM_WORLD,
-                    &req[0][m]);
+    err = MPI_Irecv(&bLocalLatDat.FOld[neigh_proc_p->FirstSharedF],
+                    neigh_proc_p->SharedFCount, MPI_DOUBLE, neigh_proc_p->Rank,
+                    10, MPI_COMM_WORLD, &req[0][m]);
   }
 #endif
 }
 
 int Net::GetMachineCount()
 {
-  return mMachineCount;
+  return mNetworkTopology->MachineCount;
 }
 
 void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
 #ifndef NOMPI
-  for (int m = 0; m < neigh_procs; m++)
+  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
-    NeighProc *neigh_proc_p = &neigh_proc[m];
+    hemelb::topology::NeighbouringProcessor *neigh_proc_p =
+        mNetworkTopology->NeighbouringProcs[m];
 
-    err = MPI_Isend(&bLocalLatDat.FNew[neigh_proc_p->f_head], neigh_proc_p->fs,
-                    MPI_DOUBLE, neigh_proc_p->id, 10, MPI_COMM_WORLD,
-                    &req[0][neigh_procs + m]);
+    err = MPI_Isend(&bLocalLatDat.FNew[neigh_proc_p->FirstSharedF],
+                    neigh_proc_p->SharedFCount, MPI_DOUBLE, neigh_proc_p->Rank,
+                    10, MPI_COMM_WORLD,
+                    &req[0][mNetworkTopology->NeighbouringProcs.size() + m]);
   }
 #endif
 }
@@ -1291,40 +863,46 @@ void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDa
 void Net::UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
 #ifndef NOMPI
-  for (int m = 0; m < neigh_procs; m++)
+  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
     err = MPI_Wait(&req[0][m], status);
-    err = MPI_Wait(&req[0][neigh_procs + m], status);
+    err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m],
+                   status);
   }
 #endif
 
   // Copy the distribution functions received from the neighbouring
   // processors into the destination buffer "f_new".
-  for (int i = 0; i < shared_fs; i++)
+  for (int i = 0; i < mNetworkTopology->TotalSharedFs; i++)
   {
-    bLocalLatDat.FNew[f_recv_iv[i]] = bLocalLatDat.FOld[neigh_proc[0].f_head
-        + i];
+    bLocalLatDat.FNew[f_recv_iv[i]]
+        = bLocalLatDat.FOld[mNetworkTopology->NeighbouringProcs[0]->FirstSharedF
+            + i];
   }
 }
 
-Net::Net(int &iArgumentCount, char* iArgumentList[])
+Net::Net(hemelb::topology::NetworkTopology * iNetworkTopology,
+         int &iArgumentCount,
+         char* iArgumentList[])
 {
 #ifndef NOMPI
   int thread_level_provided;
 
   err = MPI_Init_thread(&iArgumentCount, &iArgumentList, MPI_THREAD_FUNNELED,
                         &thread_level_provided);
-  err = MPI_Comm_size(MPI_COMM_WORLD, &mProcessorCount);
-  err = MPI_Comm_rank(MPI_COMM_WORLD, &mRank);
+  err = MPI_Comm_size(MPI_COMM_WORLD, &iNetworkTopology->ProcessorCount);
+  err = MPI_Comm_rank(MPI_COMM_WORLD, &iNetworkTopology->LocalRank);
 
-  if (IsCurrentProcTheIOProc())
+  if (iNetworkTopology->IsCurrentProcTheIOProc())
   {
     printf("thread_level_provided %i\n", thread_level_provided);
   }
 #else
-  mProcessorCount = 1;
+  iNetTop.ProcessorCount = 1;
   mRank = 0;
 #endif
+
+  mNetworkTopology = iNetworkTopology;
 }
 
 /*!
@@ -1337,33 +915,7 @@ Net::~Net()
   err = MPI_Finalize();
 #endif
 
-  delete[] from_proc_id_to_neigh_proc_index;
-
   delete[] f_recv_iv;
-
-  if (my_sites > 0)
-  {
-    for (int i = 0; i < block_count; i++)
-    {
-      if (map_block[i].wall_data != NULL)
-      {
-        delete[] map_block[i].wall_data;
-      }
-    }
-  }
-
-  for (int i = 0; i < block_count; i++)
-  {
-    if (map_block[i].ProcessorRankForEachBlockSite != NULL)
-    {
-      delete[] map_block[i].ProcessorRankForEachBlockSite;
-    }
-    if (map_block[i].site_data != NULL)
-    {
-      delete[] map_block[i].site_data;
-    }
-  }
-  delete[] map_block;
 
 #ifndef NOMPI
   for (int i = 0; i < COMMS_LEVELS; i++)
@@ -1371,9 +923,5 @@ Net::~Net()
   delete[] req;
 #endif
 
-  delete[] mFluidSitesOnEachProcessor;
-
-  delete[] procs_per_machine;
-  delete[] machine_id;
 }
 
