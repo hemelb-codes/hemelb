@@ -10,12 +10,12 @@ namespace hemelb
     }
 
     void BaseTopologyManager::AssignFluidSitesToProcessors(int & proc_count,
-                                                           int & fluid_sites_per_unit,
-                                                           int & unvisited_fluid_sites,
-                                                           const int iCurrentProcId,
-                                                           const int unitLevel,
+                                                           int & iSitesPerProc,
+                                                           int & bUnassignedSites,
+                                                           const int iMarker,
+                                                           const bool iIsMachineLevel,
                                                            lb::LocalLatticeData * iLocalLatDat,
-                                                           lb::GlobalLatticeData &iGlobLatDat,
+                                                           const lb::GlobalLatticeData &iGlobLatDat,
                                                            NetworkTopology * bNetTopology)
     {
 
@@ -57,7 +57,7 @@ namespace hemelb
             // Create variables for the index of this site on the block and the number of fluid sites
             // that have been assigned to the current processor.
             int lSiteNumber = -1;
-            int lFluidSitesOnCurrentProcessor = 0;
+            int lSitesOnCurrentProc = 0;
 
             // For each dimension of the site co-ordinates, iterate over all values of the site
             // co-ordinates on the current block.
@@ -78,7 +78,7 @@ namespace hemelb
                   //TODO comments from here.
                   // Move on if the site is solid (ProcessorRankForEachBlockSite = 1 << 30) or has
                   // already been assigned to a rank (0 <= ProcessorRankForEachBlockSite < 1 << 30).
-                  if (lProcRankForSite[lSiteNumber] != iCurrentProcId)
+                  if (lProcRankForSite[lSiteNumber] != iMarker)
                   {
                     continue;
                   }
@@ -90,9 +90,9 @@ namespace hemelb
                   {
                     ++iLocalLatDat->LocalFluidSites;
                   }
-                  ++lFluidSitesOnCurrentProcessor;
+                  ++lSitesOnCurrentProc;
 
-                  if (unitLevel == 0)
+                  if (!iIsMachineLevel)
                   {
                     ++bNetTopology->FluidSitesOnEachProcessor[proc_count];
                   }
@@ -107,26 +107,25 @@ namespace hemelb
                   site_location_a_p->k = lSiteCoordK;
 
                   // The subdomain can grow.
-                  bool lAreFluidSitesIncrementing = true;
+                  bool lIsRegionGrowing = true;
 
                   // While the region can grow (i.e. it is not bounded by solids or visited
                   // sites), and we need more sites on this particular rank.
-                  while (lFluidSitesOnCurrentProcessor < fluid_sites_per_unit
-                      && lAreFluidSitesIncrementing)
+                  while (lSitesOnCurrentProc < iSitesPerProc
+                      && lIsRegionGrowing)
                   {
                     // Sites added to the edge of the mClusters during the iteration.
                     int sites_b = 0;
-                    lAreFluidSitesIncrementing = false;
+                    lIsRegionGrowing = false;
 
                     // For sites on the edge of the domain (sites_a), deal with the neighbours.
                     for (int index_a = 0; index_a < sites_a
-                        && lFluidSitesOnCurrentProcessor < fluid_sites_per_unit; index_a++)
+                        && lSitesOnCurrentProc < iSitesPerProc; index_a++)
                     {
                       site_location_a_p = &site_location_a[index_a];
 
                       for (unsigned int l = 1; l < D3Q15::NUMVECTORS
-                          && lFluidSitesOnCurrentProcessor
-                              < fluid_sites_per_unit; l++)
+                          && lSitesOnCurrentProc < iSitesPerProc; l++)
                       {
                         // Record neighbour location.
                         int neigh_i = site_location_a_p->i + D3Q15::CX[l];
@@ -153,15 +152,15 @@ namespace hemelb
                                                                   neigh_j,
                                                                   neigh_k);
 
-                        if (proc_id_p == NULL || *proc_id_p != iCurrentProcId)
+                        if (proc_id_p == NULL || *proc_id_p != iMarker)
                         {
                           continue;
                         }
                         // Set the rank for a neighbour and update the fluid site counters.
                         *proc_id_p = proc_count;
-                        lFluidSitesOnCurrentProcessor++;
+                        lSitesOnCurrentProc++;
 
-                        if (unitLevel == 0)
+                        if (!iIsMachineLevel)
                         {
                           bNetTopology->FluidSitesOnEachProcessor[proc_count]++;
                         }
@@ -172,7 +171,7 @@ namespace hemelb
                         }
 
                         // Neighbour was found, so the region can grow.
-                        lAreFluidSitesIncrementing = true;
+                        lIsRegionGrowing = true;
 
                         // If the new layer of neighbours is too large, allocate more
                         // memory.
@@ -209,18 +208,18 @@ namespace hemelb
                   }
 
                   // If we have enough sites, we have finished.
-                  if (lFluidSitesOnCurrentProcessor >= fluid_sites_per_unit)
+                  if (lSitesOnCurrentProc >= iSitesPerProc)
                   {
                     ++proc_count;
-                    if (unitLevel == 0)
+                    if (!iIsMachineLevel)
                     {
-                      unvisited_fluid_sites -= lFluidSitesOnCurrentProcessor;
-                      fluid_sites_per_unit
-                          = (int) ceil((double) unvisited_fluid_sites
+                      bUnassignedSites -= lSitesOnCurrentProc;
+                      iSitesPerProc
+                          = (int) ceil((double) bUnassignedSites
                               / (double) (bNetTopology->ProcessorCount
                                   - proc_count));
                     }
-                    lFluidSitesOnCurrentProcessor = 0;
+                    lSitesOnCurrentProc = 0;
                   }
                   // If not, we have to start growing a different region for the same rank:
                   // region expansions could get trapped.

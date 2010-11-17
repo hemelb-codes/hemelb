@@ -68,7 +68,7 @@ namespace hemelb
 
         // Function that finds the pointer to the rank on which a particular site
         // resides. If the site is in an empty block, return NULL.
-        int * GetProcIdFromGlobalCoords(int iSiteI, int iSiteJ, int iSiteK)
+        int * GetProcIdFromGlobalCoords(int iSiteI, int iSiteJ, int iSiteK) const
         {
           // If the given site location is outside the bounding box return a NULL
           // pointer.
