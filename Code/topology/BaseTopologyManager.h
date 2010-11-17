@@ -19,9 +19,9 @@ namespace hemelb
                                      int & fluid_sites_per_unit,
                                      int & unvisited_fluid_sites,
                                      const int iCurrentProcId,
-                                     const int unitLevel,
+                                     const bool iIsMachineLevel,
                                      lb::LocalLatticeData * iLocalLatDat,
-                                     lb::GlobalLatticeData &iGlobLatDat,
+                                     const lb::GlobalLatticeData &iGlobLatDat,
                                      NetworkTopology * bNetTopology);
 
       protected:

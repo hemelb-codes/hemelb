@@ -268,7 +268,7 @@ namespace hemelb
       int m, mm, n;
 
       int inlet_sites;
-      int *neigh_proc_id;
+      const int *neigh_proc_id;
 
       lb::BlockData * lBlock;
       VelSiteData *vel_site_data_p;
