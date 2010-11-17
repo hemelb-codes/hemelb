@@ -85,29 +85,6 @@ void Net::Initialise(int iTotalFluidSites,
   // set only once is implemented here; the data set is explored by
   // means of the arrays "site_location_a[]" and "site_location_b[]"
 
-  // Find the maximum number of fluid sites per process.  If steering,
-  // leave one process out.
-  int proc_count; // Rank we are looking at.
-  int fluid_sites_per_unit; // Fluid sites per rank.
-
-#ifndef NO_STEER 
-  if (iNetTop.ProcessorCount == 1)
-  {
-    fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-        / (double) iNetTop.ProcessorCount);
-    proc_count = 0;
-  }
-  else
-  {
-    fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-        / (double) (iNetTop.ProcessorCount - 1));
-    proc_count = 1;
-  }
-#else
-  fluid_sites_per_unit = (int)ceil((double)iTotalFluidSites / (double)iNetTop.ProcessorCount);
-  proc_count = 0;
-#endif
-
   for (int n = 0; n < iNetTop.ProcessorCount; n++)
   {
     iNetTop.FluidSitesOnEachProcessor[n] = 0;
@@ -123,38 +100,59 @@ void Net::Initialise(int iTotalFluidSites,
   if (iNetTop.MachineCount == 1 || iNetTop.MachineCount
       == iNetTop.ProcessorCount)
   {
+    // Fluid sites per rank.
+    int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
+        / (double) iNetTop.ProcessorCount);
+
+    //Rank we're looking at.
+    int proc_count = 0;
+
+    // If we're steering with more than one processor, save one processor for doing that.
+#ifndef NO_STEER
+    if (iNetTop.ProcessorCount != 1)
+    {
+      fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
+          / (double) (iNetTop.ProcessorCount - 1));
+      proc_count = 1;
+    }
+#endif
+
+    // In the simple case, simply divide fluid sites up between processors.
     iTopologyManager.AssignFluidSitesToProcessors(proc_count,
                                                   fluid_sites_per_unit,
                                                   lUnvisitedFluidSiteCount, -1,
-                                                  0, &bLocalLatDat,
+                                                  false, &bLocalLatDat,
                                                   iGlobLatDat, &iNetTop);
   }
   else
   {
-    // TODO Haven't worked out exactly why this is necessary.
-    proc_count = iNetTop.ProcessorCount;
-    double weight = (double) (iNetTop.ProcCountOnEachMachine[proc_count
-        - iNetTop.ProcessorCount] * iNetTop.ProcessorCount)
-        / (double) (iNetTop.ProcessorCount - 1);
-    fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites * weight
+    // Rank we are looking at.
+    int proc_count = iNetTop.ProcessorCount;
+    double weight = (double) (iNetTop.ProcCountOnEachMachine[0]
+        * iNetTop.ProcessorCount) / (double) (iNetTop.ProcessorCount - 1);
+    // Fluid sites per rank.
+    int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites * weight
         / iNetTop.MachineCount);
+
+    // First, divide the sites up between machines.
     iTopologyManager.AssignFluidSitesToProcessors(proc_count,
                                                   fluid_sites_per_unit,
                                                   lUnvisitedFluidSiteCount, -1,
-                                                  1, &bLocalLatDat,
+                                                  true, &bLocalLatDat,
                                                   iGlobLatDat, &iNetTop);
 
-    // TODO and... this is the second half. Not exactly sure what either bit does.
     fluid_sites_per_unit = (int) ceil((double) lUnvisitedFluidSiteCount
         / (double) (iNetTop.ProcessorCount - 1));
     proc_count = 1;
+
+    // For each machine, divide up the sites it has between its cores.
     for (int lMachineNumber = 0; lMachineNumber < iNetTop.MachineCount; lMachineNumber++)
     {
       iTopologyManager.AssignFluidSitesToProcessors(proc_count,
                                                     fluid_sites_per_unit,
                                                     lUnvisitedFluidSiteCount,
                                                     iNetTop.ProcessorCount
-                                                        + lMachineNumber, 0,
+                                                        + lMachineNumber, false,
                                                     &bLocalLatDat, iGlobLatDat,
                                                     &iNetTop);
     }
@@ -307,8 +305,7 @@ void Net::Initialise(int iTotalFluidSites,
                 continue;
               }
 
-              int is_inter_site = 0;
-              int is_inner_site = 1;
+              bool lIsInnerSite = true;
 
               // Iterate over all direction vectors.
               for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
@@ -332,8 +329,8 @@ void Net::Initialise(int iTotalFluidSites,
                 {
                   continue;
                 }
-                is_inner_site = 0;
-                is_inter_site = 1;
+
+                lIsInnerSite = false;
 
                 // The first time, we set mm = 0, flag = 1, but net_neigh_procs = 0, so
                 // the loop is not executed.
@@ -409,7 +406,7 @@ void Net::Initialise(int iTotalFluidSites,
 
               ++lSiteIndexOnProc;
 
-              if (is_inner_site)
+              if (lIsInnerSite)
               {
                 ++my_inner_sites;
 
@@ -424,7 +421,7 @@ void Net::Initialise(int iTotalFluidSites,
                 }
                 ++my_inner_collisions[l];
               }
-              else if (is_inter_site)
+              else
               {
                 ++my_inter_sites;
 
