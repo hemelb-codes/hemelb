@@ -454,7 +454,6 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
   double vx, vy, vz;
   double stress;
   double f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS];
-  float pressure_par, velocity_par, stress_par;
 
   int buffer_size;
   int fluid_sites_max;
@@ -466,20 +465,6 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
   short int *local_site_data, *gathered_site_data;
 
   unsigned int my_site_id;
-
-  // parameters useful to convert pressure, velocity and stress from
-  // lattice to physical units
-  pressure_par = PULSATILE_PERIOD / (period * voxel_size * voxel_size);
-
-  pressure_par = BLOOD_DENSITY / (mmHg_TO_PASCAL * pressure_par * pressure_par
-      * voxel_size * voxel_size);
-
-  velocity_par = 1.0 / (voxel_size * ( (mParams.Tau - 0.5) / 3.)
-      / (BLOOD_VISCOSITY / BLOOD_DENSITY));
-
-  stress_par = ( (mParams.Tau - 0.5) / 3.0) / (BLOOD_VISCOSITY / BLOOD_DENSITY);
-  stress_par = BLOOD_DENSITY / (stress_par * stress_par * voxel_size
-      * voxel_size);
 
   if (mNetTopology->IsCurrentProcTheIOProc())
   {
@@ -655,14 +640,13 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
               vz /= density;
 
               // conversion from lattice to physical units
-              pressure = REFERENCE_PRESSURE + ( (density - 1.0) * Cs2)
-                  * pressure_par;
+              pressure = lbmConvertPressureToPhysicalUnits(density * Cs2);
 
-              vx *= velocity_par;
-              vy *= velocity_par;
-              vz *= velocity_par;
+              vx = lbmConvertVelocityToPhysicalUnits(vx);
+              vy = lbmConvertVelocityToPhysicalUnits(vy);
+              vz = lbmConvertVelocityToPhysicalUnits(vz);
 
-              stress *= stress_par;
+              stress = lbmConvertStressToPhysicalUnits(stress);
 
               local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0]
                   = float(pressure);
