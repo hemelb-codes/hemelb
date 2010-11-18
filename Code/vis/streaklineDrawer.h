@@ -1,9 +1,6 @@
 #ifndef HEMELB_VIS_STREAKLINEDRAWER_H
 #define HEMELB_VIS_STREAKLINEDRAWER_H
 
-//TODO REMOVE! Moved here from the constants file to try to limit scope.
-#define NEIGHBOUR_PROCS_MAX 64
-
 #include <vector>
 
 #include "constants.h"
@@ -95,7 +92,6 @@ namespace hemelb
         int particles_to_send_max, particles_to_recv_max;
 
         // Variables for counting the processors involved etc.
-        int neigh_procs;
         int shared_vs;
         int procs;
 
@@ -109,7 +105,9 @@ namespace hemelb
         short int *s_to_send, *s_to_recv;
         short int *from_proc_id_to_neigh_proc_index;
 
-        NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX];
+        std::vector<NeighProc*> mNeighProcs;
+
+     //   NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX];
 
         // If using MPI, require these for inter-processor comms.
 #ifndef NOMPI

@@ -246,10 +246,13 @@ namespace hemelb
               int m =
                   from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
 
-              neigh_proc[m].s_to_send[3 * neigh_proc[m].send_vs + 0] = neigh_i;
-              neigh_proc[m].s_to_send[3 * neigh_proc[m].send_vs + 1] = neigh_j;
-              neigh_proc[m].s_to_send[3 * neigh_proc[m].send_vs + 2] = neigh_k;
-              ++neigh_proc[m].send_vs;
+              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 0]
+                  = neigh_i;
+              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 1]
+                  = neigh_j;
+              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 2]
+                  = neigh_k;
+              ++mNeighProcs[m]->send_vs;
             }
           }
         }
@@ -265,8 +268,6 @@ namespace hemelb
       oSuccess = true;
       mNetworkTopology = iNetworkTopology;
 
-      int m, mm, n;
-
       int inlet_sites;
       const int *neigh_proc_id;
 
@@ -280,22 +281,17 @@ namespace hemelb
 
       nParticleSeeds = 0;
 
-      neigh_procs = 0;
-
       num_blocks = iGlobLatDat.BlockCount;
       velocity_field = new VelocityField[iGlobLatDat.BlockCount];
 
-      for (n = 0; n < iGlobLatDat.BlockCount; n++)
+      for (int n = 0; n < iGlobLatDat.BlockCount; n++)
       {
         velocity_field[n].vel_site_data = NULL;
       }
-      for (m = 0; m < NEIGHBOUR_PROCS_MAX; m++)
-      {
-        neigh_proc[m].send_vs = 0;
-      }
+
       counter = 1;
       inlet_sites = 0;
-      n = -1;
+      int n = -1;
 
       for (int i = 0; i < iGlobLatDat.SitesX; i += iGlobLatDat.BlockSize)
         for (int j = 0; j < iGlobLatDat.SitesY; j += iGlobLatDat.BlockSize)
@@ -309,7 +305,7 @@ namespace hemelb
               continue;
             }
 
-            m = -1;
+            int m = -1;
 
             for (int site_i = i; site_i < i + iGlobLatDat.BlockSize; site_i++)
               for (int site_j = j; site_j < j + iGlobLatDat.BlockSize; site_j++)
@@ -356,31 +352,22 @@ namespace hemelb
                         vel_site_data_p->counter = counter;
 
                         bool seenSelf = false;
-                        for (mm = 0; mm < neigh_procs && !seenSelf; mm++)
+                        for (unsigned int mm = 0; mm < mNeighProcs.size() && !seenSelf; mm++)
                         {
-                          if (*neigh_proc_id == neigh_proc[mm].id)
+                          if (*neigh_proc_id == mNeighProcs[mm]->id)
                           {
                             seenSelf = true;
-                            ++neigh_proc[mm].send_vs;
+                            ++mNeighProcs[mm]->send_vs;
                           }
                         }
                         if (seenSelf)
                           continue;
 
-                        // TODO Poor.
-                        if (neigh_procs == NEIGHBOUR_PROCS_MAX)
-                        {
-                          printf(
-                                 " too many inter processor neighbours in streakline constructor()\n");
-                          printf(" the execution is terminated\n");
+                        NeighProc * lNew = new NeighProc();
 
-                          oSuccess = false;
-                          return;
-                        }
-
-                        neigh_proc[neigh_procs].id = *neigh_proc_id;
-                        neigh_proc[neigh_procs].send_vs = 1;
-                        ++neigh_procs;
+                        lNew->id = *neigh_proc_id;
+                        lNew->send_vs = 1;
+                        mNeighProcs.push_back(lNew);
                       }
 
                   int lSiteIndex = lBlock->site_data[m];
@@ -409,9 +396,9 @@ namespace hemelb
           }
       shared_vs = 0;
 
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        shared_vs += neigh_proc[m].send_vs;
+        shared_vs += mNeighProcs[m]->send_vs;
       }
       if (shared_vs > 0)
       {
@@ -423,27 +410,26 @@ namespace hemelb
       }
       shared_vs = 0;
 
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        neigh_proc[m].s_to_send = &s_to_send[shared_vs * 3];
-        neigh_proc[m].s_to_recv = &s_to_recv[shared_vs * 3];
+        mNeighProcs[m]->s_to_send = &s_to_send[shared_vs * 3];
+        mNeighProcs[m]->s_to_recv = &s_to_recv[shared_vs * 3];
 
-        neigh_proc[m].v_to_send = &v_to_send[shared_vs * 3];
-        neigh_proc[m].v_to_recv = &v_to_recv[shared_vs * 3];
+        mNeighProcs[m]->v_to_send = &v_to_send[shared_vs * 3];
+        mNeighProcs[m]->v_to_recv = &v_to_recv[shared_vs * 3];
 
-        shared_vs += neigh_proc[m].send_vs;
+        shared_vs += mNeighProcs[m]->send_vs;
+
+        mNeighProcs[m]->send_vs = 0;
       }
-      for (m = 0; m < neigh_procs; m++)
-      {
-        neigh_proc[m].send_vs = 0;
-      }
+
       particles_to_send_max = 1000;
       particles_to_recv_max = 1000;
 
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        neigh_proc[m].p_to_send.reserve(5 * particles_to_send_max);
-        neigh_proc[m].p_to_recv.reserve(5 * particles_to_recv_max);
+        mNeighProcs[m]->p_to_send.reserve(5 * particles_to_send_max);
+        mNeighProcs[m]->p_to_recv.reserve(5 * particles_to_recv_max);
       }
 
       req = new MPI_Request[2 * iNetworkTopology->ProcessorCount];
@@ -451,13 +437,13 @@ namespace hemelb
       from_proc_id_to_neigh_proc_index
           = new short int[iNetworkTopology->ProcessorCount];
 
-      for (m = 0; m < iNetworkTopology->ProcessorCount; m++)
+      for (int m = 0; m < iNetworkTopology->ProcessorCount; m++)
       {
         from_proc_id_to_neigh_proc_index[m] = -1;
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        from_proc_id_to_neigh_proc_index[neigh_proc[m].id] = m;
+        from_proc_id_to_neigh_proc_index[mNeighProcs[m]->id] = m;
       }
 
       counter = 0;
@@ -467,14 +453,14 @@ namespace hemelb
         if (velocity_field[n].vel_site_data == NULL)
           continue;
 
-        for (m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
+        for (int m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
         {
           velocity_field[n].vel_site_data[m].counter = counter;
         }
         if (iGlobLatDat.Blocks[n].site_data == NULL)
           continue;
 
-        for (m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
+        for (int m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
         {
           velocity_field[n].vel_site_data[m].site_id
               = iGlobLatDat.Blocks[n].site_data[m];
@@ -493,39 +479,37 @@ namespace hemelb
     void StreaklineDrawer::communicateSiteIds()
     {
 #ifndef NOMPI
-      int m;
-
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Irecv(&neigh_proc[m].recv_vs, 1, MPI_INT, neigh_proc[m].id, 30,
-                  MPI_COMM_WORLD, &req[procs + neigh_proc[m].id]);
-        MPI_Isend(&neigh_proc[m].send_vs, 1, MPI_INT, neigh_proc[m].id, 30,
-                  MPI_COMM_WORLD, &req[neigh_proc[m].id]);
-        MPI_Wait(&req[neigh_proc[m].id], status);
+        MPI_Irecv(&mNeighProcs[m]->recv_vs, 1, MPI_INT, mNeighProcs[m]->id, 30,
+                  MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
+        MPI_Isend(&mNeighProcs[m]->send_vs, 1, MPI_INT, mNeighProcs[m]->id, 30,
+                  MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
+        MPI_Wait(&req[mNeighProcs[m]->id], status);
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Wait(&req[procs + neigh_proc[m].id], status);
+        MPI_Wait(&req[procs + mNeighProcs[m]->id], status);
 
-        if (neigh_proc[m].recv_vs > 0)
+        if (mNeighProcs[m]->recv_vs > 0)
         {
-          MPI_Irecv(neigh_proc[m].s_to_recv, neigh_proc[m].recv_vs * 3,
-                    MPI_SHORT, neigh_proc[m].id, 40, MPI_COMM_WORLD, &req[procs
-                        + neigh_proc[m].id]);
+          MPI_Irecv(mNeighProcs[m]->s_to_recv, mNeighProcs[m]->recv_vs * 3,
+                    MPI_SHORT, mNeighProcs[m]->id, 40, MPI_COMM_WORLD,
+                    &req[procs + mNeighProcs[m]->id]);
         }
-        if (neigh_proc[m].send_vs > 0)
+        if (mNeighProcs[m]->send_vs > 0)
         {
-          MPI_Isend(neigh_proc[m].s_to_send, neigh_proc[m].send_vs * 3,
-                    MPI_SHORT, neigh_proc[m].id, 40, MPI_COMM_WORLD,
-                    &req[neigh_proc[m].id]);
-          MPI_Wait(&req[neigh_proc[m].id], status);
+          MPI_Isend(mNeighProcs[m]->s_to_send, mNeighProcs[m]->send_vs * 3,
+                    MPI_SHORT, mNeighProcs[m]->id, 40, MPI_COMM_WORLD,
+                    &req[mNeighProcs[m]->id]);
+          MPI_Wait(&req[mNeighProcs[m]->id], status);
         }
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        if (neigh_proc[m].recv_vs > 0)
+        if (mNeighProcs[m]->recv_vs > 0)
         {
-          MPI_Wait(&req[procs + neigh_proc[m].id], status);
+          MPI_Wait(&req[procs + mNeighProcs[m]->id], status);
         }
       }
 #endif // NOMPI
@@ -537,78 +521,77 @@ namespace hemelb
 #ifndef NOMPI
       int site_i, site_j, site_k;
       int neigh_i, neigh_j, neigh_k;
-      int m, n;
 
       VelSiteData *vel_site_data_p;
 
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        if (neigh_proc[m].send_vs > 0)
+        if (mNeighProcs[m]->send_vs > 0)
         {
-          MPI_Irecv(neigh_proc[m].v_to_recv, neigh_proc[m].send_vs * 3,
-                    MPI_FLOAT, neigh_proc[m].id, 30, MPI_COMM_WORLD, &req[procs
-                        + neigh_proc[m].id]);
+          MPI_Irecv(mNeighProcs[m]->v_to_recv, mNeighProcs[m]->send_vs * 3,
+                    MPI_FLOAT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
+                    &req[procs + mNeighProcs[m]->id]);
         }
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        for (n = 0; n < neigh_proc[m].recv_vs; n++)
+        for (int n = 0; n < mNeighProcs[m]->recv_vs; n++)
         {
-          site_i = neigh_proc[m].s_to_recv[3 * n + 0];
-          site_j = neigh_proc[m].s_to_recv[3 * n + 1];
-          site_k = neigh_proc[m].s_to_recv[3 * n + 2];
+          site_i = mNeighProcs[m]->s_to_recv[3 * n + 0];
+          site_j = mNeighProcs[m]->s_to_recv[3 * n + 1];
+          site_k = mNeighProcs[m]->s_to_recv[3 * n + 2];
 
           vel_site_data_p = velSiteDataPointer(iGlobLatDat, site_i, site_j,
                                                site_k);
 
           if (vel_site_data_p != NULL)
           {
-            neigh_proc[m].v_to_send[3 * n + 0] = vel_site_data_p->vx;
-            neigh_proc[m].v_to_send[3 * n + 1] = vel_site_data_p->vy;
-            neigh_proc[m].v_to_send[3 * n + 2] = vel_site_data_p->vz;
+            mNeighProcs[m]->v_to_send[3 * n + 0] = vel_site_data_p->vx;
+            mNeighProcs[m]->v_to_send[3 * n + 1] = vel_site_data_p->vy;
+            mNeighProcs[m]->v_to_send[3 * n + 2] = vel_site_data_p->vz;
           }
           else
           {
-            neigh_proc[m].v_to_send[3 * n + 0] = 0.;
-            neigh_proc[m].v_to_send[3 * n + 1] = 0.;
-            neigh_proc[m].v_to_send[3 * n + 2] = 0.;
+            mNeighProcs[m]->v_to_send[3 * n + 0] = 0.;
+            mNeighProcs[m]->v_to_send[3 * n + 1] = 0.;
+            mNeighProcs[m]->v_to_send[3 * n + 2] = 0.;
           }
         }
-        if (neigh_proc[m].recv_vs > 0)
+        if (mNeighProcs[m]->recv_vs > 0)
         {
-          MPI_Isend(neigh_proc[m].v_to_send, neigh_proc[m].recv_vs * 3,
-                    MPI_FLOAT, neigh_proc[m].id, 30, MPI_COMM_WORLD,
-                    &req[neigh_proc[m].id]);
-          MPI_Wait(&req[neigh_proc[m].id], status);
+          MPI_Isend(mNeighProcs[m]->v_to_send, mNeighProcs[m]->recv_vs * 3,
+                    MPI_FLOAT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
+                    &req[mNeighProcs[m]->id]);
+          MPI_Wait(&req[mNeighProcs[m]->id], status);
         }
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        if (neigh_proc[m].send_vs <= 0)
+        if (mNeighProcs[m]->send_vs <= 0)
           continue;
 
-        MPI_Wait(&req[procs + neigh_proc[m].id], status);
+        MPI_Wait(&req[procs + mNeighProcs[m]->id], status);
 
-        for (n = 0; n < neigh_proc[m].send_vs; n++)
+        for (int n = 0; n < mNeighProcs[m]->send_vs; n++)
         {
-          neigh_i = neigh_proc[m].s_to_send[3 * n + 0];
-          neigh_j = neigh_proc[m].s_to_send[3 * n + 1];
-          neigh_k = neigh_proc[m].s_to_send[3 * n + 2];
+          neigh_i = mNeighProcs[m]->s_to_send[3 * n + 0];
+          neigh_j = mNeighProcs[m]->s_to_send[3 * n + 1];
+          neigh_k = mNeighProcs[m]->s_to_send[3 * n + 2];
 
           vel_site_data_p = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j,
                                                neigh_k);
 
           if (vel_site_data_p != NULL)
           {
-            vel_site_data_p->vx = neigh_proc[m].v_to_recv[3 * n + 0];
-            vel_site_data_p->vy = neigh_proc[m].v_to_recv[3 * n + 1];
-            vel_site_data_p->vz = neigh_proc[m].v_to_recv[3 * n + 2];
+            vel_site_data_p->vx = mNeighProcs[m]->v_to_recv[3 * n + 0];
+            vel_site_data_p->vy = mNeighProcs[m]->v_to_recv[3 * n + 1];
+            vel_site_data_p->vz = mNeighProcs[m]->v_to_recv[3 * n + 2];
           }
         }
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        neigh_proc[m].send_vs = 0;
+        mNeighProcs[m]->send_vs = 0;
       }
 #endif // NOMPI
     }
@@ -679,25 +662,24 @@ namespace hemelb
     {
 #ifndef NOMPI
       int site_i, site_j, site_k;
-      int m, n;
       int particles_temp;
       MPI_Status status;
 
       VelSiteData *vel_site_data_p;
 
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Irecv(&neigh_proc[m].recv_ps, 1, MPI_INT, neigh_proc[m].id, 30,
-                  MPI_COMM_WORLD, &req[procs + neigh_proc[m].id]);
+        MPI_Irecv(&mNeighProcs[m]->recv_ps, 1, MPI_INT, mNeighProcs[m]->id, 30,
+                  MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        neigh_proc[m].send_ps = 0;
+        mNeighProcs[m]->send_ps = 0;
       }
 
       particles_temp = nParticles;
 
-      for (n = particles_temp - 1; n >= 0; n--)
+      for (int n = particles_temp - 1; n >= 0; n--)
       {
         site_i = (int) particleVec[n].x;
         site_j = (int) particleVec[n].y;
@@ -711,73 +693,73 @@ namespace hemelb
         {
           continue;
         }
-        m = from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
+        int m = from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
 
-        if (neigh_proc[m].send_ps == particles_to_send_max)
+        if (mNeighProcs[m]->send_ps == particles_to_send_max)
         {
           particles_to_send_max *= 2;
-          neigh_proc[m].p_to_send.reserve(5 * particles_to_send_max);
+          mNeighProcs[m]->p_to_send.reserve(5 * particles_to_send_max);
 
         }
 
-        neigh_proc[m].p_to_send[5 * neigh_proc[m].send_ps + 0]
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 0]
             = particleVec[n].x;
-        neigh_proc[m].p_to_send[5 * neigh_proc[m].send_ps + 1]
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 1]
             = particleVec[n].y;
-        neigh_proc[m].p_to_send[5 * neigh_proc[m].send_ps + 2]
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 2]
             = particleVec[n].z;
-        neigh_proc[m].p_to_send[5 * neigh_proc[m].send_ps + 3]
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 3]
             = particleVec[n].vel;
-        neigh_proc[m].p_to_send[5 * neigh_proc[m].send_ps + 4]
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 4]
             = particleVec[n].inlet_id + 0.1;
-        ++neigh_proc[m].send_ps;
+        ++mNeighProcs[m]->send_ps;
 
         deleteParticle(n);
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Isend(&neigh_proc[m].send_ps, 1, MPI_INT, neigh_proc[m].id, 30,
-                  MPI_COMM_WORLD, &req[neigh_proc[m].id]);
-        MPI_Wait(&req[neigh_proc[m].id], &status);
+        MPI_Isend(&mNeighProcs[m]->send_ps, 1, MPI_INT, mNeighProcs[m]->id, 30,
+                  MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
+        MPI_Wait(&req[mNeighProcs[m]->id], &status);
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Wait(&req[procs + neigh_proc[m].id], &status);
+        MPI_Wait(&req[procs + mNeighProcs[m]->id], &status);
       }
 
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        if (neigh_proc[m].send_ps > 0)
+        if (mNeighProcs[m]->send_ps > 0)
         {
-          MPI_Isend(&neigh_proc[m].p_to_send[0], neigh_proc[m].send_ps * 5,
-                    MPI_FLOAT, neigh_proc[m].id, 40, MPI_COMM_WORLD,
-                    &req[neigh_proc[m].id]);
-          MPI_Wait(&req[neigh_proc[m].id], &status);
+          MPI_Isend(&mNeighProcs[m]->p_to_send[0], mNeighProcs[m]->send_ps * 5,
+                    MPI_FLOAT, mNeighProcs[m]->id, 40, MPI_COMM_WORLD,
+                    &req[mNeighProcs[m]->id]);
+          MPI_Wait(&req[mNeighProcs[m]->id], &status);
         }
       }
-      for (m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        if (neigh_proc[m].recv_ps > 0)
+        if (mNeighProcs[m]->recv_ps > 0)
         {
-          if (neigh_proc[m].recv_ps > particles_to_recv_max)
+          if (mNeighProcs[m]->recv_ps > particles_to_recv_max)
           {
             particles_to_recv_max *= 2;
             particles_to_recv_max = util::max(particles_to_recv_max,
-                                              neigh_proc[m].recv_ps);
-            neigh_proc[m].p_to_recv.reserve(5 * particles_to_recv_max);
+                                              mNeighProcs[m]->recv_ps);
+            mNeighProcs[m]->p_to_recv.reserve(5 * particles_to_recv_max);
           }
-          MPI_Irecv(&neigh_proc[m].p_to_recv[0], neigh_proc[m].recv_ps * 5,
-                    MPI_FLOAT, neigh_proc[m].id, 40, MPI_COMM_WORLD, &req[procs
-                        + neigh_proc[m].id]);
-          MPI_Wait(&req[procs + neigh_proc[m].id], &status);
+          MPI_Irecv(&mNeighProcs[m]->p_to_recv[0], mNeighProcs[m]->recv_ps * 5,
+                    MPI_FLOAT, mNeighProcs[m]->id, 40, MPI_COMM_WORLD,
+                    &req[procs + mNeighProcs[m]->id]);
+          MPI_Wait(&req[procs + mNeighProcs[m]->id], &status);
 
-          for (n = 0; n < neigh_proc[m].recv_ps; n++)
+          for (int n = 0; n < mNeighProcs[m]->recv_ps; n++)
           {
-            createParticle(neigh_proc[m].p_to_recv[5 * n + 0],
-                           neigh_proc[m].p_to_recv[5 * n + 1],
-                           neigh_proc[m].p_to_recv[5 * n + 2],
-                           neigh_proc[m].p_to_recv[5 * n + 3],
-                           (int) neigh_proc[m].p_to_recv[5 * n + 4]);
+            createParticle(mNeighProcs[m]->p_to_recv[5 * n + 0],
+                           mNeighProcs[m]->p_to_recv[5 * n + 1],
+                           mNeighProcs[m]->p_to_recv[5 * n + 2],
+                           mNeighProcs[m]->p_to_recv[5 * n + 3],
+                           (int) mNeighProcs[m]->p_to_recv[5 * n + 4]);
           }
         }
       }
@@ -864,10 +846,10 @@ namespace hemelb
       delete from_proc_id_to_neigh_proc_index;
       delete req;
 
-      for (int m = 0; m < neigh_procs; m++)
+      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        neigh_proc[m].p_to_recv.clear();
-        neigh_proc[m].p_to_send.clear();
+        mNeighProcs[m]->p_to_recv.clear();
+        mNeighProcs[m]->p_to_send.clear();
       }
 
       if (shared_vs > 0)
