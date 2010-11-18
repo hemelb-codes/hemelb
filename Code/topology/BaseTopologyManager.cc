@@ -18,10 +18,10 @@ namespace hemelb
                                                            const lb::GlobalLatticeData &iGlobLatDat,
                                                            NetworkTopology * bNetTopology)
     {
-
-      int sites_buffer_size = 10000;
-      SiteLocation *site_location_a = new SiteLocation[sites_buffer_size];
-      SiteLocation *site_location_b = new SiteLocation[sites_buffer_size];
+      std::vector<SiteLocation*> *lSiteLocationA = new std::vector<
+          SiteLocation*>;
+      std::vector<SiteLocation*> *lSiteLocationB = new std::vector<
+          SiteLocation*>;
 
       int lBlockNumber = -1;
 
@@ -97,14 +97,13 @@ namespace hemelb
                     ++bNetTopology->FluidSitesOnEachProcessor[proc_count];
                   }
 
-                  // Sites on the edge of the mClusters at the start of the current graph growing partitioning step.
-                  int sites_a = 1;
-
                   // Record the location of this initial site.
-                  SiteLocation *site_location_a_p = &site_location_a[0];
-                  site_location_a_p->i = lSiteCoordI;
-                  site_location_a_p->j = lSiteCoordJ;
-                  site_location_a_p->k = lSiteCoordK;
+                  lSiteLocationA->clear();
+                  SiteLocation *lNew = new SiteLocation();
+                  lNew->i = lSiteCoordI;
+                  lNew->j = lSiteCoordJ;
+                  lNew->k = lSiteCoordK;
+                  lSiteLocationA->push_back(lNew);
 
                   // The subdomain can grow.
                   bool lIsRegionGrowing = true;
@@ -115,22 +114,21 @@ namespace hemelb
                       && lIsRegionGrowing)
                   {
                     // Sites added to the edge of the mClusters during the iteration.
-                    int sites_b = 0;
                     lIsRegionGrowing = false;
 
                     // For sites on the edge of the domain (sites_a), deal with the neighbours.
-                    for (int index_a = 0; index_a < sites_a
+                    for (unsigned int index_a = 0; index_a < lSiteLocationA->size()
                         && lSitesOnCurrentProc < iSitesPerProc; index_a++)
                     {
-                      site_location_a_p = &site_location_a[index_a];
+                      lNew = lSiteLocationA->operator [](index_a);
 
                       for (unsigned int l = 1; l < D3Q15::NUMVECTORS
                           && lSitesOnCurrentProc < iSitesPerProc; l++)
                       {
                         // Record neighbour location.
-                        int neigh_i = site_location_a_p->i + D3Q15::CX[l];
-                        int neigh_j = site_location_a_p->j + D3Q15::CY[l];
-                        int neigh_k = site_location_a_p->k + D3Q15::CZ[l];
+                        int neigh_i = lNew->i + D3Q15::CX[l];
+                        int neigh_j = lNew->j + D3Q15::CY[l];
+                        int neigh_k = lNew->k + D3Q15::CZ[l];
 
                         // Move on if neighbour is outside the bounding box.
                         if (neigh_i == -1 || neigh_i == iGlobLatDat.SitesX)
@@ -173,38 +171,19 @@ namespace hemelb
                         // Neighbour was found, so the region can grow.
                         lIsRegionGrowing = true;
 
-                        // If the new layer of neighbours is too large, allocate more
-                        // memory.
-                        if (sites_b == sites_buffer_size)
-                        {
-                          sites_buffer_size *= 2;
-                          site_location_a
-                              = (SiteLocation *) realloc(
-                                                         site_location_a,
-                                                         sizeof(SiteLocation)
-                                                             * sites_buffer_size);
-                          site_location_b
-                              = (SiteLocation *) realloc(
-                                                         site_location_b,
-                                                         sizeof(SiteLocation)
-                                                             * sites_buffer_size);
-                        }
-
                         // Record the location of the neighbour.
-                        SiteLocation * site_location_b_p =
-                            &site_location_b[sites_b];
-                        site_location_b_p->i = neigh_i;
-                        site_location_b_p->j = neigh_j;
-                        site_location_b_p->k = neigh_k;
-                        ++sites_b;
+                        SiteLocation * lNewB = new SiteLocation();
+                        lNewB->i = neigh_i;
+                        lNewB->j = neigh_j;
+                        lNewB->k = neigh_k;
+                        lSiteLocationB->push_back(lNewB);
                       }
                     }
                     // When the new layer of edge sites has been found, swap the buffers for
                     // the current and new layers of edge sites.
-                    site_location_a_p = site_location_a;
-                    site_location_a = site_location_b;
-                    site_location_b = site_location_a_p;
-                    sites_a = sites_b;
+                    std::vector<SiteLocation*> *tempP = lSiteLocationA;
+                    lSiteLocationA = lSiteLocationB;
+                    lSiteLocationB = tempP;
                   }
 
                   // If we have enough sites, we have finished.
@@ -230,8 +209,8 @@ namespace hemelb
         }
       }
 
-      delete[] site_location_b;
-      delete[] site_location_a;
+      delete lSiteLocationA;
+      delete lSiteLocationB;
     }
   }
 }
