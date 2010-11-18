@@ -629,7 +629,7 @@ void LBM::lbmWriteConfig(int stability,
 
               if (mParams.StressType == hemelb::lb::ShearStress)
               {
-                if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= 1.0e+30)
+                if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
                 {
                   stress = -1.0;
                 }
@@ -831,8 +831,8 @@ void LBM::ReadVisParameters()
   velocity_max = par_to_send[7];
   stress_max = par_to_send[8];
 
-  density_min = +1.0e+30F;
-  density_max = -1.0e+30F;
+  density_min = ((float)BIG_NUMBER);
+  density_max = ((float)-BIG_NUMBER);
 
   for (i = 0; i < inlets; i++)
   {

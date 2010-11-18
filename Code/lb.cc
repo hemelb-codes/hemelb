@@ -480,7 +480,7 @@ void LBM::lbmUpdateInletVelocities(int time_step,
   {
     for (i = 0; i < inlets; i++)
     {
-      lbm_peak_inlet_velocity[i] = -1e+30;
+      lbm_peak_inlet_velocity[i] = -BIG_NUMBER;
       lbm_average_inlet_velocity[i] = 0.;
       lbm_inlet_count[i] = 0;
     }

@@ -702,7 +702,7 @@ void Net::Initialise(int iTotalFluidSites,
               }
               else
               {
-                bLocalLatDat.mWallNormalAtSite[site_map * 3] = 1.0e+30;
+                bLocalLatDat.mWallNormalAtSite[site_map * 3] = BIG_NUMBER;
               }
               ++lSiteIndexOnProc;
             }

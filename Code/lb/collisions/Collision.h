@@ -91,10 +91,10 @@ namespace hemelb
 
             if (iLbmParams.StressType == ShearStress)
             {
-              if (iLocalLatDat.GetNormalToWall(iSiteIndex)[0] > 1.0e+30)
+              if (iLocalLatDat.GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
               {
                 stress = 0.0;
-                rtStress = 1.0e+30;
+                rtStress = BIG_NUMBER;
               }
               else
               {
