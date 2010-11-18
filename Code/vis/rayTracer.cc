@@ -835,10 +835,10 @@ namespace hemelb
         float **block_flow_field = cluster_flow_field[cluster_id];
 
         float subimage_vtx[4];
-        subimage_vtx[0] = 1.0e+30F;
-        subimage_vtx[1] = -1.0e+30F;
-        subimage_vtx[2] = 1.0e+30F;
-        subimage_vtx[3] = -1.0e+30F;
+        subimage_vtx[0] = ((float)BIG_NUMBER);
+        subimage_vtx[1] = ((float)-BIG_NUMBER);
+        subimage_vtx[2] = ((float)BIG_NUMBER);
+        subimage_vtx[3] = ((float)-BIG_NUMBER);
 
         float p1[3];
         for (int i = 0; i < 2; i++)
