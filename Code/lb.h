@@ -34,12 +34,12 @@ class LBM
 
     int IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net);
 
-    int lbmCycle(int perform_rt,
-                 Net *net,
-                 hemelb::lb::LocalLatticeData &bLocallatDat,
-                 double &bLbTime,
-                 double &bMPISendTime,
-                 double &bMPIWaitTime);
+    hemelb::lb::Stability lbmCycle(int perform_rt,
+                                   Net *net,
+                                   hemelb::lb::LocalLatticeData &bLocallatDat,
+                                   double &bLbTime,
+                                   double &bMPISendTime,
+                                   double &bMPIWaitTime);
     void lbmCalculateFlowFieldValues();
     void RecalculateTauViscosityOmega();
     void lbmUpdateBoundaryDensities(int cycle_id, int time_step);
@@ -50,7 +50,7 @@ class LBM
     void lbmSetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
     void
-    lbmWriteConfig(int stability,
+    lbmWriteConfig(hemelb::lb::Stability stability,
                    std::string output_file_name,
                    const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
                    const hemelb::lb::LocalLatticeData &iLocalLatticeData);

@@ -12,6 +12,13 @@ namespace hemelb
       IgnoreStress = 2
     };
 
+    enum Stability
+    {
+      Unstable = 0,
+      Stable = 1,
+      StableAndConverged = 2
+    };
+
     struct LbmParameters
     {
         double Omega;
