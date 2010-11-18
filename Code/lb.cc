@@ -265,7 +265,7 @@ hemelb::lb::collisions::Collision* LBM::GetCollision(int i)
 // when the convergence criterion is not applied. Communications
 // automatically handle the streaming stage pertaining to neighbouring
 // subdomains.
-int LBM::lbmCycle(int perform_rt,
+hemelb::lb::Stability LBM::lbmCycle(int perform_rt,
                   Net *net,
                   hemelb::lb::LocalLatticeData &bLocalLatDat,
                   double &bLbTime,
@@ -366,7 +366,7 @@ int LBM::lbmCycle(int perform_rt,
   bLocalLatDat.FOld = bLocalLatDat.FNew;
   bLocalLatDat.FNew = temp;
 
-  return STABLE;
+  return hemelb::lb::Stable;
 }
 
 void LBM::lbmCalculateFlowFieldValues()
