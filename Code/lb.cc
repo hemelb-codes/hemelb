@@ -9,55 +9,55 @@
 #include "utilityFunctions.h"
 #include "vis/RayTracer.h"
 
-double LBM::lbmConvertPressureToLatticeUnits(double pressure)
+double LBM::lbmConvertPressureToLatticeUnits(double pressure) const
 {
   return Cs2 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL
       * (PULSATILE_PERIOD / (period * voxel_size)) * (PULSATILE_PERIOD
       / (period * voxel_size)) / BLOOD_DENSITY;
 }
 
-double LBM::lbmConvertPressureToPhysicalUnits(double pressure)
+double LBM::lbmConvertPressureToPhysicalUnits(double pressure) const
 {
   return REFERENCE_PRESSURE + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY
       * ( (period * voxel_size) / PULSATILE_PERIOD) * ( (period * voxel_size)
       / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
 }
 
-double LBM::lbmConvertPressureGradToLatticeUnits(double pressure_grad)
+double LBM::lbmConvertPressureGradToLatticeUnits(double pressure_grad) const
 {
   return pressure_grad * mmHg_TO_PASCAL * (PULSATILE_PERIOD / (period
       * voxel_size)) * (PULSATILE_PERIOD / (period * voxel_size))
       / BLOOD_DENSITY;
 }
 
-double LBM::lbmConvertPressureGradToPhysicalUnits(double pressure_grad)
+double LBM::lbmConvertPressureGradToPhysicalUnits(double pressure_grad) const
 {
   return pressure_grad * BLOOD_DENSITY * ( (period * voxel_size)
       / PULSATILE_PERIOD) * ( (period * voxel_size) / PULSATILE_PERIOD)
       / mmHg_TO_PASCAL;
 }
 
-double LBM::lbmConvertVelocityToLatticeUnits(double velocity)
+double LBM::lbmConvertVelocityToLatticeUnits(double velocity) const
 {
   return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size)
       / (BLOOD_VISCOSITY / BLOOD_DENSITY);
 }
 
-double LBM::lbmConvertVelocityToPhysicalUnits(double velocity)
+double LBM::lbmConvertVelocityToPhysicalUnits(double velocity) const
 {
   // convert velocity from lattice units to physical units (m/s)
   return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / ( ( (mParams.Tau - 0.5)
       / 3.0) * voxel_size);
 }
 
-double LBM::lbmConvertStressToLatticeUnits(double stress)
+double LBM::lbmConvertStressToLatticeUnits(double stress) const
 {
   return stress * (BLOOD_DENSITY / (BLOOD_VISCOSITY * BLOOD_VISCOSITY))
       * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5)
       / 3.0) * voxel_size);
 }
 
-double LBM::lbmConvertStressToPhysicalUnits(double stress)
+double LBM::lbmConvertStressToPhysicalUnits(double stress) const
 {
   // convert stress from lattice units to physical units (Pa)
   return stress * BLOOD_VISCOSITY * BLOOD_VISCOSITY / (BLOOD_DENSITY
