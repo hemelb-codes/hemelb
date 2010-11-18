@@ -15,12 +15,12 @@ class LBM
     int steering_session_id;
     int period;
 
-    double lbmConvertPressureToLatticeUnits(double pressure);
-    double lbmConvertPressureToPhysicalUnits(double pressure);
-    double lbmConvertVelocityToLatticeUnits(double velocity);
-    double lbmConvertStressToLatticeUnits(double stress);
-    double lbmConvertStressToPhysicalUnits(double stress);
-    double lbmConvertVelocityToPhysicalUnits(double velocity);
+    double lbmConvertPressureToLatticeUnits(double pressure) const;
+    double lbmConvertPressureToPhysicalUnits(double pressure) const;
+    double lbmConvertVelocityToLatticeUnits(double velocity) const;
+    double lbmConvertStressToLatticeUnits(double stress) const;
+    double lbmConvertStressToPhysicalUnits(double stress) const;
+    double lbmConvertVelocityToPhysicalUnits(double velocity) const;
 
     void lbmInit(hemelb::SimConfig *iSimulationConfig,
                  const hemelb::topology::NetworkTopology * iNetTop,
@@ -97,8 +97,8 @@ class LBM
     void allocateInlets(int nInlets);
     void allocateOutlets(int nOutlets);
 
-    double lbmConvertPressureGradToLatticeUnits(double pressure_grad);
-    double lbmConvertPressureGradToPhysicalUnits(double pressure_grad);
+    double lbmConvertPressureGradToLatticeUnits(double pressure_grad) const;
+    double lbmConvertPressureGradToPhysicalUnits(double pressure_grad) const;
 
     hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
     hemelb::lb::collisions::WallCollision* mWallCollision;
