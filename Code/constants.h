@@ -7,6 +7,7 @@
 #define PI           3.14159265358979323846264338327950288
 #define DEG_TO_RAD   (PI / 180.0)
 #define EPSILON      1.0e-30
+#define BIG_NUMBER   1.0e+30
 
 #define STABLE                 1
 #define UNSTABLE               0
@@ -33,8 +34,6 @@
 #define PULSATILE_PERIOD               0.857142857   // period of oscillation (in s) is
 					             // chosen to be 1 min / 70
 					             // beats per min
-#define TOL                            1.0e-6
-
 #define VIS_FIELDS                     3
 
 // the constants needed to define the configuration of the lattice

@@ -119,7 +119,7 @@ namespace hemelb
                           int(stress_b / dt));
 
         }
-        else if (stress < 1.0e+30F)
+        else if (stress < ((float) BIG_NUMBER))
         {
           colourPalette(stress, stress_col);
 
@@ -135,8 +135,7 @@ namespace hemelb
 
       } // if (isRt)
 
-      if (iLbmStressType != lb::ShearStress && controller->mode
-          == 0)
+      if (iLbmStressType != lb::ShearStress && controller->mode == 0)
       {
         colourPalette(density, density_col);
         colourPalette(stress, stress_col);
@@ -150,8 +149,7 @@ namespace hemelb
             * stress_col[1]), int(255.0F * stress_col[2]));
 
       }
-      else if (iLbmStressType != lb::ShearStress
-          && controller->mode == 1)
+      else if (iLbmStressType != lb::ShearStress && controller->mode == 1)
       {
         colourPalette(density, density_col);
         colourPalette(stress, stress_col);
@@ -210,7 +208,7 @@ namespace hemelb
               * density), 0, 127);
 
           // store shear stress or von Mises stress
-          if (stress < 1.0e+30F)
+          if (stress < ((float) BIG_NUMBER))
           {
             r4 = g4 = b4 = (unsigned char) util::enforceBounds(int(127.5F
                 * stress), 0, 127);
