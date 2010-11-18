@@ -115,7 +115,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
     : hemelb::util::max(1, GetLBM()->period / lImagesPerCycle);
 
   bool is_finished = false;
-  int stability = STABLE;
+  hemelb::lb::Stability stability = hemelb::lb::Stable;
 
   for (mSimulationState.CycleId = 1; mSimulationState.CycleId
       <= lSimulationConfig->NumCycles && !is_finished; mSimulationState.CycleId++)
@@ -291,7 +291,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         }
       }
 #endif
-      if (stability == STABLE_AND_CONVERGED)
+      if (stability == hemelb::lb::StableAndConverged)
       {
         is_finished = true;
         break;

@@ -409,7 +409,7 @@ void LBM::allocateOutlets(int nOutlets)
   outlet_density_phs = new double[nOutlets];
 }
 
-void LBM::lbmWriteConfig(int stability,
+void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
                          std::string output_file_name,
                          const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
                          const hemelb::lb::LocalLatticeData &iLocalLatticeData)
@@ -490,7 +490,7 @@ void LBM::lbmWriteConfig(int stability,
   }
   hemelb::io::Writer& snap = *realSnap;
 
-  if (stability == UNSTABLE)
+  if (stability == hemelb::lb::Unstable)
   {
     if (mNetTopology->IsCurrentProcTheIOProc())
     {
@@ -629,7 +629,8 @@ void LBM::lbmWriteConfig(int stability,
 
               if (mParams.StressType == hemelb::lb::ShearStress)
               {
-                if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
+                if (iLocalLatticeData.GetNormalToWall(my_site_id)[0]
+                    >= BIG_NUMBER)
                 {
                   stress = -1.0;
                 }
@@ -831,8 +832,8 @@ void LBM::ReadVisParameters()
   velocity_max = par_to_send[7];
   stress_max = par_to_send[8];
 
-  density_min = ((float)BIG_NUMBER);
-  density_max = ((float)-BIG_NUMBER);
+  density_min = ((float) BIG_NUMBER);
+  density_max = ((float) -BIG_NUMBER);
 
   for (i = 0; i < inlets; i++)
   {

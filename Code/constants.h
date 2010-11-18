@@ -9,10 +9,6 @@
 #define EPSILON      1.0e-30
 #define BIG_NUMBER   1.0e+30
 
-#define STABLE                 1
-#define UNSTABLE               0
-#define STABLE_AND_CONVERGED   2
-
 #define MACROSCOPIC_PARS   5
 #define DENSITY            0
 #define VELOCITY           1
@@ -32,37 +28,37 @@
 #define BLOOD_DENSITY                  1000.0        // 1000 Kg m^(-3)
 #define BLOOD_VISCOSITY                0.004         // 0.004 Pascal s
 #define PULSATILE_PERIOD               0.857142857   // period of oscillation (in s) is
-					             // chosen to be 1 min / 70
-					             // beats per min
+// chosen to be 1 min / 70
+// beats per min
 #define VIS_FIELDS                     3
 
 // the constants needed to define the configuration of the lattice
 // sites follow
-const unsigned int BOUNDARIES              = 4U;
-const unsigned int INLET_BOUNDARY          = 0U;
-const unsigned int OUTLET_BOUNDARY         = 1U;
-const unsigned int WALL_BOUNDARY           = 2U;
+const unsigned int BOUNDARIES = 4U;
+const unsigned int INLET_BOUNDARY = 0U;
+const unsigned int OUTLET_BOUNDARY = 1U;
+const unsigned int WALL_BOUNDARY = 2U;
 const unsigned int CHARACTERISTIC_BOUNDARY = 3U;
 
-const unsigned int SITE_TYPE_BITS       = 2U;
+const unsigned int SITE_TYPE_BITS = 2U;
 const unsigned int BOUNDARY_CONFIG_BITS = 14U;
-const unsigned int BOUNDARY_DIR_BITS    = 4U;
-const unsigned int BOUNDARY_ID_BITS     = 10U;
+const unsigned int BOUNDARY_DIR_BITS = 4U;
+const unsigned int BOUNDARY_ID_BITS = 10U;
 
-const unsigned int BOUNDARY_CONFIG_SHIFT = 2U;   // SITE_TYPE_BITS;
-const unsigned int BOUNDARY_DIR_SHIFT    = 16U;  // BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
-const unsigned int BOUNDARY_ID_SHIFT     = 20U;  // BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
+const unsigned int BOUNDARY_CONFIG_SHIFT = 2U; // SITE_TYPE_BITS;
+const unsigned int BOUNDARY_DIR_SHIFT = 16U; // BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
+const unsigned int BOUNDARY_ID_SHIFT = 20U; // BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
 
-const unsigned int SITE_TYPE_MASK       = ((1U <<  2U) - 1U);         // ((1U << SITE_TYPE_BITS) - 1U);
-const unsigned int BOUNDARY_CONFIG_MASK = ((1U << 14U) - 1U) << 2U;   // ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUNDARY_CONFIG_SHIFT;
-const unsigned int BOUNDARY_DIR_MASK    = ((1U <<  4U) - 1U) << 16U;  //((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
-const unsigned int BOUNDARY_ID_MASK     = ((1U << 10U) - 1U) << 20U;  // ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT
-const unsigned int PRESSURE_EDGE_MASK   = 1U << 31U;
+const unsigned int SITE_TYPE_MASK = ( (1U << 2U) - 1U); // ((1U << SITE_TYPE_BITS) - 1U);
+const unsigned int BOUNDARY_CONFIG_MASK = ( (1U << 14U) - 1U) << 2U; // ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUNDARY_CONFIG_SHIFT;
+const unsigned int BOUNDARY_DIR_MASK = ( (1U << 4U) - 1U) << 16U; //((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
+const unsigned int BOUNDARY_ID_MASK = ( (1U << 10U) - 1U) << 20U; // ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT
+const unsigned int PRESSURE_EDGE_MASK = 1U << 31U;
 
-const unsigned int FLUID  = 1U;
-const unsigned int INLET  = 2U;
+const unsigned int FLUID = 1U;
+const unsigned int INLET = 2U;
 const unsigned int OUTLET = 4U;
-const unsigned int EDGE   = 8U;
+const unsigned int EDGE = 8U;
 
 // square of the speed of sound
 const double Cs2 = 1.0 / 3.0;
