@@ -6,6 +6,7 @@
 #include <dirent.h>
 
 #include <sys/dir.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include "fileutils.h"
@@ -68,7 +69,8 @@ namespace hemelb
     {
       struct direct **files;
 
-      int file_count = scandir(pathname.c_str(), &files, selectOnlyContents, alphasort);
+      int file_count = scandir(pathname.c_str(), &files, selectOnlyContents,
+                               alphasort);
 
       char filename[1024];
 
@@ -114,6 +116,52 @@ namespace hemelb
     void MakeDirAllRXW(std::string &dirPath)
     {
       mkdir(dirPath.c_str(), 0777);
+    }
+
+    std::string NormalizePathRelativeToPath(std::string inPath,
+                                            std::string basePath)
+    {
+      // If it's an absolute path, just return it
+      if (inPath[0] == '/')
+      {
+        return inPath;
+      }
+
+      // Going to check if it's a directory
+      std::string baseDir;
+      struct stat st;
+      stat(basePath.c_str(), &st);
+      // Assume it's a regular file in case it doesn't exist
+      st.st_mode = S_IFREG;
+
+      if (st.st_mode == S_IFDIR)
+      {
+        // It's a directory
+        baseDir = basePath;
+      }
+      else
+      {
+        // Not a dir, find the last slash
+        unsigned int lastSlash = basePath.rfind('/');
+        if (lastSlash == basePath.npos)
+        {
+          // No slashes, so the baseDir is just the working dir
+          baseDir = '.';
+        }
+        else
+        {
+          // Has slashes, return up to the last
+          baseDir = basePath.substr(0, lastSlash);
+        }
+      }
+
+      // Make sure it ends in a slash
+      if (baseDir[baseDir.size()-1] != '/') {
+        baseDir += '/';
+      }
+
+      //Append the path of interest
+      return baseDir + inPath;
     }
 
   }
