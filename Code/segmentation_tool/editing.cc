@@ -172,7 +172,7 @@ void editProjectBoundariesToScreenVoxels (Vis *vis)
     {
       vis->screen_voxel[ n ].z[VERTEX] = 0.0;
     }
-  for (int n = 0; n < BOUNDARIES; n++)
+  for (unsigned int n = 0; n < BOUNDARIES; n++)
     {
       for (int m = 0; m < vis->boundary[ n ].triangles; m++)
 	{
@@ -424,7 +424,7 @@ void editMotionFunction (int x, int y, Vis *vis)
 	}
       else if ((vis->menu.option & (CHANGE_PRESSURE_AMPLITUDE|CHANGE_MEAN_PRESSURE|CHANGE_PRESSURE_PHASE)) &&
 	       vis->mouse.b_id >= 0 &&
-	       (vis->mouse.b_id == INLET_BOUNDARY || vis->mouse.b_id == OUTLET_BOUNDARY))
+	       ( ((unsigned int)vis->mouse.b_id) == INLET_BOUNDARY || ((unsigned int) vis->mouse.b_id) == OUTLET_BOUNDARY))
 	{
 	  double dy = 10.0 * (double)mouse_dy / vis->viewport_pixels[1];
 	  
