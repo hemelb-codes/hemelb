@@ -25,6 +25,26 @@ unsigned int BOUNDARY_CONFIG_MASK = ((1U << BOUNDARY_CONFIG_BITS) - 1U) << BOUND
 unsigned int BOUNDARY_DIR_MASK    = ((1U << BOUNDARY_DIR_BITS) - 1U)    << BOUNDARY_DIR_SHIFT;
 unsigned int BOUNDARY_ID_MASK     = ((1U << BOUNDARY_ID_BITS) - 1U)     << BOUNDARY_ID_SHIFT;
 
+int e[] = {
+   1, 0, 0,
+  -1, 0, 0,
+   0, 1, 0,
+   0,-1, 0,
+   0, 0, 1,
+   0, 0,-1,
+   1, 1, 1,
+  -1,-1,-1,
+   1, 1,-1,
+  -1,-1, 1,
+   1,-1, 1,
+  -1, 1,-1,
+   1,-1,-1,
+  -1, 1, 1
+};
+
+int inv_dir[] = {1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12};
+
+
 Screen screen;
 
 Viewpoint viewpoint;
