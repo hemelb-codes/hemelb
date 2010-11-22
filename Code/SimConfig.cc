@@ -37,7 +37,7 @@ namespace hemelb
     SimConfig *lRet = new SimConfig();
 
     lRet->DoIO(lConfigFile->FirstChildElement(), true);
-
+    lRet->DataFilePath = util::NormalizePathRelativeToPath(lRet->DataFilePath, iPath);
     delete lConfigFile;
 
     return lRet;
