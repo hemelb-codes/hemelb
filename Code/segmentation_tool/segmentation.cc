@@ -862,17 +862,16 @@ int segIsSegmentIntercepted (short int site[3], int dir, Site *site_p, Hit *hit,
   double t, t_max;
   
   int b_id, t_id;
-  int l, m, n;
   
   
 #ifndef MESH
-  for (l = 0; l < 3; l++)
+  for (int l = 0; l < 3; l++)
     {
       x1[l] = site[l] / vis->res_factor - vis->half_dim[l];
       x2[l] = x1[l] + e[ dir*3+l ] / vis->res_factor;
     }
 #else
-  for (l = 0; l < 3; l++)
+  for (int l = 0; l < 3; l++)
     {
       x1[l] = vis->seed_pos[l] + (site[l] - vis->seed_site[l]) * (vis->mesh.voxel_size / vis->res_factor);
       x2[l] = x1[l] + e[ dir*3+l ] * (vis->mesh.voxel_size / vis->res_factor);
@@ -881,8 +880,8 @@ int segIsSegmentIntercepted (short int site[3], int dir, Site *site_p, Hit *hit,
   t_max = 1.0;
   b_id = -1;
   
-  for (n = 0; n < BOUNDARIES; n++)
-    for (m = 0; m < vis->boundary[ n ].triangles; m++)
+  for (unsigned int n = 0; n < BOUNDARIES; n++)
+    for (int m = 0; m < vis->boundary[ n ].triangles; m++)
       {
 	if (segRayVsDisc (&vis->boundary[n].triangle[m], x1, x2, t_max, &t) == SUCCESS)
 	  {
@@ -894,10 +893,10 @@ int segIsSegmentIntercepted (short int site[3], int dir, Site *site_p, Hit *hit,
 #ifdef MESH
   Ray ray;
   
-  for (l = 0; l < 3; l++)
+  for (int l = 0; l < 3; l++)
     ray.org[l] = x1[l];
   
-  for (l = 0; l < 3; l++)
+  for (int l = 0; l < 3; l++)
     ray.dir[l] = x2[l] - x1[l];
   
   ray.t_max = t_max;
@@ -912,11 +911,11 @@ int segIsSegmentIntercepted (short int site[3], int dir, Site *site_p, Hit *hit,
 #endif
   if (b_id != -1)
     {
-      if (b_id == INLET_BOUNDARY)
+      if (((unsigned int)b_id) == INLET_BOUNDARY)
 	{
 	  site_p->cfg = INLET_TYPE | (t_id << BOUNDARY_ID_SHIFT);
 	}
-      else if (b_id == OUTLET_BOUNDARY)
+      else if (((unsigned int)b_id) == OUTLET_BOUNDARY)
 	{
 	  site_p->cfg = OUTLET_TYPE | (t_id << BOUNDARY_ID_SHIFT);
 	}

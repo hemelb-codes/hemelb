@@ -439,9 +439,9 @@ void visVisualiseTriangles (Vis *vis)
 	{
 	  glColor3d (0.0, 0.0, 0.5);
 	}
-      for (unsigned int m = 0; m < vis->boundary[ n ].triangles; m++)
+      for (int m = 0; m < vis->boundary[ n ].triangles; m++)
 	{
-	  if (m == vis->mouse.t_id && n == vis->mouse.b_id)
+	  if (m == vis->mouse.t_id && n == ((unsigned int)vis->mouse.b_id))
 	    {
 	      glBegin (GL_TRIANGLES);
 	    }
@@ -504,7 +504,7 @@ void visVisualiseDiscs (Vis *vis)
 	{
 	  glColor3d (0.0, 0.0, 0.5);
 	}
-      for (unsigned int m = 0; m < vis->boundary[ n ].triangles; m++)
+      for (int m = 0; m < vis->boundary[ n ].triangles; m++)
 	{
 	  glBegin (GL_TRIANGLE_FAN);
 	  
@@ -926,7 +926,7 @@ void visVisualiseSystem (Vis *vis)
     {
       visVisualiseFluidSitesWithCubes (vis);
     }
-  if (vis->mouse.b_id == INLET_BOUNDARY || vis->mouse.b_id == OUTLET_BOUNDARY)
+  if (((unsigned int) vis->mouse.b_id) == INLET_BOUNDARY || ((unsigned int )vis->mouse.b_id) == OUTLET_BOUNDARY)
     {
       visVisualiseTrianglePars (vis->mouse.b_id, vis->mouse.t_id, vis);
     }

@@ -92,7 +92,7 @@ void menuProcessMenuEvents (int option)
     {
       if (vis.mouse.b_id < 0) return;
       
-      if (option == REVERSE_INLET_NORMAL && vis.mouse.b_id == INLET_BOUNDARY)
+      if (option == REVERSE_INLET_NORMAL && ((unsigned int)vis.mouse.b_id) == INLET_BOUNDARY)
 	{
 	  editInvertTriangleNormal (vis.mouse.b_id, vis.mouse.t_id, &vis);
 	}
@@ -152,7 +152,8 @@ void menuProcessMenuEvents (int option)
   else if (option == SAVE_DATA)
     {
       printf("Opening ppm file: ./snapshot.ppm\n");
-      ioSaveWindowImage ("./snapshot.ppm");
+      std::string lSavePath = "./snapshot.ppm";
+      ioSaveWindowImage (lSavePath.c_str());
       
       segSetBoundaryConfigurations (&vis);
       

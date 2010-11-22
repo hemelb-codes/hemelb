@@ -706,7 +706,7 @@ void ioWritePars (Vis *vis)
 	  for (l = 0; l < 3; l++)
 	    nor[l] = -nor[l];
 	}
-      fprintf (pars, "%le %le %le\n", t_p->pressure_avg, t_p->pressure_amp, t_p->pressure_phs);
+      fprintf (pars, "%e %e %e\n", t_p->pressure_avg, t_p->pressure_amp, t_p->pressure_phs);
     }
   
   fprintf (pars, "%i\n", vis->boundary[ OUTLET_BOUNDARY ].triangles);
@@ -717,7 +717,7 @@ void ioWritePars (Vis *vis)
       
       editTriangleNormal (t_p, nor);
       
-      fprintf (pars, "%le %le %le\n", t_p->pressure_avg, t_p->pressure_amp, t_p->pressure_phs);
+      fprintf (pars, "%e %e %e\n", t_p->pressure_avg, t_p->pressure_amp, t_p->pressure_phs);
     }
   for (n = 0; n < vis->boundary[ INLET_BOUNDARY ].triangles; n++)
     {
@@ -841,7 +841,7 @@ void ioSaveWindowImage (char *file_name) {
 
 #else // USE_TIFFLIB
 
-void ioSaveWindowImage (char *file_name)
+void ioSaveWindowImage (const char *file_name)
 {
   FILE *ppm_image_file = fopen (file_name, "wb");
   
