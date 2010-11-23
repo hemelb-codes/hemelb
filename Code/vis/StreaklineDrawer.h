@@ -25,8 +25,7 @@ namespace hemelb
         // Constructor and destructor.
         StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
                          lb::LocalLatticeData &iLocalLatDat,
-                         lb::GlobalLatticeData &iGlobLatDat,
-                         bool & oSuccess);
+                         lb::GlobalLatticeData &iGlobLatDat);
         ~StreaklineDrawer();
 
         // Method to reset streakline drawer
