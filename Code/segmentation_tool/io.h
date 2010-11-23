@@ -1,7 +1,6 @@
 #ifndef IO
 #define IO
 
-
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <dirent.h>
@@ -16,22 +15,12 @@
 
 using namespace std;
 
-
-#ifndef MESH
-// int ioGetDir (string dir, vector<string> &files);
-// void ioGetFileNames (Vis *vis);
-// void ioReadFirstSlice (Vis *vis);
-// void ioReadSlice (int slice_id, Vis *vis);
 void ioReadConfig (Vis *vis);
-#else
-void ioReadConfig (Vis *vis);
-#endif
-void ioWriteCheckpoint (Vis *vis);
-void ioReadCheckpoint (Vis *vis);
-void ioWriteConfig (Vis *vis);
-void ioWriteCoords (Vis *vis);
-void ioWritePars (Vis *vis);
-void ioSaveWindowImage (const char *file_name);
-
+void ioWriteCheckpoint(Vis *vis);
+void ioReadCheckpoint(Vis *vis);
+void ioWriteConfig(Vis *vis);
+void ioWriteCoords(Vis *vis);
+void ioWritePars(Vis *vis);
+void ioSaveWindowImage(const char *file_name);
 
 #endif // IO

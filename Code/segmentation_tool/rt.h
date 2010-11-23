@@ -1,4 +1,3 @@
-#ifdef MESH
 #ifndef RAYTRACING
 #define RAYTRACING
 
@@ -17,4 +16,3 @@ void rtEndRayTracing (Mesh *mesh);
 
 
 #endif // RAYTRACING
-#endif // MESH
