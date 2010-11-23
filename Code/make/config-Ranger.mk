@@ -3,7 +3,7 @@ include $(MK)/config-linux.mk
 CXX := mpicxx
 AR := xiar
 
-HEMELB_CXXFLAGS := -O3 -xW -ipo -pthread
+HEMELB_CXXFLAGS := -O3 -xW -ipo -ipo-jobs4 -pthread
 
 # The MPICH define is to get around a bug in the MPI2 C++ binding on MPICH
 HEMELB_DEFS += MPICH_IGNORE_CXX_SEEK
