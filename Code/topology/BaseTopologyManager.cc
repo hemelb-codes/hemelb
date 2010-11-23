@@ -113,6 +113,12 @@ namespace hemelb
                   while (lSitesOnCurrentProc < iSitesPerProc
                       && lIsRegionGrowing)
                   {
+                    for(unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
+                    {
+                      delete lSiteLocationB->operator [](ii);
+                    }
+                    lSiteLocationB->clear();
+
                     // Sites added to the edge of the mClusters during the iteration.
                     lIsRegionGrowing = false;
 
@@ -202,11 +208,21 @@ namespace hemelb
                   }
                   // If not, we have to start growing a different region for the same rank:
                   // region expansions could get trapped.
-                }
-              }
-            }
-          }
-        }
+
+                } // Site co-ord k
+              } // Site co-ord j
+            } // Site co-ord i
+          } // Block co-ord k
+        } // Block co-ord j
+      } // Block co-ord i
+
+      for(unsigned int ii = 0; ii < lSiteLocationA->size(); ii++)
+      {
+        delete lSiteLocationA->operator [](ii);
+      }
+      for(unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
+      {
+        delete lSiteLocationB->operator [](ii);
       }
 
       delete lSiteLocationA;

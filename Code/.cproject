@@ -7,6 +7,7 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.base.825880950" moduleId="org.eclipse.cdt.core.settings" name="Default">
 				<macros>
 					<stringMacro name="HEMELB_MACHINE" type="VALUE_TEXT" value="CCS"/>
+					<stringMacro name="MESH" type="VALUE_TEXT" value=""/>
 					<stringMacro name="TIXML_USE_TICPP" type="VALUE_TEXT" value=""/>
 				</macros>
 				<externalSettings/>

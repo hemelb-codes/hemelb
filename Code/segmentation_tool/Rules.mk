@@ -8,7 +8,6 @@ $(EXE)_DEPS = config.o \
               editing.o \
               io.o \
               main.o \
-	      io_dicom.o \
 	      math.o \
               menu.o \
               rt.o \
