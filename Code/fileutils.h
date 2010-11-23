@@ -34,6 +34,11 @@ namespace hemelb
     // and anyone can read write and execute.
     void MakeDirAllRXW(std::string &dirPath);
 
+    // Get the full path of inPath relative to basePath
+    // which can be either a directory or a file (in this case, use
+    // the containing directory).
+    std::string NormalizePathRelativeToPath(std::string inPath,
+                                            std::string basePath);
   }
 }
 #endif // HEMELB_FILEUTILS_H
