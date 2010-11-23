@@ -70,14 +70,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   hemelb::vis::controller
       = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mGlobLatDat);
 
-  bool lSuccess;
   hemelb::vis::controller->initLayers(&mNetworkTopology, mGlobLatDat,
-                                      mLocalLatDat, lSuccess);
-
-  if (!lSuccess)
-  {
-    mNet->Abort();
-  }
+                                      mLocalLatDat);
 
   GetLBM()->ReadVisParameters();
 
