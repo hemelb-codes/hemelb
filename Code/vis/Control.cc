@@ -50,6 +50,7 @@ namespace hemelb
                              lb::LocalLatticeData &iLocalLatDat,
                              bool & oSuccess)
     {
+      oSuccess = true;
       myRayTracer = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
       myGlypher = new GlyphDrawer(&iGlobLatDat, &iLocalLatDat);
 
