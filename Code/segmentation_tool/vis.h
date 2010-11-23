@@ -8,10 +8,7 @@
 #include "segmentation.h"
 #include "io.h"
 #include "menu.h"
-#ifdef MESH
 #include "rt.h"
-#endif
-
 
 void visColorPalette (int iters, int res_factor, double col[3]);
 ScreenVoxel *visScreenVoxelPtr (short int x[2], Vis *vis);
@@ -23,28 +20,17 @@ void visCalculateSceneCenter (Vis *vis);
 void visCreateCubeDisplayList (Vis *vis);
 void visDeleteCubeDisplayList (void);
 void visVisualiseString (double r, double g, double b, int x, int y, char *string, void *font);
-void visVisualiseTrianglePars (int b_id, int t_id, Vis *vis);
-#ifndef MESH
-void visVisualiseSiteData (short int site[3], Vis *vis);
-#else
+void visVisualiseTrianglePars(block_id b_id, triangle_id t_id, Vis *vis);
 void visVisualiseSiteData (Vis *vis);
-#endif
 void visVisualiseVisData (Vis *vis);
 void visVisualiseTriangles (Vis *vis);
 void visVisualiseDiscs (Vis *vis);
 void visVisualiseActiveBoundaryVoxel (Vis *vis);
-#ifdef MESH
 void visVisualiseHitData (Hit *first_hit, Hit *second_hit, Vis *vis);
 void visVisualiseMesh (Vis *vis);
-#else
-void visVisualiseSelectedSlice (Vis *vis);
-void visUpdateSegmentation (Vis *vis);
-#endif
 void visVisualiseFluidSitesWithPoints (Vis *vis);
 void visVisualiseFluidSitesWithCubes (Vis *vis);
-#ifdef MESH
 void visVisualiseInterceptions (Vis *vis);
-#endif
 void visVisualiseSystem (Vis *vis);
 void GLUTCALLBACK Visualise (void);
 void visInitBoundaries (Vis *vis);
