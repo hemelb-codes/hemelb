@@ -142,11 +142,11 @@ namespace hemelb
       else
       {
         // Not a dir, find the last slash
-        unsigned int lastSlash = basePath.rfind('/');
+        unsigned long lastSlash = basePath.rfind('/');
         if (lastSlash == basePath.npos)
         {
           // No slashes, so the baseDir is just the working dir
-          baseDir = '.';
+          baseDir = ".";
         }
         else
         {
@@ -157,7 +157,7 @@ namespace hemelb
 
       // Make sure it ends in a slash
       if (baseDir[baseDir.size()-1] != '/') {
-        baseDir += '/';
+        baseDir += "/";
       }
 
       //Append the path of interest
