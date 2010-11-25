@@ -14,15 +14,10 @@ namespace hemelb
     class BaseTopologyManager
     {
       public:
-        void
-        AssignFluidSitesToProcessors(int & proc_count,
-                                     int & fluid_sites_per_unit,
-                                     int & unvisited_fluid_sites,
-                                     const int iCurrentProcId,
-                                     const bool iIsMachineLevel,
-                                     lb::LocalLatticeData * iLocalLatDat,
-                                     const lb::GlobalLatticeData &iGlobLatDat,
-                                     NetworkTopology * bNetTopology);
+        void DecomposeDomain(int iTotalFluidSites,
+                             NetworkTopology & bNetTop,
+                             const lb::GlobalLatticeData & bGlobLatDat,
+                             lb::LocalLatticeData & bLocalLatDat);
 
       protected:
 
@@ -34,6 +29,17 @@ namespace hemelb
         {
             short int i, j, k;
         };
+
+      private:
+        void
+        AssignFluidSitesToProcessors(int & proc_count,
+                                     int & fluid_sites_per_unit,
+                                     int & unvisited_fluid_sites,
+                                     const int iCurrentProcId,
+                                     const bool iIsMachineLevel,
+                                     lb::LocalLatticeData * iLocalLatDat,
+                                     const lb::GlobalLatticeData &iGlobLatDat,
+                                     NetworkTopology * bNetTopology);
     };
   }
 }
