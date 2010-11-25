@@ -72,100 +72,14 @@ void Net::Abort()
  implemented in this function.  The domain decomposition is based
  on a graph growing partitioning technique.
  */
-void Net::Initialise(int iTotalFluidSites,
-                     hemelb::topology::TopologyManager &iTopologyManager,
-                     hemelb::topology::NetworkTopology &iNetTop,
+void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
                      hemelb::lb::GlobalLatticeData &iGlobLatDat,
                      hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
+
   block_count = iGlobLatDat.BlockCount;
 
-  // Allocations.  fluid sites will store actual number of fluid
-  // sites per proc.  Site location will store up to 10000 of some
-  // sort of coordinate.
-  iNetTop.FluidSitesOnEachProcessor = new int[iNetTop.ProcessorCount];
-  bLocalLatDat.LocalFluidSites = 0;
-
-  // a fast graph growing partitioning technique which spans the data
-  // set only once is implemented here; the data set is explored by
-  // means of the arrays "site_location_a[]" and "site_location_b[]"
-
-  for (int n = 0; n < iNetTop.ProcessorCount; n++)
-  {
-    iNetTop.FluidSitesOnEachProcessor[n] = 0;
-  }
-
-  // Count of fluid sites not yet visited.
-  int lUnvisitedFluidSiteCount = iTotalFluidSites;
-
-  // Count of time elapsed.
   double seconds = hemelb::util::myClock();
-
-  // If one machine or one machine per proc.
-  if (iNetTop.MachineCount == 1 || iNetTop.MachineCount
-      == iNetTop.ProcessorCount)
-  {
-    // Fluid sites per rank.
-    int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-        / (double) iNetTop.ProcessorCount);
-
-    //Rank we're looking at.
-    int proc_count = 0;
-
-    // If we're steering with more than one processor, save one processor for doing that.
-#ifndef NO_STEER
-    if (iNetTop.ProcessorCount != 1)
-    {
-      fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-          / (double) (iNetTop.ProcessorCount - 1));
-      proc_count = 1;
-    }
-#endif
-
-    // In the simple case, simply divide fluid sites up between processors.
-    iTopologyManager.AssignFluidSitesToProcessors(proc_count,
-                                                  fluid_sites_per_unit,
-                                                  lUnvisitedFluidSiteCount, -1,
-                                                  false, &bLocalLatDat,
-                                                  iGlobLatDat, &iNetTop);
-  }
-  else
-  {
-    // Rank we are looking at.
-    int proc_count = iNetTop.ProcessorCount;
-    double weight = (double) (iNetTop.ProcCountOnEachMachine[0]
-        * iNetTop.ProcessorCount) / (double) (iNetTop.ProcessorCount - 1);
-    // Fluid sites per rank.
-    int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites * weight
-        / iNetTop.MachineCount);
-
-    // First, divide the sites up between machines.
-    iTopologyManager.AssignFluidSitesToProcessors(proc_count,
-                                                  fluid_sites_per_unit,
-                                                  lUnvisitedFluidSiteCount, -1,
-                                                  true, &bLocalLatDat,
-                                                  iGlobLatDat, &iNetTop);
-
-    fluid_sites_per_unit = (int) ceil((double) lUnvisitedFluidSiteCount
-        / (double) (iNetTop.ProcessorCount - 1));
-    proc_count = 1;
-
-    // For each machine, divide up the sites it has between its cores.
-    for (int lMachineNumber = 0; lMachineNumber < iNetTop.MachineCount; lMachineNumber++)
-    {
-      iTopologyManager.AssignFluidSitesToProcessors(proc_count,
-                                                    fluid_sites_per_unit,
-                                                    lUnvisitedFluidSiteCount,
-                                                    iNetTop.ProcessorCount
-                                                        + lMachineNumber, false,
-                                                    &bLocalLatDat, iGlobLatDat,
-                                                    &iNetTop);
-    }
-  }
-
-  // Next stage of the timing.
-  dd_time = hemelb::util::myClock() - seconds;
-  seconds = hemelb::util::myClock();
 
   // Create a map between the two-level data representation and the 1D
   // compact one is created here.

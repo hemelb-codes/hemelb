@@ -64,8 +64,16 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     fprintf(bTimingsFile, "MPI_Attr_get failed, aborting\n");
     GetNet()->Abort();
   }
-  GetNet()->Initialise(GetLBM()->total_fluid_sites, mTopologyManger,
-                       mNetworkTopology, mGlobLatDat, mLocalLatDat);
+
+  // Count of time elapsed.
+  double seconds = hemelb::util::myClock();
+
+  mTopologyManger.DecomposeDomain(GetLBM()->total_fluid_sites,
+                                  mNetworkTopology, mGlobLatDat, mLocalLatDat);
+
+  mDomainDecompTime = hemelb::util::myClock() - seconds;
+
+  GetNet()->Initialise(mNetworkTopology, mGlobLatDat, mLocalLatDat);
   GetLBM()->lbmSetInitialConditions(mLocalLatDat);
   hemelb::vis::controller
       = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mGlobLatDat);
@@ -403,7 +411,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
       fprintf(mTimingsFile, "\n");
       fprintf(mTimingsFile,
               "domain decomposition time (s):             %.3f\n",
-              GetNet()->dd_time);
+              mDomainDecompTime);
       fprintf(mTimingsFile,
               "pre-processing buffer management time (s): %.3f\n",
               GetNet()->bm_time);
