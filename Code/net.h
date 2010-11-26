@@ -21,18 +21,16 @@ class Net
 
     void Abort();
 
-    void Initialise(int iTotalFluidSites,
-                    hemelb::topology::TopologyManager &iTopologyManager,
-                    hemelb::topology::NetworkTopology &iNetTop,
+    void Initialise(hemelb::topology::NetworkTopology &iNetTop,
                     hemelb::lb::GlobalLatticeData &iGlobLatDat,
                     hemelb::lb::LocalLatticeData &bLocalLatDat);
 
     void
         ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
     void
-        SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
+    SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
     void
-        UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
+    UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
     int GetMachineCount();
 
@@ -48,7 +46,7 @@ class Net
 
     unsigned int GetCollisionType(unsigned int site_data);
     MPI_Status status[4];
-    double dd_time, bm_time, fr_time;
+    double bm_time, fr_time;
 
   private:
     // NeighProc is part of the Net (defined later in this file).  This object is an element of an array

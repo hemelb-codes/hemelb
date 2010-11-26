@@ -262,10 +262,8 @@ namespace hemelb
     // Constructor, populating fields from lattice data objects.
     StreaklineDrawer::StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
                                        lb::LocalLatticeData &iLocalLatDat,
-                                       lb::GlobalLatticeData &iGlobLatDat,
-                                       bool & oSuccess)
+                                       lb::GlobalLatticeData &iGlobLatDat)
     {
-      oSuccess = true;
       mNetworkTopology = iNetworkTopology;
 
       int inlet_sites;

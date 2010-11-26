@@ -47,17 +47,14 @@ namespace hemelb
 
     void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
                              lb::GlobalLatticeData &iGlobLatDat,
-                             lb::LocalLatticeData &iLocalLatDat,
-                             bool & oSuccess)
+                             lb::LocalLatticeData &iLocalLatDat)
     {
       myRayTracer = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
       myGlypher = new GlyphDrawer(&iGlobLatDat, &iLocalLatDat);
 
 #ifndef NO_STREAKLINES
-      bool lSuccess;
       myStreaker = new StreaklineDrawer(iNetworkTopology, iLocalLatDat,
-                                        iGlobLatDat, lSuccess);
-      oSuccess = lSuccess;
+                                        iGlobLatDat);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
