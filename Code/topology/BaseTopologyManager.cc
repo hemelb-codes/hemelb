@@ -165,16 +165,7 @@ namespace hemelb
                   // Assign it to the rank and update the fluid site counters.
                   lProcRankForSite[lSiteNumber] = proc_count;
 
-                  if (bNetTopology->LocalRank == proc_count)
-                  {
-                    ++iLocalLatDat->LocalFluidSites;
-                  }
                   ++lSitesOnCurrentProc;
-
-                  if (!iIsMachineLevel)
-                  {
-                    ++bNetTopology->FluidSitesOnEachProcessor[proc_count];
-                  }
 
                   // Record the location of this initial site.
                   lSiteLocationA->clear();
@@ -244,16 +235,6 @@ namespace hemelb
                         *proc_id_p = proc_count;
                         lSitesOnCurrentProc++;
 
-                        if (!iIsMachineLevel)
-                        {
-                          bNetTopology->FluidSitesOnEachProcessor[proc_count]++;
-                        }
-
-                        if (bNetTopology->LocalRank == proc_count)
-                        {
-                          ++iLocalLatDat->LocalFluidSites;
-                        }
-
                         // Neighbour was found, so the region can grow.
                         lIsRegionGrowing = true;
 
@@ -275,6 +256,17 @@ namespace hemelb
                   // If we have enough sites, we have finished.
                   if (lSitesOnCurrentProc >= iSitesPerProc)
                   {
+                    if (bNetTopology->LocalRank == proc_count)
+                    {
+                      iLocalLatDat->LocalFluidSites = lSitesOnCurrentProc;
+                    }
+
+                    if (!iIsMachineLevel)
+                    {
+                      bNetTopology->FluidSitesOnEachProcessor[proc_count]
+                          = lSitesOnCurrentProc;
+                    }
+
                     ++proc_count;
                     if (!iIsMachineLevel)
                     {
