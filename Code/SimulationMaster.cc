@@ -362,7 +362,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
   {
     fprintf(mTimingsFile, "\n");
     fprintf(mTimingsFile, "threads: %i, machines checked: %i\n\n",
-            mNetworkTopology.ProcessorCount, GetNet()->GetMachineCount());
+            mNetworkTopology.ProcessorCount, mNetworkTopology.MachineCount);
     fprintf(mTimingsFile, "topology depths checked: %i\n\n",
             mNetworkTopology.Depths);
     fprintf(mTimingsFile, "fluid sites: %i\n\n", GetLBM()->total_fluid_sites);
