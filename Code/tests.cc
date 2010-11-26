@@ -40,7 +40,7 @@ void Tests::TestDomainDecomposition()
 
   lTopMan.DecomposeDomain(lFluidSites, lNetTop, lGlobLatDat, lLocalLatDat);
 
-  for (int ii = 0; ii < lProcCount; ii++)
+  for (int ii = 1; ii < lProcCount; ii++)
   {
     if (std::abs(lExpectedPerRank
         - (double) lNetTop.FluidSitesOnEachProcessor[ii]) > 1.0)
