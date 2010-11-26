@@ -12,7 +12,6 @@ namespace hemelb
     {
         ~NeighbouringProcessor()
         {
-          delete[] SharedFLocation;
           delete[] SharedFReceivingIndex;
         }
 
@@ -21,10 +20,6 @@ namespace hemelb
 
         // The number of distributions shared between this neighbour and the current processor.
         int SharedFCount;
-
-        // Site co-ordinates for each of the shared distribution, and the number of
-        // the corresponding direction vector. Array is 4 elements for each shared distribution.
-        short int * SharedFLocation;
 
         // Index on this processor of the first distribution shared between this
         // neighbour and the current processor.

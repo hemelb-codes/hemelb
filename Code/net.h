@@ -32,11 +32,6 @@ class Net
     void
     UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
-    int GetMachineCount();
-
-    // Currently needed for the destructor. TODO should probably do via vector or similar.
-    int block_count;
-
     int err;
     int my_inner_sites; // Site on this process that do and do not need
     // information from neighbouring processors.

@@ -76,9 +76,6 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
                      hemelb::lb::GlobalLatticeData &iGlobLatDat,
                      hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
-
-  block_count = iGlobLatDat.BlockCount;
-
   double seconds = hemelb::util::myClock();
 
   // Create a map between the two-level data representation and the 1D
@@ -441,6 +438,9 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
   // process.
   f_recv_iv = new int[iNetTop.TotalSharedFs];
 
+  short int ** lSharedFLocationForEachProc =
+      new short int*[iNetTop.NeighbouringProcs.size()];
+
   // Reset to zero again.
   iNetTop.TotalSharedFs = 0;
 
@@ -449,8 +449,11 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
   {
     // f_data compacted according to number of shared f_s on each process.
     // f_data will be set later.
-    iNetTop.NeighbouringProcs[n]->SharedFLocation
-        = &f_data[iNetTop.TotalSharedFs << 2];
+
+
+    // Site co-ordinates for each of the shared distribution, and the number of
+    // the corresponding direction vector. Array is 4 elements for each shared distribution.
+    lSharedFLocationForEachProc[n] = &f_data[iNetTop.TotalSharedFs << 2];
 
     // Pointing to a few things, but not setting any variables.
     // FirstSharedF points to start of shared_fs.
@@ -595,9 +598,10 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
                 // its neighbours which say which sites
                 // on this process are shared with the
                 // neighbour.
-                short int *f_data_p =
-                    &neigh_proc_p->SharedFLocation[neigh_proc_p->SharedFCount
-                        << 2];
+                short int
+                    *f_data_p =
+                        &lSharedFLocationForEachProc[neigh_proc_index][neigh_proc_p->SharedFCount
+                            << 2];
                 f_data_p[0] = site_i;
                 f_data_p[1] = site_j;
                 f_data_p[2] = site_k;
@@ -661,13 +665,13 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
 #ifndef NOMPI
     if (neigh_proc_p->Rank > iNetTop.LocalRank)
     {
-      err = MPI_Isend(&neigh_proc_p->SharedFLocation[0],
+      err = MPI_Isend(&lSharedFLocationForEachProc[m][0],
                       neigh_proc_p->SharedFCount * 4, MPI_SHORT,
                       neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
     }
     else
     {
-      err = MPI_Irecv(&neigh_proc_p->SharedFLocation[0],
+      err = MPI_Irecv(&lSharedFLocationForEachProc[m][0],
                       neigh_proc_p->SharedFCount * 4, MPI_SHORT,
                       neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
                       &req[0][iNetTop.NeighbouringProcs.size() + m]);
@@ -693,7 +697,7 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
       // Now we sort the situation so that each process has its own sites.
       for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
       {
-        short int *f_data_p = &neigh_proc_p->SharedFLocation[n];
+        short int *f_data_p = &lSharedFLocationForEachProc[m][n];
 
         short int l = f_data_p[3];
         f_data_p[0] += D3Q15::CX[l];
@@ -714,7 +718,7 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
     for (int n = 0; n < neigh_proc_p->SharedFCount; n++)
     {
       // Get coordinates and direction of the distribution function to be sent to another process.
-      short int *f_data_p = &neigh_proc_p->SharedFLocation[n * 4];
+      short int *f_data_p = &lSharedFLocationForEachProc[m][n * 4];
       short int i = f_data_p[0];
       short int j = f_data_p[1];
       short int k = f_data_p[2];
@@ -753,11 +757,6 @@ void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocal
                     10, MPI_COMM_WORLD, &req[0][m]);
   }
 #endif
-}
-
-int Net::GetMachineCount()
-{
-  return mNetworkTopology->MachineCount;
 }
 
 void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
