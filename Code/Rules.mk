@@ -1,7 +1,7 @@
 # -*- mode: makefile;-*-
 include $(MK)/header.mk
 
-TARGETS = $(EXE)
+TARGETS = $(EXE) hemelbTest
 SUBDIRS = vis steering io debug lb topology xml
 
 $(EXE)_DEPS = D3Q15.o \
@@ -15,6 +15,18 @@ $(EXE)_DEPS = D3Q15.o \
         utilityFunctions.o \
 	main.o \
 	$(SUBDIRS_TGTS)
+
+hemelbTest_DEPS = D3Q15.o \
+        io.o \
+        lb.o \
+        fileutils.o \
+        net.o \
+        SimulationMaster.o \
+        SimConfig.o \
+        usage.o \
+        utilityFunctions.o \
+        tests.o \
+        $(SUBDIRS_TGTS)
 
 
 HEMELB_INCLUDEPATHS += $(TOP)
