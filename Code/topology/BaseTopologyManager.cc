@@ -35,7 +35,7 @@ namespace hemelb
           == bNetTop.ProcessorCount)
       {
         // Fluid sites per rank.
-        int iSitesPerProc = (int) ceil((double) iTotalFluidSites
+        int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
             / (double) bNetTop.ProcessorCount);
 
         //Rank we're looking at.
@@ -45,14 +45,14 @@ namespace hemelb
 #ifndef NO_STEER
         if (bNetTop.ProcessorCount != 1)
         {
-          iSitesPerProc = (int) ceil((double) iTotalFluidSites
+          fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
               / (double) (bNetTop.ProcessorCount - 1));
           proc_count = 1;
         }
 #endif
 
         // In the simple case, simply divide fluid sites up between processors.
-        AssignFluidSitesToProcessors(proc_count, iSitesPerProc,
+        AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
                                      lUnvisitedFluidSiteCount, -1, false,
                                      &bLocalLatDat, bGlobLatDat, &bNetTop);
       }
@@ -63,22 +63,22 @@ namespace hemelb
         double weight = (double) (bNetTop.ProcCountOnEachMachine[0]
             * bNetTop.ProcessorCount) / (double) (bNetTop.ProcessorCount - 1);
         // Fluid sites per rank.
-        int iSitesPerProc = (int) ceil((double) iTotalFluidSites * weight
-            / bNetTop.MachineCount);
+        int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
+            * weight / bNetTop.MachineCount);
 
         // First, divide the sites up between machines.
-        AssignFluidSitesToProcessors(proc_count, iSitesPerProc,
+        AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
                                      lUnvisitedFluidSiteCount, -1, true,
                                      &bLocalLatDat, bGlobLatDat, &bNetTop);
 
-        iSitesPerProc = (int) ceil((double) lUnvisitedFluidSiteCount
+        fluid_sites_per_unit = (int) ceil((double) lUnvisitedFluidSiteCount
             / (double) (bNetTop.ProcessorCount - 1));
         proc_count = 1;
 
         // For each machine, divide up the sites it has between its cores.
         for (int lMachineNumber = 0; lMachineNumber < bNetTop.MachineCount; lMachineNumber++)
         {
-          AssignFluidSitesToProcessors(proc_count, iSitesPerProc,
+          AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
                                        lUnvisitedFluidSiteCount,
                                        bNetTop.ProcessorCount + lMachineNumber,
                                        false, &bLocalLatDat, bGlobLatDat,
@@ -97,168 +97,209 @@ namespace hemelb
                                                            const lb::GlobalLatticeData &iGlobLatDat,
                                                            NetworkTopology * bNetTopology)
     {
-      int partial_visited_fluid_sites = 0;
+      std::vector<SiteLocation*> *lSiteLocationA = new std::vector<
+          SiteLocation*>;
+      std::vector<SiteLocation*> *lSiteLocationB = new std::vector<
+          SiteLocation*>;
 
-      int n = -1;
-      hemelb::lb::BlockData* proc_block_p;
+      int lBlockNumber = -1;
 
-      int site_i, site_j, site_k; // Global coordinates of a site.
-      int neigh_i, neigh_j, neigh_k; // Global coordinates of a neighbour site.
-      int i, j, k; // Global block index.
-      int l; // Index for neighbours of a site.
-      int m; // Site index on a paricular block.
-      int mm; // Index of processors surrounding this one.
-      int are_fluid_sites_incrementing;
-      int block_size = iGlobLatDat.BlockSize;
-      int sites_a, sites_b, index_a;
-      int sites_buffer_size = 10000;
-      SiteLocation *site_location_a, *site_location_b;
-      SiteLocation *site_location_a_p, *site_location_b_p;
-      site_location_a = (SiteLocation *) malloc(sizeof(SiteLocation)
-          * sites_buffer_size);
-      site_location_b = (SiteLocation *) malloc(sizeof(SiteLocation)
-          * sites_buffer_size);
+      // Domain Decomposition.  Pick a site. Set it to the rank we are
+      // looking at. Find its neighbours and put those on the same
+      // rank, then find the next-nearest neighbours, etc. until we
+      // have a completely joined region, or there are enough fluid
+      // sites on the rank.  In the former case, start again at
+      // another site. In the latter case, move on to the next rank.
+      // Do this until all sites are assigned to a rank. There is a
+      // high chance of of all sites on a rank being joined.
 
-      int sites_x = iGlobLatDat.SitesX;
-      int sites_y = iGlobLatDat.SitesY;
-      int sites_z = iGlobLatDat.SitesZ;
+      int lSitesOnCurrentProc = 0;
 
-      int* proc_id_p;
-
-      for (i = 0; i < iGlobLatDat.BlocksX; i++)
-        for (j = 0; j < iGlobLatDat.BlocksY; j++)
-          for (k = 0; k < iGlobLatDat.BlocksZ; k++)
+      // Iterate over all blocks.
+      for (int lBlockCoordI = 0; lBlockCoordI < iGlobLatDat.BlocksX; lBlockCoordI++)
+      {
+        for (int lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat.BlocksY; lBlockCoordJ++)
+        {
+          for (int lBlockCoordK = 0; lBlockCoordK < iGlobLatDat.BlocksZ; lBlockCoordK++)
           {
-            proc_block_p = &iGlobLatDat.Blocks[++n];
+            // Block number is the number of the block we're currently on.
+            lBlockNumber++;
 
-            if (proc_block_p->ProcessorRankForEachBlockSite == NULL)
+            // Point to a block of ProcessorRankForEachBlockSite.  If we are in a block of solids, move on.
+            int *lProcRankForSite =
+                iGlobLatDat.Blocks[lBlockNumber].ProcessorRankForEachBlockSite;
+
+            // If the array of proc rank for each site is NULL, we're on an all-solid block.
+            if (lProcRankForSite == NULL)
             {
               continue;
             }
-            m = -1;
 
-            for (site_i = i * block_size; site_i < i * block_size + block_size; site_i++)
-              for (site_j = j * block_size; site_j < j * block_size
-                  + block_size; site_j++)
-                for (site_k = k * block_size; site_k < k * block_size
-                    + block_size; site_k++)
+            // Create variables for the index of this site on the block and the number of fluid sites
+            // that have been assigned to the current processor.
+            int lSiteNumber = -1;
+
+            // For each dimension of the site co-ordinates, iterate over all values of the site
+            // co-ordinates on the current block.
+            for (int lSiteCoordI = lBlockCoordI * iGlobLatDat.BlockSize; lSiteCoordI
+                < lBlockCoordI * iGlobLatDat.BlockSize + iGlobLatDat.BlockSize; lSiteCoordI++)
+            {
+              for (int lSiteCoordJ = lBlockCoordJ * iGlobLatDat.BlockSize; lSiteCoordJ
+                  < lBlockCoordJ * iGlobLatDat.BlockSize
+                      + iGlobLatDat.BlockSize; lSiteCoordJ++)
+              {
+                for (int lSiteCoordK = lBlockCoordK * iGlobLatDat.BlockSize; lSiteCoordK
+                    < lBlockCoordK * iGlobLatDat.BlockSize
+                        + iGlobLatDat.BlockSize; lSiteCoordK++)
                 {
-                  if (proc_block_p->ProcessorRankForEachBlockSite[++m]
-                      != iMarker)
+                  // Keep track of the site number.
+                  lSiteNumber++;
+
+                  //TODO comments from here.
+                  // Move on if the site is solid (ProcessorRankForEachBlockSite = 1 << 30) or has
+                  // already been assigned to a rank (0 <= ProcessorRankForEachBlockSite < 1 << 30).
+                  if (lProcRankForSite[lSiteNumber] != iMarker)
                   {
                     continue;
                   }
-                  proc_block_p->ProcessorRankForEachBlockSite[m] = proc_count;
+                  // We have found an unvisited fluid site to start growing the subdomain from.
+                  // Assign it to the rank and update the fluid site counters.
+                  lProcRankForSite[lSiteNumber] = proc_count;
 
-                  if (proc_count == bNetTopology->LocalRank)
+                  ++lSitesOnCurrentProc;
+
+                  // Record the location of this initial site.
+                  lSiteLocationA->clear();
+                  SiteLocation *lNew = new SiteLocation();
+                  lNew->i = lSiteCoordI;
+                  lNew->j = lSiteCoordJ;
+                  lNew->k = lSiteCoordK;
+                  lSiteLocationA->push_back(lNew);
+
+                  // The subdomain can grow.
+                  bool lIsRegionGrowing = true;
+
+                  // While the region can grow (i.e. it is not bounded by solids or visited
+                  // sites), and we need more sites on this particular rank.
+                  while (lSitesOnCurrentProc < iSitesPerProc
+                      && lIsRegionGrowing)
                   {
-                    ++iLocalLatDat->LocalFluidSites;
-                  }
-                  ++partial_visited_fluid_sites;
-
-                  if (!iIsMachineLevel)
-                    ++bNetTopology->FluidSitesOnEachProcessor[proc_count];
-
-                  sites_a = 1;
-                  site_location_a_p = &site_location_a[0];
-                  site_location_a_p->i = site_i;
-                  site_location_a_p->j = site_j;
-                  site_location_a_p->k = site_k;
-
-                  are_fluid_sites_incrementing = 1;
-
-                  while (partial_visited_fluid_sites < iSitesPerProc
-                      && are_fluid_sites_incrementing)
-                  {
-                    sites_b = 0;
-                    are_fluid_sites_incrementing = 0;
-
-                    for (index_a = 0; index_a < sites_a
-                        && partial_visited_fluid_sites < iSitesPerProc; index_a++)
+                    for (unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
                     {
-                      site_location_a_p = &site_location_a[index_a];
+                      delete lSiteLocationB->operator [](ii);
+                    }
+                    lSiteLocationB->clear();
 
-                      for (l = 1; l < 15 && partial_visited_fluid_sites
-                          < iSitesPerProc; l++)
+                    // Sites added to the edge of the mClusters during the iteration.
+                    lIsRegionGrowing = false;
+
+                    // For sites on the edge of the domain (sites_a), deal with the neighbours.
+                    for (unsigned int index_a = 0; index_a
+                        < lSiteLocationA->size() && lSitesOnCurrentProc
+                        < iSitesPerProc; index_a++)
+                    {
+                      lNew = lSiteLocationA->operator [](index_a);
+
+                      for (unsigned int l = 1; l < D3Q15::NUMVECTORS
+                          && lSitesOnCurrentProc < iSitesPerProc; l++)
                       {
-                        neigh_i = site_location_a_p->i + D3Q15::CX[l];
-                        neigh_j = site_location_a_p->j + D3Q15::CY[l];
-                        neigh_k = site_location_a_p->k + D3Q15::CZ[l];
+                        // Record neighbour location.
+                        int neigh_i = lNew->i + D3Q15::CX[l];
+                        int neigh_j = lNew->j + D3Q15::CY[l];
+                        int neigh_k = lNew->k + D3Q15::CZ[l];
 
-                        if (neigh_i == -1 || neigh_i == sites_x)
+                        // Move on if neighbour is outside the bounding box.
+                        if (neigh_i == -1 || neigh_i == iGlobLatDat.SitesX)
                           continue;
-                        if (neigh_j == -1 || neigh_j == sites_y)
+                        if (neigh_j == -1 || neigh_j == iGlobLatDat.SitesY)
                           continue;
-                        if (neigh_k == -1 || neigh_k == sites_z)
+                        if (neigh_k == -1 || neigh_k == iGlobLatDat.SitesZ)
                           continue;
 
-                        proc_id_p
-                            = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                    neigh_j,
-                                                                    neigh_k);
+                        // Move on if the neighbour is in a block of solids (in which case
+                        // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid or has already
+                        // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
+                        // was initialized in lbmReadConfig in io.cc.
+
+                        // Pointer to the rank on which a particular fluid site
+                        // resides.
+                        int * proc_id_p =
+                            iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
+                                                                  neigh_j,
+                                                                  neigh_k);
 
                         if (proc_id_p == NULL || *proc_id_p != iMarker)
                         {
                           continue;
                         }
+                        // Set the rank for a neighbour and update the fluid site counters.
                         *proc_id_p = proc_count;
+                        lSitesOnCurrentProc++;
 
-                        ++partial_visited_fluid_sites;
+                        // Neighbour was found, so the region can grow.
+                        lIsRegionGrowing = true;
 
-                        if (!iIsMachineLevel)
-                          ++bNetTopology->FluidSitesOnEachProcessor[proc_count];
-
-                        are_fluid_sites_incrementing = 1;
-
-                        if (sites_b == sites_buffer_size)
-                        {
-                          sites_buffer_size *= 2;
-                          site_location_a
-                              = (SiteLocation *) realloc(
-                                                         site_location_a,
-                                                         sizeof(SiteLocation)
-                                                             * sites_buffer_size);
-                          site_location_b
-                              = (SiteLocation *) realloc(
-                                                         site_location_b,
-                                                         sizeof(SiteLocation)
-                                                             * sites_buffer_size);
-                        }
-                        site_location_b_p = &site_location_b[sites_b];
-                        site_location_b_p->i = neigh_i;
-                        site_location_b_p->j = neigh_j;
-                        site_location_b_p->k = neigh_k;
-                        ++sites_b;
-
-                        if (proc_count == bNetTopology->LocalRank)
-                        {
-                          ++iLocalLatDat->LocalFluidSites;
-                        }
+                        // Record the location of the neighbour.
+                        SiteLocation * lNewB = new SiteLocation();
+                        lNewB->i = neigh_i;
+                        lNewB->j = neigh_j;
+                        lNewB->k = neigh_k;
+                        lSiteLocationB->push_back(lNewB);
                       }
                     }
-                    site_location_a_p = site_location_a;
-                    site_location_a = site_location_b;
-                    site_location_b = site_location_a_p;
-                    sites_a = sites_b;
+                    // When the new layer of edge sites has been found, swap the buffers for
+                    // the current and new layers of edge sites.
+                    std::vector<SiteLocation*> *tempP = lSiteLocationA;
+                    lSiteLocationA = lSiteLocationB;
+                    lSiteLocationB = tempP;
                   }
-                  if (partial_visited_fluid_sites >= iSitesPerProc)
+
+                  // If we have enough sites, we have finished.
+                  if (lSitesOnCurrentProc >= iSitesPerProc)
                   {
-                    ++proc_count;
+                    if (bNetTopology->LocalRank == proc_count)
+                    {
+                      iLocalLatDat->LocalFluidSites = lSitesOnCurrentProc;
+                    }
 
                     if (!iIsMachineLevel)
                     {
-                      bUnassignedSites -= partial_visited_fluid_sites;
+                      bNetTopology->FluidSitesOnEachProcessor[proc_count]
+                          = lSitesOnCurrentProc;
+                    }
+
+                    ++proc_count;
+                    if (!iIsMachineLevel)
+                    {
+                      bUnassignedSites -= lSitesOnCurrentProc;
                       iSitesPerProc
                           = (int) ceil((double) bUnassignedSites
                               / (double) (bNetTopology->ProcessorCount
                                   - proc_count));
                     }
-                    partial_visited_fluid_sites = 0;
+                    lSitesOnCurrentProc = 0;
                   }
-                }
-          }
-      free(site_location_b);
-      free(site_location_a);
+                  // If not, we have to start growing a different region for the same rank:
+                  // region expansions could get trapped.
+
+                } // Site co-ord k
+              } // Site co-ord j
+            } // Site co-ord i
+          } // Block co-ord k
+        } // Block co-ord j
+      } // Block co-ord i
+
+      for (unsigned int ii = 0; ii < lSiteLocationA->size(); ii++)
+      {
+        delete lSiteLocationA->operator [](ii);
+      }
+      for (unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
+      {
+        delete lSiteLocationB->operator [](ii);
+      }
+
+      delete lSiteLocationA;
+      delete lSiteLocationB;
     }
   }
 }
