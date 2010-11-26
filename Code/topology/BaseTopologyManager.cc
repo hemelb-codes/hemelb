@@ -9,6 +9,85 @@ namespace hemelb
       // This exists to prevent instantiation.
     }
 
+    void BaseTopologyManager::DecomposeDomain(int iTotalFluidSites,
+                                              NetworkTopology & bNetTop,
+                                              const lb::GlobalLatticeData & bGlobLatDat,
+                                              lb::LocalLatticeData & bLocalLatDat)
+    {
+      // Allocations.  fluid sites will store actual number of fluid
+      // sites per proc.  Site location will store up to 10000 of some
+      // sort of coordinate.
+      bLocalLatDat.LocalFluidSites = 0;
+
+      // Initialise the count of fluid sites on each processor to 0.
+      bNetTop.FluidSitesOnEachProcessor = new int[bNetTop.ProcessorCount];
+
+      for (int n = 0; n < bNetTop.ProcessorCount; n++)
+      {
+        bNetTop.FluidSitesOnEachProcessor[n] = 0;
+      }
+
+      // Count of fluid sites not yet visited.
+      int lUnvisitedFluidSiteCount = iTotalFluidSites;
+
+      // If one machine or one machine per proc.
+      if (bNetTop.MachineCount == 1 || bNetTop.MachineCount
+          == bNetTop.ProcessorCount)
+      {
+        // Fluid sites per rank.
+        int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
+            / (double) bNetTop.ProcessorCount);
+
+        //Rank we're looking at.
+        int proc_count = 0;
+
+        // If we're steering with more than one processor, save one processor for doing that.
+#ifndef NO_STEER
+        if (bNetTop.ProcessorCount != 1)
+        {
+          fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
+              / (double) (bNetTop.ProcessorCount - 1));
+          proc_count = 1;
+        }
+#endif
+
+        // In the simple case, simply divide fluid sites up between processors.
+        AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
+                                     lUnvisitedFluidSiteCount, -1, false,
+                                     &bLocalLatDat, bGlobLatDat, &bNetTop);
+      }
+      else
+      {
+        // Rank we are looking at.
+        int proc_count = bNetTop.ProcessorCount;
+        double weight = (double) (bNetTop.ProcCountOnEachMachine[0]
+            * bNetTop.ProcessorCount) / (double) (bNetTop.ProcessorCount - 1);
+        // Fluid sites per rank.
+        int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
+            * weight / bNetTop.MachineCount);
+
+        // First, divide the sites up between machines.
+        AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
+                                     lUnvisitedFluidSiteCount, -1, true,
+                                     &bLocalLatDat, bGlobLatDat, &bNetTop);
+
+        fluid_sites_per_unit = (int) ceil((double) lUnvisitedFluidSiteCount
+            / (double) (bNetTop.ProcessorCount - 1));
+        proc_count = 1;
+
+        // For each machine, divide up the sites it has between its cores.
+        for (int lMachineNumber = 0; lMachineNumber < bNetTop.MachineCount; lMachineNumber++)
+        {
+          AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
+                                       lUnvisitedFluidSiteCount,
+                                       bNetTop.ProcessorCount + lMachineNumber,
+                                       false, &bLocalLatDat, bGlobLatDat,
+                                       &bNetTop);
+        }
+      }
+
+    }
+
     void BaseTopologyManager::AssignFluidSitesToProcessors(int & proc_count,
                                                            int & iSitesPerProc,
                                                            int & bUnassignedSites,
@@ -113,7 +192,7 @@ namespace hemelb
                   while (lSitesOnCurrentProc < iSitesPerProc
                       && lIsRegionGrowing)
                   {
-                    for(unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
+                    for (unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
                     {
                       delete lSiteLocationB->operator [](ii);
                     }
@@ -123,8 +202,9 @@ namespace hemelb
                     lIsRegionGrowing = false;
 
                     // For sites on the edge of the domain (sites_a), deal with the neighbours.
-                    for (unsigned int index_a = 0; index_a < lSiteLocationA->size()
-                        && lSitesOnCurrentProc < iSitesPerProc; index_a++)
+                    for (unsigned int index_a = 0; index_a
+                        < lSiteLocationA->size() && lSitesOnCurrentProc
+                        < iSitesPerProc; index_a++)
                     {
                       lNew = lSiteLocationA->operator [](index_a);
 
@@ -216,11 +296,11 @@ namespace hemelb
         } // Block co-ord j
       } // Block co-ord i
 
-      for(unsigned int ii = 0; ii < lSiteLocationA->size(); ii++)
+      for (unsigned int ii = 0; ii < lSiteLocationA->size(); ii++)
       {
         delete lSiteLocationA->operator [](ii);
       }
-      for(unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
+      for (unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
       {
         delete lSiteLocationB->operator [](ii);
       }

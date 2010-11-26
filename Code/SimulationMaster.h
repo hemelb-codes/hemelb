@@ -53,6 +53,8 @@ class SimulationMaster
     int mImagesWritten;
     int mSnapshotsWritten;
 
+    double mDomainDecompTime;
+
     double mLbTime;
     double mMPISendTime;
     double mMPIWaitTime;

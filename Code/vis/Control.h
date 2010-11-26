@@ -50,8 +50,7 @@ namespace hemelb
         ~Control();
         void initLayers(topology::NetworkTopology * iNetworkTopology,
                         lb::GlobalLatticeData &iGlobLatDat,
-                        lb::LocalLatticeData &iLocalLatDat,
-                        bool & oSuccess);
+                        lb::LocalLatticeData &iLocalLatDat);
 
         void project(float p1[], float p2[]);
         void writePixel(ColPixel *col_pixel);
