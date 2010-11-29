@@ -16,8 +16,7 @@ namespace hemelb
       public:
         void DecomposeDomain(int iTotalFluidSites,
                              NetworkTopology & bNetTop,
-                             const lb::GlobalLatticeData & bGlobLatDat,
-                             lb::LocalLatticeData & bLocalLatDat);
+                             const lb::GlobalLatticeData & bGlobLatDat);
 
       protected:
 
@@ -37,7 +36,6 @@ namespace hemelb
                                      int & unvisited_fluid_sites,
                                      const int iCurrentProcId,
                                      const bool iIsMachineLevel,
-                                     lb::LocalLatticeData * iLocalLatDat,
                                      const lb::GlobalLatticeData &iGlobLatDat,
                                      NetworkTopology * bNetTopology);
     };

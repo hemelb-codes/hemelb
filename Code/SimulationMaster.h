@@ -41,7 +41,7 @@ class SimulationMaster
     FILE *mTimingsFile;
 
     hemelb::lb::GlobalLatticeData mGlobLatDat;
-    hemelb::lb::LocalLatticeData mLocalLatDat;
+    hemelb::lb::LocalLatticeData* mLocalLatDat;
 
     hemelb::topology::TopologyManager mTopologyManger;
 
