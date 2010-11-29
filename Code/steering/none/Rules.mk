@@ -1,6 +1,6 @@
 include $(MK)/header.mk
 
-SRCS := 
+SRCS := Control.cc
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
