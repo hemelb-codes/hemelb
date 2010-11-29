@@ -191,11 +191,14 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
   int n = -1;
 
   // Iterate over all blocks in site units
-  for (int i = 0; i < iGlobLatDat.SitesX; i += iGlobLatDat.BlockSize)
+  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
+      += iGlobLatDat.GetBlockSize())
   {
-    for (int j = 0; j < iGlobLatDat.SitesY; j += iGlobLatDat.BlockSize)
+    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j
+        += iGlobLatDat.GetBlockSize())
     {
-      for (int k = 0; k < iGlobLatDat.SitesZ; k += iGlobLatDat.BlockSize)
+      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k
+          += iGlobLatDat.GetBlockSize())
       {
         hemelb::lb::BlockData * map_block_p = &iGlobLatDat.Blocks[++n];
 
@@ -207,11 +210,11 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
         int m = -1;
 
         // Iterate over all sites within the current block.
-        for (int site_i = i; site_i < i + iGlobLatDat.BlockSize; site_i++)
+        for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
         {
-          for (int site_j = j; site_j < j + iGlobLatDat.BlockSize; site_j++)
+          for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
           {
-            for (int site_k = k; site_k < k + iGlobLatDat.BlockSize; site_k++)
+            for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
             {
               m++;
               // If the site is not on this processor, continue.
@@ -485,11 +488,14 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
   n = -1;
 
   // Iterate over blocks in global co-ords.
-  for (int i = 0; i < iGlobLatDat.SitesX; i += iGlobLatDat.BlockSize)
+  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
+      += iGlobLatDat.GetBlockSize())
   {
-    for (int j = 0; j < iGlobLatDat.SitesY; j += iGlobLatDat.BlockSize)
+    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j
+        += iGlobLatDat.GetBlockSize())
     {
-      for (int k = 0; k < iGlobLatDat.SitesZ; k += iGlobLatDat.BlockSize)
+      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k
+          += iGlobLatDat.GetBlockSize())
       {
         hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[++n];
 
@@ -503,11 +509,11 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
         int m = -1;
 
         // Iterate over sites within the block.
-        for (int site_i = i; site_i < i + iGlobLatDat.BlockSize; site_i++)
+        for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
         {
-          for (int site_j = j; site_j < j + iGlobLatDat.BlockSize; site_j++)
+          for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
           {
-            for (int site_k = k; site_k < k + iGlobLatDat.BlockSize; site_k++)
+            for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
             {
               // If a site is not on this process, continue.
               m++;

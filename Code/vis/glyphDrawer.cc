@@ -15,13 +15,14 @@ namespace hemelb
       mGlobalLatDat = iGlobalLatDat;
       int n = -1;
 
-      for (int i = 0; i < iGlobalLatDat->SitesX; i += iGlobalLatDat->BlockSize)
+      for (int i = 0; i < iGlobalLatDat->GetXSiteCount(); i
+          += iGlobalLatDat->GetBlockSize())
       {
-        for (int j = 0; j < iGlobalLatDat->SitesY; j
-            += iGlobalLatDat->BlockSize)
+        for (int j = 0; j < iGlobalLatDat->GetYSiteCount(); j
+            += iGlobalLatDat->GetBlockSize())
         {
-          for (int k = 0; k < iGlobalLatDat->SitesZ; k
-              += iGlobalLatDat->BlockSize)
+          for (int k = 0; k < iGlobalLatDat->GetZSiteCount(); k
+              += iGlobalLatDat->GetBlockSize())
           {
             n++;
             lb::BlockData * map_block_p = &iGlobalLatDat->Blocks[n];
@@ -31,9 +32,9 @@ namespace hemelb
               continue;
             }
 
-            int site_i = (iGlobalLatDat->BlockSize >> 1);
-            int site_j = (iGlobalLatDat->BlockSize >> 1);
-            int site_k = (iGlobalLatDat->BlockSize >> 1);
+            int site_i = (iGlobalLatDat->GetBlockSize() >> 1);
+            int site_j = (iGlobalLatDat->GetBlockSize() >> 1);
+            int site_k = (iGlobalLatDat->GetBlockSize() >> 1);
 
             int m = ( ( (site_i << iGlobalLatDat->Log2BlockSize) + site_j)
                 << iGlobalLatDat->Log2BlockSize) + site_k;
@@ -45,9 +46,12 @@ namespace hemelb
 
             Glyph *lGlyph = new Glyph();
 
-            lGlyph->x = float(i + site_i) - 0.5F * float(iGlobalLatDat->SitesX);
-            lGlyph->y = float(j + site_j) - 0.5F * float(iGlobalLatDat->SitesY);
-            lGlyph->z = float(k + site_k) - 0.5F * float(iGlobalLatDat->SitesZ);
+            lGlyph->x = float(i + site_i) - 0.5F
+                * float(iGlobalLatDat->GetXSiteCount());
+            lGlyph->y = float(j + site_j) - 0.5F
+                * float(iGlobalLatDat->GetYSiteCount());
+            lGlyph->z = float(k + site_k) - 0.5F
+                * float(iGlobalLatDat->GetZSiteCount());
 
             int c1Plusc2 = 15;
 
@@ -94,7 +98,7 @@ namespace hemelb
       {
         D3Q15::CalculateDensityAndVelocity(mGlyphs[n]->f, density, vx, vy, vz);
 
-        temp = glyph_length * mGlobalLatDat->BlockSize
+        temp = glyph_length * mGlobalLatDat->GetBlockSize()
             * vis::controller->velocity_threshold_max_inv / density;
 
         vx *= temp;

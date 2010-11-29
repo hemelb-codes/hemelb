@@ -11,16 +11,8 @@ namespace hemelb
     // Data about an element of the domain wall
     struct WallData
     {
-        // estimated boundary normal.
-        double boundary_nor[3];
-        // estimated minimum distance (in lattice units) from the
-        // boundary;
-        double boundary_dist;
         // estimated wall normal (if the site is close to the wall);
         double wall_nor[3];
-        // estimated minimum distance (in lattice units) from the wall;
-        // if the site is close to the wall surface
-        double wall_dist;
         // cut distances along the 14 non-zero lattice vectors;
         // each one is between 0 and 1 if the surface cuts the corresponding
         // vector or is equal to "BIG_NUMBER" otherwise
@@ -51,14 +43,74 @@ namespace hemelb
         unsigned int *site_data;
     };
 
-    struct GlobalLatticeData
+    class GlobalLatticeData
     {
-        int SitesX, SitesY, SitesZ;
-        int BlocksX, BlocksY, BlocksZ;
-        int BlockCount;
-        int BlockSize;
-        int Log2BlockSize;
-        int SitesPerBlockVolumeUnit;
+      public:
+        void SetBasicDetails(int iBlocksX,
+                             int iBlocksY,
+                             int iBlocksZ,
+                             int iBlockSize)
+        {
+          mBlocksX = iBlocksX;
+          mBlocksY = iBlocksY;
+          mBlocksZ = iBlocksZ;
+          mBlockSize = iBlockSize;
+
+          mSitesX = mBlocksX * mBlockSize;
+          mSitesY = mBlocksY * mBlockSize;
+          mSitesZ = mBlocksZ * mBlockSize;
+
+          SitesPerBlockVolumeUnit = mBlockSize * mBlockSize * mBlockSize;
+
+          // A shift value we'll need later = log_2(block_size)
+          int i = mBlockSize;
+          Log2BlockSize = 0;
+          while (i > 1)
+          {
+            i >>= 1;
+            ++Log2BlockSize;
+          }
+
+          BlockCount = mBlocksX * mBlocksY * mBlocksZ;
+
+          Blocks = new BlockData[BlockCount];
+        }
+
+        int GetXSiteCount() const
+        {
+          return mSitesX;
+        }
+
+        int GetYSiteCount() const
+        {
+          return mSitesY;
+        }
+
+        int GetZSiteCount() const
+        {
+          return mSitesZ;
+        }
+
+        int GetXBlockCount() const
+        {
+          return mBlocksX;
+        }
+
+        int GetYBlockCount() const
+        {
+          return mBlocksY;
+        }
+
+        int GetZBlockCount() const
+        {
+          return mBlocksZ;
+        }
+
+        int GetBlockSize() const
+        {
+          return mBlockSize;
+        }
+
         BlockData * Blocks;
 
         ~GlobalLatticeData()
@@ -72,8 +124,8 @@ namespace hemelb
         {
           // If the given site location is outside the bounding box return a NULL
           // pointer.
-          if (iSiteI < 0 || iSiteI >= SitesX || iSiteJ < 0 || iSiteJ >= SitesY
-              || iSiteK < 0 || iSiteK >= SitesZ)
+          if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ
+              >= mSitesY || iSiteK < 0 || iSiteK >= mSitesZ)
           {
             return NULL;
           }
@@ -84,7 +136,7 @@ namespace hemelb
           int k = iSiteK >> Log2BlockSize;
 
           // Get the block from the block identifiers.
-          BlockData * lBlock = &Blocks[ (i * BlocksY + j) * BlocksZ + k];
+          BlockData * lBlock = &Blocks[ (i * mBlocksY + j) * mBlocksZ + k];
 
           // If an empty (solid) block is addressed, return a NULL pointer.
           if (lBlock->ProcessorRankForEachBlockSite == NULL)
@@ -111,8 +163,8 @@ namespace hemelb
         unsigned int * GetSiteData(int iSiteI, int iSiteJ, int iSiteK)
         {
           // If site is out of the bounding box, return NULL.
-          if (iSiteI < 0 || iSiteI >= SitesX || iSiteJ < 0 || iSiteJ >= SitesY
-              || iSiteK < 0 || iSiteK >= SitesZ)
+          if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ
+              >= mSitesY || iSiteK < 0 || iSiteK >= mSitesZ)
           {
             return NULL;
           }
@@ -123,7 +175,7 @@ namespace hemelb
           int k = iSiteK >> Log2BlockSize;
 
           // Pointer to the block
-          BlockData * lBlock = &Blocks[ (i * BlocksY + j) * BlocksZ + k];
+          BlockData * lBlock = &Blocks[ (i * mBlocksY + j) * mBlocksZ + k];
 
           // if an empty (solid) block is addressed
           if (lBlock->site_data == NULL)
@@ -142,6 +194,17 @@ namespace hemelb
                 << Log2BlockSize) + kk];
           }
         }
+
+      public:
+        // TODO public temporarily, until all usages are internal to the class.
+        int BlockCount;
+        int Log2BlockSize;
+        int SitesPerBlockVolumeUnit;
+
+      private:
+        int mSitesX, mSitesY, mSitesZ;
+        int mBlocksX, mBlocksY, mBlocksZ;
+        int mBlockSize;
     };
   }
 }

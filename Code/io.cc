@@ -84,7 +84,7 @@ void LBM::lbmReadConfig(Net *net,
 
   hemelb::io::XdrReader myReader = hemelb::io::XdrFileReader(xdrFile);
 
-  int j, k, ii, jj, kk, l, m, n;
+  int l, m, n;
   int flag;
 
   unsigned int site_i, site_j, site_k;
@@ -102,35 +102,14 @@ void LBM::lbmReadConfig(Net *net,
       ? hemelb::lb::VonMises
       : hemelb::lb::IgnoreStress);
 
-  myReader.readInt(bGlobalLatticeData.BlocksX);
-  myReader.readInt(bGlobalLatticeData.BlocksY);
-  myReader.readInt(bGlobalLatticeData.BlocksZ);
-  myReader.readInt(bGlobalLatticeData.BlockSize);
+  int lBlocksX, lBlocksY, lBlocksZ, lBlockSize;
 
-  bGlobalLatticeData.SitesX = bGlobalLatticeData.BlocksX
-      * bGlobalLatticeData.BlockSize;
-  bGlobalLatticeData.SitesY = bGlobalLatticeData.BlocksY
-      * bGlobalLatticeData.BlockSize;
-  bGlobalLatticeData.SitesZ = bGlobalLatticeData.BlocksZ
-      * bGlobalLatticeData.BlockSize;
+  myReader.readInt(lBlocksX);
+  myReader.readInt(lBlocksY);
+  myReader.readInt(lBlocksZ);
+  myReader.readInt(lBlockSize);
 
-  bGlobalLatticeData.SitesPerBlockVolumeUnit = bGlobalLatticeData.BlockSize
-      * bGlobalLatticeData.BlockSize * bGlobalLatticeData.BlockSize;
-
-  // shift = log_2(block_size)
-  int i = bGlobalLatticeData.BlockSize;
-  bGlobalLatticeData.Log2BlockSize = 0;
-  while (i > 1)
-  {
-    i >>= 1;
-    ++bGlobalLatticeData.Log2BlockSize;
-  }
-
-  bGlobalLatticeData.BlockCount = bGlobalLatticeData.BlocksX
-      * bGlobalLatticeData.BlocksY * bGlobalLatticeData.BlocksZ;
-
-  bGlobalLatticeData.Blocks
-      = new hemelb::lb::BlockData[bGlobalLatticeData.BlockCount];
+  bGlobalLatticeData.SetBasicDetails(lBlocksX, lBlocksY, lBlocksZ, lBlockSize);
 
   total_fluid_sites = 0;
 
@@ -145,11 +124,11 @@ void LBM::lbmReadConfig(Net *net,
 
   n = -1;
 
-  for (i = 0; i < bGlobalLatticeData.BlocksX; i++)
+  for (int i = 0; i < lBlocksX; i++)
   {
-    for (j = 0; j < bGlobalLatticeData.BlocksY; j++)
+    for (int j = 0; j < lBlocksY; j++)
     {
-      for (k = 0; k < bGlobalLatticeData.BlocksZ; k++)
+      for (int k = 0; k < lBlocksZ; k++)
       {
         ++n;
 
@@ -170,15 +149,15 @@ void LBM::lbmReadConfig(Net *net,
 
         m = -1;
 
-        for (ii = 0; ii < bGlobalLatticeData.BlockSize; ii++)
+        for (int ii = 0; ii < bGlobalLatticeData.GetBlockSize(); ii++)
         {
           site_i = (i << bGlobalLatticeData.Log2BlockSize) + ii;
 
-          for (jj = 0; jj < bGlobalLatticeData.BlockSize; jj++)
+          for (int jj = 0; jj < bGlobalLatticeData.GetBlockSize(); jj++)
           {
             site_j = (j << bGlobalLatticeData.Log2BlockSize) + jj;
 
-            for (kk = 0; kk < bGlobalLatticeData.BlockSize; kk++)
+            for (int kk = 0; kk < bGlobalLatticeData.GetBlockSize(); kk++)
             {
               site_k = (k << bGlobalLatticeData.Log2BlockSize) + kk;
 
@@ -217,13 +196,12 @@ void LBM::lbmReadConfig(Net *net,
                 if (net->GetCollisionType(*site_type) & INLET
                     || net->GetCollisionType(*site_type) & OUTLET)
                 {
+                  double temp;
                   // INLET or OUTLET or both
                   for (l = 0; l < 3; l++)
-                    myReader.readDouble(
-                                        bGlobalLatticeData.Blocks[n].wall_data[m].boundary_nor[l]);
+                    myReader.readDouble(temp);
 
-                  myReader.readDouble(
-                                      bGlobalLatticeData.Blocks[n].wall_data[m].boundary_dist);
+                  myReader.readDouble(temp);
                 }
 
                 if (net->GetCollisionType(*site_type) & EDGE)
@@ -233,8 +211,8 @@ void LBM::lbmReadConfig(Net *net,
                     myReader.readDouble(
                                         bGlobalLatticeData.Blocks[n].wall_data[m].wall_nor[l]);
 
-                  myReader.readDouble(
-                                      bGlobalLatticeData.Blocks[n].wall_data[m].wall_dist);
+                  double temp;
+                  myReader.readDouble(temp);
                 }
 
                 for (l = 0; l < 14; l++)
@@ -546,14 +524,14 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
    root processor */
 
   int n = -1; // net->proc_block counter
-  for (int i = 0; i < iGlobalLatticeData.SitesX; i
-      += iGlobalLatticeData.BlockSize)
+  for (int i = 0; i < iGlobalLatticeData.GetXSiteCount(); i
+      += iGlobalLatticeData.GetBlockSize())
   {
-    for (int j = 0; j < iGlobalLatticeData.SitesY; j
-        += iGlobalLatticeData.BlockSize)
+    for (int j = 0; j < iGlobalLatticeData.GetYSiteCount(); j
+        += iGlobalLatticeData.GetBlockSize())
     {
-      for (int k = 0; k < iGlobalLatticeData.SitesZ; k
-          += iGlobalLatticeData.BlockSize)
+      for (int k = 0; k < iGlobalLatticeData.GetZSiteCount(); k
+          += iGlobalLatticeData.GetBlockSize())
       {
 
         ++n;
@@ -564,11 +542,11 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
         }
         int m = -1;
 
-        for (int site_i = i; site_i < i + iGlobalLatticeData.BlockSize; site_i++)
+        for (int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
         {
-          for (int site_j = j; site_j < j + iGlobalLatticeData.BlockSize; site_j++)
+          for (int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
           {
-            for (int site_k = k; site_k < k + iGlobalLatticeData.BlockSize; site_k++)
+            for (int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
             {
 
               m++;
