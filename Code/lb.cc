@@ -226,7 +226,7 @@ void LBM::lbmSetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
   }
   density /= outlets;
 
-  for (int i = 0; i < bLocalLatDat.LocalFluidSites; i++)
+  for (int i = 0; i < bLocalLatDat.GetLocalFluidSiteCount(); i++)
   {
     D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
@@ -442,7 +442,7 @@ int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
 
   is_unstable = 0;
 
-  for (int i = 0; i < iLocalLatDat.LocalFluidSites; i++)
+  for (int i = 0; i < iLocalLatDat.GetLocalFluidSiteCount(); i++)
   {
     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
     {

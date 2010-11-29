@@ -83,7 +83,7 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
 
   // This rank's site data.
   unsigned int *lThisRankSiteData =
-      new unsigned int[bLocalLatDat.LocalFluidSites];
+      new unsigned int[bLocalLatDat.GetLocalFluidSiteCount()];
 
   // Array of booleans to store whether any sites on a block are fluid
   // sites residing on this rank.
@@ -457,8 +457,9 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
 
     // Pointing to a few things, but not setting any variables.
     // FirstSharedF points to start of shared_fs.
-    iNetTop.NeighbouringProcs[n]->FirstSharedF = bLocalLatDat.LocalFluidSites
-        * D3Q15::NUMVECTORS + 1 + iNetTop.TotalSharedFs;
+    iNetTop.NeighbouringProcs[n]->FirstSharedF
+        = bLocalLatDat.GetLocalFluidSiteCount() * D3Q15::NUMVECTORS + 1
+            + iNetTop.TotalSharedFs;
 
     iNetTop.NeighbouringProcs[n]->SharedFReceivingIndex
         = &f_recv_iv[iNetTop.TotalSharedFs];
@@ -477,29 +478,6 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
   for (unsigned int m = 0; m < iNetTop.NeighbouringProcs.size(); m++)
   {
     iNetTop.NeighbourIndexFromProcRank[iNetTop.NeighbouringProcs[m]->Rank] = m;
-  }
-
-  // Allocate f_old and f_new according to the number of sites on the process.  The extra site
-  // is there for when we would stream into a solid site during the simulation, which avoids
-  // an if condition at every timestep at every boundary site.  We also allocate space for the
-  // shared distribution functions.  We need twice as much space when we check the convergence
-  // and the extra distribution functions are
-  bLocalLatDat.FOld = new double[bLocalLatDat.LocalFluidSites
-      * D3Q15::NUMVECTORS + 1 + iNetTop.TotalSharedFs];
-  bLocalLatDat.FNew = new double[bLocalLatDat.LocalFluidSites
-      * D3Q15::NUMVECTORS + 1 + iNetTop.TotalSharedFs];
-
-  if (bLocalLatDat.LocalFluidSites > 0)
-  {
-    // f_id is allocated so we know which sites to get information from.
-    bLocalLatDat.mFNeighbours = new int[bLocalLatDat.LocalFluidSites
-        * D3Q15::NUMVECTORS];
-
-    bLocalLatDat.mSiteData = new unsigned int[bLocalLatDat.LocalFluidSites];
-    bLocalLatDat.mWallNormalAtSite = new double[bLocalLatDat.LocalFluidSites
-        * 3];
-    bLocalLatDat.mDistanceToWall = new double[bLocalLatDat.LocalFluidSites
-        * (D3Q15::NUMVECTORS - 1)];
   }
 
   lSiteIndexOnProc = 0;
@@ -542,8 +520,8 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
               unsigned int site_map = map_block_p->site_data[m];
 
               // set f_id.
-              bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + 0]
-                  = site_map * D3Q15::NUMVECTORS + 0;
+              bLocalLatDat.SetNeighbourLocation(site_map, 0, site_map
+                  * D3Q15::NUMVECTORS + 0);
 
               for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
               {
@@ -553,8 +531,11 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
                 int neigh_k = site_k + D3Q15::CZ[l];
 
                 // initialize f_id to the rubbish site.
-                bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + l]
-                    = bLocalLatDat.LocalFluidSites * D3Q15::NUMVECTORS;
+                bLocalLatDat.SetNeighbourLocation(
+                                                  site_map,
+                                                  l,
+                                                  bLocalLatDat.GetLocalFluidSiteCount()
+                                                      * D3Q15::NUMVECTORS);
 
                 // You know which process the neighbour is on.
                 int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
@@ -578,8 +559,8 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
                 // current and previous cycles.
                 if (iNetTop.LocalRank == *proc_id_p)
                 {
-                  bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + l]
-                      = *site_data_p * D3Q15::NUMVECTORS + l;
+                  bLocalLatDat.SetNeighbourLocation(site_map, l, *site_data_p
+                      * D3Q15::NUMVECTORS + l);
 
                   continue;
                 }
@@ -614,18 +595,20 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
 
               if (GetCollisionType(bLocalLatDat.mSiteData[site_map]) & EDGE)
               {
-                for (unsigned int l = 0; l < 3; l++)
-                  bLocalLatDat.mWallNormalAtSite[site_map * 3 + l]
-                      = iGlobLatDat.Blocks[n].wall_data[m].wall_nor[l];
+                bLocalLatDat.SetWallNormal(
+                                           site_map,
+                                           iGlobLatDat.Blocks[n].wall_data[m].wall_nor);
 
-                for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-                  bLocalLatDat.mDistanceToWall[site_map * (D3Q15::NUMVECTORS
-                      - 1) + l]
-                      = iGlobLatDat.Blocks[n].wall_data[m].cut_dist[l];
+                bLocalLatDat .SetDistanceToWall(
+                                                site_map,
+                                                iGlobLatDat.Blocks[n].wall_data[m].cut_dist);
               }
               else
               {
-                bLocalLatDat.mWallNormalAtSite[site_map * 3] = BIG_NUMBER;
+                double lBigDistance[3];
+                for (unsigned int ii = 0; ii < 3; ii++)
+                  lBigDistance[ii] = BIG_NUMBER;
+                bLocalLatDat.SetWallNormal(site_map, lBigDistance);
               }
               ++lSiteIndexOnProc;
             }
@@ -708,7 +691,7 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
     }
   }
 
-  int f_count = bLocalLatDat.LocalFluidSites * D3Q15::NUMVECTORS;
+  int f_count = bLocalLatDat.GetLocalFluidSiteCount() * D3Q15::NUMVECTORS;
 
   for (unsigned int m = 0; m < iNetTop.NeighbouringProcs.size(); m++)
   {
@@ -729,7 +712,7 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
 
       // Set f_id to the element in the send buffer that we put the updated
       // distribution functions in.
-      bLocalLatDat.mFNeighbours[site_map * D3Q15::NUMVECTORS + l] = ++f_count;
+      bLocalLatDat.SetNeighbourLocation(site_map, l, ++f_count);
 
       // Set the place where we put the received distribution functions, which is
       // f_new[number of fluid site that sends, inverse direction].
