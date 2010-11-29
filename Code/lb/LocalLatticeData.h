@@ -77,7 +77,7 @@ namespace hemelb
               >> BOUNDARY_ID_SHIFT;
         }
 
-        double *GetNormalToWall(int iSiteIndex) const
+        const double *GetNormalToWall(int iSiteIndex) const
         {
           return &mWallNormalAtSite[iSiteIndex * 3];
         }
