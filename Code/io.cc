@@ -84,12 +84,6 @@ void LBM::lbmReadConfig(Net *net,
 
   hemelb::io::XdrReader myReader = hemelb::io::XdrFileReader(xdrFile);
 
-  int l, m, n;
-  int flag;
-
-  unsigned int site_i, site_j, site_k;
-  unsigned int *site_type;
-
   // Not the ideal way to do this, but has to be this way as the old system used
   // doubles for the stress type. -1.0 signified shear stress, 1.0 meant von Mises.
   double lTempStressType;
@@ -122,7 +116,7 @@ void LBM::lbmReadConfig(Net *net,
 
   net->fr_time = hemelb::util::myClock();
 
-  n = -1;
+  int n = -1;
 
   for (int i = 0; i < lBlocksX; i++)
   {
@@ -136,6 +130,8 @@ void LBM::lbmReadConfig(Net *net,
         bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite = NULL;
         bGlobalLatticeData.Blocks[n].wall_data = NULL;
 
+        int flag;
+
         myReader.readInt(flag);
 
         if (flag == 0)
@@ -147,23 +143,25 @@ void LBM::lbmReadConfig(Net *net,
         bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite
             = new int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
 
-        m = -1;
+        int m = -1;
 
         for (int ii = 0; ii < bGlobalLatticeData.GetBlockSize(); ii++)
         {
-          site_i = (i << bGlobalLatticeData.Log2BlockSize) + ii;
+          unsigned int site_i = (i << bGlobalLatticeData.Log2BlockSize) + ii;
 
           for (int jj = 0; jj < bGlobalLatticeData.GetBlockSize(); jj++)
           {
-            site_j = (j << bGlobalLatticeData.Log2BlockSize) + jj;
+            unsigned int site_j = (j << bGlobalLatticeData.Log2BlockSize) + jj;
 
             for (int kk = 0; kk < bGlobalLatticeData.GetBlockSize(); kk++)
             {
-              site_k = (k << bGlobalLatticeData.Log2BlockSize) + kk;
+              unsigned int site_k = (k << bGlobalLatticeData.Log2BlockSize)
+                  + kk;
 
               ++m;
 
-              site_type = &bGlobalLatticeData.Blocks[n].site_data[m];
+              unsigned int *site_type =
+                  &bGlobalLatticeData.Blocks[n].site_data[m];
               myReader.readUnsignedInt(*site_type);
 
               if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
@@ -197,8 +195,9 @@ void LBM::lbmReadConfig(Net *net,
                     || net->GetCollisionType(*site_type) & OUTLET)
                 {
                   double temp;
-                  // INLET or OUTLET or both
-                  for (l = 0; l < 3; l++)
+                  // INLET or OUTLET or both.
+                  // These values are the boundary normal and the boundary distance.
+                  for (int l = 0; l < 3; l++)
                     myReader.readDouble(temp);
 
                   myReader.readDouble(temp);
@@ -207,7 +206,7 @@ void LBM::lbmReadConfig(Net *net,
                 if (net->GetCollisionType(*site_type) & EDGE)
                 {
                   // EDGE bit set
-                  for (l = 0; l < 3; l++)
+                  for (int l = 0; l < 3; l++)
                     myReader.readDouble(
                                         bGlobalLatticeData.Blocks[n].wall_data[m].wall_nor[l]);
 
@@ -215,7 +214,7 @@ void LBM::lbmReadConfig(Net *net,
                   myReader.readDouble(temp);
                 }
 
-                for (l = 0; l < 14; l++)
+                for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
                   myReader.readDouble(
                                       bGlobalLatticeData.Blocks[n].wall_data[m].cut_dist[l]);
               }
