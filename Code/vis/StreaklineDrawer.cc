@@ -20,8 +20,9 @@ namespace hemelb
                                                    int site_k,
                                                    int proc_id)
     {
-      if (site_i < 0 || site_i >= iGlobLatDat.SitesX || site_j < 0 || site_j
-          >= iGlobLatDat.SitesY || site_k < 0 || site_k >= iGlobLatDat.SitesZ)
+      if (site_i < 0 || site_i >= iGlobLatDat.GetXSiteCount() || site_j < 0
+          || site_j >= iGlobLatDat.GetYSiteCount() || site_k < 0 || site_k
+          >= iGlobLatDat.GetZSiteCount())
       {
         return;
       }
@@ -29,7 +30,8 @@ namespace hemelb
       int j = site_j >> iGlobLatDat.Log2BlockSize;
       int k = site_k >> iGlobLatDat.Log2BlockSize;
 
-      int block_id = (i * iGlobLatDat.BlocksY + j) * iGlobLatDat.BlocksZ + k;
+      int block_id = (i * iGlobLatDat.GetYBlockCount() + j)
+          * iGlobLatDat.GetZBlockCount() + k;
       int site_id;
 
       if (velocity_field[block_id].vel_site_data == NULL)
@@ -60,8 +62,9 @@ namespace hemelb
                                                                         int site_j,
                                                                         int site_k)
     {
-      if (site_i < 0 || site_i >= iGlobLatDat.SitesX || site_j < 0 || site_j
-          >= iGlobLatDat.SitesY || site_k < 0 || site_k >= iGlobLatDat.SitesZ)
+      if (site_i < 0 || site_i >= iGlobLatDat.GetXSiteCount() || site_j < 0
+          || site_j >= iGlobLatDat.GetYSiteCount() || site_k < 0 || site_k
+          >= iGlobLatDat.GetZSiteCount())
       {
         return NULL;
       }
@@ -69,7 +72,8 @@ namespace hemelb
       int j = site_j >> iGlobLatDat.Log2BlockSize;
       int k = site_k >> iGlobLatDat.Log2BlockSize;
 
-      int block_id = (i * iGlobLatDat.BlocksY + j) * iGlobLatDat.BlocksZ + k;
+      int block_id = (i * iGlobLatDat.GetYBlockCount() + j)
+          * iGlobLatDat.GetZBlockCount() + k;
 
       if (velocity_field[block_id].vel_site_data == NULL)
       {
@@ -291,11 +295,13 @@ namespace hemelb
       inlet_sites = 0;
       int n = -1;
 
-      for (int i = 0; i < iGlobLatDat.SitesX; i += iGlobLatDat.BlockSize)
-        for (int j = 0; j < iGlobLatDat.SitesY; j += iGlobLatDat.BlockSize)
-          for (int k = 0; k < iGlobLatDat.SitesZ; k += iGlobLatDat.BlockSize)
+      for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
+          += iGlobLatDat.GetBlockSize())
+        for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j
+            += iGlobLatDat.GetBlockSize())
+          for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k
+              += iGlobLatDat.GetBlockSize())
           {
-
             lBlock = &iGlobLatDat.Blocks[++n];
 
             if (lBlock->site_data == NULL)
@@ -305,9 +311,9 @@ namespace hemelb
 
             int m = -1;
 
-            for (int site_i = i; site_i < i + iGlobLatDat.BlockSize; site_i++)
-              for (int site_j = j; site_j < j + iGlobLatDat.BlockSize; site_j++)
-                for (int site_k = k; site_k < k + iGlobLatDat.BlockSize; site_k++)
+            for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
+              for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
+                for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
                 {
 
                   m++;
@@ -316,11 +322,13 @@ namespace hemelb
                     continue;
 
                   for (int neigh_i = util::max(0, site_i - 1); neigh_i
-                      <= util::min(iGlobLatDat.SitesX - 1, site_i + 1); neigh_i++)
+                      <= util::min(iGlobLatDat.GetXSiteCount() - 1, site_i + 1); neigh_i++)
                     for (int neigh_j = util::max(0, site_j - 1); neigh_j
-                        <= util::min(iGlobLatDat.SitesY - 1, site_j + 1); neigh_j++)
+                        <= util::min(iGlobLatDat.GetYSiteCount() - 1, site_j
+                            + 1); neigh_j++)
                       for (int neigh_k = util::max(0, site_k - 1); neigh_k
-                          <= util::min(iGlobLatDat.SitesZ - 1, site_k + 1); neigh_k++)
+                          <= util::min(iGlobLatDat.GetZSiteCount() - 1, site_k
+                              + 1); neigh_k++)
                       {
 
                         neigh_proc_id
@@ -350,7 +358,8 @@ namespace hemelb
                         vel_site_data_p->counter = counter;
 
                         bool seenSelf = false;
-                        for (unsigned int mm = 0; mm < mNeighProcs.size() && !seenSelf; mm++)
+                        for (unsigned int mm = 0; mm < mNeighProcs.size()
+                            && !seenSelf; mm++)
                         {
                           if (*neigh_proc_id == mNeighProcs[mm]->id)
                           {
@@ -784,9 +793,9 @@ namespace hemelb
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
-        p1[0] = particleVec[n].x - float(iGlobLatDat.SitesX >> 1);
-        p1[1] = particleVec[n].y - float(iGlobLatDat.SitesY >> 1);
-        p1[2] = particleVec[n].z - float(iGlobLatDat.SitesZ >> 1);
+        p1[0] = particleVec[n].x - float(iGlobLatDat.GetXSiteCount() >> 1);
+        p1[1] = particleVec[n].y - float(iGlobLatDat.GetYSiteCount() >> 1);
+        p1[2] = particleVec[n].z - float(iGlobLatDat.GetZSiteCount() >> 1);
 
         vis::controller->project(p1, p2);
 

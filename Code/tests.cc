@@ -32,8 +32,8 @@ void Tests::TestDomainDecomposition()
 
   MakeAGlobLatDat(lGlobLatDat);
 
-  int lFluidSites = lGlobLatDat.BlocksX * lGlobLatDat.BlocksY
-      * lGlobLatDat.BlocksZ * lGlobLatDat.SitesPerBlockVolumeUnit;
+  int lFluidSites = lGlobLatDat.BlockCount
+      * lGlobLatDat.SitesPerBlockVolumeUnit;
 
   double lExpectedPerRank = ((double) lFluidSites) / ((double) lProcCount - 1);
 
@@ -53,19 +53,13 @@ void Tests::TestDomainDecomposition()
 
 void Tests::MakeAGlobLatDat(hemelb::lb::GlobalLatticeData & oGlobLatDat)
 {
-  oGlobLatDat.BlocksX = oGlobLatDat.BlocksY = oGlobLatDat.BlocksZ = 8;
-  oGlobLatDat.Blocks = new hemelb::lb::BlockData[8 * 8 * 8];
-  oGlobLatDat.BlockSize = 4;
-  oGlobLatDat.Log2BlockSize = 2;
-  oGlobLatDat.SitesX = oGlobLatDat.SitesY = oGlobLatDat.SitesZ = 8 * 4;
-  oGlobLatDat.SitesPerBlockVolumeUnit = oGlobLatDat.BlockSize
-      * oGlobLatDat.BlockSize * oGlobLatDat.BlockSize;
+  oGlobLatDat.SetBasicDetails(8, 8, 8, 4);
 
-  for (int x = 0; x < oGlobLatDat.BlocksX; x++)
+  for (int x = 0; x < oGlobLatDat.GetXBlockCount(); x++)
   {
-    for (int y = 0; y < oGlobLatDat.BlocksY; y++)
+    for (int y = 0; y < oGlobLatDat.GetYBlockCount(); y++)
     {
-      for (int z = 0; z < oGlobLatDat.BlocksZ; z++)
+      for (int z = 0; z < oGlobLatDat.GetZBlockCount(); z++)
       {
         oGlobLatDat .Blocks[x * 64 + y * 8 + z].ProcessorRankForEachBlockSite
             = new int[oGlobLatDat.SitesPerBlockVolumeUnit];
