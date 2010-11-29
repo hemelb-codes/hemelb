@@ -112,11 +112,12 @@ namespace hemelb
       int lSitesOnCurrentProc = 0;
 
       // Iterate over all blocks.
-      for (int lBlockCoordI = 0; lBlockCoordI < iGlobLatDat.BlocksX; lBlockCoordI++)
+      for (int lBlockCoordI = 0; lBlockCoordI < iGlobLatDat.GetXBlockCount(); lBlockCoordI++)
       {
-        for (int lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat.BlocksY; lBlockCoordJ++)
+        for (int lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat.GetYBlockCount(); lBlockCoordJ++)
         {
-          for (int lBlockCoordK = 0; lBlockCoordK < iGlobLatDat.BlocksZ; lBlockCoordK++)
+          for (int lBlockCoordK = 0; lBlockCoordK
+              < iGlobLatDat.GetZBlockCount(); lBlockCoordK++)
           {
             // Block number is the number of the block we're currently on.
             lBlockNumber++;
@@ -137,16 +138,17 @@ namespace hemelb
 
             // For each dimension of the site co-ordinates, iterate over all values of the site
             // co-ordinates on the current block.
-            for (int lSiteCoordI = lBlockCoordI * iGlobLatDat.BlockSize; lSiteCoordI
-                < lBlockCoordI * iGlobLatDat.BlockSize + iGlobLatDat.BlockSize; lSiteCoordI++)
+            for (int lSiteCoordI = lBlockCoordI * iGlobLatDat.GetBlockSize(); lSiteCoordI
+                < lBlockCoordI * iGlobLatDat.GetBlockSize()
+                    + iGlobLatDat.GetBlockSize(); lSiteCoordI++)
             {
-              for (int lSiteCoordJ = lBlockCoordJ * iGlobLatDat.BlockSize; lSiteCoordJ
-                  < lBlockCoordJ * iGlobLatDat.BlockSize
-                      + iGlobLatDat.BlockSize; lSiteCoordJ++)
+              for (int lSiteCoordJ = lBlockCoordJ * iGlobLatDat.GetBlockSize(); lSiteCoordJ
+                  < lBlockCoordJ * iGlobLatDat.GetBlockSize()
+                      + iGlobLatDat.GetBlockSize(); lSiteCoordJ++)
               {
-                for (int lSiteCoordK = lBlockCoordK * iGlobLatDat.BlockSize; lSiteCoordK
-                    < lBlockCoordK * iGlobLatDat.BlockSize
-                        + iGlobLatDat.BlockSize; lSiteCoordK++)
+                for (int lSiteCoordK = lBlockCoordK
+                    * iGlobLatDat.GetBlockSize(); lSiteCoordK < lBlockCoordK
+                    * iGlobLatDat.GetBlockSize() + iGlobLatDat.GetBlockSize(); lSiteCoordK++)
                 {
                   // Keep track of the site number.
                   lSiteNumber++;
@@ -205,11 +207,14 @@ namespace hemelb
                         int neigh_k = lNew->k + D3Q15::CZ[l];
 
                         // Move on if neighbour is outside the bounding box.
-                        if (neigh_i == -1 || neigh_i == iGlobLatDat.SitesX)
+                        if (neigh_i == -1 || neigh_i
+                            == iGlobLatDat.GetXSiteCount())
                           continue;
-                        if (neigh_j == -1 || neigh_j == iGlobLatDat.SitesY)
+                        if (neigh_j == -1 || neigh_j
+                            == iGlobLatDat.GetYSiteCount())
                           continue;
-                        if (neigh_k == -1 || neigh_k == iGlobLatDat.SitesZ)
+                        if (neigh_k == -1 || neigh_k
+                            == iGlobLatDat.GetZSiteCount())
                           continue;
 
                         // Move on if the neighbour is in a block of solids (in which case

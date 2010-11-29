@@ -24,9 +24,9 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float(iGlobLatDat.SitesX);
-      vis->half_dim[1] = 0.5F * float(iGlobLatDat.SitesY);
-      vis->half_dim[2] = 0.5F * float(iGlobLatDat.SitesZ);
+      vis->half_dim[0] = 0.5F * float(iGlobLatDat.GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float(iGlobLatDat.GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float(iGlobLatDat.GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1],
                                                              vis->half_dim[2]));
@@ -49,7 +49,8 @@ namespace hemelb
                              lb::GlobalLatticeData &iGlobLatDat,
                              lb::LocalLatticeData &iLocalLatDat)
     {
-      myRayTracer = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
+      myRayTracer
+          = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
       myGlypher = new GlyphDrawer(&iGlobLatDat, &iLocalLatDat);
 
 #ifndef NO_STREAKLINES
