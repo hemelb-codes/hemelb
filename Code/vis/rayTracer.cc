@@ -652,7 +652,7 @@ namespace hemelb
       vis::controller->ctr_z = 0.5F * mGlobLatDat->BlockSize * (block_min_z
           + block_max_z);
 
-      cluster_voxel = new float *[mLocalLatDat->LocalFluidSites * VIS_FIELDS];
+      cluster_voxel = new float *[mLocalLatDat->GetLocalFluidSiteCount() * VIS_FIELDS];
 
       cluster_flow_field = new float **[mClusters.size()];
 

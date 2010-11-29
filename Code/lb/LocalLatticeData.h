@@ -17,46 +17,40 @@ namespace hemelb
       OUTLET_TYPE = 3U
     };
 
-    struct LocalLatticeData
+    class LocalLatticeData
     {
       public:
-        LocalLatticeData()
+        LocalLatticeData(int iLocalFluidSites, int iSharedFluidSites)
         {
-          FOld = NULL;
-          FNew = NULL;
-          LocalFluidSites = 0;
-          mSiteData = NULL;
-          mFNeighbours = NULL;
-          mDistanceToWall = NULL;
-          mWallNormalAtSite = NULL;
+          LocalFluidSites = iLocalFluidSites;
+
+          // Allocate f_old and f_new according to the number of sites on the process.  The extra site
+          // is there for when we would stream into a solid site during the simulation, which avoids
+          // an if condition at every timestep at every boundary site.  We also allocate space for the
+          // shared distribution functions.  We need twice as much space when we check the convergence
+          // and the extra distribution functions are
+          FOld = new double[LocalFluidSites * D3Q15::NUMVECTORS + 1
+              + iSharedFluidSites];
+          FNew = new double[LocalFluidSites * D3Q15::NUMVECTORS + 1
+              + iSharedFluidSites];
+
+          // f_id is allocated so we know which sites to get information from.
+          mFNeighbours = new int[LocalFluidSites * D3Q15::NUMVECTORS];
+
+          mSiteData = new unsigned int[LocalFluidSites];
+          mWallNormalAtSite = new double[LocalFluidSites * 3];
+          mDistanceToWall = new double[LocalFluidSites
+              * (D3Q15::NUMVECTORS - 1)];
         }
 
         ~LocalLatticeData()
         {
-          if (FOld != NULL)
-          {
-            delete[] FOld;
-          }
-          if (FNew != NULL)
-          {
-            delete[] FNew;
-          }
-          if (mSiteData != NULL)
-          {
-            delete[] mSiteData;
-          }
-          if (mFNeighbours != NULL)
-          {
-            delete[] mFNeighbours;
-          }
-          if (mDistanceToWall != NULL)
-          {
-            delete[] mDistanceToWall;
-          }
-          if (mWallNormalAtSite != NULL)
-          {
-            delete[] mWallNormalAtSite;
-          }
+          delete[] FOld;
+          delete[] FNew;
+          delete[] mSiteData;
+          delete[] mFNeighbours;
+          delete[] mDistanceToWall;
+          delete[] mWallNormalAtSite;
         }
 
         int GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const
@@ -93,16 +87,40 @@ namespace hemelb
           return (SiteType) (mSiteData[iSiteIndex] & SITE_TYPE_MASK);
         }
 
+        int GetLocalFluidSiteCount() const
+        {
+          return LocalFluidSites;
+        }
+
+        void SetNeighbourLocation(int iSiteIndex, int iDirection, int iValue)
+        {
+          mFNeighbours[iSiteIndex * D3Q15::NUMVECTORS + iDirection] = iValue;
+        }
+
+        void SetWallNormal(int iSiteIndex, const double iNormal[3])
+        {
+          for (int ii = 0; ii < 3; ii++)
+            mWallNormalAtSite[iSiteIndex * 3 + ii] = iNormal[ii];
+        }
+
+        void SetDistanceToWall(int iSiteIndex,
+                               const double iCutDistance[D3Q15::NUMVECTORS - 1])
+        {
+          for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
+            mDistanceToWall[iSiteIndex * (D3Q15::NUMVECTORS - 1) + l]
+                = iCutDistance[l];
+        }
+
+      public:
         double *FOld;
         double *FNew;
-        int LocalFluidSites;
 
-        friend class Net;
-
-        //private:
-        // TODO In time, these need to be made private. At the moment, that's impractical because they're initialised
-        // by the Net class.
+        // TODO sadly this has to be public, due to some budgetry in the way we determine site type.
+        // SiteType || FluidSite and SiteType && FluidSite have different significances...
         unsigned int *mSiteData;
+
+      private:
+        int LocalFluidSites;
         int *mFNeighbours;
         double *mDistanceToWall;
         double *mWallNormalAtSite;

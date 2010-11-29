@@ -20,7 +20,6 @@ void Tests::TestDomainDecomposition()
   hemelb::topology::TopologyManager lTopMan;
   hemelb::topology::NetworkTopology lNetTop;
   hemelb::lb::GlobalLatticeData lGlobLatDat;
-  hemelb::lb::LocalLatticeData lLocalLatDat;
 
   int lProcCount = 128;
   int lMachineCount = 1;
@@ -38,7 +37,7 @@ void Tests::TestDomainDecomposition()
 
   double lExpectedPerRank = ((double) lFluidSites) / ((double) lProcCount - 1);
 
-  lTopMan.DecomposeDomain(lFluidSites, lNetTop, lGlobLatDat, lLocalLatDat);
+  lTopMan.DecomposeDomain(lFluidSites, lNetTop, lGlobLatDat);
 
   for (int ii = 1; ii < lProcCount; ii++)
   {

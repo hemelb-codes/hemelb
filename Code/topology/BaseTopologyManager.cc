@@ -11,13 +11,11 @@ namespace hemelb
 
     void BaseTopologyManager::DecomposeDomain(int iTotalFluidSites,
                                               NetworkTopology & bNetTop,
-                                              const lb::GlobalLatticeData & bGlobLatDat,
-                                              lb::LocalLatticeData & bLocalLatDat)
+                                              const lb::GlobalLatticeData & bGlobLatDat)
     {
       // Allocations.  fluid sites will store actual number of fluid
       // sites per proc.  Site location will store up to 10000 of some
       // sort of coordinate.
-      bLocalLatDat.LocalFluidSites = 0;
 
       // Initialise the count of fluid sites on each processor to 0.
       bNetTop.FluidSitesOnEachProcessor = new int[bNetTop.ProcessorCount];
@@ -54,7 +52,7 @@ namespace hemelb
         // In the simple case, simply divide fluid sites up between processors.
         AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
                                      lUnvisitedFluidSiteCount, -1, false,
-                                     &bLocalLatDat, bGlobLatDat, &bNetTop);
+                                     bGlobLatDat, &bNetTop);
       }
       else
       {
@@ -69,7 +67,7 @@ namespace hemelb
         // First, divide the sites up between machines.
         AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
                                      lUnvisitedFluidSiteCount, -1, true,
-                                     &bLocalLatDat, bGlobLatDat, &bNetTop);
+                                     bGlobLatDat, &bNetTop);
 
         fluid_sites_per_unit = (int) ceil((double) lUnvisitedFluidSiteCount
             / (double) (bNetTop.ProcessorCount - 1));
@@ -81,8 +79,7 @@ namespace hemelb
           AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
                                        lUnvisitedFluidSiteCount,
                                        bNetTop.ProcessorCount + lMachineNumber,
-                                       false, &bLocalLatDat, bGlobLatDat,
-                                       &bNetTop);
+                                       false, bGlobLatDat, &bNetTop);
         }
       }
 
@@ -93,7 +90,6 @@ namespace hemelb
                                                            int & bUnassignedSites,
                                                            const int iMarker,
                                                            const bool iIsMachineLevel,
-                                                           lb::LocalLatticeData * iLocalLatDat,
                                                            const lb::GlobalLatticeData &iGlobLatDat,
                                                            NetworkTopology * bNetTopology)
     {
@@ -257,11 +253,6 @@ namespace hemelb
                   // If we have enough sites, we have finished.
                   if (lSitesOnCurrentProc >= iSitesPerProc)
                   {
-                    if (bNetTopology->LocalRank == proc_count)
-                    {
-                      iLocalLatDat->LocalFluidSites = lSitesOnCurrentProc;
-                    }
-
                     if (!iIsMachineLevel)
                     {
                       bNetTopology->FluidSitesOnEachProcessor[proc_count]
