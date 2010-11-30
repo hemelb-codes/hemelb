@@ -283,10 +283,10 @@ namespace hemelb
 
       nParticleSeeds = 0;
 
-      num_blocks = iGlobLatDat.BlockCount;
-      velocity_field = new VelocityField[iGlobLatDat.BlockCount];
+      num_blocks = iGlobLatDat.GetBlockCount();
+      velocity_field = new VelocityField[iGlobLatDat.GetBlockCount()];
 
-      for (int n = 0; n < iGlobLatDat.BlockCount; n++)
+      for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
       {
         velocity_field[n].vel_site_data = NULL;
       }
@@ -455,7 +455,7 @@ namespace hemelb
 
       counter = 0;
 
-      for (n = 0; n < iGlobLatDat.BlockCount; n++)
+      for (n = 0; n < iGlobLatDat.GetBlockCount(); n++)
       {
         if (velocity_field[n].vel_site_data == NULL)
           continue;
