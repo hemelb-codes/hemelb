@@ -438,8 +438,8 @@ namespace hemelb
                           +1, -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1 };
 
       unsigned short int *cluster_id =
-          new unsigned short int[mGlobLatDat->BlockCount];
-      for (int n = 0; n < mGlobLatDat->BlockCount; n++)
+          new unsigned short int[mGlobLatDat->GetBlockCount()];
+      for (int n = 0; n < mGlobLatDat->GetBlockCount(); n++)
       {
         cluster_id[n] = -1;
       }
@@ -453,8 +453,8 @@ namespace hemelb
       std::vector<BlockLocation> *block_location_b = new std::vector<
           BlockLocation>(blocks_buffer_size);
 
-      bool *is_block_visited = new bool[mGlobLatDat->BlockCount];
-      for (int n = 0; n < mGlobLatDat->BlockCount; n++)
+      bool *is_block_visited = new bool[mGlobLatDat->GetBlockCount()];
+      for (int n = 0; n < mGlobLatDat->GetBlockCount(); n++)
       {
         is_block_visited[n] = false;
       }

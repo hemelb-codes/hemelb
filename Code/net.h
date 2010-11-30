@@ -23,7 +23,7 @@ class Net
 
     void Initialise(hemelb::topology::NetworkTopology &iNetTop,
                     hemelb::lb::GlobalLatticeData &iGlobLatDat,
-                    hemelb::lb::LocalLatticeData &bLocalLatDat);
+                    hemelb::lb::LocalLatticeData* &bLocalLatDat);
 
     void
         ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);

@@ -71,14 +71,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mTopologyManger.DecomposeDomain(GetLBM()->total_fluid_sites,
                                   mNetworkTopology, mGlobLatDat);
 
-  mLocalLatDat
-      = new hemelb::lb::LocalLatticeData(
-                                         mNetworkTopology.FluidSitesOnEachProcessor[mNetworkTopology.LocalRank],
-                                         mNetworkTopology.TotalSharedFs);
-
   mDomainDecompTime = hemelb::util::myClock() - seconds;
 
-  GetNet()->Initialise(mNetworkTopology, mGlobLatDat, *mLocalLatDat);
+  GetNet()->Initialise(mNetworkTopology, mGlobLatDat, mLocalLatDat);
   GetLBM()->lbmSetInitialConditions(*mLocalLatDat);
   hemelb::vis::controller
       = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mGlobLatDat);

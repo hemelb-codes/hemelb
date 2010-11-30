@@ -71,9 +71,9 @@ namespace hemelb
             ++Log2BlockSize;
           }
 
-          BlockCount = mBlocksX * mBlocksY * mBlocksZ;
+          mBlockCount = mBlocksX * mBlocksY * mBlocksZ;
 
-          Blocks = new BlockData[BlockCount];
+          Blocks = new BlockData[mBlockCount];
         }
 
         int GetXSiteCount() const
@@ -109,6 +109,11 @@ namespace hemelb
         int GetBlockSize() const
         {
           return mBlockSize;
+        }
+
+        int GetBlockCount() const
+        {
+          return mBlockCount;
         }
 
         BlockData * Blocks;
@@ -197,11 +202,11 @@ namespace hemelb
 
       public:
         // TODO public temporarily, until all usages are internal to the class.
-        int BlockCount;
         int Log2BlockSize;
         int SitesPerBlockVolumeUnit;
 
       private:
+        int mBlockCount;
         int mSitesX, mSitesY, mSitesZ;
         int mBlocksX, mBlocksY, mBlocksZ;
         int mBlockSize;

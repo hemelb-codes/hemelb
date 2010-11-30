@@ -32,7 +32,7 @@ void Tests::TestDomainDecomposition()
 
   MakeAGlobLatDat(lGlobLatDat);
 
-  int lFluidSites = lGlobLatDat.BlockCount
+  int lFluidSites = lGlobLatDat.GetBlockCount()
       * lGlobLatDat.SitesPerBlockVolumeUnit;
 
   double lExpectedPerRank = ((double) lFluidSites) / ((double) lProcCount - 1);
