@@ -8,9 +8,7 @@ namespace hemelb
   namespace vis
   {
 
-#ifndef NOMPI
     MPI_Datatype MPI_col_pixel_type;
-#endif
     PixelId::PixelId(int i_, int j_) :
       isRt(false), isGlyph(false), isStreakline(false), i(i_), j(j_)
     {
@@ -21,13 +19,11 @@ namespace hemelb
     {
     }
 
-#ifndef NOMPI
     MPI_Datatype ColPixel::mpiType = MPI_DATATYPE_NULL;
-#endif// NOMPI
+
     // create the derived datatype for the MPI communications
     void ColPixel::registerMpiType()
     {
-#ifndef NOMPI
       int col_pixel_count = 15;
       int col_pixel_blocklengths[15] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                          1, 1 };
@@ -58,7 +54,6 @@ namespace hemelb
       MPI_Type_struct(col_pixel_count, col_pixel_blocklengths, col_pixel_disps,
                       col_pixel_types, &mpiType);
       MPI_Type_commit(&mpiType);
-#endif
     }
 
     const MPI_Datatype& ColPixel::getMpiType()

@@ -113,10 +113,8 @@ namespace hemelb
     {
       steer_par[STEERABLE_PARAMETERS] = *perform_rendering;
 
-#ifndef NOMPI
       MPI_Bcast(steer_par, STEERABLE_PARAMETERS + 1, MPI_FLOAT, 0,
                 MPI_COMM_WORLD);
-#endif
 
       float longitude, latitude;
       float zoom;
