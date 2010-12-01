@@ -563,21 +563,17 @@ namespace hemelb
 
           if (iNetTopology->LocalRank == send_id)
           {
-#ifndef NOMPI
             MPI_Send(&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
-#endif
+
             if (col_pixels > 0)
             {
-#ifndef NOMPI
               MPI_Send(col_pixel_send, col_pixels, ColPixel::getMpiType(),
                        recv_id, 20, MPI_COMM_WORLD);
-#endif
             }
 
           }
           else
           {
-#ifndef NOMPI
             MPI_Recv(&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD,
                      &status);
 
@@ -586,9 +582,7 @@ namespace hemelb
               MPI_Recv(col_pixel_send, col_pixels_temp, ColPixel::getMpiType(),
                        send_id, 20, MPI_COMM_WORLD, &status);
             }
-#else
-            col_pixels_temp = 0;
-#endif
+
             for (n = 0; n < col_pixels_temp; n++)
             {
               col_pixel1 = &col_pixel_send[n];
@@ -628,15 +622,12 @@ namespace hemelb
 #ifdef NEW_COMPOSITING
       if (iNetTopology->LocalRank == 1)
       {
-#ifndef NOMPI
         MPI_Send (&col_pixels, 1, MPI_INT, 0, 20, MPI_COMM_WORLD);
-#endif
+
         if (col_pixels > 0)
         {
-#ifndef NOMPI
           MPI_Send (col_pixel_recv[recv_buffer_id], col_pixels, MPI_col_pixel_type,
               0, 20, MPI_COMM_WORLD);
-#endif
         }
 
       }

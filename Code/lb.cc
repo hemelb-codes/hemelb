@@ -276,9 +276,7 @@ hemelb::lb::Stability LBM::lbmCycle(int perform_rt,
 
   int offset = net->my_inner_sites;
 
-#ifndef NOMPI
   double lPreLbTimeOne = MPI_Wtime();
-#endif
 
   for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
   {
@@ -292,17 +290,13 @@ hemelb::lb::Stability LBM::lbmCycle(int perform_rt,
     offset += net->my_inter_collisions[collision_type];
   }
 
-#ifndef NOMPI
   double lPreSendTime = MPI_Wtime();
   bLbTime += (lPreSendTime - lPreLbTimeOne);
-#endif
 
   net->SendToNeighbouringProcessors(bLocalLatDat);
 
-#ifndef NOMPI
   double lPreLbTimeTwo = MPI_Wtime();
   bMPISendTime += (lPreLbTimeTwo - lPreSendTime);
-#endif
 
   offset = 0;
 
@@ -318,17 +312,13 @@ hemelb::lb::Stability LBM::lbmCycle(int perform_rt,
     offset += net->my_inner_collisions[collision_type];
   }
 
-#ifndef NOMPI
   double lPreMPIWaitTime = MPI_Wtime();
   bLbTime += (lPreMPIWaitTime - lPreLbTimeTwo);
-#endif
 
   net->UseDataFromNeighbouringProcs(bLocalLatDat);
 
-#ifndef NOMPI
   double lPrePostStepTime = MPI_Wtime();
   bMPIWaitTime += (lPrePostStepTime - lPreMPIWaitTime);
-#endif
 
   // Do any cleanup steps necessary on boundary nodes
   offset = 0;
@@ -357,9 +347,7 @@ hemelb::lb::Stability LBM::lbmCycle(int perform_rt,
     offset += net->my_inter_collisions[collision_type];
   }
 
-#ifndef NOMPI
   bLbTime += (MPI_Wtime() - lPrePostStepTime);
-#endif
 
   // Swap f_old and f_new ready for the next timestep.
   double *temp = bLocalLatDat.FOld;
@@ -381,7 +369,6 @@ void LBM::lbmCalculateFlowFieldValues()
   local_data = new double[lMaxInlets];
   global_data = new double[lMaxInlets];
 
-#ifndef NOMPI
   local_data[0] = mMinsAndMaxes.MinDensity;
   local_data[1] = mMinsAndMaxes.MinVelocity;
   local_data[2] = mMinsAndMaxes.MinStress;
@@ -418,7 +405,7 @@ void LBM::lbmCalculateFlowFieldValues()
     lbm_average_inlet_velocity[i] = global_data[i];
     lbm_inlet_count[i] = global_data[inlets + i];
   }
-#endif // NOMPI
+
   delete[] global_data;
   delete[] local_data;
 
@@ -453,11 +440,9 @@ int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
     }
   }
 
-#ifndef NOMPI
   net->err = MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX,
                            MPI_COMM_WORLD);
   is_unstable = stability;
-#endif
 
   return is_unstable;
 }
