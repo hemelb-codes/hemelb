@@ -165,7 +165,7 @@ namespace hemelb
         // Function to get a pointer to the site_data for a site.
         // If the site is in an empty block, return NULL.
 
-        unsigned int * GetSiteData(int iSiteI, int iSiteJ, int iSiteK)
+        const unsigned int * GetSiteData(int iSiteI, int iSiteJ, int iSiteK) const
         {
           // If site is out of the bounding box, return NULL.
           if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ
