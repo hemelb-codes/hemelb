@@ -490,144 +490,9 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
 
   lSiteIndexOnProc = 0;
 
-  n = -1;
+  DoTheThing(bLocalLatDat, lSharedFLocationForEachProc, lThisRankSiteData,
+             iGlobLatDat, iNetTop);
 
-  // Iterate over blocks in global co-ords.
-  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
-      += iGlobLatDat.GetBlockSize())
-  {
-    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j
-        += iGlobLatDat.GetBlockSize())
-    {
-      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k
-          += iGlobLatDat.GetBlockSize())
-      {
-        hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[++n];
-
-        if (map_block_p->site_data == NULL)
-        {
-          continue;
-        }
-
-        hemelb::lb::BlockData *proc_block_p = &iGlobLatDat.Blocks[n];
-
-        int m = -1;
-
-        // Iterate over sites within the block.
-        for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
-        {
-          for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
-          {
-            for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
-            {
-              // If a site is not on this process, continue.
-              m++;
-              if (iNetTop.LocalRank
-                  != proc_block_p->ProcessorRankForEachBlockSite[m])
-              {
-                continue;
-              }
-              // Get site data, which is the number of the fluid site on this proc..
-              unsigned int site_map = map_block_p->site_data[m];
-
-              // set f_id.
-              bLocalLatDat->SetNeighbourLocation(site_map, 0, site_map
-                  * D3Q15::NUMVECTORS + 0);
-
-              for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
-              {
-                // Work out positions of neighbours.
-                int neigh_i = site_i + D3Q15::CX[l];
-                int neigh_j = site_j + D3Q15::CY[l];
-                int neigh_k = site_k + D3Q15::CZ[l];
-
-                // initialize f_id to the rubbish site.
-                bLocalLatDat->SetNeighbourLocation(
-                                                   site_map,
-                                                   l,
-                                                   bLocalLatDat->GetLocalFluidSiteCount()
-                                                       * D3Q15::NUMVECTORS);
-
-                // You know which process the neighbour is on.
-                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                       neigh_j,
-                                                                       neigh_k);
-
-                if (proc_id_p == NULL || *proc_id_p == 1 << 30)
-                {
-                  continue;
-                }
-                // Pointer to the neihgbour.
-                unsigned int *site_data_p = iGlobLatDat.GetSiteData(neigh_i,
-                                                                    neigh_j,
-                                                                    neigh_k);
-
-                // If on the same proc, set f_id of the
-                // current site and direction to the
-                // site and direction that it sends to.
-                // If we check convergence, the data for
-                // each site is split into that for the
-                // current and previous cycles.
-                if (iNetTop.LocalRank == *proc_id_p)
-                {
-                  bLocalLatDat->SetNeighbourLocation(site_map, l, *site_data_p
-                      * D3Q15::NUMVECTORS + l);
-
-                  continue;
-                }
-                short int neigh_proc_index =
-                    iNetTop.NeighbourIndexFromProcRank[*proc_id_p];
-
-                // You have neigh proc again.
-                hemelb::topology::NeighbouringProcessor * neigh_proc_p =
-                    iNetTop.NeighbouringProcs[neigh_proc_index];
-
-                // This stores some coordinates.  We
-                // still need to know the site number.
-                // neigh_proc[ n ].f_data is now
-                // set as well, since this points to
-                // f_data.  Every process has data for
-                // its neighbours which say which sites
-                // on this process are shared with the
-                // neighbour.
-                short int
-                    *f_data_p =
-                        &lSharedFLocationForEachProc[neigh_proc_index][neigh_proc_p->SharedFCount
-                            << 2];
-                f_data_p[0] = site_i;
-                f_data_p[1] = site_j;
-                f_data_p[2] = site_k;
-                f_data_p[3] = l;
-                ++neigh_proc_p->SharedFCount; // We recount this again.
-              }
-              // This is used in Calculate BC in IO.
-              bLocalLatDat->mSiteData[site_map]
-                  = lThisRankSiteData[lSiteIndexOnProc];
-
-              if (GetCollisionType(bLocalLatDat->mSiteData[site_map]) & EDGE)
-              {
-                bLocalLatDat->SetWallNormal(
-                                            site_map,
-                                            iGlobLatDat.Blocks[n].wall_data[m].wall_nor);
-
-                bLocalLatDat->SetDistanceToWall(
-                                                site_map,
-                                                iGlobLatDat.Blocks[n].wall_data[m].cut_dist);
-              }
-              else
-              {
-                double lBigDistance[3];
-                for (unsigned int ii = 0; ii < 3; ii++)
-                  lBigDistance[ii] = BIG_NUMBER;
-                bLocalLatDat->SetWallNormal(site_map, lBigDistance);
-              }
-              ++lSiteIndexOnProc;
-            }
-          }
-        }
-      }
-    }
-  }
   delete[] lThisRankSiteData;
 
   // point-to-point communications are performed to match data to be
@@ -736,6 +601,152 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
   delete[] f_data;
 
   bm_time = hemelb::util::myClock() - seconds;
+}
+
+void Net::DoTheThing(hemelb::lb::LocalLatticeData* bLocalLatDat,
+                     short int ** bSharedFLocationForEachProc,
+                     const unsigned int * iSiteDataForThisRank,
+                     const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                     const hemelb::topology::NetworkTopology & iNetTop)
+{
+  int n = -1;
+  int lSiteIndexOnProc = 0;
+
+  // Iterate over blocks in global co-ords.
+  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
+      += iGlobLatDat.GetBlockSize())
+  {
+    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j
+        += iGlobLatDat.GetBlockSize())
+    {
+      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k
+          += iGlobLatDat.GetBlockSize())
+      {
+        hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[++n];
+
+        if (map_block_p->site_data == NULL)
+        {
+          continue;
+        }
+
+        hemelb::lb::BlockData *proc_block_p = &iGlobLatDat.Blocks[n];
+
+        int m = -1;
+
+        // Iterate over sites within the block.
+        for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
+        {
+          for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
+          {
+            for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
+            {
+              // If a site is not on this process, continue.
+              m++;
+              if (iNetTop.LocalRank
+                  != proc_block_p->ProcessorRankForEachBlockSite[m])
+              {
+                continue;
+              }
+              // Get site data, which is the number of the fluid site on this proc..
+              unsigned int site_map = map_block_p->site_data[m];
+
+              // set f_id.
+              bLocalLatDat->SetNeighbourLocation(site_map, 0, site_map
+                  * D3Q15::NUMVECTORS + 0);
+
+              for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+              {
+                // Work out positions of neighbours.
+                int neigh_i = site_i + D3Q15::CX[l];
+                int neigh_j = site_j + D3Q15::CY[l];
+                int neigh_k = site_k + D3Q15::CZ[l];
+
+                // initialize f_id to the rubbish site.
+                bLocalLatDat->SetNeighbourLocation(
+                                                   site_map,
+                                                   l,
+                                                   bLocalLatDat->GetLocalFluidSiteCount()
+                                                       * D3Q15::NUMVECTORS);
+
+                // You know which process the neighbour is on.
+                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
+                                                                       neigh_j,
+                                                                       neigh_k);
+
+                if (proc_id_p == NULL || *proc_id_p == 1 << 30)
+                {
+                  continue;
+                }
+                // Pointer to the neihgbour.
+                const unsigned int *site_data_p =
+                    iGlobLatDat.GetSiteData(neigh_i, neigh_j, neigh_k);
+
+                // If on the same proc, set f_id of the
+                // current site and direction to the
+                // site and direction that it sends to.
+                // If we check convergence, the data for
+                // each site is split into that for the
+                // current and previous cycles.
+                if (iNetTop.LocalRank == *proc_id_p)
+                {
+                  bLocalLatDat->SetNeighbourLocation(site_map, l, *site_data_p
+                      * D3Q15::NUMVECTORS + l);
+
+                  continue;
+                }
+                short int neigh_proc_index =
+                    iNetTop.NeighbourIndexFromProcRank[*proc_id_p];
+
+                // You have neigh proc again.
+                hemelb::topology::NeighbouringProcessor * neigh_proc_p =
+                    iNetTop.NeighbouringProcs[neigh_proc_index];
+
+                // This stores some coordinates.  We
+                // still need to know the site number.
+                // neigh_proc[ n ].f_data is now
+                // set as well, since this points to
+                // f_data.  Every process has data for
+                // its neighbours which say which sites
+                // on this process are shared with the
+                // neighbour.
+                short int
+                    *f_data_p =
+                        &bSharedFLocationForEachProc[neigh_proc_index][neigh_proc_p->SharedFCount
+                            << 2];
+                f_data_p[0] = site_i;
+                f_data_p[1] = site_j;
+                f_data_p[2] = site_k;
+                f_data_p[3] = l;
+                ++neigh_proc_p->SharedFCount; // We recount this again.
+              }
+              // This is used in Calculate BC in IO.
+              bLocalLatDat->mSiteData[site_map]
+                  = iSiteDataForThisRank[lSiteIndexOnProc];
+
+              if (GetCollisionType(bLocalLatDat->mSiteData[site_map]) & EDGE)
+              {
+                bLocalLatDat->SetWallNormal(
+                                            site_map,
+                                            iGlobLatDat.Blocks[n].wall_data[m].wall_nor);
+
+                bLocalLatDat->SetDistanceToWall(
+                                                site_map,
+                                                iGlobLatDat.Blocks[n].wall_data[m].cut_dist);
+              }
+              else
+              {
+                double lBigDistance[3];
+                for (unsigned int ii = 0; ii < 3; ii++)
+                  lBigDistance[ii] = BIG_NUMBER;
+                bLocalLatDat->SetWallNormal(site_map, lBigDistance);
+              }
+              ++lSiteIndexOnProc;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)

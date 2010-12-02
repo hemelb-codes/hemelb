@@ -44,8 +44,11 @@ class Net
     double bm_time, fr_time;
 
   private:
-    // NeighProc is part of the Net (defined later in this file).  This object is an element of an array
-    // (called neigh_proc[]) and comprises information about the neighbouring processes to this process.
+    void DoTheThing(hemelb::lb::LocalLatticeData* bLocalLatDat,
+                    short int ** bSharedFLocationForEachProc,
+                    const unsigned int * iSiteDataForThisRank,
+                    const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                    const hemelb::topology::NetworkTopology & iNetTop);
 
     int *f_recv_iv;
     int my_inter_sites;
