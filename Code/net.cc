@@ -53,11 +53,7 @@ unsigned int Net::GetCollisionType(unsigned int site_data)
 
 void Net::Abort()
 {
-#ifndef NOMPI
   err = MPI_Abort(MPI_COMM_WORLD, 1);
-#else
-  exit(1);
-#endif
 
   // This gives us something to work from when we have an error - we get the rank
   // that calls abort, and we get a stack-trace from the exception having been thrown.
@@ -503,14 +499,12 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
   // will be communicated). It's here!
 
   // Allocate the request variable.
-#ifndef NOMPI
   req = new MPI_Request*[COMMS_LEVELS];
 
   for (int m = 0; m < COMMS_LEVELS; m++)
   {
     req[m] = new MPI_Request[2 * iNetTop.ProcessorCount];
   }
-#endif
 
   for (unsigned int m = 0; m < iNetTop.NeighbouringProcs.size(); m++)
   {
@@ -521,7 +515,6 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
     // It seems that, for each pair of processors, the lower numbered one ends up with its own
     // edge sites and directions stored and the higher numbered one ends up with those on the
     // other processor.
-#ifndef NOMPI
     if (neigh_proc_p->Rank > iNetTop.LocalRank)
     {
       err = MPI_Isend(&lSharedFLocationForEachProc[m][0],
@@ -535,7 +528,6 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
                       neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
                       &req[0][iNetTop.NeighbouringProcs.size() + m]);
     }
-#endif
   }
   for (unsigned int m = 0; m < iNetTop.NeighbouringProcs.size(); m++)
   {
@@ -544,15 +536,12 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
 
     if (neigh_proc_p->Rank > iNetTop.LocalRank)
     {
-#ifndef NOMPI
       err = MPI_Wait(&req[0][m], status);
-#endif
     }
     else
     {
-#ifndef NOMPI
       err = MPI_Wait(&req[0][iNetTop.NeighbouringProcs.size() + m], status);
-#endif
+
       // Now we sort the situation so that each process has its own sites.
       for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
       {
@@ -751,7 +740,6 @@ void Net::DoTheThing(hemelb::lb::LocalLatticeData* bLocalLatDat,
 
 void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
-#ifndef NOMPI
   for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
     hemelb::topology::NeighbouringProcessor * neigh_proc_p =
@@ -761,12 +749,10 @@ void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocal
                     neigh_proc_p->SharedFCount, MPI_DOUBLE, neigh_proc_p->Rank,
                     10, MPI_COMM_WORLD, &req[0][m]);
   }
-#endif
 }
 
 void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
-#ifndef NOMPI
   for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
     hemelb::topology::NeighbouringProcessor *neigh_proc_p =
@@ -777,19 +763,16 @@ void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDa
                     10, MPI_COMM_WORLD,
                     &req[0][mNetworkTopology->NeighbouringProcs.size() + m]);
   }
-#endif
 }
 
 void Net::UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
-#ifndef NOMPI
   for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
     err = MPI_Wait(&req[0][m], status);
     err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m],
                    status);
   }
-#endif
 
   // Copy the distribution functions received from the neighbouring
   // processors into the destination buffer "f_new".
@@ -805,7 +788,6 @@ Net::Net(hemelb::topology::NetworkTopology * iNetworkTopology,
          int &iArgumentCount,
          char* iArgumentList[])
 {
-#ifndef NOMPI
   int thread_level_provided;
 
   err = MPI_Init_thread(&iArgumentCount, &iArgumentList, MPI_THREAD_FUNNELED,
@@ -817,10 +799,6 @@ Net::Net(hemelb::topology::NetworkTopology * iNetworkTopology,
   {
     printf("thread_level_provided %i\n", thread_level_provided);
   }
-#else
-  iNetTop.ProcessorCount = 1;
-  mRank = 0;
-#endif
 
   mNetworkTopology = iNetworkTopology;
 }
@@ -830,18 +808,12 @@ Net::Net(hemelb::topology::NetworkTopology * iNetworkTopology,
  */
 Net::~Net()
 {
-
-#ifndef NOMPI
   err = MPI_Finalize();
-#endif
 
   delete[] f_recv_iv;
 
-#ifndef NOMPI
   for (int i = 0; i < COMMS_LEVELS; i++)
     delete[] req[i];
   delete[] req;
-#endif
-
 }
 

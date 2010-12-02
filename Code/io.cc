@@ -288,9 +288,9 @@ void LBM::lbmReadParameters()
     par_to_send[1] = 0.1 + (double) outlets;
     par_to_send[2] = 0.1 + (double) is_inlet_normal_available;
   }
-#ifndef NOMPI
+
   err = MPI_Bcast(par_to_send, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif
+
   if (!mNetTopology->IsCurrentProcTheIOProc())
   {
     inlets = (int) par_to_send[0];
@@ -332,10 +332,10 @@ void LBM::lbmReadParameters()
       }
     }
   }
-#ifndef NOMPI
+
   err = MPI_Bcast(par_to_send, 3 * (inlets + outlets + inlets), MPI_DOUBLE, 0,
                   MPI_COMM_WORLD);
-#endif
+
   if (!mNetTopology->IsCurrentProcTheIOProc())
   {
     for (int n = 0; n < inlets; n++)
@@ -645,7 +645,7 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
 
               comPeriodDelta = 0;
               ++iters;
-#ifndef NOMPI
+
               err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS
                   * communication_period, MPI_FLOAT, gathered_flow_field,
                                MACROSCOPIC_PARS * communication_period,
@@ -655,7 +655,7 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
                                MPI_SHORT, gathered_site_data, 3
                                    * communication_period, MPI_SHORT, 0,
                                MPI_COMM_WORLD);
-#endif
+
               if (mNetTopology->IsCurrentProcTheIOProc())
               {
 
@@ -701,7 +701,6 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
     // Weirdly initialized for
     for (; iters <= communication_iters; iters++)
     {
-#ifndef NOMPI
       err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS
           * communication_period, MPI_FLOAT, gathered_flow_field,
                        MACROSCOPIC_PARS * communication_period, MPI_FLOAT, 0,
@@ -710,7 +709,6 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
       err = MPI_Gather(local_site_data, 3 * communication_period, MPI_SHORT,
                        gathered_site_data, 3 * communication_period, MPI_SHORT,
                        0, MPI_COMM_WORLD);
-#endif
 
       if (mNetTopology->IsCurrentProcTheIOProc())
       {
@@ -779,9 +777,8 @@ void LBM::ReadVisParameters()
     par_to_send[7] = velocity_max;
     par_to_send[8] = stress_max;
   }
-#ifndef NOMPI
+
   int err = MPI_Bcast(par_to_send, 9, MPI_FLOAT, 0, MPI_COMM_WORLD);
-#endif
 
   mSimConfig->VisCentre.x = par_to_send[0];
   mSimConfig->VisCentre.y = par_to_send[1];
