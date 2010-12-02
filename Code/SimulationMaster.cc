@@ -185,9 +185,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       GetLBM()->lbmUpdateInletVelocities(mSimulationState.TimeStep,
                                          *mLocalLatDat, GetNet());
 
-#ifndef NOMPI
       double lPreImageTime = MPI_Wtime();
-#endif
 
 #ifndef NO_STREAKLINES
       hemelb::vis::controller->streaklines(mSimulationState.TimeStep,
@@ -260,10 +258,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         }
       }
 
-#ifndef NOMPI
       double lPreSnapshotTime = MPI_Wtime();
       mImagingTime += (lPreSnapshotTime - lPreImageTime);
-#endif
 
       if (mSimulationState.TimeStep % snapshots_period == 0)
       {
@@ -276,9 +272,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
             + std::string(snapshot_filename), mGlobLatDat, *mLocalLatDat);
       }
 
-#ifndef NOMPI
       mSnapshotTime += (MPI_Wtime() - lPreSnapshotTime);
-#endif
 
 #ifndef NO_STEER
       if (mNetworkTopology.IsCurrentProcTheIOProc())
@@ -440,7 +434,6 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
 // does not always carry data.
 void SimulationMaster::PrintTimingData(int iSignal)
 {
-#ifndef NOMPI
   double lTimings[5] = { mLbTime, mMPISendTime, mMPIWaitTime, mImagingTime,
                          mSnapshotTime };
   std::string lNames[5] = { "LBM", "MPISend", "MPIWait", "Images", "Snaps" };
@@ -504,7 +497,6 @@ void SimulationMaster::PrintTimingData(int iSignal)
               lMins[ii], lMeans[ii], lMaxes[ii]);
     }
   }
-#endif //NOMPI
 }
 
 LBM *SimulationMaster::GetLBM()

@@ -485,7 +485,6 @@ namespace hemelb
     // Communicate site ids to other processors.
     void StreaklineDrawer::communicateSiteIds()
     {
-#ifndef NOMPI
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
         MPI_Irecv(&mNeighProcs[m]->recv_vs, 1, MPI_INT, mNeighProcs[m]->id, 30,
@@ -519,13 +518,11 @@ namespace hemelb
           MPI_Wait(&req[procs + mNeighProcs[m]->id], status);
         }
       }
-#endif // NOMPI
     }
 
     // Communicate velocities to other processors.
     void StreaklineDrawer::communicateVelocities(lb::GlobalLatticeData &iGlobLatDat)
     {
-#ifndef NOMPI
       int site_i, site_j, site_k;
       int neigh_i, neigh_j, neigh_k;
 
@@ -600,7 +597,6 @@ namespace hemelb
       {
         mNeighProcs[m]->send_vs = 0;
       }
-#endif // NOMPI
     }
 
     // Update the velocity field.
@@ -667,7 +663,6 @@ namespace hemelb
     // Communicate that particles current state to other processors.
     void StreaklineDrawer::communicateParticles(lb::GlobalLatticeData &iGlobLatDat)
     {
-#ifndef NOMPI
       int site_i, site_j, site_k;
       int particles_temp;
       MPI_Status status;
@@ -770,7 +765,6 @@ namespace hemelb
           }
         }
       }
-#endif // NOMPI
     }
 
     // Render the streaklines

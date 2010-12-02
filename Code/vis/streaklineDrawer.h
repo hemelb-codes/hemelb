@@ -106,13 +106,9 @@ namespace hemelb
 
         std::vector<NeighProc*> mNeighProcs;
 
-     //   NeighProc neigh_proc[NEIGHBOUR_PROCS_MAX];
-
-        // If using MPI, require these for inter-processor comms.
-#ifndef NOMPI
+        // Require these for inter-processor comms.
         MPI_Status status[4];
         MPI_Request *req;
-#endif
 
         // Private functions for the creation / deletion of particles.
         void createSeedParticles();
