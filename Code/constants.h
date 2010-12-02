@@ -7,7 +7,10 @@
 #define PI           3.14159265358979323846264338327950288
 #define DEG_TO_RAD   (PI / 180.0)
 #define EPSILON      1.0e-30
+
+// TODO almost certainly filth.
 #define BIG_NUMBER   1.0e+30
+#define BIG_NUMBER2  (1 << 30)
 
 #define MACROSCOPIC_PARS   5
 #define DENSITY            0
