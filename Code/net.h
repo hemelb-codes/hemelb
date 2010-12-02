@@ -44,7 +44,7 @@ class Net
     double bm_time, fr_time;
 
   private:
-    void DoTheThing(hemelb::lb::LocalLatticeData* bLocalLatDat,
+    void InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
                     short int ** bSharedFLocationForEachProc,
                     const unsigned int * iSiteDataForThisRank,
                     const hemelb::lb::GlobalLatticeData & iGlobLatDat,

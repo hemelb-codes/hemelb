@@ -154,8 +154,8 @@ namespace hemelb
                   lSiteNumber++;
 
                   //TODO comments from here.
-                  // Move on if the site is solid (ProcessorRankForEachBlockSite = 1 << 30) or has
-                  // already been assigned to a rank (0 <= ProcessorRankForEachBlockSite < 1 << 30).
+                  // Move on if the site is solid (ProcessorRankForEachBlockSite = BIG_NUMBER2) or has
+                  // already been assigned to a rank (0 <= ProcessorRankForEachBlockSite < BIG_NUMBER2).
                   if (lProcRankForSite[lSiteNumber] != iMarker)
                   {
                     continue;

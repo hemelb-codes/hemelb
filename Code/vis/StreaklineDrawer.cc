@@ -337,7 +337,7 @@ namespace hemelb
                                                                     neigh_k);
 
                         if (neigh_proc_id == NULL || *neigh_proc_id
-                            == (1 << 30))
+                            == BIG_NUMBER2)
                         {
                           continue;
                         }
