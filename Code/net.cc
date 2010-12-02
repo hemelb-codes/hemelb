@@ -469,7 +469,6 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
         = &f_recv_iv[iNetTop.TotalSharedFs];
 
     iNetTop.TotalSharedFs += iNetTop.NeighbouringProcs[n]->SharedFCount;
-    iNetTop.NeighbouringProcs[n]->SharedFCount = 0;// This is set back to 0.
   }
 
   iNetTop.NeighbourIndexFromProcRank = new short int[iNetTop.ProcessorCount];
@@ -484,10 +483,8 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
     iNetTop.NeighbourIndexFromProcRank[iNetTop.NeighbouringProcs[m]->Rank] = m;
   }
 
-  lSiteIndexOnProc = 0;
-
-  InitialiseNeighbourLookup(bLocalLatDat, lSharedFLocationForEachProc, lThisRankSiteData,
-             iGlobLatDat, iNetTop);
+  InitialiseNeighbourLookup(bLocalLatDat, lSharedFLocationForEachProc,
+                            lThisRankSiteData, iGlobLatDat, iNetTop);
 
   delete[] lThisRankSiteData;
 
@@ -593,13 +590,19 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
 }
 
 void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
-                     short int ** bSharedFLocationForEachProc,
-                     const unsigned int * iSiteDataForThisRank,
-                     const hemelb::lb::GlobalLatticeData & iGlobLatDat,
-                     const hemelb::topology::NetworkTopology & iNetTop)
+                                    short int ** bSharedFLocationForEachProc,
+                                    const unsigned int * iSiteDataForThisRank,
+                                    const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                                    const hemelb::topology::NetworkTopology & iNetTop)
 {
   int n = -1;
   int lSiteIndexOnProc = 0;
+  int * lFluidSitesHandledForEachProc = new int[iNetTop.ProcessorCount];
+
+  for (int ii = 0; ii < iNetTop.ProcessorCount; ii++)
+  {
+    lFluidSitesHandledForEachProc[ii] = 0;
+  }
 
   // Iterate over blocks in global co-ords.
   for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
@@ -690,10 +693,6 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
                   short int neigh_proc_index =
                       iNetTop.NeighbourIndexFromProcRank[*proc_id_p];
 
-                  // You have neigh proc again.
-                  hemelb::topology::NeighbouringProcessor * neigh_proc_p =
-                      iNetTop.NeighbouringProcs[neigh_proc_index];
-
                   // This stores some coordinates.  We
                   // still need to know the site number.
                   // neigh_proc[ n ].f_data is now
@@ -704,13 +703,13 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
                   // neighbour.
                   short int
                       *f_data_p =
-                          &bSharedFLocationForEachProc[neigh_proc_index][neigh_proc_p->SharedFCount
+                          &bSharedFLocationForEachProc[neigh_proc_index][lFluidSitesHandledForEachProc[neigh_proc_index]
                               << 2];
                   f_data_p[0] = site_i;
                   f_data_p[1] = site_j;
                   f_data_p[2] = site_k;
                   f_data_p[3] = l;
-                  ++neigh_proc_p->SharedFCount; // We recount this again.
+                  ++lFluidSitesHandledForEachProc[neigh_proc_index];
                 }
               }
 
@@ -742,6 +741,8 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
       }
     }
   }
+
+  delete[] lFluidSitesHandledForEachProc;
 }
 
 void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
