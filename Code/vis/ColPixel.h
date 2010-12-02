@@ -44,15 +44,11 @@ namespace hemelb
                            unsigned char rgb_data[],
                            ColourPaletteFunction *colourPalette,
                            lb::StressTypes iLbmStressType);
-#ifndef NOMPI
         static const MPI_Datatype& getMpiType();
-#endif
 
       protected:
-#ifndef NOMPI
         static void registerMpiType();
         static MPI_Datatype mpiType;
-#endif
 
         void makePixelColour(unsigned char& red,
                              unsigned char& green,
