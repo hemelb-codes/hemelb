@@ -751,14 +751,15 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
 
 void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
-  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
-  {
-    hemelb::topology::NeighbouringProcessor * neigh_proc_p =
-        mNetworkTopology->NeighbouringProcs[m];
+  int m = 0;
 
-    err = MPI_Irecv(&bLocalLatDat.FOld[neigh_proc_p->FirstSharedF],
-                    neigh_proc_p->SharedFCount, MPI_DOUBLE, neigh_proc_p->Rank,
-                    10, MPI_COMM_WORLD, &req[0][m]);
+  for (std::vector<hemelb::topology::NeighbouringProcessor*>::iterator it =
+      mNetworkTopology->NeighbouringProcs.begin(); it
+      != mNetworkTopology->NeighbouringProcs.end(); ++it)
+  {
+    err = MPI_Irecv(&bLocalLatDat.FOld[(*it)->FirstSharedF], (*it)->SharedFCount,
+                    MPI_DOUBLE, (*it)->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
+    ++m;
   }
 }
 
