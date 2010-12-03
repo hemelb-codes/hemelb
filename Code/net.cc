@@ -757,23 +757,27 @@ void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocal
       mNetworkTopology->NeighbouringProcs.begin(); it
       != mNetworkTopology->NeighbouringProcs.end(); ++it)
   {
-    err = MPI_Irecv(&bLocalLatDat.FOld[(*it)->FirstSharedF], (*it)->SharedFCount,
-                    MPI_DOUBLE, (*it)->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
+    err = MPI_Irecv(&bLocalLatDat.FOld[ (*it)->FirstSharedF],
+                     (*it)->SharedFCount, MPI_DOUBLE, (*it)->Rank, 10,
+                    MPI_COMM_WORLD, &req[0][m]);
     ++m;
   }
 }
 
 void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
 {
-  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
-  {
-    hemelb::topology::NeighbouringProcessor *neigh_proc_p =
-        mNetworkTopology->NeighbouringProcs[m];
+  int m = 0;
 
-    err = MPI_Isend(&bLocalLatDat.FNew[neigh_proc_p->FirstSharedF],
-                    neigh_proc_p->SharedFCount, MPI_DOUBLE, neigh_proc_p->Rank,
-                    10, MPI_COMM_WORLD,
+  for (std::vector<hemelb::topology::NeighbouringProcessor*>::iterator it =
+      mNetworkTopology->NeighbouringProcs.begin(); it
+      != mNetworkTopology->NeighbouringProcs.end(); ++it)
+  {
+    err = MPI_Isend(&bLocalLatDat.FNew[ (*it)->FirstSharedF],
+                     (*it)->SharedFCount, MPI_DOUBLE, (*it)->Rank, 10,
+                    MPI_COMM_WORLD,
                     &req[0][mNetworkTopology->NeighbouringProcs.size() + m]);
+
+    ++m;
   }
 }
 
