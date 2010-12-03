@@ -844,8 +844,8 @@ namespace hemelb
     // Destructor
     StreaklineDrawer::~StreaklineDrawer()
     {
-      delete from_proc_id_to_neigh_proc_index;
-      delete req;
+      delete[] from_proc_id_to_neigh_proc_index;
+      delete[] req;
 
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
@@ -855,22 +855,22 @@ namespace hemelb
 
       if (shared_vs > 0)
       {
-        delete v_to_recv;
-        delete v_to_send;
+        delete[] v_to_recv;
+        delete[] v_to_send;
 
-        delete s_to_recv;
-        delete s_to_send;
+        delete[] s_to_recv;
+        delete[] s_to_send;
       }
 
       for (int m = 0; m < num_blocks; m++)
       {
         if (velocity_field[m].vel_site_data != NULL)
         {
-          delete velocity_field[m].vel_site_data;
+          delete[] velocity_field[m].vel_site_data;
         }
       }
 
-      delete velocity_field;
+      delete[] velocity_field;
       particleSeedVec.clear();
       particleVec.clear();
     }
