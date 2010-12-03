@@ -735,11 +735,12 @@ namespace hemelb
       delete myStreaker;
 #endif
 
+      delete vis;
       delete myGlypher;
       delete myRayTracer;
 
-      delete col_pixel_recv[0];
-      delete col_pixel_recv[1];
+      delete[] col_pixel_recv[0];
+      delete[] col_pixel_recv[1];
 
       delete[] col_pixel_id;
     }

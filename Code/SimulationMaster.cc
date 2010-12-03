@@ -32,6 +32,7 @@ SimulationMaster::~SimulationMaster()
 {
   delete mNet;
   delete mLbm;
+  delete mLocalLatDat;
 }
 
 void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,

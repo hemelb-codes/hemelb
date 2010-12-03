@@ -586,6 +586,10 @@ void Net::Initialise(hemelb::topology::NetworkTopology &iNetTop,
   // are freeing both of those.
   delete[] f_data;
 
+  // Delete the array in which we kept the shared f locations. Don't delete subarrays - these
+  // are pointers to elsewhere.
+  delete[] lSharedFLocationForEachProc;
+
   bm_time = hemelb::util::myClock() - seconds;
 }
 
