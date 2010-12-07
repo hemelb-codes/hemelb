@@ -97,6 +97,8 @@ class LBM
     void allocateInlets(int nInlets);
     void allocateOutlets(int nOutlets);
 
+    void handleIOError(int iError);
+
     double lbmConvertPressureGradToLatticeUnits(double pressure_grad) const;
     double lbmConvertPressureGradToPhysicalUnits(double pressure_grad) const;
 
