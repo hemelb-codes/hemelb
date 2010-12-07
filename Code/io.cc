@@ -10,12 +10,12 @@
 #include "lb.h"
 #include "net.h"
 #include "utilityFunctions.h"
-#include "io/XdrFileReader.h"
+#include "io/XdrMemReader.h"
 #include "io/AsciiFileWriter.h"
 
 void LBM::handleIOError(int iError)
 {
-  if(iError != 0)
+  if (iError != 0)
   {
     printf("Rank %i had an MPI IO Error %i\n", mNetTopology->LocalRank, iError);
   }
@@ -24,7 +24,7 @@ void LBM::handleIOError(int iError)
 /*!
  this function reads the XDR configuration file but does not store the system
  and calculate some parameters
- */   
+ */
 void LBM::lbmReadConfig(Net *net,
                         hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
 {
@@ -68,30 +68,43 @@ void LBM::lbmReadConfig(Net *net,
    */
 
   MPI_File lFile;
-  
-  
+  int lError;
 
-  FILE* xdrFile = fopen(mSimConfig->DataFilePath.c_str(), "r");
+  // Open the file using the MPI parallel I/O interface at the path
+  // given, in read-only mode.
+  lError = MPI_File_open(MPI_COMM_WORLD, &mSimConfig->DataFilePath[0],
+                         MPI_MODE_RDONLY, MPI_INFO_NULL, &lFile);
 
-  char* lProcIdentifier = mNetTopology->GetCurrentProcIdentifier();
-
-  if (xdrFile == NULL)
+  if (lError != 0)
   {
-    fprintf(stderr, "Unable to open file %s [%s], exiting\n",
-            mSimConfig->DataFilePath.c_str(), lProcIdentifier);
+    fprintf(stderr, "Unable to open file %s [rank %i], exiting\n",
+            mSimConfig->DataFilePath.c_str(), mNetTopology->LocalRank);
     fflush(0x0);
     exit(0x0);
   }
   else
   {
-    fprintf(stderr, "Opened config file %s [%s]\n",
-            mSimConfig->DataFilePath.c_str(), lProcIdentifier);
+    fprintf(stderr, "Opened config file %s [rank %i]\n",
+            mSimConfig->DataFilePath.c_str(), mNetTopology->LocalRank);
   }
   fflush(NULL);
 
-  delete[] lProcIdentifier;
+  std::string lMode = "native";
 
-  hemelb::io::XdrReader myReader = hemelb::io::XdrFileReader(xdrFile);
+  handleIOError(MPI_File_set_view(lFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL));
+
+  // TODO This is a filthy hack which suffices for now. Turns out it's quite
+  // difficult to do Xdr properly through MPI I/O.
+
+  const int lBuffSize = 10000000;
+
+  char lBuffer[10000000];
+
+  MPI_Status lStatus;
+
+  handleIOError(MPI_File_read_all(lFile, lBuffer, 10000000, MPI_BYTE, &lStatus));
+
+  hemelb::io::XdrReader myReader = hemelb::io::XdrMemReader(lBuffer, 10000000);
 
   // Not the ideal way to do this, but has to be this way as the old system used
   // doubles for the stress type. -1.0 signified shear stress, 1.0 meant von Mises.
@@ -234,7 +247,7 @@ void LBM::lbmReadConfig(Net *net,
     } // j
   } // i
 
-  fclose(xdrFile);
+  handleIOError(MPI_File_close(&lFile));
 
   net->fr_time = hemelb::util::myClock() - net->fr_time;
 }
