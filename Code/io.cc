@@ -13,13 +13,18 @@
 #include "io/XdrFileReader.h"
 #include "io/AsciiFileWriter.h"
 
-//using namespace std;
+void LBM::handleIOError(int iError)
+{
+  if(iError != 0)
+  {
+    printf("Rank %i had an MPI IO Error %i\n", mNetTopology->LocalRank, iError);
+  }
+}
 
 /*!
  this function reads the XDR configuration file but does not store the system
  and calculate some parameters
- */
-
+ */   
 void LBM::lbmReadConfig(Net *net,
                         hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
 {
@@ -61,6 +66,10 @@ void LBM::lbmReadConfig(Net *net,
    *     
    *     double mDistanceToWall[14]
    */
+
+  MPI_File lFile;
+  
+  
 
   FILE* xdrFile = fopen(mSimConfig->DataFilePath.c_str(), "r");
 
