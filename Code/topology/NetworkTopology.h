@@ -44,15 +44,6 @@ namespace hemelb
           return LocalRank == 0;
         }
 
-        char * GetCurrentProcIdentifier() const
-        {
-          // Note that this has enough space for an integer of 9 digits, so we're good up to a billion
-          // processors.
-          char* lRet = new char[15];
-          sprintf(lRet, "rank %i", LocalRank);
-          return lRet;
-        }
-
         // The rank of this processor, the total size of the topology, and the
         // number of fluid sites on this rank.
         int LocalRank;
