@@ -11,6 +11,7 @@
 #include "net.h"
 #include "utilityFunctions.h"
 #include "io/XdrMemReader.h"
+#include "io/XdrMemWriter.h"
 #include "io/AsciiFileWriter.h"
 
 void LBM::handleIOError(int iError)
@@ -91,20 +92,21 @@ void LBM::lbmReadConfig(Net *net,
 
   std::string lMode = "native";
 
-  handleIOError(MPI_File_set_view(lFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL));
+  handleIOError(MPI_File_set_view(lFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0],
+                                  MPI_INFO_NULL));
 
-  // TODO This is a filthy hack which suffices for now. Turns out it's quite
-  // difficult to do Xdr properly through MPI I/O.
+  // The file starts with a double and 4 ints.
+  // In Xdr this occupies 8 + 4 * 4 bytes.
 
-  const int lBuffSize = 10000000;
-
-  char lBuffer[10000000];
+  char lPreambleBuffer[24];
 
   MPI_Status lStatus;
 
-  handleIOError(MPI_File_read_all(lFile, lBuffer, 10000000, MPI_BYTE, &lStatus));
+  handleIOError(MPI_File_read_all(lFile, lPreambleBuffer, 24, MPI_BYTE,
+                                  &lStatus));
 
-  hemelb::io::XdrReader myReader = hemelb::io::XdrMemReader(lBuffer, 10000000);
+  hemelb::io::XdrReader myReader =
+      hemelb::io::XdrMemReader(lPreambleBuffer, 24);
 
   // Not the ideal way to do this, but has to be this way as the old system used
   // doubles for the stress type. -1.0 signified shear stress, 1.0 meant von Mises.
@@ -139,6 +141,18 @@ void LBM::lbmReadConfig(Net *net,
   net->fr_time = hemelb::util::myClock();
 
   int n = -1;
+
+  // Each block has an int flag, each site has at most an unsigned int, 8 doubles, and (Num-vectors - 1) doubles.
+  int lLength = lBlocksX * lBlocksY * lBlocksZ * (4
+      + bGlobalLatticeData.SitesPerBlockVolumeUnit * (4 + 8 * 8 + 8
+          * (D3Q15::NUMVECTORS - 1)));
+
+  char * lBlockDataBuffer = new char[lLength];
+
+  handleIOError(MPI_File_read_all(lFile, lBlockDataBuffer, lLength, MPI_BYTE,
+                                  &lStatus));
+
+  myReader = hemelb::io::XdrMemReader(lBlockDataBuffer, lLength);
 
   for (int i = 0; i < lBlocksX; i++)
   {
@@ -246,6 +260,8 @@ void LBM::lbmReadConfig(Net *net,
       } // k
     } // j
   } // i
+
+  delete[] lBlockDataBuffer;
 
   handleIOError(MPI_File_close(&lFile));
 
@@ -773,6 +789,238 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
   delete[] local_site_data;
   delete[] gathered_flow_field;
   delete[] local_flow_field;
+}
+
+void LBM::lbmWriteConfigParallel(hemelb::lb::Stability stability,
+                                 std::string output_file_name,
+                                 const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                                 const hemelb::lb::LocalLatticeData &iLocalLatticeData)
+{
+  hemelb::debug::Debugger::Get()->BreakHere();
+  /* This routine writes the flow field on file. The data are gathered
+   to the root processor and written from there.  The format
+   comprises:
+
+   0- Flag for simulation stability, 0 or 1
+
+   1- Voxel size in physical units (units of m)
+
+   2- vertex coords of the minimum bounding box with minimum values
+   (x, y and z values)
+
+   3- vertex coords of the minimum bounding box with maximum values
+   (x, y and z values)
+
+   4- #voxels within the minimum bounding box along the x, y, z axes
+   (3 values)
+
+   5- total number of fluid voxels
+
+   6-And then a list of the fluid voxels... For each fluid voxel:
+
+   a- the (x, y, z) coordinates in lattice units (3 values)
+   b- the pressure in physical units (mmHg)
+   c- (x,y,z) components of the velocity field in physical units (3
+   values, m/s)
+   d- the von Mises stress in physical units (Pa) (the stored shear
+   stress is equal to -1 if the fluid voxel is not at the wall)
+   */
+
+  if (stability == hemelb::lb::Unstable)
+  {
+    MPI_File_delete(&output_file_name[0], MPI_INFO_NULL);
+    return;
+  }
+
+  MPI_Status lStatus;
+
+  MPI_File lOutputFile;
+
+  MPI_File_open(MPI_COMM_WORLD, &output_file_name[0], MPI_MODE_WRONLY
+      | MPI_MODE_CREATE, MPI_INFO_NULL, &lOutputFile);
+
+  /* Preamble has an enum (int) for stability, a double for voxel size,
+   * 3 ints for minimum (x,y,z) in bounding box, 3 ints for maximum (x,y,z)
+   * in bounding box, 3 ints for number of coords in each of (x,y,z),
+   * 1 int for number of fluid voxels.*/
+  const int lPreambleLength = 4 + 8 + (3 * 4) + (3 * 4) + (3 * 4) + 4;
+
+  MPI_File_set_view(lOutputFile, 0, MPI_BYTE, MPI_BYTE, "native",
+                    MPI_INFO_NULL);
+
+  if (mNetTopology->IsCurrentProcTheIOProc())
+  {
+    char lBuffer[lPreambleLength];
+    hemelb::io::XdrMemWriter lWriter =
+        hemelb::io::XdrMemWriter(lBuffer, lPreambleLength);
+
+    lWriter << stability << voxel_size << site_min_x << site_min_y
+        << site_min_z << site_max_x << site_max_y << site_max_z << (1
+        + site_max_x - site_min_x) << (1 + site_max_y - site_min_y) << (1
+        + site_max_z - site_min_z) << total_fluid_sites;
+
+    MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MPI_BYTE, &lStatus);
+  }
+
+  /*
+   For each fluid voxel, we write
+   a- the (x, y, z) coordinates in lattice units (3 ints)
+   b- the pressure in physical units (mmHg, 1 x float)
+   c- (x,y,z) components of the velocity field in physical units (3
+   values, m/s, floats)
+   d- the von Mises stress in physical units (Pa) (the stored shear
+   stress is equal to -1 if the fluid voxel is not at the wall, 1 x float)
+   */
+
+  const int lOneFluidSiteLength = (3 * 4) + (5 * 4);
+
+  int lLocalSitesInitialOffset = lPreambleLength;
+
+  for (int ii = 0; ii < mNetTopology->LocalRank; ii++)
+  {
+    lLocalSitesInitialOffset += lOneFluidSiteLength
+        * mNetTopology->FluidSitesOnEachProcessor[ii];
+  }
+
+  MPI_File_set_view(lOutputFile, lLocalSitesInitialOffset, MPI_BYTE, MPI_BYTE,
+                    "native", MPI_INFO_NULL);
+
+  int lLocalWriteLength = lOneFluidSiteLength
+      * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->LocalRank];
+  char * lFluidSiteBuffer = new char[lLocalWriteLength];
+  hemelb::io::XdrMemWriter lWriter =
+      hemelb::io::XdrMemWriter(lFluidSiteBuffer, lLocalWriteLength);
+
+  /* The following loops scan over every single macrocell (block). If
+   the block is non-empty, it scans the fluid sites within that block
+   If the site is fluid, it calculates the flow field and then is
+   converted to physical units and stored in a buffer to send to the
+   root processor */
+
+  int n = -1; // net->proc_block counter
+  for (int i = 0; i < iGlobalLatticeData.GetXSiteCount(); i
+      += iGlobalLatticeData.GetBlockSize())
+  {
+    for (int j = 0; j < iGlobalLatticeData.GetYSiteCount(); j
+        += iGlobalLatticeData.GetBlockSize())
+    {
+      for (int k = 0; k < iGlobalLatticeData.GetZSiteCount(); k
+          += iGlobalLatticeData.GetBlockSize())
+      {
+
+        ++n;
+
+        if (iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite == NULL)
+        {
+          continue;
+        }
+        int m = -1;
+
+        for (int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
+        {
+          for (int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
+          {
+            for (int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
+            {
+
+              m++;
+              if (mNetTopology->LocalRank
+                  != iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m])
+              {
+                continue;
+              }
+
+              unsigned int my_site_id =
+                  iGlobalLatticeData.Blocks[n].site_data[m];
+
+              /* No idea what this does */
+              if (my_site_id & (1U << 31U))
+                continue;
+
+              double density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS],
+                  f_neq[D3Q15::NUMVECTORS], stress, pressure;
+
+              // TODO Utter filth. The cases where the whole site data is exactly equal
+              // to "FLUID_TYPE" and where just the type-component of the whole site data
+              // is equal to "FLUID_TYPE" are handled differently.
+              if (iLocalLatticeData.mSiteData[my_site_id]
+                  == hemelb::lb::FLUID_TYPE)
+              {
+                D3Q15::CalculateDensityVelocityFEq(
+                                                   &iLocalLatticeData.FOld[my_site_id
+                                                       * D3Q15::NUMVECTORS],
+                                                   density, vx, vy, vz, f_eq);
+
+                for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+                {
+                  f_neq[l] = iLocalLatticeData.FOld[my_site_id
+                      * D3Q15::NUMVECTORS + l] - f_eq[l];
+                }
+
+              }
+              else
+              { // not FLUID_TYPE
+                lbmCalculateBC(&iLocalLatticeData.FOld[my_site_id
+                    * D3Q15::NUMVECTORS],
+                               iLocalLatticeData.GetSiteType(my_site_id),
+                               iLocalLatticeData.GetBoundaryId(my_site_id),
+                               &density, &vx, &vy, &vz, f_neq);
+              }
+
+              if (mParams.StressType == hemelb::lb::ShearStress)
+              {
+                if (iLocalLatticeData.GetNormalToWall(my_site_id)[0]
+                    >= BIG_NUMBER)
+                {
+                  stress = -1.0;
+                }
+                else
+                {
+                  D3Q15::CalculateShearStress(
+                                              density,
+                                              f_neq,
+                                              &iLocalLatticeData.GetNormalToWall(
+                                                                                 my_site_id)[0],
+                                              stress, mParams.StressParameter);
+                }
+              }
+              else
+              {
+                D3Q15::CalculateVonMisesStress(f_neq, stress,
+                                               mParams.StressParameter);
+              }
+
+              vx /= density;
+              vy /= density;
+              vz /= density;
+
+              // conversion from lattice to physical units
+              pressure = lbmConvertPressureToPhysicalUnits(density * Cs2);
+
+              vx = lbmConvertVelocityToPhysicalUnits(vx);
+              vy = lbmConvertVelocityToPhysicalUnits(vy);
+              vz = lbmConvertVelocityToPhysicalUnits(vz);
+
+              stress = lbmConvertStressToPhysicalUnits(stress);
+
+              lWriter << (site_i - site_min_x) << (site_j - site_min_y)
+                  << (site_k - site_min_z);
+
+              lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
+                  << float(stress);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  MPI_File_write_all(lOutputFile, lFluidSiteBuffer, lLocalWriteLength,
+                     MPI_BYTE, &lStatus);
+
+  MPI_File_close(&lOutputFile);
+
+  delete[] lFluidSiteBuffer;
 }
 
 void LBM::ReadVisParameters()

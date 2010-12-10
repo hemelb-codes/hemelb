@@ -19,6 +19,7 @@ namespace hemelb
       
     public:
       void BreakHere(void);
+      void Print(const char* iFormat, ...);
       
     protected:
       typedef std::vector<int> VoI; // Vector of Ints
