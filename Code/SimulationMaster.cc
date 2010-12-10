@@ -265,11 +265,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       if (mSimulationState.TimeStep % snapshots_period == 0)
       {
         char snapshot_filename[255];
-        snprintf(snapshot_filename, 255, "snapshot_%06i.asc",
+        snprintf(snapshot_filename, 255, "snapshot_%06i.dat",
                  mSimulationState.TimeStep);
 
         mSnapshotsWritten++;
-        GetLBM()->lbmWriteConfig(stability, snapshot_directory
+        GetLBM()->lbmWriteConfigParallel(stability, snapshot_directory
             + std::string(snapshot_filename), mGlobLatDat, *mLocalLatDat);
       }
 

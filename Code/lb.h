@@ -54,6 +54,11 @@ class LBM
                    std::string output_file_name,
                    const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
                    const hemelb::lb::LocalLatticeData &iLocalLatticeData);
+    void
+        lbmWriteConfigParallel(hemelb::lb::Stability stability,
+                               std::string output_file_name,
+                               const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                               const hemelb::lb::LocalLatticeData &iLocalLatticeData);
 
     double GetMinPhysicalPressure();
     double GetMaxPhysicalPressure();
