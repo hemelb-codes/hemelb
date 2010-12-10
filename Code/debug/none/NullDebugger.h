@@ -10,7 +10,8 @@ namespace hemelb
     class NullDebugger : public Debugger {
     public:
        void BreakHere(void);
-      
+       void Print(const char* iFormat, ...);
+
     protected:
       void Attach(void);
       NullDebugger(char* executable);

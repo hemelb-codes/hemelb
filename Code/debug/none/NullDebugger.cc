@@ -8,6 +8,7 @@ namespace hemelb
     // Do nothing!
     void NullDebugger::Attach(void) {}
     void NullDebugger::BreakHere(void){}
+    void NullDebugger::Print(const char* iFormat, ...) {}
     
     NullDebugger::NullDebugger(char* executable) : Debugger(executable) {}
     
