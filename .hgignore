@@ -7,3 +7,8 @@ build/*
 .DS_Store
 *.orig
 Tools/visim/visim
+Tests/diffTest/CleanImages/*.ppm
+Tests/diffTest/checkpoint.tmp
+Tests/diffTest/results*
+Tests/diffTest/CleanImages/temp_file.txt
+Tests/diffTest/env_details.asc
