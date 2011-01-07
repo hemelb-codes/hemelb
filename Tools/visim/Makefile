@@ -1,13 +1,12 @@
 target = visim
 
 CC = g++
-CFLAGS = -O3
+CFLAGS = -O4 -L/usr/include/GT/ -lglut -lGLU
 
 objects = visualize_images.o
-LIBS = -framework OpenGL -framework GLUT
 
 $(target) : $(objects)
-	$(CC) $(LIBS) $(objects) -o $@
+	$(CC) $(CFLAGS) $(objects) -o $@
 
 
 .PHONY : clean

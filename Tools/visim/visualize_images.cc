@@ -1,10 +1,11 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <GLUT/glut.h>
+#include <GL/glut.h>
 #include <rpc/types.h>
 #include <rpc/rpc.h>
 #include <cstring>
+#include <string>
 
 //  g++ -framework OpenGL -framework GLUT -framework Foundation visualize_images.c -o visualize_images
 
@@ -295,9 +296,11 @@ void Display (void)
   fclose (temp_file_ptr);
   
   sprintf (input_image_name, "%s/%s", input_path, partial_image_name);
-  sprintf (output_image_name, "%s/%s", output_path, partial_image_name);
-  
-  
+
+  std::string lImageNameNoExtension = std::string(partial_image_name).substr(0, std::string(partial_image_name).rfind('.'));
+
+  sprintf (output_image_name, "%s/%s.ppm", output_path, lImageNameNoExtension.c_str());
+
   input_image_file = fopen (input_image_name, "r");
   xdrstdio_create (&xdr_image_file, input_image_file, XDR_DECODE);
   
@@ -437,7 +440,7 @@ void Reshape (GLsizei w, GLsizei h)
 
 void usage (char *progname)
 {
-  printf ("Usage: %s input path output path\n", progname);
+  printf ("Usage: %s <input directory path> <output directory path>\n", progname);
 }
 
 
