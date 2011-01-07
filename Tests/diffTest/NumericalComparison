@@ -25,15 +25,20 @@ def SnapCompare(dir1, dir2):
         
         for f in fields:
             name = f[0]
-            if name in ['position']:
+            if name in ['position', 'id']:
                 continue
 
             thisVal = diff[t].__getattribute__(name)
 
-            smallerMean = min(N.average(heme1[t].__getattribute__(name)), N.average(heme2[t].__getattribute__(name)))
+            smallerElt = N.minimum(heme1[t].__getattribute__(name), heme2[t].__getattribute__(name))
 
-            if N.max(N.abs(thisVal / smallerMean)) > accuracy:
-                print 'At time ' + str(t) + ', field ' + name + ' had a max % difference of ' +  str(N.max(N.abs(thisVal / smallerMean))) + '\n'
+            modded = N.abs(thisVal / smallerElt)
+
+            if N.max(modded) > accuracy:
+                worstIndex = N.argmax(modded)
+                print 'At time ' + str(t) + ', field ' + name + ' had a max % difference of ' +  str(modded[worstIndex]) \
+                  + ' at index (value 1, value 2): ' + str(worstIndex) + ' (' + str(heme1[t].__getattribute__(name)[worstIndex]) \
+                  + ', ' + str(heme2[t].__getattribute__(name)[worstIndex]) + ')\n'
                            
 if __name__ == '__main__':
     try:
