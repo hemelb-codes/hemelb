@@ -2,6 +2,7 @@ import numpy as N
 import re
 import xdrlib
 from enthought import units as U
+from .snapOrderer import continuousOrder
 
 def HemeLbSnapshot(filename):
     """Guess which file format we were given and use the correct class
@@ -26,28 +27,28 @@ class BaseHemeLbSnapshot(N.recarray):
     """Base class wrapping a HemeLB snapshot.
     
     Snap is basically a numpy record array with the following fields:
+    
+     - id (int) -- an id number (basically the index of the point in the
+       file
 
-        - id (int) -- an id number (basically the index of the point in the
-            file
-
-        - position (3x float) -- the position in input (STL) space
-            (typically mm)
-
-        - grid (3x int) -- the (x, y, z) coordinates in lattice units
-
-        - pressure (float) -- the pressure in physical units (mmHg)
-
-        - velocity (3x float) -- (x,y,z) components of the velocity field
-            in physical units (m/s)
-
-        - stress (float) -- the von Mises stress in physical units (Pa)
-
+     - position (3x float) -- the position in input (STL) space
+       (typically mm)
+    
+     - grid (3x int) -- the (x, y, z) coordinates in lattice units
+     
+     - pressure (float) -- the pressure in physical units (mmHg)
+     
+     - velocity (3x float) -- (x,y,z) components of the velocity field
+       in physical units (m/s)
+     
+     - stress (float) -- the von Mises stress in physical units (Pa)
+     
     Additionally it has the following properties:
-
+    
     stable, voxel_size, bb_min, bb_max, bb_len, voxel_count 
 
     (see __readHeader for full details)
-
+        
     """
     _raw_row = [('id', int),
                  ('position', float, (3,)),
@@ -101,11 +102,16 @@ class BaseHemeLbSnapshot(N.recarray):
         the lattice positions' coordinates.
 
         """
-        from .coordinates import Transformer
-        trans = Transformer(coordsFile)
+        from os.path import exists
 
-        self.position = trans.siteToStl(self.grid + self.bb_min)
-        return
+        if exists (coordsFile):
+            from .coordinates import Transformer
+            trans = Transformer(coordsFile)
+
+            self.position = trans.siteToStl(self.grid + self.bb_min)
+            return
+        else:
+            self.position = self.grid + self.bb_min
 
     pass
 
@@ -121,7 +127,7 @@ class TextHemeLbSnapshot(BaseHemeLbSnapshot):
         3- vertex coords of the minimum bounding box with maximum values (x, y and z values)
         4- #voxels within the minimum bounding box along the x, y, z axes (3 values)
         5- total number of fluid voxels
-
+        
         """
 
         f = file(filename)
@@ -131,15 +137,15 @@ class TextHemeLbSnapshot(BaseHemeLbSnapshot):
         bb_max = N.array([int(x) for x in f.readline().split()])
         bb_len = N.array([int(x) for x in f.readline().split()])
         voxel_count = int(f.readline())
-
+        
         return stable, voxel_size, bb_min, bb_max, bb_len, voxel_count
-
+    
     @classmethod
     def _load(cls, filename):
         return N.loadtxt(filename,
-                         skiprows=cls.header,
+                            skiprows=cls.header,
                          dtype=cls._readable_row).view(N.recarray)
-
+    
     pass
 
 class XdrHemeLbSnapshot(BaseHemeLbSnapshot):
@@ -223,27 +229,27 @@ hlbUnits = {'position' : U.length.mm,
 
 def CfxSnapshot(filename):
     """Factory function wrapping a CFX snapshot.
-
+    
     Load the data with:
     >>> snap = CfxSnapshot(filename)
 
     Fields are constructed from the header line.
-
-
+    
+        
     """
     (__raw_row, fieldUnits) = parseHeader(filename)
     __raw_row = [('id', int),] + __raw_row
     fieldUnits['id'] = 1
-
-        # ('position', float, (3,)),
-        # ('strain_rate', float),
-        # ('speed', float),
-        # ('velocity', float, (3,)),
-        # ('wall_shear', float, (4,))]
+    
+                 # ('position', float, (3,)),
+                 # ('strain_rate', float),
+                 # ('speed', float),
+                 # ('velocity', float, (3,)),
+                 # ('wall_shear', float, (4,))]
 
     __readable_row = N.dtype(__raw_row[1:])
     row = N.dtype(__raw_row)
-
+    
     noindex = N.genfromtxt(filename, skip_header=findStart(filename)+2,
                            delimiter=',',
                            dtype=__readable_row).view(N.recarray)
@@ -253,7 +259,42 @@ def CfxSnapshot(filename):
         key = el[0]
         index.__setattr__(key, U.convert(noindex.__getattribute__(key), fieldUnits[key], hlbUnits[key]))
         continue
+    
+    return continuousOrder(index)
 
+def CfxCentreLineSnapshot(filename):
+    """Factory function wrapping a CFX snapshot.
+    
+    Load the data with:
+    >>> snap = CfxSnapshot(filename)
+
+    Fields are constructed from the header line.
+    
+        
+    """
+    (__raw_row, fieldUnits) = parseHeader(filename, AllData=True)
+    __raw_row = [('id', int),] + __raw_row
+    fieldUnits['id'] = 1
+    
+                 # ('position', float, (3,)),
+                 # ('strain_rate', float),
+                 # ('speed', float),
+                 # ('velocity', float, (3,)),
+                 # ('wall_shear', float, (4,))]
+
+    __readable_row = N.dtype(__raw_row[1:])
+    row = N.dtype(__raw_row)
+    
+    noindex = N.genfromtxt(filename, skip_header=findStart(filename, AllData=True)+2,
+                           delimiter=',',
+                           dtype=__readable_row).view(N.recarray)
+    index = N.recarray(shape=noindex.shape, dtype=row)
+    index.id = N.arange(len(noindex))
+    for el in __raw_row[1:]:
+        key = el[0]
+        index.__setattr__(key, U.convert(noindex.__getattribute__(key), fieldUnits[key], hlbUnits[key]))
+        continue
+    
     return index
 
 fieldMap = {'velocity': 'speed',
@@ -265,15 +306,15 @@ fieldMap = {'velocity': 'speed',
             'z' : ('position', 2, 3),
             }
 
-def parseHeader(filename):
+def parseHeader(filename, AllData=False):
     '''Parses header to get data type for record array'''
     fieldRegEx = re.compile('(.+?)\s*\[\s*(.+?)\s*\]')
-
+    
     f = file(filename)
-    for i in range(findStart(filename)+2):
+    for i in range(findStart(filename, AllData=AllData)+2):
         header = f.readline()
         continue
-
+    
     fields = []
     fieldUnits = dict()
     for field in header.split(','):
@@ -294,7 +335,7 @@ def parseHeader(filename):
             pass
         fieldUnits[niceField] = U.unit_parser.unit_parser.parse_unit(unit.replace('^', '**').replace(' ', '*'), suppress_unknown = False)
         continue
-
+    
     dtype = []
     for i, field in enumerate(fields):
         try:
@@ -310,24 +351,28 @@ def parseHeader(filename):
                 assert j == other[1]
                 assert total == other[2]
                 continue
-
+            
             if current == 0:
                 dtype.append((val, float, (total,)))
                 pass
-
+            
         else:
             dtype.append((val, float))
             pass
-
+        
         continue
-
+    
     return (dtype, fieldUnits)
 
-def findStart(filename):
+def findStart(filename, AllData=False):
     """Find the start line."""
+
+    if AllData == True:
+        return -1
+
     for i, line in enumerate(file(filename)):
         if line.find('[Data]')>=0:
             return i
         continue
-
+    
     raise ValueError("File '%s' does not appear to have a '[Data]' section." % self.filename)

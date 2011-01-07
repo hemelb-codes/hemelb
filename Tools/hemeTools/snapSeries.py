@@ -1,6 +1,7 @@
 import os.path
 import glob
-from .snapshots import HemeLbSnapshot, CfxSnapshot
+from .snapshots import HemeLbSnapshot, CfxSnapshot, CfxCentreLineSnapshot
+from .snapOrderer import order, continuousOrder
 import numpy as N
 
 tol = 1e-8
@@ -28,7 +29,7 @@ class SnapCollection(object):
         
         self.times = times
         return
- 
+
     def __getitem__(self, time):
         i = self.times.searchsorted(time)
         n = len(self.times)
@@ -51,11 +52,10 @@ class SnapCollection(object):
 class Heme(SnapCollection):
     """Collection of HemeLB snapshots in original format."""
     
-    snapPattern = os.path.join('Snapshots', 'snapshot_*.asc')
-    
-    def __init__(self, base, timestep_s=None, tol=1e-8):
+    def __init__(self, base, timestep_s=None, tol=1e-8, snapPattern=os.path.join('Snapshots', 'snapshot_*.asc')):
         if timestep_s is None:
             raise ValueError("Must supply keyword argument 'timestep_s', the length of a timestep in seconds.")
+        self.snapPattern = snapPattern
         self.timestep_s = timestep_s
         return SnapCollection.__init__(self, base, tol=tol)
     
@@ -66,11 +66,25 @@ class Heme(SnapCollection):
         return ts *self.timestep_s
     
     def loader(self, snap):
-        ans = HemeLbSnapshot(snap)
+        ans = order(HemeLbSnapshot(snap))
         ans.computePosition(os.path.join(self.base, 'coords.asc'))
         return ans
-    
+
     pass
+
+class HemeCache(Heme):
+
+    def __init__(self, base, timestep_s=None, tol=1e-8):
+       self.myCache = {}
+       return Heme.__init__(self, base, timestep_s, tol)
+
+    def __getitem__(self, time):
+        try:
+            return self.myCache[time]
+        except KeyError:
+            ans = Heme.__getitem__(self, time)
+            self.myCache[time] = ans
+            return ans
 
 class Cfx(SnapCollection):
     """Collection of CFX snapshots, as produced by Savvas."""
@@ -83,7 +97,24 @@ class Cfx(SnapCollection):
         return float(
             os.path.splitext(os.path.basename(snap))[0].split(delimiter)[1][:-1]
             )
+
+    def orderSnap(self, snap):
+        return continuousOrder(snap)
     
+    pass
+
+class CfxCentreLine(SnapCollection):
+    """Collection of CFX centre line snapshots, as produced by Hywel."""
+    
+    loader = staticmethod(CfxCentreLineSnapshot)
+    snapPattern = '*.txt'
+
+    @staticmethod
+    def snapToTime(snap, delimiter):
+        return float(
+            os.path.splitext(os.path.basename(snap))[0].split(delimiter)[1][:-1]
+            )
+
     pass
 
 class SteadyCfx(Cfx):
@@ -127,11 +158,14 @@ class Diff(SnapCollection):
         for f in fieldsD:
             name = f[0]
             
-            if name in ['id', 'position']:
+            if name in ['position']:
                 assert N.allclose(snap1.__getattribute__(name),
                                   snap2.__getattribute__(name))
                 
                 ans.__setattr__(name, snap1.__getattribute__(name))
+            elif name in ['id']:
+                # do nothing
+                pass
             else:
                 ans.__setattr__(name, 
                                 snap2.__getattribute__(name) - \
