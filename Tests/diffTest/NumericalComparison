@@ -15,8 +15,8 @@ def SnapCompare(dir1, dir2):
 
     diff = Diff(heme1, heme2)
 
-    """Demand accuracy to 0.01%"""
-    accuracy = 1e-4
+    """Demand accuracy to 0.1%"""
+    accuracy = 1e-3
 
     for t in diff.times:
         print t
