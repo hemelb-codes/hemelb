@@ -35,6 +35,11 @@ namespace hemelb
       xdr_u_int(mXdr, &outUInt);
     }
 
+    unsigned int XdrReader::GetPosition()
+    {
+      return xdr_getpos(mXdr);
+    }
+
     // Destructor to get rid of any resources used by the Xdr object. This class doesn't create
     // the file object, so it doesn't free it either.
     XdrReader::~XdrReader()
