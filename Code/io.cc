@@ -13,14 +13,7 @@
 #include "io/XdrMemReader.h"
 #include "io/XdrMemWriter.h"
 #include "io/AsciiFileWriter.h"
-
-void LBM::handleIOError(int iError)
-{
-  if (iError != 0)
-  {
-    printf("Rank %i had an MPI IO Error %i\n", mNetTopology->LocalRank, iError);
-  }
-}
+#include "topology/TopologyReader.h"
 
 /*!
  this function reads the XDR configuration file but does not store the system
@@ -90,44 +83,9 @@ void LBM::lbmReadConfig(Net *net,
   }
   fflush(NULL);
 
-  std::string lMode = "native";
-
-  handleIOError(MPI_File_set_view(lFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0],
-                                  MPI_INFO_NULL));
-
-  // The file starts with a double and 4 ints.
-  // In Xdr this occupies 8 + 4 * 4 bytes.
-
-  char lPreambleBuffer[24];
-
-  MPI_Status lStatus;
-
-  handleIOError(MPI_File_read_all(lFile, lPreambleBuffer, 24, MPI_BYTE,
-                                  &lStatus));
-
-  hemelb::io::XdrReader myReader =
-      hemelb::io::XdrMemReader(lPreambleBuffer, 24);
-
-  // Not the ideal way to do this, but has to be this way as the old system used
-  // doubles for the stress type. -1.0 signified shear stress, 1.0 meant von Mises.
-  double lTempStressType;
-
-  myReader.readDouble(lTempStressType);
-
-  mParams.StressType = (lTempStressType == -1.0)
-    ? hemelb::lb::ShearStress
-    : ( (lTempStressType == 1.0)
-      ? hemelb::lb::VonMises
-      : hemelb::lb::IgnoreStress);
-
-  int lBlocksX, lBlocksY, lBlocksZ, lBlockSize;
-
-  myReader.readInt(lBlocksX);
-  myReader.readInt(lBlocksY);
-  myReader.readInt(lBlocksZ);
-  myReader.readInt(lBlockSize);
-
-  bGlobalLatticeData.SetBasicDetails(lBlocksX, lBlocksY, lBlocksZ, lBlockSize);
+  // Read the preamble.
+  hemelb::topology::TopologyReader lTopologyReader;
+  lTopologyReader.PreReadConfigFile(lFile, &mParams, bGlobalLatticeData);
 
   total_fluid_sites = 0;
 
@@ -143,22 +101,24 @@ void LBM::lbmReadConfig(Net *net,
   int n = -1;
 
   // Each block has an int flag, each site has at most an unsigned int, 8 doubles, and (Num-vectors - 1) doubles.
-  int lLength = lBlocksX * lBlocksY * lBlocksZ * (4
+  int lLength = bGlobalLatticeData.GetBlockCount() * (4
       + bGlobalLatticeData.SitesPerBlockVolumeUnit * (4 + 8 * 8 + 8
           * (D3Q15::NUMVECTORS - 1)));
 
   char * lBlockDataBuffer = new char[lLength];
 
-  handleIOError(MPI_File_read_all(lFile, lBlockDataBuffer, lLength, MPI_BYTE,
-                                  &lStatus));
+  MPI_Status lStatus;
 
-  myReader = hemelb::io::XdrMemReader(lBlockDataBuffer, lLength);
+  MPI_File_read_all(lFile, lBlockDataBuffer, lLength, MPI_BYTE, &lStatus);
 
-  for (int i = 0; i < lBlocksX; i++)
+  hemelb::io::XdrMemReader myReader =
+      hemelb::io::XdrMemReader(lBlockDataBuffer, lLength);
+
+  for (int i = 0; i < bGlobalLatticeData.GetXBlockCount(); i++)
   {
-    for (int j = 0; j < lBlocksY; j++)
+    for (int j = 0; j < bGlobalLatticeData.GetYBlockCount(); j++)
     {
-      for (int k = 0; k < lBlocksZ; k++)
+      for (int k = 0; k < bGlobalLatticeData.GetZBlockCount(); k++)
       {
         ++n;
 
@@ -263,7 +223,7 @@ void LBM::lbmReadConfig(Net *net,
 
   delete[] lBlockDataBuffer;
 
-  handleIOError(MPI_File_close(&lFile));
+  MPI_File_close(&lFile);
 
   net->fr_time = hemelb::util::myClock() - net->fr_time;
 }
@@ -531,10 +491,10 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
   buffer_size = hemelb::util::min(1000000, fluid_sites_max
       * mNetTopology->ProcessorCount);
 
-  communication_period = int(ceil(double(buffer_size)
+  communication_period = int (ceil(double (buffer_size)
       / mNetTopology->ProcessorCount));
 
-  communication_iters = hemelb::util::max(1, int(ceil(double(fluid_sites_max)
+  communication_iters = hemelb::util::max(1, int (ceil(double (fluid_sites_max)
       / communication_period)));
 
   local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
@@ -664,15 +624,15 @@ void LBM::lbmWriteConfig(hemelb::lb::Stability stability,
               stress = lbmConvertStressToPhysicalUnits(stress);
 
               local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0]
-                  = float(pressure);
+                  = float (pressure);
               local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 1]
-                  = float(vx);
+                  = float (vx);
               local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 2]
-                  = float(vy);
+                  = float (vy);
               local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 3]
-                  = float(vz);
+                  = float (vz);
               local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 4]
-                  = float(stress);
+                  = float (stress);
 
               local_site_data[3 * comPeriodDelta + 0] = site_i;
               local_site_data[3 * comPeriodDelta + 1] = site_j;
@@ -845,7 +805,9 @@ void LBM::lbmWriteConfigParallel(hemelb::lb::Stability stability,
    * 1 int for number of fluid voxels.*/
   const int lPreambleLength = 4 + 8 + (3 * 4) + (3 * 4) + (3 * 4) + 4;
 
-  MPI_File_set_view(lOutputFile, 0, MPI_BYTE, MPI_BYTE, "native",
+  std::string lReadMode = "native";
+
+  MPI_File_set_view(lOutputFile, 0, MPI_BYTE, MPI_BYTE, &lReadMode[0],
                     MPI_INFO_NULL);
 
   if (mNetTopology->IsCurrentProcTheIOProc())
@@ -883,7 +845,7 @@ void LBM::lbmWriteConfigParallel(hemelb::lb::Stability stability,
   }
 
   MPI_File_set_view(lOutputFile, lLocalSitesInitialOffset, MPI_BYTE, MPI_BYTE,
-                    "native", MPI_INFO_NULL);
+                    &lReadMode[0], MPI_INFO_NULL);
 
   int lLocalWriteLength = lOneFluidSiteLength
       * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->LocalRank];
@@ -1006,8 +968,8 @@ void LBM::lbmWriteConfigParallel(hemelb::lb::Stability stability,
               lWriter << (site_i - site_min_x) << (site_j - site_min_y)
                   << (site_k - site_min_z);
 
-              lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
-                  << float(stress);
+              lWriter << float (pressure) << float (vx) << float (vy)
+                  << float (vz) << float (stress);
             }
           }
         }

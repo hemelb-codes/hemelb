@@ -1,6 +1,7 @@
 include $(MK)/config-linux.mk
 
 CXX := mpic++.openmpi
+CC := mpicc.openmpi
 
 HEMELB_DEFS += CCS
 

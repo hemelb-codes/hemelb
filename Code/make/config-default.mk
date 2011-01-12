@@ -1,4 +1,5 @@
 CXX := mpic++
+CC := mpic++
 
 EXE := hemelb
 

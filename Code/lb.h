@@ -94,6 +94,7 @@ class LBM
                         double f_neq[]);
 
     void lbmInitCollisions();
+
     void
     lbmReadConfig(Net *net, hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
 
@@ -135,6 +136,7 @@ class LBM
 
     double *lbm_average_inlet_velocity;
     double *lbm_peak_inlet_velocity;
+
 };
 
 #endif // HEMELB_LB_H

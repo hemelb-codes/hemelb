@@ -21,6 +21,9 @@ namespace hemelb
         void readInt(int& outInt);
         void readUnsignedInt(unsigned int& outUInt);
 
+        // Get the position in the stream.
+        unsigned int GetPosition();
+
       protected:
         XdrReader();
         XDR* mXdr;
