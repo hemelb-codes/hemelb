@@ -51,16 +51,6 @@ unsigned int Net::GetCollisionType(unsigned int site_data)
   }
 }
 
-void Net::Abort()
-{
-  err = MPI_Abort(MPI_COMM_WORLD, 1);
-
-  // This gives us something to work from when we have an error - we get the rank
-  // that calls abort, and we get a stack-trace from the exception having been thrown.
-  fprintf(stderr, "Aborted by rank %d\n", mNetworkTopology->LocalRank);
-  throw "Net::Abort() called.";
-}
-
 /*!
  This is called from the main function.  First function to deal with processors.
  The domain partitioning technique and the management of the
