@@ -19,8 +19,6 @@ class Net
         char* iArgumentList[]);
     ~Net();
 
-    void Abort();
-
     void Initialise(hemelb::topology::NetworkTopology &iNetTop,
                     hemelb::lb::GlobalLatticeData &iGlobLatDat,
                     hemelb::lb::LocalLatticeData* &bLocalLatDat);
