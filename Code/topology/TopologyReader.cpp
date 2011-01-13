@@ -37,8 +37,7 @@ namespace hemelb
 
     TopologyReader::~TopologyReader()
     {
-      //      MPI_Comm_free(&mCommunicator);
-      //      MPI_Group_free(&mGroup);
+      MPI_Group_free(&mGroup);
     }
 
     void TopologyReader::PreReadConfigFile(MPI_File xiFile,
