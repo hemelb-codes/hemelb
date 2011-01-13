@@ -31,6 +31,14 @@ namespace hemelb
 
       private:
 
+        /*   void
+         GetNeighbourLocation(int lFromBlockId,
+         int lFromSiteId,
+         int lDirection,
+         hemelb::lb::GlobalLatticeData &bGlobalLatticeData,
+         int * lToBlockId,
+         int * lToSiteId);*/
+
         void
             GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
                                      Net *iNet,
@@ -44,7 +52,20 @@ namespace hemelb
                                        const int iNonSolidSitesPerBlock[],
                                        const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
-        void OptimiseDomainDecomposition();
+        void ReadInBlocks(const unsigned long iFirstBlockIdForEachProc[],
+                          const unsigned long iFirstSiteNumberForEachProc[],
+                          const unsigned long iNumberSitesPerProc[],
+                          const unsigned long iTotalSiteCount,
+                          const int iNonSolidSitesPerBlock[],
+                          const hemelb::lb::GlobalLatticeData & iGlobLatDat);
+
+        void
+            OptimiseDomainDecomposition(const unsigned long iFirstBlockIdForEachProc[],
+                                        const unsigned long iFirstSiteIdForEachProc[],
+                                        const unsigned long iNumberSitesPerProc[],
+                                        const unsigned long iTotalSiteCount,
+                                        const int iNonSolidSitesPerBlock[],
+                                        const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
         MPI_Comm mCommunicator;
         MPI_Group mGroup;

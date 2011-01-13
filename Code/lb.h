@@ -95,6 +95,8 @@ class LBM
 
     void lbmInitCollisions();
 
+  //  static void ReadBlock();
+
     void
     lbmReadConfig(Net *net, hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
 
