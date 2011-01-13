@@ -36,11 +36,11 @@ int main(int argc, char *argv[])
   // There should be an odd number of arguments since the parameters occur in pairs.
   if ( (argc % 2) == 0)
   {
-    if (lMaster.mNetworkTopology.IsCurrentProcTheIOProc())
+    if (lMaster.IsCurrentProcTheIOProc())
     {
       Usage::printUsage(argv[0]);
     }
-    lMaster.GetNet()->Abort();
+    lMaster.Abort();
   }
 
   // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
@@ -74,11 +74,11 @@ int main(int argc, char *argv[])
     }
     else
     {
-      if (lMaster.mNetworkTopology.IsCurrentProcTheIOProc())
+      if (lMaster.IsCurrentProcTheIOProc())
       {
         Usage::printUsage(argv[0]);
       }
-      lMaster.GetNet()->Abort();
+      lMaster.Abort();
     }
   }
 
@@ -102,13 +102,13 @@ int main(int argc, char *argv[])
   // Actually create the directories.
 
 
-  if (lMaster.mNetworkTopology.IsCurrentProcTheIOProc())
+  if (lMaster.IsCurrentProcTheIOProc())
   {
     if (hemelb::util::DoesDirectoryExist(lOutputDir.c_str()))
     {
       printf("\nOutput directory \"%s\" already exists. Exiting.\n\n",
              lOutputDir.c_str());
-      lMaster.GetNet()->Abort();
+      lMaster.Abort();
     }
 
     hemelb::util::MakeDirAllRXW(lOutputDir);
@@ -122,11 +122,11 @@ int main(int argc, char *argv[])
       ? lInputFile
       : lInputFile.substr(lLastForwardSlash));
     lSimulationConfig->Save(lOutputDir + "/" + lFileNameComponent);
+
     char timings_name[256];
     char procs_string[256];
 
-    std::string lProcs = std::string();
-    sprintf(procs_string, "%i", lMaster.mNetworkTopology.ProcessorCount);
+    sprintf(procs_string, "%i", lMaster.GetProcessorCount());
     strcpy(timings_name, lOutputDir.c_str());
     strcat(timings_name, "/timings");
     strcat(timings_name, procs_string);
@@ -139,11 +139,10 @@ int main(int argc, char *argv[])
 
   lMaster.Initialise(lSimulationConfig, (int) lSteeringSessionId, timings_ptr);
 
-  lMaster.RunSimulation(lSimulationConfig, total_time,
-                        image_directory, snapshot_directory,
-                        lSnapshotsPerCycle, lImagesPerCycle);
+  lMaster.RunSimulation(lSimulationConfig, total_time, image_directory,
+                        snapshot_directory, lSnapshotsPerCycle, lImagesPerCycle);
 
-  if (lMaster.mNetworkTopology.IsCurrentProcTheIOProc())
+  if (lMaster.IsCurrentProcTheIOProc())
   {
     fclose(timings_ptr);
   }

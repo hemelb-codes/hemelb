@@ -11,9 +11,11 @@ class SimulationMaster
     SimulationMaster(int iArgCount, char *iArgList[]);
     ~SimulationMaster();
 
-    // TODO: These functions are a temporary hack for moving stuff into this class from the main function.
-    LBM *GetLBM();
-    Net *GetNet();
+    void Abort();
+
+    bool IsCurrentProcTheIOProc();
+
+    int GetProcessorCount();
 
     void RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                        double iStartTime,
@@ -24,11 +26,7 @@ class SimulationMaster
 
     void Initialise(hemelb::SimConfig *iSimConfig,
                     int iSteeringSessionid,
-                    FILE *bTimingsFile);
-
-    // TODO Temporary hack while refactoring, so the main method can find out if it's
-    // on the IO rank or not.
-    hemelb::topology::NetworkTopology mNetworkTopology;
+                    FILE * bTimingsFile);
 
   private:
     void PostSimulation(int iTotalTimeSteps,
@@ -36,13 +34,14 @@ class SimulationMaster
                         bool iIsUnstable,
                         double iStartTime);
 
-    void PrintTimingData(int iSignal);
+    void PrintTimingData();
 
     FILE *mTimingsFile;
 
     hemelb::lb::GlobalLatticeData mGlobLatDat;
     hemelb::lb::LocalLatticeData* mLocalLatDat;
 
+    hemelb::topology::NetworkTopology mNetworkTopology;
     hemelb::topology::TopologyManager mTopologyManger;
 
     hemelb::steering::Control *steeringController;
