@@ -239,7 +239,12 @@ namespace hemelb
       }
     }
 
-    void TopologyReader::OptimiseDomainDecomposition()
+    void TopologyReader::OptimiseDomainDecomposition(const unsigned long iFirstBlockIdForEachProc[],
+                                                     const unsigned long iFirstSiteIdForEachProc[],
+                                                     const unsigned long iNumberSitesPerProc[],
+                                                     const unsigned long iTotalSiteCount,
+                                                     const int iNonSolidSitesPerBlock[],
+                                                     const hemelb::lb::GlobalLatticeData & iGlobLatDat)
     {
       throw "Not yet implemented";
 
@@ -265,7 +270,70 @@ namespace hemelb
       // part[ni] will contain the partition vector of the locally-stored vertices
       // comm* is a pointer to the MPI communicator of the processes involved
 
-      //ParMETIS_V3_PartKway    ()
+      unsigned long * lCumulativeSitesPerProc = new unsigned long[mSize + 1];
+      lCumulativeSitesPerProc[0] = 0;
+      for (int ii = 0; ii < mSize; ii++)
+      {
+        lCumulativeSitesPerProc[ii + 1] = lCumulativeSitesPerProc[ii]
+            + iNumberSitesPerProc[ii];
+      }
+
+      //TODO
+
+      //(idxtype *vtxdist, idxtype *xadj, idxtype *adjncy, idxtype *vwgt, idxtype *adjwgt, int *wgtflag, int *numflag, int *ncon, int *nparts, floattype *tpwgts, floattype *ubvec, int *options, int *edgecut, idxtype *part, MPI_Comm *comm)
+      //ParMETIS_V3_PartKway();
+    }
+
+    void TopologyReader::ReadInBlocks(const unsigned long iFirstBlockIdForEachProc[],
+                                      const unsigned long iFirstSiteNumberForEachProc[],
+                                      const unsigned long iNumberSitesPerProc[],
+                                      const unsigned long iTotalSiteCount,
+                                      const int iNonSolidSitesPerBlock[],
+                                      const hemelb::lb::GlobalLatticeData & iGlobLatDat)
+    {
+      bool * lReadBlock = new bool[iGlobLatDat.GetBlockCount()];
+
+      for (int ii = 0; ii < iGlobLatDat.GetBlockCount(); ii++)
+      {
+        lReadBlock[ii] = false;
+      }
+
+      // The largest block we need to read up to is
+      // - the last block if this is the last processor
+      // - the next proc's first block - 1 if the next block is reading from the very first site on its block.
+      // - the next proc's first block if the next block starts reading partway through the site list.
+      int lUpperLimit = (mRank == (mSize - 1)
+        ? (iGlobLatDat.GetBlockCount() - 1)
+        : ( (iFirstSiteNumberForEachProc[mRank + 1] == 0)
+          ? iFirstBlockIdForEachProc[mRank + 1] - 1
+          : iFirstBlockIdForEachProc[mRank + 1]));
+
+      // For each block that we're computing on, make sure it and the 26 other blocks in the cube around it will
+      // be read by this processor.
+      for (int ii = iFirstBlockIdForEachProc[mRank]; ii <= lUpperLimit; ii++)
+      {
+        for (int deltaX = -1; deltaX <= 1; deltaX++)
+        {
+          for (int deltaY = -1; deltaY <= 1; deltaY++)
+          {
+            for (int deltaZ = -1; deltaZ <= 1; deltaZ++)
+            {
+              int lPutativeBlock = ii + ( (deltaX
+                  * iGlobLatDat.GetYBlockCount()) + deltaY)
+                  * iGlobLatDat.GetZBlockCount() + deltaZ;
+
+              if (lPutativeBlock >= 0 && lPutativeBlock
+                  < iGlobLatDat.GetBlockCount())
+              {
+                lReadBlock[lPutativeBlock] = true;
+              }
+            }
+          }
+        }
+      }
+
+      // Now we actually do the reading.
+
     }
 
     void TopologyReader::LoadAndDecompose(hemelb::lb::GlobalLatticeData &bGlobalLatticeData,
@@ -325,7 +393,10 @@ namespace hemelb
                                  lTotalNonSolidSites, lNonSolidSitesPerBlock,
                                  bGlobalLatticeData);
 
-      OptimiseDomainDecomposition();
+      //TODO   ReadInBlocks
+
+
+      //OptimiseDomainDecomposition();
     }
 
   }
