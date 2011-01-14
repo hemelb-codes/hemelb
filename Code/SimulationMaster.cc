@@ -46,10 +46,16 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
  */
 SimulationMaster::~SimulationMaster()
 {
-  delete mNet;
-  delete mLbm;
   delete mNetworkTopology;
 
+  if (mNet != NULL)
+  {
+    delete mNet;
+  }
+  if (mLbm != NULL)
+  {
+    delete mLbm;
+  }
   if (mLocalLatDat != NULL)
   {
     delete mLocalLatDat;
@@ -228,7 +234,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       stability = mLbm->lbmCycle(hemelb::vis::doRendering, mNet, *mLocalLatDat,
                                  mLbTime, mMPISendTime, mMPIWaitTime);
 
-      if ( (restart = mLbm->IsUnstable(*mLocalLatDat, mNet)) != false)
+      if ( (restart = mLbm->IsUnstable(*mLocalLatDat)) != false)
       {
         break;
       }

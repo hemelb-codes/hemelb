@@ -1,6 +1,5 @@
 #include "steering/none/Control.h"
 #include "steering/common/common.h"
-#include "lb.h"
 
 namespace hemelb
 {
@@ -20,7 +19,7 @@ namespace hemelb
     {
       /* Static member function that implements the singleton pattern.
        */
-      if (!Control::isSingletonCreated)
+      if (Control::singleton == NULL)
       {
         Control::singleton = new Control(isCurrentProcTheSteeringProc);
       }
@@ -34,8 +33,7 @@ namespace hemelb
     }
 
     // Init static members
-    bool Control::isSingletonCreated = false;
-    Control* Control::singleton = 0;
+    Control* Control::singleton = NULL;
 
     // Kick off the networking thread
     void Control::StartNetworkThread(LBM* lbm,

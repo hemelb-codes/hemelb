@@ -3,7 +3,7 @@
 
 #include "steering/basic/Threadable.h"
 #include "lb/SimulationState.h"
-#include "lb.h"
+#include "lb/lb.h"
 
 namespace hemelb
 {

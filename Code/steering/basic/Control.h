@@ -5,7 +5,7 @@
 #include <semaphore.h>
 
 #include "lb/SimulationState.h"
-#include "lb.h"
+#include "lb/lb.h"
 #include "vis/Control.h"
 #include "steering/basic/NetworkThread.h"
 #include "steering/basic/Lockable.h"
@@ -58,7 +58,6 @@ namespace hemelb
 
       protected:
         // Singleton pattern
-        static bool isSingletonCreated;
         static Control* singleton;
 
         Control(bool isCurrentProcTheSteeringProc);
