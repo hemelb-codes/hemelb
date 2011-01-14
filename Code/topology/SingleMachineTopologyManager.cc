@@ -19,8 +19,8 @@ namespace hemelb
     /*!
      If one has more than one machine. The topology discovery mechanism is implemented in this function
      */
-    void TopologyManager::FindTopology(NetworkTopology* bNetworkTopology,
-                                       bool & oWasSuccessful)
+    TopologyManager::TopologyManager(NetworkTopology* bNetworkTopology,
+                                     bool* oSuccess)
     {
       // the machine is assumed to be only one if this function is
       // used instead of the previous one
@@ -40,7 +40,7 @@ namespace hemelb
       bNetworkTopology->ProcCountOnEachMachine[0]
           = bNetworkTopology->ProcessorCount;
 
-      oWasSuccessful = true;
+      *oSuccess = true;
     }
   }
 }

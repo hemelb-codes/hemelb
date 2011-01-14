@@ -16,7 +16,7 @@ SRCS := comm.c util.c debug.c setup.c grsetup.c timer.c \
        selectq.c akwayfm.c serial.c move.c \
        mmetis.c mesh.c memory.c weird.c backcompat.c 
 
-$(TARGETS)_DEPS := $(subst .c,.$(OBJEXT), $(SRCS))
+$(TARGETS)_DEPS = $(subst .c,.$(OBJEXT), $(SRCS))
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

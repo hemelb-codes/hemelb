@@ -37,7 +37,7 @@ hemelb::steering::SimulationParameters::SimulationParameters()
 
 }
 
-void hemelb::steering::SimulationParameters::collectGlobalVals(LBM* lbm,
+void hemelb::steering::SimulationParameters::collectGlobalVals(lb::LBM* lbm,
                                                                lb::SimulationState *iSimState)
 {
   this->pressureMin = lbm->GetMinPhysicalPressure();

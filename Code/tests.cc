@@ -17,12 +17,17 @@ void Tests::RunTests()
 
 void Tests::TestDomainDecomposition()
 {
-  hemelb::topology::TopologyManager lTopMan;
   int lInputs = 1;
-  char * lNames[1] = { "Tests" };
-  char** lNamePtr = &lNames[0];
+  char* lName = new char[6];
+  strcpy(lName, "Tests");
+  char ** lNamePtr = &lName;
   hemelb::topology::NetworkTopology * lNetTop =
       new hemelb::topology::NetworkTopology(&lInputs, &lNamePtr);
+
+  bool lSuccess;
+  hemelb::topology::TopologyManager* lTopMan =
+      new hemelb::topology::TopologyManager(lNetTop, &lSuccess);
+
   hemelb::lb::GlobalLatticeData lGlobLatDat;
 
   int lProcCount = 128;
@@ -41,7 +46,7 @@ void Tests::TestDomainDecomposition()
 
   double lExpectedPerRank = ((double) lFluidSites) / ((double) lProcCount - 1);
 
-  lTopMan.DecomposeDomain(lFluidSites, lNetTop, lGlobLatDat);
+  lTopMan->DecomposeDomain(lFluidSites, lNetTop, lGlobLatDat);
 
   for (int ii = 1; ii < lProcCount; ii++)
   {
@@ -53,6 +58,8 @@ void Tests::TestDomainDecomposition()
              lExpectedPerRank, ii, lNetTop->FluidSitesOnEachProcessor[ii]);
     }
   }
+
+  delete[] lName;
 }
 
 void Tests::MakeAGlobLatDat(hemelb::lb::GlobalLatticeData & oGlobLatDat)
