@@ -25,7 +25,7 @@ namespace hemelb
     const unsigned int NetworkThread::CONNECTION_BACKLOG = 10;
 
     // Use initialisation list to do the work.
-    NetworkThread::NetworkThread(LBM* lbm,
+    NetworkThread::NetworkThread(lb::LBM* lbm,
                                  Control* steeringController,
                                  lb::SimulationState* iSimState,
                                  const lb::LbmParameters* iLbmParams) :

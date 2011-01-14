@@ -14,14 +14,14 @@ namespace hemelb
     class NetworkThread : public Threadable
     {
       public:
-        NetworkThread(LBM* lbm,
+        NetworkThread(lb::LBM* lbm,
                       Control* steeringController,
                       lb::SimulationState* iSimState,
                       const lb::LbmParameters* iLbmParams);
       private:
         void DoWork(void);
 
-        LBM* mLbm;
+        lb::LBM* mLbm;
         Control* mSteeringController;
         lb::SimulationState* mSimState;
         const lb::LbmParameters* mLbmParams;

@@ -92,9 +92,10 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mNet = new Net(mNetworkTopology);
 
   // Initialise the Lbm.
-  mLbm
-      = new LBM(iSimConfig, mNetworkTopology, mGlobLatDat, iSteeringSessionid,
-                (int) (iSimConfig->StepsPerCycle), iSimConfig->VoxelSize, mNet);
+  mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat,
+                             iSteeringSessionid,
+                             (int) (iSimConfig->StepsPerCycle),
+                             iSimConfig->VoxelSize, mNet);
 
   // Initialise and begin the steering.
   steeringController
@@ -108,8 +109,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   // Initialise the domain decomposition. If this fails, abort.
   bool lTopologySuccess;
-
-  mTopologyManger.FindTopology(mNetworkTopology, lTopologySuccess);
+  mTopologyManger = new hemelb::topology::TopologyManager(mNetworkTopology,
+                                                          &lTopologySuccess);
 
   if (!lTopologySuccess)
   {
@@ -120,8 +121,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   // Count the domain decomposition time.
   double seconds = hemelb::util::myClock();
 
-  mTopologyManger.DecomposeDomain(mLbm->total_fluid_sites, mNetworkTopology,
-                                  mGlobLatDat);
+  mTopologyManger->DecomposeDomain(mLbm->total_fluid_sites, mNetworkTopology,
+                                   mGlobLatDat);
 
   mDomainDecompTime = hemelb::util::myClock() - seconds;
 

@@ -18,8 +18,8 @@ namespace hemelb
     /*!
      If one has more than one machine. The topology discovery mechanism is implemented in this function
      */
-    void TopologyManager::FindTopology(NetworkTopology* bNetworkTopology,
-                                       bool & oWasSuccessful)
+    TopologyManager::TopologyManager(NetworkTopology* bNetworkTopology,
+                                     bool* oSuccess)
     {
       int err;
       int *depth, **color;
@@ -32,7 +32,7 @@ namespace hemelb
 
       if (err != MPI_SUCCESS || flag == 0)
       {
-        oWasSuccessful = false;
+        *oSuccess = false;
         return;
       }
 
@@ -40,7 +40,7 @@ namespace hemelb
 
       if (err != MPI_SUCCESS || flag == 0)
       {
-        oWasSuccessful = false;
+        *oSuccess = false;
         return;
       }
 
@@ -112,7 +112,8 @@ namespace hemelb
           bNetworkTopology->MachineIdOfEachProc[i] = machine_id;
         }
       }
-      oWasSuccessful = true;
+      *oSuccess = true;
+      return;
     }
   }
 }

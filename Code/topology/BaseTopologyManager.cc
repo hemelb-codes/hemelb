@@ -155,7 +155,6 @@ namespace hemelb
                   // Keep track of the site number.
                   lSiteNumber++;
 
-                  //TODO comments from here.
                   // Move on if the site is solid (ProcessorRankForEachBlockSite = BIG_NUMBER2) or has
                   // already been assigned to a rank (0 <= ProcessorRankForEachBlockSite < BIG_NUMBER2).
                   if (lProcRankForSite[lSiteNumber] != iMarker)

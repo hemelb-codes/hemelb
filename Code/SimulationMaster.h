@@ -42,11 +42,11 @@ class SimulationMaster
     hemelb::lb::LocalLatticeData* mLocalLatDat;
 
     hemelb::topology::NetworkTopology* mNetworkTopology;
-    hemelb::topology::TopologyManager mTopologyManger;
+    hemelb::topology::TopologyManager* mTopologyManger;
 
     hemelb::steering::Control *steeringController;
     hemelb::lb::SimulationState mSimulationState;
-    LBM *mLbm;
+    hemelb::lb::LBM *mLbm;
     Net *mNet;
 
     int mImagesWritten;
