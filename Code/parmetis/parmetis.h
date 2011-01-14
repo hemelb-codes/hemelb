@@ -29,7 +29,7 @@
 
 /* Indexes are as long as integers for now */
 #ifdef IDXTYPE_INT
-typedef unsigned long idxtype;
+typedef long idxtype;
 #else
 typedef short idxtype;
 #endif

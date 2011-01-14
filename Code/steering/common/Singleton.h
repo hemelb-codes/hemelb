@@ -14,7 +14,6 @@ namespace hemelb
       class Singleton
       {
         protected:
-          static bool isSingletonCreated;
           static Singleton* singleton;
           Singleton()
           {
@@ -23,19 +22,16 @@ namespace hemelb
         public:
           static Derived* Init()
           {
-            if (!Singleton<Derived>::isSingletonCreated)
+            if (Singleton<Derived>::singleton == NULL)
             {
               Singleton<Derived>::singleton = new Derived();
-              Singleton<Derived>::isSingletonCreated = true;
             }
             return static_cast<Derived*> (Singleton<Derived>::singleton);
           }
       };
 
       template<typename Derived>
-      bool Singleton<Derived>::isSingletonCreated = false;
-      template<typename Derived>
-      Singleton<Derived>* Singleton<Derived>::singleton = 0;
+      Singleton<Derived>* Singleton<Derived>::singleton = NULL;
 
     }
   }
