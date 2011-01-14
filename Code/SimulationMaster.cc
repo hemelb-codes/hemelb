@@ -14,18 +14,18 @@
 /**
  * Constructor for the SimulationMaster class
  *
- * Initialises contained LBM and Net classes, and the Debugger.
+ * Initialises member variables including the network topology
+ * object.
  */
 SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
 {
   mNetworkTopology = new hemelb::topology::NetworkTopology(&iArgCount,
                                                            &iArgList);
-
-  mLbm = new LBM();
-  mNet = new Net(mNetworkTopology);
-  mLocalLatDat = NULL;
-
   hemelb::debug::Debugger::Init(iArgList[0]);
+
+  mLbm = NULL;
+  mNet = NULL;
+  mLocalLatDat = NULL;
 
   mSimulationState.IsTerminating = 0;
 
@@ -83,6 +83,13 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 {
   mTimingsFile = bTimingsFile;
 
+  mNet = new Net(mNetworkTopology);
+
+  // Initialise the Lbm.
+  mLbm
+      = new LBM(iSimConfig, mNetworkTopology, mGlobLatDat, iSteeringSessionid,
+                (int) (iSimConfig->StepsPerCycle), iSimConfig->VoxelSize, mNet);
+
   // Initialise and begin the steering.
   steeringController
       = hemelb::steering::Control::Init(
@@ -92,10 +99,6 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     steeringController->StartNetworkThread(mLbm, &mSimulationState,
                                            mLbm->GetLbmParams());
   }
-
-  // Initialise the Lbm.
-  mLbm->lbmInit(iSimConfig, mNetworkTopology, mGlobLatDat, iSteeringSessionid,
-                (int) (iSimConfig->StepsPerCycle), iSimConfig->VoxelSize, mNet);
 
   // Initialise the domain decomposition. If this fails, abort.
   bool lTopologySuccess;

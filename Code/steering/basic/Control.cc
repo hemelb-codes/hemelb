@@ -62,7 +62,7 @@ namespace hemelb
 
     // Init static members
     bool Control::isSingletonCreated = false;
-    Control* Control::singleton = 0;
+    Control* Control::singleton = NULL;
 
     // Kick off the networking thread
     void Control::StartNetworkThread(LBM* lbm,
