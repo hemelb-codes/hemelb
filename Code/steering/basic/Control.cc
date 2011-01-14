@@ -64,7 +64,7 @@ namespace hemelb
     Control* Control::singleton = NULL;
 
     // Kick off the networking thread
-    void Control::StartNetworkThread(LBM* lbm,
+    void Control::StartNetworkThread(lb::LBM* lbm,
                                      lb::SimulationState *iSimState,
                                      const lb::LbmParameters *iLbmParams)
     {
@@ -88,7 +88,7 @@ namespace hemelb
                                             int* perform_rendering,
                                             hemelb::lb::SimulationState &iSimulationState,
                                             hemelb::vis::Control* visController,
-                                            LBM* lbm)
+                                            lb::LBM* lbm)
     {
       if (mIsCurrentProcTheSteeringProc)
       {
@@ -108,7 +108,7 @@ namespace hemelb
     void Control::BroadcastSteerableParameters(int *perform_rendering,
                                                hemelb::lb::SimulationState &lSimulationState,
                                                vis::Control *visControl,
-                                               LBM* lbm)
+                                               lb::LBM* lbm)
     {
       steer_par[STEERABLE_PARAMETERS] = *perform_rendering;
 

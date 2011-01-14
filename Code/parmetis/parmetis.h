@@ -27,9 +27,8 @@
 /* Undefine the following #define in order to use short int as the idxtype */
 #define IDXTYPE_INT
 
-/* Indexes are as long as integers for now */
 #ifdef IDXTYPE_INT
-typedef long idxtype;
+typedef int idxtype;
 #else
 typedef short idxtype;
 #endif

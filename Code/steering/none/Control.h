@@ -17,7 +17,7 @@ namespace hemelb
         static Control* Init(bool isCurrentProcTheSteeringProc);
         static Control* Get(void);
 
-        void StartNetworkThread(LBM* lbm,
+        void StartNetworkThread(lb::LBM* lbm,
                                 lb::SimulationState *iSimState,
                                 const lb::LbmParameters *iLbmParams);
 
@@ -26,7 +26,7 @@ namespace hemelb
                                       int* perform_rendering,
                                       hemelb::lb::SimulationState &iSimulationState,
                                       hemelb::vis::Control* visController,
-                                      LBM* lbm);
+                                      lb::LBM* lbm);
         bool ShouldRenderForNetwork();
 
       protected:

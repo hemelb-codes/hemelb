@@ -35,7 +35,7 @@ namespace hemelb
         SimulationParameters();
         ~SimulationParameters();
         char* pack();
-        void collectGlobalVals(LBM* lbm, lb::SimulationState *iSimState);
+        void collectGlobalVals(lb::LBM* lbm, lb::SimulationState *iSimState);
 
       private:
         io::XdrMemWriter *paramWriter;
