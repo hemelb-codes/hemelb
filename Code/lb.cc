@@ -440,7 +440,7 @@ int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
     }
   }
 
-  net->err = MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX,
+  MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX,
                            MPI_COMM_WORLD);
   is_unstable = stability;
 

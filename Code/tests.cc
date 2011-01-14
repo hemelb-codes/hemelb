@@ -18,17 +18,21 @@ void Tests::RunTests()
 void Tests::TestDomainDecomposition()
 {
   hemelb::topology::TopologyManager lTopMan;
-  hemelb::topology::NetworkTopology lNetTop;
+  int lInputs = 1;
+  char * lNames[1] = { "Tests" };
+  char** lNamePtr = &lNames[0];
+  hemelb::topology::NetworkTopology * lNetTop =
+      new hemelb::topology::NetworkTopology(&lInputs, &lNamePtr);
   hemelb::lb::GlobalLatticeData lGlobLatDat;
 
   int lProcCount = 128;
   int lMachineCount = 1;
 
-  lNetTop.NeighbourIndexFromProcRank = new short int[1];
-  lNetTop.ProcCountOnEachMachine = new int[1];
-  lNetTop.MachineIdOfEachProc = new int[lProcCount];
-  lNetTop.ProcessorCount = lProcCount;
-  lNetTop.MachineCount = 1;
+  lNetTop->NeighbourIndexFromProcRank = new short int[1];
+  lNetTop->ProcCountOnEachMachine = new int[1];
+  lNetTop->MachineIdOfEachProc = new int[lProcCount];
+  lNetTop->ProcessorCount = lProcCount;
+  lNetTop->MachineCount = 1;
 
   MakeAGlobLatDat(lGlobLatDat);
 
@@ -42,11 +46,11 @@ void Tests::TestDomainDecomposition()
   for (int ii = 1; ii < lProcCount; ii++)
   {
     if (std::abs(lExpectedPerRank
-        - (double) lNetTop.FluidSitesOnEachProcessor[ii]) > 1.0)
+        - (double) lNetTop->FluidSitesOnEachProcessor[ii]) > 1.0)
     {
       printf(
              "Domain decomposition problem: Expecting %f sites per processor, but rank %d had %d.\n",
-             lExpectedPerRank, ii, lNetTop.FluidSitesOnEachProcessor[ii]);
+             lExpectedPerRank, ii, lNetTop->FluidSitesOnEachProcessor[ii]);
     }
   }
 }

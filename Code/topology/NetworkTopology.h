@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdio>
+#include "mpiInclude.h"
 
 namespace hemelb
 {
@@ -31,6 +32,21 @@ namespace hemelb
 
     struct NetworkTopology
     {
+        NetworkTopology(int * argCount, char *** argList)
+        {
+          int thread_level_provided;
+
+          MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED,
+                          &thread_level_provided);
+          MPI_Comm_size(MPI_COMM_WORLD, &ProcessorCount);
+          MPI_Comm_rank(MPI_COMM_WORLD, &LocalRank);
+
+          if (IsCurrentProcTheIOProc())
+          {
+            printf("thread_level_provided %i\n", thread_level_provided);
+          }
+        }
+
         ~NetworkTopology()
         {
           delete[] NeighbourIndexFromProcRank;
