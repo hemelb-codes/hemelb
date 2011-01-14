@@ -1,6 +1,5 @@
 #include "topology/TopologyManager.h"
 
-
 /*
  * NOTE!
  *
@@ -20,26 +19,26 @@ namespace hemelb
     /*!
      If one has more than one machine. The topology discovery mechanism is implemented in this function
      */
-    void TopologyManager::FindTopology(NetworkTopology &bNetworkTopology,
+    void TopologyManager::FindTopology(NetworkTopology* bNetworkTopology,
                                        bool & oWasSuccessful)
     {
       // the machine is assumed to be only one if this function is
       // used instead of the previous one
 
-      bNetworkTopology.Depths = 1;
-      bNetworkTopology.MachineCount = 1;
+      bNetworkTopology->Depths = 1;
+      bNetworkTopology->MachineCount = 1;
 
-      bNetworkTopology.MachineIdOfEachProc
-          = new int[bNetworkTopology.ProcessorCount];
-      bNetworkTopology.ProcCountOnEachMachine
-          = new int[bNetworkTopology.MachineCount];
+      bNetworkTopology->MachineIdOfEachProc
+          = new int[bNetworkTopology->ProcessorCount];
+      bNetworkTopology->ProcCountOnEachMachine
+          = new int[bNetworkTopology->MachineCount];
 
-      for (int i = 0; i < bNetworkTopology.ProcessorCount; i++)
+      for (int i = 0; i < bNetworkTopology->ProcessorCount; i++)
       {
-        bNetworkTopology.MachineIdOfEachProc[i] = 0;
+        bNetworkTopology->MachineIdOfEachProc[i] = 0;
       }
-      bNetworkTopology.ProcCountOnEachMachine[0]
-          = bNetworkTopology.ProcessorCount;
+      bNetworkTopology->ProcCountOnEachMachine[0]
+          = bNetworkTopology->ProcessorCount;
 
       oWasSuccessful = true;
     }

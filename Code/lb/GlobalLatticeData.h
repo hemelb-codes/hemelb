@@ -24,6 +24,13 @@ namespace hemelb
     // within a global block.
     struct BlockData
     {
+        BlockData()
+        {
+          ProcessorRankForEachBlockSite = NULL;
+          wall_data = NULL;
+          site_data = NULL;
+        }
+
         ~BlockData()
         {
           if (ProcessorRankForEachBlockSite != NULL)

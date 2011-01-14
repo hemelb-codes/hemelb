@@ -14,13 +14,10 @@
 class Net
 {
   public:
-    Net(hemelb::topology::NetworkTopology * iTopology,
-        int &iArgumentCount,
-        char* iArgumentList[]);
+    Net(hemelb::topology::NetworkTopology * iTopology);
     ~Net();
 
-    void Initialise(hemelb::topology::NetworkTopology &iNetTop,
-                    hemelb::lb::GlobalLatticeData &iGlobLatDat,
+    void Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                     hemelb::lb::LocalLatticeData* &bLocalLatDat);
 
     void
@@ -30,7 +27,6 @@ class Net
     void
     UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
-    int err;
     int my_inner_sites; // Site on this process that do and do not need
     // information from neighbouring processors.
     int my_inner_collisions[COLLISION_TYPES]; // Number of collisions that only use data on this rank.
@@ -42,14 +38,15 @@ class Net
     double bm_time, fr_time;
 
   private:
-    void InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
-                    short int ** bSharedFLocationForEachProc,
-                    const unsigned int * iSiteDataForThisRank,
-                    const hemelb::lb::GlobalLatticeData & iGlobLatDat,
-                    const hemelb::topology::NetworkTopology & iNetTop);
+    void
+        InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
+                                  short int ** bSharedFLocationForEachProc,
+                                  const unsigned int * iSiteDataForThisRank,
+                                  const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
     int *f_recv_iv;
     int my_inter_sites;
+    int err;
 
     hemelb::SimConfig* mSimConfig;
     hemelb::topology::NetworkTopology * mNetworkTopology;
