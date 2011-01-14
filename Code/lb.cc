@@ -153,13 +153,13 @@ const hemelb::lb::LbmParameters *LBM::GetLbmParams()
   return &mParams;
 }
 
-void LBM::lbmInit(hemelb::SimConfig *iSimulationConfig,
-                  const hemelb::topology::NetworkTopology * iNetTop,
-                  hemelb::lb::GlobalLatticeData &bGlobLatDat,
-                  int iSteeringSessionId,
-                  int iPeriod,
-                  double iVoxelSize,
-                  Net *net)
+LBM::LBM(hemelb::SimConfig *iSimulationConfig,
+         const hemelb::topology::NetworkTopology * iNetTop,
+         hemelb::lb::GlobalLatticeData &bGlobLatDat,
+         int iSteeringSessionId,
+         int iPeriod,
+         double iVoxelSize,
+         Net *net)
 {
   steering_session_id = iSteeringSessionId;
   period = iPeriod;
@@ -266,11 +266,11 @@ hemelb::lb::collisions::Collision* LBM::GetCollision(int i)
 // automatically handle the streaming stage pertaining to neighbouring
 // subdomains.
 hemelb::lb::Stability LBM::lbmCycle(int perform_rt,
-                  Net *net,
-                  hemelb::lb::LocalLatticeData &bLocalLatDat,
-                  double &bLbTime,
-                  double &bMPISendTime,
-                  double &bMPIWaitTime)
+                                    Net *net,
+                                    hemelb::lb::LocalLatticeData &bLocalLatDat,
+                                    double &bLbTime,
+                                    double &bMPISendTime,
+                                    double &bMPIWaitTime)
 {
   net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
 
@@ -440,8 +440,7 @@ int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
     }
   }
 
-  MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX,
-                           MPI_COMM_WORLD);
+  MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   is_unstable = stability;
 
   return is_unstable;
