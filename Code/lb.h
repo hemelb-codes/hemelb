@@ -22,13 +22,13 @@ class LBM
     double lbmConvertStressToPhysicalUnits(double stress) const;
     double lbmConvertVelocityToPhysicalUnits(double velocity) const;
 
-    void lbmInit(hemelb::SimConfig *iSimulationConfig,
-                 const hemelb::topology::NetworkTopology * iNetTop,
-                 hemelb::lb::GlobalLatticeData &bGlobLatDat,
-                 int iSteeringSessionId,
-                 int iPeriod,
-                 double iVoxelSize,
-                 Net *net);
+    LBM(hemelb::SimConfig *iSimulationConfig,
+        const hemelb::topology::NetworkTopology * iNetTop,
+        hemelb::lb::GlobalLatticeData &bGlobLatDat,
+        int iSteeringSessionId,
+        int iPeriod,
+        double iVoxelSize,
+        Net *net);
     void lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat);
     ~LBM();
 
@@ -95,7 +95,7 @@ class LBM
 
     void lbmInitCollisions();
 
-  //  static void ReadBlock();
+    //  static void ReadBlock();
 
     void
     lbmReadConfig(Net *net, hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
