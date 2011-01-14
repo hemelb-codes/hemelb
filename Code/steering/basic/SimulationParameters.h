@@ -2,7 +2,7 @@
 #define HEMELB_STEERING_ON_SIMULATIONPARAMETERS_H
 
 #include "io/XdrMemWriter.h"
-#include "lb.h"
+#include "lb/lb.h"
 #include "lb/SimulationState.h"
 
 namespace hemelb

@@ -13,7 +13,7 @@ namespace hemelb
        * actually construct the instance. It should be defined in the
        * appropriate platform subdirectory.
        */
-      if (!Debugger::isSingletonCreated)
+      if (Debugger::singleton == NULL)
       {
         Debugger::singleton = PlatformDebuggerFactory(executable);
       }
@@ -28,8 +28,7 @@ namespace hemelb
     }
 
     // Init static members
-    bool Debugger::isSingletonCreated = false;
-    Debugger* Debugger::singleton = 0;
+    Debugger* Debugger::singleton = NULL;
 
     Debugger::Debugger(char* executable)
     {

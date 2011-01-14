@@ -1,7 +1,7 @@
 #ifndef HEMELB_SIMULATIONMASTER_H
 #define HEMELB_SIMULATIONMASTER_H
 
-#include "lb.h"
+#include "lb/lb.h"
 #include "net.h"
 #include "steering/basic/Control.h"
 

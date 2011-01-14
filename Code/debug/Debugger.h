@@ -31,7 +31,6 @@ namespace hemelb
         std::string mExecutable;
 
         // Singleton pattern
-        static bool isSingletonCreated;
         static Debugger* singleton;
 
     };

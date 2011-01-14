@@ -6,7 +6,7 @@
 #include "usage.h"
 #include "fileutils.h"
 #include "utilityFunctions.h"
-#include "lb.h"
+#include "lb/lb.h"
 
 #include "SimConfig.h"
 #include "SimulationMaster.h"

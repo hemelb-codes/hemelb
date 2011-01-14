@@ -32,7 +32,7 @@ class LBM
     void lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat);
     ~LBM();
 
-    int IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net);
+    int IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat);
 
     hemelb::lb::Stability lbmCycle(int perform_rt,
                                    Net *net,

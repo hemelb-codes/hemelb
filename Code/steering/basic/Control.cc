@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-#include "lb.h"
+#include "lb/lb.h"
 #include "steering/basic/Control.h"
 #include "steering/common/common.h"
 
@@ -47,7 +47,7 @@ namespace hemelb
     {
       /* Static member function that implements the singleton pattern.
        */
-      if (!Control::isSingletonCreated)
+      if (Control::singleton == NULL)
       {
         Control::singleton = new Control(isCurrentProcTheSteeringProc);
       }
@@ -61,7 +61,6 @@ namespace hemelb
     }
 
     // Init static members
-    bool Control::isSingletonCreated = false;
     Control* Control::singleton = NULL;
 
     // Kick off the networking thread

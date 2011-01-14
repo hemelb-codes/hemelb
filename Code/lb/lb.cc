@@ -5,7 +5,7 @@
 #include <math.h>
 #include <limits>
 
-#include "lb.h"
+#include "lb/lb.h"
 #include "utilityFunctions.h"
 #include "vis/RayTracer.h"
 
@@ -423,7 +423,7 @@ void LBM::lbmCalculateFlowFieldValues()
   inlets = inlets;
 }
 
-int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat, Net *net)
+int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat)
 {
   int is_unstable, stability;
 
