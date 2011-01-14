@@ -10,8 +10,8 @@ namespace hemelb
     class TopologyManager : public BaseTopologyManager
     {
       public:
-        void FindTopology(NetworkTopology &bNetworkTopology,
-                                  bool & oWasSuccessful);
+        void FindTopology(NetworkTopology* bNetworkTopology,
+                          bool & oWasSuccessful);
     };
   }
 }

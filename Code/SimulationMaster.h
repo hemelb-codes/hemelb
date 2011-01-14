@@ -41,7 +41,7 @@ class SimulationMaster
     hemelb::lb::GlobalLatticeData mGlobLatDat;
     hemelb::lb::LocalLatticeData* mLocalLatDat;
 
-    hemelb::topology::NetworkTopology mNetworkTopology;
+    hemelb::topology::NetworkTopology* mNetworkTopology;
     hemelb::topology::TopologyManager mTopologyManger;
 
     hemelb::steering::Control *steeringController;

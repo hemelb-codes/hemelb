@@ -15,7 +15,7 @@ namespace hemelb
     {
       public:
         void DecomposeDomain(int iTotalFluidSites,
-                             NetworkTopology & bNetTop,
+                             NetworkTopology* bNetTop,
                              const lb::GlobalLatticeData & bGlobLatDat);
 
       protected:
