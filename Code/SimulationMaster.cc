@@ -105,7 +105,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat,
                              iSteeringSessionid,
                              (int) (iSimConfig->StepsPerCycle),
-                             iSimConfig->VoxelSize, mNet);
+                             iSimConfig->VoxelSize, &mFileReadTime);
 
   // Initialise and begin the steering.
   steeringController
@@ -228,17 +228,17 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                hemelb::vis::doRendering);
 
       mLbm->UpdateBoundaryDensities(mSimulationState.CycleId,
-                                       mSimulationState.TimeStep);
+                                    mSimulationState.TimeStep);
 
       stability = mLbm->DoCycle(hemelb::vis::doRendering, mNet, *mLocalLatDat,
-                                 mLbTime, mMPISendTime, mMPIWaitTime);
+                                mLbTime, mMPISendTime, mMPIWaitTime);
 
       if ( (restart = mLbm->IsUnstable(*mLocalLatDat)) != false)
       {
         break;
       }
       mLbm->UpdateInletVelocities(mSimulationState.TimeStep, *mLocalLatDat,
-                                     mNet);
+                                  mNet);
 
       double lPreImageTime = MPI_Wtime();
 
@@ -480,7 +480,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
               mNet->bm_time);
       fprintf(mTimingsFile,
               "input configuration reading time (s):      %.3f\n",
-              mNet->fr_time);
+              mFileReadTime);
 
       fprintf(mTimingsFile,
               "total time (s):                            %.3f\n\n",

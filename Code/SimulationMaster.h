@@ -52,6 +52,7 @@ class SimulationMaster
     int mSnapshotsWritten;
 
     double mDomainDecompTime;
+    double mFileReadTime;
 
     double mLbTime;
     double mMPISendTime;
