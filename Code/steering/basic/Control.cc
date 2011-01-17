@@ -166,18 +166,18 @@ namespace hemelb
       visControl->updateImageSize(pixels_x, pixels_y);
 
       lattice_density_min
-          = lbm->lbmConvertPressureToLatticeUnits(
+          = lbm->ConvertPressureToLatticeUnits(
                                                   visControl->physical_pressure_threshold_min)
               / Cs2;
       lattice_density_max
-          = lbm->lbmConvertPressureToLatticeUnits(
+          = lbm->ConvertPressureToLatticeUnits(
                                                   visControl->physical_pressure_threshold_max)
               / Cs2;
       lattice_velocity_max
-          = lbm->lbmConvertVelocityToLatticeUnits(
+          = lbm->ConvertVelocityToLatticeUnits(
                                                   visControl->physical_velocity_threshold_max);
       lattice_stress_max
-          = lbm->lbmConvertStressToLatticeUnits(
+          = lbm->ConvertStressToLatticeUnits(
                                                 visControl->physical_stress_threshold_max);
 
       visControl->SetProjection(pixels_x, pixels_y, visControl->ctr_x,

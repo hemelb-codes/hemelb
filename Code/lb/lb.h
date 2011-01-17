@@ -19,12 +19,12 @@ namespace hemelb
         int steering_session_id;
         int period;
 
-        double lbmConvertPressureToLatticeUnits(double pressure) const;
-        double lbmConvertPressureToPhysicalUnits(double pressure) const;
-        double lbmConvertVelocityToLatticeUnits(double velocity) const;
-        double lbmConvertStressToLatticeUnits(double stress) const;
-        double lbmConvertStressToPhysicalUnits(double stress) const;
-        double lbmConvertVelocityToPhysicalUnits(double velocity) const;
+        double ConvertPressureToLatticeUnits(double pressure) const;
+        double ConvertPressureToPhysicalUnits(double pressure) const;
+        double ConvertVelocityToLatticeUnits(double velocity) const;
+        double ConvertStressToLatticeUnits(double stress) const;
+        double ConvertStressToPhysicalUnits(double stress) const;
+        double ConvertVelocityToPhysicalUnits(double velocity) const;
 
         LBM(hemelb::SimConfig *iSimulationConfig,
             const hemelb::topology::NetworkTopology * iNetTop,
@@ -33,39 +33,39 @@ namespace hemelb
             int iPeriod,
             double iVoxelSize,
             Net *net);
-        void lbmRestart(hemelb::lb::LocalLatticeData &iLocalLatDat);
+        void Restart(hemelb::lb::LocalLatticeData &iLocalLatDat);
         ~LBM();
 
         int IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat);
 
         hemelb::lb::Stability
-            lbmCycle(int perform_rt,
-                     Net *net,
-                     hemelb::lb::LocalLatticeData &bLocallatDat,
-                     double &bLbTime,
-                     double &bMPISendTime,
-                     double &bMPIWaitTime);
-        void lbmCalculateFlowFieldValues();
+        DoCycle(int perform_rt,
+                Net *net,
+                hemelb::lb::LocalLatticeData &bLocallatDat,
+                double &bLbTime,
+                double &bMPISendTime,
+                double &bMPIWaitTime);
+        void CalculateFlowFieldValues();
         void RecalculateTauViscosityOmega();
-        void lbmUpdateBoundaryDensities(int cycle_id, int time_step);
+        void UpdateBoundaryDensities(int cycle_id, int time_step);
         void
-            lbmUpdateInletVelocities(int time_step,
-                                     hemelb::lb::LocalLatticeData &iLocalLatDat,
-                                     Net *net);
+        UpdateInletVelocities(int time_step,
+                              hemelb::lb::LocalLatticeData &iLocalLatDat,
+                              Net *net);
 
         void
-            lbmSetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
+        SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
         void
-        lbmWriteConfig(hemelb::lb::Stability stability,
-                       std::string output_file_name,
-                       const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                       const hemelb::lb::LocalLatticeData &iLocalLatticeData);
+        WriteConfig(hemelb::lb::Stability stability,
+                    std::string output_file_name,
+                    const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                    const hemelb::lb::LocalLatticeData &iLocalLatticeData);
         void
-            lbmWriteConfigParallel(hemelb::lb::Stability stability,
-                                   std::string output_file_name,
-                                   const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                                   const hemelb::lb::LocalLatticeData &iLocalLatticeData);
+            WriteConfigParallel(hemelb::lb::Stability stability,
+                                std::string output_file_name,
+                                const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                                const hemelb::lb::LocalLatticeData &iLocalLatticeData);
 
         double GetMinPhysicalPressure();
         double GetMaxPhysicalPressure();
@@ -74,7 +74,7 @@ namespace hemelb
         double GetMinPhysicalStress();
         double GetMaxPhysicalStress();
 
-        void lbmInitMinMaxValues(void);
+        void InitMinMaxValues(void);
 
         double GetAverageInletVelocity(int iInletNumber);
         double GetPeakInletVelocity(int iInletNumber);
@@ -91,32 +91,31 @@ namespace hemelb
         const hemelb::lb::LbmParameters *GetLbmParams();
 
       private:
-        void lbmCalculateBC(double f[],
-                            hemelb::lb::SiteType iSiteType,
-                            unsigned int iBoundaryId,
-                            double *density,
-                            double *vx,
-                            double *vy,
-                            double *vz,
-                            double f_neq[]);
+        void CalculateBC(double f[],
+                         hemelb::lb::SiteType iSiteType,
+                         unsigned int iBoundaryId,
+                         double *density,
+                         double *vx,
+                         double *vy,
+                         double *vz,
+                         double f_neq[]);
 
-        void lbmInitCollisions();
+        void InitCollisions();
 
         //  static void ReadBlock();
 
         void
-        lbmReadConfig(Net *net,
-                      hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
+        ReadConfig(Net *net, hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
 
-        void lbmReadParameters();
+        void ReadParameters();
 
         void allocateInlets(int nInlets);
         void allocateOutlets(int nOutlets);
 
         void handleIOError(int iError);
 
-        double lbmConvertPressureGradToLatticeUnits(double pressure_grad) const;
-        double lbmConvertPressureGradToPhysicalUnits(double pressure_grad) const;
+        double ConvertPressureGradToLatticeUnits(double pressure_grad) const;
+        double ConvertPressureGradToPhysicalUnits(double pressure_grad) const;
 
         hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
         hemelb::lb::collisions::WallCollision* mWallCollision;
@@ -136,16 +135,16 @@ namespace hemelb
         int is_inlet_normal_available;
         double* inlet_density, *outlet_density;
         hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;
-        double *lbm_inlet_normal;
-        long int *lbm_inlet_count;
+        double *inlet_normal;
+        long int *inlet_count;
         double voxel_size;
 
         hemelb::lb::LbmParameters mParams;
         const hemelb::topology::NetworkTopology * mNetTopology;
         hemelb::SimConfig *mSimConfig;
 
-        double *lbm_average_inlet_velocity;
-        double *lbm_peak_inlet_velocity;
+        double *average_inlet_velocity;
+        double *peak_inlet_velocity;
 
     };
   }
