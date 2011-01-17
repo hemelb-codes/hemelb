@@ -15,26 +15,6 @@ namespace hemelb
     {
     }
 
-    Control* Control::Init(bool isCurrentProcTheSteeringProc)
-    {
-      /* Static member function that implements the singleton pattern.
-       */
-      if (Control::singleton == NULL)
-      {
-        Control::singleton = new Control(isCurrentProcTheSteeringProc);
-      }
-      return Control::singleton;
-    }
-
-    Control* Control::Get(void)
-    {
-      // Get the single instance.
-      return Control::singleton;
-    }
-
-    // Init static members
-    Control* Control::singleton = NULL;
-
     // Kick off the networking thread
     void Control::StartNetworkThread(lb::LBM* lbm,
                                      lb::SimulationState *iSimState,

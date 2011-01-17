@@ -103,14 +103,12 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   // Initialise the Lbm.
   mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat,
-                             iSteeringSessionid,
-                             (int) (iSimConfig->StepsPerCycle),
-                             iSimConfig->VoxelSize, &mFileReadTime);
+                             iSteeringSessionid, &mFileReadTime);
 
   // Initialise and begin the steering.
   steeringController
-      = hemelb::steering::Control::Init(
-                                        mNetworkTopology->IsCurrentProcTheIOProc());
+      = new hemelb::steering::Control(
+                                      mNetworkTopology->IsCurrentProcTheIOProc());
   if (mNetworkTopology->IsCurrentProcTheIOProc())
   {
     steeringController->StartNetworkThread(mLbm, &mSimulationState,
