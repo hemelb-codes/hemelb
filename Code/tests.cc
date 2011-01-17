@@ -32,9 +32,6 @@ void Tests::TestDomainDecomposition()
   int lMachineCount = 1;
 
   lNetTop->NeighbourIndexFromProcRank = new short int[1];
-  lNetTop->ProcCountOnEachMachine = new int[1];
-  lNetTop->MachineIdOfEachProc = new int[lProcCount];
-  lNetTop->MachineCount = 1;
 
   MakeAGlobLatDat(lGlobLatDat);
 

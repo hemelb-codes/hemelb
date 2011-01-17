@@ -24,11 +24,11 @@ namespace hemelb
       // the machine is assumed to be only one if this function is
       // used instead of the previous one
 
-      Depths = 1;
-      MachineCount = 1;
+      depths = 1;
+      machineCount = 1;
 
       MachineIdOfEachProc = new int[GetProcessorCount()];
-      ProcCountOnEachMachine = new int[MachineCount];
+      ProcCountOnEachMachine = new int[machineCount];
 
       for (int i = 0; i < GetProcessorCount(); i++)
       {

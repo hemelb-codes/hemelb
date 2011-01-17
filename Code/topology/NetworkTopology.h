@@ -45,6 +45,9 @@ namespace hemelb
         int GetLocalRank() const;
         int GetProcessorCount() const;
 
+        int GetDepths() const;
+        int GetMachineCount() const;
+
         void DecomposeDomain(int iTotalFluidSites,
                              const lb::GlobalLatticeData & bGlobLatDat);
 
@@ -57,15 +60,6 @@ namespace hemelb
         short int * NeighbourIndexFromProcRank;
         // Array containing numbers of fluid sites on each processor.
         int * FluidSitesOnEachProcessor;
-
-        // Number of processors on each machine
-        int * ProcCountOnEachMachine;
-        // Machine Id where each processor is.
-        int * MachineIdOfEachProc;
-        // Number of depths in the topology.
-        int Depths;
-        // Number of machines in the topology.
-        int MachineCount;
 
       private:
         struct SiteLocation
@@ -85,6 +79,16 @@ namespace hemelb
 
         int localRank;
         int processorCount;
+
+        // Number of depths in the topology.
+        int depths;
+        // Number of machines in the topology.
+        int machineCount;
+
+        // Number of processors on each machine
+        int * ProcCountOnEachMachine;
+        // Machine Id where each processor is.
+        int * MachineIdOfEachProc;
     };
   }
 }

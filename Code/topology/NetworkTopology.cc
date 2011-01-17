@@ -56,6 +56,16 @@ namespace hemelb
       return processorCount;
     }
 
+    int NetworkTopology::GetDepths() const
+    {
+      return depths;
+    }
+
+    int NetworkTopology::GetMachineCount() const
+    {
+      return machineCount;
+    }
+
     void NetworkTopology::DecomposeDomain(int iTotalFluidSites,
                                           const lb::GlobalLatticeData & bGlobLatDat)
     {
@@ -75,7 +85,7 @@ namespace hemelb
       int lUnvisitedFluidSiteCount = iTotalFluidSites;
 
       // If one machine or one machine per proc.
-      if (MachineCount == 1 || MachineCount == GetProcessorCount())
+      if (machineCount == 1 || machineCount == GetProcessorCount())
       {
         // Fluid sites per rank.
         int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
@@ -107,7 +117,7 @@ namespace hemelb
             * GetProcessorCount()) / (double) (GetProcessorCount() - 1);
         // Fluid sites per rank.
         int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-            * weight / MachineCount);
+            * weight / machineCount);
 
         // First, divide the sites up between machines.
         AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
@@ -119,7 +129,7 @@ namespace hemelb
         proc_count = 1;
 
         // For each machine, divide up the sites it has between its cores.
-        for (int lMachineNumber = 0; lMachineNumber < MachineCount; lMachineNumber++)
+        for (int lMachineNumber = 0; lMachineNumber < machineCount; lMachineNumber++)
         {
           AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
                                        lUnvisitedFluidSiteCount,
