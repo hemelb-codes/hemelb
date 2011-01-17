@@ -1,5 +1,5 @@
 #include "mpiInclude.h"
-#include "utilityFunctions.h"
+#include "util/utilityFunctions.h"
 
 namespace hemelb
 {

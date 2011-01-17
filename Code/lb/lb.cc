@@ -6,7 +6,7 @@
 #include <limits>
 
 #include "lb/lb.h"
-#include "utilityFunctions.h"
+#include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
 
 namespace hemelb

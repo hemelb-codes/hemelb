@@ -1,6 +1,6 @@
 #include "vis/ColPixel.h"
 
-#include "utilityFunctions.h"
+#include "util/utilityFunctions.h"
 #include "vis/Control.h"
 
 namespace hemelb

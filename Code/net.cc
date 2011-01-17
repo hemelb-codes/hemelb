@@ -6,7 +6,7 @@
 
 #include "lb/lb.h"
 #include "net.h"
-#include "utilityFunctions.h"
+#include "util/utilityFunctions.h"
 #include <cstdlib>
 #include <cmath>
 #include <cstdio>
