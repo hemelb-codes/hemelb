@@ -1,7 +1,8 @@
 include $(MK)/header.mk
 
 SRCS := BaseTopologyManager.cc \
-        TopologyReader.cc
+        NetworkTopology.cc \
+        TopologyReader.cc 
 
 ifdef HEMELB_CFG_MULTIMACHINE
   SRCS += MultiMachineTopologyManager.cc

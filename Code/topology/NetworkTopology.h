@@ -9,12 +9,10 @@ namespace hemelb
 {
   namespace topology
   {
-    struct NeighbouringProcessor
+    class NeighbouringProcessor
     {
-        ~NeighbouringProcessor()
-        {
-          delete[] SharedFReceivingIndex;
-        }
+      public:
+        ~NeighbouringProcessor();
 
         // Rank of the neighbouring processor.
         int Rank;
@@ -30,35 +28,13 @@ namespace hemelb
         int * SharedFReceivingIndex;
     };
 
-    struct NetworkTopology
+    class NetworkTopology
     {
-        NetworkTopology(int * argCount, char *** argList)
-        {
-          int thread_level_provided;
+      public:
+        NetworkTopology(int * argCount, char *** argList);
+        ~NetworkTopology();
 
-          MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED,
-                          &thread_level_provided);
-          MPI_Comm_size(MPI_COMM_WORLD, &ProcessorCount);
-          MPI_Comm_rank(MPI_COMM_WORLD, &LocalRank);
-
-          if (IsCurrentProcTheIOProc())
-          {
-            printf("thread_level_provided %i\n", thread_level_provided);
-          }
-        }
-
-        ~NetworkTopology()
-        {
-          delete[] NeighbourIndexFromProcRank;
-          delete[] FluidSitesOnEachProcessor;
-          delete[] ProcCountOnEachMachine;
-          delete[] MachineIdOfEachProc;
-        }
-
-        bool IsCurrentProcTheIOProc() const
-        {
-          return LocalRank == 0;
-        }
+        bool IsCurrentProcTheIOProc() const;
 
         // The rank of this processor, the total size of the topology, and the
         // number of fluid sites on this rank.

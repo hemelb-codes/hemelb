@@ -4,7 +4,7 @@
 #include <limits>
 
 #include "lb/LbmParameters.h"
-#include "utilityFunctions.h"
+#include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
 // TODO ideally this wouldn't be here.
 #include "vis/Control.h"

@@ -1,7 +1,7 @@
 #include <vector>
 #include <math.h>
 
-#include "utilityFunctions.h"
+#include "util/utilityFunctions.h"
 #include "vis/Control.h"
 #include "vis/RayTracer.h"
 #include "vis/GlyphDrawer.h"

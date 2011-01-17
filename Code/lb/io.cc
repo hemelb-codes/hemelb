@@ -9,7 +9,7 @@
 #include "debug/Debugger.h"
 #include "lb/lb.h"
 #include "net.h"
-#include "utilityFunctions.h"
+#include "util/utilityFunctions.h"
 #include "io/XdrMemReader.h"
 #include "io/XdrMemWriter.h"
 #include "io/AsciiFileWriter.h"

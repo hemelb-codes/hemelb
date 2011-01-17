@@ -2,7 +2,7 @@
 #include <math.h>
 #include <vector>
 
-#include "utilityFunctions.h"
+#include "util/utilityFunctions.h"
 
 #include "vis/StreaklineDrawer.h"
 #include "vis/Control.h"
