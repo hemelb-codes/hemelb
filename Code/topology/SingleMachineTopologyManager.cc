@@ -29,16 +29,16 @@ namespace hemelb
       bNetworkTopology->MachineCount = 1;
 
       bNetworkTopology->MachineIdOfEachProc
-          = new int[bNetworkTopology->ProcessorCount];
+          = new int[bNetworkTopology->GetProcessorCount()];
       bNetworkTopology->ProcCountOnEachMachine
           = new int[bNetworkTopology->MachineCount];
 
-      for (int i = 0; i < bNetworkTopology->ProcessorCount; i++)
+      for (int i = 0; i < bNetworkTopology->GetProcessorCount(); i++)
       {
         bNetworkTopology->MachineIdOfEachProc[i] = 0;
       }
       bNetworkTopology->ProcCountOnEachMachine[0]
-          = bNetworkTopology->ProcessorCount;
+          = bNetworkTopology->GetProcessorCount();
 
       *oSuccess = true;
     }

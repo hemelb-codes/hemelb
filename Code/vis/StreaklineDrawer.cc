@@ -183,9 +183,9 @@ namespace hemelb
 
       VelSiteData *vel_site_data_p;
 
-      int site_i = int(particleVec[p_index].x);
-      int site_j = int(particleVec[p_index].y);
-      int site_k = int(particleVec[p_index].z);
+      int site_i = int (particleVec[p_index].x);
+      int site_j = int (particleVec[p_index].y);
+      int site_k = int (particleVec[p_index].z);
 
       *is_interior = 1;
 
@@ -213,7 +213,7 @@ namespace hemelb
               v[i][j][k][0] = v[i][j][k][1] = v[i][j][k][2] = 0.0F;
               continue;
             }
-            if (mNetworkTopology->LocalRank != vel_site_data_p->proc_id)
+            if (mNetworkTopology->GetLocalRank() != vel_site_data_p->proc_id)
             {
               *is_interior = 0;
             }
@@ -227,7 +227,8 @@ namespace hemelb
               v[i][j][k][1] = vel_site_data_p->vy;
               v[i][j][k][2] = vel_site_data_p->vz;
             }
-            else if (mNetworkTopology->LocalRank == vel_site_data_p->proc_id)
+            else if (mNetworkTopology->GetLocalRank()
+                == vel_site_data_p->proc_id)
             {
               // the local counter is set equal to the global one
               // and the local velocity is calculated
@@ -317,7 +318,7 @@ namespace hemelb
                 {
 
                   m++;
-                  if (mNetworkTopology->LocalRank
+                  if (mNetworkTopology->GetLocalRank()
                       != lBlock->ProcessorRankForEachBlockSite[m])
                     continue;
 
@@ -345,7 +346,7 @@ namespace hemelb
                         initializeVelFieldBlock(iGlobLatDat, neigh_i, neigh_j,
                                                 neigh_k, *neigh_proc_id);
 
-                        if (mNetworkTopology->LocalRank == *neigh_proc_id)
+                        if (mNetworkTopology->GetLocalRank() == *neigh_proc_id)
                           continue;
 
                         vel_site_data_p = velSiteDataPointer(iGlobLatDat,
@@ -439,12 +440,12 @@ namespace hemelb
         mNeighProcs[m]->p_to_recv.reserve(5 * particles_to_recv_max);
       }
 
-      req = new MPI_Request[2 * iNetworkTopology->ProcessorCount];
+      req = new MPI_Request[2 * iNetworkTopology->GetProcessorCount()];
 
       from_proc_id_to_neigh_proc_index
-          = new short int[iNetworkTopology->ProcessorCount];
+          = new short int[iNetworkTopology->GetProcessorCount()];
 
-      for (int m = 0; m < iNetworkTopology->ProcessorCount; m++)
+      for (int m = 0; m < iNetworkTopology->GetProcessorCount(); m++)
       {
         from_proc_id_to_neigh_proc_index[m] = -1;
       }
@@ -473,7 +474,7 @@ namespace hemelb
               = iGlobLatDat.Blocks[n].site_data[m];
         }
       }
-      procs = iNetworkTopology->ProcessorCount;
+      procs = iNetworkTopology->GetProcessorCount();
     }
 
     // Reset the streakline drawer.
@@ -690,7 +691,7 @@ namespace hemelb
         vel_site_data_p = velSiteDataPointer(iGlobLatDat, site_i, site_j,
                                              site_k);
 
-        if (vel_site_data_p == NULL || mNetworkTopology->LocalRank
+        if (vel_site_data_p == NULL || mNetworkTopology->GetLocalRank()
             == vel_site_data_p->proc_id || vel_site_data_p->proc_id == -1)
         {
           continue;
@@ -787,17 +788,17 @@ namespace hemelb
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
-        p1[0] = particleVec[n].x - float(iGlobLatDat.GetXSiteCount() >> 1);
-        p1[1] = particleVec[n].y - float(iGlobLatDat.GetYSiteCount() >> 1);
-        p1[2] = particleVec[n].z - float(iGlobLatDat.GetZSiteCount() >> 1);
+        p1[0] = particleVec[n].x - float (iGlobLatDat.GetXSiteCount() >> 1);
+        p1[1] = particleVec[n].y - float (iGlobLatDat.GetYSiteCount() >> 1);
+        p1[2] = particleVec[n].z - float (iGlobLatDat.GetZSiteCount() >> 1);
 
         vis::controller->project(p1, p2);
 
-        p2[0] = int(scale[0] * (p2[0] + screen_max[0]));
-        p2[1] = int(scale[1] * (p2[1] + screen_max[1]));
+        p2[0] = int (scale[0] * (p2[0] + screen_max[0]));
+        p2[1] = int (scale[1] * (p2[1] + screen_max[1]));
 
-        int i = int(p2[0]);
-        int j = int(p2[1]);
+        int i = int (p2[0]);
+        int j = int (p2[1]);
 
         if (! (i < 0 || i >= pixels_x || j < 0 || j >= pixels_y))
         {

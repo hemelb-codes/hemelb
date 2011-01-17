@@ -16,8 +16,8 @@ namespace hemelb
 
       MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED,
                       &thread_level_provided);
-      MPI_Comm_size(MPI_COMM_WORLD, &ProcessorCount);
-      MPI_Comm_rank(MPI_COMM_WORLD, &LocalRank);
+      MPI_Comm_size(MPI_COMM_WORLD, &processorCount);
+      MPI_Comm_rank(MPI_COMM_WORLD, &localRank);
 
       if (IsCurrentProcTheIOProc())
       {
@@ -27,6 +27,8 @@ namespace hemelb
 
     NetworkTopology::~NetworkTopology()
     {
+      MPI_Finalize();
+
       delete[] NeighbourIndexFromProcRank;
       delete[] FluidSitesOnEachProcessor;
       delete[] ProcCountOnEachMachine;
@@ -35,7 +37,17 @@ namespace hemelb
 
     bool NetworkTopology::IsCurrentProcTheIOProc() const
     {
-      return LocalRank == 0;
+      return localRank == 0;
+    }
+
+    int NetworkTopology::GetLocalRank() const
+    {
+      return localRank;
+    }
+
+    int NetworkTopology::GetProcessorCount() const
+    {
+      return processorCount;
     }
 
   }

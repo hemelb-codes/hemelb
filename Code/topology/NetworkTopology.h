@@ -36,10 +36,10 @@ namespace hemelb
 
         bool IsCurrentProcTheIOProc() const;
 
-        // The rank of this processor, the total size of the topology, and the
-        // number of fluid sites on this rank.
-        int LocalRank;
-        int ProcessorCount;
+        // Functions for getting the rank of this processor and the total size
+        /// of the topology.
+        int GetLocalRank() const;
+        int GetProcessorCount() const;
 
         // Number of local distributions shared with neighbouring processors.
         int TotalSharedFs;
@@ -59,6 +59,10 @@ namespace hemelb
         int Depths;
         // Number of machines in the topology.
         int MachineCount;
+
+      private:
+        int localRank;
+        int processorCount;
     };
   }
 }

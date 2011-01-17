@@ -75,7 +75,7 @@ bool SimulationMaster::IsCurrentProcTheIOProc()
  */
 int SimulationMaster::GetProcessorCount()
 {
-  return mNetworkTopology->ProcessorCount;
+  return mNetworkTopology->GetProcessorCount();
 }
 
 /**
@@ -410,7 +410,7 @@ void SimulationMaster::Abort()
 
   // This gives us something to work from when we have an error - we get the rank
   // that calls abort, and we get a stack-trace from the exception having been thrown.
-  fprintf(stderr, "Aborted by rank %d\n", mNetworkTopology->LocalRank);
+  fprintf(stderr, "Aborted by rank %d\n", mNetworkTopology->GetLocalRank());
   throw "SimulationMaster::Abort() called.";
 }
 
@@ -429,7 +429,8 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
   {
     fprintf(mTimingsFile, "\n");
     fprintf(mTimingsFile, "threads: %i, machines checked: %i\n\n",
-            mNetworkTopology->ProcessorCount, mNetworkTopology->MachineCount);
+            mNetworkTopology->GetProcessorCount(),
+            mNetworkTopology->MachineCount);
     fprintf(mTimingsFile, "topology depths checked: %i\n\n",
             mNetworkTopology->Depths);
     fprintf(mTimingsFile, "fluid sites: %i\n\n", mLbm->total_fluid_sites);
@@ -488,7 +489,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
 
       fprintf(mTimingsFile, "Sub-domains info:\n\n");
 
-      for (int n = 0; n < mNetworkTopology->ProcessorCount; n++)
+      for (int n = 0; n < mNetworkTopology->GetProcessorCount(); n++)
       {
         fprintf(mTimingsFile, "rank: %i, fluid sites: %i\n", n,
                 mNetworkTopology->FluidSitesOnEachProcessor[n]);
@@ -550,12 +551,12 @@ void SimulationMaster::PrintTimingData()
 
   if (mNetworkTopology->IsCurrentProcTheIOProc())
   {
-    if (mNetworkTopology->ProcessorCount > 1)
+    if (mNetworkTopology->GetProcessorCount() > 1)
     {
       for (int ii = 0; ii < 3; ii++)
-        lMeans[ii] /= (double) (mNetworkTopology->ProcessorCount - 1);
+        lMeans[ii] /= (double) (mNetworkTopology->GetProcessorCount() - 1);
       for (int ii = 3; ii < 5; ii++)
-        lMeans[ii] /= (double) mNetworkTopology->ProcessorCount;
+        lMeans[ii] /= (double) mNetworkTopology->GetProcessorCount();
     }
 
     fprintf(mTimingsFile,
