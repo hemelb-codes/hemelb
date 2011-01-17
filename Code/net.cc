@@ -4,7 +4,6 @@
  buffers are defined.
  */
 
-#include "lb/lb.h"
 #include "net.h"
 #include "util/utilityFunctions.h"
 #include <cstdlib>
