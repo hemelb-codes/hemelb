@@ -18,8 +18,19 @@
  */
 SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
 {
+  // Initialise the network discovery. If this fails, abort.
+  bool lTopologySuccess = true;
   mNetworkTopology = new hemelb::topology::NetworkTopology(&iArgCount,
-                                                           &iArgList);
+                                                           &iArgList,
+                                                           &lTopologySuccess);
+
+  if (!lTopologySuccess)
+  {
+    printf(
+           "Couldn't get machine information for this network topology. Aborting.\n");
+    Abort();
+  }
+
   hemelb::debug::Debugger::Init(iArgList[0]);
 
   mLbm = NULL;
@@ -106,22 +117,10 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                            mLbm->GetLbmParams());
   }
 
-  // Initialise the domain decomposition. If this fails, abort.
-  bool lTopologySuccess;
-  mTopologyManger = new hemelb::topology::TopologyManager(mNetworkTopology,
-                                                          &lTopologySuccess);
-
-  if (!lTopologySuccess)
-  {
-    fprintf(bTimingsFile, "MPI_Attr_get failed, aborting\n");
-    Abort();
-  }
-
   // Count the domain decomposition time.
   double seconds = hemelb::util::myClock();
 
-  mTopologyManger->DecomposeDomain(mLbm->total_fluid_sites, mNetworkTopology,
-                                   mGlobLatDat);
+  mNetworkTopology->DecomposeDomain(mLbm->total_fluid_sites, mGlobLatDat);
 
   mDomainDecompTime = hemelb::util::myClock() - seconds;
 
