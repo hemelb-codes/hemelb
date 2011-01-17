@@ -25,7 +25,7 @@ namespace hemelb
       int machine_id, flag, is_found;
       int i, j, sum;
 
-      Depths = 0;
+      depths = 0;
 
       err = MPI_Attr_get(MPI_COMM_WORLD, MPICHX_TOPOLOGY_DEPTHS, &depth, &flag);
 
@@ -41,7 +41,7 @@ namespace hemelb
         return false;
       }
 
-      MachineCount = 0;
+      machineCount = 0;
 
       MachineIdOfEachProc = new int[GetProcessorCount()];
       ProcCountOnEachMachine = new int[GetProcessorCount()];
@@ -55,9 +55,9 @@ namespace hemelb
         if (depth[i] != 4)
           continue;
 
-        Depths = max(Depths, depth[i]);
+        depths = max(depths, depth[i]);
 
-        for (j = 0, is_found = 0; j < MachineCount && is_found == 0; j++)
+        for (j = 0, is_found = 0; j < machineCount && is_found == 0; j++)
         {
           if (color[i][3] == MachineIdOfEachProc[j])
           {
@@ -68,13 +68,13 @@ namespace hemelb
         if (is_found == 1)
           continue;
 
-        MachineIdOfEachProc[MachineCount] = color[i][3];
-        ++ProcCountOnEachMachine[MachineCount];
-        ++MachineCount;
+        MachineIdOfEachProc[machineCount] = color[i][3];
+        ++ProcCountOnEachMachine[machineCount];
+        ++machineCount;
       }
-      MachineCount = max(1, MachineCount);
+      machineCount = max(1, machineCount);
 
-      if (MachineCount == 1)
+      if (machineCount == 1)
       {
         for (i = 0; i < GetProcessorCount(); i++)
         {
