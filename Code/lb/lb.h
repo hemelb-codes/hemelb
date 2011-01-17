@@ -30,8 +30,6 @@ namespace hemelb
             const hemelb::topology::NetworkTopology * iNetTop,
             hemelb::lb::GlobalLatticeData &bGlobLatDat,
             int iSteeringSessionId,
-            int iPeriod,
-            double iVoxelSize,
             double* oFileReadTime);
         void Restart(hemelb::lb::LocalLatticeData &iLocalLatDat);
         ~LBM();

@@ -13,9 +13,7 @@ namespace hemelb
     class Control
     {
       public:
-        // Singleton
-        static Control* Init(bool isCurrentProcTheSteeringProc);
-        static Control* Get(void);
+        Control(bool isCurrentProcTheSteeringProc);
 
         void StartNetworkThread(lb::LBM* lbm,
                                 lb::SimulationState *iSimState,
@@ -30,10 +28,6 @@ namespace hemelb
         bool ShouldRenderForNetwork();
 
       protected:
-        // Singleton pattern
-        static Control* singleton;
-
-        Control(bool isCurrentProcTheSteeringProc);
         ~Control();
     };
 

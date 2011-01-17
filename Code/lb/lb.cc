@@ -161,13 +161,11 @@ namespace hemelb
              const hemelb::topology::NetworkTopology * iNetTop,
              hemelb::lb::GlobalLatticeData &bGlobLatDat,
              int iSteeringSessionId,
-             int iPeriod,
-             double iVoxelSize,
              double * oFileReadTime)
     {
       steering_session_id = iSteeringSessionId;
-      period = iPeriod;
-      voxel_size = iVoxelSize;
+      period = iSimulationConfig->StepsPerCycle;
+      voxel_size = iSimulationConfig->VoxelSize;
 
       mNetTopology = iNetTop;
       mSimConfig = iSimulationConfig;
