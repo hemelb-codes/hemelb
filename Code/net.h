@@ -8,7 +8,6 @@
 
 #include "lb/GlobalLatticeData.h"
 #include "lb/LocalLatticeData.h"
-#include "topology/TopologyManager.h"
 #include "topology/NetworkTopology.h"
 
 class Net

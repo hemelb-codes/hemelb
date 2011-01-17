@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdio>
 #include "mpiInclude.h"
+#include "lb/GlobalLatticeData.h"
 
 namespace hemelb
 {
@@ -31,7 +32,10 @@ namespace hemelb
     class NetworkTopology
     {
       public:
-        NetworkTopology(int * argCount, char *** argList);
+        NetworkTopology(int * argCount,
+                        char *** argList,
+                        bool * oMachineDiscoverySuccess);
+
         ~NetworkTopology();
 
         bool IsCurrentProcTheIOProc() const;
@@ -40,6 +44,9 @@ namespace hemelb
         /// of the topology.
         int GetLocalRank() const;
         int GetProcessorCount() const;
+
+        void DecomposeDomain(int iTotalFluidSites,
+                             const lb::GlobalLatticeData & bGlobLatDat);
 
         // Number of local distributions shared with neighbouring processors.
         int TotalSharedFs;
@@ -61,6 +68,21 @@ namespace hemelb
         int MachineCount;
 
       private:
+        struct SiteLocation
+        {
+            short int i, j, k;
+        };
+
+        bool InitialiseMachineInfo();
+
+        void
+        AssignFluidSitesToProcessors(int & proc_count,
+                                     int & fluid_sites_per_unit,
+                                     int & unvisited_fluid_sites,
+                                     const int iCurrentProcId,
+                                     const bool iIsMachineLevel,
+                                     const lb::GlobalLatticeData &iGlobLatDat);
+
         int localRank;
         int processorCount;
     };

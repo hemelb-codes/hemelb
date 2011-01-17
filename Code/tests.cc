@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 
-#include "topology/TopologyManager.h"
+#include "topology/NetworkTopology.h"
 
 int main(int argc, char *argv[])
 {
@@ -21,12 +21,10 @@ void Tests::TestDomainDecomposition()
   char* lName = new char[6];
   strcpy(lName, "Tests");
   char ** lNamePtr = &lName;
-  hemelb::topology::NetworkTopology * lNetTop =
-      new hemelb::topology::NetworkTopology(&lInputs, &lNamePtr);
-
   bool lSuccess;
-  hemelb::topology::TopologyManager* lTopMan =
-      new hemelb::topology::TopologyManager(lNetTop, &lSuccess);
+
+  hemelb::topology::NetworkTopology * lNetTop =
+      new hemelb::topology::NetworkTopology(&lInputs, &lNamePtr, &lSuccess);
 
   hemelb::lb::GlobalLatticeData lGlobLatDat;
 
@@ -45,7 +43,7 @@ void Tests::TestDomainDecomposition()
 
   double lExpectedPerRank = ((double) lFluidSites) / ((double) lProcCount - 1);
 
-  lTopMan->DecomposeDomain(lFluidSites, lNetTop, lGlobLatDat);
+  lNetTop->DecomposeDomain(lFluidSites, lGlobLatDat);
 
   for (int ii = 1; ii < lProcCount; ii++)
   {
@@ -59,7 +57,6 @@ void Tests::TestDomainDecomposition()
   }
 
   delete[] lName;
-  delete lTopMan;
   delete lNetTop;
 }
 
