@@ -32,9 +32,8 @@ class Net
     int my_inter_collisions[COLLISION_TYPES]; // Number of collisions that require information from
     // other processors.
 
-    unsigned int GetCollisionType(unsigned int site_data);
     MPI_Status status[4];
-    double bm_time, fr_time;
+    double bm_time;
 
   private:
     void

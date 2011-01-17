@@ -23,8 +23,7 @@ namespace hemelb
      this function reads the XDR configuration file but does not store the system
      and calculate some parameters
      */
-    void LBM::ReadConfig(Net *net,
-                            hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
+    void LBM::ReadConfig(hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
     {
       /* Read the config file written by the segtool.
        *
@@ -99,8 +98,6 @@ namespace hemelb
       site_max_x = INT_MIN;
       site_max_y = INT_MIN;
       site_max_z = INT_MIN;
-
-      net->fr_time = hemelb::util::myClock();
 
       int n = -1;
 
@@ -184,7 +181,7 @@ namespace hemelb
                   site_max_y = hemelb::util::max(site_max_y, site_j);
                   site_max_z = hemelb::util::max(site_max_z, site_k);
 
-                  if (net->GetCollisionType(*site_type) != FLUID)
+                  if (bGlobalLatticeData.GetCollisionType(*site_type) != FLUID)
                   {
                     // Neither solid nor simple fluid
                     if (bGlobalLatticeData.Blocks[n].wall_data == NULL)
@@ -193,8 +190,9 @@ namespace hemelb
                           = new hemelb::lb::WallData[bGlobalLatticeData.SitesPerBlockVolumeUnit];
                     }
 
-                    if (net->GetCollisionType(*site_type) & INLET
-                        || net->GetCollisionType(*site_type) & OUTLET)
+                    if (bGlobalLatticeData.GetCollisionType(*site_type) & INLET
+                        || bGlobalLatticeData.GetCollisionType(*site_type)
+                            & OUTLET)
                     {
                       double temp;
                       // INLET or OUTLET or both.
@@ -205,7 +203,7 @@ namespace hemelb
                       myReader.readDouble(temp);
                     }
 
-                    if (net->GetCollisionType(*site_type) & EDGE)
+                    if (bGlobalLatticeData.GetCollisionType(*site_type) & EDGE)
                     {
                       // EDGE bit set
                       for (int l = 0; l < 3; l++)
@@ -230,8 +228,6 @@ namespace hemelb
       delete[] lBlockDataBuffer;
 
       MPI_File_close(&lFile);
-
-      net->fr_time = hemelb::util::myClock() - net->fr_time;
     }
 
     // TODO
@@ -350,8 +346,8 @@ namespace hemelb
         {
           hemelb::SimConfig::InOutLet *lInlet = mSimConfig->Inlets[n];
 
-          inlet_density_avg[n]
-              = ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
+          inlet_density_avg[n] = ConvertPressureToLatticeUnits(lInlet->PMean)
+              / Cs2;
           inlet_density_amp[n]
               = ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
           inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
@@ -363,8 +359,8 @@ namespace hemelb
         for (int n = 0; n < outlets; n++)
         {
           hemelb::SimConfig::InOutLet *lOutlet = mSimConfig->Outlets[n];
-          outlet_density_avg[n]
-              = ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
+          outlet_density_avg[n] = ConvertPressureToLatticeUnits(lOutlet->PMean)
+              / Cs2;
           outlet_density_amp[n]
               = ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
           outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
@@ -423,12 +419,12 @@ namespace hemelb
         {
           for (int n = 0; n < inlets; n++)
           {
-            par_to_send[3 * (inlets + outlets) + 3 * n + 0]
-                = inlet_normal[3 * n + 0];
-            par_to_send[3 * (inlets + outlets) + 3 * n + 1]
-                = inlet_normal[3 * n + 1];
-            par_to_send[3 * (inlets + outlets) + 3 * n + 2]
-                = inlet_normal[3 * n + 2];
+            par_to_send[3 * (inlets + outlets) + 3 * n + 0] = inlet_normal[3
+                * n + 0];
+            par_to_send[3 * (inlets + outlets) + 3 * n + 1] = inlet_normal[3
+                * n + 1];
+            par_to_send[3 * (inlets + outlets) + 3 * n + 2] = inlet_normal[3
+                * n + 2];
           }
         }
       }
@@ -454,12 +450,12 @@ namespace hemelb
         {
           for (int n = 0; n < inlets; n++)
           {
-            inlet_normal[3 * n + 0] = par_to_send[3 * (inlets + outlets)
-                + 3 * n + 0];
-            inlet_normal[3 * n + 1] = par_to_send[3 * (inlets + outlets)
-                + 3 * n + 1];
-            inlet_normal[3 * n + 2] = par_to_send[3 * (inlets + outlets)
-                + 3 * n + 2];
+            inlet_normal[3 * n + 0] = par_to_send[3 * (inlets + outlets) + 3
+                * n + 0];
+            inlet_normal[3 * n + 1] = par_to_send[3 * (inlets + outlets) + 3
+                * n + 1];
+            inlet_normal[3 * n + 2] = par_to_send[3 * (inlets + outlets) + 3
+                * n + 2];
           }
         }
       }
@@ -487,9 +483,9 @@ namespace hemelb
     }
 
     void LBM::WriteConfig(hemelb::lb::Stability stability,
-                             std::string output_file_name,
-                             const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                             const hemelb::lb::LocalLatticeData &iLocalLatticeData)
+                          std::string output_file_name,
+                          const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                          const hemelb::lb::LocalLatticeData &iLocalLatticeData)
     {
       /* This routine writes the flow field on file. The data are gathered
        to the root processor and written from there.  The format
@@ -689,11 +685,11 @@ namespace hemelb
                   }
                   else
                   { // not FLUID_TYPE
-                    CalculateBC(&iLocalLatticeData.FOld[ (my_site_id * (par
-                        + 1) + par) * D3Q15::NUMVECTORS],
-                                   iLocalLatticeData.GetSiteType(my_site_id),
-                                   iLocalLatticeData.GetBoundaryId(my_site_id),
-                                   &density, &vx, &vy, &vz, f_neq);
+                    CalculateBC(&iLocalLatticeData.FOld[ (my_site_id
+                        * (par + 1) + par) * D3Q15::NUMVECTORS],
+                                iLocalLatticeData.GetSiteType(my_site_id),
+                                iLocalLatticeData.GetBoundaryId(my_site_id),
+                                &density, &vx, &vy, &vz, f_neq);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
@@ -865,9 +861,9 @@ namespace hemelb
     }
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability,
-                                     std::string output_file_name,
-                                     const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                                     const hemelb::lb::LocalLatticeData &iLocalLatticeData)
+                                  std::string output_file_name,
+                                  const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                                  const hemelb::lb::LocalLatticeData &iLocalLatticeData)
     {
       hemelb::debug::Debugger::Get()->BreakHere();
       /* This routine writes the flow field on file. The data are gathered
@@ -1044,9 +1040,9 @@ namespace hemelb
                   { // not FLUID_TYPE
                     CalculateBC(&iLocalLatticeData.FOld[my_site_id
                         * D3Q15::NUMVECTORS],
-                                   iLocalLatticeData.GetSiteType(my_site_id),
-                                   iLocalLatticeData.GetBoundaryId(my_site_id),
-                                   &density, &vx, &vy, &vz, f_neq);
+                                iLocalLatticeData.GetSiteType(my_site_id),
+                                iLocalLatticeData.GetBoundaryId(my_site_id),
+                                &density, &vx, &vy, &vz, f_neq);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
@@ -1117,8 +1113,7 @@ namespace hemelb
 
       if (mNetTopology->IsCurrentProcTheIOProc())
       {
-        velocity_max
-            = ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
+        velocity_max = ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
         stress_max = ConvertStressToLatticeUnits(mSimConfig->MaxStress);
 
         par_to_send[0] = mSimConfig->VisCentre.x;

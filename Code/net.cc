@@ -10,46 +10,6 @@
 #include <cmath>
 #include <cstdio>
 
-// Returns the type of collision/streaming update for the fluid site
-// with data "site_data".
-unsigned int Net::GetCollisionType(unsigned int site_data)
-{
-  unsigned int boundary_type;
-
-  if (site_data == hemelb::lb::FLUID_TYPE)
-  {
-    return FLUID;
-  }
-  boundary_type = site_data & SITE_TYPE_MASK;
-
-  if (boundary_type == hemelb::lb::FLUID_TYPE)
-  {
-    return EDGE;
-  }
-  if (! (site_data & PRESSURE_EDGE_MASK))
-  {
-    if (boundary_type == hemelb::lb::INLET_TYPE)
-    {
-      return INLET;
-    }
-    else
-    {
-      return OUTLET;
-    }
-  }
-  else
-  {
-    if (boundary_type == hemelb::lb::INLET_TYPE)
-    {
-      return INLET | EDGE;
-    }
-    else
-    {
-      return OUTLET | EDGE;
-    }
-  }
-}
-
 /*!
  This is called from the main function.  First function to deal with processors.
  The domain partitioning technique and the management of the
@@ -278,35 +238,27 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
               int l = -1;
 
-              if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
-                  == FLUID)
+              switch (iGlobLatDat.GetCollisionType(
+                                                   lThisRankSiteData[lSiteIndexOnProc]))
               {
-                l = 0;
-              }
-              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
-                  == EDGE)
-              {
-                l = 1;
-              }
-              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
-                  == INLET)
-              {
-                l = 2;
-              }
-              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
-                  == OUTLET)
-              {
-                l = 3;
-              }
-              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
-                  == (INLET | EDGE))
-              {
-                l = 4;
-              }
-              else if (GetCollisionType(lThisRankSiteData[lSiteIndexOnProc])
-                  == (OUTLET | EDGE))
-              {
-                l = 5;
+                case FLUID:
+                  l = 0;
+                  break;
+                case EDGE:
+                  l = 1;
+                  break;
+                case INLET:
+                  l = 2;
+                  break;
+                case OUTLET:
+                  l = 3;
+                  break;
+                case (INLET | EDGE):
+                  l = 4;
+                  break;
+                case (OUTLET | EDGE):
+                  l = 5;
+                  break;
               }
 
               ++lSiteIndexOnProc;
@@ -716,7 +668,9 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
               bLocalLatDat->mSiteData[site_map]
                   = iSiteDataForThisRank[lSiteIndexOnProc];
 
-              if (GetCollisionType(bLocalLatDat->mSiteData[site_map]) & EDGE)
+              if (iGlobLatDat.GetCollisionType(
+                                               bLocalLatDat->mSiteData[site_map])
+                  & EDGE)
               {
                 bLocalLatDat->SetWallNormal(
                                             site_map,
