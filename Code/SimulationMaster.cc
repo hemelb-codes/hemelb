@@ -3,10 +3,9 @@
 
 #include "vis/visthread.h"
 #include "vis/ColourPalette.h"
-#include "utilityFunctions.h"
-#include "usage.h"
+#include "util/utilityFunctions.h"
 #include "debug/Debugger.h"
-#include "fileutils.h"
+#include "util/fileutils.h"
 
 #include <limits>
 #include <stdlib.h>

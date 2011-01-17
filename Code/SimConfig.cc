@@ -3,8 +3,9 @@
 #include <string>
 #include <iostream>
 #include <unistd.h>
-#include "fileutils.h"
 #include <cstdlib>
+
+#include "util/fileutils.h"
 #include "debug/Debugger.h"
 
 namespace hemelb

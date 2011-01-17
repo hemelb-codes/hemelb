@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "fileutils.h"
+#include "util/fileutils.h"
 
 namespace hemelb
 {
