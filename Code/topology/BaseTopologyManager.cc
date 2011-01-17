@@ -18,9 +18,10 @@ namespace hemelb
       // sort of coordinate.
 
       // Initialise the count of fluid sites on each processor to 0.
-      bNetTop->FluidSitesOnEachProcessor = new int[bNetTop->ProcessorCount];
+      bNetTop->FluidSitesOnEachProcessor
+          = new int[bNetTop->GetProcessorCount()];
 
-      for (int n = 0; n < bNetTop->ProcessorCount; n++)
+      for (int n = 0; n < bNetTop->GetProcessorCount(); n++)
       {
         bNetTop->FluidSitesOnEachProcessor[n] = 0;
       }
@@ -30,21 +31,21 @@ namespace hemelb
 
       // If one machine or one machine per proc.
       if (bNetTop->MachineCount == 1 || bNetTop->MachineCount
-          == bNetTop->ProcessorCount)
+          == bNetTop->GetProcessorCount())
       {
         // Fluid sites per rank.
         int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-            / (double) bNetTop->ProcessorCount);
+            / (double) bNetTop->GetProcessorCount());
 
         //Rank we're looking at.
         int proc_count = 0;
 
         // If we're steering with more than one processor, save one processor for doing that.
 #ifndef NO_STEER
-        if (bNetTop->ProcessorCount != 1)
+        if (bNetTop->GetProcessorCount() != 1)
         {
           fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-              / (double) (bNetTop->ProcessorCount - 1));
+              / (double) (bNetTop->GetProcessorCount() - 1));
           proc_count = 1;
         }
 #endif
@@ -57,9 +58,10 @@ namespace hemelb
       else
       {
         // Rank we are looking at.
-        int proc_count = bNetTop->ProcessorCount;
+        int proc_count = bNetTop->GetProcessorCount();
         double weight = (double) (bNetTop->ProcCountOnEachMachine[0]
-            * bNetTop->ProcessorCount) / (double) (bNetTop->ProcessorCount - 1);
+            * bNetTop->GetProcessorCount())
+            / (double) (bNetTop->GetProcessorCount() - 1);
         // Fluid sites per rank.
         int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
             * weight / bNetTop->MachineCount);
@@ -70,18 +72,17 @@ namespace hemelb
                                      bGlobLatDat, bNetTop);
 
         fluid_sites_per_unit = (int) ceil((double) lUnvisitedFluidSiteCount
-            / (double) (bNetTop->ProcessorCount - 1));
+            / (double) (bNetTop->GetProcessorCount() - 1));
         proc_count = 1;
 
         // For each machine, divide up the sites it has between its cores.
         for (int lMachineNumber = 0; lMachineNumber < bNetTop->MachineCount; lMachineNumber++)
         {
-          AssignFluidSitesToProcessors(
-                                       proc_count,
-                                       fluid_sites_per_unit,
+          AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
                                        lUnvisitedFluidSiteCount,
-                                       bNetTop->ProcessorCount + lMachineNumber,
-                                       false, bGlobLatDat, bNetTop);
+                                       bNetTop->GetProcessorCount()
+                                           + lMachineNumber, false,
+                                       bGlobLatDat, bNetTop);
         }
       }
 
@@ -269,10 +270,9 @@ namespace hemelb
                     if (!iIsMachineLevel)
                     {
                       bUnassignedSites -= lSitesOnCurrentProc;
-                      iSitesPerProc
-                          = (int) ceil((double) bUnassignedSites
-                              / (double) (bNetTopology->ProcessorCount
-                                  - proc_count));
+                      iSitesPerProc = (int) ceil((double) bUnassignedSites
+                          / (double) (bNetTopology->GetProcessorCount()
+                              - proc_count));
                     }
                     lSitesOnCurrentProc = 0;
                   }

@@ -24,9 +24,9 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float(iGlobLatDat.GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float(iGlobLatDat.GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float(iGlobLatDat.GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float (iGlobLatDat.GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float (iGlobLatDat.GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float (iGlobLatDat.GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1],
                                                              vis->half_dim[2]));
@@ -350,11 +350,11 @@ namespace hemelb
       pixels_x = mScreen.PixelsX;
       pixels_y = mScreen.PixelsY;
 
-      x1 = int(p1[0]);
-      y1 = int(p1[1]);
+      x1 = int (p1[0]);
+      y1 = int (p1[1]);
 
-      x2 = int(p2[0]);
-      y2 = int(p2[1]);
+      x2 = int (p2[0]);
+      y2 = int (p2[1]);
 
       if (x2 < x1)
       {
@@ -536,7 +536,7 @@ namespace hemelb
       comm_inc = 1;
       m = 1;
 
-      while (m < iNetTopology->ProcessorCount)
+      while (m < iNetTopology->GetProcessorCount())
       {
         m <<= 1;
 #ifndef NEW_COMPOSITING
@@ -544,24 +544,25 @@ namespace hemelb
 #else
         int start_id = 1;
 #endif
-        for (recv_id = start_id; recv_id < iNetTopology->ProcessorCount;)
+        for (recv_id = start_id; recv_id < iNetTopology->GetProcessorCount();)
         {
           send_id = recv_id + comm_inc;
 
-          if (iNetTopology->LocalRank != recv_id && iNetTopology->LocalRank
-              != send_id)
+          if (iNetTopology->GetLocalRank() != recv_id
+              && iNetTopology->GetLocalRank() != send_id)
           {
             recv_id += comm_inc << 1;
             continue;
           }
 
-          if (send_id >= iNetTopology->ProcessorCount || recv_id == send_id)
+          if (send_id >= iNetTopology->GetProcessorCount() || recv_id
+              == send_id)
           {
             recv_id += comm_inc << 1;
             continue;
           }
 
-          if (iNetTopology->LocalRank == send_id)
+          if (iNetTopology->GetLocalRank() == send_id)
           {
             MPI_Send(&col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
 
@@ -608,8 +609,8 @@ namespace hemelb
 
             }
           }
-          if (m < iNetTopology->ProcessorCount && iNetTopology->LocalRank
-              == recv_id)
+          if (m < iNetTopology->GetProcessorCount()
+              && iNetTopology->GetLocalRank() == recv_id)
           {
             memcpy(col_pixel_send, col_pixel_recv[recv_buffer_id], col_pixels
                 * sizeof(ColPixel));

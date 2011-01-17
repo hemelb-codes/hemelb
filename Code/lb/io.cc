@@ -76,14 +76,14 @@ namespace hemelb
       if (lError != 0)
       {
         fprintf(stderr, "Unable to open file %s [rank %i], exiting\n",
-                mSimConfig->DataFilePath.c_str(), mNetTopology->LocalRank);
+                mSimConfig->DataFilePath.c_str(), mNetTopology->GetLocalRank());
         fflush(0x0);
         exit(0x0);
       }
       else
       {
         fprintf(stderr, "Opened config file %s [rank %i]\n",
-                mSimConfig->DataFilePath.c_str(), mNetTopology->LocalRank);
+                mSimConfig->DataFilePath.c_str(), mNetTopology->GetLocalRank());
       }
       fflush(NULL);
 
@@ -579,7 +579,7 @@ namespace hemelb
 
       fluid_sites_max = 0;
 
-      for (int n = 0; n < mNetTopology->ProcessorCount; n++)
+      for (int n = 0; n < mNetTopology->GetProcessorCount(); n++)
       {
         fluid_sites_max
             = hemelb::util::max(fluid_sites_max,
@@ -593,10 +593,10 @@ namespace hemelb
       // frequency with which data communication to the root processor is
       // performed becomes lower and viceversa
       buffer_size = hemelb::util::min(1000000, fluid_sites_max
-          * mNetTopology->ProcessorCount);
+          * mNetTopology->GetProcessorCount());
 
       communication_period = int (ceil(double (buffer_size)
-          / mNetTopology->ProcessorCount));
+          / mNetTopology->GetProcessorCount()));
 
       communication_iters
           = hemelb::util::max(1, int (ceil(double (fluid_sites_max)
@@ -604,11 +604,11 @@ namespace hemelb
 
       local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
       gathered_flow_field = new float[MACROSCOPIC_PARS * communication_period
-          * mNetTopology->ProcessorCount];
+          * mNetTopology->GetProcessorCount()];
 
       local_site_data = new short int[3 * communication_period];
       gathered_site_data = new short int[3 * communication_period
-          * mNetTopology->ProcessorCount];
+          * mNetTopology->GetProcessorCount()];
 
       for (comPeriodDelta = 0; comPeriodDelta < communication_period; comPeriodDelta++)
       {
@@ -655,7 +655,7 @@ namespace hemelb
                 {
 
                   m++;
-                  if (mNetTopology->LocalRank
+                  if (mNetTopology->GetLocalRank()
                       != iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m])
                   {
                     continue;
@@ -767,7 +767,7 @@ namespace hemelb
                   if (mNetTopology->IsCurrentProcTheIOProc())
                   {
 
-                    for (int l = 0; l < mNetTopology->ProcessorCount
+                    for (int l = 0; l < mNetTopology->GetProcessorCount()
                         * communication_period; l++)
                     {
                       if (gathered_site_data[l * 3 + 0] == -1)
@@ -822,7 +822,7 @@ namespace hemelb
 
           if (mNetTopology->IsCurrentProcTheIOProc())
           {
-            for (int l = 0; l < mNetTopology->ProcessorCount
+            for (int l = 0; l < mNetTopology->GetProcessorCount()
                 * communication_period; l++)
             {
 
@@ -952,7 +952,7 @@ namespace hemelb
 
       int lLocalSitesInitialOffset = lPreambleLength;
 
-      for (int ii = 0; ii < mNetTopology->LocalRank; ii++)
+      for (int ii = 0; ii < mNetTopology->GetLocalRank(); ii++)
       {
         lLocalSitesInitialOffset += lOneFluidSiteLength
             * mNetTopology->FluidSitesOnEachProcessor[ii];
@@ -961,8 +961,10 @@ namespace hemelb
       MPI_File_set_view(lOutputFile, lLocalSitesInitialOffset, MPI_BYTE,
                         MPI_BYTE, &lReadMode[0], MPI_INFO_NULL);
 
-      int lLocalWriteLength = lOneFluidSiteLength
-          * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->LocalRank];
+      int
+          lLocalWriteLength =
+              lOneFluidSiteLength
+                  * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->GetLocalRank()];
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
       hemelb::io::XdrMemWriter lWriter =
           hemelb::io::XdrMemWriter(lFluidSiteBuffer, lLocalWriteLength);
@@ -1003,7 +1005,7 @@ namespace hemelb
                 {
 
                   m++;
-                  if (mNetTopology->LocalRank
+                  if (mNetTopology->GetLocalRank()
                       != iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m])
                   {
                     continue;

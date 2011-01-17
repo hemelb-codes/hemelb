@@ -500,7 +500,7 @@ namespace hemelb
 
             for (int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
             {
-              if (mNetworkTopology->LocalRank
+              if (mNetworkTopology->GetLocalRank()
                   == lBlock->ProcessorRankForEachBlockSite[m])
               {
                 BlockLocation& tempBlockLoc = block_location_a->at(0);
@@ -566,7 +566,7 @@ namespace hemelb
                   bool is_site_found = false;
                   for (int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
                   {
-                    if (mNetworkTopology->LocalRank
+                    if (mNetworkTopology->GetLocalRank()
                         == lBlock->ProcessorRankForEachBlockSite[m])
                     {
                       is_site_found = true;
@@ -782,7 +782,7 @@ namespace hemelb
 
       // Init globals
       blocks_yz = iGlobLatDat->GetYBlockCount() * iGlobLatDat->GetZBlockCount();
-      mBlockSizeFloat = float(iGlobLatDat->GetBlockSize());
+      mBlockSizeFloat = float (iGlobLatDat->GetBlockSize());
       block_size2 = iGlobLatDat->GetBlockSize() * iGlobLatDat->GetBlockSize();
       block_size3 = iGlobLatDat->GetBlockSize() * block_size2;
       block_size_1 = iGlobLatDat->GetBlockSize() - 1;
