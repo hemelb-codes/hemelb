@@ -1,6 +1,6 @@
 include $(MK)/header.mk
 
-SRCS := BaseTopologyManager.cc \
+SRCS := TopologyManagerCommon.cc \
         NetworkTopology.cc \
         TopologyReader.cc 
 

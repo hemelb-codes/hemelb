@@ -1,6 +1,6 @@
 #include "tests.h"
 
-#include <math.h>
+#include <cmath>
 #include <cstdlib>
 
 #include "topology/TopologyManager.h"
