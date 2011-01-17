@@ -1,17 +1,14 @@
-#include "topology/BaseTopologyManager.h"
+#include "topology/TopologyManager.h"
+
+#include <math.h>
 
 namespace hemelb
 {
   namespace topology
   {
-    BaseTopologyManager::BaseTopologyManager()
-    {
-      // This exists to prevent instantiation.
-    }
-
-    void BaseTopologyManager::DecomposeDomain(int iTotalFluidSites,
-                                              NetworkTopology* bNetTop,
-                                              const lb::GlobalLatticeData & bGlobLatDat)
+    void TopologyManager::DecomposeDomain(int iTotalFluidSites,
+                                          NetworkTopology* bNetTop,
+                                          const lb::GlobalLatticeData & bGlobLatDat)
     {
       // Allocations.  fluid sites will store actual number of fluid
       // sites per proc.  Site location will store up to 10000 of some
@@ -88,13 +85,13 @@ namespace hemelb
 
     }
 
-    void BaseTopologyManager::AssignFluidSitesToProcessors(int & proc_count,
-                                                           int & iSitesPerProc,
-                                                           int & bUnassignedSites,
-                                                           const int iMarker,
-                                                           const bool iIsMachineLevel,
-                                                           const lb::GlobalLatticeData &iGlobLatDat,
-                                                           NetworkTopology * bNetTopology)
+    void TopologyManager::AssignFluidSitesToProcessors(int & proc_count,
+                                                       int & iSitesPerProc,
+                                                       int & bUnassignedSites,
+                                                       const int iMarker,
+                                                       const bool iIsMachineLevel,
+                                                       const lb::GlobalLatticeData &iGlobLatDat,
+                                                       NetworkTopology * bNetTopology)
     {
       std::vector<SiteLocation*> *lSiteLocationA = new std::vector<
           SiteLocation*>;
