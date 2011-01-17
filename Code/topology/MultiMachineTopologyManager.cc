@@ -47,15 +47,15 @@ namespace hemelb
       bNetworkTopology->MachineCount = 0;
 
       bNetworkTopology->MachineIdOfEachProc
-          = new int[bNetworkTopology->ProcessorCount];
+          = new int[bNetworkTopology->GetProcessorCount()];
       bNetworkTopology->ProcCountOnEachMachine
-          = new int[bNetworkTopology->ProcessorCount];
+          = new int[bNetworkTopology->GetProcessorCount()];
 
-      for (i = 0; i < bNetworkTopology->ProcessorCount; i++)
+      for (i = 0; i < bNetworkTopology->GetProcessorCount(); i++)
       {
         bNetworkTopology->ProcCountOnEachMachine[i] = 0;
       }
-      for (i = 0; i < bNetworkTopology->ProcessorCount; i++)
+      for (i = 0; i < bNetworkTopology->GetProcessorCount(); i++)
       {
         if (depth[i] != 4)
           continue;
@@ -83,16 +83,16 @@ namespace hemelb
 
       if (bNetworkTopology->MachineCount == 1)
       {
-        for (i = 0; i < bNetworkTopology->ProcessorCount; i++)
+        for (i = 0; i < bNetworkTopology->GetProcessorCount(); i++)
         {
           bNetworkTopology->MachineIdOfEachProc[i] = 0;
         }
         bNetworkTopology->ProcCountOnEachMachine[0]
-            = bNetworkTopology->ProcessorCount;
+            = bNetworkTopology->GetProcessorCount();
       }
       else
       {
-        for (i = 0; i < bNetworkTopology->ProcessorCount; i++)
+        for (i = 0; i < bNetworkTopology->GetProcessorCount(); i++)
         {
           sum = 0;
           machine_id = 0;
