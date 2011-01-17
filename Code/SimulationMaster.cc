@@ -126,7 +126,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   // Initialise the Net object and the Lbm.
   mNet->Initialise(mGlobLatDat, mLocalLatDat);
-  mLbm->lbmSetInitialConditions(*mLocalLatDat);
+  mLbm->SetInitialConditions(*mLocalLatDat);
 
   // Initialise the visualisation controller.
   hemelb::vis::controller
@@ -180,7 +180,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
   {
     bool restart = false;
 
-    mLbm->lbmInitMinMaxValues();
+    mLbm->InitMinMaxValues();
 
     for (mSimulationState.TimeStep = 1; mSimulationState.TimeStep
         <= mLbm->period; mSimulationState.TimeStep++)
@@ -227,17 +227,17 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                render_for_network_stream, write_snapshot_image,
                hemelb::vis::doRendering);
 
-      mLbm->lbmUpdateBoundaryDensities(mSimulationState.CycleId,
+      mLbm->UpdateBoundaryDensities(mSimulationState.CycleId,
                                        mSimulationState.TimeStep);
 
-      stability = mLbm->lbmCycle(hemelb::vis::doRendering, mNet, *mLocalLatDat,
+      stability = mLbm->DoCycle(hemelb::vis::doRendering, mNet, *mLocalLatDat,
                                  mLbTime, mMPISendTime, mMPIWaitTime);
 
       if ( (restart = mLbm->IsUnstable(*mLocalLatDat)) != false)
       {
         break;
       }
-      mLbm->lbmUpdateInletVelocities(mSimulationState.TimeStep, *mLocalLatDat,
+      mLbm->UpdateInletVelocities(mSimulationState.TimeStep, *mLocalLatDat,
                                      mNet);
 
       double lPreImageTime = MPI_Wtime();
@@ -321,7 +321,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                  mSimulationState.TimeStep);
 
         mSnapshotsWritten++;
-        mLbm->lbmWriteConfigParallel(stability, snapshot_directory
+        mLbm->WriteConfigParallel(stability, snapshot_directory
             + std::string(snapshot_filename), mGlobLatDat, *mLocalLatDat);
       }
 
@@ -362,7 +362,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       hemelb::util::DeleteDirContents(snapshot_directory);
       hemelb::util::DeleteDirContents(image_directory);
 
-      mLbm->lbmRestart(*mLocalLatDat);
+      mLbm->Restart(*mLocalLatDat);
 #ifndef NO_STREAKLINES
       hemelb::vis::controller->restart();
 #endif
@@ -382,7 +382,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       mSimulationState.CycleId = 0;
       continue;
     }
-    mLbm->lbmCalculateFlowFieldValues();
+    mLbm->CalculateFlowFieldValues();
 
     if (mNetworkTopology->IsCurrentProcTheIOProc())
     {
