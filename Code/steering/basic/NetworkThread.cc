@@ -65,17 +65,16 @@ namespace hemelb
       // be exported in std:: namespace as GCC does.
       // std::snprintf(steering_session_id_char, 255, "%i",
       // mLbm->steering_session_id);
-      
-      std::sprintf(steering_session_id_char, "%i",
-		   mLbm->steering_session_id);
+
+      std::sprintf(steering_session_id_char, "%i", mLbm->steering_session_id);
 
       vis::setRenderState(0);
 
-      gethostname(Control::Get()->host_name, 255);
+      gethostname(mSteeringController->host_name, 255);
 
       FILE *f = fopen("env_details.asc", "w");
 
-      fprintf(f, "%s\n", Control::Get()->host_name);
+      fprintf(f, "%s\n", mSteeringController->host_name);
       fclose(f);
 
       // fprintf (timings_ptr, "MPI 0 Hostname -> %s\n\n", host_name);
@@ -126,7 +125,7 @@ namespace hemelb
           exit(1);
         }
         my_address.sin_family = AF_INET;
-        my_address.sin_port = htons (MYPORT);
+        my_address.sin_port = htons(MYPORT);
         my_address.sin_addr.s_addr = INADDR_ANY;
         memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
 
@@ -164,7 +163,7 @@ namespace hemelb
 
         is_broken_pipe = 0;
 
-        Control::Get()->isConnected.SetValue(true);
+        mSteeringController->isConnected.SetValue(true);
 
         // setRenderState(1);
         // At this point we're ready to send a frame...
@@ -181,13 +180,13 @@ namespace hemelb
           while (!is_frame_ready_local)
           {
             usleep(5000);
-            sem_wait(&Control::Get()->nrl);
-            is_frame_ready_local = Control::Get()->is_frame_ready;
-            sem_post(&Control::Get()->nrl);
+            sem_wait(&mSteeringController->nrl);
+            is_frame_ready_local = mSteeringController->is_frame_ready;
+            sem_post(&mSteeringController->nrl);
             // printf("THREAD is_frame_ready_local %i\n", is_frame_ready_local);
           }
-          sem_wait(&Control::Get()->nrl);
-          Control::Get()->sending_frame = 1;
+          sem_wait(&mSteeringController->nrl);
+          mSteeringController->sending_frame = 1;
           // printf("THREAD sending frame = 1\n");
           // pthread_cond_wait (&network_send_frame, &LOCK);
           // setRenderState(0);
@@ -240,7 +239,7 @@ namespace hemelb
             printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
             // pthread_mutex_unlock ( &LOCK );
-            sem_post(&Control::Get()->nrl);
+            sem_post(&mSteeringController->nrl);
             vis::setRenderState(0);
             break;
           }
@@ -258,7 +257,7 @@ namespace hemelb
             printf("RG thread: broken network pipe...\n");
             is_broken_pipe = 1;
             // pthread_mutex_unlock ( &LOCK );
-            sem_post(&Control::Get()->nrl);
+            sem_post(&mSteeringController->nrl);
             vis::setRenderState(0);
             break;
           }
@@ -295,9 +294,9 @@ namespace hemelb
           // pthread_mutex_unlock ( &LOCK );
           // sem_post(&nrl);
 
-          Control::Get()->sending_frame = 0;
-          Control::Get()->is_frame_ready = 0;
-          sem_post(&Control::Get()->nrl);
+          mSteeringController->sending_frame = 0;
+          mSteeringController->is_frame_ready = 0;
+          sem_post(&mSteeringController->nrl);
 
           frame_number++;
 
@@ -305,7 +304,7 @@ namespace hemelb
 
         close(new_fd);
 
-        Control::Get()->isConnected.SetValue(false);
+        mSteeringController->isConnected.SetValue(false);
 
         // pthread_join(steering_thread, NULL);
 

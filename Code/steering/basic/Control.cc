@@ -43,26 +43,6 @@ namespace hemelb
       sem_destroy(&steering_var_lock);
     }
 
-    Control* Control::Init(bool isCurrentProcTheSteeringProc)
-    {
-      /* Static member function that implements the singleton pattern.
-       */
-      if (Control::singleton == NULL)
-      {
-        Control::singleton = new Control(isCurrentProcTheSteeringProc);
-      }
-      return Control::singleton;
-    }
-
-    Control* Control::Get(void)
-    {
-      // Get the single instance.
-      return Control::singleton;
-    }
-
-    // Init static members
-    Control* Control::singleton = NULL;
-
     // Kick off the networking thread
     void Control::StartNetworkThread(lb::LBM* lbm,
                                      lb::SimulationState *iSimState,
@@ -147,38 +127,38 @@ namespace hemelb
       pixels_x = steer_par[12];
       pixels_y = steer_par[13];
 
-      visControl->mouse_x = int(steer_par[14]);
-      visControl->mouse_y = int(steer_par[15]);
+      visControl->mouse_x = int (steer_par[14]);
+      visControl->mouse_y = int (steer_par[15]);
 
-      lSimulationState.IsTerminating = int(steer_par[16]);
+      lSimulationState.IsTerminating = int (steer_par[16]);
 
       // To swap between glyphs and streak line rendering...
       // 0 - Only display the isosurfaces (wall pressure and stress)
       // 1 - Isosurface and glyphs
       // 2 - Wall pattern streak lines
-      visControl->mode = int(steer_par[17]);
+      visControl->mode = int (steer_par[17]);
 
       visControl->streaklines_per_pulsatile_period = steer_par[18];
       visControl->streakline_length = steer_par[19];
 
-      *perform_rendering = int(steer_par[20]);
+      *perform_rendering = int (steer_par[20]);
 
       visControl->updateImageSize(pixels_x, pixels_y);
 
       lattice_density_min
           = lbm->ConvertPressureToLatticeUnits(
-                                                  visControl->physical_pressure_threshold_min)
+                                               visControl->physical_pressure_threshold_min)
               / Cs2;
       lattice_density_max
           = lbm->ConvertPressureToLatticeUnits(
-                                                  visControl->physical_pressure_threshold_max)
+                                               visControl->physical_pressure_threshold_max)
               / Cs2;
       lattice_velocity_max
           = lbm->ConvertVelocityToLatticeUnits(
-                                                  visControl->physical_velocity_threshold_max);
+                                               visControl->physical_velocity_threshold_max);
       lattice_stress_max
           = lbm->ConvertStressToLatticeUnits(
-                                                visControl->physical_stress_threshold_max);
+                                             visControl->physical_stress_threshold_max);
 
       visControl->SetProjection(pixels_x, pixels_y, visControl->ctr_x,
                                 visControl->ctr_y, visControl->ctr_z,

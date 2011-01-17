@@ -18,9 +18,7 @@ namespace hemelb
     class Control
     {
       public:
-        // Singleton
-        static Control* Init(bool isCurrentProcTheSteeringProc);
-        static Control* Get(void);
+        Control(bool isCurrentProcTheSteeringProc);
 
         void StartNetworkThread(lb::LBM* lbm,
                                 lb::SimulationState *iSimState,
@@ -57,10 +55,6 @@ namespace hemelb
         bool updated_mouse_coords;
 
       protected:
-        // Singleton pattern
-        static Control* singleton;
-
-        Control(bool isCurrentProcTheSteeringProc);
         ~Control();
 
         // Is this MPI task the IO task?
