@@ -32,7 +32,7 @@ namespace hemelb
             int iSteeringSessionId,
             int iPeriod,
             double iVoxelSize,
-            Net *net);
+            double* oFileReadTime);
         void Restart(hemelb::lb::LocalLatticeData &iLocalLatDat);
         ~LBM();
 
@@ -105,7 +105,7 @@ namespace hemelb
         //  static void ReadBlock();
 
         void
-        ReadConfig(Net *net, hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
+        ReadConfig(hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
 
         void ReadParameters();
 
@@ -138,6 +138,8 @@ namespace hemelb
         double *inlet_normal;
         long int *inlet_count;
         double voxel_size;
+
+        double mFileReadTime;
 
         hemelb::lb::LbmParameters mParams;
         const hemelb::topology::NetworkTopology * mNetTopology;

@@ -2,6 +2,7 @@
 #define HEMELB_LB_GLOBALLATTICEDATA_H
 
 #include "D3Q15.h"
+#include "lb/LocalLatticeData.h"
 #include <cstdlib>
 
 namespace hemelb
@@ -128,6 +129,46 @@ namespace hemelb
         ~GlobalLatticeData()
         {
           delete[] Blocks;
+        }
+
+        // Returns the type of collision/streaming update for the fluid site
+        // with data "site_data".
+        unsigned int GetCollisionType(unsigned int site_data) const
+        {
+          unsigned int boundary_type;
+
+          if (site_data == hemelb::lb::FLUID_TYPE)
+          {
+            return FLUID;
+          }
+          boundary_type = site_data & SITE_TYPE_MASK;
+
+          if (boundary_type == hemelb::lb::FLUID_TYPE)
+          {
+            return EDGE;
+          }
+          if (! (site_data & PRESSURE_EDGE_MASK))
+          {
+            if (boundary_type == hemelb::lb::INLET_TYPE)
+            {
+              return INLET;
+            }
+            else
+            {
+              return OUTLET;
+            }
+          }
+          else
+          {
+            if (boundary_type == hemelb::lb::INLET_TYPE)
+            {
+              return INLET | EDGE;
+            }
+            else
+            {
+              return OUTLET | EDGE;
+            }
+          }
         }
 
         // Function that finds the pointer to the rank on which a particular site

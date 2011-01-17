@@ -95,13 +95,13 @@ namespace hemelb
     // Calculate the BCs for each boundary site type and the
     // non-equilibrium distribution functions.
     void LBM::CalculateBC(double f[],
-                             hemelb::lb::SiteType iSiteType,
-                             unsigned int iBoundaryId,
-                             double *density,
-                             double *vx,
-                             double *vy,
-                             double *vz,
-                             double f_neq[])
+                          hemelb::lb::SiteType iSiteType,
+                          unsigned int iBoundaryId,
+                          double *density,
+                          double *vx,
+                          double *vy,
+                          double *vz,
+                          double f_neq[])
     {
       double dummy_density;
 
@@ -163,7 +163,7 @@ namespace hemelb
              int iSteeringSessionId,
              int iPeriod,
              double iVoxelSize,
-             Net *net)
+             double * oFileReadTime)
     {
       steering_session_id = iSteeringSessionId;
       period = iPeriod;
@@ -172,7 +172,9 @@ namespace hemelb
       mNetTopology = iNetTop;
       mSimConfig = iSimulationConfig;
 
-      ReadConfig(net, bGlobLatDat);
+      double fileReadStartTime = hemelb::util::myClock();
+      ReadConfig(bGlobLatDat);
+      *oFileReadTime = hemelb::util::myClock() - fileReadStartTime;
 
       ReadParameters();
 
@@ -272,11 +274,11 @@ namespace hemelb
     // automatically handle the streaming stage pertaining to neighbouring
     // subdomains.
     hemelb::lb::Stability LBM::DoCycle(int perform_rt,
-                                        Net *net,
-                                        hemelb::lb::LocalLatticeData &bLocalLatDat,
-                                        double &bLbTime,
-                                        double &bMPISendTime,
-                                        double &bMPIWaitTime)
+                                       Net *net,
+                                       hemelb::lb::LocalLatticeData &bLocalLatDat,
+                                       double &bLbTime,
+                                       double &bMPISendTime,
+                                       double &bMPIWaitTime)
     {
       net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
 
@@ -455,8 +457,8 @@ namespace hemelb
 
     // Update peak and average inlet velocities local to the current subdomain.
     void LBM::UpdateInletVelocities(int time_step,
-                                       hemelb::lb::LocalLatticeData &iLocalLatDat,
-                                       Net *net)
+                                    hemelb::lb::LocalLatticeData &iLocalLatDat,
+                                    Net *net)
     {
       double density;
       double vx, vy, vz;
@@ -510,8 +512,8 @@ namespace hemelb
         {
           velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
         }
-        peak_inlet_velocity[inlet_id]
-            = fmax(peak_inlet_velocity[inlet_id], velocity);
+        peak_inlet_velocity[inlet_id] = fmax(peak_inlet_velocity[inlet_id],
+                                             velocity);
         average_inlet_velocity[inlet_id] += velocity;
         ++inlet_count[inlet_id];
       }
@@ -546,8 +548,8 @@ namespace hemelb
         {
           velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
         }
-        peak_inlet_velocity[inlet_id]
-            = fmax(peak_inlet_velocity[inlet_id], velocity);
+        peak_inlet_velocity[inlet_id] = fmax(peak_inlet_velocity[inlet_id],
+                                             velocity);
         average_inlet_velocity[inlet_id] += velocity;
         ++inlet_count[inlet_id];
       }

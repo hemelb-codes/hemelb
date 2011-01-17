@@ -151,12 +151,12 @@ namespace hemelb
           ++bNonSolidSitesPerBlock[n];
 
           // Have to read in all the rest of the data for this site, to pass it.
-          if (iNet->GetCollisionType(site_type) != FLUID)
+          if (bGlobalLatticeData.GetCollisionType(site_type) != FLUID)
           {
             double temp;
             // Neither solid nor simple fluid
-            if (iNet->GetCollisionType(site_type) & INLET
-                || iNet->GetCollisionType(site_type) & OUTLET)
+            if (bGlobalLatticeData.GetCollisionType(site_type) & INLET
+                || bGlobalLatticeData.GetCollisionType(site_type) & OUTLET)
             {
               // INLET or OUTLET or both.
               // These values are the boundary normal and the boundary distance.
@@ -166,7 +166,7 @@ namespace hemelb
               myReader.readDouble(temp);
             }
 
-            if (iNet->GetCollisionType(site_type) & EDGE)
+            if (bGlobalLatticeData.GetCollisionType(site_type) & EDGE)
             {
               // EDGE bit set
               for (int l = 0; l < 3; l++)
