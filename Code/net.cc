@@ -44,69 +44,6 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                                          mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()],
                                          mNetworkTopology->TotalSharedFs);
 
-  int collision_offset[2][COLLISION_TYPES];
-  // Calculate the number of each type of collision.
-  collision_offset[0][0] = 0;
-
-  for (unsigned int l = 1; l < COLLISION_TYPES; l++)
-  {
-    collision_offset[0][l] = collision_offset[0][l - 1] + my_inner_collisions[l - 1];
-  }
-  collision_offset[1][0] = my_inner_sites;
-  for (unsigned int l = 1; l < COLLISION_TYPES; l++)
-  {
-    collision_offset[1][l] = collision_offset[1][l - 1] + my_inter_collisions[l - 1];
-  }
-
-  // Iterate over blocks
-  for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
-  {
-    hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
-
-    // If we are in a block of solids, continue.
-    if (map_block_p->site_data == NULL)
-    {
-      continue;
-    }
-
-    // Iterate over sites within the block.
-    for (int m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
-    {
-      unsigned int *site_data_p = &map_block_p->site_data[m];
-
-      // If the site is solid, continue.
-      if (*site_data_p & (1U << 31U))
-      {
-        continue;
-      }
-
-      // 0th collision type for inner sites, so don't do anything.
-      if (*site_data_p < 500000000)
-      {
-        continue;
-      }
-
-      // Renumber the sites in map_block so that the numbers are compacted together.  We have
-      // collision offset to tell us when one collision type ends and another starts.
-      for (unsigned int l = 1; l < COLLISION_TYPES; l++)
-      {
-        if (*site_data_p >= 50000000 * (10 + (l - 1)) && *site_data_p < 50000000 * (10 + l))
-        {
-          *site_data_p += collision_offset[0][l] - 50000000 * (10 + (l - 1));
-          break;
-        }
-      }
-      for (unsigned int l = 0; l < COLLISION_TYPES; l++)
-      {
-        if (*site_data_p >= 50000000 * (20 + l) && *site_data_p < 50000000 * (20 + (l + 1)))
-        {
-          *site_data_p += collision_offset[1][l] - 50000000 * (20 + l);
-          break;
-        }
-      }
-    }
-  }
-
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
   // streamed between different partitions) are collected and the
@@ -164,66 +101,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
   delete[] lThisRankSiteData;
 
-  // point-to-point communications are performed to match data to be
-  // sent to/receive from different partitions; in this way, the
-  // communication of the locations of the interface-dependent fluid
-  // sites and the identifiers of the distribution functions which
-  // propagate to different partitions is avoided (only their values
-  // will be communicated). It's here!
-
-  // Allocate the request variable.
-  req = new MPI_Request*[COMMS_LEVELS];
-
-  for (int m = 0; m < COMMS_LEVELS; m++)
-  {
-    req[m] = new MPI_Request[2 * mNetworkTopology->GetProcessorCount()];
-  }
-
-  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
-  {
-    hemelb::topology::NeighbouringProcessor * neigh_proc_p = mNetworkTopology->NeighbouringProcs[m];
-
-    // One way send receive.  The lower numbered mNetworkTopology->ProcessorCount send and the higher numbered ones receive.
-    // It seems that, for each pair of processors, the lower numbered one ends up with its own
-    // edge sites and directions stored and the higher numbered one ends up with those on the
-    // other processor.
-    if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
-    {
-      err = MPI_Isend(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4,
-                      MPI_SHORT, neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
-    }
-    else
-    {
-      err = MPI_Irecv(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4,
-                      MPI_SHORT, neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
-                      &req[0][mNetworkTopology->NeighbouringProcs.size() + m]);
-    }
-  }
-  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
-  {
-    hemelb::topology::NeighbouringProcessor * neigh_proc_p = mNetworkTopology->NeighbouringProcs[m];
-
-    if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
-    {
-      err = MPI_Wait(&req[0][m], status);
-    }
-    else
-    {
-      err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m], status);
-
-      // Now we sort the situation so that each process has its own sites.
-      for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
-      {
-        short int *f_data_p = &lSharedFLocationForEachProc[m][n];
-
-        short int l = f_data_p[3];
-        f_data_p[0] += D3Q15::CX[l];
-        f_data_p[1] += D3Q15::CY[l];
-        f_data_p[2] += D3Q15::CZ[l];
-        f_data_p[3] = D3Q15::INVERSEDIRECTIONS[l];
-      }
-    }
-  }
+  InitialisePointToPointComms(lSharedFLocationForEachProc);
 
   int f_count = bLocalLatDat->GetLocalFluidSiteCount() * D3Q15::NUMVECTORS;
 
@@ -262,6 +140,64 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
   delete[] lSharedFLocationForEachProc;
 
   bm_time = hemelb::util::myClock() - seconds;
+}
+
+void Net::InitialisePointToPointComms(short int **& lSharedFLocationForEachProc)
+{
+  // point-to-point communications are performed to match data to be
+  // sent to/receive from different partitions; in this way, the
+  // communication of the locations of the interface-dependent fluid
+  // sites and the identifiers of the distribution functions which
+  // propagate to different partitions is avoided (only their values
+  // will be communicated). It's here!
+  // Allocate the request variable.
+  req = new MPI_Request*[COMMS_LEVELS];
+  for (int m = 0; m < COMMS_LEVELS; m++)
+  {
+    req[m] = new MPI_Request[2 * mNetworkTopology->GetProcessorCount()];
+  }
+  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
+  {
+    hemelb::topology::NeighbouringProcessor *neigh_proc_p = mNetworkTopology->NeighbouringProcs[m];
+    // One way send receive.  The lower numbered mNetworkTopology->ProcessorCount send and the higher numbered ones receive.
+    // It seems that, for each pair of processors, the lower numbered one ends up with its own
+    // edge sites and directions stored and the higher numbered one ends up with those on the
+    // other processor.
+    if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
+    {
+      err = MPI_Isend(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4,
+                      MPI_SHORT, neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
+    }
+    else
+    {
+      err = MPI_Irecv(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4,
+                      MPI_SHORT, neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
+                      &req[0][mNetworkTopology->NeighbouringProcs.size() + m]);
+    }
+  }
+
+  for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
+  {
+    hemelb::topology::NeighbouringProcessor *neigh_proc_p = mNetworkTopology->NeighbouringProcs[m];
+    if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
+    {
+      err = MPI_Wait(&req[0][m], status);
+    }
+    else
+    {
+      err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m], status);
+      // Now we sort the situation so that each process has its own sites.
+      for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
+      {
+        short int *f_data_p = &lSharedFLocationForEachProc[m][n];
+        short int l = f_data_p[3];
+        f_data_p[0] += D3Q15::CX[l];
+        f_data_p[1] += D3Q15::CY[l];
+        f_data_p[2] += D3Q15::CZ[l];
+        f_data_p[3] = D3Q15::INVERSEDIRECTIONS[l];
+      }
+    }
+  }
 }
 
 void Net::GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
@@ -514,6 +450,69 @@ void Net::CountCollisionTypes(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
               }
             }
           }
+        }
+      }
+    }
+  }
+
+  int collision_offset[2][COLLISION_TYPES];
+  // Calculate the number of each type of collision.
+  collision_offset[0][0] = 0;
+
+  for (unsigned int l = 1; l < COLLISION_TYPES; l++)
+  {
+    collision_offset[0][l] = collision_offset[0][l - 1] + my_inner_collisions[l - 1];
+  }
+  collision_offset[1][0] = my_inner_sites;
+  for (unsigned int l = 1; l < COLLISION_TYPES; l++)
+  {
+    collision_offset[1][l] = collision_offset[1][l - 1] + my_inter_collisions[l - 1];
+  }
+
+  // Iterate over blocks
+  for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
+  {
+    hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
+
+    // If we are in a block of solids, continue.
+    if (map_block_p->site_data == NULL)
+    {
+      continue;
+    }
+
+    // Iterate over sites within the block.
+    for (int m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
+    {
+      unsigned int *site_data_p = &map_block_p->site_data[m];
+
+      // If the site is solid, continue.
+      if (*site_data_p & (1U << 31U))
+      {
+        continue;
+      }
+
+      // 0th collision type for inner sites, so don't do anything.
+      if (*site_data_p < 500000000)
+      {
+        continue;
+      }
+
+      // Renumber the sites in map_block so that the numbers are compacted together.  We have
+      // collision offset to tell us when one collision type ends and another starts.
+      for (unsigned int l = 1; l < COLLISION_TYPES; l++)
+      {
+        if (*site_data_p >= 50000000 * (10 + (l - 1)) && *site_data_p < 50000000 * (10 + l))
+        {
+          *site_data_p += collision_offset[0][l] - 50000000 * (10 + (l - 1));
+          break;
+        }
+      }
+      for (unsigned int l = 0; l < COLLISION_TYPES; l++)
+      {
+        if (*site_data_p >= 50000000 * (20 + l) && *site_data_p < 50000000 * (20 + (l + 1)))
+        {
+          *site_data_p += collision_offset[1][l] - 50000000 * (20 + l);
+          break;
         }
       }
     }
