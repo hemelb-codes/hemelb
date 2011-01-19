@@ -36,6 +36,10 @@ namespace hemelb
         void SetDistanceToWall(int iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
 
       public:
+        int my_inner_sites;
+        int my_inner_collisions[COLLISION_TYPES];
+        int my_inter_collisions[COLLISION_TYPES];
+
         double *FOld;
         double *FNew;
 

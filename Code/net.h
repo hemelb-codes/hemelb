@@ -26,10 +26,6 @@ class Net
     void
     UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
-    int my_inner_sites;
-    int my_inner_collisions[COLLISION_TYPES];
-    int my_inter_collisions[COLLISION_TYPES];
-
   private:
     void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
                              unsigned int *& bThisRankSiteData);
@@ -37,8 +33,10 @@ class Net
                                    short int **bSharedFLocationForEachProc,
                                    const unsigned int *iSiteDataForThisRank,
                                    const hemelb::lb::GlobalLatticeData & iGlobLatDat);
-    void CountCollisionTypes(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
-                             const unsigned int *lThisRankSiteData);
+    void CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
+                             const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                             const unsigned int * lThisRankSiteData);
+
     void InitialisePointToPointComms(short int **& lSharedFLocationForEachProc);
 
     int *f_recv_iv;
