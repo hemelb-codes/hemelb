@@ -29,8 +29,7 @@ class Net
     int my_inner_sites;
     int my_inner_collisions[COLLISION_TYPES];
     int my_inter_collisions[COLLISION_TYPES];
-    MPI_Status status[4];
-    double bm_time;
+
   private:
     void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
                              unsigned int *& bThisRankSiteData);
@@ -45,11 +44,10 @@ class Net
     int *f_recv_iv;
     int err;
 
-    hemelb::SimConfig* mSimConfig;
     hemelb::topology::NetworkTopology * mNetworkTopology;
 
     MPI_Request **req;
-
+    MPI_Status status[4];
 };
 
 #endif // HEMELB_NET_H
