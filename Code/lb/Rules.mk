@@ -9,7 +9,8 @@ SUBDIRS := collisions
 
 $(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
                    lb.o \
-                   io.o 
+                   io.o \
+                   LocalLatticeData.o
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
