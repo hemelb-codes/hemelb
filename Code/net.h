@@ -43,7 +43,6 @@ class Net
                                   const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
     int *f_recv_iv;
-    int my_inter_sites;
     int err;
 
     hemelb::SimConfig* mSimConfig;

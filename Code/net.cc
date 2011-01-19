@@ -43,8 +43,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
   for (int lBlockNumber = 0; lBlockNumber < iGlobLatDat.GetBlockCount(); lBlockNumber++)
   {
-    hemelb::lb::BlockData * lCurrentDataBlock =
-        &iGlobLatDat.Blocks[lBlockNumber];
+    hemelb::lb::BlockData * lCurrentDataBlock = &iGlobLatDat.Blocks[lBlockNumber];
 
     // If we are in a block of solids, move to the next block.
     if (lCurrentDataBlock->site_data == NULL)
@@ -57,8 +56,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
     // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
     // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
-    for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock
-        < iGlobLatDat.SitesPerBlockVolumeUnit; lSiteIndexWithinBlock++)
+    for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock < iGlobLatDat.SitesPerBlockVolumeUnit; lSiteIndexWithinBlock++)
     {
       if (mNetworkTopology->GetLocalRank()
           == proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock])
@@ -67,13 +65,11 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
         // this rank (in the whole-processor location), then set the site data
         // for this site within the current block to be the site index over the whole
         // processor.
-        if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock]
-            & SITE_TYPE_MASK) != hemelb::lb::SOLID_TYPE)
+        if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock] & SITE_TYPE_MASK)
+            != hemelb::lb::SOLID_TYPE)
         {
-          lThisRankSiteData[lSiteIndexOnProc]
-              = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
-          lCurrentDataBlock->site_data[lSiteIndexWithinBlock]
-              = lSiteIndexOnProc;
+          lThisRankSiteData[lSiteIndexOnProc] = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
+          lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = lSiteIndexOnProc;
           ++lSiteIndexOnProc;
         }
         else
@@ -120,7 +116,6 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
   // here.  neigh_proc is a static array that is declared in config.h.
 
   // Initialise various things to 0.
-  my_inter_sites = 0;
   my_inner_sites = 0;
 
   for (int m = 0; m < COLLISION_TYPES; m++)
@@ -136,14 +131,11 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
   int n = -1;
 
   // Iterate over all blocks in site units
-  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
-      += iGlobLatDat.GetBlockSize())
+  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i += iGlobLatDat.GetBlockSize())
   {
-    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j
-        += iGlobLatDat.GetBlockSize())
+    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j += iGlobLatDat.GetBlockSize())
     {
-      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k
-          += iGlobLatDat.GetBlockSize())
+      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
       {
         hemelb::lb::BlockData * map_block_p = &iGlobLatDat.Blocks[++n];
 
@@ -163,8 +155,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
             {
               m++;
               // If the site is not on this processor, continue.
-              if (mNetworkTopology->GetLocalRank()
-                  != map_block_p->ProcessorRankForEachBlockSite[m])
+              if (mNetworkTopology->GetLocalRank() != map_block_p->ProcessorRankForEachBlockSite[m])
               {
                 continue;
               }
@@ -180,16 +171,14 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                 int neigh_k = site_k + D3Q15::CZ[l];
 
                 // Find the processor Id for that neighbour.
-                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                       neigh_j,
-                                                                       neigh_k);
+                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
                 // Move on if the neighbour is in a block of solids (in which case
                 // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
                 // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
                 // in lbmReadConfig in io.cc.
-                if (proc_id_p == NULL || mNetworkTopology->GetLocalRank()
-                    == (*proc_id_p) || *proc_id_p == (BIG_NUMBER2))
+                if (proc_id_p == NULL || mNetworkTopology->GetLocalRank() == (*proc_id_p)
+                    || *proc_id_p == (BIG_NUMBER2))
                 {
                   continue;
                 }
@@ -202,8 +191,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
                 // Iterate over neighbouring processors until we find the one with the
                 // neighbouring site on it.
-                int lNeighbouringProcs =
-                    mNetworkTopology->NeighbouringProcs.size();
+                int lNeighbouringProcs = mNetworkTopology->NeighbouringProcs.size();
                 for (int mm = 0; mm < lNeighbouringProcs && flag; mm++)
                 {
                   // Check whether the rank for a particular neighbour has already been
@@ -238,8 +226,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
               int l = -1;
 
-              switch (iGlobLatDat.GetCollisionType(
-                                                   lThisRankSiteData[lSiteIndexOnProc]))
+              switch (iGlobLatDat.GetCollisionType(lThisRankSiteData[lSiteIndexOnProc]))
               {
                 case FLUID:
                   l = 0;
@@ -273,24 +260,19 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                 }
                 else
                 {
-                  map_block_p->site_data[m] = 50000000 * (10 + (l - 1))
-                      + my_inner_collisions[l];
+                  map_block_p->site_data[m] = 50000000 * (10 + (l - 1)) + my_inner_collisions[l];
                 }
                 ++my_inner_collisions[l];
               }
               else
               {
-                ++my_inter_sites;
-
                 if (l == 0)
                 {
-                  map_block_p->site_data[m] = 1000000000
-                      + my_inter_collisions[l];
+                  map_block_p->site_data[m] = 1000000000 + my_inter_collisions[l];
                 }
                 else
                 {
-                  map_block_p->site_data[m] = 50000000 * (20 + l)
-                      + my_inter_collisions[l];
+                  map_block_p->site_data[m] = 50000000 * (20 + l) + my_inter_collisions[l];
                 }
                 ++my_inter_collisions[l];
               }
@@ -312,14 +294,12 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
   for (unsigned int l = 1; l < COLLISION_TYPES; l++)
   {
-    collision_offset[0][l] = collision_offset[0][l - 1] + my_inner_collisions[l
-        - 1];
+    collision_offset[0][l] = collision_offset[0][l - 1] + my_inner_collisions[l - 1];
   }
   collision_offset[1][0] = my_inner_sites;
   for (unsigned int l = 1; l < COLLISION_TYPES; l++)
   {
-    collision_offset[1][l] = collision_offset[1][l - 1] + my_inter_collisions[l
-        - 1];
+    collision_offset[1][l] = collision_offset[1][l - 1] + my_inter_collisions[l - 1];
   }
 
   // Iterate over blocks
@@ -354,8 +334,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
       // collision offset to tell us when one collision type ends and another starts.
       for (unsigned int l = 1; l < COLLISION_TYPES; l++)
       {
-        if (*site_data_p >= 50000000 * (10 + (l - 1)) && *site_data_p
-            < 50000000 * (10 + l))
+        if (*site_data_p >= 50000000 * (10 + (l - 1)) && *site_data_p < 50000000 * (10 + l))
         {
           *site_data_p += collision_offset[0][l] - 50000000 * (10 + (l - 1));
           break;
@@ -363,8 +342,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
       }
       for (unsigned int l = 0; l < COLLISION_TYPES; l++)
       {
-        if (*site_data_p >= 50000000 * (20 + l) && *site_data_p < 50000000
-            * (20 + (l + 1)))
+        if (*site_data_p >= 50000000 * (20 + l) && *site_data_p < 50000000 * (20 + (l + 1)))
         {
           *site_data_p += collision_offset[1][l] - 50000000 * (20 + l);
           break;
@@ -399,20 +377,17 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
     // Site co-ordinates for each of the shared distribution, and the number of
     // the corresponding direction vector. Array is 4 elements for each shared distribution.
-    lSharedFLocationForEachProc[n] = &f_data[mNetworkTopology->TotalSharedFs
-        << 2];
+    lSharedFLocationForEachProc[n] = &f_data[mNetworkTopology->TotalSharedFs << 2];
 
     // Pointing to a few things, but not setting any variables.
     // FirstSharedF points to start of shared_fs.
-    mNetworkTopology->NeighbouringProcs[n]->FirstSharedF
-        = bLocalLatDat->GetLocalFluidSiteCount() * D3Q15::NUMVECTORS + 1
-            + mNetworkTopology->TotalSharedFs;
+    mNetworkTopology->NeighbouringProcs[n]->FirstSharedF = bLocalLatDat->GetLocalFluidSiteCount()
+        * D3Q15::NUMVECTORS + 1 + mNetworkTopology->TotalSharedFs;
 
     mNetworkTopology->NeighbouringProcs[n]->SharedFReceivingIndex
         = &f_recv_iv[mNetworkTopology->TotalSharedFs];
 
-    mNetworkTopology->TotalSharedFs
-        += mNetworkTopology->NeighbouringProcs[n]->SharedFCount;
+    mNetworkTopology->TotalSharedFs += mNetworkTopology->NeighbouringProcs[n]->SharedFCount;
   }
 
   mNetworkTopology->NeighbourIndexFromProcRank
@@ -425,12 +400,11 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
   // Get neigh_proc_index from ProcessorRankForEachBlockSite.
   for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
-    mNetworkTopology->NeighbourIndexFromProcRank[mNetworkTopology->NeighbouringProcs[m]->Rank]
-        = m;
+    mNetworkTopology->NeighbourIndexFromProcRank[mNetworkTopology->NeighbouringProcs[m]->Rank] = m;
   }
 
-  InitialiseNeighbourLookup(bLocalLatDat, lSharedFLocationForEachProc,
-                            lThisRankSiteData, iGlobLatDat);
+  InitialiseNeighbourLookup(bLocalLatDat, lSharedFLocationForEachProc, lThisRankSiteData,
+                            iGlobLatDat);
 
   delete[] lThisRankSiteData;
 
@@ -451,8 +425,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
   for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
-    hemelb::topology::NeighbouringProcessor * neigh_proc_p =
-        mNetworkTopology->NeighbouringProcs[m];
+    hemelb::topology::NeighbouringProcessor * neigh_proc_p = mNetworkTopology->NeighbouringProcs[m];
 
     // One way send receive.  The lower numbered mNetworkTopology->ProcessorCount send and the higher numbered ones receive.
     // It seems that, for each pair of processors, the lower numbered one ends up with its own
@@ -460,22 +433,19 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
     // other processor.
     if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
     {
-      err = MPI_Isend(&lSharedFLocationForEachProc[m][0],
-                      neigh_proc_p->SharedFCount * 4, MPI_SHORT,
-                      neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
+      err = MPI_Isend(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4,
+                      MPI_SHORT, neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
     }
     else
     {
-      err = MPI_Irecv(&lSharedFLocationForEachProc[m][0],
-                      neigh_proc_p->SharedFCount * 4, MPI_SHORT,
-                      neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
+      err = MPI_Irecv(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4,
+                      MPI_SHORT, neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
                       &req[0][mNetworkTopology->NeighbouringProcs.size() + m]);
     }
   }
   for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
-    hemelb::topology::NeighbouringProcessor * neigh_proc_p =
-        mNetworkTopology->NeighbouringProcs[m];
+    hemelb::topology::NeighbouringProcessor * neigh_proc_p = mNetworkTopology->NeighbouringProcs[m];
 
     if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
     {
@@ -483,8 +453,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
     }
     else
     {
-      err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m],
-                     status);
+      err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m], status);
 
       // Now we sort the situation so that each process has its own sites.
       for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
@@ -504,8 +473,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
   for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
-    hemelb::topology::NeighbouringProcessor *neigh_proc_p =
-        mNetworkTopology->NeighbouringProcs[m];
+    hemelb::topology::NeighbouringProcessor *neigh_proc_p = mNetworkTopology->NeighbouringProcs[m];
 
     for (int n = 0; n < neigh_proc_p->SharedFCount; n++)
     {
@@ -547,8 +515,7 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
 {
   int n = -1;
   int lSiteIndexOnProc = 0;
-  int * lFluidSitesHandledForEachProc =
-      new int[mNetworkTopology->GetProcessorCount()];
+  int * lFluidSitesHandledForEachProc = new int[mNetworkTopology->GetProcessorCount()];
 
   for (int ii = 0; ii < mNetworkTopology->GetProcessorCount(); ii++)
   {
@@ -556,14 +523,11 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
   }
 
   // Iterate over blocks in global co-ords.
-  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
-      += iGlobLatDat.GetBlockSize())
+  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i += iGlobLatDat.GetBlockSize())
   {
-    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j
-        += iGlobLatDat.GetBlockSize())
+    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j += iGlobLatDat.GetBlockSize())
     {
-      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k
-          += iGlobLatDat.GetBlockSize())
+      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
       {
         n++;
         hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
@@ -585,8 +549,7 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
               // If a site is not on this process, continue.
               m++;
 
-              if (mNetworkTopology->GetLocalRank()
-                  != map_block_p->ProcessorRankForEachBlockSite[m])
+              if (mNetworkTopology->GetLocalRank() != map_block_p->ProcessorRankForEachBlockSite[m])
               {
                 continue;
               }
@@ -596,8 +559,7 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
 
               // Set neighbour location for the distribution component at the centre of
               // this site.
-              bLocalLatDat->SetNeighbourLocation(site_map, 0, site_map
-                  * D3Q15::NUMVECTORS + 0);
+              bLocalLatDat->SetNeighbourLocation(site_map, 0, site_map * D3Q15::NUMVECTORS + 0);
 
               for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
               {
@@ -607,16 +569,12 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
                 int neigh_k = site_k + D3Q15::CZ[l];
 
                 // Get the id of the processor which the neighbouring site lies on.
-                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                       neigh_j,
-                                                                       neigh_k);
+                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
                 if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                 {
                   // initialize f_id to the rubbish site.
-                  bLocalLatDat->SetNeighbourLocation(
-                                                     site_map,
-                                                     l,
+                  bLocalLatDat->SetNeighbourLocation(site_map, l,
                                                      bLocalLatDat->GetLocalFluidSiteCount()
                                                          * D3Q15::NUMVECTORS);
                   continue;
@@ -631,11 +589,11 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
                 {
 
                   // Pointer to the neighbour.
-                  const unsigned int *site_data_p =
-                      iGlobLatDat.GetSiteData(neigh_i, neigh_j, neigh_k);
+                  const unsigned int *site_data_p = iGlobLatDat.GetSiteData(neigh_i, neigh_j,
+                                                                            neigh_k);
 
-                  bLocalLatDat->SetNeighbourLocation(site_map, l, *site_data_p
-                      * D3Q15::NUMVECTORS + l);
+                  bLocalLatDat->SetNeighbourLocation(site_map, l, *site_data_p * D3Q15::NUMVECTORS
+                      + l);
 
                   continue;
                 }
@@ -665,19 +623,13 @@ void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
               }
 
               // This is used in Calculate BC in IO.
-              bLocalLatDat->mSiteData[site_map]
-                  = iSiteDataForThisRank[lSiteIndexOnProc];
+              bLocalLatDat->mSiteData[site_map] = iSiteDataForThisRank[lSiteIndexOnProc];
 
-              if (iGlobLatDat.GetCollisionType(
-                                               bLocalLatDat->mSiteData[site_map])
-                  & EDGE)
+              if (iGlobLatDat.GetCollisionType(bLocalLatDat->mSiteData[site_map]) & EDGE)
               {
-                bLocalLatDat->SetWallNormal(
-                                            site_map,
-                                            iGlobLatDat.Blocks[n].wall_data[m].wall_nor);
+                bLocalLatDat->SetWallNormal(site_map, iGlobLatDat.Blocks[n].wall_data[m].wall_nor);
 
-                bLocalLatDat->SetDistanceToWall(
-                                                site_map,
+                bLocalLatDat->SetDistanceToWall(site_map,
                                                 iGlobLatDat.Blocks[n].wall_data[m].cut_dist);
               }
               else
@@ -703,12 +655,10 @@ void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocal
   int m = 0;
 
   for (std::vector<hemelb::topology::NeighbouringProcessor*>::iterator it =
-      mNetworkTopology->NeighbouringProcs.begin(); it
-      != mNetworkTopology->NeighbouringProcs.end(); ++it)
+      mNetworkTopology->NeighbouringProcs.begin(); it != mNetworkTopology->NeighbouringProcs.end(); ++it)
   {
-    err = MPI_Irecv(&bLocalLatDat.FOld[ (*it)->FirstSharedF],
-                     (*it)->SharedFCount, MPI_DOUBLE, (*it)->Rank, 10,
-                    MPI_COMM_WORLD, &req[0][m]);
+    err = MPI_Irecv(&bLocalLatDat.FOld[ (*it)->FirstSharedF], (*it)->SharedFCount, MPI_DOUBLE,
+                     (*it)->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
     ++m;
   }
 }
@@ -718,12 +668,10 @@ void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDa
   int m = 0;
 
   for (std::vector<hemelb::topology::NeighbouringProcessor*>::iterator it =
-      mNetworkTopology->NeighbouringProcs.begin(); it
-      != mNetworkTopology->NeighbouringProcs.end(); ++it)
+      mNetworkTopology->NeighbouringProcs.begin(); it != mNetworkTopology->NeighbouringProcs.end(); ++it)
   {
-    err = MPI_Isend(&bLocalLatDat.FNew[ (*it)->FirstSharedF],
-                     (*it)->SharedFCount, MPI_DOUBLE, (*it)->Rank, 10,
-                    MPI_COMM_WORLD,
+    err = MPI_Isend(&bLocalLatDat.FNew[ (*it)->FirstSharedF], (*it)->SharedFCount, MPI_DOUBLE,
+                     (*it)->Rank, 10, MPI_COMM_WORLD,
                     &req[0][mNetworkTopology->NeighbouringProcs.size() + m]);
 
     ++m;
@@ -735,8 +683,7 @@ void Net::UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDa
   for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
   {
     err = MPI_Wait(&req[0][m], status);
-    err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m],
-                   status);
+    err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m], status);
   }
 
   // Copy the distribution functions received from the neighbouring
@@ -744,8 +691,7 @@ void Net::UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDa
   for (int i = 0; i < mNetworkTopology->TotalSharedFs; i++)
   {
     bLocalLatDat.FNew[f_recv_iv[i]]
-        = bLocalLatDat.FOld[mNetworkTopology->NeighbouringProcs[0]->FirstSharedF
-            + i];
+        = bLocalLatDat.FOld[mNetworkTopology->NeighbouringProcs[0]->FirstSharedF + i];
   }
 }
 
