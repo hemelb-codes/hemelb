@@ -20,7 +20,7 @@ class Net
                     hemelb::lb::LocalLatticeData* &bLocalLatDat);
 
     void
-        ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
+    ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
     void
     SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
     void
@@ -36,11 +36,13 @@ class Net
     double bm_time;
 
   private:
-    void
-        InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
-                                  short int ** bSharedFLocationForEachProc,
-                                  const unsigned int * iSiteDataForThisRank,
-                                  const hemelb::lb::GlobalLatticeData & iGlobLatDat);
+    void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
+                             unsigned int* &bThisRankSiteData);
+
+    void InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
+                                   short int ** bSharedFLocationForEachProc,
+                                   const unsigned int * iSiteDataForThisRank,
+                                   const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
     int *f_recv_iv;
     int err;
