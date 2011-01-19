@@ -24,9 +24,7 @@ class SimulationMaster
                        unsigned int lSnapshotsPerCycle,
                        unsigned int lImagesPerCycle);
 
-    void Initialise(hemelb::SimConfig *iSimConfig,
-                    int iSteeringSessionid,
-                    FILE * bTimingsFile);
+    void Initialise(hemelb::SimConfig *iSimConfig, int iSteeringSessionid, FILE * bTimingsFile);
 
   private:
     void PostSimulation(int iTotalTimeSteps,
@@ -53,6 +51,7 @@ class SimulationMaster
 
     double mDomainDecompTime;
     double mFileReadTime;
+    double mNetInitialiseTime;
 
     double mLbTime;
     double mMPISendTime;
