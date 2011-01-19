@@ -37,173 +37,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
   // distribution functions of the reference processor are calculated
   // here.  neigh_proc is a static array that is declared in config.h.
 
-  // Initialise various things to 0.
-  my_inner_sites = 0;
-
-  for (int m = 0; m < COLLISION_TYPES; m++)
-  {
-    my_inter_collisions[m] = 0;
-    my_inner_collisions[m] = 0;
-  }
-
-  mNetworkTopology->TotalSharedFs = 0; // shared SharedFCount within Net struct.
-
-  int lSiteIndexOnProc = 0;
-
-  int n = -1;
-
-  // Iterate over all blocks in site units
-  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i += iGlobLatDat.GetBlockSize())
-  {
-    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j += iGlobLatDat.GetBlockSize())
-    {
-      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
-      {
-        hemelb::lb::BlockData * map_block_p = &iGlobLatDat.Blocks[++n];
-
-        if (map_block_p->site_data == NULL)
-        {
-          continue;
-        }
-
-        int m = -1;
-
-        // Iterate over all sites within the current block.
-        for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
-        {
-          for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
-          {
-            for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
-            {
-              m++;
-              // If the site is not on this processor, continue.
-              if (mNetworkTopology->GetLocalRank() != map_block_p->ProcessorRankForEachBlockSite[m])
-              {
-                continue;
-              }
-
-              bool lIsInnerSite = true;
-
-              // Iterate over all direction vectors.
-              for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
-              {
-                // Find the neighbour site co-ords in this direction.
-                int neigh_i = site_i + D3Q15::CX[l];
-                int neigh_j = site_j + D3Q15::CY[l];
-                int neigh_k = site_k + D3Q15::CZ[l];
-
-                // Find the processor Id for that neighbour.
-                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
-
-                // Move on if the neighbour is in a block of solids (in which case
-                // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
-                // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
-                // in lbmReadConfig in io.cc.
-                if (proc_id_p == NULL || mNetworkTopology->GetLocalRank() == (*proc_id_p)
-                    || *proc_id_p == (BIG_NUMBER2))
-                {
-                  continue;
-                }
-
-                lIsInnerSite = false;
-
-                // The first time, net_neigh_procs = 0, so
-                // the loop is not executed.
-                bool flag = true;
-
-                // Iterate over neighbouring processors until we find the one with the
-                // neighbouring site on it.
-                int lNeighbouringProcs = mNetworkTopology->NeighbouringProcs.size();
-                for (int mm = 0; mm < lNeighbouringProcs && flag; mm++)
-                {
-                  // Check whether the rank for a particular neighbour has already been
-                  // used for this processor.  If it has, set flag to zero.
-                  hemelb::topology::NeighbouringProcessor * neigh_proc_p =
-                      mNetworkTopology->NeighbouringProcs[mm];
-
-                  // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
-                  if (*proc_id_p == neigh_proc_p->Rank)
-                  {
-                    flag = false;
-                    ++neigh_proc_p->SharedFCount;
-                    ++mNetworkTopology->TotalSharedFs;
-                  }
-                }
-                // If flag is 1, we didn't find a neighbour-proc with the neighbour-site on it
-                // so we need a new neighbouring processor.
-                if (flag)
-                {
-                  // Store rank of neighbour in >neigh_proc[neigh_procs]
-                  hemelb::topology::NeighbouringProcessor * lNewNeighbour =
-                      new hemelb::topology::NeighbouringProcessor();
-                  lNewNeighbour->SharedFCount = 1;
-                  lNewNeighbour->Rank = *proc_id_p;
-                  mNetworkTopology->NeighbouringProcs.push_back(lNewNeighbour);
-                  ++mNetworkTopology->TotalSharedFs;
-                }
-              }
-
-              // Set the collision type data. map_block site data is renumbered according to
-              // fluid site numbers within a particular collision type.
-
-              int l = -1;
-
-              switch (iGlobLatDat.GetCollisionType(lThisRankSiteData[lSiteIndexOnProc]))
-              {
-                case FLUID:
-                  l = 0;
-                  break;
-                case EDGE:
-                  l = 1;
-                  break;
-                case INLET:
-                  l = 2;
-                  break;
-                case OUTLET:
-                  l = 3;
-                  break;
-                case (INLET | EDGE):
-                  l = 4;
-                  break;
-                case (OUTLET | EDGE):
-                  l = 5;
-                  break;
-              }
-
-              ++lSiteIndexOnProc;
-
-              if (lIsInnerSite)
-              {
-                ++my_inner_sites;
-
-                if (l == 0)
-                {
-                  map_block_p->site_data[m] = my_inner_collisions[l];
-                }
-                else
-                {
-                  map_block_p->site_data[m] = 50000000 * (10 + (l - 1)) + my_inner_collisions[l];
-                }
-                ++my_inner_collisions[l];
-              }
-              else
-              {
-                if (l == 0)
-                {
-                  map_block_p->site_data[m] = 1000000000 + my_inter_collisions[l];
-                }
-                else
-                {
-                  map_block_p->site_data[m] = 50000000 * (20 + l) + my_inter_collisions[l];
-                }
-                ++my_inter_collisions[l];
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  CountCollisionTypes(iGlobLatDat, lThisRankSiteData);
 
   bLocalLatDat
       = new hemelb::lb::LocalLatticeData(
@@ -512,6 +346,178 @@ void Net::GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
     }
   }
   delete[] lBlockIsOnThisRank;
+}
+
+void Net::CountCollisionTypes(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                              const unsigned int * lThisRankSiteData)
+{
+  // Initialise various things to 0.
+  my_inner_sites = 0;
+
+  for (int m = 0; m < COLLISION_TYPES; m++)
+  {
+    my_inter_collisions[m] = 0;
+    my_inner_collisions[m] = 0;
+  }
+
+  mNetworkTopology->TotalSharedFs = 0; // shared SharedFCount within Net struct.
+
+  int lSiteIndexOnProc = 0;
+
+  int n = -1;
+
+  // Iterate over all blocks in site units
+  for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i += iGlobLatDat.GetBlockSize())
+  {
+    for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j += iGlobLatDat.GetBlockSize())
+    {
+      for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
+      {
+        hemelb::lb::BlockData * map_block_p = &iGlobLatDat.Blocks[++n];
+
+        if (map_block_p->site_data == NULL)
+        {
+          continue;
+        }
+
+        int m = -1;
+
+        // Iterate over all sites within the current block.
+        for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
+        {
+          for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
+          {
+            for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
+            {
+              m++;
+              // If the site is not on this processor, continue.
+              if (mNetworkTopology->GetLocalRank() != map_block_p->ProcessorRankForEachBlockSite[m])
+              {
+                continue;
+              }
+
+              bool lIsInnerSite = true;
+
+              // Iterate over all direction vectors.
+              for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+              {
+                // Find the neighbour site co-ords in this direction.
+                int neigh_i = site_i + D3Q15::CX[l];
+                int neigh_j = site_j + D3Q15::CY[l];
+                int neigh_k = site_k + D3Q15::CZ[l];
+
+                // Find the processor Id for that neighbour.
+                int *proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+
+                // Move on if the neighbour is in a block of solids (in which case
+                // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
+                // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
+                // in lbmReadConfig in io.cc.
+                if (proc_id_p == NULL || mNetworkTopology->GetLocalRank() == (*proc_id_p)
+                    || *proc_id_p == (BIG_NUMBER2))
+                {
+                  continue;
+                }
+
+                lIsInnerSite = false;
+
+                // The first time, net_neigh_procs = 0, so
+                // the loop is not executed.
+                bool flag = true;
+
+                // Iterate over neighbouring processors until we find the one with the
+                // neighbouring site on it.
+                int lNeighbouringProcs = mNetworkTopology->NeighbouringProcs.size();
+                for (int mm = 0; mm < lNeighbouringProcs && flag; mm++)
+                {
+                  // Check whether the rank for a particular neighbour has already been
+                  // used for this processor.  If it has, set flag to zero.
+                  hemelb::topology::NeighbouringProcessor * neigh_proc_p =
+                      mNetworkTopology->NeighbouringProcs[mm];
+
+                  // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
+                  if (*proc_id_p == neigh_proc_p->Rank)
+                  {
+                    flag = false;
+                    ++neigh_proc_p->SharedFCount;
+                    ++mNetworkTopology->TotalSharedFs;
+                  }
+                }
+                // If flag is 1, we didn't find a neighbour-proc with the neighbour-site on it
+                // so we need a new neighbouring processor.
+                if (flag)
+                {
+                  // Store rank of neighbour in >neigh_proc[neigh_procs]
+                  hemelb::topology::NeighbouringProcessor * lNewNeighbour =
+                      new hemelb::topology::NeighbouringProcessor();
+                  lNewNeighbour->SharedFCount = 1;
+                  lNewNeighbour->Rank = *proc_id_p;
+                  mNetworkTopology->NeighbouringProcs.push_back(lNewNeighbour);
+                  ++mNetworkTopology->TotalSharedFs;
+                }
+              }
+
+              // Set the collision type data. map_block site data is renumbered according to
+              // fluid site numbers within a particular collision type.
+
+              int l = -1;
+
+              switch (iGlobLatDat.GetCollisionType(lThisRankSiteData[lSiteIndexOnProc]))
+              {
+                case FLUID:
+                  l = 0;
+                  break;
+                case EDGE:
+                  l = 1;
+                  break;
+                case INLET:
+                  l = 2;
+                  break;
+                case OUTLET:
+                  l = 3;
+                  break;
+                case (INLET | EDGE):
+                  l = 4;
+                  break;
+                case (OUTLET | EDGE):
+                  l = 5;
+                  break;
+              }
+
+              ++lSiteIndexOnProc;
+
+              if (lIsInnerSite)
+              {
+                ++my_inner_sites;
+
+                if (l == 0)
+                {
+                  map_block_p->site_data[m] = my_inner_collisions[l];
+                }
+                else
+                {
+                  map_block_p->site_data[m] = 50000000 * (10 + (l - 1)) + my_inner_collisions[l];
+                }
+                ++my_inner_collisions[l];
+              }
+              else
+              {
+                if (l == 0)
+                {
+                  map_block_p->site_data[m] = 1000000000 + my_inter_collisions[l];
+                }
+                else
+                {
+                  map_block_p->site_data[m] = 50000000 * (20 + l) + my_inter_collisions[l];
+                }
+                ++my_inter_collisions[l];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
