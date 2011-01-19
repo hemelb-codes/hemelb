@@ -20,8 +20,6 @@
 void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                      hemelb::lb::LocalLatticeData* &bLocalLatDat)
 {
-  double seconds = hemelb::util::myClock();
-
   // Create a map between the two-level data representation and the 1D
   // compact one is created here.
 
@@ -138,8 +136,6 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
   // Delete the array in which we kept the shared f locations. Don't delete subarrays - these
   // are pointers to elsewhere.
   delete[] lSharedFLocationForEachProc;
-
-  bm_time = hemelb::util::myClock() - seconds;
 }
 
 void Net::InitialisePointToPointComms(short int **& lSharedFLocationForEachProc)
