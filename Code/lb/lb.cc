@@ -15,64 +15,59 @@ namespace hemelb
   {
     double LBM::ConvertPressureToLatticeUnits(double pressure) const
     {
-      return Cs2 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL
-          * (PULSATILE_PERIOD / (period * voxel_size)) * (PULSATILE_PERIOD
-          / (period * voxel_size)) / BLOOD_DENSITY;
+      return Cs2 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL * (PULSATILE_PERIOD / (period
+          * voxel_size)) * (PULSATILE_PERIOD / (period * voxel_size)) / BLOOD_DENSITY;
     }
 
     double LBM::ConvertPressureToPhysicalUnits(double pressure) const
     {
-      return REFERENCE_PRESSURE + ( (pressure / Cs2 - 1.0) * Cs2)
-          * BLOOD_DENSITY * ( (period * voxel_size) / PULSATILE_PERIOD)
-          * ( (period * voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
+      return REFERENCE_PRESSURE + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY * ( (period
+          * voxel_size) / PULSATILE_PERIOD) * ( (period * voxel_size) / PULSATILE_PERIOD)
+          / mmHg_TO_PASCAL;
     }
 
     double LBM::ConvertPressureGradToLatticeUnits(double pressure_grad) const
     {
-      return pressure_grad * mmHg_TO_PASCAL * (PULSATILE_PERIOD / (period
-          * voxel_size)) * (PULSATILE_PERIOD / (period * voxel_size))
-          / BLOOD_DENSITY;
+      return pressure_grad * mmHg_TO_PASCAL * (PULSATILE_PERIOD / (period * voxel_size))
+          * (PULSATILE_PERIOD / (period * voxel_size)) / BLOOD_DENSITY;
     }
 
     double LBM::ConvertPressureGradToPhysicalUnits(double pressure_grad) const
     {
-      return pressure_grad * BLOOD_DENSITY * ( (period * voxel_size)
-          / PULSATILE_PERIOD) * ( (period * voxel_size) / PULSATILE_PERIOD)
-          / mmHg_TO_PASCAL;
+      return pressure_grad * BLOOD_DENSITY * ( (period * voxel_size) / PULSATILE_PERIOD)
+          * ( (period * voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
     }
 
     double LBM::ConvertVelocityToLatticeUnits(double velocity) const
     {
-      return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size)
-          / (BLOOD_VISCOSITY / BLOOD_DENSITY);
+      return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) / (BLOOD_VISCOSITY
+          / BLOOD_DENSITY);
     }
 
     double LBM::ConvertVelocityToPhysicalUnits(double velocity) const
     {
       // convert velocity from lattice units to physical units (m/s)
-      return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / ( ( (mParams.Tau
-          - 0.5) / 3.0) * voxel_size);
+      return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / ( ( (mParams.Tau - 0.5) / 3.0)
+          * voxel_size);
     }
 
     double LBM::ConvertStressToLatticeUnits(double stress) const
     {
-      return stress * (BLOOD_DENSITY / (BLOOD_VISCOSITY * BLOOD_VISCOSITY))
-          * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau
-          - 0.5) / 3.0) * voxel_size);
+      return stress * (BLOOD_DENSITY / (BLOOD_VISCOSITY * BLOOD_VISCOSITY)) * ( ( (mParams.Tau
+          - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size);
     }
 
     double LBM::ConvertStressToPhysicalUnits(double stress) const
     {
       // convert stress from lattice units to physical units (Pa)
-      return stress * BLOOD_VISCOSITY * BLOOD_VISCOSITY / (BLOOD_DENSITY
-          * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau
-          - 0.5) / 3.0) * voxel_size));
+      return stress * BLOOD_VISCOSITY * BLOOD_VISCOSITY / (BLOOD_DENSITY * ( ( (mParams.Tau - 0.5)
+          / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size));
     }
 
     void LBM::RecalculateTauViscosityOmega()
     {
-      mParams.Tau = 0.5 + (PULSATILE_PERIOD * BLOOD_VISCOSITY / BLOOD_DENSITY)
-          / (Cs2 * period * voxel_size * voxel_size);
+      mParams.Tau = 0.5 + (PULSATILE_PERIOD * BLOOD_VISCOSITY / BLOOD_DENSITY) / (Cs2 * period
+          * voxel_size * voxel_size);
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
@@ -142,13 +137,13 @@ namespace hemelb
 
       for (int i = 0; i < inlets; i++)
       {
-        inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w
-            * (double) time_step + inlet_density_phs[i]);
+        inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double) time_step
+            + inlet_density_phs[i]);
       }
       for (int i = 0; i < outlets; i++)
       {
-        outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i]
-            * cos(w * (double) time_step + outlet_density_phs[i]);
+        outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i] * cos(w
+            * (double) time_step + outlet_density_phs[i]);
       }
     }
 
@@ -186,8 +181,7 @@ namespace hemelb
                                       double density_threshold_minmax_inv,
                                       double stress_threshold_max_inv)
     {
-      double density = density_threshold_min + col_pixel_p->density
-          / density_threshold_minmax_inv;
+      double density = density_threshold_min + col_pixel_p->density / density_threshold_minmax_inv;
       double stress = col_pixel_p->stress / stress_threshold_max_inv;
 
       mouse_pressure = ConvertPressureToPhysicalUnits(density * Cs2);
@@ -201,22 +195,16 @@ namespace hemelb
       // It'd be nice to do this with something like
       // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
-      mMidFluidCollision
-          = new hemelb::lb::collisions::ImplSimpleCollideAndStream();
-      mWallCollision
-          = new hemelb::lb::collisions::ImplZeroVelocityEquilibrium();
+      mMidFluidCollision = new hemelb::lb::collisions::ImplSimpleCollideAndStream();
+      mWallCollision = new hemelb::lb::collisions::ImplZeroVelocityEquilibrium();
       mInletCollision
-          = new hemelb::lb::collisions::ImplNonZeroVelocityBoundaryDensity(
-                                                                           inlet_density);
+          = new hemelb::lb::collisions::ImplNonZeroVelocityBoundaryDensity(inlet_density);
       mOutletCollision
-          = new hemelb::lb::collisions::ImplNonZeroVelocityBoundaryDensity(
-                                                                           outlet_density);
+          = new hemelb::lb::collisions::ImplNonZeroVelocityBoundaryDensity(outlet_density);
       mInletWallCollision
-          = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(
-                                                                        inlet_density);
+          = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(inlet_density);
       mOutletWallCollision
-          = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(
-                                                                        outlet_density);
+          = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
     void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
@@ -280,7 +268,7 @@ namespace hemelb
     {
       net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
 
-      int offset = net->my_inner_sites;
+      int offset = bLocalLatDat.my_inner_sites;
 
       double lPreLbTimeOne = MPI_Wtime();
 
@@ -289,11 +277,10 @@ namespace hemelb
         GetCollision(collision_type)->DoCollisions(
                                                    perform_rt,
                                                    offset,
-                                                   net->my_inter_collisions[collision_type],
-                                                   mParams, mMinsAndMaxes,
-                                                   bLocalLatDat,
+                                                   bLocalLatDat.my_inter_collisions[collision_type],
+                                                   mParams, mMinsAndMaxes, bLocalLatDat,
                                                    hemelb::vis::controller);
-        offset += net->my_inter_collisions[collision_type];
+        offset += bLocalLatDat.my_inter_collisions[collision_type];
       }
 
       double lPreSendTime = MPI_Wtime();
@@ -311,11 +298,10 @@ namespace hemelb
         GetCollision(collision_type)->DoCollisions(
                                                    perform_rt,
                                                    offset,
-                                                   net->my_inner_collisions[collision_type],
-                                                   mParams, mMinsAndMaxes,
-                                                   bLocalLatDat,
+                                                   bLocalLatDat.my_inner_collisions[collision_type],
+                                                   mParams, mMinsAndMaxes, bLocalLatDat,
                                                    hemelb::vis::controller);
-        offset += net->my_inner_collisions[collision_type];
+        offset += bLocalLatDat.my_inner_collisions[collision_type];
       }
 
       double lPreMPIWaitTime = MPI_Wtime();
@@ -331,26 +317,20 @@ namespace hemelb
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(
-                                               perform_rt,
-                                               offset,
-                                               net->my_inner_collisions[collision_type],
-                                               mParams, mMinsAndMaxes,
-                                               bLocalLatDat,
+        GetCollision(collision_type)->PostStep(perform_rt, offset,
+                                               bLocalLatDat.my_inner_collisions[collision_type],
+                                               mParams, mMinsAndMaxes, bLocalLatDat,
                                                hemelb::vis::controller);
-        offset += net->my_inner_collisions[collision_type];
+        offset += bLocalLatDat.my_inner_collisions[collision_type];
       }
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(
-                                               perform_rt,
-                                               offset,
-                                               net->my_inter_collisions[collision_type],
-                                               mParams, mMinsAndMaxes,
-                                               bLocalLatDat,
+        GetCollision(collision_type)->PostStep(perform_rt, offset,
+                                               bLocalLatDat.my_inter_collisions[collision_type],
+                                               mParams, mMinsAndMaxes, bLocalLatDat,
                                                hemelb::vis::controller);
-        offset += net->my_inter_collisions[collision_type];
+        offset += bLocalLatDat.my_inter_collisions[collision_type];
       }
 
       bLbTime += (MPI_Wtime() - lPrePostStepTime);
@@ -384,10 +364,9 @@ namespace hemelb
 
       memcpy(&local_data[6], peak_inlet_velocity, sizeof(double) * inlets);
 
-      MPI_Reduce(&local_data[0], &global_data[0], 3, MPI_DOUBLE, MPI_MIN, 0,
+      MPI_Reduce(&local_data[0], &global_data[0], 3, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+      MPI_Reduce(&local_data[3], &global_data[3], 3 + inlets, MPI_DOUBLE, MPI_MAX, 0,
                  MPI_COMM_WORLD);
-      MPI_Reduce(&local_data[3], &global_data[3], 3 + inlets, MPI_DOUBLE,
-                 MPI_MAX, 0, MPI_COMM_WORLD);
 
       mMinsAndMaxes.MinDensity = global_data[0];
       mMinsAndMaxes.MinVelocity = global_data[1];
@@ -403,8 +382,7 @@ namespace hemelb
         local_data[i] = average_inlet_velocity[i];
         local_data[inlets + i] = inlet_count[i];
       }
-      MPI_Reduce(local_data, global_data, 2 * inlets, MPI_DOUBLE, MPI_SUM, 0,
-                 MPI_COMM_WORLD);
+      MPI_Reduce(local_data, global_data, 2 * inlets, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
       for (i = 0; i < inlets; i++)
       {
@@ -418,10 +396,8 @@ namespace hemelb
       for (i = 0; i < inlets; i++)
       {
         average_inlet_velocity[i] /= inlet_count[i];
-        average_inlet_velocity[i]
-            = ConvertVelocityToPhysicalUnits(average_inlet_velocity[i]);
-        peak_inlet_velocity[i]
-            = ConvertVelocityToPhysicalUnits(peak_inlet_velocity[i]);
+        average_inlet_velocity[i] = ConvertVelocityToPhysicalUnits(average_inlet_velocity[i]);
+        peak_inlet_velocity[i] = ConvertVelocityToPhysicalUnits(peak_inlet_velocity[i]);
       }
 
       period = period;
@@ -446,8 +422,7 @@ namespace hemelb
         }
       }
 
-      MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX,
-                    MPI_COMM_WORLD);
+      MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
       is_unstable = stability;
 
       return is_unstable;
@@ -480,12 +455,11 @@ namespace hemelb
       c1 = 15;
       c2 = 0;
 
-      offset = net->my_inner_collisions[0] + net->my_inner_collisions[1];
+      offset = iLocalLatDat.my_inner_collisions[0] + iLocalLatDat.my_inner_collisions[1];
 
-      for (i = offset; i < offset + net->my_inner_collisions[2]; i++)
+      for (i = offset; i < offset + iLocalLatDat.my_inner_collisions[2]; i++)
       {
-        D3Q15::CalculateDensityAndVelocity(&iLocalLatDat.FOld[i * c1 + c2],
-                                           density, vx, vy, vz);
+        D3Q15::CalculateDensityAndVelocity(&iLocalLatDat.FOld[i * c1 + c2], density, vx, vy, vz);
 
         inlet_id = iLocalLatDat.GetBoundaryId(i);
 
@@ -510,18 +484,16 @@ namespace hemelb
         {
           velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
         }
-        peak_inlet_velocity[inlet_id] = fmax(peak_inlet_velocity[inlet_id],
-                                             velocity);
+        peak_inlet_velocity[inlet_id] = fmax(peak_inlet_velocity[inlet_id], velocity);
         average_inlet_velocity[inlet_id] += velocity;
         ++inlet_count[inlet_id];
       }
-      offset = net->my_inner_sites + net->my_inter_collisions[0]
-          + net->my_inter_collisions[1];
+      offset = iLocalLatDat.my_inner_sites + iLocalLatDat.my_inter_collisions[0]
+          + iLocalLatDat.my_inter_collisions[1];
 
-      for (i = offset; i < offset + net->my_inter_collisions[2]; i++)
+      for (i = offset; i < offset + iLocalLatDat.my_inter_collisions[2]; i++)
       {
-        D3Q15::CalculateDensityAndVelocity(&iLocalLatDat.FOld[i * c1 + c2],
-                                           density, vx, vy, vz);
+        D3Q15::CalculateDensityAndVelocity(&iLocalLatDat.FOld[i * c1 + c2], density, vx, vy, vz);
 
         inlet_id = iLocalLatDat.GetBoundaryId(i);
 
@@ -546,8 +518,7 @@ namespace hemelb
         {
           velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
         }
-        peak_inlet_velocity[inlet_id] = fmax(peak_inlet_velocity[inlet_id],
-                                             velocity);
+        peak_inlet_velocity[inlet_id] = fmax(peak_inlet_velocity[inlet_id], velocity);
         average_inlet_velocity[inlet_id] += velocity;
         ++inlet_count[inlet_id];
       }
@@ -571,33 +542,25 @@ namespace hemelb
 
       for (i = 0; i < inlets; i++)
       {
-        inlet_density_avg[i]
-            = ConvertPressureToPhysicalUnits(inlet_density_avg[i] * Cs2);
-        inlet_density_amp[i]
-            = ConvertPressureGradToPhysicalUnits(inlet_density_amp[i] * Cs2);
+        inlet_density_avg[i] = ConvertPressureToPhysicalUnits(inlet_density_avg[i] * Cs2);
+        inlet_density_amp[i] = ConvertPressureGradToPhysicalUnits(inlet_density_amp[i] * Cs2);
       }
       for (i = 0; i < outlets; i++)
       {
-        outlet_density_avg[i]
-            = ConvertPressureToPhysicalUnits(outlet_density_avg[i] * Cs2);
-        outlet_density_amp[i]
-            = ConvertPressureGradToPhysicalUnits(outlet_density_amp[i] * Cs2);
+        outlet_density_avg[i] = ConvertPressureToPhysicalUnits(outlet_density_avg[i] * Cs2);
+        outlet_density_amp[i] = ConvertPressureGradToPhysicalUnits(outlet_density_amp[i] * Cs2);
       }
       period *= 2;
 
       for (i = 0; i < inlets; i++)
       {
-        inlet_density_avg[i]
-            = ConvertPressureToLatticeUnits(inlet_density_avg[i]) / Cs2;
-        inlet_density_amp[i]
-            = ConvertPressureGradToLatticeUnits(inlet_density_amp[i]) / Cs2;
+        inlet_density_avg[i] = ConvertPressureToLatticeUnits(inlet_density_avg[i]) / Cs2;
+        inlet_density_amp[i] = ConvertPressureGradToLatticeUnits(inlet_density_amp[i]) / Cs2;
       }
       for (i = 0; i < outlets; i++)
       {
-        outlet_density_avg[i]
-            = ConvertPressureToLatticeUnits(outlet_density_avg[i]) / Cs2;
-        outlet_density_amp[i]
-            = ConvertPressureGradToLatticeUnits(outlet_density_amp[i]) / Cs2;
+        outlet_density_avg[i] = ConvertPressureToLatticeUnits(outlet_density_avg[i]) / Cs2;
+        outlet_density_amp[i] = ConvertPressureGradToLatticeUnits(outlet_density_amp[i]) / Cs2;
       }
 
       RecalculateTauViscosityOmega();
