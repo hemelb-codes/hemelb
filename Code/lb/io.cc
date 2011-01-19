@@ -69,8 +69,8 @@ namespace hemelb
 
       // Open the file using the MPI parallel I/O interface at the path
       // given, in read-only mode.
-      lError = MPI_File_open(MPI_COMM_WORLD, &mSimConfig->DataFilePath[0],
-                             MPI_MODE_RDONLY, MPI_INFO_NULL, &lFile);
+      lError = MPI_File_open(MPI_COMM_WORLD, &mSimConfig->DataFilePath[0], MPI_MODE_RDONLY,
+                             MPI_INFO_NULL, &lFile);
 
       if (lError != 0)
       {
@@ -81,8 +81,8 @@ namespace hemelb
       }
       else
       {
-        fprintf(stderr, "Opened config file %s [rank %i]\n",
-                mSimConfig->DataFilePath.c_str(), mNetTopology->GetLocalRank());
+        fprintf(stderr, "Opened config file %s [rank %i]\n", mSimConfig->DataFilePath.c_str(),
+                mNetTopology->GetLocalRank());
       }
       fflush(NULL);
 
@@ -103,8 +103,7 @@ namespace hemelb
 
       // Each block has an int flag, each site has at most an unsigned int, 8 doubles, and (Num-vectors - 1) doubles.
       int lLength = bGlobalLatticeData.GetBlockCount() * (4
-          + bGlobalLatticeData.SitesPerBlockVolumeUnit * (4 + 8 * 8 + 8
-              * (D3Q15::NUMVECTORS - 1)));
+          + bGlobalLatticeData.SitesPerBlockVolumeUnit * (4 + 8 * 8 + 8 * (D3Q15::NUMVECTORS - 1)));
 
       char * lBlockDataBuffer = new char[lLength];
 
@@ -112,8 +111,7 @@ namespace hemelb
 
       MPI_File_read_all(lFile, lBlockDataBuffer, lLength, MPI_BYTE, &lStatus);
 
-      hemelb::io::XdrMemReader myReader =
-          hemelb::io::XdrMemReader(lBlockDataBuffer, lLength);
+      hemelb::io::XdrMemReader myReader = hemelb::io::XdrMemReader(lBlockDataBuffer, lLength);
 
       for (int i = 0; i < bGlobalLatticeData.GetXBlockCount(); i++)
       {
@@ -144,33 +142,27 @@ namespace hemelb
 
             for (int ii = 0; ii < bGlobalLatticeData.GetBlockSize(); ii++)
             {
-              unsigned int site_i = (i << bGlobalLatticeData.Log2BlockSize)
-                  + ii;
+              unsigned int site_i = (i << bGlobalLatticeData.Log2BlockSize) + ii;
 
               for (int jj = 0; jj < bGlobalLatticeData.GetBlockSize(); jj++)
               {
-                unsigned int site_j = (j << bGlobalLatticeData.Log2BlockSize)
-                    + jj;
+                unsigned int site_j = (j << bGlobalLatticeData.Log2BlockSize) + jj;
 
                 for (int kk = 0; kk < bGlobalLatticeData.GetBlockSize(); kk++)
                 {
-                  unsigned int site_k = (k << bGlobalLatticeData.Log2BlockSize)
-                      + kk;
+                  unsigned int site_k = (k << bGlobalLatticeData.Log2BlockSize) + kk;
 
                   ++m;
 
-                  unsigned int *site_type =
-                      &bGlobalLatticeData.Blocks[n].site_data[m];
+                  unsigned int *site_type = &bGlobalLatticeData.Blocks[n].site_data[m];
                   myReader.readUnsignedInt(*site_type);
 
                   if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
                   {
-                    bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m]
-                        = 1 << 30;
+                    bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m] = 1 << 30;
                     continue;
                   }
-                  bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m]
-                      = -1;
+                  bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m] = -1;
 
                   ++total_fluid_sites;
 
@@ -191,8 +183,7 @@ namespace hemelb
                     }
 
                     if (bGlobalLatticeData.GetCollisionType(*site_type) & INLET
-                        || bGlobalLatticeData.GetCollisionType(*site_type)
-                            & OUTLET)
+                        || bGlobalLatticeData.GetCollisionType(*site_type) & OUTLET)
                     {
                       double temp;
                       // INLET or OUTLET or both.
@@ -207,16 +198,14 @@ namespace hemelb
                     {
                       // EDGE bit set
                       for (int l = 0; l < 3; l++)
-                        myReader.readDouble(
-                                            bGlobalLatticeData.Blocks[n].wall_data[m].wall_nor[l]);
+                        myReader.readDouble(bGlobalLatticeData.Blocks[n].wall_data[m].wall_nor[l]);
 
                       double temp;
                       myReader.readDouble(temp);
                     }
 
                     for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-                      myReader.readDouble(
-                                          bGlobalLatticeData.Blocks[n].wall_data[m].cut_dist[l]);
+                      myReader.readDouble(bGlobalLatticeData.Blocks[n].wall_data[m].cut_dist[l]);
                   }
                 } // kk
               } // jj
@@ -346,10 +335,8 @@ namespace hemelb
         {
           hemelb::SimConfig::InOutLet *lInlet = mSimConfig->Inlets[n];
 
-          inlet_density_avg[n] = ConvertPressureToLatticeUnits(lInlet->PMean)
-              / Cs2;
-          inlet_density_amp[n]
-              = ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
+          inlet_density_avg[n] = ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
+          inlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
           inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
         }
 
@@ -359,10 +346,8 @@ namespace hemelb
         for (int n = 0; n < outlets; n++)
         {
           hemelb::SimConfig::InOutLet *lOutlet = mSimConfig->Outlets[n];
-          outlet_density_avg[n] = ConvertPressureToLatticeUnits(lOutlet->PMean)
-              / Cs2;
-          outlet_density_amp[n]
-              = ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
+          outlet_density_avg[n] = ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
+          outlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
           outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
         }
 
@@ -419,18 +404,14 @@ namespace hemelb
         {
           for (int n = 0; n < inlets; n++)
           {
-            par_to_send[3 * (inlets + outlets) + 3 * n + 0] = inlet_normal[3
-                * n + 0];
-            par_to_send[3 * (inlets + outlets) + 3 * n + 1] = inlet_normal[3
-                * n + 1];
-            par_to_send[3 * (inlets + outlets) + 3 * n + 2] = inlet_normal[3
-                * n + 2];
+            par_to_send[3 * (inlets + outlets) + 3 * n + 0] = inlet_normal[3 * n + 0];
+            par_to_send[3 * (inlets + outlets) + 3 * n + 1] = inlet_normal[3 * n + 1];
+            par_to_send[3 * (inlets + outlets) + 3 * n + 2] = inlet_normal[3 * n + 2];
           }
         }
       }
 
-      err = MPI_Bcast(par_to_send, 3 * (inlets + outlets + inlets), MPI_DOUBLE,
-                      0, MPI_COMM_WORLD);
+      err = MPI_Bcast(par_to_send, 3 * (inlets + outlets + inlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
       if (!mNetTopology->IsCurrentProcTheIOProc())
       {
@@ -450,12 +431,9 @@ namespace hemelb
         {
           for (int n = 0; n < inlets; n++)
           {
-            inlet_normal[3 * n + 0] = par_to_send[3 * (inlets + outlets) + 3
-                * n + 0];
-            inlet_normal[3 * n + 1] = par_to_send[3 * (inlets + outlets) + 3
-                * n + 1];
-            inlet_normal[3 * n + 2] = par_to_send[3 * (inlets + outlets) + 3
-                * n + 2];
+            inlet_normal[3 * n + 0] = par_to_send[3 * (inlets + outlets) + 3 * n + 0];
+            inlet_normal[3 * n + 1] = par_to_send[3 * (inlets + outlets) + 3 * n + 1];
+            inlet_normal[3 * n + 2] = par_to_send[3 * (inlets + outlets) + 3 * n + 2];
           }
         }
       }
@@ -564,12 +542,9 @@ namespace hemelb
         shrinked_sites_z = 1 + site_max_z - site_min_z;
 
         snap << voxel_size << hemelb::io::Writer::eol;
-        snap << site_min_x << site_min_y << site_min_z
-            << hemelb::io::Writer::eol;
-        snap << site_max_x << site_max_y << site_max_z
-            << hemelb::io::Writer::eol;
-        snap << shrinked_sites_x << shrinked_sites_y << shrinked_sites_z
-            << hemelb::io::Writer::eol;
+        snap << site_min_x << site_min_y << site_min_z << hemelb::io::Writer::eol;
+        snap << site_max_x << site_max_y << site_max_z << hemelb::io::Writer::eol;
+        snap << shrinked_sites_x << shrinked_sites_y << shrinked_sites_z << hemelb::io::Writer::eol;
         snap << total_fluid_sites << hemelb::io::Writer::eol;
       }
 
@@ -577,9 +552,8 @@ namespace hemelb
 
       for (int n = 0; n < mNetTopology->GetProcessorCount(); n++)
       {
-        fluid_sites_max
-            = hemelb::util::max(fluid_sites_max,
-                                mNetTopology->FluidSitesOnEachProcessor[n]);
+        fluid_sites_max = hemelb::util::max(fluid_sites_max,
+                                            mNetTopology->FluidSitesOnEachProcessor[n]);
       }
 
       // "buffer_size" is the size of the flow field buffer to send to the
@@ -588,15 +562,12 @@ namespace hemelb
       // ("gathered_flow_field").  If "buffer_size" is larger the
       // frequency with which data communication to the root processor is
       // performed becomes lower and viceversa
-      buffer_size = hemelb::util::min(1000000, fluid_sites_max
-          * mNetTopology->GetProcessorCount());
+      buffer_size = hemelb::util::min(1000000, fluid_sites_max * mNetTopology->GetProcessorCount());
 
-      communication_period = int (ceil(double (buffer_size)
-          / mNetTopology->GetProcessorCount()));
+      communication_period = int(ceil(double(buffer_size) / mNetTopology->GetProcessorCount()));
 
-      communication_iters
-          = hemelb::util::max(1, int (ceil(double (fluid_sites_max)
-              / communication_period)));
+      communication_iters = hemelb::util::max(1, int(ceil(double(fluid_sites_max)
+          / communication_period)));
 
       local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
       gathered_flow_field = new float[MACROSCOPIC_PARS * communication_period
@@ -634,8 +605,7 @@ namespace hemelb
 
             ++n;
 
-            if (iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite
-                == NULL)
+            if (iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite == NULL)
             {
               continue;
             }
@@ -643,11 +613,9 @@ namespace hemelb
 
             for (int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
             {
-              for (int site_j = j; site_j < j
-                  + iGlobalLatticeData.GetBlockSize(); site_j++)
+              for (int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
               {
-                for (int site_k = k; site_k < k
-                    + iGlobalLatticeData.GetBlockSize(); site_k++)
+                for (int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
                 {
 
                   m++;
@@ -666,36 +634,29 @@ namespace hemelb
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  if (iLocalLatticeData.mSiteData[my_site_id]
-                      == hemelb::lb::FLUID_TYPE)
+                  if (iLocalLatticeData.mSiteData[my_site_id] == hemelb::lb::FLUID_TYPE)
                   {
-                    D3Q15::CalculateDensityVelocityFEq(
-                                                       &iLocalLatticeData.FOld[ (my_site_id
-                                                           * (par + 1) + par)
-                                                           * D3Q15::NUMVECTORS],
-                                                       density, vx, vy, vz,
-                                                       f_eq);
+                    D3Q15::CalculateDensityVelocityFEq(&iLocalLatticeData.FOld[ (my_site_id * (par
+                        + 1) + par) * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
-                      f_neq[l] = iLocalLatticeData.FOld[ (my_site_id
-                          * (par + 1) + par) * D3Q15::NUMVECTORS + l] - f_eq[l];
+                      f_neq[l] = iLocalLatticeData.FOld[ (my_site_id * (par + 1) + par)
+                          * D3Q15::NUMVECTORS + l] - f_eq[l];
                     }
 
                   }
                   else
                   { // not FLUID_TYPE
-                    CalculateBC(&iLocalLatticeData.FOld[ (my_site_id
-                        * (par + 1) + par) * D3Q15::NUMVECTORS],
-                                iLocalLatticeData.GetSiteType(my_site_id),
-                                iLocalLatticeData.GetBoundaryId(my_site_id),
-                                &density, &vx, &vy, &vz, f_neq);
+                    CalculateBC(&iLocalLatticeData.FOld[ (my_site_id * (par + 1) + par)
+                        * D3Q15::NUMVECTORS], iLocalLatticeData.GetSiteType(my_site_id),
+                                iLocalLatticeData.GetBoundaryId(my_site_id), &density, &vx, &vy,
+                                &vz, f_neq);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
                   {
-                    if (iLocalLatticeData.GetNormalToWall(my_site_id)[0]
-                        >= BIG_NUMBER)
+                    if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
                     {
                       stress = -1.0;
                     }
@@ -704,16 +665,13 @@ namespace hemelb
                       D3Q15::CalculateShearStress(
                                                   density,
                                                   f_neq,
-                                                  &iLocalLatticeData.GetNormalToWall(
-                                                                                     my_site_id)[0],
-                                                  stress,
-                                                  mParams.StressParameter);
+                                                  &iLocalLatticeData.GetNormalToWall(my_site_id)[0],
+                                                  stress, mParams.StressParameter);
                     }
                   }
                   else
                   {
-                    D3Q15::CalculateVonMisesStress(f_neq, stress,
-                                                   mParams.StressParameter);
+                    D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.StressParameter);
                   }
 
                   vx /= density;
@@ -729,16 +687,11 @@ namespace hemelb
 
                   stress = ConvertStressToPhysicalUnits(stress);
 
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0]
-                      = float (pressure);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 1]
-                      = float (vx);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 2]
-                      = float (vy);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 3]
-                      = float (vz);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 4]
-                      = float (stress);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0] = float(pressure);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 1] = float(vx);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 2] = float(vy);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 3] = float(vz);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 4] = float(stress);
 
                   local_site_data[3 * comPeriodDelta + 0] = site_i;
                   local_site_data[3 * comPeriodDelta + 1] = site_j;
@@ -750,21 +703,18 @@ namespace hemelb
                   comPeriodDelta = 0;
                   ++iters;
 
-                  err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS
-                      * communication_period, MPI_FLOAT, gathered_flow_field,
-                                   MACROSCOPIC_PARS * communication_period,
-                                   MPI_FLOAT, 0, MPI_COMM_WORLD);
+                  err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS * communication_period,
+                                   MPI_FLOAT, gathered_flow_field, MACROSCOPIC_PARS
+                                       * communication_period, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-                  err = MPI_Gather(local_site_data, 3 * communication_period,
-                                   MPI_SHORT, gathered_site_data, 3
-                                       * communication_period, MPI_SHORT, 0,
+                  err = MPI_Gather(local_site_data, 3 * communication_period, MPI_SHORT,
+                                   gathered_site_data, 3 * communication_period, MPI_SHORT, 0,
                                    MPI_COMM_WORLD);
 
                   if (mNetTopology->IsCurrentProcTheIOProc())
                   {
 
-                    for (int l = 0; l < mNetTopology->GetProcessorCount()
-                        * communication_period; l++)
+                    for (int l = 0; l < mNetTopology->GetProcessorCount() * communication_period; l++)
                     {
                       if (gathered_site_data[l * 3 + 0] == -1)
                         continue;
@@ -773,8 +723,7 @@ namespace hemelb
                       gathered_site_data[l * 3 + 1] -= site_min_y;
                       gathered_site_data[l * 3 + 2] -= site_min_z;
 
-                      snap << gathered_site_data[l * 3 + 0]
-                          << gathered_site_data[l * 3 + 1]
+                      snap << gathered_site_data[l * 3 + 0] << gathered_site_data[l * 3 + 1]
                           << gathered_site_data[l * 3 + 2];
 
                       for (int kk = 0; kk < MACROSCOPIC_PARS; kk++)
@@ -806,20 +755,17 @@ namespace hemelb
         // Weirdly initialized for
         for (; iters <= communication_iters; iters++)
         {
-          err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS
-              * communication_period, MPI_FLOAT, gathered_flow_field,
-                           MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+          err = MPI_Gather(local_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
+                           gathered_flow_field, MACROSCOPIC_PARS * communication_period, MPI_FLOAT,
                            0, MPI_COMM_WORLD);
 
-          err = MPI_Gather(local_site_data, 3 * communication_period,
-                           MPI_SHORT, gathered_site_data, 3
-                               * communication_period, MPI_SHORT, 0,
+          err = MPI_Gather(local_site_data, 3 * communication_period, MPI_SHORT,
+                           gathered_site_data, 3 * communication_period, MPI_SHORT, 0,
                            MPI_COMM_WORLD);
 
           if (mNetTopology->IsCurrentProcTheIOProc())
           {
-            for (int l = 0; l < mNetTopology->GetProcessorCount()
-                * communication_period; l++)
+            for (int l = 0; l < mNetTopology->GetProcessorCount() * communication_period; l++)
             {
 
               if (gathered_site_data[l * 3 + 0] == -1)
@@ -829,8 +775,8 @@ namespace hemelb
               gathered_site_data[l * 3 + 1] -= site_min_y;
               gathered_site_data[l * 3 + 2] -= site_min_z;
 
-              snap << gathered_site_data[l * 3 + 0] << gathered_site_data[l * 3
-                  + 1] << gathered_site_data[l * 3 + 2];
+              snap << gathered_site_data[l * 3 + 0] << gathered_site_data[l * 3 + 1]
+                  << gathered_site_data[l * 3 + 2];
 
               for (int kk = 0; kk < MACROSCOPIC_PARS; kk++)
               {
@@ -865,7 +811,6 @@ namespace hemelb
                                   const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
                                   const hemelb::lb::LocalLatticeData &iLocalLatticeData)
     {
-      hemelb::debug::Debugger::Get()->BreakHere();
       /* This routine writes the flow field on file. The data are gathered
        to the root processor and written from there.  The format
        comprises:
@@ -905,8 +850,8 @@ namespace hemelb
 
       MPI_File lOutputFile;
 
-      MPI_File_open(MPI_COMM_WORLD, &output_file_name[0], MPI_MODE_WRONLY
-          | MPI_MODE_CREATE, MPI_INFO_NULL, &lOutputFile);
+      MPI_File_open(MPI_COMM_WORLD, &output_file_name[0], MPI_MODE_WRONLY | MPI_MODE_CREATE,
+                    MPI_INFO_NULL, &lOutputFile);
 
       /* Preamble has an enum (int) for stability, a double for voxel size,
        * 3 ints for minimum (x,y,z) in bounding box, 3 ints for maximum (x,y,z)
@@ -916,22 +861,18 @@ namespace hemelb
 
       std::string lReadMode = "native";
 
-      MPI_File_set_view(lOutputFile, 0, MPI_BYTE, MPI_BYTE, &lReadMode[0],
-                        MPI_INFO_NULL);
+      MPI_File_set_view(lOutputFile, 0, MPI_BYTE, MPI_BYTE, &lReadMode[0], MPI_INFO_NULL);
 
       if (mNetTopology->IsCurrentProcTheIOProc())
       {
         char lBuffer[lPreambleLength];
-        hemelb::io::XdrMemWriter lWriter =
-            hemelb::io::XdrMemWriter(lBuffer, lPreambleLength);
+        hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lBuffer, lPreambleLength);
 
-        lWriter << stability << voxel_size << site_min_x << site_min_y
-            << site_min_z << site_max_x << site_max_y << site_max_z << (1
-            + site_max_x - site_min_x) << (1 + site_max_y - site_min_y) << (1
-            + site_max_z - site_min_z) << total_fluid_sites;
+        lWriter << stability << voxel_size << site_min_x << site_min_y << site_min_z << site_max_x
+            << site_max_y << site_max_z << (1 + site_max_x - site_min_x) << (1 + site_max_y
+            - site_min_y) << (1 + site_max_z - site_min_z) << total_fluid_sites;
 
-        MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MPI_BYTE,
-                       &lStatus);
+        MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MPI_BYTE, &lStatus);
       }
 
       /*
@@ -954,16 +895,14 @@ namespace hemelb
             * mNetTopology->FluidSitesOnEachProcessor[ii];
       }
 
-      MPI_File_set_view(lOutputFile, lLocalSitesInitialOffset, MPI_BYTE,
-                        MPI_BYTE, &lReadMode[0], MPI_INFO_NULL);
+      MPI_File_set_view(lOutputFile, lLocalSitesInitialOffset, MPI_BYTE, MPI_BYTE, &lReadMode[0],
+                        MPI_INFO_NULL);
 
-      int
-          lLocalWriteLength =
-              lOneFluidSiteLength
-                  * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->GetLocalRank()];
+      int lLocalWriteLength = lOneFluidSiteLength
+          * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->GetLocalRank()];
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
-      hemelb::io::XdrMemWriter lWriter =
-          hemelb::io::XdrMemWriter(lFluidSiteBuffer, lLocalWriteLength);
+      hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lFluidSiteBuffer,
+                                                                  lLocalWriteLength);
 
       /* The following loops scan over every single macrocell (block). If
        the block is non-empty, it scans the fluid sites within that block
@@ -984,8 +923,7 @@ namespace hemelb
 
             ++n;
 
-            if (iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite
-                == NULL)
+            if (iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite == NULL)
             {
               continue;
             }
@@ -993,11 +931,9 @@ namespace hemelb
 
             for (int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
             {
-              for (int site_j = j; site_j < j
-                  + iGlobalLatticeData.GetBlockSize(); site_j++)
+              for (int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
               {
-                for (int site_k = k; site_k < k
-                    + iGlobalLatticeData.GetBlockSize(); site_k++)
+                for (int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
                 {
 
                   m++;
@@ -1007,48 +943,41 @@ namespace hemelb
                     continue;
                   }
 
-                  unsigned int my_site_id =
-                      iGlobalLatticeData.Blocks[n].site_data[m];
+                  unsigned int my_site_id = iGlobalLatticeData.Blocks[n].site_data[m];
 
                   /* No idea what this does */
                   if (my_site_id & (1U << 31U))
                     continue;
 
-                  double density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS],
-                      f_neq[D3Q15::NUMVECTORS], stress, pressure;
+                  double density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
+                      stress, pressure;
 
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  if (iLocalLatticeData.mSiteData[my_site_id]
-                      == hemelb::lb::FLUID_TYPE)
+                  if (iLocalLatticeData.mSiteData[my_site_id] == hemelb::lb::FLUID_TYPE)
                   {
-                    D3Q15::CalculateDensityVelocityFEq(
-                                                       &iLocalLatticeData.FOld[my_site_id
-                                                           * D3Q15::NUMVECTORS],
-                                                       density, vx, vy, vz,
-                                                       f_eq);
+                    D3Q15::CalculateDensityVelocityFEq(&iLocalLatticeData.FOld[my_site_id
+                        * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
-                      f_neq[l] = iLocalLatticeData.FOld[my_site_id
-                          * D3Q15::NUMVECTORS + l] - f_eq[l];
+                      f_neq[l] = iLocalLatticeData.FOld[my_site_id * D3Q15::NUMVECTORS + l]
+                          - f_eq[l];
                     }
 
                   }
                   else
                   { // not FLUID_TYPE
-                    CalculateBC(&iLocalLatticeData.FOld[my_site_id
-                        * D3Q15::NUMVECTORS],
+                    CalculateBC(&iLocalLatticeData.FOld[my_site_id * D3Q15::NUMVECTORS],
                                 iLocalLatticeData.GetSiteType(my_site_id),
-                                iLocalLatticeData.GetBoundaryId(my_site_id),
-                                &density, &vx, &vy, &vz, f_neq);
+                                iLocalLatticeData.GetBoundaryId(my_site_id), &density, &vx, &vy,
+                                &vz, f_neq);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
                   {
-                    if (iLocalLatticeData.GetNormalToWall(my_site_id)[0]
-                        >= BIG_NUMBER)
+                    if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
                     {
                       stress = -1.0;
                     }
@@ -1057,16 +986,13 @@ namespace hemelb
                       D3Q15::CalculateShearStress(
                                                   density,
                                                   f_neq,
-                                                  &iLocalLatticeData.GetNormalToWall(
-                                                                                     my_site_id)[0],
-                                                  stress,
-                                                  mParams.StressParameter);
+                                                  &iLocalLatticeData.GetNormalToWall(my_site_id)[0],
+                                                  stress, mParams.StressParameter);
                     }
                   }
                   else
                   {
-                    D3Q15::CalculateVonMisesStress(f_neq, stress,
-                                                   mParams.StressParameter);
+                    D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.StressParameter);
                   }
 
                   vx /= density;
@@ -1085,8 +1011,8 @@ namespace hemelb
                   lWriter << (site_i - site_min_x) << (site_j - site_min_y)
                       << (site_k - site_min_z);
 
-                  lWriter << float (pressure) << float (vx) << float (vy)
-                      << float (vz) << float (stress);
+                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
+                      << float(stress);
                 }
               }
             }
@@ -1094,8 +1020,7 @@ namespace hemelb
         }
       }
 
-      MPI_File_write_all(lOutputFile, lFluidSiteBuffer, lLocalWriteLength,
-                         MPI_BYTE, &lStatus);
+      MPI_File_write_all(lOutputFile, lFluidSiteBuffer, lLocalWriteLength, MPI_BYTE, &lStatus);
 
       MPI_File_close(&lOutputFile);
 
@@ -1104,8 +1029,8 @@ namespace hemelb
 
     void LBM::ReadVisParameters()
     {
-      float lDensity_threshold_min, lDensity_threshold_minmax_inv,
-          lVelocity_threshold_max_inv, lStress_threshold_max_inv;
+      float lDensity_threshold_min, lDensity_threshold_minmax_inv, lVelocity_threshold_max_inv,
+          lStress_threshold_max_inv;
       float par_to_send[9];
       float density_min, density_max, velocity_max, stress_max;
 
@@ -1144,17 +1069,13 @@ namespace hemelb
 
       for (i = 0; i < inlets; i++)
       {
-        density_min = fminf(density_min, inlet_density_avg[i]
-            - inlet_density_amp[i]);
-        density_max = fmaxf(density_max, inlet_density_avg[i]
-            + inlet_density_amp[i]);
+        density_min = fminf(density_min, inlet_density_avg[i] - inlet_density_amp[i]);
+        density_max = fmaxf(density_max, inlet_density_avg[i] + inlet_density_amp[i]);
       }
       for (i = 0; i < outlets; i++)
       {
-        density_min = fminf(density_min, outlet_density_avg[i]
-            - outlet_density_amp[i]);
-        density_max = fmaxf(density_max, outlet_density_avg[i]
-            + outlet_density_amp[i]);
+        density_min = fminf(density_min, outlet_density_avg[i] - outlet_density_amp[i]);
+        density_max = fmaxf(density_max, outlet_density_avg[i] + outlet_density_amp[i]);
       }
       lDensity_threshold_min = density_min;
 
@@ -1162,11 +1083,9 @@ namespace hemelb
       lVelocity_threshold_max_inv = 1.0F / velocity_max;
       lStress_threshold_max_inv = 1.0F / stress_max;
 
-      hemelb::vis::controller->SetSomeParams(mSimConfig->VisBrightness,
-                                             lDensity_threshold_min,
+      hemelb::vis::controller->SetSomeParams(mSimConfig->VisBrightness, lDensity_threshold_min,
                                              lDensity_threshold_minmax_inv,
-                                             lVelocity_threshold_max_inv,
-                                             lStress_threshold_max_inv);
+                                             lVelocity_threshold_max_inv, lStress_threshold_max_inv);
     }
   }
 }

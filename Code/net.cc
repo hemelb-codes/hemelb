@@ -4,11 +4,12 @@
  buffers are defined.
  */
 
-#include "net.h"
-#include "util/utilityFunctions.h"
 #include <cstdlib>
 #include <cmath>
 #include <cstdio>
+
+#include "net.h"
+#include "util/utilityFunctions.h"
 
 /*!
  This is called from the main function.  First function to deal with processors.
@@ -35,12 +36,12 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
   // distribution functions of the reference processor are calculated
   // here.  neigh_proc is a static array that is declared in config.h.
 
-  CountCollisionTypes(iGlobLatDat, lThisRankSiteData);
-
   bLocalLatDat
       = new hemelb::lb::LocalLatticeData(
                                          mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()],
                                          mNetworkTopology->TotalSharedFs);
+
+  CountCollisionTypes(bLocalLatDat, iGlobLatDat, lThisRankSiteData);
 
   // the precise interface-dependent data (interface-dependent fluid
   // site locations and identifiers of the distribution functions
@@ -280,16 +281,17 @@ void Net::GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
   delete[] lBlockIsOnThisRank;
 }
 
-void Net::CountCollisionTypes(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+void Net::CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
+                              const hemelb::lb::GlobalLatticeData & iGlobLatDat,
                               const unsigned int * lThisRankSiteData)
 {
   // Initialise various things to 0.
-  my_inner_sites = 0;
+  bLocalLatDat->my_inner_sites = 0;
 
   for (int m = 0; m < COLLISION_TYPES; m++)
   {
-    my_inter_collisions[m] = 0;
-    my_inner_collisions[m] = 0;
+    bLocalLatDat->my_inter_collisions[m] = 0;
+    bLocalLatDat->my_inner_collisions[m] = 0;
   }
 
   mNetworkTopology->TotalSharedFs = 0; // shared SharedFCount within Net struct.
@@ -420,29 +422,31 @@ void Net::CountCollisionTypes(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
 
               if (lIsInnerSite)
               {
-                ++my_inner_sites;
+                ++bLocalLatDat->my_inner_sites;
 
                 if (l == 0)
                 {
-                  map_block_p->site_data[m] = my_inner_collisions[l];
+                  map_block_p->site_data[m] = bLocalLatDat->my_inner_collisions[l];
                 }
                 else
                 {
-                  map_block_p->site_data[m] = 50000000 * (10 + (l - 1)) + my_inner_collisions[l];
+                  map_block_p->site_data[m] = 50000000 * (10 + (l - 1))
+                      + bLocalLatDat->my_inner_collisions[l];
                 }
-                ++my_inner_collisions[l];
+                ++bLocalLatDat->my_inner_collisions[l];
               }
               else
               {
                 if (l == 0)
                 {
-                  map_block_p->site_data[m] = 1000000000 + my_inter_collisions[l];
+                  map_block_p->site_data[m] = 1000000000 + bLocalLatDat->my_inter_collisions[l];
                 }
                 else
                 {
-                  map_block_p->site_data[m] = 50000000 * (20 + l) + my_inter_collisions[l];
+                  map_block_p->site_data[m] = 50000000 * (20 + l)
+                      + bLocalLatDat->my_inter_collisions[l];
                 }
-                ++my_inter_collisions[l];
+                ++bLocalLatDat->my_inter_collisions[l];
               }
             }
           }
@@ -457,12 +461,12 @@ void Net::CountCollisionTypes(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
 
   for (unsigned int l = 1; l < COLLISION_TYPES; l++)
   {
-    collision_offset[0][l] = collision_offset[0][l - 1] + my_inner_collisions[l - 1];
+    collision_offset[0][l] = collision_offset[0][l - 1] + bLocalLatDat->my_inner_collisions[l - 1];
   }
-  collision_offset[1][0] = my_inner_sites;
+  collision_offset[1][0] = bLocalLatDat->my_inner_sites;
   for (unsigned int l = 1; l < COLLISION_TYPES; l++)
   {
-    collision_offset[1][l] = collision_offset[1][l - 1] + my_inter_collisions[l - 1];
+    collision_offset[1][l] = collision_offset[1][l - 1] + bLocalLatDat->my_inter_collisions[l - 1];
   }
 
   // Iterate over blocks
