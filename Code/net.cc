@@ -30,85 +30,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
       *lThisRankSiteData =
           new unsigned int[mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]];
 
-  // Array of booleans to store whether any sites on a block are fluid
-  // sites residing on this rank.
-  bool *lBlockIsOnThisRank = new bool[iGlobLatDat.GetBlockCount()];
-  // Initialise to false.
-  for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
-  {
-    lBlockIsOnThisRank[n] = false;
-  }
-
-  int lSiteIndexOnProc = 0;
-
-  for (int lBlockNumber = 0; lBlockNumber < iGlobLatDat.GetBlockCount(); lBlockNumber++)
-  {
-    hemelb::lb::BlockData * lCurrentDataBlock = &iGlobLatDat.Blocks[lBlockNumber];
-
-    // If we are in a block of solids, move to the next block.
-    if (lCurrentDataBlock->site_data == NULL)
-    {
-      continue;
-    }
-
-    // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
-    hemelb::lb::BlockData * proc_block_p = &iGlobLatDat.Blocks[lBlockNumber];
-
-    // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
-    // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
-    for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock < iGlobLatDat.SitesPerBlockVolumeUnit; lSiteIndexWithinBlock++)
-    {
-      if (mNetworkTopology->GetLocalRank()
-          == proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock])
-      {
-        // If the current site is non-solid, copy the site data into the array for
-        // this rank (in the whole-processor location), then set the site data
-        // for this site within the current block to be the site index over the whole
-        // processor.
-        if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock] & SITE_TYPE_MASK)
-            != hemelb::lb::SOLID_TYPE)
-        {
-          lThisRankSiteData[lSiteIndexOnProc] = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
-          lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = lSiteIndexOnProc;
-          ++lSiteIndexOnProc;
-        }
-        else
-        {
-          // If this is a solid, set the site data on the current block to
-          // some massive value.
-          lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = (1U << 31U);
-        }
-        // Set the array to notify that the current block has sites on this
-        // rank.
-        lBlockIsOnThisRank[lBlockNumber] = true;
-      }
-      // If this site is not on the current processor, set its whole processor
-      // index within the per-block store to a nonsense value.
-      else
-      {
-        lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = (1U << 31U);
-      }
-    }
-  }
-
-  // If we are in a block of solids, we set map_block[n].site_data to NULL.
-  for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
-  {
-    if (lBlockIsOnThisRank[n])
-    {
-      continue;
-    }
-
-    delete[] iGlobLatDat.Blocks[n].site_data;
-    iGlobLatDat.Blocks[n].site_data = NULL;
-
-    if (iGlobLatDat.Blocks[n].wall_data != NULL)
-    {
-      delete[] iGlobLatDat.Blocks[n].wall_data;
-      iGlobLatDat.Blocks[n].wall_data = NULL;
-    }
-  }
-  delete[] lBlockIsOnThisRank;
+  GetThisRankSiteData(iGlobLatDat, lThisRankSiteData);
 
   // The numbers of inter- and intra-machine neighbouring processors,
   // interface-dependent and independent fluid sites and shared
@@ -126,7 +48,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
   mNetworkTopology->TotalSharedFs = 0; // shared SharedFCount within Net struct.
 
-  lSiteIndexOnProc = 0;
+  int lSiteIndexOnProc = 0;
 
   int n = -1;
 
@@ -506,6 +428,90 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
   delete[] lSharedFLocationForEachProc;
 
   bm_time = hemelb::util::myClock() - seconds;
+}
+
+void Net::GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
+                              unsigned int* &bThisRankSiteData)
+{
+  // Array of booleans to store whether any sites on a block are fluid
+  // sites residing on this rank.
+  bool *lBlockIsOnThisRank = new bool[iGlobLatDat.GetBlockCount()];
+  // Initialise to false.
+  for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
+  {
+    lBlockIsOnThisRank[n] = false;
+  }
+
+  int lSiteIndexOnProc = 0;
+
+  for (int lBlockNumber = 0; lBlockNumber < iGlobLatDat.GetBlockCount(); lBlockNumber++)
+  {
+    hemelb::lb::BlockData * lCurrentDataBlock = &iGlobLatDat.Blocks[lBlockNumber];
+
+    // If we are in a block of solids, move to the next block.
+    if (lCurrentDataBlock->site_data == NULL)
+    {
+      continue;
+    }
+
+    // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
+    hemelb::lb::BlockData * proc_block_p = &iGlobLatDat.Blocks[lBlockNumber];
+
+    // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
+    // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
+    for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock < iGlobLatDat.SitesPerBlockVolumeUnit; lSiteIndexWithinBlock++)
+    {
+      if (mNetworkTopology->GetLocalRank()
+          == proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock])
+      {
+        // If the current site is non-solid, copy the site data into the array for
+        // this rank (in the whole-processor location), then set the site data
+        // for this site within the current block to be the site index over the whole
+        // processor.
+        if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock] & SITE_TYPE_MASK)
+            != hemelb::lb::SOLID_TYPE)
+        {
+          bThisRankSiteData[lSiteIndexOnProc] = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
+          lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = lSiteIndexOnProc;
+          ++lSiteIndexOnProc;
+        }
+        else
+        {
+          // If this is a solid, set the site data on the current block to
+          // some massive value.
+          lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = (1U << 31U);
+        }
+        // Set the array to notify that the current block has sites on this
+        // rank.
+        lBlockIsOnThisRank[lBlockNumber] = true;
+      }
+      // If this site is not on the current processor, set its whole processor
+      // index within the per-block store to a nonsense value.
+      else
+      {
+        lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = (1U << 31U);
+      }
+    }
+  }
+
+  // If we are in a block of solids, we set map_block[n].site_data to NULL.
+  for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
+  {
+    if (lBlockIsOnThisRank[n])
+    {
+      continue;
+    }
+
+    delete[] iGlobLatDat.Blocks[n].site_data;
+    iGlobLatDat.Blocks[n].site_data = NULL;
+
+    if (iGlobLatDat.Blocks[n].wall_data != NULL)
+    {
+      delete[] iGlobLatDat.Blocks[n].wall_data;
+      iGlobLatDat.Blocks[n].wall_data = NULL;
+    }
+  }
+  delete[] lBlockIsOnThisRank;
 }
 
 void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
