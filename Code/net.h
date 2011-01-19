@@ -26,26 +26,21 @@ class Net
     void
     UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
-    int my_inner_sites; // Site on this process that do and do not need
-    // information from neighbouring processors.
-    int my_inner_collisions[COLLISION_TYPES]; // Number of collisions that only use data on this rank.
-    int my_inter_collisions[COLLISION_TYPES]; // Number of collisions that require information from
-    // other processors.
-
+    int my_inner_sites;
+    int my_inner_collisions[COLLISION_TYPES];
+    int my_inter_collisions[COLLISION_TYPES];
     MPI_Status status[4];
     double bm_time;
-
   private:
-    void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
-                             unsigned int* &bThisRankSiteData);
-
-    void InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
-                                   short int ** bSharedFLocationForEachProc,
-                                   const unsigned int * iSiteDataForThisRank,
+    void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                             unsigned int *& bThisRankSiteData);
+    void InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData *bLocalLatDat,
+                                   short int **bSharedFLocationForEachProc,
+                                   const unsigned int *iSiteDataForThisRank,
                                    const hemelb::lb::GlobalLatticeData & iGlobLatDat);
-
     void CountCollisionTypes(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
-                             const unsigned int * lThisRankSiteData);
+                             const unsigned int *lThisRankSiteData);
+    void InitialisePointToPointComms(short int **& lSharedFLocationForEachProc);
 
     int *f_recv_iv;
     int err;
