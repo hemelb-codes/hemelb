@@ -44,6 +44,9 @@ class Net
                                    const unsigned int * iSiteDataForThisRank,
                                    const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
+    void CountCollisionTypes(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                             const unsigned int * lThisRankSiteData);
+
     int *f_recv_iv;
     int err;
 
