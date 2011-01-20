@@ -20,8 +20,7 @@ namespace hemelb
   {
 
     Control::Control(bool isCurrentProcTheSteeringProc) :
-      is_frame_ready(false), sending_frame(false), isConnected(false),
-          updated_mouse_coords(false),
+      is_frame_ready(false), sending_frame(false), isConnected(false), updated_mouse_coords(false),
           mIsCurrentProcTheSteeringProc(isCurrentProcTheSteeringProc)
     {
       // From main()
@@ -34,8 +33,6 @@ namespace hemelb
     {
       if (mIsCurrentProcTheSteeringProc)
       {
-        delete[] hemelb::vis::xdrSendBuffer_frame_details;
-        delete[] hemelb::vis::xdrSendBuffer_pixel_data;
         delete mNetworkThread;
       }
       sem_destroy(&nrl);
@@ -50,11 +47,6 @@ namespace hemelb
     {
       if (mIsCurrentProcTheSteeringProc)
       {
-        hemelb::vis::xdrSendBuffer_pixel_data
-            = new char[hemelb::vis::pixel_data_bytes];
-        hemelb::vis::xdrSendBuffer_frame_details
-            = new char[hemelb::vis::frame_details_bytes];
-
         pthread_mutex_init(&LOCK, NULL);
         pthread_cond_init(&network_send_frame, NULL);
 
@@ -65,35 +57,30 @@ namespace hemelb
 
     // Broadcast the steerable parameters to all tasks.
     void Control::UpdateSteerableParameters(bool shouldRenderForSnapshot,
-                                            int* perform_rendering,
                                             hemelb::lb::SimulationState &iSimulationState,
                                             hemelb::vis::Control* visController,
                                             lb::LBM* lbm)
     {
       if (mIsCurrentProcTheSteeringProc)
       {
-        hemelb::vis::doRendering = ShouldRenderForNetwork()
-            || shouldRenderForSnapshot;
+        iSimulationState.DoRendering = ShouldRenderForNetwork() || shouldRenderForSnapshot;
         sem_wait(&steering_var_lock);
       }
 
-      BroadcastSteerableParameters(perform_rendering, iSimulationState,
-                                   visController, lbm);
+      BroadcastSteerableParameters(iSimulationState, visController, lbm);
 
       if (mIsCurrentProcTheSteeringProc)
         sem_post(&steering_var_lock);
     }
 
     // Broadcast the steerable parameters to all tasks.
-    void Control::BroadcastSteerableParameters(int *perform_rendering,
-                                               hemelb::lb::SimulationState &lSimulationState,
+    void Control::BroadcastSteerableParameters(hemelb::lb::SimulationState &lSimulationState,
                                                vis::Control *visControl,
                                                lb::LBM* lbm)
     {
-      steer_par[STEERABLE_PARAMETERS] = *perform_rendering;
+      steer_par[STEERABLE_PARAMETERS] = lSimulationState.DoRendering;
 
-      MPI_Bcast(steer_par, STEERABLE_PARAMETERS + 1, MPI_FLOAT, 0,
-                MPI_COMM_WORLD);
+      MPI_Bcast(steer_par, STEERABLE_PARAMETERS + 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
       float longitude, latitude;
       float zoom;
@@ -141,32 +128,24 @@ namespace hemelb
       visControl->streaklines_per_pulsatile_period = steer_par[18];
       visControl->streakline_length = steer_par[19];
 
-      *perform_rendering = int (steer_par[20]);
+      lSimulationState.DoRendering = int (steer_par[20]);
 
       visControl->updateImageSize(pixels_x, pixels_y);
 
       lattice_density_min
-          = lbm->ConvertPressureToLatticeUnits(
-                                               visControl->physical_pressure_threshold_min)
-              / Cs2;
+          = lbm->ConvertPressureToLatticeUnits(visControl->physical_pressure_threshold_min) / Cs2;
       lattice_density_max
-          = lbm->ConvertPressureToLatticeUnits(
-                                               visControl->physical_pressure_threshold_max)
-              / Cs2;
+          = lbm->ConvertPressureToLatticeUnits(visControl->physical_pressure_threshold_max) / Cs2;
       lattice_velocity_max
-          = lbm->ConvertVelocityToLatticeUnits(
-                                               visControl->physical_velocity_threshold_max);
+          = lbm->ConvertVelocityToLatticeUnits(visControl->physical_velocity_threshold_max);
       lattice_stress_max
-          = lbm->ConvertStressToLatticeUnits(
-                                             visControl->physical_stress_threshold_max);
+          = lbm->ConvertStressToLatticeUnits(visControl->physical_stress_threshold_max);
 
-      visControl->SetProjection(pixels_x, pixels_y, visControl->ctr_x,
-                                visControl->ctr_y, visControl->ctr_z,
-                                longitude, latitude, zoom);
+      visControl->SetProjection(pixels_x, pixels_y, visControl->ctr_x, visControl->ctr_y,
+                                visControl->ctr_z, longitude, latitude, zoom);
 
       visControl->density_threshold_min = lattice_density_min;
-      visControl->density_threshold_minmax_inv = 1.0F / (lattice_density_max
-          - lattice_density_min);
+      visControl->density_threshold_minmax_inv = 1.0F / (lattice_density_max - lattice_density_min);
       visControl->velocity_threshold_max_inv = 1.0F / lattice_velocity_max;
       visControl->stress_threshold_max_inv = 1.0F / lattice_stress_max;
     }
