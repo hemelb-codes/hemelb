@@ -287,7 +287,7 @@ namespace hemelb
           return mBlockNumber < iUpperLimit;
         }
 
-        int GetICooord()
+        int GetICoord()
         {
           return (mBlockNumber - (mBlockNumber % (mGlobLatDat->GetYBlockCount()
               * mGlobLatDat->GetZBlockCount()))) / (mGlobLatDat->GetYBlockCount()
@@ -304,6 +304,21 @@ namespace hemelb
         int GetKCoord()
         {
           return mBlockNumber % mGlobLatDat->GetZBlockCount();
+        }
+
+        int GetICoord(int iSiteI)
+        {
+          return (GetICoord() << mGlobLatDat->Log2BlockSize) + iSiteI;
+        }
+
+        int GetJCoord(int iSiteJ)
+        {
+          return (GetJCoord() << mGlobLatDat->Log2BlockSize) + iSiteJ;
+        }
+
+        int GetKCoord(int iSiteK)
+        {
+          return (GetKCoord() << mGlobLatDat->Log2BlockSize) + iSiteK;
         }
 
       private:
