@@ -20,11 +20,10 @@ namespace hemelb
                                 const lb::LbmParameters *iLbmParams);
 
         void
-            UpdateSteerableParameters(bool shouldRenderForSnapshot,
-                                      int* perform_rendering,
-                                      hemelb::lb::SimulationState &iSimulationState,
-                                      hemelb::vis::Control* visController,
-                                      lb::LBM* lbm);
+        UpdateSteerableParameters(bool shouldRenderForSnapshot,
+                                  hemelb::lb::SimulationState &iSimulationState,
+                                  hemelb::vis::Control* visController,
+                                  lb::LBM* lbm);
         bool ShouldRenderForNetwork();
 
       protected:

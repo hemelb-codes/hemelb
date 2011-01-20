@@ -135,18 +135,15 @@ namespace hemelb
 
         for (int ii = 0; ii < bGlobalLatticeData.GetBlockSize(); ii++)
         {
-          unsigned int site_i = (lBlockCounter.GetICooord() << bGlobalLatticeData.Log2BlockSize)
-              + ii;
+          unsigned int site_i = lBlockCounter.GetICoord(ii);
 
           for (int jj = 0; jj < bGlobalLatticeData.GetBlockSize(); jj++)
           {
-            unsigned int site_j = (lBlockCounter.GetJCoord() << bGlobalLatticeData.Log2BlockSize)
-                + jj;
+            unsigned int site_j = lBlockCounter.GetJCoord(jj);
 
             for (int kk = 0; kk < bGlobalLatticeData.GetBlockSize(); kk++)
             {
-              unsigned int site_k = (lBlockCounter.GetKCoord() << bGlobalLatticeData.Log2BlockSize)
-                  + kk;
+              unsigned int site_k = lBlockCounter.GetKCoord(kk);
 
               ++m;
 
@@ -560,9 +557,9 @@ namespace hemelb
       // performed becomes lower and viceversa
       buffer_size = hemelb::util::min(1000000, fluid_sites_max * mNetTopology->GetProcessorCount());
 
-      communication_period = int(ceil(double(buffer_size) / mNetTopology->GetProcessorCount()));
+      communication_period = int (ceil(double (buffer_size) / mNetTopology->GetProcessorCount()));
 
-      communication_iters = hemelb::util::max(1, int(ceil(double(fluid_sites_max)
+      communication_iters = hemelb::util::max(1, int (ceil(double (fluid_sites_max)
           / communication_period)));
 
       local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
@@ -683,11 +680,11 @@ namespace hemelb
 
                   stress = ConvertStressToPhysicalUnits(stress);
 
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0] = float(pressure);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 1] = float(vx);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 2] = float(vy);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 3] = float(vz);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 4] = float(stress);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0] = float (pressure);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 1] = float (vx);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 2] = float (vy);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 3] = float (vz);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 4] = float (stress);
 
                   local_site_data[3 * comPeriodDelta + 0] = site_i;
                   local_site_data[3 * comPeriodDelta + 1] = site_j;
@@ -1007,8 +1004,8 @@ namespace hemelb
                   lWriter << (site_i - site_min_x) << (site_j - site_min_y)
                       << (site_k - site_min_z);
 
-                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
-                      << float(stress);
+                  lWriter << float (pressure) << float (vx) << float (vy) << float (vz)
+                      << float (stress);
                 }
               }
             }
