@@ -8,8 +8,6 @@
 
 #include <sys/types.h>
 
-#include "vis/visthread.h"
-
 #include "io/XdrMemWriter.h"
 
 #include "steering/basic/NetworkThread.h"

@@ -12,7 +12,6 @@
 
 #include "steering/steering.h"
 
-#include "vis/visthread.h"
 #include "vis/ColourPalette.h"
 
 #include "debug/Debugger.h"
