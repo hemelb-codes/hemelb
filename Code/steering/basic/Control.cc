@@ -11,8 +11,6 @@
 #include "steering/basic/Control.h"
 #include "steering/common/common.h"
 
-#include "vis/visthread.h"
-
 namespace hemelb
 {
 

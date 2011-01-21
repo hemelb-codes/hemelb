@@ -1,7 +1,6 @@
 #include "SimulationMaster.h"
 #include "SimConfig.h"
 
-#include "vis/visthread.h"
 #include "vis/ColourPalette.h"
 #include "util/utilityFunctions.h"
 #include "debug/Debugger.h"
