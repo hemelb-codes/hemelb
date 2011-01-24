@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <cstdio>
 #include <cstring>
 #include <netinet/in.h>
@@ -5,7 +6,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include "vis/visthread.h"
+#include <sys/types.h>
 
 #include "io/XdrMemWriter.h"
 
@@ -20,9 +21,7 @@ namespace hemelb
 {
   namespace steering
   {
-    // Ex-macros
-    const unsigned int NetworkThread::MYPORT = 65250;
-    const unsigned int NetworkThread::CONNECTION_BACKLOG = 10;
+    pthread_mutex_t NetworkThread::var_lock = PTHREAD_MUTEX_INITIALIZER;
 
     // Use initialisation list to do the work.
     NetworkThread::NetworkThread(lb::LBM* lbm,
@@ -35,6 +34,15 @@ namespace hemelb
       /* Storing references to lbm and steeringController; we
        * won't want to destroy them.
        */
+
+      xdrSendBuffer_pixel_data = new char[pixel_data_bytes];
+      xdrSendBuffer_frame_details = new char[frame_details_bytes];
+    }
+
+    NetworkThread::~NetworkThread()
+    {
+      delete[] xdrSendBuffer_frame_details;
+      delete[] xdrSendBuffer_pixel_data;
     }
 
     // Override the base class to make sure this thread's joinable.
@@ -44,6 +52,15 @@ namespace hemelb
       pthread_attr_init(attr);
       pthread_attr_setdetachstate(attr, PTHREAD_CREATE_JOINABLE);
       return attr;
+    }
+
+    void NetworkThread::setRenderState(int val)
+    {
+#ifndef NO_STEER
+      pthread_mutex_lock(&var_lock);
+      //  doRendering = val;
+      pthread_mutex_unlock(&var_lock);
+#endif
     }
 
     // Return seconds since epoch to microsec precision.
@@ -68,7 +85,7 @@ namespace hemelb
 
       std::sprintf(steering_session_id_char, "%i", mLbm->steering_session_id);
 
-      vis::setRenderState(0);
+      setRenderState(0);
 
       gethostname(mSteeringController->host_name, 255);
 
@@ -97,13 +114,12 @@ namespace hemelb
 
       HttpPost::get_host_details(rank_0_host_details, ip_addr);
 
-      HttpPost::request("bunsen.chem.ucl.ac.uk", 28080,
-                        "/ahe/test/rendezvous/", steering_session_id_char,
-                        rank_0_host_details);
+      HttpPost::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/",
+                        steering_session_id_char, rank_0_host_details);
 
       while (1)
       {
-        vis::setRenderState(0);
+        setRenderState(0);
 
         // pthread_mutex_lock (&LOCK);
         // sem_wait( &nrl );
@@ -118,8 +134,7 @@ namespace hemelb
           perror("socket");
           exit(1);
         }
-        if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int))
-            == -1)
+        if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
         {
           perror("setsockopt");
           exit(1);
@@ -129,8 +144,7 @@ namespace hemelb
         my_address.sin_addr.s_addr = INADDR_ANY;
         memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
 
-        if (bind(sock_fd, (struct sockaddr *) &my_address, sizeof my_address)
-            == -1)
+        if (bind(sock_fd, (struct sockaddr *) &my_address, sizeof my_address) == -1)
         {
           perror("bind");
           exit(1);
@@ -147,8 +161,7 @@ namespace hemelb
         // getsockname (sock_fd, (struct sockaddr *) &my_address,&_length);
         // printf("Server Port is: %d\n", ntohs(my_address.sin_port));
 
-        if ( (new_fd = accept(sock_fd, (struct sockaddr *) &their_addr,
-                              &sin_size)) == -1)
+        if ( (new_fd = accept(sock_fd, (struct sockaddr *) &their_addr, &sin_size)) == -1)
         {
           perror("accept");
           // continue;
@@ -199,29 +212,23 @@ namespace hemelb
           {
             int pixeldatabytes = 8;
             char *xdr_pixel = new char[pixeldatabytes];
-            io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel,
-                                                            pixeldatabytes);
+            io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel, pixeldatabytes);
 
-            pixelWriter << vis::controller->mScreen.PixelsX
-                << vis::controller->mScreen.PixelsY;
+            pixelWriter << vis::controller->mScreen.PixelsX << vis::controller->mScreen.PixelsY;
 
             Network::send_all(new_fd, xdr_pixel, pixeldatabytes);
             delete xdr_pixel;
           }
 
-          io::XdrMemWriter pixelDataWriter =
-              io::XdrMemWriter(vis::xdrSendBuffer_pixel_data,
-                               vis::pixel_data_bytes);
-          io::XdrMemWriter frameDetailsWriter =
-              io::XdrMemWriter(vis::xdrSendBuffer_frame_details,
-                               vis::frame_details_bytes);
+          io::XdrMemWriter pixelDataWriter = io::XdrMemWriter(xdrSendBuffer_pixel_data,
+                                                              pixel_data_bytes);
+          io::XdrMemWriter frameDetailsWriter = io::XdrMemWriter(xdrSendBuffer_frame_details,
+                                                                 frame_details_bytes);
 
           for (int i = 0; i < vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
           {
-            pixelDataWriter.writePixel(
-                                       &vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
-                                       vis::ColourPalette::pickColour,
-                                       mLbmParams->StressType);
+            pixelDataWriter.writePixel(&vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
+                                       vis::ColourPalette::pickColour, mLbmParams->StressType);
           }
 
           int frameBytes = pixelDataWriter.getCurrentStreamPosition();
@@ -230,9 +237,8 @@ namespace hemelb
 
           int detailsBytes = frameDetailsWriter.getCurrentStreamPosition();
 
-          int detailsBytesSent =
-              Network::send_all(new_fd, vis::xdrSendBuffer_frame_details,
-                                detailsBytes);
+          int detailsBytesSent = Network::send_all(new_fd, xdrSendBuffer_frame_details,
+                                                   detailsBytes);
 
           if (detailsBytesSent < 0)
           {
@@ -240,7 +246,7 @@ namespace hemelb
             is_broken_pipe = 1;
             // pthread_mutex_unlock ( &LOCK );
             sem_post(&mSteeringController->nrl);
-            vis::setRenderState(0);
+            setRenderState(0);
             break;
           }
           else
@@ -248,9 +254,7 @@ namespace hemelb
             bytesSent += detailsBytesSent;
           }
 
-          int frameBytesSent = Network::send_all(new_fd,
-                                                 vis::xdrSendBuffer_pixel_data,
-                                                 frameBytes);
+          int frameBytesSent = Network::send_all(new_fd, xdrSendBuffer_pixel_data, frameBytes);
 
           if (frameBytesSent < 0)
           {
@@ -258,7 +262,7 @@ namespace hemelb
             is_broken_pipe = 1;
             // pthread_mutex_unlock ( &LOCK );
             sem_post(&mSteeringController->nrl);
-            vis::setRenderState(0);
+            setRenderState(0);
             break;
           }
           else
@@ -276,7 +280,7 @@ namespace hemelb
           // fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
           // printf ("RG thread: bytes sent %i\n", bytesSent);
 
-          vis::setRenderState(1);
+          setRenderState(1);
 
           double frameTimeSend = frameTiming() - frameTimeStart;
 

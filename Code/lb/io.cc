@@ -99,8 +99,6 @@ namespace hemelb
       site_max_y = INT_MIN;
       site_max_z = INT_MIN;
 
-      int n = -1;
-
       // Each block has an int flag, each site has at most an unsigned int, 8 doubles, and (Num-vectors - 1) doubles.
       int lLength = bGlobalLatticeData.GetBlockCount() * (4
           + bGlobalLatticeData.SitesPerBlockVolumeUnit * (4 + 8 * 8 + 8 * (D3Q15::NUMVECTORS - 1)));
@@ -113,105 +111,100 @@ namespace hemelb
 
       hemelb::io::XdrMemReader myReader = hemelb::io::XdrMemReader(lBlockDataBuffer, lLength);
 
-      for (int i = 0; i < bGlobalLatticeData.GetXBlockCount(); i++)
+      for (BlockCounter lBlockCounter(&bGlobalLatticeData, 0); lBlockCounter
+          < bGlobalLatticeData.GetBlockCount(); lBlockCounter++)
       {
-        for (int j = 0; j < bGlobalLatticeData.GetYBlockCount(); j++)
+        bGlobalLatticeData.Blocks[lBlockCounter].site_data = NULL;
+        bGlobalLatticeData.Blocks[lBlockCounter].ProcessorRankForEachBlockSite = NULL;
+        bGlobalLatticeData.Blocks[lBlockCounter].wall_data = NULL;
+
+        int flag;
+
+        myReader.readInt(flag);
+
+        if (flag == 0)
+          continue;
+        // Block contains some non-solid sites
+
+        bGlobalLatticeData.Blocks[lBlockCounter].site_data
+            = new unsigned int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
+        bGlobalLatticeData.Blocks[lBlockCounter].ProcessorRankForEachBlockSite
+            = new int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
+
+        int m = -1;
+
+        for (int ii = 0; ii < bGlobalLatticeData.GetBlockSize(); ii++)
         {
-          for (int k = 0; k < bGlobalLatticeData.GetZBlockCount(); k++)
+          unsigned int site_i = lBlockCounter.GetICoord(ii);
+
+          for (int jj = 0; jj < bGlobalLatticeData.GetBlockSize(); jj++)
           {
-            ++n;
+            unsigned int site_j = lBlockCounter.GetJCoord(jj);
 
-            bGlobalLatticeData.Blocks[n].site_data = NULL;
-            bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite = NULL;
-            bGlobalLatticeData.Blocks[n].wall_data = NULL;
-
-            int flag;
-
-            myReader.readInt(flag);
-
-            if (flag == 0)
-              continue;
-            // Block contains some non-solid sites
-
-            bGlobalLatticeData.Blocks[n].site_data
-                = new unsigned int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
-            bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite
-                = new int[bGlobalLatticeData.SitesPerBlockVolumeUnit];
-
-            int m = -1;
-
-            for (int ii = 0; ii < bGlobalLatticeData.GetBlockSize(); ii++)
+            for (int kk = 0; kk < bGlobalLatticeData.GetBlockSize(); kk++)
             {
-              unsigned int site_i = (i << bGlobalLatticeData.Log2BlockSize) + ii;
+              unsigned int site_k = lBlockCounter.GetKCoord(kk);
 
-              for (int jj = 0; jj < bGlobalLatticeData.GetBlockSize(); jj++)
+              ++m;
+
+              unsigned int *site_type = &bGlobalLatticeData.Blocks[lBlockCounter].site_data[m];
+              myReader.readUnsignedInt(*site_type);
+
+              if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
               {
-                unsigned int site_j = (j << bGlobalLatticeData.Log2BlockSize) + jj;
+                bGlobalLatticeData.Blocks[lBlockCounter].ProcessorRankForEachBlockSite[m] = 1 << 30;
+                continue;
+              }
+              bGlobalLatticeData.Blocks[lBlockCounter].ProcessorRankForEachBlockSite[m] = -1;
 
-                for (int kk = 0; kk < bGlobalLatticeData.GetBlockSize(); kk++)
+              ++total_fluid_sites;
+
+              site_min_x = hemelb::util::min(site_min_x, site_i);
+              site_min_y = hemelb::util::min(site_min_y, site_j);
+              site_min_z = hemelb::util::min(site_min_z, site_k);
+              site_max_x = hemelb::util::max(site_max_x, site_i);
+              site_max_y = hemelb::util::max(site_max_y, site_j);
+              site_max_z = hemelb::util::max(site_max_z, site_k);
+
+              if (bGlobalLatticeData.GetCollisionType(*site_type) != FLUID)
+              {
+                // Neither solid nor simple fluid
+                if (bGlobalLatticeData.Blocks[lBlockCounter].wall_data == NULL)
                 {
-                  unsigned int site_k = (k << bGlobalLatticeData.Log2BlockSize) + kk;
+                  bGlobalLatticeData.Blocks[lBlockCounter].wall_data
+                      = new hemelb::lb::WallData[bGlobalLatticeData.SitesPerBlockVolumeUnit];
+                }
 
-                  ++m;
+                if (bGlobalLatticeData.GetCollisionType(*site_type) & INLET
+                    || bGlobalLatticeData.GetCollisionType(*site_type) & OUTLET)
+                {
+                  double temp;
+                  // INLET or OUTLET or both.
+                  // These values are the boundary normal and the boundary distance.
+                  for (int l = 0; l < 3; l++)
+                    myReader.readDouble(temp);
 
-                  unsigned int *site_type = &bGlobalLatticeData.Blocks[n].site_data[m];
-                  myReader.readUnsignedInt(*site_type);
+                  myReader.readDouble(temp);
+                }
 
-                  if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
-                  {
-                    bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m] = 1 << 30;
-                    continue;
-                  }
-                  bGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m] = -1;
+                if (bGlobalLatticeData.GetCollisionType(*site_type) & EDGE)
+                {
+                  // EDGE bit set
+                  for (int l = 0; l < 3; l++)
+                    myReader.readDouble(
+                                        bGlobalLatticeData.Blocks[lBlockCounter].wall_data[m].wall_nor[l]);
 
-                  ++total_fluid_sites;
+                  double temp;
+                  myReader.readDouble(temp);
+                }
 
-                  site_min_x = hemelb::util::min(site_min_x, site_i);
-                  site_min_y = hemelb::util::min(site_min_y, site_j);
-                  site_min_z = hemelb::util::min(site_min_z, site_k);
-                  site_max_x = hemelb::util::max(site_max_x, site_i);
-                  site_max_y = hemelb::util::max(site_max_y, site_j);
-                  site_max_z = hemelb::util::max(site_max_z, site_k);
-
-                  if (bGlobalLatticeData.GetCollisionType(*site_type) != FLUID)
-                  {
-                    // Neither solid nor simple fluid
-                    if (bGlobalLatticeData.Blocks[n].wall_data == NULL)
-                    {
-                      bGlobalLatticeData.Blocks[n].wall_data
-                          = new hemelb::lb::WallData[bGlobalLatticeData.SitesPerBlockVolumeUnit];
-                    }
-
-                    if (bGlobalLatticeData.GetCollisionType(*site_type) & INLET
-                        || bGlobalLatticeData.GetCollisionType(*site_type) & OUTLET)
-                    {
-                      double temp;
-                      // INLET or OUTLET or both.
-                      // These values are the boundary normal and the boundary distance.
-                      for (int l = 0; l < 3; l++)
-                        myReader.readDouble(temp);
-
-                      myReader.readDouble(temp);
-                    }
-
-                    if (bGlobalLatticeData.GetCollisionType(*site_type) & EDGE)
-                    {
-                      // EDGE bit set
-                      for (int l = 0; l < 3; l++)
-                        myReader.readDouble(bGlobalLatticeData.Blocks[n].wall_data[m].wall_nor[l]);
-
-                      double temp;
-                      myReader.readDouble(temp);
-                    }
-
-                    for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-                      myReader.readDouble(bGlobalLatticeData.Blocks[n].wall_data[m].cut_dist[l]);
-                  }
-                } // kk
-              } // jj
-            } // ii
-          } // k
-        } // j
+                for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
+                  myReader.readDouble(
+                                      bGlobalLatticeData.Blocks[lBlockCounter].wall_data[m].cut_dist[l]);
+              }
+            } // kk
+          } // jj
+        } // ii
       } // i
 
       delete[] lBlockDataBuffer;
@@ -564,9 +557,9 @@ namespace hemelb
       // performed becomes lower and viceversa
       buffer_size = hemelb::util::min(1000000, fluid_sites_max * mNetTopology->GetProcessorCount());
 
-      communication_period = int(ceil(double(buffer_size) / mNetTopology->GetProcessorCount()));
+      communication_period = int (ceil(double (buffer_size) / mNetTopology->GetProcessorCount()));
 
-      communication_iters = hemelb::util::max(1, int(ceil(double(fluid_sites_max)
+      communication_iters = hemelb::util::max(1, int (ceil(double (fluid_sites_max)
           / communication_period)));
 
       local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
@@ -687,11 +680,11 @@ namespace hemelb
 
                   stress = ConvertStressToPhysicalUnits(stress);
 
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0] = float(pressure);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 1] = float(vx);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 2] = float(vy);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 3] = float(vz);
-                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 4] = float(stress);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 0] = float (pressure);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 1] = float (vx);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 2] = float (vy);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 3] = float (vz);
+                  local_flow_field[MACROSCOPIC_PARS * comPeriodDelta + 4] = float (stress);
 
                   local_site_data[3 * comPeriodDelta + 0] = site_i;
                   local_site_data[3 * comPeriodDelta + 1] = site_j;
@@ -1011,8 +1004,8 @@ namespace hemelb
                   lWriter << (site_i - site_min_x) << (site_j - site_min_y)
                       << (site_k - site_min_z);
 
-                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
-                      << float(stress);
+                  lWriter << float (pressure) << float (vx) << float (vy) << float (vz)
+                      << float (stress);
                 }
               }
             }

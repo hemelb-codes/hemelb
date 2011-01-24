@@ -4,6 +4,7 @@ syntax: glob
 *.d
 *~
 build/*
+Code/client/displayClient
 .DS_Store
 *.orig
 Tools/visim/visim

@@ -53,11 +53,10 @@ namespace hemelb
 
     class GlobalLatticeData
     {
+        friend class BlockCounter;
+
       public:
-        void SetBasicDetails(int iBlocksX,
-                             int iBlocksY,
-                             int iBlocksZ,
-                             int iBlockSize)
+        void SetBasicDetails(int iBlocksX, int iBlocksY, int iBlocksZ, int iBlockSize)
         {
           mBlocksX = iBlocksX;
           mBlocksY = iBlocksY;
@@ -177,8 +176,8 @@ namespace hemelb
         {
           // If the given site location is outside the bounding box return a NULL
           // pointer.
-          if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ
-              >= mSitesY || iSiteK < 0 || iSiteK >= mSitesZ)
+          if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ >= mSitesY || iSiteK < 0
+              || iSiteK >= mSitesZ)
           {
             return NULL;
           }
@@ -205,8 +204,8 @@ namespace hemelb
 
             // Return pointer to ProcessorRankForEachBlockSite[site] (the only member of
             // mProcessorsForEachBlock)
-            return &lBlock->ProcessorRankForEachBlockSite[ ( ( (ii
-                << Log2BlockSize) + jj) << Log2BlockSize) + kk];
+            return &lBlock->ProcessorRankForEachBlockSite[ ( ( (ii << Log2BlockSize) + jj)
+                << Log2BlockSize) + kk];
           }
         }
 
@@ -216,8 +215,8 @@ namespace hemelb
         const unsigned int * GetSiteData(int iSiteI, int iSiteJ, int iSiteK) const
         {
           // If site is out of the bounding box, return NULL.
-          if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ
-              >= mSitesY || iSiteK < 0 || iSiteK >= mSitesZ)
+          if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ >= mSitesY || iSiteK < 0
+              || iSiteK >= mSitesZ)
           {
             return NULL;
           }
@@ -243,8 +242,7 @@ namespace hemelb
             int kk = iSiteK - (k << Log2BlockSize);
 
             // Return pointer to site_data[site]
-            return &lBlock->site_data[ ( ( (ii << Log2BlockSize) + jj)
-                << Log2BlockSize) + kk];
+            return &lBlock->site_data[ ( ( (ii << Log2BlockSize) + jj) << Log2BlockSize) + kk];
           }
         }
 
@@ -258,6 +256,74 @@ namespace hemelb
         int mSitesX, mSitesY, mSitesZ;
         int mBlocksX, mBlocksY, mBlocksZ;
         int mBlockSize;
+    };
+
+    class BlockCounter
+    {
+      public:
+        BlockCounter(GlobalLatticeData* iGlobLatDat, int iStartNumber)
+        {
+          mBlockNumber = iStartNumber;
+          mGlobLatDat = iGlobLatDat;
+        }
+
+        void operator++()
+        {
+          mBlockNumber++;
+        }
+
+        void operator++(int in)
+        {
+          mBlockNumber++;
+        }
+
+        operator int()
+        {
+          return mBlockNumber;
+        }
+
+        bool operator<(int iUpperLimit) const
+        {
+          return mBlockNumber < iUpperLimit;
+        }
+
+        int GetICoord()
+        {
+          return (mBlockNumber - (mBlockNumber % (mGlobLatDat->GetYBlockCount()
+              * mGlobLatDat->GetZBlockCount()))) / (mGlobLatDat->GetYBlockCount()
+              * mGlobLatDat->GetZBlockCount());
+        }
+
+        int GetJCoord()
+        {
+          int lTemp = mBlockNumber
+              % (mGlobLatDat->GetYBlockCount() * mGlobLatDat->GetZBlockCount());
+          return (lTemp - (lTemp % mGlobLatDat->GetZBlockCount())) / mGlobLatDat->GetZBlockCount();
+        }
+
+        int GetKCoord()
+        {
+          return mBlockNumber % mGlobLatDat->GetZBlockCount();
+        }
+
+        int GetICoord(int iSiteI)
+        {
+          return (GetICoord() << mGlobLatDat->Log2BlockSize) + iSiteI;
+        }
+
+        int GetJCoord(int iSiteJ)
+        {
+          return (GetJCoord() << mGlobLatDat->Log2BlockSize) + iSiteJ;
+        }
+
+        int GetKCoord(int iSiteK)
+        {
+          return (GetKCoord() << mGlobLatDat->Log2BlockSize) + iSiteK;
+        }
+
+      private:
+        GlobalLatticeData* mGlobLatDat;
+        int mBlockNumber;
     };
   }
 }
