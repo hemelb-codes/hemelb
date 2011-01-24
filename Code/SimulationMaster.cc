@@ -1,7 +1,6 @@
 #include "SimulationMaster.h"
 #include "SimConfig.h"
 
-#include "vis/visthread.h"
 #include "vis/ColourPalette.h"
 #include "util/utilityFunctions.h"
 #include "debug/Debugger.h"
@@ -36,6 +35,7 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mLocalLatDat = NULL;
 
   mSimulationState.IsTerminating = 0;
+  mSimulationState.DoRendering = 0;
 
   mLbTime = 0.0;
   mMPISendTime = 0.0;
@@ -137,8 +137,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                          iSimConfig->VisLongitude, iSimConfig->VisLatitude,
                                          iSimConfig->VisZoom);
 
-  steeringController->UpdateSteerableParameters(false, &hemelb::vis::doRendering, mSimulationState,
-                                                hemelb::vis::controller, mLbm);
+  steeringController->UpdateSteerableParameters(false, mSimulationState, hemelb::vis::controller,
+                                                mLbm);
 }
 
 /**
@@ -194,8 +194,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       if (mSimulationState.TimeStep % BCAST_FREQ == 0)
       {
-        steeringController->UpdateSteerableParameters(write_snapshot_image,
-                                                      &hemelb::vis::doRendering, mSimulationState,
+        steeringController->UpdateSteerableParameters(write_snapshot_image, mSimulationState,
                                                       hemelb::vis::controller, mLbm);
 
       }
@@ -208,11 +207,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         printf(
                "time step %i sending_frame %i render_network_stream %i write_snapshot_image %i rendering %i\n",
                mSimulationState.TimeStep, steeringController->sending_frame,
-               render_for_network_stream, write_snapshot_image, hemelb::vis::doRendering);
+               render_for_network_stream, write_snapshot_image, mSimulationState.DoRendering);
 
       mLbm->UpdateBoundaryDensities(mSimulationState.CycleId, mSimulationState.TimeStep);
 
-      stability = mLbm->DoCycle(hemelb::vis::doRendering, mNet, *mLocalLatDat, mLbTime,
+      stability = mLbm->DoCycle(mSimulationState.DoRendering, mNet, *mLocalLatDat, mLbTime,
                                 mMPISendTime, mMPIWaitTime);
 
       if ( (restart = mLbm->IsUnstable(*mLocalLatDat)) != false)
@@ -229,7 +228,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 #endif
 #ifndef NO_STEER
 
-      if (total_time_steps % BCAST_FREQ == 0 && hemelb::vis::doRendering && !write_snapshot_image)
+      if (total_time_steps % BCAST_FREQ == 0 && mSimulationState.DoRendering
+          && !write_snapshot_image)
       {
         hemelb::vis::controller->render(RECV_BUFFER_A, mGlobLatDat, mNetworkTopology);
 
@@ -239,9 +239,9 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
           for (int i = 0; i < hemelb::vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
           {
             if (hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.isRt
-                && int(hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.i)
+                && int (hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.i)
                     == hemelb::vis::controller->mouse_x
-                && int(hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.j)
+                && int (hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.j)
                     == hemelb::vis::controller->mouse_y)
             {
               double mouse_pressure, mouse_stress;
