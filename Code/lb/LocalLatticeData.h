@@ -20,7 +20,7 @@ namespace hemelb
     class LocalLatticeData
     {
       public:
-        LocalLatticeData(int iLocalFluidSites, int iSharedFluidSites);
+        LocalLatticeData(int iLocalFluidSites);
         ~LocalLatticeData();
 
         int GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const;
@@ -35,6 +35,7 @@ namespace hemelb
         void SetWallNormal(int iSiteIndex, const double iNormal[3]);
         void SetDistanceToWall(int iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
 
+        void SetSharedSiteCount(int iSharedCount);
       public:
         int my_inner_sites;
         int my_inner_collisions[COLLISION_TYPES];
