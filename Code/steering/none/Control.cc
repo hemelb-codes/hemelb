@@ -24,7 +24,6 @@ namespace hemelb
 
     // Broadcast the steerable parameters to all tasks.
     void Control::UpdateSteerableParameters(bool shouldRenderForSnapshot,
-                                            int* perform_rendering,
                                             hemelb::lb::SimulationState &iSimulationState,
                                             hemelb::vis::Control* visController,
                                             lb::LBM* lbm)

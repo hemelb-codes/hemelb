@@ -25,11 +25,10 @@ namespace hemelb
                                 const lb::LbmParameters *iLbmParams);
 
         void
-            UpdateSteerableParameters(bool shouldRenderForSnapshot,
-                                      int* perform_rendering,
-                                      hemelb::lb::SimulationState &iSimulationState,
-                                      hemelb::vis::Control* visController,
-                                      lb::LBM* lbm);
+        UpdateSteerableParameters(bool shouldRenderForSnapshot,
+                                  hemelb::lb::SimulationState &iSimulationState,
+                                  hemelb::vis::Control* visController,
+                                  lb::LBM* lbm);
         bool ShouldRenderForNetwork();
 
         char host_name[255];
@@ -62,10 +61,9 @@ namespace hemelb
 
         // Do the MPI send to spread the params
         void
-            BroadcastSteerableParameters(int *perform_rendering,
-                                         hemelb::lb::SimulationState &lSimulationState,
-                                         vis::Control *visControl,
-                                         lb::LBM* lbm);
+        BroadcastSteerableParameters(hemelb::lb::SimulationState &lSimulationState,
+                                     vis::Control *visControl,
+                                     lb::LBM* lbm);
 
         NetworkThread* mNetworkThread;
     };

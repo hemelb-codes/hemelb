@@ -2,7 +2,7 @@
 include $(MK)/header.mk
 
 TARGETS = $(EXE) hlbTest
-SUBDIRS = vis steering lb io debug topology xml parmetis util
+SUBDIRS = steering vis lb io debug topology xml parmetis util
 
 $(EXE)_DEPS = D3Q15.o \
 	net.o \
