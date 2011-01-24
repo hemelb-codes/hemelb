@@ -38,8 +38,7 @@ void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
 
   bLocalLatDat
       = new hemelb::lb::LocalLatticeData(
-                                         mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()],
-                                         mNetworkTopology->TotalSharedFs);
+                                         mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]);
 
   CountCollisionTypes(bLocalLatDat, iGlobLatDat, lThisRankSiteData);
 
@@ -294,7 +293,7 @@ void Net::CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
     bLocalLatDat->my_inner_collisions[m] = 0;
   }
 
-  mNetworkTopology->TotalSharedFs = 0; // shared SharedFCount within Net struct.
+  mNetworkTopology->TotalSharedFs = 0;
 
   int lSiteIndexOnProc = 0;
 
@@ -517,6 +516,8 @@ void Net::CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
       }
     }
   }
+
+  bLocalLatDat->SetSharedSiteCount(mNetworkTopology->TotalSharedFs);
 }
 
 void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
