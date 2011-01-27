@@ -223,7 +223,8 @@ int *ismalloc(int, int, char *);
 idxtype *idxsmalloc(int, idxtype, char *);
 void *GKmalloc(int, char *);
 #endif
-/*void GKfree(void **,...); */
+/* The next line was commented out, but this function is used */
+void GKfree(void **,...);
 int *iset(int n, int val, int *x);
 idxtype * idxset(int n, idxtype val, idxtype *x);
 int idxamax(int n, idxtype *x);
