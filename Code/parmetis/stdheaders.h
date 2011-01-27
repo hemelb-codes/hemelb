@@ -14,7 +14,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
+/* This include is redundant as malloc etc are in stdlib.h and
+   malloc.h not guaranteed present on POSIX */
+/* #include <malloc.h> */
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
