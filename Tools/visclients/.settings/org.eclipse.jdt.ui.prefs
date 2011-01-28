@@ -1,5 +1,7 @@
-#Mon Jun 30 14:54:43 BST 2008
+#Fri Jan 28 15:09:18 GMT 2011
 eclipse.preferences.version=1
+formatter_profile=_HemeLBJava
+formatter_settings_version=11
 org.eclipse.jdt.ui.exception.name=e
 org.eclipse.jdt.ui.gettersetter.use.is=true
 org.eclipse.jdt.ui.javadoc=false

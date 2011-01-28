@@ -51,7 +51,7 @@ public class MyGridFtp {
         	try {
          v =client.list();
         	} catch (Exception e) {
-        		System.err.println("execption on list");
+        		System.err.println("exception on list");
         		e.printStackTrace();
         	}
         	
@@ -63,7 +63,7 @@ public class MyGridFtp {
         	try{
         	client.changeDir(path);
         	} catch (Exception e) {
-        		System.err.println("execption on cd");
+        		System.err.println("exception on cd");
 
         	}
         	}
