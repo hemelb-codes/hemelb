@@ -1,1 +1,0 @@
-mpCC_r -I/home/mazzeo/RealityGrid/file/reg_steer_lib/include config.cc eVizRLEUtil.c io.cc lb.cc main.cc rt.cc topology.cc -o hemelb -O2 -lm
