@@ -72,7 +72,7 @@ void ParMETIS_V3_PartGeomKway(idxtype *vtxdist, idxtype *xadj, idxtype *adjncy,
     nvtxs = vtxdist[1];
 
     if (incon == 1) {
-      METIS_WPartGraphKway(&nvtxs, xadj, adjncy, vwgt, adjwgt, &iwgtflag, &inumflag, 
+      METIS_WPartGraphKway2(&nvtxs, xadj, adjncy, vwgt, adjwgt, &iwgtflag, &inumflag, 
             &inparts, itpwgts, moptions, edgecut, part);
     }
     else {
