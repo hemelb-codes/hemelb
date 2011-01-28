@@ -40,7 +40,7 @@ namespace hemelb
 
         struct PixelId i;
 
-        void rawWritePixel(unsigned int *pixel_index,
+        void rawWritePixel(int *pixel_index,
                            unsigned char rgb_data[],
                            ColourPaletteFunction *colourPalette,
                            lb::StressTypes iLbmStressType);
