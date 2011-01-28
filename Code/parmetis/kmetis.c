@@ -67,7 +67,7 @@ void ParMETIS_V3_PartKway(idxtype *vtxdist, idxtype *xadj, idxtype *adjncy, idxt
     nvtxs = vtxdist[1] - vtxdist[0];
 
     if (incon == 1) {
-      METIS_WPartGraphKway(&nvtxs, xadj, adjncy, vwgt, adjwgt, &iwgtflag, &inumflag, 
+      METIS_WPartGraphKway2(&nvtxs, xadj, adjncy, vwgt, adjwgt, &iwgtflag, &inumflag, 
             &inparts, itpwgts, moptions, edgecut, part);
     }
     else {

@@ -82,8 +82,8 @@ int Mc_Diffusion(CtrlType *ctrl, GraphType *graph, idxtype *vtxdist,
 
   wsize = amax(sizeof(float)*nparts*6, sizeof(idxtype)*(nvtxs+nparts*2+1));
   workspace = (float *)GKmalloc(wsize, "Mc_Diffusion: workspace");
-  degrees = GKmalloc(nedges*sizeof(EdgeType), "Mc_Diffusion: degrees");
-  rinfo = graph->rinfo = GKmalloc(nvtxs*sizeof(RInfoType), "Mc_Diffusion: rinfo");
+  degrees = (EdgeType *)GKmalloc(nedges*sizeof(EdgeType), "Mc_Diffusion: degrees");
+  rinfo = graph->rinfo = (RInfoType *)GKmalloc(nvtxs*sizeof(RInfoType), "Mc_Diffusion: rinfo");
 
   /******************************************/
   /* construct subdomain connectivity graph */
