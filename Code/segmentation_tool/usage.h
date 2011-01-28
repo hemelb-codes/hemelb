@@ -3,7 +3,8 @@
 
 #include "stdio.h"
 
-
-void visUsage (char *progname);
-
+class Usage{
+  public:
+static void visUsage (char *progname);
+};
 #endif // USAGE

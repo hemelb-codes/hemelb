@@ -1,7 +1,0 @@
-CC=mpicxx
-MPIRUN=
-EXE=hemelb
-DEFS=
-FLAGS=-O3 -xW -ipo -pthread
-INCLUDES=
-LIBS=
