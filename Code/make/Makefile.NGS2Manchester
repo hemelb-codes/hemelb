@@ -1,0 +1,7 @@
+CC=mpicxx
+MPIRUN=
+EXE=hemelb
+DEFS=-DNGS2Manchester
+FLAGS=-O3 -ipo -pthread
+INCLUDES=
+LIBS=
