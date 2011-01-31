@@ -58,7 +58,7 @@ namespace hemelb
     {
 #ifndef NO_STEER
       pthread_mutex_lock(&var_lock);
-      //  doRendering = val;
+      mSimState->DoRendering = val;
       pthread_mutex_unlock(&var_lock);
 #endif
     }
@@ -210,13 +210,23 @@ namespace hemelb
           int bytesSent = 0;
 
           {
-            int pixeldatabytes = 8;
+            const int pixeldatabytes = 8;
             char *xdr_pixel = new char[pixeldatabytes];
             io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel, pixeldatabytes);
 
             pixelWriter << vis::controller->mScreen.PixelsX << vis::controller->mScreen.PixelsY;
 
-            Network::send_all(new_fd, xdr_pixel, pixeldatabytes);
+            int pixelDataBytesSent = Network::send_all(new_fd, xdr_pixel, pixeldatabytes);
+
+            if (pixelDataBytesSent < 0)
+            {
+              HandleBrokenPipe();
+              is_broken_pipe = 1;
+              break;
+            }
+
+            bytesSent += pixelDataBytesSent;
+
             delete xdr_pixel;
           }
 
@@ -242,11 +252,8 @@ namespace hemelb
 
           if (detailsBytesSent < 0)
           {
-            printf("RG thread: broken network pipe...\n");
+            HandleBrokenPipe();
             is_broken_pipe = 1;
-            // pthread_mutex_unlock ( &LOCK );
-            sem_post(&mSteeringController->nrl);
-            setRenderState(0);
             break;
           }
           else
@@ -258,11 +265,8 @@ namespace hemelb
 
           if (frameBytesSent < 0)
           {
-            printf("RG thread: broken network pipe...\n");
+            HandleBrokenPipe();
             is_broken_pipe = 1;
-            // pthread_mutex_unlock ( &LOCK );
-            sem_post(&mSteeringController->nrl);
-            setRenderState(0);
             break;
           }
           else
@@ -273,7 +277,17 @@ namespace hemelb
           SimulationParameters* sim = new SimulationParameters();
           sim->collectGlobalVals(mLbm, mSimState);
           int sizeToSend = sim->paramsSizeB;
-          Network::send_all(new_fd, sim->pack(), sizeToSend);
+          int simParamsBytesSent = Network::send_all(new_fd, sim->pack(), sizeToSend);
+
+          if (simParamsBytesSent < 0)
+          {
+            HandleBrokenPipe();
+            is_broken_pipe = 1;
+            break;
+          }
+
+          bytesSent += simParamsBytesSent;
+
           // printf ("Sim bytes sent %i\n", sizeToSend);
           delete sim;
 
@@ -315,6 +329,13 @@ namespace hemelb
       } // while(1)
     }
 
+    void NetworkThread::HandleBrokenPipe()
+    {
+      printf("RG thread: broken network pipe...\n");
+      mSteeringController->sending_frame = false;
+      sem_post(&mSteeringController->nrl);
+      setRenderState(0);
+    }
   }
 
 }

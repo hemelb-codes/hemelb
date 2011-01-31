@@ -32,6 +32,8 @@ namespace hemelb
       private:
         void DoWork(void);
 
+        void HandleBrokenPipe();
+
         lb::LBM* mLbm;
         Control* mSteeringController;
         lb::SimulationState* mSimState;
