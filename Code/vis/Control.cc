@@ -16,8 +16,7 @@ namespace hemelb
     // make a global controller
     Control *controller;
 
-    Control::Control(lb::StressTypes iStressType,
-                     lb::GlobalLatticeData &iGlobLatDat)
+    Control::Control(lb::StressTypes iStressType, lb::GlobalLatticeData &iGlobLatDat)
     {
       mStressType = iStressType;
 
@@ -28,8 +27,7 @@ namespace hemelb
       vis->half_dim[1] = 0.5F * float (iGlobLatDat.GetYSiteCount());
       vis->half_dim[2] = 0.5F * float (iGlobLatDat.GetZSiteCount());
 
-      vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1],
-                                                             vis->half_dim[2]));
+      vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
       col_pixels_max = COLOURED_PIXELS_MAX;
 
       col_pixel_recv[0] = new ColPixel[col_pixels_max];
@@ -49,13 +47,11 @@ namespace hemelb
                              lb::GlobalLatticeData &iGlobLatDat,
                              lb::LocalLatticeData &iLocalLatDat)
     {
-      myRayTracer
-          = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
+      myRayTracer = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
       myGlypher = new GlyphDrawer(&iGlobLatDat, &iLocalLatDat);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(iNetworkTopology, iLocalLatDat,
-                                        iGlobLatDat);
+      myStreaker = new StreaklineDrawer(iNetworkTopology, iLocalLatDat, iGlobLatDat);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -107,8 +103,8 @@ namespace hemelb
       // Just do using the other Rotate function, swapping for x and y
       // (to swap order) and giving the inverse of the sine values
       // (to swap direction).
-      RotateAboutXThenY(-iSinThetaY, iCosThetaY, -iSinThetaX, iCosThetaX, iYIn,
-                        iXIn, iZIn, oYOut, oXOut, oZOut);
+      RotateAboutXThenY(-iSinThetaY, iCosThetaY, -iSinThetaX, iCosThetaX, iYIn, iXIn, iZIn, oYOut,
+                        oXOut, oZOut);
     }
 
     void Control::project(float p1[], float p2[])
@@ -121,8 +117,8 @@ namespace hemelb
       }
 
       UndoRotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation,
-                            mViewpoint.SinYRotation, mViewpoint.CosYRotation,
-                            x1[0], x1[1], x1[2], x2[0], x2[1], x2[2]);
+                            mViewpoint.SinYRotation, mViewpoint.CosYRotation, x1[0], x1[1], x1[2],
+                            x2[0], x2[1], x2[2]);
 
       float temp = mViewpoint.dist / (p2[2] = -x2[2]);
 
@@ -168,18 +164,14 @@ namespace hemelb
 
       mViewpoint.dist = dist;
 
-      RotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation,
-                        mViewpoint.SinYRotation, mViewpoint.CosYRotation,
-                        mScreen.MaxXValue, 0.0F, 0.0F,
-                        mScreen.UnitVectorProjectionX[0],
-                        mScreen.UnitVectorProjectionX[1],
+      RotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation, mViewpoint.SinYRotation,
+                        mViewpoint.CosYRotation, mScreen.MaxXValue, 0.0F, 0.0F,
+                        mScreen.UnitVectorProjectionX[0], mScreen.UnitVectorProjectionX[1],
                         mScreen.UnitVectorProjectionX[2]);
 
-      RotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation,
-                        mViewpoint.SinYRotation, mViewpoint.CosYRotation, 0.0F,
-                        mScreen.MaxYValue, 0.0F,
-                        mScreen.UnitVectorProjectionY[0],
-                        mScreen.UnitVectorProjectionY[1],
+      RotateAboutXThenY(mViewpoint.SinXRotation, mViewpoint.CosXRotation, mViewpoint.SinYRotation,
+                        mViewpoint.CosYRotation, 0.0F, mScreen.MaxYValue, 0.0F,
+                        mScreen.UnitVectorProjectionY[0], mScreen.UnitVectorProjectionY[1],
                         mScreen.UnitVectorProjectionY[2]);
 
       mScreen.ScaleX = (float) iPixels_x / (2.F * mScreen.MaxXValue);
@@ -187,15 +179,12 @@ namespace hemelb
 
       temp = dist / rad;
 
-      mScreen.vtx[0] = (mViewpoint.x[0] + temp * (iLocal_ctr_x
-          - mViewpoint.x[0])) - mScreen.UnitVectorProjectionX[0]
-          - mScreen.UnitVectorProjectionY[0] - mViewpoint.x[0];
-      mScreen.vtx[1] = (mViewpoint.x[1] + temp * (iLocal_ctr_y
-          - mViewpoint.x[1])) - mScreen.UnitVectorProjectionX[1]
-          - mScreen.UnitVectorProjectionY[1] - mViewpoint.x[1];
-      mScreen.vtx[2] = (mViewpoint.x[2] + temp * (iLocal_ctr_z
-          - mViewpoint.x[2])) - mScreen.UnitVectorProjectionX[2]
-          - mScreen.UnitVectorProjectionY[2] - mViewpoint.x[2];
+      mScreen.vtx[0] = (mViewpoint.x[0] + temp * (iLocal_ctr_x - mViewpoint.x[0]))
+          - mScreen.UnitVectorProjectionX[0] - mScreen.UnitVectorProjectionY[0] - mViewpoint.x[0];
+      mScreen.vtx[1] = (mViewpoint.x[1] + temp * (iLocal_ctr_y - mViewpoint.x[1]))
+          - mScreen.UnitVectorProjectionX[1] - mScreen.UnitVectorProjectionY[1] - mViewpoint.x[1];
+      mScreen.vtx[2] = (mViewpoint.x[2] + temp * (iLocal_ctr_z - mViewpoint.x[2]))
+          - mScreen.UnitVectorProjectionX[2] - mScreen.UnitVectorProjectionY[2] - mViewpoint.x[2];
 
       mScreen.UnitVectorProjectionX[0] *= (2.F / (float) iPixels_x);
       mScreen.UnitVectorProjectionX[1] *= (2.F / (float) iPixels_x);
@@ -206,100 +195,98 @@ namespace hemelb
       mScreen.UnitVectorProjectionY[2] *= (2.F / (float) iPixels_y);
     }
 
-    void Control::MergePixels(ColPixel *col_pixel1, ColPixel *col_pixel2)
+    /**
+     * Merge data from the first ColPixel argument into the second
+     * ColPixel argument.
+     */
+    void Control::MergePixels(const ColPixel *fromPixel, ColPixel *toPixel)
     {
       // Merge raytracing data
 
-      if (col_pixel1->i.isRt && col_pixel2->i.isRt)
+      if (fromPixel->i.isRt && toPixel->i.isRt)
       {
         // Both are ray-tracing
-        col_pixel2->vel_r += col_pixel1->vel_r;
-        col_pixel2->vel_g += col_pixel1->vel_g;
-        col_pixel2->vel_b += col_pixel1->vel_b;
+        toPixel->vel_r += fromPixel->vel_r;
+        toPixel->vel_g += fromPixel->vel_g;
+        toPixel->vel_b += fromPixel->vel_b;
 
         if (mStressType != lb::ShearStress)
         {
-          col_pixel2->stress_r += col_pixel1->stress_r;
-          col_pixel2->stress_g += col_pixel1->stress_g;
-          col_pixel2->stress_b += col_pixel1->stress_b;
+          toPixel->stress_r += fromPixel->stress_r;
+          toPixel->stress_g += fromPixel->stress_g;
+          toPixel->stress_b += fromPixel->stress_b;
         }
 
-        col_pixel2->dt += col_pixel1->dt;
+        toPixel->dt += fromPixel->dt;
 
-        if (col_pixel1->t < col_pixel2->t)
+        if (fromPixel->t < toPixel->t)
         {
-          col_pixel2->t = col_pixel1->t;
-          col_pixel2->density = col_pixel1->density;
-          col_pixel2->stress = col_pixel1->stress;
+          toPixel->t = fromPixel->t;
+          toPixel->density = fromPixel->density;
+          toPixel->stress = fromPixel->stress;
         }
 
       }
-      else if (col_pixel1->i.isRt && !col_pixel2->i.isRt)
+      else if (fromPixel->i.isRt && !toPixel->i.isRt)
       {
-        // Only 1 is ray-tracing
-        col_pixel2->vel_r = col_pixel1->vel_r;
-        col_pixel2->vel_g = col_pixel1->vel_g;
-        col_pixel2->vel_b = col_pixel1->vel_b;
+        // Only the 'from' merge-pixel is ray-tracing
+        toPixel->vel_r = fromPixel->vel_r;
+        toPixel->vel_g = fromPixel->vel_g;
+        toPixel->vel_b = fromPixel->vel_b;
 
         if (mStressType != lb::ShearStress)
         {
-          col_pixel2->stress_r = col_pixel1->stress_r;
-          col_pixel2->stress_g = col_pixel1->stress_g;
-          col_pixel2->stress_b = col_pixel1->stress_b;
+          toPixel->stress_r = fromPixel->stress_r;
+          toPixel->stress_g = fromPixel->stress_g;
+          toPixel->stress_b = fromPixel->stress_b;
         }
 
-        col_pixel2->t = col_pixel1->t;
-        col_pixel2->dt = col_pixel1->dt;
-        col_pixel2->density = col_pixel1->density;
-        col_pixel2->stress = col_pixel1->stress;
+        toPixel->t = fromPixel->t;
+        toPixel->dt = fromPixel->dt;
+        toPixel->density = fromPixel->density;
+        toPixel->stress = fromPixel->stress;
 
-        col_pixel2->i.isRt = true;
+        toPixel->i.isRt = true;
       }
-      // Done merging ray-tracing
+      // Done merging ray-tracing - (last combinations would be if from-pixel has no ray-tracing data)
 
       // Now merge glyph data
       if (mStressType != lb::ShearStress && (mode == 0 || mode == 1))
       {
-
-        if (col_pixel1->i.isGlyph)
+        if (fromPixel->i.isGlyph)
         {
-          col_pixel2->i.isGlyph = true;
+          toPixel->i.isGlyph = true;
         }
-
       }
       else
       {
-
 #ifndef NO_STREAKLINES
         // merge streakline data
-        if (col_pixel1->i.isStreakline && col_pixel2->i.isStreakline)
+        if (fromPixel->i.isStreakline)
         {
-
-          if (col_pixel1->particle_z < col_pixel2->particle_z)
+          if (!toPixel->i.isStreakline)
           {
-            col_pixel2->particle_z = col_pixel1->particle_z;
-            col_pixel2->particle_vel = col_pixel1->particle_vel;
-            col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
+            toPixel->particle_z = fromPixel->particle_z;
+            toPixel->particle_vel = fromPixel->particle_vel;
+            toPixel->particle_inlet_id = fromPixel->particle_inlet_id;
+
+            toPixel->i.isStreakline = true;
           }
-
-        }
-        else if (col_pixel1->i.isStreakline && !col_pixel2->i.isStreakline)
-        {
-          col_pixel2->particle_z = col_pixel1->particle_z;
-          col_pixel2->particle_vel = col_pixel1->particle_vel;
-          col_pixel2->particle_inlet_id = col_pixel1->particle_inlet_id;
-
-          col_pixel2->i.isStreakline = true;
+          else
+          {
+            if (fromPixel->particle_z < toPixel->particle_z)
+            {
+              toPixel->particle_z = fromPixel->particle_z;
+              toPixel->particle_vel = fromPixel->particle_vel;
+              toPixel->particle_inlet_id = fromPixel->particle_inlet_id;
+            }
+          }
         }
 #endif
       }
-
     }
 
-    void Control::RegisterSite(int i,
-                               float density,
-                               float velocity,
-                               float stress)
+    void Control::RegisterSite(int i, float density, float velocity, float stress)
     {
       myRayTracer->UpdateClusterVoxel(i, density, velocity, stress);
     }
@@ -336,39 +323,31 @@ namespace hemelb
 
     void Control::renderLine(float p1[], float p2[])
     {
-      int pixels_x, pixels_y;
-      int x, y;
-      int x1, y1;
-      int x2, y2;
-      int dx, dy;
-      int incE, incNE;
-      int d;
-      int m;
+      // Store end points of the line and 'current' point (x and y).
+      int x1, y1, x2, y2;
 
-      ColPixel col_pixel;
+      int x = int (p1[0]);
+      int y = int (p1[1]);
 
-      pixels_x = mScreen.PixelsX;
-      pixels_y = mScreen.PixelsY;
-
-      x1 = int (p1[0]);
-      y1 = int (p1[1]);
-
-      x2 = int (p2[0]);
-      y2 = int (p2[1]);
-
-      if (x2 < x1)
+      if (int (p2[0]) < int (p1[0]))
       {
-        x = x1;
-        y = y1;
-        x1 = x2;
-        y1 = y2;
+        x1 = int (p2[0]);
+        y1 = int (p2[1]);
         x2 = x;
         y2 = y;
       }
+      else
+      {
+        x1 = x;
+        y1 = y;
 
-      x = x1;
-      y = y1;
+        x2 = int (p2[0]);
+        y2 = int (p2[1]);
+      }
 
+      // Initialise dy with the absolute difference in y between endpoints of the line, and
+      // m with the sign (-1 / +1) of the gradient.
+      int dy, m;
       if (y1 < y2)
       {
         dy = y2 - y1;
@@ -381,19 +360,23 @@ namespace hemelb
         m = -1;
       }
 
-      dx = x2 - x1;
+      // Set dx with the difference between x-values at the endpoints.
+      int dx = x2 - x1;
+
+      // Set up the iteration in general terms.
+      //int incE, d, incNE, whileVariable, whileLimit, otherVariable, otherVariableIncrement;
 
       if (dx > dy)
       {
-        incE = dy;
-        d = dy - dx;
-        incNE = d;
+        int incE = dy;
+        int d = dy - dx;
+        int incNE = d;
 
         while (x <= x2)
         {
-          if (! (x < 0 || x >= pixels_x || y < 0 || y >= pixels_y))
+          if (! (x < 0 || x >= mScreen.PixelsX || y < 0 || y >= mScreen.PixelsY))
           {
-
+            ColPixel col_pixel;
             col_pixel.i = PixelId(x, y);
             col_pixel.i.isGlyph = true;
 
@@ -416,15 +399,15 @@ namespace hemelb
       }
       else if (y1 < y2)
       {
-        incE = dx;
-        d = dx - dy;
-        incNE = d;
+        int incE = dx;
+        int d = dx - dy;
+        int incNE = d;
 
         while (y <= y2)
         {
-          if (! (x < 0 || x >= pixels_x || y < 0 || y >= pixels_y))
+          if (! (x < 0 || x >= mScreen.PixelsX || y < 0 || y >= mScreen.PixelsY))
           {
-
+            ColPixel col_pixel;
             col_pixel.i = PixelId(x, y);
             col_pixel.i.isGlyph = true;
 
@@ -447,15 +430,15 @@ namespace hemelb
       }
       else
       {
-        incE = dx;
-        d = dx - dy;
-        incNE = d;
+        int incE = dx;
+        int d = dx - dy;
+        int incNE = d;
 
         while (y >= y2)
         {
-          if (! (x < 0 || x >= pixels_x || y < 0 || y >= pixels_y))
+          if (! (x < 0 || x >= mScreen.PixelsX || y < 0 || y >= mScreen.PixelsY))
           {
-
+            ColPixel col_pixel;
             col_pixel.i = PixelId(x, y);
             col_pixel.i.isGlyph = true;
 
@@ -504,8 +487,7 @@ namespace hemelb
       }
     }
 
-    void Control::compositeImage(int recv_buffer_id,
-                                 const topology::NetworkTopology * iNetTopology)
+    void Control::compositeImage(int recv_buffer_id, const topology::NetworkTopology * iNetTopology)
     {
       // here, the communications needed to composite the image are
       // handled through a binary tree pattern and parallel pairwise
@@ -522,8 +504,7 @@ namespace hemelb
       ColPixel *col_pixel1, *col_pixel2;
 
 #ifndef NEW_COMPOSITING
-      memcpy(col_pixel_recv[recv_buffer_id], col_pixel_send, col_pixels
-          * sizeof(ColPixel));
+      memcpy(col_pixel_recv[recv_buffer_id], col_pixel_send, col_pixels * sizeof(ColPixel));
 #else
       if (net->id != 0)
       {
@@ -548,15 +529,13 @@ namespace hemelb
         {
           send_id = recv_id + comm_inc;
 
-          if (iNetTopology->GetLocalRank() != recv_id
-              && iNetTopology->GetLocalRank() != send_id)
+          if (iNetTopology->GetLocalRank() != recv_id && iNetTopology->GetLocalRank() != send_id)
           {
             recv_id += comm_inc << 1;
             continue;
           }
 
-          if (send_id >= iNetTopology->GetProcessorCount() || recv_id
-              == send_id)
+          if (send_id >= iNetTopology->GetProcessorCount() || recv_id == send_id)
           {
             recv_id += comm_inc << 1;
             continue;
@@ -568,20 +547,19 @@ namespace hemelb
 
             if (col_pixels > 0)
             {
-              MPI_Send(col_pixel_send, col_pixels, ColPixel::getMpiType(),
-                       recv_id, 20, MPI_COMM_WORLD);
+              MPI_Send(col_pixel_send, col_pixels, ColPixel::getMpiType(), recv_id, 20,
+                       MPI_COMM_WORLD);
             }
 
           }
           else
           {
-            MPI_Recv(&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD,
-                     &status);
+            MPI_Recv(&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD, &status);
 
             if (col_pixels_temp > 0)
             {
-              MPI_Recv(col_pixel_send, col_pixels_temp, ColPixel::getMpiType(),
-                       send_id, 20, MPI_COMM_WORLD, &status);
+              MPI_Recv(col_pixel_send, col_pixels_temp, ColPixel::getMpiType(), send_id, 20,
+                       MPI_COMM_WORLD, &status);
             }
 
             for (n = 0; n < col_pixels_temp; n++)
@@ -590,11 +568,9 @@ namespace hemelb
               i = col_pixel1->i.i;
               j = col_pixel1->i.j;
 
-              if (* (col_pixel_id_p = &col_pixel_id[i * mScreen.PixelsY + j])
-                  == -1)
+              if (* (col_pixel_id_p = &col_pixel_id[i * mScreen.PixelsY + j]) == -1)
               {
-                col_pixel2 = &col_pixel_recv[recv_buffer_id][*col_pixel_id_p
-                    = col_pixels];
+                col_pixel2 = &col_pixel_recv[recv_buffer_id][*col_pixel_id_p = col_pixels];
 
                 memcpy(col_pixel2, col_pixel1, sizeof(ColPixel));
                 ++col_pixels;
@@ -609,11 +585,9 @@ namespace hemelb
 
             }
           }
-          if (m < iNetTopology->GetProcessorCount()
-              && iNetTopology->GetLocalRank() == recv_id)
+          if (m < iNetTopology->GetProcessorCount() && iNetTopology->GetLocalRank() == recv_id)
           {
-            memcpy(col_pixel_send, col_pixel_recv[recv_buffer_id], col_pixels
-                * sizeof(ColPixel));
+            memcpy(col_pixel_send, col_pixel_recv[recv_buffer_id], col_pixels * sizeof(ColPixel));
           }
 
           recv_id += comm_inc << 1;
@@ -652,8 +626,7 @@ namespace hemelb
     {
       if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
       {
-        pixels_max = util::max(2 * pixels_max, mScreen.PixelsX
-            * mScreen.PixelsY);
+        pixels_max = util::max(2 * pixels_max, mScreen.PixelsX * mScreen.PixelsY);
 
         col_pixel_id = (int *) realloc(col_pixel_id, sizeof(int) * pixels_max);
       }
@@ -666,8 +639,7 @@ namespace hemelb
         myGlypher->render();
       }
 #ifndef NO_STREAKLINES
-      if (shouldDrawStreaklines
-          && (mStressType == lb::ShearStress || mode == 2))
+      if (shouldDrawStreaklines && (mStressType == lb::ShearStress || mode == 2))
       {
         myStreaker->render(iGlobLatDat);
       }
@@ -683,8 +655,7 @@ namespace hemelb
 #endif
       for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
       {
-        col_pixel_id[col_pixel_send[m].i.i * mScreen.PixelsY
-            + col_pixel_send[m].i.j] = -1;
+        col_pixel_id[col_pixel_send[m].i.i * mScreen.PixelsY + col_pixel_send[m].i.j] = -1;
       }
     }
 
@@ -696,22 +667,18 @@ namespace hemelb
 
       writer << mode;
 
-      writer << physical_pressure_threshold_min
-          << physical_pressure_threshold_max << physical_velocity_threshold_max
-          << physical_stress_threshold_max;
+      writer << physical_pressure_threshold_min << physical_pressure_threshold_max
+          << physical_velocity_threshold_max << physical_stress_threshold_max;
 
-      writer << mScreen.PixelsX << mScreen.PixelsY
-          << col_pixels_recv[recv_buffer_id];
+      writer << mScreen.PixelsX << mScreen.PixelsY << col_pixels_recv[recv_buffer_id];
 
       for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
       {
-        writer.writePixel(&col_pixel_recv[recv_buffer_id][n], ColourPalette,
-                          mStressType);
+        writer.writePixel(&col_pixel_recv[recv_buffer_id][n], ColourPalette, mStressType);
       }
     }
 
-    void Control::setMouseParams(double iPhysicalPressure,
-                                 double iPhysicalStress)
+    void Control::setMouseParams(double iPhysicalPressure, double iPhysicalStress)
     {
       mouse_pressure = iPhysicalPressure;
       mouse_stress = iPhysicalStress;
