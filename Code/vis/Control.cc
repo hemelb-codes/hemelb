@@ -503,16 +503,10 @@ namespace hemelb
 
       ColPixel *col_pixel1, *col_pixel2;
 
-#ifndef NEW_COMPOSITING
-      memcpy(col_pixel_recv[recv_buffer_id], col_pixel_send, col_pixels * sizeof(ColPixel));
-#else
-      if (net->id != 0)
+      if (!iNetTopology->IsCurrentProcTheIOProc())
       {
-        memcpy (col_pixel_recv[recv_buffer_id],
-            col_pixel_send,
-            col_pixels * sizeof(ColPixel));
+        memcpy(col_pixel_recv[recv_buffer_id], col_pixel_send, col_pixels * sizeof(ColPixel));
       }
-#endif
 
       comm_inc = 1;
       m = 1;
@@ -520,11 +514,8 @@ namespace hemelb
       while (m < iNetTopology->GetProcessorCount())
       {
         m <<= 1;
-#ifndef NEW_COMPOSITING
-        int start_id = 0;
-#else
         int start_id = 1;
-#endif
+
         for (recv_id = start_id; recv_id < iNetTopology->GetProcessorCount();)
         {
           send_id = recv_id + comm_inc;
@@ -594,30 +585,29 @@ namespace hemelb
         }
         comm_inc <<= 1;
       }
-#ifdef NEW_COMPOSITING
-      if (iNetTopology->LocalRank == 1)
+
+      if (iNetTopology->GetLocalRank() == 1)
       {
-        MPI_Send (&col_pixels, 1, MPI_INT, 0, 20, MPI_COMM_WORLD);
+        MPI_Send(&col_pixels, 1, MPI_INT, 0, 20, MPI_COMM_WORLD);
 
         if (col_pixels > 0)
         {
-          MPI_Send (col_pixel_recv[recv_buffer_id], col_pixels, MPI_col_pixel_type,
-              0, 20, MPI_COMM_WORLD);
+          MPI_Send(col_pixel_recv[recv_buffer_id], col_pixels, ColPixel::getMpiType(), 0, 20,
+                   MPI_COMM_WORLD);
         }
 
       }
-      else if (iNetTopology->LocalRank == 0)
+      else if (iNetTopology->GetLocalRank() == 0)
       {
-        MPI_Recv (&col_pixels, 1, MPI_INT, 1, 20, MPI_COMM_WORLD, &status);
+        MPI_Recv(&col_pixels, 1, MPI_INT, 1, 20, MPI_COMM_WORLD, &status);
 
         if (col_pixels > 0)
         {
-          MPI_Recv (col_pixel_recv[recv_buffer_id], col_pixels, MPI_col_pixel_type,
-              1, 20, MPI_COMM_WORLD, &status);
+          MPI_Recv(col_pixel_recv[recv_buffer_id], col_pixels, ColPixel::getMpiType(), 1, 20,
+                   MPI_COMM_WORLD, &status);
         }
 
       }
-#endif // NEW_COMPOSITING
     }
 
     void Control::render(int recv_buffer_id,
@@ -647,12 +637,7 @@ namespace hemelb
       compositeImage(recv_buffer_id, iNetTopology);
 
       col_pixels_recv[recv_buffer_id] = col_pixels;
-#ifndef NEW_COMPOSITING
-      if (iNetTopology->IsCurrentProcTheIOProc())
-      {
-        return;
-      }
-#endif
+
       for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
       {
         col_pixel_id[col_pixel_send[m].i.i * mScreen.PixelsY + col_pixel_send[m].i.j] = -1;
