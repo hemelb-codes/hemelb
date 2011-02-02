@@ -1,17 +1,4 @@
 import wx
-from wx.lib.masked import NumCtrl
-
-class VectorCtrl(object):
-    """Simple container of three TextCtrl's for a vector quantity.
-    """
-    
-    def __init__(self, parent):
-        self.x = NumCtrl(parent, style=wx.TE_PROCESS_ENTER, fractionWidth=6)
-        self.y = NumCtrl(parent, style=wx.TE_PROCESS_ENTER, fractionWidth=6)
-        self.z = NumCtrl(parent, style=wx.TE_PROCESS_ENTER, fractionWidth=6)
-        return
-    
-    pass
 
 class LayoutContainer(object):
     """Represents a BoxSizer. It's children can be other

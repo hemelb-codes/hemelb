@@ -4,62 +4,53 @@ from vtk import vtkRenderer, vtkPolyDataMapper, vtkActor, vtkModifiedBSPTree
 
 from vtk.wx.wxVTKRenderWindowInteractor import wxVTKRenderWindowInteractor
 
-from Delegator import Delegator, ParentDelegator
-from Layout import H, V, StretchSpacer
-from Placers import SeedPlacer
+from HemeLbSetupTool.View.Layout import H, V, StretchSpacer
+from HemeLbSetupTool.attic.Placers import SeedPlacer
+from HemeLbSetupTool.Bindings.Bindings import WxActionBinding
 
 import pdb
 
-class VtkViewPanel(wx.Panel, ParentDelegator):
-    def __init__(self, *args, **kwargs):
+class VtkViewPanel(wx.Panel):
+    def __init__(self, controller, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
-        ParentDelegator.__init__(self)
+        self.controller = controller
         
-        self.exports.debugButton = wx.Button(self, label="DEBUG")
+        self.debugButton = wx.Button(self, label="DEBUG")
+        self.controller.BindAction('Debug', WxActionBinding(self.debugButton, wx.EVT_BUTTON))
         
-        self.exports.resetViewButton = wx.Button(self, label="Reset")
+        self.resetViewButton = wx.Button(self, label="Reset")
         
-        self.exports.xButton = wx.Button(self, label="X")
-        self.exports.yButton = wx.Button(self, label="Y")
-        self.exports.zButton = wx.Button(self, label="Z")
-        self.exports.rwi = RWI(self)
+        self.xButton = wx.Button(self, label="X")
+        self.yButton = wx.Button(self, label="Y")
+        self.zButton = wx.Button(self, label="Z")
+        self.rwi = RWI(self)
 
-        layout = V((V((H(StretchSpacer(), self.exports.resetViewButton,
-                         self.exports.xButton, self.exports.yButton,
-                         self.exports.zButton, StretchSpacer()), 0, wx.EXPAND),
+        layout = V((V((H(StretchSpacer(), self.resetViewButton,
+                         self.xButton, self.yButton,
+                         self.zButton, StretchSpacer()), 0, wx.EXPAND),
                       (self.rwi, 1, wx.EXPAND)), 1, wx.EXPAND))
         self.SetSizer(layout.create())
 
         return
     
-class RWI(wxVTKRenderWindowInteractor, ParentDelegator):
+class RWI(wxVTKRenderWindowInteractor):
     """Set up for the VTK window (on the RHS of the window).
     """
     def __init__(self, parent, *args, **kwargs):
         wxVTKRenderWindowInteractor.__init__(self, parent, wx.ID_ANY,
                           *args, **kwargs)
-        ParentDelegator.__init__(self)
         self.AddObserver("ExitEvent", lambda o,e,f=parent: f.Close())
         
-        self.exports.renderer = vtkRenderer()
+        self.renderer = vtkRenderer()
         self.GetRenderWindow().AddRenderer(self.renderer)
 
         # Set the up direction and default to trackball mode for view control
         self.renderer.GetActiveCamera().SetViewUp(0.,0.,1.)
         self.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
         
-        self.exports.pipeline = Pipeline(self)
+        self.pipeline = Pipeline(self)
         return
-
-    def __getattr__(self, attr):
-        """Since wxVTKRenderWindowInteractor has a __getattr__, we
-        must be careful here.
-        """
-        try:
-            return wxVTKRenderWindowInteractor.__getattr__(self, attr)
-        except AttributeError:
-            return ParentDelegator.__getattr__(self, attr)
-
+    
     def ResetView(self):
         """Reset the view on the current scene.
         """
@@ -73,11 +64,12 @@ class RWI(wxVTKRenderWindowInteractor, ParentDelegator):
     
     pass
 
-class Pipeline(Delegator):
+class Pipeline(object):
     """Represent the VTK pipeline.
     """
-    def __init__(self, delegate):
-        Delegator.__init__(self, delegate)
+    def __init__(self, rwi):
+        self.rwi = rwi
+        
         self.stlMapper = vtkPolyDataMapper()
         self.stlActor = vtkActor()
         self.stlActor.SetMapper(self.stlMapper)

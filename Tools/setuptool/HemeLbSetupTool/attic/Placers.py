@@ -2,7 +2,6 @@ from vtk import vtkPolyDataMapper, vtkActor, \
      vtkSphereSource, vtkPolygonalSurfacePointPlacer
 from wx.lib.pubsub import Publisher
 
-from Delegator import Delegator
 
 import pdb
 

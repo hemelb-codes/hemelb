@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-from App import SetupTool
-
-if __name__ == "__main__":
-    app = SetupTool(redirect=False)
-    app.MainLoop()
+from HemeLbSetupTool.App import SetupTool
+import pdb
+app = SetupTool(redirect=False)
+app.MainLoop()
