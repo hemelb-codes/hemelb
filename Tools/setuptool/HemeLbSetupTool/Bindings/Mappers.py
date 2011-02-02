@@ -1,6 +1,15 @@
-from Observer import Observable
+from HemeLbSetupTool.Util.Observer import Observable
+from HemeLbSetupTool.Bindings.EmptySelection import isNone
+from HemeLbSetupTool.Bindings.Translators import UnitTranslator
 
 class Mapper(object):
+    def __init__(self, translator=UnitTranslator()):
+        self.translator = translator
+        return
+    
+    def SetTranslator(self, trans):
+        self.translator = trans
+        return
     
     def SetBinding(self, b):
         self.binding = b
@@ -9,13 +18,23 @@ class Mapper(object):
     def HandleUpdate(self, ignored):
         self.binding.MapperWasUpdated(self)
         return
+
+    def Get(self):
+        ans = self._Get()
+        ans = self.translator.Untranslate(ans)
+        return ans
     
+    def Set(self, val):
+        self.Unobserve()
+        val = self.translator.Translate(val)
+        self._Set(val)
+        self.Observe()
     pass
 
 class SimpleObservingMapper(Mapper):
-    def __init__(self, model, key):
+    def __init__(self, model, key, translator=UnitTranslator()):
         assert isinstance(model, Observable)
-        
+        Mapper.__init__(self, translator=translator)
         self.model = model
         self.key = key
         return
@@ -28,24 +47,24 @@ class SimpleObservingMapper(Mapper):
         self.model.RemoveObserver(self.key, self.HandleUpdate)
         return
     
-    def Get(self):
+    def _Get(self):
         return getattr(self.model, self.key)
     
-    def Set(self, val):
-        self.Unobserve()
+    def _Set(self, val):
         setattr(self.model, self.key, val)
-        self.Observe()
         return
     pass
 
 class WxWidgetMapper(Mapper):
-    def __init__(self, widget, key, event):
+    def __init__(self, widget, key, event, translator=UnitTranslator()):
+        Mapper.__init__(self, translator=translator)
+        
         self.widget = widget
         self.key = key
         self.event = event
-        
-        self.Get = getattr(widget, 'Get'+self.key)
-        self.setter = getattr(widget, 'Set'+self.key)
+
+        self._Get = getattr(widget, 'Get'+self.key)
+        self._Set = getattr(widget, 'Set'+self.key)
         return
     
     def Observe(self):
@@ -53,13 +72,33 @@ class WxWidgetMapper(Mapper):
         return
     
     def Unobserve(self):
-        self.widget.Bind(self.event, self.HandleUpdate)
+        self.widget.Unbind(self.event)
         return
 
-    def Set(self, val):
-        self.Unobserve()
-        self.setter(val)
-        self.Observe()
+    pass
+
+class WxWidgetEnabledMapper(Mapper):
+    """Simple binding for enabledness. This is a one way binding, so
+    don't want to watch for events.
+    """
+    def __init__(self, widget):
+        Mapper.__init__(self)
+        self.widget = widget
         return
     
-    pass
+    def _Get(self):
+        return self.widget.Enabled
+    def _Set(self, value):
+        if value:
+            self.widget.Enable()
+        else:
+            self.widget.Disable()
+            pass
+        return
+    
+    def Observe(self):
+        return
+    
+    def Unobserve(self):
+        return
+    

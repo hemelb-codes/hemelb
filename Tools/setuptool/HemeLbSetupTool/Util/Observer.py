@@ -39,7 +39,7 @@ class Change(object):
     """Describe a change.
     """
 
-    def __init__(self, time=None, obj=None, attr=None, new=None, old=None, index=None):
+    def __init__(self, time=None, obj=None, key=None, new=None, old=None, index=None):
         # if kind not in ChangeKinds:
         #     raise ValueError("Keyword argument 'kind' must be specified and one of %s" %
         #                      str(ChangeKinds))
@@ -49,6 +49,7 @@ class Change(object):
         # self.kind = kind
         self.time = time
         self.obj = obj
+        self.key = key
         self.new = new
         self.old = old
         self.index = index
@@ -96,23 +97,40 @@ class Observable(object):
         #     oldValue = NoSuch
         #     pass
         
-        self.WillChangeAttr(name)
+        self.WillChangeValueForKey(name)
         
         object.__setattr__(self, name, newValue)
         
-        self.DidChangeAttr(name)
+        self.DidChangeValueForKey(name)
         return
 
-    def __notifyList(self, oMap, attr, **changeOpts):
+    def __notifyList(self, oMap, key, **changeOpts):
         try:
             # Get the set of observers
-            oList = oMap[attr]
+            attrObservers = oMap[key]
         except KeyError:
-            # No observers have been set, so return
-            return
-        opts = dict(# kind=ChangeKinds.SETTING,
-                    obj=self,
-                    attr=attr)
+            # No observers have been set for attr
+            attrObservers = set()
+            pass
+        
+        if '.' not in key:
+            # Only for simple keys do I want to notify @ANY observers
+            try:
+                anyObservers = oMap['@ANY']
+            except KeyError:
+                # No observers set for @ANY
+                anyObservers = set()
+                pass
+            oList = set.union(attrObservers, anyObservers)
+        else:
+            oList = attrObservers
+            pass
+        
+        # No observers, quit now
+        if not len(oList): return
+        
+        opts = dict(obj=self,
+                    key=key)
         opts.update(changeOpts)
         # Construct a change object
         change = Change(**opts)
@@ -123,34 +141,68 @@ class Observable(object):
             continue
         return
 
-    def WillChangeAttr(self, name, **changeOpts):
+    def GetValueForKey(self, keyPath):
+        keyParts = keyPath.split('.', 1)
+        if len(keyParts) == 1:
+            return getattr(self, keyPath)
+        else:
+            localKey, restOfKey = keyParts
+            return getattr(self, localKey).GetValueForKey(restOfKey)
+        return
+    
+    def WillChangeValueForKey(self, key, **changeOpts):
         """Tell our observes that we're about to change.
         """
         changeOpts['time'] = ChangeTimes.BEFORE
-        self.__notifyList(self.__preObservers, name, **changeOpts)
+        self.__notifyList(self.__preObservers, key, **changeOpts)
         return
     
-    def DidChangeAttr(self, name, **changeOpts):
+    def DidChangeValueForKey(self, key, **changeOpts):
         """Tell our observers that we have just changed.
         """
         changeOpts['time'] = ChangeTimes.AFTER
-        self.__notifyList(self.__postObservers, name, **changeOpts)
+        self.__notifyList(self.__postObservers, key, **changeOpts)
         return
     
-    def AddObserver(self, attr, callback, options=NotifyOptions()):
+    def AddObserver(self, keyPath, callback, options=NotifyOptions()):
         """Make 'callback' an observer of changes to the attribute
         'attr'. The callback must be a callable taking one argument,
         which will be an Observer.Change object.
         """
-        assert isinstance(attr, str)
+        assert isinstance(keyPath, str)
+
+        keyParts = keyPath.split('.', 1)
+
+        # We always add an observer to the raw string
+        self._AddObserverToLocalKey(keyPath, callback, options)
+        if len(keyParts) == 2:
+            localKey, restOfKey = keyParts
+            self._AddObserverToComplexKey(localKey, restOfKey, callback, options)
+            pass
+
+        return
+    
+    def _AddObserverToComplexKey(self, localKey, restOfKey, callback, options):
+        # Create the wrapper object
+        wrapper = ComplexKeyCallbackWrapper(self, localKey, restOfKey, callback, options)
+        # Make the wrapper observe the local part of the key path
+        self._AddObserverToLocalKey(localKey, wrapper.LocalKeyPartChange,
+                                    NotifyOptions(BEFORE_CHANGE=True,
+                                                  AFTER_CHANGE=True))
+        localValue = getattr(self, localKey)
+        # And make it observe the sub-objects part of the key path
+        localValue.AddObserver(restOfKey, wrapper.RestOfKeyChange, options)
+        return
+    
+    def _AddObserverToLocalKey(self, keyPath, callback, options):
         for flag, obs in ((options.BEFORE_CHANGE, self.__preObservers),
                           (options.AFTER_CHANGE, self.__postObservers)):
             
             if flag:
                 try:
-                    attrObs = obs[attr]
+                    attrObs = obs[keyPath]
                 except KeyError:
-                    attrObs = obs[attr] = set()
+                    attrObs = obs[keyPath] = set()
                     pass
                 attrObs.add(callback)
                 pass
@@ -196,6 +248,42 @@ class Observable(object):
     
     pass
 
+class ComplexKeyCallbackWrapper(object):
+    def __init__(self, obj, localKey, restOfKey, callback, options):
+        self.obj = obj
+        self.localKey = localKey
+        self.restOfKey = restOfKey
+        self.fullKey = localKey+'.'+restOfKey
+        self.callback = callback
+        self.options = options
+        return
+
+    def LocalKeyPartChange(self, change):
+        # This is a change of the first part of the key
+        if change.time is ChangeTimes.BEFORE:
+            # Notify 
+            self.obj.WillChangeValueForKey(self.fullKey)
+            # Remove self from sub object's observers
+            getattr(self.obj, self.localKey).RemoveObserver(self.restOfKey, self.RestOfKeyChange)
+            pass
+        if change.time is ChangeTimes.AFTER:
+            # Notify 
+            self.obj.DidChangeValueForKey(self.fullKey)
+            # Add self as sub object's observer
+            getattr(self.obj, self.localKey).AddObserver(self.restOfKey, self.RestOfKeyChange, self.options)
+            pass
+        return
+    
+    def RestOfKeyChange(self, change):
+        # The rest of the key's value changed, here we just forward
+        # the notification.
+        if change.time is ChangeTimes.BEFORE:
+            self.obj.WillChangeValueForKey(self.fullKey)
+            pass
+        if change.time is ChangeTimes.AFTER:
+            self.obj.DidChangeValueForKey(self.fullKey)
+            pass
+        
 class Dependency(object):
     """Helper class for notification of dependent attributes.
     """
@@ -209,10 +297,10 @@ class Dependency(object):
         """The object is the callback itself (i.e. it's a functor).
         """
         if change.time is ChangeTimes.BEFORE:
-            self.obj.WillChangeAttr(self.ofAttr)
+            self.obj.WillChangeValueForKey(self.ofAttr)
             pass
         if change.time is ChangeTimes.AFTER:
-            self.obj.DidChangeAttr(self.ofAttr)
+            self.obj.DidChangeValueForKey(self.ofAttr)
             pass
         return
     pass
@@ -241,25 +329,25 @@ class ObservableList(Observable, collections.MutableSequence):
         if index >= len(self) or index < -len(self):
             raise IndexError('ObservableList assignment index out of range')
         
-        self.WillChangeAttr('@REPLACEMENT', index=index)
+        self.WillChangeValueForKey('@REPLACEMENT', index=index)
         ans = self.__contents.__setitem__(index, obj)
-        self.DidChangeAttr('@REPLACEMENT', index=index)
+        self.DidChangeValueForKey('@REPLACEMENT', index=index)
     
     def __delitem__(self, index):
         if index >= len(self) or index < -len(self):
             raise IndexError('ObservableList assignment index out of range')
         
-        self.WillChangeAttr('@REMOVAL', index=index)
+        self.WillChangeValueForKey('@REMOVAL', index=index)
         self.__contents.__delitem__(index)
-        self.DidChangeAttr('@REMOVAL', index=index)
+        self.DidChangeValueForKey('@REMOVAL', index=index)
         return
     
     def insert(self, index, object):
         """Insert object before index.
         """
-        self.WillChangeAttr('@INSERTION', index=index)
+        self.WillChangeValueForKey('@INSERTION', index=index)
         self.__contents.insert(index, object)
-        self.DidChangeAttr('@INSERTION', index=index)
+        self.DidChangeValueForKey('@INSERTION', index=index)
         return
 
     def __str__(self):
@@ -269,32 +357,61 @@ class ObservableList(Observable, collections.MutableSequence):
     pass
 
 if __name__ == "__main__":
+    import pdb
+    
     class Observed(Observable):
-        def __init__(self, x=0):
+        def __init__(self, x, pressure):
             self.x = x
+            self.Pressure = pressure
+            
             self.AddDependency('y', 'x')
+            self.AddDependency('PressureString', 'Pressure.x')
+            self.AddDependency('PressureString', 'Pressure.y')
+            self.AddDependency('PressureString', 'Pressure.z')
             return
-
+        
         @property
         def y(self):
             return self.x
+
+        @property
+        def PressureString(self):
+            return 'p = %f + %f cos(wt + degtorad(%f))' % (self.Pressure.x,
+                                                           self.Pressure.y,
+                                                           self.Pressure.z)
         
         pass
     
+    class Vector(Observable):
+        def __init__(self, x,y,z):
+            self.x = x
+            self.y = y
+            self.z = z
+            return
+        
     class Observer(object):
-        def changex(self, change):
-            print change.__dict__
+        def change(self, change):
+            print change.key, change.obj.GetValueForKey(change.key)
             return
         pass
 
     print "Intantiate Observed a"
-    a = Observed(7)
+    a = Observed(7, Vector(1,2,3))
     b = Observer()
-    print "Add b as observer of a.y"
-    a.AddObserver('y', b.changex)
+    print "Add b as observer of a.y, a.Pressure.x and a.PressureString"
+    a.AddObserver('y', b.change)
+    a.AddObserver('Pressure.x', b.change)
+    a.AddObserver('PressureString', b.change)
+    
     print "Set a.x"
     a.x = 1
+    print "Set a.Pressure.x"
+    a.Pressure.x = 3e8
+    print "Set a.Pressure"
+    pdb.run('a.Pressure = Vector(10,12,14)')
     
     olist = ObservableList()
-    olist.AddObserver('@INSERTION', b.changex)
+    print 'Add b as observer of olist.@INSERTION'
+    olist.AddObserver('@INSERTION', b.change)
+    print 'Append to olist'
     olist.append(6)

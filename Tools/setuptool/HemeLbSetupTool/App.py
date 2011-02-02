@@ -1,19 +1,20 @@
 import wx
 
-from Model import Profile
-from View import WxView
-from Controller import Controller
+from HemeLbSetupTool.Model.Profile import Profile
+from HemeLbSetupTool.Controller.ProfileController import ProfileController
+from HemeLbSetupTool.View.MainWindow import MainWindow
 
 class SetupTool(wx.App):
     def OnInit(self):
         # Model
-        profile = Profile()
-        # View
-        view = WxView()
+        self.profile = Profile()
         # Controller
-        controller = Controller(profile, view)
+        self.controller = ProfileController(self.profile)
+        
+        # View
+        self.view = MainWindow(self.controller)
 
-        self.SetTopWindow(controller.InitWindow())
+        self.SetTopWindow(self.view)
         return True
     
     pass
