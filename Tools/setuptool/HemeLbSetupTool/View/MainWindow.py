@@ -1,28 +1,23 @@
 import wx
-from ToolPanel import ToolPanel
-from VtkViewPanel import VtkViewPanel
-from Delegator import Delegator, ParentDelegator
 
-class DSplitter(wx.SplitterWindow, ParentDelegator):
-    def __init__(self, *args, **kwargs):
-        wx.SplitterWindow.__init__(self, *args, **kwargs)
-        ParentDelegator.__init__(self)
-        return
-    pass
+from HemeLbSetupTool.View.ToolPanel import ToolPanel
+from HemeLbSetupTool.View.VtkViewPanel import VtkViewPanel
 
-class MainWindow(Delegator, wx.Frame):
-    def __init__(self, delegate):
-        Delegator.__init__(self, delegate)
+
+class MainWindow(wx.Frame):
+    def __init__(self, controller):
         wx.Frame.__init__(self, None, title="HemeLB Setup Tool")
-                
-        self._InitMenu()
+        self.appController = controller
+        
+        # self._InitMenu()
         #self._InitStatusBar() # A Statusbar in the bottom of the window
         
         # Going to have a vertically split window; tools on the left,
         # render window on the right.
-        self.splitter = DSplitter(self)
-        self.exports.toolPanel = ToolPanel(self.splitter)
-        self.exports.vtkPanel = VtkViewPanel(self.splitter)
+        self.splitter = wx.SplitterWindow(self)
+        
+        self.toolPanel = ToolPanel(controller, self.splitter)
+        self.vtkPanel = VtkViewPanel(controller, self.splitter)
         self.splitter.SplitVertically(self.toolPanel, self.vtkPanel)
         
         self.Show(True)
