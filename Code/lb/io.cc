@@ -8,7 +8,7 @@
 
 #include "debug/Debugger.h"
 #include "lb/lb.h"
-#include "net.h"
+#include "net/net.h"
 #include "util/utilityFunctions.h"
 #include "io/XdrMemReader.h"
 #include "io/XdrMemWriter.h"

@@ -259,12 +259,12 @@ namespace hemelb
     // when the convergence criterion is not applied. Communications
     // automatically handle the streaming stage pertaining to neighbouring
     // subdomains.
-    hemelb::lb::Stability LBM::DoCycle(int perform_rt,
-                                       Net *net,
-                                       hemelb::lb::LocalLatticeData &bLocalLatDat,
-                                       double &bLbTime,
-                                       double &bMPISendTime,
-                                       double &bMPIWaitTime)
+    Stability LBM::DoCycle(int perform_rt,
+                           net::Net *net,
+                           LocalLatticeData &bLocalLatDat,
+                           double &bLbTime,
+                           double &bMPISendTime,
+                           double &bMPIWaitTime)
     {
       net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
 
@@ -430,8 +430,8 @@ namespace hemelb
 
     // Update peak and average inlet velocities local to the current subdomain.
     void LBM::UpdateInletVelocities(int time_step,
-                                    hemelb::lb::LocalLatticeData &iLocalLatDat,
-                                    Net *net)
+                                    lb::LocalLatticeData &iLocalLatDat,
+                                    net::Net *net)
     {
       double density;
       double vx, vy, vz;

@@ -97,7 +97,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 {
   mTimingsFile = bTimingsFile;
 
-  mNet = new Net(mNetworkTopology);
+  mNet = new hemelb::net::Net(mNetworkTopology);
 
   // Initialise the Lbm.
   mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat, iSteeringSessionid,
