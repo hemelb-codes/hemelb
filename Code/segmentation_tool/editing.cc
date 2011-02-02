@@ -330,6 +330,7 @@ void editMouseFunction(int button, int state, int x, int y, Vis *vis)
   if (button != GLUT_LEFT_BUTTON)
     return;
 
+  // TODO: What is this doing and why is it not done with x?
   y = vis->viewport_pixels[1] - y - 1;
 
   voxel[0] = (x * vis->screen_voxels) / vis->viewport_pixels[0];
