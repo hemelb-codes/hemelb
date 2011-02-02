@@ -565,6 +565,11 @@ void visVisualiseHitData(Hit *first_hit, Hit *second_hit, Vis *vis)
 
 void visVisualiseMesh(Vis *vis)
 {
+  // Draw a grayscale, wireframe triangle for each triangle in the STL
+  // model. Grayscale is proportional to (view.pos - triangle.pos)
+  // dotted with the triangle normal. White is pointing towards or
+  // away from the camera, black at 90 degrees.
+
   double dx[3];
   double grey;
 
@@ -693,6 +698,9 @@ void visVisualiseFluidSitesWithCubes(Vis *vis)
 
 void visVisualiseSystem(Vis *vis)
 {
+  // This is only called from Visualise below, in the case that the
+  // global vis has vis.mode >= 1, which I believe is always the case.
+  
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   visVisualiseMesh(vis);
