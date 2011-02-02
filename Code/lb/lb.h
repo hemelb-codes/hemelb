@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_H
 #define HEMELB_LB_H
 
-#include "net.h"
+#include "net/net.h"
 #include "topology/NetworkTopology.h"
 #include "lb/collisions/Collisions.h"
 #include "vis/ColPixel.h"
@@ -38,8 +38,8 @@ namespace hemelb
 
         hemelb::lb::Stability
         DoCycle(int perform_rt,
-                Net *net,
-                hemelb::lb::LocalLatticeData &bLocallatDat,
+                net::Net *net,
+                lb::LocalLatticeData &bLocallatDat,
                 double &bLbTime,
                 double &bMPISendTime,
                 double &bMPIWaitTime);
@@ -48,8 +48,8 @@ namespace hemelb
         void UpdateBoundaryDensities(int cycle_id, int time_step);
         void
         UpdateInletVelocities(int time_step,
-                              hemelb::lb::LocalLatticeData &iLocalLatDat,
-                              Net *net);
+                              lb::LocalLatticeData &iLocalLatDat,
+                              net::Net *net);
 
         void
         SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
