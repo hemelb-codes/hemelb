@@ -1,5 +1,6 @@
 import os.path
 from vtk import vtkSTLReader
+from numpy import isfinite
 
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
@@ -42,7 +43,17 @@ class Profile(Observable):
 
         # When the STL changes, we should reset the voxel size.
         self.AddObserver('StlFile', self.OnStlFileChanged)
+        # Dependencies for properties
         self.AddDependency('HaveValidStlFile', 'StlFile')
+        self.AddDependency('HaveValidOutputXmlFile', 'OutputXmlFile')
+        self.AddDependency('HaveValidOutputConfigFile', 'OutputConfigFile')
+        self.AddDependency('HaveValidSeedPoint', 'SeedPoint.x')
+        self.AddDependency('HaveValidSeedPoint', 'SeedPoint.y')
+        self.AddDependency('HaveValidSeedPoint', 'SeedPoint.z')
+        self.AddDependency('IsReadyToGenerate', 'HaveValidStlFile')
+        self.AddDependency('IsReadyToGenerate', 'HaveValidOutputXmlFile')
+        self.AddDependency('IsReadyToGenerate', 'HaveValidOutputConfigFile')
+        self.AddDependency('IsReadyToGenerate', 'HaveValidSeedPoint')
         return
     
     def OnStlFileChanged(self, change):
@@ -62,6 +73,34 @@ class Profile(Observable):
             return True
 
         return False
+
+    @property
+    def HaveValidSeedPoint(self):
+        if isfinite(self.SeedPoint.x) and isfinite(self.SeedPoint.y) and isfinite(self.SeedPoint.z):
+            return True
+        return False
+    
+    @property
+    def HaveValidOutputXmlFile(self):
+        return IsFileValid(self.OutputXmlFile, ext='.xml')
+    @property
+    def HaveValidOutputConfigFile(self):
+        return IsFileValid(self.OutputConfigFile, ext='.dat')
+    
+    @property
+    def IsReadyToGenerate(self):
+        """Read only property indicating if we have enough information
+        to do the setup.
+        """
+        if not self.HaveValidSeedPoint:
+            return False
+        if not self.HaveValidOutputXmlFile:
+            return False
+        if not self.HaveValidOutputConfigFile:
+            return False
+        if not self.HaveValidStlFile:
+            return False
+        return True
     
     @classmethod
     def NewFromFile(cls, filename):
@@ -81,3 +120,21 @@ class Profile(Observable):
         return
     
     pass
+
+def IsFileValid(path, ext=None, exists=None):
+    if not isinstance(path, (str, unicode)):
+        return False
+    if path == '':
+        return False
+    
+    if exists is not None:
+        if os.path.exists != exists:
+            return False
+        pass
+    
+    if ext is not None:
+        ending = os.path.splitext(path)[1]
+        if ending != ext:
+            return False
+        pass
+    return True

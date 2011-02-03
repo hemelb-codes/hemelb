@@ -5,6 +5,22 @@ from HemeLbSetupTool.Bindings.Translators import FloatTranslator, NoneToValueTra
 from HemeLbSetupTool.Bindings.Mappers import WxWidgetMapper, Mapper
 from HemeLbSetupTool.View.Layout import H
 
+def ForwardGet(func):
+    def Get(self, val):
+        return tuple(getattr(getattr(self, coord), func.func_name)() for coord in ('x', 'y', 'z'))
+    Get.func_name = func.func_name
+    return Get
+
+def ForwardSet(func):
+    def Set(self, val):
+        for coord in ('x', 'y', 'z'):
+            setter = getattr(getattr(self, coord), func.func_name)
+            setter(val)
+            continue
+        return
+    Set.func_name = func.func_name
+    return Set
+
 class VectorCtrl(wx.Panel):
     """Simple container of three TextCtrl's for a vector quantity.
     """
@@ -25,9 +41,15 @@ class VectorCtrl(wx.Panel):
         
         return
     
+    @ForwardSet
+    def SetBackgroundColour(): return
+    
+    @ForwardGet
+    def GetBackgroundColour(): return
+    
     pass
 
-class VectorMapper(WxWidgetMapper):
+class VectorCtrlMapper(WxWidgetMapper):
     """Widget mapper for VectorCtrls.
     """
     def __init__(self, widget, key, event,

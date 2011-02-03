@@ -1,11 +1,12 @@
 import wx
-
+import pdb
 from HemeLbSetupTool.Util.Observer import ObservableList
 
 from HemeLbSetupTool.Bindings.ObjectController import ObjectController
 from HemeLbSetupTool.Bindings.EmptySelection import EmptySelection, isNone
 from HemeLbSetupTool.Bindings.Translators import Translator
-from HemeLbSetupTool.Bindings.Mappers import Mapper
+from HemeLbSetupTool.Bindings.Bindings import ValueBinding
+from HemeLbSetupTool.Bindings.Mappers import Mapper, ReadOnlyMapper
 
 class ListController(ObjectController):
     def __init__(self, delegate, SelectionControllerClass=ObjectController):
@@ -16,10 +17,6 @@ class ListController(ObjectController):
         self.AddDependency('Selection', 'SelectedIndex')
         return
     
-    def HandleInsertion(self, change):
-        return
-
-    
     @property
     def Selection(self):
         if self.SelectedIndex is None:
@@ -28,53 +25,74 @@ class ListController(ObjectController):
     
     pass
 
-class ListCtrlSelectionMapper(Mapper, Translator):
-    def __init__(self, widget, inner=None):
-        Mapper.__init__(self, translator=self)
-        Translator.__init__(self, inner)
+class ListMapper(Mapper):
+    def __init__(self, model):
+        Mapper.__init__(self)
+        self.model = model
+        return
+    
+    pass
+
+class HasListKeys(object):
+    """Mixin for ObjectController subclasses with ObservableList keys.
+    """
+    BindMethodDispatchTable = ((ListController, 'BindList'),)
+    
+    def BindList(self, modelKey, widgetMapper):
+        """We need to bind the selection and deal with add/remove/update.
+        """
+        self.BindComplexValue(modelKey, ListContentsMapper, (),
+                              ValueBinding, widgetMapper)
         
-        self.widget = widget
+        return
+    
+    def DefineListKey(self, name):
+        """Typically used in the subclass __init__ method to easily
+        mark a key as being a List and hence needing a ListController
+        to manage it.
+        """
+        setattr(self, name,
+                ListController(getattr(self.delegate, name))
+                )
+        return
+    
+    pass
+
+
+class ListContentsMapper(ReadOnlyMapper):
+    """This is a mapper for list add/remove/replace events.
+    """
+    def __init__(self, controller, key):
+        ReadOnlyMapper.__init__(self)
+        listController = getattr(controller, key)
+        self.model = listController.delegate
+        self.key = key
+        self.currentChange = None
+        return
+    
+    def HandleListChange(self, change):
+        self.currentChange = change
+        try:
+            self.HandleUpdate()
+        finally:
+            self.currentChange = None
+            pass
         return
 
-    def TranslateStage(self, val):
-        if isNone(val):
-            return -1
-        if val < -1 or val >= self.widget.GetItemCount():
-            raise IndexError('Index "%d" out of range for %s' % (val, str(widget)))
-        
-        return val
-    
-    def UntranslateStage(self, val):
-        if val == -1:
-            return None
-        return val
+    def _Get(self):
+        return self.model, self.currentChange
     
     def Observe(self):
-        self.widget.Bind(wx.EVT_LIST_ITEM_SELECTED, self.HandleUpdate)
-        self.widget.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.HandleUpdate)
+        self.model.AddObserver('@INSERTION', self.HandleListChange)
+        self.model.AddObserver('@REMOVAL', self.HandleListChange)
+        self.model.AddObserver('@REPLACEMENT', self.HandleListChange)
         return
     
     def Unobserve(self):
-        self.widget.Unbind(wx.EVT_LIST_ITEM_SELECTED)
-        self.widget.Unbind(wx.EVT_LIST_ITEM_DESELECTED)
+        self.model.RemoveObserver('@INSERTION', self.HandleListChange)
+        self.model.RemoveObserver('@REMOVAL', self.HandleListChange)
+        self.model.RemoveObserver('@REPLACEMENT', self.HandleListChange)
         return
-    
-    def _Get(self):
-        return self.widget.GetFirstSelected()
-    
-    def _Set(self, ind):
-        self.Unobserve()
-        try:
-            prevSelected = self._Get()
-            if ind != prevSelected:
-                self.widget.SetItemState(newInd, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-                self.widget.SetItemState(prevSelected, 0, wx.LIST_STATE_SELECTED)
-                pass
-            
-            
-        finally:
-            self.Observe()
-            pass
+    pass
 
-        return
-    
+

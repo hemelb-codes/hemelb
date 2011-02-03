@@ -2,9 +2,10 @@ import wx
 from wx.lib.masked import NumCtrl, EVT_NUM
 
 from HemeLbSetupTool.View.Layout import H, V, StretchSpacer
-from HemeLbSetupTool.View.VectorCtrl import VectorCtrl, VectorMapper
+from HemeLbSetupTool.View.VectorCtrl import VectorCtrl, VectorCtrlMapper
+from HemeLbSetupTool.View.IoletListCtrl import IoletListCtrl
 
-from HemeLbSetupTool.Bindings.Mappers import WxWidgetMapper, WxWidgetEnabledMapper
+from HemeLbSetupTool.Bindings.Mappers import WxWidgetMapper, WxWidgetEnabledMapper, NonObservingWxWidgetMapper, WxListCtrlMapper
 from HemeLbSetupTool.Bindings.Translators import NoneToValueTranslator, FloatTranslator
 from HemeLbSetupTool.Bindings.Bindings import WxActionBinding
 
@@ -55,13 +56,12 @@ class ControlPanel(wx.Panel):
         self.openProfileButton = wx.Button(self, label='Open Profile')
         self.saveProfileButton = wx.Button(self, label='Save Profile')
         self.generateButton = wx.Button(self, label='Generate')
+        controller.BindValue('IsReadyToGenerate', WxWidgetEnabledMapper(self.generateButton))
+        
         self.progressGauge = wx.Gauge(self)
         
         layout = V(
             (H(
-                # (self._openProfileButton, 0, wx.ALIGN_LEFT),
-                # (self._saveProfileButton, 0, wx.ALIGN_CENTRE),
-                # (self._generateButton, 0, wx.ALIGN_RIGHT)
                 StretchSpacer(),
                 self.openProfileButton,
                 self.saveProfileButton,
@@ -83,14 +83,19 @@ class InputPanel(wx.Panel):
         
         iLabel = wx.StaticText(self, label='Input STL File')
         self.inputStlField = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
-        self.controller.BindValue('StlFile',
+        controller.BindValue('StlFile',
                                   WxWidgetMapper(
                                       self.inputStlField, 'Value', wx.EVT_TEXT,
                                       translator=NoneToValueTranslator('')
                                       )
                                   )
+        controller.BindValue('HaveValidStlFile',
+                             NonObservingWxWidgetMapper(self.inputStlField, 'BackgroundColour',
+                                                        translator=controller.validColourer)
+                             )
+        
         self.inputStlButton = wx.Button(self, label='Choose')
-        self.controller.BindAction('ChooseStl', WxActionBinding(self.inputStlButton, wx.EVT_BUTTON))
+        controller.BindAction('ChooseStl', WxActionBinding(self.inputStlButton, wx.EVT_BUTTON))
         
         layout = V(
             iLabel,
@@ -113,21 +118,21 @@ class IoletsDetailPanel(wx.Panel):
         self.centreVector = VectorCtrl(self)
         controller.BindValue(
             'Selection.Centre',
-            VectorMapper(self.centreVector, 'Value', wx.EVT_TEXT)
+            VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
             )
         
         normalLabel = wx.StaticText(self, label='Normal')
         self.normalVector = VectorCtrl(self)
         controller.BindValue(
             'Selection.Normal',
-            VectorMapper(self.normalVector, 'Value', wx.EVT_TEXT)
+            VectorCtrlMapper(self.normalVector, 'Value', wx.EVT_TEXT)
             )
         
         pressureLabel = wx.StaticText(self, label='Pressure (mmHg)')
         self.pressureVector = VectorCtrl(self)
         controller.BindValue(
             'Selection.Pressure',
-            VectorMapper(self.pressureVector, 'Value', wx.EVT_TEXT)
+            VectorCtrlMapper(self.pressureVector, 'Value', wx.EVT_TEXT)
             )
         
 
@@ -165,15 +170,26 @@ class IoletsPanel(wx.Panel):
         
         ioletsLabel = wx.StaticText(self, label='Inlets and Outlets')
         
-        self.ioletsListCtrl = wx.ListCtrl(self, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
-        self.ioletsListCtrl.InsertColumn(0, 'Name')
+        self.ioletsListCtrl = IoletListCtrl(self, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
         
-        # self.controller.BindValue('Iolets.SelectedIndex',
+        controller.BindValue('Iolets',
+                             WxListCtrlMapper(self.ioletsListCtrl))
+        # controller.BindValue('Iolets.SelectedIndex',
         #                           ListCtrlSelectionBinding(self.ioletsListCtrl))
         self.addInletButton = wx.Button(self, label='Add Inlet')
-        self.addOutletButton = wx.Button(self, label='Add Outlet')
-        self.removeIoletButton = wx.Button(self, label='Remove')
+        controller.BindAction('Iolets.AddInlet',
+                              WxActionBinding(self.addInletButton, wx.EVT_BUTTON))
 
+        self.addOutletButton = wx.Button(self, label='Add Outlet')
+        controller.BindAction('Iolets.AddOutlet',
+                              WxActionBinding(self.addOutletButton, wx.EVT_BUTTON))
+        
+        self.removeIoletButton = wx.Button(self, label='Remove')
+        controller.BindValue('Iolets.SelectedIndex',
+                             WxWidgetEnabledMapper(self.removeIoletButton))
+        controller.BindAction('Iolets.RemoveIolet',
+                              WxActionBinding(self.removeIoletButton, wx.EVT_BUTTON))
+        
         self.detail = IoletsDetailPanel(controller.Iolets, self)
         
         layout = V(ioletsLabel,
@@ -224,9 +240,13 @@ class SeedPanel(wx.Panel):
         seedLabel = wx.StaticText(self, label='Seed Position')
         self.seedVector = VectorCtrl(self)
 
-        self.controller.BindValue('SeedPoint',
-                                  VectorMapper(self.seedVector, 'Value', wx.EVT_TEXT))
-                                  
+        controller.BindValue('SeedPoint',
+                             VectorCtrlMapper(self.seedVector, 'Value', wx.EVT_TEXT))
+        controller.BindValue('HaveValidSeedPoint',
+                             NonObservingWxWidgetMapper(self.seedVector, 'BackgroundColour',
+                                                        translator=controller.validColourer)
+                             )
+        
         self.seedPlaceButton = wx.Button(self, label='Place')
         
         layout = V(seedLabel,
@@ -249,29 +269,37 @@ class OutputPanel(wx.Panel):
         
         configLabel = wx.StaticText(self, label='Output config')
         self.configField = wx.TextCtrl(self)
-        self.controller.BindValue('OutputConfigFile',
-                                  WxWidgetMapper(
-                                      self.configField, 'Value', wx.EVT_TEXT,
-                                      translator=NoneToValueTranslator('')
-                                      )
-                                  )
-        
+        controller.BindValue('OutputConfigFile',
+                             WxWidgetMapper(
+                                 self.configField, 'Value', wx.EVT_TEXT,
+                                 translator=NoneToValueTranslator('')
+                                 )
+                             )
+        controller.BindValue('HaveValidOutputConfigFile',
+                             NonObservingWxWidgetMapper(self.configField, 'BackgroundColour',
+                                                        translator=controller.validColourer)
+                             )
+
         self.configChooseButton = wx.Button(self, label='Choose')
-        self.controller.BindAction('ChooseOutputConfigFile',
-                                   WxActionBinding(self.configChooseButton, wx.EVT_BUTTON))
+        controller.BindAction('ChooseOutputConfigFile',
+                              WxActionBinding(self.configChooseButton, wx.EVT_BUTTON))
 
         xmlLabel = wx.StaticText(self, label='Output xml')
         self.xmlField = wx.TextCtrl(self)
-        self.controller.BindValue('OutputXmlFile',
-                                  WxWidgetMapper(
-                                      self.xmlField, 'Value', wx.EVT_TEXT,
-                                      translator=NoneToValueTranslator('')
-                                      )
-                                  )
-        
+        controller.BindValue('OutputXmlFile',
+                             WxWidgetMapper(
+                                 self.xmlField, 'Value', wx.EVT_TEXT,
+                                 translator=NoneToValueTranslator('')
+                                 )
+                             )
+        controller.BindValue('HaveValidOutputXmlFile',
+                             NonObservingWxWidgetMapper(self.xmlField, 'BackgroundColour',
+                                                        translator=controller.validColourer)
+                             )
+
         self.xmlChooseButton = wx.Button(self, label='Choose')
-        self.controller.BindAction('ChooseOutputXmlFile',
-                                   WxActionBinding(self.xmlChooseButton, wx.EVT_BUTTON))
+        controller.BindAction('ChooseOutputXmlFile',
+                              WxActionBinding(self.xmlChooseButton, wx.EVT_BUTTON))
         
         layout = V(
             xmlLabel,
