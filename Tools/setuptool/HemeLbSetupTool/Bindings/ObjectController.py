@@ -6,29 +6,35 @@ from HemeLbSetupTool.Bindings.Bindings import ValueBinding
 class ObjectController(Observable):
     """Acts as an intermediary between the model object and view objects.
     """
-    WidgetMapperClassDispatchTable = ((Mapper, 'BindSimpleValue'), )
+    BindMethodDispatchTable = ((object, 'BindSimpleValue'), )
     
-    def ChooseBindMethod(self, widgetMapper):
+    def ChooseBindMethod(self, key):
         """Here we walk up the class hierarchy looking in the
-        WidgetMapperClassDispatchTable for each class to see if the
-        given widget mapper is an instance of any entry. We return the
-        corresponding method for the first match.
+        BindMethodDispatchTable for each class to see if the value
+        corresponding to the key is an instance of any entry. We
+        return the corresponding method for the first match.
 
-        ObjectController.WidgetMapperClassDispatchTable contains a
-        single entry that forwards any Mapper subclass to
-        'BindSimpleValue'.
+        ObjectController.BindMethodDispatchTable contains a single
+        entry that forwards any value to 'BindSimpleValue'.
         """
+        # First, get the object, possibly from the delegate
+        try:
+            value = getattr(self, key)
+        except AttributeError:
+            value = getattr(self.delegate, key)
+            pass
+        
         # Walk up the hierarchy
         for controllerClass in type(self).__mro__:
             try:
-                table = controllerClass.WidgetMapperClassDispatchTable
+                table = controllerClass.BindMethodDispatchTable
             except AttributeError:
-                # If the class doesn't have a WidgetMapperClassDispatchTable
+                # If the class doesn't have a BindMethodDispatchTable
                 continue
-        
-            for mapperClass, methodName in table:
+            
+            for cls, methodName in table:
                 # Loop through the entries
-                if isinstance(widgetMapper, mapperClass):
+                if isinstance(value, cls):
                     # We found a match so return the method
                     return getattr(self, methodName)
                 continue
@@ -54,7 +60,7 @@ class ObjectController(Observable):
         """
         parts = modelKey.split('.', 1)
         if len(parts) == 1:
-            self.ChooseBindMethod(widgetMapper)(modelKey, widgetMapper)
+            self.ChooseBindMethod(modelKey)(modelKey, widgetMapper)
         else:
             local = parts[0]
             rest = parts[1]
@@ -63,9 +69,8 @@ class ObjectController(Observable):
             pass
         return
     
-    def BindSimpleValue(self, modelKey, widgetMapper):
-        """Do a simple value binding.
-        """
+    def BindComplexValue(self, modelKey, modelMapperFactory, modelFactoryArgs,
+                         bindMgrFactory, widgetMapper):
         try:
             # If we've already got a BindingManager for this attribute
             # of the model, use that.
@@ -74,19 +79,34 @@ class ObjectController(Observable):
             # If not, create it, on self if we have that attribute,
             # otherwise on the delegate
             if hasattr(self, modelKey):                
-                modelMapper = SimpleObservingMapper(self, modelKey)
+                modelMapper = modelMapperFactory(self, modelKey, *modelFactoryArgs)
             else:
-                modelMapper = SimpleObservingMapper(self.delegate, modelKey)
+                modelMapper = modelMapperFactory(self.delegate, modelKey, *modelFactoryArgs)
                 pass
-            bindingMgr = self.__values[modelKey] = ValueBinding(modelMapper)
+            bindingMgr = self.__values[modelKey] = bindMgrFactory(modelMapper)
             pass
         # Bind our widget to the manager
         bindingMgr.BindWidget(widgetMapper)
         return
     
-    def BindAction(self, key, action):
-        self.__actions.add(action)
-        action.Bind(self.__getCallbackWrapper(key))
+    def BindSimpleValue(self, modelKey, widgetMapper):
+        """Do a simple value binding.
+        """
+        self.BindComplexValue(modelKey, SimpleObservingMapper, (), ValueBinding, widgetMapper)
+        return
+    
+    def BindAction(self, modelKey, action):
+        parts = modelKey.split('.', 1)
+        if len(parts) == 1:
+            self.__actions.add(action)
+            action.Bind(self.__getCallbackWrapper(modelKey))
+        else:
+            local = parts[0]
+            rest = parts[1]
+            subController = getattr(self, local)
+            subController.BindAction(rest, action)
+            pass
+
         return
     
     def __getCallbackWrapper(self, key):
