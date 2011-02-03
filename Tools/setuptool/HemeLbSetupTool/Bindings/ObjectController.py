@@ -1,7 +1,7 @@
-from HemeLbSetupTool.Util.Observer import Observable
+from ..Util.Observer import Observable
 
-from HemeLbSetupTool.Bindings.Mappers import Mapper, SimpleObservingMapper
-from HemeLbSetupTool.Bindings.Bindings import ValueBinding
+from .Mappers import Mapper, SimpleObservingMapper
+from .Bindings import ValueBinding
 
 class ObjectController(Observable):
     """Acts as an intermediary between the model object and view objects.

@@ -1,4 +1,4 @@
-from HemeLbSetupTool.Util.Observer import Observable
+from ..Util.Observer import Observable
 
 class EmptySelection(Observable):
     """Represent an empty selection.

@@ -1,6 +1,6 @@
-from HemeLbSetupTool.Util.Observer import Observable
-from HemeLbSetupTool.Bindings.EmptySelection import isNone
-from HemeLbSetupTool.Bindings.Translators import UnitTranslator
+from ..Util.Observer import Observable
+from .EmptySelection import isNone
+from .Translators import UnitTranslator
 
 class Mapper(object):
     def __init__(self, translator=UnitTranslator()):
