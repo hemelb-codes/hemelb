@@ -1,12 +1,12 @@
 import wx
 import pdb
-from HemeLbSetupTool.Util.Observer import ObservableList
+from ..Util.Observer import ObservableList
 
-from HemeLbSetupTool.Bindings.ObjectController import ObjectController
-from HemeLbSetupTool.Bindings.EmptySelection import EmptySelection, isNone
-from HemeLbSetupTool.Bindings.Translators import Translator
-from HemeLbSetupTool.Bindings.Bindings import ValueBinding
-from HemeLbSetupTool.Bindings.Mappers import Mapper, ReadOnlyMapper
+from .ObjectController import ObjectController
+from .EmptySelection import EmptySelection, isNone
+from .Translators import Translator
+from .Bindings import ValueBinding
+from .Mappers import Mapper, ReadOnlyMapper
 
 class ListController(ObjectController):
     def __init__(self, delegate, SelectionControllerClass=ObjectController):
