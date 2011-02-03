@@ -1,5 +1,5 @@
 from HemeLbSetupTool.Bindings.ObjectController import ObjectController
-from HemeLbSetupTool.View.VectorCtrl import VectorMapper
+# from HemeLbSetupTool.View.VectorCtrl import VectorCtrlMapper
 
 class VectorController(ObjectController):
     """Controller for HemeLbSetupTool.Model.Vector objects.
@@ -14,7 +14,7 @@ class VectorController(ObjectController):
 class HasVectorKeys(object):
     """Mixin for ObjectController subclasses with Vector keys.
     """
-    WidgetMapperClassDispatchTable = ((VectorMapper, 'BindVector'),)
+    BindMethodDispatchTable = ((VectorController, 'BindVector'),)
     
     def BindVector(self, key, mapper):
         """Each component of the vector should be appropriately bound.
