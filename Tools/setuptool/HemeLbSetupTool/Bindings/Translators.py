@@ -1,4 +1,4 @@
-from HemeLbSetupTool.Bindings.EmptySelection import isNone
+from .EmptySelection import isNone
 
 class ValidationError(Exception):
     pass

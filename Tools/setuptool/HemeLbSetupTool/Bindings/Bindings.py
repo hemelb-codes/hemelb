@@ -1,4 +1,4 @@
-from HemeLbSetupTool.Bindings import Translators
+from . import Translators
 
 class ValueBinding(object):
     """This object manages the binding of zero or more controls to a

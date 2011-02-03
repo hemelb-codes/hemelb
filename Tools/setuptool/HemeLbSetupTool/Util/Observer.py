@@ -3,7 +3,7 @@
 Create a subclass of Observable to use.
 """
 import collections
-from Enum import Enum
+from .Enum import Enum
 
 class NoSuch(object):
     """Special None-like object for when an attribute did not exist.
