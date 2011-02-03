@@ -5,8 +5,8 @@ from HemeLbSetupTool.View.Layout import H, V, StretchSpacer, RectSpacer
 from HemeLbSetupTool.View.VectorCtrl import VectorCtrl, VectorCtrlMapper
 from HemeLbSetupTool.View.IoletListCtrl import IoletListCtrl
 
-from HemeLbSetupTool.Bindings.Mappers import WxWidgetMapper, WxWidgetEnabledMapper, NonObservingWxWidgetMapper, WxListCtrlMapper
-from HemeLbSetupTool.Bindings.Translators import NoneToValueTranslator, FloatTranslator
+from HemeLbSetupTool.Bindings.WxMappers import WxWidgetMapper, WxWidgetEnabledMapper, NonObservingWxWidgetMapper, WxListCtrlMapper
+from HemeLbSetupTool.Bindings.Translators import NoneToValueTranslator, FloatTranslator, QuickTranslator
 from HemeLbSetupTool.Bindings.Bindings import WxActionBinding
 
 import pdb
@@ -111,6 +111,12 @@ class InputPanel(wx.Panel):
     pass
 
 class IoletsDetailPanel(wx.Panel):
+    @staticmethod
+    def translatorHelper(val):
+        if isNone(val):
+            return False
+        return True
+    
     def __init__(self, controller, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
@@ -160,7 +166,14 @@ class IoletsDetailPanel(wx.Panel):
             )
         self.SetSizer(layout.create())
         
-        controller.BindValue('SelectedIndex', WxWidgetEnabledMapper(self))
+        controller.BindValue(
+            'SelectedIndex',
+            WxWidgetEnabledMapper(
+                self,
+                translator=QuickTranslator(self.translatorHelper,
+                                           lambda x: None)
+                )
+            )
         
         return
     

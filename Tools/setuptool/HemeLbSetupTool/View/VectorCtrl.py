@@ -2,7 +2,7 @@ import wx
 # from wx.lib.masked import NumCtrl, EVT_NUM
 
 from HemeLbSetupTool.Bindings.Translators import FloatTranslator, NoneToValueTranslator
-from HemeLbSetupTool.Bindings.Mappers import WxWidgetMapper, Mapper
+from HemeLbSetupTool.Bindings.WxMappers import WxWidgetMapper, Mapper
 from HemeLbSetupTool.View.Layout import H
 
 def ForwardGet(func):
