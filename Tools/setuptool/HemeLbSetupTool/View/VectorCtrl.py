@@ -31,12 +31,12 @@ class VectorCtrl(wx.Panel):
         # self.x = NumCtrl(parent, style=wx.TE_PROCESS_ENTER, integerWidth=3, fractionWidth=3)
         # self.y = NumCtrl(parent, style=wx.TE_PROCESS_ENTER, integerWidth=3, fractionWidth=3)
         # self.z = NumCtrl(parent, style=wx.TE_PROCESS_ENTER, integerWidth=3, fractionWidth=3)
-        self.x = wx.TextCtrl(self)
-        self.y = wx.TextCtrl(self)
-        self.z = wx.TextCtrl(self)
-        sizer = H((self.x, 0, wx.EXPAND),
-                  (self.y, 0, wx.EXPAND),
-                  (self.z, 0, wx.EXPAND)).create()
+        self.x = wx.TextCtrl(self, size=(50,22))
+        self.y = wx.TextCtrl(self, size=(50,22))
+        self.z = wx.TextCtrl(self, size=(50,22))
+        sizer = H((self.x, 1, wx.EXPAND),
+                  (self.y, 1, wx.EXPAND),
+                  (self.z, 1, wx.EXPAND)).create()
         self.SetSizer(sizer)
         
         return

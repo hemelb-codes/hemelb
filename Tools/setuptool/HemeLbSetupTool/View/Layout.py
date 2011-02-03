@@ -32,6 +32,10 @@ class LayoutContainer(object):
 
             if isinstance(subElem, StretchSpacer):
                 sizer.AddStretchSpacer(prop=subElem.prop)
+            elif isinstance(subElem, SquareSpacer):
+                sizer.AddSpacer(subElem.size)
+            elif isinstance(subElem, RectSpacer):
+                sizer.Add(subElem.size)
             else:
                 sizer.Add(subElem, *args)
                 pass
@@ -44,6 +48,18 @@ class LayoutContainer(object):
 class StretchSpacer(object):
     def __init__(self, prop=1):
         self.prop = prop
+        return
+    pass
+
+class SquareSpacer(object):
+    def __init__(self, size):
+        self.size = size
+        return
+    pass
+
+class RectSpacer(object):
+    def __init__(self, x, y):
+        self.size = (x,y)
         return
     pass
 

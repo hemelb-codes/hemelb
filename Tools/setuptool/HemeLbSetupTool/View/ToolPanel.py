@@ -1,7 +1,7 @@
 import wx
 from wx.lib.masked import NumCtrl, EVT_NUM
 
-from HemeLbSetupTool.View.Layout import H, V, StretchSpacer
+from HemeLbSetupTool.View.Layout import H, V, StretchSpacer, RectSpacer
 from HemeLbSetupTool.View.VectorCtrl import VectorCtrl, VectorCtrlMapper
 from HemeLbSetupTool.View.IoletListCtrl import IoletListCtrl
 
@@ -34,12 +34,12 @@ class ToolPanel(wx.Panel):
                              WxWidgetEnabledMapper(self.outputPanel))
         
         layout = V(
-            (self.controlPanel, 1, wx.EXPAND),
-            (self.inputPanel, 1, wx.EXPAND),
-            (self.ioletsPanel, 3, wx.EXPAND),
-            (self.voxelPanel, 1, wx.EXPAND),
-            (self.seedPanel, 1, wx.EXPAND),
-            (self.outputPanel, 1, wx.EXPAND),
+            (self.controlPanel, 0, wx.EXPAND),
+            (self.inputPanel, 0, wx.EXPAND),
+            (self.ioletsPanel, 1, wx.EXPAND),
+            (self.voxelPanel, 0, wx.EXPAND),
+            (self.seedPanel, 0, wx.EXPAND),
+            (self.outputPanel, 0, wx.EXPAND),
             )
         sizer = layout.create()
         self.SetSizer(sizer)
@@ -68,7 +68,8 @@ class ControlPanel(wx.Panel):
                 self.generateButton,
                 StretchSpacer(),
                 ), 0, wx.EXPAND),
-            self.progressGauge)
+            (self.progressGauge, 0, wx.EXPAND)
+            )
         self.SetSizer(layout.create())
         
         return
@@ -142,16 +143,20 @@ class IoletsDetailPanel(wx.Panel):
                                                  'Label', wx.EVT_TEXT,
                                                  translator=NoneToValueTranslator('')))
         layout = V(
-            V(centreLabel,
-              self.centreVector),
+            (V(centreLabel,
+              (self.centreVector, 1, wx.EXPAND)),
+             0, wx.EXPAND),
             
-            V(normalLabel,
-              self.normalVector),
+            (V(normalLabel,
+               (self.normalVector, 1, wx.EXPAND)),
+            0, wx.EXPAND),
             
-            V(pressureLabel,
-              self.pressureVector,
-              self.pressureExpressionLabel
-              )
+            (V(pressureLabel,
+               (self.pressureVector, 1, wx.EXPAND),
+               self.pressureExpressionLabel
+               ),
+             0, wx.EXPAND),
+            RectSpacer(0,2)
             )
         self.SetSizer(layout.create())
         
@@ -193,13 +198,14 @@ class IoletsPanel(wx.Panel):
         self.detail = IoletsDetailPanel(controller.Iolets, self)
         
         layout = V(ioletsLabel,
-                   H( V( (self.ioletsListCtrl, 1, wx.EXPAND) ),
-                      self.detail
-                     ),
-                   H(self.addInletButton,
+                   (H( (V( (self.ioletsListCtrl, 1, wx.EXPAND) ), 1, wx.EXPAND),
+                      (V(StretchSpacer(), (self.detail, 0, wx.EXPAND)), 2, wx.EXPAND)
+                     ), 1, wx.EXPAND),
+                   (H(self.addInletButton,
                      self.addOutletButton,
                      self.removeIoletButton
-                     )
+                     ), 0, wx.EXPAND),
+                   RectSpacer(0,1)
                    )
         self.SetSizer(layout.create())
         return
@@ -223,8 +229,8 @@ class VoxelPanel(wx.Panel):
         
         layout = V(
             voxelLabel,
-            (H((V((self.voxelSizeField, 0, wx.EXPAND)), 1, wx.EXPAND),
-               self.voxelResetButton),0, wx.EXPAND)
+            (H((V(self.voxelSizeField), 1, wx.EXPAND),
+               self.voxelResetButton), 1, wx.EXPAND)
             )
         self.SetSizer(layout.create())
         return
@@ -250,11 +256,8 @@ class SeedPanel(wx.Panel):
         self.seedPlaceButton = wx.Button(self, label='Place')
         
         layout = V(seedLabel,
-                   H(self.seedVector,
-                   # H(self.seedVector.x,
-                   #   self.seedVector.y,
-                   #   self.seedVector.z,
-                     self.seedPlaceButton)
+                   (H((self.seedVector, 1, wx.EXPAND),
+                     self.seedPlaceButton), 1, wx.EXPAND)
                    )
         self.SetSizer(layout.create())
         return
