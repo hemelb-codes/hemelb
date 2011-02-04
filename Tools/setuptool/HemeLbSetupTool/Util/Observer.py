@@ -3,7 +3,7 @@
 Create a subclass of Observable to use.
 """
 import collections
-from .Enum import Enum
+from HemeLbSetupTool.Util.Enum import Enum
 
 class NoSuch(object):
     """Special None-like object for when an attribute did not exist.
@@ -144,10 +144,27 @@ class Observable(object):
     def GetValueForKey(self, keyPath):
         keyParts = keyPath.split('.', 1)
         if len(keyParts) == 1:
-            return getattr(self, keyPath)
+            return self._GetLocalValueForKey(keyPath)
         else:
             localKey, restOfKey = keyParts
-            return getattr(self, localKey).GetValueForKey(restOfKey)
+            return self._GetLocalValueForKey(localKey).GetValueForKey(restOfKey)
+        return
+    
+    def _GetLocalValueForKey(self, key):
+        return getattr(self, key)
+    
+    def SetValueForKey(self, keyPath, value):
+        keyParts = keyPath.split('.', 1)
+        if len(keyParts) == 1:
+            self._SetLocalValueForKey(keyPath, value)
+        else:
+            localKey, restOfKey = keyParts
+            self._GetLocalValueForKey(localKey).SetValueForKey(restOfKey, value)
+            pass
+        return
+    
+    def _SetLocalValueForKey(self, key, value):
+        setattr(self, key, value)
         return
     
     def WillChangeValueForKey(self, key, **changeOpts):
@@ -317,6 +334,9 @@ class ObservableList(Observable, collections.MutableSequence):
         else:
             self.__contents = list(iterable)
             pass
+
+        self.AddDependency('length', '@INSERTION')
+        self.AddDependency('length', '@REMOVAL')
         return
 
     def __len__(self):
@@ -350,6 +370,10 @@ class ObservableList(Observable, collections.MutableSequence):
         self.DidChangeValueForKey('@INSERTION', index=index)
         return
 
+    @property
+    def length(self):
+        return self.__len__()
+    
     def __str__(self):
         return self.__contents.__str__()
     def __repr__(self):
@@ -408,7 +432,7 @@ if __name__ == "__main__":
     print "Set a.Pressure.x"
     a.Pressure.x = 3e8
     print "Set a.Pressure"
-    pdb.run('a.Pressure = Vector(10,12,14)')
+    a.Pressure = Vector(10,12,14)
     
     olist = ObservableList()
     print 'Add b as observer of olist.@INSERTION'

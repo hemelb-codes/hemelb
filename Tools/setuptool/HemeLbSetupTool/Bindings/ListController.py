@@ -1,5 +1,6 @@
+import collections
 import wx
-import pdb
+
 from ..Util.Observer import ObservableList
 
 from .ObjectController import ObjectController
@@ -8,7 +9,9 @@ from .Translators import Translator
 from .Bindings import ValueBinding
 from .Mappers import Mapper, ReadOnlyMapper
 
-class ListController(ObjectController):
+import pdb
+
+class ListController(ObjectController, collections.MutableSequence):
     def __init__(self, delegate, SelectionControllerClass=ObjectController):
         assert isinstance(delegate, ObservableList)
         ObjectController.__init__(self, delegate)
@@ -23,6 +26,41 @@ class ListController(ObjectController):
             return self.SelectionControllerClass(EmptySelection)
         return self.SelectionControllerClass(self.delegate[self.SelectedIndex])
     
+    def insert(self, index, object):
+        self.delegate.insert(index, object)
+        self.SelectedIndex = index
+        return
+    
+    def __getitem__(self, index):
+        return self.SelectionControllerClass(self.delegate[index])
+    def __setitem__(self, index, obj):
+        if isinstance(obj, SelectionControllerClass):
+            self.delegate[index] = obj.delegate
+        else:
+            self.delegate[index] = obj
+            pass
+        return
+    
+    def __delitem__(self, index):
+        del self.delegate[index]
+        # Now take care to update the selected index such that we take
+        # the next item, unless we just popped the item at the end of
+        # the list. In that case take the new end. If the list is
+        # empty, set it to None.
+        newlen = len(self.delegate)
+        if index >= newlen:
+            index = newlen -1
+            pass
+        if newlen == 0:
+            index = None
+            pass
+        
+        self.SelectedIndex = index
+        return
+    
+    def __len__(self):
+        return self.delegate.__len__()
+    
     pass
 
 class ListMapper(Mapper):
@@ -36,12 +74,12 @@ class ListMapper(Mapper):
 class HasListKeys(object):
     """Mixin for ObjectController subclasses with ObservableList keys.
     """
-    BindMethodDispatchTable = ((ListController, 'BindList'),)
+    BindFunctionDispatchTable = ((ListController, 'BindList'),)
     
-    def BindList(self, modelKey, widgetMapper):
+    def BindList(self, top, modelKey, widgetMapper):
         """We need to bind the selection and deal with add/remove/update.
         """
-        self.BindComplexValue(modelKey, ListContentsMapper, (),
+        self.BindComplexValue(top, modelKey, ListContentsMapper, (),
                               ValueBinding, widgetMapper)
         
         return

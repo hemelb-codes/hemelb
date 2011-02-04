@@ -1,13 +1,17 @@
+from __future__ import absolute_import
 import wx
 from wx.lib.masked import NumCtrl, EVT_NUM
 
-from HemeLbSetupTool.View.Layout import H, V, StretchSpacer, RectSpacer
-from HemeLbSetupTool.View.VectorCtrl import VectorCtrl, VectorCtrlMapper
-from HemeLbSetupTool.View.IoletListCtrl import IoletListCtrl
+from .Layout import H, V, StretchSpacer, RectSpacer
+from .VectorCtrl import VectorCtrl, VectorCtrlMapper
+from .IoletListCtrl import IoletListCtrl
 
-from HemeLbSetupTool.Bindings.WxMappers import WxWidgetMapper, WxWidgetEnabledMapper, NonObservingWxWidgetMapper, WxListCtrlMapper
-from HemeLbSetupTool.Bindings.Translators import NoneToValueTranslator, FloatTranslator, QuickTranslator
-from HemeLbSetupTool.Bindings.Bindings import WxActionBinding
+from ..Bindings.WxMappers import WxWidgetMapper, \
+     WxWidgetEnabledMapper, NonObservingWxWidgetMapper, \
+     WxListCtrlMapper, WxListCtrlSelectionMapper
+from ..Bindings.Translators import NoneToValueTranslator, \
+     FloatTranslator, QuickTranslator
+from ..Bindings.Bindings import WxActionBinding
 
 import pdb
 class ToolPanel(wx.Panel):
@@ -110,23 +114,39 @@ class InputPanel(wx.Panel):
         return
     pass
 
+selectionToTrueTranslator = QuickTranslator(lambda x: x is not None,
+                                            lambda x: None)
+
 class IoletsDetailPanel(wx.Panel):
-    @staticmethod
-    def translatorHelper(val):
-        if isNone(val):
-            return False
-        return True
-    
     def __init__(self, controller, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
         
-        centreLabel = wx.StaticText(self, label='Centre (mm)')
+        nameLabel = wx.StaticText(self, label='Name')
+        self.nameField = wx.TextCtrl(self)
+
+        controller.BindValue(
+            'Selection.Name',
+            WxWidgetMapper(self.nameField, 'Value', wx.EVT_TEXT,
+                           translator=NoneToValueTranslator(''))
+            )
+        
+        centreLabel = wx.StaticText(self, label='Centre / mm')
         self.centreVector = VectorCtrl(self)
         controller.BindValue(
             'Selection.Centre',
             VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
             )
+        
+        radiusLabel = wx.StaticText(self, label='Radius / mm')
+        self.radiusField = wx.TextCtrl(self)
+        controller.BindValue(
+            'Selection.Radius',
+            WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
+                           translator=FloatTranslator())
+            )
+        
+        self.placeButton = wx.Button(self, label='Place')
         
         normalLabel = wx.StaticText(self, label='Normal')
         self.normalVector = VectorCtrl(self)
@@ -135,7 +155,7 @@ class IoletsDetailPanel(wx.Panel):
             VectorCtrlMapper(self.normalVector, 'Value', wx.EVT_TEXT)
             )
         
-        pressureLabel = wx.StaticText(self, label='Pressure (mmHg)')
+        pressureLabel = wx.StaticText(self, label='Pressure / mmHg')
         self.pressureVector = VectorCtrl(self)
         controller.BindValue(
             'Selection.Pressure',
@@ -147,15 +167,25 @@ class IoletsDetailPanel(wx.Panel):
         controller.BindValue('Selection.PressureEquation',
                                   WxWidgetMapper(self.pressureExpressionLabel,
                                                  'Label', wx.EVT_TEXT,
-                                                 translator=NoneToValueTranslator('')))
+                                                 translator=NoneToValueTranslator('p = ')))
         layout = V(
+            (V(nameLabel,
+               (self.nameField, 1, wx.EXPAND)),
+             0, wx.EXPAND),
+            
+            (self.placeButton, 0, wx.CENTRE),
+            
+            (V(radiusLabel,
+              (self.radiusField, 1, wx.EXPAND)),
+             0, wx.EXPAND),
+            
             (V(centreLabel,
-              (self.centreVector, 1, wx.EXPAND)),
+               (self.centreVector, 1, wx.EXPAND)),
              0, wx.EXPAND),
             
             (V(normalLabel,
                (self.normalVector, 1, wx.EXPAND)),
-            0, wx.EXPAND),
+             0, wx.EXPAND),
             
             (V(pressureLabel,
                (self.pressureVector, 1, wx.EXPAND),
@@ -168,11 +198,7 @@ class IoletsDetailPanel(wx.Panel):
         
         controller.BindValue(
             'SelectedIndex',
-            WxWidgetEnabledMapper(
-                self,
-                translator=QuickTranslator(self.translatorHelper,
-                                           lambda x: None)
-                )
+            WxWidgetEnabledMapper(self, translator=selectionToTrueTranslator)
             )
         
         return
@@ -188,12 +214,15 @@ class IoletsPanel(wx.Panel):
         
         ioletsLabel = wx.StaticText(self, label='Inlets and Outlets')
         
-        self.ioletsListCtrl = IoletListCtrl(self, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
+        self.ioletsListCtrl = IoletListCtrl(controller.Iolets,
+                                            self, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
         
         controller.BindValue('Iolets',
                              WxListCtrlMapper(self.ioletsListCtrl))
-        # controller.BindValue('Iolets.SelectedIndex',
-        #                           ListCtrlSelectionBinding(self.ioletsListCtrl))
+        
+        controller.BindValue('Iolets.SelectedIndex',
+                             WxListCtrlSelectionMapper(self.ioletsListCtrl))
+        
         self.addInletButton = wx.Button(self, label='Add Inlet')
         controller.BindAction('Iolets.AddInlet',
                               WxActionBinding(self.addInletButton, wx.EVT_BUTTON))
@@ -204,7 +233,9 @@ class IoletsPanel(wx.Panel):
         
         self.removeIoletButton = wx.Button(self, label='Remove')
         controller.BindValue('Iolets.SelectedIndex',
-                             WxWidgetEnabledMapper(self.removeIoletButton))
+                             WxWidgetEnabledMapper(self.removeIoletButton,
+                                                   translator=selectionToTrueTranslator)
+                             )
         controller.BindAction('Iolets.RemoveIolet',
                               WxActionBinding(self.removeIoletButton, wx.EVT_BUTTON))
         
