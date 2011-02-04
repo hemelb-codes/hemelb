@@ -266,6 +266,8 @@ namespace hemelb
                                        double &bMPISendTime,
                                        double &bMPIWaitTime)
     {
+      net->InitialiseSendReceive(bLocalLatDat);
+
       net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
 
       int offset = bLocalLatDat.my_inner_sites;
