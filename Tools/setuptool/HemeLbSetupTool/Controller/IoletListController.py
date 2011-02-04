@@ -14,21 +14,18 @@ class IoletListController(ListController):
     
     def AddInlet(self):
         self.nInlets += 1
-        self.delegate.append(Inlet(Name='Inlet%d' % (self.nInlets)))
-        self.SelectedIndex = len(self.delegate)-1
+        self.append(Inlet(Name='Inlet%d' % (self.nInlets)))
         return
     
     def AddOutlet(self):
         self.nOutlets += 1
-        self.delegate.append(Outlet(Name='Outlet%d' % (self.nOutlets)))
-        self.SelectedIndex = len(self.delegate)-1
+        self.append(Outlet(Name='Outlet%d' % (self.nOutlets)))
         return
 
     def RemoveIolet(self):
-        pdb.set_trace()
         if self.SelectedIndex is None:
             return
-        del self.delegate[self.SelectedIndex]
+        del self[self.SelectedIndex]
         return
     
     pass
@@ -36,7 +33,7 @@ class IoletListController(ListController):
 class HasIoletListKeys(HasListKeys):
     """Mixin for ObjectController subclasses with IoletList keys.
     """
-    BindMethodDispatchTable = ((IoletListController, 'BindList'),)
+    BindFunctionDispatchTable = ((IoletListController, 'BindList'),)
 
     # def BindList(self, modelKey, widgetMapper):
     #     """We need to bind the selection and deal with add/remove/update.

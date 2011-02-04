@@ -89,7 +89,11 @@ class FloatTranslator(Translator):
         return
 
     def TranslateStage(self, value):
-        return self.format % value
+        try:
+            return self.format % value
+        except TypeError:
+            return 'nan'
+        return
     
     def UntranslateStage(self, value):
         try:
