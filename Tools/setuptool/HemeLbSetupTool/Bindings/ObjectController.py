@@ -6,15 +6,15 @@ from .Bindings import ValueBinding
 class ObjectController(Observable):
     """Acts as an intermediary between the model object and view objects.
     """
-    BindMethodDispatchTable = ((object, 'BindSimpleValue'), )
+    BindFunctionDispatchTable = ((object, 'BindSimpleValue'), )
     
-    def ChooseBindMethod(self, key):
+    def ChooseBindFunction(self, key):
         """Here we walk up the class hierarchy looking in the
-        BindMethodDispatchTable for each class to see if the value
+        BindFunctionDispatchTable for each class to see if the value
         corresponding to the key is an instance of any entry. We
         return the corresponding method for the first match.
 
-        ObjectController.BindMethodDispatchTable contains a single
+        ObjectController.BindFunctionDispatchTable contains a single
         entry that forwards any value to 'BindSimpleValue'.
         """
         # First, get the object, possibly from the delegate
@@ -27,9 +27,9 @@ class ObjectController(Observable):
         # Walk up the hierarchy
         for controllerClass in type(self).__mro__:
             try:
-                table = controllerClass.BindMethodDispatchTable
+                table = controllerClass.BindFunctionDispatchTable
             except AttributeError:
-                # If the class doesn't have a BindMethodDispatchTable
+                # If the class doesn't have a BindFunctionDispatchTable
                 continue
             
             for cls, methodName in table:
@@ -53,46 +53,83 @@ class ObjectController(Observable):
         self.__actions = set()
         return
     
+    def _GetLocalValueForKey(self, key):
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            return self.delegate._GetLocalValueForKey(key)
+        return
+
+    def _SetLocalValueForKey(self, key, value):
+        if hasattr(self, key):
+            setattr(self, key, value)
+        else:
+            self.delegate._SetLocalValueForKey(key, value)
+            pass
+        return
+    
+    def _AddObserverToLocalKey(self, keyPath, callback, options):
+        if hasattr(self, keyPath) or '.' in keyPath:
+            # If its our attribute or a dotted path, add to self
+            Observable._AddObserverToLocalKey(self, keyPath, callback, options)
+        else:
+            # Delegate it
+            self.delegate._AddObserverToLocalKey(keyPath, callback, options)
+            pass
+        return
+    
     def BindValue(self, modelKey, widgetMapper):
         """Bind a mapper to a value. First find the responsible
         controller by walking the key path, then dispatched on the
         type of the mapper.
         """
-        parts = modelKey.split('.', 1)
-        if len(parts) == 1:
-            self.ChooseBindMethod(modelKey)(modelKey, widgetMapper)
-        else:
-            local = parts[0]
-            rest = parts[1]
-            subController = getattr(self, local)
-            subController.BindValue(rest, widgetMapper)
-            pass
+        con, conKey = self.FindResponsibleControllerAndKey(modelKey)
+        
+        con.ChooseBindFunction(conKey)(self, modelKey, widgetMapper)
         return
     
-    def BindComplexValue(self, modelKey, modelMapperFactory, modelFactoryArgs,
+    def FindResponsibleControllerAndKey(self, modelKey):
+        """Find the responsible controller by walking along the key
+        path, return that and the key path from that point to the full
+        key.
+        """
+        parts = modelKey.split('.', 1)
+        if len(parts) == 1:
+            return self, parts[0]
+        
+        local = parts[0]
+        rest = parts[1]
+        subController = getattr(self, local)
+        return subController.FindResponsibleControllerAndKey(rest)
+    
+    def BindComplexValue(self, topController, modelKey,
+                         modelMapperFactory, modelFactoryArgs,
                          bindMgrFactory, widgetMapper):
         try:
-            # If we've already got a BindingManager for this attribute
-            # of the model, use that.
-            bindingMgr = self.__values[modelKey]
+            # If the topController's already got a BindingManager for
+            # this attribute of the model, use that.
+            bindingMgr = topController.__values[modelKey]
         except KeyError:
-            # If not, create it, on self if we have that attribute,
+            # If not, create it, based on self if we have that attribute,
             # otherwise on the delegate
-            if hasattr(self, modelKey):                
-                modelMapper = modelMapperFactory(self, modelKey, *modelFactoryArgs)
-            else:
-                modelMapper = modelMapperFactory(self.delegate, modelKey, *modelFactoryArgs)
-                pass
-            bindingMgr = self.__values[modelKey] = bindMgrFactory(modelMapper)
+            # if hasattr(self, modelKey):
+            modelMapper = modelMapperFactory(topController, modelKey, *modelFactoryArgs)
+            # else:
+            #     modelMapper = modelMapperFactory(self.delegate, modelKey, *modelFactoryArgs)
+            #     pass
+            bindingMgr = topController.__values[modelKey] = bindMgrFactory(modelMapper)
             pass
         # Bind our widget to the manager
         bindingMgr.BindWidget(widgetMapper)
         return
     
-    def BindSimpleValue(self, modelKey, widgetMapper):
+    def BindSimpleValue(self, topController, modelKey, widgetMapper):
         """Do a simple value binding.
         """
-        self.BindComplexValue(modelKey, SimpleObservingMapper, (), ValueBinding, widgetMapper)
+        self.BindComplexValue(topController, modelKey,
+                              SimpleObservingMapper, (), ValueBinding,
+                              widgetMapper)
+        
         return
     
     def BindAction(self, modelKey, action):

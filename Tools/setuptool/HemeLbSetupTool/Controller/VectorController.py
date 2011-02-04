@@ -14,16 +14,16 @@ class VectorController(ObjectController):
 class HasVectorKeys(object):
     """Mixin for ObjectController subclasses with Vector keys.
     """
-    BindMethodDispatchTable = ((VectorController, 'BindVector'),)
+    BindFunctionDispatchTable = ((VectorController, 'BindVector'),)
     
-    def BindVector(self, key, mapper):
+    def BindVector(self, top, key, mapper):
         """Each component of the vector should be appropriately bound.
         """
         for coord in ('x', 'y', 'z'):
             # Get the key path to the component and bind the part of
             # the VectorCtrl to that path
-            self.BindValue(key + '.' + coord,
-                           mapper.CreateSubMapper(coord))
+            top.BindValue(key + '.' + coord,
+                          mapper.CreateSubMapper(coord))
             continue
         return
 

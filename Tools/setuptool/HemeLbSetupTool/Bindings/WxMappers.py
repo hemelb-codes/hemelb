@@ -1,8 +1,10 @@
 import types
+import wx
 
 from .Mappers import Mapper, WriteOnlyMapper
+from .EmptySelection import isNone
 from .Translators import Translator, UnitTranslator, QuickTranslator
-
+import pdb
 class WxWidgetMapper(Mapper):
     def __init__(self, widget, key, event, translator=UnitTranslator()):
         Mapper.__init__(self, translator=translator)
@@ -81,7 +83,7 @@ class WxListCtrlMapper(WriteOnlyMapper):
     managed list.
     """
     def __init__(self, widget, translator=UnitTranslator()):
-        Mapper.__init__(self, translator=translator)
+        WriteOnlyMapper.__init__(self, translator=translator)
         
         self.widget = widget
         return
@@ -100,7 +102,7 @@ class WxListCtrlMapper(WriteOnlyMapper):
             self.Clean(model)
             return
         
-        if change.key == '@DELETION':
+        if change.key == '@REMOVAL':
             self.Delete(model, change)
         elif change.key == '@INSERTION':
             self.Insert(model, change)
@@ -117,11 +119,15 @@ class WxListCtrlMapper(WriteOnlyMapper):
     
     def Insert(self, model, change):
         index = change.index
+        # This effectively creates a new control- we will probably
+        # have to bind it to a model key
         self.widget.InsertItemAtIndex(index, self.translator.Translate(model[index]))
         return
     
     def Delete(self, model, change):
         index = change.index
+        # This effectively deletes a control. We should throw away any
+        # bindings
         self.widget.DeleteItem(index)
         return
     
@@ -133,6 +139,9 @@ class WxListCtrlMapper(WriteOnlyMapper):
     pass
 
 class WxListCtrlSelectionMapper(Mapper, Translator):
+    """Mapper for the keeping a single selected item's index in sync
+    with a ListController's SelectedIndex.
+    """
     def __init__(self, widget, inner=None):
         Mapper.__init__(self, translator=self)
         Translator.__init__(self, inner)
@@ -171,14 +180,35 @@ class WxListCtrlSelectionMapper(Mapper, Translator):
         try:
             prevSelected = self._Get()
             if ind != prevSelected:
-                self.widget.SetItemState(newInd, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-                self.widget.SetItemState(prevSelected, 0, wx.LIST_STATE_SELECTED)
+                # If the selection wasn't already selected
+                self.widget.SetItemState(ind, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+                if prevSelected >= 0:
+                    # There was a previous selection (prevSelected
+                    # will be -1 if there was one)
+                    self.widget.SetItemState(prevSelected, 0, wx.LIST_STATE_SELECTED)
+                    pass
                 pass
-            
             
         finally:
             self.Observe()
             pass
 
         return
+    pass
+
+class WxListCtrlItemMapper(WriteOnlyMapper):
+    """Keep a single square in a wx.ListCtrl in sync.
+    """
+    
+    def __init__(self, listCtrl, row, column, translator=UnitTranslator()):
+        WriteOnlyMapper.__init__(self, translator=translator)
+        self.listCtrl = listCtrl
+        self.row = row
+        self.col = column
+        return
+
+    def _Set(self, val):
+        self.listCtrl.SetStringItem(self.row, self.col, val)
+        return
+    
     pass
