@@ -35,6 +35,6 @@ class BindableWxListCtrl(wx.ListCtrl):
         return
     
     def DeleteItem(self, row):
-        del self.itemController[row]
+        del self.itemControllers[row]
         return wx.ListCtrl.DeleteItem(self, row)
     pass

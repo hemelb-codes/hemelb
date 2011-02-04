@@ -17,7 +17,7 @@ class MainWindow(wx.Frame):
         self.splitter = wx.SplitterWindow(self)
         
         self.toolPanel = ToolPanel(controller, self.splitter)
-        self.vtkPanel = VtkViewPanel(controller, self.splitter)
+        self.vtkPanel = VtkViewPanel(controller.Pipeline, self.splitter)
         self.splitter.SplitVertically(self.toolPanel, self.vtkPanel)
         
         self.Show(True)

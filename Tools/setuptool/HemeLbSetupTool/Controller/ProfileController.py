@@ -2,21 +2,25 @@ import wx
 
 from HemeLbSetupTool.Bindings.ObjectController import ObjectController
 from HemeLbSetupTool.Bindings.Translators import QuickTranslator
+from HemeLbSetupTool.Bindings.VtkObject import HasVtkObjectKeys
 from HemeLbSetupTool.Controller.IoletListController import IoletListController, HasIoletListKeys
 from HemeLbSetupTool.Controller.VectorController import HasVectorKeys
 
 import pdb
 
-class ProfileController(HasIoletListKeys, HasVectorKeys, ObjectController):
+class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, ObjectController):
+    """Proxy for HemeLbSetupTool.Mode.Profile objects.
+    """
     def __init__(self, delegate):
         ObjectController.__init__(self, delegate)
         self.DefineVectorKey("SeedPoint")
         self.DefineIoletListKey("Iolets")
+        self.DefineVtkObjectKey("StlReader")
         
         def trans(state):
             if state:
                 return wx.WHITE
-            return wx.RED
+            return wx.Colour(255,128,128)
         
         self.validColourer = QuickTranslator(trans, lambda x: False) 
         return

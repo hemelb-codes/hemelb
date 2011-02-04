@@ -172,7 +172,7 @@ class Controller(Notifier):
         # Create the windows
         frame = self.view.Create(self)
         
-        self.view.pipeline.Start(self.model.stlReader.GetOutputPort())
+        self.view.pipeline.Start(self.model.StlReader.GetOutputPort())
         self.BindToUiEvents()
         self.SubscribeToModelTopics()
         

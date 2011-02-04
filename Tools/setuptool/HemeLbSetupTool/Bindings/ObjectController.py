@@ -49,8 +49,8 @@ class ObjectController(Observable):
         
         assert isinstance(delegate, Observable)
         self.delegate = delegate
-        self.__values = dict()
-        self.__actions = set()
+        self._values = dict()
+        self._actions = set()
         return
     
     def _GetLocalValueForKey(self, key):
@@ -108,7 +108,7 @@ class ObjectController(Observable):
         try:
             # If the topController's already got a BindingManager for
             # this attribute of the model, use that.
-            bindingMgr = topController.__values[modelKey]
+            bindingMgr = topController._values[modelKey]
         except KeyError:
             # If not, create it, based on self if we have that attribute,
             # otherwise on the delegate
@@ -117,7 +117,7 @@ class ObjectController(Observable):
             # else:
             #     modelMapper = modelMapperFactory(self.delegate, modelKey, *modelFactoryArgs)
             #     pass
-            bindingMgr = topController.__values[modelKey] = bindMgrFactory(modelMapper)
+            bindingMgr = topController._values[modelKey] = bindMgrFactory(modelMapper)
             pass
         # Bind our widget to the manager
         bindingMgr.BindWidget(widgetMapper)
@@ -135,8 +135,8 @@ class ObjectController(Observable):
     def BindAction(self, modelKey, action):
         parts = modelKey.split('.', 1)
         if len(parts) == 1:
-            self.__actions.add(action)
-            action.Bind(self.__getCallbackWrapper(modelKey))
+            self._actions.add(action)
+            action.Bind(self._getCallbackWrapper(modelKey))
         else:
             local = parts[0]
             rest = parts[1]
@@ -146,7 +146,7 @@ class ObjectController(Observable):
 
         return
     
-    def __getCallbackWrapper(self, key):
+    def _getCallbackWrapper(self, key):
         obj = self
         cb = None
         while cb is None:

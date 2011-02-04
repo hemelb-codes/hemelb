@@ -5,7 +5,7 @@ from numpy import isfinite
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
 from HemeLbSetupTool.Model.Vector import Vector
-
+import pdb
 class Profile(Observable):
     """This class represents the parameters necessary to perform a
     setup for HemeLb and supplies the functionality to do it.
@@ -36,10 +36,10 @@ class Profile(Observable):
             raise TypeError("__init__() got an unexpected keyword argument '%'" % k)
 
         # We need a reader to get the polydata
-        self.stlReader = vtkSTLReader()
+        self.StlReader = vtkSTLReader()
         # And a way to estimate the voxel size
         self.sider = AverageSideLengthCalculator()
-        self.sider.SetInputConnection(self.stlReader.GetOutputPort())
+        self.sider.SetInputConnection(self.StlReader.GetOutputPort())
 
         # When the STL changes, we should reset the voxel size.
         self.AddObserver('StlFile', self.OnStlFileChanged)
@@ -57,7 +57,7 @@ class Profile(Observable):
         return
     
     def OnStlFileChanged(self, change):
-        self.stlReader.SetFileName(self.StlFile)
+        self.StlReader.SetFileName(self.StlFile)
         self.VoxelSize = self.sider.GetOutputValue()
         return
     
@@ -65,14 +65,7 @@ class Profile(Observable):
     def HaveValidStlFile(self):
         """Read only property indicating if our STL file is valid.
         """
-        if self.StlFile is None:
-            return False
-        if not os.path.exists(self.StlFile):
-            return False
-        if self.stlReader.GetOutput().GetNumberOfPoints() > 0:
-            return True
-
-        return False
+        return IsFileValid(self.StlFile, ext='.stl', exists=True)
 
     @property
     def HaveValidSeedPoint(self):
@@ -128,7 +121,7 @@ def IsFileValid(path, ext=None, exists=None):
         return False
     
     if exists is not None:
-        if os.path.exists != exists:
+        if os.path.exists(path) != exists:
             return False
         pass
     

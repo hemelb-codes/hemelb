@@ -15,7 +15,7 @@ class Mapper(object):
         self.binding = b
         return
     
-    def HandleUpdate(self, ignored=None):
+    def HandleUpdate(self, ignored=None, alsoIgnored=None):
         self.binding.MapperWasUpdated(self)
         return
 
