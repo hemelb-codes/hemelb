@@ -57,6 +57,9 @@ class ControlPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
         
+        self.debugButton = wx.Button(self, label="DEBUG")
+        controller.BindAction('Debug', WxActionBinding(self.debugButton, wx.EVT_BUTTON))
+        
         self.openProfileButton = wx.Button(self, label='Open Profile')
         self.saveProfileButton = wx.Button(self, label='Save Profile')
         self.generateButton = wx.Button(self, label='Generate')
@@ -66,6 +69,7 @@ class ControlPanel(wx.Panel):
         
         layout = V(
             (H(
+                self.debugButton,
                 StretchSpacer(),
                 self.openProfileButton,
                 self.saveProfileButton,
@@ -298,6 +302,13 @@ class SeedPanel(wx.Panel):
                              )
         
         self.seedPlaceButton = wx.Button(self, label='Place')
+        controller.BindValue('Pipeline.SeedPlaceButtonEnabled',
+                             WxWidgetEnabledMapper(self.seedPlaceButton))
+        controller.BindValue('Pipeline.SeedPlaceButtonLabel',
+                             NonObservingWxWidgetMapper(self.seedPlaceButton, 'Label'))
+        
+        controller.BindAction('Pipeline.SeedPlaceStart',
+                              WxActionBinding(self.seedPlaceButton, wx.EVT_BUTTON))
         
         layout = V(seedLabel,
                    (H((self.seedVector, 1, wx.EXPAND),
