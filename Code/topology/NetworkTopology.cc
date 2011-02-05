@@ -5,20 +5,16 @@ namespace hemelb
 {
   namespace topology
   {
-
     NeighbouringProcessor::~NeighbouringProcessor()
     {
       delete[] SharedFReceivingIndex;
     }
 
-    NetworkTopology::NetworkTopology(int * argCount,
-                                     char *** argList,
-                                     bool* oSuccess)
+    NetworkTopology::NetworkTopology(int * argCount, char *** argList, bool* oSuccess)
     {
       int thread_level_provided;
 
-      MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED,
-                      &thread_level_provided);
+      MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED, &thread_level_provided);
 
       MPI_Comm_size(MPI_COMM_WORLD, &processorCount);
       MPI_Comm_rank(MPI_COMM_WORLD, &localRank);
@@ -105,24 +101,21 @@ namespace hemelb
 #endif
 
         // In the simple case, simply divide fluid sites up between processors.
-        AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
-                                     lUnvisitedFluidSiteCount, -1, false,
-                                     bGlobLatDat);
+        AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit, lUnvisitedFluidSiteCount,
+                                     -1, false, bGlobLatDat);
       }
       else
       {
         // Rank we are looking at.
         int proc_count = GetProcessorCount();
-        double weight = (double) (ProcCountOnEachMachine[0]
-            * GetProcessorCount()) / (double) (GetProcessorCount() - 1);
+        double weight = (double) (ProcCountOnEachMachine[0] * GetProcessorCount())
+            / (double) (GetProcessorCount() - 1);
         // Fluid sites per rank.
-        int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
-            * weight / machineCount);
+        int fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites * weight / machineCount);
 
         // First, divide the sites up between machines.
-        AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
-                                     lUnvisitedFluidSiteCount, -1, true,
-                                     bGlobLatDat);
+        AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit, lUnvisitedFluidSiteCount,
+                                     -1, true, bGlobLatDat);
 
         fluid_sites_per_unit = (int) ceil((double) lUnvisitedFluidSiteCount
             / (double) (GetProcessorCount() - 1));
@@ -131,10 +124,8 @@ namespace hemelb
         // For each machine, divide up the sites it has between its cores.
         for (int lMachineNumber = 0; lMachineNumber < machineCount; lMachineNumber++)
         {
-          AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit,
-                                       lUnvisitedFluidSiteCount,
-                                       GetProcessorCount() + lMachineNumber,
-                                       false, bGlobLatDat);
+          AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit, lUnvisitedFluidSiteCount,
+                                       GetProcessorCount() + lMachineNumber, false, bGlobLatDat);
         }
       }
 
@@ -147,10 +138,8 @@ namespace hemelb
                                                        const bool iIsMachineLevel,
                                                        const lb::GlobalLatticeData &iGlobLatDat)
     {
-      std::vector<SiteLocation*> *lSiteLocationA = new std::vector<
-          SiteLocation*>;
-      std::vector<SiteLocation*> *lSiteLocationB = new std::vector<
-          SiteLocation*>;
+      std::vector<SiteLocation*> *lSiteLocationA = new std::vector<SiteLocation*>;
+      std::vector<SiteLocation*> *lSiteLocationB = new std::vector<SiteLocation*>;
 
       int lBlockNumber = -1;
 
@@ -170,15 +159,13 @@ namespace hemelb
       {
         for (int lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat.GetYBlockCount(); lBlockCoordJ++)
         {
-          for (int lBlockCoordK = 0; lBlockCoordK
-              < iGlobLatDat.GetZBlockCount(); lBlockCoordK++)
+          for (int lBlockCoordK = 0; lBlockCoordK < iGlobLatDat.GetZBlockCount(); lBlockCoordK++)
           {
             // Block number is the number of the block we're currently on.
             lBlockNumber++;
 
             // Point to a block of ProcessorRankForEachBlockSite.  If we are in a block of solids, move on.
-            int *lProcRankForSite =
-                iGlobLatDat.Blocks[lBlockNumber].ProcessorRankForEachBlockSite;
+            int *lProcRankForSite = iGlobLatDat.Blocks[lBlockNumber].ProcessorRankForEachBlockSite;
 
             // If the array of proc rank for each site is NULL, we're on an all-solid block.
             if (lProcRankForSite == NULL)
@@ -193,16 +180,13 @@ namespace hemelb
             // For each dimension of the site co-ordinates, iterate over all values of the site
             // co-ordinates on the current block.
             for (int lSiteCoordI = lBlockCoordI * iGlobLatDat.GetBlockSize(); lSiteCoordI
-                < lBlockCoordI * iGlobLatDat.GetBlockSize()
-                    + iGlobLatDat.GetBlockSize(); lSiteCoordI++)
+                < lBlockCoordI * iGlobLatDat.GetBlockSize() + iGlobLatDat.GetBlockSize(); lSiteCoordI++)
             {
               for (int lSiteCoordJ = lBlockCoordJ * iGlobLatDat.GetBlockSize(); lSiteCoordJ
-                  < lBlockCoordJ * iGlobLatDat.GetBlockSize()
-                      + iGlobLatDat.GetBlockSize(); lSiteCoordJ++)
+                  < lBlockCoordJ * iGlobLatDat.GetBlockSize() + iGlobLatDat.GetBlockSize(); lSiteCoordJ++)
               {
-                for (int lSiteCoordK = lBlockCoordK
-                    * iGlobLatDat.GetBlockSize(); lSiteCoordK < lBlockCoordK
-                    * iGlobLatDat.GetBlockSize() + iGlobLatDat.GetBlockSize(); lSiteCoordK++)
+                for (int lSiteCoordK = lBlockCoordK * iGlobLatDat.GetBlockSize(); lSiteCoordK
+                    < lBlockCoordK * iGlobLatDat.GetBlockSize() + iGlobLatDat.GetBlockSize(); lSiteCoordK++)
                 {
                   // Keep track of the site number.
                   lSiteNumber++;
@@ -232,8 +216,7 @@ namespace hemelb
 
                   // While the region can grow (i.e. it is not bounded by solids or visited
                   // sites), and we need more sites on this particular rank.
-                  while (lSitesOnCurrentProc < iSitesPerProc
-                      && lIsRegionGrowing)
+                  while (lSitesOnCurrentProc < iSitesPerProc && lIsRegionGrowing)
                   {
                     for (unsigned int ii = 0; ii < lSiteLocationB->size(); ii++)
                     {
@@ -245,14 +228,13 @@ namespace hemelb
                     lIsRegionGrowing = false;
 
                     // For sites on the edge of the domain (sites_a), deal with the neighbours.
-                    for (unsigned int index_a = 0; index_a
-                        < lSiteLocationA->size() && lSitesOnCurrentProc
-                        < iSitesPerProc; index_a++)
+                    for (unsigned int index_a = 0; index_a < lSiteLocationA->size()
+                        && lSitesOnCurrentProc < iSitesPerProc; index_a++)
                     {
                       lNew = lSiteLocationA->operator [](index_a);
 
-                      for (unsigned int l = 1; l < D3Q15::NUMVECTORS
-                          && lSitesOnCurrentProc < iSitesPerProc; l++)
+                      for (unsigned int l = 1; l < D3Q15::NUMVECTORS && lSitesOnCurrentProc
+                          < iSitesPerProc; l++)
                       {
                         // Record neighbour location.
                         int neigh_i = lNew->i + D3Q15::CX[l];
@@ -260,14 +242,11 @@ namespace hemelb
                         int neigh_k = lNew->k + D3Q15::CZ[l];
 
                         // Move on if neighbour is outside the bounding box.
-                        if (neigh_i == -1 || neigh_i
-                            == iGlobLatDat.GetXSiteCount())
+                        if (neigh_i == -1 || neigh_i == iGlobLatDat.GetXSiteCount())
                           continue;
-                        if (neigh_j == -1 || neigh_j
-                            == iGlobLatDat.GetYSiteCount())
+                        if (neigh_j == -1 || neigh_j == iGlobLatDat.GetYSiteCount())
                           continue;
-                        if (neigh_k == -1 || neigh_k
-                            == iGlobLatDat.GetZSiteCount())
+                        if (neigh_k == -1 || neigh_k == iGlobLatDat.GetZSiteCount())
                           continue;
 
                         // Move on if the neighbour is in a block of solids (in which case
@@ -277,10 +256,8 @@ namespace hemelb
 
                         // Pointer to the rank on which a particular fluid site
                         // resides.
-                        int * proc_id_p =
-                            iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                  neigh_j,
-                                                                  neigh_k);
+                        int * proc_id_p = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i, neigh_j,
+                                                                                neigh_k);
 
                         if (proc_id_p == NULL || *proc_id_p != iMarker)
                         {
@@ -313,8 +290,7 @@ namespace hemelb
                   {
                     if (!iIsMachineLevel)
                     {
-                      FluidSitesOnEachProcessor[proc_count]
-                          = lSitesOnCurrentProc;
+                      FluidSitesOnEachProcessor[proc_count] = lSitesOnCurrentProc;
                     }
 
                     ++proc_count;

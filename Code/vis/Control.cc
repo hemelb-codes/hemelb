@@ -629,7 +629,7 @@ namespace hemelb
         myGlypher->render();
       }
 #ifndef NO_STREAKLINES
-      if (shouldDrawStreaklines && (mStressType == lb::ShearStress || mode == 2))
+      if (mStressType == lb::ShearStress || mode == 2)
       {
         myStreaker->render(iGlobLatDat);
       }
