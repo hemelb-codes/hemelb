@@ -115,7 +115,6 @@ namespace hemelb
         // better public member vars than globals!
         int mode;
         int image_freq;
-        int shouldDrawStreaklines;
 
         float velocity_threshold_max_inv;
         float stress_threshold_max_inv;
