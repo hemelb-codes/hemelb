@@ -39,7 +39,7 @@ namespace hemelb
         hemelb::lb::Stability
         DoCycle(int perform_rt,
                 net::Net *net,
-                lb::LocalLatticeData &bLocallatDat,
+                lb::LocalLatticeData *bLocallatDat,
                 double &bLbTime,
                 double &bMPISendTime,
                 double &bMPIWaitTime);

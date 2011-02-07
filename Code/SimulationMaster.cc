@@ -211,7 +211,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       mLbm->UpdateBoundaryDensities(mSimulationState.CycleId, mSimulationState.TimeStep);
 
-      stability = mLbm->DoCycle(mSimulationState.DoRendering, mNet, *mLocalLatDat, mLbTime,
+      stability = mLbm->DoCycle(mSimulationState.DoRendering, mNet, mLocalLatDat, mLbTime,
                                 mMPISendTime, mMPIWaitTime);
 
       if ( (restart = mLbm->IsUnstable(*mLocalLatDat)) != false)
