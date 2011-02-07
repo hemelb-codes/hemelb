@@ -45,10 +45,9 @@ namespace hemelb
         template<class T>
         void RequestSend(T* oPointer, int iCount, int iToRank)
         {
-          ProcessorComms *lComms = GetProcComms(iToRank);
+          ProcComms *lComms = GetProcComms(iToRank);
 
-          AddToList(oPointer, iCount, lComms->mSendPointerList, lComms->mSendLengthList,
-                    lComms->mSendTypeList);
+          AddToList(oPointer, iCount, lComms->SendData);
         }
 
         /**
@@ -62,10 +61,9 @@ namespace hemelb
         template<class T>
         void RequestReceive(T* oPointer, int iCount, int iFromRank)
         {
-          ProcessorComms *lComms = GetProcComms(iFromRank);
+          ProcComms *lComms = GetProcComms(iFromRank);
 
-          AddToList(oPointer, iCount, lComms->mReceivePointerList, lComms->mReceiveLengthList,
-                    lComms->mReceiveTypeList);
+          AddToList(oPointer, iCount, lComms->ReceiveData);
         }
 
         void InitialiseSendReceive(hemelb::lb::LocalLatticeData &bLocalLatDat);
@@ -74,33 +72,35 @@ namespace hemelb
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
          */
-        struct ProcessorComms
+        struct ProcComms
         {
           public:
-            std::vector<void*> mSendPointerList;
-            std::vector<int> mSendLengthList;
-            std::vector<MPI_Datatype> mSendTypeList;
-            std::vector<void*> mReceivePointerList;
-            std::vector<int> mReceiveLengthList;
-            std::vector<MPI_Datatype> mReceiveTypeList;
+            struct MetaData
+            {
+                std::vector<void*> PointerList;
+                std::vector<int> LengthList;
+                std::vector<MPI_Datatype> TypeList;
+
+                void clear()
+                {
+                  PointerList.clear();
+                  LengthList.clear();
+                  TypeList.clear();
+                }
+            };
+
+            MetaData SendData;
+            MetaData ReceiveData;
 
             MPI_Datatype SendType;
             MPI_Datatype ReceiveType;
         };
 
-        ProcessorComms* GetProcComms(int iRank);
+        ProcComms* GetProcComms(int iRank);
 
-        void AddToList(int* iNew,
-                       int iLength,
-                       std::vector<void*> &iPointerList,
-                       std::vector<int> &iLengthList,
-                       std::vector<MPI_Datatype> &iTypeList);
+        void AddToList(int* iNew, int iLength, ProcComms::MetaData &bMetaData);
 
-        void AddToList(double* iNew,
-                       int iLength,
-                       std::vector<void*> &iPointerList,
-                       std::vector<int> &iLengthList,
-                       std::vector<MPI_Datatype> &iTypeList);
+        void AddToList(double* iNew, int iLength, ProcComms::MetaData &bMetaData);
 
         void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
                                  unsigned int *& bThisRankSiteData);
@@ -126,7 +126,7 @@ namespace hemelb
         int *f_recv_iv;
         int err;
 
-        std::map<int, ProcessorComms*> mProcessorComms;
+        std::map<int, ProcComms*> mProcessorComms;
 
         hemelb::topology::NetworkTopology * mNetworkTopology;
 
