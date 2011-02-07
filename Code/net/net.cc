@@ -708,7 +708,7 @@ namespace hemelb
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); ++it)
       {
-        MPI_Irecv(it->second->ReceiveData.PointerList.front(), 1, it->second->ReceiveType,
+        MPI_Irecv(it->second->PermanentReceiveData.PointerList.front(), 1, it->second->PermanentReceiveType,
                   it->first, 10, MPI_COMM_WORLD, &req[0][m]);
         ++m;
       }
@@ -724,7 +724,7 @@ namespace hemelb
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); ++it)
       {
-        MPI_Isend(it->second->SendData.PointerList.front(), 1, it->second->SendType, it->first, 10,
+        MPI_Isend(it->second->PermanentSendData.PointerList.front(), 1, it->second->PermanentSendType, it->first, 10,
                   MPI_COMM_WORLD, &req[0][mProcessorComms.size() + m]);
 
         ++m;
@@ -744,11 +744,11 @@ namespace hemelb
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); it++)
       {
-        it->second->SendData.clear();
-        it->second->ReceiveData.clear();
+        it->second->PermanentSendData.clear();
+        it->second->PermanentReceiveData.clear();
 
-        MPI_Type_free(&it->second->SendType);
-        MPI_Type_free(&it->second->ReceiveType);
+        MPI_Type_free(&it->second->PermanentSendType);
+        MPI_Type_free(&it->second->PermanentReceiveType);
       }
 
       // Copy the distribution functions received from the neighbouring
@@ -806,10 +806,10 @@ namespace hemelb
       {
         ProcComms* lThisPC = (*it).second;
 
-        CreateMPIType(lThisPC->SendData.PointerList, lThisPC->SendData.LengthList,
-                      lThisPC->SendData.TypeList, lThisPC->SendType);
-        CreateMPIType(lThisPC->ReceiveData.PointerList, lThisPC->ReceiveData.LengthList,
-                      lThisPC->ReceiveData.TypeList, lThisPC->ReceiveType);
+        CreateMPIType(lThisPC->PermanentSendData.PointerList, lThisPC->PermanentSendData.LengthList,
+                      lThisPC->PermanentSendData.TypeList, lThisPC->PermanentSendType);
+        CreateMPIType(lThisPC->PermanentReceiveData.PointerList, lThisPC->PermanentReceiveData.LengthList,
+                      lThisPC->PermanentReceiveData.TypeList, lThisPC->PermanentReceiveType);
       }
 
       preppedToSendReceive = true;

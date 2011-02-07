@@ -47,7 +47,7 @@ namespace hemelb
         {
           ProcComms *lComms = GetProcComms(iToRank);
 
-          AddToList(oPointer, iCount, lComms->SendData);
+          AddToList(oPointer, iCount, lComms->PermanentSendData);
         }
 
         /**
@@ -63,7 +63,7 @@ namespace hemelb
         {
           ProcComms *lComms = GetProcComms(iFromRank);
 
-          AddToList(oPointer, iCount, lComms->ReceiveData);
+          AddToList(oPointer, iCount, lComms->PermanentReceiveData);
         }
 
         void InitialiseSendReceive(hemelb::lb::LocalLatticeData &bLocalLatDat);
@@ -89,11 +89,15 @@ namespace hemelb
                 }
             };
 
-            MetaData SendData;
-            MetaData ReceiveData;
+            MetaData PermanentSendData;
+            MetaData PermanentReceiveData;
+            MetaData OneOffSendData;
+            MetaData OneOffReceiveData;
 
-            MPI_Datatype SendType;
-            MPI_Datatype ReceiveType;
+            MPI_Datatype PermanentSendType;
+            MPI_Datatype PermanentReceiveType;
+            MPI_Datatype OneOffSendType;
+            MPI_Datatype OneOffReceiveType;
         };
 
         ProcComms* GetProcComms(int iRank);
