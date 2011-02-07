@@ -207,6 +207,11 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
+    void LBM::SetFTranslator(int* iFTranslator)
+    {
+      receivedFTranslator = iFTranslator;
+    }
+
     void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
     {
       double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
@@ -278,7 +283,7 @@ namespace hemelb
                                    (*it)->Rank);
       }
 
-      net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
+      net->Receive();
 
       int offset = bLocalLatDat->my_inner_sites;
 
@@ -298,7 +303,7 @@ namespace hemelb
       double lPreSendTime = MPI_Wtime();
       bLbTime += (lPreSendTime - lPreLbTimeOne);
 
-      net->SendToNeighbouringProcessors(bLocalLatDat);
+      net->Send();
 
       double lPreLbTimeTwo = MPI_Wtime();
       bMPISendTime += (lPreLbTimeTwo - lPreSendTime);
@@ -319,7 +324,15 @@ namespace hemelb
       double lPreMPIWaitTime = MPI_Wtime();
       bLbTime += (lPreMPIWaitTime - lPreLbTimeTwo);
 
-      net->UseDataFromNeighbouringProcs(bLocalLatDat);
+      net->Wait(bLocalLatDat);
+
+      // Copy the distribution functions received from the neighbouring
+      // processors into the destination buffer "f_new".
+      for (int i = 0; i < mNetTopology->TotalSharedFs; i++)
+      {
+        bLocalLatDat->FNew[receivedFTranslator[i]]
+            = bLocalLatDat->FOld[mNetTopology->NeighbouringProcs[0]->FirstSharedF + i];
+      }
 
       double lPrePostStepTime = MPI_Wtime();
       bMPIWaitTime += (lPrePostStepTime - lPreMPIWaitTime);
@@ -607,6 +620,9 @@ namespace hemelb
 
     LBM::~LBM()
     {
+      // Delete the translator between received location and location in f_new.
+      delete[] receivedFTranslator;
+
       // Delete arrays allocated for the inlets
       delete[] inlet_density;
       delete[] inlet_density_avg;

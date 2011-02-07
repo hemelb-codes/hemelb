@@ -23,7 +23,7 @@ namespace hemelb
      implemented in this function.  The domain decomposition is based
      on a graph growing partitioning technique.
      */
-    void Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
+    int* Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                          hemelb::lb::LocalLatticeData* &bLocalLatDat)
     {
       // Create a map between the two-level data representation and the 1D
@@ -56,7 +56,7 @@ namespace hemelb
 
       // Allocate the index in which to put the distribution functions received from the other
       // process.
-      f_recv_iv = new int[mNetworkTopology->TotalSharedFs];
+      int* f_recv_iv = new int[mNetworkTopology->TotalSharedFs];
 
       short int ** lSharedFLocationForEachProc =
           new short int*[mNetworkTopology->NeighbouringProcs.size()];
@@ -80,9 +80,6 @@ namespace hemelb
         mNetworkTopology->NeighbouringProcs[n]->FirstSharedF
             = bLocalLatDat->GetLocalFluidSiteCount() * D3Q15::NUMVECTORS + 1
                 + mNetworkTopology->TotalSharedFs;
-
-        mNetworkTopology->NeighbouringProcs[n]->SharedFReceivingIndex
-            = &f_recv_iv[mNetworkTopology->TotalSharedFs];
 
         mNetworkTopology->TotalSharedFs += mNetworkTopology->NeighbouringProcs[n]->SharedFCount;
       }
@@ -110,6 +107,8 @@ namespace hemelb
 
       int f_count = bLocalLatDat->GetLocalFluidSiteCount() * D3Q15::NUMVECTORS;
 
+      int sharedSitesSeen = 0;
+
       for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
       {
         hemelb::topology::NeighbouringProcessor *neigh_proc_p =
@@ -133,8 +132,8 @@ namespace hemelb
 
           // Set the place where we put the received distribution functions, which is
           // f_new[number of fluid site that sends, inverse direction].
-          neigh_proc_p->SharedFReceivingIndex[n] = site_map * D3Q15::NUMVECTORS
-              + D3Q15::INVERSEDIRECTIONS[l];
+          f_recv_iv[sharedSitesSeen] = site_map * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
+          ++sharedSitesSeen;
         }
       }
       // neigh_prc->f_data was only set as a pointer to f_data, not allocated.  In this line, we
@@ -144,6 +143,8 @@ namespace hemelb
       // Delete the array in which we kept the shared f locations. Don't delete subarrays - these
       // are pointers to elsewhere.
       delete[] lSharedFLocationForEachProc;
+
+      return f_recv_iv;
     }
 
     void Net::InitialisePointToPointComms(short int **& lSharedFLocationForEachProc)
@@ -155,11 +156,6 @@ namespace hemelb
       // propagate to different partitions is avoided (only their values
       // will be communicated). It's here!
       // Allocate the request variable.
-      req = new MPI_Request*[COMMS_LEVELS];
-      for (int m = 0; m < COMMS_LEVELS; m++)
-      {
-        req[m] = new MPI_Request[2 * mNetworkTopology->GetProcessorCount()];
-      }
       for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
       {
         hemelb::topology::NeighbouringProcessor *neigh_proc_p =
@@ -170,14 +166,14 @@ namespace hemelb
         // other processor.
         if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
         {
-          err = MPI_Isend(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4,
-                          MPI_SHORT, neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &req[0][m]);
+          MPI_Isend(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4, MPI_SHORT,
+                    neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &mRequests[m]);
         }
         else
         {
-          err = MPI_Irecv(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4,
-                          MPI_SHORT, neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
-                          &req[0][mNetworkTopology->NeighbouringProcs.size() + m]);
+          MPI_Irecv(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4, MPI_SHORT,
+                    neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
+                    &mRequests[mNetworkTopology->NeighbouringProcs.size() + m]);
         }
       }
 
@@ -187,11 +183,11 @@ namespace hemelb
             mNetworkTopology->NeighbouringProcs[m];
         if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
         {
-          err = MPI_Wait(&req[0][m], status);
+          MPI_Wait(&mRequests[m], status);
         }
         else
         {
-          err = MPI_Wait(&req[0][mNetworkTopology->NeighbouringProcs.size() + m], status);
+          MPI_Wait(&mRequests[mNetworkTopology->NeighbouringProcs.size() + m], status);
           // Now we sort the situation so that each process has its own sites.
           for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
           {
@@ -681,9 +677,9 @@ namespace hemelb
       delete[] lFluidSitesHandledForEachProc;
     }
 
-    void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData *bLocalLatDat)
+    void Net::Receive()
     {
-      // Make sure the MPi datatypes have been created.
+      // Make sure the MPI datatypes have been created.
       EnsurePreparedToSendReceive();
 
       int m = 0;
@@ -692,12 +688,12 @@ namespace hemelb
           != mProcessorComms.end(); ++it)
       {
         MPI_Irecv(it->second->ReceiveData.PointerList.front(), 1, it->second->ReceiveType,
-                  it->first, 10, MPI_COMM_WORLD, &req[0][m]);
+                  it->first, 10, MPI_COMM_WORLD, &mRequests[m]);
         ++m;
       }
     }
 
-    void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData *bLocalLatDat)
+    void Net::Send()
     {
       // Make sure the datatypes have been created.
       EnsurePreparedToSendReceive();
@@ -708,19 +704,15 @@ namespace hemelb
           != mProcessorComms.end(); ++it)
       {
         MPI_Isend(it->second->SendData.PointerList.front(), 1, it->second->SendType, it->first, 10,
-                  MPI_COMM_WORLD, &req[0][mProcessorComms.size() + m]);
+                  MPI_COMM_WORLD, &mRequests[mProcessorComms.size() + m]);
 
         ++m;
       }
     }
 
-    void Net::UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData *bLocalLatDat)
+    void Net::Wait(hemelb::lb::LocalLatticeData *bLocalLatDat)
     {
-      for (unsigned int m = 0; m < mProcessorComms.size(); m++)
-      {
-        err = MPI_Wait(&req[0][m], status);
-        err = MPI_Wait(&req[0][mProcessorComms.size() + m], status);
-      }
+      MPI_Waitall(2 * mProcessorComms.size(), mRequests, status);
 
       sendReceivePrepped = false;
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
@@ -731,14 +723,6 @@ namespace hemelb
 
         MPI_Type_free(&it->second->SendType);
         MPI_Type_free(&it->second->ReceiveType);
-      }
-
-      // Copy the distribution functions received from the neighbouring
-      // processors into the destination buffer "f_new".
-      for (int i = 0; i < mNetworkTopology->TotalSharedFs; i++)
-      {
-        bLocalLatDat->FNew[f_recv_iv[i]]
-            = bLocalLatDat->FOld[mNetworkTopology->NeighbouringProcs[0]->FirstSharedF + i];
       }
     }
 
@@ -832,6 +816,8 @@ namespace hemelb
     Net::Net(hemelb::topology::NetworkTopology * iNetworkTopology)
     {
       mNetworkTopology = iNetworkTopology;
+      mRequests = new MPI_Request[2 * mNetworkTopology->GetProcessorCount()];
+      status = new MPI_Status[2 * mNetworkTopology->GetProcessorCount()];
       sendReceivePrepped = false;
     }
 
@@ -840,11 +826,8 @@ namespace hemelb
      */
     Net::~Net()
     {
-      delete[] f_recv_iv;
-
-      for (int i = 0; i < COMMS_LEVELS; i++)
-        delete[] req[i];
-      delete[] req;
+      delete[] mRequests;
+      delete[] status;
 
       if (sendReceivePrepped)
       {

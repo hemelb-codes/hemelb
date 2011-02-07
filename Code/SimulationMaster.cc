@@ -120,9 +120,10 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   // Initialise the Net object and the Lbm.
 
   seconds = hemelb::util::myClock();
-  mNet->Initialise(mGlobLatDat, mLocalLatDat);
+  int* lReceiveTranslator = mNet->Initialise(mGlobLatDat, mLocalLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
+  mLbm->SetFTranslator(lReceiveTranslator);
   mLbm->SetInitialConditions(*mLocalLatDat);
 
   // Initialise the visualisation controller.

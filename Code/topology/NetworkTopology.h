@@ -13,11 +13,6 @@ namespace hemelb
     class NeighbouringProcessor
     {
       public:
-        ~NeighbouringProcessor();
-
-        // Array of the indexes corresponding to received distributions.
-        int * SharedFReceivingIndex;
-
         // Rank of the neighbouring processor.
         int Rank;
 
@@ -39,10 +34,9 @@ namespace hemelb
         bool IsCurrentProcTheIOProc() const;
 
         // Functions for getting the rank of this processor and the total size
-        /// of the topology.
+        // of the topology.
         int GetLocalRank() const;
         int GetProcessorCount() const;
-
         int GetDepths() const;
         int GetMachineCount() const;
 
