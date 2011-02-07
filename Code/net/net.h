@@ -28,11 +28,11 @@ namespace hemelb
                         hemelb::lb::LocalLatticeData* &bLocalLatDat);
 
         void
-        ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
+        ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData *bLocalLatDat);
         void
-        SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat);
+        SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData *bLocalLatDat);
         void
-        UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat);
+        UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData *bLocalLatDat);
 
         /**
          * Request that iCount entries of type T be included in the send to iToRank,
@@ -45,9 +45,16 @@ namespace hemelb
         template<class T>
         void RequestSend(T* oPointer, int iCount, int iToRank)
         {
+          if (sendReceivePrepped)
+          {
+            std::cerr
+                << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
+            exit(0);
+          }
+
           ProcComms *lComms = GetProcComms(iToRank);
 
-          AddToList(oPointer, iCount, lComms->PermanentSendData);
+          AddToList(oPointer, iCount, lComms->SendData);
         }
 
         /**
@@ -61,12 +68,17 @@ namespace hemelb
         template<class T>
         void RequestReceive(T* oPointer, int iCount, int iFromRank)
         {
+          if (sendReceivePrepped)
+          {
+            std::cerr
+                << "Error: tried to add receive-data after the datatype was already constructed. This is a bug.\n";
+            exit(0);
+          }
+
           ProcComms *lComms = GetProcComms(iFromRank);
 
-          AddToList(oPointer, iCount, lComms->PermanentReceiveData);
+          AddToList(oPointer, iCount, lComms->ReceiveData);
         }
-
-        void InitialiseSendReceive(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
       private:
         /**
@@ -89,15 +101,11 @@ namespace hemelb
                 }
             };
 
-            MetaData PermanentSendData;
-            MetaData PermanentReceiveData;
-            MetaData OneOffSendData;
-            MetaData OneOffReceiveData;
+            MetaData SendData;
+            MetaData ReceiveData;
 
-            MPI_Datatype PermanentSendType;
-            MPI_Datatype PermanentReceiveType;
-            MPI_Datatype OneOffSendType;
-            MPI_Datatype OneOffReceiveType;
+            MPI_Datatype SendType;
+            MPI_Datatype ReceiveType;
         };
 
         ProcComms* GetProcComms(int iRank);
@@ -120,12 +128,10 @@ namespace hemelb
 
         void EnsurePreparedToSendReceive();
 
-        void CreateMPIType(std::vector<void*> &iPointerList,
-                           std::vector<int> &iLengthList,
-                           std::vector<MPI_Datatype> &iTypeList,
+        void CreateMPIType(const ProcComms::MetaData &iMetaData,
                            MPI_Datatype &oNewDatatype);
 
-        bool preppedToSendReceive;
+        bool sendReceivePrepped;
 
         int *f_recv_iv;
         int err;

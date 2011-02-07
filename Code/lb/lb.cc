@@ -261,16 +261,26 @@ namespace hemelb
     // subdomains.
     Stability LBM::DoCycle(int perform_rt,
                            net::Net *net,
-                           LocalLatticeData &bLocalLatDat,
+                           LocalLatticeData *bLocalLatDat,
                            double &bLbTime,
                            double &bMPISendTime,
                            double &bMPIWaitTime)
     {
-      net->InitialiseSendReceive(bLocalLatDat);
+      for (std::vector<hemelb::topology::NeighbouringProcessor*>::const_iterator it =
+          mNetTopology->NeighbouringProcs.begin(); it != mNetTopology->NeighbouringProcs.end(); it++)
+      {
+        // Request the receive into the appropriate bit of FOld.
+        net->RequestReceive<double> (&bLocalLatDat->FOld[ (*it)->FirstSharedF],
+                                      (*it)->SharedFCount, (*it)->Rank);
+
+        // Request the send from the right bit of
+        net->RequestSend<double> (&bLocalLatDat->FNew[ (*it)->FirstSharedF], (*it)->SharedFCount,
+                                   (*it)->Rank);
+      }
 
       net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
 
-      int offset = bLocalLatDat.my_inner_sites;
+      int offset = bLocalLatDat->my_inner_sites;
 
       double lPreLbTimeOne = MPI_Wtime();
 
@@ -279,10 +289,10 @@ namespace hemelb
         GetCollision(collision_type)->DoCollisions(
                                                    perform_rt,
                                                    offset,
-                                                   bLocalLatDat.my_inter_collisions[collision_type],
-                                                   mParams, mMinsAndMaxes, bLocalLatDat,
+                                                   bLocalLatDat->my_inter_collisions[collision_type],
+                                                   mParams, mMinsAndMaxes, *bLocalLatDat,
                                                    hemelb::vis::controller);
-        offset += bLocalLatDat.my_inter_collisions[collision_type];
+        offset += bLocalLatDat->my_inter_collisions[collision_type];
       }
 
       double lPreSendTime = MPI_Wtime();
@@ -300,10 +310,10 @@ namespace hemelb
         GetCollision(collision_type)->DoCollisions(
                                                    perform_rt,
                                                    offset,
-                                                   bLocalLatDat.my_inner_collisions[collision_type],
-                                                   mParams, mMinsAndMaxes, bLocalLatDat,
+                                                   bLocalLatDat->my_inner_collisions[collision_type],
+                                                   mParams, mMinsAndMaxes, *bLocalLatDat,
                                                    hemelb::vis::controller);
-        offset += bLocalLatDat.my_inner_collisions[collision_type];
+        offset += bLocalLatDat->my_inner_collisions[collision_type];
       }
 
       double lPreMPIWaitTime = MPI_Wtime();
@@ -320,27 +330,27 @@ namespace hemelb
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->PostStep(perform_rt, offset,
-                                               bLocalLatDat.my_inner_collisions[collision_type],
-                                               mParams, mMinsAndMaxes, bLocalLatDat,
+                                               bLocalLatDat->my_inner_collisions[collision_type],
+                                               mParams, mMinsAndMaxes, *bLocalLatDat,
                                                hemelb::vis::controller);
-        offset += bLocalLatDat.my_inner_collisions[collision_type];
+        offset += bLocalLatDat->my_inner_collisions[collision_type];
       }
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->PostStep(perform_rt, offset,
-                                               bLocalLatDat.my_inter_collisions[collision_type],
-                                               mParams, mMinsAndMaxes, bLocalLatDat,
+                                               bLocalLatDat->my_inter_collisions[collision_type],
+                                               mParams, mMinsAndMaxes, *bLocalLatDat,
                                                hemelb::vis::controller);
-        offset += bLocalLatDat.my_inter_collisions[collision_type];
+        offset += bLocalLatDat->my_inter_collisions[collision_type];
       }
 
       bLbTime += (MPI_Wtime() - lPrePostStepTime);
 
       // Swap f_old and f_new ready for the next timestep.
-      double *temp = bLocalLatDat.FOld;
-      bLocalLatDat.FOld = bLocalLatDat.FNew;
-      bLocalLatDat.FNew = temp;
+      double *temp = bLocalLatDat->FOld;
+      bLocalLatDat->FOld = bLocalLatDat->FNew;
+      bLocalLatDat->FNew = temp;
 
       return hemelb::lb::Stable;
     }
