@@ -118,6 +118,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mDomainDecompTime = hemelb::util::myClock() - seconds;
 
   // Initialise the Net object and the Lbm.
+  mLocalLatDat
+      = new hemelb::lb::LocalLatticeData(
+                                         mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]);
 
   seconds = hemelb::util::myClock();
   int* lReceiveTranslator = mNet->Initialise(mGlobLatDat, mLocalLatDat);
