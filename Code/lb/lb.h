@@ -47,12 +47,11 @@ namespace hemelb
         void RecalculateTauViscosityOmega();
         void UpdateBoundaryDensities(int cycle_id, int time_step);
         void
-        UpdateInletVelocities(int time_step,
-                              lb::LocalLatticeData &iLocalLatDat,
-                              net::Net *net);
+        UpdateInletVelocities(int time_step, lb::LocalLatticeData &iLocalLatDat, net::Net *net);
 
-        void
-        SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
+        void SetFTranslator(int* iFTranslator);
+
+        void SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
         void
         WriteConfig(hemelb::lb::Stability stability,
@@ -60,10 +59,10 @@ namespace hemelb
                     const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
                     const hemelb::lb::LocalLatticeData &iLocalLatticeData);
         void
-            WriteConfigParallel(hemelb::lb::Stability stability,
-                                std::string output_file_name,
-                                const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                                const hemelb::lb::LocalLatticeData &iLocalLatticeData);
+        WriteConfigParallel(hemelb::lb::Stability stability,
+                            std::string output_file_name,
+                            const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
+                            const hemelb::lb::LocalLatticeData &iLocalLatticeData);
 
         double GetMinPhysicalPressure();
         double GetMaxPhysicalPressure();
@@ -146,6 +145,7 @@ namespace hemelb
         double *average_inlet_velocity;
         double *peak_inlet_velocity;
 
+        int * receivedFTranslator;
     };
   }
 }

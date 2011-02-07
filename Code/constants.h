@@ -17,8 +17,6 @@
 #define VELOCITY           1
 #define STRESS             2
 
-#define COMMS_LEVELS                   2
-
 #define BCAST_FREQ   1
 
 #define RECV_BUFFER_A   0
