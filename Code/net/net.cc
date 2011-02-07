@@ -41,10 +41,6 @@ namespace hemelb
       // distribution functions of the reference processor are calculated
       // here.  neigh_proc is a static array that is declared in config.h.
 
-      bLocalLatDat
-          = new hemelb::lb::LocalLatticeData(
-                                             mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]);
-
       CountCollisionTypes(bLocalLatDat, iGlobLatDat, lThisRankSiteData);
 
       // the precise interface-dependent data (interface-dependent fluid
@@ -123,6 +119,15 @@ namespace hemelb
           short int k = f_data_p[2];
           short int l = f_data_p[3];
 
+          // Correct so that each process has the correct coordinates.
+          if (neigh_proc_p->Rank < mNetworkTopology->GetLocalRank())
+          {
+            i += D3Q15::CX[l];
+            j += D3Q15::CY[l];
+            k += D3Q15::CZ[l];
+            l = D3Q15::INVERSEDIRECTIONS[l];
+          }
+
           // Get the fluid site number of site that will send data to another process.
           unsigned int site_map = *iGlobLatDat.GetSiteData(i, j, k);
 
@@ -149,7 +154,7 @@ namespace hemelb
 
     void Net::InitialisePointToPointComms(short int **& lSharedFLocationForEachProc)
     {
-      EnsureEnoughRequests(mNetworkTopology->NeighbouringProcs.size() * 2);
+      EnsureEnoughRequests(mNetworkTopology->NeighbouringProcs.size());
 
       // point-to-point communications are performed to match data to be
       // sent to/receive from different partitions; in this way, the
@@ -174,34 +179,11 @@ namespace hemelb
         else
         {
           MPI_Irecv(&lSharedFLocationForEachProc[m][0], neigh_proc_p->SharedFCount * 4, MPI_SHORT,
-                    neigh_proc_p->Rank, 10, MPI_COMM_WORLD,
-                    &mRequests[mNetworkTopology->NeighbouringProcs.size() + m]);
+                    neigh_proc_p->Rank, 10, MPI_COMM_WORLD, &mRequests[m]);
         }
       }
 
-      for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
-      {
-        hemelb::topology::NeighbouringProcessor *neigh_proc_p =
-            mNetworkTopology->NeighbouringProcs[m];
-        if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
-        {
-          MPI_Wait(&mRequests[m], &status[0]);
-        }
-        else
-        {
-          MPI_Wait(&mRequests[mNetworkTopology->NeighbouringProcs.size() + m], &status[0]);
-          // Now we sort the situation so that each process has its own sites.
-          for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
-          {
-            short int *f_data_p = &lSharedFLocationForEachProc[m][n];
-            short int l = f_data_p[3];
-            f_data_p[0] += D3Q15::CX[l];
-            f_data_p[1] += D3Q15::CY[l];
-            f_data_p[2] += D3Q15::CZ[l];
-            f_data_p[3] = D3Q15::INVERSEDIRECTIONS[l];
-          }
-        }
-      }
+      MPI_Waitall(mNetworkTopology->NeighbouringProcs.size(), &mRequests[0], &status[0]);
     }
 
     void Net::GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
