@@ -307,7 +307,7 @@ class SeedPanel(wx.Panel):
         controller.BindValue('Pipeline.SeedPlaceButtonLabel',
                              NonObservingWxWidgetMapper(self.seedPlaceButton, 'Label'))
         
-        controller.BindAction('Pipeline.SeedPlaceStart',
+        controller.BindAction('Pipeline.SeedPlaceClicked',
                               WxActionBinding(self.seedPlaceButton, wx.EVT_BUTTON))
         
         layout = V(seedLabel,

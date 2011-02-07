@@ -37,7 +37,8 @@ class VtkViewPanel(wx.Panel):
         self.SetSizer(layout.create())
 
         return
-    
+    pass
+
 class RWI(wxVTKRenderWindowInteractor):
     """Set up for the VTK window (on the RHS of the window).
     """
@@ -50,7 +51,7 @@ class RWI(wxVTKRenderWindowInteractor):
         
         # Set the up direction and default to trackball mode for view control
         # self.renderer.GetActiveCamera().SetViewUp(0.,0.,1.)
-        self.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
+        # self.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
         
         controller.GetValueForKey('SetInteractor')(self)
         
