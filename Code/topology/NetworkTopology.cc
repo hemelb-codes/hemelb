@@ -5,11 +5,6 @@ namespace hemelb
 {
   namespace topology
   {
-    NeighbouringProcessor::~NeighbouringProcessor()
-    {
-      delete[] SharedFReceivingIndex;
-    }
-
     NetworkTopology::NetworkTopology(int * argCount, char *** argList, bool* oSuccess)
     {
       int thread_level_provided;

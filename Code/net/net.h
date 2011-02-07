@@ -24,15 +24,12 @@ namespace hemelb
         Net(hemelb::topology::NetworkTopology * iTopology);
         ~Net();
 
-        void Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
+        int* Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                         hemelb::lb::LocalLatticeData* &bLocalLatDat);
 
-        void
-        ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData *bLocalLatDat);
-        void
-        SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData *bLocalLatDat);
-        void
-        UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData *bLocalLatDat);
+        void Receive();
+        void Send();
+        void Wait(hemelb::lb::LocalLatticeData *bLocalLatDat);
 
         /**
          * Request that iCount entries of type T be included in the send to iToRank,
@@ -128,20 +125,17 @@ namespace hemelb
 
         void EnsurePreparedToSendReceive();
 
-        void CreateMPIType(const ProcComms::MetaData &iMetaData,
-                           MPI_Datatype &oNewDatatype);
+        void CreateMPIType(const ProcComms::MetaData &iMetaData, MPI_Datatype &oNewDatatype);
 
         bool sendReceivePrepped;
-
-        int *f_recv_iv;
-        int err;
-
         std::map<int, ProcComms*> mProcessorComms;
-
         hemelb::topology::NetworkTopology * mNetworkTopology;
 
-        MPI_Request **req;
-        MPI_Status status[4];
+        // Requests equal to twice the total number of processors in the communicator
+        // are available for general communication within the Net object (both
+        // initialisation and during each iteration).
+        MPI_Request *mRequests;
+        MPI_Status *status;
     };
 
   }
