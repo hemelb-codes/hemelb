@@ -46,7 +46,7 @@ namespace hemelb
           {
             std::cerr
                 << "Error: tried to add send-data after the datatype was already constructed. This is a bug.\n";
-            exit(0);
+            exit(1);
           }
 
           ProcComms *lComms = GetProcComms(iToRank);
@@ -69,7 +69,7 @@ namespace hemelb
           {
             std::cerr
                 << "Error: tried to add receive-data after the datatype was already constructed. This is a bug.\n";
-            exit(0);
+            exit(1);
           }
 
           ProcComms *lComms = GetProcComms(iFromRank);
@@ -78,6 +78,19 @@ namespace hemelb
         }
 
       private:
+
+        void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                                 unsigned int *& bThisRankSiteData);
+        void InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData *bLocalLatDat,
+                                       short int **bSharedFLocationForEachProc,
+                                       const unsigned int *iSiteDataForThisRank,
+                                       const hemelb::lb::GlobalLatticeData & iGlobLatDat);
+        void CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
+                                 const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+                                 const unsigned int * lThisRankSiteData);
+
+        void InitialisePointToPointComms(short int **& lSharedFLocationForEachProc);
+
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
          */
@@ -111,31 +124,22 @@ namespace hemelb
 
         void AddToList(double* iNew, int iLength, ProcComms::MetaData &bMetaData);
 
-        void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
-                                 unsigned int *& bThisRankSiteData);
-        void InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData *bLocalLatDat,
-                                       short int **bSharedFLocationForEachProc,
-                                       const unsigned int *iSiteDataForThisRank,
-                                       const hemelb::lb::GlobalLatticeData & iGlobLatDat);
-        void CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
-                                 const hemelb::lb::GlobalLatticeData & iGlobLatDat,
-                                 const unsigned int * lThisRankSiteData);
-
-        void InitialisePointToPointComms(short int **& lSharedFLocationForEachProc);
-
         void EnsurePreparedToSendReceive();
 
         void CreateMPIType(const ProcComms::MetaData &iMetaData, MPI_Datatype &oNewDatatype);
+
+        void EnsureEnoughRequests(unsigned int count);
 
         bool sendReceivePrepped;
         std::map<int, ProcComms*> mProcessorComms;
         hemelb::topology::NetworkTopology * mNetworkTopology;
 
-        // Requests equal to twice the total number of processors in the communicator
-        // are available for general communication within the Net object (both
-        // initialisation and during each iteration).
-        MPI_Request *mRequests;
-        MPI_Status *status;
+        // Requests and statuses available for general communication within the Net object (both
+        // initialisation and during each iteration). Code using these must make sure
+        // there are enough available. We do this in a way to minimise the number created
+        // on each core, but also to minimise creation / deletion overheads.
+        std::vector<MPI_Request> mRequests;
+        std::vector<MPI_Status> status;
     };
 
   }
