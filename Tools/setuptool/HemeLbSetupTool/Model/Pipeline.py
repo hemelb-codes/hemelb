@@ -1,6 +1,7 @@
 from vtk import vtkPolyDataMapper, vtkActor, vtkModifiedBSPTree, \
-     vtkRenderer, vtkAnnotatedCubeActor, vtkAxesActor, \
-     vtkTextProperty, vtkPropAssembly, vtkOrientationMarkerWidget
+     vtkPolygonalSurfacePointPlacer, vtkRenderer, \
+     vtkAnnotatedCubeActor, vtkAxesActor, vtkTextProperty, \
+     vtkPropAssembly, vtkOrientationMarkerWidget
 
 from ..Util.Observer import Observable
 
@@ -14,6 +15,9 @@ class Pipeline(Observable):
         # self.seeder = SeedPlacer(self, self.stlActor)
         self.Locator = vtkModifiedBSPTree()
         
+        self.SurfacePlacer = vtkPolygonalSurfacePointPlacer()
+        self.SurfacePlacer.AddProp(self.StlActor)
+
         self.Renderer = vtkRenderer()
         self.Renderer.AddActor(self.StlActor)
         # reader = self.GetValueForKey('StlReader')
@@ -56,7 +60,7 @@ class Pipeline(Observable):
         self.Interactor = iact
         self.SetMarkerInteractor(iact)
         return
-    
+
     def SetMarkerInteractor(self, iact):
         self.OrientationMarker.SetInteractor(iact)
         self.OrientationMarker.SetEnabled(1)
