@@ -681,24 +681,7 @@ namespace hemelb
       delete[] lFluidSitesHandledForEachProc;
     }
 
-    // Initialise the send / receive of the LBM data.
-    void Net::InitialiseSendReceive(hemelb::lb::LocalLatticeData &bLocalLatDat)
-    {
-      for (std::vector<hemelb::topology::NeighbouringProcessor*>::const_iterator it =
-          mNetworkTopology->NeighbouringProcs.begin(); it
-          != mNetworkTopology->NeighbouringProcs.end(); it++)
-      {
-        // Request the receive into the appropriate bit of FOld.
-        RequestReceive<double> (&bLocalLatDat.FOld[ (*it)->FirstSharedF], (*it)->SharedFCount,
-                                 (*it)->Rank);
-
-        // Request the send from the right bit of
-        RequestSend<double> (&bLocalLatDat.FNew[ (*it)->FirstSharedF], (*it)->SharedFCount,
-                              (*it)->Rank);
-      }
-    }
-
-    void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
+    void Net::ReceiveFromNeighbouringProcessors(hemelb::lb::LocalLatticeData *bLocalLatDat)
     {
       // Make sure the MPi datatypes have been created.
       EnsurePreparedToSendReceive();
@@ -708,13 +691,13 @@ namespace hemelb
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); ++it)
       {
-        MPI_Irecv(it->second->PermanentReceiveData.PointerList.front(), 1, it->second->PermanentReceiveType,
+        MPI_Irecv(it->second->ReceiveData.PointerList.front(), 1, it->second->ReceiveType,
                   it->first, 10, MPI_COMM_WORLD, &req[0][m]);
         ++m;
       }
     }
 
-    void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData &bLocalLatDat)
+    void Net::SendToNeighbouringProcessors(hemelb::lb::LocalLatticeData *bLocalLatDat)
     {
       // Make sure the datatypes have been created.
       EnsurePreparedToSendReceive();
@@ -724,14 +707,14 @@ namespace hemelb
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); ++it)
       {
-        MPI_Isend(it->second->PermanentSendData.PointerList.front(), 1, it->second->PermanentSendType, it->first, 10,
+        MPI_Isend(it->second->SendData.PointerList.front(), 1, it->second->SendType, it->first, 10,
                   MPI_COMM_WORLD, &req[0][mProcessorComms.size() + m]);
 
         ++m;
       }
     }
 
-    void Net::UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData &bLocalLatDat)
+    void Net::UseDataFromNeighbouringProcs(hemelb::lb::LocalLatticeData *bLocalLatDat)
     {
       for (unsigned int m = 0; m < mProcessorComms.size(); m++)
       {
@@ -739,24 +722,23 @@ namespace hemelb
         err = MPI_Wait(&req[0][mProcessorComms.size() + m], status);
       }
 
-      // Reset the send / receive stuff so that the datatypes will be recreated next iteration.
-      preppedToSendReceive = false;
+      sendReceivePrepped = false;
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); it++)
       {
-        it->second->PermanentSendData.clear();
-        it->second->PermanentReceiveData.clear();
+        it->second->SendData.clear();
+        it->second->ReceiveData.clear();
 
-        MPI_Type_free(&it->second->PermanentSendType);
-        MPI_Type_free(&it->second->PermanentReceiveType);
+        MPI_Type_free(&it->second->SendType);
+        MPI_Type_free(&it->second->ReceiveType);
       }
 
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       for (int i = 0; i < mNetworkTopology->TotalSharedFs; i++)
       {
-        bLocalLatDat.FNew[f_recv_iv[i]]
-            = bLocalLatDat.FOld[mNetworkTopology->NeighbouringProcs[0]->FirstSharedF + i];
+        bLocalLatDat->FNew[f_recv_iv[i]]
+            = bLocalLatDat->FOld[mNetworkTopology->NeighbouringProcs[0]->FirstSharedF + i];
       }
     }
 
@@ -796,7 +778,7 @@ namespace hemelb
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
     void Net::EnsurePreparedToSendReceive()
     {
-      if (preppedToSendReceive)
+      if (sendReceivePrepped)
       {
         return;
       }
@@ -806,43 +788,40 @@ namespace hemelb
       {
         ProcComms* lThisPC = (*it).second;
 
-        CreateMPIType(lThisPC->PermanentSendData.PointerList, lThisPC->PermanentSendData.LengthList,
-                      lThisPC->PermanentSendData.TypeList, lThisPC->PermanentSendType);
-        CreateMPIType(lThisPC->PermanentReceiveData.PointerList, lThisPC->PermanentReceiveData.LengthList,
-                      lThisPC->PermanentReceiveData.TypeList, lThisPC->PermanentReceiveType);
+        CreateMPIType(lThisPC->SendData, lThisPC->SendType);
+        CreateMPIType(lThisPC->ReceiveData, lThisPC->ReceiveType);
       }
 
-      preppedToSendReceive = true;
+      sendReceivePrepped = true;
     }
 
     // Helper function to create a MPI derived datatype given a list of pointers, types and lengths.
-    void Net::CreateMPIType(std::vector<void*> &iPointerList,
-                            std::vector<int> &iLengthList,
-                            std::vector<MPI_Datatype> &iTypeList,
-                            MPI_Datatype &oNewDatatype)
+    void Net::CreateMPIType(const ProcComms::MetaData &iMetaData, MPI_Datatype &oNewDatatype)
     {
-      MPI_Aint* displacements = new MPI_Aint[iPointerList.size()];
-      int* lengths = new int[iPointerList.size()];
-      MPI_Datatype* types = new MPI_Datatype[iPointerList.size()];
+      MPI_Aint* displacements = new MPI_Aint[iMetaData.PointerList.size()];
+      int* lengths = new int[iMetaData.PointerList.size()];
+      MPI_Datatype* types = new MPI_Datatype[iMetaData.PointerList.size()];
 
       int lLocation = 0;
 
-      for (std::vector<void*>::iterator it = iPointerList.begin(); it != iPointerList.end(); it++)
+      for (std::vector<void*>::const_iterator it = iMetaData.PointerList.begin(); it
+          != iMetaData.PointerList.end(); it++)
       {
         MPI_Get_address(*it, &displacements[lLocation]);
         ++lLocation;
       }
 
-      for (int ii = iPointerList.size() - 1; ii >= 0; ii--)
+      for (int ii = iMetaData.PointerList.size() - 1; ii >= 0; ii--)
       {
         displacements[ii] -= displacements[0];
 
-        lengths[ii] = iLengthList[ii];
-        types[ii] = iTypeList[ii];
+        lengths[ii] = iMetaData.LengthList[ii];
+        types[ii] = iMetaData.TypeList[ii];
       }
 
       // Create the type and commit it.
-      MPI_Type_create_struct(iPointerList.size(), lengths, displacements, types, &oNewDatatype);
+      MPI_Type_create_struct(iMetaData.PointerList.size(), lengths, displacements, types,
+                             &oNewDatatype);
       MPI_Type_commit(&oNewDatatype);
 
       delete[] displacements;
@@ -853,7 +832,7 @@ namespace hemelb
     Net::Net(hemelb::topology::NetworkTopology * iNetworkTopology)
     {
       mNetworkTopology = iNetworkTopology;
-      preppedToSendReceive = false;
+      sendReceivePrepped = false;
     }
 
     /*!
@@ -866,6 +845,16 @@ namespace hemelb
       for (int i = 0; i < COMMS_LEVELS; i++)
         delete[] req[i];
       delete[] req;
+
+      if (sendReceivePrepped)
+      {
+        for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
+            != mProcessorComms.end(); it++)
+        {
+          MPI_Type_free(&it->second->SendType);
+          MPI_Type_free(&it->second->ReceiveType);
+        }
+      }
     }
 
   }
