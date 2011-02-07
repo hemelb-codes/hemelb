@@ -1,5 +1,5 @@
 import operator
-from vtk import vtkSphereSource, vtkPolyDataMapper, vtkActor
+from vtk import vtkSphereSource, vtkPolyDataMapper, vtkActor, vtkInteractorStyleTrackballCamera, vtkInteractorStyleUser
 
 from ..Util.Observer import Observable
 from ..Bindings.ObjectController import ObjectController
@@ -94,12 +94,16 @@ class SeedPlacer(Observable):
 
         self.On = False
         self.AddObserver('On', self.OnSet)
+        
         return
-
+    
+    def SetCentre(self, centre):
+        self.representation.SetCenter(centre)
+        return
+    
     def OnSet(self, change):
         if self.On:
             if not self.controller.IsActorAdded(self.actor):
-                pdb.set_trace()
                 self.GetValueForKey('controller.Renderer').AddActor(self.actor)
                 pass
         else:
@@ -108,6 +112,8 @@ class SeedPlacer(Observable):
                 pass
             pass
         return
+    pass
+
     
 class PipelineController(HasVtkObjectKeys, ObjectController):
     """Represent the VTK pipeline.
@@ -159,7 +165,7 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
     @property
     def SeedPlaceButtonLabel(self):
         if self.mode == 'seed':
-            return 'Cancel'
+            return 'Finish'
         return 'Place'
     
     @property
@@ -168,16 +174,27 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
             return True
         return False
     
-    def SeedPlaceStart(self):
+    def SeedPlaceClicked(self):
         if self.mode == 'view':
             self.SeedPlacer.On = True
             self.mode = 'seed'
-
+            
         elif self.mode == 'seed':
-            self.SeedPlacer.On = False
             self.mode = 'view'
+            
             pass
         
+        return
+    
+    def SetInteractor(self, iact):
+        self.delegate.SetInteractor(iact)
+        
+        self.viewInteractorStyle = vtkInteractorStyleTrackballCamera()
+        iact.SetInteractorStyle(self.viewInteractorStyle)
+        
+        self.leftClickObserverId = iact.AddObserver(
+            "LeftButtonPressEvent", self.HandleLeftClick
+            )
         return
     
     def HandleStlReaderModified(self, change):
@@ -187,6 +204,43 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
         self.GetValueForKey('Locator.BuildLocator')()
         self.delegate.ResetView()
         return
+
+    def HandleLeftClick(self, obj, evt):
+        """Callback to handle VTK click events in the RWI.
+        """
+        if self.mode == 'seed':
+            self.HandleLeftButtonPressForSeedPlacement(obj, evt)
+            pass
+        return
+    
+    
+    def HandleLeftButtonPressForSeedPlacement(self, obj, evt):
+        mousePos = obj.GetEventPosition()
+        didClickSurface, worldPos = self.MouseToWorld(mousePos)
+        
+        if didClickSurface:
+            self.SeedPlacer.SetCentre(worldPos)
+            
+            # Want to abort further handling of this event, but
+            # currently can't do this from Python. Grr.
+            pass
+
+        return
+    
+    def MouseToWorld(self, mousePos, worldPos=None):
+        worldRefPos = [0.,0.,0.]
+        if worldPos is None:
+            worldPos = [0., 0., 0.]
+            pass
+        worldOrient = [0.,0.,0.,
+                       0.,0.,0.,
+                       0.,0.,0.]
+        didClickSurface = self.GetValueForKey('SurfacePlacer').ComputeWorldPosition(
+            self.GetValueForKey('Renderer'), mousePos, worldRefPos,
+            worldPos, worldOrient)
+        return didClickSurface, worldPos
+
+
     
     # def ChangeStlValidity(self, change):
     #     if self.GetValueForKey('HaveValidStlFile'):
