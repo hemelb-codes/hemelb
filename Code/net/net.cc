@@ -149,6 +149,8 @@ namespace hemelb
 
     void Net::InitialisePointToPointComms(short int **& lSharedFLocationForEachProc)
     {
+      EnsureEnoughRequests(mNetworkTopology->NeighbouringProcs.size() * 2);
+
       // point-to-point communications are performed to match data to be
       // sent to/receive from different partitions; in this way, the
       // communication of the locations of the interface-dependent fluid
@@ -183,11 +185,11 @@ namespace hemelb
             mNetworkTopology->NeighbouringProcs[m];
         if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
         {
-          MPI_Wait(&mRequests[m], status);
+          MPI_Wait(&mRequests[m], &status[0]);
         }
         else
         {
-          MPI_Wait(&mRequests[mNetworkTopology->NeighbouringProcs.size() + m], status);
+          MPI_Wait(&mRequests[mNetworkTopology->NeighbouringProcs.size() + m], &status[0]);
           // Now we sort the situation so that each process has its own sites.
           for (int n = 0; n < neigh_proc_p->SharedFCount * 4; n += 4)
           {
@@ -286,6 +288,19 @@ namespace hemelb
         }
       }
       delete[] lBlockIsOnThisRank;
+    }
+
+    void Net::EnsureEnoughRequests(unsigned int count)
+    {
+      if (mRequests.size() < count)
+      {
+        int deficit = count - mRequests.size();
+        for (int ii = 0; ii < deficit; ii++)
+        {
+          mRequests.push_back(MPI_Request());
+          status.push_back(MPI_Status());
+        }
+      }
     }
 
     void Net::CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
@@ -712,7 +727,7 @@ namespace hemelb
 
     void Net::Wait(hemelb::lb::LocalLatticeData *bLocalLatDat)
     {
-      MPI_Waitall(2 * mProcessorComms.size(), mRequests, status);
+      MPI_Waitall(2 * mProcessorComms.size(), &mRequests[0], &status[0]);
 
       sendReceivePrepped = false;
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
@@ -776,6 +791,8 @@ namespace hemelb
         CreateMPIType(lThisPC->ReceiveData, lThisPC->ReceiveType);
       }
 
+      EnsureEnoughRequests(2 * mProcessorComms.size());
+
       sendReceivePrepped = true;
     }
 
@@ -816,8 +833,6 @@ namespace hemelb
     Net::Net(hemelb::topology::NetworkTopology * iNetworkTopology)
     {
       mNetworkTopology = iNetworkTopology;
-      mRequests = new MPI_Request[2 * mNetworkTopology->GetProcessorCount()];
-      status = new MPI_Status[2 * mNetworkTopology->GetProcessorCount()];
       sendReceivePrepped = false;
     }
 
@@ -826,9 +841,6 @@ namespace hemelb
      */
     Net::~Net()
     {
-      delete[] mRequests;
-      delete[] status;
-
       if (sendReceivePrepped)
       {
         for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
