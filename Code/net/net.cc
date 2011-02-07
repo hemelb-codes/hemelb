@@ -705,11 +705,11 @@ namespace hemelb
 
       int m = 0;
 
-      for (std::map<int, ProcessorComms*>::iterator it = mProcessorComms.begin(); it
+      for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); ++it)
       {
-        MPI_Irecv(it->second->mReceivePointerList.front(), 1, it->second->ReceiveType, it->first,
-                  10, MPI_COMM_WORLD, &req[0][m]);
+        MPI_Irecv(it->second->ReceiveData.PointerList.front(), 1, it->second->ReceiveType,
+                  it->first, 10, MPI_COMM_WORLD, &req[0][m]);
         ++m;
       }
     }
@@ -721,10 +721,10 @@ namespace hemelb
 
       int m = 0;
 
-      for (std::map<int, ProcessorComms*>::iterator it = mProcessorComms.begin(); it
+      for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); ++it)
       {
-        MPI_Isend(it->second->mSendPointerList.front(), 1, it->second->SendType, it->first, 10,
+        MPI_Isend(it->second->SendData.PointerList.front(), 1, it->second->SendType, it->first, 10,
                   MPI_COMM_WORLD, &req[0][mProcessorComms.size() + m]);
 
         ++m;
@@ -741,15 +741,11 @@ namespace hemelb
 
       // Reset the send / receive stuff so that the datatypes will be recreated next iteration.
       preppedToSendReceive = false;
-      for (std::map<int, ProcessorComms*>::iterator it = mProcessorComms.begin(); it
+      for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); it++)
       {
-        it->second->mSendPointerList.clear();
-        it->second->mSendLengthList.clear();
-        it->second->mSendTypeList.clear();
-        it->second->mReceivePointerList.clear();
-        it->second->mReceiveLengthList.clear();
-        it->second->mReceiveTypeList.clear();
+        it->second->SendData.clear();
+        it->second->ReceiveData.clear();
 
         MPI_Type_free(&it->second->SendType);
         MPI_Type_free(&it->second->ReceiveType);
@@ -765,14 +761,14 @@ namespace hemelb
     }
 
     // Helper function to get the ProcessorCommunications object, and create it if it doesn't exist yet.
-    Net::ProcessorComms* Net::GetProcComms(int iRank)
+    Net::ProcComms* Net::GetProcComms(int iRank)
     {
-      std::map<int, ProcessorComms*>::iterator lValue = mProcessorComms.find(iRank);
-      ProcessorComms *lComms;
+      std::map<int, ProcComms*>::iterator lValue = mProcessorComms.find(iRank);
+      ProcComms *lComms;
       if (lValue == mProcessorComms.end())
       {
-        lComms = new ProcessorComms();
-        mProcessorComms .insert(std::pair<int, ProcessorComms*>(iRank, lComms));
+        lComms = new ProcComms();
+        mProcessorComms .insert(std::pair<int, ProcComms*>(iRank, lComms));
       }
       else
       {
@@ -782,24 +778,19 @@ namespace hemelb
     }
 
     // Helper functions to add ints to the list.
-    void Net::AddToList(int* iNew,
-                        int iLength,
-                        std::vector<void*> &iPointerList,
-                        std::vector<int> &iLengthList,
-                        std::vector<MPI_Datatype> &iTypeList)
+    void Net::AddToList(int* iNew, int iLength, ProcComms::MetaData &bMetaData)
     {
-      iPointerList.push_back(iNew);
-      iLengthList.push_back(iLength);
-      iTypeList.push_back(MPI_INT);
+      bMetaData.PointerList.push_back(iNew);
+      bMetaData.LengthList.push_back(iLength);
+      bMetaData.TypeList.push_back(MPI_INT);
     }
 
     // Helper functions to add doubles to the list.
-    void Net::AddToList(double* iNew, int iLength, std::vector<void*> &iPointerList, std::vector<
-        int> &iLengthList, std::vector<MPI_Datatype> &iTypeList)
+    void Net::AddToList(double* iNew, int iLength, ProcComms::MetaData &bMetaData)
     {
-      iPointerList.push_back(iNew);
-      iLengthList.push_back(iLength);
-      iTypeList.push_back(MPI_DOUBLE);
+      bMetaData.PointerList.push_back(iNew);
+      bMetaData.LengthList.push_back(iLength);
+      bMetaData.TypeList.push_back(MPI_DOUBLE);
     }
 
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
@@ -810,15 +801,15 @@ namespace hemelb
         return;
       }
 
-      for (std::map<int, ProcessorComms*>::iterator it = mProcessorComms.begin(); it
+      for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
           != mProcessorComms.end(); it++)
       {
-        ProcessorComms* lThisPC = (*it).second;
+        ProcComms* lThisPC = (*it).second;
 
-        CreateMPIType(lThisPC->mSendPointerList, lThisPC->mSendLengthList, lThisPC->mSendTypeList,
-                      lThisPC->SendType);
-        CreateMPIType(lThisPC->mReceivePointerList, lThisPC->mReceiveLengthList,
-                      lThisPC->mReceiveTypeList, lThisPC->ReceiveType);
+        CreateMPIType(lThisPC->SendData.PointerList, lThisPC->SendData.LengthList,
+                      lThisPC->SendData.TypeList, lThisPC->SendType);
+        CreateMPIType(lThisPC->ReceiveData.PointerList, lThisPC->ReceiveData.LengthList,
+                      lThisPC->ReceiveData.TypeList, lThisPC->ReceiveType);
       }
 
       preppedToSendReceive = true;
