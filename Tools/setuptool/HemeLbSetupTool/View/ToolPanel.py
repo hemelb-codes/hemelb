@@ -130,7 +130,7 @@ class IoletsDetailPanel(wx.Panel):
         self.nameField = wx.TextCtrl(self)
 
         controller.BindValue(
-            'Selection.Name',
+            'Iolets.Selection.Name',
             WxWidgetMapper(self.nameField, 'Value', wx.EVT_TEXT,
                            translator=NoneToValueTranslator(''))
             )
@@ -138,37 +138,44 @@ class IoletsDetailPanel(wx.Panel):
         centreLabel = wx.StaticText(self, label='Centre / mm')
         self.centreVector = VectorCtrl(self)
         controller.BindValue(
-            'Selection.Centre',
+            'Iolets.Selection.Centre',
             VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
             )
         
         radiusLabel = wx.StaticText(self, label='Radius / mm')
         self.radiusField = wx.TextCtrl(self)
         controller.BindValue(
-            'Selection.Radius',
+            'Iolets.Selection.Radius',
             WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
                            translator=FloatTranslator())
             )
         
         self.placeButton = wx.Button(self, label='Place')
+        controller.BindValue('Pipeline.IoletPlaceButtonEnabled',
+                             WxWidgetEnabledMapper(self.placeButton))
+        controller.BindValue('Pipeline.IoletPlaceButtonLabel',
+                             NonObservingWxWidgetMapper(self.placeButton, 'Label'))
+        
+        controller.BindAction('Pipeline.IoletPlaceClicked',
+                              WxActionBinding(self.placeButton, wx.EVT_BUTTON))
         
         normalLabel = wx.StaticText(self, label='Normal')
         self.normalVector = VectorCtrl(self)
         controller.BindValue(
-            'Selection.Normal',
+            'Iolets.Selection.Normal',
             VectorCtrlMapper(self.normalVector, 'Value', wx.EVT_TEXT)
             )
         
         pressureLabel = wx.StaticText(self, label='Pressure / mmHg')
         self.pressureVector = VectorCtrl(self)
         controller.BindValue(
-            'Selection.Pressure',
+            'Iolets.Selection.Pressure',
             VectorCtrlMapper(self.pressureVector, 'Value', wx.EVT_TEXT)
             )
         
 
         self.pressureExpressionLabel = wx.StaticText(self, label='p =')
-        controller.BindValue('Selection.PressureEquation',
+        controller.BindValue('Iolets.Selection.PressureEquation',
                                   WxWidgetMapper(self.pressureExpressionLabel,
                                                  'Label', wx.EVT_TEXT,
                                                  translator=NoneToValueTranslator('p = ')))
@@ -201,7 +208,7 @@ class IoletsDetailPanel(wx.Panel):
         self.SetSizer(layout.create())
         
         controller.BindValue(
-            'SelectedIndex',
+            'Iolets.SelectedIndex',
             WxWidgetEnabledMapper(self, translator=selectionToTrueTranslator)
             )
         
@@ -243,7 +250,7 @@ class IoletsPanel(wx.Panel):
         controller.BindAction('Iolets.RemoveIolet',
                               WxActionBinding(self.removeIoletButton, wx.EVT_BUTTON))
         
-        self.detail = IoletsDetailPanel(controller.Iolets, self)
+        self.detail = IoletsDetailPanel(controller, self)
         
         layout = V(ioletsLabel,
                    (H( (V( (self.ioletsListCtrl, 1, wx.EXPAND) ), 1, wx.EXPAND),

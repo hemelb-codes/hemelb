@@ -4,6 +4,8 @@ import wx
 from .Mappers import Mapper, WriteOnlyMapper
 from .EmptySelection import isNone
 from .Translators import Translator, UnitTranslator, QuickTranslator
+from .ListController import ListContentsDestMapper
+
 import pdb
 class WxWidgetMapper(Mapper):
     def __init__(self, widget, key, event, translator=UnitTranslator()):
@@ -69,51 +71,23 @@ class WxWidgetEnabledMapper(NonObservingWxWidgetMapper):
     pass
 
 
-class WxListCtrlMapper(WriteOnlyMapper):
+class WxListCtrlMapper(ListContentsDestMapper):
     """A mapper for the contents of a wx.ListCtrl
 
     It requires the model end of the binding to be a
-    HemeLbSetupTool.Bindings.ListController.ListContentsMapper (or
-    subclass thereof) object that will produce appropriate data for
-    it. The widget you bind must be a custom subclass of wx.ListCtrl
-    that defines the InsertItemAtIndex(int index, item) method to
-    actually add the text etc.
+    HemeLbSetupTool.Bindings.ListController.ListContentsSourceMapper
+    (or subclass thereof) object that will produce appropriate data
+    for it. The widget you bind must be a custom subclass of
+    wx.ListCtrl that defines the InsertItemAtIndex(int index, item)
+    method to actually add the text etc.
 
     The translator supplied operates on individual items of the
     managed list.
     """
-    def __init__(self, widget, translator=UnitTranslator()):
-        WriteOnlyMapper.__init__(self, translator=translator)
-        
-        self.widget = widget
-        return
-
-    def Set(self, val):
-        """This Set method skips translation here; that is dealt with
-        by the Insert handler.
-        """
-        self.Unobserve()
-        self._Set(val)
-        self.Observe()
-
-    def _Set(self, val):
-        model, change = val
-        if change is None:
-            self.Clean(model)
-            return
-        
-        if change.key == '@REMOVAL':
-            self.Delete(model, change)
-        elif change.key == '@INSERTION':
-            self.Insert(model, change)
-        elif change.key == '@REPLACEMENT':
-            self.Replace(model, change)
-        return
-
     def Clean(self, model):
-        self.widget.DeleteAllItems()
+        self.target.DeleteAllItems()
         for i, item in enumerate(model):
-            self.widget.InsertItemAtIndex(i, self.translator.Translate(item))
+            self.target.InsertItemAtIndex(i, self.translator.Translate(item))
             continue
         return
     
@@ -121,14 +95,14 @@ class WxListCtrlMapper(WriteOnlyMapper):
         index = change.index
         # This effectively creates a new control- we will probably
         # have to bind it to a model key
-        self.widget.InsertItemAtIndex(index, self.translator.Translate(model[index]))
+        self.target.InsertItemAtIndex(index, self.translator.Translate(model[index]))
         return
     
     def Delete(self, model, change):
         index = change.index
         # This effectively deletes a control. We should throw away any
         # bindings
-        self.widget.DeleteItem(index)
+        self.target.DeleteItem(index)
         return
     
     def Replace (self, model, change):
