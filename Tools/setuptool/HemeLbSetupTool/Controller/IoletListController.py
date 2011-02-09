@@ -38,7 +38,7 @@ class HasIoletListKeys(HasListKeys):
     # def BindList(self, modelKey, widgetMapper):
     #     """We need to bind the selection and deal with add/remove/update.
     #     """
-    #     self.BindComplexValue(modelKey, ListContentsMapper, (),
+    #     self.BindComplexValue(modelKey, ListContentsSourceMapper, (),
     #                           ValueBinding, widgetMapper)
         
     #     return

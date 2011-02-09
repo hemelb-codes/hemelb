@@ -5,9 +5,9 @@ from ..Util.Observer import ObservableList
 
 from .ObjectController import ObjectController
 from .EmptySelection import EmptySelection, isNone
-from .Translators import Translator
+from .Translators import Translator, UnitTranslator
 from .Bindings import ValueBinding
-from .Mappers import Mapper, ReadOnlyMapper
+from .Mappers import Mapper, ReadOnlyMapper, WriteOnlyMapper
 
 import pdb
 
@@ -63,14 +63,6 @@ class ListController(ObjectController, collections.MutableSequence):
     
     pass
 
-class ListMapper(Mapper):
-    def __init__(self, model):
-        Mapper.__init__(self)
-        self.model = model
-        return
-    
-    pass
-
 class HasListKeys(object):
     """Mixin for ObjectController subclasses with ObservableList keys.
     """
@@ -79,7 +71,7 @@ class HasListKeys(object):
     def BindList(self, top, modelKey, widgetMapper):
         """We need to bind the selection and deal with add/remove/update.
         """
-        self.BindComplexValue(top, modelKey, ListContentsMapper, (),
+        self.BindComplexValue(top, modelKey, ListContentsSourceMapper, (),
                               ValueBinding, widgetMapper)
         
         return
@@ -97,7 +89,7 @@ class HasListKeys(object):
     pass
 
 
-class ListContentsMapper(ReadOnlyMapper):
+class ListContentsSourceMapper(ReadOnlyMapper):
     """This is a mapper for list add/remove/replace events.
     """
     def __init__(self, controller, key):
@@ -134,3 +126,73 @@ class ListContentsMapper(ReadOnlyMapper):
     pass
 
 
+class ListContentsDestMapper(WriteOnlyMapper):
+    """A mapper for the contents of list that you want to shadow that
+    of an ObservableList.
+
+    It requires the model end of the binding to be a
+    HemeLbSetupTool.Bindings.ListController.ListContentsMapper (or
+    subclass thereof) object that will produce appropriate data for
+    it. The list you bind must implement the MutableSequence ABC.
+    
+    The translator supplied operates on individual items of the
+    managed list.
+    """
+    def __init__(self, target, translator=UnitTranslator()):
+        WriteOnlyMapper.__init__(self, translator=translator)
+        
+        self.target = target
+        return
+
+    def Set(self, val):
+        """This Set method skips translation here; that is dealt with
+        by the Insert handler.
+        """
+        self.Unobserve()
+        self._Set(val)
+        self.Observe()
+
+    def _Set(self, val):
+        model, change = val
+        if change is None:
+            self.Clean(model)
+            return
+        
+        if change.key == '@REMOVAL':
+            self.Delete(model, change)
+        elif change.key == '@INSERTION':
+            self.Insert(model, change)
+        elif change.key == '@REPLACEMENT':
+            self.Replace(model, change)
+        return
+
+    def Clean(self, model):
+        while len(self.target) > 0:
+            self.target.pop()
+            continue
+        
+        for i, item in enumerate(model):
+            self.target.append(self.translator.Translate(item))
+            continue
+        return
+    
+    def Insert(self, model, change):
+        index = change.index
+        # This effectively creates a new control- we will probably
+        # have to bind it to a model key
+        self.target.insert(index, self.translator.Translate(model[index]))
+        return
+    
+    def Delete(self, model, change):
+        index = change.index
+        # This effectively deletes a control. We should throw away any
+        # bindings
+        del self.target[index]
+        return
+    
+    def Replace (self, model, change):
+        index = change.index
+        self.target[index] = model[index]
+        return
+    
+    pass

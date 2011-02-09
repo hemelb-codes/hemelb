@@ -1,9 +1,11 @@
 from vtk import vtkPolyDataMapper, vtkActor, vtkModifiedBSPTree, \
      vtkPolygonalSurfacePointPlacer, vtkRenderer, \
      vtkAnnotatedCubeActor, vtkAxesActor, vtkTextProperty, \
-     vtkPropAssembly, vtkOrientationMarkerWidget
+     vtkPropAssembly, vtkOrientationMarkerWidget, vtkSphereSource
 
 from ..Util.Observer import Observable
+
+from .PlacedIolet import PlacedIoletList
 
 import pdb
 
@@ -26,6 +28,12 @@ class Pipeline(Observable):
         # self._lastStlFile = None
         self.CreateMarker()
 
+        self.PlacedSeed = PlacedSeed(self)
+        self.PlacedSeed.AddObserver('Enabled', self.HandlePlacedItemEnabledChange)
+        
+        self.PlacedIolets = PlacedIoletList()
+        self.PlacedIolets.SetItemEnabledChangeHandler(self.HandlePlacedItemEnabledChange)
+        
         return
     
     def ResetView(self):
@@ -59,8 +67,14 @@ class Pipeline(Observable):
     def SetInteractor(self, iact):
         self.Interactor = iact
         self.SetMarkerInteractor(iact)
+        self.PlacedIolets.SetInteractor(iact)
+        
         return
-
+    
+    def SetInteractorForObject(self, obj):
+        obj.SetInteractor(self.Interactor)
+        return
+    
     def SetMarkerInteractor(self, iact):
         self.OrientationMarker.SetInteractor(iact)
         self.OrientationMarker.SetEnabled(1)
@@ -139,5 +153,58 @@ class Pipeline(Observable):
         marker.SetViewport(0.0, 0.0, 0.15, 0.3)
         self.OrientationMarker = marker
         return
+
+    def IsActorAdded(self, actor):
+        """Return whether the supplied argument is in the renderer's
+        list of actors.
+        """
+        aList = self.Renderer.GetActors()
+        iterator = aList.NewIterator()
+        
+        while not iterator.IsDoneWithTraversal():
+            a = iterator.GetCurrentObject()
+            if a is actor:
+                return True
+            iterator.GoToNextItem()
+            continue
+        return False
+
+    def HandlePlacedItemEnabledChange(self, change):
+        item = change.obj
+        if item.Enabled:
+            if not self.IsActorAdded(item.actor):
+                self.Renderer.AddActor(item.actor)
+                pass
+        else:
+            if self.IsActorAdded(item.actor):
+                self.Renderer.RemoveActor(item.actor)
+                pass
+            pass
+        return
+
+    pass
+
+class PlacedSeed(Observable):
+    def __init__(self, pipeline, colour=(0,0,1)):
+        self.representation = vtkSphereSource()
+        self.mapper = vtkPolyDataMapper()
+        self.mapper.SetInputConnection(self.representation.GetOutputPort())
+        
+        self.actor = vtkActor()
+        self.actor.SetMapper(self.mapper)
+        # Make it blue
+        self.actor.GetProperty().SetColor(colour)
+
+        self.Enabled = False
+        
+        return
+    
+    def SetCentre(self, centre):
+        self.representation.SetCenter(centre)
+        return
+    def GetCentre(self):
+        return self.representation.GetCenter()
+    Centre = property(GetCentre, SetCentre)
+    
     pass
 

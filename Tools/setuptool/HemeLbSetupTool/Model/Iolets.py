@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from HemeLbSetupTool.Util.Observer import Observable
 from HemeLbSetupTool.Model.Vector import Vector
 
@@ -7,7 +8,7 @@ class Iolet(Observable):
     _Args = {'Name': None,
              'Centre': Vector(),
              'Normal': Vector(),
-             'Radius': None}
+             'Radius': float("nan")}
     
     def __init__(self, **kwargs):
         it = Iolet._Args.iteritems()
@@ -39,7 +40,7 @@ class SinusoidalPressureIolet(Iolet):
             avg = self.Pressure.x
             amp = self.Pressure.y
             phs = self.Pressure.z
-            ans = 'p = %f + %f cos(wt + degtorad(%f))' % (avg, amp, phs)
+            ans = u'p = %.2f + %.2f cos(wt + %.0f°)' % (avg, amp, phs)
             return ans
         except:
             return ''
