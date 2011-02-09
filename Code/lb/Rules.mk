@@ -3,7 +3,8 @@ include $(MK)/header.mk
 TARGETS := libHemeLbMethod.$(LIBEXT)
 
 #SRCS := lb.cc \
-#        io.cc
+         io.cc \
+         StabilityTester.cc         
 
 SUBDIRS := collisions
 

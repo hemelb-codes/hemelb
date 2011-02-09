@@ -1,7 +1,7 @@
 include $(MK)/header.mk
 
 TARGETS := libHemeLbNet.$(LIBEXT)
-SRCS := net.cc
+SRCS := net.cc PhasedBroadcast.cc
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 
