@@ -283,7 +283,7 @@ namespace hemelb
                                    (*it)->Rank);
       }
 
-      net->Receive();
+      net->PostReceives();
 
       int offset = bLocalLatDat->my_inner_sites;
 
