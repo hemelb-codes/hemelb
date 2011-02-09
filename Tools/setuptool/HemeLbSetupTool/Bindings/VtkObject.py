@@ -54,8 +54,6 @@ class HasVtkObjectKeys(object):
     BindFunctionDispatchTable = ((VtkObjectController, 'BindVtkObject'),)
     
     def BindVtkObject(self, top, key, mapper):
-        """Each component of the vector should be appropriately bound.
-        """
         
         return
 

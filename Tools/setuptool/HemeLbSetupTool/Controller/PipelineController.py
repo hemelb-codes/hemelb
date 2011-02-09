@@ -1,63 +1,47 @@
 import operator
-from vtk import vtkSphereSource, vtkPolyDataMapper, vtkActor, vtkInteractorStyleTrackballCamera, vtkInteractorStyleUser
+from vtk import vtkPolyDataMapper, vtkActor, vtkInteractorStyleTrackballCamera, vtkInteractorStyleUser
 
 from ..Util.Observer import Observable
 from ..Bindings.ObjectController import ObjectController
+from ..Bindings.ListController import ListContentsDestMapper
 from ..Bindings.VtkObject import HasVtkObjectKeys
-from ..Bindings.Mappers import Mapper
+from ..Bindings.Mappers import Mapper, SimpleObservingMapper
 from ..Bindings.Translators import UnitTranslator
 
 from .VectorController import VectorController
+from .PlacedIoletController import PlacedIoletListController, HasPlacedIoletListKeys
 import pdb
 
-# class VtkPointController(VectorController):
-#     def __init__(self, delegate):
-#         VectorController.__init__(self, delegate)
-        
-#         self.representation = vtkSphereSource()
-#         self.mapper = vtkPolyDataMapper()
-#         self.mapper.SetInputConnection(self.representation.GetOutputPort())
-        
-#         self.actor = vtkActor()
-#         self.actor.SetMapper(self.mapper)
-#         # Make it blue
-#         self.actor.GetProperty().SetColor(0,0,1)
-        
-#         return
 
-#     pass
-
-# class HasVtkPointKeys(object):
-#     """Mixin for ObjectController subclasses with VtkPoint (Vectors
-#     that will shown as points in the view) keys.
-#     """
-#     BindFunctionDispatchTable = ((VtkPointController, 'BindVector'),)
-#     pass
 class SeedCoordMapper(Mapper):
-    def __init__(self, i, placer, translator=UnitTranslator()):
+    """Custom bindings mapper for the SeedPosition attribute to the
+    'Center' of the VTK pipeline's representation of the seed
+    location.
+    """
+    def __init__(self, i, placedSeed, translator=UnitTranslator()):
         Mapper.__init__(self, translator)
         
-        self.placer = placer
+        self.PlacedSeed = placedSeed
         self.i = i
         self.obsId = None
         return
     
     def _Get(self):
-        return self.placer.representation.GetCenter()[self.i]
+        return self.PlacedSeed.GetCentre()[self.i]
     
     def _Set(self, val):
         if val != val:
             # It's a nan
-            self.placer.On = False
+            self.PlacedSeed.Enabled = False
             pass
         
-        old = list(self.placer.representation.GetCenter())
+        old = list(self.PlacedSeed.GetCentre())
         old[self.i] = val
-        self.placer.representation.SetCenter(old)
+        self.PlacedSeed.SetCentre(old)
 
         allFinite = reduce(operator.and_, map(lambda x: x==x, old))
         if allFinite:
-            self.placer.On = True
+            self.PlacedSeed.Enabled = True
             pass
         return
 
@@ -66,56 +50,20 @@ class SeedCoordMapper(Mapper):
             self.Unobserve()
             pass
         
-        self.obsId = self.placer.representation.AddObserver('ModifiedEvent', self.HandleUpdate)
+        self.obsId = self.PlacedSeed.representation.AddObserver('ModifiedEvent', self.HandleUpdate)
         return
     def Unobserve(self):
         if self.obsId is None:
             return
         
-        self.placer.representation.RemoveObserver(self.obsId)
+        self.PlacedSeed.representation.RemoveObserver(self.obsId)
         self.obsId = None
         return
     
     pass
 
 
-class SeedPlacer(Observable):
-    def __init__(self, controller, colour=(0,0,1)):
-        self.controller = controller
-        
-        self.representation = vtkSphereSource()
-        self.mapper = vtkPolyDataMapper()
-        self.mapper.SetInputConnection(self.representation.GetOutputPort())
-        
-        self.actor = vtkActor()
-        self.actor.SetMapper(self.mapper)
-        # Make it blue
-        self.actor.GetProperty().SetColor(colour)
-
-        self.On = False
-        self.AddObserver('On', self.OnSet)
-        
-        return
-    
-    def SetCentre(self, centre):
-        self.representation.SetCenter(centre)
-        return
-    
-    def OnSet(self, change):
-        if self.On:
-            if not self.controller.IsActorAdded(self.actor):
-                self.GetValueForKey('controller.Renderer').AddActor(self.actor)
-                pass
-        else:
-            if self.controller.IsActorAdded(self.actor):
-                self.GetValueForKey('controller.Renderer').RemoveActor(self.actor)
-                pass
-            pass
-        return
-    pass
-
-    
-class PipelineController(HasVtkObjectKeys, ObjectController):
+class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectController):
     """Represent the VTK pipeline.
     """
     def __init__(self, delegate, profileController):
@@ -128,40 +76,35 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
         self.DefineVtkObjectKey('StlMapper')
         self.DefineVtkObjectKey('StlActor')
         self.DefineVtkObjectKey('Locator')
+        self.DefinePlacedIoletListKey('PlacedIolets')
+        
+        profileController.BindValue('Iolets',
+                                    ListContentsDestMapper(self.delegate.PlacedIolets,
+                                                           translator=self.PlacedIolets.translator))
+        profileController.BindValue('Iolets.SelectedIndex',
+                                    SimpleObservingMapper(self.PlacedIolets, 'SelectedIndex'))
         
         self.GetValueForKey('StlMapper.SetInputConnection')(
             profileController.GetValueForKey('StlReader.GetOutputPort')()
             )
         
-        self.SeedPlacer = SeedPlacer(self)
+        # self.PlacedSeed = PlacedSeed(self)
         
         profileController.BindValue('SeedPoint.x',
-                                    SeedCoordMapper(0, self.SeedPlacer))
+                                    SeedCoordMapper(0, self.GetValueForKey('PlacedSeed')))
         profileController.BindValue('SeedPoint.y',
-                                    SeedCoordMapper(1, self.SeedPlacer))
+                                    SeedCoordMapper(1, self.GetValueForKey('PlacedSeed')))
         profileController.BindValue('SeedPoint.z',
-                                    SeedCoordMapper(2, self.SeedPlacer))
+                                    SeedCoordMapper(2, self.GetValueForKey('PlacedSeed')))
+
         
         profileController.AddObserver('StlReader.Modified', self.HandleStlReaderModified)
         self.AddDependency('SeedPlaceButtonEnabled', 'mode')
         self.AddDependency('SeedPlaceButtonLabel', 'mode')
+        self.AddDependency('IoletPlaceButtonEnabled', 'mode')
+        self.AddDependency('IoletPlaceButtonLabel', 'mode')
         return
-    
-    def IsActorAdded(self, actor):
-        """Return whether the supplied argument is in the renderer's
-        list of actors.
-        """
-        aList = self.delegate.Renderer.GetActors()
-        iterator = aList.NewIterator()
         
-        while not iterator.IsDoneWithTraversal():
-            a = iterator.GetCurrentObject()
-            if a is actor:
-                return True
-            iterator.GoToNextItem()
-            continue
-        return False
-    
     @property
     def SeedPlaceButtonLabel(self):
         if self.mode == 'seed':
@@ -176,7 +119,7 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
     
     def SeedPlaceClicked(self):
         if self.mode == 'view':
-            self.SeedPlacer.On = True
+            self.SetValueForKey('PlacedSeed.Enabled', True)
             self.mode = 'seed'
             
         elif self.mode == 'seed':
@@ -186,6 +129,30 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
         
         return
     
+    @property
+    def IoletPlaceButtonLabel(self):
+        if self.mode == 'iolet':
+            return 'Finish'
+        return 'Place'
+    
+    @property
+    def IoletPlaceButtonEnabled(self):
+        if self.mode =='view' or self.mode == 'iolet':
+            return True
+        return False
+    
+    def IoletPlaceClicked(self):
+        if self.mode == 'view':
+            self.SetValueForKey('PlacedSeed.Enabled', True)
+            self.mode = 'iolet'
+            
+        elif self.mode == 'iolet':
+            self.mode = 'view'
+            
+            pass
+        
+        return
+
     def SetInteractor(self, iact):
         self.delegate.SetInteractor(iact)
         
@@ -210,7 +177,10 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
         """
         if self.mode == 'seed':
             self.HandleLeftButtonPressForSeedPlacement(obj, evt)
+        elif self.mode == 'iolet':
+            self.HandleLeftButtonPressForIoletPlacement(obj, evt)
             pass
+        
         return
     
     
@@ -219,8 +189,23 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
         didClickSurface, worldPos = self.MouseToWorld(mousePos)
         
         if didClickSurface:
-            self.SeedPlacer.SetCentre(worldPos)
+            self.SetValueForKey('PlacedSeed.Centre', worldPos)
             
+            # Want to abort further handling of this event, but
+            # currently can't do this from Python. Grr.
+            pass
+
+        return
+    
+    def HandleLeftButtonPressForIoletPlacement(self, obj, evt):
+        mousePos = obj.GetEventPosition()
+        didClickSurface, worldPos = self.MouseToWorld(mousePos)
+        
+        if didClickSurface:
+            pdb.set_trace()
+            self.SetValueForKey('PlacedIolets.Selection.Centre', worldPos)
+            self.SetValueForKey('PlacedIolets.Selection.Normal', (0.,0.,1.))
+            self.SetValueForKey('PlacedIolets.Selection.Radius', 1.)
             # Want to abort further handling of this event, but
             # currently can't do this from Python. Grr.
             pass
@@ -258,22 +243,7 @@ class PipelineController(HasVtkObjectKeys, ObjectController):
     #         # STL is invalid, do nothin
     #         pass
     #     return
-    
-    # def IsActorAdded(self, actor):
-    #     """Return whether the supplied argument is in the renderer's
-    #     list of actors.
-    #     """
-    #     aList = self.renderer.GetActors()
-    #     iterator = aList.NewIterator()
         
-    #     while not iterator.IsDoneWithTraversal():
-    #         a = iterator.GetCurrentObject()
-    #         if a is actor:
-    #             return True
-    #         iterator.GoToNextItem()
-    #         continue
-    #     return False
-    
     # def Show(self):
     #     if not self.IsActorAdded(self.stlActor):
     #         self.renderer.AddActor(self.stlActor)

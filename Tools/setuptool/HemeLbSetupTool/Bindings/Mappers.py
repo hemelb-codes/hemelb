@@ -45,7 +45,7 @@ class WriteOnlyMapper(Mapper):
         return
     
     pass
-import pdb
+
 class SimpleObservingMapper(Mapper):
     def __init__(self, model, key, translator=UnitTranslator()):
         assert isinstance(model, Observable)
