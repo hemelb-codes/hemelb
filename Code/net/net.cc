@@ -183,7 +183,7 @@ namespace hemelb
         }
       }
 
-      MPI_Waitall(mNetworkTopology->NeighbouringProcs.size(), &mRequests[0], &status[0]);
+      MPI_Waitall(mNetworkTopology->NeighbouringProcs.size(), &mRequests[0], &mStatuses[0]);
     }
 
     void Net::GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
@@ -280,7 +280,7 @@ namespace hemelb
         for (int ii = 0; ii < deficit; ii++)
         {
           mRequests.push_back(MPI_Request());
-          status.push_back(MPI_Status());
+          mStatuses.push_back(MPI_Status());
         }
       }
     }
@@ -674,7 +674,7 @@ namespace hemelb
       delete[] lFluidSitesHandledForEachProc;
     }
 
-    void Net::Receive()
+    void Net::PostReceives()
     {
       // Make sure the MPI datatypes have been created.
       EnsurePreparedToSendReceive();
@@ -709,7 +709,7 @@ namespace hemelb
 
     void Net::Wait(hemelb::lb::LocalLatticeData *bLocalLatDat)
     {
-      MPI_Waitall(2 * mProcessorComms.size(), &mRequests[0], &status[0]);
+      MPI_Waitall(2 * mProcessorComms.size(), &mRequests[0], &mStatuses[0]);
 
       sendReceivePrepped = false;
       for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it

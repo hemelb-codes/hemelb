@@ -27,7 +27,7 @@ namespace hemelb
         int* Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                         hemelb::lb::LocalLatticeData* &bLocalLatDat);
 
-        void Receive();
+        void PostReceives();
         void Send();
         void Wait(hemelb::lb::LocalLatticeData *bLocalLatDat);
 
@@ -139,7 +139,7 @@ namespace hemelb
         // there are enough available. We do this in a way to minimise the number created
         // on each core, but also to minimise creation / deletion overheads.
         std::vector<MPI_Request> mRequests;
-        std::vector<MPI_Status> status;
+        std::vector<MPI_Status> mStatuses;
     };
 
   }
