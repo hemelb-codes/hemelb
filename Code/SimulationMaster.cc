@@ -122,11 +122,14 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
       = new hemelb::lb::LocalLatticeData(
                                          mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]);
 
+  mStabilityTester = new hemelb::lb::StabilityTester(mLocalLatDat, mNet, mNetworkTopology,
+                                                     &mSimulationState);
+
   seconds = hemelb::util::myClock();
   int* lReceiveTranslator = mNet->Initialise(mGlobLatDat, mLocalLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
-  mLbm->SetFTranslator(lReceiveTranslator);
+  mLbm->Initialise(lReceiveTranslator, mStabilityTester);
   mLbm->SetInitialConditions(*mLocalLatDat);
 
   // Initialise the visualisation controller.
@@ -218,7 +221,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       stability = mLbm->DoCycle(mSimulationState.DoRendering, mNet, mLocalLatDat, mLbTime,
                                 mMPISendTime, mMPIWaitTime);
 
-      if ( (restart = mLbm->IsUnstable(*mLocalLatDat)) != false)
+      restart = (mSimulationState.Stability == hemelb::lb::Unstable);
+      if (restart)
       {
         break;
       }
