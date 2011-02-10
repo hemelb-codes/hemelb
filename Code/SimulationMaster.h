@@ -43,6 +43,7 @@ class SimulationMaster
 
     hemelb::steering::Control *steeringController;
     hemelb::lb::SimulationState mSimulationState;
+    hemelb::lb::StabilityTester * mStabilityTester;
     hemelb::lb::LBM *mLbm;
     hemelb::net::Net *mNet;
 

@@ -27,7 +27,7 @@ namespace hemelb
         int* Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
                         hemelb::lb::LocalLatticeData* &bLocalLatDat);
 
-        void PostReceives();
+        void Receive();
         void Send();
         void Wait(hemelb::lb::LocalLatticeData *bLocalLatDat);
 
@@ -49,9 +49,9 @@ namespace hemelb
             exit(1);
           }
 
-          ProcComms *lComms = GetProcComms(iToRank);
+          ProcComms *lComms = GetProcComms(iToRank, true);
 
-          AddToList(oPointer, iCount, lComms->SendData);
+          AddToList(oPointer, iCount, lComms);
         }
 
         /**
@@ -72,9 +72,9 @@ namespace hemelb
             exit(1);
           }
 
-          ProcComms *lComms = GetProcComms(iFromRank);
+          ProcComms *lComms = GetProcComms(iFromRank, false);
 
-          AddToList(oPointer, iCount, lComms->ReceiveData);
+          AddToList(oPointer, iCount, lComms);
         }
 
       private:
@@ -97,41 +97,37 @@ namespace hemelb
         struct ProcComms
         {
           public:
-            struct MetaData
+            std::vector<void*> PointerList;
+            std::vector<int> LengthList;
+            std::vector<MPI_Datatype> TypeList;
+
+            void clear()
             {
-                std::vector<void*> PointerList;
-                std::vector<int> LengthList;
-                std::vector<MPI_Datatype> TypeList;
+              PointerList.clear();
+              LengthList.clear();
+              TypeList.clear();
+            }
 
-                void clear()
-                {
-                  PointerList.clear();
-                  LengthList.clear();
-                  TypeList.clear();
-                }
-            };
-
-            MetaData SendData;
-            MetaData ReceiveData;
-
-            MPI_Datatype SendType;
-            MPI_Datatype ReceiveType;
+            MPI_Datatype Type;
         };
 
-        ProcComms* GetProcComms(int iRank);
+        ProcComms* GetProcComms(int iRank, bool iIsSend);
 
-        void AddToList(int* iNew, int iLength, ProcComms::MetaData &bMetaData);
+        void AddToList(int* iNew, int iLength, ProcComms* bMetaData);
 
-        void AddToList(double* iNew, int iLength, ProcComms::MetaData &bMetaData);
+        void AddToList(double* iNew, int iLength, ProcComms* bMetaData);
 
         void EnsurePreparedToSendReceive();
 
-        void CreateMPIType(const ProcComms::MetaData &iMetaData, MPI_Datatype &oNewDatatype);
+        void CreateMPIType(ProcComms *iMetaData);
 
         void EnsureEnoughRequests(unsigned int count);
 
         bool sendReceivePrepped;
-        std::map<int, ProcComms*> mProcessorComms;
+
+        std::map<int, ProcComms*> mSendProcessorComms;
+        std::map<int, ProcComms*> mReceiveProcessorComms;
+
         hemelb::topology::NetworkTopology * mNetworkTopology;
 
         // Requests and statuses available for general communication within the Net object (both

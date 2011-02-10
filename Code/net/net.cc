@@ -674,18 +674,18 @@ namespace hemelb
       delete[] lFluidSitesHandledForEachProc;
     }
 
-    void Net::PostReceives()
+    void Net::Receive()
     {
       // Make sure the MPI datatypes have been created.
       EnsurePreparedToSendReceive();
 
       int m = 0;
 
-      for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
-          != mProcessorComms.end(); ++it)
+      for (std::map<int, ProcComms*>::iterator it = mReceiveProcessorComms.begin(); it
+          != mReceiveProcessorComms.end(); ++it)
       {
-        MPI_Irecv(it->second->ReceiveData.PointerList.front(), 1, it->second->ReceiveType,
-                  it->first, 10, MPI_COMM_WORLD, &mRequests[m]);
+        MPI_Irecv(it->second->PointerList.front(), 1, it->second->Type, it->first, 10,
+                  MPI_COMM_WORLD, &mRequests[m]);
         ++m;
       }
     }
@@ -697,11 +697,11 @@ namespace hemelb
 
       int m = 0;
 
-      for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
-          != mProcessorComms.end(); ++it)
+      for (std::map<int, ProcComms*>::iterator it = mSendProcessorComms.begin(); it
+          != mSendProcessorComms.end(); ++it)
       {
-        MPI_Isend(it->second->SendData.PointerList.front(), 1, it->second->SendType, it->first, 10,
-                  MPI_COMM_WORLD, &mRequests[mProcessorComms.size() + m]);
+        MPI_Isend(it->second->PointerList.front(), 1, it->second->Type, it->first, 10,
+                  MPI_COMM_WORLD, &mRequests[mReceiveProcessorComms.size() + m]);
 
         ++m;
       }
@@ -709,29 +709,39 @@ namespace hemelb
 
     void Net::Wait(hemelb::lb::LocalLatticeData *bLocalLatDat)
     {
-      MPI_Waitall(2 * mProcessorComms.size(), &mRequests[0], &mStatuses[0]);
+      MPI_Waitall(mSendProcessorComms.size() + mReceiveProcessorComms.size(), &mRequests[0],
+                  &mStatuses[0]);
 
       sendReceivePrepped = false;
-      for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
-          != mProcessorComms.end(); it++)
-      {
-        it->second->SendData.clear();
-        it->second->ReceiveData.clear();
 
-        MPI_Type_free(&it->second->SendType);
-        MPI_Type_free(&it->second->ReceiveType);
+      for (std::map<int, ProcComms*>::iterator it = mReceiveProcessorComms.begin(); it
+          != mReceiveProcessorComms.end(); it++)
+      {
+        MPI_Type_free(&it->second->Type);
       }
+      mReceiveProcessorComms.clear();
+
+      for (std::map<int, ProcComms*>::iterator it = mSendProcessorComms.begin(); it
+          != mSendProcessorComms.end(); it++)
+      {
+        MPI_Type_free(&it->second->Type);
+      }
+      mSendProcessorComms.clear();
     }
 
     // Helper function to get the ProcessorCommunications object, and create it if it doesn't exist yet.
-    Net::ProcComms* Net::GetProcComms(int iRank)
+    Net::ProcComms* Net::GetProcComms(int iRank, bool iIsSend)
     {
-      std::map<int, ProcComms*>::iterator lValue = mProcessorComms.find(iRank);
+      std::map<int, ProcComms*>* lMap = iIsSend
+        ? &mSendProcessorComms
+        : &mReceiveProcessorComms;
+
+      std::map<int, ProcComms*>::iterator lValue = lMap->find(iRank);
       ProcComms *lComms;
-      if (lValue == mProcessorComms.end())
+      if (lValue == lMap->end())
       {
         lComms = new ProcComms();
-        mProcessorComms .insert(std::pair<int, ProcComms*>(iRank, lComms));
+        lMap->insert(std::pair<int, ProcComms*>(iRank, lComms));
       }
       else
       {
@@ -741,19 +751,19 @@ namespace hemelb
     }
 
     // Helper functions to add ints to the list.
-    void Net::AddToList(int* iNew, int iLength, ProcComms::MetaData &bMetaData)
+    void Net::AddToList(int* iNew, int iLength, ProcComms *bMetaData)
     {
-      bMetaData.PointerList.push_back(iNew);
-      bMetaData.LengthList.push_back(iLength);
-      bMetaData.TypeList.push_back(MPI_INT);
+      bMetaData->PointerList.push_back(iNew);
+      bMetaData->LengthList.push_back(iLength);
+      bMetaData->TypeList.push_back(MPI_INT);
     }
 
     // Helper functions to add doubles to the list.
-    void Net::AddToList(double* iNew, int iLength, ProcComms::MetaData &bMetaData)
+    void Net::AddToList(double* iNew, int iLength, ProcComms *bMetaData)
     {
-      bMetaData.PointerList.push_back(iNew);
-      bMetaData.LengthList.push_back(iLength);
-      bMetaData.TypeList.push_back(MPI_DOUBLE);
+      bMetaData->PointerList.push_back(iNew);
+      bMetaData->LengthList.push_back(iLength);
+      bMetaData->TypeList.push_back(MPI_DOUBLE);
     }
 
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
@@ -764,48 +774,55 @@ namespace hemelb
         return;
       }
 
-      for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
-          != mProcessorComms.end(); it++)
+      for (std::map<int, ProcComms*>::iterator it = mSendProcessorComms.begin(); it
+          != mSendProcessorComms.end(); it++)
       {
         ProcComms* lThisPC = (*it).second;
 
-        CreateMPIType(lThisPC->SendData, lThisPC->SendType);
-        CreateMPIType(lThisPC->ReceiveData, lThisPC->ReceiveType);
+        CreateMPIType(lThisPC);
       }
 
-      EnsureEnoughRequests(2 * mProcessorComms.size());
+      for (std::map<int, ProcComms*>::iterator it = mReceiveProcessorComms.begin(); it
+          != mReceiveProcessorComms.end(); it++)
+      {
+        ProcComms* lThisPC = (*it).second;
+
+        CreateMPIType(lThisPC);
+      }
+
+      EnsureEnoughRequests(mReceiveProcessorComms.size() + mSendProcessorComms.size());
 
       sendReceivePrepped = true;
     }
 
     // Helper function to create a MPI derived datatype given a list of pointers, types and lengths.
-    void Net::CreateMPIType(const ProcComms::MetaData &iMetaData, MPI_Datatype &oNewDatatype)
+    void Net::CreateMPIType(ProcComms *iMetaData)
     {
-      MPI_Aint* displacements = new MPI_Aint[iMetaData.PointerList.size()];
-      int* lengths = new int[iMetaData.PointerList.size()];
-      MPI_Datatype* types = new MPI_Datatype[iMetaData.PointerList.size()];
+      MPI_Aint* displacements = new MPI_Aint[iMetaData->PointerList.size()];
+      int* lengths = new int[iMetaData->PointerList.size()];
+      MPI_Datatype* types = new MPI_Datatype[iMetaData->PointerList.size()];
 
       int lLocation = 0;
 
-      for (std::vector<void*>::const_iterator it = iMetaData.PointerList.begin(); it
-          != iMetaData.PointerList.end(); it++)
+      for (std::vector<void*>::const_iterator it = iMetaData->PointerList.begin(); it
+          != iMetaData->PointerList.end(); it++)
       {
         MPI_Get_address(*it, &displacements[lLocation]);
         ++lLocation;
       }
 
-      for (int ii = iMetaData.PointerList.size() - 1; ii >= 0; ii--)
+      for (int ii = iMetaData->PointerList.size() - 1; ii >= 0; ii--)
       {
         displacements[ii] -= displacements[0];
 
-        lengths[ii] = iMetaData.LengthList[ii];
-        types[ii] = iMetaData.TypeList[ii];
+        lengths[ii] = iMetaData->LengthList[ii];
+        types[ii] = iMetaData->TypeList[ii];
       }
 
       // Create the type and commit it.
-      MPI_Type_create_struct(iMetaData.PointerList.size(), lengths, displacements, types,
-                             &oNewDatatype);
-      MPI_Type_commit(&oNewDatatype);
+      MPI_Type_create_struct(iMetaData->PointerList.size(), lengths, displacements, types,
+                             &iMetaData->Type);
+      MPI_Type_commit(&iMetaData->Type);
 
       delete[] displacements;
       delete[] lengths;
@@ -825,12 +842,18 @@ namespace hemelb
     {
       if (sendReceivePrepped)
       {
-        for (std::map<int, ProcComms*>::iterator it = mProcessorComms.begin(); it
-            != mProcessorComms.end(); it++)
+        for (std::map<int, ProcComms*>::iterator it = mSendProcessorComms.begin(); it
+            != mSendProcessorComms.end(); it++)
         {
-          MPI_Type_free(&it->second->SendType);
-          MPI_Type_free(&it->second->ReceiveType);
+          MPI_Type_free(&it->second->Type);
         }
+
+        for (std::map<int, ProcComms*>::iterator it = mReceiveProcessorComms.begin(); it
+            != mReceiveProcessorComms.end(); it++)
+        {
+          MPI_Type_free(&it->second->Type);
+        }
+
       }
     }
 

@@ -207,9 +207,10 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
-    void LBM::SetFTranslator(int* iFTranslator)
+    void LBM::Initialise(int* iFTranslator, StabilityTester* iStabTester)
     {
       receivedFTranslator = iFTranslator;
+      mStabilityTester = iStabTester;
     }
 
     void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
@@ -283,7 +284,9 @@ namespace hemelb
                                    (*it)->Rank);
       }
 
-      net->PostReceives();
+      mStabilityTester->RequestComms();
+
+      net->Receive();
 
       int offset = bLocalLatDat->my_inner_sites;
 
@@ -360,6 +363,8 @@ namespace hemelb
 
       bLbTime += (MPI_Wtime() - lPrePostStepTime);
 
+      mStabilityTester->PostReceive();
+
       // Swap f_old and f_new ready for the next timestep.
       double *temp = bLocalLatDat->FOld;
       bLocalLatDat->FOld = bLocalLatDat->FNew;
@@ -428,29 +433,6 @@ namespace hemelb
       period = period;
 
       inlets = inlets;
-    }
-
-    int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat)
-    {
-      int is_unstable, stability;
-
-      is_unstable = 0;
-
-      for (int i = 0; i < iLocalLatDat.GetLocalFluidSiteCount(); i++)
-      {
-        for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
-        {
-          if (iLocalLatDat.FOld[i * D3Q15::NUMVECTORS + l] < 0.)
-          {
-            is_unstable = 1;
-          }
-        }
-      }
-
-      MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-      is_unstable = stability;
-
-      return is_unstable;
     }
 
     // Update peak and average inlet velocities local to the current subdomain.
@@ -591,6 +573,8 @@ namespace hemelb
       RecalculateTauViscosityOmega();
 
       SetInitialConditions(iLocalLatDat);
+
+      mStabilityTester->Reset();
     }
 
     double LBM::GetMinPhysicalPressure()
