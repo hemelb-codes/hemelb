@@ -4,6 +4,7 @@
 #include "net/net.h"
 #include "topology/NetworkTopology.h"
 #include "lb/collisions/Collisions.h"
+#include "lb/StabilityTester.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 
@@ -34,22 +35,19 @@ namespace hemelb
         void Restart(hemelb::lb::LocalLatticeData &iLocalLatDat);
         ~LBM();
 
-        int IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat);
-
-        hemelb::lb::Stability
-        DoCycle(int perform_rt,
-                net::Net *net,
-                lb::LocalLatticeData *bLocallatDat,
-                double &bLbTime,
-                double &bMPISendTime,
-                double &bMPIWaitTime);
+        hemelb::lb::Stability DoCycle(int perform_rt,
+                                      net::Net *net,
+                                      lb::LocalLatticeData *bLocallatDat,
+                                      double &bLbTime,
+                                      double &bMPISendTime,
+                                      double &bMPIWaitTime);
         void CalculateFlowFieldValues();
         void RecalculateTauViscosityOmega();
         void UpdateBoundaryDensities(int cycle_id, int time_step);
         void
         UpdateInletVelocities(int time_step, lb::LocalLatticeData &iLocalLatDat, net::Net *net);
 
-        void SetFTranslator(int* iFTranslator);
+        void Initialise(int* iFTranslator, StabilityTester* iStabTester);
 
         void SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
@@ -138,6 +136,7 @@ namespace hemelb
 
         double mFileReadTime;
 
+        hemelb::lb::StabilityTester * mStabilityTester;
         hemelb::lb::LbmParameters mParams;
         const hemelb::topology::NetworkTopology * mNetTopology;
         hemelb::SimConfig *mSimConfig;

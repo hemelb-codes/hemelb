@@ -12,6 +12,7 @@ namespace hemelb
         double IntraCycleTime;
         int IsTerminating;
         int DoRendering;
+        int Stability;
     };
   }
 }

@@ -1,4 +1,5 @@
 #include "lb/StabilityTester.h"
+#include "lb/LbmParameters.h"
 
 namespace hemelb
 {
@@ -6,24 +7,41 @@ namespace hemelb
   {
 
     StabilityTester::StabilityTester(const hemelb::lb::LocalLatticeData * iLocalLatDat,
-                                     int * bStability)
+                                     net::Net* net,
+                                     topology::NetworkTopology* iNetTop,
+                                     SimulationState* simState) :
+      net::PhasedBroadcast(net, iNetTop, simState, SPREADFACTOR)
     {
-      PhasedBroadcast(SPREADFACTOR);
-
       mLocalLatDat = iLocalLatDat;
-      mPublicSimulationStability = bStability;
-
+      mPublicSimulationStability = &simState->Stability;
       Reset();
     }
 
     void StabilityTester::Reset()
     {
-      mLocalStability = Stable;
-      mReceivedSimulationStability = Stable;
+      // Re-initialise all values to be Stable.
+      mUpwardsStability = Stable;
+      mDownwardsStability = Stable;
       *mPublicSimulationStability = Stable;
       for (unsigned int ii = 0; ii < SPREADFACTOR; ii++)
       {
         mChildrensStability[ii] = Stable;
+      }
+    }
+
+    void StabilityTester::PostReceiveFromChildren()
+    {
+      // No need to test children's stability if this node is already unstable.
+      if (mUpwardsStability == Stable)
+      {
+        for (int ii = 0; ii < (int) SPREADFACTOR; ii++)
+        {
+          if (mChildrensStability[ii] == Unstable)
+          {
+            mUpwardsStability = Unstable;
+            break;
+          }
+        }
       }
     }
 
@@ -34,35 +52,44 @@ namespace hemelb
 
     void StabilityTester::ProgressFromParent()
     {
-      ReceiveFromParent<int> (&mReceivedSimulationStability, 1);
+      ReceiveFromParent<int> (&mDownwardsStability, 1);
     }
 
     void StabilityTester::ProgressToChildren()
     {
-      SendToChildren<int> (&mReceivedSimulationStability, 1);
+      SendToChildren<int> (&mDownwardsStability, 1);
     }
 
     void StabilityTester::ProgressToParent()
     {
-      // No need to test children's stability if this node is already unstable.
-      if (mLocalStability == Stable)
+      // No need to bother testing out local lattice points if we're going to be
+      // sending up a 'Unstable' value anyway.
+      if (mUpwardsStability != Unstable)
       {
-        for (int ii = 0; ii < mChildrensStability; ii++)
+        for (int i = 0; i < mLocalLatDat->GetLocalFluidSiteCount(); i++)
         {
-          if (mChildrensStability == Unstable)
+          for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
           {
-            mLocalStability = Unstable;
-            break;
+            if (mLocalLatDat->FNew[i * D3Q15::NUMVECTORS + l] < 0.)
+            {
+              mUpwardsStability = Unstable;
+            }
           }
         }
       }
 
-      SendToParent<int> (&mLocalStability, 1);
+      SendToParent<int> (&mUpwardsStability, 1);
+    }
+
+    void StabilityTester::TopNodeAction()
+    {
+      mDownwardsStability = mUpwardsStability;
     }
 
     void StabilityTester::Effect()
     {
-      *mPublicSimulationStability = mReceivedSimulationStability;
+      *mPublicSimulationStability = mDownwardsStability;
     }
 
   }
+}
