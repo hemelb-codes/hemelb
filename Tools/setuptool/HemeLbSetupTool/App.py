@@ -41,6 +41,13 @@ class SetupTool(wx.App):
         # View
         self.view = MainWindow(self.controller)
 
+        # If we set the StlFile on the command line, we need to
+        # trigger the event now everything's been setup.
+        if 'StlFile' in self.cmdLineArgs and \
+               self.cmdLineArgs['StlFile'] is not None:
+            self.profile.DidChangeValueForKey('StlFile')
+            pass
+
         self.SetTopWindow(self.view)
         return True
     
