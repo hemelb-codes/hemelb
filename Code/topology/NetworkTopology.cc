@@ -58,6 +58,7 @@ namespace hemelb
     }
 
     void NetworkTopology::DecomposeDomain(int iTotalFluidSites,
+                                          bool iReserveSteeringCore,
                                           const lb::GlobalLatticeData & bGlobLatDat)
     {
       // Allocations.  fluid sites will store actual number of fluid
@@ -86,14 +87,12 @@ namespace hemelb
         int proc_count = 0;
 
         // If we're steering with more than one processor, save one processor for doing that.
-#ifndef NO_STEER
-        if (GetProcessorCount() != 1)
+        if (iReserveSteeringCore && GetProcessorCount() != 1)
         {
           fluid_sites_per_unit = (int) ceil((double) iTotalFluidSites
               / (double) (GetProcessorCount() - 1));
           proc_count = 1;
         }
-#endif
 
         // In the simple case, simply divide fluid sites up between processors.
         AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit, lUnvisitedFluidSiteCount,

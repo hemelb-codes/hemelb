@@ -13,9 +13,12 @@ namespace hemelb
     {
       public:
         SteeringThread(int fd, Control* controller);
+
+      protected:
+        virtual pthread_attr_t* GetPthreadAttributes(void);
+
       private:
         void DoWork(void);
-        pthread_attr_t* GetPthreadAttributes(void);
 
         Control* mSteeringController;
         int mFdInt;

@@ -1,5 +1,4 @@
 #include <pthread.h>
-
 #include "steering/basic/Threadable.h"
 
 namespace hemelb

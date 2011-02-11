@@ -316,7 +316,6 @@ namespace hemelb
     {
 
       double par_to_send[10000];
-      int nParamsRead = 0;
       int err;
 
       if (mNetTopology->IsCurrentProcTheIOProc())
@@ -1045,7 +1044,7 @@ namespace hemelb
         par_to_send[8] = stress_max;
       }
 
-      int err = MPI_Bcast(par_to_send, 9, MPI_FLOAT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(par_to_send, 9, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
       mSimConfig->VisCentre.x = par_to_send[0];
       mSimConfig->VisCentre.y = par_to_send[1];

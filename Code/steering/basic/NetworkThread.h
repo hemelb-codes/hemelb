@@ -1,9 +1,7 @@
 #ifndef HEMELB_STEERING_BASIC_NETWORKTHREAD
 #define HEMELB_STEERING_BASIC_NETWORKTHREAD
 
-#ifndef NO_STEER
 #include <pthread.h>
-#endif
 
 #include "steering/basic/Threadable.h"
 #include "lb/SimulationState.h"
@@ -25,11 +23,11 @@ namespace hemelb
 
         ~NetworkThread();
 
-#ifndef NO_STEER
-        static pthread_mutex_t var_lock;
-#endif
-
       private:
+        static pthread_mutex_t var_lock;
+
+        char host_name[255];
+
         void DoWork(void);
 
         void HandleBrokenPipe();
