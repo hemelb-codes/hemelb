@@ -41,8 +41,10 @@ class Profile(Observable):
         self.sider = AverageSideLengthCalculator()
         self.sider.SetInputConnection(self.StlReader.GetOutputPort())
 
-        # When the STL changes, we should reset the voxel size.
+        # When the STL changes, we should reset the voxel size and
+        # update the vtkSTLReader.
         self.AddObserver('StlFile', self.OnStlFileChanged)
+        
         # Dependencies for properties
         self.AddDependency('HaveValidStlFile', 'StlFile')
         self.AddDependency('HaveValidOutputXmlFile', 'OutputXmlFile')
