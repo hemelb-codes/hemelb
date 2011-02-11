@@ -5,10 +5,8 @@
 
 #ifdef HEMELB_STEERING_LIB_basic
   #include "steering/basic/Control.h"
-
 #else
-  #include "steering/none/steering.h"
-
+  #include "steering/none/Control.h"
 #endif
 
 #endif // HEMELB_STEERING_STEERING_H

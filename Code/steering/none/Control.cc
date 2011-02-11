@@ -36,6 +36,11 @@ namespace hemelb
       return false;
     }
 
+    bool Control::RequiresSeparateSteeringCore() const
+    {
+      return false;
+    }
+
   }
 
 }

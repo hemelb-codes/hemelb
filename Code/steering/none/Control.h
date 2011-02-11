@@ -26,6 +26,8 @@ namespace hemelb
                                   lb::LBM* lbm);
         bool ShouldRenderForNetwork();
 
+        bool RequiresSeparateSteeringCore() const;
+
       protected:
         ~Control();
     };

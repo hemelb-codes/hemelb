@@ -56,11 +56,9 @@ namespace hemelb
 
     void NetworkThread::setRenderState(int val)
     {
-#ifndef NO_STEER
       pthread_mutex_lock(&var_lock);
       mSimState->DoRendering = val;
       pthread_mutex_unlock(&var_lock);
-#endif
     }
 
     // Return seconds since epoch to microsec precision.
@@ -87,11 +85,11 @@ namespace hemelb
 
       setRenderState(0);
 
-      gethostname(mSteeringController->host_name, 255);
+      gethostname(host_name, 255);
 
       FILE *f = fopen("env_details.asc", "w");
 
-      fprintf(f, "%s\n", mSteeringController->host_name);
+      fprintf(f, "%s\n", host_name);
       fclose(f);
 
       // fprintf (timings_ptr, "MPI 0 Hostname -> %s\n\n", host_name);
@@ -121,7 +119,6 @@ namespace hemelb
       {
         setRenderState(0);
 
-        // pthread_mutex_lock (&LOCK);
         // sem_wait( &nrl );
 
         struct sockaddr_in my_address;
@@ -186,7 +183,6 @@ namespace hemelb
         while (!is_broken_pipe)
         {
           // printf("THREAD: waiting for signal that frame is ready to send..\n"); fflush(0x0);
-          // pthread_mutex_lock ( &LOCK );
 
           bool is_frame_ready_local = 0;
 
@@ -201,7 +197,6 @@ namespace hemelb
           sem_wait(&mSteeringController->nrl);
           mSteeringController->sending_frame = 1;
           // printf("THREAD sending frame = 1\n");
-          // pthread_cond_wait (&network_send_frame, &LOCK);
           // setRenderState(0);
           // printf("THREAD: received signal that frame is ready to send..\n"); fflush(0x0);
 
@@ -309,7 +304,6 @@ namespace hemelb
             usleep(timeDiff * 1.0e6);
           }
 
-          // pthread_mutex_unlock ( &LOCK );
           // sem_post(&nrl);
 
           mSteeringController->sending_frame = 0;

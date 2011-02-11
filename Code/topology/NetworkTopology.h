@@ -40,7 +40,7 @@ namespace hemelb
         int GetDepths() const;
         int GetMachineCount() const;
 
-        void DecomposeDomain(int iTotalFluidSites, const lb::GlobalLatticeData & bGlobLatDat);
+        void DecomposeDomain(int iTotalFluidSites, bool iReserveSteeringCore, const lb::GlobalLatticeData & bGlobLatDat);
 
         // Number of local distributions shared with neighbouring processors.
         int TotalSharedFs;
