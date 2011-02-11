@@ -3,7 +3,7 @@
 
 #include "lb/lb.h"
 #include "net/net.h"
-#include "steering/basic/Control.h"
+#include "steering/steering.h"
 
 class SimulationMaster
 {

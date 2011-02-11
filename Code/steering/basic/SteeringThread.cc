@@ -86,12 +86,10 @@ namespace hemelb
           }
           sched_yield();
         }
-        // pthread_mutex_lock(&steer_param_lock);
 
         sem_wait(&mSteeringController->steering_var_lock);
 
         for (int i = 0; i < STEERABLE_PARAMETERS; i++)
-          //xdr_float(&xdr_steering_stream, &steering::steer_par[i]);
           steeringStream->readFloat(steering::steer_par[i]);
 
         sem_post(&mSteeringController->steering_var_lock);

@@ -23,7 +23,6 @@ namespace hemelb
     {
       // From main()
       sem_init(&nrl, 0, 1);
-      //sem_init(&connected_sem, 0, 1);
       sem_init(&steering_var_lock, 0, 1);
     }
 
@@ -34,7 +33,6 @@ namespace hemelb
         delete mNetworkThread;
       }
       sem_destroy(&nrl);
-      //sem_destroy(&connected_sem);
       sem_destroy(&steering_var_lock);
     }
 
@@ -45,9 +43,6 @@ namespace hemelb
     {
       if (mIsCurrentProcTheSteeringProc)
       {
-        pthread_mutex_init(&LOCK, NULL);
-        pthread_cond_init(&network_send_frame, NULL);
-
         mNetworkThread = new NetworkThread(lbm, this, iSimState, iLbmParams);
         mNetworkThread->Run();
       }
@@ -156,6 +151,10 @@ namespace hemelb
       return isConnected.GetValue() && !sending_frame;
     }
 
+    bool Control::RequiresSeparateSteeringCore() const
+    {
+      return true;
+    }
   }
 
 }
