@@ -1,4 +1,4 @@
-#include "steering/none/Control.h"
+#include "steering/Control.h"
 #include "steering/common/common.h"
 
 namespace hemelb
@@ -7,7 +7,8 @@ namespace hemelb
   namespace steering
   {
 
-    Control::Control(bool isCurrentProcTheSteeringProc)
+    Control::Control(bool isCurrentProcTheSteeringProc) :
+      isConnected(false)
     {
     }
 

@@ -2,7 +2,7 @@
 #define HEMELB_STEERING_BASIC_STEERINGTHREAD
 
 #include "steering/basic/Threadable.h"
-#include "steering/basic/Control.h"
+#include "steering/Control.h"
 
 namespace hemelb
 {
