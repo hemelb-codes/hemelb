@@ -12,7 +12,7 @@
 
 #include "steering/basic/NetworkThread.h"
 #include "steering/basic/SteeringThread.h"
-#include "steering/basic/Control.h"
+#include "steering/Control.h"
 #include "steering/basic/HttpPost.h"
 #include "steering/basic/Network.h"
 #include "steering/basic/SimulationParameters.h"
