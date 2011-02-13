@@ -8,7 +8,7 @@
 #include <semaphore.h>
 
 #include "lb/lb.h"
-#include "steering/basic/Control.h"
+#include "steering/Control.h"
 #include "steering/common/common.h"
 
 namespace hemelb
