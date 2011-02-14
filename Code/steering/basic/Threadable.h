@@ -31,9 +31,6 @@ namespace hemelb
         // your subclass.
         virtual void DoWork(void) = 0;
 
-        // Override this to change the thread attributes
-        virtual pthread_attr_t* GetPthreadAttributes(void);
-
         void Exit(void);
 
       private:
