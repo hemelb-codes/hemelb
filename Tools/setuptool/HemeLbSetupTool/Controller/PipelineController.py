@@ -202,7 +202,6 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
         didClickSurface, worldPos = self.MouseToWorld(mousePos)
         
         if didClickSurface:
-            pdb.set_trace()
             self.SetValueForKey('PlacedIolets.Selection.Centre', worldPos)
             self.SetValueForKey('PlacedIolets.Selection.Normal', (0.,0.,1.))
             self.SetValueForKey('PlacedIolets.Selection.Radius', 1.)
