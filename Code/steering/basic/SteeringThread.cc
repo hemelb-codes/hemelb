@@ -12,19 +12,9 @@ namespace hemelb
   namespace steering
   {
 
-    SteeringThread::SteeringThread(int fd, Control* controller) :
-      mSteeringController(controller), mFdInt(fd)
+    SteeringThread::SteeringThread(int fd, sem_t* bSteeringVariableLock) :
+      mSteeringVariableLock(bSteeringVariableLock), mFdInt(fd)
     {
-    }
-
-    // Make it joinable
-    pthread_attr_t* SteeringThread::GetPthreadAttributes()
-    {
-      pthread_attr_t* attr = new pthread_attr_t;
-
-      pthread_attr_init(attr);
-      pthread_attr_setdetachstate(attr, PTHREAD_CREATE_JOINABLE);
-      return attr;
     }
 
     // The work routine of the thread.
@@ -45,8 +35,7 @@ namespace hemelb
 
         //xdrmem_create(&xdr_steering_stream, xdr_steering_data, bytes,
         //              XDR_DECODE);
-        io::XdrMemReader* steeringStream =
-            new io::XdrMemReader(steeringRecvBuffer, bytes);
+        io::XdrMemReader* steeringStream = new io::XdrMemReader(steeringRecvBuffer, bytes);
 
         while (1)
         {
@@ -67,8 +56,7 @@ namespace hemelb
           {
             /* If there's something to read, read it... */
             //        printf("STEERING: Got data\n"); fflush(0x0);
-            steerDataRecvB = Network::recv_all(mFdInt, steeringRecvBuffer,
-                                               num_chars);
+            steerDataRecvB = Network::recv_all(mFdInt, steeringRecvBuffer, num_chars);
             sched_yield();
             break;
           }
@@ -87,15 +75,12 @@ namespace hemelb
           sched_yield();
         }
 
-        sem_wait(&mSteeringController->steering_var_lock);
+        sem_wait(mSteeringVariableLock);
 
         for (int i = 0; i < STEERABLE_PARAMETERS; i++)
           steeringStream->readFloat(steering::steer_par[i]);
 
-        sem_post(&mSteeringController->steering_var_lock);
-
-        if (steering::steer_par[14] > -1.0 && steering::steer_par[15] > -1.0)
-          mSteeringController->updated_mouse_coords = 1;
+        sem_post(mSteeringVariableLock);
 
         delete steeringStream;
       }

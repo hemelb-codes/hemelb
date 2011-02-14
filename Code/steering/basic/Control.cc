@@ -107,8 +107,15 @@ namespace hemelb
       pixels_x = steer_par[12];
       pixels_y = steer_par[13];
 
-      visControl->mouse_x = int (steer_par[14]);
-      visControl->mouse_y = int (steer_par[15]);
+      int newMouseX = int (steer_par[14]);
+      int newMouseY = int (steer_par[15]);
+
+      if (newMouseX != visControl->mouse_x || newMouseY != visControl->mouse_y)
+      {
+        updated_mouse_coords = true;
+        visControl->mouse_x = newMouseX;
+        visControl->mouse_y = newMouseY;
+      }
 
       lSimulationState.IsTerminating = int (steer_par[16]);
 
