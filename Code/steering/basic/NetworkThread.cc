@@ -161,7 +161,7 @@ namespace hemelb
 
         // fprintf (timings_ptr, "server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
         // printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
-        steering_thread = new SteeringThread(new_fd, mSteeringController);
+        steering_thread = new SteeringThread(new_fd, &mSteeringController->steering_var_lock);
         steering_thread->Run();
 
         close(sock_fd);
