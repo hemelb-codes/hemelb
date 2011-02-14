@@ -12,7 +12,8 @@ namespace hemelb
       {
       };
     }
-    /* 
+
+    /**
      * Template class for wrappers around member vars that allows them to
      * be altered by the Steerer. Template parameter should be a suitable
      * subclass of Tag<>; see example in Tags.cc.

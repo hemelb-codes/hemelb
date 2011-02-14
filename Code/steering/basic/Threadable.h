@@ -9,7 +9,7 @@ namespace hemelb
   {
 
     class Threadable
-    /*
+    /**
      * An abstract class wrapping a pthread.
      * You must implement the pure virtual method
      * void DoWork(void) which is executed in the

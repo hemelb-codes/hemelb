@@ -35,8 +35,8 @@ namespace hemelb
         sem_t nrl;
         sem_t steering_var_lock;
 
-        bool is_frame_ready;
         bool sending_frame;
+        bool is_frame_ready;
         Lockable<bool> isConnected;
 
         int send_array_length;

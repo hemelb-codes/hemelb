@@ -105,15 +105,10 @@ namespace hemelb
 
       SteeringThread* steering_thread = NULL;
 
-      static char ip_addr[16];
-      static char rank_0_host_details[1024];
-
       signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
 
-      HttpPost::get_host_details(rank_0_host_details, ip_addr);
-
       HttpPost::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/",
-                        steering_session_id_char, rank_0_host_details);
+                        steering_session_id_char);
 
       while (1)
       {
@@ -194,11 +189,9 @@ namespace hemelb
             sem_post(&mSteeringController->nrl);
             // printf("THREAD is_frame_ready_local %i\n", is_frame_ready_local);
           }
+
           sem_wait(&mSteeringController->nrl);
           mSteeringController->sending_frame = 1;
-          // printf("THREAD sending frame = 1\n");
-          // setRenderState(0);
-          // printf("THREAD: received signal that frame is ready to send..\n"); fflush(0x0);
 
           double frameTimeStart = frameTiming();
 
@@ -303,8 +296,6 @@ namespace hemelb
 
             usleep(timeDiff * 1.0e6);
           }
-
-          // sem_post(&nrl);
 
           mSteeringController->sending_frame = 0;
           mSteeringController->is_frame_ready = 0;

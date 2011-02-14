@@ -7,9 +7,8 @@ namespace hemelb
 {
   namespace steering
   {
-    template<typename T>
-    class Lockable
-    /*
+
+    /**
      * Wrap a variable with locking through semaphores.
      * Construct with Lockable<type>(value).
      * Get a copy of the value with GetValue().
@@ -17,11 +16,9 @@ namespace hemelb
      * Hold/release the lock with Lock()/Unlock.
      *
      */
+    template<typename T>
+    class Lockable
     {
-      private:
-        sem_t mSem;
-        T mValue;
-
       public:
         Lockable(T value) :
           mValue(value)
@@ -58,6 +55,10 @@ namespace hemelb
         {
           sem_post(&mSem);
         }
+
+      private:
+        sem_t mSem;
+        T mValue;
     };
 
   } // namespace steering
