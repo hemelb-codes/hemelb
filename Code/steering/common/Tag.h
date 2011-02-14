@@ -17,7 +17,8 @@ namespace hemelb
   {
     namespace _private
     {
-      /* Family of Tags for a type of variable T.  Doesn't specify a tag
+      /**
+       * Family of Tags for a type of variable T.  Doesn't specify a tag
        * string; that's the job of the the subclass. Hence we're a "static
        * abstract base class" and using the Curiously Recurring Template
        * Pattern/static polymorphism. Note this is without the common

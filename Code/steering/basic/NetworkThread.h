@@ -13,6 +13,10 @@ namespace hemelb
   {
     class Control;
 
+    /**
+     * Class to handle the business of sending imaging and steering data over a network connection,
+     * run on a separate thread.
+     */
     class NetworkThread : public Threadable
     {
       public:
