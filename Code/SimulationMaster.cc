@@ -269,7 +269,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         }
         if (mNetworkTopology->IsCurrentProcTheIOProc())
         {
-          steeringController->is_frame_ready = 1;
+          steeringController->is_frame_ready = true;
           sem_post(&steeringController->nrl); // let go of the lock
         }
       }
