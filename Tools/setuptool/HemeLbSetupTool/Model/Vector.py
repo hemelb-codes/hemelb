@@ -1,4 +1,4 @@
-from HemeLbSetupTool.Util.Observer import Observable, ObservableList
+from HemeLbSetupTool.Util.Observer import Observable
 
 class Vector(Observable):
     def __init__(self, *args):
