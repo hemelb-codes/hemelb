@@ -47,6 +47,9 @@ class VectorCtrl(wx.Panel):
     @ForwardGet
     def GetBackgroundColour(): return
     
+    @ForwardSet
+    def SetEditable(): return
+    
     pass
 
 class VectorCtrlMapper(WxWidgetMapper):

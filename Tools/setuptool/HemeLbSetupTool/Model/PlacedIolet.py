@@ -5,7 +5,6 @@ from vtk import vtkPlaneWidget, vtkPolyData, vtkPolyDataMapper, \
 
 from ..Util.Observer import Observable, ObservableList, NotifyOptions
 
-from .Iolets import Inlet, Outlet
 import pdb
 class PlacedIoletList(ObservableList):
     def __init__(self, *args, **kwargs):
@@ -71,6 +70,10 @@ class PlacedIolet(Observable):
         self.AddDependency('IsCentreValid', 'Centre')
         self.AddDependency('IsNormalValid', 'Normal')
         self.AddDependency('IsRadiusValid', 'Radius')
+        self.AddDependency('CanShow', 'IsCentreValid')
+        self.AddDependency('CanShow', 'IsNormalValid')
+        self.AddDependency('CanShow', 'IsRadiusValid')
+        
     #     self.iolet.AddObserver('Centre.@ANY', self.MyIoletCentreChanged)
     #     self.iolet.AddObserver('Normal.@ANY', self.MyIoletNormalChanged)
     #     self.iolet.AddObserver('Radius', self.MyIoletRadiusChanged)
@@ -120,6 +123,26 @@ class PlacedIolet(Observable):
         normal = self.Normal
         return N.alltrue(N.isfinite(normal)) and \
                N.dot(normal, normal) >1e-6
+               
+    def CalcFirstPlaneUnitVector(self):
+        v1 = N.array([0., 0., 1.])
+        e1 = N.cross(self._n, v1)
+        e1Sq = N.dot(e1, e1)
+        
+        v2 = N.array([0., 1., 0.])
+        e2 = N.cross(self._n, v2)
+        e2Sq = N.dot(e2, e2)
+        
+        if e1Sq > e2Sq:
+            self._p1 = e1 / N.sqrt(e1Sq)
+        else:
+            self._p1 = e2 / N.sqrt(e2Sq)
+            pass
+        return
+    
+    def CalcSecondPlaneUnitVector(self):
+        self._p2 = N.cross(self._n, self._p1)
+        return
     
     def SetRadius(self, radius):
         pdb.set_trace()
@@ -133,24 +156,22 @@ class PlacedIolet(Observable):
         # Get into numpy vectors
         self.widget.GetCenter(self._c)
         self.widget.GetNormal(self._n)
-        self.widget.GetPoint1(self._p1)
-        if not N.alltrue(N.isfinite(self._p1))
-        
-        self.widget.GetPoint2(self._p2)
-        
-        # p1/2 now are relative to centre
-        self._p1 -= self._c
-        self._p2 -= self._c
-        # Rescale so that they have length == radius
-        self._p1 *= radius / N.sqrt(N.dot(self._p1, self._p1))
-        self._p2 *= radius / N.sqrt(N.dot(self._p2, self._p2))
-        
+        # Calc unit vectors
+        self.CalcFirstPlaneUnitVector()
+        self.CalcSecondPlaneUnitVector()
+        # Scale
+        self._p1 *= radius
+        self._p2 *= radius
+        # Add current position
+        self._p1 += self._c
+        self._p2 += self._c
         # Set
         self.widget.SetPoint1(self._p1)
-        self.widget.SetPoint1(self._p2)
+        self.widget.SetPoint2(self._p2)
         # Force the plane to be updated
         self.widget.InvokeEvent("InteractionEvent")
         return
+    
     def GetRadius(self):
         # Get into numpy vectors
         self.widget.GetCenter(self._c)
@@ -171,6 +192,10 @@ class PlacedIolet(Observable):
     def IsRadiusValid(self):
         radius = self.Radius
         return N.isfinite(radius) and radius > 1e-6
+    
+    @property
+    def CanShow(self):
+        return self.IsCentreValid and self.IsNormalValid and self.IsRadiusValid
     
     pass
 
