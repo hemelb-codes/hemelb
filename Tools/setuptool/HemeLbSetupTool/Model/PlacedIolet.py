@@ -67,12 +67,12 @@ class PlacedIolet(Observable):
         self.Enabled = False
         
         self.AddObserver('Enabled', self.EnabledSet)
-        self.AddDependency('IsCentreValid', 'Centre')
-        self.AddDependency('IsNormalValid', 'Normal')
-        self.AddDependency('IsRadiusValid', 'Radius')
-        self.AddDependency('CanShow', 'IsCentreValid')
-        self.AddDependency('CanShow', 'IsNormalValid')
-        self.AddDependency('CanShow', 'IsRadiusValid')
+#        self.AddDependency('IsCentreValid', 'Centre')
+#        self.AddDependency('IsNormalValid', 'Normal')
+#        self.AddDependency('IsRadiusValid', 'Radius')
+#        self.AddDependency('CanShow', 'IsCentreValid')
+#        self.AddDependency('CanShow', 'IsNormalValid')
+#        self.AddDependency('CanShow', 'IsRadiusValid')
         
     #     self.iolet.AddObserver('Centre.@ANY', self.MyIoletCentreChanged)
     #     self.iolet.AddObserver('Normal.@ANY', self.MyIoletNormalChanged)
@@ -99,38 +99,39 @@ class PlacedIolet(Observable):
         return
     
     def SetCentre(self, centre):
+        assert N.alltrue(N.isfinite(centre))
         self.widget.SetCenter(centre)
         # Force the plane to be updated
-        self.widget.InvokeEvent("InteractionEvent")
+#        self.widget.InvokeEvent("InteractionEvent")
         return
     def GetCentre(self):
         return self.widget.GetCenter()
     Centre = property(GetCentre, SetCentre)
-    @property
-    def IsCentreValid(self):
-        return N.alltrue(N.isfinite(self.Centre))
+#    @property
+#    def IsCentreValid(self):
+#        return N.alltrue(N.isfinite(self.Centre))
     
     def SetNormal(self, normal):
         self.widget.SetNormal(normal)
         # Force the plane to be updated
-        self.widget.InvokeEvent("InteractionEvent")
+#        self.widget.InvokeEvent("InteractionEvent")
         return
     def GetNormal(self):
         return self.widget.GetNormal()
     Normal = property(GetNormal, SetNormal)
-    @property
-    def IsNormalValid(self):
-        normal = self.Normal
-        return N.alltrue(N.isfinite(normal)) and \
-               N.dot(normal, normal) >1e-6
-               
+#    @property
+#    def IsNormalValid(self):
+#        normal = self.Normal
+#        return N.alltrue(N.isfinite(normal)) and \
+#               N.dot(normal, normal) >1e-6
+
+    _v1 = N.array([0., 0., 1.])
+    _v2 = N.array([0., 1., 0.])
     def CalcFirstPlaneUnitVector(self):
-        v1 = N.array([0., 0., 1.])
-        e1 = N.cross(self._n, v1)
+        e1 = N.cross(self._n, self._v1)
         e1Sq = N.dot(e1, e1)
         
-        v2 = N.array([0., 1., 0.])
-        e2 = N.cross(self._n, v2)
+        e2 = N.cross(self._n, self._v2)
         e2Sq = N.dot(e2, e2)
         
         if e1Sq > e2Sq:
@@ -146,13 +147,6 @@ class PlacedIolet(Observable):
     
     def SetRadius(self, radius):
         pdb.set_trace()
-        if not N.isfinite(radius):
-            self.Enabled = False
-            return
-        
-        if not (self.IsCentreValid and self.IsNormalValid):
-            return
-        
         # Get into numpy vectors
         self.widget.GetCenter(self._c)
         self.widget.GetNormal(self._n)
@@ -169,7 +163,7 @@ class PlacedIolet(Observable):
         self.widget.SetPoint1(self._p1)
         self.widget.SetPoint2(self._p2)
         # Force the plane to be updated
-        self.widget.InvokeEvent("InteractionEvent")
+#        self.widget.InvokeEvent("InteractionEvent")
         return
     
     def GetRadius(self):
@@ -181,21 +175,19 @@ class PlacedIolet(Observable):
         # p1/2 now are relative to centre
         self._p1 -= self._c
         self._p2 -= self._c
-        # Square
-        self._p1 **= 2
-        self._p2 **= 2
-        r1 = N.sqrt(self._p1.sum())
-        r2 = N.sqrt(self._p1.sum())
-        return 0.5*(r1+r2)
+        # Get norms
+        r1 = N.sqrt(N.dot(self._p1, self._p1))
+        r2 = N.sqrt(N.dot(self._p2, self._p2))
+        return min(r1, r2)
     Radius = property(GetRadius, SetRadius)
-    @property
-    def IsRadiusValid(self):
-        radius = self.Radius
-        return N.isfinite(radius) and radius > 1e-6
+#    @property
+#    def IsRadiusValid(self):
+#        radius = self.Radius
+#        return N.isfinite(radius) and radius > 1e-6
     
-    @property
-    def CanShow(self):
-        return self.IsCentreValid and self.IsNormalValid and self.IsRadiusValid
+#    @property
+#    def CanShow(self):
+#        return self.IsCentreValid and self.IsNormalValid and self.IsRadiusValid
     
     pass
 
