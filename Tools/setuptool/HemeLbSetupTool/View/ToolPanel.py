@@ -109,7 +109,7 @@ class InputPanel(wx.Panel):
         layout = V(
             iLabel,
             (H(
-                (V((self.inputStlField, 0, wx.EXPAND)),1, wx.EXPAND),
+                (V((self.inputStlField, 0, wx.EXPAND)), 1, wx.EXPAND),
                 self.inputStlButton
                 ), 0, wx.EXPAND
              )
@@ -137,6 +137,10 @@ class IoletsDetailPanel(wx.Panel):
         
         centreLabel = wx.StaticText(self, label='Centre / mm')
         self.centreVector = VectorCtrl(self)
+        # TODO: make these text fields (Centre, Normal, Radius) 
+        # editable. At the moment I can't get the binding to VTK
+        # working properly.
+        self.centreVector.SetEditable(False)
         controller.BindValue(
             'Iolets.Selection.Centre',
             VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
@@ -144,6 +148,8 @@ class IoletsDetailPanel(wx.Panel):
         
         radiusLabel = wx.StaticText(self, label='Radius / mm')
         self.radiusField = wx.TextCtrl(self)
+        self.radiusField.SetEditable(False)
+        
         controller.BindValue(
             'Iolets.Selection.Radius',
             WxWidgetMapper(self.radiusField, 'Value', wx.EVT_TEXT,
@@ -161,6 +167,7 @@ class IoletsDetailPanel(wx.Panel):
         
         normalLabel = wx.StaticText(self, label='Normal')
         self.normalVector = VectorCtrl(self)
+        self.normalVector.SetEditable(False)
         controller.BindValue(
             'Iolets.Selection.Normal',
             VectorCtrlMapper(self.normalVector, 'Value', wx.EVT_TEXT)
@@ -203,7 +210,7 @@ class IoletsDetailPanel(wx.Panel):
                self.pressureExpressionLabel
                ),
              0, wx.EXPAND),
-            RectSpacer(0,2)
+            RectSpacer(0, 2)
             )
         self.SetSizer(layout.create())
         
@@ -226,7 +233,7 @@ class IoletsPanel(wx.Panel):
         ioletsLabel = wx.StaticText(self, label='Inlets and Outlets')
         
         self.ioletsListCtrl = IoletListCtrl(controller.Iolets,
-                                            self, style=wx.LC_REPORT|wx.SUNKEN_BORDER)
+                                            self, style=wx.LC_REPORT | wx.SUNKEN_BORDER)
         
         controller.BindValue('Iolets',
                              WxListCtrlMapper(self.ioletsListCtrl))
@@ -253,14 +260,14 @@ class IoletsPanel(wx.Panel):
         self.detail = IoletsDetailPanel(controller, self)
         
         layout = V(ioletsLabel,
-                   (H( (V( (self.ioletsListCtrl, 1, wx.EXPAND) ), 1, wx.EXPAND),
+                   (H((V((self.ioletsListCtrl, 1, wx.EXPAND)), 1, wx.EXPAND),
                       (V(StretchSpacer(), (self.detail, 0, wx.EXPAND)), 2, wx.EXPAND)
                      ), 1, wx.EXPAND),
                    (H(self.addInletButton,
                      self.addOutletButton,
                      self.removeIoletButton
                      ), 0, wx.EXPAND),
-                   RectSpacer(0,1)
+                   RectSpacer(0, 1)
                    )
         self.SetSizer(layout.create())
         return
@@ -368,11 +375,11 @@ class OutputPanel(wx.Panel):
         
         layout = V(
             xmlLabel,
-            ( H( (V((self.xmlField, 0, wx.EXPAND)), 1, wx.EXPAND),
+            (H((V((self.xmlField, 0, wx.EXPAND)), 1, wx.EXPAND),
                  self.xmlChooseButton
                  ), 0, wx.EXPAND),
             configLabel,
-            ( H( (V((self.configField, 0, wx.EXPAND)), 1, wx.EXPAND),
+            (H((V((self.configField, 0, wx.EXPAND)), 1, wx.EXPAND),
                  self.configChooseButton
                  ), 0, wx.EXPAND),
             )

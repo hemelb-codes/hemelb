@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from math import sqrt
 from HemeLbSetupTool.Util.Observer import Observable
 from HemeLbSetupTool.Model.Vector import Vector
 
@@ -6,9 +7,10 @@ class Iolet(Observable):
     """Represent boundary across which there can be flow.
     """
     _Args = {'Name': None,
-             'Centre': Vector(),
-             'Normal': Vector(),
-             'Radius': float("nan")}
+             # Initialize to the VTK defaults for now
+             'Centre': Vector(0.,0.,0.),
+             'Normal': Vector(0.,0.,1.),
+             'Radius': 1/sqrt(2.)}
     
     def __init__(self, **kwargs):
         it = Iolet._Args.iteritems()
