@@ -16,6 +16,9 @@ class Vector(Observable):
 
         return
     
+    def __str__(self):
+        return '[%f, %f, %f]' % (self.x, self.y, self.z)
+    
     pass
 
 
