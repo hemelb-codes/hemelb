@@ -1,6 +1,6 @@
 from ..Util.Observer import Observable
 
-from .Mappers import Mapper, SimpleObservingMapper
+from .Mappers import SimpleObservingMapper
 from .Bindings import ValueBinding
 
 class ObjectController(Observable):
@@ -41,7 +41,7 @@ class ObjectController(Observable):
             continue
         
         # Search terminated without matching
-        raise ValueError('No matching Bind method for Mapper of type "%s"' % str(type(widgetMapper)))
+        raise ValueError('No matching Bind method for Mapper of type "%s"' % str(type(self.widgetMapper)))
     
     def __init__(self, delegate):
         """The delegate will typically be the model or another controller.

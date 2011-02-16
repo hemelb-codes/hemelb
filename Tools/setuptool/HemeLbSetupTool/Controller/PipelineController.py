@@ -1,15 +1,13 @@
 import operator
-from vtk import vtkPolyDataMapper, vtkActor, vtkInteractorStyleTrackballCamera, vtkInteractorStyleUser
+from vtk import vtkInteractorStyleTrackballCamera
 
-from ..Util.Observer import Observable
 from ..Bindings.ObjectController import ObjectController
 from ..Bindings.ListController import ListContentsDestMapper
 from ..Bindings.VtkObject import HasVtkObjectKeys
 from ..Bindings.Mappers import Mapper, SimpleObservingMapper
 from ..Bindings.Translators import UnitTranslator
 
-from .VectorController import VectorController
-from .PlacedIoletController import PlacedIoletListController, HasPlacedIoletListKeys
+from .PlacedIoletController import HasPlacedIoletListKeys
 import pdb
 
 
@@ -202,10 +200,10 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
         didClickSurface, worldPos = self.MouseToWorld(mousePos)
         
         if didClickSurface:
-            pdb.set_trace()
             self.SetValueForKey('PlacedIolets.Selection.Centre', worldPos)
-            self.SetValueForKey('PlacedIolets.Selection.Normal', (0.,0.,1.))
-            self.SetValueForKey('PlacedIolets.Selection.Radius', 1.)
+            self.SetValueForKey('PlacedIolets.Selection.Enabled', True)
+#            self.SetValueForKey('PlacedIolets.Selection.Normal', (0.,0.,1.))
+#            self.SetValueForKey('PlacedIolets.Selection.Radius', 1.)
             # Want to abort further handling of this event, but
             # currently can't do this from Python. Grr.
             pass

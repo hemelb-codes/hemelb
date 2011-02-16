@@ -127,7 +127,7 @@ class WxListCtrlSelectionMapper(Mapper, Translator):
         if isNone(val):
             return -1
         if val < -1 or val >= self.widget.GetItemCount():
-            raise IndexError('Index "%d" out of range for %s' % (val, str(widget)))
+            raise IndexError('Index "%d" out of range for %s' % (val, str(self.widget)))
         
         return val
     

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import pdb
-from argparse import ArgumentParser, Action
+from argparse import ArgumentParser
 
 # Parse command line arguments
 parser = ArgumentParser(description='Process an input STL file into'

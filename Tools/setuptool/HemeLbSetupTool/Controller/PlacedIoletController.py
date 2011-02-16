@@ -3,7 +3,7 @@ from ..Bindings.ListController import ObjectController, ListController, HasListK
 from ..Bindings.Mappers import SimpleObservingMapper
 from ..Bindings.VtkObject import HasVtkObjectKeys
 
-from ..Model.PlacedIolet import PlacedIolet, PlacedInlet, PlacedOutlet
+from ..Model.PlacedIolet import PlacedInlet, PlacedOutlet
 from ..Model.Iolets import Inlet, Outlet
 
 from .IoletController import IoletController
@@ -20,32 +20,9 @@ class PlacedIoletController(HasVtkObjectKeys, ObjectController):
     
     pass
 
-# class ComponentTranslator(Translator):
-#     def __init__(self, model, component, inner=None):
-#         Translator.__init__(self, inner)
-#         self.component = component
-#         self.model = model
-#         self.index = {'x': 0,
-#                       'y': 1,
-#                       'z': 2}[component.lower()]
-#         return
-#     def TranslateStage(self, val):
-#         orig = self.model.GetValueForKey(self.key)
-#         orig[self.index] = val
-#         self.model.SetValueForKey(self.key, orig)
-#         return
-    
 class VectorMapper(SimpleObservingMapper):
     """Mapper for Vectors to components of a list.
     """
-    
-    # def __init__(self, model, key, translator=UnitTranslator()):
-    #     SimpleObservingMapper.__init__(self, translator=translator)
-        
-    #     self.model = model
-    #     self.key = key
-        
-    #     return
     
     def CreateSubMapper(self, component):
         return VectorComponentMapper(self.model,
@@ -74,8 +51,11 @@ class VectorComponentMapper(SimpleObservingMapper):
         # tuple so must convert to a list to allow item assignment)
         # update and set them all.
         new = list(self.model.GetValueForKey(self.key))
+        if new[self.index] == val:
+            # No change
+            return
         new[self.index] = val
-        self.model.SetValueForKey(self.key, new)
+        self.model.SetValueForKey(self.key, new, index=self.index)
         return
 
     # We add the index to the change options here so our sibling
@@ -87,12 +67,11 @@ class VectorComponentMapper(SimpleObservingMapper):
     # Here we ignore the update if we have an index in the
     # ChangeOptions object and it's not ours.
     def HandleUpdate(self, change=None, alsoIgnored=None):
-        try:
-            index = change.index
-            if index != self.index:
-                return
-        except:
-            pass
+        # If the index of the change was set and it's not our index, skip the update.
+        index = change.index
+        if isinstance(index, int) and index != self.index:
+            return
+        
         return SimpleObservingMapper.HandleUpdate(self, change, alsoIgnored)
     pass
 
@@ -112,7 +91,7 @@ class PlacedIoletListController(ListController):
         else:
             raise ValueError("Must be an Inlet or Outlet")
         
-        controller = IoletController(iolet)
+        controller = IoletController.New(iolet)
         controller.BindValue('Radius', SimpleObservingMapper(pi, 'Radius'))
         controller.BindValue('Centre', VectorMapper(pi, 'Centre'))
         controller.BindValue('Normal', VectorMapper(pi, 'Normal'))
@@ -144,33 +123,3 @@ class HasPlacedIoletListKeys(HasListKeys):
     
     
     pass
-
-# class VtkPropertyMapper(SimpleObservingMapper):
-#     """Custom bindings mapper for the SeedPosition attribute to the
-#     'Center' of the VTK pipeline's representation of the seed
-#     location.
-#     """
-#     def __init__(self, model, key, translator=UnitTranslator()):
-#         SimpleObservingMapper.__init__(self, model, key, translator)
-#         self._vtkObsId = None
-#         return
-    
-#     def Observe(self):
-#         SimpleObservingMapper.Observer(self)
-#         if self.obsId is not None:
-#             self.PlacedSeed.representation.RemoveObserver(self.obsId)
-#             pass
-        
-#         self.obsId = self.PlacedSeed.representation.AddObserver('ModifiedEvent', self.HandleUpdate)
-#         return
-#     def Unobserve(self):
-#         SimpleObservingMapper.Unobserve(self)
-        
-#         if self.obsId is None:
-#             return
-        
-#         self.PlacedSeed.representation.RemoveObserver(self.obsId)
-#         self.obsId = None
-#         return
-    
-#     pass

@@ -4,7 +4,6 @@ from vtk import vtkRenderer
 from vtk.wx.wxVTKRenderWindowInteractor import wxVTKRenderWindowInteractor
 
 from HemeLbSetupTool.View.Layout import H, V, StretchSpacer
-# from HemeLbSetupTool.attic.Placers import SeedPlacer
 from HemeLbSetupTool.Bindings.Bindings import WxActionBinding
 
 import pdb
