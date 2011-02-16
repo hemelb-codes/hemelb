@@ -1,7 +1,6 @@
 import numpy as N
 
-from vtk import vtkPlaneWidget, vtkPolyData, vtkPolyDataMapper, \
-     vtkActor
+from vtk import vtkPlaneWidget, vtkPolyDataMapper, vtkActor
 
 from ..Util.Observer import Observable, ObservableList, NotifyOptions
 
@@ -42,52 +41,68 @@ class PlacedIolet(Observable):
     def __init__(self):
         # Working arrays, constructed once for speed.
         self._c = N.zeros(3)
-        self._n = N.zeros(3)
+        self._o = N.zeros(3)
         self._p1 = N.zeros(3)
         self._p2 = N.zeros(3)
+        self._n = N.zeros(3)
 
         self.widget = vtkPlaneWidget()
         self.widget.SetRepresentationToOutline()
         # planeWidget.PlaceWidget(clickPos)
         
-        self.representation = vtkPolyData()
+        # self.representation = vtkPolyData()
         # This is effectively a copy and is guaranteed to be up to
         # date when InteractionEvent or EndInteraction events are
         # invoked
-        self.widget.AddObserver("InteractionEvent", self._SyncRepresentation)
-        self.widget.GetPolyData(self.representation)
-
+        # self.widget.AddObserver("InteractionEvent", self._SyncRepresentation)
+        self.representation = self.widget.GetPolyDataAlgorithm()
+        
         self.mapper = vtkPolyDataMapper()
-        self.mapper.SetInput(self.representation)
+        self.mapper.SetInputConnection(self.representation.GetOutputPort())
         
         self.actor = vtkActor()
         self.actor.SetMapper(self.mapper)
         self.actor.GetProperty().SetColor(self.colour)
         
-        self.Enabled = False
+        self._Enabled = False
+        # Keep a cached copy of the radius etc to minimise the number of notifications we must send
+        self._lastRadius = self.Radius
+        self._lastCentre = self.Centre
+        self._lastNormal = self.Normal
         
-        self.AddObserver('Enabled', self.EnabledSet)
-#        self.AddDependency('IsCentreValid', 'Centre')
-#        self.AddDependency('IsNormalValid', 'Normal')
-#        self.AddDependency('IsRadiusValid', 'Radius')
-#        self.AddDependency('CanShow', 'IsCentreValid')
-#        self.AddDependency('CanShow', 'IsNormalValid')
-#        self.AddDependency('CanShow', 'IsRadiusValid')
-        
-    #     self.iolet.AddObserver('Centre.@ANY', self.MyIoletCentreChanged)
-    #     self.iolet.AddObserver('Normal.@ANY', self.MyIoletNormalChanged)
-    #     self.iolet.AddObserver('Radius', self.MyIoletRadiusChanged)
-    #     return
-    # def MyIoletCentreChanged(self, change):
-    #     self.SetCentre(self.iolet.Centre.x,
-    #                    self.iolet.Centre.y,
-    #                    self.iolet.Centre.z)
-        
-    def EnabledSet(self, change):
+        self.widget.AddObserver("EndInteractionEvent", self.HandleInteraction)
+        # self.AddObserver('Enabled', self.EnabledSet)
+        return
+    
+    def HandleInteraction(self, obj, evt):
+        """This handler is called from VTK when the widget has been
+         interacted with by the user. We check each of the 
+         properties against the cached values and if changed, notify
+         any observers of this.
+         """
+        if self.Centre != self._lastCentre:
+            self.DidChangeValueForKey('Centre')
+            self._lastCentre = self.Centre
+            pass
+        if self.Normal != self._lastNormal:
+            self.DidChangeValueForKey('Normal')
+            self._lastNormal = self.Normal
+            pass
+        if self.Radius != self._lastRadius:
+            self.DidChangeValueForKey('Radius')
+            self._lastRadius = self.Radius
+            pass
+        return
+    
+    @property
+    def Enabled(self):
+        return self._Enabled
+    @Enabled.setter
+    def Enabled(self, enabled):
         if self.widget.GetInteractor() is None:
             return
-        
-        if self.Enabled:
+        self._Enabled = enabled
+        if enabled:
             self.widget.On()
         else:
             self.widget.Off()
@@ -99,7 +114,6 @@ class PlacedIolet(Observable):
         return
     
     def SetCentre(self, centre):
-        assert N.alltrue(N.isfinite(centre))
         self.widget.SetCenter(centre)
         # Force the plane to be updated
 #        self.widget.InvokeEvent("InteractionEvent")
@@ -107,9 +121,6 @@ class PlacedIolet(Observable):
     def GetCentre(self):
         return self.widget.GetCenter()
     Centre = property(GetCentre, SetCentre)
-#    @property
-#    def IsCentreValid(self):
-#        return N.alltrue(N.isfinite(self.Centre))
     
     def SetNormal(self, normal):
         self.widget.SetNormal(normal)
@@ -119,47 +130,31 @@ class PlacedIolet(Observable):
     def GetNormal(self):
         return self.widget.GetNormal()
     Normal = property(GetNormal, SetNormal)
-#    @property
-#    def IsNormalValid(self):
-#        normal = self.Normal
-#        return N.alltrue(N.isfinite(normal)) and \
-#               N.dot(normal, normal) >1e-6
-
-    _v1 = N.array([0., 0., 1.])
-    _v2 = N.array([0., 1., 0.])
-    def CalcFirstPlaneUnitVector(self):
-        e1 = N.cross(self._n, self._v1)
-        e1Sq = N.dot(e1, e1)
-        
-        e2 = N.cross(self._n, self._v2)
-        e2Sq = N.dot(e2, e2)
-        
-        if e1Sq > e2Sq:
-            self._p1 = e1 / N.sqrt(e1Sq)
-        else:
-            self._p1 = e2 / N.sqrt(e2Sq)
-            pass
-        return
-    
-    def CalcSecondPlaneUnitVector(self):
-        self._p2 = N.cross(self._n, self._p1)
-        return
     
     def SetRadius(self, radius):
-        pdb.set_trace()
         # Get into numpy vectors
         self.widget.GetCenter(self._c)
-        self.widget.GetNormal(self._n)
-        # Calc unit vectors
-        self.CalcFirstPlaneUnitVector()
-        self.CalcSecondPlaneUnitVector()
+        self.widget.GetOrigin(self._o)
+        self.widget.GetPoint1(self._p1)
+        self.widget.GetPoint2(self._p2)
+        # Make corners relative to centre
+        self._o -= self._c
+        self._p1 -= self._c
+        self._p2 -= self._c
+        # Compute norms
+        oNorm = N.dot(self._o, self._o)
+        p1Norm = N.dot(self._p1, self._p1)
+        p2Norm = N.dot(self._p2, self._p2)
         # Scale
-        self._p1 *= radius
-        self._p2 *= radius
-        # Add current position
+        self._o *= radius * N.sqrt(2. / oNorm)
+        self._p1 *= radius * N.sqrt(2. / p1Norm)
+        self._p2 *= radius * N.sqrt(2. / p2Norm)
+        # Add the centre back on
+        self._o += self._c
         self._p1 += self._c
         self._p2 += self._c
         # Set
+        self.widget.SetOrigin(self._o)
         self.widget.SetPoint1(self._p1)
         self.widget.SetPoint2(self._p2)
         # Force the plane to be updated
@@ -168,39 +163,27 @@ class PlacedIolet(Observable):
     
     def GetRadius(self):
         # Get into numpy vectors
-        self.widget.GetCenter(self._c)
+        self.widget.GetOrigin(self._o)
         self.widget.GetPoint1(self._p1)
-        self.widget.GetPoint2(self._p2)
-
-        # p1/2 now are relative to centre
-        self._p1 -= self._c
-        self._p2 -= self._c
-        # Get norms
-        r1 = N.sqrt(N.dot(self._p1, self._p1))
-        r2 = N.sqrt(N.dot(self._p2, self._p2))
-        return min(r1, r2)
+        
+        self._p1 -= self._o
+        
+        return 0.5 * N.sqrt(N.dot(self._p1, self._p1))
+    
     Radius = property(GetRadius, SetRadius)
-#    @property
-#    def IsRadiusValid(self):
-#        radius = self.Radius
-#        return N.isfinite(radius) and radius > 1e-6
-    
-#    @property
-#    def CanShow(self):
-#        return self.IsCentreValid and self.IsNormalValid and self.IsRadiusValid
-    
+        
     pass
 
 class PlacedInlet(PlacedIolet):    
     def __init__(self):
-        self.colour = (0.,1.,0.)
+        self.colour = (0., 1., 0.)
         PlacedIolet.__init__(self)
         return
     pass
 
 class PlacedOutlet(PlacedIolet):    
     def __init__(self):
-        self.colour = (1.,0.,0.)
+        self.colour = (1., 0., 0.)
         PlacedIolet.__init__(self)
         return
     pass

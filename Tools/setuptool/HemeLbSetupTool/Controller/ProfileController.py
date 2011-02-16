@@ -3,7 +3,7 @@ import wx
 from HemeLbSetupTool.Bindings.ObjectController import ObjectController
 from HemeLbSetupTool.Bindings.Translators import QuickTranslator
 from HemeLbSetupTool.Bindings.VtkObject import HasVtkObjectKeys
-from HemeLbSetupTool.Controller.IoletListController import IoletListController, HasIoletListKeys
+from HemeLbSetupTool.Controller.IoletListController import HasIoletListKeys
 from HemeLbSetupTool.Controller.VectorController import HasVectorKeys
 
 import pdb

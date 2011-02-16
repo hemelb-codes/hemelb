@@ -1,13 +1,10 @@
-import wx
-
 from HemeLbSetupTool.Bindings.ListController import ListController, HasListKeys
-from HemeLbSetupTool.Controller.VectorController import VectorController
 from HemeLbSetupTool.Controller.IoletController import IoletController
 from HemeLbSetupTool.Model.Iolets import Inlet, Outlet
 import pdb
 class IoletListController(ListController):
     def __init__(self, delegate):
-        ListController.__init__(self, delegate, SelectionControllerClass=IoletController)
+        ListController.__init__(self, delegate, SelectionControllerClass=IoletController.New)
         self.nInlets = 0
         self.nOutlets = 0
         return
@@ -23,6 +20,7 @@ class IoletListController(ListController):
         return
 
     def RemoveIolet(self):
+        # TODO: Make sure PlacedIolet's widget + actor are removed from the scene. 
         if self.SelectedIndex is None:
             return
         del self[self.SelectedIndex]

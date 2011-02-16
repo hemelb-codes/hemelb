@@ -1,13 +1,12 @@
 import collections
-import wx
 
 from ..Util.Observer import ObservableList
 
 from .ObjectController import ObjectController
-from .EmptySelection import EmptySelection, isNone
-from .Translators import Translator, UnitTranslator
+from .EmptySelection import EmptySelection
+from .Translators import UnitTranslator
 from .Bindings import ValueBinding
-from .Mappers import Mapper, ReadOnlyMapper, WriteOnlyMapper
+from .Mappers import ReadOnlyMapper, WriteOnlyMapper
 
 import pdb
 
@@ -34,7 +33,7 @@ class ListController(ObjectController, collections.MutableSequence):
     def __getitem__(self, index):
         return self.SelectionControllerClass(self.delegate[index])
     def __setitem__(self, index, obj):
-        if isinstance(obj, SelectionControllerClass):
+        if isinstance(obj, self.SelectionControllerClass):
             self.delegate[index] = obj.delegate
         else:
             self.delegate[index] = obj
@@ -42,20 +41,25 @@ class ListController(ObjectController, collections.MutableSequence):
         return
     
     def __delitem__(self, index):
-        del self.delegate[index]
+        curLen = len(self.delegate)
+        newLen = curLen - 1
         # Now take care to update the selected index such that we take
         # the next item, unless we just popped the item at the end of
         # the list. In that case take the new end. If the list is
         # empty, set it to None.
-        newlen = len(self.delegate)
-        if index >= newlen:
-            index = newlen -1
+        if index >= newLen:
+            newInd = newLen - 1
             pass
-        if newlen == 0:
-            index = None
+        if newLen == 0:
+            newInd = None
             pass
+        self.WillChangeValueForKey('SelectedIndex')
         
-        self.SelectedIndex = index
+        del self.delegate[index]
+        # Now, we've pre notified of the SelectedIndex change, so skip the Observable setattr        
+        object.__setattr__(self, 'SelectedIndex', newInd)
+        # And post the change
+        self.DidChangeValueForKey('SelectedIndex')
         return
     
     def __len__(self):
@@ -171,7 +175,7 @@ class ListContentsDestMapper(WriteOnlyMapper):
             self.target.pop()
             continue
         
-        for i, item in enumerate(model):
+        for item in model:
             self.target.append(self.translator.Translate(item))
             continue
         return
