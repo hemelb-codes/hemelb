@@ -14,7 +14,7 @@ class Iolet(Observable):
              'Radius': 0.5}
     
     def __init__(self, **kwargs):
-        it = Iolet._Args.iteritems()
+        it = self._Args.iteritems()
         for a, default in it:
             setattr(self, a,
                     kwargs.pop(a, copy(default)))
@@ -24,14 +24,22 @@ class Iolet(Observable):
             raise TypeError("__init__() got an unexpected keyword argument '%'" % k)
         
         return
-
+    
+    def __getstate__(self):
+        picdic = {}
+        for attr in self._Args:
+            picdic[attr] = getattr(self, attr)
+            continue
+        return picdic
     pass
 
 class SinusoidalPressureIolet(Iolet):
+    _Args = Iolet._Args.copy()
+    _Args['Pressure'] = Vector(80., 0., 0.)
+    
     def __init__(self, **kwargs):
-        pressure = kwargs.pop('Pressure', Vector(80., 0., 0.))
         Iolet.__init__(self, **kwargs)
-        self.Pressure = pressure
+        
         self.AddDependency('PressureEquation', 'Pressure.x')
         self.AddDependency('PressureEquation', 'Pressure.y')
         self.AddDependency('PressureEquation', 'Pressure.z')

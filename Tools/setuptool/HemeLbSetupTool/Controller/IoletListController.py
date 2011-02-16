@@ -32,15 +32,7 @@ class HasIoletListKeys(HasListKeys):
     """Mixin for ObjectController subclasses with IoletList keys.
     """
     BindFunctionDispatchTable = ((IoletListController, 'BindList'),)
-
-    # def BindList(self, modelKey, widgetMapper):
-    #     """We need to bind the selection and deal with add/remove/update.
-    #     """
-    #     self.BindComplexValue(modelKey, ListContentsSourceMapper, (),
-    #                           ValueBinding, widgetMapper)
-        
-    #     return
-
+    
     def DefineIoletListKey(self, name):
         """Typically used in the subclass __init__ method to easily
         mark a key as being a List and hence needing a ListController

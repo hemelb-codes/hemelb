@@ -31,65 +31,16 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         pdb.set_trace()
         return
     
-            
-    # def ResetView(self, event):
-    #     """Tell the view to reset.
-    #     """
-    #     # Trigger the custom RenderWindowInteractor's Reset Method
-    #     self.view.rwi.ResetView()
-    #     return
-
-    # # STL file selection events
-    # @EventHandler
     def ChooseStl(self, ignored=None):
         dialog = wx.FileDialog(None, style=wx.FD_OPEN, wildcard='*.stl')
         
         if dialog.ShowModal() == wx.ID_OK:
             self.delegate.StlFile = dialog.GetPath()
-            
-            # self.view.pipeline.Show()
-            # self.view.rwi.ResetView()
             pass
         
         dialog.Destroy()
         return
-
-    # IOLets events
-
-
-    # Seed placement events
-    # @EventHandler
-    # def OnViewPlaceSeed(self, event):
-    #     if self._placeMode == 'off':
-    #         self._placeMode = 'seed'
-    #         self.view.pipeline.seeder.PlaceOn()
-    #         self.view.seedPlaceButton.SetLabel('Cancel')
-    #     elif self._placeMode == 'seed':
-    #         self.EndSeedMode()
-    #     return
     
-    # def EndSeedMode(self):
-    #     self._placeMode = 'off'
-    #     self.view.pipeline.seeder.PlaceOff()
-    #     self.view.seedPlaceButton.SetLabel('Place')
-    #     return
-    
-    # @MessageHandler
-    # def OnViewSeedPointSent(self, msg):
-    #     self.EndSeedMode()
-    #     self.model.SeedPoint = msg.data
-    #     return
-    
-    # @EventHandler
-    # def OnViewSeedPointEdited(self, event):
-    #     seedVec = self.view.seedVector
-    #     pos = [seedVec.x.GetValue(),
-    #            seedVec.y.GetValue(),
-    #            seedVec.z.GetValue()]
-    #     self.model.SeedPoint = pos
-    #     return
-    
-    # Output file events
     def ChooseOutputConfigFile(self, ignored=None):
         dialog = wx.FileDialog(None,
                                style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT,
@@ -114,4 +65,27 @@ class ProfileController(HasIoletListKeys, HasVectorKeys, HasVtkObjectKeys, Objec
         dialog.Destroy()
         return
         
+    def ChooseSaveFile(self, ignored=None):
+        dialog = wx.FileDialog(None,
+                               style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT,
+                               wildcard='*.pro')
+        
+        if dialog.ShowModal() == wx.ID_OK:
+            self.delegate.Save(dialog.GetPath())
+            pass
+        
+        dialog.Destroy()
+        return
+    
+    def LoadFromFile(self, ignored=None):
+        dialog = wx.FileDialog(None,
+                               style=wx.FD_OPEN,
+                               wildcard='*.pro')
+        
+        if dialog.ShowModal() == wx.ID_OK:
+            self.delegate.LoadFromFile(dialog.GetPath())
+            pass
+        
+        dialog.Destroy()
+        return
     pass

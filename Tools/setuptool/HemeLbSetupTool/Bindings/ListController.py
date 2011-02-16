@@ -47,6 +47,7 @@ class ListController(ObjectController, collections.MutableSequence):
         # the next item, unless we just popped the item at the end of
         # the list. In that case take the new end. If the list is
         # empty, set it to None.
+        newInd = index
         if index >= newLen:
             newInd = newLen - 1
             pass

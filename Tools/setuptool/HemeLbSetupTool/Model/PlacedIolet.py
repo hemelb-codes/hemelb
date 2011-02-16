@@ -29,9 +29,11 @@ class PlacedIoletList(ObservableList):
     def HandleInsertion(self, change):
         self[change.index].AddObserver('Enabled', self._ItemEnabledChangeHandler)
         self[change.index].widget.SetInteractor(self.Interactor)
+        self[change.index].Enabled = True
         return
     
     def HandlePreRemoval(self, change):
+        self[change.index].Enabled = False
         self[change.index].RemoveObserver('Enabled', self._ItemEnabledChangeHandler)
         return
     pass
@@ -64,11 +66,14 @@ class PlacedIolet(Observable):
         self.actor.SetMapper(self.mapper)
         self.actor.GetProperty().SetColor(self.colour)
         
-        self._Enabled = False
         # Keep a cached copy of the radius etc to minimise the number of notifications we must send
         self._lastRadius = self.Radius
         self._lastCentre = self.Centre
         self._lastNormal = self.Normal
+        
+        # We can only enable after self.SetInteractor() has been called.
+        self._Enabled = False
+        
         
         self.widget.AddObserver("EndInteractionEvent", self.HandleInteraction)
         # self.AddObserver('Enabled', self.EnabledSet)
