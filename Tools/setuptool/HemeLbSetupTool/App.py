@@ -18,19 +18,7 @@ class SetupTool(wx.App):
     
     def OnInit(self):
         # Model
-        if self.cmdLineProfileFile is None:
-            # No profile
-            self.profile = Profile(**self.cmdLineArgs)
-        else:
-            # Load the profile
-            self.profile = Profile.NewFromFile(self.cmdLineProfileFile)
-            # override any keys that have been set on cmdline.
-            for k, val in self.cmdLineArgs.iteritems():
-                if val is not None:
-                    setattr(self.profile, k, val)
-                    pass
-                continue
-            pass
+        self.profile = Profile()
         
         self.pipeline = Pipeline()
         
@@ -41,13 +29,18 @@ class SetupTool(wx.App):
         # View
         self.view = MainWindow(self.controller)
 
-        # If we set the StlFile on the command line, we need to
-        # trigger the event now everything's been setup.
-        if 'StlFile' in self.cmdLineArgs and \
-               self.cmdLineArgs['StlFile'] is not None:
-            self.profile.DidChangeValueForKey('StlFile')
+        if self.cmdLineProfileFile is not None:
+            # Load the profile
+            self.profile.LoadFromFile(self.cmdLineProfileFile)
             pass
-
+        
+        # override any keys that have been set on cmdline.
+        for k, val in self.cmdLineArgs.iteritems():
+            if val is not None:
+                setattr(self.profile, k, val)
+                pass
+            continue
+        
         self.SetTopWindow(self.view)
         return True
     
