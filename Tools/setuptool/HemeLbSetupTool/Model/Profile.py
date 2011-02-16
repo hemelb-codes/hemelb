@@ -1,6 +1,9 @@
 import os.path
-from vtk import vtkSTLReader
+import pickle
+from copy import copy
 from numpy import isfinite
+
+from vtk import vtkSTLReader
 
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
@@ -29,7 +32,7 @@ class Profile(Observable):
         # args given here or the default dict if they aren't present.
         for a, default in Profile._Args.iteritems():
             setattr(self, a,
-                    kwargs.pop(a, default))
+                    kwargs.pop(a, copy(default)))
             continue
         # Raise an error on a kwarg we don't understand
         for k in kwargs:
@@ -97,15 +100,21 @@ class Profile(Observable):
             return False
         return True
     
-    @classmethod
-    def NewFromFile(cls, filename):
-        new = cls()
-        return new
+    def LoadFromFile(self, filename):
+        restored = pickle.Unpickler(file(filename)).load()
+        self.CloneFrom(restored)
+        return
     
     def Save(self, filename):
+        outfile = file(filename, 'w')
+        pickler = pickle.Pickler(outfile)
+        pickler.dump(self)
         return
-
+    
     def Generate(self):
+        """Create the output based on our configuration.
+        """
+        
         return
     
     def ResetVoxelSize(self, ignored=None):

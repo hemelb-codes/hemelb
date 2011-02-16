@@ -1,6 +1,10 @@
 from HemeLbSetupTool.Util.Observer import Observable
 
 class Vector(Observable):
+    _Args = {'x': float("nan"),
+             'y': float("nan"),
+             'z': float("nan")}
+    
     def __init__(self, *args):
         if len(args) == 0:
             nan = float("nan")
@@ -18,7 +22,12 @@ class Vector(Observable):
     
     def __str__(self):
         return '[%f, %f, %f]' % (self.x, self.y, self.z)
-    
+    def __getstate__(self):
+        picdic = {}
+        for attr in ('x', 'y', 'z'):
+            picdic[attr] = getattr(self, attr)
+            continue
+        return picdic
     pass
 
 

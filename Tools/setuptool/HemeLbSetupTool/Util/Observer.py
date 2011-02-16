@@ -66,6 +66,7 @@ class Observable(object):
     usual __init__ will take care of this.
 
     """
+    _Args = {}
     
     def __new__(cls, *args, **kwargs):
         """Use __new__ to preempt user __init__ method.
@@ -264,6 +265,47 @@ class Observable(object):
             )
         return
     
+    def __getstate__(self):
+        picdic = {}
+        for attr in self._Args:
+            val = getattr(self, attr)
+            if isinstance(val, ObservableList):
+                picdic[attr] = [io for io in val]
+            else:
+                picdic[attr] = val
+                pass
+            continue
+        return picdic
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        return
+    
+    def CloneFrom(self, other):
+        for attr in self._Args:
+            val = getattr(self, attr)
+            if isinstance(val, ObservableList):
+                # first clear our list
+                ourList = val
+                while len(ourList):
+                    ourList.pop()
+                    continue
+                # Copy in the new ones
+                for obj in getattr(other, attr):
+                    newObj = type(obj)()
+                    newObj.CloneFrom(obj)
+                    ourList.append(newObj)
+                    continue
+                
+            elif isinstance(val, Observable):
+                val.CloneFrom(getattr(other, attr))
+            else:
+                setattr(self, attr,
+                        getattr(other, attr))
+                pass
+            continue
+        return
+
     pass
 
 class ComplexKeyCallbackWrapper(object):
@@ -329,6 +371,7 @@ class ObservableList(Observable, collections.MutableSequence):
     '@REPLACEMENT'.
     
     """
+    _Args = {'_ObservableList__contents': []}
     def __init__(self, iterable=None):
         if iterable is None:
             self.__contents = list()

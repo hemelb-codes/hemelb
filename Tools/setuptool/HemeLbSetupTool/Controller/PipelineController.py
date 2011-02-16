@@ -141,7 +141,7 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
     
     def IoletPlaceClicked(self):
         if self.mode == 'view':
-            self.SetValueForKey('PlacedSeed.Enabled', True)
+#            self.SetValueForKey('PlacedSeed.Enabled', True)
             self.mode = 'iolet'
             
         elif self.mode == 'iolet':
@@ -201,7 +201,7 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
         
         if didClickSurface:
             self.SetValueForKey('PlacedIolets.Selection.Centre', worldPos)
-            self.SetValueForKey('PlacedIolets.Selection.Enabled', True)
+#            self.SetValueForKey('PlacedIolets.Selection.Enabled', True)
 #            self.SetValueForKey('PlacedIolets.Selection.Normal', (0.,0.,1.))
 #            self.SetValueForKey('PlacedIolets.Selection.Radius', 1.)
             # Want to abort further handling of this event, but

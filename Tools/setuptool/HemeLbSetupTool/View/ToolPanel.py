@@ -61,9 +61,14 @@ class ControlPanel(wx.Panel):
         controller.BindAction('Debug', WxActionBinding(self.debugButton, wx.EVT_BUTTON))
         
         self.openProfileButton = wx.Button(self, label='Open Profile')
+        controller.BindAction('LoadFromFile', WxActionBinding(self.openProfileButton, wx.EVT_BUTTON))
+        
         self.saveProfileButton = wx.Button(self, label='Save Profile')
+        controller.BindAction('ChooseSaveFile', WxActionBinding(self.saveProfileButton, wx.EVT_BUTTON))
+        
         self.generateButton = wx.Button(self, label='Generate')
         controller.BindValue('IsReadyToGenerate', WxWidgetEnabledMapper(self.generateButton))
+        controller.BindAction('Generate', WxActionBinding(self.generateButton, wx.EVT_BUTTON))
         
         self.progressGauge = wx.Gauge(self)
         
