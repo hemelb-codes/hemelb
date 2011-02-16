@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from math import sqrt
+from copy import copy
+
 from HemeLbSetupTool.Util.Observer import Observable
 from HemeLbSetupTool.Model.Vector import Vector
 
@@ -10,13 +11,13 @@ class Iolet(Observable):
              # Initialize to the VTK defaults for now
              'Centre': Vector(0.,0.,0.),
              'Normal': Vector(0.,0.,1.),
-             'Radius': 1/sqrt(2.)}
+             'Radius': 0.5}
     
     def __init__(self, **kwargs):
         it = Iolet._Args.iteritems()
         for a, default in it:
             setattr(self, a,
-                    kwargs.pop(a, default))
+                    kwargs.pop(a, copy(default)))
             continue
         
         for k in kwargs:
@@ -28,7 +29,7 @@ class Iolet(Observable):
 
 class SinusoidalPressureIolet(Iolet):
     def __init__(self, **kwargs):
-        pressure = kwargs.pop('Pressure', Vector())
+        pressure = kwargs.pop('Pressure', Vector(80., 0., 0.))
         Iolet.__init__(self, **kwargs)
         self.Pressure = pressure
         self.AddDependency('PressureEquation', 'Pressure.x')

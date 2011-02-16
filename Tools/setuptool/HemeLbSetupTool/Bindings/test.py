@@ -4,7 +4,6 @@ from HemeLbSetupTool.Util.Observer import Observable
 
 from HemeLbSetupTool.Bindings.ObjectController import ObjectController
 from HemeLbSetupTool.Bindings.WxMappers import WxWidgetMapper
-from HemeLbSetupTool.Bindings.Mappers import SimpleObservingMapper
 from HemeLbSetupTool.Bindings.Translators import QuickTranslator
 from HemeLbSetupTool.Bindings.Bindings import WxActionBinding
 

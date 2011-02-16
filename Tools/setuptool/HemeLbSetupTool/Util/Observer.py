@@ -81,7 +81,7 @@ class Observable(object):
         object.__setattr__(new, '_Observable__dependencies', {})
         return new
 
-    def __setattr__(self, name, newValue):
+    def __setattr__(self, name, newValue, **changeOpts):
         """Set the attribute in the usual fashion, but notify any
         observers of this attribute.
         """
@@ -98,11 +98,11 @@ class Observable(object):
         #     oldValue = NoSuch
         #     pass
         
-        self.WillChangeValueForKey(name)
+        self.WillChangeValueForKey(name, **changeOpts)
         
         object.__setattr__(self, name, newValue)
         
-        self.DidChangeValueForKey(name)
+        self.DidChangeValueForKey(name, **changeOpts)
         return
 
     def __notifyList(self, oMap, key, **changeOpts):
@@ -154,18 +154,18 @@ class Observable(object):
     def _GetLocalValueForKey(self, key):
         return getattr(self, key)
     
-    def SetValueForKey(self, keyPath, value):
+    def SetValueForKey(self, keyPath, value, **changeOpts):
         keyParts = keyPath.split('.', 1)
         if len(keyParts) == 1:
-            self._SetLocalValueForKey(keyPath, value)
+            self._SetLocalValueForKey(keyPath, value, **changeOpts)
         else:
             localKey, restOfKey = keyParts
-            self._GetLocalValueForKey(localKey).SetValueForKey(restOfKey, value)
+            self._GetLocalValueForKey(localKey).SetValueForKey(restOfKey, value, **changeOpts)
             pass
         return
     
-    def _SetLocalValueForKey(self, key, value):
-        setattr(self, key, value)
+    def _SetLocalValueForKey(self, key, value, **changeOpts):
+        self.__setattr__(key, value, **changeOpts)
         return
     
     def WillChangeValueForKey(self, key, **changeOpts):
@@ -351,7 +351,7 @@ class ObservableList(Observable, collections.MutableSequence):
             raise IndexError('ObservableList assignment index out of range')
         
         self.WillChangeValueForKey('@REPLACEMENT', index=index)
-        ans = self.__contents.__setitem__(index, obj)
+        self.__contents.__setitem__(index, obj)
         self.DidChangeValueForKey('@REPLACEMENT', index=index)
     
     def __delitem__(self, index):

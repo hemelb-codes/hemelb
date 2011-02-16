@@ -1,5 +1,4 @@
 from ..Util.Observer import Observable
-from .EmptySelection import isNone
 from .Translators import UnitTranslator
 
 class Mapper(object):

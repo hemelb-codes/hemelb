@@ -140,7 +140,7 @@ class IoletsDetailPanel(wx.Panel):
         # TODO: make these text fields (Centre, Normal, Radius) 
         # editable. At the moment I can't get the binding to VTK
         # working properly.
-        self.centreVector.SetEditable(False)
+#        self.centreVector.SetEditable(False)
         controller.BindValue(
             'Iolets.Selection.Centre',
             VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
@@ -148,7 +148,7 @@ class IoletsDetailPanel(wx.Panel):
         
         radiusLabel = wx.StaticText(self, label='Radius / mm')
         self.radiusField = wx.TextCtrl(self)
-        self.radiusField.SetEditable(False)
+#        self.radiusField.SetEditable(False)
         
         controller.BindValue(
             'Iolets.Selection.Radius',
@@ -167,7 +167,7 @@ class IoletsDetailPanel(wx.Panel):
         
         normalLabel = wx.StaticText(self, label='Normal')
         self.normalVector = VectorCtrl(self)
-        self.normalVector.SetEditable(False)
+#        self.normalVector.SetEditable(False)
         controller.BindValue(
             'Iolets.Selection.Normal',
             VectorCtrlMapper(self.normalVector, 'Value', wx.EVT_TEXT)
