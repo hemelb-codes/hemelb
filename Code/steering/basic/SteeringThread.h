@@ -18,7 +18,7 @@ namespace hemelb
         void DoWork(void);
 
         sem_t* mSteeringVariableLock;
-        int mFdInt;
+        int mSocketFileDescriptor;
     };
 
   }
