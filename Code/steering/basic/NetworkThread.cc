@@ -36,12 +36,10 @@ namespace hemelb
        */
 
       xdrSendBuffer_pixel_data = new char[pixel_data_bytes];
-      xdrSendBuffer_frame_details = new char[frame_details_bytes];
     }
 
     NetworkThread::~NetworkThread()
     {
-      delete[] xdrSendBuffer_frame_details;
       delete[] xdrSendBuffer_pixel_data;
     }
 
@@ -74,122 +72,115 @@ namespace hemelb
     // the new (Oct 2010) structure.
     void NetworkThread::DoWork(void)
     {
-      char steering_session_id_char[255];
-
-      // PG compiler sticks to the letter of the standard: snprintf should not
-      // be exported in std:: namespace as GCC does.
-      // std::snprintf(steering_session_id_char, 255, "%i",
-      // mLbm->steering_session_id);
-
-      std::sprintf(steering_session_id_char, "%i", mLbm->steering_session_id);
-
-      setRenderState(0);
-
-      gethostname(host_name, 255);
-
-      FILE *f = fopen("env_details.asc", "w");
-
-      fprintf(f, "%s\n", host_name);
-      fclose(f);
-
-      // fprintf (timings_ptr, "MPI 0 Hostname -> %s\n\n", host_name);
-
-      //printf("kicking off network thread.....\n"); fflush(0x0);
-
-      int sock_fd;
-      int new_fd;
-      int yes = 1;
-
-      int is_broken_pipe = 0;
-      int frame_number = 0;
-
-      SteeringThread* steering_thread = NULL;
-
-      signal(SIGPIPE, SIG_IGN); // Ignore a broken pipe
-
-      HttpPost::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/",
-                        steering_session_id_char);
-
-      while (1)
+      // Write the name of this machine to a file.
       {
+        char thisMachineName[255];
+        gethostname(thisMachineName, 255);
+        FILE *f = fopen("env_details.asc", "w");
+        fprintf(f, "%s\n", thisMachineName);
+        fclose(f);
+      }
+
+      // Suppress signals from a broken pipe.
+      signal(SIGPIPE, SIG_IGN);
+
+      // Send the steering session id we're using to the rendezvous resource.
+      {
+        char steering_session_id_char[255];
+        std::sprintf(steering_session_id_char, "%i", mLbm->steering_session_id);
+
+        HttpPost::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/",
+                          steering_session_id_char);
+      }
+
+      // Loop forever (no breaks), creating new sockets whenever the current pipe breaks.
+      while (true)
+      {
+        // Turn off rendering.
         setRenderState(0);
 
-        // sem_wait( &nrl );
-
-        struct sockaddr_in my_address;
-        struct sockaddr_in their_addr; // client address
-
-        socklen_t sin_size;
-
-        if ( (sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+        // Create the socket.
+        int openSocket = socket(AF_INET, SOCK_STREAM, 0);
+        if (openSocket == -1)
         {
           perror("socket");
           exit(1);
         }
-        if (setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+
+        // Make the socket reusable.
+        int yes = 1;
+        if (setsockopt(openSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
         {
           perror("setsockopt");
           exit(1);
         }
-        my_address.sin_family = AF_INET;
-        my_address.sin_port = htons(MYPORT);
-        my_address.sin_addr.s_addr = INADDR_ANY;
-        memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
 
-        if (bind(sock_fd, (struct sockaddr *) &my_address, sizeof my_address) == -1)
+        // Bind to the socket.
         {
-          perror("bind");
-          exit(1);
+          struct sockaddr_in my_address;
+
+          my_address.sin_family = AF_INET;
+          my_address.sin_port = htons(MYPORT);
+          my_address.sin_addr.s_addr = INADDR_ANY;
+          memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
+
+          if (bind(openSocket, (struct sockaddr *) &my_address, sizeof my_address) == -1)
+          {
+            perror("bind");
+            exit(1);
+          }
         }
-        if (listen(sock_fd, CONNECTION_BACKLOG) == -1)
+
+        // Mark the socket as accepting incoming connections.
+        if (listen(openSocket, CONNECTION_BACKLOG) == -1)
         {
           perror("listen");
           exit(1);
         }
-        sin_size = sizeof (their_addr);
 
-        // socklen_t _length = sizeof(my_address);
-        //
-        // getsockname (sock_fd, (struct sockaddr *) &my_address,&_length);
-        // printf("Server Port is: %d\n", ntohs(my_address.sin_port));
+        // Accept an incoming connection from the client.
+        struct sockaddr_in clientAddress;
+        socklen_t socketSize = sizeof (clientAddress);
 
-        if ( (new_fd = accept(sock_fd, (struct sockaddr *) &their_addr, &sin_size)) == -1)
+        int socketToClient = accept(openSocket, (struct sockaddr *) &clientAddress, &socketSize);
+
+        if (socketToClient == -1)
         {
           perror("accept");
-          // continue;
         }
 
-        // fprintf (timings_ptr, "server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
-        // printf ("RG thread: server: got connection from %s (FD %i)\n", inet_ntoa (their_addr.sin_addr), new_fd);
-        steering_thread = new SteeringThread(new_fd, &mSteeringController->steering_var_lock);
-        steering_thread->Run();
+        // Start the steering thread on the connection to the client.
+        {
+          SteeringThread* steering_thread =
+              new SteeringThread(socketToClient, &mSteeringController->steering_var_lock);
+          steering_thread->Run();
+        }
 
-        close(sock_fd);
+        // Close the open socket (we only want the client-specific one.
+        close(openSocket);
 
-        is_broken_pipe = 0;
-
+        // Tell the steering controller that we have a connection.
         mSteeringController->isConnected.SetValue(true);
 
-        // setRenderState(1);
-        // At this point we're ready to send a frame...
-        // setRendering=1;
-        // sem_wait( &nrl );
+        bool is_broken_pipe = false;
 
+        // While the connection is still live, keep sending frames.
         while (!is_broken_pipe)
         {
-          // printf("THREAD: waiting for signal that frame is ready to send..\n"); fflush(0x0);
-
-          bool is_frame_ready_local = 0;
-
-          while (!is_frame_ready_local)
+          // Wait until a frame is ready.
           {
-            usleep(5000);
-            sem_wait(&mSteeringController->nrl);
-            is_frame_ready_local = mSteeringController->is_frame_ready;
-            sem_post(&mSteeringController->nrl);
-            // printf("THREAD is_frame_ready_local %i\n", is_frame_ready_local);
+            bool is_frame_ready_local = false;
+
+            while (!is_frame_ready_local)
+            {
+              usleep(5000);
+              sem_wait(&mSteeringController->nrl);
+              is_frame_ready_local = mSteeringController->is_frame_ready;
+              sem_post(&mSteeringController->nrl);
+            }
           }
 
+          // Take control of the steering controller.
           sem_wait(&mSteeringController->nrl);
           mSteeringController->sending_frame = 1;
 
@@ -197,31 +188,29 @@ namespace hemelb
 
           int bytesSent = 0;
 
+          // Send the dimensions of the image, in terms of pixel count.
           {
+            // 2 ints for the X and Y dimensions = 2*4 bytes
             const int pixeldatabytes = 8;
-            char *xdr_pixel = new char[pixeldatabytes];
+            char xdr_pixel[pixeldatabytes];
             io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel, pixeldatabytes);
 
             pixelWriter << vis::controller->mScreen.PixelsX << vis::controller->mScreen.PixelsY;
 
-            int pixelDataBytesSent = Network::send_all(new_fd, xdr_pixel, pixeldatabytes);
+            int pixelDataBytesSent = Network::send_all(socketToClient, xdr_pixel, pixeldatabytes);
 
             if (pixelDataBytesSent < 0)
             {
               HandleBrokenPipe();
-              is_broken_pipe = 1;
+              is_broken_pipe = true;
               break;
             }
 
             bytesSent += pixelDataBytesSent;
-
-            delete xdr_pixel;
           }
 
           io::XdrMemWriter pixelDataWriter = io::XdrMemWriter(xdrSendBuffer_pixel_data,
                                                               pixel_data_bytes);
-          io::XdrMemWriter frameDetailsWriter = io::XdrMemWriter(xdrSendBuffer_frame_details,
-                                                                 frame_details_bytes);
 
           for (int i = 0; i < vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
           {
@@ -229,32 +218,40 @@ namespace hemelb
                                        vis::ColourPalette::pickColour, mLbmParams->StressType);
           }
 
+          // Send the number of bytes being used on pixel data.
           int frameBytes = pixelDataWriter.getCurrentStreamPosition();
-
-          frameDetailsWriter << frameBytes;
-
-          int detailsBytes = frameDetailsWriter.getCurrentStreamPosition();
-
-          int detailsBytesSent = Network::send_all(new_fd, xdrSendBuffer_frame_details,
-                                                   detailsBytes);
-
-          if (detailsBytesSent < 0)
           {
-            HandleBrokenPipe();
-            is_broken_pipe = 1;
-            break;
-          }
-          else
-          {
-            bytesSent += detailsBytesSent;
+            char xdrSendBuffer_frame_details[frame_details_bytes];
+
+            io::XdrMemWriter frameDetailsWriter = io::XdrMemWriter(xdrSendBuffer_frame_details,
+                                                                   frame_details_bytes);
+            frameDetailsWriter << frameBytes;
+
+            int frameDetailsBytes = frameDetailsWriter.getCurrentStreamPosition();
+
+            int frameDetailsBytesSent = Network::send_all(socketToClient,
+                                                          xdrSendBuffer_frame_details,
+                                                          frameDetailsBytes);
+
+            if (frameDetailsBytesSent < 0)
+            {
+              HandleBrokenPipe();
+              is_broken_pipe = true;
+              break;
+            }
+            else
+            {
+              bytesSent += frameDetailsBytesSent;
+            }
           }
 
-          int frameBytesSent = Network::send_all(new_fd, xdrSendBuffer_pixel_data, frameBytes);
+          int frameBytesSent = Network::send_all(socketToClient, xdrSendBuffer_pixel_data,
+                                                 frameBytes);
 
           if (frameBytesSent < 0)
           {
             HandleBrokenPipe();
-            is_broken_pipe = 1;
+            is_broken_pipe = true;
             break;
           }
           else
@@ -262,55 +259,44 @@ namespace hemelb
             bytesSent += frameBytesSent;
           }
 
-          SimulationParameters* sim = new SimulationParameters();
-          sim->collectGlobalVals(mLbm, mSimState);
-          int sizeToSend = sim->paramsSizeB;
-          int simParamsBytesSent = Network::send_all(new_fd, sim->pack(), sizeToSend);
-
-          if (simParamsBytesSent < 0)
+          // Send the numerical data from the simulation, wanted by the client.
           {
-            HandleBrokenPipe();
-            is_broken_pipe = 1;
-            break;
+            SimulationParameters sim;
+            sim.collectGlobalVals(mLbm, mSimState);
+            int sizeToSend = sim.paramsSizeB;
+            int simParamsBytesSent = Network::send_all(socketToClient, sim.pack(), sizeToSend);
+
+            if (simParamsBytesSent < 0)
+            {
+              HandleBrokenPipe();
+              is_broken_pipe = true;
+              break;
+            }
+
+            bytesSent += simParamsBytesSent;
           }
 
-          bytesSent += simParamsBytesSent;
-
-          // printf ("Sim bytes sent %i\n", sizeToSend);
-          delete sim;
-
-          // fprintf (timings_ptr, "bytes sent %i\n", bytesSent);
-          // printf ("RG thread: bytes sent %i\n", bytesSent);
-
+          // All data is sent so we can start rendering again.
           setRenderState(1);
 
-          double frameTimeSend = frameTiming() - frameTimeStart;
-
-          // printf("Time to send frame = %0.6f s\n", frameTimeSend);
-
-          double timeDiff = (1.0 / 25.0) - frameTimeSend;
-
-          if (timeDiff > 0.0)
+          // Send this thread to sleep to aim for an approximate 25Hz of sends.
           {
-            // printf("Sleeping for %0.6f s\n", timeDiff);
+            double sendingTime = frameTiming() - frameTimeStart;
 
-            usleep(timeDiff * 1.0e6);
+            if ( (1.0 / 25.0) > sendingTime)
+            {
+              usleep( ( (1.0 / 25.0) - sendingTime) * 1.0e6);
+            }
           }
 
           mSteeringController->sending_frame = 0;
           mSteeringController->is_frame_ready = 0;
           sem_post(&mSteeringController->nrl);
-
-          frame_number++;
-
         } // while (is_broken_pipe == 0)
 
-        close(new_fd);
+        close(socketToClient);
 
         mSteeringController->isConnected.SetValue(false);
-
-        // pthread_join(steering_thread, NULL);
-
       } // while(1)
     }
 
