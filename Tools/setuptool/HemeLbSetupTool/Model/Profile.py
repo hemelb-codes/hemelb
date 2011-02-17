@@ -139,7 +139,7 @@ class Profile(Observable):
                 for site in block.IterSites():
                     self.ClassifySite(site)
                     
-                    blockWriter.pack_uint(type)
+                    blockWriter.pack_uint(site.Type)
                     if site.Type == SOLID:
                         # Solid sites, we don't do anything
                         continue
