@@ -30,8 +30,6 @@ namespace hemelb
       private:
         static pthread_mutex_t var_lock;
 
-        char host_name[255];
-
         void DoWork(void);
 
         void HandleBrokenPipe();
@@ -56,7 +54,6 @@ namespace hemelb
         // it is assumed that the frame size is the only detail
         static const u_int frame_details_bytes = 1 * sizeof(int);
         char* xdrSendBuffer_pixel_data;
-        char* xdrSendBuffer_frame_details;
 
         void setRenderState(int val);
     };
