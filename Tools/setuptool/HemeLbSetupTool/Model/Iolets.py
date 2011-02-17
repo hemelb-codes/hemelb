@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from copy import copy
+from vtk import vtkPlaneSource
 
 from HemeLbSetupTool.Util.Observer import Observable
 from HemeLbSetupTool.Model.Vector import Vector
@@ -9,10 +10,12 @@ class Iolet(Observable):
     """
     _Args = {'Name': None,
              # Initialize to the VTK defaults for now
-             'Centre': Vector(0.,0.,0.),
-             'Normal': Vector(0.,0.,1.),
+             'Centre': Vector(0., 0., 0.),
+             'Normal': Vector(0., 0., 1.),
              'Radius': 0.5}
-    
+    # TODO: Move the representation of the plane (a vtkPlaneSource) 
+    # into this class from PlacedIolet. It should have the side 
+    # effect of simplifying the bindings.
     def __init__(self, **kwargs):
         it = self._Args.iteritems()
         for a, default in it:
@@ -31,6 +34,24 @@ class Iolet(Observable):
             picdic[attr] = getattr(self, attr)
             continue
         return picdic
+    
+    @property
+    def Plane(self):
+        p = vtkPlaneSource()
+        # Default is:
+        # Centre = 0,0,0
+        # Normal = 0,0,1
+        # Origin = -0.5, -0.5, 0
+        # So set the radius first while it's simple
+        p.SetOrigin(-self.Radius, -self.Radius, 0.)
+        p.SetPoint1(+self.Radius, -self.Radius, 0.)
+        p.SetPoint2(-self.Radius, +self.Radius, 0.)
+        # Shift to the right place
+        p.SetCenter(self.Centre.x, self.Centre.y, self.Centre.z)
+        # Orient correctly
+        p.SetNormal(self.Normal.x, self.Normal.y, self.Normal.z)
+        
+        return p
     pass
 
 class SinusoidalPressureIolet(Iolet):

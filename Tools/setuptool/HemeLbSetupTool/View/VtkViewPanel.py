@@ -1,6 +1,5 @@
 import wx
 
-from vtk import vtkRenderer
 from vtk.wx.wxVTKRenderWindowInteractor import wxVTKRenderWindowInteractor
 
 from HemeLbSetupTool.View.Layout import H, V, StretchSpacer
