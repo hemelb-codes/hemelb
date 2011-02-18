@@ -9,6 +9,7 @@
 
 #include "lb/lb.h"
 #include "steering/Control.h"
+#include "steering/basic/ClientConnection.h"
 #include "steering/common/common.h"
 
 namespace hemelb
@@ -43,7 +44,8 @@ namespace hemelb
     {
       if (mIsCurrentProcTheSteeringProc)
       {
-        mNetworkThread = new NetworkThread(lbm, this, iSimState, iLbmParams);
+        ClientConnection* clientConnection = new ClientConnection(lbm->steering_session_id);
+        mNetworkThread = new NetworkThread(lbm, this, iSimState, iLbmParams, clientConnection);
         mNetworkThread->Run();
       }
     }

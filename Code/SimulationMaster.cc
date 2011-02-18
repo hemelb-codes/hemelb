@@ -239,7 +239,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       if (mSimulationState.DoRendering && (total_time_steps % BCAST_FREQ == 0)
           && !write_snapshot_image)
       {
+        sem_wait(&mSimulationState.Rendering);
+
         hemelb::vis::controller->render(RECV_BUFFER_A, mGlobLatDat, mNetworkTopology);
+
+        sem_post(&mSimulationState.Rendering);
 
         if (hemelb::vis::controller->mouse_x >= 0 && hemelb::vis::controller->mouse_y >= 0
             && steeringController->updated_mouse_coords)

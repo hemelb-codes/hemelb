@@ -27,14 +27,11 @@ namespace hemelb
     NetworkThread::NetworkThread(lb::LBM* lbm,
                                  Control* steeringController,
                                  lb::SimulationState* iSimState,
-                                 const lb::LbmParameters* iLbmParams) :
-      mLbm(lbm), mSteeringController(steeringController), mSimState(iSimState),
-          mLbmParams(iLbmParams)
+                                 const lb::LbmParameters* iLbmParams,
+                                 ClientConnection* iClientConnection) :
+      mClientConnection(iClientConnection), mLbm(lbm), mSteeringController(steeringController),
+          mSimState(iSimState), mLbmParams(iLbmParams)
     {
-      /* Storing references to lbm and steeringController; we
-       * won't want to destroy them.
-       */
-
       xdrSendBuffer_pixel_data = new char[pixel_data_bytes];
     }
 
@@ -54,9 +51,14 @@ namespace hemelb
 
     void NetworkThread::setRenderState(int val)
     {
-      pthread_mutex_lock(&var_lock);
-      mSimState->DoRendering = val;
-      pthread_mutex_unlock(&var_lock);
+      if(val > 0)
+      {
+        sem_wait(&mSimState->Rendering);
+      }
+      else
+      {
+        sem_post(&mSimState->Rendering);
+      }
     }
 
     // Return seconds since epoch to microsec precision.
@@ -72,82 +74,13 @@ namespace hemelb
     // the new (Oct 2010) structure.
     void NetworkThread::DoWork(void)
     {
-      // Write the name of this machine to a file.
-      {
-        char thisMachineName[255];
-        gethostname(thisMachineName, 255);
-        FILE *f = fopen("env_details.asc", "w");
-        fprintf(f, "%s\n", thisMachineName);
-        fclose(f);
-      }
-
       // Suppress signals from a broken pipe.
       signal(SIGPIPE, SIG_IGN);
-
-      // Send the steering session id we're using to the rendezvous resource.
-      {
-        char steering_session_id_char[255];
-        std::sprintf(steering_session_id_char, "%i", mLbm->steering_session_id);
-
-        HttpPost::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/",
-                          steering_session_id_char);
-      }
 
       // Loop forever (no breaks), creating new sockets whenever the current pipe breaks.
       while (true)
       {
-        // Turn off rendering.
-        setRenderState(0);
-
-        // Create the socket.
-        int openSocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (openSocket == -1)
-        {
-          perror("socket");
-          exit(1);
-        }
-
-        // Make the socket reusable.
-        int yes = 1;
-        if (setsockopt(openSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
-        {
-          perror("setsockopt");
-          exit(1);
-        }
-
-        // Bind to the socket.
-        {
-          struct sockaddr_in my_address;
-
-          my_address.sin_family = AF_INET;
-          my_address.sin_port = htons(MYPORT);
-          my_address.sin_addr.s_addr = INADDR_ANY;
-          memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
-
-          if (bind(openSocket, (struct sockaddr *) &my_address, sizeof my_address) == -1)
-          {
-            perror("bind");
-            exit(1);
-          }
-        }
-
-        // Mark the socket as accepting incoming connections.
-        if (listen(openSocket, CONNECTION_BACKLOG) == -1)
-        {
-          perror("listen");
-          exit(1);
-        }
-
-        // Accept an incoming connection from the client.
-        struct sockaddr_in clientAddress;
-        socklen_t socketSize = sizeof (clientAddress);
-
-        int socketToClient = accept(openSocket, (struct sockaddr *) &clientAddress, &socketSize);
-
-        if (socketToClient == -1)
-        {
-          perror("accept");
-        }
+        int socketToClient = mClientConnection->GetWorkingSocket();
 
         // Start the steering thread on the connection to the client.
         {
@@ -155,9 +88,6 @@ namespace hemelb
               new SteeringThread(socketToClient, &mSteeringController->steering_var_lock);
           steering_thread->Run();
         }
-
-        // Close the open socket (we only want the client-specific one.
-        close(openSocket);
 
         // Tell the steering controller that we have a connection.
         mSteeringController->isConnected.SetValue(true);
@@ -183,6 +113,8 @@ namespace hemelb
           // Take control of the steering controller.
           sem_wait(&mSteeringController->nrl);
           mSteeringController->sending_frame = 1;
+          // Turn off rendering.
+          setRenderState(0);
 
           double frameTimeStart = frameTiming();
 
@@ -209,8 +141,7 @@ namespace hemelb
             bytesSent += pixelDataBytesSent;
           }
 
-          io::XdrMemWriter pixelDataWriter = io::XdrMemWriter(xdrSendBuffer_pixel_data,
-                                                              pixel_data_bytes);
+          io::XdrMemWriter pixelDataWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
 
           for (int i = 0; i < vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
           {
@@ -294,14 +225,13 @@ namespace hemelb
           sem_post(&mSteeringController->nrl);
         } // while (is_broken_pipe == 0)
 
-        close(socketToClient);
-
         mSteeringController->isConnected.SetValue(false);
       } // while(1)
     }
 
     void NetworkThread::HandleBrokenPipe()
     {
+      mClientConnection->ReportBroken();
       printf("RG thread: broken network pipe...\n");
       mSteeringController->sending_frame = false;
       sem_post(&mSteeringController->nrl);
