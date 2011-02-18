@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 
+#include "steering/basic/ClientConnection.h"
 #include "steering/basic/Threadable.h"
 #include "lb/SimulationState.h"
 #include "lb/lb.h"
@@ -23,11 +24,14 @@ namespace hemelb
         NetworkThread(lb::LBM* lbm,
                       Control* steeringController,
                       lb::SimulationState* iSimState,
-                      const lb::LbmParameters* iLbmParams);
+                      const lb::LbmParameters* iLbmParams,
+                      ClientConnection* iClientConnection);
 
         ~NetworkThread();
 
       private:
+        ClientConnection* mClientConnection;
+
         static pthread_mutex_t var_lock;
 
         void DoWork(void);
@@ -42,8 +46,7 @@ namespace hemelb
         pthread_attr_t* GetPthreadAttributes(void);
         double frameTiming(void);
 
-        static const unsigned int MYPORT = 65250;
-        static const unsigned int CONNECTION_BACKLOG = 10;
+        char* xdrSendBuffer_pixel_data;
 
         // data per pixel inlude the data for the pixel location and 4 colours
         //in RGB format, thus #bytes per pixel are (sizeof(int)+4
@@ -53,7 +56,6 @@ namespace hemelb
         static const u_int pixel_data_bytes = COLOURED_PIXELS_MAX * bytes_per_pixel_data;
         // it is assumed that the frame size is the only detail
         static const u_int frame_details_bytes = 1 * sizeof(int);
-        char* xdrSendBuffer_pixel_data;
 
         void setRenderState(int val);
     };
