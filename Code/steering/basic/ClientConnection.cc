@@ -14,7 +14,10 @@ namespace hemelb
   {
     ClientConnection::ClientConnection(int iSteeringSessionId)
     {
+      sem_init(&mIsBusy, 0, 1);
+
       // Write the name of this machine to a file.
+
       {
         char thisMachineName[255];
         gethostname(thisMachineName, 255);
@@ -36,13 +39,16 @@ namespace hemelb
       mIsBroken = false;
     }
 
+    ClientConnection::~ClientConnection()
+    {
+      sem_destroy(&mIsBusy);
+
+      close(mCurrentSocket);
+    }
+
     int ClientConnection::GetWorkingSocket()
     {
-      // If the socket's broken, close it.
-      if (mIsBroken)
-      {
-        close(mCurrentSocket);
-      }
+      sem_wait(&mIsBusy);
 
       // If we haven't yet had a socket, or the current one is broken, open a new one.
       if (mCurrentSocket < 0 || mIsBroken)
@@ -90,6 +96,8 @@ namespace hemelb
         struct sockaddr_in clientAddress;
         socklen_t socketSize = sizeof (clientAddress);
 
+        int lOldSocket = mCurrentSocket;
+
         mCurrentSocket = accept(openSocket, (struct sockaddr *) &clientAddress, &socketSize);
 
         if (mCurrentSocket == -1)
@@ -100,16 +108,30 @@ namespace hemelb
         // Close the open socket (we only want the client-specific one).
         close(openSocket);
 
+        if (lOldSocket > 0)
+        {
+          close(lOldSocket);
+        }
+
         // We've only just created the socket so it shouldn't be broken.
         mIsBroken = false;
       }
 
-      return mCurrentSocket;
+      int lRet = mCurrentSocket;
+
+      sem_post(&mIsBusy);
+
+      return lRet;
     }
 
-    void ClientConnection::ReportBroken()
+    void ClientConnection::ReportBroken(int iSocketNum)
     {
-      mIsBroken = true;
+      sem_wait(&mIsBusy);
+      if (mCurrentSocket == iSocketNum)
+      {
+        mIsBroken = true;
+      }
+      sem_post(&mIsBusy);
     }
 
   }

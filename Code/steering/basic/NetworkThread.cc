@@ -51,7 +51,7 @@ namespace hemelb
 
     void NetworkThread::setRenderState(int val)
     {
-      if(val > 0)
+      if (val > 0)
       {
         sem_wait(&mSimState->Rendering);
       }
@@ -82,20 +82,11 @@ namespace hemelb
       {
         int socketToClient = mClientConnection->GetWorkingSocket();
 
-        // Start the steering thread on the connection to the client.
-        {
-          SteeringThread* steering_thread =
-              new SteeringThread(socketToClient, &mSteeringController->steering_var_lock);
-          steering_thread->Run();
-        }
-
         // Tell the steering controller that we have a connection.
         mSteeringController->isConnected.SetValue(true);
 
-        bool is_broken_pipe = false;
-
         // While the connection is still live, keep sending frames.
-        while (!is_broken_pipe)
+        while (true)
         {
           // Wait until a frame is ready.
           {
@@ -133,8 +124,7 @@ namespace hemelb
 
             if (pixelDataBytesSent < 0)
             {
-              HandleBrokenPipe();
-              is_broken_pipe = true;
+              HandleBrokenPipe(socketToClient);
               break;
             }
 
@@ -166,8 +156,7 @@ namespace hemelb
 
             if (frameDetailsBytesSent < 0)
             {
-              HandleBrokenPipe();
-              is_broken_pipe = true;
+              HandleBrokenPipe(socketToClient);
               break;
             }
             else
@@ -181,8 +170,7 @@ namespace hemelb
 
           if (frameBytesSent < 0)
           {
-            HandleBrokenPipe();
-            is_broken_pipe = true;
+            HandleBrokenPipe(socketToClient);
             break;
           }
           else
@@ -199,8 +187,7 @@ namespace hemelb
 
             if (simParamsBytesSent < 0)
             {
-              HandleBrokenPipe();
-              is_broken_pipe = true;
+              HandleBrokenPipe(socketToClient);
               break;
             }
 
@@ -229,10 +216,10 @@ namespace hemelb
       } // while(1)
     }
 
-    void NetworkThread::HandleBrokenPipe()
+    void NetworkThread::HandleBrokenPipe(int iSocket)
     {
-      mClientConnection->ReportBroken();
       printf("RG thread: broken network pipe...\n");
+      mClientConnection->ReportBroken(iSocket);
       mSteeringController->sending_frame = false;
       sem_post(&mSteeringController->nrl);
       setRenderState(0);

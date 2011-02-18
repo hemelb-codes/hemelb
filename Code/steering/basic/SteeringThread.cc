@@ -15,8 +15,8 @@ namespace hemelb
     /**
      * Takes a
      */
-    SteeringThread::SteeringThread(int socketFileDescriptor, sem_t* bSteeringVariableLock) :
-      mSteeringVariableLock(bSteeringVariableLock), mSocketFileDescriptor(socketFileDescriptor)
+    SteeringThread::SteeringThread(ClientConnection* iClientConn, sem_t* bSteeringVariableLock) :
+      mClientConn(iClientConn), mSteeringVariableLock(bSteeringVariableLock)
     {
     }
 
@@ -37,9 +37,13 @@ namespace hemelb
         // Initialise the stream reader.
         io::XdrMemReader steeringStream(steeringRecvBuffer, bytes);
 
+        bool readOK = false;
+
         // Keep looping until we receive a frame.
         while (true)
         {
+          int mSocketFileDescriptor = mClientConn->GetWorkingSocket();
+
           // Add the socket to a list to be checked for read-readiness.
           fd_set readableDescriptors;
           {
@@ -64,8 +68,11 @@ namespace hemelb
             if (steerDataRecvB < 0)
             {
               printf("Steering thread: broken network pipe...\n");
-              return;
+              mClientConn->ReportBroken(mSocketFileDescriptor);
+              break;
             }
+
+            readOK = true;
 
             // Otherwise yield the thread, and break from the loop as we've received the data we need.
             sched_yield();
@@ -81,6 +88,7 @@ namespace hemelb
 
         // We've got a frame. Lock the steering variables, and
         // write to them.
+        if (readOK)
         {
           sem_wait(mSteeringVariableLock);
 
