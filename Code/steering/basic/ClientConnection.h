@@ -1,6 +1,8 @@
 #ifndef HEMELB_STEERING_BASIC_CLIENTCONNECTION_H
 #define HEMELB_STEERING_BASIC_CLIENTCONNECTION_H
 
+#include <semaphore.h>
+
 namespace hemelb
 {
   namespace steering
@@ -9,10 +11,11 @@ namespace hemelb
     {
       public:
         ClientConnection(int iSteeringSessionId);
+        ~ClientConnection();
 
         int GetWorkingSocket();
 
-        void ReportBroken();
+        void ReportBroken(int iSocketNum);
 
       private:
         static const unsigned int MYPORT = 65250;
@@ -20,6 +23,10 @@ namespace hemelb
 
         int mCurrentSocket;
         bool mIsBroken;
+        // Use a semaphore to make sure that we don't create two new connections
+        // when a broken one is reported simultaneously by two separate threads
+        // (for example).
+        sem_t mIsBusy;
     };
   }
 }

@@ -36,7 +36,7 @@ namespace hemelb
 
         void DoWork(void);
 
-        void HandleBrokenPipe();
+        void HandleBrokenPipe(int iSocket);
 
         lb::LBM* mLbm;
         Control* mSteeringController;
