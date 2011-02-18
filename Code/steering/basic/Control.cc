@@ -32,6 +32,7 @@ namespace hemelb
       if (mIsCurrentProcTheSteeringProc)
       {
         delete mNetworkThread;
+        delete mSteeringThread;
       }
       sem_destroy(&nrl);
       sem_destroy(&steering_var_lock);
@@ -47,6 +48,9 @@ namespace hemelb
         ClientConnection* clientConnection = new ClientConnection(lbm->steering_session_id);
         mNetworkThread = new NetworkThread(lbm, this, iSimState, iLbmParams, clientConnection);
         mNetworkThread->Run();
+
+        mSteeringThread = new SteeringThread(clientConnection, &steering_var_lock);
+        mSteeringThread->Run();
       }
     }
 

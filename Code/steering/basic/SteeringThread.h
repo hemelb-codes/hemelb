@@ -2,6 +2,7 @@
 #define HEMELB_STEERING_BASIC_STEERINGTHREAD
 
 #include <semaphore.h>
+#include "steering/basic/ClientConnection.h"
 #include "steering/basic/Threadable.h"
 
 namespace hemelb
@@ -12,13 +13,13 @@ namespace hemelb
     class SteeringThread : public Threadable
     {
       public:
-        SteeringThread(int fd, sem_t * bVariableEditSempahore);
+        SteeringThread(ClientConnection* iClientConn, sem_t * bVariableEditSempahore);
 
       private:
         void DoWork(void);
 
+        ClientConnection* mClientConn;
         sem_t* mSteeringVariableLock;
-        int mSocketFileDescriptor;
     };
 
   }

@@ -7,6 +7,7 @@
 #include "lb/SimulationState.h"
 #include "lb/lb.h"
 #include "vis/Control.h"
+#include "steering/basic/SteeringThread.h"
 #include "steering/basic/NetworkThread.h"
 #include "steering/basic/Lockable.h"
 
@@ -56,6 +57,7 @@ namespace hemelb
                                      lb::LBM* lbm);
 
         NetworkThread* mNetworkThread;
+        SteeringThread* mSteeringThread;
     };
 
   }
