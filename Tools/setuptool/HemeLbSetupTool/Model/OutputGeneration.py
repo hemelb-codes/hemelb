@@ -21,8 +21,8 @@ class ConfigGenerator(object):
         """Create the output based on our configuration.
         """
         clipper = self.ConstructClipPipeline()
-        clipper.Update()
         # Run the pipeline as we need it to build the locator
+        clipper.Update()
         surface = clipper.GetOutput()
         
         self.Locator = locator = vtkCellLocator()
@@ -33,6 +33,7 @@ class ConfigGenerator(object):
         checker.Initialize(surface)
         
         domain = Domain(self.VoxelSize, surface.GetBounds())
+        # Will eventually use this point with the vtkCellLocator to test for interior-ness
         self.ExternalPoint = domain.Origin
         
         writer = Writer(OutputConfigFile=self.OutputConfigFile,
@@ -50,13 +51,13 @@ class ConfigGenerator(object):
                     self.ClassifySite(site)
                     
                     blockWriter.pack_uint(site.Type)
-                    if site.Type == SOLID:
+                    if site.Type == SOLID_TYPE:
                         # Solid sites, we don't do anything
                         continue
                     # Increase count of fluid sites
                     blockWriter.IncrementFluidSitesCount()
                     
-                    if site.Type == FLUID:
+                    if site.Type == FLUID_TYPE:
                         # Pure fluid sites don't need any more data
                         continue
                     
@@ -317,7 +318,7 @@ class Domain(object):
     def GetBlock(self, *blockIjk):
         val = self.blocks[blockIjk]
         if val is None:
-            val = self.blocks[blockIjk] = MacroBlock(ijk=blockIjk, size=self.BlockSize)
+            val = self.blocks[blockIjk] = MacroBlock(domain=self, ijk=blockIjk, size=self.BlockSize)
             pass
         return val
     
@@ -398,9 +399,11 @@ class MacroBlock(object):
         if any(map(lambda x: x<0 or x>=self.size, localSiteIjk)):
             return self.domain.GetSite(*globalSiteIjk)
         
-        return self.GetSite(*localSiteIjk)
+        return self.GetLocalSite(*localSiteIjk)
     
     def CalcPositionFromIndex(self, index):
+        if self.domain is None:
+            pdb.set_trace()
         return self.domain.CalcPositionFromIndex(index)
     pass
 
@@ -430,6 +433,7 @@ class LatticeSite(object):
         self.IsEdge = None
         self.IsInlet = None
         self.IsOutlet = None
+        self.BoundaryId = None
         
         # Attributes that will be updated by Profile.ClassifySite
 #        self.Type = None
@@ -440,21 +444,25 @@ class LatticeSite(object):
         return
     @property
     def Type(self):
+        type = SOLID_TYPE
         if self.IsFluid:
+            type = FLUID_TYPE
             if self.IsEdge:
-                return EDGE
+                type  |= PRESSURE_EDGE_MASK
+                pass
             
-            return FLUID
+            
+            return FLUID_TYPE
         
         if self.IsFluid is None:
             return None
         
-        return SOLID
+        return SOLID_TYPE
     def IterNeighbours(self):
         """Create an iterator for our neighbours.
         """
-        for ijk in self.IterNeighbourIndices:
-            yield self.block.GetSite(ijk)
+        for ijk in self.IterNeighbourIndices():
+            yield self.block.GetSite(*ijk)
             continue
         return
     
@@ -476,5 +484,47 @@ class LatticeSite(object):
     pass
 
 # Site types
-SOLID = 0
-FLUID = 1
+SOLID_TYPE  = 0b00
+FLUID_TYPE  = 0b01
+INLET_TYPE  = 0b10
+OUTLET_TYPE = 0b11
+
+BOUNDARIES        = 3
+INLET_BOUNDARY    = 0
+OUTLET_BOUNDARY   = 1
+WALL_BOUNDARY     = 2
+
+SITE_TYPE_BITS       = 2
+BOUNDARY_CONFIG_BITS = 14
+BOUNDARY_DIR_BITS    = 4
+BOUNDARY_ID_BITS     = 10
+
+BOUNDARY_CONFIG_SHIFT = SITE_TYPE_BITS;
+BOUNDARY_DIR_SHIFT    = BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
+BOUNDARY_ID_SHIFT     = BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
+
+#===============================================================================
+# Horrifying bit-fiddling masks courtesy of Marco.
+# Comments show the bit patterns.
+#===============================================================================
+
+SITE_TYPE_MASK       = ((1 << SITE_TYPE_BITS) - 1)
+# 0000 0000  0000 0000  0000 0000  0000 0011
+# These give the *_TYPE given above
+
+BOUNDARY_CONFIG_MASK = ((1 << BOUNDARY_CONFIG_BITS) - 1) << BOUNDARY_CONFIG_SHIFT
+# 0000 0000  0000 0000  1111 1111  1111 1100
+# These bits are set if the lattice vector they correspond to takes one to a solid site
+# The following hex digits give the index into LatticeSite.neighbours
+# ---- ----  ---- ----  DCBA 9876  5432 10--
+
+BOUNDARY_DIR_MASK    = ((1 << BOUNDARY_DIR_BITS) - 1)    << BOUNDARY_DIR_SHIFT
+# 0000 0000  0000 1111  0000 0000  0000 0000
+# No idea what these represent. As far as I can tell, they're unused.
+
+BOUNDARY_ID_MASK     = ((1 << BOUNDARY_ID_BITS) - 1)     << BOUNDARY_ID_SHIFT
+# 0011 1111  1111 0000  0000 0000  0000 0000
+# These bits together give the index of the inlet/outlet/wall in the output XML file
+ 
+PRESSURE_EDGE_MASK = 1 << 31
+# 1000 0000  0000 0000  0000 0000  0000 0000
