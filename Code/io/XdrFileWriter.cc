@@ -14,8 +14,7 @@ namespace hemelb
     XdrFileWriter::XdrFileWriter(std::string fileName)
     {
       myFile = fopen(fileName.c_str(), "w");
-      mXdr = new XDR;
-      xdrstdio_create(mXdr, myFile, XDR_ENCODE);
+      xdrstdio_create(&mXdr, myFile, XDR_ENCODE);
     }
 
     // A destructor that ends the work of the Xdr object (including a
@@ -23,8 +22,7 @@ namespace hemelb
     // memory and closes the file.
     XdrFileWriter::~XdrFileWriter()
     {
-      xdr_destroy(mXdr);
-      delete mXdr;
+      xdr_destroy(&mXdr);
       fclose(myFile);
     }
 

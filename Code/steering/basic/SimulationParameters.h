@@ -25,12 +25,11 @@ namespace hemelb
         double time;
         int cycle;
         int nInlets;
-        double* inletAvgVel;
         double mousePressure;
         double mouseStress;
 
-        char* params;
-        u_int paramsSizeB;
+        static const u_int paramsSizeB = 3 * sizeof(int) + 9 * sizeof(double);
+        char params[paramsSizeB];
 
         SimulationParameters();
         ~SimulationParameters();
@@ -38,7 +37,7 @@ namespace hemelb
         void collectGlobalVals(lb::LBM* lbm, lb::SimulationState *iSimState);
 
       private:
-        io::XdrMemWriter *paramWriter;
+        io::XdrMemWriter paramWriter;
 
     };
 
