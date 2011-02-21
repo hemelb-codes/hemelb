@@ -20,7 +20,7 @@ namespace hemelb
       void writeRecordSeparator();
   
     protected:
-      XDR *mXdr;
+      XDR mXdr;
   
       // Methods to write basic types to the Xdr object.
       void _write(int const& intToWrite);

@@ -144,7 +144,7 @@ namespace hemelb
          * Returns the number of the iteration, as an integer between inclusive-0 and
          * exclusive-2 * (the tree depth)
          */
-        int Get0IndexedIterationNumber() const;
+        unsigned int Get0IndexedIterationNumber() const;
 
         /**
          * Note that depths are 0-indexed. I.e. a tree with a single node has

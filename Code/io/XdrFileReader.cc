@@ -14,8 +14,7 @@ namespace hemelb
   {
     // Constructor to create an Xdr object based on a file.
     XdrFileReader::XdrFileReader(FILE* xdrFile) {
-      mXdr = new XDR;
-      xdrstdio_create (mXdr, xdrFile, XDR_DECODE);
+      xdrstdio_create (&mXdr, xdrFile, XDR_DECODE);
     }
 
   }

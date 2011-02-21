@@ -8,7 +8,8 @@ namespace hemelb
   namespace steering
   {
 
-    SimulationParameters::SimulationParameters()
+    SimulationParameters::SimulationParameters() :
+      paramWriter(params, paramsSizeB)
     {
       // C'tor initialises to the following defaults.
 
@@ -24,20 +25,6 @@ namespace hemelb
       nInlets = 3;
       mousePressure = -1.0;
       mouseStress = -1.0;
-
-      inletAvgVel = new double[nInlets];
-
-      for (int i = 0; i < nInlets; i++)
-        inletAvgVel[i] = 1.0;
-
-      // Assumption here is that sizeof(char) is 1B;
-      paramsSizeB = 3 * sizeof(int);
-      paramsSizeB += 9 * sizeof(double);
-      // params_bytes += n_inlets * sizeof(double);
-
-      params = new char[paramsSizeB];
-      paramWriter = new io::XdrMemWriter(params, paramsSizeB);
-
     }
 
     void SimulationParameters::collectGlobalVals(lb::LBM* lbm, lb::SimulationState *iSimState)
@@ -59,14 +46,10 @@ namespace hemelb
 
     SimulationParameters::~SimulationParameters()
     {
-      delete paramWriter;
-      delete[] inletAvgVel;
-      delete[] params;
     }
 
     char* SimulationParameters::pack()
     {
-      io::XdrMemWriter& paramWriter = * (this->paramWriter);
       paramWriter << pressureMin;
       paramWriter << pressureMax;
 
