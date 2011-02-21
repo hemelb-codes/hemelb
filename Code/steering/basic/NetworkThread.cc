@@ -1,19 +1,7 @@
-#include <pthread.h>
-#include <cstdio>
-#include <cstring>
-#include <netinet/in.h>
-#include <sys/time.h>
-#include <unistd.h>
 #include <signal.h>
 
-#include <sys/types.h>
-
-#include "io/XdrMemWriter.h"
-
 #include "steering/basic/NetworkThread.h"
-#include "steering/basic/SteeringThread.h"
 #include "steering/Control.h"
-#include "steering/basic/HttpPost.h"
 #include "steering/basic/Network.h"
 #include "steering/basic/SimulationParameters.h"
 

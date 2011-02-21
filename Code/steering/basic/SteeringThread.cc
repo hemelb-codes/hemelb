@@ -12,9 +12,6 @@ namespace hemelb
   namespace steering
   {
 
-    /**
-     * Takes a
-     */
     SteeringThread::SteeringThread(ClientConnection* iClientConn, sem_t* bSteeringVariableLock) :
       mClientConn(iClientConn), mSteeringVariableLock(bSteeringVariableLock)
     {
