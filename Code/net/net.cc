@@ -846,12 +846,14 @@ namespace hemelb
             != mSendProcessorComms.end(); it++)
         {
           MPI_Type_free(&it->second->Type);
+          delete it->second;
         }
 
         for (std::map<int, ProcComms*>::iterator it = mReceiveProcessorComms.begin(); it
             != mReceiveProcessorComms.end(); it++)
         {
           MPI_Type_free(&it->second->Type);
+          delete it->second;
         }
 
       }

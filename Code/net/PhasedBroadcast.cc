@@ -54,10 +54,10 @@ namespace hemelb
       }
 
       // The children of a node N in a M-tree with root 0 are those in the range (M*N)+1,...,(M*N) + M
-      for (int child = (spreadFactor * mNetTop->GetLocalRank()) + 1; child <= spreadFactor * (1
+      for (unsigned int child = (spreadFactor * mNetTop->GetLocalRank()) + 1; child <= spreadFactor * (1
           + mNetTop->GetLocalRank()); ++child)
       {
-        if (child < mNetTop->GetProcessorCount())
+        if (child < (unsigned int)mNetTop->GetProcessorCount())
         {
           mChildren.push_back(child);
         }
@@ -76,7 +76,7 @@ namespace hemelb
      */
     void PhasedBroadcast::RequestComms()
     {
-      int iCycleNumber = Get0IndexedIterationNumber();
+      unsigned int iCycleNumber = Get0IndexedIterationNumber();
 
       // Passing down the tree.
       if (iCycleNumber < mTreeDepth)
@@ -106,7 +106,7 @@ namespace hemelb
 
     void PhasedBroadcast::PostReceive()
     {
-      int iCycleNumber = Get0IndexedIterationNumber();
+      unsigned int iCycleNumber = Get0IndexedIterationNumber();
       // Passing down the tree.
       if (mMyDepth == (iCycleNumber + 1))
       {
@@ -132,7 +132,7 @@ namespace hemelb
       }
     }
 
-    int PhasedBroadcast::Get0IndexedIterationNumber() const
+    unsigned int PhasedBroadcast::Get0IndexedIterationNumber() const
     {
       if (mTreeDepth > 0)
       {
