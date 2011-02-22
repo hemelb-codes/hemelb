@@ -1,5 +1,5 @@
-#ifndef HEMELB_STEERING_BASIC_CLIENTCONNECTION_H
-#define HEMELB_STEERING_BASIC_CLIENTCONNECTION_H
+#ifndef HEMELB_STEERING_CLIENTCONNECTION_H
+#define HEMELB_STEERING_CLIENTCONNECTION_H
 
 #include <semaphore.h>
 
@@ -22,6 +22,7 @@ namespace hemelb
         static const unsigned int CONNECTION_BACKLOG = 10;
 
         int mCurrentSocket;
+        int mListeningSocket;
         bool mIsBroken;
         // Use a semaphore to make sure that we don't create two new connections
         // when a broken one is reported simultaneously by two separate threads
@@ -31,4 +32,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_STEERING_BASIC_CLIENTCONNECTION_H */
+#endif /* HEMELB_STEERING_CLIENTCONNECTION_H */

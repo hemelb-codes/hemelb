@@ -1,6 +1,6 @@
 include $(MK)/header.mk
 
-SRCS := common.cc
+SRCS :=
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

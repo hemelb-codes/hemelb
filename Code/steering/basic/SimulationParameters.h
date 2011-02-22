@@ -2,7 +2,6 @@
 #define HEMELB_STEERING_ON_SIMULATIONPARAMETERS_H
 
 #include "io/XdrMemWriter.h"
-#include "lb/lb.h"
 #include "lb/SimulationState.h"
 
 namespace hemelb
@@ -34,7 +33,6 @@ namespace hemelb
         SimulationParameters();
         ~SimulationParameters();
         char* pack();
-        void collectGlobalVals(lb::LBM* lbm, lb::SimulationState *iSimState);
 
       private:
         io::XdrMemWriter paramWriter;

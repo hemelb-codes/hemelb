@@ -2,8 +2,10 @@
 #define HEMELB_SIMULATIONMASTER_H
 
 #include "lb/lb.h"
+#include "lb/StabilityTester.h"
 #include "net/net.h"
 #include "steering/Control.h"
+#include "steering/SteeringComponent.h"
 
 class SimulationMaster
 {
@@ -24,7 +26,10 @@ class SimulationMaster
                        unsigned int lSnapshotsPerCycle,
                        unsigned int lImagesPerCycle);
 
-    void Initialise(hemelb::SimConfig *iSimConfig, int iSteeringSessionid, FILE * bTimingsFile);
+    void Initialise(hemelb::SimConfig *iSimConfig,
+                    int iImagesPerCycle,
+                    int iSteeringSessionid,
+                    FILE * bTimingsFile);
 
   private:
     void PostSimulation(int iTotalTimeSteps,
@@ -41,7 +46,10 @@ class SimulationMaster
 
     hemelb::topology::NetworkTopology* mNetworkTopology;
 
+    hemelb::steering::ClientConnection* clientConnection;
     hemelb::steering::Control *steeringController;
+    hemelb::steering::SteeringComponent* steeringCpt;
+
     hemelb::lb::SimulationState mSimulationState;
     hemelb::lb::StabilityTester * mStabilityTester;
     hemelb::lb::LBM *mLbm;

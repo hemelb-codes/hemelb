@@ -3,7 +3,7 @@
 
 #include <pthread.h>
 
-#include "steering/basic/ClientConnection.h"
+#include "steering/ClientConnection.h"
 #include "steering/basic/Threadable.h"
 #include "lb/SimulationState.h"
 #include "lb/lb.h"
@@ -36,8 +36,6 @@ namespace hemelb
 
         void DoWork(void);
 
-        void HandleBrokenPipe(int iSocket);
-
         lb::LBM* mLbm;
         Control* mSteeringController;
         lb::SimulationState* mSimState;
@@ -58,6 +56,8 @@ namespace hemelb
         static const u_int frame_details_bytes = 1 * sizeof(int);
 
         void setRenderState(int val);
+
+        int SendSuccess(int iSocket, char * data, int length);
     };
 
   } // namespace steering

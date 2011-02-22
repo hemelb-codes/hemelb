@@ -54,10 +54,10 @@ namespace hemelb
       }
 
       // The children of a node N in a M-tree with root 0 are those in the range (M*N)+1,...,(M*N) + M
-      for (unsigned int child = (spreadFactor * mNetTop->GetLocalRank()) + 1; child <= spreadFactor * (1
-          + mNetTop->GetLocalRank()); ++child)
+      for (unsigned int child = (spreadFactor * mNetTop->GetLocalRank()) + 1; child <= spreadFactor
+          * (1 + mNetTop->GetLocalRank()); ++child)
       {
-        if (child < (unsigned int)mNetTop->GetProcessorCount())
+        if (child < (unsigned int) mNetTop->GetProcessorCount())
         {
           mChildren.push_back(child);
         }
@@ -136,12 +136,17 @@ namespace hemelb
     {
       if (mTreeDepth > 0)
       {
-        return (mSimState->TimeStep - 1) % (2 * mTreeDepth);
+        return (mSimState->TimeStep - 1) % GetRoundTripLength();
       }
       else
       {
         return 0;
       }
+    }
+
+    unsigned int PhasedBroadcast::GetRoundTripLength() const
+    {
+      return 2 * mTreeDepth;
     }
 
     /**
