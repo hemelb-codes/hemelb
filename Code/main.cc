@@ -17,8 +17,7 @@
 void PrintUsage(char *progname)
 {
   printf("-!-!-!-!-!-!-!-!-!-!-!-!");
-  printf("Correct usage: %s [-<Parameter Name> <Parameter Value>]* \n",
-         progname);
+  printf("Correct usage: %s [-<Parameter Name> <Parameter Value>]* \n", progname);
   printf("Parameter name and significance:\n");
   printf("-in \t Path to the configuration xml file (default is config.xml)\n");
   printf(
@@ -93,8 +92,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  hemelb::SimConfig *lSimulationConfig =
-      hemelb::SimConfig::Load(lInputFile.c_str());
+  hemelb::SimConfig *lSimulationConfig = hemelb::SimConfig::Load(lInputFile.c_str());
 
   unsigned long lLastForwardSlash = lInputFile.rfind('/');
   if (lOutputDir.length() == 0)
@@ -117,8 +115,7 @@ int main(int argc, char *argv[])
   {
     if (hemelb::util::DoesDirectoryExist(lOutputDir.c_str()))
     {
-      printf("\nOutput directory \"%s\" already exists. Exiting.\n\n",
-             lOutputDir.c_str());
+      printf("\nOutput directory \"%s\" already exists. Exiting.\n\n", lOutputDir.c_str());
       lMaster.Abort();
     }
 
@@ -128,8 +125,7 @@ int main(int argc, char *argv[])
 
     // Save the computed config out to disk in the output directory so we have
     // a record of the total state used.
-    std::string lFileNameComponent = std::string( (lLastForwardSlash
-        == std::string::npos)
+    std::string lFileNameComponent = std::string( (lLastForwardSlash == std::string::npos)
       ? lInputFile
       : lInputFile.substr(lLastForwardSlash));
     lSimulationConfig->Save(lOutputDir + "/" + lFileNameComponent);
@@ -143,15 +139,14 @@ int main(int argc, char *argv[])
     strcat(timings_name, procs_string);
     strcat(timings_name, ".asc");
     timings_ptr = fopen(timings_name, "w");
-    fprintf(timings_ptr,
-            "***********************************************************\n");
+    fprintf(timings_ptr, "***********************************************************\n");
     fprintf(timings_ptr, "Opening config file:\n %s\n", lInputFile.c_str());
   }
 
-  lMaster.Initialise(lSimulationConfig, (int) lSteeringSessionId, timings_ptr);
+  lMaster.Initialise(lSimulationConfig, lImagesPerCycle, (int) lSteeringSessionId, timings_ptr);
 
-  lMaster.RunSimulation(lSimulationConfig, total_time, image_directory,
-                        snapshot_directory, lSnapshotsPerCycle, lImagesPerCycle);
+  lMaster.RunSimulation(lSimulationConfig, total_time, image_directory, snapshot_directory,
+                        lSnapshotsPerCycle, lImagesPerCycle);
 
   if (lMaster.IsCurrentProcTheIOProc())
   {

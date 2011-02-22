@@ -33,6 +33,7 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mLbm = NULL;
   mNet = NULL;
   mLocalLatDat = NULL;
+  steeringCpt = NULL;
 
   mSimulationState.IsTerminating = 0;
   mSimulationState.DoRendering = 0;
@@ -68,6 +69,11 @@ SimulationMaster::~SimulationMaster()
   {
     delete mLocalLatDat;
   }
+
+  if (steeringCpt != NULL)
+  {
+    delete steeringCpt;
+  }
 }
 
 /**
@@ -92,6 +98,7 @@ int SimulationMaster::GetProcessorCount()
  * domain decomposition, LBM and visualisation.
  */
 void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
+                                  int iImagesPerCycle,
                                   int iSteeringSessionid,
                                   FILE * bTimingsFile)
 {
@@ -104,17 +111,33 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                              &mFileReadTime);
 
   // Initialise and begin the steering.
+  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  {
+    clientConnection = new hemelb::steering::ClientConnection(iSteeringSessionid);
+  }
+  else
+  {
+    clientConnection = NULL;
+  }
+
+  int images_period = (iImagesPerCycle == 0)
+    ? 1e9
+    : hemelb::util::max(1, mLbm->period / iImagesPerCycle);
+
   steeringController = new hemelb::steering::Control(mNetworkTopology->IsCurrentProcTheIOProc());
   if (mNetworkTopology->IsCurrentProcTheIOProc())
   {
-    steeringController->StartNetworkThread(mLbm, &mSimulationState, mLbm->GetLbmParams());
+    steeringController->StartNetworkThread(mLbm, &mSimulationState, clientConnection,
+                                           mLbm->GetLbmParams());
   }
 
   // Count the domain decomposition time.
   double seconds = hemelb::util::myClock();
 
-  mNetworkTopology->DecomposeDomain(mLbm->total_fluid_sites,
-                                    steeringController->RequiresSeparateSteeringCore(), mGlobLatDat);
+  mNetworkTopology->DecomposeDomain(
+                                    mLbm->total_fluid_sites,
+                                    hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
+                                    mGlobLatDat);
 
   mDomainDecompTime = hemelb::util::myClock() - seconds;
 
@@ -130,12 +153,18 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   int* lReceiveTranslator = mNet->Initialise(mGlobLatDat, mLocalLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
-  mLbm->Initialise(lReceiveTranslator, mStabilityTester);
+  mLbm->Initialise(lReceiveTranslator);
   mLbm->SetInitialConditions(*mLocalLatDat);
 
   // Initialise the visualisation controller.
   hemelb::vis::controller = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mGlobLatDat);
   hemelb::vis::controller->initLayers(mNetworkTopology, mGlobLatDat, *mLocalLatDat);
+
+  steeringCpt = new hemelb::steering::SteeringComponent(&steeringController->sending_frame,
+                                                        images_period, &steeringController->nrl,
+                                                        clientConnection, hemelb::vis::controller,
+                                                        mLbm, mNet, mNetworkTopology,
+                                                        &mSimulationState);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();
@@ -144,9 +173,6 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                          iSimConfig->VisCentre.y, iSimConfig->VisCentre.z,
                                          iSimConfig->VisLongitude, iSimConfig->VisLatitude,
                                          iSimConfig->VisZoom);
-
-  steeringController->UpdateSteerableParameters(false, mSimulationState, hemelb::vis::controller,
-                                                mLbm);
 }
 
 /**
@@ -191,6 +217,12 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         ? true
         : false;
 
+      // Make sure we're rendering if we're writing this iteration.
+      if(write_snapshot_image)
+      {
+        mSimulationState.DoRendering = true;
+      }
+
       /* In the following two if blocks we do the core magic to ensure we only Render
        when (1) we are not sending a frame or (2) we need to output to disk */
 
@@ -198,13 +230,6 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       if (mNetworkTopology->IsCurrentProcTheIOProc())
       {
         render_for_network_stream = steeringController->ShouldRenderForNetwork();
-      }
-
-      if (mSimulationState.TimeStep % BCAST_FREQ == 0)
-      {
-        steeringController->UpdateSteerableParameters(write_snapshot_image, mSimulationState,
-                                                      hemelb::vis::controller, mLbm);
-
       }
 
       /* for debugging purposes we want to ensure we capture the variables in a single
@@ -219,8 +244,51 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       mLbm->UpdateBoundaryDensities(mSimulationState.CycleId, mSimulationState.TimeStep);
 
-      stability = mLbm->DoCycle(mSimulationState.DoRendering, mNet, mLocalLatDat, mLbTime,
-                                mMPISendTime, mMPIWaitTime);
+      // Cycle.
+      {
+        mLbm->RequestComms(mNet, mLocalLatDat);
+        steeringCpt->RequestComms();
+        mStabilityTester->RequestComms();
+
+        mNet->Receive();
+
+        {
+          double lPrePreSend = MPI_Wtime();
+          mLbm->PreSend(mLocalLatDat, mSimulationState.DoRendering);
+          mLbTime += (MPI_Wtime() - lPrePreSend);
+        }
+
+        {
+          double lPreSendTime = MPI_Wtime();
+          mNet->Send();
+          mMPISendTime += (MPI_Wtime() - lPreSendTime);
+        }
+
+        {
+          double lPrePreReceive = MPI_Wtime();
+          mLbm->PreReceive(mSimulationState.DoRendering, mLocalLatDat);
+          mLbTime += (MPI_Wtime() - lPrePreReceive);
+        }
+
+        {
+          double lPreWaitTime = MPI_Wtime();
+          mNet->Wait(mLocalLatDat);
+          mMPIWaitTime += (MPI_Wtime() - lPreWaitTime);
+        }
+
+        {
+          double lPrePostStep = MPI_Wtime();
+          mLbm->PostReceive(mLocalLatDat, mSimulationState.DoRendering);
+          mLbTime += (MPI_Wtime() - lPrePostStep);
+        }
+
+        mStabilityTester->PostReceive();
+        steeringCpt->PostReceive();
+
+        mLbm->EndIteration(mLocalLatDat);
+      }
+
+      stability = hemelb::lb::Stable;
 
       restart = (mSimulationState.Stability == hemelb::lb::Unstable);
       if (restart)
@@ -236,8 +304,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                                            *mLocalLatDat);
 #endif
 
-      if (mSimulationState.DoRendering && (total_time_steps % BCAST_FREQ == 0)
-          && !write_snapshot_image)
+      if (mSimulationState.DoRendering && !write_snapshot_image)
       {
         sem_wait(&mSimulationState.Rendering);
 
@@ -341,6 +408,9 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       hemelb::util::DeleteDirContents(image_directory);
 
       mLbm->Restart(*mLocalLatDat);
+      mStabilityTester->Reset();
+      steeringCpt->Reset();
+
 #ifndef NO_STREAKLINES
       hemelb::vis::controller->restart();
 #endif

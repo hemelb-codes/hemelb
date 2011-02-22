@@ -27,23 +27,6 @@ namespace hemelb
       mouseStress = -1.0;
     }
 
-    void SimulationParameters::collectGlobalVals(lb::LBM* lbm, lb::SimulationState *iSimState)
-    {
-      this->pressureMin = lbm->GetMinPhysicalPressure();
-      this->pressureMax = lbm->GetMaxPhysicalPressure();
-      this->velocityMin = lbm->GetMinPhysicalVelocity();
-      this->velocityMax = lbm->GetMaxPhysicalVelocity();
-      this->stressMax = lbm->GetMaxPhysicalStress();
-      this->timeStep = iSimState->TimeStep;
-      this->time = iSimState->IntraCycleTime;
-      this->cycle = iSimState->CycleId;
-      this->nInlets = lbm->inlets;
-
-      this->mousePressure = vis::controller->mouse_pressure;
-      this->mouseStress = vis::controller->mouse_stress;
-
-    }
-
     SimulationParameters::~SimulationParameters()
     {
     }

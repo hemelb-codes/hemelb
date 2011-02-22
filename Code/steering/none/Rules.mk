@@ -1,6 +1,6 @@
 include $(MK)/header.mk
 
-SRCS := Control.cc
+SRCS := SteeringComponent.cc
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

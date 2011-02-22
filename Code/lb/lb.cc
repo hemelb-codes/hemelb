@@ -207,10 +207,9 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
-    void LBM::Initialise(int* iFTranslator, StabilityTester* iStabTester)
+    void LBM::Initialise(int* iFTranslator)
     {
       receivedFTranslator = iFTranslator;
-      mStabilityTester = iStabTester;
     }
 
     void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
@@ -261,16 +260,7 @@ namespace hemelb
       return NULL;
     }
 
-    // The entire simulation time step takes place through this function
-    // when the convergence criterion is not applied. Communications
-    // automatically handle the streaming stage pertaining to neighbouring
-    // subdomains.
-    Stability LBM::DoCycle(int perform_rt,
-                           net::Net *net,
-                           LocalLatticeData *bLocalLatDat,
-                           double &bLbTime,
-                           double &bMPISendTime,
-                           double &bMPIWaitTime)
+    void LBM::RequestComms(net::Net* net, lb::LocalLatticeData* bLocalLatDat)
     {
       for (std::vector<hemelb::topology::NeighbouringProcessor*>::const_iterator it =
           mNetTopology->NeighbouringProcs.begin(); it != mNetTopology->NeighbouringProcs.end(); it++)
@@ -283,14 +273,11 @@ namespace hemelb
         net->RequestSend<double> (&bLocalLatDat->FNew[ (*it)->FirstSharedF], (*it)->SharedFCount,
                                    (*it)->Rank);
       }
+    }
 
-      mStabilityTester->RequestComms();
-
-      net->Receive();
-
+    void LBM::PreSend(lb::LocalLatticeData* bLocalLatDat, int perform_rt)
+    {
       int offset = bLocalLatDat->my_inner_sites;
-
-      double lPreLbTimeOne = MPI_Wtime();
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
@@ -302,16 +289,11 @@ namespace hemelb
                                                    hemelb::vis::controller);
         offset += bLocalLatDat->my_inter_collisions[collision_type];
       }
+    }
 
-      double lPreSendTime = MPI_Wtime();
-      bLbTime += (lPreSendTime - lPreLbTimeOne);
-
-      net->Send();
-
-      double lPreLbTimeTwo = MPI_Wtime();
-      bMPISendTime += (lPreLbTimeTwo - lPreSendTime);
-
-      offset = 0;
+    void LBM::PreReceive(int perform_rt, lb::LocalLatticeData* bLocalLatDat)
+    {
+      int offset = 0;
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
@@ -323,12 +305,10 @@ namespace hemelb
                                                    hemelb::vis::controller);
         offset += bLocalLatDat->my_inner_collisions[collision_type];
       }
+    }
 
-      double lPreMPIWaitTime = MPI_Wtime();
-      bLbTime += (lPreMPIWaitTime - lPreLbTimeTwo);
-
-      net->Wait(bLocalLatDat);
-
+    void LBM::PostReceive(lb::LocalLatticeData* bLocalLatDat, int perform_rt)
+    {
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       for (int i = 0; i < mNetTopology->TotalSharedFs; i++)
@@ -337,11 +317,8 @@ namespace hemelb
             = bLocalLatDat->FOld[mNetTopology->NeighbouringProcs[0]->FirstSharedF + i];
       }
 
-      double lPrePostStepTime = MPI_Wtime();
-      bMPIWaitTime += (lPrePostStepTime - lPreMPIWaitTime);
-
       // Do any cleanup steps necessary on boundary nodes
-      offset = 0;
+      int offset = 0;
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
@@ -360,17 +337,14 @@ namespace hemelb
                                                hemelb::vis::controller);
         offset += bLocalLatDat->my_inter_collisions[collision_type];
       }
+    }
 
-      bLbTime += (MPI_Wtime() - lPrePostStepTime);
-
-      mStabilityTester->PostReceive();
-
+    void LBM::EndIteration(lb::LocalLatticeData* bLocalLatDat)
+    {
       // Swap f_old and f_new ready for the next timestep.
       double *temp = bLocalLatDat->FOld;
       bLocalLatDat->FOld = bLocalLatDat->FNew;
       bLocalLatDat->FNew = temp;
-
-      return hemelb::lb::Stable;
     }
 
     void LBM::CalculateFlowFieldValues()
@@ -573,8 +547,6 @@ namespace hemelb
       RecalculateTauViscosityOmega();
 
       SetInitialConditions(iLocalLatDat);
-
-      mStabilityTester->Reset();
     }
 
     double LBM::GetMinPhysicalPressure()

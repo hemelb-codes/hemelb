@@ -2,7 +2,7 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbSteering.$(LIBEXT)
 
-SRCS := common.cc
+SRCS :=
 
 ifeq ($(HEMELB_STEERING_LIB), none)
 # no steering - use "off"

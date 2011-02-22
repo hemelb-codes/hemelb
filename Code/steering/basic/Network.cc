@@ -35,16 +35,28 @@ namespace hemelb
         // Receive some data (up to the remaining length)
         n = recv(sockid, buf + received_bytes, bytes_left_to_receive, NULL);
 
-        if (n == -1)
-          break;
-
-        received_bytes += n;
-        bytes_left_to_receive -= n;
+        if (n < 0)
+        {
+          // Distinguish between cases where the pipe fails because it'd block
+          // (No problem, we'll try again later) or because the pipe is broken.
+          if (errno == EWOULDBLOCK)
+          {
+            // Wait a bit before trying again.
+            usleep(10);
+          }
+          else
+          {
+            return -1;
+          }
+        }
+        else
+        {
+          received_bytes += n;
+          bytes_left_to_receive -= n;
+        }
       }
 
-      return n == -1
-        ? -1
-        : received_bytes;
+      return received_bytes;
     }
 
     /**
@@ -65,16 +77,27 @@ namespace hemelb
       {
         n = send(sockid, buf + sent_bytes, bytes_left_to_send, 0);
 
-        if (n == -1)
-          break;
-
-        sent_bytes += n;
-        bytes_left_to_send -= n;
+        if (n < 0)
+        {
+          // Distinguish between cases where the pipe fails because it'd block
+          // (No problem, we'll try again later) or because the pipe is broken.
+          if (errno == EWOULDBLOCK)
+          {
+            // Wait a bit before trying again.
+            usleep(10);
+          }
+          else
+          {
+            return -1;
+          }
+        }
+        else
+        {
+          sent_bytes += n;
+          bytes_left_to_send -= n;
+        }
       }
-
-      return n == -1
-        ? -1
-        : sent_bytes;
+      return sent_bytes;
     }
 
   }
