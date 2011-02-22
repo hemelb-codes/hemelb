@@ -70,6 +70,13 @@ namespace hemelb
       {
         int socketToClient = mClientConnection->GetWorkingSocket();
 
+        if (socketToClient < 0)
+        {
+          // TODO temporary hack until the network thread code is actually run on the main, single thread.
+          usleep(10000);
+          continue;
+        }
+
         // Tell the steering controller that we have a connection.
         mSteeringController->isConnected.SetValue(true);
 
@@ -91,6 +98,7 @@ namespace hemelb
 
           // Take control of the steering controller.
           sem_wait(&mSteeringController->nrl);
+
           mSteeringController->sending_frame = 1;
           // Turn off rendering.
           setRenderState(0);
@@ -108,17 +116,17 @@ namespace hemelb
 
             pixelWriter << vis::controller->mScreen.PixelsX << vis::controller->mScreen.PixelsY;
 
-            int pixelDataBytesSent = Network::send_all(socketToClient, xdr_pixel, pixeldatabytes);
+            int pixelDataBytesSent = SendSuccess(socketToClient, xdr_pixel, pixeldatabytes);
 
             if (pixelDataBytesSent < 0)
             {
-              HandleBrokenPipe(socketToClient);
               break;
             }
-
-            bytesSent += pixelDataBytesSent;
+            else
+            {
+              bytesSent += pixelDataBytesSent;
+            }
           }
-
           io::XdrMemWriter pixelDataWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
 
           for (int i = 0; i < vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
@@ -138,13 +146,11 @@ namespace hemelb
 
             int frameDetailsBytes = frameDetailsWriter.getCurrentStreamPosition();
 
-            int frameDetailsBytesSent = Network::send_all(socketToClient,
-                                                          xdrSendBuffer_frame_details,
-                                                          frameDetailsBytes);
+            int frameDetailsBytesSent = SendSuccess(socketToClient, xdrSendBuffer_frame_details,
+                                                    frameDetailsBytes);
 
             if (frameDetailsBytesSent < 0)
             {
-              HandleBrokenPipe(socketToClient);
               break;
             }
             else
@@ -153,12 +159,10 @@ namespace hemelb
             }
           }
 
-          int frameBytesSent = Network::send_all(socketToClient, xdrSendBuffer_pixel_data,
-                                                 frameBytes);
+          int frameBytesSent = SendSuccess(socketToClient, xdrSendBuffer_pixel_data, frameBytes);
 
           if (frameBytesSent < 0)
           {
-            HandleBrokenPipe(socketToClient);
             break;
           }
           else
@@ -169,17 +173,31 @@ namespace hemelb
           // Send the numerical data from the simulation, wanted by the client.
           {
             SimulationParameters sim;
-            sim.collectGlobalVals(mLbm, mSimState);
+
+            sim.pressureMin = mLbm->GetMinPhysicalPressure();
+            sim.pressureMax = mLbm->GetMaxPhysicalPressure();
+            sim.velocityMin = mLbm->GetMinPhysicalVelocity();
+            sim.velocityMax = mLbm->GetMaxPhysicalVelocity();
+            sim.stressMax = mLbm->GetMaxPhysicalStress();
+            sim.timeStep = mSimState->TimeStep;
+            sim.time = mSimState->IntraCycleTime;
+            sim.cycle = mSimState->CycleId;
+            sim.nInlets = mLbm->inlets;
+
+            sim.mousePressure = vis::controller->mouse_pressure;
+            sim.mouseStress = vis::controller->mouse_stress;
+
             int sizeToSend = sim.paramsSizeB;
-            int simParamsBytesSent = Network::send_all(socketToClient, sim.pack(), sizeToSend);
+            int simParamsBytesSent = SendSuccess(socketToClient, sim.pack(), sizeToSend);
 
             if (simParamsBytesSent < 0)
             {
-              HandleBrokenPipe(socketToClient);
               break;
             }
-
-            bytesSent += simParamsBytesSent;
+            else
+            {
+              bytesSent += simParamsBytesSent;
+            }
           }
 
           // All data is sent so we can start rendering again.
@@ -204,14 +222,28 @@ namespace hemelb
       } // while(1)
     }
 
-    void NetworkThread::HandleBrokenPipe(int iSocket)
+    int NetworkThread::SendSuccess(int iSocket, char * data, int length)
     {
-      printf("RG thread: broken network pipe...\n");
-      mClientConnection->ReportBroken(iSocket);
-      mSteeringController->sending_frame = false;
-      sem_post(&mSteeringController->nrl);
-      setRenderState(0);
-    }
-  }
+      // Try to send all the data.
+      int pixelDataBytesSent = Network::send_all(iSocket, data, length);
 
+      // We couldn't send. The pipe is broken.
+      if (pixelDataBytesSent < 0)
+      {
+        printf("RG thread: broken network pipe...\n");
+        mClientConnection->ReportBroken(iSocket);
+
+        mSteeringController->sending_frame = false;
+        sem_post(&mSteeringController->nrl);
+        setRenderState(0);
+
+        return -1;
+      }
+      else
+      {
+        return pixelDataBytesSent;
+      }
+    }
+
+  }
 }

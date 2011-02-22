@@ -766,6 +766,14 @@ namespace hemelb
       bMetaData->TypeList.push_back(MPI_DOUBLE);
     }
 
+    // Helper functions to add floats to the list.
+    void Net::AddToList(float* iNew, int iLength, ProcComms *bMetaData)
+    {
+      bMetaData->PointerList.push_back(iNew);
+      bMetaData->LengthList.push_back(iLength);
+      bMetaData->TypeList.push_back(MPI_FLOAT);
+    }
+
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
     void Net::EnsurePreparedToSendReceive()
     {

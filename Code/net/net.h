@@ -117,6 +117,8 @@ namespace hemelb
 
         void AddToList(double* iNew, int iLength, ProcComms* bMetaData);
 
+        void AddToList(float* iNew, int iLength, ProcComms* bMetaData);
+
         void EnsurePreparedToSendReceive();
 
         void CreateMPIType(ProcComms *iMetaData);

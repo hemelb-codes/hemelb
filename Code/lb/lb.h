@@ -4,7 +4,6 @@
 #include "net/net.h"
 #include "topology/NetworkTopology.h"
 #include "lb/collisions/Collisions.h"
-#include "lb/StabilityTester.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 
@@ -35,19 +34,13 @@ namespace hemelb
         void Restart(hemelb::lb::LocalLatticeData &iLocalLatDat);
         ~LBM();
 
-        hemelb::lb::Stability DoCycle(int perform_rt,
-                                      net::Net *net,
-                                      lb::LocalLatticeData *bLocallatDat,
-                                      double &bLbTime,
-                                      double &bMPISendTime,
-                                      double &bMPIWaitTime);
         void CalculateFlowFieldValues();
         void RecalculateTauViscosityOmega();
         void UpdateBoundaryDensities(int cycle_id, int time_step);
         void
         UpdateInletVelocities(int time_step, lb::LocalLatticeData &iLocalLatDat, net::Net *net);
 
-        void Initialise(int* iFTranslator, StabilityTester* iStabTester);
+        void Initialise(int* iFTranslator);
 
         void SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
 
@@ -85,6 +78,12 @@ namespace hemelb
 
         const hemelb::lb::LbmParameters *GetLbmParams();
 
+        void RequestComms(net::Net* net, lb::LocalLatticeData* bLocalLatDat);
+        void PreSend(lb::LocalLatticeData* bLocalLatDat, int perform_rt);
+        void PreReceive(int perform_rt, lb::LocalLatticeData* bLocalLatDat);
+        void PostReceive(lb::LocalLatticeData* bLocalLatDat, int perform_rt);
+        void EndIteration(lb::LocalLatticeData* bLocalLatDat);
+
       private:
         void CalculateBC(double f[],
                          hemelb::lb::SiteType iSiteType,
@@ -99,8 +98,7 @@ namespace hemelb
 
         //  static void ReadBlock();
 
-        void
-        ReadConfig(hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
+        void ReadConfig(hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
 
         void ReadParameters();
 
@@ -136,7 +134,6 @@ namespace hemelb
 
         double mFileReadTime;
 
-        hemelb::lb::StabilityTester * mStabilityTester;
         hemelb::lb::LbmParameters mParams;
         const hemelb::topology::NetworkTopology * mNetTopology;
         hemelb::SimConfig *mSimConfig;

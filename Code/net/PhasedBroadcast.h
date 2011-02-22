@@ -137,6 +137,14 @@ namespace hemelb
           }
         }
 
+        /**
+         * Returns the total number of iterations spent doing a complete traversal -- all the way
+         * down the tree and back up again.
+         *
+         * @return
+         */
+        unsigned int GetRoundTripLength() const;
+
       private:
         static const int NOPARENT = -1;
 

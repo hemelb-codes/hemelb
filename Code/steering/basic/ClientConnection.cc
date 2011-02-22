@@ -3,9 +3,10 @@
 #include <cstring>
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 
-#include "steering/basic/ClientConnection.h"
+#include "steering/ClientConnection.h"
 #include "HttpPost.h"
 
 namespace hemelb
@@ -37,6 +38,45 @@ namespace hemelb
 
       mCurrentSocket = -1;
       mIsBroken = false;
+
+      // Create the socket.
+      mListeningSocket = socket(AF_INET, SOCK_STREAM, 0);
+      if (mListeningSocket == -1)
+      {
+        perror("socket");
+        exit(1);
+      }
+
+      // Make the socket reusable.
+      int yes = 1;
+      if (setsockopt(mListeningSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
+      {
+        perror("setsockopt");
+        exit(1);
+      }
+
+      // Bind to the socket.
+      {
+        struct sockaddr_in my_address;
+
+        my_address.sin_family = AF_INET;
+        my_address.sin_port = htons(MYPORT);
+        my_address.sin_addr.s_addr = INADDR_ANY;
+        memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
+
+        if (bind(mListeningSocket, (struct sockaddr *) &my_address, sizeof my_address) == -1)
+        {
+          perror("bind");
+          exit(1);
+        }
+      }
+
+      // Mark the socket as accepting incoming connections.
+      if (listen(mListeningSocket, CONNECTION_BACKLOG) == -1)
+      {
+        perror("listen");
+        exit(1);
+      }
     }
 
     ClientConnection::~ClientConnection()
@@ -44,6 +84,7 @@ namespace hemelb
       sem_destroy(&mIsBusy);
 
       close(mCurrentSocket);
+      close(mListeningSocket);
     }
 
     int ClientConnection::GetWorkingSocket()
@@ -53,61 +94,45 @@ namespace hemelb
       // If we haven't yet had a socket, or the current one is broken, open a new one.
       if (mCurrentSocket < 0 || mIsBroken)
       {
-        // Create the socket.
-        int openSocket = socket(AF_INET, SOCK_STREAM, 0);
-        if (openSocket == -1)
-        {
-          perror("socket");
-          exit(1);
-        }
-
-        // Make the socket reusable.
-        int yes = 1;
-        if (setsockopt(openSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1)
-        {
-          perror("setsockopt");
-          exit(1);
-        }
-
-        // Bind to the socket.
-        {
-          struct sockaddr_in my_address;
-
-          my_address.sin_family = AF_INET;
-          my_address.sin_port = htons(MYPORT);
-          my_address.sin_addr.s_addr = INADDR_ANY;
-          memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
-
-          if (bind(openSocket, (struct sockaddr *) &my_address, sizeof my_address) == -1)
-          {
-            perror("bind");
-            exit(1);
-          }
-        }
-
-        // Mark the socket as accepting incoming connections.
-        if (listen(openSocket, CONNECTION_BACKLOG) == -1)
-        {
-          perror("listen");
-          exit(1);
-        }
-
         // Accept an incoming connection from the client.
         struct sockaddr_in clientAddress;
         socklen_t socketSize = sizeof (clientAddress);
 
         int lOldSocket = mCurrentSocket;
 
-        mCurrentSocket = accept(openSocket, (struct sockaddr *) &clientAddress, &socketSize);
-
-        if (mCurrentSocket == -1)
+        // Make the socket non-blocking, just while we try to accept on it, then set
+        // it back to what it was before.
         {
-          perror("accept");
+          int flags = fcntl(mListeningSocket, F_GETFL, 0);
+          if (flags == -1)
+          {
+            flags = 0;
+          }
+          if (fcntl(mListeningSocket, F_SETFL, flags | O_NONBLOCK) < 0)
+          {
+            perror("flags");
+          }
+
+          // Try to accept a socket (from the non-blocking socket)
+          mCurrentSocket
+              = accept(mListeningSocket, (struct sockaddr *) &clientAddress, &socketSize);
+
+          // We've got a socket - make that socket non-blocking too.
+          if (mCurrentSocket > 0)
+          {
+            flags = fcntl(mCurrentSocket, F_GETFL, 0);
+            if (flags == -1)
+            {
+              flags = 0;
+            }
+            if(fcntl(mCurrentSocket, F_SETFL, flags | O_NONBLOCK) < 0)
+            {
+              perror("flags");
+            }
+          }
         }
 
-        // Close the open socket (we only want the client-specific one).
-        close(openSocket);
-
+        // If we had a socket before, close it.
         if (lOldSocket > 0)
         {
           close(lOldSocket);
