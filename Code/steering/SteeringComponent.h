@@ -14,9 +14,7 @@ namespace hemelb
     class SteeringComponent : public net::PhasedBroadcast
     {
       public:
-        SteeringComponent(bool* iIsNetworkSending,
-                          int imagesPeriod,
-                          sem_t* varLock,
+        SteeringComponent(int imagesPeriod,
                           ClientConnection* iClientConnection,
                           vis::Control* iVisControl,
                           lb::LBM* iLbm,
@@ -30,6 +28,8 @@ namespace hemelb
          * This function initialises all of the steering parameters, on all nodes.
          */
         void Reset();
+
+        bool updatedMouseCoords;
 
       protected:
         void ProgressFromChildren();
@@ -50,11 +50,8 @@ namespace hemelb
         const static int SPREADFACTOR = 10;
 
         int imagesPeriod;
-        bool* isNetworkSending;
         bool isConnected;
-        bool updatedMouseCoords;
 
-        sem_t* mVariableLock;
         ClientConnection* mClientConnection;
         lb::LBM* mLbm;
         lb::SimulationState* mSimState;

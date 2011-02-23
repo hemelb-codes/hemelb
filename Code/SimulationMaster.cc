@@ -124,11 +124,10 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     ? 1e9
     : hemelb::util::max(1, mLbm->period / iImagesPerCycle);
 
-  steeringController = new hemelb::steering::Control(mNetworkTopology->IsCurrentProcTheIOProc());
   if (mNetworkTopology->IsCurrentProcTheIOProc())
   {
-    steeringController->StartNetworkThread(mLbm, &mSimulationState, clientConnection,
-                                           mLbm->GetLbmParams());
+    imageSendCpt = new hemelb::steering::ImageSendComponent(mLbm, &mSimulationState,
+                                                            mLbm->GetLbmParams(), clientConnection);
   }
 
   // Count the domain decomposition time.
@@ -160,11 +159,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   hemelb::vis::controller = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mGlobLatDat);
   hemelb::vis::controller->initLayers(mNetworkTopology, mGlobLatDat, *mLocalLatDat);
 
-  steeringCpt = new hemelb::steering::SteeringComponent(&steeringController->sending_frame,
-                                                        images_period, &steeringController->nrl,
-                                                        clientConnection, hemelb::vis::controller,
-                                                        mLbm, mNet, mNetworkTopology,
-                                                        &mSimulationState);
+  steeringCpt = new hemelb::steering::SteeringComponent(images_period, clientConnection,
+                                                        hemelb::vis::controller, mLbm, mNet,
+                                                        mNetworkTopology, &mSimulationState);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();
@@ -218,7 +215,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         : false;
 
       // Make sure we're rendering if we're writing this iteration.
-      if(write_snapshot_image)
+      if (write_snapshot_image)
       {
         mSimulationState.DoRendering = true;
       }
@@ -229,7 +226,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       bool render_for_network_stream = false;
       if (mNetworkTopology->IsCurrentProcTheIOProc())
       {
-        render_for_network_stream = steeringController->ShouldRenderForNetwork();
+        render_for_network_stream = imageSendCpt->ShouldRenderNewNetworkImage();
       }
 
       /* for debugging purposes we want to ensure we capture the variables in a single
@@ -237,10 +234,9 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
        This is to be done. */
 
       if (mNetworkTopology->IsCurrentProcTheIOProc() && mSimulationState.TimeStep % 100 == 0)
-        printf(
-               "time step %i sending_frame %i render_network_stream %i write_snapshot_image %i rendering %i\n",
-               mSimulationState.TimeStep, steeringController->sending_frame,
-               render_for_network_stream, write_snapshot_image, mSimulationState.DoRendering);
+        printf("time step %i render_network_stream %i write_snapshot_image %i rendering %i\n",
+               mSimulationState.TimeStep, render_for_network_stream, write_snapshot_image,
+               mSimulationState.DoRendering);
 
       mLbm->UpdateBoundaryDensities(mSimulationState.CycleId, mSimulationState.TimeStep);
 
@@ -306,14 +302,10 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       if (mSimulationState.DoRendering && !write_snapshot_image)
       {
-        sem_wait(&mSimulationState.Rendering);
-
         hemelb::vis::controller->render(RECV_BUFFER_A, mGlobLatDat, mNetworkTopology);
 
-        sem_post(&mSimulationState.Rendering);
-
         if (hemelb::vis::controller->mouse_x >= 0 && hemelb::vis::controller->mouse_y >= 0
-            && steeringController->updated_mouse_coords)
+            && steeringCpt->updatedMouseCoords)
         {
           for (int i = 0; i < hemelb::vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
           {
@@ -336,13 +328,18 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
               break;
             }
           }
-          steeringController->updated_mouse_coords = 0;
+          steeringCpt->updatedMouseCoords = 0;
         }
+
         if (mNetworkTopology->IsCurrentProcTheIOProc())
         {
-          steeringController->is_frame_ready = true;
-          sem_post(&steeringController->nrl); // let go of the lock
+          imageSendCpt->isFrameReady = true;
         }
+      }
+
+      if (render_for_network_stream && mNetworkTopology->IsCurrentProcTheIOProc())
+      {
+        imageSendCpt->DoWork();
       }
 
       if (write_snapshot_image)
@@ -374,16 +371,6 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       }
 
       mSnapshotTime += (MPI_Wtime() - lPreSnapshotTime);
-
-      if (mNetworkTopology->IsCurrentProcTheIOProc())
-      {
-        if (render_for_network_stream)
-        {
-          // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
-          sched_yield();
-          sem_post(&steeringController->nrl);
-        }
-      }
 
       if (stability == hemelb::lb::StableAndConverged)
       {

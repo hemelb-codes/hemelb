@@ -4,7 +4,7 @@
 #include "lb/lb.h"
 #include "lb/StabilityTester.h"
 #include "net/net.h"
-#include "steering/Control.h"
+#include "steering/ImageSendComponent.h"
 #include "steering/SteeringComponent.h"
 
 class SimulationMaster
@@ -47,11 +47,11 @@ class SimulationMaster
     hemelb::topology::NetworkTopology* mNetworkTopology;
 
     hemelb::steering::ClientConnection* clientConnection;
-    hemelb::steering::Control *steeringController;
+    hemelb::steering::ImageSendComponent *imageSendCpt;
     hemelb::steering::SteeringComponent* steeringCpt;
 
     hemelb::lb::SimulationState mSimulationState;
-    hemelb::lb::StabilityTester * mStabilityTester;
+    hemelb::lb::StabilityTester* mStabilityTester;
     hemelb::lb::LBM *mLbm;
     hemelb::net::Net *mNet;
 

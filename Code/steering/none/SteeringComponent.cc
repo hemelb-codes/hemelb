@@ -15,9 +15,7 @@ namespace hemelb
      * @param iSimState
      * @return
      */
-    SteeringComponent::SteeringComponent(bool* iIsNetworkSending,
-                                         int imagesPeriod,
-                                         sem_t* varLock,
+    SteeringComponent::SteeringComponent(int imagesPeriod,
                                          ClientConnection* iClientConnection,
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,

@@ -6,7 +6,6 @@
 #include <netinet/in.h>
 
 #include "steering/ClientConnection.h"
-#include "HttpPost.h"
 
 namespace hemelb
 {
