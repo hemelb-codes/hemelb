@@ -15,17 +15,6 @@ namespace hemelb
         int IsTerminating;
         int DoRendering;
         int Stability;
-        sem_t Rendering;
-
-        SimulationState()
-        {
-          sem_init(&Rendering, 0, 1);
-        }
-
-        ~SimulationState()
-        {
-          sem_destroy(&Rendering);
-        }
     };
   }
 }

@@ -7,9 +7,7 @@ namespace hemelb
 {
   namespace steering
   {
-    SteeringComponent::SteeringComponent(bool* iIsNetworkSending,
-                                         int imagesPeriod,
-                                         sem_t* varLock,
+    SteeringComponent::SteeringComponent(int imagesPeriod,
                                          ClientConnection* iClientConnection,
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
@@ -17,7 +15,6 @@ namespace hemelb
                                          const topology::NetworkTopology *iNetTop,
                                          lb::SimulationState * iSimState) :
       net::PhasedBroadcast(iNet, iNetTop, iSimState, SPREADFACTOR), imagesPeriod(imagesPeriod),
-          isNetworkSending(iIsNetworkSending), mVariableLock(varLock),
           mClientConnection(iClientConnection), mLbm(iLbm), mSimState(iSimState),
           mVisControl(iVisControl)
     {
@@ -73,7 +70,7 @@ namespace hemelb
        * the way early on.
        */
       {
-        privateSteeringParams[STEERABLE_PARAMETERS] = (float) ( (isConnected && !*isNetworkSending)
+        privateSteeringParams[STEERABLE_PARAMETERS] = (float) ( (isConnected)
             || (mSimState->TimeStep % imagesPeriod >= 0 && mSimState->TimeStep % imagesPeriod
                 < (int) GetRoundTripLength()));
 
@@ -161,6 +158,8 @@ namespace hemelb
 
     void SteeringComponent::Effect()
     {
+      // TODO we need to make sure that doing this doesn't overwrite the values in the config.xml file.
+      // At the moment, it definitely does.
       AssignValues();
     }
   }
