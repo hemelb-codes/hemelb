@@ -1,5 +1,5 @@
-#ifndef HEMELB_STEERING_ON_NETWORK_H
-#define HEMELB_STEERING_ON_NETWORK_H
+#ifndef HEMELB_STEERING_NETWORK_H
+#define HEMELB_STEERING_NETWORK_H
 
 namespace hemelb
 {
@@ -11,6 +11,7 @@ namespace hemelb
       public:
         // Receive a bytestream of known length from a socket into a buffer.
         static int recv_all(int sockid, char *buf, const int length);
+
         // Send all bytes from a buffer of known length over a socket.
         static int send_all(int sockid, const char *buf, const int length);
     };
@@ -18,4 +19,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_STEERING_ON_NETWORK_H
+#endif // HEMELB_STEERING_NETWORK_H

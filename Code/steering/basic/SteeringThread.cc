@@ -12,99 +12,89 @@ namespace hemelb
   namespace steering
   {
 
-    SteeringThread::SteeringThread(int fd, Control* controller) :
-      mSteeringController(controller), mFdInt(fd)
+    SteeringThread::SteeringThread(ClientConnection* iClientConn, sem_t* bSteeringVariableLock) :
+      mClientConn(iClientConn), mSteeringVariableLock(bSteeringVariableLock)
     {
     }
 
-    // Make it joinable
-    pthread_attr_t* SteeringThread::GetPthreadAttributes()
-    {
-      pthread_attr_t* attr = new pthread_attr_t;
-
-      pthread_attr_init(attr);
-      pthread_attr_setdetachstate(attr, PTHREAD_CREATE_JOINABLE);
-      return attr;
-    }
-
-    // The work routine of the thread.
+    // The work routine of the thread - reads data from the socket to the client.
     // This is original code with minimal tweaks to make it work with
     // the new (Oct 2010) structure.
     void SteeringThread::DoWork(void)
     {
-      // printf("Kicking off steering thread with FD %i\n", read_fd);
+      // Create a buffer for the data received.
+      const int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
+      const int bytes = sizeof(char) * num_chars;
 
-      int num_chars = STEERABLE_PARAMETERS * sizeof(float) / sizeof(char);
-      int bytes = sizeof(char) * num_chars;
+      char steeringRecvBuffer[bytes];
 
-      char* steeringRecvBuffer = new char[bytes];
-
-      while (1)
+      // This outer loop is infinite - we keep receiving frame after frame.
+      while (true)
       {
-        //XDR xdr_steering_stream;
+        // Initialise the stream reader.
+        io::XdrMemReader steeringStream(steeringRecvBuffer, bytes);
 
-        //xdrmem_create(&xdr_steering_stream, xdr_steering_data, bytes,
-        //              XDR_DECODE);
-        io::XdrMemReader* steeringStream =
-            new io::XdrMemReader(steeringRecvBuffer, bytes);
+        bool readOK = false;
 
-        while (1)
+        // Keep looping until we receive a frame.
+        while (true)
         {
-          struct timeval tv;
-          fd_set readfds;
-          int steerDataRecvB = 0;
+          int mSocketFileDescriptor = mClientConn->GetWorkingSocket();
 
-          tv.tv_sec = 0;
-          tv.tv_usec = 0;
-
-          FD_ZERO(&readfds);
-          FD_SET(mFdInt, &readfds);
-
-          select(mFdInt + 1, &readfds, NULL, NULL, &tv);
-          // printf("STEERING: Polling..\n"); fflush(0x0);
-
-          if (FD_ISSET(mFdInt, &readfds))
+          // Add the socket to a list to be checked for read-readiness.
+          fd_set readableDescriptors;
           {
-            /* If there's something to read, read it... */
-            //        printf("STEERING: Got data\n"); fflush(0x0);
-            steerDataRecvB = Network::recv_all(mFdInt, steeringRecvBuffer,
-                                               num_chars);
+            struct timeval tv;
+            tv.tv_sec = 0;
+            tv.tv_usec = 0;
+
+            FD_ZERO(&readableDescriptors);
+            FD_SET(mSocketFileDescriptor, &readableDescriptors);
+
+            select(mSocketFileDescriptor + 1, &readableDescriptors, NULL, NULL, &tv);
+          }
+
+          // If the socket is readable, read from it.
+          if (FD_ISSET(mSocketFileDescriptor, &readableDescriptors))
+          {
+            // Try to receive all the data.
+            int steerDataRecvB = Network::recv_all(mSocketFileDescriptor, steeringRecvBuffer,
+                                                   num_chars);
+
+            // If there was an error, report it and return.
+            if (steerDataRecvB < 0)
+            {
+              printf("Steering thread: broken network pipe...\n");
+              mClientConn->ReportBroken(mSocketFileDescriptor);
+              break;
+            }
+
+            readOK = true;
+
+            // Otherwise yield the thread, and break from the loop as we've received the data we need.
             sched_yield();
             break;
           }
+          // If the socket isn't readable, sleep for a bit before trying again.
           else
           {
             usleep(5000);
+            sched_yield();
           }
-
-          if (steerDataRecvB < 0)
-          {
-            printf("Steering thread: broken network pipe...\n");
-            delete steeringStream;
-            delete[] steeringRecvBuffer;
-            return;
-          }
-          sched_yield();
         }
-        // pthread_mutex_lock(&steer_param_lock);
 
-        sem_wait(&mSteeringController->steering_var_lock);
+        // We've got a frame. Lock the steering variables, and
+        // write to them.
+        if (readOK)
+        {
+          sem_wait(mSteeringVariableLock);
 
-        for (int i = 0; i < STEERABLE_PARAMETERS; i++)
-          //xdr_float(&xdr_steering_stream, &steering::steer_par[i]);
-          steeringStream->readFloat(steering::steer_par[i]);
+          for (int i = 0; i < STEERABLE_PARAMETERS; i++)
+            steeringStream.readFloat(steering::steer_par[i]);
 
-        sem_post(&mSteeringController->steering_var_lock);
-
-        if (steering::steer_par[14] > -1.0 && steering::steer_par[15] > -1.0)
-          mSteeringController->updated_mouse_coords = 1;
-
-        delete steeringStream;
+          sem_post(mSteeringVariableLock);
+        }
       }
-      delete[] steeringRecvBuffer;
-
-      return;
-
     }
 
   }

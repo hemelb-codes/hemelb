@@ -1,4 +1,4 @@
-#Wed Jan 19 13:17:26 GMT 2011
+#Thu Feb 17 12:06:43 GMT 2011
 eclipse.preferences.version=1
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/delimiter=\:
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/operation=append
@@ -11,6 +11,17 @@ environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/TIXML_USE_TICP
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/TIXML_USE_TICPP/value=
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/append=true
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/appendContributed=true
+indexer/filesToParseUpFront=cstdarg, stdarg.h, stddef.h, sys/resource.h, ctime, sys/types.h, signal.h, cstdio
+indexer/indexAllFiles=true
+indexer/indexUnusedHeadersWithAlternateLang=false
+indexer/indexUnusedHeadersWithDefaultLang=false
+indexer/indexerId=org.eclipse.cdt.core.fastIndexer
+indexer/skipFilesLargerThanMB=8
+indexer/skipImplicitReferences=false
+indexer/skipMacroReferences=false
+indexer/skipReferences=false
+indexer/skipTypeReferences=false
+indexer/useHeuristicIncludeResolution=true
 org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=18
 org.eclipse.cdt.core.formatter.alignment_for_base_clause_in_type_declaration=83
 org.eclipse.cdt.core.formatter.alignment_for_compact_if=0
