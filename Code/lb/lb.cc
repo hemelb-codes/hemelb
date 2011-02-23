@@ -207,6 +207,12 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
+    void LBM::Initialise(int* iFTranslator, StabilityTester* iStabTester)
+    {
+      receivedFTranslator = iFTranslator;
+      mStabilityTester = iStabTester;
+    }
+
     void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
     {
       double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
@@ -259,16 +265,30 @@ namespace hemelb
     // when the convergence criterion is not applied. Communications
     // automatically handle the streaming stage pertaining to neighbouring
     // subdomains.
-    hemelb::lb::Stability LBM::DoCycle(int perform_rt,
-                                       Net *net,
-                                       hemelb::lb::LocalLatticeData &bLocalLatDat,
-                                       double &bLbTime,
-                                       double &bMPISendTime,
-                                       double &bMPIWaitTime)
+    Stability LBM::DoCycle(int perform_rt,
+                           net::Net *net,
+                           LocalLatticeData *bLocalLatDat,
+                           double &bLbTime,
+                           double &bMPISendTime,
+                           double &bMPIWaitTime)
     {
-      net->ReceiveFromNeighbouringProcessors(bLocalLatDat);
+      for (std::vector<hemelb::topology::NeighbouringProcessor*>::const_iterator it =
+          mNetTopology->NeighbouringProcs.begin(); it != mNetTopology->NeighbouringProcs.end(); it++)
+      {
+        // Request the receive into the appropriate bit of FOld.
+        net->RequestReceive<double> (&bLocalLatDat->FOld[ (*it)->FirstSharedF],
+                                      (*it)->SharedFCount, (*it)->Rank);
 
-      int offset = bLocalLatDat.my_inner_sites;
+        // Request the send from the right bit of
+        net->RequestSend<double> (&bLocalLatDat->FNew[ (*it)->FirstSharedF], (*it)->SharedFCount,
+                                   (*it)->Rank);
+      }
+
+      mStabilityTester->RequestComms();
+
+      net->Receive();
+
+      int offset = bLocalLatDat->my_inner_sites;
 
       double lPreLbTimeOne = MPI_Wtime();
 
@@ -277,16 +297,16 @@ namespace hemelb
         GetCollision(collision_type)->DoCollisions(
                                                    perform_rt,
                                                    offset,
-                                                   bLocalLatDat.my_inter_collisions[collision_type],
-                                                   mParams, mMinsAndMaxes, bLocalLatDat,
+                                                   bLocalLatDat->my_inter_collisions[collision_type],
+                                                   mParams, mMinsAndMaxes, *bLocalLatDat,
                                                    hemelb::vis::controller);
-        offset += bLocalLatDat.my_inter_collisions[collision_type];
+        offset += bLocalLatDat->my_inter_collisions[collision_type];
       }
 
       double lPreSendTime = MPI_Wtime();
       bLbTime += (lPreSendTime - lPreLbTimeOne);
 
-      net->SendToNeighbouringProcessors(bLocalLatDat);
+      net->Send();
 
       double lPreLbTimeTwo = MPI_Wtime();
       bMPISendTime += (lPreLbTimeTwo - lPreSendTime);
@@ -298,16 +318,24 @@ namespace hemelb
         GetCollision(collision_type)->DoCollisions(
                                                    perform_rt,
                                                    offset,
-                                                   bLocalLatDat.my_inner_collisions[collision_type],
-                                                   mParams, mMinsAndMaxes, bLocalLatDat,
+                                                   bLocalLatDat->my_inner_collisions[collision_type],
+                                                   mParams, mMinsAndMaxes, *bLocalLatDat,
                                                    hemelb::vis::controller);
-        offset += bLocalLatDat.my_inner_collisions[collision_type];
+        offset += bLocalLatDat->my_inner_collisions[collision_type];
       }
 
       double lPreMPIWaitTime = MPI_Wtime();
       bLbTime += (lPreMPIWaitTime - lPreLbTimeTwo);
 
-      net->UseDataFromNeighbouringProcs(bLocalLatDat);
+      net->Wait(bLocalLatDat);
+
+      // Copy the distribution functions received from the neighbouring
+      // processors into the destination buffer "f_new".
+      for (int i = 0; i < mNetTopology->TotalSharedFs; i++)
+      {
+        bLocalLatDat->FNew[receivedFTranslator[i]]
+            = bLocalLatDat->FOld[mNetTopology->NeighbouringProcs[0]->FirstSharedF + i];
+      }
 
       double lPrePostStepTime = MPI_Wtime();
       bMPIWaitTime += (lPrePostStepTime - lPreMPIWaitTime);
@@ -318,27 +346,29 @@ namespace hemelb
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->PostStep(perform_rt, offset,
-                                               bLocalLatDat.my_inner_collisions[collision_type],
-                                               mParams, mMinsAndMaxes, bLocalLatDat,
+                                               bLocalLatDat->my_inner_collisions[collision_type],
+                                               mParams, mMinsAndMaxes, *bLocalLatDat,
                                                hemelb::vis::controller);
-        offset += bLocalLatDat.my_inner_collisions[collision_type];
+        offset += bLocalLatDat->my_inner_collisions[collision_type];
       }
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->PostStep(perform_rt, offset,
-                                               bLocalLatDat.my_inter_collisions[collision_type],
-                                               mParams, mMinsAndMaxes, bLocalLatDat,
+                                               bLocalLatDat->my_inter_collisions[collision_type],
+                                               mParams, mMinsAndMaxes, *bLocalLatDat,
                                                hemelb::vis::controller);
-        offset += bLocalLatDat.my_inter_collisions[collision_type];
+        offset += bLocalLatDat->my_inter_collisions[collision_type];
       }
 
       bLbTime += (MPI_Wtime() - lPrePostStepTime);
 
+      mStabilityTester->PostReceive();
+
       // Swap f_old and f_new ready for the next timestep.
-      double *temp = bLocalLatDat.FOld;
-      bLocalLatDat.FOld = bLocalLatDat.FNew;
-      bLocalLatDat.FNew = temp;
+      double *temp = bLocalLatDat->FOld;
+      bLocalLatDat->FOld = bLocalLatDat->FNew;
+      bLocalLatDat->FNew = temp;
 
       return hemelb::lb::Stable;
     }
@@ -405,33 +435,10 @@ namespace hemelb
       inlets = inlets;
     }
 
-    int LBM::IsUnstable(hemelb::lb::LocalLatticeData &iLocalLatDat)
-    {
-      int is_unstable, stability;
-
-      is_unstable = 0;
-
-      for (int i = 0; i < iLocalLatDat.GetLocalFluidSiteCount(); i++)
-      {
-        for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
-        {
-          if (iLocalLatDat.FOld[i * D3Q15::NUMVECTORS + l] < 0.)
-          {
-            is_unstable = 1;
-          }
-        }
-      }
-
-      MPI_Allreduce(&is_unstable, &stability, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-      is_unstable = stability;
-
-      return is_unstable;
-    }
-
     // Update peak and average inlet velocities local to the current subdomain.
     void LBM::UpdateInletVelocities(int time_step,
-                                    hemelb::lb::LocalLatticeData &iLocalLatDat,
-                                    Net *net)
+                                    lb::LocalLatticeData &iLocalLatDat,
+                                    net::Net *net)
     {
       double density;
       double vx, vy, vz;
@@ -566,6 +573,8 @@ namespace hemelb
       RecalculateTauViscosityOmega();
 
       SetInitialConditions(iLocalLatDat);
+
+      mStabilityTester->Reset();
     }
 
     double LBM::GetMinPhysicalPressure()
@@ -595,6 +604,9 @@ namespace hemelb
 
     LBM::~LBM()
     {
+      // Delete the translator between received location and location in f_new.
+      delete[] receivedFTranslator;
+
       // Delete arrays allocated for the inlets
       delete[] inlet_density;
       delete[] inlet_density_avg;

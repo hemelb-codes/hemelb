@@ -6,7 +6,8 @@ SRCS := HttpPost.cc \
 	Control.cc \
 	Threadable.cc \
 	NetworkThread.cc \
-	SteeringThread.cc
+	SteeringThread.cc \
+        ClientConnection.cc
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

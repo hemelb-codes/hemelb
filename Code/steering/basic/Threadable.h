@@ -9,7 +9,7 @@ namespace hemelb
   {
 
     class Threadable
-    /*
+    /**
      * An abstract class wrapping a pthread.
      * You must implement the pure virtual method
      * void DoWork(void) which is executed in the
@@ -30,9 +30,6 @@ namespace hemelb
         // Pure virtual worker method, implement this in
         // your subclass.
         virtual void DoWork(void) = 0;
-
-        // Override this to change the thread attributes
-        virtual pthread_attr_t* GetPthreadAttributes(void);
 
         void Exit(void);
 

@@ -28,15 +28,14 @@ namespace hemelb
       vis->half_dim[2] = 0.5F * float (iGlobLatDat.GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
-      col_pixels_max = COLOURED_PIXELS_MAX;
 
-      col_pixel_recv[0] = new ColPixel[col_pixels_max];
-      col_pixel_recv[1] = new ColPixel[col_pixels_max];
+      col_pixel_recv[0] = new ColPixel[MAXCOLOUREDPIXELS];
+      col_pixel_recv[1] = new ColPixel[MAXCOLOUREDPIXELS];
 
-      pixels_max = COLOURED_PIXELS_MAX;
+      pixels_max = MAXCOLOUREDPIXELS;
       col_pixel_id = new int[pixels_max];
 
-      for (int i = 0; i < COLOURED_PIXELS_MAX; i++)
+      for (int i = 0; i < MAXCOLOUREDPIXELS; i++)
       {
         col_pixel_id[i] = -1;
       }
@@ -629,7 +628,7 @@ namespace hemelb
         myGlypher->render();
       }
 #ifndef NO_STREAKLINES
-      if (shouldDrawStreaklines && (mStressType == lb::ShearStress || mode == 2))
+      if (mStressType == lb::ShearStress || mode == 2)
       {
         myStreaker->render(iGlobLatDat);
       }

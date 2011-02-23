@@ -23,8 +23,9 @@ void Tests::TestDomainDecomposition()
   char ** lNamePtr = &lName;
   bool lSuccess;
 
-  hemelb::topology::NetworkTopology * lNetTop =
-      new hemelb::topology::NetworkTopology(&lInputs, &lNamePtr, &lSuccess);
+  hemelb::topology::NetworkTopology * lNetTop = new hemelb::topology::NetworkTopology(&lInputs,
+                                                                                      &lNamePtr,
+                                                                                      &lSuccess);
 
   hemelb::lb::GlobalLatticeData lGlobLatDat;
 
@@ -35,17 +36,15 @@ void Tests::TestDomainDecomposition()
 
   MakeAGlobLatDat(lGlobLatDat);
 
-  int lFluidSites = lGlobLatDat.GetBlockCount()
-      * lGlobLatDat.SitesPerBlockVolumeUnit;
+  int lFluidSites = lGlobLatDat.GetBlockCount() * lGlobLatDat.SitesPerBlockVolumeUnit;
 
   double lExpectedPerRank = ((double) lFluidSites) / ((double) lProcCount - 1);
 
-  lNetTop->DecomposeDomain(lFluidSites, lGlobLatDat);
+  lNetTop->DecomposeDomain(lFluidSites, true, lGlobLatDat);
 
   for (int ii = 1; ii < lProcCount; ii++)
   {
-    if (std::abs(lExpectedPerRank
-        - (double) lNetTop->FluidSitesOnEachProcessor[ii]) > 1.0)
+    if (std::abs(lExpectedPerRank - (double) lNetTop->FluidSitesOnEachProcessor[ii]) > 1.0)
     {
       printf(
              "Domain decomposition problem: Expecting %f sites per processor, but rank %d had %d.\n",
@@ -71,8 +70,7 @@ void Tests::MakeAGlobLatDat(hemelb::lb::GlobalLatticeData & oGlobLatDat)
             = new int[oGlobLatDat.SitesPerBlockVolumeUnit];
         for (int lSite = 0; lSite < oGlobLatDat.SitesPerBlockVolumeUnit; lSite++)
         {
-          oGlobLatDat .Blocks[x * 64 + y * 8 + z].ProcessorRankForEachBlockSite[lSite]
-              = -1;
+          oGlobLatDat .Blocks[x * 64 + y * 8 + z].ProcessorRankForEachBlockSite[lSite] = -1;
         }
       }
     }

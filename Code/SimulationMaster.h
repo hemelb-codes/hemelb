@@ -2,8 +2,8 @@
 #define HEMELB_SIMULATIONMASTER_H
 
 #include "lb/lb.h"
-#include "net.h"
-#include "steering/basic/Control.h"
+#include "net/net.h"
+#include "steering/Control.h"
 
 class SimulationMaster
 {
@@ -43,8 +43,9 @@ class SimulationMaster
 
     hemelb::steering::Control *steeringController;
     hemelb::lb::SimulationState mSimulationState;
+    hemelb::lb::StabilityTester * mStabilityTester;
     hemelb::lb::LBM *mLbm;
-    Net *mNet;
+    hemelb::net::Net *mNet;
 
     int mImagesWritten;
     int mSnapshotsWritten;

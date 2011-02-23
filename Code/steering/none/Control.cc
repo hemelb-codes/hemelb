@@ -1,4 +1,4 @@
-#include "steering/none/Control.h"
+#include "steering/Control.h"
 #include "steering/common/common.h"
 
 namespace hemelb
@@ -7,7 +7,8 @@ namespace hemelb
   namespace steering
   {
 
-    Control::Control(bool isCurrentProcTheSteeringProc)
+    Control::Control(bool isCurrentProcTheSteeringProc) :
+      isConnected(false)
     {
     }
 
@@ -32,6 +33,11 @@ namespace hemelb
 
     // Do we need to render a frame for the client?
     bool Control::ShouldRenderForNetwork()
+    {
+      return false;
+    }
+
+    bool Control::RequiresSeparateSteeringCore() const
     {
       return false;
     }

@@ -26,7 +26,7 @@ namespace hemelb
 
       protected:
         XdrReader();
-        XDR* mXdr;
+        XDR mXdr;
 
     };
   }

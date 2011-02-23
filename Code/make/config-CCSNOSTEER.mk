@@ -1,10 +1,6 @@
-# -*- mode: makefile; -*-
-CXX := mpic++.openmpi
+include $(MK)/config-CCS-base.mk
 
-EXE := hemelb
+HEMELB_STEERING_LIB := none
 
-HEMELB_DEFS := CCS NO_STEER
-
-HEMELB_CXXFLAGS :=-O3 -pthread -Wunused
-
-# vim: set ft=make :
+HEMELB_CXXFLAGS += -O4
+HEMELB_CCFLAGS += -O4
