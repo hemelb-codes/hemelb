@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from copy import copy
 from vtk import vtkPlaneSource
+import numpy as np
 
 from HemeLbSetupTool.Util.Observer import Observable
 from HemeLbSetupTool.Model.Vector import Vector
@@ -52,6 +53,41 @@ class Iolet(Observable):
         p.SetNormal(self.Normal.x, self.Normal.y, self.Normal.z)
         
         return p
+    
+    def IntersectWithLine(self, p1, p2):
+        """Given a line defined by the two points p1,p2; and a plane defined by the
+        normal n and point p0, compute an intersection. The parametric
+        coordinate along the line is returned in t, and the coordinates of 
+        intersection are returned in x. A zero is returned if the plane and line
+        do not intersect between (0<=t<=1). If the plane and line are parallel,
+        zero is returned and t is set to VTK_LARGE_DOUBLE.
+        """
+        tol = 1e-6
+        n = np.array([self.Normal.x, self.Normal.y, self.Normal.z])
+        p0 =np.array([self.Centre.x, self.Centre.y, self.Centre.z])
+        # Compute line vector
+        p21 = np.array(p2) - p1
+    
+        # Compute denominator.  If ~0, line and plane are parallel.
+        num = np.dot(n,p0) - np.dot(n ,p1)
+        den = np.dot(n, p21)
+        
+        # If denominator with respect to numerator is "zero", then the line and
+        # plane are considered parallel. 
+        if np.fabs(den) <= np.fabs(num*tol):
+            return np.finfo(float).max, None
+        
+        # valid intersection
+        t = num / den
+        x = p1 + t * p21
+        
+        rSq = np.sum((x - p0)**2)
+        
+        if rSq <= self.Radius:
+            return t, x
+        
+        return np.finfo(float).max, None
+
     pass
 
 class SinusoidalPressureIolet(Iolet):
