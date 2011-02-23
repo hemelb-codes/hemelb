@@ -1,11 +1,10 @@
 include $(MK)/header.mk
 
 SRCS := HttpPost.cc \
-	Network.cc \
-	SimulationParameters.cc \
-	Control.cc \
-	Threadable.cc \
-	NetworkThread.cc \
+        Network.cc \
+        SimulationParameters.cc \
+        Threadable.cc \
+        ImageSendComponent.cc \
         ClientConnection.cc \
         SteeringComponent.cc
 
