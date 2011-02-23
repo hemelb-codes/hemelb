@@ -21,14 +21,9 @@ namespace hemelb
 
     }
 
-    double ImageSendComponent::frameTiming(void)
-    {
-
-    }
-
     int ImageSendComponent::SendSuccess(int iSocket, char * data, int length)
     {
-
+      return -1;
     }
 
     bool ImageSendComponent::ShouldRenderNewNetworkImage()
