@@ -73,9 +73,7 @@ class ConfigGenerator(object):
             # the case where there are no fluid sites).
             with writer.BlockStarted() as blockWriter:
                 for site in block.IterSites():
-                    if i == 29:
-                        j += 1
-#                        print j
+                    j += 1
                     
                     self.ClassifySite(site)
                     # cache the type cos it's probably slow to compute
@@ -147,7 +145,7 @@ class ConfigGenerator(object):
             
             nHits = 0
             
-            for hitDist, hitPoint, hitObj in self.IterHitsForLink(site.Position, neigh.Position):
+            for hitPoint, hitObj in self.IterHitsForLink(site.Position, neigh.Position):
                 nHits += 1
                 if nHits == 1:
                     # First hit, assign stuff for site
@@ -294,51 +292,7 @@ class ConfigGenerator(object):
 
     pass
     
-class HitListIterator(object):
-    
-    def next(self):
-        i = self.i
-        if i < len(self):
-            self.i += 1
-            return self[i]
-        else:
-            return None
-        return
-    pass
-
-class IoletHitList(HitListIterator):
-    def __init__(self, iolets, start, end):
-        self.HitDists = []
-        self.HitPoints = []
-        self.HitIolets = []
-
-        for io in iolets:
-            parametricDist, point = io.IntersectWithLine(start, end)
-            if parametricDist >= 0. and parametricDist < 1.:
-                # Real intersection
-                self.insert(parametricDist, point, io)
-                pass
-            continue
-        
-        self.i = 0
-        return
-    
-        
-    def __len__(self):
-        return len(self.HitDists)
-    def __getitem__(self,i):
-        return self.HitDists[i], self.HitPoints[i], self.HitIolets[i]
-    
-    def insert(self, dist, point, iolet):
-        i = bisect.bisect_right(self.HitDists, dist)
-        self.HitDists.insert(i, dist)
-        self.HitPoints.insert(i, point)
-        self.HitIolets.insert(i, iolet)
-        return
-    
-    pass
-
-class StlHitList(HitListIterator):
+class StlHitList(object):
     def __init__(self, locator, start, end):
         self.HitPoints = vtkPoints()
         self.HitCellIds= vtkIdList()
@@ -367,9 +321,8 @@ class StlHitList(HitListIterator):
         if i >= self.len: raise IndexError
          
         hit = self.HitPoints.GetPoint(i)
-        dist = sqrt(np.sum((hit-self.start)**2) / self._denom)
         
-        return dist, hit, self.HitCellIds.GetId(i)
+        return hit, self.HitCellIds.GetId(i)
     pass
 
 class IntegerAdder(vtkProgrammableFilter):
@@ -457,6 +410,7 @@ class Writer(object):
                 
         encoder = xdrlib.Packer()
         # Write the preamble, starting with the stress type
+        print 'Preamble start: %x' % self.file.tell()
         encoder.pack_int(StressType)
         
         # Blocks in each dimension
@@ -468,7 +422,9 @@ class Writer(object):
         
         # Write this to the file
         self.file.write(encoder.get_buffer())
-        
+        print 'Preamble end: %x' % self.file.tell()
+        print 'Dummy header start: %x' % self.file.tell()
+
         # Reset, we're going to write a dummy header now
         encoder.reset()
         # For each block
@@ -482,7 +438,8 @@ class Writer(object):
         self.file.write(encoder.get_buffer())
         # Note the start of the body
         self.bodyStart = self.file.tell()
-        
+        print 'Dummy header end: %x' % self.file.tell()
+
         self.HeaderEncoder = xdrlib.Packer()
         return
     
@@ -506,6 +463,8 @@ class Writer(object):
         
         encoder.IncrementFluidSitesCount = incrementor
         # Give the altered XDR encoder back to our caller
+        print 'Block start: %x' % self.file.tell()
+
         yield encoder
         
         # Write our record into the header buffer
@@ -517,11 +476,13 @@ class Writer(object):
             self.HeaderEncoder.pack_uint(0)
         else:
             # Write the block to the main file 
+
             blockStart = self.file.tell()
             self.file.write(encoder.get_buffer())
             blockEnd = self.file.tell()
             self.HeaderEncoder.pack_uint(blockEnd - blockStart)
             pass
+        print 'Block end: %x' % self.file.tell()
         
         return
     
@@ -715,14 +676,14 @@ class LatticeSite(object):
     
     @property
     def Config(self):
-        type = self.Type
+        cfg = self.Type
         if not self.IsFluid:
-            return type
+            return self.Type
         
         # Fluid sites now
-        if type == FLUID_TYPE and not self.IsEdge:
+        if self.Type == FLUID_TYPE and not self.IsEdge:
             # Simple fluid sites
-            return type
+            return self.Type
         
         # A complex one
         
@@ -730,8 +691,7 @@ class LatticeSite(object):
             # Bit fiddle the boundary config. See comment below
             # by BOUNDARY_CONFIG_MASK for definition.
             boundary = 0
-            for i, cut in enumerate(self.CutDistances):
-                neigh = self.block.GetSite(*(self.ijk+self.neighbours[i]))
+            for i, neigh in self.EnumerateNeighbours():
                 if not neigh.IsFluid:
                     # If the lattice vector is cut, set the flag
                     boundary |= 1 << i
@@ -739,31 +699,40 @@ class LatticeSite(object):
                 continue
             # Shift the boundary bit field to the appropriate
             # place and set these bits in the type
-            type |= boundary << BOUNDARY_CONFIG_SHIFT
+            cfg |= boundary << BOUNDARY_CONFIG_SHIFT
             
             if boundary:
                 # Set this bit if we've hit any solid sites
-                type  |= PRESSURE_EDGE_MASK
+                cfg  |= PRESSURE_EDGE_MASK
                 pass
             pass
         
-        if type != FLUID_TYPE:
+        if self.Type != FLUID_TYPE:
             # It must be an inlet or outlet
             # Shift the index left and set the bits
-            type |= self.BoundaryId << BOUNDARY_ID_SHIFT
+            cfg |= self.BoundaryId << BOUNDARY_ID_SHIFT
             pass
         
-        return type
+        return cfg
     
-    def IterNeighbours(self):
-        """Create an iterator for our neighbours.
+    def EnumerateNeighbours(self):
+        """Create an iterator that enumerates our neighbours.
         """
-        for ijk in self.IterNeighbourIndices():
-            yield self.block.GetSite(*ijk)
+        domain = self.block.domain
+        shape = domain.BlockCounts * domain.BlockSize
+        for i, neigh in enumerate(self.neighbours):
+            ind = self.ijk + neigh
+            # Skip any out of range
+            if np.any(ind<0) or np.any(ind>=shape):
+                continue
+            
+            yield i, self.block.GetSite(ind[0], ind[1], ind[2])
             continue
         return
     
     def EnumerateLaterNeighbours(self):
+        """Create an iterator that enumerates our neighbours who're later in the array.
+        """
         domain = self.block.domain
         shape = domain.BlockCounts * domain.BlockSize
         for i in self.laterNeighbourInds:
@@ -776,22 +745,6 @@ class LatticeSite(object):
             yield i, self.block.GetSite(ind[0], ind[1], ind[2])
             continue
         return
-
-    def IterNeighbourIndices(self):
-        """Create an iterator for the indices of our neighbours.
-        """
-        domain = self.block.domain
-        shape = domain.BlockCounts * domain.BlockSize
-        for neigh in self.neighbours:
-            ind = self.ijk + neigh
-            # Skip any out of range
-            if np.any(ind<0) or np.any(ind>=shape):
-                continue
-            
-            yield tuple(ind)
-            continue
-        return
-    
     pass
 
 # Site types
