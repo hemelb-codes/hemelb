@@ -3,7 +3,6 @@ include $(MK)/header.mk
 SRCS := HttpPost.cc \
         Network.cc \
         SimulationParameters.cc \
-        Threadable.cc \
         ImageSendComponent.cc \
         ClientConnection.cc \
         SteeringComponent.cc
