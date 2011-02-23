@@ -1,10 +1,15 @@
 from contextlib import contextmanager
 import xdrlib
 import numpy as np
+from math import sqrt
+import bisect
 
 from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, vtkPolyData, \
-    vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkSelectEnclosedPoints, vtkCellLocator, \
-    vtkPoints, vtkIdList, vtkPolyDataNormals, vtkProgrammableFilter
+    vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkCellLocator, \
+    vtkPoints, vtkIdList, vtkPolyDataNormals, vtkProgrammableFilter, vtkOBBTree, vtkXMLPolyDataWriter, vtkTriangleFilter, vtkCleanPolyData, vtkIntArray
+
+from .Iolets import Inlet, Outlet, Iolet
+
 import pdb
 
 class ConfigGenerator(object):
@@ -14,56 +19,91 @@ class ConfigGenerator(object):
             setattr(self, k, getattr(profile, k))
             continue
         # Pull in the StlReader too
-        self.SurfaceSource = profile.StlReader
+        self.StlReader = profile.StlReader
+        
+        self.ClippedSurface = self.ConstructClipPipeline()
+        self.Locator = vtkOBBTree()
+        self.Locator.SetTolerance(0.)
+        
         return
     
     def Execute(self):
         """Create the output based on our configuration.
         """
-        clipper = self.ConstructClipPipeline()
+        # Work out the indices of the IOlets 
+        nIn = 0
+        nOut= 0
+        for io in self.Iolets:
+            if isinstance(io, Inlet):
+                io.Index = nIn
+                nIn += 1
+            elif isinstance(io, Outlet):
+                io.Index = nOut
+                nOut += 1
+                pass
+            continue
+        
         # Run the pipeline as we need it to build the locator
-        clipper.Update()
-        surface = clipper.GetOutput()
+        self.ClippedSurface.Update()
+        surface = self.ClippedSurface.GetOutput()
         
-        self.Locator = locator = vtkCellLocator()
-        locator.SetDataSet(surface)
-        locator.BuildLocator()
+#        writer = vtkXMLPolyDataWriter()
+#        writer.SetFileName('/Users/rupert/tmp/surf2.vtp')
+#        writer.SetInputConnection(self.ClippedSurface.GetOutputPort())
+#        writer.Write()
         
-        checker = self.IsEnclosedChecker = vtkSelectEnclosedPoints()
-        checker.Initialize(surface)
+        # Create the locator
+        self.Locator.SetDataSet(surface)
+        self.Locator.BuildLocator()
+        
         
         domain = Domain(self.VoxelSize, surface.GetBounds())
-        # Will eventually use this point with the vtkCellLocator to test for interior-ness
-        self.ExternalPoint = domain.Origin
         
         writer = Writer(OutputConfigFile=self.OutputConfigFile,
                         StressType=self.StressType,
                         BlockSize=domain.BlockSize,
                         BlockCounts=domain.BlockCounts)
         
-        
+        i = -1
+        j = -1
         for block in domain.SmartIterBlocks():
+            i +=1
             # Open the BlockStarted context of the writer; this will
             # deal with flushing the state to the file (or not, in
             # the case where there are no fluid sites).
             with writer.BlockStarted() as blockWriter:
                 for site in block.IterSites():
-                    self.ClassifySite(site)
+                    if i == 29:
+                        j += 1
+#                        print j
                     
-                    blockWriter.pack_uint(site.Type)
-                    if site.Type == SOLID_TYPE:
+                    self.ClassifySite(site)
+                    # cache the type cos it's probably slow to compute
+                    type = site.Type
+                    cfg = site.Config
+                    blockWriter.pack_uint(cfg)
+                    
+                    if type == SOLID_TYPE:
                         # Solid sites, we don't do anything
                         continue
+                    
                     # Increase count of fluid sites
                     blockWriter.IncrementFluidSitesCount()
                     
-                    if site.Type == FLUID_TYPE:
+                    if cfg == FLUID_TYPE:
                         # Pure fluid sites don't need any more data
                         continue
                     
                     # It must be INLET/OUTLET/EDGE
-                    for n in site.Normal: blockWriter.pack_double(n)
-                    blockWriter.pack_double(site.BoundaryDistance)
+                    
+                    if type == INLET_TYPE or type == OUTLET_TYPE:
+                        for n in site.BoundaryNormal: blockWriter.pack_double(n)
+                        blockWriter.pack_double(site.BoundaryDistance)
+                        pass
+                    
+                    if site.IsEdge:
+                        for n in site.WallNormal: blockWriter.pack_double(n)
+                        blockWriter.pack_double(site.WallDistance)
                     
                     for cd in site.CutDistances: blockWriter.pack_double(cd)
                     
@@ -75,24 +115,100 @@ class ConfigGenerator(object):
         writer.RewriteHeader()
         return
 
-    def IsSiteEnclosed(self, site):
-        if site.IsFluid is not None:
-            return site.IsFluid
+    def IterHitsForLink(self, start, end):
+        # Intersect against the STL surface
+        stlHits = StlHitList(self.Locator, start, end)
+                 
+        # Now start yielding intersections
+        topStl = stlHits.next()
+          
+        while topStl is not None:
+            yield topStl
+            topStl = stlHits.next()
+            continue
         
-        ans = site.IsFluid = self.IsEnclosedChecker.IsInsideSurface(site.Position)
-        return ans
+        return
     
     def ClassifySite(self, site):
         
-        if not self.IsSiteEnclosed(site):
+        if site.IsFluid is None:
+            # We're the first site; if we're not, the IsFluid flag
+            # will have been set to True/False below
+            if self.Locator.InsideOrOutside(site.Position) < 0:
+                # vtkOBBTree.InsideOrOutside returns -1 for inside
+                site.IsFluid = True
+            else:
+                site.IsFluid = False
+                pass
+            pass
+        
+        for i, neigh in site.EnumerateLaterNeighbours():
+            # Check our neighbours, who are further on, logically, in the whole array
+            
+            nHits = 0
+            
+            for hitDist, hitPoint, hitObj in self.IterHitsForLink(site.Position, neigh.Position):
+                nHits += 1
+                if nHits == 1:
+                    # First hit, assign stuff for site
+                    # TODO: Figure out if this has to be in physical or lattice units.
+                    site.CutDistances[i] = sqrt(np.sum((hitPoint-site.Position)**2))
+                    site.IsEdge = True
+                    site.CutCellIds[i] = hitObj
+                    
+                    pass
+                
+                continue
+            
+            # If we had any hits, we need to set the last one for the reverse link
+            # hit* above will handily have the right values
+            if nHits > 0:
+                neigh.IsEdge = True
+                neigh.CutDistances[i] = sqrt(np.sum((hitPoint-neigh.Position)**2))
+                neigh.CutCellIds[i] = hitObj
+                pass
+            
+            # Count hits and set the neighbour's fluid flag
+            if nHits % 2 == 0:
+                neigh.IsFluid = site.IsFluid
+            else:
+                neigh.IsFluid = not site.IsFluid
+            continue
+        
+        if not site.IsFluid or not site.IsEdge:
+            # Nothing more to do for solid sites or simple fluid sites
             return
         
-        for i, neigh in enumerate(site.IterNeighbours()):
-            if not self.IsSiteEnclosed(neigh):
-                # We're an edge
+        celldata = self.ClippedSurface.GetOutput().GetCellData()
+        normals = celldata.GetNormals()
+        ioletIds = celldata.GetScalars()
+        
+        site.IsEdge = False
+        for i, hitCellId in enumerate(site.CutCellIds):
+            if hitCellId == -1:
+                # Didn't hit in this direction
+                continue
+            
+            ioletId = ioletIds.GetValue(hitCellId)
+            if ioletId >= 0:
+                # It's an iolet
+                if site.CutDistances[i] < site.BoundaryDistance:
+                    io = site.Iolet = self.Iolets[ioletId]
+                    site.BoundaryDistance = site.CutDistances[i]
+                    site.BoundaryNormal[:] = io.Normal.x, io.Normal.y, io.Normal.z
+                    site.BoundaryId = io.Index
+                    pass
+                
+            else:
+                # It's wall
                 site.IsEdge = True
-                site.CutDistances[i] = 1.0
+                if site.CutDistances[i] < site.WallDistance:
+                    # If it's the closest point yet, store it
+                    site.WallDistance = site.CutDistances[i]
+                    site.WallNormal[:] = normals.GetTuple3(hitCellId)
+                    pass
                 pass
+            
             continue
         
         return
@@ -100,13 +216,20 @@ class ConfigGenerator(object):
     def ConstructClipPipeline(self):
         """Clip the PolyData read from the STL file against the planes.
         """
+        # Add the Iolet id -1 to all cells first
+        adder = IntegerAdder(Value=-1)
+        adder.SetInputConnection(self.StlReader.GetOutputPort())
+        
         # Have the name pdSource first point to the input, then loop
         # over IOlets, clipping and capping.
-        pdSource = self.SurfaceSource
-        
-        for iolet in self.Iolets:
+        pdSource = adder
+        for i, iolet in enumerate(self.Iolets):
 #            pdb.set_trace()
             plane = vtkPlane()
+            # Shift the plane back a bit, to avoid the messy polygons
+#            plane.SetOrigin(iolet.Centre.x - 1e-9*self.VoxelSize*iolet.Normal.x,
+#                            iolet.Centre.y - 1e-9*self.VoxelSize*iolet.Normal.y,
+#                            iolet.Centre.z - 1e-9*self.VoxelSize*iolet.Normal.z)
             plane.SetOrigin(iolet.Centre.x, iolet.Centre.y, iolet.Centre.z)
             plane.SetNormal(iolet.Normal.x, iolet.Normal.y, iolet.Normal.z)
             # TODO: switch from this simple ImplicitPlane (i.e.
@@ -124,29 +247,32 @@ class ConfigGenerator(object):
             filter.SetClosestPoint(self.SeedPoint.x, self.SeedPoint.y, self.SeedPoint.z)
             filter.SetExtractionModeToClosestPointRegion()
             
-            # Get any edges of the mesh, will give us a PolyLine
+            # Get any edges of the mesh
             edger = vtkFeatureEdges()
             edger.BoundaryEdgesOn()
             edger.FeatureEdgesOff()
             edger.NonManifoldEdgesOff()
             edger.ManifoldEdgesOff()
             edger.SetInputConnection(filter.GetOutputPort())
-            
+            # Convert the edges to a polyline
             stripper = vtkStripper()
             stripper.SetInputConnection(edger.GetOutputPort())
             stripper.Update()
-            
-            # TODO: Want to convert this to an algorithm to make the whole process a pipeline
+            # Turn the poly line to a polygon
             faceMaker = PolyLinesToCapConverter()
             faceMaker.SetInputConnection(stripper.GetOutputPort())
-#            face = vtkPolyData()
-#            face.SetPoints(stripper.GetOutput().GetPoints())
-#            face.SetPolys(stripper.GetOutput().GetLines())
+            # Triangulate it
+            triangulator = vtkTriangleFilter()
+            triangulator.SetInputConnection(faceMaker.GetOutputPort())
+            
+            # Add the index of the iolet to the cell data
+            idAdder = IntegerAdder(Value=i)
+            idAdder.SetInputConnection(triangulator.GetOutputPort())
             
             # Join the two together
             joiner = vtkAppendPolyData()
             joiner.AddInputConnection(filter.GetOutputPort())
-            joiner.AddInputConnection(faceMaker.GetOutputPort())
+            joiner.AddInputConnection(idAdder.GetOutputPort())
 #            filter.Update()
 #            joiner.AddInput(filter.GetOutput())
 #            joiner.AddInput(face)
@@ -155,13 +281,123 @@ class ConfigGenerator(object):
             pdSource = joiner
             continue
         
+        cleaner = vtkCleanPolyData()
+        cleaner.SetTolerance(0.)
+        cleaner.SetInputConnection(pdSource.GetOutputPort())
+        
         normer = vtkPolyDataNormals()
-        normer.SetInputConnection(pdSource.GetOutputPort())
+        normer.SetInputConnection(cleaner.GetOutputPort())
         normer.ComputeCellNormalsOn()
         normer.ComputePointNormalsOff()
 
         return normer
 
+    pass
+    
+class HitListIterator(object):
+    
+    def next(self):
+        i = self.i
+        if i < len(self):
+            self.i += 1
+            return self[i]
+        else:
+            return None
+        return
+    pass
+
+class IoletHitList(HitListIterator):
+    def __init__(self, iolets, start, end):
+        self.HitDists = []
+        self.HitPoints = []
+        self.HitIolets = []
+
+        for io in iolets:
+            parametricDist, point = io.IntersectWithLine(start, end)
+            if parametricDist >= 0. and parametricDist < 1.:
+                # Real intersection
+                self.insert(parametricDist, point, io)
+                pass
+            continue
+        
+        self.i = 0
+        return
+    
+        
+    def __len__(self):
+        return len(self.HitDists)
+    def __getitem__(self,i):
+        return self.HitDists[i], self.HitPoints[i], self.HitIolets[i]
+    
+    def insert(self, dist, point, iolet):
+        i = bisect.bisect_right(self.HitDists, dist)
+        self.HitDists.insert(i, dist)
+        self.HitPoints.insert(i, point)
+        self.HitIolets.insert(i, iolet)
+        return
+    
+    pass
+
+class StlHitList(HitListIterator):
+    def __init__(self, locator, start, end):
+        self.HitPoints = vtkPoints()
+        self.HitCellIds= vtkIdList()
+        locator.IntersectWithLine(start, end, self.HitPoints, self.HitCellIds)
+        self.len = self.HitPoints.GetNumberOfPoints()
+        
+        self.start = start
+        self.end = end
+        self._denom = np.sum((end - start)**2)
+        self.i = 0
+        return
+    
+    def next(self):
+        i = self.i
+        if i < self.len:
+            self.i += 1
+            return self[i]
+        else:
+            return None
+ 
+    def __len__(self):
+        return self.len
+    
+    def __getitem__(self, i):
+        if i < 0: raise IndexError
+        if i >= self.len: raise IndexError
+         
+        hit = self.HitPoints.GetPoint(i)
+        dist = sqrt(np.sum((hit-self.start)**2) / self._denom)
+        
+        return dist, hit, self.HitCellIds.GetId(i)
+    pass
+
+class IntegerAdder(vtkProgrammableFilter):
+    def __init__(self, Value=-1):
+        self.SetExecuteMethod(self.Execute)
+        self.Value = Value
+        return
+    
+    def SetValue(self, val):
+        self.Value = val
+        return
+    def GetValue(self):
+        return self.Value
+    
+    def Execute(self, *args):
+        # Get the strips
+        input = self.GetPolyDataInput()
+        values = vtkIntArray()
+        values.SetNumberOfTuples(input.GetNumberOfCells())
+        values.FillComponent(0, self.Value)
+        
+        # Get the out PD
+        out = self.GetPolyDataOutput()
+        out.CopyStructure(input)
+        out.GetCellData().SetScalars(values)
+        
+        return
+    
     pass
 
 class PolyLinesToCapConverter(vtkProgrammableFilter):
@@ -186,6 +422,27 @@ class PolyLinesToCapConverter(vtkProgrammableFilter):
         return
     pass
 
+class PolyLinesToRefinedCapConverter(vtkProgrammableFilter):
+    """Given an input vtkPolyData object, containing the output of
+    a vtkStripper (i.e. PolyLines), convert this to polygons
+    covering the surface enclosed by the PolyLines.    
+    """
+    def __init__(self):
+        self.SetExecuteMethod(self.Execute)
+        
+    def Execute(self, *args):
+        # Get the strips
+        strips = self.GetPolyDataInput()
+        
+        # Get the out PD
+        out = self.GetPolyDataOutput()
+        out.PrepareForNewData()
+        # Do a trick to set the points and poly of the cap
+        out.SetPoints(strips.GetPoints())
+        out.SetPolys(strips.GetLines())
+        
+        return
+    pass
 class Writer(object):
     """Generates the HemeLB input file.
     """
@@ -402,8 +659,6 @@ class MacroBlock(object):
         return self.GetLocalSite(*localSiteIjk)
     
     def CalcPositionFromIndex(self, index):
-        if self.domain is None:
-            pdb.set_trace()
         return self.domain.CalcPositionFromIndex(index)
     pass
 
@@ -423,7 +678,7 @@ class LatticeSite(object):
                            [-1, 1,-1],
                            [ 1,-1,-1],
                            [-1, 1, 1]])
-    
+    laterNeighbourInds = [0, 2, 4, 6, 8, 10, 12]
     def __init__(self, block=None, ijk=(0,0,0)):
         self.block = block
         self.ijk = ijk
@@ -431,33 +686,75 @@ class LatticeSite(object):
         
         self.IsFluid = None
         self.IsEdge = None
-        self.IsInlet = None
-        self.IsOutlet = None
+        self.Iolet = None
         self.BoundaryId = None
         
         # Attributes that will be updated by Profile.ClassifySite
 #        self.Type = None
-        self.Normal = None
-        self.BoundaryDistance = None
-        self.CutDistances = -1. * np.ones(len(self.neighbours))
+        self.BoundaryNormal = np.zeros(3)
+        self.BoundaryDistance = float('inf')
         
+        self.WallNormal = np.zeros(3)
+        self.WallDistance = float('inf')
+        
+        self.CutDistances = 1. / np.zeros(len(self.neighbours), dtype=float)
+        self.CutCellIds = -np.ones(len(self.neighbours), dtype=int)
         return
+    
     @property
     def Type(self):
-        type = SOLID_TYPE
         if self.IsFluid:
-            type = FLUID_TYPE
-            if self.IsEdge:
+            if isinstance(self.Iolet, Inlet):
+                return INLET_TYPE
+            elif isinstance(self.Iolet, Outlet):
+                return OUTLET_TYPE
+            else:
+                return FLUID_TYPE
+        else:
+            return SOLID_TYPE
+    
+    @property
+    def Config(self):
+        type = self.Type
+        if not self.IsFluid:
+            return type
+        
+        # Fluid sites now
+        if type == FLUID_TYPE and not self.IsEdge:
+            # Simple fluid sites
+            return type
+        
+        # A complex one
+        
+        if self.IsEdge:
+            # Bit fiddle the boundary config. See comment below
+            # by BOUNDARY_CONFIG_MASK for definition.
+            boundary = 0
+            for i, cut in enumerate(self.CutDistances):
+                neigh = self.block.GetSite(*(self.ijk+self.neighbours[i]))
+                if not neigh.IsFluid:
+                    # If the lattice vector is cut, set the flag
+                    boundary |= 1 << i
+                    pass
+                continue
+            # Shift the boundary bit field to the appropriate
+            # place and set these bits in the type
+            type |= boundary << BOUNDARY_CONFIG_SHIFT
+            
+            if boundary:
+                # Set this bit if we've hit any solid sites
                 type  |= PRESSURE_EDGE_MASK
                 pass
-            
-            
-            return FLUID_TYPE
+            pass
         
-        if self.IsFluid is None:
-            return None
+        if type != FLUID_TYPE:
+            # It must be an inlet or outlet
+            # Shift the index left and set the bits
+            type |= self.BoundaryId << BOUNDARY_ID_SHIFT
+            pass
         
-        return SOLID_TYPE
+        return type
+    
     def IterNeighbours(self):
         """Create an iterator for our neighbours.
         """
@@ -466,6 +763,20 @@ class LatticeSite(object):
             continue
         return
     
+    def EnumerateLaterNeighbours(self):
+        domain = self.block.domain
+        shape = domain.BlockCounts * domain.BlockSize
+        for i in self.laterNeighbourInds:
+            neigh = self.neighbours[i]
+            ind = self.ijk + neigh
+            # Skip any out of range
+            if np.any(ind<0) or np.any(ind>=shape):
+                continue
+            
+            yield i, self.block.GetSite(ind[0], ind[1], ind[2])
+            continue
+        return
+
     def IterNeighbourIndices(self):
         """Create an iterator for the indices of our neighbours.
         """
