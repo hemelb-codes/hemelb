@@ -1,5 +1,4 @@
 #include <pthread.h>
-
 #include "steering/basic/Threadable.h"
 
 namespace hemelb
@@ -9,27 +8,19 @@ namespace hemelb
 
     Threadable::Threadable()
     {
-      mPthreadAttributes = GetPthreadAttributes();
     }
 
     Threadable::~Threadable()
     {
-      delete mPthreadAttributes;
-    }
-
-    pthread_attr_t* Threadable::GetPthreadAttributes(void)
-    {
-      return NULL;
     }
 
     int Threadable::Run(void)
     {
-      return pthread_create(&mPthread, mPthreadAttributes,
-                            Threadable::PthreadLaunch,
-                            static_cast<void*> (this));
+      return pthread_create(&mPthread, NULL, Threadable::PthreadLaunch, static_cast<void*> (this));
     }
 
-    void Threadable::Exit(void) {
+    void Threadable::Exit(void)
+    {
       pthread_exit(&mPthread);
     }
 

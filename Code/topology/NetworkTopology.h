@@ -13,8 +13,6 @@ namespace hemelb
     class NeighbouringProcessor
     {
       public:
-        ~NeighbouringProcessor();
-
         // Rank of the neighbouring processor.
         int Rank;
 
@@ -24,32 +22,25 @@ namespace hemelb
         // Index on this processor of the first distribution shared between this
         // neighbour and the current processor.
         int FirstSharedF;
-
-        // Array of the indexes corresponding to received distributions.
-        int * SharedFReceivingIndex;
     };
 
     class NetworkTopology
     {
       public:
-        NetworkTopology(int * argCount,
-                        char *** argList,
-                        bool * oMachineDiscoverySuccess);
+        NetworkTopology(int * argCount, char *** argList, bool * oMachineDiscoverySuccess);
 
         ~NetworkTopology();
 
         bool IsCurrentProcTheIOProc() const;
 
         // Functions for getting the rank of this processor and the total size
-        /// of the topology.
+        // of the topology.
         int GetLocalRank() const;
         int GetProcessorCount() const;
-
         int GetDepths() const;
         int GetMachineCount() const;
 
-        void DecomposeDomain(int iTotalFluidSites,
-                             const lb::GlobalLatticeData & bGlobLatDat);
+        void DecomposeDomain(int iTotalFluidSites, bool iReserveSteeringCore, const lb::GlobalLatticeData & bGlobLatDat);
 
         // Number of local distributions shared with neighbouring processors.
         int TotalSharedFs;

@@ -8,7 +8,8 @@
 #include <semaphore.h>
 
 #include "lb/lb.h"
-#include "steering/basic/Control.h"
+#include "steering/Control.h"
+#include "steering/basic/ClientConnection.h"
 #include "steering/common/common.h"
 
 namespace hemelb
@@ -23,7 +24,6 @@ namespace hemelb
     {
       // From main()
       sem_init(&nrl, 0, 1);
-      //sem_init(&connected_sem, 0, 1);
       sem_init(&steering_var_lock, 0, 1);
     }
 
@@ -32,9 +32,9 @@ namespace hemelb
       if (mIsCurrentProcTheSteeringProc)
       {
         delete mNetworkThread;
+        delete mSteeringThread;
       }
       sem_destroy(&nrl);
-      //sem_destroy(&connected_sem);
       sem_destroy(&steering_var_lock);
     }
 
@@ -45,11 +45,12 @@ namespace hemelb
     {
       if (mIsCurrentProcTheSteeringProc)
       {
-        pthread_mutex_init(&LOCK, NULL);
-        pthread_cond_init(&network_send_frame, NULL);
-
-        mNetworkThread = new NetworkThread(lbm, this, iSimState, iLbmParams);
+        ClientConnection* clientConnection = new ClientConnection(lbm->steering_session_id);
+        mNetworkThread = new NetworkThread(lbm, this, iSimState, iLbmParams, clientConnection);
         mNetworkThread->Run();
+
+        mSteeringThread = new SteeringThread(clientConnection, &steering_var_lock);
+        mSteeringThread->Run();
       }
     }
 
@@ -112,8 +113,15 @@ namespace hemelb
       pixels_x = steer_par[12];
       pixels_y = steer_par[13];
 
-      visControl->mouse_x = int (steer_par[14]);
-      visControl->mouse_y = int (steer_par[15]);
+      int newMouseX = int (steer_par[14]);
+      int newMouseY = int (steer_par[15]);
+
+      if (newMouseX != visControl->mouse_x || newMouseY != visControl->mouse_y)
+      {
+        updated_mouse_coords = true;
+        visControl->mouse_x = newMouseX;
+        visControl->mouse_y = newMouseY;
+      }
 
       lSimulationState.IsTerminating = int (steer_par[16]);
 
@@ -156,6 +164,10 @@ namespace hemelb
       return isConnected.GetValue() && !sending_frame;
     }
 
+    bool Control::RequiresSeparateSteeringCore() const
+    {
+      return true;
+    }
   }
 
 }

@@ -4,7 +4,7 @@
 #include "mpiInclude.h"
 #include "lb/LbmParameters.h"
 #include "lb/GlobalLatticeData.h"
-#include "net.h"
+#include "net/net.h"
 
 namespace hemelb
 {
@@ -19,15 +19,15 @@ namespace hemelb
         ~TopologyReader();
 
         void
-        LoadAndDecompose(hemelb::lb::GlobalLatticeData &bGlobalLatticeData,
-                         Net *net,
-                         hemelb::lb::LbmParameters * bLbmParams,
+        LoadAndDecompose(lb::GlobalLatticeData &bGlobalLatticeData,
+                         net::Net *net,
+                         lb::LbmParameters * bLbmParams,
                          SimConfig * bSimConfig);
 
         void
         PreReadConfigFile(MPI_File xiFile,
-                          hemelb::lb::LbmParameters * bParams,
-                          hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
+                          lb::LbmParameters * bParams,
+                          lb::GlobalLatticeData &bGlobalLatticeData);
 
       private:
 
@@ -41,9 +41,9 @@ namespace hemelb
 
         void
             GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
-                                     Net *iNet,
+                                     net::Net *iNet,
                                      MPI_File iFile,
-                                     const hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
+                                     const lb::GlobalLatticeData &bGlobalLatticeData);
         void
             GetInitialSiteDistribution(unsigned long oFirstBlockIdForEachProc[],
                                        unsigned long oFirstSiteIdForEachProc[],

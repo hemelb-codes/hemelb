@@ -82,7 +82,7 @@ namespace hemelb
     }
 
     void TopologyReader::GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
-                                                  Net* iNet,
+                                                  net::Net* iNet,
                                                   MPI_File iFile,
                                                   const hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
     {
@@ -336,9 +336,9 @@ namespace hemelb
 
     }
 
-    void TopologyReader::LoadAndDecompose(hemelb::lb::GlobalLatticeData &bGlobalLatticeData,
-                                          Net *net,
-                                          hemelb::lb::LbmParameters * bLbmParams,
+    void TopologyReader::LoadAndDecompose(lb::GlobalLatticeData &bGlobalLatticeData,
+                                          net::Net *net,
+                                          lb::LbmParameters * bLbmParams,
                                           SimConfig * bSimConfig)
     {
       MPI_File lFile;

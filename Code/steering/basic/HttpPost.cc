@@ -1,5 +1,3 @@
-#define _DEBUG_PRINT(X)   /* X */
-
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -7,7 +5,6 @@
 #include <netdb.h>
 #include <cstring>
 #include <cstdio>
-
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -17,10 +14,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <netdb.h>
-
 #include <sys/utsname.h>
-
-#define MYPORT 65250
 
 #include "steering/basic/HttpPost.h"
 
@@ -30,12 +24,13 @@ namespace hemelb
 {
   namespace steering
   {
-    
-    void HttpPost::get_host_details(char* rank_0_host_details, char* ip_addr __attribute__((unused)))
+
+    void HttpPost::get_host_details(char* rank_0_host_details)
     {
       // This really does modify the strings passed in. Without
       // checking their lengths, of course.
       char hostname[256];
+      char ip_addr[16];
 
       // On specific machines, just get the host name and insert it into the rank_0_host_details parameter
 #ifdef NGS2Leeds
@@ -59,205 +54,211 @@ namespace hemelb
       sprintf(rank_0_host_details, "%s.ncsa.teragrid.org:%i", hostname, MYPORT);
       fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #else
-  
+
       // If not on a specific known machine, need to do something more clever.
-      struct utsname  name;
-      struct hostent *host;
-  
+      struct utsname name;
+
       if (uname(&name) < 0)
-	{
-	  fprintf(stderr, "STEER: Get_fully_qualified_hostname: uname failed\n");
-	  exit(0x0);
-	}
-  
-      host = gethostbyname(name.nodename);
-  
+      {
+        fprintf(stderr, "STEER: Get_fully_qualified_hostname: uname failed\n");
+        exit(0x0);
+      }
+
+      // Get information about our host.
+      struct hostent *host = gethostbyname(name.nodename);
+
       // Now go through every associated IP adress, and use the first valid, public one.
       for (int address_id = 0; address_id < 4; address_id++)
-	{
-	  if (host->h_addr_list[address_id] == NULL) break;
-      
-	  printf("checking Address ID %i..\n", address_id);
-      
-	  if (host->h_length == 4) {
-	
-	    sprintf(ip_addr, "%d.%d.%d.%d",
-		    (unsigned char)(host->h_addr_list[address_id][0]),
-		    (unsigned char)(host->h_addr_list[address_id][1]),
-		    (unsigned char)(host->h_addr_list[address_id][2]),
-		    (unsigned char)(host->h_addr_list[address_id][3]));
-	
-	    printf("NAME %s IP %s\n", host->h_name, ip_addr);
-	
-	    if ( (unsigned char)(host->h_addr_list[address_id][0]) == 10 )
-	      {
-		printf("IP %s is not public..\n", ip_addr);
-		continue;
-	      }
-	
-	    if ( (unsigned char)(host->h_addr_list[address_id][0]) == 127 )
-	      {
-		printf("IP %s is not public..\n", ip_addr);
-		continue;
-	      }
-	
-	    if( (unsigned char)(host->h_addr_list[address_id][0]) == 172 &&
-		(unsigned char)(host->h_addr_list[address_id][1]) == 16 )
-	      {
-		printf("IP %s is not public..\n", ip_addr);
-		continue;
-	      }
-	
-	    if( (unsigned char)(host->h_addr_list[address_id][0]) == 192 &&
-		(unsigned char)(host->h_addr_list[address_id][1]) == 168 &&
-		(unsigned char)(host->h_addr_list[address_id][1]) == 0  )
-	      {
-		printf("IP %s is not public..\n", ip_addr);
-		continue;
-	      }
-	
-	  } else {
-	
-	    printf("address is not IP4..\n");
-	    continue;
-	  }
-	}
-  
+      {
+        // If no address, break.
+        if (host->h_addr_list[address_id] == NULL)
+          break;
+
+        printf("checking Address ID %i...\n", address_id);
+
+        // If IP4, print details.
+        if (host->h_length != 4)
+        {
+          printf("address is not IP4..\n");
+          continue;
+        }
+
+        sprintf(ip_addr, "%d.%d.%d.%d", (unsigned char) (host->h_addr_list[address_id][0]),
+                (unsigned char) (host->h_addr_list[address_id][1]),
+                (unsigned char) (host->h_addr_list[address_id][2]),
+                (unsigned char) (host->h_addr_list[address_id][3]));
+
+        printf("NAME %s IP %s\n", host->h_name, ip_addr);
+
+        // Private addresses (see RFC-1918).
+        if ((unsigned char) (host->h_addr_list[address_id][0]) == 10)
+        {
+          printf("IP %s is not public..\n", ip_addr);
+          continue;
+        }
+
+        // Loopback addresses.
+        if ((unsigned char) (host->h_addr_list[address_id][0]) == 127)
+        {
+          printf("IP %s is not public..\n", ip_addr);
+          continue;
+        }
+
+        // Private addresses.
+        if ((unsigned char) (host->h_addr_list[address_id][0]) == 172
+            && (unsigned char) (host->h_addr_list[address_id][1]) >= 16
+            && (unsigned char) (host->h_addr_list[address_id][1]) < 32)
+        {
+          printf("IP %s is not public..\n", ip_addr);
+          continue;
+        }
+
+        // Private IP addresses.
+        if ((unsigned char) (host->h_addr_list[address_id][0]) == 192
+            && (unsigned char) (host->h_addr_list[address_id][1]) == 168)
+        {
+          printf("IP %s is not public..\n", ip_addr);
+          continue;
+        }
+      }
+
       printf("Public hostname to use will be %s IP %s\n", host->h_name, ip_addr);
-  
+
       sprintf(rank_0_host_details, "%s:%i", host->h_name, MYPORT);
-  
 #endif
     }
 
+    int HttpPost::Send_Request(int iSocket, const char *iMessage)
+    {
+      return send(iSocket, iMessage, strlen(iMessage), 0);
+    }
 
-    /* It's OK, this was written by a Java developer */
+    int HttpPost::request(const char* hostname,
+                          const short port,
+                          const char* api,
+                          const char* resourceid)
+    {
+      // Get the host name to communicate with.
+      char host_name[1024];
+      get_host_details(host_name);
 
-#define SEND_RQ(MSG)				\
-    /*cout<<send_str;*/				\
-    send(sock,MSG,strlen(MSG),0);
+      // Attempt to get a socket to use.
+      int sock = socket(AF_INET, SOCK_STREAM, 0);
+      if (sock == -1)
+      {
+        return -100;
+      }
 
-    int HttpPost::request (const char* hostname, const short port,
-			   const char* api, const char* resourceid,
-			   const char* parameters) {
-  
       sockaddr_in sin;
-      int sock = socket (AF_INET, SOCK_STREAM, 0);
-  
-  
-      if (sock == -1) {
-	return -100;
-      }
-  
       sin.sin_family = AF_INET;
-      sin.sin_port = htons((unsigned short)port);
-  
+      sin.sin_port = htons((unsigned short) port);
+
+      // Get name for the other end of the connection.
       struct hostent * host_addr = gethostbyname(hostname);
-  
-      if(host_addr==NULL) {
-	_DEBUG_PRINT( cout<<"Unable to locate host"<<endl );
-	return -103;
+
+      if (host_addr == NULL)
+      {
+        return -103;
       }
-  
-      sin.sin_addr.s_addr = *((int*)*host_addr->h_addr_list) ;
-      _DEBUG_PRINT( cout<<"Port :"<<sin.sin_port<<", Address : "<< sin.sin_addr.s_addr<<endl);
-  
-      if( connect (sock,(const struct sockaddr *)&sin, sizeof(sockaddr_in) ) == -1 ) {
-	_DEBUG_PRINT( cout<<"connect failed"<<endl ) ;
-	return -101;
+
+      sin.sin_addr.s_addr = * ((int*) *host_addr->h_addr_list);
+
+      // Attempt to connect.
+      if (connect(sock, (const struct sockaddr *) &sin, sizeof(sockaddr_in)) == -1)
+      {
+        return -101;
       }
-  
-      string send_str;
-  
-      SEND_RQ("POST ");
-      SEND_RQ(api);
-      SEND_RQ(resourceid);
-      SEND_RQ(" HTTP/1.0\r\n");
-      SEND_RQ("Accept: */*\r\n");
-      SEND_RQ("User-Agent: Mozilla/4.0\r\n");
-  
+
+      // Now we perform the actual sending.
+      Send_Request(sock, "POST ");
+      Send_Request(sock, api);
+      Send_Request(sock, resourceid);
+      Send_Request(sock, " HTTP/1.0\r\n");
+      Send_Request(sock, "Accept: */*\r\n");
+      Send_Request(sock, "User-Agent: Mozilla/4.0\r\n");
+
       char content_header[100];
-  
-      sprintf(content_header,
-	      "Content-Length: %d\r\n",
-	      int(strlen(parameters)));
-      SEND_RQ(content_header);
-      SEND_RQ("Accept-Language: en-us\r\n");
-      SEND_RQ("Accept-Encoding: gzip, deflate\r\n");
-      SEND_RQ("Host: ");
-      SEND_RQ("hostname");
-      SEND_RQ("\r\n");
-      SEND_RQ("Content-Type: text/plain\r\n");
-  
-      //If you need to send a basic authorization
-      //string Auth        = "username:password";
-      //Figureout a way to encode test into base64 !
-      //string AuthInfo    = base64_encode(reinterpret_cast<const unsigned char*>(Auth.c_str()),Auth.length());
-      //string sPassReq    = "Authorization: Basic " + AuthInfo;
-      //SEND_RQ(sPassReq.c_str());
-  
-      SEND_RQ("\r\n");
-      // SEND_RQ("\r\n");
-      SEND_RQ(parameters);
-      SEND_RQ("\r\n");
-  
-      _DEBUG_PRINT(cout<<"####HEADER####"<<endl);
-  
-      char c1[1];
-      
-      int l,line_length = 0;
+      sprintf(content_header, "Content-Length: %d\r\n", int (strlen(host_name)));
+
+      Send_Request(sock, content_header);
+      Send_Request(sock, "Accept-Language: en-us\r\n");
+      Send_Request(sock, "Accept-Encoding: gzip, deflate\r\n");
+      Send_Request(sock, "Host: ");
+      Send_Request(sock, "hostname");
+      Send_Request(sock, "\r\n");
+      Send_Request(sock, "Content-Type: text/plain\r\n");
+      Send_Request(sock, "\r\n");
+      Send_Request(sock, host_name);
+      Send_Request(sock, "\r\n");
+
+      /* If you need to send a basic authorization
+       *  string Auth        = "username:password";
+       *  Figureout a way to encode test into base64 !
+       *  string AuthInfo    = base64_encode(reinterpret_cast<const unsigned char*>(Auth.c_str()),Auth.length());
+       *  string sPassReq    = "Authorization: Basic " + AuthInfo;
+       *  Send_Request(sock, sPassReq.c_str());
+       *  */
+
+      // Receive 1 character at a time until a whole response is recovered.
+      int line_length = 0;
       bool loop = true;
       bool bHeader = false;
-      
+
       string message;
-  
-      while (loop) {
-	// receive 1 char from the socket
-	l = recv(sock, c1, 1, 0);
-    
-	if (l<0) // an error occured
-	  loop = false;
-	
-	if (c1[0] == '\n') {
-	  // received a newline
-	  if (line_length == 0)
-	    loop = false;
-	  
-	  line_length = 0;
-	  
-	  if (message.find("201 Created") != string::npos)
-	    // found the text in the message
-	    bHeader = true;
-	  
-	} else if (c1[0] != '\r') {
-	  // didn't get newline and didn't get carriage return
-	  line_length++;
-	}
-	
-	_DEBUG_PRINT( cout<<c1[0]);
-	message += c1[0];
+
+      while (loop)
+      {
+        char c1[1];
+
+        // receive 1 char from the socket
+        int l = recv(sock, c1, 1, 0);
+
+        // An error occurred.
+        if (l < 0)
+          loop = false;
+
+        if (c1[0] == '\n')
+        {
+          // Received a newline. If the only character on this line, we're at the end of the
+          // response.
+          if (line_length == 0)
+            loop = false;
+
+          line_length = 0;
+
+          // if the message contains a success response code, we are in the header.
+          if (message.find("201 Created") != string::npos)
+            bHeader = true;
+        }
+        else if (c1[0] != '\r')
+        {
+          // Didn't get newline and didn't get carriage return.
+          line_length++;
+        }
+
+        message += c1[0];
       }
-  
-      message="";
-  
-      if (bHeader) {
-    
-	_DEBUG_PRINT( cout<<"####BODY####"<<endl) ;
-    
-	char p[1024];
-    
-	while((l = recv(sock,p,1023,0)) > 0)
-	  {
-	    _DEBUG_PRINT( cout.write(p,l)) ;
-	    p[l] = '\0';
-	    message += p;
-	  }
-	_DEBUG_PRINT( cout << message.c_str());
-    
-      } else {
-	return -102;
+
+      message = "";
+
+      // If we are indeed reading a header, read the rest of the message.
+      if (bHeader)
+      {
+        char p[1024];
+
+        int l;
+
+        while ( (l = recv(sock, p, 1023, 0)) > 0)
+        {
+          p[l] = '\0';
+          message += p;
+        }
       }
-  
+      else
+      {
+        return -102;
+      }
+
       return 0;
     }
 

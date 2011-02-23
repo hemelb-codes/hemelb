@@ -45,8 +45,7 @@ namespace hemelb
             float dist;
         };
 
-            Control(lb::StressTypes iStressType,
-                    lb::GlobalLatticeData &iGlobLatDat);
+        Control(lb::StressTypes iStressType, lb::GlobalLatticeData &iGlobLatDat);
         ~Control();
         void initLayers(topology::NetworkTopology * iNetworkTopology,
                         lb::GlobalLatticeData &iGlobLatDat,
@@ -107,15 +106,13 @@ namespace hemelb
                         std::string image_file_name,
                         void(*ColourPalette)(float value, float col[]));
         void setMouseParams(double iPhysicalPressure, double iPhysicalStress);
-        void compositeImage(int recv_buffer_id,
-                            const topology::NetworkTopology * iNetTopology);
+        void compositeImage(int recv_buffer_id, const topology::NetworkTopology * iNetTopology);
 
         void RegisterSite(int i, float density, float velocity, float stress);
 
         // better public member vars than globals!
         int mode;
         int image_freq;
-        int shouldDrawStreaklines;
 
         float velocity_threshold_max_inv;
         float stress_threshold_max_inv;
@@ -146,8 +143,7 @@ namespace hemelb
             float system_size;
         };
 
-        int col_pixels, // number of ColPixels (?)
-            col_pixels_max; // max permitted of above
+        int col_pixels; // number of ColPixels (?)
 
         int *col_pixel_id; // array of pixel IDs
 
@@ -166,6 +162,8 @@ namespace hemelb
         StreaklineDrawer *myStreaker;
 
         lb::StressTypes mStressType;
+
+        static const long MAXCOLOUREDPIXELS = 2048 * 2048;
 
     };
 

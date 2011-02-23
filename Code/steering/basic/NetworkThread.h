@@ -1,10 +1,9 @@
 #ifndef HEMELB_STEERING_BASIC_NETWORKTHREAD
 #define HEMELB_STEERING_BASIC_NETWORKTHREAD
 
-#ifndef NO_STEER
 #include <pthread.h>
-#endif
 
+#include "steering/basic/ClientConnection.h"
 #include "steering/basic/Threadable.h"
 #include "lb/SimulationState.h"
 #include "lb/lb.h"
@@ -15,24 +14,29 @@ namespace hemelb
   {
     class Control;
 
+    /**
+     * Class to handle the business of sending imaging and steering data over a network connection,
+     * run on a separate thread.
+     */
     class NetworkThread : public Threadable
     {
       public:
         NetworkThread(lb::LBM* lbm,
                       Control* steeringController,
                       lb::SimulationState* iSimState,
-                      const lb::LbmParameters* iLbmParams);
+                      const lb::LbmParameters* iLbmParams,
+                      ClientConnection* iClientConnection);
 
         ~NetworkThread();
 
-#ifndef NO_STEER
-        static pthread_mutex_t var_lock;
-#endif
-
       private:
+        ClientConnection* mClientConnection;
+
+        static pthread_mutex_t var_lock;
+
         void DoWork(void);
 
-        void HandleBrokenPipe();
+        void HandleBrokenPipe(int iSocket);
 
         lb::LBM* mLbm;
         Control* mSteeringController;
@@ -42,8 +46,7 @@ namespace hemelb
         pthread_attr_t* GetPthreadAttributes(void);
         double frameTiming(void);
 
-        static const unsigned int MYPORT = 65250;
-        static const unsigned int CONNECTION_BACKLOG = 10;
+        char* xdrSendBuffer_pixel_data;
 
         // data per pixel inlude the data for the pixel location and 4 colours
         //in RGB format, thus #bytes per pixel are (sizeof(int)+4
@@ -53,8 +56,6 @@ namespace hemelb
         static const u_int pixel_data_bytes = COLOURED_PIXELS_MAX * bytes_per_pixel_data;
         // it is assumed that the frame size is the only detail
         static const u_int frame_details_bytes = 1 * sizeof(int);
-        char* xdrSendBuffer_pixel_data;
-        char* xdrSendBuffer_frame_details;
 
         void setRenderState(int val);
     };

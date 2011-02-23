@@ -1,7 +1,6 @@
 #ifndef HEMELB_VIS_COLPIXEL_H
 #define HEMELB_VIS_COLPIXEL_H
 
-#define COLOURED_PIXELS_MAX    2048 * 2048
 #include "mpiInclude.h"
 #include "vis/ColourPalette.h"
 #include "lb/LbmParameters.h"

@@ -17,14 +17,10 @@
 #define VELOCITY           1
 #define STRESS             2
 
-#define COMMS_LEVELS                   2
-
 #define BCAST_FREQ   1
 
 #define RECV_BUFFER_A   0
 #define RECV_BUFFER_B   1
-
-#define STEERABLE_PARAMETERS   20
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
 #define mmHg_TO_PASCAL                 133.3223874

@@ -97,7 +97,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 {
   mTimingsFile = bTimingsFile;
 
-  mNet = new Net(mNetworkTopology);
+  mNet = new hemelb::net::Net(mNetworkTopology);
 
   // Initialise the Lbm.
   mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat, iSteeringSessionid,
@@ -113,16 +113,24 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   // Count the domain decomposition time.
   double seconds = hemelb::util::myClock();
 
-  mNetworkTopology->DecomposeDomain(mLbm->total_fluid_sites, mGlobLatDat);
+  mNetworkTopology->DecomposeDomain(mLbm->total_fluid_sites,
+                                    steeringController->RequiresSeparateSteeringCore(), mGlobLatDat);
 
   mDomainDecompTime = hemelb::util::myClock() - seconds;
 
   // Initialise the Net object and the Lbm.
+  mLocalLatDat
+      = new hemelb::lb::LocalLatticeData(
+                                         mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]);
+
+  mStabilityTester = new hemelb::lb::StabilityTester(mLocalLatDat, mNet, mNetworkTopology,
+                                                     &mSimulationState);
 
   seconds = hemelb::util::myClock();
-  mNet->Initialise(mGlobLatDat, mLocalLatDat);
+  int* lReceiveTranslator = mNet->Initialise(mGlobLatDat, mLocalLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
+  mLbm->Initialise(lReceiveTranslator, mStabilityTester);
   mLbm->SetInitialConditions(*mLocalLatDat);
 
   // Initialise the visualisation controller.
@@ -186,7 +194,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       /* In the following two if blocks we do the core magic to ensure we only Render
        when (1) we are not sending a frame or (2) we need to output to disk */
 
-      int render_for_network_stream = 0;
+      bool render_for_network_stream = false;
       if (mNetworkTopology->IsCurrentProcTheIOProc())
       {
         render_for_network_stream = steeringController->ShouldRenderForNetwork();
@@ -211,10 +219,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       mLbm->UpdateBoundaryDensities(mSimulationState.CycleId, mSimulationState.TimeStep);
 
-      stability = mLbm->DoCycle(mSimulationState.DoRendering, mNet, *mLocalLatDat, mLbTime,
+      stability = mLbm->DoCycle(mSimulationState.DoRendering, mNet, mLocalLatDat, mLbTime,
                                 mMPISendTime, mMPIWaitTime);
 
-      if ( (restart = mLbm->IsUnstable(*mLocalLatDat)) != false)
+      restart = (mSimulationState.Stability == hemelb::lb::Unstable);
+      if (restart)
       {
         break;
       }
@@ -226,12 +235,15 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       hemelb::vis::controller->streaklines(mSimulationState.TimeStep, mLbm->period, mGlobLatDat,
                                            *mLocalLatDat);
 #endif
-#ifndef NO_STEER
 
-      if (total_time_steps % BCAST_FREQ == 0 && mSimulationState.DoRendering
+      if (mSimulationState.DoRendering && (total_time_steps % BCAST_FREQ == 0)
           && !write_snapshot_image)
       {
+        sem_wait(&mSimulationState.Rendering);
+
         hemelb::vis::controller->render(RECV_BUFFER_A, mGlobLatDat, mNetworkTopology);
+
+        sem_post(&mSimulationState.Rendering);
 
         if (hemelb::vis::controller->mouse_x >= 0 && hemelb::vis::controller->mouse_y >= 0
             && steeringController->updated_mouse_coords)
@@ -261,11 +273,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         }
         if (mNetworkTopology->IsCurrentProcTheIOProc())
         {
-          steeringController->is_frame_ready = 1;
+          steeringController->is_frame_ready = true;
           sem_post(&steeringController->nrl); // let go of the lock
         }
       }
-#endif // NO_STEER
+
       if (write_snapshot_image)
       {
         hemelb::vis::controller->render(RECV_BUFFER_B, mGlobLatDat, mNetworkTopology);
@@ -296,19 +308,16 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       mSnapshotTime += (MPI_Wtime() - lPreSnapshotTime);
 
-#ifndef NO_STEER
       if (mNetworkTopology->IsCurrentProcTheIOProc())
       {
-        if (render_for_network_stream == 1)
+        if (render_for_network_stream)
         {
           // printf("sending signal to thread that frame is ready to go...\n"); fflush(0x0);
           sched_yield();
           sem_post(&steeringController->nrl);
-          //pthread_mutex_unlock (&LOCK);
-          //pthread_cond_signal (&network_send_frame);
         }
       }
-#endif
+
       if (stability == hemelb::lb::StableAndConverged)
       {
         is_finished = true;

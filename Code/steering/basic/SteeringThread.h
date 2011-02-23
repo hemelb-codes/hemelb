@@ -1,8 +1,9 @@
 #ifndef HEMELB_STEERING_BASIC_STEERINGTHREAD
 #define HEMELB_STEERING_BASIC_STEERINGTHREAD
 
+#include <semaphore.h>
+#include "steering/basic/ClientConnection.h"
 #include "steering/basic/Threadable.h"
-#include "steering/basic/Control.h"
 
 namespace hemelb
 {
@@ -12,13 +13,13 @@ namespace hemelb
     class SteeringThread : public Threadable
     {
       public:
-        SteeringThread(int fd, Control* controller);
+        SteeringThread(ClientConnection* iClientConn, sem_t * bVariableEditSempahore);
+
       private:
         void DoWork(void);
-        pthread_attr_t* GetPthreadAttributes(void);
 
-        Control* mSteeringController;
-        int mFdInt;
+        ClientConnection* mClientConn;
+        sem_t* mSteeringVariableLock;
     };
 
   }

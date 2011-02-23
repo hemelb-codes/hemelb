@@ -7,7 +7,8 @@ namespace hemelb
   {
     namespace _private
     {
-      /* Base class for singleton behaviour.
+      /**
+       * Base class for singleton behaviour.
        * Uses CRTP to do static polymorphism.
        */
       template<typename Derived>
