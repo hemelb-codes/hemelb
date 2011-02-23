@@ -17,24 +17,23 @@ namespace hemelb
      */
     SteeringComponent::SteeringComponent(bool* iIsNetworkSending,
                                          int imagesPeriod,
+                                         sem_t* varLock,
                                          ClientConnection* iClientConnection,
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
                                          const topology::NetworkTopology *iNetTop,
                                          lb::SimulationState * iSimState) :
-      net::PhasedBroadcast(iNet, iNetTop, iSimState, SPREADFACTOR)
+      net::PhasedBroadcast(iNet, iNetTop, iSimState, SPREADFACTOR), imagesPeriod(imagesPeriod),
+          mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl)
     {
-
+      Reset();
+      AssignValues();
     }
 
     bool SteeringComponent::RequiresSeparateSteeringCore()
     {
       return false;
-    }
-    void SteeringComponent::Reset()
-    {
-
     }
 
     void SteeringComponent::ProgressFromChildren()
@@ -70,7 +69,8 @@ namespace hemelb
 
     void SteeringComponent::Effect()
     {
-
+      mSimState->DoRendering = ( (mSimState->TimeStep % imagesPeriod >= 0 && mSimState->TimeStep
+          % imagesPeriod < (int) GetRoundTripLength()));
     }
   }
 }

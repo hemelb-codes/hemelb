@@ -24,9 +24,12 @@ namespace hemelb
                           const topology::NetworkTopology *iNetTop,
                           lb::SimulationState * iSimState);
 
-        void Reset();
-
         static bool RequiresSeparateSteeringCore();
+
+        /*
+         * This function initialises all of the steering parameters, on all nodes.
+         */
+        void Reset();
 
       protected:
         void ProgressFromChildren();
@@ -41,6 +44,8 @@ namespace hemelb
         void Effect();
 
       private:
+        void AssignValues();
+
         const static int STEERABLE_PARAMETERS = 20;
         const static int SPREADFACTOR = 10;
 
