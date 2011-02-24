@@ -18,16 +18,19 @@ namespace hemelb
         TopologyReader();
         ~TopologyReader();
 
-        void
-        LoadAndDecompose(lb::GlobalLatticeData &bGlobalLatticeData,
-                         net::Net *net,
-                         lb::LbmParameters * bLbmParams,
-                         SimConfig * bSimConfig);
+        void LoadAndDecompose(lb::GlobalLatticeData &bGlobalLatticeData,
+                              net::Net *net,
+                              lb::LbmParameters * bLbmParams,
+                              SimConfig * bSimConfig);
 
-        void
-        PreReadConfigFile(MPI_File xiFile,
+        void ReadPreamble(MPI_File xiFile,
                           lb::LbmParameters * bParams,
                           lb::GlobalLatticeData &bGlobalLatticeData);
+
+        void ReadHeader(MPI_File xiFile,
+                        unsigned int iBlockCount,
+                        unsigned int* sitesInEachBlock,
+                        unsigned int* bytesUsedByBlockInDataFile);
 
       private:
 
@@ -39,18 +42,16 @@ namespace hemelb
          int * lToBlockId,
          int * lToSiteId);*/
 
-        void
-            GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
-                                     net::Net *iNet,
-                                     MPI_File iFile,
-                                     const lb::GlobalLatticeData &bGlobalLatticeData);
-        void
-            GetInitialSiteDistribution(unsigned long oFirstBlockIdForEachProc[],
-                                       unsigned long oFirstSiteIdForEachProc[],
-                                       unsigned long oNumberSitesPerProc[],
-                                       unsigned long oTotalSiteCount,
-                                       const int iNonSolidSitesPerBlock[],
-                                       const hemelb::lb::GlobalLatticeData & iGlobLatDat);
+        void GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
+                                      net::Net *iNet,
+                                      MPI_File iFile,
+                                      const lb::GlobalLatticeData &bGlobalLatticeData);
+        void GetInitialSiteDistribution(unsigned long oFirstBlockIdForEachProc[],
+                                        unsigned long oFirstSiteIdForEachProc[],
+                                        unsigned long oNumberSitesPerProc[],
+                                        unsigned long oTotalSiteCount,
+                                        const int iNonSolidSitesPerBlock[],
+                                        const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
         void ReadInBlocks(const unsigned long iFirstBlockIdForEachProc[],
                           const unsigned long iFirstSiteNumberForEachProc[],
@@ -59,23 +60,17 @@ namespace hemelb
                           const int iNonSolidSitesPerBlock[],
                           const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
-        void
-            OptimiseDomainDecomposition(const unsigned long iFirstBlockIdForEachProc[],
-                                        const unsigned long iFirstSiteIdForEachProc[],
-                                        const unsigned long iNumberSitesPerProc[],
-                                        const unsigned long iTotalSiteCount,
-                                        const int iNonSolidSitesPerBlock[],
-                                        const hemelb::lb::GlobalLatticeData & iGlobLatDat);
+        void OptimiseDomainDecomposition(const unsigned long iFirstBlockIdForEachProc[],
+                                         const unsigned long iFirstSiteIdForEachProc[],
+                                         const unsigned long iNumberSitesPerProc[],
+                                         const unsigned long iTotalSiteCount,
+                                         const int iNonSolidSitesPerBlock[],
+                                         const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
         MPI_Comm mCommunicator;
         MPI_Group mGroup;
         int mRank;
         int mSize;
-
-        // The config file starts with a double and 4 ints.
-        // In Xdr this occupies 8 + 4 * 4 bytes.
-        static const int mPreambleBytes = 24;
-
     };
 
   }

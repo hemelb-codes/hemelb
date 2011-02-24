@@ -53,7 +53,8 @@ namespace hemelb
         // Struct for information about the velocity field at some point.
         struct VelSiteData
         {
-            int proc_id, counter, site_id;
+            int proc_id;
+            unsigned int counter, site_id;
             float vx, vy, vz;
         };
 
@@ -67,7 +68,7 @@ namespace hemelb
         typedef std::vector<float> FloatVector;
         struct NeighProc
         {
-            int id;
+            unsigned int id;
             int send_ps, recv_ps;
             int send_vs, recv_vs;
 
@@ -79,10 +80,10 @@ namespace hemelb
 
         // Necessary to keep a local store of the number of blocks created, so that we can
         // write a correct constructor. Alternative (TODO) is to use a vector.
-        int num_blocks;
+        unsigned int num_blocks;
 
         // Counter keeps track of the number of VelSiteDatas created
-        int counter;
+        unsigned int counter;
 
         // Variables for tracking the actual numbers of particles, and the maximum number
         //(i.e. the number for which memory has been allocated).
@@ -117,17 +118,15 @@ namespace hemelb
 
         // Private functions for initialising the velocity field.
         void initializeVelFieldBlock(lb::GlobalLatticeData &iGlobLatDat,
-                                     int site_i,
-                                     int site_j,
-                                     int site_k,
+                                     unsigned int site_i,
+                                     unsigned int site_j,
+                                     unsigned int site_k,
                                      int proc_id);
         VelSiteData *velSiteDataPointer(lb::GlobalLatticeData &iGlobLatDat,
-                                        int site_i,
-                                        int site_j,
-                                        int site_k);
-        void particleVelocity(Particle *particle_p,
-                              float v[2][2][2][3],
-                              float interp_v[3]);
+                                        unsigned int site_i,
+                                        unsigned int site_j,
+                                        unsigned int site_k);
+        void particleVelocity(Particle *particle_p, float v[2][2][2][3], float interp_v[3]);
         void localVelField(int p_index,
                            float v[2][2][2][3],
                            int *is_interior,

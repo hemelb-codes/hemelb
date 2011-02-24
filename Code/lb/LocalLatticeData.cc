@@ -10,7 +10,7 @@ namespace hemelb
       LocalFluidSites = iLocalFluidSites;
 
       // f_id is allocated so we know which sites to get information from.
-      mFNeighbours = new int[LocalFluidSites * D3Q15::NUMVECTORS];
+      mFNeighbours = new unsigned int[LocalFluidSites * D3Q15::NUMVECTORS];
 
       mSiteData = new unsigned int[LocalFluidSites];
       mWallNormalAtSite = new double[LocalFluidSites * 3];
@@ -75,7 +75,7 @@ namespace hemelb
       return LocalFluidSites;
     }
 
-    void LocalLatticeData::SetNeighbourLocation(int iSiteIndex, int iDirection, int iValue)
+    void LocalLatticeData::SetNeighbourLocation(unsigned int iSiteIndex, unsigned int iDirection, unsigned int iValue)
     {
       mFNeighbours[iSiteIndex * D3Q15::NUMVECTORS + iDirection] = iValue;
     }

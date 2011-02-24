@@ -69,9 +69,9 @@ namespace hemelb
                                    int rawGreen,
                                    int rawBlue)
     {
-      red = (unsigned char) util::enforceBounds(rawRed, 0, 255);
-      green = (unsigned char) util::enforceBounds(rawGreen, 0, 255);
-      blue = (unsigned char) util::enforceBounds(rawBlue, 0, 255);
+      red = (unsigned char) util::NumericalFunctions::enforceBounds(rawRed, 0, 255);
+      green = (unsigned char) util::NumericalFunctions::enforceBounds(rawGreen, 0, 255);
+      blue = (unsigned char) util::NumericalFunctions::enforceBounds(rawBlue, 0, 255);
     }
 
     void ColPixel::rawWritePixel(int *pixel_index,
@@ -193,12 +193,12 @@ namespace hemelb
         else
         {
           // store pressure colour
-          r3 = g3 = b3 = (unsigned char) util::enforceBounds(int (127.5F * density), 0, 127);
+          r3 = g3 = b3 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density), 0, 127);
 
           // store shear stress or von Mises stress
           if (stress < ((float) BIG_NUMBER))
           {
-            r4 = g4 = b4 = (unsigned char) util::enforceBounds(int (127.5F * stress), 0, 127);
+            r4 = g4 = b4 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress), 0, 127);
 
           }
           else

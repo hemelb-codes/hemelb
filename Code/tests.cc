@@ -60,15 +60,15 @@ void Tests::MakeAGlobLatDat(hemelb::lb::GlobalLatticeData & oGlobLatDat)
 {
   oGlobLatDat.SetBasicDetails(8, 8, 8, 4);
 
-  for (int x = 0; x < oGlobLatDat.GetXBlockCount(); x++)
+  for (unsigned int x = 0; x < oGlobLatDat.GetXBlockCount(); x++)
   {
-    for (int y = 0; y < oGlobLatDat.GetYBlockCount(); y++)
+    for (unsigned int y = 0; y < oGlobLatDat.GetYBlockCount(); y++)
     {
-      for (int z = 0; z < oGlobLatDat.GetZBlockCount(); z++)
+      for (unsigned int z = 0; z < oGlobLatDat.GetZBlockCount(); z++)
       {
         oGlobLatDat .Blocks[x * 64 + y * 8 + z].ProcessorRankForEachBlockSite
             = new int[oGlobLatDat.SitesPerBlockVolumeUnit];
-        for (int lSite = 0; lSite < oGlobLatDat.SitesPerBlockVolumeUnit; lSite++)
+        for (unsigned int lSite = 0; lSite < oGlobLatDat.SitesPerBlockVolumeUnit; lSite++)
         {
           oGlobLatDat .Blocks[x * 64 + y * 8 + z].ProcessorRankForEachBlockSite[lSite] = -1;
         }
