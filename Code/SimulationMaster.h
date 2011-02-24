@@ -27,7 +27,7 @@ class SimulationMaster
                        unsigned int lImagesPerCycle);
 
     void Initialise(hemelb::SimConfig *iSimConfig,
-                    int iImagesPerCycle,
+                    unsigned int iImagesPerCycle,
                     int iSteeringSessionid,
                     FILE * bTimingsFile);
 

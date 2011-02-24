@@ -17,7 +17,7 @@ namespace hemelb
         int total_fluid_sites;
         int inlets, outlets;
         int steering_session_id;
-        int period;
+        unsigned int period;
 
         double ConvertPressureToLatticeUnits(double pressure) const;
         double ConvertPressureToPhysicalUnits(double pressure) const;
@@ -123,8 +123,8 @@ namespace hemelb
         double *inlet_density_avg, *inlet_density_amp;
         double *outlet_density_avg, *outlet_density_amp;
         double *inlet_density_phs, *outlet_density_phs;
-        int site_min_x, site_min_y, site_min_z;
-        int site_max_x, site_max_y, site_max_z;
+        unsigned int site_min_x, site_min_y, site_min_z;
+        unsigned int site_max_x, site_max_y, site_max_z;
         int is_inlet_normal_available;
         double* inlet_density, *outlet_density;
         hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;

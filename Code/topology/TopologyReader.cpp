@@ -40,30 +40,52 @@ namespace hemelb
       MPI_Group_free(&mGroup);
     }
 
-    void TopologyReader::PreReadConfigFile(MPI_File xiFile,
-                                           hemelb::lb::LbmParameters * bParams,
-                                           hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
+    /**
+     * Read in the section at the beginning of the config file.
+     *
+     * // PREAMBLE
+     * uint stress_type = load_uint();
+     * uint blocks[3]; // blocks in x,y,z
+     * for (int i=0; i<3; ++i)
+     *        blocks[i] = load_uint();
+     * // number of sites along 1 edge of a block
+     * uint block_size = load_uint();
+     *
+     * uint nBlocks = blocks[0] * blocks[1] * blocks[2];
+     *
+     * // HEADER
+     * uint nSites[nBlocks];
+     * uint nBytes[nBlocks];
+     *
+     * for (int i = 0; i < nBlocks; ++i) {
+     *        nSites[i] = load_uint(); // sites in block
+     *        nBytes[i] = load_uint(); // length, in bytes, of the block's record in this file
+     * }
+     */
+    void TopologyReader::ReadPreamble(MPI_File xiFile,
+                                      hemelb::lb::LbmParameters * bParams,
+                                      hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
     {
       std::string lMode = "native";
 
       MPI_File_set_view(xiFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL);
 
+
+      // OLD Version
+
+      static const int mPreambleBytes = 24;
+
       char lPreambleBuffer[mPreambleBytes];
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile, lPreambleBuffer, mPreambleBytes, MPI_BYTE,
-                        &lStatus);
-
-      hemelb::io::XdrReader myReader =
-          hemelb::io::XdrMemReader(lPreambleBuffer, mPreambleBytes);
-
+      MPI_File_read_all(xiFile, lPreambleBuffer, mPreambleBytes, MPI_BYTE, &lStatus);
+      hemelb::io::XdrReader myReader = hemelb::io::XdrMemReader(lPreambleBuffer, mPreambleBytes);
       // Not the ideal way to do this, but has to be this way as the old system used
       // doubles for the stress type. -1.0 signified shear stress, 1.0 meant von Mises.
       double lTempStressType;
 
       myReader.readDouble(lTempStressType);
-
       bParams->StressType = (lTempStressType == -1.0)
         ? hemelb::lb::ShearStress
         : ( (lTempStressType == 1.0)
@@ -77,8 +99,77 @@ namespace hemelb
       myReader.readInt(lBlocksZ);
       myReader.readInt(lBlockSize);
 
-      bGlobalLatticeData.SetBasicDetails(lBlocksX, lBlocksY, lBlocksZ,
-                                         lBlockSize);
+      bGlobalLatticeData.SetBasicDetails(lBlocksX, lBlocksY, lBlocksZ, lBlockSize);
+
+      // New version.
+      //      // The config file starts with:
+      //      // * 1 unsigned int for stress type
+      //      // * 3 unsigned ints for the number of blocks in the x, y, z directions
+      //      // * 1 unsigned int for the block size (number of sites along one edge of a block)
+      //      // * 1 unsigned int for the total number of blocks in the cube, which should be equal to the
+      //      //   product of the x, y and z block counts.
+      //      static const int PreambleBytes = 24;
+      //
+      //      char lPreambleBuffer[PreambleBytes];
+      //
+      //      MPI_Status lStatus;
+      //
+      //      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_BYTE, &lStatus);
+      //
+      //      hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
+      //                                                                      PreambleBytes);
+      //
+      //      // Variables we'll read.
+      //      unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
+      //
+      //      preambleReader.readUnsignedInt(stressType);
+      //      preambleReader.readUnsignedInt(blocksX);
+      //      preambleReader.readUnsignedInt(blocksY);
+      //      preambleReader.readUnsignedInt(blocksZ);
+      //      preambleReader.readUnsignedInt(blockSize);
+      //
+      //      bParams->StressType = stressType;
+      //
+      //      bGlobalLatticeData.SetBasicDetails(blocksX, blocksY, blocksZ, blockSize);
+      //
+      //      unsigned int blockCount;
+      //
+      //      preambleReader.readUnsignedInt(blockCount);
+      //
+      //      if (bGlobalLatticeData.GetBlockCount() != blockCount)
+      //      {
+      //        printf(
+      //               "Input file may be corrupted: Recorded block count was %i but should have been %i.\n",
+      //               blockCount, bGlobalLatticeData.GetBlockCount());
+      //        exit(1);
+      //      }
+    }
+
+    void TopologyReader::ReadHeader(MPI_File xiFile,
+                                    unsigned int iBlockCount,
+                                    unsigned int* sitesInEachBlock,
+                                    unsigned int* bytesUsedByBlockInDataFile)
+    {
+      // The header section of the config file contains two adjacent unsigned ints for each block.
+      // The first is the number of sites in that block, the second is the number of bytes used by
+      // the block in the data file.
+
+      unsigned int headerByteCount = 2 * 4 * iBlockCount;
+
+      char* lHeaderBuffer = new char[headerByteCount];
+
+      MPI_Status lStatus;
+
+      MPI_File_read_all(xiFile, lHeaderBuffer, headerByteCount, MPI_BYTE, &lStatus);
+
+      hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lHeaderBuffer,
+                                                                      headerByteCount);
+
+      for (unsigned int ii = 0; ii < iBlockCount; ii++)
+      {
+        preambleReader.readUnsignedInt(sitesInEachBlock[ii]);
+        preambleReader.readUnsignedInt(bytesUsedByBlockInDataFile[ii]);
+      }
     }
 
     void TopologyReader::GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
@@ -87,9 +178,8 @@ namespace hemelb
                                                   const hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
     {
       // Each block has an int flag, each site has at most an unsigned int, 8 doubles, and (Num-vectors - 1) doubles.
-      unsigned int lLengthPerBlock = 4
-          + bGlobalLatticeData.SitesPerBlockVolumeUnit * (4 + 8 * 8 + 8
-              * (D3Q15::NUMVECTORS - 1));
+      unsigned int lLengthPerBlock = 4 + bGlobalLatticeData.SitesPerBlockVolumeUnit * (4 + 8 * 8
+          + 8 * (D3Q15::NUMVECTORS - 1));
 
       // 500000 bytes is a reasonable amount to read at once (a significant read, but small enough
       // that it's barely noticeable in terms of memory usage.
@@ -101,31 +191,27 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(iFile, lBlockDataBuffer, lBytesToReadAtOnce, MPI_BYTE,
-                        &lStatus);
+      MPI_File_read_all(iFile, lBlockDataBuffer, lBytesToReadAtOnce, MPI_BYTE, &lStatus);
 
-      hemelb::io::XdrMemReader myReader =
-          hemelb::io::XdrMemReader(lBlockDataBuffer, lBytesToReadAtOnce);
+      hemelb::io::XdrMemReader myReader = hemelb::io::XdrMemReader(lBlockDataBuffer,
+                                                                   lBytesToReadAtOnce);
 
-      for (int n = 0; n < bGlobalLatticeData.GetBlockCount(); n++)
+      for (unsigned int n = 0; n < bGlobalLatticeData.GetBlockCount(); n++)
       {
         // If we've read so far through the buffer that we might go over at the end of
         // this block, read in some more data.
         if ( (myReader.GetPosition() + lLengthPerBlock) < lBytesToReadAtOnce)
         {
-          for (unsigned int ii = myReader.GetPosition(); ii
-              < lBytesToReadAtOnce; ii++)
+          for (unsigned int ii = myReader.GetPosition(); ii < lBytesToReadAtOnce; ii++)
           {
-            lBlockDataBuffer[ii - myReader.GetPosition()]
-                = lBlockDataBuffer[ii];
+            lBlockDataBuffer[ii - myReader.GetPosition()] = lBlockDataBuffer[ii];
           }
 
-          MPI_File_read_all(iFile, &lBlockDataBuffer[ (lBytesToReadAtOnce
-              - myReader.GetPosition())], myReader.GetPosition(), MPI_BYTE,
-                            &lStatus);
+          MPI_File_read_all(iFile,
+                            &lBlockDataBuffer[ (lBytesToReadAtOnce - myReader.GetPosition())],
+                            myReader.GetPosition(), MPI_BYTE, &lStatus);
 
-          myReader = hemelb::io::XdrMemReader(lBlockDataBuffer,
-                                              lBytesToReadAtOnce);
+          myReader = hemelb::io::XdrMemReader(lBlockDataBuffer, lBytesToReadAtOnce);
         }
 
         int flag;
@@ -138,7 +224,7 @@ namespace hemelb
           continue;
         }
 
-        for (int m = 0; m < bGlobalLatticeData.SitesPerBlockVolumeUnit; m++)
+        for (unsigned int m = 0; m < bGlobalLatticeData.SitesPerBlockVolumeUnit; m++)
         {
           unsigned int site_type;
           myReader.readUnsignedInt(site_type);
@@ -194,7 +280,7 @@ namespace hemelb
     {
       oTotalSiteCount = 0;
 
-      for (int ii = 0; ii < iGlobLatDat.GetBlockCount(); ii++)
+      for (unsigned int ii = 0; ii < iGlobLatDat.GetBlockCount(); ii++)
       {
         oTotalSiteCount += iNonSolidSitesPerBlock[ii];
       }
@@ -217,11 +303,9 @@ namespace hemelb
 
         int lSitesToPass = oNumberSitesPerProc[ii];
 
-        for (; (lSitesToPass > 0) && (lCurrentBlockId
-            <= iGlobLatDat.GetBlockCount());)
+        for (; (lSitesToPass > 0) && (lCurrentBlockId <= iGlobLatDat.GetBlockCount());)
         {
-          int lSitesLeftOnCurrentBlock =
-              iNonSolidSitesPerBlock[lCurrentBlockId] - lCurrentSiteId;
+          int lSitesLeftOnCurrentBlock = iNonSolidSitesPerBlock[lCurrentBlockId] - lCurrentSiteId;
 
           if (lSitesLeftOnCurrentBlock > lSitesToPass)
           {
@@ -274,8 +358,7 @@ namespace hemelb
       lCumulativeSitesPerProc[0] = 0;
       for (int ii = 0; ii < mSize; ii++)
       {
-        lCumulativeSitesPerProc[ii + 1] = lCumulativeSitesPerProc[ii]
-            + iNumberSitesPerProc[ii];
+        lCumulativeSitesPerProc[ii + 1] = lCumulativeSitesPerProc[ii] + iNumberSitesPerProc[ii];
       }
 
       //TODO
@@ -293,7 +376,7 @@ namespace hemelb
     {
       bool * lReadBlock = new bool[iGlobLatDat.GetBlockCount()];
 
-      for (int ii = 0; ii < iGlobLatDat.GetBlockCount(); ii++)
+      for (unsigned int ii = 0; ii < iGlobLatDat.GetBlockCount(); ii++)
       {
         lReadBlock[ii] = false;
       }
@@ -318,12 +401,10 @@ namespace hemelb
           {
             for (int deltaZ = -1; deltaZ <= 1; deltaZ++)
             {
-              int lPutativeBlock = ii + ( (deltaX
-                  * iGlobLatDat.GetYBlockCount()) + deltaY)
+              int lPutativeBlock = ii + ( (deltaX * iGlobLatDat.GetYBlockCount()) + deltaY)
                   * iGlobLatDat.GetZBlockCount() + deltaZ;
 
-              if (lPutativeBlock >= 0 && lPutativeBlock
-                  < iGlobLatDat.GetBlockCount())
+              if (lPutativeBlock >= 0 && lPutativeBlock < (int)iGlobLatDat.GetBlockCount())
               {
                 lReadBlock[lPutativeBlock] = true;
               }
@@ -346,8 +427,8 @@ namespace hemelb
 
       // Open the file using the MPI parallel I/O interface at the path
       // given, in read-only mode.
-      lError = MPI_File_open(MPI_COMM_WORLD, &bSimConfig->DataFilePath[0],
-                             MPI_MODE_RDONLY, MPI_INFO_NULL, &lFile);
+      lError = MPI_File_open(MPI_COMM_WORLD, &bSimConfig->DataFilePath[0], MPI_MODE_RDONLY,
+                             MPI_INFO_NULL, &lFile);
 
       if (lError != 0)
       {
@@ -358,24 +439,22 @@ namespace hemelb
       }
       else
       {
-        fprintf(stderr, "Opened config file %s [rank %i]\n",
-                bSimConfig->DataFilePath.c_str(), mRank);
+        fprintf(stderr, "Opened config file %s [rank %i]\n", bSimConfig->DataFilePath.c_str(),
+                mRank);
       }
       fflush(NULL);
 
-      PreReadConfigFile(lFile, bLbmParams, bGlobalLatticeData);
+      ReadPreamble(lFile, bLbmParams, bGlobalLatticeData);
 
-      int * lNonSolidSitesPerBlock =
-          new int[bGlobalLatticeData.GetBlockCount()];
+      int * lNonSolidSitesPerBlock = new int[bGlobalLatticeData.GetBlockCount()];
 
-      for (int ii = 0; ii < bGlobalLatticeData.GetBlockCount(); ii++)
+      for (unsigned int ii = 0; ii < bGlobalLatticeData.GetBlockCount(); ii++)
       {
         // Set the non-solid sites to 0 for the current block.
         lNonSolidSitesPerBlock[ii] = 0;
       }
 
-      GetNonSolidSitesPerBlock(lNonSolidSitesPerBlock, net, lFile,
-                               bGlobalLatticeData);
+      GetNonSolidSitesPerBlock(lNonSolidSitesPerBlock, net, lFile, bGlobalLatticeData);
 
       unsigned long * lFirstBlockIdForEachProc = new unsigned long[mSize];
       unsigned long * lFirstSiteIdForEachProc = new unsigned long[mSize];
@@ -383,14 +462,13 @@ namespace hemelb
 
       unsigned long lTotalNonSolidSites = 0;
 
-      for (int ii = 0; ii < bGlobalLatticeData.GetBlockCount(); ii++)
+      for (unsigned int ii = 0; ii < bGlobalLatticeData.GetBlockCount(); ii++)
       {
         lTotalNonSolidSites += lNonSolidSitesPerBlock[ii];
       }
 
-      GetInitialSiteDistribution(lFirstBlockIdForEachProc,
-                                 lFirstSiteIdForEachProc, lNumberSitesPerProc,
-                                 lTotalNonSolidSites, lNonSolidSitesPerBlock,
+      GetInitialSiteDistribution(lFirstBlockIdForEachProc, lFirstSiteIdForEachProc,
+                                 lNumberSitesPerProc, lTotalNonSolidSites, lNonSolidSitesPerBlock,
                                  bGlobalLatticeData);
 
       //TODO   ReadInBlocks

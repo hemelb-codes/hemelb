@@ -23,8 +23,8 @@ namespace hemelb
       mSpreadFactor = spreadFactor;
 
       // Calculate the correct values for the depth variables.
-      int noSeenToThisDepth = 1;
-      int noAtCurrentDepth = 1;
+      unsigned int noSeenToThisDepth = 1;
+      unsigned int noAtCurrentDepth = 1;
 
       while (noSeenToThisDepth < mNetTop->GetProcessorCount())
       {
