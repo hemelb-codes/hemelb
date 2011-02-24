@@ -6,6 +6,7 @@
 #include <limits>
 
 #include "lb/lb.h"
+#include "topology/TopologyReader.h"
 #include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
 
@@ -166,7 +167,12 @@ namespace hemelb
       mSimConfig = iSimulationConfig;
 
       double fileReadStartTime = hemelb::util::myClock();
-      ReadConfig(bGlobLatDat);
+
+      topology::TopologyReader lTopologist;
+
+      unsigned int siteMins[3], siteMaxes[3];
+      lTopologist.LoadAndDecompose(&bGlobLatDat, total_fluid_sites, siteMins, siteMaxes, &mParams,
+                                   mSimConfig);
       *oFileReadTime = hemelb::util::myClock() - fileReadStartTime;
 
       ReadParameters();
