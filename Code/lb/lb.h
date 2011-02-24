@@ -98,8 +98,6 @@ namespace hemelb
 
         //  static void ReadBlock();
 
-        void ReadConfig(hemelb::lb::GlobalLatticeData &bGlobalLatticeData);
-
         void ReadParameters();
 
         void allocateInlets(int nInlets);

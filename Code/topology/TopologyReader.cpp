@@ -1,9 +1,11 @@
 #include "TopologyReader.h"
 #include "io/XdrMemReader.h"
+#include "lb/GlobalLatticeData.h"
 extern "C"
 {
 #include "parmetis/parmetislib.h"
 }
+#include "util/utilityFunctions.h"
 
 namespace hemelb
 {
@@ -52,6 +54,46 @@ namespace hemelb
      * uint block_size = load_uint();
      *
      * uint nBlocks = blocks[0] * blocks[1] * blocks[2];
+     */
+    void TopologyReader::ReadPreamble(MPI_File xiFile,
+                                      hemelb::lb::LbmParameters * bParams,
+                                      hemelb::lb::GlobalLatticeData* bGlobalLatticeData)
+    {
+      std::string lMode = "native";
+
+      MPI_File_set_view(xiFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL);
+
+      // The config file starts with:
+      // * 1 unsigned int for stress type
+      // * 3 unsigned ints for the number of blocks in the x, y, z directions
+      // * 1 unsigned int for the block size (number of sites along one edge of a block)
+      static const int PreambleBytes = 20;
+
+      char lPreambleBuffer[PreambleBytes];
+
+      MPI_Status lStatus;
+
+      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_BYTE, &lStatus);
+
+      hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
+                                                                      PreambleBytes);
+
+      // Variables we'll read.
+      unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
+
+      preambleReader.readUnsignedInt(stressType);
+      preambleReader.readUnsignedInt(blocksX);
+      preambleReader.readUnsignedInt(blocksY);
+      preambleReader.readUnsignedInt(blocksZ);
+      preambleReader.readUnsignedInt(blockSize);
+
+      bParams->StressType = (lb::StressTypes) stressType;
+
+      bGlobalLatticeData->SetBasicDetails(blocksX, blocksY, blocksZ, blockSize);
+    }
+
+    /**
+     * Read the header section, with minimal information about each block.
      *
      * // HEADER
      * uint nSites[nBlocks];
@@ -62,89 +104,6 @@ namespace hemelb
      *        nBytes[i] = load_uint(); // length, in bytes, of the block's record in this file
      * }
      */
-    void TopologyReader::ReadPreamble(MPI_File xiFile,
-                                      hemelb::lb::LbmParameters * bParams,
-                                      hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
-    {
-      std::string lMode = "native";
-
-      MPI_File_set_view(xiFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL);
-
-
-      // OLD Version
-
-      static const int mPreambleBytes = 24;
-
-      char lPreambleBuffer[mPreambleBytes];
-
-      MPI_Status lStatus;
-
-      MPI_File_read_all(xiFile, lPreambleBuffer, mPreambleBytes, MPI_BYTE, &lStatus);
-      hemelb::io::XdrReader myReader = hemelb::io::XdrMemReader(lPreambleBuffer, mPreambleBytes);
-      // Not the ideal way to do this, but has to be this way as the old system used
-      // doubles for the stress type. -1.0 signified shear stress, 1.0 meant von Mises.
-      double lTempStressType;
-
-      myReader.readDouble(lTempStressType);
-      bParams->StressType = (lTempStressType == -1.0)
-        ? hemelb::lb::ShearStress
-        : ( (lTempStressType == 1.0)
-          ? hemelb::lb::VonMises
-          : hemelb::lb::IgnoreStress);
-
-      int lBlocksX, lBlocksY, lBlocksZ, lBlockSize;
-
-      myReader.readInt(lBlocksX);
-      myReader.readInt(lBlocksY);
-      myReader.readInt(lBlocksZ);
-      myReader.readInt(lBlockSize);
-
-      bGlobalLatticeData.SetBasicDetails(lBlocksX, lBlocksY, lBlocksZ, lBlockSize);
-
-      // New version.
-      //      // The config file starts with:
-      //      // * 1 unsigned int for stress type
-      //      // * 3 unsigned ints for the number of blocks in the x, y, z directions
-      //      // * 1 unsigned int for the block size (number of sites along one edge of a block)
-      //      // * 1 unsigned int for the total number of blocks in the cube, which should be equal to the
-      //      //   product of the x, y and z block counts.
-      //      static const int PreambleBytes = 24;
-      //
-      //      char lPreambleBuffer[PreambleBytes];
-      //
-      //      MPI_Status lStatus;
-      //
-      //      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_BYTE, &lStatus);
-      //
-      //      hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
-      //                                                                      PreambleBytes);
-      //
-      //      // Variables we'll read.
-      //      unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
-      //
-      //      preambleReader.readUnsignedInt(stressType);
-      //      preambleReader.readUnsignedInt(blocksX);
-      //      preambleReader.readUnsignedInt(blocksY);
-      //      preambleReader.readUnsignedInt(blocksZ);
-      //      preambleReader.readUnsignedInt(blockSize);
-      //
-      //      bParams->StressType = stressType;
-      //
-      //      bGlobalLatticeData.SetBasicDetails(blocksX, blocksY, blocksZ, blockSize);
-      //
-      //      unsigned int blockCount;
-      //
-      //      preambleReader.readUnsignedInt(blockCount);
-      //
-      //      if (bGlobalLatticeData.GetBlockCount() != blockCount)
-      //      {
-      //        printf(
-      //               "Input file may be corrupted: Recorded block count was %i but should have been %i.\n",
-      //               blockCount, bGlobalLatticeData.GetBlockCount());
-      //        exit(1);
-      //      }
-    }
-
     void TopologyReader::ReadHeader(MPI_File xiFile,
                                     unsigned int iBlockCount,
                                     unsigned int* sitesInEachBlock,
@@ -170,105 +129,8 @@ namespace hemelb
         preambleReader.readUnsignedInt(sitesInEachBlock[ii]);
         preambleReader.readUnsignedInt(bytesUsedByBlockInDataFile[ii]);
       }
-    }
 
-    void TopologyReader::GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
-                                                  net::Net* iNet,
-                                                  MPI_File iFile,
-                                                  const hemelb::lb::GlobalLatticeData &bGlobalLatticeData)
-    {
-      // Each block has an int flag, each site has at most an unsigned int, 8 doubles, and (Num-vectors - 1) doubles.
-      unsigned int lLengthPerBlock = 4 + bGlobalLatticeData.SitesPerBlockVolumeUnit * (4 + 8 * 8
-          + 8 * (D3Q15::NUMVECTORS - 1));
-
-      // 500000 bytes is a reasonable amount to read at once (a significant read, but small enough
-      // that it's barely noticeable in terms of memory usage.
-      unsigned int lBytesToReadAtOnce = (lLengthPerBlock > 500000)
-        ? lLengthPerBlock
-        : 500000;
-
-      char * lBlockDataBuffer = new char[lBytesToReadAtOnce];
-
-      MPI_Status lStatus;
-
-      MPI_File_read_all(iFile, lBlockDataBuffer, lBytesToReadAtOnce, MPI_BYTE, &lStatus);
-
-      hemelb::io::XdrMemReader myReader = hemelb::io::XdrMemReader(lBlockDataBuffer,
-                                                                   lBytesToReadAtOnce);
-
-      for (unsigned int n = 0; n < bGlobalLatticeData.GetBlockCount(); n++)
-      {
-        // If we've read so far through the buffer that we might go over at the end of
-        // this block, read in some more data.
-        if ( (myReader.GetPosition() + lLengthPerBlock) < lBytesToReadAtOnce)
-        {
-          for (unsigned int ii = myReader.GetPosition(); ii < lBytesToReadAtOnce; ii++)
-          {
-            lBlockDataBuffer[ii - myReader.GetPosition()] = lBlockDataBuffer[ii];
-          }
-
-          MPI_File_read_all(iFile,
-                            &lBlockDataBuffer[ (lBytesToReadAtOnce - myReader.GetPosition())],
-                            myReader.GetPosition(), MPI_BYTE, &lStatus);
-
-          myReader = hemelb::io::XdrMemReader(lBlockDataBuffer, lBytesToReadAtOnce);
-        }
-
-        int flag;
-
-        myReader.readInt(flag);
-
-        // If block contains all solid sites, move on.
-        if (flag == 0)
-        {
-          continue;
-        }
-
-        for (unsigned int m = 0; m < bGlobalLatticeData.SitesPerBlockVolumeUnit; m++)
-        {
-          unsigned int site_type;
-          myReader.readUnsignedInt(site_type);
-
-          if ( (site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
-          {
-            continue;
-          }
-
-          ++bNonSolidSitesPerBlock[n];
-
-          // Have to read in all the rest of the data for this site, to pass it.
-          if (bGlobalLatticeData.GetCollisionType(site_type) != FLUID)
-          {
-            double temp;
-            // Neither solid nor simple fluid
-            if (bGlobalLatticeData.GetCollisionType(site_type) & INLET
-                || bGlobalLatticeData.GetCollisionType(site_type) & OUTLET)
-            {
-              // INLET or OUTLET or both.
-              // These values are the boundary normal and the boundary distance.
-              for (int l = 0; l < 3; l++)
-                myReader.readDouble(temp);
-
-              myReader.readDouble(temp);
-            }
-
-            if (bGlobalLatticeData.GetCollisionType(site_type) & EDGE)
-            {
-              // EDGE bit set
-              for (int l = 0; l < 3; l++)
-                myReader.readDouble(temp);
-
-              double temp;
-              myReader.readDouble(temp);
-            }
-
-            for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-              myReader.readDouble(temp);
-          }
-        } // m
-      } // n
-
-      delete[] lBlockDataBuffer;
+      delete[] lHeaderBuffer;
     }
 
     void TopologyReader::GetInitialSiteDistribution(unsigned long oFirstBlockIdForEachProc[],
@@ -404,7 +266,7 @@ namespace hemelb
               int lPutativeBlock = ii + ( (deltaX * iGlobLatDat.GetYBlockCount()) + deltaY)
                   * iGlobLatDat.GetZBlockCount() + deltaZ;
 
-              if (lPutativeBlock >= 0 && lPutativeBlock < (int)iGlobLatDat.GetBlockCount())
+              if (lPutativeBlock >= 0 && lPutativeBlock < (int) iGlobLatDat.GetBlockCount())
               {
                 lReadBlock[lPutativeBlock] = true;
               }
@@ -417,10 +279,12 @@ namespace hemelb
 
     }
 
-    void TopologyReader::LoadAndDecompose(lb::GlobalLatticeData &bGlobalLatticeData,
-                                          net::Net *net,
-                                          lb::LbmParameters * bLbmParams,
-                                          SimConfig * bSimConfig)
+    void TopologyReader::LoadAndDecompose(lb::GlobalLatticeData* bGlobalLatticeData,
+                                          int &totalFluidSites,
+                                          unsigned int siteMins[3],
+                                          unsigned int siteMaxes[3],
+                                          lb::LbmParameters* bLbmParams,
+                                          SimConfig* bSimConfig)
     {
       MPI_File lFile;
       int lError;
@@ -446,35 +310,217 @@ namespace hemelb
 
       ReadPreamble(lFile, bLbmParams, bGlobalLatticeData);
 
-      int * lNonSolidSitesPerBlock = new int[bGlobalLatticeData.GetBlockCount()];
+      unsigned int* sitesPerBlock = new unsigned int[bGlobalLatticeData->GetBlockCount()];
+      unsigned int* bytesPerBlock = new unsigned int[bGlobalLatticeData->GetBlockCount()];
 
-      for (unsigned int ii = 0; ii < bGlobalLatticeData.GetBlockCount(); ii++)
-      {
-        // Set the non-solid sites to 0 for the current block.
-        lNonSolidSitesPerBlock[ii] = 0;
-      }
+      ReadHeader(lFile, bGlobalLatticeData->GetBlockCount(), sitesPerBlock, bytesPerBlock);
 
-      GetNonSolidSitesPerBlock(lNonSolidSitesPerBlock, net, lFile, bGlobalLatticeData);
+      ReadAllBlocks(bGlobalLatticeData, bytesPerBlock, totalFluidSites, siteMins, siteMaxes, lFile);
+      /*
+       * Will eventually become the optimised version...
 
-      unsigned long * lFirstBlockIdForEachProc = new unsigned long[mSize];
-      unsigned long * lFirstSiteIdForEachProc = new unsigned long[mSize];
-      unsigned long * lNumberSitesPerProc = new unsigned long[mSize];
+       unsigned long * lFirstBlockIdForEachProc = new unsigned long[mSize];
+       unsigned long * lFirstSiteIdForEachProc = new unsigned long[mSize];
+       unsigned long * lNumberSitesPerProc = new unsigned long[mSize];
 
-      unsigned long lTotalNonSolidSites = 0;
 
-      for (unsigned int ii = 0; ii < bGlobalLatticeData.GetBlockCount(); ii++)
-      {
-        lTotalNonSolidSites += lNonSolidSitesPerBlock[ii];
-      }
+       unsigned long lTotalNonSolidSites = 0;
 
-      GetInitialSiteDistribution(lFirstBlockIdForEachProc, lFirstSiteIdForEachProc,
-                                 lNumberSitesPerProc, lTotalNonSolidSites, lNonSolidSitesPerBlock,
-                                 bGlobalLatticeData);
+       for (unsigned int ii = 0; ii < bGlobalLatticeData.GetBlockCount(); ii++)
+       {
+       lTotalNonSolidSites += lNonSolidSitesPerBlock[ii];
+       }
+
+       GetInitialSiteDistribution(lFirstBlockIdForEachProc, lFirstSiteIdForEachProc,
+       lNumberSitesPerProc, lTotalNonSolidSites, lNonSolidSitesPerBlock,
+       bGlobalLatticeData);*/
 
       //TODO   ReadInBlocks
 
 
       //OptimiseDomainDecomposition();
+
+      MPI_File_close(&lFile);
+    }
+
+    /**
+     * Read in ALL of the blocks in the file.
+     *
+     * BODY:
+     * Block *block = new Block[nBlocks];
+     * sitesPerBlock = block_size*block_size*block_size;
+     *
+     * for (int i = 0; i < blocks[0] * blocks[1] * blocks[2]; ++i) {
+     *   if (nSites[i] == 0)
+     *     // nothing
+     *     continue;
+     *
+     *   block[i]->sites = new Site[sitesPerBlock];
+     *   for (int j = 0; j < sitesPerBlock; ++j) {
+     *     block[i]->sites[j]->config = load_uint();
+     *     if (block[i]->sites[j]->IsAdjacentInletOrOutlet()) {
+     *       for (k=0; k<3; ++k)
+     *         block[i]->sites[j]->boundaryNormal[k] = load_double();
+     *       block[i]->sites[j]->boundaryDistance = load_double();
+     *     }
+     *
+     *     if (block[i]->sites[j]->IsAdjacentToWall()) {
+     *       for (k=0; k<3; ++k)
+     *         block[i]->sites[j]->wallNormal[k] = load_double();
+     *       block[i]->sites[j]->wallDistance = load_double();
+     *     }
+     *
+     *     for (k=0; k<14; ++k)
+     *       block[i]->sites[j]->cutDistance[k] = load_double();
+     *   }
+     * }
+     */
+    void TopologyReader::ReadAllBlocks(lb::GlobalLatticeData* bGlobLatDat,
+                                       const unsigned int* bytesPerBlock,
+                                       int &totalFluidSites,
+                                       unsigned int siteMins[3],
+                                       unsigned int siteMaxes[3],
+                                       MPI_File iFile)
+    {
+      // Initialise counter variables.
+      totalFluidSites = 0;
+
+      siteMins[0] = UINT_MAX;
+      siteMins[1] = UINT_MAX;
+      siteMins[2] = UINT_MAX;
+      siteMaxes[0] = 0;
+      siteMaxes[1] = 0;
+      siteMaxes[2] = 0;
+
+      // Each site can have at most
+      // * an unsigned int (config)
+      // * 4 doubles
+      // * 14 further doubles (in D3Q15)
+      unsigned int maxBytesPerBlock = (bGlobLatDat->SitesPerBlockVolumeUnit) * (4 * 1 + 8 * (4
+          + D3Q15::NUMVECTORS - 1));
+      const unsigned int BlocksToReadInOneGo = 10;
+      char* readBuffer = new char[maxBytesPerBlock * BlocksToReadInOneGo];
+
+      // This makes sure we do the right number of read operations.
+      for (unsigned int readNum = 0; readNum
+          <= (bGlobLatDat->GetBlockCount() / BlocksToReadInOneGo); ++readNum)
+      {
+        const unsigned int upperLimitBlockNumber =
+            util::NumericalFunctions::min<unsigned int>(bGlobLatDat->GetBlockCount(), (readNum + 1)
+                * BlocksToReadInOneGo);
+        const unsigned int lowerLimitBlockNumber = readNum * BlocksToReadInOneGo;
+
+        unsigned int bytesToRead = 0;
+        for (unsigned int ii = lowerLimitBlockNumber; ii < upperLimitBlockNumber; ++ii)
+        {
+          bytesToRead += bytesPerBlock[ii];
+        }
+
+        MPI_Status lStatus;
+
+        MPI_File_read_all(iFile, readBuffer, (int) bytesToRead, MPI_BYTE, &lStatus);
+
+        io::XdrMemReader lReader(readBuffer, bytesToRead);
+
+        for (lb::BlockCounter lBlock(bGlobLatDat, lowerLimitBlockNumber); lBlock
+            < upperLimitBlockNumber; lBlock++)
+        {
+          bGlobLatDat->Blocks[lBlock].site_data = NULL;
+          bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite = NULL;
+          bGlobLatDat->Blocks[lBlock].wall_data = NULL;
+
+          if (bytesPerBlock[lBlock] == 0)
+            continue;
+          // Block contains some non-solid sites
+
+          bGlobLatDat->Blocks[lBlock].site_data
+              = new unsigned int[bGlobLatDat->SitesPerBlockVolumeUnit];
+          bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite
+              = new int[bGlobLatDat->SitesPerBlockVolumeUnit];
+
+          int m = -1;
+
+          for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockSize(); ii++)
+          {
+            unsigned int site_i = lBlock.GetICoord(ii);
+
+            for (unsigned int jj = 0; jj < bGlobLatDat->GetBlockSize(); jj++)
+            {
+              unsigned int site_j = lBlock.GetJCoord(jj);
+
+              for (unsigned int kk = 0; kk < bGlobLatDat->GetBlockSize(); kk++)
+              {
+                unsigned int site_k = lBlock.GetKCoord(kk);
+
+                ++m;
+
+                unsigned int *site_type = &bGlobLatDat->Blocks[lBlock].site_data[m];
+                lReader.readUnsignedInt(*site_type);
+
+                if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
+                {
+                  bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[m] = 1 << 30;
+                  continue;
+                }
+                bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[m] = -1;
+
+                ++totalFluidSites;
+
+                siteMins[0] = hemelb::util::NumericalFunctions::min<unsigned int>(siteMins[0],
+                                                                                  site_i);
+                siteMins[1] = hemelb::util::NumericalFunctions::min<unsigned int>(siteMins[1],
+                                                                                  site_j);
+                siteMins[1] = hemelb::util::NumericalFunctions::min<unsigned int>(siteMins[1],
+                                                                                  site_k);
+                siteMaxes[0] = hemelb::util::NumericalFunctions::max<unsigned int>(siteMaxes[0],
+                                                                                   site_i);
+                siteMaxes[1] = hemelb::util::NumericalFunctions::max<unsigned int>(siteMaxes[1],
+                                                                                   site_j);
+                siteMaxes[2] = hemelb::util::NumericalFunctions::max<unsigned int>(siteMaxes[2],
+                                                                                   site_k);
+
+                if (bGlobLatDat->GetCollisionType(*site_type) != FLUID)
+                {
+                  // Neither solid nor simple fluid
+                  if (bGlobLatDat->Blocks[lBlock].wall_data == NULL)
+                  {
+                    bGlobLatDat->Blocks[lBlock].wall_data
+                        = new hemelb::lb::WallData[bGlobLatDat->SitesPerBlockVolumeUnit];
+                  }
+
+                  if (bGlobLatDat->GetCollisionType(*site_type) & INLET
+                      || bGlobLatDat->GetCollisionType(*site_type) & OUTLET)
+                  {
+                    double temp;
+                    // INLET or OUTLET or both.
+                    // These values are the boundary normal and the boundary distance.
+                    for (int l = 0; l < 3; l++)
+                      lReader.readDouble(temp);
+
+                    lReader.readDouble(temp);
+                  }
+
+                  if (bGlobLatDat->GetCollisionType(*site_type) & EDGE)
+                  {
+                    // EDGE bit set
+                    for (int l = 0; l < 3; l++)
+                      lReader.readDouble(bGlobLatDat->Blocks[lBlock].wall_data[m].wall_nor[l]);
+
+                    double temp;
+                    lReader.readDouble(temp);
+                  }
+
+                  for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
+                    lReader.readDouble(bGlobLatDat->Blocks[lBlock].wall_data[m].cut_dist[l]);
+                }
+              } // kk
+            } // jj
+          } // ii
+
+        }
+      }
+
+      delete[] readBuffer;
     }
 
   }
