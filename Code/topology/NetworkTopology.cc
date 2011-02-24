@@ -11,8 +11,12 @@ namespace hemelb
 
       MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED, &thread_level_provided);
 
-      MPI_Comm_size(MPI_COMM_WORLD, &processorCount);
-      MPI_Comm_rank(MPI_COMM_WORLD, &localRank);
+      int tempSize = 0, tempRank = 0;
+      MPI_Comm_size(MPI_COMM_WORLD, &tempSize);
+      MPI_Comm_rank(MPI_COMM_WORLD, &tempRank);
+
+      processorCount = tempSize;
+      localRank = tempRank;
 
       if (IsCurrentProcTheIOProc())
       {
@@ -37,12 +41,12 @@ namespace hemelb
       return localRank == 0;
     }
 
-    int NetworkTopology::GetLocalRank() const
+    unsigned int NetworkTopology::GetLocalRank() const
     {
       return localRank;
     }
 
-    int NetworkTopology::GetProcessorCount() const
+    unsigned int NetworkTopology::GetProcessorCount() const
     {
       return processorCount;
     }
@@ -68,7 +72,7 @@ namespace hemelb
       // Initialise the count of fluid sites on each processor to 0.
       FluidSitesOnEachProcessor = new int[GetProcessorCount()];
 
-      for (int n = 0; n < GetProcessorCount(); n++)
+      for (unsigned int n = 0; n < GetProcessorCount(); n++)
       {
         FluidSitesOnEachProcessor[n] = 0;
       }
@@ -116,7 +120,7 @@ namespace hemelb
         proc_count = 1;
 
         // For each machine, divide up the sites it has between its cores.
-        for (int lMachineNumber = 0; lMachineNumber < machineCount; lMachineNumber++)
+        for (unsigned int lMachineNumber = 0; lMachineNumber < machineCount; lMachineNumber++)
         {
           AssignFluidSitesToProcessors(proc_count, fluid_sites_per_unit, lUnvisitedFluidSiteCount,
                                        GetProcessorCount() + lMachineNumber, false, bGlobLatDat);
@@ -149,11 +153,11 @@ namespace hemelb
       int lSitesOnCurrentProc = 0;
 
       // Iterate over all blocks.
-      for (int lBlockCoordI = 0; lBlockCoordI < iGlobLatDat.GetXBlockCount(); lBlockCoordI++)
+      for (unsigned int lBlockCoordI = 0; lBlockCoordI < iGlobLatDat.GetXBlockCount(); lBlockCoordI++)
       {
-        for (int lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat.GetYBlockCount(); lBlockCoordJ++)
+        for (unsigned int lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat.GetYBlockCount(); lBlockCoordJ++)
         {
-          for (int lBlockCoordK = 0; lBlockCoordK < iGlobLatDat.GetZBlockCount(); lBlockCoordK++)
+          for (unsigned int lBlockCoordK = 0; lBlockCoordK < iGlobLatDat.GetZBlockCount(); lBlockCoordK++)
           {
             // Block number is the number of the block we're currently on.
             lBlockNumber++;
@@ -173,13 +177,13 @@ namespace hemelb
 
             // For each dimension of the site co-ordinates, iterate over all values of the site
             // co-ordinates on the current block.
-            for (int lSiteCoordI = lBlockCoordI * iGlobLatDat.GetBlockSize(); lSiteCoordI
+            for (unsigned int lSiteCoordI = lBlockCoordI * iGlobLatDat.GetBlockSize(); lSiteCoordI
                 < lBlockCoordI * iGlobLatDat.GetBlockSize() + iGlobLatDat.GetBlockSize(); lSiteCoordI++)
             {
-              for (int lSiteCoordJ = lBlockCoordJ * iGlobLatDat.GetBlockSize(); lSiteCoordJ
+              for (unsigned int lSiteCoordJ = lBlockCoordJ * iGlobLatDat.GetBlockSize(); lSiteCoordJ
                   < lBlockCoordJ * iGlobLatDat.GetBlockSize() + iGlobLatDat.GetBlockSize(); lSiteCoordJ++)
               {
-                for (int lSiteCoordK = lBlockCoordK * iGlobLatDat.GetBlockSize(); lSiteCoordK
+                for (unsigned int lSiteCoordK = lBlockCoordK * iGlobLatDat.GetBlockSize(); lSiteCoordK
                     < lBlockCoordK * iGlobLatDat.GetBlockSize() + iGlobLatDat.GetBlockSize(); lSiteCoordK++)
                 {
                   // Keep track of the site number.
@@ -236,11 +240,11 @@ namespace hemelb
                         int neigh_k = lNew->k + D3Q15::CZ[l];
 
                         // Move on if neighbour is outside the bounding box.
-                        if (neigh_i == -1 || neigh_i == iGlobLatDat.GetXSiteCount())
+                        if (neigh_i == -1 || neigh_i == (int) iGlobLatDat.GetXSiteCount())
                           continue;
-                        if (neigh_j == -1 || neigh_j == iGlobLatDat.GetYSiteCount())
+                        if (neigh_j == -1 || neigh_j == (int) iGlobLatDat.GetYSiteCount())
                           continue;
-                        if (neigh_k == -1 || neigh_k == iGlobLatDat.GetZSiteCount())
+                        if (neigh_k == -1 || neigh_k == (int) iGlobLatDat.GetZSiteCount())
                           continue;
 
                         // Move on if the neighbour is in a block of solids (in which case

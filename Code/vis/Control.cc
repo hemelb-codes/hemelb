@@ -496,9 +496,8 @@ namespace hemelb
 
       int *col_pixel_id_p;
       int col_pixels_temp;
-      int comm_inc, send_id, recv_id;
       int i, j;
-      int m, n;
+      int n;
 
       ColPixel *col_pixel1, *col_pixel2;
 
@@ -507,17 +506,17 @@ namespace hemelb
         memcpy(col_pixel_recv[recv_buffer_id], col_pixel_send, col_pixels * sizeof(ColPixel));
       }
 
-      comm_inc = 1;
-      m = 1;
+      unsigned int comm_inc = 1;
+      unsigned int m = 1;
 
       while (m < iNetTopology->GetProcessorCount())
       {
         m <<= 1;
-        int start_id = 1;
+        unsigned int start_id = 1;
 
-        for (recv_id = start_id; recv_id < iNetTopology->GetProcessorCount();)
+        for (unsigned int recv_id = start_id; recv_id < iNetTopology->GetProcessorCount();)
         {
-          send_id = recv_id + comm_inc;
+          unsigned int send_id = recv_id + comm_inc;
 
           if (iNetTopology->GetLocalRank() != recv_id && iNetTopology->GetLocalRank() != send_id)
           {
@@ -615,7 +614,8 @@ namespace hemelb
     {
       if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
       {
-        pixels_max = util::max(2 * pixels_max, mScreen.PixelsX * mScreen.PixelsY);
+        pixels_max = util::NumericalFunctions::max(2 * pixels_max, mScreen.PixelsX
+            * mScreen.PixelsY);
 
         col_pixel_id = (int *) realloc(col_pixel_id, sizeof(int) * pixels_max);
       }

@@ -15,13 +15,13 @@ namespace hemelb
       mGlobalLatDat = iGlobalLatDat;
       int n = -1;
 
-      for (int i = 0; i < iGlobalLatDat->GetXSiteCount(); i
+      for (unsigned int i = 0; i < iGlobalLatDat->GetXSiteCount(); i
           += iGlobalLatDat->GetBlockSize())
       {
-        for (int j = 0; j < iGlobalLatDat->GetYSiteCount(); j
+        for (unsigned int j = 0; j < iGlobalLatDat->GetYSiteCount(); j
             += iGlobalLatDat->GetBlockSize())
         {
-          for (int k = 0; k < iGlobalLatDat->GetZSiteCount(); k
+          for (unsigned int k = 0; k < iGlobalLatDat->GetZSiteCount(); k
               += iGlobalLatDat->GetBlockSize())
           {
             n++;
@@ -32,11 +32,11 @@ namespace hemelb
               continue;
             }
 
-            int site_i = (iGlobalLatDat->GetBlockSize() >> 1);
-            int site_j = (iGlobalLatDat->GetBlockSize() >> 1);
-            int site_k = (iGlobalLatDat->GetBlockSize() >> 1);
+            unsigned int site_i = (iGlobalLatDat->GetBlockSize() >> 1);
+            unsigned int site_j = (iGlobalLatDat->GetBlockSize() >> 1);
+            unsigned int site_k = (iGlobalLatDat->GetBlockSize() >> 1);
 
-            int m = ( ( (site_i << iGlobalLatDat->Log2BlockSize) + site_j)
+            unsigned int m = ( ( (site_i << iGlobalLatDat->Log2BlockSize) + site_j)
                 << iGlobalLatDat->Log2BlockSize) + site_k;
 
             if (map_block_p->site_data[m] & (1U << 31U))
@@ -46,17 +46,13 @@ namespace hemelb
 
             Glyph *lGlyph = new Glyph();
 
-            lGlyph->x = float(i + site_i) - 0.5F
-                * float(iGlobalLatDat->GetXSiteCount());
-            lGlyph->y = float(j + site_j) - 0.5F
-                * float(iGlobalLatDat->GetYSiteCount());
-            lGlyph->z = float(k + site_k) - 0.5F
-                * float(iGlobalLatDat->GetZSiteCount());
+            lGlyph->x = float (i + site_i) - 0.5F * float (iGlobalLatDat->GetXSiteCount());
+            lGlyph->y = float (j + site_j) - 0.5F * float (iGlobalLatDat->GetYSiteCount());
+            lGlyph->z = float (k + site_k) - 0.5F * float (iGlobalLatDat->GetZSiteCount());
 
             int c1Plusc2 = 15;
 
-            lGlyph->f = &iLocalLatDat->FOld[map_block_p->site_data[m]
-                * c1Plusc2];
+            lGlyph->f = &iLocalLatDat->FOld[map_block_p->site_data[m] * c1Plusc2];
 
             mGlyphs.push_back(lGlyph);
 

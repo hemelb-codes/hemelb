@@ -88,16 +88,16 @@ namespace hemelb
 
       // Read the preamble.
       hemelb::topology::TopologyReader lTopologyReader;
-      lTopologyReader.PreReadConfigFile(lFile, &mParams, bGlobalLatticeData);
+      lTopologyReader.ReadPreamble(lFile, &mParams, bGlobalLatticeData);
 
       total_fluid_sites = 0;
 
-      site_min_x = INT_MAX;
-      site_min_y = INT_MAX;
-      site_min_z = INT_MAX;
-      site_max_x = INT_MIN;
-      site_max_y = INT_MIN;
-      site_max_z = INT_MIN;
+      site_min_x = UINT_MAX;
+      site_min_y = UINT_MAX;
+      site_min_z = UINT_MAX;
+      site_max_x = 0;
+      site_max_y = 0;
+      site_max_z = 0;
 
       // Each block has an int flag, each site has at most an unsigned int, 8 doubles, and (Num-vectors - 1) doubles.
       int lLength = bGlobalLatticeData.GetBlockCount() * (4
@@ -133,15 +133,15 @@ namespace hemelb
 
         int m = -1;
 
-        for (int ii = 0; ii < bGlobalLatticeData.GetBlockSize(); ii++)
+        for (unsigned int ii = 0; ii < bGlobalLatticeData.GetBlockSize(); ii++)
         {
           unsigned int site_i = lBlockCounter.GetICoord(ii);
 
-          for (int jj = 0; jj < bGlobalLatticeData.GetBlockSize(); jj++)
+          for (unsigned int jj = 0; jj < bGlobalLatticeData.GetBlockSize(); jj++)
           {
             unsigned int site_j = lBlockCounter.GetJCoord(jj);
 
-            for (int kk = 0; kk < bGlobalLatticeData.GetBlockSize(); kk++)
+            for (unsigned int kk = 0; kk < bGlobalLatticeData.GetBlockSize(); kk++)
             {
               unsigned int site_k = lBlockCounter.GetKCoord(kk);
 
@@ -159,12 +159,12 @@ namespace hemelb
 
               ++total_fluid_sites;
 
-              site_min_x = hemelb::util::min(site_min_x, site_i);
-              site_min_y = hemelb::util::min(site_min_y, site_j);
-              site_min_z = hemelb::util::min(site_min_z, site_k);
-              site_max_x = hemelb::util::max(site_max_x, site_i);
-              site_max_y = hemelb::util::max(site_max_y, site_j);
-              site_max_z = hemelb::util::max(site_max_z, site_k);
+              site_min_x = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_x, site_i);
+              site_min_y = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_y, site_j);
+              site_min_z = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_z, site_k);
+              site_max_x = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_x, site_i);
+              site_max_y = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_y, site_j);
+              site_max_z = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_z, site_k);
 
               if (bGlobalLatticeData.GetCollisionType(*site_type) != FLUID)
               {
@@ -259,12 +259,12 @@ namespace hemelb
 
      ++total_fluid_sites;
 
-     site_min_x = hemelb::util::min(site_min_x, site_i);
-     site_min_y = hemelb::util::min(site_min_y, site_j);
-     site_min_z = hemelb::util::min(site_min_z, site_k);
-     site_max_x = hemelb::util::max(site_max_x, site_i);
-     site_max_y = hemelb::util::max(site_max_y, site_j);
-     site_max_z = hemelb::util::max(site_max_z, site_k);
+     site_min_x = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_x, site_i);
+     site_min_y = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_y, site_j);
+     site_min_z = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_z, site_k);
+     site_max_x = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_x, site_i);
+     site_max_y = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_y, site_j);
+     site_max_z = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_z, site_k);
 
      if (net->GetCollisionType(*site_type) != FLUID)
      {
@@ -436,7 +436,7 @@ namespace hemelb
 
     void LBM::allocateInlets(int nInlets)
     {
-      nInlets = hemelb::util::max(1, nInlets);
+      nInlets = hemelb::util::NumericalFunctions::max<int>(1, nInlets);
       inlet_density = new double[nInlets];
       inlet_density_avg = new double[nInlets];
       inlet_density_amp = new double[nInlets];
@@ -445,7 +445,7 @@ namespace hemelb
 
     void LBM::allocateOutlets(int nOutlets)
     {
-      nOutlets = hemelb::util::max(1, nOutlets);
+      nOutlets = hemelb::util::NumericalFunctions::max<int>(1, nOutlets);
       outlet_density = new double[nOutlets];
       outlet_density_avg = new double[nOutlets];
       outlet_density_amp = new double[nOutlets];
@@ -542,10 +542,10 @@ namespace hemelb
 
       fluid_sites_max = 0;
 
-      for (int n = 0; n < mNetTopology->GetProcessorCount(); n++)
+      for (unsigned int n = 0; n < mNetTopology->GetProcessorCount(); n++)
       {
-        fluid_sites_max = hemelb::util::max(fluid_sites_max,
-                                            mNetTopology->FluidSitesOnEachProcessor[n]);
+        fluid_sites_max = hemelb::util::NumericalFunctions::max<int>(fluid_sites_max,
+                                                 mNetTopology->FluidSitesOnEachProcessor[n]);
       }
 
       // "buffer_size" is the size of the flow field buffer to send to the
@@ -554,11 +554,12 @@ namespace hemelb
       // ("gathered_flow_field").  If "buffer_size" is larger the
       // frequency with which data communication to the root processor is
       // performed becomes lower and viceversa
-      buffer_size = hemelb::util::min(1000000, fluid_sites_max * mNetTopology->GetProcessorCount());
+      buffer_size = hemelb::util::NumericalFunctions::min<unsigned int>(1000000U, fluid_sites_max
+          * mNetTopology->GetProcessorCount());
 
       communication_period = int (ceil(double (buffer_size) / mNetTopology->GetProcessorCount()));
 
-      communication_iters = hemelb::util::max(1, int (ceil(double (fluid_sites_max)
+      communication_iters = hemelb::util::NumericalFunctions::max<int>(1, int (ceil(double (fluid_sites_max)
           / communication_period)));
 
       local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
@@ -585,13 +586,13 @@ namespace hemelb
        root processor */
 
       int n = -1; // net->proc_block counter
-      for (int i = 0; i < iGlobalLatticeData.GetXSiteCount(); i
+      for (unsigned int i = 0; i < iGlobalLatticeData.GetXSiteCount(); i
           += iGlobalLatticeData.GetBlockSize())
       {
-        for (int j = 0; j < iGlobalLatticeData.GetYSiteCount(); j
+        for (unsigned int j = 0; j < iGlobalLatticeData.GetYSiteCount(); j
             += iGlobalLatticeData.GetBlockSize())
         {
-          for (int k = 0; k < iGlobalLatticeData.GetZSiteCount(); k
+          for (unsigned int k = 0; k < iGlobalLatticeData.GetZSiteCount(); k
               += iGlobalLatticeData.GetBlockSize())
           {
 
@@ -603,15 +604,15 @@ namespace hemelb
             }
             int m = -1;
 
-            for (int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
+            for (unsigned int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
             {
-              for (int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
+              for (unsigned int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
               {
-                for (int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
+                for (unsigned int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
                 {
 
                   m++;
-                  if (mNetTopology->GetLocalRank()
+                  if ((int) mNetTopology->GetLocalRank()
                       != iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m])
                   {
                     continue;
@@ -706,7 +707,8 @@ namespace hemelb
                   if (mNetTopology->IsCurrentProcTheIOProc())
                   {
 
-                    for (int l = 0; l < mNetTopology->GetProcessorCount() * communication_period; l++)
+                    for (unsigned int l = 0; l < mNetTopology->GetProcessorCount()
+                        * communication_period; l++)
                     {
                       if (gathered_site_data[l * 3 + 0] == -1)
                         continue;
@@ -757,7 +759,7 @@ namespace hemelb
 
           if (mNetTopology->IsCurrentProcTheIOProc())
           {
-            for (int l = 0; l < mNetTopology->GetProcessorCount() * communication_period; l++)
+            for (unsigned int l = 0; l < mNetTopology->GetProcessorCount() * communication_period; l++)
             {
 
               if (gathered_site_data[l * 3 + 0] == -1)
@@ -881,7 +883,7 @@ namespace hemelb
 
       int lLocalSitesInitialOffset = lPreambleLength;
 
-      for (int ii = 0; ii < mNetTopology->GetLocalRank(); ii++)
+      for (unsigned int ii = 0; ii < mNetTopology->GetLocalRank(); ii++)
       {
         lLocalSitesInitialOffset += lOneFluidSiteLength
             * mNetTopology->FluidSitesOnEachProcessor[ii];
@@ -903,13 +905,13 @@ namespace hemelb
        root processor */
 
       int n = -1; // net->proc_block counter
-      for (int i = 0; i < iGlobalLatticeData.GetXSiteCount(); i
+      for (unsigned int i = 0; i < iGlobalLatticeData.GetXSiteCount(); i
           += iGlobalLatticeData.GetBlockSize())
       {
-        for (int j = 0; j < iGlobalLatticeData.GetYSiteCount(); j
+        for (unsigned int j = 0; j < iGlobalLatticeData.GetYSiteCount(); j
             += iGlobalLatticeData.GetBlockSize())
         {
-          for (int k = 0; k < iGlobalLatticeData.GetZSiteCount(); k
+          for (unsigned int k = 0; k < iGlobalLatticeData.GetZSiteCount(); k
               += iGlobalLatticeData.GetBlockSize())
           {
 
@@ -921,15 +923,15 @@ namespace hemelb
             }
             int m = -1;
 
-            for (int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
+            for (unsigned int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
             {
-              for (int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
+              for (unsigned int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
               {
-                for (int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
+                for (unsigned int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
                 {
 
                   m++;
-                  if (mNetTopology->GetLocalRank()
+                  if ((int) mNetTopology->GetLocalRank()
                       != iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m])
                   {
                     continue;

@@ -354,7 +354,7 @@ namespace hemelb
 
       int i;
 
-      int lMaxInlets = hemelb::util::max(6 + inlets, 2 * inlets);
+      int lMaxInlets = hemelb::util::NumericalFunctions::max<int>(6 + inlets, 2 * inlets);
 
       local_data = new double[lMaxInlets];
       global_data = new double[lMaxInlets];

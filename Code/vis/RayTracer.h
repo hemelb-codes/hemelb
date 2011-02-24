@@ -113,8 +113,8 @@ namespace hemelb
 
         float mBlockSizeFloat;
         float mBlockSizeInverse;
-        int block_size2, block_size3, block_size_1;
-        int blocks_yz;
+        unsigned int block_size2, block_size3, block_size_1;
+        unsigned int blocks_yz;
     };
 
   }
