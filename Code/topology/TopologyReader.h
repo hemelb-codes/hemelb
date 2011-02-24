@@ -18,21 +18,30 @@ namespace hemelb
         TopologyReader();
         ~TopologyReader();
 
-        void LoadAndDecompose(lb::GlobalLatticeData &bGlobalLatticeData,
-                              net::Net *net,
-                              lb::LbmParameters * bLbmParams,
-                              SimConfig * bSimConfig);
+        void LoadAndDecompose(lb::GlobalLatticeData* bGlobalLatticeData,
+                              int &totalFluidSites,
+                              unsigned int siteMins[3],
+                              unsigned int siteMaxes[3],
+                              lb::LbmParameters* bLbmParams,
+                              SimConfig* bSimConfig);
+
+      private:
 
         void ReadPreamble(MPI_File xiFile,
-                          lb::LbmParameters * bParams,
-                          lb::GlobalLatticeData &bGlobalLatticeData);
+                          lb::LbmParameters* bParams,
+                          lb::GlobalLatticeData* bGlobalLatticeData);
 
         void ReadHeader(MPI_File xiFile,
                         unsigned int iBlockCount,
                         unsigned int* sitesInEachBlock,
                         unsigned int* bytesUsedByBlockInDataFile);
 
-      private:
+        void ReadAllBlocks(lb::GlobalLatticeData* bGlobLatDat,
+                           const unsigned int* bytesPerBlock,
+                           int &totalFluidSites,
+                           unsigned int siteMins[3],
+                           unsigned int siteMaxes[3],
+                           MPI_File iFile);
 
         /*   void
          GetNeighbourLocation(int lFromBlockId,
@@ -42,10 +51,6 @@ namespace hemelb
          int * lToBlockId,
          int * lToSiteId);*/
 
-        void GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
-                                      net::Net *iNet,
-                                      MPI_File iFile,
-                                      const lb::GlobalLatticeData &bGlobalLatticeData);
         void GetInitialSiteDistribution(unsigned long oFirstBlockIdForEachProc[],
                                         unsigned long oFirstSiteIdForEachProc[],
                                         unsigned long oNumberSitesPerProc[],
