@@ -107,8 +107,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mNet = new hemelb::net::Net(mNetworkTopology);
 
   // Initialise the Lbm.
-  mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat, iSteeringSessionid,
-                             &mFileReadTime);
+  mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat, &mFileReadTime);
 
   // Initialise and begin the steering.
   if (mNetworkTopology->IsCurrentProcTheIOProc())

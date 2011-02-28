@@ -16,7 +16,6 @@ namespace hemelb
       public:
         int total_fluid_sites;
         int inlets, outlets;
-        int steering_session_id;
         unsigned int period;
 
         double ConvertPressureToLatticeUnits(double pressure) const;
@@ -29,7 +28,6 @@ namespace hemelb
         LBM(hemelb::SimConfig *iSimulationConfig,
             const hemelb::topology::NetworkTopology * iNetTop,
             hemelb::lb::GlobalLatticeData &bGlobLatDat,
-            int iSteeringSessionId,
             double* oFileReadTime);
         void Restart(hemelb::lb::LocalLatticeData &iLocalLatDat);
         ~LBM();
