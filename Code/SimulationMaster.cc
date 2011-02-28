@@ -108,20 +108,12 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   // Initialise the Lbm.
   mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology);
 
-  double fileReadStartTime = hemelb::util::myClock();
   hemelb::topology::TopologyReader lTopologist;
   lTopologist.LoadAndDecompose(&mGlobLatDat, mLbm->total_fluid_sites, mLbm->siteMins,
-                               mLbm->siteMaxes, mLbm->GetLbmParams(), iSimConfig);
-  mFileReadTime = hemelb::util::myClock() - fileReadStartTime;
-
-  // Count the domain decomposition time.
-  double seconds = hemelb::util::myClock();
-
-  lTopologist.DecomposeDomain(mLbm->total_fluid_sites,
-                              hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
-                              mNetworkTopology, mGlobLatDat);
-
-  mDomainDecompTime = hemelb::util::myClock() - seconds;
+                               mLbm->siteMaxes,
+                               hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
+                               mNetworkTopology, mLbm->GetLbmParams(), iSimConfig, &mFileReadTime,
+                               &mDomainDecompTime);
 
   // Initialise and begin the steering.
   if (mNetworkTopology->IsCurrentProcTheIOProc())
@@ -149,7 +141,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mStabilityTester = new hemelb::lb::StabilityTester(mLocalLatDat, mNet, mNetworkTopology,
                                                      &mSimulationState);
 
-  seconds = hemelb::util::myClock();
+  double seconds = hemelb::util::myClock();
   int* lReceiveTranslator = mNet->Initialise(mGlobLatDat, mLocalLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 

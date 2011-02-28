@@ -22,13 +22,12 @@ namespace hemelb
                               int &totalFluidSites,
                               unsigned int siteMins[3],
                               unsigned int siteMaxes[3],
+                              bool iReserveSteeringCore,
+                              NetworkTopology* bNetTop,
                               lb::LbmParameters* bLbmParams,
-                              SimConfig* bSimConfig);
-
-        void DecomposeDomain(int iTotalFluidSites,
-                             bool iReserveSteeringCore,
-                             NetworkTopology* bNetTop,
-                             const lb::GlobalLatticeData & bGlobLatDat);
+                              SimConfig* bSimConfig,
+                              double* lReadTime,
+                              double* lDecomposeTime);
 
       private:
         struct SiteLocation
@@ -36,13 +35,18 @@ namespace hemelb
             short int i, j, k;
         };
 
+        void DecomposeDomain(int iTotalFluidSites,
+                             bool iReserveSteeringCore,
+                             NetworkTopology* bNetTop,
+                             const lb::GlobalLatticeData* bGlobLatDat);
+
         void AssignFluidSitesToProcessors(int & proc_count,
                                           int & fluid_sites_per_unit,
                                           int & unvisited_fluid_sites,
                                           const int iCurrentProcId,
                                           const bool iIsMachineLevel,
                                           NetworkTopology* bNetTop,
-                                          const lb::GlobalLatticeData &iGlobLatDat);
+                                          const lb::GlobalLatticeData* iGlobLatDat);
 
         void ReadPreamble(MPI_File xiFile,
                           lb::LbmParameters* bParams,
