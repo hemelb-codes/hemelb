@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 
+#include "topology/TopologyReader.h"
 #include "topology/NetworkTopology.h"
 
 int main(int argc, char *argv[])
@@ -40,7 +41,9 @@ void Tests::TestDomainDecomposition()
 
   double lExpectedPerRank = ((double) lFluidSites) / ((double) lProcCount - 1);
 
-  lNetTop->DecomposeDomain(lFluidSites, true, lGlobLatDat);
+  hemelb::topology::TopologyReader lTop;
+
+  lTop.DecomposeDomain(lFluidSites, true, lNetTop, lGlobLatDat);
 
   for (int ii = 1; ii < lProcCount; ii++)
   {

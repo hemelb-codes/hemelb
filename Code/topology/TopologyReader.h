@@ -25,7 +25,24 @@ namespace hemelb
                               lb::LbmParameters* bLbmParams,
                               SimConfig* bSimConfig);
 
+        void DecomposeDomain(int iTotalFluidSites,
+                             bool iReserveSteeringCore,
+                             NetworkTopology* bNetTop,
+                             const lb::GlobalLatticeData & bGlobLatDat);
+
       private:
+        struct SiteLocation
+        {
+            short int i, j, k;
+        };
+
+        void AssignFluidSitesToProcessors(int & proc_count,
+                                          int & fluid_sites_per_unit,
+                                          int & unvisited_fluid_sites,
+                                          const int iCurrentProcId,
+                                          const bool iIsMachineLevel,
+                                          NetworkTopology* bNetTop,
+                                          const lb::GlobalLatticeData &iGlobLatDat);
 
         void ReadPreamble(MPI_File xiFile,
                           lb::LbmParameters* bParams,
