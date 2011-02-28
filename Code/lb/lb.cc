@@ -168,7 +168,6 @@ namespace hemelb
 
       topology::TopologyReader lTopologist;
 
-      unsigned int siteMins[3], siteMaxes[3];
       lTopologist.LoadAndDecompose(&bGlobLatDat, total_fluid_sites, siteMins, siteMaxes, &mParams,
                                    mSimConfig);
       *oFileReadTime = hemelb::util::myClock() - fileReadStartTime;
@@ -211,12 +210,14 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
-    void LBM::Initialise(int* iFTranslator)
+    void LBM::Initialise(int* iFTranslator, LocalLatticeData* bLocalLatDat)
     {
       receivedFTranslator = iFTranslator;
+
+      SetInitialConditions(bLocalLatDat);
     }
 
-    void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
+    void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData* bLocalLatDat)
     {
       double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
       double density;
@@ -229,12 +230,12 @@ namespace hemelb
       }
       density /= outlets;
 
-      for (int i = 0; i < bLocalLatDat.GetLocalFluidSiteCount(); i++)
+      for (int i = 0; i < bLocalLatDat->GetLocalFluidSiteCount(); i++)
       {
         D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
-        f_old_p = &bLocalLatDat.FOld[i * D3Q15::NUMVECTORS];
-        f_new_p = &bLocalLatDat.FNew[i * D3Q15::NUMVECTORS];
+        f_old_p = &bLocalLatDat->FOld[i * D3Q15::NUMVECTORS];
+        f_new_p = &bLocalLatDat->FNew[i * D3Q15::NUMVECTORS];
 
         for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
         {
@@ -521,7 +522,7 @@ namespace hemelb
     // In the case of instability, this function restart the simulation
     // with twice as many time steps per period and update the parameters
     // that depends on this change.
-    void LBM::Restart(hemelb::lb::LocalLatticeData &iLocalLatDat)
+    void LBM::Restart(hemelb::lb::LocalLatticeData* iLocalLatDat)
     {
       int i;
 

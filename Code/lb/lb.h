@@ -29,7 +29,7 @@ namespace hemelb
             const hemelb::topology::NetworkTopology * iNetTop,
             hemelb::lb::GlobalLatticeData &bGlobLatDat,
             double* oFileReadTime);
-        void Restart(hemelb::lb::LocalLatticeData &iLocalLatDat);
+        void Restart(hemelb::lb::LocalLatticeData* iLocalLatDat);
         ~LBM();
 
         void CalculateFlowFieldValues();
@@ -38,9 +38,9 @@ namespace hemelb
         void
         UpdateInletVelocities(int time_step, lb::LocalLatticeData &iLocalLatDat, net::Net *net);
 
-        void Initialise(int* iFTranslator);
+        void Initialise(int* iFTranslator, LocalLatticeData* bLocalLatDat);
 
-        void SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat);
+        void SetInitialConditions(hemelb::lb::LocalLatticeData* bLocalLatDat);
 
         void
         WriteConfig(hemelb::lb::Stability stability,
@@ -119,8 +119,7 @@ namespace hemelb
         double *inlet_density_avg, *inlet_density_amp;
         double *outlet_density_avg, *outlet_density_amp;
         double *inlet_density_phs, *outlet_density_phs;
-        unsigned int site_min_x, site_min_y, site_min_z;
-        unsigned int site_max_x, site_max_y, site_max_z;
+        unsigned int siteMins[3], siteMaxes[3];
         int is_inlet_normal_available;
         double* inlet_density, *outlet_density;
         hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;

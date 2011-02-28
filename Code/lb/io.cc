@@ -336,13 +336,13 @@ namespace hemelb
 
       if (mNetTopology->IsCurrentProcTheIOProc())
       {
-        shrinked_sites_x = 1 + site_max_x - site_min_x;
-        shrinked_sites_y = 1 + site_max_y - site_min_y;
-        shrinked_sites_z = 1 + site_max_z - site_min_z;
+        shrinked_sites_x = 1 + siteMaxes[0] - siteMins[0];
+        shrinked_sites_y = 1 + siteMaxes[1] - siteMins[1];
+        shrinked_sites_z = 1 + siteMaxes[2] - siteMins[2];
 
         snap << voxel_size << hemelb::io::Writer::eol;
-        snap << site_min_x << site_min_y << site_min_z << hemelb::io::Writer::eol;
-        snap << site_max_x << site_max_y << site_max_z << hemelb::io::Writer::eol;
+        snap << siteMins[0] << siteMins[1] << siteMins[2] << hemelb::io::Writer::eol;
+        snap << siteMaxes[0] << siteMaxes[1] << siteMaxes[2] << hemelb::io::Writer::eol;
         snap << shrinked_sites_x << shrinked_sites_y << shrinked_sites_z << hemelb::io::Writer::eol;
         snap << total_fluid_sites << hemelb::io::Writer::eol;
       }
@@ -351,8 +351,9 @@ namespace hemelb
 
       for (unsigned int n = 0; n < mNetTopology->GetProcessorCount(); n++)
       {
-        fluid_sites_max = hemelb::util::NumericalFunctions::max<int>(fluid_sites_max,
-                                                 mNetTopology->FluidSitesOnEachProcessor[n]);
+        fluid_sites_max
+            = hemelb::util::NumericalFunctions::max<int>(fluid_sites_max,
+                                                         mNetTopology->FluidSitesOnEachProcessor[n]);
       }
 
       // "buffer_size" is the size of the flow field buffer to send to the
@@ -366,8 +367,9 @@ namespace hemelb
 
       communication_period = int (ceil(double (buffer_size) / mNetTopology->GetProcessorCount()));
 
-      communication_iters = hemelb::util::NumericalFunctions::max<int>(1, int (ceil(double (fluid_sites_max)
-          / communication_period)));
+      communication_iters
+          = hemelb::util::NumericalFunctions::max<int>(1, int (ceil(double (fluid_sites_max)
+              / communication_period)));
 
       local_flow_field = new float[MACROSCOPIC_PARS * communication_period];
       gathered_flow_field = new float[MACROSCOPIC_PARS * communication_period
@@ -520,9 +522,9 @@ namespace hemelb
                       if (gathered_site_data[l * 3 + 0] == -1)
                         continue;
 
-                      gathered_site_data[l * 3 + 0] -= site_min_x;
-                      gathered_site_data[l * 3 + 1] -= site_min_y;
-                      gathered_site_data[l * 3 + 2] -= site_min_z;
+                      gathered_site_data[l * 3 + 0] -= siteMins[0];
+                      gathered_site_data[l * 3 + 1] -= siteMins[1];
+                      gathered_site_data[l * 3 + 2] -= siteMins[2];
 
                       snap << gathered_site_data[l * 3 + 0] << gathered_site_data[l * 3 + 1]
                           << gathered_site_data[l * 3 + 2];
@@ -572,9 +574,9 @@ namespace hemelb
               if (gathered_site_data[l * 3 + 0] == -1)
                 continue;
 
-              gathered_site_data[l * 3 + 0] -= site_min_x;
-              gathered_site_data[l * 3 + 1] -= site_min_y;
-              gathered_site_data[l * 3 + 2] -= site_min_z;
+              gathered_site_data[l * 3 + 0] -= siteMins[0];
+              gathered_site_data[l * 3 + 1] -= siteMins[1];
+              gathered_site_data[l * 3 + 2] -= siteMins[2];
 
               snap << gathered_site_data[l * 3 + 0] << gathered_site_data[l * 3 + 1]
                   << gathered_site_data[l * 3 + 2];
@@ -669,9 +671,10 @@ namespace hemelb
         char lBuffer[lPreambleLength];
         hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lBuffer, lPreambleLength);
 
-        lWriter << stability << voxel_size << site_min_x << site_min_y << site_min_z << site_max_x
-            << site_max_y << site_max_z << (1 + site_max_x - site_min_x) << (1 + site_max_y
-            - site_min_y) << (1 + site_max_z - site_min_z) << total_fluid_sites;
+        lWriter << stability << voxel_size << siteMins[0] << siteMins[1] << siteMins[2]
+            << siteMaxes[0] << siteMaxes[1] << siteMaxes[2] << (1 + siteMaxes[0] - siteMins[0])
+            << (1 + siteMaxes[1] - siteMins[1]) << (1 + siteMaxes[2] - siteMins[2])
+            << total_fluid_sites;
 
         MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MPI_BYTE, &lStatus);
       }
@@ -809,8 +812,8 @@ namespace hemelb
 
                   stress = ConvertStressToPhysicalUnits(stress);
 
-                  lWriter << (site_i - site_min_x) << (site_j - site_min_y)
-                      << (site_k - site_min_z);
+                  lWriter << (site_i - siteMins[0]) << (site_j - siteMins[1]) << (site_k
+                      - siteMins[2]);
 
                   lWriter << float (pressure) << float (vx) << float (vy) << float (vz)
                       << float (stress);

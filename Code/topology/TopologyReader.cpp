@@ -281,8 +281,8 @@ namespace hemelb
 
     void TopologyReader::LoadAndDecompose(lb::GlobalLatticeData* bGlobalLatticeData,
                                           int &totalFluidSites,
-                                          unsigned int siteMins[3],
-                                          unsigned int siteMaxes[3],
+                                          unsigned int* siteMins,
+                                          unsigned int* siteMaxes,
                                           lb::LbmParameters* bLbmParams,
                                           SimConfig* bSimConfig)
     {
@@ -378,8 +378,8 @@ namespace hemelb
     void TopologyReader::ReadAllBlocks(lb::GlobalLatticeData* bGlobLatDat,
                                        const unsigned int* bytesPerBlock,
                                        int &totalFluidSites,
-                                       unsigned int siteMins[3],
-                                       unsigned int siteMaxes[3],
+                                       unsigned int *siteMins,
+                                       unsigned int *siteMaxes,
                                        MPI_File iFile)
     {
       // Initialise counter variables.
@@ -470,7 +470,7 @@ namespace hemelb
                                                                                   site_i);
                 siteMins[1] = hemelb::util::NumericalFunctions::min<unsigned int>(siteMins[1],
                                                                                   site_j);
-                siteMins[1] = hemelb::util::NumericalFunctions::min<unsigned int>(siteMins[1],
+                siteMins[2] = hemelb::util::NumericalFunctions::min<unsigned int>(siteMins[2],
                                                                                   site_k);
                 siteMaxes[0] = hemelb::util::NumericalFunctions::max<unsigned int>(siteMaxes[0],
                                                                                    site_i);

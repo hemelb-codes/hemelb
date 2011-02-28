@@ -266,7 +266,7 @@ namespace hemelb
     class BlockCounter
     {
       public:
-        BlockCounter(GlobalLatticeData* iGlobLatDat, int unsigned iStartNumber)
+        BlockCounter(GlobalLatticeData* iGlobLatDat, unsigned int iStartNumber)
         {
           mBlockNumber = iStartNumber;
           mGlobLatDat = iGlobLatDat;
