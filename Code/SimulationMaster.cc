@@ -104,8 +104,6 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 {
   mTimingsFile = bTimingsFile;
 
-  mNet = new hemelb::net::Net(mNetworkTopology);
-
   // Initialise the Lbm.
   mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat, &mFileReadTime);
 
@@ -118,10 +116,6 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   {
     clientConnection = NULL;
   }
-
-  int images_period = (iImagesPerCycle == 0)
-    ? 1e9
-    : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / iImagesPerCycle);
 
   if (mNetworkTopology->IsCurrentProcTheIOProc())
   {
@@ -144,6 +138,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
       = new hemelb::lb::LocalLatticeData(
                                          mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]);
 
+  mNet = new hemelb::net::Net(mNetworkTopology);
+
   mStabilityTester = new hemelb::lb::StabilityTester(mLocalLatDat, mNet, mNetworkTopology,
                                                      &mSimulationState);
 
@@ -151,12 +147,16 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   int* lReceiveTranslator = mNet->Initialise(mGlobLatDat, mLocalLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
-  mLbm->Initialise(lReceiveTranslator);
-  mLbm->SetInitialConditions(*mLocalLatDat);
+  mLbm->Initialise(lReceiveTranslator, mLocalLatDat);
 
   // Initialise the visualisation controller.
-  hemelb::vis::controller = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mGlobLatDat);
-  hemelb::vis::controller->initLayers(mNetworkTopology, mGlobLatDat, *mLocalLatDat);
+  hemelb::vis::controller
+      = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, &mGlobLatDat);
+  hemelb::vis::controller->initLayers(mNetworkTopology, &mGlobLatDat, mLocalLatDat);
+
+  int images_period = (iImagesPerCycle == 0)
+    ? 1e9
+    : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / iImagesPerCycle);
 
   steeringCpt = new hemelb::steering::SteeringComponent(images_period, clientConnection,
                                                         hemelb::vis::controller, mLbm, mNet,
@@ -295,13 +295,13 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       double lPreImageTime = MPI_Wtime();
 
 #ifndef NO_STREAKLINES
-      hemelb::vis::controller->streaklines(mSimulationState.TimeStep, mLbm->period, mGlobLatDat,
-                                           *mLocalLatDat);
+      hemelb::vis::controller->streaklines(mSimulationState.TimeStep, mLbm->period, &mGlobLatDat,
+                                           mLocalLatDat);
 #endif
 
       if (mSimulationState.DoRendering && !write_snapshot_image)
       {
-        hemelb::vis::controller->render(RECV_BUFFER_A, mGlobLatDat, mNetworkTopology);
+        hemelb::vis::controller->render(RECV_BUFFER_A, &mGlobLatDat, mNetworkTopology);
 
         if (hemelb::vis::controller->mouse_x >= 0 && hemelb::vis::controller->mouse_y >= 0
             && steeringCpt->updatedMouseCoords)
@@ -343,7 +343,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       if (write_snapshot_image)
       {
-        hemelb::vis::controller->render(RECV_BUFFER_B, mGlobLatDat, mNetworkTopology);
+        hemelb::vis::controller->render(RECV_BUFFER_B, &mGlobLatDat, mNetworkTopology);
         mImagesWritten++;
 
         if (mNetworkTopology->IsCurrentProcTheIOProc())
@@ -393,7 +393,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       hemelb::util::DeleteDirContents(snapshot_directory);
       hemelb::util::DeleteDirContents(image_directory);
 
-      mLbm->Restart(*mLocalLatDat);
+      mLbm->Restart(mLocalLatDat);
       mStabilityTester->Reset();
       steeringCpt->Reset();
 
