@@ -25,10 +25,8 @@ namespace hemelb
         double ConvertStressToPhysicalUnits(double stress) const;
         double ConvertVelocityToPhysicalUnits(double velocity) const;
 
-        LBM(hemelb::SimConfig *iSimulationConfig,
-            const hemelb::topology::NetworkTopology * iNetTop,
-            hemelb::lb::GlobalLatticeData &bGlobLatDat,
-            double* oFileReadTime);
+            LBM(hemelb::SimConfig *iSimulationConfig,
+                const hemelb::topology::NetworkTopology * iNetTop);
         void Restart(hemelb::lb::LocalLatticeData* iLocalLatDat);
         ~LBM();
 
@@ -74,13 +72,15 @@ namespace hemelb
                                      double density_threshold_minmax_inv,
                                      double stress_threshold_max_inv);
 
-        const hemelb::lb::LbmParameters *GetLbmParams();
+        hemelb::lb::LbmParameters *GetLbmParams();
 
         void RequestComms(net::Net* net, lb::LocalLatticeData* bLocalLatDat);
         void PreSend(lb::LocalLatticeData* bLocalLatDat, int perform_rt);
         void PreReceive(int perform_rt, lb::LocalLatticeData* bLocalLatDat);
         void PostReceive(lb::LocalLatticeData* bLocalLatDat, int perform_rt);
         void EndIteration(lb::LocalLatticeData* bLocalLatDat);
+
+        unsigned int siteMins[3], siteMaxes[3];
 
       private:
         void CalculateBC(double f[],
@@ -119,7 +119,6 @@ namespace hemelb
         double *inlet_density_avg, *inlet_density_amp;
         double *outlet_density_avg, *outlet_density_amp;
         double *inlet_density_phs, *outlet_density_phs;
-        unsigned int siteMins[3], siteMaxes[3];
         int is_inlet_normal_available;
         double* inlet_density, *outlet_density;
         hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;
