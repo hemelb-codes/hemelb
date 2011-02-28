@@ -148,29 +148,19 @@ namespace hemelb
       }
     }
 
-    const hemelb::lb::LbmParameters *LBM::GetLbmParams()
+    hemelb::lb::LbmParameters *LBM::GetLbmParams()
     {
       return &mParams;
     }
 
     LBM::LBM(hemelb::SimConfig *iSimulationConfig,
-             const hemelb::topology::NetworkTopology * iNetTop,
-             hemelb::lb::GlobalLatticeData &bGlobLatDat,
-             double * oFileReadTime)
+             const hemelb::topology::NetworkTopology * iNetTop)
     {
       period = iSimulationConfig->StepsPerCycle;
       voxel_size = iSimulationConfig->VoxelSize;
 
       mNetTopology = iNetTop;
       mSimConfig = iSimulationConfig;
-
-      double fileReadStartTime = hemelb::util::myClock();
-
-      topology::TopologyReader lTopologist;
-
-      lTopologist.LoadAndDecompose(&bGlobLatDat, total_fluid_sites, siteMins, siteMaxes, &mParams,
-                                   mSimConfig);
-      *oFileReadTime = hemelb::util::myClock() - fileReadStartTime;
 
       ReadParameters();
 

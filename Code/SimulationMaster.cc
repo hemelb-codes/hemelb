@@ -3,6 +3,7 @@
 
 #include "vis/ColourPalette.h"
 #include "util/utilityFunctions.h"
+#include "topology/TopologyReader.h"
 #include "debug/Debugger.h"
 #include "util/fileutils.h"
 
@@ -105,7 +106,13 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mTimingsFile = bTimingsFile;
 
   // Initialise the Lbm.
-  mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology, mGlobLatDat, &mFileReadTime);
+  mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology);
+
+  double fileReadStartTime = hemelb::util::myClock();
+  hemelb::topology::TopologyReader lTopologist;
+  lTopologist.LoadAndDecompose(&mGlobLatDat, mLbm->total_fluid_sites, mLbm->siteMins,
+                               mLbm->siteMaxes, mLbm->GetLbmParams(), iSimConfig);
+  mFileReadTime = hemelb::util::myClock() - fileReadStartTime;
 
   // Initialise and begin the steering.
   if (mNetworkTopology->IsCurrentProcTheIOProc())
