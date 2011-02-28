@@ -156,10 +156,8 @@ namespace hemelb
     LBM::LBM(hemelb::SimConfig *iSimulationConfig,
              const hemelb::topology::NetworkTopology * iNetTop,
              hemelb::lb::GlobalLatticeData &bGlobLatDat,
-             int iSteeringSessionId,
              double * oFileReadTime)
     {
-      steering_session_id = iSteeringSessionId;
       period = iSimulationConfig->StepsPerCycle;
       voxel_size = iSimulationConfig->VoxelSize;
 
