@@ -20,8 +20,8 @@ namespace hemelb
 
         void LoadAndDecompose(lb::GlobalLatticeData* bGlobalLatticeData,
                               int &totalFluidSites,
-                              unsigned int* siteMins,
-                              unsigned int* siteMaxes,
+                              unsigned int siteMins[3],
+                              unsigned int siteMaxes[3],
                               lb::LbmParameters* bLbmParams,
                               SimConfig* bSimConfig);
 
@@ -39,8 +39,8 @@ namespace hemelb
         void ReadAllBlocks(lb::GlobalLatticeData* bGlobLatDat,
                            const unsigned int* bytesPerBlock,
                            int &totalFluidSites,
-                           unsigned int *siteMins,
-                           unsigned int *siteMaxes,
+                           unsigned int siteMins[3],
+                           unsigned int siteMaxes[3],
                            MPI_File iFile);
 
         /*   void
