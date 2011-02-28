@@ -1,7 +1,7 @@
 # -*- mode: makefile;-*-
 include $(MK)/header.mk
 
-TARGETS = $(EXE) hlbTest
+TARGETS = $(EXE)
 SUBDIRS = steering vis lb net debug topology io xml parmetis util
 
 $(EXE)_DEPS = D3Q15.o \
@@ -9,12 +9,6 @@ $(EXE)_DEPS = D3Q15.o \
         SimConfig.o \
 	main.o \
 	$(SUBDIRS_TGTS)
-
-hlbTest_DEPS = D3Q15.o \
-        SimulationMaster.o \
-        SimConfig.o \
-        tests.o \
-        $(SUBDIRS_TGTS)
 
 HEMELB_INCLUDEPATHS += $(TOP)
 
