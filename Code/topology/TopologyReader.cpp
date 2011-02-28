@@ -225,8 +225,7 @@ namespace hemelb
 
       //TODO
 
-      //(idxtype *vtxdist, idxtype *xadj, idxtype *adjncy, idxtype *vwgt, idxtype *adjwgt, int *wgtflag, int *numflag, int *ncon, int *nparts, floattype *tpwgts, floattype *ubvec, int *options, int *edgecut, idxtype *part, MPI_Comm *comm)
-      //ParMETIS_V3_PartKway();
+    //  ParMETIS_RefineKway();
     }
 
     void TopologyReader::ReadInBlocks(const unsigned long iFirstBlockIdForEachProc[],
