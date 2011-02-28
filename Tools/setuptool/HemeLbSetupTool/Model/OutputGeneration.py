@@ -3,10 +3,12 @@ import xdrlib
 import numpy as np
 from math import sqrt
 import bisect
+import os.path
+from xml.etree.ElementTree import Element, SubElement, ElementTree
 
-from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, vtkPolyData, \
-    vtkFeatureEdges, vtkPolyDataConnectivityFilter, vtkCellLocator, \
-    vtkPoints, vtkIdList, vtkPolyDataNormals, vtkProgrammableFilter, vtkOBBTree, vtkXMLPolyDataWriter, vtkTriangleFilter, vtkCleanPolyData, vtkIntArray
+from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, vtkStripper, \
+    vtkFeatureEdges, vtkPolyDataConnectivityFilter,  \
+    vtkPoints, vtkIdList, vtkPolyDataNormals, vtkProgrammableFilter, vtkOBBTree, vtkTriangleFilter, vtkCleanPolyData, vtkIntArray
 
 from .Iolets import Inlet, Outlet, Iolet
 
@@ -111,6 +113,9 @@ class ConfigGenerator(object):
             continue # for block in domain...
         
         writer.RewriteHeader()
+        
+        # Write the XML file
+        XmlWriter(self).Write()
         return
 
     def IterHitsForLink(self, start, end):
@@ -410,7 +415,6 @@ class Writer(object):
                 
         encoder = xdrlib.Packer()
         # Write the preamble, starting with the stress type
-        print 'Preamble start: %x' % self.file.tell()
         encoder.pack_int(StressType)
         
         # Blocks in each dimension
@@ -422,9 +426,7 @@ class Writer(object):
         
         # Write this to the file
         self.file.write(encoder.get_buffer())
-        print 'Preamble end: %x' % self.file.tell()
-        print 'Dummy header start: %x' % self.file.tell()
-
+        
         # Reset, we're going to write a dummy header now
         encoder.reset()
         # For each block
@@ -438,8 +440,7 @@ class Writer(object):
         self.file.write(encoder.get_buffer())
         # Note the start of the body
         self.bodyStart = self.file.tell()
-        print 'Dummy header end: %x' % self.file.tell()
-
+        
         self.HeaderEncoder = xdrlib.Packer()
         return
     
@@ -463,8 +464,6 @@ class Writer(object):
         
         encoder.IncrementFluidSitesCount = incrementor
         # Give the altered XDR encoder back to our caller
-        print 'Block start: %x' % self.file.tell()
-
         yield encoder
         
         # Write our record into the header buffer
@@ -482,7 +481,6 @@ class Writer(object):
             blockEnd = self.file.tell()
             self.HeaderEncoder.pack_uint(blockEnd - blockStart)
             pass
-        print 'Block end: %x' % self.file.tell()
         
         return
     
@@ -578,6 +576,109 @@ class Domain(object):
             continue # nd.enumerate(self.blocks)
         
         return
+    pass
+
+class XmlWriter(object):
+    def __init__(self, profile):
+        self.profile = profile
+        return
+    
+    @staticmethod
+    def indent(elem, level=0):
+        i = "\n" + level*"  "
+        if len(elem):
+            if not elem.text or not elem.text.strip():
+                elem.text = i + "  "
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+            for elem in elem:
+                XmlWriter.indent(elem, level+1)
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+        else:
+            if level and (not elem.tail or not elem.tail.strip()):
+                elem.tail = i
+        return
+    
+    def Write(self):
+        self.root = Element('hemelbsettings')
+        self.DoSimulation()
+        self.DoGeometry()
+        self.DoIolets()
+        self.DoVisualisation()
+        
+        self.indent(self.root)
+        
+        xmlFile = file(self.profile.OutputXmlFile, 'wb')
+        xmlFile.write('<?xml version="1.0" ?>\n')
+        ElementTree(self.root).write(xmlFile)
+        return
+    
+    def DoSimulation(self):
+        sim = SubElement(self.root, 'simulation')
+        sim.set('cycles', str(3))
+        sim.set('cyclesteps', str(1000))
+        return
+    
+    def DoGeometry(self):
+        geom = SubElement(self.root, 'geometry')
+        geom.set('voxelsize', str(self.profile.VoxelSize))
+        
+        data = SubElement(geom, 'datafile')
+        data.set('path', os.path.relpath(self.profile.OutputConfigFile,
+                                         os.path.split(self.profile.OutputXmlFile)[0]))
+        return
+    
+    def DoIolets(self):
+        inlets = SubElement(self.root, 'inlets')
+        outlets = SubElement(self.root, 'outlets')
+        
+        for io in self.profile.Iolets:
+            if isinstance(io, Inlet):
+                iolet = SubElement(inlets, 'inlet')
+            elif isinstance(io, Outlet):
+                iolet = SubElement(outlets, 'outlet')
+            else:
+                continue
+            pressure = SubElement(iolet, 'pressure')
+            pressure.set('mean',      str(io.Pressure.x))
+            pressure.set('amplitude', str(io.Pressure.y))
+            pressure.set('phase',     str(io.Pressure.z))
+            
+            normal = SubElement(iolet, 'normal')
+            normal.set('x', str(io.Normal.x))
+            normal.set('y', str(io.Normal.y))
+            normal.set('z', str(io.Normal.z))
+                        
+            position = SubElement(iolet, 'position')
+            position.set('x', str(io.Centre.x))
+            position.set('y', str(io.Centre.y))
+            position.set('z', str(io.Centre.z))
+            continue
+        return
+    
+    def DoVisualisation(self):
+        vis = SubElement(self.root, 'visualisation')
+        
+        centre = SubElement(vis, 'centre')
+        centre.set('x', '0.0')
+        centre.set('y', '0.0')
+        centre.set('z', '0.0')
+        
+        orientation = SubElement(vis, 'orientation')
+        orientation.set('longitude', '45.0')
+        orientation.set('latitude', '45.0')
+        
+        display = SubElement(vis, 'display')
+        display.set('zoom', '1.0')
+        display.set('brightness', '0.03')
+        
+        range = SubElement(vis, 'range')
+        range.set('maxvelocity', str(0.1))
+        range.set('maxstress', str(0.1))
+        
+        return
+    
     pass
 
 class MacroBlock(object):
