@@ -16,16 +16,17 @@ namespace hemelb
     // make a global controller
     Control *controller;
 
-    Control::Control(lb::StressTypes iStressType, lb::GlobalLatticeData &iGlobLatDat)
+    Control::Control(lb::StressTypes iStressType,
+                     lb::GlobalLatticeData* iGlobLatDat)
     {
       mStressType = iStressType;
 
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float (iGlobLatDat.GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float (iGlobLatDat.GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float (iGlobLatDat.GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float (iGlobLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float (iGlobLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float (iGlobLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -39,15 +40,14 @@ namespace hemelb
       {
         col_pixel_id[i] = -1;
       }
-
     }
 
     void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
-                             lb::GlobalLatticeData &iGlobLatDat,
-                             lb::LocalLatticeData &iLocalLatDat)
+                             lb::GlobalLatticeData* iGlobLatDat,
+                             lb::LocalLatticeData* iLocalLatDat)
     {
-      myRayTracer = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
-      myGlypher = new GlyphDrawer(&iGlobLatDat, &iLocalLatDat);
+      myRayTracer = new RayTracer(iNetworkTopology, iLocalLatDat, iGlobLatDat);
+      myGlypher = new GlyphDrawer(iGlobLatDat, iLocalLatDat);
 
 #ifndef NO_STREAKLINES
       myStreaker = new StreaklineDrawer(iNetworkTopology, iLocalLatDat, iGlobLatDat);
@@ -609,8 +609,8 @@ namespace hemelb
     }
 
     void Control::render(int recv_buffer_id,
-                         lb::GlobalLatticeData &iGlobLatDat,
-                         const topology::NetworkTopology * iNetTopology)
+                         lb::GlobalLatticeData* iGlobLatDat,
+                         const topology::NetworkTopology* iNetTopology)
     {
       if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
       {
@@ -670,8 +670,8 @@ namespace hemelb
 
     void Control::streaklines(int time_step,
                               int period,
-                              lb::GlobalLatticeData &iGlobLatDat,
-                              lb::LocalLatticeData &iLocalLatDat)
+                              lb::GlobalLatticeData* iGlobLatDat,
+                              lb::LocalLatticeData* iLocalLatDat)
     {
       myStreaker ->StreakLines(time_step, period, iGlobLatDat, iLocalLatDat);
     }
