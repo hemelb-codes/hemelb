@@ -38,11 +38,7 @@ namespace hemelb
         unsigned int GetLocalRank() const;
         unsigned int GetProcessorCount() const;
         int GetDepths() const;
-        int GetMachineCount() const;
-
-        void DecomposeDomain(int iTotalFluidSites,
-                             bool iReserveSteeringCore,
-                             const lb::GlobalLatticeData & bGlobLatDat);
+        unsigned int GetMachineCount() const;
 
         // Number of local distributions shared with neighbouring processors.
         int TotalSharedFs;
@@ -55,20 +51,7 @@ namespace hemelb
         int * FluidSitesOnEachProcessor;
 
       private:
-        struct SiteLocation
-        {
-            short int i, j, k;
-        };
-
         bool InitialiseMachineInfo();
-
-        void
-        AssignFluidSitesToProcessors(int & proc_count,
-                                     int & fluid_sites_per_unit,
-                                     int & unvisited_fluid_sites,
-                                     const int iCurrentProcId,
-                                     const bool iIsMachineLevel,
-                                     const lb::GlobalLatticeData &iGlobLatDat);
 
         unsigned int localRank;
         unsigned int processorCount;
