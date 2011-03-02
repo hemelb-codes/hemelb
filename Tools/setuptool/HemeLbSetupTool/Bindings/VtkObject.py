@@ -1,7 +1,7 @@
 import types
 from vtk import vtkObject
 
-from ..Util.Observer import Change, ChangeTimes
+from ..Util.Observer import Change, ChangeTimes, Observable
 from .ObjectController import ObjectController
 import pdb
 
