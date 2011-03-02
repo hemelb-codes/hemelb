@@ -14,7 +14,7 @@ namespace hemelb
     {
       public:
         // Rank of the neighbouring processor.
-        int Rank;
+        unsigned int Rank;
 
         // The number of distributions shared between this neighbour and the current processor.
         int SharedFCount;
@@ -35,12 +35,10 @@ namespace hemelb
 
         // Functions for getting the rank of this processor and the total size
         // of the topology.
-        int GetLocalRank() const;
-        int GetProcessorCount() const;
+        unsigned int GetLocalRank() const;
+        unsigned int GetProcessorCount() const;
         int GetDepths() const;
-        int GetMachineCount() const;
-
-        void DecomposeDomain(int iTotalFluidSites, bool iReserveSteeringCore, const lb::GlobalLatticeData & bGlobLatDat);
+        unsigned int GetMachineCount() const;
 
         // Number of local distributions shared with neighbouring processors.
         int TotalSharedFs;
@@ -53,33 +51,20 @@ namespace hemelb
         int * FluidSitesOnEachProcessor;
 
       private:
-        struct SiteLocation
-        {
-            short int i, j, k;
-        };
-
         bool InitialiseMachineInfo();
 
-        void
-        AssignFluidSitesToProcessors(int & proc_count,
-                                     int & fluid_sites_per_unit,
-                                     int & unvisited_fluid_sites,
-                                     const int iCurrentProcId,
-                                     const bool iIsMachineLevel,
-                                     const lb::GlobalLatticeData &iGlobLatDat);
-
-        int localRank;
-        int processorCount;
+        unsigned int localRank;
+        unsigned int processorCount;
 
         // Number of depths in the topology.
         int depths;
         // Number of machines in the topology.
-        int machineCount;
+        unsigned int machineCount;
 
         // Number of processors on each machine
-        int * ProcCountOnEachMachine;
+        unsigned int * ProcCountOnEachMachine;
         // Machine Id where each processor is.
-        int * MachineIdOfEachProc;
+        unsigned int * MachineIdOfEachProc;
     };
   }
 }

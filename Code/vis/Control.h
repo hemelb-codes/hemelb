@@ -45,11 +45,9 @@ namespace hemelb
             float dist;
         };
 
-        Control(lb::StressTypes iStressType, lb::GlobalLatticeData &iGlobLatDat);
+        Control(lb::StressTypes iStressType,
+                lb::GlobalLatticeData* iGlobLatDat);
         ~Control();
-        void initLayers(topology::NetworkTopology * iNetworkTopology,
-                        lb::GlobalLatticeData &iGlobLatDat,
-                        lb::LocalLatticeData &iLocalLatDat);
 
         void project(float p1[], float p2[]);
         void writePixel(ColPixel *col_pixel);
@@ -94,14 +92,14 @@ namespace hemelb
 
         void streaklines(int time_step,
                          int period,
-                         lb::GlobalLatticeData &iGlobLatDat,
-                         lb::LocalLatticeData &iLocalLatDat);
+                         lb::GlobalLatticeData* iGlobLatDat,
+                         lb::LocalLatticeData* iLocalLatDat);
         void restart();
 
         void updateImageSize(int pixels_x, int pixels_y);
         void render(int recv_buffer_id,
-                    lb::GlobalLatticeData &iGlobLatDat,
-                    const topology::NetworkTopology * iNetTopology);
+                    lb::GlobalLatticeData* iGlobLatDat,
+                    const topology::NetworkTopology* iNetTopology);
         void writeImage(int recv_buffer_id,
                         std::string image_file_name,
                         void(*ColourPalette)(float value, float col[]));
@@ -109,6 +107,11 @@ namespace hemelb
         void compositeImage(int recv_buffer_id, const topology::NetworkTopology * iNetTopology);
 
         void RegisterSite(int i, float density, float velocity, float stress);
+
+
+        void initLayers(topology::NetworkTopology * iNetworkTopology,
+                        lb::GlobalLatticeData* iGlobLatDat,
+                        lb::LocalLatticeData* iLocalLatDat);
 
         // better public member vars than globals!
         int mode;
@@ -136,7 +139,6 @@ namespace hemelb
         int mouse_x, mouse_y;
 
       private:
-
         struct Vis
         {
             float half_dim[3];

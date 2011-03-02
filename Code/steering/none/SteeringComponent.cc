@@ -67,8 +67,7 @@ namespace hemelb
 
     void SteeringComponent::Effect()
     {
-      mSimState->DoRendering = ( (mSimState->TimeStep % imagesPeriod >= 0 && mSimState->TimeStep
-          % imagesPeriod < (int) GetRoundTripLength()));
+      mSimState->DoRendering = (mSimState->TimeStep % imagesPeriod < GetRoundTripLength());
     }
   }
 }

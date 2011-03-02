@@ -16,16 +16,17 @@ namespace hemelb
     // make a global controller
     Control *controller;
 
-    Control::Control(lb::StressTypes iStressType, lb::GlobalLatticeData &iGlobLatDat)
+    Control::Control(lb::StressTypes iStressType,
+                     lb::GlobalLatticeData* iGlobLatDat)
     {
       mStressType = iStressType;
 
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float (iGlobLatDat.GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float (iGlobLatDat.GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float (iGlobLatDat.GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float (iGlobLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float (iGlobLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float (iGlobLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -39,15 +40,14 @@ namespace hemelb
       {
         col_pixel_id[i] = -1;
       }
-
     }
 
     void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
-                             lb::GlobalLatticeData &iGlobLatDat,
-                             lb::LocalLatticeData &iLocalLatDat)
+                             lb::GlobalLatticeData* iGlobLatDat,
+                             lb::LocalLatticeData* iLocalLatDat)
     {
-      myRayTracer = new RayTracer(iNetworkTopology, &iLocalLatDat, &iGlobLatDat);
-      myGlypher = new GlyphDrawer(&iGlobLatDat, &iLocalLatDat);
+      myRayTracer = new RayTracer(iNetworkTopology, iLocalLatDat, iGlobLatDat);
+      myGlypher = new GlyphDrawer(iGlobLatDat, iLocalLatDat);
 
 #ifndef NO_STREAKLINES
       myStreaker = new StreaklineDrawer(iNetworkTopology, iLocalLatDat, iGlobLatDat);
@@ -496,9 +496,8 @@ namespace hemelb
 
       int *col_pixel_id_p;
       int col_pixels_temp;
-      int comm_inc, send_id, recv_id;
       int i, j;
-      int m, n;
+      int n;
 
       ColPixel *col_pixel1, *col_pixel2;
 
@@ -507,17 +506,17 @@ namespace hemelb
         memcpy(col_pixel_recv[recv_buffer_id], col_pixel_send, col_pixels * sizeof(ColPixel));
       }
 
-      comm_inc = 1;
-      m = 1;
+      unsigned int comm_inc = 1;
+      unsigned int m = 1;
 
       while (m < iNetTopology->GetProcessorCount())
       {
         m <<= 1;
-        int start_id = 1;
+        unsigned int start_id = 1;
 
-        for (recv_id = start_id; recv_id < iNetTopology->GetProcessorCount();)
+        for (unsigned int recv_id = start_id; recv_id < iNetTopology->GetProcessorCount();)
         {
-          send_id = recv_id + comm_inc;
+          unsigned int send_id = recv_id + comm_inc;
 
           if (iNetTopology->GetLocalRank() != recv_id && iNetTopology->GetLocalRank() != send_id)
           {
@@ -610,12 +609,13 @@ namespace hemelb
     }
 
     void Control::render(int recv_buffer_id,
-                         lb::GlobalLatticeData &iGlobLatDat,
-                         const topology::NetworkTopology * iNetTopology)
+                         lb::GlobalLatticeData* iGlobLatDat,
+                         const topology::NetworkTopology* iNetTopology)
     {
       if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
       {
-        pixels_max = util::max(2 * pixels_max, mScreen.PixelsX * mScreen.PixelsY);
+        pixels_max = util::NumericalFunctions::max(2 * pixels_max, mScreen.PixelsX
+            * mScreen.PixelsY);
 
         col_pixel_id = (int *) realloc(col_pixel_id, sizeof(int) * pixels_max);
       }
@@ -670,8 +670,8 @@ namespace hemelb
 
     void Control::streaklines(int time_step,
                               int period,
-                              lb::GlobalLatticeData &iGlobLatDat,
-                              lb::LocalLatticeData &iLocalLatDat)
+                              lb::GlobalLatticeData* iGlobLatDat,
+                              lb::LocalLatticeData* iLocalLatDat)
     {
       myStreaker ->StreakLines(time_step, period, iGlobLatDat, iLocalLatDat);
     }

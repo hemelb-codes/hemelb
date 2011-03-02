@@ -56,8 +56,7 @@ namespace hemelb
                                     float ray_t,
                                     float ray_segment,
                                     Ray *bCurrentRay,
-                                    void(*ColourPalette)(float value,
-                                                         float col[]),
+                                    void(*ColourPalette)(float value, float col[]),
                                     const lb::StressTypes iLbmStressType)
     {
       if (*flow_field < 0.0F)
@@ -66,8 +65,7 @@ namespace hemelb
       float palette[3];
 
       // update the volume rendering of the velocity flow field
-      float scaled_velocity = * (flow_field + 1)
-          * vis::controller->velocity_threshold_max_inv;
+      float scaled_velocity = * (flow_field + 1) * vis::controller->velocity_threshold_max_inv;
 
       ColourPalette(scaled_velocity, palette);
 
@@ -78,8 +76,7 @@ namespace hemelb
       if (iLbmStressType != lb::ShearStress)
       {
         // update the volume rendering of the von Mises stress flow field
-        float scaled_stress = * (flow_field + 2)
-            * vis::controller->stress_threshold_max_inv;
+        float scaled_stress = * (flow_field + 2) * vis::controller->stress_threshold_max_inv;
 
         ColourPalette(scaled_stress, palette);
 
@@ -106,23 +103,21 @@ namespace hemelb
                                      float voxel_flow_field[],
                                      float t,
                                      Ray *bCurrentRay,
-                                     void(*ColourPalette)(float value,
-                                                          float col[]),
+                                     void(*ColourPalette)(float value, float col[]),
                                      bool xyz_is_1[],
                                      const lb::StressTypes iLbmStressType)
     {
       float t_max[3];
-      int i_vec[3];
+      unsigned int i_vec[3];
 
       for (int i = 0; i < 3; i++)
       {
-        i_vec[i] = (int) block_x[i];
+        i_vec[i] = block_x[i] >= 0.0
+          ? (unsigned int) block_x[i]
+          : 0;
       }
       for (int i = 0; i < 3; i++)
       {
-        i_vec[i] = (i_vec[i] < 0)
-          ? 0
-          : i_vec[i];
         i_vec[i] = (i_vec[i] > block_size_1)
           ? block_size_1
           : i_vec[i];
@@ -135,9 +130,9 @@ namespace hemelb
           : i_vec[i])) * bCurrentRay->InverseDirection[i];
       }
 
-      int i = i_vec[0] * block_size2;
-      int j = i_vec[1] * mGlobLatDat->GetBlockSize();
-      int k = i_vec[2];
+      unsigned int i = i_vec[0] * block_size2;
+      unsigned int j = i_vec[1] * mGlobLatDat->GetBlockSize();
+      unsigned int k = i_vec[2];
 
       while (true)
       {
@@ -145,9 +140,8 @@ namespace hemelb
         {
           if (t_max[0] < t_max[2])
           {
-            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t,
-                            t_max[0] - t, bCurrentRay, ColourPalette,
-                            iLbmStressType);
+            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[0] - t,
+                            bCurrentRay, ColourPalette, iLbmStressType);
 
             if (xyz_is_1[0])
             {
@@ -160,9 +154,13 @@ namespace hemelb
             }
             else
             {
-              if ( (i -= block_size2) < 0)
+              if (i < block_size2)
               {
                 return;
+              }
+              else
+              {
+                i -= block_size2;
               }
               t = t_max[0];
               t_max[0] -= bCurrentRay->InverseDirection[0];
@@ -170,9 +168,8 @@ namespace hemelb
           }
           else
           {
-            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t,
-                            t_max[2] - t, bCurrentRay, ColourPalette,
-                            iLbmStressType);
+            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
+                            bCurrentRay, ColourPalette, iLbmStressType);
 
             if (xyz_is_1[2])
             {
@@ -185,9 +182,13 @@ namespace hemelb
             }
             else
             {
-              if (--k < 0)
+              if (k == 0)
               {
                 return;
+              }
+              else
+              {
+                --k;
               }
               t = t_max[2];
               t_max[2] -= bCurrentRay->InverseDirection[2];
@@ -198,9 +199,8 @@ namespace hemelb
         {
           if (t_max[1] < t_max[2])
           {
-            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t,
-                            t_max[1] - t, bCurrentRay, ColourPalette,
-                            iLbmStressType);
+            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[1] - t,
+                            bCurrentRay, ColourPalette, iLbmStressType);
 
             if (xyz_is_1[1])
             {
@@ -213,9 +213,13 @@ namespace hemelb
             }
             else
             {
-              if ( (j -= mGlobLatDat->GetBlockSize()) < 0)
+              if (j < mGlobLatDat->GetBlockSize())
               {
                 return;
+              }
+              else
+              {
+                j -= mGlobLatDat->GetBlockSize();
               }
               t = t_max[1];
               t_max[1] -= bCurrentRay->InverseDirection[1];
@@ -223,9 +227,8 @@ namespace hemelb
           }
           else
           {
-            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t,
-                            t_max[2] - t, bCurrentRay, ColourPalette,
-                            iLbmStressType);
+            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
+                            bCurrentRay, ColourPalette, iLbmStressType);
 
             if (xyz_is_1[2])
             {
@@ -238,9 +241,13 @@ namespace hemelb
             }
             else
             {
-              if (--k < 0)
+              if (k == 0)
               {
                 return;
+              }
+              else
+              {
+                --k;
               }
               t = t_max[2];
               t_max[2] -= bCurrentRay->InverseDirection[2];
@@ -253,8 +260,7 @@ namespace hemelb
     void RayTracer::rtTraverseBlocksFn(float ray_dx[],
                                        float **block_flow_field,
                                        Ray *bCurrentRay,
-                                       void(*ColourPalette)(float value,
-                                                            float col[]),
+                                       void(*ColourPalette)(float value, float col[]),
                                        bool xyz_Is_1[],
                                        const lb::StressTypes iLbmStressType)
     {
@@ -272,8 +278,8 @@ namespace hemelb
       }
       for (int l = 0; l < 3; l++)
       {
-        i_vec[l] = util::enforceBounds(cluster_blocks_vec[l], 0,
-                                       (int) (mBlockSizeInverse * dx[l]));
+        i_vec[l] = util::NumericalFunctions::enforceBounds(cluster_blocks_vec[l], 0,
+                                                           (int) (mBlockSizeInverse * dx[l]));
         block_min[l] = (float) i_vec[l] * mBlockSizeFloat - dx[l];
       }
       int i = i_vec[0] * cluster_blocks_yz;
@@ -286,8 +292,8 @@ namespace hemelb
         block_x[1] = -block_min[1];
         block_x[2] = -block_min[2];
 
-        rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F,
-                         bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
+        rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F, bCurrentRay,
+                         ColourPalette, xyz_Is_1, iLbmStressType);
       }
       for (int l = 0; l < 3; l++)
       {
@@ -322,9 +328,8 @@ namespace hemelb
               block_x[1] = t_max[0] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[0] * bCurrentRay->Direction[2] - block_min[2];
 
-              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k],
-                               t_max[0], bCurrentRay, ColourPalette, xyz_Is_1,
-                               iLbmStressType);
+              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[0],
+                               bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
             }
 
             t_max[0] = xyz_Is_1[0]
@@ -352,9 +357,8 @@ namespace hemelb
               block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
-              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k],
-                               t_max[2], bCurrentRay, ColourPalette, xyz_Is_1,
-                               iLbmStressType);
+              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
+                               bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -385,9 +389,8 @@ namespace hemelb
               block_x[1] = t_max[1] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[1] * bCurrentRay->Direction[2] - block_min[2];
 
-              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k],
-                               t_max[1], bCurrentRay, ColourPalette, xyz_Is_1,
-                               iLbmStressType);
+              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[1],
+                               bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
             }
 
             t_max[1] = xyz_Is_1[1]
@@ -415,9 +418,8 @@ namespace hemelb
               block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
-              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k],
-                               t_max[2], bCurrentRay, ColourPalette, xyz_Is_1,
-                               iLbmStressType);
+              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
+                               bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -430,16 +432,15 @@ namespace hemelb
 
     void RayTracer::rtBuildClusters()
     {
-      const int n_x[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, +0, +0, +0, +0,
-                          +0, +0, +0, +0, +1, +1, +1, +1, +1, +1, +1, +1, +1 };
-      const int n_y[] = { -1, -1, -1, +0, +0, +0, +1, +1, +1, -1, -1, -1, +0,
-                          +0, +1, +1, +1, -1, -1, -1, +0, +0, +0, +1, +1, +1 };
-      const int n_z[] = { -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1, -1,
-                          +1, -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1 };
+      const int n_x[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, +0, +0, +0, +0, +0, +0, +0, +0, +1,
+                          +1, +1, +1, +1, +1, +1, +1, +1 };
+      const int n_y[] = { -1, -1, -1, +0, +0, +0, +1, +1, +1, -1, -1, -1, +0, +0, +1, +1, +1, -1,
+                          -1, -1, +0, +0, +0, +1, +1, +1 };
+      const int n_z[] = { -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +1, -1, +0, +1, -1,
+                          +0, +1, -1, +0, +1, -1, +0, +1 };
 
-      unsigned short int *cluster_id =
-          new unsigned short int[mGlobLatDat->GetBlockCount()];
-      for (int n = 0; n < mGlobLatDat->GetBlockCount(); n++)
+      unsigned short int *cluster_id = new unsigned short int[mGlobLatDat->GetBlockCount()];
+      for (unsigned int n = 0; n < mGlobLatDat->GetBlockCount(); n++)
       {
         cluster_id[n] = -1;
       }
@@ -448,31 +449,31 @@ namespace hemelb
 
       int blocks_buffer_size = 10000;
 
-      std::vector<BlockLocation> *block_location_a = new std::vector<
-          BlockLocation>(blocks_buffer_size);
-      std::vector<BlockLocation> *block_location_b = new std::vector<
-          BlockLocation>(blocks_buffer_size);
+      std::vector<BlockLocation> *block_location_a =
+          new std::vector<BlockLocation>(blocks_buffer_size);
+      std::vector<BlockLocation> *block_location_b =
+          new std::vector<BlockLocation>(blocks_buffer_size);
 
       bool *is_block_visited = new bool[mGlobLatDat->GetBlockCount()];
-      for (int n = 0; n < mGlobLatDat->GetBlockCount(); n++)
+      for (unsigned int n = 0; n < mGlobLatDat->GetBlockCount(); n++)
       {
         is_block_visited[n] = false;
       }
 
-      int block_min_x = std::numeric_limits<int>::max();
-      int block_min_y = std::numeric_limits<int>::max();
-      int block_min_z = std::numeric_limits<int>::max();
-      int block_max_x = std::numeric_limits<int>::min();
-      int block_max_y = std::numeric_limits<int>::min();
-      int block_max_z = std::numeric_limits<int>::min();
+      unsigned int block_min_x = std::numeric_limits<unsigned int>::max();
+      unsigned int block_min_y = std::numeric_limits<unsigned int>::max();
+      unsigned int block_min_z = std::numeric_limits<unsigned int>::max();
+      unsigned int block_max_x = std::numeric_limits<unsigned int>::min();
+      unsigned int block_max_y = std::numeric_limits<unsigned int>::min();
+      unsigned int block_max_z = std::numeric_limits<unsigned int>::min();
 
       int n = -1;
 
-      for (int i = 0; i < mGlobLatDat->GetXBlockCount(); i++)
+      for (unsigned int i = 0; i < mGlobLatDat->GetXBlockCount(); i++)
       {
-        for (int j = 0; j < mGlobLatDat->GetYBlockCount(); j++)
+        for (unsigned int j = 0; j < mGlobLatDat->GetYBlockCount(); j++)
         {
-          for (int k = 0; k < mGlobLatDat->GetZBlockCount(); k++)
+          for (unsigned int k = 0; k < mGlobLatDat->GetZBlockCount(); k++)
           {
             n++;
 
@@ -482,12 +483,12 @@ namespace hemelb
               continue;
             }
 
-            block_min_x = util::min(block_min_x, i);
-            block_min_y = util::min(block_min_y, j);
-            block_min_z = util::min(block_min_z, k);
-            block_max_x = util::max(block_max_x, i);
-            block_max_y = util::max(block_max_y, j);
-            block_max_z = util::max(block_max_z, k);
+            block_min_x = util::NumericalFunctions::min(block_min_x, i);
+            block_min_y = util::NumericalFunctions::min(block_min_y, j);
+            block_min_z = util::NumericalFunctions::min(block_min_z, k);
+            block_max_x = util::NumericalFunctions::max(block_max_x, i);
+            block_max_y = util::NumericalFunctions::max(block_max_y, j);
+            block_max_z = util::NumericalFunctions::max(block_max_z, k);
 
             if (is_block_visited[n])
             {
@@ -498,9 +499,9 @@ namespace hemelb
 
             int blocks_a = 0;
 
-            for (int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
+            for (unsigned int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
             {
-              if (mNetworkTopology->GetLocalRank()
+              if ((int) mNetworkTopology->GetLocalRank()
                   == lBlock->ProcessorRankForEachBlockSite[m])
               {
                 BlockLocation& tempBlockLoc = block_location_a->at(0);
@@ -537,8 +538,7 @@ namespace hemelb
 
               for (int index_a = 0; index_a < blocks_a; index_a++)
               {
-                const BlockLocation& tempBlockLoc =
-                    block_location_a->at(index_a);
+                const BlockLocation& tempBlockLoc = block_location_a->at(index_a);
 
                 for (int l = 0; l < 26; l++)
                 {
@@ -546,15 +546,15 @@ namespace hemelb
                   int neigh_j = tempBlockLoc.j + n_y[l];
                   int neigh_k = tempBlockLoc.k + n_z[l];
 
-                  if (neigh_i == -1 || neigh_i == mGlobLatDat->GetXBlockCount())
+                  if (neigh_i == -1 || neigh_i == (int) mGlobLatDat->GetXBlockCount())
                     continue;
-                  if (neigh_j == -1 || neigh_j == mGlobLatDat->GetYBlockCount())
+                  if (neigh_j == -1 || neigh_j == (int) mGlobLatDat->GetYBlockCount())
                     continue;
-                  if (neigh_k == -1 || neigh_k == mGlobLatDat->GetZBlockCount())
+                  if (neigh_k == -1 || neigh_k == (int) mGlobLatDat->GetZBlockCount())
                     continue;
 
-                  int block_id = (neigh_i * mGlobLatDat->GetYBlockCount()
-                      + neigh_j) * mGlobLatDat->GetZBlockCount() + neigh_k;
+                  int block_id = (neigh_i * mGlobLatDat->GetYBlockCount() + neigh_j)
+                      * mGlobLatDat->GetZBlockCount() + neigh_k;
 
                   if (is_block_visited[block_id]
                       || (lBlock = &mGlobLatDat->Blocks[block_id])->ProcessorRankForEachBlockSite
@@ -564,9 +564,9 @@ namespace hemelb
                   }
 
                   bool is_site_found = false;
-                  for (int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
+                  for (unsigned int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
                   {
-                    if (mNetworkTopology->GetLocalRank()
+                    if ((int) mNetworkTopology->GetLocalRank()
                         == lBlock->ProcessorRankForEachBlockSite[m])
                     {
                       is_site_found = true;
@@ -596,18 +596,18 @@ namespace hemelb
                   ++blocks_b;
 
                   lNewCluster->block_min[0]
-                      = util::min((int) lNewCluster->block_min[0], neigh_i);
+                      = util::NumericalFunctions::min((int) lNewCluster->block_min[0], neigh_i);
                   lNewCluster->block_min[1]
-                      = util::min((int) lNewCluster->block_min[1], neigh_j);
+                      = util::NumericalFunctions::min((int) lNewCluster->block_min[1], neigh_j);
                   lNewCluster->block_min[2]
-                      = util::min((int) lNewCluster->block_min[2], neigh_k);
+                      = util::NumericalFunctions::min((int) lNewCluster->block_min[2], neigh_k);
 
-                  cluster_block_max_i = util::max((int) cluster_block_max_i,
-                                                  neigh_i);
-                  cluster_block_max_j = util::max((int) cluster_block_max_j,
-                                                  neigh_j);
-                  cluster_block_max_k = util::max((int) cluster_block_max_k,
-                                                  neigh_k);
+                  cluster_block_max_i = util::NumericalFunctions::max((int) cluster_block_max_i,
+                                                                      neigh_i);
+                  cluster_block_max_j = util::NumericalFunctions::max((int) cluster_block_max_j,
+                                                                      neigh_j);
+                  cluster_block_max_k = util::NumericalFunctions::max((int) cluster_block_max_k,
+                                                                      neigh_k);
 
                   cluster_id[block_id] = mClusters.size();
                 }
@@ -621,22 +621,16 @@ namespace hemelb
               blocks_a = blocks_b;
             }
 
-            lNewCluster->x[0] = lNewCluster->block_min[0]
-                * mGlobLatDat->GetBlockSize() - 0.5F
+            lNewCluster->x[0] = lNewCluster->block_min[0] * mGlobLatDat->GetBlockSize() - 0.5F
                 * mGlobLatDat->GetXSiteCount();
-            lNewCluster->x[1] = lNewCluster->block_min[1]
-                * mGlobLatDat->GetBlockSize() - 0.5F
+            lNewCluster->x[1] = lNewCluster->block_min[1] * mGlobLatDat->GetBlockSize() - 0.5F
                 * mGlobLatDat->GetYSiteCount();
-            lNewCluster->x[2] = lNewCluster->block_min[2]
-                * mGlobLatDat->GetBlockSize() - 0.5F
+            lNewCluster->x[2] = lNewCluster->block_min[2] * mGlobLatDat->GetBlockSize() - 0.5F
                 * mGlobLatDat->GetZSiteCount();
 
-            lNewCluster->blocks_x = 1 + cluster_block_max_i
-                - lNewCluster->block_min[0];
-            lNewCluster->blocks_y = 1 + cluster_block_max_j
-                - lNewCluster->block_min[1];
-            lNewCluster->blocks_z = 1 + cluster_block_max_k
-                - lNewCluster->block_min[2];
+            lNewCluster->blocks_x = 1 + cluster_block_max_i - lNewCluster->block_min[0];
+            lNewCluster->blocks_y = 1 + cluster_block_max_j - lNewCluster->block_min[1];
+            lNewCluster->blocks_z = 1 + cluster_block_max_k - lNewCluster->block_min[2];
 
             mClusters.push_back(lNewCluster);
           }
@@ -648,15 +642,11 @@ namespace hemelb
 
       delete[] is_block_visited;
 
-      vis::controller->ctr_x = 0.5F * mGlobLatDat->GetBlockSize()
-          * (block_min_x + block_max_x);
-      vis::controller->ctr_y = 0.5F * mGlobLatDat->GetBlockSize()
-          * (block_min_y + block_max_y);
-      vis::controller->ctr_z = 0.5F * mGlobLatDat->GetBlockSize()
-          * (block_min_z + block_max_z);
+      vis::controller->ctr_x = 0.5F * mGlobLatDat->GetBlockSize() * (block_min_x + block_max_x);
+      vis::controller->ctr_y = 0.5F * mGlobLatDat->GetBlockSize() * (block_min_y + block_max_y);
+      vis::controller->ctr_z = 0.5F * mGlobLatDat->GetBlockSize() * (block_min_z + block_max_z);
 
-      cluster_voxel = new float *[mLocalLatDat->GetLocalFluidSiteCount()
-          * VIS_FIELDS];
+      cluster_voxel = new float *[mLocalLatDat->GetLocalFluidSiteCount() * VIS_FIELDS];
 
       cluster_flow_field = new float **[mClusters.size()];
 
@@ -664,8 +654,8 @@ namespace hemelb
       {
         Cluster *cluster_p = mClusters[lThisClusterId];
 
-        cluster_flow_field[lThisClusterId] = new float *[cluster_p->blocks_x
-            * cluster_p->blocks_y * cluster_p->blocks_z];
+        cluster_flow_field[lThisClusterId] = new float *[cluster_p->blocks_x * cluster_p->blocks_y
+            * cluster_p->blocks_z];
 
         int voxel_min[3], voxel_max[3];
         for (int l = 0; l < 3; l++)
@@ -679,23 +669,19 @@ namespace hemelb
         int block_coord[3];
         for (int i = 0; i < cluster_p->blocks_x; i++)
         {
-          block_coord[0] = (i + cluster_p->block_min[0])
-              * mGlobLatDat->GetBlockSize();
+          block_coord[0] = (i + cluster_p->block_min[0]) * mGlobLatDat->GetBlockSize();
 
           for (int j = 0; j < cluster_p->blocks_y; j++)
           {
-            block_coord[1] = (j + cluster_p->block_min[1])
-                * mGlobLatDat->GetBlockSize();
+            block_coord[1] = (j + cluster_p->block_min[1]) * mGlobLatDat->GetBlockSize();
 
             for (int k = 0; k < cluster_p->blocks_z; k++)
             {
-              block_coord[2] = (k + cluster_p->block_min[2])
-                  * mGlobLatDat->GetBlockSize();
+              block_coord[2] = (k + cluster_p->block_min[2]) * mGlobLatDat->GetBlockSize();
 
-              int block_id = ( (i + cluster_p->block_min[0])
-                  * mGlobLatDat->GetYBlockCount() + (j
-                  + cluster_p->block_min[1])) * mGlobLatDat->GetZBlockCount()
-                  + (k + cluster_p->block_min[2]);
+              int block_id = ( (i + cluster_p->block_min[0]) * mGlobLatDat->GetYBlockCount() + (j
+                  + cluster_p->block_min[1])) * mGlobLatDat->GetZBlockCount() + (k
+                  + cluster_p->block_min[2]);
 
               cluster_flow_field[lThisClusterId][++n] = NULL;
 
@@ -722,30 +708,27 @@ namespace hemelb
                     if (my_site_id & (1U << 31U))
                     {
                       for (int l = 0; l < VIS_FIELDS; l++)
-                        cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS
-                            + l] = -1.0F;
+                        cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS + l] = -1.0F;
 
                       continue;
                     }
 
                     for (int l = 0; l < VIS_FIELDS; l++)
                     {
-                      cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS + l]
-                          = 1.0F;
+                      cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS + l] = 1.0F;
                     }
 
                     for (int l = 0; l < VIS_FIELDS; l++)
                     {
                       cluster_voxel[my_site_id * VIS_FIELDS + l]
-                          = &cluster_flow_field[lThisClusterId][n][m
-                              * VIS_FIELDS + l];
+                          = &cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS + l];
                     }
 
                     for (int l = 0; l < 3; l++)
                     {
-                      voxel_min[l] = util::min(voxel_min[l], ii[l]
+                      voxel_min[l] = util::NumericalFunctions::min<int>(voxel_min[l], ii[l]
                           + block_coord[l]);
-                      voxel_max[l] = util::max(voxel_max[l], ii[l]
+                      voxel_max[l] = util::NumericalFunctions::max<int>(voxel_max[l], ii[l]
                           + block_coord[l]);
                     }
 
@@ -755,12 +738,9 @@ namespace hemelb
           } // for j
         } // for i
 
-        cluster_p->minmax_x[0] = (float) voxel_min[0] - 0.5F
-            * (float) mGlobLatDat->GetXSiteCount();
-        cluster_p->minmax_y[0] = (float) voxel_min[1] - 0.5F
-            * (float) mGlobLatDat->GetYSiteCount();
-        cluster_p->minmax_z[0] = (float) voxel_min[2] - 0.5F
-            * (float) mGlobLatDat->GetZSiteCount();
+        cluster_p->minmax_x[0] = (float) voxel_min[0] - 0.5F * (float) mGlobLatDat->GetXSiteCount();
+        cluster_p->minmax_y[0] = (float) voxel_min[1] - 0.5F * (float) mGlobLatDat->GetYSiteCount();
+        cluster_p->minmax_z[0] = (float) voxel_min[2] - 0.5F * (float) mGlobLatDat->GetZSiteCount();
 
         cluster_p->minmax_x[1] = (float) (voxel_max[0] + 1) - 0.5F
             * (float) mGlobLatDat->GetXSiteCount();
@@ -833,8 +813,7 @@ namespace hemelb
         cluster_blocks_vec[1] = cluster_p->blocks_y - 1;
         cluster_blocks_vec[2] = cluster_p->blocks_z - 1;
         cluster_blocks_z = cluster_p->blocks_z;
-        cluster_blocks_yz = (int) cluster_p->blocks_y
-            * (int) cluster_p->blocks_z;
+        cluster_blocks_yz = (int) cluster_p->blocks_y * (int) cluster_p->blocks_z;
         cluster_blocks = (int) cluster_p->blocks_x * cluster_blocks_yz;
 
         float **block_flow_field = cluster_flow_field[cluster_id];
@@ -870,24 +849,20 @@ namespace hemelb
         }
 
         int subimage_pix[4];
-        subimage_pix[0] = (int) (lScaleX * (subimage_vtx[0] + lScreenMaxX)
-            + 0.5F);
-        subimage_pix[1] = (int) (lScaleX * (subimage_vtx[1] + lScreenMaxX)
-            + 0.5F);
-        subimage_pix[2] = (int) (lScaleY * (subimage_vtx[2] + lScreenMaxY)
-            + 0.5F);
-        subimage_pix[3] = (int) (lScaleY * (subimage_vtx[3] + lScreenMaxY)
-            + 0.5F);
+        subimage_pix[0] = (int) (lScaleX * (subimage_vtx[0] + lScreenMaxX) + 0.5F);
+        subimage_pix[1] = (int) (lScaleX * (subimage_vtx[1] + lScreenMaxX) + 0.5F);
+        subimage_pix[2] = (int) (lScaleY * (subimage_vtx[2] + lScreenMaxY) + 0.5F);
+        subimage_pix[3] = (int) (lScaleY * (subimage_vtx[3] + lScreenMaxY) + 0.5F);
 
-        if (subimage_pix[0] >= lPixelsX || subimage_pix[1] < 0
-            || subimage_pix[2] >= lPixelsY || subimage_pix[3] < 0)
+        if (subimage_pix[0] >= lPixelsX || subimage_pix[1] < 0 || subimage_pix[2] >= lPixelsY
+            || subimage_pix[3] < 0)
         {
           continue;
         }
-        subimage_pix[0] = util::max(subimage_pix[0], 0);
-        subimage_pix[1] = util::min(subimage_pix[1], lPixelsX - 1);
-        subimage_pix[2] = util::max(subimage_pix[2], 0);
-        subimage_pix[3] = util::min(subimage_pix[3], lPixelsY - 1);
+        subimage_pix[0] = util::NumericalFunctions::max(subimage_pix[0], 0);
+        subimage_pix[1] = util::NumericalFunctions::min(subimage_pix[1], lPixelsX - 1);
+        subimage_pix[2] = util::NumericalFunctions::max(subimage_pix[2], 0);
+        subimage_pix[3] = util::NumericalFunctions::min(subimage_pix[3], lPixelsY - 1);
 
         AABB aabb;
         aabb.acc_1 = cluster_p->minmax_x[1] - p0[0];
@@ -900,8 +875,7 @@ namespace hemelb
         float par3[3];
         for (int l = 0; l < 3; l++)
         {
-          par3[l] = screen_vtx[l] + subimage_pix[0] * par1[l] + subimage_pix[2]
-              * par2[l];
+          par3[l] = screen_vtx[l] + subimage_pix[0] * par1[l] + subimage_pix[2] * par2[l];
         }
 
         for (int i = subimage_pix[0]; i <= subimage_pix[1]; i++)
@@ -919,9 +893,8 @@ namespace hemelb
             lRay.Direction[1] = lRayDirection[1];
             lRay.Direction[2] = lRayDirection[2];
 
-            float lInverseDirectionMagnitude = 1.0F / sqrtf(lRayDirection[0]
-                * lRayDirection[0] + lRayDirection[1] * lRayDirection[1]
-                + lRayDirection[2] * lRayDirection[2]);
+            float lInverseDirectionMagnitude = 1.0F / sqrtf(lRayDirection[0] * lRayDirection[0]
+                + lRayDirection[1] * lRayDirection[1] + lRayDirection[2] * lRayDirection[2]);
 
             lRay.Direction[0] *= lInverseDirectionMagnitude;
             lRay.Direction[1] *= lInverseDirectionMagnitude;
@@ -941,9 +914,8 @@ namespace hemelb
             lRayDirection[2] += par2[2];
 
             float t_near, t_far;
-            rtAABBvsRayFn(aabb, lRay.InverseDirection[0],
-                          lRay.InverseDirection[1], lRay.InverseDirection[2],
-                          lRayInPositiveDirection, t_near, t_far);
+            rtAABBvsRayFn(aabb, lRay.InverseDirection[0], lRay.InverseDirection[1],
+                          lRay.InverseDirection[2], lRayInPositiveDirection, t_near, t_far);
 
             if (t_near > t_far)
             {
@@ -969,8 +941,7 @@ namespace hemelb
             lRay.MinT = std::numeric_limits<float>::max();
             lRay.Density = -1.0F;
 
-            rtTraverseBlocksFn(ray_dx, block_flow_field, &lRay,
-                               ColourPalette::pickColour,
+            rtTraverseBlocksFn(ray_dx, block_flow_field, &lRay, ColourPalette::pickColour,
                                lRayInPositiveDirection, iLbmStressType);
 
             if (lRay.MinT == std::numeric_limits<float>::max())
@@ -991,14 +962,12 @@ namespace hemelb
             }
             col_pixel.dt = lRay.Length;
             col_pixel.t = lRay.MinT + t_near;
-            col_pixel.density = (lRay.Density
-                - vis::controller->density_threshold_min)
+            col_pixel.density = (lRay.Density - vis::controller->density_threshold_min)
                 * vis::controller->density_threshold_minmax_inv;
 
             if (lRay.Stress != std::numeric_limits<float>::max())
             {
-              col_pixel.stress = lRay.Stress
-                  * vis::controller->stress_threshold_max_inv;
+              col_pixel.stress = lRay.Stress * vis::controller->stress_threshold_max_inv;
             }
             else
             {

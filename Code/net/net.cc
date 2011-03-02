@@ -83,7 +83,7 @@ namespace hemelb
       mNetworkTopology->NeighbourIndexFromProcRank
           = new short int[mNetworkTopology->GetProcessorCount()];
 
-      for (int m = 0; m < mNetworkTopology->GetProcessorCount(); m++)
+      for (unsigned int m = 0; m < mNetworkTopology->GetProcessorCount(); m++)
       {
         mNetworkTopology->NeighbourIndexFromProcRank[m] = -1;
       }
@@ -193,14 +193,14 @@ namespace hemelb
       // sites residing on this rank.
       bool *lBlockIsOnThisRank = new bool[iGlobLatDat.GetBlockCount()];
       // Initialise to false.
-      for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
+      for (unsigned int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
       {
         lBlockIsOnThisRank[n] = false;
       }
 
       int lSiteIndexOnProc = 0;
 
-      for (int lBlockNumber = 0; lBlockNumber < iGlobLatDat.GetBlockCount(); lBlockNumber++)
+      for (unsigned int lBlockNumber = 0; lBlockNumber < iGlobLatDat.GetBlockCount(); lBlockNumber++)
       {
         hemelb::lb::BlockData * lCurrentDataBlock = &iGlobLatDat.Blocks[lBlockNumber];
 
@@ -215,10 +215,10 @@ namespace hemelb
 
         // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
         // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
-        for (int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock
+        for (unsigned int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock
             < iGlobLatDat.SitesPerBlockVolumeUnit; lSiteIndexWithinBlock++)
         {
-          if (mNetworkTopology->GetLocalRank()
+          if ((int) mNetworkTopology->GetLocalRank()
               == proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock])
           {
             // If the current site is non-solid, copy the site data into the array for
@@ -253,7 +253,7 @@ namespace hemelb
       }
 
       // If we are in a block of solids, we set map_block[n].site_data to NULL.
-      for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
+      for (unsigned int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
       {
         if (lBlockIsOnThisRank[n])
         {
@@ -305,11 +305,11 @@ namespace hemelb
       int n = -1;
 
       // Iterate over all blocks in site units
-      for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i += iGlobLatDat.GetBlockSize())
+      for (unsigned int i = 0; i < iGlobLatDat.GetXSiteCount(); i += iGlobLatDat.GetBlockSize())
       {
-        for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j += iGlobLatDat.GetBlockSize())
+        for (unsigned int j = 0; j < iGlobLatDat.GetYSiteCount(); j += iGlobLatDat.GetBlockSize())
         {
-          for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
+          for (unsigned int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
           {
             hemelb::lb::BlockData * map_block_p = &iGlobLatDat.Blocks[++n];
 
@@ -321,15 +321,15 @@ namespace hemelb
             int m = -1;
 
             // Iterate over all sites within the current block.
-            for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
+            for (unsigned int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
             {
-              for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
+              for (unsigned int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
               {
-                for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
+                for (unsigned int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
                 {
                   m++;
                   // If the site is not on this processor, continue.
-                  if (mNetworkTopology->GetLocalRank()
+                  if ((int) mNetworkTopology->GetLocalRank()
                       != map_block_p->ProcessorRankForEachBlockSite[m])
                   {
                     continue;
@@ -353,7 +353,7 @@ namespace hemelb
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
                     // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
                     // in lbmReadConfig in io.cc.
-                    if (proc_id_p == NULL || mNetworkTopology->GetLocalRank() == (*proc_id_p)
+                    if (proc_id_p == NULL || (int) mNetworkTopology->GetLocalRank() == (*proc_id_p)
                         || *proc_id_p == (BIG_NUMBER2))
                     {
                       continue;
@@ -376,7 +376,7 @@ namespace hemelb
                           mNetworkTopology->NeighbouringProcs[mm];
 
                       // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
-                      if (*proc_id_p == neigh_proc_p->Rank)
+                      if (*proc_id_p == (int)neigh_proc_p->Rank)
                       {
                         flag = false;
                         ++neigh_proc_p->SharedFCount;
@@ -478,7 +478,7 @@ namespace hemelb
       }
 
       // Iterate over blocks
-      for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
+      for (unsigned int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
       {
         hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
 
@@ -489,7 +489,7 @@ namespace hemelb
         }
 
         // Iterate over sites within the block.
-        for (int m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
+        for (unsigned int m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
         {
           unsigned int *site_data_p = &map_block_p->site_data[m];
 
@@ -538,17 +538,17 @@ namespace hemelb
       int lSiteIndexOnProc = 0;
       int * lFluidSitesHandledForEachProc = new int[mNetworkTopology->GetProcessorCount()];
 
-      for (int ii = 0; ii < mNetworkTopology->GetProcessorCount(); ii++)
+      for (unsigned int ii = 0; ii < mNetworkTopology->GetProcessorCount(); ii++)
       {
         lFluidSitesHandledForEachProc[ii] = 0;
       }
 
       // Iterate over blocks in global co-ords.
-      for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i += iGlobLatDat.GetBlockSize())
+      for (unsigned int i = 0; i < iGlobLatDat.GetXSiteCount(); i += iGlobLatDat.GetBlockSize())
       {
-        for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j += iGlobLatDat.GetBlockSize())
+        for (unsigned int j = 0; j < iGlobLatDat.GetYSiteCount(); j += iGlobLatDat.GetBlockSize())
         {
-          for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
+          for (unsigned int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
           {
             n++;
             hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
@@ -561,16 +561,16 @@ namespace hemelb
             int m = -1;
 
             // Iterate over sites within the block.
-            for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
+            for (unsigned int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
             {
-              for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
+              for (unsigned int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
               {
-                for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
+                for (unsigned int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
                 {
                   // If a site is not on this process, continue.
                   m++;
 
-                  if (mNetworkTopology->GetLocalRank()
+                  if ((int) mNetworkTopology->GetLocalRank()
                       != map_block_p->ProcessorRankForEachBlockSite[m])
                   {
                     continue;
@@ -608,7 +608,7 @@ namespace hemelb
                     // If we check convergence, the data for
                     // each site is split into that for the
                     // current and previous cycles.
-                    else if (mNetworkTopology->GetLocalRank() == *proc_id_p)
+                    else if ((int)mNetworkTopology->GetLocalRank() == *proc_id_p)
                     {
 
                       // Pointer to the neighbour.

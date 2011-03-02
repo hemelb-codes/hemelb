@@ -31,7 +31,9 @@ namespace hemelb
         SiteType GetSiteType(int iSiteIndex) const;
         int GetLocalFluidSiteCount() const;
 
-        void SetNeighbourLocation(int iSiteIndex, int iDirection, int iValue);
+        void SetNeighbourLocation(unsigned int iSiteIndex,
+                                  unsigned int iDirection,
+                                  unsigned int iValue);
         void SetWallNormal(int iSiteIndex, const double iNormal[3]);
         void SetDistanceToWall(int iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
 
@@ -50,7 +52,7 @@ namespace hemelb
 
       private:
         int LocalFluidSites;
-        int *mFNeighbours;
+        unsigned int *mFNeighbours;
         double *mDistanceToWall;
         double *mWallNormalAtSite;
     };
