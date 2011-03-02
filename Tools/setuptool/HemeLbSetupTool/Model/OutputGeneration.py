@@ -154,7 +154,7 @@ class ConfigGenerator(object):
                 nHits += 1
                 if nHits == 1:
                     # First hit, assign stuff for site
-                    # TODO: Figure out if this has to be in physical or lattice units.
+                    # This is in physical units for now
                     site.CutDistances[i] = sqrt(np.sum((hitPoint-site.Position)**2))
                     site.IsEdge = True
                     site.CutCellIds[i] = hitObj
@@ -177,6 +177,9 @@ class ConfigGenerator(object):
             else:
                 neigh.IsFluid = not site.IsFluid
             continue
+        
+        # In fact, these have to be fractions of the lattice vector, rather than in lattice units, scale them here using efficient array operations
+        site.CutDistances /= self.VoxelSize * site.latticeVectorNorms
         
         if not site.IsFluid or not site.IsEdge:
             # Nothing more to do for solid sites or simple fluid sites
@@ -740,6 +743,7 @@ class LatticeSite(object):
                            [-1, 1,-1],
                            [ 1,-1,-1],
                            [-1, 1, 1]])
+    latticeVectorNorms = np.sqrt(np.sum(neighbours**2,axis=-1))
     laterNeighbourInds = [0, 2, 4, 6, 8, 10, 12]
     def __init__(self, block=None, ijk=(0,0,0)):
         self.block = block
