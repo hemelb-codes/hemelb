@@ -16,13 +16,14 @@ namespace hemelb
         virtual ~XdrReader();
 
         // Functions for reading the next bit of the stream.
-        void readDouble(double& outDouble);
-        void readFloat(float& outDouble);
-        void readInt(int& outInt);
-        void readUnsignedInt(unsigned int& outUInt);
+        bool readDouble(double& outDouble);
+        bool readFloat(float& outDouble);
+        bool readInt(int& outInt);
+        bool readUnsignedInt(unsigned int& outUInt);
 
         // Get the position in the stream.
         unsigned int GetPosition();
+        bool SetPosition(unsigned int iPosition);
 
       protected:
         XdrReader();

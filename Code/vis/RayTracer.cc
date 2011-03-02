@@ -642,9 +642,28 @@ namespace hemelb
 
       delete[] is_block_visited;
 
-      vis::controller->ctr_x = 0.5F * mGlobLatDat->GetBlockSize() * (block_min_x + block_max_x);
-      vis::controller->ctr_y = 0.5F * mGlobLatDat->GetBlockSize() * (block_min_y + block_max_y);
-      vis::controller->ctr_z = 0.5F * mGlobLatDat->GetBlockSize() * (block_min_z + block_max_z);
+      // We don't have all the minima / maxima on one core, so we have to gather them.
+      // NOTE this only happens once, during initialisation, otherwise it would be
+      // totally unforgivable.
+
+      // TODO: Tidy this.
+      unsigned int mins[3], maxes[3];
+      unsigned int localMins[3], localMaxes[3];
+
+      localMins[0] = block_min_x;
+      localMins[1] = block_min_y;
+      localMins[2] = block_min_z;
+
+      localMaxes[0] = block_max_x;
+      localMaxes[1] = block_max_y;
+      localMaxes[2] = block_max_z;
+
+      MPI_Allreduce(localMins, mins, 3, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, maxes, 3, MPI_UNSIGNED, MPI_MAX, MPI_COMM_WORLD );
+
+      vis::controller->ctr_x = 0.5F * mGlobLatDat->GetBlockSize() * (mins[0] + maxes[0]);
+      vis::controller->ctr_y = 0.5F * mGlobLatDat->GetBlockSize() * (mins[1] + maxes[1]);
+      vis::controller->ctr_z = 0.5F * mGlobLatDat->GetBlockSize() * (mins[2] + maxes[2]);
 
       cluster_voxel = new float *[mLocalLatDat->GetLocalFluidSiteCount() * VIS_FIELDS];
 
