@@ -13,6 +13,9 @@ namespace hemelb
   namespace vis
   {
 
+    // TODO the streaker needs to be fixed. The lines drawn differ depending on how many proccesors
+    // are used to do the visualisation. This is a bug.
+
     // Function to initialise the velocity field at given coordinates.
     void StreaklineDrawer::initializeVelFieldBlock(lb::GlobalLatticeData* iGlobLatDat,
                                                    unsigned int site_i,
@@ -60,8 +63,8 @@ namespace hemelb
                                                                         unsigned int site_j,
                                                                         unsigned int site_k)
     {
-      if (site_i >= iGlobLatDat->GetXSiteCount() || site_j >= iGlobLatDat->GetYSiteCount() || site_k
-          >= iGlobLatDat->GetZSiteCount())
+      if (site_i >= iGlobLatDat->GetXSiteCount() || site_j >= iGlobLatDat->GetYSiteCount()
+          || site_k >= iGlobLatDat->GetZSiteCount())
       {
         return NULL;
       }
@@ -69,8 +72,8 @@ namespace hemelb
       unsigned int j = site_j >> iGlobLatDat->Log2BlockSize;
       unsigned int k = site_k >> iGlobLatDat->Log2BlockSize;
 
-      unsigned int block_id = (i * iGlobLatDat->GetYBlockCount() + j) * iGlobLatDat->GetZBlockCount()
-          + k;
+      unsigned int block_id = (i * iGlobLatDat->GetYBlockCount() + j)
+          * iGlobLatDat->GetZBlockCount() + k;
 
       if (velocity_field[block_id].vel_site_data == NULL)
       {
@@ -182,7 +185,7 @@ namespace hemelb
 
       *is_interior = 1;
 
-      int c1Plusc2 = 15;
+      const int c1Plusc2 = 15;
 
       for (int i = 0; i < 2; i++)
       {
@@ -307,16 +310,13 @@ namespace hemelb
                       != lBlock->ProcessorRankForEachBlockSite[m])
                     continue;
 
-                  for (unsigned int neigh_i = util::NumericalFunctions::max<unsigned int>(0, site_i
-                      - 1); neigh_i
+                  for (unsigned int neigh_i = util::NumericalFunctions::max<int>(0, site_i - 1); neigh_i
                       <= util::NumericalFunctions::min<unsigned int>(iGlobLatDat->GetXSiteCount()
                           - 1, site_i + 1); neigh_i++)
-                    for (unsigned int neigh_j =
-                        util::NumericalFunctions::max<unsigned int>(0, site_j - 1); neigh_j
+                    for (unsigned int neigh_j = util::NumericalFunctions::max<int>(0, site_j - 1); neigh_j
                         <= util::NumericalFunctions::min<unsigned int>(iGlobLatDat->GetYSiteCount()
                             - 1, site_j + 1); neigh_j++)
-                      for (unsigned int neigh_k =
-                          util::NumericalFunctions::max<unsigned int>(0, site_k - 1); neigh_k
+                      for (unsigned int neigh_k = util::NumericalFunctions::max<int>(0, site_k - 1); neigh_k
                           <= util::NumericalFunctions::min<unsigned int>(
                                                                          iGlobLatDat->GetZSiteCount()
                                                                              - 1, site_k + 1); neigh_k++)
@@ -365,7 +365,7 @@ namespace hemelb
 
                   int lSiteIndex = lBlock->site_data[m];
 
-                  // if the lattice site is an not inlet one
+                  // if the lattice site is not an inlet
                   if (iLocalLatDat->GetSiteType(lSiteIndex) != lb::INLET_TYPE)
                   {
                     continue;
@@ -395,8 +395,8 @@ namespace hemelb
       }
       if (shared_vs > 0)
       {
-        s_to_send = new short int[3 * shared_vs];
-        s_to_recv = new short int[3 * shared_vs];
+        s_to_send = new unsigned int[3 * shared_vs];
+        s_to_recv = new unsigned int[3 * shared_vs];
 
         v_to_send = new float[3 * shared_vs];
         v_to_recv = new float[3 * shared_vs];
@@ -427,7 +427,7 @@ namespace hemelb
 
       req = new MPI_Request[2 * iNetworkTopology->GetProcessorCount()];
 
-      from_proc_id_to_neigh_proc_index = new short int[iNetworkTopology->GetProcessorCount()];
+      from_proc_id_to_neigh_proc_index = new unsigned int[iNetworkTopology->GetProcessorCount()];
 
       for (unsigned int m = 0; m < iNetworkTopology->GetProcessorCount(); m++)
       {
@@ -471,10 +471,10 @@ namespace hemelb
     {
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Irecv(&mNeighProcs[m]->recv_vs, 1, MPI_INT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
-                  &req[procs + mNeighProcs[m]->id]);
-        MPI_Isend(&mNeighProcs[m]->send_vs, 1, MPI_INT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
-                  &req[mNeighProcs[m]->id]);
+        MPI_Irecv(&mNeighProcs[m]->recv_vs, 1, MPI_UNSIGNED, mNeighProcs[m]->id, 30,
+                  MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
+        MPI_Isend(&mNeighProcs[m]->send_vs, 1, MPI_UNSIGNED, mNeighProcs[m]->id, 30,
+                  MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
         MPI_Wait(&req[mNeighProcs[m]->id], status);
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
@@ -483,13 +483,14 @@ namespace hemelb
 
         if (mNeighProcs[m]->recv_vs > 0)
         {
-          MPI_Irecv(mNeighProcs[m]->s_to_recv, mNeighProcs[m]->recv_vs * 3, MPI_SHORT,
+          MPI_Irecv(mNeighProcs[m]->s_to_recv, mNeighProcs[m]->recv_vs * 3, MPI_UNSIGNED,
                     mNeighProcs[m]->id, 40, MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
         }
         if (mNeighProcs[m]->send_vs > 0)
         {
-          MPI_Isend(mNeighProcs[m]->s_to_send, mNeighProcs[m]->send_vs * 3, MPI_SHORT,
+          MPI_Isend(mNeighProcs[m]->s_to_send, mNeighProcs[m]->send_vs * 3, MPI_UNSIGNED,
                     mNeighProcs[m]->id, 40, MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
+
           MPI_Wait(&req[mNeighProcs[m]->id], status);
         }
       }
@@ -520,7 +521,7 @@ namespace hemelb
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        for (int n = 0; n < mNeighProcs[m]->recv_vs; n++)
+        for (unsigned int n = 0; n < mNeighProcs[m]->recv_vs; n++)
         {
           site_i = mNeighProcs[m]->s_to_recv[3 * n + 0];
           site_j = mNeighProcs[m]->s_to_recv[3 * n + 1];
@@ -545,6 +546,7 @@ namespace hemelb
         {
           MPI_Isend(mNeighProcs[m]->v_to_send, mNeighProcs[m]->recv_vs * 3, MPI_FLOAT,
                     mNeighProcs[m]->id, 30, MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
+
           MPI_Wait(&req[mNeighProcs[m]->id], status);
         }
       }
@@ -555,7 +557,7 @@ namespace hemelb
 
         MPI_Wait(&req[procs + mNeighProcs[m]->id], status);
 
-        for (int n = 0; n < mNeighProcs[m]->send_vs; n++)
+        for (unsigned int n = 0; n < mNeighProcs[m]->send_vs; n++)
         {
           neigh_i = mNeighProcs[m]->s_to_send[3 * n + 0];
           neigh_j = mNeighProcs[m]->s_to_send[3 * n + 1];
@@ -648,8 +650,8 @@ namespace hemelb
 
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Irecv(&mNeighProcs[m]->recv_ps, 1, MPI_INT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
-                  &req[procs + mNeighProcs[m]->id]);
+        MPI_Irecv(&mNeighProcs[m]->recv_ps, 1, MPI_UNSIGNED, mNeighProcs[m]->id, 30,
+                  MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
@@ -691,9 +693,9 @@ namespace hemelb
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Isend(&mNeighProcs[m]->send_ps, 1, MPI_INT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
-                  &req[mNeighProcs[m]->id]);
-        MPI_Wait(&req[mNeighProcs[m]->id], &status);
+        MPI_Isend(&mNeighProcs[m]->send_ps, 1, MPI_UNSIGNED, mNeighProcs[m]->id, 30,
+                  MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
+
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
@@ -706,6 +708,7 @@ namespace hemelb
         {
           MPI_Isend(&mNeighProcs[m]->p_to_send[0], mNeighProcs[m]->send_ps * 5, MPI_FLOAT,
                     mNeighProcs[m]->id, 40, MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
+
           MPI_Wait(&req[mNeighProcs[m]->id], &status);
         }
       }
@@ -724,7 +727,7 @@ namespace hemelb
                     mNeighProcs[m]->id, 40, MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
           MPI_Wait(&req[procs + mNeighProcs[m]->id], &status);
 
-          for (int n = 0; n < mNeighProcs[m]->recv_ps; n++)
+          for (unsigned int n = 0; n < mNeighProcs[m]->recv_ps; n++)
           {
             createParticle(mNeighProcs[m]->p_to_recv[5 * n + 0], mNeighProcs[m]->p_to_recv[5 * n
                 + 1], mNeighProcs[m]->p_to_recv[5 * n + 2], mNeighProcs[m]->p_to_recv[5 * n + 3],

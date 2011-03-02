@@ -125,12 +125,16 @@ namespace hemelb
           {
             // If there was no data and it wasn't simply that the socket would block,
             // raise an error.
-            if (steerDataRecvB != EAGAIN)
+            if (errno != EAGAIN)
             {
-              printf("Steering component: broken network pipe...\n");
+              printf("Steering component: broken network pipe... (%s) \n", strerror(errno));
               mClientConnection->ReportBroken(socket);
               isConnected = false;
             }
+            break;
+          }
+          else if (steerDataRecvB == 0)
+          {
             break;
           }
 

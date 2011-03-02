@@ -149,11 +149,7 @@ namespace hemelb
 
         int *col_pixel_id; // array of pixel IDs
 
-        int time_step, cycle;
-        int period, inlets;
         int pixels_max;
-
-        int perform_rendering;
 
         ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
 

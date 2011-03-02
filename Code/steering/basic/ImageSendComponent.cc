@@ -2,6 +2,7 @@
 #include "steering/basic/SimulationParameters.h"
 #include "steering/basic/Network.h"
 #include "io/XdrMemWriter.h"
+#include <errno.h>
 #include <signal.h>
 
 namespace hemelb
@@ -38,8 +39,6 @@ namespace hemelb
     // the new (Feb 2011) structure.
     void ImageSendComponent::DoWork(void)
     {
-      debug::Debugger::Get()->BreakHere();
-
       // If no frame is ready for sending, return.
       if (!isFrameReady)
       {
@@ -164,11 +163,14 @@ namespace hemelb
       int pixelDataBytesSent = Network::send_all(iSocket, data, length);
 
       // We couldn't send. The pipe is broken.
-      if (pixelDataBytesSent < 0)
+      if (pixelDataBytesSent <= 0)
       {
-        mClientConnection->ReportBroken(iSocket);
-        isConnected = false;
-        isFrameReady = false;
+        if (errno != EAGAIN)
+        {
+          printf("Image send component: broken network pipe... (%s) \n", strerror(errno));
+          mClientConnection->ReportBroken(iSocket);
+          isConnected = false;
+        }
         return -1;
       }
       else

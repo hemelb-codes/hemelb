@@ -29,25 +29,18 @@ namespace hemelb
       int bytes_left_to_receive = length;
       int n = 0;
 
+      // TODO: Make this better.
       // While some data left to be received...
       while (received_bytes < length)
       {
         // Receive some data (up to the remaining length)
         n = recv(sockid, buf + received_bytes, bytes_left_to_receive, NULL);
 
-        if (n < 0)
+        if (n <= 0)
         {
           // Distinguish between cases where the pipe fails because it'd block
           // (No problem, we'll try again later) or because the pipe is broken.
-          if (errno == EWOULDBLOCK)
-          {
-            // Wait a bit before trying again.
-            usleep(10);
-          }
-          else
-          {
-            return -1;
-          }
+          return n;
         }
         else
         {
@@ -73,11 +66,12 @@ namespace hemelb
       int bytes_left_to_send = length;
       int n = 0;
 
+      // TODO: Make this better.
       while (sent_bytes < length)
       {
         n = send(sockid, buf + sent_bytes, bytes_left_to_send, 0);
 
-        if (n < 0)
+        if (n <= 0)
         {
           // Distinguish between cases where the pipe fails because it'd block
           // (No problem, we'll try again later) or because the pipe is broken.
@@ -88,7 +82,7 @@ namespace hemelb
           }
           else
           {
-            return -1;
+            return n;
           }
         }
         else
