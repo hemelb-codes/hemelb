@@ -24,8 +24,8 @@ namespace hemelb
       public:
         // Constructor and destructor.
         StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
-                         lb::LocalLatticeData &iLocalLatDat,
-                         lb::GlobalLatticeData &iGlobLatDat);
+                         lb::LocalLatticeData* iLocalLatDat,
+                         lb::GlobalLatticeData* iGlobLatDat);
         ~StreaklineDrawer();
 
         // Method to reset streakline drawer
@@ -34,9 +34,9 @@ namespace hemelb
         // Drawing methods.
         void StreakLines(int time_steps,
                          int time_steps_per_cycle,
-                         lb::GlobalLatticeData &iGlobLatDat,
-                         lb::LocalLatticeData &iLocalLatDat);
-        void render(lb::GlobalLatticeData &iGlobLatDat);
+                         lb::GlobalLatticeData* iGlobLatDat,
+                         lb::LocalLatticeData* iLocalLatDat);
+        void render(lb::GlobalLatticeData* iGlobLatDat);
 
       private:
 
@@ -53,7 +53,8 @@ namespace hemelb
         // Struct for information about the velocity field at some point.
         struct VelSiteData
         {
-            int proc_id, counter, site_id;
+            int proc_id;
+            unsigned int counter, site_id;
             float vx, vy, vz;
         };
 
@@ -67,7 +68,7 @@ namespace hemelb
         typedef std::vector<float> FloatVector;
         struct NeighProc
         {
-            int id;
+            unsigned int id;
             int send_ps, recv_ps;
             int send_vs, recv_vs;
 
@@ -79,10 +80,10 @@ namespace hemelb
 
         // Necessary to keep a local store of the number of blocks created, so that we can
         // write a correct constructor. Alternative (TODO) is to use a vector.
-        int num_blocks;
+        unsigned int num_blocks;
 
         // Counter keeps track of the number of VelSiteDatas created
-        int counter;
+        unsigned int counter;
 
         // Variables for tracking the actual numbers of particles, and the maximum number
         //(i.e. the number for which memory has been allocated).
@@ -116,34 +117,32 @@ namespace hemelb
         void deleteParticle(unsigned int p_index);
 
         // Private functions for initialising the velocity field.
-        void initializeVelFieldBlock(lb::GlobalLatticeData &iGlobLatDat,
-                                     int site_i,
-                                     int site_j,
-                                     int site_k,
+        void initializeVelFieldBlock(lb::GlobalLatticeData* iGlobLatDat,
+                                     unsigned int site_i,
+                                     unsigned int site_j,
+                                     unsigned int site_k,
                                      int proc_id);
-        VelSiteData *velSiteDataPointer(lb::GlobalLatticeData &iGlobLatDat,
-                                        int site_i,
-                                        int site_j,
-                                        int site_k);
-        void particleVelocity(Particle *particle_p,
-                              float v[2][2][2][3],
-                              float interp_v[3]);
+        VelSiteData *velSiteDataPointer(lb::GlobalLatticeData* iGlobLatDat,
+                                        unsigned int site_i,
+                                        unsigned int site_j,
+                                        unsigned int site_k);
+        void particleVelocity(Particle *particle_p, float v[2][2][2][3], float interp_v[3]);
         void localVelField(int p_index,
                            float v[2][2][2][3],
                            int *is_interior,
-                           lb::GlobalLatticeData &iGlobLatDat,
-                           lb::LocalLatticeData &iLocalLatDat);
+                           lb::GlobalLatticeData* iGlobLatDat,
+                           lb::LocalLatticeData* iLocalLatDat);
 
         // Private functions for updating the velocity field and the particles in it.
         void updateVelField(int stage_id,
-                            lb::GlobalLatticeData &iGlobLatDat,
-                            lb::LocalLatticeData &iLocalLatDat);
+                            lb::GlobalLatticeData* iGlobLatDat,
+                            lb::LocalLatticeData* iLocalLatDat);
         void updateParticles();
 
         // Private functions for inter-proc communication.
         void communicateSiteIds();
-        void communicateVelocities(lb::GlobalLatticeData &iGlobLatDat);
-        void communicateParticles(lb::GlobalLatticeData &iGlobLatDat);
+        void communicateVelocities(lb::GlobalLatticeData* iGlobLatDat);
+        void communicateParticles(lb::GlobalLatticeData* iGlobLatDat);
 
         const topology::NetworkTopology * mNetworkTopology;
 

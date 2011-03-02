@@ -56,7 +56,10 @@ namespace hemelb
         friend class BlockCounter;
 
       public:
-        void SetBasicDetails(int iBlocksX, int iBlocksY, int iBlocksZ, int iBlockSize)
+        void SetBasicDetails(unsigned int iBlocksX,
+                             unsigned int iBlocksY,
+                             unsigned int iBlocksZ,
+                             unsigned int iBlockSize)
         {
           mBlocksX = iBlocksX;
           mBlocksY = iBlocksY;
@@ -70,7 +73,7 @@ namespace hemelb
           SitesPerBlockVolumeUnit = mBlockSize * mBlockSize * mBlockSize;
 
           // A shift value we'll need later = log_2(block_size)
-          int i = mBlockSize;
+          unsigned int i = mBlockSize;
           Log2BlockSize = 0;
           while (i > 1)
           {
@@ -83,42 +86,42 @@ namespace hemelb
           Blocks = new BlockData[mBlockCount];
         }
 
-        int GetXSiteCount() const
+        unsigned int GetXSiteCount() const
         {
           return mSitesX;
         }
 
-        int GetYSiteCount() const
+        unsigned int GetYSiteCount() const
         {
           return mSitesY;
         }
 
-        int GetZSiteCount() const
+        unsigned int GetZSiteCount() const
         {
           return mSitesZ;
         }
 
-        int GetXBlockCount() const
+        unsigned int GetXBlockCount() const
         {
           return mBlocksX;
         }
 
-        int GetYBlockCount() const
+        unsigned int GetYBlockCount() const
         {
           return mBlocksY;
         }
 
-        int GetZBlockCount() const
+        unsigned int GetZBlockCount() const
         {
           return mBlocksZ;
         }
 
-        int GetBlockSize() const
+        unsigned int GetBlockSize() const
         {
           return mBlockSize;
         }
 
-        int GetBlockCount() const
+        unsigned int GetBlockCount() const
         {
           return mBlockCount;
         }
@@ -172,20 +175,21 @@ namespace hemelb
 
         // Function that finds the pointer to the rank on which a particular site
         // resides. If the site is in an empty block, return NULL.
-        int * GetProcIdFromGlobalCoords(int iSiteI, int iSiteJ, int iSiteK) const
+        int * GetProcIdFromGlobalCoords(unsigned int iSiteI,
+                                        unsigned int iSiteJ,
+                                        unsigned int iSiteK) const
         {
           // If the given site location is outside the bounding box return a NULL
           // pointer.
-          if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ >= mSitesY || iSiteK < 0
-              || iSiteK >= mSitesZ)
+          if (iSiteI >= mSitesX || iSiteJ >= mSitesY || iSiteK >= mSitesZ)
           {
             return NULL;
           }
 
           // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-          int i = iSiteI >> Log2BlockSize;
-          int j = iSiteJ >> Log2BlockSize;
-          int k = iSiteK >> Log2BlockSize;
+          unsigned int i = iSiteI >> Log2BlockSize;
+          unsigned int j = iSiteJ >> Log2BlockSize;
+          unsigned int k = iSiteK >> Log2BlockSize;
 
           // Get the block from the block identifiers.
           BlockData * lBlock = &Blocks[ (i * mBlocksY + j) * mBlocksZ + k];
@@ -198,9 +202,9 @@ namespace hemelb
           else
           {
             // Find site coordinates within the block
-            int ii = iSiteI - (i << Log2BlockSize);
-            int jj = iSiteJ - (j << Log2BlockSize);
-            int kk = iSiteK - (k << Log2BlockSize);
+            unsigned int ii = iSiteI - (i << Log2BlockSize);
+            unsigned int jj = iSiteJ - (j << Log2BlockSize);
+            unsigned int kk = iSiteK - (k << Log2BlockSize);
 
             // Return pointer to ProcessorRankForEachBlockSite[site] (the only member of
             // mProcessorsForEachBlock)
@@ -212,19 +216,20 @@ namespace hemelb
         // Function to get a pointer to the site_data for a site.
         // If the site is in an empty block, return NULL.
 
-        const unsigned int * GetSiteData(int iSiteI, int iSiteJ, int iSiteK) const
+        const unsigned int * GetSiteData(unsigned int iSiteI,
+                                         unsigned int iSiteJ,
+                                         unsigned int iSiteK) const
         {
           // If site is out of the bounding box, return NULL.
-          if (iSiteI < 0 || iSiteI >= mSitesX || iSiteJ < 0 || iSiteJ >= mSitesY || iSiteK < 0
-              || iSiteK >= mSitesZ)
+          if (iSiteI >= mSitesX || iSiteJ >= mSitesY || iSiteK >= mSitesZ)
           {
             return NULL;
           }
 
           // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-          int i = iSiteI >> Log2BlockSize;
-          int j = iSiteJ >> Log2BlockSize;
-          int k = iSiteK >> Log2BlockSize;
+          unsigned int i = iSiteI >> Log2BlockSize;
+          unsigned int j = iSiteJ >> Log2BlockSize;
+          unsigned int k = iSiteK >> Log2BlockSize;
 
           // Pointer to the block
           BlockData * lBlock = &Blocks[ (i * mBlocksY + j) * mBlocksZ + k];
@@ -237,9 +242,9 @@ namespace hemelb
           else
           {
             // Find site coordinates within the block
-            int ii = iSiteI - (i << Log2BlockSize);
-            int jj = iSiteJ - (j << Log2BlockSize);
-            int kk = iSiteK - (k << Log2BlockSize);
+            unsigned int ii = iSiteI - (i << Log2BlockSize);
+            unsigned int jj = iSiteJ - (j << Log2BlockSize);
+            unsigned int kk = iSiteK - (k << Log2BlockSize);
 
             // Return pointer to site_data[site]
             return &lBlock->site_data[ ( ( (ii << Log2BlockSize) + jj) << Log2BlockSize) + kk];
@@ -248,20 +253,20 @@ namespace hemelb
 
       public:
         // TODO public temporarily, until all usages are internal to the class.
-        int Log2BlockSize;
-        int SitesPerBlockVolumeUnit;
+        unsigned int Log2BlockSize;
+        unsigned int SitesPerBlockVolumeUnit;
 
       private:
-        int mBlockCount;
-        int mSitesX, mSitesY, mSitesZ;
-        int mBlocksX, mBlocksY, mBlocksZ;
-        int mBlockSize;
+        unsigned int mBlockCount;
+        unsigned int mSitesX, mSitesY, mSitesZ;
+        unsigned int mBlocksX, mBlocksY, mBlocksZ;
+        unsigned int mBlockSize;
     };
 
     class BlockCounter
     {
       public:
-        BlockCounter(GlobalLatticeData* iGlobLatDat, int iStartNumber)
+        BlockCounter(GlobalLatticeData* iGlobLatDat, unsigned int iStartNumber)
         {
           mBlockNumber = iStartNumber;
           mGlobLatDat = iGlobLatDat;
@@ -282,7 +287,7 @@ namespace hemelb
           return mBlockNumber;
         }
 
-        bool operator<(int iUpperLimit) const
+        bool operator<(unsigned int iUpperLimit) const
         {
           return mBlockNumber < iUpperLimit;
         }
@@ -323,7 +328,7 @@ namespace hemelb
 
       private:
         GlobalLatticeData* mGlobLatDat;
-        int mBlockNumber;
+        unsigned int mBlockNumber;
     };
   }
 }

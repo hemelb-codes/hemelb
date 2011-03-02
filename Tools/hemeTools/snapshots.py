@@ -11,7 +11,7 @@ def HemeLbSnapshot(filename):
     try:
         reader = xdrlib.Unpacker(file(filename).read(4))
         stable = reader.unpack_int()
-        if stable == 0 or stable == 1:
+        if stable == 0 or stable == 1 or stable == 2:
             cls = XdrHemeLbSnapshot
         else:
             cls = TextHemeLbSnapshot
