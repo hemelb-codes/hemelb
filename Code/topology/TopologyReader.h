@@ -18,18 +18,51 @@ namespace hemelb
         TopologyReader();
         ~TopologyReader();
 
-        void
-        LoadAndDecompose(lb::GlobalLatticeData &bGlobalLatticeData,
-                         net::Net *net,
-                         lb::LbmParameters * bLbmParams,
-                         SimConfig * bSimConfig);
-
-        void
-        PreReadConfigFile(MPI_File xiFile,
-                          lb::LbmParameters * bParams,
-                          lb::GlobalLatticeData &bGlobalLatticeData);
+        void LoadAndDecompose(lb::GlobalLatticeData* bGlobalLatticeData,
+                              int &totalFluidSites,
+                              unsigned int siteMins[3],
+                              unsigned int siteMaxes[3],
+                              bool iReserveSteeringCore,
+                              NetworkTopology* bNetTop,
+                              lb::LbmParameters* bLbmParams,
+                              SimConfig* bSimConfig,
+                              double* lReadTime,
+                              double* lDecomposeTime);
 
       private:
+        struct SiteLocation
+        {
+            short int i, j, k;
+        };
+
+        void DecomposeDomain(int iTotalFluidSites,
+                             bool iReserveSteeringCore,
+                             NetworkTopology* bNetTop,
+                             const lb::GlobalLatticeData* bGlobLatDat);
+
+        void AssignFluidSitesToProcessors(int & proc_count,
+                                          int & fluid_sites_per_unit,
+                                          int & unvisited_fluid_sites,
+                                          const int iCurrentProcId,
+                                          const bool iIsMachineLevel,
+                                          NetworkTopology* bNetTop,
+                                          const lb::GlobalLatticeData* iGlobLatDat);
+
+        void ReadPreamble(MPI_File xiFile,
+                          lb::LbmParameters* bParams,
+                          lb::GlobalLatticeData* bGlobalLatticeData);
+
+        void ReadHeader(MPI_File xiFile,
+                        unsigned int iBlockCount,
+                        unsigned int* sitesInEachBlock,
+                        unsigned int* bytesUsedByBlockInDataFile);
+
+        void ReadAllBlocks(lb::GlobalLatticeData* bGlobLatDat,
+                           const unsigned int* bytesPerBlock,
+                           int &totalFluidSites,
+                           unsigned int siteMins[3],
+                           unsigned int siteMaxes[3],
+                           MPI_File iFile);
 
         /*   void
          GetNeighbourLocation(int lFromBlockId,
@@ -39,18 +72,12 @@ namespace hemelb
          int * lToBlockId,
          int * lToSiteId);*/
 
-        void
-            GetNonSolidSitesPerBlock(int bNonSolidSitesPerBlock[],
-                                     net::Net *iNet,
-                                     MPI_File iFile,
-                                     const lb::GlobalLatticeData &bGlobalLatticeData);
-        void
-            GetInitialSiteDistribution(unsigned long oFirstBlockIdForEachProc[],
-                                       unsigned long oFirstSiteIdForEachProc[],
-                                       unsigned long oNumberSitesPerProc[],
-                                       unsigned long oTotalSiteCount,
-                                       const int iNonSolidSitesPerBlock[],
-                                       const hemelb::lb::GlobalLatticeData & iGlobLatDat);
+        void GetInitialSiteDistribution(unsigned long oFirstBlockIdForEachProc[],
+                                        unsigned long oFirstSiteIdForEachProc[],
+                                        unsigned long oNumberSitesPerProc[],
+                                        unsigned long oTotalSiteCount,
+                                        const int iNonSolidSitesPerBlock[],
+                                        const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
         void ReadInBlocks(const unsigned long iFirstBlockIdForEachProc[],
                           const unsigned long iFirstSiteNumberForEachProc[],
@@ -59,23 +86,17 @@ namespace hemelb
                           const int iNonSolidSitesPerBlock[],
                           const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
-        void
-            OptimiseDomainDecomposition(const unsigned long iFirstBlockIdForEachProc[],
-                                        const unsigned long iFirstSiteIdForEachProc[],
-                                        const unsigned long iNumberSitesPerProc[],
-                                        const unsigned long iTotalSiteCount,
-                                        const int iNonSolidSitesPerBlock[],
-                                        const hemelb::lb::GlobalLatticeData & iGlobLatDat);
+        void OptimiseDomainDecomposition(const unsigned long iFirstBlockIdForEachProc[],
+                                         const unsigned long iFirstSiteIdForEachProc[],
+                                         const unsigned long iNumberSitesPerProc[],
+                                         const unsigned long iTotalSiteCount,
+                                         const int iNonSolidSitesPerBlock[],
+                                         const hemelb::lb::GlobalLatticeData & iGlobLatDat);
 
         MPI_Comm mCommunicator;
         MPI_Group mGroup;
         int mRank;
         int mSize;
-
-        // The config file starts with a double and 4 ints.
-        // In Xdr this occupies 8 + 4 * 4 bytes.
-        static const int mPreambleBytes = 24;
-
     };
 
   }

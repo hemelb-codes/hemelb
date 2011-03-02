@@ -14,77 +14,74 @@ namespace hemelb
   {
 
     // Function to initialise the velocity field at given coordinates.
-    void StreaklineDrawer::initializeVelFieldBlock(lb::GlobalLatticeData &iGlobLatDat,
-                                                   int site_i,
-                                                   int site_j,
-                                                   int site_k,
+    void StreaklineDrawer::initializeVelFieldBlock(lb::GlobalLatticeData* iGlobLatDat,
+                                                   unsigned int site_i,
+                                                   unsigned int site_j,
+                                                   unsigned int site_k,
                                                    int proc_id)
     {
-      if (site_i < 0 || site_i >= iGlobLatDat.GetXSiteCount() || site_j < 0
-          || site_j >= iGlobLatDat.GetYSiteCount() || site_k < 0 || site_k
-          >= iGlobLatDat.GetZSiteCount())
+      if (site_i >= iGlobLatDat->GetXSiteCount() || site_j >= iGlobLatDat->GetYSiteCount()
+          || site_k >= iGlobLatDat->GetZSiteCount())
       {
         return;
       }
-      int i = site_i >> iGlobLatDat.Log2BlockSize;
-      int j = site_j >> iGlobLatDat.Log2BlockSize;
-      int k = site_k >> iGlobLatDat.Log2BlockSize;
+      unsigned int i = site_i >> iGlobLatDat->Log2BlockSize;
+      unsigned int j = site_j >> iGlobLatDat->Log2BlockSize;
+      unsigned int k = site_k >> iGlobLatDat->Log2BlockSize;
 
-      int block_id = (i * iGlobLatDat.GetYBlockCount() + j)
-          * iGlobLatDat.GetZBlockCount() + k;
-      int site_id;
+      unsigned int block_id = (i * iGlobLatDat->GetYBlockCount() + j)
+          * iGlobLatDat->GetZBlockCount() + k;
+      unsigned int site_id;
 
       if (velocity_field[block_id].vel_site_data == NULL)
       {
         velocity_field[block_id].vel_site_data
-            = new VelSiteData[iGlobLatDat.SitesPerBlockVolumeUnit];
+            = new VelSiteData[iGlobLatDat->SitesPerBlockVolumeUnit];
 
-        for (site_id = 0; site_id < iGlobLatDat.SitesPerBlockVolumeUnit; site_id++)
+        for (site_id = 0; site_id < iGlobLatDat->SitesPerBlockVolumeUnit; site_id++)
         {
           velocity_field[block_id].vel_site_data[site_id].proc_id = -1;
           velocity_field[block_id].vel_site_data[site_id].counter = 0;
         }
       }
 
-      int ii = site_i - (i << iGlobLatDat.Log2BlockSize);
-      int jj = site_j - (j << iGlobLatDat.Log2BlockSize);
-      int kk = site_k - (k << iGlobLatDat.Log2BlockSize);
+      unsigned int ii = site_i - (i << iGlobLatDat->Log2BlockSize);
+      unsigned int jj = site_j - (j << iGlobLatDat->Log2BlockSize);
+      unsigned int kk = site_k - (k << iGlobLatDat->Log2BlockSize);
 
-      site_id = ( ( (ii << iGlobLatDat.Log2BlockSize) + jj)
-          << iGlobLatDat.Log2BlockSize) + kk;
+      site_id = ( ( (ii << iGlobLatDat->Log2BlockSize) + jj) << iGlobLatDat->Log2BlockSize) + kk;
       velocity_field[block_id].vel_site_data[site_id].proc_id = proc_id;
     }
 
     // Returns the velocity site data for a given index, or NULL if the index isn't valid / has
     // no data.
-    StreaklineDrawer::VelSiteData *StreaklineDrawer::velSiteDataPointer(lb::GlobalLatticeData &iGlobLatDat,
-                                                                        int site_i,
-                                                                        int site_j,
-                                                                        int site_k)
+    StreaklineDrawer::VelSiteData *StreaklineDrawer::velSiteDataPointer(lb::GlobalLatticeData* iGlobLatDat,
+                                                                        unsigned int site_i,
+                                                                        unsigned int site_j,
+                                                                        unsigned int site_k)
     {
-      if (site_i < 0 || site_i >= iGlobLatDat.GetXSiteCount() || site_j < 0
-          || site_j >= iGlobLatDat.GetYSiteCount() || site_k < 0 || site_k
-          >= iGlobLatDat.GetZSiteCount())
+      if (site_i >= iGlobLatDat->GetXSiteCount() || site_j >= iGlobLatDat->GetYSiteCount() || site_k
+          >= iGlobLatDat->GetZSiteCount())
       {
         return NULL;
       }
-      int i = site_i >> iGlobLatDat.Log2BlockSize;
-      int j = site_j >> iGlobLatDat.Log2BlockSize;
-      int k = site_k >> iGlobLatDat.Log2BlockSize;
+      unsigned int i = site_i >> iGlobLatDat->Log2BlockSize;
+      unsigned int j = site_j >> iGlobLatDat->Log2BlockSize;
+      unsigned int k = site_k >> iGlobLatDat->Log2BlockSize;
 
-      int block_id = (i * iGlobLatDat.GetYBlockCount() + j)
-          * iGlobLatDat.GetZBlockCount() + k;
+      unsigned int block_id = (i * iGlobLatDat->GetYBlockCount() + j) * iGlobLatDat->GetZBlockCount()
+          + k;
 
       if (velocity_field[block_id].vel_site_data == NULL)
       {
         return NULL;
       }
-      int ii = site_i - (i << iGlobLatDat.Log2BlockSize);
-      int jj = site_j - (j << iGlobLatDat.Log2BlockSize);
-      int kk = site_k - (k << iGlobLatDat.Log2BlockSize);
+      unsigned int ii = site_i - (i << iGlobLatDat->Log2BlockSize);
+      unsigned int jj = site_j - (j << iGlobLatDat->Log2BlockSize);
+      unsigned int kk = site_k - (k << iGlobLatDat->Log2BlockSize);
 
-      int site_id = ( ( (ii << iGlobLatDat.Log2BlockSize) + jj)
-          << iGlobLatDat.Log2BlockSize) + kk;
+      unsigned int site_id = ( ( (ii << iGlobLatDat->Log2BlockSize) + jj)
+          << iGlobLatDat->Log2BlockSize) + kk;
 
       return &velocity_field[block_id].vel_site_data[site_id];
     }
@@ -116,11 +113,7 @@ namespace hemelb
     }
 
     // Create a particle with given position, velocity and inlet_id.
-    void StreaklineDrawer::createParticle(float x,
-                                          float y,
-                                          float z,
-                                          float vel,
-                                          int inlet_id)
+    void StreaklineDrawer::createParticle(float x, float y, float z, float vel, int inlet_id)
     {
 
       if (nParticles == particleVec.capacity())
@@ -167,8 +160,8 @@ namespace hemelb
     {
       for (unsigned int n = 0; n < nParticleSeeds; n++)
       {
-        createParticle(particleSeedVec[n].x, particleSeedVec[n].y,
-                       particleSeedVec[n].z, 0.0F, particleSeedVec[n].inlet_id);
+        createParticle(particleSeedVec[n].x, particleSeedVec[n].y, particleSeedVec[n].z, 0.0F,
+                       particleSeedVec[n].inlet_id);
       }
     }
 
@@ -176,8 +169,8 @@ namespace hemelb
     void StreaklineDrawer::localVelField(int p_index,
                                          float v[2][2][2][3],
                                          int *is_interior,
-                                         lb::GlobalLatticeData &iGlobLatDat,
-                                         lb::LocalLatticeData &iLocalLatDat)
+                                         lb::GlobalLatticeData* iGlobLatDat,
+                                         lb::LocalLatticeData* iLocalLatDat)
     {
       double vx, vy, vz;
 
@@ -203,8 +196,7 @@ namespace hemelb
           {
             int neigh_k = site_k + k;
 
-            vel_site_data_p = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j,
-                                                 neigh_k);
+            vel_site_data_p = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j, neigh_k);
 
             if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1)
             {
@@ -213,7 +205,7 @@ namespace hemelb
               v[i][j][k][0] = v[i][j][k][1] = v[i][j][k][2] = 0.0F;
               continue;
             }
-            if (mNetworkTopology->GetLocalRank() != vel_site_data_p->proc_id)
+            if ((int) mNetworkTopology->GetLocalRank() != vel_site_data_p->proc_id)
             {
               *is_interior = 0;
             }
@@ -227,18 +219,15 @@ namespace hemelb
               v[i][j][k][1] = vel_site_data_p->vy;
               v[i][j][k][2] = vel_site_data_p->vz;
             }
-            else if (mNetworkTopology->GetLocalRank()
-                == vel_site_data_p->proc_id)
+            else if ((int) mNetworkTopology->GetLocalRank() == vel_site_data_p->proc_id)
             {
               // the local counter is set equal to the global one
               // and the local velocity is calculated
               vel_site_data_p->counter = counter;
               double density;
 
-              D3Q15::CalculateDensityAndVelocity(
-                                                 &iLocalLatDat.FOld[vel_site_data_p->site_id
-                                                     * c1Plusc2], density, vx,
-                                                 vy, vz);
+              D3Q15::CalculateDensityAndVelocity(&iLocalLatDat->FOld[vel_site_data_p->site_id
+                  * c1Plusc2], density, vx, vy, vz);
 
               v[i][j][k][0] = vel_site_data_p->vx = vx / density;
               v[i][j][k][1] = vel_site_data_p->vy = vy / density;
@@ -248,15 +237,11 @@ namespace hemelb
             {
               vel_site_data_p->counter = counter;
 
-              int m =
-                  from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
+              int m = from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
 
-              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 0]
-                  = neigh_i;
-              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 1]
-                  = neigh_j;
-              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 2]
-                  = neigh_k;
+              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 0] = neigh_i;
+              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 1] = neigh_j;
+              mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 2] = neigh_k;
               ++mNeighProcs[m]->send_vs;
             }
           }
@@ -266,8 +251,8 @@ namespace hemelb
 
     // Constructor, populating fields from lattice data objects.
     StreaklineDrawer::StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
-                                       lb::LocalLatticeData &iLocalLatDat,
-                                       lb::GlobalLatticeData &iGlobLatDat)
+                                       lb::LocalLatticeData* iLocalLatDat,
+                                       lb::GlobalLatticeData* iGlobLatDat)
     {
       mNetworkTopology = iNetworkTopology;
 
@@ -284,26 +269,26 @@ namespace hemelb
 
       nParticleSeeds = 0;
 
-      num_blocks = iGlobLatDat.GetBlockCount();
-      velocity_field = new VelocityField[iGlobLatDat.GetBlockCount()];
+      num_blocks = iGlobLatDat->GetBlockCount();
+      velocity_field = new VelocityField[iGlobLatDat->GetBlockCount()];
 
-      for (int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
+      for (unsigned int n = 0; n < iGlobLatDat->GetBlockCount(); n++)
       {
         velocity_field[n].vel_site_data = NULL;
       }
 
       counter = 1;
       inlet_sites = 0;
-      int n = -1;
+      unsigned int n = 0;
 
-      for (int i = 0; i < iGlobLatDat.GetXSiteCount(); i
-          += iGlobLatDat.GetBlockSize())
-        for (int j = 0; j < iGlobLatDat.GetYSiteCount(); j
-            += iGlobLatDat.GetBlockSize())
-          for (int k = 0; k < iGlobLatDat.GetZSiteCount(); k
-              += iGlobLatDat.GetBlockSize())
+      for (unsigned int i = 0; i < iGlobLatDat->GetXSiteCount(); i += iGlobLatDat->GetBlockSize())
+        for (unsigned int j = 0; j < iGlobLatDat->GetYSiteCount(); j += iGlobLatDat->GetBlockSize())
+          for (unsigned int k = 0; k < iGlobLatDat->GetZSiteCount(); k
+              += iGlobLatDat->GetBlockSize())
           {
-            lBlock = &iGlobLatDat.Blocks[++n];
+            lBlock = &iGlobLatDat->Blocks[n];
+
+            ++n;
 
             if (lBlock->site_data == NULL)
             {
@@ -312,46 +297,47 @@ namespace hemelb
 
             int m = -1;
 
-            for (int site_i = i; site_i < i + iGlobLatDat.GetBlockSize(); site_i++)
-              for (int site_j = j; site_j < j + iGlobLatDat.GetBlockSize(); site_j++)
-                for (int site_k = k; site_k < k + iGlobLatDat.GetBlockSize(); site_k++)
+            for (unsigned int site_i = i; site_i < i + iGlobLatDat->GetBlockSize(); site_i++)
+              for (unsigned int site_j = j; site_j < j + iGlobLatDat->GetBlockSize(); site_j++)
+                for (unsigned int site_k = k; site_k < k + iGlobLatDat->GetBlockSize(); site_k++)
                 {
 
                   m++;
-                  if (mNetworkTopology->GetLocalRank()
+                  if ((int) mNetworkTopology->GetLocalRank()
                       != lBlock->ProcessorRankForEachBlockSite[m])
                     continue;
 
-                  for (int neigh_i = util::max(0, site_i - 1); neigh_i
-                      <= util::min(iGlobLatDat.GetXSiteCount() - 1, site_i + 1); neigh_i++)
-                    for (int neigh_j = util::max(0, site_j - 1); neigh_j
-                        <= util::min(iGlobLatDat.GetYSiteCount() - 1, site_j
-                            + 1); neigh_j++)
-                      for (int neigh_k = util::max(0, site_k - 1); neigh_k
-                          <= util::min(iGlobLatDat.GetZSiteCount() - 1, site_k
-                              + 1); neigh_k++)
+                  for (unsigned int neigh_i = util::NumericalFunctions::max<unsigned int>(0, site_i
+                      - 1); neigh_i
+                      <= util::NumericalFunctions::min<unsigned int>(iGlobLatDat->GetXSiteCount()
+                          - 1, site_i + 1); neigh_i++)
+                    for (unsigned int neigh_j =
+                        util::NumericalFunctions::max<unsigned int>(0, site_j - 1); neigh_j
+                        <= util::NumericalFunctions::min<unsigned int>(iGlobLatDat->GetYSiteCount()
+                            - 1, site_j + 1); neigh_j++)
+                      for (unsigned int neigh_k =
+                          util::NumericalFunctions::max<unsigned int>(0, site_k - 1); neigh_k
+                          <= util::NumericalFunctions::min<unsigned int>(
+                                                                         iGlobLatDat->GetZSiteCount()
+                                                                             - 1, site_k + 1); neigh_k++)
                       {
 
-                        neigh_proc_id
-                            = iGlobLatDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                    neigh_j,
-                                                                    neigh_k);
+                        neigh_proc_id = iGlobLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j,
+                                                                               neigh_k);
 
-                        if (neigh_proc_id == NULL || *neigh_proc_id
-                            == BIG_NUMBER2)
+                        if (neigh_proc_id == NULL || *neigh_proc_id == BIG_NUMBER2)
                         {
                           continue;
                         }
 
-                        initializeVelFieldBlock(iGlobLatDat, neigh_i, neigh_j,
-                                                neigh_k, *neigh_proc_id);
+                        initializeVelFieldBlock(iGlobLatDat, neigh_i, neigh_j, neigh_k,
+                                                *neigh_proc_id);
 
-                        if (mNetworkTopology->GetLocalRank() == *neigh_proc_id)
+                        if ((int) mNetworkTopology->GetLocalRank() == *neigh_proc_id)
                           continue;
 
-                        vel_site_data_p = velSiteDataPointer(iGlobLatDat,
-                                                             neigh_i, neigh_j,
-                                                             neigh_k);
+                        vel_site_data_p
+                            = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j, neigh_k);
 
                         if (vel_site_data_p->counter == counter)
                           continue;
@@ -359,10 +345,9 @@ namespace hemelb
                         vel_site_data_p->counter = counter;
 
                         bool seenSelf = false;
-                        for (unsigned int mm = 0; mm < mNeighProcs.size()
-                            && !seenSelf; mm++)
+                        for (unsigned int mm = 0; mm < mNeighProcs.size() && !seenSelf; mm++)
                         {
-                          if (*neigh_proc_id == mNeighProcs[mm]->id)
+                          if (*neigh_proc_id == (int) mNeighProcs[mm]->id)
                           {
                             seenSelf = true;
                             ++mNeighProcs[mm]->send_vs;
@@ -381,7 +366,7 @@ namespace hemelb
                   int lSiteIndex = lBlock->site_data[m];
 
                   // if the lattice site is an not inlet one
-                  if (iLocalLatDat.GetSiteType(lSiteIndex) != lb::INLET_TYPE)
+                  if (iLocalLatDat->GetSiteType(lSiteIndex) != lb::INLET_TYPE)
                   {
                     continue;
                   }
@@ -398,7 +383,7 @@ namespace hemelb
                   particleSeedVec[nParticleSeeds].y = (float) site_j;
                   particleSeedVec[nParticleSeeds].z = (float) site_k;
                   particleSeedVec[nParticleSeeds].inlet_id
-                      = iLocalLatDat.GetBoundaryId(lSiteIndex);
+                      = iLocalLatDat->GetBoundaryId(lSiteIndex);
                   ++nParticleSeeds;
                 }
           }
@@ -442,10 +427,9 @@ namespace hemelb
 
       req = new MPI_Request[2 * iNetworkTopology->GetProcessorCount()];
 
-      from_proc_id_to_neigh_proc_index
-          = new short int[iNetworkTopology->GetProcessorCount()];
+      from_proc_id_to_neigh_proc_index = new short int[iNetworkTopology->GetProcessorCount()];
 
-      for (int m = 0; m < iNetworkTopology->GetProcessorCount(); m++)
+      for (unsigned int m = 0; m < iNetworkTopology->GetProcessorCount(); m++)
       {
         from_proc_id_to_neigh_proc_index[m] = -1;
       }
@@ -456,22 +440,21 @@ namespace hemelb
 
       counter = 0;
 
-      for (n = 0; n < iGlobLatDat.GetBlockCount(); n++)
+      for (n = 0; n < iGlobLatDat->GetBlockCount(); n++)
       {
         if (velocity_field[n].vel_site_data == NULL)
           continue;
 
-        for (int m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
+        for (unsigned int m = 0; m < iGlobLatDat->SitesPerBlockVolumeUnit; m++)
         {
           velocity_field[n].vel_site_data[m].counter = counter;
         }
-        if (iGlobLatDat.Blocks[n].site_data == NULL)
+        if (iGlobLatDat->Blocks[n].site_data == NULL)
           continue;
 
-        for (int m = 0; m < iGlobLatDat.SitesPerBlockVolumeUnit; m++)
+        for (unsigned int m = 0; m < iGlobLatDat->SitesPerBlockVolumeUnit; m++)
         {
-          velocity_field[n].vel_site_data[m].site_id
-              = iGlobLatDat.Blocks[n].site_data[m];
+          velocity_field[n].vel_site_data[m].site_id = iGlobLatDat->Blocks[n].site_data[m];
         }
       }
       procs = iNetworkTopology->GetProcessorCount();
@@ -488,10 +471,10 @@ namespace hemelb
     {
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Irecv(&mNeighProcs[m]->recv_vs, 1, MPI_INT, mNeighProcs[m]->id, 30,
-                  MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
-        MPI_Isend(&mNeighProcs[m]->send_vs, 1, MPI_INT, mNeighProcs[m]->id, 30,
-                  MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
+        MPI_Irecv(&mNeighProcs[m]->recv_vs, 1, MPI_INT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
+                  &req[procs + mNeighProcs[m]->id]);
+        MPI_Isend(&mNeighProcs[m]->send_vs, 1, MPI_INT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
+                  &req[mNeighProcs[m]->id]);
         MPI_Wait(&req[mNeighProcs[m]->id], status);
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
@@ -500,15 +483,13 @@ namespace hemelb
 
         if (mNeighProcs[m]->recv_vs > 0)
         {
-          MPI_Irecv(mNeighProcs[m]->s_to_recv, mNeighProcs[m]->recv_vs * 3,
-                    MPI_SHORT, mNeighProcs[m]->id, 40, MPI_COMM_WORLD,
-                    &req[procs + mNeighProcs[m]->id]);
+          MPI_Irecv(mNeighProcs[m]->s_to_recv, mNeighProcs[m]->recv_vs * 3, MPI_SHORT,
+                    mNeighProcs[m]->id, 40, MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
         }
         if (mNeighProcs[m]->send_vs > 0)
         {
-          MPI_Isend(mNeighProcs[m]->s_to_send, mNeighProcs[m]->send_vs * 3,
-                    MPI_SHORT, mNeighProcs[m]->id, 40, MPI_COMM_WORLD,
-                    &req[mNeighProcs[m]->id]);
+          MPI_Isend(mNeighProcs[m]->s_to_send, mNeighProcs[m]->send_vs * 3, MPI_SHORT,
+                    mNeighProcs[m]->id, 40, MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
           MPI_Wait(&req[mNeighProcs[m]->id], status);
         }
       }
@@ -522,7 +503,7 @@ namespace hemelb
     }
 
     // Communicate velocities to other processors.
-    void StreaklineDrawer::communicateVelocities(lb::GlobalLatticeData &iGlobLatDat)
+    void StreaklineDrawer::communicateVelocities(lb::GlobalLatticeData* iGlobLatDat)
     {
       int site_i, site_j, site_k;
       int neigh_i, neigh_j, neigh_k;
@@ -533,9 +514,8 @@ namespace hemelb
       {
         if (mNeighProcs[m]->send_vs > 0)
         {
-          MPI_Irecv(mNeighProcs[m]->v_to_recv, mNeighProcs[m]->send_vs * 3,
-                    MPI_FLOAT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
-                    &req[procs + mNeighProcs[m]->id]);
+          MPI_Irecv(mNeighProcs[m]->v_to_recv, mNeighProcs[m]->send_vs * 3, MPI_FLOAT,
+                    mNeighProcs[m]->id, 30, MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
         }
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
@@ -546,8 +526,7 @@ namespace hemelb
           site_j = mNeighProcs[m]->s_to_recv[3 * n + 1];
           site_k = mNeighProcs[m]->s_to_recv[3 * n + 2];
 
-          vel_site_data_p = velSiteDataPointer(iGlobLatDat, site_i, site_j,
-                                               site_k);
+          vel_site_data_p = velSiteDataPointer(iGlobLatDat, site_i, site_j, site_k);
 
           if (vel_site_data_p != NULL)
           {
@@ -564,9 +543,8 @@ namespace hemelb
         }
         if (mNeighProcs[m]->recv_vs > 0)
         {
-          MPI_Isend(mNeighProcs[m]->v_to_send, mNeighProcs[m]->recv_vs * 3,
-                    MPI_FLOAT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
-                    &req[mNeighProcs[m]->id]);
+          MPI_Isend(mNeighProcs[m]->v_to_send, mNeighProcs[m]->recv_vs * 3, MPI_FLOAT,
+                    mNeighProcs[m]->id, 30, MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
           MPI_Wait(&req[mNeighProcs[m]->id], status);
         }
       }
@@ -583,8 +561,7 @@ namespace hemelb
           neigh_j = mNeighProcs[m]->s_to_send[3 * n + 1];
           neigh_k = mNeighProcs[m]->s_to_send[3 * n + 2];
 
-          vel_site_data_p = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j,
-                                               neigh_k);
+          vel_site_data_p = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j, neigh_k);
 
           if (vel_site_data_p != NULL)
           {
@@ -602,8 +579,8 @@ namespace hemelb
 
     // Update the velocity field.
     void StreaklineDrawer::updateVelField(int stage_id,
-                                          lb::GlobalLatticeData &iGlobLatDat,
-                                          lb::LocalLatticeData &iLocalLatDat)
+                                          lb::GlobalLatticeData* iGlobLatDat,
+                                          lb::LocalLatticeData * iLocalLatDat)
     {
       float v[2][2][2][3], interp_v[3];
       float vel;
@@ -622,8 +599,7 @@ namespace hemelb
           continue;
 
         particleVelocity(&particleVec[n], v, interp_v);
-        vel = interp_v[0] * interp_v[0] + interp_v[1] * interp_v[1]
-            + interp_v[2] * interp_v[2];
+        vel = interp_v[0] * interp_v[0] + interp_v[1] * interp_v[1] + interp_v[2] * interp_v[2];
 
         if (vel > 1.0F)
         {
@@ -662,7 +638,7 @@ namespace hemelb
     }
 
     // Communicate that particles current state to other processors.
-    void StreaklineDrawer::communicateParticles(lb::GlobalLatticeData &iGlobLatDat)
+    void StreaklineDrawer::communicateParticles(lb::GlobalLatticeData* iGlobLatDat)
     {
       int site_i, site_j, site_k;
       int particles_temp;
@@ -672,8 +648,8 @@ namespace hemelb
 
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Irecv(&mNeighProcs[m]->recv_ps, 1, MPI_INT, mNeighProcs[m]->id, 30,
-                  MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
+        MPI_Irecv(&mNeighProcs[m]->recv_ps, 1, MPI_INT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
+                  &req[procs + mNeighProcs[m]->id]);
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
@@ -688,10 +664,9 @@ namespace hemelb
         site_j = (int) particleVec[n].y;
         site_k = (int) particleVec[n].z;
 
-        vel_site_data_p = velSiteDataPointer(iGlobLatDat, site_i, site_j,
-                                             site_k);
+        vel_site_data_p = velSiteDataPointer(iGlobLatDat, site_i, site_j, site_k);
 
-        if (vel_site_data_p == NULL || mNetworkTopology->GetLocalRank()
+        if (vel_site_data_p == NULL || (int) mNetworkTopology->GetLocalRank()
             == vel_site_data_p->proc_id || vel_site_data_p->proc_id == -1)
         {
           continue;
@@ -705,24 +680,19 @@ namespace hemelb
 
         }
 
-        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 0]
-            = particleVec[n].x;
-        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 1]
-            = particleVec[n].y;
-        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 2]
-            = particleVec[n].z;
-        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 3]
-            = particleVec[n].vel;
-        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 4]
-            = particleVec[n].inlet_id + 0.1;
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 0] = particleVec[n].x;
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 1] = particleVec[n].y;
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 2] = particleVec[n].z;
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 3] = particleVec[n].vel;
+        mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 4] = particleVec[n].inlet_id + 0.1;
         ++mNeighProcs[m]->send_ps;
 
         deleteParticle(n);
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Isend(&mNeighProcs[m]->send_ps, 1, MPI_INT, mNeighProcs[m]->id, 30,
-                  MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
+        MPI_Isend(&mNeighProcs[m]->send_ps, 1, MPI_INT, mNeighProcs[m]->id, 30, MPI_COMM_WORLD,
+                  &req[mNeighProcs[m]->id]);
         MPI_Wait(&req[mNeighProcs[m]->id], &status);
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
@@ -734,9 +704,8 @@ namespace hemelb
       {
         if (mNeighProcs[m]->send_ps > 0)
         {
-          MPI_Isend(&mNeighProcs[m]->p_to_send[0], mNeighProcs[m]->send_ps * 5,
-                    MPI_FLOAT, mNeighProcs[m]->id, 40, MPI_COMM_WORLD,
-                    &req[mNeighProcs[m]->id]);
+          MPI_Isend(&mNeighProcs[m]->p_to_send[0], mNeighProcs[m]->send_ps * 5, MPI_FLOAT,
+                    mNeighProcs[m]->id, 40, MPI_COMM_WORLD, &req[mNeighProcs[m]->id]);
           MPI_Wait(&req[mNeighProcs[m]->id], &status);
         }
       }
@@ -747,21 +716,18 @@ namespace hemelb
           if (mNeighProcs[m]->recv_ps > particles_to_recv_max)
           {
             particles_to_recv_max *= 2;
-            particles_to_recv_max = util::max(particles_to_recv_max,
-                                              mNeighProcs[m]->recv_ps);
+            particles_to_recv_max = util::NumericalFunctions::max(particles_to_recv_max,
+                                                                  mNeighProcs[m]->recv_ps);
             mNeighProcs[m]->p_to_recv.reserve(5 * particles_to_recv_max);
           }
-          MPI_Irecv(&mNeighProcs[m]->p_to_recv[0], mNeighProcs[m]->recv_ps * 5,
-                    MPI_FLOAT, mNeighProcs[m]->id, 40, MPI_COMM_WORLD,
-                    &req[procs + mNeighProcs[m]->id]);
+          MPI_Irecv(&mNeighProcs[m]->p_to_recv[0], mNeighProcs[m]->recv_ps * 5, MPI_FLOAT,
+                    mNeighProcs[m]->id, 40, MPI_COMM_WORLD, &req[procs + mNeighProcs[m]->id]);
           MPI_Wait(&req[procs + mNeighProcs[m]->id], &status);
 
           for (int n = 0; n < mNeighProcs[m]->recv_ps; n++)
           {
-            createParticle(mNeighProcs[m]->p_to_recv[5 * n + 0],
-                           mNeighProcs[m]->p_to_recv[5 * n + 1],
-                           mNeighProcs[m]->p_to_recv[5 * n + 2],
-                           mNeighProcs[m]->p_to_recv[5 * n + 3],
+            createParticle(mNeighProcs[m]->p_to_recv[5 * n + 0], mNeighProcs[m]->p_to_recv[5 * n
+                + 1], mNeighProcs[m]->p_to_recv[5 * n + 2], mNeighProcs[m]->p_to_recv[5 * n + 3],
                            (int) mNeighProcs[m]->p_to_recv[5 * n + 4]);
           }
         }
@@ -769,7 +735,7 @@ namespace hemelb
     }
 
     // Render the streaklines
-    void StreaklineDrawer::render(lb::GlobalLatticeData &iGlobLatDat)
+    void StreaklineDrawer::render(lb::GlobalLatticeData* iGlobLatDat)
     {
       float screen_max[2];
       float scale[2];
@@ -788,9 +754,9 @@ namespace hemelb
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
-        p1[0] = particleVec[n].x - float (iGlobLatDat.GetXSiteCount() >> 1);
-        p1[1] = particleVec[n].y - float (iGlobLatDat.GetYSiteCount() >> 1);
-        p1[2] = particleVec[n].z - float (iGlobLatDat.GetZSiteCount() >> 1);
+        p1[0] = particleVec[n].x - float (iGlobLatDat->GetXSiteCount() >> 1);
+        p1[1] = particleVec[n].y - float (iGlobLatDat->GetYSiteCount() >> 1);
+        p1[2] = particleVec[n].z - float (iGlobLatDat->GetZSiteCount() >> 1);
 
         vis::controller->project(p1, p2);
 
@@ -816,18 +782,17 @@ namespace hemelb
     // Draw streaklines
     void StreaklineDrawer::StreakLines(int time_steps,
                                        int time_steps_per_cycle,
-                                       lb::GlobalLatticeData &iGlobLatDat,
-                                       lb::LocalLatticeData &iLocalLatDat)
+                                       lb::GlobalLatticeData* iGlobLatDat,
+                                       lb::LocalLatticeData* iLocalLatDat)
     {
-      int particle_creation_period = util::max(1, (int) (time_steps_per_cycle
+      int particle_creation_period = util::NumericalFunctions::max(1, (int) (time_steps_per_cycle
           / 5000.0F));
 
       if (time_steps % (int) (time_steps_per_cycle
           / vis::controller->streaklines_per_pulsatile_period)
-          <= (vis::controller->streakline_length / 100.0F)
-              * (time_steps_per_cycle
-                  / vis::controller->streaklines_per_pulsatile_period)
-          && time_steps % particle_creation_period == 0)
+          <= (vis::controller->streakline_length / 100.0F) * (time_steps_per_cycle
+              / vis::controller->streaklines_per_pulsatile_period) && time_steps
+          % particle_creation_period == 0)
       {
         createSeedParticles();
       }
@@ -863,7 +828,7 @@ namespace hemelb
         delete[] s_to_send;
       }
 
-      for (int m = 0; m < num_blocks; m++)
+      for (unsigned int m = 0; m < num_blocks; m++)
       {
         if (velocity_field[m].vel_site_data != NULL)
         {

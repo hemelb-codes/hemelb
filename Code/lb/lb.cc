@@ -6,6 +6,7 @@
 #include <limits>
 
 #include "lb/lb.h"
+#include "topology/TopologyReader.h"
 #include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
 
@@ -147,27 +148,19 @@ namespace hemelb
       }
     }
 
-    const hemelb::lb::LbmParameters *LBM::GetLbmParams()
+    hemelb::lb::LbmParameters *LBM::GetLbmParams()
     {
       return &mParams;
     }
 
     LBM::LBM(hemelb::SimConfig *iSimulationConfig,
-             const hemelb::topology::NetworkTopology * iNetTop,
-             hemelb::lb::GlobalLatticeData &bGlobLatDat,
-             int iSteeringSessionId,
-             double * oFileReadTime)
+             const hemelb::topology::NetworkTopology * iNetTop)
     {
-      steering_session_id = iSteeringSessionId;
       period = iSimulationConfig->StepsPerCycle;
       voxel_size = iSimulationConfig->VoxelSize;
 
       mNetTopology = iNetTop;
       mSimConfig = iSimulationConfig;
-
-      double fileReadStartTime = hemelb::util::myClock();
-      ReadConfig(bGlobLatDat);
-      *oFileReadTime = hemelb::util::myClock() - fileReadStartTime;
 
       ReadParameters();
 
@@ -207,12 +200,14 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
-    void LBM::Initialise(int* iFTranslator)
+    void LBM::Initialise(int* iFTranslator, LocalLatticeData* bLocalLatDat)
     {
       receivedFTranslator = iFTranslator;
+
+      SetInitialConditions(bLocalLatDat);
     }
 
-    void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData &bLocalLatDat)
+    void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData* bLocalLatDat)
     {
       double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
       double density;
@@ -225,12 +220,12 @@ namespace hemelb
       }
       density /= outlets;
 
-      for (int i = 0; i < bLocalLatDat.GetLocalFluidSiteCount(); i++)
+      for (int i = 0; i < bLocalLatDat->GetLocalFluidSiteCount(); i++)
       {
         D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
-        f_old_p = &bLocalLatDat.FOld[i * D3Q15::NUMVECTORS];
-        f_new_p = &bLocalLatDat.FNew[i * D3Q15::NUMVECTORS];
+        f_old_p = &bLocalLatDat->FOld[i * D3Q15::NUMVECTORS];
+        f_new_p = &bLocalLatDat->FNew[i * D3Q15::NUMVECTORS];
 
         for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
         {
@@ -354,7 +349,7 @@ namespace hemelb
 
       int i;
 
-      int lMaxInlets = hemelb::util::max(6 + inlets, 2 * inlets);
+      int lMaxInlets = hemelb::util::NumericalFunctions::max<int>(6 + inlets, 2 * inlets);
 
       local_data = new double[lMaxInlets];
       global_data = new double[lMaxInlets];
@@ -517,7 +512,7 @@ namespace hemelb
     // In the case of instability, this function restart the simulation
     // with twice as many time steps per period and update the parameters
     // that depends on this change.
-    void LBM::Restart(hemelb::lb::LocalLatticeData &iLocalLatDat)
+    void LBM::Restart(hemelb::lb::LocalLatticeData* iLocalLatDat)
     {
       int i;
 
