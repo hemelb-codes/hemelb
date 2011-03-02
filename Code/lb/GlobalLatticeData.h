@@ -192,7 +192,7 @@ namespace hemelb
           unsigned int k = iSiteK >> Log2BlockSize;
 
           // Get the block from the block identifiers.
-          BlockData * lBlock = &Blocks[ (i * mBlocksY + j) * mBlocksZ + k];
+          BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(i, j, k)];
 
           // If an empty (solid) block is addressed, return a NULL pointer.
           if (lBlock->ProcessorRankForEachBlockSite == NULL)
@@ -211,6 +211,15 @@ namespace hemelb
             return &lBlock->ProcessorRankForEachBlockSite[ ( ( (ii << Log2BlockSize) + jj)
                 << Log2BlockSize) + kk];
           }
+        }
+
+        // Function that gets the index of a block from its coordinates.
+        unsigned int GetBlockIdFromBlockCoords(unsigned int blockI,
+                                               unsigned int blockJ,
+                                               unsigned int blockK) const
+        {
+          // Get the block from the block identifiers.
+          return (blockI * mBlocksY + blockJ) * mBlocksZ + blockK;
         }
 
         // Function to get a pointer to the site_data for a site.
@@ -232,7 +241,7 @@ namespace hemelb
           unsigned int k = iSiteK >> Log2BlockSize;
 
           // Pointer to the block
-          BlockData * lBlock = &Blocks[ (i * mBlocksY + j) * mBlocksZ + k];
+          BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(i, j, k)];
 
           // if an empty (solid) block is addressed
           if (lBlock->site_data == NULL)
@@ -266,7 +275,7 @@ namespace hemelb
     class BlockCounter
     {
       public:
-        BlockCounter(GlobalLatticeData* iGlobLatDat, unsigned int iStartNumber)
+        BlockCounter(const GlobalLatticeData* iGlobLatDat, unsigned int iStartNumber)
         {
           mBlockNumber = iStartNumber;
           mGlobLatDat = iGlobLatDat;
@@ -327,7 +336,7 @@ namespace hemelb
         }
 
       private:
-        GlobalLatticeData* mGlobLatDat;
+        const GlobalLatticeData* mGlobLatDat;
         unsigned int mBlockNumber;
     };
   }

@@ -46,7 +46,7 @@ namespace hemelb
             float x, y, z;
             float vx, vy, vz;
             float vel;
-            int inlet_id;
+            unsigned int inlet_id;
         };
         typedef std::vector<Particle> ParticleVector;
 
@@ -69,13 +69,13 @@ namespace hemelb
         struct NeighProc
         {
             unsigned int id;
-            int send_ps, recv_ps;
-            int send_vs, recv_vs;
+            unsigned int send_ps, recv_ps;
+            unsigned int send_vs, recv_vs;
 
             FloatVector p_to_send, p_to_recv;
             float *v_to_send, *v_to_recv;
 
-            short int *s_to_send, *s_to_recv;
+            unsigned int *s_to_send, *s_to_recv;
         };
 
         // Necessary to keep a local store of the number of blocks created, so that we can
@@ -89,11 +89,11 @@ namespace hemelb
         //(i.e. the number for which memory has been allocated).
         unsigned int nParticles;
         unsigned int nParticleSeeds;
-        int particles_to_send_max, particles_to_recv_max;
+        unsigned int particles_to_send_max, particles_to_recv_max;
 
         // Variables for counting the processors involved etc.
-        int shared_vs;
-        int procs;
+        unsigned int shared_vs;
+        unsigned int procs;
 
         // Pointers to the structs.
         VelocityField *velocity_field;
@@ -102,8 +102,8 @@ namespace hemelb
 
         // Arrays for communicating between processors.
         float *v_to_send, *v_to_recv;
-        short int *s_to_send, *s_to_recv;
-        short int *from_proc_id_to_neigh_proc_index;
+        unsigned int *s_to_send, *s_to_recv;
+        unsigned int *from_proc_id_to_neigh_proc_index;
 
         std::vector<NeighProc*> mNeighProcs;
 
