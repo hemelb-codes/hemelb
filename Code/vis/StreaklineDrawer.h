@@ -48,7 +48,6 @@ namespace hemelb
             float vel;
             unsigned int inlet_id;
         };
-        typedef std::vector<Particle> ParticleVector;
 
         // Struct for information about the velocity field at some point.
         struct VelSiteData
@@ -97,8 +96,8 @@ namespace hemelb
 
         // Pointers to the structs.
         VelocityField *velocity_field;
-        ParticleVector particleVec;
-        ParticleVector particleSeedVec;
+        std::vector<Particle> particleVec;
+        std::vector<Particle> particleSeedVec;
 
         // Arrays for communicating between processors.
         float *v_to_send, *v_to_recv;
