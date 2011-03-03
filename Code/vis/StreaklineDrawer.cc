@@ -32,16 +32,13 @@ namespace hemelb
       unsigned int j = site_j >> iGlobLatDat->Log2BlockSize;
       unsigned int k = site_k >> iGlobLatDat->Log2BlockSize;
 
-      unsigned int block_id = (i * iGlobLatDat->GetYBlockCount() + j)
-          * iGlobLatDat->GetZBlockCount() + k;
-      unsigned int site_id;
-
+      unsigned int block_id = iGlobLatDat->GetBlockIdFromBlockCoords(i, j, k);
       if (velocity_field[block_id].vel_site_data == NULL)
       {
         velocity_field[block_id].vel_site_data
             = new VelSiteData[iGlobLatDat->SitesPerBlockVolumeUnit];
 
-        for (site_id = 0; site_id < iGlobLatDat->SitesPerBlockVolumeUnit; site_id++)
+        for (unsigned int site_id = 0; site_id < iGlobLatDat->SitesPerBlockVolumeUnit; site_id++)
         {
           velocity_field[block_id].vel_site_data[site_id].proc_id = -1;
           velocity_field[block_id].vel_site_data[site_id].counter = 0;
@@ -52,7 +49,8 @@ namespace hemelb
       unsigned int jj = site_j - (j << iGlobLatDat->Log2BlockSize);
       unsigned int kk = site_k - (k << iGlobLatDat->Log2BlockSize);
 
-      site_id = ( ( (ii << iGlobLatDat->Log2BlockSize) + jj) << iGlobLatDat->Log2BlockSize) + kk;
+      unsigned int site_id = ( ( (ii << iGlobLatDat->Log2BlockSize) + jj)
+          << iGlobLatDat->Log2BlockSize) + kk;
       velocity_field[block_id].vel_site_data[site_id].proc_id = proc_id;
     }
 
@@ -72,8 +70,7 @@ namespace hemelb
       unsigned int j = site_j >> iGlobLatDat->Log2BlockSize;
       unsigned int k = site_k >> iGlobLatDat->Log2BlockSize;
 
-      unsigned int block_id = (i * iGlobLatDat->GetYBlockCount() + j)
-          * iGlobLatDat->GetZBlockCount() + k;
+      unsigned int block_id = iGlobLatDat->GetBlockIdFromBlockCoords(i, j, k);
 
       if (velocity_field[block_id].vel_site_data == NULL)
       {
@@ -132,7 +129,7 @@ namespace hemelb
       ++nParticles;
     }
 
-    // Delete the particle at given index. Do something a bit budget to ensure that 
+    // Delete the particle at given index. Do something a bit budget to ensure that
     // the particles remain in the first <particles> elements of an array,
     void StreaklineDrawer::deleteParticle(unsigned int p_index)
     {
@@ -175,31 +172,28 @@ namespace hemelb
                                          lb::GlobalLatticeData* iGlobLatDat,
                                          lb::LocalLatticeData* iLocalLatDat)
     {
-      double vx, vy, vz;
-
-      VelSiteData *vel_site_data_p;
-
-      int site_i = int (particleVec[p_index].x);
-      int site_j = int (particleVec[p_index].y);
-      int site_k = int (particleVec[p_index].z);
+      unsigned int site_i = (unsigned int) particleVec[p_index].x;
+      unsigned int site_j = (unsigned int) particleVec[p_index].y;
+      unsigned int site_k = (unsigned int) particleVec[p_index].z;
 
       *is_interior = 1;
 
       const int c1Plusc2 = 15;
 
-      for (int i = 0; i < 2; i++)
+      for (unsigned int i = 0; i < 2; i++)
       {
-        int neigh_i = site_i + i;
+        unsigned int neigh_i = site_i + i;
 
-        for (int j = 0; j < 2; j++)
+        for (unsigned int j = 0; j < 2; j++)
         {
-          int neigh_j = site_j + j;
+          unsigned int neigh_j = site_j + j;
 
-          for (int k = 0; k < 2; k++)
+          for (unsigned int k = 0; k < 2; k++)
           {
-            int neigh_k = site_k + k;
+            unsigned int neigh_k = site_k + k;
 
-            vel_site_data_p = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j, neigh_k);
+            VelSiteData *vel_site_data_p = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j,
+                                                              neigh_k);
 
             if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1)
             {
@@ -227,7 +221,7 @@ namespace hemelb
               // the local counter is set equal to the global one
               // and the local velocity is calculated
               vel_site_data_p->counter = counter;
-              double density;
+              double density, vx, vy, vz;
 
               D3Q15::CalculateDensityAndVelocity(&iLocalLatDat->FOld[vel_site_data_p->site_id
                   * c1Plusc2], density, vx, vy, vz);
@@ -240,7 +234,7 @@ namespace hemelb
             {
               vel_site_data_p->counter = counter;
 
-              int m = from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
+              unsigned int m = from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
 
               mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 0] = neigh_i;
               mNeighProcs[m]->s_to_send[3 * mNeighProcs[m]->send_vs + 1] = neigh_j;
@@ -259,17 +253,9 @@ namespace hemelb
     {
       mNetworkTopology = iNetworkTopology;
 
-      int inlet_sites;
-      const int *neigh_proc_id;
-
-      lb::BlockData * lBlock;
-      VelSiteData *vel_site_data_p;
-
       particleVec.reserve(10000);
       nParticles = 0;
-
       particleSeedVec.reserve(100);
-
       nParticleSeeds = 0;
 
       num_blocks = iGlobLatDat->GetBlockCount();
@@ -281,15 +267,17 @@ namespace hemelb
       }
 
       counter = 1;
-      inlet_sites = 0;
+      unsigned int inlet_sites = 0;
       unsigned int n = 0;
 
       for (unsigned int i = 0; i < iGlobLatDat->GetXSiteCount(); i += iGlobLatDat->GetBlockSize())
+      {
         for (unsigned int j = 0; j < iGlobLatDat->GetYSiteCount(); j += iGlobLatDat->GetBlockSize())
+        {
           for (unsigned int k = 0; k < iGlobLatDat->GetZSiteCount(); k
               += iGlobLatDat->GetBlockSize())
           {
-            lBlock = &iGlobLatDat->Blocks[n];
+            lb::BlockData* lBlock = &iGlobLatDat->Blocks[n];
 
             ++n;
 
@@ -301,7 +289,9 @@ namespace hemelb
             int m = -1;
 
             for (unsigned int site_i = i; site_i < i + iGlobLatDat->GetBlockSize(); site_i++)
+            {
               for (unsigned int site_j = j; site_j < j + iGlobLatDat->GetBlockSize(); site_j++)
+              {
                 for (unsigned int site_k = k; site_k < k + iGlobLatDat->GetBlockSize(); site_k++)
                 {
 
@@ -310,20 +300,26 @@ namespace hemelb
                       != lBlock->ProcessorRankForEachBlockSite[m])
                     continue;
 
-                  for (unsigned int neigh_i = util::NumericalFunctions::max<int>(0, site_i - 1); neigh_i
+                  for (unsigned int neigh_i = util::NumericalFunctions::max<int>(0, (int) site_i
+                      - 1); neigh_i
                       <= util::NumericalFunctions::min<unsigned int>(iGlobLatDat->GetXSiteCount()
                           - 1, site_i + 1); neigh_i++)
-                    for (unsigned int neigh_j = util::NumericalFunctions::max<int>(0, site_j - 1); neigh_j
+                  {
+                    for (unsigned int neigh_j = util::NumericalFunctions::max<int>(0, (int) site_j
+                        - 1); neigh_j
                         <= util::NumericalFunctions::min<unsigned int>(iGlobLatDat->GetYSiteCount()
                             - 1, site_j + 1); neigh_j++)
-                      for (unsigned int neigh_k = util::NumericalFunctions::max<int>(0, site_k - 1); neigh_k
+                    {
+                      for (unsigned int neigh_k = util::NumericalFunctions::max<int>(0,
+                                                                                     (int) site_k
+                                                                                         - 1); neigh_k
                           <= util::NumericalFunctions::min<unsigned int>(
                                                                          iGlobLatDat->GetZSiteCount()
                                                                              - 1, site_k + 1); neigh_k++)
                       {
-
-                        neigh_proc_id = iGlobLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j,
-                                                                               neigh_k);
+                        const int *neigh_proc_id = iGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
+                                                                                          neigh_j,
+                                                                                          neigh_k);
 
                         if (neigh_proc_id == NULL || *neigh_proc_id == BIG_NUMBER2)
                         {
@@ -334,13 +330,17 @@ namespace hemelb
                                                 *neigh_proc_id);
 
                         if ((int) mNetworkTopology->GetLocalRank() == *neigh_proc_id)
+                        {
                           continue;
+                        }
 
-                        vel_site_data_p
-                            = velSiteDataPointer(iGlobLatDat, neigh_i, neigh_j, neigh_k);
+                        VelSiteData* vel_site_data_p = velSiteDataPointer(iGlobLatDat, neigh_i,
+                                                                          neigh_j, neigh_k);
 
                         if (vel_site_data_p->counter == counter)
+                        {
                           continue;
+                        }
 
                         vel_site_data_p->counter = counter;
 
@@ -354,7 +354,9 @@ namespace hemelb
                           }
                         }
                         if (seenSelf)
+                        {
                           continue;
+                        }
 
                         NeighProc * lNew = new NeighProc();
 
@@ -362,6 +364,8 @@ namespace hemelb
                         lNew->send_vs = 1;
                         mNeighProcs.push_back(lNew);
                       }
+                    }
+                  }
 
                   int lSiteIndex = lBlock->site_data[m];
 
@@ -373,7 +377,9 @@ namespace hemelb
                   ++inlet_sites;
 
                   if (inlet_sites % 50 != 0)
+                  {
                     continue;
+                  }
 
                   if (nParticleSeeds == particleSeedVec.capacity())
                   {
@@ -386,7 +392,12 @@ namespace hemelb
                       = iLocalLatDat->GetBoundaryId(lSiteIndex);
                   ++nParticleSeeds;
                 }
+              }
+            }
           }
+        }
+      }
+
       shared_vs = 0;
 
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
@@ -584,24 +595,24 @@ namespace hemelb
                                           lb::GlobalLatticeData* iGlobLatDat,
                                           lb::LocalLatticeData * iLocalLatDat)
     {
-      float v[2][2][2][3], interp_v[3];
-      float vel;
+      unsigned int particles_temp = nParticles;
 
-      int particles_temp;
-      int is_interior;
-      int n;
-
-      particles_temp = nParticles;
-
-      for (n = particles_temp - 1; n >= 0; n--)
+      for (int n = (int) (particles_temp - 1); n >= 0; n--)
       {
+        float v[2][2][2][3];
+        int is_interior;
         localVelField(n, v, &is_interior, iGlobLatDat, iLocalLatDat);
 
         if (stage_id == 0 && !is_interior)
+        {
           continue;
+        }
+
+        float interp_v[3];
 
         particleVelocity(&particleVec[n], v, interp_v);
-        vel = interp_v[0] * interp_v[0] + interp_v[1] * interp_v[1] + interp_v[2] * interp_v[2];
+        float vel = interp_v[0] * interp_v[0] + interp_v[1] * interp_v[1] + interp_v[2]
+            * interp_v[2];
 
         if (vel > 1.0F)
         {
@@ -623,7 +634,6 @@ namespace hemelb
         {
           deleteParticle(n);
         }
-
       }
     }
 
@@ -642,11 +652,7 @@ namespace hemelb
     // Communicate that particles current state to other processors.
     void StreaklineDrawer::communicateParticles(lb::GlobalLatticeData* iGlobLatDat)
     {
-      int site_i, site_j, site_k;
-      int particles_temp;
       MPI_Status status;
-
-      VelSiteData *vel_site_data_p;
 
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
@@ -658,15 +664,15 @@ namespace hemelb
         mNeighProcs[m]->send_ps = 0;
       }
 
-      particles_temp = nParticles;
+      unsigned int particles_temp = nParticles;
 
-      for (int n = particles_temp - 1; n >= 0; n--)
+      for (int n = (int) (particles_temp - 1); n >= 0; n--)
       {
-        site_i = (int) particleVec[n].x;
-        site_j = (int) particleVec[n].y;
-        site_k = (int) particleVec[n].z;
+        unsigned int site_i = (unsigned int) particleVec[n].x;
+        unsigned int site_j = (unsigned int) particleVec[n].y;
+        unsigned int site_k = (unsigned int) particleVec[n].z;
 
-        vel_site_data_p = velSiteDataPointer(iGlobLatDat, site_i, site_j, site_k);
+        VelSiteData *vel_site_data_p = velSiteDataPointer(iGlobLatDat, site_i, site_j, site_k);
 
         if (vel_site_data_p == NULL || (int) mNetworkTopology->GetLocalRank()
             == vel_site_data_p->proc_id || vel_site_data_p->proc_id == -1)
@@ -679,7 +685,6 @@ namespace hemelb
         {
           particles_to_send_max *= 2;
           mNeighProcs[m]->p_to_send.reserve(5 * particles_to_send_max);
-
         }
 
         mNeighProcs[m]->p_to_send[5 * mNeighProcs[m]->send_ps + 0] = particleVec[n].x;
@@ -740,37 +745,33 @@ namespace hemelb
     // Render the streaklines
     void StreaklineDrawer::render(lb::GlobalLatticeData* iGlobLatDat)
     {
-      float screen_max[2];
-      float scale[2];
-      float p1[3], p2[3];
-
-      ColPixel col_pixel;
-
       int pixels_x = vis::controller->mScreen.PixelsX;
       int pixels_y = vis::controller->mScreen.PixelsY;
 
+      float screen_max[2];
       screen_max[0] = vis::controller->mScreen.MaxXValue;
       screen_max[1] = vis::controller->mScreen.MaxYValue;
 
+      float scale[2];
       scale[0] = vis::controller->mScreen.ScaleX;
       scale[1] = vis::controller->mScreen.ScaleY;
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
+        float p1[3], p2[3];
         p1[0] = particleVec[n].x - float (iGlobLatDat->GetXSiteCount() >> 1);
         p1[1] = particleVec[n].y - float (iGlobLatDat->GetYSiteCount() >> 1);
         p1[2] = particleVec[n].z - float (iGlobLatDat->GetZSiteCount() >> 1);
 
         vis::controller->project(p1, p2);
 
-        p2[0] = int (scale[0] * (p2[0] + screen_max[0]));
-        p2[1] = int (scale[1] * (p2[1] + screen_max[1]));
-
-        int i = int (p2[0]);
-        int j = int (p2[1]);
+        int i = (int) (scale[0] * (p2[0] + screen_max[0]));
+        int j = (int) (scale[1] * (p2[1] + screen_max[1]));
 
         if (! (i < 0 || i >= pixels_x || j < 0 || j >= pixels_y))
         {
+          ColPixel col_pixel;
+
           col_pixel.particle_vel = particleVec[n].vel;
           col_pixel.particle_z = p2[2];
           col_pixel.particle_inlet_id = particleVec[n].inlet_id;
@@ -788,7 +789,7 @@ namespace hemelb
                                        lb::GlobalLatticeData* iGlobLatDat,
                                        lb::LocalLatticeData* iLocalLatDat)
     {
-      int particle_creation_period = util::NumericalFunctions::max(1, (int) (time_steps_per_cycle
+      unsigned int particle_creation_period = util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle
           / 5000.0F));
 
       if (time_steps % (int) (time_steps_per_cycle
