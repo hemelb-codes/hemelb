@@ -456,9 +456,9 @@ class PolyLinesToCapConverter(vtkProgrammableFilter):
     covering the surface enclosed by the PolyLines.    
     """
     def __init__(self):
-        self.SetExecuteMethod(self.Execute)
+        self.SetExecuteMethod(self._Execute)
 
-    def Execute(self, *args):
+    def _Execute(self, *args):
         # Get the strips
         strips = self.GetPolyDataInput()
 
@@ -472,37 +472,35 @@ class PolyLinesToCapConverter(vtkProgrammableFilter):
         return
     pass
 
-class PolyLinesToRefinedCapConverter(vtkProgrammableFilter):
-    """Given an input vtkPolyData object, containing the output of
-    a vtkStripper (i.e. PolyLines), convert this to polygons
-    covering the surface enclosed by the PolyLines.    
-    """
-    def __init__(self):
-        self.SetExecuteMethod(self.Execute)
-
-    def Execute(self, *args):
-        # Get the strips
-        strips = self.GetPolyDataInput()
-
-        # Get the out PD
-        out = self.GetPolyDataOutput()
-        out.PrepareForNewData()
-        # Do a trick to set the points and poly of the cap
-        out.SetPoints(strips.GetPoints())
-        out.SetPolys(strips.GetLines())
-
-        return
-    pass
 class Writer(object):
     """Generates the HemeLB input file.
+    
+    
     """
     def __init__(self, OutputConfigFile=None, StressType=None,
                  BlockSize=8, BlockCounts=None, VoxelSize=None, Origin=None):
+        """This opens the file and writes the preamble and a dummy
+        header. All keyword arguments are required.
+        
+        OutputConfigFile - path to output file
+        
+        StressType - an integer indicating what stress calculation
+        method to use
+
+        BlockSize - number of sites along one dimension of a block
+
+        BlockCounts - number of blocks along x-, y- and z-directions
+
+        VoxelSize - length of a voxel, in metres
+
+        Origin - location of the (0,0,0) site in physical coordinates
+        
+        """
         self.OutputConfigFile = OutputConfigFile
         self.StressType = StressType
         self.BlockSize = BlockSize
         self.BlockCounts = BlockCounts
-        # Make sure this in in metres
+        # TODO: Make sure this in in metres
         self.VoxelSize = VoxelSize
         # Make sure this in metres
         self.Origin = Origin
@@ -523,7 +521,8 @@ class Writer(object):
 
         # Voxel Size, in metres
         encoder.pack_double(VoxelSize)
-        # Position of site index (0,0,0) in block index (0,0,0), in metres in the STL file's coordinate system
+        # Position of site index (0,0,0) in block index (0,0,0), in
+        # metres in the STL file's coordinate system
         for ori in Origin:
             encoder.pack_double(ori)
             continue
@@ -549,6 +548,8 @@ class Writer(object):
         return
 
     def Close(self):
+        """Rewrites the header map and closes the file.
+        """
         head = self.HeaderEncoder.get_buffer()
         assert len(head) == (self.bodyStart - self.headerStart)
 
@@ -559,18 +560,34 @@ class Writer(object):
 
     @contextmanager
     def BlockStarted(self):
+        """A context manager (see PEP 343) for use in a 'with'
+        statement.
+        
+        This context manager will return an enhanced xdrlib.Packer
+        instance which should be used to write the data for a single
+        MacroBlock within the body of the 'with' statement. Every time
+        a fluid site is written, the IncrementFluidSitesCount method
+        of the Packer should be called. This is used at the end of the
+        'with' block to write a record in the header.
+         
+        """
+        # The encode we will yiled
         encoder = xdrlib.Packer()
 
-
+        # This function will be set to the IncrementFluidSitesCount
+        # attribute of the Packer
         def incrementor():
+            """Increase the count of fluid sites that have been
+            written by the active BlockStarted context.
+            """
             incrementor.count += 1
             return
         incrementor.count = 0
-
+        
         encoder.IncrementFluidSitesCount = incrementor
         # Give the altered XDR encoder back to our caller
         yield encoder
-
+        
         # Write our record into the header buffer
         self.HeaderEncoder.pack_uint(incrementor.count)
 
@@ -593,7 +610,16 @@ class Writer(object):
 
 
 class Domain(object):
+    """Represent the entire simulation domain that is needed for the
+    simulation.
+    """
+    
     def __init__(self, VoxelSize, SurfaceBounds, BlockSize=8):
+        """VoxelSize - voxel size, in metres
+        
+        SurfaceBounds - bounds of the surface, in standard VTK order
+        (x_min, x_max, y_min, y_max, z_min, z_max), in metres.
+        """
         self.VoxelSize = VoxelSize
         self.BlockSize = BlockSize
         # VTK standard order of (x_min, x_max, y_min, y_max, z_min, z_max)
@@ -626,11 +652,7 @@ class Domain(object):
 
         self.Origin = np.array(origin)
         self.BlockCounts = np.array(blocks)
-
-#        for ijk, val in np.ndenumerate(self.blocks):
-#            self.blocks[ijk] = MacroBlock(ijk=ijk, size=BlockSize)
-#            continue
-
+        
         return
 
     def CalcPositionFromIndex(self, index):
