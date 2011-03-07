@@ -13,6 +13,8 @@ from ..Bindings.Translators import NoneToValueTranslator, \
      FloatTranslator, QuickTranslator
 from ..Bindings.Bindings import WxActionBinding
 
+from ..Model.Profile import Profile
+
 import pdb
 class ToolPanel(wx.Panel):
     """Tools Panel for the LHS of the window.
@@ -97,6 +99,10 @@ class InputPanel(wx.Panel):
         
         iLabel = wx.StaticText(self, label='Input STL File')
         self.inputStlField = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
+        
+        uLabel = wx.StaticText(self, label='STL File Unit')
+        self.inputStlUnitsChoice = wx.Choice(self, choices=[unit.Name for unit in Profile._UnitChoices])
+        
         controller.BindValue('StlFile',
                                   WxWidgetMapper(
                                       self.inputStlField, 'Value', wx.EVT_TEXT,
@@ -110,14 +116,16 @@ class InputPanel(wx.Panel):
         
         self.inputStlButton = wx.Button(self, label='Choose')
         controller.BindAction('ChooseStl', WxActionBinding(self.inputStlButton, wx.EVT_BUTTON))
-        
+        controller.BindValue('StlFileUnitId',
+                             WxWidgetMapper(self.inputStlUnitsChoice, 'Selection', wx.EVT_CHOICE))
         layout = V(
             iLabel,
             (H(
                 (V((self.inputStlField, 0, wx.EXPAND)), 1, wx.EXPAND),
                 self.inputStlButton
                 ), 0, wx.EXPAND
-             )
+             ),
+             H(uLabel, self.inputStlUnitsChoice)
             )
         self.SetSizer(layout.create())
         return
@@ -286,6 +294,11 @@ class VoxelPanel(wx.Panel):
         self.controller = controller
         
         voxelLabel = wx.StaticText(self, label='Voxel size (mm)')
+        controller.BindValue('StlFileUnitId',
+                              WxWidgetMapper(voxelLabel,
+                                             'Label', wx.EVT_TEXT,
+                                             translator=QuickTranslator(lambda i: 'Voxel size (%s)' % Profile._UnitChoices[i].Abbrv,
+                                                                        lambda x: 1)))
         self.voxelSizeField = NumCtrl(self, style=wx.TE_PROCESS_ENTER, integerWidth=2, fractionWidth=4, allowNegative=False)
         self.controller.BindValue('VoxelSize',
                                   WxWidgetMapper(self.voxelSizeField, 'Value', EVT_NUM,

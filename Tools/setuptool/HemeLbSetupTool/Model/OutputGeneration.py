@@ -29,8 +29,8 @@ class ConfigGenerator(object):
         for k in profile._Args:
             setattr(self, k, getattr(profile, k))
             continue
-        # Pull in the StlReader too
-        self.StlReader = profile.StlReader
+        # Pull in the SurfaceSource too
+        self.SurfaceSource = profile.SurfaceSource
 
         self.ClippedSurface = self.ConstructClipPipeline()
         self.Locator = vtkOBBTree()
@@ -289,7 +289,7 @@ class ConfigGenerator(object):
         """
         # Add the Iolet id -1 to all cells first
         adder = IntegerAdder(Value= -1)
-        adder.SetInputConnection(self.StlReader.GetOutputPort())
+        adder.SetInputConnection(self.SurfaceSource.GetOutputPort())
 
         # Have the name pdSource first point to the input, then loop
         # over IOlets, clipping and capping.
