@@ -94,17 +94,12 @@ class ConfigGenerator(object):
                         VoxelSize=domain.VoxelSize,
                         Origin=domain.Origin)
 
-        i = -1
-        j = -1
         for block in domain.SmartIterBlocks():
-            i += 1
             # Open the BlockStarted context of the writer; this will
             # deal with flushing the state to the file (or not, in the
             # case where there are no fluid sites).
             with writer.BlockStarted() as blockWriter:
                 for site in block.IterSites():
-                    j += 1
-
                     self.ClassifySite(site)
                     # cache the type cos it's probably slow to compute
                     type = site.Type
