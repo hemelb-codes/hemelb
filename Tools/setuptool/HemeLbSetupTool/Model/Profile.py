@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 import os.path
 import pickle
 from copy import copy
 import numpy as np
 
-from vtk import vtkSTLReader
+from vtk import vtkSTLReader, vtkTransform, vtkTransformFilter
 
 from HemeLbSetupTool.Util.Observer import Observable, ObservableList
 from HemeLbSetupTool.Model.SideLengthCalculator import AverageSideLengthCalculator
@@ -11,6 +12,19 @@ from HemeLbSetupTool.Model.Vector import Vector
 from HemeLbSetupTool.Model.OutputGeneration import ConfigGenerator
 
 import pdb
+
+class LengthUnit(Observable):
+    def __init__(self, sizeInMetres, name, abbrv):
+        self.SizeInMetres = sizeInMetres
+        self.Name = name
+        self.Abbrv = abbrv
+        return 
+    pass
+
+metre = LengthUnit(1., 'metre', 'm')
+millimetre = LengthUnit(1e-3, 'millimetre', 'mm')
+micrometre = micron = LengthUnit(1e-6, 'micrometre', u'µm')
+
 class Profile(Observable):
     """This class represents the parameters necessary to perform a
     setup for HemeLb and supplies the functionality to do it.
@@ -21,12 +35,14 @@ class Profile(Observable):
     """
     # Required parameters and defaults.
     _Args = {'StlFile': None,
+             'StlFileUnitId': 1,
              'Iolets': ObservableList(),
              'VoxelSize': None,
              'SeedPoint': Vector(),
              'OutputConfigFile': None,
              'OutputXmlFile': None,
              'StressType': 1}
+    _UnitChoices = [metre, millimetre, micrometre]
     
     def __init__(self, **kwargs):
         """Required arguments may be set here through keyword arguments.
@@ -43,14 +59,18 @@ class Profile(Observable):
 
         # We need a reader to get the polydata
         self.StlReader = vtkSTLReader()
+        # Something to scale it to metres
+        scale = 1. / self.StlFileUnit.SizeInMetres
+        trans = vtkTransform()
+        trans.Scale(scale, scale, scale)
+        self.SurfaceSource = vtkTransformFilter()
+        self.SurfaceSource.SetTransform(trans)
+        self.SurfaceSource.SetInputConnection(self.StlReader.GetOutputPort())
+        
         # And a way to estimate the voxel size
         self.sider = AverageSideLengthCalculator()
-        self.sider.SetInputConnection(self.StlReader.GetOutputPort())
+        self.sider.SetInputConnection(self.SurfaceSource.GetOutputPort())
 
-        # When the STL changes, we should reset the voxel size and
-        # update the vtkSTLReader.
-        self.AddObserver('StlFile', self.OnStlFileChanged)
-        
         # Dependencies for properties
         self.AddDependency('HaveValidStlFile', 'StlFile')
         self.AddDependency('HaveValidOutputXmlFile', 'OutputXmlFile')
@@ -62,11 +82,25 @@ class Profile(Observable):
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputXmlFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidOutputConfigFile')
         self.AddDependency('IsReadyToGenerate', 'HaveValidSeedPoint')
+        self.AddDependency('StlFileUnit', 'StlFileUnitId')
+        
+        # When the STL changes, we should reset the voxel size and
+        # update the vtkSTLReader.
+        self.AddObserver('StlFile', self.OnStlFileChanged)
+        
+        # And when the units are changed update the transform
+        self.AddObserver('StlFileUnitId', self.OnStlFileUnitIdChanged)
         return
     
     def OnStlFileChanged(self, change):
         self.StlReader.SetFileName(self.StlFile)
         self.VoxelSize = self.sider.GetOutputValue()
+        return
+    
+    def OnStlFileUnitIdChanged(self, change):
+        scale = 1. / self.StlFileUnit.SizeInMetres
+        trans = self.SurfaceSource.GetTransform()
+        trans.Scale(scale, scale, scale)
         return
     
     @property
@@ -102,6 +136,10 @@ class Profile(Observable):
         if not self.HaveValidStlFile:
             return False
         return True
+    
+    @property
+    def StlFileUnit(self):
+        return self._UnitChoices[self.StlFileUnitId]
     
     def LoadFromFile(self, filename):
         restored = pickle.Unpickler(file(filename)).load()
