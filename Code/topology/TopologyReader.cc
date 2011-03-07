@@ -77,12 +77,16 @@ namespace hemelb
 
       // Variables we'll read.
       unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
+      double voxelSize, siteZeroWorldPosition[3];
 
       preambleReader.readUnsignedInt(stressType);
       preambleReader.readUnsignedInt(blocksX);
       preambleReader.readUnsignedInt(blocksY);
       preambleReader.readUnsignedInt(blocksZ);
       preambleReader.readUnsignedInt(blockSize);
+      preambleReader.readDouble(voxelSize);
+      for (unsigned int i = 0; i < 3; ++i)
+        preambleReader.readDouble(siteZeroWorldPosition[0]);
 
       bParams->StressType = (lb::StressTypes) stressType;
 
