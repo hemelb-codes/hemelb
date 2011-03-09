@@ -65,7 +65,7 @@ namespace hemelb
       float palette[3];
 
       // update the volume rendering of the velocity flow field
-      float scaled_velocity = * (flow_field + 1) * vis::controller->velocity_threshold_max_inv;
+      float scaled_velocity = * (flow_field + 1) * mDomainStats->velocity_threshold_max_inv;
 
       ColourPalette(scaled_velocity, palette);
 
@@ -76,7 +76,7 @@ namespace hemelb
       if (iLbmStressType != lb::ShearStress)
       {
         // update the volume rendering of the von Mises stress flow field
-        float scaled_stress = * (flow_field + 2) * vis::controller->stress_threshold_max_inv;
+        float scaled_stress = * (flow_field + 2) * mDomainStats->stress_threshold_max_inv;
 
         ColourPalette(scaled_stress, palette);
 
@@ -659,11 +659,11 @@ namespace hemelb
       localMaxes[2] = block_max_z;
 
       MPI_Allreduce(localMins, mins, 3, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, maxes, 3, MPI_UNSIGNED, MPI_MAX, MPI_COMM_WORLD );
+      MPI_Allreduce(localMaxes, maxes, 3, MPI_UNSIGNED, MPI_MAX, MPI_COMM_WORLD);
 
-      vis::controller->ctr_x = 0.5F * mGlobLatDat->GetBlockSize() * (mins[0] + maxes[0]);
-      vis::controller->ctr_y = 0.5F * mGlobLatDat->GetBlockSize() * (mins[1] + maxes[1]);
-      vis::controller->ctr_z = 0.5F * mGlobLatDat->GetBlockSize() * (mins[2] + maxes[2]);
+      mVisSettings->ctr_x = 0.5F * mGlobLatDat->GetBlockSize() * (mins[0] + maxes[0]);
+      mVisSettings->ctr_y = 0.5F * mGlobLatDat->GetBlockSize() * (mins[1] + maxes[1]);
+      mVisSettings->ctr_z = 0.5F * mGlobLatDat->GetBlockSize() * (mins[2] + maxes[2]);
 
       cluster_voxel = new float *[mLocalLatDat->GetLocalFluidSiteCount() * VIS_FIELDS];
 
@@ -773,7 +773,13 @@ namespace hemelb
 
     RayTracer::RayTracer(const topology::NetworkTopology * iNetworkTopology,
                          const lb::LocalLatticeData* iLocalLatDat,
-                         const lb::GlobalLatticeData* iGlobLatDat)
+                         const lb::GlobalLatticeData* iGlobLatDat,
+                         DomainStats* iDomainStats,
+                         Screen* iScreen,
+                         Viewpoint* iViewpoint,
+                         VisSettings* iVisSettings) :
+      mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint),
+          mVisSettings(iVisSettings)
     {
       mNetworkTopology = iNetworkTopology;
       mLocalLatDat = iLocalLatDat;
@@ -793,29 +799,29 @@ namespace hemelb
 
     void RayTracer::Render(const lb::StressTypes iLbmStressType)
     {
-      float lScreenMaxX = vis::controller->mScreen.MaxXValue;
-      float lScreenMaxY = vis::controller->mScreen.MaxYValue;
+      float lScreenMaxX = mScreen->MaxXValue;
+      float lScreenMaxY = mScreen->MaxYValue;
 
-      int lPixelsX = vis::controller->mScreen.PixelsX;
-      int lPixelsY = vis::controller->mScreen.PixelsY;
+      int lPixelsX = mScreen->PixelsX;
+      int lPixelsY = mScreen->PixelsY;
 
       float p0[3];
       for (int l = 0; l < 3; l++)
       {
-        p0[l] = vis::controller->mViewpoint.x[l];
+        p0[l] = mViewpoint->x[l];
       }
 
       float par1[3], par2[3];
       float screen_vtx[3];
       for (int l = 0; l < 3; l++)
       {
-        par1[l] = vis::controller->mScreen.UnitVectorProjectionX[l];
-        par2[l] = vis::controller->mScreen.UnitVectorProjectionY[l];
-        screen_vtx[l] = vis::controller->mScreen.vtx[l];
+        par1[l] = mScreen->UnitVectorProjectionX[l];
+        par2[l] = mScreen->UnitVectorProjectionY[l];
+        screen_vtx[l] = mScreen->vtx[l];
       }
 
-      float lScaleX = vis::controller->mScreen.ScaleX;
-      float lScaleY = vis::controller->mScreen.ScaleY;
+      float lScaleX = mScreen->ScaleX;
+      float lScaleY = mScreen->ScaleY;
 
       for (unsigned int cluster_id = 0; cluster_id < mClusters.size(); cluster_id++)
       {
@@ -857,7 +863,7 @@ namespace hemelb
               p1[2] = cluster_p->minmax_z[k];
 
               float p2[3];
-              vis::controller->project(p1, p2);
+              mViewpoint->Project(p1, p2);
 
               subimage_vtx[0] = fminf(subimage_vtx[0], p2[0]);
               subimage_vtx[1] = fmaxf(subimage_vtx[1], p2[0]);
@@ -981,12 +987,12 @@ namespace hemelb
             }
             col_pixel.dt = lRay.Length;
             col_pixel.t = lRay.MinT + t_near;
-            col_pixel.density = (lRay.Density - vis::controller->density_threshold_min)
-                * vis::controller->density_threshold_minmax_inv;
+            col_pixel.density = (lRay.Density - mDomainStats->density_threshold_min)
+                * mDomainStats->density_threshold_minmax_inv;
 
             if (lRay.Stress != std::numeric_limits<float>::max())
             {
-              col_pixel.stress = lRay.Stress * vis::controller->stress_threshold_max_inv;
+              col_pixel.stress = lRay.Stress * mDomainStats->stress_threshold_max_inv;
             }
             else
             {
@@ -995,7 +1001,7 @@ namespace hemelb
             col_pixel.i = PixelId(i, j);
             col_pixel.i.isRt = true;
 
-            vis::controller->writePixel(&col_pixel);
+            mScreen->AddPixel(&col_pixel, mVisSettings->mStressType, mVisSettings->mode);
           }
           par3[0] += par1[0];
           par3[1] += par1[1];

@@ -74,8 +74,100 @@ namespace hemelb
       blue = (unsigned char) util::NumericalFunctions::enforceBounds(rawBlue, 0, 255);
     }
 
+    /**
+     * Merge data from the ColPixel argument into this pixel.
+     */
+    void ColPixel::MergeIn(const ColPixel *fromPixel, lb::StressTypes iStressType, int mode)
+    {
+      // Merge raytracing data
+
+      if (fromPixel->i.isRt && i.isRt)
+      {
+        // Both are ray-tracing
+        vel_r += fromPixel->vel_r;
+        vel_g += fromPixel->vel_g;
+        vel_b += fromPixel->vel_b;
+
+        if (iStressType != lb::ShearStress)
+        {
+          stress_r += fromPixel->stress_r;
+          stress_g += fromPixel->stress_g;
+          stress_b += fromPixel->stress_b;
+        }
+
+        dt += fromPixel->dt;
+
+        if (fromPixel->t < t)
+        {
+          t = fromPixel->t;
+          density = fromPixel->density;
+          stress = fromPixel->stress;
+        }
+
+      }
+      else if (fromPixel->i.isRt && !i.isRt)
+      {
+        // Only the 'from' merge-pixel is ray-tracing
+        vel_r = fromPixel->vel_r;
+        vel_g = fromPixel->vel_g;
+        vel_b = fromPixel->vel_b;
+
+        if (iStressType != lb::ShearStress)
+        {
+          stress_r = fromPixel->stress_r;
+          stress_g = fromPixel->stress_g;
+          stress_b = fromPixel->stress_b;
+        }
+
+        t = fromPixel->t;
+        dt = fromPixel->dt;
+        density = fromPixel->density;
+        stress = fromPixel->stress;
+
+        i.isRt = true;
+      }
+      // Done merging ray-tracing - (last combinations would be if from-pixel has no ray-tracing data)
+
+      // Now merge glyph data
+      if (iStressType != lb::ShearStress && (mode == 0 || mode == 1))
+      {
+        if (fromPixel->i.isGlyph)
+        {
+          i.isGlyph = true;
+        }
+      }
+      else
+      {
+#ifndef NO_STREAKLINES
+        // merge streakline data
+        if (fromPixel->i.isStreakline)
+        {
+          if (!i.isStreakline)
+          {
+            particle_z = fromPixel->particle_z;
+            particle_vel = fromPixel->particle_vel;
+            particle_inlet_id = fromPixel->particle_inlet_id;
+
+            i.isStreakline = true;
+          }
+          else
+          {
+            if (fromPixel->particle_z < particle_z)
+            {
+              particle_z = fromPixel->particle_z;
+              particle_vel = fromPixel->particle_vel;
+              particle_inlet_id = fromPixel->particle_inlet_id;
+            }
+          }
+        }
+#endif
+      }
+    }
+
     void ColPixel::rawWritePixel(int *pixel_index,
+                                 int mode,
                                  unsigned char rgb_data[],
+                                 DomainStats* iDomainStats,
                                  ColourPaletteFunction *colourPalette,
                                  lb::StressTypes iLbmStressType)
     {
@@ -125,7 +217,7 @@ namespace hemelb
 
       } // if (isRt)
 
-      if (iLbmStressType != lb::ShearStress && controller->mode == 0)
+      if (iLbmStressType != lb::ShearStress && mode == 0)
       {
         colourPalette(density, density_col);
         colourPalette(stress, stress_col);
@@ -139,7 +231,7 @@ namespace hemelb
                         int (255.0F * stress_col[2]));
 
       }
-      else if (iLbmStressType != lb::ShearStress && controller->mode == 1)
+      else if (iLbmStressType != lb::ShearStress && mode == 1)
       {
         colourPalette(density, density_col);
         colourPalette(stress, stress_col);
@@ -177,7 +269,7 @@ namespace hemelb
 
         if (i.isStreakline)
         {
-          float scaled_vel = particle_vel * controller->velocity_threshold_max_inv;
+          float scaled_vel = particle_vel * iDomainStats->velocity_threshold_max_inv;
 
           colourPalette(scaled_vel, particle_col);
 
@@ -193,12 +285,14 @@ namespace hemelb
         else
         {
           // store pressure colour
-          r3 = g3 = b3 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density), 0, 127);
+          r3 = g3 = b3 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F
+              * density), 0, 127);
 
           // store shear stress or von Mises stress
           if (stress < ((float) BIG_NUMBER))
           {
-            r4 = g4 = b4 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress), 0, 127);
+            r4 = g4 = b4 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F
+                * stress), 0, 127);
 
           }
           else

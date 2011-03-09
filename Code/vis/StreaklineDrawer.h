@@ -10,6 +10,10 @@
 #include "lb/LocalLatticeData.h"
 #include "topology/NetworkTopology.h"
 
+#include "vis/Screen.h"
+#include "vis/Viewpoint.h"
+#include "vis/VisSettings.h"
+
 namespace hemelb
 {
   namespace vis
@@ -25,7 +29,10 @@ namespace hemelb
         // Constructor and destructor.
         StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
                          lb::LocalLatticeData* iLocalLatDat,
-                         lb::GlobalLatticeData* iGlobLatDat);
+                         lb::GlobalLatticeData* iGlobLatDat,
+                         Screen* iScreen,
+                         Viewpoint* iViewpoint,
+                         VisSettings* iVisSettings);
         ~StreaklineDrawer();
 
         // Method to reset streakline drawer
@@ -145,6 +152,9 @@ namespace hemelb
 
         const topology::NetworkTopology * mNetworkTopology;
 
+        Screen* mScreen;
+        Viewpoint* mViewpoint;
+        VisSettings* mVisSettings;
     };
 
   }

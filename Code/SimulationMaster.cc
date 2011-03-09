@@ -35,6 +35,7 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mNet = NULL;
   mLocalLatDat = NULL;
   steeringCpt = NULL;
+  mVisControl = NULL;
 
   mSimulationState.IsTerminating = 0;
   mSimulationState.DoRendering = 0;
@@ -74,6 +75,11 @@ SimulationMaster::~SimulationMaster()
   if (steeringCpt != NULL)
   {
     delete steeringCpt;
+  }
+
+  if (mVisControl != NULL)
+  {
+    delete mVisControl;
   }
 }
 
@@ -125,12 +131,6 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     clientConnection = NULL;
   }
 
-  if (mNetworkTopology->IsCurrentProcTheIOProc())
-  {
-    imageSendCpt = new hemelb::steering::ImageSendComponent(mLbm, &mSimulationState,
-                                                            mLbm->GetLbmParams(), clientConnection);
-  }
-
   // Initialise the Net object and the Lbm.
   mLocalLatDat
       = new hemelb::lb::LocalLatticeData(
@@ -145,28 +145,32 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   int* lReceiveTranslator = mNet->Initialise(mGlobLatDat, mLocalLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
-  mLbm->Initialise(lReceiveTranslator, mLocalLatDat);
-
   // Initialise the visualisation controller.
-  hemelb::vis::controller
-      = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, &mGlobLatDat);
-  hemelb::vis::controller->initLayers(mNetworkTopology, &mGlobLatDat, mLocalLatDat);
+  mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, &mGlobLatDat);
+  mVisControl->initLayers(mNetworkTopology, &mGlobLatDat, mLocalLatDat);
+
+  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  {
+    imageSendCpt = new hemelb::steering::ImageSendComponent(mLbm, &mSimulationState, mVisControl,
+                                                            mLbm->GetLbmParams(), clientConnection);
+  }
+
+  mLbm->Initialise(lReceiveTranslator, mLocalLatDat, mVisControl);
 
   int images_period = (iImagesPerCycle == 0)
     ? 1e9
     : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / iImagesPerCycle);
 
   steeringCpt = new hemelb::steering::SteeringComponent(images_period, clientConnection,
-                                                        hemelb::vis::controller, mLbm, mNet,
-                                                        mNetworkTopology, &mSimulationState);
+                                                        mVisControl, mLbm, mNet, mNetworkTopology,
+                                                        &mSimulationState);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();
 
-  hemelb::vis::controller->SetProjection(512, 512, iSimConfig->VisCentre.x,
-                                         iSimConfig->VisCentre.y, iSimConfig->VisCentre.z,
-                                         iSimConfig->VisLongitude, iSimConfig->VisLatitude,
-                                         iSimConfig->VisZoom);
+  mVisControl->SetProjection(512, 512, iSimConfig->VisCentre.x, iSimConfig->VisCentre.y,
+                             iSimConfig->VisCentre.z, iSimConfig->VisLongitude,
+                             iSimConfig->VisLatitude, iSimConfig->VisZoom);
 }
 
 /**
@@ -293,34 +297,32 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       double lPreImageTime = MPI_Wtime();
 
 #ifndef NO_STREAKLINES
-      hemelb::vis::controller->streaklines(mSimulationState.TimeStep, mLbm->period, &mGlobLatDat,
-                                           mLocalLatDat);
+      mVisControl->streaklines(mSimulationState.TimeStep, mLbm->period, &mGlobLatDat, mLocalLatDat);
 #endif
 
       if (mSimulationState.DoRendering && !write_snapshot_image)
       {
-        hemelb::vis::controller->render(RECV_BUFFER_A, &mGlobLatDat, mNetworkTopology);
+        mVisControl->render(RECV_BUFFER_A, &mGlobLatDat, mNetworkTopology);
 
-        if (hemelb::vis::controller->mouse_x >= 0 && hemelb::vis::controller->mouse_y >= 0
+        if (mVisControl->mVisSettings.mouse_x >= 0 && mVisControl->mVisSettings.mouse_y >= 0
             && steeringCpt->updatedMouseCoords)
         {
-          for (int i = 0; i < hemelb::vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
+          for (int i = 0; i < mVisControl->col_pixels_recv[RECV_BUFFER_A]; i++)
           {
-            if (hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.isRt
-                && int (hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.i)
-                    == hemelb::vis::controller->mouse_x
-                && int (hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i].i.j)
-                    == hemelb::vis::controller->mouse_y)
+            if (mVisControl->col_pixel_recv[RECV_BUFFER_A][i].i.isRt
+                && int (mVisControl->col_pixel_recv[RECV_BUFFER_A][i].i.i)
+                    == mVisControl->mVisSettings.mouse_x
+                && int (mVisControl->col_pixel_recv[RECV_BUFFER_A][i].i.j)
+                    == mVisControl->mVisSettings.mouse_y)
             {
               double mouse_pressure, mouse_stress;
-              mLbm->CalculateMouseFlowField(
-                                            &hemelb::vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
+              mLbm->CalculateMouseFlowField(&mVisControl->col_pixel_recv[RECV_BUFFER_A][i],
                                             mouse_pressure, mouse_stress,
-                                            hemelb::vis::controller->density_threshold_min,
-                                            hemelb::vis::controller->density_threshold_minmax_inv,
-                                            hemelb::vis::controller->stress_threshold_max_inv);
+                                            mVisControl->mDomainStats.density_threshold_min,
+                                            mVisControl->mDomainStats.density_threshold_minmax_inv,
+                                            mVisControl->mDomainStats.stress_threshold_max_inv);
 
-              hemelb::vis::controller->setMouseParams(mouse_pressure, mouse_stress);
+              mVisControl->setMouseParams(mouse_pressure, mouse_stress);
 
               break;
             }
@@ -341,7 +343,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       if (write_snapshot_image)
       {
-        hemelb::vis::controller->render(RECV_BUFFER_B, &mGlobLatDat, mNetworkTopology);
+        mVisControl->render(RECV_BUFFER_B, &mGlobLatDat, mNetworkTopology);
         mImagesWritten++;
 
         if (mNetworkTopology->IsCurrentProcTheIOProc())
@@ -349,8 +351,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
           char image_filename[255];
           snprintf(image_filename, 255, "%08i.dat", mSimulationState.TimeStep);
 
-          hemelb::vis::controller->writeImage(RECV_BUFFER_B, image_directory
-              + std::string(image_filename), hemelb::vis::ColourPalette::pickColour);
+          mVisControl->writeImage(RECV_BUFFER_B, image_directory + std::string(image_filename),
+                                  hemelb::vis::ColourPalette::pickColour);
         }
       }
 
@@ -396,7 +398,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       steeringCpt->Reset();
 
 #ifndef NO_STREAKLINES
-      hemelb::vis::controller->restart();
+      mVisControl->restart();
 #endif
       if (mNetworkTopology->IsCurrentProcTheIOProc())
       {
