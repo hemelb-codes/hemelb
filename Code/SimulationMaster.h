@@ -55,6 +55,8 @@ class SimulationMaster
     hemelb::lb::LBM *mLbm;
     hemelb::net::Net *mNet;
 
+    hemelb::vis::Control* mVisControl;
+
     int mImagesWritten;
     int mSnapshotsWritten;
 
