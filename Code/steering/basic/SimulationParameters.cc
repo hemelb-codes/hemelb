@@ -49,13 +49,8 @@ namespace hemelb
       paramWriter << cycle;
       paramWriter << nInlets;
 
-      //	for(int i=0; i<n_inlets; i++) xdr_double(&xdr_params, &inlet_avg_vel[i]);
-
       paramWriter << mousePressure;
       paramWriter << mouseStress;
-
-      vis::controller->mouse_pressure = -1.0;
-      vis::controller->mouse_stress = -1.0;
 
       return params;
     }

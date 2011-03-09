@@ -153,8 +153,7 @@ namespace hemelb
       return &mParams;
     }
 
-    LBM::LBM(hemelb::SimConfig *iSimulationConfig,
-             const hemelb::topology::NetworkTopology * iNetTop)
+    LBM::LBM(SimConfig *iSimulationConfig, const topology::NetworkTopology * iNetTop)
     {
       period = iSimulationConfig->StepsPerCycle;
       voxel_size = iSimulationConfig->VoxelSize;
@@ -200,11 +199,13 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
-    void LBM::Initialise(int* iFTranslator, LocalLatticeData* bLocalLatDat)
+    void LBM::Initialise(int* iFTranslator, LocalLatticeData* bLocalLatDat, vis::Control* iControl)
     {
       receivedFTranslator = iFTranslator;
 
       SetInitialConditions(bLocalLatDat);
+
+      mVisControl = iControl;
     }
 
     void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData* bLocalLatDat)
@@ -281,7 +282,7 @@ namespace hemelb
                                                    offset,
                                                    bLocalLatDat->my_inter_collisions[collision_type],
                                                    mParams, mMinsAndMaxes, *bLocalLatDat,
-                                                   hemelb::vis::controller);
+                                                   mVisControl);
         offset += bLocalLatDat->my_inter_collisions[collision_type];
       }
     }
@@ -297,7 +298,7 @@ namespace hemelb
                                                    offset,
                                                    bLocalLatDat->my_inner_collisions[collision_type],
                                                    mParams, mMinsAndMaxes, *bLocalLatDat,
-                                                   hemelb::vis::controller);
+                                                   mVisControl);
         offset += bLocalLatDat->my_inner_collisions[collision_type];
       }
     }
@@ -319,8 +320,7 @@ namespace hemelb
       {
         GetCollision(collision_type)->PostStep(perform_rt, offset,
                                                bLocalLatDat->my_inner_collisions[collision_type],
-                                               mParams, mMinsAndMaxes, *bLocalLatDat,
-                                               hemelb::vis::controller);
+                                               mParams, mMinsAndMaxes, *bLocalLatDat, mVisControl);
         offset += bLocalLatDat->my_inner_collisions[collision_type];
       }
 
@@ -328,8 +328,7 @@ namespace hemelb
       {
         GetCollision(collision_type)->PostStep(perform_rt, offset,
                                                bLocalLatDat->my_inter_collisions[collision_type],
-                                               mParams, mMinsAndMaxes, *bLocalLatDat,
-                                               hemelb::vis::controller);
+                                               mParams, mMinsAndMaxes, *bLocalLatDat, mVisControl);
         offset += bLocalLatDat->my_inter_collisions[collision_type];
       }
     }

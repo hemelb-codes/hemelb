@@ -16,6 +16,7 @@ namespace hemelb
       public:
         ImageSendComponent(lb::LBM* lbm,
                            lb::SimulationState* iSimState,
+                           vis::Control* iControl,
                            const lb::LbmParameters* iLbmParams,
                            ClientConnection* iClientConnection);
         ~ImageSendComponent();
@@ -35,6 +36,7 @@ namespace hemelb
         ClientConnection* mClientConnection;
         lb::LBM* mLbm;
         lb::SimulationState* mSimState;
+        vis::Control* mVisControl;
         const lb::LbmParameters* mLbmParams;
 
         char* xdrSendBuffer_pixel_data;
@@ -45,7 +47,7 @@ namespace hemelb
         //rgb)=sizeof(int)+4*3*sizeof(unsigned char))
         static const int bytes_per_pixel_data = sizeof(int) + 4 * sizeof(unsigned char);
         // one int for colour_id and one for pixel id
-        static const u_int pixel_data_bytes = COLOURED_PIXELS_MAX * bytes_per_pixel_data;
+        static const u_int pixel_data_bytes = vis::Screen::COLOURED_PIXELS_MAX * bytes_per_pixel_data;
         // it is assumed that the frame size is the only detail
         static const u_int frame_details_bytes = 1 * sizeof(int);
     };

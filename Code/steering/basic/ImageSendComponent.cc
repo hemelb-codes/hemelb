@@ -12,9 +12,11 @@ namespace hemelb
     // Use initialisation list to do the work.
     ImageSendComponent::ImageSendComponent(lb::LBM* lbm,
                                            lb::SimulationState* iSimState,
+                                           vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
                                            ClientConnection* iClientConnection) :
-      mClientConnection(iClientConnection), mLbm(lbm), mSimState(iSimState), mLbmParams(iLbmParams)
+      mClientConnection(iClientConnection), mLbm(lbm), mSimState(iSimState), mVisControl(iControl),
+          mLbmParams(iLbmParams)
     {
       xdrSendBuffer_pixel_data = new char[pixel_data_bytes];
 
@@ -67,7 +69,7 @@ namespace hemelb
         char xdr_pixel[pixeldatabytes];
         io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel, pixeldatabytes);
 
-        pixelWriter << vis::controller->mScreen.PixelsX << vis::controller->mScreen.PixelsY;
+        pixelWriter << mVisControl->mScreen.PixelsX << mVisControl->mScreen.PixelsY;
 
         int pixelDataBytesSent = SendSuccess(socketToClient, xdr_pixel, pixeldatabytes);
 
@@ -83,10 +85,11 @@ namespace hemelb
 
       io::XdrMemWriter pixelDataWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
 
-      for (int i = 0; i < vis::controller->col_pixels_recv[RECV_BUFFER_A]; i++)
+      for (int i = 0; i < mVisControl->col_pixels_recv[RECV_BUFFER_A]; i++)
       {
-        pixelDataWriter.writePixel(&vis::controller->col_pixel_recv[RECV_BUFFER_A][i],
-                                   vis::ColourPalette::pickColour, mLbmParams->StressType);
+        pixelDataWriter.writePixel(&mVisControl->col_pixel_recv[RECV_BUFFER_A][i],
+                                   vis::ColourPalette::pickColour, &mVisControl->mDomainStats,
+                                   mVisControl->mVisSettings.mode, mLbmParams->StressType);
       }
 
       // Send the number of bytes being used on pixel data.
@@ -138,11 +141,14 @@ namespace hemelb
         sim.cycle = mSimState->CycleId;
         sim.nInlets = mLbm->inlets;
 
-        sim.mousePressure = vis::controller->mouse_pressure;
-        sim.mouseStress = vis::controller->mouse_stress;
+        sim.mousePressure = mVisControl->mVisSettings.mouse_pressure;
+        sim.mouseStress = mVisControl->mVisSettings.mouse_stress;
 
         int sizeToSend = sim.paramsSizeB;
         int simParamsBytesSent = SendSuccess(socketToClient, sim.pack(), sizeToSend);
+
+        mVisControl->mVisSettings.mouse_pressure = -1.0;
+        mVisControl->mVisSettings.mouse_stress = -1.0;
 
         if (simParamsBytesSent < 0)
         {
