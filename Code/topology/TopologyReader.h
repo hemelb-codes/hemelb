@@ -69,8 +69,10 @@ namespace hemelb
                                const lb::GlobalLatticeData* iGlobLatDat);
 
         void OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
-                                         const unsigned int* procForEachBlock,
-                                         const unsigned int* blockCountForEachProc);
+                                         const int* procForEachBlock,
+                                         const unsigned int* blockCountForEachProc,
+                                         const topology::NetworkTopology* iNetTop,
+                                         lb::GlobalLatticeData* bGlobLatDat);
 
         // The config file starts with:
         // * 1 unsigned int for stress type

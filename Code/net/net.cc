@@ -16,6 +16,19 @@ namespace hemelb
   namespace net
   {
 
+    void Net::EnsureEnoughRequests(unsigned int count)
+    {
+      if (mRequests.size() < count)
+      {
+        int deficit = count - mRequests.size();
+        for (int ii = 0; ii < deficit; ii++)
+        {
+          mRequests.push_back(MPI_Request());
+          mStatuses.push_back(MPI_Status());
+        }
+      }
+    }
+
     /*!
      This is called from the main function.  First function to deal with processors.
      The domain partitioning technique and the management of the
@@ -270,19 +283,6 @@ namespace hemelb
         }
       }
       delete[] lBlockIsOnThisRank;
-    }
-
-    void Net::EnsureEnoughRequests(unsigned int count)
-    {
-      if (mRequests.size() < count)
-      {
-        int deficit = count - mRequests.size();
-        for (int ii = 0; ii < deficit; ii++)
-        {
-          mRequests.push_back(MPI_Request());
-          mStatuses.push_back(MPI_Status());
-        }
-      }
     }
 
     void Net::CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
