@@ -2,13 +2,20 @@
 include $(MK)/header.mk
 
 TARGETS = $(EXE)
-SUBDIRS = steering vis lb net debug topology io xml parmetis util
+
+# Note that ParMetis doesn't count as a subdirectory because it uses its own
+# build system.
+# To rebuild that, go to the ParMetis directory and run make there.
+
+SUBDIRS = steering vis lb net debug topology io xml util
 
 $(EXE)_DEPS = D3Q15.o \
         SimulationMaster.o \
         SimConfig.o \
-	main.o \
-	$(SUBDIRS_TGTS)
+        main.o \
+        $(SUBDIRS_TGTS)
+
+$(EXE)_LIBS = -lparmetis
 
 HEMELB_INCLUDEPATHS += $(TOP)
 
