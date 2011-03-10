@@ -257,8 +257,6 @@ namespace hemelb
 
       double lMiddle = MPI_Wtime();
 
-      debug::Debugger::Get()->BreakHere();
-
       OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, blockCountForEachProc, bNetTop,
                                   bGlobalLatticeData);
 
@@ -805,14 +803,6 @@ namespace hemelb
 
       std::vector<int> lAdjacencies;
 
-      for (lb::BlockCounter lBlockCounter = lb::BlockCounter(bGlobLatDat, 0); lBlockCounter
-          < bGlobLatDat->GetBlockCount(); ++lBlockCounter)
-      {
-        for (unsigned int jj = 0; jj < bGlobLatDat->GetBlockSize(); ++jj)
-        {
-        }
-      }
-
       unsigned int lFluidVertex = 0;
       int n = -1;
       for (unsigned int i = 0; i < bGlobLatDat->GetXSiteCount(); i += bGlobLatDat->GetBlockSize())
@@ -893,7 +883,8 @@ namespace hemelb
                     unsigned int localSiteId = ( ( (neighLocalSiteI << bGlobLatDat->Log2BlockSize)
                         + neighLocalSiteJ) << bGlobLatDat->Log2BlockSize) + neighLocalSiteK;
 
-                    for (unsigned int neighSite = 0; neighSite < bGlobLatDat->GetBlockSize(); ++neighSite)
+                    for (unsigned int neighSite = 0; neighSite
+                        < bGlobLatDat->SitesPerBlockVolumeUnit; ++neighSite)
                     {
                       if (neighSite == localSiteId)
                       {
@@ -905,6 +896,8 @@ namespace hemelb
                         ++neighGlobalSiteId;
                       }
                     }
+
+                    debug::Debugger::Get()->BreakHere();
 
                     lAdjacencies.push_back(neighGlobalSiteId);
                   }
@@ -971,14 +964,23 @@ namespace hemelb
 
       MPI_Comm lComms = MPI_COMM_WORLD;
 
-  //    ParMETIS_RefineKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
-  //                        &weightFlag, &numberingFlag, options, &edgesCut, partitionVector, &lComms);
+      unsigned int edgesCutBefore = 0;
+      int myLowest = vertexDistribution[iNetTop->GetLocalRank()];
+      int myHighest = vertexDistribution[iNetTop->GetLocalRank() + 1] - 1;
 
-  //    std::cout << "Edges cut: " << edgesCut << "\n Partition vector: ";
-      for (int ii = 0; ii < localVertexCount; ++ii)
+      for (unsigned int ii = 0; ii < lAdjacencies.size(); ++ii)
       {
-  //      std::cout << partitionVector[ii] << " ";
+        if (lAdjacencies[ii] < myLowest || lAdjacencies[ii] > myHighest)
+        {
+          ++edgesCutBefore;
+        }
       }
+
+      ParMETIS_RefineKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
+                          &weightFlag, &numberingFlag, options, &edgesCut, partitionVector, &lComms);
+
+      std::cout << "Before refinements, edges cut: " << edgesCutBefore << "\n";
+      std::cout << "Edges cut: " << edgesCut << "\n";
     }
 
   }
