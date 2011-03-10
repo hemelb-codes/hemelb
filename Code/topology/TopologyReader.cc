@@ -1,10 +1,9 @@
+#include <math.h>
+#include <parmetis.h>
+
 #include "TopologyReader.h"
 #include "io/XdrMemReader.h"
 #include "lb/GlobalLatticeData.h"
-extern "C"
-{
-#include "parmetis/parmetislib.h"
-}
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -258,7 +257,10 @@ namespace hemelb
 
       double lMiddle = MPI_Wtime();
 
-      //TODO    OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, blockCountForEachProc);
+      debug::Debugger::Get()->BreakHere();
+
+      OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, blockCountForEachProc, bNetTop,
+                                  bGlobalLatticeData);
 
       //TODO this is a total hack just for now.
       bNetTop->FluidSitesOnEachProcessor = new int[bNetTop->GetProcessorCount()];
@@ -753,10 +755,168 @@ namespace hemelb
     }
 
     void TopologyReader::OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
-                                                     const unsigned int* procForEachBlock,
-                                                     const unsigned int* blockCountForEachProc)
+                                                     const int* procForEachBlock,
+                                                     const unsigned int* blockCountForEachProc,
+                                                     const topology::NetworkTopology* iNetTop,
+                                                     lb::GlobalLatticeData* bGlobLatDat)
     {
-      throw "Not yet implemented";
+      /*
+       *  Get an array of the site count on each processor.
+       */
+      int* sitesPerProc = new int[iNetTop->GetProcessorCount()];
+      for (unsigned int ii = 0; ii < iNetTop->GetProcessorCount(); ++ii)
+      {
+        sitesPerProc[ii] = 0;
+      }
+
+      for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
+      {
+        sitesPerProc[procForEachBlock[ii]] += sitesPerBlock[ii];
+      }
+
+      /*
+       *  Create vertex distribution array.
+       */
+      int* vertexDistribution = new int[iNetTop->GetProcessorCount() + 1];
+      vertexDistribution[0] = 0;
+
+      for (unsigned int ii = 0; ii < iNetTop->GetProcessorCount(); ++ii)
+      {
+        vertexDistribution[ii + 1] = vertexDistribution[ii] + sitesPerProc[ii];
+      }
+
+      /*
+       *  Create the adjacency count and list for all the local vertices.
+       */
+      // First, it'll be useful to create an array of the first site index on each block.
+      int* firstSiteIndexPerBlock = new int[bGlobLatDat->GetBlockCount()];
+      firstSiteIndexPerBlock[0] = 0;
+
+      for (unsigned int ii = 1; ii < bGlobLatDat->GetBlockCount(); ++ii)
+      {
+        firstSiteIndexPerBlock[ii] = firstSiteIndexPerBlock[ii - 1] + sitesPerBlock[ii - 1];
+      }
+
+      int localVertexCount = vertexDistribution[iNetTop->GetLocalRank() + 1]
+          - vertexDistribution[iNetTop->GetLocalRank()];
+
+      int* adjacenciesPerVertex = new int[localVertexCount + 1];
+      adjacenciesPerVertex[0] = 0;
+
+      std::vector<int> lAdjacencies;
+
+      for (lb::BlockCounter lBlockCounter = lb::BlockCounter(bGlobLatDat, 0); lBlockCounter
+          < bGlobLatDat->GetBlockCount(); ++lBlockCounter)
+      {
+        for (unsigned int jj = 0; jj < bGlobLatDat->GetBlockSize(); ++jj)
+        {
+        }
+      }
+
+      unsigned int lFluidVertex = 0;
+      int n = -1;
+      for (unsigned int i = 0; i < bGlobLatDat->GetXSiteCount(); i += bGlobLatDat->GetBlockSize())
+      {
+        for (unsigned int j = 0; j < bGlobLatDat->GetYSiteCount(); j += bGlobLatDat->GetBlockSize())
+        {
+          for (unsigned int k = 0; k < bGlobLatDat->GetZSiteCount(); k
+              += bGlobLatDat->GetBlockSize())
+          {
+            ++n;
+
+            if (procForEachBlock[n] != (int) iNetTop->GetLocalRank())
+            {
+              continue;
+            }
+
+            hemelb::lb::BlockData *map_block_p = &bGlobLatDat->Blocks[n];
+
+            if (map_block_p->site_data == NULL)
+            {
+              continue;
+            }
+
+            int m = -1;
+
+            // Iterate over sites within the block.
+            for (unsigned int site_i = i; site_i < i + bGlobLatDat->GetBlockSize(); site_i++)
+            {
+              for (unsigned int site_j = j; site_j < j + bGlobLatDat->GetBlockSize(); site_j++)
+              {
+                for (unsigned int site_k = k; site_k < k + bGlobLatDat->GetBlockSize(); site_k++)
+                {
+                  ++m;
+
+                  // Get site data, which is the number of the fluid site on this proc..
+                  unsigned int site_map = map_block_p->site_data[m];
+
+                  // Continue if it's a solid
+                  if (map_block_p->ProcessorRankForEachBlockSite[m] == 1U << 30)
+                  {
+                    continue;
+                  }
+
+                  for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+                  {
+                    // Work out positions of neighbours.
+                    int neigh_i = site_i + D3Q15::CX[l];
+                    int neigh_j = site_j + D3Q15::CY[l];
+                    int neigh_k = site_k + D3Q15::CZ[l];
+
+                    // Get the id of the processor which the neighbouring site lies on.
+                    int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j,
+                                                                            neigh_k);
+
+                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
+                    {
+                      continue;
+                    }
+
+                    // We now do some faffery to find out the global fluid site id of this point
+                    unsigned int neighBlockI = neigh_i >> bGlobLatDat->Log2BlockSize;
+                    unsigned int neighBlockJ = neigh_j >> bGlobLatDat->Log2BlockSize;
+                    unsigned int neighBlockK = neigh_k >> bGlobLatDat->Log2BlockSize;
+
+                    unsigned int neighLocalSiteI = neigh_i - (neighBlockI
+                        << bGlobLatDat->Log2BlockSize);
+                    unsigned int neighLocalSiteJ = neigh_j - (neighBlockJ
+                        << bGlobLatDat->Log2BlockSize);
+                    unsigned int neighLocalSiteK = neigh_k - (neighBlockK
+                        << bGlobLatDat->Log2BlockSize);
+
+                    unsigned int neighBlockId = bGlobLatDat->GetBlockIdFromBlockCoords(neighBlockI,
+                                                                                       neighBlockJ,
+                                                                                       neighBlockK);
+
+                    unsigned int neighGlobalSiteId = firstSiteIndexPerBlock[neighBlockId];
+
+                    unsigned int localSiteId = ( ( (neighLocalSiteI << bGlobLatDat->Log2BlockSize)
+                        + neighLocalSiteJ) << bGlobLatDat->Log2BlockSize) + neighLocalSiteK;
+
+                    for (unsigned int neighSite = 0; neighSite < bGlobLatDat->GetBlockSize(); ++neighSite)
+                    {
+                      if (neighSite == localSiteId)
+                      {
+                        break;
+                      }
+                      else if (bGlobLatDat->Blocks[neighBlockId].ProcessorRankForEachBlockSite[neighSite]
+                          != 1U << 30)
+                      {
+                        ++neighGlobalSiteId;
+                      }
+                    }
+
+                    lAdjacencies.push_back(neighGlobalSiteId);
+                  }
+
+                  adjacenciesPerVertex[lFluidVertex + 1] = lAdjacencies.size();
+                  ++lFluidVertex;
+                }
+              }
+            }
+          }
+        }
+      }
 
       // From the ParMETIS documentation:
       // --------------------------------
@@ -803,8 +963,22 @@ namespace hemelb
        */
       // Required: zero-indexed site id for first site on each block.
 
+      int weightFlag = 0;
+      int numberingFlag = 0;
+      int edgesCut = 0;
+      int* partitionVector = new int[localVertexCount];
+      int options[4] = { 0, 0, 0, 0 };
 
-      // ParMETIS_RefineKway();
+      MPI_Comm lComms = MPI_COMM_WORLD;
+
+  //    ParMETIS_RefineKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
+  //                        &weightFlag, &numberingFlag, options, &edgesCut, partitionVector, &lComms);
+
+  //    std::cout << "Edges cut: " << edgesCut << "\n Partition vector: ";
+      for (int ii = 0; ii < localVertexCount; ++ii)
+      {
+  //      std::cout << partitionVector[ii] << " ";
+      }
     }
 
   }
