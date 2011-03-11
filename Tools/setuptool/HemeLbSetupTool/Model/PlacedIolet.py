@@ -49,6 +49,7 @@ class PlacedIolet(Observable):
         self._n = N.zeros(3)
 
         self.widget = vtkPlaneWidget()
+        self.widget.KeyPressActivationOff()
         self.widget.SetRepresentationToOutline()
         # planeWidget.PlaceWidget(clickPos)
         
@@ -176,7 +177,12 @@ class PlacedIolet(Observable):
         return 0.5 * N.sqrt(N.dot(self._p1, self._p1))
     
     Radius = property(GetRadius, SetRadius)
-        
+    
+    def HandleWidgetSizeChange(self, change):
+#        self.widget.InvokeEvent('LeftButtonPressEvent')
+#        self.widget.InvokeEvent('LeftButtonReleaseEvent')
+        return
+    
     pass
 
 class PlacedInlet(PlacedIolet):    
