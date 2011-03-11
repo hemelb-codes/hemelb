@@ -11,21 +11,22 @@ import pdb
 
 class Pipeline(Observable):
     def __init__(self):
-        self.StlMapper = vtkPolyDataMapper()
-        self.StlActor = vtkActor()
-        self.StlActor.SetMapper(self.StlMapper)
+        # 1 mm is probably about right.
+        # TODO: force this to be recalculated when the SurfaceSource updates
+        self.WidgetSize = 1e-3
+        
+        self.SurfaceMapper = vtkPolyDataMapper()
+        self.SurfaceActor = vtkActor()
+        self.SurfaceActor.SetMapper(self.SurfaceMapper)
         # self.seeder = SeedPlacer(self, self.stlActor)
         self.Locator = vtkModifiedBSPTree()
         
         self.SurfacePlacer = vtkPolygonalSurfacePointPlacer()
-        self.SurfacePlacer.AddProp(self.StlActor)
+        self.SurfacePlacer.AddProp(self.SurfaceActor)
 
         self.Renderer = vtkRenderer()
-        self.Renderer.AddActor(self.StlActor)
-        # reader = self.GetValueForKey('StlReader')
-        # self.StlMapper.SetInputConnection(reader.GetOutputPort())
-
-        # self._lastStlFile = None
+        self.Renderer.AddActor(self.SurfaceActor)
+        
         self.CreateMarker()
 
         self.PlacedSeed = PlacedSeed(self)
@@ -35,7 +36,7 @@ class Pipeline(Observable):
         self.PlacedIolets.SetItemEnabledChangeHandler(self.HandlePlacedItemEnabledChange)
         
         return
-    
+            
     def ResetView(self):
         """Reset the view on the current scene.
         """
@@ -173,11 +174,13 @@ class Pipeline(Observable):
         item = change.obj
         if item.Enabled:
             if not self.IsActorAdded(item.actor):
+                self.AddObserver('WidgetSize', item.HandleWidgetSizeChange)
                 self.Renderer.AddActor(item.actor)
                 pass
         else:
             if self.IsActorAdded(item.actor):
                 self.Renderer.RemoveActor(item.actor)
+                self.RemoveObserver('WidgetSize', item.HandleWidgetSizeChange)
                 pass
             pass
         return
@@ -187,6 +190,9 @@ class Pipeline(Observable):
 class PlacedSeed(Observable):
     def __init__(self, pipeline, colour=(0,0,1)):
         self.representation = vtkSphereSource()
+        self.representation.SetRadius(pipeline.WidgetSize)
+#        pipeline.AddObserver('WidgetSize', self.HandleWidgetSizeChange)
+        
         self.mapper = vtkPolyDataMapper()
         self.mapper.SetInputConnection(self.representation.GetOutputPort())
         
@@ -197,6 +203,11 @@ class PlacedSeed(Observable):
 
         self.Enabled = False
         
+        return
+    
+    def HandleWidgetSizeChange(self, change):
+        pro = change.obj
+        self.representation.SetRadius(pro.WidgetSize)
         return
     
     def SetCentre(self, centre):

@@ -15,6 +15,8 @@ from .Iolets import Inlet, Outlet, Iolet
 
 import pdb
 
+np.seterr(divide='ignore')
+
 class ConfigGenerator(object):
     """This object is in charge of creating the input for HemeLB from
     the supplied Model.Profile object. The process is coordinated by
@@ -495,7 +497,6 @@ class Writer(object):
         self.StressType = StressType
         self.BlockSize = BlockSize
         self.BlockCounts = BlockCounts
-        # TODO: Make sure this in in metres
         self.VoxelSize = VoxelSize
         # Make sure this in metres
         self.Origin = Origin
@@ -667,7 +668,6 @@ class Domain(object):
 
     def SmartIterBlocks(self):
         # Fill the blocks with Nones
-        # TODO: make this choose the best ordering of indices for memory efficiency
         self.blocks = np.empty(self.BlockCounts, dtype=object)
         maxInds = [l - 1 for l in self.BlockCounts]
 
