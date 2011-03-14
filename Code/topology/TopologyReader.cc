@@ -21,32 +21,34 @@ namespace hemelb
 
     TopologyReader::TopologyReader()
     {
-      MPI_Comm_rank(MPI_COMM_WORLD, &mRank);
-      MPI_Comm_size(MPI_COMM_WORLD, &mSize);
-      MPI_Comm_group(MPI_COMM_WORLD, &mGroup);
+      MPI_Comm_group(MPI_COMM_WORLD, &mTopologyGroup);
 
-      if (mSize == 1)
-      {
-        MPI_Group lNewGroup;
-        MPI_Comm_dup(MPI_COMM_WORLD, &mCommunicator);
-        int lExclusions[1];
-        MPI_Group_excl(mGroup, 0, lExclusions, &lNewGroup);
-        mGroup = lNewGroup;
-      }
-      else
-      {
-        MPI_Group lNewGroup;
-        int lExclusions[1] = { 0 };
-        MPI_Group_excl(mGroup, 1, lExclusions, &lNewGroup);
-        mGroup = lNewGroup;
+      MPI_Group lNewGroup;
+      int lExclusions[1] = { 0 };
+      MPI_Group_excl(mTopologyGroup, 1, lExclusions, &lNewGroup);
+      mTopologyGroup = lNewGroup;
 
-        MPI_Comm_create(MPI_COMM_WORLD, mGroup, &mCommunicator);
+      MPI_Comm_create(MPI_COMM_WORLD, mTopologyGroup, &mTopologyComm);
+
+      MPI_Comm_rank(MPI_COMM_WORLD, &mGlobalRank);
+
+      if (mGlobalRank != 0)
+      {
+        MPI_Comm_rank(mTopologyComm, &mTopologyRank);
+        MPI_Comm_size(mTopologyComm, &mTopologySize);
       }
+
+      // Reduce the size
+      --mTopologySize;
     }
 
     TopologyReader::~TopologyReader()
     {
-      MPI_Group_free(&mGroup);
+      MPI_Group_free(&mTopologyGroup);
+      if (mGlobalRank != 0)
+      {
+        MPI_Comm_free(&mTopologyComm);
+      }
     }
 
     /**
@@ -230,14 +232,14 @@ namespace hemelb
       if (lError != 0)
       {
         fprintf(stderr, "Unable to open file %s [rank %i], exiting\n",
-                bSimConfig->DataFilePath.c_str(), mRank);
+                bSimConfig->DataFilePath.c_str(), mGlobalRank);
         fflush(0x0);
         exit(0x0);
       }
       else
       {
         fprintf(stderr, "Opened config file %s [rank %i]\n", bSimConfig->DataFilePath.c_str(),
-                mRank);
+                mGlobalRank);
       }
       fflush(NULL);
 
@@ -263,7 +265,7 @@ namespace hemelb
       double lMiddle = MPI_Wtime();
 
       OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, blockCountForEachProc, bNetTop,
-                                  bGlobalLatticeData);
+                                  bSimConfig, bLbmParams, bGlobalLatticeData);
 
       //TODO this is a total hack just for now.
       bNetTop->FluidSitesOnEachProcessor = new int[bNetTop->GetProcessorCount()];
@@ -391,6 +393,25 @@ namespace hemelb
                                            const unsigned int localRank,
                                            const lb::GlobalLatticeData* iGlobLatDat)
     {
+      for (unsigned int ii = 0; ii < iGlobLatDat->GetBlockCount(); ++ii)
+      {
+        if (iGlobLatDat->Blocks[ii].ProcessorRankForEachBlockSite != NULL)
+        {
+          delete[] iGlobLatDat->Blocks[ii].ProcessorRankForEachBlockSite;
+          iGlobLatDat->Blocks[ii].ProcessorRankForEachBlockSite = NULL;
+        }
+        if (iGlobLatDat->Blocks[ii].site_data != NULL)
+        {
+          delete[] iGlobLatDat->Blocks[ii].site_data;
+          iGlobLatDat->Blocks[ii].site_data = NULL;
+        }
+        if (iGlobLatDat->Blocks[ii].wall_data != NULL)
+        {
+          delete[] iGlobLatDat->Blocks[ii].wall_data;
+          iGlobLatDat->Blocks[ii].wall_data = NULL;
+        }
+      }
+
       // Create a list of which blocks to read in.
       bool* readBlock = new bool[iGlobLatDat->GetBlockCount()];
 
@@ -471,6 +492,9 @@ namespace hemelb
         for (lb::BlockCounter lBlock(iGlobLatDat, lowerLimitBlockNumber); lBlock
             < upperLimitBlockNumber; lBlock++)
         {
+          iGlobLatDat->Blocks[lBlock].wall_data = NULL;
+          iGlobLatDat->Blocks[lBlock].site_data = NULL;
+          iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite = NULL;
 
           if (readBlock[lBlock] && bytesPerBlock[lBlock] > 0)
           {
@@ -571,10 +595,6 @@ namespace hemelb
           // Not being read.
           else
           {
-            iGlobLatDat->Blocks[lBlock].site_data = NULL;
-            iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite = NULL;
-            iGlobLatDat->Blocks[lBlock].wall_data = NULL;
-
             if (bytesPerBlock[lBlock] > 0)
             {
               if (!lReader.SetPosition(lReader.GetPosition() + bytesPerBlock[lBlock]))
@@ -761,6 +781,8 @@ namespace hemelb
                                                      const int* procForEachBlock,
                                                      const unsigned int* blockCountForEachProc,
                                                      const topology::NetworkTopology* iNetTop,
+                                                     SimConfig* bSimConfig,
+                                                     lb::LbmParameters* bLbmParams,
                                                      lb::GlobalLatticeData* bGlobLatDat)
     {
       /*
@@ -794,7 +816,6 @@ namespace hemelb
       // First, it'll be useful to create an array of the first site index on each block.
 
       // This needs to have all the blocks with ascending id based on which processor they're on.
-      debug::Debugger::Get()->BreakHere();
       int* firstSiteOnProc = new int[iNetTop->GetProcessorCount()];
       for (unsigned int ii = 0; ii < iNetTop->GetProcessorCount(); ++ii)
       {
@@ -835,11 +856,6 @@ namespace hemelb
           {
             ++n;
 
-            if (n == 36)
-            {
-              //    debug::Debugger::Get()->BreakHere();
-            }
-
             if (procForEachBlock[n] != (int) iNetTop->GetLocalRank())
             {
               continue;
@@ -863,11 +879,6 @@ namespace hemelb
                 {
                   ++m;
 
-                  if (site_i == 8 && site_j == 1 && site_k == 7)
-                  {
-                    //debug::Debugger::Get()->BreakHere();
-                  }
-
                   // Get site data, which is the number of the fluid site on this proc..
                   unsigned int site_map = map_block_p->site_data[m];
 
@@ -879,12 +890,6 @@ namespace hemelb
 
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
                   {
-                    if (site_i == 8 && site_j == 1 && site_k == 7 && D3Q15::CX[l] == -1
-                        && D3Q15::CY[l] == 0 && D3Q15::CZ[l] == 0)
-                    {
-                      //   debug::Debugger::Get()->BreakHere();
-                    }
-
                     // Work out positions of neighbours.
                     int neigh_i = site_i + D3Q15::CX[l];
                     int neigh_j = site_j + D3Q15::CY[l];
@@ -934,9 +939,6 @@ namespace hemelb
                       }
                     }
 
-                    if (lFluidVertex == 104 && neighGlobalSiteId == 2392)
-                      debug::Debugger::Get()->BreakHere();
-
                     lAdjacencies.push_back(neighGlobalSiteId);
                   }
 
@@ -971,9 +973,9 @@ namespace hemelb
       // part[ni] will contain the partition vector of the locally-stored vertices
       // comm* is a pointer to the MPI communicator of the processes involved
       /*
-       unsigned long * lCumulativeSitesPerProc = new unsigned long[mSize + 1];
+       unsigned long * lCumulativeSitesPerProc = new unsigned long[mTopologySize + 1];
        lCumulativeSitesPerProc[0] = 0;
-       for (int ii = 0; ii < mSize; ii++)
+       for (int ii = 0; ii < mTopologySize; ii++)
        {
        lCumulativeSitesPerProc[ii + 1] = lCumulativeSitesPerProc[ii] + iNumberSitesPerProc[ii];
        }
@@ -1026,7 +1028,7 @@ namespace hemelb
       // Because of the way Parmetis works, it will have assigned everything for the last processor to proc 0.
       for (int ii = 0; ii <= (myHighest - myLowest); ++ii)
       {
-        ++(partitionVector[ii]);
+        ++ (partitionVector[ii]);
       }
 
       std::cout << "Rank " << iNetTop->GetLocalRank() << " had edges cut before: "
@@ -1081,9 +1083,139 @@ namespace hemelb
       MPI_Allgatherv(&moveData[0], moves, lMoveType, movesList, allMoves, offsets, lMoveType,
                      MPI_COMM_WORLD);
 
-      // TODO USE A COMMUNICATOR JUST FOR THIS CLASS.
+      // Modify the global lattice data object with this information.
+      unsigned int moveIndex = 0;
+      for (unsigned int lFromProc = 0; lFromProc < iNetTop->GetProcessorCount(); ++lFromProc)
+      {
+        for (int lMoveNumber = 0; lMoveNumber < allMoves[lFromProc]; ++lMoveNumber)
+        {
+          int fluidSite = movesList[2 * moveIndex];
+          int toProc = movesList[2 * moveIndex + 1];
+          ++moveIndex;
 
+          int fluidSiteBlock = bGlobLatDat->GetBlockCount() - 1;
+          for (; firstSiteIndexPerBlock[fluidSiteBlock] > fluidSite;)
+          {
+            --fluidSiteBlock;
+          }
+
+          if (bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite != NULL)
+          {
+            int lFluidSitesToGo = fluidSite - firstSiteIndexPerBlock[fluidSiteBlock];
+            int lSiteIndex = 0;
+            for (; lFluidSitesToGo >= 0; ++lSiteIndex)
+            {
+              if (bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                  != (1 << 30))
+              {
+                --lFluidSitesToGo;
+              }
+            }
+            bGlobLatDat ->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex] = toProc;
+          }
+        }
+      }
+
+      // TODO USE A COMMUNICATOR JUST FOR THIS CLASS.
       MPI_Type_free(&lMoveType);
+
+      MPI_File lFile;
+      MPI_Info lFileInfo;
+      int lError;
+
+      // Open the file using the MPI parallel I/O interface at the path
+      // given, in read-only mode.
+      MPI_Info_create(&lFileInfo);
+
+      // Create hints about how we'll read the file. See Chapter 13, page 400 of the MPI 2.2 spec.
+      //
+      MPI_Info_set(lFileInfo, "access_style", "read_once,sequential");
+      MPI_Info_set(lFileInfo, "collective_buffering", "true");
+
+      lError = MPI_File_open(MPI_COMM_WORLD, &bSimConfig->DataFilePath[0], MPI_MODE_RDONLY,
+                             lFileInfo, &lFile);
+
+      if (lError != 0)
+      {
+        fprintf(stderr, "Unable to open file %s [rank %i], exiting\n",
+                bSimConfig->DataFilePath.c_str(), mGlobalRank);
+        fflush(0x0);
+        exit(0x0);
+      }
+
+      int* newProcForEachBlock = new int[bGlobLatDat->GetBlockCount()];
+
+      // Hackily, set the proc for each block to be this proc whenever we have a proc on that block under the new scheme.
+      for (unsigned int lBlockNumber = 0; lBlockNumber < bGlobLatDat->GetBlockCount(); ++lBlockNumber)
+      {
+        newProcForEachBlock[lBlockNumber] = procForEachBlock[lBlockNumber];
+
+        if (bGlobLatDat->Blocks[lBlockNumber].ProcessorRankForEachBlockSite != NULL)
+        {
+
+          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->SitesPerBlockVolumeUnit; ++lSiteIndex)
+          {
+            if (bGlobLatDat ->Blocks[lBlockNumber].ProcessorRankForEachBlockSite[lSiteIndex]
+                == (int) iNetTop->GetLocalRank())
+            {
+              newProcForEachBlock[lBlockNumber] = iNetTop->GetLocalRank();
+            }
+          }
+        }
+      }
+
+      ReadPreamble(lFile, bLbmParams, bGlobLatDat);
+
+      unsigned int* bytesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
+      unsigned int* newSitePerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
+
+      ReadHeader(lFile, bGlobLatDat->GetBlockCount(), newSitePerBlock, bytesPerBlock);
+
+      ReadInLocalBlocks(lFile, bytesPerBlock, newProcForEachBlock, iNetTop->GetLocalRank(),
+                        bGlobLatDat);
+
+      // Now we go through the global lattice data and correct the record of where each fluid site lives.
+      // The only sites we need to care about are the ones we've just read in.
+
+      for (unsigned int lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
+      {
+        if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
+        {
+          int lGlobalFluidSiteIndex = firstSiteIndexPerBlock[lBlock];
+
+          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->SitesPerBlockVolumeUnit; ++lSiteIndex)
+          {
+            if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex] != 1 << 30)
+            {
+              // This should be what it originally was...
+              bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                  = procForEachBlock[lBlock];
+
+              // ... unless it was one of the changes suggested by ParMetis.
+              for (int lMoveId = 0; lMoveId < allMoves[procForEachBlock[lBlock]]; ++lMoveId)
+              {
+                int lThisProcOffset = offsets[procForEachBlock[lBlock]];
+
+                if (movesList[2 * (lThisProcOffset + lMoveId)] == lGlobalFluidSiteIndex)
+                {
+                  bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                      = movesList[2 * (lThisProcOffset + lMoveId) + 1];
+                  break;
+                }
+              }
+              //
+              ++lGlobalFluidSiteIndex;
+            }
+          }
+        }
+      }
+      //
+      MPI_File_close(&lFile);
+      MPI_Info_free(&lFileInfo);
+
+      delete[] bytesPerBlock;
+      delete[] newSitePerBlock;
+      delete[] newProcForEachBlock;
     }
 
   }
