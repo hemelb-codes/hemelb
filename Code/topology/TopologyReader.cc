@@ -14,6 +14,11 @@ namespace hemelb
     // TODO The memory usage here is not yet optimal. We shouldn't allocate any memory for blocks
     // that aren't on this processor or a neighbour.
 
+    // TODO This file is generally ugly. The first step to making it nicer would probably be to
+    // integrate it with the LocalLatDat and GlobalLatDat objects (because we really only want
+    // LocalLatticeData), and the functions in Net which initialise them. Once the interface
+    // to this object is nice and clean, we can tidy up the code here.
+
     TopologyReader::TopologyReader()
     {
       MPI_Comm_rank(MPI_COMM_WORLD, &mRank);
@@ -787,12 +792,28 @@ namespace hemelb
        *  Create the adjacency count and list for all the local vertices.
        */
       // First, it'll be useful to create an array of the first site index on each block.
-      int* firstSiteIndexPerBlock = new int[bGlobLatDat->GetBlockCount()];
-      firstSiteIndexPerBlock[0] = 0;
 
-      for (unsigned int ii = 1; ii < bGlobLatDat->GetBlockCount(); ++ii)
+      // This needs to have all the blocks with ascending id based on which processor they're on.
+      debug::Debugger::Get()->BreakHere();
+      int* firstSiteOnProc = new int[iNetTop->GetProcessorCount()];
+      for (unsigned int ii = 0; ii < iNetTop->GetProcessorCount(); ++ii)
       {
-        firstSiteIndexPerBlock[ii] = firstSiteIndexPerBlock[ii - 1] + sitesPerBlock[ii - 1];
+        firstSiteOnProc[ii] = vertexDistribution[ii];
+      }
+
+      int* firstSiteIndexPerBlock = new int[bGlobLatDat->GetBlockCount()];
+      for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
+      {
+        int proc = procForEachBlock[ii];
+        if (proc < 0)
+        {
+          firstSiteIndexPerBlock[ii] = -1;
+        }
+        else
+        {
+          firstSiteIndexPerBlock[ii] = firstSiteOnProc[proc];
+          firstSiteOnProc[proc] += sitesPerBlock[ii];
+        }
       }
 
       int localVertexCount = vertexDistribution[iNetTop->GetLocalRank() + 1]
@@ -813,6 +834,11 @@ namespace hemelb
               += bGlobLatDat->GetBlockSize())
           {
             ++n;
+
+            if (n == 36)
+            {
+              //    debug::Debugger::Get()->BreakHere();
+            }
 
             if (procForEachBlock[n] != (int) iNetTop->GetLocalRank())
             {
@@ -837,6 +863,11 @@ namespace hemelb
                 {
                   ++m;
 
+                  if (site_i == 8 && site_j == 1 && site_k == 7)
+                  {
+                    //debug::Debugger::Get()->BreakHere();
+                  }
+
                   // Get site data, which is the number of the fluid site on this proc..
                   unsigned int site_map = map_block_p->site_data[m];
 
@@ -848,6 +879,12 @@ namespace hemelb
 
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
                   {
+                    if (site_i == 8 && site_j == 1 && site_k == 7 && D3Q15::CX[l] == -1
+                        && D3Q15::CY[l] == 0 && D3Q15::CZ[l] == 0)
+                    {
+                      //   debug::Debugger::Get()->BreakHere();
+                    }
+
                     // Work out positions of neighbours.
                     int neigh_i = site_i + D3Q15::CX[l];
                     int neigh_j = site_j + D3Q15::CY[l];
@@ -897,7 +934,8 @@ namespace hemelb
                       }
                     }
 
-                    debug::Debugger::Get()->BreakHere();
+                    if (lFluidVertex == 104 && neighGlobalSiteId == 2392)
+                      debug::Debugger::Get()->BreakHere();
 
                     lAdjacencies.push_back(neighGlobalSiteId);
                   }
@@ -976,11 +1014,76 @@ namespace hemelb
         }
       }
 
-      ParMETIS_RefineKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
-                          &weightFlag, &numberingFlag, options, &edgesCut, partitionVector, &lComms);
+      int desiredPartitionSize = iNetTop->GetProcessorCount() - 1;
 
-      std::cout << "Before refinements, edges cut: " << edgesCutBefore << "\n";
+      //      ParMETIS_RefineKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
+      //                          &weightFlag, &numberingFlag, options, &edgesCut, partitionVector, &lComms);
+
+      ParMETIS_PartKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
+                        &weightFlag, &numberingFlag, &desiredPartitionSize, options, &edgesCut,
+                        partitionVector, &lComms);
+
+      // Because of the way Parmetis works, it will have assigned everything for the last processor to proc 0.
+      for (int ii = 0; ii <= (myHighest - myLowest); ++ii)
+      {
+        ++(partitionVector[ii]);
+      }
+
+      std::cout << "Rank " << iNetTop->GetLocalRank() << " had edges cut before: "
+          << edgesCutBefore << "\n";
       std::cout << "Edges cut: " << edgesCut << "\n";
+
+      // Right. Let's count how many sites we're going to have to move.
+      int moves = 0;
+      std::vector<int> moveData;
+
+      for (int ii = 0; ii <= (myHighest - myLowest); ++ii)
+      {
+        if (partitionVector[ii] != (int) iNetTop->GetLocalRank())
+        {
+          ++moves;
+          moveData.push_back(myLowest + ii);
+          moveData.push_back(partitionVector[ii]);
+        }
+      }
+
+      std::cout << "Rank " << iNetTop->GetLocalRank() << " is moving " << moves
+          << " fluid sites.\n";
+
+      // Spread this data around, so all processes now how many moves each process is doing.
+      int* allMoves = new int[iNetTop->GetProcessorCount()];
+
+      MPI_Allgather(&moves, 1, MPI_INT, allMoves, 1, MPI_INT, MPI_COMM_WORLD);
+
+      // Count the total moves.
+      int totalMoves = 0;
+
+      for (unsigned int ii = 0; ii < iNetTop->GetProcessorCount(); ++ii)
+      {
+        totalMoves += allMoves[ii];
+      }
+
+      // Now share all the lists of moves.
+      MPI_Datatype lMoveType;
+      MPI_Type_contiguous(2, MPI_INT, &lMoveType);
+      MPI_Type_commit(&lMoveType);
+
+      int* movesList = new int[2 * totalMoves];
+      int* offsets = new int[iNetTop->GetProcessorCount()];
+
+      offsets[0] = 0;
+
+      for (unsigned int ii = 1; ii < iNetTop->GetProcessorCount(); ++ii)
+      {
+        offsets[ii] = offsets[ii - 1] + allMoves[ii - 1];
+      }
+
+      MPI_Allgatherv(&moveData[0], moves, lMoveType, movesList, allMoves, offsets, lMoveType,
+                     MPI_COMM_WORLD);
+
+      // TODO USE A COMMUNICATOR JUST FOR THIS CLASS.
+
+      MPI_Type_free(&lMoveType);
     }
 
   }
