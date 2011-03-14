@@ -35,11 +35,20 @@ namespace hemelb
         ~BlockData()
         {
           if (ProcessorRankForEachBlockSite != NULL)
+          {
             delete[] ProcessorRankForEachBlockSite;
+            ProcessorRankForEachBlockSite = NULL;
+          }
           if (wall_data != NULL)
+          {
             delete[] wall_data;
+            wall_data = NULL;
+          }
           if (site_data != NULL)
+          {
             delete[] site_data;
+            site_data = NULL;
+          }
         }
 
         // An array of the ranks on which each lattice site within the block resides.
