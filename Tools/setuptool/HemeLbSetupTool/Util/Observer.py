@@ -3,6 +3,7 @@
 Create a subclass of Observable to use.
 """
 import collections
+from copy import copy
 
 from .Enum import Enum
 
@@ -282,7 +283,19 @@ class Observable(object):
         return
     
     def CloneFrom(self, other):
-        for attr in self._Args:
+        try:
+            attrList = copy(self._CloneOrder)
+        except AttributeError:
+            attrList = []
+            pass
+        
+        for k in self._Args:
+            if k not in attrList:
+                attrList.append(k)
+                pass
+            continue
+        
+        for attr in attrList:
             val = getattr(self, attr)
             if isinstance(val, ObservableList):
                 # first clear our list
