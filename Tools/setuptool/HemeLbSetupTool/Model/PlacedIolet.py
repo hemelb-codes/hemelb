@@ -100,11 +100,9 @@ class PlacedIolet(Observable):
             pass
         return
     
-    @property
-    def Enabled(self):
+    def GetEnabled(self):
         return self._Enabled
-    @Enabled.setter
-    def Enabled(self, enabled):
+    def SetEnabled(self, enabled):
         if self.widget.GetInteractor() is None:
             return
         self._Enabled = enabled
@@ -114,6 +112,7 @@ class PlacedIolet(Observable):
             self.widget.Off()
             pass
         return
+    Enabled = property(GetEnabled, SetEnabled)
     
     def _SyncRepresentation(self, obj, evt):
         self.widget.GetPolyData(self.representation)
