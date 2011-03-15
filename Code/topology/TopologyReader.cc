@@ -264,9 +264,6 @@ namespace hemelb
 
       double lMiddle = MPI_Wtime();
 
-      OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, blockCountForEachProc, bNetTop,
-                                  bSimConfig, bLbmParams, bGlobalLatticeData);
-
       //TODO this is a total hack just for now.
       bNetTop->FluidSitesOnEachProcessor = new int[bNetTop->GetProcessorCount()];
       for (unsigned int ii = 0; ii < bNetTop->GetProcessorCount(); ++ii)
@@ -280,7 +277,17 @@ namespace hemelb
         if (sitesPerBlock[ii] > 0)
         {
           bNetTop->FluidSitesOnEachProcessor[procForEachBlock[ii]] += sitesPerBlock[ii];
+        }
+      }
 
+      OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, blockCountForEachProc, bNetTop,
+                                  bSimConfig, bLbmParams, bGlobalLatticeData);
+
+      //TODO this is a total hack just for now.
+      for (unsigned int ii = 0; ii < bGlobalLatticeData->GetBlockCount(); ++ii)
+      {
+        if (sitesPerBlock[ii] > 0)
+        {
           if (bGlobalLatticeData->Blocks[ii].ProcessorRankForEachBlockSite != NULL)
           {
             for (unsigned int jj = 0; jj < bGlobalLatticeData->SitesPerBlockVolumeUnit; ++jj)
@@ -1200,6 +1207,8 @@ namespace hemelb
                 {
                   bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
                       = movesList[2 * (lThisProcOffset + lMoveId) + 1];
+                  iNetTop->FluidSitesOnEachProcessor[procForEachBlock[lBlock]]--;
+                  iNetTop->FluidSitesOnEachProcessor[movesList[2 * (lThisProcOffset + lMoveId) + 1]]++;
                   break;
                 }
               }
