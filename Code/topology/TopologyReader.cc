@@ -1090,8 +1090,17 @@ namespace hemelb
       MPI_Allgatherv(&moveData[0], moves, lMoveType, movesList, allMoves, offsets, lMoveType,
                      MPI_COMM_WORLD);
 
-      // Modify the global lattice data object with this information.
+      int* newProcForEachBlock = new int[bGlobLatDat->GetBlockCount()];
+
+      for (unsigned int lBlockNumber = 0; lBlockNumber < bGlobLatDat->GetBlockCount(); ++lBlockNumber)
+      {
+        newProcForEachBlock[lBlockNumber] = procForEachBlock[lBlockNumber];
+      }
+
+      // Hackily, set the proc for each block to be this proc whenever we have a proc on that block under the new scheme.
       unsigned int moveIndex = 0;
+      debug::Debugger::Get()->BreakHere();
+
       for (unsigned int lFromProc = 0; lFromProc < iNetTop->GetProcessorCount(); ++lFromProc)
       {
         for (int lMoveNumber = 0; lMoveNumber < allMoves[lFromProc]; ++lMoveNumber)
@@ -1100,28 +1109,21 @@ namespace hemelb
           int toProc = movesList[2 * moveIndex + 1];
           ++moveIndex;
 
-          int fluidSiteBlock = bGlobLatDat->GetBlockCount() - 1;
-          for (; firstSiteIndexPerBlock[fluidSiteBlock] > fluidSite;)
+          if (toProc == (int) iNetTop->GetLocalRank())
           {
-            --fluidSiteBlock;
-          }
-
-          if (bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite != NULL)
-          {
-            int lFluidSitesToGo = fluidSite - firstSiteIndexPerBlock[fluidSiteBlock];
-            int lSiteIndex = 0;
-            for (; lFluidSitesToGo >= 0; ++lSiteIndex)
+            int fluidSiteBlock = bGlobLatDat->GetBlockCount() - 1;
+            for (; (procForEachBlock[fluidSiteBlock] < 0)
+                || (firstSiteIndexPerBlock[fluidSiteBlock] > fluidSite);)
             {
-              if (bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex]
-                  != (1 << 30))
-              {
-                --lFluidSitesToGo;
-              }
+              --fluidSiteBlock;
             }
-            bGlobLatDat ->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex] = toProc;
+
+            newProcForEachBlock[fluidSiteBlock] = iNetTop->GetLocalRank();
           }
         }
       }
+
+      debug::Debugger::Get()->BreakHere();
 
       // TODO USE A COMMUNICATOR JUST FOR THIS CLASS.
       MPI_Type_free(&lMoveType);
@@ -1150,27 +1152,6 @@ namespace hemelb
         exit(0x0);
       }
 
-      int* newProcForEachBlock = new int[bGlobLatDat->GetBlockCount()];
-
-      // Hackily, set the proc for each block to be this proc whenever we have a proc on that block under the new scheme.
-      for (unsigned int lBlockNumber = 0; lBlockNumber < bGlobLatDat->GetBlockCount(); ++lBlockNumber)
-      {
-        newProcForEachBlock[lBlockNumber] = procForEachBlock[lBlockNumber];
-
-        if (bGlobLatDat->Blocks[lBlockNumber].ProcessorRankForEachBlockSite != NULL)
-        {
-
-          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->SitesPerBlockVolumeUnit; ++lSiteIndex)
-          {
-            if (bGlobLatDat ->Blocks[lBlockNumber].ProcessorRankForEachBlockSite[lSiteIndex]
-                == (int) iNetTop->GetLocalRank())
-            {
-              newProcForEachBlock[lBlockNumber] = iNetTop->GetLocalRank();
-            }
-          }
-        }
-      }
-
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 
       unsigned int* bytesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
@@ -1184,6 +1165,8 @@ namespace hemelb
       // Now we go through the global lattice data and correct the record of where each fluid site lives.
       // The only sites we need to care about are the ones we've just read in.
 
+      debug::Debugger::Get()->BreakHere();
+
       for (unsigned int lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
       {
         if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
@@ -1192,7 +1175,7 @@ namespace hemelb
 
           for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->SitesPerBlockVolumeUnit; ++lSiteIndex)
           {
-            if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex] != 1 << 30)
+            if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex] != (1U << 30))
             {
               // This should be what it originally was...
               bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
