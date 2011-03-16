@@ -15,6 +15,8 @@ from .Iolets import Inlet, Outlet, Iolet
 
 import pdb
 
+np.seterr(divide='ignore')
+
 class ConfigGenerator(object):
     """This object is in charge of creating the input for HemeLB from
     the supplied Model.Profile object. The process is coordinated by
@@ -29,8 +31,8 @@ class ConfigGenerator(object):
         for k in profile._Args:
             setattr(self, k, getattr(profile, k))
             continue
-        # Pull in the StlReader too
-        self.StlReader = profile.StlReader
+        # Pull in the SurfaceSource too
+        self.SurfaceSource = profile.SurfaceSource
 
         self.ClippedSurface = self.ConstructClipPipeline()
         self.Locator = vtkOBBTree()
@@ -94,17 +96,12 @@ class ConfigGenerator(object):
                         VoxelSize=domain.VoxelSize,
                         Origin=domain.Origin)
 
-        i = -1
-        j = -1
         for block in domain.SmartIterBlocks():
-            i += 1
             # Open the BlockStarted context of the writer; this will
             # deal with flushing the state to the file (or not, in the
             # case where there are no fluid sites).
             with writer.BlockStarted() as blockWriter:
                 for site in block.IterSites():
-                    j += 1
-
                     self.ClassifySite(site)
                     # cache the type cos it's probably slow to compute
                     type = site.Type
@@ -294,7 +291,7 @@ class ConfigGenerator(object):
         """
         # Add the Iolet id -1 to all cells first
         adder = IntegerAdder(Value= -1)
-        adder.SetInputConnection(self.StlReader.GetOutputPort())
+        adder.SetInputConnection(self.SurfaceSource.GetOutputPort())
 
         # Have the name pdSource first point to the input, then loop
         # over IOlets, clipping and capping.
@@ -500,7 +497,6 @@ class Writer(object):
         self.StressType = StressType
         self.BlockSize = BlockSize
         self.BlockCounts = BlockCounts
-        # TODO: Make sure this in in metres
         self.VoxelSize = VoxelSize
         # Make sure this in metres
         self.Origin = Origin
@@ -672,7 +668,6 @@ class Domain(object):
 
     def SmartIterBlocks(self):
         # Fill the blocks with Nones
-        # TODO: make this choose the best ordering of indices for memory efficiency
         self.blocks = np.empty(self.BlockCounts, dtype=object)
         maxInds = [l - 1 for l in self.BlockCounts]
 
