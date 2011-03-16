@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import wx
-from wx.lib.masked import NumCtrl, EVT_NUM
 
 from .Layout import H, V, StretchSpacer, RectSpacer
 from .VectorCtrl import VectorCtrl, VectorCtrlMapper
@@ -12,6 +11,8 @@ from ..Bindings.WxMappers import WxWidgetMapper, \
 from ..Bindings.Translators import NoneToValueTranslator, \
      FloatTranslator, QuickTranslator
 from ..Bindings.Bindings import WxActionBinding
+
+from ..Model.Profile import Profile
 
 import pdb
 class ToolPanel(wx.Panel):
@@ -97,6 +98,10 @@ class InputPanel(wx.Panel):
         
         iLabel = wx.StaticText(self, label='Input STL File')
         self.inputStlField = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
+        
+        uLabel = wx.StaticText(self, label='STL File Unit')
+        self.inputStlUnitsChoice = wx.Choice(self, choices=[unit.Name for unit in Profile._UnitChoices])
+        
         controller.BindValue('StlFile',
                                   WxWidgetMapper(
                                       self.inputStlField, 'Value', wx.EVT_TEXT,
@@ -110,14 +115,16 @@ class InputPanel(wx.Panel):
         
         self.inputStlButton = wx.Button(self, label='Choose')
         controller.BindAction('ChooseStl', WxActionBinding(self.inputStlButton, wx.EVT_BUTTON))
-        
+        controller.BindValue('StlFileUnitId',
+                             WxWidgetMapper(self.inputStlUnitsChoice, 'Selection', wx.EVT_CHOICE))
         layout = V(
             iLabel,
             (H(
                 (V((self.inputStlField, 0, wx.EXPAND)), 1, wx.EXPAND),
                 self.inputStlButton
                 ), 0, wx.EXPAND
-             )
+             ),
+             H(uLabel, self.inputStlUnitsChoice)
             )
         self.SetSizer(layout.create())
         return
@@ -140,7 +147,7 @@ class IoletsDetailPanel(wx.Panel):
                            translator=NoneToValueTranslator(''))
             )
         
-        centreLabel = wx.StaticText(self, label='Centre / mm')
+        centreLabel = wx.StaticText(self, label='Centre / m')
         self.centreVector = VectorCtrl(self)
         # TODO: make these text fields (Centre, Normal, Radius) 
         # editable. At the moment I can't get the binding to VTK
@@ -151,7 +158,7 @@ class IoletsDetailPanel(wx.Panel):
             VectorCtrlMapper(self.centreVector, 'Value', wx.EVT_TEXT)
             )
         
-        radiusLabel = wx.StaticText(self, label='Radius / mm')
+        radiusLabel = wx.StaticText(self, label='Radius / m')
         self.radiusField = wx.TextCtrl(self)
 #        self.radiusField.SetEditable(False)
         
@@ -285,20 +292,31 @@ class VoxelPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
         
-        voxelLabel = wx.StaticText(self, label='Voxel size (mm)')
-        self.voxelSizeField = NumCtrl(self, style=wx.TE_PROCESS_ENTER, integerWidth=2, fractionWidth=4, allowNegative=False)
+        voxelLabel = wx.StaticText(self, label='Voxel size / m')
+#        controller.BindValue('StlFileUnitId',
+#                              WxWidgetMapper(voxelLabel,
+#                                             'Label', wx.EVT_TEXT,
+#                                             translator=QuickTranslator(lambda i: 'Voxel size (%s)' % Profile._UnitChoices[i].Abbrv,
+#                                                                        lambda x: 1)))
+        self.voxelSizeField = wx.TextCtrl(self)
         self.controller.BindValue('VoxelSize',
-                                  WxWidgetMapper(self.voxelSizeField, 'Value', EVT_NUM,
-                                                 translator=NoneToValueTranslator(0.)))
+                                  WxWidgetMapper(self.voxelSizeField, 'Value', wx.EVT_TEXT,
+                                                 translator=FloatTranslator()))
         
         self.voxelResetButton = wx.Button(self, label='Reset')
         self.controller.BindAction('ResetVoxelSize', WxActionBinding(self.voxelResetButton, wx.EVT_BUTTON))
         
         layout = V(
             voxelLabel,
-            (H((V(self.voxelSizeField), 1, wx.EXPAND),
+            (H((V((self.voxelSizeField, 0, wx.EXPAND)), 1, wx.EXPAND),
                self.voxelResetButton), 1, wx.EXPAND)
             )
+#        layout = V(
+#            xmlLabel,
+#            (H((V((self.xmlField, 0, wx.EXPAND)), 1, wx.EXPAND),
+#                 self.xmlChooseButton
+#                 ), 0, wx.EXPAND)
+#            )
         self.SetSizer(layout.create())
         return
     pass
@@ -310,7 +328,7 @@ class SeedPanel(wx.Panel):
         wx.Panel.__init__(self, *args, **kwargs)
         self.controller = controller
         
-        seedLabel = wx.StaticText(self, label='Seed Position')
+        seedLabel = wx.StaticText(self, label='Seed Position / m')
         self.seedVector = VectorCtrl(self)
 
         controller.BindValue('SeedPoint',
