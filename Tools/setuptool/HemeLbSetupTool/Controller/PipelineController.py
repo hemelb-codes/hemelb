@@ -1,4 +1,5 @@
 import operator
+from math import sqrt
 from vtk import vtkInteractorStyleTrackballCamera
 
 from ..Bindings.ObjectController import ObjectController
@@ -71,9 +72,10 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
         
         self.mode = 'view'
         
-        self.DefineVtkObjectKey('StlMapper')
-        self.DefineVtkObjectKey('StlActor')
+        self.DefineVtkObjectKey('SurfaceMapper')
+        self.DefineVtkObjectKey('SurfaceActor')
         self.DefineVtkObjectKey('Locator')
+        
         self.DefinePlacedIoletListKey('PlacedIolets')
         
         profileController.BindValue('Iolets',
@@ -82,8 +84,8 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
         profileController.BindValue('Iolets.SelectedIndex',
                                     SimpleObservingMapper(self.PlacedIolets, 'SelectedIndex'))
         
-        self.GetValueForKey('StlMapper.SetInputConnection')(
-            profileController.GetValueForKey('StlReader.GetOutputPort')()
+        self.GetValueForKey('SurfaceMapper.SetInputConnection')(
+            profileController.GetValueForKey('SurfaceSource.GetOutputPort')()
             )
         
         # self.PlacedSeed = PlacedSeed(self)
@@ -96,7 +98,11 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
                                     SeedCoordMapper(2, self.GetValueForKey('PlacedSeed')))
 
         
-        profileController.AddObserver('StlReader.Modified', self.HandleStlReaderModified)
+        profileController.AddObserver('SurfaceSource.Modified', self.HandleSurfaceSourceModified)
+#        pdb.set_trace()
+#        vtkSider = profileController.delegate.SideLengthCalculator
+#        vtkSider.AddObserver('ModifiedEvent', self.HandleSurfaceSourceModified)
+#        profileController.AddObserver('StlFileUnitId', self.OnStlFileUnitIdChanged)
         self.AddDependency('SeedPlaceButtonEnabled', 'mode')
         self.AddDependency('SeedPlaceButtonLabel', 'mode')
         self.AddDependency('IoletPlaceButtonEnabled', 'mode')
@@ -162,14 +168,33 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
             )
         return
     
-    def HandleStlReaderModified(self, change):
-        self.GetValueForKey('Locator.SetDataSet')(
-            change.obj.GetValueForKey('StlReader.GetOutput')()
-            )
+    def HandleSideLengthModified(self, obj, evt):
+        pdb.set_trace()
+        side = obj.GetValueForKey.GetOutputValue()
+        self.SetValueForKey('PlacedSeed.representation.Radius', side)
+        return
+        
+    def HandleSurfaceSourceModified(self, change):
+        # THis gets the Controller, so get the model object underneath
+        source = change.obj.GetValueForKey('SurfaceSource').delegate
+        source.Update()
+        surf = source.GetOutput()
+        surf.ComputeBounds()
+        
+        self.GetValueForKey('Locator.SetDataSet')(surf)
         self.GetValueForKey('Locator.BuildLocator')()
+        bounds = surf.GetBounds()
+        # VTK standard bounding box
+        # Compute diagonal length
+        size = sqrt((bounds[1]-bounds[0])**2 +
+                    (bounds[3]-bounds[2])**2 +
+                    (bounds[5]-bounds[4])**2)
+        
+        # Set the WidgetSize to 1% of the BB diagonal
+        self.SetValueForKey('WidgetSize', 0.01 * size)
         self.delegate.ResetView()
         return
-
+    
     def HandleLeftClick(self, obj, evt):
         """Callback to handle VTK click events in the RWI.
         """
@@ -223,48 +248,4 @@ class PipelineController(HasVtkObjectKeys, HasPlacedIoletListKeys, ObjectControl
             worldPos, worldOrient)
         return didClickSurface, worldPos
 
-
-    
-    # def ChangeStlValidity(self, change):
-    #     if self.GetValueForKey('HaveValidStlFile'):
-    #         # We have a valid STL
-    #         newStlFile = self.GetValueForKey('StlFile')
-    #         if newStlFile != self._lastStlFile:
-    #             # The new path is different from the last one
-    #             self.locator.SetDataSet(self.GetValueForKey('StlReader').GetOutput())
-    #             self.locator.BuildLocator()
-    #             self._lastStlFile = newStlFile
-    #         else:
-    #             # Its the same file
-    #             pass
-    #     else:
-    #         # STL is invalid, do nothin
-    #         pass
-    #     return
-        
-    # def Show(self):
-    #     if not self.IsActorAdded(self.stlActor):
-    #         self.renderer.AddActor(self.stlActor)
-    #         self.rwi.Update()
-    #         pass
-    #     return
-    
-    # def PlaceSeed(self):
-    #     self.seeder.PlaceOn()
-    #     return
-
-    # def SetSeedPoint(self, pos):
-    #     return self.seeder.SetSeedPoint(pos)
-    
     pass
-
-    # def GetActorReady(self, placer):
-    #     # Update the centre
-    #     if self.SeedPoint is not None:
-    #         self.representation.SetCenter(self.SeedPoint)
-    #         bb = placer.surfaceActor.GetBounds()
-    #         # Set the radius to 1% of the average bounding box side
-    #         self.representation.SetRadius(sum([bb[2*i+1]-bb[2*i] for i in range(3)])/300.)
-    #         return self.actor
-    #     return None
-
