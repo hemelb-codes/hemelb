@@ -114,7 +114,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   // Initialise the Lbm.
   mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology);
 
-  hemelb::topology::TopologyReader lTopologist;
+  hemelb::topology::TopologyReader
+      lTopologist(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore());
   lTopologist.LoadAndDecompose(&mGlobLatDat, mLbm->total_fluid_sites, mLbm->siteMins,
                                mLbm->siteMaxes,
                                hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
