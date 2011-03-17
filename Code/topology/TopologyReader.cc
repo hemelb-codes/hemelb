@@ -19,32 +19,48 @@ namespace hemelb
     // LocalLatticeData), and the functions in Net which initialise them. Once the interface
     // to this object is nice and clean, we can tidy up the code here.
 
-    TopologyReader::TopologyReader()
+    TopologyReader::TopologyReader(const bool reserveSteeringCore)
     {
-      MPI_Comm_group(MPI_COMM_WORLD, &mTopologyGroup);
-
-      MPI_Group lNewGroup;
-      int lExclusions[1] = { 0 };
-      MPI_Group_excl(mTopologyGroup, 1, lExclusions, &lNewGroup);
-      mTopologyGroup = lNewGroup;
-
-      MPI_Comm_create(MPI_COMM_WORLD, mTopologyGroup, &mTopologyComm);
-
+      // Each rank needs to know its global rank
       MPI_Comm_rank(MPI_COMM_WORLD, &mGlobalRank);
 
+      // Get the group of all procs.
+      MPI_Group lWorldGroup;
+      MPI_Comm_group(MPI_COMM_WORLD, &lWorldGroup);
+
+      // Create our own group, without the root node.
+      if (reserveSteeringCore)
+      {
+        int lExclusions[1] = { 0 };
+        MPI_Group_excl(lWorldGroup, 1, lExclusions, &mTopologyGroup);
+      }
+      else
+      {
+        mTopologyGroup = lWorldGroup;
+      }
+
+      // Create a communicator just for the domain decomposition.
+      MPI_Comm_create(MPI_COMM_WORLD, mTopologyGroup, &mTopologyComm);
+
+      // Each rank needs to know its rank wrt the domain
+      // decomposition.
       if (mGlobalRank != 0)
       {
         MPI_Comm_rank(mTopologyComm, &mTopologyRank);
         MPI_Comm_size(mTopologyComm, &mTopologySize);
       }
-
-      // Reduce the size
-      --mTopologySize;
+      else
+      {
+        mTopologyRank = -1;
+        mTopologySize = 0;
+      }
     }
 
     TopologyReader::~TopologyReader()
     {
       MPI_Group_free(&mTopologyGroup);
+
+      // Note that on rank 0, this is the same as MPI_COMM_WORLD.
       if (mGlobalRank != 0)
       {
         MPI_Comm_free(&mTopologyComm);
@@ -68,16 +84,20 @@ namespace hemelb
                                       hemelb::lb::LbmParameters * bParams,
                                       hemelb::lb::GlobalLatticeData* bGlobalLatticeData)
     {
-      std::string lMode = "native";
+      // The config file starts with:
+      // * 1 unsigned int for stress type
+      // * 3 unsigned ints for the number of blocks in the x, y, z directions
+      // * 1 unsigned int for the block size (number of sites along one edge of a block)
+      static const int PreambleBytes = 20;
 
-      MPI_File_set_view(xiFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL);
-
+      // Read in the file preamble into a buffer.
       char lPreambleBuffer[PreambleBytes];
 
       MPI_Status lStatus;
 
       MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_BYTE, &lStatus);
 
+      // Create an Xdr translator based on the read-in data.
       hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
                                                                       PreambleBytes);
 
@@ -85,6 +105,7 @@ namespace hemelb
       unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
       double voxelSize, siteZeroWorldPosition[3];
 
+      // Read in the values.
       preambleReader.readUnsignedInt(stressType);
       preambleReader.readUnsignedInt(blocksX);
       preambleReader.readUnsignedInt(blocksY);
@@ -92,8 +113,11 @@ namespace hemelb
       preambleReader.readUnsignedInt(blockSize);
       preambleReader.readDouble(voxelSize);
       for (unsigned int i = 0; i < 3; ++i)
-        preambleReader.readDouble(siteZeroWorldPosition[0]);
+      {
+        preambleReader.readDouble(siteZeroWorldPosition[i]);
+      }
 
+      // Pass the read in variables to the objects that need them.
       bParams->StressType = (lb::StressTypes) stressType;
 
       bGlobalLatticeData->SetBasicDetails(blocksX, blocksY, blocksZ, blockSize);
@@ -101,6 +125,10 @@ namespace hemelb
 
     /**
      * Read the header section, with minimal information about each block.
+     *
+     * Note that the output is placed into the arrays sitesInEachBlock and
+     * bytesUsedByBlockInDataFile, each of which must have iBlockCount
+     * elements allocated.
      *
      * // HEADER
      * uint nSites[nBlocks];
@@ -121,15 +149,18 @@ namespace hemelb
       // the block in the data file.
       unsigned int headerByteCount = 2 * 4 * iBlockCount;
 
+      // Allocate a buffer to read into, then do the reading.
       char* lHeaderBuffer = new char[headerByteCount];
 
       MPI_Status lStatus;
 
       MPI_File_read_all(xiFile, lHeaderBuffer, headerByteCount, MPI_BYTE, &lStatus);
 
+      // Create a Xdr translation object to translate from binary
       hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lHeaderBuffer,
                                                                       headerByteCount);
 
+      // Reada in all the data.
       for (unsigned int ii = 0; ii < iBlockCount; ii++)
       {
         preambleReader.readUnsignedInt(sitesInEachBlock[ii]);
@@ -151,18 +182,21 @@ namespace hemelb
      * To achieve this here, use parmetis's "nparts" parameters to first decompose over machines, then
      * to decompose within machines.
      *
-     * @param iBlockCount
-     * @param sitesInEachBlock
-     * @param initialProcForEachBlock
+     * @param initialProcForEachBlock Array of length iBlockCount, into which the rank number will be
+     * written for each block
+     * @param blockCountPerProc Array of length topology size, into which the number of blocks
+     * allocated to each processor will be written.
      */
     void TopologyReader::BlockDecomposition(const unsigned int iBlockCount,
                                             const unsigned int iProcCount,
                                             const bool reservedSteeringCore,
                                             const hemelb::lb::GlobalLatticeData* iGlobLatDat,
                                             const unsigned int* fluidSitePerBlock,
-                                            int* initialProcForEachBlock,
-                                            unsigned int* blockCountPerProc)
+                                            int* initialProcForEachBlock)
     {
+      // TODO hack to use iProcCount.
+      unsigned int* blockCountPerProc = new unsigned int[iProcCount];
+
       // Count of block sites.
       unsigned int lUnvisitedFluidBlockCount = 0;
       for (unsigned int ii = 0; ii < iBlockCount; ++ii)
@@ -243,6 +277,10 @@ namespace hemelb
       }
       fflush(NULL);
 
+      std::string lMode = "native";
+
+      MPI_File_set_view(lFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL);
+
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 
       unsigned int* sitesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
@@ -251,10 +289,8 @@ namespace hemelb
       ReadHeader(lFile, bGlobLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
 
       int* procForEachBlock = new int[bGlobLatDat->GetBlockCount()];
-      unsigned int* blockCountForEachProc = new unsigned int[bNetTop->GetProcessorCount()];
       BlockDecomposition(bGlobLatDat->GetBlockCount(), bNetTop->GetProcessorCount(),
-                         iReserveSteeringCore, bGlobLatDat, sitesPerBlock, procForEachBlock,
-                         blockCountForEachProc);
+                         iReserveSteeringCore, bGlobLatDat, sitesPerBlock, procForEachBlock);
 
       ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, bNetTop->GetLocalRank(),
                         bGlobLatDat);
@@ -273,8 +309,8 @@ namespace hemelb
         }
       }
 
-      OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, blockCountForEachProc, bNetTop,
-                                  bSimConfig, bLbmParams, bGlobLatDat);
+      OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, bNetTop, bSimConfig, bLbmParams,
+                                  bGlobLatDat);
 
       bNetTop->FluidSitesOnEachProcessor = new int[bNetTop->GetProcessorCount()];
 
@@ -778,7 +814,6 @@ namespace hemelb
 
     void TopologyReader::OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
                                                      const int* procForEachBlock,
-                                                     const unsigned int* blockCountForEachProc,
                                                      const topology::NetworkTopology* iNetTop,
                                                      SimConfig* bSimConfig,
                                                      lb::LbmParameters* bLbmParams,
@@ -1136,6 +1171,10 @@ namespace hemelb
         fflush(0x0);
         exit(0x0);
       }
+
+      std::string lMode = "native";
+
+      MPI_File_set_view(lFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL);
 
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 
