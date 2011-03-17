@@ -15,7 +15,7 @@ namespace hemelb
     class TopologyReader
     {
       public:
-        TopologyReader();
+        TopologyReader(const bool reserveSteeringCore);
         ~TopologyReader();
 
         void LoadAndDecompose(lb::GlobalLatticeData* bGlobalLatticeData,
@@ -49,8 +49,7 @@ namespace hemelb
                                 const bool reservedSteeringCore,
                                 const hemelb::lb::GlobalLatticeData* iGlobLatDat,
                                 const unsigned int* fluidSitePerBlock,
-                                int* initialProcForEachBlock,
-                                unsigned int* blockCountPerProc);
+                                int* initialProcForEachBlock);
 
         void DivideBlocks(unsigned int currentUnit,
                           unsigned int blocksPerUnit,
@@ -70,17 +69,10 @@ namespace hemelb
 
         void OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
                                          const int* procForEachBlock,
-                                         const unsigned int* blockCountForEachProc,
                                          const topology::NetworkTopology* iNetTop,
                                          SimConfig* bSimConfig,
                                          lb::LbmParameters* bLbmParams,
                                          lb::GlobalLatticeData* bGlobLatDat);
-
-        // The config file starts with:
-        // * 1 unsigned int for stress type
-        // * 3 unsigned ints for the number of blocks in the x, y, z directions
-        // * 1 unsigned int for the block size (number of sites along one edge of a block)
-        static const int PreambleBytes = 20;
 
         MPI_Comm mTopologyComm;
         MPI_Group mTopologyGroup;
