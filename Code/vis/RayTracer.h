@@ -2,8 +2,8 @@
 #define HEMELB_VIS_RAYTRACER_H
 
 #include "constants.h"
-#include "lb/LocalLatticeData.h"
-#include "lb/GlobalLatticeData.h"
+#include "geometry/LocalLatticeData.h"
+#include "geometry/GlobalLatticeData.h"
 #include "topology/NetworkTopology.h"
 
 #include "vis/DomainStats.h"
@@ -20,8 +20,8 @@ namespace hemelb
       public:
         // Constructor and destructor do all the usual stuff.
         RayTracer(const topology::NetworkTopology * iNetworkTopology,
-                  const lb::LocalLatticeData* iLocalLatDat,
-                  const lb::GlobalLatticeData* iGlobLatDat,
+                  const geometry::LocalLatticeData* iLocalLatDat,
+                  const geometry::GlobalLatticeData* iGlobLatDat,
                   DomainStats* iDomainStats,
                   Screen* iScreen,
                   Viewpoint* iViewpoint,
@@ -110,8 +110,8 @@ namespace hemelb
         void rtBuildClusters();
 
         const topology::NetworkTopology * mNetworkTopology;
-        const lb::LocalLatticeData* mLocalLatDat;
-        const lb::GlobalLatticeData* mGlobLatDat;
+        const geometry::LocalLatticeData* mLocalLatDat;
+        const geometry::GlobalLatticeData* mGlobLatDat;
 
         DomainStats* mDomainStats;
         Screen* mScreen;

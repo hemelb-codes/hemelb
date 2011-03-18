@@ -117,10 +117,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   hemelb::topology::TopologyReader
       lTopologist(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore());
   lTopologist.LoadAndDecompose(&mGlobLatDat, mLbm->total_fluid_sites, mLbm->siteMins,
-                               mLbm->siteMaxes,
-                               hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
-                               mNetworkTopology, mLbm->GetLbmParams(), iSimConfig, &mFileReadTime,
-                               &mDomainDecompTime);
+                               mLbm->siteMaxes, mNetworkTopology, mLbm->GetLbmParams(), iSimConfig,
+                               &mFileReadTime, &mDomainDecompTime);
 
   // Initialise and begin the steering.
   if (mNetworkTopology->IsCurrentProcTheIOProc())
@@ -134,8 +132,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   // Initialise the Net object and the Lbm.
   mLocalLatDat
-      = new hemelb::lb::LocalLatticeData(
-                                         mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]);
+      = new hemelb::geometry::LocalLatticeData(
+                                               mNetworkTopology->FluidSitesOnEachProcessor[mNetworkTopology->GetLocalRank()]);
 
   mNet = new hemelb::net::Net(mNetworkTopology);
 

@@ -477,7 +477,7 @@ namespace hemelb
           {
             n++;
 
-            lb::BlockData * lBlock = &mGlobLatDat->Blocks[n];
+            geometry::BlockData * lBlock = &mGlobLatDat->Blocks[n];
             if (lBlock->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
@@ -709,7 +709,7 @@ namespace hemelb
                 continue;
               }
 
-              lb::BlockData * lBlock = &mGlobLatDat->Blocks[block_id];
+              geometry::BlockData * lBlock = &mGlobLatDat->Blocks[block_id];
 
               cluster_flow_field[lThisClusterId][n]
                   = new float[mGlobLatDat->SitesPerBlockVolumeUnit * VIS_FIELDS];
@@ -772,8 +772,8 @@ namespace hemelb
     }
 
     RayTracer::RayTracer(const topology::NetworkTopology * iNetworkTopology,
-                         const lb::LocalLatticeData* iLocalLatDat,
-                         const lb::GlobalLatticeData* iGlobLatDat,
+                         const geometry::LocalLatticeData* iLocalLatDat,
+                         const geometry::GlobalLatticeData* iGlobLatDat,
                          DomainStats* iDomainStats,
                          Screen* iScreen,
                          Viewpoint* iViewpoint,

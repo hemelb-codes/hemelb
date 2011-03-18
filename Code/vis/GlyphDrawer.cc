@@ -9,8 +9,8 @@ namespace hemelb
     double GlyphDrawer::glyph_length = -1.F;
 
     // Constructor
-    GlyphDrawer::GlyphDrawer(hemelb::lb::GlobalLatticeData* iGlobalLatDat,
-                             hemelb::lb::LocalLatticeData* iLocalLatDat,
+    GlyphDrawer::GlyphDrawer(geometry::GlobalLatticeData* iGlobalLatDat,
+                             geometry::LocalLatticeData* iLocalLatDat,
                              Screen* iScreen,
                              DomainStats* iDomainStats,
                              Viewpoint* iViewpoint,
@@ -31,7 +31,7 @@ namespace hemelb
               += iGlobalLatDat->GetBlockSize())
           {
             n++;
-            lb::BlockData * map_block_p = &iGlobalLatDat->Blocks[n];
+            geometry::BlockData * map_block_p = &iGlobalLatDat->Blocks[n];
 
             if (map_block_p->site_data == NULL)
             {

@@ -91,7 +91,7 @@ namespace hemelb
     // Calculate the BCs for each boundary site type and the
     // non-equilibrium distribution functions.
     void LBM::CalculateBC(double f[],
-                          hemelb::lb::SiteType iSiteType,
+                          hemelb::geometry::SiteType iSiteType,
                           unsigned int iBoundaryId,
                           double *density,
                           double *vx,
@@ -106,13 +106,13 @@ namespace hemelb
         f_neq[l] = f[l];
       }
 
-      if (iSiteType == hemelb::lb::FLUID_TYPE)
+      if (iSiteType == hemelb::geometry::FLUID_TYPE)
       {
         D3Q15::CalculateDensityAndVelocity(f, *density, *vx, *vy, *vz);
       }
       else
       {
-        if (iSiteType == hemelb::lb::INLET_TYPE)
+        if (iSiteType == hemelb::geometry::INLET_TYPE)
         {
           *density = inlet_density[iBoundaryId];
         }
@@ -199,7 +199,9 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
-    void LBM::Initialise(int* iFTranslator, LocalLatticeData* bLocalLatDat, vis::Control* iControl)
+    void LBM::Initialise(int* iFTranslator,
+                         geometry::LocalLatticeData* bLocalLatDat,
+                         vis::Control* iControl)
     {
       receivedFTranslator = iFTranslator;
 
@@ -208,7 +210,7 @@ namespace hemelb
       mVisControl = iControl;
     }
 
-    void LBM::SetInitialConditions(hemelb::lb::LocalLatticeData* bLocalLatDat)
+    void LBM::SetInitialConditions(geometry::LocalLatticeData* bLocalLatDat)
     {
       double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
       double density;
@@ -256,7 +258,7 @@ namespace hemelb
       return NULL;
     }
 
-    void LBM::RequestComms(net::Net* net, lb::LocalLatticeData* bLocalLatDat)
+    void LBM::RequestComms(net::Net* net, geometry::LocalLatticeData* bLocalLatDat)
     {
       for (std::vector<hemelb::topology::NeighbouringProcessor*>::const_iterator it =
           mNetTopology->NeighbouringProcs.begin(); it != mNetTopology->NeighbouringProcs.end(); it++)
@@ -271,7 +273,7 @@ namespace hemelb
       }
     }
 
-    void LBM::PreSend(lb::LocalLatticeData* bLocalLatDat, int perform_rt)
+    void LBM::PreSend(geometry::LocalLatticeData* bLocalLatDat, int perform_rt)
     {
       int offset = bLocalLatDat->my_inner_sites;
 
@@ -287,7 +289,7 @@ namespace hemelb
       }
     }
 
-    void LBM::PreReceive(int perform_rt, lb::LocalLatticeData* bLocalLatDat)
+    void LBM::PreReceive(int perform_rt, geometry::LocalLatticeData* bLocalLatDat)
     {
       int offset = 0;
 
@@ -303,7 +305,7 @@ namespace hemelb
       }
     }
 
-    void LBM::PostReceive(lb::LocalLatticeData* bLocalLatDat, int perform_rt)
+    void LBM::PostReceive(geometry::LocalLatticeData* bLocalLatDat, int perform_rt)
     {
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
@@ -333,7 +335,7 @@ namespace hemelb
       }
     }
 
-    void LBM::EndIteration(lb::LocalLatticeData* bLocalLatDat)
+    void LBM::EndIteration(geometry::LocalLatticeData* bLocalLatDat)
     {
       // Swap f_old and f_new ready for the next timestep.
       double *temp = bLocalLatDat->FOld;
@@ -405,7 +407,7 @@ namespace hemelb
 
     // Update peak and average inlet velocities local to the current subdomain.
     void LBM::UpdateInletVelocities(int time_step,
-                                    lb::LocalLatticeData &iLocalLatDat,
+                                    geometry::LocalLatticeData &iLocalLatDat,
                                     net::Net *net)
     {
       double density;
@@ -511,7 +513,7 @@ namespace hemelb
     // In the case of instability, this function restart the simulation
     // with twice as many time steps per period and update the parameters
     // that depends on this change.
-    void LBM::Restart(hemelb::lb::LocalLatticeData* iLocalLatDat)
+    void LBM::Restart(geometry::LocalLatticeData* iLocalLatDat)
     {
       int i;
 
