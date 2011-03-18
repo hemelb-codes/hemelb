@@ -1,5 +1,6 @@
 #include "topology/NetworkTopology.h"
 #include "math.h"
+#include "mpiInclude.h"
 
 namespace hemelb
 {

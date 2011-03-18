@@ -1,8 +1,7 @@
 #ifndef HEMELB_VIS_GLYPHDRAWER_H
 #define HEMELB_VIS_GLYPHDRAWER_H
 
-#include "geometry/LocalLatticeData.h"
-#include "geometry/GlobalLatticeData.h"
+#include "geometry/LatticeData.h"
 
 #include "vis/Screen.h"
 #include "vis/DomainStats.h"
@@ -26,8 +25,7 @@ namespace hemelb
         static double glyph_length;
 
         // Constructor and destructor
-        GlyphDrawer(geometry::GlobalLatticeData* iGlobalLatDat,
-                    geometry::LocalLatticeData* iLocalLatDat,
+        GlyphDrawer(geometry::LatticeData* iLatDat,
                     Screen* iScreen,
                     DomainStats* iDomainStats,
                     Viewpoint* iViewpoint,
@@ -51,7 +49,7 @@ namespace hemelb
         VisSettings* mVisSettings;
 
         std::vector<Glyph*> mGlyphs;
-        geometry::GlobalLatticeData* mGlobalLatDat;
+        geometry::LatticeData* mLatDat;
     };
 
   }

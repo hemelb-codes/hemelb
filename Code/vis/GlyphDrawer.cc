@@ -9,8 +9,7 @@ namespace hemelb
     double GlyphDrawer::glyph_length = -1.F;
 
     // Constructor
-    GlyphDrawer::GlyphDrawer(geometry::GlobalLatticeData* iGlobalLatDat,
-                             geometry::LocalLatticeData* iLocalLatDat,
+    GlyphDrawer::GlyphDrawer(geometry::LatticeData* iLatDat,
                              Screen* iScreen,
                              DomainStats* iDomainStats,
                              Viewpoint* iViewpoint,
