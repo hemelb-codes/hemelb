@@ -45,15 +45,11 @@ namespace hemelb
                         unsigned int* bytesUsedByBlockInDataFile);
 
         void BlockDecomposition(const unsigned int iBlockCount,
-                                const unsigned int iProcCount,
-                                const bool reservedSteeringCore,
                                 const hemelb::lb::GlobalLatticeData* iGlobLatDat,
                                 const unsigned int* fluidSitePerBlock,
                                 int* initialProcForEachBlock);
 
-        void DivideBlocks(unsigned int currentUnit,
-                          unsigned int blocksPerUnit,
-                          unsigned int unassignedBlocks,
+        void DivideBlocks(unsigned int unassignedBlocks,
                           unsigned int totalBlockCount,
                           unsigned int unitCount,
                           unsigned int* blocksOnEachUnit,
@@ -69,7 +65,6 @@ namespace hemelb
 
         void OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
                                          const int* procForEachBlock,
-                                         const topology::NetworkTopology* iNetTop,
                                          SimConfig* bSimConfig,
                                          lb::LbmParameters* bLbmParams,
                                          lb::GlobalLatticeData* bGlobLatDat);
@@ -77,7 +72,7 @@ namespace hemelb
         MPI_Comm mTopologyComm;
         MPI_Group mTopologyGroup;
         int mTopologyRank;
-        int mTopologySize;
+        unsigned int mTopologySize;
         int mGlobalRank;
     };
 
