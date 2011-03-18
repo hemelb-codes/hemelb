@@ -6,7 +6,7 @@ namespace hemelb
   namespace lb
   {
 
-    StabilityTester::StabilityTester(const hemelb::lb::LocalLatticeData * iLocalLatDat,
+    StabilityTester::StabilityTester(const geometry::LocalLatticeData * iLocalLatDat,
                                      net::Net* net,
                                      topology::NetworkTopology* iNetTop,
                                      SimulationState* simState) :

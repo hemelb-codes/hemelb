@@ -2,12 +2,12 @@
 #define HEMELB_LB_GLOBALLATTICEDATA_H
 
 #include "D3Q15.h"
-#include "lb/LocalLatticeData.h"
+#include "geometry/LocalLatticeData.h"
 #include <cstdlib>
 
 namespace hemelb
 {
-  namespace lb
+  namespace geometry
   {
     // Data about an element of the domain wall
     struct WallData
@@ -148,19 +148,19 @@ namespace hemelb
         {
           unsigned int boundary_type;
 
-          if (site_data == hemelb::lb::FLUID_TYPE)
+          if (site_data == hemelb::geometry::FLUID_TYPE)
           {
             return FLUID;
           }
           boundary_type = site_data & SITE_TYPE_MASK;
 
-          if (boundary_type == hemelb::lb::FLUID_TYPE)
+          if (boundary_type == hemelb::geometry::FLUID_TYPE)
           {
             return EDGE;
           }
           if (! (site_data & PRESSURE_EDGE_MASK))
           {
-            if (boundary_type == hemelb::lb::INLET_TYPE)
+            if (boundary_type == hemelb::geometry::INLET_TYPE)
             {
               return INLET;
             }
@@ -171,7 +171,7 @@ namespace hemelb
           }
           else
           {
-            if (boundary_type == hemelb::lb::INLET_TYPE)
+            if (boundary_type == hemelb::geometry::INLET_TYPE)
             {
               return INLET | EDGE;
             }

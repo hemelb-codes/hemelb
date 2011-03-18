@@ -17,7 +17,7 @@ namespace hemelb
     // are used to do the visualisation. This is a bug.
 
     // Function to initialise the velocity field at given coordinates.
-    void StreaklineDrawer::initializeVelFieldBlock(lb::GlobalLatticeData* iGlobLatDat,
+    void StreaklineDrawer::initializeVelFieldBlock(geometry::GlobalLatticeData* iGlobLatDat,
                                                    unsigned int site_i,
                                                    unsigned int site_j,
                                                    unsigned int site_k,
@@ -56,7 +56,7 @@ namespace hemelb
 
     // Returns the velocity site data for a given index, or NULL if the index isn't valid / has
     // no data.
-    StreaklineDrawer::VelSiteData *StreaklineDrawer::velSiteDataPointer(lb::GlobalLatticeData* iGlobLatDat,
+    StreaklineDrawer::VelSiteData *StreaklineDrawer::velSiteDataPointer(geometry::GlobalLatticeData* iGlobLatDat,
                                                                         unsigned int site_i,
                                                                         unsigned int site_j,
                                                                         unsigned int site_k)
@@ -169,8 +169,8 @@ namespace hemelb
     void StreaklineDrawer::localVelField(int p_index,
                                          float v[2][2][2][3],
                                          int *is_interior,
-                                         lb::GlobalLatticeData* iGlobLatDat,
-                                         lb::LocalLatticeData* iLocalLatDat)
+                                         geometry::GlobalLatticeData* iGlobLatDat,
+                                         geometry::LocalLatticeData* iLocalLatDat)
     {
       unsigned int site_i = (unsigned int) particleVec[p_index].x;
       unsigned int site_j = (unsigned int) particleVec[p_index].y;
@@ -248,8 +248,8 @@ namespace hemelb
 
     // Constructor, populating fields from lattice data objects.
     StreaklineDrawer::StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
-                                       lb::LocalLatticeData* iLocalLatDat,
-                                       lb::GlobalLatticeData* iGlobLatDat,
+                                       geometry::LocalLatticeData* iLocalLatDat,
+                                       geometry::GlobalLatticeData* iGlobLatDat,
                                        Screen* iScreen,
                                        Viewpoint* iViewpoint,
                                        VisSettings* iVisSettings) :
@@ -281,7 +281,7 @@ namespace hemelb
           for (unsigned int k = 0; k < iGlobLatDat->GetZSiteCount(); k
               += iGlobLatDat->GetBlockSize())
           {
-            lb::BlockData* lBlock = &iGlobLatDat->Blocks[n];
+            geometry::BlockData* lBlock = &iGlobLatDat->Blocks[n];
 
             ++n;
 
@@ -374,7 +374,7 @@ namespace hemelb
                   int lSiteIndex = lBlock->site_data[m];
 
                   // if the lattice site is not an inlet
-                  if (iLocalLatDat->GetSiteType(lSiteIndex) != lb::INLET_TYPE)
+                  if (iLocalLatDat->GetSiteType(lSiteIndex) != geometry::INLET_TYPE)
                   {
                     continue;
                   }
@@ -519,7 +519,7 @@ namespace hemelb
     }
 
     // Communicate velocities to other processors.
-    void StreaklineDrawer::communicateVelocities(lb::GlobalLatticeData* iGlobLatDat)
+    void StreaklineDrawer::communicateVelocities(geometry::GlobalLatticeData* iGlobLatDat)
     {
       int site_i, site_j, site_k;
       int neigh_i, neigh_j, neigh_k;
@@ -596,8 +596,8 @@ namespace hemelb
 
     // Update the velocity field.
     void StreaklineDrawer::updateVelField(int stage_id,
-                                          lb::GlobalLatticeData* iGlobLatDat,
-                                          lb::LocalLatticeData * iLocalLatDat)
+                                          geometry::GlobalLatticeData* iGlobLatDat,
+                                          geometry::LocalLatticeData * iLocalLatDat)
     {
       unsigned int particles_temp = nParticles;
 
@@ -654,7 +654,7 @@ namespace hemelb
     }
 
     // Communicate that particles current state to other processors.
-    void StreaklineDrawer::communicateParticles(lb::GlobalLatticeData* iGlobLatDat)
+    void StreaklineDrawer::communicateParticles(geometry::GlobalLatticeData* iGlobLatDat)
     {
       MPI_Status status;
 
@@ -747,7 +747,7 @@ namespace hemelb
     }
 
     // Render the streaklines
-    void StreaklineDrawer::render(lb::GlobalLatticeData* iGlobLatDat)
+    void StreaklineDrawer::render(geometry::GlobalLatticeData* iGlobLatDat)
     {
       int pixels_x = mScreen->PixelsX;
       int pixels_y = mScreen->PixelsY;
@@ -790,8 +790,8 @@ namespace hemelb
     // Draw streaklines
     void StreaklineDrawer::StreakLines(int time_steps,
                                        int time_steps_per_cycle,
-                                       lb::GlobalLatticeData* iGlobLatDat,
-                                       lb::LocalLatticeData* iLocalLatDat)
+                                       geometry::GlobalLatticeData* iGlobLatDat,
+                                       geometry::LocalLatticeData* iLocalLatDat)
     {
       unsigned int particle_creation_period =
           util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle

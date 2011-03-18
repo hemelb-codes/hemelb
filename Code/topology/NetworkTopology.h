@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdio>
 #include "mpiInclude.h"
-#include "lb/GlobalLatticeData.h"
+#include "geometry/GlobalLatticeData.h"
 
 namespace hemelb
 {

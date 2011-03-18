@@ -3,7 +3,7 @@
 
 #include "mpiInclude.h"
 #include "lb/LbmParameters.h"
-#include "lb/GlobalLatticeData.h"
+#include "geometry/GlobalLatticeData.h"
 #include "net/net.h"
 
 namespace hemelb
@@ -18,11 +18,10 @@ namespace hemelb
         TopologyReader(const bool reserveSteeringCore);
         ~TopologyReader();
 
-        void LoadAndDecompose(lb::GlobalLatticeData* bGlobalLatticeData,
+        void LoadAndDecompose(geometry::GlobalLatticeData* bGlobalLatticeData,
                               int &totalFluidSites,
                               unsigned int siteMins[3],
                               unsigned int siteMaxes[3],
-                              bool iReserveSteeringCore,
                               NetworkTopology* bNetTop,
                               lb::LbmParameters* bLbmParams,
                               SimConfig* bSimConfig,
@@ -37,7 +36,7 @@ namespace hemelb
 
         void ReadPreamble(MPI_File xiFile,
                           lb::LbmParameters* bParams,
-                          lb::GlobalLatticeData* bGlobalLatticeData);
+                          geometry::GlobalLatticeData* bGlobalLatticeData);
 
         void ReadHeader(MPI_File xiFile,
                         unsigned int iBlockCount,
@@ -45,7 +44,7 @@ namespace hemelb
                         unsigned int* bytesUsedByBlockInDataFile);
 
         void BlockDecomposition(const unsigned int iBlockCount,
-                                const hemelb::lb::GlobalLatticeData* iGlobLatDat,
+                                const geometry::GlobalLatticeData* iGlobLatDat,
                                 const unsigned int* fluidSitePerBlock,
                                 int* initialProcForEachBlock);
 
@@ -55,19 +54,19 @@ namespace hemelb
                           unsigned int* blocksOnEachUnit,
                           int* unitForEachBlock,
                           const unsigned int* fluidSitesPerBlock,
-                          const lb::GlobalLatticeData* iGlobLatDat);
+                          const geometry::GlobalLatticeData* iGlobLatDat);
 
         void ReadInLocalBlocks(MPI_File iFile,
                                const unsigned int* bytesPerBlock,
                                const int* unitForEachBlock,
                                const unsigned int localRank,
-                               const lb::GlobalLatticeData* iGlobLatDat);
+                               const geometry::GlobalLatticeData* iGlobLatDat);
 
         void OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
                                          const int* procForEachBlock,
                                          SimConfig* bSimConfig,
                                          lb::LbmParameters* bLbmParams,
-                                         lb::GlobalLatticeData* bGlobLatDat);
+                                         geometry::GlobalLatticeData* bGlobLatDat);
 
         MPI_Comm mTopologyComm;
         MPI_Group mTopologyGroup;

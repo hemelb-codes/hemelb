@@ -1,8 +1,8 @@
-#include "lb/LocalLatticeData.h"
+#include "geometry/LocalLatticeData.h"
 
 namespace hemelb
 {
-  namespace lb
+  namespace geometry
   {
 
     LocalLatticeData::LocalLatticeData(int iLocalFluidSites)
@@ -75,7 +75,9 @@ namespace hemelb
       return LocalFluidSites;
     }
 
-    void LocalLatticeData::SetNeighbourLocation(unsigned int iSiteIndex, unsigned int iDirection, unsigned int iValue)
+    void LocalLatticeData::SetNeighbourLocation(unsigned int iSiteIndex,
+                                                unsigned int iDirection,
+                                                unsigned int iValue)
     {
       mFNeighbours[iSiteIndex * D3Q15::NUMVECTORS + iDirection] = iValue;
     }

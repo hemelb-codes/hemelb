@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_LOCALLATTICEDATA_H
-#define HEMELB_LB_LOCALLATTICEDATA_H
+#ifndef HEMELB_GEOMETRY_LOCALLATTICEDATA_H
+#define HEMELB_GEOMETRY_LOCALLATTICEDATA_H
 
 #include "constants.h"
 #include "D3Q15.h"
@@ -7,7 +7,7 @@
 
 namespace hemelb
 {
-  namespace lb
+  namespace geometry
   {
     enum SiteType
     {

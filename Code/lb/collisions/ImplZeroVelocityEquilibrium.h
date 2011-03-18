@@ -18,7 +18,7 @@ namespace hemelb
                             const int iSiteCount,
                             const LbmParameters &iLbmParams,
                             MinsAndMaxes &bMinimaAndMaxima,
-                            LocalLatticeData &bLocalLatDat,
+                            geometry::LocalLatticeData &bLocalLatDat,
                             hemelb::vis::Control *iControl);
 
         private:
@@ -27,7 +27,7 @@ namespace hemelb
                                     const int iSiteCount,
                                     const LbmParameters &iLbmParams,
                                     MinsAndMaxes &bMinimaAndMaxima,
-                                    LocalLatticeData &bLocalLatDat,
+                                    geometry::LocalLatticeData &bLocalLatDat,
                                     hemelb::vis::Control *iControl);
       };
 
