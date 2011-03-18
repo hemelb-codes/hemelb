@@ -184,8 +184,8 @@ class Profile(Observable):
     
     def Generate(self):
         generator = ConfigGenerator(self)
-#        generator.Execute()
-        cProfile.runctx('generator.Execute()', globals(), locals(), 'generate.prof')
+        generator.Execute()
+#        cProfile.runctx('generator.Execute()', globals(), locals(), 'generate.prof')
         return
     
     def ResetVoxelSize(self, ignored=None):
