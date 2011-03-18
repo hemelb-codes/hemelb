@@ -2,7 +2,7 @@
 #define HEMELB_LB_COLLISIONS_COLLISION_H
 
 #include "vis/Control.h"
-#include "geometry/LocalLatticeData.h"
+#include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 
 #include <math.h>
@@ -33,7 +33,7 @@ namespace hemelb
                                     const int iSiteCount,
                                     const LbmParameters &iLbmParams,
                                     MinsAndMaxes &bMinimaAndMaxima,
-                                    geometry::LocalLatticeData &bLocalLatDat,
+                                    geometry::LatticeData &bLatDat,
                                     hemelb::vis::Control *iControl);
 
           virtual void PostStep(const bool iDoRayTracing,
@@ -41,7 +41,7 @@ namespace hemelb
                                 const int iSiteCount,
                                 const LbmParameters &iLbmParams,
                                 MinsAndMaxes &bMinimaAndMaxima,
-                                geometry::LocalLatticeData &bLocalLatDat,
+                                geometry::LatticeData &bLatDat,
                                 hemelb::vis::Control *iControl);
 
         protected:
@@ -57,7 +57,7 @@ namespace hemelb
                                   const double *f_neq,
                                   const double &iDensity,
                                   MinsAndMaxes &bMinimaAndMaxima,
-                                  const geometry::LocalLatticeData &iLocalLatDat,
+                                  const geometry::LatticeData &iLatDat,
                                   const LbmParameters &iLbmParams,
                                   hemelb::vis::Control *iControl)
           {
@@ -91,7 +91,7 @@ namespace hemelb
 
             if (iLbmParams.StressType == ShearStress)
             {
-              if (iLocalLatDat.GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
+              if (iLatDat.GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
               {
                 stress = 0.0;
                 rtStress = BIG_NUMBER;
@@ -99,7 +99,7 @@ namespace hemelb
               else
               {
                 D3Q15::CalculateShearStress(iDensity, f_neq,
-                                            iLocalLatDat.GetNormalToWall(iSiteIndex), stress,
+                                            iLatDat.GetNormalToWall(iSiteIndex), stress,
                                             iLbmParams.StressParameter);
                 rtStress = stress;
               }

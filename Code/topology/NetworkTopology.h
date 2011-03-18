@@ -3,8 +3,6 @@
 
 #include <vector>
 #include <cstdio>
-#include "mpiInclude.h"
-#include "geometry/GlobalLatticeData.h"
 
 namespace hemelb
 {
