@@ -165,8 +165,8 @@ namespace hemelb
 
     void LBM::WriteConfig(hemelb::lb::Stability stability,
                           std::string output_file_name,
-                          const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                          const hemelb::lb::LocalLatticeData &iLocalLatticeData)
+                          const hemelb::geometry::GlobalLatticeData &iGlobalLatticeData,
+                          const hemelb::geometry::LocalLatticeData &iLocalLatticeData)
     {
       /* This routine writes the flow field on file. The data are gathered
        to the root processor and written from there.  The format
@@ -340,7 +340,7 @@ namespace hemelb
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  if (iLocalLatticeData.mSiteData[my_site_id] == hemelb::lb::FLUID_TYPE)
+                  if (iLocalLatticeData.mSiteData[my_site_id] == geometry::FLUID_TYPE)
                   {
                     D3Q15::CalculateDensityVelocityFEq(&iLocalLatticeData.FOld[ (my_site_id * (par
                         + 1) + par) * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
@@ -515,8 +515,8 @@ namespace hemelb
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability,
                                   std::string output_file_name,
-                                  const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                                  const hemelb::lb::LocalLatticeData &iLocalLatticeData)
+                                  const hemelb::geometry::GlobalLatticeData &iGlobalLatticeData,
+                                  const hemelb::geometry::LocalLatticeData &iLocalLatticeData)
     {
       /* This routine writes the flow field on file. The data are gathered
        to the root processor and written from there.  The format
@@ -663,7 +663,7 @@ namespace hemelb
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  if (iLocalLatticeData.mSiteData[my_site_id] == hemelb::lb::FLUID_TYPE)
+                  if (iLocalLatticeData.mSiteData[my_site_id] == geometry::FLUID_TYPE)
                   {
                     D3Q15::CalculateDensityVelocityFEq(&iLocalLatticeData.FOld[my_site_id
                         * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);

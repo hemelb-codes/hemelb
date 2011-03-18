@@ -12,7 +12,7 @@ namespace hemelb
 {
   namespace vis
   {
-    Control::Control(lb::StressTypes iStressType, lb::GlobalLatticeData* iGlobLatDat)
+    Control::Control(lb::StressTypes iStressType, geometry::GlobalLatticeData* iGlobLatDat)
     {
       mVisSettings.mStressType = iStressType;
 
@@ -38,8 +38,8 @@ namespace hemelb
     }
 
     void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
-                             lb::GlobalLatticeData* iGlobLatDat,
-                             lb::LocalLatticeData* iLocalLatDat)
+                             geometry::GlobalLatticeData* iGlobLatDat,
+                             geometry::LocalLatticeData* iLocalLatDat)
     {
       myRayTracer = new RayTracer(iNetworkTopology, iLocalLatDat, iGlobLatDat, &mDomainStats,
                                   &mScreen, &mViewpoint, &mVisSettings);
@@ -283,7 +283,7 @@ namespace hemelb
     }
 
     void Control::render(int recv_buffer_id,
-                         lb::GlobalLatticeData* iGlobLatDat,
+                         geometry::GlobalLatticeData* iGlobLatDat,
                          const topology::NetworkTopology* iNetTopology)
     {
       if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
@@ -348,8 +348,8 @@ namespace hemelb
 
     void Control::streaklines(int time_step,
                               int period,
-                              lb::GlobalLatticeData* iGlobLatDat,
-                              lb::LocalLatticeData* iLocalLatDat)
+                              geometry::GlobalLatticeData* iGlobLatDat,
+                              geometry::LocalLatticeData* iLocalLatDat)
     {
       myStreaker ->StreakLines(time_step, period, iGlobLatDat, iLocalLatDat);
     }

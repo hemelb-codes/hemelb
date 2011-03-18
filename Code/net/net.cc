@@ -36,8 +36,8 @@ namespace hemelb
      implemented in this function.  The domain decomposition is based
      on a graph growing partitioning technique.
      */
-    int* Net::Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
-                         hemelb::lb::LocalLatticeData* &bLocalLatDat)
+    int* Net::Initialise(geometry::GlobalLatticeData &iGlobLatDat,
+                         geometry::LocalLatticeData* &bLocalLatDat)
     {
       // Create a map between the two-level data representation and the 1D
       // compact one is created here.
@@ -199,7 +199,7 @@ namespace hemelb
       MPI_Waitall(mNetworkTopology->NeighbouringProcs.size(), &mRequests[0], &mStatuses[0]);
     }
 
-    void Net::GetThisRankSiteData(const hemelb::lb::GlobalLatticeData &iGlobLatDat,
+    void Net::GetThisRankSiteData(const geometry::GlobalLatticeData &iGlobLatDat,
                                   unsigned int* &bThisRankSiteData)
     {
       // Array of booleans to store whether any sites on a block are fluid
@@ -215,7 +215,7 @@ namespace hemelb
 
       for (unsigned int lBlockNumber = 0; lBlockNumber < iGlobLatDat.GetBlockCount(); lBlockNumber++)
       {
-        hemelb::lb::BlockData * lCurrentDataBlock = &iGlobLatDat.Blocks[lBlockNumber];
+        geometry::BlockData * lCurrentDataBlock = &iGlobLatDat.Blocks[lBlockNumber];
 
         // If we are in a block of solids, move to the next block.
         if (lCurrentDataBlock->site_data == NULL)
@@ -224,7 +224,7 @@ namespace hemelb
         }
 
         // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
-        hemelb::lb::BlockData * proc_block_p = &iGlobLatDat.Blocks[lBlockNumber];
+        geometry::BlockData * proc_block_p = &iGlobLatDat.Blocks[lBlockNumber];
 
         // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
         // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
@@ -239,7 +239,7 @@ namespace hemelb
             // for this site within the current block to be the site index over the whole
             // processor.
             if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock] & SITE_TYPE_MASK)
-                != hemelb::lb::SOLID_TYPE)
+                != geometry::SOLID_TYPE)
             {
               bThisRankSiteData[lSiteIndexOnProc]
                   = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
@@ -288,8 +288,8 @@ namespace hemelb
       delete[] lBlockIsOnThisRank;
     }
 
-    void Net::CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
-                                  const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+    void Net::CountCollisionTypes(geometry::LocalLatticeData * bLocalLatDat,
+                                  const geometry::GlobalLatticeData & iGlobLatDat,
                                   const unsigned int * lThisRankSiteData)
     {
       // Initialise various things to 0.
@@ -314,7 +314,7 @@ namespace hemelb
         {
           for (unsigned int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
           {
-            hemelb::lb::BlockData * map_block_p = &iGlobLatDat.Blocks[++n];
+            geometry::BlockData * map_block_p = &iGlobLatDat.Blocks[++n];
 
             if (map_block_p->site_data == NULL)
             {
@@ -483,7 +483,7 @@ namespace hemelb
       // Iterate over blocks
       for (unsigned int n = 0; n < iGlobLatDat.GetBlockCount(); n++)
       {
-        hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
+        geometry::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
 
         // If we are in a block of solids, continue.
         if (map_block_p->site_data == NULL)
@@ -532,10 +532,10 @@ namespace hemelb
       bLocalLatDat->SetSharedSiteCount(mNetworkTopology->TotalSharedFs);
     }
 
-    void Net::InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData* bLocalLatDat,
+    void Net::InitialiseNeighbourLookup(geometry::LocalLatticeData* bLocalLatDat,
                                         short int ** bSharedFLocationForEachProc,
                                         const unsigned int * iSiteDataForThisRank,
-                                        const hemelb::lb::GlobalLatticeData & iGlobLatDat)
+                                        const geometry::GlobalLatticeData & iGlobLatDat)
     {
       int n = -1;
       int lSiteIndexOnProc = 0;
@@ -554,7 +554,7 @@ namespace hemelb
           for (unsigned int k = 0; k < iGlobLatDat.GetZSiteCount(); k += iGlobLatDat.GetBlockSize())
           {
             n++;
-            hemelb::lb::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
+            geometry::BlockData *map_block_p = &iGlobLatDat.Blocks[n];
 
             if (map_block_p->site_data == NULL)
             {
@@ -710,7 +710,7 @@ namespace hemelb
       }
     }
 
-    void Net::Wait(hemelb::lb::LocalLatticeData *bLocalLatDat)
+    void Net::Wait(geometry::LocalLatticeData *bLocalLatDat)
     {
       MPI_Waitall(mSendProcessorComms.size() + mReceiveProcessorComms.size(), &mRequests[0],
                   &mStatuses[0]);

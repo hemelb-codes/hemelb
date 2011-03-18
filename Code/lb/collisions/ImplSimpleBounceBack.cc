@@ -12,18 +12,18 @@ namespace hemelb
                                               const int iSiteCount,
                                               const LbmParameters &iLbmParams,
                                               MinsAndMaxes &bMinimaAndMaxima,
-                                              LocalLatticeData &bLocalLatDat,
+                                              geometry::LocalLatticeData &bLocalLatDat,
                                               hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams,
-                                      bMinimaAndMaxima, bLocalLatDat, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
+                                      bLocalLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams,
-                                       bMinimaAndMaxima, bLocalLatDat, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
+                                       bLocalLatDat, iControl);
         }
       }
 
@@ -32,7 +32,7 @@ namespace hemelb
                                                       const int iSiteCount,
                                                       const LbmParameters &iLbmParams,
                                                       MinsAndMaxes &bMinimaAndMaxima,
-                                                      LocalLatticeData &bLocalLatDat,
+                                                      geometry::LocalLatticeData &bLocalLatDat,
                                                       hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
@@ -46,8 +46,7 @@ namespace hemelb
             lFNeq[ii] = lFOld[ii];
           }
 
-          D3Q15::CalculateDensityVelocityFEq(lFNeq, lDensity, lVx, lVy, lVz,
-                                             lFOld);
+          D3Q15::CalculateDensityVelocityFEq(lFNeq, lDensity, lVx, lVy, lVz, lFOld);
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
@@ -58,13 +57,11 @@ namespace hemelb
 
             // Remember, oFNeq currently hold the equilibrium distribution. We
             // simultaneously use this and correct it, here.
-            bLocalLatDat.FNew[lStreamTo] = lFOld[ii] += iLbmParams.Omega
-                * (lFNeq[ii] -= lFOld[ii]);
+            bLocalLatDat.FNew[lStreamTo] = lFOld[ii] += iLbmParams.Omega * (lFNeq[ii] -= lFOld[ii]);
           }
 
-          UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, lIndex, lFNeq,
-                                             lDensity, bMinimaAndMaxima,
-                                             bLocalLatDat, iLbmParams, iControl);
+          UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, lIndex, lFNeq, lDensity,
+                                             bMinimaAndMaxima, bLocalLatDat, iLbmParams, iControl);
         }
       }
 

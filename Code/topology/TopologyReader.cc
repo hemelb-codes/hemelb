@@ -3,7 +3,7 @@
 
 #include "TopologyReader.h"
 #include "io/XdrMemReader.h"
-#include "lb/GlobalLatticeData.h"
+#include "geometry/GlobalLatticeData.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -84,7 +84,7 @@ namespace hemelb
      */
     void TopologyReader::ReadPreamble(MPI_File xiFile,
                                       hemelb::lb::LbmParameters * bParams,
-                                      hemelb::lb::GlobalLatticeData* bGlobalLatticeData)
+                                      geometry::GlobalLatticeData* bGlobalLatticeData)
     {
       // The config file starts with:
       // * 1 unsigned int for stress type
@@ -190,7 +190,7 @@ namespace hemelb
      * allocated to each processor will be written.
      */
     void TopologyReader::BlockDecomposition(const unsigned int iBlockCount,
-                                            const hemelb::lb::GlobalLatticeData* iGlobLatDat,
+                                            const geometry::GlobalLatticeData* iGlobLatDat,
                                             const unsigned int* fluidSitePerBlock,
                                             int* initialProcForEachBlock)
     {
@@ -217,11 +217,10 @@ namespace hemelb
                    initialProcForEachBlock, fluidSitePerBlock, iGlobLatDat);
     }
 
-    void TopologyReader::LoadAndDecompose(lb::GlobalLatticeData* bGlobLatDat,
+    void TopologyReader::LoadAndDecompose(geometry::GlobalLatticeData* bGlobLatDat,
                                           int &totalFluidSites,
                                           unsigned int siteMins[3],
                                           unsigned int siteMaxes[3],
-                                          bool iReserveSteeringCore,
                                           NetworkTopology* bNetTop,
                                           lb::LbmParameters* bLbmParams,
                                           SimConfig* bSimConfig,
@@ -432,7 +431,7 @@ namespace hemelb
                                            const unsigned int* bytesPerBlock,
                                            const int* unitForEachBlock,
                                            const unsigned int localRank,
-                                           const lb::GlobalLatticeData* iGlobLatDat)
+                                           const geometry::GlobalLatticeData* iGlobLatDat)
     {
       for (unsigned int ii = 0; ii < iGlobLatDat->GetBlockCount(); ++ii)
       {
@@ -530,7 +529,7 @@ namespace hemelb
 
         io::XdrMemReader lReader(readBuffer, bytesToRead);
 
-        for (lb::BlockCounter lBlock(iGlobLatDat, lowerLimitBlockNumber); lBlock
+        for (geometry::BlockCounter lBlock(iGlobLatDat, lowerLimitBlockNumber); lBlock
             < upperLimitBlockNumber; lBlock++)
         {
           if (readBlock[lBlock] && bytesPerBlock[lBlock] > 0)
@@ -562,7 +561,7 @@ namespace hemelb
                     std::cout << "Error reading site type\n";
                   }
 
-                  if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
+                  if ( (*site_type & SITE_TYPE_MASK) == geometry::SOLID_TYPE)
                   {
                     iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[m] = 1 << 30;
                     continue;
@@ -575,7 +574,7 @@ namespace hemelb
                     if (iGlobLatDat->Blocks[lBlock].wall_data == NULL)
                     {
                       iGlobLatDat->Blocks[lBlock].wall_data
-                          = new hemelb::lb::WallData[iGlobLatDat->SitesPerBlockVolumeUnit];
+                          = new geometry::WallData[iGlobLatDat->SitesPerBlockVolumeUnit];
                     }
 
                     if (iGlobLatDat->GetCollisionType(*site_type) & INLET
@@ -669,7 +668,7 @@ namespace hemelb
                                       unsigned int* blocksOnEachUnit,
                                       int* unitForEachBlock,
                                       const unsigned int* fluidSitesPerBlock,
-                                      const lb::GlobalLatticeData* iGlobLatDat)
+                                      const geometry::GlobalLatticeData* iGlobLatDat)
     {
       // Initialise the unit being assigned to, and the approximate number of blocks
       // required on each unit.
@@ -841,7 +840,7 @@ namespace hemelb
                                                      const int* procForEachBlock,
                                                      SimConfig* bSimConfig,
                                                      lb::LbmParameters* bLbmParams,
-                                                     lb::GlobalLatticeData* bGlobLatDat)
+                                                     geometry::GlobalLatticeData* bGlobLatDat)
     {
       /*
        *  Get an array of the site count on each processor.
@@ -919,7 +918,7 @@ namespace hemelb
               continue;
             }
 
-            hemelb::lb::BlockData *map_block_p = &bGlobLatDat->Blocks[n];
+            geometry::BlockData *map_block_p = &bGlobLatDat->Blocks[n];
 
             if (map_block_p->site_data == NULL)
             {
