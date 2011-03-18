@@ -12,7 +12,8 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, \
     vtkOBBTree, vtkTriangleFilter, vtkCleanPolyData, vtkIntArray
 
 from .Iolets import Inlet, Outlet, Iolet
-
+from .OutputGenerationHelpers import MacroBlock, latticeVectorNorms
+from .HitList import HitList
 import pdb
 
 np.seterr(divide='ignore')
@@ -37,7 +38,8 @@ class ConfigGenerator(object):
         self.ClippedSurface = self.ConstructClipPipeline()
         self.Locator = vtkOBBTree()
         self.Locator.SetTolerance(0.)
-
+        
+        self.IsFirstSite = True
         return
 
     def Execute(self):
@@ -107,7 +109,7 @@ class ConfigGenerator(object):
                     type = site.Type
                     cfg = site.Config
                     blockWriter.pack_uint(cfg)
-
+                    
                     if type == SOLID_TYPE:
                         # Solid sites, we don't do anything
                         continue
@@ -143,22 +145,7 @@ class ConfigGenerator(object):
         XmlWriter(self).Write()
         return
 
-    def IterHitsForLink(self, start, end):
-        """Given a pair of sites, yield the itersections one at a
-        time.
-        """
-        # Intersect against the STL surface
-        stlHits = StlHitList(self.Locator, start, end)
-
-        # Now start yielding intersections
-        topStl = stlHits.next()
-
-        while topStl is not None:
-            yield topStl
-            topStl = stlHits.next()
-            continue
-
-        return
+    
 
     def ClassifySite(self, site):
         """Perform classification of the supplied sites. Note that
@@ -169,9 +156,11 @@ class ConfigGenerator(object):
         with the CutDistances array (at appropriate indices), {Wall,
         Boundary}x{Distance, Normal}.
         """
-        if site.IsFluid is None:
-            # We're the first site; if we're not, the IsFluid flag
-            # will have been set to True/False below
+        if self.IsFirstSite:
+            # We're the first site; the IsFluid flag will have been
+            # set to True/False below for all other sites, but we
+            # need to bootstrap the process here.
+            self.IsFirstSite = False
             if self.Locator.InsideOrOutside(site.Position) < 0:
                 # vtkOBBTree.InsideOrOutside returns -1 for inside
                 site.IsFluid = True
@@ -186,7 +175,7 @@ class ConfigGenerator(object):
 
             nHits = 0
 
-            for hitPoint, hitObj in self.IterHitsForLink(site.Position, neigh.Position):
+            for hitPoint, hitObj in HitList(self.Locator, site.Position, neigh.Position):
                 nHits += 1
                 if nHits == 1:
                     # First hit, assign the distance (in STL units for
@@ -278,7 +267,7 @@ class ConfigGenerator(object):
 
         # Scale to be fractions of lattice vectors instead of
         # distances in lattice units; see above for more.
-        site.CutDistances /= LatticeSite.latticeVectorNorms
+        site.CutDistances /= latticeVectorNorms
         return
 
     def ConstructClipPipeline(self):
@@ -369,49 +358,6 @@ class ConfigGenerator(object):
 
     pass
 
-class StlHitList(object):
-    """Object that finds the intersections given by a vtkLocator the
-    line joining a start and end LatticeSite. It then gives a simple
-    iterator-like method (next) for getting these points, which when
-    it finishes, returns None rather than raise StopIteration.
-    """
-    def __init__(self, locator, start, end):
-        """locator - vtkLocator to use to test for intersections.
-        start - starting LatticeSite
-        end - ending LatticeSite
-        """
-        self.HitPoints = vtkPoints()
-        self.HitCellIds = vtkIdList()
-        # Find intersections
-        locator.IntersectWithLine(start, end, self.HitPoints, self.HitCellIds)
-        # Cache the number of them
-        self.len = self.HitPoints.GetNumberOfPoints()
-        # Track where we are in the iteration
-        self.i = 0
-        return
-
-    def next(self):
-        """Move our internal internal counter on one and return the
-        new value, or None in the case that it doesn't exist.
-        """
-        i = self.i
-        if i < self.len:
-            self.i += 1
-            return self[i]
-        else:
-            return None
-
-    def __len__(self):
-        return self.len
-
-    def __getitem__(self, i):
-        if i < 0: raise IndexError
-        if i >= self.len: raise IndexError
-
-        hit = self.HitPoints.GetPoint(i)
-
-        return hit, self.HitCellIds.GetId(i)
-    pass
 
 class IntegerAdder(vtkProgrammableFilter):
     """vtkFilter for adding an integer value to vtkPolyData's
@@ -657,7 +603,7 @@ class Domain(object):
     def GetBlock(self, *blockIjk):
         val = self.blocks[blockIjk]
         if val is None:
-            val = self.blocks[blockIjk] = MacroBlock(domain=self, ijk=blockIjk, size=self.BlockSize)
+            val = self.blocks[blockIjk] = MacroBlock(self, blockIjk, self.BlockSize)
             pass
         return val
 
@@ -674,7 +620,7 @@ class Domain(object):
         for ijk, val in np.ndenumerate(self.blocks):
             if val is None:
                 # If the block hasn't been created, do so
-                val = self.blocks[ijk] = MacroBlock(ijk=ijk, domain=self, size=self.BlockSize)
+                val = self.blocks[ijk] = MacroBlock(self, ijk, self.BlockSize)
                 pass
 
             yield val
@@ -803,173 +749,7 @@ class XmlWriter(object):
 
     pass
 
-class MacroBlock(object):
-    def __init__(self, domain=None, ijk=(0, 0, 0), size=8):
-        self.domain = domain
-        self.size = size
-        self.ijk = (ijk)
-        self.sites = np.empty((size, size, size), dtype=object)
-        for localSiteIjk, ignored in np.ndenumerate(self.sites):
-            globalSiteIjk = tuple(self.ijk[i] * self.size + localSiteIjk[i]
-                                  for i in xrange(3))
 
-            self.sites[localSiteIjk] = LatticeSite(block=self, ijk=globalSiteIjk)
-        return
-
-    def IterSites(self):
-        for site in self.sites.flat:
-            yield site
-            continue
-        return
-
-    def NdEnumerateSites(self):
-        for item in np.ndenumerate(self.sites):
-            yield item
-            continue
-        return
-
-    def GetLocalSite(self, *localSiteIjk):
-        return self.sites[localSiteIjk]
-
-    def GetSite(self, *globalSiteIjk):
-        localSiteIjk = tuple(globalSiteIjk[i] - self.ijk[i] * self.size
-                             for i in xrange(3))
-
-        # Check if the coords belong to another block, i.e. any of
-        # the local ones outside the range [0, self.size)
-        if any(map(lambda x: x < 0 or x >= self.size, localSiteIjk)):
-            return self.domain.GetSite(*globalSiteIjk)
-
-        return self.GetLocalSite(*localSiteIjk)
-
-    def CalcPositionFromIndex(self, index):
-        return self.domain.CalcPositionFromIndex(index)
-    pass
-
-class LatticeSite(object):
-    # This ordering of the lattice vectors must be the same as in the HemeLB source.
-    neighbours = np.array([[ 1, 0, 0],
-                           [-1, 0, 0],
-                           [ 0, 1, 0],
-                           [ 0, -1, 0],
-                           [ 0, 0, 1],
-                           [ 0, 0, -1],
-                           [ 1, 1, 1],
-                           [-1, -1, -1],
-                           [ 1, 1, -1],
-                           [-1, -1, 1],
-                           [ 1, -1, 1],
-                           [-1, 1, -1],
-                           [ 1, -1, -1],
-                           [-1, 1, 1]])
-    latticeVectorNorms = np.sqrt(np.sum(neighbours ** 2, axis= -1))
-    laterNeighbourInds = [0, 2, 4, 6, 8, 10, 12]
-    def __init__(self, block=None, ijk=(0, 0, 0)):
-        self.block = block
-        self.ijk = ijk
-        self.Position = block.CalcPositionFromIndex(ijk)
-
-        self.IsFluid = None
-        self.IsEdge = None
-        self.Iolet = None
-        self.BoundaryId = None
-
-        # Attributes that will be updated by Profile.ClassifySite
-#        self.Type = None
-        self.BoundaryNormal = np.zeros(3)
-        self.BoundaryDistance = float('inf')
-
-        self.WallNormal = np.zeros(3)
-        self.WallDistance = float('inf')
-
-        self.CutDistances = 1. / np.zeros(len(self.neighbours), dtype=float)
-        self.CutCellIds = -np.ones(len(self.neighbours), dtype=int)
-        return
-
-    @property
-    def Type(self):
-        if self.IsFluid:
-            if isinstance(self.Iolet, Inlet):
-                return INLET_TYPE
-            elif isinstance(self.Iolet, Outlet):
-                return OUTLET_TYPE
-            else:
-                return FLUID_TYPE
-        else:
-            return SOLID_TYPE
-
-    @property
-    def Config(self):
-        cfg = self.Type
-        if not self.IsFluid:
-            return self.Type
-
-        # Fluid sites now
-        if self.Type == FLUID_TYPE and not self.IsEdge:
-            # Simple fluid sites
-            return self.Type
-
-        # A complex one
-
-        if self.IsEdge:
-            # Bit fiddle the boundary config. See comment below
-            # by BOUNDARY_CONFIG_MASK for definition.
-            boundary = 0
-            for i, neigh in self.EnumerateNeighbours():
-                if not neigh.IsFluid:
-                    # If the lattice vector is cut, set the flag
-                    boundary |= 1 << i
-                    pass
-                continue
-            # Shift the boundary bit field to the appropriate
-            # place and set these bits in the type
-            cfg |= boundary << BOUNDARY_CONFIG_SHIFT
-
-            if boundary:
-                # Set this bit if we've hit any solid sites
-                cfg |= PRESSURE_EDGE_MASK
-                pass
-            pass
-
-        if self.Type != FLUID_TYPE:
-            # It must be an inlet or outlet
-            # Shift the index left and set the bits
-            cfg |= self.BoundaryId << BOUNDARY_ID_SHIFT
-            pass
-
-        return cfg
-
-    def EnumerateNeighbours(self):
-        """Create an iterator that enumerates our neighbours.
-        """
-        domain = self.block.domain
-        shape = domain.BlockCounts * domain.BlockSize
-        for i, neigh in enumerate(self.neighbours):
-            ind = self.ijk + neigh
-            # Skip any out of range
-            if np.any(ind < 0) or np.any(ind >= shape):
-                continue
-
-            yield i, self.block.GetSite(ind[0], ind[1], ind[2])
-            continue
-        return
-
-    def EnumerateLaterNeighbours(self):
-        """Create an iterator that enumerates our neighbours who're later in the array.
-        """
-        domain = self.block.domain
-        shape = domain.BlockCounts * domain.BlockSize
-        for i in self.laterNeighbourInds:
-            neigh = self.neighbours[i]
-            ind = self.ijk + neigh
-            # Skip any out of range
-            if np.any(ind < 0) or np.any(ind >= shape):
-                continue
-
-            yield i, self.block.GetSite(ind[0], ind[1], ind[2])
-            continue
-        return
-    pass
 
 # Site types
 SOLID_TYPE = 0b00
