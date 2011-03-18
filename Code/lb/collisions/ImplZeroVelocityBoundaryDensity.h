@@ -20,7 +20,7 @@ namespace hemelb
                             const int iSiteCount,
                             const LbmParameters &iLbmParams,
                             MinsAndMaxes &bMinimaAndMaxima,
-                            geometry::LocalLatticeData &bLocalLatDat,
+                            geometry::LatticeData &bLatDat,
                             hemelb::vis::Control *iControl);
 
         private:
@@ -29,7 +29,7 @@ namespace hemelb
                                     const int iSiteCount,
                                     const LbmParameters &iLbmParams,
                                     MinsAndMaxes &bMinimaAndMaxima,
-                                    geometry::LocalLatticeData &bLocalLatDat,
+                                    geometry::LatticeData &bLatDat,
                                     hemelb::vis::Control *iControl);
 
           double* mBoundaryDensityArray;

@@ -27,33 +27,27 @@ namespace hemelb
 
             LBM(hemelb::SimConfig *iSimulationConfig,
                 const hemelb::topology::NetworkTopology * iNetTop);
-        void Restart(geometry::LocalLatticeData* iLocalLatDat);
+        void Restart(geometry::LatticeData* iLatDat);
         ~LBM();
 
         void CalculateFlowFieldValues();
         void RecalculateTauViscosityOmega();
         void UpdateBoundaryDensities(int cycle_id, int time_step);
         void
-        UpdateInletVelocities(int time_step,
-                              geometry::LocalLatticeData &iLocalLatDat,
-                              net::Net *net);
+        UpdateInletVelocities(int time_step, geometry::LatticeData &iLatDat, net::Net *net);
 
-        void Initialise(int* iFTranslator,
-                        geometry::LocalLatticeData* bLocalLatDat,
-                        vis::Control* iControl);
+        void Initialise(int* iFTranslator, geometry::LatticeData* bLatDat, vis::Control* iControl);
 
-        void SetInitialConditions(geometry::LocalLatticeData* bLocalLatDat);
+        void SetInitialConditions(geometry::LatticeData* bLatDat);
 
         void
         WriteConfig(hemelb::lb::Stability stability,
                     std::string output_file_name,
-                    const geometry::GlobalLatticeData &iGlobalLatticeData,
-                    const geometry::LocalLatticeData &iLocalLatticeData);
+                    const geometry::LatticeData &iLatticeData);
         void
         WriteConfigParallel(hemelb::lb::Stability stability,
                             std::string output_file_name,
-                            const geometry::GlobalLatticeData &iGlobalLatticeData,
-                            const geometry::LocalLatticeData &iLocalLatticeData);
+                            const geometry::LatticeData &iLatticeData);
 
         double GetMinPhysicalPressure();
         double GetMaxPhysicalPressure();
@@ -78,17 +72,17 @@ namespace hemelb
 
         hemelb::lb::LbmParameters *GetLbmParams();
 
-        void RequestComms(net::Net* net, geometry::LocalLatticeData* bLocalLatDat);
-        void PreSend(geometry::LocalLatticeData* bLocalLatDat, int perform_rt);
-        void PreReceive(int perform_rt, geometry::LocalLatticeData* bLocalLatDat);
-        void PostReceive(geometry::LocalLatticeData* bLocalLatDat, int perform_rt);
-        void EndIteration(geometry::LocalLatticeData* bLocalLatDat);
+        void RequestComms(net::Net* net, geometry::LatticeData* bLatDat);
+        void PreSend(geometry::LatticeData* bLatDat, int perform_rt);
+        void PreReceive(int perform_rt, geometry::LatticeData* bLatDat);
+        void PostReceive(geometry::LatticeData* bLatDat, int perform_rt);
+        void EndIteration(geometry::LatticeData* bLatDat);
 
         unsigned int siteMins[3], siteMaxes[3];
 
       private:
         void CalculateBC(double f[],
-                         hemelb::geometry::SiteType iSiteType,
+                         hemelb::geometry::LatticeData::SiteType iSiteType,
                          unsigned int iBoundaryId,
                          double *density,
                          double *vx,

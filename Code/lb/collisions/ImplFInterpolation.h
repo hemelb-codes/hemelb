@@ -18,7 +18,7 @@ namespace hemelb
                             const int iSiteCount,
                             const LbmParameters &iLbmParams,
                             MinsAndMaxes &bMinimaAndMaxima,
-                            geometry::LocalLatticeData &bLocalLatDat,
+                            geometry::LatticeData &bLatDat,
                             hemelb::vis::Control *iControl);
 
           void PostStep(const bool iDoRayTracing,
@@ -26,7 +26,7 @@ namespace hemelb
                         const int iSiteCount,
                         const LbmParameters &iLbmParams,
                         MinsAndMaxes &bMinimaAndMaxima,
-                        geometry::LocalLatticeData &bLocalLatDat,
+                        geometry::LatticeData &bLatDat,
                         hemelb::vis::Control *iControl);
 
         private:
@@ -35,7 +35,7 @@ namespace hemelb
                                     const int iSiteCount,
                                     const LbmParameters &iLbmParams,
                                     MinsAndMaxes &bMinimaAndMaxima,
-                                    geometry::LocalLatticeData &bLocalLatDat,
+                                    geometry::LatticeData &bLatDat,
                                     hemelb::vis::Control *iControl);
 
           template<bool tDoRayTracing>
@@ -43,7 +43,7 @@ namespace hemelb
                                 const int iSiteCount,
                                 const LbmParameters &iLbmParams,
                                 MinsAndMaxes &bMinimaAndMaxima,
-                                geometry::LocalLatticeData &bLocalLatDat,
+                                geometry::LatticeData &bLatDat,
                                 hemelb::vis::Control *iControl);
       };
 

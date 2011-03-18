@@ -1,8 +1,7 @@
 #ifndef HEMELB_VIS_CONTROL_H
 #define HEMELB_VIS_CONTROL_H
 
-#include "geometry/GlobalLatticeData.h"
-#include "geometry/LocalLatticeData.h"
+#include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 
 #include "vis/DomainStats.h"
@@ -28,7 +27,7 @@ namespace hemelb
     class Control
     {
       public:
-        Control(lb::StressTypes iStressType, geometry::GlobalLatticeData* iGlobLatDat);
+        Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
@@ -46,15 +45,12 @@ namespace hemelb
                            const float &latitude,
                            const float &zoom);
 
-        void streaklines(int time_step,
-                         int period,
-                         geometry::GlobalLatticeData* iGlobLatDat,
-                         geometry::LocalLatticeData* iLocalLatDat);
+        void streaklines(int time_step, int period, geometry::LatticeData* iLatDat);
         void restart();
 
         void updateImageSize(int pixels_x, int pixels_y);
         void render(int recv_buffer_id,
-                    geometry::GlobalLatticeData* iGlobLatDat,
+                    geometry::LatticeData* iLatDat,
                     const topology::NetworkTopology* iNetTopology);
         void writeImage(int recv_buffer_id,
                         std::string image_file_name,
@@ -65,8 +61,7 @@ namespace hemelb
         void RegisterSite(int i, float density, float velocity, float stress);
 
         void initLayers(topology::NetworkTopology * iNetworkTopology,
-                        geometry::GlobalLatticeData* iGlobLatDat,
-                        geometry::LocalLatticeData* iLocalLatDat);
+                        geometry::LatticeData* iLatDat);
 
         Screen mScreen;
         Viewpoint mViewpoint;

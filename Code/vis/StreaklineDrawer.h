@@ -6,8 +6,7 @@
 #include "constants.h"
 #include "mpiInclude.h"
 
-#include "geometry/GlobalLatticeData.h"
-#include "geometry/LocalLatticeData.h"
+#include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
 #include "vis/Screen.h"
@@ -28,8 +27,7 @@ namespace hemelb
       public:
         // Constructor and destructor.
         StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
-                         geometry::LocalLatticeData* iLocalLatDat,
-                         geometry::GlobalLatticeData* iGlobLatDat,
+                         geometry::LatticeData* iLatDat,
                          Screen* iScreen,
                          Viewpoint* iViewpoint,
                          VisSettings* iVisSettings);
@@ -39,11 +37,8 @@ namespace hemelb
         void Restart();
 
         // Drawing methods.
-        void StreakLines(int time_steps,
-                         int time_steps_per_cycle,
-                         geometry::GlobalLatticeData* iGlobLatDat,
-                         geometry::LocalLatticeData* iLocalLatDat);
-        void render(geometry::GlobalLatticeData* iGlobLatDat);
+        void StreakLines(int time_steps, int time_steps_per_cycle, geometry::LatticeData* iLatDat);
+        void render(geometry::LatticeData* iLatDat);
 
       private:
 
@@ -123,12 +118,12 @@ namespace hemelb
         void deleteParticle(unsigned int p_index);
 
         // Private functions for initialising the velocity field.
-        void initializeVelFieldBlock(geometry::GlobalLatticeData* iGlobLatDat,
+        void initializeVelFieldBlock(geometry::LatticeData* iLatDat,
                                      unsigned int site_i,
                                      unsigned int site_j,
                                      unsigned int site_k,
                                      int proc_id);
-        VelSiteData *velSiteDataPointer(geometry::GlobalLatticeData* iGlobLatDat,
+        VelSiteData *velSiteDataPointer(geometry::LatticeData* iLatDat,
                                         unsigned int site_i,
                                         unsigned int site_j,
                                         unsigned int site_k);
@@ -136,19 +131,16 @@ namespace hemelb
         void localVelField(int p_index,
                            float v[2][2][2][3],
                            int *is_interior,
-                           geometry::GlobalLatticeData* iGlobLatDat,
-                           geometry::LocalLatticeData* iLocalLatDat);
+                           geometry::LatticeData* iLatDat);
 
         // Private functions for updating the velocity field and the particles in it.
-        void updateVelField(int stage_id,
-                            geometry::GlobalLatticeData* iGlobLatDat,
-                            geometry::LocalLatticeData* iLocalLatDat);
+        void updateVelField(int stage_id, geometry::LatticeData* iLatDat);
         void updateParticles();
 
         // Private functions for inter-proc communication.
         void communicateSiteIds();
-        void communicateVelocities(geometry::GlobalLatticeData* iGlobLatDat);
-        void communicateParticles(geometry::GlobalLatticeData* iGlobLatDat);
+        void communicateVelocities(geometry::LatticeData* iLatDat);
+        void communicateParticles(geometry::LatticeData* iLatDat);
 
         const topology::NetworkTopology * mNetworkTopology;
 
