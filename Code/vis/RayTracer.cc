@@ -131,7 +131,7 @@ namespace hemelb
       }
 
       unsigned int i = i_vec[0] * block_size2;
-      unsigned int j = i_vec[1] * mGlobLatDat->GetBlockSize();
+      unsigned int j = i_vec[1] * mLatDat->GetBlockSize();
       unsigned int k = i_vec[2];
 
       while (true)
@@ -173,7 +173,7 @@ namespace hemelb
 
             if (xyz_is_1[2])
             {
-              if (++k >= mGlobLatDat->GetBlockSize())
+              if (++k >= mLatDat->GetBlockSize())
               {
                 return;
               }
@@ -204,7 +204,7 @@ namespace hemelb
 
             if (xyz_is_1[1])
             {
-              if ( (j += mGlobLatDat->GetBlockSize()) >= block_size2)
+              if ( (j += mLatDat->GetBlockSize()) >= block_size2)
               {
                 return;
               }
@@ -213,13 +213,13 @@ namespace hemelb
             }
             else
             {
-              if (j < mGlobLatDat->GetBlockSize())
+              if (j < mLatDat->GetBlockSize())
               {
                 return;
               }
               else
               {
-                j -= mGlobLatDat->GetBlockSize();
+                j -= mLatDat->GetBlockSize();
               }
               t = t_max[1];
               t_max[1] -= bCurrentRay->InverseDirection[1];
@@ -232,7 +232,7 @@ namespace hemelb
 
             if (xyz_is_1[2])
             {
-              if (++k >= mGlobLatDat->GetBlockSize())
+              if (++k >= mLatDat->GetBlockSize())
               {
                 return;
               }
@@ -439,8 +439,8 @@ namespace hemelb
       const int n_z[] = { -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +1, -1, +0, +1, -1,
                           +0, +1, -1, +0, +1, -1, +0, +1 };
 
-      unsigned short int *cluster_id = new unsigned short int[mGlobLatDat->GetBlockCount()];
-      for (unsigned int n = 0; n < mGlobLatDat->GetBlockCount(); n++)
+      unsigned short int *cluster_id = new unsigned short int[mLatDat->GetBlockCount()];
+      for (unsigned int n = 0; n < mLatDat->GetBlockCount(); n++)
       {
         cluster_id[n] = -1;
       }
@@ -454,8 +454,8 @@ namespace hemelb
       std::vector<BlockLocation> *block_location_b =
           new std::vector<BlockLocation>(blocks_buffer_size);
 
-      bool *is_block_visited = new bool[mGlobLatDat->GetBlockCount()];
-      for (unsigned int n = 0; n < mGlobLatDat->GetBlockCount(); n++)
+      bool *is_block_visited = new bool[mLatDat->GetBlockCount()];
+      for (unsigned int n = 0; n < mLatDat->GetBlockCount(); n++)
       {
         is_block_visited[n] = false;
       }
@@ -469,15 +469,15 @@ namespace hemelb
 
       int n = -1;
 
-      for (unsigned int i = 0; i < mGlobLatDat->GetXBlockCount(); i++)
+      for (unsigned int i = 0; i < mLatDat->GetXBlockCount(); i++)
       {
-        for (unsigned int j = 0; j < mGlobLatDat->GetYBlockCount(); j++)
+        for (unsigned int j = 0; j < mLatDat->GetYBlockCount(); j++)
         {
-          for (unsigned int k = 0; k < mGlobLatDat->GetZBlockCount(); k++)
+          for (unsigned int k = 0; k < mLatDat->GetZBlockCount(); k++)
           {
             n++;
 
-            geometry::BlockData * lBlock = &mGlobLatDat->Blocks[n];
+            geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock((unsigned int) n);
             if (lBlock->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
@@ -499,7 +499,7 @@ namespace hemelb
 
             int blocks_a = 0;
 
-            for (unsigned int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
+            for (unsigned int m = 0; m < mLatDat->GetSitesPerBlockVolumeUnit(); m++)
             {
               if ((int) mNetworkTopology->GetLocalRank()
                   == lBlock->ProcessorRankForEachBlockSite[m])
@@ -546,25 +546,25 @@ namespace hemelb
                   int neigh_j = tempBlockLoc.j + n_y[l];
                   int neigh_k = tempBlockLoc.k + n_z[l];
 
-                  if (neigh_i == -1 || neigh_i == (int) mGlobLatDat->GetXBlockCount())
+                  if (neigh_i == -1 || neigh_i == (int) mLatDat->GetXBlockCount())
                     continue;
-                  if (neigh_j == -1 || neigh_j == (int) mGlobLatDat->GetYBlockCount())
+                  if (neigh_j == -1 || neigh_j == (int) mLatDat->GetYBlockCount())
                     continue;
-                  if (neigh_k == -1 || neigh_k == (int) mGlobLatDat->GetZBlockCount())
+                  if (neigh_k == -1 || neigh_k == (int) mLatDat->GetZBlockCount())
                     continue;
 
-                  int block_id = (neigh_i * mGlobLatDat->GetYBlockCount() + neigh_j)
-                      * mGlobLatDat->GetZBlockCount() + neigh_k;
+                  int block_id = (neigh_i * mLatDat->GetYBlockCount() + neigh_j)
+                      * mLatDat->GetZBlockCount() + neigh_k;
 
                   if (is_block_visited[block_id]
-                      || (lBlock = &mGlobLatDat->Blocks[block_id])->ProcessorRankForEachBlockSite
+                      || (lBlock = mLatDat->GetBlock(block_id))->ProcessorRankForEachBlockSite
                           == NULL)
                   {
                     continue;
                   }
 
                   bool is_site_found = false;
-                  for (unsigned int m = 0; m < mGlobLatDat->SitesPerBlockVolumeUnit; m++)
+                  for (unsigned int m = 0; m < mLatDat->GetSitesPerBlockVolumeUnit(); m++)
                   {
                     if ((int) mNetworkTopology->GetLocalRank()
                         == lBlock->ProcessorRankForEachBlockSite[m])
@@ -621,12 +621,12 @@ namespace hemelb
               blocks_a = blocks_b;
             }
 
-            lNewCluster->x[0] = lNewCluster->block_min[0] * mGlobLatDat->GetBlockSize() - 0.5F
-                * mGlobLatDat->GetXSiteCount();
-            lNewCluster->x[1] = lNewCluster->block_min[1] * mGlobLatDat->GetBlockSize() - 0.5F
-                * mGlobLatDat->GetYSiteCount();
-            lNewCluster->x[2] = lNewCluster->block_min[2] * mGlobLatDat->GetBlockSize() - 0.5F
-                * mGlobLatDat->GetZSiteCount();
+            lNewCluster->x[0] = lNewCluster->block_min[0] * mLatDat->GetBlockSize() - 0.5F
+                * mLatDat->GetXSiteCount();
+            lNewCluster->x[1] = lNewCluster->block_min[1] * mLatDat->GetBlockSize() - 0.5F
+                * mLatDat->GetYSiteCount();
+            lNewCluster->x[2] = lNewCluster->block_min[2] * mLatDat->GetBlockSize() - 0.5F
+                * mLatDat->GetZSiteCount();
 
             lNewCluster->blocks_x = 1 + cluster_block_max_i - lNewCluster->block_min[0];
             lNewCluster->blocks_y = 1 + cluster_block_max_j - lNewCluster->block_min[1];
@@ -661,11 +661,11 @@ namespace hemelb
       MPI_Allreduce(localMins, mins, 3, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
       MPI_Allreduce(localMaxes, maxes, 3, MPI_UNSIGNED, MPI_MAX, MPI_COMM_WORLD);
 
-      mVisSettings->ctr_x = 0.5F * mGlobLatDat->GetBlockSize() * (mins[0] + maxes[0]);
-      mVisSettings->ctr_y = 0.5F * mGlobLatDat->GetBlockSize() * (mins[1] + maxes[1]);
-      mVisSettings->ctr_z = 0.5F * mGlobLatDat->GetBlockSize() * (mins[2] + maxes[2]);
+      mVisSettings->ctr_x = 0.5F * mLatDat->GetBlockSize() * (mins[0] + maxes[0]);
+      mVisSettings->ctr_y = 0.5F * mLatDat->GetBlockSize() * (mins[1] + maxes[1]);
+      mVisSettings->ctr_z = 0.5F * mLatDat->GetBlockSize() * (mins[2] + maxes[2]);
 
-      cluster_voxel = new float *[mLocalLatDat->GetLocalFluidSiteCount() * VIS_FIELDS];
+      cluster_voxel = new float *[mLatDat->GetLocalFluidSiteCount() * VIS_FIELDS];
 
       cluster_flow_field = new float **[mClusters.size()];
 
@@ -688,18 +688,18 @@ namespace hemelb
         int block_coord[3];
         for (int i = 0; i < cluster_p->blocks_x; i++)
         {
-          block_coord[0] = (i + cluster_p->block_min[0]) * mGlobLatDat->GetBlockSize();
+          block_coord[0] = (i + cluster_p->block_min[0]) * mLatDat->GetBlockSize();
 
           for (int j = 0; j < cluster_p->blocks_y; j++)
           {
-            block_coord[1] = (j + cluster_p->block_min[1]) * mGlobLatDat->GetBlockSize();
+            block_coord[1] = (j + cluster_p->block_min[1]) * mLatDat->GetBlockSize();
 
             for (int k = 0; k < cluster_p->blocks_z; k++)
             {
-              block_coord[2] = (k + cluster_p->block_min[2]) * mGlobLatDat->GetBlockSize();
+              block_coord[2] = (k + cluster_p->block_min[2]) * mLatDat->GetBlockSize();
 
-              int block_id = ( (i + cluster_p->block_min[0]) * mGlobLatDat->GetYBlockCount() + (j
-                  + cluster_p->block_min[1])) * mGlobLatDat->GetZBlockCount() + (k
+              int block_id = ( (i + cluster_p->block_min[0]) * mLatDat->GetYBlockCount() + (j
+                  + cluster_p->block_min[1])) * mLatDat->GetZBlockCount() + (k
                   + cluster_p->block_min[2]);
 
               cluster_flow_field[lThisClusterId][++n] = NULL;
@@ -709,17 +709,17 @@ namespace hemelb
                 continue;
               }
 
-              geometry::BlockData * lBlock = &mGlobLatDat->Blocks[block_id];
+              geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock(block_id);
 
               cluster_flow_field[lThisClusterId][n]
-                  = new float[mGlobLatDat->SitesPerBlockVolumeUnit * VIS_FIELDS];
+                  = new float[mLatDat->GetSitesPerBlockVolumeUnit() * VIS_FIELDS];
 
               int m = -1;
 
               float ii[3];
-              for (ii[0] = 0; ii[0] < mGlobLatDat->GetBlockSize(); ii[0]++)
-                for (ii[1] = 0; ii[1] < mGlobLatDat->GetBlockSize(); ii[1]++)
-                  for (ii[2] = 0; ii[2] < mGlobLatDat->GetBlockSize(); ii[2]++)
+              for (ii[0] = 0; ii[0] < mLatDat->GetBlockSize(); ii[0]++)
+                for (ii[1] = 0; ii[1] < mLatDat->GetBlockSize(); ii[1]++)
+                  for (ii[2] = 0; ii[2] < mLatDat->GetBlockSize(); ii[2]++)
                   {
                     unsigned int my_site_id;
                     my_site_id = lBlock->site_data[++m];
@@ -757,40 +757,35 @@ namespace hemelb
           } // for j
         } // for i
 
-        cluster_p->minmax_x[0] = (float) voxel_min[0] - 0.5F * (float) mGlobLatDat->GetXSiteCount();
-        cluster_p->minmax_y[0] = (float) voxel_min[1] - 0.5F * (float) mGlobLatDat->GetYSiteCount();
-        cluster_p->minmax_z[0] = (float) voxel_min[2] - 0.5F * (float) mGlobLatDat->GetZSiteCount();
+        cluster_p->minmax_x[0] = (float) voxel_min[0] - 0.5F * (float) mLatDat->GetXSiteCount();
+        cluster_p->minmax_y[0] = (float) voxel_min[1] - 0.5F * (float) mLatDat->GetYSiteCount();
+        cluster_p->minmax_z[0] = (float) voxel_min[2] - 0.5F * (float) mLatDat->GetZSiteCount();
 
         cluster_p->minmax_x[1] = (float) (voxel_max[0] + 1) - 0.5F
-            * (float) mGlobLatDat->GetXSiteCount();
+            * (float) mLatDat->GetXSiteCount();
         cluster_p->minmax_y[1] = (float) (voxel_max[1] + 1) - 0.5F
-            * (float) mGlobLatDat->GetYSiteCount();
+            * (float) mLatDat->GetYSiteCount();
         cluster_p ->minmax_z[1] = (float) (voxel_max[2] + 1) - 0.5F
-            * (float) mGlobLatDat->GetZSiteCount();
+            * (float) mLatDat->GetZSiteCount();
       }
       delete[] cluster_id;
     }
 
     RayTracer::RayTracer(const topology::NetworkTopology * iNetworkTopology,
-                         const geometry::LocalLatticeData* iLocalLatDat,
-                         const geometry::GlobalLatticeData* iGlobLatDat,
+                         const geometry::LatticeData* iLatDat,
                          DomainStats* iDomainStats,
                          Screen* iScreen,
                          Viewpoint* iViewpoint,
                          VisSettings* iVisSettings) :
-      mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint),
-          mVisSettings(iVisSettings)
+      mNetworkTopology(iNetworkTopology), mLatDat(iLatDat), mDomainStats(iDomainStats),
+          mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
     {
-      mNetworkTopology = iNetworkTopology;
-      mLocalLatDat = iLocalLatDat;
-      mGlobLatDat = iGlobLatDat;
-
       // Init globals
-      blocks_yz = iGlobLatDat->GetYBlockCount() * iGlobLatDat->GetZBlockCount();
-      mBlockSizeFloat = float (iGlobLatDat->GetBlockSize());
-      block_size2 = iGlobLatDat->GetBlockSize() * iGlobLatDat->GetBlockSize();
-      block_size3 = iGlobLatDat->GetBlockSize() * block_size2;
-      block_size_1 = iGlobLatDat->GetBlockSize() - 1;
+      blocks_yz = mLatDat->GetYBlockCount() * mLatDat->GetZBlockCount();
+      mBlockSizeFloat = float (mLatDat->GetBlockSize());
+      block_size2 = mLatDat->GetBlockSize() * mLatDat->GetBlockSize();
+      block_size3 = mLatDat->GetBlockSize() * block_size2;
+      block_size_1 = mLatDat->GetBlockSize() - 1;
 
       mBlockSizeInverse = 1.F / mBlockSizeFloat;
 

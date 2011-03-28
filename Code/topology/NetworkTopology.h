@@ -46,7 +46,7 @@ namespace hemelb
         // neighbouring processor vector.
         short int * NeighbourIndexFromProcRank;
         // Array containing numbers of fluid sites on each processor.
-        int * FluidSitesOnEachProcessor;
+        unsigned int * FluidSitesOnEachProcessor;
 
       private:
         bool InitialiseMachineInfo();

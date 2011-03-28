@@ -23,11 +23,11 @@ namespace hemelb
         Net(hemelb::topology::NetworkTopology * iTopology);
         ~Net();
 
-        int* Initialise(geometry::LatticeData &iLatDat);
+        int* Initialise(geometry::LatticeData* bLatDat);
 
         void Receive();
         void Send();
-        void Wait(geometry::LatticeData* bLatDat);
+        void Wait();
 
         /**
          * Request that iCount entries of type T be included in the send to iToRank,
@@ -77,14 +77,12 @@ namespace hemelb
 
       private:
 
-        void GetThisRankSiteData(const geometry::LatticeData & iLatDat,
+        void GetThisRankSiteData(const geometry::LatticeData* bLatDat,
                                  unsigned int *& bThisRankSiteData);
-        void InitialiseNeighbourLookup(geometry::LatticeData *bLatDat,
+        void InitialiseNeighbourLookup(geometry::LatticeData* bLatDat,
                                        short int **bSharedFLocationForEachProc,
-                                       const unsigned int *iSiteDataForThisRank,
-                                       const geometry::LatticeData & iLatDat);
-        void CountCollisionTypes(geometry::LatticeData * bLatDat,
-                                 const geometry::LatticeData & iLatDat,
+                                       const unsigned int *iSiteDataForThisRank);
+        void CountCollisionTypes(geometry::LatticeData* bLatDat,
                                  const unsigned int * lThisRankSiteData);
 
         void InitialisePointToPointComms(short int **& lSharedFLocationForEachProc);

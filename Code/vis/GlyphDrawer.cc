@@ -14,50 +14,44 @@ namespace hemelb
                              DomainStats* iDomainStats,
                              Viewpoint* iViewpoint,
                              VisSettings* iVisSettings) :
-      mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint),
+      mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint),
           mVisSettings(iVisSettings)
     {
-      mGlobalLatDat = iGlobalLatDat;
       int n = -1;
 
-      for (unsigned int i = 0; i < iGlobalLatDat->GetXSiteCount(); i
-          += iGlobalLatDat->GetBlockSize())
+      for (unsigned int i = 0; i < mLatDat->GetXSiteCount(); i += mLatDat->GetBlockSize())
       {
-        for (unsigned int j = 0; j < iGlobalLatDat->GetYSiteCount(); j
-            += iGlobalLatDat->GetBlockSize())
+        for (unsigned int j = 0; j < mLatDat->GetYSiteCount(); j += mLatDat->GetBlockSize())
         {
-          for (unsigned int k = 0; k < iGlobalLatDat->GetZSiteCount(); k
-              += iGlobalLatDat->GetBlockSize())
+          for (unsigned int k = 0; k < mLatDat->GetZSiteCount(); k += mLatDat->GetBlockSize())
           {
             n++;
-            geometry::BlockData * map_block_p = &iGlobalLatDat->Blocks[n];
+            geometry::LatticeData::BlockData * map_block_p = mLatDat->GetBlock(n);
 
             if (map_block_p->site_data == NULL)
             {
               continue;
             }
 
-            unsigned int site_i = (iGlobalLatDat->GetBlockSize() >> 1);
-            unsigned int site_j = (iGlobalLatDat->GetBlockSize() >> 1);
-            unsigned int site_k = (iGlobalLatDat->GetBlockSize() >> 1);
+            unsigned int site_i = (mLatDat->GetBlockSize() >> 1);
+            unsigned int site_j = (mLatDat->GetBlockSize() >> 1);
+            unsigned int site_k = (mLatDat->GetBlockSize() >> 1);
 
-            unsigned int m = ( ( (site_i << iGlobalLatDat->Log2BlockSize) + site_j)
-                << iGlobalLatDat->Log2BlockSize) + site_k;
+            unsigned int m = ( ( (site_i << mLatDat->GetLog2BlockSize()) + site_j)
+                << mLatDat->GetLog2BlockSize()) + site_k;
 
-            if (map_block_p->site_data[m] & (1U << 31U))
+            if (map_block_p->site_data[m] & BIG_NUMBER3)
             {
               continue;
             }
 
             Glyph *lGlyph = new Glyph();
 
-            lGlyph->x = float (i + site_i) - 0.5F * float (iGlobalLatDat->GetXSiteCount());
-            lGlyph->y = float (j + site_j) - 0.5F * float (iGlobalLatDat->GetYSiteCount());
-            lGlyph->z = float (k + site_k) - 0.5F * float (iGlobalLatDat->GetZSiteCount());
+            lGlyph->x = float (i + site_i) - 0.5F * float (mLatDat->GetXSiteCount());
+            lGlyph->y = float (j + site_j) - 0.5F * float (mLatDat->GetYSiteCount());
+            lGlyph->z = float (k + site_k) - 0.5F * float (mLatDat->GetZSiteCount());
 
-            int c1Plusc2 = 15;
-
-            lGlyph->f = &iLocalLatDat->FOld[map_block_p->site_data[m] * c1Plusc2];
+            lGlyph->f = mLatDat->GetFOld(map_block_p->site_data[m] * D3Q15::NUMVECTORS);
 
             mGlyphs.push_back(lGlyph);
 
@@ -99,8 +93,8 @@ namespace hemelb
       {
         D3Q15::CalculateDensityAndVelocity(mGlyphs[n]->f, density, vx, vy, vz);
 
-        temp = glyph_length * mGlobalLatDat->GetBlockSize()
-            * mDomainStats->velocity_threshold_max_inv / density;
+        temp = glyph_length * mLatDat->GetBlockSize() * mDomainStats->velocity_threshold_max_inv
+            / density;
 
         vx *= temp;
         vy *= temp;
