@@ -18,7 +18,7 @@ namespace hemelb
       mSitesY = mBlocksY * mBlockSize;
       mSitesZ = mBlocksZ * mBlockSize;
 
-      SitesPerBlockVolumeUnit = mBlockSize * mBlockSize * mBlockSize;
+      mSitesPerBlockVolumeUnit = mBlockSize * mBlockSize * mBlockSize;
 
       // A shift value we'll need later = log_2(block_size)
       unsigned int i = mBlockSize;
@@ -72,6 +72,11 @@ namespace hemelb
     unsigned int LatticeData::GlobalLatticeData::GetBlockCount() const
     {
       return mBlockCount;
+    }
+
+    unsigned int LatticeData::GlobalLatticeData::GetSitesPerBlockVolumeUnit() const
+    {
+      return mSitesPerBlockVolumeUnit;
     }
 
     LatticeData::GlobalLatticeData::~GlobalLatticeData()
@@ -171,16 +176,10 @@ namespace hemelb
     // Function to get a pointer to the site_data for a site.
     // If the site is in an empty block, return NULL.
 
-    const unsigned int * LatticeData::GlobalLatticeData::GetSiteData(unsigned int iSiteI,
-                                                                     unsigned int iSiteJ,
-                                                                     unsigned int iSiteK) const
+    unsigned int LatticeData::GlobalLatticeData::GetSiteData(unsigned int iSiteI,
+                                                             unsigned int iSiteJ,
+                                                             unsigned int iSiteK) const
     {
-      // If site is out of the bounding box, return NULL.
-      if (iSiteI >= mSitesX || iSiteJ >= mSitesY || iSiteK >= mSitesZ)
-      {
-        return NULL;
-      }
-
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
       unsigned int i = iSiteI >> Log2BlockSize;
       unsigned int j = iSiteJ >> Log2BlockSize;
@@ -189,21 +188,13 @@ namespace hemelb
       // Pointer to the block
       BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(i, j, k)];
 
-      // if an empty (solid) block is addressed
-      if (lBlock->site_data == NULL)
-      {
-        return NULL;
-      }
-      else
-      {
-        // Find site coordinates within the block
-        unsigned int ii = iSiteI - (i << Log2BlockSize);
-        unsigned int jj = iSiteJ - (j << Log2BlockSize);
-        unsigned int kk = iSiteK - (k << Log2BlockSize);
+      // Find site coordinates within the block
+      unsigned int ii = iSiteI - (i << Log2BlockSize);
+      unsigned int jj = iSiteJ - (j << Log2BlockSize);
+      unsigned int kk = iSiteK - (k << Log2BlockSize);
 
-        // Return pointer to site_data[site]
-        return &lBlock->site_data[ ( ( (ii << Log2BlockSize) + jj) << Log2BlockSize) + kk];
-      }
+      // Return pointer to site_data[site]
+      return lBlock->site_data[ ( ( (ii << Log2BlockSize) + jj) << Log2BlockSize) + kk];
     }
   }
 }

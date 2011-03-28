@@ -321,7 +321,7 @@ namespace hemelb
       {
         if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
         {
-          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->SitesPerBlockVolumeUnit; ++lSiteIndex)
+          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
           {
             if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
                 == mGlobalRank)
@@ -332,7 +332,8 @@ namespace hemelb
         }
       }
 
-      MPI_Allgather(&localFluidSites, 1, MPI_UNSIGNED, fluidSitePerProc, 1, MPI_UNSIGNED, MPI_COMM_WORLD);
+      MPI_Allgather(&localFluidSites, 1, MPI_UNSIGNED, fluidSitePerProc, 1, MPI_UNSIGNED,
+                    MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       unsigned int localMins[3];
@@ -502,7 +503,7 @@ namespace hemelb
       // * an unsigned int (config)
       // * 4 doubles
       // * 14 further doubles (in D3Q15)
-      unsigned int maxBytesPerBlock = (iGlobLatDat->SitesPerBlockVolumeUnit) * (4 * 1 + 8 * (4
+      unsigned int maxBytesPerBlock = (iGlobLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
           + D3Q15::NUMVECTORS - 1));
       const unsigned int BlocksToReadInOneGo = 10;
       char* readBuffer = new char[maxBytesPerBlock * BlocksToReadInOneGo];
@@ -534,9 +535,9 @@ namespace hemelb
           if (readBlock[lBlock] && bytesPerBlock[lBlock] > 0)
           {
             iGlobLatDat->Blocks[lBlock].site_data
-                = new unsigned int[iGlobLatDat->SitesPerBlockVolumeUnit];
+                = new unsigned int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
             iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite
-                = new int[iGlobLatDat->SitesPerBlockVolumeUnit];
+                = new int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
 
             int m = -1;
 
@@ -573,7 +574,7 @@ namespace hemelb
                     if (iGlobLatDat->Blocks[lBlock].wall_data == NULL)
                     {
                       iGlobLatDat->Blocks[lBlock].wall_data
-                          = new WallData[iGlobLatDat->SitesPerBlockVolumeUnit];
+                          = new WallData[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
                     }
 
                     if (iGlobLatDat->GetCollisionType(*site_type) & INLET
@@ -982,7 +983,7 @@ namespace hemelb
                         + neighLocalSiteJ) << bGlobLatDat->Log2BlockSize) + neighLocalSiteK;
 
                     for (unsigned int neighSite = 0; neighSite
-                        < bGlobLatDat->SitesPerBlockVolumeUnit; ++neighSite)
+                        < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++neighSite)
                     {
                       if (neighSite == localSiteId)
                       {
@@ -1188,7 +1189,7 @@ namespace hemelb
 
         if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
         {
-          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->SitesPerBlockVolumeUnit; ++lSiteIndex)
+          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
           {
             if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex] != (1U << 30))
             {

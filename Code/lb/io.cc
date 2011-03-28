@@ -337,7 +337,7 @@ namespace hemelb
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  if (*iLatticeData.GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
+                  if (iLatticeData.GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
                   {
                     D3Q15::CalculateDensityVelocityFEq(iLatticeData.GetFOld( (my_site_id
                         * (par + 1) + par) * D3Q15::NUMVECTORS), density, vx, vy, vz, f_eq);
@@ -654,7 +654,7 @@ namespace hemelb
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  if (*iLatDat.GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
+                  if (iLatDat.GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
                   {
                     D3Q15::CalculateDensityVelocityFEq(iLatDat.GetFOld(my_site_id
                         * D3Q15::NUMVECTORS), density, vx, vy, vz, f_eq);
