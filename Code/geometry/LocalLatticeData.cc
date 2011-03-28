@@ -15,7 +15,7 @@ namespace hemelb
       mWallNormalAtSite = NULL;
     }
 
-    void LatticeData::LocalLatticeData::Initialise(int iLocalFluidSites)
+    void LatticeData::LocalLatticeData::Initialise(unsigned int iLocalFluidSites)
     {
       LocalFluidSites = iLocalFluidSites;
 
@@ -86,7 +86,7 @@ namespace hemelb
       return (SiteType) (mSiteData[iSiteIndex] & SITE_TYPE_MASK);
     }
 
-    int LatticeData::LocalLatticeData::GetLocalFluidSiteCount() const
+    unsigned int LatticeData::LocalLatticeData::GetLocalFluidSiteCount() const
     {
       return LocalFluidSites;
     }

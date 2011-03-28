@@ -26,62 +26,7 @@ namespace hemelb
           OUTLET_TYPE = 3U
         };
 
-        LatticeData(const bool reserveSteeringCore,
-                    int* totalFluidSites,
-                    unsigned int siteMins[3],
-                    unsigned int siteMaxes[3],
-                    int* fluidSitePerProc,
-                    lb::LbmParameters* bLbmParams,
-                    SimConfig* bSimConfig,
-                    double* lReadTime,
-                    double* lDecomposeTime);
-
-        const double *GetNormalToWall(int iSiteIndex) const;
-
-      private:
-        class LocalLatticeData
-        {
-          public:
-            LocalLatticeData();
-            ~LocalLatticeData();
-
-            void Initialise(int iLocalFluidSites);
-
-            int GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const;
-            double GetCutDistance(int iSiteIndex, int iDirection) const;
-            bool HasBoundary(int iSiteIndex, int iDirection) const;
-            int GetBoundaryId(int iSiteIndex) const;
-            const double *GetNormalToWall(int iSiteIndex) const;
-            SiteType GetSiteType(int iSiteIndex) const;
-            int GetLocalFluidSiteCount() const;
-
-            void SetNeighbourLocation(unsigned int iSiteIndex,
-                                      unsigned int iDirection,
-                                      unsigned int iValue);
-            void SetWallNormal(int iSiteIndex, const double iNormal[3]);
-            void
-            SetDistanceToWall(int iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
-
-            void SetSharedSiteCount(int iSharedCount);
-          public:
-            int my_inner_sites;
-            int my_inner_collisions[COLLISION_TYPES];
-            int my_inter_collisions[COLLISION_TYPES];
-
-            double *FOld;
-            double *FNew;
-
-            // TODO sadly this has to be public, due to some budgetry in the way we determine site type.
-            // SiteType || FluidSite and SiteType && FluidSite have different significances...
-            unsigned int *mSiteData;
-
-          private:
-            int LocalFluidSites;
-            unsigned int *mFNeighbours;
-            double *mDistanceToWall;
-            double *mWallNormalAtSite;
-        };
-
+        //TODO Ideally we'd hide implementation details like this.
         // Data about an element of the domain wall
         struct WallData
         {
@@ -131,6 +76,116 @@ namespace hemelb
             WallData *wall_data;
             // The "site data" for each site.
             unsigned int *site_data;
+        };
+
+        LatticeData(const bool reserveSteeringCore,
+                    int* totalFluidSites,
+                    unsigned int siteMins[3],
+                    unsigned int siteMaxes[3],
+                    unsigned int* fluidSitePerProc,
+                    lb::LbmParameters* bLbmParams,
+                    SimConfig* bSimConfig,
+                    double* lReadTime,
+                    double* lDecomposeTime);
+
+        const double *GetNormalToWall(int iSiteIndex) const;
+
+        unsigned int GetXSiteCount() const;
+        unsigned int GetYSiteCount() const;
+        unsigned int GetZSiteCount() const;
+
+        unsigned int GetXBlockCount() const;
+        unsigned int GetYBlockCount() const;
+        unsigned int GetZBlockCount() const;
+
+        unsigned int GetLog2BlockSize() const;
+
+        unsigned int GetBlockSize() const;
+        unsigned int GetBlockCount() const;
+
+        unsigned int GetSitesPerBlockVolumeUnit() const;
+
+        unsigned int GetBlockIdFromBlockCoords(unsigned int i, unsigned int j, unsigned int k) const;
+
+        int*
+        GetProcIdFromGlobalCoords(unsigned int siteI, unsigned int siteJ, unsigned int siteK) const;
+
+        BlockData* GetBlock(unsigned int blockNumber) const;
+
+        double* GetFOld(unsigned int siteNumber) const;
+        double* GetFNew(unsigned int siteNumber) const;
+        unsigned int GetLocalFluidSiteCount() const;
+        SiteType GetSiteType(int iSiteIndex) const;
+        int GetBoundaryId(int iSiteIndex) const;
+        int GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const;
+        bool HasBoundary(int iSiteIndex, int iDirection) const;
+        double GetCutDistance(int iSiteIndex, int iDirection) const;
+        unsigned int* GetSiteData(unsigned int iSiteIndex) const;
+        const unsigned int * GetSiteData(unsigned int iSiteI,
+                                         unsigned int iSiteJ,
+                                         unsigned int iSiteK) const;
+        void SetNeighbourLocation(unsigned int iSiteIndex,
+                                  unsigned int iDirection,
+                                  unsigned int iValue);
+
+        void SetSiteCounts(unsigned int innerSites,
+                           unsigned int interCollisions[COLLISION_TYPES],
+                           unsigned int innerCollisions[COLLISION_TYPES],
+                           unsigned int sharedSites);
+        void SetSiteData(unsigned int siteIndex, unsigned int siteData);
+        void SetWallNormal(unsigned int siteIndex, double normal[3]);
+        void SetWallDistance(unsigned int siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1]);
+
+        unsigned int GetInnerSiteCount();
+        unsigned int GetInnerCollisionCount(unsigned int collisionType);
+        unsigned int GetInterCollisionCount(unsigned int collisionType);
+        unsigned int GetCollisionType(unsigned int site_data) const;
+
+        void SwapOldAndNew();
+
+      private:
+        class LocalLatticeData
+        {
+          public:
+            LocalLatticeData();
+            ~LocalLatticeData();
+
+            void Initialise(unsigned int iLocalFluidSites);
+
+            int GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const;
+            double GetCutDistance(int iSiteIndex, int iDirection) const;
+            bool HasBoundary(int iSiteIndex, int iDirection) const;
+            int GetBoundaryId(int iSiteIndex) const;
+            const double *GetNormalToWall(int iSiteIndex) const;
+            SiteType GetSiteType(int iSiteIndex) const;
+            unsigned int GetLocalFluidSiteCount() const;
+
+            void SetNeighbourLocation(unsigned int iSiteIndex,
+                                      unsigned int iDirection,
+                                      unsigned int iValue);
+            void SetWallNormal(int iSiteIndex, const double iNormal[3]);
+            void
+            SetDistanceToWall(int iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
+
+            void SetSharedSiteCount(int iSharedCount);
+
+          public:
+            unsigned int my_inner_sites;
+            unsigned int my_inner_collisions[COLLISION_TYPES];
+            unsigned int my_inter_collisions[COLLISION_TYPES];
+
+            double *FOld;
+            double *FNew;
+
+            // TODO sadly this has to be public, due to some budgetry in the way we determine site type.
+            // SiteType || FluidSite and SiteType && FluidSite have different significances...
+            unsigned int *mSiteData;
+
+          private:
+            unsigned int LocalFluidSites;
+            unsigned int *mFNeighbours;
+            double *mDistanceToWall;
+            double *mWallNormalAtSite;
         };
 
         class GlobalLatticeData
@@ -268,7 +323,7 @@ namespace hemelb
                                   int* totalFluidSites,
                                   unsigned int siteMins[3],
                                   unsigned int siteMaxes[3],
-                                  int* fluidSitePerProc,
+                                  unsigned int* fluidSitePerProc,
                                   lb::LbmParameters* bLbmParams,
                                   SimConfig* bSimConfig,
                                   double* lReadTime,

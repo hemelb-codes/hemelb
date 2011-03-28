@@ -220,7 +220,7 @@ namespace hemelb
                                                        int *totalFluidSites,
                                                        unsigned int siteMins[3],
                                                        unsigned int siteMaxes[3],
-                                                       int* fluidSitePerProc,
+                                                       unsigned int* fluidSitePerProc,
                                                        lb::LbmParameters* bLbmParams,
                                                        SimConfig* bSimConfig,
                                                        double* oReadTime,
@@ -315,7 +315,7 @@ namespace hemelb
                                     bGlobLatDat);
       }
 
-      int localFluidSites = 0;
+      unsigned int localFluidSites = 0;
 
       for (unsigned int lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
       {
@@ -332,7 +332,7 @@ namespace hemelb
         }
       }
 
-      MPI_Allgather(&localFluidSites, 1, MPI_INT, fluidSitePerProc, 1, MPI_INT, MPI_COMM_WORLD);
+      MPI_Allgather(&localFluidSites, 1, MPI_UNSIGNED, fluidSitePerProc, 1, MPI_UNSIGNED, MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       unsigned int localMins[3];

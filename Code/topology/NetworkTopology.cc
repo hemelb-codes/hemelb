@@ -25,6 +25,8 @@ namespace hemelb
       }
 
       *oSuccess = InitialiseMachineInfo();
+
+      FluidSitesOnEachProcessor = new unsigned int[processorCount];
     }
 
     NetworkTopology::~NetworkTopology()

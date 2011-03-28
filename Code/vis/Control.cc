@@ -12,16 +12,16 @@ namespace hemelb
 {
   namespace vis
   {
-    Control::Control(lb::StressTypes iStressType, geometry::GlobalLatticeData* iGlobLatDat)
+    Control::Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat)
     {
       mVisSettings.mStressType = iStressType;
 
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float (iGlobLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float (iGlobLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float (iGlobLatDat->GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float (iLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float (iLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float (iLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -38,17 +38,15 @@ namespace hemelb
     }
 
     void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
-                             geometry::GlobalLatticeData* iGlobLatDat,
-                             geometry::LocalLatticeData* iLocalLatDat)
+                             geometry::LatticeData* iLatDat)
     {
-      myRayTracer = new RayTracer(iNetworkTopology, iLocalLatDat, iGlobLatDat, &mDomainStats,
-                                  &mScreen, &mViewpoint, &mVisSettings);
-      myGlypher = new GlyphDrawer(iGlobLatDat, iLocalLatDat, &mScreen, &mDomainStats, &mViewpoint,
+      myRayTracer = new RayTracer(iNetworkTopology, iLatDat, &mDomainStats, &mScreen, &mViewpoint,
                                   &mVisSettings);
+      myGlypher = new GlyphDrawer(iLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(iNetworkTopology, iLocalLatDat, iGlobLatDat, &mScreen,
-                                        &mViewpoint, &mVisSettings);
+      myStreaker = new StreaklineDrawer(iNetworkTopology, iLatDat, &mScreen, &mViewpoint,
+                                        &mVisSettings);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -283,7 +281,7 @@ namespace hemelb
     }
 
     void Control::render(int recv_buffer_id,
-                         geometry::GlobalLatticeData* iGlobLatDat,
+                         geometry::LatticeData* iLatDat,
                          const topology::NetworkTopology* iNetTopology)
     {
       if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
@@ -304,7 +302,7 @@ namespace hemelb
 #ifndef NO_STREAKLINES
       if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode == 2)
       {
-        myStreaker->render(iGlobLatDat);
+        myStreaker->render(iLatDat);
       }
 #endif
       compositeImage(recv_buffer_id, iNetTopology);
@@ -346,12 +344,9 @@ namespace hemelb
       mVisSettings.mouse_stress = iPhysicalStress;
     }
 
-    void Control::streaklines(int time_step,
-                              int period,
-                              geometry::GlobalLatticeData* iGlobLatDat,
-                              geometry::LocalLatticeData* iLocalLatDat)
+    void Control::streaklines(int time_step, int period, geometry::LatticeData* iLatDat)
     {
-      myStreaker ->StreakLines(time_step, period, iGlobLatDat, iLocalLatDat);
+      myStreaker ->StreakLines(time_step, period, iLatDat);
     }
 
     void Control::restart()

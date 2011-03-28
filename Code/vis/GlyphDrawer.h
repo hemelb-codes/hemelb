@@ -43,13 +43,14 @@ namespace hemelb
             double *f;
         };
 
+        geometry::LatticeData* mLatDat;
+
         Screen* mScreen;
         DomainStats* mDomainStats;
         Viewpoint* mViewpoint;
         VisSettings* mVisSettings;
 
         std::vector<Glyph*> mGlyphs;
-        geometry::LatticeData* mLatDat;
     };
 
   }

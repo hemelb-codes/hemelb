@@ -9,6 +9,7 @@
 // TODO almost certainly filth.
 #define BIG_NUMBER   1.0e+30
 #define BIG_NUMBER2  (1 << 30)
+#define BIG_NUMBER3 (1U << 31U)
 
 #define MACROSCOPIC_PARS   5
 #define DENSITY            0
