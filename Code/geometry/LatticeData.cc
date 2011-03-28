@@ -104,9 +104,9 @@ namespace hemelb
                     {
 
                       // Pointer to the neighbour.
-                      const unsigned int *site_data_p = GetSiteData(neigh_i, neigh_j, neigh_k);
+                      unsigned int contigSiteId = GetContiguousSiteId(neigh_i, neigh_j, neigh_k);
 
-                      SetNeighbourLocation(site_map, l, *site_data_p * D3Q15::NUMVECTORS + l);
+                      SetNeighbourLocation(site_map, l, contigSiteId * D3Q15::NUMVECTORS + l);
 
                       continue;
                     }
@@ -140,7 +140,7 @@ namespace hemelb
                   // This is used in Calculate BC in IO.
                   SetSiteData(site_map, iSiteDataForThisRank[lSiteIndexOnProc]);
 
-                  if (GetCollisionType(*GetSiteData(site_map)) & EDGE)
+                  if (GetCollisionType(GetSiteData(site_map)) & EDGE)
                   {
                     SetWallNormal(site_map, GetBlock(n)->wall_data[m].wall_nor);
 
@@ -210,7 +210,7 @@ namespace hemelb
 
     unsigned int LatticeData::GetSitesPerBlockVolumeUnit() const
     {
-      return globLatDat.SitesPerBlockVolumeUnit;
+      return globLatDat.GetSitesPerBlockVolumeUnit();
     }
 
     unsigned int LatticeData::GetBlockIdFromBlockCoords(unsigned int i,
@@ -272,14 +272,14 @@ namespace hemelb
       return localLatDat.GetCutDistance(iSiteIndex, iDirection);
     }
 
-    unsigned int* LatticeData::GetSiteData(unsigned int iSiteIndex) const
+    unsigned int LatticeData::GetSiteData(unsigned int iSiteIndex) const
     {
-      return &localLatDat.mSiteData[iSiteIndex];
+      return localLatDat.mSiteData[iSiteIndex];
     }
 
-    const unsigned int* LatticeData::GetSiteData(unsigned int iSiteI,
-                                                 unsigned int iSiteJ,
-                                                 unsigned int iSiteK) const
+    unsigned int LatticeData::GetContiguousSiteId(unsigned int iSiteI,
+                                                  unsigned int iSiteJ,
+                                                  unsigned int iSiteK) const
     {
       return globLatDat.GetSiteData(iSiteI, iSiteJ, iSiteK);
     }
