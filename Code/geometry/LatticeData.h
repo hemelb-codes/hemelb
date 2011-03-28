@@ -88,7 +88,22 @@ namespace hemelb
                     double* lReadTime,
                     double* lDecomposeTime);
 
-        const double *GetNormalToWall(int iSiteIndex) const;
+        void InitialiseNeighbourLookup(short int ** bSharedFLocationForEachProc,
+                                       int localRank,
+                                       const unsigned int * iSiteDataForThisRank);
+
+        void SetNeighbourLocation(unsigned int iSiteIndex,
+                                  unsigned int iDirection,
+                                  unsigned int iValue);
+
+        void SetSiteCounts(unsigned int innerSites,
+                           unsigned int interCollisions[COLLISION_TYPES],
+                           unsigned int innerCollisions[COLLISION_TYPES],
+                           unsigned int sharedSites);
+
+        void SwapOldAndNew();
+
+        const double* GetNormalToWall(int iSiteIndex) const;
 
         unsigned int GetXSiteCount() const;
         unsigned int GetYSiteCount() const;
@@ -124,24 +139,10 @@ namespace hemelb
         const unsigned int * GetSiteData(unsigned int iSiteI,
                                          unsigned int iSiteJ,
                                          unsigned int iSiteK) const;
-        void SetNeighbourLocation(unsigned int iSiteIndex,
-                                  unsigned int iDirection,
-                                  unsigned int iValue);
-
-        void SetSiteCounts(unsigned int innerSites,
-                           unsigned int interCollisions[COLLISION_TYPES],
-                           unsigned int innerCollisions[COLLISION_TYPES],
-                           unsigned int sharedSites);
-        void SetSiteData(unsigned int siteIndex, unsigned int siteData);
-        void SetWallNormal(unsigned int siteIndex, double normal[3]);
-        void SetWallDistance(unsigned int siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1]);
-
-        unsigned int GetInnerSiteCount();
-        unsigned int GetInnerCollisionCount(unsigned int collisionType);
-        unsigned int GetInterCollisionCount(unsigned int collisionType);
+        unsigned int GetInnerSiteCount() const;
+        unsigned int GetInnerCollisionCount(unsigned int collisionType) const;
+        unsigned int GetInterCollisionCount(unsigned int collisionType) const;
         unsigned int GetCollisionType(unsigned int site_data) const;
-
-        void SwapOldAndNew();
 
       private:
         class LocalLatticeData
@@ -375,6 +376,10 @@ namespace hemelb
             unsigned int mTopologySize;
             int mGlobalRank;
         };
+
+        void SetSiteData(unsigned int siteIndex, unsigned int siteData);
+        void SetWallNormal(unsigned int siteIndex, double normal[3]);
+        void SetWallDistance(unsigned int siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1]);
 
         LocalLatticeData localLatDat;
         GlobalLatticeData globLatDat;
