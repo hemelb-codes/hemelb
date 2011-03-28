@@ -11,18 +11,18 @@ namespace hemelb
                                                      const int iSiteCount,
                                                      const LbmParameters &iLbmParams,
                                                      MinsAndMaxes &bMinimaAndMaxima,
-                                                     geometry::LocalLatticeData &bLocalLatDat,
+                                                     geometry::LatticeData &bLatDat,
                                                      hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
           DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                      bLocalLatDat, iControl);
+                                      bLatDat, iControl);
         }
         else
         {
           DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                       bLocalLatDat, iControl);
+                                       bLatDat, iControl);
         }
       }
 
@@ -31,12 +31,12 @@ namespace hemelb
                                                              const int iSiteCount,
                                                              const LbmParameters &iLbmParams,
                                                              MinsAndMaxes &bMinimaAndMaxima,
-                                                             geometry::LocalLatticeData &bLocalLatDat,
+                                                             geometry::LatticeData &bLatDat,
                                                              hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *lFOld = &bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS];
+          double *lFOld = bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS);
           double lFNeq[D3Q15::NUMVECTORS];
           double lDensity;
 
@@ -57,12 +57,12 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            bLocalLatDat.FNew[bLocalLatDat.GetStreamedIndex(lIndex, ii)] = lFOld[ii];
+            * (bLatDat.GetFNew(bLatDat.GetStreamedIndex(lIndex, ii))) = lFOld[ii];
             lFNeq[ii] -= lFOld[ii];
           }
 
           Collision::UpdateMinsAndMaxes<tDoRayTracing>(0.0, 0.0, 0.0, lIndex, lFNeq, lDensity,
-                                                       bMinimaAndMaxima, bLocalLatDat, iLbmParams,
+                                                       bMinimaAndMaxima, bLatDat, iLbmParams,
                                                        iControl);
         }
       }

@@ -41,9 +41,7 @@ class SimulationMaster
 
     FILE *mTimingsFile;
 
-    hemelb::geometry::GlobalLatticeData mGlobLatDat;
-    hemelb::geometry::LocalLatticeData* mLocalLatDat;
-
+    hemelb::geometry::LatticeData* mLatDat;
     hemelb::topology::NetworkTopology* mNetworkTopology;
 
     hemelb::steering::ClientConnection* clientConnection;

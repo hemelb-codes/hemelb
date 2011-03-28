@@ -12,18 +12,18 @@ namespace hemelb
                                             const int iSiteCount,
                                             const LbmParameters &iLbmParams,
                                             MinsAndMaxes &bMinimaAndMaxima,
-                                            geometry::LocalLatticeData &bLocalLatDat,
+                                            geometry::LatticeData &bLatDat,
                                             hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
           DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                      bLocalLatDat, iControl);
+                                      bLatDat, iControl);
         }
         else
         {
           DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                       bLocalLatDat, iControl);
+                                       bLatDat, iControl);
         }
       }
 
@@ -32,18 +32,18 @@ namespace hemelb
                                         const int iSiteCount,
                                         const LbmParameters &iLbmParams,
                                         MinsAndMaxes &bMinimaAndMaxima,
-                                        geometry::LocalLatticeData &bLocalLatDat,
+                                        geometry::LatticeData &bLatDat,
                                         hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          PostStepInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                  bLocalLatDat, iControl);
+          PostStepInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima, bLatDat,
+                                  iControl);
         }
         else
         {
-          PostStepInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                   bLocalLatDat, iControl);
+          PostStepInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima, bLatDat,
+                                   iControl);
         }
       }
 
@@ -52,24 +52,24 @@ namespace hemelb
                                                     const int iSiteCount,
                                                     const LbmParameters &iLbmParams,
                                                     MinsAndMaxes &bMinimaAndMaxima,
-                                                    geometry::LocalLatticeData &bLocalLatDat,
+                                                    geometry::LatticeData &bLatDat,
                                                     hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *f = &bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS];
+          double *f = bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS);
           double density, v_x, v_y, v_z, f_neq[15];
           // Temporarily store f_eq in f_neq. Rectified later.
           D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_neq);
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            bLocalLatDat.FNew[bLocalLatDat.GetStreamedIndex(lIndex, ii)] = f[ii]
-                += iLbmParams.Omega * (f_neq[ii] = f[ii] - f_neq[ii]);
+            * (bLatDat.GetFNew(bLatDat.GetStreamedIndex(lIndex, ii))) = f[ii] += iLbmParams.Omega
+                * (f_neq[ii] = f[ii] - f_neq[ii]);
           }
 
           UpdateMinsAndMaxes<tDoRayTracing> (v_x, v_y, v_z, lIndex, f_neq, density,
-                                             bMinimaAndMaxima, bLocalLatDat, iLbmParams, iControl);
+                                             bMinimaAndMaxima, bLatDat, iLbmParams, iControl);
         }
       }
 
@@ -80,7 +80,7 @@ namespace hemelb
                                                 const int iSiteCount,
                                                 const LbmParameters &iLbmParams,
                                                 MinsAndMaxes &bMinimaAndMaxima,
-                                                geometry::LocalLatticeData &bLocalLatDat,
+                                                geometry::LatticeData &bLatDat,
                                                 hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
@@ -89,28 +89,22 @@ namespace hemelb
           // and even cases separately.
           for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
           {
-            if (bLocalLatDat.HasBoundary(lIndex, l))
+            if (bLatDat.HasBoundary(lIndex, l))
             {
-              double twoQ = 2.0 * bLocalLatDat.GetCutDistance(lIndex, l);
-              if (twoQ < 1.0)
-              {
-                bLocalLatDat.FNew[lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]]
-                    = bLocalLatDat.FNew[lIndex * D3Q15::NUMVECTORS + l] + twoQ
-                        * (bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS + l]
-                            - bLocalLatDat.FNew[lIndex * D3Q15::NUMVECTORS + l]);
-              }
-              else
-              {
-                bLocalLatDat.FNew[lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]]
-                    = bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]]
-                        + (1. / twoQ) * (bLocalLatDat.FOld[lIndex * D3Q15::NUMVECTORS + l]
-                            - bLocalLatDat.FOld[lIndex * 15 + D3Q15::INVERSEDIRECTIONS[l]]);
-              }
+              double twoQ = 2.0 * bLatDat.GetCutDistance(lIndex, l);
+
+              * (bLatDat.GetFNew(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l])) = (twoQ
+                  < 1.0)
+                ? (*bLatDat.GetFNew(lIndex * D3Q15::NUMVECTORS + l) + twoQ
+                    * (*bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS + l) - *bLatDat.GetFNew(lIndex
+                        * D3Q15::NUMVECTORS + l)))
+                : (*bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]) + (1.
+                    / twoQ) * (*bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS + l)
+                    - *bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l])));
             }
           }
         }
       }
-
     }
   }
 }

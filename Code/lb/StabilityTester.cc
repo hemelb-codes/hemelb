@@ -6,13 +6,12 @@ namespace hemelb
   namespace lb
   {
 
-    StabilityTester::StabilityTester(const geometry::LocalLatticeData * iLocalLatDat,
+    StabilityTester::StabilityTester(const geometry::LatticeData * iLatDat,
                                      net::Net* net,
                                      topology::NetworkTopology* iNetTop,
                                      SimulationState* simState) :
-      net::PhasedBroadcast(net, iNetTop, simState, SPREADFACTOR)
+      net::PhasedBroadcast(net, iNetTop, simState, SPREADFACTOR), mLatDat(iLatDat)
     {
-      mLocalLatDat = iLocalLatDat;
       mPublicSimulationStability = &simState->Stability;
       Reset();
     }
@@ -66,11 +65,11 @@ namespace hemelb
       // sending up a 'Unstable' value anyway.
       if (mUpwardsStability != Unstable)
       {
-        for (int i = 0; i < mLocalLatDat->GetLocalFluidSiteCount(); i++)
+        for (unsigned int i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
         {
           for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
           {
-            if (mLocalLatDat->FNew[i * D3Q15::NUMVECTORS + l] < 0.)
+            if (*mLatDat->GetFNew(i * D3Q15::NUMVECTORS + l) < 0.0)
             {
               mUpwardsStability = Unstable;
             }
