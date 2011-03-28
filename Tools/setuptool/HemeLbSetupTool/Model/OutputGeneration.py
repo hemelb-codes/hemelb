@@ -12,8 +12,10 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, \
     vtkOBBTree, vtkTriangleFilter, vtkCleanPolyData, vtkIntArray
 
 from .Iolets import Inlet, Outlet, Iolet
-from .OutputGenerationHelpers import MacroBlock, latticeVectorNorms
+from .OutputGenerationHelpers import Domain, DomainSmartBlockIterator, latticeVectorNorms
 from .HitList import HitList
+#from .DomainSmartBlockIterator import 
+
 import pdb
 
 np.seterr(divide='ignore')
@@ -98,7 +100,7 @@ class ConfigGenerator(object):
                         VoxelSize=domain.VoxelSize,
                         Origin=domain.Origin)
 
-        for block in domain.SmartIterBlocks():
+        for block in DomainSmartBlockIterator(domain):
             # Open the BlockStarted context of the writer; this will
             # deal with flushing the state to the file (or not, in the
             # case where there are no fluid sites).
@@ -551,100 +553,7 @@ class Writer(object):
     pass
 
 
-class Domain(object):
-    """Represent the entire simulation domain that is needed for the
-    simulation.
-    """
-    
-    def __init__(self, VoxelSize, SurfaceBounds, BlockSize=8):
-        """VoxelSize - voxel size, in metres
-        
-        SurfaceBounds - bounds of the surface, in standard VTK order
-        (x_min, x_max, y_min, y_max, z_min, z_max), in metres.
-        """
-        self.VoxelSize = VoxelSize
-        self.BlockSize = BlockSize
-        # VTK standard order of (x_min, x_max, y_min, y_max, z_min, z_max)
-        bb = np.array(SurfaceBounds)
-        bb.shape = (3, 2)
 
-        origin = []
-        blocks = []
-        for min, max in bb:
-            size = max - min
-            # int() truncates, we add 2 to make sure there's enough
-            # room for the sites just outside.
-            nSites = int(size / VoxelSize) + 2
-
-            # The extra space
-            extra = nSites * VoxelSize - size
-            # We want to balance this equally with the placement of
-            # the first site.
-            siteZero = min - 0.5 * extra
-
-            nBlocks = nSites / BlockSize
-            remainder = nSites % BlockSize
-            if remainder:
-                nBlocks += 1
-                pass
-
-            origin.append(siteZero)
-            blocks.append(nBlocks)
-            continue
-
-        self.Origin = np.array(origin)
-        self.BlockCounts = np.array(blocks)
-        
-        return
-
-    def CalcPositionFromIndex(self, index):
-        return self.Origin + self.VoxelSize * np.array(index)
-
-    def GetBlock(self, *blockIjk):
-        val = self.blocks[blockIjk]
-        if val is None:
-            val = self.blocks[blockIjk] = MacroBlock(self, blockIjk, self.BlockSize)
-            pass
-        return val
-
-    def GetSite(self, *globalSiteIjk):
-        blockIjk = [i / self.BlockSize for i in globalSiteIjk]
-        block = self.GetBlock(*blockIjk)
-        return block.GetSite(*globalSiteIjk)
-
-    def SmartIterBlocks(self):
-        # Fill the blocks with Nones
-        self.blocks = np.empty(self.BlockCounts, dtype=object)
-        maxInds = [l - 1 for l in self.BlockCounts]
-
-        for ijk, val in np.ndenumerate(self.blocks):
-            if val is None:
-                # If the block hasn't been created, do so
-                val = self.blocks[ijk] = MacroBlock(self, ijk, self.BlockSize)
-                pass
-
-            yield val
-
-            # Delete any unnecessary blocks now
-            for i in range(ijk[0] - 1, ijk[0] + 1):
-                if i < 0: continue
-                if i == ijk[0] and i != maxInds[0]: continue
-                for j in range(ijk[1] - 1, ijk[1] + 1):
-                    if j < 0: continue
-                    if j == ijk[1] and j != maxInds[1]: continue
-                    for k in range(ijk[2] - 1, ijk[2] + 1):
-                        if k < 0: continue
-                        if k == ijk[2] and k != maxInds[2]: continue
-                        self.blocks[i, j, k] = None
-                        continue
-                    continue
-                continue
-
-
-            continue # nd.enumerate(self.blocks)
-
-        return
-    pass
 
 class XmlWriter(object):
     def __init__(self, profile):
