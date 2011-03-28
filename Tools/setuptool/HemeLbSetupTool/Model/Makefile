@@ -1,6 +1,6 @@
 CXX = gcc
 
-CXXFLAGS = -fno-strict-aliasing -fno-common -dynamic -arch i386 -DNDEBUG -g -O0 -arch i386 \
+CXXFLAGS = -fno-strict-aliasing -fno-common -dynamic -arch i386 -DNDEBUG -g -O3 -arch i386 \
 	-I/Library/Frameworks/Python.framework/Versions/7.0/include \
 	-I/Library/Frameworks/Python.framework/Versions/7.0/lib/python2.7/site-packages/numpy/core/include \
 	-I/Library/Frameworks/Python.framework/Versions/7.0/include/python2.7 \
