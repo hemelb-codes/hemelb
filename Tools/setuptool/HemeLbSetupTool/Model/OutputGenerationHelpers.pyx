@@ -31,33 +31,220 @@ cdef np.ndarray laterNeighbourInds = np.array([0, 2, 4, 6, 8, 10, 12], dtype=np.
 #     unsigned int i, j, k
 #     pass
 
-ctypedef object Index
-ctypedef object Domain
-
 RealCode = np.float
 ctypedef np.float_t Real
+# ctypedef np.ndarray[int, ndim=1] Index
 # ctypedef vector[np.float_t] RealVector
+
+cdef class LatticeSite
+cdef class MacroBlock
+
+# cdef class Index:
+#     cdef vector[int]* v
+#     def __cinit__(self):
+#         self.v = new vector[int](3)
+
+#     def __dealloc__(self):
+#         del self.v
+
+#     cdef inline object GetObject(Index self, np.ndarray array):
+#         return array[deref(self.v)[0],
+#                      deref(self.v)[1],
+#                      deref(self.v)[2]]
+#     cdef inline object SetObject(Index self, np.ndarray array, object val):
+#         array[deref(self.v)[0],
+#               deref(self.v)[1],
+#               deref(self.v)[2]] = val
+#         return val
+    
+#     cdef Real GetReal(Index self, np.ndarray array):
+#         return array[deref(self.v)[0],
+#                      deref(self.v)[1],
+#                      deref(self.v)[2]]
+    
+cdef class Domain:
+    """Represent the entire simulation domain that is needed for the
+    simulation.
+    """
+    cdef:
+        public Real VoxelSize
+        public int BlockSize
+        vector[Real]* _Origin
+        vector[int]* _BlockCounts
+        public np.ndarray blocks
+        
+    property Origin:
+        def __get__(self):
+            cdef np.ndarray ans = np.zeros(3, dtype=RealCode)
+            for i from 0 <= i < 3:
+                ans[i] = deref(self._Origin)[i]
+            return ans
+        def __set__(self, np.ndarray val):
+            for i from 0 <= i < 3:
+                deref(self._Origin)[i] = val[i]
+    property BlockCounts:
+        def __get__(self):
+            cdef np.ndarray ans = np.zeros(3, dtype=int)
+            for i from 0 <= i < 3:
+                ans[i] = deref(self._BlockCounts)[i]
+            return ans
+        def __set__(self, np.ndarray val):
+            for i from 0 <= i < 3:
+                deref(self._BlockCounts)[i] = val[i]
+
+    def __cinit__(self, *args, **kwargs):
+        self._Origin = new vector[Real](3)
+        self._BlockCounts = new vector[int](3)
+
+    def __dealloc__(self):
+        del self._Origin
+        del self._BlockCounts
+        
+    def __init__(self, VoxelSize, SurfaceBounds, BlockSize=8):
+        """VoxelSize - voxel size, in metres
+        
+        SurfaceBounds - bounds of the surface, in standard VTK order
+        (x_min, x_max, y_min, y_max, z_min, z_max), in metres.
+        """
+        self.VoxelSize = VoxelSize
+        self.BlockSize = BlockSize
+        # VTK standard order of (x_min, x_max, y_min, y_max, z_min, z_max)
+        bb = np.array(SurfaceBounds)
+        bb.shape = (3, 2)
+
+        origin = []
+        blocks = []
+        i = 0
+        for min, max in bb:
+            size = max - min
+            # int() truncates, we add 2 to make sure there's enough
+            # room for the sites just outside.
+            nSites = int(size / VoxelSize) + 2
+
+            # The extra space
+            extra = nSites * VoxelSize - size
+            # We want to balance this equally with the placement of
+            # the first site.
+            siteZero = min - 0.5 * extra
+
+            nBlocks = nSites / BlockSize
+            remainder = nSites % BlockSize
+            if remainder:
+                nBlocks += 1
+                pass
+            
+            origin.append(siteZero)
+            blocks.append(nBlocks)
+            continue
+        
+        self.Origin = np.array(origin)
+        self.BlockCounts = np.array(blocks)
+        
+        # Fill the blocks with Nones
+        self.blocks = np.empty(self.BlockCounts, dtype=object)
+        return
+
+    cdef void CalcPositionFromIndex(self, vector[int]* index, vector[Real]* ans):
+        for i from 0 <= i < 3:
+            deref(ans)[i] = deref(self._Origin)[i] + self.VoxelSize * deref(index)[i]
+
+    cdef MacroBlock GetBlock(self, np.ndarray[int] blockIjk):
+        val = self.blocks[blockIjk[0], blockIjk[1], blockIjk[2]]
+        if val is None:
+            val = self.blocks[blockIjk[0], blockIjk[1], blockIjk[2]] = MacroBlock(self, blockIjk, self.BlockSize)
+            pass
+        return val
+
+    cdef LatticeSite GetSite(self, np.ndarray[int] globalSiteIjk):
+        cdef np.ndarray[int] blockIjk = globalSiteIjk / self.BlockSize
+        cdef MacroBlock block = self.GetBlock(blockIjk)
+        return block.GetSite(globalSiteIjk)
+
+    pass
+
+cdef class DomainSmartBlockIterator:
+    cdef Domain domain
+    cdef np.ndarray ijk, maxInds
+    
+    def __init__(self, Domain domain):
+        self.domain = domain
+        self.ijk = np.zeros(3, dtype=int)
+        self.maxInds = domain.BlockCounts - 1
+        self.ijk[2] = -1
+
+    def __iter__(self): return self
+
+    def __next__(self):
+        cdef DomainSmartBlockIterator slf = self
+        cdef np.ndarray[int] ijk = slf.ijk
+        cdef int p, i, j, k
+        cdef MacroBlock val
+        
+        # Delete any unnecessary blocks
+        for i in range(ijk[0] - 1, ijk[0] + 1):
+            if i < 0: continue
+            if i == ijk[0] and i != slf.maxInds[0]: continue
+            for j in range(ijk[1] - 1, ijk[1] + 1):
+                if j < 0: continue
+                if j == ijk[1] and j != slf.maxInds[1]: continue
+                for k in range(ijk[2] - 1, ijk[2] + 1):
+                    if k < 0: continue
+                    if k == ijk[2] and k != slf.maxInds[2]: continue
+                    slf.domain.blocks[i, j, k] = None
+                    continue
+                continue
+            continue
+
+        # Update the index vector
+        ijk[2] += 1
+        if ijk[2] == slf.domain.BlockCounts[2]:
+            ijk[2] = 0
+            
+            ijk[1] += 1
+            if ijk[1] == slf.domain.BlockCounts[1]:
+                ijk[1] = 0
+
+                ijk[0] += 1
+                if ijk[0] == slf.domain.BlockCounts[0]:
+                    raise StopIteration
+        
+        # If the block hasn't been created, do so
+        val = slf.domain.blocks[ijk[0], ijk[1], ijk[2]]
+        if val is None:
+            val = slf.domain.blocks[ijk[0], ijk[1], ijk[2]] = MacroBlock(slf.domain, ijk, slf.domain.BlockSize)
+        
+        # "yield" the value
+        return val
 
 cdef class MacroBlock:
     cdef public Domain domain
     cdef public unsigned int size
-    cdef public Index ijk
+    cdef vector[int]* ijk
     cdef public np.ndarray sites
+    def __cinit__(self,  Domain domain, np.ndarray[int] ijk, unsigned int size):
+        self.ijk = new vector[int](3)
+        cdef int i
+        for i in range(3):
+            deref(self.ijk)[i] = ijk[i]
+
+    def __dealloc__(self):
+        del self.ijk
     
-    def __init__(self, Domain domain, Index ijk, unsigned int size):
+    def __init__(self, Domain domain, np.ndarray[int] ijk, unsigned int size):
         self.domain = domain
         self.size = size
-        self.ijk = ijk
         self.sites = np.empty((size, size, size), dtype=object)
         
-        cdef Index globalSiteIjk
+        cdef np.ndarray[int] globalSiteIjk = np.zeros(3, dtype=int)
+        # cdef vector[int] i = vector[int](3)
+        cdef int i,j,k, dim
         
-        for i from 0 <= i < size:
-            for j from 0 <= j < size:
-                for k from 0 <= k < size:
-                    globalSiteIjk = (self.ijk[0] * size + i,
-                                     self.ijk[1] * size + j,
-                                     self.ijk[2] * size + k)
+        for i in range(size):
+            for j in range(size):
+                for k in range(size):
+                    globalSiteIjk[0] = deref(self.ijk)[0] * size + i
+                    globalSiteIjk[1] = deref(self.ijk)[1] * size + j
+                    globalSiteIjk[2] = deref(self.ijk)[2] * size + k
                     self.sites[i,j,k] = LatticeSite(self, globalSiteIjk)
         return
 
@@ -67,35 +254,35 @@ cdef class MacroBlock:
     cpdef NdEnumerateSites(self):
         return np.ndenumerate(self.sites)
     
-    cpdef GetLocalSite(self, int i, int j, int k):
-        return self.sites[i, j, k]
+    cdef LatticeSite GetLocalSite(self, np.ndarray[int] ijk):
+        return self.sites[ijk[0], ijk[1], ijk[2]]
 
-    cpdef GetSite(self, int gi, int gj, int gk):
-        cdef int i,j,k
+    cdef LatticeSite GetSite(MacroBlock self, np.ndarray[int] gIjk):
+        cdef np.ndarray[int] lIjk = gIjk.copy()
         cdef int size = self.size
-        i = gi - self.ijk[0]*size
-        j = gj - self.ijk[1]*size
-        k = gk - self.ijk[2]*size
+        cdef int dim
+        for dim in range(3):
+            lIjk[dim] -= deref(self.ijk)[dim]*size
         # Check if the coords belong to another block, i.e. any of
         # the local ones outside the range [0, self.size)
-        if (i<0) or (j<0) or (k<0) or (i>=size) or (j>=size) or (k>=size):
-            return self.domain.GetSite(gi, gj, gk)
+        if (lIjk[0]<0) or (lIjk[1]<0) or (lIjk[2]<0) or (lIjk[0]>=size) or (lIjk[1]>=size) or (lIjk[2]>=size):
+            return self.domain.GetSite(gIjk)
 
-        return self.GetLocalSite(i, j, k)
+        return self.GetLocalSite(lIjk)
     
-    cpdef CalcPositionFromIndex(self, Index index):
-        return self.domain.CalcPositionFromIndex(index)
+    cdef void CalcPositionFromIndex(self, vector[int]* index, vector[Real]* ans):
+        self.domain.CalcPositionFromIndex(index, ans)
 
 cdef class LatticeSite:
     cdef public MacroBlock block
-    cdef public Index ijk
+    cdef vector[int]* ijk
     cdef vector[Real]* _Position
     
     cdef public bint IsFluid
     cdef public object IsEdge
     cdef public object Iolet
     cdef public object BoundaryId
-        
+    
     # Attributes that will be updated by Profile.ClassifySite
     cdef public np.ndarray BoundaryNormal
     cdef public Real BoundaryDistance
@@ -106,17 +293,15 @@ cdef class LatticeSite:
     cdef public np.ndarray CutDistances
     cdef public np.ndarray CutCellIds
     
-    def __cinit__(self, MacroBlock block, Index ijk):
+    def __cinit__(self, MacroBlock block, np.ndarray[int] ijk):
         self._Position = new vector[Real](3)
         self.block = block
-        self.ijk = ijk
-        pos = block.CalcPositionFromIndex(ijk)
-        cdef Real val
-        # cdef vector[Real] pv = deref(self._Position)
-        for i from 0 <= i < 3:
-            # val = pos[i]
-            deref(self._Position)[i] = pos[i]
-            
+        self.ijk = new vector[int](3)
+        cdef int i
+        for i in range(3):
+            deref(self.ijk)[i] = ijk[i]
+        
+        block.domain.CalcPositionFromIndex(self.ijk, self._Position)
 
         self.IsFluid = False
         self.IsEdge = None
@@ -133,8 +318,11 @@ cdef class LatticeSite:
 
         self.CutDistances = 1. / np.zeros(len(neighbours), dtype=RealCode)
         self.CutCellIds = -np.ones(len(neighbours), dtype=int)
-        return
-    
+        
+    def __dealloc__(self):
+        del self._Position
+        del self.ijk
+        
     property Position:
         def __get__(self):
             cdef np.ndarray ans = np.zeros(3, dtype=RealCode)
@@ -210,17 +398,19 @@ cdef class LatticeSite:
     pass
 
 cdef class SiteNeighbourEnumeratorBase:
-    cdef object domain
-    cdef object shape
+    cdef Domain domain
+    cdef np.ndarray shape
     cdef np.int_t i
     cdef np.int_t max_i
     cdef LatticeSite site
+    cdef np.ndarray ind
     
     def __cinit__(self, LatticeSite site):
         self.site = site
         self.domain = site.block.domain
         self.shape = self.domain.BlockCounts * self.domain.BlockSize
         self.i = -1
+        self.ind = np.zeros(3, dtype=int)
         return
     
     cdef np.ndarray GetVector(SiteNeighbourEnumeratorBase self):
@@ -229,21 +419,29 @@ cdef class SiteNeighbourEnumeratorBase:
     def __iter__(self): return self
     
     def __next__(self):
-        cdef np.ndarray latticeVec
+        cdef np.ndarray[int, ndim=1] latticeVec
         cdef SiteNeighbourEnumeratorBase slf = self
+        cdef bint shouldTryNextVec = False
         while True:
             slf.i += 1
             if slf.i >= slf.max_i:
                 raise StopIteration
             
             latticeVec = slf.GetVector()
-            ind = slf.site.ijk + latticeVec
-            # Skip any out of range
-            if np.any(ind < 0) or np.any(ind >= self.shape):
+            for j from 0 <= j < 3:
+                slf.ind[j] = deref(slf.site.ijk)[j] + latticeVec[j]
+                # Skip any out of range
+                if slf.ind[j] < 0 or slf.ind[j] >= slf.shape[j]:
+                    shouldTryNextVec = True
+                    break
+                shouldTryNextVec = False
+                
+            if shouldTryNextVec:
                 continue
-            break
+            else:
+                break
         
-        return self.i, self.site.block.GetSite(ind[0], ind[1], ind[2])
+        return slf.i, slf.site.block.GetSite(slf.ind)
     pass
 
 cdef class SiteNeighbourEnumerator(SiteNeighbourEnumeratorBase):
