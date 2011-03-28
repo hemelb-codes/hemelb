@@ -1028,29 +1028,6 @@ namespace hemelb
       // edgecut[1] will contain the number of edges cut by the partitioning
       // part[ni] will contain the partition vector of the locally-stored vertices
       // comm* is a pointer to the MPI communicator of the processes involved
-      /*
-       unsigned long * lCumulativeSitesPerProc = new unsigned long[mTopologySize + 1];
-       lCumulativeSitesPerProc[0] = 0;
-       for (int ii = 0; ii < mTopologySize; ii++)
-       {
-       lCumulativeSitesPerProc[ii + 1] = lCumulativeSitesPerProc[ii] + iNumberSitesPerProc[ii];
-       }
-
-       //TODO
-
-       int* siteCountPerProc = iNetTop->FluidSitesOnEachProcessor;
-       int* cumulativeAdjsThisNode = new int[1
-       + iNetTop->FluidSitesOnEachProcessor[iNetTop->GetLocalRank()]];
-
-       cumulativeAdjsThisNode[0] = 0;
-       std::vector<int> adjacencies;
-
-       for (int ii = 0; ii < iNetTop->FluidSitesOnEachProcessor[iNetTop->GetLocalRank()]; ++ii)
-       {
-
-       }
-       */
-      // Required: zero-indexed site id for first site on each block.
 
       int weightFlag = 0;
       int numberingFlag = 0;

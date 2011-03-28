@@ -79,9 +79,6 @@ namespace hemelb
 
         void GetThisRankSiteData(const geometry::LatticeData* bLatDat,
                                  unsigned int *& bThisRankSiteData);
-        void InitialiseNeighbourLookup(geometry::LatticeData* bLatDat,
-                                       short int **bSharedFLocationForEachProc,
-                                       const unsigned int *iSiteDataForThisRank);
         void CountCollisionTypes(geometry::LatticeData* bLatDat,
                                  const unsigned int * lThisRankSiteData);
 

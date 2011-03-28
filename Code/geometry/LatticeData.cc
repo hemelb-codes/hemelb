@@ -1,3 +1,5 @@
+#include <map>
+
 #include "geometry/LatticeData.h"
 
 namespace hemelb
@@ -25,6 +27,139 @@ namespace hemelb
       MPI_Comm_rank(MPI_COMM_WORLD, &localRank);
 
       localLatDat.Initialise(fluidSitePerProc[localRank]);
+    }
+
+    void LatticeData::InitialiseNeighbourLookup(short int ** bSharedFLocationForEachProc,
+                                                int localRank,
+                                                const unsigned int * iSiteDataForThisRank)
+    {
+      int n = -1;
+      int lSiteIndexOnProc = 0;
+
+      std::map<short int, int> sitesHandledPerProc;
+
+      // Iterate over blocks in global co-ords.
+      for (unsigned int i = 0; i < GetXSiteCount(); i += GetBlockSize())
+      {
+        for (unsigned int j = 0; j < GetYSiteCount(); j += GetBlockSize())
+        {
+          for (unsigned int k = 0; k < GetZSiteCount(); k += GetBlockSize())
+          {
+            n++;
+            geometry::LatticeData::BlockData *map_block_p = GetBlock(n);
+
+            if (map_block_p->site_data == NULL)
+            {
+              continue;
+            }
+
+            int m = -1;
+
+            // Iterate over sites within the block.
+            for (unsigned int site_i = i; site_i < i + GetBlockSize(); site_i++)
+            {
+              for (unsigned int site_j = j; site_j < j + GetBlockSize(); site_j++)
+              {
+                for (unsigned int site_k = k; site_k < k + GetBlockSize(); site_k++)
+                {
+                  // If a site is not on this process, continue.
+                  m++;
+
+                  if (localRank != map_block_p->ProcessorRankForEachBlockSite[m])
+                  {
+                    continue;
+                  }
+
+                  // Get site data, which is the number of the fluid site on this proc..
+                  unsigned int site_map = map_block_p->site_data[m];
+
+                  // Set neighbour location for the distribution component at the centre of
+                  // this site.
+                  SetNeighbourLocation(site_map, 0, site_map * D3Q15::NUMVECTORS + 0);
+
+                  for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+                  {
+                    // Work out positions of neighbours.
+                    int neigh_i = site_i + D3Q15::CX[l];
+                    int neigh_j = site_j + D3Q15::CY[l];
+                    int neigh_k = site_k + D3Q15::CZ[l];
+
+                    // Get the id of the processor which the neighbouring site lies on.
+                    int *proc_id_p = GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+
+                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
+                    {
+                      // initialize f_id to the rubbish site.
+                      SetNeighbourLocation(site_map, l, GetLocalFluidSiteCount()
+                          * D3Q15::NUMVECTORS);
+                      continue;
+                    }
+                    // If on the same proc, set f_id of the
+                    // current site and direction to the
+                    // site and direction that it sends to.
+                    // If we check convergence, the data for
+                    // each site is split into that for the
+                    // current and previous cycles.
+                    else if (localRank == *proc_id_p)
+                    {
+
+                      // Pointer to the neighbour.
+                      const unsigned int *site_data_p = GetSiteData(neigh_i, neigh_j, neigh_k);
+
+                      SetNeighbourLocation(site_map, l, *site_data_p * D3Q15::NUMVECTORS + l);
+
+                      continue;
+                    }
+                    else
+                    {
+                      short int neigh_proc_index = (short int) *proc_id_p;
+
+                      // This stores some coordinates.  We
+                      // still need to know the site number.
+                      // neigh_proc[ n ].f_data is now
+                      // set as well, since this points to
+                      // f_data.  Every process has data for
+                      // its neighbours which say which sites
+                      // on this process are shared with the
+                      // neighbour.
+                      int fluidSitesHandled = (sitesHandledPerProc.count(neigh_proc_index) > 0)
+                        ? sitesHandledPerProc[neigh_proc_index]
+                        : 0;
+
+                      short int *f_data_p =
+                          &bSharedFLocationForEachProc[neigh_proc_index][fluidSitesHandled << 2];
+                      f_data_p[0] = site_i;
+                      f_data_p[1] = site_j;
+                      f_data_p[2] = site_k;
+                      f_data_p[3] = l;
+
+                      sitesHandledPerProc[neigh_proc_index] = fluidSitesHandled + 1;
+                    }
+                  }
+
+                  // This is used in Calculate BC in IO.
+                  SetSiteData(site_map, iSiteDataForThisRank[lSiteIndexOnProc]);
+
+                  if (GetCollisionType(*GetSiteData(site_map)) & EDGE)
+                  {
+                    SetWallNormal(site_map, GetBlock(n)->wall_data[m].wall_nor);
+
+                    SetWallDistance(site_map, GetBlock(n)->wall_data[m].cut_dist);
+                  }
+                  else
+                  {
+                    double lBigDistance[3];
+                    for (unsigned int ii = 0; ii < 3; ii++)
+                      lBigDistance[ii] = BIG_NUMBER;
+                    SetWallNormal(site_map, lBigDistance);
+                  }
+                  ++lSiteIndexOnProc;
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     const double* LatticeData::GetNormalToWall(int iSiteIndex) const
@@ -186,15 +321,15 @@ namespace hemelb
       localLatDat.SetDistanceToWall(siteIndex, cutDistance);
     }
 
-    unsigned int LatticeData::GetInnerSiteCount()
+    unsigned int LatticeData::GetInnerSiteCount() const
     {
       return localLatDat.my_inner_sites;
     }
-    unsigned int LatticeData::GetInnerCollisionCount(unsigned int collisionType)
+    unsigned int LatticeData::GetInnerCollisionCount(unsigned int collisionType) const
     {
       return localLatDat.my_inner_collisions[collisionType];
     }
-    unsigned int LatticeData::GetInterCollisionCount(unsigned int collisionType)
+    unsigned int LatticeData::GetInterCollisionCount(unsigned int collisionType) const
     {
       return localLatDat.my_inter_collisions[collisionType];
     }
