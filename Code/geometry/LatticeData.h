@@ -135,8 +135,8 @@ namespace hemelb
         int GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const;
         bool HasBoundary(int iSiteIndex, int iDirection) const;
         double GetCutDistance(int iSiteIndex, int iDirection) const;
-        unsigned int* GetSiteData(unsigned int iSiteIndex) const;
-        const unsigned int * GetSiteData(unsigned int iSiteI,
+        unsigned int GetSiteData(unsigned int iSiteIndex) const;
+        unsigned int GetContiguousSiteId(unsigned int iSiteI,
                                          unsigned int iSiteJ,
                                          unsigned int iSiteK) const;
         unsigned int GetInnerSiteCount() const;
@@ -209,6 +209,8 @@ namespace hemelb
             unsigned int GetBlockSize() const;
             unsigned int GetBlockCount() const;
 
+            unsigned int GetSitesPerBlockVolumeUnit() const;
+
             BlockData * Blocks;
 
             ~GlobalLatticeData();
@@ -228,17 +230,14 @@ namespace hemelb
                                                    unsigned int blockJ,
                                                    unsigned int blockK) const;
 
-            // Function to get a pointer to the site_data for a site.
-            // If the site is in an empty block, return NULL.
-            const unsigned int * GetSiteData(unsigned int iSiteI,
-                                             unsigned int iSiteJ,
-                                             unsigned int iSiteK) const;
+            unsigned int
+            GetSiteData(unsigned int iSiteI, unsigned int iSiteJ, unsigned int iSiteK) const;
           public:
             // TODO public temporarily, until all usages are internal to the class.
             unsigned int Log2BlockSize;
-            unsigned int SitesPerBlockVolumeUnit;
 
           private:
+            unsigned int mSitesPerBlockVolumeUnit;
             unsigned int mBlockCount;
             unsigned int mSitesX, mSitesY, mSitesZ;
             unsigned int mBlocksX, mBlocksY, mBlocksZ;

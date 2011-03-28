@@ -154,15 +154,15 @@ namespace hemelb
           }
 
           // Get the fluid site number of site that will send data to another process.
-          unsigned int site_map = *bLatDat->GetSiteData(i, j, k);
+          unsigned int contigSiteId = bLatDat->GetContiguousSiteId(i, j, k);
 
           // Set f_id to the element in the send buffer that we put the updated
           // distribution functions in.
-          bLatDat->SetNeighbourLocation(site_map, l, ++f_count);
+          bLatDat->SetNeighbourLocation(contigSiteId, l, ++f_count);
 
           // Set the place where we put the received distribution functions, which is
           // f_new[number of fluid site that sends, inverse direction].
-          f_recv_iv[sharedSitesSeen] = site_map * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
+          f_recv_iv[sharedSitesSeen] = contigSiteId * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
           ++sharedSitesSeen;
         }
       }
