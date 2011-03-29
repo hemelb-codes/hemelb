@@ -8,7 +8,7 @@ namespace hemelb
   {
     NetworkTopology::NetworkTopology(int * argCount, char *** argList, bool* oSuccess)
     {
-      int thread_level_provided;
+      int thread_level_provided = 0;
 
       MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED, &thread_level_provided);
 
