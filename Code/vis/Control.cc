@@ -35,6 +35,9 @@ namespace hemelb
       {
         mScreen.col_pixel_id[i] = -1;
       }
+
+      mVisSettings.mouse_x = -1;
+      mVisSettings.mouse_y = -1;
     }
 
     void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
