@@ -786,11 +786,10 @@ namespace hemelb
           util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle
               / 5000.0F));
 
-      if (time_steps
-          % (int) (time_steps_per_cycle / mVisSettings->streaklines_per_pulsatile_period)
-          <= (mVisSettings->streakline_length / 100.0F) * (time_steps_per_cycle
-              / mVisSettings->streaklines_per_pulsatile_period) && time_steps
-          % particle_creation_period == 0)
+      if (time_steps % (int) (0.5 + time_steps_per_cycle
+          / mVisSettings->streaklines_per_pulsatile_period) <= (mVisSettings->streakline_length
+          / 100.0F) * (time_steps_per_cycle / mVisSettings->streaklines_per_pulsatile_period)
+          && time_steps % particle_creation_period == 0)
       {
         createSeedParticles();
       }

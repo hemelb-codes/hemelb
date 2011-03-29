@@ -96,7 +96,7 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_BYTE, &lStatus);
+      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_CHAR, &lStatus);
 
       // Create an Xdr translator based on the read-in data.
       hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
@@ -155,7 +155,7 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile, lHeaderBuffer, headerByteCount, MPI_BYTE, &lStatus);
+      MPI_File_read_all(xiFile, lHeaderBuffer, headerByteCount, MPI_CHAR, &lStatus);
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lHeaderBuffer,
@@ -265,7 +265,7 @@ namespace hemelb
 
       std::string lMode = "native";
 
-      MPI_File_set_view(lFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL);
+      MPI_File_set_view(lFile, 0, MPI_CHAR, MPI_CHAR, &lMode[0], MPI_INFO_NULL);
 
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 
@@ -525,7 +525,7 @@ namespace hemelb
 
         MPI_Status lStatus;
 
-        MPI_File_read_all(iFile, readBuffer, (int) bytesToRead, MPI_BYTE, &lStatus);
+        MPI_File_read_all(iFile, readBuffer, (int) bytesToRead, MPI_CHAR, &lStatus);
 
         io::XdrMemReader lReader(readBuffer, bytesToRead);
 
@@ -853,7 +853,10 @@ namespace hemelb
 
       for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
       {
-        sitesPerProc[procForEachBlock[ii]] += sitesPerBlock[ii];
+        if (procForEachBlock[ii] >= 0)
+        {
+          sitesPerProc[procForEachBlock[ii]] += sitesPerBlock[ii];
+        }
       }
 
       /*
@@ -894,7 +897,7 @@ namespace hemelb
         }
       }
 
-      int localVertexCount = vertexDistribution[mTopologyRank + 1]
+      unsigned int localVertexCount = vertexDistribution[mTopologyRank + 1]
           - vertexDistribution[mTopologyRank];
 
       int* adjacenciesPerVertex = new int[localVertexCount + 1];
@@ -999,13 +1002,18 @@ namespace hemelb
                     lAdjacencies.push_back(neighGlobalSiteId);
                   }
 
-                  adjacenciesPerVertex[lFluidVertex + 1] = lAdjacencies.size();
-                  ++lFluidVertex;
+                  adjacenciesPerVertex[++lFluidVertex] = lAdjacencies.size();
                 }
               }
             }
           }
         }
+      }
+
+      if (lFluidVertex != localVertexCount)
+      {
+        std::cerr << "Encountered a different number of vertices on two different parses: "
+            << lFluidVertex << " and " << localVertexCount << "\n";
       }
 
       // From the ParMETIS documentation:
@@ -1046,6 +1054,11 @@ namespace hemelb
         {
           ++edgesCutBefore;
         }
+      }
+
+      for(unsigned int ii = 0; ii < localVertexCount; ++ii)
+      {
+        partitionVector[ii] = -1;
       }
 
       int desiredPartitionSize = mTopologySize;
@@ -1171,7 +1184,7 @@ namespace hemelb
 
       std::string lMode = "native";
 
-      MPI_File_set_view(lFile, 0, MPI_BYTE, MPI_BYTE, &lMode[0], MPI_INFO_NULL);
+      MPI_File_set_view(lFile, 0, MPI_CHAR, MPI_CHAR, &lMode[0], MPI_INFO_NULL);
 
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 

@@ -23,6 +23,7 @@ namespace hemelb
       // Suppress signals from a broken pipe.
       signal(SIGPIPE, SIG_IGN);
       isFrameReady = false;
+      isConnected = false;
       lastRender = 0.0;
       double lastSend = 0.0;
     }

@@ -111,8 +111,11 @@ namespace hemelb
 
         for (unsigned int ii = 0; ii < mNetworkTopology->GetProcessorCount(); ++ii)
         {
-          SharedLocationPerProcByNeighbourId[ii]
-              = lSharedFLocationForEachProc[mNetworkTopology->NeighbourIndexFromProcRank[ii]];
+          if (mNetworkTopology->NeighbourIndexFromProcRank[ii] >= 0)
+          {
+            SharedLocationPerProcByNeighbourId[ii]
+                = lSharedFLocationForEachProc[mNetworkTopology->NeighbourIndexFromProcRank[ii]];
+          }
         }
 
         bLatDat->InitialiseNeighbourLookup(SharedLocationPerProcByNeighbourId,
@@ -162,7 +165,8 @@ namespace hemelb
 
           // Set the place where we put the received distribution functions, which is
           // f_new[number of fluid site that sends, inverse direction].
-          f_recv_iv[sharedSitesSeen] = contigSiteId * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l];
+          f_recv_iv[sharedSitesSeen] = contigSiteId * D3Q15::NUMVECTORS
+              + D3Q15::INVERSEDIRECTIONS[l];
           ++sharedSitesSeen;
         }
       }
