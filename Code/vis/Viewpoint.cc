@@ -9,7 +9,7 @@ namespace hemelb
                                       float iZIn,
                                       float* oXOut,
                                       float* oYOut,
-                                      float* oZOut)
+                                      float* oZOut) const
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
@@ -35,7 +35,7 @@ namespace hemelb
                            float zIn,
                            float* xOut,
                            float* yOut,
-                           float* zOut)
+                           float* zOut) const
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
@@ -55,7 +55,7 @@ namespace hemelb
       *zOut = lTemp * cosY - xIn * sinY;
     }
 
-    void Viewpoint::Project(const float p1[], float p2[])
+    void Viewpoint::Project(const float p1[], float p2[]) const
     {
       float x1[3], x2[3];
 
