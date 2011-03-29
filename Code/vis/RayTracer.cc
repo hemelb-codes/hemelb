@@ -13,43 +13,50 @@ namespace hemelb
 {
   namespace vis
   {
-    // TODO RENAME THIS FUNCTION AND MAKE IT MORE EFFICIENT.
-    void RayTracer::rtAABBvsRayFn(const AABB &aabb,
-                                  const float &inv_x,
-                                  const float &inv_y,
-                                  const float &inv_z,
-                                  const bool xyz_sign_is_1[],
-                                  float &t_near,
-                                  float &t_far)
+    // TODO RENAME THIS FUNCTION
+    void RayTracer::rtAABBvsRayFn(const AABB* aabb,
+                                  const float inverseDirection[3],
+                                  const bool xyzComponentIsPositive[3],
+                                  float* t_near,
+                                  float* t_far)
     {
-      float tx0 = (xyz_sign_is_1[0]
-        ? aabb.acc_2
-        : aabb.acc_1) * inv_x;
-      float tx1 = (xyz_sign_is_1[0]
-        ? aabb.acc_1
-        : aabb.acc_2) * inv_x;
-      float ty0 = (xyz_sign_is_1[1]
-        ? aabb.acc_4
-        : aabb.acc_3) * inv_y;
-      float ty1 = (xyz_sign_is_1[1]
-        ? aabb.acc_3
-        : aabb.acc_4) * inv_y;
-      float tz0 = (xyz_sign_is_1[2]
-        ? aabb.acc_6
-        : aabb.acc_5) * inv_z;
-      float tz1 = (xyz_sign_is_1[2]
-        ? aabb.acc_5
-        : aabb.acc_6) * inv_z;
+      float tx0 = (xyzComponentIsPositive[0]
+        ? aabb->acc_2
+        : aabb->acc_1) * inverseDirection[0];
+      float tx1 = (xyzComponentIsPositive[0]
+        ? aabb->acc_1
+        : aabb->acc_2) * inverseDirection[0];
+      float ty0 = (xyzComponentIsPositive[1]
+        ? aabb->acc_4
+        : aabb->acc_3) * inverseDirection[1];
+      float ty1 = (xyzComponentIsPositive[1]
+        ? aabb->acc_3
+        : aabb->acc_4) * inverseDirection[1];
+      float tz0 = (xyzComponentIsPositive[2]
+        ? aabb->acc_6
+        : aabb->acc_5) * inverseDirection[2];
+      float tz1 = (xyzComponentIsPositive[2]
+        ? aabb->acc_5
+        : aabb->acc_6) * inverseDirection[2];
 
-      t_near = fmaxf(tx0, fmaxf(ty0, tz0));
-      t_far = fminf(tx1, fminf(ty1, tz1));
+      *t_near = fmaxf(tx0, fmaxf(ty0, tz0));
+      *t_far = fminf(tx1, fminf(ty1, tz1));
     }
 
-    void RayTracer::rtUpdateColour(float dt, float palette[], float col[])
+    /**
+     * Update a colour vector to include a section of known length through a
+     * solid of known colour.
+     *
+     * @param dt
+     * @param palette
+     * @param col
+     */
+    void RayTracer::UpdateColour(float dt, const float palette[3], float col[3])
     {
-      col[0] += dt * palette[0];
-      col[1] += dt * palette[1];
-      col[2] += dt * palette[2];
+      for (int ii = 0; ii < 3; ++ii)
+      {
+        col[ii] += dt * palette[ii];
+      }
     }
 
     void RayTracer::rtUpdateRayData(float *flow_field,
@@ -69,9 +76,7 @@ namespace hemelb
 
       ColourPalette(scaled_velocity, palette);
 
-      bCurrentRay->VelocityColour[0] += ray_segment * palette[0];
-      bCurrentRay->VelocityColour[1] += ray_segment * palette[1];
-      bCurrentRay->VelocityColour[2] += ray_segment * palette[2];
+      UpdateColour(ray_segment, palette, bCurrentRay->VelocityColour);
 
       if (iLbmStressType != lb::ShearStress)
       {
@@ -80,10 +85,9 @@ namespace hemelb
 
         ColourPalette(scaled_stress, palette);
 
-        bCurrentRay->StressColour[0] += ray_segment * palette[0];
-        bCurrentRay->StressColour[1] += ray_segment * palette[1];
-        bCurrentRay->StressColour[2] += ray_segment * palette[2];
+        UpdateColour(ray_segment, palette, bCurrentRay->StressColour);
       }
+
       bCurrentRay->Length += ray_segment;
 
       if (bCurrentRay->Density >= 0.0F)
@@ -107,22 +111,15 @@ namespace hemelb
                                      bool xyz_is_1[],
                                      const lb::StressTypes iLbmStressType)
     {
-      float t_max[3];
       unsigned int i_vec[3];
 
       for (int i = 0; i < 3; i++)
       {
-        i_vec[i] = block_x[i] >= 0.0
-          ? (unsigned int) block_x[i]
-          : 0;
-      }
-      for (int i = 0; i < 3; i++)
-      {
-        i_vec[i] = (i_vec[i] > block_size_1)
-          ? block_size_1
-          : i_vec[i];
+        i_vec[i] = util::NumericalFunctions::enforceBounds<unsigned int>(block_x[i], 0,
+                                                                         block_size_1);
       }
 
+      float t_max[3];
       for (int i = 0; i < 3; i++)
       {
         t_max[i] = (block_min[i] + (float) (xyz_is_1[i]
@@ -264,28 +261,21 @@ namespace hemelb
                                        bool xyz_Is_1[],
                                        const lb::StressTypes iLbmStressType)
     {
-      float block_min[3];
-      float t_max[3];
-      float block_x[3];
-      float t_delta[3];
-      float dx[3];
-
       int i_vec[3];
+      float block_min[3];
 
-      for (int i = 0; i < 3; i++)
-      {
-        dx[i] = ray_dx[i];
-      }
       for (int l = 0; l < 3; l++)
       {
         i_vec[l] = util::NumericalFunctions::enforceBounds(cluster_blocks_vec[l], 0,
-                                                           (int) (mBlockSizeInverse * dx[l]));
-        block_min[l] = (float) i_vec[l] * mBlockSizeFloat - dx[l];
+                                                           (int) (mBlockSizeInverse * ray_dx[l]));
+        block_min[l] = (float) i_vec[l] * mBlockSizeFloat - ray_dx[l];
       }
+
       int i = i_vec[0] * cluster_blocks_yz;
       int j = i_vec[1] * cluster_blocks_z;
       int k = i_vec[2];
 
+      float block_x[3];
       if (block_flow_field[i + j + k] != NULL)
       {
         block_x[0] = -block_min[0];
@@ -295,6 +285,9 @@ namespace hemelb
         rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F, bCurrentRay,
                          ColourPalette, xyz_Is_1, iLbmStressType);
       }
+
+      float t_max[3];
+      float t_delta[3];
       for (int l = 0; l < 3; l++)
       {
         t_max[l] = (xyz_Is_1[l]
@@ -439,7 +432,7 @@ namespace hemelb
       const int n_z[] = { -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +0, +1, -1, +1, -1, +0, +1, -1,
                           +0, +1, -1, +0, +1, -1, +0, +1 };
 
-      unsigned short int *cluster_id = new unsigned short int[mLatDat->GetBlockCount()];
+      short int *cluster_id = new short int[mLatDat->GetBlockCount()];
       for (unsigned int n = 0; n < mLatDat->GetBlockCount(); n++)
       {
         cluster_id[n] = -1;
@@ -646,7 +639,6 @@ namespace hemelb
       // NOTE this only happens once, during initialisation, otherwise it would be
       // totally unforgivable.
 
-      // TODO: Tidy this.
       unsigned int mins[3], maxes[3];
       unsigned int localMins[3], localMaxes[3];
 
@@ -704,7 +696,7 @@ namespace hemelb
 
               cluster_flow_field[lThisClusterId][++n] = NULL;
 
-              if (cluster_id[block_id] != lThisClusterId)
+              if (cluster_id[block_id] != (short int) lThisClusterId)
               {
                 continue;
               }
@@ -778,65 +770,44 @@ namespace hemelb
                          Viewpoint* iViewpoint,
                          VisSettings* iVisSettings) :
       mNetworkTopology(iNetworkTopology), mLatDat(iLatDat), mDomainStats(iDomainStats),
-          mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
+          mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings),
+          mBlockSizeFloat((float) mLatDat->GetBlockSize()),
+          mBlockSizeInverse(1.F / mBlockSizeFloat), block_size2(mLatDat->GetBlockSize()
+              * mLatDat->GetBlockSize()), block_size3(mLatDat->GetBlockSize() * block_size2),
+          block_size_1(mLatDat->GetBlockSize() - 1), blocks_yz(mLatDat->GetYBlockCount()
+              * mLatDat->GetZBlockCount())
     {
-      // Init globals
-      blocks_yz = mLatDat->GetYBlockCount() * mLatDat->GetZBlockCount();
-      mBlockSizeFloat = float (mLatDat->GetBlockSize());
-      block_size2 = mLatDat->GetBlockSize() * mLatDat->GetBlockSize();
-      block_size3 = mLatDat->GetBlockSize() * block_size2;
-      block_size_1 = mLatDat->GetBlockSize() - 1;
-
-      mBlockSizeInverse = 1.F / mBlockSizeFloat;
-
       rtBuildClusters();
     }
 
     void RayTracer::Render(const lb::StressTypes iLbmStressType)
     {
-      float lScreenMaxX = mScreen->MaxXValue;
-      float lScreenMaxY = mScreen->MaxYValue;
-
-      int lPixelsX = mScreen->PixelsX;
-      int lPixelsY = mScreen->PixelsY;
-
-      float p0[3];
+      float projectedUnitX[3], projectedUnitY[3];
       for (int l = 0; l < 3; l++)
       {
-        p0[l] = mViewpoint->x[l];
+        projectedUnitX[l] = mScreen->UnitVectorProjectionX[l];
+        projectedUnitY[l] = mScreen->UnitVectorProjectionY[l];
       }
 
-      float par1[3], par2[3];
-      float screen_vtx[3];
-      for (int l = 0; l < 3; l++)
+      for (unsigned int clusterId = 0; clusterId < mClusters.size(); clusterId++)
       {
-        par1[l] = mScreen->UnitVectorProjectionX[l];
-        par2[l] = mScreen->UnitVectorProjectionY[l];
-        screen_vtx[l] = mScreen->vtx[l];
-      }
-
-      float lScaleX = mScreen->ScaleX;
-      float lScaleY = mScreen->ScaleY;
-
-      for (unsigned int cluster_id = 0; cluster_id < mClusters.size(); cluster_id++)
-      {
-        Cluster *cluster_p = mClusters[cluster_id];
+        Cluster* thisCluster = mClusters[clusterId];
 
         // the image-based projection of the mClusters bounding box is
         // calculated here
         float cluster_x[3];
         for (int l = 0; l < 3; l++)
         {
-          cluster_x[l] = cluster_p->x[l] - p0[l];
+          cluster_x[l] = thisCluster->x[l] - mViewpoint->x[l];
         }
-        cluster_blocks_vec[0] = cluster_p->blocks_x - 1;
-        cluster_blocks_vec[1] = cluster_p->blocks_y - 1;
-        cluster_blocks_vec[2] = cluster_p->blocks_z - 1;
-        cluster_blocks_z = cluster_p->blocks_z;
-        cluster_blocks_yz = (int) cluster_p->blocks_y * (int) cluster_p->blocks_z;
-        cluster_blocks = (int) cluster_p->blocks_x * cluster_blocks_yz;
+        cluster_blocks_vec[0] = thisCluster->blocks_x - 1;
+        cluster_blocks_vec[1] = thisCluster->blocks_y - 1;
+        cluster_blocks_vec[2] = thisCluster->blocks_z - 1;
+        cluster_blocks_z = thisCluster->blocks_z;
+        cluster_blocks_yz = (int) thisCluster->blocks_y * (int) thisCluster->blocks_z;
+        cluster_blocks = (int) thisCluster->blocks_x * cluster_blocks_yz;
 
-        float **block_flow_field = cluster_flow_field[cluster_id];
+        float **block_flow_field = cluster_flow_field[clusterId];
 
         float subimage_vtx[4];
         subimage_vtx[0] = ((float) BIG_NUMBER);
@@ -847,15 +818,15 @@ namespace hemelb
         float p1[3];
         for (int i = 0; i < 2; i++)
         {
-          p1[0] = cluster_p->minmax_x[i];
+          p1[0] = thisCluster->minmax_x[i];
 
           for (int j = 0; j < 2; j++)
           {
-            p1[1] = cluster_p->minmax_y[j];
+            p1[1] = thisCluster->minmax_y[j];
 
             for (int k = 0; k < 2; k++)
             {
-              p1[2] = cluster_p->minmax_z[k];
+              p1[2] = thisCluster->minmax_z[k];
 
               float p2[3];
               mViewpoint->Project(p1, p2);
@@ -869,33 +840,34 @@ namespace hemelb
         }
 
         int subimage_pix[4];
-        subimage_pix[0] = (int) (lScaleX * (subimage_vtx[0] + lScreenMaxX) + 0.5F);
-        subimage_pix[1] = (int) (lScaleX * (subimage_vtx[1] + lScreenMaxX) + 0.5F);
-        subimage_pix[2] = (int) (lScaleY * (subimage_vtx[2] + lScreenMaxY) + 0.5F);
-        subimage_pix[3] = (int) (lScaleY * (subimage_vtx[3] + lScreenMaxY) + 0.5F);
+        subimage_pix[0] = (int) (mScreen->ScaleX * (subimage_vtx[0] + mScreen->MaxXValue) + 0.5F);
+        subimage_pix[1] = (int) (mScreen->ScaleX * (subimage_vtx[1] + mScreen->MaxXValue) + 0.5F);
+        subimage_pix[2] = (int) (mScreen->ScaleY * (subimage_vtx[2] + mScreen->MaxYValue) + 0.5F);
+        subimage_pix[3] = (int) (mScreen->ScaleY * (subimage_vtx[3] + mScreen->MaxYValue) + 0.5F);
 
-        if (subimage_pix[0] >= lPixelsX || subimage_pix[1] < 0 || subimage_pix[2] >= lPixelsY
-            || subimage_pix[3] < 0)
+        if (subimage_pix[0] >= mScreen->PixelsX || subimage_pix[1] < 0 || subimage_pix[2]
+            >= mScreen->PixelsY || subimage_pix[3] < 0)
         {
           continue;
         }
         subimage_pix[0] = util::NumericalFunctions::max(subimage_pix[0], 0);
-        subimage_pix[1] = util::NumericalFunctions::min(subimage_pix[1], lPixelsX - 1);
+        subimage_pix[1] = util::NumericalFunctions::min(subimage_pix[1], mScreen->PixelsX - 1);
         subimage_pix[2] = util::NumericalFunctions::max(subimage_pix[2], 0);
-        subimage_pix[3] = util::NumericalFunctions::min(subimage_pix[3], lPixelsY - 1);
+        subimage_pix[3] = util::NumericalFunctions::min(subimage_pix[3], mScreen->PixelsY - 1);
 
         AABB aabb;
-        aabb.acc_1 = cluster_p->minmax_x[1] - p0[0];
-        aabb.acc_2 = cluster_p->minmax_x[0] - p0[0];
-        aabb.acc_3 = cluster_p->minmax_y[1] - p0[1];
-        aabb.acc_4 = cluster_p->minmax_y[0] - p0[1];
-        aabb.acc_5 = cluster_p->minmax_z[1] - p0[2];
-        aabb.acc_6 = cluster_p->minmax_z[0] - p0[2];
+        aabb.acc_1 = thisCluster->minmax_x[1] - mViewpoint->x[0];
+        aabb.acc_2 = thisCluster->minmax_x[0] - mViewpoint->x[0];
+        aabb.acc_3 = thisCluster->minmax_y[1] - mViewpoint->x[1];
+        aabb.acc_4 = thisCluster->minmax_y[0] - mViewpoint->x[1];
+        aabb.acc_5 = thisCluster->minmax_z[1] - mViewpoint->x[2];
+        aabb.acc_6 = thisCluster->minmax_z[0] - mViewpoint->x[2];
 
         float par3[3];
         for (int l = 0; l < 3; l++)
         {
-          par3[l] = screen_vtx[l] + subimage_pix[0] * par1[l] + subimage_pix[2] * par2[l];
+          par3[l] = mScreen->vtx[l] + subimage_pix[0] * projectedUnitX[l] + subimage_pix[2]
+              * projectedUnitY[l];
         }
 
         for (int i = subimage_pix[0]; i <= subimage_pix[1]; i++)
@@ -929,13 +901,12 @@ namespace hemelb
             lRayInPositiveDirection[1] = lRay.Direction[1] > 0.0F;
             lRayInPositiveDirection[2] = lRay.Direction[2] > 0.0F;
 
-            lRayDirection[0] += par2[0];
-            lRayDirection[1] += par2[1];
-            lRayDirection[2] += par2[2];
+            lRayDirection[0] += projectedUnitY[0];
+            lRayDirection[1] += projectedUnitY[1];
+            lRayDirection[2] += projectedUnitY[2];
 
             float t_near, t_far;
-            rtAABBvsRayFn(aabb, lRay.InverseDirection[0], lRay.InverseDirection[1],
-                          lRay.InverseDirection[2], lRayInPositiveDirection, t_near, t_far);
+            rtAABBvsRayFn(&aabb, lRay.InverseDirection, lRayInPositiveDirection, &t_near, &t_far);
 
             if (t_near > t_far)
             {
@@ -998,9 +969,9 @@ namespace hemelb
 
             mScreen->AddPixel(&col_pixel, mVisSettings->mStressType, mVisSettings->mode);
           }
-          par3[0] += par1[0];
-          par3[1] += par1[1];
-          par3[2] += par1[2];
+          par3[0] += projectedUnitX[0];
+          par3[1] += projectedUnitX[1];
+          par3[2] += projectedUnitX[2];
         }
       }
     }

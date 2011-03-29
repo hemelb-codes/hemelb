@@ -13,9 +13,9 @@ namespace hemelb
                                float iZIn,
                                float *oXOut,
                                float *oYOut,
-                               float *oZOut);
+                               float *oZOut) const;
 
-        void Project(const float p1[], float p2[]);
+        void Project(const float p1[], float p2[]) const;
 
         float x[3];
         float SinYRotation, CosYRotation;
@@ -32,7 +32,7 @@ namespace hemelb
                     float zIn,
                     float* xOut,
                     float* yOut,
-                    float* zOut);
+                    float* zOut) const;
 
     };
   }

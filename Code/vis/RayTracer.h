@@ -95,15 +95,13 @@ namespace hemelb
                                 bool xyz_Is_1[],
                                 const lb::StressTypes iLbmStressType);
 
-        void rtAABBvsRayFn(const AABB &aabb,
-                           const float &inv_x,
-                           const float &inv_y,
-                           const float &inv_z,
-                           const bool xyz_sign_is_1[],
-                           float &t_near,
-                           float &t_far);
+        void rtAABBvsRayFn(const AABB* aabb,
+                           const float inverseDirection[3],
+                           const bool xyzComponentIsPositive[3],
+                           float* t_near,
+                           float* t_far);
 
-        void rtUpdateColour(float dt, float palette[], float col[]);
+        void UpdateColour(float dt, const float palette[3], float col[3]);
 
         void rtBuildClusters();
 
@@ -122,10 +120,10 @@ namespace hemelb
         int cluster_blocks_vec[3];
         int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
-        float mBlockSizeFloat;
-        float mBlockSizeInverse;
-        unsigned int block_size2, block_size3, block_size_1;
-        unsigned int blocks_yz;
+        const float mBlockSizeFloat;
+        const float mBlockSizeInverse;
+        const unsigned int block_size2, block_size3, block_size_1;
+        const unsigned int blocks_yz;
     };
 
   }
