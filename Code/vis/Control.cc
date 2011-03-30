@@ -167,13 +167,6 @@ namespace hemelb
 
       MPI_Status status;
 
-      int *col_pixel_id_p;
-      int col_pixels_temp;
-      int i, j;
-      int n;
-
-      ColPixel *col_pixel1, *col_pixel2;
-
       if (!iNetTopology->IsCurrentProcTheIOProc())
       {
         memcpy(col_pixel_recv[recv_buffer_id], mScreen.localPixels, mScreen.col_pixels
@@ -181,14 +174,13 @@ namespace hemelb
       }
 
       unsigned int comm_inc = 1;
-      unsigned int m = 1;
 
-      while (m < iNetTopology->GetProcessorCount())
+      for (unsigned int comm_inc = 1; comm_inc < (iNetTopology->GetProcessorCount()); comm_inc
+          <<= 1)
       {
-        m <<= 1;
-        unsigned int start_id = 1;
+        unsigned int m = comm_inc << 1;
 
-        for (unsigned int recv_id = start_id; recv_id < iNetTopology->GetProcessorCount();)
+        for (unsigned int recv_id = 1; recv_id < iNetTopology->GetProcessorCount();)
         {
           unsigned int send_id = recv_id + comm_inc;
 
@@ -217,6 +209,8 @@ namespace hemelb
           }
           else
           {
+            int col_pixels_temp;
+
             MPI_Recv(&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD, &status);
 
             if (col_pixels_temp > 0)
@@ -225,25 +219,25 @@ namespace hemelb
                        MPI_COMM_WORLD, &status);
             }
 
-            for (n = 0; n < col_pixels_temp; n++)
+            for (int n = 0; n < col_pixels_temp; n++)
             {
-              col_pixel1 = &mScreen.localPixels[n];
-              i = col_pixel1->i.i;
-              j = col_pixel1->i.j;
+              ColPixel* col_pixel1 = &mScreen.localPixels[n];
 
-              if (* (col_pixel_id_p = &mScreen.col_pixel_id[i * mScreen.PixelsY + j]) == -1)
+              int id = col_pixel1->i.i * mScreen.PixelsY + col_pixel1->i.j;
+
+              if (mScreen.col_pixel_id[id] == -1)
               {
-                col_pixel2 = &col_pixel_recv[recv_buffer_id][*col_pixel_id_p = mScreen.col_pixels];
+                mScreen.col_pixel_id[id] = mScreen.col_pixels;
 
-                memcpy(col_pixel2, col_pixel1, sizeof(ColPixel));
+                col_pixel_recv[recv_buffer_id][mScreen.col_pixels] = *col_pixel1;
                 ++mScreen.col_pixels;
-
               }
               else
               {
-                col_pixel2 = &col_pixel_recv[recv_buffer_id][*col_pixel_id_p];
-
-                col_pixel2->MergeIn(col_pixel1, mVisSettings.mStressType, mVisSettings.mode);
+                col_pixel_recv[recv_buffer_id][mScreen.col_pixel_id[id]].MergeIn(
+                                                                                 col_pixel1,
+                                                                                 mVisSettings.mStressType,
+                                                                                 mVisSettings.mode);
               }
 
             }
@@ -256,7 +250,6 @@ namespace hemelb
 
           recv_id += comm_inc << 1;
         }
-        comm_inc <<= 1;
       }
 
       if (iNetTopology->GetLocalRank() == 1)
