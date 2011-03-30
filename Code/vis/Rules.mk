@@ -6,7 +6,9 @@ SRCS := ColPixel.cc \
         GlyphDrawer.cc \
         RayTracer.cc \
         StreaklineDrawer.cc \
-        Control.cc
+        Control.cc \
+        Screen.cc \
+        Viewpoint.cc
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 

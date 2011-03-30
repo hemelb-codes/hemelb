@@ -4,6 +4,7 @@
 #include "net/PhasedBroadcast.h"
 #include "lb/lb.h"
 #include "lb/SimulationState.h"
+#include "vis/DomainStats.h"
 #include "vis/Control.h"
 #include "steering/ClientConnection.h"
 

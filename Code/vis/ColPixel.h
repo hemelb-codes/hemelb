@@ -2,6 +2,7 @@
 #define HEMELB_VIS_COLPIXEL_H
 
 #include "mpiInclude.h"
+#include "vis/DomainStats.h"
 #include "vis/ColourPalette.h"
 #include "lb/LbmParameters.h"
 
@@ -39,8 +40,16 @@ namespace hemelb
 
         struct PixelId i;
 
+        /**
+         * Merge data from the first ColPixel argument into the second
+         * ColPixel argument.
+         */
+        void MergeIn(const ColPixel *fromPixel, lb::StressTypes iStressType, int mode);
+
         void rawWritePixel(int *pixel_index,
+                           int mode,
                            unsigned char rgb_data[],
+                           DomainStats* iDomainStats,
                            ColourPaletteFunction *colourPalette,
                            lb::StressTypes iLbmStressType);
         static const MPI_Datatype& getMpiType();

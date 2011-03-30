@@ -36,7 +36,7 @@ namespace hemelb
         void
         UpdateInletVelocities(int time_step, lb::LocalLatticeData &iLocalLatDat, net::Net *net);
 
-        void Initialise(int* iFTranslator, LocalLatticeData* bLocalLatDat);
+        void Initialise(int* iFTranslator, LocalLatticeData* bLocalLatDat, vis::Control* iControl);
 
         void SetInitialConditions(hemelb::lb::LocalLatticeData* bLocalLatDat);
 
@@ -128,9 +128,10 @@ namespace hemelb
 
         double mFileReadTime;
 
-        hemelb::lb::LbmParameters mParams;
-        const hemelb::topology::NetworkTopology * mNetTopology;
-        hemelb::SimConfig *mSimConfig;
+        LbmParameters mParams;
+        const topology::NetworkTopology * mNetTopology;
+        SimConfig *mSimConfig;
+        vis::Control* mVisControl;
 
         double *average_inlet_velocity;
         double *peak_inlet_velocity;

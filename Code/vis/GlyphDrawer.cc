@@ -10,7 +10,13 @@ namespace hemelb
 
     // Constructor
     GlyphDrawer::GlyphDrawer(hemelb::lb::GlobalLatticeData* iGlobalLatDat,
-                             hemelb::lb::LocalLatticeData* iLocalLatDat)
+                             hemelb::lb::LocalLatticeData* iLocalLatDat,
+                             Screen* iScreen,
+                             DomainStats* iDomainStats,
+                             Viewpoint* iViewpoint,
+                             VisSettings* iVisSettings) :
+      mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint),
+          mVisSettings(iVisSettings)
     {
       mGlobalLatDat = iGlobalLatDat;
       int n = -1;
@@ -75,14 +81,14 @@ namespace hemelb
     void GlyphDrawer::render()
     {
       float screen_max[4];
-      screen_max[0] = vis::controller->mScreen.MaxXValue;
-      screen_max[1] = vis::controller->mScreen.MaxXValue;
-      screen_max[2] = vis::controller->mScreen.MaxYValue;
-      screen_max[3] = vis::controller->mScreen.MaxYValue;
+      screen_max[0] = mScreen->MaxXValue;
+      screen_max[1] = mScreen->MaxXValue;
+      screen_max[2] = mScreen->MaxYValue;
+      screen_max[3] = mScreen->MaxYValue;
 
       float scale[4];
-      scale[0] = scale[1] = vis::controller->mScreen.ScaleX;
-      scale[2] = scale[3] = vis::controller->mScreen.ScaleY;
+      scale[0] = scale[1] = mScreen->ScaleX;
+      scale[2] = scale[3] = mScreen->ScaleY;
 
       double density;
       double vx, vy, vz;
@@ -95,7 +101,7 @@ namespace hemelb
         D3Q15::CalculateDensityAndVelocity(mGlyphs[n]->f, density, vx, vy, vz);
 
         temp = glyph_length * mGlobalLatDat->GetBlockSize()
-            * vis::controller->velocity_threshold_max_inv / density;
+            * mDomainStats->velocity_threshold_max_inv / density;
 
         vx *= temp;
         vy *= temp;
@@ -109,15 +115,15 @@ namespace hemelb
         p2[1] = mGlyphs[n]->y + vy;
         p2[2] = mGlyphs[n]->z + vz;
 
-        vis::controller->project(p1, p3);
-        vis::controller->project(p2, p4);
+        mViewpoint->Project(p1, p3);
+        mViewpoint->Project(p2, p4);
 
         p3[0] = scale[0] * (p3[0] + screen_max[0]);
         p3[1] = scale[1] * (p3[1] + screen_max[1]);
         p4[0] = scale[2] * (p4[0] + screen_max[2]);
         p4[1] = scale[3] * (p4[1] + screen_max[3]);
 
-        vis::controller->renderLine(p3, p4);
+        mScreen->RenderLine(p3, p4, mVisSettings->mStressType, mVisSettings->mode);
       }
     }
 

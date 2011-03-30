@@ -69,8 +69,12 @@ namespace hemelb
                                const lb::GlobalLatticeData* iGlobLatDat);
 
         void OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
-                                         const unsigned int* procForEachBlock,
-                                         const unsigned int* blockCountForEachProc);
+                                         const int* procForEachBlock,
+                                         const unsigned int* blockCountForEachProc,
+                                         const topology::NetworkTopology* iNetTop,
+                                         SimConfig* bSimConfig,
+                                         lb::LbmParameters* bLbmParams,
+                                         lb::GlobalLatticeData* bGlobLatDat);
 
         // The config file starts with:
         // * 1 unsigned int for stress type
@@ -78,10 +82,11 @@ namespace hemelb
         // * 1 unsigned int for the block size (number of sites along one edge of a block)
         static const int PreambleBytes = 20;
 
-        MPI_Comm mCommunicator;
-        MPI_Group mGroup;
-        int mRank;
-        int mSize;
+        MPI_Comm mTopologyComm;
+        MPI_Group mTopologyGroup;
+        int mTopologyRank;
+        int mTopologySize;
+        int mGlobalRank;
     };
 
   }

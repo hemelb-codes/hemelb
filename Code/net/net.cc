@@ -16,6 +16,19 @@ namespace hemelb
   namespace net
   {
 
+    void Net::EnsureEnoughRequests(unsigned int count)
+    {
+      if (mRequests.size() < count)
+      {
+        int deficit = count - mRequests.size();
+        for (int ii = 0; ii < deficit; ii++)
+        {
+          mRequests.push_back(MPI_Request());
+          mStatuses.push_back(MPI_Status());
+        }
+      }
+    }
+
     /*!
      This is called from the main function.  First function to deal with processors.
      The domain partitioning technique and the management of the
@@ -260,8 +273,11 @@ namespace hemelb
           continue;
         }
 
-        delete[] iGlobLatDat.Blocks[n].site_data;
-        iGlobLatDat.Blocks[n].site_data = NULL;
+        if (iGlobLatDat.Blocks[n].site_data != NULL)
+        {
+          delete[] iGlobLatDat.Blocks[n].site_data;
+          iGlobLatDat.Blocks[n].site_data = NULL;
+        }
 
         if (iGlobLatDat.Blocks[n].wall_data != NULL)
         {
@@ -270,19 +286,6 @@ namespace hemelb
         }
       }
       delete[] lBlockIsOnThisRank;
-    }
-
-    void Net::EnsureEnoughRequests(unsigned int count)
-    {
-      if (mRequests.size() < count)
-      {
-        int deficit = count - mRequests.size();
-        for (int ii = 0; ii < deficit; ii++)
-        {
-          mRequests.push_back(MPI_Request());
-          mStatuses.push_back(MPI_Status());
-        }
-      }
     }
 
     void Net::CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
@@ -376,7 +379,7 @@ namespace hemelb
                           mNetworkTopology->NeighbouringProcs[mm];
 
                       // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
-                      if (*proc_id_p == (int)neigh_proc_p->Rank)
+                      if (*proc_id_p == (int) neigh_proc_p->Rank)
                       {
                         flag = false;
                         ++neigh_proc_p->SharedFCount;
@@ -608,7 +611,7 @@ namespace hemelb
                     // If we check convergence, the data for
                     // each site is split into that for the
                     // current and previous cycles.
-                    else if ((int)mNetworkTopology->GetLocalRank() == *proc_id_p)
+                    else if ((int) mNetworkTopology->GetLocalRank() == *proc_id_p)
                     {
 
                       // Pointer to the neighbour.
