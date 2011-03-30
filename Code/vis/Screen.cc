@@ -107,7 +107,7 @@ namespace hemelb
     {
       int d = incNE;
 
-      while ( (xLimited && x <= limit) || (xLimited && y <= limit))
+      while ( (xLimited && x <= limit) || (!xLimited && y <= limit))
       {
         if (x >= 0 && x < PixelsX && y >= 0 && y < PixelsY)
         {
