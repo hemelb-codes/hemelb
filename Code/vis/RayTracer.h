@@ -72,28 +72,29 @@ namespace hemelb
             short int i, j, k;
         };
 
-        void rtUpdateRayData(float *flow_field,
+        void rtUpdateRayData(const float flow_field[3],
                              float ray_t,
                              float ray_segment,
-                             Ray *bCurrentRay,
+                             Ray* bCurrentRay,
                              void(*ColourPalette)(float value, float col[]),
                              const lb::StressTypes iLbmStressType);
 
-        void rtTraverseVoxels(float block_min[],
-                              float block_x[],
-                              float voxel_flow_field[],
+        void rtTraverseVoxels(const float block_min[3],
+                              const float block_x[3],
+                              const float voxel_flow_field[],
                               float t,
-                              Ray *bCurrentRay,
+                              Ray* bCurrentRay,
                               void(*ColourPalette)(float value, float col[]),
-                              bool xyz_is_1[],
+                              const bool xyz_is_1[3],
                               const lb::StressTypes iLbmStressType);
 
-        void rtTraverseBlocksFn(float ray_dx[],
-                                float **block_flow_field,
-                                Ray *bCurrentRay,
+        void rtTraverseBlocksFn(const Cluster* cluster,
+                                const bool xyz_Is_1[3],
+                                const float ray_dx[3],
+                                const lb::StressTypes iLbmStressType,
                                 void(*ColourPalette)(float value, float col[]),
-                                bool xyz_Is_1[],
-                                const lb::StressTypes iLbmStressType);
+                                float **block_flow_field,
+                                Ray *bCurrentRay);
 
         void rtAABBvsRayFn(const AABB* aabb,
                            const float inverseDirection[3],
@@ -116,9 +117,6 @@ namespace hemelb
         std::vector<Cluster*> mClusters;
         float **cluster_voxel;
         float ***cluster_flow_field;
-
-        int cluster_blocks_vec[3];
-        int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
 
         const float mBlockSizeFloat;
         const float mBlockSizeInverse;

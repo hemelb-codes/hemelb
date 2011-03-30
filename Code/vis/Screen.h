@@ -11,7 +11,10 @@ namespace hemelb
     {
       public:
         void AddPixel(const ColPixel* newPixel, lb::StressTypes iStressType, int mode);
-        void RenderLine(const float endPoint1[3], const float endPoint2[3], lb::StressTypes iStressType, int mode);
+        void RenderLine(const float endPoint1[3],
+                        const float endPoint2[3],
+                        lb::StressTypes iStressType,
+                        int mode);
 
         static const int COLOURED_PIXELS_MAX = 2048 * 2048;
 
@@ -31,6 +34,9 @@ namespace hemelb
         // Array of pixel ids.
         int *col_pixel_id;
         ColPixel localPixels[COLOURED_PIXELS_MAX];
+
+      private:
+        void RenderLineHelper(int x, int y, lb::StressTypes stressType, int mode);
     };
   }
 }
