@@ -53,20 +53,17 @@ def LinuxGrep(results):
     lines = results.split('\n')
     
     for line in lines:
-        # Get the second half, showing where the symbol found
-        name, pathAndStuff = line.split('=>')
-        
-        # Split on whitespace
-        words = pathAndStuff.split()
         try:
+            # Get the second half, showing where the symbol found
+            name, pathAndStuff = line.split('=>')
+            
+            # Split on whitespace
+            words = pathAndStuff.split()
             # First word is the full path of the library
             libPath = words[0]
-        except IndexError:
-            continue
-        try:
             dir, base = os.path.split(libPath)
             # Do a string split rather than os.path.splitext as the latter splits on the last dot
-            base, rest = base.split('.')[0]
+            base, rest = base.split('.', 1)
             if base == 'libvtkCommon':
                 return dir
             
