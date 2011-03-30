@@ -3,6 +3,12 @@
 
 #include "lb/LocalLatticeData.h"
 #include "lb/GlobalLatticeData.h"
+
+#include "vis/Screen.h"
+#include "vis/DomainStats.h"
+#include "vis/Viewpoint.h"
+#include "vis/VisSettings.h"
+
 #include <vector>
 
 namespace hemelb
@@ -21,7 +27,11 @@ namespace hemelb
 
         // Constructor and destructor
         GlyphDrawer(hemelb::lb::GlobalLatticeData* iGlobalLatDat,
-                    hemelb::lb::LocalLatticeData* iLocalLatDat);
+                    hemelb::lb::LocalLatticeData* iLocalLatDat,
+                    Screen* iScreen,
+                    DomainStats* iDomainStats,
+                    Viewpoint* iViewpoint,
+                    VisSettings* iVisSettings);
         ~GlyphDrawer();
 
         // Function to perform the rendering.
@@ -34,6 +44,11 @@ namespace hemelb
             float x, y, z;
             double *f;
         };
+
+        Screen* mScreen;
+        DomainStats* mDomainStats;
+        Viewpoint* mViewpoint;
+        VisSettings* mVisSettings;
 
         std::vector<Glyph*> mGlyphs;
         hemelb::lb::GlobalLatticeData* mGlobalLatDat;

@@ -5,6 +5,11 @@
 #include "lb/LocalLatticeData.h"
 #include "lb/LbmParameters.h"
 
+#include "vis/DomainStats.h"
+#include "vis/Screen.h"
+#include "vis/Viewpoint.h"
+#include "vis/VisSettings.h"
+
 #include "vis/ColPixel.h"
 #include "vis/GlyphDrawer.h"
 #include "vis/StreaklineDrawer.h"
@@ -23,55 +28,8 @@ namespace hemelb
     class Control
     {
       public:
-        struct Screen
-        {
-            float vtx[3];
-
-            // Projection of unit vectors along screen axes into normal space.
-            float UnitVectorProjectionX[3];
-            float UnitVectorProjectionY[3];
-
-            float MaxXValue, MaxYValue;
-            float ScaleX, ScaleY;
-
-            int PixelsX, PixelsY;
-        };
-
-        struct Viewpoint
-        {
-            float x[3];
-            float SinYRotation, CosYRotation;
-            float SinXRotation, CosXRotation;
-            float dist;
-        };
-
-        Control(lb::StressTypes iStressType,
-                lb::GlobalLatticeData* iGlobLatDat);
+        Control(lb::StressTypes iStressType, lb::GlobalLatticeData* iGlobLatDat);
         ~Control();
-
-        void project(float p1[], float p2[]);
-        void writePixel(ColPixel *col_pixel);
-        void MergePixels(const ColPixel *col_pixel1, ColPixel *col_pixel2);
-        void RotateAboutXThenY(const float &iSinThetaX,
-                               const float &iCosThetaX,
-                               const float &iSinThetaY,
-                               const float &iCosSinThetaY,
-                               const float &iXIn,
-                               const float &iYIn,
-                               const float &iZIn,
-                               float &oXOut,
-                               float &oYOut,
-                               float &oZOut);
-        void UndoRotateAboutXThenY(const float &iSinThetaX,
-                                   const float &iCosThetaX,
-                                   const float &iSinThetaY,
-                                   const float &iCosSinThetaY,
-                                   const float &iXIn,
-                                   const float &iYIn,
-                                   const float &iZIn,
-                                   float &oXOut,
-                                   float &oYOut,
-                                   float &oZOut);
 
         void SetSomeParams(const float iBrightness,
                            const float iDensityThresholdMin,
@@ -87,8 +45,6 @@ namespace hemelb
                            const float &longitude,
                            const float &latitude,
                            const float &zoom);
-
-        void renderLine(float x1[], float x2[]);
 
         void streaklines(int time_step,
                          int period,
@@ -108,50 +64,26 @@ namespace hemelb
 
         void RegisterSite(int i, float density, float velocity, float stress);
 
-
         void initLayers(topology::NetworkTopology * iNetworkTopology,
                         lb::GlobalLatticeData* iGlobLatDat,
                         lb::LocalLatticeData* iLocalLatDat);
 
-        // better public member vars than globals!
-        int mode;
-        int image_freq;
-
-        float velocity_threshold_max_inv;
-        float stress_threshold_max_inv;
-        float density_threshold_min, density_threshold_minmax_inv;
-        float ctr_x, ctr_y, ctr_z;
-        float streaklines_per_pulsatile_period, streakline_length;
-        double mouse_pressure, mouse_stress;
-        float brightness;
-
         Screen mScreen;
         Viewpoint mViewpoint;
+        DomainStats mDomainStats;
+        VisSettings mVisSettings;
 
         int col_pixels_recv[2]; // number received?
         ColPixel* col_pixel_recv[2];
 
-        float physical_pressure_threshold_min;
-        float physical_pressure_threshold_max;
-        float physical_velocity_threshold_max;
-        float physical_stress_threshold_max;
-
-        int mouse_x, mouse_y;
-
-      private:
+       private:
         struct Vis
         {
             float half_dim[3];
             float system_size;
         };
 
-        int col_pixels; // number of ColPixels (?)
-
-        int *col_pixel_id; // array of pixel IDs
-
         int pixels_max;
-
-        ColPixel col_pixel_send[COLOURED_PIXELS_MAX];
 
         Vis* vis;
 
@@ -159,13 +91,9 @@ namespace hemelb
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
 
-        lb::StressTypes mStressType;
-
         static const long MAXCOLOUREDPIXELS = 2048 * 2048;
 
     };
-
-    extern Control *controller;
   }
 }
 

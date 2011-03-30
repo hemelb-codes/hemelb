@@ -249,7 +249,11 @@ namespace hemelb
     // Constructor, populating fields from lattice data objects.
     StreaklineDrawer::StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
                                        lb::LocalLatticeData* iLocalLatDat,
-                                       lb::GlobalLatticeData* iGlobLatDat)
+                                       lb::GlobalLatticeData* iGlobLatDat,
+                                       Screen* iScreen,
+                                       Viewpoint* iViewpoint,
+                                       VisSettings* iVisSettings) :
+      mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
     {
       mNetworkTopology = iNetworkTopology;
 
@@ -745,16 +749,16 @@ namespace hemelb
     // Render the streaklines
     void StreaklineDrawer::render(lb::GlobalLatticeData* iGlobLatDat)
     {
-      int pixels_x = vis::controller->mScreen.PixelsX;
-      int pixels_y = vis::controller->mScreen.PixelsY;
+      int pixels_x = mScreen->PixelsX;
+      int pixels_y = mScreen->PixelsY;
 
       float screen_max[2];
-      screen_max[0] = vis::controller->mScreen.MaxXValue;
-      screen_max[1] = vis::controller->mScreen.MaxYValue;
+      screen_max[0] = mScreen->MaxXValue;
+      screen_max[1] = mScreen->MaxYValue;
 
       float scale[2];
-      scale[0] = vis::controller->mScreen.ScaleX;
-      scale[1] = vis::controller->mScreen.ScaleY;
+      scale[0] = mScreen->ScaleX;
+      scale[1] = mScreen->ScaleY;
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
@@ -763,7 +767,7 @@ namespace hemelb
         p1[1] = particleVec[n].y - float (iGlobLatDat->GetYSiteCount() >> 1);
         p1[2] = particleVec[n].z - float (iGlobLatDat->GetZSiteCount() >> 1);
 
-        vis::controller->project(p1, p2);
+        mViewpoint->Project(p1, p2);
 
         int i = (int) (scale[0] * (p2[0] + screen_max[0]));
         int j = (int) (scale[1] * (p2[1] + screen_max[1]));
@@ -778,7 +782,7 @@ namespace hemelb
           col_pixel.i = PixelId(i, j);
           col_pixel.i.isStreakline = true;
 
-          vis::controller->writePixel(&col_pixel);
+          mScreen->AddPixel(&col_pixel, mVisSettings->mStressType, mVisSettings->mode);
         }
       }
     }
@@ -789,13 +793,14 @@ namespace hemelb
                                        lb::GlobalLatticeData* iGlobLatDat,
                                        lb::LocalLatticeData* iLocalLatDat)
     {
-      unsigned int particle_creation_period = util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle
-          / 5000.0F));
+      unsigned int particle_creation_period =
+          util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle
+              / 5000.0F));
 
-      if (time_steps % (int) (time_steps_per_cycle
-          / vis::controller->streaklines_per_pulsatile_period)
-          <= (vis::controller->streakline_length / 100.0F) * (time_steps_per_cycle
-              / vis::controller->streaklines_per_pulsatile_period) && time_steps
+      if (time_steps
+          % (int) (time_steps_per_cycle / mVisSettings->streaklines_per_pulsatile_period)
+          <= (mVisSettings->streakline_length / 100.0F) * (time_steps_per_cycle
+              / mVisSettings->streaklines_per_pulsatile_period) && time_steps
           % particle_creation_period == 0)
       {
         createSeedParticles();
