@@ -36,7 +36,13 @@ namespace hemelb
         ColPixel localPixels[COLOURED_PIXELS_MAX];
 
       private:
-        void RenderLineHelper(int x, int y, lb::StressTypes stressType, int mode);
+        template<bool xLimited> void RenderLineHelper(int x,
+                                                      int y,
+                                                      int incE,
+                                                      int incNE,
+                                                      int limit,
+                                                      lb::StressTypes stressType,
+                                                      int mode);
     };
   }
 }
