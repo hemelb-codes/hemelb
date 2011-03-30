@@ -67,24 +67,8 @@ namespace hemelb
       {
         x1 = x;
         y1 = y;
-
         x2 = int (endPoint2[0]);
         y2 = int (endPoint2[1]);
-      }
-
-      // Initialise dy with the absolute difference in y between endpoints of the line, and
-      // m with the sign (-1 / +1) of the gradient.
-      int dy, m;
-      if (y1 < y2)
-      {
-        dy = y2 - y1;
-        m = 1;
-
-      }
-      else
-      {
-        dy = y1 - y2;
-        m = -1;
       }
 
       // Set dx with the difference between x-values at the endpoints.
@@ -93,71 +77,73 @@ namespace hemelb
       // Set up the iteration in general terms.
       //int incE, d, incNE, whileVariable, whileLimit, otherVariable, otherVariableIncrement;
 
+      if (y2 <= y1)
+      {
+        int temp = y2;
+        y2 = y;
+        y = temp;
+      }
+
+      int dy = y2 - y;
+
       if (dx > dy)
       {
-        int incE = dy;
-        int d = dy - dx;
-        int incNE = d;
-
-        while (x <= x2)
-        {
-          RenderLineHelper(x, y, iStressType, mode);
-
-          if (d < 0)
-          {
-            d += incE;
-          }
-          else
-          {
-            d += incNE;
-            y += m;
-          }
-          ++x;
-
-        } // end while
-
-      }
+        RenderLineHelper<true> (x, y, dy, dy - dx, x2, iStressType, mode);
+      } // end while
       else
       {
-        if (y2 <= y1)
-        {
-          int temp = y2;
-          y2 = y;
-          y = temp;
-        }
-
-        int incE = dx;
-        int d = dx - dy;
-        int incNE = d;
-
-        while (y <= y2)
-        {
-          RenderLineHelper(x, y, iStressType, mode);
-
-          if (d < 0)
-          {
-            d += incE;
-          }
-          else
-          {
-            d += incNE;
-            ++x;
-          }
-          ++y;
-        } // while
+        RenderLineHelper<false> (x, y, dx, dx - dy, y2, iStressType, mode);
       }
     }
 
-    void Screen::RenderLineHelper(int x, int y, lb::StressTypes stressType, int mode)
+    template<bool xLimited>
+    void Screen::RenderLineHelper(int x,
+                                  int y,
+                                  int incE,
+                                  int incNE,
+                                  int limit,
+                                  lb::StressTypes stressType,
+                                  int mode)
     {
-      if (x >= 0 && x < PixelsX && y >= 0 && y < PixelsY)
-      {
-        ColPixel col_pixel;
-        col_pixel.i = PixelId(x, y);
-        col_pixel.i.isGlyph = true;
+      int d = incNE;
 
-        AddPixel(&col_pixel, stressType, mode);
-      }
+      while ( (xLimited && x <= limit) || (xLimited && y <= limit))
+      {
+        if (x >= 0 && x < PixelsX && y >= 0 && y < PixelsY)
+        {
+          ColPixel col_pixel;
+          col_pixel.i = PixelId(x, y);
+          col_pixel.i.isGlyph = true;
+
+          AddPixel(&col_pixel, stressType, mode);
+        }
+
+        if (d < 0)
+        {
+          d += incE;
+        }
+        else
+        {
+          d += incNE;
+          if (xLimited)
+          {
+            y++;
+          }
+          else
+          {
+            x++;
+          }
+        }
+        if (xLimited)
+        {
+          ++x;
+        }
+        else
+        {
+          ++y;
+        }
+
+      } // end while
     }
 
   }
