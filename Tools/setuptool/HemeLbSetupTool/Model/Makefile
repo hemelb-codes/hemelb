@@ -1,6 +1,6 @@
 CXX = gcc
 
-CXXFLAGS = -fno-strict-aliasing -fno-common -dynamic -arch i386 -DNDEBUG -g -O3 -arch i386 \
+CXXFLAGS = -fno-strict-aliasing -fno-common -dynamic -arch i386 -DNDEBUG -g -O3 -arch i386 -Wno-deprecated \
 	-I/Library/Frameworks/Python.framework/Versions/7.0/include \
 	-I/Library/Frameworks/Python.framework/Versions/7.0/lib/python2.7/site-packages/numpy/core/include \
 	-I/Library/Frameworks/Python.framework/Versions/7.0/include/python2.7 \
@@ -10,7 +10,7 @@ LDFLAGS = -L/Library/Frameworks/Python.framework/Versions/7.0/lib \
 	-L/Library/Frameworks/Python.framework/Versions/7.0/lib \
 	-bundle -undefined dynamic_lookup -arch i386 -g
 
-targets = OutputGenerationHelpers.so HitList.so
+targets = OutputGenerationHelpers.so HitList.so vtkHelp.so
 all : $(targets)
 $(echo )
 %.cpp : %.pyx
@@ -21,15 +21,9 @@ $(echo )
 %.so : %.o
 	$(CXX) $(LDFLAGS) $^ -o $@
 
-OutputGenerationHelpers.cpp : OutputGenerationHelpers.pyx Flags.pxi
-# OutputGenerationHelpers.o : OutputGenerationHelpers.c
-# 	gcc   -c OutputGenerationHelpers.c -o build/temp.macosx-10.5-i386-2.7/OutputGenerationHelpers.o
-
-# OutputGenerationHelpers.so : OutputGenerationHelpers.o
-# 	$(CXX) $(LDFLAGS) $^ -o $@
-
-# HitList.so : HitList.o
-# 	$(CXX) $(LDFLAGS) $^ -o $@
+OutputGenerationHelpers.cpp : OutputGenerationHelpers.pyx vtkHelp.pxd HitList.pxd Flags.pxi
+HitList.cpp : vtkHelp.pxd
+vtkHelp.cpp : vtkHelp.pxd
 
 .PHONY : clean
 clean :
