@@ -4,40 +4,58 @@ namespace hemelb
 {
   namespace vis
   {
+    /**
+     * Add a pixel to the screen.
+     *
+     * @param newPixel The new pixel to be added
+     * @param iStressType The stress type of the visualisation
+     * @param mode Controls what aspects of the visualisation to display.
+     */
     void Screen::AddPixel(const ColPixel* newPixel, lb::StressTypes iStressType, int mode)
     {
-      int *col_pixel_id_p = &col_pixel_id[newPixel->i.i * PixelsY + newPixel->i.j];
+      // Get the id of the pixel if we've already added one at the same location.
+      int pixelId = col_pixel_id[newPixel->i.i * PixelsY + newPixel->i.j];
 
-      if (*col_pixel_id_p != -1)
+      // If we have one at this location, merge in the pixel.
+      if (pixelId != -1)
       {
-        localPixels[*col_pixel_id_p].MergeIn(newPixel, iStressType, mode);
+        localPixels[pixelId].MergeIn(newPixel, iStressType, mode);
       }
+      // Otherwise, if we have exceeded the maximum number of pixels, do nothing.
+      else if (col_pixels >= COLOURED_PIXELS_MAX)
+      {
+        return;
+      }
+      // Otherwise, add the pixel to the list.
       else
-      { // col_pixel_id_p == -1
+      {
+        // Put the pixel number into the store of ids.
+        col_pixel_id[newPixel->i.i * PixelsY + newPixel->i.j] = col_pixels;
 
-        if (col_pixels >= COLOURED_PIXELS_MAX)
-        {
-          return;
-        }
-
-        *col_pixel_id_p = col_pixels;
-
-        memcpy(&localPixels[col_pixels], newPixel, sizeof(ColPixel));
+        // Add the pixel to the end of the list and move the end marker.
+        localPixels[col_pixels] = *newPixel;
         ++col_pixels;
       }
     }
 
+    /**
+     * Render a line between two points on the screen.
+     *
+     * @param endPoint1
+     * @param endPoint2
+     * @param iStressType
+     * @param mode
+     */
     void Screen::RenderLine(const float endPoint1[3],
                             const float endPoint2[3],
                             lb::StressTypes iStressType,
                             int mode)
     {
       // Store end points of the line and 'current' point (x and y).
-      int x1, y1, x2, y2;
-
       int x = int (endPoint1[0]);
       int y = int (endPoint1[1]);
 
+      int x1, y1, x2, y2;
       if (int (endPoint2[0]) < int (endPoint1[0]))
       {
         x1 = int (endPoint2[0]);
@@ -83,14 +101,7 @@ namespace hemelb
 
         while (x <= x2)
         {
-          if (! (x < 0 || x >= PixelsX || y < 0 || y >= PixelsY))
-          {
-            ColPixel col_pixel;
-            col_pixel.i = PixelId(x, y);
-            col_pixel.i.isGlyph = true;
-
-            AddPixel(&col_pixel, iStressType, mode);
-          }
+          RenderLineHelper(x, y, iStressType, mode);
 
           if (d < 0)
           {
@@ -106,22 +117,22 @@ namespace hemelb
         } // end while
 
       }
-      else if (y1 < y2)
+      else
       {
+        if (y2 <= y1)
+        {
+          int temp = y2;
+          y2 = y;
+          y = temp;
+        }
+
         int incE = dx;
         int d = dx - dy;
         int incNE = d;
 
         while (y <= y2)
         {
-          if (! (x < 0 || x >= PixelsX || y < 0 || y >= PixelsY))
-          {
-            ColPixel col_pixel;
-            col_pixel.i = PixelId(x, y);
-            col_pixel.i.isGlyph = true;
-
-            AddPixel(&col_pixel, iStressType, mode);
-          }
+          RenderLineHelper(x, y, iStressType, mode);
 
           if (d < 0)
           {
@@ -133,39 +144,19 @@ namespace hemelb
             ++x;
           }
           ++y;
-
         } // while
-
       }
-      else
+    }
+
+    void Screen::RenderLineHelper(int x, int y, lb::StressTypes stressType, int mode)
+    {
+      if (x >= 0 && x < PixelsX && y >= 0 && y < PixelsY)
       {
-        int incE = dx;
-        int d = dx - dy;
-        int incNE = d;
+        ColPixel col_pixel;
+        col_pixel.i = PixelId(x, y);
+        col_pixel.i.isGlyph = true;
 
-        while (y >= y2)
-        {
-          if (! (x < 0 || x >= PixelsX || y < 0 || y >= PixelsY))
-          {
-            ColPixel col_pixel;
-            col_pixel.i = PixelId(x, y);
-            col_pixel.i.isGlyph = true;
-
-            AddPixel(&col_pixel, iStressType, mode);
-          }
-
-          if (d < 0)
-          {
-            d += incE;
-          }
-          else
-          {
-            d += incNE;
-            ++x;
-          }
-          --y;
-
-        } // while
+        AddPixel(&col_pixel, stressType, mode);
       }
     }
 
