@@ -188,6 +188,8 @@ namespace hemelb
 
     bool ImageSendComponent::ShouldRenderNewNetworkImage()
     {
+      isConnected = mClientConnection->GetWorkingSocket() > 0;
+
       if (!isConnected)
       {
         return false;
