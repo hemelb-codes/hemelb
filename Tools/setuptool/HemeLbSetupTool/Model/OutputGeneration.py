@@ -12,9 +12,7 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, \
     vtkOBBTree, vtkTriangleFilter, vtkCleanPolyData, vtkIntArray
 
 from .Iolets import Inlet, Outlet, Iolet
-from .OutputGenerationHelpers import Domain, DomainSmartBlockIterator, latticeVectorNorms
-from .HitList import HitList
-#from .DomainSmartBlockIterator import 
+from .OutputGenerationHelpers import Domain, DomainSmartBlockIterator, ClassifySite
 
 import pdb
 
@@ -106,7 +104,7 @@ class ConfigGenerator(object):
             # case where there are no fluid sites).
             with writer.BlockStarted() as blockWriter:
                 for site in block.IterSites():
-                    self.ClassifySite(site)
+                    ClassifySite(self, site)
                     # cache the type cos it's probably slow to compute
                     type = site.Type
                     cfg = site.Config
@@ -149,128 +147,6 @@ class ConfigGenerator(object):
 
     
 
-    def ClassifySite(self, site):
-        """Perform classification of the supplied sites. Note that
-        this will alter the connected sites that have yet to be
-        classified, as we wish to examine each link only once.
-
-        Each site must have its IsFluid and IsEdge flags set, along
-        with the CutDistances array (at appropriate indices), {Wall,
-        Boundary}x{Distance, Normal}.
-        """
-        if self.IsFirstSite:
-            # We're the first site; the IsFluid flag will have been
-            # set to True/False below for all other sites, but we
-            # need to bootstrap the process here.
-            self.IsFirstSite = False
-            if self.Locator.InsideOrOutside(site.Position) < 0:
-                # vtkOBBTree.InsideOrOutside returns -1 for inside
-                site.IsFluid = True
-            else:
-                site.IsFluid = False
-                pass
-            pass
-
-        for i, neigh in site.EnumerateLaterNeighbours():
-            # Check our neighbours, who are further on in what would
-            # be a conventional array of all sites.
-
-            nHits = 0
-
-            for hitPoint, hitObj in HitList(self.Locator, site.Position, neigh.Position):
-                nHits += 1
-                if nHits == 1:
-                    # First hit, assign the distance (in STL units for
-                    # now) to first intersection (i.e. CutDistance)
-                    # and the ID of the vtkPolygon which we
-                    # intersected (CutCellId). We also now know we're
-                    # an edge site.
-                    
-                    site.CutDistances[i] = sqrt(np.sum((hitPoint -
-                                                        site.Position) ** 2))
-                    site.IsEdge = True
-                    site.CutCellIds[i] = hitObj
-
-                    pass
-
-                continue
-
-            # If we had any hits, we need to set the last one for the
-            # reverse link; hitPoint and hitObj assigned above will
-            # handily have the final values from the loop.
-            if nHits > 0:
-                neigh.IsEdge = True
-                neigh.CutDistances[i] = sqrt(np.sum((hitPoint - neigh.Position) ** 2))
-                neigh.CutCellIds[i] = hitObj
-                pass
-
-            # Set the neighbour's fluid flag
-            if nHits % 2 == 0:
-                # Even nHits => we crossed the surface and then back
-                # to where we were.
-                neigh.IsFluid = site.IsFluid
-            else:
-                # Odd nHits => we're now on the other side of the
-                # surface.
-                neigh.IsFluid = not site.IsFluid
-            continue
-
-        if not site.IsFluid or not site.IsEdge:
-            # Nothing more to do for solid sites or simple fluid sites
-            return
-        
-        # These CutDistances need to be fractions of the corresponding
-        # lattice vector, rather than distances in lattice units or
-        # physical units. HOWEVER, we need to know the distances to
-        # the walls and Iolets in plain lattice units below, so only
-        # scale by the VoxelSize for now and scale to vector fractions
-        # once we're done.
-        site.CutDistances /= self.VoxelSize
-
-        # Get the normals and scalars associated with the surface
-        # polygons. The scalars hold the index of the Iolet which they
-        # represent, -1 meaning they aren't an Iolet.
-        celldata = self.ClippedSurface.GetOutput().GetCellData()
-        normals = celldata.GetNormals()
-        ioletIds = celldata.GetScalars()
-
-        site.IsEdge = False
-        for i, hitCellId in enumerate(site.CutCellIds):
-            # The site.CutCellsIds array is initialised to -1 and then
-            # updated with the index of the first vtkPolygon they
-            # intersect.
-            if hitCellId == -1:
-                # We didn't hit in this direction.
-                continue
-            
-            ioletId = ioletIds.GetValue(hitCellId)
-            if ioletId >= 0:
-                # It's an iolet
-                if site.CutDistances[i] < site.BoundaryDistance:
-                    # It is the closest yet
-                    io = site.Iolet = self.Iolets[ioletId]
-                    # TODO: confirm this should be in lattice units 
-                    site.BoundaryDistance = site.CutDistances[i]
-                    site.BoundaryNormal[:] = io.Normal.x, io.Normal.y, io.Normal.z
-                    site.BoundaryId = io.Index
-                    pass
-                
-            else:
-                # It's wall
-                site.IsEdge = True
-                if site.CutDistances[i] < site.WallDistance:
-                    # If it's the closest point yet, store it
-                    site.WallDistance = site.CutDistances[i]
-                    site.WallNormal[:] = normals.GetTuple3(hitCellId)
-                    pass
-                pass
-
-            continue
-
-        # Scale to be fractions of lattice vectors instead of
-        # distances in lattice units; see above for more.
-        site.CutDistances /= latticeVectorNorms
-        return
 
     def ConstructClipPipeline(self):
         """This constructs a VTK pipeline to clip the vtkPolyData read
