@@ -56,7 +56,7 @@ namespace hemelb
       int y = int (endPoint1[1]);
 
       int x1, y1, x2, y2;
-      if (int (endPoint2[0]) < int (endPoint1[0]))
+      if (endPoint2[0] < endPoint1[0])
       {
         x1 = int (endPoint2[0]);
         y1 = int (endPoint2[1]);
@@ -75,7 +75,6 @@ namespace hemelb
       int dx = x2 - x1;
 
       // Set up the iteration in general terms.
-      //int incE, d, incNE, whileVariable, whileLimit, otherVariable, otherVariableIncrement;
 
       if (y2 <= y1)
       {
@@ -89,7 +88,7 @@ namespace hemelb
       if (dx > dy)
       {
         RenderLineHelper<true> (x, y, dy, dy - dx, x2, iStressType, mode);
-      } // end while
+      }
       else
       {
         RenderLineHelper<false> (x, y, dx, dx - dy, y2, iStressType, mode);
