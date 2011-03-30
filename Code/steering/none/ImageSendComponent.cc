@@ -6,6 +6,7 @@ namespace hemelb
   {
     ImageSendComponent::ImageSendComponent(lb::LBM* lbm,
                                            lb::SimulationState* iSimState,
+                                           vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
                                            ClientConnection* iClientConnection)
     {

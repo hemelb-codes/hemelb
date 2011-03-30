@@ -154,7 +154,6 @@ int main(int argc, char *argv[])
   }
 
   delete lSimulationConfig;
-  delete hemelb::vis::controller;
 
   return (0);
 }

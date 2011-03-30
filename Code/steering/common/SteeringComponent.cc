@@ -6,25 +6,25 @@ namespace hemelb
   {
     void SteeringComponent::AssignValues()
     {
-      mVisControl->ctr_x += privateSteeringParams[0];
-      mVisControl->ctr_y += privateSteeringParams[1];
-      mVisControl->ctr_z += privateSteeringParams[2];
+      mVisControl->mVisSettings.ctr_x += privateSteeringParams[0];
+      mVisControl->mVisSettings.ctr_y += privateSteeringParams[1];
+      mVisControl->mVisSettings.ctr_z += privateSteeringParams[2];
 
       float longitude = privateSteeringParams[3];
       float latitude = privateSteeringParams[4];
 
       float zoom = privateSteeringParams[5];
 
-      mVisControl->brightness = privateSteeringParams[6];
+      mVisControl->mVisSettings.brightness = privateSteeringParams[6];
 
       // The minimum value here is by default 0.0 all the time
-      mVisControl->physical_velocity_threshold_max = privateSteeringParams[7];
+      mVisControl->mDomainStats.physical_velocity_threshold_max = privateSteeringParams[7];
 
       // The minimum value here is by default 0.0 all the time
-      mVisControl->physical_stress_threshold_max = privateSteeringParams[8];
+      mVisControl->mDomainStats.physical_stress_threshold_max = privateSteeringParams[8];
 
-      mVisControl->physical_pressure_threshold_min = privateSteeringParams[9];
-      mVisControl->physical_pressure_threshold_max = privateSteeringParams[10];
+      mVisControl->mDomainStats.physical_pressure_threshold_min = privateSteeringParams[9];
+      mVisControl->mDomainStats.physical_pressure_threshold_max = privateSteeringParams[10];
 
       vis::GlyphDrawer::glyph_length = privateSteeringParams[11];
 
@@ -34,11 +34,12 @@ namespace hemelb
       int newMouseX = int (privateSteeringParams[14]);
       int newMouseY = int (privateSteeringParams[15]);
 
-      if (newMouseX != mVisControl->mouse_x || newMouseY != mVisControl->mouse_y)
+      if (newMouseX != mVisControl->mVisSettings.mouse_x || newMouseY
+          != mVisControl->mVisSettings.mouse_y)
       {
         updatedMouseCoords = true;
-        mVisControl->mouse_x = newMouseX;
-        mVisControl->mouse_y = newMouseY;
+        mVisControl->mVisSettings.mouse_x = newMouseX;
+        mVisControl->mVisSettings.mouse_y = newMouseY;
       }
 
       mSimState->IsTerminating = int (privateSteeringParams[16]);
@@ -47,32 +48,43 @@ namespace hemelb
       // 0 - Only display the isosurfaces (wall pressure and stress)
       // 1 - Isosurface and glyphs
       // 2 - Wall pattern streak lines
-      mVisControl->mode = int (privateSteeringParams[17]);
+      mVisControl->mVisSettings.mode = int (privateSteeringParams[17]);
 
-      mVisControl->streaklines_per_pulsatile_period = privateSteeringParams[18];
-      mVisControl->streakline_length = privateSteeringParams[19];
+      mVisControl->mVisSettings.streaklines_per_pulsatile_period = privateSteeringParams[18];
+      mVisControl->mVisSettings.streakline_length = privateSteeringParams[19];
 
       mSimState->DoRendering = int (privateSteeringParams[20]);
 
       mVisControl->updateImageSize(pixels_x, pixels_y);
 
-      float lattice_density_min =
-          mLbm->ConvertPressureToLatticeUnits(mVisControl->physical_pressure_threshold_min) / Cs2;
-      float lattice_density_max =
-          mLbm->ConvertPressureToLatticeUnits(mVisControl->physical_pressure_threshold_max) / Cs2;
-      float lattice_velocity_max =
-          mLbm->ConvertVelocityToLatticeUnits(mVisControl->physical_velocity_threshold_max);
-      float lattice_stress_max =
-          mLbm->ConvertStressToLatticeUnits(mVisControl->physical_stress_threshold_max);
+      float
+          lattice_density_min =
+              mLbm->ConvertPressureToLatticeUnits(
+                                                  mVisControl->mDomainStats.physical_pressure_threshold_min)
+                  / Cs2;
+      float
+          lattice_density_max =
+              mLbm->ConvertPressureToLatticeUnits(
+                                                  mVisControl->mDomainStats.physical_pressure_threshold_max)
+                  / Cs2;
+      float
+          lattice_velocity_max =
+              mLbm->ConvertVelocityToLatticeUnits(
+                                                  mVisControl->mDomainStats.physical_velocity_threshold_max);
+      float
+          lattice_stress_max =
+              mLbm->ConvertStressToLatticeUnits(
+                                                mVisControl->mDomainStats.physical_stress_threshold_max);
 
-      mVisControl->SetProjection(pixels_x, pixels_y, mVisControl->ctr_x, mVisControl->ctr_y,
-                                 mVisControl->ctr_z, longitude, latitude, zoom);
+      mVisControl->SetProjection(pixels_x, pixels_y, mVisControl->mVisSettings.ctr_x,
+                                 mVisControl->mVisSettings.ctr_y, mVisControl->mVisSettings.ctr_z,
+                                 longitude, latitude, zoom);
 
-      mVisControl->density_threshold_min = lattice_density_min;
-      mVisControl->density_threshold_minmax_inv = 1.0F
-          / (lattice_density_max - lattice_density_min);
-      mVisControl->velocity_threshold_max_inv = 1.0F / lattice_velocity_max;
-      mVisControl->stress_threshold_max_inv = 1.0F / lattice_stress_max;
+      mVisControl->mDomainStats.density_threshold_min = lattice_density_min;
+      mVisControl->mDomainStats.density_threshold_minmax_inv = 1.0F / (lattice_density_max
+          - lattice_density_min);
+      mVisControl->mDomainStats.velocity_threshold_max_inv = 1.0F / lattice_velocity_max;
+      mVisControl->mDomainStats.stress_threshold_max_inv = 1.0F / lattice_stress_max;
     }
 
     void SteeringComponent::Reset()

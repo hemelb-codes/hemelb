@@ -6,6 +6,11 @@
 #include "lb/GlobalLatticeData.h"
 #include "topology/NetworkTopology.h"
 
+#include "vis/DomainStats.h"
+#include "vis/Screen.h"
+#include "vis/Viewpoint.h"
+#include "vis/VisSettings.h"
+
 namespace hemelb
 {
   namespace vis
@@ -16,7 +21,11 @@ namespace hemelb
         // Constructor and destructor do all the usual stuff.
         RayTracer(const topology::NetworkTopology * iNetworkTopology,
                   const lb::LocalLatticeData* iLocalLatDat,
-                  const lb::GlobalLatticeData* iGlobLatDat);
+                  const lb::GlobalLatticeData* iGlobLatDat,
+                  DomainStats* iDomainStats,
+                  Screen* iScreen,
+                  Viewpoint* iViewpoint,
+                  VisSettings* iVisSettings);
         ~RayTracer();
 
         // Method to update the voxel corresponding to site i with its
@@ -103,6 +112,11 @@ namespace hemelb
         const topology::NetworkTopology * mNetworkTopology;
         const lb::LocalLatticeData* mLocalLatDat;
         const lb::GlobalLatticeData* mGlobLatDat;
+
+        DomainStats* mDomainStats;
+        Screen* mScreen;
+        Viewpoint* mViewpoint;
+        VisSettings* mVisSettings;
 
         std::vector<Cluster*> mClusters;
         float **cluster_voxel;

@@ -19,102 +19,6 @@ namespace hemelb
 {
   namespace lb
   {
-    // TODO
-    /*
-     void LBM::ReadBlock(unsigned int * &siteData,
-     int * &procRankForEachBlockSite,
-     hemelb::lb::WallData * &wallData,
-     hemelb::io::XdrReader &reader,
-     const hemelb::lb::GlobalLatticeData &iGlobLatDat)
-     {
-     int flag;
-
-     reader.readInt(flag);
-
-     if (flag == 0)
-     continue;
-     // Block contains some non-solid sites
-
-     siteData = new unsigned int[iGlobLatDat.SitesPerBlockVolumeUnit];
-     procRankForEachBlockSite = new int[iGlobLatDat.SitesPerBlockVolumeUnit];
-
-     int m = -1;
-
-     for (int ii = 0; ii < iGlobLatDat.GetBlockSize(); ii++)
-     {
-     unsigned int site_i = (i << iGlobLatDat.Log2BlockSize) + ii;
-
-     for (int jj = 0; jj < iGlobLatDat.GetBlockSize(); jj++)
-     {
-     unsigned int site_j = (j << iGlobLatDat.Log2BlockSize) + jj;
-
-     for (int kk = 0; kk < iGlobLatDat.GetBlockSize(); kk++)
-     {
-     unsigned int site_k = (k << iGlobLatDat.Log2BlockSize) + kk;
-
-     ++m;
-
-     unsigned int *site_type = &siteData[m];
-     reader.readUnsignedInt(*site_type);
-
-     if ( (*site_type & SITE_TYPE_MASK) == hemelb::lb::SOLID_TYPE)
-     {
-     procRankForEachBlockSite[m] = 1 << 30;
-     continue;
-     }
-     procRankForEachBlockSite[m] = -1;
-
-     ++total_fluid_sites;
-
-     site_min_x = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_x, site_i);
-     site_min_y = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_y, site_j);
-     site_min_z = hemelb::util::NumericalFunctions::min<unsigned int>(site_min_z, site_k);
-     site_max_x = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_x, site_i);
-     site_max_y = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_y, site_j);
-     site_max_z = hemelb::util::NumericalFunctions::max<unsigned int>(site_max_z, site_k);
-
-     if (net->GetCollisionType(*site_type) != FLUID)
-     {
-     // Neither solid nor simple fluid
-     if (bGlobalLatticeData.Blocks[n].wall_data == NULL)
-     {
-     bGlobalLatticeData.Blocks[n].wall_data
-     = new hemelb::lb::WallData[bGlobalLatticeData.SitesPerBlockVolumeUnit];
-     }
-
-     if (net->GetCollisionType(*site_type) & INLET
-     || net->GetCollisionType(*site_type) & OUTLET)
-     {
-     double temp;
-     // INLET or OUTLET or both.
-     // These values are the boundary normal and the boundary distance.
-     for (int l = 0; l < 3; l++)
-     myReader.readDouble(temp);
-
-     myReader.readDouble(temp);
-     }
-
-     if (net->GetCollisionType(*site_type) & EDGE)
-     {
-     // EDGE bit set
-     for (int l = 0; l < 3; l++)
-     myReader.readDouble(
-     bGlobalLatticeData.Blocks[n].wall_data[m].wall_nor[l]);
-
-     double temp;
-     myReader.readDouble(temp);
-     }
-
-     for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-     myReader.readDouble(
-     bGlobalLatticeData.Blocks[n].wall_data[m].cut_dist[l]);
-     }
-     } // kk
-     } // jj
-     } // ii
-     }
-     */
-
     /*!
      through this function the processor 0 reads the LB parameters
      and then communicate them to the other processors
@@ -887,9 +791,9 @@ namespace hemelb
       lVelocity_threshold_max_inv = 1.0F / velocity_max;
       lStress_threshold_max_inv = 1.0F / stress_max;
 
-      hemelb::vis::controller->SetSomeParams(mSimConfig->VisBrightness, lDensity_threshold_min,
-                                             lDensity_threshold_minmax_inv,
-                                             lVelocity_threshold_max_inv, lStress_threshold_max_inv);
+      mVisControl->SetSomeParams(mSimConfig->VisBrightness, lDensity_threshold_min,
+                                 lDensity_threshold_minmax_inv, lVelocity_threshold_max_inv,
+                                 lStress_threshold_max_inv);
     }
   }
 }
