@@ -67,28 +67,13 @@ namespace hemelb
                                 const float &iLatitude,
                                 const float &iZoom)
     {
-      // Convert to radians
-      float temp = iLongitude * DEG_TO_RAD;
-
-      mViewpoint.SinYRotation = sinf(temp);
-      mViewpoint.CosYRotation = cosf(temp);
-
-      // Convert to radians
-      temp = iLatitude * DEG_TO_RAD;
-
-      mViewpoint.SinXRotation = sinf(temp);
-      mViewpoint.CosXRotation = cosf(temp);
-
       float rad = 5.F * vis->system_size;
       float dist = 0.5 * rad;
 
-      mViewpoint.RotateToViewpoint(0., 0., rad, mViewpoint.x);
+      float centre[3] = { iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z };
 
-      mViewpoint.x[0] += iLocal_ctr_x;
-      mViewpoint.x[1] += iLocal_ctr_y;
-      mViewpoint.x[2] += iLocal_ctr_z;
-
-      mViewpoint.dist = dist;
+      mViewpoint.SetViewpointPosition(iLongitude * DEG_TO_RAD, iLatitude * DEG_TO_RAD, centre, rad,
+                                      dist);
 
       mViewpoint.RotateToViewpoint(mScreen.MaxXValue, 0.0F, 0.0F, mScreen.UnitVectorProjectionX);
 
@@ -103,14 +88,16 @@ namespace hemelb
       mScreen.ScaleX = (float) iPixels_x / (2.F * mScreen.MaxXValue);
       mScreen.ScaleY = (float) iPixels_y / (2.F * mScreen.MaxYValue);
 
-      temp = dist / rad;
+      float temp = dist / rad;
 
-      mScreen.vtx[0] = (mViewpoint.x[0] + temp * (iLocal_ctr_x - mViewpoint.x[0]))
-          - mScreen.UnitVectorProjectionX[0] - mScreen.UnitVectorProjectionY[0] - mViewpoint.x[0];
-      mScreen.vtx[1] = (mViewpoint.x[1] + temp * (iLocal_ctr_y - mViewpoint.x[1]))
-          - mScreen.UnitVectorProjectionX[1] - mScreen.UnitVectorProjectionY[1] - mViewpoint.x[1];
-      mScreen.vtx[2] = (mViewpoint.x[2] + temp * (iLocal_ctr_z - mViewpoint.x[2]))
-          - mScreen.UnitVectorProjectionX[2] - mScreen.UnitVectorProjectionY[2] - mViewpoint.x[2];
+      const float* viewpointCentre = mViewpoint.GetViewpointCentre();
+
+      mScreen.vtx[0] = (temp * (iLocal_ctr_x - viewpointCentre[0])) - mScreen.UnitVectorProjectionX[0]
+          - mScreen.UnitVectorProjectionY[0];
+      mScreen.vtx[1] = (temp * (iLocal_ctr_y - viewpointCentre[1])) - mScreen.UnitVectorProjectionX[1]
+          - mScreen.UnitVectorProjectionY[1];
+      mScreen.vtx[2] = (temp * (iLocal_ctr_z - viewpointCentre[2])) - mScreen.UnitVectorProjectionX[2]
+          - mScreen.UnitVectorProjectionY[2];
 
       mScreen.UnitVectorProjectionX[0] *= (2.F / (float) iPixels_x);
       mScreen.UnitVectorProjectionX[1] *= (2.F / (float) iPixels_x);
