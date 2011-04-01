@@ -447,7 +447,7 @@ void SimulationMaster::Abort()
   // This gives us something to work from when we have an error - we get the rank
   // that calls abort, and we get a stack-trace from the exception having been thrown.
   fprintf(stderr, "Aborted by rank %d\n", mNetworkTopology->GetLocalRank());
-  throw "SimulationMaster::Abort() called.";
+  exit(1);
 }
 
 /**
