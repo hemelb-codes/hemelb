@@ -799,6 +799,8 @@ namespace hemelb
         projectedUnitY[l] = mScreen->UnitVectorProjectionY[l];
       }
 
+      const float* viewpointCentre = mViewpoint->GetViewpointCentre();
+
       for (unsigned int clusterId = 0; clusterId < mClusters.size(); clusterId++)
       {
         const Cluster* thisCluster = mClusters[clusterId];
@@ -808,7 +810,7 @@ namespace hemelb
         float cluster_x[3];
         for (int l = 0; l < 3; l++)
         {
-          cluster_x[l] = thisCluster->x[l] - mViewpoint->x[l];
+          cluster_x[l] = thisCluster->x[l] - viewpointCentre[l];
         }
 
         float **block_flow_field = cluster_flow_field[clusterId];
@@ -863,12 +865,12 @@ namespace hemelb
         subimageMaxY = util::NumericalFunctions::min(subimageMaxY, mScreen->PixelsY - 1);
 
         AABB aabb;
-        aabb.acc_1 = thisCluster->minmax_x[1] - mViewpoint->x[0];
-        aabb.acc_2 = thisCluster->minmax_x[0] - mViewpoint->x[0];
-        aabb.acc_3 = thisCluster->minmax_y[1] - mViewpoint->x[1];
-        aabb.acc_4 = thisCluster->minmax_y[0] - mViewpoint->x[1];
-        aabb.acc_5 = thisCluster->minmax_z[1] - mViewpoint->x[2];
-        aabb.acc_6 = thisCluster->minmax_z[0] - mViewpoint->x[2];
+        aabb.acc_1 = thisCluster->minmax_x[1] - viewpointCentre[0];
+        aabb.acc_2 = thisCluster->minmax_x[0] - viewpointCentre[0];
+        aabb.acc_3 = thisCluster->minmax_y[1] - viewpointCentre[1];
+        aabb.acc_4 = thisCluster->minmax_y[0] - viewpointCentre[1];
+        aabb.acc_5 = thisCluster->minmax_z[1] - viewpointCentre[2];
+        aabb.acc_6 = thisCluster->minmax_z[0] - viewpointCentre[2];
 
         float par3[3];
         for (int l = 0; l < 3; l++)

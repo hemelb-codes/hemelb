@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "vis/Viewpoint.h"
 
 namespace hemelb
@@ -63,6 +65,40 @@ namespace hemelb
 
       p2[0] = temp * x2[1];
       p2[1] = temp * x2[0];
+    }
+
+    /**
+     * Set the position of the viewpoint.
+     *
+     * @param longitude in radians.
+     * @param latitude in radians.
+     * @param localCentre
+     * @param distance
+     */
+    void Viewpoint::SetViewpointPosition(float longitude,
+                                         float latitude,
+                                         float localCentre[3],
+                                         float rad,
+                                         float distance)
+    {
+      SinYRotation = sinf(longitude);
+      CosYRotation = cosf(longitude);
+
+      SinXRotation = sinf(latitude);
+      CosXRotation = cosf(latitude);
+
+      RotateToViewpoint(0., 0., rad, x);
+
+      x[0] += localCentre[0];
+      x[1] += localCentre[1];
+      x[2] += localCentre[2];
+
+      dist = distance;
+    }
+
+    const float* Viewpoint::GetViewpointCentre() const
+    {
+      return &x[0];
     }
 
   }
