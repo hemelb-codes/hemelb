@@ -174,35 +174,53 @@ namespace hemelb
       // For all processors with pixels, copy these to the receive buffer.
       if (!iNetTopology->IsCurrentProcTheIOProc())
       {
-        for (int ii = 0; ii < mScreen.col_pixels; ++ii)
+        for (unsigned int ii = 0; ii < mScreen.col_pixels; ++ii)
         {
           col_pixel_recv[recv_buffer_id][ii] = mScreen.localPixels[ii];
         }
       }
 
-      for (unsigned int comm_inc = 1; comm_inc < iNetTopology->GetProcessorCount(); comm_inc <<= 1)
-      {
-        for (unsigned int receivingProc = 1; receivingProc < (iNetTopology->GetProcessorCount()
-            - comm_inc); receivingProc += comm_inc << 1)
-        {
-          unsigned int sendingProc = receivingProc + comm_inc;
+      /*
+       * We do several iterations.
+       *
+       * On the first, every even proc passes data to the odd proc below, where it is merged.
+       * On the second, the difference is two, so proc 3 passes to 1, 7 to 5, 11 to 9 etc.
+       * On the third the differenec is four, so proc 5 passes to 1, 13 to 9 etc.
+       * .
+       * .
+       * .
+       *
+       * This continues until all data is passed back to processor one, which passes it to proc 0.
+       */
 
+      // Start with a difference in rank of 1, doubling every time.
+      for (unsigned int deltaRank = 1; deltaRank < iNetTopology->GetProcessorCount(); deltaRank
+          <<= 1)
+      {
+        // The receiving proc is all the ranks that are 1 modulo (deltaRank * 2)
+        for (unsigned int receivingProc = 1; receivingProc < (iNetTopology->GetProcessorCount()
+            - deltaRank); receivingProc += deltaRank << 1)
+        {
+          unsigned int sendingProc = receivingProc + deltaRank;
+
+          // If we're the sending proc, do the send.
           if (iNetTopology->GetLocalRank() == sendingProc)
           {
-            MPI_Send(&mScreen.col_pixels, 1, MPI_INT, receivingProc, 20, MPI_COMM_WORLD);
+            MPI_Send(&mScreen.col_pixels, 1, MPI_UNSIGNED, receivingProc, 20, MPI_COMM_WORLD);
 
             if (mScreen.col_pixels > 0)
             {
               MPI_Send(mScreen.localPixels, mScreen.col_pixels, ColPixel::getMpiType(),
                        receivingProc, 20, MPI_COMM_WORLD);
             }
-
           }
+
+          // If we're the receiving proc, receive.
           else if (iNetTopology->GetLocalRank() == receivingProc)
           {
-            int col_pixels_temp;
+            unsigned int col_pixels_temp;
 
-            MPI_Recv(&col_pixels_temp, 1, MPI_INT, sendingProc, 20, MPI_COMM_WORLD, &status);
+            MPI_Recv(&col_pixels_temp, 1, MPI_UNSIGNED, sendingProc, 20, MPI_COMM_WORLD, &status);
 
             if (col_pixels_temp > 0)
             {
@@ -210,12 +228,12 @@ namespace hemelb
                        20, MPI_COMM_WORLD, &status);
             }
 
-            for (int n = 0; n < col_pixels_temp; n++)
+            // Now merge the received pixels in with the local store of pixels.
+            for (unsigned int n = 0; n < col_pixels_temp; n++)
             {
               ColPixel* col_pixel1 = &mScreen.localPixels[n];
 
               int id = col_pixel1->i.i * mScreen.PixelsY + col_pixel1->i.j;
-
               if (mScreen.col_pixel_id[id] == -1)
               {
                 mScreen.col_pixel_id[id] = mScreen.col_pixels;
@@ -232,11 +250,11 @@ namespace hemelb
               }
             }
 
-            unsigned int m = comm_inc << 1;
-
-            if (m < iNetTopology->GetProcessorCount())
+            // If this isn't the last iteration, copy the pixels from the received buffer
+            // back to the screen.
+            if ( (deltaRank << 1) < iNetTopology->GetProcessorCount())
             {
-              for (int ii = 0; ii < mScreen.col_pixels; ++ii)
+              for (unsigned int ii = 0; ii < mScreen.col_pixels; ++ii)
               {
                 mScreen.localPixels[ii] = col_pixel_recv[recv_buffer_id][ii];
               }
@@ -245,9 +263,10 @@ namespace hemelb
         }
       }
 
+      // Send the final image from proc 1 to 0.
       if (iNetTopology->GetLocalRank() == 1)
       {
-        MPI_Send(&mScreen.col_pixels, 1, MPI_INT, 0, 20, MPI_COMM_WORLD);
+        MPI_Send(&mScreen.col_pixels, 1, MPI_UNSIGNED, 0, 20, MPI_COMM_WORLD);
 
         if (mScreen.col_pixels > 0)
         {
@@ -256,9 +275,10 @@ namespace hemelb
         }
 
       }
+      // Receive the final image on proc 0.
       else if (iNetTopology->GetLocalRank() == 0)
       {
-        MPI_Recv(&mScreen.col_pixels, 1, MPI_INT, 1, 20, MPI_COMM_WORLD, &status);
+        MPI_Recv(&mScreen.col_pixels, 1, MPI_UNSIGNED, 1, 20, MPI_COMM_WORLD, &status);
 
         if (mScreen.col_pixels > 0)
         {
