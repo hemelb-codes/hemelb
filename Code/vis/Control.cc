@@ -88,23 +88,17 @@ namespace hemelb
       float rad = 5.F * vis->system_size;
       float dist = 0.5 * rad;
 
-      temp = rad * mViewpoint.CosXRotation;
+      mViewpoint.RotateToViewpoint(0., 0., rad, mViewpoint.x);
 
-      mViewpoint.x[0] = temp * mViewpoint.SinYRotation + iLocal_ctr_x;
-      mViewpoint.x[1] = rad * mViewpoint.SinXRotation + iLocal_ctr_y;
-      mViewpoint.x[2] = temp * mViewpoint.CosYRotation + iLocal_ctr_z;
+      mViewpoint.x[0] += iLocal_ctr_x;
+      mViewpoint.x[1] += iLocal_ctr_y;
+      mViewpoint.x[2] += iLocal_ctr_z;
 
       mViewpoint.dist = dist;
 
-      mViewpoint.RotateToViewpoint(mScreen.MaxXValue, 0.0F, 0.0F,
-                                   &mScreen.UnitVectorProjectionX[0],
-                                   &mScreen.UnitVectorProjectionX[1],
-                                   &mScreen.UnitVectorProjectionX[2]);
+      mViewpoint.RotateToViewpoint(mScreen.MaxXValue, 0.0F, 0.0F, mScreen.UnitVectorProjectionX);
 
-      mViewpoint.RotateToViewpoint(0.0F, mScreen.MaxYValue, 0.0F,
-                                   &mScreen.UnitVectorProjectionY[0],
-                                   &mScreen.UnitVectorProjectionY[1],
-                                   &mScreen.UnitVectorProjectionY[2]);
+      mViewpoint.RotateToViewpoint(0.0F, mScreen.MaxYValue, 0.0F, mScreen.UnitVectorProjectionY);
 
       mScreen.ScaleX = (float) iPixels_x / (2.F * mScreen.MaxXValue);
       mScreen.ScaleY = (float) iPixels_y / (2.F * mScreen.MaxYValue);
