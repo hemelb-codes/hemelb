@@ -8,12 +8,7 @@ namespace hemelb
     class Viewpoint
     {
       public:
-        void RotateToViewpoint(float iXIn,
-                               float iYIn,
-                               float iZIn,
-                               float *oXOut,
-                               float *oYOut,
-                               float *oZOut) const;
+        void RotateToViewpoint(float iXIn, float iYIn, float iZIn, float rotatedVector[3]) const;
 
         void Project(const float p1[], float p2[]) const;
 
@@ -30,9 +25,7 @@ namespace hemelb
                     float xIn,
                     float yIn,
                     float zIn,
-                    float* xOut,
-                    float* yOut,
-                    float* zOut) const;
+                    float rotatedVector[3]) const;
 
     };
   }
