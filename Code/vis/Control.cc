@@ -67,20 +67,14 @@ namespace hemelb
                                 const float &iLatitude,
                                 const float &iZoom)
     {
-      mScreen.MaxXValue = (0.5 * vis->system_size) / iZoom;
-      mScreen.MaxYValue = (0.5 * vis->system_size) / iZoom;
-
-      mScreen.PixelsX = iPixels_x;
-      mScreen.PixelsY = iPixels_y;
-
       // Convert to radians
-      float temp = iLongitude * 0.01745329F;
+      float temp = iLongitude * DEG_TO_RAD;
 
       mViewpoint.SinYRotation = sinf(temp);
       mViewpoint.CosYRotation = cosf(temp);
 
       // Convert to radians
-      temp = iLatitude * 0.01745329F;
+      temp = iLatitude * DEG_TO_RAD;
 
       mViewpoint.SinXRotation = sinf(temp);
       mViewpoint.CosXRotation = cosf(temp);
@@ -99,6 +93,12 @@ namespace hemelb
       mViewpoint.RotateToViewpoint(mScreen.MaxXValue, 0.0F, 0.0F, mScreen.UnitVectorProjectionX);
 
       mViewpoint.RotateToViewpoint(0.0F, mScreen.MaxYValue, 0.0F, mScreen.UnitVectorProjectionY);
+
+      mScreen.MaxXValue = (0.5 * vis->system_size) / iZoom;
+      mScreen.MaxYValue = (0.5 * vis->system_size) / iZoom;
+
+      mScreen.PixelsX = iPixels_x;
+      mScreen.PixelsY = iPixels_y;
 
       mScreen.ScaleX = (float) iPixels_x / (2.F * mScreen.MaxXValue);
       mScreen.ScaleY = (float) iPixels_y / (2.F * mScreen.MaxYValue);
