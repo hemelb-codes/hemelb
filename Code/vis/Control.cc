@@ -159,64 +159,55 @@ namespace hemelb
       }
     }
 
+    /**
+     * Method that uses a binary tree communication method to composite the image
+     * as created from multiple processors.
+     *
+     * @param recv_buffer_id
+     * @param iNetTopology
+     */
     void Control::compositeImage(int recv_buffer_id, const topology::NetworkTopology * iNetTopology)
     {
-      // here, the communications needed to composite the image are
-      // handled through a binary tree pattern and parallel pairwise
-      // blocking communications.
-
+      // Status object for MPI comms.
       MPI_Status status;
 
+      // For all processors with pixels, copy these to the receive buffer.
       if (!iNetTopology->IsCurrentProcTheIOProc())
       {
-        memcpy(col_pixel_recv[recv_buffer_id], mScreen.localPixels, mScreen.col_pixels
-            * sizeof(ColPixel));
+        for (int ii = 0; ii < mScreen.col_pixels; ++ii)
+        {
+          col_pixel_recv[recv_buffer_id][ii] = mScreen.localPixels[ii];
+        }
       }
 
-      unsigned int comm_inc = 1;
-
-      for (unsigned int comm_inc = 1; comm_inc < (iNetTopology->GetProcessorCount()); comm_inc
-          <<= 1)
+      for (unsigned int comm_inc = 1; comm_inc < iNetTopology->GetProcessorCount(); comm_inc <<= 1)
       {
-        unsigned int m = comm_inc << 1;
-
-        for (unsigned int recv_id = 1; recv_id < iNetTopology->GetProcessorCount();)
+        for (unsigned int receivingProc = 1; receivingProc < (iNetTopology->GetProcessorCount()
+            - comm_inc); receivingProc += comm_inc << 1)
         {
-          unsigned int send_id = recv_id + comm_inc;
+          unsigned int sendingProc = receivingProc + comm_inc;
 
-          if (iNetTopology->GetLocalRank() != recv_id && iNetTopology->GetLocalRank() != send_id)
+          if (iNetTopology->GetLocalRank() == sendingProc)
           {
-            recv_id += comm_inc << 1;
-            continue;
-          }
-
-          if (send_id >= iNetTopology->GetProcessorCount() || recv_id == send_id)
-          {
-            recv_id += comm_inc << 1;
-            continue;
-          }
-
-          if (iNetTopology->GetLocalRank() == send_id)
-          {
-            MPI_Send(&mScreen.col_pixels, 1, MPI_INT, recv_id, 20, MPI_COMM_WORLD);
+            MPI_Send(&mScreen.col_pixels, 1, MPI_INT, receivingProc, 20, MPI_COMM_WORLD);
 
             if (mScreen.col_pixels > 0)
             {
-              MPI_Send(mScreen.localPixels, mScreen.col_pixels, ColPixel::getMpiType(), recv_id,
-                       20, MPI_COMM_WORLD);
+              MPI_Send(mScreen.localPixels, mScreen.col_pixels, ColPixel::getMpiType(),
+                       receivingProc, 20, MPI_COMM_WORLD);
             }
 
           }
-          else
+          else if (iNetTopology->GetLocalRank() == receivingProc)
           {
             int col_pixels_temp;
 
-            MPI_Recv(&col_pixels_temp, 1, MPI_INT, send_id, 20, MPI_COMM_WORLD, &status);
+            MPI_Recv(&col_pixels_temp, 1, MPI_INT, sendingProc, 20, MPI_COMM_WORLD, &status);
 
             if (col_pixels_temp > 0)
             {
-              MPI_Recv(mScreen.localPixels, col_pixels_temp, ColPixel::getMpiType(), send_id, 20,
-                       MPI_COMM_WORLD, &status);
+              MPI_Recv(mScreen.localPixels, col_pixels_temp, ColPixel::getMpiType(), sendingProc,
+                       20, MPI_COMM_WORLD, &status);
             }
 
             for (int n = 0; n < col_pixels_temp; n++)
@@ -239,16 +230,18 @@ namespace hemelb
                                                                                  mVisSettings.mStressType,
                                                                                  mVisSettings.mode);
               }
+            }
 
+            unsigned int m = comm_inc << 1;
+
+            if (m < iNetTopology->GetProcessorCount())
+            {
+              for (int ii = 0; ii < mScreen.col_pixels; ++ii)
+              {
+                mScreen.localPixels[ii] = col_pixel_recv[recv_buffer_id][ii];
+              }
             }
           }
-          if (m < iNetTopology->GetProcessorCount() && iNetTopology->GetLocalRank() == recv_id)
-          {
-            memcpy(mScreen.localPixels, col_pixel_recv[recv_buffer_id], mScreen.col_pixels
-                * sizeof(ColPixel));
-          }
-
-          recv_id += comm_inc << 1;
         }
       }
 
