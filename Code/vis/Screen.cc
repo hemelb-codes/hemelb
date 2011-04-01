@@ -95,6 +95,18 @@ namespace hemelb
       }
     }
 
+    /**
+     * Helper function for rendering a line. The template parameter indicates whether the end of
+     * the line will be limited by the x or y dimension.
+     *
+     * @param x
+     * @param y
+     * @param incE
+     * @param incNE
+     * @param limit
+     * @param stressType
+     * @param mode
+     */
     template<bool xLimited>
     void Screen::RenderLineHelper(int x,
                                   int y,
@@ -120,28 +132,21 @@ namespace hemelb
         if (d < 0)
         {
           d += incE;
+          if (xLimited)
+          {
+            ++x;
+          }
+          else
+          {
+            ++y;
+          }
         }
         else
         {
           d += incNE;
-          if (xLimited)
-          {
-            y++;
-          }
-          else
-          {
-            x++;
-          }
-        }
-        if (xLimited)
-        {
+          ++y;
           ++x;
         }
-        else
-        {
-          ++y;
-        }
-
       } // end while
     }
 

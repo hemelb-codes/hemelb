@@ -16,7 +16,7 @@ namespace hemelb
                         lb::StressTypes iStressType,
                         int mode);
 
-        static const int COLOURED_PIXELS_MAX = 2048 * 2048;
+        static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
 
         float vtx[3];
 
@@ -30,7 +30,7 @@ namespace hemelb
         int PixelsX, PixelsY;
 
         // number of ColPixels.
-        int col_pixels;
+        unsigned int col_pixels;
         // Array of pixel ids.
         int *col_pixel_id;
         ColPixel localPixels[COLOURED_PIXELS_MAX];
