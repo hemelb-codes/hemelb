@@ -12,10 +12,13 @@ namespace hemelb
 
         void Project(const float p1[], float p2[]) const;
 
-        float x[3];
-        float SinYRotation, CosYRotation;
-        float SinXRotation, CosXRotation;
-        float dist;
+        void SetViewpointPosition(float longitude,
+                                  float latitude,
+                                  float localCentre[3],
+                                  float rad,
+                                  float distance);
+
+        const float* GetViewpointCentre() const;
 
       private:
         void Rotate(float sinX,
@@ -27,6 +30,10 @@ namespace hemelb
                     float zIn,
                     float rotatedVector[3]) const;
 
+        float dist;
+        float SinYRotation, CosYRotation;
+        float SinXRotation, CosXRotation;
+        float x[3];
     };
   }
 }
