@@ -225,23 +225,22 @@ cdef class MacroBlock:
     cdef public unsigned int size
     cdef vector[int]* ijk
     cdef public np.ndarray sites
-    def __cinit__(self,  Domain domain, np.ndarray[int] ijk, unsigned int size):
+    def __cinit__(self):
         self.ijk = new vector[int](3)
-        cdef int i
-        for i in range(3):
-            deref(self.ijk)[i] = ijk[i]
-
+        
     def __dealloc__(self):
         del self.ijk
     
     def __init__(self, Domain domain, np.ndarray[int] ijk, unsigned int size):
-        self.domain = domain
+        cdef int i,j,k, dim
+        
+        self.domain = domain 
+        for i in range(3):
+            deref(self.ijk)[i] = ijk[i]
         self.size = size
         self.sites = np.empty((size, size, size), dtype=object)
         
         cdef np.ndarray[int] globalSiteIjk = np.zeros(3, dtype=int)
-        # cdef vector[int] i = vector[int](3)
-        cdef int i,j,k, dim
         
         for i in range(size):
             for j in range(size):
@@ -298,10 +297,12 @@ cdef class LatticeSite:
     cdef public np.ndarray CutDistances
     cdef public np.ndarray CutCellIds
     
-    def __cinit__(self, MacroBlock block, np.ndarray[int] ijk):
+    def __cinit__(self):
         self._Position = new vector[Real](3)
-        self.block = block
         self.ijk = new vector[int](3)
+        
+    def __init__(self, MacroBlock block, np.ndarray[int] ijk):
+        self.block = block
         cdef int i
         for i in range(3):
             deref(self.ijk)[i] = ijk[i]
@@ -426,7 +427,7 @@ cdef class SiteNeighbourEnumeratorBase:
     cdef LatticeSite site
     cdef np.ndarray ind
     
-    def __cinit__(self, LatticeSite site):
+    def __init__(self, LatticeSite site):
         self.site = site
         self.domain = site.block.domain
         self.shape = self.domain.BlockCounts * self.domain.BlockSize
@@ -442,7 +443,7 @@ cdef class SiteNeighbourEnumeratorBase:
         ans = self.cNext()
         return ans.i, ans.s
     
-    cdef IntSitePair cNext(SiteNeighbourEnumeratorBase self):
+    cdef IntSitePair cNext(self):
         cdef IntSitePair ans = IntSitePair()
         
         cdef np.ndarray[int, ndim=1] latticeVec
@@ -472,15 +473,18 @@ cdef class SiteNeighbourEnumeratorBase:
     pass
 
 cdef class SiteNeighbourEnumerator(SiteNeighbourEnumeratorBase):
-    def __cinit__(self, LatticeSite site):
+    def __init__(self, LatticeSite site):
         self.max_i = 14
+        SiteNeighbourEnumeratorBase.__init__(self, site)
         return
     pass
 
 cdef class SiteLaterNeighbourEnumerator(SiteNeighbourEnumeratorBase):
-    def __cinit__(self, LatticeSite site):
+    def __init__(self, LatticeSite site):
         self.max_i = 7
+        SiteNeighbourEnumeratorBase.__init__(self, site)
         return
+    
     cdef np.ndarray GetVector(self):
         return neighbours[laterNeighbourInds[self.i]]
     pass
