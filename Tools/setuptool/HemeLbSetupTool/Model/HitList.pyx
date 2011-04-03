@@ -16,7 +16,8 @@ cdef class HitList(object):
     def __cinit__(self):
         self.HitPoints = vtkPoints_New()
         self.HitCellIds = vtkIdList_New()
-        
+
+    def __init__(self):
         self.Point = np.zeros(3, dtype=np.float)
 
     cdef Init(self, vtkOBBTree* locator, np.ndarray start, np.ndarray end):
@@ -37,7 +38,7 @@ cdef class HitList(object):
     def __dealloc__(self):
         self.HitPoints.Delete()
         self.HitCellIds.Delete()
-
+        
     cdef PointCellIdPair cNext(self):
         cdef PointCellIdPair ans = PointCellIdPair()
         cdef int i = self.i
