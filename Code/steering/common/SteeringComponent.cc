@@ -26,7 +26,7 @@ namespace hemelb
       mVisControl->mDomainStats.physical_pressure_threshold_min = privateSteeringParams[9];
       mVisControl->mDomainStats.physical_pressure_threshold_max = privateSteeringParams[10];
 
-      vis::GlyphDrawer::glyph_length = privateSteeringParams[11];
+      mVisControl->mVisSettings.glyphLength = privateSteeringParams[11];
 
       float pixels_x = privateSteeringParams[12];
       float pixels_y = privateSteeringParams[13];
