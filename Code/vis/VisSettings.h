@@ -16,6 +16,7 @@ namespace hemelb
         float streaklines_per_pulsatile_period, streakline_length;
         double mouse_pressure, mouse_stress;
         float brightness;
+        float glyphLength;
 
         lb::StressTypes mStressType;
 

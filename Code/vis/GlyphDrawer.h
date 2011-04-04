@@ -18,12 +18,6 @@ namespace hemelb
     class GlyphDrawer
     {
       public:
-
-        // TODO there might be another way of increasing access to this. It
-        // currently needs to be public because it is one of the steering
-        // parameters.
-        static double glyph_length;
-
         // Constructor and destructor
         GlyphDrawer(geometry::LatticeData* iLatDat,
                     Screen* iScreen,
@@ -33,7 +27,7 @@ namespace hemelb
         ~GlyphDrawer();
 
         // Function to perform the rendering.
-        void render();
+        void Render();
 
       private:
         // A struct to represent a single glyph.
