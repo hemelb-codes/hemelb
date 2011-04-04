@@ -17,11 +17,13 @@ namespace hemelb
 {
   namespace vis
   {
-    //TODO Some of this classes members could be combined with the topology-aware classes
+    //TODO Some of this class's members could be combined with the topology-aware classes
     // (and obv be initialised when they are).
 
-    // Class that controls the drawing of streaklines - lines that trace
-    // the path of an imaginary particle were it dropped into the fluid.
+    /**
+     * Class that controls the drawing of streaklines - lines that trace
+     * the path of an imaginary particle were it dropped into the fluid.
+     */
     class StreaklineDrawer
     {
       public:
