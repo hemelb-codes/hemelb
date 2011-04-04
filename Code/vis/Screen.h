@@ -25,7 +25,7 @@ namespace hemelb
          * @param output
          */
         template<typename T>
-        void Transform(float* input, T output[2])
+        void Transform(float* input, T output[2]) const
         {
           output[0] = (T) (ScaleX * (input[0] + MaxXValue));
           output[1] = (T) (ScaleY * (input[1] + MaxYValue));
