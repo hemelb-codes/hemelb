@@ -1,7 +1,6 @@
 #include "SimulationMaster.h"
 #include "SimConfig.h"
 
-#include "vis/ColourPalette.h"
 #include "util/utilityFunctions.h"
 #include "geometry/LatticeData.h"
 #include "debug/Debugger.h"
@@ -351,8 +350,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
           char image_filename[255];
           snprintf(image_filename, 255, "%08i.dat", mSimulationState.TimeStep);
 
-          mVisControl->writeImage(RECV_BUFFER_B, image_directory + std::string(image_filename),
-                                  hemelb::vis::ColourPalette::pickColour);
+          mVisControl->writeImage(RECV_BUFFER_B, image_directory + std::string(image_filename));
         }
       }
 

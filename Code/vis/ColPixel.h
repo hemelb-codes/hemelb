@@ -3,7 +3,6 @@
 
 #include "mpiInclude.h"
 #include "vis/DomainStats.h"
-#include "vis/ColourPalette.h"
 #include "lb/LbmParameters.h"
 
 namespace hemelb
@@ -48,9 +47,10 @@ namespace hemelb
                            int mode,
                            unsigned char rgb_data[],
                            DomainStats* iDomainStats,
-                           ColourPaletteFunction *colourPalette,
                            lb::StressTypes iLbmStressType);
         static const MPI_Datatype& getMpiType();
+
+        static void PickColour(float value, float colour[3]);
 
       protected:
         static void registerMpiType();

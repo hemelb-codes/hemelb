@@ -52,9 +52,7 @@ namespace hemelb
         void render(int recv_buffer_id,
                     geometry::LatticeData* iLatDat,
                     const topology::NetworkTopology* iNetTopology);
-        void writeImage(int recv_buffer_id,
-                        std::string image_file_name,
-                        void(*ColourPalette)(float value, float col[]));
+        void writeImage(int recv_buffer_id, std::string image_file_name);
         void setMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void compositeImage(int recv_buffer_id, const topology::NetworkTopology * iNetTopology);
 
