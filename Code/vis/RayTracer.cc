@@ -6,8 +6,6 @@
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
-// TODO ideally this wouldn't be here.
-#include "vis/Control.h"
 
 namespace hemelb
 {
@@ -63,8 +61,7 @@ namespace hemelb
                                     float ray_t,
                                     float ray_segment,
                                     Ray* bCurrentRay,
-                                    void(*ColourPalette)(float value, float col[]),
-                                    const lb::StressTypes iLbmStressType)
+                                    void(*ColourPalette)(float value, float col[]))
     {
       if (*flow_field < 0.0F)
         return; // solid voxel
@@ -78,7 +75,7 @@ namespace hemelb
 
       UpdateColour(ray_segment, palette, bCurrentRay->VelocityColour);
 
-      if (iLbmStressType != lb::ShearStress)
+      if (mVisSettings->mStressType != lb::ShearStress)
       {
         // update the volume rendering of the von Mises stress flow field
         float scaled_stress = * (flow_field + 2) * mDomainStats->stress_threshold_max_inv;
@@ -108,8 +105,7 @@ namespace hemelb
                                      float t,
                                      Ray* bCurrentRay,
                                      void(*ColourPalette)(float value, float col[]),
-                                     const bool xyz_is_1[3],
-                                     const lb::StressTypes iLbmStressType)
+                                     const bool xyz_is_1[3])
     {
       unsigned int i_vec[3];
 
@@ -138,7 +134,7 @@ namespace hemelb
           if (t_max[0] < t_max[2])
           {
             rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[0] - t,
-                            bCurrentRay, ColourPalette, iLbmStressType);
+                            bCurrentRay, ColourPalette);
 
             if (xyz_is_1[0])
             {
@@ -166,7 +162,7 @@ namespace hemelb
           else
           {
             rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
-                            bCurrentRay, ColourPalette, iLbmStressType);
+                            bCurrentRay, ColourPalette);
 
             if (xyz_is_1[2])
             {
@@ -197,7 +193,7 @@ namespace hemelb
           if (t_max[1] < t_max[2])
           {
             rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[1] - t,
-                            bCurrentRay, ColourPalette, iLbmStressType);
+                            bCurrentRay, ColourPalette);
 
             if (xyz_is_1[1])
             {
@@ -225,7 +221,7 @@ namespace hemelb
           else
           {
             rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
-                            bCurrentRay, ColourPalette, iLbmStressType);
+                            bCurrentRay, ColourPalette);
 
             if (xyz_is_1[2])
             {
@@ -257,7 +253,6 @@ namespace hemelb
     void RayTracer::rtTraverseBlocksFn(const Cluster* cluster,
                                        const bool xyz_Is_1[3],
                                        const float ray_dx[3],
-                                       const lb::StressTypes iLbmStressType,
                                        void(*ColourPalette)(float value, float col[]),
                                        float **block_flow_field,
                                        Ray *bCurrentRay)
@@ -293,7 +288,7 @@ namespace hemelb
         block_x[2] = -block_min[2];
 
         rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F, bCurrentRay,
-                         ColourPalette, xyz_Is_1, iLbmStressType);
+                         ColourPalette, xyz_Is_1);
       }
 
       float t_max[3];
@@ -332,7 +327,7 @@ namespace hemelb
               block_x[2] = t_max[0] * bCurrentRay->Direction[2] - block_min[2];
 
               rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[0],
-                               bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
+                               bCurrentRay, ColourPalette, xyz_Is_1);
             }
 
             t_max[0] = xyz_Is_1[0]
@@ -361,7 +356,7 @@ namespace hemelb
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
               rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
-                               bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
+                               bCurrentRay, ColourPalette, xyz_Is_1);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -393,7 +388,7 @@ namespace hemelb
               block_x[2] = t_max[1] * bCurrentRay->Direction[2] - block_min[2];
 
               rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[1],
-                               bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
+                               bCurrentRay, ColourPalette, xyz_Is_1);
             }
 
             t_max[1] = xyz_Is_1[1]
@@ -422,7 +417,7 @@ namespace hemelb
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
               rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
-                               bCurrentRay, ColourPalette, xyz_Is_1, iLbmStressType);
+                               bCurrentRay, ColourPalette, xyz_Is_1);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -790,7 +785,7 @@ namespace hemelb
       rtBuildClusters();
     }
 
-    void RayTracer::Render(const lb::StressTypes iLbmStressType)
+    void RayTracer::Render()
     {
       float projectedUnitX[3], projectedUnitY[3];
       for (int l = 0; l < 3; l++)
@@ -932,7 +927,7 @@ namespace hemelb
             lRay.VelocityColour[1] = 0.0F;
             lRay.VelocityColour[2] = 0.0F;
 
-            if (iLbmStressType != lb::ShearStress)
+            if (mVisSettings->mStressType != lb::ShearStress)
             {
               lRay.StressColour[0] = 0.0F;
               lRay.StressColour[1] = 0.0F;
@@ -942,7 +937,7 @@ namespace hemelb
             lRay.MinT = std::numeric_limits<float>::max();
             lRay.Density = -1.0F;
 
-            rtTraverseBlocksFn(thisCluster, lRayInPositiveDirection, ray_dx, iLbmStressType,
+            rtTraverseBlocksFn(thisCluster, lRayInPositiveDirection, ray_dx,
                                ColourPalette::pickColour, block_flow_field, &lRay);
 
             if (lRay.MinT == std::numeric_limits<float>::max())
@@ -955,7 +950,7 @@ namespace hemelb
             col_pixel.vel_g = lRay.VelocityColour[1] * 255.0F;
             col_pixel.vel_b = lRay.VelocityColour[2] * 255.0F;
 
-            if (iLbmStressType != lb::ShearStress)
+            if (mVisSettings->mStressType != lb::ShearStress)
             {
               col_pixel.stress_r = lRay.StressColour[0] * 255.0F;
               col_pixel.stress_g = lRay.StressColour[1] * 255.0F;
