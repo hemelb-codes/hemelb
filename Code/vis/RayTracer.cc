@@ -846,10 +846,10 @@ namespace hemelb
 
         int subimageMinX, subimageMaxX, subimageMinY, subimageMaxY;
 
-        subimageMinX = (int) (mScreen->ScaleX * (subimage_vtx[0] + mScreen->MaxXValue) + 0.5F);
-        subimageMaxX = (int) (mScreen->ScaleX * (subimage_vtx[1] + mScreen->MaxXValue) + 0.5F);
-        subimageMinY = (int) (mScreen->ScaleY * (subimage_vtx[2] + mScreen->MaxYValue) + 0.5F);
-        subimageMaxY = (int) (mScreen->ScaleY * (subimage_vtx[3] + mScreen->MaxYValue) + 0.5F);
+        subimageMinX = (int) (mScreen->ScaleX * (subimage_vtx[0] + mScreen->MaxXValue));
+        subimageMaxX = (int) (mScreen->ScaleX * (subimage_vtx[1] + mScreen->MaxXValue));
+        subimageMinY = (int) (mScreen->ScaleY * (subimage_vtx[2] + mScreen->MaxYValue));
+        subimageMaxY = (int) (mScreen->ScaleY * (subimage_vtx[3] + mScreen->MaxYValue));
 
         // If the entire sub-image is off the screen, continue to the next cluster.
         if (subimageMinX >= mScreen->PixelsX || subimageMaxX < 0 || subimageMinY

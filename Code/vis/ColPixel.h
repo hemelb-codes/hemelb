@@ -10,8 +10,6 @@ namespace hemelb
 {
   namespace vis
   {
-    // TODO: This should really be a temporary header file that grows to have more common stuff in it.
-
     struct PixelId
     {
         unsigned int isRt :1;

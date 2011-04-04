@@ -742,14 +742,6 @@ namespace hemelb
       int pixels_x = mScreen->PixelsX;
       int pixels_y = mScreen->PixelsY;
 
-      float screen_max[2];
-      screen_max[0] = mScreen->MaxXValue;
-      screen_max[1] = mScreen->MaxYValue;
-
-      float scale[2];
-      scale[0] = mScreen->ScaleX;
-      scale[1] = mScreen->ScaleY;
-
       for (unsigned int n = 0; n < nParticles; n++)
       {
         float p1[3], p2[3];
@@ -757,19 +749,18 @@ namespace hemelb
         p1[1] = particleVec[n].y - float (iLatDat->GetYSiteCount() >> 1);
         p1[2] = particleVec[n].z - float (iLatDat->GetZSiteCount() >> 1);
 
+        int x[2];
         mViewpoint->Project(p1, p2);
+        mScreen->Transform<int>(p2, x);
 
-        int i = (int) (scale[0] * (p2[0] + screen_max[0]));
-        int j = (int) (scale[1] * (p2[1] + screen_max[1]));
-
-        if (! (i < 0 || i >= pixels_x || j < 0 || j >= pixels_y))
+        if (! (x[0] < 0 || x[0] >= pixels_x || x[1] < 0 || x[1] >= pixels_y))
         {
           ColPixel col_pixel;
 
           col_pixel.particle_vel = particleVec[n].vel;
           col_pixel.particle_z = p2[2];
           col_pixel.particle_inlet_id = particleVec[n].inlet_id;
-          col_pixel.i = PixelId(i, j);
+          col_pixel.i = PixelId(x[0], x[1]);
           col_pixel.i.isStreakline = true;
 
           mScreen->AddPixel(&col_pixel, mVisSettings->mStressType, mVisSettings->mode);

@@ -16,6 +16,21 @@ namespace hemelb
                         lb::StressTypes iStressType,
                         int mode);
 
+        /**
+         * Does a transform from input array into output array. This function
+         * will still work if the two arrays point to the same location in
+         * memory. It only operates on the first two elements of input.
+         *
+         * @param input
+         * @param output
+         */
+        template<typename T>
+        void Transform(float* input, T output[2])
+        {
+          output[0] = (T) (ScaleX * (input[0] + MaxXValue));
+          output[1] = (T) (ScaleY * (input[1] + MaxYValue));
+        }
+
         static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
 
         float vtx[3];
