@@ -92,12 +92,12 @@ namespace hemelb
 
       const float* viewpointCentre = mViewpoint.GetViewpointCentre();
 
-      mScreen.vtx[0] = (temp * (iLocal_ctr_x - viewpointCentre[0])) - mScreen.UnitVectorProjectionX[0]
-          - mScreen.UnitVectorProjectionY[0];
-      mScreen.vtx[1] = (temp * (iLocal_ctr_y - viewpointCentre[1])) - mScreen.UnitVectorProjectionX[1]
-          - mScreen.UnitVectorProjectionY[1];
-      mScreen.vtx[2] = (temp * (iLocal_ctr_z - viewpointCentre[2])) - mScreen.UnitVectorProjectionX[2]
-          - mScreen.UnitVectorProjectionY[2];
+      mScreen.vtx[0] = (temp * (iLocal_ctr_x - viewpointCentre[0]))
+          - mScreen.UnitVectorProjectionX[0] - mScreen.UnitVectorProjectionY[0];
+      mScreen.vtx[1] = (temp * (iLocal_ctr_y - viewpointCentre[1]))
+          - mScreen.UnitVectorProjectionX[1] - mScreen.UnitVectorProjectionY[1];
+      mScreen.vtx[2] = (temp * (iLocal_ctr_z - viewpointCentre[2]))
+          - mScreen.UnitVectorProjectionX[2] - mScreen.UnitVectorProjectionY[2];
 
       mScreen.UnitVectorProjectionX[0] *= (2.F / (float) iPixels_x);
       mScreen.UnitVectorProjectionX[1] *= (2.F / (float) iPixels_x);
@@ -283,7 +283,7 @@ namespace hemelb
       }
       mScreen.col_pixels = 0;
 
-      myRayTracer->Render(mVisSettings.mStressType);
+      myRayTracer->Render();
 
       if (mVisSettings.mode == 1)
       {

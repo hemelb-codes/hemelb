@@ -34,7 +34,7 @@ namespace hemelb
                                 const float &stress);
 
         // Render the current state into an image.
-        void Render(const lb::StressTypes iLbmStressType);
+        void Render();
 
       private:
 
@@ -76,8 +76,7 @@ namespace hemelb
                              float ray_t,
                              float ray_segment,
                              Ray* bCurrentRay,
-                             void(*ColourPalette)(float value, float col[]),
-                             const lb::StressTypes iLbmStressType);
+                             void(*ColourPalette)(float value, float col[]));
 
         void rtTraverseVoxels(const float block_min[3],
                               const float block_x[3],
@@ -85,13 +84,11 @@ namespace hemelb
                               float t,
                               Ray* bCurrentRay,
                               void(*ColourPalette)(float value, float col[]),
-                              const bool xyz_is_1[3],
-                              const lb::StressTypes iLbmStressType);
+                              const bool xyz_is_1[3]);
 
         void rtTraverseBlocksFn(const Cluster* cluster,
                                 const bool xyz_Is_1[3],
                                 const float ray_dx[3],
-                                const lb::StressTypes iLbmStressType,
                                 void(*ColourPalette)(float value, float col[]),
                                 float **block_flow_field,
                                 Ray *bCurrentRay);
