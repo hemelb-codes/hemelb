@@ -790,8 +790,8 @@ namespace hemelb
       float projectedUnitX[3], projectedUnitY[3];
       for (int l = 0; l < 3; l++)
       {
-        projectedUnitX[l] = mScreen->UnitVectorProjectionX[l];
-        projectedUnitY[l] = mScreen->UnitVectorProjectionY[l];
+        projectedUnitX[l] = mScreen->GetUnitVectorProjectionX()[l];
+        projectedUnitY[l] = mScreen->GetUnitVectorProjectionY()[l];
       }
 
       const float* viewpointCentre = mViewpoint->GetViewpointCentre();
@@ -810,10 +810,10 @@ namespace hemelb
 
         float **block_flow_field = cluster_flow_field[clusterId];
 
-        float subimage_vtx[4];
+        float subimageMins[2], subimageMaxes[2];
 
-        subimage_vtx[0] = subimage_vtx[2] = std::numeric_limits<float>::max();
-        subimage_vtx[1] = subimage_vtx[3] = std::numeric_limits<float>::min();
+        subimageMins[0] = subimageMins[1] = std::numeric_limits<float>::max();
+        subimageMaxes[0] = subimageMaxes[1] = std::numeric_limits<float>::min();
 
         float p1[3];
         for (int i = 0; i < 2; i++)
@@ -831,33 +831,34 @@ namespace hemelb
               float p2[3];
               mViewpoint->Project(p1, p2);
 
-              subimage_vtx[0] = fminf(subimage_vtx[0], p2[0]);
-              subimage_vtx[1] = fmaxf(subimage_vtx[1], p2[0]);
-              subimage_vtx[2] = fminf(subimage_vtx[2], p2[1]);
-              subimage_vtx[3] = fmaxf(subimage_vtx[3], p2[1]);
+              subimageMins[0] = fminf(subimageMins[0], p2[0]);
+              subimageMaxes[0] = fmaxf(subimageMaxes[0], p2[0]);
+
+              subimageMins[1] = fminf(subimageMins[1], p2[1]);
+              subimageMaxes[1] = fmaxf(subimageMaxes[1], p2[1]);
             }
           }
         }
 
-        int subimageMinX, subimageMaxX, subimageMinY, subimageMaxY;
+        int subimageMinXY[2], subimageMaxXY[2];
 
-        subimageMinX = (int) (mScreen->ScaleX * (subimage_vtx[0] + mScreen->MaxXValue));
-        subimageMaxX = (int) (mScreen->ScaleX * (subimage_vtx[1] + mScreen->MaxXValue));
-        subimageMinY = (int) (mScreen->ScaleY * (subimage_vtx[2] + mScreen->MaxYValue));
-        subimageMaxY = (int) (mScreen->ScaleY * (subimage_vtx[3] + mScreen->MaxYValue));
+        mScreen->Transform<int> (subimageMins, subimageMinXY);
+        mScreen->Transform<int> (subimageMaxes, subimageMaxXY);
 
         // If the entire sub-image is off the screen, continue to the next cluster.
-        if (subimageMinX >= mScreen->PixelsX || subimageMaxX < 0 || subimageMinY
-            >= mScreen->PixelsY || subimageMaxY < 0)
+        if (subimageMinXY[0] >= mScreen->GetPixelsX() || subimageMaxXY[0] < 0 || subimageMinXY[1]
+            >= mScreen->GetPixelsY() || subimageMaxXY[1] < 0)
         {
           continue;
         }
 
         // Crop the sub-image to the screen.
-        subimageMinX = util::NumericalFunctions::max(subimageMinX, 0);
-        subimageMaxX = util::NumericalFunctions::min(subimageMaxX, mScreen->PixelsX - 1);
-        subimageMinY = util::NumericalFunctions::max(subimageMinY, 0);
-        subimageMaxY = util::NumericalFunctions::min(subimageMaxY, mScreen->PixelsY - 1);
+        subimageMinXY[0] = util::NumericalFunctions::max(subimageMinXY[0], 0);
+        subimageMaxXY[0] = util::NumericalFunctions::min(subimageMaxXY[0], mScreen->GetPixelsX()
+            - 1);
+        subimageMinXY[1] = util::NumericalFunctions::max(subimageMinXY[1], 0);
+        subimageMaxXY[1] = util::NumericalFunctions::min(subimageMaxXY[1], mScreen->GetPixelsY()
+            - 1);
 
         AABB aabb;
         aabb.acc_1 = thisCluster->minmax_x[1] - viewpointCentre[0];
@@ -868,13 +869,14 @@ namespace hemelb
         aabb.acc_6 = thisCluster->minmax_z[0] - viewpointCentre[2];
 
         float par3[3];
+        const float* vtx = mScreen->GetVtx();
         for (int l = 0; l < 3; l++)
         {
-          par3[l] = mScreen->vtx[l] + subimageMinX * projectedUnitX[l] + subimageMinY
+          par3[l] = vtx[l] + subimageMinXY[0] * projectedUnitX[l] + subimageMinXY[1]
               * projectedUnitY[l];
         }
 
-        for (int subImageX = subimageMinX; subImageX <= subimageMaxX; ++subImageX)
+        for (int subImageX = subimageMinXY[0]; subImageX <= subimageMaxXY[0]; ++subImageX)
         {
           float lRayDirection[3];
           for (int l = 0; l < 3; l++)
@@ -882,7 +884,7 @@ namespace hemelb
             lRayDirection[l] = par3[l];
           }
 
-          for (int subImageY = subimageMinY; subImageY <= subimageMaxY; ++subImageY)
+          for (int subImageY = subimageMinXY[1]; subImageY <= subimageMaxXY[1]; ++subImageY)
           {
             Ray lRay;
 
@@ -980,10 +982,7 @@ namespace hemelb
       }
     }
 
-    void RayTracer::UpdateClusterVoxel(const int i,
-                                       const float density,
-                                       const float velocity,
-                                       const float stress)
+    void RayTracer::UpdateClusterVoxel(int i, float density, float velocity, float stress)
     {
       cluster_voxel[3 * i][0] = density;
       cluster_voxel[3 * i][1] = velocity;
