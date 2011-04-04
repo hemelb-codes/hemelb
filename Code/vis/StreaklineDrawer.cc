@@ -739,8 +739,8 @@ namespace hemelb
     // Render the streaklines
     void StreaklineDrawer::render(geometry::LatticeData* iLatDat)
     {
-      int pixels_x = mScreen->PixelsX;
-      int pixels_y = mScreen->PixelsY;
+      int pixels_x = mScreen->GetPixelsX();
+      int pixels_y = mScreen->GetPixelsY();
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
@@ -751,7 +751,7 @@ namespace hemelb
 
         int x[2];
         mViewpoint->Project(p1, p2);
-        mScreen->Transform<int>(p2, x);
+        mScreen->Transform<int> (p2, x);
 
         if (! (x[0] < 0 || x[0] >= pixels_x || x[1] < 0 || x[1] >= pixels_y))
         {

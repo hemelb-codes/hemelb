@@ -70,7 +70,7 @@ namespace hemelb
         char xdr_pixel[pixeldatabytes];
         io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel, pixeldatabytes);
 
-        pixelWriter << mVisControl->mScreen.PixelsX << mVisControl->mScreen.PixelsY;
+        pixelWriter << mVisControl->mScreen.GetPixelsX() << mVisControl->mScreen.GetPixelsY();
 
         int pixelDataBytesSent = SendSuccess(socketToClient, xdr_pixel, pixeldatabytes);
 

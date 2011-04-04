@@ -75,37 +75,8 @@ namespace hemelb
       mViewpoint.SetViewpointPosition(iLongitude * DEG_TO_RAD, iLatitude * DEG_TO_RAD, centre, rad,
                                       dist);
 
-      mViewpoint.RotateToViewpoint(mScreen.MaxXValue, 0.0F, 0.0F, mScreen.UnitVectorProjectionX);
-
-      mViewpoint.RotateToViewpoint(0.0F, mScreen.MaxYValue, 0.0F, mScreen.UnitVectorProjectionY);
-
-      mScreen.MaxXValue = (0.5 * vis->system_size) / iZoom;
-      mScreen.MaxYValue = (0.5 * vis->system_size) / iZoom;
-
-      mScreen.PixelsX = iPixels_x;
-      mScreen.PixelsY = iPixels_y;
-
-      mScreen.ScaleX = (float) iPixels_x / (2.F * mScreen.MaxXValue);
-      mScreen.ScaleY = (float) iPixels_y / (2.F * mScreen.MaxYValue);
-
-      float temp = dist / rad;
-
-      const float* viewpointCentre = mViewpoint.GetViewpointCentre();
-
-      mScreen.vtx[0] = (temp * (iLocal_ctr_x - viewpointCentre[0]))
-          - mScreen.UnitVectorProjectionX[0] - mScreen.UnitVectorProjectionY[0];
-      mScreen.vtx[1] = (temp * (iLocal_ctr_y - viewpointCentre[1]))
-          - mScreen.UnitVectorProjectionX[1] - mScreen.UnitVectorProjectionY[1];
-      mScreen.vtx[2] = (temp * (iLocal_ctr_z - viewpointCentre[2]))
-          - mScreen.UnitVectorProjectionX[2] - mScreen.UnitVectorProjectionY[2];
-
-      mScreen.UnitVectorProjectionX[0] *= (2.F / (float) iPixels_x);
-      mScreen.UnitVectorProjectionX[1] *= (2.F / (float) iPixels_x);
-      mScreen.UnitVectorProjectionX[2] *= (2.F / (float) iPixels_x);
-
-      mScreen.UnitVectorProjectionY[0] *= (2.F / (float) iPixels_y);
-      mScreen.UnitVectorProjectionY[1] *= (2.F / (float) iPixels_y);
-      mScreen.UnitVectorProjectionY[2] *= (2.F / (float) iPixels_y);
+      mScreen.Set( (0.5 * vis->system_size) / iZoom, (0.5 * vis->system_size) / iZoom, iPixels_x,
+                  iPixels_y, rad, &mViewpoint);
     }
 
     void Control::RegisterSite(int i, float density, float velocity, float stress)
@@ -129,7 +100,7 @@ namespace hemelb
 
     void Control::updateImageSize(int pixels_x, int pixels_y)
     {
-      if (pixels_x * pixels_y > mScreen.PixelsX * mScreen.PixelsY)
+      if (pixels_x * pixels_y > mScreen.GetPixelsX() * mScreen.GetPixelsY())
       {
         pixels_max = pixels_x * pixels_y;
         mScreen.col_pixel_id = (int *) realloc(mScreen.col_pixel_id, sizeof(int) * pixels_max);
@@ -214,7 +185,7 @@ namespace hemelb
             {
               ColPixel* col_pixel1 = &mScreen.localPixels[n];
 
-              int id = col_pixel1->i.i * mScreen.PixelsY + col_pixel1->i.j;
+              int id = col_pixel1->i.i * mScreen.GetPixelsY() + col_pixel1->i.j;
               if (mScreen.col_pixel_id[id] == -1)
               {
                 mScreen.col_pixel_id[id] = mScreen.col_pixels;
@@ -274,10 +245,10 @@ namespace hemelb
                          geometry::LatticeData* iLatDat,
                          const topology::NetworkTopology* iNetTopology)
     {
-      if (mScreen.PixelsX * mScreen.PixelsY > pixels_max)
+      if (mScreen.GetPixelsX() * mScreen.GetPixelsY() > pixels_max)
       {
-        pixels_max = util::NumericalFunctions::max(2 * pixels_max, mScreen.PixelsX
-            * mScreen.PixelsY);
+        pixels_max = util::NumericalFunctions::max(2 * pixels_max, mScreen.GetPixelsX()
+            * mScreen.GetPixelsY());
 
         mScreen.col_pixel_id = (int *) realloc(mScreen.col_pixel_id, sizeof(int) * pixels_max);
       }
@@ -301,7 +272,7 @@ namespace hemelb
 
       for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
       {
-        mScreen.col_pixel_id[mScreen.localPixels[m].i.i * mScreen.PixelsY
+        mScreen.col_pixel_id[mScreen.localPixels[m].i.i * mScreen.GetPixelsY()
             + mScreen.localPixels[m].i.j] = -1;
       }
     }
@@ -317,7 +288,7 @@ namespace hemelb
           << mDomainStats.physical_velocity_threshold_max
           << mDomainStats.physical_stress_threshold_max;
 
-      writer << mScreen.PixelsX << mScreen.PixelsY << col_pixels_recv[recv_buffer_id];
+      writer << mScreen.GetPixelsX() << mScreen.GetPixelsY() << col_pixels_recv[recv_buffer_id];
 
       for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
       {

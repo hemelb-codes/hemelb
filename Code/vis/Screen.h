@@ -2,6 +2,7 @@
 #define HEMELB_VIS_SCREEN_H
 
 #include "vis/ColPixel.h"
+#include "vis/Viewpoint.h"
 
 namespace hemelb
 {
@@ -15,6 +16,13 @@ namespace hemelb
                         const float endPoint2[3],
                         lb::StressTypes iStressType,
                         int mode);
+
+        void Set(float maxX,
+                 float maxY,
+                 int pixelsX,
+                 int pixelsY,
+                 float rad,
+                 const Viewpoint* viewpoint);
 
         /**
          * Does a transform from input array into output array. This function
@@ -31,18 +39,13 @@ namespace hemelb
           output[1] = (T) (ScaleY * (input[1] + MaxYValue));
         }
 
+        const float* GetVtx() const;
+        const float* GetUnitVectorProjectionX() const;
+        const float* GetUnitVectorProjectionY() const;
+        int GetPixelsX() const;
+        int GetPixelsY() const;
+
         static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
-
-        float vtx[3];
-
-        // Projection of unit vectors along screen axes into normal space.
-        float UnitVectorProjectionX[3];
-        float UnitVectorProjectionY[3];
-
-        float MaxXValue, MaxYValue;
-        float ScaleX, ScaleY;
-
-        int PixelsX, PixelsY;
 
         // number of ColPixels.
         unsigned int col_pixels;
@@ -58,6 +61,16 @@ namespace hemelb
                                                       int limit,
                                                       lb::StressTypes stressType,
                                                       int mode);
+
+        float ScaleX, ScaleY;
+        float MaxXValue, MaxYValue;
+        float vtx[3];
+
+        // Projection of unit vectors along screen axes into normal space.
+        float UnitVectorProjectionX[3];
+        float UnitVectorProjectionY[3];
+
+        int PixelsX, PixelsY;
     };
   }
 }

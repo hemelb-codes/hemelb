@@ -149,5 +149,62 @@ namespace hemelb
         }
       } // end while
     }
+
+    void Screen::Set(float maxX,
+                     float maxY,
+                     int pixelsX,
+                     int pixelsY,
+                     float rad,
+                     const Viewpoint* viewpoint)
+    {
+      MaxXValue = maxX;
+      MaxYValue = maxX;
+
+      viewpoint->RotateToViewpoint(MaxXValue, 0.0F, 0.0F, UnitVectorProjectionX);
+      viewpoint->RotateToViewpoint(0.0F, MaxYValue, 0.0F, UnitVectorProjectionY);
+
+      PixelsX = pixelsX;
+      PixelsY = pixelsX;
+
+      ScaleX = (float) pixelsX / (2.F * MaxXValue);
+      ScaleY = (float) pixelsY / (2.F * MaxYValue);
+
+      float radVector[3];
+      viewpoint->RotateToViewpoint(0.F, 0.F, -rad, radVector);
+
+      for (int ii = 0; ii < 3; ++ii)
+      {
+        vtx[ii] = (0.5F * radVector[ii]) - UnitVectorProjectionX[ii] - UnitVectorProjectionY[ii];
+      }
+
+      UnitVectorProjectionX[0] *= (2.F / (float) pixelsX);
+      UnitVectorProjectionX[1] *= (2.F / (float) pixelsX);
+      UnitVectorProjectionX[2] *= (2.F / (float) pixelsX);
+
+      UnitVectorProjectionY[0] *= (2.F / (float) pixelsY);
+      UnitVectorProjectionY[1] *= (2.F / (float) pixelsY);
+      UnitVectorProjectionY[2] *= (2.F / (float) pixelsY);
+    }
+
+    const float* Screen::GetVtx() const
+    {
+      return vtx;
+    }
+    const float* Screen::GetUnitVectorProjectionX() const
+    {
+      return UnitVectorProjectionX;
+    }
+    const float* Screen::GetUnitVectorProjectionY() const
+    {
+      return UnitVectorProjectionY;
+    }
+    int Screen::GetPixelsX() const
+    {
+      return PixelsX;
+    }
+    int Screen::GetPixelsY() const
+    {
+      return PixelsY;
+    }
   }
 }
