@@ -63,7 +63,11 @@ namespace hemelb
             float x[3];
 
             unsigned short int blocks_x, blocks_y, blocks_z;
-            unsigned short int block_min[3];
+        };
+
+        struct MinLocation
+        {
+            int i, j, k;
         };
 
         // Some sort of coordinates.
