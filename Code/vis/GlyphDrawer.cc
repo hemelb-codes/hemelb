@@ -5,9 +5,6 @@ namespace hemelb
 {
   namespace vis
   {
-
-    double GlyphDrawer::glyph_length = -1.F;
-
     // Constructor
     GlyphDrawer::GlyphDrawer(geometry::LatticeData* iLatDat,
                              Screen* iScreen,
@@ -39,8 +36,9 @@ namespace hemelb
             const unsigned int site_j = (mLatDat->GetBlockSize() >> 1);
             const unsigned int site_k = (mLatDat->GetBlockSize() >> 1);
 
-            const unsigned int siteIdOnBlock = ( ( (site_i << mLatDat->GetLog2BlockSize()) + site_j)
-                << mLatDat->GetLog2BlockSize()) + site_k;
+            const unsigned int siteIdOnBlock =
+                ( ( (site_i << mLatDat->GetLog2BlockSize()) + site_j)
+                    << mLatDat->GetLog2BlockSize()) + site_k;
 
             // ... (only if there's fluid there).
             if (map_block_p->site_data[siteIdOnBlock] & BIG_NUMBER3)
@@ -78,7 +76,7 @@ namespace hemelb
     /**
      * Perform the rendering for each glyph.
      */
-    void GlyphDrawer::render()
+    void GlyphDrawer::Render()
     {
       // For each glyph...
       for (unsigned int n = 0; n < mGlyphs.size(); n++)
@@ -89,7 +87,7 @@ namespace hemelb
         D3Q15::CalculateDensityAndVelocity(mGlyphs[n]->f, density, vx, vy, vz);
 
         // ... calculate the velocity vector multiplier...
-        const double temp = glyph_length * mLatDat->GetBlockSize()
+        const double temp = mVisSettings->glyphLength * mLatDat->GetBlockSize()
             * mDomainStats->velocity_threshold_max_inv / density;
 
         // ... calculate the two ends of the line we're going to draw...

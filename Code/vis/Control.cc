@@ -287,7 +287,7 @@ namespace hemelb
 
       if (mVisSettings.mode == 1)
       {
-        myGlypher->render();
+        myGlypher->Render();
       }
 #ifndef NO_STREAKLINES
       if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode == 2)
