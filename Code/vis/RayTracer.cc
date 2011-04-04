@@ -3,6 +3,7 @@
 #include <vector>
 #include <limits>
 
+#include "debug/Debugger.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
@@ -430,6 +431,8 @@ namespace hemelb
 
     void RayTracer::BuildClusters()
     {
+      std::vector<MinLocation> clusterBlockMins;
+
       const int n_x[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, +0, +0, +0, +0, +0, +0, +0, +0, +1,
                           +1, +1, +1, +1, +1, +1, +1, +1 };
       const int n_y[] = { -1, -1, -1, +0, +0, +0, +1, +1, +1, -1, -1, -1, +0, +0, +1, +1, +1, -1,
@@ -515,10 +518,11 @@ namespace hemelb
             }
 
             Cluster lNewCluster;
+            MinLocation blockMinimum;
 
-            lNewCluster.block_min[0] = i;
-            lNewCluster.block_min[1] = j;
-            lNewCluster.block_min[2] = k;
+            blockMinimum.i = i;
+            blockMinimum.j = j;
+            blockMinimum.k = k;
 
             unsigned short int cluster_block_max_i = i;
             unsigned short int cluster_block_max_j = j;
@@ -591,12 +595,9 @@ namespace hemelb
                   tempBlockLoc.k = neigh_k;
                   ++blocks_b;
 
-                  lNewCluster.block_min[0]
-                      = util::NumericalFunctions::min((int) lNewCluster.block_min[0], neigh_i);
-                  lNewCluster.block_min[1]
-                      = util::NumericalFunctions::min((int) lNewCluster.block_min[1], neigh_j);
-                  lNewCluster.block_min[2]
-                      = util::NumericalFunctions::min((int) lNewCluster.block_min[2], neigh_k);
+                  blockMinimum.i = util::NumericalFunctions::min((int) blockMinimum.i, neigh_i);
+                  blockMinimum.j = util::NumericalFunctions::min((int) blockMinimum.j, neigh_j);
+                  blockMinimum.k = util::NumericalFunctions::min((int) blockMinimum.k, neigh_k);
 
                   cluster_block_max_i = util::NumericalFunctions::max((int) cluster_block_max_i,
                                                                       neigh_i);
@@ -617,18 +618,19 @@ namespace hemelb
               blocks_a = blocks_b;
             }
 
-            lNewCluster.x[0] = lNewCluster.block_min[0] * mLatDat->GetBlockSize() - 0.5F
+            lNewCluster.x[0] = blockMinimum.i * mLatDat->GetBlockSize() - 0.5F
                 * mLatDat->GetXSiteCount();
-            lNewCluster.x[1] = lNewCluster.block_min[1] * mLatDat->GetBlockSize() - 0.5F
+            lNewCluster.x[1] = blockMinimum.j * mLatDat->GetBlockSize() - 0.5F
                 * mLatDat->GetYSiteCount();
-            lNewCluster.x[2] = lNewCluster.block_min[2] * mLatDat->GetBlockSize() - 0.5F
+            lNewCluster.x[2] = blockMinimum.k * mLatDat->GetBlockSize() - 0.5F
                 * mLatDat->GetZSiteCount();
 
-            lNewCluster.blocks_x = 1 + cluster_block_max_i - lNewCluster.block_min[0];
-            lNewCluster.blocks_y = 1 + cluster_block_max_j - lNewCluster.block_min[1];
-            lNewCluster.blocks_z = 1 + cluster_block_max_k - lNewCluster.block_min[2];
+            lNewCluster.blocks_x = 1 + cluster_block_max_i - blockMinimum.i;
+            lNewCluster.blocks_y = 1 + cluster_block_max_j - blockMinimum.j;
+            lNewCluster.blocks_z = 1 + cluster_block_max_k - blockMinimum.k;
 
             mClusters.push_back(lNewCluster);
+            clusterBlockMins.push_back(blockMinimum);
           }
         }
       }
@@ -680,24 +682,24 @@ namespace hemelb
 
         n = -1;
 
-        int block_coord[3];
         for (int i = 0; i < cluster_p->blocks_x; i++)
         {
-          block_coord[0] = (i + cluster_p->block_min[0]) * mLatDat->GetBlockSize();
-
           for (int j = 0; j < cluster_p->blocks_y; j++)
           {
-            block_coord[1] = (j + cluster_p->block_min[1]) * mLatDat->GetBlockSize();
-
             for (int k = 0; k < cluster_p->blocks_z; k++)
             {
-              block_coord[2] = (k + cluster_p->block_min[2]) * mLatDat->GetBlockSize();
+              ++n;
 
-              int block_id = ( (i + cluster_p->block_min[0]) * mLatDat->GetYBlockCount() + (j
-                  + cluster_p->block_min[1])) * mLatDat->GetZBlockCount() + (k
-                  + cluster_p->block_min[2]);
+              int block_coord[3];
+              MinLocation* mins = &clusterBlockMins[lThisClusterId];
+              block_coord[0] = (i + mins->i) * mLatDat->GetBlockSize();
+              block_coord[1] = (j + mins->j) * mLatDat->GetBlockSize();
+              block_coord[2] = (k + mins->k) * mLatDat->GetBlockSize();
 
-              cluster_flow_field[lThisClusterId][++n] = NULL;
+              int block_id = ( (i + mins->i) * mLatDat->GetYBlockCount() + (j + mins->j))
+                  * mLatDat->GetZBlockCount() + (k + mins->k);
+
+              cluster_flow_field[lThisClusterId][n] = NULL;
 
               if (cluster_id[block_id] != (short int) lThisClusterId)
               {
@@ -711,10 +713,10 @@ namespace hemelb
 
               int m = -1;
 
-              float ii[3];
-              for (ii[0] = 0; ii[0] < mLatDat->GetBlockSize(); ii[0]++)
-                for (ii[1] = 0; ii[1] < mLatDat->GetBlockSize(); ii[1]++)
-                  for (ii[2] = 0; ii[2] < mLatDat->GetBlockSize(); ii[2]++)
+              float siteLocOnBlock[3];
+              for (siteLocOnBlock[0] = 0; siteLocOnBlock[0] < mLatDat->GetBlockSize(); siteLocOnBlock[0]++)
+                for (siteLocOnBlock[1] = 0; siteLocOnBlock[1] < mLatDat->GetBlockSize(); siteLocOnBlock[1]++)
+                  for (siteLocOnBlock[2] = 0; siteLocOnBlock[2] < mLatDat->GetBlockSize(); siteLocOnBlock[2]++)
                   {
                     unsigned int my_site_id;
                     my_site_id = lBlock->site_data[++m];
@@ -740,10 +742,12 @@ namespace hemelb
 
                     for (int l = 0; l < 3; l++)
                     {
-                      voxel_min[l] = util::NumericalFunctions::min<int>(voxel_min[l], ii[l]
-                          + block_coord[l]);
-                      voxel_max[l] = util::NumericalFunctions::max<int>(voxel_max[l], ii[l]
-                          + block_coord[l]);
+                      voxel_min[l] = util::NumericalFunctions::min<int>(voxel_min[l],
+                                                                        siteLocOnBlock[l]
+                                                                            + block_coord[l]);
+                      voxel_max[l] = util::NumericalFunctions::max<int>(voxel_max[l],
+                                                                        siteLocOnBlock[l]
+                                                                            + block_coord[l]);
                     }
 
                   } // for ii[0..2]
