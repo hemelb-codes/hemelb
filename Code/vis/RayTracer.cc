@@ -12,11 +12,11 @@ namespace hemelb
   namespace vis
   {
     // TODO RENAME THIS FUNCTION
-    void RayTracer::rtAABBvsRayFn(const AABB* aabb,
-                                  const float inverseDirection[3],
-                                  const bool xyzComponentIsPositive[3],
-                                  float* t_near,
-                                  float* t_far)
+    void RayTracer::AABBvsRay(const AABB* aabb,
+                              const float inverseDirection[3],
+                              const bool xyzComponentIsPositive[3],
+                              float* t_near,
+                              float* t_far)
     {
       float tx0 = (xyzComponentIsPositive[0]
         ? aabb->acc_2
@@ -57,11 +57,11 @@ namespace hemelb
       }
     }
 
-    void RayTracer::rtUpdateRayData(const float flow_field[3],
-                                    float ray_t,
-                                    float ray_segment,
-                                    Ray* bCurrentRay,
-                                    void(*ColourPalette)(float value, float col[]))
+    void RayTracer::UpdateRayData(const float flow_field[3],
+                                  float ray_t,
+                                  float ray_segment,
+                                  Ray* bCurrentRay,
+                                  void(*ColourPalette)(float value, float col[]))
     {
       if (*flow_field < 0.0F)
         return; // solid voxel
@@ -99,13 +99,13 @@ namespace hemelb
       bCurrentRay->Stress = * (flow_field + 2);
     }
 
-    void RayTracer::rtTraverseVoxels(const float block_min[3],
-                                     const float block_x[3],
-                                     const float voxel_flow_field[],
-                                     float t,
-                                     Ray* bCurrentRay,
-                                     void(*ColourPalette)(float value, float col[]),
-                                     const bool xyz_is_1[3])
+    void RayTracer::TraverseVoxels(const float block_min[3],
+                                   const float block_x[3],
+                                   const float voxel_flow_field[],
+                                   float t,
+                                   Ray* bCurrentRay,
+                                   void(*ColourPalette)(float value, float col[]),
+                                   const bool xyz_is_1[3])
     {
       unsigned int i_vec[3];
 
@@ -133,8 +133,8 @@ namespace hemelb
         {
           if (t_max[0] < t_max[2])
           {
-            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[0] - t,
-                            bCurrentRay, ColourPalette);
+            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[0] - t,
+                          bCurrentRay, ColourPalette);
 
             if (xyz_is_1[0])
             {
@@ -161,8 +161,8 @@ namespace hemelb
           }
           else
           {
-            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
-                            bCurrentRay, ColourPalette);
+            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
+                          bCurrentRay, ColourPalette);
 
             if (xyz_is_1[2])
             {
@@ -192,8 +192,8 @@ namespace hemelb
         {
           if (t_max[1] < t_max[2])
           {
-            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[1] - t,
-                            bCurrentRay, ColourPalette);
+            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[1] - t,
+                          bCurrentRay, ColourPalette);
 
             if (xyz_is_1[1])
             {
@@ -220,8 +220,8 @@ namespace hemelb
           }
           else
           {
-            rtUpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
-                            bCurrentRay, ColourPalette);
+            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
+                          bCurrentRay, ColourPalette);
 
             if (xyz_is_1[2])
             {
@@ -250,12 +250,12 @@ namespace hemelb
       }
     }
 
-    void RayTracer::rtTraverseBlocksFn(const Cluster* cluster,
-                                       const bool xyz_Is_1[3],
-                                       const float ray_dx[3],
-                                       void(*ColourPalette)(float value, float col[]),
-                                       float **block_flow_field,
-                                       Ray *bCurrentRay)
+    void RayTracer::TraverseBlocks(const Cluster* cluster,
+                                   const bool xyz_Is_1[3],
+                                   const float ray_dx[3],
+                                   void(*ColourPalette)(float value, float col[]),
+                                   float **block_flow_field,
+                                   Ray *bCurrentRay)
     {
 
       int cluster_blocks_vec[3];
@@ -287,8 +287,8 @@ namespace hemelb
         block_x[1] = -block_min[1];
         block_x[2] = -block_min[2];
 
-        rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F, bCurrentRay,
-                         ColourPalette, xyz_Is_1);
+        TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F, bCurrentRay,
+                       ColourPalette, xyz_Is_1);
       }
 
       float t_max[3];
@@ -326,8 +326,8 @@ namespace hemelb
               block_x[1] = t_max[0] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[0] * bCurrentRay->Direction[2] - block_min[2];
 
-              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[0],
-                               bCurrentRay, ColourPalette, xyz_Is_1);
+              TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[0],
+                             bCurrentRay, ColourPalette, xyz_Is_1);
             }
 
             t_max[0] = xyz_Is_1[0]
@@ -355,8 +355,8 @@ namespace hemelb
               block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
-              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
-                               bCurrentRay, ColourPalette, xyz_Is_1);
+              TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
+                             bCurrentRay, ColourPalette, xyz_Is_1);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -387,8 +387,8 @@ namespace hemelb
               block_x[1] = t_max[1] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[1] * bCurrentRay->Direction[2] - block_min[2];
 
-              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[1],
-                               bCurrentRay, ColourPalette, xyz_Is_1);
+              TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[1],
+                             bCurrentRay, ColourPalette, xyz_Is_1);
             }
 
             t_max[1] = xyz_Is_1[1]
@@ -416,8 +416,8 @@ namespace hemelb
               block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
-              rtTraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
-                               bCurrentRay, ColourPalette, xyz_Is_1);
+              TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
+                             bCurrentRay, ColourPalette, xyz_Is_1);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -428,7 +428,7 @@ namespace hemelb
       }
     }
 
-    void RayTracer::rtBuildClusters()
+    void RayTracer::BuildClusters()
     {
       const int n_x[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, +0, +0, +0, +0, +0, +0, +0, +0, +1,
                           +1, +1, +1, +1, +1, +1, +1, +1 };
@@ -442,8 +442,6 @@ namespace hemelb
       {
         cluster_id[n] = -1;
       }
-
-      mClusters = std::vector<Cluster*>();
 
       int blocks_buffer_size = 10000;
 
@@ -516,11 +514,11 @@ namespace hemelb
               continue;
             }
 
-            Cluster *lNewCluster = new Cluster();
+            Cluster lNewCluster;
 
-            lNewCluster->block_min[0] = i;
-            lNewCluster->block_min[1] = j;
-            lNewCluster->block_min[2] = k;
+            lNewCluster.block_min[0] = i;
+            lNewCluster.block_min[1] = j;
+            lNewCluster.block_min[2] = k;
 
             unsigned short int cluster_block_max_i = i;
             unsigned short int cluster_block_max_j = j;
@@ -593,12 +591,12 @@ namespace hemelb
                   tempBlockLoc.k = neigh_k;
                   ++blocks_b;
 
-                  lNewCluster->block_min[0]
-                      = util::NumericalFunctions::min((int) lNewCluster->block_min[0], neigh_i);
-                  lNewCluster->block_min[1]
-                      = util::NumericalFunctions::min((int) lNewCluster->block_min[1], neigh_j);
-                  lNewCluster->block_min[2]
-                      = util::NumericalFunctions::min((int) lNewCluster->block_min[2], neigh_k);
+                  lNewCluster.block_min[0]
+                      = util::NumericalFunctions::min((int) lNewCluster.block_min[0], neigh_i);
+                  lNewCluster.block_min[1]
+                      = util::NumericalFunctions::min((int) lNewCluster.block_min[1], neigh_j);
+                  lNewCluster.block_min[2]
+                      = util::NumericalFunctions::min((int) lNewCluster.block_min[2], neigh_k);
 
                   cluster_block_max_i = util::NumericalFunctions::max((int) cluster_block_max_i,
                                                                       neigh_i);
@@ -619,16 +617,16 @@ namespace hemelb
               blocks_a = blocks_b;
             }
 
-            lNewCluster->x[0] = lNewCluster->block_min[0] * mLatDat->GetBlockSize() - 0.5F
+            lNewCluster.x[0] = lNewCluster.block_min[0] * mLatDat->GetBlockSize() - 0.5F
                 * mLatDat->GetXSiteCount();
-            lNewCluster->x[1] = lNewCluster->block_min[1] * mLatDat->GetBlockSize() - 0.5F
+            lNewCluster.x[1] = lNewCluster.block_min[1] * mLatDat->GetBlockSize() - 0.5F
                 * mLatDat->GetYSiteCount();
-            lNewCluster->x[2] = lNewCluster->block_min[2] * mLatDat->GetBlockSize() - 0.5F
+            lNewCluster.x[2] = lNewCluster.block_min[2] * mLatDat->GetBlockSize() - 0.5F
                 * mLatDat->GetZSiteCount();
 
-            lNewCluster->blocks_x = 1 + cluster_block_max_i - lNewCluster->block_min[0];
-            lNewCluster->blocks_y = 1 + cluster_block_max_j - lNewCluster->block_min[1];
-            lNewCluster->blocks_z = 1 + cluster_block_max_k - lNewCluster->block_min[2];
+            lNewCluster.blocks_x = 1 + cluster_block_max_i - lNewCluster.block_min[0];
+            lNewCluster.blocks_y = 1 + cluster_block_max_j - lNewCluster.block_min[1];
+            lNewCluster.blocks_z = 1 + cluster_block_max_k - lNewCluster.block_min[2];
 
             mClusters.push_back(lNewCluster);
           }
@@ -668,7 +666,7 @@ namespace hemelb
 
       for (unsigned int lThisClusterId = 0; lThisClusterId < mClusters.size(); lThisClusterId++)
       {
-        Cluster *cluster_p = mClusters[lThisClusterId];
+        Cluster* cluster_p = &mClusters[lThisClusterId];
 
         cluster_flow_field[lThisClusterId] = new float *[cluster_p->blocks_x * cluster_p->blocks_y
             * cluster_p->blocks_z];
@@ -782,7 +780,7 @@ namespace hemelb
           block_size_1(mLatDat->GetBlockSize() - 1), blocks_yz(mLatDat->GetYBlockCount()
               * mLatDat->GetZBlockCount())
     {
-      rtBuildClusters();
+      BuildClusters();
     }
 
     void RayTracer::Render()
@@ -798,7 +796,7 @@ namespace hemelb
 
       for (unsigned int clusterId = 0; clusterId < mClusters.size(); clusterId++)
       {
-        const Cluster* thisCluster = mClusters[clusterId];
+        const Cluster* thisCluster = &mClusters[clusterId];
 
         // the image-based projection of the mClusters bounding box is
         // calculated here
@@ -911,7 +909,7 @@ namespace hemelb
             lRayDirection[2] += projectedUnitY[2];
 
             float t_near, t_far;
-            rtAABBvsRayFn(&aabb, lRay.InverseDirection, lRayInPositiveDirection, &t_near, &t_far);
+            AABBvsRay(&aabb, lRay.InverseDirection, lRayInPositiveDirection, &t_near, &t_far);
 
             if (t_near > t_far)
             {
@@ -937,8 +935,8 @@ namespace hemelb
             lRay.MinT = std::numeric_limits<float>::max();
             lRay.Density = -1.0F;
 
-            rtTraverseBlocksFn(thisCluster, lRayInPositiveDirection, ray_dx,
-                               ColourPalette::pickColour, block_flow_field, &lRay);
+            TraverseBlocks(thisCluster, lRayInPositiveDirection, ray_dx, ColourPalette::pickColour,
+                           block_flow_field, &lRay);
 
             if (lRay.MinT == std::numeric_limits<float>::max())
             {
@@ -995,8 +993,7 @@ namespace hemelb
     {
       for (unsigned int n = 0; n < mClusters.size(); n++)
       {
-        for (int m = 0; m < (mClusters[n]->blocks_x * mClusters[n]->blocks_y
-            * mClusters[n]->blocks_z); m++)
+        for (int m = 0; m < (mClusters[n].blocks_x * mClusters[n].blocks_y * mClusters[n].blocks_z); m++)
         {
           if (cluster_flow_field[n][m] != NULL)
           {
@@ -1004,14 +1001,10 @@ namespace hemelb
           }
         }
         delete[] cluster_flow_field[n];
-
-        delete mClusters[n];
       }
 
       delete[] cluster_flow_field;
       delete[] cluster_voxel;
-
-      mClusters.clear();
     }
 
   }

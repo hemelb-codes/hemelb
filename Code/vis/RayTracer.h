@@ -72,36 +72,36 @@ namespace hemelb
             short int i, j, k;
         };
 
-        void rtUpdateRayData(const float flow_field[3],
-                             float ray_t,
-                             float ray_segment,
-                             Ray* bCurrentRay,
-                             void(*ColourPalette)(float value, float col[]));
+        void UpdateRayData(const float flow_field[3],
+                           float ray_t,
+                           float ray_segment,
+                           Ray* bCurrentRay,
+                           void(*ColourPalette)(float value, float col[]));
 
-        void rtTraverseVoxels(const float block_min[3],
-                              const float block_x[3],
-                              const float voxel_flow_field[],
-                              float t,
-                              Ray* bCurrentRay,
-                              void(*ColourPalette)(float value, float col[]),
-                              const bool xyz_is_1[3]);
+        void TraverseVoxels(const float block_min[3],
+                            const float block_x[3],
+                            const float voxel_flow_field[],
+                            float t,
+                            Ray* bCurrentRay,
+                            void(*ColourPalette)(float value, float col[]),
+                            const bool xyz_is_1[3]);
 
-        void rtTraverseBlocksFn(const Cluster* cluster,
-                                const bool xyz_Is_1[3],
-                                const float ray_dx[3],
-                                void(*ColourPalette)(float value, float col[]),
-                                float **block_flow_field,
-                                Ray *bCurrentRay);
+        void TraverseBlocks(const Cluster* cluster,
+                            const bool xyz_Is_1[3],
+                            const float ray_dx[3],
+                            void(*ColourPalette)(float value, float col[]),
+                            float **block_flow_field,
+                            Ray *bCurrentRay);
 
-        void rtAABBvsRayFn(const AABB* aabb,
-                           const float inverseDirection[3],
-                           const bool xyzComponentIsPositive[3],
-                           float* t_near,
-                           float* t_far);
+        void AABBvsRay(const AABB* aabb,
+                       const float inverseDirection[3],
+                       const bool xyzComponentIsPositive[3],
+                       float* t_near,
+                       float* t_far);
 
         void UpdateColour(float dt, const float palette[3], float col[3]);
 
-        void rtBuildClusters();
+        void BuildClusters();
 
         const topology::NetworkTopology * mNetworkTopology;
         const geometry::LatticeData* mLatDat;
@@ -111,7 +111,7 @@ namespace hemelb
         Viewpoint* mViewpoint;
         VisSettings* mVisSettings;
 
-        std::vector<Cluster*> mClusters;
+        std::vector<Cluster> mClusters;
         float **cluster_voxel;
         float ***cluster_flow_field;
 
