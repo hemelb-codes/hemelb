@@ -1,5 +1,6 @@
-#include "vis/ColPixel.h"
+#include <math.h>
 
+#include "vis/ColPixel.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
 
@@ -168,7 +169,6 @@ namespace hemelb
                                  int mode,
                                  unsigned char rgb_data[],
                                  DomainStats* iDomainStats,
-                                 ColourPaletteFunction *colourPalette,
                                  lb::StressTypes iLbmStressType)
     {
       float density_col[3], stress_col[3], particle_col[3];
@@ -203,7 +203,7 @@ namespace hemelb
         }
         else if (stress < ((float) BIG_NUMBER))
         {
-          colourPalette(stress, stress_col);
+          PickColour(stress, stress_col);
 
           // store wall shear stress colour
           makePixelColour(r2, g2, b2, int (255.0F * stress_col[0]), int (255.0F * stress_col[1]),
@@ -219,8 +219,8 @@ namespace hemelb
 
       if (iLbmStressType != lb::ShearStress && mode == 0)
       {
-        colourPalette(density, density_col);
-        colourPalette(stress, stress_col);
+        PickColour(density, density_col);
+        PickColour(stress, stress_col);
 
         // store wall pressure colour
         makePixelColour(r3, g3, b3, int (255.0F * density_col[0]), int (255.0F * density_col[1]),
@@ -233,8 +233,8 @@ namespace hemelb
       }
       else if (iLbmStressType != lb::ShearStress && mode == 1)
       {
-        colourPalette(density, density_col);
-        colourPalette(stress, stress_col);
+        PickColour(density, density_col);
+        PickColour(stress, stress_col);
 
         if (i.isRt)
         {
@@ -271,7 +271,7 @@ namespace hemelb
         {
           float scaled_vel = particle_vel * iDomainStats->velocity_threshold_max_inv;
 
-          colourPalette(scaled_vel, particle_col);
+          PickColour(scaled_vel, particle_col);
 
           // store particle colour
           makePixelColour(r3, g3, b3, int (255.0F * particle_col[0]),
@@ -316,6 +316,14 @@ namespace hemelb
       rgb_data[10] = g4;
       rgb_data[11] = b4;
 
+    }
+
+    void ColPixel::PickColour(float value, float colour[3])
+    {
+      colour[0] = util::NumericalFunctions::enforceBounds<float>(4.F * value - 2.F, 0.F, 1.F);
+      colour[1] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * fabs(value - 0.5F),
+                                                                 0.F, 1.F);
+      colour[2] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * value, 0.F, 1.F);
     }
 
   }

@@ -306,9 +306,7 @@ namespace hemelb
       }
     }
 
-    void Control::writeImage(int recv_buffer_id,
-                             std::string image_file_name,
-                             void(*ColourPalette)(float value, float col[]))
+    void Control::writeImage(int recv_buffer_id, std::string image_file_name)
     {
       io::XdrFileWriter writer = io::XdrFileWriter(image_file_name);
 
@@ -323,8 +321,8 @@ namespace hemelb
 
       for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
       {
-        writer.writePixel(&col_pixel_recv[recv_buffer_id][n], ColourPalette, &mDomainStats,
-                          mVisSettings.mode, mVisSettings.mStressType);
+        writer.writePixel(&col_pixel_recv[recv_buffer_id][n], &mDomainStats, mVisSettings.mode,
+                          mVisSettings.mStressType);
       }
     }
 
