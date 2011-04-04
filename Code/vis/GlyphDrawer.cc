@@ -34,7 +34,7 @@ namespace hemelb
               continue;
             }
 
-            // We put the glyph at the site at the centre of the block.
+            // We put the glyph at the site at the centre of the block...
             const unsigned int site_i = (mLatDat->GetBlockSize() >> 1);
             const unsigned int site_j = (mLatDat->GetBlockSize() >> 1);
             const unsigned int site_k = (mLatDat->GetBlockSize() >> 1);
@@ -42,11 +42,13 @@ namespace hemelb
             const unsigned int siteIdOnBlock = ( ( (site_i << mLatDat->GetLog2BlockSize()) + site_j)
                 << mLatDat->GetLog2BlockSize()) + site_k;
 
+            // ... (only if there's fluid there).
             if (map_block_p->site_data[siteIdOnBlock] & BIG_NUMBER3)
             {
               continue;
             }
 
+            // Create a glyph at the desired location
             Glyph *lGlyph = new Glyph();
 
             lGlyph->x = float (i + site_i) - 0.5F * float (mLatDat->GetXSiteCount());
