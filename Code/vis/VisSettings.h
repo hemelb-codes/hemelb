@@ -11,7 +11,6 @@ namespace hemelb
     {
         // better public member vars than globals!
         int mode;
-        int image_freq;
 
         float ctr_x, ctr_y, ctr_z;
         float streaklines_per_pulsatile_period, streakline_length;

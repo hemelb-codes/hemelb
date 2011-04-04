@@ -149,6 +149,5 @@ namespace hemelb
         }
       } // end while
     }
-
   }
 }
