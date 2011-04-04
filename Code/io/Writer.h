@@ -3,7 +3,6 @@
 
 #include "lb/LbmParameters.h"
 #include "vis/ColPixel.h"
-#include "vis/ColourPalette.h"
 
 namespace hemelb
 {
@@ -31,7 +30,6 @@ namespace hemelb
         }
 
         void writePixel(vis::ColPixel *col_pixel_p,
-                        vis::ColourPaletteFunction*colourPalette,
                         vis::DomainStats* iDomainStats,
                         int mode,
                         const lb::StressTypes iLbmStressType);

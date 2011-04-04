@@ -89,8 +89,8 @@ namespace hemelb
       for (int i = 0; i < mVisControl->col_pixels_recv[RECV_BUFFER_A]; i++)
       {
         pixelDataWriter.writePixel(&mVisControl->col_pixel_recv[RECV_BUFFER_A][i],
-                                   vis::ColourPalette::pickColour, &mVisControl->mDomainStats,
-                                   mVisControl->mVisSettings.mode, mLbmParams->StressType);
+                                   &mVisControl->mDomainStats, mVisControl->mVisSettings.mode,
+                                   mLbmParams->StressType);
       }
 
       // Send the number of bytes being used on pixel data.

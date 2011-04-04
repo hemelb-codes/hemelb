@@ -20,7 +20,7 @@ namespace hemelb
         // Constructor and destructor do all the usual stuff.
         RayTracer(const topology::NetworkTopology * iNetworkTopology,
                   const geometry::LatticeData* iLatDat,
-                  DomainStats* iDomainStats,
+                  const DomainStats* iDomainStats,
                   Screen* iScreen,
                   Viewpoint* iViewpoint,
                   VisSettings* iVisSettings);
@@ -28,10 +28,10 @@ namespace hemelb
 
         // Method to update the voxel corresponding to site i with its
         // newly calculated density, velocity and stress.
-        void UpdateClusterVoxel(const int &i,
-                                const float &density,
-                                const float &velocity,
-                                const float &stress);
+        void UpdateClusterVoxel(const int i,
+                                const float density,
+                                const float velocity,
+                                const float stress);
 
         // Render the current state into an image.
         void Render();
@@ -79,21 +79,18 @@ namespace hemelb
         void UpdateRayData(const float flow_field[3],
                            float ray_t,
                            float ray_segment,
-                           Ray* bCurrentRay,
-                           void(*ColourPalette)(float value, float col[]));
+                           Ray* bCurrentRay);
 
         void TraverseVoxels(const float block_min[3],
                             const float block_x[3],
                             const float voxel_flow_field[],
                             float t,
                             Ray* bCurrentRay,
-                            void(*ColourPalette)(float value, float col[]),
                             const bool xyz_is_1[3]);
 
         void TraverseBlocks(const Cluster* cluster,
                             const bool xyz_Is_1[3],
                             const float ray_dx[3],
-                            void(*ColourPalette)(float value, float col[]),
                             float **block_flow_field,
                             Ray *bCurrentRay);
 
@@ -110,7 +107,7 @@ namespace hemelb
         const topology::NetworkTopology * mNetworkTopology;
         const geometry::LatticeData* mLatDat;
 
-        DomainStats* mDomainStats;
+        const DomainStats* mDomainStats;
         Screen* mScreen;
         Viewpoint* mViewpoint;
         VisSettings* mVisSettings;

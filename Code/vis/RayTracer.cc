@@ -61,27 +61,26 @@ namespace hemelb
     void RayTracer::UpdateRayData(const float flow_field[3],
                                   float ray_t,
                                   float ray_segment,
-                                  Ray* bCurrentRay,
-                                  void(*ColourPalette)(float value, float col[]))
+                                  Ray* bCurrentRay)
     {
-      if (*flow_field < 0.0F)
+      if (flow_field[0] < 0.0F)
+      {
         return; // solid voxel
+      }
 
       float palette[3];
 
       // update the volume rendering of the velocity flow field
-      float scaled_velocity = * (flow_field + 1) * mDomainStats->velocity_threshold_max_inv;
-
-      ColourPalette(scaled_velocity, palette);
+      ColPixel::PickColour(flow_field[1] * mDomainStats->velocity_threshold_max_inv, palette);
 
       UpdateColour(ray_segment, palette, bCurrentRay->VelocityColour);
 
       if (mVisSettings->mStressType != lb::ShearStress)
       {
         // update the volume rendering of the von Mises stress flow field
-        float scaled_stress = * (flow_field + 2) * mDomainStats->stress_threshold_max_inv;
+        float scaled_stress = flow_field[2] * mDomainStats->stress_threshold_max_inv;
 
-        ColourPalette(scaled_stress, palette);
+        ColPixel::PickColour(scaled_stress, palette);
 
         UpdateColour(ray_segment, palette, bCurrentRay->StressColour);
       }
@@ -89,15 +88,17 @@ namespace hemelb
       bCurrentRay->Length += ray_segment;
 
       if (bCurrentRay->Density >= 0.0F)
+      {
         return;
+      }
 
       bCurrentRay->MinT = ray_t;
 
       // keep track of the density nearest to the view point
-      bCurrentRay->Density = *flow_field;
+      bCurrentRay->Density = flow_field[0];
 
       // keep track of the stress nearest to the view point
-      bCurrentRay->Stress = * (flow_field + 2);
+      bCurrentRay->Stress = flow_field[2];
     }
 
     void RayTracer::TraverseVoxels(const float block_min[3],
@@ -105,7 +106,6 @@ namespace hemelb
                                    const float voxel_flow_field[],
                                    float t,
                                    Ray* bCurrentRay,
-                                   void(*ColourPalette)(float value, float col[]),
                                    const bool xyz_is_1[3])
     {
       unsigned int i_vec[3];
@@ -135,7 +135,7 @@ namespace hemelb
           if (t_max[0] < t_max[2])
           {
             UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[0] - t,
-                          bCurrentRay, ColourPalette);
+                          bCurrentRay);
 
             if (xyz_is_1[0])
             {
@@ -163,7 +163,7 @@ namespace hemelb
           else
           {
             UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
-                          bCurrentRay, ColourPalette);
+                          bCurrentRay);
 
             if (xyz_is_1[2])
             {
@@ -194,7 +194,7 @@ namespace hemelb
           if (t_max[1] < t_max[2])
           {
             UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[1] - t,
-                          bCurrentRay, ColourPalette);
+                          bCurrentRay);
 
             if (xyz_is_1[1])
             {
@@ -222,7 +222,7 @@ namespace hemelb
           else
           {
             UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
-                          bCurrentRay, ColourPalette);
+                          bCurrentRay);
 
             if (xyz_is_1[2])
             {
@@ -254,7 +254,6 @@ namespace hemelb
     void RayTracer::TraverseBlocks(const Cluster* cluster,
                                    const bool xyz_Is_1[3],
                                    const float ray_dx[3],
-                                   void(*ColourPalette)(float value, float col[]),
                                    float **block_flow_field,
                                    Ray *bCurrentRay)
     {
@@ -288,8 +287,7 @@ namespace hemelb
         block_x[1] = -block_min[1];
         block_x[2] = -block_min[2];
 
-        TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F, bCurrentRay,
-                       ColourPalette, xyz_Is_1);
+        TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F, bCurrentRay, xyz_Is_1);
       }
 
       float t_max[3];
@@ -328,7 +326,7 @@ namespace hemelb
               block_x[2] = t_max[0] * bCurrentRay->Direction[2] - block_min[2];
 
               TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[0],
-                             bCurrentRay, ColourPalette, xyz_Is_1);
+                             bCurrentRay, xyz_Is_1);
             }
 
             t_max[0] = xyz_Is_1[0]
@@ -357,7 +355,7 @@ namespace hemelb
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
               TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
-                             bCurrentRay, ColourPalette, xyz_Is_1);
+                             bCurrentRay, xyz_Is_1);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -389,7 +387,7 @@ namespace hemelb
               block_x[2] = t_max[1] * bCurrentRay->Direction[2] - block_min[2];
 
               TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[1],
-                             bCurrentRay, ColourPalette, xyz_Is_1);
+                             bCurrentRay, xyz_Is_1);
             }
 
             t_max[1] = xyz_Is_1[1]
@@ -418,7 +416,7 @@ namespace hemelb
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
               TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
-                             bCurrentRay, ColourPalette, xyz_Is_1);
+                             bCurrentRay, xyz_Is_1);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -772,7 +770,7 @@ namespace hemelb
 
     RayTracer::RayTracer(const topology::NetworkTopology * iNetworkTopology,
                          const geometry::LatticeData* iLatDat,
-                         DomainStats* iDomainStats,
+                         const DomainStats* iDomainStats,
                          Screen* iScreen,
                          Viewpoint* iViewpoint,
                          VisSettings* iVisSettings) :
@@ -939,8 +937,7 @@ namespace hemelb
             lRay.MinT = std::numeric_limits<float>::max();
             lRay.Density = -1.0F;
 
-            TraverseBlocks(thisCluster, lRayInPositiveDirection, ray_dx, ColourPalette::pickColour,
-                           block_flow_field, &lRay);
+            TraverseBlocks(thisCluster, lRayInPositiveDirection, ray_dx, block_flow_field, &lRay);
 
             if (lRay.MinT == std::numeric_limits<float>::max())
             {
@@ -983,10 +980,10 @@ namespace hemelb
       }
     }
 
-    void RayTracer::UpdateClusterVoxel(const int &i,
-                                       const float &density,
-                                       const float &velocity,
-                                       const float &stress)
+    void RayTracer::UpdateClusterVoxel(const int i,
+                                       const float density,
+                                       const float velocity,
+                                       const float stress)
     {
       cluster_voxel[3 * i][0] = density;
       cluster_voxel[3 * i][1] = velocity;
