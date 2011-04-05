@@ -35,10 +35,11 @@ class Profile(Observable):
     
     """
     # Required parameters and defaults.
+    _CloneOrder = ['StlFileUnitId']
     _Args = {'StlFile': None,
              'StlFileUnitId': 1,
              'Iolets': ObservableList(),
-             'VoxelSize': None,
+             'VoxelSize': 0.,
              'SeedPoint': Vector(),
              'OutputConfigFile': None,
              'OutputXmlFile': None,
