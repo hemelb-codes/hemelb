@@ -46,7 +46,7 @@ namespace hemelb
         void rawWritePixel(int *pixel_index,
                            int mode,
                            unsigned char rgb_data[],
-                           DomainStats* iDomainStats,
+                           const DomainStats* iDomainStats,
                            lb::StressTypes iLbmStressType);
         static const MPI_Datatype& getMpiType();
 

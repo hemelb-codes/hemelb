@@ -30,7 +30,7 @@ namespace hemelb
         }
 
         void writePixel(vis::ColPixel *col_pixel_p,
-                        vis::DomainStats* iDomainStats,
+                        const vis::DomainStats* iDomainStats,
                         int mode,
                         const lb::StressTypes iLbmStressType);
 

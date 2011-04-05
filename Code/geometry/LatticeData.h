@@ -122,6 +122,8 @@ namespace hemelb
 
         unsigned int GetBlockIdFromBlockCoords(unsigned int i, unsigned int j, unsigned int k) const;
 
+        bool IsValidLatticeSite(unsigned int i, unsigned int j, unsigned int k) const;
+
         int*
         GetProcIdFromGlobalCoords(unsigned int siteI, unsigned int siteJ, unsigned int siteK) const;
 
@@ -210,6 +212,8 @@ namespace hemelb
             unsigned int GetBlockCount() const;
 
             unsigned int GetSitesPerBlockVolumeUnit() const;
+
+            bool IsValidLatticeSite(unsigned int i, unsigned int j, unsigned int k) const;
 
             BlockData * Blocks;
 
