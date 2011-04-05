@@ -79,6 +79,13 @@ namespace hemelb
       return mSitesPerBlockVolumeUnit;
     }
 
+    bool LatticeData::GlobalLatticeData::IsValidLatticeSite(unsigned int i,
+                                                            unsigned int j,
+                                                            unsigned int k) const
+    {
+      return i <= mSitesX && j <= mSitesY && k <= mSitesZ;
+    }
+
     LatticeData::GlobalLatticeData::~GlobalLatticeData()
     {
       delete[] Blocks;
@@ -130,13 +137,6 @@ namespace hemelb
                                                                     unsigned int iSiteJ,
                                                                     unsigned int iSiteK) const
     {
-      // If the given site location is outside the bounding box return a NULL
-      // pointer.
-      if (iSiteI >= mSitesX || iSiteJ >= mSitesY || iSiteK >= mSitesZ)
-      {
-        return NULL;
-      }
-
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
       unsigned int i = iSiteI >> Log2BlockSize;
       unsigned int j = iSiteJ >> Log2BlockSize;

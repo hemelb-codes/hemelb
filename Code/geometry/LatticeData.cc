@@ -84,6 +84,11 @@ namespace hemelb
                     int neigh_j = site_j + D3Q15::CY[l];
                     int neigh_k = site_k + D3Q15::CZ[l];
 
+                    if (!IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
+                    {
+                      continue;
+                    }
+
                     // Get the id of the processor which the neighbouring site lies on.
                     int *proc_id_p = GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
@@ -225,6 +230,11 @@ namespace hemelb
                                                 unsigned int siteK) const
     {
       return globLatDat.GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
+    }
+
+    bool LatticeData::IsValidLatticeSite(unsigned int i, unsigned int j, unsigned int k) const
+    {
+      return globLatDat.IsValidLatticeSite(i, j, k);
     }
 
     LatticeData::BlockData* LatticeData::GetBlock(unsigned int blockNumber) const
