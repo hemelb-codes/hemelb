@@ -120,7 +120,7 @@ namespace hemelb
         void deleteParticle(unsigned int p_index);
 
         // Private functions for initialising the velocity field.
-        void initializeVelFieldBlock(geometry::LatticeData* iLatDat,
+        void initializeVelFieldBlock(const geometry::LatticeData* iLatDat,
                                      unsigned int site_i,
                                      unsigned int site_j,
                                      unsigned int site_k,

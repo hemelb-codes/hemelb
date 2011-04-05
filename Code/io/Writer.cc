@@ -17,7 +17,7 @@ namespace hemelb
 
     // Function to write out our struct, ColPixel.
     void Writer::writePixel(vis::ColPixel *col_pixel_p,
-                            vis::DomainStats* iDomainStats,
+                            const vis::DomainStats* iDomainStats,
                             int mode,
                             const lb::StressTypes iLbmStressType)
     {

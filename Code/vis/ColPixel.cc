@@ -168,7 +168,7 @@ namespace hemelb
     void ColPixel::rawWritePixel(int *pixel_index,
                                  int mode,
                                  unsigned char rgb_data[],
-                                 DomainStats* iDomainStats,
+                                 const DomainStats* iDomainStats,
                                  lb::StressTypes iLbmStressType)
     {
       float density_col[3], stress_col[3], particle_col[3];

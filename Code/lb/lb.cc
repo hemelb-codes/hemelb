@@ -165,15 +165,16 @@ namespace hemelb
       InitCollisions();
     }
 
-    void LBM::CalculateMouseFlowField(hemelb::vis::ColPixel *col_pixel_p,
+    void LBM::CalculateMouseFlowField(float densityIn,
+                                      float stressIn,
                                       double &mouse_pressure,
                                       double &mouse_stress,
                                       double density_threshold_min,
                                       double density_threshold_minmax_inv,
                                       double stress_threshold_max_inv)
     {
-      double density = density_threshold_min + col_pixel_p->density / density_threshold_minmax_inv;
-      double stress = col_pixel_p->stress / stress_threshold_max_inv;
+      double density = density_threshold_min + densityIn / density_threshold_minmax_inv;
+      double stress = stressIn / stress_threshold_max_inv;
 
       mouse_pressure = ConvertPressureToPhysicalUnits(density * Cs2);
       mouse_stress = ConvertStressToPhysicalUnits(stress);
