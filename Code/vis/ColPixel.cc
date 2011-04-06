@@ -10,12 +10,12 @@ namespace hemelb
   {
 
     MPI_Datatype MPI_col_pixel_type;
-    PixelId::PixelId(int i_, int j_) :
+    ColPixel::PixelId::PixelId(int i_, int j_) :
       isRt(false), isGlyph(false), isStreakline(false), i(i_), j(j_)
     {
     }
 
-    PixelId::PixelId() :
+    ColPixel::PixelId::PixelId() :
       isRt(false), isGlyph(false), isStreakline(false), i(0), j(0)
     {
     }
@@ -26,20 +26,38 @@ namespace hemelb
     {
     }
 
-    ColPixel::ColPixel(float particleVelocity, float particleZ, int particleInletId)
+    ColPixel::ColPixel(int iIn, int jIn) :
+      i(iIn, jIn)
     {
+      i.isGlyph = true;
+    }
+
+    ColPixel::ColPixel(int iIn,
+                       int jIn,
+                       float particleVelocity,
+                       float particleZ,
+                       int particleInletId) :
+      i(iIn, jIn)
+    {
+      i.isStreakline = true;
+
       particle_vel = particleVelocity;
       particle_z = particleZ;
       particle_inlet_id = particleInletId;
     }
 
-    ColPixel::ColPixel(float tIn,
+    ColPixel::ColPixel(int iIn,
+                       int jIn,
+                       float tIn,
                        float dtIn,
                        float densityIn,
                        float stressIn,
                        const float velocityColour[3],
-                       const float stressColour[3])
+                       const float stressColour[3]) :
+      i(iIn, jIn)
     {
+      i.isRt = true;
+
       t = tIn;
       dt = dtIn;
 
@@ -82,7 +100,10 @@ namespace hemelb
               * col_pixel_blocklengths[i - 1]);
         }
       }
-      MPI_Type_struct(col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types,
+      MPI_Type_struct(col_pixel_count,
+                      col_pixel_blocklengths,
+                      col_pixel_disps,
+                      col_pixel_types,
                       &mpiType);
       MPI_Type_commit(&mpiType);
     }
@@ -210,7 +231,9 @@ namespace hemelb
         if (visSettings->mStressType != lb::ShearStress)
         {
           // store von Mises stress volume rendering colour
-          MakePixelColour(int (stress_r / dt), int (stress_g / dt), int (stress_b / dt),
+          MakePixelColour(int (stress_r / dt),
+                          int (stress_g / dt),
+                          int (stress_b / dt),
                           &rgb_data[3]);
         }
         else if (stress < ((float) BIG_NUMBER))
@@ -307,14 +330,16 @@ namespace hemelb
       {
         // store pressure colour
         rgb_data[6] = rgb_data[7] = rgb_data[8]
-            = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density), 0,
+            = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density),
+                                                                      0,
                                                                       127);
 
         // store shear stress or von Mises stress
         if (stress < ((float) BIG_NUMBER))
         {
           rgb_data[9] = rgb_data[10] = rgb_data[11]
-              = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress), 0,
+              = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress),
+                                                                        0,
                                                                         127);
         }
         else
@@ -328,18 +353,41 @@ namespace hemelb
     {
       colour[0] = util::NumericalFunctions::enforceBounds<float>(4.F * value - 2.F, 0.F, 1.F);
       colour[1] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * fabs(value - 0.5F),
-                                                                 0.F, 1.F);
+                                                                 0.F,
+                                                                 1.F);
       colour[2] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * value, 0.F, 1.F);
     }
 
-    float ColPixel::GetDensity()
+    float ColPixel::GetDensity() const
     {
       return density;
     }
 
-    float ColPixel::GetStress()
+    float ColPixel::GetStress() const
     {
       return stress;
     }
+
+    unsigned int ColPixel::GetI() const
+    {
+      return i.i;
+    }
+    unsigned int ColPixel::GetJ() const
+    {
+      return i.j;
+    }
+    bool ColPixel::IsRT() const
+    {
+      return i.isRt;
+    }
+    bool ColPixel::IsGlyph() const
+    {
+      return i.isGlyph;
+    }
+    bool ColPixel::IsStreakline() const
+    {
+      return i.isStreakline;
+    }
+
   }
 }

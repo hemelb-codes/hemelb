@@ -41,7 +41,7 @@ namespace hemelb
     void Screen::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
     {
       // Get the id of the pixel if we've already added one at the same location.
-      int pixelId = col_pixel_id[newPixel->i.i * PixelsY + newPixel->i.j];
+      int pixelId = col_pixel_id[newPixel->GetI() * PixelsY + newPixel->GetJ()];
 
       // If we have one at this location, merge in the pixel.
       if (pixelId != -1)
@@ -57,7 +57,7 @@ namespace hemelb
       else
       {
         // Put the pixel number into the store of ids.
-        col_pixel_id[newPixel->i.i * PixelsY + newPixel->i.j] = col_pixels;
+        col_pixel_id[newPixel->GetI() * PixelsY + newPixel->GetJ()] = col_pixels;
 
         // Add the pixel to the end of the list and move the end marker.
         localPixels[col_pixels] = *newPixel;
@@ -147,10 +147,7 @@ namespace hemelb
       {
         if (x >= 0 && x < (int) PixelsX && y >= 0 && y < (int) PixelsY)
         {
-          ColPixel col_pixel;
-          col_pixel.i = PixelId(x, y);
-          col_pixel.i.isGlyph = true;
-
+          ColPixel col_pixel(x, y);
           AddPixel(&col_pixel, visSettings);
         }
 
@@ -275,7 +272,11 @@ namespace hemelb
 
             if (col_pixels > 0)
             {
-              MPI_Send(localPixels, col_pixels, ColPixel::getMpiType(), receivingProc, 20,
+              MPI_Send(localPixels,
+                       col_pixels,
+                       ColPixel::getMpiType(),
+                       receivingProc,
+                       20,
                        MPI_COMM_WORLD);
             }
           }
@@ -289,8 +290,13 @@ namespace hemelb
 
             if (col_pixels_temp > 0)
             {
-              MPI_Recv(localPixels, col_pixels_temp, ColPixel::getMpiType(), sendingProc, 20,
-                       MPI_COMM_WORLD, &status);
+              MPI_Recv(localPixels,
+                       col_pixels_temp,
+                       ColPixel::getMpiType(),
+                       sendingProc,
+                       20,
+                       MPI_COMM_WORLD,
+                       &status);
             }
 
             // Now merge the received pixels in with the local store of pixels.
@@ -298,7 +304,7 @@ namespace hemelb
             {
               ColPixel* col_pixel1 = &localPixels[n];
 
-              int id = col_pixel1->i.i * GetPixelsY() + col_pixel1->i.j;
+              int id = col_pixel1->GetI() * GetPixelsY() + col_pixel1->GetJ();
               if (col_pixel_id[id] == -1)
               {
                 col_pixel_id[id] = col_pixels;
@@ -332,7 +338,11 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Send(col_pixel_recv[bufferId], col_pixels, ColPixel::getMpiType(), 0, 20,
+          MPI_Send(col_pixel_recv[bufferId],
+                   col_pixels,
+                   ColPixel::getMpiType(),
+                   0,
+                   20,
                    MPI_COMM_WORLD);
         }
 
@@ -344,8 +354,13 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Recv(col_pixel_recv[bufferId], col_pixels, ColPixel::getMpiType(), 1, 20,
-                   MPI_COMM_WORLD, &status);
+          MPI_Recv(col_pixel_recv[bufferId],
+                   col_pixels,
+                   ColPixel::getMpiType(),
+                   1,
+                   20,
+                   MPI_COMM_WORLD,
+                   &status);
         }
 
       }
@@ -354,7 +369,7 @@ namespace hemelb
 
       for (int m = 0; m < col_pixels_recv[bufferId]; m++)
       {
-        col_pixel_id[localPixels[m].i.i * GetPixelsY() + localPixels[m].i.j] = -1;
+        col_pixel_id[localPixels[m].GetI() * GetPixelsY() + localPixels[m].GetJ()] = -1;
       }
     }
 
@@ -366,8 +381,8 @@ namespace hemelb
     {
       for (int i = 0; i < col_pixels_recv[bufferId]; i++)
       {
-        if (col_pixel_recv[bufferId][i].i.isRt && int (col_pixel_recv[bufferId][i].i.i) == mouseX
-            && int (col_pixel_recv[bufferId][i].i.j) == mouseY)
+        if (col_pixel_recv[bufferId][i].IsRT() && int (col_pixel_recv[bufferId][i].GetI())
+            == mouseX && int (col_pixel_recv[bufferId][i].GetJ()) == mouseY)
         {
           *density = col_pixel_recv[bufferId][i].GetDensity();
           *stress = col_pixel_recv[bufferId][i].GetStress();

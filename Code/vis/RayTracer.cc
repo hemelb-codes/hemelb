@@ -112,7 +112,8 @@ namespace hemelb
 
       for (int i = 0; i < 3; i++)
       {
-        i_vec[i] = util::NumericalFunctions::enforceBounds<unsigned int>(block_x[i], 0,
+        i_vec[i] = util::NumericalFunctions::enforceBounds<unsigned int>(block_x[i],
+                                                                         0,
                                                                          block_size_1);
       }
 
@@ -134,7 +135,9 @@ namespace hemelb
         {
           if (t_max[0] < t_max[2])
           {
-            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[0] - t,
+            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS],
+                          t,
+                          t_max[0] - t,
                           bCurrentRay);
 
             if (xyz_is_1[0])
@@ -162,7 +165,9 @@ namespace hemelb
           }
           else
           {
-            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
+            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS],
+                          t,
+                          t_max[2] - t,
                           bCurrentRay);
 
             if (xyz_is_1[2])
@@ -193,7 +198,9 @@ namespace hemelb
         {
           if (t_max[1] < t_max[2])
           {
-            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[1] - t,
+            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS],
+                          t,
+                          t_max[1] - t,
                           bCurrentRay);
 
             if (xyz_is_1[1])
@@ -221,7 +228,9 @@ namespace hemelb
           }
           else
           {
-            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS], t, t_max[2] - t,
+            UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS],
+                          t,
+                          t_max[2] - t,
                           bCurrentRay);
 
             if (xyz_is_1[2])
@@ -271,7 +280,8 @@ namespace hemelb
 
       for (int l = 0; l < 3; l++)
       {
-        i_vec[l] = util::NumericalFunctions::enforceBounds(cluster_blocks_vec[l], 0,
+        i_vec[l] = util::NumericalFunctions::enforceBounds(cluster_blocks_vec[l],
+                                                           0,
                                                            (int) (mBlockSizeInverse * ray_dx[l]));
         block_min[l] = (float) i_vec[l] * mBlockSizeFloat - ray_dx[l];
       }
@@ -325,8 +335,12 @@ namespace hemelb
               block_x[1] = t_max[0] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[0] * bCurrentRay->Direction[2] - block_min[2];
 
-              TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[0],
-                             bCurrentRay, xyz_Is_1);
+              TraverseVoxels(block_min,
+                             block_x,
+                             block_flow_field[i + j + k],
+                             t_max[0],
+                             bCurrentRay,
+                             xyz_Is_1);
             }
 
             t_max[0] = xyz_Is_1[0]
@@ -354,8 +368,12 @@ namespace hemelb
               block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
-              TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
-                             bCurrentRay, xyz_Is_1);
+              TraverseVoxels(block_min,
+                             block_x,
+                             block_flow_field[i + j + k],
+                             t_max[2],
+                             bCurrentRay,
+                             xyz_Is_1);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -386,8 +404,12 @@ namespace hemelb
               block_x[1] = t_max[1] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[1] * bCurrentRay->Direction[2] - block_min[2];
 
-              TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[1],
-                             bCurrentRay, xyz_Is_1);
+              TraverseVoxels(block_min,
+                             block_x,
+                             block_flow_field[i + j + k],
+                             t_max[1],
+                             bCurrentRay,
+                             xyz_Is_1);
             }
 
             t_max[1] = xyz_Is_1[1]
@@ -415,8 +437,12 @@ namespace hemelb
               block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
               block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
 
-              TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], t_max[2],
-                             bCurrentRay, xyz_Is_1);
+              TraverseVoxels(block_min,
+                             block_x,
+                             block_flow_field[i + j + k],
+                             t_max[2],
+                             bCurrentRay,
+                             xyz_Is_1);
             }
 
             t_max[2] = xyz_Is_1[2]
@@ -944,16 +970,17 @@ namespace hemelb
               continue;
             }
 
-            ColPixel col_pixel(lRay.MinT + t_near, lRay.Length,
+            ColPixel col_pixel(subImageX,
+                               subImageY,
+                               lRay.MinT + t_near,
+                               lRay.Length,
                                 (lRay.Density - mDomainStats->density_threshold_min)
-                                   * mDomainStats->density_threshold_minmax_inv, lRay.Stress
-                                   != std::numeric_limits<float>::max()
+                                   * mDomainStats->density_threshold_minmax_inv,
+                               lRay.Stress != std::numeric_limits<float>::max()
                                  ? lRay.Stress * mDomainStats->stress_threshold_max_inv
-                                 : std::numeric_limits<float>::max(), lRay.VelocityColour,
+                                 : std::numeric_limits<float>::max(),
+                               lRay.VelocityColour,
                                lRay.StressColour);
-
-            col_pixel.i = PixelId(subImageX, subImageY);
-            col_pixel.i.isRt = true;
 
             mScreen->AddPixel(&col_pixel, mVisSettings);
           }

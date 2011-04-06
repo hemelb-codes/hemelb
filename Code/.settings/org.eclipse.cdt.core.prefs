@@ -1,4 +1,4 @@
-#Thu Feb 17 12:06:43 GMT 2011
+#Wed Apr 06 15:32:36 BST 2011
 eclipse.preferences.version=1
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/delimiter=\:
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/operation=append
@@ -22,7 +22,7 @@ indexer/skipMacroReferences=false
 indexer/skipReferences=false
 indexer/skipTypeReferences=false
 indexer/useHeuristicIncludeResolution=true
-org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=18
+org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=82
 org.eclipse.cdt.core.formatter.alignment_for_base_clause_in_type_declaration=83
 org.eclipse.cdt.core.formatter.alignment_for_compact_if=0
 org.eclipse.cdt.core.formatter.alignment_for_conditional_expression=53
