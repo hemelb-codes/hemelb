@@ -3,6 +3,7 @@
 
 #include "mpiInclude.h"
 #include "vis/DomainStats.h"
+#include "vis/VisSettings.h"
 #include "lb/LbmParameters.h"
 
 namespace hemelb
@@ -41,13 +42,13 @@ namespace hemelb
          * Merge data from the first ColPixel argument into the second
          * ColPixel argument.
          */
-        void MergeIn(const ColPixel* fromPixel, lb::StressTypes iStressType, int mode);
+        void
+        MergeIn(const ColPixel* fromPixel, const VisSettings* visSettings);
 
         void rawWritePixel(int* pixel_index,
-                           int mode,
                            unsigned char rgb_data[12],
                            const DomainStats* iDomainStats,
-                           lb::StressTypes iLbmStressType);
+                           const VisSettings* visSettings);
         static const MPI_Datatype& getMpiType();
 
         static void PickColour(float value, float colour[3]);

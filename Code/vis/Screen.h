@@ -17,11 +17,11 @@ namespace hemelb
         Screen();
         ~Screen();
 
-        void AddPixel(const ColPixel* newPixel, lb::StressTypes iStressType, int mode);
+        void
+        AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
         void RenderLine(const float endPoint1[3],
                         const float endPoint2[3],
-                        lb::StressTypes iStressType,
-                        int mode);
+                        const VisSettings* visSettings);
 
         void Set(float maxX,
                  float maxY,
@@ -76,8 +76,7 @@ namespace hemelb
                                                       int incE,
                                                       int incNE,
                                                       int limit,
-                                                      lb::StressTypes stressType,
-                                                      int mode);
+                                                      const VisSettings* visSettings);
 
         float ScaleX, ScaleY;
         float MaxXValue, MaxYValue;

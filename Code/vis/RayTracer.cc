@@ -973,7 +973,7 @@ namespace hemelb
             col_pixel.i = PixelId(subImageX, subImageY);
             col_pixel.i.isRt = true;
 
-            mScreen->AddPixel(&col_pixel, mVisSettings->mStressType, mVisSettings->mode);
+            mScreen->AddPixel(&col_pixel, mVisSettings);
           }
           par3[0] += projectedUnitX[0];
           par3[1] += projectedUnitX[1];

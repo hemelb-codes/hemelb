@@ -112,12 +112,13 @@ namespace hemelb
 
       myRayTracer->Render();
 
-      if (mVisSettings.mode == 1)
+      if (mVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
         myGlypher->Render();
       }
 #ifndef NO_STREAKLINES
-      if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode == 2)
+      if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
+          == VisSettings::WALLANDSTREAKLINES)
       {
         myStreaker->render(iLatDat);
       }
@@ -129,7 +130,7 @@ namespace hemelb
     {
       io::XdrFileWriter writer = io::XdrFileWriter(image_file_name);
 
-      writer << mVisSettings.mode;
+      writer << (int) mVisSettings.mode;
 
       writer << mDomainStats.physical_pressure_threshold_min
           << mDomainStats.physical_pressure_threshold_max

@@ -31,8 +31,7 @@ namespace hemelb
 
         void writePixel(vis::ColPixel *col_pixel_p,
                         const vis::DomainStats* iDomainStats,
-                        int mode,
-                        const lb::StressTypes iLbmStressType);
+                        const vis::VisSettings* visSettings);
 
         // Function to get the current position of writing in the stream.
         virtual unsigned int getCurrentStreamPosition() const = 0;
