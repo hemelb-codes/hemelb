@@ -929,12 +929,10 @@ namespace hemelb
             lRay.VelocityColour[1] = 0.0F;
             lRay.VelocityColour[2] = 0.0F;
 
-            if (mVisSettings->mStressType != lb::ShearStress)
-            {
-              lRay.StressColour[0] = 0.0F;
-              lRay.StressColour[1] = 0.0F;
-              lRay.StressColour[2] = 0.0F;
-            }
+            lRay.StressColour[0] = 0.0F;
+            lRay.StressColour[1] = 0.0F;
+            lRay.StressColour[2] = 0.0F;
+
             lRay.Length = 0.0F;
             lRay.MinT = std::numeric_limits<float>::max();
             lRay.Density = -1.0F;
@@ -946,30 +944,14 @@ namespace hemelb
               continue;
             }
 
-            ColPixel col_pixel;
-            col_pixel.vel_r = lRay.VelocityColour[0] * 255.0F;
-            col_pixel.vel_g = lRay.VelocityColour[1] * 255.0F;
-            col_pixel.vel_b = lRay.VelocityColour[2] * 255.0F;
+            ColPixel col_pixel(lRay.MinT + t_near, lRay.Length,
+                                (lRay.Density - mDomainStats->density_threshold_min)
+                                   * mDomainStats->density_threshold_minmax_inv, lRay.Stress
+                                   != std::numeric_limits<float>::max()
+                                 ? lRay.Stress * mDomainStats->stress_threshold_max_inv
+                                 : std::numeric_limits<float>::max(), lRay.VelocityColour,
+                               lRay.StressColour);
 
-            if (mVisSettings->mStressType != lb::ShearStress)
-            {
-              col_pixel.stress_r = lRay.StressColour[0] * 255.0F;
-              col_pixel.stress_g = lRay.StressColour[1] * 255.0F;
-              col_pixel.stress_b = lRay.StressColour[2] * 255.0F;
-            }
-            col_pixel.dt = lRay.Length;
-            col_pixel.t = lRay.MinT + t_near;
-            col_pixel.density = (lRay.Density - mDomainStats->density_threshold_min)
-                * mDomainStats->density_threshold_minmax_inv;
-
-            if (lRay.Stress != std::numeric_limits<float>::max())
-            {
-              col_pixel.stress = lRay.Stress * mDomainStats->stress_threshold_max_inv;
-            }
-            else
-            {
-              col_pixel.stress = std::numeric_limits<float>::max();
-            }
             col_pixel.i = PixelId(subImageX, subImageY);
             col_pixel.i.isRt = true;
 

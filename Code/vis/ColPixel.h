@@ -25,16 +25,16 @@ namespace hemelb
     class ColPixel
     {
       public:
-        float vel_r, vel_g, vel_b;
-        float stress_r, stress_g, stress_b;
-        float t, dt;
-        float density;
-        float stress;
+        ColPixel();
 
-        float particle_vel;
-        float particle_z;
+        ColPixel(float particleVelocity, float particleZ, int particleInletId);
 
-        int particle_inlet_id;
+        ColPixel(float t,
+                 float dt,
+                 float density,
+                 float stress,
+                 const float velocityColour[3],
+                 const float stressColour[3]);
 
         struct PixelId i;
 
@@ -53,11 +53,27 @@ namespace hemelb
 
         static void PickColour(float value, float colour[3]);
 
-      protected:
+        float GetDensity();
+        float GetStress();
+
+      private:
         static void registerMpiType();
         static MPI_Datatype mpiType;
 
         void MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest);
+
+        // Ray tracer pixel data
+        float t, dt;
+        float vel_r, vel_g, vel_b;
+        float stress_r, stress_g, stress_b;
+        float density;
+        float stress;
+
+        // Streakline pixel data
+        float particle_vel;
+        float particle_z;
+        int particle_inlet_id;
+
     };
 
   }
