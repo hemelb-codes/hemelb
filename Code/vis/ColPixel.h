@@ -41,12 +41,12 @@ namespace hemelb
          * Merge data from the first ColPixel argument into the second
          * ColPixel argument.
          */
-        void MergeIn(const ColPixel *fromPixel, lb::StressTypes iStressType, int mode);
+        void MergeIn(const ColPixel* fromPixel, lb::StressTypes iStressType, int mode);
 
-        void rawWritePixel(int *pixel_index,
+        void rawWritePixel(int* pixel_index,
                            int mode,
-                           unsigned char rgb_data[],
-                           DomainStats* iDomainStats,
+                           unsigned char rgb_data[12],
+                           const DomainStats* iDomainStats,
                            lb::StressTypes iLbmStressType);
         static const MPI_Datatype& getMpiType();
 
@@ -56,12 +56,7 @@ namespace hemelb
         static void registerMpiType();
         static MPI_Datatype mpiType;
 
-        void makePixelColour(unsigned char& red,
-                             unsigned char& green,
-                             unsigned char& blue,
-                             int rawRed,
-                             int rawGreen,
-                             int rawBlue);
+        void MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest);
     };
 
   }

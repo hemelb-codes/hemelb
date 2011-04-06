@@ -63,16 +63,11 @@ namespace hemelb
       return mpiType;
     }
 
-    void ColPixel::makePixelColour(unsigned char& red,
-                                   unsigned char& green,
-                                   unsigned char& blue,
-                                   int rawRed,
-                                   int rawGreen,
-                                   int rawBlue)
+    void ColPixel::MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest)
     {
-      red = (unsigned char) util::NumericalFunctions::enforceBounds(rawRed, 0, 255);
-      green = (unsigned char) util::NumericalFunctions::enforceBounds(rawGreen, 0, 255);
-      blue = (unsigned char) util::NumericalFunctions::enforceBounds(rawBlue, 0, 255);
+      dest[0] = (unsigned char) util::NumericalFunctions::enforceBounds(rawRed, 0, 255);
+      dest[1] = (unsigned char) util::NumericalFunctions::enforceBounds(rawGreen, 0, 255);
+      dest[2] = (unsigned char) util::NumericalFunctions::enforceBounds(rawBlue, 0, 255);
     }
 
     /**
@@ -167,72 +162,65 @@ namespace hemelb
 
     void ColPixel::rawWritePixel(int *pixel_index,
                                  int mode,
-                                 unsigned char rgb_data[],
-                                 DomainStats* iDomainStats,
+                                 unsigned char rgb_data[12],
+                                 const DomainStats* iDomainStats,
                                  lb::StressTypes iLbmStressType)
     {
-      float density_col[3], stress_col[3], particle_col[3];
-
-      int bits_per_char = sizeof(char) * 8;
-      int pixel_i, pixel_j;
-
-      unsigned char r1, g1, b1;
-      unsigned char r2, g2, b2;
-      unsigned char r3, g3, b3;
-      unsigned char r4, g4, b4;
-
-      // store pixel id
-      pixel_i = i.i;
-      pixel_j = i.j;
-
-      *pixel_index = (pixel_i << (2 * bits_per_char)) + pixel_j;
-
-      r1 = g1 = b1 = 255;
-      r2 = g2 = b2 = 255;
+      const int bits_per_char = sizeof(char) * 8;
+      *pixel_index = (i.i << (2 * bits_per_char)) + i.j;
 
       if (i.isRt)
       {
         // store velocity volume rendering colour
-        makePixelColour(r1, g1, b1, int (vel_r / dt), int (vel_g / dt), int (vel_b / dt));
+        MakePixelColour(int (vel_r / dt), int (vel_g / dt), int (vel_b / dt), &rgb_data[0]);
 
         if (iLbmStressType != lb::ShearStress)
         {
           // store von Mises stress volume rendering colour
-          makePixelColour(r2, g2, b2, int (stress_r / dt), int (stress_g / dt), int (stress_b / dt));
-
+          MakePixelColour(int (stress_r / dt), int (stress_g / dt), int (stress_b / dt),
+                          &rgb_data[3]);
         }
         else if (stress < ((float) BIG_NUMBER))
         {
+          float stress_col[3];
+
           PickColour(stress, stress_col);
 
           // store wall shear stress colour
-          makePixelColour(r2, g2, b2, int (255.0F * stress_col[0]), int (255.0F * stress_col[1]),
-                          int (255.0F * stress_col[2]));
-
+          MakePixelColour(int (255.0F * stress_col[0]), int (255.0F * stress_col[1]), int (255.0F
+              * stress_col[2]), &rgb_data[3]);
         }
         else
         {
-          r2 = g2 = b2 = 0;
+          rgb_data[3] = rgb_data[4] = rgb_data[5];
         }
-
       } // if (isRt)
+      else
+      {
+        for (int ii = 0; ii < 6; ++ii)
+        {
+          rgb_data[ii] = 255;
+        }
+      }
 
       if (iLbmStressType != lb::ShearStress && mode == 0)
       {
+        float density_col[3], stress_col[3];
         PickColour(density, density_col);
         PickColour(stress, stress_col);
 
         // store wall pressure colour
-        makePixelColour(r3, g3, b3, int (255.0F * density_col[0]), int (255.0F * density_col[1]),
-                        int (255.0F * density_col[2]));
+        MakePixelColour(int (255.0F * density_col[0]), int (255.0F * density_col[1]), int (255.0F
+            * density_col[2]), &rgb_data[6]);
 
         // store von Mises stress colour
-        makePixelColour(r4, g4, b4, int (255.0F * stress_col[0]), int (255.0F * stress_col[1]),
-                        int (255.0F * stress_col[2]));
+        MakePixelColour(int (255.0F * stress_col[0]), int (255.0F * stress_col[1]), int (255.0F
+            * stress_col[2]), &rgb_data[9]);
 
       }
       else if (iLbmStressType != lb::ShearStress && mode == 1)
       {
+        float density_col[3], stress_col[3];
         PickColour(density, density_col);
         PickColour(stress, stress_col);
 
@@ -250,17 +238,19 @@ namespace hemelb
           }
 
           // store wall pressure (+glyph) colour
-          makePixelColour(r3, g3, b3, int (127.5F * density_col[0]), int (127.5F * density_col[1]),
-                          int (127.5F * density_col[2]));
+          MakePixelColour(int (127.5F * density_col[0]), int (127.5F * density_col[1]), int (127.5F
+              * density_col[2]), &rgb_data[6]);
 
           // store von Mises stress (+glyph) colour
-          makePixelColour(r4, g4, b4, int (127.5F * stress_col[0]), int (127.5F * stress_col[1]),
-                          int (127.5F * stress_col[2]));
+          MakePixelColour(int (127.5F * stress_col[0]), int (127.5F * stress_col[1]), int (127.5F
+              * stress_col[2]), &rgb_data[9]);
         }
         else
         {
-          r3 = g3 = b3 = 0;
-          r4 = g4 = b4 = 0;
+          for (int ii = 6; ii < 12; ++ii)
+          {
+            rgb_data[ii] = 0;
+          }
         }
 
       }
@@ -270,52 +260,39 @@ namespace hemelb
         if (i.isStreakline)
         {
           float scaled_vel = particle_vel * iDomainStats->velocity_threshold_max_inv;
-
+          float particle_col[3];
           PickColour(scaled_vel, particle_col);
 
           // store particle colour
-          makePixelColour(r3, g3, b3, int (255.0F * particle_col[0]),
-                          int (255.0F * particle_col[1]), int (255.0F * particle_col[2]));
+          MakePixelColour(int (255.0F * particle_col[0]), int (255.0F * particle_col[1]),
+                          int (255.0F * particle_col[2]), &rgb_data[6]);
 
-          r4 = r3;
-          g4 = g3;
-          b4 = b3;
-
+          for (int ii = 9; ii < 12; ++ii)
+          {
+            rgb_data[ii] = rgb_data[ii - 3];
+          }
         }
         else
         {
           // store pressure colour
-          r3 = g3 = b3 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F
-              * density), 0, 127);
+          rgb_data[6] = rgb_data[7] = rgb_data[8]
+              = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density), 0,
+                                                                        127);
 
           // store shear stress or von Mises stress
           if (stress < ((float) BIG_NUMBER))
           {
-            r4 = g4 = b4 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F
-                * stress), 0, 127);
+            rgb_data[9] = rgb_data[10] = rgb_data[11]
+                = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress), 0,
+                                                                          127);
 
           }
           else
           {
-            r4 = g4 = b4 = 0;
+            rgb_data[9] = rgb_data[10] = rgb_data[11] = 0;
           }
         }
-
       }
-
-      rgb_data[0] = r1;
-      rgb_data[1] = g1;
-      rgb_data[2] = b1;
-      rgb_data[3] = r2;
-      rgb_data[4] = g2;
-      rgb_data[5] = b2;
-      rgb_data[6] = r3;
-      rgb_data[7] = g3;
-      rgb_data[8] = b3;
-      rgb_data[9] = r4;
-      rgb_data[10] = g4;
-      rgb_data[11] = b4;
-
     }
 
     void ColPixel::PickColour(float value, float colour[3])
