@@ -22,6 +22,39 @@ namespace hemelb
 
     MPI_Datatype ColPixel::mpiType = MPI_DATATYPE_NULL;
 
+    ColPixel::ColPixel()
+    {
+    }
+
+    ColPixel::ColPixel(float particleVelocity, float particleZ, int particleInletId)
+    {
+      particle_vel = particleVelocity;
+      particle_z = particleZ;
+      particle_inlet_id = particleInletId;
+    }
+
+    ColPixel::ColPixel(float tIn,
+                       float dtIn,
+                       float densityIn,
+                       float stressIn,
+                       const float velocityColour[3],
+                       const float stressColour[3])
+    {
+      t = tIn;
+      dt = dtIn;
+
+      density = densityIn;
+      stress = stressIn;
+
+      vel_r = velocityColour[0] * 255.0F;
+      vel_g = velocityColour[1] * 255.0F;
+      vel_b = velocityColour[2] * 255.0F;
+
+      stress_r = stressColour[0] * 255.0F;
+      stress_g = stressColour[1] * 255.0F;
+      stress_b = stressColour[2] * 255.0F;
+    }
+
     // create the derived datatype for the MPI communications
     void ColPixel::registerMpiType()
     {
@@ -194,7 +227,6 @@ namespace hemelb
           rgb_data[3] = rgb_data[4] = rgb_data[5] = 0;
         }
       } // if (isRt)
-
       else
       {
         for (int ii = 0; ii < 6; ++ii)
@@ -256,43 +288,38 @@ namespace hemelb
         }
 
       }
+      else if (i.isStreakline)
+      {
+        float scaled_vel = particle_vel * iDomainStats->velocity_threshold_max_inv;
+        float particle_col[3];
+        PickColour(scaled_vel, particle_col);
+
+        // store particle colour
+        MakePixelColour(int (255.0F * particle_col[0]), int (255.0F * particle_col[1]), int (255.0F
+            * particle_col[2]), &rgb_data[6]);
+
+        for (int ii = 9; ii < 12; ++ii)
+        {
+          rgb_data[ii] = rgb_data[ii - 3];
+        }
+      }
       else
       {
+        // store pressure colour
+        rgb_data[6] = rgb_data[7] = rgb_data[8]
+            = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density), 0,
+                                                                      127);
 
-        if (i.isStreakline)
+        // store shear stress or von Mises stress
+        if (stress < ((float) BIG_NUMBER))
         {
-          float scaled_vel = particle_vel * iDomainStats->velocity_threshold_max_inv;
-          float particle_col[3];
-          PickColour(scaled_vel, particle_col);
-
-          // store particle colour
-          MakePixelColour(int (255.0F * particle_col[0]), int (255.0F * particle_col[1]),
-                          int (255.0F * particle_col[2]), &rgb_data[6]);
-
-          for (int ii = 9; ii < 12; ++ii)
-          {
-            rgb_data[ii] = rgb_data[ii - 3];
-          }
+          rgb_data[9] = rgb_data[10] = rgb_data[11]
+              = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress), 0,
+                                                                        127);
         }
         else
         {
-          // store pressure colour
-          rgb_data[6] = rgb_data[7] = rgb_data[8]
-              = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density), 0,
-                                                                        127);
-
-          // store shear stress or von Mises stress
-          if (stress < ((float) BIG_NUMBER))
-          {
-            rgb_data[9] = rgb_data[10] = rgb_data[11]
-                = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress), 0,
-                                                                          127);
-
-          }
-          else
-          {
-            rgb_data[9] = rgb_data[10] = rgb_data[11] = 0;
-          }
+          rgb_data[9] = rgb_data[10] = rgb_data[11] = 0;
         }
       }
     }
@@ -305,5 +332,14 @@ namespace hemelb
       colour[2] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * value, 0.F, 1.F);
     }
 
+    float ColPixel::GetDensity()
+    {
+      return density;
+    }
+
+    float ColPixel::GetStress()
+    {
+      return stress;
+    }
   }
 }

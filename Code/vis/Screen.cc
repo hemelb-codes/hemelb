@@ -369,8 +369,8 @@ namespace hemelb
         if (col_pixel_recv[bufferId][i].i.isRt && int (col_pixel_recv[bufferId][i].i.i) == mouseX
             && int (col_pixel_recv[bufferId][i].i.j) == mouseY)
         {
-          *density = col_pixel_recv[bufferId][i].density;
-          *stress = col_pixel_recv[bufferId][i].stress;
+          *density = col_pixel_recv[bufferId][i].GetDensity();
+          *stress = col_pixel_recv[bufferId][i].GetStress();
 
           return true;
         }
