@@ -756,11 +756,7 @@ namespace hemelb
 
         if (! (x[0] < 0 || x[0] >= pixels_x || x[1] < 0 || x[1] >= pixels_y))
         {
-          ColPixel col_pixel(particleVec[n].vel, p2[2], particleVec[n].inlet_id);
-
-          col_pixel.i = PixelId(x[0], x[1]);
-          col_pixel.i.isStreakline = true;
-
+          ColPixel col_pixel(x[0], x[1], particleVec[n].vel, p2[2], particleVec[n].inlet_id);
           mScreen->AddPixel(&col_pixel, mVisSettings);
         }
       }
