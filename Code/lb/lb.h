@@ -63,7 +63,8 @@ namespace hemelb
 
         void ReadVisParameters();
 
-        void CalculateMouseFlowField(hemelb::vis::ColPixel *col_pixel_p,
+        void CalculateMouseFlowField(float densityIn,
+                                     float stressIn,
                                      double &mouse_pressure,
                                      double &mouse_stress,
                                      double density_threshold_min,

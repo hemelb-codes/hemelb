@@ -303,30 +303,21 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       {
         mVisControl->render(RECV_BUFFER_A, mLatDat, mNetworkTopology);
 
-        if (mVisControl->mVisSettings.mouse_x >= 0 && mVisControl->mVisSettings.mouse_y >= 0
-            && steeringCpt->updatedMouseCoords)
+        if (steeringCpt->updatedMouseCoords)
         {
-          for (int i = 0; i < mVisControl->col_pixels_recv[RECV_BUFFER_A]; i++)
+          float density, stress;
+
+          if (mVisControl->MouseIsOverPixel(&density, &stress))
           {
-            if (mVisControl->col_pixel_recv[RECV_BUFFER_A][i].i.isRt
-                && int (mVisControl->col_pixel_recv[RECV_BUFFER_A][i].i.i)
-                    == mVisControl->mVisSettings.mouse_x
-                && int (mVisControl->col_pixel_recv[RECV_BUFFER_A][i].i.j)
-                    == mVisControl->mVisSettings.mouse_y)
-            {
-              double mouse_pressure, mouse_stress;
-              mLbm->CalculateMouseFlowField(&mVisControl->col_pixel_recv[RECV_BUFFER_A][i],
-                                            mouse_pressure, mouse_stress,
-                                            mVisControl->mDomainStats.density_threshold_min,
-                                            mVisControl->mDomainStats.density_threshold_minmax_inv,
-                                            mVisControl->mDomainStats.stress_threshold_max_inv);
+            double mouse_pressure, mouse_stress;
+            mLbm->CalculateMouseFlowField(density, stress, mouse_pressure, mouse_stress,
+                                          mVisControl->mDomainStats.density_threshold_min,
+                                          mVisControl->mDomainStats.density_threshold_minmax_inv,
+                                          mVisControl->mDomainStats.stress_threshold_max_inv);
 
-              mVisControl->setMouseParams(mouse_pressure, mouse_stress);
-
-              break;
-            }
+            mVisControl->setMouseParams(mouse_pressure, mouse_stress);
           }
-          steeringCpt->updatedMouseCoords = 0;
+          steeringCpt->updatedMouseCoords = false;
         }
 
         if (mNetworkTopology->IsCurrentProcTheIOProc())

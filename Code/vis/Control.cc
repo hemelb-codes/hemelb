@@ -25,17 +25,6 @@ namespace hemelb
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
-      col_pixel_recv[0] = new ColPixel[MAXCOLOUREDPIXELS];
-      col_pixel_recv[1] = new ColPixel[MAXCOLOUREDPIXELS];
-
-      pixels_max = MAXCOLOUREDPIXELS;
-      mScreen.col_pixel_id = new int[pixels_max];
-
-      for (int i = 0; i < MAXCOLOUREDPIXELS; i++)
-      {
-        mScreen.col_pixel_id[i] = -1;
-      }
-
       mVisSettings.mouse_x = -1;
       mVisSettings.mouse_y = -1;
     }
@@ -100,15 +89,7 @@ namespace hemelb
 
     void Control::updateImageSize(int pixels_x, int pixels_y)
     {
-      if (pixels_x * pixels_y > mScreen.GetPixelsX() * mScreen.GetPixelsY())
-      {
-        pixels_max = pixels_x * pixels_y;
-        mScreen.col_pixel_id = (int *) realloc(mScreen.col_pixel_id, sizeof(int) * pixels_max);
-      }
-      for (int i = 0; i < pixels_x * pixels_y; i++)
-      {
-        mScreen.col_pixel_id[i] = -1;
-      }
+      mScreen.Resize(pixels_x, pixels_y);
     }
 
     /**
@@ -120,139 +101,14 @@ namespace hemelb
      */
     void Control::compositeImage(int recv_buffer_id, const topology::NetworkTopology * iNetTopology)
     {
-      // Status object for MPI comms.
-      MPI_Status status;
-
-      // For all processors with pixels, copy these to the receive buffer.
-      if (!iNetTopology->IsCurrentProcTheIOProc())
-      {
-        for (unsigned int ii = 0; ii < mScreen.col_pixels; ++ii)
-        {
-          col_pixel_recv[recv_buffer_id][ii] = mScreen.localPixels[ii];
-        }
-      }
-
-      /*
-       * We do several iterations.
-       *
-       * On the first, every even proc passes data to the odd proc below, where it is merged.
-       * On the second, the difference is two, so proc 3 passes to 1, 7 to 5, 11 to 9 etc.
-       * On the third the differenec is four, so proc 5 passes to 1, 13 to 9 etc.
-       * .
-       * .
-       * .
-       *
-       * This continues until all data is passed back to processor one, which passes it to proc 0.
-       */
-
-      // Start with a difference in rank of 1, doubling every time.
-      for (unsigned int deltaRank = 1; deltaRank < iNetTopology->GetProcessorCount(); deltaRank
-          <<= 1)
-      {
-        // The receiving proc is all the ranks that are 1 modulo (deltaRank * 2)
-        for (unsigned int receivingProc = 1; receivingProc < (iNetTopology->GetProcessorCount()
-            - deltaRank); receivingProc += deltaRank << 1)
-        {
-          unsigned int sendingProc = receivingProc + deltaRank;
-
-          // If we're the sending proc, do the send.
-          if (iNetTopology->GetLocalRank() == sendingProc)
-          {
-            MPI_Send(&mScreen.col_pixels, 1, MPI_UNSIGNED, receivingProc, 20, MPI_COMM_WORLD);
-
-            if (mScreen.col_pixels > 0)
-            {
-              MPI_Send(mScreen.localPixels, mScreen.col_pixels, ColPixel::getMpiType(),
-                       receivingProc, 20, MPI_COMM_WORLD);
-            }
-          }
-
-          // If we're the receiving proc, receive.
-          else if (iNetTopology->GetLocalRank() == receivingProc)
-          {
-            unsigned int col_pixels_temp;
-
-            MPI_Recv(&col_pixels_temp, 1, MPI_UNSIGNED, sendingProc, 20, MPI_COMM_WORLD, &status);
-
-            if (col_pixels_temp > 0)
-            {
-              MPI_Recv(mScreen.localPixels, col_pixels_temp, ColPixel::getMpiType(), sendingProc,
-                       20, MPI_COMM_WORLD, &status);
-            }
-
-            // Now merge the received pixels in with the local store of pixels.
-            for (unsigned int n = 0; n < col_pixels_temp; n++)
-            {
-              ColPixel* col_pixel1 = &mScreen.localPixels[n];
-
-              int id = col_pixel1->i.i * mScreen.GetPixelsY() + col_pixel1->i.j;
-              if (mScreen.col_pixel_id[id] == -1)
-              {
-                mScreen.col_pixel_id[id] = mScreen.col_pixels;
-
-                col_pixel_recv[recv_buffer_id][mScreen.col_pixels] = *col_pixel1;
-                ++mScreen.col_pixels;
-              }
-              else
-              {
-                col_pixel_recv[recv_buffer_id][mScreen.col_pixel_id[id]].MergeIn(
-                                                                                 col_pixel1,
-                                                                                 mVisSettings.mStressType,
-                                                                                 mVisSettings.mode);
-              }
-            }
-
-            // If this isn't the last iteration, copy the pixels from the received buffer
-            // back to the screen.
-            if ( (deltaRank << 1) < iNetTopology->GetProcessorCount())
-            {
-              for (unsigned int ii = 0; ii < mScreen.col_pixels; ++ii)
-              {
-                mScreen.localPixels[ii] = col_pixel_recv[recv_buffer_id][ii];
-              }
-            }
-          }
-        }
-      }
-
-      // Send the final image from proc 1 to 0.
-      if (iNetTopology->GetLocalRank() == 1)
-      {
-        MPI_Send(&mScreen.col_pixels, 1, MPI_UNSIGNED, 0, 20, MPI_COMM_WORLD);
-
-        if (mScreen.col_pixels > 0)
-        {
-          MPI_Send(col_pixel_recv[recv_buffer_id], mScreen.col_pixels, ColPixel::getMpiType(), 0,
-                   20, MPI_COMM_WORLD);
-        }
-
-      }
-      // Receive the final image on proc 0.
-      else if (iNetTopology->GetLocalRank() == 0)
-      {
-        MPI_Recv(&mScreen.col_pixels, 1, MPI_UNSIGNED, 1, 20, MPI_COMM_WORLD, &status);
-
-        if (mScreen.col_pixels > 0)
-        {
-          MPI_Recv(col_pixel_recv[recv_buffer_id], mScreen.col_pixels, ColPixel::getMpiType(), 1,
-                   20, MPI_COMM_WORLD, &status);
-        }
-
-      }
+      mScreen.CompositeImage(recv_buffer_id, &mVisSettings, iNetTopology);
     }
 
     void Control::render(int recv_buffer_id,
                          geometry::LatticeData* iLatDat,
                          const topology::NetworkTopology* iNetTopology)
     {
-      if (mScreen.GetPixelsX() * mScreen.GetPixelsY() > pixels_max)
-      {
-        pixels_max = util::NumericalFunctions::max(2 * pixels_max, mScreen.GetPixelsX()
-            * mScreen.GetPixelsY());
-
-        mScreen.col_pixel_id = (int *) realloc(mScreen.col_pixel_id, sizeof(int) * pixels_max);
-      }
-      mScreen.col_pixels = 0;
+      mScreen.Reset();
 
       myRayTracer->Render();
 
@@ -267,14 +123,6 @@ namespace hemelb
       }
 #endif
       compositeImage(recv_buffer_id, iNetTopology);
-
-      col_pixels_recv[recv_buffer_id] = mScreen.col_pixels;
-
-      for (int m = 0; m < col_pixels_recv[recv_buffer_id]; m++)
-      {
-        mScreen.col_pixel_id[mScreen.localPixels[m].i.i * mScreen.GetPixelsY()
-            + mScreen.localPixels[m].i.j] = -1;
-      }
     }
 
     void Control::writeImage(int recv_buffer_id, std::string image_file_name)
@@ -288,19 +136,25 @@ namespace hemelb
           << mDomainStats.physical_velocity_threshold_max
           << mDomainStats.physical_stress_threshold_max;
 
-      writer << mScreen.GetPixelsX() << mScreen.GetPixelsY() << col_pixels_recv[recv_buffer_id];
-
-      for (int n = 0; n < col_pixels_recv[recv_buffer_id]; n++)
-      {
-        writer.writePixel(&col_pixel_recv[recv_buffer_id][n], &mDomainStats, mVisSettings.mode,
-                          mVisSettings.mStressType);
-      }
+      mScreen.WritePixelCount(recv_buffer_id, &writer);
+      mScreen.WritePixels(recv_buffer_id, &mDomainStats, &mVisSettings, &writer);
     }
 
     void Control::setMouseParams(double iPhysicalPressure, double iPhysicalStress)
     {
       mVisSettings.mouse_pressure = iPhysicalPressure;
       mVisSettings.mouse_stress = iPhysicalStress;
+    }
+
+    bool Control::MouseIsOverPixel(float* density, float* stress)
+    {
+      if (mVisSettings.mouse_x < 0 || mVisSettings.mouse_y < 0)
+      {
+        return false;
+      }
+
+      return mScreen.MouseIsOverPixel(RECV_BUFFER_A, mVisSettings.mouse_x, mVisSettings.mouse_y,
+                                      density, stress);
     }
 
     void Control::streaklines(int time_step, int period, geometry::LatticeData* iLatDat)
@@ -322,11 +176,6 @@ namespace hemelb
       delete vis;
       delete myGlypher;
       delete myRayTracer;
-
-      delete[] col_pixel_recv[0];
-      delete[] col_pixel_recv[1];
-
-      delete[] mScreen.col_pixel_id;
     }
 
   } // namespace vis
