@@ -55,9 +55,10 @@ namespace hemelb
       private:
         struct PixelId
         {
-            bool isRt :true;
-            bool isGlyph :true;
-            bool isStreakline :true;
+            // Bitfield, fits in 4 bytes
+            bool isRt :1;
+            bool isGlyph :1;
+            bool isStreakline :1;
             unsigned int i :14;
             unsigned int j :14;
 
