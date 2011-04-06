@@ -38,7 +38,7 @@ namespace hemelb
      * @param iStressType The stress type of the visualisation
      * @param mode Controls what aspects of the visualisation to display.
      */
-    void Screen::AddPixel(const ColPixel* newPixel, lb::StressTypes iStressType, int mode)
+    void Screen::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
     {
       // Get the id of the pixel if we've already added one at the same location.
       int pixelId = col_pixel_id[newPixel->i.i * PixelsY + newPixel->i.j];
@@ -46,7 +46,7 @@ namespace hemelb
       // If we have one at this location, merge in the pixel.
       if (pixelId != -1)
       {
-        localPixels[pixelId].MergeIn(newPixel, iStressType, mode);
+        localPixels[pixelId].MergeIn(newPixel, visSettings);
       }
       // Otherwise, if we have exceeded the maximum number of pixels, do nothing.
       else if (col_pixels >= COLOURED_PIXELS_MAX)
@@ -75,8 +75,7 @@ namespace hemelb
      */
     void Screen::RenderLine(const float endPoint1[3],
                             const float endPoint2[3],
-                            lb::StressTypes iStressType,
-                            int mode)
+                            const VisSettings* visSettings)
     {
       // Store end points of the line and 'current' point (x and y).
       int x = int (endPoint1[0]);
@@ -114,11 +113,11 @@ namespace hemelb
 
       if (dx > dy)
       {
-        RenderLineHelper<true> (x, y, dy, dy - dx, x2, iStressType, mode);
+        RenderLineHelper<true> (x, y, dy, dy - dx, x2, visSettings);
       }
       else
       {
-        RenderLineHelper<false> (x, y, dx, dx - dy, y2, iStressType, mode);
+        RenderLineHelper<false> (x, y, dx, dx - dy, y2, visSettings);
       }
     }
 
@@ -140,8 +139,7 @@ namespace hemelb
                                   int incE,
                                   int incNE,
                                   int limit,
-                                  lb::StressTypes stressType,
-                                  int mode)
+                                  const VisSettings* visSettings)
     {
       int d = incNE;
 
@@ -153,7 +151,7 @@ namespace hemelb
           col_pixel.i = PixelId(x, y);
           col_pixel.i.isGlyph = true;
 
-          AddPixel(&col_pixel, stressType, mode);
+          AddPixel(&col_pixel, visSettings);
         }
 
         if (d < 0)
@@ -310,9 +308,7 @@ namespace hemelb
               }
               else
               {
-                col_pixel_recv[bufferId][col_pixel_id[id]].MergeIn(col_pixel1,
-                                                                   visSettings->mStressType,
-                                                                   visSettings->mode);
+                col_pixel_recv[bufferId][col_pixel_id[id]].MergeIn(col_pixel1, visSettings);
               }
             }
 
@@ -397,8 +393,7 @@ namespace hemelb
     {
       for (int i = 0; i < col_pixels_recv[bufferId]; i++)
       {
-        writer->writePixel(&col_pixel_recv[bufferId][i], domainStats, visSettings->mode,
-                           visSettings->mStressType);
+        writer->writePixel(&col_pixel_recv[bufferId][i], domainStats, visSettings);
       }
     }
 

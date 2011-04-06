@@ -18,8 +18,7 @@ namespace hemelb
     // Function to write out our struct, ColPixel.
     void Writer::writePixel(vis::ColPixel *col_pixel_p,
                             const vis::DomainStats* iDomainStats,
-                            int mode,
-                            const lb::StressTypes iLbmStressType)
+                            const vis::VisSettings* visSettings)
     {
       // TODO: make this deal with spaces/newlines for general writer
 
@@ -29,7 +28,7 @@ namespace hemelb
       int bits_per_char = sizeof(char) * 8;
 
       // Use a ray-tracer function to get the necessary pixel data.
-      col_pixel_p->rawWritePixel(&index, mode, rgb_data, iDomainStats, iLbmStressType);
+      col_pixel_p->rawWritePixel(&index, rgb_data, iDomainStats, visSettings);
 
       *this << index;
 

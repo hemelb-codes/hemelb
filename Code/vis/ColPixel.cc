@@ -73,7 +73,7 @@ namespace hemelb
     /**
      * Merge data from the ColPixel argument into this pixel.
      */
-    void ColPixel::MergeIn(const ColPixel *fromPixel, lb::StressTypes iStressType, int mode)
+    void ColPixel::MergeIn(const ColPixel *fromPixel, const VisSettings* visSettings)
     {
       // Merge raytracing data
 
@@ -84,7 +84,7 @@ namespace hemelb
         vel_g += fromPixel->vel_g;
         vel_b += fromPixel->vel_b;
 
-        if (iStressType != lb::ShearStress)
+        if (visSettings->mStressType != lb::ShearStress)
         {
           stress_r += fromPixel->stress_r;
           stress_g += fromPixel->stress_g;
@@ -108,7 +108,7 @@ namespace hemelb
         vel_g = fromPixel->vel_g;
         vel_b = fromPixel->vel_b;
 
-        if (iStressType != lb::ShearStress)
+        if (visSettings->mStressType != lb::ShearStress)
         {
           stress_r = fromPixel->stress_r;
           stress_g = fromPixel->stress_g;
@@ -125,7 +125,8 @@ namespace hemelb
       // Done merging ray-tracing - (last combinations would be if from-pixel has no ray-tracing data)
 
       // Now merge glyph data
-      if (iStressType != lb::ShearStress && (mode == 0 || mode == 1))
+      if (visSettings->mStressType != lb::ShearStress && (visSettings->mode
+          == VisSettings::ISOSURFACES || visSettings->mode == VisSettings::ISOSURFACESANDGLYPHS))
       {
         if (fromPixel->i.isGlyph)
         {
@@ -161,10 +162,9 @@ namespace hemelb
     }
 
     void ColPixel::rawWritePixel(int *pixel_index,
-                                 int mode,
                                  unsigned char rgb_data[12],
                                  const DomainStats* iDomainStats,
-                                 lb::StressTypes iLbmStressType)
+                                 const VisSettings* visSettings)
     {
       const int bits_per_char = sizeof(char) * 8;
       *pixel_index = (i.i << (2 * bits_per_char)) + i.j;
@@ -174,7 +174,7 @@ namespace hemelb
         // store velocity volume rendering colour
         MakePixelColour(int (vel_r / dt), int (vel_g / dt), int (vel_b / dt), &rgb_data[0]);
 
-        if (iLbmStressType != lb::ShearStress)
+        if (visSettings->mStressType != lb::ShearStress)
         {
           // store von Mises stress volume rendering colour
           MakePixelColour(int (stress_r / dt), int (stress_g / dt), int (stress_b / dt),
@@ -183,7 +183,6 @@ namespace hemelb
         else if (stress < ((float) BIG_NUMBER))
         {
           float stress_col[3];
-
           PickColour(stress, stress_col);
 
           // store wall shear stress colour
@@ -192,9 +191,10 @@ namespace hemelb
         }
         else
         {
-          rgb_data[3] = rgb_data[4] = rgb_data[5];
+          rgb_data[3] = rgb_data[4] = rgb_data[5] = 0;
         }
       } // if (isRt)
+
       else
       {
         for (int ii = 0; ii < 6; ++ii)
@@ -203,7 +203,8 @@ namespace hemelb
         }
       }
 
-      if (iLbmStressType != lb::ShearStress && mode == 0)
+      if (visSettings->mStressType != lb::ShearStress && visSettings->mode
+          == VisSettings::ISOSURFACES)
       {
         float density_col[3], stress_col[3];
         PickColour(density, density_col);
@@ -218,7 +219,8 @@ namespace hemelb
             * stress_col[2]), &rgb_data[9]);
 
       }
-      else if (iLbmStressType != lb::ShearStress && mode == 1)
+      else if (visSettings->mStressType != lb::ShearStress && visSettings->mode
+          == VisSettings::ISOSURFACESANDGLYPHS)
       {
         float density_col[3], stress_col[3];
         PickColour(density, density_col);
