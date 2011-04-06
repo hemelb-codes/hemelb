@@ -10,57 +10,68 @@ namespace hemelb
 {
   namespace vis
   {
-    struct PixelId
-    {
-        unsigned int isRt :1;
-        unsigned int isGlyph :1;
-        unsigned int isStreakline :1;
-        unsigned int i :14;
-        unsigned int j :14;
-
-        PixelId();
-        PixelId(int i, int j);
-    };
-
     class ColPixel
     {
       public:
         ColPixel();
 
-        ColPixel(float particleVelocity, float particleZ, int particleInletId);
+        ColPixel(int i, int j);
 
-        ColPixel(float t,
+        ColPixel(int i, int j, float particleVelocity, float particleZ, int particleInletId);
+
+        ColPixel(int i,
+                 int j,
+                 float t,
                  float dt,
                  float density,
                  float stress,
                  const float velocityColour[3],
                  const float stressColour[3]);
 
-        struct PixelId i;
-
         /**
          * Merge data from the first ColPixel argument into the second
          * ColPixel argument.
          */
-        void
-        MergeIn(const ColPixel* fromPixel, const VisSettings* visSettings);
+        void MergeIn(const ColPixel* fromPixel, const VisSettings* visSettings);
 
         void rawWritePixel(int* pixel_index,
                            unsigned char rgb_data[12],
                            const DomainStats* iDomainStats,
                            const VisSettings* visSettings);
-        static const MPI_Datatype& getMpiType();
 
+        float GetDensity() const;
+        float GetStress() const;
+
+        unsigned int GetI() const;
+        unsigned int GetJ() const;
+
+        bool IsRT() const;
+        bool IsGlyph() const;
+        bool IsStreakline() const;
+
+        static const MPI_Datatype& getMpiType();
         static void PickColour(float value, float colour[3]);
 
-        float GetDensity();
-        float GetStress();
-
       private:
+        struct PixelId
+        {
+            bool isRt :true;
+            bool isGlyph :true;
+            bool isStreakline :true;
+            unsigned int i :14;
+            unsigned int j :14;
+
+            PixelId();
+            PixelId(int i, int j);
+        };
+
         static void registerMpiType();
         static MPI_Datatype mpiType;
 
         void MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest);
+
+        // Pixel identity
+        struct PixelId i;
 
         // Ray tracer pixel data
         float t, dt;
