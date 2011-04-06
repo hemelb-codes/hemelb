@@ -362,12 +362,11 @@ namespace hemelb
                    MPI_COMM_WORLD,
                    &status);
         }
-
       }
 
       col_pixels_recv[bufferId] = col_pixels;
 
-      for (int m = 0; m < col_pixels_recv[bufferId]; m++)
+      for (unsigned int m = 0; m < col_pixels_recv[bufferId]; m++)
       {
         col_pixel_id[localPixels[m].GetI() * GetPixelsY() + localPixels[m].GetJ()] = -1;
       }
@@ -379,7 +378,7 @@ namespace hemelb
                                   float* density,
                                   float* stress)
     {
-      for (int i = 0; i < col_pixels_recv[bufferId]; i++)
+      for (unsigned int i = 0; i < col_pixels_recv[bufferId]; i++)
       {
         if (col_pixel_recv[bufferId][i].IsRT() && int (col_pixel_recv[bufferId][i].GetI())
             == mouseX && int (col_pixel_recv[bufferId][i].GetJ()) == mouseY)
@@ -406,7 +405,7 @@ namespace hemelb
                              const VisSettings* visSettings,
                              io::Writer* writer)
     {
-      for (int i = 0; i < col_pixels_recv[bufferId]; i++)
+      for (unsigned int i = 0; i < col_pixels_recv[bufferId]; i++)
       {
         writer->writePixel(&col_pixel_recv[bufferId][i], domainStats, visSettings);
       }
