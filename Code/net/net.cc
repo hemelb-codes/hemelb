@@ -365,6 +365,11 @@ namespace hemelb
                     int neigh_j = site_j + D3Q15::CY[l];
                     int neigh_k = site_k + D3Q15::CZ[l];
 
+                    if (!bLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
+                    {
+                      continue;
+                    }
+
                     // Find the processor Id for that neighbour.
                     int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 

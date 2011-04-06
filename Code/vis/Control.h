@@ -45,6 +45,8 @@ namespace hemelb
                            const float &latitude,
                            const float &zoom);
 
+        bool MouseIsOverPixel(float* density, float* stress);
+
         void streaklines(int time_step, int period, geometry::LatticeData* iLatDat);
         void restart();
 
@@ -66,9 +68,6 @@ namespace hemelb
         DomainStats mDomainStats;
         VisSettings mVisSettings;
 
-        int col_pixels_recv[2]; // number received?
-        ColPixel* col_pixel_recv[2];
-
       private:
         struct Vis
         {
@@ -76,15 +75,11 @@ namespace hemelb
             float system_size;
         };
 
-        int pixels_max;
-
         Vis* vis;
 
         RayTracer *myRayTracer;
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
-
-        static const long MAXCOLOUREDPIXELS = 2048 * 2048;
 
     };
   }
