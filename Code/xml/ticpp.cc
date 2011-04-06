@@ -219,7 +219,7 @@ Node* Node::NodeFactory( TiXmlNode* tiXmlNode, bool throwIfNull, bool rememberSp
 		}
 	}
 
-	Node* temp;
+	Node* temp = NULL;
 	switch ( tiXmlNode->Type() )
 	{
 		case TiXmlNode::DOCUMENT:
