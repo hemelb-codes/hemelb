@@ -17,17 +17,12 @@ namespace hemelb
     // are used to do the visualisation. This is a bug.
 
     // Function to initialise the velocity field at given coordinates.
-    void StreaklineDrawer::initializeVelFieldBlock(geometry::LatticeData* iLatDat,
+    void StreaklineDrawer::initializeVelFieldBlock(const geometry::LatticeData* iLatDat,
                                                    unsigned int site_i,
                                                    unsigned int site_j,
                                                    unsigned int site_k,
                                                    int proc_id)
     {
-      if (site_i >= iLatDat->GetXSiteCount() || site_j >= iLatDat->GetYSiteCount() || site_k
-          >= iLatDat->GetZSiteCount())
-      {
-        return;
-      }
       unsigned int i = site_i >> iLatDat->GetLog2BlockSize();
       unsigned int j = site_j >> iLatDat->GetLog2BlockSize();
       unsigned int k = site_k >> iLatDat->GetLog2BlockSize();
@@ -298,22 +293,28 @@ namespace hemelb
                       != lBlock->ProcessorRankForEachBlockSite[m])
                     continue;
 
-                  for (unsigned int neigh_i = util::NumericalFunctions::max<int>(0, (int) site_i
-                      - 1); neigh_i
-                      <= util::NumericalFunctions::min<unsigned int>(iLatDat->GetXSiteCount() - 1,
-                                                                     site_i + 1); neigh_i++)
+                  const unsigned int startI = util::NumericalFunctions::max<int>(0, (int) site_i
+                      - 1);
+                  const unsigned int startJ = util::NumericalFunctions::max<int>(0, (int) site_j
+                      - 1);
+                  const unsigned int startK = util::NumericalFunctions::max<int>(0, (int) site_k
+                      - 1);
+
+                  const unsigned int endI =
+                      util::NumericalFunctions::min<unsigned int>(iLatDat->GetXSiteCount() - 1,
+                                                                  site_i + 1);
+                  const unsigned int endJ =
+                      util::NumericalFunctions::min<unsigned int>(iLatDat->GetYSiteCount() - 1,
+                                                                  site_j + 1);
+                  const unsigned int endK =
+                      util::NumericalFunctions::min<unsigned int>(iLatDat->GetZSiteCount() - 1,
+                                                                  site_k + 1);
+
+                  for (unsigned int neigh_i = startI; neigh_i <= endI; neigh_i++)
                   {
-                    for (unsigned int neigh_j = util::NumericalFunctions::max<int>(0, (int) site_j
-                        - 1); neigh_j
-                        <= util::NumericalFunctions::min<unsigned int>(
-                                                                       iLatDat->GetYSiteCount() - 1,
-                                                                       site_j + 1); neigh_j++)
+                    for (unsigned int neigh_j = startJ; neigh_j <= endJ; neigh_j++)
                     {
-                      for (unsigned int neigh_k = util::NumericalFunctions::max<int>(0,
-                                                                                     (int) site_k
-                                                                                         - 1); neigh_k
-                          <= util::NumericalFunctions::min<unsigned int>(iLatDat->GetZSiteCount()
-                              - 1, site_k + 1); neigh_k++)
+                      for (unsigned int neigh_k = startK; neigh_k <= endK; neigh_k++)
                       {
                         const int *neigh_proc_id = iLatDat->GetProcIdFromGlobalCoords(neigh_i,
                                                                                       neigh_j,

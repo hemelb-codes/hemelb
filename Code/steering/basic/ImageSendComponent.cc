@@ -86,12 +86,8 @@ namespace hemelb
 
       io::XdrMemWriter pixelDataWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
 
-      for (int i = 0; i < mVisControl->col_pixels_recv[RECV_BUFFER_A]; i++)
-      {
-        pixelDataWriter.writePixel(&mVisControl->col_pixel_recv[RECV_BUFFER_A][i],
-                                   &mVisControl->mDomainStats, mVisControl->mVisSettings.mode,
-                                   mLbmParams->StressType);
-      }
+      mVisControl->mScreen.WritePixels(RECV_BUFFER_A, &mVisControl->mDomainStats,
+                                       &mVisControl->mVisSettings, &pixelDataWriter);
 
       // Send the number of bytes being used on pixel data.
       int frameBytes = pixelDataWriter.getCurrentStreamPosition();
