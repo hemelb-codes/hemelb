@@ -108,7 +108,7 @@ namespace hemelb
         mScreen->Transform<float> (p3, p3);
         mScreen->Transform<float> (p4, p4);
 
-        mScreen->RenderLine(p3, p4, mVisSettings->mStressType, mVisSettings->mode);
+        mScreen->RenderLine(p3, p4, mVisSettings);
       }
     }
 

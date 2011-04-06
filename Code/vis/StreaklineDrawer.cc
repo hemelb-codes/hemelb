@@ -764,7 +764,7 @@ namespace hemelb
           col_pixel.i = PixelId(x[0], x[1]);
           col_pixel.i.isStreakline = true;
 
-          mScreen->AddPixel(&col_pixel, mVisSettings->mStressType, mVisSettings->mode);
+          mScreen->AddPixel(&col_pixel, mVisSettings);
         }
       }
     }
