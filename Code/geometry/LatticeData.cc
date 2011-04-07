@@ -31,7 +31,7 @@ namespace hemelb
 
     void LatticeData::InitialiseNeighbourLookup(short int ** bSharedFLocationForEachProc,
                                                 int localRank,
-                                                const unsigned int * iSiteDataForThisRank)
+                                                const unsigned int* iSiteDataForThisRank)
     {
       int n = -1;
       int lSiteIndexOnProc = 0;
