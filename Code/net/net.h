@@ -9,8 +9,7 @@
 #include "D3Q15.h"
 #include "SimConfig.h"
 
-#include "lb/GlobalLatticeData.h"
-#include "lb/LocalLatticeData.h"
+#include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
 namespace hemelb
@@ -24,12 +23,11 @@ namespace hemelb
         Net(hemelb::topology::NetworkTopology * iTopology);
         ~Net();
 
-        int* Initialise(hemelb::lb::GlobalLatticeData &iGlobLatDat,
-                        hemelb::lb::LocalLatticeData* &bLocalLatDat);
+        int* Initialise(geometry::LatticeData* bLatDat);
 
         void Receive();
         void Send();
-        void Wait(hemelb::lb::LocalLatticeData *bLocalLatDat);
+        void Wait();
 
         /**
          * Request that iCount entries of type T be included in the send to iToRank,
@@ -79,14 +77,9 @@ namespace hemelb
 
       private:
 
-        void GetThisRankSiteData(const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+        void GetThisRankSiteData(const geometry::LatticeData* bLatDat,
                                  unsigned int *& bThisRankSiteData);
-        void InitialiseNeighbourLookup(hemelb::lb::LocalLatticeData *bLocalLatDat,
-                                       short int **bSharedFLocationForEachProc,
-                                       const unsigned int *iSiteDataForThisRank,
-                                       const hemelb::lb::GlobalLatticeData & iGlobLatDat);
-        void CountCollisionTypes(hemelb::lb::LocalLatticeData * bLocalLatDat,
-                                 const hemelb::lb::GlobalLatticeData & iGlobLatDat,
+        void CountCollisionTypes(geometry::LatticeData* bLatDat,
                                  const unsigned int * lThisRankSiteData);
 
         void InitialisePointToPointComms(short int **& lSharedFLocationForEachProc);

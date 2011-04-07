@@ -13,7 +13,7 @@
 #include "io/XdrMemReader.h"
 #include "io/XdrMemWriter.h"
 #include "io/AsciiFileWriter.h"
-#include "topology/TopologyReader.h"
+#include "geometry/LatticeData.h"
 
 namespace hemelb
 {
@@ -165,8 +165,7 @@ namespace hemelb
 
     void LBM::WriteConfig(hemelb::lb::Stability stability,
                           std::string output_file_name,
-                          const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                          const hemelb::lb::LocalLatticeData &iLocalLatticeData)
+                          const hemelb::geometry::LatticeData &iLatticeData)
     {
       /* This routine writes the flow field on file. The data are gathered
        to the root processor and written from there.  The format
@@ -299,39 +298,37 @@ namespace hemelb
        root processor */
 
       int n = -1; // net->proc_block counter
-      for (unsigned int i = 0; i < iGlobalLatticeData.GetXSiteCount(); i
-          += iGlobalLatticeData.GetBlockSize())
+      for (unsigned int i = 0; i < iLatticeData.GetXSiteCount(); i += iLatticeData.GetBlockSize())
       {
-        for (unsigned int j = 0; j < iGlobalLatticeData.GetYSiteCount(); j
-            += iGlobalLatticeData.GetBlockSize())
+        for (unsigned int j = 0; j < iLatticeData.GetYSiteCount(); j += iLatticeData.GetBlockSize())
         {
-          for (unsigned int k = 0; k < iGlobalLatticeData.GetZSiteCount(); k
-              += iGlobalLatticeData.GetBlockSize())
+          for (unsigned int k = 0; k < iLatticeData.GetZSiteCount(); k
+              += iLatticeData.GetBlockSize())
           {
 
             ++n;
 
-            if (iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite == NULL)
+            if (iLatticeData.GetBlock(n)->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
             }
             int m = -1;
 
-            for (unsigned int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
+            for (unsigned int site_i = i; site_i < i + iLatticeData.GetBlockSize(); site_i++)
             {
-              for (unsigned int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
+              for (unsigned int site_j = j; site_j < j + iLatticeData.GetBlockSize(); site_j++)
               {
-                for (unsigned int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
+                for (unsigned int site_k = k; site_k < k + iLatticeData.GetBlockSize(); site_k++)
                 {
 
                   m++;
                   if ((int) mNetTopology->GetLocalRank()
-                      != iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m])
+                      != iLatticeData.GetBlock(n)->ProcessorRankForEachBlockSite[m])
                   {
                     continue;
                   }
 
-                  my_site_id = iGlobalLatticeData.Blocks[n].site_data[m];
+                  my_site_id = iLatticeData.GetBlock(n)->site_data[m];
 
                   /* No idea what this does */
                   if (my_site_id & (1U << 31U))
@@ -340,38 +337,36 @@ namespace hemelb
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  if (iLocalLatticeData.mSiteData[my_site_id] == hemelb::lb::FLUID_TYPE)
+                  if (iLatticeData.GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
                   {
-                    D3Q15::CalculateDensityVelocityFEq(&iLocalLatticeData.FOld[ (my_site_id * (par
-                        + 1) + par) * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
+                    D3Q15::CalculateDensityVelocityFEq(iLatticeData.GetFOld( (my_site_id
+                        * (par + 1) + par) * D3Q15::NUMVECTORS), density, vx, vy, vz, f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
-                      f_neq[l] = iLocalLatticeData.FOld[ (my_site_id * (par + 1) + par)
-                          * D3Q15::NUMVECTORS + l] - f_eq[l];
+                      f_neq[l] = *iLatticeData.GetFOld( (my_site_id * (par + 1) + par)
+                          * D3Q15::NUMVECTORS + l) - f_eq[l];
                     }
 
                   }
                   else
                   { // not FLUID_TYPE
-                    CalculateBC(&iLocalLatticeData.FOld[ (my_site_id * (par + 1) + par)
-                        * D3Q15::NUMVECTORS], iLocalLatticeData.GetSiteType(my_site_id),
-                                iLocalLatticeData.GetBoundaryId(my_site_id), &density, &vx, &vy,
-                                &vz, f_neq);
+                    CalculateBC(iLatticeData.GetFOld( (my_site_id * (par + 1) + par)
+                        * D3Q15::NUMVECTORS), iLatticeData.GetSiteType(my_site_id),
+                                iLatticeData.GetBoundaryId(my_site_id), &density, &vx, &vy, &vz,
+                                f_neq);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
                   {
-                    if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
+                    if (iLatticeData.GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
                     {
                       stress = -1.0;
                     }
                     else
                     {
-                      D3Q15::CalculateShearStress(
-                                                  density,
-                                                  f_neq,
-                                                  &iLocalLatticeData.GetNormalToWall(my_site_id)[0],
+                      D3Q15::CalculateShearStress(density, f_neq,
+                                                  &iLatticeData.GetNormalToWall(my_site_id)[0],
                                                   stress, mParams.StressParameter);
                     }
                   }
@@ -515,8 +510,7 @@ namespace hemelb
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability,
                                   std::string output_file_name,
-                                  const hemelb::lb::GlobalLatticeData &iGlobalLatticeData,
-                                  const hemelb::lb::LocalLatticeData &iLocalLatticeData)
+                                  const hemelb::geometry::LatticeData &iLatDat)
     {
       /* This routine writes the flow field on file. The data are gathered
        to the root processor and written from there.  The format
@@ -619,39 +613,36 @@ namespace hemelb
        root processor */
 
       int n = -1; // net->proc_block counter
-      for (unsigned int i = 0; i < iGlobalLatticeData.GetXSiteCount(); i
-          += iGlobalLatticeData.GetBlockSize())
+      for (unsigned int i = 0; i < iLatDat.GetXSiteCount(); i += iLatDat.GetBlockSize())
       {
-        for (unsigned int j = 0; j < iGlobalLatticeData.GetYSiteCount(); j
-            += iGlobalLatticeData.GetBlockSize())
+        for (unsigned int j = 0; j < iLatDat.GetYSiteCount(); j += iLatDat.GetBlockSize())
         {
-          for (unsigned int k = 0; k < iGlobalLatticeData.GetZSiteCount(); k
-              += iGlobalLatticeData.GetBlockSize())
+          for (unsigned int k = 0; k < iLatDat.GetZSiteCount(); k += iLatDat.GetBlockSize())
           {
 
             ++n;
 
-            if (iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite == NULL)
+            if (iLatDat.GetBlock(n)->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
             }
             int m = -1;
 
-            for (unsigned int site_i = i; site_i < i + iGlobalLatticeData.GetBlockSize(); site_i++)
+            for (unsigned int site_i = i; site_i < i + iLatDat.GetBlockSize(); site_i++)
             {
-              for (unsigned int site_j = j; site_j < j + iGlobalLatticeData.GetBlockSize(); site_j++)
+              for (unsigned int site_j = j; site_j < j + iLatDat.GetBlockSize(); site_j++)
               {
-                for (unsigned int site_k = k; site_k < k + iGlobalLatticeData.GetBlockSize(); site_k++)
+                for (unsigned int site_k = k; site_k < k + iLatDat.GetBlockSize(); site_k++)
                 {
 
                   m++;
                   if ((int) mNetTopology->GetLocalRank()
-                      != iGlobalLatticeData.Blocks[n].ProcessorRankForEachBlockSite[m])
+                      != iLatDat.GetBlock(n)->ProcessorRankForEachBlockSite[m])
                   {
                     continue;
                   }
 
-                  unsigned int my_site_id = iGlobalLatticeData.Blocks[n].site_data[m];
+                  unsigned int my_site_id = iLatDat.GetBlock(n)->site_data[m];
 
                   /* No idea what this does */
                   if (my_site_id & (1U << 31U))
@@ -663,39 +654,35 @@ namespace hemelb
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
                   // is equal to "FLUID_TYPE" are handled differently.
-                  if (iLocalLatticeData.mSiteData[my_site_id] == hemelb::lb::FLUID_TYPE)
+                  if (iLatDat.GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
                   {
-                    D3Q15::CalculateDensityVelocityFEq(&iLocalLatticeData.FOld[my_site_id
-                        * D3Q15::NUMVECTORS], density, vx, vy, vz, f_eq);
+                    D3Q15::CalculateDensityVelocityFEq(iLatDat.GetFOld(my_site_id
+                        * D3Q15::NUMVECTORS), density, vx, vy, vz, f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
-                      f_neq[l] = iLocalLatticeData.FOld[my_site_id * D3Q15::NUMVECTORS + l]
-                          - f_eq[l];
+                      f_neq[l] = *iLatDat.GetFOld(my_site_id * D3Q15::NUMVECTORS + l) - f_eq[l];
                     }
 
                   }
                   else
                   { // not FLUID_TYPE
-                    CalculateBC(&iLocalLatticeData.FOld[my_site_id * D3Q15::NUMVECTORS],
-                                iLocalLatticeData.GetSiteType(my_site_id),
-                                iLocalLatticeData.GetBoundaryId(my_site_id), &density, &vx, &vy,
-                                &vz, f_neq);
+                    CalculateBC(iLatDat.GetFOld(my_site_id * D3Q15::NUMVECTORS),
+                                iLatDat.GetSiteType(my_site_id), iLatDat.GetBoundaryId(my_site_id),
+                                &density, &vx, &vy, &vz, f_neq);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
                   {
-                    if (iLocalLatticeData.GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
+                    if (iLatDat.GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
                     {
                       stress = -1.0;
                     }
                     else
                     {
-                      D3Q15::CalculateShearStress(
-                                                  density,
-                                                  f_neq,
-                                                  &iLocalLatticeData.GetNormalToWall(my_site_id)[0],
-                                                  stress, mParams.StressParameter);
+                      D3Q15::CalculateShearStress(density, f_neq,
+                                                  &iLatDat.GetNormalToWall(my_site_id)[0], stress,
+                                                  mParams.StressParameter);
                     }
                   }
                   else

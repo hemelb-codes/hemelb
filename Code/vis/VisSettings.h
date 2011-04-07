@@ -9,14 +9,24 @@ namespace hemelb
   {
     struct VisSettings
     {
+        enum Mode
+        {
+          // 0 - Only display the isosurfaces (wall pressure and stress)
+          ISOSURFACES = 0,
+          // 1 - Isosurface and glyphs
+          ISOSURFACESANDGLYPHS = 1,
+          // 2 - Wall pattern streak lines
+          WALLANDSTREAKLINES = 2
+        };
+
         // better public member vars than globals!
-        int mode;
-        int image_freq;
+        Mode mode;
 
         float ctr_x, ctr_y, ctr_z;
         float streaklines_per_pulsatile_period, streakline_length;
         double mouse_pressure, mouse_stress;
         float brightness;
+        float glyphLength;
 
         lb::StressTypes mStressType;
 

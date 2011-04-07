@@ -3,7 +3,6 @@
 
 #include "lb/LbmParameters.h"
 #include "vis/ColPixel.h"
-#include "vis/ColourPalette.h"
 
 namespace hemelb
 {
@@ -31,10 +30,8 @@ namespace hemelb
         }
 
         void writePixel(vis::ColPixel *col_pixel_p,
-                        vis::ColourPaletteFunction*colourPalette,
-                        vis::DomainStats* iDomainStats,
-                        int mode,
-                        const lb::StressTypes iLbmStressType);
+                        const vis::DomainStats* iDomainStats,
+                        const vis::VisSettings* visSettings);
 
         // Function to get the current position of writing in the stream.
         virtual unsigned int getCurrentStreamPosition() const = 0;

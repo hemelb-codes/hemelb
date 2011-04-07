@@ -6,8 +6,7 @@
 #include "constants.h"
 #include "mpiInclude.h"
 
-#include "lb/GlobalLatticeData.h"
-#include "lb/LocalLatticeData.h"
+#include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
 #include "vis/Screen.h"
@@ -18,18 +17,19 @@ namespace hemelb
 {
   namespace vis
   {
-    //TODO Some of this classes members could be combined with the topology-aware classes
+    //TODO Some of this class's members could be combined with the topology-aware classes
     // (and obv be initialised when they are).
 
-    // Class that controls the drawing of streaklines - lines that trace
-    // the path of an imaginary particle were it dropped into the fluid.
+    /**
+     * Class that controls the drawing of streaklines - lines that trace
+     * the path of an imaginary particle were it dropped into the fluid.
+     */
     class StreaklineDrawer
     {
       public:
         // Constructor and destructor.
         StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
-                         lb::LocalLatticeData* iLocalLatDat,
-                         lb::GlobalLatticeData* iGlobLatDat,
+                         geometry::LatticeData* iLatDat,
                          Screen* iScreen,
                          Viewpoint* iViewpoint,
                          VisSettings* iVisSettings);
@@ -39,11 +39,8 @@ namespace hemelb
         void Restart();
 
         // Drawing methods.
-        void StreakLines(int time_steps,
-                         int time_steps_per_cycle,
-                         lb::GlobalLatticeData* iGlobLatDat,
-                         lb::LocalLatticeData* iLocalLatDat);
-        void render(lb::GlobalLatticeData* iGlobLatDat);
+        void StreakLines(int time_steps, int time_steps_per_cycle, geometry::LatticeData* iLatDat);
+        void render(geometry::LatticeData* iLatDat);
 
       private:
 
@@ -111,7 +108,7 @@ namespace hemelb
         unsigned int *s_to_send, *s_to_recv;
         unsigned int *from_proc_id_to_neigh_proc_index;
 
-        std::vector<NeighProc*> mNeighProcs;
+        std::vector<NeighProc> mNeighProcs;
 
         // Require these for inter-processor comms.
         MPI_Status status[4];
@@ -123,12 +120,12 @@ namespace hemelb
         void deleteParticle(unsigned int p_index);
 
         // Private functions for initialising the velocity field.
-        void initializeVelFieldBlock(lb::GlobalLatticeData* iGlobLatDat,
+        void initializeVelFieldBlock(const geometry::LatticeData* iLatDat,
                                      unsigned int site_i,
                                      unsigned int site_j,
                                      unsigned int site_k,
                                      int proc_id);
-        VelSiteData *velSiteDataPointer(lb::GlobalLatticeData* iGlobLatDat,
+        VelSiteData *velSiteDataPointer(geometry::LatticeData* iLatDat,
                                         unsigned int site_i,
                                         unsigned int site_j,
                                         unsigned int site_k);
@@ -136,19 +133,16 @@ namespace hemelb
         void localVelField(int p_index,
                            float v[2][2][2][3],
                            int *is_interior,
-                           lb::GlobalLatticeData* iGlobLatDat,
-                           lb::LocalLatticeData* iLocalLatDat);
+                           geometry::LatticeData* iLatDat);
 
         // Private functions for updating the velocity field and the particles in it.
-        void updateVelField(int stage_id,
-                            lb::GlobalLatticeData* iGlobLatDat,
-                            lb::LocalLatticeData* iLocalLatDat);
+        void updateVelField(int stage_id, geometry::LatticeData* iLatDat);
         void updateParticles();
 
         // Private functions for inter-proc communication.
         void communicateSiteIds();
-        void communicateVelocities(lb::GlobalLatticeData* iGlobLatDat);
-        void communicateParticles(lb::GlobalLatticeData* iGlobLatDat);
+        void communicateVelocities(geometry::LatticeData* iLatDat);
+        void communicateParticles(geometry::LatticeData* iLatDat);
 
         const topology::NetworkTopology * mNetworkTopology;
 

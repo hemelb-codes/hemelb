@@ -26,7 +26,7 @@ namespace hemelb
       mVisControl->mDomainStats.physical_pressure_threshold_min = privateSteeringParams[9];
       mVisControl->mDomainStats.physical_pressure_threshold_max = privateSteeringParams[10];
 
-      vis::GlyphDrawer::glyph_length = privateSteeringParams[11];
+      mVisControl->mVisSettings.glyphLength = privateSteeringParams[11];
 
       float pixels_x = privateSteeringParams[12];
       float pixels_y = privateSteeringParams[13];
@@ -48,7 +48,7 @@ namespace hemelb
       // 0 - Only display the isosurfaces (wall pressure and stress)
       // 1 - Isosurface and glyphs
       // 2 - Wall pattern streak lines
-      mVisControl->mVisSettings.mode = int (privateSteeringParams[17]);
+      mVisControl->mVisSettings.mode = (vis::VisSettings::Mode) (privateSteeringParams[17]);
 
       mVisControl->mVisSettings.streaklines_per_pulsatile_period = privateSteeringParams[18];
       mVisControl->mVisSettings.streakline_length = privateSteeringParams[19];

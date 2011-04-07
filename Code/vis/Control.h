@@ -1,8 +1,7 @@
 #ifndef HEMELB_VIS_CONTROL_H
 #define HEMELB_VIS_CONTROL_H
 
-#include "lb/GlobalLatticeData.h"
-#include "lb/LocalLatticeData.h"
+#include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 
 #include "vis/DomainStats.h"
@@ -28,7 +27,7 @@ namespace hemelb
     class Control
     {
       public:
-        Control(lb::StressTypes iStressType, lb::GlobalLatticeData* iGlobLatDat);
+        Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
@@ -46,52 +45,39 @@ namespace hemelb
                            const float &latitude,
                            const float &zoom);
 
-        void streaklines(int time_step,
-                         int period,
-                         lb::GlobalLatticeData* iGlobLatDat,
-                         lb::LocalLatticeData* iLocalLatDat);
+        bool MouseIsOverPixel(float* density, float* stress);
+
+        void streaklines(int time_step, int period, geometry::LatticeData* iLatDat);
         void restart();
 
         void updateImageSize(int pixels_x, int pixels_y);
-        void render(int recv_buffer_id,
-                    lb::GlobalLatticeData* iGlobLatDat,
-                    const topology::NetworkTopology* iNetTopology);
-        void writeImage(int recv_buffer_id,
-                        std::string image_file_name,
-                        void(*ColourPalette)(float value, float col[]));
+        void render(geometry::LatticeData* iLatDat, const topology::NetworkTopology* iNetTopology);
+        void writeImage(std::string image_file_name);
         void setMouseParams(double iPhysicalPressure, double iPhysicalStress);
-        void compositeImage(int recv_buffer_id, const topology::NetworkTopology * iNetTopology);
+        void compositeImage(const topology::NetworkTopology * iNetTopology);
 
         void RegisterSite(int i, float density, float velocity, float stress);
 
         void initLayers(topology::NetworkTopology * iNetworkTopology,
-                        lb::GlobalLatticeData* iGlobLatDat,
-                        lb::LocalLatticeData* iLocalLatDat);
+                        geometry::LatticeData* iLatDat);
 
         Screen mScreen;
         Viewpoint mViewpoint;
         DomainStats mDomainStats;
         VisSettings mVisSettings;
 
-        int col_pixels_recv[2]; // number received?
-        ColPixel* col_pixel_recv[2];
-
-       private:
+      private:
         struct Vis
         {
             float half_dim[3];
             float system_size;
         };
 
-        int pixels_max;
-
         Vis* vis;
 
         RayTracer *myRayTracer;
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
-
-        static const long MAXCOLOUREDPIXELS = 2048 * 2048;
 
     };
   }
