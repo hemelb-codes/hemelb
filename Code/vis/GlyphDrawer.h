@@ -1,8 +1,7 @@
 #ifndef HEMELB_VIS_GLYPHDRAWER_H
 #define HEMELB_VIS_GLYPHDRAWER_H
 
-#include "lb/LocalLatticeData.h"
-#include "lb/GlobalLatticeData.h"
+#include "geometry/LatticeData.h"
 
 #include "vis/Screen.h"
 #include "vis/DomainStats.h"
@@ -19,15 +18,8 @@ namespace hemelb
     class GlyphDrawer
     {
       public:
-
-        // TODO there might be another way of increasing access to this. It
-        // currently needs to be public because it is one of the steering
-        // parameters.
-        static double glyph_length;
-
         // Constructor and destructor
-        GlyphDrawer(hemelb::lb::GlobalLatticeData* iGlobalLatDat,
-                    hemelb::lb::LocalLatticeData* iLocalLatDat,
+        GlyphDrawer(geometry::LatticeData* iLatDat,
                     Screen* iScreen,
                     DomainStats* iDomainStats,
                     Viewpoint* iViewpoint,
@@ -35,7 +27,7 @@ namespace hemelb
         ~GlyphDrawer();
 
         // Function to perform the rendering.
-        void render();
+        void Render();
 
       private:
         // A struct to represent a single glyph.
@@ -45,13 +37,14 @@ namespace hemelb
             double *f;
         };
 
+        geometry::LatticeData* mLatDat;
+
         Screen* mScreen;
         DomainStats* mDomainStats;
         Viewpoint* mViewpoint;
         VisSettings* mVisSettings;
 
         std::vector<Glyph*> mGlyphs;
-        hemelb::lb::GlobalLatticeData* mGlobalLatDat;
     };
 
   }

@@ -1,5 +1,6 @@
 #include "topology/NetworkTopology.h"
 #include "math.h"
+#include "mpiInclude.h"
 
 namespace hemelb
 {
@@ -7,7 +8,7 @@ namespace hemelb
   {
     NetworkTopology::NetworkTopology(int * argCount, char *** argList, bool* oSuccess)
     {
-      int thread_level_provided;
+      int thread_level_provided = 0;
 
       MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED, &thread_level_provided);
 
@@ -24,6 +25,8 @@ namespace hemelb
       }
 
       *oSuccess = InitialiseMachineInfo();
+
+      FluidSitesOnEachProcessor = new unsigned int[processorCount];
     }
 
     NetworkTopology::~NetworkTopology()

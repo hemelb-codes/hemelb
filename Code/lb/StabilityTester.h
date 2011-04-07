@@ -2,7 +2,7 @@
 #define HEMELB_LB_STABILITYCHECKER_H
 
 #include "net/PhasedBroadcast.h"
-#include "lb/LocalLatticeData.h"
+#include "geometry/LatticeData.h"
 
 namespace hemelb
 {
@@ -11,7 +11,7 @@ namespace hemelb
     class StabilityTester : public net::PhasedBroadcast
     {
       public:
-        StabilityTester(const hemelb::lb::LocalLatticeData * iLocalLatDat,
+        StabilityTester(const geometry::LatticeData * iLatDat,
                         net::Net* net,
                         topology::NetworkTopology *iNetTop,
                         SimulationState* simState);
@@ -53,7 +53,7 @@ namespace hemelb
          */
         static const unsigned int SPREADFACTOR = 10;
 
-        const hemelb::lb::LocalLatticeData * mLocalLatDat;
+        const geometry::LatticeData * mLatDat;
 
         /**
          * Stability value of this node and its children to propagate upwards.

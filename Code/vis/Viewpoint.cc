@@ -1,15 +1,12 @@
+#include <math.h>
+
 #include "vis/Viewpoint.h"
 
 namespace hemelb
 {
   namespace vis
   {
-    void Viewpoint::RotateToViewpoint(float iXIn,
-                                      float iYIn,
-                                      float iZIn,
-                                      float* oXOut,
-                                      float* oYOut,
-                                      float* oZOut)
+    void Viewpoint::RotateToViewpoint(float iXIn, float iYIn, float iZIn, float rotatedVector[3]) const
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
@@ -22,8 +19,8 @@ namespace hemelb
       // Out = (Ycos(iThetaX) + Zsin(iThetaX)                                        )
       //       (Zcos(iThetaX)cos(iThetaY) - Ysin(iThetaX)cos(iThetaY) - Xsin(iThetaY))
 
-      Rotate(SinXRotation, CosXRotation, SinYRotation, CosYRotation, iXIn, iYIn, iZIn, oXOut,
-             oYOut, oZOut);
+      Rotate(SinXRotation, CosXRotation, SinYRotation, CosYRotation, iXIn, iYIn, iZIn,
+             rotatedVector);
     }
 
     void Viewpoint::Rotate(float sinX,
@@ -33,9 +30,7 @@ namespace hemelb
                            float xIn,
                            float yIn,
                            float zIn,
-                           float* xOut,
-                           float* yOut,
-                           float* zOut)
+                           float rotatedVector[3]) const
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
@@ -50,12 +45,12 @@ namespace hemelb
 
       const float lTemp = zIn * cosX - yIn * sinX;
 
-      *xOut = lTemp * sinY + xIn * cosY;
-      *yOut = zIn * sinX + yIn * cosX;
-      *zOut = lTemp * cosY - xIn * sinY;
+      rotatedVector[0] = lTemp * sinY + xIn * cosY;
+      rotatedVector[1] = zIn * sinX + yIn * cosX;
+      rotatedVector[2] = lTemp * cosY - xIn * sinY;
     }
 
-    void Viewpoint::Project(const float p1[], float p2[])
+    void Viewpoint::Project(const float p1[], float p2[]) const
     {
       float x1[3], x2[3];
 
@@ -64,13 +59,46 @@ namespace hemelb
         x1[l] = p1[l] - x[l];
       }
 
-      Rotate(-SinYRotation, CosYRotation, -SinXRotation, CosXRotation, x1[1], x1[0], x1[2], &x2[1],
-             &x2[0], &x2[2]);
+      Rotate(-SinYRotation, CosYRotation, -SinXRotation, CosXRotation, x1[1], x1[0], x1[2], x2);
 
       float temp = dist / (p2[2] = -x2[2]);
 
-      p2[0] = temp * x2[0];
-      p2[1] = temp * x2[1];
+      p2[0] = temp * x2[1];
+      p2[1] = temp * x2[0];
+    }
+
+    /**
+     * Set the position of the viewpoint.
+     *
+     * @param longitude in radians.
+     * @param latitude in radians.
+     * @param localCentre
+     * @param distance
+     */
+    void Viewpoint::SetViewpointPosition(float longitude,
+                                         float latitude,
+                                         float localCentre[3],
+                                         float rad,
+                                         float distance)
+    {
+      SinYRotation = sinf(longitude);
+      CosYRotation = cosf(longitude);
+
+      SinXRotation = sinf(latitude);
+      CosXRotation = cosf(latitude);
+
+      RotateToViewpoint(0., 0., rad, x);
+
+      x[0] += localCentre[0];
+      x[1] += localCentre[1];
+      x[2] += localCentre[2];
+
+      dist = distance;
+    }
+
+    const float* Viewpoint::GetViewpointCentre() const
+    {
+      return &x[0];
     }
 
   }

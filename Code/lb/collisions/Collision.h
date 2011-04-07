@@ -2,7 +2,7 @@
 #define HEMELB_LB_COLLISIONS_COLLISION_H
 
 #include "vis/Control.h"
-#include "lb/LocalLatticeData.h"
+#include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 
 #include <math.h>
@@ -33,7 +33,7 @@ namespace hemelb
                                     const int iSiteCount,
                                     const LbmParameters &iLbmParams,
                                     MinsAndMaxes &bMinimaAndMaxima,
-                                    LocalLatticeData &bLocalLatDat,
+                                    geometry::LatticeData &bLatDat,
                                     hemelb::vis::Control *iControl);
 
           virtual void PostStep(const bool iDoRayTracing,
@@ -41,7 +41,7 @@ namespace hemelb
                                 const int iSiteCount,
                                 const LbmParameters &iLbmParams,
                                 MinsAndMaxes &bMinimaAndMaxima,
-                                LocalLatticeData &bLocalLatDat,
+                                geometry::LatticeData &bLatDat,
                                 hemelb::vis::Control *iControl);
 
         protected:
@@ -57,7 +57,7 @@ namespace hemelb
                                   const double *f_neq,
                                   const double &iDensity,
                                   MinsAndMaxes &bMinimaAndMaxima,
-                                  const LocalLatticeData &iLocalLatDat,
+                                  const geometry::LatticeData &iLatDat,
                                   const LbmParameters &iLbmParams,
                                   hemelb::vis::Control *iControl)
           {
@@ -91,26 +91,22 @@ namespace hemelb
 
             if (iLbmParams.StressType == ShearStress)
             {
-              if (iLocalLatDat.GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
+              if (iLatDat.GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
               {
                 stress = 0.0;
                 rtStress = BIG_NUMBER;
               }
               else
               {
-                D3Q15::CalculateShearStress(
-                                            iDensity,
-                                            f_neq,
-                                            iLocalLatDat.GetNormalToWall(
-                                                                         iSiteIndex),
-                                            stress, iLbmParams.StressParameter);
+                D3Q15::CalculateShearStress(iDensity, f_neq,
+                                            iLatDat.GetNormalToWall(iSiteIndex), stress,
+                                            iLbmParams.StressParameter);
                 rtStress = stress;
               }
             }
             else
             {
-              D3Q15::CalculateVonMisesStress(f_neq, stress,
-                                             iLbmParams.StressParameter);
+              D3Q15::CalculateVonMisesStress(f_neq, stress, iLbmParams.StressParameter);
               rtStress = stress;
             }
 
