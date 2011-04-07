@@ -32,12 +32,19 @@ namespace hemelb
     void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
                              geometry::LatticeData* iLatDat)
     {
-      myRayTracer = new RayTracer(iNetworkTopology, iLatDat, &mDomainStats, &mScreen, &mViewpoint,
+      myRayTracer = new RayTracer(iNetworkTopology,
+                                  iLatDat,
+                                  &mDomainStats,
+                                  &mScreen,
+                                  &mViewpoint,
                                   &mVisSettings);
       myGlypher = new GlyphDrawer(iLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(iNetworkTopology, iLatDat, &mScreen, &mViewpoint,
+      myStreaker = new StreaklineDrawer(iNetworkTopology,
+                                        iLatDat,
+                                        &mScreen,
+                                        &mViewpoint,
                                         &mVisSettings);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
@@ -61,11 +68,18 @@ namespace hemelb
 
       float centre[3] = { iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z };
 
-      mViewpoint.SetViewpointPosition(iLongitude * DEG_TO_RAD, iLatitude * DEG_TO_RAD, centre, rad,
+      mViewpoint.SetViewpointPosition(iLongitude * DEG_TO_RAD,
+                                      iLatitude * DEG_TO_RAD,
+                                      centre,
+                                      rad,
                                       dist);
 
-      mScreen.Set( (0.5 * vis->system_size) / iZoom, (0.5 * vis->system_size) / iZoom, iPixels_x,
-                  iPixels_y, rad, &mViewpoint);
+      mScreen.Set( (0.5 * vis->system_size) / iZoom,
+                   (0.5 * vis->system_size) / iZoom,
+                  iPixels_x,
+                  iPixels_y,
+                  rad,
+                  &mViewpoint);
     }
 
     void Control::RegisterSite(int i, float density, float velocity, float stress)
@@ -96,16 +110,14 @@ namespace hemelb
      * Method that uses a binary tree communication method to composite the image
      * as created from multiple processors.
      *
-     * @param recv_buffer_id
      * @param iNetTopology
      */
-    void Control::compositeImage(int recv_buffer_id, const topology::NetworkTopology * iNetTopology)
+    void Control::compositeImage(const topology::NetworkTopology * iNetTopology)
     {
-      mScreen.CompositeImage(recv_buffer_id, &mVisSettings, iNetTopology);
+      mScreen.CompositeImage(&mVisSettings, iNetTopology);
     }
 
-    void Control::render(int recv_buffer_id,
-                         geometry::LatticeData* iLatDat,
+    void Control::render(geometry::LatticeData* iLatDat,
                          const topology::NetworkTopology* iNetTopology)
     {
       mScreen.Reset();
@@ -123,10 +135,10 @@ namespace hemelb
         myStreaker->render(iLatDat);
       }
 #endif
-      compositeImage(recv_buffer_id, iNetTopology);
+      compositeImage(iNetTopology);
     }
 
-    void Control::writeImage(int recv_buffer_id, std::string image_file_name)
+    void Control::writeImage(std::string image_file_name)
     {
       io::XdrFileWriter writer = io::XdrFileWriter(image_file_name);
 
@@ -137,8 +149,8 @@ namespace hemelb
           << mDomainStats.physical_velocity_threshold_max
           << mDomainStats.physical_stress_threshold_max;
 
-      mScreen.WritePixelCount(recv_buffer_id, &writer);
-      mScreen.WritePixels(recv_buffer_id, &mDomainStats, &mVisSettings, &writer);
+      mScreen.WritePixelCount(&writer);
+      mScreen.WritePixels(&mDomainStats, &mVisSettings, &writer);
     }
 
     void Control::setMouseParams(double iPhysicalPressure, double iPhysicalStress)
@@ -154,8 +166,7 @@ namespace hemelb
         return false;
       }
 
-      return mScreen.MouseIsOverPixel(RECV_BUFFER_A, mVisSettings.mouse_x, mVisSettings.mouse_y,
-                                      density, stress);
+      return mScreen.MouseIsOverPixel(mVisSettings.mouse_x, mVisSettings.mouse_y, density, stress);
     }
 
     void Control::streaklines(int time_step, int period, geometry::LatticeData* iLatDat)

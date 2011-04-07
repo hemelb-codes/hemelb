@@ -16,9 +16,6 @@
 #define VELOCITY           1
 #define STRESS             2
 
-#define RECV_BUFFER_A   0
-#define RECV_BUFFER_B   1
-
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
 #define mmHg_TO_PASCAL                 133.3223874
 #define BLOOD_DENSITY                  1000.0        // 1000 Kg m^(-3)
