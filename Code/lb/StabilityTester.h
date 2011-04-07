@@ -19,33 +19,33 @@ namespace hemelb
         /**
          * Override the reset method in the base class, to reset the stability variables.
          */
-        virtual void Reset();
-
-        /**
-         * Override the method from the base class to use the data from child nodes.
-         */
-        virtual void PostReceiveFromChildren();
+        void Reset();
 
       protected:
         /**
          * Override the methods from the base class to propagate data from the root, and
          * to send data about this node and its childrens' stabilities up towards the root.
          */
-        virtual void ProgressFromChildren();
-        virtual void ProgressFromParent();
-        virtual void ProgressToChildren();
-        virtual void ProgressToParent();
+        void ProgressFromChildren();
+        void ProgressFromParent();
+        void ProgressToChildren();
+        void ProgressToParent();
 
         /**
          * Take the combined stability information (an int, with a value of hemelb::lb::Unstable
          * if any child node is unstable) and start passing it back down the tree.
          */
-        virtual void TopNodeAction();
+        void TopNodeAction();
+
+        /**
+         * Override the method from the base class to use the data from child nodes.
+         */
+        void PostReceiveFromChildren();
 
         /**
          * Apply the stability value sent by the root node to the simulation logic.
          */
-        virtual void Effect();
+        void Effect();
 
       private:
         /**

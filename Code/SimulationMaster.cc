@@ -112,19 +112,35 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 {
   mTimingsFile = bTimingsFile;
 
-  // Initialise the Lbm.
-  mLbm = new hemelb::lb::LBM(iSimConfig, mNetworkTopology);
+  unsigned int mins[3], maxes[3];
+  hemelb::lb::LbmParameters params;
+  int totalFluidSites;
 
   mLatDat
       = new hemelb::geometry::LatticeData(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
-                                          &mLbm->total_fluid_sites,
-                                          mLbm->siteMins,
-                                          mLbm->siteMaxes,
+                                          &totalFluidSites,
+                                          mins,
+                                          maxes,
                                           mNetworkTopology->FluidSitesOnEachProcessor,
-                                          mLbm->GetLbmParams(),
+                                          &params,
                                           iSimConfig,
                                           &mFileReadTime,
                                           &mDomainDecompTime);
+
+  // Initialise the Net object and the Lbm.
+  mNet = new hemelb::net::Net(mNetworkTopology);
+
+  // Initialise the Lbm.
+  mLbm = new hemelb::lb::LBM(iSimConfig, mNet, mLatDat, &mSimulationState, mNetworkTopology);
+
+  // TODO When we've taken the stress type out of the config file, this could be nicer.
+  for (int ii = 0; ii < 3; ++ii)
+  {
+    mLbm->siteMins[ii] = mins[ii];
+    mLbm->siteMaxes[ii] = maxes[ii];
+  }
+  mLbm->GetLbmParams()->StressType = params.StressType;
+  mLbm->total_fluid_sites = totalFluidSites;
 
   // Initialise and begin the steering.
   if (mNetworkTopology->IsCurrentProcTheIOProc())
@@ -136,9 +152,6 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     clientConnection = NULL;
   }
 
-  // Initialise the Net object and the Lbm.
-  mNet = new hemelb::net::Net(mNetworkTopology);
-
   mStabilityTester = new hemelb::lb::StabilityTester(mLatDat,
                                                      mNet,
                                                      mNetworkTopology,
@@ -149,8 +162,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
   // Initialise the visualisation controller.
-  mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mLatDat);
-  mVisControl->initLayers(mNetworkTopology, mLatDat);
+  mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType,
+                                         mNetworkTopology,
+                                         mLatDat);
 
   if (mNetworkTopology->IsCurrentProcTheIOProc())
   {
@@ -161,7 +175,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                             clientConnection);
   }
 
-  mLbm->Initialise(lReceiveTranslator, mLatDat, mVisControl);
+  mLbm->Initialise(lReceiveTranslator, mVisControl);
 
   int images_period = (iImagesPerCycle == 0)
     ? 1e9
@@ -213,6 +227,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
   bool is_finished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
 
+  std::vector<hemelb::net::IteratedAction*> actors;
+  actors.push_back(mLbm);
+  actors.push_back(steeringCpt);
+  actors.push_back(mStabilityTester);
+
   for (mSimulationState.CycleId = 1; mSimulationState.CycleId <= lSimulationConfig->NumCycles
       && !is_finished; mSimulationState.CycleId++)
   {
@@ -260,15 +279,21 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       // Cycle.
       {
-        mLbm->RequestComms(mNet, mLatDat);
-        steeringCpt->RequestComms();
-        mStabilityTester->RequestComms();
+        for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+            != actors.end(); ++it)
+        {
+          (*it)->RequestComms();
+        }
 
         mNet->Receive();
 
         {
           double lPrePreSend = MPI_Wtime();
-          mLbm->PreSend(mLatDat, mSimulationState.DoRendering);
+          for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+              != actors.end(); ++it)
+          {
+            (*it)->PreSend();
+          }
           mLbTime += (MPI_Wtime() - lPrePreSend);
         }
 
@@ -280,7 +305,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
         {
           double lPrePreReceive = MPI_Wtime();
-          mLbm->PreReceive(mSimulationState.DoRendering, mLatDat);
+          for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+              != actors.end(); ++it)
+          {
+            (*it)->PreReceive();
+          }
           mLbTime += (MPI_Wtime() - lPrePreReceive);
         }
 
@@ -292,14 +321,19 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
         {
           double lPrePostStep = MPI_Wtime();
-          mLbm->PostReceive(mLatDat, mSimulationState.DoRendering);
+          for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+              != actors.end(); ++it)
+          {
+            (*it)->PostReceive();
+          }
           mLbTime += (MPI_Wtime() - lPrePostStep);
         }
 
-        mStabilityTester->PostReceive();
-        steeringCpt->PostReceive();
-
-        mLbm->EndIteration(mLatDat);
+        for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+            != actors.end(); ++it)
+        {
+          (*it)->EndIteration();
+        }
       }
 
       stability = hemelb::lb::Stable;
@@ -309,18 +343,22 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       {
         break;
       }
-      mLbm->UpdateInletVelocities(mSimulationState.TimeStep, *mLatDat, mNet);
+      mLbm->UpdateInletVelocities(mSimulationState.TimeStep);
 
       double lPreImageTime = MPI_Wtime();
 
 #ifndef NO_STREAKLINES
-      mVisControl->streaklines(mSimulationState.TimeStep, mLbm->period, mLatDat);
+      mVisControl->ProgressStreaklines(mSimulationState.TimeStep, mLbm->period, mLatDat);
 #endif
 
-      if (mSimulationState.DoRendering && !write_snapshot_image)
+      // If we're rendering for the network, or for an image to disk, render now.
+      if (mSimulationState.DoRendering || write_snapshot_image)
       {
-        mVisControl->render(mLatDat, mNetworkTopology);
+        mVisControl->Render(mLatDat, mNetworkTopology);
+      }
 
+      if (mSimulationState.DoRendering)
+      {
         if (steeringCpt->updatedMouseCoords)
         {
           float density, stress;
@@ -336,7 +374,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                                           mVisControl->mDomainStats.density_threshold_minmax_inv,
                                           mVisControl->mDomainStats.stress_threshold_max_inv);
 
-            mVisControl->setMouseParams(mouse_pressure, mouse_stress);
+            mVisControl->SetMouseParams(mouse_pressure, mouse_stress);
           }
           steeringCpt->updatedMouseCoords = false;
         }
@@ -354,7 +392,6 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       if (write_snapshot_image)
       {
-        mVisControl->render(mLatDat, mNetworkTopology);
         mImagesWritten++;
 
         if (mNetworkTopology->IsCurrentProcTheIOProc())
@@ -362,7 +399,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
           char image_filename[255];
           snprintf(image_filename, 255, "%08i.dat", mSimulationState.TimeStep);
 
-          mVisControl->writeImage(image_directory + std::string(image_filename));
+          mVisControl->WriteImage(image_directory + std::string(image_filename));
         }
       }
 
@@ -375,9 +412,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         snprintf(snapshot_filename, 255, "snapshot_%06i.dat", mSimulationState.TimeStep);
 
         mSnapshotsWritten++;
-        mLbm->WriteConfigParallel(stability,
-                                  snapshot_directory + std::string(snapshot_filename),
-                                  *mLatDat);
+        mLbm->WriteConfigParallel(stability, snapshot_directory + std::string(snapshot_filename));
       }
 
       mSnapshotTime += (MPI_Wtime() - lPreSnapshotTime);
@@ -404,12 +439,14 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       hemelb::util::DeleteDirContents(snapshot_directory);
       hemelb::util::DeleteDirContents(image_directory);
 
-      mLbm->Restart(mLatDat);
-      mStabilityTester->Reset();
-      steeringCpt->Reset();
+      for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+          != actors.end(); ++it)
+      {
+        (*it)->Reset();
+      }
 
 #ifndef NO_STREAKLINES
-      mVisControl->restart();
+      mVisControl->Reset();
 #endif
       if (mNetworkTopology->IsCurrentProcTheIOProc())
       {

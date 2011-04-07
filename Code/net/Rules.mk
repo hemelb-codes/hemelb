@@ -2,7 +2,8 @@
 
 TARGETS := libHemeLbNet.$(LIBEXT)
 SRCS := net.cc \
-        PhasedBroadcast.cc
+        PhasedBroadcast.cc \
+        IteratedAction.cc
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 

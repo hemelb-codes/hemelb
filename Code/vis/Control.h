@@ -27,7 +27,9 @@ namespace hemelb
     class Control
     {
       public:
-        Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat);
+        Control(lb::StressTypes iStressType,
+                const topology::NetworkTopology* netTop,
+                geometry::LatticeData* iLatDat);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
@@ -47,19 +49,14 @@ namespace hemelb
 
         bool MouseIsOverPixel(float* density, float* stress);
 
-        void streaklines(int time_step, int period, geometry::LatticeData* iLatDat);
-        void restart();
+        void ProgressStreaklines(int time_step, int period, geometry::LatticeData* iLatDat);
+        void Reset();
 
-        void updateImageSize(int pixels_x, int pixels_y);
-        void render(geometry::LatticeData* iLatDat, const topology::NetworkTopology* iNetTopology);
-        void writeImage(std::string image_file_name);
-        void setMouseParams(double iPhysicalPressure, double iPhysicalStress);
-        void compositeImage(const topology::NetworkTopology * iNetTopology);
-
+        void UpdateImageSize(int pixels_x, int pixels_y);
+        void Render(geometry::LatticeData* iLatDat, const topology::NetworkTopology* iNetTopology);
+        void WriteImage(std::string image_file_name);
+        void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void RegisterSite(int i, float density, float velocity, float stress);
-
-        void initLayers(topology::NetworkTopology * iNetworkTopology,
-                        geometry::LatticeData* iLatDat);
 
         Screen mScreen;
         Viewpoint mViewpoint;
@@ -73,8 +70,10 @@ namespace hemelb
             float system_size;
         };
 
-        Vis* vis;
+        void initLayers(const topology::NetworkTopology * iNetworkTopology,
+                        geometry::LatticeData* iLatDat);
 
+        Vis* vis;
         RayTracer *myRayTracer;
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
