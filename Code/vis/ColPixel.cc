@@ -1,5 +1,6 @@
-#include "vis/ColPixel.h"
+#include <math.h>
 
+#include "vis/ColPixel.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
 
@@ -9,17 +10,68 @@ namespace hemelb
   {
 
     MPI_Datatype MPI_col_pixel_type;
-    PixelId::PixelId(int i_, int j_) :
+    ColPixel::PixelId::PixelId(int i_, int j_) :
       isRt(false), isGlyph(false), isStreakline(false), i(i_), j(j_)
     {
     }
 
-    PixelId::PixelId() :
+    ColPixel::PixelId::PixelId() :
       isRt(false), isGlyph(false), isStreakline(false), i(0), j(0)
     {
     }
 
     MPI_Datatype ColPixel::mpiType = MPI_DATATYPE_NULL;
+
+    ColPixel::ColPixel()
+    {
+    }
+
+    ColPixel::ColPixel(int iIn, int jIn) :
+      i(iIn, jIn)
+    {
+      i.isGlyph = true;
+    }
+
+    ColPixel::ColPixel(int iIn,
+                       int jIn,
+                       float particleVelocity,
+                       float particleZ,
+                       int particleInletId) :
+      i(iIn, jIn)
+    {
+      i.isStreakline = true;
+
+      particle_vel = particleVelocity;
+      particle_z = particleZ;
+      particle_inlet_id = particleInletId;
+    }
+
+    ColPixel::ColPixel(int iIn,
+                       int jIn,
+                       float tIn,
+                       float dtIn,
+                       float densityIn,
+                       float stressIn,
+                       const float velocityColour[3],
+                       const float stressColour[3]) :
+      i(iIn, jIn)
+    {
+      i.isRt = true;
+
+      t = tIn;
+      dt = dtIn;
+
+      density = densityIn;
+      stress = stressIn;
+
+      vel_r = velocityColour[0] * 255.0F;
+      vel_g = velocityColour[1] * 255.0F;
+      vel_b = velocityColour[2] * 255.0F;
+
+      stress_r = stressColour[0] * 255.0F;
+      stress_g = stressColour[1] * 255.0F;
+      stress_b = stressColour[2] * 255.0F;
+    }
 
     // create the derived datatype for the MPI communications
     void ColPixel::registerMpiType()
@@ -48,7 +100,10 @@ namespace hemelb
               * col_pixel_blocklengths[i - 1]);
         }
       }
-      MPI_Type_struct(col_pixel_count, col_pixel_blocklengths, col_pixel_disps, col_pixel_types,
+      MPI_Type_struct(col_pixel_count,
+                      col_pixel_blocklengths,
+                      col_pixel_disps,
+                      col_pixel_types,
                       &mpiType);
       MPI_Type_commit(&mpiType);
     }
@@ -62,22 +117,17 @@ namespace hemelb
       return mpiType;
     }
 
-    void ColPixel::makePixelColour(unsigned char& red,
-                                   unsigned char& green,
-                                   unsigned char& blue,
-                                   int rawRed,
-                                   int rawGreen,
-                                   int rawBlue)
+    void ColPixel::MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest)
     {
-      red = (unsigned char) util::NumericalFunctions::enforceBounds(rawRed, 0, 255);
-      green = (unsigned char) util::NumericalFunctions::enforceBounds(rawGreen, 0, 255);
-      blue = (unsigned char) util::NumericalFunctions::enforceBounds(rawBlue, 0, 255);
+      dest[0] = (unsigned char) util::NumericalFunctions::enforceBounds(rawRed, 0, 255);
+      dest[1] = (unsigned char) util::NumericalFunctions::enforceBounds(rawGreen, 0, 255);
+      dest[2] = (unsigned char) util::NumericalFunctions::enforceBounds(rawBlue, 0, 255);
     }
 
     /**
      * Merge data from the ColPixel argument into this pixel.
      */
-    void ColPixel::MergeIn(const ColPixel *fromPixel, lb::StressTypes iStressType, int mode)
+    void ColPixel::MergeIn(const ColPixel *fromPixel, const VisSettings* visSettings)
     {
       // Merge raytracing data
 
@@ -88,7 +138,7 @@ namespace hemelb
         vel_g += fromPixel->vel_g;
         vel_b += fromPixel->vel_b;
 
-        if (iStressType != lb::ShearStress)
+        if (visSettings->mStressType != lb::ShearStress)
         {
           stress_r += fromPixel->stress_r;
           stress_g += fromPixel->stress_g;
@@ -112,7 +162,7 @@ namespace hemelb
         vel_g = fromPixel->vel_g;
         vel_b = fromPixel->vel_b;
 
-        if (iStressType != lb::ShearStress)
+        if (visSettings->mStressType != lb::ShearStress)
         {
           stress_r = fromPixel->stress_r;
           stress_g = fromPixel->stress_g;
@@ -129,7 +179,8 @@ namespace hemelb
       // Done merging ray-tracing - (last combinations would be if from-pixel has no ray-tracing data)
 
       // Now merge glyph data
-      if (iStressType != lb::ShearStress && (mode == 0 || mode == 1))
+      if (visSettings->mStressType != lb::ShearStress && (visSettings->mode
+          == VisSettings::ISOSURFACES || visSettings->mode == VisSettings::ISOSURFACESANDGLYPHS))
       {
         if (fromPixel->i.isGlyph)
         {
@@ -165,76 +216,70 @@ namespace hemelb
     }
 
     void ColPixel::rawWritePixel(int *pixel_index,
-                                 int mode,
-                                 unsigned char rgb_data[],
-                                 DomainStats* iDomainStats,
-                                 ColourPaletteFunction *colourPalette,
-                                 lb::StressTypes iLbmStressType)
+                                 unsigned char rgb_data[12],
+                                 const DomainStats* iDomainStats,
+                                 const VisSettings* visSettings)
     {
-      float density_col[3], stress_col[3], particle_col[3];
-
-      int bits_per_char = sizeof(char) * 8;
-      int pixel_i, pixel_j;
-
-      unsigned char r1, g1, b1;
-      unsigned char r2, g2, b2;
-      unsigned char r3, g3, b3;
-      unsigned char r4, g4, b4;
-
-      // store pixel id
-      pixel_i = i.i;
-      pixel_j = i.j;
-
-      *pixel_index = (pixel_i << (2 * bits_per_char)) + pixel_j;
-
-      r1 = g1 = b1 = 255;
-      r2 = g2 = b2 = 255;
+      const int bits_per_char = sizeof(char) * 8;
+      *pixel_index = (i.i << (2 * bits_per_char)) + i.j;
 
       if (i.isRt)
       {
         // store velocity volume rendering colour
-        makePixelColour(r1, g1, b1, int (vel_r / dt), int (vel_g / dt), int (vel_b / dt));
+        MakePixelColour(int (vel_r / dt), int (vel_g / dt), int (vel_b / dt), &rgb_data[0]);
 
-        if (iLbmStressType != lb::ShearStress)
+        if (visSettings->mStressType != lb::ShearStress)
         {
           // store von Mises stress volume rendering colour
-          makePixelColour(r2, g2, b2, int (stress_r / dt), int (stress_g / dt), int (stress_b / dt));
-
+          MakePixelColour(int (stress_r / dt),
+                          int (stress_g / dt),
+                          int (stress_b / dt),
+                          &rgb_data[3]);
         }
         else if (stress < ((float) BIG_NUMBER))
         {
-          colourPalette(stress, stress_col);
+          float stress_col[3];
+          PickColour(stress, stress_col);
 
           // store wall shear stress colour
-          makePixelColour(r2, g2, b2, int (255.0F * stress_col[0]), int (255.0F * stress_col[1]),
-                          int (255.0F * stress_col[2]));
-
+          MakePixelColour(int (255.0F * stress_col[0]), int (255.0F * stress_col[1]), int (255.0F
+              * stress_col[2]), &rgb_data[3]);
         }
         else
         {
-          r2 = g2 = b2 = 0;
+          rgb_data[3] = rgb_data[4] = rgb_data[5] = 0;
         }
-
       } // if (isRt)
-
-      if (iLbmStressType != lb::ShearStress && mode == 0)
+      else
       {
-        colourPalette(density, density_col);
-        colourPalette(stress, stress_col);
+        for (int ii = 0; ii < 6; ++ii)
+        {
+          rgb_data[ii] = 255;
+        }
+      }
+
+      if (visSettings->mStressType != lb::ShearStress && visSettings->mode
+          == VisSettings::ISOSURFACES)
+      {
+        float density_col[3], stress_col[3];
+        PickColour(density, density_col);
+        PickColour(stress, stress_col);
 
         // store wall pressure colour
-        makePixelColour(r3, g3, b3, int (255.0F * density_col[0]), int (255.0F * density_col[1]),
-                        int (255.0F * density_col[2]));
+        MakePixelColour(int (255.0F * density_col[0]), int (255.0F * density_col[1]), int (255.0F
+            * density_col[2]), &rgb_data[6]);
 
         // store von Mises stress colour
-        makePixelColour(r4, g4, b4, int (255.0F * stress_col[0]), int (255.0F * stress_col[1]),
-                        int (255.0F * stress_col[2]));
+        MakePixelColour(int (255.0F * stress_col[0]), int (255.0F * stress_col[1]), int (255.0F
+            * stress_col[2]), &rgb_data[9]);
 
       }
-      else if (iLbmStressType != lb::ShearStress && mode == 1)
+      else if (visSettings->mStressType != lb::ShearStress && visSettings->mode
+          == VisSettings::ISOSURFACESANDGLYPHS)
       {
-        colourPalette(density, density_col);
-        colourPalette(stress, stress_col);
+        float density_col[3], stress_col[3];
+        PickColour(density, density_col);
+        PickColour(stress, stress_col);
 
         if (i.isRt)
         {
@@ -250,72 +295,98 @@ namespace hemelb
           }
 
           // store wall pressure (+glyph) colour
-          makePixelColour(r3, g3, b3, int (127.5F * density_col[0]), int (127.5F * density_col[1]),
-                          int (127.5F * density_col[2]));
+          MakePixelColour(int (127.5F * density_col[0]), int (127.5F * density_col[1]), int (127.5F
+              * density_col[2]), &rgb_data[6]);
 
           // store von Mises stress (+glyph) colour
-          makePixelColour(r4, g4, b4, int (127.5F * stress_col[0]), int (127.5F * stress_col[1]),
-                          int (127.5F * stress_col[2]));
+          MakePixelColour(int (127.5F * stress_col[0]), int (127.5F * stress_col[1]), int (127.5F
+              * stress_col[2]), &rgb_data[9]);
         }
         else
         {
-          r3 = g3 = b3 = 0;
-          r4 = g4 = b4 = 0;
+          for (int ii = 6; ii < 12; ++ii)
+          {
+            rgb_data[ii] = 0;
+          }
         }
 
+      }
+      else if (i.isStreakline)
+      {
+        float scaled_vel = particle_vel * iDomainStats->velocity_threshold_max_inv;
+        float particle_col[3];
+        PickColour(scaled_vel, particle_col);
+
+        // store particle colour
+        MakePixelColour(int (255.0F * particle_col[0]), int (255.0F * particle_col[1]), int (255.0F
+            * particle_col[2]), &rgb_data[6]);
+
+        for (int ii = 9; ii < 12; ++ii)
+        {
+          rgb_data[ii] = rgb_data[ii - 3];
+        }
       }
       else
       {
+        // store pressure colour
+        rgb_data[6] = rgb_data[7] = rgb_data[8]
+            = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density),
+                                                                      0,
+                                                                      127);
 
-        if (i.isStreakline)
+        // store shear stress or von Mises stress
+        if (stress < ((float) BIG_NUMBER))
         {
-          float scaled_vel = particle_vel * iDomainStats->velocity_threshold_max_inv;
-
-          colourPalette(scaled_vel, particle_col);
-
-          // store particle colour
-          makePixelColour(r3, g3, b3, int (255.0F * particle_col[0]),
-                          int (255.0F * particle_col[1]), int (255.0F * particle_col[2]));
-
-          r4 = r3;
-          g4 = g3;
-          b4 = b3;
-
+          rgb_data[9] = rgb_data[10] = rgb_data[11]
+              = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress),
+                                                                        0,
+                                                                        127);
         }
         else
         {
-          // store pressure colour
-          r3 = g3 = b3 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F
-              * density), 0, 127);
-
-          // store shear stress or von Mises stress
-          if (stress < ((float) BIG_NUMBER))
-          {
-            r4 = g4 = b4 = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F
-                * stress), 0, 127);
-
-          }
-          else
-          {
-            r4 = g4 = b4 = 0;
-          }
+          rgb_data[9] = rgb_data[10] = rgb_data[11] = 0;
         }
-
       }
+    }
 
-      rgb_data[0] = r1;
-      rgb_data[1] = g1;
-      rgb_data[2] = b1;
-      rgb_data[3] = r2;
-      rgb_data[4] = g2;
-      rgb_data[5] = b2;
-      rgb_data[6] = r3;
-      rgb_data[7] = g3;
-      rgb_data[8] = b3;
-      rgb_data[9] = r4;
-      rgb_data[10] = g4;
-      rgb_data[11] = b4;
+    void ColPixel::PickColour(float value, float colour[3])
+    {
+      colour[0] = util::NumericalFunctions::enforceBounds<float>(4.F * value - 2.F, 0.F, 1.F);
+      colour[1] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * fabs(value - 0.5F),
+                                                                 0.F,
+                                                                 1.F);
+      colour[2] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * value, 0.F, 1.F);
+    }
 
+    float ColPixel::GetDensity() const
+    {
+      return density;
+    }
+
+    float ColPixel::GetStress() const
+    {
+      return stress;
+    }
+
+    unsigned int ColPixel::GetI() const
+    {
+      return i.i;
+    }
+    unsigned int ColPixel::GetJ() const
+    {
+      return i.j;
+    }
+    bool ColPixel::IsRT() const
+    {
+      return i.isRt;
+    }
+    bool ColPixel::IsGlyph() const
+    {
+      return i.isGlyph;
+    }
+    bool ColPixel::IsStreakline() const
+    {
+      return i.isStreakline;
     }
 
   }

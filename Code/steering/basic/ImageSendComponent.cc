@@ -23,6 +23,7 @@ namespace hemelb
       // Suppress signals from a broken pipe.
       signal(SIGPIPE, SIG_IGN);
       isFrameReady = false;
+      isConnected = false;
       lastRender = 0.0;
       double lastSend = 0.0;
     }
@@ -69,7 +70,7 @@ namespace hemelb
         char xdr_pixel[pixeldatabytes];
         io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel, pixeldatabytes);
 
-        pixelWriter << mVisControl->mScreen.PixelsX << mVisControl->mScreen.PixelsY;
+        pixelWriter << mVisControl->mScreen.GetPixelsX() << mVisControl->mScreen.GetPixelsY();
 
         int pixelDataBytesSent = SendSuccess(socketToClient, xdr_pixel, pixeldatabytes);
 
@@ -85,12 +86,9 @@ namespace hemelb
 
       io::XdrMemWriter pixelDataWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
 
-      for (int i = 0; i < mVisControl->col_pixels_recv[RECV_BUFFER_A]; i++)
-      {
-        pixelDataWriter.writePixel(&mVisControl->col_pixel_recv[RECV_BUFFER_A][i],
-                                   vis::ColourPalette::pickColour, &mVisControl->mDomainStats,
-                                   mVisControl->mVisSettings.mode, mLbmParams->StressType);
-      }
+      mVisControl->mScreen.WritePixels(&mVisControl->mDomainStats,
+                                       &mVisControl->mVisSettings,
+                                       &pixelDataWriter);
 
       // Send the number of bytes being used on pixel data.
       int frameBytes = pixelDataWriter.getCurrentStreamPosition();
@@ -103,7 +101,8 @@ namespace hemelb
 
         int frameDetailsBytes = frameDetailsWriter.getCurrentStreamPosition();
 
-        int frameDetailsBytesSent = SendSuccess(socketToClient, xdrSendBuffer_frame_details,
+        int frameDetailsBytesSent = SendSuccess(socketToClient,
+                                                xdrSendBuffer_frame_details,
                                                 frameDetailsBytes);
 
         if (frameDetailsBytesSent < 0)
@@ -187,6 +186,8 @@ namespace hemelb
 
     bool ImageSendComponent::ShouldRenderNewNetworkImage()
     {
+      isConnected = mClientConnection->GetWorkingSocket() > 0;
+
       if (!isConnected)
       {
         return false;

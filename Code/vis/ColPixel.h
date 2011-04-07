@@ -3,67 +3,89 @@
 
 #include "mpiInclude.h"
 #include "vis/DomainStats.h"
-#include "vis/ColourPalette.h"
+#include "vis/VisSettings.h"
 #include "lb/LbmParameters.h"
 
 namespace hemelb
 {
   namespace vis
   {
-    // TODO: This should really be a temporary header file that grows to have more common stuff in it.
-
-    struct PixelId
-    {
-        unsigned int isRt :1;
-        unsigned int isGlyph :1;
-        unsigned int isStreakline :1;
-        unsigned int i :14;
-        unsigned int j :14;
-
-        PixelId();
-        PixelId(int i, int j);
-    };
-
     class ColPixel
     {
       public:
-        float vel_r, vel_g, vel_b;
-        float stress_r, stress_g, stress_b;
-        float t, dt;
-        float density;
-        float stress;
+        ColPixel();
 
-        float particle_vel;
-        float particle_z;
+        ColPixel(int i, int j);
 
-        int particle_inlet_id;
+        ColPixel(int i, int j, float particleVelocity, float particleZ, int particleInletId);
 
-        struct PixelId i;
+        ColPixel(int i,
+                 int j,
+                 float t,
+                 float dt,
+                 float density,
+                 float stress,
+                 const float velocityColour[3],
+                 const float stressColour[3]);
 
         /**
          * Merge data from the first ColPixel argument into the second
          * ColPixel argument.
          */
-        void MergeIn(const ColPixel *fromPixel, lb::StressTypes iStressType, int mode);
+        void MergeIn(const ColPixel* fromPixel, const VisSettings* visSettings);
 
-        void rawWritePixel(int *pixel_index,
-                           int mode,
-                           unsigned char rgb_data[],
-                           DomainStats* iDomainStats,
-                           ColourPaletteFunction *colourPalette,
-                           lb::StressTypes iLbmStressType);
+        void rawWritePixel(int* pixel_index,
+                           unsigned char rgb_data[12],
+                           const DomainStats* iDomainStats,
+                           const VisSettings* visSettings);
+
+        float GetDensity() const;
+        float GetStress() const;
+
+        unsigned int GetI() const;
+        unsigned int GetJ() const;
+
+        bool IsRT() const;
+        bool IsGlyph() const;
+        bool IsStreakline() const;
+
         static const MPI_Datatype& getMpiType();
+        static void PickColour(float value, float colour[3]);
 
-      protected:
+      private:
+        struct PixelId
+        {
+            // Bitfield, fits in 4 bytes
+            bool isRt :1;
+            bool isGlyph :1;
+            bool isStreakline :1;
+            unsigned int i :14;
+            unsigned int j :14;
+
+            PixelId();
+            PixelId(int i, int j);
+        };
+
         static void registerMpiType();
         static MPI_Datatype mpiType;
 
-        void makePixelColour(unsigned char& red,
-                             unsigned char& green,
-                             unsigned char& blue,
-                             int rawRed,
-                             int rawGreen,
-                             int rawBlue);
+        void MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest);
+
+        // Pixel identity
+        struct PixelId i;
+
+        // Ray tracer pixel data
+        float t, dt;
+        float vel_r, vel_g, vel_b;
+        float stress_r, stress_g, stress_b;
+        float density;
+        float stress;
+
+        // Streakline pixel data
+        float particle_vel;
+        float particle_z;
+        int particle_inlet_id;
+
     };
 
   }

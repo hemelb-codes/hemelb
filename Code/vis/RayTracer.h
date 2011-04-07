@@ -2,8 +2,7 @@
 #define HEMELB_VIS_RAYTRACER_H
 
 #include "constants.h"
-#include "lb/LocalLatticeData.h"
-#include "lb/GlobalLatticeData.h"
+#include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
 #include "vis/DomainStats.h"
@@ -20,9 +19,8 @@ namespace hemelb
       public:
         // Constructor and destructor do all the usual stuff.
         RayTracer(const topology::NetworkTopology * iNetworkTopology,
-                  const lb::LocalLatticeData* iLocalLatDat,
-                  const lb::GlobalLatticeData* iGlobLatDat,
-                  DomainStats* iDomainStats,
+                  const geometry::LatticeData* iLatDat,
+                  const DomainStats* iDomainStats,
                   Screen* iScreen,
                   Viewpoint* iViewpoint,
                   VisSettings* iVisSettings);
@@ -30,13 +28,10 @@ namespace hemelb
 
         // Method to update the voxel corresponding to site i with its
         // newly calculated density, velocity and stress.
-        void UpdateClusterVoxel(const int &i,
-                                const float &density,
-                                const float &velocity,
-                                const float &stress);
+        void UpdateClusterVoxel(int i, float density, float velocity, float stress);
 
         // Render the current state into an image.
-        void Render(const lb::StressTypes iLbmStressType);
+        void Render();
 
       private:
 
@@ -65,7 +60,11 @@ namespace hemelb
             float x[3];
 
             unsigned short int blocks_x, blocks_y, blocks_z;
-            unsigned short int block_min[3];
+        };
+
+        struct MinLocation
+        {
+            int i, j, k;
         };
 
         // Some sort of coordinates.
@@ -74,61 +73,50 @@ namespace hemelb
             short int i, j, k;
         };
 
-        void rtUpdateRayData(float *flow_field,
-                             float ray_t,
-                             float ray_segment,
-                             Ray *bCurrentRay,
-                             void(*ColourPalette)(float value, float col[]),
-                             const lb::StressTypes iLbmStressType);
+        void UpdateRayData(const float flow_field[3],
+                           float ray_t,
+                           float ray_segment,
+                           Ray* bCurrentRay);
 
-        void rtTraverseVoxels(float block_min[],
-                              float block_x[],
-                              float voxel_flow_field[],
-                              float t,
-                              Ray *bCurrentRay,
-                              void(*ColourPalette)(float value, float col[]),
-                              bool xyz_is_1[],
-                              const lb::StressTypes iLbmStressType);
+        void TraverseVoxels(const float block_min[3],
+                            const float block_x[3],
+                            const float voxel_flow_field[],
+                            float t,
+                            Ray* bCurrentRay,
+                            const bool xyz_is_1[3]);
 
-        void rtTraverseBlocksFn(float ray_dx[],
-                                float **block_flow_field,
-                                Ray *bCurrentRay,
-                                void(*ColourPalette)(float value, float col[]),
-                                bool xyz_Is_1[],
-                                const lb::StressTypes iLbmStressType);
+        void TraverseBlocks(const Cluster* cluster,
+                            const bool xyz_Is_1[3],
+                            const float ray_dx[3],
+                            float **block_flow_field,
+                            Ray *bCurrentRay);
 
-        void rtAABBvsRayFn(const AABB &aabb,
-                           const float &inv_x,
-                           const float &inv_y,
-                           const float &inv_z,
-                           const bool xyz_sign_is_1[],
-                           float &t_near,
-                           float &t_far);
+        void AABBvsRay(const AABB* aabb,
+                       const float inverseDirection[3],
+                       const bool xyzComponentIsPositive[3],
+                       float* t_near,
+                       float* t_far);
 
-        void rtUpdateColour(float dt, float palette[], float col[]);
+        void UpdateColour(float dt, const float palette[3], float col[3]);
 
-        void rtBuildClusters();
+        void BuildClusters();
 
         const topology::NetworkTopology * mNetworkTopology;
-        const lb::LocalLatticeData* mLocalLatDat;
-        const lb::GlobalLatticeData* mGlobLatDat;
+        const geometry::LatticeData* mLatDat;
 
-        DomainStats* mDomainStats;
+        const DomainStats* mDomainStats;
         Screen* mScreen;
         Viewpoint* mViewpoint;
         VisSettings* mVisSettings;
 
-        std::vector<Cluster*> mClusters;
+        std::vector<Cluster> mClusters;
         float **cluster_voxel;
         float ***cluster_flow_field;
 
-        int cluster_blocks_vec[3];
-        int cluster_blocks_z, cluster_blocks_yz, cluster_blocks;
-
-        float mBlockSizeFloat;
-        float mBlockSizeInverse;
-        unsigned int block_size2, block_size3, block_size_1;
-        unsigned int blocks_yz;
+        const float mBlockSizeFloat;
+        const float mBlockSizeInverse;
+        const unsigned int block_size2, block_size3, block_size_1;
+        const unsigned int blocks_yz;
     };
 
   }

@@ -10,8 +10,6 @@
 #include "SimConfig.h"
 #include "SimulationMaster.h"
 
-#include "vis/ColourPalette.h"
-
 #include "debug/Debugger.h"
 
 void PrintUsage(char *progname)

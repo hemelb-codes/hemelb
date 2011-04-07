@@ -3,8 +3,6 @@
 
 #include <vector>
 #include <cstdio>
-#include "mpiInclude.h"
-#include "lb/GlobalLatticeData.h"
 
 namespace hemelb
 {
@@ -48,7 +46,7 @@ namespace hemelb
         // neighbouring processor vector.
         short int * NeighbourIndexFromProcRank;
         // Array containing numbers of fluid sites on each processor.
-        int * FluidSitesOnEachProcessor;
+        unsigned int * FluidSitesOnEachProcessor;
 
       private:
         bool InitialiseMachineInfo();

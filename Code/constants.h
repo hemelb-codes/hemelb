@@ -9,14 +9,12 @@
 // TODO almost certainly filth.
 #define BIG_NUMBER   1.0e+30
 #define BIG_NUMBER2  (1 << 30)
+#define BIG_NUMBER3 (1U << 31U)
 
 #define MACROSCOPIC_PARS   5
 #define DENSITY            0
 #define VELOCITY           1
 #define STRESS             2
-
-#define RECV_BUFFER_A   0
-#define RECV_BUFFER_B   1
 
 #define REFERENCE_PRESSURE             80.0           // 80 mmHg
 #define mmHg_TO_PASCAL                 133.3223874

@@ -1,7 +1,6 @@
 include $(MK)/header.mk
 
-SRCS := NetworkTopology.cc \
-        TopologyReader.cc 
+SRCS := NetworkTopology.cc
 
 ifdef HEMELB_CFG_MULTIMACHINE
   SRCS += MultiMachineNetworkTopology.cc
