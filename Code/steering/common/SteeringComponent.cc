@@ -55,7 +55,7 @@ namespace hemelb
 
       mSimState->DoRendering = int (privateSteeringParams[20]);
 
-      mVisControl->updateImageSize(pixels_x, pixels_y);
+      mVisControl->UpdateImageSize(pixels_x, pixels_y);
 
       float
           lattice_density_min =

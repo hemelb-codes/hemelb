@@ -2,7 +2,9 @@
 #define HEMELB_LB_H
 
 #include "net/net.h"
+#include "net/IteratedAction.h"
 #include "topology/NetworkTopology.h"
+#include "lb/SimulationState.h"
 #include "lb/collisions/Collisions.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
@@ -11,7 +13,7 @@ namespace hemelb
 {
   namespace lb
   {
-    class LBM
+    class LBM : public net::IteratedAction
     {
       public:
         int total_fluid_sites;
@@ -25,29 +27,25 @@ namespace hemelb
         double ConvertStressToPhysicalUnits(double stress) const;
         double ConvertVelocityToPhysicalUnits(double velocity) const;
 
-            LBM(hemelb::SimConfig *iSimulationConfig,
-                const hemelb::topology::NetworkTopology * iNetTop);
-        void Restart(geometry::LatticeData* iLatDat);
+        LBM(hemelb::SimConfig *iSimulationConfig,
+            net::Net* net,
+            geometry::LatticeData* latDat,
+            SimulationState* simState,
+            const hemelb::topology::NetworkTopology * iNetTop);
+        void Reset();
         ~LBM();
 
         void CalculateFlowFieldValues();
         void RecalculateTauViscosityOmega();
         void UpdateBoundaryDensities(int cycle_id, int time_step);
-        void
-        UpdateInletVelocities(int time_step, geometry::LatticeData &iLatDat, net::Net *net);
+        void UpdateInletVelocities(int time_step);
 
-        void Initialise(int* iFTranslator, geometry::LatticeData* bLatDat, vis::Control* iControl);
+        void Initialise(int* iFTranslator, vis::Control* iControl);
 
-        void SetInitialConditions(geometry::LatticeData* bLatDat);
+        void SetInitialConditions();
 
         void
-        WriteConfig(hemelb::lb::Stability stability,
-                    std::string output_file_name,
-                    const geometry::LatticeData &iLatticeData);
-        void
-        WriteConfigParallel(hemelb::lb::Stability stability,
-                            std::string output_file_name,
-                            const geometry::LatticeData &iLatticeData);
+        WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
 
         double GetMinPhysicalPressure();
         double GetMaxPhysicalPressure();
@@ -73,11 +71,11 @@ namespace hemelb
 
         hemelb::lb::LbmParameters *GetLbmParams();
 
-        void RequestComms(net::Net* net, geometry::LatticeData* bLatDat);
-        void PreSend(geometry::LatticeData* bLatDat, int perform_rt);
-        void PreReceive(int perform_rt, geometry::LatticeData* bLatDat);
-        void PostReceive(geometry::LatticeData* bLatDat, int perform_rt);
-        void EndIteration(geometry::LatticeData* bLatDat);
+        void RequestComms();
+        void PreSend();
+        void PreReceive();
+        void PostReceive();
+        void EndIteration();
 
         unsigned int siteMins[3], siteMaxes[3];
 
@@ -127,9 +125,13 @@ namespace hemelb
 
         double mFileReadTime;
 
-        LbmParameters mParams;
-        const topology::NetworkTopology * mNetTopology;
         SimConfig *mSimConfig;
+        net::Net* mNet;
+        geometry::LatticeData* mLatDat;
+        SimulationState* mState;
+        const topology::NetworkTopology * mNetTopology;
+
+        LbmParameters mParams;
         vis::Control* mVisControl;
 
         double *average_inlet_velocity;

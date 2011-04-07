@@ -152,13 +152,16 @@ namespace hemelb
       return &mParams;
     }
 
-    LBM::LBM(SimConfig *iSimulationConfig, const topology::NetworkTopology * iNetTop)
+    LBM::LBM(SimConfig *iSimulationConfig,
+             net::Net* net,
+             geometry::LatticeData* latDat,
+             SimulationState* simState,
+             const topology::NetworkTopology * iNetTop) :
+      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
+          mNetTopology(iNetTop)
     {
       period = iSimulationConfig->StepsPerCycle;
       voxel_size = iSimulationConfig->VoxelSize;
-
-      mNetTopology = iNetTop;
-      mSimConfig = iSimulationConfig;
 
       ReadParameters();
 
@@ -199,16 +202,16 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
-    void LBM::Initialise(int* iFTranslator, geometry::LatticeData* bLatDat, vis::Control* iControl)
+    void LBM::Initialise(int* iFTranslator, vis::Control* iControl)
     {
       receivedFTranslator = iFTranslator;
 
-      SetInitialConditions(bLatDat);
+      SetInitialConditions();
 
       mVisControl = iControl;
     }
 
-    void LBM::SetInitialConditions(geometry::LatticeData* bLatDat)
+    void LBM::SetInitialConditions()
     {
       double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
       double density;
@@ -221,12 +224,12 @@ namespace hemelb
       }
       density /= outlets;
 
-      for (unsigned int i = 0; i < bLatDat->GetLocalFluidSiteCount(); i++)
+      for (unsigned int i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
         D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
-        f_old_p = bLatDat->GetFOld(i * D3Q15::NUMVECTORS);
-        f_new_p = bLatDat->GetFNew(i * D3Q15::NUMVECTORS);
+        f_old_p = mLatDat->GetFOld(i * D3Q15::NUMVECTORS);
+        f_new_p = mLatDat->GetFNew(i * D3Q15::NUMVECTORS);
 
         for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
         {
@@ -256,55 +259,65 @@ namespace hemelb
       return NULL;
     }
 
-    void LBM::RequestComms(net::Net* net, geometry::LatticeData* bLatDat)
+    void LBM::RequestComms()
     {
       for (std::vector<hemelb::topology::NeighbouringProcessor*>::const_iterator it =
           mNetTopology->NeighbouringProcs.begin(); it != mNetTopology->NeighbouringProcs.end(); it++)
       {
         // Request the receive into the appropriate bit of FOld.
-        net->RequestReceive<double> (bLatDat->GetFOld( (*it)->FirstSharedF), (*it)->SharedFCount,
-                                      (*it)->Rank);
+        mNet->RequestReceive<double> (mLatDat->GetFOld( (*it)->FirstSharedF),
+                                       (*it)->SharedFCount,
+                                       (*it)->Rank);
 
         // Request the send from the right bit of
-        net->RequestSend<double> (bLatDat->GetFNew( (*it)->FirstSharedF), (*it)->SharedFCount,
-                                   (*it)->Rank);
+        mNet->RequestSend<double> (mLatDat->GetFNew( (*it)->FirstSharedF),
+                                    (*it)->SharedFCount,
+                                    (*it)->Rank);
       }
     }
 
-    void LBM::PreSend(geometry::LatticeData* bLatDat, int perform_rt)
+    void LBM::PreSend()
     {
-      int offset = bLatDat->GetInnerSiteCount();
+      int offset = mLatDat->GetInnerSiteCount();
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->DoCollisions(perform_rt, offset,
-                                                   bLatDat->GetInterCollisionCount(collision_type),
-                                                   mParams, mMinsAndMaxes, *bLatDat, mVisControl);
-        offset += bLatDat->GetInterCollisionCount(collision_type);
+        GetCollision(collision_type)->DoCollisions(mState->DoRendering,
+                                                   offset,
+                                                   mLatDat->GetInterCollisionCount(collision_type),
+                                                   mParams,
+                                                   mMinsAndMaxes,
+                                                   *mLatDat,
+                                                   mVisControl);
+        offset += mLatDat->GetInterCollisionCount(collision_type);
       }
     }
 
-    void LBM::PreReceive(int perform_rt, geometry::LatticeData* bLatDat)
+    void LBM::PreReceive()
     {
       int offset = 0;
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->DoCollisions(perform_rt, offset,
-                                                   bLatDat->GetInnerCollisionCount(collision_type),
-                                                   mParams, mMinsAndMaxes, *bLatDat, mVisControl);
-        offset += bLatDat->GetInnerCollisionCount(collision_type);
+        GetCollision(collision_type)->DoCollisions(mState->DoRendering,
+                                                   offset,
+                                                   mLatDat->GetInnerCollisionCount(collision_type),
+                                                   mParams,
+                                                   mMinsAndMaxes,
+                                                   *mLatDat,
+                                                   mVisControl);
+        offset += mLatDat->GetInnerCollisionCount(collision_type);
       }
     }
 
-    void LBM::PostReceive(geometry::LatticeData* bLatDat, int perform_rt)
+    void LBM::PostReceive()
     {
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       for (int i = 0; i < mNetTopology->TotalSharedFs; i++)
       {
-        *bLatDat->GetFNew(receivedFTranslator[i])
-            = *bLatDat->GetFOld(mNetTopology->NeighbouringProcs[0]->FirstSharedF + i);
+        *mLatDat->GetFNew(receivedFTranslator[i])
+            = *mLatDat->GetFOld(mNetTopology->NeighbouringProcs[0]->FirstSharedF + i);
       }
 
       // Do any cleanup steps necessary on boundary nodes
@@ -312,25 +325,33 @@ namespace hemelb
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(perform_rt, offset,
-                                               bLatDat->GetInnerCollisionCount(collision_type),
-                                               mParams, mMinsAndMaxes, *bLatDat, mVisControl);
-        offset += bLatDat->GetInnerCollisionCount(collision_type);
+        GetCollision(collision_type)->PostStep(mState->DoRendering,
+                                               offset,
+                                               mLatDat->GetInnerCollisionCount(collision_type),
+                                               mParams,
+                                               mMinsAndMaxes,
+                                               *mLatDat,
+                                               mVisControl);
+        offset += mLatDat->GetInnerCollisionCount(collision_type);
       }
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(perform_rt, offset,
-                                               bLatDat->GetInterCollisionCount(collision_type),
-                                               mParams, mMinsAndMaxes, *bLatDat, mVisControl);
-        offset += bLatDat->GetInterCollisionCount(collision_type);
+        GetCollision(collision_type)->PostStep(mState->DoRendering,
+                                               offset,
+                                               mLatDat->GetInterCollisionCount(collision_type),
+                                               mParams,
+                                               mMinsAndMaxes,
+                                               *mLatDat,
+                                               mVisControl);
+        offset += mLatDat->GetInterCollisionCount(collision_type);
       }
     }
 
-    void LBM::EndIteration(geometry::LatticeData* bLatDat)
+    void LBM::EndIteration()
     {
       // Swap f_old and f_new ready for the next timestep.
-      bLatDat->SwapOldAndNew();
+      mLatDat->SwapOldAndNew();
     }
 
     void LBM::CalculateFlowFieldValues()
@@ -355,7 +376,12 @@ namespace hemelb
       memcpy(&local_data[6], peak_inlet_velocity, sizeof(double) * inlets);
 
       MPI_Reduce(&local_data[0], &global_data[0], 3, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-      MPI_Reduce(&local_data[3], &global_data[3], 3 + inlets, MPI_DOUBLE, MPI_MAX, 0,
+      MPI_Reduce(&local_data[3],
+                 &global_data[3],
+                 3 + inlets,
+                 MPI_DOUBLE,
+                 MPI_MAX,
+                 0,
                  MPI_COMM_WORLD);
 
       mMinsAndMaxes.MinDensity = global_data[0];
@@ -396,7 +422,7 @@ namespace hemelb
     }
 
     // Update peak and average inlet velocities local to the current subdomain.
-    void LBM::UpdateInletVelocities(int time_step, geometry::LatticeData &iLatDat, net::Net *net)
+    void LBM::UpdateInletVelocities(int time_step)
     {
       double density;
       double vx, vy, vz;
@@ -415,14 +441,17 @@ namespace hemelb
         }
       }
 
-      unsigned int offset = iLatDat.GetInnerCollisionCount(0) + iLatDat.GetInnerCollisionCount(1);
+      unsigned int offset = mLatDat->GetInnerCollisionCount(0) + mLatDat->GetInnerCollisionCount(1);
 
-      for (unsigned int i = offset; i < offset + iLatDat.GetInnerCollisionCount(2); i++)
+      for (unsigned int i = offset; i < offset + mLatDat->GetInnerCollisionCount(2); i++)
       {
-        D3Q15::CalculateDensityAndVelocity(iLatDat.GetFOld(i * D3Q15::NUMVECTORS), density, vx, vy,
+        D3Q15::CalculateDensityAndVelocity(mLatDat->GetFOld(i * D3Q15::NUMVECTORS),
+                                           density,
+                                           vx,
+                                           vy,
                                            vz);
 
-        inlet_id = iLatDat.GetBoundaryId(i);
+        inlet_id = mLatDat->GetBoundaryId(i);
 
         if (is_inlet_normal_available)
         {
@@ -450,15 +479,18 @@ namespace hemelb
         ++inlet_count[inlet_id];
       }
 
-      offset = iLatDat.GetInnerSiteCount() + iLatDat.GetInterCollisionCount(0)
-          + iLatDat.GetInterCollisionCount(1);
+      offset = mLatDat->GetInnerSiteCount() + mLatDat->GetInterCollisionCount(0)
+          + mLatDat->GetInterCollisionCount(1);
 
-      for (unsigned int i = offset; i < offset + iLatDat.GetInterCollisionCount(2); i++)
+      for (unsigned int i = offset; i < offset + mLatDat->GetInterCollisionCount(2); i++)
       {
-        D3Q15::CalculateDensityAndVelocity(iLatDat.GetFOld(i * D3Q15::NUMVECTORS), density, vx, vy,
+        D3Q15::CalculateDensityAndVelocity(mLatDat->GetFOld(i * D3Q15::NUMVECTORS),
+                                           density,
+                                           vx,
+                                           vy,
                                            vz);
 
-        inlet_id = iLatDat.GetBoundaryId(i);
+        inlet_id = mLatDat->GetBoundaryId(i);
 
         if (is_inlet_normal_available)
         {
@@ -499,7 +531,7 @@ namespace hemelb
     // In the case of instability, this function restart the simulation
     // with twice as many time steps per period and update the parameters
     // that depends on this change.
-    void LBM::Restart(geometry::LatticeData* iLatDat)
+    void LBM::Reset()
     {
       int i;
 
@@ -528,7 +560,7 @@ namespace hemelb
 
       RecalculateTauViscosityOmega();
 
-      SetInitialConditions(iLatDat);
+      SetInitialConditions();
     }
 
     double LBM::GetMinPhysicalPressure()

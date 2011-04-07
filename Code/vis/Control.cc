@@ -12,7 +12,9 @@ namespace hemelb
 {
   namespace vis
   {
-    Control::Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat)
+    Control::Control(lb::StressTypes iStressType,
+                     const topology::NetworkTopology* netTop,
+                     geometry::LatticeData* iLatDat)
     {
       mVisSettings.mStressType = iStressType;
 
@@ -27,9 +29,11 @@ namespace hemelb
 
       mVisSettings.mouse_x = -1;
       mVisSettings.mouse_y = -1;
+
+      initLayers(netTop, iLatDat);
     }
 
-    void Control::initLayers(topology::NetworkTopology * iNetworkTopology,
+    void Control::initLayers(const topology::NetworkTopology * iNetworkTopology,
                              geometry::LatticeData* iLatDat)
     {
       myRayTracer = new RayTracer(iNetworkTopology,
@@ -101,23 +105,12 @@ namespace hemelb
       mDomainStats.stress_threshold_max_inv = iStressThresholdMaxInv;
     }
 
-    void Control::updateImageSize(int pixels_x, int pixels_y)
+    void Control::UpdateImageSize(int pixels_x, int pixels_y)
     {
       mScreen.Resize(pixels_x, pixels_y);
     }
 
-    /**
-     * Method that uses a binary tree communication method to composite the image
-     * as created from multiple processors.
-     *
-     * @param iNetTopology
-     */
-    void Control::compositeImage(const topology::NetworkTopology * iNetTopology)
-    {
-      mScreen.CompositeImage(&mVisSettings, iNetTopology);
-    }
-
-    void Control::render(geometry::LatticeData* iLatDat,
+    void Control::Render(geometry::LatticeData* iLatDat,
                          const topology::NetworkTopology* iNetTopology)
     {
       mScreen.Reset();
@@ -135,10 +128,10 @@ namespace hemelb
         myStreaker->render(iLatDat);
       }
 #endif
-      compositeImage(iNetTopology);
+      mScreen.CompositeImage(&mVisSettings, iNetTopology);
     }
 
-    void Control::writeImage(std::string image_file_name)
+    void Control::WriteImage(std::string image_file_name)
     {
       io::XdrFileWriter writer = io::XdrFileWriter(image_file_name);
 
@@ -153,7 +146,7 @@ namespace hemelb
       mScreen.WritePixels(&mDomainStats, &mVisSettings, &writer);
     }
 
-    void Control::setMouseParams(double iPhysicalPressure, double iPhysicalStress)
+    void Control::SetMouseParams(double iPhysicalPressure, double iPhysicalStress)
     {
       mVisSettings.mouse_pressure = iPhysicalPressure;
       mVisSettings.mouse_stress = iPhysicalStress;
@@ -169,12 +162,12 @@ namespace hemelb
       return mScreen.MouseIsOverPixel(mVisSettings.mouse_x, mVisSettings.mouse_y, density, stress);
     }
 
-    void Control::streaklines(int time_step, int period, geometry::LatticeData* iLatDat)
+    void Control::ProgressStreaklines(int time_step, int period, geometry::LatticeData* iLatDat)
     {
       myStreaker ->StreakLines(time_step, period, iLatDat);
     }
 
-    void Control::restart()
+    void Control::Reset()
     {
       myStreaker->Restart();
     }
