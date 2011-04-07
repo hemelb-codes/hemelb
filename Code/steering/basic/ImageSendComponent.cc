@@ -86,8 +86,9 @@ namespace hemelb
 
       io::XdrMemWriter pixelDataWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
 
-      mVisControl->mScreen.WritePixels(RECV_BUFFER_A, &mVisControl->mDomainStats,
-                                       &mVisControl->mVisSettings, &pixelDataWriter);
+      mVisControl->mScreen.WritePixels(&mVisControl->mDomainStats,
+                                       &mVisControl->mVisSettings,
+                                       &pixelDataWriter);
 
       // Send the number of bytes being used on pixel data.
       int frameBytes = pixelDataWriter.getCurrentStreamPosition();
@@ -100,7 +101,8 @@ namespace hemelb
 
         int frameDetailsBytes = frameDetailsWriter.getCurrentStreamPosition();
 
-        int frameDetailsBytesSent = SendSuccess(socketToClient, xdrSendBuffer_frame_details,
+        int frameDetailsBytesSent = SendSuccess(socketToClient,
+                                                xdrSendBuffer_frame_details,
                                                 frameDetailsBytes);
 
         if (frameDetailsBytesSent < 0)

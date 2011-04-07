@@ -319,7 +319,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       if (mSimulationState.DoRendering && !write_snapshot_image)
       {
-        mVisControl->render(RECV_BUFFER_A, mLatDat, mNetworkTopology);
+        mVisControl->render(mLatDat, mNetworkTopology);
 
         if (steeringCpt->updatedMouseCoords)
         {
@@ -354,7 +354,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       if (write_snapshot_image)
       {
-        mVisControl->render(RECV_BUFFER_B, mLatDat, mNetworkTopology);
+        mVisControl->render(mLatDat, mNetworkTopology);
         mImagesWritten++;
 
         if (mNetworkTopology->IsCurrentProcTheIOProc())
@@ -362,7 +362,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
           char image_filename[255];
           snprintf(image_filename, 255, "%08i.dat", mSimulationState.TimeStep);
 
-          mVisControl->writeImage(RECV_BUFFER_B, image_directory + std::string(image_filename));
+          mVisControl->writeImage(image_directory + std::string(image_filename));
         }
       }
 

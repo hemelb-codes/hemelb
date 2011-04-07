@@ -57,16 +57,14 @@ namespace hemelb
 
         static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
 
-        void CompositeImage(int bufferId,
-                            const VisSettings* visSettings,
-                            const topology::NetworkTopology* netTop);
+        void
+            CompositeImage(const VisSettings* visSettings, const topology::NetworkTopology* netTop);
 
-        bool MouseIsOverPixel(int bufferId, int mouseX, int mouseY, float* density, float* stress);
+        bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
 
-        void WritePixelCount(int bufferId, io::Writer* writer);
+        void WritePixelCount(io::Writer* writer);
 
-        void WritePixels(int bufferId,
-                         const DomainStats* domainStats,
+        void WritePixels(const DomainStats* domainStats,
                          const VisSettings* visSettings,
                          io::Writer* writer);
 

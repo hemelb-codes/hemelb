@@ -226,8 +226,7 @@ namespace hemelb
       col_pixels = 0;
     }
 
-    void Screen::CompositeImage(int bufferId,
-                                const VisSettings* visSettings,
+    void Screen::CompositeImage(const VisSettings* visSettings,
                                 const hemelb::topology::NetworkTopology* netTop)
     {
       // Status object for MPI comms.
@@ -363,8 +362,7 @@ namespace hemelb
       }
     }
 
-    bool Screen::MouseIsOverPixel(int bufferId,
-                                  int mouseX,
+    bool Screen::MouseIsOverPixel(int mouseX,
                                   int mouseY,
                                   float* density,
                                   float* stress)
@@ -384,15 +382,14 @@ namespace hemelb
       return false;
     }
 
-    void Screen::WritePixelCount(int bufferId, io::Writer* writer)
+    void Screen::WritePixelCount(io::Writer* writer)
     {
       writer->operator <<(GetPixelsX());
       writer->operator <<(GetPixelsY());
       writer->operator <<(col_pixels_recv);
     }
 
-    void Screen::WritePixels(int bufferId,
-                             const DomainStats* domainStats,
+    void Screen::WritePixels(const DomainStats* domainStats,
                              const VisSettings* visSettings,
                              io::Writer* writer)
     {
