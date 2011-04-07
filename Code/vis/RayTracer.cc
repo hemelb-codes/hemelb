@@ -813,12 +813,8 @@ namespace hemelb
 
     void RayTracer::Render()
     {
-      float projectedUnitX[3], projectedUnitY[3];
-      for (int l = 0; l < 3; l++)
-      {
-        projectedUnitX[l] = mScreen->GetUnitVectorProjectionX()[l];
-        projectedUnitY[l] = mScreen->GetUnitVectorProjectionY()[l];
-      }
+      const float* const projectedUnitX = mScreen->GetUnitVectorProjectionX();
+      const float* const projectedUnitY = mScreen->GetUnitVectorProjectionY();
 
       const float* viewpointCentre = mViewpoint->GetViewpointCentre();
 
