@@ -18,17 +18,13 @@ namespace hemelb
         col_pixel_id[i] = -1;
       }
 
-      col_pixel_recv[0] = new ColPixel[COLOURED_PIXELS_MAX];
-      col_pixel_recv[1] = new ColPixel[COLOURED_PIXELS_MAX];
+      col_pixel_recv = new ColPixel[COLOURED_PIXELS_MAX];
     }
 
     Screen::~Screen()
     {
-      delete[] col_pixel_recv[0];
-      delete[] col_pixel_recv[1];
-
+      delete[] col_pixel_recv;
       delete[] col_pixel_id;
-
     }
 
     /**
@@ -240,7 +236,7 @@ namespace hemelb
       // For all processors with pixels, copy these to the receive buffer.
       for (unsigned int ii = 0; ii < col_pixels; ++ii)
       {
-        col_pixel_recv[bufferId][ii] = localPixels[ii];
+        col_pixel_recv[ii] = localPixels[ii];
       }
 
       /*
@@ -309,12 +305,12 @@ namespace hemelb
               {
                 col_pixel_id[id] = col_pixels;
 
-                col_pixel_recv[bufferId][col_pixels] = *col_pixel1;
+                col_pixel_recv[col_pixels] = *col_pixel1;
                 ++col_pixels;
               }
               else
               {
-                col_pixel_recv[bufferId][col_pixel_id[id]].MergeIn(col_pixel1, visSettings);
+                col_pixel_recv[col_pixel_id[id]].MergeIn(col_pixel1, visSettings);
               }
             }
 
@@ -324,7 +320,7 @@ namespace hemelb
             {
               for (unsigned int ii = 0; ii < col_pixels; ++ii)
               {
-                localPixels[ii] = col_pixel_recv[bufferId][ii];
+                localPixels[ii] = col_pixel_recv[ii];
               }
             }
           }
@@ -338,12 +334,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Send(col_pixel_recv[bufferId],
-                   col_pixels,
-                   ColPixel::getMpiType(),
-                   0,
-                   20,
-                   MPI_COMM_WORLD);
+          MPI_Send(col_pixel_recv, col_pixels, ColPixel::getMpiType(), 0, 20, MPI_COMM_WORLD);
         }
 
       }
@@ -354,7 +345,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Recv(col_pixel_recv[bufferId],
+          MPI_Recv(col_pixel_recv,
                    col_pixels,
                    ColPixel::getMpiType(),
                    1,
@@ -364,9 +355,9 @@ namespace hemelb
         }
       }
 
-      col_pixels_recv[bufferId] = col_pixels;
+      col_pixels_recv = col_pixels;
 
-      for (unsigned int m = 0; m < col_pixels_recv[bufferId]; m++)
+      for (unsigned int m = 0; m < col_pixels_recv; m++)
       {
         col_pixel_id[localPixels[m].GetI() * GetPixelsY() + localPixels[m].GetJ()] = -1;
       }
@@ -378,13 +369,13 @@ namespace hemelb
                                   float* density,
                                   float* stress)
     {
-      for (unsigned int i = 0; i < col_pixels_recv[bufferId]; i++)
+      for (unsigned int i = 0; i < col_pixels_recv; i++)
       {
-        if (col_pixel_recv[bufferId][i].IsRT() && int (col_pixel_recv[bufferId][i].GetI())
-            == mouseX && int (col_pixel_recv[bufferId][i].GetJ()) == mouseY)
+        if (col_pixel_recv[i].IsRT() && int (col_pixel_recv[i].GetI()) == mouseX
+            && int (col_pixel_recv[i].GetJ()) == mouseY)
         {
-          *density = col_pixel_recv[bufferId][i].GetDensity();
-          *stress = col_pixel_recv[bufferId][i].GetStress();
+          *density = col_pixel_recv[i].GetDensity();
+          *stress = col_pixel_recv[i].GetStress();
 
           return true;
         }
@@ -397,7 +388,7 @@ namespace hemelb
     {
       writer->operator <<(GetPixelsX());
       writer->operator <<(GetPixelsY());
-      writer->operator <<(col_pixels_recv[bufferId]);
+      writer->operator <<(col_pixels_recv);
     }
 
     void Screen::WritePixels(int bufferId,
@@ -405,9 +396,9 @@ namespace hemelb
                              const VisSettings* visSettings,
                              io::Writer* writer)
     {
-      for (unsigned int i = 0; i < col_pixels_recv[bufferId]; i++)
+      for (unsigned int i = 0; i < col_pixels_recv; i++)
       {
-        writer->writePixel(&col_pixel_recv[bufferId][i], domainStats, visSettings);
+        writer->writePixel(&col_pixel_recv[i], domainStats, visSettings);
       }
     }
 
