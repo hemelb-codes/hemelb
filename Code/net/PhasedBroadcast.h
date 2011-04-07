@@ -2,6 +2,7 @@
 #define HEMELB_NET_PHASEDBROADCAST_H
 
 #include <vector>
+#include "net/IteratedAction.h"
 #include "net/net.h"
 #include "lb/SimulationState.h"
 #include "topology/NetworkTopology.h"
@@ -10,7 +11,7 @@ namespace hemelb
 {
   namespace net
   {
-    class PhasedBroadcast
+    class PhasedBroadcast : public IteratedAction
     {
       public:
         PhasedBroadcast(Net * iNet,
