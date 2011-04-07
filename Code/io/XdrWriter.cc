@@ -37,7 +37,8 @@ namespace hemelb
     // Method to get the current position in the stream.
     unsigned int XdrWriter::getCurrentStreamPosition() const
     {
-      return xdr_getpos(&mXdr);
+      // The XDR function does not modify the instance, but is not const in the declaration.
+      return xdr_getpos(const_cast<XDR*>(&mXdr));
     }
 
     // No field/record separators in XDR files
