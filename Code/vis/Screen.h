@@ -94,8 +94,8 @@ namespace hemelb
         ColPixel localPixels[COLOURED_PIXELS_MAX];
         // number of ColPixels.
         unsigned int col_pixels;
-        unsigned int col_pixels_recv[2]; // number received?
-        ColPixel* col_pixel_recv[2];
+        unsigned int col_pixels_recv; // number received?
+        ColPixel* col_pixel_recv;
     };
   }
 }
