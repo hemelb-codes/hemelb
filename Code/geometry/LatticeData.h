@@ -90,7 +90,7 @@ namespace hemelb
 
         void InitialiseNeighbourLookup(short int ** bSharedFLocationForEachProc,
                                        int localRank,
-                                       const unsigned int * iSiteDataForThisRank);
+                                       const unsigned int* iSiteDataForThisRank);
 
         void SetNeighbourLocation(unsigned int iSiteIndex,
                                   unsigned int iDirection,

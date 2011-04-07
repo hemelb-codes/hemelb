@@ -108,7 +108,7 @@ namespace hemelb
         unsigned int *s_to_send, *s_to_recv;
         unsigned int *from_proc_id_to_neigh_proc_index;
 
-        std::vector<NeighProc*> mNeighProcs;
+        std::vector<NeighProc> mNeighProcs;
 
         // Require these for inter-processor comms.
         MPI_Status status[4];
