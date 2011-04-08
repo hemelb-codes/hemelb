@@ -8,6 +8,9 @@ namespace hemelb
   namespace vis
   {
 
+    // TODO This is probably going to have to be cleverly redesigned. We need to pass the images around over several iterations without
+    // interference between the steering and writte-to-disk images.
+
     Screen::Screen()
     {
       PixelsMax = COLOURED_PIXELS_MAX;
@@ -18,12 +21,12 @@ namespace hemelb
         col_pixel_id[i] = -1;
       }
 
-      col_pixel_recv = new ColPixel[COLOURED_PIXELS_MAX];
+      compositingBuffer = new ColPixel[COLOURED_PIXELS_MAX];
     }
 
     Screen::~Screen()
     {
-      delete[] col_pixel_recv;
+      delete[] compositingBuffer;
       delete[] col_pixel_id;
     }
 
@@ -235,7 +238,7 @@ namespace hemelb
       // For all processors with pixels, copy these to the receive buffer.
       for (unsigned int ii = 0; ii < col_pixels; ++ii)
       {
-        col_pixel_recv[ii] = localPixels[ii];
+        compositingBuffer[ii] = localPixels[ii];
       }
 
       /*
@@ -304,12 +307,12 @@ namespace hemelb
               {
                 col_pixel_id[id] = col_pixels;
 
-                col_pixel_recv[col_pixels] = *col_pixel1;
+                compositingBuffer[col_pixels] = *col_pixel1;
                 ++col_pixels;
               }
               else
               {
-                col_pixel_recv[col_pixel_id[id]].MergeIn(col_pixel1, visSettings);
+                compositingBuffer[col_pixel_id[id]].MergeIn(col_pixel1, visSettings);
               }
             }
 
@@ -319,7 +322,7 @@ namespace hemelb
             {
               for (unsigned int ii = 0; ii < col_pixels; ++ii)
               {
-                localPixels[ii] = col_pixel_recv[ii];
+                localPixels[ii] = compositingBuffer[ii];
               }
             }
           }
@@ -333,7 +336,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Send(col_pixel_recv, col_pixels, ColPixel::getMpiType(), 0, 20, MPI_COMM_WORLD);
+          MPI_Send(compositingBuffer, col_pixels, ColPixel::getMpiType(), 0, 20, MPI_COMM_WORLD);
         }
 
       }
@@ -344,7 +347,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Recv(col_pixel_recv,
+          MPI_Recv(compositingBuffer,
                    col_pixels,
                    ColPixel::getMpiType(),
                    1,
@@ -354,26 +357,23 @@ namespace hemelb
         }
       }
 
-      col_pixels_recv = col_pixels;
+      pixelCountInBuffer = col_pixels;
 
-      for (unsigned int m = 0; m < col_pixels_recv; m++)
+      for (unsigned int m = 0; m < pixelCountInBuffer; m++)
       {
         col_pixel_id[localPixels[m].GetI() * GetPixelsY() + localPixels[m].GetJ()] = -1;
       }
     }
 
-    bool Screen::MouseIsOverPixel(int mouseX,
-                                  int mouseY,
-                                  float* density,
-                                  float* stress)
+    bool Screen::MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress)
     {
-      for (unsigned int i = 0; i < col_pixels_recv; i++)
+      for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        if (col_pixel_recv[i].IsRT() && int (col_pixel_recv[i].GetI()) == mouseX
-            && int (col_pixel_recv[i].GetJ()) == mouseY)
+        if (compositingBuffer[i].IsRT() && int (compositingBuffer[i].GetI()) == mouseX
+            && int (compositingBuffer[i].GetJ()) == mouseY)
         {
-          *density = col_pixel_recv[i].GetDensity();
-          *stress = col_pixel_recv[i].GetStress();
+          *density = compositingBuffer[i].GetDensity();
+          *stress = compositingBuffer[i].GetStress();
 
           return true;
         }
@@ -386,16 +386,16 @@ namespace hemelb
     {
       writer->operator <<(GetPixelsX());
       writer->operator <<(GetPixelsY());
-      writer->operator <<(col_pixels_recv);
+      writer->operator <<(pixelCountInBuffer);
     }
 
     void Screen::WritePixels(const DomainStats* domainStats,
                              const VisSettings* visSettings,
                              io::Writer* writer)
     {
-      for (unsigned int i = 0; i < col_pixels_recv; i++)
+      for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        writer->writePixel(&col_pixel_recv[i], domainStats, visSettings);
+        writer->writePixel(&compositingBuffer[i], domainStats, visSettings);
       }
     }
 

@@ -288,45 +288,45 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         mNet->Receive();
 
         {
-          double lPrePreSend = MPI_Wtime();
+          double lPrePreSend = hemelb::util::myClock();
           for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
               != actors.end(); ++it)
           {
             (*it)->PreSend();
           }
-          mLbTime += (MPI_Wtime() - lPrePreSend);
+          mLbTime += (hemelb::util::myClock() - lPrePreSend);
         }
 
         {
-          double lPreSendTime = MPI_Wtime();
+          double lPreSendTime = hemelb::util::myClock();
           mNet->Send();
-          mMPISendTime += (MPI_Wtime() - lPreSendTime);
+          mMPISendTime += (hemelb::util::myClock() - lPreSendTime);
         }
 
         {
-          double lPrePreReceive = MPI_Wtime();
+          double lPrePreReceive = hemelb::util::myClock();
           for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
               != actors.end(); ++it)
           {
             (*it)->PreReceive();
           }
-          mLbTime += (MPI_Wtime() - lPrePreReceive);
+          mLbTime += (hemelb::util::myClock() - lPrePreReceive);
         }
 
         {
-          double lPreWaitTime = MPI_Wtime();
+          double lPreWaitTime = hemelb::util::myClock();
           mNet->Wait();
-          mMPIWaitTime += (MPI_Wtime() - lPreWaitTime);
+          mMPIWaitTime += (hemelb::util::myClock() - lPreWaitTime);
         }
 
         {
-          double lPrePostStep = MPI_Wtime();
+          double lPrePostStep = hemelb::util::myClock();
           for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
               != actors.end(); ++it)
           {
             (*it)->PostReceive();
           }
-          mLbTime += (MPI_Wtime() - lPrePostStep);
+          mLbTime += (hemelb::util::myClock() - lPrePostStep);
         }
 
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
@@ -345,7 +345,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       }
       mLbm->UpdateInletVelocities(mSimulationState.TimeStep);
 
-      double lPreImageTime = MPI_Wtime();
+      double lPreImageTime = hemelb::util::myClock();
 
 #ifndef NO_STREAKLINES
       mVisControl->ProgressStreaklines(mSimulationState.TimeStep, mLbm->period, mLatDat);
@@ -403,7 +403,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         }
       }
 
-      double lPreSnapshotTime = MPI_Wtime();
+      double lPreSnapshotTime = hemelb::util::myClock();
       mImagingTime += (lPreSnapshotTime - lPreImageTime);
 
       if (mSimulationState.TimeStep % snapshots_period == 0)
@@ -415,7 +415,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         mLbm->WriteConfigParallel(stability, snapshot_directory + std::string(snapshot_filename));
       }
 
-      mSnapshotTime += (MPI_Wtime() - lPreSnapshotTime);
+      mSnapshotTime += (hemelb::util::myClock() - lPreSnapshotTime);
 
       if (stability == hemelb::lb::StableAndConverged)
       {

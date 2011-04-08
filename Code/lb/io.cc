@@ -25,121 +25,43 @@ namespace hemelb
      */
     void LBM::ReadParameters()
     {
+      inlets = mSimConfig->Inlets.size();
+      allocateInlets(inlets);
 
-      double par_to_send[10000];
-      int err;
-
-      if (mNetTopology->IsCurrentProcTheIOProc())
+      for (int n = 0; n < inlets; n++)
       {
-        inlets = mSimConfig->Inlets.size();
-        allocateInlets(inlets);
+        hemelb::SimConfig::InOutLet *lInlet = mSimConfig->Inlets[n];
 
-        for (int n = 0; n < inlets; n++)
-        {
-          hemelb::SimConfig::InOutLet *lInlet = mSimConfig->Inlets[n];
-
-          inlet_density_avg[n] = ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
-          inlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
-          inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
-        }
-
-        outlets = mSimConfig->Outlets.size();
-        allocateOutlets(outlets);
-
-        for (int n = 0; n < outlets; n++)
-        {
-          hemelb::SimConfig::InOutLet *lOutlet = mSimConfig->Outlets[n];
-          outlet_density_avg[n] = ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
-          outlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
-          outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
-        }
-
-        average_inlet_velocity = new double[inlets];
-        peak_inlet_velocity = new double[inlets];
-        inlet_normal = new double[3 * inlets];
-        inlet_count = new long int[inlets];
-
-        is_inlet_normal_available = 1;
-
-        for (int ii = 0; ii < inlets; ii++)
-        {
-          inlet_normal[3 * ii] = mSimConfig->Inlets[ii]->Normal.x;
-          inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
-          inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
-        }
-
-        par_to_send[0] = 0.1 + (double) inlets;
-        par_to_send[1] = 0.1 + (double) outlets;
-        par_to_send[2] = 0.1 + (double) is_inlet_normal_available;
+        inlet_density_avg[n] = ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
+        inlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
+        inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
       }
 
-      err = MPI_Bcast(par_to_send, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      outlets = mSimConfig->Outlets.size();
+      allocateOutlets(outlets);
 
-      if (!mNetTopology->IsCurrentProcTheIOProc())
+      for (int n = 0; n < outlets; n++)
       {
-        inlets = (int) par_to_send[0];
-        outlets = (int) par_to_send[1];
-        is_inlet_normal_available = (int) par_to_send[2];
-
-        allocateInlets(inlets);
-        allocateOutlets(outlets);
-
-        average_inlet_velocity = new double[inlets];
-        peak_inlet_velocity = new double[inlets];
-        inlet_normal = new double[3 * inlets];
-        inlet_count = new long int[inlets];
-      }
-      else
-      {
-        for (int n = 0; n < inlets; n++)
-        {
-          par_to_send[3 * n + 0] = inlet_density_avg[n];
-          par_to_send[3 * n + 1] = inlet_density_amp[n];
-          par_to_send[3 * n + 2] = inlet_density_phs[n];
-        }
-        for (int n = 0; n < outlets; n++)
-        {
-          par_to_send[3 * inlets + 3 * n + 0] = outlet_density_avg[n];
-          par_to_send[3 * inlets + 3 * n + 1] = outlet_density_amp[n];
-          par_to_send[3 * inlets + 3 * n + 2] = outlet_density_phs[n];
-        }
-        if (is_inlet_normal_available)
-        {
-          for (int n = 0; n < inlets; n++)
-          {
-            par_to_send[3 * (inlets + outlets) + 3 * n + 0] = inlet_normal[3 * n + 0];
-            par_to_send[3 * (inlets + outlets) + 3 * n + 1] = inlet_normal[3 * n + 1];
-            par_to_send[3 * (inlets + outlets) + 3 * n + 2] = inlet_normal[3 * n + 2];
-          }
-        }
+        hemelb::SimConfig::InOutLet *lOutlet = mSimConfig->Outlets[n];
+        outlet_density_avg[n] = ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
+        outlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
+        outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
       }
 
-      err = MPI_Bcast(par_to_send, 3 * (inlets + outlets + inlets), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      average_inlet_velocity = new double[inlets];
+      peak_inlet_velocity = new double[inlets];
+      inlet_normal = new double[3 * inlets];
+      inlet_count = new long int[inlets];
 
-      if (!mNetTopology->IsCurrentProcTheIOProc())
+      is_inlet_normal_available = 1;
+
+      for (int ii = 0; ii < inlets; ii++)
       {
-        for (int n = 0; n < inlets; n++)
-        {
-          inlet_density_avg[n] = par_to_send[3 * n + 0];
-          inlet_density_amp[n] = par_to_send[3 * n + 1];
-          inlet_density_phs[n] = par_to_send[3 * n + 2];
-        }
-        for (int n = 0; n < outlets; n++)
-        {
-          outlet_density_avg[n] = par_to_send[3 * inlets + 3 * n + 0];
-          outlet_density_amp[n] = par_to_send[3 * inlets + 3 * n + 1];
-          outlet_density_phs[n] = par_to_send[3 * inlets + 3 * n + 2];
-        }
-        if (is_inlet_normal_available)
-        {
-          for (int n = 0; n < inlets; n++)
-          {
-            inlet_normal[3 * n + 0] = par_to_send[3 * (inlets + outlets) + 3 * n + 0];
-            inlet_normal[3 * n + 1] = par_to_send[3 * (inlets + outlets) + 3 * n + 1];
-            inlet_normal[3 * n + 2] = par_to_send[3 * (inlets + outlets) + 3 * n + 2];
-          }
-        }
+        inlet_normal[3 * ii] = mSimConfig->Inlets[ii]->Normal.x;
+        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
+        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
       }
+
       UpdateBoundaryDensities(0, 0);
 
       RecalculateTauViscosityOmega();
@@ -393,41 +315,15 @@ namespace hemelb
     {
       float lDensity_threshold_min, lDensity_threshold_minmax_inv, lVelocity_threshold_max_inv,
           lStress_threshold_max_inv;
-      float par_to_send[9];
       float density_min, density_max, velocity_max, stress_max;
 
       int i;
 
-      if (mNetTopology->IsCurrentProcTheIOProc())
-      {
-        velocity_max = ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
-        stress_max = ConvertStressToLatticeUnits(mSimConfig->MaxStress);
-
-        par_to_send[0] = mSimConfig->VisCentre.x;
-        par_to_send[1] = mSimConfig->VisCentre.y;
-        par_to_send[2] = mSimConfig->VisCentre.z;
-        par_to_send[3] = mSimConfig->VisLongitude;
-        par_to_send[4] = mSimConfig->VisLatitude;
-        par_to_send[5] = mSimConfig->VisZoom;
-        par_to_send[6] = mSimConfig->VisBrightness;
-        par_to_send[7] = velocity_max;
-        par_to_send[8] = stress_max;
-      }
-
-      MPI_Bcast(par_to_send, 9, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
-      mSimConfig->VisCentre.x = par_to_send[0];
-      mSimConfig->VisCentre.y = par_to_send[1];
-      mSimConfig->VisCentre.z = par_to_send[2];
-      mSimConfig->VisLongitude = par_to_send[3];
-      mSimConfig->VisLatitude = par_to_send[4];
-      mSimConfig->VisZoom = par_to_send[5];
-      mSimConfig->VisBrightness = par_to_send[6];
-      velocity_max = par_to_send[7];
-      stress_max = par_to_send[8];
-
       density_min = ((float) BIG_NUMBER);
       density_max = ((float) -BIG_NUMBER);
+
+      velocity_max = ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
+      stress_max = ConvertStressToLatticeUnits(mSimConfig->MaxStress);
 
       for (i = 0; i < inlets; i++)
       {
