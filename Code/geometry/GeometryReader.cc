@@ -226,7 +226,7 @@ namespace hemelb
                                                        double* oReadTime,
                                                        double* oDecomposeTime)
     {
-      double lStart = MPI_Wtime();
+      double lStart = util::myClock();
 
       MPI_File lFile;
       MPI_Info lFileInfo;
@@ -294,7 +294,7 @@ namespace hemelb
       MPI_File_close(&lFile);
       MPI_Info_free(&lFileInfo);
 
-      double lMiddle = MPI_Wtime();
+      double lMiddle = util::myClock();
 
       int preOptimisationSites = 0;
 
@@ -385,7 +385,7 @@ namespace hemelb
         *totalFluidSites += sitesPerBlock[ii];
       }
 
-      double lEnd = MPI_Wtime();
+      double lEnd = util::myClock();
 
       *oReadTime = lMiddle - lStart;
       *oDecomposeTime = lEnd - lMiddle;
