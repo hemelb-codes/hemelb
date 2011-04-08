@@ -136,6 +136,7 @@ namespace hemelb
         sim.pressureMax = mLbm->GetMaxPhysicalPressure();
         sim.velocityMin = mLbm->GetMinPhysicalVelocity();
         sim.velocityMax = mLbm->GetMaxPhysicalVelocity();
+        sim.stressMin = mLbm->GetMinPhysicalStress();
         sim.stressMax = mLbm->GetMaxPhysicalStress();
         sim.timeStep = mSimState->TimeStep;
         sim.time = mSimState->IntraCycleTime;
