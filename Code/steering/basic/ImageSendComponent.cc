@@ -1,9 +1,11 @@
+#include <errno.h>
+#include <signal.h>
+
 #include "steering/ImageSendComponent.h"
 #include "steering/basic/SimulationParameters.h"
 #include "steering/basic/Network.h"
 #include "io/XdrMemWriter.h"
-#include <errno.h>
-#include <signal.h>
+#include "util/utilityFunctions.h"
 
 namespace hemelb
 {
@@ -195,7 +197,7 @@ namespace hemelb
 
       // If we're going to exceed 25Hz by rendering now, wait until next iteration.
       {
-        double frameTimeStart = frameTiming();
+        double frameTimeStart = util::myClock();
 
         double deltaTime = frameTimeStart - lastRender;
 

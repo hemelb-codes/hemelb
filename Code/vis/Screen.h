@@ -58,7 +58,7 @@ namespace hemelb
         static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
 
         void
-            CompositeImage(const VisSettings* visSettings, const topology::NetworkTopology* netTop);
+        CompositeImage(const VisSettings* visSettings, const topology::NetworkTopology* netTop);
 
         bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
 
@@ -88,12 +88,12 @@ namespace hemelb
         unsigned int PixelsMax;
 
         // Array of pixel ids.
-        int *col_pixel_id;
+        int* col_pixel_id;
         ColPixel localPixels[COLOURED_PIXELS_MAX];
         // number of ColPixels.
         unsigned int col_pixels;
-        unsigned int col_pixels_recv; // number received?
-        ColPixel* col_pixel_recv;
+        unsigned int pixelCountInBuffer; // number received?
+        ColPixel* compositingBuffer;
     };
   }
 }
