@@ -415,10 +415,6 @@ namespace hemelb
         average_inlet_velocity[i] = ConvertVelocityToPhysicalUnits(average_inlet_velocity[i]);
         peak_inlet_velocity[i] = ConvertVelocityToPhysicalUnits(peak_inlet_velocity[i]);
       }
-
-      period = period;
-
-      inlets = inlets;
     }
 
     // Update peak and average inlet velocities local to the current subdomain.
