@@ -34,7 +34,7 @@ namespace hemelb
       while (received_bytes < length)
       {
         // Receive some data (up to the remaining length)
-        n = recv(sockid, buf + received_bytes, bytes_left_to_receive, NULL);
+        n = recv(sockid, buf + received_bytes, bytes_left_to_receive, 0);
 
         if (n <= 0)
         {
