@@ -237,8 +237,6 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
   {
     bool restart = false;
 
-    mLbm->InitMinMaxValues();
-
     for (mSimulationState.TimeStep = 1; mSimulationState.TimeStep <= mLbm->period; mSimulationState.TimeStep++)
     {
       ++total_time_steps;
