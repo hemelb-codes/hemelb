@@ -73,20 +73,6 @@ namespace hemelb
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
     }
 
-    // Set up of min/max values at the beginning of each pulsatile cycle.
-    void LBM::InitMinMaxValues(void)
-    {
-      // All values will be in [0, infinity) so it's adequate
-      // to set initial maxima to -1, and minima to std::numeric_limits<double>::max();
-      mMinsAndMaxes.MaxDensity = -1.0;
-      mMinsAndMaxes.MaxVelocity = -1.0;
-      mMinsAndMaxes.MaxStress = -1.0;
-
-      mMinsAndMaxes.MinDensity = std::numeric_limits<double>::max();
-      mMinsAndMaxes.MinVelocity = std::numeric_limits<double>::max();
-      mMinsAndMaxes.MinStress = std::numeric_limits<double>::max();
-    }
-
     // Calculate the BCs for each boundary site type and the
     // non-equilibrium distribution functions.
     void LBM::CalculateBC(double f[],

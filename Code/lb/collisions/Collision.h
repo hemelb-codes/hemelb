@@ -17,6 +17,8 @@ namespace hemelb
       struct MinsAndMaxes
       {
         public:
+          MinsAndMaxes();
+
           double MinDensity;
           double MaxDensity;
           double MinVelocity;

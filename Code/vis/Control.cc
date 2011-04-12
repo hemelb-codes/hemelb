@@ -1,5 +1,6 @@
 #include <vector>
 #include <math.h>
+#include <limits>
 
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
@@ -36,6 +37,60 @@ namespace hemelb
     void Control::initLayers(const topology::NetworkTopology * iNetworkTopology,
                              geometry::LatticeData* iLatDat)
     {
+      // We don't have all the minima / maxima on one core, so we have to gather them.
+      // NOTE this only happens once, during initialisation, otherwise it would be
+      // totally unforgivable.
+      unsigned int block_min_x = std::numeric_limits<unsigned int>::max();
+      unsigned int block_min_y = std::numeric_limits<unsigned int>::max();
+      unsigned int block_min_z = std::numeric_limits<unsigned int>::max();
+      unsigned int block_max_x = std::numeric_limits<unsigned int>::min();
+      unsigned int block_max_y = std::numeric_limits<unsigned int>::min();
+      unsigned int block_max_z = std::numeric_limits<unsigned int>::min();
+
+      int n = -1;
+
+      for (unsigned int i = 0; i < iLatDat->GetXBlockCount(); i++)
+      {
+        for (unsigned int j = 0; j < iLatDat->GetYBlockCount(); j++)
+        {
+          for (unsigned int k = 0; k < iLatDat->GetZBlockCount(); k++)
+          {
+            n++;
+
+            geometry::LatticeData::BlockData * lBlock = iLatDat->GetBlock((unsigned int) n);
+            if (lBlock->ProcessorRankForEachBlockSite == NULL)
+            {
+              continue;
+            }
+
+            block_min_x = util::NumericalFunctions::min(block_min_x, i);
+            block_min_y = util::NumericalFunctions::min(block_min_y, j);
+            block_min_z = util::NumericalFunctions::min(block_min_z, k);
+            block_max_x = util::NumericalFunctions::max(block_max_x, i);
+            block_max_y = util::NumericalFunctions::max(block_max_y, j);
+            block_max_z = util::NumericalFunctions::max(block_max_z, k);
+          }
+        }
+      }
+
+      unsigned int mins[3], maxes[3];
+      unsigned int localMins[3], localMaxes[3];
+
+      localMins[0] = block_min_x;
+      localMins[1] = block_min_y;
+      localMins[2] = block_min_z;
+
+      localMaxes[0] = block_max_x;
+      localMaxes[1] = block_max_y;
+      localMaxes[2] = block_max_z;
+
+      MPI_Allreduce(localMins, mins, 3, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, maxes, 3, MPI_UNSIGNED, MPI_MAX, MPI_COMM_WORLD);
+
+      mVisSettings.ctr_x = 0.5F * iLatDat->GetBlockSize() * (mins[0] + maxes[0]);
+      mVisSettings.ctr_y = 0.5F * iLatDat->GetBlockSize() * (mins[1] + maxes[1]);
+      mVisSettings.ctr_z = 0.5F * iLatDat->GetBlockSize() * (mins[2] + maxes[2]);
+
       myRayTracer = new RayTracer(iNetworkTopology,
                                   iLatDat,
                                   &mDomainStats,

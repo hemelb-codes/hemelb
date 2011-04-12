@@ -16,36 +16,35 @@ namespace hemelb
     class LBM : public net::IteratedAction
     {
       public:
-        int total_fluid_sites;
-        int inlets, outlets;
-        unsigned int period;
-
-        double ConvertPressureToLatticeUnits(double pressure) const;
-        double ConvertPressureToPhysicalUnits(double pressure) const;
-        double ConvertVelocityToLatticeUnits(double velocity) const;
-        double ConvertStressToLatticeUnits(double stress) const;
-        double ConvertStressToPhysicalUnits(double stress) const;
-        double ConvertVelocityToPhysicalUnits(double velocity) const;
-
         LBM(hemelb::SimConfig *iSimulationConfig,
             net::Net* net,
             geometry::LatticeData* latDat,
             SimulationState* simState,
             const hemelb::topology::NetworkTopology * iNetTop);
-        void Reset();
         ~LBM();
 
+        void RequestComms();
+        void PreSend();
+        void PreReceive();
+        void PostReceive();
+        void EndIteration();
+        void Reset();
+
+        int total_fluid_sites;
+        int inlets;
+        unsigned int period;
+
+        double ConvertPressureToLatticeUnits(double pressure) const;
+        double ConvertVelocityToLatticeUnits(double velocity) const;
+        double ConvertStressToLatticeUnits(double stress) const;
+
         void CalculateFlowFieldValues();
-        void RecalculateTauViscosityOmega();
         void UpdateBoundaryDensities(int cycle_id, int time_step);
         void UpdateInletVelocities(int time_step);
 
         void Initialise(int* iFTranslator, vis::Control* iControl);
 
-        void SetInitialConditions();
-
-        void
-        WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
+        void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
 
         double GetMinPhysicalPressure();
         double GetMaxPhysicalPressure();
@@ -53,8 +52,6 @@ namespace hemelb
         double GetMaxPhysicalVelocity();
         double GetMinPhysicalStress();
         double GetMaxPhysicalStress();
-
-        void InitMinMaxValues(void);
 
         double GetAverageInletVelocity(int iInletNumber);
         double GetPeakInletVelocity(int iInletNumber);
@@ -71,15 +68,16 @@ namespace hemelb
 
         hemelb::lb::LbmParameters *GetLbmParams();
 
-        void RequestComms();
-        void PreSend();
-        void PreReceive();
-        void PostReceive();
-        void EndIteration();
-
         unsigned int siteMins[3], siteMaxes[3];
 
       private:
+        void RecalculateTauViscosityOmega();
+        void SetInitialConditions();
+
+        double ConvertPressureToPhysicalUnits(double pressure) const;
+        double ConvertStressToPhysicalUnits(double stress) const;
+        double ConvertVelocityToPhysicalUnits(double velocity) const;
+
         void CalculateBC(double f[],
                          hemelb::geometry::LatticeData::SiteType iSiteType,
                          unsigned int iBoundaryId,
@@ -122,6 +120,7 @@ namespace hemelb
         double *inlet_normal;
         long int *inlet_count;
         double voxel_size;
+        int outlets;
 
         double mFileReadTime;
 

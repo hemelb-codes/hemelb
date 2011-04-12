@@ -35,7 +35,6 @@ namespace hemelb
       delete[] xdrSendBuffer_pixel_data;
     }
 
-    // TODO The timing of network sends (i.e. the frame rate) needs to be checked.
     // TODO Need to check whether the current method (when the image is there, send the whole
     // thing in one go) is OK performance-wise, or whether we should instead try on another iteration
     // if we can't send it immediately.
