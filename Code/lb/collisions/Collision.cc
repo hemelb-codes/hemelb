@@ -1,4 +1,4 @@
-#include <limits.h>
+#include <limits>
 #include "lb/collisions/Collision.h"
 
 namespace hemelb
