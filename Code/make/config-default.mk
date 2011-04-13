@@ -11,4 +11,4 @@ HEMELB_CXXFLAGS := -g -pedantic -Wall -Wextra -Wno-unused
 HEMELB_DEFS := TIXML_USE_TICPP
 HEMELB_INCLUDEPATHS :=
 HEMELB_LIBPATHS :=
-
+$(EXE)_LIBS = -lparmetis

@@ -15,8 +15,6 @@ $(EXE)_DEPS = D3Q15.o \
         main.o \
         $(SUBDIRS_TGTS)
 
-$(EXE)_LIBS = -lparmetis
-
 HEMELB_INCLUDEPATHS += $(TOP)
 
 include $(MK)/footer.mk

@@ -1,3 +1,4 @@
+
 // In this file, the functions useful to calculate the equilibrium distribution
 // function, momentums, the effective von Mises stress and the boundary conditions
 // are reported
@@ -342,6 +343,9 @@ namespace hemelb
 
     void LBM::CalculateFlowFieldValues()
     {
+      // TODO: Get rid of this whole thing, and the code in the UI
+      // that uses it.
+      /*
       double *local_data;
       double *global_data;
 
@@ -401,6 +405,7 @@ namespace hemelb
         average_inlet_velocity[i] = ConvertVelocityToPhysicalUnits(average_inlet_velocity[i]);
         peak_inlet_velocity[i] = ConvertVelocityToPhysicalUnits(peak_inlet_velocity[i]);
       }
+      */
     }
 
     // Update peak and average inlet velocities local to the current subdomain.
