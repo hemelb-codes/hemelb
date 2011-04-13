@@ -83,7 +83,7 @@ namespace hemelb
                                                             unsigned int j,
                                                             unsigned int k) const
     {
-      return i <= mSitesX && j <= mSitesY && k <= mSitesZ;
+      return i < mSitesX && j < mSitesY && k < mSitesZ;
     }
 
     LatticeData::GlobalLatticeData::~GlobalLatticeData()

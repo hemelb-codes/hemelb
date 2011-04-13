@@ -80,6 +80,11 @@ namespace hemelb
      * uint block_size = load_uint();
      *
      * uint nBlocks = blocks[0] * blocks[1] * blocks[2];
+     *
+     * double voxel_size = load_double();
+     *
+     * for (int i=0; i<3; ++i)
+     *        site0WorldPosition[i] = load_double();
      */
     void LatticeData::GeometryReader::ReadPreamble(MPI_File xiFile,
                                                    hemelb::lb::LbmParameters * bParams,
@@ -89,7 +94,9 @@ namespace hemelb
       // * 1 unsigned int for stress type
       // * 3 unsigned ints for the number of blocks in the x, y, z directions
       // * 1 unsigned int for the block size (number of sites along one edge of a block)
-      static const int PreambleBytes = sizeof(unsigned int) * 5;
+      // * 1 double for the voxel size
+      // * 3 doubles for the world-position of site 0
+      static const int PreambleBytes = 5 * 4 + 4 * 8;
 
       // Read in the file preamble into a buffer.
       char lPreambleBuffer[PreambleBytes];
@@ -977,15 +984,25 @@ namespace hemelb
                     int neigh_j = site_j + D3Q15::CY[l];
                     int neigh_k = site_k + D3Q15::CZ[l];
 
+                    if(neigh_i <= 0 || neigh_j <= 0 || neigh_k <= 0 || !bGlobLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
+		      {
+			continue;
+		      }
+
+
                     // Get the id of the processor which the neighbouring site lies on.
                     int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
                                                                             neigh_j,
                                                                             neigh_k);
 
-                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
+                    if (proc_id_p == NULL)
                     {
                       continue;
                     }
+                    if (*proc_id_p == BIG_NUMBER2)
+		      {
+			continue;
+		      }
 
                     // We now do some faffery to find out the global fluid site id of this point
                     unsigned int neighBlockI = neigh_i >> bGlobLatDat->Log2BlockSize;
