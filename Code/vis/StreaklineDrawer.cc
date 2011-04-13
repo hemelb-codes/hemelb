@@ -225,7 +225,7 @@ namespace hemelb
             {
               vel_site_data_p->counter = counter;
 
-              unsigned int m = from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
+              int m = from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
 
               mNeighProcs[m].s_to_send[3 * mNeighProcs[m].send_vs + 0] = neigh_i;
               mNeighProcs[m].s_to_send[3 * mNeighProcs[m].send_vs + 1] = neigh_j;
@@ -435,13 +435,13 @@ namespace hemelb
 
       req = new MPI_Request[2 * iNetworkTopology->GetProcessorCount()];
 
-      from_proc_id_to_neigh_proc_index = new unsigned int[iNetworkTopology->GetProcessorCount()];
+      from_proc_id_to_neigh_proc_index = new int[iNetworkTopology->GetProcessorCount()];
 
       for (unsigned int m = 0; m < iNetworkTopology->GetProcessorCount(); m++)
       {
         from_proc_id_to_neigh_proc_index[m] = -1;
       }
-      for (unsigned int m = 0; m < mNeighProcs.size(); m++)
+      for (int m = 0; m < (int)mNeighProcs.size(); m++)
       {
         from_proc_id_to_neigh_proc_index[mNeighProcs[m].id] = m;
       }
