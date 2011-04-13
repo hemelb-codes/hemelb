@@ -106,7 +106,7 @@ namespace hemelb
         // Arrays for communicating between processors.
         float *v_to_send, *v_to_recv;
         unsigned int *s_to_send, *s_to_recv;
-        unsigned int *from_proc_id_to_neigh_proc_index;
+        int *from_proc_id_to_neigh_proc_index;
 
         std::vector<NeighProc> mNeighProcs;
 
