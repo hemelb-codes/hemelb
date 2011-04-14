@@ -8,17 +8,6 @@ namespace hemelb
     namespace collisions
     {
 
-      MinsAndMaxes::MinsAndMaxes()
-      {
-        MaxDensity = -1.0;
-        MaxVelocity = -1.0;
-        MaxStress = -1.0;
-
-        MinDensity = std::numeric_limits<double>::max();
-        MinVelocity = std::numeric_limits<double>::max();
-        MinStress = std::numeric_limits<double>::max();
-      }
-
       // Default constructor, implemented so we can make it protected
       // and prevent instantiation of this base class.
       Collision::Collision()
@@ -33,7 +22,6 @@ namespace hemelb
                                    const int iFirstIndex,
                                    const int iSiteCount,
                                    const LbmParameters &iLbmParams,
-                                   MinsAndMaxes &bMinimaAndMaxima,
                                    geometry::LatticeData &bLatDat,
                                    hemelb::vis::Control *iControl)
       {
@@ -44,7 +32,6 @@ namespace hemelb
                                const int iFirstIndex,
                                const int iSiteCount,
                                const LbmParameters &iLbmParams,
-                               MinsAndMaxes &bMinimaAndMaxima,
                                geometry::LatticeData &bLatDat,
                                hemelb::vis::Control *iControl)
       {

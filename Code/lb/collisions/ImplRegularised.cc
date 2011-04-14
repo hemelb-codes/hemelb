@@ -11,19 +11,16 @@ namespace hemelb
                                          const int iFirstIndex,
                                          const int iSiteCount,
                                          const LbmParameters &iLbmParams,
-                                         MinsAndMaxes &bMinimaAndMaxima,
                                          geometry::LatticeData &bLatDat,
                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                      bLatDat, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                       bLatDat, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
       }
 
@@ -31,7 +28,6 @@ namespace hemelb
       void ImplRegularised::DoCollisionsInternal(const int iFirstIndex,
                                                  const int iSiteCount,
                                                  const LbmParameters &iLbmParams,
-                                                 MinsAndMaxes &bMinimaAndMaxima,
                                                  geometry::LatticeData &bLatDat,
                                                  hemelb::vis::Control *iControl)
       {
@@ -236,8 +232,15 @@ namespace hemelb
               + (-1.0 / 24.0) * temp2 + (1.0 + iLbmParams.Omega) * (f_neq[14] = ( (1.0 / 72.0)
               * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (-1, +1, +1)
 
-          UpdateMinsAndMaxes<tDoRayTracing> (v_x, v_y, v_z, lIndex, f_neq, density,
-                                             bMinimaAndMaxima, bLatDat, iLbmParams, iControl);
+          UpdateMinsAndMaxes<tDoRayTracing> (v_x,
+                                             v_y,
+                                             v_z,
+                                             lIndex,
+                                             f_neq,
+                                             density,
+                                             bLatDat,
+                                             iLbmParams,
+                                             iControl);
         }
       }
     }

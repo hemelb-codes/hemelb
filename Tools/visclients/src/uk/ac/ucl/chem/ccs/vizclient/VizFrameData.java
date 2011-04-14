@@ -20,12 +20,6 @@ public class VizFrameData {
 	//private double dataRate = 0.f;
 	//private double framePerSec = 0.f;
 	
-    private double vis_pressure_min;
-    private double vis_pressure_max;
-    private double vis_velocity_min;
-    private double vis_velocity_max;
-    private double vis_stress_min;
-    private double vis_stress_max;
     private int vis_time_step;
     private double vis_time;
     private int vis_cycle;
@@ -107,67 +101,6 @@ public class VizFrameData {
 		this.bufferSize = bufferSize;
 	}
 	
-	
-	
-	public double getVis_pressure_min() {
-		return vis_pressure_min;
-	}
-
-
-	public void setVis_pressure_min(double vis_pressure_min) {
-		this.vis_pressure_min = vis_pressure_min;
-	}
-
-
-	public double getVis_pressure_max() {
-		return vis_pressure_max;
-	}
-
-
-	public void setVis_pressure_max(double vis_pressure_max) {
-		this.vis_pressure_max = vis_pressure_max;
-	}
-
-
-	public double getVis_velocity_min() {
-		return vis_velocity_min;
-	}
-
-
-	public void setVis_velocity_min(double vis_velocity_min) {
-		this.vis_velocity_min = vis_velocity_min;
-	}
-
-
-	public double getVis_velocity_max() {
-		return vis_velocity_max;
-	}
-
-
-	public void setVis_velocity_max(double vis_velocity_max) {
-		this.vis_velocity_max = vis_velocity_max;
-	}
-
-
-	public double getVis_stress_min() {
-		return vis_stress_min;
-	}
-
-
-	public void setVis_stress_min(double vis_stress_min) {
-		this.vis_stress_min = vis_stress_min;
-	}
-
-
-	public double getVis_stress_max() {
-		return vis_stress_max;
-	}
-
-
-	public void setVis_stress_max(double vis_stress_max) {
-		this.vis_stress_max = vis_stress_max;
-	}
-
 
 	public int getVis_time_step() {
 		return vis_time_step;
