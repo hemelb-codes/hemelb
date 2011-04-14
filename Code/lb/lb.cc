@@ -344,7 +344,6 @@ namespace hemelb
       double velocity;
 
       int inlet_id;
-      int c1, c2;
 
       unsigned int offset = mLatDat->GetInnerCollisionCount(0) + mLatDat->GetInnerCollisionCount(1);
 
