@@ -11,19 +11,16 @@ namespace hemelb
                                          const int iFirstIndex,
                                          const int iSiteCount,
                                          const LbmParameters &iLbmParams,
-                                         MinsAndMaxes &bMinimaAndMaxima,
                                          geometry::LatticeData &bLatDat,
                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                      bLatDat, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                       bLatDat, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
       }
 
@@ -31,7 +28,6 @@ namespace hemelb
       void ImplGuoZhengShi::DoCollisionsInternal(const int iFirstIndex,
                                                  const int iSiteCount,
                                                  const LbmParameters &iLbmParams,
-                                                 MinsAndMaxes &bMinimaAndMaxima,
                                                  geometry::LatticeData &bLatDat,
                                                  hemelb::vis::Control *iControl)
       {
@@ -84,8 +80,11 @@ namespace hemelb
                   double nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
 
                   D3Q15::CalculateDensityVelocityFEq(bLatDat.GetFOld(nextIOut * D3Q15::NUMVECTORS),
-                                                     nextNodeDensity, nextNodeV[0], nextNodeV[1],
-                                                     nextNodeV[2], nextNodeFEq);
+                                                     nextNodeDensity,
+                                                     nextNodeV[0],
+                                                     nextNodeV[1],
+                                                     nextNodeV[2],
+                                                     nextNodeFEq);
 
                   for (int a = 0; a < 3; a++)
                     uWall[a] = delta * uWall[a] + (1. - delta) * (delta - 1.) * nextNodeV[a] / (1.
@@ -115,8 +114,15 @@ namespace hemelb
             }
           }
 
-          UpdateMinsAndMaxes<tRayTracing> (v_x, v_y, v_z, lIndex, f_neq, density, bMinimaAndMaxima,
-                                           bLatDat, iLbmParams, iControl);
+          UpdateMinsAndMaxes<tRayTracing> (v_x,
+                                           v_y,
+                                           v_z,
+                                           lIndex,
+                                           f_neq,
+                                           density,
+                                           bLatDat,
+                                           iLbmParams,
+                                           iControl);
         }
       }
     }

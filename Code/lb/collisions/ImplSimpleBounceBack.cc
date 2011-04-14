@@ -11,19 +11,16 @@ namespace hemelb
                                               const int iFirstIndex,
                                               const int iSiteCount,
                                               const LbmParameters &iLbmParams,
-                                              MinsAndMaxes &bMinimaAndMaxima,
                                               geometry::LatticeData &bLatDat,
                                               hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                      bLatDat, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                       bLatDat, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
       }
 
@@ -31,7 +28,6 @@ namespace hemelb
       void ImplSimpleBounceBack::DoCollisionsInternal(const int iFirstIndex,
                                                       const int iSiteCount,
                                                       const LbmParameters &iLbmParams,
-                                                      MinsAndMaxes &bMinimaAndMaxima,
                                                       geometry::LatticeData &bLatDat,
                                                       hemelb::vis::Control *iControl)
       {
@@ -61,8 +57,15 @@ namespace hemelb
                 -= lFOld[ii]);
           }
 
-          UpdateMinsAndMaxes<tDoRayTracing> (lVx, lVy, lVz, lIndex, lFNeq, lDensity,
-                                             bMinimaAndMaxima, bLatDat, iLbmParams, iControl);
+          UpdateMinsAndMaxes<tDoRayTracing> (lVx,
+                                             lVy,
+                                             lVz,
+                                             lIndex,
+                                             lFNeq,
+                                             lDensity,
+                                             bLatDat,
+                                             iLbmParams,
+                                             iControl);
         }
       }
 
