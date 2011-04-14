@@ -123,12 +123,6 @@ public class DirectBiConnection implements SteeringConnection {
 
 			try {
 				
-				vizFrame.setVis_pressure_min(d.readDouble());
-				vizFrame.setVis_pressure_max(d.readDouble());
-				vizFrame.setVis_velocity_min(d.readDouble());
-				vizFrame.setVis_velocity_max(d.readDouble());
-				vizFrame.setVis_stress_min(d.readDouble());
-				vizFrame.setVis_stress_max(d.readDouble());
 				vizFrame.setVis_time_step(d.readInt());
 				vizFrame.setVis_time(d.readDouble());
 				vizFrame.setVis_cycle(d.readInt());

@@ -16,19 +16,16 @@ namespace hemelb
                                                          const int iFirstIndex,
                                                          const int iSiteCount,
                                                          const LbmParameters &iLbmParams,
-                                                         MinsAndMaxes &bMinimaAndMaxima,
                                                          geometry::LatticeData &bLatDat,
                                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                      bLatDat, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                       bLatDat, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
       }
 
@@ -37,7 +34,6 @@ namespace hemelb
       void ImplZeroVelocityBoundaryDensity::DoCollisionsInternal(const int iFirstIndex,
                                                                  const int iSiteCount,
                                                                  const LbmParameters &iLbmParams,
-                                                                 MinsAndMaxes &bMinimaAndMaxima,
                                                                  geometry::LatticeData &bLatDat,
                                                                  hemelb::vis::Control *iControl)
       {
@@ -63,8 +59,14 @@ namespace hemelb
             lFNeq[ii] -= lFOld[ii];
           }
 
-          Collision::UpdateMinsAndMaxes<tDoRayTracing>(0.0, 0.0, 0.0, iIndex, lFNeq, lDensity,
-                                                       bMinimaAndMaxima, bLatDat, iLbmParams,
+          Collision::UpdateMinsAndMaxes<tDoRayTracing>(0.0,
+                                                       0.0,
+                                                       0.0,
+                                                       iIndex,
+                                                       lFNeq,
+                                                       lDensity,
+                                                       bLatDat,
+                                                       iLbmParams,
                                                        iControl);
         }
       }

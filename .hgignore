@@ -17,3 +17,4 @@ Tests/diffTest/CleanImages/temp_file.txt
 Tests/diffTest/env_details.asc
 Tools/setuptool/HemeLbSetupTool/Model/*.cpp
 Tools/setuptool/HemeLbSetupTool/Model/*.so
+Tools/visclients/hs_err*.log
