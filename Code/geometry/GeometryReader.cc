@@ -212,8 +212,13 @@ namespace hemelb
       }
 
       // Divide blocks between the processors.
-      DivideBlocks(lUnvisitedFluidBlockCount, iBlockCount, mTopologySize, blockCountPerProc,
-                   initialProcForEachBlock, fluidSitePerBlock, iGlobLatDat);
+      DivideBlocks(lUnvisitedFluidBlockCount,
+                   iBlockCount,
+                   mTopologySize,
+                   blockCountPerProc,
+                   initialProcForEachBlock,
+                   fluidSitePerBlock,
+                   iGlobLatDat);
     }
 
     void LatticeData::GeometryReader::LoadAndDecompose(GlobalLatticeData* bGlobLatDat,
@@ -246,19 +251,26 @@ namespace hemelb
       MPI_Info_set(lFileInfo, &accessStyle[0], &accessStyleValue[0]);
       MPI_Info_set(lFileInfo, &buffering[0], &bufferingValue[0]);
 
-      lError = MPI_File_open(MPI_COMM_WORLD, &bSimConfig->DataFilePath[0], MPI_MODE_RDONLY,
-                             lFileInfo, &lFile);
+      lError = MPI_File_open(MPI_COMM_WORLD,
+                             &bSimConfig->DataFilePath[0],
+                             MPI_MODE_RDONLY,
+                             lFileInfo,
+                             &lFile);
 
       if (lError != 0)
       {
-        fprintf(stderr, "Unable to open file %s [rank %i], exiting\n",
-                bSimConfig->DataFilePath.c_str(), mGlobalRank);
+        fprintf(stderr,
+                "Unable to open file %s [rank %i], exiting\n",
+                bSimConfig->DataFilePath.c_str(),
+                mGlobalRank);
         fflush(0x0);
         exit(0x0);
       }
       else
       {
-        fprintf(stderr, "Opened config file %s [rank %i]\n", bSimConfig->DataFilePath.c_str(),
+        fprintf(stderr,
+                "Opened config file %s [rank %i]\n",
+                bSimConfig->DataFilePath.c_str(),
                 mGlobalRank);
       }
       fflush(NULL);
@@ -267,15 +279,18 @@ namespace hemelb
 
       MPI_File_set_view(lFile, 0, MPI_CHAR, MPI_CHAR, &lMode[0], MPI_INFO_NULL);
 
+      fprintf(stderr, "Reading file preamble (rank %i)\n", mGlobalRank);
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 
       unsigned int* sitesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
       unsigned int* bytesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
 
+      fprintf(stderr, "Reading file header (rank %i)\n", mGlobalRank);
       ReadHeader(lFile, bGlobLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
 
       int* procForEachBlock = new int[bGlobLatDat->GetBlockCount()];
 
+      fprintf(stderr, "Beginning initial decomposition (rank %i)\n", mGlobalRank);
       if (mGlobalRank == 0)
       {
         for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
@@ -285,10 +300,13 @@ namespace hemelb
       }
       else
       {
-        BlockDecomposition(bGlobLatDat->GetBlockCount(), bGlobLatDat, sitesPerBlock,
+        BlockDecomposition(bGlobLatDat->GetBlockCount(),
+                           bGlobLatDat,
+                           sitesPerBlock,
                            procForEachBlock);
       }
 
+      fprintf(stderr, "Reading in my blocks (rank %i)\n", mGlobalRank);
       ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
 
       MPI_File_close(&lFile);
@@ -311,9 +329,14 @@ namespace hemelb
 
       if (mGlobalRank != 0)
       {
-        OptimiseDomainDecomposition(sitesPerBlock, procForEachBlock, bSimConfig, bLbmParams,
+        fprintf(stderr, "Beginning domain decomposition optimisation (rank %i)\n", mGlobalRank);
+        OptimiseDomainDecomposition(sitesPerBlock,
+                                    procForEachBlock,
+                                    bSimConfig,
+                                    bLbmParams,
                                     bGlobLatDat);
       }
+      fprintf(stderr, "Ending domain decomposition optimisation (rank %i)\n", mGlobalRank);
 
       unsigned int localFluidSites = 0;
 
@@ -332,7 +355,12 @@ namespace hemelb
         }
       }
 
-      MPI_Allgather(&localFluidSites, 1, MPI_UNSIGNED, fluidSitePerProc, 1, MPI_UNSIGNED,
+      MPI_Allgather(&localFluidSites,
+                    1,
+                    MPI_UNSIGNED,
+                    fluidSitePerProc,
+                    1,
+                    MPI_UNSIGNED,
                     MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
@@ -485,7 +513,8 @@ namespace hemelb
                 for (unsigned int neighK = util::NumericalFunctions::max<int>(0, blockK - 1); (neighK
                     <= (blockK + 1)) && (neighK < iGlobLatDat->GetZBlockCount()); ++neighK)
                 {
-                  unsigned int lNeighId = iGlobLatDat->GetBlockIdFromBlockCoords(neighI, neighJ,
+                  unsigned int lNeighId = iGlobLatDat->GetBlockIdFromBlockCoords(neighI,
+                                                                                 neighJ,
                                                                                  neighK);
 
                   if (bytesPerBlock[lNeighId] > 0)
@@ -602,8 +631,7 @@ namespace hemelb
                       // EDGE bit set
                       for (int l = 0; l < 3; l++)
                       {
-                        if (!lReader.readDouble(
-                                                iGlobLatDat->Blocks[lBlock].wall_data[m].wall_nor[l]))
+                        if (!lReader.readDouble(iGlobLatDat->Blocks[lBlock].wall_data[m].wall_nor[l]))
                         {
                           std::cout << "Error reading edge normal\n";
                         }
@@ -956,7 +984,8 @@ namespace hemelb
                     int neigh_k = site_k + D3Q15::CZ[l];
 
                     // Get the id of the processor which the neighbouring site lies on.
-                    int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j,
+                    int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
+                                                                            neigh_j,
                                                                             neigh_k);
 
                     if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
@@ -1056,7 +1085,7 @@ namespace hemelb
         }
       }
 
-      for(unsigned int ii = 0; ii < localVertexCount; ++ii)
+      for (unsigned int ii = 0; ii < localVertexCount; ++ii)
       {
         partitionVector[ii] = -1;
       }
@@ -1066,9 +1095,19 @@ namespace hemelb
       //      ParMETIS_RefineKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
       //                          &weightFlag, &numberingFlag, options, &edgesCut, partitionVector, &lComms);
 
-      ParMETIS_PartKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
-                        &weightFlag, &numberingFlag, &desiredPartitionSize, options, &edgesCut,
-                        partitionVector, &mTopologyComm);
+      fprintf(stderr, "Calling ParMetis (rank %i)\n", mGlobalRank);
+      ParMETIS_PartKway(vertexDistribution,
+                        adjacenciesPerVertex,
+                        &lAdjacencies[0],
+                        NULL,
+                        NULL,
+                        &weightFlag,
+                        &numberingFlag,
+                        &desiredPartitionSize,
+                        options,
+                        &edgesCut,
+                        partitionVector,
+                        &mTopologyComm);
 
       // Right. Let's count how many sites we're going to have to move.
       int moves = 0;
@@ -1112,7 +1151,13 @@ namespace hemelb
         offsets[ii] = offsets[ii - 1] + allMoves[ii - 1];
       }
 
-      MPI_Allgatherv(&moveData[0], moves, lMoveType, movesList, allMoves, offsets, lMoveType,
+      MPI_Allgatherv(&moveData[0],
+                     moves,
+                     lMoveType,
+                     movesList,
+                     allMoves,
+                     offsets,
+                     lMoveType,
                      mTopologyComm);
 
       int* newProcForEachBlock = new int[bGlobLatDat->GetBlockCount()];
@@ -1171,13 +1216,19 @@ namespace hemelb
       MPI_Info_set(lFileInfo, &accessStyle[0], &accessStyleValue[0]);
       MPI_Info_set(lFileInfo, &buffering[0], &bufferingValue[0]);
 
-      lError = MPI_File_open(mTopologyComm, &bSimConfig->DataFilePath[0], MPI_MODE_RDONLY,
-                             lFileInfo, &lFile);
+      fprintf(stderr, "Beginning second file read (rank %i)\n", mGlobalRank);
+      lError = MPI_File_open(mTopologyComm,
+                             &bSimConfig->DataFilePath[0],
+                             MPI_MODE_RDONLY,
+                             lFileInfo,
+                             &lFile);
 
       if (lError != 0)
       {
-        fprintf(stderr, "Unable to open file %s [rank %i], exiting\n",
-                bSimConfig->DataFilePath.c_str(), mGlobalRank);
+        fprintf(stderr,
+                "Unable to open file %s [rank %i], exiting\n",
+                bSimConfig->DataFilePath.c_str(),
+                mGlobalRank);
         fflush(0x0);
         exit(0x0);
       }
