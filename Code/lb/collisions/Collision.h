@@ -14,19 +14,6 @@ namespace hemelb
     namespace collisions
     {
 
-      struct MinsAndMaxes
-      {
-        public:
-          MinsAndMaxes();
-
-          double MinDensity;
-          double MaxDensity;
-          double MinVelocity;
-          double MaxVelocity;
-          double MinStress;
-          double MaxStress;
-      };
-
       class Collision
       {
         public:
@@ -34,7 +21,6 @@ namespace hemelb
                                     const int iFirstIndex,
                                     const int iSiteCount,
                                     const LbmParameters &iLbmParams,
-                                    MinsAndMaxes &bMinimaAndMaxima,
                                     geometry::LatticeData &bLatDat,
                                     hemelb::vis::Control *iControl);
 
@@ -42,7 +28,6 @@ namespace hemelb
                                 const int iFirstIndex,
                                 const int iSiteCount,
                                 const LbmParameters &iLbmParams,
-                                MinsAndMaxes &bMinimaAndMaxima,
                                 geometry::LatticeData &bLatDat,
                                 hemelb::vis::Control *iControl);
 
@@ -58,71 +43,36 @@ namespace hemelb
                                   const int &iSiteIndex,
                                   const double *f_neq,
                                   const double &iDensity,
-                                  MinsAndMaxes &bMinimaAndMaxima,
                                   const geometry::LatticeData &iLatDat,
                                   const LbmParameters &iLbmParams,
                                   hemelb::vis::Control *iControl)
           {
-            if (iDensity < bMinimaAndMaxima.MinDensity)
+            if (tDoRayTracing)
             {
-              bMinimaAndMaxima.MinDensity = iDensity;
-            }
-            if (iDensity > bMinimaAndMaxima.MaxDensity)
-            {
-              bMinimaAndMaxima.MaxDensity = iDensity;
-            }
+              double rtStress;
 
-            double stress;
-            double rtStress;
-
-            // TODO: It'd be nice if this were unnecessary.
-            iVx *= (1.0 / iDensity);
-            iVy *= (1.0 / iDensity);
-            iVz *= (1.0 / iDensity);
-
-            double lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz);
-
-            if (lVelocity < bMinimaAndMaxima.MinVelocity)
-            {
-              bMinimaAndMaxima.MinVelocity = lVelocity;
-            }
-            if (lVelocity > bMinimaAndMaxima.MaxVelocity)
-            {
-              bMinimaAndMaxima.MaxVelocity = lVelocity;
-            }
-
-            if (iLbmParams.StressType == ShearStress)
-            {
-              if (iLatDat.GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
+              if (iLbmParams.StressType == ShearStress)
               {
-                stress = 0.0;
-                rtStress = BIG_NUMBER;
+                if (iLatDat.GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
+                {
+                  rtStress = BIG_NUMBER;
+                }
+                else
+                {
+                  D3Q15::CalculateShearStress(iDensity,
+                                              f_neq,
+                                              iLatDat.GetNormalToWall(iSiteIndex),
+                                              rtStress,
+                                              iLbmParams.StressParameter);
+                }
               }
               else
               {
-                D3Q15::CalculateShearStress(iDensity, f_neq,
-                                            iLatDat.GetNormalToWall(iSiteIndex), stress,
-                                            iLbmParams.StressParameter);
-                rtStress = stress;
+                D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams.StressParameter);
               }
-            }
-            else
-            {
-              D3Q15::CalculateVonMisesStress(f_neq, stress, iLbmParams.StressParameter);
-              rtStress = stress;
-            }
 
-            if (stress < bMinimaAndMaxima.MinStress)
-            {
-              bMinimaAndMaxima.MinStress = stress;
-            }
-            if (stress > bMinimaAndMaxima.MaxStress)
-            {
-              bMinimaAndMaxima.MaxStress = stress;
-            }
-
-            if (tDoRayTracing)
-            {
+              // TODO: It'd be nice if the /iDensity were unnecessary.
+              double lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
               iControl->RegisterSite(iSiteIndex, iDensity, lVelocity, rtStress);
             }
           }

@@ -464,7 +464,6 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       mSimulationState.CycleId = 0;
       continue;
     }
-    mLbm->CalculateFlowFieldValues();
 
     if (mNetworkTopology->IsCurrentProcTheIOProc())
     {
@@ -541,28 +540,8 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
     {
 
       fprintf(mTimingsFile, "time steps per cycle: %i\n", mLbm->period);
-      fprintf(mTimingsFile,
-              "pressure min, max (mmHg): %e, %e\n",
-              mLbm->GetMinPhysicalPressure(),
-              mLbm->GetMaxPhysicalPressure());
-      fprintf(mTimingsFile,
-              "velocity min, max (m/s) : %e, %e\n",
-              mLbm->GetMinPhysicalVelocity(),
-              mLbm->GetMaxPhysicalVelocity());
-      fprintf(mTimingsFile,
-              "stress   min, max (Pa)  : %e, %e\n",
-              mLbm->GetMinPhysicalStress(),
-              mLbm->GetMaxPhysicalStress());
       fprintf(mTimingsFile, "\n");
 
-      for (int n = 0; n < mLbm->inlets; n++)
-      {
-        fprintf(mTimingsFile,
-                "inlet id: %i, average / peak velocity (m/s): %e / %e\n",
-                n,
-                mLbm->GetAverageInletVelocity(n),
-                mLbm->GetPeakInletVelocity(n));
-      }
       fprintf(mTimingsFile, "\n");
 
       fprintf(mTimingsFile, "\n");

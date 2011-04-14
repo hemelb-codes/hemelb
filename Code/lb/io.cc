@@ -48,12 +48,7 @@ namespace hemelb
         outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
       }
 
-      average_inlet_velocity = new double[inlets];
-      peak_inlet_velocity = new double[inlets];
       inlet_normal = new double[3 * inlets];
-      inlet_count = new long int[inlets];
-
-      is_inlet_normal_available = 1;
 
       for (int ii = 0; ii < inlets; ii++)
       {

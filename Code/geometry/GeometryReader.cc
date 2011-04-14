@@ -968,9 +968,6 @@ namespace hemelb
                 {
                   ++m;
 
-                  // Get site data, which is the number of the fluid site on this proc..
-                  unsigned int site_map = map_block_p->site_data[m];
-
                   // Continue if it's a solid
                   if (map_block_p->ProcessorRankForEachBlockSite[m] == 1U << 30)
                   {
