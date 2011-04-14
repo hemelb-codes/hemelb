@@ -286,15 +286,18 @@ namespace hemelb
 
       MPI_File_set_view(lFile, 0, MPI_CHAR, MPI_CHAR, &lMode[0], MPI_INFO_NULL);
 
+      fprintf(stderr, "Reading file preamble (rank %i)\n", mGlobalRank);
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 
       unsigned int* sitesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
       unsigned int* bytesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
 
+      fprintf(stderr, "Reading file header (rank %i)\n", mGlobalRank);
       ReadHeader(lFile, bGlobLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
 
       int* procForEachBlock = new int[bGlobLatDat->GetBlockCount()];
 
+      fprintf(stderr, "Beginning initial decomposition (rank %i)\n", mGlobalRank);
       if (mGlobalRank == 0)
       {
         for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
@@ -310,6 +313,7 @@ namespace hemelb
                            procForEachBlock);
       }
 
+      fprintf(stderr, "Reading in my blocks (rank %i)\n", mGlobalRank);
       ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
 
       MPI_File_close(&lFile);
@@ -332,12 +336,14 @@ namespace hemelb
 
       if (mGlobalRank != 0)
       {
+        fprintf(stderr, "Beginning domain decomposition optimisation (rank %i)\n", mGlobalRank);
         OptimiseDomainDecomposition(sitesPerBlock,
                                     procForEachBlock,
                                     bSimConfig,
                                     bLbmParams,
                                     bGlobLatDat);
       }
+      fprintf(stderr, "Ending domain decomposition optimisation (rank %i)\n", mGlobalRank);
 
       unsigned int localFluidSites = 0;
 
@@ -1103,6 +1109,7 @@ namespace hemelb
       //      ParMETIS_RefineKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
       //                          &weightFlag, &numberingFlag, options, &edgesCut, partitionVector, &lComms);
 
+      fprintf(stderr, "Calling ParMetis (rank %i)\n", mGlobalRank);
       ParMETIS_PartKway(vertexDistribution,
                         adjacenciesPerVertex,
                         &lAdjacencies[0],
@@ -1223,6 +1230,7 @@ namespace hemelb
       MPI_Info_set(lFileInfo, &accessStyle[0], &accessStyleValue[0]);
       MPI_Info_set(lFileInfo, &buffering[0], &bufferingValue[0]);
 
+      fprintf(stderr, "Beginning second file read (rank %i)\n", mGlobalRank);
       lError = MPI_File_open(mTopologyComm,
                              &bSimConfig->DataFilePath[0],
                              MPI_MODE_RDONLY,
