@@ -11,19 +11,16 @@ namespace hemelb
                                             const int iFirstIndex,
                                             const int iSiteCount,
                                             const LbmParameters &iLbmParams,
-                                            MinsAndMaxes &bMinimaAndMaxima,
                                             geometry::LatticeData &bLatDat,
                                             hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                      bLatDat, iControl);
+          DoCollisionsInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
         else
         {
-          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima,
-                                       bLatDat, iControl);
+          DoCollisionsInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
       }
 
@@ -31,19 +28,16 @@ namespace hemelb
                                         const int iFirstIndex,
                                         const int iSiteCount,
                                         const LbmParameters &iLbmParams,
-                                        MinsAndMaxes &bMinimaAndMaxima,
                                         geometry::LatticeData &bLatDat,
                                         hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
-          PostStepInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima, bLatDat,
-                                  iControl);
+          PostStepInternal<true> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
         else
         {
-          PostStepInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bMinimaAndMaxima, bLatDat,
-                                   iControl);
+          PostStepInternal<false> (iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
         }
       }
 
@@ -51,7 +45,6 @@ namespace hemelb
       void ImplFInterpolation::DoCollisionsInternal(const int iFirstIndex,
                                                     const int iSiteCount,
                                                     const LbmParameters &iLbmParams,
-                                                    MinsAndMaxes &bMinimaAndMaxima,
                                                     geometry::LatticeData &bLatDat,
                                                     hemelb::vis::Control *iControl)
       {
@@ -68,8 +61,15 @@ namespace hemelb
                 * (f_neq[ii] = f[ii] - f_neq[ii]);
           }
 
-          UpdateMinsAndMaxes<tDoRayTracing> (v_x, v_y, v_z, lIndex, f_neq, density,
-                                             bMinimaAndMaxima, bLatDat, iLbmParams, iControl);
+          UpdateMinsAndMaxes<tDoRayTracing> (v_x,
+                                             v_y,
+                                             v_z,
+                                             lIndex,
+                                             f_neq,
+                                             density,
+                                             bLatDat,
+                                             iLbmParams,
+                                             iControl);
         }
       }
 
@@ -79,7 +79,6 @@ namespace hemelb
       void ImplFInterpolation::PostStepInternal(const int iFirstIndex,
                                                 const int iSiteCount,
                                                 const LbmParameters &iLbmParams,
-                                                MinsAndMaxes &bMinimaAndMaxima,
                                                 geometry::LatticeData &bLatDat,
                                                 hemelb::vis::Control *iControl)
       {

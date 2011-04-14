@@ -73,20 +73,6 @@ namespace hemelb
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
     }
 
-    // Set up of min/max values at the beginning of each pulsatile cycle.
-    void LBM::InitMinMaxValues(void)
-    {
-      // All values will be in [0, infinity) so it's adequate
-      // to set initial maxima to -1, and minima to std::numeric_limits<double>::max();
-      mMinsAndMaxes.MaxDensity = -1.0;
-      mMinsAndMaxes.MaxVelocity = -1.0;
-      mMinsAndMaxes.MaxStress = -1.0;
-
-      mMinsAndMaxes.MinDensity = std::numeric_limits<double>::max();
-      mMinsAndMaxes.MinVelocity = std::numeric_limits<double>::max();
-      mMinsAndMaxes.MinStress = std::numeric_limits<double>::max();
-    }
-
     // Calculate the BCs for each boundary site type and the
     // non-equilibrium distribution functions.
     void LBM::CalculateBC(double f[],
@@ -286,7 +272,6 @@ namespace hemelb
                                                    offset,
                                                    mLatDat->GetInterCollisionCount(collision_type),
                                                    mParams,
-                                                   mMinsAndMaxes,
                                                    *mLatDat,
                                                    mVisControl);
         offset += mLatDat->GetInterCollisionCount(collision_type);
@@ -303,7 +288,6 @@ namespace hemelb
                                                    offset,
                                                    mLatDat->GetInnerCollisionCount(collision_type),
                                                    mParams,
-                                                   mMinsAndMaxes,
                                                    *mLatDat,
                                                    mVisControl);
         offset += mLatDat->GetInnerCollisionCount(collision_type);
@@ -329,7 +313,6 @@ namespace hemelb
                                                offset,
                                                mLatDat->GetInnerCollisionCount(collision_type),
                                                mParams,
-                                               mMinsAndMaxes,
                                                *mLatDat,
                                                mVisControl);
         offset += mLatDat->GetInnerCollisionCount(collision_type);
@@ -341,7 +324,6 @@ namespace hemelb
                                                offset,
                                                mLatDat->GetInterCollisionCount(collision_type),
                                                mParams,
-                                               mMinsAndMaxes,
                                                *mLatDat,
                                                mVisControl);
         offset += mLatDat->GetInterCollisionCount(collision_type);
@@ -354,69 +336,6 @@ namespace hemelb
       mLatDat->SwapOldAndNew();
     }
 
-    void LBM::CalculateFlowFieldValues()
-    {
-      double *local_data;
-      double *global_data;
-
-      int i;
-
-      int lMaxInlets = hemelb::util::NumericalFunctions::max<int>(6 + inlets, 2 * inlets);
-
-      local_data = new double[lMaxInlets];
-      global_data = new double[lMaxInlets];
-
-      local_data[0] = mMinsAndMaxes.MinDensity;
-      local_data[1] = mMinsAndMaxes.MinVelocity;
-      local_data[2] = mMinsAndMaxes.MinStress;
-      local_data[3] = mMinsAndMaxes.MaxDensity;
-      local_data[4] = mMinsAndMaxes.MaxVelocity;
-      local_data[5] = mMinsAndMaxes.MaxStress;
-
-      memcpy(&local_data[6], peak_inlet_velocity, sizeof(double) * inlets);
-
-      MPI_Reduce(&local_data[0], &global_data[0], 3, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-      MPI_Reduce(&local_data[3],
-                 &global_data[3],
-                 3 + inlets,
-                 MPI_DOUBLE,
-                 MPI_MAX,
-                 0,
-                 MPI_COMM_WORLD);
-
-      mMinsAndMaxes.MinDensity = global_data[0];
-      mMinsAndMaxes.MinVelocity = global_data[1];
-      mMinsAndMaxes.MinStress = global_data[2];
-      mMinsAndMaxes.MaxDensity = global_data[3];
-      mMinsAndMaxes.MaxVelocity = global_data[4];
-      mMinsAndMaxes.MaxStress = global_data[5];
-
-      memcpy(peak_inlet_velocity, &global_data[6], sizeof(double) * inlets);
-
-      for (i = 0; i < inlets; i++)
-      {
-        local_data[i] = average_inlet_velocity[i];
-        local_data[inlets + i] = inlet_count[i];
-      }
-      MPI_Reduce(local_data, global_data, 2 * inlets, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-      for (i = 0; i < inlets; i++)
-      {
-        average_inlet_velocity[i] = global_data[i];
-        inlet_count[i] = global_data[inlets + i];
-      }
-
-      delete[] global_data;
-      delete[] local_data;
-
-      for (i = 0; i < inlets; i++)
-      {
-        average_inlet_velocity[i] /= inlet_count[i];
-        average_inlet_velocity[i] = ConvertVelocityToPhysicalUnits(average_inlet_velocity[i]);
-        peak_inlet_velocity[i] = ConvertVelocityToPhysicalUnits(peak_inlet_velocity[i]);
-      }
-    }
-
     // Update peak and average inlet velocities local to the current subdomain.
     void LBM::UpdateInletVelocities(int time_step)
     {
@@ -426,16 +345,6 @@ namespace hemelb
 
       int inlet_id;
       int c1, c2;
-
-      if (time_step == 1)
-      {
-        for (int i = 0; i < inlets; i++)
-        {
-          peak_inlet_velocity[i] = -BIG_NUMBER;
-          average_inlet_velocity[i] = 0.;
-          inlet_count[i] = 0;
-        }
-      }
 
       unsigned int offset = mLatDat->GetInnerCollisionCount(0) + mLatDat->GetInnerCollisionCount(1);
 
@@ -449,30 +358,20 @@ namespace hemelb
 
         inlet_id = mLatDat->GetBoundaryId(i);
 
-        if (is_inlet_normal_available)
+        vx *= inlet_normal[3 * inlet_id + 0];
+        vy *= inlet_normal[3 * inlet_id + 1];
+        vz *= inlet_normal[3 * inlet_id + 2];
+
+        velocity = vx * vx + vy * vy + vz * vz;
+
+        if (velocity > 0.)
         {
-          vx *= inlet_normal[3 * inlet_id + 0];
-          vy *= inlet_normal[3 * inlet_id + 1];
-          vz *= inlet_normal[3 * inlet_id + 2];
-
-          velocity = vx * vx + vy * vy + vz * vz;
-
-          if (velocity > 0.)
-          {
-            velocity = sqrt(velocity) / density;
-          }
-          else
-          {
-            velocity = -sqrt(velocity) / density;
-          }
+          velocity = sqrt(velocity) / density;
         }
         else
         {
-          velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
+          velocity = -sqrt(velocity) / density;
         }
-        peak_inlet_velocity[inlet_id] = fmax(peak_inlet_velocity[inlet_id], velocity);
-        average_inlet_velocity[inlet_id] += velocity;
-        ++inlet_count[inlet_id];
       }
 
       offset = mLatDat->GetInnerSiteCount() + mLatDat->GetInterCollisionCount(0)
@@ -488,40 +387,21 @@ namespace hemelb
 
         inlet_id = mLatDat->GetBoundaryId(i);
 
-        if (is_inlet_normal_available)
+        vx *= inlet_normal[3 * inlet_id + 0];
+        vy *= inlet_normal[3 * inlet_id + 1];
+        vz *= inlet_normal[3 * inlet_id + 2];
+
+        velocity = vx * vx + vy * vy + vz * vz;
+
+        if (velocity > 0.)
         {
-          vx *= inlet_normal[3 * inlet_id + 0];
-          vy *= inlet_normal[3 * inlet_id + 1];
-          vz *= inlet_normal[3 * inlet_id + 2];
-
-          velocity = vx * vx + vy * vy + vz * vz;
-
-          if (velocity > 0.)
-          {
-            velocity = sqrt(velocity) / density;
-          }
-          else
-          {
-            velocity = -sqrt(velocity) / density;
-          }
+          velocity = sqrt(velocity) / density;
         }
         else
         {
-          velocity = sqrt(vx * vx + vy * vy + vz * vz) / density;
+          velocity = -sqrt(velocity) / density;
         }
-        peak_inlet_velocity[inlet_id] = fmax(peak_inlet_velocity[inlet_id], velocity);
-        average_inlet_velocity[inlet_id] += velocity;
-        ++inlet_count[inlet_id];
       }
-    }
-
-    double LBM::GetAverageInletVelocity(int iInletNumber)
-    {
-      return average_inlet_velocity[iInletNumber];
-    }
-    double LBM::GetPeakInletVelocity(int iInletNumber)
-    {
-      return peak_inlet_velocity[iInletNumber];
     }
 
     // In the case of instability, this function restart the simulation
@@ -559,31 +439,6 @@ namespace hemelb
       SetInitialConditions();
     }
 
-    double LBM::GetMinPhysicalPressure()
-    {
-      return ConvertPressureToPhysicalUnits(mMinsAndMaxes.MinDensity * Cs2);
-    }
-    double LBM::GetMaxPhysicalPressure()
-    {
-      return ConvertPressureToPhysicalUnits(mMinsAndMaxes.MaxDensity * Cs2);
-    }
-    double LBM::GetMinPhysicalVelocity()
-    {
-      return ConvertVelocityToPhysicalUnits(mMinsAndMaxes.MinVelocity);
-    }
-    double LBM::GetMaxPhysicalVelocity()
-    {
-      return ConvertVelocityToPhysicalUnits(mMinsAndMaxes.MaxVelocity);
-    }
-    double LBM::GetMinPhysicalStress()
-    {
-      return ConvertStressToPhysicalUnits(mMinsAndMaxes.MinStress);
-    }
-    double LBM::GetMaxPhysicalStress()
-    {
-      return ConvertStressToPhysicalUnits(mMinsAndMaxes.MaxStress);
-    }
-
     LBM::~LBM()
     {
       // Delete the translator between received location and location in f_new.
@@ -610,10 +465,7 @@ namespace hemelb
       delete mOutletWallCollision;
 
       // Delete various other arrays used
-      delete[] inlet_count;
       delete[] inlet_normal;
-      delete[] average_inlet_velocity;
-      delete[] peak_inlet_velocity;
     }
   }
 }
