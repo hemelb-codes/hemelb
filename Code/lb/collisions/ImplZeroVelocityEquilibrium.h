@@ -17,7 +17,6 @@ namespace hemelb
                             const int iFirstIndex,
                             const int iSiteCount,
                             const LbmParameters &iLbmParams,
-                            MinsAndMaxes &bMinimaAndMaxima,
                             geometry::LatticeData &bLatDat,
                             hemelb::vis::Control *iControl);
 
@@ -26,7 +25,6 @@ namespace hemelb
           void DoCollisionsInternal(const int iFirstIndex,
                                     const int iSiteCount,
                                     const LbmParameters &iLbmParams,
-                                    MinsAndMaxes &bMinimaAndMaxima,
                                     geometry::LatticeData &bLatDat,
                                     hemelb::vis::Control *iControl);
       };

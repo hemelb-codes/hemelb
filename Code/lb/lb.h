@@ -35,7 +35,6 @@ namespace hemelb
         void Reset();
         ~LBM();
 
-        void CalculateFlowFieldValues();
         void RecalculateTauViscosityOmega();
         void UpdateBoundaryDensities(int cycle_id, int time_step);
         void UpdateInletVelocities(int time_step);
@@ -44,20 +43,7 @@ namespace hemelb
 
         void SetInitialConditions();
 
-        void
-        WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
-
-        double GetMinPhysicalPressure();
-        double GetMaxPhysicalPressure();
-        double GetMinPhysicalVelocity();
-        double GetMaxPhysicalVelocity();
-        double GetMinPhysicalStress();
-        double GetMaxPhysicalStress();
-
-        void InitMinMaxValues(void);
-
-        double GetAverageInletVelocity(int iInletNumber);
-        double GetPeakInletVelocity(int iInletNumber);
+        void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
 
         void ReadVisParameters();
 
@@ -116,11 +102,8 @@ namespace hemelb
         double *inlet_density_avg, *inlet_density_amp;
         double *outlet_density_avg, *outlet_density_amp;
         double *inlet_density_phs, *outlet_density_phs;
-        int is_inlet_normal_available;
         double* inlet_density, *outlet_density;
-        hemelb::lb::collisions::MinsAndMaxes mMinsAndMaxes;
         double *inlet_normal;
-        long int *inlet_count;
         double voxel_size;
 
         double mFileReadTime;
@@ -133,9 +116,6 @@ namespace hemelb
 
         LbmParameters mParams;
         vis::Control* mVisControl;
-
-        double *average_inlet_velocity;
-        double *peak_inlet_velocity;
 
         int * receivedFTranslator;
     };

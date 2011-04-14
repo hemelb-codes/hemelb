@@ -14,12 +14,6 @@ namespace hemelb
 
       public:
 
-        double pressureMin;
-        double pressureMax;
-        double velocityMin;
-        double velocityMax;
-        double stressMin;
-        double stressMax;
         int timeStep;
         double time;
         int cycle;
@@ -27,7 +21,7 @@ namespace hemelb
         double mousePressure;
         double mouseStress;
 
-        static const u_int paramsSizeB = 3 * sizeof(int) + 9 * sizeof(double);
+        static const u_int paramsSizeB = 3 * sizeof(int) + 3 * sizeof(double);
         char params[paramsSizeB];
 
         SimulationParameters();
