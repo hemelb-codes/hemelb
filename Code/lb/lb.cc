@@ -1,4 +1,3 @@
-
 // In this file, the functions useful to calculate the equilibrium distribution
 // function, momentums, the effective von Mises stress and the boundary conditions
 // are reported
@@ -272,8 +271,8 @@ namespace hemelb
         GetCollision(collision_type)->DoCollisions(mState->DoRendering,
                                                    offset,
                                                    mLatDat->GetInterCollisionCount(collision_type),
-                                                   mParams,
-                                                   *mLatDat,
+                                                   &mParams,
+                                                   mLatDat,
                                                    mVisControl);
         offset += mLatDat->GetInterCollisionCount(collision_type);
       }
@@ -288,8 +287,8 @@ namespace hemelb
         GetCollision(collision_type)->DoCollisions(mState->DoRendering,
                                                    offset,
                                                    mLatDat->GetInnerCollisionCount(collision_type),
-                                                   mParams,
-                                                   *mLatDat,
+                                                   &mParams,
+                                                   mLatDat,
                                                    mVisControl);
         offset += mLatDat->GetInnerCollisionCount(collision_type);
       }
@@ -313,8 +312,8 @@ namespace hemelb
         GetCollision(collision_type)->PostStep(mState->DoRendering,
                                                offset,
                                                mLatDat->GetInnerCollisionCount(collision_type),
-                                               mParams,
-                                               *mLatDat,
+                                               &mParams,
+                                               mLatDat,
                                                mVisControl);
         offset += mLatDat->GetInnerCollisionCount(collision_type);
       }
@@ -324,8 +323,8 @@ namespace hemelb
         GetCollision(collision_type)->PostStep(mState->DoRendering,
                                                offset,
                                                mLatDat->GetInterCollisionCount(collision_type),
-                                               mParams,
-                                               *mLatDat,
+                                               &mParams,
+                                               mLatDat,
                                                mVisControl);
         offset += mLatDat->GetInterCollisionCount(collision_type);
       }

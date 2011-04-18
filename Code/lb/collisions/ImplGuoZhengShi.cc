@@ -10,8 +10,8 @@ namespace hemelb
       void ImplGuoZhengShi::DoCollisions(const bool iDoRayTracing,
                                          const int iFirstIndex,
                                          const int iSiteCount,
-                                         const LbmParameters &iLbmParams,
-                                         geometry::LatticeData &bLatDat,
+                                         const LbmParameters* iLbmParams,
+                                         geometry::LatticeData* bLatDat,
                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
@@ -27,8 +27,8 @@ namespace hemelb
       template<bool tRayTracing>
       void ImplGuoZhengShi::DoCollisionsInternal(const int iFirstIndex,
                                                  const int iSiteCount,
-                                                 const LbmParameters &iLbmParams,
-                                                 geometry::LatticeData &bLatDat,
+                                                 const LbmParameters* iLbmParams,
+                                                 geometry::LatticeData* bLatDat,
                                                  hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
@@ -40,13 +40,13 @@ namespace hemelb
           double lFEq[15];
           double f_neq[15];
           double density, v_x, v_y, v_z;
-          double *f = bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS);
+          double *f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
 
           D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, lFEq);
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            * (bLatDat.GetFNew(bLatDat.GetStreamedIndex(lIndex, ii))) = f[ii] + iLbmParams.Omega
+            * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = f[ii] + iLbmParams->Omega
                 * (f_neq[ii] = f[ii] - lFEq[ii]);
           }
 
@@ -55,9 +55,9 @@ namespace hemelb
           {
             int lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
 
-            if (bLatDat.HasBoundary(lIndex, l))
+            if (bLatDat->HasBoundary(lIndex, l))
             {
-              double delta = bLatDat.GetCutDistance(lIndex, l);
+              double delta = bLatDat->GetCutDistance(lIndex, l);
               double uWall[3];
               double fNeq;
 
@@ -72,14 +72,14 @@ namespace hemelb
               {
                 // Only do the extra interpolation if there's gonna be a point there to interpolate from, i.e. there's no boundary
                 // in the direction of awayFromWallIndex
-                if (!bLatDat.HasBoundary(lIndex, lAwayFromWallIndex))
+                if (!bLatDat->HasBoundary(lIndex, lAwayFromWallIndex))
                 {
                   // Need some info about the next node away from the wall in this direction...
-                  int nextIOut = bLatDat.GetStreamedIndex(lIndex, lAwayFromWallIndex)
+                  int nextIOut = bLatDat->GetStreamedIndex(lIndex, lAwayFromWallIndex)
                       / D3Q15::NUMVECTORS;
                   double nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
 
-                  D3Q15::CalculateDensityVelocityFEq(bLatDat.GetFOld(nextIOut * D3Q15::NUMVECTORS),
+                  D3Q15::CalculateDensityVelocityFEq(bLatDat->GetFOld(nextIOut * D3Q15::NUMVECTORS),
                                                      nextNodeDensity,
                                                      nextNodeV[0],
                                                      nextNodeV[1],
@@ -90,7 +90,7 @@ namespace hemelb
                     uWall[a] = delta * uWall[a] + (1. - delta) * (delta - 1.) * nextNodeV[a] / (1.
                         + delta);
 
-                  fNeq = delta * fNeq + (1. - delta) * (*bLatDat.GetFOld(nextIOut
+                  fNeq = delta * fNeq + (1. - delta) * (*bLatDat->GetFOld(nextIOut
                       * D3Q15::NUMVECTORS + lAwayFromWallIndex) - nextNodeFEq[lAwayFromWallIndex]);
                 }
                 // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
@@ -109,8 +109,8 @@ namespace hemelb
               D3Q15::CalculateFeq(density, uWall[0], uWall[1], uWall[2], fEqTemp);
 
               // Collide and stream!
-              * (bLatDat.GetFNew(lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex))
-                  = fEqTemp[lAwayFromWallIndex] + (1.0 + iLbmParams.Omega) * fNeq;
+              * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex))
+                  = fEqTemp[lAwayFromWallIndex] + (1.0 + iLbmParams->Omega) * fNeq;
             }
           }
 

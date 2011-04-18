@@ -15,8 +15,8 @@ namespace hemelb
       void ImplNonZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,
                                                             const int iFirstIndex,
                                                             const int iSiteCount,
-                                                            const LbmParameters &iLbmParams,
-                                                            geometry::LatticeData &bLatDat,
+                                                            const LbmParameters* iLbmParams,
+                                                            geometry::LatticeData* bLatDat,
                                                             hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
@@ -32,17 +32,17 @@ namespace hemelb
       template<bool tDoRayTracing>
       void ImplNonZeroVelocityBoundaryDensity::DoCollisionsInternal(const int iFirstIndex,
                                                                     const int iSiteCount,
-                                                                    const LbmParameters &iLbmParams,
-                                                                    geometry::LatticeData &bLatDat,
+                                                                    const LbmParameters* iLbmParams,
+                                                                    geometry::LatticeData* bLatDat,
                                                                     hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *lFOld = bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS);
+          double *lFOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
           double lFNeq[15];
           double lVx, lVy, lVz, lDummyDensity, lDensity;
 
-          lDensity = mBoundaryDensityArray[bLatDat.GetBoundaryId(lIndex)];
+          lDensity = mBoundaryDensityArray[bLatDat->GetBoundaryId(lIndex)];
 
           D3Q15::CalculateDensityAndVelocity(lFOld, lDummyDensity, lVx, lVy, lVz);
 
@@ -56,7 +56,7 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            * (bLatDat.GetFNew(bLatDat.GetStreamedIndex(lIndex, ii))) = lFOld[ii];
+            * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = lFOld[ii];
           }
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)

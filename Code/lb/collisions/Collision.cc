@@ -21,8 +21,8 @@ namespace hemelb
       void Collision::DoCollisions(const bool iDoRayTracing,
                                    const int iFirstIndex,
                                    const int iSiteCount,
-                                   const LbmParameters &iLbmParams,
-                                   geometry::LatticeData &bLatDat,
+                                   const LbmParameters* iLbmParams,
+                                   geometry::LatticeData* bLatDat,
                                    hemelb::vis::Control *iControl)
       {
         // Standard implementation - do nothing.
@@ -31,8 +31,8 @@ namespace hemelb
       void Collision::PostStep(const bool iDoRayTracing,
                                const int iFirstIndex,
                                const int iSiteCount,
-                               const LbmParameters &iLbmParams,
-                               geometry::LatticeData &bLatDat,
+                               const LbmParameters* iLbmParams,
+                               geometry::LatticeData* bLatDat,
                                hemelb::vis::Control *iControl)
       {
         // Standard implementation - do nothing.
