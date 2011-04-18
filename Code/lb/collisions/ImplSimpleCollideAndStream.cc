@@ -10,8 +10,8 @@ namespace hemelb
       void ImplSimpleCollideAndStream::DoCollisions(const bool iDoRayTracing,
                                                     const int iFirstIndex,
                                                     const int iSiteCount,
-                                                    const LbmParameters &iLbmParams,
-                                                    geometry::LatticeData &bLatDat,
+                                                    const LbmParameters *iLbmParams,
+                                                    geometry::LatticeData *bLatDat,
                                                     hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
@@ -27,13 +27,13 @@ namespace hemelb
       template<bool tDoRayTracing>
       void ImplSimpleCollideAndStream::DoCollisionsInternal(const int iFirstIndex,
                                                             const int iSiteCount,
-                                                            const LbmParameters &iLbmParams,
-                                                            geometry::LatticeData &bLatDat,
+                                                            const LbmParameters *iLbmParams,
+                                                            geometry::LatticeData *bLatDat,
                                                             hemelb::vis::Control *iControl)
       {
         for (int iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
         {
-          double *lFOld = bLatDat.GetFOld(iIndex * D3Q15::NUMVECTORS);
+          double *lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
           double lDensity, lVx, lVy, lVz;
           double lFNeq[D3Q15::NUMVECTORS];
 
@@ -42,8 +42,8 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            * (bLatDat.GetFNew(bLatDat.GetStreamedIndex(iIndex, ii))) = lFOld[ii]
-                += iLbmParams.Omega * (lFNeq[ii] = lFOld[ii] - lFNeq[ii]);
+            * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
+                += iLbmParams->Omega * (lFNeq[ii] = lFOld[ii] - lFNeq[ii]);
           }
 
           UpdateMinsAndMaxes<tDoRayTracing> (lVx,
