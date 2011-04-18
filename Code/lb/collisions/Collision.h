@@ -20,15 +20,15 @@ namespace hemelb
           virtual void DoCollisions(const bool iDoRayTracing,
                                     const int iFirstIndex,
                                     const int iSiteCount,
-                                    const LbmParameters &iLbmParams,
-                                    geometry::LatticeData &bLatDat,
+                                    const LbmParameters* iLbmParams,
+                                    geometry::LatticeData* bLatDat,
                                     hemelb::vis::Control *iControl);
 
           virtual void PostStep(const bool iDoRayTracing,
                                 const int iFirstIndex,
                                 const int iSiteCount,
-                                const LbmParameters &iLbmParams,
-                                geometry::LatticeData &bLatDat,
+                                const LbmParameters* iLbmParams,
+                                geometry::LatticeData* bLatDat,
                                 hemelb::vis::Control *iControl);
 
         protected:
@@ -40,20 +40,20 @@ namespace hemelb
           void UpdateMinsAndMaxes(double iVx,
                                   double iVy,
                                   double iVz,
-                                  const int &iSiteIndex,
-                                  const double *f_neq,
-                                  const double &iDensity,
-                                  const geometry::LatticeData &iLatDat,
-                                  const LbmParameters &iLbmParams,
+                                  const int iSiteIndex,
+                                  const double* f_neq,
+                                  const double iDensity,
+                                  const geometry::LatticeData* iLatDat,
+                                  const LbmParameters* iLbmParams,
                                   hemelb::vis::Control *iControl)
           {
             if (tDoRayTracing)
             {
               double rtStress;
 
-              if (iLbmParams.StressType == ShearStress)
+              if (iLbmParams->StressType == ShearStress)
               {
-                if (iLatDat.GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
+                if (iLatDat->GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
                 {
                   rtStress = BIG_NUMBER;
                 }
@@ -61,14 +61,14 @@ namespace hemelb
                 {
                   D3Q15::CalculateShearStress(iDensity,
                                               f_neq,
-                                              iLatDat.GetNormalToWall(iSiteIndex),
+                                              iLatDat->GetNormalToWall(iSiteIndex),
                                               rtStress,
-                                              iLbmParams.StressParameter);
+                                              iLbmParams->StressParameter);
                 }
               }
               else
               {
-                D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams.StressParameter);
+                D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams->StressParameter);
               }
 
               // TODO: It'd be nice if the /iDensity were unnecessary.

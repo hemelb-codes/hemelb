@@ -988,9 +988,9 @@ namespace hemelb
                     int neigh_k = site_k + D3Q15::CZ[l];
 
                     if(neigh_i <= 0 || neigh_j <= 0 || neigh_k <= 0 || !bGlobLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
-		      {
-			continue;
-		      }
+                    {
+                      continue;
+                    }
 
 
                     // Get the id of the processor which the neighbouring site lies on.
@@ -998,14 +998,10 @@ namespace hemelb
                                                                             neigh_j,
                                                                             neigh_k);
 
-                    if (proc_id_p == NULL)
+                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
                       continue;
                     }
-                    if (*proc_id_p == BIG_NUMBER2)
-		      {
-			continue;
-		      }
 
                     // We now do some faffery to find out the global fluid site id of this point
                     unsigned int neighBlockI = neigh_i >> bGlobLatDat->Log2BlockSize;

@@ -9,8 +9,8 @@ namespace hemelb
       void ImplZeroVelocityEquilibrium::DoCollisions(const bool iDoRayTracing,
                                                      const int iFirstIndex,
                                                      const int iSiteCount,
-                                                     const LbmParameters &iLbmParams,
-                                                     geometry::LatticeData &bLatDat,
+                                                     const LbmParameters* iLbmParams,
+                                                     geometry::LatticeData* bLatDat,
                                                      hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
@@ -26,13 +26,13 @@ namespace hemelb
       template<bool tDoRayTracing>
       void ImplZeroVelocityEquilibrium::DoCollisionsInternal(const int iFirstIndex,
                                                              const int iSiteCount,
-                                                             const LbmParameters &iLbmParams,
-                                                             geometry::LatticeData &bLatDat,
+                                                             const LbmParameters* iLbmParams,
+                                                             geometry::LatticeData* bLatDat,
                                                              hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *lFOld = bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS);
+          double *lFOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
           double lFNeq[D3Q15::NUMVECTORS];
           double lDensity;
 
@@ -53,7 +53,7 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            * (bLatDat.GetFNew(bLatDat.GetStreamedIndex(lIndex, ii))) = lFOld[ii];
+            * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = lFOld[ii];
             lFNeq[ii] -= lFOld[ii];
           }
 
