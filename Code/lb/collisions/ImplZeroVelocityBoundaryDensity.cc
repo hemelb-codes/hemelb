@@ -15,8 +15,8 @@ namespace hemelb
       void ImplZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,
                                                          const int iFirstIndex,
                                                          const int iSiteCount,
-                                                         const LbmParameters &iLbmParams,
-                                                         geometry::LatticeData &bLatDat,
+                                                         const LbmParameters* iLbmParams,
+                                                         geometry::LatticeData* bLatDat,
                                                          hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
@@ -33,17 +33,17 @@ namespace hemelb
       template<bool tDoRayTracing>
       void ImplZeroVelocityBoundaryDensity::DoCollisionsInternal(const int iFirstIndex,
                                                                  const int iSiteCount,
-                                                                 const LbmParameters &iLbmParams,
-                                                                 geometry::LatticeData &bLatDat,
+                                                                 const LbmParameters* iLbmParams,
+                                                                 geometry::LatticeData* bLatDat,
                                                                  hemelb::vis::Control *iControl)
       {
         for (int iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
         {
-          double *lFOld = bLatDat.GetFOld(iIndex * D3Q15::NUMVECTORS);
+          double *lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
           double lFNeq[D3Q15::NUMVECTORS];
           double lDensity;
 
-          lDensity = mBoundaryDensityArray[bLatDat.GetBoundaryId(iIndex)];
+          lDensity = mBoundaryDensityArray[bLatDat->GetBoundaryId(iIndex)];
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
@@ -55,7 +55,7 @@ namespace hemelb
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
-            * (bLatDat.GetFNew(bLatDat.GetStreamedIndex(iIndex, ii))) = lFOld[ii];
+            * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii];
             lFNeq[ii] -= lFOld[ii];
           }
 
