@@ -1122,7 +1122,7 @@ namespace hemelb
                         &edgesCut,
                         partitionVector,
                         &mTopologyComm);
-
+ fprintf(stderr, "ParMetis finished (rank %i)\n", mGlobalRank);
       // Right. Let's count how many sites we're going to have to move.
       int moves = 0;
       std::vector<int> moveData;
