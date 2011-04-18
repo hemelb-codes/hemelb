@@ -10,8 +10,8 @@ namespace hemelb
       void ImplSimpleBounceBack::DoCollisions(const bool iDoRayTracing,
                                               const int iFirstIndex,
                                               const int iSiteCount,
-                                              const LbmParameters &iLbmParams,
-                                              geometry::LatticeData &bLatDat,
+                                              const LbmParameters *iLbmParams,
+                                              geometry::LatticeData *bLatDat,
                                               hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
@@ -27,13 +27,13 @@ namespace hemelb
       template<bool tDoRayTracing>
       void ImplSimpleBounceBack::DoCollisionsInternal(const int iFirstIndex,
                                                       const int iSiteCount,
-                                                      const LbmParameters &iLbmParams,
-                                                      geometry::LatticeData &bLatDat,
+                                                      const LbmParameters *iLbmParams,
+                                                      geometry::LatticeData *bLatDat,
                                                       hemelb::vis::Control *iControl)
       {
         for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *lFOld = bLatDat.GetFOld(lIndex * D3Q15::NUMVECTORS);
+          double *lFOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
           double lFNeq[D3Q15::NUMVECTORS];
           double lVx, lVy, lVz, lDensity;
 
@@ -47,13 +47,13 @@ namespace hemelb
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
             // The actual bounce-back lines, including streaming and collision. Basically swap the non-equilibrium components of f in each of the opposing pairs of directions.
-            int lStreamTo = (bLatDat.HasBoundary(lIndex, ii))
+            int lStreamTo = (bLatDat->HasBoundary(lIndex, ii))
               ? ( (lIndex * D3Q15::NUMVECTORS) + D3Q15::INVERSEDIRECTIONS[ii])
-              : bLatDat.GetStreamedIndex(lIndex, ii);
+              : bLatDat->GetStreamedIndex(lIndex, ii);
 
             // Remember, oFNeq currently hold the equilibrium distribution. We
             // simultaneously use this and correct it, here.
-            * (bLatDat.GetFNew(lStreamTo)) = lFOld[ii] += iLbmParams.Omega * (lFNeq[ii]
+            * (bLatDat->GetFNew(lStreamTo)) = lFOld[ii] += iLbmParams->Omega * (lFNeq[ii]
                 -= lFOld[ii]);
           }
 
