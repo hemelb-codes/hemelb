@@ -483,11 +483,11 @@ namespace hemelb
                   &req[procs + mNeighProcs[m].id]);
         MPI_Isend(&mNeighProcs[m].send_vs, 1, MPI_UNSIGNED, mNeighProcs[m].id, 30, MPI_COMM_WORLD,
                   &req[mNeighProcs[m].id]);
-        MPI_Wait(&req[mNeighProcs[m].id], status);
+        MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Wait(&req[procs + mNeighProcs[m].id], status);
+        MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
 
         if (mNeighProcs[m].recv_vs > 0)
         {
@@ -499,14 +499,14 @@ namespace hemelb
           MPI_Isend(mNeighProcs[m].s_to_send, mNeighProcs[m].send_vs * 3, MPI_UNSIGNED,
                     mNeighProcs[m].id, 40, MPI_COMM_WORLD, &req[mNeighProcs[m].id]);
 
-          MPI_Wait(&req[mNeighProcs[m].id], status);
+          MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
         }
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
         if (mNeighProcs[m].recv_vs > 0)
         {
-          MPI_Wait(&req[procs + mNeighProcs[m].id], status);
+          MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
         }
       }
     }
@@ -555,7 +555,7 @@ namespace hemelb
           MPI_Isend(mNeighProcs[m].v_to_send, mNeighProcs[m].recv_vs * 3, MPI_FLOAT,
                     mNeighProcs[m].id, 30, MPI_COMM_WORLD, &req[mNeighProcs[m].id]);
 
-          MPI_Wait(&req[mNeighProcs[m].id], status);
+          MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
         }
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
@@ -563,7 +563,7 @@ namespace hemelb
         if (mNeighProcs[m].send_vs <= 0)
           continue;
 
-        MPI_Wait(&req[procs + mNeighProcs[m].id], status);
+        MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
 
         for (unsigned int n = 0; n < mNeighProcs[m].send_vs; n++)
         {
@@ -647,8 +647,6 @@ namespace hemelb
     // Communicate that particles current state to other processors.
     void StreaklineDrawer::communicateParticles(geometry::LatticeData* iLatDat)
     {
-      MPI_Status status;
-
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
         MPI_Irecv(&mNeighProcs[m].recv_ps, 1, MPI_UNSIGNED, mNeighProcs[m].id, 30, MPI_COMM_WORLD,
@@ -699,7 +697,7 @@ namespace hemelb
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
       {
-        MPI_Wait(&req[procs + mNeighProcs[m].id], &status);
+        MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
       }
 
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
@@ -709,7 +707,7 @@ namespace hemelb
           MPI_Isend(&mNeighProcs[m].p_to_send[0], mNeighProcs[m].send_ps * 5, MPI_FLOAT,
                     mNeighProcs[m].id, 40, MPI_COMM_WORLD, &req[mNeighProcs[m].id]);
 
-          MPI_Wait(&req[mNeighProcs[m].id], &status);
+          MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
         }
       }
       for (unsigned int m = 0; m < mNeighProcs.size(); m++)
@@ -725,7 +723,7 @@ namespace hemelb
           }
           MPI_Irecv(&mNeighProcs[m].p_to_recv[0], mNeighProcs[m].recv_ps * 5, MPI_FLOAT,
                     mNeighProcs[m].id, 40, MPI_COMM_WORLD, &req[procs + mNeighProcs[m].id]);
-          MPI_Wait(&req[procs + mNeighProcs[m].id], &status);
+          MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
 
           for (unsigned int n = 0; n < mNeighProcs[m].recv_ps; n++)
           {
