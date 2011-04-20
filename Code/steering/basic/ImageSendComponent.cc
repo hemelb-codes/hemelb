@@ -27,7 +27,6 @@ namespace hemelb
       isFrameReady = false;
       isConnected = false;
       lastRender = 0.0;
-      double lastSend = 0.0;
     }
 
     ImageSendComponent::~ImageSendComponent()
