@@ -57,6 +57,11 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
  */
 SimulationMaster::~SimulationMaster()
 {
+  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  {
+    delete imageSendCpt;
+  }
+
   delete mNetworkTopology;
 
   if (mLatDat != NULL)
@@ -73,6 +78,10 @@ SimulationMaster::~SimulationMaster()
     delete mLbm;
   }
 
+  if (clientConnection != NULL)
+  {
+    delete clientConnection;
+  }
   if (steeringCpt != NULL)
   {
     delete steeringCpt;
@@ -81,6 +90,11 @@ SimulationMaster::~SimulationMaster()
   if (mVisControl != NULL)
   {
     delete mVisControl;
+  }
+
+  if (mStabilityTester != NULL)
+  {
+    delete mStabilityTester;
   }
 }
 

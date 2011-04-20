@@ -704,7 +704,7 @@ namespace hemelb
                     unsigned int my_site_id;
                     my_site_id = lBlock->site_data[++m];
 
-                    if (my_site_id & (1U << 31U))
+                    if (my_site_id & BIG_NUMBER3)
                     {
                       for (int l = 0; l < VIS_FIELDS; l++)
                         cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS + l] = -1.0F;
