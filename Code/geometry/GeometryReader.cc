@@ -23,6 +23,8 @@ namespace hemelb
       MPI_Group lWorldGroup;
       MPI_Comm_group(MPI_COMM_WORLD, &lWorldGroup);
 
+      mParticipateInTopology = !reserveSteeringCore || mGlobalRank != 0;
+
       // Create our own group, without the root node.
       if (reserveSteeringCore)
       {
@@ -39,7 +41,7 @@ namespace hemelb
 
       // Each rank needs to know its rank wrt the domain
       // decomposition.
-      if (mGlobalRank != 0)
+      if (mParticipateInTopology)
       {
         int temp = 0;
         MPI_Comm_rank(mTopologyComm, &mTopologyRank);
@@ -58,7 +60,7 @@ namespace hemelb
       MPI_Group_free(&mTopologyGroup);
 
       // Note that on rank 0, this is the same as MPI_COMM_WORLD.
-      if (mGlobalRank != 0)
+      if (mParticipateInTopology)
       {
         MPI_Comm_free(&mTopologyComm);
       }
@@ -292,7 +294,7 @@ namespace hemelb
       int* procForEachBlock = new int[bGlobLatDat->GetBlockCount()];
 
       log::Logger::Log<log::Info, log::OnePerCore>("Beginning initial decomposition");
-      if (mGlobalRank == 0)
+      if (!mParticipateInTopology)
       {
         for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
         {
@@ -314,7 +316,7 @@ namespace hemelb
 
       int preOptimisationSites = 0;
 
-      if (mGlobalRank != 0)
+      if (mParticipateInTopology)
       {
         for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ii++)
         {
@@ -328,7 +330,7 @@ namespace hemelb
       // TODO This *hackily* sets the position to be just past the preamble and header sections.
       MPI_File_seek(lFile, 2 * 4 * bGlobLatDat->GetBlockCount() + 5 * 4 + 4 * 8, MPI_SEEK_SET);
 
-      if (mGlobalRank != 0)
+      if (mParticipateInTopology)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Beginning domain decomposition optimisation");
         OptimiseDomainDecomposition(sitesPerBlock,
@@ -557,14 +559,14 @@ namespace hemelb
           if (readBlock[lBlock] && bytesPerBlock[lBlock] > 0)
           {
             if (iGlobLatDat->Blocks[lBlock].site_data == NULL)
-          {
-            iGlobLatDat->Blocks[lBlock].site_data
-                = new unsigned int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+            {
+              iGlobLatDat->Blocks[lBlock].site_data
+                  = new unsigned int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
             }
             if (iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite == NULL)
             {
-            iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite
-                = new int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+              iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite
+                  = new int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
             }
 
             int m = -1;
@@ -875,28 +877,28 @@ namespace hemelb
        *  Get an array of the site count on each processor.
        */
       {
-      int* sitesPerProc = new int[mTopologySize];
-      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-      {
-        sitesPerProc[ii] = 0;
-      }
-
-      for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
-      {
-        if (procForEachBlock[ii] >= 0)
+        int* sitesPerProc = new int[mTopologySize];
+        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
         {
-          sitesPerProc[procForEachBlock[ii]] += sitesPerBlock[ii];
+          sitesPerProc[ii] = 0;
         }
-      }
 
-      /*
-       *  Create vertex distribution array.
-       */
-      vertexDistribution[0] = 0;
+        for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
+        {
+          if (procForEachBlock[ii] >= 0)
+          {
+            sitesPerProc[procForEachBlock[ii]] += sitesPerBlock[ii];
+          }
+        }
 
-      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-      {
-        vertexDistribution[ii + 1] = vertexDistribution[ii] + sitesPerProc[ii];
+        /*
+         *  Create vertex distribution array.
+         */
+        vertexDistribution[0] = 0;
+
+        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+        {
+          vertexDistribution[ii + 1] = vertexDistribution[ii] + sitesPerProc[ii];
         }
         delete[] sitesPerProc;
       }
@@ -908,25 +910,25 @@ namespace hemelb
       int* firstSiteIndexPerBlock = new int[bGlobLatDat->GetBlockCount()];
 
       {
-      // This needs to have all the blocks with ascending id based on which processor they're on.
-      int* firstSiteOnProc = new int[mTopologySize];
-      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-      {
-        firstSiteOnProc[ii] = vertexDistribution[ii];
-      }
+        // This needs to have all the blocks with ascending id based on which processor they're on.
+        int* firstSiteOnProc = new int[mTopologySize];
+        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+        {
+          firstSiteOnProc[ii] = vertexDistribution[ii];
+        }
 
-      for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
-      {
-        int proc = procForEachBlock[ii];
-        if (proc < 0)
+        for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
         {
-          firstSiteIndexPerBlock[ii] = -1;
-        }
-        else
-        {
-          firstSiteIndexPerBlock[ii] = firstSiteOnProc[proc];
-          firstSiteOnProc[proc] += sitesPerBlock[ii];
-        }
+          int proc = procForEachBlock[ii];
+          if (proc < 0)
+          {
+            firstSiteIndexPerBlock[ii] = -1;
+          }
+          else
+          {
+            firstSiteIndexPerBlock[ii] = firstSiteOnProc[proc];
+            firstSiteOnProc[proc] += sitesPerBlock[ii];
+          }
         }
         delete[] firstSiteOnProc;
       }
@@ -1225,8 +1227,11 @@ namespace hemelb
                 != BIG_NUMBER2)
             {
               // This should be what it originally was...
+              // TODO ugly
               bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
-                  = (lOriginalProc + 1);
+                  = (mTopologyRank == mGlobalRank)
+                    ? lOriginalProc
+                    : (lOriginalProc + 1);
             }
           }
         }
@@ -1272,8 +1277,11 @@ namespace hemelb
               lSiteIndex++;
             }
 
-            bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex] = (toProc
-                + 1);
+            // TODO Ugly.
+            bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                = (mGlobalRank == mTopologyRank)
+                  ? toProc
+                  : (toProc + 1);
           }
         }
       }

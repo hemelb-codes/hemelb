@@ -378,6 +378,7 @@ namespace hemelb
             int mTopologyRank;
             unsigned int mTopologySize;
             int mGlobalRank;
+            bool mParticipateInTopology;
         };
 
         void SetSiteData(unsigned int siteIndex, unsigned int siteData);
