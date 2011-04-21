@@ -107,7 +107,6 @@ namespace hemelb
 
       // Variables we'll read.
       unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
-
       double voxelSize, siteZeroWorldPosition[3];
 
       // Read in the values.
@@ -558,14 +557,14 @@ namespace hemelb
           if (readBlock[lBlock] && bytesPerBlock[lBlock] > 0)
           {
             if (iGlobLatDat->Blocks[lBlock].site_data == NULL)
-            {
-              iGlobLatDat->Blocks[lBlock].site_data
-                  = new unsigned int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+          {
+            iGlobLatDat->Blocks[lBlock].site_data
+                = new unsigned int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
             }
             if (iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite == NULL)
             {
-              iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite
-                  = new int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+            iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite
+                = new int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
             }
 
             int m = -1;
@@ -876,28 +875,28 @@ namespace hemelb
        *  Get an array of the site count on each processor.
        */
       {
-        int* sitesPerProc = new int[mTopologySize];
-        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+      int* sitesPerProc = new int[mTopologySize];
+      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+      {
+        sitesPerProc[ii] = 0;
+      }
+
+      for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
+      {
+        if (procForEachBlock[ii] >= 0)
         {
-          sitesPerProc[ii] = 0;
+          sitesPerProc[procForEachBlock[ii]] += sitesPerBlock[ii];
         }
+      }
 
-        for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
-        {
-          if (procForEachBlock[ii] >= 0)
-          {
-            sitesPerProc[procForEachBlock[ii]] += sitesPerBlock[ii];
-          }
-        }
+      /*
+       *  Create vertex distribution array.
+       */
+      vertexDistribution[0] = 0;
 
-        /*
-         *  Create vertex distribution array.
-         */
-        vertexDistribution[0] = 0;
-
-        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-        {
-          vertexDistribution[ii + 1] = vertexDistribution[ii] + sitesPerProc[ii];
+      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+      {
+        vertexDistribution[ii + 1] = vertexDistribution[ii] + sitesPerProc[ii];
         }
         delete[] sitesPerProc;
       }
@@ -909,25 +908,25 @@ namespace hemelb
       int* firstSiteIndexPerBlock = new int[bGlobLatDat->GetBlockCount()];
 
       {
-        // This needs to have all the blocks with ascending id based on which processor they're on.
-        int* firstSiteOnProc = new int[mTopologySize];
-        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-        {
-          firstSiteOnProc[ii] = vertexDistribution[ii];
-        }
+      // This needs to have all the blocks with ascending id based on which processor they're on.
+      int* firstSiteOnProc = new int[mTopologySize];
+      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+      {
+        firstSiteOnProc[ii] = vertexDistribution[ii];
+      }
 
-        for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
+      for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
+      {
+        int proc = procForEachBlock[ii];
+        if (proc < 0)
         {
-          int proc = procForEachBlock[ii];
-          if (proc < 0)
-          {
-            firstSiteIndexPerBlock[ii] = -1;
-          }
-          else
-          {
-            firstSiteIndexPerBlock[ii] = firstSiteOnProc[proc];
-            firstSiteOnProc[proc] += sitesPerBlock[ii];
-          }
+          firstSiteIndexPerBlock[ii] = -1;
+        }
+        else
+        {
+          firstSiteIndexPerBlock[ii] = firstSiteOnProc[proc];
+          firstSiteOnProc[proc] += sitesPerBlock[ii];
+        }
         }
         delete[] firstSiteOnProc;
       }
