@@ -371,7 +371,6 @@ namespace hemelb
                                              const unsigned int* bytesPerBlock,
                                              const int* procForEachBlock,
                                              MPI_File iFile,
-                                             lb::LbmParameters* bLbmParams,
                                              GlobalLatticeData* bGlobLatDat);
 
             MPI_Comm mTopologyComm;

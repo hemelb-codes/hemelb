@@ -16,6 +16,7 @@
 #include <netdb.h>
 #include <sys/utsname.h>
 
+#include "log/Logger.h"
 #include "steering/basic/HttpPost.h"
 
 using namespace std;
@@ -36,23 +37,18 @@ namespace hemelb
 #ifdef NGS2Leeds
       gethostname(hostname, 256);
       sprintf(rank_0_host_details, "%s.ngs.leeds.ac.uk:%i", hostname, MYPORT);
-      fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif NGS2Manchester
       gethostname(hostname, 256);
       sprintf(rank_0_host_details, "%s.vidar.ngs.manchester.ac.uk:%i", hostname, MYPORT);
-      fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif CCS
       gethostname(hostname, 256);
       std::sprintf(rank_0_host_details, "%s.chem.ucl.ac.uk:%i", hostname, MYPORT);
-      fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif LONI
       gethostname(hostname, 256);
       sprintf(rank_0_host_details, "%s:%i", hostname, MYPORT);
-      fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #elif NCSA
       gethostname(hostname, 256);
       sprintf(rank_0_host_details, "%s.ncsa.teragrid.org:%i", hostname, MYPORT);
-      fprintf(stderr, "MPI rank 0 public interface details - %s\n", rank_0_host_details);
 #else
 
       // If not on a specific known machine, need to do something more clever.
@@ -83,7 +79,9 @@ namespace hemelb
           continue;
         }
 
-        sprintf(ip_addr, "%d.%d.%d.%d", (unsigned char) (host->h_addr_list[address_id][0]),
+        sprintf(ip_addr,
+                "%d.%d.%d.%d",
+                (unsigned char) (host->h_addr_list[address_id][0]),
                 (unsigned char) (host->h_addr_list[address_id][1]),
                 (unsigned char) (host->h_addr_list[address_id][2]),
                 (unsigned char) (host->h_addr_list[address_id][3]));
@@ -122,10 +120,11 @@ namespace hemelb
         }
       }
 
-      printf("Public hostname to use will be %s IP %s\n", host->h_name, ip_addr);
-
-      sprintf(rank_0_host_details, "%s:%i", host->h_name, MYPORT);
+      sprintf(rank_0_host_details, "%s:%i (IP %s)", host->h_name, MYPORT, ip_addr);
 #endif
+
+      log::Logger::Log<log::Info, log::Singleton>("MPI public interface details - %s",
+                                                  rank_0_host_details);
     }
 
     int HttpPost::Send_Request(int iSocket, const char *iMessage)

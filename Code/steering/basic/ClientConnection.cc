@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 
+#include "log/Logger.h"
 #include "steering/ClientConnection.h"
 #include "HttpPost.h"
 
