@@ -3,6 +3,7 @@
 
 #include "io/XdrMemReader.h"
 #include "geometry/LatticeData.h"
+#include "log/Logger.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -10,13 +11,8 @@ namespace hemelb
   namespace geometry
   {
 
-    // TODO The memory usage here is not yet optimal. We shouldn't allocate any memory for blocks
-    // that aren't on this processor or a neighbour.
-
-    // TODO This file is generally ugly. The first step to making it nicer would probably be to
-    // integrate it with the LocalLatDat and GlobalLatDat objects (because we really only want
-    // LocalLatticeData), and the functions in Net which initialise them. Once the interface
-    // to this object is nice and clean, we can tidy up the code here.
+    // TODO This file is generally ugly. Integrate with the functions in Net which initialise the LatDat.
+    // Once the interface to this object is nice and clean, we can tidy up the code here.
 
     LatticeData::GeometryReader::GeometryReader(const bool reserveSteeringCore)
     {
@@ -269,19 +265,15 @@ namespace hemelb
 
       if (lError != 0)
       {
-        fprintf(stderr,
-                "Unable to open file %s [rank %i], exiting\n",
-                bSimConfig->DataFilePath.c_str(),
-                mGlobalRank);
+        log::Logger::Log<log::Info, log::OnePerCore>("Unable to open file %s [rank %i], exiting",
+                                                     bSimConfig->DataFilePath.c_str());
         fflush(0x0);
         exit(0x0);
       }
       else
       {
-        fprintf(stderr,
-                "Opened config file %s [rank %i]\n",
-                bSimConfig->DataFilePath.c_str(),
-                mGlobalRank);
+        log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s",
+                                                     bSimConfig->DataFilePath.c_str());
       }
       fflush(NULL);
 
@@ -289,18 +281,18 @@ namespace hemelb
 
       MPI_File_set_view(lFile, 0, MPI_CHAR, MPI_CHAR, &lMode[0], MPI_INFO_NULL);
 
-      fprintf(stderr, "Reading file preamble (rank %i)\n", mGlobalRank);
+      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 
       unsigned int* sitesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
       unsigned int* bytesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
 
-      fprintf(stderr, "Reading file header (rank %i)\n", mGlobalRank);
+      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
       ReadHeader(lFile, bGlobLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
 
       int* procForEachBlock = new int[bGlobLatDat->GetBlockCount()];
 
-      fprintf(stderr, "Beginning initial decomposition (rank %i)\n", mGlobalRank);
+      log::Logger::Log<log::Info, log::OnePerCore>("Beginning initial decomposition");
       if (mGlobalRank == 0)
       {
         for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
@@ -316,7 +308,7 @@ namespace hemelb
                            procForEachBlock);
       }
 
-      fprintf(stderr, "Reading in my blocks (rank %i)\n", mGlobalRank);
+      log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
       ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
 
       double lMiddle = util::myClock();
@@ -339,19 +331,18 @@ namespace hemelb
 
       if (mGlobalRank != 0)
       {
-        fprintf(stderr, "Beginning domain decomposition optimisation (rank %i)\n", mGlobalRank);
+        log::Logger::Log<log::Info, log::OnePerCore>("Beginning domain decomposition optimisation");
         OptimiseDomainDecomposition(sitesPerBlock,
                                     bytesPerBlock,
                                     procForEachBlock,
                                     lFile,
-                                    bLbmParams,
                                     bGlobLatDat);
+        log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
       }
       else
       {
         ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
       }
-      fprintf(stderr, "Ending domain decomposition optimisation (rank %i)\n", mGlobalRank);
 
       unsigned int localFluidSites = 0;
 
@@ -877,7 +868,6 @@ namespace hemelb
                                                                   const unsigned int* bytesPerBlock,
                                                                   const int* procForEachBlock,
                                                                   MPI_File iFile,
-                                                                  lb::LbmParameters* bLbmParams,
                                                                   GlobalLatticeData* bGlobLatDat)
     {
       int* vertexDistribution = new int[mTopologySize + 1];
@@ -1112,10 +1102,7 @@ namespace hemelb
 
       int desiredPartitionSize = mTopologySize;
 
-      //      ParMETIS_RefineKway(vertexDistribution, adjacenciesPerVertex, &lAdjacencies[0], NULL, NULL,
-      //                          &weightFlag, &numberingFlag, options, &edgesCut, partitionVector, &lComms);
-
-      fprintf(stderr, "Calling ParMetis (rank %i)\n", mGlobalRank);
+      log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
       ParMETIS_PartKway(vertexDistribution,
                         adjacenciesPerVertex,
                         &lAdjacencies[0],

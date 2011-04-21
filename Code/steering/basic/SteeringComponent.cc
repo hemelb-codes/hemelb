@@ -1,7 +1,9 @@
+#include <errno.h>
+
 #include "steering/SteeringComponent.h"
 #include "Network.h"
 #include "io/XdrMemReader.h"
-#include <errno.h>
+#include "log/Logger.h"
 
 namespace hemelb
 {
@@ -127,7 +129,8 @@ namespace hemelb
             // raise an error.
             if (errno != EAGAIN)
             {
-              printf("Steering component: broken network pipe... (%s) \n", strerror(errno));
+              log::Logger::Log<log::Warning, log::Singleton>("Steering component: broken network pipe... (%s)",
+                                                             strerror(errno));
               mClientConnection->ReportBroken(socket);
               isConnected = false;
             }

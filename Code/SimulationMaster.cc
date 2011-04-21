@@ -5,6 +5,7 @@
 #include "geometry/LatticeData.h"
 #include "debug/Debugger.h"
 #include "util/fileutils.h"
+#include "log/Logger.h"
 
 #include <limits>
 #include <stdlib.h>
@@ -24,7 +25,7 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
 
   if (!lTopologySuccess)
   {
-    printf("Couldn't get machine information for this network topology. Aborting.\n");
+    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
     Abort();
   }
 
@@ -280,12 +281,14 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
        instant of time since variables might be altered by the thread half way through?
        This is to be done. */
 
-      if (mNetworkTopology->IsCurrentProcTheIOProc() && mSimulationState.TimeStep % 100 == 0)
-        printf("time step %i render_network_stream %i write_snapshot_image %i rendering %i\n",
-               mSimulationState.TimeStep,
-               render_for_network_stream,
-               write_snapshot_image,
-               mSimulationState.DoRendering);
+      if (mSimulationState.TimeStep % 100 == 0)
+      {
+        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_snapshot_image %i rendering %i",
+                                                                            mSimulationState.TimeStep,
+                                                                            render_for_network_stream,
+                                                                            write_snapshot_image,
+                                                                            mSimulationState.DoRendering);
+      }
 
       mLbm->UpdateBoundaryDensities(mSimulationState.CycleId, mSimulationState.TimeStep);
 
@@ -460,11 +463,10 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 #ifndef NO_STREAKLINES
       mVisControl->Reset();
 #endif
-      if (mNetworkTopology->IsCurrentProcTheIOProc())
-      {
-        printf("restarting: period: %i\n", mLbm->period);
-        fflush(0x0);
-      }
+
+      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: period: %i\n",
+                                                                          mLbm->period);
+
       snapshots_period
           = (lSnapshotsPerCycle == 0)
             ? 1e9
@@ -482,7 +484,9 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
     if (mNetworkTopology->IsCurrentProcTheIOProc())
     {
       fprintf(mTimingsFile, "cycle id: %li\n", mSimulationState.CycleId);
-      printf("cycle id: %li\n", mSimulationState.CycleId);
+
+      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
+                                                                          mSimulationState.CycleId);
 
       fflush(NULL);
     }
@@ -507,7 +511,7 @@ void SimulationMaster::Abort()
 
   // This gives us something to work from when we have an error - we get the rank
   // that calls abort, and we get a stack-trace from the exception having been thrown.
-  fprintf(stderr, "Aborted by rank %d\n", mNetworkTopology->GetLocalRank());
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Aborting");
   exit(1);
 }
 

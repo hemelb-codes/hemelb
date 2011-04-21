@@ -7,3 +7,5 @@ HEMELB_DEFS += CCS
 
 HEMELB_CXXFLAGS += -pthread -Wno-long-long -Wno-unused-result
 HEMELB_CCFLAGS += -pthread -Wno-long-long -Wno-unused-result
+
+HEMELB_LOG_LEVEL = warning

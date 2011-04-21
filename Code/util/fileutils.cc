@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "log/Logger.h"
 #include "util/fileutils.h"
 
 namespace hemelb
@@ -43,7 +44,7 @@ namespace hemelb
     {
       if (!file_exists(filename))
       {
-        fprintf(stderr, "Cannot open file %s\nExiting.\n", filename);
+        log::Logger::Log<log::Info, log::OnePerCore>("Cannot open file %s\nExiting.", filename);
         exit(0);
       }
     }
@@ -51,8 +52,7 @@ namespace hemelb
     // Function to select directory contents that are not "." or ".."
     int selectOnlyContents(direct_t *entry)
     {
-      if ( (strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..")
-          == 0))
+      if ( (strcmp(entry->d_name, ".") == 0) || (strcmp(entry->d_name, "..") == 0))
       {
         return 0;
 
@@ -69,8 +69,7 @@ namespace hemelb
     {
       struct direct **files;
 
-      int file_count = scandir(pathname.c_str(), &files, selectOnlyContents,
-                               alphasort);
+      int file_count = scandir(pathname.c_str(), &files, selectOnlyContents, alphasort);
 
       char filename[1024];
 
@@ -118,8 +117,7 @@ namespace hemelb
       mkdir(dirPath.c_str(), 0777);
     }
 
-    std::string NormalizePathRelativeToPath(std::string inPath,
-                                            std::string basePath)
+    std::string NormalizePathRelativeToPath(std::string inPath, std::string basePath)
     {
       // If it's an absolute path, just return it
       if (inPath[0] == '/')
@@ -156,7 +154,8 @@ namespace hemelb
       }
 
       // Make sure it ends in a slash
-      if (baseDir[baseDir.size()-1] != '/') {
+      if (baseDir[baseDir.size() - 1] != '/')
+      {
         baseDir += "/";
       }
 
