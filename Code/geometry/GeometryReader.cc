@@ -1078,7 +1078,7 @@ namespace hemelb
       // part[ni] will contain the partition vector of the locally-stored vertices
       // comm* is a pointer to the MPI communicator of the processes involved
 
-      int weightFlag = 0;
+      int weightFlag = 2;
       int numberingFlag = 0;
       int edgesCut = 0;
       int* partitionVector = new int[localVertexCount];
@@ -1103,20 +1103,41 @@ namespace hemelb
 
       int desiredPartitionSize = mTopologySize;
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
-      ParMETIS_PartKway(vertexDistribution,
-                        adjacenciesPerVertex,
-                        &lAdjacencies[0],
-                        NULL,
-                        NULL,
-                        &weightFlag,
-                        &numberingFlag,
-                        &desiredPartitionSize,
-                        options,
-                        &edgesCut,
-                        partitionVector,
-                        &mTopologyComm);
+      int noConstraints = 1;
+      int* vertexWeight = new int[localVertexCount];
+      for (unsigned int ii = 0; ii < localVertexCount; ++ii)
+      {
+        vertexWeight[ii] = 1;
+      }
 
+      float* domainWeights = new float[desiredPartitionSize];
+
+      for (int ii = 0; ii < desiredPartitionSize; ++ii)
+      {
+        domainWeights[ii] = 1.0F / ((float) desiredPartitionSize);
+      }
+
+      float tolerance = 1.005;
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
+      ParMETIS_V3_PartKway(vertexDistribution,
+                           adjacenciesPerVertex,
+                           &lAdjacencies[0],
+                           vertexWeight,
+                           NULL,
+                           &weightFlag,
+                           &numberingFlag,
+                           &noConstraints,
+                           &desiredPartitionSize,
+                           domainWeights,
+                           &tolerance,
+                           options,
+                           &edgesCut,
+                           partitionVector,
+                           &mTopologyComm);
+
+      delete[] domainWeights;
+      delete[] vertexWeight;
       delete[] adjacenciesPerVertex;
       delete[] vertexDistribution;
 
