@@ -124,7 +124,7 @@ namespace hemelb
 
         bool IsValidLatticeSite(unsigned int i, unsigned int j, unsigned int k) const;
 
-        int*
+        const int*
         GetProcIdFromGlobalCoords(unsigned int siteI, unsigned int siteJ, unsigned int siteK) const;
 
         BlockData* GetBlock(unsigned int blockNumber) const;
@@ -134,7 +134,7 @@ namespace hemelb
         unsigned int GetLocalFluidSiteCount() const;
         SiteType GetSiteType(int iSiteIndex) const;
         int GetBoundaryId(int iSiteIndex) const;
-        int GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const;
+        unsigned int GetStreamedIndex(unsigned int iSiteIndex, unsigned int iDirectionIndex) const;
         bool HasBoundary(int iSiteIndex, int iDirection) const;
         double GetCutDistance(int iSiteIndex, int iDirection) const;
         unsigned int GetSiteData(unsigned int iSiteIndex) const;
@@ -155,7 +155,8 @@ namespace hemelb
 
             void Initialise(unsigned int iLocalFluidSites);
 
-            int GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const;
+            unsigned int
+            GetStreamedIndex(unsigned int iSiteIndex, unsigned int iDirectionIndex) const;
             double GetCutDistance(int iSiteIndex, int iDirection) const;
             bool HasBoundary(int iSiteIndex, int iDirection) const;
             int GetBoundaryId(int iSiteIndex) const;
@@ -225,9 +226,9 @@ namespace hemelb
 
             // Function that finds the pointer to the rank on which a particular site
             // resides. If the site is in an empty block, return NULL.
-            int * GetProcIdFromGlobalCoords(unsigned int iSiteI,
-                                            unsigned int iSiteJ,
-                                            unsigned int iSiteK) const;
+            const int * GetProcIdFromGlobalCoords(unsigned int iSiteI,
+                                                  unsigned int iSiteJ,
+                                                  unsigned int iSiteK) const;
 
             // Function that gets the index of a block from its coordinates.
             unsigned int GetBlockIdFromBlockCoords(unsigned int blockI,
