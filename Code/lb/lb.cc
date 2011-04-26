@@ -247,18 +247,18 @@ namespace hemelb
 
     void LBM::RequestComms()
     {
-      for (std::vector<hemelb::topology::NeighbouringProcessor*>::const_iterator it =
+      for (std::vector<hemelb::topology::NeighbouringProcessor>::const_iterator it =
           mNetTopology->NeighbouringProcs.begin(); it != mNetTopology->NeighbouringProcs.end(); it++)
       {
         // Request the receive into the appropriate bit of FOld.
-        mNet->RequestReceive<double> (mLatDat->GetFOld( (*it)->FirstSharedF),
-                                       (*it)->SharedFCount,
-                                       (*it)->Rank);
+        mNet->RequestReceive<double> (mLatDat->GetFOld( (*it).FirstSharedF),
+                                       (*it).SharedFCount,
+                                       (*it).Rank);
 
         // Request the send from the right bit of
-        mNet->RequestSend<double> (mLatDat->GetFNew( (*it)->FirstSharedF),
-                                    (*it)->SharedFCount,
-                                    (*it)->Rank);
+        mNet->RequestSend<double> (mLatDat->GetFNew( (*it).FirstSharedF),
+                                    (*it).SharedFCount,
+                                    (*it).Rank);
       }
     }
 
@@ -301,7 +301,7 @@ namespace hemelb
       for (int i = 0; i < mNetTopology->TotalSharedFs; i++)
       {
         *mLatDat->GetFNew(receivedFTranslator[i])
-            = *mLatDat->GetFOld(mNetTopology->NeighbouringProcs[0]->FirstSharedF + i);
+            = *mLatDat->GetFOld(mNetTopology->NeighbouringProcs[0].FirstSharedF + i);
       }
 
       // Do any cleanup steps necessary on boundary nodes

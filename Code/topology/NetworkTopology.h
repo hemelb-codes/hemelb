@@ -41,7 +41,7 @@ namespace hemelb
         // Number of local distributions shared with neighbouring processors.
         int TotalSharedFs;
         // The vector of all neighbouring processors.
-        std::vector<NeighbouringProcessor*> NeighbouringProcs;
+        std::vector<NeighbouringProcessor> NeighbouringProcs;
         // For each processor in the topology, holds the index into the
         // neighbouring processor vector.
         short int * NeighbourIndexFromProcRank;

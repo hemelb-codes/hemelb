@@ -29,7 +29,7 @@ namespace hemelb
       localLatDat.Initialise(fluidSitePerProc[localRank]);
     }
 
-    void LatticeData::InitialiseNeighbourLookup(short int ** bSharedFLocationForEachProc,
+    void LatticeData::InitialiseNeighbourLookup(int ** bSharedFLocationForEachProc,
                                                 int localRank,
                                                 const unsigned int* iSiteDataForThisRank)
     {
@@ -127,11 +127,11 @@ namespace hemelb
                       // its neighbours which say which sites
                       // on this process are shared with the
                       // neighbour.
-                      int fluidSitesHandled = (sitesHandledPerProc.count(neigh_proc_index) > 0)
+                      int fluidSitesHandled = (sitesHandledPerProc.count((short int)neigh_proc_index) > 0)
                         ? sitesHandledPerProc[neigh_proc_index]
                         : 0;
 
-                      short int *f_data_p =
+                      int *f_data_p =
                           &bSharedFLocationForEachProc[neigh_proc_index][fluidSitesHandled << 2];
                       f_data_p[0] = site_i;
                       f_data_p[1] = site_j;
