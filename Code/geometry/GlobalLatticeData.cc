@@ -133,7 +133,7 @@ namespace hemelb
 
     // Function that finds the pointer to the rank on which a particular site
     // resides. If the site is in an empty block, return NULL.
-    int * LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(unsigned int iSiteI,
+    const int * LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(unsigned int iSiteI,
                                                                     unsigned int iSiteJ,
                                                                     unsigned int iSiteK) const
     {

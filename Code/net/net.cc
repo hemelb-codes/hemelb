@@ -379,7 +379,7 @@ namespace hemelb
                     }
 
                     // Find the processor Id for that neighbour.
-                    int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                    const int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
                     // Move on if the neighbour is in a block of solids (in which case
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
@@ -584,7 +584,7 @@ namespace hemelb
                     }
 
                     // Find the processor Id for that neighbour.
-                    int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                    const int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
                     // Move on if the neighbour is in a block of solids (in which case
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
