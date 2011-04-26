@@ -88,7 +88,7 @@ namespace hemelb
                     double* lReadTime,
                     double* lDecomposeTime);
 
-        void InitialiseNeighbourLookup(short int ** bSharedFLocationForEachProc,
+        void InitialiseNeighbourLookup(int ** bSharedFLocationForEachProc,
                                        int localRank,
                                        const unsigned int* iSiteDataForThisRank);
 
@@ -336,7 +336,7 @@ namespace hemelb
           private:
             struct BlockLocation
             {
-                short int i, j, k;
+                int i, j, k;
             };
 
             void ReadPreamble(MPI_File xiFile,
@@ -368,9 +368,9 @@ namespace hemelb
                                    const GlobalLatticeData* iGlobLatDat);
 
             void OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
+                                             const unsigned int* bytesPerBlock,
                                              const int* procForEachBlock,
-                                             SimConfig* bSimConfig,
-                                             lb::LbmParameters* bLbmParams,
+                                             MPI_File iFile,
                                              GlobalLatticeData* bGlobLatDat);
 
             MPI_Comm mTopologyComm;
@@ -378,6 +378,7 @@ namespace hemelb
             int mTopologyRank;
             unsigned int mTopologySize;
             int mGlobalRank;
+            bool mParticipateInTopology;
         };
 
         void SetSiteData(unsigned int siteIndex, unsigned int siteData);

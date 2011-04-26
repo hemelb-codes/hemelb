@@ -82,7 +82,7 @@ namespace hemelb
         void CountCollisionTypes(geometry::LatticeData* bLatDat,
                                  const unsigned int * lThisRankSiteData);
 
-        void InitialisePointToPointComms(short int **& lSharedFLocationForEachProc);
+        void InitialisePointToPointComms(int **& lSharedFLocationForEachProc);
 
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
@@ -120,8 +120,8 @@ namespace hemelb
 
         bool sendReceivePrepped;
 
-        std::map<int, ProcComms*> mSendProcessorComms;
-        std::map<int, ProcComms*> mReceiveProcessorComms;
+        std::map<int, ProcComms> mSendProcessorComms;
+        std::map<int, ProcComms> mReceiveProcessorComms;
 
         hemelb::topology::NetworkTopology * mNetworkTopology;
 

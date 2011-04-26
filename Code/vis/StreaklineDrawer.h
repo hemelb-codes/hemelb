@@ -111,7 +111,6 @@ namespace hemelb
         std::vector<NeighProc> mNeighProcs;
 
         // Require these for inter-processor comms.
-        MPI_Status status[4];
         MPI_Request *req;
 
         // Private functions for the creation / deletion of particles.

@@ -8,9 +8,7 @@ namespace hemelb
   {
     NetworkTopology::NetworkTopology(int * argCount, char *** argList, bool* oSuccess)
     {
-      int thread_level_provided = 0;
-
-      MPI_Init_thread(argCount, argList, MPI_THREAD_FUNNELED, &thread_level_provided);
+      MPI_Init(argCount, argList);
 
       int tempSize = 0, tempRank = 0;
       MPI_Comm_size(MPI_COMM_WORLD, &tempSize);
@@ -18,11 +16,6 @@ namespace hemelb
 
       processorCount = tempSize;
       localRank = tempRank;
-
-      if (IsCurrentProcTheIOProc())
-      {
-        printf("thread_level_provided %i\n", thread_level_provided);
-      }
 
       *oSuccess = InitialiseMachineInfo();
 
