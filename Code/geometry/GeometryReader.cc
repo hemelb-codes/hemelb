@@ -273,8 +273,8 @@ namespace hemelb
       }
       else
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Opened config file %s",
-                                                     bSimConfig->DataFilePath.c_str());
+        log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s",
+                                                      bSimConfig->DataFilePath.c_str());
       }
       fflush(NULL);
 
@@ -293,7 +293,7 @@ namespace hemelb
 
       int* procForEachBlock = new int[bGlobLatDat->GetBlockCount()];
 
-      log::Logger::Log<log::Info, log::OnePerCore>("Beginning initial decomposition");
+      log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
       if (!mParticipateInTopology)
       {
         for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
@@ -332,7 +332,7 @@ namespace hemelb
 
       if (mParticipateInTopology)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Beginning domain decomposition optimisation");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
         OptimiseDomainDecomposition(sitesPerBlock,
                                     bytesPerBlock,
                                     procForEachBlock,
@@ -996,8 +996,8 @@ namespace hemelb
 
                     // Get the id of the processor which the neighbouring site lies on.
                     const int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
-                                                                            neigh_j,
-                                                                            neigh_k);
+                                                                                  neigh_j,
+                                                                                  neigh_k);
 
                     if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
@@ -1209,8 +1209,6 @@ namespace hemelb
       }
 
       MPI_Type_free(&lMoveType);
-
-      int lError;
 
       ReadInLocalBlocks(iFile, bytesPerBlock, newProcForEachBlock, mTopologyRank, bGlobLatDat);
 
