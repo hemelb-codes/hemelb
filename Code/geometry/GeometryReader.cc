@@ -386,8 +386,8 @@ namespace hemelb
         {
           for (unsigned int siteK = 0; siteK < bGlobLatDat->GetZSiteCount(); ++siteK)
           {
-            int procId = bGlobLatDat->GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
-            if (procId != (int) mGlobalRank)
+            const int* procId = bGlobLatDat->GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
+            if (procId == NULL || *procId != (int) mGlobalRank)
             {
               continue;
             }
@@ -995,11 +995,11 @@ namespace hemelb
                     }
 
                     // Get the id of the processor which the neighbouring site lies on.
-                    int proc_id = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
+                    const int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
                                                                             neigh_j,
                                                                             neigh_k);
 
-                    if (proc_id == -1 || proc_id == BIG_NUMBER2)
+                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
                       continue;
                     }
