@@ -222,7 +222,7 @@ namespace hemelb
                   unsigned int my_site_id = mLatDat->GetBlock(n)->site_data[m];
 
                   /* No idea what this does */
-                  if (my_site_id & (1U << 31U))
+                  if (my_site_id & BIG_NUMBER3)
                     continue;
 
                   double density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],

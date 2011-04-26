@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <signal.h>
 
+#include "log/Logger.h"
 #include "steering/ImageSendComponent.h"
 #include "steering/basic/SimulationParameters.h"
 #include "steering/basic/Network.h"
@@ -27,7 +28,6 @@ namespace hemelb
       isFrameReady = false;
       isConnected = false;
       lastRender = 0.0;
-      double lastSend = 0.0;
     }
 
     ImageSendComponent::~ImageSendComponent()
@@ -168,7 +168,8 @@ namespace hemelb
       {
         if (errno != EAGAIN)
         {
-          printf("Image send component: broken network pipe... (%s) \n", strerror(errno));
+          log::Logger::Log<log::Warning, log::Singleton>("Image send component: broken network pipe... (%s)",
+                                                         strerror(errno));
           mClientConnection->ReportBroken(iSocket);
           isConnected = false;
         }
