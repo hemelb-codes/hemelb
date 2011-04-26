@@ -124,7 +124,7 @@ namespace hemelb
 
         bool IsValidLatticeSite(unsigned int i, unsigned int j, unsigned int k) const;
 
-        int
+        const int*
         GetProcIdFromGlobalCoords(unsigned int siteI, unsigned int siteJ, unsigned int siteK) const;
 
         BlockData* GetBlock(unsigned int blockNumber) const;
@@ -196,8 +196,6 @@ namespace hemelb
             friend class BlockCounter;
 
           public:
-            ~GlobalLatticeData();
-
             void SetBasicDetails(unsigned int iBlocksX,
                                  unsigned int iBlocksY,
                                  unsigned int iBlocksZ,
@@ -217,15 +215,19 @@ namespace hemelb
 
             bool IsValidLatticeSite(unsigned int i, unsigned int j, unsigned int k) const;
 
+            BlockData * Blocks;
+
+            ~GlobalLatticeData();
+
             // Returns the type of collision/streaming update for the fluid site
             // with data "site_data".
             unsigned int GetCollisionType(unsigned int site_data) const;
 
-            // Function that the rank on which a particular site
-            // resides. If the site is in an empty block, return -1.
-            int GetProcIdFromGlobalCoords(unsigned int iSiteI,
-                                          unsigned int iSiteJ,
-                                          unsigned int iSiteK) const;
+            // Function that finds the pointer to the rank on which a particular site
+            // resides. If the site is in an empty block, return NULL.
+            const int * GetProcIdFromGlobalCoords(unsigned int iSiteI,
+                                            unsigned int iSiteJ,
+                                            unsigned int iSiteK) const;
 
             // Function that gets the index of a block from its coordinates.
             unsigned int GetBlockIdFromBlockCoords(unsigned int blockI,
@@ -233,12 +235,10 @@ namespace hemelb
                                                    unsigned int blockK) const;
 
             unsigned int
-                GetSiteData(unsigned int iSiteI, unsigned int iSiteJ, unsigned int iSiteK) const;
-
+            GetSiteData(unsigned int iSiteI, unsigned int iSiteJ, unsigned int iSiteK) const;
           public:
             // TODO public temporarily, until all usages are internal to the class.
             unsigned int Log2BlockSize;
-            BlockData * Blocks;
 
           private:
             unsigned int mSitesPerBlockVolumeUnit;
