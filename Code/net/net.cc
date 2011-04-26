@@ -379,14 +379,14 @@ namespace hemelb
                     }
 
                     // Find the processor Id for that neighbour.
-                    int proc_id = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                    const int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
                     // Move on if the neighbour is in a block of solids (in which case
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
                     // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
                     // in lbmReadConfig in io.cc.
-                    if (proc_id == -1 || ((int) mNetworkTopology->GetLocalRank()) == (proc_id)
-                        || proc_id == BIG_NUMBER2)
+                    if (proc_id_p == NULL || (int) mNetworkTopology->GetLocalRank() == (*proc_id_p)
+                        || *proc_id_p == (BIG_NUMBER2))
                     {
                       continue;
                     }
@@ -408,7 +408,7 @@ namespace hemelb
                           &mNetworkTopology->NeighbouringProcs[mm];
 
                       // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
-                      if (proc_id == (int) neigh_proc_p->Rank)
+                      if (*proc_id_p == (int) neigh_proc_p->Rank)
                       {
                         flag = false;
                         ++neigh_proc_p->SharedFCount;
@@ -422,7 +422,7 @@ namespace hemelb
                       // Store rank of neighbour in >neigh_proc[neigh_procs]
                       hemelb::topology::NeighbouringProcessor lNewNeighbour;
                       lNewNeighbour.SharedFCount = 1;
-                      lNewNeighbour.Rank = proc_id;
+                      lNewNeighbour.Rank = *proc_id_p;
                       mNetworkTopology->NeighbouringProcs.push_back(lNewNeighbour);
                       ++mNetworkTopology->TotalSharedFs;
                     }
@@ -584,14 +584,14 @@ namespace hemelb
                     }
 
                     // Find the processor Id for that neighbour.
-                    int proc_id = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                    const int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
                     // Move on if the neighbour is in a block of solids (in which case
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
                     // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
                     // in lbmReadConfig in io.cc.
-                    if (proc_id == -1 || ((int) mNetworkTopology->GetLocalRank()) == proc_id
-                        || proc_id == BIG_NUMBER2)
+                    if (proc_id_p == NULL || (int) mNetworkTopology->GetLocalRank() == (*proc_id_p)
+                        || *proc_id_p == (BIG_NUMBER2))
                     {
                       continue;
                     }
