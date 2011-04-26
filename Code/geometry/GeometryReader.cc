@@ -93,7 +93,7 @@ namespace hemelb
       // * 3 unsigned ints for the number of blocks in the x, y, z directions
       // * 1 unsigned int for the block size (number of sites along one edge of a block)
       // * 1 double for the voxel size
-      // * 3 doubles for the wor    ld-position of site 0
+      // * 3 doubles for the world-position of site 0
       const int PreambleBytes = 5 * 4 + 4 * 8;
 
       // Read in the file preamble into a buffer.
