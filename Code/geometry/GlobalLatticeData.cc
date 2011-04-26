@@ -131,11 +131,11 @@ namespace hemelb
       }
     }
 
-    // Function that finds the pointer to the rank on which a particular site
-    // resides. If the site is in an empty block, return NULL.
-    int * LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(unsigned int iSiteI,
-                                                                    unsigned int iSiteJ,
-                                                                    unsigned int iSiteK) const
+    // Function that finds the rank on which a particular site
+    // resides. If the site is in an empty block, return -1.
+    int LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(unsigned int iSiteI,
+                                                                  unsigned int iSiteJ,
+                                                                  unsigned int iSiteK) const
     {
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
       unsigned int i = iSiteI >> Log2BlockSize;
@@ -148,7 +148,7 @@ namespace hemelb
       // If an empty (solid) block is addressed, return a NULL pointer.
       if (lBlock->ProcessorRankForEachBlockSite == NULL)
       {
-        return NULL;
+        return -1;
       }
       else
       {
@@ -159,7 +159,7 @@ namespace hemelb
 
         // Return pointer to ProcessorRankForEachBlockSite[site] (the only member of
         // mProcessorsForEachBlock)
-        return &lBlock->ProcessorRankForEachBlockSite[ ( ( (ii << Log2BlockSize) + jj)
+        return lBlock->ProcessorRankForEachBlockSite[ ( ( (ii << Log2BlockSize) + jj)
             << Log2BlockSize) + kk];
       }
     }

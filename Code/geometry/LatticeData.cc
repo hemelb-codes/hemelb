@@ -20,8 +20,15 @@ namespace hemelb
     {
       GeometryReader reader(reserveSteeringCore);
 
-      reader.LoadAndDecompose(&globLatDat, totalFluidSites, siteMins, siteMaxes, fluidSitePerProc,
-                              bLbmParams, bSimConfig, lReadTime, lDecomposeTime);
+      reader.LoadAndDecompose(&globLatDat,
+                              totalFluidSites,
+                              siteMins,
+                              siteMaxes,
+                              fluidSitePerProc,
+                              bLbmParams,
+                              bSimConfig,
+                              lReadTime,
+                              lDecomposeTime);
 
       int localRank;
       MPI_Comm_rank(MPI_COMM_WORLD, &localRank);
@@ -90,9 +97,9 @@ namespace hemelb
                     }
 
                     // Get the id of the processor which the neighbouring site lies on.
-                    int *proc_id_p = GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                    int proc_id = GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
 
-                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
+                    if (proc_id == BIG_NUMBER2 || proc_id == -1)
                     {
                       // initialize f_id to the rubbish site.
                       SetNeighbourLocation(site_map, l, GetLocalFluidSiteCount()
@@ -105,7 +112,7 @@ namespace hemelb
                     // If we check convergence, the data for
                     // each site is split into that for the
                     // current and previous cycles.
-                    else if (localRank == *proc_id_p)
+                    else if (localRank == proc_id)
                     {
 
                       // Pointer to the neighbour.
@@ -117,7 +124,7 @@ namespace hemelb
                     }
                     else
                     {
-                      short int neigh_proc_index = (short int) *proc_id_p;
+                      short int neigh_proc_index = (short int) proc_id;
 
                       // This stores some coordinates.  We
                       // still need to know the site number.
@@ -127,9 +134,10 @@ namespace hemelb
                       // its neighbours which say which sites
                       // on this process are shared with the
                       // neighbour.
-                      int fluidSitesHandled = (sitesHandledPerProc.count((short int)neigh_proc_index) > 0)
-                        ? sitesHandledPerProc[neigh_proc_index]
-                        : 0;
+                      int fluidSitesHandled =
+                          (sitesHandledPerProc.count((short int) neigh_proc_index) > 0)
+                            ? sitesHandledPerProc[neigh_proc_index]
+                            : 0;
 
                       int *f_data_p =
                           &bSharedFLocationForEachProc[neigh_proc_index][fluidSitesHandled << 2];
@@ -225,9 +233,9 @@ namespace hemelb
       return globLatDat.GetBlockIdFromBlockCoords(i, j, k);
     }
 
-    int* LatticeData::GetProcIdFromGlobalCoords(unsigned int siteI,
-                                                unsigned int siteJ,
-                                                unsigned int siteK) const
+    int LatticeData::GetProcIdFromGlobalCoords(unsigned int siteI,
+                                               unsigned int siteJ,
+                                               unsigned int siteK) const
     {
       return globLatDat.GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
     }
