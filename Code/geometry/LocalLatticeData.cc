@@ -54,7 +54,8 @@ namespace hemelb
         delete[] mWallNormalAtSite;
     }
 
-    int LatticeData::LocalLatticeData::GetStreamedIndex(int iSiteIndex, int iDirectionIndex) const
+    unsigned int LatticeData::LocalLatticeData::GetStreamedIndex(unsigned int iSiteIndex,
+                                                                 unsigned int iDirectionIndex) const
     {
       return mFNeighbours[iSiteIndex * D3Q15::NUMVECTORS + iDirectionIndex];
     }
