@@ -127,9 +127,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 {
   mTimingsFile = bTimingsFile;
 
-  unsigned int mins[3], maxes[3];
+  site_t mins[3], maxes[3];
   hemelb::lb::LbmParameters params;
-  int totalFluidSites;
+  site_t totalFluidSites;
 
   mLatDat
       = new hemelb::geometry::LatticeData(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
@@ -173,7 +173,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                      &mSimulationState);
 
   double seconds = hemelb::util::myClock();
-  int* lReceiveTranslator = mNet->Initialise(mLatDat);
+  site_t* lReceiveTranslator = mNet->Initialise(mLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
   // Initialise the visualisation controller.
@@ -193,7 +193,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mLbm->Initialise(lReceiveTranslator, mVisControl);
 
   int images_period = (iImagesPerCycle == 0)
-    ? 1e9
+    ? 1000000000
     : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / iImagesPerCycle);
 
   steeringCpt = new hemelb::steering::SteeringComponent(images_period,
@@ -232,11 +232,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
   int total_time_steps = 0;
 
   unsigned int snapshots_period = (lSnapshotsPerCycle == 0)
-    ? 1e9
+    ? 1000000000
     : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / lSnapshotsPerCycle);
 
   unsigned int images_period = (lImagesPerCycle == 0)
-    ? 1e9
+    ? 1000000000
     : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / lImagesPerCycle);
 
   bool is_finished = false;
@@ -290,7 +290,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
                                                                             mSimulationState.DoRendering);
       }
 
-      mLbm->UpdateBoundaryDensities(mSimulationState.CycleId, mSimulationState.TimeStep);
+      mLbm->UpdateBoundaryDensities(mSimulationState.TimeStep);
 
       // Cycle.
       {
@@ -412,7 +412,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
         if (mNetworkTopology->IsCurrentProcTheIOProc())
         {
           char image_filename[255];
-          snprintf(image_filename, 255, "%08i.dat", mSimulationState.TimeStep);
+          snprintf(image_filename, 255, "%08li.dat", mSimulationState.TimeStep);
 
           mVisControl->WriteImage(image_directory + std::string(image_filename));
         }
@@ -424,7 +424,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       if (mSimulationState.TimeStep % snapshots_period == 0)
       {
         char snapshot_filename[255];
-        snprintf(snapshot_filename, 255, "snapshot_%06i.dat", mSimulationState.TimeStep);
+        snprintf(snapshot_filename, 255, "snapshot_%06li.dat", mSimulationState.TimeStep);
 
         mSnapshotsWritten++;
         mLbm->WriteConfigParallel(stability, snapshot_directory + std::string(snapshot_filename));
@@ -469,12 +469,12 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
       snapshots_period
           = (lSnapshotsPerCycle == 0)
-            ? 1e9
+            ? 1000000000
             : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period
                 / lSnapshotsPerCycle);
 
       images_period = (lImagesPerCycle == 0)
-        ? 1e9
+        ? 1000000000
         : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / lImagesPerCycle);
 
       mSimulationState.CycleId = 0;
@@ -493,8 +493,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
   }
 
   mSimulationState.CycleId
-      = hemelb::util::NumericalFunctions::min<unsigned int>(mSimulationState.CycleId,
-                                                            lSimulationConfig->NumCycles);
+      = hemelb::util::NumericalFunctions::min<unsigned long>(mSimulationState.CycleId,
+                                                             lSimulationConfig->NumCycles);
 
   PostSimulation(total_time_steps,
                  hemelb::util::myClock() - simulation_time,
@@ -534,7 +534,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
             mNetworkTopology->GetProcessorCount(),
             mNetworkTopology->GetMachineCount());
     fprintf(mTimingsFile, "topology depths checked: %i\n\n", mNetworkTopology->GetDepths());
-    fprintf(mTimingsFile, "fluid sites: %i\n\n", mLbm->total_fluid_sites);
+    fprintf(mTimingsFile, "fluid sites: %li\n\n", mLbm->total_fluid_sites);
     fprintf(mTimingsFile,
             "cycles and total time steps: %li, %i \n\n",
             mSimulationState.CycleId,
@@ -576,7 +576,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
       for (unsigned int n = 0; n < mNetworkTopology->GetProcessorCount(); n++)
       {
         fprintf(mTimingsFile,
-                "rank: %i, fluid sites: %i\n",
+                "rank: %li, fluid sites: %li\n",
                 n,
                 mNetworkTopology->FluidSitesOnEachProcessor[n]);
       }

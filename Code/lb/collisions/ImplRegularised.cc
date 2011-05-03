@@ -8,8 +8,8 @@ namespace hemelb
     {
 
       void ImplRegularised::DoCollisions(const bool iDoRayTracing,
-                                         const int iFirstIndex,
-                                         const int iSiteCount,
+                                         const site_t iFirstIndex,
+                                         const site_t iSiteCount,
                                          const LbmParameters *iLbmParams,
                                          geometry::LatticeData *bLatDat,
                                          hemelb::vis::Control *iControl)
@@ -25,17 +25,17 @@ namespace hemelb
       }
 
       template<bool tDoRayTracing>
-      void ImplRegularised::DoCollisionsInternal(const int iFirstIndex,
-                                                 const int iSiteCount,
+      void ImplRegularised::DoCollisionsInternal(const site_t iFirstIndex,
+                                                 const site_t iSiteCount,
                                                  const LbmParameters *iLbmParams,
                                                  geometry::LatticeData *bLatDat,
                                                  hemelb::vis::Control *iControl)
       {
-        for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
-          double density, v_x, v_y, v_z;
-          double f_neq[15];
+          distribn_t *f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+          distribn_t density, v_x, v_y, v_z;
+          distribn_t f_neq[15];
 
           // First calculate the density and macro-velocity
           // TEMPORARILY STORE f_eq IN f_neq BUT THE FUNCTION RETURNS f_eq. THIS IS SORTED
@@ -44,7 +44,7 @@ namespace hemelb
 
           // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
           // (fi = fiEq + fopp(i) - fopp(i)Eq)
-          double fTemp[15];
+          distribn_t fTemp[15];
 
           for (int l = 0; l < 15; l++)
             fTemp[l] = f[l];
@@ -114,15 +114,15 @@ namespace hemelb
             f_neq[l] = fTemp[l] - f_neq[l];
           }
 
-          double density_1 = 1. / density;
-          double v_xx = v_x * v_x;
-          double v_yy = v_y * v_y;
-          double v_zz = v_z * v_z;
+          distribn_t density_1 = 1. / density;
+          distribn_t v_xx = v_x * v_x;
+          distribn_t v_yy = v_y * v_y;
+          distribn_t v_zz = v_z * v_z;
 
           // PI = sum_i e_i e_i f_i
-          double piMatrix[3][3];
+          distribn_t piMatrix[3][3];
 
-          double diagSum = f_neq[7] + f_neq[8] + f_neq[9] + f_neq[10] + f_neq[11] + f_neq[12]
+          distribn_t diagSum = f_neq[7] + f_neq[8] + f_neq[9] + f_neq[10] + f_neq[11] + f_neq[12]
               + f_neq[13] + f_neq[14];
 
           piMatrix[0][0] = f_neq[1] + f_neq[2] + diagSum;
@@ -145,9 +145,9 @@ namespace hemelb
           // Qi = e_i e_i - (speed of sound ^ 2) * Identity
           // Then gi = fiEq + t_i (the 2/9, 1/9, 1/72 stuff) (Qi . PI (inner product)) / 2 * speed of sound^4
           // Or:  gi = fiEq + t_i (the 2/9, 1/9, 1/72 stuff) ((e_i e_i . PI (inner product)) / 2 * speed of sound^4 - specialNumber)
-          double specialNumber = (2.0 / 9.0) * Cs2 * (piMatrix[0][0] + piMatrix[1][1]
+          distribn_t specialNumber = (2.0 / 9.0) * Cs2 * (piMatrix[0][0] + piMatrix[1][1]
               + piMatrix[2][2]);
-          double piMatrixSum = piMatrix[0][0] + piMatrix[0][1] + piMatrix[0][2] + piMatrix[1][0]
+          distribn_t piMatrixSum = piMatrix[0][0] + piMatrix[0][1] + piMatrix[0][2] + piMatrix[1][0]
               + piMatrix[1][1] + piMatrix[1][2] + piMatrix[2][0] + piMatrix[2][1] + piMatrix[2][2];
 
           // The gi (here; f) are then collided and streamed
@@ -155,11 +155,11 @@ namespace hemelb
               - (1.0 / 3.0) * ( (v_xx + v_yy + v_zz) * density_1)) + (1.0 + iLbmParams->Omega)
               * (f_neq[0] = -specialNumber);
 
-          double temp1 = (1.0 / 9.0) * density - (1.0 / 6.0) * ( (v_xx + v_yy + v_zz) * density_1);
+          distribn_t temp1 = (1.0 / 9.0) * density - (1.0 / 6.0) * ( (v_xx + v_yy + v_zz) * density_1);
           specialNumber *= 1.0 / 2.0;
 
           // Now apply bounce-back to the components that require it, from fTemp
-          int lStreamTo[15];
+          site_t lStreamTo[15];
           for (int l = 1; l < 15; l++)
           {
             if (bLatDat->HasBoundary(lIndex, l))
@@ -196,7 +196,7 @@ namespace hemelb
           temp1 *= (1.0 / 8.0);
           specialNumber *= (1.0 / 8.0);
 
-          double temp2 = (v_x + v_y) + v_z;
+          distribn_t temp2 = (v_x + v_y) + v_z;
 
           * (bLatDat->GetFNew(lStreamTo[7])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
               + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[7] = ( (1.0 / 72.0)

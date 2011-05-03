@@ -13,61 +13,65 @@ namespace hemelb
 {
   namespace lb
   {
-    double LBM::ConvertPressureToLatticeUnits(double pressure) const
+    distribn_t LBM::ConvertPressureToLatticeUnits(double pressure) const
     {
-      return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * (PULSATILE_PERIOD_s / (period
-          * voxel_size)) * (PULSATILE_PERIOD_s / (period * voxel_size)) / BLOOD_DENSITY_Kg_per_m3;
+      return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * (PULSATILE_PERIOD_s
+          / (period * voxel_size)) * (PULSATILE_PERIOD_s / (period * voxel_size))
+          / BLOOD_DENSITY_Kg_per_m3;
     }
 
-    double LBM::ConvertPressureToPhysicalUnits(double pressure) const
+    double LBM::ConvertPressureToPhysicalUnits(distribn_t pressure) const
     {
-      return REFERENCE_PRESSURE_mmHg + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3 * ( (period
-          * voxel_size) / PULSATILE_PERIOD_s) * ( (period * voxel_size) / PULSATILE_PERIOD_s)
-          / mmHg_TO_PASCAL;
+      return REFERENCE_PRESSURE_mmHg + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3
+          * ( (period * voxel_size) / PULSATILE_PERIOD_s) * ( (period * voxel_size)
+          / PULSATILE_PERIOD_s) / mmHg_TO_PASCAL;
     }
 
-    double LBM::ConvertPressureGradToLatticeUnits(double pressure_grad) const
+    distribn_t LBM::ConvertPressureGradToLatticeUnits(double pressure_grad) const
     {
       return pressure_grad * mmHg_TO_PASCAL * (PULSATILE_PERIOD_s / (period * voxel_size))
           * (PULSATILE_PERIOD_s / (period * voxel_size)) / BLOOD_DENSITY_Kg_per_m3;
     }
 
-    double LBM::ConvertPressureGradToPhysicalUnits(double pressure_grad) const
+    double LBM::ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const
     {
-      return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * ( (period * voxel_size) / PULSATILE_PERIOD_s)
-          * ( (period * voxel_size) / PULSATILE_PERIOD_s) / mmHg_TO_PASCAL;
+      return pressure_grad * BLOOD_DENSITY_Kg_per_m3
+          * ( (period * voxel_size) / PULSATILE_PERIOD_s) * ( (period * voxel_size)
+          / PULSATILE_PERIOD_s) / mmHg_TO_PASCAL;
     }
 
-    double LBM::ConvertVelocityToLatticeUnits(double velocity) const
+    distribn_t LBM::ConvertVelocityToLatticeUnits(double velocity) const
     {
       return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) / (BLOOD_VISCOSITY_Pa_s
           / BLOOD_DENSITY_Kg_per_m3);
     }
 
-    double LBM::ConvertVelocityToPhysicalUnits(double velocity) const
+    double LBM::ConvertVelocityToPhysicalUnits(distribn_t velocity) const
     {
       // convert velocity from lattice units to physical units (m/s)
-      return velocity * (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / ( ( (mParams.Tau - 0.5) / 3.0)
+      return velocity * (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / ( ( (mParams.Tau - 0.5)
+          / 3.0) * voxel_size);
+    }
+
+    distribn_t LBM::ConvertStressToLatticeUnits(double stress) const
+    {
+      return stress * (BLOOD_DENSITY_Kg_per_m3 / (BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s))
+          * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0)
           * voxel_size);
     }
 
-    double LBM::ConvertStressToLatticeUnits(double stress) const
-    {
-      return stress * (BLOOD_DENSITY_Kg_per_m3 / (BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s)) * ( ( (mParams.Tau
-          - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size);
-    }
-
-    double LBM::ConvertStressToPhysicalUnits(double stress) const
+    double LBM::ConvertStressToPhysicalUnits(distribn_t stress) const
     {
       // convert stress from lattice units to physical units (Pa)
-      return stress * BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s / (BLOOD_DENSITY_Kg_per_m3 * ( ( (mParams.Tau - 0.5)
-          / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size));
+      return stress * BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s / (BLOOD_DENSITY_Kg_per_m3
+          * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0)
+          * voxel_size));
     }
 
     void LBM::RecalculateTauViscosityOmega()
     {
-      mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / (Cs2 * period
-          * voxel_size * voxel_size);
+      mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
+          / (Cs2 * period * voxel_size * voxel_size);
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
@@ -75,16 +79,16 @@ namespace hemelb
 
     // Calculate the BCs for each boundary site type and the
     // non-equilibrium distribution functions.
-    void LBM::CalculateBC(double f[],
+    void LBM::CalculateBC(distribn_t f[],
                           hemelb::geometry::LatticeData::SiteType iSiteType,
                           unsigned int iBoundaryId,
-                          double *density,
-                          double *vx,
-                          double *vy,
-                          double *vz,
-                          double f_neq[])
+                          distribn_t *density,
+                          distribn_t *vx,
+                          distribn_t *vy,
+                          distribn_t *vz,
+                          distribn_t f_neq[])
     {
-      double dummy_density;
+      distribn_t dummy_density;
 
       for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
       {
@@ -117,7 +121,7 @@ namespace hemelb
 
     }
 
-    void LBM::UpdateBoundaryDensities(int cycle_id, int time_step)
+    void LBM::UpdateBoundaryDensities(unsigned long time_step)
     {
       double w = 2.0 * PI / period;
 
@@ -156,8 +160,8 @@ namespace hemelb
 
     void LBM::CalculateMouseFlowField(float densityIn,
                                       float stressIn,
-                                      double &mouse_pressure,
-                                      double &mouse_stress,
+                                      distribn_t &mouse_pressure,
+                                      distribn_t &mouse_stress,
                                       double density_threshold_min,
                                       double density_threshold_minmax_inv,
                                       double stress_threshold_max_inv)
@@ -188,7 +192,7 @@ namespace hemelb
           = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
     }
 
-    void LBM::Initialise(int* iFTranslator, vis::Control* iControl)
+    void LBM::Initialise(site_t* iFTranslator, vis::Control* iControl)
     {
       receivedFTranslator = iFTranslator;
 
@@ -199,8 +203,8 @@ namespace hemelb
 
     void LBM::SetInitialConditions()
     {
-      double *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
-      double density;
+      distribn_t *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
+      distribn_t density;
 
       density = 0.;
 
@@ -210,7 +214,7 @@ namespace hemelb
       }
       density /= outlets;
 
-      for (unsigned int i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
+      for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
         D3Q15::CalculateFeq(density, 0.0, 0.0, 0.0, f_eq);
 
@@ -251,12 +255,12 @@ namespace hemelb
           mNetTopology->NeighbouringProcs.begin(); it != mNetTopology->NeighbouringProcs.end(); it++)
       {
         // Request the receive into the appropriate bit of FOld.
-        mNet->RequestReceive<double> (mLatDat->GetFOld( (*it).FirstSharedF),
+        mNet->RequestReceive<distribn_t> (mLatDat->GetFOld( (*it).FirstSharedF),
                                        (*it).SharedFCount,
                                        (*it).Rank);
 
-        // Request the send from the right bit of
-        mNet->RequestSend<double> (mLatDat->GetFNew( (*it).FirstSharedF),
+        // Request the send from the right bit of FNew.
+        mNet->RequestSend<distribn_t> (mLatDat->GetFNew( (*it).FirstSharedF),
                                     (*it).SharedFCount,
                                     (*it).Rank);
       }
@@ -264,7 +268,7 @@ namespace hemelb
 
     void LBM::PreSend()
     {
-      int offset = mLatDat->GetInnerSiteCount();
+      site_t offset = mLatDat->GetInnerSiteCount();
 
       for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
@@ -280,9 +284,9 @@ namespace hemelb
 
     void LBM::PreReceive()
     {
-      int offset = 0;
+      site_t offset = 0;
 
-      for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+      for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->DoCollisions(mState->DoRendering,
                                                    offset,
@@ -298,16 +302,16 @@ namespace hemelb
     {
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
-      for (int i = 0; i < mNetTopology->TotalSharedFs; i++)
+      for (size_t i = 0; i < mNetTopology->TotalSharedFs; i++)
       {
         *mLatDat->GetFNew(receivedFTranslator[i])
             = *mLatDat->GetFOld(mNetTopology->NeighbouringProcs[0].FirstSharedF + i);
       }
 
       // Do any cleanup steps necessary on boundary nodes
-      int offset = 0;
+      size_t offset = 0;
 
-      for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+      for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->PostStep(mState->DoRendering,
                                                offset,
@@ -318,7 +322,7 @@ namespace hemelb
         offset += mLatDat->GetInnerCollisionCount(collision_type);
       }
 
-      for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+      for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->PostStep(mState->DoRendering,
                                                offset,
@@ -339,15 +343,15 @@ namespace hemelb
     // Update peak and average inlet velocities local to the current subdomain.
     void LBM::UpdateInletVelocities(int time_step)
     {
-      double density;
-      double vx, vy, vz;
-      double velocity;
+      distribn_t density;
+      distribn_t vx, vy, vz;
+      distribn_t velocity;
 
       int inlet_id;
 
-      unsigned int offset = mLatDat->GetInnerCollisionCount(0) + mLatDat->GetInnerCollisionCount(1);
+      site_t offset = mLatDat->GetInnerCollisionCount(0) + mLatDat->GetInnerCollisionCount(1);
 
-      for (unsigned int i = offset; i < offset + mLatDat->GetInnerCollisionCount(2); i++)
+      for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(2); i++)
       {
         D3Q15::CalculateDensityAndVelocity(mLatDat->GetFOld(i * D3Q15::NUMVECTORS),
                                            density,
@@ -376,7 +380,7 @@ namespace hemelb
       offset = mLatDat->GetInnerSiteCount() + mLatDat->GetInterCollisionCount(0)
           + mLatDat->GetInterCollisionCount(1);
 
-      for (unsigned int i = offset; i < offset + mLatDat->GetInterCollisionCount(2); i++)
+      for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(2); i++)
       {
         D3Q15::CalculateDensityAndVelocity(mLatDat->GetFOld(i * D3Q15::NUMVECTORS),
                                            density,

@@ -105,7 +105,7 @@ namespace hemelb
     if (iIsLoading)
     {
       char *dummy;
-      value = std::strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
+      value = std::strtof(iParent->Attribute(iAttributeName)->c_str(), &dummy);
     }
     else
     {

@@ -30,54 +30,52 @@ namespace hemelb
         void EndIteration();
         void Reset();
 
-        int total_fluid_sites;
+        site_t total_fluid_sites;
         int inlets;
         unsigned int period;
 
-        double ConvertPressureToLatticeUnits(double pressure) const;
-        double ConvertVelocityToLatticeUnits(double velocity) const;
-        double ConvertStressToLatticeUnits(double stress) const;
+        distribn_t ConvertPressureToLatticeUnits(double pressure) const;
+        distribn_t ConvertVelocityToLatticeUnits(double velocity) const;
+        distribn_t ConvertStressToLatticeUnits(double stress) const;
 
-        void UpdateBoundaryDensities(int cycle_id, int time_step);
+        void UpdateBoundaryDensities(unsigned long time_step);
         void UpdateInletVelocities(int time_step);
 
-        void Initialise(int* iFTranslator, vis::Control* iControl);
+        void Initialise(site_t* iFTranslator, vis::Control* iControl);
 
         void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
         void ReadVisParameters();
 
         void CalculateMouseFlowField(float densityIn,
                                      float stressIn,
-                                     double &mouse_pressure,
-                                     double &mouse_stress,
+                                     distribn_t &mouse_pressure,
+                                     distribn_t &mouse_stress,
                                      double density_threshold_min,
                                      double density_threshold_minmax_inv,
                                      double stress_threshold_max_inv);
 
         hemelb::lb::LbmParameters *GetLbmParams();
 
-        unsigned int siteMins[3], siteMaxes[3];
+        site_t siteMins[3], siteMaxes[3];
 
       private:
         void RecalculateTauViscosityOmega();
         void SetInitialConditions();
 
-        double ConvertPressureToPhysicalUnits(double pressure) const;
-        double ConvertStressToPhysicalUnits(double stress) const;
-        double ConvertVelocityToPhysicalUnits(double velocity) const;
+        double ConvertPressureToPhysicalUnits(double distribn_t) const;
+        double ConvertStressToPhysicalUnits(double distribn_t) const;
+        double ConvertVelocityToPhysicalUnits(double distribn_t) const;
 
-        void CalculateBC(double f[],
+        void CalculateBC(distribn_t f[],
                          hemelb::geometry::LatticeData::SiteType iSiteType,
                          unsigned int iBoundaryId,
-                         double *density,
-                         double *vx,
-                         double *vy,
-                         double *vz,
-                         double f_neq[]);
+                         distribn_t *density,
+                         distribn_t *vx,
+                         distribn_t *vy,
+                         distribn_t *vz,
+                         distribn_t f_neq[]);
 
         void InitCollisions();
-
-        //  static void ReadBlock();
 
         void ReadParameters();
 
@@ -86,8 +84,8 @@ namespace hemelb
 
         void handleIOError(int iError);
 
-        double ConvertPressureGradToLatticeUnits(double pressure_grad) const;
-        double ConvertPressureGradToPhysicalUnits(double pressure_grad) const;
+        distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad) const;
+        double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
         hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
         hemelb::lb::collisions::WallCollision* mWallCollision;
@@ -99,10 +97,10 @@ namespace hemelb
         //TODO Get rid of this hack
         hemelb::lb::collisions::Collision* GetCollision(int i);
 
-        double *inlet_density_avg, *inlet_density_amp;
-        double *outlet_density_avg, *outlet_density_amp;
-        double *inlet_density_phs, *outlet_density_phs;
-        double* inlet_density, *outlet_density;
+        distribn_t *inlet_density_avg, *inlet_density_amp;
+        distribn_t *outlet_density_avg, *outlet_density_amp;
+        distribn_t *inlet_density_phs, *outlet_density_phs;
+        distribn_t* inlet_density, *outlet_density;
         double *inlet_normal;
         double voxel_size;
         int outlets;
@@ -118,7 +116,7 @@ namespace hemelb
         LbmParameters mParams;
         vis::Control* mVisControl;
 
-        int * receivedFTranslator;
+        site_t* receivedFTranslator;
     };
   }
 }

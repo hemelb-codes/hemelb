@@ -1,6 +1,14 @@
 #ifndef HEMELB_CONSTANTS_H
 #define HEMELB_CONSTANTS_H
 
+#include "mpiInclude.h"
+
+typedef long site_t;
+const MPI_Datatype site_mpi_t = MPI_LONG;
+
+typedef int proc_t;
+typedef double distribn_t;
+
 const unsigned int COLLISION_TYPES = 6;
 const double PI = 3.14159265358979323846264338327950288;
 const double DEG_TO_RAD = (PI / 180.0);

@@ -8,8 +8,8 @@ namespace hemelb
     {
 
       void ImplGuoZhengShi::DoCollisions(const bool iDoRayTracing,
-                                         const int iFirstIndex,
-                                         const int iSiteCount,
+                                         const site_t iFirstIndex,
+                                         const site_t iSiteCount,
                                          const LbmParameters* iLbmParams,
                                          geometry::LatticeData* bLatDat,
                                          hemelb::vis::Control *iControl)
@@ -25,22 +25,22 @@ namespace hemelb
       }
 
       template<bool tRayTracing>
-      void ImplGuoZhengShi::DoCollisionsInternal(const int iFirstIndex,
-                                                 const int iSiteCount,
+      void ImplGuoZhengShi::DoCollisionsInternal(const site_t iFirstIndex,
+                                                 const site_t iSiteCount,
                                                  const LbmParameters* iLbmParams,
                                                  geometry::LatticeData* bLatDat,
                                                  hemelb::vis::Control *iControl)
       {
-        for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
 
           // First do a normal collision & streaming step, as if we were mid-fluid.
           // NOTE that we use the version that preserves f_old.
           // NOTE that this handily works out the equilibrium density, v_x, v_y and v_z for us
-          double lFEq[15];
-          double f_neq[15];
-          double density, v_x, v_y, v_z;
-          double *f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+          distribn_t lFEq[15];
+          distribn_t f_neq[15];
+          distribn_t density, v_x, v_y, v_z;
+          distribn_t* f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
 
           D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, lFEq);
 
@@ -59,7 +59,7 @@ namespace hemelb
             {
               double delta = bLatDat->GetCutDistance(lIndex, l);
               double uWall[3];
-              double fNeq;
+              distribn_t fNeq;
 
               // Work out uw1 (noting that ub is 0 until we implement moving walls)
               uWall[0] = (1 - 1. / delta) * v_x;
@@ -75,9 +75,9 @@ namespace hemelb
                 if (!bLatDat->HasBoundary(lIndex, lAwayFromWallIndex))
                 {
                   // Need some info about the next node away from the wall in this direction...
-                  int nextIOut = bLatDat->GetStreamedIndex(lIndex, lAwayFromWallIndex)
+                  site_t nextIOut = bLatDat->GetStreamedIndex(lIndex, lAwayFromWallIndex)
                       / D3Q15::NUMVECTORS;
-                  double nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
+                  distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
 
                   D3Q15::CalculateDensityVelocityFEq(bLatDat->GetFOld(nextIOut * D3Q15::NUMVECTORS),
                                                      nextNodeDensity,
@@ -105,7 +105,7 @@ namespace hemelb
 
               // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
               // Note that we assume that the density is the same as at this node
-              double fEqTemp[D3Q15::NUMVECTORS];
+              distribn_t fEqTemp[D3Q15::NUMVECTORS];
               D3Q15::CalculateFeq(density, uWall[0], uWall[1], uWall[2], fEqTemp);
 
               // Collide and stream!

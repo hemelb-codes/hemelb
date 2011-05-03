@@ -23,7 +23,7 @@ namespace hemelb
         Net(hemelb::topology::NetworkTopology * iTopology);
         ~Net();
 
-        int* Initialise(geometry::LatticeData* bLatDat);
+        site_t* Initialise(geometry::LatticeData* bLatDat);
 
         void Receive();
         void Send();
@@ -38,7 +38,7 @@ namespace hemelb
          * @param iToRank Rank to send to.
          */
         template<class T>
-        void RequestSend(T* oPointer, int iCount, int iToRank)
+        void RequestSend(T* oPointer, int iCount, proc_t iToRank)
         {
           if (sendReceivePrepped)
           {
@@ -61,7 +61,7 @@ namespace hemelb
          * @param iFromRank Rank to receive from.
          */
         template<class T>
-        void RequestReceive(T* oPointer, int iCount, int iFromRank)
+        void RequestReceive(T* oPointer, int iCount, proc_t iFromRank)
         {
           if (sendReceivePrepped)
           {
@@ -82,7 +82,7 @@ namespace hemelb
         void CountCollisionTypes(geometry::LatticeData* bLatDat,
                                  const unsigned int * lThisRankSiteData);
 
-        void InitialisePointToPointComms(int **& lSharedFLocationForEachProc);
+        void InitialisePointToPointComms(site_t** &lSharedFLocationForEachProc);
 
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
@@ -104,7 +104,7 @@ namespace hemelb
             MPI_Datatype Type;
         };
 
-        ProcComms* GetProcComms(int iRank, bool iIsSend);
+        ProcComms* GetProcComms(proc_t iRank, bool iIsSend);
 
         void AddToList(int* iNew, int iLength, ProcComms* bMetaData);
 
@@ -120,8 +120,8 @@ namespace hemelb
 
         bool sendReceivePrepped;
 
-        std::map<int, ProcComms> mSendProcessorComms;
-        std::map<int, ProcComms> mReceiveProcessorComms;
+        std::map<proc_t, ProcComms> mSendProcessorComms;
+        std::map<proc_t, ProcComms> mReceiveProcessorComms;
 
         hemelb::topology::NetworkTopology * mNetworkTopology;
 

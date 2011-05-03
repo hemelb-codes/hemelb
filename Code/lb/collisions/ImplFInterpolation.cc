@@ -8,8 +8,8 @@ namespace hemelb
     {
 
       void ImplFInterpolation::DoCollisions(const bool iDoRayTracing,
-                                            const int iFirstIndex,
-                                            const int iSiteCount,
+                                            const site_t iFirstIndex,
+                                            const site_t iSiteCount,
                                             const LbmParameters* iLbmParams,
                                             geometry::LatticeData* bLatDat,
                                             hemelb::vis::Control *iControl)
@@ -25,8 +25,8 @@ namespace hemelb
       }
 
       void ImplFInterpolation::PostStep(const bool iDoRayTracing,
-                                        const int iFirstIndex,
-                                        const int iSiteCount,
+                                        const site_t iFirstIndex,
+                                        const site_t iSiteCount,
                                         const LbmParameters* iLbmParams,
                                         geometry::LatticeData* bLatDat,
                                         hemelb::vis::Control *iControl)
@@ -42,16 +42,16 @@ namespace hemelb
       }
 
       template<bool tDoRayTracing>
-      void ImplFInterpolation::DoCollisionsInternal(const int iFirstIndex,
-                                                    const int iSiteCount,
+      void ImplFInterpolation::DoCollisionsInternal(const site_t iFirstIndex,
+                                                    const site_t iSiteCount,
                                                     const LbmParameters* iLbmParams,
                                                     geometry::LatticeData* bLatDat,
                                                     hemelb::vis::Control *iControl)
       {
-        for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
-          double density, v_x, v_y, v_z, f_neq[15];
+          distribn_t* f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+          distribn_t density, v_x, v_y, v_z, f_neq[15];
           // Temporarily store f_eq in f_neq. Rectified later.
           D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_neq);
 
@@ -74,15 +74,14 @@ namespace hemelb
       }
 
       //TODO: Does this change velocity / density / stress? Need to update mins and maxes if so.
-
       template<bool tDoRayTracing>
-      void ImplFInterpolation::PostStepInternal(const int iFirstIndex,
-                                                const int iSiteCount,
+      void ImplFInterpolation::PostStepInternal(const site_t iFirstIndex,
+                                                const site_t iSiteCount,
                                                 const LbmParameters* iLbmParams,
                                                 geometry::LatticeData* bLatDat,
                                                 hemelb::vis::Control *iControl)
       {
-        for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
           // Handle odd indices, then evens - it's slightly easier to take the odd
           // and even cases separately.

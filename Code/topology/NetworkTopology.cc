@@ -14,12 +14,12 @@ namespace hemelb
       MPI_Comm_size(MPI_COMM_WORLD, &tempSize);
       MPI_Comm_rank(MPI_COMM_WORLD, &tempRank);
 
-      processorCount = tempSize;
-      localRank = tempRank;
+      processorCount = (proc_t) tempSize;
+      localRank = (proc_t) tempRank;
 
       *oSuccess = InitialiseMachineInfo();
 
-      FluidSitesOnEachProcessor = new unsigned int[processorCount];
+      FluidSitesOnEachProcessor = new site_t[processorCount];
     }
 
     NetworkTopology::~NetworkTopology()
@@ -37,12 +37,12 @@ namespace hemelb
       return localRank == 0;
     }
 
-    unsigned int NetworkTopology::GetLocalRank() const
+    proc_t NetworkTopology::GetLocalRank() const
     {
       return localRank;
     }
 
-    unsigned int NetworkTopology::GetProcessorCount() const
+    proc_t NetworkTopology::GetProcessorCount() const
     {
       return processorCount;
     }

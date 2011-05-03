@@ -8,8 +8,8 @@ namespace hemelb
     {
 
       void ImplSimpleCollideAndStream::DoCollisions(const bool iDoRayTracing,
-                                                    const int iFirstIndex,
-                                                    const int iSiteCount,
+                                                    const site_t iFirstIndex,
+                                                    const site_t iSiteCount,
                                                     const LbmParameters *iLbmParams,
                                                     geometry::LatticeData *bLatDat,
                                                     hemelb::vis::Control *iControl)
@@ -25,17 +25,17 @@ namespace hemelb
       }
 
       template<bool tDoRayTracing>
-      void ImplSimpleCollideAndStream::DoCollisionsInternal(const int iFirstIndex,
-                                                            const int iSiteCount,
+      void ImplSimpleCollideAndStream::DoCollisionsInternal(const site_t iFirstIndex,
+                                                            const site_t iSiteCount,
                                                             const LbmParameters *iLbmParams,
                                                             geometry::LatticeData *bLatDat,
                                                             hemelb::vis::Control *iControl)
       {
-        for (int iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
+        for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
         {
-          double *lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
-          double lDensity, lVx, lVy, lVz;
-          double lFNeq[D3Q15::NUMVECTORS];
+          distribn_t* lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
+          distribn_t lDensity, lVx, lVy, lVz;
+          distribn_t lFNeq[D3Q15::NUMVECTORS];
 
           // Temporarily store f_eq in f_neq (rectified in next statement)
           D3Q15::CalculateDensityVelocityFEq(lFOld, lDensity, lVx, lVy, lVz, lFNeq);
