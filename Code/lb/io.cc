@@ -48,7 +48,7 @@ namespace hemelb
         outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
       }
 
-      inlet_normal = new double[3 * inlets];
+      inlet_normal = new distribn_t[3 * inlets];
 
       for (int ii = 0; ii < inlets; ii++)
       {
@@ -57,7 +57,7 @@ namespace hemelb
         inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
       }
 
-      UpdateBoundaryDensities(0, 0);
+      UpdateBoundaryDensities(0);
 
       RecalculateTauViscosityOmega();
     }
@@ -65,19 +65,19 @@ namespace hemelb
     void LBM::allocateInlets(int nInlets)
     {
       nInlets = hemelb::util::NumericalFunctions::max<int>(1, nInlets);
-      inlet_density = new double[nInlets];
-      inlet_density_avg = new double[nInlets];
-      inlet_density_amp = new double[nInlets];
-      inlet_density_phs = new double[nInlets];
+      inlet_density = new distribn_t[nInlets];
+      inlet_density_avg = new distribn_t[nInlets];
+      inlet_density_amp = new distribn_t[nInlets];
+      inlet_density_phs = new distribn_t[nInlets];
     }
 
     void LBM::allocateOutlets(int nOutlets)
     {
       nOutlets = hemelb::util::NumericalFunctions::max<int>(1, nOutlets);
-      outlet_density = new double[nOutlets];
-      outlet_density_avg = new double[nOutlets];
-      outlet_density_amp = new double[nOutlets];
-      outlet_density_phs = new double[nOutlets];
+      outlet_density = new distribn_t[nOutlets];
+      outlet_density_avg = new distribn_t[nOutlets];
+      outlet_density_amp = new distribn_t[nOutlets];
+      outlet_density_phs = new distribn_t[nOutlets];
     }
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name)
@@ -142,10 +142,10 @@ namespace hemelb
         char lBuffer[lPreambleLength];
         hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lBuffer, lPreambleLength);
 
-        lWriter << stability << voxel_size << siteMins[0] << siteMins[1] << siteMins[2]
-            << siteMaxes[0] << siteMaxes[1] << siteMaxes[2] << (1 + siteMaxes[0] - siteMins[0])
-            << (1 + siteMaxes[1] - siteMins[1]) << (1 + siteMaxes[2] - siteMins[2])
-            << total_fluid_sites;
+        lWriter << stability << voxel_size << (int) siteMins[0] << (int) siteMins[1]
+            << (int) siteMins[2] << (int) siteMaxes[0] << (int) siteMaxes[1] << (int) siteMaxes[2]
+            << (int) (1 + siteMaxes[0] - siteMins[0]) << (int) (1 + siteMaxes[1] - siteMins[1])
+            << (int) (1 + siteMaxes[2] - siteMins[2]) << (int) total_fluid_sites;
 
         MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MPI_BYTE, &lStatus);
       }
@@ -177,7 +177,7 @@ namespace hemelb
                         &lReadMode[0],
                         MPI_INFO_NULL);
 
-      int lLocalWriteLength = lOneFluidSiteLength
+      site_t lLocalWriteLength = lOneFluidSiteLength
           * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->GetLocalRank()];
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
       hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lFluidSiteBuffer,
@@ -189,12 +189,12 @@ namespace hemelb
        converted to physical units and stored in a buffer to send to the
        root processor */
 
-      int n = -1; // net->proc_block counter
-      for (unsigned int i = 0; i < mLatDat->GetXSiteCount(); i += mLatDat->GetBlockSize())
+      site_t n = -1;
+      for (site_t i = 0; i < mLatDat->GetXSiteCount(); i += mLatDat->GetBlockSize())
       {
-        for (unsigned int j = 0; j < mLatDat->GetYSiteCount(); j += mLatDat->GetBlockSize())
+        for (site_t j = 0; j < mLatDat->GetYSiteCount(); j += mLatDat->GetBlockSize())
         {
-          for (unsigned int k = 0; k < mLatDat->GetZSiteCount(); k += mLatDat->GetBlockSize())
+          for (site_t k = 0; k < mLatDat->GetZSiteCount(); k += mLatDat->GetBlockSize())
           {
 
             ++n;
@@ -203,29 +203,29 @@ namespace hemelb
             {
               continue;
             }
-            int m = -1;
+            site_t m = -1;
 
-            for (unsigned int site_i = i; site_i < i + mLatDat->GetBlockSize(); site_i++)
+            for (site_t site_i = i; site_i < i + mLatDat->GetBlockSize(); site_i++)
             {
-              for (unsigned int site_j = j; site_j < j + mLatDat->GetBlockSize(); site_j++)
+              for (site_t site_j = j; site_j < j + mLatDat->GetBlockSize(); site_j++)
               {
-                for (unsigned int site_k = k; site_k < k + mLatDat->GetBlockSize(); site_k++)
+                for (site_t site_k = k; site_k < k + mLatDat->GetBlockSize(); site_k++)
                 {
 
                   m++;
-                  if ((int) mNetTopology->GetLocalRank()
+                  if (mNetTopology->GetLocalRank()
                       != mLatDat->GetBlock(n)->ProcessorRankForEachBlockSite[m])
                   {
                     continue;
                   }
 
-                  unsigned int my_site_id = mLatDat->GetBlock(n)->site_data[m];
+                  site_t my_site_id = mLatDat->GetBlock(n)->site_data[m];
 
                   /* No idea what this does */
                   if (my_site_id & BIG_NUMBER3)
                     continue;
 
-                  double density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
+                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
                       stress, pressure;
 
                   // TODO Utter filth. The cases where the whole site data is exactly equal
@@ -287,7 +287,7 @@ namespace hemelb
 
                   stress = ConvertStressToPhysicalUnits(stress);
 
-                  lWriter << (site_i - siteMins[0]) << (site_j - siteMins[1]) << (site_k
+                  lWriter << (int)(site_i - siteMins[0]) << (int)(site_j - siteMins[1]) << (int)(site_k
                       - siteMins[2]);
 
                   lWriter << float (pressure) << float (vx) << float (vy) << float (vz)

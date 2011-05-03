@@ -14,7 +14,7 @@ namespace hemelb
       mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint),
           mVisSettings(iVisSettings)
     {
-      unsigned int n = 0;
+      int n = -1;
 
       // Iterate over the first site in each block.
       for (unsigned int i = 0; i < mLatDat->GetXSiteCount(); i += mLatDat->GetBlockSize())
@@ -23,6 +23,8 @@ namespace hemelb
         {
           for (unsigned int k = 0; k < mLatDat->GetZSiteCount(); k += mLatDat->GetBlockSize())
           {
+            ++n;
+
             // Get the block data for this block - if it has no site data, move on.
             geometry::LatticeData::BlockData * map_block_p = mLatDat->GetBlock(n);
 
@@ -32,11 +34,11 @@ namespace hemelb
             }
 
             // We put the glyph at the site at the centre of the block...
-            const unsigned int site_i = (mLatDat->GetBlockSize() >> 1);
-            const unsigned int site_j = (mLatDat->GetBlockSize() >> 1);
-            const unsigned int site_k = (mLatDat->GetBlockSize() >> 1);
+            const site_t site_i = (mLatDat->GetBlockSize() >> 1);
+            const site_t site_j = (mLatDat->GetBlockSize() >> 1);
+            const site_t site_k = (mLatDat->GetBlockSize() >> 1);
 
-            const unsigned int siteIdOnBlock =
+            const site_t siteIdOnBlock =
                 ( ( (site_i << mLatDat->GetLog2BlockSize()) + site_j)
                     << mLatDat->GetLog2BlockSize()) + site_k;
 
@@ -56,8 +58,6 @@ namespace hemelb
             lGlyph->f = mLatDat->GetFOld(map_block_p->site_data[siteIdOnBlock] * D3Q15::NUMVECTORS);
 
             mGlyphs.push_back(lGlyph);
-
-            ++n;
           } // for k
         } // for j
       } // for i
@@ -67,7 +67,7 @@ namespace hemelb
     // Destructor
     GlyphDrawer::~GlyphDrawer()
     {
-      for (unsigned int ii = 0; ii < mGlyphs.size(); ii++)
+      for (size_t ii = 0; ii < mGlyphs.size(); ii++)
       {
         delete mGlyphs[ii];
       }
@@ -79,11 +79,11 @@ namespace hemelb
     void GlyphDrawer::Render()
     {
       // For each glyph...
-      for (unsigned int n = 0; n < mGlyphs.size(); n++)
+      for (site_t n = 0; n < mGlyphs.size(); n++)
       {
         // ... get the density and velocity at that point...
-        double density;
-        double vx, vy, vz;
+        distribn_t density;
+        distribn_t vx, vy, vz;
         D3Q15::CalculateDensityAndVelocity(mGlyphs[n]->f, density, vx, vy, vz);
 
         // ... calculate the velocity vector multiplier...

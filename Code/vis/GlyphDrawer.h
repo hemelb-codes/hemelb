@@ -34,7 +34,7 @@ namespace hemelb
         struct Glyph
         {
             float x, y, z;
-            double *f;
+            distribn_t *f;
         };
 
         geometry::LatticeData* mLatDat;

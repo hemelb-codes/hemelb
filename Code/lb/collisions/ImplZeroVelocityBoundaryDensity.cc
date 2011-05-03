@@ -7,14 +7,14 @@ namespace hemelb
     namespace collisions
     {
 
-      ImplZeroVelocityBoundaryDensity::ImplZeroVelocityBoundaryDensity(double* iOutletDensityArray)
+      ImplZeroVelocityBoundaryDensity::ImplZeroVelocityBoundaryDensity(distribn_t* iOutletDensityArray)
       {
         mBoundaryDensityArray = iOutletDensityArray;
       }
 
       void ImplZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,
-                                                         const int iFirstIndex,
-                                                         const int iSiteCount,
+                                                         const site_t iFirstIndex,
+                                                         const site_t iSiteCount,
                                                          const LbmParameters* iLbmParams,
                                                          geometry::LatticeData* bLatDat,
                                                          hemelb::vis::Control *iControl)
@@ -31,17 +31,17 @@ namespace hemelb
 
       // Collision + streaming for fluid lattice sites and adjacent to the outlet and the wall.
       template<bool tDoRayTracing>
-      void ImplZeroVelocityBoundaryDensity::DoCollisionsInternal(const int iFirstIndex,
-                                                                 const int iSiteCount,
+      void ImplZeroVelocityBoundaryDensity::DoCollisionsInternal(const site_t iFirstIndex,
+                                                                 const site_t iSiteCount,
                                                                  const LbmParameters* iLbmParams,
                                                                  geometry::LatticeData* bLatDat,
                                                                  hemelb::vis::Control *iControl)
       {
-        for (int iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
+        for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
         {
-          double *lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
-          double lFNeq[D3Q15::NUMVECTORS];
-          double lDensity;
+          distribn_t* lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
+          distribn_t lFNeq[D3Q15::NUMVECTORS];
+          distribn_t lDensity;
 
           lDensity = mBoundaryDensityArray[bLatDat->GetBoundaryId(iIndex)];
 

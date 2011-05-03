@@ -1,6 +1,8 @@
 #ifndef HEMELB_D3Q15_H
 #define HEMELB_D3Q15_H
 
+#include "constants.h"
+
 class D3Q15
 {
   public:
@@ -17,29 +19,29 @@ class D3Q15
 
     // Functions to calculate the density and velocity from an array of SharedFCount and to calculate the
     // equilibrium f array from density and velocity.
-    static void CalculateDensityAndVelocity(const double f[],
-                                            double &density,
-                                            double &v_x,
-                                            double &v_y,
-                                            double &v_z);
-    static void CalculateFeq(const double &density,
-                             const double &v_x,
-                             const double &v_y,
-                             const double &v_z,
-                             double f_eq[]);
-    static void CalculateDensityVelocityFEq(const double f[],
-                                            double &density,
-                                            double &v_x,
-                                            double &v_y,
-                                            double &v_z,
-                                            double f_eq[]);
-    static void CalculateVonMisesStress(const double f[],
-                                        double &stress,
+    static void CalculateDensityAndVelocity(const distribn_t f[],
+                                            distribn_t &density,
+                                            distribn_t &v_x,
+                                            distribn_t &v_y,
+                                            distribn_t &v_z);
+    static void CalculateFeq(const distribn_t &density,
+                             const distribn_t &v_x,
+                             const distribn_t &v_y,
+                             const distribn_t &v_z,
+                             distribn_t f_eq[]);
+    static void CalculateDensityVelocityFEq(const distribn_t f[],
+                                            distribn_t &density,
+                                            distribn_t &v_x,
+                                            distribn_t &v_y,
+                                            distribn_t &v_z,
+                                            distribn_t f_eq[]);
+    static void CalculateVonMisesStress(const distribn_t f[],
+                                        distribn_t &stress,
                                         const double iStressParameter);
-    static void CalculateShearStress(const double &density,
-                                     const double f[],
+    static void CalculateShearStress(const distribn_t &density,
+                                     const distribn_t f[],
                                      const double nor[],
-                                     double &stress,
+                                     distribn_t &stress,
                                      const double &iStressParameter);
 };
 
