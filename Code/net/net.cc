@@ -20,8 +20,8 @@ namespace hemelb
     {
       if (mRequests.size() < count)
       {
-        int deficit = count - mRequests.size();
-        for (int ii = 0; ii < deficit; ii++)
+        size_t deficit = count - mRequests.size();
+        for (unsigned int ii = 0; ii < deficit; ii++)
         {
           mRequests.push_back(MPI_Request());
           mStatuses.push_back(MPI_Status());
@@ -36,7 +36,7 @@ namespace hemelb
      implemented in this function.  The domain decomposition is based
      on a graph growing partitioning technique.
      */
-    int* Net::Initialise(geometry::LatticeData* bLatDat)
+    site_t* Net::Initialise(geometry::LatticeData* bLatDat)
     {
       // Create a map between the two-level data representation and the 1D
       // compact one is created here.
@@ -60,19 +60,20 @@ namespace hemelb
       // streamed between different partitions) are collected and the
       // buffers needed for the communications are set from here
 
-      int *f_data = new int[4 * mNetworkTopology->TotalSharedFs];
+      site_t* f_data = new site_t[4 * mNetworkTopology->TotalSharedFs];
 
       // Allocate the index in which to put the distribution functions received from the other
       // process.
-      int* f_recv_iv = new int[mNetworkTopology->TotalSharedFs];
+      site_t* f_recv_iv = new site_t[mNetworkTopology->TotalSharedFs];
 
-      int ** lSharedFLocationForEachProc = new int*[mNetworkTopology->NeighbouringProcs.size()];
+      site_t** lSharedFLocationForEachProc =
+          new site_t*[mNetworkTopology->NeighbouringProcs.size()];
 
       // Reset to zero again.
       mNetworkTopology->TotalSharedFs = 0;
 
       // Set the remaining neighbouring processor data.
-      for (unsigned int n = 0; n < mNetworkTopology->NeighbouringProcs.size(); n++)
+      for (proc_t n = 0; n < mNetworkTopology->NeighbouringProcs.size(); n++)
       {
         // f_data compacted according to number of shared f_s on each process.
         // f_data will be set later.
@@ -91,23 +92,24 @@ namespace hemelb
       }
 
       mNetworkTopology->NeighbourIndexFromProcRank
-          = new short int[mNetworkTopology->GetProcessorCount()];
+          = new proc_t[mNetworkTopology->GetProcessorCount()];
 
-      for (unsigned int m = 0; m < mNetworkTopology->GetProcessorCount(); m++)
+      for (proc_t m = 0; m < mNetworkTopology->GetProcessorCount(); m++)
       {
         mNetworkTopology->NeighbourIndexFromProcRank[m] = -1;
       }
       // Get neigh_proc_index from ProcessorRankForEachBlockSite.
-      for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
+      for (proc_t m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
       {
         mNetworkTopology->NeighbourIndexFromProcRank[mNetworkTopology->NeighbouringProcs[m].Rank]
             = m;
       }
 
       {
-        int ** SharedLocationPerProcByNeighbourId = new int*[mNetworkTopology->GetProcessorCount()];
+        site_t** SharedLocationPerProcByNeighbourId =
+            new site_t*[mNetworkTopology->GetProcessorCount()];
 
-        for (unsigned int ii = 0; ii < mNetworkTopology->GetProcessorCount(); ++ii)
+        for (proc_t ii = 0; ii < mNetworkTopology->GetProcessorCount(); ++ii)
         {
           if (mNetworkTopology->NeighbourIndexFromProcRank[ii] >= 0)
           {
@@ -117,7 +119,7 @@ namespace hemelb
         }
 
         bLatDat->InitialiseNeighbourLookup(SharedLocationPerProcByNeighbourId,
-                                           (int) mNetworkTopology->GetLocalRank(),
+                                           mNetworkTopology->GetLocalRank(),
                                            lThisRankSiteData);
 
         delete[] SharedLocationPerProcByNeighbourId;
@@ -127,23 +129,23 @@ namespace hemelb
 
       InitialisePointToPointComms(lSharedFLocationForEachProc);
 
-      int f_count = bLatDat->GetLocalFluidSiteCount() * D3Q15::NUMVECTORS;
+      site_t f_count = bLatDat->GetLocalFluidSiteCount() * D3Q15::NUMVECTORS;
 
-      int sharedSitesSeen = 0;
+      site_t sharedSitesSeen = 0;
 
-      for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
+      for (proc_t m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
       {
         hemelb::topology::NeighbouringProcessor *neigh_proc_p =
             &mNetworkTopology->NeighbouringProcs[m];
 
-        for (int n = 0; n < neigh_proc_p->SharedFCount; n++)
+        for (site_t n = 0; n < neigh_proc_p->SharedFCount; n++)
         {
           // Get coordinates and direction of the distribution function to be sent to another process.
-          int *f_data_p = &lSharedFLocationForEachProc[m][n * 4];
-          int i = f_data_p[0];
-          int j = f_data_p[1];
-          int k = f_data_p[2];
-          int l = f_data_p[3];
+          site_t* f_data_p = &lSharedFLocationForEachProc[m][n * 4];
+          site_t i = f_data_p[0];
+          site_t j = f_data_p[1];
+          site_t k = f_data_p[2];
+          site_t l = f_data_p[3];
 
           // Correct so that each process has the correct coordinates.
           if (neigh_proc_p->Rank < mNetworkTopology->GetLocalRank())
@@ -155,7 +157,7 @@ namespace hemelb
           }
 
           // Get the fluid site number of site that will send data to another process.
-          unsigned int contigSiteId = bLatDat->GetContiguousSiteId(i, j, k);
+          site_t contigSiteId = bLatDat->GetContiguousSiteId(i, j, k);
 
           // Set f_id to the element in the send buffer that we put the updated
           // distribution functions in.
@@ -179,7 +181,7 @@ namespace hemelb
       return f_recv_iv;
     }
 
-    void Net::InitialisePointToPointComms(int** &lSharedFLocationForEachProc)
+    void Net::InitialisePointToPointComms(site_t** &lSharedFLocationForEachProc)
     {
       EnsureEnoughRequests(mNetworkTopology->NeighbouringProcs.size());
 
@@ -190,7 +192,7 @@ namespace hemelb
       // propagate to different partitions is avoided (only their values
       // will be communicated). It's here!
       // Allocate the request variable.
-      for (unsigned int m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
+      for (proc_t m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
       {
         hemelb::topology::NeighbouringProcessor *neigh_proc_p =
             &mNetworkTopology->NeighbouringProcs[m];
@@ -202,7 +204,7 @@ namespace hemelb
         {
           MPI_Isend(&lSharedFLocationForEachProc[m][0],
                     neigh_proc_p->SharedFCount * 4,
-                    MPI_INT,
+                    site_mpi_t,
                     neigh_proc_p->Rank,
                     10,
                     MPI_COMM_WORLD,
@@ -212,7 +214,7 @@ namespace hemelb
         {
           MPI_Irecv(&lSharedFLocationForEachProc[m][0],
                     neigh_proc_p->SharedFCount * 4,
-                    MPI_INT,
+                    site_mpi_t,
                     neigh_proc_p->Rank,
                     10,
                     MPI_COMM_WORLD,
@@ -230,14 +232,14 @@ namespace hemelb
       // sites residing on this rank.
       bool *lBlockIsOnThisRank = new bool[iLatDat->GetBlockCount()];
       // Initialise to false.
-      for (unsigned int n = 0; n < iLatDat->GetBlockCount(); n++)
+      for (site_t n = 0; n < iLatDat->GetBlockCount(); n++)
       {
         lBlockIsOnThisRank[n] = false;
       }
 
       int lSiteIndexOnProc = 0;
 
-      for (unsigned int lBlockNumber = 0; lBlockNumber < iLatDat->GetBlockCount(); lBlockNumber++)
+      for (site_t lBlockNumber = 0; lBlockNumber < iLatDat->GetBlockCount(); lBlockNumber++)
       {
         geometry::LatticeData::BlockData* lCurrentDataBlock = iLatDat->GetBlock(lBlockNumber);
 
@@ -252,10 +254,10 @@ namespace hemelb
 
         // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
         // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
-        for (unsigned int lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock
+        for (site_t lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock
             < iLatDat->GetSitesPerBlockVolumeUnit(); lSiteIndexWithinBlock++)
         {
-          if ((int) mNetworkTopology->GetLocalRank()
+          if (mNetworkTopology->GetLocalRank()
               == proc_block_p->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock])
           {
             // If the current site is non-solid, copy the site data into the array for
@@ -290,7 +292,7 @@ namespace hemelb
       }
 
       // If we are in a block of solids, we set map_block[n].site_data to NULL.
-      for (unsigned int n = 0; n < iLatDat->GetBlockCount(); n++)
+      for (site_t n = 0; n < iLatDat->GetBlockCount(); n++)
       {
         if (lBlockIsOnThisRank[n])
         {
@@ -315,10 +317,10 @@ namespace hemelb
     void Net::CountCollisionTypes(geometry::LatticeData* bLatDat,
                                   const unsigned int * lThisRankSiteData)
     {
-      unsigned int innerSites = 0;
+      site_t innerSites = 0;
 
-      unsigned int interCollisions[COLLISION_TYPES];
-      unsigned int innerCollisions[COLLISION_TYPES];
+      site_t interCollisions[COLLISION_TYPES];
+      site_t innerCollisions[COLLISION_TYPES];
 
       for (int m = 0; m < COLLISION_TYPES; m++)
       {
@@ -330,14 +332,14 @@ namespace hemelb
 
       int lSiteIndexOnProc = 0;
 
-      int n = -1;
+      site_t n = -1;
 
       // Iterate over all blocks in site units
-      for (unsigned int i = 0; i < bLatDat->GetXSiteCount(); i += bLatDat->GetBlockSize())
+      for (site_t i = 0; i < bLatDat->GetXSiteCount(); i += bLatDat->GetBlockSize())
       {
-        for (unsigned int j = 0; j < bLatDat->GetYSiteCount(); j += bLatDat->GetBlockSize())
+        for (site_t j = 0; j < bLatDat->GetYSiteCount(); j += bLatDat->GetBlockSize())
         {
-          for (unsigned int k = 0; k < bLatDat->GetZSiteCount(); k += bLatDat->GetBlockSize())
+          for (site_t k = 0; k < bLatDat->GetZSiteCount(); k += bLatDat->GetBlockSize())
           {
             geometry::LatticeData::BlockData * map_block_p = bLatDat->GetBlock(++n);
 
@@ -346,18 +348,18 @@ namespace hemelb
               continue;
             }
 
-            int m = -1;
+            site_t m = -1;
 
             // Iterate over all sites within the current block.
-            for (unsigned int site_i = i; site_i < i + bLatDat->GetBlockSize(); site_i++)
+            for (site_t site_i = i; site_i < i + bLatDat->GetBlockSize(); site_i++)
             {
-              for (unsigned int site_j = j; site_j < j + bLatDat->GetBlockSize(); site_j++)
+              for (site_t site_j = j; site_j < j + bLatDat->GetBlockSize(); site_j++)
               {
-                for (unsigned int site_k = k; site_k < k + bLatDat->GetBlockSize(); site_k++)
+                for (site_t site_k = k; site_k < k + bLatDat->GetBlockSize(); site_k++)
                 {
                   m++;
                   // If the site is not on this processor, continue.
-                  if ((int) mNetworkTopology->GetLocalRank()
+                  if (mNetworkTopology->GetLocalRank()
                       != map_block_p->ProcessorRankForEachBlockSite[m])
                   {
                     continue;
@@ -369,9 +371,9 @@ namespace hemelb
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
                   {
                     // Find the neighbour site co-ords in this direction.
-                    int neigh_i = site_i + D3Q15::CX[l];
-                    int neigh_j = site_j + D3Q15::CY[l];
-                    int neigh_k = site_k + D3Q15::CZ[l];
+                    site_t neigh_i = site_i + D3Q15::CX[l];
+                    site_t neigh_j = site_j + D3Q15::CY[l];
+                    site_t neigh_k = site_k + D3Q15::CZ[l];
 
                     if (!bLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
                     {
@@ -379,13 +381,15 @@ namespace hemelb
                     }
 
                     // Find the processor Id for that neighbour.
-                    const int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                    const proc_t* proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i,
+                                                                                 neigh_j,
+                                                                                 neigh_k);
 
                     // Move on if the neighbour is in a block of solids (in which case
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
                     // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
                     // in lbmReadConfig in io.cc.
-                    if (proc_id_p == NULL || (int) mNetworkTopology->GetLocalRank() == (*proc_id_p)
+                    if (proc_id_p == NULL || mNetworkTopology->GetLocalRank() == *proc_id_p
                         || *proc_id_p == (BIG_NUMBER2))
                     {
                       continue;
@@ -399,12 +403,12 @@ namespace hemelb
 
                     // Iterate over neighbouring processors until we find the one with the
                     // neighbouring site on it.
-                    int lNeighbouringProcs = mNetworkTopology->NeighbouringProcs.size();
-                    for (int mm = 0; mm < lNeighbouringProcs && flag; mm++)
+                    proc_t lNeighbouringProcs = mNetworkTopology->NeighbouringProcs.size();
+                    for (proc_t mm = 0; mm < lNeighbouringProcs && flag; mm++)
                     {
                       // Check whether the rank for a particular neighbour has already been
                       // used for this processor.  If it has, set flag to zero.
-                      hemelb::topology::NeighbouringProcessor * neigh_proc_p =
+                      hemelb::topology::NeighbouringProcessor* neigh_proc_p =
                           &mNetworkTopology->NeighbouringProcs[mm];
 
                       // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
@@ -479,7 +483,7 @@ namespace hemelb
         }
       }
 
-      int collision_offset[2][COLLISION_TYPES];
+      site_t collision_offset[2][COLLISION_TYPES];
       // Calculate the number of each type of collision.
       collision_offset[0][0] = 0;
 
@@ -495,8 +499,8 @@ namespace hemelb
 
       lSiteIndexOnProc = 0;
 
-      unsigned int innerColsPassed[COLLISION_TYPES];
-      unsigned int interColsPassed[COLLISION_TYPES];
+      site_t innerColsPassed[COLLISION_TYPES];
+      site_t interColsPassed[COLLISION_TYPES];
 
       for (unsigned int ii = 0; ii < COLLISION_TYPES; ++ii)
       {
@@ -508,11 +512,11 @@ namespace hemelb
       n = -1;
 
       // Iterate over all blocks in site units
-      for (unsigned int i = 0; i < bLatDat->GetXSiteCount(); i += bLatDat->GetBlockSize())
+      for (site_t i = 0; i < bLatDat->GetXSiteCount(); i += bLatDat->GetBlockSize())
       {
-        for (unsigned int j = 0; j < bLatDat->GetYSiteCount(); j += bLatDat->GetBlockSize())
+        for (site_t j = 0; j < bLatDat->GetYSiteCount(); j += bLatDat->GetBlockSize())
         {
-          for (unsigned int k = 0; k < bLatDat->GetZSiteCount(); k += bLatDat->GetBlockSize())
+          for (site_t k = 0; k < bLatDat->GetZSiteCount(); k += bLatDat->GetBlockSize())
           {
             geometry::LatticeData::BlockData * map_block_p = bLatDat->GetBlock(++n);
 
@@ -523,14 +527,14 @@ namespace hemelb
             }
 
             // Iterate over sites within the block.
-            int m = -1;
+            site_t m = -1;
 
             // Iterate over all sites within the current block.
-            for (unsigned int site_i = i; site_i < i + bLatDat->GetBlockSize(); site_i++)
+            for (site_t site_i = i; site_i < i + bLatDat->GetBlockSize(); site_i++)
             {
-              for (unsigned int site_j = j; site_j < j + bLatDat->GetBlockSize(); site_j++)
+              for (site_t site_j = j; site_j < j + bLatDat->GetBlockSize(); site_j++)
               {
-                for (unsigned int site_k = k; site_k < k + bLatDat->GetBlockSize(); site_k++)
+                for (site_t site_k = k; site_k < k + bLatDat->GetBlockSize(); site_k++)
                 {
                   m++;
 
@@ -574,9 +578,9 @@ namespace hemelb
                   for (unsigned int q = 1; q < D3Q15::NUMVECTORS; q++)
                   {
                     // Find the neighbour site co-ords in this direction.
-                    int neigh_i = site_i + D3Q15::CX[q];
-                    int neigh_j = site_j + D3Q15::CY[q];
-                    int neigh_k = site_k + D3Q15::CZ[q];
+                    site_t neigh_i = site_i + D3Q15::CX[q];
+                    site_t neigh_j = site_j + D3Q15::CY[q];
+                    site_t neigh_k = site_k + D3Q15::CZ[q];
 
                     if (!bLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
                     {
@@ -584,13 +588,15 @@ namespace hemelb
                     }
 
                     // Find the processor Id for that neighbour.
-                    const int *proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i, neigh_j, neigh_k);
+                    const proc_t* proc_id_p = bLatDat->GetProcIdFromGlobalCoords(neigh_i,
+                                                                                 neigh_j,
+                                                                                 neigh_k);
 
                     // Move on if the neighbour is in a block of solids (in which case
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
                     // BIG_NUMBER2) or the neighbour is also on this rank.  ProcessorRankForEachBlockSite was initialized
                     // in lbmReadConfig in io.cc.
-                    if (proc_id_p == NULL || (int) mNetworkTopology->GetLocalRank() == (*proc_id_p)
+                    if (proc_id_p == NULL || (int) mNetworkTopology->GetLocalRank() == *proc_id_p
                         || *proc_id_p == (BIG_NUMBER2))
                     {
                       continue;
@@ -631,9 +637,9 @@ namespace hemelb
       // Make sure the MPI datatypes have been created.
       EnsurePreparedToSendReceive();
 
-      int m = 0;
+      proc_t m = 0;
 
-      for (std::map<int, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
+      for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
           != mReceiveProcessorComms.end(); ++it)
       {
         MPI_Irecv(it->second.PointerList.front(),
@@ -652,9 +658,9 @@ namespace hemelb
       // Make sure the datatypes have been created.
       EnsurePreparedToSendReceive();
 
-      int m = 0;
+      proc_t m = 0;
 
-      for (std::map<int, ProcComms>::iterator it = mSendProcessorComms.begin(); it
+      for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
           != mSendProcessorComms.end(); ++it)
       {
         MPI_Isend(it->second.PointerList.front(),
@@ -677,14 +683,14 @@ namespace hemelb
 
       sendReceivePrepped = false;
 
-      for (std::map<int, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
+      for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
           != mReceiveProcessorComms.end(); it++)
       {
         MPI_Type_free(&it->second.Type);
       }
       mReceiveProcessorComms.clear();
 
-      for (std::map<int, ProcComms>::iterator it = mSendProcessorComms.begin(); it
+      for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
           != mSendProcessorComms.end(); it++)
       {
         MPI_Type_free(&it->second.Type);
@@ -693,18 +699,18 @@ namespace hemelb
     }
 
     // Helper function to get the ProcessorCommunications object, and create it if it doesn't exist yet.
-    Net::ProcComms* Net::GetProcComms(int iRank, bool iIsSend)
+    Net::ProcComms* Net::GetProcComms(proc_t iRank, bool iIsSend)
     {
-      std::map<int, ProcComms>* lMap = iIsSend
+      std::map<proc_t, ProcComms>* lMap = iIsSend
         ? &mSendProcessorComms
         : &mReceiveProcessorComms;
 
-      std::map<int, ProcComms>::iterator lValue = lMap->find(iRank);
+      std::map<proc_t, ProcComms>::iterator lValue = lMap->find(iRank);
 
       if (lValue == lMap->end())
       {
         ProcComms lRet;
-        lMap->insert(std::pair<int, ProcComms>(iRank, lRet));
+        lMap->insert(std::pair<proc_t, ProcComms>(iRank, lRet));
         return &lMap->find(iRank)->second;
       }
       else
@@ -745,13 +751,13 @@ namespace hemelb
         return;
       }
 
-      for (std::map<int, ProcComms>::iterator it = mSendProcessorComms.begin(); it
+      for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
           != mSendProcessorComms.end(); it++)
       {
         CreateMPIType(& (*it).second);
       }
 
-      for (std::map<int, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
+      for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
           != mReceiveProcessorComms.end(); it++)
       {
         CreateMPIType(& (*it).second);
@@ -812,13 +818,13 @@ namespace hemelb
     {
       if (sendReceivePrepped)
       {
-        for (std::map<int, ProcComms>::iterator it = mSendProcessorComms.begin(); it
+        for (std::map<proc_t, ProcComms>::iterator it = mSendProcessorComms.begin(); it
             != mSendProcessorComms.end(); it++)
         {
           MPI_Type_free(&it->second.Type);
         }
 
-        for (std::map<int, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
+        for (std::map<proc_t, ProcComms>::iterator it = mReceiveProcessorComms.begin(); it
             != mReceiveProcessorComms.end(); it++)
         {
           MPI_Type_free(&it->second.Type);

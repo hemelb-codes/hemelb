@@ -4,10 +4,10 @@ namespace hemelb
 {
   namespace geometry
   {
-    void LatticeData::GlobalLatticeData::SetBasicDetails(unsigned int iBlocksX,
-                                                         unsigned int iBlocksY,
-                                                         unsigned int iBlocksZ,
-                                                         unsigned int iBlockSize)
+    void LatticeData::GlobalLatticeData::SetBasicDetails(site_t iBlocksX,
+                                                         site_t iBlocksY,
+                                                         site_t iBlocksZ,
+                                                         site_t iBlockSize)
     {
       mBlocksX = iBlocksX;
       mBlocksY = iBlocksY;
@@ -21,7 +21,7 @@ namespace hemelb
       mSitesPerBlockVolumeUnit = mBlockSize * mBlockSize * mBlockSize;
 
       // A shift value we'll need later = log_2(block_size)
-      unsigned int i = mBlockSize;
+      site_t i = mBlockSize;
       Log2BlockSize = 0;
       while (i > 1)
       {
@@ -34,54 +34,52 @@ namespace hemelb
       Blocks = new BlockData[mBlockCount];
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetXSiteCount() const
+    site_t LatticeData::GlobalLatticeData::GetXSiteCount() const
     {
       return mSitesX;
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetYSiteCount() const
+    site_t LatticeData::GlobalLatticeData::GetYSiteCount() const
     {
       return mSitesY;
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetZSiteCount() const
+    site_t LatticeData::GlobalLatticeData::GetZSiteCount() const
     {
       return mSitesZ;
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetXBlockCount() const
+    site_t LatticeData::GlobalLatticeData::GetXBlockCount() const
     {
       return mBlocksX;
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetYBlockCount() const
+    site_t LatticeData::GlobalLatticeData::GetYBlockCount() const
     {
       return mBlocksY;
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetZBlockCount() const
+    site_t LatticeData::GlobalLatticeData::GetZBlockCount() const
     {
       return mBlocksZ;
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetBlockSize() const
+    site_t LatticeData::GlobalLatticeData::GetBlockSize() const
     {
       return mBlockSize;
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetBlockCount() const
+    site_t LatticeData::GlobalLatticeData::GetBlockCount() const
     {
       return mBlockCount;
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetSitesPerBlockVolumeUnit() const
+    site_t LatticeData::GlobalLatticeData::GetSitesPerBlockVolumeUnit() const
     {
       return mSitesPerBlockVolumeUnit;
     }
 
-    bool LatticeData::GlobalLatticeData::IsValidLatticeSite(unsigned int i,
-                                                            unsigned int j,
-                                                            unsigned int k) const
+    bool LatticeData::GlobalLatticeData::IsValidLatticeSite(site_t i, site_t j, site_t k) const
     {
       return i < mSitesX && j < mSitesY && k < mSitesZ;
     }
@@ -133,14 +131,14 @@ namespace hemelb
 
     // Function that finds the pointer to the rank on which a particular site
     // resides. If the site is in an empty block, return NULL.
-    const int * LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(unsigned int iSiteI,
-                                                                    unsigned int iSiteJ,
-                                                                    unsigned int iSiteK) const
+    const proc_t* LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(site_t iSiteI,
+                                                                            site_t iSiteJ,
+                                                                            site_t iSiteK) const
     {
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-      unsigned int i = iSiteI >> Log2BlockSize;
-      unsigned int j = iSiteJ >> Log2BlockSize;
-      unsigned int k = iSiteK >> Log2BlockSize;
+      site_t i = iSiteI >> Log2BlockSize;
+      site_t j = iSiteJ >> Log2BlockSize;
+      site_t k = iSiteK >> Log2BlockSize;
 
       // Get the block from the block identifiers.
       BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(i, j, k)];
@@ -153,9 +151,9 @@ namespace hemelb
       else
       {
         // Find site coordinates within the block
-        unsigned int ii = iSiteI - (i << Log2BlockSize);
-        unsigned int jj = iSiteJ - (j << Log2BlockSize);
-        unsigned int kk = iSiteK - (k << Log2BlockSize);
+        site_t ii = iSiteI - (i << Log2BlockSize);
+        site_t jj = iSiteJ - (j << Log2BlockSize);
+        site_t kk = iSiteK - (k << Log2BlockSize);
 
         // Return pointer to ProcessorRankForEachBlockSite[site] (the only member of
         // mProcessorsForEachBlock)
@@ -165,9 +163,9 @@ namespace hemelb
     }
 
     // Function that gets the index of a block from its coordinates.
-    unsigned int LatticeData::GlobalLatticeData::GetBlockIdFromBlockCoords(unsigned int blockI,
-                                                                           unsigned int blockJ,
-                                                                           unsigned int blockK) const
+    site_t LatticeData::GlobalLatticeData::GetBlockIdFromBlockCoords(site_t blockI,
+                                                                     site_t blockJ,
+                                                                     site_t blockK) const
     {
       // Get the block from the block identifiers.
       return (blockI * mBlocksY + blockJ) * mBlocksZ + blockK;
@@ -176,22 +174,20 @@ namespace hemelb
     // Function to get a pointer to the site_data for a site.
     // If the site is in an empty block, return NULL.
 
-    unsigned int LatticeData::GlobalLatticeData::GetSiteData(unsigned int iSiteI,
-                                                             unsigned int iSiteJ,
-                                                             unsigned int iSiteK) const
+    unsigned int LatticeData::GlobalLatticeData::GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const
     {
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-      unsigned int i = iSiteI >> Log2BlockSize;
-      unsigned int j = iSiteJ >> Log2BlockSize;
-      unsigned int k = iSiteK >> Log2BlockSize;
+      site_t i = iSiteI >> Log2BlockSize;
+      site_t j = iSiteJ >> Log2BlockSize;
+      site_t k = iSiteK >> Log2BlockSize;
 
       // Pointer to the block
       BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(i, j, k)];
 
       // Find site coordinates within the block
-      unsigned int ii = iSiteI - (i << Log2BlockSize);
-      unsigned int jj = iSiteJ - (j << Log2BlockSize);
-      unsigned int kk = iSiteK - (k << Log2BlockSize);
+      site_t ii = iSiteI - (i << Log2BlockSize);
+      site_t jj = iSiteJ - (j << Log2BlockSize);
+      site_t kk = iSiteK - (k << Log2BlockSize);
 
       // Return pointer to site_data[site]
       return lBlock->site_data[ ( ( (ii << Log2BlockSize) + jj) << Log2BlockSize) + kk];

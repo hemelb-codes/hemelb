@@ -7,8 +7,8 @@ namespace hemelb
     namespace collisions
     {
       void ImplZeroVelocityEquilibrium::DoCollisions(const bool iDoRayTracing,
-                                                     const int iFirstIndex,
-                                                     const int iSiteCount,
+                                                     const site_t iFirstIndex,
+                                                     const site_t iSiteCount,
                                                      const LbmParameters* iLbmParams,
                                                      geometry::LatticeData* bLatDat,
                                                      hemelb::vis::Control *iControl)
@@ -24,17 +24,17 @@ namespace hemelb
       }
 
       template<bool tDoRayTracing>
-      void ImplZeroVelocityEquilibrium::DoCollisionsInternal(const int iFirstIndex,
-                                                             const int iSiteCount,
+      void ImplZeroVelocityEquilibrium::DoCollisionsInternal(const site_t iFirstIndex,
+                                                             const site_t iSiteCount,
                                                              const LbmParameters* iLbmParams,
                                                              geometry::LatticeData* bLatDat,
                                                              hemelb::vis::Control *iControl)
       {
-        for (int lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
-          double *lFOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
-          double lFNeq[D3Q15::NUMVECTORS];
-          double lDensity;
+          distribn_t* lFOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+          distribn_t lFNeq[D3Q15::NUMVECTORS];
+          distribn_t lDensity;
 
           lDensity = 0.0;
 

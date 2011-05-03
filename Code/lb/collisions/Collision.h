@@ -18,15 +18,15 @@ namespace hemelb
       {
         public:
           virtual void DoCollisions(const bool iDoRayTracing,
-                                    const int iFirstIndex,
-                                    const int iSiteCount,
+                                    const site_t iFirstIndex,
+                                    const site_t iSiteCount,
                                     const LbmParameters* iLbmParams,
                                     geometry::LatticeData* bLatDat,
                                     hemelb::vis::Control *iControl);
 
           virtual void PostStep(const bool iDoRayTracing,
-                                const int iFirstIndex,
-                                const int iSiteCount,
+                                const site_t iFirstIndex,
+                                const site_t iSiteCount,
                                 const LbmParameters* iLbmParams,
                                 geometry::LatticeData* bLatDat,
                                 hemelb::vis::Control *iControl);
@@ -37,12 +37,12 @@ namespace hemelb
           virtual ~Collision();
 
           template<bool tDoRayTracing>
-          void UpdateMinsAndMaxes(double iVx,
-                                  double iVy,
-                                  double iVz,
-                                  const int iSiteIndex,
-                                  const double* f_neq,
-                                  const double iDensity,
+          void UpdateMinsAndMaxes(distribn_t iVx,
+                                  distribn_t iVy,
+                                  distribn_t iVz,
+                                  const site_t iSiteIndex,
+                                  const distribn_t* f_neq,
+                                  const distribn_t iDensity,
                                   const geometry::LatticeData* iLatDat,
                                   const LbmParameters* iLbmParams,
                                   hemelb::vis::Control *iControl)
@@ -72,7 +72,7 @@ namespace hemelb
               }
 
               // TODO: It'd be nice if the /iDensity were unnecessary.
-              double lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
+              distribn_t lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
               iControl->RegisterSite(iSiteIndex, iDensity, lVelocity, rtStress);
             }
           }

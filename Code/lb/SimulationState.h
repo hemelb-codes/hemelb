@@ -9,8 +9,8 @@ namespace hemelb
   {
     struct SimulationState
     {
-        long CycleId;
-        unsigned int TimeStep;
+        unsigned long CycleId;
+        unsigned long TimeStep;
         double IntraCycleTime;
         int IsTerminating;
         int DoRendering;

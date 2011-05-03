@@ -56,8 +56,8 @@ namespace hemelb
         // Struct for information about the velocity field at some point.
         struct VelSiteData
         {
-            int proc_id;
-            unsigned int counter, site_id;
+            proc_t proc_id;
+            site_t counter, site_id;
             float vx, vy, vz;
         };
 
@@ -71,22 +71,22 @@ namespace hemelb
         typedef std::vector<float> FloatVector;
         struct NeighProc
         {
-            unsigned int id;
-            unsigned int send_ps, recv_ps;
-            unsigned int send_vs, recv_vs;
+            proc_t id;
+            site_t send_ps, recv_ps;
+            site_t send_vs, recv_vs;
 
             FloatVector p_to_send, p_to_recv;
             float *v_to_send, *v_to_recv;
 
-            unsigned int *s_to_send, *s_to_recv;
+            site_t *s_to_send, *s_to_recv;
         };
 
         // Necessary to keep a local store of the number of blocks created, so that we can
         // write a correct constructor. Alternative (TODO) is to use a vector.
-        unsigned int num_blocks;
+        site_t num_blocks;
 
         // Counter keeps track of the number of VelSiteDatas created
-        unsigned int counter;
+        site_t counter;
 
         // Variables for tracking the actual numbers of particles, and the maximum number
         //(i.e. the number for which memory has been allocated).
@@ -95,8 +95,8 @@ namespace hemelb
         unsigned int particles_to_send_max, particles_to_recv_max;
 
         // Variables for counting the processors involved etc.
-        unsigned int shared_vs;
-        unsigned int procs;
+        site_t shared_vs;
+        proc_t procs;
 
         // Pointers to the structs.
         VelocityField *velocity_field;
@@ -105,8 +105,8 @@ namespace hemelb
 
         // Arrays for communicating between processors.
         float *v_to_send, *v_to_recv;
-        unsigned int *s_to_send, *s_to_recv;
-        int *from_proc_id_to_neigh_proc_index;
+        site_t *s_to_send, *s_to_recv;
+        proc_t *from_proc_id_to_neigh_proc_index;
 
         std::vector<NeighProc> mNeighProcs;
 
@@ -120,14 +120,14 @@ namespace hemelb
 
         // Private functions for initialising the velocity field.
         void initializeVelFieldBlock(const geometry::LatticeData* iLatDat,
-                                     unsigned int site_i,
-                                     unsigned int site_j,
-                                     unsigned int site_k,
-                                     int proc_id);
+                                     site_t site_i,
+                                     site_t site_j,
+                                     site_t site_k,
+                                     proc_t proc_id);
         VelSiteData *velSiteDataPointer(geometry::LatticeData* iLatDat,
-                                        unsigned int site_i,
-                                        unsigned int site_j,
-                                        unsigned int site_k);
+                                        site_t site_i,
+                                        site_t site_j,
+                                        site_t site_k);
         void particleVelocity(Particle *particle_p, float v[2][2][2][3], float interp_v[3]);
         void localVelField(int p_index,
                            float v[2][2][2][3],

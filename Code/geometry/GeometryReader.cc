@@ -146,31 +146,35 @@ namespace hemelb
      * }
      */
     void LatticeData::GeometryReader::ReadHeader(MPI_File xiFile,
-                                                 unsigned int iBlockCount,
-                                                 unsigned int* sitesInEachBlock,
+                                                 site_t iBlockCount,
+                                                 site_t* sitesInEachBlock,
                                                  unsigned int* bytesUsedByBlockInDataFile)
     {
       // The header section of the config file contains two adjacent unsigned ints for each block.
       // The first is the number of sites in that block, the second is the number of bytes used by
       // the block in the data file.
-      unsigned int headerByteCount = 2 * 4 * iBlockCount;
+      site_t headerByteCount = 2 * 4 * iBlockCount;
 
       // Allocate a buffer to read into, then do the reading.
       char* lHeaderBuffer = new char[headerByteCount];
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile, lHeaderBuffer, headerByteCount, MPI_CHAR, &lStatus);
+      MPI_File_read_all(xiFile, lHeaderBuffer, (int) headerByteCount, MPI_CHAR, &lStatus);
 
       // Create a Xdr translation object to translate from binary
-      hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lHeaderBuffer,
-                                                                      headerByteCount);
+      hemelb::io::XdrReader preambleReader =
+          hemelb::io::XdrMemReader(lHeaderBuffer, (unsigned int) headerByteCount);
 
       // Read in all the data.
-      for (unsigned int ii = 0; ii < iBlockCount; ii++)
+      for (site_t ii = 0; ii < iBlockCount; ii++)
       {
-        preambleReader.readUnsignedInt(sitesInEachBlock[ii]);
-        preambleReader.readUnsignedInt(bytesUsedByBlockInDataFile[ii]);
+        unsigned int sites, bytes;
+        preambleReader.readUnsignedInt(sites);
+        preambleReader.readUnsignedInt(bytes);
+
+        sitesInEachBlock[ii] = sites;
+        bytesUsedByBlockInDataFile[ii] = bytes;
       }
 
       delete[] lHeaderBuffer;
@@ -193,16 +197,16 @@ namespace hemelb
      * @param blockCountPerProc Array of length topology size, into which the number of blocks
      * allocated to each processor will be written.
      */
-    void LatticeData::GeometryReader::BlockDecomposition(const unsigned int iBlockCount,
+    void LatticeData::GeometryReader::BlockDecomposition(const site_t iBlockCount,
                                                          const GlobalLatticeData* iGlobLatDat,
-                                                         const unsigned int* fluidSitePerBlock,
-                                                         int* initialProcForEachBlock)
+                                                         const site_t* fluidSitePerBlock,
+                                                         proc_t* initialProcForEachBlock)
     {
-      unsigned int* blockCountPerProc = new unsigned int[mTopologySize];
+      site_t* blockCountPerProc = new site_t[mTopologySize];
 
       // Count of block sites.
-      unsigned int lUnvisitedFluidBlockCount = 0;
-      for (unsigned int ii = 0; ii < iBlockCount; ++ii)
+      site_t lUnvisitedFluidBlockCount = 0;
+      for (site_t ii = 0; ii < iBlockCount; ++ii)
       {
         if (fluidSitePerBlock[ii] != 0)
         {
@@ -229,10 +233,10 @@ namespace hemelb
     }
 
     void LatticeData::GeometryReader::LoadAndDecompose(GlobalLatticeData* bGlobLatDat,
-                                                       int *totalFluidSites,
-                                                       unsigned int siteMins[3],
-                                                       unsigned int siteMaxes[3],
-                                                       unsigned int* fluidSitePerProc,
+                                                       site_t* totalFluidSites,
+                                                       site_t siteMins[3],
+                                                       site_t siteMaxes[3],
+                                                       site_t* fluidSitePerProc,
                                                        lb::LbmParameters* bLbmParams,
                                                        SimConfig* bSimConfig,
                                                        double* oReadTime,
@@ -285,18 +289,18 @@ namespace hemelb
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
 
-      unsigned int* sitesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
+      site_t* sitesPerBlock = new site_t[bGlobLatDat->GetBlockCount()];
       unsigned int* bytesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
       ReadHeader(lFile, bGlobLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
 
-      int* procForEachBlock = new int[bGlobLatDat->GetBlockCount()];
+      proc_t* procForEachBlock = new proc_t[bGlobLatDat->GetBlockCount()];
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
       if (!mParticipateInTopology)
       {
-        for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
+        for (site_t ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
         {
           procForEachBlock[ii] = -1;
         }
@@ -314,11 +318,11 @@ namespace hemelb
 
       double lMiddle = util::myClock();
 
-      int preOptimisationSites = 0;
+      site_t preOptimisationSites = 0;
 
       if (mParticipateInTopology)
       {
-        for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ii++)
+        for (site_t ii = 0; ii < bGlobLatDat->GetBlockCount(); ii++)
         {
           if (procForEachBlock[ii] == mTopologyRank)
           {
@@ -345,13 +349,13 @@ namespace hemelb
         ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
       }
 
-      unsigned int localFluidSites = 0;
+      site_t localFluidSites = 0;
 
-      for (unsigned int lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
+      for (site_t lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
       {
         if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
         {
-          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
+          for (site_t lSiteIndex = 0; lSiteIndex < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
           {
             if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
                 == mGlobalRank)
@@ -364,15 +368,15 @@ namespace hemelb
 
       MPI_Allgather(&localFluidSites,
                     1,
-                    MPI_UNSIGNED,
+                    site_mpi_t,
                     fluidSitePerProc,
                     1,
-                    MPI_UNSIGNED,
+                    site_mpi_t,
                     MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
-      unsigned int localMins[3];
-      unsigned int localMaxes[3];
+      site_t localMins[3];
+      site_t localMaxes[3];
       localMins[0] = UINT_MAX;
       localMins[1] = UINT_MAX;
       localMins[2] = UINT_MAX;
@@ -380,42 +384,36 @@ namespace hemelb
       localMaxes[1] = 0;
       localMaxes[2] = 0;
 
-      for (unsigned int siteI = 0; siteI < bGlobLatDat->GetXSiteCount(); ++siteI)
+      for (site_t siteI = 0; siteI < bGlobLatDat->GetXSiteCount(); ++siteI)
       {
-        for (unsigned int siteJ = 0; siteJ < bGlobLatDat->GetYSiteCount(); ++siteJ)
+        for (site_t siteJ = 0; siteJ < bGlobLatDat->GetYSiteCount(); ++siteJ)
         {
-          for (unsigned int siteK = 0; siteK < bGlobLatDat->GetZSiteCount(); ++siteK)
+          for (site_t siteK = 0; siteK < bGlobLatDat->GetZSiteCount(); ++siteK)
           {
-            const int* procId = bGlobLatDat->GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
-            if (procId == NULL || *procId != (int) mGlobalRank)
+            const proc_t* procId = bGlobLatDat->GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
+            if (procId == NULL || *procId != mGlobalRank)
             {
               continue;
             }
             else
             {
-              localMins[0] = hemelb::util::NumericalFunctions::min<unsigned int>(localMins[0],
-                                                                                 siteI);
-              localMins[1] = hemelb::util::NumericalFunctions::min<unsigned int>(localMins[1],
-                                                                                 siteJ);
-              localMins[2] = hemelb::util::NumericalFunctions::min<unsigned int>(localMins[2],
-                                                                                 siteK);
-              localMaxes[0] = hemelb::util::NumericalFunctions::max<unsigned int>(localMaxes[0],
-                                                                                  siteI);
-              localMaxes[1] = hemelb::util::NumericalFunctions::max<unsigned int>(localMaxes[1],
-                                                                                  siteJ);
-              localMaxes[2] = hemelb::util::NumericalFunctions::max<unsigned int>(localMaxes[2],
-                                                                                  siteK);
+              localMins[0] = hemelb::util::NumericalFunctions::min(localMins[0], siteI);
+              localMins[1] = hemelb::util::NumericalFunctions::min(localMins[1], siteJ);
+              localMins[2] = hemelb::util::NumericalFunctions::min(localMins[2], siteK);
+              localMaxes[0] = hemelb::util::NumericalFunctions::max(localMaxes[0], siteI);
+              localMaxes[1] = hemelb::util::NumericalFunctions::max(localMaxes[1], siteJ);
+              localMaxes[2] = hemelb::util::NumericalFunctions::max(localMaxes[2], siteK);
             }
           }
         }
       }
 
-      MPI_Allreduce(localMins, siteMins, 3, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, MPI_UNSIGNED, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, siteMins, 3, site_mpi_t, MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, site_mpi_t, MPI_MAX, MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       *totalFluidSites = 0;
-      for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
+      for (site_t ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
       {
         *totalFluidSites += sitesPerBlock[ii];
       }
@@ -471,46 +469,44 @@ namespace hemelb
      */
     void LatticeData::GeometryReader::ReadInLocalBlocks(MPI_File iFile,
                                                         const unsigned int* bytesPerBlock,
-                                                        const int* unitForEachBlock,
-                                                        const unsigned int localRank,
+                                                        const proc_t* unitForEachBlock,
+                                                        const proc_t localRank,
                                                         const GlobalLatticeData* iGlobLatDat)
     {
       // Create a list of which blocks to read in.
       bool* readBlock = new bool[iGlobLatDat->GetBlockCount()];
 
-      for (unsigned int ii = 0; ii < iGlobLatDat->GetBlockCount(); ++ii)
+      for (site_t ii = 0; ii < iGlobLatDat->GetBlockCount(); ++ii)
       {
         readBlock[ii] = false;
       }
 
       // Read a block in if it has fluid sites and is to live on the current processor. Also read
       // in any neighbours with fluid sites.
-      for (unsigned int blockI = 0; blockI < iGlobLatDat->GetXBlockCount(); ++blockI)
+      for (site_t blockI = 0; blockI < iGlobLatDat->GetXBlockCount(); ++blockI)
       {
-        for (unsigned int blockJ = 0; blockJ < iGlobLatDat->GetYBlockCount(); ++blockJ)
+        for (site_t blockJ = 0; blockJ < iGlobLatDat->GetYBlockCount(); ++blockJ)
         {
-          for (unsigned int blockK = 0; blockK < iGlobLatDat->GetZBlockCount(); ++blockK)
+          for (site_t blockK = 0; blockK < iGlobLatDat->GetZBlockCount(); ++blockK)
           {
-            unsigned int lBlockId = iGlobLatDat->GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
+            site_t lBlockId = iGlobLatDat->GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
 
-            if ( (bytesPerBlock[lBlockId] == 0) || (unitForEachBlock[lBlockId] != (int) localRank))
+            if ( (bytesPerBlock[lBlockId] == 0) || (unitForEachBlock[lBlockId] != localRank))
             {
               continue;
             }
 
             // Read in all neighbouring blocks with fluid sites.
-            for (unsigned int neighI = util::NumericalFunctions::max<int>(0, blockI - 1); (neighI
+            for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1); (neighI
                 <= (blockI + 1)) && (neighI < iGlobLatDat->GetXBlockCount()); ++neighI)
             {
-              for (unsigned int neighJ = util::NumericalFunctions::max<int>(0, blockJ - 1); (neighJ
+              for (site_t neighJ = util::NumericalFunctions::max<site_t>(0, blockJ - 1); (neighJ
                   <= (blockJ + 1)) && (neighJ < iGlobLatDat->GetYBlockCount()); ++neighJ)
               {
-                for (unsigned int neighK = util::NumericalFunctions::max<int>(0, blockK - 1); (neighK
+                for (site_t neighK = util::NumericalFunctions::max<site_t>(0, blockK - 1); (neighK
                     <= (blockK + 1)) && (neighK < iGlobLatDat->GetZBlockCount()); ++neighK)
                 {
-                  unsigned int lNeighId = iGlobLatDat->GetBlockIdFromBlockCoords(neighI,
-                                                                                 neighJ,
-                                                                                 neighK);
+                  site_t lNeighId = iGlobLatDat->GetBlockIdFromBlockCoords(neighI, neighJ, neighK);
 
                   if (bytesPerBlock[lNeighId] > 0)
                   {
@@ -527,7 +523,7 @@ namespace hemelb
       // * an unsigned int (config)
       // * 4 doubles
       // * 14 further doubles (in D3Q15)
-      unsigned int maxBytesPerBlock = (iGlobLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
+      site_t maxBytesPerBlock = (iGlobLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
           + D3Q15::NUMVECTORS - 1));
       const unsigned int BlocksToReadInOneGo = 10;
       char* readBuffer = new char[maxBytesPerBlock * BlocksToReadInOneGo];
@@ -536,13 +532,13 @@ namespace hemelb
       for (unsigned int readNum = 0; readNum
           <= (iGlobLatDat->GetBlockCount() / BlocksToReadInOneGo); ++readNum)
       {
-        const unsigned int upperLimitBlockNumber =
-            util::NumericalFunctions::min<unsigned int>(iGlobLatDat->GetBlockCount(), (readNum + 1)
+        const site_t upperLimitBlockNumber =
+            util::NumericalFunctions::min<site_t>(iGlobLatDat->GetBlockCount(), (readNum + 1)
                 * BlocksToReadInOneGo);
-        const unsigned int lowerLimitBlockNumber = readNum * BlocksToReadInOneGo;
+        const site_t lowerLimitBlockNumber = readNum * BlocksToReadInOneGo;
 
         unsigned int bytesToRead = 0;
-        for (unsigned int ii = lowerLimitBlockNumber; ii < upperLimitBlockNumber; ++ii)
+        for (site_t ii = lowerLimitBlockNumber; ii < upperLimitBlockNumber; ++ii)
         {
           bytesToRead += bytesPerBlock[ii];
         }
@@ -566,22 +562,22 @@ namespace hemelb
             if (iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite == NULL)
             {
               iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite
-                  = new int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+                  = new proc_t[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
             }
 
-            int m = -1;
+            site_t m = -1;
 
-            for (unsigned int ii = 0; ii < iGlobLatDat->GetBlockSize(); ii++)
+            for (site_t ii = 0; ii < iGlobLatDat->GetBlockSize(); ii++)
             {
-              unsigned int site_i = lBlock.GetICoord(ii);
+              site_t site_i = lBlock.GetICoord(ii);
 
-              for (unsigned int jj = 0; jj < iGlobLatDat->GetBlockSize(); jj++)
+              for (site_t jj = 0; jj < iGlobLatDat->GetBlockSize(); jj++)
               {
-                unsigned int site_j = lBlock.GetJCoord(jj);
+                site_t site_j = lBlock.GetJCoord(jj);
 
-                for (unsigned int kk = 0; kk < iGlobLatDat->GetBlockSize(); kk++)
+                for (site_t kk = 0; kk < iGlobLatDat->GetBlockSize(); kk++)
                 {
-                  unsigned int site_k = lBlock.GetKCoord(kk);
+                  site_t site_k = lBlock.GetKCoord(kk);
 
                   ++m;
 
@@ -691,25 +687,24 @@ namespace hemelb
      * @param fluidSitesPerBlock
      * @param iGlobLatDat
      */
-    void LatticeData::GeometryReader::DivideBlocks(unsigned int unassignedBlocks,
-                                                   unsigned int blockCount,
-                                                   unsigned int unitCount,
-                                                   unsigned int* blocksOnEachUnit,
-                                                   int* unitForEachBlock,
-                                                   const unsigned int* fluidSitesPerBlock,
+    void LatticeData::GeometryReader::DivideBlocks(site_t unassignedBlocks,
+                                                   site_t blockCount,
+                                                   proc_t unitCount,
+                                                   site_t* blocksOnEachUnit,
+                                                   proc_t* unitForEachBlock,
+                                                   const site_t* fluidSitesPerBlock,
                                                    const GlobalLatticeData* iGlobLatDat)
     {
       // Initialise the unit being assigned to, and the approximate number of blocks
       // required on each unit.
-      unsigned int currentUnit = 0;
+      proc_t currentUnit = 0;
 
-      unsigned int blocksPerUnit = (unsigned int) ceil((double) unassignedBlocks
-          / (double) (mTopologySize));
+      site_t blocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (mTopologySize));
 
       // Create an array to monitor whether each block has been assigned yet.
       bool *blockAssigned = new bool[blockCount];
 
-      for (unsigned int ii = 0; ii < blockCount; ++ii)
+      for (site_t ii = 0; ii < blockCount; ++ii)
       {
         blockAssigned[ii] = false;
       }
@@ -728,14 +723,14 @@ namespace hemelb
       // Do this until all sites are assigned to a rank. There is a
       // high chance of of all sites on a rank being joined.
 
-      unsigned int lBlocksOnCurrentProc = 0;
+      site_t lBlocksOnCurrentProc = 0;
 
       // Iterate over all blocks.
-      for (unsigned int lBlockCoordI = 0; lBlockCoordI < iGlobLatDat->GetXBlockCount(); lBlockCoordI++)
+      for (site_t lBlockCoordI = 0; lBlockCoordI < iGlobLatDat->GetXBlockCount(); lBlockCoordI++)
       {
-        for (unsigned int lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat->GetYBlockCount(); lBlockCoordJ++)
+        for (site_t lBlockCoordJ = 0; lBlockCoordJ < iGlobLatDat->GetYBlockCount(); lBlockCoordJ++)
         {
-          for (unsigned int lBlockCoordK = 0; lBlockCoordK < iGlobLatDat->GetZBlockCount(); lBlockCoordK++)
+          for (site_t lBlockCoordK = 0; lBlockCoordK < iGlobLatDat->GetZBlockCount(); lBlockCoordK++)
           {
             // Block number is the number of the block we're currently on.
             lBlockNumber++;
@@ -789,16 +784,16 @@ namespace hemelb
                     < blocksPerUnit; l++)
                 {
                   // Record neighbour location.
-                  int neigh_i = lNew.i + D3Q15::CX[l];
-                  int neigh_j = lNew.j + D3Q15::CY[l];
-                  int neigh_k = lNew.k + D3Q15::CZ[l];
+                  site_t neigh_i = lNew.i + D3Q15::CX[l];
+                  site_t neigh_j = lNew.j + D3Q15::CY[l];
+                  site_t neigh_k = lNew.k + D3Q15::CZ[l];
 
                   // Move on if neighbour is outside the bounding box.
-                  if (neigh_i == -1 || neigh_i == (int) iGlobLatDat->GetXBlockCount())
+                  if (neigh_i == -1 || neigh_i == iGlobLatDat->GetXBlockCount())
                     continue;
-                  if (neigh_j == -1 || neigh_j == (int) iGlobLatDat->GetYBlockCount())
+                  if (neigh_j == -1 || neigh_j == iGlobLatDat->GetYBlockCount())
                     continue;
-                  if (neigh_k == -1 || neigh_k == (int) iGlobLatDat->GetZBlockCount())
+                  if (neigh_k == -1 || neigh_k == iGlobLatDat->GetZBlockCount())
                     continue;
 
                   // Move on if the neighbour is in a block of solids (in which case
@@ -806,9 +801,9 @@ namespace hemelb
                   // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
                   // was initialized in lbmReadConfig in io.cc.
 
-                  unsigned int neighBlockId = iGlobLatDat->GetBlockIdFromBlockCoords(neigh_i,
-                                                                                     neigh_j,
-                                                                                     neigh_k);
+                  site_t neighBlockId = iGlobLatDat->GetBlockIdFromBlockCoords(neigh_i,
+                                                                               neigh_j,
+                                                                               neigh_k);
 
                   // Don't use this block if it has no fluid sites, or if it has already been assigned to a processor.
                   if (fluidSitesPerBlock[neighBlockId] == 0 || blockAssigned[neighBlockId])
@@ -865,9 +860,9 @@ namespace hemelb
       delete[] blockAssigned;
     }
 
-    void LatticeData::GeometryReader::OptimiseDomainDecomposition(const unsigned int* sitesPerBlock,
+    void LatticeData::GeometryReader::OptimiseDomainDecomposition(const site_t* sitesPerBlock,
                                                                   const unsigned int* bytesPerBlock,
-                                                                  const int* procForEachBlock,
+                                                                  const proc_t* procForEachBlock,
                                                                   MPI_File iFile,
                                                                   GlobalLatticeData* bGlobLatDat)
     {
@@ -877,7 +872,7 @@ namespace hemelb
        *  Get an array of the site count on each processor.
        */
       {
-        int* sitesPerProc = new int[mTopologySize];
+        site_t* sitesPerProc = new site_t[mTopologySize];
         for (unsigned int ii = 0; ii < mTopologySize; ++ii)
         {
           sitesPerProc[ii] = 0;
@@ -898,7 +893,7 @@ namespace hemelb
 
         for (unsigned int ii = 0; ii < mTopologySize; ++ii)
         {
-          vertexDistribution[ii + 1] = vertexDistribution[ii] + sitesPerProc[ii];
+          vertexDistribution[ii + 1] = vertexDistribution[ii] + (int) sitesPerProc[ii];
         }
         delete[] sitesPerProc;
       }
@@ -911,7 +906,7 @@ namespace hemelb
 
       {
         // This needs to have all the blocks with ascending id based on which processor they're on.
-        int* firstSiteOnProc = new int[mTopologySize];
+        site_t* firstSiteOnProc = new site_t[mTopologySize];
         for (unsigned int ii = 0; ii < mTopologySize; ++ii)
         {
           firstSiteOnProc[ii] = vertexDistribution[ii];
@@ -926,7 +921,7 @@ namespace hemelb
           }
           else
           {
-            firstSiteIndexPerBlock[ii] = firstSiteOnProc[proc];
+            firstSiteIndexPerBlock[ii] = (int) firstSiteOnProc[proc];
             firstSiteOnProc[proc] += sitesPerBlock[ii];
           }
         }
@@ -943,12 +938,11 @@ namespace hemelb
 
       unsigned int lFluidVertex = 0;
       int n = -1;
-      for (unsigned int i = 0; i < bGlobLatDat->GetXSiteCount(); i += bGlobLatDat->GetBlockSize())
+      for (site_t i = 0; i < bGlobLatDat->GetXSiteCount(); i += bGlobLatDat->GetBlockSize())
       {
-        for (unsigned int j = 0; j < bGlobLatDat->GetYSiteCount(); j += bGlobLatDat->GetBlockSize())
+        for (site_t j = 0; j < bGlobLatDat->GetYSiteCount(); j += bGlobLatDat->GetBlockSize())
         {
-          for (unsigned int k = 0; k < bGlobLatDat->GetZSiteCount(); k
-              += bGlobLatDat->GetBlockSize())
+          for (site_t k = 0; k < bGlobLatDat->GetZSiteCount(); k += bGlobLatDat->GetBlockSize())
           {
             ++n;
 
@@ -967,11 +961,11 @@ namespace hemelb
             int m = -1;
 
             // Iterate over sites within the block.
-            for (unsigned int site_i = i; site_i < i + bGlobLatDat->GetBlockSize(); site_i++)
+            for (site_t site_i = i; site_i < i + bGlobLatDat->GetBlockSize(); site_i++)
             {
-              for (unsigned int site_j = j; site_j < j + bGlobLatDat->GetBlockSize(); site_j++)
+              for (site_t site_j = j; site_j < j + bGlobLatDat->GetBlockSize(); site_j++)
               {
-                for (unsigned int site_k = k; site_k < k + bGlobLatDat->GetBlockSize(); site_k++)
+                for (site_t site_k = k; site_k < k + bGlobLatDat->GetBlockSize(); site_k++)
                 {
                   ++m;
 
@@ -984,9 +978,9 @@ namespace hemelb
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
                   {
                     // Work out positions of neighbours.
-                    int neigh_i = site_i + D3Q15::CX[l];
-                    int neigh_j = site_j + D3Q15::CY[l];
-                    int neigh_k = site_k + D3Q15::CZ[l];
+                    site_t neigh_i = site_i + D3Q15::CX[l];
+                    site_t neigh_j = site_j + D3Q15::CY[l];
+                    site_t neigh_k = site_k + D3Q15::CZ[l];
 
                     if (neigh_i <= 0 || neigh_j <= 0 || neigh_k <= 0
                         || !bGlobLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
@@ -1005,27 +999,24 @@ namespace hemelb
                     }
 
                     // We now do some faffery to find out the global fluid site id of this point
-                    unsigned int neighBlockI = neigh_i >> bGlobLatDat->Log2BlockSize;
-                    unsigned int neighBlockJ = neigh_j >> bGlobLatDat->Log2BlockSize;
-                    unsigned int neighBlockK = neigh_k >> bGlobLatDat->Log2BlockSize;
+                    site_t neighBlockI = neigh_i >> bGlobLatDat->Log2BlockSize;
+                    site_t neighBlockJ = neigh_j >> bGlobLatDat->Log2BlockSize;
+                    site_t neighBlockK = neigh_k >> bGlobLatDat->Log2BlockSize;
 
-                    unsigned int neighLocalSiteI = neigh_i - (neighBlockI
-                        << bGlobLatDat->Log2BlockSize);
-                    unsigned int neighLocalSiteJ = neigh_j - (neighBlockJ
-                        << bGlobLatDat->Log2BlockSize);
-                    unsigned int neighLocalSiteK = neigh_k - (neighBlockK
-                        << bGlobLatDat->Log2BlockSize);
+                    site_t neighLocalSiteI = neigh_i - (neighBlockI << bGlobLatDat->Log2BlockSize);
+                    site_t neighLocalSiteJ = neigh_j - (neighBlockJ << bGlobLatDat->Log2BlockSize);
+                    site_t neighLocalSiteK = neigh_k - (neighBlockK << bGlobLatDat->Log2BlockSize);
 
-                    unsigned int neighBlockId = bGlobLatDat->GetBlockIdFromBlockCoords(neighBlockI,
-                                                                                       neighBlockJ,
-                                                                                       neighBlockK);
+                    site_t neighBlockId = bGlobLatDat->GetBlockIdFromBlockCoords(neighBlockI,
+                                                                                 neighBlockJ,
+                                                                                 neighBlockK);
 
-                    unsigned int neighGlobalSiteId = firstSiteIndexPerBlock[neighBlockId];
+                    site_t neighGlobalSiteId = firstSiteIndexPerBlock[neighBlockId];
 
-                    unsigned int localSiteId = ( ( (neighLocalSiteI << bGlobLatDat->Log2BlockSize)
+                    site_t localSiteId = ( ( (neighLocalSiteI << bGlobLatDat->Log2BlockSize)
                         + neighLocalSiteJ) << bGlobLatDat->Log2BlockSize) + neighLocalSiteK;
 
-                    for (unsigned int neighSite = 0; neighSite
+                    for (site_t neighSite = 0; neighSite
                         < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++neighSite)
                     {
                       if (neighSite == localSiteId)
@@ -1039,10 +1030,10 @@ namespace hemelb
                       }
                     }
 
-                    lAdjacencies.push_back(neighGlobalSiteId);
+                    lAdjacencies.push_back((int) neighGlobalSiteId);
                   }
 
-                  adjacenciesPerVertex[++lFluidVertex] = lAdjacencies.size();
+                  adjacenciesPerVertex[++lFluidVertex] = (int) lAdjacencies.size();
                 }
               }
             }
@@ -1117,7 +1108,7 @@ namespace hemelb
         domainWeights[ii] = 1.0F / ((float) desiredPartitionSize);
       }
 
-      float tolerance = 1.005;
+      float tolerance = 1.005F;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
       ParMETIS_V3_PartKway(vertexDistribution,

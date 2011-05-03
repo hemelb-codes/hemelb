@@ -15,16 +15,16 @@ namespace hemelb
       {
         public:
           void DoCollisions(const bool iDoRayTracing,
-                            const int iFirstIndex,
-                            const int iSiteCount,
+                            const site_t iFirstIndex,
+                            const site_t iSiteCount,
                             const LbmParameters *iLbmParams,
                             geometry::LatticeData *bLatDat,
                             hemelb::vis::Control *iControl);
 
         private:
           template<bool tDoRayTracing>
-          void DoCollisionsInternal(const int iFirstIndex,
-                                    const int iSiteCount,
+          void DoCollisionsInternal(const site_t iFirstIndex,
+                                    const site_t iSiteCount,
                                     const LbmParameters *iLbmParams,
                                     geometry::LatticeData *bLatDat,
                                     hemelb::vis::Control *iControl);
