@@ -15,58 +15,58 @@ namespace hemelb
   {
     double LBM::ConvertPressureToLatticeUnits(double pressure) const
     {
-      return Cs2 + (pressure - REFERENCE_PRESSURE) * mmHg_TO_PASCAL * (PULSATILE_PERIOD / (period
-          * voxel_size)) * (PULSATILE_PERIOD / (period * voxel_size)) / BLOOD_DENSITY;
+      return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * (PULSATILE_PERIOD_s / (period
+          * voxel_size)) * (PULSATILE_PERIOD_s / (period * voxel_size)) / BLOOD_DENSITY_Kg_per_m3;
     }
 
     double LBM::ConvertPressureToPhysicalUnits(double pressure) const
     {
-      return REFERENCE_PRESSURE + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY * ( (period
-          * voxel_size) / PULSATILE_PERIOD) * ( (period * voxel_size) / PULSATILE_PERIOD)
+      return REFERENCE_PRESSURE_mmHg + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3 * ( (period
+          * voxel_size) / PULSATILE_PERIOD_s) * ( (period * voxel_size) / PULSATILE_PERIOD_s)
           / mmHg_TO_PASCAL;
     }
 
     double LBM::ConvertPressureGradToLatticeUnits(double pressure_grad) const
     {
-      return pressure_grad * mmHg_TO_PASCAL * (PULSATILE_PERIOD / (period * voxel_size))
-          * (PULSATILE_PERIOD / (period * voxel_size)) / BLOOD_DENSITY;
+      return pressure_grad * mmHg_TO_PASCAL * (PULSATILE_PERIOD_s / (period * voxel_size))
+          * (PULSATILE_PERIOD_s / (period * voxel_size)) / BLOOD_DENSITY_Kg_per_m3;
     }
 
     double LBM::ConvertPressureGradToPhysicalUnits(double pressure_grad) const
     {
-      return pressure_grad * BLOOD_DENSITY * ( (period * voxel_size) / PULSATILE_PERIOD)
-          * ( (period * voxel_size) / PULSATILE_PERIOD) / mmHg_TO_PASCAL;
+      return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * ( (period * voxel_size) / PULSATILE_PERIOD_s)
+          * ( (period * voxel_size) / PULSATILE_PERIOD_s) / mmHg_TO_PASCAL;
     }
 
     double LBM::ConvertVelocityToLatticeUnits(double velocity) const
     {
-      return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) / (BLOOD_VISCOSITY
-          / BLOOD_DENSITY);
+      return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) / (BLOOD_VISCOSITY_Pa_s
+          / BLOOD_DENSITY_Kg_per_m3);
     }
 
     double LBM::ConvertVelocityToPhysicalUnits(double velocity) const
     {
       // convert velocity from lattice units to physical units (m/s)
-      return velocity * (BLOOD_VISCOSITY / BLOOD_DENSITY) / ( ( (mParams.Tau - 0.5) / 3.0)
+      return velocity * (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / ( ( (mParams.Tau - 0.5) / 3.0)
           * voxel_size);
     }
 
     double LBM::ConvertStressToLatticeUnits(double stress) const
     {
-      return stress * (BLOOD_DENSITY / (BLOOD_VISCOSITY * BLOOD_VISCOSITY)) * ( ( (mParams.Tau
+      return stress * (BLOOD_DENSITY_Kg_per_m3 / (BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s)) * ( ( (mParams.Tau
           - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size);
     }
 
     double LBM::ConvertStressToPhysicalUnits(double stress) const
     {
       // convert stress from lattice units to physical units (Pa)
-      return stress * BLOOD_VISCOSITY * BLOOD_VISCOSITY / (BLOOD_DENSITY * ( ( (mParams.Tau - 0.5)
+      return stress * BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s / (BLOOD_DENSITY_Kg_per_m3 * ( ( (mParams.Tau - 0.5)
           / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size));
     }
 
     void LBM::RecalculateTauViscosityOmega()
     {
-      mParams.Tau = 0.5 + (PULSATILE_PERIOD * BLOOD_VISCOSITY / BLOOD_DENSITY) / (Cs2 * period
+      mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / (Cs2 * period
           * voxel_size * voxel_size);
 
       mParams.Omega = -1.0 / mParams.Tau;

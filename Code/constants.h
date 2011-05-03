@@ -1,29 +1,23 @@
 #ifndef HEMELB_CONSTANTS_H
 #define HEMELB_CONSTANTS_H
 
-#define COLLISION_TYPES                6
-#define PI           3.14159265358979323846264338327950288
-#define DEG_TO_RAD   (PI / 180.0)
-#define EPSILON      1.0e-30
+const unsigned int COLLISION_TYPES = 6;
+const double PI = 3.14159265358979323846264338327950288;
+const double DEG_TO_RAD = (PI / 180.0);
+// TODO this was used for a convergence test - we could reinstate that at some point.
+const double EPSILON = 1.0e-30;
 
 // TODO almost certainly filth.
 const double BIG_NUMBER = 1.0e+30;
 const int BIG_NUMBER2 = 1 << 30;
 const unsigned int BIG_NUMBER3 = 1U << 31U;
 
-#define MACROSCOPIC_PARS   5
-#define DENSITY            0
-#define VELOCITY           1
-#define STRESS             2
-
-#define REFERENCE_PRESSURE             80.0           // 80 mmHg
-#define mmHg_TO_PASCAL                 133.3223874
-#define BLOOD_DENSITY                  1000.0        // 1000 Kg m^(-3)
-#define BLOOD_VISCOSITY                0.004         // 0.004 Pascal s
-#define PULSATILE_PERIOD               0.857142857   // period of oscillation (in s) is
-// chosen to be 1 min / 70
-// beats per min
-#define VIS_FIELDS                     3
+const double REFERENCE_PRESSURE_mmHg = 80.0;
+const double mmHg_TO_PASCAL = 133.3223874;
+const double BLOOD_DENSITY_Kg_per_m3 = 1000.0;
+const double BLOOD_VISCOSITY_Pa_s = 0.004;
+const double PULSATILE_PERIOD_s = 60.0 / 70.0;
+const unsigned int VIS_FIELDS = 3;
 
 // the constants needed to define the configuration of the lattice
 // sites follow

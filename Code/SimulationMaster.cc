@@ -255,7 +255,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
     for (mSimulationState.TimeStep = 1; mSimulationState.TimeStep <= mLbm->period; mSimulationState.TimeStep++)
     {
       ++total_time_steps;
-      mSimulationState.IntraCycleTime = (PULSATILE_PERIOD * mSimulationState.TimeStep)
+      mSimulationState.IntraCycleTime = (PULSATILE_PERIOD_s * mSimulationState.TimeStep)
           / mLbm->period;
 
       bool write_snapshot_image = ( (mSimulationState.TimeStep % images_period) == 0)
