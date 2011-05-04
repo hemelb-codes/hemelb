@@ -32,13 +32,18 @@ INCLUDES = $(HEMELB_INCLUDEPATHS)
 # INCLUDES so that they have precedence.
 # CPPFLAGS = -MMD -D_REENTRANT -D_POSIX_C_SOURCE=200112L -D__EXTENSIONS__ \
 # 	   -DDEBUG $(DIR_INCLUDES) $(addprefix -I,$(INCLUDES))
-CPPFLAGS = -MMD $(DIR_INCLUDES) $(addprefix -I,$(INCLUDES)) $(addprefix -D, $(HEMELB_DEFS))
+MAKE_DEPENDENCIES_GNU = -MMD
+MAKE_DEPENDENCIES_INTEL = -MMD
+MAKE_DEPENDENCIES_PGI = -MMD$(addsuffix .d,$(basename $@))
+
+MAKE_DEPENDENCIES = $(MAKE_DEPENDENCIES_INTEL)
+CPPFLAGS = $(MAKE_DEPENDENCIES) $(DIR_INCLUDES) $(addprefix -I,$(INCLUDES)) $(addprefix -D, $(HEMELB_DEFS))
 
 # Linker flags.  The values below will use what you've specified for
 # particular target or directory but if you have some flags or
 # libraries that should be used for all targets/directories just
 # append them at end.
-LDFLAGS = $(LDFLAGS_$(@)) $(addprefix -L,$(LIBDIRS_$(subst /$(OBJDIR),,$(@D))))
+LDFLAGS = $(LDFLAGS_$(@)) $(addprefix -L,$(HEMELB_LIBPATHS) $(LIBDIRS_$(subst /$(OBJDIR),,$(@D))))
 LDLIBS = $(LIBS_$(@))
 
 ############# This is the end of generic flags #############
