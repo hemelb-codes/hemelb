@@ -26,7 +26,7 @@ namespace hemelb
     ssize_t Network::recv_all(int sockid, char *buf, const int length)
     {
       ssize_t received_bytes = 0;
-      int bytes_left_to_receive = length;
+      ssize_t bytes_left_to_receive = length;
       ssize_t n = 0;
 
       // TODO: Make this better.
@@ -62,8 +62,8 @@ namespace hemelb
      */
     ssize_t Network::send_all(int sockid, const char *buf, const int length)
     {
-      int sent_bytes = 0;
-      int bytes_left_to_send = length;
+      ssize_t sent_bytes = 0;
+      ssize_t bytes_left_to_send = length;
       ssize_t n = 0;
 
       // TODO: Make this better.

@@ -22,8 +22,8 @@ namespace hemelb
       mSpreadFactor = spreadFactor;
 
       // Calculate the correct values for the depth variables.
-      unsigned int noSeenToThisDepth = 1;
-      unsigned int noAtCurrentDepth = 1;
+      proc_t noSeenToThisDepth = 1;
+      proc_t noAtCurrentDepth = 1;
 
       while (noSeenToThisDepth < mNetTop->GetProcessorCount())
       {
@@ -131,7 +131,7 @@ namespace hemelb
       }
     }
 
-    unsigned int PhasedBroadcast::Get0IndexedIterationNumber() const
+    unsigned long PhasedBroadcast::Get0IndexedIterationNumber() const
     {
       if (mTreeDepth > 0)
       {

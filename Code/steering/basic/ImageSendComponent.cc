@@ -62,7 +62,7 @@ namespace hemelb
       // Tell the steering controller that we have a connection.
       isConnected = true;
 
-      int bytesSent = 0;
+      ssize_t bytesSent = 0;
 
       // Send the dimensions of the image, in terms of pixel count.
       {
@@ -73,7 +73,7 @@ namespace hemelb
 
         pixelWriter << mVisControl->mScreen.GetPixelsX() << mVisControl->mScreen.GetPixelsY();
 
-        int pixelDataBytesSent = SendSuccess(socketToClient, xdr_pixel, pixeldatabytes);
+        ssize_t pixelDataBytesSent = SendSuccess(socketToClient, xdr_pixel, pixeldatabytes);
 
         if (pixelDataBytesSent < 0)
         {
@@ -102,9 +102,9 @@ namespace hemelb
 
         int frameDetailsBytes = frameDetailsWriter.getCurrentStreamPosition();
 
-        int frameDetailsBytesSent = SendSuccess(socketToClient,
-                                                xdrSendBuffer_frame_details,
-                                                frameDetailsBytes);
+        ssize_t frameDetailsBytesSent = SendSuccess(socketToClient,
+                                                    xdrSendBuffer_frame_details,
+                                                    frameDetailsBytes);
 
         if (frameDetailsBytesSent < 0)
         {
@@ -116,7 +116,7 @@ namespace hemelb
         }
       }
 
-      int frameBytesSent = SendSuccess(socketToClient, xdrSendBuffer_pixel_data, frameBytes);
+      ssize_t frameBytesSent = SendSuccess(socketToClient, xdrSendBuffer_pixel_data, frameBytes);
 
       if (frameBytesSent < 0)
       {
@@ -140,7 +140,7 @@ namespace hemelb
         sim.mouseStress = mVisControl->mVisSettings.mouse_stress;
 
         int sizeToSend = sim.paramsSizeB;
-        int simParamsBytesSent = SendSuccess(socketToClient, sim.pack(), sizeToSend);
+        ssize_t simParamsBytesSent = SendSuccess(socketToClient, sim.pack(), sizeToSend);
 
         mVisControl->mVisSettings.mouse_pressure = -1.0;
         mVisControl->mVisSettings.mouse_stress = -1.0;
@@ -158,10 +158,10 @@ namespace hemelb
       isFrameReady = false;
     }
 
-    int ImageSendComponent::SendSuccess(int iSocket, char * data, int length)
+    ssize_t ImageSendComponent::SendSuccess(int iSocket, char * data, int length)
     {
       // Try to send all the data.
-      int pixelDataBytesSent = Network::send_all(iSocket, data, length);
+      ssize_t pixelDataBytesSent = Network::send_all(iSocket, data, length);
 
       // We couldn't send. The pipe is broken.
       if (pixelDataBytesSent <= 0)

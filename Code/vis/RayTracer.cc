@@ -71,14 +71,15 @@ namespace hemelb
       float palette[3];
 
       // update the volume rendering of the velocity flow field
-      ColPixel::PickColour(flow_field[1] * mDomainStats->velocity_threshold_max_inv, palette);
+      ColPixel::PickColour(flow_field[1] * (float) mDomainStats->velocity_threshold_max_inv,
+                           palette);
 
       UpdateColour(ray_segment, palette, bCurrentRay->VelocityColour);
 
       if (mVisSettings->mStressType != lb::ShearStress)
       {
         // update the volume rendering of the von Mises stress flow field
-        float scaled_stress = flow_field[2] * mDomainStats->stress_threshold_max_inv;
+        float scaled_stress = flow_field[2] * (float) mDomainStats->stress_threshold_max_inv;
 
         ColPixel::PickColour(scaled_stress, palette);
 
@@ -530,7 +531,7 @@ namespace hemelb
             site_t cluster_block_max_j = j;
             site_t cluster_block_max_k = k;
 
-            cluster_id[n] = mClusters.size();
+            cluster_id[n] = (short int) mClusters.size();
             bool are_blocks_incrementing = true;
 
             while (are_blocks_incrementing)
@@ -605,7 +606,7 @@ namespace hemelb
                   cluster_block_max_j = util::NumericalFunctions::max(cluster_block_max_j, neigh_j);
                   cluster_block_max_k = util::NumericalFunctions::max(cluster_block_max_k, neigh_k);
 
-                  cluster_id[block_id] = mClusters.size();
+                  cluster_id[block_id] = (short int) mClusters.size();
                 }
               }
 
@@ -617,16 +618,16 @@ namespace hemelb
               blocks_a = blocks_b;
             }
 
-            lNewCluster.x[0] = blockMinimum.i * mLatDat->GetBlockSize() - 0.5F
-                * mLatDat->GetXSiteCount();
-            lNewCluster.x[1] = blockMinimum.j * mLatDat->GetBlockSize() - 0.5F
-                * mLatDat->GetYSiteCount();
-            lNewCluster.x[2] = blockMinimum.k * mLatDat->GetBlockSize() - 0.5F
-                * mLatDat->GetZSiteCount();
+            lNewCluster.x[0] = (float) (blockMinimum.i * mLatDat->GetBlockSize()) - 0.5F
+                * (float) mLatDat->GetXSiteCount();
+            lNewCluster.x[1] = (float) (blockMinimum.j * mLatDat->GetBlockSize()) - 0.5F
+                * (float) mLatDat->GetYSiteCount();
+            lNewCluster.x[2] = (float) (blockMinimum.k * mLatDat->GetBlockSize()) - 0.5F
+                * (float) mLatDat->GetZSiteCount();
 
-            lNewCluster.blocks_x = 1 + cluster_block_max_i - blockMinimum.i;
-            lNewCluster.blocks_y = 1 + cluster_block_max_j - blockMinimum.j;
-            lNewCluster.blocks_z = 1 + cluster_block_max_k - blockMinimum.k;
+            lNewCluster.blocks_x = (unsigned short) (1 + cluster_block_max_i - blockMinimum.i);
+            lNewCluster.blocks_y = (unsigned short) (1 + cluster_block_max_j - blockMinimum.j);
+            lNewCluster.blocks_z = (unsigned short) (1 + cluster_block_max_k - blockMinimum.k);
 
             mClusters.push_back(lNewCluster);
             clusterBlockMins.push_back(blockMinimum);
@@ -650,11 +651,11 @@ namespace hemelb
         cluster_flow_field[lThisClusterId] = new float *[cluster_p->blocks_x * cluster_p->blocks_y
             * cluster_p->blocks_z];
 
-        int voxel_min[3], voxel_max[3];
+        site_t voxel_min[3], voxel_max[3];
         for (int l = 0; l < 3; l++)
         {
-          voxel_min[l] = std::numeric_limits<int>::max();
-          voxel_max[l] = std::numeric_limits<int>::min();
+          voxel_min[l] = std::numeric_limits<site_t>::max();
+          voxel_max[l] = std::numeric_limits<site_t>::min();
         }
 
         n = -1;
@@ -673,7 +674,7 @@ namespace hemelb
               block_coord[1] = (j + mins->j) * mLatDat->GetBlockSize();
               block_coord[2] = (k + mins->k) * mLatDat->GetBlockSize();
 
-              int block_id = ( (i + mins->i) * mLatDat->GetYBlockCount() + (j + mins->j))
+              site_t block_id = ( (i + mins->i) * mLatDat->GetYBlockCount() + (j + mins->j))
                   * mLatDat->GetZBlockCount() + (k + mins->k);
 
               cluster_flow_field[lThisClusterId][n] = NULL;
@@ -690,7 +691,7 @@ namespace hemelb
 
               int m = -1;
 
-              float siteLocOnBlock[3];
+              site_t siteLocOnBlock[3];
               for (siteLocOnBlock[0] = 0; siteLocOnBlock[0] < mLatDat->GetBlockSize(); siteLocOnBlock[0]++)
                 for (siteLocOnBlock[1] = 0; siteLocOnBlock[1] < mLatDat->GetBlockSize(); siteLocOnBlock[1]++)
                   for (siteLocOnBlock[2] = 0; siteLocOnBlock[2] < mLatDat->GetBlockSize(); siteLocOnBlock[2]++)
@@ -700,18 +701,18 @@ namespace hemelb
 
                     if (my_site_id & BIG_NUMBER3)
                     {
-                      for (int l = 0; l < VIS_FIELDS; l++)
+                      for (unsigned int l = 0; l < VIS_FIELDS; l++)
                         cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS + l] = -1.0F;
 
                       continue;
                     }
 
-                    for (int l = 0; l < VIS_FIELDS; l++)
+                    for (unsigned int l = 0; l < VIS_FIELDS; l++)
                     {
                       cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS + l] = 1.0F;
                     }
 
-                    for (int l = 0; l < VIS_FIELDS; l++)
+                    for (unsigned int l = 0; l < VIS_FIELDS; l++)
                     {
                       cluster_voxel[my_site_id * VIS_FIELDS + l]
                           = &cluster_flow_field[lThisClusterId][n][m * VIS_FIELDS + l];
@@ -719,12 +720,10 @@ namespace hemelb
 
                     for (int l = 0; l < 3; l++)
                     {
-                      voxel_min[l] = util::NumericalFunctions::min<int>(voxel_min[l],
-                                                                        siteLocOnBlock[l]
-                                                                            + block_coord[l]);
-                      voxel_max[l] = util::NumericalFunctions::max<int>(voxel_max[l],
-                                                                        siteLocOnBlock[l]
-                                                                            + block_coord[l]);
+                      voxel_min[l] = util::NumericalFunctions::min(voxel_min[l], siteLocOnBlock[l]
+                          + block_coord[l]);
+                      voxel_max[l] = util::NumericalFunctions::max(voxel_max[l], siteLocOnBlock[l]
+                          + block_coord[l]);
                     }
 
                   } // for ii[0..2]
@@ -847,8 +846,8 @@ namespace hemelb
         const float* vtx = mScreen->GetVtx();
         for (int l = 0; l < 3; l++)
         {
-          par3[l] = vtx[l] + subimageMinXY[0] * projectedUnitX[l] + subimageMinXY[1]
-              * projectedUnitY[l];
+          par3[l] = vtx[l] + (float) subimageMinXY[0] * projectedUnitX[l]
+              + (float) subimageMinXY[1] * projectedUnitY[l];
         }
 
         for (int subImageX = subimageMinXY[0]; subImageX <= subimageMaxXY[0]; ++subImageX)
@@ -919,17 +918,12 @@ namespace hemelb
               continue;
             }
 
-            ColPixel col_pixel(subImageX,
-                               subImageY,
-                               lRay.MinT + t_near,
-                               lRay.Length,
-                                (lRay.Density - mDomainStats->density_threshold_min)
-                                   * mDomainStats->density_threshold_minmax_inv,
-                               lRay.Stress != std::numeric_limits<float>::max()
-                                 ? lRay.Stress * mDomainStats->stress_threshold_max_inv
-                                 : std::numeric_limits<float>::max(),
-                               lRay.VelocityColour,
-                               lRay.StressColour);
+            ColPixel col_pixel(subImageX, subImageY, lRay.MinT + t_near, lRay.Length, (lRay.Density
+                - (float) mDomainStats->density_threshold_min)
+                * (float) mDomainStats->density_threshold_minmax_inv, lRay.Stress
+                != std::numeric_limits<float>::max()
+              ? lRay.Stress * (float) mDomainStats->stress_threshold_max_inv
+              : std::numeric_limits<float>::max(), lRay.VelocityColour, lRay.StressColour);
 
             mScreen->AddPixel(&col_pixel, mVisSettings);
           }
@@ -940,11 +934,11 @@ namespace hemelb
       }
     }
 
-    void RayTracer::UpdateClusterVoxel(int i, float density, float velocity, float stress)
+    void RayTracer::UpdateClusterVoxel(site_t i, distribn_t density, distribn_t velocity, distribn_t stress)
     {
-      cluster_voxel[3 * i][0] = density;
-      cluster_voxel[3 * i][1] = velocity;
-      cluster_voxel[3 * i][2] = stress;
+      cluster_voxel[3 * i][0] = (float) density;
+      cluster_voxel[3 * i][1] = (float) velocity;
+      cluster_voxel[3 * i][2] = (float) stress;
     }
 
     RayTracer::~RayTracer()

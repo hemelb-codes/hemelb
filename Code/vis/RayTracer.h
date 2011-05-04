@@ -28,7 +28,10 @@ namespace hemelb
 
         // Method to update the voxel corresponding to site i with its
         // newly calculated density, velocity and stress.
-        void UpdateClusterVoxel(int i, float density, float velocity, float stress);
+        void UpdateClusterVoxel(site_t i,
+                                distribn_t density,
+                                distribn_t velocity,
+                                distribn_t stress);
 
         // Render the current state into an image.
         void Render();

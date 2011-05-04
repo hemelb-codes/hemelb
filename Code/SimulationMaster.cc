@@ -194,7 +194,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   int images_period = (iImagesPerCycle == 0)
     ? 1000000000
-    : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / iImagesPerCycle);
+    : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period / iImagesPerCycle));
 
   steeringCpt = new hemelb::steering::SteeringComponent(images_period,
                                                         clientConnection,
@@ -233,11 +233,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
   unsigned int snapshots_period = (lSnapshotsPerCycle == 0)
     ? 1000000000
-    : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / lSnapshotsPerCycle);
+    : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period / lSnapshotsPerCycle));
 
   unsigned int images_period = (lImagesPerCycle == 0)
     ? 1000000000
-    : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / lImagesPerCycle);
+    : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period / lImagesPerCycle));
 
   bool is_finished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
@@ -255,8 +255,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
     for (mSimulationState.TimeStep = 1; mSimulationState.TimeStep <= mLbm->period; mSimulationState.TimeStep++)
     {
       ++total_time_steps;
-      mSimulationState.IntraCycleTime = (PULSATILE_PERIOD_s * mSimulationState.TimeStep)
-          / mLbm->period;
+      mSimulationState.IntraCycleTime = (PULSATILE_PERIOD_s * (double) mSimulationState.TimeStep)
+          / (double) mLbm->period;
 
       bool write_snapshot_image = ( (mSimulationState.TimeStep % images_period) == 0)
         ? true
@@ -467,15 +467,16 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: period: %i\n",
                                                                           mLbm->period);
 
-      snapshots_period
-          = (lSnapshotsPerCycle == 0)
-            ? 1000000000
-            : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period
-                / lSnapshotsPerCycle);
-
-      images_period = (lImagesPerCycle == 0)
+      snapshots_period = (lSnapshotsPerCycle == 0)
         ? 1000000000
-        : hemelb::util::NumericalFunctions::max<unsigned int>(1U, mLbm->period / lImagesPerCycle);
+        : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period
+            / lSnapshotsPerCycle));
+
+      images_period
+          = (lImagesPerCycle == 0)
+            ? 1000000000
+            : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period
+                / lImagesPerCycle));
 
       mSimulationState.CycleId = 0;
       continue;
@@ -547,8 +548,8 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
     if (mNetworkTopology->IsCurrentProcTheIOProc())
     {
       fprintf(mTimingsFile,
-              "Attention: simulation unstable with %i timesteps/cycle\n",
-              mLbm->period);
+              "Attention: simulation unstable with %li timesteps/cycle\n",
+              (unsigned long) mLbm->period);
       fprintf(mTimingsFile, "Simulation is terminated\n");
     }
   }
@@ -557,7 +558,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
     if (mNetworkTopology->IsCurrentProcTheIOProc())
     {
 
-      fprintf(mTimingsFile, "time steps per cycle: %i\n", mLbm->period);
+      fprintf(mTimingsFile, "time steps per cycle: %li\n", (unsigned long) mLbm->period);
       fprintf(mTimingsFile, "\n");
 
       fprintf(mTimingsFile, "\n");
@@ -573,12 +574,12 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
 
       fprintf(mTimingsFile, "Sub-domains info:\n\n");
 
-      for (unsigned int n = 0; n < mNetworkTopology->GetProcessorCount(); n++)
+      for (proc_t n = 0; n < mNetworkTopology->GetProcessorCount(); n++)
       {
         fprintf(mTimingsFile,
-                "rank: %li, fluid sites: %li\n",
-                n,
-                mNetworkTopology->FluidSitesOnEachProcessor[n]);
+                "rank: %lu, fluid sites: %lu\n",
+                (unsigned long) n,
+                (unsigned long) mNetworkTopology->FluidSitesOnEachProcessor[n]);
       }
     }
   }

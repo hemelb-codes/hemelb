@@ -95,9 +95,9 @@ namespace hemelb
         p1[1] = mGlyphs[n]->y;
         p1[2] = mGlyphs[n]->z;
 
-        p2[0] = mGlyphs[n]->x + (float) vx * temp;
-        p2[1] = mGlyphs[n]->y + (float) vy * temp;
-        p2[2] = mGlyphs[n]->z + (float) vz * temp;
+        p2[0] = mGlyphs[n]->x + (float) (vx * temp);
+        p2[1] = mGlyphs[n]->y + (float) (vy * temp);
+        p2[2] = mGlyphs[n]->z + (float) (vz * temp);
 
         // ... transform to the location on the screen, and render.
         float p3[3], p4[3];

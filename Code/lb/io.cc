@@ -25,7 +25,7 @@ namespace hemelb
      */
     void LBM::ReadParameters()
     {
-      inlets = mSimConfig->Inlets.size();
+      inlets = (int) mSimConfig->Inlets.size();
       allocateInlets(inlets);
 
       for (int n = 0; n < inlets; n++)
@@ -37,7 +37,7 @@ namespace hemelb
         inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
       }
 
-      outlets = mSimConfig->Outlets.size();
+      outlets = (int) mSimConfig->Outlets.size();
       allocateOutlets(outlets);
 
       for (int n = 0; n < outlets; n++)
@@ -160,11 +160,11 @@ namespace hemelb
        stress is equal to -1 if the fluid voxel is not at the wall, 1 x float)
        */
 
-      const int lOneFluidSiteLength = (3 * 4) + (5 * 4);
+      const short int lOneFluidSiteLength = (3 * 4) + (5 * 4);
 
-      int lLocalSitesInitialOffset = lPreambleLength;
+      site_t lLocalSitesInitialOffset = lPreambleLength;
 
-      for (unsigned int ii = 0; ii < mNetTopology->GetLocalRank(); ii++)
+      for (proc_t ii = 0; ii < mNetTopology->GetLocalRank(); ii++)
       {
         lLocalSitesInitialOffset += lOneFluidSiteLength
             * mNetTopology->FluidSitesOnEachProcessor[ii];
@@ -181,7 +181,7 @@ namespace hemelb
           * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->GetLocalRank()];
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
       hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lFluidSiteBuffer,
-                                                                  lLocalWriteLength);
+                                                                  (unsigned int) lLocalWriteLength);
 
       /* The following loops scan over every single macrocell (block). If
        the block is non-empty, it scans the fluid sites within that block
@@ -225,8 +225,8 @@ namespace hemelb
                   if (my_site_id & BIG_NUMBER3)
                     continue;
 
-                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
-                      stress, pressure;
+                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS],
+                      f_neq[D3Q15::NUMVECTORS], stress, pressure;
 
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
@@ -256,7 +256,7 @@ namespace hemelb
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
                   {
-                    if (mLatDat->GetNormalToWall(my_site_id)[0] >= BIG_NUMBER)
+                    if (mLatDat->GetNormalToWall(my_site_id)[0] >= NO_VALUE)
                     {
                       stress = -1.0;
                     }
@@ -287,8 +287,8 @@ namespace hemelb
 
                   stress = ConvertStressToPhysicalUnits(stress);
 
-                  lWriter << (int)(site_i - siteMins[0]) << (int)(site_j - siteMins[1]) << (int)(site_k
-                      - siteMins[2]);
+                  lWriter << (int) (site_i - siteMins[0]) << (int) (site_j - siteMins[1])
+                      << (int) (site_k - siteMins[2]);
 
                   lWriter << float (pressure) << float (vx) << float (vy) << float (vz)
                       << float (stress);
@@ -299,7 +299,7 @@ namespace hemelb
         }
       }
 
-      MPI_File_write_all(lOutputFile, lFluidSiteBuffer, lLocalWriteLength, MPI_BYTE, &lStatus);
+      MPI_File_write_all(lOutputFile, lFluidSiteBuffer, (int) lLocalWriteLength, MPI_BYTE, &lStatus);
 
       MPI_File_close(&lOutputFile);
 
@@ -308,33 +308,31 @@ namespace hemelb
 
     void LBM::ReadVisParameters()
     {
-      float lDensity_threshold_min, lDensity_threshold_minmax_inv, lVelocity_threshold_max_inv,
-          lStress_threshold_max_inv;
-      float density_min, density_max, velocity_max, stress_max;
+      distribn_t density_min = std::numeric_limits<distribn_t>::max();
+      distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
-      int i;
+      distribn_t velocity_max = ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
+      distribn_t stress_max = ConvertStressToLatticeUnits(mSimConfig->MaxStress);
 
-      density_min = ((float) BIG_NUMBER);
-      density_max = ((float) -BIG_NUMBER);
-
-      velocity_max = ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
-      stress_max = ConvertStressToLatticeUnits(mSimConfig->MaxStress);
-
-      for (i = 0; i < inlets; i++)
+      for (int i = 0; i < inlets; i++)
       {
-        density_min = fminf(density_min, inlet_density_avg[i] - inlet_density_amp[i]);
-        density_max = fmaxf(density_max, inlet_density_avg[i] + inlet_density_amp[i]);
+        density_min = util::NumericalFunctions::min(density_min, inlet_density_avg[i]
+            - inlet_density_amp[i]);
+        density_max = util::NumericalFunctions::max(density_max, inlet_density_avg[i]
+            + inlet_density_amp[i]);
       }
-      for (i = 0; i < outlets; i++)
+      for (int i = 0; i < outlets; i++)
       {
-        density_min = fminf(density_min, outlet_density_avg[i] - outlet_density_amp[i]);
-        density_max = fmaxf(density_max, outlet_density_avg[i] + outlet_density_amp[i]);
+        density_min = util::NumericalFunctions::min(density_min, outlet_density_avg[i]
+            - outlet_density_amp[i]);
+        density_max = util::NumericalFunctions::max(density_max, outlet_density_avg[i]
+            + outlet_density_amp[i]);
       }
-      lDensity_threshold_min = density_min;
 
-      lDensity_threshold_minmax_inv = 1.0F / (density_max - density_min);
-      lVelocity_threshold_max_inv = 1.0F / velocity_max;
-      lStress_threshold_max_inv = 1.0F / stress_max;
+      distribn_t lDensity_threshold_min = density_min;
+      distribn_t lDensity_threshold_minmax_inv = 1.0F / (density_max - density_min);
+      distribn_t lVelocity_threshold_max_inv = 1.0F / velocity_max;
+      distribn_t lStress_threshold_max_inv = 1.0F / stress_max;
 
       mVisControl->SetSomeParams(mSimConfig->VisBrightness,
                                  lDensity_threshold_min,

@@ -49,13 +49,13 @@ namespace hemelb
           {
             if (tDoRayTracing)
             {
-              double rtStress;
+              distribn_t rtStress;
 
               if (iLbmParams->StressType == ShearStress)
               {
-                if (iLatDat->GetNormalToWall(iSiteIndex)[0] > BIG_NUMBER)
+                if (iLatDat->GetNormalToWall(iSiteIndex)[0] > NO_VALUE)
                 {
-                  rtStress = BIG_NUMBER;
+                  rtStress = NO_VALUE;
                 }
                 else
                 {

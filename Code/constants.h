@@ -1,6 +1,8 @@
 #ifndef HEMELB_CONSTANTS_H
 #define HEMELB_CONSTANTS_H
 
+#include <limits>
+
 #include "mpiInclude.h"
 
 // Basic types for use in HemeLB. Any variable which scales as a function of the number of sites
@@ -19,7 +21,7 @@ const double DEG_TO_RAD = (PI / 180.0);
 const double EPSILON = 1.0e-30;
 
 // TODO almost certainly filth.
-const double BIG_NUMBER = 1.0e+30;
+const distribn_t NO_VALUE = std::numeric_limits<distribn_t>::max();
 const int BIG_NUMBER2 = 1 << 30;
 const unsigned int BIG_NUMBER3 = 1U << 31U;
 
