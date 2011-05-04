@@ -33,10 +33,10 @@ namespace hemelb
         ~Control();
 
         void SetSomeParams(const float iBrightness,
-                           const float iDensityThresholdMin,
-                           const float iDensityThresholdMinMaxInv,
-                           const float iVelocityThresholdMaxInv,
-                           const float iStressThresholdMaxInv);
+                           const distribn_t iDensityThresholdMin,
+                           const distribn_t iDensityThresholdMinMaxInv,
+                           const distribn_t iVelocityThresholdMaxInv,
+                           const distribn_t iStressThresholdMaxInv);
 
         void SetProjection(const int &pixels_x,
                            const int &pixels_y,

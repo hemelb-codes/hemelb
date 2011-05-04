@@ -23,11 +23,11 @@ namespace hemelb
      * @param length
      * @return Returns the number of bytes recieved or -1 on failure.
      */
-    int Network::recv_all(int sockid, char *buf, const int length)
+    ssize_t Network::recv_all(int sockid, char *buf, const int length)
     {
-      int received_bytes = 0;
+      ssize_t received_bytes = 0;
       int bytes_left_to_receive = length;
-      int n = 0;
+      ssize_t n = 0;
 
       // TODO: Make this better.
       // While some data left to be received...
@@ -60,11 +60,11 @@ namespace hemelb
      * @param length
      * @return Returns the number of bytes sent or -1 on failure.
      */
-    int Network::send_all(int sockid, const char *buf, const int length)
+    ssize_t Network::send_all(int sockid, const char *buf, const int length)
     {
       int sent_bytes = 0;
       int bytes_left_to_send = length;
-      int n = 0;
+      ssize_t n = 0;
 
       // TODO: Make this better.
       while (sent_bytes < length)

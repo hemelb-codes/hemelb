@@ -10,7 +10,7 @@ namespace hemelb
   {
 
     MPI_Datatype MPI_col_pixel_type;
-    ColPixel::PixelId::PixelId(int i_, int j_) :
+    ColPixel::PixelId::PixelId(unsigned int i_, unsigned int j_) :
       isRt(false), isGlyph(false), isStreakline(false), i(i_), j(j_)
     {
     }

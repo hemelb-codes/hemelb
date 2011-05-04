@@ -40,24 +40,24 @@ namespace hemelb
       // We don't have all the minima / maxima on one core, so we have to gather them.
       // NOTE this only happens once, during initialisation, otherwise it would be
       // totally unforgivable.
-      unsigned int block_min_x = std::numeric_limits<unsigned int>::max();
-      unsigned int block_min_y = std::numeric_limits<unsigned int>::max();
-      unsigned int block_min_z = std::numeric_limits<unsigned int>::max();
-      unsigned int block_max_x = std::numeric_limits<unsigned int>::min();
-      unsigned int block_max_y = std::numeric_limits<unsigned int>::min();
-      unsigned int block_max_z = std::numeric_limits<unsigned int>::min();
+      site_t block_min_x = std::numeric_limits<site_t>::max();
+      site_t block_min_y = std::numeric_limits<site_t>::max();
+      site_t block_min_z = std::numeric_limits<site_t>::max();
+      site_t block_max_x = std::numeric_limits<site_t>::min();
+      site_t block_max_y = std::numeric_limits<site_t>::min();
+      site_t block_max_z = std::numeric_limits<site_t>::min();
 
-      int n = -1;
+      site_t n = -1;
 
-      for (unsigned int i = 0; i < iLatDat->GetXBlockCount(); i++)
+      for (site_t i = 0; i < iLatDat->GetXBlockCount(); i++)
       {
-        for (unsigned int j = 0; j < iLatDat->GetYBlockCount(); j++)
+        for (site_t j = 0; j < iLatDat->GetYBlockCount(); j++)
         {
-          for (unsigned int k = 0; k < iLatDat->GetZBlockCount(); k++)
+          for (site_t k = 0; k < iLatDat->GetZBlockCount(); k++)
           {
             n++;
 
-            geometry::LatticeData::BlockData * lBlock = iLatDat->GetBlock((unsigned int) n);
+            geometry::LatticeData::BlockData * lBlock = iLatDat->GetBlock(n);
             if (lBlock->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
@@ -73,8 +73,8 @@ namespace hemelb
         }
       }
 
-      unsigned int mins[3], maxes[3];
-      unsigned int localMins[3], localMaxes[3];
+      site_t mins[3], maxes[3];
+      site_t localMins[3], localMaxes[3];
 
       localMins[0] = block_min_x;
       localMins[1] = block_min_y;
@@ -84,12 +84,12 @@ namespace hemelb
       localMaxes[1] = block_max_y;
       localMaxes[2] = block_max_z;
 
-      MPI_Allreduce(localMins, mins, 3, MPI_UNSIGNED, MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, maxes, 3, MPI_UNSIGNED, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, mins, 3, site_mpi_t, MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, maxes, 3, site_mpi_t, MPI_MAX, MPI_COMM_WORLD);
 
-      mVisSettings.ctr_x = 0.5F * iLatDat->GetBlockSize() * (mins[0] + maxes[0]);
-      mVisSettings.ctr_y = 0.5F * iLatDat->GetBlockSize() * (mins[1] + maxes[1]);
-      mVisSettings.ctr_z = 0.5F * iLatDat->GetBlockSize() * (mins[2] + maxes[2]);
+      mVisSettings.ctr_x = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[0] + maxes[0]));
+      mVisSettings.ctr_y = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[1] + maxes[1]));
+      mVisSettings.ctr_z = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
       myRayTracer = new RayTracer(iNetworkTopology,
                                   iLatDat,
@@ -127,11 +127,8 @@ namespace hemelb
 
       float centre[3] = { iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z };
 
-      mViewpoint.SetViewpointPosition(iLongitude * DEG_TO_RAD,
-                                      iLatitude * DEG_TO_RAD,
-                                      centre,
-                                      rad,
-                                      dist);
+      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
+          * (float) DEG_TO_RAD, centre, rad, dist);
 
       mScreen.Set( (0.5 * vis->system_size) / iZoom,
                    (0.5 * vis->system_size) / iZoom,
@@ -147,10 +144,10 @@ namespace hemelb
     }
 
     void Control::SetSomeParams(const float iBrightness,
-                                const float iDensityThresholdMin,
-                                const float iDensityThresholdMinMaxInv,
-                                const float iVelocityThresholdMaxInv,
-                                const float iStressThresholdMaxInv)
+                                const distribn_t iDensityThresholdMin,
+                                const distribn_t iDensityThresholdMinMaxInv,
+                                const distribn_t iVelocityThresholdMaxInv,
+                                const distribn_t iStressThresholdMaxInv)
     {
       mVisSettings.brightness = iBrightness;
       mDomainStats.density_threshold_min = iDensityThresholdMin;
