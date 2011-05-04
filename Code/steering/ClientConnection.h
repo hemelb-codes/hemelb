@@ -1,6 +1,7 @@
 #ifndef HEMELB_STEERING_CLIENTCONNECTION_H
 #define HEMELB_STEERING_CLIENTCONNECTION_H
 
+#include <netinet/in.h>
 #include <semaphore.h>
 
 namespace hemelb
@@ -18,7 +19,7 @@ namespace hemelb
         void ReportBroken(int iSocketNum);
 
       private:
-        static const unsigned int MYPORT = 65250;
+        static const in_port_t MYPORT = 65250;
         static const unsigned int CONNECTION_BACKLOG = 10;
 
         int mCurrentSocket;

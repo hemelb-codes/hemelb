@@ -10,14 +10,6 @@ namespace hemelb
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
-      // In matrices:
-      //       (cos(iThetaY)  0 sin(iThetaY)) (1 0            0              )
-      // Out = (0             1 0           ) (0 cos(-iThetaX) -sin(-iThetaX)) In
-      //       (-sin(iThetaY) 0 cos(iThetaY)) (0 sin(-iThetaX) cos(-iThetaX) )
-      //
-      //       (Xcos(iThetaY) + Zsin(iThetaY)cos(iThetaX) - Ysin(iThetaY)sin(iThetaX))
-      // Out = (Ycos(iThetaX) + Zsin(iThetaX)                                        )
-      //       (Zcos(iThetaX)cos(iThetaY) - Ysin(iThetaX)cos(iThetaY) - Xsin(iThetaY))
 
       Rotate(SinXRotation, CosXRotation, SinYRotation, CosYRotation, iXIn, iYIn, iZIn,
              rotatedVector);

@@ -131,9 +131,9 @@ namespace hemelb
       {
         SimulationParameters sim;
 
-        sim.timeStep = mSimState->TimeStep;
+        sim.timeStep = (int) mSimState->TimeStep;
         sim.time = mSimState->IntraCycleTime;
-        sim.cycle = mSimState->CycleId;
+        sim.cycle = (int) mSimState->CycleId;
         sim.nInlets = mLbm->inlets;
 
         sim.mousePressure = mVisControl->mVisSettings.mouse_pressure;

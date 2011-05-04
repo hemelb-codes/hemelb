@@ -36,6 +36,7 @@ namespace hemelb
         void _write(float const & value);
         void _write(short const & value);
         void _write(unsigned int const & value);
+        void _write(long const & value);
 
     };
   }

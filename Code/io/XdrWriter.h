@@ -28,7 +28,7 @@ namespace hemelb
       void _write(short const& shortToWrite);
       void _write(float const& floatToWrite);
       void _write(unsigned int const& uIntToWrite);
-
+      void _write(long const& longToWrite);
     };
   }
 }

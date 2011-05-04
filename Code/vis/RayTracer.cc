@@ -108,13 +108,13 @@ namespace hemelb
                                    Ray* bCurrentRay,
                                    const bool xyz_is_1[3])
     {
-      unsigned int i_vec[3];
+      site_t i_vec[3];
 
       for (int i = 0; i < 3; i++)
       {
-        i_vec[i] = util::NumericalFunctions::enforceBounds<unsigned int>(block_x[i],
-                                                                         0,
-                                                                         block_size_1);
+        i_vec[i] = util::NumericalFunctions::enforceBounds<site_t>((site_t) block_x[i],
+                                                                   0,
+                                                                   block_size_1);
       }
 
       float t_max[3];
@@ -125,9 +125,9 @@ namespace hemelb
           : i_vec[i])) * bCurrentRay->InverseDirection[i];
       }
 
-      unsigned int i = i_vec[0] * block_size2;
-      unsigned int j = i_vec[1] * mLatDat->GetBlockSize();
-      unsigned int k = i_vec[2];
+      site_t i = i_vec[0] * block_size2;
+      site_t j = i_vec[1] * mLatDat->GetBlockSize();
+      site_t k = i_vec[2];
 
       while (true)
       {
@@ -455,7 +455,7 @@ namespace hemelb
 
     void RayTracer::BuildClusters()
     {
-      std::vector<MinLocation> clusterBlockMins;
+      std::vector<Location> clusterBlockMins;
 
       const int n_x[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, +0, +0, +0, +0, +0, +0, +0, +0, +1,
                           +1, +1, +1, +1, +1, +1, +1, +1 };
@@ -472,10 +472,8 @@ namespace hemelb
 
       int blocks_buffer_size = 10000;
 
-      std::vector<BlockLocation> *block_location_a =
-          new std::vector<BlockLocation>(blocks_buffer_size);
-      std::vector<BlockLocation> *block_location_b =
-          new std::vector<BlockLocation>(blocks_buffer_size);
+      std::vector<Location> *block_location_a = new std::vector<Location>(blocks_buffer_size);
+      std::vector<Location> *block_location_b = new std::vector<Location>(blocks_buffer_size);
 
       bool *is_block_visited = new bool[mLatDat->GetBlockCount()];
       for (unsigned int n = 0; n < mLatDat->GetBlockCount(); n++)
@@ -483,17 +481,17 @@ namespace hemelb
         is_block_visited[n] = false;
       }
 
-      int n = -1;
+      site_t n = -1;
 
-      for (unsigned int i = 0; i < mLatDat->GetXBlockCount(); i++)
+      for (site_t i = 0; i < mLatDat->GetXBlockCount(); i++)
       {
-        for (unsigned int j = 0; j < mLatDat->GetYBlockCount(); j++)
+        for (site_t j = 0; j < mLatDat->GetYBlockCount(); j++)
         {
-          for (unsigned int k = 0; k < mLatDat->GetZBlockCount(); k++)
+          for (site_t k = 0; k < mLatDat->GetZBlockCount(); k++)
           {
             n++;
 
-            geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock((unsigned int) n);
+            geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock(n);
             if (lBlock->ProcessorRankForEachBlockSite == NULL || is_block_visited[n])
             {
               continue;
@@ -503,12 +501,11 @@ namespace hemelb
 
             int blocks_a = 0;
 
-            for (unsigned int m = 0; m < mLatDat->GetSitesPerBlockVolumeUnit(); m++)
+            for (site_t m = 0; m < mLatDat->GetSitesPerBlockVolumeUnit(); m++)
             {
-              if ((int) mNetworkTopology->GetLocalRank()
-                  == lBlock->ProcessorRankForEachBlockSite[m])
+              if (mNetworkTopology->GetLocalRank() == lBlock->ProcessorRankForEachBlockSite[m])
               {
-                BlockLocation& tempBlockLoc = block_location_a->at(0);
+                Location& tempBlockLoc = block_location_a->at(0);
                 tempBlockLoc.i = i;
                 tempBlockLoc.j = j;
                 tempBlockLoc.k = k;
@@ -523,15 +520,15 @@ namespace hemelb
             }
 
             Cluster lNewCluster;
-            MinLocation blockMinimum;
+            Location blockMinimum;
 
             blockMinimum.i = i;
             blockMinimum.j = j;
             blockMinimum.k = k;
 
-            unsigned short int cluster_block_max_i = i;
-            unsigned short int cluster_block_max_j = j;
-            unsigned short int cluster_block_max_k = k;
+            site_t cluster_block_max_i = i;
+            site_t cluster_block_max_j = j;
+            site_t cluster_block_max_k = k;
 
             cluster_id[n] = mClusters.size();
             bool are_blocks_incrementing = true;
@@ -543,22 +540,22 @@ namespace hemelb
 
               for (int index_a = 0; index_a < blocks_a; index_a++)
               {
-                const BlockLocation& tempBlockLoc = block_location_a->at(index_a);
+                const Location& tempBlockLoc = block_location_a->at(index_a);
 
                 for (int l = 0; l < 26; l++)
                 {
-                  int neigh_i = tempBlockLoc.i + n_x[l];
-                  int neigh_j = tempBlockLoc.j + n_y[l];
-                  int neigh_k = tempBlockLoc.k + n_z[l];
+                  site_t neigh_i = tempBlockLoc.i + n_x[l];
+                  site_t neigh_j = tempBlockLoc.j + n_y[l];
+                  site_t neigh_k = tempBlockLoc.k + n_z[l];
 
-                  if (neigh_i == -1 || neigh_i == (int) mLatDat->GetXBlockCount())
+                  if (neigh_i == -1 || neigh_i == mLatDat->GetXBlockCount())
                     continue;
-                  if (neigh_j == -1 || neigh_j == (int) mLatDat->GetYBlockCount())
+                  if (neigh_j == -1 || neigh_j == mLatDat->GetYBlockCount())
                     continue;
-                  if (neigh_k == -1 || neigh_k == (int) mLatDat->GetZBlockCount())
+                  if (neigh_k == -1 || neigh_k == mLatDat->GetZBlockCount())
                     continue;
 
-                  int block_id = (neigh_i * mLatDat->GetYBlockCount() + neigh_j)
+                  site_t block_id = (neigh_i * mLatDat->GetYBlockCount() + neigh_j)
                       * mLatDat->GetZBlockCount() + neigh_k;
 
                   if (is_block_visited[block_id]
@@ -571,7 +568,7 @@ namespace hemelb
                   bool is_site_found = false;
                   for (unsigned int m = 0; m < mLatDat->GetSitesPerBlockVolumeUnit(); m++)
                   {
-                    if ((int) mNetworkTopology->GetLocalRank()
+                    if (mNetworkTopology->GetLocalRank()
                         == lBlock->ProcessorRankForEachBlockSite[m])
                     {
                       is_site_found = true;
@@ -594,29 +591,26 @@ namespace hemelb
                   }
                   are_blocks_incrementing = true;
 
-                  BlockLocation& tempBlockLoc = block_location_b->at(blocks_b);
+                  Location& tempBlockLoc = block_location_b->at(blocks_b);
                   tempBlockLoc.i = neigh_i;
                   tempBlockLoc.j = neigh_j;
                   tempBlockLoc.k = neigh_k;
                   ++blocks_b;
 
-                  blockMinimum.i = util::NumericalFunctions::min((int) blockMinimum.i, neigh_i);
-                  blockMinimum.j = util::NumericalFunctions::min((int) blockMinimum.j, neigh_j);
-                  blockMinimum.k = util::NumericalFunctions::min((int) blockMinimum.k, neigh_k);
+                  blockMinimum.i = util::NumericalFunctions::min(blockMinimum.i, neigh_i);
+                  blockMinimum.j = util::NumericalFunctions::min(blockMinimum.j, neigh_j);
+                  blockMinimum.k = util::NumericalFunctions::min(blockMinimum.k, neigh_k);
 
-                  cluster_block_max_i = util::NumericalFunctions::max((int) cluster_block_max_i,
-                                                                      neigh_i);
-                  cluster_block_max_j = util::NumericalFunctions::max((int) cluster_block_max_j,
-                                                                      neigh_j);
-                  cluster_block_max_k = util::NumericalFunctions::max((int) cluster_block_max_k,
-                                                                      neigh_k);
+                  cluster_block_max_i = util::NumericalFunctions::max(cluster_block_max_i, neigh_i);
+                  cluster_block_max_j = util::NumericalFunctions::max(cluster_block_max_j, neigh_j);
+                  cluster_block_max_k = util::NumericalFunctions::max(cluster_block_max_k, neigh_k);
 
                   cluster_id[block_id] = mClusters.size();
                 }
               }
 
               // swap pointers in block_location_a/_b
-              std::vector<BlockLocation>* tempBlockLocation = block_location_a;
+              std::vector<Location>* tempBlockLocation = block_location_a;
               block_location_a = block_location_b;
               block_location_b = tempBlockLocation;
 
@@ -665,16 +659,16 @@ namespace hemelb
 
         n = -1;
 
-        for (int i = 0; i < cluster_p->blocks_x; i++)
+        for (site_t i = 0; i < cluster_p->blocks_x; i++)
         {
-          for (int j = 0; j < cluster_p->blocks_y; j++)
+          for (site_t j = 0; j < cluster_p->blocks_y; j++)
           {
-            for (int k = 0; k < cluster_p->blocks_z; k++)
+            for (site_t k = 0; k < cluster_p->blocks_z; k++)
             {
               ++n;
 
-              int block_coord[3];
-              MinLocation* mins = &clusterBlockMins[lThisClusterId];
+              site_t block_coord[3];
+              Location* mins = &clusterBlockMins[lThisClusterId];
               block_coord[0] = (i + mins->i) * mLatDat->GetBlockSize();
               block_coord[1] = (j + mins->j) * mLatDat->GetBlockSize();
               block_coord[2] = (k + mins->k) * mLatDat->GetBlockSize();

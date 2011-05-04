@@ -34,6 +34,11 @@ namespace hemelb
       xdr_u_int(&mXdr, const_cast<unsigned int *> (&uIntToWrite));
     }
 
+    void XdrWriter::_write(long const& longToWrite)
+    {
+      xdr_long(&mXdr, const_cast<long*> (&longToWrite));
+    }
+
     // Method to get the current position in the stream.
     unsigned int XdrWriter::getCurrentStreamPosition() const
     {

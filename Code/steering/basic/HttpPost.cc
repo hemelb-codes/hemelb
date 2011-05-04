@@ -127,13 +127,13 @@ namespace hemelb
                                                   rank_0_host_details);
     }
 
-    int HttpPost::Send_Request(int iSocket, const char *iMessage)
+    ssize_t HttpPost::Send_Request(int iSocket, const char *iMessage)
     {
       return send(iSocket, iMessage, strlen(iMessage), 0);
     }
 
     int HttpPost::request(const char* hostname,
-                          const short port,
+                          const in_port_t port,
                           const char* api,
                           const char* resourceid)
     {
@@ -150,7 +150,7 @@ namespace hemelb
 
       sockaddr_in sin;
       sin.sin_family = AF_INET;
-      sin.sin_port = htons((unsigned short) port);
+      sin.sin_port = htons((in_port_t) port);
 
       // Get name for the other end of the connection.
       struct hostent * host_addr = gethostbyname(hostname);
@@ -210,7 +210,7 @@ namespace hemelb
         char c1[1];
 
         // receive 1 char from the socket
-        int l = recv(sock, c1, 1, 0);
+        ssize_t l = recv(sock, c1, 1, 0);
 
         // An error occurred.
         if (l < 0)
@@ -245,7 +245,7 @@ namespace hemelb
       {
         char p[1024];
 
-        int l;
+        ssize_t l;
 
         while ( (l = recv(sock, p, 1023, 0)) > 0)
         {

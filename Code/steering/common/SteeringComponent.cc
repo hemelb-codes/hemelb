@@ -23,8 +23,8 @@ namespace hemelb
       // The minimum value here is by default 0.0 all the time
       mVisControl->mDomainStats.physical_stress_threshold_max = privateSteeringParams[8];
 
-      mVisControl->mDomainStats.physical_pressure_threshold_min = privateSteeringParams[9];
-      mVisControl->mDomainStats.physical_pressure_threshold_max = privateSteeringParams[10];
+      mVisControl->mDomainStats.physical_pressure_threshold_min = (distribn_t) privateSteeringParams[9];
+      mVisControl->mDomainStats.physical_pressure_threshold_max = (distribn_t) privateSteeringParams[10];
 
       mVisControl->mVisSettings.glyphLength = privateSteeringParams[11];
 
@@ -55,30 +55,31 @@ namespace hemelb
 
       mSimState->DoRendering = int (privateSteeringParams[20]);
 
-      mVisControl->UpdateImageSize(pixels_x, pixels_y);
+      mVisControl->UpdateImageSize((int) pixels_x, (int) pixels_y);
 
-      float
+      distribn_t
           lattice_density_min =
-              mLbm->ConvertPressureToLatticeUnits(
-                                                  mVisControl->mDomainStats.physical_pressure_threshold_min)
+              mLbm->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_min)
                   / Cs2;
-      float
+      distribn_t
           lattice_density_max =
-              mLbm->ConvertPressureToLatticeUnits(
-                                                  mVisControl->mDomainStats.physical_pressure_threshold_max)
+              mLbm->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_max)
                   / Cs2;
-      float
+      distribn_t
           lattice_velocity_max =
-              mLbm->ConvertVelocityToLatticeUnits(
-                                                  mVisControl->mDomainStats.physical_velocity_threshold_max);
-      float
+              mLbm->ConvertVelocityToLatticeUnits(mVisControl->mDomainStats.physical_velocity_threshold_max);
+      distribn_t
           lattice_stress_max =
-              mLbm->ConvertStressToLatticeUnits(
-                                                mVisControl->mDomainStats.physical_stress_threshold_max);
+              mLbm->ConvertStressToLatticeUnits(mVisControl->mDomainStats.physical_stress_threshold_max);
 
-      mVisControl->SetProjection(pixels_x, pixels_y, mVisControl->mVisSettings.ctr_x,
-                                 mVisControl->mVisSettings.ctr_y, mVisControl->mVisSettings.ctr_z,
-                                 longitude, latitude, zoom);
+      mVisControl->SetProjection(pixels_x,
+                                 pixels_y,
+                                 mVisControl->mVisSettings.ctr_x,
+                                 mVisControl->mVisSettings.ctr_y,
+                                 mVisControl->mVisSettings.ctr_z,
+                                 longitude,
+                                 latitude,
+                                 zoom);
 
       mVisControl->mDomainStats.density_threshold_min = lattice_density_min;
       mVisControl->mDomainStats.density_threshold_minmax_inv = 1.0F / (lattice_density_max
