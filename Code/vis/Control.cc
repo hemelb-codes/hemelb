@@ -123,22 +123,22 @@ namespace hemelb
                                 const float &iZoom)
     {
       float rad = 5.F * vis->system_size;
-      float dist = 0.5 * rad;
+      float dist = 0.5F * rad;
 
       float centre[3] = { iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z };
 
       mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
           * (float) DEG_TO_RAD, centre, rad, dist);
 
-      mScreen.Set( (0.5 * vis->system_size) / iZoom,
-                   (0.5 * vis->system_size) / iZoom,
+      mScreen.Set( (0.5F * vis->system_size) / iZoom,
+                   (0.5F * vis->system_size) / iZoom,
                   iPixels_x,
                   iPixels_y,
                   rad,
                   &mViewpoint);
     }
 
-    void Control::RegisterSite(int i, float density, float velocity, float stress)
+    void Control::RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress)
     {
       myRayTracer->UpdateClusterVoxel(i, density, velocity, stress);
     }
@@ -214,7 +214,9 @@ namespace hemelb
       return mScreen.MouseIsOverPixel(mVisSettings.mouse_x, mVisSettings.mouse_y, density, stress);
     }
 
-    void Control::ProgressStreaklines(int time_step, int period, geometry::LatticeData* iLatDat)
+    void Control::ProgressStreaklines(unsigned long time_step,
+                                      unsigned long period,
+                                      geometry::LatticeData* iLatDat)
     {
       myStreaker ->StreakLines(time_step, period, iLatDat);
     }

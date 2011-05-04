@@ -23,8 +23,8 @@ namespace hemelb
       // The minimum value here is by default 0.0 all the time
       mVisControl->mDomainStats.physical_stress_threshold_max = privateSteeringParams[8];
 
-      mVisControl->mDomainStats.physical_pressure_threshold_min = (distribn_t) privateSteeringParams[9];
-      mVisControl->mDomainStats.physical_pressure_threshold_max = (distribn_t) privateSteeringParams[10];
+      mVisControl->mDomainStats.physical_pressure_threshold_min = privateSteeringParams[9];
+      mVisControl->mDomainStats.physical_pressure_threshold_max = privateSteeringParams[10];
 
       mVisControl->mVisSettings.glyphLength = privateSteeringParams[11];
 
@@ -72,8 +72,8 @@ namespace hemelb
           lattice_stress_max =
               mLbm->ConvertStressToLatticeUnits(mVisControl->mDomainStats.physical_stress_threshold_max);
 
-      mVisControl->SetProjection(pixels_x,
-                                 pixels_y,
+      mVisControl->SetProjection((int) pixels_x,
+                                 (int) pixels_y,
                                  mVisControl->mVisSettings.ctr_x,
                                  mVisControl->mVisSettings.ctr_y,
                                  mVisControl->mVisSettings.ctr_z,
@@ -94,51 +94,51 @@ namespace hemelb
       updatedMouseCoords = false;
 
       // scene center (dx,dy,dz)
-      privateSteeringParams[0] = 0.0;
-      privateSteeringParams[1] = 0.0;
-      privateSteeringParams[2] = 0.0;
+      privateSteeringParams[0] = 0.0F;
+      privateSteeringParams[1] = 0.0F;
+      privateSteeringParams[2] = 0.0F;
 
       // longitude and latitude
-      privateSteeringParams[3] = 45.0;
-      privateSteeringParams[4] = 45.0;
+      privateSteeringParams[3] = 45.0F;
+      privateSteeringParams[4] = 45.0F;
 
       // zoom and brightness
-      privateSteeringParams[5] = 1.0;
-      privateSteeringParams[6] = 0.03;
+      privateSteeringParams[5] = 1.0F;
+      privateSteeringParams[6] = 0.03F;
 
       // velocity and stress ranges
-      privateSteeringParams[7] = 0.1;
-      privateSteeringParams[8] = 0.1;
+      privateSteeringParams[7] = 0.1F;
+      privateSteeringParams[8] = 0.1F;
 
       // Minimum pressure and maximum pressure for Colour mapping
-      privateSteeringParams[9] = 80.0;
-      privateSteeringParams[10] = 120.0;
+      privateSteeringParams[9] = 80.0F;
+      privateSteeringParams[10] = 120.0F;
 
       // Glyph length
-      privateSteeringParams[11] = 1.0;
+      privateSteeringParams[11] = 1.0F;
 
       // Rendered frame size, pixel x and pixel y
-      privateSteeringParams[12] = 512;
-      privateSteeringParams[13] = 512;
+      privateSteeringParams[12] = 512.0F;
+      privateSteeringParams[13] = 512.0F;
 
       // x-y position of the mouse of the client
-      privateSteeringParams[14] = -1.0;
-      privateSteeringParams[15] = -1.0;
+      privateSteeringParams[14] = -1.0F;
+      privateSteeringParams[15] = -1.0F;
 
       // signal useful to terminate the simulation
-      privateSteeringParams[16] = 0.0;
+      privateSteeringParams[16] = 0.0F;
 
       // Vis_mode
-      privateSteeringParams[17] = 0.0;
+      privateSteeringParams[17] = 0.0F;
 
       // vis_streaklines_per_pulsatile_period
-      privateSteeringParams[18] = 5.0;
+      privateSteeringParams[18] = 5.0F;
 
       // vis_streakline_length
-      privateSteeringParams[19] = 100.0;
+      privateSteeringParams[19] = 100.0F;
 
       // Value of DoRendering
-      privateSteeringParams[20] = 0.0;
+      privateSteeringParams[20] = 0.0F;
     }
   }
 }

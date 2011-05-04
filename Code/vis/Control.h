@@ -49,14 +49,14 @@ namespace hemelb
 
         bool MouseIsOverPixel(float* density, float* stress);
 
-        void ProgressStreaklines(int time_step, int period, geometry::LatticeData* iLatDat);
+        void ProgressStreaklines(unsigned long time_step, unsigned long period, geometry::LatticeData* iLatDat);
         void Reset();
 
         void UpdateImageSize(int pixels_x, int pixels_y);
         void Render(geometry::LatticeData* iLatDat, const topology::NetworkTopology* iNetTopology);
         void WriteImage(std::string image_file_name);
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
-        void RegisterSite(int i, float density, float velocity, float stress);
+        void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
 
         Screen mScreen;
         Viewpoint mViewpoint;

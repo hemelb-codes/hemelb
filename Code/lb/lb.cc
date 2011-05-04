@@ -15,29 +15,28 @@ namespace hemelb
   {
     distribn_t LBM::ConvertPressureToLatticeUnits(double pressure) const
     {
-      return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * (PULSATILE_PERIOD_s
-          / (period * voxel_size)) * (PULSATILE_PERIOD_s / (period * voxel_size))
+      double temp = (PULSATILE_PERIOD_s / ((double) period * voxel_size));
+      return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
           / BLOOD_DENSITY_Kg_per_m3;
     }
 
     double LBM::ConvertPressureToPhysicalUnits(distribn_t pressure) const
     {
+      double temp = ( ((double) period * voxel_size) / PULSATILE_PERIOD_s);
       return REFERENCE_PRESSURE_mmHg + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3
-          * ( (period * voxel_size) / PULSATILE_PERIOD_s) * ( (period * voxel_size)
-          / PULSATILE_PERIOD_s) / mmHg_TO_PASCAL;
+          * temp * temp / mmHg_TO_PASCAL;
     }
 
     distribn_t LBM::ConvertPressureGradToLatticeUnits(double pressure_grad) const
     {
-      return pressure_grad * mmHg_TO_PASCAL * (PULSATILE_PERIOD_s / (period * voxel_size))
-          * (PULSATILE_PERIOD_s / (period * voxel_size)) / BLOOD_DENSITY_Kg_per_m3;
+      double temp = (PULSATILE_PERIOD_s / ((double) period * voxel_size));
+      return pressure_grad * mmHg_TO_PASCAL * temp * temp / BLOOD_DENSITY_Kg_per_m3;
     }
 
     double LBM::ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const
     {
-      return pressure_grad * BLOOD_DENSITY_Kg_per_m3
-          * ( (period * voxel_size) / PULSATILE_PERIOD_s) * ( (period * voxel_size)
-          / PULSATILE_PERIOD_s) / mmHg_TO_PASCAL;
+      double temp = ( ((double) period * voxel_size) / PULSATILE_PERIOD_s);
+      return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * temp * temp / mmHg_TO_PASCAL;
     }
 
     distribn_t LBM::ConvertVelocityToLatticeUnits(double velocity) const
@@ -71,7 +70,7 @@ namespace hemelb
     void LBM::RecalculateTauViscosityOmega()
     {
       mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-          / (Cs2 * period * voxel_size * voxel_size);
+          / (Cs2 * ((double) period * voxel_size * voxel_size));
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
@@ -123,7 +122,7 @@ namespace hemelb
 
     void LBM::UpdateBoundaryDensities(unsigned long time_step)
     {
-      double w = 2.0 * PI / period;
+      double w = 2.0 * PI / (double) period;
 
       for (int i = 0; i < inlets; i++)
       {
@@ -256,13 +255,13 @@ namespace hemelb
       {
         // Request the receive into the appropriate bit of FOld.
         mNet->RequestReceive<distribn_t> (mLatDat->GetFOld( (*it).FirstSharedF),
-                                       (*it).SharedFCount,
-                                       (*it).Rank);
+                                          (int) (*it).SharedFCount,
+                                           (*it).Rank);
 
         // Request the send from the right bit of FNew.
         mNet->RequestSend<distribn_t> (mLatDat->GetFNew( (*it).FirstSharedF),
-                                    (*it).SharedFCount,
-                                    (*it).Rank);
+                                       (int) (*it).SharedFCount,
+                                        (*it).Rank);
       }
     }
 
@@ -270,7 +269,7 @@ namespace hemelb
     {
       site_t offset = mLatDat->GetInnerSiteCount();
 
-      for (int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+      for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->DoCollisions(mState->DoRendering,
                                                    offset,
@@ -302,7 +301,7 @@ namespace hemelb
     {
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
-      for (size_t i = 0; i < mNetTopology->TotalSharedFs; i++)
+      for (site_t i = 0; i < mNetTopology->TotalSharedFs; i++)
       {
         *mLatDat->GetFNew(receivedFTranslator[i])
             = *mLatDat->GetFOld(mNetTopology->NeighbouringProcs[0].FirstSharedF + i);
@@ -341,7 +340,7 @@ namespace hemelb
     }
 
     // Update peak and average inlet velocities local to the current subdomain.
-    void LBM::UpdateInletVelocities(int time_step)
+    void LBM::UpdateInletVelocities(unsigned long time_step)
     {
       distribn_t density;
       distribn_t vx, vy, vz;

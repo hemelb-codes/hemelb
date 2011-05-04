@@ -120,7 +120,7 @@ namespace hemelb
         if (FD_ISSET(socket, &readableDescriptors))
         {
           // Try to receive all the data.
-          int steerDataRecvB = Network::recv_all(socket, steeringRecvBuffer, num_chars);
+          ssize_t steerDataRecvB = Network::recv_all(socket, steeringRecvBuffer, num_chars);
 
           // If there was an error, report it and return.
           if (steerDataRecvB < 0)

@@ -164,7 +164,7 @@ namespace hemelb
                   {
                     double lBigDistance[3];
                     for (unsigned int ii = 0; ii < 3; ii++)
-                      lBigDistance[ii] = BIG_NUMBER;
+                      lBigDistance[ii] = NO_VALUE;
                     SetWallNormal(site_map, lBigDistance);
                   }
                   ++lSiteIndexOnProc;

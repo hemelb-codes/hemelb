@@ -116,7 +116,7 @@ namespace hemelb
 
         void CreateMPIType(ProcComms *iMetaData);
 
-        void EnsureEnoughRequests(unsigned int count);
+        void EnsureEnoughRequests(size_t count);
 
         bool sendReceivePrepped;
 
