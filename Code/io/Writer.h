@@ -47,11 +47,11 @@ namespace hemelb
         // Methods to simply write (no separators) which are virtual and
         // hence must be overriden.
         virtual void _write(int16_t const& intToWrite) = 0;
-        virtual void _write(u_int16_t const& uIntToWrite) = 0;
+        virtual void _write(uint16_t const& uIntToWrite) = 0;
         virtual void _write(int32_t const& intToWrite) = 0;
-        virtual void _write(u_int32_t const& uIntToWrite) = 0;
+        virtual void _write(uint32_t const& uIntToWrite) = 0;
         virtual void _write(int64_t const& intToWrite) = 0;
-        virtual void _write(u_int64_t const& uIntToWrite) = 0;
+        virtual void _write(uint64_t const& uIntToWrite) = 0;
 
         virtual void _write(double const& doubleToWrite) = 0;
         virtual void _write(float const& floatToWrite) = 0;

@@ -32,11 +32,11 @@ namespace hemelb
         // These necessary since can't override a virtual method with a
         // template member.
         void _write(int16_t const& intToWrite);
-        void _write(u_int16_t const& uIntToWrite);
+        void _write(uint16_t const& uIntToWrite);
         void _write(int32_t const& intToWrite);
-        void _write(u_int32_t const& uIntToWrite);
+        void _write(uint32_t const& uIntToWrite);
         void _write(int64_t const& intToWrite);
-        void _write(u_int64_t const& uIntToWrite);
+        void _write(uint64_t const& uIntToWrite);
 
         void _write(double const& doubleToWrite);
         void _write(float const& floatToWrite);

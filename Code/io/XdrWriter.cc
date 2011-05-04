@@ -18,9 +18,9 @@ namespace hemelb
       xdr_int16_t(&mXdr, const_cast<int16_t *> (&shortToWrite));
     }
 
-    void XdrWriter::_write(u_int16_t const& shortToWrite)
+    void XdrWriter::_write(uint16_t const& shortToWrite)
     {
-      xdr_u_int16_t(&mXdr, const_cast<u_int16_t *> (&shortToWrite));
+      xdr_u_int16_t(&mXdr, const_cast<uint16_t *> (&shortToWrite));
     }
 
     void XdrWriter::_write(int32_t const& value)
@@ -28,9 +28,9 @@ namespace hemelb
       xdr_int(&mXdr, const_cast<int32_t *> (&value));
     }
 
-    void XdrWriter::_write(u_int32_t const& uIntToWrite)
+    void XdrWriter::_write(uint32_t const& uIntToWrite)
     {
-      xdr_u_int32_t(&mXdr, const_cast<u_int32_t *> (&uIntToWrite));
+      xdr_u_int32_t(&mXdr, const_cast<uint32_t *> (&uIntToWrite));
     }
 
     void XdrWriter::_write(int64_t const& longToWrite)
@@ -38,9 +38,9 @@ namespace hemelb
       xdr_int64_t(&mXdr, const_cast<int64_t*> (&longToWrite));
     }
 
-    void XdrWriter::_write(u_int64_t const& longToWrite)
+    void XdrWriter::_write(uint64_t const& longToWrite)
     {
-      xdr_u_int64_t(&mXdr, const_cast<u_int64_t*> (&longToWrite));
+      xdr_u_int64_t(&mXdr, const_cast<uint64_t*> (&longToWrite));
     }
 
     void XdrWriter::_write(float const& floatToWrite)
