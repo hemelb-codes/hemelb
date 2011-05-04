@@ -77,14 +77,14 @@ namespace hemelb
                             const VisSettings* visSettings)
     {
       // Store end points of the line and 'current' point (x and y).
-      int x = int (endPoint1[0]);
-      int y = int (endPoint1[1]);
+      int x = int(endPoint1[0]);
+      int y = int(endPoint1[1]);
 
       int x1, y1, x2, y2;
       if (endPoint2[0] < endPoint1[0])
       {
-        x1 = int (endPoint2[0]);
-        y1 = int (endPoint2[1]);
+        x1 = int(endPoint2[0]);
+        y1 = int(endPoint2[1]);
         x2 = x;
         y2 = y;
       }
@@ -92,8 +92,8 @@ namespace hemelb
       {
         x1 = x;
         y1 = y;
-        x2 = int (endPoint2[0]);
-        y2 = int (endPoint2[1]);
+        x2 = int(endPoint2[0]);
+        y2 = int(endPoint2[1]);
       }
 
       // Set dx with the difference between x-values at the endpoints.
@@ -369,8 +369,8 @@ namespace hemelb
     {
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        if (compositingBuffer[i].IsRT() && int (compositingBuffer[i].GetI()) == mouseX
-            && int (compositingBuffer[i].GetJ()) == mouseY)
+        if (compositingBuffer[i].IsRT() && int(compositingBuffer[i].GetI()) == mouseX
+            && int(compositingBuffer[i].GetJ()) == mouseY)
         {
           *density = compositingBuffer[i].GetDensity();
           *stress = compositingBuffer[i].GetStress();
@@ -393,31 +393,57 @@ namespace hemelb
                              const VisSettings* visSettings,
                              io::Writer* writer)
     {
+      int index;
+      int pix_data[3];
+      unsigned char rgb_data[12];
+      int bits_per_char = sizeof(char) * 8;
+
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        writer->writePixel(&compositingBuffer[i], domainStats, visSettings);
+//        col_pixel_p = &compositingBuffer[i];
+        ColPixel& col_pixel = compositingBuffer[i];
+        // Use a ray-tracer function to get the necessary pixel data.
+        col_pixel.rawWritePixel(&index, rgb_data, domainStats, visSettings);
+
+        *writer << index;
+
+        pix_data[0] = (rgb_data[0] << (3 * bits_per_char)) + (rgb_data[1] << (2 * bits_per_char))
+            + (rgb_data[2] << bits_per_char) + rgb_data[3];
+
+        pix_data[1] = (rgb_data[4] << (3 * bits_per_char)) + (rgb_data[5] << (2 * bits_per_char))
+            + (rgb_data[6] << bits_per_char) + rgb_data[7];
+
+        pix_data[2] = (rgb_data[8] << (3 * bits_per_char)) + (rgb_data[9] << (2 * bits_per_char))
+            + (rgb_data[10] << bits_per_char) + rgb_data[11];
+
+        for (int i = 0; i < 3; i++)
+        {
+          *writer << pix_data[i];
+        }
+        *writer<< io::Writer::eol;
       }
     }
 
-    const float* Screen::GetVtx() const
-    {
-      return vtx;
-    }
-    const float* Screen::GetUnitVectorProjectionX() const
-    {
-      return UnitVectorProjectionX;
-    }
-    const float* Screen::GetUnitVectorProjectionY() const
-    {
-      return UnitVectorProjectionY;
-    }
-    int Screen::GetPixelsX() const
-    {
-      return PixelsX;
-    }
-    int Screen::GetPixelsY() const
-    {
-      return PixelsY;
-    }
+
+  const float* Screen::GetVtx() const
+  {
+    return vtx;
   }
+  const float* Screen::GetUnitVectorProjectionX() const
+  {
+    return UnitVectorProjectionX;
+  }
+  const float* Screen::GetUnitVectorProjectionY() const
+  {
+    return UnitVectorProjectionY;
+  }
+  int Screen::GetPixelsX() const
+  {
+    return PixelsX;
+  }
+  int Screen::GetPixelsY() const
+  {
+    return PixelsY;
+  }
+}
 }
