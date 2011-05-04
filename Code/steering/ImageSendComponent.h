@@ -30,7 +30,7 @@ namespace hemelb
         int send_array_length;
 
       private:
-        int SendSuccess(int iSocket, char * data, int length);
+        ssize_t SendSuccess(int iSocket, char * data, int length);
 
         ClientConnection* mClientConnection;
         lb::LBM* mLbm;

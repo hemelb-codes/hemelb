@@ -150,7 +150,7 @@ namespace hemelb
 
       sockaddr_in sin;
       sin.sin_family = AF_INET;
-      sin.sin_port = htons((in_port_t) port);
+      sin.sin_port = (in_port_t) htonl(port);
 
       // Get name for the other end of the connection.
       struct hostent * host_addr = gethostbyname(hostname);

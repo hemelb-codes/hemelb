@@ -32,14 +32,14 @@ namespace hemelb
 
         site_t total_fluid_sites;
         int inlets;
-        unsigned int period;
+        unsigned long period;
 
         distribn_t ConvertPressureToLatticeUnits(double pressure) const;
         distribn_t ConvertVelocityToLatticeUnits(double velocity) const;
         distribn_t ConvertStressToLatticeUnits(double stress) const;
 
         void UpdateBoundaryDensities(unsigned long time_step);
-        void UpdateInletVelocities(int time_step);
+        void UpdateInletVelocities(unsigned long time_step);
 
         void Initialise(site_t* iFTranslator, vis::Control* iControl);
 

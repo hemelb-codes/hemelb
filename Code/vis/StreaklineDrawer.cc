@@ -1,4 +1,3 @@
-//#include <stdlib.h>
 #include <math.h>
 #include <vector>
 
@@ -87,12 +86,13 @@ namespace hemelb
                                             float v[2][2][2][3],
                                             float interp_v[3])
     {
-      float dx, dy, dz;
       float v_00z, v_01z, v_10z, v_11z, v_0y, v_1y;
 
-      dx = particle_p->x - (int) particle_p->x;
-      dy = particle_p->y - (int) particle_p->y;
-      dz = particle_p->z - (int) particle_p->z;
+      float dummy;
+
+      float dx = modff(particle_p->x, &dummy);
+      float dy = modff(particle_p->y, &dummy);
+      float dz = modff(particle_p->z, &dummy);
 
       for (int l = 0; l < 3; l++)
       {
@@ -221,9 +221,9 @@ namespace hemelb
               D3Q15::CalculateDensityAndVelocity(iLatDat->GetFOld(vel_site_data_p->site_id
                   * D3Q15::NUMVECTORS), density, vx, vy, vz);
 
-              v[i][j][k][0] = vel_site_data_p->vx = vx / density;
-              v[i][j][k][1] = vel_site_data_p->vy = vy / density;
-              v[i][j][k][2] = vel_site_data_p->vz = vz / density;
+              v[i][j][k][0] = vel_site_data_p->vx = (float) (vx / density);
+              v[i][j][k][1] = vel_site_data_p->vy = (float) (vy / density);
+              v[i][j][k][2] = vel_site_data_p->vz = (float) (vz / density);
             }
             else
             {
@@ -345,7 +345,7 @@ namespace hemelb
                         vel_site_data_p->counter = counter;
 
                         bool seenSelf = false;
-                        for (proc_t mm = 0; mm < mNeighProcs.size() && !seenSelf; mm++)
+                        for (size_t mm = 0; mm < mNeighProcs.size() && !seenSelf; mm++)
                         {
                           if (*neigh_proc_id == mNeighProcs[mm].id)
                           {
@@ -399,7 +399,7 @@ namespace hemelb
 
       shared_vs = 0;
 
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         shared_vs += mNeighProcs[m].send_vs;
       }
@@ -413,7 +413,7 @@ namespace hemelb
       }
       shared_vs = 0;
 
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         mNeighProcs[m].s_to_send = &s_to_send[shared_vs * 3];
         mNeighProcs[m].s_to_recv = &s_to_recv[shared_vs * 3];
@@ -429,7 +429,7 @@ namespace hemelb
       particles_to_send_max = 1000;
       particles_to_recv_max = 1000;
 
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         mNeighProcs[m].p_to_send.reserve(5 * particles_to_send_max);
         mNeighProcs[m].p_to_recv.reserve(5 * particles_to_recv_max);
@@ -443,9 +443,9 @@ namespace hemelb
       {
         from_proc_id_to_neigh_proc_index[m] = -1;
       }
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
-        from_proc_id_to_neigh_proc_index[mNeighProcs[m].id] = m;
+        from_proc_id_to_neigh_proc_index[mNeighProcs[m].id] = (proc_t) m;
       }
 
       counter = 0;
@@ -479,7 +479,7 @@ namespace hemelb
     // Communicate site ids to other processors.
     void StreaklineDrawer::communicateSiteIds()
     {
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         MPI_Irecv(&mNeighProcs[m].recv_vs,
                   1,
@@ -497,14 +497,14 @@ namespace hemelb
                   &req[mNeighProcs[m].id]);
         MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
       }
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
 
         if (mNeighProcs[m].recv_vs > 0)
         {
           MPI_Irecv(mNeighProcs[m].s_to_recv,
-                    mNeighProcs[m].recv_vs * 3,
+                    (int) mNeighProcs[m].recv_vs * 3,
                     site_mpi_t,
                     mNeighProcs[m].id,
                     40,
@@ -514,7 +514,7 @@ namespace hemelb
         if (mNeighProcs[m].send_vs > 0)
         {
           MPI_Isend(mNeighProcs[m].s_to_send,
-                    mNeighProcs[m].send_vs * 3,
+                    (int) mNeighProcs[m].send_vs * 3,
                     site_mpi_t,
                     mNeighProcs[m].id,
                     40,
@@ -524,7 +524,7 @@ namespace hemelb
           MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
         }
       }
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         if (mNeighProcs[m].recv_vs > 0)
         {
@@ -536,12 +536,12 @@ namespace hemelb
     // Communicate velocities to other processors.
     void StreaklineDrawer::communicateVelocities(geometry::LatticeData* iLatDat)
     {
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         if (mNeighProcs[m].send_vs > 0)
         {
           MPI_Irecv(mNeighProcs[m].v_to_recv,
-                    mNeighProcs[m].send_vs * 3,
+                    (int) mNeighProcs[m].send_vs * 3,
                     MPI_FLOAT,
                     mNeighProcs[m].id,
                     30,
@@ -550,7 +550,7 @@ namespace hemelb
         }
       }
 
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         for (site_t n = 0; n < mNeighProcs[m].recv_vs; n++)
         {
@@ -576,7 +576,7 @@ namespace hemelb
         if (mNeighProcs[m].recv_vs > 0)
         {
           MPI_Isend(mNeighProcs[m].v_to_send,
-                    mNeighProcs[m].recv_vs * 3,
+                    (int) mNeighProcs[m].recv_vs * 3,
                     MPI_FLOAT,
                     mNeighProcs[m].id,
                     30,
@@ -587,7 +587,7 @@ namespace hemelb
         }
       }
 
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         if (mNeighProcs[m].send_vs <= 0)
           continue;
@@ -610,7 +610,7 @@ namespace hemelb
           }
         }
       }
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         mNeighProcs[m].send_vs = 0;
       }
@@ -676,7 +676,7 @@ namespace hemelb
     // Communicate that particles current state to other processors.
     void StreaklineDrawer::communicateParticles(geometry::LatticeData* iLatDat)
     {
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         MPI_Irecv(&mNeighProcs[m].recv_ps,
                   1,
@@ -686,7 +686,7 @@ namespace hemelb
                   MPI_COMM_WORLD,
                   &req[procs + mNeighProcs[m].id]);
       }
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         mNeighProcs[m].send_ps = 0;
       }
@@ -718,12 +718,13 @@ namespace hemelb
         mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 1] = particleVec[n].y;
         mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 2] = particleVec[n].z;
         mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 3] = particleVec[n].vel;
-        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 4] = particleVec[n].inlet_id + 0.1;
+        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 4] = (float) particleVec[n].inlet_id
+            + 0.1F;
         ++mNeighProcs[m].send_ps;
 
         deleteParticle(n);
       }
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         MPI_Isend(&mNeighProcs[m].send_ps,
                   1,
@@ -734,17 +735,17 @@ namespace hemelb
                   &req[mNeighProcs[m].id]);
 
       }
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
       }
 
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         if (mNeighProcs[m].send_ps > 0)
         {
           MPI_Isend(&mNeighProcs[m].p_to_send[0],
-                    mNeighProcs[m].send_ps * 5,
+                    (int) mNeighProcs[m].send_ps * 5,
                     MPI_FLOAT,
                     mNeighProcs[m].id,
                     40,
@@ -754,7 +755,7 @@ namespace hemelb
           MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
         }
       }
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         if (mNeighProcs[m].recv_ps > 0)
         {
@@ -762,12 +763,12 @@ namespace hemelb
           {
             particles_to_recv_max *= 2;
             particles_to_recv_max
-                = util::NumericalFunctions::max<unsigned int>(particles_to_recv_max,
-                                                              mNeighProcs[m].recv_ps);
+                = util::NumericalFunctions::max(particles_to_recv_max,
+                                                (unsigned int) mNeighProcs[m].recv_ps);
             mNeighProcs[m].p_to_recv.reserve(5 * particles_to_recv_max);
           }
           MPI_Irecv(&mNeighProcs[m].p_to_recv[0],
-                    mNeighProcs[m].recv_ps * 5,
+                    (int) mNeighProcs[m].recv_ps * 5,
                     MPI_FLOAT,
                     mNeighProcs[m].id,
                     40,
@@ -813,18 +814,23 @@ namespace hemelb
     }
 
     // Draw streaklines
-    void StreaklineDrawer::StreakLines(int time_steps,
-                                       int time_steps_per_cycle,
+    void StreaklineDrawer::StreakLines(unsigned long time_steps,
+                                       unsigned long time_steps_per_cycle,
                                        geometry::LatticeData* iLatDat)
     {
+      // Set the particle creation period to be every time step, unless there are >=10000
+      // timesteps per cycle
       unsigned int particle_creation_period =
           util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle
-              / 5000.0F));
+              / 5000));
 
-      if (time_steps % (int) (0.5 + time_steps_per_cycle
-          / mVisSettings->streaklines_per_pulsatile_period) <= (mVisSettings->streakline_length
-          / 100.0F) * (time_steps_per_cycle / mVisSettings->streaklines_per_pulsatile_period)
-          && time_steps % particle_creation_period == 0)
+      int timestepsBetweenStreaklinesRounded = (int) (0.5F + (float) time_steps_per_cycle
+          / mVisSettings->streaklines_per_pulsatile_period);
+
+      if ((float) (time_steps % timestepsBetweenStreaklinesRounded)
+          <= (mVisSettings->streakline_length / 100.0F) * ((float) time_steps_per_cycle
+              / mVisSettings->streaklines_per_pulsatile_period) && time_steps
+          % particle_creation_period == 0)
       {
         createSeedParticles();
       }
@@ -845,7 +851,7 @@ namespace hemelb
       delete[] from_proc_id_to_neigh_proc_index;
       delete[] req;
 
-      for (proc_t m = 0; m < mNeighProcs.size(); m++)
+      for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
         mNeighProcs[m].p_to_recv.clear();
         mNeighProcs[m].p_to_send.clear();

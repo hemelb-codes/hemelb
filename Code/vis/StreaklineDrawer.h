@@ -39,7 +39,9 @@ namespace hemelb
         void Restart();
 
         // Drawing methods.
-        void StreakLines(int time_steps, int time_steps_per_cycle, geometry::LatticeData* iLatDat);
+        void StreakLines(unsigned long time_steps,
+                         unsigned long time_steps_per_cycle,
+                         geometry::LatticeData* iLatDat);
         void render(geometry::LatticeData* iLatDat);
 
       private:

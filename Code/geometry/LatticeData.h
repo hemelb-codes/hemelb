@@ -34,7 +34,7 @@ namespace hemelb
             double wall_nor[3];
             // cut distances along the 14 non-zero lattice vectors;
             // each one is between 0 and 1 if the surface cuts the corresponding
-            // vector or is equal to "BIG_NUMBER" otherwise
+            // vector or is equal to "NO_VALUE" otherwise
             double cut_dist[D3Q15::NUMVECTORS - 1];
         };
 

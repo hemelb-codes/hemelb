@@ -60,38 +60,30 @@ namespace hemelb
 
   void SimConfig::DoIO(TiXmlElement *iTopNode, bool iIsLoading)
   {
-    TiXmlElement* lSimulationElement = GetChild(iTopNode, "simulation",
-                                                iIsLoading);
+    TiXmlElement* lSimulationElement = GetChild(iTopNode, "simulation", iIsLoading);
     DoIO(lSimulationElement, "cycles", iIsLoading, NumCycles);
     DoIO(lSimulationElement, "cyclesteps", iIsLoading, StepsPerCycle);
 
     TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
     DoIO(lGeometryElement, "voxelsize", iIsLoading, VoxelSize);
-    DoIO(GetChild(lGeometryElement, "datafile", iIsLoading), "path",
-         iIsLoading, DataFilePath);
+    DoIO(GetChild(lGeometryElement, "datafile", iIsLoading), "path", iIsLoading, DataFilePath);
 
     DoIO(GetChild(iTopNode, "inlets", iIsLoading), iIsLoading, Inlets, "inlet");
 
-    DoIO(GetChild(iTopNode, "outlets", iIsLoading), iIsLoading, Outlets,
-         "outlet");
+    DoIO(GetChild(iTopNode, "outlets", iIsLoading), iIsLoading, Outlets, "outlet");
 
-    TiXmlElement* lVisualisationElement = GetChild(iTopNode, "visualisation",
-                                                   iIsLoading);
-    DoIO(GetChild(lVisualisationElement, "centre", iIsLoading), iIsLoading,
-         VisCentre);
-    TiXmlElement *lOrientationElement = GetChild(lVisualisationElement,
-                                                 "orientation", iIsLoading);
+    TiXmlElement* lVisualisationElement = GetChild(iTopNode, "visualisation", iIsLoading);
+    DoIO(GetChild(lVisualisationElement, "centre", iIsLoading), iIsLoading, VisCentre);
+    TiXmlElement *lOrientationElement = GetChild(lVisualisationElement, "orientation", iIsLoading);
     DoIO(lOrientationElement, "longitude", iIsLoading, VisLongitude);
     DoIO(lOrientationElement, "latitude", iIsLoading, VisLatitude);
 
-    TiXmlElement *lDisplayElement = GetChild(lVisualisationElement, "display",
-                                             iIsLoading);
+    TiXmlElement *lDisplayElement = GetChild(lVisualisationElement, "display", iIsLoading);
 
     DoIO(lDisplayElement, "zoom", iIsLoading, VisZoom);
     DoIO(lDisplayElement, "brightness", iIsLoading, VisBrightness);
 
-    TiXmlElement *lRangeElement = GetChild(lVisualisationElement, "range",
-                                           iIsLoading);
+    TiXmlElement *lRangeElement = GetChild(lVisualisationElement, "range", iIsLoading);
 
     DoIO(lRangeElement, "maxvelocity", iIsLoading, MaxVelocity);
     DoIO(lRangeElement, "maxstress", iIsLoading, MaxStress);
@@ -181,8 +173,33 @@ namespace hemelb
     }
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, std::vector<
-      InOutLet*> &bResult, std::string iChildNodeName)
+  void SimConfig::DoIO(TiXmlElement* iParent,
+                       std::string iAttributeName,
+                       bool iIsLoading,
+                       unsigned long &bValue)
+  {
+    if (iIsLoading)
+    {
+      char *dummy;
+      // Read in, in base 10.
+      bValue = std::strtoul(iParent->Attribute(iAttributeName)->c_str(), &dummy, 10);
+    }
+    else
+    {
+      // This should be ample.
+      char lStringValue[20];
+
+      // %ld specifies long integer style.
+      sprintf(lStringValue, "%ld", bValue);
+
+      iParent->SetAttribute(iAttributeName, lStringValue);
+    }
+  }
+
+  void SimConfig::DoIO(TiXmlElement *iParent,
+                       bool iIsLoading,
+                       std::vector<InOutLet*> &bResult,
+                       std::string iChildNodeName)
   {
     if (iIsLoading)
     {
@@ -201,8 +218,7 @@ namespace hemelb
       for (unsigned int ii = 0; ii < bResult.size(); ii++)
       {
         // NB we're good up to 99 inlets here.
-        DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading,
-             bResult[ii]);
+        DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, bResult[ii]);
       }
     }
   }

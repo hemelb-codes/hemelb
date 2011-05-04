@@ -236,7 +236,7 @@ namespace hemelb
                           int (stress_b / dt),
                           &rgb_data[3]);
         }
-        else if (stress < ((float) BIG_NUMBER))
+        else if (stress < ((float) NO_VALUE))
         {
           float stress_col[3];
           PickColour(stress, stress_col);
@@ -313,7 +313,7 @@ namespace hemelb
       }
       else if (i.isStreakline)
       {
-        float scaled_vel = particle_vel * iDomainStats->velocity_threshold_max_inv;
+        float scaled_vel = (float) (particle_vel * iDomainStats->velocity_threshold_max_inv);
         float particle_col[3];
         PickColour(scaled_vel, particle_col);
 
@@ -335,7 +335,7 @@ namespace hemelb
                                                                       127);
 
         // store shear stress or von Mises stress
-        if (stress < ((float) BIG_NUMBER))
+        if (stress < ((float) NO_VALUE))
         {
           rgb_data[9] = rgb_data[10] = rgb_data[11]
               = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress),
@@ -352,9 +352,8 @@ namespace hemelb
     void ColPixel::PickColour(float value, float colour[3])
     {
       colour[0] = util::NumericalFunctions::enforceBounds<float>(4.F * value - 2.F, 0.F, 1.F);
-      colour[1] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * fabs(value - 0.5F),
-                                                                 0.F,
-                                                                 1.F);
+      colour[1] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * (float) fabs(value
+          - 0.5F), 0.F, 1.F);
       colour[2] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * value, 0.F, 1.F);
     }
 

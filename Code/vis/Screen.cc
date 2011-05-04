@@ -255,13 +255,13 @@ namespace hemelb
        */
 
       // Start with a difference in rank of 1, doubling every time.
-      for (unsigned int deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
+      for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
       {
         // The receiving proc is all the ranks that are 1 modulo (deltaRank * 2)
-        for (unsigned int receivingProc = 1; receivingProc < (netTop->GetProcessorCount()
-            - deltaRank); receivingProc += deltaRank << 1)
+        for (proc_t receivingProc = 1; receivingProc < (netTop->GetProcessorCount() - deltaRank); receivingProc
+            += deltaRank << 1)
         {
-          unsigned int sendingProc = receivingProc + deltaRank;
+          proc_t sendingProc = receivingProc + deltaRank;
 
           // If we're the sending proc, do the send.
           if (netTop->GetLocalRank() == sendingProc)

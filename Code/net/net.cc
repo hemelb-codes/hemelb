@@ -16,7 +16,7 @@ namespace hemelb
   namespace net
   {
 
-    void Net::EnsureEnoughRequests(unsigned int count)
+    void Net::EnsureEnoughRequests(size_t count)
     {
       if (mRequests.size() < count)
       {
@@ -73,7 +73,7 @@ namespace hemelb
       mNetworkTopology->TotalSharedFs = 0;
 
       // Set the remaining neighbouring processor data.
-      for (proc_t n = 0; n < mNetworkTopology->NeighbouringProcs.size(); n++)
+      for (size_t n = 0; n < mNetworkTopology->NeighbouringProcs.size(); n++)
       {
         // f_data compacted according to number of shared f_s on each process.
         // f_data will be set later.
@@ -99,7 +99,7 @@ namespace hemelb
         mNetworkTopology->NeighbourIndexFromProcRank[m] = -1;
       }
       // Get neigh_proc_index from ProcessorRankForEachBlockSite.
-      for (proc_t m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
+      for (proc_t m = 0; m < (proc_t) mNetworkTopology->NeighbouringProcs.size(); m++)
       {
         mNetworkTopology->NeighbourIndexFromProcRank[mNetworkTopology->NeighbouringProcs[m].Rank]
             = m;
@@ -133,7 +133,7 @@ namespace hemelb
 
       site_t sharedSitesSeen = 0;
 
-      for (proc_t m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
+      for (size_t m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
       {
         hemelb::topology::NeighbouringProcessor *neigh_proc_p =
             &mNetworkTopology->NeighbouringProcs[m];
@@ -161,7 +161,7 @@ namespace hemelb
 
           // Set f_id to the element in the send buffer that we put the updated
           // distribution functions in.
-          bLatDat->SetNeighbourLocation(contigSiteId, l, ++f_count);
+          bLatDat->SetNeighbourLocation(contigSiteId, (unsigned int) l, ++f_count);
 
           // Set the place where we put the received distribution functions, which is
           // f_new[number of fluid site that sends, inverse direction].
@@ -192,7 +192,7 @@ namespace hemelb
       // propagate to different partitions is avoided (only their values
       // will be communicated). It's here!
       // Allocate the request variable.
-      for (proc_t m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
+      for (size_t m = 0; m < mNetworkTopology->NeighbouringProcs.size(); m++)
       {
         hemelb::topology::NeighbouringProcessor *neigh_proc_p =
             &mNetworkTopology->NeighbouringProcs[m];
@@ -203,7 +203,7 @@ namespace hemelb
         if (neigh_proc_p->Rank > mNetworkTopology->GetLocalRank())
         {
           MPI_Isend(&lSharedFLocationForEachProc[m][0],
-                    neigh_proc_p->SharedFCount * 4,
+                    (int) neigh_proc_p->SharedFCount * 4,
                     site_mpi_t,
                     neigh_proc_p->Rank,
                     10,
@@ -213,7 +213,7 @@ namespace hemelb
         else
         {
           MPI_Irecv(&lSharedFLocationForEachProc[m][0],
-                    neigh_proc_p->SharedFCount * 4,
+                    (int) neigh_proc_p->SharedFCount * 4,
                     site_mpi_t,
                     neigh_proc_p->Rank,
                     10,
@@ -222,7 +222,7 @@ namespace hemelb
         }
       }
 
-      MPI_Waitall(mNetworkTopology->NeighbouringProcs.size(), &mRequests[0], &mStatuses[0]);
+      MPI_Waitall((int) mNetworkTopology->NeighbouringProcs.size(), &mRequests[0], &mStatuses[0]);
     }
 
     void Net::GetThisRankSiteData(const geometry::LatticeData* iLatDat,
@@ -322,7 +322,7 @@ namespace hemelb
       site_t interCollisions[COLLISION_TYPES];
       site_t innerCollisions[COLLISION_TYPES];
 
-      for (int m = 0; m < COLLISION_TYPES; m++)
+      for (unsigned int m = 0; m < COLLISION_TYPES; m++)
       {
         interCollisions[m] = 0;
         innerCollisions[m] = 0;
@@ -403,7 +403,7 @@ namespace hemelb
 
                     // Iterate over neighbouring processors until we find the one with the
                     // neighbouring site on it.
-                    proc_t lNeighbouringProcs = mNetworkTopology->NeighbouringProcs.size();
+                    proc_t lNeighbouringProcs = (proc_t) mNetworkTopology->NeighbouringProcs.size();
                     for (proc_t mm = 0; mm < lNeighbouringProcs && flag; mm++)
                     {
                       // Check whether the rank for a particular neighbour has already been
@@ -467,7 +467,7 @@ namespace hemelb
 
                     if (l == 0)
                     {
-                      map_block_p->site_data[m] = innerCollisions[l];
+                      map_block_p->site_data[m] = (unsigned int) innerCollisions[l];
                     }
 
                     ++innerCollisions[l];
@@ -610,13 +610,13 @@ namespace hemelb
                   {
                     if (l != 0)
                     {
-                      *site_data_p = collision_offset[0][l] + innerColsPassed[l];
+                      *site_data_p = (unsigned int) (collision_offset[0][l] + innerColsPassed[l]);
                       ++innerColsPassed[l];
                     }
                   }
                   else
                   {
-                    *site_data_p = collision_offset[1][l] + interColsPassed[l];
+                    *site_data_p = (unsigned int) (collision_offset[1][l] + interColsPassed[l]);
                     ++interColsPassed[l];
                   }
                 }
@@ -677,7 +677,7 @@ namespace hemelb
 
     void Net::Wait()
     {
-      MPI_Waitall(mSendProcessorComms.size() + mReceiveProcessorComms.size(),
+      MPI_Waitall((int) (mSendProcessorComms.size() + mReceiveProcessorComms.size()),
                   &mRequests[0],
                   &mStatuses[0]);
 
@@ -784,7 +784,7 @@ namespace hemelb
         ++lLocation;
       }
 
-      for (int ii = iMetaData->PointerList.size() - 1; ii >= 0; ii--)
+      for (int ii = (int) iMetaData->PointerList.size() - 1; ii >= 0; ii--)
       {
         displacements[ii] -= displacements[0];
 
@@ -793,7 +793,7 @@ namespace hemelb
       }
 
       // Create the type and commit it.
-      MPI_Type_create_struct(iMetaData->PointerList.size(),
+      MPI_Type_create_struct((int) iMetaData->PointerList.size(),
                              lengths,
                              displacements,
                              types,
