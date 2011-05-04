@@ -1,8 +1,6 @@
 #ifndef HEMELB_IO_WRITER_H
 #define HEMELB_IO_WRITER_H
 #include <stdint.h>
-#include "lb/LbmParameters.h"
-#include "vis/ColPixel.h"
 
 namespace hemelb
 {
@@ -28,10 +26,6 @@ namespace hemelb
           writeFieldSeparator();
           return *this;
         }
-
-        void writePixel(vis::ColPixel *col_pixel_p,
-                        const vis::DomainStats* iDomainStats,
-                        const vis::VisSettings* visSettings);
 
         // Function to get the current position of writing in the stream.
         virtual unsigned int getCurrentStreamPosition() const = 0;
