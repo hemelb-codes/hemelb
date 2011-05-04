@@ -9,19 +9,38 @@ namespace hemelb
   {
     // Functions to write simple types out to the Xdr stream.
     // Sadly templating is non-trivial due to XDR's naming.
-    void XdrWriter::_write(int const& value)
+
+    // The const_cast in these is safe as the XDR writer won't
+    // change the values but doesn't specify in the headers.
+
+    void XdrWriter::_write(int16_t const& shortToWrite)
     {
-      xdr_int(&mXdr, const_cast<int *> (&value));
+      xdr_int16_t(&mXdr, const_cast<int16_t *> (&shortToWrite));
     }
 
-    void XdrWriter::_write(double const& doubleToWrite)
+    void XdrWriter::_write(u_int16_t const& shortToWrite)
     {
-      xdr_double(&mXdr, const_cast<double *> (&doubleToWrite));
+      xdr_u_int16_t(&mXdr, const_cast<u_int16_t *> (&shortToWrite));
     }
 
-    void XdrWriter::_write(short const& shortToWrite)
+    void XdrWriter::_write(int32_t const& value)
     {
-      xdr_short(&mXdr, const_cast<short *> (&shortToWrite));
+      xdr_int(&mXdr, const_cast<int32_t *> (&value));
+    }
+
+    void XdrWriter::_write(u_int32_t const& uIntToWrite)
+    {
+      xdr_u_int32_t(&mXdr, const_cast<u_int32_t *> (&uIntToWrite));
+    }
+
+    void XdrWriter::_write(int64_t const& longToWrite)
+    {
+      xdr_int64_t(&mXdr, const_cast<int64_t*> (&longToWrite));
+    }
+
+    void XdrWriter::_write(u_int64_t const& longToWrite)
+    {
+      xdr_u_int64_t(&mXdr, const_cast<u_int64_t*> (&longToWrite));
     }
 
     void XdrWriter::_write(float const& floatToWrite)
@@ -29,14 +48,9 @@ namespace hemelb
       xdr_float(&mXdr, const_cast<float *> (&floatToWrite));
     }
 
-    void XdrWriter::_write(unsigned int const& uIntToWrite)
+    void XdrWriter::_write(double const& doubleToWrite)
     {
-      xdr_u_int(&mXdr, const_cast<unsigned int *> (&uIntToWrite));
-    }
-
-    void XdrWriter::_write(long const& longToWrite)
-    {
-      xdr_long(&mXdr, const_cast<long*> (&longToWrite));
+      xdr_double(&mXdr, const_cast<double *> (&doubleToWrite));
     }
 
     // Method to get the current position in the stream.
