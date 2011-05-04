@@ -20,6 +20,7 @@ namespace hemelb
       public:
         enum SiteType
         {
+          // These must be consistent with the setup tool
           SOLID_TYPE = 0U,
           FLUID_TYPE = 1U,
           INLET_TYPE = 2U,
