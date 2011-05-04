@@ -127,9 +127,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 {
   mTimingsFile = bTimingsFile;
 
-  site_t mins[3], maxes[3];
+  hemelb::site_t mins[3], maxes[3];
   hemelb::lb::LbmParameters params;
-  site_t totalFluidSites;
+  hemelb::site_t totalFluidSites;
 
   mLatDat
       = new hemelb::geometry::LatticeData(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
@@ -173,7 +173,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                      &mSimulationState);
 
   double seconds = hemelb::util::myClock();
-  site_t* lReceiveTranslator = mNet->Initialise(mLatDat);
+  hemelb::site_t* lReceiveTranslator = mNet->Initialise(mLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
   // Initialise the visualisation controller.
@@ -255,7 +255,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
     for (mSimulationState.TimeStep = 1; mSimulationState.TimeStep <= mLbm->period; mSimulationState.TimeStep++)
     {
       ++total_time_steps;
-      mSimulationState.IntraCycleTime = (PULSATILE_PERIOD_s * (double) mSimulationState.TimeStep)
+      mSimulationState.IntraCycleTime = (hemelb::PULSATILE_PERIOD_s * (double) mSimulationState.TimeStep)
           / (double) mLbm->period;
 
       bool write_snapshot_image = ( (mSimulationState.TimeStep % images_period) == 0)
@@ -574,7 +574,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
 
       fprintf(mTimingsFile, "Sub-domains info:\n\n");
 
-      for (proc_t n = 0; n < mNetworkTopology->GetProcessorCount(); n++)
+      for (hemelb::proc_t n = 0; n < mNetworkTopology->GetProcessorCount(); n++)
       {
         fprintf(mTimingsFile,
                 "rank: %lu, fluid sites: %lu\n",
