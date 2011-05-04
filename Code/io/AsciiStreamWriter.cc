@@ -36,6 +36,8 @@ namespace hemelb
     void AsciiStreamWriter::_write(unsigned int const & value) {
       this->_write<unsigned int>(value);
     }
-
+    void AsciiStreamWriter::_write(long const & value) {
+      this->_write<long>(value);
+    }
   }
 }

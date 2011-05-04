@@ -3,9 +3,12 @@
 
 #include "mpiInclude.h"
 
+// Basic types for use in HemeLB. Any variable which scales as a function of the number of sites
+// can have type site_t, processors proc_t.
+// Any variable whose precision should roughly match that of the lattice sites' velocity
+// distributions can have type distribn_t.
 typedef long site_t;
 const MPI_Datatype site_mpi_t = MPI_LONG;
-
 typedef int proc_t;
 typedef double distribn_t;
 

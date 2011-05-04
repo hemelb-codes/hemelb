@@ -63,7 +63,7 @@ namespace hemelb
             unsigned int j :14;
 
             PixelId();
-            PixelId(int i, int j);
+            PixelId(unsigned int i, unsigned int j);
         };
 
         static void registerMpiType();

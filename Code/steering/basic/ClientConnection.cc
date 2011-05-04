@@ -33,7 +33,9 @@ namespace hemelb
         char steering_session_id_char[255];
         std::sprintf(steering_session_id_char, "%i", iSteeringSessionId);
 
-        HttpPost::request("bunsen.chem.ucl.ac.uk", 28080, "/ahe/test/rendezvous/",
+        HttpPost::request("bunsen.chem.ucl.ac.uk",
+                          28080,
+                          "/ahe/test/rendezvous/",
                           steering_session_id_char);
       }
 
@@ -61,7 +63,7 @@ namespace hemelb
         struct sockaddr_in my_address;
 
         my_address.sin_family = AF_INET;
-        my_address.sin_port = htons(MYPORT);
+        my_address.sin_port = htons((in_port_t) MYPORT);
         my_address.sin_addr.s_addr = INADDR_ANY;
         memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
 
@@ -126,7 +128,7 @@ namespace hemelb
             {
               flags = 0;
             }
-            if(fcntl(mCurrentSocket, F_SETFL, flags | O_NONBLOCK) < 0)
+            if (fcntl(mCurrentSocket, F_SETFL, flags | O_NONBLOCK) < 0)
             {
               perror("flags");
             }

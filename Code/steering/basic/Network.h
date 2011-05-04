@@ -10,10 +10,10 @@ namespace hemelb
     {
       public:
         // Receive a bytestream of known length from a socket into a buffer.
-        static int recv_all(int sockid, char *buf, const int length);
+        static ssize_t recv_all(int sockid, char *buf, const int length);
 
         // Send all bytes from a buffer of known length over a socket.
-        static int send_all(int sockid, const char *buf, const int length);
+        static ssize_t send_all(int sockid, const char *buf, const int length);
     };
 
   }

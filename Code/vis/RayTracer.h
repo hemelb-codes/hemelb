@@ -62,15 +62,10 @@ namespace hemelb
             unsigned short int blocks_x, blocks_y, blocks_z;
         };
 
-        struct MinLocation
-        {
-            int i, j, k;
-        };
-
         // Some sort of coordinates.
-        struct BlockLocation
+        struct Location
         {
-            short int i, j, k;
+            site_t i, j, k;
         };
 
         void UpdateRayData(const float flow_field[3],
@@ -115,8 +110,8 @@ namespace hemelb
 
         const float mBlockSizeFloat;
         const float mBlockSizeInverse;
-        const unsigned int block_size2, block_size3, block_size_1;
-        const unsigned int blocks_yz;
+        const site_t block_size2, block_size3, block_size_1;
+        const site_t blocks_yz;
     };
 
   }

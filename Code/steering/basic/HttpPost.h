@@ -19,7 +19,7 @@ namespace hemelb
          * @return Error code. 0 on success.
          */
         static int request(const char* hostname,
-                           const short port,
+                           const in_port_t port,
                            const char* api,
                            const char* resourceid);
 
@@ -39,7 +39,7 @@ namespace hemelb
          * @param iMessage
          * @return
          */
-        static int Send_Request(int iSocket, const char *iMessage);
+        static ssize_t Send_Request(int iSocket, const char *iMessage);
 
         static const int MYPORT = 65250;
     };
