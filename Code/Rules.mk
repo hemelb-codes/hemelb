@@ -15,8 +15,6 @@ $(EXE)_DEPS = D3Q15.o \
         main.o \
         $(SUBDIRS_TGTS)
 
-HEMELB_INCLUDEPATHS += $(TOP)
-
 include $(MK)/footer.mk
 # This is just a convenience - to let you know when make has stopped
 # interpreting make files and started their execution.
