@@ -23,9 +23,29 @@ namespace hemelb
       *outStream << std::endl;
     }
 
-    void AsciiStreamWriter::_write(int const & value)
+    void AsciiStreamWriter::_write(int16_t const & value)
     {
-      this->_write<int> (value);
+      this->_write<int16_t> (value);
+    }
+    void AsciiStreamWriter::_write(u_int16_t const & value)
+    {
+      this->_write<u_int16_t> (value);
+    }
+    void AsciiStreamWriter::_write(int32_t const & value)
+    {
+      this->_write<int32_t> (value);
+    }
+    void AsciiStreamWriter::_write(u_int32_t const & value)
+    {
+      this->_write<u_int32_t> (value);
+    }
+    void AsciiStreamWriter::_write(int64_t const & value)
+    {
+      this->_write<int64_t> (value);
+    }
+    void AsciiStreamWriter::_write(u_int64_t const & value)
+    {
+      this->_write<u_int64_t> (value);
     }
     void AsciiStreamWriter::_write(double const & value)
     {
@@ -34,18 +54,6 @@ namespace hemelb
     void AsciiStreamWriter::_write(float const & value)
     {
       this->_write<float> (value);
-    }
-    void AsciiStreamWriter::_write(short const & value)
-    {
-      this->_write<short> (value);
-    }
-    void AsciiStreamWriter::_write(unsigned int const & value)
-    {
-      this->_write<unsigned int> (value);
-    }
-    void AsciiStreamWriter::_write(long const & value)
-    {
-      this->_write<long> (value);
     }
   }
 }
