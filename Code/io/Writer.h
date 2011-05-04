@@ -1,6 +1,6 @@
 #ifndef HEMELB_IO_WRITER_H
 #define HEMELB_IO_WRITER_H
-
+#include <stdint.h>
 #include "lb/LbmParameters.h"
 #include "vis/ColPixel.h"
 
