@@ -483,14 +483,14 @@ namespace hemelb
       {
         MPI_Irecv(&mNeighProcs[m].recv_vs,
                   1,
-                  site_mpi_t,
+                  MpiDataType<site_t>(),
                   mNeighProcs[m].id,
                   30,
                   MPI_COMM_WORLD,
                   &req[procs + mNeighProcs[m].id]);
         MPI_Isend(&mNeighProcs[m].send_vs,
                   1,
-                  site_mpi_t,
+                  MpiDataType<site_t>(),
                   mNeighProcs[m].id,
                   30,
                   MPI_COMM_WORLD,
@@ -505,7 +505,7 @@ namespace hemelb
         {
           MPI_Irecv(mNeighProcs[m].s_to_recv,
                     (int) mNeighProcs[m].recv_vs * 3,
-                    site_mpi_t,
+                    MpiDataType<site_t>(),
                     mNeighProcs[m].id,
                     40,
                     MPI_COMM_WORLD,
@@ -515,7 +515,7 @@ namespace hemelb
         {
           MPI_Isend(mNeighProcs[m].s_to_send,
                     (int) mNeighProcs[m].send_vs * 3,
-                    site_mpi_t,
+                    MpiDataType<site_t>(),
                     mNeighProcs[m].id,
                     40,
                     MPI_COMM_WORLD,
@@ -680,7 +680,7 @@ namespace hemelb
       {
         MPI_Irecv(&mNeighProcs[m].recv_ps,
                   1,
-                  site_mpi_t,
+                  MpiDataType<site_t>(),
                   mNeighProcs[m].id,
                   30,
                   MPI_COMM_WORLD,
@@ -728,7 +728,7 @@ namespace hemelb
       {
         MPI_Isend(&mNeighProcs[m].send_ps,
                   1,
-                  site_mpi_t,
+                  MpiDataType<site_t>(),
                   mNeighProcs[m].id,
                   30,
                   MPI_COMM_WORLD,

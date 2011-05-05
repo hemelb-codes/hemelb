@@ -204,7 +204,7 @@ namespace hemelb
         {
           MPI_Isend(&lSharedFLocationForEachProc[m][0],
                     (int) neigh_proc_p->SharedFCount * 4,
-                    site_mpi_t,
+                    MpiDataType<site_t>(),
                     neigh_proc_p->Rank,
                     10,
                     MPI_COMM_WORLD,
@@ -214,7 +214,7 @@ namespace hemelb
         {
           MPI_Irecv(&lSharedFLocationForEachProc[m][0],
                     (int) neigh_proc_p->SharedFCount * 4,
-                    site_mpi_t,
+                    MpiDataType<site_t>(),
                     neigh_proc_p->Rank,
                     10,
                     MPI_COMM_WORLD,
