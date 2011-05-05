@@ -272,7 +272,7 @@ namespace hemelb
             {
               MPI_Send(localPixels,
                        col_pixels,
-                       ColPixel::getMpiType(),
+                       MpiDataType<ColPixel>(),
                        receivingProc,
                        20,
                        MPI_COMM_WORLD);
@@ -290,7 +290,7 @@ namespace hemelb
             {
               MPI_Recv(localPixels,
                        col_pixels_temp,
-                       ColPixel::getMpiType(),
+                       MpiDataType<ColPixel>(),
                        sendingProc,
                        20,
                        MPI_COMM_WORLD,
@@ -336,7 +336,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Send(compositingBuffer, col_pixels, ColPixel::getMpiType(), 0, 20, MPI_COMM_WORLD);
+          MPI_Send(compositingBuffer, col_pixels, MpiDataType<ColPixel>(), 0, 20, MPI_COMM_WORLD);
         }
 
       }
@@ -349,7 +349,7 @@ namespace hemelb
         {
           MPI_Recv(compositingBuffer,
                    col_pixels,
-                   ColPixel::getMpiType(),
+                   MpiDataType<ColPixel>(),
                    1,
                    20,
                    MPI_COMM_WORLD,
