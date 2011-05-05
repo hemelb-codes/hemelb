@@ -3,7 +3,7 @@
 
 #include <limits>
 
-#include "mpiInclude.h"
+//#include "mpiInclude.h"
 
 namespace hemelb
 {
@@ -13,7 +13,7 @@ namespace hemelb
   // Any variable whose precision should roughly match that of the lattice sites' velocity
   // distributions can have type distribn_t.
   typedef long site_t;
-  const MPI_Datatype site_mpi_t = MPI_LONG;
+//  const MPI_Datatype site_mpi_t = MPI_LONG;
   typedef int proc_t;
   typedef double distribn_t;
 
