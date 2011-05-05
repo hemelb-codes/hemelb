@@ -1,5 +1,4 @@
 #include "io/Writer.h"
-#include "vis/ColPixel.h"
 
 namespace hemelb
 {
