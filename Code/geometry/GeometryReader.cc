@@ -615,8 +615,8 @@ namespace hemelb
         blockAssigned[ii] = false;
       }
 
-      std::vector<BlockLocation> *lBlockLocationA = new std::vector<BlockLocation>;
-      std::vector<BlockLocation> *lBlockLocationB = new std::vector<BlockLocation>;
+      std::vector<BlockLocation> *lCurrentEdge = new std::vector<BlockLocation>;
+      std::vector<BlockLocation> *lExpandedEdge = new std::vector<BlockLocation>;
 
       int lBlockNumber = -1;
 
@@ -660,13 +660,12 @@ namespace hemelb
             ++lBlocksOnCurrentProc;
 
             // Record the location of this initial site.
-            // TODO If we're clearing this every time, does it need to be a vector?
-            lBlockLocationA->clear();
+            lCurrentEdge->clear();
             BlockLocation lNew;
             lNew.i = lBlockCoordI;
             lNew.j = lBlockCoordJ;
             lNew.k = lBlockCoordK;
-            lBlockLocationA->push_back(lNew);
+            lCurrentEdge->push_back(lNew);
 
             // The subdomain can grow.
             bool lIsRegionGrowing = true;
@@ -675,69 +674,24 @@ namespace hemelb
             // sites), and we need more sites on this particular rank.
             while (lBlocksOnCurrentProc < blocksPerUnit && lIsRegionGrowing)
             {
-              lBlockLocationB->clear();
+              lExpandedEdge->clear();
 
               // Sites added to the edge of the mClusters during the iteration.
-              lIsRegionGrowing = false;
+              lIsRegionGrowing = Expand(lCurrentEdge,
+                                        lExpandedEdge,
+                                        iGlobLatDat,
+                                        fluidSitesPerBlock,
+                                        blockAssigned,
+                                        currentUnit,
+                                        unitForEachBlock,
+                                        lBlocksOnCurrentProc,
+                                        blocksPerUnit);
 
-              // For sites on the edge of the domain (sites_a), deal with the neighbours.
-              for (unsigned int index_a = 0; index_a < lBlockLocationA->size()
-                  && lBlocksOnCurrentProc < blocksPerUnit; index_a++)
-              {
-                lNew = lBlockLocationA->operator [](index_a);
-
-                for (unsigned int l = 1; l < D3Q15::NUMVECTORS && lBlocksOnCurrentProc
-                    < blocksPerUnit; l++)
-                {
-                  // Record neighbour location.
-                  site_t neigh_i = lNew.i + D3Q15::CX[l];
-                  site_t neigh_j = lNew.j + D3Q15::CY[l];
-                  site_t neigh_k = lNew.k + D3Q15::CZ[l];
-
-                  // Move on if neighbour is outside the bounding box.
-                  if (neigh_i == -1 || neigh_i == iGlobLatDat->GetXBlockCount())
-                    continue;
-                  if (neigh_j == -1 || neigh_j == iGlobLatDat->GetYBlockCount())
-                    continue;
-                  if (neigh_k == -1 || neigh_k == iGlobLatDat->GetZBlockCount())
-                    continue;
-
-                  // Move on if the neighbour is in a block of solids (in which case
-                  // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid or has already
-                  // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
-                  // was initialized in lbmReadConfig in io.cc.
-
-                  site_t neighBlockId = iGlobLatDat->GetBlockIdFromBlockCoords(neigh_i,
-                                                                               neigh_j,
-                                                                               neigh_k);
-
-                  // Don't use this block if it has no fluid sites, or if it has already been assigned to a processor.
-                  if (fluidSitesPerBlock[neighBlockId] == 0 || blockAssigned[neighBlockId])
-                  {
-                    continue;
-                  }
-
-                  // Set the rank for a neighbour and update the fluid site counters.
-                  blockAssigned[neighBlockId] = true;
-                  unitForEachBlock[neighBlockId] = currentUnit;
-                  lBlocksOnCurrentProc++;
-
-                  // Neighbour was found, so the region can grow.
-                  lIsRegionGrowing = true;
-
-                  // Record the location of the neighbour.
-                  BlockLocation lNewB;
-                  lNewB.i = neigh_i;
-                  lNewB.j = neigh_j;
-                  lNewB.k = neigh_k;
-                  lBlockLocationB->push_back(lNewB);
-                }
-              }
               // When the new layer of edge sites has been found, swap the buffers for
               // the current and new layers of edge sites.
-              std::vector<BlockLocation> *tempP = lBlockLocationA;
-              lBlockLocationA = lBlockLocationB;
-              lBlockLocationB = tempP;
+              std::vector<BlockLocation> *tempP = lCurrentEdge;
+              lCurrentEdge = lExpandedEdge;
+              lExpandedEdge = tempP;
             }
 
             // If we have enough sites, we have finished.
@@ -760,10 +714,89 @@ namespace hemelb
         } // Block co-ord j
       } // Block co-ord i
 
-      delete lBlockLocationA;
-      delete lBlockLocationB;
+      delete lCurrentEdge;
+      delete lExpandedEdge;
 
       delete[] blockAssigned;
+    }
+
+    /**
+     * Returns true if the region was expanded.
+     *
+     * @param edgeBlocks
+     * @param iGlobLatDat
+     * @param fluidSitesPerBlock
+     * @param blockAssigned
+     * @param currentUnit
+     * @param unitForEachBlock
+     * @param blocksOnCurrentProc
+     * @param blocksPerUnit
+     * @return
+     */
+    bool LatticeData::GeometryReader::Expand(std::vector<BlockLocation>* edgeBlocks,
+                                             std::vector<BlockLocation>* expansionBlocks,
+                                             const GlobalLatticeData* iGlobLatDat,
+                                             const site_t* fluidSitesPerBlock,
+                                             bool* blockAssigned,
+                                             proc_t currentUnit,
+                                             proc_t* unitForEachBlock,
+                                             site_t &blocksOnCurrentUnit,
+                                             site_t blocksPerUnit)
+    {
+      bool lRet = false;
+
+      // For sites on the edge of the domain (sites_a), deal with the neighbours.
+      for (unsigned int index_a = 0; index_a < edgeBlocks->size() && blocksOnCurrentUnit
+          < blocksPerUnit; index_a++)
+      {
+        BlockLocation* lNew = &edgeBlocks->operator [](index_a);
+
+        for (unsigned int l = 1; l < D3Q15::NUMVECTORS && blocksOnCurrentUnit < blocksPerUnit; l++)
+        {
+          // Record neighbour location.
+          site_t neigh_i = lNew->i + D3Q15::CX[l];
+          site_t neigh_j = lNew->j + D3Q15::CY[l];
+          site_t neigh_k = lNew->k + D3Q15::CZ[l];
+
+          // Move on if neighbour is outside the bounding box.
+          if (neigh_i == -1 || neigh_i == iGlobLatDat->GetXBlockCount())
+            continue;
+          if (neigh_j == -1 || neigh_j == iGlobLatDat->GetYBlockCount())
+            continue;
+          if (neigh_k == -1 || neigh_k == iGlobLatDat->GetZBlockCount())
+            continue;
+
+          // Move on if the neighbour is in a block of solids (in which case
+          // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid or has already
+          // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
+          // was initialized in lbmReadConfig in io.cc.
+
+          site_t neighBlockId = iGlobLatDat->GetBlockIdFromBlockCoords(neigh_i, neigh_j, neigh_k);
+
+          // Don't use this block if it has no fluid sites, or if it has already been assigned to a processor.
+          if (fluidSitesPerBlock[neighBlockId] == 0 || blockAssigned[neighBlockId])
+          {
+            continue;
+          }
+
+          // Set the rank for a neighbour and update the fluid site counters.
+          blockAssigned[neighBlockId] = true;
+          unitForEachBlock[neighBlockId] = currentUnit;
+          ++blocksOnCurrentUnit;
+
+          // Neighbour was found, so the region can grow.
+          lRet = true;
+
+          // Record the location of the neighbour.
+          BlockLocation lNewB;
+          lNewB.i = neigh_i;
+          lNewB.j = neigh_j;
+          lNewB.k = neigh_k;
+          expansionBlocks->push_back(lNewB);
+        }
+      }
+
+      return lRet;
     }
 
     void LatticeData::GeometryReader::OptimiseDomainDecomposition(const site_t* sitesPerBlock,

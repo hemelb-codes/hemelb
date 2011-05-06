@@ -353,6 +353,16 @@ namespace hemelb
                                    const proc_t localRank,
                                    const GlobalLatticeData* iGlobLatDat);
 
+            bool Expand(std::vector<BlockLocation>* edgeBlocks,
+                        std::vector<BlockLocation>* expansionBlocks,
+                        const GlobalLatticeData* iGlobLatDat,
+                        const site_t* fluidSitesPerBlock,
+                        bool* blockAssigned,
+                        proc_t currentUnit,
+                        proc_t* unitForEachBlock,
+                        site_t &blocksOnCurrentUnit,
+                        site_t blocksPerUnit);
+
             void OptimiseDomainDecomposition(const site_t* sitesPerBlock,
                                              const unsigned int* bytesPerBlock,
                                              const proc_t* procForEachBlock,
