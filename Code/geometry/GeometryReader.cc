@@ -66,10 +66,6 @@ namespace hemelb
     }
 
     void LatticeData::GeometryReader::LoadAndDecompose(GlobalLatticeData* bGlobLatDat,
-                                                       site_t* totalFluidSites,
-                                                       site_t siteMins[3],
-                                                       site_t siteMaxes[3],
-                                                       site_t* fluidSitePerProc,
                                                        lb::LbmParameters* bLbmParams,
                                                        SimConfig* bSimConfig,
                                                        double* oReadTime,
@@ -163,6 +159,7 @@ namespace hemelb
                     PreambleBytes + GetHeaderLength(bGlobLatDat->GetBlockCount()),
                     MPI_SEEK_SET);
 
+      // TODO This logic should be moved into OptimiseDomainDecomposition
       if (mParticipateInTopology)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
@@ -178,82 +175,12 @@ namespace hemelb
         ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
       }
 
-      site_t localFluidSites = 0;
-
-      for (site_t lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
-      {
-        if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
-        {
-          for (site_t lSiteIndex = 0; lSiteIndex < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
-          {
-            if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
-                == mGlobalRank)
-            {
-              ++localFluidSites;
-            }
-          }
-        }
-      }
-
-      MPI_Allgather(&localFluidSites,
-                    1,
-                    site_mpi_t,
-                    fluidSitePerProc,
-                    1,
-                    site_mpi_t,
-                    MPI_COMM_WORLD);
-
-      //TODO this is a total hack just for now.
-      site_t localMins[3];
-      site_t localMaxes[3];
-      localMins[0] = UINT_MAX;
-      localMins[1] = UINT_MAX;
-      localMins[2] = UINT_MAX;
-      localMaxes[0] = 0;
-      localMaxes[1] = 0;
-      localMaxes[2] = 0;
-
-      for (site_t siteI = 0; siteI < bGlobLatDat->GetXSiteCount(); ++siteI)
-      {
-        for (site_t siteJ = 0; siteJ < bGlobLatDat->GetYSiteCount(); ++siteJ)
-        {
-          for (site_t siteK = 0; siteK < bGlobLatDat->GetZSiteCount(); ++siteK)
-          {
-            const proc_t* procId = bGlobLatDat->GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
-            if (procId == NULL || *procId != mGlobalRank)
-            {
-              continue;
-            }
-            else
-            {
-              localMins[0] = hemelb::util::NumericalFunctions::min(localMins[0], siteI);
-              localMins[1] = hemelb::util::NumericalFunctions::min(localMins[1], siteJ);
-              localMins[2] = hemelb::util::NumericalFunctions::min(localMins[2], siteK);
-              localMaxes[0] = hemelb::util::NumericalFunctions::max(localMaxes[0], siteI);
-              localMaxes[1] = hemelb::util::NumericalFunctions::max(localMaxes[1], siteJ);
-              localMaxes[2] = hemelb::util::NumericalFunctions::max(localMaxes[2], siteK);
-            }
-          }
-        }
-      }
-
-      MPI_Allreduce(localMins, siteMins, 3, site_mpi_t, MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, site_mpi_t, MPI_MAX, MPI_COMM_WORLD);
-
-      //TODO this is a total hack just for now.
-      *totalFluidSites = 0;
-      for (site_t ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
-      {
-        *totalFluidSites += sitesPerBlock[ii];
-      }
-
-      double lEnd = util::myClock();
-
-      *oReadTime = lMiddle - lStart;
-      *oOptimiseTime = lEnd - lMiddle;
-
+      // Finish up - close the file, set the timings, deallocate memory.
       MPI_File_close(&lFile);
       MPI_Info_free(&lFileInfo);
+
+      *oReadTime = lMiddle - lStart;
+      *oOptimiseTime = util::myClock() - lMiddle;
 
       delete[] sitesPerBlock;
       delete[] bytesPerBlock;
@@ -364,10 +291,6 @@ namespace hemelb
 
     /**
      * Read in the necessary blocks from the file.
-     *
-     * NOTE: we used to set the values of the site_mins and site_maxes (min and max site
-     * ids in each of the x, y and z directions) in this function. If this is still
-     * needed it probably has to go in the header of the file.
      *
      * BODY:
      * Block *block = new Block[nBlocks];
@@ -849,7 +772,7 @@ namespace hemelb
                                                                   MPI_File iFile,
                                                                   GlobalLatticeData* bGlobLatDat)
     {
-      int* vertexDistribution = new int[mTopologySize + 1];
+      idxtype* vertexDistribution = new idxtype[mTopologySize + 1];
 
       /*
        *  Get an array of the site count on each processor.
@@ -914,10 +837,10 @@ namespace hemelb
       unsigned int localVertexCount = vertexDistribution[mTopologyRank + 1]
           - vertexDistribution[mTopologyRank];
 
-      int* adjacenciesPerVertex = new int[localVertexCount + 1];
+      idxtype* adjacenciesPerVertex = new idxtype[localVertexCount + 1];
       adjacenciesPerVertex[0] = 0;
 
-      std::vector<int> lAdjacencies;
+      std::vector<idxtype> lAdjacencies;
 
       unsigned int lFluidVertex = 0;
       int n = -1;
@@ -1013,10 +936,10 @@ namespace hemelb
                       }
                     }
 
-                    lAdjacencies.push_back((int) neighGlobalSiteId);
+                    lAdjacencies.push_back((idxtype) neighGlobalSiteId);
                   }
 
-                  adjacenciesPerVertex[++lFluidVertex] = (int) lAdjacencies.size();
+                  adjacenciesPerVertex[++lFluidVertex] = (idxtype) lAdjacencies.size();
                 }
               }
             }
@@ -1055,20 +978,11 @@ namespace hemelb
       int weightFlag = 2;
       int numberingFlag = 0;
       int edgesCut = 0;
-      int* partitionVector = new int[localVertexCount];
+      idxtype* partitionVector = new idxtype[localVertexCount];
       int options[4] = { 0, 0, 0, 0 };
 
-      unsigned int edgesCutBefore = 0;
       int myLowest = vertexDistribution[mTopologyRank];
       int myHighest = vertexDistribution[mTopologyRank + 1] - 1;
-
-      for (unsigned int ii = 0; ii < lAdjacencies.size(); ++ii)
-      {
-        if (lAdjacencies[ii] < myLowest || lAdjacencies[ii] > myHighest)
-        {
-          ++edgesCutBefore;
-        }
-      }
 
       for (unsigned int ii = 0; ii < localVertexCount; ++ii)
       {
@@ -1078,7 +992,7 @@ namespace hemelb
       int desiredPartitionSize = mTopologySize;
 
       int noConstraints = 1;
-      int* vertexWeight = new int[localVertexCount];
+      idxtype* vertexWeight = new idxtype[localVertexCount];
       for (unsigned int ii = 0; ii < localVertexCount; ++ii)
       {
         vertexWeight[ii] = 1;

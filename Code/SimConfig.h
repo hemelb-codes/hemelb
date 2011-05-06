@@ -34,8 +34,8 @@ namespace hemelb
 
       double VoxelSize;
       std::string DataFilePath;
-      std::vector<InOutLet*> Inlets;
-      std::vector<InOutLet*> Outlets;
+      std::vector<InOutLet> Inlets;
+      std::vector<InOutLet> Outlets;
       Vector VisCentre;
       float VisLongitude;
       float VisLatitude;
@@ -62,9 +62,9 @@ namespace hemelb
                 std::string &iValue);
       void DoIO(TiXmlElement *iXmlNode,
                 bool iIsLoading,
-                std::vector<InOutLet*> &value,
+                std::vector<InOutLet> &value,
                 std::string iChildNodeName);
-      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, InOutLet *value);
+      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, InOutLet &value);
       void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, Vector &iValue);
       TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);
   };

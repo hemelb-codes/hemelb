@@ -314,10 +314,6 @@ namespace hemelb
             ~GeometryReader();
 
             void LoadAndDecompose(GlobalLatticeData* bGlobalLatticeData,
-                                  site_t* totalFluidSites,
-                                  site_t siteMins[3],
-                                  site_t siteMaxes[3],
-                                  site_t* fluidSitePerProc,
                                   lb::LbmParameters* bLbmParams,
                                   SimConfig* bSimConfig,
                                   double* lReadTime,
