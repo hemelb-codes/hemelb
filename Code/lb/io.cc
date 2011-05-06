@@ -30,7 +30,7 @@ namespace hemelb
 
       for (int n = 0; n < inlets; n++)
       {
-        hemelb::SimConfig::InOutLet *lInlet = mSimConfig->Inlets[n];
+        hemelb::SimConfig::InOutLet *lInlet = &mSimConfig->Inlets[n];
 
         inlet_density_avg[n] = ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
         inlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
@@ -42,7 +42,7 @@ namespace hemelb
 
       for (int n = 0; n < outlets; n++)
       {
-        hemelb::SimConfig::InOutLet *lOutlet = mSimConfig->Outlets[n];
+        hemelb::SimConfig::InOutLet *lOutlet = &mSimConfig->Outlets[n];
         outlet_density_avg[n] = ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
         outlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
         outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
@@ -52,9 +52,9 @@ namespace hemelb
 
       for (int ii = 0; ii < inlets; ii++)
       {
-        inlet_normal[3 * ii] = mSimConfig->Inlets[ii]->Normal.x;
-        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
-        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
+        inlet_normal[3 * ii] = mSimConfig->Inlets[ii].Normal.x;
+        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii].Normal.y;
+        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii].Normal.z;
       }
 
       UpdateBoundaryDensities(0);

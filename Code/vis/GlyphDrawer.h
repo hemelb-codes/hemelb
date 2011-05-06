@@ -44,7 +44,7 @@ namespace hemelb
         Viewpoint* mViewpoint;
         VisSettings* mVisSettings;
 
-        std::vector<Glyph*> mGlyphs;
+        std::vector<Glyph> mGlyphs;
     };
 
   }
