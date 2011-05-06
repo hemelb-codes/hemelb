@@ -13,7 +13,6 @@ namespace hemelb
 
     // TODO This file is generally ugly. Integrate with the functions in Net which initialise the LatDat.
     // Once the interface to this object is nice and clean, we can tidy up the code here.
-
     LatticeData::GeometryReader::GeometryReader(const bool reserveSteeringCore)
     {
       // Each rank needs to know its global rank
@@ -66,172 +65,6 @@ namespace hemelb
       }
     }
 
-    /**
-     * Read in the section at the beginning of the config file.
-     *
-     * // PREAMBLE
-     * uint stress_type = load_uint();
-     * uint blocks[3]; // blocks in x,y,z
-     * for (int i=0; i<3; ++i)
-     *        blocks[i] = load_uint();
-     * // number of sites along 1 edge of a block
-     * uint block_size = load_uint();
-     *
-     * uint nBlocks = blocks[0] * blocks[1] * blocks[2];
-     *
-     * double voxel_size = load_double();
-     *
-     * for (int i=0; i<3; ++i)
-     *        site0WorldPosition[i] = load_double();
-     */
-    void LatticeData::GeometryReader::ReadPreamble(MPI_File xiFile,
-                                                   hemelb::lb::LbmParameters * bParams,
-                                                   GlobalLatticeData* bGlobalLatticeData)
-    {
-      // The config file starts with:
-      // * 1 unsigned int for stress type
-      // * 3 unsigned ints for the number of blocks in the x, y, z directions
-      // * 1 unsigned int for the block size (number of sites along one edge of a block)
-      // * 1 double for the voxel size
-      // * 3 doubles for the world-position of site 0
-      const int PreambleBytes = 5 * 4 + 4 * 8;
-
-      // Read in the file preamble into a buffer.
-      char lPreambleBuffer[PreambleBytes];
-
-      MPI_Status lStatus;
-
-      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_CHAR, &lStatus);
-
-      // Create an Xdr translator based on the read-in data.
-      hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
-                                                                      PreambleBytes);
-
-      // Variables we'll read.
-      unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
-      double voxelSize, siteZeroWorldPosition[3];
-
-      // Read in the values.
-      preambleReader.readUnsignedInt(stressType);
-      preambleReader.readUnsignedInt(blocksX);
-      preambleReader.readUnsignedInt(blocksY);
-      preambleReader.readUnsignedInt(blocksZ);
-      preambleReader.readUnsignedInt(blockSize);
-      preambleReader.readDouble(voxelSize);
-      for (unsigned int i = 0; i < 3; ++i)
-      {
-        preambleReader.readDouble(siteZeroWorldPosition[i]);
-      }
-
-      // Pass the read in variables to the objects that need them.
-      bParams->StressType = (lb::StressTypes) stressType;
-
-      bGlobalLatticeData->SetBasicDetails(blocksX, blocksY, blocksZ, blockSize);
-    }
-
-    /**
-     * Read the header section, with minimal information about each block.
-     *
-     * Note that the output is placed into the arrays sitesInEachBlock and
-     * bytesUsedByBlockInDataFile, each of which must have iBlockCount
-     * elements allocated.
-     *
-     * // HEADER
-     * uint nSites[nBlocks];
-     * uint nBytes[nBlocks];
-     *
-     * for (int i = 0; i < nBlocks; ++i) {
-     *        nSites[i] = load_uint(); // sites in block
-     *        nBytes[i] = load_uint(); // length, in bytes, of the block's record in this file
-     * }
-     */
-    void LatticeData::GeometryReader::ReadHeader(MPI_File xiFile,
-                                                 site_t iBlockCount,
-                                                 site_t* sitesInEachBlock,
-                                                 unsigned int* bytesUsedByBlockInDataFile)
-    {
-      // The header section of the config file contains two adjacent unsigned ints for each block.
-      // The first is the number of sites in that block, the second is the number of bytes used by
-      // the block in the data file.
-      site_t headerByteCount = 2 * 4 * iBlockCount;
-
-      // Allocate a buffer to read into, then do the reading.
-      char* lHeaderBuffer = new char[headerByteCount];
-
-      MPI_Status lStatus;
-
-      MPI_File_read_all(xiFile, lHeaderBuffer, (int) headerByteCount, MPI_CHAR, &lStatus);
-
-      // Create a Xdr translation object to translate from binary
-      hemelb::io::XdrReader preambleReader =
-          hemelb::io::XdrMemReader(lHeaderBuffer, (unsigned int) headerByteCount);
-
-      // Read in all the data.
-      for (site_t ii = 0; ii < iBlockCount; ii++)
-      {
-        unsigned int sites, bytes;
-        preambleReader.readUnsignedInt(sites);
-        preambleReader.readUnsignedInt(bytes);
-
-        sitesInEachBlock[ii] = sites;
-        bytesUsedByBlockInDataFile[ii] = bytes;
-      }
-
-      delete[] lHeaderBuffer;
-    }
-
-    /**
-     * Get an initial distribution of which block should be on which processor.
-     *
-     * To make this fast and remove a need to read in the site info about blocks,
-     * we assume that neighbouring blocks with any fluid sites on have lattice links
-     * between them.
-     *
-     * NOTE that the old version of this code used to cope with running on multiple machines,
-     * by decomposing fluid sites over machines, then decomposing over processors within one machine.
-     * To achieve this here, use parmetis's "nparts" parameters to first decompose over machines, then
-     * to decompose within machines.
-     *
-     * @param initialProcForEachBlock Array of length iBlockCount, into which the rank number will be
-     * written for each block
-     * @param blockCountPerProc Array of length topology size, into which the number of blocks
-     * allocated to each processor will be written.
-     */
-    void LatticeData::GeometryReader::BlockDecomposition(const site_t iBlockCount,
-                                                         const GlobalLatticeData* iGlobLatDat,
-                                                         const site_t* fluidSitePerBlock,
-                                                         proc_t* initialProcForEachBlock)
-    {
-      site_t* blockCountPerProc = new site_t[mTopologySize];
-
-      // Count of block sites.
-      site_t lUnvisitedFluidBlockCount = 0;
-      for (site_t ii = 0; ii < iBlockCount; ++ii)
-      {
-        if (fluidSitePerBlock[ii] != 0)
-        {
-          ++lUnvisitedFluidBlockCount;
-        }
-      }
-
-      // Initialise site count per processor
-      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-      {
-        blockCountPerProc[ii] = 0;
-      }
-
-      // Divide blocks between the processors.
-      DivideBlocks(lUnvisitedFluidBlockCount,
-                   iBlockCount,
-                   mTopologySize,
-                   blockCountPerProc,
-                   initialProcForEachBlock,
-                   fluidSitePerBlock,
-                   iGlobLatDat);
-
-      delete[] blockCountPerProc;
-    }
-
     void LatticeData::GeometryReader::LoadAndDecompose(GlobalLatticeData* bGlobLatDat,
                                                        site_t* totalFluidSites,
                                                        site_t siteMins[3],
@@ -240,7 +73,7 @@ namespace hemelb
                                                        lb::LbmParameters* bLbmParams,
                                                        SimConfig* bSimConfig,
                                                        double* oReadTime,
-                                                       double* oDecomposeTime)
+                                                       double* oOptimiseTime)
     {
       double lStart = util::myClock();
 
@@ -253,7 +86,6 @@ namespace hemelb
       MPI_Info_create(&lFileInfo);
 
       // Create hints about how we'll read the file. See Chapter 13, page 400 of the MPI 2.2 spec.
-
       std::string accessStyle = "access_style";
       std::string accessStyleValue = "sequential";
       std::string buffering = "collective_buffering";
@@ -262,6 +94,7 @@ namespace hemelb
       MPI_Info_set(lFileInfo, &accessStyle[0], &accessStyleValue[0]);
       MPI_Info_set(lFileInfo, &buffering[0], &bufferingValue[0]);
 
+      // Open the file.
       lError = MPI_File_open(MPI_COMM_WORLD,
                              &bSimConfig->DataFilePath[0],
                              MPI_MODE_RDONLY,
@@ -270,7 +103,7 @@ namespace hemelb
 
       if (lError != 0)
       {
-        log::Logger::Log<log::Info, log::OnePerCore>("Unable to open file %s [rank %i], exiting",
+        log::Logger::Log<log::Info, log::OnePerCore>("Unable to open file %s, exiting",
                                                      bSimConfig->DataFilePath.c_str());
         fflush(0x0);
         exit(0x0);
@@ -282,22 +115,27 @@ namespace hemelb
       }
       fflush(NULL);
 
+      // Set the view to the file.
       std::string lMode = "native";
-
       MPI_File_set_view(lFile, 0, MPI_CHAR, MPI_CHAR, &lMode[0], MPI_INFO_NULL);
 
+      // Read the file preamble.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
       ReadPreamble(lFile, bLbmParams, bGlobLatDat);
+
+      // Read the file header.
+      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
 
       site_t* sitesPerBlock = new site_t[bGlobLatDat->GetBlockCount()];
       unsigned int* bytesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
       ReadHeader(lFile, bGlobLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
+
+      // Perform an initial decomposition, of which processor should read each block.
+      log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
 
       proc_t* procForEachBlock = new proc_t[bGlobLatDat->GetBlockCount()];
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
       if (!mParticipateInTopology)
       {
         for (site_t ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
@@ -313,26 +151,17 @@ namespace hemelb
                            procForEachBlock);
       }
 
+      // Perform the initial read-in.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
+
       ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
 
       double lMiddle = util::myClock();
 
-      site_t preOptimisationSites = 0;
-
-      if (mParticipateInTopology)
-      {
-        for (site_t ii = 0; ii < bGlobLatDat->GetBlockCount(); ii++)
-        {
-          if (procForEachBlock[ii] == mTopologyRank)
-          {
-            preOptimisationSites += sitesPerBlock[ii];
-          }
-        }
-      }
-
-      // TODO This *hackily* sets the position to be just past the preamble and header sections.
-      MPI_File_seek(lFile, 2 * 4 * bGlobLatDat->GetBlockCount() + 5 * 4 + 4 * 8, MPI_SEEK_SET);
+      // Move the file pointer to the start of the block section, after the preamble and header.
+      MPI_File_seek(lFile,
+                    PreambleBytes + GetHeaderLength(bGlobLatDat->GetBlockCount()),
+                    MPI_SEEK_SET);
 
       if (mParticipateInTopology)
       {
@@ -421,7 +250,7 @@ namespace hemelb
       double lEnd = util::myClock();
 
       *oReadTime = lMiddle - lStart;
-      *oDecomposeTime = lEnd - lMiddle;
+      *oOptimiseTime = lEnd - lMiddle;
 
       MPI_File_close(&lFile);
       MPI_Info_free(&lFileInfo);
@@ -429,6 +258,108 @@ namespace hemelb
       delete[] sitesPerBlock;
       delete[] bytesPerBlock;
       delete[] procForEachBlock;
+    }
+
+    /**
+     * Read in the section at the beginning of the config file.
+     *
+     * // PREAMBLE
+     * uint stress_type = load_uint();
+     * uint blocks[3]; // blocks in x,y,z
+     * for (int i=0; i<3; ++i)
+     *        blocks[i] = load_uint();
+     * // number of sites along 1 edge of a block
+     * uint block_size = load_uint();
+     *
+     * uint nBlocks = blocks[0] * blocks[1] * blocks[2];
+     *
+     * double voxel_size = load_double();
+     *
+     * for (int i=0; i<3; ++i)
+     *        site0WorldPosition[i] = load_double();
+     */
+    void LatticeData::GeometryReader::ReadPreamble(MPI_File xiFile,
+                                                   hemelb::lb::LbmParameters * bParams,
+                                                   GlobalLatticeData* bGlobalLatticeData)
+    {
+      // Read in the file preamble into a buffer.
+      char lPreambleBuffer[PreambleBytes];
+
+      MPI_Status lStatus;
+
+      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_CHAR, &lStatus);
+
+      // Create an Xdr translator based on the read-in data.
+      hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
+                                                                      PreambleBytes);
+
+      // Variables we'll read.
+      unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
+      double voxelSize, siteZeroWorldPosition[3];
+
+      // Read in the values.
+      preambleReader.readUnsignedInt(stressType);
+      preambleReader.readUnsignedInt(blocksX);
+      preambleReader.readUnsignedInt(blocksY);
+      preambleReader.readUnsignedInt(blocksZ);
+      preambleReader.readUnsignedInt(blockSize);
+      preambleReader.readDouble(voxelSize);
+      for (unsigned int i = 0; i < 3; ++i)
+      {
+        preambleReader.readDouble(siteZeroWorldPosition[i]);
+      }
+
+      // Pass the read in variables to the objects that need them.
+      bParams->StressType = (lb::StressTypes) stressType;
+
+      bGlobalLatticeData->SetBasicDetails(blocksX, blocksY, blocksZ, blockSize);
+    }
+
+    /**
+     * Read the header section, with minimal information about each block.
+     *
+     * Note that the output is placed into the arrays sitesInEachBlock and
+     * bytesUsedByBlockInDataFile, each of which must have iBlockCount
+     * elements allocated.
+     *
+     * // HEADER
+     * uint nSites[nBlocks];
+     * uint nBytes[nBlocks];
+     *
+     * for (int i = 0; i < nBlocks; ++i) {
+     *        nSites[i] = load_uint(); // sites in block
+     *        nBytes[i] = load_uint(); // length, in bytes, of the block's record in this file
+     * }
+     */
+    void LatticeData::GeometryReader::ReadHeader(MPI_File xiFile,
+                                                 site_t iBlockCount,
+                                                 site_t* sitesInEachBlock,
+                                                 unsigned int* bytesUsedByBlockInDataFile)
+    {
+      site_t headerByteCount = GetHeaderLength(iBlockCount);
+      // Allocate a buffer to read into, then do the reading.
+      char* lHeaderBuffer = new char[headerByteCount];
+
+      MPI_Status lStatus;
+
+      MPI_File_read_all(xiFile, lHeaderBuffer, (int) headerByteCount, MPI_CHAR, &lStatus);
+
+      // Create a Xdr translation object to translate from binary
+      hemelb::io::XdrReader preambleReader =
+          hemelb::io::XdrMemReader(lHeaderBuffer, (unsigned int) headerByteCount);
+
+      // Read in all the data.
+      for (site_t ii = 0; ii < iBlockCount; ii++)
+      {
+        unsigned int sites, bytes;
+        preambleReader.readUnsignedInt(sites);
+        preambleReader.readUnsignedInt(bytes);
+
+        sitesInEachBlock[ii] = sites;
+        bytesUsedByBlockInDataFile[ii] = bytes;
+      }
+
+      delete[] lHeaderBuffer;
     }
 
     /**
@@ -670,6 +601,58 @@ namespace hemelb
 
       delete[] readBuffer;
       delete[] readBlock;
+    }
+
+    /**
+     * Get an initial distribution of which block should be on which processor.
+     *
+     * To make this fast and remove a need to read in the site info about blocks,
+     * we assume that neighbouring blocks with any fluid sites on have lattice links
+     * between them.
+     *
+     * NOTE that the old version of this code used to cope with running on multiple machines,
+     * by decomposing fluid sites over machines, then decomposing over processors within one machine.
+     * To achieve this here, use parmetis's "nparts" parameters to first decompose over machines, then
+     * to decompose within machines.
+     *
+     * @param initialProcForEachBlock Array of length iBlockCount, into which the rank number will be
+     * written for each block
+     * @param blockCountPerProc Array of length topology size, into which the number of blocks
+     * allocated to each processor will be written.
+     */
+    void LatticeData::GeometryReader::BlockDecomposition(const site_t iBlockCount,
+                                                         const GlobalLatticeData* iGlobLatDat,
+                                                         const site_t* fluidSitePerBlock,
+                                                         proc_t* initialProcForEachBlock)
+    {
+      site_t* blockCountPerProc = new site_t[mTopologySize];
+
+      // Count of block sites.
+      site_t lUnvisitedFluidBlockCount = 0;
+      for (site_t ii = 0; ii < iBlockCount; ++ii)
+      {
+        if (fluidSitePerBlock[ii] != 0)
+        {
+          ++lUnvisitedFluidBlockCount;
+        }
+      }
+
+      // Initialise site count per processor
+      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+      {
+        blockCountPerProc[ii] = 0;
+      }
+
+      // Divide blocks between the processors.
+      DivideBlocks(lUnvisitedFluidBlockCount,
+                   iBlockCount,
+                   mTopologySize,
+                   blockCountPerProc,
+                   initialProcForEachBlock,
+                   fluidSitePerBlock,
+                   iGlobLatDat);
+
+      delete[] blockCountPerProc;
     }
 
     /**
@@ -1301,6 +1284,14 @@ namespace hemelb
       delete[] firstSiteIndexPerBlock;
       delete[] newProcForEachBlock;
       delete[] allMoves;
+    }
+
+    // The header section of the config file contains two adjacent unsigned ints for each block.
+    // The first is the number of sites in that block, the second is the number of bytes used by
+    // the block in the data file.
+    site_t LatticeData::GeometryReader::GetHeaderLength(site_t blockCount) const
+    {
+      return 2 * 4 * blockCount;
     }
 
   }
