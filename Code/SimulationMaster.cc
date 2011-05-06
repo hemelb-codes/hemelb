@@ -564,7 +564,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
       fprintf(mTimingsFile, "\n");
 
       fprintf(mTimingsFile, "\n");
-      fprintf(mTimingsFile, "domain decomposition time (s):             %.3f\n", mDomainDecompTime);
+      fprintf(mTimingsFile, "decomposition optimisation time (s):       %.3f\n", mDomainDecompTime);
       fprintf(mTimingsFile, "pre-processing buffer management time (s): %.3f\n", mNetInitialiseTime);
       fprintf(mTimingsFile, "input configuration reading time (s):      %.3f\n", mFileReadTime);
 

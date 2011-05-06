@@ -27,25 +27,25 @@ namespace hemelb
     {
       this->_write<int16_t> (value);
     }
-    void AsciiStreamWriter::_write(u_int16_t const & value)
+    void AsciiStreamWriter::_write(uint16_t const & value)
     {
-      this->_write<u_int16_t> (value);
+      this->_write<uint16_t> (value);
     }
     void AsciiStreamWriter::_write(int32_t const & value)
     {
       this->_write<int32_t> (value);
     }
-    void AsciiStreamWriter::_write(u_int32_t const & value)
+    void AsciiStreamWriter::_write(uint32_t const & value)
     {
-      this->_write<u_int32_t> (value);
+      this->_write<uint32_t> (value);
     }
     void AsciiStreamWriter::_write(int64_t const & value)
     {
       this->_write<int64_t> (value);
     }
-    void AsciiStreamWriter::_write(u_int64_t const & value)
+    void AsciiStreamWriter::_write(uint64_t const & value)
     {
-      this->_write<u_int64_t> (value);
+      this->_write<uint64_t> (value);
     }
     void AsciiStreamWriter::_write(double const & value)
     {

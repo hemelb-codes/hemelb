@@ -363,6 +363,16 @@ namespace hemelb
                                              MPI_File iFile,
                                              GlobalLatticeData* bGlobLatDat);
 
+            site_t GetHeaderLength(site_t blockCount) const;
+
+            // The config file starts with:
+            // * 1 unsigned int for stress type
+            // * 3 unsigned ints for the number of blocks in the x, y, z directions
+            // * 1 unsigned int for the block size (number of sites along one edge of a block)
+            // * 1 double for the voxel size
+            // * 3 doubles for the world-position of site 0
+            static const int PreambleBytes = 5 * 4 + 4 * 8;
+
             MPI_Comm mTopologyComm;
             MPI_Group mTopologyGroup;
             int mTopologyRank;
