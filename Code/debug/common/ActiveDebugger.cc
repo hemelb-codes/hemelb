@@ -66,8 +66,8 @@ namespace hemelb
       int pId = getpid();
       pid_t childPid = 0;
 
-      MPI_Gather((void*) &pId, 1, MPI_INT, (void*) & (mPIds->front()), 1,
-                 MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Gather((void*) &pId, 1, MpiDataType(pId), (void*) & (mPIds->front()), 1,
+                 MpiDataType(mPIds->front()), 0, MPI_COMM_WORLD);
 
       if (rank == 0)
       {
@@ -107,8 +107,8 @@ namespace hemelb
 
         int pId = getpid();
 
-        MPI_Gather((void*) &pId, 1, MPI_INT, (void*) & (mPIds->front()), 1,
-                   MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Gather((void*) &pId, 1, MpiDataType(pId), (void*) & (mPIds->front()), 1,
+                   MpiDataType(mPIds->front()), 0, MPI_COMM_WORLD);
 
       }
     }

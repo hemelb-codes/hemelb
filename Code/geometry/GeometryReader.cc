@@ -101,7 +101,7 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_CHAR, &lStatus);
+      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MpiDataType(lPreambleBuffer[0]), &lStatus);
 
       // Create an Xdr translator based on the read-in data.
       hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
@@ -160,7 +160,7 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile, lHeaderBuffer, (int) headerByteCount, MPI_CHAR, &lStatus);
+      MPI_File_read_all(xiFile, lHeaderBuffer, (int) headerByteCount, MpiDataType(lHeaderBuffer[0]), &lStatus);
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::XdrReader preambleReader =
@@ -545,7 +545,7 @@ namespace hemelb
 
         MPI_Status lStatus;
 
-        MPI_File_read_all(iFile, readBuffer, (int) bytesToRead, MPI_CHAR, &lStatus);
+        MPI_File_read_all(iFile, readBuffer, (int) bytesToRead, MpiDataType(readBuffer[0]), &lStatus);
 
         io::XdrMemReader lReader(readBuffer, bytesToRead);
 
@@ -1151,7 +1151,7 @@ namespace hemelb
       // Spread this data around, so all processes now how many moves each process is doing.
       int* allMoves = new int[mTopologySize];
 
-      MPI_Allgather(&moves, 1, MPI_INT, allMoves, 1, MPI_INT, mTopologyComm);
+      MPI_Allgather(&moves, 1, MpiDataType(moves), allMoves, 1, MpiDataType(allMoves[0]), mTopologyComm);
 
       // Count the total moves.
       int totalMoves = 0;
@@ -1163,7 +1163,7 @@ namespace hemelb
 
       // Now share all the lists of moves.
       MPI_Datatype lMoveType;
-      MPI_Type_contiguous(2, MPI_INT, &lMoveType);
+      MPI_Type_contiguous(2, MpiDataType(moveData[0]), &lMoveType);
       MPI_Type_commit(&lMoveType);
 
       int* movesList = new int[2 * totalMoves];
