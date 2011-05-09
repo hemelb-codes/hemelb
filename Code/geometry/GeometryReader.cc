@@ -768,63 +768,13 @@ namespace hemelb
 
       delete[] adjacenciesPerVertex;
 
-      // Right. Let's count how many sites we're going to have to move.
-      int moves = 0;
-      std::vector<idxtype> moveData;
-
-      int myLowest = vtxDistribn[mTopologyRank];
-      int myHighest = vtxDistribn[mTopologyRank + 1] - 1;
-
-      delete[] vtxDistribn;
-
-      for (int ii = 0; ii <= (myHighest - myLowest); ++ii)
-      {
-        if (partitionVector[ii] != mTopologyRank)
-        {
-          ++moves;
-          moveData.push_back(myLowest + ii);
-          moveData.push_back(partitionVector[ii]);
-        }
-      }
-
-      delete[] partitionVector;
-
-      // Spread this data around, so all processes now how many moves each process is doing.
       int* allMoves = new int[mTopologySize];
 
-      MPI_Allgather(&moves, 1, MPI_INT, allMoves, 1, MPI_INT, mTopologyComm);
+      int* movesList = GetMovesList(allMoves, vtxDistribn, partitionVector);
 
-      // Count the total moves.
-      int totalMoves = 0;
+      delete[] vtxDistribn;
+      delete[] partitionVector;
 
-      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-      {
-        totalMoves += allMoves[ii];
-      }
-
-      // Now share all the lists of moves.
-      MPI_Datatype lMoveType;
-      MPI_Type_contiguous(2, MPI_INT, &lMoveType);
-      MPI_Type_commit(&lMoveType);
-
-      int* movesList = new int[2 * totalMoves];
-      int* offsets = new int[mTopologySize];
-
-      offsets[0] = 0;
-
-      for (unsigned int ii = 1; ii < mTopologySize; ++ii)
-      {
-        offsets[ii] = offsets[ii - 1] + allMoves[ii - 1];
-      }
-
-      MPI_Allgatherv(&moveData[0],
-                     moves,
-                     lMoveType,
-                     movesList,
-                     allMoves,
-                     offsets,
-                     lMoveType,
-                     mTopologyComm);
 
       int* newProcForEachBlock = new int[bGlobLatDat->GetBlockCount()];
 
@@ -860,8 +810,6 @@ namespace hemelb
           }
         }
       }
-
-      MPI_Type_free(&lMoveType);
 
       ReadInLocalBlocks(iFile, bGlobLatDat, bytesPerBlock, newProcForEachBlock, mTopologyRank);
 
@@ -938,7 +886,6 @@ namespace hemelb
       }
 
       delete[] movesList;
-      delete[] offsets;
       delete[] firstSiteIndexPerBlock;
       delete[] newProcForEachBlock;
       delete[] allMoves;
@@ -1234,6 +1181,88 @@ namespace hemelb
 
       delete[] domainWeights;
       delete[] vertexWeight;
+    }
+
+    /**
+     * Returns a list of the fluid sites to be moved.
+     *
+     * NOTE: This function's return value is a dynamically-allocated array of all the moves to be
+     * performed, ordered by (origin processor [with a count described by the content of the first
+     * parameter], site id on the origin processor). The contents of the array are contiguous
+     * pairs of ints: (site id on the origin processor, destination rank).
+     *
+     * @param movesFromEachProc
+     * @param vtxDistribn
+     * @param partitionVector
+     * @return
+     */
+    int* LatticeData::GeometryReader::GetMovesList(int* movesFromEachProc,
+                                                   const int* vtxDistribn,
+                                                   const int* partitionVector)
+    {
+      // Right. Let's count how many sites we're going to have to move. Count the local number of
+      // sites to be moved, and collect the site id and the destination processor.
+      int moves = 0;
+      std::vector<idxtype> moveData;
+
+      const int myLowest = vtxDistribn[mTopologyRank];
+      const int myHighest = vtxDistribn[mTopologyRank + 1] - 1;
+
+      for (int ii = 0; ii <= (myHighest - myLowest); ++ii)
+      {
+        if (partitionVector[ii] != mTopologyRank)
+        {
+          ++moves;
+          moveData.push_back(myLowest + ii);
+          moveData.push_back(partitionVector[ii]);
+        }
+      }
+
+      // Spread the move-count data around, so all processes now how many moves each process is
+      // doing.
+      MPI_Allgather(&moves, 1, MPI_INT, movesFromEachProc, 1, MPI_INT, mTopologyComm);
+
+      // Count the total moves.
+      int totalMoves = 0;
+
+      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+      {
+        totalMoves += movesFromEachProc[ii];
+      }
+
+      // Now share all the lists of moves - create a MPI type...
+      MPI_Datatype lMoveType;
+      MPI_Type_contiguous(2, MPI_INT, &lMoveType);
+      MPI_Type_commit(&lMoveType);
+
+      // ... create a destination array...
+      int* movesList = new int[2 * totalMoves];
+
+      // ... create an array of offsets into the destination array for each rank...
+      int* offsets = new int[mTopologySize];
+
+      offsets[0] = 0;
+      for (unsigned int ii = 1; ii < mTopologySize; ++ii)
+      {
+        offsets[ii] = offsets[ii - 1] + movesFromEachProc[ii - 1];
+      }
+
+      // ... use MPI to gather the data...
+      MPI_Allgatherv(&moveData[0],
+                     moves,
+                     lMoveType,
+                     movesList,
+                     movesFromEachProc,
+                     offsets,
+                     lMoveType,
+                     mTopologyComm);
+
+      // ... clean up...
+      MPI_Type_free(&lMoveType);
+      delete[] offsets;
+
+      // ... and return the list of moves.
+      return movesList;
     }
 
   }

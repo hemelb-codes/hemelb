@@ -336,6 +336,10 @@ namespace hemelb
                               idxtype* adjacenciesPerVertex,
                               idxtype* adjacencies);
 
+            int* GetMovesList(int* movesFromEachProc,
+                              const int* vtxDistribn,
+                              const int* partitionVector);
+
             // The config file starts with:
             // * 1 unsigned int for stress type
             // * 3 unsigned ints for the number of blocks in the x, y, z directions
