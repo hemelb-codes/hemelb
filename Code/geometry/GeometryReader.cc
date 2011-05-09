@@ -1,5 +1,6 @@
 #include <math.h>
 
+#include "debug/Debugger.h"
 #include "io/XdrMemReader.h"
 #include "geometry/LatticeData.h"
 #include "log/Logger.h"
@@ -731,6 +732,7 @@ namespace hemelb
                                                                   MPI_File iFile,
                                                                   GlobalLatticeData* bGlobLatDat)
     {
+      // Get some arrays that ParMetis needs.
       idxtype* vtxDistribn = new idxtype[mTopologySize + 1];
 
       GetSiteDistributionArray(vtxDistribn,
@@ -758,6 +760,7 @@ namespace hemelb
                        firstSiteIndexPerBlock,
                        bGlobLatDat);
 
+      // Call parmetis.
       idxtype* partitionVector = new idxtype[localVertexCount];
 
       CallParmetis(partitionVector,
@@ -768,126 +771,28 @@ namespace hemelb
 
       delete[] adjacenciesPerVertex;
 
+      // Convert the ParMetis results into a nice format.
       int* allMoves = new int[mTopologySize];
 
-      int* movesList = GetMovesList(allMoves, vtxDistribn, partitionVector);
+      int* movesList = GetMovesList(allMoves,
+                                    firstSiteIndexPerBlock,
+                                    procForEachBlock,
+                                    sitesPerBlock,
+                                    vtxDistribn,
+                                    partitionVector,
+                                    bGlobLatDat);
 
+      delete[] firstSiteIndexPerBlock;
       delete[] vtxDistribn;
       delete[] partitionVector;
 
+      // Reread the blocks based on the ParMetis decomposition.
+      RereadBlocks(bGlobLatDat, iFile, allMoves, movesList, bytesPerBlock, procForEachBlock);
 
-      int* newProcForEachBlock = new int[bGlobLatDat->GetBlockCount()];
-
-      for (unsigned int lBlockNumber = 0; lBlockNumber < bGlobLatDat->GetBlockCount(); ++lBlockNumber)
-      {
-        newProcForEachBlock[lBlockNumber] = procForEachBlock[lBlockNumber];
-      }
-
-      // Hackily, set the proc for each block to be this proc whenever we have a proc on that block under the new scheme.
-      unsigned int moveIndex = 0;
-
-      for (unsigned int lFromProc = 0; lFromProc < mTopologySize; ++lFromProc)
-      {
-        for (int lMoveNumber = 0; lMoveNumber < allMoves[lFromProc]; ++lMoveNumber)
-        {
-          int fluidSite = movesList[2 * moveIndex];
-          int toProc = movesList[2 * moveIndex + 1];
-          ++moveIndex;
-
-          if (toProc == mTopologyRank)
-          {
-            unsigned int fluidSiteBlock = 0;
-
-            while ( (procForEachBlock[fluidSiteBlock] < 0)
-                || (firstSiteIndexPerBlock[fluidSiteBlock] > fluidSite)
-                || ( (firstSiteIndexPerBlock[fluidSiteBlock] + (int) sitesPerBlock[fluidSiteBlock])
-                    <= fluidSite))
-            {
-              fluidSiteBlock++;
-            }
-
-            newProcForEachBlock[fluidSiteBlock] = mTopologyRank;
-          }
-        }
-      }
-
-      ReadInLocalBlocks(iFile, bGlobLatDat, bytesPerBlock, newProcForEachBlock, mTopologyRank);
-
-      // Set the proc rank to what it originally was.
-      for (unsigned int lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
-      {
-        proc_t lOriginalProc = procForEachBlock[lBlock];
-
-        if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
-        {
-          for (unsigned int lSiteIndex = 0; lSiteIndex < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
-          {
-            if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
-                != BIG_NUMBER2)
-            {
-              // This should be what it originally was...
-              // TODO ugly
-              bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
-                  = (mTopologyRank == mGlobalRank)
-                    ? lOriginalProc
-                    : (lOriginalProc + 1);
-            }
-          }
-        }
-      }
-
-      // Then go through and implement the ParMetis partition.
-      moveIndex = 0;
-
-      for (unsigned int lFromProc = 0; lFromProc < mTopologySize; ++lFromProc)
-      {
-        for (int lMoveNumber = 0; lMoveNumber < allMoves[lFromProc]; ++lMoveNumber)
-        {
-          int fluidSite = movesList[2 * moveIndex];
-          int toProc = movesList[2 * moveIndex + 1];
-          ++moveIndex;
-
-          unsigned int fluidSiteBlock = 0;
-
-          while ( (procForEachBlock[fluidSiteBlock] < 0) || (firstSiteIndexPerBlock[fluidSiteBlock]
-              > fluidSite) || ( (firstSiteIndexPerBlock[fluidSiteBlock]
-              + (int) sitesPerBlock[fluidSiteBlock]) <= fluidSite))
-          {
-            fluidSiteBlock++;
-          }
-
-          if (bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite != NULL)
-          {
-            int fluidSitesToPass = fluidSite - firstSiteIndexPerBlock[fluidSiteBlock];
-
-            unsigned int lSiteIndex = 0;
-
-            while (true)
-            {
-              if (bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex]
-                  != BIG_NUMBER2)
-              {
-                fluidSitesToPass--;
-              }
-              if (fluidSitesToPass < 0)
-              {
-                break;
-              }
-              lSiteIndex++;
-            }
-
-            // TODO Ugly.
-            bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex]
-                = (mGlobalRank == mTopologyRank)
-                  ? toProc
-                  : (toProc + 1);
-          }
-        }
-      }
+      // Implement the decomposition now that we have read the necessary data.
+      ImplementMoves(bGlobLatDat, procForEachBlock, allMoves, movesList);
 
       delete[] movesList;
-      delete[] firstSiteIndexPerBlock;
-      delete[] newProcForEachBlock;
       delete[] allMoves;
     }
 
@@ -1189,7 +1094,7 @@ namespace hemelb
      * NOTE: This function's return value is a dynamically-allocated array of all the moves to be
      * performed, ordered by (origin processor [with a count described by the content of the first
      * parameter], site id on the origin processor). The contents of the array are contiguous
-     * pairs of ints: (site id on the origin processor, destination rank).
+     * triplets of ints: (block id, site id on block, destination rank).
      *
      * @param movesFromEachProc
      * @param vtxDistribn
@@ -1197,29 +1102,104 @@ namespace hemelb
      * @return
      */
     int* LatticeData::GeometryReader::GetMovesList(int* movesFromEachProc,
+                                                   const int* firstSiteIndexPerBlock,
+                                                   const proc_t* procForEachBlock,
+                                                   const site_t* sitesPerBlock,
                                                    const int* vtxDistribn,
-                                                   const int* partitionVector)
+                                                   const int* partitionVector,
+                                                   const GlobalLatticeData* bGlobLatDat)
     {
       // Right. Let's count how many sites we're going to have to move. Count the local number of
       // sites to be moved, and collect the site id and the destination processor.
-      int moves = 0;
       std::vector<idxtype> moveData;
 
       const int myLowest = vtxDistribn[mTopologyRank];
       const int myHighest = vtxDistribn[mTopologyRank + 1] - 1;
 
+      // For each local fluid site...
       for (int ii = 0; ii <= (myHighest - myLowest); ++ii)
       {
+        // ... if it's going elsewhere...
         if (partitionVector[ii] != mTopologyRank)
         {
-          ++moves;
-          moveData.push_back(myLowest + ii);
+          // ... get it's id on the local processor...
+          int localFluidSiteId = myLowest + ii;
+
+          // ... find out which block it's on, by going through all blocks until we find one
+          // with firstIdOnBlock <= localFluidSiteId < (firstIdOnBlock + sitesOnBlock)...
+          unsigned int fluidSiteBlock = 0;
+
+          while ( (procForEachBlock[fluidSiteBlock] < 0) || (firstSiteIndexPerBlock[fluidSiteBlock]
+              > localFluidSiteId) || ( (firstSiteIndexPerBlock[fluidSiteBlock]
+              + (int) sitesPerBlock[fluidSiteBlock]) <= (int) localFluidSiteId))
+          {
+            fluidSiteBlock++;
+          }
+
+          // ... and find its site id within that block. Start by working out how many fluid sites
+          // we have to pass before we arrive at the fluid site we're after...
+          int fluidSitesToPass = localFluidSiteId - firstSiteIndexPerBlock[fluidSiteBlock];
+          unsigned int lSiteIndex = 0;
+
+          while (true)
+          {
+            // ... then keep going through the sites on the block until we've passed as many fluid
+            // sites as we need to.
+            if (bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                != BIG_NUMBER2)
+            {
+              fluidSitesToPass--;
+            }
+            if (fluidSitesToPass < 0)
+            {
+              break;
+            }
+            lSiteIndex++;
+          }
+
+          // The above code could go wrong, so in debug logging mode, we do some extra tests.
+          if (log::Logger::ShouldDisplay<log::Debug>())
+          {
+            // If we've ended up on an impossible block, or one that doesn't live on this rank,
+            // inform the user.
+            if (fluidSiteBlock >= bGlobLatDat->GetBlockCount() || procForEachBlock[fluidSiteBlock]
+                != mTopologyRank)
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to block %u of %i (block on processor %i)",
+                                                            ii,
+                                                            fluidSiteBlock,
+                                                            bGlobLatDat->GetBlockCount(),
+                                                            procForEachBlock[fluidSiteBlock]);
+            }
+
+            // Similarly, if we've ended up with an impossible site index, or a solid site,
+            // print an error message.
+            if (lSiteIndex >= bGlobLatDat->GetSitesPerBlockVolumeUnit()
+                || bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                    == BIG_NUMBER2)
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Partition element %i wrongly assigned to site %u of %i (block %i%s)",
+                                                            ii,
+                                                            lSiteIndex,
+                                                            sitesPerBlock[fluidSiteBlock],
+                                                            fluidSiteBlock,
+                                                            bGlobLatDat->Blocks[fluidSiteBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                                                                == BIG_NUMBER2
+                                                              ? " and site is solid"
+                                                              : "");
+            }
+          }
+
+          // Add the block, site and destination rank to our move list.
+          moveData.push_back((int) fluidSiteBlock);
+          moveData.push_back((int) lSiteIndex);
           moveData.push_back(partitionVector[ii]);
         }
       }
 
       // Spread the move-count data around, so all processes now how many moves each process is
       // doing.
+      int moves = (int) moveData.size() / 3;
       MPI_Allgather(&moves, 1, MPI_INT, movesFromEachProc, 1, MPI_INT, mTopologyComm);
 
       // Count the total moves.
@@ -1232,11 +1212,11 @@ namespace hemelb
 
       // Now share all the lists of moves - create a MPI type...
       MPI_Datatype lMoveType;
-      MPI_Type_contiguous(2, MPI_INT, &lMoveType);
+      MPI_Type_contiguous(3, MPI_INT, &lMoveType);
       MPI_Type_commit(&lMoveType);
 
       // ... create a destination array...
-      int* movesList = new int[2 * totalMoves];
+      int* movesList = new int[3 * totalMoves];
 
       // ... create an array of offsets into the destination array for each rank...
       int* offsets = new int[mTopologySize];
@@ -1263,6 +1243,129 @@ namespace hemelb
 
       // ... and return the list of moves.
       return movesList;
+    }
+
+    void LatticeData::GeometryReader::RereadBlocks(GlobalLatticeData* bGlobLatDat,
+                                                   MPI_File iFile,
+                                                   const int* movesPerProc,
+                                                   const int* movesList,
+                                                   const unsigned int* bytesPerBlock,
+                                                   const int* procForEachBlock)
+    {
+      // Initialise the array (of which proc each block belongs to) to what it was before.
+      int* newProcForEachBlock = new int[bGlobLatDat->GetBlockCount()];
+
+      for (unsigned int lBlockNumber = 0; lBlockNumber < bGlobLatDat->GetBlockCount(); ++lBlockNumber)
+      {
+        newProcForEachBlock[lBlockNumber] = procForEachBlock[lBlockNumber];
+      }
+
+      // Set the proc for each block to be the current proc whenever a site on that block is
+      // going to be moved to the current proc.
+      unsigned int moveIndex = 0;
+
+      for (unsigned int lFromProc = 0; lFromProc < mTopologySize; ++lFromProc)
+      {
+        for (int lMoveNumber = 0; lMoveNumber < movesPerProc[lFromProc]; ++lMoveNumber)
+        {
+          int block = movesList[3 * moveIndex];
+          int toProc = movesList[3 * moveIndex + 2];
+          ++moveIndex;
+
+          if (toProc == mTopologyRank)
+          {
+            newProcForEachBlock[block] = mTopologyRank;
+          }
+        }
+      }
+
+      // Reread the blocks into the GlobalLatticeData now.
+      ReadInLocalBlocks(iFile, bGlobLatDat, bytesPerBlock, newProcForEachBlock, mTopologyRank);
+
+      // Clean up.
+      delete[] newProcForEachBlock;
+    }
+
+    void LatticeData::GeometryReader::ImplementMoves(GlobalLatticeData* bGlobLatDat,
+                                                     const proc_t* procForEachBlock,
+                                                     const int* movesFromEachProc,
+                                                     const int* movesList) const
+    {
+      // First all, set the proc rank for each site to what it originally was before
+      // domain decomposition optimisation. Go through each block...
+      for (site_t lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
+      {
+        // If this proc has owned a fluid site on this block either before or after optimisation,
+        // the following will be non-null.
+        if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
+        {
+          // Get the original proc for that block.
+          proc_t lOriginalProc = procForEachBlock[lBlock];
+
+          // For each site on that block...
+          for (site_t lSiteIndex = 0; lSiteIndex < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
+          {
+            // ... if the site is non-solid...
+            if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                != BIG_NUMBER2)
+            {
+              // ... set its rank to be the rank it had before optimisation.
+              bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex]
+                  = ConvertTopologyRankToGlobalRank(lOriginalProc);
+            }
+          }
+        }
+      }
+
+      // Now implement the moves suggested by parmetis.
+      unsigned int moveIndex = 0;
+
+      // For each source proc, go through as many moves as it had.
+      for (unsigned int lFromProc = 0; lFromProc < mTopologySize; ++lFromProc)
+      {
+        for (int lMoveNumber = 0; lMoveNumber < movesFromEachProc[lFromProc]; ++lMoveNumber)
+        {
+          // For each move, get the block, site and destination proc.
+          int block = movesList[3 * moveIndex];
+          int site = movesList[3 * moveIndex + 1];
+          int toProc = movesList[3 * moveIndex + 2];
+
+          // Only implement the move if we have read that block's data.
+          if (bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite != NULL)
+          {
+            // Some logging code - the unmodified rank for each move's site should equal
+            // lFromProc.
+            if (log::Logger::ShouldDisplay<log::Debug>())
+            {
+              if (bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
+                  != (proc_t) lFromProc)
+              {
+                log::Logger::Log<log::Debug, log::OnePerCore>("Block %i, site %i from move %u was originally on proc %i, not proc %u.",
+                                                              block,
+                                                              site,
+                                                              moveIndex,
+                                                              bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site],
+                                                              lFromProc);
+              }
+            }
+
+            // Implement the move.
+            bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
+                = ConvertTopologyRankToGlobalRank(toProc);
+          }
+
+          ++moveIndex;
+        }
+      }
+    }
+
+    proc_t LatticeData::GeometryReader::ConvertTopologyRankToGlobalRank(proc_t topologyRank) const
+    {
+      // If the global rank is not equal to the topology rank, we are not using rank 0 for
+      // LBM.
+      return (mGlobalRank == mTopologyRank)
+        ? topologyRank
+        : (topologyRank + 1);
     }
 
   }
