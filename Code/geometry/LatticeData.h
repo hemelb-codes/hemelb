@@ -337,8 +337,26 @@ namespace hemelb
                               idxtype* adjacencies);
 
             int* GetMovesList(int* movesFromEachProc,
+                              const int* firstSiteIndexPerBlock,
+                              const proc_t* procForEachBlock,
+                              const site_t* sitesPerBlock,
                               const int* vtxDistribn,
-                              const int* partitionVector);
+                              const int* partitionVector,
+                              const GlobalLatticeData* bGlobLatDat);
+
+            void RereadBlocks(GlobalLatticeData* bGlobLatDat,
+                              MPI_File iFile,
+                              const int* movesPerProc,
+                              const int* movesList,
+                              const unsigned int* bytesPerBlock,
+                              const int* procForEachBlock);
+
+            void ImplementMoves(GlobalLatticeData* bGlobLatDat,
+                                const proc_t* procForEachBlock,
+                                const int* movesFromEachProc,
+                                const int* movesList) const;
+
+            proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
             // The config file starts with:
             // * 1 unsigned int for stress type
