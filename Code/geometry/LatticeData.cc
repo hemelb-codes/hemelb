@@ -49,10 +49,10 @@ namespace hemelb
 
       MPI_Allgather(&localFluidSites,
                     1,
-                    site_mpi_t,
+                    MpiDataType<site_t>(),
                     fluidSitePerProc,
                     1,
-                    site_mpi_t,
+                    MpiDataType<site_t>(),
                     MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
@@ -89,8 +89,8 @@ namespace hemelb
         }
       }
 
-      MPI_Allreduce(localMins, siteMins, 3, site_mpi_t, MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, site_mpi_t, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       *totalFluidSites = 0;

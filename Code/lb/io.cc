@@ -135,7 +135,8 @@ namespace hemelb
 
       std::string lReadMode = "native";
 
-      MPI_File_set_view(lOutputFile, 0, MPI_BYTE, MPI_BYTE, &lReadMode[0], MPI_INFO_NULL);
+      MPI_Datatype viewType = MpiDataType<char>();
+      MPI_File_set_view(lOutputFile, 0, viewType, viewType, &lReadMode[0], MPI_INFO_NULL);
 
       if (mNetTopology->IsCurrentProcTheIOProc())
       {
@@ -147,7 +148,7 @@ namespace hemelb
             << (int) (1 + siteMaxes[0] - siteMins[0]) << (int) (1 + siteMaxes[1] - siteMins[1])
             << (int) (1 + siteMaxes[2] - siteMins[2]) << (int) total_fluid_sites;
 
-        MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MPI_BYTE, &lStatus);
+        MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MpiDataType(lBuffer[0]), &lStatus);
       }
 
       /*
@@ -172,8 +173,8 @@ namespace hemelb
 
       MPI_File_set_view(lOutputFile,
                         lLocalSitesInitialOffset,
-                        MPI_BYTE,
-                        MPI_BYTE,
+                        viewType,
+                        viewType,
                         &lReadMode[0],
                         MPI_INFO_NULL);
 
@@ -299,7 +300,7 @@ namespace hemelb
         }
       }
 
-      MPI_File_write_all(lOutputFile, lFluidSiteBuffer, (int) lLocalWriteLength, MPI_BYTE, &lStatus);
+      MPI_File_write_all(lOutputFile, lFluidSiteBuffer, (int) lLocalWriteLength, MpiDataType(lFluidSiteBuffer[0]), &lStatus);
 
       MPI_File_close(&lOutputFile);
 

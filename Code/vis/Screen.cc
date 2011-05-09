@@ -266,13 +266,13 @@ namespace hemelb
           // If we're the sending proc, do the send.
           if (netTop->GetLocalRank() == sendingProc)
           {
-            MPI_Send(&col_pixels, 1, MPI_UNSIGNED, receivingProc, 20, MPI_COMM_WORLD);
+            MPI_Send(&col_pixels, 1, MpiDataType(col_pixels), receivingProc, 20, MPI_COMM_WORLD);
 
             if (col_pixels > 0)
             {
               MPI_Send(localPixels,
                        col_pixels,
-                       ColPixel::getMpiType(),
+                       MpiDataType<ColPixel>(),
                        receivingProc,
                        20,
                        MPI_COMM_WORLD);
@@ -284,13 +284,13 @@ namespace hemelb
           {
             unsigned int col_pixels_temp;
 
-            MPI_Recv(&col_pixels_temp, 1, MPI_UNSIGNED, sendingProc, 20, MPI_COMM_WORLD, &status);
+            MPI_Recv(&col_pixels_temp, 1, MpiDataType(col_pixels_temp), sendingProc, 20, MPI_COMM_WORLD, &status);
 
             if (col_pixels_temp > 0)
             {
               MPI_Recv(localPixels,
                        col_pixels_temp,
-                       ColPixel::getMpiType(),
+                       MpiDataType<ColPixel>(),
                        sendingProc,
                        20,
                        MPI_COMM_WORLD,
@@ -332,24 +332,24 @@ namespace hemelb
       // Send the final image from proc 1 to 0.
       if (netTop->GetLocalRank() == 1)
       {
-        MPI_Send(&col_pixels, 1, MPI_UNSIGNED, 0, 20, MPI_COMM_WORLD);
+        MPI_Send(&col_pixels, 1, MpiDataType(col_pixels), 0, 20, MPI_COMM_WORLD);
 
         if (col_pixels > 0)
         {
-          MPI_Send(compositingBuffer, col_pixels, ColPixel::getMpiType(), 0, 20, MPI_COMM_WORLD);
+          MPI_Send(compositingBuffer, col_pixels, MpiDataType<ColPixel>(), 0, 20, MPI_COMM_WORLD);
         }
 
       }
       // Receive the final image on proc 0.
       else if (netTop->GetLocalRank() == 0)
       {
-        MPI_Recv(&col_pixels, 1, MPI_UNSIGNED, 1, 20, MPI_COMM_WORLD, &status);
+        MPI_Recv(&col_pixels, 1, MpiDataType(col_pixels), 1, 20, MPI_COMM_WORLD, &status);
 
         if (col_pixels > 0)
         {
           MPI_Recv(compositingBuffer,
                    col_pixels,
-                   ColPixel::getMpiType(),
+                   MpiDataType<ColPixel>(),
                    1,
                    20,
                    MPI_COMM_WORLD,
