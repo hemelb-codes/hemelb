@@ -1,5 +1,4 @@
 #include <math.h>
-#include <parmetis.h>
 
 #include "io/XdrMemReader.h"
 #include "geometry/LatticeData.h"
@@ -150,7 +149,7 @@ namespace hemelb
       // Perform the initial read-in.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
 
-      ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
+      ReadInLocalBlocks(lFile, bGlobLatDat, bytesPerBlock, procForEachBlock, mTopologyRank);
 
       double lMiddle = util::myClock();
 
@@ -172,7 +171,7 @@ namespace hemelb
       }
       else
       {
-        ReadInLocalBlocks(lFile, bytesPerBlock, procForEachBlock, mTopologyRank, bGlobLatDat);
+        ReadInLocalBlocks(lFile, bGlobLatDat, bytesPerBlock, procForEachBlock, mTopologyRank);
       }
 
       // Finish up - close the file, set the timings, deallocate memory.
@@ -322,14 +321,96 @@ namespace hemelb
      * }
      */
     void LatticeData::GeometryReader::ReadInLocalBlocks(MPI_File iFile,
+                                                        GlobalLatticeData* iGlobLatDat,
                                                         const unsigned int* bytesPerBlock,
                                                         const proc_t* unitForEachBlock,
-                                                        const proc_t localRank,
-                                                        const GlobalLatticeData* iGlobLatDat)
+                                                        const proc_t localRank)
     {
       // Create a list of which blocks to read in.
       bool* readBlock = new bool[iGlobLatDat->GetBlockCount()];
 
+      DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank, iGlobLatDat);
+
+      /* Allocate a buffer to read into.
+       * Each site can have at most
+       * * an unsigned int (config)
+       * * 4 doubles
+       * * 14 further doubles (in D3Q15)
+       */
+      const site_t maxBytesPerBlock = (iGlobLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
+          + D3Q15::NUMVECTORS - 1));
+      const unsigned int BlocksToReadInOneGo = 10;
+      char* readBuffer = new char[maxBytesPerBlock * BlocksToReadInOneGo];
+
+      io::XdrMemReader lReader(readBuffer, (unsigned int) maxBytesPerBlock * BlocksToReadInOneGo);
+
+      // For each read operation we need to do...
+      for (unsigned int readNum = 0; readNum
+          <= (iGlobLatDat->GetBlockCount() / BlocksToReadInOneGo); ++readNum)
+      {
+        // Calculate the first (inclusive) and last (exclusive) blocks we're reading, and
+        // the number of bytes involved.
+        const site_t lastBlockExc =
+            util::NumericalFunctions::min<site_t>(iGlobLatDat->GetBlockCount(), (readNum + 1)
+                * BlocksToReadInOneGo);
+        const site_t firstBlockInc = readNum * BlocksToReadInOneGo;
+
+        unsigned int bytesToRead = 0;
+        for (site_t ii = firstBlockInc; ii < lastBlockExc; ++ii)
+        {
+          bytesToRead += bytesPerBlock[ii];
+        }
+
+        // Do the read operation and reset the Xdr reader.
+        MPI_File_read_all(iFile, readBuffer, (int) bytesToRead, MPI_CHAR, MPI_STATUS_IGNORE);
+
+        lReader.SetPosition(0);
+
+        // For each block...
+        for (site_t lBlock = firstBlockInc; lBlock < lastBlockExc; lBlock++)
+        {
+          // ... either read the block in...
+          if (readBlock[lBlock] && bytesPerBlock[lBlock] > 0)
+          {
+            iGlobLatDat->ReadBlock(lBlock, &lReader);
+          }
+          // ... or move to a point in the buffer beyond it.
+          else
+          {
+            if (bytesPerBlock[lBlock] > 0)
+            {
+              if (!lReader.SetPosition(lReader.GetPosition() + bytesPerBlock[lBlock]))
+              {
+                std::cout << "Error setting stream position\n";
+              }
+            }
+          }
+        }
+      }
+
+      // Clear up allocated memory.
+      delete[] readBuffer;
+      delete[] readBlock;
+    }
+
+    /**
+     * Compile a list of blocks to be read onto this core, including all the ones we perform
+     * LB on, and also any of their neighbouring blocks.
+     *
+     * NOTE: that the skipping-over of blocks without any fluid sites is dealt with by other
+     * code.
+     *
+     * @param readBlock
+     * @param unitForEachBlock
+     * @param localRank
+     * @param iGlobLatDat
+     */
+    void LatticeData::GeometryReader::DecideWhichBlocksToRead(bool* readBlock,
+                                                              const proc_t* unitForEachBlock,
+                                                              const proc_t localRank,
+                                                              const GlobalLatticeData* iGlobLatDat)
+    {
+      // Initialise each block to not being read.
       for (site_t ii = 0; ii < iGlobLatDat->GetBlockCount(); ++ii)
       {
         readBlock[ii] = false;
@@ -345,12 +426,12 @@ namespace hemelb
           {
             site_t lBlockId = iGlobLatDat->GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
 
-            if ( (bytesPerBlock[lBlockId] == 0) || (unitForEachBlock[lBlockId] != localRank))
+            if (unitForEachBlock[lBlockId] != localRank)
             {
               continue;
             }
 
-            // Read in all neighbouring blocks with fluid sites.
+            // Read in all neighbouring blocks.
             for (site_t neighI = util::NumericalFunctions::max<site_t>(0, blockI - 1); (neighI
                 <= (blockI + 1)) && (neighI < iGlobLatDat->GetXBlockCount()); ++neighI)
             {
@@ -362,168 +443,13 @@ namespace hemelb
                 {
                   site_t lNeighId = iGlobLatDat->GetBlockIdFromBlockCoords(neighI, neighJ, neighK);
 
-                  if (bytesPerBlock[lNeighId] > 0)
-                  {
-                    readBlock[lNeighId] = true;
-                  }
+                  readBlock[lNeighId] = true;
                 }
               }
             }
           }
         }
       }
-
-      // Each site can have at most
-      // * an unsigned int (config)
-      // * 4 doubles
-      // * 14 further doubles (in D3Q15)
-      site_t maxBytesPerBlock = (iGlobLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
-          + D3Q15::NUMVECTORS - 1));
-      const unsigned int BlocksToReadInOneGo = 10;
-      char* readBuffer = new char[maxBytesPerBlock * BlocksToReadInOneGo];
-
-      // This makes sure we do the right number of read operations.
-      for (unsigned int readNum = 0; readNum
-          <= (iGlobLatDat->GetBlockCount() / BlocksToReadInOneGo); ++readNum)
-      {
-        const site_t upperLimitBlockNumber =
-            util::NumericalFunctions::min<site_t>(iGlobLatDat->GetBlockCount(), (readNum + 1)
-                * BlocksToReadInOneGo);
-        const site_t lowerLimitBlockNumber = readNum * BlocksToReadInOneGo;
-
-        unsigned int bytesToRead = 0;
-        for (site_t ii = lowerLimitBlockNumber; ii < upperLimitBlockNumber; ++ii)
-        {
-          bytesToRead += bytesPerBlock[ii];
-        }
-
-        MPI_Status lStatus;
-
-        MPI_File_read_all(iFile, readBuffer, (int) bytesToRead, MPI_CHAR, &lStatus);
-
-        io::XdrMemReader lReader(readBuffer, bytesToRead);
-
-        for (BlockCounter lBlock(iGlobLatDat, lowerLimitBlockNumber); lBlock
-            < upperLimitBlockNumber; lBlock++)
-        {
-          if (readBlock[lBlock] && bytesPerBlock[lBlock] > 0)
-          {
-            if (iGlobLatDat->Blocks[lBlock].site_data == NULL)
-            {
-              iGlobLatDat->Blocks[lBlock].site_data
-                  = new unsigned int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
-            }
-            if (iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite == NULL)
-            {
-              iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite
-                  = new proc_t[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
-            }
-
-            site_t m = -1;
-
-            for (site_t ii = 0; ii < iGlobLatDat->GetBlockSize(); ii++)
-            {
-              site_t site_i = lBlock.GetICoord(ii);
-
-              for (site_t jj = 0; jj < iGlobLatDat->GetBlockSize(); jj++)
-              {
-                site_t site_j = lBlock.GetJCoord(jj);
-
-                for (site_t kk = 0; kk < iGlobLatDat->GetBlockSize(); kk++)
-                {
-                  site_t site_k = lBlock.GetKCoord(kk);
-
-                  ++m;
-
-                  unsigned int *site_type = &iGlobLatDat->Blocks[lBlock].site_data[m];
-                  if (!lReader.readUnsignedInt(*site_type))
-                  {
-                    std::cout << "Error reading site type\n";
-                  }
-
-                  if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
-                  {
-                    iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[m] = BIG_NUMBER2;
-                    continue;
-                  }
-                  iGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite[m] = -1;
-
-                  if (iGlobLatDat->GetCollisionType(*site_type) != FLUID)
-                  {
-                    // Neither solid nor simple fluid
-                    if (iGlobLatDat->Blocks[lBlock].wall_data == NULL)
-                    {
-                      iGlobLatDat->Blocks[lBlock].wall_data
-                          = new WallData[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
-                    }
-
-                    if (iGlobLatDat->GetCollisionType(*site_type) & INLET
-                        || iGlobLatDat->GetCollisionType(*site_type) & OUTLET)
-                    {
-                      double temp;
-                      // INLET or OUTLET or both.
-                      // These values are the boundary normal and the boundary distance.
-                      for (int l = 0; l < 3; l++)
-                      {
-                        if (!lReader.readDouble(temp))
-                        {
-                          std::cout << "Error reading boundary normals\n";
-                        }
-                      }
-
-                      if (!lReader.readDouble(temp))
-                      {
-                        std::cout << "Error reading boundary distances\n";
-                      }
-                    }
-
-                    if (iGlobLatDat->GetCollisionType(*site_type) & EDGE)
-                    {
-                      // EDGE bit set
-                      for (int l = 0; l < 3; l++)
-                      {
-                        if (!lReader.readDouble(iGlobLatDat->Blocks[lBlock].wall_data[m].wall_nor[l]))
-                        {
-                          std::cout << "Error reading edge normal\n";
-                        }
-                      }
-
-                      double temp;
-                      if (!lReader.readDouble(temp))
-                      {
-                        std::cout << "Error reading edge distance\n";
-                      }
-                    }
-
-                    for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-                    {
-                      if (!lReader.readDouble(iGlobLatDat->Blocks[lBlock].wall_data[m].cut_dist[l]))
-                      {
-                        std::cout << "Error reading cut distances\n";
-                      }
-                    }
-                  }
-                } // kk
-              } // jj
-            } // ii
-          }
-          // Not being read.
-
-          else
-          {
-            if (bytesPerBlock[lBlock] > 0)
-            {
-              if (!lReader.SetPosition(lReader.GetPosition() + bytesPerBlock[lBlock]))
-              {
-                std::cout << "Error setting stream position\n";
-              }
-            }
-          }
-        }
-      }
-
-      delete[] readBuffer;
-      delete[] readBlock;
     }
 
     /**
@@ -805,266 +731,51 @@ namespace hemelb
                                                                   MPI_File iFile,
                                                                   GlobalLatticeData* bGlobLatDat)
     {
-      idxtype* vertexDistribution = new idxtype[mTopologySize + 1];
+      idxtype* vtxDistribn = new idxtype[mTopologySize + 1];
 
-      /*
-       *  Get an array of the site count on each processor.
-       */
-      {
-        site_t* sitesPerProc = new site_t[mTopologySize];
-        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-        {
-          sitesPerProc[ii] = 0;
-        }
+      GetSiteDistributionArray(vtxDistribn,
+                               bGlobLatDat->GetBlockCount(),
+                               procForEachBlock,
+                               sitesPerBlock);
 
-        for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
-        {
-          if (procForEachBlock[ii] >= 0)
-          {
-            sitesPerProc[procForEachBlock[ii]] += sitesPerBlock[ii];
-          }
-        }
-
-        /*
-         *  Create vertex distribution array.
-         */
-        vertexDistribution[0] = 0;
-
-        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-        {
-          vertexDistribution[ii + 1] = vertexDistribution[ii] + (int) sitesPerProc[ii];
-        }
-        delete[] sitesPerProc;
-      }
-
-      /*
-       *  Create the adjacency count and list for all the local vertices.
-       */
-      // First, it'll be useful to create an array of the first site index on each block.
       int* firstSiteIndexPerBlock = new int[bGlobLatDat->GetBlockCount()];
 
-      {
-        // This needs to have all the blocks with ascending id based on which processor they're on.
-        site_t* firstSiteOnProc = new site_t[mTopologySize];
-        for (unsigned int ii = 0; ii < mTopologySize; ++ii)
-        {
-          firstSiteOnProc[ii] = vertexDistribution[ii];
-        }
+      GetFirstSiteIndexOnEachBlock(firstSiteIndexPerBlock,
+                                   bGlobLatDat->GetBlockCount(),
+                                   vtxDistribn,
+                                   procForEachBlock,
+                                   sitesPerBlock);
 
-        for (unsigned int ii = 0; ii < bGlobLatDat->GetBlockCount(); ++ii)
-        {
-          int proc = procForEachBlock[ii];
-          if (proc < 0)
-          {
-            firstSiteIndexPerBlock[ii] = -1;
-          }
-          else
-          {
-            firstSiteIndexPerBlock[ii] = (int) firstSiteOnProc[proc];
-            firstSiteOnProc[proc] += sitesPerBlock[ii];
-          }
-        }
-        delete[] firstSiteOnProc;
-      }
-
-      unsigned int localVertexCount = vertexDistribution[mTopologyRank + 1]
-          - vertexDistribution[mTopologyRank];
+      unsigned int localVertexCount = vtxDistribn[mTopologyRank + 1] - vtxDistribn[mTopologyRank];
 
       idxtype* adjacenciesPerVertex = new idxtype[localVertexCount + 1];
-      adjacenciesPerVertex[0] = 0;
-
       std::vector<idxtype> lAdjacencies;
 
-      unsigned int lFluidVertex = 0;
-      int n = -1;
-      for (site_t i = 0; i < bGlobLatDat->GetXSiteCount(); i += bGlobLatDat->GetBlockSize())
-      {
-        for (site_t j = 0; j < bGlobLatDat->GetYSiteCount(); j += bGlobLatDat->GetBlockSize())
-        {
-          for (site_t k = 0; k < bGlobLatDat->GetZSiteCount(); k += bGlobLatDat->GetBlockSize())
-          {
-            ++n;
+      GetAdjacencyData(adjacenciesPerVertex,
+                       lAdjacencies,
+                       localVertexCount,
+                       procForEachBlock,
+                       firstSiteIndexPerBlock,
+                       bGlobLatDat);
 
-            if (procForEachBlock[n] != mTopologyRank)
-            {
-              continue;
-            }
-
-            BlockData *map_block_p = &bGlobLatDat->Blocks[n];
-
-            if (map_block_p->site_data == NULL)
-            {
-              continue;
-            }
-
-            int m = -1;
-
-            // Iterate over sites within the block.
-            for (site_t site_i = i; site_i < i + bGlobLatDat->GetBlockSize(); site_i++)
-            {
-              for (site_t site_j = j; site_j < j + bGlobLatDat->GetBlockSize(); site_j++)
-              {
-                for (site_t site_k = k; site_k < k + bGlobLatDat->GetBlockSize(); site_k++)
-                {
-                  ++m;
-
-                  // Continue if it's a solid
-                  if (map_block_p->ProcessorRankForEachBlockSite[m] == BIG_NUMBER2)
-                  {
-                    continue;
-                  }
-
-                  for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
-                  {
-                    // Work out positions of neighbours.
-                    site_t neigh_i = site_i + D3Q15::CX[l];
-                    site_t neigh_j = site_j + D3Q15::CY[l];
-                    site_t neigh_k = site_k + D3Q15::CZ[l];
-
-                    if (neigh_i <= 0 || neigh_j <= 0 || neigh_k <= 0
-                        || !bGlobLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
-                    {
-                      continue;
-                    }
-
-                    // Get the id of the processor which the neighbouring site lies on.
-                    const int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
-                                                                                  neigh_j,
-                                                                                  neigh_k);
-
-                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
-                    {
-                      continue;
-                    }
-
-                    // We now do some faffery to find out the global fluid site id of this point
-                    site_t neighBlockI = neigh_i >> bGlobLatDat->Log2BlockSize;
-                    site_t neighBlockJ = neigh_j >> bGlobLatDat->Log2BlockSize;
-                    site_t neighBlockK = neigh_k >> bGlobLatDat->Log2BlockSize;
-
-                    site_t neighLocalSiteI = neigh_i - (neighBlockI << bGlobLatDat->Log2BlockSize);
-                    site_t neighLocalSiteJ = neigh_j - (neighBlockJ << bGlobLatDat->Log2BlockSize);
-                    site_t neighLocalSiteK = neigh_k - (neighBlockK << bGlobLatDat->Log2BlockSize);
-
-                    site_t neighBlockId = bGlobLatDat->GetBlockIdFromBlockCoords(neighBlockI,
-                                                                                 neighBlockJ,
-                                                                                 neighBlockK);
-
-                    site_t neighGlobalSiteId = firstSiteIndexPerBlock[neighBlockId];
-
-                    site_t localSiteId = ( ( (neighLocalSiteI << bGlobLatDat->Log2BlockSize)
-                        + neighLocalSiteJ) << bGlobLatDat->Log2BlockSize) + neighLocalSiteK;
-
-                    for (site_t neighSite = 0; neighSite
-                        < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++neighSite)
-                    {
-                      if (neighSite == localSiteId)
-                      {
-                        break;
-                      }
-                      else if (bGlobLatDat->Blocks[neighBlockId].ProcessorRankForEachBlockSite[neighSite]
-                          != BIG_NUMBER2)
-                      {
-                        ++neighGlobalSiteId;
-                      }
-                    }
-
-                    lAdjacencies.push_back((idxtype) neighGlobalSiteId);
-                  }
-
-                  adjacenciesPerVertex[++lFluidVertex] = (idxtype) lAdjacencies.size();
-                }
-              }
-            }
-          }
-        }
-      }
-
-      if (lFluidVertex != localVertexCount)
-      {
-        std::cerr << "Encountered a different number of vertices on two different parses: "
-            << lFluidVertex << " and " << localVertexCount << "\n";
-      }
-
-      // From the ParMETIS documentation:
-      // --------------------------------
-      // Processor Pi holds ni consecutive vertices and mi corresponding edges
-      //
-      // xadj[ni+1] has the cumulative number of adjacencies per vertex (with a leading 0 on each processor)
-      // vwgt[ni] has vertex weight coefficients and can be NULL
-      // adjncy[mi] has the adjacent vertices for each edge (using a global index, starting at 0)
-      // adjwgt[mi] has edge weights and can be NULL
-      // vtxdist[P+1] has an identical array of the number of the vertices on each processor, cumulatively.
-      //           So Pi has vertices from vtxdist[i] to vtxdist[i+1]-1
-      // wgtflag* is 0 with no weights (1 on edges, 2 on vertices, 3 on edges & vertices)
-      // numflag* is 0 for C-style numbering (1 for Fortran-style)
-      // ncon* is the number of weights on each vertex
-      // nparts* is the number of sub-domains (partition domains) desired
-      // tpwgts* is the fraction of vertex weight to apply to each sub-domain
-      // ubvec* is an array of the imbalance tolerance for each vertex weight
-      // options* is an int array of options
-      //
-      // edgecut[1] will contain the number of edges cut by the partitioning
-      // part[ni] will contain the partition vector of the locally-stored vertices
-      // comm* is a pointer to the MPI communicator of the processes involved
-
-      int weightFlag = 2;
-      int numberingFlag = 0;
-      int edgesCut = 0;
       idxtype* partitionVector = new idxtype[localVertexCount];
-      int options[4] = { 0, 0, 0, 0 };
 
-      int myLowest = vertexDistribution[mTopologyRank];
-      int myHighest = vertexDistribution[mTopologyRank + 1] - 1;
+      CallParmetis(partitionVector,
+                   localVertexCount,
+                   vtxDistribn,
+                   adjacenciesPerVertex,
+                   &lAdjacencies[0]);
 
-      for (unsigned int ii = 0; ii < localVertexCount; ++ii)
-      {
-        partitionVector[ii] = -1;
-      }
-
-      int desiredPartitionSize = mTopologySize;
-
-      int noConstraints = 1;
-      idxtype* vertexWeight = new idxtype[localVertexCount];
-      for (unsigned int ii = 0; ii < localVertexCount; ++ii)
-      {
-        vertexWeight[ii] = 1;
-      }
-
-      float* domainWeights = new float[desiredPartitionSize];
-
-      for (int ii = 0; ii < desiredPartitionSize; ++ii)
-      {
-        domainWeights[ii] = 1.0F / ((float) desiredPartitionSize);
-      }
-
-      float tolerance = 1.005F;
-
-      log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
-      ParMETIS_V3_PartKway(vertexDistribution,
-                           adjacenciesPerVertex,
-                           &lAdjacencies[0],
-                           vertexWeight,
-                           NULL,
-                           &weightFlag,
-                           &numberingFlag,
-                           &noConstraints,
-                           &desiredPartitionSize,
-                           domainWeights,
-                           &tolerance,
-                           options,
-                           &edgesCut,
-                           partitionVector,
-                           &mTopologyComm);
-
-      delete[] domainWeights;
-      delete[] vertexWeight;
       delete[] adjacenciesPerVertex;
-      delete[] vertexDistribution;
 
       // Right. Let's count how many sites we're going to have to move.
       int moves = 0;
-      std::vector<int> moveData;
+      std::vector<idxtype> moveData;
+
+      int myLowest = vtxDistribn[mTopologyRank];
+      int myHighest = vtxDistribn[mTopologyRank + 1] - 1;
+
+      delete[] vtxDistribn;
 
       for (int ii = 0; ii <= (myHighest - myLowest); ++ii)
       {
@@ -1152,12 +863,12 @@ namespace hemelb
 
       MPI_Type_free(&lMoveType);
 
-      ReadInLocalBlocks(iFile, bytesPerBlock, newProcForEachBlock, mTopologyRank, bGlobLatDat);
+      ReadInLocalBlocks(iFile, bGlobLatDat, bytesPerBlock, newProcForEachBlock, mTopologyRank);
 
       // Set the proc rank to what it originally was.
       for (unsigned int lBlock = 0; lBlock < bGlobLatDat->GetBlockCount(); ++lBlock)
       {
-        int lOriginalProc = procForEachBlock[lBlock];
+        proc_t lOriginalProc = procForEachBlock[lBlock];
 
         if (bGlobLatDat->Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
         {
@@ -1239,6 +950,290 @@ namespace hemelb
     site_t LatticeData::GeometryReader::GetHeaderLength(site_t blockCount) const
     {
       return 2 * 4 * blockCount;
+    }
+
+    /**
+     * Get the cumulative count of sites on each processor.
+     *
+     * @param vertexDistribn
+     * @param blockCount
+     * @param procForEachBlock
+     * @param sitesPerBlock
+     */
+    void LatticeData::GeometryReader::GetSiteDistributionArray(idxtype* vertexDistribn,
+                                                               const site_t blockCount,
+                                                               const proc_t* procForEachBlock,
+                                                               const site_t* sitesPerBlock) const
+    {
+      // Firstly, count the sites per processor.
+      for (unsigned int ii = 0; ii < (mTopologySize + 1); ++ii)
+      {
+        vertexDistribn[ii] = 0;
+      }
+
+      for (unsigned int ii = 0; ii < blockCount; ++ii)
+      {
+        if (procForEachBlock[ii] >= 0)
+        {
+          vertexDistribn[1 + procForEachBlock[ii]] += (idxtype) sitesPerBlock[ii];
+        }
+      }
+
+      // Now make the count cumulative.
+      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+      {
+        vertexDistribn[ii + 1] += vertexDistribn[ii];
+      }
+    }
+
+    void LatticeData::GeometryReader::GetFirstSiteIndexOnEachBlock(int* firstSiteIndexPerBlock,
+                                                                   const site_t blockCount,
+                                                                   const idxtype* vertexDistribution,
+                                                                   const proc_t* procForEachBlock,
+                                                                   const site_t* sitesPerBlock) const
+    {
+      // First calculate the lowest site index on each proc - relatively easy.
+      site_t* firstSiteOnProc = new site_t[mTopologySize];
+      for (unsigned int ii = 0; ii < mTopologySize; ++ii)
+      {
+        firstSiteOnProc[ii] = vertexDistribution[ii];
+      }
+
+      // Now for each block (in ascending order), the smallest site index is the smallest site
+      // index on its processor, incremented by the number of sites observed from that processor
+      // so far.
+      for (unsigned int ii = 0; ii < blockCount; ++ii)
+      {
+        int proc = procForEachBlock[ii];
+        if (proc < 0)
+        {
+          firstSiteIndexPerBlock[ii] = -1;
+        }
+        else
+        {
+          firstSiteIndexPerBlock[ii] = (int) firstSiteOnProc[proc];
+          firstSiteOnProc[proc] += sitesPerBlock[ii];
+        }
+      }
+
+      // Clean up.
+      delete[] firstSiteOnProc;
+    }
+
+    void LatticeData::GeometryReader::GetAdjacencyData(idxtype* adjacenciesPerVertex,
+                                                       std::vector<idxtype> &adjacencies,
+                                                       const site_t localVertexCount,
+                                                       const proc_t* procForEachBlock,
+                                                       const int* firstSiteIndexPerBlock,
+                                                       const GlobalLatticeData* bGlobLatDat) const
+    {
+      adjacenciesPerVertex[0] = 0;
+      unsigned int lFluidVertex = 0;
+      int n = -1;
+
+      // For each block (counting up by lowest site id)...
+      for (site_t i = 0; i < bGlobLatDat->GetXSiteCount(); i += bGlobLatDat->GetBlockSize())
+      {
+        for (site_t j = 0; j < bGlobLatDat->GetYSiteCount(); j += bGlobLatDat->GetBlockSize())
+        {
+          for (site_t k = 0; k < bGlobLatDat->GetZSiteCount(); k += bGlobLatDat->GetBlockSize())
+          {
+            ++n;
+
+            // ... considering only the ones which live on this proc...
+            if (procForEachBlock[n] != mTopologyRank)
+            {
+              continue;
+            }
+
+            BlockData *map_block_p = &bGlobLatDat->Blocks[n];
+
+            // ... and only those with fluid sites...
+            if (map_block_p->site_data == NULL)
+            {
+              continue;
+            }
+
+            int m = -1;
+
+            // ... iterate over sites within the block...
+            for (site_t site_i = i; site_i < i + bGlobLatDat->GetBlockSize(); site_i++)
+            {
+              for (site_t site_j = j; site_j < j + bGlobLatDat->GetBlockSize(); site_j++)
+              {
+                for (site_t site_k = k; site_k < k + bGlobLatDat->GetBlockSize(); site_k++)
+                {
+                  ++m;
+
+                  // ... only looking at non-solid sites...
+                  if (map_block_p->ProcessorRankForEachBlockSite[m] == BIG_NUMBER2)
+                  {
+                    continue;
+                  }
+
+                  // ... for each lattice direction...
+                  for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+                  {
+                    // ... which leads to a valid neighbouring site...
+                    site_t neigh_i = site_i + D3Q15::CX[l];
+                    site_t neigh_j = site_j + D3Q15::CY[l];
+                    site_t neigh_k = site_k + D3Q15::CZ[l];
+
+                    if (neigh_i <= 0 || neigh_j <= 0 || neigh_k <= 0
+                        || !bGlobLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
+                    {
+                      continue;
+                    }
+
+                    // ... (that is actually being simulated and not a solid)...
+                    const int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
+                                                                                  neigh_j,
+                                                                                  neigh_k);
+
+                    if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
+                    {
+                      continue;
+                    }
+
+                    // ... get some info about the position of the neighbouring site.
+                    site_t neighBlockI = neigh_i >> bGlobLatDat->Log2BlockSize;
+                    site_t neighBlockJ = neigh_j >> bGlobLatDat->Log2BlockSize;
+                    site_t neighBlockK = neigh_k >> bGlobLatDat->Log2BlockSize;
+
+                    site_t neighLocalSiteI = neigh_i - (neighBlockI << bGlobLatDat->Log2BlockSize);
+                    site_t neighLocalSiteJ = neigh_j - (neighBlockJ << bGlobLatDat->Log2BlockSize);
+                    site_t neighLocalSiteK = neigh_k - (neighBlockK << bGlobLatDat->Log2BlockSize);
+
+                    site_t neighBlockId = bGlobLatDat->GetBlockIdFromBlockCoords(neighBlockI,
+                                                                                 neighBlockJ,
+                                                                                 neighBlockK);
+
+                    // Now get the local id of the neighbour on its block,
+                    site_t localSiteId = ( ( (neighLocalSiteI << bGlobLatDat->Log2BlockSize)
+                        + neighLocalSiteJ) << bGlobLatDat->Log2BlockSize) + neighLocalSiteK;
+
+                    // calculate the site's id over the whole geometry,
+                    site_t neighGlobalSiteId = firstSiteIndexPerBlock[neighBlockId];
+
+                    for (site_t neighSite = 0; neighSite
+                        < bGlobLatDat->GetSitesPerBlockVolumeUnit(); ++neighSite)
+                    {
+                      if (neighSite == localSiteId)
+                      {
+                        break;
+                      }
+                      else if (bGlobLatDat->Blocks[neighBlockId].ProcessorRankForEachBlockSite[neighSite]
+                          != BIG_NUMBER2)
+                      {
+                        ++neighGlobalSiteId;
+                      }
+                    }
+
+                    // then add this to the list of adjacencies.
+                    adjacencies.push_back((idxtype) neighGlobalSiteId);
+                  }
+
+                  // The cumulative count of adjacencies for this vertex is equal to the total
+                  // number of adjacencies we've entered.
+                  // NOTE: The prefix operator is correct here because
+                  // the array has a leading 0 not relating to any site.
+                  adjacenciesPerVertex[++lFluidVertex] = (idxtype) adjacencies.size();
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Perform a debugging test if running at the appropriate log level.
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        if (lFluidVertex != localVertexCount)
+        {
+          std::cerr << "Encountered a different number of vertices on two different parses: "
+              << lFluidVertex << " and " << localVertexCount << "\n";
+        }
+      }
+    }
+
+    void LatticeData::GeometryReader::CallParmetis(idxtype* partitionVector,
+                                                   unsigned int localVertexCount,
+                                                   idxtype* vtxDistribn,
+                                                   idxtype* adjacenciesPerVertex,
+                                                   idxtype* adjacencies)
+    {
+      // From the ParMETIS documentation:
+      // --------------------------------
+      // Processor Pi holds ni consecutive vertices and mi corresponding edges
+      //
+      // xadj[ni+1] has the cumulative number of adjacencies per vertex (with a leading 0 on each processor)
+      // vwgt[ni] has vertex weight coefficients and can be NULL
+      // adjncy[mi] has the adjacent vertices for each edge (using a global index, starting at 0)
+      // adjwgt[mi] has edge weights and can be NULL
+      // vtxdist[P+1] has an identical array of the number of the vertices on each processor, cumulatively.
+      //           So Pi has vertices from vtxdist[i] to vtxdist[i+1]-1
+      // wgtflag* is 0 with no weights (1 on edges, 2 on vertices, 3 on edges & vertices)
+      // numflag* is 0 for C-style numbering (1 for Fortran-style)
+      // ncon* is the number of weights on each vertex
+      // nparts* is the number of sub-domains (partition domains) desired
+      // tpwgts* is the fraction of vertex weight to apply to each sub-domain
+      // ubvec* is an array of the imbalance tolerance for each vertex weight
+      // options* is an int array of options
+      //
+      // edgecut[1] will contain the number of edges cut by the partitioning
+      // part[ni] will contain the partition vector of the locally-stored vertices
+      // comm* is a pointer to the MPI communicator of the processes involved
+
+
+      // Initialise the partition vector.
+      for (unsigned int ii = 0; ii < localVertexCount; ++ii)
+      {
+        partitionVector[ii] = -1;
+      }
+
+      // Weight all vertices evenly.
+      idxtype* vertexWeight = new idxtype[localVertexCount];
+      for (unsigned int ii = 0; ii < localVertexCount; ++ii)
+      {
+        vertexWeight[ii] = 1;
+      }
+
+      // Set the weights of each partition to be even, and to sum to 1.
+      int desiredPartitionSize = mTopologySize;
+
+      float* domainWeights = new float[desiredPartitionSize];
+      for (int ii = 0; ii < desiredPartitionSize; ++ii)
+      {
+        domainWeights[ii] = 1.0F / ((float) desiredPartitionSize);
+      }
+
+      // A bunch of values ParMetis needs.
+      int noConstraints = 1;
+      int weightFlag = 2;
+      int numberingFlag = 0;
+      int edgesCut = 0;
+      int options[4] = { 0, 0, 0, 0 };
+      float tolerance = 1.005F;
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
+      ParMETIS_V3_PartKway(vtxDistribn,
+                           adjacenciesPerVertex,
+                           adjacencies,
+                           vertexWeight,
+                           NULL,
+                           &weightFlag,
+                           &numberingFlag,
+                           &noConstraints,
+                           &desiredPartitionSize,
+                           domainWeights,
+                           &tolerance,
+                           options,
+                           &edgesCut,
+                           partitionVector,
+                           &mTopologyComm);
+
+      delete[] domainWeights;
+      delete[] vertexWeight;
     }
 
   }

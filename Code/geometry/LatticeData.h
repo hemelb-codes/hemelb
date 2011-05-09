@@ -2,11 +2,13 @@
 #define HEMELB_GEOMETRY_LATTICEDATA_H
 
 #include <cstdio>
+#include <parmetis.h>
 
 #include "D3Q15.h"
 #include "constants.h"
 #include "SimConfig.h"
 #include "mpiInclude.h"
+#include "io/XdrReader.h"
 // TODO Remove the stress type from the data file, so we can remove the dependence
 // on LbmParams here.
 #include "lb/LbmParameters.h"
@@ -186,8 +188,6 @@ namespace hemelb
 
         class GlobalLatticeData
         {
-            friend class BlockCounter;
-
           public:
             void SetBasicDetails(site_t iBlocksX,
                                  site_t iBlocksY,
@@ -224,7 +224,12 @@ namespace hemelb
             // Function that gets the index of a block from its coordinates.
             site_t GetBlockIdFromBlockCoords(site_t blockI, site_t blockJ, site_t blockK) const;
 
+            void GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const;
+            site_t GetSiteCoord(site_t block, site_t localSiteCoord) const;
+
             unsigned int GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
+
+            void ReadBlock(site_t block, io::XdrReader* reader);
 
           public:
             // TODO public temporarily, until all usages are internal to the class.
@@ -236,75 +241,6 @@ namespace hemelb
             site_t mSitesX, mSitesY, mSitesZ;
             site_t mBlocksX, mBlocksY, mBlocksZ;
             site_t mBlockSize;
-        };
-
-        class BlockCounter
-        {
-          public:
-            BlockCounter(const GlobalLatticeData* iGlobLatDat, site_t iStartNumber)
-            {
-              mBlockNumber = iStartNumber;
-              mGlobLatDat = iGlobLatDat;
-            }
-
-            void operator++()
-            {
-              mBlockNumber++;
-            }
-
-            void operator++(int in)
-            {
-              mBlockNumber++;
-            }
-
-            operator site_t()
-            {
-              return mBlockNumber;
-            }
-
-            bool operator<(site_t iUpperLimit) const
-            {
-              return mBlockNumber < iUpperLimit;
-            }
-
-            site_t GetICoord()
-            {
-              return (mBlockNumber - (mBlockNumber % (mGlobLatDat->GetYBlockCount()
-                  * mGlobLatDat->GetZBlockCount()))) / (mGlobLatDat->GetYBlockCount()
-                  * mGlobLatDat->GetZBlockCount());
-            }
-
-            site_t GetJCoord()
-            {
-              site_t lTemp = mBlockNumber % (mGlobLatDat->GetYBlockCount()
-                  * mGlobLatDat->GetZBlockCount());
-              return (lTemp - (lTemp % mGlobLatDat->GetZBlockCount()))
-                  / mGlobLatDat->GetZBlockCount();
-            }
-
-            site_t GetKCoord()
-            {
-              return mBlockNumber % mGlobLatDat->GetZBlockCount();
-            }
-
-            site_t GetICoord(site_t iSiteI)
-            {
-              return (GetICoord() << mGlobLatDat->Log2BlockSize) + iSiteI;
-            }
-
-            site_t GetJCoord(site_t iSiteJ)
-            {
-              return (GetJCoord() << mGlobLatDat->Log2BlockSize) + iSiteJ;
-            }
-
-            site_t GetKCoord(site_t iSiteK)
-            {
-              return (GetKCoord() << mGlobLatDat->Log2BlockSize) + iSiteK;
-            }
-
-          private:
-            const GlobalLatticeData* mGlobLatDat;
-            site_t mBlockNumber;
         };
 
         class GeometryReader
@@ -348,10 +284,15 @@ namespace hemelb
                               const GlobalLatticeData* iGlobLatDat);
 
             void ReadInLocalBlocks(MPI_File iFile,
+                                   GlobalLatticeData* iGlobLatDat,
                                    const unsigned int* bytesPerBlock,
                                    const proc_t* unitForEachBlock,
-                                   const proc_t localRank,
-                                   const GlobalLatticeData* iGlobLatDat);
+                                   const proc_t localRank);
+
+            void DecideWhichBlocksToRead(bool* readBlock,
+                                         const proc_t* unitForEachBlock,
+                                         const proc_t localRank,
+                                         const GlobalLatticeData* iGlobLatDat);
 
             bool Expand(std::vector<BlockLocation>* edgeBlocks,
                         std::vector<BlockLocation>* expansionBlocks,
@@ -370,6 +311,30 @@ namespace hemelb
                                              GlobalLatticeData* bGlobLatDat);
 
             site_t GetHeaderLength(site_t blockCount) const;
+
+            void GetSiteDistributionArray(idxtype* vertexDistribn,
+                                          const site_t blockCount,
+                                          const proc_t* procForEachBlock,
+                                          const site_t* sitesPerBlock) const;
+
+            void GetFirstSiteIndexOnEachBlock(int* firstSiteIndexPerBlock,
+                                              const site_t blockCount,
+                                              const idxtype* vertexDistribution,
+                                              const proc_t* procForEachBlock,
+                                              const site_t* sitesPerBlock) const;
+
+            void GetAdjacencyData(idxtype* adjacenciesPerVertex,
+                                  std::vector<idxtype> &adjacencies,
+                                  const site_t localVertexCount,
+                                  const proc_t* procForEachBlock,
+                                  const int* firstSiteIndexPerBlock,
+                                  const GlobalLatticeData* bGlobLatDat) const;
+
+            void CallParmetis(idxtype* partitionVector,
+                              unsigned int localVertexCount,
+                              idxtype* vtxDistribn,
+                              idxtype* adjacenciesPerVertex,
+                              idxtype* adjacencies);
 
             // The config file starts with:
             // * 1 unsigned int for stress type
