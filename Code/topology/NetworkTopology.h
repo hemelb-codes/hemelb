@@ -24,6 +24,7 @@ namespace hemelb
         site_t FirstSharedF;
     };
 
+    // TODO This should be globally available, static.
     class NetworkTopology
     {
       public:
