@@ -204,7 +204,7 @@ namespace hemelb
         {
           MPI_Isend(&lSharedFLocationForEachProc[m][0],
                     (int) neigh_proc_p->SharedFCount * 4,
-                    site_mpi_t,
+                    MpiDataType<site_t>(),
                     neigh_proc_p->Rank,
                     10,
                     MPI_COMM_WORLD,
@@ -214,7 +214,7 @@ namespace hemelb
         {
           MPI_Irecv(&lSharedFLocationForEachProc[m][0],
                     (int) neigh_proc_p->SharedFCount * 4,
-                    site_mpi_t,
+                    MpiDataType<site_t>(),
                     neigh_proc_p->Rank,
                     10,
                     MPI_COMM_WORLD,
@@ -719,29 +719,29 @@ namespace hemelb
       }
     }
 
-    // Helper functions to add ints to the list.
-    void Net::AddToList(int* iNew, int iLength, ProcComms *bMetaData)
-    {
-      bMetaData->PointerList.push_back(iNew);
-      bMetaData->LengthList.push_back(iLength);
-      bMetaData->TypeList.push_back(MPI_INT);
-    }
-
-    // Helper functions to add doubles to the list.
-    void Net::AddToList(double* iNew, int iLength, ProcComms *bMetaData)
-    {
-      bMetaData->PointerList.push_back(iNew);
-      bMetaData->LengthList.push_back(iLength);
-      bMetaData->TypeList.push_back(MPI_DOUBLE);
-    }
-
-    // Helper functions to add floats to the list.
-    void Net::AddToList(float* iNew, int iLength, ProcComms *bMetaData)
-    {
-      bMetaData->PointerList.push_back(iNew);
-      bMetaData->LengthList.push_back(iLength);
-      bMetaData->TypeList.push_back(MPI_FLOAT);
-    }
+//    // Helper functions to add ints to the list.
+//    void Net::AddToList(int* iNew, int iLength, ProcComms *bMetaData)
+//    {
+//      bMetaData->PointerList.push_back(iNew);
+//      bMetaData->LengthList.push_back(iLength);
+//      bMetaData->TypeList.push_back(MpiDataType(iNew));
+//    }
+//
+//    // Helper functions to add doubles to the list.
+//    void Net::AddToList(double* iNew, int iLength, ProcComms *bMetaData)
+//    {
+//      bMetaData->PointerList.push_back(iNew);
+//      bMetaData->LengthList.push_back(iLength);
+//      bMetaData->TypeList.push_back(MpiDataType(iNew));
+//    }
+//
+//    // Helper functions to add floats to the list.
+//    void Net::AddToList(float* iNew, int iLength, ProcComms *bMetaData)
+//    {
+//      bMetaData->PointerList.push_back(iNew);
+//      bMetaData->LengthList.push_back(iLength);
+//      bMetaData->TypeList.push_back(MpiDataType(iNew));
+//    }
 
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
     void Net::EnsurePreparedToSendReceive()

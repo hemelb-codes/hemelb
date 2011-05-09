@@ -106,11 +106,18 @@ namespace hemelb
 
         ProcComms* GetProcComms(proc_t iRank, bool iIsSend);
 
-        void AddToList(int* iNew, int iLength, ProcComms* bMetaData);
-
-        void AddToList(double* iNew, int iLength, ProcComms* bMetaData);
-
-        void AddToList(float* iNew, int iLength, ProcComms* bMetaData);
+        //void AddToList(int* iNew, int iLength, ProcComms* bMetaData);
+        //
+        //void AddToList(double* iNew, int iLength, ProcComms* bMetaData);
+        //
+        //void AddToList(float* iNew, int iLength, ProcComms* bMetaData);
+        template<typename T>
+        void AddToList(T* iNew, int iLength, ProcComms *bMetaData)
+        {
+          bMetaData->PointerList.push_back(iNew);
+          bMetaData->LengthList.push_back(iLength);
+          bMetaData->TypeList.push_back(MpiDataType<T>());
+        }
 
         void EnsurePreparedToSendReceive();
 

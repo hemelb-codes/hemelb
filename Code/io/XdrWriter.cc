@@ -10,8 +10,20 @@ namespace hemelb
     // Functions to write simple types out to the Xdr stream.
     // Sadly templating is non-trivial due to XDR's naming.
 
-    // The const_cast in these is safe as the XDR writer won't
-    // change the values but doesn't specify in the headers.
+    /* The const_cast in these is safe as the XDR writer won't
+     * change the values but doesn't specify in the headers.
+     */
+
+    /* The XDR implementation on BSD based machines uses
+     * xdr_u_int??_t() to pack/unpack these types, while Linux
+     * based machines have xdr_uint??_t(). Use the config macro to
+     * create aliases on BSD.
+     */
+#ifdef HEMELB_CFG_ON_BSD
+#define xdr_uint16_t xdr_u_int16_t
+#define xdr_uint32_t xdr_u_int32_t
+#define xdr_uint64_t xdr_u_int64_t
+#endif //  HEMELB_CFG_ON_BSD
 
     void XdrWriter::_write(int16_t const& shortToWrite)
     {

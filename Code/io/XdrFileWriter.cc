@@ -11,9 +11,9 @@ namespace hemelb
 
     // Implement a constructor that opens the file and creates the Xdr
     // object to write to it.
-    XdrFileWriter::XdrFileWriter(std::string fileName)
+    XdrFileWriter::XdrFileWriter(const std::string fileName, const std::string mode)
     {
-      myFile = fopen(fileName.c_str(), "w");
+      myFile = fopen(fileName.c_str(), mode.c_str());
       xdrstdio_create(&mXdr, myFile, XDR_ENCODE);
     }
 

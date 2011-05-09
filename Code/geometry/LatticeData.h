@@ -22,6 +22,7 @@ namespace hemelb
       public:
         enum SiteType
         {
+          // These must be consistent with the setup tool
           SOLID_TYPE = 0U,
           FLUID_TYPE = 1U,
           INLET_TYPE = 2U,
@@ -336,13 +337,13 @@ namespace hemelb
                               idxtype* adjacenciesPerVertex,
                               idxtype* adjacencies);
 
-            int* GetMovesList(int* movesFromEachProc,
-                              const int* firstSiteIndexPerBlock,
-                              const proc_t* procForEachBlock,
-                              const site_t* sitesPerBlock,
-                              const int* vtxDistribn,
-                              const int* partitionVector,
-                              const GlobalLatticeData* bGlobLatDat);
+            idxtype* GetMovesList(int* movesFromEachProc,
+                                  const int* firstSiteIndexPerBlock,
+                                  const proc_t* procForEachBlock,
+                                  const site_t* sitesPerBlock,
+                                  const int* vtxDistribn,
+                                  const int* partitionVector,
+                                  const GlobalLatticeData* bGlobLatDat);
 
             void RereadBlocks(GlobalLatticeData* bGlobLatDat,
                               MPI_File iFile,
