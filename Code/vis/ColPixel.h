@@ -49,7 +49,6 @@ namespace hemelb
         bool IsGlyph() const;
         bool IsStreakline() const;
 
-        static const MPI_Datatype& getMpiType();
         static void PickColour(float value, float colour[3]);
 
       private:
@@ -65,9 +64,6 @@ namespace hemelb
             PixelId();
             PixelId(unsigned int i, unsigned int j);
         };
-
-        static void registerMpiType();
-        static MPI_Datatype mpiType;
 
         void MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest);
 

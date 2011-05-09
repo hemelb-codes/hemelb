@@ -9,7 +9,6 @@ namespace hemelb
   namespace vis
   {
 
-    MPI_Datatype MPI_col_pixel_type;
     ColPixel::PixelId::PixelId(unsigned int i_, unsigned int j_) :
       isRt(false), isGlyph(false), isStreakline(false), i(i_), j(j_)
     {
@@ -19,8 +18,6 @@ namespace hemelb
       isRt(false), isGlyph(false), isStreakline(false), i(0), j(0)
     {
     }
-
-    MPI_Datatype ColPixel::mpiType = MPI_DATATYPE_NULL;
 
     ColPixel::ColPixel()
     {
@@ -71,50 +68,6 @@ namespace hemelb
       stress_r = stressColour[0] * 255.0F;
       stress_g = stressColour[1] * 255.0F;
       stress_b = stressColour[2] * 255.0F;
-    }
-
-    // create the derived datatype for the MPI communications
-    void ColPixel::registerMpiType()
-    {
-      int col_pixel_count = 15;
-      int col_pixel_blocklengths[15] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-
-      MPI_Datatype col_pixel_types[15] = { MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-                                           MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-                                           MPI_FLOAT, MPI_FLOAT, MPI_INT, MPI_INT, MPI_UB };
-
-      MPI_Aint col_pixel_disps[15];
-
-      col_pixel_disps[0] = 0;
-
-      for (int i = 1; i < col_pixel_count; i++)
-      {
-        if (col_pixel_types[i - 1] == MPI_FLOAT)
-        {
-          col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float) * col_pixel_blocklengths[i
-              - 1]);
-        }
-        else if (col_pixel_types[i - 1] == MPI_INT)
-        {
-          col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(int)
-              * col_pixel_blocklengths[i - 1]);
-        }
-      }
-      MPI_Type_struct(col_pixel_count,
-                      col_pixel_blocklengths,
-                      col_pixel_disps,
-                      col_pixel_types,
-                      &mpiType);
-      MPI_Type_commit(&mpiType);
-    }
-
-    const MPI_Datatype& ColPixel::getMpiType()
-    {
-      if (mpiType == MPI_DATATYPE_NULL)
-      {
-        registerMpiType();
-      }
-      return mpiType;
     }
 
     void ColPixel::MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest)
@@ -226,15 +179,12 @@ namespace hemelb
       if (i.isRt)
       {
         // store velocity volume rendering colour
-        MakePixelColour(int (vel_r / dt), int (vel_g / dt), int (vel_b / dt), &rgb_data[0]);
+        MakePixelColour(int(vel_r / dt), int(vel_g / dt), int(vel_b / dt), &rgb_data[0]);
 
         if (visSettings->mStressType != lb::ShearStress)
         {
           // store von Mises stress volume rendering colour
-          MakePixelColour(int (stress_r / dt),
-                          int (stress_g / dt),
-                          int (stress_b / dt),
-                          &rgb_data[3]);
+          MakePixelColour(int(stress_r / dt), int(stress_g / dt), int(stress_b / dt), &rgb_data[3]);
         }
         else if (stress < ((float) NO_VALUE))
         {
@@ -242,8 +192,10 @@ namespace hemelb
           PickColour(stress, stress_col);
 
           // store wall shear stress colour
-          MakePixelColour(int (255.0F * stress_col[0]), int (255.0F * stress_col[1]), int (255.0F
-              * stress_col[2]), &rgb_data[3]);
+          MakePixelColour(int(255.0F * stress_col[0]),
+                          int(255.0F * stress_col[1]),
+                          int(255.0F * stress_col[2]),
+                          &rgb_data[3]);
         }
         else
         {
@@ -266,12 +218,16 @@ namespace hemelb
         PickColour(stress, stress_col);
 
         // store wall pressure colour
-        MakePixelColour(int (255.0F * density_col[0]), int (255.0F * density_col[1]), int (255.0F
-            * density_col[2]), &rgb_data[6]);
+        MakePixelColour(int(255.0F * density_col[0]),
+                        int(255.0F * density_col[1]),
+                        int(255.0F * density_col[2]),
+                        &rgb_data[6]);
 
         // store von Mises stress colour
-        MakePixelColour(int (255.0F * stress_col[0]), int (255.0F * stress_col[1]), int (255.0F
-            * stress_col[2]), &rgb_data[9]);
+        MakePixelColour(int(255.0F * stress_col[0]),
+                        int(255.0F * stress_col[1]),
+                        int(255.0F * stress_col[2]),
+                        &rgb_data[9]);
 
       }
       else if (visSettings->mStressType != lb::ShearStress && visSettings->mode
@@ -295,12 +251,16 @@ namespace hemelb
           }
 
           // store wall pressure (+glyph) colour
-          MakePixelColour(int (127.5F * density_col[0]), int (127.5F * density_col[1]), int (127.5F
-              * density_col[2]), &rgb_data[6]);
+          MakePixelColour(int(127.5F * density_col[0]),
+                          int(127.5F * density_col[1]),
+                          int(127.5F * density_col[2]),
+                          &rgb_data[6]);
 
           // store von Mises stress (+glyph) colour
-          MakePixelColour(int (127.5F * stress_col[0]), int (127.5F * stress_col[1]), int (127.5F
-              * stress_col[2]), &rgb_data[9]);
+          MakePixelColour(int(127.5F * stress_col[0]),
+                          int(127.5F * stress_col[1]),
+                          int(127.5F * stress_col[2]),
+                          &rgb_data[9]);
         }
         else
         {
@@ -318,8 +278,10 @@ namespace hemelb
         PickColour(scaled_vel, particle_col);
 
         // store particle colour
-        MakePixelColour(int (255.0F * particle_col[0]), int (255.0F * particle_col[1]), int (255.0F
-            * particle_col[2]), &rgb_data[6]);
+        MakePixelColour(int(255.0F * particle_col[0]),
+                        int(255.0F * particle_col[1]),
+                        int(255.0F * particle_col[2]),
+                        &rgb_data[6]);
 
         for (int ii = 9; ii < 12; ++ii)
         {
@@ -329,16 +291,17 @@ namespace hemelb
       else
       {
         // store pressure colour
-        rgb_data[6] = rgb_data[7] = rgb_data[8]
-            = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * density),
-                                                                      0,
-                                                                      127);
+        rgb_data[6] = rgb_data[7]
+            = rgb_data[8] = (unsigned char) util::NumericalFunctions::enforceBounds(int(127.5F
+                                                                                        * density),
+                                                                                    0,
+                                                                                    127);
 
         // store shear stress or von Mises stress
         if (stress < ((float) NO_VALUE))
         {
           rgb_data[9] = rgb_data[10] = rgb_data[11]
-              = (unsigned char) util::NumericalFunctions::enforceBounds(int (127.5F * stress),
+              = (unsigned char) util::NumericalFunctions::enforceBounds(int(127.5F * stress),
                                                                         0,
                                                                         127);
         }
@@ -353,7 +316,9 @@ namespace hemelb
     {
       colour[0] = util::NumericalFunctions::enforceBounds<float>(4.F * value - 2.F, 0.F, 1.F);
       colour[1] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * (float) fabs(value
-          - 0.5F), 0.F, 1.F);
+                                                                     - 0.5F),
+                                                                 0.F,
+                                                                 1.F);
       colour[2] = util::NumericalFunctions::enforceBounds<float>(2.F - 4.F * value, 0.F, 1.F);
     }
 
@@ -388,5 +353,41 @@ namespace hemelb
       return i.isStreakline;
     }
 
+  }
+
+  template<>
+  MPI_Datatype MpiDataTypeTraits<hemelb::vis::ColPixel>::RegisterMpiDataType()
+  {
+    int col_pixel_count = 15;
+    int col_pixel_blocklengths[15] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+
+    MPI_Datatype col_pixel_types[15] = { MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+                                         MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
+                                         MPI_FLOAT, MPI_FLOAT, MPI_INT, MPI_INT, MPI_UB };
+
+    MPI_Aint col_pixel_disps[15];
+
+    col_pixel_disps[0] = 0;
+
+    for (int i = 1; i < col_pixel_count; i++)
+    {
+      if (col_pixel_types[i - 1] == MPI_FLOAT)
+      {
+        col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float)
+            * col_pixel_blocklengths[i - 1]);
+      }
+      else if (col_pixel_types[i - 1] == MPI_INT)
+      {
+        col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(int) * col_pixel_blocklengths[i - 1]);
+      }
+    }
+    MPI_Datatype type;
+    MPI_Type_struct(col_pixel_count,
+                    col_pixel_blocklengths,
+                    col_pixel_disps,
+                    col_pixel_types,
+                    &type);
+    MPI_Type_commit(&type);
+    return type;
   }
 }

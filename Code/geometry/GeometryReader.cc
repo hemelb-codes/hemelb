@@ -214,7 +214,11 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile, lPreambleBuffer, PreambleBytes, MPI_CHAR, &lStatus);
+      MPI_File_read_all(xiFile,
+                        lPreambleBuffer,
+                        PreambleBytes,
+                        MpiDataType(lPreambleBuffer[0]),
+                        &lStatus);
 
       // Create an Xdr translator based on the read-in data.
       hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
@@ -269,7 +273,11 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile, lHeaderBuffer, (int) headerByteCount, MPI_CHAR, &lStatus);
+      MPI_File_read_all(xiFile,
+                        lHeaderBuffer,
+                        (int) headerByteCount,
+                        MpiDataType(lHeaderBuffer[0]),
+                        &lStatus);
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::XdrReader preambleReader =
@@ -774,13 +782,13 @@ namespace hemelb
       // Convert the ParMetis results into a nice format.
       int* allMoves = new int[mTopologySize];
 
-      int* movesList = GetMovesList(allMoves,
-                                    firstSiteIndexPerBlock,
-                                    procForEachBlock,
-                                    sitesPerBlock,
-                                    vtxDistribn,
-                                    partitionVector,
-                                    bGlobLatDat);
+      idxtype* movesList = GetMovesList(allMoves,
+                                        firstSiteIndexPerBlock,
+                                        procForEachBlock,
+                                        sitesPerBlock,
+                                        vtxDistribn,
+                                        partitionVector,
+                                        bGlobLatDat);
 
       delete[] firstSiteIndexPerBlock;
       delete[] vtxDistribn;
@@ -1101,13 +1109,13 @@ namespace hemelb
      * @param partitionVector
      * @return
      */
-    int* LatticeData::GeometryReader::GetMovesList(int* movesFromEachProc,
-                                                   const int* firstSiteIndexPerBlock,
-                                                   const proc_t* procForEachBlock,
-                                                   const site_t* sitesPerBlock,
-                                                   const int* vtxDistribn,
-                                                   const int* partitionVector,
-                                                   const GlobalLatticeData* bGlobLatDat)
+    idxtype* LatticeData::GeometryReader::GetMovesList(int* movesFromEachProc,
+                                                       const int* firstSiteIndexPerBlock,
+                                                       const proc_t* procForEachBlock,
+                                                       const site_t* sitesPerBlock,
+                                                       const int* vtxDistribn,
+                                                       const int* partitionVector,
+                                                       const GlobalLatticeData* bGlobLatDat)
     {
       // Right. Let's count how many sites we're going to have to move. Count the local number of
       // sites to be moved, and collect the site id and the destination processor.
@@ -1200,7 +1208,13 @@ namespace hemelb
       // Spread the move-count data around, so all processes now how many moves each process is
       // doing.
       int moves = (int) moveData.size() / 3;
-      MPI_Allgather(&moves, 1, MPI_INT, movesFromEachProc, 1, MPI_INT, mTopologyComm);
+      MPI_Allgather(&moves,
+                    1,
+                    MpiDataType(moves),
+                    movesFromEachProc,
+                    1,
+                    MpiDataType(movesFromEachProc[0]),
+                    mTopologyComm);
 
       // Count the total moves.
       int totalMoves = 0;
@@ -1212,11 +1226,11 @@ namespace hemelb
 
       // Now share all the lists of moves - create a MPI type...
       MPI_Datatype lMoveType;
-      MPI_Type_contiguous(3, MPI_INT, &lMoveType);
+      MPI_Type_contiguous(3, MpiDataType<idxtype> (), &lMoveType);
       MPI_Type_commit(&lMoveType);
 
       // ... create a destination array...
-      int* movesList = new int[3 * totalMoves];
+      idxtype* movesList = new idxtype[3 * totalMoves];
 
       // ... create an array of offsets into the destination array for each rank...
       int* offsets = new int[mTopologySize];
