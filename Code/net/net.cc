@@ -412,7 +412,7 @@ namespace hemelb
                           &mNetworkTopology->NeighbouringProcs[mm];
 
                       // If ProcessorRankForEachBlockSite is equal to a neigh_proc that has alredy been listed.
-                      if (*proc_id_p == (int) neigh_proc_p->Rank)
+                      if (*proc_id_p == neigh_proc_p->Rank)
                       {
                         flag = false;
                         ++neigh_proc_p->SharedFCount;
