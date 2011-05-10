@@ -1,4 +1,5 @@
 #include "geometry/LatticeData.h"
+#include "log/Logger.h"
 
 namespace hemelb
 {
@@ -249,6 +250,7 @@ namespace hemelb
               Blocks[block].ProcessorRankForEachBlockSite[m] = BIG_NUMBER2;
               continue;
             }
+
             Blocks[block].ProcessorRankForEachBlockSite[m] = -1;
 
             if (GetCollisionType(*site_type) != FLUID)
