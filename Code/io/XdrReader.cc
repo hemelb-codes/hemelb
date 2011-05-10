@@ -39,6 +39,7 @@ namespace hemelb
       return xdr_getpos(&mXdr);
     }
 
+    // Returns false on failure
     bool XdrReader::SetPosition(unsigned int iPosition)
     {
       return xdr_setpos(&mXdr, iPosition);

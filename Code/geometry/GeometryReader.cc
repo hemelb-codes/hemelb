@@ -73,13 +73,11 @@ namespace hemelb
     {
       double lStart = util::myClock();
 
-      MPI_File lFile;
-      MPI_Info lFileInfo;
       int lError;
 
       // Open the file using the MPI parallel I/O interface at the path
       // given, in read-only mode.
-      MPI_Info_create(&lFileInfo);
+      MPI_Info_create(&fileInfo);
 
       // Create hints about how we'll read the file. See Chapter 13, page 400 of the MPI 2.2 spec.
       std::string accessStyle = "access_style";
@@ -87,15 +85,15 @@ namespace hemelb
       std::string buffering = "collective_buffering";
       std::string bufferingValue = "true";
 
-      MPI_Info_set(lFileInfo, &accessStyle[0], &accessStyleValue[0]);
-      MPI_Info_set(lFileInfo, &buffering[0], &bufferingValue[0]);
+      MPI_Info_set(fileInfo, &accessStyle[0], &accessStyleValue[0]);
+      MPI_Info_set(fileInfo, &buffering[0], &bufferingValue[0]);
 
       // Open the file.
       lError = MPI_File_open(MPI_COMM_WORLD,
                              &bSimConfig->DataFilePath[0],
                              MPI_MODE_RDONLY,
-                             lFileInfo,
-                             &lFile);
+                             fileInfo,
+                             &file);
 
       if (lError != 0)
       {
@@ -113,11 +111,11 @@ namespace hemelb
 
       // Set the view to the file.
       std::string lMode = "native";
-      MPI_File_set_view(lFile, 0, MPI_CHAR, MPI_CHAR, &lMode[0], MPI_INFO_NULL);
+      MPI_File_set_view(file, 0, MPI_CHAR, MPI_CHAR, &lMode[0], fileInfo);
 
       // Read the file preamble.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
-      ReadPreamble(lFile, bLbmParams, bGlobLatDat);
+      ReadPreamble(bLbmParams, bGlobLatDat);
 
       // Read the file header.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
@@ -125,7 +123,7 @@ namespace hemelb
       site_t* sitesPerBlock = new site_t[bGlobLatDat->GetBlockCount()];
       unsigned int* bytesPerBlock = new unsigned int[bGlobLatDat->GetBlockCount()];
 
-      ReadHeader(lFile, bGlobLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
+      ReadHeader(bGlobLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
 
       // Perform an initial decomposition, of which processor should read each block.
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
@@ -150,34 +148,36 @@ namespace hemelb
       // Perform the initial read-in.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading in my blocks");
 
-      ReadInLocalBlocks(lFile, bGlobLatDat, bytesPerBlock, procForEachBlock, mTopologyRank);
+      // Close the file - only the ranks participating in the topology need to read it again.
+      MPI_File_close(&file);
+
+      if (mParticipateInTopology)
+      {
+        // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
+        // local to this node.
+        MPI_File_open(mTopologyComm, &bSimConfig->DataFilePath[0], MPI_MODE_RDONLY, fileInfo, &file);
+
+        ReadInLocalBlocks(bGlobLatDat,
+                          sitesPerBlock,
+                          bytesPerBlock,
+                          procForEachBlock,
+                          mTopologyRank);
+      }
 
       double lMiddle = util::myClock();
 
-      // Move the file pointer to the start of the block section, after the preamble and header.
-      MPI_File_seek(lFile,
-                    PreambleBytes + GetHeaderLength(bGlobLatDat->GetBlockCount()),
-                    MPI_SEEK_SET);
-
-      // TODO This logic should be moved into OptimiseDomainDecomposition
+      // Optimise.
       if (mParticipateInTopology)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
-        OptimiseDomainDecomposition(sitesPerBlock,
-                                    bytesPerBlock,
-                                    procForEachBlock,
-                                    lFile,
-                                    bGlobLatDat);
+        OptimiseDomainDecomposition(sitesPerBlock, bytesPerBlock, procForEachBlock, bGlobLatDat);
         log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
-      }
-      else
-      {
-        ReadInLocalBlocks(lFile, bGlobLatDat, bytesPerBlock, procForEachBlock, mTopologyRank);
+
+        MPI_File_close(&file);
       }
 
       // Finish up - close the file, set the timings, deallocate memory.
-      MPI_File_close(&lFile);
-      MPI_Info_free(&lFileInfo);
+      MPI_Info_free(&fileInfo);
 
       *oReadTime = lMiddle - lStart;
       *oOptimiseTime = util::myClock() - lMiddle;
@@ -205,8 +205,7 @@ namespace hemelb
      * for (int i=0; i<3; ++i)
      *        site0WorldPosition[i] = load_double();
      */
-    void LatticeData::GeometryReader::ReadPreamble(MPI_File xiFile,
-                                                   hemelb::lb::LbmParameters * bParams,
+    void LatticeData::GeometryReader::ReadPreamble(hemelb::lb::LbmParameters * bParams,
                                                    GlobalLatticeData* bGlobalLatticeData)
     {
       // Read in the file preamble into a buffer.
@@ -214,7 +213,7 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile,
+      MPI_File_read_all(file,
                         lPreambleBuffer,
                         PreambleBytes,
                         MpiDataType(lPreambleBuffer[0]),
@@ -262,8 +261,7 @@ namespace hemelb
      *        nBytes[i] = load_uint(); // length, in bytes, of the block's record in this file
      * }
      */
-    void LatticeData::GeometryReader::ReadHeader(MPI_File xiFile,
-                                                 site_t iBlockCount,
+    void LatticeData::GeometryReader::ReadHeader(site_t iBlockCount,
                                                  site_t* sitesInEachBlock,
                                                  unsigned int* bytesUsedByBlockInDataFile)
     {
@@ -273,7 +271,7 @@ namespace hemelb
 
       MPI_Status lStatus;
 
-      MPI_File_read_all(xiFile,
+      MPI_File_read_all(file,
                         lHeaderBuffer,
                         (int) headerByteCount,
                         MpiDataType(lHeaderBuffer[0]),
@@ -329,8 +327,8 @@ namespace hemelb
      *   }
      * }
      */
-    void LatticeData::GeometryReader::ReadInLocalBlocks(MPI_File iFile,
-                                                        GlobalLatticeData* iGlobLatDat,
+    void LatticeData::GeometryReader::ReadInLocalBlocks(GlobalLatticeData* iGlobLatDat,
+                                                        const site_t* sitesPerBlock,
                                                         const unsigned int* bytesPerBlock,
                                                         const proc_t* unitForEachBlock,
                                                         const proc_t localRank)
@@ -340,65 +338,155 @@ namespace hemelb
 
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank, iGlobLatDat);
 
-      /* Allocate a buffer to read into.
-       * Each site can have at most
-       * * an unsigned int (config)
-       * * 4 doubles
-       * * 14 further doubles (in D3Q15)
-       */
+      // Set the view and read in.
+      MPI_Offset lOffset = PreambleBytes + GetHeaderLength(iGlobLatDat->GetBlockCount());
+
+      // Allocate a buffer to read into.
       const site_t maxBytesPerBlock = (iGlobLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
           + D3Q15::NUMVECTORS - 1));
-      const unsigned int BlocksToReadInOneGo = 10;
-      char* readBuffer = new char[maxBytesPerBlock * BlocksToReadInOneGo];
+      const unsigned int MaxBlocksToReadInOneGo = 100;
 
-      io::XdrMemReader lReader(readBuffer, (unsigned int) maxBytesPerBlock * BlocksToReadInOneGo);
+      char* buffer = new char[maxBytesPerBlock * MaxBlocksToReadInOneGo];
 
-      // For each read operation we need to do...
-      for (unsigned int readNum = 0; readNum
-          <= (iGlobLatDat->GetBlockCount() / BlocksToReadInOneGo); ++readNum)
+      // Track the next block we should look at.
+      site_t nextBlockToRead = 0;
+
+      // While the next block is valid...
+      while (nextBlockToRead < iGlobLatDat->GetBlockCount())
       {
-        // Calculate the first (inclusive) and last (exclusive) blocks we're reading, and
-        // the number of bytes involved.
-        const site_t lastBlockExc =
-            util::NumericalFunctions::min<site_t>(iGlobLatDat->GetBlockCount(), (readNum + 1)
-                * BlocksToReadInOneGo);
-        const site_t firstBlockInc = readNum * BlocksToReadInOneGo;
+        // ... track the blocks we're going to read, and how many bytes we'll require.
+        std::vector<site_t> thisReadBlocks;
+        int length = 0;
 
-        unsigned int bytesToRead = 0;
-        for (site_t ii = firstBlockInc; ii < lastBlockExc; ++ii)
+        // We only want to read valid blocks, up to MaxBlocks blocks, and we only want to read-in
+        // consecutive blocks.
+        for (; nextBlockToRead < iGlobLatDat->GetBlockCount(); ++nextBlockToRead)
         {
-          bytesToRead += bytesPerBlock[ii];
+          if (thisReadBlocks.size() == MaxBlocksToReadInOneGo)
+          {
+            break;
+          }
+
+          // If this is a block we're not going to read in...
+          if (bytesPerBlock[nextBlockToRead] == 0 || !readBlock[nextBlockToRead])
+          {
+            // ... and we've not read any blocks yet, add to the start position of the read
+            // and keep going until we find a block we do want to read.
+            if (thisReadBlocks.size() == 0)
+            {
+              if (bytesPerBlock[nextBlockToRead] > 0)
+              {
+                lOffset += bytesPerBlock[nextBlockToRead];
+              }
+
+              continue;
+            }
+            // Alternatively, if we've read some blocks, break because we'd read a
+            // non-contiguous set if we continued.
+
+            else
+            {
+              break;
+            }
+          }
+
+          // We're going to read this block. Add it to the list, add its length to the total
+          // read length.
+          thisReadBlocks.push_back(nextBlockToRead);
+          length += bytesPerBlock[nextBlockToRead];
         }
 
-        // Do the read operation and reset the Xdr reader.
-        MPI_File_read_all(iFile, readBuffer, (int) bytesToRead, MPI_CHAR, MPI_STATUS_IGNORE);
-
-        lReader.SetPosition(0);
-
-        // For each block...
-        for (site_t lBlock = firstBlockInc; lBlock < lastBlockExc; lBlock++)
+        // If the length is going to overflow the buffer print an error.
+        if (length > (MaxBlocksToReadInOneGo * maxBytesPerBlock))
         {
-          // ... either read the block in...
-          if (readBlock[lBlock] && bytesPerBlock[lBlock] > 0)
+          log::Logger::Log<log::Debug, log::OnePerCore>("Read in %i bytes when the longest read was presumed to be: ",
+                                                        length,
+                                                         (MaxBlocksToReadInOneGo * maxBytesPerBlock));
+        }
+
+        // Read the data.
+        int error = MPI_File_read_at(file, lOffset, buffer, length, MPI_CHAR, MPI_STATUS_IGNORE);
+
+        // Make sure we don't re-read a section of the file next time.
+        lOffset += length;
+
+        // Check for any errors in the file-reading.
+        if (error != 0)
+        {
+          log::Logger::Log<log::Info, log::OnePerCore>("Unable to read file (at section just before block %i)",
+                                                       nextBlockToRead);
+        }
+
+        // Create an Xdr interpreter.
+        io::XdrMemReader lReader(buffer, length);
+
+        unsigned int lCurrentPosition = lReader.GetPosition();
+
+        // Go through the blocks.
+        for (std::vector<site_t>::const_iterator it = thisReadBlocks.begin(); it
+            < thisReadBlocks.end(); ++it)
+        {
+          // Let the GlobLatDat read the block.
+          iGlobLatDat->ReadBlock(*it, &lReader);
+
+          // If debugging, check we've read the right length.
+          if (log::Logger::ShouldDisplay<log::Debug>())
           {
-            iGlobLatDat->ReadBlock(lBlock, &lReader);
-          }
-          // ... or move to a point in the buffer beyond it.
-          else
-          {
-            if (bytesPerBlock[lBlock] > 0)
+            unsigned int lNewPosition = lReader.GetPosition();
+
+            // Check we've moved the right amount through the file.
+            if (lNewPosition != (lCurrentPosition + bytesPerBlock[*it]))
             {
-              if (!lReader.SetPosition(lReader.GetPosition() + bytesPerBlock[lBlock]))
+              log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting block %i to take up %i bytes but it actually took up %u bytes",
+                                                            *it,
+                                                             (lNewPosition - lCurrentPosition),
+                                                            bytesPerBlock[*it]);
+            }
+
+            // Check the bytes for each block fit our expectations.
+            if (bytesPerBlock[*it] > maxBytesPerBlock)
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Block %i takes up %i bytes but we thought the maximum was %u bytes",
+                                                            *it,
+                                                            maxBytesPerBlock);
+            }
+
+            lCurrentPosition = lNewPosition;
+          }
+        }
+      }
+
+      // If debug-level logging, check that we've read in as many sites as anticipated.
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        for (site_t block = 0; block < iGlobLatDat->GetBlockCount(); ++block)
+        {
+          // For each block to be read.
+          if (bytesPerBlock[block] > 0 && readBlock[block])
+          {
+            // Count the sites read,
+            site_t numSitesRead = 0;
+            for (site_t site = 0; site < iGlobLatDat->GetSitesPerBlockVolumeUnit(); ++site)
+            {
+              if (iGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site] != BIG_NUMBER2)
               {
-                std::cout << "Error setting stream position\n";
+                ++numSitesRead;
               }
+            }
+
+            // Compare with the sites we expected to read.
+            if (numSitesRead != sitesPerBlock[block])
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
+                                                            sitesPerBlock[block],
+                                                            block,
+                                                            numSitesRead);
             }
           }
         }
       }
 
-      // Clear up allocated memory.
-      delete[] readBuffer;
+      delete[] buffer;
       delete[] readBlock;
     }
 
@@ -737,7 +825,6 @@ namespace hemelb
     void LatticeData::GeometryReader::OptimiseDomainDecomposition(const site_t* sitesPerBlock,
                                                                   const unsigned int* bytesPerBlock,
                                                                   const proc_t* procForEachBlock,
-                                                                  MPI_File iFile,
                                                                   GlobalLatticeData* bGlobLatDat)
     {
       // Get some arrays that ParMetis needs.
@@ -795,7 +882,7 @@ namespace hemelb
       delete[] partitionVector;
 
       // Reread the blocks based on the ParMetis decomposition.
-      RereadBlocks(bGlobLatDat, iFile, allMoves, movesList, bytesPerBlock, procForEachBlock);
+      RereadBlocks(bGlobLatDat, allMoves, movesList, sitesPerBlock, bytesPerBlock, procForEachBlock);
 
       // Implement the decomposition now that we have read the necessary data.
       ImplementMoves(bGlobLatDat, procForEachBlock, allMoves, movesList);
@@ -1260,9 +1347,9 @@ namespace hemelb
     }
 
     void LatticeData::GeometryReader::RereadBlocks(GlobalLatticeData* bGlobLatDat,
-                                                   MPI_File iFile,
                                                    const int* movesPerProc,
                                                    const int* movesList,
+                                                   const site_t* sitesPerBlock,
                                                    const unsigned int* bytesPerBlock,
                                                    const int* procForEachBlock)
     {
@@ -1294,7 +1381,11 @@ namespace hemelb
       }
 
       // Reread the blocks into the GlobalLatticeData now.
-      ReadInLocalBlocks(iFile, bGlobLatDat, bytesPerBlock, newProcForEachBlock, mTopologyRank);
+      ReadInLocalBlocks(bGlobLatDat,
+                        sitesPerBlock,
+                        bytesPerBlock,
+                        newProcForEachBlock,
+                        mTopologyRank);
 
       // Clean up.
       delete[] newProcForEachBlock;
@@ -1352,7 +1443,7 @@ namespace hemelb
             if (log::Logger::ShouldDisplay<log::Debug>())
             {
               if (bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
-                  != (proc_t) lFromProc)
+                  != ConvertTopologyRankToGlobalRank((proc_t) lFromProc))
               {
                 log::Logger::Log<log::Debug, log::OnePerCore>("Block %i, site %i from move %u was originally on proc %i, not proc %u.",
                                                               block,
@@ -1380,6 +1471,40 @@ namespace hemelb
       return (mGlobalRank == mTopologyRank)
         ? topologyRank
         : (topologyRank + 1);
+    }
+
+    void LatticeData::GeometryReader::CreateFileReadType(MPI_Datatype* dataType,
+                                                         const site_t blockCount,
+                                                         const bool* readBlock,
+                                                         const unsigned int* bytesPerBlock) const
+    {
+      // Create vectors for each of the things we'll need to give to MPI_Type_create_struct
+      std::vector<MPI_Datatype> baseTypes;
+      std::vector<MPI_Aint> displacements;
+      std::vector<int> counts;
+
+      int currentDisplacement = 0;
+
+      // For each block, record the type (byte), number of bytes, and distance from the start
+      // of the file.
+      for (site_t block = 0; block < blockCount; ++block)
+      {
+        if (readBlock[block])
+        {
+          baseTypes.push_back(MPI_CHAR);
+          counts.push_back(bytesPerBlock[block]);
+          displacements.push_back(currentDisplacement);
+        }
+
+        currentDisplacement += bytesPerBlock[block];
+      }
+
+      // Create the type.
+      MPI_Type_create_struct((int) baseTypes.size(),
+                             &counts[0],
+                             &displacements[0],
+                             &baseTypes[0],
+                             dataType);
     }
 
   }

@@ -262,12 +262,9 @@ namespace hemelb
                 site_t i, j, k;
             };
 
-            void ReadPreamble(MPI_File xiFile,
-                              lb::LbmParameters* bParams,
-                              GlobalLatticeData* bGlobalLatticeData);
+            void ReadPreamble(lb::LbmParameters* bParams, GlobalLatticeData* bGlobalLatticeData);
 
-            void ReadHeader(MPI_File xiFile,
-                            site_t iBlockCount,
+            void ReadHeader(site_t iBlockCount,
                             site_t* sitesInEachBlock,
                             unsigned int* bytesUsedByBlockInDataFile);
 
@@ -284,8 +281,8 @@ namespace hemelb
                               const site_t* fluidSitesPerBlock,
                               const GlobalLatticeData* iGlobLatDat);
 
-            void ReadInLocalBlocks(MPI_File iFile,
-                                   GlobalLatticeData* iGlobLatDat,
+            void ReadInLocalBlocks(GlobalLatticeData* iGlobLatDat,
+                                   const site_t* sitesPerBlock,
                                    const unsigned int* bytesPerBlock,
                                    const proc_t* unitForEachBlock,
                                    const proc_t localRank);
@@ -308,7 +305,6 @@ namespace hemelb
             void OptimiseDomainDecomposition(const site_t* sitesPerBlock,
                                              const unsigned int* bytesPerBlock,
                                              const proc_t* procForEachBlock,
-                                             MPI_File iFile,
                                              GlobalLatticeData* bGlobLatDat);
 
             site_t GetHeaderLength(site_t blockCount) const;
@@ -346,9 +342,9 @@ namespace hemelb
                                   const GlobalLatticeData* bGlobLatDat);
 
             void RereadBlocks(GlobalLatticeData* bGlobLatDat,
-                              MPI_File iFile,
                               const int* movesPerProc,
                               const int* movesList,
+                              const site_t* sitesPerBlock,
                               const unsigned int* bytesPerBlock,
                               const int* procForEachBlock);
 
@@ -359,6 +355,11 @@ namespace hemelb
 
             proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
+            void CreateFileReadType(MPI_Datatype* dataType,
+                                    const site_t blockCount,
+                                    const bool* readBlock,
+                                    const unsigned int* bytesPerBlock) const;
+
             // The config file starts with:
             // * 1 unsigned int for stress type
             // * 3 unsigned ints for the number of blocks in the x, y, z directions
@@ -367,6 +368,8 @@ namespace hemelb
             // * 3 doubles for the world-position of site 0
             static const int PreambleBytes = 5 * 4 + 4 * 8;
 
+            MPI_File file;
+            MPI_Info fileInfo;
             MPI_Comm mTopologyComm;
             MPI_Group mTopologyGroup;
             int mTopologyRank;
