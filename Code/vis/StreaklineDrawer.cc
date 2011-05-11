@@ -176,6 +176,8 @@ namespace hemelb
 
       *is_interior = 1;
 
+      const proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
+
       for (unsigned int i = 0; i < 2; i++)
       {
         site_t neigh_i = site_i + i;
@@ -197,7 +199,7 @@ namespace hemelb
               v[i][j][k][0] = v[i][j][k][1] = v[i][j][k][2] = 0.0F;
               continue;
             }
-            if ((int) mNetworkTopology->GetLocalRank() != vel_site_data_p->proc_id)
+            if (thisRank != vel_site_data_p->proc_id)
             {
               *is_interior = 0;
             }
@@ -211,7 +213,7 @@ namespace hemelb
               v[i][j][k][1] = vel_site_data_p->vy;
               v[i][j][k][2] = vel_site_data_p->vz;
             }
-            else if (mNetworkTopology->GetLocalRank() == vel_site_data_p->proc_id)
+            else if (thisRank == vel_site_data_p->proc_id)
             {
               // the local counter is set equal to the global one
               // and the local velocity is calculated
@@ -242,15 +244,12 @@ namespace hemelb
     }
 
     // Constructor, populating fields from lattice data objects.
-    StreaklineDrawer::StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
-                                       geometry::LatticeData* iLatDat,
+    StreaklineDrawer::StreaklineDrawer(geometry::LatticeData* iLatDat,
                                        Screen* iScreen,
                                        Viewpoint* iViewpoint,
                                        VisSettings* iVisSettings) :
       mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
     {
-      mNetworkTopology = iNetworkTopology;
-
       particleVec.reserve(10000);
       nParticles = 0;
       particleSeedVec.reserve(100);
@@ -267,6 +266,8 @@ namespace hemelb
       counter = 1;
       site_t inlet_sites = 0;
       site_t n = 0;
+
+      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
 
       for (site_t i = 0; i < iLatDat->GetXSiteCount(); i += iLatDat->GetBlockSize())
       {
@@ -293,7 +294,7 @@ namespace hemelb
                 {
 
                   m++;
-                  if (mNetworkTopology->GetLocalRank() != lBlock->ProcessorRankForEachBlockSite[m])
+                  if (netTop->GetLocalRank() != lBlock->ProcessorRankForEachBlockSite[m])
                     continue;
 
                   const site_t startI = util::NumericalFunctions::max<int>(0, (int) site_i - 1);
@@ -327,7 +328,7 @@ namespace hemelb
 
                         initializeVelFieldBlock(iLatDat, neigh_i, neigh_j, neigh_k, *neigh_proc_id);
 
-                        if (mNetworkTopology->GetLocalRank() == *neigh_proc_id)
+                        if (netTop->GetLocalRank() == *neigh_proc_id)
                         {
                           continue;
                         }
@@ -435,11 +436,11 @@ namespace hemelb
         mNeighProcs[m].p_to_recv.reserve(5 * particles_to_recv_max);
       }
 
-      req = new MPI_Request[2 * iNetworkTopology->GetProcessorCount()];
+      req = new MPI_Request[2 * netTop->GetProcessorCount()];
 
-      from_proc_id_to_neigh_proc_index = new proc_t[iNetworkTopology->GetProcessorCount()];
+      from_proc_id_to_neigh_proc_index = new proc_t[netTop->GetProcessorCount()];
 
-      for (proc_t m = 0; m < iNetworkTopology->GetProcessorCount(); m++)
+      for (proc_t m = 0; m < netTop->GetProcessorCount(); m++)
       {
         from_proc_id_to_neigh_proc_index[m] = -1;
       }
@@ -467,7 +468,7 @@ namespace hemelb
           velocity_field[n].vel_site_data[m].site_id = iLatDat->GetBlock(n)->site_data[m];
         }
       }
-      procs = iNetworkTopology->GetProcessorCount();
+      procs = netTop->GetProcessorCount();
     }
 
     // Reset the streakline drawer.
@@ -680,7 +681,7 @@ namespace hemelb
       {
         MPI_Irecv(&mNeighProcs[m].recv_ps,
                   1,
-                  MpiDataType<site_t>(),
+                  MpiDataType<site_t> (),
                   mNeighProcs[m].id,
                   30,
                   MPI_COMM_WORLD,
@@ -693,6 +694,8 @@ namespace hemelb
 
       unsigned int particles_temp = nParticles;
 
+      proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
+
       for (int n = (int) (particles_temp - 1); n >= 0; n--)
       {
         site_t site_i = (unsigned int) particleVec[n].x;
@@ -701,8 +704,8 @@ namespace hemelb
 
         VelSiteData *vel_site_data_p = velSiteDataPointer(iLatDat, site_i, site_j, site_k);
 
-        if (vel_site_data_p == NULL || (int) mNetworkTopology->GetLocalRank()
-            == vel_site_data_p->proc_id || vel_site_data_p->proc_id == -1)
+        if (vel_site_data_p == NULL || thisRank == vel_site_data_p->proc_id
+            || vel_site_data_p->proc_id == -1)
         {
           continue;
         }
@@ -728,7 +731,7 @@ namespace hemelb
       {
         MPI_Isend(&mNeighProcs[m].send_ps,
                   1,
-                  MpiDataType<site_t>(),
+                  MpiDataType<site_t> (),
                   mNeighProcs[m].id,
                   30,
                   MPI_COMM_WORLD,

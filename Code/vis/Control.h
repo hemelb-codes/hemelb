@@ -27,9 +27,7 @@ namespace hemelb
     class Control
     {
       public:
-        Control(lb::StressTypes iStressType,
-                const topology::NetworkTopology* netTop,
-                geometry::LatticeData* iLatDat);
+        Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
@@ -49,11 +47,13 @@ namespace hemelb
 
         bool MouseIsOverPixel(float* density, float* stress);
 
-        void ProgressStreaklines(unsigned long time_step, unsigned long period, geometry::LatticeData* iLatDat);
+        void ProgressStreaklines(unsigned long time_step,
+                                 unsigned long period,
+                                 geometry::LatticeData* iLatDat);
         void Reset();
 
         void UpdateImageSize(int pixels_x, int pixels_y);
-        void Render(geometry::LatticeData* iLatDat, const topology::NetworkTopology* iNetTopology);
+        void Render(geometry::LatticeData* iLatDat);
         void WriteImage(std::string image_file_name);
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
@@ -70,8 +70,7 @@ namespace hemelb
             float system_size;
         };
 
-        void initLayers(const topology::NetworkTopology * iNetworkTopology,
-                        geometry::LatticeData* iLatDat);
+        void initLayers(geometry::LatticeData* iLatDat);
 
         Vis* vis;
         RayTracer *myRayTracer;

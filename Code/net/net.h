@@ -20,7 +20,7 @@ namespace hemelb
     class Net
     {
       public:
-        Net(hemelb::topology::NetworkTopology * iTopology);
+        Net();
         ~Net();
 
         site_t* Initialise(geometry::LatticeData* bLatDat);
@@ -129,8 +129,6 @@ namespace hemelb
 
         std::map<proc_t, ProcComms> mSendProcessorComms;
         std::map<proc_t, ProcComms> mReceiveProcessorComms;
-
-        hemelb::topology::NetworkTopology * mNetworkTopology;
 
         // Requests and statuses available for general communication within the Net object (both
         // initialisation and during each iteration). Code using these must make sure

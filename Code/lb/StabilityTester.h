@@ -13,7 +13,6 @@ namespace hemelb
       public:
         StabilityTester(const geometry::LatticeData * iLatDat,
                         net::Net* net,
-                        topology::NetworkTopology *iNetTop,
                         SimulationState* simState);
 
         /**

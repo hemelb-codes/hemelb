@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 #include "vis/Screen.h"
 
@@ -77,14 +78,14 @@ namespace hemelb
                             const VisSettings* visSettings)
     {
       // Store end points of the line and 'current' point (x and y).
-      int x = int(endPoint1[0]);
-      int y = int(endPoint1[1]);
+      int x = int (endPoint1[0]);
+      int y = int (endPoint1[1]);
 
       int x1, y1, x2, y2;
       if (endPoint2[0] < endPoint1[0])
       {
-        x1 = int(endPoint2[0]);
-        y1 = int(endPoint2[1]);
+        x1 = int (endPoint2[0]);
+        y1 = int (endPoint2[1]);
         x2 = x;
         y2 = y;
       }
@@ -92,8 +93,8 @@ namespace hemelb
       {
         x1 = x;
         y1 = y;
-        x2 = int(endPoint2[0]);
-        y2 = int(endPoint2[1]);
+        x2 = int (endPoint2[0]);
+        y2 = int (endPoint2[1]);
       }
 
       // Set dx with the difference between x-values at the endpoints.
@@ -229,8 +230,7 @@ namespace hemelb
       col_pixels = 0;
     }
 
-    void Screen::CompositeImage(const VisSettings* visSettings,
-                                const hemelb::topology::NetworkTopology* netTop)
+    void Screen::CompositeImage(const VisSettings* visSettings)
     {
       // Status object for MPI comms.
       MPI_Status status;
@@ -254,6 +254,8 @@ namespace hemelb
        * This continues until all data is passed back to processor one, which passes it to proc 0.
        */
 
+      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
+
       // Start with a difference in rank of 1, doubling every time.
       for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
       {
@@ -272,7 +274,7 @@ namespace hemelb
             {
               MPI_Send(localPixels,
                        col_pixels,
-                       MpiDataType<ColPixel>(),
+                       MpiDataType<ColPixel> (),
                        receivingProc,
                        20,
                        MPI_COMM_WORLD);
@@ -284,13 +286,19 @@ namespace hemelb
           {
             unsigned int col_pixels_temp;
 
-            MPI_Recv(&col_pixels_temp, 1, MpiDataType(col_pixels_temp), sendingProc, 20, MPI_COMM_WORLD, &status);
+            MPI_Recv(&col_pixels_temp,
+                     1,
+                     MpiDataType(col_pixels_temp),
+                     sendingProc,
+                     20,
+                     MPI_COMM_WORLD,
+                     &status);
 
             if (col_pixels_temp > 0)
             {
               MPI_Recv(localPixels,
                        col_pixels_temp,
-                       MpiDataType<ColPixel>(),
+                       MpiDataType<ColPixel> (),
                        sendingProc,
                        20,
                        MPI_COMM_WORLD,
@@ -336,7 +344,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Send(compositingBuffer, col_pixels, MpiDataType<ColPixel>(), 0, 20, MPI_COMM_WORLD);
+          MPI_Send(compositingBuffer, col_pixels, MpiDataType<ColPixel> (), 0, 20, MPI_COMM_WORLD);
         }
 
       }
@@ -349,7 +357,7 @@ namespace hemelb
         {
           MPI_Recv(compositingBuffer,
                    col_pixels,
-                   MpiDataType<ColPixel>(),
+                   MpiDataType<ColPixel> (),
                    1,
                    20,
                    MPI_COMM_WORLD,
@@ -369,8 +377,8 @@ namespace hemelb
     {
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        if (compositingBuffer[i].IsRT() && int(compositingBuffer[i].GetI()) == mouseX
-            && int(compositingBuffer[i].GetJ()) == mouseY)
+        if (compositingBuffer[i].IsRT() && int (compositingBuffer[i].GetI()) == mouseX
+            && int (compositingBuffer[i].GetJ()) == mouseY)
         {
           *density = compositingBuffer[i].GetDensity();
           *stress = compositingBuffer[i].GetStress();
@@ -400,7 +408,7 @@ namespace hemelb
 
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-//        col_pixel_p = &compositingBuffer[i];
+        //        col_pixel_p = &compositingBuffer[i];
         ColPixel& col_pixel = compositingBuffer[i];
         // Use a ray-tracer function to get the necessary pixel data.
         col_pixel.rawWritePixel(&index, rgb_data, domainStats, visSettings);
@@ -420,30 +428,29 @@ namespace hemelb
         {
           *writer << pix_data[i];
         }
-        *writer<< io::Writer::eol;
+        *writer << io::Writer::eol;
       }
     }
 
-
-  const float* Screen::GetVtx() const
-  {
-    return vtx;
+    const float* Screen::GetVtx() const
+    {
+      return vtx;
+    }
+    const float* Screen::GetUnitVectorProjectionX() const
+    {
+      return UnitVectorProjectionX;
+    }
+    const float* Screen::GetUnitVectorProjectionY() const
+    {
+      return UnitVectorProjectionY;
+    }
+    int Screen::GetPixelsX() const
+    {
+      return PixelsX;
+    }
+    int Screen::GetPixelsY() const
+    {
+      return PixelsY;
+    }
   }
-  const float* Screen::GetUnitVectorProjectionX() const
-  {
-    return UnitVectorProjectionX;
-  }
-  const float* Screen::GetUnitVectorProjectionY() const
-  {
-    return UnitVectorProjectionY;
-  }
-  int Screen::GetPixelsX() const
-  {
-    return PixelsX;
-  }
-  int Screen::GetPixelsY() const
-  {
-    return PixelsY;
-  }
-}
 }

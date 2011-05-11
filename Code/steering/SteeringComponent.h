@@ -20,7 +20,6 @@ namespace hemelb
                           vis::Control* iVisControl,
                           lb::LBM* iLbm,
                           net::Net * iNet,
-                          const topology::NetworkTopology *iNetTop,
                           lb::SimulationState * iSimState);
 
         static bool RequiresSeparateSteeringCore();
