@@ -12,7 +12,7 @@ namespace hemelb
 {
   namespace steering
   {
-    class SteeringComponent : public net::PhasedBroadcast
+    class SteeringComponent : public net::PhasedBroadcast<false, 1, 0, true, false>
     {
       public:
         SteeringComponent(int imagesPeriod,
