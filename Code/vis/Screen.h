@@ -2,7 +2,6 @@
 #define HEMELB_VIS_SCREEN_H
 
 #include "io/Writer.h"
-#include "topology/NetworkTopology.h"
 #include "vis/ColPixel.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
@@ -58,7 +57,7 @@ namespace hemelb
         static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
 
         void
-        CompositeImage(const VisSettings* visSettings, const topology::NetworkTopology* netTop);
+        CompositeImage(const VisSettings* visSettings);
 
         bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
 

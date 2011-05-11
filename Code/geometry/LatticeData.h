@@ -374,7 +374,6 @@ namespace hemelb
             MPI_Group mTopologyGroup;
             int mTopologyRank;
             unsigned int mTopologySize;
-            int mGlobalRank;
             bool mParticipateInTopology;
         };
 

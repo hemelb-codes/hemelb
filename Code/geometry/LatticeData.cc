@@ -1,6 +1,7 @@
 #include <map>
 #include <limits>
 
+#include "topology/NetworkTopology.h"
 #include "geometry/LatticeData.h"
 #include "util/utilityFunctions.h"
 
@@ -26,10 +27,8 @@ namespace hemelb
       reader.LoadAndDecompose(&globLatDat, bLbmParams, bSimConfig, lReadTime, lDecomposeTime);
 
       // Count the fluid sites on the local processor.
-      int localRank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &localRank);
-      int size;
-      MPI_Comm_size(MPI_COMM_WORLD, &size);
+      proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();
+      proc_t size = topology::NetworkTopology::Instance()->GetProcessorCount();
 
       site_t localFluidSites = 0;
 

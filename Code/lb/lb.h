@@ -19,8 +19,7 @@ namespace hemelb
         LBM(hemelb::SimConfig *iSimulationConfig,
             net::Net* net,
             geometry::LatticeData* latDat,
-            SimulationState* simState,
-            const hemelb::topology::NetworkTopology * iNetTop);
+            SimulationState* simState);
         ~LBM();
 
         void RequestComms();
@@ -111,7 +110,6 @@ namespace hemelb
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
-        const topology::NetworkTopology * mNetTopology;
 
         LbmParameters mParams;
         vis::Control* mVisControl;

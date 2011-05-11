@@ -28,8 +28,7 @@ namespace hemelb
     {
       public:
         // Constructor and destructor.
-        StreaklineDrawer(const topology::NetworkTopology * iNetworkTopology,
-                         geometry::LatticeData* iLatDat,
+        StreaklineDrawer(geometry::LatticeData* iLatDat,
                          Screen* iScreen,
                          Viewpoint* iViewpoint,
                          VisSettings* iVisSettings);
@@ -144,8 +143,6 @@ namespace hemelb
         void communicateSiteIds();
         void communicateVelocities(geometry::LatticeData* iLatDat);
         void communicateParticles(geometry::LatticeData* iLatDat);
-
-        const topology::NetworkTopology * mNetworkTopology;
 
         Screen* mScreen;
         Viewpoint* mViewpoint;

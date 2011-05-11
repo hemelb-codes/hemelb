@@ -15,7 +15,6 @@ namespace hemelb
     {
       public:
         PhasedBroadcast(Net * iNet,
-                        const topology::NetworkTopology *iNetTop,
                         const lb::SimulationState * iSimState,
                         unsigned int spreadFactor);
 
@@ -178,7 +177,6 @@ namespace hemelb
 
         const lb::SimulationState * mSimState;
         Net * mNet;
-        const topology::NetworkTopology * mNetTop;
     };
   }
 }

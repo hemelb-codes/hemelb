@@ -484,6 +484,8 @@ namespace hemelb
 
       site_t n = -1;
 
+      const proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();
+
       for (site_t i = 0; i < mLatDat->GetXBlockCount(); i++)
       {
         for (site_t j = 0; j < mLatDat->GetYBlockCount(); j++)
@@ -504,7 +506,7 @@ namespace hemelb
 
             for (site_t m = 0; m < mLatDat->GetSitesPerBlockVolumeUnit(); m++)
             {
-              if (mNetworkTopology->GetLocalRank() == lBlock->ProcessorRankForEachBlockSite[m])
+              if (localRank == lBlock->ProcessorRankForEachBlockSite[m])
               {
                 Location& tempBlockLoc = block_location_a->at(0);
                 tempBlockLoc.i = i;
@@ -569,7 +571,7 @@ namespace hemelb
                   bool is_site_found = false;
                   for (unsigned int m = 0; m < mLatDat->GetSitesPerBlockVolumeUnit(); m++)
                   {
-                    if (mNetworkTopology->GetLocalRank()
+                    if (topology::NetworkTopology::Instance()->GetLocalRank()
                         == lBlock->ProcessorRankForEachBlockSite[m])
                     {
                       is_site_found = true;
@@ -746,15 +748,13 @@ namespace hemelb
       delete[] cluster_id;
     }
 
-    RayTracer::RayTracer(const topology::NetworkTopology * iNetworkTopology,
-                         const geometry::LatticeData* iLatDat,
+    RayTracer::RayTracer(const geometry::LatticeData* iLatDat,
                          const DomainStats* iDomainStats,
                          Screen* iScreen,
                          Viewpoint* iViewpoint,
                          VisSettings* iVisSettings) :
-      mNetworkTopology(iNetworkTopology), mLatDat(iLatDat), mDomainStats(iDomainStats),
-          mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings),
-          mBlockSizeFloat((float) mLatDat->GetBlockSize()),
+      mLatDat(iLatDat), mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint),
+          mVisSettings(iVisSettings), mBlockSizeFloat((float) mLatDat->GetBlockSize()),
           mBlockSizeInverse(1.F / mBlockSizeFloat), block_size2(mLatDat->GetBlockSize()
               * mLatDat->GetBlockSize()), block_size3(mLatDat->GetBlockSize() * block_size2),
           block_size_1(mLatDat->GetBlockSize() - 1), blocks_yz(mLatDat->GetYBlockCount()
@@ -934,7 +934,10 @@ namespace hemelb
       }
     }
 
-    void RayTracer::UpdateClusterVoxel(site_t i, distribn_t density, distribn_t velocity, distribn_t stress)
+    void RayTracer::UpdateClusterVoxel(site_t i,
+                                       distribn_t density,
+                                       distribn_t velocity,
+                                       distribn_t stress)
     {
       cluster_voxel[3 * i][0] = (float) density;
       cluster_voxel[3 * i][1] = (float) velocity;

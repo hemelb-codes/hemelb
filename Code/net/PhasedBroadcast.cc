@@ -8,13 +8,11 @@ namespace hemelb
   namespace net
   {
     PhasedBroadcast::PhasedBroadcast(Net* iNet,
-                                     const topology::NetworkTopology *iNetTop,
                                      const lb::SimulationState * iSimState,
                                      unsigned int spreadFactor)
     {
       mNet = iNet;
       mSimState = iSimState;
-      mNetTop = iNetTop;
 
       // Initialise member variables.
       mTreeDepth = 0;
@@ -25,7 +23,9 @@ namespace hemelb
       proc_t noSeenToThisDepth = 1;
       proc_t noAtCurrentDepth = 1;
 
-      while (noSeenToThisDepth < mNetTop->GetProcessorCount())
+      hemelb::topology::NetworkTopology* netTop = hemelb::topology::NetworkTopology::Instance();
+
+      while (noSeenToThisDepth < netTop->GetProcessorCount())
       {
         // Go down a level. I.e. increase the depth of the tree, to a new level which has M times
         // as many nodes on it.
@@ -35,28 +35,28 @@ namespace hemelb
 
         // If this node is at the current depth, it must have a rank lower than or equal to the highest
         // rank at the current depth but greater than the highest rank at the previous depth.
-        if (noSeenToThisDepth > mNetTop->GetLocalRank() && ( (noSeenToThisDepth - noAtCurrentDepth)
-            <= mNetTop->GetLocalRank()))
+        if (noSeenToThisDepth > netTop->GetLocalRank() && ( (noSeenToThisDepth - noAtCurrentDepth)
+            <= netTop->GetLocalRank()))
         {
           mMyDepth = mTreeDepth;
         }
       }
 
       // In a M-tree, with a root of 0, each node N's parent has rank floor((N-1) / M)
-      if (mNetTop->GetLocalRank() == 0)
+      if (netTop->GetLocalRank() == 0)
       {
         mParent = NOPARENT;
       }
       else
       {
-        mParent = (mNetTop->GetLocalRank() - 1) / spreadFactor;
+        mParent = (netTop->GetLocalRank() - 1) / spreadFactor;
       }
 
       // The children of a node N in a M-tree with root 0 are those in the range (M*N)+1,...,(M*N) + M
-      for (unsigned int child = (spreadFactor * mNetTop->GetLocalRank()) + 1; child <= spreadFactor
-          * (1 + mNetTop->GetLocalRank()); ++child)
+      for (unsigned int child = (spreadFactor * netTop->GetLocalRank()) + 1; child <= spreadFactor
+          * (1 + netTop->GetLocalRank()); ++child)
       {
-        if (child < (unsigned int) mNetTop->GetProcessorCount())
+        if (child < (unsigned int) netTop->GetProcessorCount())
         {
           mChildren.push_back(child);
         }
@@ -117,7 +117,7 @@ namespace hemelb
         PostReceiveFromChildren();
 
         // If this node is the root of the tree, it must act.
-        if (mNetTop->GetLocalRank() == 0)
+        if (topology::NetworkTopology::Instance()->GetLocalRank() == 0)
         {
           TopNodeAction();
         }
