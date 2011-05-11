@@ -8,7 +8,7 @@ namespace hemelb
 {
   namespace lb
   {
-    class StabilityTester : public net::PhasedBroadcast
+    class StabilityTester : public net::PhasedBroadcast<>
     {
       public:
         StabilityTester(const geometry::LatticeData * iLatDat,
