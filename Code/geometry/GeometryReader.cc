@@ -3,6 +3,7 @@
 #include "debug/Debugger.h"
 #include "io/XdrMemReader.h"
 #include "geometry/LatticeData.h"
+#include "topology/NetworkTopology.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 
@@ -15,14 +16,12 @@ namespace hemelb
     // Once the interface to this object is nice and clean, we can tidy up the code here.
     LatticeData::GeometryReader::GeometryReader(const bool reserveSteeringCore)
     {
-      // Each rank needs to know its global rank
-      MPI_Comm_rank(MPI_COMM_WORLD, &mGlobalRank);
-
       // Get the group of all procs.
       MPI_Group lWorldGroup;
       MPI_Comm_group(MPI_COMM_WORLD, &lWorldGroup);
 
-      mParticipateInTopology = !reserveSteeringCore || mGlobalRank != 0;
+      mParticipateInTopology = !reserveSteeringCore
+          || topology::NetworkTopology::Instance()->GetLocalRank() != 0;
 
       // Create our own group, without the root node.
       if (reserveSteeringCore)
@@ -1468,7 +1467,7 @@ namespace hemelb
     {
       // If the global rank is not equal to the topology rank, we are not using rank 0 for
       // LBM.
-      return (mGlobalRank == mTopologyRank)
+      return (topology::NetworkTopology::Instance()->GetLocalRank() == mTopologyRank)
         ? topologyRank
         : (topologyRank + 1);
     }

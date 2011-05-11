@@ -144,10 +144,8 @@ namespace hemelb
     LBM::LBM(SimConfig *iSimulationConfig,
              net::Net* net,
              geometry::LatticeData* latDat,
-             SimulationState* simState,
-             const topology::NetworkTopology * iNetTop) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
-          mNetTopology(iNetTop)
+             SimulationState* simState) :
+      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
     {
       period = iSimulationConfig->StepsPerCycle;
       voxel_size = iSimulationConfig->VoxelSize;
@@ -250,8 +248,10 @@ namespace hemelb
 
     void LBM::RequestComms()
     {
+      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
+
       for (std::vector<hemelb::topology::NeighbouringProcessor>::const_iterator it =
-          mNetTopology->NeighbouringProcs.begin(); it != mNetTopology->NeighbouringProcs.end(); it++)
+          netTop->NeighbouringProcs.begin(); it != netTop->NeighbouringProcs.end(); it++)
       {
         // Request the receive into the appropriate bit of FOld.
         mNet->RequestReceive<distribn_t> (mLatDat->GetFOld( (*it).FirstSharedF),
@@ -301,10 +301,12 @@ namespace hemelb
     {
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
-      for (site_t i = 0; i < mNetTopology->TotalSharedFs; i++)
+      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
+
+      for (site_t i = 0; i < netTop->TotalSharedFs; i++)
       {
         *mLatDat->GetFNew(receivedFTranslator[i])
-            = *mLatDat->GetFOld(mNetTopology->NeighbouringProcs[0].FirstSharedF + i);
+            = *mLatDat->GetFOld(netTop->NeighbouringProcs[0].FirstSharedF + i);
       }
 
       // Do any cleanup steps necessary on boundary nodes

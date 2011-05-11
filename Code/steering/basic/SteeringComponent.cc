@@ -14,9 +14,8 @@ namespace hemelb
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
-                                         const topology::NetworkTopology *iNetTop,
                                          lb::SimulationState * iSimState) :
-      net::PhasedBroadcast(iNet, iNetTop, iSimState, SPREADFACTOR), imagesPeriod(imagesPeriod),
+      net::PhasedBroadcast(iNet, iSimState, SPREADFACTOR), imagesPeriod(imagesPeriod),
           mClientConnection(iClientConnection), mLbm(iLbm), mSimState(iSimState),
           mVisControl(iVisControl)
     {
