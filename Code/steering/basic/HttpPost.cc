@@ -16,6 +16,7 @@
 #include <netdb.h>
 #include <sys/utsname.h>
 
+#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/basic/HttpPost.h"
 
@@ -150,7 +151,8 @@ namespace hemelb
 
       sockaddr_in sin;
       sin.sin_family = AF_INET;
-      sin.sin_port = (in_port_t) htonl(port);
+      debug::Debugger::Get()->BreakHere();
+      sin.sin_port = htons((in_port_t) port);
 
       // Get name for the other end of the connection.
       struct hostent * host_addr = gethostbyname(hostname);
