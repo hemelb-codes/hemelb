@@ -33,28 +33,11 @@ namespace hemelb
       return false;
     }
 
-    void SteeringComponent::ProgressFromChildren()
+    void SteeringComponent::ProgressFromParent(unsigned int splayNumber)
     {
 
     }
-    void SteeringComponent::ProgressFromParent()
-    {
-
-    }
-    void SteeringComponent::ProgressToChildren()
-    {
-
-    }
-    void SteeringComponent::ProgressToParent()
-    {
-
-    }
-
-    void SteeringComponent::PostReceiveFromChildren()
-    {
-
-    }
-    void SteeringComponent::PostReceiveFromParent()
+    void SteeringComponent::ProgressToChildren(unsigned int splayNumber)
     {
 
     }

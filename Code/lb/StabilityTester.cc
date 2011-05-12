@@ -27,7 +27,7 @@ namespace hemelb
       }
     }
 
-    void StabilityTester::PostReceiveFromChildren()
+    void StabilityTester::PostReceiveFromChildren(unsigned int splayNumber)
     {
       // No need to test children's stability if this node is already unstable.
       if (mUpwardsStability == Stable)
@@ -43,22 +43,22 @@ namespace hemelb
       }
     }
 
-    void StabilityTester::ProgressFromChildren()
+    void StabilityTester::ProgressFromChildren(unsigned int splayNumber)
     {
       ReceiveFromChildren<int> (mChildrensStability, 1);
     }
 
-    void StabilityTester::ProgressFromParent()
+    void StabilityTester::ProgressFromParent(unsigned int splayNumber)
     {
       ReceiveFromParent<int> (&mDownwardsStability, 1);
     }
 
-    void StabilityTester::ProgressToChildren()
+    void StabilityTester::ProgressToChildren(unsigned int splayNumber)
     {
       SendToChildren<int> (&mDownwardsStability, 1);
     }
 
-    void StabilityTester::ProgressToParent()
+    void StabilityTester::ProgressToParent(unsigned int splayNumber)
     {
       // No need to bother testing out local lattice points if we're going to be
       // sending up a 'Unstable' value anyway.
