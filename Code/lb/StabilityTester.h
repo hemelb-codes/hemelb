@@ -25,10 +25,10 @@ namespace hemelb
          * Override the methods from the base class to propagate data from the root, and
          * to send data about this node and its childrens' stabilities up towards the root.
          */
-        void ProgressFromChildren();
-        void ProgressFromParent();
-        void ProgressToChildren();
-        void ProgressToParent();
+        void ProgressFromChildren(unsigned int splayNumber);
+        void ProgressFromParent(unsigned int splayNumber);
+        void ProgressToChildren(unsigned int splayNumber);
+        void ProgressToParent(unsigned int splayNumber);
 
         /**
          * Take the combined stability information (an int, with a value of hemelb::lb::Unstable
@@ -39,7 +39,7 @@ namespace hemelb
         /**
          * Override the method from the base class to use the data from child nodes.
          */
-        void PostReceiveFromChildren();
+        void PostReceiveFromChildren(unsigned int splayNumber);
 
         /**
          * Apply the stability value sent by the root node to the simulation logic.

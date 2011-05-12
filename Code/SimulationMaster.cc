@@ -230,6 +230,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
 
+  mSimulationState.TimeStepsPerCycle = lSimulationConfig->StepsPerCycle;
+
   for (mSimulationState.CycleId = 1; mSimulationState.CycleId <= lSimulationConfig->NumCycles
       && !is_finished; mSimulationState.CycleId++)
   {
