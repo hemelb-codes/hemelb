@@ -151,7 +151,6 @@ namespace hemelb
 
       sockaddr_in sin;
       sin.sin_family = AF_INET;
-      debug::Debugger::Get()->BreakHere();
       sin.sin_port = htons((in_port_t) port);
 
       // Get name for the other end of the connection.
