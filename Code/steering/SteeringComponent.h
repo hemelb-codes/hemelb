@@ -12,7 +12,7 @@ namespace hemelb
 {
   namespace steering
   {
-    class SteeringComponent : public net::PhasedBroadcast
+    class SteeringComponent : public net::PhasedBroadcast<false, 1, 0, true, false>
     {
       public:
         SteeringComponent(int imagesPeriod,
@@ -20,7 +20,6 @@ namespace hemelb
                           vis::Control* iVisControl,
                           lb::LBM* iLbm,
                           net::Net * iNet,
-                          const topology::NetworkTopology *iNetTop,
                           lb::SimulationState * iSimState);
 
         static bool RequiresSeparateSteeringCore();
@@ -33,13 +32,8 @@ namespace hemelb
         bool updatedMouseCoords;
 
       protected:
-        void ProgressFromChildren();
-        void ProgressFromParent();
-        void ProgressToChildren();
-        void ProgressToParent();
-
-        void PostReceiveFromChildren();
-        void PostReceiveFromParent();
+        void ProgressFromParent(unsigned int splayNumber);
+        void ProgressToChildren(unsigned int splayNumber);
 
         void TopNodeAction();
         void Effect();

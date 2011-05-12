@@ -20,10 +20,9 @@ namespace hemelb
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
-                                         const topology::NetworkTopology *iNetTop,
                                          lb::SimulationState * iSimState) :
-      net::PhasedBroadcast(iNet, iNetTop, iSimState, SPREADFACTOR), imagesPeriod(imagesPeriod),
-          mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl)
+      net::PhasedBroadcast<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
+          imagesPeriod(imagesPeriod), mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl)
     {
       Reset();
       AssignValues();
@@ -34,28 +33,11 @@ namespace hemelb
       return false;
     }
 
-    void SteeringComponent::ProgressFromChildren()
+    void SteeringComponent::ProgressFromParent(unsigned int splayNumber)
     {
 
     }
-    void SteeringComponent::ProgressFromParent()
-    {
-
-    }
-    void SteeringComponent::ProgressToChildren()
-    {
-
-    }
-    void SteeringComponent::ProgressToParent()
-    {
-
-    }
-
-    void SteeringComponent::PostReceiveFromChildren()
-    {
-
-    }
-    void SteeringComponent::PostReceiveFromParent()
+    void SteeringComponent::ProgressToChildren(unsigned int splayNumber)
     {
 
     }

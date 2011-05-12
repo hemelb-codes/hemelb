@@ -23,12 +23,16 @@ namespace hemelb
       XDR mXdr;
   
       // Methods to write basic types to the Xdr object.
-      void _write(int const& intToWrite);
+      void _write(int16_t const& intToWrite);
+      void _write(uint16_t const& uIntToWrite);
+      void _write(int32_t const& intToWrite);
+      void _write(uint32_t const& uIntToWrite);
+      void _write(int64_t const& intToWrite);
+      void _write(uint64_t const& uIntToWrite);
+
       void _write(double const& doubleToWrite);
-      void _write(short const& shortToWrite);
       void _write(float const& floatToWrite);
-      void _write(unsigned int const& uIntToWrite);
-      void _write(long const& longToWrite);
+
     };
   }
 }

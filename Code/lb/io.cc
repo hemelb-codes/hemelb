@@ -30,7 +30,7 @@ namespace hemelb
 
       for (int n = 0; n < inlets; n++)
       {
-        hemelb::SimConfig::InOutLet *lInlet = mSimConfig->Inlets[n];
+        hemelb::SimConfig::InOutLet *lInlet = &mSimConfig->Inlets[n];
 
         inlet_density_avg[n] = ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
         inlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
@@ -42,7 +42,7 @@ namespace hemelb
 
       for (int n = 0; n < outlets; n++)
       {
-        hemelb::SimConfig::InOutLet *lOutlet = mSimConfig->Outlets[n];
+        hemelb::SimConfig::InOutLet *lOutlet = &mSimConfig->Outlets[n];
         outlet_density_avg[n] = ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
         outlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
         outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
@@ -52,9 +52,9 @@ namespace hemelb
 
       for (int ii = 0; ii < inlets; ii++)
       {
-        inlet_normal[3 * ii] = mSimConfig->Inlets[ii]->Normal.x;
-        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
-        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
+        inlet_normal[3 * ii] = mSimConfig->Inlets[ii].Normal.x;
+        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii].Normal.y;
+        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii].Normal.z;
       }
 
       UpdateBoundaryDensities(0);
@@ -135,9 +135,12 @@ namespace hemelb
 
       std::string lReadMode = "native";
 
-      MPI_File_set_view(lOutputFile, 0, MPI_BYTE, MPI_BYTE, &lReadMode[0], MPI_INFO_NULL);
+      MPI_Datatype viewType = MpiDataType<char> ();
+      MPI_File_set_view(lOutputFile, 0, viewType, viewType, &lReadMode[0], MPI_INFO_NULL);
 
-      if (mNetTopology->IsCurrentProcTheIOProc())
+      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
+
+      if (netTop->IsCurrentProcTheIOProc())
       {
         char lBuffer[lPreambleLength];
         hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lBuffer, lPreambleLength);
@@ -147,7 +150,7 @@ namespace hemelb
             << (int) (1 + siteMaxes[0] - siteMins[0]) << (int) (1 + siteMaxes[1] - siteMins[1])
             << (int) (1 + siteMaxes[2] - siteMins[2]) << (int) total_fluid_sites;
 
-        MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MPI_BYTE, &lStatus);
+        MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MpiDataType(lBuffer[0]), &lStatus);
       }
 
       /*
@@ -164,21 +167,20 @@ namespace hemelb
 
       site_t lLocalSitesInitialOffset = lPreambleLength;
 
-      for (proc_t ii = 0; ii < mNetTopology->GetLocalRank(); ii++)
+      for (proc_t ii = 0; ii < netTop->GetLocalRank(); ii++)
       {
-        lLocalSitesInitialOffset += lOneFluidSiteLength
-            * mNetTopology->FluidSitesOnEachProcessor[ii];
+        lLocalSitesInitialOffset += lOneFluidSiteLength * netTop->FluidSitesOnEachProcessor[ii];
       }
 
       MPI_File_set_view(lOutputFile,
                         lLocalSitesInitialOffset,
-                        MPI_BYTE,
-                        MPI_BYTE,
+                        viewType,
+                        viewType,
                         &lReadMode[0],
                         MPI_INFO_NULL);
 
       site_t lLocalWriteLength = lOneFluidSiteLength
-          * mNetTopology->FluidSitesOnEachProcessor[mNetTopology->GetLocalRank()];
+          * netTop->FluidSitesOnEachProcessor[netTop->GetLocalRank()];
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
       hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lFluidSiteBuffer,
                                                                   (unsigned int) lLocalWriteLength);
@@ -213,7 +215,7 @@ namespace hemelb
                 {
 
                   m++;
-                  if (mNetTopology->GetLocalRank()
+                  if (netTop->GetLocalRank()
                       != mLatDat->GetBlock(n)->ProcessorRankForEachBlockSite[m])
                   {
                     continue;
@@ -299,7 +301,11 @@ namespace hemelb
         }
       }
 
-      MPI_File_write_all(lOutputFile, lFluidSiteBuffer, (int) lLocalWriteLength, MPI_BYTE, &lStatus);
+      MPI_File_write_all(lOutputFile,
+                         lFluidSiteBuffer,
+                         (int) lLocalWriteLength,
+                         MpiDataType(lFluidSiteBuffer[0]),
+                         &lStatus);
 
       MPI_File_close(&lOutputFile);
 

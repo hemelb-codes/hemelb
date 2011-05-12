@@ -27,10 +27,9 @@ namespace hemelb
     class NetworkTopology
     {
       public:
-        NetworkTopology(int * argCount, char *** argList, bool * oMachineDiscoverySuccess);
+        static NetworkTopology* Instance();
 
-        ~NetworkTopology();
-
+        void Init(int * argCount, char *** argList, bool * oMachineDiscoverySuccess);
         bool IsCurrentProcTheIOProc() const;
 
         // Functions for getting the rank of this processor and the total size
@@ -51,6 +50,8 @@ namespace hemelb
         site_t* FluidSitesOnEachProcessor;
 
       private:
+        NetworkTopology();
+        ~NetworkTopology();
         bool InitialiseMachineInfo();
 
         proc_t localRank;
@@ -65,6 +66,8 @@ namespace hemelb
         proc_t* ProcCountOnEachMachine;
         // Machine Id where each processor is.
         unsigned int* MachineIdOfEachProc;
+
+        static NetworkTopology instance;
     };
   }
 }

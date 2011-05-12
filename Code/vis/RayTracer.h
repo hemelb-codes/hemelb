@@ -18,8 +18,7 @@ namespace hemelb
     {
       public:
         // Constructor and destructor do all the usual stuff.
-        RayTracer(const topology::NetworkTopology * iNetworkTopology,
-                  const geometry::LatticeData* iLatDat,
+        RayTracer(const geometry::LatticeData* iLatDat,
                   const DomainStats* iDomainStats,
                   Screen* iScreen,
                   Viewpoint* iViewpoint,
@@ -99,7 +98,6 @@ namespace hemelb
 
         void BuildClusters();
 
-        const topology::NetworkTopology * mNetworkTopology;
         const geometry::LatticeData* mLatDat;
 
         const DomainStats* mDomainStats;
