@@ -20,8 +20,7 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
 {
   // Initialise the network discovery. If this fails, abort.
   bool lTopologySuccess = true;
-  mNetworkTopology
-      = new hemelb::topology::NetworkTopology(&iArgCount, &iArgList, &lTopologySuccess);
+  hemelb::topology::NetworkTopology::Instance()->Init(&iArgCount, &iArgList, &lTopologySuccess);
 
   if (!lTopologySuccess)
   {
@@ -34,7 +33,6 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mLatDat = NULL;
 
   mLbm = NULL;
-  mNet = NULL;
   steeringCpt = NULL;
   mVisControl = NULL;
 
@@ -58,22 +56,16 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
  */
 SimulationMaster::~SimulationMaster()
 {
-  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     delete imageSendCpt;
   }
-
-  delete mNetworkTopology;
 
   if (mLatDat != NULL)
   {
     delete mLatDat;
   }
 
-  if (mNet != NULL)
-  {
-    delete mNet;
-  }
   if (mLbm != NULL)
   {
     delete mLbm;
@@ -105,7 +97,7 @@ SimulationMaster::~SimulationMaster()
  */
 bool SimulationMaster::IsCurrentProcTheIOProc()
 {
-  return mNetworkTopology->IsCurrentProcTheIOProc();
+  return hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
 }
 
 /**
@@ -113,7 +105,7 @@ bool SimulationMaster::IsCurrentProcTheIOProc()
  */
 int SimulationMaster::GetProcessorCount()
 {
-  return mNetworkTopology->GetProcessorCount();
+  return hemelb::topology::NetworkTopology::Instance()->GetProcessorCount();
 }
 
 /**
@@ -127,26 +119,23 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 {
   mTimingsFile = bTimingsFile;
 
-  site_t mins[3], maxes[3];
+  hemelb::site_t mins[3], maxes[3];
   hemelb::lb::LbmParameters params;
-  site_t totalFluidSites;
+  hemelb::site_t totalFluidSites;
 
   mLatDat
       = new hemelb::geometry::LatticeData(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           &totalFluidSites,
                                           mins,
                                           maxes,
-                                          mNetworkTopology->FluidSitesOnEachProcessor,
+                                          hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor,
                                           &params,
                                           iSimConfig,
                                           &mFileReadTime,
                                           &mDomainDecompTime);
 
-  // Initialise the Net object and the Lbm.
-  mNet = new hemelb::net::Net(mNetworkTopology);
-
   // Initialise the Lbm.
-  mLbm = new hemelb::lb::LBM(iSimConfig, mNet, mLatDat, &mSimulationState, mNetworkTopology);
+  mLbm = new hemelb::lb::LBM(iSimConfig, &mNet, mLatDat, &mSimulationState);
 
   // TODO When we've taken the stress type out of the config file, this could be nicer.
   for (int ii = 0; ii < 3; ++ii)
@@ -158,7 +147,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mLbm->total_fluid_sites = totalFluidSites;
 
   // Initialise and begin the steering.
-  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     clientConnection = new hemelb::steering::ClientConnection(iSteeringSessionid);
   }
@@ -167,21 +156,16 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     clientConnection = NULL;
   }
 
-  mStabilityTester = new hemelb::lb::StabilityTester(mLatDat,
-                                                     mNet,
-                                                     mNetworkTopology,
-                                                     &mSimulationState);
+  mStabilityTester = new hemelb::lb::StabilityTester(mLatDat, &mNet, &mSimulationState);
 
   double seconds = hemelb::util::myClock();
-  site_t* lReceiveTranslator = mNet->Initialise(mLatDat);
+  hemelb::site_t* lReceiveTranslator = mNet.Initialise(mLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
   // Initialise the visualisation controller.
-  mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType,
-                                         mNetworkTopology,
-                                         mLatDat);
+  mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mLatDat);
 
-  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     imageSendCpt = new hemelb::steering::ImageSendComponent(mLbm,
                                                             &mSimulationState,
@@ -200,8 +184,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                         clientConnection,
                                                         mVisControl,
                                                         mLbm,
-                                                        mNet,
-                                                        mNetworkTopology,
+                                                        &mNet,
                                                         &mSimulationState);
 
   // Read in the visualisation parameters.
@@ -247,6 +230,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
 
+  mSimulationState.TimeStepsPerCycle = lSimulationConfig->StepsPerCycle;
+
   for (mSimulationState.CycleId = 1; mSimulationState.CycleId <= lSimulationConfig->NumCycles
       && !is_finished; mSimulationState.CycleId++)
   {
@@ -255,8 +240,8 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
     for (mSimulationState.TimeStep = 1; mSimulationState.TimeStep <= mLbm->period; mSimulationState.TimeStep++)
     {
       ++total_time_steps;
-      mSimulationState.IntraCycleTime = (PULSATILE_PERIOD_s * (double) mSimulationState.TimeStep)
-          / (double) mLbm->period;
+      mSimulationState.IntraCycleTime = (hemelb::PULSATILE_PERIOD_s
+          * (double) mSimulationState.TimeStep) / (double) mLbm->period;
 
       bool write_snapshot_image = ( (mSimulationState.TimeStep % images_period) == 0)
         ? true
@@ -272,7 +257,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
        when (1) we are not sending a frame or (2) we need to output to disk */
 
       bool render_for_network_stream = false;
-      if (mNetworkTopology->IsCurrentProcTheIOProc())
+      if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         render_for_network_stream = imageSendCpt->ShouldRenderNewNetworkImage();
       }
@@ -300,7 +285,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
           (*it)->RequestComms();
         }
 
-        mNet->Receive();
+        mNet.Receive();
 
         {
           double lPrePreSend = hemelb::util::myClock();
@@ -314,7 +299,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
         {
           double lPreSendTime = hemelb::util::myClock();
-          mNet->Send();
+          mNet.Send();
           mMPISendTime += (hemelb::util::myClock() - lPreSendTime);
         }
 
@@ -330,7 +315,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
 
         {
           double lPreWaitTime = hemelb::util::myClock();
-          mNet->Wait();
+          mNet.Wait();
           mMPIWaitTime += (hemelb::util::myClock() - lPreWaitTime);
         }
 
@@ -369,7 +354,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       // If we're rendering for the network, or for an image to disk, render now.
       if (mSimulationState.DoRendering || write_snapshot_image)
       {
-        mVisControl->Render(mLatDat, mNetworkTopology);
+        mVisControl->Render(mLatDat);
       }
 
       if (mSimulationState.DoRendering)
@@ -394,13 +379,14 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
           steeringCpt->updatedMouseCoords = false;
         }
 
-        if (mNetworkTopology->IsCurrentProcTheIOProc())
+        if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
         {
           imageSendCpt->isFrameReady = true;
         }
       }
 
-      if (render_for_network_stream && mNetworkTopology->IsCurrentProcTheIOProc())
+      if (render_for_network_stream
+          && hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         imageSendCpt->DoWork();
       }
@@ -409,7 +395,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       {
         mImagesWritten++;
 
-        if (mNetworkTopology->IsCurrentProcTheIOProc())
+        if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
         {
           char image_filename[255];
           snprintf(image_filename, 255, "%08li.dat", mSimulationState.TimeStep);
@@ -482,7 +468,7 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
       continue;
     }
 
-    if (mNetworkTopology->IsCurrentProcTheIOProc())
+    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       fprintf(mTimingsFile, "cycle id: %li\n", mSimulationState.CycleId);
 
@@ -527,14 +513,16 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
                                       bool iIsUnstable,
                                       double iStartTime)
 {
-  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     fprintf(mTimingsFile, "\n");
     fprintf(mTimingsFile,
             "threads: %i, machines checked: %i\n\n",
-            mNetworkTopology->GetProcessorCount(),
-            mNetworkTopology->GetMachineCount());
-    fprintf(mTimingsFile, "topology depths checked: %i\n\n", mNetworkTopology->GetDepths());
+            hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(),
+            hemelb::topology::NetworkTopology::Instance()->GetMachineCount());
+    fprintf(mTimingsFile,
+            "topology depths checked: %i\n\n",
+            hemelb::topology::NetworkTopology::Instance()->GetDepths());
     fprintf(mTimingsFile, "fluid sites: %li\n\n", mLbm->total_fluid_sites);
     fprintf(mTimingsFile,
             "cycles and total time steps: %li, %i \n\n",
@@ -545,7 +533,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
 
   if (iIsUnstable)
   {
-    if (mNetworkTopology->IsCurrentProcTheIOProc())
+    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       fprintf(mTimingsFile,
               "Attention: simulation unstable with %li timesteps/cycle\n",
@@ -555,7 +543,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
   }
   else
   {
-    if (mNetworkTopology->IsCurrentProcTheIOProc())
+    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
 
       fprintf(mTimingsFile, "time steps per cycle: %li\n", (unsigned long) mLbm->period);
@@ -564,7 +552,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
       fprintf(mTimingsFile, "\n");
 
       fprintf(mTimingsFile, "\n");
-      fprintf(mTimingsFile, "domain decomposition time (s):             %.3f\n", mDomainDecompTime);
+      fprintf(mTimingsFile, "decomposition optimisation time (s):       %.3f\n", mDomainDecompTime);
       fprintf(mTimingsFile, "pre-processing buffer management time (s): %.3f\n", mNetInitialiseTime);
       fprintf(mTimingsFile, "input configuration reading time (s):      %.3f\n", mFileReadTime);
 
@@ -574,12 +562,13 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
 
       fprintf(mTimingsFile, "Sub-domains info:\n\n");
 
-      for (proc_t n = 0; n < mNetworkTopology->GetProcessorCount(); n++)
+      for (hemelb::proc_t n = 0; n
+          < hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(); n++)
       {
         fprintf(mTimingsFile,
                 "rank: %lu, fluid sites: %lu\n",
                 (unsigned long) n,
-                (unsigned long) mNetworkTopology->FluidSitesOnEachProcessor[n]);
+                (unsigned long) hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor[n]);
       }
     }
   }
@@ -616,33 +605,34 @@ void SimulationMaster::PrintTimingData()
   double lMaxes[5];
   double lMeans[5];
 
-  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     for (int ii = 0; ii < 3; ii++)
       lTimings[ii] = 0.0;
   }
 
-  MPI_Reduce(lTimings, lMaxes, 5, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-  MPI_Reduce(lTimings, lMeans, 5, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(lTimings, lMaxes, 5, hemelb::MpiDataType(lMaxes[0]), MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(lTimings, lMeans, 5, hemelb::MpiDataType(lMeans[0]), MPI_SUM, 0, MPI_COMM_WORLD);
 
   // Change the values for LBM and MPI on process 0 so they don't interfere with the min
   // operation (previously values were 0.0 so they won't affect max / mean
   // calc).
-  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     for (int ii = 0; ii < 3; ii++)
       lTimings[ii] = std::numeric_limits<double>::max();
   }
-  MPI_Reduce(lTimings, lMins, 5, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(lTimings, lMins, 5, hemelb::MpiDataType(lMins[0]), MPI_MIN, 0, MPI_COMM_WORLD);
 
-  if (mNetworkTopology->IsCurrentProcTheIOProc())
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
-    if (mNetworkTopology->GetProcessorCount() > 1)
+    if (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
     {
       for (int ii = 0; ii < 3; ii++)
-        lMeans[ii] /= (double) (mNetworkTopology->GetProcessorCount() - 1);
+        lMeans[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount()
+            - 1);
       for (int ii = 3; ii < 5; ii++)
-        lMeans[ii] /= (double) mNetworkTopology->GetProcessorCount();
+        lMeans[ii] /= (double) hemelb::topology::NetworkTopology::Instance()->GetProcessorCount();
     }
 
     fprintf(mTimingsFile, "\n\nPer-proc timing data (secs per [cycle,image,snapshot]): \n\n");

@@ -13,9 +13,8 @@ $(EXE)_DEPS = D3Q15.o \
         SimulationMaster.o \
         SimConfig.o \
         main.o \
+	mpiInclude.o \
         $(SUBDIRS_TGTS)
-
-HEMELB_INCLUDEPATHS += $(TOP)
 
 include $(MK)/footer.mk
 # This is just a convenience - to let you know when make has stopped

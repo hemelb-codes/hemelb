@@ -1,6 +1,9 @@
 #include <map>
+#include <limits>
 
+#include "topology/NetworkTopology.h"
 #include "geometry/LatticeData.h"
+#include "util/utilityFunctions.h"
 
 namespace hemelb
 {
@@ -18,20 +21,82 @@ namespace hemelb
       localLatDat(), globLatDat()
 
     {
+      // Use a reader to read in the file.
       GeometryReader reader(reserveSteeringCore);
 
-      reader.LoadAndDecompose(&globLatDat,
-                              totalFluidSites,
-                              siteMins,
-                              siteMaxes,
-                              fluidSitePerProc,
-                              bLbmParams,
-                              bSimConfig,
-                              lReadTime,
-                              lDecomposeTime);
+      reader.LoadAndDecompose(&globLatDat, bLbmParams, bSimConfig, lReadTime, lDecomposeTime);
 
-      int localRank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &localRank);
+      // Count the fluid sites on the local processor.
+      proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();
+      proc_t size = topology::NetworkTopology::Instance()->GetProcessorCount();
+
+      site_t localFluidSites = 0;
+
+      for (site_t lBlock = 0; lBlock < globLatDat.GetBlockCount(); ++lBlock)
+      {
+        if (globLatDat.Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
+        {
+          for (site_t lSiteIndex = 0; lSiteIndex < globLatDat.GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
+          {
+            if (globLatDat.Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex] == localRank)
+            {
+              ++localFluidSites;
+            }
+          }
+        }
+      }
+
+      MPI_Allgather(&localFluidSites,
+                    1,
+                    MpiDataType<site_t>(),
+                    fluidSitePerProc,
+                    1,
+                    MpiDataType<site_t>(),
+                    MPI_COMM_WORLD);
+
+      //TODO this is a total hack just for now.
+      site_t localMins[3];
+      site_t localMaxes[3];
+      localMins[0] = std::numeric_limits<site_t>::max();
+      localMins[1] = std::numeric_limits<site_t>::max();
+      localMins[2] = std::numeric_limits<site_t>::max();
+      localMaxes[0] = 0;
+      localMaxes[1] = 0;
+      localMaxes[2] = 0;
+
+      for (site_t siteI = 0; siteI < globLatDat.GetXSiteCount(); ++siteI)
+      {
+        for (site_t siteJ = 0; siteJ < globLatDat.GetYSiteCount(); ++siteJ)
+        {
+          for (site_t siteK = 0; siteK < globLatDat.GetZSiteCount(); ++siteK)
+          {
+            const proc_t* procId = globLatDat.GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
+            if (procId == NULL || *procId != localRank)
+            {
+              continue;
+            }
+            else
+            {
+              localMins[0] = hemelb::util::NumericalFunctions::min(localMins[0], siteI);
+              localMins[1] = hemelb::util::NumericalFunctions::min(localMins[1], siteJ);
+              localMins[2] = hemelb::util::NumericalFunctions::min(localMins[2], siteK);
+              localMaxes[0] = hemelb::util::NumericalFunctions::max(localMaxes[0], siteI);
+              localMaxes[1] = hemelb::util::NumericalFunctions::max(localMaxes[1], siteJ);
+              localMaxes[2] = hemelb::util::NumericalFunctions::max(localMaxes[2], siteK);
+            }
+          }
+        }
+      }
+
+      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
+
+      //TODO this is a total hack just for now.
+      *totalFluidSites = 0;
+      for (proc_t ii = 0; ii < (proc_t) size; ++ii)
+      {
+        *totalFluidSites += fluidSitePerProc[ii];
+      }
 
       localLatDat.Initialise(fluidSitePerProc[localRank]);
     }
@@ -328,8 +393,7 @@ namespace hemelb
     {
       localLatDat.SetWallNormal(siteIndex, normal);
     }
-    void LatticeData::SetWallDistance(site_t siteIndex, double cutDistance[D3Q15::NUMVECTORS
-        - 1])
+    void LatticeData::SetWallDistance(site_t siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1])
     {
       localLatDat.SetDistanceToWall(siteIndex, cutDistance);
     }

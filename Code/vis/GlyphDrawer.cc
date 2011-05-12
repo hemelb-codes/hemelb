@@ -48,13 +48,13 @@ namespace hemelb
             }
 
             // Create a glyph at the desired location
-            Glyph *lGlyph = new Glyph();
+            Glyph lGlyph;
 
-            lGlyph->x = float (i + site_i) - 0.5F * float (mLatDat->GetXSiteCount());
-            lGlyph->y = float (j + site_j) - 0.5F * float (mLatDat->GetYSiteCount());
-            lGlyph->z = float (k + site_k) - 0.5F * float (mLatDat->GetZSiteCount());
+            lGlyph.x = float (i + site_i) - 0.5F * float (mLatDat->GetXSiteCount());
+            lGlyph.y = float (j + site_j) - 0.5F * float (mLatDat->GetYSiteCount());
+            lGlyph.z = float (k + site_k) - 0.5F * float (mLatDat->GetZSiteCount());
 
-            lGlyph->f = mLatDat->GetFOld(map_block_p->site_data[siteIdOnBlock] * D3Q15::NUMVECTORS);
+            lGlyph.f = mLatDat->GetFOld(map_block_p->site_data[siteIdOnBlock] * D3Q15::NUMVECTORS);
 
             mGlyphs.push_back(lGlyph);
           } // for k
@@ -66,10 +66,6 @@ namespace hemelb
     // Destructor
     GlyphDrawer::~GlyphDrawer()
     {
-      for (size_t ii = 0; ii < mGlyphs.size(); ii++)
-      {
-        delete mGlyphs[ii];
-      }
     }
 
     /**
@@ -83,7 +79,7 @@ namespace hemelb
         // ... get the density and velocity at that point...
         distribn_t density;
         distribn_t vx, vy, vz;
-        D3Q15::CalculateDensityAndVelocity(mGlyphs[n]->f, density, vx, vy, vz);
+        D3Q15::CalculateDensityAndVelocity(mGlyphs[n].f, density, vx, vy, vz);
 
         // ... calculate the velocity vector multiplier...
         const double temp = mVisSettings->glyphLength * ((distribn_t) mLatDat->GetBlockSize())
@@ -91,13 +87,13 @@ namespace hemelb
 
         // ... calculate the two ends of the line we're going to draw...
         float p1[3], p2[3];
-        p1[0] = mGlyphs[n]->x;
-        p1[1] = mGlyphs[n]->y;
-        p1[2] = mGlyphs[n]->z;
+        p1[0] = mGlyphs[n].x;
+        p1[1] = mGlyphs[n].y;
+        p1[2] = mGlyphs[n].z;
 
-        p2[0] = mGlyphs[n]->x + (float) (vx * temp);
-        p2[1] = mGlyphs[n]->y + (float) (vy * temp);
-        p2[2] = mGlyphs[n]->z + (float) (vz * temp);
+        p2[0] = mGlyphs[n].x + (float) (vx * temp);
+        p2[1] = mGlyphs[n].y + (float) (vy * temp);
+        p2[2] = mGlyphs[n].z + (float) (vz * temp);
 
         // ... transform to the location on the screen, and render.
         float p3[3], p4[3];

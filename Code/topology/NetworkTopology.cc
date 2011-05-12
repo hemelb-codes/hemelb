@@ -6,7 +6,20 @@ namespace hemelb
 {
   namespace topology
   {
-    NetworkTopology::NetworkTopology(int * argCount, char *** argList, bool* oSuccess)
+    NetworkTopology NetworkTopology::instance;
+
+    // Must be specified to prevent the default constructor being public.
+    NetworkTopology::NetworkTopology()
+    {
+
+    }
+
+    NetworkTopology* NetworkTopology::Instance()
+    {
+      return &instance;
+    }
+
+    void NetworkTopology::Init(int * argCount, char *** argList, bool* oSuccess)
     {
       MPI_Init(argCount, argList);
 

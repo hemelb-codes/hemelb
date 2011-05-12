@@ -12,6 +12,6 @@ TARGETS := libHemeLbTopology.$(LIBEXT)
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 
-INCLUDES_$(d) := $(INCLUDES_$(parent))
+INCLUDES_$(d) := $(INCLUDES_$(parent)) $(PMETIS_INCLUDE_DIR)
 
 include $(MK)/footer.mk

@@ -14,49 +14,22 @@ namespace hemelb
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
-                                         const topology::NetworkTopology *iNetTop,
                                          lb::SimulationState * iSimState) :
-      net::PhasedBroadcast(iNet, iNetTop, iSimState, SPREADFACTOR), imagesPeriod(imagesPeriod),
-          mClientConnection(iClientConnection), mLbm(iLbm), mSimState(iSimState),
-          mVisControl(iVisControl)
+      net::PhasedBroadcast<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
+          imagesPeriod(imagesPeriod), mClientConnection(iClientConnection), mLbm(iLbm),
+          mSimState(iSimState), mVisControl(iVisControl)
     {
       Reset();
     }
 
-    /**
-     * Does nothing - data only travels from parent to children in steering.
-     */
-    void SteeringComponent::ProgressFromChildren()
-    {
-
-    }
-
-    void SteeringComponent::ProgressFromParent()
+    void SteeringComponent::ProgressFromParent(unsigned int splayNumber)
     {
       ReceiveFromParent<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }
 
-    void SteeringComponent::ProgressToChildren()
+    void SteeringComponent::ProgressToChildren(unsigned int splayNumber)
     {
       SendToChildren<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
-    }
-
-    /**
-     * Does nothing - data only travels from parent to children in steering.
-     */
-    void SteeringComponent::ProgressToParent()
-    {
-
-    }
-
-    void SteeringComponent::PostReceiveFromChildren()
-    {
-
-    }
-
-    void SteeringComponent::PostReceiveFromParent()
-    {
-
     }
 
     bool SteeringComponent::RequiresSeparateSteeringCore()

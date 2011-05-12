@@ -13,9 +13,7 @@ namespace hemelb
 {
   namespace vis
   {
-    Control::Control(lb::StressTypes iStressType,
-                     const topology::NetworkTopology* netTop,
-                     geometry::LatticeData* iLatDat)
+    Control::Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat)
     {
       mVisSettings.mStressType = iStressType;
 
@@ -31,11 +29,10 @@ namespace hemelb
       mVisSettings.mouse_x = -1;
       mVisSettings.mouse_y = -1;
 
-      initLayers(netTop, iLatDat);
+      initLayers(iLatDat);
     }
 
-    void Control::initLayers(const topology::NetworkTopology * iNetworkTopology,
-                             geometry::LatticeData* iLatDat)
+    void Control::initLayers(geometry::LatticeData* iLatDat)
     {
       // We don't have all the minima / maxima on one core, so we have to gather them.
       // NOTE this only happens once, during initialisation, otherwise it would be
@@ -84,27 +81,18 @@ namespace hemelb
       localMaxes[1] = block_max_y;
       localMaxes[2] = block_max_z;
 
-      MPI_Allreduce(localMins, mins, 3, site_mpi_t, MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, maxes, 3, site_mpi_t, MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, mins, 3, MpiDataType<site_t> (), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, maxes, 3, MpiDataType<site_t> (), MPI_MAX, MPI_COMM_WORLD);
 
       mVisSettings.ctr_x = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[0] + maxes[0]));
       mVisSettings.ctr_y = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[1] + maxes[1]));
       mVisSettings.ctr_z = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
-      myRayTracer = new RayTracer(iNetworkTopology,
-                                  iLatDat,
-                                  &mDomainStats,
-                                  &mScreen,
-                                  &mViewpoint,
-                                  &mVisSettings);
+      myRayTracer = new RayTracer(iLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
       myGlypher = new GlyphDrawer(iLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(iNetworkTopology,
-                                        iLatDat,
-                                        &mScreen,
-                                        &mViewpoint,
-                                        &mVisSettings);
+      myStreaker = new StreaklineDrawer(iLatDat, &mScreen, &mViewpoint, &mVisSettings);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -162,8 +150,7 @@ namespace hemelb
       mScreen.Resize(pixels_x, pixels_y);
     }
 
-    void Control::Render(geometry::LatticeData* iLatDat,
-                         const topology::NetworkTopology* iNetTopology)
+    void Control::Render(geometry::LatticeData* iLatDat)
     {
       mScreen.Reset();
 
@@ -180,7 +167,7 @@ namespace hemelb
         myStreaker->render(iLatDat);
       }
 #endif
-      mScreen.CompositeImage(&mVisSettings, iNetTopology);
+      mScreen.CompositeImage(&mVisSettings);
     }
 
     void Control::WriteImage(std::string image_file_name)
