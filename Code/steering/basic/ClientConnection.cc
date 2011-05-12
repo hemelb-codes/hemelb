@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 
+#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/ClientConnection.h"
 #include "HttpPost.h"
@@ -63,7 +64,9 @@ namespace hemelb
         struct sockaddr_in my_address;
 
         my_address.sin_family = AF_INET;
-        my_address.sin_port = (in_port_t) htonl(MYPORT);
+
+        debug::Debugger::Get()->BreakHere();
+        my_address.sin_port = htons((in_port_t) MYPORT);
         my_address.sin_addr.s_addr = INADDR_ANY;
         memset(my_address.sin_zero, '\0', sizeof my_address.sin_zero);
 
