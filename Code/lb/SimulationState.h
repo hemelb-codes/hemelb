@@ -11,6 +11,7 @@ namespace hemelb
     {
         unsigned long CycleId;
         unsigned long TimeStep;
+        unsigned long TimeStepsPerCycle;
         double IntraCycleTime;
         int IsTerminating;
         int DoRendering;

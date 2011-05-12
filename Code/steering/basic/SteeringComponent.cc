@@ -22,40 +22,14 @@ namespace hemelb
       Reset();
     }
 
-    /**
-     * Does nothing - data only travels from parent to children in steering.
-     */
-    void SteeringComponent::ProgressFromChildren()
-    {
-
-    }
-
-    void SteeringComponent::ProgressFromParent()
+    void SteeringComponent::ProgressFromParent(unsigned int splayNumber)
     {
       ReceiveFromParent<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }
 
-    void SteeringComponent::ProgressToChildren()
+    void SteeringComponent::ProgressToChildren(unsigned int splayNumber)
     {
       SendToChildren<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
-    }
-
-    /**
-     * Does nothing - data only travels from parent to children in steering.
-     */
-    void SteeringComponent::ProgressToParent()
-    {
-
-    }
-
-    void SteeringComponent::PostReceiveFromChildren()
-    {
-
-    }
-
-    void SteeringComponent::PostReceiveFromParent()
-    {
-
     }
 
     bool SteeringComponent::RequiresSeparateSteeringCore()
