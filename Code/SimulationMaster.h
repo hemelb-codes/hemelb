@@ -42,7 +42,6 @@ class SimulationMaster
     FILE *mTimingsFile;
 
     hemelb::geometry::LatticeData* mLatDat;
-    hemelb::topology::NetworkTopology* mNetworkTopology;
 
     hemelb::steering::ClientConnection* clientConnection;
     hemelb::steering::ImageSendComponent *imageSendCpt;
@@ -51,7 +50,7 @@ class SimulationMaster
     hemelb::lb::SimulationState mSimulationState;
     hemelb::lb::StabilityTester* mStabilityTester;
     hemelb::lb::LBM *mLbm;
-    hemelb::net::Net *mNet;
+    hemelb::net::Net mNet;
 
     hemelb::vis::Control* mVisControl;
 

@@ -2,11 +2,13 @@
 #define HEMELB_GEOMETRY_LATTICEDATA_H
 
 #include <cstdio>
+#include <parmetis.h>
 
 #include "D3Q15.h"
 #include "constants.h"
 #include "SimConfig.h"
 #include "mpiInclude.h"
+#include "io/XdrReader.h"
 // TODO Remove the stress type from the data file, so we can remove the dependence
 // on LbmParams here.
 #include "lb/LbmParameters.h"
@@ -20,6 +22,7 @@ namespace hemelb
       public:
         enum SiteType
         {
+          // These must be consistent with the setup tool
           SOLID_TYPE = 0U,
           FLUID_TYPE = 1U,
           INLET_TYPE = 2U,
@@ -186,8 +189,6 @@ namespace hemelb
 
         class GlobalLatticeData
         {
-            friend class BlockCounter;
-
           public:
             void SetBasicDetails(site_t iBlocksX,
                                  site_t iBlocksY,
@@ -224,7 +225,12 @@ namespace hemelb
             // Function that gets the index of a block from its coordinates.
             site_t GetBlockIdFromBlockCoords(site_t blockI, site_t blockJ, site_t blockK) const;
 
+            void GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const;
+            site_t GetSiteCoord(site_t block, site_t localSiteCoord) const;
+
             unsigned int GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
+
+            void ReadBlock(site_t block, io::XdrReader* reader);
 
           public:
             // TODO public temporarily, until all usages are internal to the class.
@@ -238,75 +244,6 @@ namespace hemelb
             site_t mBlockSize;
         };
 
-        class BlockCounter
-        {
-          public:
-            BlockCounter(const GlobalLatticeData* iGlobLatDat, site_t iStartNumber)
-            {
-              mBlockNumber = iStartNumber;
-              mGlobLatDat = iGlobLatDat;
-            }
-
-            void operator++()
-            {
-              mBlockNumber++;
-            }
-
-            void operator++(int in)
-            {
-              mBlockNumber++;
-            }
-
-            operator site_t()
-            {
-              return mBlockNumber;
-            }
-
-            bool operator<(site_t iUpperLimit) const
-            {
-              return mBlockNumber < iUpperLimit;
-            }
-
-            site_t GetICoord()
-            {
-              return (mBlockNumber - (mBlockNumber % (mGlobLatDat->GetYBlockCount()
-                  * mGlobLatDat->GetZBlockCount()))) / (mGlobLatDat->GetYBlockCount()
-                  * mGlobLatDat->GetZBlockCount());
-            }
-
-            site_t GetJCoord()
-            {
-              site_t lTemp = mBlockNumber % (mGlobLatDat->GetYBlockCount()
-                  * mGlobLatDat->GetZBlockCount());
-              return (lTemp - (lTemp % mGlobLatDat->GetZBlockCount()))
-                  / mGlobLatDat->GetZBlockCount();
-            }
-
-            site_t GetKCoord()
-            {
-              return mBlockNumber % mGlobLatDat->GetZBlockCount();
-            }
-
-            site_t GetICoord(site_t iSiteI)
-            {
-              return (GetICoord() << mGlobLatDat->Log2BlockSize) + iSiteI;
-            }
-
-            site_t GetJCoord(site_t iSiteJ)
-            {
-              return (GetJCoord() << mGlobLatDat->Log2BlockSize) + iSiteJ;
-            }
-
-            site_t GetKCoord(site_t iSiteK)
-            {
-              return (GetKCoord() << mGlobLatDat->Log2BlockSize) + iSiteK;
-            }
-
-          private:
-            const GlobalLatticeData* mGlobLatDat;
-            site_t mBlockNumber;
-        };
-
         class GeometryReader
         {
           public:
@@ -314,10 +251,6 @@ namespace hemelb
             ~GeometryReader();
 
             void LoadAndDecompose(GlobalLatticeData* bGlobalLatticeData,
-                                  site_t* totalFluidSites,
-                                  site_t siteMins[3],
-                                  site_t siteMaxes[3],
-                                  site_t* fluidSitePerProc,
                                   lb::LbmParameters* bLbmParams,
                                   SimConfig* bSimConfig,
                                   double* lReadTime,
@@ -329,12 +262,9 @@ namespace hemelb
                 site_t i, j, k;
             };
 
-            void ReadPreamble(MPI_File xiFile,
-                              lb::LbmParameters* bParams,
-                              GlobalLatticeData* bGlobalLatticeData);
+            void ReadPreamble(lb::LbmParameters* bParams, GlobalLatticeData* bGlobalLatticeData);
 
-            void ReadHeader(MPI_File xiFile,
-                            site_t iBlockCount,
+            void ReadHeader(site_t iBlockCount,
                             site_t* sitesInEachBlock,
                             unsigned int* bytesUsedByBlockInDataFile);
 
@@ -351,23 +281,99 @@ namespace hemelb
                               const site_t* fluidSitesPerBlock,
                               const GlobalLatticeData* iGlobLatDat);
 
-            void ReadInLocalBlocks(MPI_File iFile,
+            void ReadInLocalBlocks(GlobalLatticeData* iGlobLatDat,
+                                   const site_t* sitesPerBlock,
                                    const unsigned int* bytesPerBlock,
                                    const proc_t* unitForEachBlock,
-                                   const proc_t localRank,
-                                   const GlobalLatticeData* iGlobLatDat);
+                                   const proc_t localRank);
+
+            void DecideWhichBlocksToRead(bool* readBlock,
+                                         const proc_t* unitForEachBlock,
+                                         const proc_t localRank,
+                                         const GlobalLatticeData* iGlobLatDat);
+
+            bool Expand(std::vector<BlockLocation>* edgeBlocks,
+                        std::vector<BlockLocation>* expansionBlocks,
+                        const GlobalLatticeData* iGlobLatDat,
+                        const site_t* fluidSitesPerBlock,
+                        bool* blockAssigned,
+                        proc_t currentUnit,
+                        proc_t* unitForEachBlock,
+                        site_t &blocksOnCurrentUnit,
+                        site_t blocksPerUnit);
 
             void OptimiseDomainDecomposition(const site_t* sitesPerBlock,
                                              const unsigned int* bytesPerBlock,
                                              const proc_t* procForEachBlock,
-                                             MPI_File iFile,
                                              GlobalLatticeData* bGlobLatDat);
 
+            site_t GetHeaderLength(site_t blockCount) const;
+
+            void GetSiteDistributionArray(idxtype* vertexDistribn,
+                                          const site_t blockCount,
+                                          const proc_t* procForEachBlock,
+                                          const site_t* sitesPerBlock) const;
+
+            void GetFirstSiteIndexOnEachBlock(int* firstSiteIndexPerBlock,
+                                              const site_t blockCount,
+                                              const idxtype* vertexDistribution,
+                                              const proc_t* procForEachBlock,
+                                              const site_t* sitesPerBlock) const;
+
+            void GetAdjacencyData(idxtype* adjacenciesPerVertex,
+                                  std::vector<idxtype> &adjacencies,
+                                  const site_t localVertexCount,
+                                  const proc_t* procForEachBlock,
+                                  const int* firstSiteIndexPerBlock,
+                                  const GlobalLatticeData* bGlobLatDat) const;
+
+            void CallParmetis(idxtype* partitionVector,
+                              unsigned int localVertexCount,
+                              idxtype* vtxDistribn,
+                              idxtype* adjacenciesPerVertex,
+                              idxtype* adjacencies);
+
+            idxtype* GetMovesList(int* movesFromEachProc,
+                                  const int* firstSiteIndexPerBlock,
+                                  const proc_t* procForEachBlock,
+                                  const site_t* sitesPerBlock,
+                                  const int* vtxDistribn,
+                                  const int* partitionVector,
+                                  const GlobalLatticeData* bGlobLatDat);
+
+            void RereadBlocks(GlobalLatticeData* bGlobLatDat,
+                              const int* movesPerProc,
+                              const int* movesList,
+                              const site_t* sitesPerBlock,
+                              const unsigned int* bytesPerBlock,
+                              const int* procForEachBlock);
+
+            void ImplementMoves(GlobalLatticeData* bGlobLatDat,
+                                const proc_t* procForEachBlock,
+                                const int* movesFromEachProc,
+                                const int* movesList) const;
+
+            proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
+
+            void CreateFileReadType(MPI_Datatype* dataType,
+                                    const site_t blockCount,
+                                    const bool* readBlock,
+                                    const unsigned int* bytesPerBlock) const;
+
+            // The config file starts with:
+            // * 1 unsigned int for stress type
+            // * 3 unsigned ints for the number of blocks in the x, y, z directions
+            // * 1 unsigned int for the block size (number of sites along one edge of a block)
+            // * 1 double for the voxel size
+            // * 3 doubles for the world-position of site 0
+            static const int PreambleBytes = 5 * 4 + 4 * 8;
+
+            MPI_File file;
+            MPI_Info fileInfo;
             MPI_Comm mTopologyComm;
             MPI_Group mTopologyGroup;
             int mTopologyRank;
             unsigned int mTopologySize;
-            int mGlobalRank;
             bool mParticipateInTopology;
         };
 

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 #include "vis/Screen.h"
 
@@ -229,8 +230,7 @@ namespace hemelb
       col_pixels = 0;
     }
 
-    void Screen::CompositeImage(const VisSettings* visSettings,
-                                const hemelb::topology::NetworkTopology* netTop)
+    void Screen::CompositeImage(const VisSettings* visSettings)
     {
       // Status object for MPI comms.
       MPI_Status status;
@@ -254,6 +254,8 @@ namespace hemelb
        * This continues until all data is passed back to processor one, which passes it to proc 0.
        */
 
+      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
+
       // Start with a difference in rank of 1, doubling every time.
       for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
       {
@@ -266,13 +268,13 @@ namespace hemelb
           // If we're the sending proc, do the send.
           if (netTop->GetLocalRank() == sendingProc)
           {
-            MPI_Send(&col_pixels, 1, MPI_UNSIGNED, receivingProc, 20, MPI_COMM_WORLD);
+            MPI_Send(&col_pixels, 1, MpiDataType(col_pixels), receivingProc, 20, MPI_COMM_WORLD);
 
             if (col_pixels > 0)
             {
               MPI_Send(localPixels,
                        col_pixels,
-                       ColPixel::getMpiType(),
+                       MpiDataType<ColPixel> (),
                        receivingProc,
                        20,
                        MPI_COMM_WORLD);
@@ -284,13 +286,19 @@ namespace hemelb
           {
             unsigned int col_pixels_temp;
 
-            MPI_Recv(&col_pixels_temp, 1, MPI_UNSIGNED, sendingProc, 20, MPI_COMM_WORLD, &status);
+            MPI_Recv(&col_pixels_temp,
+                     1,
+                     MpiDataType(col_pixels_temp),
+                     sendingProc,
+                     20,
+                     MPI_COMM_WORLD,
+                     &status);
 
             if (col_pixels_temp > 0)
             {
               MPI_Recv(localPixels,
                        col_pixels_temp,
-                       ColPixel::getMpiType(),
+                       MpiDataType<ColPixel> (),
                        sendingProc,
                        20,
                        MPI_COMM_WORLD,
@@ -332,24 +340,24 @@ namespace hemelb
       // Send the final image from proc 1 to 0.
       if (netTop->GetLocalRank() == 1)
       {
-        MPI_Send(&col_pixels, 1, MPI_UNSIGNED, 0, 20, MPI_COMM_WORLD);
+        MPI_Send(&col_pixels, 1, MpiDataType(col_pixels), 0, 20, MPI_COMM_WORLD);
 
         if (col_pixels > 0)
         {
-          MPI_Send(compositingBuffer, col_pixels, ColPixel::getMpiType(), 0, 20, MPI_COMM_WORLD);
+          MPI_Send(compositingBuffer, col_pixels, MpiDataType<ColPixel> (), 0, 20, MPI_COMM_WORLD);
         }
 
       }
       // Receive the final image on proc 0.
       else if (netTop->GetLocalRank() == 0)
       {
-        MPI_Recv(&col_pixels, 1, MPI_UNSIGNED, 1, 20, MPI_COMM_WORLD, &status);
+        MPI_Recv(&col_pixels, 1, MpiDataType(col_pixels), 1, 20, MPI_COMM_WORLD, &status);
 
         if (col_pixels > 0)
         {
           MPI_Recv(compositingBuffer,
                    col_pixels,
-                   ColPixel::getMpiType(),
+                   MpiDataType<ColPixel> (),
                    1,
                    20,
                    MPI_COMM_WORLD,
@@ -393,9 +401,34 @@ namespace hemelb
                              const VisSettings* visSettings,
                              io::Writer* writer)
     {
+      int index;
+      int pix_data[3];
+      unsigned char rgb_data[12];
+      int bits_per_char = sizeof(char) * 8;
+
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        writer->writePixel(&compositingBuffer[i], domainStats, visSettings);
+        //        col_pixel_p = &compositingBuffer[i];
+        ColPixel& col_pixel = compositingBuffer[i];
+        // Use a ray-tracer function to get the necessary pixel data.
+        col_pixel.rawWritePixel(&index, rgb_data, domainStats, visSettings);
+
+        *writer << index;
+
+        pix_data[0] = (rgb_data[0] << (3 * bits_per_char)) + (rgb_data[1] << (2 * bits_per_char))
+            + (rgb_data[2] << bits_per_char) + rgb_data[3];
+
+        pix_data[1] = (rgb_data[4] << (3 * bits_per_char)) + (rgb_data[5] << (2 * bits_per_char))
+            + (rgb_data[6] << bits_per_char) + rgb_data[7];
+
+        pix_data[2] = (rgb_data[8] << (3 * bits_per_char)) + (rgb_data[9] << (2 * bits_per_char))
+            + (rgb_data[10] << bits_per_char) + rgb_data[11];
+
+        for (int i = 0; i < 3; i++)
+        {
+          *writer << pix_data[i];
+        }
+        *writer << io::Writer::eol;
       }
     }
 
