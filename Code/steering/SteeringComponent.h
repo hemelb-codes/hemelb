@@ -42,7 +42,7 @@ namespace hemelb
         void AssignValues();
 
         const static int STEERABLE_PARAMETERS = 20;
-        const static int SPREADFACTOR = 10;
+        const static unsigned int SPREADFACTOR = 10;
 
         int imagesPeriod;
         bool isConnected;
