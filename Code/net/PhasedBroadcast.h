@@ -51,7 +51,6 @@ namespace hemelb
           // Initialise member variables.
           mTreeDepth = 0;
           mMyDepth = 0;
-          mSpreadFactor = spreadFactor;
 
           // Calculate the correct values for the depth variables.
           proc_t noSeenToThisDepth = 1;
@@ -530,11 +529,6 @@ namespace hemelb
          */
         unsigned int mMyDepth;
         unsigned int mTreeDepth;
-
-        /**
-         * The maximum number of children and node has.
-         */
-        unsigned int mSpreadFactor;
 
         /**
          * This node's parent rank.

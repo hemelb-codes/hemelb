@@ -2,7 +2,12 @@
 #define HEMELB_VIS_CONTROL_H
 
 #include "geometry/LatticeData.h"
+
 #include "lb/LbmParameters.h"
+#include "lb/SimulationState.h"
+
+#include "net/net.h"
+#include "net/PhasedBroadcast.h"
 
 #include "vis/DomainStats.h"
 #include "vis/Screen.h"
@@ -24,10 +29,10 @@ namespace hemelb
 
     // Class to control and use the effects of different visualisation
     // methods.
-    class Control
+    class Control : net::PhasedBroadcast<true, 2, 0, false, true>
     {
       public:
-        Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat);
+        Control(lb::StressTypes iStressType, net::Net* net, lb::SimulationState* simState, geometry::LatticeData* iLatDat);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
@@ -64,6 +69,8 @@ namespace hemelb
         VisSettings mVisSettings;
 
       private:
+        static const unsigned int SPREADFACTOR = 3;
+
         struct Vis
         {
             float half_dim[3];
@@ -76,7 +83,6 @@ namespace hemelb
         RayTracer *myRayTracer;
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
-
     };
   }
 }
