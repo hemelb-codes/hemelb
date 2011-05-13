@@ -13,7 +13,11 @@ namespace hemelb
 {
   namespace vis
   {
-    Control::Control(lb::StressTypes iStressType, geometry::LatticeData* iLatDat)
+    Control::Control(lb::StressTypes iStressType,
+                     net::Net* net,
+                     lb::SimulationState* simState,
+                     geometry::LatticeData* iLatDat) :
+      net::PhasedBroadcast<true, 2, 0, false, true>(net, simState, SPREADFACTOR)
     {
       mVisSettings.mStressType = iStressType;
 

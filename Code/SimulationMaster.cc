@@ -163,7 +163,10 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
   // Initialise the visualisation controller.
-  mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType, mLatDat);
+  mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType,
+                                         &mNet,
+                                         &mSimulationState,
+                                         mLatDat);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
