@@ -356,6 +356,24 @@ namespace hemelb
         }
 
         /**
+         * Receives data from each child. This is a variable length per child, and each child's
+         * data is inserted into the appropriate array.
+         *
+         * @param dataStart Pointer to the start of the array.
+         * @param countPerChild Number of elements to receive per child.
+         */
+        template<class T>
+        void ReceiveFromChildren(T** dataStart, unsigned int* countPerChild)
+        {
+          unsigned int childNum = 0;
+          for (std::vector<int>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
+          {
+            mNet->RequestReceive<T> (dataStart[childNum], countPerChild[childNum], *it);
+            ++childNum;
+          }
+        }
+
+        /**
          * Helper function for sending data to parent nodes.
          */
         template<class T>
@@ -431,7 +449,7 @@ namespace hemelb
           unsigned int firstSendCycle = (mTreeDepth - mMyDepth) * (splay - overlap);
 
           // If we're either not far enough or too far through the cycle, don't send.
-          if (subCycleNumber < firstSendCycle || subCycleNumber > (firstSendCycle + overlap))
+          if (subCycleNumber < firstSendCycle || subCycleNumber > (firstSendCycle + splay))
           {
             return false;
           }
@@ -453,7 +471,7 @@ namespace hemelb
           unsigned int firstSendCycle = mMyDepth * (splay - overlap);
 
           // If we're either not far enough or too far through the cycle, don't send.
-          if (subCycleNumber < firstSendCycle || subCycleNumber > (firstSendCycle + overlap))
+          if (subCycleNumber < firstSendCycle || subCycleNumber > (firstSendCycle + splay))
           {
             return false;
           }
@@ -475,7 +493,7 @@ namespace hemelb
           unsigned int firstReceiveCycle = (mMyDepth - 1) * (splay - overlap);
 
           // If we're either not far enough or too far through the cycle, don't receive.
-          if (subCycleNumber < firstReceiveCycle || subCycleNumber > (firstReceiveCycle + overlap))
+          if (subCycleNumber < firstReceiveCycle || subCycleNumber > (firstReceiveCycle + splay))
           {
             return false;
           }
@@ -497,7 +515,7 @@ namespace hemelb
           unsigned int firstReceiveCycle = (mTreeDepth - (mMyDepth + 1)) * (splay - overlap);
 
           // If we're either not far enough or too far through the cycle, don't receive.
-          if (subCycleNumber < firstReceiveCycle || subCycleNumber > (firstReceiveCycle + overlap))
+          if (subCycleNumber < firstReceiveCycle || subCycleNumber > (firstReceiveCycle + splay))
           {
             return false;
           }
