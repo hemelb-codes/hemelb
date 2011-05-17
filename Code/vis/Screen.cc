@@ -185,7 +185,7 @@ namespace hemelb
       viewpoint->RotateToViewpoint(MaxXValue, 0.0F, 0.0F, UnitVectorProjectionX);
       viewpoint->RotateToViewpoint(0.0F, MaxYValue, 0.0F, UnitVectorProjectionY);
 
-      if (pixelsX * pixelsY <= COLOURED_PIXELS_MAX)
+      if (pixelsX * pixelsY <= (int) COLOURED_PIXELS_MAX)
       {
         PixelsX = pixelsX;
         PixelsY = pixelsX;
