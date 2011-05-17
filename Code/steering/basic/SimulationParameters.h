@@ -22,14 +22,12 @@ namespace hemelb
         double mouseStress;
 
         static const u_int paramsSizeB = 3 * sizeof(int) + 3 * sizeof(double);
-        char params[paramsSizeB];
 
         SimulationParameters();
         ~SimulationParameters();
-        char* pack();
+        void pack(io::XdrWriter* writer);
 
       private:
-        io::XdrMemWriter paramWriter;
 
     };
 

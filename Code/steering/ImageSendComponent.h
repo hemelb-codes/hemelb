@@ -6,6 +6,7 @@
 #include "lb/SimulationState.h"
 #include "lb/LbmParameters.h"
 #include "steering/ClientConnection.h"
+#include "steering/basic/SimulationParameters.h"
 
 namespace hemelb
 {
@@ -38,18 +39,21 @@ namespace hemelb
         vis::Control* mVisControl;
         const lb::LbmParameters* mLbmParams;
 
-        char* xdrSendBuffer_pixel_data;
+        char* xdrSendBuffer;
         double lastRender;
 
-        // data per pixel inlude the data for the pixel location and 4 colours
-        //in RGB format, thus #bytes per pixel are (sizeof(int)+4
-        //rgb)=sizeof(int)+4*3*sizeof(unsigned char))
-        static const int bytes_per_pixel_data = sizeof(int) + 4 * sizeof(unsigned char);
-        // one int for colour_id and one for pixel id
-        static const u_int pixel_data_bytes = vis::Screen::COLOURED_PIXELS_MAX
-            * bytes_per_pixel_data;
-        // it is assumed that the frame size is the only detail
-        static const u_int frame_details_bytes = 1 * sizeof(int);
+        // data per pixel is
+        // 1 * int (pixel index)
+        // 3 * int (pixel RGB)
+        static const int bytes_per_pixel_data = 4 * 4;
+
+        // Sent data:
+        // 2 * int (pixelsX, pixelsY)
+        // 1 * int (bytes of pixel data)
+        // pixel data (variable, up to COLOURED_PIXELS_MAX * bytes_per_pixel_data)
+        // SimulationParameters::paramsSizeB (metadata - mouse pressure and stress etc)
+        static const int maxSendSize = 2 * 4 + 1 * 4 + vis::Screen::COLOURED_PIXELS_MAX
+            * bytes_per_pixel_data + SimulationParameters::paramsSizeB;
     };
   }
 }

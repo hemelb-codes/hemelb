@@ -435,6 +435,11 @@ namespace hemelb
       }
     }
 
+    unsigned int Screen::GetPixelCount() const
+    {
+      return pixelCountInBuffer;
+    }
+
     const float* Screen::GetVtx() const
     {
       return vtx;
