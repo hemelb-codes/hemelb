@@ -1,6 +1,8 @@
 #ifndef HEMELB_STEERING_NETWORK_H
 #define HEMELB_STEERING_NETWORK_H
 
+#include <string.h>
+
 #include "steering/ClientConnection.h"
 #include "net/IteratedAction.h"
 
@@ -22,23 +24,20 @@ namespace hemelb
 
         /**
          * Use the time between MPI send and MPI receives being completed to perform the
-         * Network sends and receives.
+         * Network sends.
          */
         void PreReceive();
 
         bool IsConnected();
 
       private:
+        void Break(int socket);
+
         ClientConnection clientConnection;
 
-        char* sendBuf;
-        char* recvBuf;
-
-        int sendBufLen;
-        int sendBufUsed;
-
-        int recvBufLen;
-        int recvBufUsed;
+        // Buffers to keep the data from partial sends and receives.
+        std::string sendBuf;
+        std::string recvBuf;
     };
 
   }
