@@ -33,6 +33,8 @@ namespace hemelb
       private:
         void Break(int socket);
 
+        long sendInternal(const char* data, long length, int socket);
+
         ClientConnection clientConnection;
 
         // Buffers to keep the data from partial sends and receives.

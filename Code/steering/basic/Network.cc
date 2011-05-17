@@ -108,7 +108,8 @@ namespace hemelb
 
     void Network::PreReceive()
     {
-
+      // Calling send_all will attempt to flush the send buffer.
+      send_all(NULL, 0);
     }
 
     bool Network::IsConnected()
@@ -135,40 +136,46 @@ namespace hemelb
         return false;
       }
 
-      ssize_t sent_bytes = 0;
-      ssize_t bytes_left_to_send = length;
-      ssize_t n = 0;
-
-      // TODO: Make this better.
-      while (sent_bytes < length)
+      // If we have buffered strings to be sent, send those first.
+      if (sendBuf.length() > 0)
       {
-        n = send(socketToClient, buf + sent_bytes, bytes_left_to_send, 0);
+        long sent = sendInternal(sendBuf.c_str(), sendBuf.length(), socketToClient);
 
-        if (n <= 0)
+        // Broken socket?
+        if (sent < 0)
         {
-          // Distinguish between cases where the pipe fails because it'd block
-          // (No problem, we'll try again later) or because the pipe is broken.
-          if (errno == EWOULDBLOCK)
-          {
-            // Wait a bit before trying again.
-            usleep(10);
-          }
-          else
-          {
-            log::Logger::Log<log::Warning, log::Singleton>("Network send had broken pipe... (%s)",
-                                                           strerror(errno));
-            Break(socketToClient);
-
-            return false;
-          }
+          return false;
         }
+
+        // Did sending block? We'll try again next time.
+        if (sent < (long) sendBuf.length())
+        {
+          sendBuf.erase(0, sent);
+          sendBuf.append(buf, length);
+          return true;
+        }
+        // If not, we sent the whole buffer.
         else
         {
-          sent_bytes += n;
-          bytes_left_to_send -= n;
+          sendBuf.clear();
         }
       }
 
+      // If we sent the whole buffer, try to send the new data.
+      int sent_bytes = sendInternal(buf, length, socketToClient);
+
+      // Is the socket broken?
+      if (sent_bytes < 0)
+      {
+        return false;
+      }
+      // Did the socket block? Still return true, because we'll try again next time.
+      else if (sent_bytes < length)
+      {
+        sendBuf.append(buf + sent_bytes, length - sent_bytes);
+      }
+
+      // Otherwise we sent the whole thing.
       return true;
     }
 
@@ -178,6 +185,48 @@ namespace hemelb
 
       recvBuf.clear();
       sendBuf.clear();
+    }
+
+    /**
+     * Returns -1 for a broken socket, otherwise the number of bytes we could send before blocking.
+     *
+     * @param data
+     * @param length
+     * @param socket
+     * @return
+     */
+    long Network::sendInternal(const char* data, long length, int socket)
+    {
+      long sent_bytes = 0;
+
+      while (sent_bytes < length)
+      {
+        long n = send(socket, data + sent_bytes, length - sent_bytes, 0);
+
+        if (n <= 0)
+        {
+          // Distinguish between cases where the pipe fails because it'd block
+          // (No problem, we'll try again later) or because the pipe is broken.
+          if (errno == EWOULDBLOCK)
+          {
+            return sent_bytes;
+          }
+          else
+          {
+            log::Logger::Log<log::Warning, log::Singleton>("Network send had broken pipe... (%s)",
+                                                           strerror(errno));
+            Break(socket);
+
+            return -1;
+          }
+        }
+        else
+        {
+          sent_bytes += n;
+        }
+      }
+
+      return sent_bytes;
     }
 
   }
