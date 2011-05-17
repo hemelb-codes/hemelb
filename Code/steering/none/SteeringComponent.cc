@@ -16,7 +16,7 @@ namespace hemelb
      * @return
      */
     SteeringComponent::SteeringComponent(int imagesPeriod,
-                                         ClientConnection* iClientConnection,
+                                         Network* network,
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,

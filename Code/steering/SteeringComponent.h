@@ -6,7 +6,7 @@
 #include "lb/SimulationState.h"
 #include "vis/DomainStats.h"
 #include "vis/Control.h"
-#include "steering/basic/Network.h"
+#include "steering/Network.h"
 
 namespace hemelb
 {

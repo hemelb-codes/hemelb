@@ -1,7 +1,7 @@
 #include <errno.h>
 
 #include "steering/SteeringComponent.h"
-#include "Network.h"
+#include "steering/Network.h"
 #include "io/XdrMemReader.h"
 #include "log/Logger.h"
 

@@ -3,7 +3,7 @@
 
 #include "log/Logger.h"
 #include "steering/ImageSendComponent.h"
-#include "steering/basic/Network.h"
+#include "steering/Network.h"
 #include "io/XdrMemWriter.h"
 #include "util/utilityFunctions.h"
 
