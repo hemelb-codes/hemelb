@@ -5,7 +5,7 @@
 #include "lb/lb.h"
 #include "lb/SimulationState.h"
 #include "lb/LbmParameters.h"
-#include "steering/basic/Network.h"
+#include "steering/Network.h"
 #include "steering/basic/SimulationParameters.h"
 
 namespace hemelb
