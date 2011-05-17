@@ -233,6 +233,11 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
 
+  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+  {
+    actors.push_back(network);
+  }
+
   mSimulationState.TimeStepsPerCycle = lSimulationConfig->StepsPerCycle;
 
   for (mSimulationState.CycleId = 1; mSimulationState.CycleId <= lSimulationConfig->NumCycles
