@@ -16,8 +16,8 @@ namespace hemelb
 {
   namespace steering
   {
-    Network::Network(ClientConnection* clientConnection) :
-      clientConnection(clientConnection)
+    Network::Network(int steeringSessionId) :
+      clientConnection(steeringSessionId)
     {
 
     }
@@ -30,8 +30,15 @@ namespace hemelb
      * @param length
      * @return Returns the number of bytes recieved or -1 on failure.
      */
-    ssize_t Network::recv_all(int sockid, char *buf, const int length)
+    bool Network::recv_all(char *buf, const int length)
     {
+      int socketToClient = clientConnection.GetWorkingSocket();
+
+      if (socketToClient < 0)
+      {
+        return false;
+      }
+
       ssize_t received_bytes = 0;
       ssize_t bytes_left_to_receive = length;
       ssize_t n = 0;
@@ -41,13 +48,21 @@ namespace hemelb
       while (received_bytes < length)
       {
         // Receive some data (up to the remaining length)
-        n = recv(sockid, buf + received_bytes, bytes_left_to_receive, 0);
+        n = recv(socketToClient, buf + received_bytes, bytes_left_to_receive, 0);
 
+        // If there was an error, report it and return.
         if (n <= 0)
         {
-          // Distinguish between cases where the pipe fails because it'd block
-          // (No problem, we'll try again later) or because the pipe is broken.
-          return n;
+          // If there was no data and it wasn't simply that the socket would block,
+          // raise an error.
+          if (errno != EAGAIN)
+          {
+            log::Logger::Log<log::Warning, log::Singleton>("Steering component: broken network pipe... (%s)",
+                                                           strerror(errno));
+            clientConnection.ReportBroken(socketToClient);
+          }
+
+          return false;
         }
         else
         {
@@ -56,7 +71,7 @@ namespace hemelb
         }
       }
 
-      return received_bytes;
+      return true;
     }
 
     void Network::PreReceive()
@@ -66,7 +81,7 @@ namespace hemelb
 
     bool Network::IsConnected()
     {
-      return clientConnection->GetWorkingSocket() > 0;
+      return clientConnection.GetWorkingSocket() > 0;
     }
 
     /**
@@ -80,7 +95,7 @@ namespace hemelb
     bool Network::send_all(const char *buf, const int length)
     {
       // Get a socket.
-      int socketToClient = clientConnection->GetWorkingSocket();
+      int socketToClient = clientConnection.GetWorkingSocket();
 
       // If there's no such socket, we don't have a connection. Nothing to do.
       if (socketToClient < 0)
@@ -110,7 +125,7 @@ namespace hemelb
           {
             log::Logger::Log<log::Warning, log::Singleton>("Network send had broken pipe... (%s)",
                                                            strerror(errno));
-            clientConnection->ReportBroken(socketToClient);
+            clientConnection.ReportBroken(socketToClient);
 
             return false;
           }

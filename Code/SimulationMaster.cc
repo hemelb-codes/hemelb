@@ -75,10 +75,6 @@ SimulationMaster::~SimulationMaster()
   {
     delete network;
   }
-  if (clientConnection != NULL)
-  {
-    delete clientConnection;
-  }
   if (steeringCpt != NULL)
   {
     delete steeringCpt;
@@ -153,12 +149,10 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
-    clientConnection = new hemelb::steering::ClientConnection(iSteeringSessionid);
-    network = new hemelb::steering::Network(clientConnection);
+    network = new hemelb::steering::Network(iSteeringSessionid);
   }
   else
   {
-    clientConnection = NULL;
     network = NULL;
   }
 
@@ -190,7 +184,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period / iImagesPerCycle));
 
   steeringCpt = new hemelb::steering::SteeringComponent(images_period,
-                                                        clientConnection,
+                                                        network,
                                                         mVisControl,
                                                         mLbm,
                                                         &mNet,
