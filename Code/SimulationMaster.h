@@ -44,7 +44,6 @@ class SimulationMaster
     hemelb::geometry::LatticeData* mLatDat;
 
     hemelb::steering::Network* network;
-    hemelb::steering::ClientConnection* clientConnection;
     hemelb::steering::ImageSendComponent *imageSendCpt;
     hemelb::steering::SteeringComponent* steeringCpt;
 

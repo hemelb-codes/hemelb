@@ -6,7 +6,7 @@
 #include "lb/SimulationState.h"
 #include "vis/DomainStats.h"
 #include "vis/Control.h"
-#include "steering/ClientConnection.h"
+#include "steering/basic/Network.h"
 
 namespace hemelb
 {
@@ -16,7 +16,7 @@ namespace hemelb
     {
       public:
         SteeringComponent(int imagesPeriod,
-                          ClientConnection* iClientConnection,
+                          Network* iNetwork,
                           vis::Control* iVisControl,
                           lb::LBM* iLbm,
                           net::Net * iNet,
@@ -47,7 +47,7 @@ namespace hemelb
         int imagesPeriod;
         bool isConnected;
 
-        ClientConnection* mClientConnection;
+        Network* mNetwork;
         lb::LBM* mLbm;
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
