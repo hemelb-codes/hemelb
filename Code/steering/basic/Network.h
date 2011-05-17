@@ -12,10 +12,10 @@ namespace hemelb
     class Network : public net::IteratedAction
     {
       public:
-        Network(ClientConnection* clientConnection);
+        Network(int iSteeringSessionId);
 
         // Receive a bytestream of known length from a socket into a buffer.
-        static ssize_t recv_all(int socket, char *buf, const int length);
+        bool recv_all(char *buf, const int length);
 
         // Send all bytes from a buffer of known length over a socket.
         bool send_all(const char *buf, const int length);
@@ -29,7 +29,7 @@ namespace hemelb
         bool IsConnected();
 
       private:
-        ClientConnection* clientConnection;
+        ClientConnection clientConnection;
 
         char* sendBuf;
         char* recvBuf;

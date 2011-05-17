@@ -89,13 +89,7 @@ namespace hemelb
       }
 
       // Send to the client.
-      bool success = mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition()
-          - initialPosition);
-
-      if (!success)
-      {
-        isConnected = false;
-      }
+      mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition() - initialPosition);
 
       isFrameReady = false;
     }

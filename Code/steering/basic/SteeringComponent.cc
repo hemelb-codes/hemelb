@@ -10,14 +10,14 @@ namespace hemelb
   namespace steering
   {
     SteeringComponent::SteeringComponent(int imagesPeriod,
-                                         ClientConnection* iClientConnection,
+                                         Network* iNetwork,
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
                                          lb::SimulationState * iSimState) :
       net::PhasedBroadcast<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-          imagesPeriod(imagesPeriod), mClientConnection(iClientConnection), mLbm(iLbm),
-          mSimState(iSimState), mVisControl(iVisControl)
+          imagesPeriod(imagesPeriod), mNetwork(iNetwork), mLbm(iLbm), mSimState(iSimState),
+          mVisControl(iVisControl)
     {
       Reset();
     }
@@ -57,16 +57,11 @@ namespace hemelb
       char steeringRecvBuffer[bytes];
 
       // Get the open socket.
-      int socket = mClientConnection->GetWorkingSocket();
+      isConnected = mNetwork->IsConnected();
 
-      if (socket < 0)
+      if (!isConnected)
       {
-        isConnected = false;
         return;
-      }
-      else
-      {
-        isConnected = true;
       }
 
       bool newSteeringDataExists = false;
@@ -75,45 +70,9 @@ namespace hemelb
       // received we only want to act on the last set.
       while (true)
       {
-        // Create a set of sockets to check for readability, just containing the single socket
-        // of interest.
-        fd_set readableDescriptors;
+        // Try to receive all the data.
+        if (mNetwork->recv_all(steeringRecvBuffer, num_chars))
         {
-          struct timeval tv;
-          tv.tv_sec = 0;
-          tv.tv_usec = 0;
-
-          FD_ZERO(&readableDescriptors);
-          FD_SET(socket, &readableDescriptors);
-
-          select(socket + 1, &readableDescriptors, NULL, NULL, &tv);
-        }
-
-        // If the socket is readable, read from it.
-        if (FD_ISSET(socket, &readableDescriptors))
-        {
-          // Try to receive all the data.
-          ssize_t steerDataRecvB = Network::recv_all(socket, steeringRecvBuffer, num_chars);
-
-          // If there was an error, report it and return.
-          if (steerDataRecvB < 0)
-          {
-            // If there was no data and it wasn't simply that the socket would block,
-            // raise an error.
-            if (errno != EAGAIN)
-            {
-              log::Logger::Log<log::Warning, log::Singleton>("Steering component: broken network pipe... (%s)",
-                                                             strerror(errno));
-              mClientConnection->ReportBroken(socket);
-              isConnected = false;
-            }
-            break;
-          }
-          else if (steerDataRecvB == 0)
-          {
-            break;
-          }
-
           // We read data!
           newSteeringDataExists = true;
         }
