@@ -11,7 +11,7 @@
 
 #include "debug/Debugger.h"
 #include "log/Logger.h"
-#include "steering/basic/Network.h"
+#include "steering/Network.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
