@@ -16,8 +16,8 @@ namespace hemelb
                                            lb::SimulationState* iSimState,
                                            vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
-                                           ClientConnection* iClientConnection) :
-      mClientConnection(iClientConnection), mLbm(lbm), mSimState(iSimState), mVisControl(iControl),
+                                           Network* iNetwork) :
+      mNetwork(iNetwork), mLbm(lbm), mSimState(iSimState), mVisControl(iControl),
           mLbmParams(iLbmParams)
     {
       xdrSendBuffer = new char[maxSendSize];
@@ -48,19 +48,11 @@ namespace hemelb
         return;
       }
 
-      // Get a socket.
-      int socketToClient = mClientConnection->GetWorkingSocket();
+      isConnected = mNetwork->IsConnected();
 
-      // If it's non-existent, we don't have a connection. Nothing to do.
-      if (socketToClient < 0)
+      if (!isConnected)
       {
-        isConnected = false;
         return;
-      }
-      else
-      {
-        // Tell the steering controller that we have a connection.
-        isConnected = true;
       }
 
       io::XdrMemWriter imageWriter = io::XdrMemWriter(xdrSendBuffer, maxSendSize);
@@ -97,41 +89,20 @@ namespace hemelb
       }
 
       // Send to the client.
-      if (SendSuccess(socketToClient, xdrSendBuffer, imageWriter.getCurrentStreamPosition()
-          - initialPosition) < 0)
+      bool success = mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition()
+          - initialPosition);
+
+      if (!success)
       {
-        return;
+        isConnected = false;
       }
 
       isFrameReady = false;
     }
 
-    ssize_t ImageSendComponent::SendSuccess(int iSocket, char * data, int length)
-    {
-      // Try to send all the data.
-      ssize_t pixelDataBytesSent = Network::send_all(iSocket, data, length);
-
-      // We couldn't send. The pipe is broken.
-      if (pixelDataBytesSent <= 0)
-      {
-        if (errno != EAGAIN)
-        {
-          log::Logger::Log<log::Warning, log::Singleton>("Image send component: broken network pipe... (%s)",
-                                                         strerror(errno));
-          mClientConnection->ReportBroken(iSocket);
-          isConnected = false;
-        }
-        return -1;
-      }
-      else
-      {
-        return pixelDataBytesSent;
-      }
-    }
-
     bool ImageSendComponent::ShouldRenderNewNetworkImage()
     {
-      isConnected = mClientConnection->GetWorkingSocket() > 0;
+      isConnected = mNetwork->IsConnected();
 
       if (!isConnected)
       {

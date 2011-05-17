@@ -71,6 +71,10 @@ SimulationMaster::~SimulationMaster()
     delete mLbm;
   }
 
+  if (network != NULL)
+  {
+    delete network;
+  }
   if (clientConnection != NULL)
   {
     delete clientConnection;
@@ -150,10 +154,12 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     clientConnection = new hemelb::steering::ClientConnection(iSteeringSessionid);
+    network = new hemelb::steering::Network(clientConnection);
   }
   else
   {
     clientConnection = NULL;
+    network = NULL;
   }
 
   mStabilityTester = new hemelb::lb::StabilityTester(mLatDat, &mNet, &mSimulationState);
@@ -174,7 +180,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                             &mSimulationState,
                                                             mVisControl,
                                                             mLbm->GetLbmParams(),
-                                                            clientConnection);
+                                                            network);
   }
 
   mLbm->Initialise(lReceiveTranslator, mVisControl);
