@@ -9,8 +9,10 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
+#include "debug/Debugger.h"
 #include "log/Logger.h"
 #include "steering/basic/Network.h"
+#include "util/utilityFunctions.h"
 
 namespace hemelb
 {
@@ -28,10 +30,11 @@ namespace hemelb
      * @param sockid
      * @param buf
      * @param length
-     * @return Returns the number of bytes recieved or -1 on failure.
+     * @return Returns true if we have successfully provided that much data.
      */
     bool Network::recv_all(char *buf, const int length)
     {
+      // Get a socket
       int socketToClient = clientConnection.GetWorkingSocket();
 
       if (socketToClient < 0)
@@ -39,16 +42,19 @@ namespace hemelb
         return false;
       }
 
-      ssize_t received_bytes = 0;
-      ssize_t bytes_left_to_receive = length;
-      ssize_t n = 0;
+      ssize_t bytesGot = 0;
 
-      // TODO: Make this better.
+      // If we have some buffered data to receive, include that in our count.
+      if (recvBuf.length() > 0)
+      {
+        bytesGot += recvBuf.length();
+      }
+
       // While some data left to be received...
-      while (received_bytes < length)
+      while (bytesGot < length)
       {
         // Receive some data (up to the remaining length)
-        n = recv(socketToClient, buf + received_bytes, bytes_left_to_receive, 0);
+        ssize_t n = recv(socketToClient, buf + bytesGot, length - bytesGot, 0);
 
         // If there was an error, report it and return.
         if (n <= 0)
@@ -59,16 +65,42 @@ namespace hemelb
           {
             log::Logger::Log<log::Warning, log::Singleton>("Steering component: broken network pipe... (%s)",
                                                            strerror(errno));
-            clientConnection.ReportBroken(socketToClient);
+            Break(socketToClient);
+          }
+          else
+          {
+            // If we'd already received some data, store this in the buffer for the start of the
+            // next receive.
+            if (bytesGot > 0)
+            {
+              // The newly-received-byte count is the total received byte count minus the length
+              // of the buffer.
+              long int numNewBytes = bytesGot - recvBuf.length();
+              recvBuf.append(buf + recvBuf.length(), numNewBytes);
+            }
           }
 
+          // We didn't fully receive.
           return false;
         }
         else
         {
-          received_bytes += n;
-          bytes_left_to_receive -= n;
+          bytesGot += n;
         }
+      }
+
+      // Successfully received what we needed to. Now use the buffer to fill in the gaps, if
+      // we were using the buffer at the front of the received data.
+      if (recvBuf.length() > 0)
+      {
+        // The length of buffer to use is the minimum of the buffer size and the length of
+        // the string.
+        int copyLength = util::NumericalFunctions::min((int) recvBuf.length(), length);
+
+        memcpy(buf, recvBuf.c_str(), copyLength);
+
+        // Empty that much of the buffer.
+        recvBuf.erase(0, copyLength);
       }
 
       return true;
@@ -125,7 +157,7 @@ namespace hemelb
           {
             log::Logger::Log<log::Warning, log::Singleton>("Network send had broken pipe... (%s)",
                                                            strerror(errno));
-            clientConnection.ReportBroken(socketToClient);
+            Break(socketToClient);
 
             return false;
           }
@@ -138,6 +170,14 @@ namespace hemelb
       }
 
       return true;
+    }
+
+    void Network::Break(int socket)
+    {
+      clientConnection.ReportBroken(socket);
+
+      recvBuf.clear();
+      sendBuf.clear();
     }
 
   }
