@@ -185,11 +185,14 @@ namespace hemelb
       viewpoint->RotateToViewpoint(MaxXValue, 0.0F, 0.0F, UnitVectorProjectionX);
       viewpoint->RotateToViewpoint(0.0F, MaxYValue, 0.0F, UnitVectorProjectionY);
 
-      PixelsX = pixelsX;
-      PixelsY = pixelsX;
+      if (pixelsX * pixelsY <= COLOURED_PIXELS_MAX)
+      {
+        PixelsX = pixelsX;
+        PixelsY = pixelsX;
+      }
 
-      ScaleX = (float) pixelsX / (2.F * MaxXValue);
-      ScaleY = (float) pixelsY / (2.F * MaxYValue);
+      ScaleX = (float) PixelsX / (2.F * MaxXValue);
+      ScaleY = (float) PixelsY / (2.F * MaxYValue);
 
       float radVector[3];
       viewpoint->RotateToViewpoint(0.F, 0.F, -rad, radVector);
@@ -199,13 +202,13 @@ namespace hemelb
         vtx[ii] = (0.5F * radVector[ii]) - UnitVectorProjectionX[ii] - UnitVectorProjectionY[ii];
       }
 
-      UnitVectorProjectionX[0] *= (2.F / (float) pixelsX);
-      UnitVectorProjectionX[1] *= (2.F / (float) pixelsX);
-      UnitVectorProjectionX[2] *= (2.F / (float) pixelsX);
+      UnitVectorProjectionX[0] *= (2.F / (float) PixelsX);
+      UnitVectorProjectionX[1] *= (2.F / (float) PixelsX);
+      UnitVectorProjectionX[2] *= (2.F / (float) PixelsX);
 
-      UnitVectorProjectionY[0] *= (2.F / (float) pixelsY);
-      UnitVectorProjectionY[1] *= (2.F / (float) pixelsY);
-      UnitVectorProjectionY[2] *= (2.F / (float) pixelsY);
+      UnitVectorProjectionY[0] *= (2.F / (float) PixelsY);
+      UnitVectorProjectionY[1] *= (2.F / (float) PixelsY);
+      UnitVectorProjectionY[2] *= (2.F / (float) PixelsY);
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
