@@ -67,6 +67,8 @@ namespace hemelb
                          const VisSettings* visSettings,
                          io::Writer* writer);
 
+        unsigned int GetPixelCount() const;
+
       private:
         template<bool xLimited> void RenderLineHelper(int x,
                                                       int y,

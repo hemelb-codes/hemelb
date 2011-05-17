@@ -3,7 +3,6 @@
 
 #include "log/Logger.h"
 #include "steering/ImageSendComponent.h"
-#include "steering/basic/SimulationParameters.h"
 #include "steering/basic/Network.h"
 #include "io/XdrMemWriter.h"
 #include "util/utilityFunctions.h"
@@ -21,7 +20,7 @@ namespace hemelb
       mClientConnection(iClientConnection), mLbm(lbm), mSimState(iSimState), mVisControl(iControl),
           mLbmParams(iLbmParams)
     {
-      xdrSendBuffer_pixel_data = new char[pixel_data_bytes];
+      xdrSendBuffer = new char[maxSendSize];
 
       // Suppress signals from a broken pipe.
       signal(SIGPIPE, SIG_IGN);
@@ -32,7 +31,7 @@ namespace hemelb
 
     ImageSendComponent::~ImageSendComponent()
     {
-      delete[] xdrSendBuffer_pixel_data;
+      delete[] xdrSendBuffer;
     }
 
     // TODO Need to check whether the current method (when the image is there, send the whole
@@ -58,76 +57,28 @@ namespace hemelb
         isConnected = false;
         return;
       }
-
-      // Tell the steering controller that we have a connection.
-      isConnected = true;
-
-      ssize_t bytesSent = 0;
-
-      // Send the dimensions of the image, in terms of pixel count.
-      {
-        // 2 ints for the X and Y dimensions = 2*4 bytes
-        const int pixeldatabytes = 8;
-        char xdr_pixel[pixeldatabytes];
-        io::XdrMemWriter pixelWriter = io::XdrMemWriter(xdr_pixel, pixeldatabytes);
-
-        pixelWriter << mVisControl->mScreen.GetPixelsX() << mVisControl->mScreen.GetPixelsY();
-
-        ssize_t pixelDataBytesSent = SendSuccess(socketToClient, xdr_pixel, pixeldatabytes);
-
-        if (pixelDataBytesSent < 0)
-        {
-          return;
-        }
-        else
-        {
-          bytesSent += pixelDataBytesSent;
-        }
-      }
-
-      io::XdrMemWriter pixelDataWriter(xdrSendBuffer_pixel_data, pixel_data_bytes);
-
-      mVisControl->mScreen.WritePixels(&mVisControl->mDomainStats,
-                                       &mVisControl->mVisSettings,
-                                       &pixelDataWriter);
-
-      // Send the number of bytes being used on pixel data.
-      int frameBytes = pixelDataWriter.getCurrentStreamPosition();
-      {
-        char xdrSendBuffer_frame_details[frame_details_bytes];
-
-        io::XdrMemWriter frameDetailsWriter = io::XdrMemWriter(xdrSendBuffer_frame_details,
-                                                               frame_details_bytes);
-        frameDetailsWriter << frameBytes;
-
-        int frameDetailsBytes = frameDetailsWriter.getCurrentStreamPosition();
-
-        ssize_t frameDetailsBytesSent = SendSuccess(socketToClient,
-                                                    xdrSendBuffer_frame_details,
-                                                    frameDetailsBytes);
-
-        if (frameDetailsBytesSent < 0)
-        {
-          return;
-        }
-        else
-        {
-          bytesSent += frameDetailsBytesSent;
-        }
-      }
-
-      ssize_t frameBytesSent = SendSuccess(socketToClient, xdrSendBuffer_pixel_data, frameBytes);
-
-      if (frameBytesSent < 0)
-      {
-        return;
-      }
       else
       {
-        bytesSent += frameBytesSent;
+        // Tell the steering controller that we have a connection.
+        isConnected = true;
       }
 
-      // Send the numerical data from the simulation, wanted by the client.
+      io::XdrMemWriter imageWriter = io::XdrMemWriter(xdrSendBuffer, maxSendSize);
+
+      unsigned int initialPosition = imageWriter.getCurrentStreamPosition();
+
+      // Write the dimensions of the image, in terms of pixel count.
+      imageWriter << mVisControl->mScreen.GetPixelsX() << mVisControl->mScreen.GetPixelsY();
+
+      // Write the length of the pixel data
+      imageWriter << (int) (mVisControl->mScreen.GetPixelCount() * bytes_per_pixel_data);
+
+      // Write the pixels themselves
+      mVisControl->mScreen.WritePixels(&mVisControl->mDomainStats,
+                                       &mVisControl->mVisSettings,
+                                       &imageWriter);
+
+      // Write the numerical data from the simulation, wanted by the client.
       {
         SimulationParameters sim;
 
@@ -139,20 +90,17 @@ namespace hemelb
         sim.mousePressure = mVisControl->mVisSettings.mouse_pressure;
         sim.mouseStress = mVisControl->mVisSettings.mouse_stress;
 
-        int sizeToSend = sim.paramsSizeB;
-        ssize_t simParamsBytesSent = SendSuccess(socketToClient, sim.pack(), sizeToSend);
-
         mVisControl->mVisSettings.mouse_pressure = -1.0;
         mVisControl->mVisSettings.mouse_stress = -1.0;
 
-        if (simParamsBytesSent < 0)
-        {
-          return;
-        }
-        else
-        {
-          bytesSent += simParamsBytesSent;
-        }
+        sim.pack(&imageWriter);
+      }
+
+      // Send to the client.
+      if (SendSuccess(socketToClient, xdrSendBuffer, imageWriter.getCurrentStreamPosition()
+          - initialPosition) < 0)
+      {
+        return;
       }
 
       isFrameReady = false;

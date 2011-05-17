@@ -8,8 +8,7 @@ namespace hemelb
   namespace steering
   {
 
-    SimulationParameters::SimulationParameters() :
-      paramWriter(params, paramsSizeB)
+    SimulationParameters::SimulationParameters()
     {
       // C'tor initialises to the following defaults.
 
@@ -25,19 +24,17 @@ namespace hemelb
     {
     }
 
-    char* SimulationParameters::pack()
+    void SimulationParameters::pack(io::XdrWriter* writer)
     {
-      paramWriter << timeStep;
+      writer->operator <<(timeStep);
 
-      paramWriter << time;
+      writer->operator <<(time);
 
-      paramWriter << cycle;
-      paramWriter << nInlets;
+      writer->operator <<(cycle);
+      writer->operator <<(nInlets);
 
-      paramWriter << mousePressure;
-      paramWriter << mouseStress;
-
-      return params;
+      writer->operator <<(mousePressure);
+      writer->operator <<(mouseStress);
     }
 
   }
