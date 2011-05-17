@@ -9,12 +9,19 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
+#include "log/Logger.h"
 #include "steering/basic/Network.h"
 
 namespace hemelb
 {
   namespace steering
   {
+    Network::Network(ClientConnection* clientConnection) :
+      clientConnection(clientConnection)
+    {
+
+    }
+
     /**
      * Receive a bytestream of known length from a socket into a buffer.
      *
@@ -52,6 +59,16 @@ namespace hemelb
       return received_bytes;
     }
 
+    void Network::PreReceive()
+    {
+
+    }
+
+    bool Network::IsConnected()
+    {
+      return clientConnection->GetWorkingSocket() > 0;
+    }
+
     /**
      * Send all bytes from a buffer of known length over a socket.
      *
@@ -60,8 +77,17 @@ namespace hemelb
      * @param length
      * @return Returns the number of bytes sent or -1 on failure.
      */
-    ssize_t Network::send_all(int sockid, const char *buf, const int length)
+    bool Network::send_all(const char *buf, const int length)
     {
+      // Get a socket.
+      int socketToClient = clientConnection->GetWorkingSocket();
+
+      // If there's no such socket, we don't have a connection. Nothing to do.
+      if (socketToClient < 0)
+      {
+        return false;
+      }
+
       ssize_t sent_bytes = 0;
       ssize_t bytes_left_to_send = length;
       ssize_t n = 0;
@@ -69,7 +95,7 @@ namespace hemelb
       // TODO: Make this better.
       while (sent_bytes < length)
       {
-        n = send(sockid, buf + sent_bytes, bytes_left_to_send, 0);
+        n = send(socketToClient, buf + sent_bytes, bytes_left_to_send, 0);
 
         if (n <= 0)
         {
@@ -82,7 +108,11 @@ namespace hemelb
           }
           else
           {
-            return n;
+            log::Logger::Log<log::Warning, log::Singleton>("Network send had broken pipe... (%s)",
+                                                           strerror(errno));
+            clientConnection->ReportBroken(socketToClient);
+
+            return false;
           }
         }
         else
@@ -91,7 +121,8 @@ namespace hemelb
           bytes_left_to_send -= n;
         }
       }
-      return sent_bytes;
+
+      return true;
     }
 
   }

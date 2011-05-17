@@ -8,7 +8,7 @@ namespace hemelb
                                            lb::SimulationState* iSimState,
                                            vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
-                                           ClientConnection* iClientConnection)
+                                           Network* iNetwork)
     {
 
     }
@@ -20,11 +20,6 @@ namespace hemelb
     void ImageSendComponent::DoWork()
     {
 
-    }
-
-    int ImageSendComponent::SendSuccess(int iSocket, char * data, int length)
-    {
-      return -1;
     }
 
     bool ImageSendComponent::ShouldRenderNewNetworkImage()

@@ -5,7 +5,7 @@
 #include "lb/lb.h"
 #include "lb/SimulationState.h"
 #include "lb/LbmParameters.h"
-#include "steering/ClientConnection.h"
+#include "steering/basic/Network.h"
 #include "steering/basic/SimulationParameters.h"
 
 namespace hemelb
@@ -19,7 +19,7 @@ namespace hemelb
                            lb::SimulationState* iSimState,
                            vis::Control* iControl,
                            const lb::LbmParameters* iLbmParams,
-                           ClientConnection* iClientConnection);
+                           Network* iNetwork);
         ~ImageSendComponent();
 
         void DoWork();
@@ -31,9 +31,7 @@ namespace hemelb
         int send_array_length;
 
       private:
-        ssize_t SendSuccess(int iSocket, char * data, int length);
-
-        ClientConnection* mClientConnection;
+        Network* mNetwork;
         lb::LBM* mLbm;
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
