@@ -1,7 +1,7 @@
 #ifndef HEMELB_STEERING_STEERINGCOMPONENT_H
 #define HEMELB_STEERING_STEERINGCOMPONENT_H
 
-#include "net/PhasedBroadcast.h"
+#include "net/PhasedBroadcastRegular.h"
 #include "lb/lb.h"
 #include "lb/SimulationState.h"
 #include "vis/DomainStats.h"
@@ -12,7 +12,7 @@ namespace hemelb
 {
   namespace steering
   {
-    class SteeringComponent : public net::PhasedBroadcast<false, 1, 0, true, false>
+    class SteeringComponent : public net::PhasedBroadcastRegular<false, 1, 0, true, false>
     {
       public:
         SteeringComponent(int imagesPeriod,
