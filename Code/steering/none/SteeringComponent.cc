@@ -21,7 +21,7 @@ namespace hemelb
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
                                          lb::SimulationState * iSimState) :
-      net::PhasedBroadcast<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
+      net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
           imagesPeriod(imagesPeriod), mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl)
     {
       Reset();

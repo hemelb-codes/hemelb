@@ -34,10 +34,6 @@ namespace hemelb
       delete[] xdrSendBuffer;
     }
 
-    // TODO Need to check whether the current method (when the image is there, send the whole
-    // thing in one go) is OK performance-wise, or whether we should instead try on another iteration
-    // if we can't send it immediately.
-
     // This is original code with minimal tweaks to make it work with
     // the new (Feb 2011) structure.
     void ImageSendComponent::DoWork(void)

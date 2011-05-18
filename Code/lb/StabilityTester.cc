@@ -9,7 +9,7 @@ namespace hemelb
     StabilityTester::StabilityTester(const geometry::LatticeData * iLatDat,
                                      net::Net* net,
                                      SimulationState* simState) :
-      net::PhasedBroadcast<>(net, simState, SPREADFACTOR), mLatDat(iLatDat)
+      net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat)
     {
       mPublicSimulationStability = &simState->Stability;
       Reset();

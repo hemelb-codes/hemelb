@@ -17,7 +17,7 @@ namespace hemelb
                      net::Net* net,
                      lb::SimulationState* simState,
                      geometry::LatticeData* iLatDat) :
-      net::PhasedBroadcast<true, 2, 0, false, true>(net, simState, SPREADFACTOR)
+      net::PhasedBroadcastRegular<true, 2, 0, false, true>(net, simState, SPREADFACTOR)
     {
       mVisSettings.mStressType = iStressType;
 
