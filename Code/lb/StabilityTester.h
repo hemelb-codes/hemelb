@@ -1,14 +1,14 @@
 #ifndef HEMELB_LB_STABILITYCHECKER_H
 #define HEMELB_LB_STABILITYCHECKER_H
 
-#include "net/PhasedBroadcast.h"
+#include "net/PhasedBroadcastRegular.h"
 #include "geometry/LatticeData.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    class StabilityTester : public net::PhasedBroadcast<>
+    class StabilityTester : public net::PhasedBroadcastRegular<>
     {
       public:
         StabilityTester(const geometry::LatticeData * iLatDat,

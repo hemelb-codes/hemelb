@@ -7,7 +7,7 @@
 #include "lb/SimulationState.h"
 
 #include "net/net.h"
-#include "net/PhasedBroadcast.h"
+#include "net/PhasedBroadcastRegular.h"
 
 #include "vis/DomainStats.h"
 #include "vis/Screen.h"
@@ -29,7 +29,7 @@ namespace hemelb
 
     // Class to control and use the effects of different visualisation
     // methods.
-    class Control : net::PhasedBroadcast<true, 2, 0, false, true>
+    class Control : net::PhasedBroadcastRegular<true, 2, 0, false, true>
     {
       public:
         Control(lb::StressTypes iStressType, net::Net* net, lb::SimulationState* simState, geometry::LatticeData* iLatDat);
