@@ -9,9 +9,9 @@ namespace hemelb
     StabilityTester::StabilityTester(const geometry::LatticeData * iLatDat,
                                      net::Net* net,
                                      SimulationState* simState) :
-      net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat)
+      net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
+          mSimState(simState)
     {
-      mPublicSimulationStability = &simState->Stability;
       Reset();
     }
 
@@ -20,7 +20,9 @@ namespace hemelb
       // Re-initialise all values to be Stable.
       mUpwardsStability = Stable;
       mDownwardsStability = Stable;
-      *mPublicSimulationStability = Stable;
+
+      mSimState->SetStability(Stable);
+
       for (unsigned int ii = 0; ii < SPREADFACTOR; ii++)
       {
         mChildrensStability[ii] = Stable;
@@ -86,7 +88,7 @@ namespace hemelb
 
     void StabilityTester::Effect()
     {
-      *mPublicSimulationStability = mDownwardsStability;
+      mSimState->SetStability((Stability) mDownwardsStability);
     }
 
   }

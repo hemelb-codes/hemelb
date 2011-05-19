@@ -271,7 +271,7 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->DoCollisions(mState->DoRendering,
+        GetCollision(collision_type)->DoCollisions(mState->GetDoRendering(),
                                                    offset,
                                                    mLatDat->GetInterCollisionCount(collision_type),
                                                    &mParams,
@@ -287,7 +287,7 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->DoCollisions(mState->DoRendering,
+        GetCollision(collision_type)->DoCollisions(mState->GetDoRendering(),
                                                    offset,
                                                    mLatDat->GetInnerCollisionCount(collision_type),
                                                    &mParams,
@@ -314,7 +314,7 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(mState->DoRendering,
+        GetCollision(collision_type)->PostStep(mState->GetDoRendering(),
                                                offset,
                                                mLatDat->GetInnerCollisionCount(collision_type),
                                                &mParams,
@@ -325,7 +325,7 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(mState->DoRendering,
+        GetCollision(collision_type)->PostStep(mState->GetDoRendering(),
                                                offset,
                                                mLatDat->GetInterCollisionCount(collision_type),
                                                &mParams,
