@@ -1,5 +1,7 @@
-#ifndef HEMELB_NET_PHASEDBROADCASTREGULAR_H
-#define HEMELB_NET_PHASEDBROADCASTREGULAR_H
+#ifndef HEMELB_NET_PHASEDBROADCASTIRREGULAR_H
+#define HEMELB_NET_PHASEDBROADCASTIRREGULAR_H
+
+#include <queue>
 
 #include "net/PhasedBroadcast.h"
 
@@ -8,32 +10,54 @@ namespace hemelb
   namespace net
   {
     /**
-     * PhasedBroadcastRegular - a class for performing phased broadcasts starting at regular
-     * intervals.
+     * PhasedBroadcastIrregular - a class for performing phased broadcasts that are not restricted
+     * to starting at regular intervals.
      */
-    template<bool initialAction = false, unsigned splay = 1, unsigned overlap = 0, bool goDown =
-        true, bool goUp = true>
-    class PhasedBroadcastRegular : public PhasedBroadcast<initialAction, splay, overlap, goDown,
-        goUp>
+    template<bool initAction = false, unsigned splay = 1, unsigned ovrlp = 0, bool down = true,
+        bool up = true>
+    class PhasedBroadcastIrregular : public PhasedBroadcast<initAction, splay, ovrlp, down, up>
     {
-        // Typedef for the base class type, for convenience.
-        typedef PhasedBroadcast<initialAction, splay, overlap, goDown, goUp> base;
+        // Typedef for the base class's type
+        typedef PhasedBroadcast<initAction, splay, ovrlp, down, up> base;
 
       public:
         /**
-         * Constructor that calls the base class's constructor.
+         * Constructor that initialises the base class.
          *
          * @param iNet
          * @param iSimState
          * @param spreadFactor
          * @return
          */
-        PhasedBroadcastRegular(Net * iNet,
-                               const lb::SimulationState * iSimState,
-                               unsigned int spreadFactor) :
+        PhasedBroadcastIrregular(Net * iNet,
+                                 const lb::SimulationState * iSimState,
+                                 unsigned int spreadFactor) :
           base(iNet, iSimState, spreadFactor)
         {
 
+        }
+
+        /**
+         * Request the broadcasting to start on this iteration. Returns the number of the iteration
+         * on which it will complete.
+         *
+         * @return
+         */
+        unsigned int Start()
+        {
+          unsigned int currentTimeStep = base::mSimState->GetTimeStepsPassed();
+          if (!startIterations.empty() && startIterations.back() == currentTimeStep)
+          {
+            startIterations.push_back(currentTimeStep);
+          }
+          return currentTimeStep + base::GetRoundTripLength() - 1;
+        }
+
+        virtual void Reset()
+        {
+          startIterations.clear();
+
+          base::Reset();
         }
 
         /**
@@ -49,7 +73,7 @@ namespace hemelb
           // Nothing to do for initial action case.
 
           // Next, deal with the case of a cycle with an initial pass down the tree.
-          if (goDown)
+          if (down)
           {
             if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
             {
@@ -68,8 +92,8 @@ namespace hemelb
             }
           }
 
-          // And deal with the case of a cycle with a pass up the tree.
-          if (goUp)
+          // Now deal with the case of a pass up the tree.
+          if (up)
           {
             if (iCycleNumber >= firstAscent)
             {
@@ -90,13 +114,13 @@ namespace hemelb
         }
 
         /**
-         * Function called after send begin but before receives are known to be completed. The
-         * action performed is limited to the InitialAction, if used.
+         * Function that acts while waiting for data to be received. This performs the initial
+         * action on the first iteration only.
          */
         void PreReceive()
         {
           // The only thing to do while waiting is the initial action.
-          if (initialAction)
+          if (initAction)
           {
             if (Get0IndexedIterationNumber() == 0)
             {
@@ -112,18 +136,18 @@ namespace hemelb
         void PostReceive()
         {
           const unsigned int iCycleNumber = Get0IndexedIterationNumber();
-          const unsigned int firstAscent = PhasedBroadcast<initialAction, splay, overlap, goDown,
-              goUp>::GetFirstAscending();
-          const unsigned int traversalLength = PhasedBroadcast<initialAction, splay, overlap,
-              goDown, goUp>::GetTraverseTime();
-          const unsigned int cycleLength = PhasedBroadcast<initialAction, splay, overlap, goDown,
-              goUp>::GetRoundTripLength();
+          const unsigned int firstAscent =
+              PhasedBroadcast<initAction, splay, ovrlp, down, up>::GetFirstAscending();
+          const unsigned int traversalLength =
+              PhasedBroadcast<initAction, splay, ovrlp, down, up>::GetTraverseTime();
+          const unsigned int cycleLength =
+              PhasedBroadcast<initAction, splay, ovrlp, down, up>::GetRoundTripLength();
 
           // Deal with the case of a cycle with an initial pass down the tree.
-          if (goDown)
+          if (down)
           {
-            const unsigned int firstDescent = PhasedBroadcast<initialAction, splay, overlap,
-                goDown, goUp>::GetFirstDescending();
+            const unsigned int firstDescent =
+                PhasedBroadcast<initAction, splay, ovrlp, down, up>::GetFirstDescending();
 
             if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
             {
@@ -143,8 +167,8 @@ namespace hemelb
             }
           }
 
-          // Deal with the case of a cycle with a pass back up the tree.
-          if (goUp)
+          // Deal with the case of a pass up the tree.
+          if (up)
           {
             if (iCycleNumber >= firstAscent)
             {
@@ -174,8 +198,8 @@ namespace hemelb
         {
           if (base::GetTreeDepth() > 0)
           {
-            unsigned long stepsPassed = (base::mSimState->GetCycleId() - 1)
-                * base::mSimState->GetTimeStepsPerCycle() + base::mSimState->GetTimeStep() - 1;
+            unsigned long stepsPassed = (base::mSimState->CycleId - 1)
+                * base::mSimState->TimeStepsPerCycle + base::mSimState->TimeStep - 1;
 
             return stepsPassed % base::GetRoundTripLength();
           }
@@ -272,8 +296,11 @@ namespace hemelb
         {
 
         }
+
+      private:
+        queue<unsigned int> startIterations;
     };
   }
 }
 
-#endif /* HEMELB_NET_PHASEDBROADCASTREGULAR_H */
+#endif /* HEMELB_NET_PHASEDBROADCASTIRREGULAR_H */

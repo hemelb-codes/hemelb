@@ -42,7 +42,7 @@ namespace hemelb
         mVisControl->mVisSettings.mouse_y = newMouseY;
       }
 
-      mSimState->IsTerminating = int (privateSteeringParams[16]);
+      mSimState->SetIsTerminating(1 == (int) privateSteeringParams[16]);
 
       // To swap between glyphs and streak line rendering...
       // 0 - Only display the isosurfaces (wall pressure and stress)
@@ -53,7 +53,7 @@ namespace hemelb
       mVisControl->mVisSettings.streaklines_per_pulsatile_period = privateSteeringParams[18];
       mVisControl->mVisSettings.streakline_length = privateSteeringParams[19];
 
-      mSimState->DoRendering = int (privateSteeringParams[20]);
+      mSimState->SetDoRendering(1 == (int) privateSteeringParams[20]);
 
       mVisControl->UpdateImageSize((int) pixels_x, (int) pixels_y);
 

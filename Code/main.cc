@@ -144,8 +144,7 @@ int main(int argc, char *argv[])
 
   lMaster.Initialise(lSimulationConfig, lImagesPerCycle, (int) lSteeringSessionId, timings_ptr);
 
-  lMaster.RunSimulation(lSimulationConfig,
-                        total_time,
+  lMaster.RunSimulation(total_time,
                         image_directory,
                         snapshot_directory,
                         lSnapshotsPerCycle,

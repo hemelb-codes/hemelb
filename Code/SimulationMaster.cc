@@ -35,9 +35,7 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mLbm = NULL;
   steeringCpt = NULL;
   mVisControl = NULL;
-
-  mSimulationState.IsTerminating = 0;
-  mSimulationState.DoRendering = 0;
+  mSimulationState = NULL;
 
   mLbTime = 0.0;
   mMPISendTime = 0.0;
@@ -89,6 +87,11 @@ SimulationMaster::~SimulationMaster()
   {
     delete mStabilityTester;
   }
+
+  if (mSimulationState != NULL)
+  {
+    delete mSimulationState;
+  }
 }
 
 /**
@@ -117,6 +120,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                   int iSteeringSessionid,
                                   FILE * bTimingsFile)
 {
+  mSimulationState = new hemelb::lb::SimulationState(iSimConfig->StepsPerCycle,
+                                                     iSimConfig->NumCycles);
+
   mTimingsFile = bTimingsFile;
 
   hemelb::site_t mins[3], maxes[3];
@@ -135,7 +141,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                           &mDomainDecompTime);
 
   // Initialise the Lbm.
-  mLbm = new hemelb::lb::LBM(iSimConfig, &mNet, mLatDat, &mSimulationState);
+  mLbm = new hemelb::lb::LBM(iSimConfig, &mNet, mLatDat, mSimulationState);
 
   // TODO When we've taken the stress type out of the config file, this could be nicer.
   for (int ii = 0; ii < 3; ++ii)
@@ -156,7 +162,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     network = NULL;
   }
 
-  mStabilityTester = new hemelb::lb::StabilityTester(mLatDat, &mNet, &mSimulationState);
+  mStabilityTester = new hemelb::lb::StabilityTester(mLatDat, &mNet, mSimulationState);
 
   double seconds = hemelb::util::myClock();
   hemelb::site_t* lReceiveTranslator = mNet.Initialise(mLatDat);
@@ -165,13 +171,13 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   // Initialise the visualisation controller.
   mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType,
                                          &mNet,
-                                         &mSimulationState,
+                                         mSimulationState,
                                          mLatDat);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     imageSendCpt = new hemelb::steering::ImageSendComponent(mLbm,
-                                                            &mSimulationState,
+                                                            mSimulationState,
                                                             mVisControl,
                                                             mLbm->GetLbmParams(),
                                                             network);
@@ -188,7 +194,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                         mVisControl,
                                                         mLbm,
                                                         &mNet,
-                                                        &mSimulationState);
+                                                        mSimulationState);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();
@@ -206,8 +212,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 /**
  * Begin the simulation.
  */
-void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
-                                     double iStartTime,
+void SimulationMaster::RunSimulation(double iStartTime,
                                      std::string image_directory,
                                      std::string snapshot_directory,
                                      unsigned int lSnapshotsPerCycle,
@@ -238,212 +243,107 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
     actors.push_back(network);
   }
 
-  mSimulationState.TimeStepsPerCycle = lSimulationConfig->StepsPerCycle;
-
-  for (mSimulationState.CycleId = 1; mSimulationState.CycleId <= lSimulationConfig->NumCycles
-      && !is_finished; mSimulationState.CycleId++)
+  for (; mSimulationState->GetTimeStepsPassed() <= mSimulationState->GetTotalTimeSteps()
+      && !is_finished; mSimulationState->Increment())
   {
-    bool restart = false;
+    ++total_time_steps;
 
-    for (mSimulationState.TimeStep = 1; mSimulationState.TimeStep <= mLbm->period; mSimulationState.TimeStep++)
+    bool write_snapshot_image = ( (mSimulationState->GetTimeStep() % images_period) == 0)
+      ? true
+      : false;
+
+    // Make sure we're rendering if we're writing this iteration.
+    if (write_snapshot_image)
     {
-      ++total_time_steps;
-      mSimulationState.IntraCycleTime = (hemelb::PULSATILE_PERIOD_s
-          * (double) mSimulationState.TimeStep) / (double) mLbm->period;
+      mSimulationState->SetDoRendering(true);
+    }
 
-      bool write_snapshot_image = ( (mSimulationState.TimeStep % images_period) == 0)
-        ? true
-        : false;
+    /* In the following two if blocks we do the core magic to ensure we only Render
+     when (1) we are not sending a frame or (2) we need to output to disk */
 
-      // Make sure we're rendering if we're writing this iteration.
-      if (write_snapshot_image)
+    bool render_for_network_stream = false;
+    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    {
+      render_for_network_stream = imageSendCpt->ShouldRenderNewNetworkImage();
+    }
+
+    /* for debugging purposes we want to ensure we capture the variables in a single
+     instant of time since variables might be altered by the thread half way through?
+     This is to be done. */
+
+    if (mSimulationState->GetTimeStep() % 100 == 0)
+    {
+      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_snapshot_image %i rendering %i",
+                                                                          mSimulationState->GetTimeStep(),
+                                                                          render_for_network_stream,
+                                                                          write_snapshot_image,
+                                                                          mSimulationState->GetDoRendering());
+    }
+
+    mLbm->UpdateBoundaryDensities(mSimulationState->GetTimeStep());
+
+    // Cycle.
+    {
+      for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+          != actors.end(); ++it)
       {
-        mSimulationState.DoRendering = true;
+        (*it)->RequestComms();
       }
 
-      /* In the following two if blocks we do the core magic to ensure we only Render
-       when (1) we are not sending a frame or (2) we need to output to disk */
+      mNet.Receive();
 
-      bool render_for_network_stream = false;
-      if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        render_for_network_stream = imageSendCpt->ShouldRenderNewNetworkImage();
-      }
-
-      /* for debugging purposes we want to ensure we capture the variables in a single
-       instant of time since variables might be altered by the thread half way through?
-       This is to be done. */
-
-      if (mSimulationState.TimeStep % 100 == 0)
-      {
-        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_snapshot_image %i rendering %i",
-                                                                            mSimulationState.TimeStep,
-                                                                            render_for_network_stream,
-                                                                            write_snapshot_image,
-                                                                            mSimulationState.DoRendering);
-      }
-
-      mLbm->UpdateBoundaryDensities(mSimulationState.TimeStep);
-
-      // Cycle.
-      {
+        double lPrePreSend = hemelb::util::myClock();
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
             != actors.end(); ++it)
         {
-          (*it)->RequestComms();
+          (*it)->PreSend();
         }
+        mLbTime += (hemelb::util::myClock() - lPrePreSend);
+      }
 
-        mNet.Receive();
+      {
+        double lPreSendTime = hemelb::util::myClock();
+        mNet.Send();
+        mMPISendTime += (hemelb::util::myClock() - lPreSendTime);
+      }
 
-        {
-          double lPrePreSend = hemelb::util::myClock();
-          for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-              != actors.end(); ++it)
-          {
-            (*it)->PreSend();
-          }
-          mLbTime += (hemelb::util::myClock() - lPrePreSend);
-        }
-
-        {
-          double lPreSendTime = hemelb::util::myClock();
-          mNet.Send();
-          mMPISendTime += (hemelb::util::myClock() - lPreSendTime);
-        }
-
-        {
-          double lPrePreReceive = hemelb::util::myClock();
-          for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-              != actors.end(); ++it)
-          {
-            (*it)->PreReceive();
-          }
-          mLbTime += (hemelb::util::myClock() - lPrePreReceive);
-        }
-
-        {
-          double lPreWaitTime = hemelb::util::myClock();
-          mNet.Wait();
-          mMPIWaitTime += (hemelb::util::myClock() - lPreWaitTime);
-        }
-
-        {
-          double lPrePostStep = hemelb::util::myClock();
-          for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-              != actors.end(); ++it)
-          {
-            (*it)->PostReceive();
-          }
-          mLbTime += (hemelb::util::myClock() - lPrePostStep);
-        }
-
+      {
+        double lPrePreReceive = hemelb::util::myClock();
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
             != actors.end(); ++it)
         {
-          (*it)->EndIteration();
+          (*it)->PreReceive();
         }
+        mLbTime += (hemelb::util::myClock() - lPrePreReceive);
       }
 
-      stability = hemelb::lb::Stable;
-
-      restart = (mSimulationState.Stability == hemelb::lb::Unstable);
-      if (restart)
       {
-        break;
-      }
-      mLbm->UpdateInletVelocities(mSimulationState.TimeStep);
-
-      double lPreImageTime = hemelb::util::myClock();
-
-#ifndef NO_STREAKLINES
-      mVisControl->ProgressStreaklines(mSimulationState.TimeStep, mLbm->period, mLatDat);
-#endif
-
-      // If we're rendering for the network, or for an image to disk, render now.
-      if (mSimulationState.DoRendering || write_snapshot_image)
-      {
-        mVisControl->Render(mLatDat);
+        double lPreWaitTime = hemelb::util::myClock();
+        mNet.Wait();
+        mMPIWaitTime += (hemelb::util::myClock() - lPreWaitTime);
       }
 
-      if (mSimulationState.DoRendering)
       {
-        if (steeringCpt->updatedMouseCoords)
+        double lPrePostStep = hemelb::util::myClock();
+        for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+            != actors.end(); ++it)
         {
-          float density, stress;
-
-          if (mVisControl->MouseIsOverPixel(&density, &stress))
-          {
-            double mouse_pressure, mouse_stress;
-            mLbm->CalculateMouseFlowField(density,
-                                          stress,
-                                          mouse_pressure,
-                                          mouse_stress,
-                                          mVisControl->mDomainStats.density_threshold_min,
-                                          mVisControl->mDomainStats.density_threshold_minmax_inv,
-                                          mVisControl->mDomainStats.stress_threshold_max_inv);
-
-            mVisControl->SetMouseParams(mouse_pressure, mouse_stress);
-          }
-          steeringCpt->updatedMouseCoords = false;
+          (*it)->PostReceive();
         }
-
-        if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-        {
-          imageSendCpt->isFrameReady = true;
-        }
+        mLbTime += (hemelb::util::myClock() - lPrePostStep);
       }
 
-      if (render_for_network_stream
-          && hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
+          != actors.end(); ++it)
       {
-        imageSendCpt->DoWork();
-      }
-
-      if (write_snapshot_image)
-      {
-        mImagesWritten++;
-
-        if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-        {
-          char image_filename[255];
-          snprintf(image_filename, 255, "%08li.dat", mSimulationState.TimeStep);
-
-          mVisControl->WriteImage(image_directory + std::string(image_filename));
-        }
-      }
-
-      double lPreSnapshotTime = hemelb::util::myClock();
-      mImagingTime += (lPreSnapshotTime - lPreImageTime);
-
-      if (mSimulationState.TimeStep % snapshots_period == 0)
-      {
-        char snapshot_filename[255];
-        snprintf(snapshot_filename, 255, "snapshot_%06li.dat", mSimulationState.TimeStep);
-
-        mSnapshotsWritten++;
-        mLbm->WriteConfigParallel(stability, snapshot_directory + std::string(snapshot_filename));
-      }
-
-      mSnapshotTime += (hemelb::util::myClock() - lPreSnapshotTime);
-
-      if (stability == hemelb::lb::StableAndConverged)
-      {
-        is_finished = true;
-        break;
-      }
-      if (mSimulationState.IsTerminating)
-      {
-        is_finished = true;
-        break;
-      }
-      if (mLbm->period > 400000)
-      {
-        is_unstable = true;
-        break;
+        (*it)->EndIteration();
       }
     }
 
-    if (restart)
+    stability = hemelb::lb::Stable;
+
+    if (mSimulationState->GetStability() == hemelb::lb::Unstable)
     {
       hemelb::util::DeleteDirContents(snapshot_directory);
       hemelb::util::DeleteDirContents(image_directory);
@@ -472,24 +372,111 @@ void SimulationMaster::RunSimulation(hemelb::SimConfig *& lSimulationConfig,
             : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period
                 / lImagesPerCycle));
 
-      mSimulationState.CycleId = 0;
+      mSimulationState->Reset();
       continue;
     }
+    mLbm->UpdateInletVelocities(mSimulationState->GetTimeStep());
 
-    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    double lPreImageTime = hemelb::util::myClock();
+
+#ifndef NO_STREAKLINES
+    mVisControl->ProgressStreaklines(mSimulationState->GetTimeStep(), mLbm->period, mLatDat);
+#endif
+
+    // If we're rendering for the network, or for an image to disk, render now.
+    if (mSimulationState->GetDoRendering() || write_snapshot_image)
     {
-      fprintf(mTimingsFile, "cycle id: %li\n", mSimulationState.CycleId);
+      mVisControl->Render(mLatDat);
+    }
+
+    if (mSimulationState->GetDoRendering())
+    {
+      if (steeringCpt->updatedMouseCoords)
+      {
+        float density, stress;
+
+        if (mVisControl->MouseIsOverPixel(&density, &stress))
+        {
+          double mouse_pressure, mouse_stress;
+          mLbm->CalculateMouseFlowField(density,
+                                        stress,
+                                        mouse_pressure,
+                                        mouse_stress,
+                                        mVisControl->mDomainStats.density_threshold_min,
+                                        mVisControl->mDomainStats.density_threshold_minmax_inv,
+                                        mVisControl->mDomainStats.stress_threshold_max_inv);
+
+          mVisControl->SetMouseParams(mouse_pressure, mouse_stress);
+        }
+        steeringCpt->updatedMouseCoords = false;
+      }
+
+      if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        imageSendCpt->isFrameReady = true;
+      }
+    }
+
+    if (render_for_network_stream
+        && hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    {
+      imageSendCpt->DoWork();
+    }
+
+    if (write_snapshot_image)
+    {
+      mImagesWritten++;
+
+      if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        char image_filename[255];
+        snprintf(image_filename, 255, "%08li.dat", mSimulationState->GetTimeStep());
+
+        mVisControl->WriteImage(image_directory + std::string(image_filename));
+      }
+    }
+
+    double lPreSnapshotTime = hemelb::util::myClock();
+    mImagingTime += (lPreSnapshotTime - lPreImageTime);
+
+    if (mSimulationState->GetTimeStep() % snapshots_period == 0)
+    {
+      char snapshot_filename[255];
+      snprintf(snapshot_filename, 255, "snapshot_%06li.dat", mSimulationState->GetTimeStep());
+
+      mSnapshotsWritten++;
+      mLbm->WriteConfigParallel(stability, snapshot_directory + std::string(snapshot_filename));
+    }
+
+    mSnapshotTime += (hemelb::util::myClock() - lPreSnapshotTime);
+
+    if (stability == hemelb::lb::StableAndConverged)
+    {
+      is_finished = true;
+      break;
+    }
+    if (mSimulationState->GetIsTerminating())
+    {
+      is_finished = true;
+      break;
+    }
+    if (mLbm->period > 400000)
+    {
+      is_unstable = true;
+      break;
+    }
+
+    if (mSimulationState->GetTimeStep() == mSimulationState->GetTimeStepsPerCycle()
+        && hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    {
+      fprintf(mTimingsFile, "cycle id: %li\n", mSimulationState->GetCycleId());
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
-                                                                          mSimulationState.CycleId);
+                                                                          mSimulationState->GetCycleId());
 
       fflush(NULL);
     }
   }
-
-  mSimulationState.CycleId
-      = hemelb::util::NumericalFunctions::min<unsigned long>(mSimulationState.CycleId,
-                                                             lSimulationConfig->NumCycles);
 
   PostSimulation(total_time_steps,
                  hemelb::util::myClock() - simulation_time,
@@ -534,7 +521,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
     fprintf(mTimingsFile, "fluid sites: %li\n\n", mLbm->total_fluid_sites);
     fprintf(mTimingsFile,
             "cycles and total time steps: %li, %i \n\n",
-            mSimulationState.CycleId,
+             (mSimulationState->GetCycleId() - 1), // Note that the cycle-id is 1-indexed.
             iTotalTimeSteps);
     fprintf(mTimingsFile, "time steps per second: %.3f\n\n", iTotalTimeSteps / iSimulationTime);
   }
@@ -592,11 +579,14 @@ void SimulationMaster::PrintTimingData()
   double lTimings[5] = { mLbTime, mMPISendTime, mMPIWaitTime, mImagingTime, mSnapshotTime };
   std::string lNames[5] = { "LBM", "MPISend", "MPIWait", "Images", "Snaps" };
 
-  if (mSimulationState.CycleId > 0)
+  // Note that CycleId is 1-indexed and will have just been incremented when we finish.
+  double cycles = (double) (mSimulationState->GetCycleId() - 1);
+
+  if (cycles > 0.0)
   {
-    mLbTime /= (double) mSimulationState.CycleId;
-    mMPISendTime /= (double) mSimulationState.CycleId;
-    mMPIWaitTime /= (double) mSimulationState.CycleId;
+    mLbTime /= cycles;
+    mMPISendTime /= cycles;
+    mMPIWaitTime /= cycles;
   }
 
   if (mImagesWritten > 0)
