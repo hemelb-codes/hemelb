@@ -46,7 +46,7 @@ namespace hemelb
        */
       {
         privateSteeringParams[STEERABLE_PARAMETERS] = (float) ( (isConnected)
-            || (mSimState->TimeStep % imagesPeriod < GetRoundTripLength()));
+            || (mSimState->GetTimeStep() % imagesPeriod < GetRoundTripLength()));
 
       }
 

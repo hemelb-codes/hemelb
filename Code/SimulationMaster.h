@@ -19,8 +19,7 @@ class SimulationMaster
 
     int GetProcessorCount();
 
-    void RunSimulation(hemelb::SimConfig *& lSimulationConfig,
-                       double iStartTime,
+    void RunSimulation(double iStartTime,
                        std::string image_directory,
                        std::string snapshot_directory,
                        unsigned int lSnapshotsPerCycle,
@@ -47,7 +46,7 @@ class SimulationMaster
     hemelb::steering::ImageSendComponent *imageSendCpt;
     hemelb::steering::SteeringComponent* steeringCpt;
 
-    hemelb::lb::SimulationState mSimulationState;
+    hemelb::lb::SimulationState* mSimulationState;
     hemelb::lb::StabilityTester* mStabilityTester;
     hemelb::lb::LBM *mLbm;
     hemelb::net::Net mNet;

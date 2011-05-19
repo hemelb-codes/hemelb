@@ -67,9 +67,9 @@ namespace hemelb
          */
         int mChildrensStability[SPREADFACTOR];
         /**
-         * Pointer to the stability variable used in the rest of the simulation.
+         * Pointer to the simulation state used in the rest of the simulation.
          */
-        int * mPublicSimulationStability;
+        lb::SimulationState* mSimState;
     };
   }
 }

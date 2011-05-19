@@ -7,7 +7,8 @@ SUBDIRS := collisions
 $(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
                    lb.o \
                    io.o \
-                   StabilityTester.o
+                   StabilityTester.o \
+                   SimulationState.o
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
