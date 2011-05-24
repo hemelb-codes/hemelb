@@ -163,7 +163,14 @@ namespace hemelb
 
       sin.sin_addr.s_addr = * ((int*) *host_addr->h_addr_list);
 
-      // Attempt to connect.
+      // Attempt to connect, but don't try for too long.
+      timeval tv;
+      tv.tv_sec = 2;
+      tv.tv_usec = 0;
+
+      setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof (tv));
+      setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof (tv));
+
       if (connect(sock, (const struct sockaddr *) &sin, sizeof(sockaddr_in)) == -1)
       {
         return -101;
