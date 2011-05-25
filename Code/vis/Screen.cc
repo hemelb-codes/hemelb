@@ -14,7 +14,6 @@ namespace hemelb
 
     Screen::Screen()
     {
-      PixelsMax = COLOURED_PIXELS_MAX;
     }
 
     Screen::~Screen()
@@ -30,29 +29,7 @@ namespace hemelb
      */
     void Screen::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
     {
-      // Get the id of the pixel if we've already added one at the same location.
-      int pixelId = localPixels.pixelId[newPixel->GetI() * PixelsY + newPixel->GetJ()];
-
-      // If we have one at this location, merge in the pixel.
-      if (pixelId != -1)
-      {
-        localPixels.pixels[pixelId].MergeIn(newPixel, visSettings);
-      }
-      // Otherwise, if we have exceeded the maximum number of pixels, do nothing.
-      else if (col_pixels >= COLOURED_PIXELS_MAX)
-      {
-        return;
-      }
-      // Otherwise, add the pixel to the list.
-      else
-      {
-        // Put the pixel number into the store of ids.
-        localPixels.pixelId[newPixel->GetI() * PixelsY + newPixel->GetJ()] = col_pixels;
-
-        // Add the pixel to the end of the list and move the end marker.
-        localPixels.pixels[col_pixels] = *newPixel;
-        ++col_pixels;
-      }
+      localPixels.AddPixel(newPixel, visSettings);
     }
 
     /**
@@ -135,7 +112,8 @@ namespace hemelb
 
       while ( (xLimited && x <= limit) || (!xLimited && y <= limit))
       {
-        if (x >= 0 && x < (int) PixelsX && y >= 0 && y < (int) PixelsY)
+        if (x >= 0 && x < (int) localPixels.GetPixelsX() && y >= 0 && y
+            < (int) localPixels.GetPixelsY())
         {
           ColPixel col_pixel(x, y);
           AddPixel(&col_pixel, visSettings);
@@ -177,12 +155,11 @@ namespace hemelb
 
       if (pixelsX * pixelsY <= (int) COLOURED_PIXELS_MAX)
       {
-        PixelsX = pixelsX;
-        PixelsY = pixelsX;
+        localPixels.SetSize(pixelsX, pixelsY);
       }
 
-      ScaleX = (float) PixelsX / (2.F * MaxXValue);
-      ScaleY = (float) PixelsY / (2.F * MaxYValue);
+      ScaleX = (float) localPixels.GetPixelsX() / (2.F * MaxXValue);
+      ScaleY = (float) localPixels.GetPixelsY() / (2.F * MaxYValue);
 
       float radVector[3];
       viewpoint->RotateToViewpoint(0.F, 0.F, -rad, radVector);
@@ -192,29 +169,23 @@ namespace hemelb
         vtx[ii] = (0.5F * radVector[ii]) - UnitVectorProjectionX[ii] - UnitVectorProjectionY[ii];
       }
 
-      UnitVectorProjectionX[0] *= (2.F / (float) PixelsX);
-      UnitVectorProjectionX[1] *= (2.F / (float) PixelsX);
-      UnitVectorProjectionX[2] *= (2.F / (float) PixelsX);
+      UnitVectorProjectionX[0] *= (2.F / (float) localPixels.GetPixelsX());
+      UnitVectorProjectionX[1] *= (2.F / (float) localPixels.GetPixelsX());
+      UnitVectorProjectionX[2] *= (2.F / (float) localPixels.GetPixelsX());
 
-      UnitVectorProjectionY[0] *= (2.F / (float) PixelsY);
-      UnitVectorProjectionY[1] *= (2.F / (float) PixelsY);
-      UnitVectorProjectionY[2] *= (2.F / (float) PixelsY);
+      UnitVectorProjectionY[0] *= (2.F / (float) localPixels.GetPixelsY());
+      UnitVectorProjectionY[1] *= (2.F / (float) localPixels.GetPixelsY());
+      UnitVectorProjectionY[2] *= (2.F / (float) localPixels.GetPixelsY());
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
     {
-      PixelsX = newPixelsX;
-      PixelsY = newPixelsY;
-
-      for (unsigned int i = 0; i < PixelsX * PixelsY; i++)
-      {
-        localPixels.pixelId[i] = -1;
-      }
+      localPixels.SetSize(newPixelsX, newPixelsY);
     }
 
     void Screen::Reset()
     {
-      col_pixels = 0;
+      localPixels.pixelCount = 0;
     }
 
     void Screen::CompositeImage(const VisSettings* visSettings)
@@ -249,12 +220,17 @@ namespace hemelb
           // If we're the sending proc, do the send.
           if (netTop->GetLocalRank() == sendingProc)
           {
-            MPI_Send(&col_pixels, 1, MpiDataType(col_pixels), receivingProc, 20, MPI_COMM_WORLD);
+            MPI_Send(&localPixels.pixelCount,
+                     1,
+                     MpiDataType(localPixels.pixelCount),
+                     receivingProc,
+                     20,
+                     MPI_COMM_WORLD);
 
-            if (col_pixels > 0)
+            if (localPixels.pixelCount > 0)
             {
               MPI_Send(localPixels.pixels,
-                       col_pixels,
+                       localPixels.pixelCount,
                        MpiDataType<ColPixel> (),
                        receivingProc,
                        20,
@@ -265,20 +241,18 @@ namespace hemelb
           // If we're the receiving proc, receive.
           else if (netTop->GetLocalRank() == receivingProc)
           {
-            unsigned int col_pixels_temp;
-
-            MPI_Recv(&col_pixels_temp,
+            MPI_Recv(&compositingBuffer.pixelCount,
                      1,
-                     MpiDataType(col_pixels_temp),
+                     MpiDataType(compositingBuffer.pixelCount),
                      sendingProc,
                      20,
                      MPI_COMM_WORLD,
                      &status);
 
-            if (col_pixels_temp > 0)
+            if (compositingBuffer.pixelCount > 0)
             {
-              MPI_Recv(compositingBuffer,
-                       col_pixels_temp,
+              MPI_Recv(compositingBuffer.pixels,
+                       compositingBuffer.pixelCount,
                        MpiDataType<ColPixel> (),
                        sendingProc,
                        20,
@@ -286,24 +260,9 @@ namespace hemelb
                        &status);
             }
 
-            // Now merge the received pixels in with the local store of pixels.
-            for (unsigned int n = 0; n < col_pixels_temp; n++)
-            {
-              ColPixel* col_pixel1 = &compositingBuffer[n];
-
-              int id = col_pixel1->GetI() * GetPixelsY() + col_pixel1->GetJ();
-              if (localPixels.pixelId[id] == -1)
-              {
-                localPixels.pixelId[id] = col_pixels;
-
-                localPixels.pixels[col_pixels] = *col_pixel1;
-                ++col_pixels;
-              }
-              else
-              {
-                localPixels.pixels[localPixels.pixelId[id]].MergeIn(col_pixel1, visSettings);
-              }
-            }
+            localPixels.AddPixels(compositingBuffer.pixels,
+                                  compositingBuffer.pixelCount,
+                                  visSettings);
           }
         }
       }
@@ -311,23 +270,39 @@ namespace hemelb
       // Send the final image from proc 1 to 0.
       if (netTop->GetLocalRank() == 1)
       {
-        MPI_Send(&col_pixels, 1, MpiDataType(col_pixels), 0, 20, MPI_COMM_WORLD);
+        MPI_Send(&localPixels.pixelCount,
+                 1,
+                 MpiDataType(localPixels.pixelCount),
+                 0,
+                 20,
+                 MPI_COMM_WORLD);
 
-        if (col_pixels > 0)
+        if (localPixels.pixelCount > 0)
         {
-          MPI_Send(localPixels.pixels, col_pixels, MpiDataType<ColPixel> (), 0, 20, MPI_COMM_WORLD);
+          MPI_Send(localPixels.pixels,
+                   localPixels.pixelCount,
+                   MpiDataType<ColPixel> (),
+                   0,
+                   20,
+                   MPI_COMM_WORLD);
         }
 
       }
       // Receive the final image on proc 0.
       else if (netTop->GetLocalRank() == 0)
       {
-        MPI_Recv(&col_pixels, 1, MpiDataType(col_pixels), 1, 20, MPI_COMM_WORLD, &status);
+        MPI_Recv(&localPixels.pixelCount,
+                 1,
+                 MpiDataType(localPixels.pixelCount),
+                 1,
+                 20,
+                 MPI_COMM_WORLD,
+                 &status);
 
-        if (col_pixels > 0)
+        if (localPixels.pixelCount > 0)
         {
           MPI_Recv(localPixels.pixels,
-                   col_pixels,
+                   localPixels.pixelCount,
                    MpiDataType<ColPixel> (),
                    1,
                    20,
@@ -336,7 +311,7 @@ namespace hemelb
         }
       }
 
-      pixelCountInBuffer = col_pixels;
+      pixelCountInBuffer = localPixels.pixelCount;
 
       for (unsigned int m = 0; m < pixelCountInBuffer; m++)
       {
@@ -422,11 +397,11 @@ namespace hemelb
     }
     int Screen::GetPixelsX() const
     {
-      return PixelsX;
+      return localPixels.GetPixelsX();
     }
     int Screen::GetPixelsY() const
     {
-      return PixelsY;
+      return localPixels.GetPixelsY();
     }
   }
 }

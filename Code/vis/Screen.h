@@ -86,13 +86,8 @@ namespace hemelb
         float UnitVectorProjectionX[3];
         float UnitVectorProjectionY[3];
 
-        unsigned int PixelsX, PixelsY;
-        unsigned int PixelsMax;
-
         ScreenPixels localPixels;
-        ColPixel compositingBuffer[COLOURED_PIXELS_MAX];
-        // number of ColPixels.
-        unsigned int col_pixels;
+        ScreenPixels compositingBuffer;
         unsigned int pixelCountInBuffer; // number received?
     };
   }
