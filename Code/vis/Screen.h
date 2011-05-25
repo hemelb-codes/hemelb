@@ -91,10 +91,10 @@ namespace hemelb
         // Array of pixel ids.
         int* col_pixel_id;
         ColPixel localPixels[COLOURED_PIXELS_MAX];
+        ColPixel compositingBuffer[COLOURED_PIXELS_MAX];
         // number of ColPixels.
         unsigned int col_pixels;
         unsigned int pixelCountInBuffer; // number received?
-        ColPixel* compositingBuffer;
     };
   }
 }
