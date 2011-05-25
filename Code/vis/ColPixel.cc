@@ -70,7 +70,7 @@ namespace hemelb
       stress_b = stressColour[2] * 255.0F;
     }
 
-    void ColPixel::MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest)
+    void ColPixel::MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest) const
     {
       dest[0] = (unsigned char) util::NumericalFunctions::enforceBounds(rawRed, 0, 255);
       dest[1] = (unsigned char) util::NumericalFunctions::enforceBounds(rawGreen, 0, 255);
@@ -171,7 +171,7 @@ namespace hemelb
     void ColPixel::rawWritePixel(int *pixel_index,
                                  unsigned char rgb_data[12],
                                  const DomainStats* iDomainStats,
-                                 const VisSettings* visSettings)
+                                 const VisSettings* visSettings) const
     {
       const int bits_per_char = sizeof(char) * 8;
       *pixel_index = (i.i << (2 * bits_per_char)) + i.j;

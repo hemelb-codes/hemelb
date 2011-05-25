@@ -3,6 +3,7 @@
 
 #include "io/Writer.h"
 #include "vis/ColPixel.h"
+#include "vis/ScreenPixels.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 
@@ -88,9 +89,7 @@ namespace hemelb
         unsigned int PixelsX, PixelsY;
         unsigned int PixelsMax;
 
-        // Array of pixel ids.
-        int* col_pixel_id;
-        ColPixel localPixels[COLOURED_PIXELS_MAX];
+        ScreenPixels localPixels;
         ColPixel compositingBuffer[COLOURED_PIXELS_MAX];
         // number of ColPixels.
         unsigned int col_pixels;
