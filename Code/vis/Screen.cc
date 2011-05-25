@@ -10,22 +10,15 @@ namespace hemelb
   {
 
     // TODO This is probably going to have to be cleverly redesigned. We need to pass the images around over several iterations without
-    // interference between the steering and writte-to-disk images.
+    // interference between the steering and written-to-disk images.
 
     Screen::Screen()
     {
       PixelsMax = COLOURED_PIXELS_MAX;
-      col_pixel_id = new int[PixelsMax];
-
-      for (unsigned int i = 0; i < COLOURED_PIXELS_MAX; i++)
-      {
-        col_pixel_id[i] = -1;
-      }
     }
 
     Screen::~Screen()
     {
-      delete[] col_pixel_id;
     }
 
     /**
@@ -38,12 +31,12 @@ namespace hemelb
     void Screen::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
     {
       // Get the id of the pixel if we've already added one at the same location.
-      int pixelId = col_pixel_id[newPixel->GetI() * PixelsY + newPixel->GetJ()];
+      int pixelId = localPixels.pixelId[newPixel->GetI() * PixelsY + newPixel->GetJ()];
 
       // If we have one at this location, merge in the pixel.
       if (pixelId != -1)
       {
-        localPixels[pixelId].MergeIn(newPixel, visSettings);
+        localPixels.pixels[pixelId].MergeIn(newPixel, visSettings);
       }
       // Otherwise, if we have exceeded the maximum number of pixels, do nothing.
       else if (col_pixels >= COLOURED_PIXELS_MAX)
@@ -54,10 +47,10 @@ namespace hemelb
       else
       {
         // Put the pixel number into the store of ids.
-        col_pixel_id[newPixel->GetI() * PixelsY + newPixel->GetJ()] = col_pixels;
+        localPixels.pixelId[newPixel->GetI() * PixelsY + newPixel->GetJ()] = col_pixels;
 
         // Add the pixel to the end of the list and move the end marker.
-        localPixels[col_pixels] = *newPixel;
+        localPixels.pixels[col_pixels] = *newPixel;
         ++col_pixels;
       }
     }
@@ -210,18 +203,12 @@ namespace hemelb
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
     {
-      if (newPixelsX * newPixelsY > PixelsX * PixelsY)
-      {
-        PixelsMax = util::NumericalFunctions::max(2 * PixelsMax, newPixelsX * newPixelsY);
-        col_pixel_id = (int *) realloc(col_pixel_id, sizeof(int) * PixelsMax);
-      }
-
       PixelsX = newPixelsX;
       PixelsY = newPixelsY;
 
       for (unsigned int i = 0; i < PixelsX * PixelsY; i++)
       {
-        col_pixel_id[i] = -1;
+        localPixels.pixelId[i] = -1;
       }
     }
 
@@ -266,7 +253,7 @@ namespace hemelb
 
             if (col_pixels > 0)
             {
-              MPI_Send(localPixels,
+              MPI_Send(localPixels.pixels,
                        col_pixels,
                        MpiDataType<ColPixel> (),
                        receivingProc,
@@ -305,16 +292,16 @@ namespace hemelb
               ColPixel* col_pixel1 = &compositingBuffer[n];
 
               int id = col_pixel1->GetI() * GetPixelsY() + col_pixel1->GetJ();
-              if (col_pixel_id[id] == -1)
+              if (localPixels.pixelId[id] == -1)
               {
-                col_pixel_id[id] = col_pixels;
+                localPixels.pixelId[id] = col_pixels;
 
-                localPixels[col_pixels] = *col_pixel1;
+                localPixels.pixels[col_pixels] = *col_pixel1;
                 ++col_pixels;
               }
               else
               {
-                localPixels[col_pixel_id[id]].MergeIn(col_pixel1, visSettings);
+                localPixels.pixels[localPixels.pixelId[id]].MergeIn(col_pixel1, visSettings);
               }
             }
           }
@@ -328,7 +315,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Send(localPixels, col_pixels, MpiDataType<ColPixel> (), 0, 20, MPI_COMM_WORLD);
+          MPI_Send(localPixels.pixels, col_pixels, MpiDataType<ColPixel> (), 0, 20, MPI_COMM_WORLD);
         }
 
       }
@@ -339,7 +326,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Recv(localPixels,
+          MPI_Recv(localPixels.pixels,
                    col_pixels,
                    MpiDataType<ColPixel> (),
                    1,
@@ -353,7 +340,8 @@ namespace hemelb
 
       for (unsigned int m = 0; m < pixelCountInBuffer; m++)
       {
-        col_pixel_id[localPixels[m].GetI() * GetPixelsY() + localPixels[m].GetJ()] = -1;
+        localPixels.pixelId[localPixels.pixels[m].GetI() * GetPixelsY()
+            + localPixels.pixels[m].GetJ()] = -1;
       }
     }
 
@@ -361,11 +349,11 @@ namespace hemelb
     {
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        if (localPixels[i].IsRT() && int (localPixels[i].GetI()) == mouseX
-            && int (localPixels[i].GetJ()) == mouseY)
+        if (localPixels.pixels[i].IsRT() && int (localPixels.pixels[i].GetI()) == mouseX
+            && int (localPixels.pixels[i].GetJ()) == mouseY)
         {
-          *density = localPixels[i].GetDensity();
-          *stress = localPixels[i].GetStress();
+          *density = localPixels.pixels[i].GetDensity();
+          *stress = localPixels.pixels[i].GetStress();
 
           return true;
         }
@@ -392,7 +380,7 @@ namespace hemelb
 
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        ColPixel& col_pixel = localPixels[i];
+        ColPixel& col_pixel = localPixels.pixels[i];
         // Use a ray-tracer function to get the necessary pixel data.
         col_pixel.rawWritePixel(&index, rgb_data, domainStats, visSettings);
 

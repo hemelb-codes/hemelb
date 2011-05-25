@@ -37,7 +37,7 @@ namespace hemelb
         void rawWritePixel(int* pixel_index,
                            unsigned char rgb_data[12],
                            const DomainStats* iDomainStats,
-                           const VisSettings* visSettings);
+                           const VisSettings* visSettings) const;
 
         float GetDensity() const;
         float GetStress() const;
@@ -65,7 +65,7 @@ namespace hemelb
             PixelId(unsigned int i, unsigned int j);
         };
 
-        void MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest);
+        void MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest) const;
 
         // Pixel identity
         struct PixelId i;
