@@ -19,7 +19,7 @@ namespace hemelb
 
         void FoldIn(const ScreenPixels* inScreen, const VisSettings* visSettings);
         void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
-        void AddPixels(const ColPixel** newPixel,
+        void AddPixels(const ColPixel* newPixel,
                        unsigned int pixelCount,
                        const VisSettings* visSettings);
 
