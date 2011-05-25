@@ -82,13 +82,13 @@ namespace hemelb
       }
     }
 
-    void ScreenPixels::AddPixels(const ColPixel** newPixel,
+    void ScreenPixels::AddPixels(const ColPixel* newPixel,
                                  unsigned int pixelCount,
                                  const VisSettings* visSettings)
     {
       for (unsigned int ii = 0; ii < pixelCount; ++ii)
       {
-        AddPixel(newPixel[ii], visSettings);
+        AddPixel(&newPixel[ii], visSettings);
       }
     }
 
