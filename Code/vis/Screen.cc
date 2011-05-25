@@ -21,13 +21,10 @@ namespace hemelb
       {
         col_pixel_id[i] = -1;
       }
-
-      compositingBuffer = new ColPixel[COLOURED_PIXELS_MAX];
     }
 
     Screen::~Screen()
     {
-      delete[] compositingBuffer;
       delete[] col_pixel_id;
     }
 
@@ -238,12 +235,6 @@ namespace hemelb
       // Status object for MPI comms.
       MPI_Status status;
 
-      // For all processors with pixels, copy these to the receive buffer.
-      for (unsigned int ii = 0; ii < col_pixels; ++ii)
-      {
-        compositingBuffer[ii] = localPixels[ii];
-      }
-
       /*
        * We do several iterations.
        *
@@ -299,7 +290,7 @@ namespace hemelb
 
             if (col_pixels_temp > 0)
             {
-              MPI_Recv(localPixels,
+              MPI_Recv(compositingBuffer,
                        col_pixels_temp,
                        MpiDataType<ColPixel> (),
                        sendingProc,
@@ -311,29 +302,19 @@ namespace hemelb
             // Now merge the received pixels in with the local store of pixels.
             for (unsigned int n = 0; n < col_pixels_temp; n++)
             {
-              ColPixel* col_pixel1 = &localPixels[n];
+              ColPixel* col_pixel1 = &compositingBuffer[n];
 
               int id = col_pixel1->GetI() * GetPixelsY() + col_pixel1->GetJ();
               if (col_pixel_id[id] == -1)
               {
                 col_pixel_id[id] = col_pixels;
 
-                compositingBuffer[col_pixels] = *col_pixel1;
+                localPixels[col_pixels] = *col_pixel1;
                 ++col_pixels;
               }
               else
               {
-                compositingBuffer[col_pixel_id[id]].MergeIn(col_pixel1, visSettings);
-              }
-            }
-
-            // If this isn't the last iteration, copy the pixels from the received buffer
-            // back to the screen.
-            if ( (deltaRank << 1) < netTop->GetProcessorCount())
-            {
-              for (unsigned int ii = 0; ii < col_pixels; ++ii)
-              {
-                localPixels[ii] = compositingBuffer[ii];
+                localPixels[col_pixel_id[id]].MergeIn(col_pixel1, visSettings);
               }
             }
           }
@@ -347,7 +328,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Send(compositingBuffer, col_pixels, MpiDataType<ColPixel> (), 0, 20, MPI_COMM_WORLD);
+          MPI_Send(localPixels, col_pixels, MpiDataType<ColPixel> (), 0, 20, MPI_COMM_WORLD);
         }
 
       }
@@ -358,7 +339,7 @@ namespace hemelb
 
         if (col_pixels > 0)
         {
-          MPI_Recv(compositingBuffer,
+          MPI_Recv(localPixels,
                    col_pixels,
                    MpiDataType<ColPixel> (),
                    1,
@@ -380,11 +361,11 @@ namespace hemelb
     {
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        if (compositingBuffer[i].IsRT() && int (compositingBuffer[i].GetI()) == mouseX
-            && int (compositingBuffer[i].GetJ()) == mouseY)
+        if (localPixels[i].IsRT() && int (localPixels[i].GetI()) == mouseX
+            && int (localPixels[i].GetJ()) == mouseY)
         {
-          *density = compositingBuffer[i].GetDensity();
-          *stress = compositingBuffer[i].GetStress();
+          *density = localPixels[i].GetDensity();
+          *stress = localPixels[i].GetStress();
 
           return true;
         }
@@ -411,8 +392,7 @@ namespace hemelb
 
       for (unsigned int i = 0; i < pixelCountInBuffer; i++)
       {
-        //        col_pixel_p = &compositingBuffer[i];
-        ColPixel& col_pixel = compositingBuffer[i];
+        ColPixel& col_pixel = localPixels[i];
         // Use a ray-tracer function to get the necessary pixel data.
         col_pixel.rawWritePixel(&index, rgb_data, domainStats, visSettings);
 
