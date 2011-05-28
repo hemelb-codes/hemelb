@@ -22,12 +22,12 @@ namespace hemelb
       Reset();
     }
 
-    void SteeringComponent::ProgressFromParent(unsigned int splayNumber)
+    void SteeringComponent::ProgressFromParent(unsigned long splayNumber)
     {
       ReceiveFromParent<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }
 
-    void SteeringComponent::ProgressToChildren(unsigned int splayNumber)
+    void SteeringComponent::ProgressToChildren(unsigned long splayNumber)
     {
       SendToChildren<float> (privateSteeringParams, STEERABLE_PARAMETERS + 1);
     }

@@ -29,28 +29,7 @@ namespace hemelb
 
     void ScreenPixels::FoldIn(const ScreenPixels* inScreen, const VisSettings* visSettings)
     {
-      for (unsigned int n = 0; n < inScreen->pixelCount; ++n)
-      {
-        const ColPixel* col_pixel1 = &inScreen->pixels[n];
-
-        int id = col_pixel1->GetI() * GetPixelsY() + col_pixel1->GetJ();
-        if (pixelId[id] == -1)
-        {
-          pixelId[id] = pixelCount;
-
-          pixels[pixelCount] = *col_pixel1;
-          ++pixelCount;
-        }
-        else
-        {
-          ColPixel one = pixels[pixelId[id]];
-          ColPixel two = *col_pixel1;
-          two.MergeIn(&one, visSettings);
-          pixels[pixelId[id]].MergeIn(col_pixel1, visSettings);
-
-          debug::Debugger::Get()->BreakHere();
-        }
-      }
+      AddPixels(inScreen->pixels, inScreen->pixelCount, visSettings);
     }
 
     void ScreenPixels::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)

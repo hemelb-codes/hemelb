@@ -186,13 +186,13 @@ namespace hemelb
          *
          * @return
          */
-        unsigned int GetRoundTripLength() const
+        unsigned long GetRoundTripLength() const
         {
-          unsigned int delayTime = initialAction
+          unsigned long delayTime = initialAction
             ? 1
             : 0;
 
-          unsigned int multiplier = (down
+          unsigned long multiplier = (down
             ? 1
             : 0) + (up
             ? 1
@@ -206,7 +206,7 @@ namespace hemelb
          *
          * @return
          */
-        unsigned int GetFirstDescending() const
+        unsigned long GetFirstDescending() const
         {
           return (initialAction
             ? 1
@@ -218,7 +218,7 @@ namespace hemelb
          *
          * @return
          */
-        unsigned int GetFirstAscending() const
+        unsigned long GetFirstAscending() const
         {
           return GetFirstDescending() + (down
             ? GetTraverseTime()
@@ -230,7 +230,7 @@ namespace hemelb
          *
          * @return
          */
-        unsigned int GetMyDepth() const
+        unsigned long GetMyDepth() const
         {
           return mMyDepth;
         }
@@ -240,7 +240,7 @@ namespace hemelb
          *
          * @return
          */
-        unsigned int GetTreeDepth() const
+        unsigned long GetTreeDepth() const
         {
           return mTreeDepth;
         }
@@ -251,7 +251,7 @@ namespace hemelb
          *
          * @return
          */
-        unsigned int GetTraverseTime() const
+        unsigned long GetTraverseTime() const
         {
           return mTreeDepth * (splay - ovrlp) + ovrlp;
         }
@@ -260,13 +260,13 @@ namespace hemelb
          * Gets the overlap value for a send to a parent node given the number of iterations
          * through the 'upwards' phase. Returns true if this node should send to is parent.
          */
-        bool GetSendParentOverlap(unsigned int subCycleNumber, unsigned int* sendOverlap)
+        bool GetSendParentOverlap(unsigned long subCycleNumber, unsigned long* sendOverlap)
         {
           // The first cycle we're sending to parents.
-          unsigned int firstSendCycle = (mTreeDepth - mMyDepth) * (splay - ovrlp);
+          unsigned long firstSendCycle = (mTreeDepth - mMyDepth) * (splay - ovrlp);
 
           // If we're either not far enough or too far through the cycle, don't send.
-          if (subCycleNumber < firstSendCycle || subCycleNumber > (firstSendCycle + splay))
+          if (subCycleNumber < firstSendCycle || subCycleNumber >= (firstSendCycle + splay))
           {
             return false;
           }
@@ -282,13 +282,13 @@ namespace hemelb
          * Gets the overlap value for a send to child nodes given the number of iterations
          * through the 'downwards' phase. Returns true if this node should send to is children.
          */
-        bool GetSendChildrenOverlap(unsigned int subCycleNumber, unsigned int* sendOverlap)
+        bool GetSendChildrenOverlap(unsigned long subCycleNumber, unsigned long* sendOverlap)
         {
           // The first cycle we're sending to children.
-          unsigned int firstSendCycle = mMyDepth * (splay - ovrlp);
+          unsigned long firstSendCycle = mMyDepth * (splay - ovrlp);
 
           // If we're either not far enough or too far through the cycle, don't send.
-          if (subCycleNumber < firstSendCycle || subCycleNumber > (firstSendCycle + splay))
+          if (subCycleNumber < firstSendCycle || subCycleNumber >= (firstSendCycle + splay))
           {
             return false;
           }
@@ -304,13 +304,13 @@ namespace hemelb
          * Gets the overlap value for a receive from a parent node given the number of iterations
          * through the 'downwards' phase. Returns true if this node should receive from its parent.
          */
-        bool GetReceiveParentOverlap(unsigned int subCycleNumber, unsigned int* receiveOverlap)
+        bool GetReceiveParentOverlap(unsigned long subCycleNumber, unsigned long* receiveOverlap)
         {
           // The first cycle we're receiving from parents.
-          unsigned int firstReceiveCycle = (mMyDepth - 1) * (splay - ovrlp);
+          unsigned long firstReceiveCycle = (mMyDepth - 1) * (splay - ovrlp);
 
           // If we're either not far enough or too far through the cycle, don't receive.
-          if (subCycleNumber < firstReceiveCycle || subCycleNumber > (firstReceiveCycle + splay))
+          if (subCycleNumber < firstReceiveCycle || subCycleNumber >= (firstReceiveCycle + splay))
           {
             return false;
           }
@@ -326,13 +326,13 @@ namespace hemelb
          * Gets the overlap value for a receive from child node given the number of iterations
          * through the 'upwards' phase. Returns true if this node should receive from its children.
          */
-        bool GetReceiveChildrenOverlap(unsigned int subCycleNumber, unsigned int* receiveOverlap)
+        bool GetReceiveChildrenOverlap(unsigned long subCycleNumber, unsigned long* receiveOverlap)
         {
           // The first cycle we're receiving from parents.
-          unsigned int firstReceiveCycle = (mTreeDepth - (mMyDepth + 1)) * (splay - ovrlp);
+          unsigned long firstReceiveCycle = (mTreeDepth - (mMyDepth + 1)) * (splay - ovrlp);
 
           // If we're either not far enough or too far through the cycle, don't receive.
-          if (subCycleNumber < firstReceiveCycle || subCycleNumber > (firstReceiveCycle + splay))
+          if (subCycleNumber < firstReceiveCycle || subCycleNumber >= (firstReceiveCycle + splay))
           {
             return false;
           }

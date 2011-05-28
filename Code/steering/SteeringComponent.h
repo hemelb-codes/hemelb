@@ -32,8 +32,8 @@ namespace hemelb
         bool updatedMouseCoords;
 
       protected:
-        void ProgressFromParent(unsigned int splayNumber);
-        void ProgressToChildren(unsigned int splayNumber);
+        void ProgressFromParent(unsigned long splayNumber);
+        void ProgressToChildren(unsigned long splayNumber);
 
         void TopNodeAction();
         void Effect();
