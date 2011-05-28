@@ -41,10 +41,10 @@ namespace hemelb
          */
         void RequestComms()
         {
-          const unsigned int iCycleNumber = Get0IndexedIterationNumber();
-          const unsigned int firstAscent = base::GetFirstAscending();
-          const unsigned int firstDescent = base::GetFirstDescending();
-          const unsigned int traversalLength = base::GetTraverseTime();
+          const unsigned long iCycleNumber = Get0IndexedIterationNumber();
+          const unsigned long firstAscent = base::GetFirstAscending();
+          const unsigned long firstDescent = base::GetFirstDescending();
+          const unsigned long traversalLength = base::GetTraverseTime();
 
           // Nothing to do for initial action case.
 
@@ -53,8 +53,8 @@ namespace hemelb
           {
             if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
             {
-              unsigned int sendOverlap;
-              unsigned int receiveOverlap;
+              unsigned long sendOverlap;
+              unsigned long receiveOverlap;
 
               if (base::GetSendChildrenOverlap(iCycleNumber - firstDescent, &sendOverlap))
               {
@@ -73,8 +73,8 @@ namespace hemelb
           {
             if (iCycleNumber >= firstAscent)
             {
-              unsigned int sendOverlap;
-              unsigned int receiveOverlap;
+              unsigned long sendOverlap;
+              unsigned long receiveOverlap;
 
               if (base::GetSendParentOverlap(iCycleNumber - firstAscent, &sendOverlap))
               {
@@ -111,23 +111,23 @@ namespace hemelb
          */
         void PostReceive()
         {
-          const unsigned int iCycleNumber = Get0IndexedIterationNumber();
-          const unsigned int firstAscent = PhasedBroadcast<initialAction, splay, overlap, goDown,
+          const unsigned long iCycleNumber = Get0IndexedIterationNumber();
+          const unsigned long firstAscent = PhasedBroadcast<initialAction, splay, overlap, goDown,
               goUp>::GetFirstAscending();
-          const unsigned int traversalLength = PhasedBroadcast<initialAction, splay, overlap,
+          const unsigned long traversalLength = PhasedBroadcast<initialAction, splay, overlap,
               goDown, goUp>::GetTraverseTime();
-          const unsigned int cycleLength = PhasedBroadcast<initialAction, splay, overlap, goDown,
+          const unsigned long cycleLength = PhasedBroadcast<initialAction, splay, overlap, goDown,
               goUp>::GetRoundTripLength();
 
           // Deal with the case of a cycle with an initial pass down the tree.
           if (goDown)
           {
-            const unsigned int firstDescent = PhasedBroadcast<initialAction, splay, overlap,
+            const unsigned long firstDescent = PhasedBroadcast<initialAction, splay, overlap,
                 goDown, goUp>::GetFirstDescending();
 
             if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
             {
-              unsigned int receiveOverlap;
+              unsigned long receiveOverlap;
 
               if (base::GetReceiveParentOverlap(iCycleNumber - firstDescent, &receiveOverlap))
               {
@@ -148,7 +148,7 @@ namespace hemelb
           {
             if (iCycleNumber >= firstAscent)
             {
-              unsigned int receiveOverlap;
+              unsigned long receiveOverlap;
 
               if (base::GetReceiveChildrenOverlap(iCycleNumber - firstAscent, &receiveOverlap))
               {
@@ -201,7 +201,7 @@ namespace hemelb
          * Use ReceiveFromChildren to do this. The parameter splayNumber is 0 indexed and less
          * than splay.
          */
-        virtual void ProgressFromChildren(unsigned int splayNumber)
+        virtual void ProgressFromChildren(unsigned long splayNumber)
         {
 
         }
@@ -212,7 +212,7 @@ namespace hemelb
          * Use ReceiveFromParent to do this. The parameter splayNumber is 0 indexed and less
          * than splay.
          */
-        virtual void ProgressFromParent(unsigned int splayNumber)
+        virtual void ProgressFromParent(unsigned long splayNumber)
         {
 
         }
@@ -223,7 +223,7 @@ namespace hemelb
          * Use SendToChildren to do this. The parameter splayNumber is 0 indexed and less
          * than splay.
          */
-        virtual void ProgressToChildren(unsigned int splayNumber)
+        virtual void ProgressToChildren(unsigned long splayNumber)
         {
 
         }
@@ -234,7 +234,7 @@ namespace hemelb
          * Use SendToParent to do this. The parameter splayNumber is 0 indexed and less
          * than splay.
          */
-        virtual void ProgressToParent(unsigned int splayNumber)
+        virtual void ProgressToParent(unsigned long splayNumber)
         {
 
         }
@@ -243,7 +243,7 @@ namespace hemelb
          * Overridable function, called by a node after data has been received from its children.
          * The parameter splayNumber is 0 indexed and less than splay.
          */
-        virtual void PostReceiveFromChildren(unsigned int splayNumber)
+        virtual void PostReceiveFromChildren(unsigned long splayNumber)
         {
 
         }
@@ -252,7 +252,7 @@ namespace hemelb
          * Overridable function, called by a node after data has been received from its parent. The
          * parameter splayNumber is 0 indexed and less than splay.
          */
-        virtual void PostReceiveFromParent(unsigned int splayNumber)
+        virtual void PostReceiveFromParent(unsigned long splayNumber)
         {
 
         }

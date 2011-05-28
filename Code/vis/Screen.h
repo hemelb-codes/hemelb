@@ -86,7 +86,7 @@ namespace hemelb
         float UnitVectorProjectionX[3];
         float UnitVectorProjectionY[3];
 
-        ScreenPixels localPixels;
+        ScreenPixels pixels;
         ScreenPixels compositingBuffer;
         unsigned int pixelCountInBuffer; // number received?
     };

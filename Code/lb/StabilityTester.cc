@@ -29,7 +29,7 @@ namespace hemelb
       }
     }
 
-    void StabilityTester::PostReceiveFromChildren(unsigned int splayNumber)
+    void StabilityTester::PostReceiveFromChildren(unsigned long splayNumber)
     {
       // No need to test children's stability if this node is already unstable.
       if (mUpwardsStability == Stable)
@@ -45,28 +45,28 @@ namespace hemelb
       }
     }
 
-    void StabilityTester::ProgressFromChildren(unsigned int splayNumber)
+    void StabilityTester::ProgressFromChildren(unsigned long splayNumber)
     {
       ReceiveFromChildren<int> (mChildrensStability, 1);
     }
 
-    void StabilityTester::ProgressFromParent(unsigned int splayNumber)
+    void StabilityTester::ProgressFromParent(unsigned long splayNumber)
     {
       ReceiveFromParent<int> (&mDownwardsStability, 1);
     }
 
-    void StabilityTester::ProgressToChildren(unsigned int splayNumber)
+    void StabilityTester::ProgressToChildren(unsigned long splayNumber)
     {
       SendToChildren<int> (&mDownwardsStability, 1);
     }
 
-    void StabilityTester::ProgressToParent(unsigned int splayNumber)
+    void StabilityTester::ProgressToParent(unsigned long splayNumber)
     {
       // No need to bother testing out local lattice points if we're going to be
       // sending up a 'Unstable' value anyway.
       if (mUpwardsStability != Unstable)
       {
-        for (unsigned int i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
+        for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
         {
           for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
           {

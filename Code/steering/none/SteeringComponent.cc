@@ -33,11 +33,11 @@ namespace hemelb
       return false;
     }
 
-    void SteeringComponent::ProgressFromParent(unsigned int splayNumber)
+    void SteeringComponent::ProgressFromParent(unsigned long splayNumber)
     {
 
     }
-    void SteeringComponent::ProgressToChildren(unsigned int splayNumber)
+    void SteeringComponent::ProgressToChildren(unsigned long splayNumber)
     {
 
     }
