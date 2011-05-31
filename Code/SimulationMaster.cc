@@ -1,6 +1,7 @@
 #include "SimulationMaster.h"
 #include "SimConfig.h"
 
+#include "io/XdrFileWriter.h"
 #include "util/utilityFunctions.h"
 #include "geometry/LatticeData.h"
 #include "debug/Debugger.h"
@@ -432,7 +433,12 @@ void SimulationMaster::RunSimulation(double iStartTime,
         char image_filename[255];
         snprintf(image_filename, 255, "%08li.dat", mSimulationState->GetTimeStep());
 
-        mVisControl->WriteImage(image_directory + std::string(image_filename));
+        hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(image_directory
+            + std::string(image_filename));
+
+        mVisControl->mScreen.GetPixels()->WriteImage(&writer,
+                                                     &mVisControl->mDomainStats,
+                                                     &mVisControl->mVisSettings);
       }
     }
 

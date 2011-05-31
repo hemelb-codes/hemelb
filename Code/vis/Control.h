@@ -62,7 +62,6 @@ namespace hemelb
 
         void UpdateImageSize(int pixels_x, int pixels_y);
         void Render(geometry::LatticeData* iLatDat);
-        void WriteImage(std::string image_file_name);
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
 

@@ -89,7 +89,7 @@ namespace hemelb
 
     void Screen::Reset()
     {
-      pixels.pixelCount = 0;
+      pixels.Reset();
     }
 
     bool Screen::MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress)
@@ -107,47 +107,6 @@ namespace hemelb
       }
 
       return false;
-    }
-
-    void Screen::WritePixelCount(io::Writer* writer)
-    {
-      writer->operator <<(GetPixelsX());
-      writer->operator <<(GetPixelsY());
-      writer->operator <<(pixelCountInBuffer);
-    }
-
-    void Screen::WritePixels(const DomainStats* domainStats,
-                             const VisSettings* visSettings,
-                             io::Writer* writer)
-    {
-      int index;
-      int pix_data[3];
-      unsigned char rgb_data[12];
-      int bits_per_char = sizeof(char) * 8;
-
-      for (unsigned int i = 0; i < pixelCountInBuffer; i++)
-      {
-        ColPixel& col_pixel = pixels.pixels[i];
-        // Use a ray-tracer function to get the necessary pixel data.
-        col_pixel.rawWritePixel(&index, rgb_data, domainStats, visSettings);
-
-        *writer << index;
-
-        pix_data[0] = (rgb_data[0] << (3 * bits_per_char)) + (rgb_data[1] << (2 * bits_per_char))
-            + (rgb_data[2] << bits_per_char) + rgb_data[3];
-
-        pix_data[1] = (rgb_data[4] << (3 * bits_per_char)) + (rgb_data[5] << (2 * bits_per_char))
-            + (rgb_data[6] << bits_per_char) + rgb_data[7];
-
-        pix_data[2] = (rgb_data[8] << (3 * bits_per_char)) + (rgb_data[9] << (2 * bits_per_char))
-            + (rgb_data[10] << bits_per_char) + rgb_data[11];
-
-        for (int i = 0; i < 3; i++)
-        {
-          *writer << pix_data[i];
-        }
-        *writer << io::Writer::eol;
-      }
     }
 
     unsigned int Screen::GetPixelCount() const
@@ -174,6 +133,11 @@ namespace hemelb
     int Screen::GetPixelsY() const
     {
       return pixels.GetPixelsY();
+    }
+
+    const ScreenPixels* Screen::GetPixels() const
+    {
+      return &pixels;
     }
   }
 }
