@@ -13,6 +13,7 @@ namespace hemelb
       {
         pixelId[ii] = -1;
       }
+
       pixelCount = 0;
       PixelsX = 0;
       PixelsY = 0;

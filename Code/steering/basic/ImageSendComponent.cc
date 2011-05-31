@@ -62,9 +62,9 @@ namespace hemelb
       imageWriter << (int) (mVisControl->mScreen.GetPixelCount() * bytes_per_pixel_data);
 
       // Write the pixels themselves
-      mVisControl->mScreen.WritePixels(&mVisControl->mDomainStats,
-                                       &mVisControl->mVisSettings,
-                                       &imageWriter);
+      mVisControl->mScreen.GetPixels()->WritePixels(&imageWriter,
+                                                    &mVisControl->mDomainStats,
+                                                    &mVisControl->mVisSettings);
 
       // Write the numerical data from the simulation, wanted by the client.
       {

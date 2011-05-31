@@ -192,7 +192,6 @@ namespace hemelb
        *
        * This continues until all data is passed back to processor one, which passes it to proc 0.
        */
-
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
 
       // Start with a difference in rank of 1, doubling every time.
@@ -245,9 +244,9 @@ namespace hemelb
                        20,
                        MPI_COMM_WORLD,
                        &status);
-            }
 
-            mScreen.pixels.FoldIn(&recvBuffers, &mVisSettings);
+              mScreen.pixels.FoldIn(&recvBuffers, &mVisSettings);
+            }
           }
         }
       }
@@ -303,21 +302,6 @@ namespace hemelb
         mScreen.pixels.pixelId[mScreen.pixels.pixels[m].GetI() * mScreen.GetPixelsY()
             + mScreen.pixels.pixels[m].GetJ()] = -1;
       }
-    }
-
-    void Control::WriteImage(std::string image_file_name)
-    {
-      io::XdrFileWriter writer = io::XdrFileWriter(image_file_name);
-
-      writer << (int) mVisSettings.mode;
-
-      writer << mDomainStats.physical_pressure_threshold_min
-          << mDomainStats.physical_pressure_threshold_max
-          << mDomainStats.physical_velocity_threshold_max
-          << mDomainStats.physical_stress_threshold_max;
-
-      mScreen.WritePixelCount(&writer);
-      mScreen.WritePixels(&mDomainStats, &mVisSettings, &writer);
     }
 
     void Control::SetMouseParams(double iPhysicalPressure, double iPhysicalStress)
