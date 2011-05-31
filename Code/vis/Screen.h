@@ -71,13 +71,6 @@ namespace hemelb
         unsigned int GetPixelCount() const;
 
       private:
-        template<bool xLimited> void RenderLineHelper(int x,
-                                                      int y,
-                                                      int incE,
-                                                      int incNE,
-                                                      int limit,
-                                                      const VisSettings* visSettings);
-
         float ScaleX, ScaleY;
         float MaxXValue, MaxYValue;
         float vtx[3];
