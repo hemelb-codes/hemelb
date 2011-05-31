@@ -83,12 +83,12 @@ namespace hemelb
          */
         void RequestComms()
         {
-          const unsigned long iCycleNumber = Get0IndexedIterationNumber();
+          const unsigned long currentIt = base::mSimState->GetTimeStepsPassed();
           const unsigned long firstAscent = base::GetFirstAscending();
           const unsigned long firstDescent = base::GetFirstDescending();
           const unsigned long traversalLength = base::GetTraverseTime();
 
-          for (dequeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
+          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {
             unsigned long progress = currentIt - *it;
 
@@ -137,7 +137,7 @@ namespace hemelb
 
           // Use this time to clear out the array. We do this once every iteration so it
           // suffices to get rid of one value.
-          for (dequeType::iterator it = startIterations.begin(); it != startIterations.end(); it++)
+          for (storeType::iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {
             if (*it == searchValue)
             {
@@ -157,7 +157,7 @@ namespace hemelb
           // The only thing to do while waiting is the initial action.
           if (initAction)
           {
-            for (dequeType::const_iterator it = startIterations.begin(); it
+            for (storeType::const_iterator it = startIterations.begin(); it
                 != startIterations.end(); it++)
             {
               if (*it == base::mSimState->GetTimeStepsPassed())
@@ -179,7 +179,7 @@ namespace hemelb
           const unsigned long cycleLength = base::GetRoundTripLength();
           const unsigned long currentIt = base::mSimState->GetTimeStepsPassed();
 
-          for (dequeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
+          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {
             const unsigned long progress = currentIt - *it;
 
