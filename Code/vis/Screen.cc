@@ -94,7 +94,7 @@ namespace hemelb
 
     bool Screen::MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress)
     {
-      for (unsigned int i = 0; i < pixelCountInBuffer; i++)
+      for (unsigned int i = 0; i < pixels.pixelCount; i++)
       {
         if (pixels.pixels[i].IsRT() && int (pixels.pixels[i].GetI()) == mouseX
             && int (pixels.pixels[i].GetJ()) == mouseY)
@@ -111,7 +111,7 @@ namespace hemelb
 
     unsigned int Screen::GetPixelCount() const
     {
-      return pixelCountInBuffer;
+      return pixels.pixelCount;
     }
 
     const float* Screen::GetVtx() const

@@ -7,7 +7,7 @@
 #include "lb/SimulationState.h"
 
 #include "net/net.h"
-#include "net/PhasedBroadcastRegular.h"
+#include "net/PhasedBroadcastIrregular.h"
 
 #include "vis/DomainStats.h"
 #include "vis/Screen.h"
@@ -29,7 +29,7 @@ namespace hemelb
 
     // Class to control and use the effects of different visualisation
     // methods.
-    class Control : net::PhasedBroadcastRegular<true, 2, 0, false, true>
+    class Control : net::PhasedBroadcastIrregular<true, 2, 0, false, true>
     {
       public:
         Control(lb::StressTypes iStressType,
@@ -71,7 +71,9 @@ namespace hemelb
         VisSettings mVisSettings;
 
       private:
-        typedef net::PhasedBroadcastRegular<true, 2, 0, false, true> base;
+        typedef net::PhasedBroadcastIrregular<true, 2, 0, false, true> base;
+        typedef net::PhasedBroadcast<true, 2, 0, false, true> deepbase;
+        typedef std::map<unsigned long, ScreenPixels*> mapType;
 
         static const unsigned int SPREADFACTOR = 3;
 

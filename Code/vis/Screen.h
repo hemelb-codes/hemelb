@@ -72,7 +72,6 @@ namespace hemelb
         float UnitVectorProjectionY[3];
 
         ScreenPixels pixels;
-        unsigned int pixelCountInBuffer; // number received?
     };
   }
 }

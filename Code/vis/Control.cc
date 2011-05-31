@@ -17,7 +17,7 @@ namespace hemelb
                      net::Net* net,
                      lb::SimulationState* simState,
                      geometry::LatticeData* iLatDat) :
-      net::PhasedBroadcastRegular<true, 2, 0, false, true>(net, simState, SPREADFACTOR)
+      net::PhasedBroadcastIrregular<true, 2, 0, false, true>(net, simState, SPREADFACTOR)
     {
       mVisSettings.mStressType = iStressType;
 
@@ -295,9 +295,7 @@ namespace hemelb
         }
       }
 
-      mScreen.pixelCountInBuffer = mScreen.pixels.pixelCount;
-
-      for (unsigned int m = 0; m < mScreen.pixelCountInBuffer; m++)
+      for (unsigned int m = 0; m < mScreen.pixels.pixelCount; m++)
       {
         mScreen.pixels.pixelId[mScreen.pixels.pixels[m].GetI() * mScreen.GetPixelsY()
             + mScreen.pixels.pixels[m].GetJ()] = -1;
