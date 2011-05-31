@@ -13,14 +13,13 @@ namespace hemelb
   {
     class Screen
     {
-      friend class Control;
+        friend class Control;
 
       public:
         Screen();
         ~Screen();
 
-        void
-        AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
+        void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
         void RenderLine(const float endPoint1[3],
                         const float endPoint2[3],
                         const VisSettings* visSettings);
@@ -57,13 +56,9 @@ namespace hemelb
         int GetPixelsX() const;
         int GetPixelsY() const;
 
+        const ScreenPixels* GetPixels() const;
+
         bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
-
-        void WritePixelCount(io::Writer* writer);
-
-        void WritePixels(const DomainStats* domainStats,
-                         const VisSettings* visSettings,
-                         io::Writer* writer);
 
         unsigned int GetPixelCount() const;
 
