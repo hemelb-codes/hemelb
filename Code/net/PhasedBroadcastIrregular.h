@@ -1,7 +1,7 @@
 #ifndef HEMELB_NET_PHASEDBROADCASTIRREGULAR_H
 #define HEMELB_NET_PHASEDBROADCASTIRREGULAR_H
 
-#include <queue>
+#include <list>
 
 #include "net/PhasedBroadcast.h"
 
@@ -19,6 +19,7 @@ namespace hemelb
     {
         // Typedef for the base class's type
         typedef PhasedBroadcast<initAction, splay, ovrlp, down, up> base;
+        typedef std::list<unsigned long> storeType;
 
       public:
         /**
@@ -34,7 +35,7 @@ namespace hemelb
                                  unsigned int spreadFactor) :
           base(iNet, iSimState, spreadFactor)
         {
-
+          performInstantBroadcast = false;
         }
 
         /**
@@ -43,18 +44,35 @@ namespace hemelb
          *
          * @return
          */
-        unsigned int Start()
+        unsigned long Start()
         {
-          unsigned int currentTimeStep = base::mSimState->GetTimeStepsPassed();
-          if (!startIterations.empty() && startIterations.back() == currentTimeStep)
+          unsigned long currentTimeStep = base::mSimState->GetTimeStepsPassed();
+          unsigned long finishTime = currentTimeStep + base::GetRoundTripLength() - 1;
+
+          // If it's going to take longer than is available for the simulation, assume the
+          // implementing class will do its thing instantaneously this iteration.
+          if (finishTime > base::mSimState->GetTotalTimeSteps())
           {
-            startIterations.push_back(currentTimeStep);
+            performInstantBroadcast = true;
+            return currentTimeStep;
           }
-          return currentTimeStep + base::GetRoundTripLength() - 1;
+          else
+          {
+            if (startIterations.empty() || startIterations.back() != currentTimeStep)
+            {
+              startIterations.push_back(currentTimeStep);
+            }
+
+            return finishTime;
+          }
         }
 
         virtual void Reset()
         {
+          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
+          {
+            ClearOut(*it);
+          }
           startIterations.clear();
 
           base::Reset();
@@ -65,50 +83,67 @@ namespace hemelb
          */
         void RequestComms()
         {
-          const unsigned int iCycleNumber = Get0IndexedIterationNumber();
-          const unsigned int firstAscent = base::GetFirstAscending();
-          const unsigned int firstDescent = base::GetFirstDescending();
-          const unsigned int traversalLength = base::GetTraverseTime();
+          const unsigned long iCycleNumber = Get0IndexedIterationNumber();
+          const unsigned long firstAscent = base::GetFirstAscending();
+          const unsigned long firstDescent = base::GetFirstDescending();
+          const unsigned long traversalLength = base::GetTraverseTime();
 
-          // Nothing to do for initial action case.
-
-          // Next, deal with the case of a cycle with an initial pass down the tree.
-          if (down)
+          for (dequeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {
-            if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
+            unsigned long progress = currentIt - *it;
+
+            // Next, deal with the case of a cycle with an initial pass down the tree.
+            if (down)
             {
-              unsigned int sendOverlap;
-              unsigned int receiveOverlap;
-
-              if (base::GetSendChildrenOverlap(iCycleNumber - firstDescent, &sendOverlap))
+              if (progress >= firstDescent && progress < firstAscent)
               {
-                ProgressToChildren(sendOverlap);
+                unsigned long sendOverlap;
+                unsigned long receiveOverlap;
+
+                if (base::GetSendChildrenOverlap(progress - firstDescent, &sendOverlap))
+                {
+                  ProgressToChildren(*it, sendOverlap);
+                }
+
+                if (base::GetReceiveParentOverlap(progress - firstDescent, &receiveOverlap))
+                {
+                  ProgressFromParent(*it, receiveOverlap);
+                }
               }
+            }
 
-              if (base::GetReceiveParentOverlap(iCycleNumber - firstDescent, &receiveOverlap))
+            // Now deal with the case of a pass up the tree.
+            if (up)
+            {
+              if (progress >= firstAscent)
               {
-                ProgressFromParent(receiveOverlap);
+                unsigned long sendOverlap;
+                unsigned long receiveOverlap;
+
+                if (base::GetSendParentOverlap(progress - firstAscent, &sendOverlap))
+                {
+                  ProgressToParent(*it, sendOverlap);
+                }
+
+                if (base::GetReceiveChildrenOverlap(progress - firstAscent, &receiveOverlap))
+                {
+                  ProgressFromChildren(*it, receiveOverlap);
+                }
               }
             }
           }
 
-          // Now deal with the case of a pass up the tree.
-          if (up)
+          unsigned long searchValue = currentIt - base::GetRoundTripLength() - 1;
+
+          // Use this time to clear out the array. We do this once every iteration so it
+          // suffices to get rid of one value.
+          for (dequeType::iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {
-            if (iCycleNumber >= firstAscent)
+            if (*it == searchValue)
             {
-              unsigned int sendOverlap;
-              unsigned int receiveOverlap;
-
-              if (base::GetSendParentOverlap(iCycleNumber - firstAscent, &sendOverlap))
-              {
-                ProgressToParent(sendOverlap);
-              }
-
-              if (base::GetReceiveChildrenOverlap(iCycleNumber - firstAscent, &receiveOverlap))
-              {
-                ProgressFromChildren(receiveOverlap);
-              }
+              ClearOut(searchValue);
+              startIterations.erase(it);
+              break;
             }
           }
         }
@@ -122,9 +157,13 @@ namespace hemelb
           // The only thing to do while waiting is the initial action.
           if (initAction)
           {
-            if (Get0IndexedIterationNumber() == 0)
+            for (dequeType::const_iterator it = startIterations.begin(); it
+                != startIterations.end(); it++)
             {
-              InitialAction();
+              if (*it == base::mSimState->GetTimeStepsPassed())
+              {
+                InitialAction(*it);
+              }
             }
           }
         }
@@ -135,77 +174,65 @@ namespace hemelb
          */
         void PostReceive()
         {
-          const unsigned int iCycleNumber = Get0IndexedIterationNumber();
-          const unsigned int firstAscent =
-              PhasedBroadcast<initAction, splay, ovrlp, down, up>::GetFirstAscending();
-          const unsigned int traversalLength =
-              PhasedBroadcast<initAction, splay, ovrlp, down, up>::GetTraverseTime();
-          const unsigned int cycleLength =
-              PhasedBroadcast<initAction, splay, ovrlp, down, up>::GetRoundTripLength();
+          const unsigned long firstAscent = base::GetFirstAscending();
+          const unsigned long traversalLength = base::GetTraverseTime();
+          const unsigned long cycleLength = base::GetRoundTripLength();
+          const unsigned long currentIt = base::mSimState->GetTimeStepsPassed();
 
-          // Deal with the case of a cycle with an initial pass down the tree.
-          if (down)
+          for (dequeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
           {
-            const unsigned int firstDescent =
-                PhasedBroadcast<initAction, splay, ovrlp, down, up>::GetFirstDescending();
+            const unsigned long progress = currentIt - *it;
 
-            if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
+            // Deal with the case of a cycle with an initial pass down the tree.
+            if (down)
             {
-              unsigned int receiveOverlap;
+              const unsigned long firstDescent = base::GetFirstDescending();
 
-              if (base::GetReceiveParentOverlap(iCycleNumber - firstDescent, &receiveOverlap))
+              if (progress >= firstDescent && progress < firstAscent)
               {
-                PostReceiveFromParent(receiveOverlap);
-              }
+                unsigned long receiveOverlap;
 
-              // If we're halfway through the programme, all top-down changes have occurred and
-              // can be applied on all nodes at once safely.
-              if ( (iCycleNumber - firstDescent) == (traversalLength - 1))
-              {
-                Effect();
+                if (base::GetReceiveParentOverlap(progress - firstDescent, &receiveOverlap))
+                {
+                  PostReceiveFromParent(*it, receiveOverlap);
+                }
+
+                // If we're halfway through the programme, all top-down changes have occurred and
+                // can be applied on all nodes at once safely.
+                if (progress == (traversalLength - 1))
+                {
+                  Effect(currentIt);
+                }
               }
+            }
+
+            // Deal with the case of a pass up the tree.
+            if (up)
+            {
+              if (progress >= firstAscent && progress < cycleLength)
+              {
+                unsigned long receiveOverlap;
+
+                if (base::GetReceiveChildrenOverlap(progress - firstAscent, &receiveOverlap))
+                {
+                  PostReceiveFromChildren(*it, receiveOverlap);
+                }
+              }
+            }
+
+            // If this node is the root of the tree and we've just finished the upwards half, it
+            // must act.
+            if (progress == (base::GetRoundTripLength() - 1)
+                && topology::NetworkTopology::Instance()->GetLocalRank() == 0)
+            {
+              TopNodeAction(*it);
             }
           }
 
-          // Deal with the case of a pass up the tree.
-          if (up)
+          if (performInstantBroadcast)
           {
-            if (iCycleNumber >= firstAscent)
-            {
-              unsigned int receiveOverlap;
-
-              if (base::GetReceiveChildrenOverlap(iCycleNumber - firstAscent, &receiveOverlap))
-              {
-                PostReceiveFromChildren(receiveOverlap);
-              }
-            }
-          }
-
-          // If this node is the root of the tree and we've just finished the upwards half, it
-          // must act.
-          if (iCycleNumber == (base::GetRoundTripLength() - 1)
-              && topology::NetworkTopology::Instance()->GetLocalRank() == 0)
-          {
-            TopNodeAction();
-          }
-        }
-
-        /**
-         * Returns the number of the iteration, as an integer between inclusive-0 and
-         * exclusive-2 * (the tree depth)
-         */
-        unsigned long Get0IndexedIterationNumber() const
-        {
-          if (base::GetTreeDepth() > 0)
-          {
-            unsigned long stepsPassed = (base::mSimState->CycleId - 1)
-                * base::mSimState->TimeStepsPerCycle + base::mSimState->TimeStep - 1;
-
-            return stepsPassed % base::GetRoundTripLength();
-          }
-          else
-          {
-            return 0;
+            InstantBroadcast(currentIt);
+            performInstantBroadcast = false;
           }
         }
 
@@ -214,7 +241,7 @@ namespace hemelb
          * Overridable function for the initial action performed by a node at the beginning of the
          * cycle. Only has an effect if the template paramter initialAction is true.
          */
-        virtual void InitialAction()
+        virtual void InitialAction(unsigned long startIteration)
         {
 
         }
@@ -225,7 +252,7 @@ namespace hemelb
          * Use ReceiveFromChildren to do this. The parameter splayNumber is 0 indexed and less
          * than splay.
          */
-        virtual void ProgressFromChildren(unsigned int splayNumber)
+        virtual void ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber)
         {
 
         }
@@ -236,7 +263,7 @@ namespace hemelb
          * Use ReceiveFromParent to do this. The parameter splayNumber is 0 indexed and less
          * than splay.
          */
-        virtual void ProgressFromParent(unsigned int splayNumber)
+        virtual void ProgressFromParent(unsigned long startIteration, unsigned long splayNumber)
         {
 
         }
@@ -247,7 +274,7 @@ namespace hemelb
          * Use SendToChildren to do this. The parameter splayNumber is 0 indexed and less
          * than splay.
          */
-        virtual void ProgressToChildren(unsigned int splayNumber)
+        virtual void ProgressToChildren(unsigned long startIteration, unsigned long splayNumber)
         {
 
         }
@@ -258,7 +285,7 @@ namespace hemelb
          * Use SendToParent to do this. The parameter splayNumber is 0 indexed and less
          * than splay.
          */
-        virtual void ProgressToParent(unsigned int splayNumber)
+        virtual void ProgressToParent(unsigned long startIteration, unsigned long splayNumber)
         {
 
         }
@@ -267,7 +294,8 @@ namespace hemelb
          * Overridable function, called by a node after data has been received from its children.
          * The parameter splayNumber is 0 indexed and less than splay.
          */
-        virtual void PostReceiveFromChildren(unsigned int splayNumber)
+        virtual void PostReceiveFromChildren(unsigned long startIteration,
+                                             unsigned long splayNumber)
         {
 
         }
@@ -276,7 +304,7 @@ namespace hemelb
          * Overridable function, called by a node after data has been received from its parent. The
          * parameter splayNumber is 0 indexed and less than splay.
          */
-        virtual void PostReceiveFromParent(unsigned int splayNumber)
+        virtual void PostReceiveFromParent(unsigned long startIteration, unsigned long splayNumber)
         {
 
         }
@@ -284,7 +312,7 @@ namespace hemelb
         /**
          * Action taken when upwards-travelling data reaches the top node.
          */
-        virtual void TopNodeAction()
+        virtual void TopNodeAction(unsigned long startIteration)
         {
 
         }
@@ -292,13 +320,30 @@ namespace hemelb
         /**
          * Action taken by all nodes when downwards-travelling data has been sent to every node.
          */
-        virtual void Effect()
+        virtual void Effect(unsigned long startIteration)
+        {
+
+        }
+
+        /**
+         * For the case where we don't have enough iterations for a phased broadcast to complete.
+         */
+        virtual void InstantBroadcast(unsigned long startIteration)
+        {
+
+        }
+
+        /**
+         * For clearing out the results of an iteration after completion.
+         */
+        virtual void ClearOut(unsigned long startIteration)
         {
 
         }
 
       private:
-        queue<unsigned int> startIterations;
+        storeType startIterations;
+        bool performInstantBroadcast;
     };
   }
 }
