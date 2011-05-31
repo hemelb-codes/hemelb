@@ -171,7 +171,138 @@ namespace hemelb
         myStreaker->render(iLatDat);
       }
 #endif
-      mScreen.CompositeImage(&mVisSettings);
+
+      CompositeImage();
+    }
+
+    void Control::CompositeImage()
+    {
+      // Status object for MPI comms.
+      MPI_Status status;
+
+      /*
+       * We do several iterations.
+       *
+       * On the first, every even proc passes data to the odd proc below, where it is merged.
+       * On the second, the difference is two, so proc 3 passes to 1, 7 to 5, 11 to 9 etc.
+       * On the third the differenec is four, so proc 5 passes to 1, 13 to 9 etc.
+       * .
+       * .
+       * .
+       *
+       * This continues until all data is passed back to processor one, which passes it to proc 0.
+       */
+
+      topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
+
+      // Start with a difference in rank of 1, doubling every time.
+      for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
+      {
+        // The receiving proc is all the ranks that are 1 modulo (deltaRank * 2)
+        for (proc_t receivingProc = 1; receivingProc < (netTop->GetProcessorCount() - deltaRank); receivingProc
+            += deltaRank << 1)
+        {
+          proc_t sendingProc = receivingProc + deltaRank;
+
+          // If we're the sending proc, do the send.
+          if (netTop->GetLocalRank() == sendingProc)
+          {
+            MPI_Send(&mScreen.pixels.pixelCount,
+                     1,
+                     MpiDataType(mScreen.pixels.pixelCount),
+                     receivingProc,
+                     20,
+                     MPI_COMM_WORLD);
+
+            if (mScreen.pixels.pixelCount > 0)
+            {
+              MPI_Send(mScreen.pixels.pixels,
+                       mScreen.pixels.pixelCount,
+                       MpiDataType<ColPixel> (),
+                       receivingProc,
+                       20,
+                       MPI_COMM_WORLD);
+            }
+          }
+
+          // If we're the receiving proc, receive.
+          else if (netTop->GetLocalRank() == receivingProc)
+          {
+            MPI_Recv(&recvBuffers.pixelCount,
+                     1,
+                     MpiDataType(recvBuffers.pixelCount),
+                     sendingProc,
+                     20,
+                     MPI_COMM_WORLD,
+                     &status);
+
+            if (recvBuffers.pixelCount > 0)
+            {
+              MPI_Recv(recvBuffers.pixels,
+                       recvBuffers.pixelCount,
+                       MpiDataType<ColPixel> (),
+                       sendingProc,
+                       20,
+                       MPI_COMM_WORLD,
+                       &status);
+            }
+
+            mScreen.pixels.FoldIn(&recvBuffers, &mVisSettings);
+          }
+        }
+      }
+
+      // Send the final image from proc 1 to 0.
+      if (netTop->GetLocalRank() == 1)
+      {
+        MPI_Send(&mScreen.pixels.pixelCount,
+                 1,
+                 MpiDataType(mScreen.pixels.pixelCount),
+                 0,
+                 20,
+                 MPI_COMM_WORLD);
+
+        if (mScreen.pixels.pixelCount > 0)
+        {
+          MPI_Send(mScreen.pixels.pixels,
+                   mScreen.pixels.pixelCount,
+                   MpiDataType<ColPixel> (),
+                   0,
+                   20,
+                   MPI_COMM_WORLD);
+        }
+
+      }
+      // Receive the final image on proc 0.
+      else if (netTop->GetLocalRank() == 0)
+      {
+        MPI_Recv(&mScreen.pixels.pixelCount,
+                 1,
+                 MpiDataType(mScreen.pixels.pixelCount),
+                 1,
+                 20,
+                 MPI_COMM_WORLD,
+                 &status);
+
+        if (mScreen.pixels.pixelCount > 0)
+        {
+          MPI_Recv(mScreen.pixels.pixels,
+                   mScreen.pixels.pixelCount,
+                   MpiDataType<ColPixel> (),
+                   1,
+                   20,
+                   MPI_COMM_WORLD,
+                   &status);
+        }
+      }
+
+      mScreen.pixelCountInBuffer = mScreen.pixels.pixelCount;
+
+      for (unsigned int m = 0; m < mScreen.pixelCountInBuffer; m++)
+      {
+        mScreen.pixels.pixelId[mScreen.pixels.pixels[m].GetI() * mScreen.GetPixelsY()
+            + mScreen.pixels.pixels[m].GetJ()] = -1;
+      }
     }
 
     void Control::WriteImage(std::string image_file_name)
@@ -215,6 +346,8 @@ namespace hemelb
     void Control::Reset()
     {
       myStreaker->Restart();
+
+      base::Reset();
     }
 
     Control::~Control()

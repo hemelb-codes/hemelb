@@ -13,6 +13,8 @@ namespace hemelb
   {
     class Screen
     {
+      friend class Control;
+
       public:
         Screen();
         ~Screen();
@@ -55,11 +57,6 @@ namespace hemelb
         int GetPixelsX() const;
         int GetPixelsY() const;
 
-        static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
-
-        void
-        CompositeImage(const VisSettings* visSettings);
-
         bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
 
         void WritePixelCount(io::Writer* writer);
@@ -80,7 +77,6 @@ namespace hemelb
         float UnitVectorProjectionY[3];
 
         ScreenPixels pixels;
-        ScreenPixels compositingBuffer;
         unsigned int pixelCountInBuffer; // number received?
     };
   }
