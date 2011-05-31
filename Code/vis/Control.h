@@ -32,7 +32,10 @@ namespace hemelb
     class Control : net::PhasedBroadcastRegular<true, 2, 0, false, true>
     {
       public:
-        Control(lb::StressTypes iStressType, net::Net* net, lb::SimulationState* simState, geometry::LatticeData* iLatDat);
+        Control(lb::StressTypes iStressType,
+                net::Net* net,
+                lb::SimulationState* simState,
+                geometry::LatticeData* iLatDat);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
@@ -69,6 +72,8 @@ namespace hemelb
         VisSettings mVisSettings;
 
       private:
+        typedef net::PhasedBroadcastRegular<true, 2, 0, false, true> base;
+
         static const unsigned int SPREADFACTOR = 3;
 
         struct Vis
@@ -78,6 +83,9 @@ namespace hemelb
         };
 
         void initLayers(geometry::LatticeData* iLatDat);
+        void CompositeImage();
+
+        ScreenPixels recvBuffers;
 
         Vis* vis;
         RayTracer *myRayTracer;
