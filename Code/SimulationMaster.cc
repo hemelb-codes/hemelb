@@ -8,6 +8,7 @@
 #include "util/fileutils.h"
 #include "log/Logger.h"
 
+#include <map>
 #include <limits>
 #include <stdlib.h>
 
