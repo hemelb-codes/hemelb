@@ -29,6 +29,7 @@ namespace hemelb
          */
         void Reset();
 
+        bool readyForNextImage;
         bool updatedMouseCoords;
 
       protected:

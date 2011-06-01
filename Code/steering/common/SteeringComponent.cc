@@ -90,6 +90,7 @@ namespace hemelb
 
     void SteeringComponent::Reset()
     {
+      readyForNextImage = false;
       isConnected = false;
       updatedMouseCoords = false;
 

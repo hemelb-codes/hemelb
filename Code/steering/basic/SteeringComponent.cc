@@ -40,14 +40,11 @@ namespace hemelb
     void SteeringComponent::TopNodeAction()
     {
       /*
-       * The final steering parameter is DoRendering, which is true if we're connected and not in
-       * the middle of sending another image, OR if we're writing an image file. Get that out of
-       * the way early on.
+       * The final steering parameter is DoRendering, which is true if we're connected and ready
+       * for the next frame.
        */
       {
-        privateSteeringParams[STEERABLE_PARAMETERS] = (float) ( (isConnected)
-            || (mSimState->GetTimeStep() % imagesPeriod < GetRoundTripLength()));
-
+        privateSteeringParams[STEERABLE_PARAMETERS] = (float) (isConnected && readyForNextImage);
       }
 
       // Create a buffer for the data received.
