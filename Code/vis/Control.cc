@@ -2,6 +2,7 @@
 #include <math.h>
 #include <limits>
 
+#include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
 #include "vis/RayTracer.h"
@@ -17,7 +18,8 @@ namespace hemelb
                      net::Net* net,
                      lb::SimulationState* simState,
                      geometry::LatticeData* iLatDat) :
-      net::PhasedBroadcastIrregular<true, 2, 0, false, true>(net, simState, SPREADFACTOR)
+      net::PhasedBroadcastIrregular<true, 2, 0, false, true>(net, simState, SPREADFACTOR),
+          mLatDat(iLatDat)
     {
       mVisSettings.mStressType = iStressType;
 
@@ -33,10 +35,10 @@ namespace hemelb
       mVisSettings.mouse_x = -1;
       mVisSettings.mouse_y = -1;
 
-      initLayers(iLatDat);
+      initLayers();
     }
 
-    void Control::initLayers(geometry::LatticeData* iLatDat)
+    void Control::initLayers()
     {
       // We don't have all the minima / maxima on one core, so we have to gather them.
       // NOTE this only happens once, during initialisation, otherwise it would be
@@ -50,15 +52,15 @@ namespace hemelb
 
       site_t n = -1;
 
-      for (site_t i = 0; i < iLatDat->GetXBlockCount(); i++)
+      for (site_t i = 0; i < mLatDat->GetXBlockCount(); i++)
       {
-        for (site_t j = 0; j < iLatDat->GetYBlockCount(); j++)
+        for (site_t j = 0; j < mLatDat->GetYBlockCount(); j++)
         {
-          for (site_t k = 0; k < iLatDat->GetZBlockCount(); k++)
+          for (site_t k = 0; k < mLatDat->GetZBlockCount(); k++)
           {
             n++;
 
-            geometry::LatticeData::BlockData * lBlock = iLatDat->GetBlock(n);
+            geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock(n);
             if (lBlock->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
@@ -88,15 +90,15 @@ namespace hemelb
       MPI_Allreduce(localMins, mins, 3, MpiDataType<site_t> (), MPI_MIN, MPI_COMM_WORLD);
       MPI_Allreduce(localMaxes, maxes, 3, MpiDataType<site_t> (), MPI_MAX, MPI_COMM_WORLD);
 
-      mVisSettings.ctr_x = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[0] + maxes[0]));
-      mVisSettings.ctr_y = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[1] + maxes[1]));
-      mVisSettings.ctr_z = 0.5F * (float) (iLatDat->GetBlockSize() * (mins[2] + maxes[2]));
+      mVisSettings.ctr_x = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[0] + maxes[0]));
+      mVisSettings.ctr_y = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[1] + maxes[1]));
+      mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
-      myRayTracer = new RayTracer(iLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
-      myGlypher = new GlyphDrawer(iLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
+      myRayTracer = new RayTracer(mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
+      myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(iLatDat, &mScreen, &mViewpoint, &mVisSettings);
+      myStreaker = new StreaklineDrawer(mLatDat, &mScreen, &mViewpoint, &mVisSettings);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -154,7 +156,7 @@ namespace hemelb
       mScreen.Resize(pixels_x, pixels_y);
     }
 
-    void Control::Render(geometry::LatticeData* iLatDat)
+    void Control::Render()
     {
       mScreen.Reset();
 
@@ -168,11 +170,50 @@ namespace hemelb
       if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
           == VisSettings::WALLANDSTREAKLINES)
       {
-        myStreaker->render(iLatDat);
+        myStreaker->render(mLatDat);
       }
 #endif
 
       CompositeImage();
+    }
+
+    void Control::ClearOut(unsigned long startIt)
+    {
+      bool found;
+
+      do
+      {
+        found = false;
+
+        if (resultsByStartIt.size() > 0)
+        {
+          mapType::iterator it = resultsByStartIt.begin();
+          if (it->first <= startIt)
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
+                                                          it->first);
+
+            delete it->second;
+            resultsByStartIt.erase(it);
+            found = true;
+          }
+        }
+      }
+      while (found);
+    }
+
+    const ScreenPixels* Control::GetResult(unsigned long startIt)
+    {
+      log::Logger::Log<log::Debug, log::OnePerCore>("Getting image results from it %lu", startIt);
+
+      if (resultsByStartIt.count(startIt) != 0)
+      {
+        return resultsByStartIt[startIt];
+      }
+      else
+      {
+        return NULL;
+      }
     }
 
     void Control::CompositeImage()
@@ -293,6 +334,12 @@ namespace hemelb
                    MPI_COMM_WORLD,
                    &status);
         }
+
+        resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(base::mSimState->GetTimeStepsPassed(),
+                                                                        new ScreenPixels(*mScreen.GetPixels())));
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.",
+                                                      base::mSimState->GetTimeStepsPassed());
       }
 
       for (unsigned int m = 0; m < mScreen.pixels.pixelCount; m++)
@@ -318,11 +365,9 @@ namespace hemelb
       return mScreen.MouseIsOverPixel(mVisSettings.mouse_x, mVisSettings.mouse_y, density, stress);
     }
 
-    void Control::ProgressStreaklines(unsigned long time_step,
-                                      unsigned long period,
-                                      geometry::LatticeData* iLatDat)
+    void Control::ProgressStreaklines(unsigned long time_step, unsigned long period)
     {
-      myStreaker ->StreakLines(time_step, period, iLatDat);
+      myStreaker ->StreakLines(time_step, period, mLatDat);
     }
 
     void Control::Reset()
@@ -344,4 +389,5 @@ namespace hemelb
     }
 
   } // namespace vis
-} // namespace hemelb
+}
+// namespace hemelb

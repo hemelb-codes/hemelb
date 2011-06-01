@@ -55,17 +55,18 @@ namespace hemelb
 
         bool MouseIsOverPixel(float* density, float* stress);
 
-        void ProgressStreaklines(unsigned long time_step,
-                                 unsigned long period,
-                                 geometry::LatticeData* iLatDat);
+        void ProgressStreaklines(unsigned long time_step, unsigned long period);
         void Reset();
 
         void UpdateImageSize(int pixels_x, int pixels_y);
-        void Render(geometry::LatticeData* iLatDat);
+        void Render();
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
 
-        Screen mScreen;
+        void ClearOut(unsigned long startIt);
+
+        const ScreenPixels* GetResult(unsigned long startIteration);
+
         Viewpoint mViewpoint;
         DomainStats mDomainStats;
         VisSettings mVisSettings;
@@ -83,11 +84,14 @@ namespace hemelb
             float system_size;
         };
 
-        void initLayers(geometry::LatticeData* iLatDat);
+        void initLayers();
         void CompositeImage();
 
         ScreenPixels recvBuffers[SPREADFACTOR];
 
+        std::map<unsigned long, ScreenPixels*> resultsByStartIt;
+        geometry::LatticeData* mLatDat;
+        Screen mScreen;
         Vis* vis;
         RayTracer *myRayTracer;
         GlyphDrawer *myGlypher;
