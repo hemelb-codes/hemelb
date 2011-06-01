@@ -235,10 +235,14 @@ void SimulationMaster::RunSimulation(double iStartTime,
   bool is_finished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
 
+  std::multimap<unsigned long, unsigned long> snapshotsCompleted;
+  std::multimap<unsigned long, unsigned long> networkImagesCompleted;
+
   std::vector<hemelb::net::IteratedAction*> actors;
   actors.push_back(mLbm);
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
+  actors.push_back(mVisControl);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
@@ -412,17 +416,12 @@ void SimulationMaster::RunSimulation(double iStartTime,
         }
         steeringCpt->updatedMouseCoords = false;
       }
-
-      if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-      {
-        imageSendCpt->isFrameReady = true;
-      }
     }
 
     if (render_for_network_stream
         && hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
-      imageSendCpt->DoWork();
+      imageSendCpt->DoWork(mVisControl->mScreen.GetPixels());
     }
 
     if (write_snapshot_image)

@@ -24,7 +24,7 @@ namespace hemelb
 
       // Suppress signals from a broken pipe.
       signal(SIGPIPE, SIG_IGN);
-      isFrameReady = false;
+
       isConnected = false;
       lastRender = 0.0;
     }
@@ -36,14 +36,8 @@ namespace hemelb
 
     // This is original code with minimal tweaks to make it work with
     // the new (Feb 2011) structure.
-    void ImageSendComponent::DoWork(void)
+    void ImageSendComponent::DoWork(const vis::ScreenPixels* pix)
     {
-      // If no frame is ready for sending, return.
-      if (!isFrameReady)
-      {
-        return;
-      }
-
       isConnected = mNetwork->IsConnected();
 
       if (!isConnected)
@@ -56,15 +50,13 @@ namespace hemelb
       unsigned int initialPosition = imageWriter.getCurrentStreamPosition();
 
       // Write the dimensions of the image, in terms of pixel count.
-      imageWriter << mVisControl->mScreen.GetPixelsX() << mVisControl->mScreen.GetPixelsY();
+      imageWriter << pix->GetPixelsX() << pix->GetPixelsY();
 
       // Write the length of the pixel data
-      imageWriter << (int) (mVisControl->mScreen.GetPixelCount() * bytes_per_pixel_data);
+      imageWriter << (int) (pix->pixelCount * bytes_per_pixel_data);
 
       // Write the pixels themselves
-      mVisControl->mScreen.GetPixels()->WritePixels(&imageWriter,
-                                                    &mVisControl->mDomainStats,
-                                                    &mVisControl->mVisSettings);
+      pix->WritePixels(&imageWriter, &mVisControl->mDomainStats, &mVisControl->mVisSettings);
 
       // Write the numerical data from the simulation, wanted by the client.
       {
@@ -86,8 +78,6 @@ namespace hemelb
 
       // Send to the client.
       mNetwork->send_all(xdrSendBuffer, imageWriter.getCurrentStreamPosition() - initialPosition);
-
-      isFrameReady = false;
     }
 
     bool ImageSendComponent::ShouldRenderNewNetworkImage()
@@ -111,7 +101,6 @@ namespace hemelb
         }
         else
         {
-          // TODO this isn't ideal. Change it.
           lastRender = frameTimeStart;
           return true;
         }
