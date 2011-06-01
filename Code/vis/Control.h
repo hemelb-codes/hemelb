@@ -29,7 +29,7 @@ namespace hemelb
 
     // Class to control and use the effects of different visualisation
     // methods.
-    class Control : net::PhasedBroadcastIrregular<true, 2, 0, false, true>
+    class Control : public net::PhasedBroadcastIrregular<true, 2, 0, false, true>
     {
       public:
         Control(lb::StressTypes iStressType,

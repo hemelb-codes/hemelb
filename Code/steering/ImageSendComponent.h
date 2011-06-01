@@ -22,11 +22,10 @@ namespace hemelb
                            Network* iNetwork);
         ~ImageSendComponent();
 
-        void DoWork();
+        void DoWork(const vis::ScreenPixels* pix);
 
         bool ShouldRenderNewNetworkImage();
 
-        bool isFrameReady;
         bool isConnected;
         int send_array_length;
 
