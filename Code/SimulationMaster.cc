@@ -271,6 +271,7 @@ void SimulationMaster::RunSimulation(double iStartTime,
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       render_for_network_stream = imageSendCpt->ShouldRenderNewNetworkImage();
+      steeringCpt->readyForNextImage = render_for_network_stream;
     }
 
     /* for debugging purposes we want to ensure we capture the variables in a single
