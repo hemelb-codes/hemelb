@@ -227,25 +227,25 @@ namespace hemelb
           // If we're the receiving proc, receive.
           else if (netTop->GetLocalRank() == receivingProc)
           {
-            MPI_Recv(&recvBuffers.pixelCount,
+            MPI_Recv(&recvBuffers[0].pixelCount,
                      1,
-                     MpiDataType(recvBuffers.pixelCount),
+                     MpiDataType(recvBuffers[0].pixelCount),
                      sendingProc,
                      20,
                      MPI_COMM_WORLD,
                      &status);
 
-            if (recvBuffers.pixelCount > 0)
+            if (recvBuffers[0].pixelCount > 0)
             {
-              MPI_Recv(recvBuffers.pixels,
-                       recvBuffers.pixelCount,
+              MPI_Recv(recvBuffers[0].pixels,
+                       recvBuffers[0].pixelCount,
                        MpiDataType<ColPixel> (),
                        sendingProc,
                        20,
                        MPI_COMM_WORLD,
                        &status);
 
-              mScreen.pixels.FoldIn(&recvBuffers, &mVisSettings);
+              mScreen.pixels.FoldIn(&recvBuffers[0], &mVisSettings);
             }
           }
         }

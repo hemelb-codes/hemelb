@@ -86,7 +86,7 @@ namespace hemelb
         void initLayers(geometry::LatticeData* iLatDat);
         void CompositeImage();
 
-        ScreenPixels recvBuffers;
+        ScreenPixels recvBuffers[SPREADFACTOR];
 
         Vis* vis;
         RayTracer *myRayTracer;
