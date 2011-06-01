@@ -235,8 +235,10 @@ void SimulationMaster::RunSimulation(double iStartTime,
   bool is_finished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
 
-  std::multimap<unsigned long, unsigned long> snapshotsCompleted;
-  std::multimap<unsigned long, unsigned long> networkImagesCompleted;
+  typedef std::multimap<unsigned long, unsigned long> mapType;
+
+  mapType snapshotsCompleted;
+  mapType networkImagesCompleted;
 
   std::vector<hemelb::net::IteratedAction*> actors;
   actors.push_back(mLbm);
@@ -262,6 +264,8 @@ void SimulationMaster::RunSimulation(double iStartTime,
     if (write_snapshot_image)
     {
       mSimulationState->SetDoRendering(true);
+      snapshotsCompleted .insert(std::pair<unsigned long, unsigned long>(mSimulationState->GetTimeStepsPassed(),
+                                                                         mSimulationState->GetTimeStepsPassed()));
     }
 
     /* In the following two if blocks we do the core magic to ensure we only Render
@@ -290,6 +294,7 @@ void SimulationMaster::RunSimulation(double iStartTime,
     mLbm->UpdateBoundaryDensities(mSimulationState->GetTimeStep());
 
     // Cycle.
+
     {
       for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
           != actors.end(); ++it)
@@ -298,7 +303,6 @@ void SimulationMaster::RunSimulation(double iStartTime,
       }
 
       mNet.Receive();
-
       {
         double lPrePreSend = hemelb::util::myClock();
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
@@ -387,13 +391,19 @@ void SimulationMaster::RunSimulation(double iStartTime,
     double lPreImageTime = hemelb::util::myClock();
 
 #ifndef NO_STREAKLINES
-    mVisControl->ProgressStreaklines(mSimulationState->GetTimeStep(), mLbm->period, mLatDat);
+    mVisControl->ProgressStreaklines(mSimulationState->GetTimeStep(), mLbm->period);
 #endif
 
-    // If we're rendering for the network, or for an image to disk, render now.
-    if (mSimulationState->GetDoRendering() || write_snapshot_image)
+    if (mSimulationState->GetDoRendering())
     {
-      mVisControl->Render(mLatDat);
+      networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(mSimulationState->GetTimeStepsPassed(),
+                                                                            mSimulationState->GetTimeStepsPassed()));
+    }
+
+    // If we're rendering for the network, or for an image to disk, render now.
+    if (write_snapshot_image || mSimulationState->GetDoRendering())
+    {
+      mVisControl->Render();
     }
 
     if (mSimulationState->GetDoRendering())
@@ -419,14 +429,22 @@ void SimulationMaster::RunSimulation(double iStartTime,
       }
     }
 
-    if (render_for_network_stream
-        && hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
-      imageSendCpt->DoWork(mVisControl->mScreen.GetPixels());
+      while (networkImagesCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
+      {
+        mapType::iterator it = networkImagesCompleted.find(mSimulationState->GetTimeStepsPassed());
+
+        imageSendCpt->DoWork(mVisControl->GetResult(it->second));
+
+        networkImagesCompleted.erase(it);
+      }
     }
 
-    if (write_snapshot_image)
+    while (snapshotsCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
     {
+      mapType::iterator it = snapshotsCompleted.find(mSimulationState->GetTimeStepsPassed());
+
       mImagesWritten++;
 
       if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -437,10 +455,17 @@ void SimulationMaster::RunSimulation(double iStartTime,
         hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(image_directory
             + std::string(image_filename));
 
-        mVisControl->mScreen.GetPixels()->WriteImage(&writer,
-                                                     &mVisControl->mDomainStats,
-                                                     &mVisControl->mVisSettings);
+        mVisControl->GetResult(it->second)->WriteImage(&writer,
+                                                       &mVisControl->mDomainStats,
+                                                       &mVisControl->mVisSettings);
       }
+
+      snapshotsCompleted.erase(it);
+    }
+
+    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    {
+      mVisControl->ClearOut(mSimulationState->GetTimeStepsPassed());
     }
 
     double lPreSnapshotTime = hemelb::util::myClock();
