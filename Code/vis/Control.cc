@@ -174,7 +174,87 @@ namespace hemelb
       }
 #endif
 
-      CompositeImage();
+      log::Logger::Log<log::Debug, log::OnePerCore>("Rendering.");
+    }
+
+    void Control::InitialAction(unsigned long startIteration)
+    {
+      Render();
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("Render stored for phased imaging.");
+
+      resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(startIteration,
+                                                                      new ScreenPixels(*mScreen.GetPixels())));
+    }
+
+    void Control::ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber)
+    {
+      if (splayNumber == 0)
+      {
+        unsigned int* childNumbers[SPREADFACTOR];
+        unsigned int counts[SPREADFACTOR];
+        for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
+        {
+          recvBuffers[ii].pixelCount = 0;
+          childNumbers[ii] = &recvBuffers[ii].pixelCount;
+          counts[ii] = 1;
+        }
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel count.");
+
+        ReceiveFromChildren<unsigned int> (childNumbers, counts);
+      }
+      else if (splayNumber == 1)
+      {
+        ColPixel* childData[SPREADFACTOR];
+        unsigned int counts[SPREADFACTOR];
+        for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
+        {
+          childData[ii] = recvBuffers[ii].pixels;
+          counts[ii] = recvBuffers[ii].pixelCount;
+        }
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel data.");
+
+        ReceiveFromChildren<ColPixel> (childData, counts);
+      }
+    }
+
+    void Control::ProgressToParent(unsigned long startIteration, unsigned long splayNumber)
+    {
+      ScreenPixels* pixels = resultsByStartIt[startIteration];
+      if (splayNumber == 0)
+      {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count.");
+
+        SendToParent<unsigned int> (&pixels->pixelCount, 1);
+      }
+      else if (splayNumber == 1)
+      {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data.");
+
+        SendToParent<ColPixel> (pixels->pixels, pixels->pixelCount);
+      }
+    }
+
+    void Control::PostReceiveFromChildren(unsigned long startIteration, unsigned long splayNumber)
+    {
+      if (splayNumber == 1)
+      {
+        ScreenPixels* pixels = resultsByStartIt[startIteration];
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("Combining in child pixel data.");
+
+        for (unsigned int child = 0; child < SPREADFACTOR; ++child)
+        {
+          pixels->FoldIn(&recvBuffers[child], &mVisSettings);
+        }
+      }
+    }
+
+    bool Control::IsRendering() const
+    {
+      return IsInitialAction() || IsInstantBroadcast();
     }
 
     void Control::ClearOut(unsigned long startIt)
@@ -216,8 +296,12 @@ namespace hemelb
       }
     }
 
-    void Control::CompositeImage()
+    void Control::InstantBroadcast(unsigned long startIteration)
     {
+      log::Logger::Log<log::Debug, log::OnePerCore>("Performing instant imaging.");
+
+      Render();
+
       // Status object for MPI comms.
       MPI_Status status;
 
@@ -341,12 +425,6 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.",
                                                       base::mSimState->GetTimeStepsPassed());
       }
-
-      for (unsigned int m = 0; m < mScreen.pixels.pixelCount; m++)
-      {
-        mScreen.pixels.pixelId[mScreen.pixels.pixels[m].GetI() * mScreen.GetPixelsY()
-            + mScreen.pixels.pixels[m].GetJ()] = -1;
-      }
     }
 
     void Control::SetMouseParams(double iPhysicalPressure, double iPhysicalStress)
@@ -372,9 +450,13 @@ namespace hemelb
 
     void Control::Reset()
     {
+      log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
+
       myStreaker->Restart();
 
       base::Reset();
+
+      ClearOut(base::mSimState->GetTimeStepsPassed() + 1);
     }
 
     Control::~Control()

@@ -157,13 +157,9 @@ namespace hemelb
           // The only thing to do while waiting is the initial action.
           if (initAction)
           {
-            for (storeType::const_iterator it = startIterations.begin(); it
-                != startIterations.end(); it++)
+            if (IsInitialAction())
             {
-              if (*it == base::mSimState->GetTimeStepsPassed())
-              {
-                InitialAction(*it);
-              }
+              InitialAction(base::mSimState->GetTimeStepsPassed());
             }
           }
         }
@@ -237,6 +233,35 @@ namespace hemelb
         }
 
       protected:
+        /**
+         * Returns true if we are performing an instant broadcast on the current iteration.
+         *
+         * @return
+         */
+        bool IsInstantBroadcast() const
+        {
+          return performInstantBroadcast;
+        }
+
+        /**
+         * Returns true if we are performing the initial action for a phased broadcast on
+         * the current iteration.
+         *
+         * @return
+         */
+        bool IsInitialAction() const
+        {
+          for (storeType::const_iterator it = startIterations.begin(); it != startIterations.end(); it++)
+          {
+            if (*it == base::mSimState->GetTimeStepsPassed())
+            {
+              return true;
+            }
+          }
+
+          return false;
+        }
+
         /**
          * Overridable function for the initial action performed by a node at the beginning of the
          * cycle. Only has an effect if the template paramter initialAction is true.
