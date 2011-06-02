@@ -263,13 +263,23 @@ void SimulationMaster::RunSimulation(double iStartTime,
     // Make sure we're rendering if we're writing this iteration.
     if (write_snapshot_image)
     {
-      mSimulationState->SetDoRendering(true);
-      snapshotsCompleted .insert(std::pair<unsigned long, unsigned long>(mSimulationState->GetTimeStepsPassed(),
-                                                                         mSimulationState->GetTimeStepsPassed()));
+      snapshotsCompleted.insert(std::pair<unsigned long, unsigned long>(mVisControl->Start(),
+                                                                        mSimulationState->GetTimeStepsPassed()));
+    }
+
+    if (mSimulationState->GetDoRendering())
+    {
+      networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(mVisControl->Start(),
+                                                                            mSimulationState->GetTimeStepsPassed()));
+      mSimulationState->SetDoRendering(false);
     }
 
     /* In the following two if blocks we do the core magic to ensure we only Render
      when (1) we are not sending a frame or (2) we need to output to disk */
+
+    /* for debugging purposes we want to ensure we capture the variables in a single
+     instant of time since variables might be altered by the thread half way through?
+     This is to be done. */
 
     bool render_for_network_stream = false;
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -277,10 +287,6 @@ void SimulationMaster::RunSimulation(double iStartTime,
       render_for_network_stream = imageSendCpt->ShouldRenderNewNetworkImage();
       steeringCpt->readyForNextImage = render_for_network_stream;
     }
-
-    /* for debugging purposes we want to ensure we capture the variables in a single
-     instant of time since variables might be altered by the thread half way through?
-     This is to be done. */
 
     if (mSimulationState->GetTimeStep() % 100 == 0)
     {
@@ -394,78 +400,66 @@ void SimulationMaster::RunSimulation(double iStartTime,
     mVisControl->ProgressStreaklines(mSimulationState->GetTimeStep(), mLbm->period);
 #endif
 
-    if (mSimulationState->GetDoRendering())
+    if (snapshotsCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
     {
-      networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(mSimulationState->GetTimeStepsPassed(),
-                                                                            mSimulationState->GetTimeStepsPassed()));
-    }
-
-    // If we're rendering for the network, or for an image to disk, render now.
-    if (write_snapshot_image || mSimulationState->GetDoRendering())
-    {
-      mVisControl->Render();
-    }
-
-    if (mSimulationState->GetDoRendering())
-    {
-      if (steeringCpt->updatedMouseCoords)
+      for (std::multimap<unsigned long, unsigned long>::const_iterator it =
+          snapshotsCompleted.find(mSimulationState->GetTimeStepsPassed()); it
+          != snapshotsCompleted.end() && it->first == mSimulationState->GetTimeStepsPassed(); ++it)
       {
-        float density, stress;
+        mImagesWritten++;
 
-        if (mVisControl->MouseIsOverPixel(&density, &stress))
+        if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
         {
-          double mouse_pressure, mouse_stress;
-          mLbm->CalculateMouseFlowField(density,
-                                        stress,
-                                        mouse_pressure,
-                                        mouse_stress,
-                                        mVisControl->mDomainStats.density_threshold_min,
-                                        mVisControl->mDomainStats.density_threshold_minmax_inv,
-                                        mVisControl->mDomainStats.stress_threshold_max_inv);
+          char image_filename[255];
+          snprintf(image_filename, 255, "%08li.dat", 1 + ( (it->second - 1)
+              % mSimulationState->GetTimeStepsPerCycle()));
+          hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(image_directory
+              + std::string(image_filename));
 
-          mVisControl->SetMouseParams(mouse_pressure, mouse_stress);
+          mVisControl->GetResult(it->second)->WriteImage(&writer,
+                                                         &mVisControl->mDomainStats,
+                                                         &mVisControl->mVisSettings);
         }
-        steeringCpt->updatedMouseCoords = false;
       }
+
+      snapshotsCompleted.erase(mSimulationState->GetTimeStepsPassed());
     }
 
-    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+    if (networkImagesCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
     {
-      while (networkImagesCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
+      for (std::multimap<unsigned long, unsigned long>::const_iterator it =
+          networkImagesCompleted.find(mSimulationState->GetTimeStepsPassed()); it
+          != networkImagesCompleted.end() && it->first == mSimulationState->GetTimeStepsPassed(); ++it)
       {
-        mapType::iterator it = networkImagesCompleted.find(mSimulationState->GetTimeStepsPassed());
+        if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+        {
 
-        imageSendCpt->DoWork(mVisControl->GetResult(it->second));
+          if (steeringCpt->updatedMouseCoords)
+          {
+            float density, stress;
 
-        networkImagesCompleted.erase(it);
+            if (mVisControl->MouseIsOverPixel(&density, &stress))
+            {
+              double mouse_pressure, mouse_stress;
+              mLbm->CalculateMouseFlowField(density,
+                                            stress,
+                                            mouse_pressure,
+                                            mouse_stress,
+                                            mVisControl->mDomainStats.density_threshold_min,
+                                            mVisControl->mDomainStats.density_threshold_minmax_inv,
+                                            mVisControl->mDomainStats.stress_threshold_max_inv);
+
+              mVisControl->SetMouseParams(mouse_pressure, mouse_stress);
+            }
+            steeringCpt->updatedMouseCoords = false;
+          }
+
+          imageSendCpt->DoWork(mVisControl->GetResult(it->second));
+
+        }
       }
-    }
 
-    while (snapshotsCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
-    {
-      mapType::iterator it = snapshotsCompleted.find(mSimulationState->GetTimeStepsPassed());
-
-      mImagesWritten++;
-
-      if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-      {
-        char image_filename[255];
-        snprintf(image_filename, 255, "%08li.dat", mSimulationState->GetTimeStep());
-
-        hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(image_directory
-            + std::string(image_filename));
-
-        mVisControl->GetResult(it->second)->WriteImage(&writer,
-                                                       &mVisControl->mDomainStats,
-                                                       &mVisControl->mVisSettings);
-      }
-
-      snapshotsCompleted.erase(it);
-    }
-
-    if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-    {
-      mVisControl->ClearOut(mSimulationState->GetTimeStepsPassed());
+      networkImagesCompleted.erase(mSimulationState->GetTimeStepsPassed());
     }
 
     double lPreSnapshotTime = hemelb::util::myClock();

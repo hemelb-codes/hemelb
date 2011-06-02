@@ -30,6 +30,16 @@ namespace hemelb
 
     void ScreenPixels::FoldIn(const ScreenPixels* inScreen, const VisSettings* visSettings)
     {
+      if (pixelCount == 0)
+      {
+        memcpy(pixels, inScreen->pixels, sizeof(ColPixel) * inScreen->pixelCount);
+        pixelCount = inScreen->pixelCount;
+        for (unsigned int ii = 0; ii < COLOURED_PIXELS_MAX; ++ii)
+        {
+          pixelId[ii] = inScreen->pixelId[ii];
+        }
+      }
+
       AddPixels(inScreen->pixels, inScreen->pixelCount, visSettings);
     }
 

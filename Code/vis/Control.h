@@ -59,17 +59,25 @@ namespace hemelb
         void Reset();
 
         void UpdateImageSize(int pixels_x, int pixels_y);
-        void Render();
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
 
-        void ClearOut(unsigned long startIt);
-
         const ScreenPixels* GetResult(unsigned long startIteration);
+
+        bool IsRendering() const;
 
         Viewpoint mViewpoint;
         DomainStats mDomainStats;
         VisSettings mVisSettings;
+
+        void InstantBroadcast(unsigned long startIteration);
+
+      protected:
+        void InitialAction(unsigned long startIteration);
+        void ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber);
+        void ProgressToParent(unsigned long startIteration, unsigned long splayNumber);
+        void PostReceiveFromChildren(unsigned long startIteration, unsigned long splayNumber);
+        void ClearOut(unsigned long startIteration);
 
       private:
         typedef net::PhasedBroadcastIrregular<true, 2, 0, false, true> base;
@@ -85,7 +93,7 @@ namespace hemelb
         };
 
         void initLayers();
-        void CompositeImage();
+        void Render();
 
         ScreenPixels recvBuffers[SPREADFACTOR];
 
