@@ -1,6 +1,8 @@
 #ifndef HEMELB_VIS_CONTROL_H
 #define HEMELB_VIS_CONTROL_H
 
+#include <stack>
+
 #include "geometry/LatticeData.h"
 
 #include "lb/LbmParameters.h"
@@ -70,21 +72,21 @@ namespace hemelb
         DomainStats mDomainStats;
         VisSettings mVisSettings;
 
-        void InstantBroadcast(unsigned long startIteration);
-
       protected:
         void InitialAction(unsigned long startIteration);
         void ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber);
         void ProgressToParent(unsigned long startIteration, unsigned long splayNumber);
         void PostReceiveFromChildren(unsigned long startIteration, unsigned long splayNumber);
         void ClearOut(unsigned long startIteration);
+        void InstantBroadcast(unsigned long startIteration);
 
       private:
         typedef net::PhasedBroadcastIrregular<true, 2, 0, false, true> base;
         typedef net::PhasedBroadcast<true, 2, 0, false, true> deepbase;
         typedef std::map<unsigned long, ScreenPixels*> mapType;
 
-        static const unsigned int SPREADFACTOR = 3;
+        // This is mainly constrained by the memory available per core.
+        static const unsigned int SPREADFACTOR = 2;
 
         struct Vis
         {
@@ -97,6 +99,7 @@ namespace hemelb
 
         ScreenPixels recvBuffers[SPREADFACTOR];
 
+        std::stack<ScreenPixels*> pixelsBuffer;
         std::map<unsigned long, ScreenPixels*> resultsByStartIt;
         geometry::LatticeData* mLatDat;
         Screen mScreen;

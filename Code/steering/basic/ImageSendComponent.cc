@@ -101,8 +101,8 @@ namespace hemelb
         }
         else
         {
-          log::Logger::Log<log::Info, log::OnePerCore>("Image-send component requesting new render, %f seconds since last one.",
-                                                       deltaTime);
+          log::Logger::Log<log::Debug, log::OnePerCore>("Image-send component requesting new render, %f seconds since last one.",
+                                                        deltaTime);
           lastRender = frameTimeStart;
           return true;
         }
