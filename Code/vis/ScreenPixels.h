@@ -40,7 +40,6 @@ namespace hemelb
                         const VisSettings* visSettings) const;
 
         ColPixel pixels[COLOURED_PIXELS_MAX];
-        int pixelId[COLOURED_PIXELS_MAX];
         unsigned int pixelCount;
 
       private:
@@ -51,6 +50,7 @@ namespace hemelb
                                                       int limit,
                                                       const VisSettings* visSettings);
 
+        int pixelId[COLOURED_PIXELS_MAX];
         unsigned int PixelsX, PixelsY;
     };
 
