@@ -183,8 +183,22 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Render stored for phased imaging.");
 
-      resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(startIteration,
-                                                                      new ScreenPixels(*mScreen.GetPixels())));
+      ScreenPixels* pix;
+
+      // If we don't have any in the buffer, create a new ScreenPixels object.
+      if (pixelsBuffer.empty())
+      {
+        pix = new ScreenPixels(*mScreen.GetPixels());
+      }
+      // Otherwise use a ScreenPixels object from the buffer.
+      else
+      {
+        pix = pixelsBuffer.top();
+        pixelsBuffer.pop();
+        *pix = *mScreen.GetPixels();
+      }
+
+      resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(startIteration, pix));
     }
 
     void Control::ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber)
@@ -273,7 +287,7 @@ namespace hemelb
             log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
                                                           it->first);
 
-            delete it->second;
+            pixelsBuffer.push(it->second);
             resultsByStartIt.erase(it);
             found = true;
           }
@@ -468,6 +482,20 @@ namespace hemelb
       delete vis;
       delete myGlypher;
       delete myRayTracer;
+
+      // Clear out the ScreenPixels used still in the results buffer.
+      for (std::map<unsigned long, ScreenPixels*>::iterator it = resultsByStartIt.begin(); it
+          != resultsByStartIt.end(); it++)
+      {
+        delete it->second;
+      }
+
+      // Clear out the ScreenPixels objects from the pixelsBuffer.
+      while (!pixelsBuffer.empty())
+      {
+        delete pixelsBuffer.top();
+        pixelsBuffer.pop();
+      }
     }
 
   } // namespace vis
