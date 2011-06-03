@@ -56,6 +56,7 @@ namespace hemelb
         int GetPixelsX() const;
         int GetPixelsY() const;
 
+        ScreenPixels* SwapBuffers(ScreenPixels*);
         const ScreenPixels* GetPixels() const;
 
         bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
@@ -71,7 +72,7 @@ namespace hemelb
         float UnitVectorProjectionX[3];
         float UnitVectorProjectionY[3];
 
-        ScreenPixels pixels;
+        ScreenPixels* pixels;
     };
   }
 }
