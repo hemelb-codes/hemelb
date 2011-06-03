@@ -96,6 +96,7 @@ namespace hemelb
 
         void initLayers();
         void Render();
+        ScreenPixels* GetPixFromBuffer();
 
         ScreenPixels recvBuffers[SPREADFACTOR];
 
