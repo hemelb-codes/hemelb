@@ -188,14 +188,14 @@ namespace hemelb
       // If we don't have any in the buffer, create a new ScreenPixels object.
       if (pixelsBuffer.empty())
       {
-        pix = new ScreenPixels(*mScreen.GetPixels());
+        pix = mScreen.SwapBuffers(new ScreenPixels());
       }
       // Otherwise use a ScreenPixels object from the buffer.
       else
       {
-        pix = pixelsBuffer.top();
+        ScreenPixels* buff = pixelsBuffer.top();
         pixelsBuffer.pop();
-        *pix = *mScreen.GetPixels();
+        pix = mScreen.SwapBuffers(buff);
       }
 
       resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(startIteration, pix));
@@ -345,17 +345,17 @@ namespace hemelb
           // If we're the sending proc, do the send.
           if (netTop->GetLocalRank() == sendingProc)
           {
-            MPI_Send(&mScreen.pixels.pixelCount,
+            MPI_Send(&mScreen.pixels->pixelCount,
                      1,
-                     MpiDataType(mScreen.pixels.pixelCount),
+                     MpiDataType(mScreen.pixels->pixelCount),
                      receivingProc,
                      20,
                      MPI_COMM_WORLD);
 
-            if (mScreen.pixels.pixelCount > 0)
+            if (mScreen.pixels->pixelCount > 0)
             {
-              MPI_Send(mScreen.pixels.pixels,
-                       mScreen.pixels.pixelCount,
+              MPI_Send(mScreen.pixels->pixels,
+                       mScreen.pixels->pixelCount,
                        MpiDataType<ColPixel> (),
                        receivingProc,
                        20,
@@ -384,7 +384,7 @@ namespace hemelb
                        MPI_COMM_WORLD,
                        &status);
 
-              mScreen.pixels.FoldIn(&recvBuffers[0], &mVisSettings);
+              mScreen.pixels->FoldIn(&recvBuffers[0], &mVisSettings);
             }
           }
         }
@@ -393,17 +393,17 @@ namespace hemelb
       // Send the final image from proc 1 to 0.
       if (netTop->GetLocalRank() == 1)
       {
-        MPI_Send(&mScreen.pixels.pixelCount,
+        MPI_Send(&mScreen.pixels->pixelCount,
                  1,
-                 MpiDataType(mScreen.pixels.pixelCount),
+                 MpiDataType(mScreen.pixels->pixelCount),
                  0,
                  20,
                  MPI_COMM_WORLD);
 
-        if (mScreen.pixels.pixelCount > 0)
+        if (mScreen.pixels->pixelCount > 0)
         {
-          MPI_Send(mScreen.pixels.pixels,
-                   mScreen.pixels.pixelCount,
+          MPI_Send(mScreen.pixels->pixels,
+                   mScreen.pixels->pixelCount,
                    MpiDataType<ColPixel> (),
                    0,
                    20,
@@ -414,18 +414,18 @@ namespace hemelb
       // Receive the final image on proc 0.
       else if (netTop->GetLocalRank() == 0)
       {
-        MPI_Recv(&mScreen.pixels.pixelCount,
+        MPI_Recv(&mScreen.pixels->pixelCount,
                  1,
-                 MpiDataType(mScreen.pixels.pixelCount),
+                 MpiDataType(mScreen.pixels->pixelCount),
                  1,
                  20,
                  MPI_COMM_WORLD,
                  &status);
 
-        if (mScreen.pixels.pixelCount > 0)
+        if (mScreen.pixels->pixelCount > 0)
         {
-          MPI_Recv(mScreen.pixels.pixels,
-                   mScreen.pixels.pixelCount,
+          MPI_Recv(mScreen.pixels->pixels,
+                   mScreen.pixels->pixelCount,
                    MpiDataType<ColPixel> (),
                    1,
                    20,
@@ -433,8 +433,23 @@ namespace hemelb
                    &status);
         }
 
+        ScreenPixels* pix;
+
+        // Create a new pixels object if we don't have any spare ones in the buffer.
+        if (pixelsBuffer.empty())
+        {
+          pix = mScreen.SwapBuffers(new ScreenPixels());
+        }
+        // Use a pixels object from the buffer when there is one.
+        else
+        {
+          ScreenPixels* newBuff = pixelsBuffer.top();
+          pixelsBuffer.pop();
+          pix = mScreen.SwapBuffers(newBuff);
+        }
+
         resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(base::mSimState->GetTimeStepsPassed(),
-                                                                        new ScreenPixels(*mScreen.GetPixels())));
+                                                                        pix));
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.",
                                                       base::mSimState->GetTimeStepsPassed());

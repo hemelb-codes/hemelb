@@ -14,10 +14,12 @@ namespace hemelb
 
     Screen::Screen()
     {
+      pixels = new ScreenPixels();
     }
 
     Screen::~Screen()
     {
+      delete pixels;
     }
 
     /**
@@ -29,7 +31,7 @@ namespace hemelb
      */
     void Screen::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
     {
-      pixels.AddPixel(newPixel, visSettings);
+      pixels->AddPixel(newPixel, visSettings);
     }
 
     /**
@@ -44,7 +46,7 @@ namespace hemelb
                             const float endPoint2[3],
                             const VisSettings* visSettings)
     {
-      pixels.RenderLine(endPoint1, endPoint2, visSettings);
+      pixels->RenderLine(endPoint1, endPoint2, visSettings);
     }
 
     void Screen::Set(float maxX,
@@ -60,10 +62,10 @@ namespace hemelb
       viewpoint->RotateToViewpoint(MaxXValue, 0.0F, 0.0F, UnitVectorProjectionX);
       viewpoint->RotateToViewpoint(0.0F, MaxYValue, 0.0F, UnitVectorProjectionY);
 
-      pixels.SetSize(pixelsX, pixelsY);
+      pixels->SetSize(pixelsX, pixelsY);
 
-      ScaleX = (float) pixels.GetPixelsX() / (2.F * MaxXValue);
-      ScaleY = (float) pixels.GetPixelsY() / (2.F * MaxYValue);
+      ScaleX = (float) pixels->GetPixelsX() / (2.F * MaxXValue);
+      ScaleY = (float) pixels->GetPixelsY() / (2.F * MaxYValue);
 
       float radVector[3];
       viewpoint->RotateToViewpoint(0.F, 0.F, -rad, radVector);
@@ -73,34 +75,34 @@ namespace hemelb
         vtx[ii] = (0.5F * radVector[ii]) - UnitVectorProjectionX[ii] - UnitVectorProjectionY[ii];
       }
 
-      UnitVectorProjectionX[0] *= (2.F / (float) pixels.GetPixelsX());
-      UnitVectorProjectionX[1] *= (2.F / (float) pixels.GetPixelsX());
-      UnitVectorProjectionX[2] *= (2.F / (float) pixels.GetPixelsX());
+      UnitVectorProjectionX[0] *= (2.F / (float) pixels->GetPixelsX());
+      UnitVectorProjectionX[1] *= (2.F / (float) pixels->GetPixelsX());
+      UnitVectorProjectionX[2] *= (2.F / (float) pixels->GetPixelsX());
 
-      UnitVectorProjectionY[0] *= (2.F / (float) pixels.GetPixelsY());
-      UnitVectorProjectionY[1] *= (2.F / (float) pixels.GetPixelsY());
-      UnitVectorProjectionY[2] *= (2.F / (float) pixels.GetPixelsY());
+      UnitVectorProjectionY[0] *= (2.F / (float) pixels->GetPixelsY());
+      UnitVectorProjectionY[1] *= (2.F / (float) pixels->GetPixelsY());
+      UnitVectorProjectionY[2] *= (2.F / (float) pixels->GetPixelsY());
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
     {
-      pixels.SetSize(newPixelsX, newPixelsY);
+      pixels->SetSize(newPixelsX, newPixelsY);
     }
 
     void Screen::Reset()
     {
-      pixels.Reset();
+      pixels->Reset();
     }
 
     bool Screen::MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress)
     {
-      for (unsigned int i = 0; i < pixels.pixelCount; i++)
+      for (unsigned int i = 0; i < pixels->pixelCount; i++)
       {
-        if (pixels.pixels[i].IsRT() && int (pixels.pixels[i].GetI()) == mouseX
-            && int (pixels.pixels[i].GetJ()) == mouseY)
+        if (pixels->pixels[i].IsRT() && int (pixels->pixels[i].GetI()) == mouseX
+            && int (pixels->pixels[i].GetJ()) == mouseY)
         {
-          *density = pixels.pixels[i].GetDensity();
-          *stress = pixels.pixels[i].GetStress();
+          *density = pixels->pixels[i].GetDensity();
+          *stress = pixels->pixels[i].GetStress();
 
           return true;
         }
@@ -111,7 +113,7 @@ namespace hemelb
 
     unsigned int Screen::GetPixelCount() const
     {
-      return pixels.pixelCount;
+      return pixels->pixelCount;
     }
 
     const float* Screen::GetVtx() const
@@ -128,16 +130,22 @@ namespace hemelb
     }
     int Screen::GetPixelsX() const
     {
-      return pixels.GetPixelsX();
+      return pixels->GetPixelsX();
     }
     int Screen::GetPixelsY() const
     {
-      return pixels.GetPixelsY();
+      return pixels->GetPixelsY();
     }
 
+    ScreenPixels* Screen::SwapBuffers(ScreenPixels* inPix)
+    {
+      ScreenPixels* temp = pixels;
+      pixels = inPix;
+      return temp;
+    }
     const ScreenPixels* Screen::GetPixels() const
     {
-      return &pixels;
+      return pixels;
     }
   }
 }
