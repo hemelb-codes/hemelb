@@ -21,12 +21,13 @@ ConfigGenerator::ConfigGenerator() :
 	ClippedSurface(NULL), IsFirstSite(true) {
 	Neighbours::Init();
 	this->Locator = vtkOBBTree::New();
-	this->Locator->SetTolerance(0);
+	this->Locator->SetTolerance(1e-9);
 	this->hitPoints = vtkPoints::New();
 	this->hitCellIds = vtkIdList::New();
 }
 
 ConfigGenerator::~ConfigGenerator() {
+	this->Locator->Delete();
 	this->hitPoints->Delete();
 	this->hitCellIds->Delete();
 }
@@ -36,7 +37,7 @@ void ConfigGenerator::Execute() {
 	this->Locator->SetDataSet(this->ClippedSurface);
 	this->Locator->BuildLocator();
 
-	Domain domain(this->VoxelSize, this->ClippedSurface->GetBounds(), 4);
+	Domain domain(this->VoxelSize, this->ClippedSurface->GetBounds());
 
 	ConfigWriter writer(this->OutputConfigFile, this->StressType,
 			domain.GetBlockSize(), domain.GetBlockCounts(),
@@ -51,27 +52,26 @@ void ConfigGenerator::Execute() {
 		//		BlockWriter& blockWriter = *blockWriterPtr;
 		BlockWriter blockWriter = *writer.StartNextBlock();
 		Block& block = *blockIt;
-		Log() << "Examining block at " << block.GetIndex() << std::endl;
+
 		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
 			Site& site = **siteIt;
-			Log() << "\tExamining site at " << site.GetIndex() << std::endl;
 			this->ClassifySite(site);
 			// cache the type cos it's probably slow to compute
 			unsigned int type = site.GetType();
 			unsigned int cfg = site.GetConfig();
 			blockWriter << cfg;
 
-			if (type == hemelb::SOLID_TYPE)
+			if (type == hemelb::SOLID_TYPE) {
 				//Solid sites, we don't do anything
 				continue;
-
+			}
 			// Increase count of fluid sites
 			blockWriter.IncrementFluidSitesCount();
 
-			if (cfg == hemelb::FLUID_TYPE)
+			if (cfg == hemelb::FLUID_TYPE) {
 				// Pure fluid sites don't need any more data
 				continue;
-
+			}
 			// It must be INLET/OUTLET/EDGE
 
 			if (type == hemelb::INLET_TYPE || type == hemelb::OUTLET_TYPE) {
@@ -87,7 +87,6 @@ void ConfigGenerator::Execute() {
 					blockWriter << *wn;
 				blockWriter << site.WallDistance;
 			}
-
 			for (std::vector<double>::iterator it = site.CutDistances.begin(); it
 					!= site.CutDistances.end(); ++it)
 				blockWriter << *it;
