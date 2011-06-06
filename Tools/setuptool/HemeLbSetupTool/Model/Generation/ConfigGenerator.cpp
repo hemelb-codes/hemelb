@@ -10,8 +10,8 @@
 #include "vtkOBBTree.h"
 #include "vtkPolyData.h"
 
-ConfigGenerator::ConfigGenerator() {
-}
+//ConfigGenerator::ConfigGenerator() {
+//}
 
 void ConfigGenerator::Execute() {
 	ConfigGenerator& self = *this;
@@ -72,3 +72,8 @@ void ConfigGenerator::Execute() {
 
 	}
 }
+
+void ConfigGenerator::ClassifySite(Site& site) {
+
+}
+

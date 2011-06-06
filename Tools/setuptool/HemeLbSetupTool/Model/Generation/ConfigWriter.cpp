@@ -18,13 +18,11 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile, int StressType, 
 		this->Origin[i] = Origin[i];
 	}
 
-	//	// Open the config file for read/write, creating if non-existent, truncating otherwise.
-	//	this->file = std::fopen(this->OutputConfigFile.c_str(), "w+");
-
-
-	// The encoder we're going to use for the body of the file. This needs to be advanced to the right place in the file.
+	// The encoder we're going to use for the body of the file. This needs to
+	// be advanced to the right place in the file.
 	this->bodyEncoder = new hemelb::io::XdrFileWriter(this->OutputConfigFile);
-	// Do this by using this encoder to write the preceeding parts; alias it to a better name.
+	// Do this by using this encoder to write the preceding parts; alias it to
+	// a better name.
 	hemelb::io::XdrWriter& headerEncoder = *this->bodyEncoder;
 
 	// Preamble
@@ -76,7 +74,8 @@ ConfigWriter::~ConfigWriter() {
 }
 
 void ConfigWriter::Close() {
-	// The d'tor is currently the only way to close the file
+	// The hemelb::io::XdrFileWriter d'tor is currently the only way to close
+	// the file
 	delete this->bodyEncoder;
 	this->bodyEncoder = NULL;
 

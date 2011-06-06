@@ -6,9 +6,9 @@
 #include "Index.h"
 
 namespace hemelb {
-namespace io {
-class XdrWriter;
-}
+  namespace io {
+    class XdrWriter;
+  }
 }
 using hemelb::io::XdrWriter;
 
@@ -16,8 +16,8 @@ class BlockWriter;
 
 class ConfigWriter {
 public:
-	ConfigWriter(const std::string& OutputConfigFile, int StressType, int BlockSize,
-			Index BlockCounts, double VoxelSize, Vector Origin);
+	ConfigWriter(const std::string& OutputConfigFile, int StressType,
+			int BlockSize, Index BlockCounts, double VoxelSize, Vector Origin);
 
 	~ConfigWriter();
 

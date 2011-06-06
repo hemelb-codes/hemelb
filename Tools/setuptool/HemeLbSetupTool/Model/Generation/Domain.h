@@ -49,12 +49,21 @@ protected:
 	double VoxelSize;
 
 	std::vector<Block*> blocks;
+	/*
+	 * These TranslateIndex member functions translate between 3d and 1a
+	 * indices, i.e.
+	 * 		ijk = (i * ny + j) * nz + k
+	 * and the inverse. The direction is inferred from the type of the first
+	 * argument.
+	 */
 
+	// 1d => 3d
 	inline Index* TranslateIndex(const int i) {
 		Index* bInd = new Index();
 		this->TranslateIndex(i, *bInd);
 		return bInd;
 	}
+	// 1d => 3d, putting the answer in an existing Index
 	inline void TranslateIndex(const int k, Index& ans) {
 		ans[2] = k % this->BlockCounts[2];
 		int j = k / this->BlockCounts[2];
@@ -69,6 +78,7 @@ protected:
 #endif
 	}
 
+	// 3d => 1d
 	inline int TranslateIndex(const Index& ijk) {
 		return (ijk[0] * this->BlockCounts[1] + ijk[1]) * this->BlockCounts[2]
 				+ ijk[2];
