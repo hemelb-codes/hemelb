@@ -8,6 +8,9 @@
 //#include "vtkSmartPointer.h"
 class vtkPolyDataAlgorithm;
 class vtkOBBTree;
+class vtkPoints;
+class vtkIdList;
+
 //typedef vtkSmartPointer<vtkPolyDataAlgorithm> vtkPolyDataAlgorithmPtr;
 //typedef vtkSmartPointer<vtkOBBTree> vtkOBBTreePtr;
 
@@ -19,19 +22,17 @@ class Site;
 
 class ConfigGenerator {
 public:
-//	ConfigGenerator();
-//	~ConfigGenerator();
+	ConfigGenerator();
+	~ConfigGenerator();
 	void Execute();
 	void ClassifySite(Site& site);
 
 	inline double GetVoxelSize(void) {
 		return this->VoxelSize;
 	}
-	;
 	inline void SetVoxelSize(double val) {
 		this->VoxelSize = val;
 	}
-	;
 
 	inline std::string GetOutputConfigFile(void) {
 		return this->OutputConfigFile;
@@ -40,12 +41,12 @@ public:
 		this->OutputConfigFile = val;
 	}
 
-//	inline std::string GetOutputXmlFile(void) {
-//		return this->OutputXmlFile;
-//	}
-//	inline void SetOutputXmlFile(std::string val) {
-//		this->OutputXmlFile = val;
-//	}
+	//	inline std::string GetOutputXmlFile(void) {
+	//		return this->OutputXmlFile;
+	//	}
+	//	inline void SetOutputXmlFile(std::string val) {
+	//		this->OutputXmlFile = val;
+	//	}
 
 	inline int GetStressType(void) {
 		return this->StressType;
@@ -54,11 +55,11 @@ public:
 		this->StressType = val;
 	}
 
-	inline std::vector<Iolet>& GetIolets() {
+	inline std::vector<Iolet*>& GetIolets() {
 		return this->Iolets;
 	}
-	inline void SetIolets(std::vector<Iolet> iv) {
-		this->Iolets = std::vector<Iolet>(iv);
+	inline void SetIolets(std::vector<Iolet*> iv) {
+		this->Iolets = std::vector<Iolet*>(iv);
 	}
 
 	inline void GetSeedPoint(double out[3]) {
@@ -76,18 +77,18 @@ public:
 		this->SeedPoint[2] = z;
 	}
 
-	inline vtkPolyDataAlgorithm* GetSurfaceSource(void) {
-		return this->SurfaceSource;
-	}
-	inline void SetSurfaceSource(vtkPolyDataAlgorithm* val) {
-		this->SurfaceSource = val;
-	}
+	//	inline vtkPolyDataAlgorithm* GetFullSurfaceSource(void) {
+	//		return this->FullSurfaceSource;
+	//	}
+	//	inline void SetFullSurfaceSource(vtkPolyDataAlgorithm* val) {
+	//		this->FullSurfaceSource = val;
+	//	}
 
-	inline vtkPolyDataAlgorithm* GetClippedSurface(void) {
-		return this->ClippedSurface;
+	inline vtkPolyDataAlgorithm* GetClippedSurfaceSource(void) {
+		return this->ClippedSurfaceSource;
 	}
-	inline void SetClippedSurface(vtkPolyDataAlgorithm* val) {
-		this->ClippedSurface = val;
+	inline void SetClippedSurfaceSource(vtkPolyDataAlgorithm* val) {
+		this->ClippedSurfaceSource = val;
 	}
 
 	inline vtkOBBTree* GetLocator(void) {
@@ -98,16 +99,20 @@ public:
 	}
 
 protected:
+	// Members set from outside to initialise
 	double VoxelSize;
 	std::string OutputConfigFile;
-//	std::string OutputXmlFile;
 	int StressType;
-
-	std::vector<Iolet> Iolets;
+	std::vector<Iolet*> Iolets;
 	double SeedPoint[3];
-	vtkPolyDataAlgorithm* SurfaceSource;
-	vtkPolyDataAlgorithm* ClippedSurface;
+	//	vtkPolyDataAlgorithm* FullSurfaceSource;
+	vtkPolyDataAlgorithm* ClippedSurfaceSource;
 	vtkOBBTree* Locator;
+
+	// Members used internally
+	vtkPoints* hitPoints;
+	vtkIdList* hitCellIds;
+	bool IsFirstSite;
 };
 
 #endif // HEMELBSETUPTOOL_CONFIGGENERATOR_H

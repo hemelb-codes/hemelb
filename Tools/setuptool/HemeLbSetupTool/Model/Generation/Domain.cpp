@@ -1,7 +1,8 @@
-#include <iostream>
-#include "Domain.h"
-#include "Block.h"
+
 #include "Site.h"
+#include "Block.h"
+#include "Domain.h"
+#include "Debug.h"
 
 Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 		unsigned int BlockSize) :
@@ -29,10 +30,12 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 			++nBlocks;
 		this->Origin[i] = siteZero;
 		this->BlockCounts[i] = nBlocks;
+		this->VoxelCounts[i] = nBlocks * BlockSize;
 		totalBlocks *= nBlocks;
 	}
-	std::cout << "Blocks " << this->BlockCounts << std::endl;
 	this->blocks.resize(totalBlocks);
+	Log() << std::endl;
+	Log() << "Domain size " << this->BlockCounts << std::endl;
 }
 //
 //Domain::~Domain() {
@@ -51,7 +54,7 @@ Block& Domain::GetBlock(const Index& index) {
 	Block* bp = this->blocks[i];
 	// If the block hasn't been created yet, do so.
 	if (!bp) {
-		std::cout << "Creating block at " << index << std::endl;
+		Log() << "Creating block at " << index << std::endl;
 		bp = this->blocks[i] = new Block(*this, index, this->BlockSize);
 	}
 	return *bp;
@@ -71,12 +74,12 @@ BlockIterator Domain::end() {
 }
 
 BlockIterator::BlockIterator() :
-	domain(NULL), current(0, 0, -1) {
+	domain(NULL), current(0, 0, 0) {
 	this->maxima = this->domain->BlockCounts - 1;
 }
 
 BlockIterator::BlockIterator(Domain& dom) :
-	domain(&dom), current(0, 0, -1) {
+	domain(&dom), current(0, 0, 0) {
 	this->maxima = this->domain->BlockCounts - 1;
 }
 
@@ -106,29 +109,28 @@ BlockIterator& BlockIterator::operator++() {
 	// need to handle that case.
 	int pos;
 	// Delete any unnecessary blocks
-	for (int i = this->current[0] - 1; i < this->current[0] + 1; ++i) {
+	for (int i = this->current.x - 1; i < this->current.x + 1; ++i) {
 		if (i < 0)
 			continue;
-		if (i == this->current[0] && i != this->maxima[0])
+		if (i == this->current.x && i != this->maxima.x)
 			continue;
 
-		for (int j = this->current[1] - 1; j < this->current[1] + 1; ++j) {
+		for (int j = this->current.y - 1; j < this->current.y + 1; ++j) {
 			if (j < 0)
 				continue;
-			if (j == this->current[1] && j != this->maxima[1])
+			if (j == this->current.y && j != this->maxima.y)
 				continue;
 
-			for (int k = this->current[2] - 1; k < this->current[2] + 1; ++k) {
+			for (int k = this->current.z - 1; k < this->current.z + 1; ++k) {
 				if (k < 0)
 					continue;
-				if (k == this->current[2] && k != this->maxima[2])
+				if (k == this->current.z && k != this->maxima.z)
 					continue;
 
 				// This block can no longer be reached from the current or later
 				// blocks, so delete, and set pointer to null
-				std::cout << "Block to be deleted " << this->current
-						<< std::endl;
-				pos = this->domain->TranslateIndex(this->current);
+				Log() << "Deleting block at " << Index(i, j, k) << std::endl;
+				pos = this->domain->TranslateIndex(i, j, k);
 				delete this->domain->blocks[pos];
 				this->domain->blocks[pos] = NULL;
 			}
@@ -136,15 +138,15 @@ BlockIterator& BlockIterator::operator++() {
 	}
 
 	// Update the index vector
-	this->current[2] += 1;
-	if (this->current[2] == this->domain->BlockCounts[2]) {
-		this->current[2] = 0;
+	this->current.z += 1;
+	if (this->current.z == this->domain->BlockCounts.z) {
+		this->current.z = 0;
 
-		this->current[1] += 1;
-		if (this->current[1] == this->domain->BlockCounts[1]) {
-			this->current[1] = 0;
+		this->current.y += 1;
+		if (this->current.y == this->domain->BlockCounts.y) {
+			this->current.y = 0;
 
-			this->current[0] += 1;
+			this->current.x += 1;
 		}
 	}
 	return *this;
