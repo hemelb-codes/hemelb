@@ -314,7 +314,7 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(mState->GetDoRendering(),
+        GetCollision(collision_type)->PostStep(mVisControl->IsRendering(),
                                                offset,
                                                mLatDat->GetInnerCollisionCount(collision_type),
                                                &mParams,
@@ -325,7 +325,7 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(mState->GetDoRendering(),
+        GetCollision(collision_type)->PostStep(mVisControl->IsRendering(),
                                                offset,
                                                mLatDat->GetInterCollisionCount(collision_type),
                                                &mParams,
