@@ -6,7 +6,7 @@
 
 // VTK bits we need
 //#include "vtkSmartPointer.h"
-class vtkPolyDataAlgorithm;
+class vtkPolyData;
 class vtkOBBTree;
 class vtkPoints;
 class vtkIdList;
@@ -77,26 +77,19 @@ public:
 		this->SeedPoint[2] = z;
 	}
 
-	//	inline vtkPolyDataAlgorithm* GetFullSurfaceSource(void) {
-	//		return this->FullSurfaceSource;
-	//	}
-	//	inline void SetFullSurfaceSource(vtkPolyDataAlgorithm* val) {
-	//		this->FullSurfaceSource = val;
-	//	}
-
-	inline vtkPolyDataAlgorithm* GetClippedSurfaceSource(void) {
-		return this->ClippedSurfaceSource;
+	inline vtkPolyData* GetClippedSurface(void) {
+		return this->ClippedSurface;
 	}
-	inline void SetClippedSurfaceSource(vtkPolyDataAlgorithm* val) {
-		this->ClippedSurfaceSource = val;
+	inline void SetClippedSurface(vtkPolyData* val) {
+		this->ClippedSurface = val;
 	}
 
-	inline vtkOBBTree* GetLocator(void) {
-		return this->Locator;
-	}
-	inline void SetLocator(vtkOBBTree* val) {
-		this->Locator = val;
-	}
+//	inline vtkOBBTree* GetLocator(void) {
+//		return this->Locator;
+//	}
+//	inline void SetLocator(vtkOBBTree* val) {
+//		this->Locator = val;
+//	}
 
 protected:
 	// Members set from outside to initialise
@@ -105,8 +98,7 @@ protected:
 	int StressType;
 	std::vector<Iolet*> Iolets;
 	double SeedPoint[3];
-	//	vtkPolyDataAlgorithm* FullSurfaceSource;
-	vtkPolyDataAlgorithm* ClippedSurfaceSource;
+	vtkPolyData* ClippedSurface;
 	vtkOBBTree* Locator;
 
 	// Members used internally

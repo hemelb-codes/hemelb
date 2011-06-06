@@ -41,7 +41,7 @@ public:
 protected:
 	Vector Origin;
 	Index BlockCounts;
-	Index VoxelCounts;
+	Index SiteCounts;
 	unsigned int BlockSize;
 	double VoxelSize;
 
