@@ -113,6 +113,13 @@ def GetVtkCompileFlags(vtkLibDir):
     
     return []
 
+def GetHemeLbCompileFlags():
+    osName = platform.system()
+    if osName == 'Darwin':
+        return ['-DHEMELB_CFG_ON_BSD']
+    
+    return []
+    
 if __name__ == "__main__":
     # numpy, vtk
     vtkLibDir = GetVtkLibDir()
@@ -120,22 +127,25 @@ if __name__ == "__main__":
     include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir]
     libraries = []
     library_dirs = []
-    extra_compile_args = GetVtkCompileFlags(vtkLibDir)
+    extra_compile_args = GetVtkCompileFlags(vtkLibDir) + GetHemeLbCompileFlags()
     extra_link_args = []
 
     # Create the list of extension modules
     ext_modules = []
     # Generation C++ 
     generation_cpp = [os.path.join('HemeLbSetupTool/Model/Generation', cpp)
-                      for cpp in ['Block.cpp',
+                      for cpp in ['Neighbours.cpp',
+                                  'Block.cpp',
                                   'BlockWriter.cpp',
                                   'ConfigGenerator.cpp',
                                   'ConfigWriter.cpp',
                                   'Domain.cpp',
-                                  'Site.cpp']]
+                                  'Site.cpp',
+                                  'Debug.cpp']]
     # HemeLB classes
     hemelb_cpp = [os.path.join(HemeLbDir, cpp)
-                  for cpp in ['io/XdrFileWriter.cc',
+                  for cpp in ['D3Q15.cc',
+                              'io/XdrFileWriter.cc',
                               'io/XdrMemWriter.cc',
                               'io/XdrWriter.cc',
                               'io/Writer.cc']]

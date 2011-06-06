@@ -6,9 +6,9 @@ from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, \
     vtkStripper, vtkFeatureEdges, vtkPolyDataConnectivityFilter, \
     vtkPolyDataNormals, vtkProgrammableFilter, vtkDelaunay2D, \
     vtkTriangleFilter, vtkCleanPolyData, vtkIntArray, vtkOctreePointLocator, \
-    vtkImplicitFunction, vtkPoints, vtkPolyData, vtkCellArray
-from vtk import vtkXMLPolyDataWriter
-from .Iolets import Inlet, Outlet
+    vtkImplicitFunction, vtkPoints, vtkPolyData, vtkCellArray, vtkTransform, vtkMatrix4x4, vtkIncrementalOctreePointLocator, vtkCellArray
+from vtk import vtkXMLPolyDataWriter, vtkAlgorithm
+from .Iolets import Inlet, Outlet, Iolet
 import Generation
 import pdb
 
@@ -124,33 +124,18 @@ class Clipper(object):
         
         Note that this does NOT EXECUTE the pipeline.
         """
-        # TODO: should probably seal any leaks first.
-        
+        # seal any leaks first.
+        closer = PolyDataCloser()
+        closer.SetInputConnection(self.SurfaceSource.GetOutputPort())
         # Add the Iolet id -1 to all cells
         adder = IntegerAdder(Value= -1)
-        adder.SetInputConnection(self.SurfaceSource.GetOutputPort())
+        adder.SetInputConnection(closer.GetOutputPort())
         # Have the name pdSource first point to the input, then loop
         # over IOlets, clipping and capping.
         pdSource = adder
-        for i, iolet in enumerate(self.Iolets):
-            # TODO: switch from this simple ImplicitPlane (i.e.
-            # infinite plane) clipping to excising a thin cuboid
-            # from the Iolet and keeping the piece next to the
-            # SeedPoint.
-
-            # Create a plane to clip against.
-            plane = vtkPlane()
-            plane.SetOrigin(iolet.Centre.x, iolet.Centre.y, iolet.Centre.z)
-            plane.SetNormal(iolet.Normal.x, iolet.Normal.y, iolet.Normal.z)
-
-#            # Clips to give the surface we want
-#            clipper = vtkClipPolyData()
-#            clipper.SetClipFunction(plane)
-#            clipper.SetInputConnection(pdSource.GetOutputPort())
-
-            capper = PolyDataClipCapAndLabeller(Value=i, ClipFunction=plane)
+        for i, iolet in enumerate(self.Iolets):            
+            capper = PolyDataClipCapAndLabeller(Value=i, Iolet=iolet)
             capper.SetInputConnection(pdSource.GetOutputPort())
-
             # Set the source of the next iteraction to the capped
             # surface producer.
             pdSource = capper
@@ -165,7 +150,7 @@ class Clipper(object):
         normer.ConsistencyOn()
         normer.AutoOrientNormalsOn()
         normer.NonManifoldTraversalOff()
-
+        
         return normer
 
     pass
@@ -185,19 +170,27 @@ class StageWriter(object):
 
     def WriteOutput(self, stage, name=None):
         writer = vtkXMLPolyDataWriter()
+
+        if isinstance(stage, vtkAlgorithm):
+            # To ensure everything executes in order
+            stage.Update()
+            writer.SetInputConnection(stage.GetOutputPort())
+        elif isinstance(stage, vtkPolyData):
+            writer.SetInput(stage)
+        else:
+            raise ValueError('Cannot cope with instances of "%s"' % type(stage))
+        
         if name is None:
             fnPattern = '%02d.vtp'
         else:
-            fnPattern = name + '%02d.vtp'
-
+            fnPattern = '%02d-' + name + '.vtp'
         filename = os.path.join(self.dir, fnPattern % self.i)
-        writer.SetInputConnection(stage.GetOutputPort())
+        self.i += 1
         writer.SetFileName(filename)
         writer.Write()
-        self.i += 1
         return
     pass
-#ws = StageWriter('/Users/rupe/tmp/setuptooltest/stages').WriteOutput
+ws = StageWriter('/Users/rupert/tmp/setuptooltest/stages').WriteOutput
 
 class IntegerAdder(vtkProgrammableFilter):
     """vtkFilter for adding an integer value to vtkPolyData's
@@ -233,238 +226,17 @@ class IntegerAdder(vtkProgrammableFilter):
 
     pass
 
-class PolyDataCapAndLabeller1(vtkProgrammableFilter):
-    """vtkFilter for capping a vtkPolyData surface, and labeling the
-    cap with an integer cell data value.
-    """
-    def __init__(self, Value= -1):
-        self.SetExecuteMethod(self._Execute)
-        self.Value = Value
-        return
-
-    def SetValue(self, val):
-        self.Value = val
-        return
-    def GetValue(self):
-        return self.Value
-
-
-    def _Execute(self, *args):
-        # Setup the in/out PD
-        input = self.GetPolyDataInput()
-
-        output = self.GetPolyDataOutput()
-        output.DeepCopy(input)
-        outPoints = output.GetPoints()
-        outCells = output.GetPolys()
-        outCellData = output.GetCellData().GetScalars()
-
-        # Gets any edges of the mesh
-        edger = vtkFeatureEdges()
-        edger.BoundaryEdgesOn()
-        edger.FeatureEdgesOff()
-        edger.NonManifoldEdgesOff()
-        edger.ManifoldEdgesOff()
-        edger.SetInput(input)
-
-        # Converts the edges to a polyline
-        stripper = vtkStripper()
-        stripper.SetInputConnection(edger.GetOutputPort())
-        stripper.Update()
-
-        lines = stripper.GetOutput()
-        lineIndices = lines.GetLines().GetData()
-        linePoints = lines.GetPoints()
-
-        nCaps = lines.GetNumberOfLines()
-
-        # Range of point indices for each strip, not including the last closing one
-        pointIndexRanges = np.zeros((nCaps, 2), dtype=int)
-        # Number of triangles that will need to be created for each cap
-        nNewTris = np.zeros(nCaps, dtype=int)
-        # Barycentres of faces
-        barycentres = np.zeros((nCaps, 3), dtype=float)
-        # Index of the point into the output vtkPoints 
-        barycentreIds = np.zeros(nCaps, dtype=int)
-
-        # This is locator we'll use to find the points of the boundaries 
-        # the points list
-        locator = vtkOctreePointLocator()
-        locator.SetDataSet(input)
-        locator.BuildLocator()
-
-        # First count will be at index 0
-        stripLenIdx = 0
-        for iCap in xrange(nCaps):
-            # The polyline is a number of points, followed by a list
-            # of the indices of the points that make it up. The 
-            # final index will be the same as the first one.
-            stripLen = int(lineIndices.GetTuple1(stripLenIdx))
-
-            nNewTris[iCap] = stripLen - 1
-            # First point id after the length of the strip
-            pointIndexRanges[iCap] = (stripLenIdx + 1, stripLenIdx + 1 + nNewTris[iCap])
-
-            # Now compute barycentre of face
-            # R = (Sum_i m_i r_i) / (Sum_i m_i)
-            sum_miri = np.zeros(3, dtype=float)
-            sum_mi = 0.
-
-            # For efficiency, we will also construct the triangles
-            # making up the face now. The barycentre will of course be
-            # in the wrong place, but we'll fix that at the end
-            barycentreIds[iCap] = outPoints.InsertNextPoint(0., 0., 0.)
-
-            for iLine in xrange(*pointIndexRanges[iCap]):
-                start = np.array(linePoints.GetPoint(int(lineIndices.GetTuple1(iLine))))
-                end = np.array(linePoints.GetPoint(int(lineIndices.GetTuple1(iLine + 1))))
-                ri = 0.5 * (start + end)
-                # Use length as a proxy of mass
-                mi = np.sqrt(np.dot(end - start, end - start))
-
-                sum_mi += mi
-                sum_miri += mi * ri
-
-                # Create the triangle now
-                outCells.InsertNextCell(3)
-                startPointId = locator.FindClosestPoint(start)
-                outCells.InsertCellPoint(startPointId)
-                outCells.InsertCellPoint(barycentreIds[iCap])
-                endPointId = locator.FindClosestPoint(end)
-                outCells.InsertCellPoint(endPointId)
-
-                outCellData.InsertNextTuple1(self.Value)
-
-                continue
-
-            barycentres[iCap] = sum_miri / sum_mi
-            outPoints.SetPoint(barycentreIds[iCap], barycentres[iCap])
-
-            stripLenIdx += stripLen + 1 # +1 for the count
-            continue
-
-        return
-
-    pass
-
-class PolyDataCapAndLabeller2(vtkProgrammableFilter):
-    """vtkFilter for capping a vtkPolyData surface, and labeling the
-    cap with an integer cell data value.
-    """
-    def __init__(self, Value= -1):
-        self.SetExecuteMethod(self._Execute)
-        self.Value = Value
-        return
-
-    def SetValue(self, val):
-        self.Value = val
-        return
-    def GetValue(self):
-        return self.Value
-
-
-    def _Execute(self, *args):
-        # Setup the in/out PD
-        input = self.GetPolyDataInput()
-
-        output = self.GetPolyDataOutput()
-        output.DeepCopy(input)
-        outPoints = output.GetPoints()
-        outCells = output.GetPolys()
-        outCellData = output.GetCellData().GetScalars()
-
-        # Gets any edges of the mesh
-        edger = vtkFeatureEdges()
-        edger.BoundaryEdgesOn()
-        edger.FeatureEdgesOff()
-        edger.NonManifoldEdgesOff()
-        edger.ManifoldEdgesOff()
-        edger.SetInput(input)
-
-        # Converts the edges to a polyline
-        stripper = vtkStripper()
-        stripper.SetInputConnection(edger.GetOutputPort())
-        stripper.Update()
-
-        lines = stripper.GetOutput()
-        lineIndices = lines.GetLines().GetData()
-        linePoints = lines.GetPoints()
-
-        nCaps = lines.GetNumberOfLines()
-
-        # Range of point indices for each strip, not including the last closing one
-        pointIndexRanges = np.zeros((nCaps, 2), dtype=int)
-        # Number of triangles that will need to be created for each cap
-        nNewTris = np.zeros(nCaps, dtype=int)
-        # Barycentres of faces
-        barycentres = np.zeros((nCaps, 3), dtype=float)
-        # Index of the point into the output vtkPoints 
-        barycentreIds = np.zeros(nCaps, dtype=int)
-
-        # This is locator we'll use to find the points of the boundaries 
-        # the points list
-        locator = vtkOctreePointLocator()
-        locator.SetDataSet(input)
-        locator.BuildLocator()
-
-        # First count will be at index 0
-        stripLenIdx = 0
-        for iCap in xrange(nCaps):
-            # The polyline is a number of points, followed by a list
-            # of the indices of the points that make it up. The 
-            # final index will be the same as the first one.
-            stripLen = int(lineIndices.GetTuple1(stripLenIdx))
-
-            nNewTris[iCap] = stripLen - 1
-            # First point id after the length of the strip
-            pointIndexRanges[iCap] = (stripLenIdx + 1, stripLenIdx + 1 + nNewTris[iCap])
-
-            # Now compute barycentre of face
-            # R = (Sum_i m_i r_i) / (Sum_i m_i)
-            sum_miri = np.zeros(3, dtype=float)
-            sum_mi = 0.
-
-            # For efficiency, we will also construct the triangles
-            # making up the face now. The barycentre will of course be
-            # in the wrong place, but we'll fix that at the end
-            barycentreIds[iCap] = outPoints.InsertNextPoint(0., 0., 0.)
-
-            for iLine in xrange(*pointIndexRanges[iCap]):
-                start = np.array(linePoints.GetPoint(int(lineIndices.GetTuple1(iLine))))
-                end = np.array(linePoints.GetPoint(int(lineIndices.GetTuple1(iLine + 1))))
-                ri = 0.5 * (start + end)
-                # Use length as a proxy of mass
-                mi = np.sqrt(np.dot(end - start, end - start))
-
-                sum_mi += mi
-                sum_miri += mi * ri
-
-                # Create the triangle now
-                outCells.InsertNextCell(3)
-                startPointId = locator.FindClosestPoint(start)
-                outCells.InsertCellPoint(startPointId)
-                outCells.InsertCellPoint(barycentreIds[iCap])
-                endPointId = locator.FindClosestPoint(end)
-                outCells.InsertCellPoint(endPointId)
-
-                outCellData.InsertNextTuple1(self.Value)
-
-                continue
-
-            barycentres[iCap] = sum_miri / sum_mi
-            outPoints.SetPoint(barycentreIds[iCap], barycentres[iCap])
-
-            stripLenIdx += stripLen + 1 # +1 for the count
-            continue
-
-        return
-
-    pass
 class Face(object):
-    def __init__(self, EdgePolyData):
+    """Represent a freshly clipped open face and generate the cap to
+    cover it. Used by the PolyDataClipCapAndLabeller below.
+    
+    Lazily evaluates and caches its properties.
+    """
+    def __init__(self, EdgePolyData, Iolet):
         self.EdgePolyData = EdgePolyData
         self.nPoints = EdgePolyData.GetNumberOfPoints()
         
+        self.Normal = np.array([Iolet.Normal.x, Iolet.Normal.y, Iolet.Normal.z])
         self._Barycentre = None
         self._Perimeter = None
         self._MeanRadius = None
@@ -546,15 +318,24 @@ class Face(object):
         self._MeanRadius = 0.
         linePoints = self.EdgePolyData.GetPoints()
         lineIndices = self.EdgePolyData.GetLines().GetData()
-        
+        bary = self.BaryCentre
         # Approximate the average radius of the gap
         for iPoint in xrange(self.nPoints):
             iStart = int(lineIndices.GetTuple1(iPoint + 1))
             pt = np.array(linePoints.GetPoint(iStart))
-            self._MeanRadius += np.sqrt(np.sum((pt - self._Barycentre) ** 2))
+            self._MeanRadius += np.sqrt(np.sum((pt - bary) ** 2))
             continue
         self._MeanRadius /= self.nPoints
         return
+    
+    def _ComputeFuzz(self):
+        fuzz = np.random.normal(size=3)
+        # Project this onto our plane's normal
+        fuzz -= np.dot(fuzz, self.Normal) * self.Normal
+        # Normalise and scale appropriately (one thousandth of the triangle size)
+        fuzz *= 1e-3 * self.TargetSideLength / np.sqrt(np.dot(fuzz, fuzz))
+        
+        return fuzz
     
     def _ComputeFacePoints(self):
         self._FacePoints = vtkPoints()
@@ -563,38 +344,47 @@ class Face(object):
         lineIndices = self.EdgePolyData.GetLines().GetData()
 
         rFrac = np.linspace(0., 1., self.NumberOfBands + 1)[1:-1]
-        # Go round the cap again, adding new points
+        # Go round the edge of the cap, adding new points
         # We want to add points in rings, spaced approximately evenly,
-        # such that we get near equilateral triangles (except at the edge, 
+        # such that we get near-equilateral triangles (except at the edge, 
         # where we know there are extra points due to the clipping).
         
         # There are nSides actual points, but we will work as if there are
         # (nSides/2). The perimeter is proportional to the radius, hence 
-        # the number of new points is too. If rFrac is the reduced radius,
-        # then:
+        # the number of new points at that radius is too. If rFrac is the
+        # reduced radius, then:
         # nNew = (nSides/2) * rFrac
-        nNew = ((self.nPoints / 2.) * rFrac).astype(int)
         
         # Easiest way to place these is by putting them rFrac of the way
         # from barycentre to the edge, every (nSides/nNew) edge sites.
         # This won't be perfect, but we don't care as we'll throw these 
         # points at the Delaunay triangulator in a moment 
         every = (2. / rFrac).astype(int)
+        
+        # Now update nNew to give how many points we'll actually create. The
+        # difference is due to integer arithmetic etc.
+        nNew = (self.nPoints + every - 1) / every
+        
         # Count how many we have actually added.
         nAdded = np.zeros(nNew.shape, dtype=int)
         bary = self.BaryCentre
+        
+        # Always want the barycentre
+        self._FacePoints.InsertNextPoint(bary + self._ComputeFuzz())
+        
         for iPoint in xrange(self.nPoints):
             which = np.where(iPoint % every == 0)[0]
             iStart = int(lineIndices.GetTuple1(iPoint + 1))
             pt = np.array(linePoints.GetPoint(iStart))
-            
             for iBand in which:
                 # If we've done enough, skip
-                if nAdded[iBand] == nNew[iBand]: continue
+#                if nAdded[iBand] == nNew[iBand]: continue
                 nAdded[iBand] += 1
-                self._FacePoints.InsertNextPoint(rFrac[iBand] * (pt - bary) + bary)
+                newPt = rFrac[iBand] * (pt - bary) + bary
+                # We now have to add a bit of random fuzz, as we mustn't have
+                # colinear points (vtkDelaunay2D will go mad)
+                self._FacePoints.InsertNextPoint(newPt + self._ComputeFuzz())
                 continue
-                
             continue
         
         return
@@ -603,12 +393,40 @@ class Face(object):
         # Now triangulate the face.
         # TODO: make this transform to the correct plane. This will work
         # for now as we're clipping in the XY plane
+        trans = vtkTransform()
+        trans.Identity()
+        
+        u, v, w = self.Normal
+        # r = distance in xy plane
+        r = np.sqrt(u ** 2 + v ** 2)
+        if r > 0.:
+            # Rotation about z axis such that vector is in XZ plane (+x)
+            # u/r  -v/r 0    0
+            # v/r  u/r  0    0
+            # 0    0    1    0
+            # 0    0    0    1
+            matZ = vtkMatrix4x4()
+            matZ.SetElement(0, 0, u / r); matZ.SetElement(0, 1, -v / r)
+            matZ.SetElement(1, 0, v / r); matZ.SetElement(1, 1, u / r)
+            trans.Concatenate(matZ)
+            
+            # Rotate about y axis so the normal is now in +z
+            # w    0    -r   0
+            # 0    1    0    0
+            # r    0    w    0
+            # 0    0    0    1
+            matY = vtkMatrix4x4()
+            matY.SetElement(0, 0, w); matY.SetElement(0, 2, -r)
+            matY.SetElement(2, 0, r); matY.SetElement(2, 2, w)
+            trans.Concatenate(matY)
+            pass
         triangulator = vtkDelaunay2D()
+        triangulator.SetTransform(trans)
+        
         inPD = vtkPolyData()
         inPD.SetPoints(self.FacePoints)
         triangulator.SetInput(inPD)
         triangulator.SetSource(self.EdgePolyData)
-#        triangulator.BoundingTriangulationOn()
         triangulator.Update()
         self._TriangulatedFace = triangulator.GetOutput()
         return 
@@ -616,13 +434,13 @@ class Face(object):
     pass
 
 class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
-    """vtkFilter for capping a vtkPolyData surface, and labeling the
+    """vtkFilter for clipping and capping a vtkPolyData surface, and labeling the
     cap with an integer cell data value.
     """
-    def __init__(self, Value=None, ClipFunction=None):
+    def __init__(self, Value=None, Iolet=None):
         self.SetExecuteMethod(self._Execute)
         self.Value = Value
-        self.ClipFunction = ClipFunction
+        self.Iolet = Iolet
         return
     
     def SetValue(self, val):
@@ -631,19 +449,34 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
     def GetValue(self):
         return self.Value
     
-    def SetClipFunction(self, val):
-        self.ClipFunction = val
+    def SetIolet(self, val):
+        self.Iolet = val
         return
-    def GetClipFunction(self):
-        return self.ClipFunction
+    def GetIolet(self):
+        return self.Iolet
     
-    def _MakeClipper(self, pdSource):
-        clipper = vtkClipPolyData()
-        clipper.SetInputConnection(pd)
-        clipper.SetClipFunction(self.ClipFunction)
-        # TODO: insert filter to get part closest to seed point
-        return clipper.GetOutputPoint()
+    def _Clip(self, pd):
+        # TODO: switch from this simple ImplicitPlane (i.e.
+        # infinite plane) clipping to excising a thin cuboid
+        # from the Iolet and keeping the piece next to the
+        # SeedPoint.
         
+        plane = vtkPlane()
+        plane.SetOrigin(self.Iolet.Centre.x, self.Iolet.Centre.y, self.Iolet.Centre.z)
+        plane.SetNormal(self.Iolet.Normal.x, self.Iolet.Normal.y, self.Iolet.Normal.z)
+        clipper = vtkClipPolyData()
+        clipper.SetInput(pd)
+        clipper.SetClipFunction(plane)
+        # TODO: insert filter to get part closest to seed point?
+        clipper.Update()
+        return clipper.GetOutput()
+        
+    def _AddValue(self, pd):
+        adder = IntegerAdder(Value=self.Value)
+        adder.SetInput(pd)
+        adder.Update()
+        return adder.GetOutput()
+    
     def _GetOpenFaces(self, pd):
         # Gets any edges of the mesh
         edger = vtkFeatureEdges()
@@ -665,7 +498,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         if nLines == 0:
             return []
         elif nLines == 1:
-            return [Face(lines)]
+            return [Face(lines, self.Iolet)]
         
         ans = []
         allLinePoints = lines.GetPoints()
@@ -703,7 +536,7 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
             newLinePolyData.SetPoints(newLinePoints)
             newLinePolyData.SetLines(newLineConnections)
             # create the Face and add to the output list
-            ans.append(Face(newLinePolyData))
+            ans.append(Face(newLinePolyData, self.Iolet))
             
             lineLenIdx += newLineLen + 1 # +1 for the count
             continue
@@ -711,50 +544,79 @@ class PolyDataClipCapAndLabeller(vtkProgrammableFilter):
         return ans
     
     def _Execute(self, *args):
+#        pdb.set_trace()
         assert isinstance(self.Value, int)
-        assert isinstance(self.ClipFunction, vtkImplicitFunction)
-        
-        clippedSource = self._MakeClipper(self.GetInputConnection(0,0))
-        clippedSource.Update()
-        clipped = clippedSource.GetOutput()
-        
+        assert isinstance(self.Iolet, Iolet)
+        input = self.GetPolyDataInput()
+        clipped = self._Clip(input)                
         faces = self._GetOpenFaces(clipped)
-        pdb.set_trace()
         
-        output = self.GetPolyDataOutput()
-        output.PrepareForNewData()
-        
+        merger = vtkAppendPolyData()
+        merger.AddInput(clipped)
         for face in faces:
-            
-            
+            facePD = face.TriangulatedFace
+            iadd = IntegerAdder(Value=self.Value)
+            iadd.SetInput(facePD)
+            iadd.Update()
+            merger.AddInput(iadd.GetOutput())
             continue
-
+        cleaner = vtkCleanPolyData()
+        cleaner.SetInputConnection(merger.GetOutputPort())
+        cleaner.Update()
+        output = self.GetPolyDataOutput()
+        output.DeepCopy(cleaner.GetOutput())
         return
 
     pass
 
-class PolyLinesToCapConverter(vtkProgrammableFilter):
-    """Given an input vtkPolyData object, containing the output of
-    a vtkStripper (i.e. PolyLines), convert this to polygons
-    covering the surface enclosed by the PolyLines.    
+class PolyDataCloser(vtkProgrammableFilter):
+    """Given an input vtkPolyData object, close any holes in the surface.   
     """
     def __init__(self):
         self.SetExecuteMethod(self._Execute)
 
     def _Execute(self, *args):
-        # Get the strips
-        strips = self.GetPolyDataInput()
+        input = self.GetPolyDataInput()
+        
+        # Gets any edges of the mesh
+        edger = vtkFeatureEdges()
+        edger.BoundaryEdgesOn()
+        edger.FeatureEdgesOff()
+        edger.NonManifoldEdgesOff()
+        edger.ManifoldEdgesOff()
+        edger.SetInput(input)
 
-        # Get the out PD
-        out = self.GetPolyDataOutput()
-        out.PrepareForNewData()
-        # Do a trick to set the points and poly of the cap
-        out.SetPoints(strips.GetPoints())
-        out.SetPolys(strips.GetLines())
-
+        # Converts the edges to a polyline
+        stripper = vtkStripper()
+        stripper.SetInputConnection(edger.GetOutputPort())
+        stripper.Update()
+        
+        # Change the polylines into polygons
+        boundaryPoly = vtkPolyData()
+        boundaryPoly.SetPoints(stripper.GetOutput().GetPoints())
+        boundaryPoly.SetPolys(stripper.GetOutput().GetLines())
+        
+        # Triangulate
+        tri = vtkTriangleFilter()
+        tri.SetInput(boundaryPoly)
+        tri.Update()
+        
+        # Join to the input
+        merger = vtkAppendPolyData()
+        merger.AddInput(input)
+        merger.AddInput(tri.GetOutput())
+#        merger.Update()
+        
+        # Clean up by merging duplicate points
+        cleaner = vtkCleanPolyData()
+        cleaner.SetInputConnection(merger.GetOutputPort())
+        cleaner.Update()
+        
+        # Set output
+        output = self.GetPolyDataOutput()
+        output.ShallowCopy(cleaner.GetOutput())
         return
     pass
-
 
 class XmlWriter(object):
     def __init__(self, profile):
