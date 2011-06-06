@@ -1,17 +1,13 @@
-from contextlib import contextmanager
-import xdrlib
 import numpy as np
-from math import sqrt
-import bisect
 import os.path
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 
 from vtk import vtkClipPolyData, vtkAppendPolyData, vtkPlane, \
     vtkStripper, vtkFeatureEdges, vtkPolyDataConnectivityFilter, \
-    vtkPoints, vtkIdList, vtkPolyDataNormals, vtkProgrammableFilter, \
+    vtkPolyDataNormals, vtkProgrammableFilter, \
     vtkOBBTree, vtkTriangleFilter, vtkCleanPolyData, vtkIntArray
 
-from .Iolets import Inlet, Outlet, Iolet
+from .Iolets import Inlet, Outlet
 import Generation
 import pdb
 
@@ -20,16 +16,16 @@ def DVfromV(v):
     """Translate a Model.Vector.Vector to a Generation.DoubleVector.
     """
     dv = Generation.DoubleVector()
-    dv.resize(3)
-    dv[0] = v.x
-    dv[1] = v.y
-    dv[2] = v.z
+    dv.x = v.x
+    dv.y = v.y
+    dv.z = v.z
     return dv
 
 class ConfigGenerator(object):
     def __init__(self, profile):
         """Clip the STL and set attributes on the SWIG-proxied C++ ConfigGenerator object.
         """
+#        pdb.set_trace()
         self.profile = profile 
         
         self.generator = Generation.ConfigGenerator()
@@ -49,39 +45,45 @@ class ConfigGenerator(object):
             proxy.Radius = io.Radius
             
             if isinstance(io, Inlet):
-                io.Index = proxy.Index = nIn
+                io.Id = proxy.Id = nIn
+                proxy.IsInlet = True
                 nIn += 1
             elif isinstance(io, Outlet):
-                io.Index = proxy.Index = nOut
+                io.Id = proxy.Id = nOut
+                proxy.IsInlet = False
                 nOut += 1
                 pass
             ioletProxies.append(proxy)
             continue
-        
+        # We need to keep a reference to this to make sure it's not GC'ed
+        self.ioletProxies = ioletProxies
         self.generator.SetIolets(ioletProxies)
         
         self.generator.SetSeedPoint(profile.SeedPoint.x,
                                     profile.SeedPoint.y,
                                     profile.SeedPoint.z)
         
-        self.generator.SetSurfaceSource(profile.SurfaceSource)
+#        self.generator.SetFullSurfaceSource(profile.SurfaceSource)
         
         clippedSrc = Clipper(profile).ConstructClipPipeline()
-        self.generator.SetClippedSurface(clippedSrc)
+        self.generator.SetClippedSurfaceSource(clippedSrc)
         
         # Create the locator
         clippedSrc.Update()
-        surface = clippedSrc.GetOutput()
-        locator = vtkOBBTree()
-        locator.SetDataSet(surface)
-        locator.BuildLocator()
-        self.generator.SetLocator(locator)
+        clippedSurface = clippedSrc.GetOutput()
+        self.Locator = vtkOBBTree()
+        self.Locator.SetDataSet(clippedSurface)
+        self.Locator.BuildLocator()
+        # Again, we need to make sure this is kept alive and not GC'ed
+        self.generator.SetLocator(self.Locator)
         return
     
     def Execute(self):
         """Forward this to the C++ implementation.
         """
-        return self.generator.Execute()
+#        self.generator.Execute()
+        XmlWriter(self.profile).Write()
+        return
     pass
 
 class Clipper(object):
@@ -102,109 +104,6 @@ class Clipper(object):
 
         self.ClippedSurface = self.ConstructClipPipeline()
         return
-
-#    def Execute(self):
-#        """Create the output based on our configuration.
-#        
-#        1) Add an index to the Iolets within their type.
-#        
-#        2) Clip and cap the STL model; this is performed by a VTK
-#        pipeline (see ConstructClipPipeline).
-#
-#        3) Create the Writer and Domain objects. The Domain initially
-#        has no MacroBlocks allocated, only a 3D array of Nones of the
-#        appropriate size.
-#        
-#        4) Iterate over the set of MacroBlocks (and their contained
-#        LatticeSites), constructing them in a lazy fashion; the blocks
-#        are deleted when they can no longer be used to save memory,
-#        see Domain.SmartIterBlocks for details.
-#
-#        5) Each site is fully classified (see ClassifySite) when its
-#        turn comes to be written. The classification takes care to
-#        examine each link between sites only once for efficiency. It
-#        therefore partially updates the other site's attributes.
-#        
-#        The Writer object deals with writing the preamble and header
-#        of the output.
-#        """
-#        # Work out the indices of the IOlets 
-#        nIn = 0
-#        nOut = 0
-#        for io in self.Iolets:
-#            if isinstance(io, Inlet):
-#                io.Index = nIn
-#                nIn += 1
-#            elif isinstance(io, Outlet):
-#                io.Index = nOut
-#                nOut += 1
-#                pass
-#            continue
-#
-#        # Run the pipeline as we need it to build the locator
-#        self.ClippedSurface.Update()
-#        surface = self.ClippedSurface.GetOutput()
-#
-#        # Create the locator
-#        self.Locator.SetDataSet(surface)
-#        self.Locator.BuildLocator()
-#
-#
-#        domain = Domain(self.VoxelSize, surface.GetBounds())
-#
-#        writer = Writer(OutputConfigFile=self.OutputConfigFile,
-#                        StressType=self.StressType,
-#                        BlockSize=domain.BlockSize,
-#                        BlockCounts=domain.BlockCounts,
-#                        VoxelSize=domain.VoxelSize,
-#                        Origin=domain.Origin)
-#
-#        for block in DomainSmartBlockIterator(domain):
-#            # Open the BlockStarted context of the writer; this will
-#            # deal with flushing the state to the file (or not, in the
-#            # case where there are no fluid sites).
-#            with writer.BlockStarted() as blockWriter:
-#                for site in block.IterSites():
-#                    ClassifySite(self, site)
-#                    # cache the type cos it's probably slow to compute
-#                    type = site.Type
-#                    cfg = site.Config
-#                    blockWriter.pack_uint(cfg)
-#                    
-#                    if type == SOLID_TYPE:
-#                        # Solid sites, we don't do anything
-#                        continue
-#
-#                    # Increase count of fluid sites
-#                    blockWriter.IncrementFluidSitesCount()
-#
-#                    if cfg == FLUID_TYPE:
-#                        # Pure fluid sites don't need any more data
-#                        continue
-#
-#                    # It must be INLET/OUTLET/EDGE
-#
-#                    if type == INLET_TYPE or type == OUTLET_TYPE:
-#                        for n in site.BoundaryNormal: blockWriter.pack_double(n)
-#                        blockWriter.pack_double(site.BoundaryDistance)
-#                        pass
-#
-#                    if site.IsEdge:
-#                        for n in site.WallNormal: blockWriter.pack_double(n)
-#                        blockWriter.pack_double(site.WallDistance)
-#
-#                    for cd in site.CutDistances: blockWriter.pack_double(cd)
-#
-#                    continue
-#
-#                pass
-#            continue # for block in domain...
-#
-#        writer.Close()
-#
-#        # Write the XML file
-#        XmlWriter(self).Write()
-#        return
 
     def ConstructClipPipeline(self):
         """This constructs a VTK pipeline to clip the vtkPolyData read
@@ -351,140 +250,6 @@ class PolyLinesToCapConverter(vtkProgrammableFilter):
         return
     pass
 
-#class Writer(object):
-#    """Generates the HemeLB input file.
-#    
-#    
-#    """
-#    def __init__(self, OutputConfigFile=None, StressType=None,
-#                 BlockSize=8, BlockCounts=None, VoxelSize=None, Origin=None):
-#        """This opens the file and writes the preamble and a dummy
-#        header. All keyword arguments are required.
-#        
-#        OutputConfigFile - path to output file
-#        
-#        StressType - an integer indicating what stress calculation
-#        method to use
-#
-#        BlockSize - number of sites along one dimension of a block
-#
-#        BlockCounts - number of blocks along x-, y- and z-directions
-#
-#        VoxelSize - length of a voxel, in metres
-#
-#        Origin - location of the (0,0,0) site in physical coordinates
-#        
-#        """
-#        self.OutputConfigFile = OutputConfigFile
-#        self.StressType = StressType
-#        self.BlockSize = BlockSize
-#        self.BlockCounts = BlockCounts
-#        self.VoxelSize = VoxelSize
-#        # Make sure this in metres
-#        self.Origin = Origin
-#
-#        # Truncate, and open for read & write in binary mode
-#        self.file = file(OutputConfigFile, 'w+b')
-#
-#        encoder = xdrlib.Packer()
-#        # Write the preamble, starting with the stress type
-#        encoder.pack_int(StressType)
-#
-#        # Blocks in each dimension
-#        for count in BlockCounts:
-#            encoder.pack_uint(int(count))
-#            continue
-#        # Sites along 1 dimension of a block
-#        encoder.pack_uint(BlockSize)
-#
-#        # Voxel Size, in metres
-#        encoder.pack_double(VoxelSize)
-#        # Position of site index (0,0,0) in block index (0,0,0), in
-#        # metres in the STL file's coordinate system
-#        for ori in Origin:
-#            encoder.pack_double(ori)
-#            continue
-#
-#        # Write this to the file
-#        self.file.write(encoder.get_buffer())
-#
-#        # Reset, we're going to write a dummy header now
-#        encoder.reset()
-#        # For each block
-#        for ignored in xrange(np.prod(BlockCounts)):
-#            encoder.pack_uint(0) # n fluid sites
-#            encoder.pack_uint(0) # n bytes
-#            continue
-#        # Note the start of the header
-#        self.headerStart = self.file.tell()
-#        # Write it
-#        self.file.write(encoder.get_buffer())
-#        # Note the start of the body
-#        self.bodyStart = self.file.tell()
-#
-#        self.HeaderEncoder = xdrlib.Packer()
-#        return
-#
-#    def Close(self):
-#        """Rewrites the header map and closes the file.
-#        """
-#        head = self.HeaderEncoder.get_buffer()
-#        assert len(head) == (self.bodyStart - self.headerStart)
-#
-#        self.file.seek(self.headerStart)
-#        self.file.write(head)
-#        self.file.close()
-#        return
-#
-#    @contextmanager
-#    def BlockStarted(self):
-#        """A context manager (see PEP 343) for use in a 'with'
-#        statement.
-#        
-#        This context manager will return an enhanced xdrlib.Packer
-#        instance which should be used to write the data for a single
-#        MacroBlock within the body of the 'with' statement. Every time
-#        a fluid site is written, the IncrementFluidSitesCount method
-#        of the Packer should be called. This is used at the end of the
-#        'with' block to write a record in the header.
-#         
-#        """
-#        # The encode we will yiled
-#        encoder = xdrlib.Packer()
-#
-#        # This function will be set to the IncrementFluidSitesCount
-#        # attribute of the Packer
-#        def incrementor():
-#            """Increase the count of fluid sites that have been
-#            written by the active BlockStarted context.
-#            """
-#            incrementor.count += 1
-#            return
-#        incrementor.count = 0
-#        
-#        encoder.IncrementFluidSitesCount = incrementor
-#        # Give the altered XDR encoder back to our caller
-#        yield encoder
-#        
-#        # Write our record into the header buffer
-#        self.HeaderEncoder.pack_uint(incrementor.count)
-#
-#        if incrementor.count == 0:
-#            # We mustn't write anything to the file, so note that it
-#            # takes zero bytes
-#            self.HeaderEncoder.pack_uint(0)
-#        else:
-#            # Write the block to the main file 
-#
-#            blockStart = self.file.tell()
-#            self.file.write(encoder.get_buffer())
-#            blockEnd = self.file.tell()
-#            self.HeaderEncoder.pack_uint(blockEnd - blockStart)
-#            pass
-#
-#        return
-#
-#    pass
 
 class XmlWriter(object):
     def __init__(self, profile):
@@ -588,51 +353,3 @@ class XmlWriter(object):
         return
 
     pass
-
-
-#
-## Site types
-#SOLID_TYPE = 0b00
-#FLUID_TYPE = 0b01
-#INLET_TYPE = 0b10
-#OUTLET_TYPE = 0b11
-#
-#BOUNDARIES = 3
-#INLET_BOUNDARY = 0
-#OUTLET_BOUNDARY = 1
-#WALL_BOUNDARY = 2
-#
-#SITE_TYPE_BITS = 2
-#BOUNDARY_CONFIG_BITS = 14
-#BOUNDARY_DIR_BITS = 4
-#BOUNDARY_ID_BITS = 10
-#
-#BOUNDARY_CONFIG_SHIFT = SITE_TYPE_BITS;
-#BOUNDARY_DIR_SHIFT = BOUNDARY_CONFIG_SHIFT + BOUNDARY_CONFIG_BITS;
-#BOUNDARY_ID_SHIFT = BOUNDARY_DIR_SHIFT + BOUNDARY_DIR_BITS;
-#
-##===============================================================================
-## Horrifying bit-fiddling masks courtesy of Marco.
-## Comments show the bit patterns.
-##===============================================================================
-#
-#SITE_TYPE_MASK = ((1 << SITE_TYPE_BITS) - 1)
-## 0000 0000  0000 0000  0000 0000  0000 0011
-## These give the *_TYPE given above
-#
-#BOUNDARY_CONFIG_MASK = ((1 << BOUNDARY_CONFIG_BITS) - 1) << BOUNDARY_CONFIG_SHIFT
-## 0000 0000  0000 0000  1111 1111  1111 1100
-## These bits are set if the lattice vector they correspond to takes one to a solid site
-## The following hex digits give the index into LatticeSite.neighbours
-## ---- ----  ---- ----  DCBA 9876  5432 10--
-#
-#BOUNDARY_DIR_MASK = ((1 << BOUNDARY_DIR_BITS) - 1) << BOUNDARY_DIR_SHIFT
-## 0000 0000  0000 1111  0000 0000  0000 0000
-## No idea what these represent. As far as I can tell, they're unused.
-#
-#BOUNDARY_ID_MASK = ((1 << BOUNDARY_ID_BITS) - 1) << BOUNDARY_ID_SHIFT
-## 0011 1111  1111 0000  0000 0000  0000 0000
-## These bits together give the index of the inlet/outlet/wall in the output XML file
-#
-#PRESSURE_EDGE_MASK = 1 << 31
-## 1000 0000  0000 0000  0000 0000  0000 0000

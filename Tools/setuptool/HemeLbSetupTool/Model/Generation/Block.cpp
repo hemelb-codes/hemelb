@@ -1,11 +1,21 @@
-#include "Block.h"
 #include "Index.h"
-#include "Domain.h"
-#include "Site.h"
 
-Block::Block(Domain& dom, const Index& ind, unsigned int& size) :
+#include "Site.h"
+#include "Block.h"
+#include "Domain.h"
+
+Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
 	size(size), index(ind), min(ind * size), max((ind + 1) * size), domain(dom) {
 	this->sites.resize(size * size * size);
+	unsigned int ijk = 0;
+	for (unsigned int i = ind.x * size; i < (ind.x + 1) * size; ++i) {
+		for (unsigned int j = ind.y * size; j < (ind.y + 1) * size; ++j) {
+			for (unsigned int k = ind.z * size; k < (ind.z + 1) * size; ++k) {
+				this->sites[ijk] = new Site(*this, i, j, k);
+				++ijk;
+			}
+		}
+	}
 }
 
 Site& Block::GetGlobalSite(const Index& globalInd) {
@@ -26,5 +36,11 @@ Site& Block::GetGlobalSite(const Index& globalInd) {
 }
 
 Site& Block::GetLocalSite(const Index& ind) {
-	return this->sites[this->TranslateIndex(ind)];
+	/*
+	 * Get the site, creating it if it didn't exist.
+	 */
+	unsigned int ijk = this->TranslateIndex(ind);
+	//	if (this->sites[ijk] == NULL)
+	//		this->sites[ijk] = new Site(*this);
+	return *this->sites[ijk];
 }

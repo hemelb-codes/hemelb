@@ -1,9 +1,13 @@
 %module Generation
+
+%include "cpointer.i"
+%pointer_class(Iolet, IoletPtr)
+
 %include "std_string.i"
 %include "std_vector.i"
 namespace std {
-  %template(DoubleVector) vector<double>;
-  %template(IoletVector) vector<Iolet>;
+  //%template(DoubleVector) vector<double>;
+  %template(IoletPtrVector) vector<Iolet*>;
 }
 // This is needed declare Iolet before the std::vector support code. But note that we must include Python.h before anything else
 %begin %{
@@ -12,6 +16,7 @@ namespace std {
 %}
 
 %{
+#include "Index.h"
 #include "ConfigGenerator.h"
 #include "vtkPolyDataAlgorithm.h"
 #include "vtkOBBTree.h"
@@ -88,3 +93,10 @@ namespace std {
 %ignore ConfigGenerator::ClassifySite(Site&);
 %include ConfigGenerator.h
 %include Iolet.h
+
+%ignore Iterator;
+%ignore Vec3::operator%;
+%ignore Vec3::operator[];
+%ignore Vec3::Magnitude;
+%include Index.h
+%template (DoubleVector) Vec3<double>;
