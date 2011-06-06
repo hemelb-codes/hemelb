@@ -1,2 +1,2 @@
-run scripts/setuptool --profile  ~/tmp/setuptooltest/cyl_048.pro
+run scripts/setuptool --profile  ~/tmp/setuptooltest/tiny.pro
 continue

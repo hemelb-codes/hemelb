@@ -18,8 +18,9 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 		// room for the sites just outside.
 		nSites = int(size / VoxelSize) + 2;
 
-		// The extra space
-		extra = nSites * VoxelSize - size;
+		// The extra space.
+		// Minus one, since we want the number of links, not "fence posts"
+		extra = (nSites - 1) * VoxelSize - size;
 		// We want to balance this equally with the placement of
 		// the first site.
 		siteZero = min - 0.5 * extra;
@@ -30,7 +31,7 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 			++nBlocks;
 		this->Origin[i] = siteZero;
 		this->BlockCounts[i] = nBlocks;
-		this->VoxelCounts[i] = nBlocks * BlockSize;
+		this->SiteCounts[i] = nBlocks * BlockSize;
 		totalBlocks *= nBlocks;
 	}
 	this->blocks.resize(totalBlocks);

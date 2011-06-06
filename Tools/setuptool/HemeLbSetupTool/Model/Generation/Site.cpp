@@ -11,8 +11,9 @@
 
 // C'tor
 Site::Site(Block& block, Index& index) :
-	Position(block.GetDomain().CalcPositionFromIndex(index)), block(block),
-			index(index) {
+	IsFluidKnown(false), IsFluid(false), IsEdge(false),
+			Position(block.GetDomain().CalcPositionFromIndex(index)),
+			block(block), index(index) {
 	this->Init();
 }
 
@@ -170,8 +171,7 @@ bool NeighbourIteratorBase::IsCurrentValid() {
 
 	for (unsigned int j = 0; j < 3; ++j) {
 		// If ind is out of the Domain, the current is invalid
-		if (this->index[j] < 0 or this->index[j]
-				>= this->domain->VoxelCounts[j])
+		if (this->index[j] < 0 or this->index[j] >= this->domain->SiteCounts[j])
 			return false;
 	}
 	return true;
@@ -207,6 +207,12 @@ NeighbourIteratorBase::pointer NeighbourIteratorBase::operator->() {
 	return &(*(*this));
 }
 
+unsigned int NeighbourIterator::GetNeighbourIndex() {
+	return this->i;
+}
+unsigned int LaterNeighbourIterator::GetNeighbourIndex() {
+	return Neighbours::laterNeighbourIndices[this->i];
+}
 // Get the lattice vector for the current neighbour
 Index LaterNeighbourIterator::GetVector() {
 	return Neighbours::vectors[Neighbours::laterNeighbourIndices[this->i]];

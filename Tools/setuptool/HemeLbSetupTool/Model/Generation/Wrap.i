@@ -18,13 +18,13 @@ namespace std {
 %{
 #include "Index.h"
 #include "ConfigGenerator.h"
-#include "vtkPolyDataAlgorithm.h"
+#include "vtkPolyData.h"
 #include "vtkOBBTree.h"
 #include <sstream>
 %}
 
 // TODO: remove the copy-pasta for the 2 vtk classes
-%typemap (in) vtkPolyDataAlgorithm* {
+%typemap (in) vtkPolyData* {
   int fail = 0;
   // New reference
   PyObject* thisObj = PyObject_GetAttrString($input, "__this__");
