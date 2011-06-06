@@ -2,6 +2,7 @@
 #define HEMELBSETUPTOOL_CONFIGWRITER_H
 
 #include <string>
+#include <cstdio>
 
 #include "Index.h"
 
@@ -34,8 +35,7 @@ protected:
 	char *headerBuffer;
 
 	int bodyStart;
-	XdrWriter* bodyEncoder;
-
+	FILE* bodyFile;
 	friend class BlockWriter;
 };
 
