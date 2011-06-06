@@ -9,14 +9,10 @@ namespace hemelb
   {
     ScreenPixels::ScreenPixels()
     {
-      for (unsigned int ii = 0; ii < COLOURED_PIXELS_MAX; ++ii)
-      {
-        pixelId[ii] = -1;
-      }
-
-      pixelCount = 0;
       PixelsX = 0;
       PixelsY = 0;
+
+      Reset();
     }
 
     ScreenPixels::~ScreenPixels()
@@ -26,6 +22,11 @@ namespace hemelb
     void ScreenPixels::Reset()
     {
       pixelCount = 0;
+
+      for (unsigned int ii = 0; ii < COLOURED_PIXELS_MAX; ++ii)
+      {
+        pixelId[ii] = -1;
+      }
     }
 
     void ScreenPixels::FoldIn(const ScreenPixels* inScreen, const VisSettings* visSettings)

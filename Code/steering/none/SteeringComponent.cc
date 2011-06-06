@@ -48,6 +48,7 @@ namespace hemelb
 
     void SteeringComponent::Effect()
     {
+      AssignValues();
     }
   }
 }
