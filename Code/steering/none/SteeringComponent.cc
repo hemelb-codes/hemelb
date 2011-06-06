@@ -15,14 +15,13 @@ namespace hemelb
      * @param iSimState
      * @return
      */
-    SteeringComponent::SteeringComponent(int imagesPeriod,
-                                         Network* network,
+    SteeringComponent::SteeringComponent(Network* network,
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
                                          lb::SimulationState * iSimState) :
       net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-          imagesPeriod(imagesPeriod), mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl)
+          mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl)
     {
       Reset();
       AssignValues();
@@ -49,7 +48,6 @@ namespace hemelb
 
     void SteeringComponent::Effect()
     {
-      mSimState->DoRendering = (mSimState->TimeStep % imagesPeriod < GetRoundTripLength());
     }
   }
 }
