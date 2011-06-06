@@ -18,6 +18,7 @@ public:
 	Site(Block& block, unsigned int i, unsigned int j, unsigned int k);
 	unsigned int GetType() const;
 	unsigned int GetConfig();
+	bool IsFluidKnown;
 	bool IsFluid;
 	bool IsEdge;
 	Vector BoundaryNormal;
@@ -58,9 +59,7 @@ public:
 	reference operator*();
 	pointer operator->();
 
-	inline unsigned int GetNeighbourIndex() {
-		return this->i;
-	}
+	virtual unsigned int GetNeighbourIndex() = 0;
 
 protected:
 	Site* site;
@@ -79,7 +78,7 @@ protected:
 class LaterNeighbourIterator: public NeighbourIteratorBase {
 public:
 	LaterNeighbourIterator(Site& site, unsigned int startpos = 0);
-
+	unsigned int GetNeighbourIndex();
 protected:
 	Index GetVector();
 };
@@ -88,7 +87,7 @@ protected:
 class NeighbourIterator: public NeighbourIteratorBase {
 public:
 	NeighbourIterator(Site& site, unsigned int startpos = 0);
-
+	unsigned int GetNeighbourIndex();
 protected:
 	Index GetVector();
 };

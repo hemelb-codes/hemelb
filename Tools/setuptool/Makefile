@@ -18,7 +18,7 @@ hemelb_cpp = $(addprefix $(HemeLbDir)/, D3Q15.cc io/XdrFileWriter.cc io/XdrMemWr
 swig_cpp = $(generationDir)/Wrap.cpp
 
 CXX = g++
-CXXFLAGS = -Wall -MMD -fno-strict-aliasing -fno-common -dynamic -arch i386 -DNDEBUG -DHEMELB_CFG_ON_BSD -g -O3 -arch i386  -Wno-deprecated -no-cpp-precomp -Werror
+CXXFLAGS = -Wall -MMD -fno-strict-aliasing -fno-common -dynamic -arch i386 -DNDEBUG -DHEMELB_CFG_ON_BSD -g -O0 -arch i386  -Wno-deprecated -no-cpp-precomp -Werror
 INCLUDES = -isystem$(pythonDir) -isystem$(vtkDir) -iquote$(HemeLbDir)
 
 LDFLAGS = -g -bundle -undefined dynamic_lookup -arch i386 # -L/usr/local/lib -lmpi
