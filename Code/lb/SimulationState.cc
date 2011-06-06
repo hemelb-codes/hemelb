@@ -102,5 +102,11 @@ namespace hemelb
     {
       return mStability;
     }
+
+    void SimulationState::DoubleTimeResolution()
+    {
+      TotalTimeSteps *= 2;
+      TimeStepsPerCycle *= 2;
+    }
   }
 }
