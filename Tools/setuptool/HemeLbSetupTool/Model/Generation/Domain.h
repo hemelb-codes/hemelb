@@ -5,10 +5,10 @@
 
 #include "Index.h"
 #include "GetSet.h"
-#include "Site.h"
+//#include "Site.h"
 #include "BlockWriter.h"
 class Block;
-//class Site;
+class Site;
 class BlockIterator;
 
 class Domain {
@@ -30,21 +30,18 @@ public:
 	BlockIterator begin();
 	BlockIterator end();
 
-	GETTER(BlockSize, int);
-	SETTER(BlockSize, int);
+	GETTER(BlockSize, int);SETTER(BlockSize, int);
 
-	GETTER(BlockCounts, Index);
-	SETTER(BlockCounts, Index);
+	GETTER(BlockCounts, Index);SETTER(BlockCounts, Index);
 
-	GETTER(Origin, Vector);
-	SETTER(Origin, Vector);
+	GETTER(Origin, Vector);SETTER(Origin, Vector);
 
-	GETTER(VoxelSize, double);
-	SETTER(VoxelSize, double);
+	GETTER(VoxelSize, double);SETTER(VoxelSize, double);
 
 protected:
 	Vector Origin;
 	Index BlockCounts;
+	Index VoxelCounts;
 	unsigned int BlockSize;
 	double VoxelSize;
 
@@ -58,20 +55,20 @@ protected:
 	 */
 
 	// 1d => 3d
-	inline Index* TranslateIndex(const int i) {
+	inline Index* TranslateIndex(const unsigned int i) {
 		Index* bInd = new Index();
 		this->TranslateIndex(i, *bInd);
 		return bInd;
 	}
 	// 1d => 3d, putting the answer in an existing Index
-	inline void TranslateIndex(const int k, Index& ans) {
-		ans[2] = k % this->BlockCounts[2];
-		int j = k / this->BlockCounts[2];
+	inline void TranslateIndex(const unsigned int k, Index& ans) {
+		ans.z = k % this->BlockCounts.z;
+		int j = k / this->BlockCounts.z;
 
-		ans[1] = j % this->BlockCounts[1];
-		int i = j / this->BlockCounts[1];
+		ans.y = j % this->BlockCounts.y;
+		int i = j / this->BlockCounts.y;
 
-		ans[0] = i % this->BlockCounts[0];
+		ans.x = i % this->BlockCounts.x;
 #ifdef CHECK_BOUNDS
 		if (i / this->BlockCounts[0])
 		throw IndexError;
@@ -80,11 +77,16 @@ protected:
 
 	// 3d => 1d
 	inline int TranslateIndex(const Index& ijk) {
-		return (ijk[0] * this->BlockCounts[1] + ijk[1]) * this->BlockCounts[2]
-				+ ijk[2];
+		return (ijk.x * this->BlockCounts.y + ijk.y) * this->BlockCounts.z
+				+ ijk.z;
+	}
+	inline int TranslateIndex(const unsigned int& i, const unsigned int& j,
+			const unsigned int& k) {
+		return (i * this->BlockCounts.y + j) * this->BlockCounts.z + k;
 	}
 
 	friend class BlockIterator;
+	friend class NeighbourIteratorBase;
 };
 
 class BlockIterator: public std::iterator<std::forward_iterator_tag, Block> {

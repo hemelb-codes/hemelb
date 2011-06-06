@@ -51,7 +51,6 @@ public:
 #ifdef BOUNDS_CHECK
 		if (i < 0)
 			throw IndexError();
-		else
 #endif
 		if (i == 0)
 			return x;
@@ -59,24 +58,25 @@ public:
 			return y;
 		else if (i == 2)
 			return z;
-		else
-			throw IndexError();
+
+#ifdef BOUNDS_CHECK
+		throw IndexError();
+#endif
 	}
+
 	const T& operator[](const int i) const {
+#ifdef BOUNDS_CHECK
 		if (i < 0)
 			throw IndexError();
-		else if (i == 0)
+#endif
+		if (i == 0)
 			return x;
 		else if (i == 1)
 			return y;
-		else
-#ifdef BOUNDS_CHECK
-			if (i == 2)
-#endif
+		else if (i == 2)
 			return z;
 #ifdef BOUNDS_CHECK
-		else
-			throw IndexError();
+		throw IndexError();
 #endif
 	}
 
@@ -169,29 +169,30 @@ public:
 	}
 
 	static Vec3 Cross(const Vec3& V1, const Vec3 &V2) {
-		return Vec3(V1.y * V2.z - V1.z * V2.y, V1.z * V2.x - V1.x * V2.z, V1.x
-				* V2.y - V1.y * V2.x);
+		return Vec3(V1.y * V2.z - V1.z * V2.y, V1.z * V2.x - V1.x * V2.z,
+				V1.x * V2.y - V1.y * V2.x);
 	}
 
 	Vec3 Cross(const Vec3 &V2) const {
-		return Vec3(y * V2.z - z * V2.y, z * V2.x - x * V2.z, x * V2.y - y
-				* V2.x);
+		return Vec3(y * V2.z - z * V2.y, z * V2.x - x * V2.z,
+				x * V2.y - y * V2.x);
 	}
 
-	T Magnitude() const {
-		return T(std::sqrt(x * x + y * y + z * z));
+	template<typename U>
+	U Magnitude() const {
+		return U(std::sqrt(x * x + y * y + z * z));
 	}
 
 	static T Distance(const Vec3& V1, const Vec3& V2) {
-		return (V1 - V2).Magnitude();
+		return (V1 - V2).Magnitude<T> ();
 	}
 
 	T Distance(const Vec3 &V1) const {
-		return (*this - V1).Magnitude();
+		return (*this - V1).Magnitude<T> ();
 	}
 
 	void Normalize() {
-		T mag = this->Magnitude();
+		T mag = this->Magnitude<T> ();
 		if (mag == 0) {
 			return;
 		}

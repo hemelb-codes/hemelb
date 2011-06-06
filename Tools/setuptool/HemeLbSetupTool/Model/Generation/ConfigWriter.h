@@ -5,11 +5,7 @@
 
 #include "Index.h"
 
-namespace hemelb {
-  namespace io {
-    class XdrWriter;
-  }
-}
+#include "io/XdrWriter.h"
 using hemelb::io::XdrWriter;
 
 class BlockWriter;
