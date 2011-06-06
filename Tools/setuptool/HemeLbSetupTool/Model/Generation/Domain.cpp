@@ -1,15 +1,17 @@
+#include <iostream>
 #include "Domain.h"
 #include "Block.h"
 #include "Site.h"
 
 Domain::Domain(double VoxelSize, double SurfaceBounds[6],
-		unsigned int BlockSize) {
+		unsigned int BlockSize) :
+	BlockSize(BlockSize), VoxelSize(VoxelSize) {
 	double min, max, size, extra, siteZero;
 	int nSites, nBlocks, remainder, totalBlocks = 1;
 
 	for (unsigned int i = 0; i < 3; ++i) {
-		min = SurfaceBounds[i];
-		max = SurfaceBounds[i + 1];
+		min = SurfaceBounds[2 * i];
+		max = SurfaceBounds[2 * i + 1];
 		size = max - min;
 		// int() truncates, we add 2 to make sure there's enough
 		// room for the sites just outside.
@@ -29,6 +31,7 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 		this->BlockCounts[i] = nBlocks;
 		totalBlocks *= nBlocks;
 	}
+	std::cout << "Blocks " << this->BlockCounts << std::endl;
 	this->blocks.resize(totalBlocks);
 }
 //
@@ -47,8 +50,10 @@ Block& Domain::GetBlock(const Index& index) {
 	int i = this->TranslateIndex(index);
 	Block* bp = this->blocks[i];
 	// If the block hasn't been created yet, do so.
-	if (!bp)
+	if (!bp) {
+		std::cout << "Creating block at " << index << std::endl;
 		bp = this->blocks[i] = new Block(*this, index, this->BlockSize);
+	}
 	return *bp;
 }
 
@@ -97,7 +102,8 @@ BlockIterator& BlockIterator::operator=(const BlockIterator& other) {
 }
 
 BlockIterator& BlockIterator::operator++() {
-	// Note it is an error to increment an iterator past it's end, so we don't need to handle that case.
+	// Note it is an error to increment an iterator past it's end, so we don't
+	// need to handle that case.
 	int pos;
 	// Delete any unnecessary blocks
 	for (int i = this->current[0] - 1; i < this->current[0] + 1; ++i) {
@@ -118,7 +124,10 @@ BlockIterator& BlockIterator::operator++() {
 				if (k == this->current[2] && k != this->maxima[2])
 					continue;
 
-				// This block can no longer be reached from the current or later blocks, so delete, and set pointer to null
+				// This block can no longer be reached from the current or later
+				// blocks, so delete, and set pointer to null
+				std::cout << "Block to be deleted " << this->current
+						<< std::endl;
 				pos = this->domain->TranslateIndex(this->current);
 				delete this->domain->blocks[pos];
 				this->domain->blocks[pos] = NULL;

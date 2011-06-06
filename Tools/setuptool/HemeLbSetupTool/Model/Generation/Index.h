@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <iterator>
+#include <ostream>
 
 #define BOUNDS_CHECK
 
@@ -46,11 +47,13 @@ public:
 		return (x == other.x && y == other.y && z == other.z);
 	}
 
-#ifdef BOUNDS_CHECK
 	T& operator[](const int i) {
+#ifdef BOUNDS_CHECK
 		if (i < 0)
 			throw IndexError();
-		else if (i == 0)
+		else
+#endif
+		if (i == 0)
 			return x;
 		else if (i == 1)
 			return y;
@@ -66,30 +69,35 @@ public:
 			return x;
 		else if (i == 1)
 			return y;
-		else if (i == 2)
+		else
+#ifdef BOUNDS_CHECK
+			if (i == 2)
+#endif
 			return z;
+#ifdef BOUNDS_CHECK
 		else
 			throw IndexError();
+#endif
 	}
 
-#else
-	T& operator[](const int i) {
-		if (i == 0)
-		return x;
-		else if (i == 1)
-		return y;
-		else
-		return z;
-	}
-	const T& operator[](const int i) const {
-		if (i == 0)
-		return x;
-		else if (i == 1)
-		return y;
-		else
-		return z;
-	}
-#endif
+	//#else
+	//	T& operator[](const int i) {
+	//		if (i == 0)
+	//		return x;
+	//		else if (i == 1)
+	//		return y;
+	//		else
+	//		return z;
+	//	}
+	//	const T& operator[](const int i) const {
+	//		if (i == 0)
+	//		return x;
+	//		else if (i == 1)
+	//		return y;
+	//		else
+	//		return z;
+	//	}
+	//#endif
 
 	Vec3 operator+(const Vec3& V2) const {
 		return Vec3(x + V2.x, y + V2.y, z + V2.z);
@@ -199,7 +207,14 @@ public:
 		return iterator(*this, 3U);
 	}
 
+	//friend std::ostream& operator<< (std::ostream& o, Vec3<T> const& v3);
 };
+
+template<typename T>
+std::ostream& operator<<(std::ostream& o, Vec3<T> const& v3) {
+	return o << "x: " << v3.x << "; y: " << v3.y << "; z: " << v3.z;
+}
+
 template<typename T>
 class Iterator: public std::iterator<std::forward_iterator_tag, T> {
 protected:

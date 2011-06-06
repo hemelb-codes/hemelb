@@ -7,10 +7,10 @@ import numpy
 import vtk
 
 from distutils.core import setup
-# from distutils.extension import Extension
+from distutils.extension import Extension
 
-from Cython.Distutils import build_ext
-from Cython.Distutils.extension import Extension
+# from Cython.Distutils import build_ext
+# from Cython.Distutils.extension import Extension
 
 def GetVtkVersion():
     v = vtk.vtkVersion()
@@ -116,8 +116,8 @@ def GetVtkCompileFlags(vtkLibDir):
 if __name__ == "__main__":
     # numpy, vtk
     vtkLibDir = GetVtkLibDir()
-    
-    include_dirs = [numpy.get_numpy_include(), LibToInclude(vtkLibDir)]
+    HemeLbDir = os.path.abspath('../../Code')
+    include_dirs = [ LibToInclude(vtkLibDir), HemeLbDir]
     libraries = []
     library_dirs = []
     extra_compile_args = GetVtkCompileFlags(vtkLibDir)
@@ -125,32 +125,43 @@ if __name__ == "__main__":
 
     # Create the list of extension modules
     ext_modules = []
-    for pyx in ['HemeLbSetupTool/Model/HitList.pyx',
-                'HemeLbSetupTool/Model/OutputGenerationHelpers.pyx',
-                'HemeLbSetupTool/Model/vtkHelp.pyx']:
-        # Work out the module name
-        base, ignored = os.path.splitext(pyx)
-        modname = base.replace('/', '.')
+    # Generation C++ 
+    generation_cpp = [os.path.join('HemeLbSetupTool/Model/Generation', cpp)
+                      for cpp in ['Block.cpp',
+                                  'BlockWriter.cpp',
+                                  'ConfigGenerator.cpp',
+                                  'ConfigWriter.cpp',
+                                  'Domain.cpp',
+                                  'Site.cpp']]
+    # HemeLB classes
+    hemelb_cpp = [os.path.join(HemeLbDir, cpp)
+                  for cpp in ['io/XdrFileWriter.cc',
+                              'io/XdrMemWriter.cc',
+                              'io/XdrWriter.cc',
+                              'io/Writer.cc']]
 
-        ext = Extension(modname,
-                        [pyx],
-                        extra_compile_args=extra_compile_args,
-                        include_dirs=include_dirs,
-                        extra_link_args=extra_link_args,
-                        library_dirs=library_dirs,
-                        libraries=libraries,
-                        pyrex_cplus=True,
-                        )
-        ext_modules.append(ext)
-
-
+    # SWIG wrapper
+    swig_cpp = ['HemeLbSetupTool/Model/Generation/Wrap.cpp']
+    # Do we need to swig it?
+    if not os.path.exists(swig_cpp[0]) or os.path.getmtime(swig_cpp[0]) < os.path.getmtime('HemeLbSetupTool/Model/Generation/Wrap.i'):
+        cmd = 'swig -c++ -python -o HemeLbSetupTool/Model/Generation/Wrap.cpp -outdir HemeLbSetupTool/Model HemeLbSetupTool/Model/Generation/Wrap.i'
+        print cmd
+        os.system(cmd)
+    
+    generation_ext = Extension('HemeLbSetupTool.Model._Generation',
+                               sources=generation_cpp + hemelb_cpp + swig_cpp,
+                               extra_compile_args=extra_compile_args,
+                               include_dirs=include_dirs,
+                               extra_link_args=extra_link_args,
+                               library_dirs=library_dirs,
+                               libraries=libraries,
+                               )
+    
     setup(name='HemeLbSetupTool',
-          version='1.0',
+          version='1.1',
           author='Rupert Nash',
           author_email='rupert.nash@ucl.ac.uk',
           packages=['HemeLbSetupTool', 'HemeLbSetupTool.Bindings', 'HemeLbSetupTool.Util', 'HemeLbSetupTool.Model', 'HemeLbSetupTool.View', 'HemeLbSetupTool.Controller'],
           scripts=['scripts/setuptool'],
-          # Swap in the Cython builder
-          cmdclass={'build_ext': build_ext},
-          ext_modules=ext_modules
+          ext_modules=[generation_ext]
           )
