@@ -219,13 +219,21 @@ void SimulationMaster::RunSimulation(double iStartTime,
   bool is_unstable = false;
   int total_time_steps = 0;
 
-  unsigned int snapshots_period = (lSnapshotsPerCycle == 0)
-    ? 1000000000
-    : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period / lSnapshotsPerCycle));
+  unsigned int
+      snapshots_period =
+          (lSnapshotsPerCycle == 0)
+            ? 1000000000
+            : hemelb::util::NumericalFunctions::max(1U,
+                                                    (unsigned int) (mSimulationState->GetTimeStepsPerCycle()
+                                                        / lSnapshotsPerCycle));
 
-  unsigned int images_period = (lImagesPerCycle == 0)
-    ? 1000000000
-    : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period / lImagesPerCycle));
+  unsigned int
+      images_period =
+          (lImagesPerCycle == 0)
+            ? 1000000000
+            : hemelb::util::NumericalFunctions::max(1U,
+                                                    (unsigned int) (mSimulationState->GetTimeStepsPerCycle()
+                                                        / lImagesPerCycle));
 
   bool is_finished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
@@ -371,18 +379,21 @@ void SimulationMaster::RunSimulation(double iStartTime,
 #endif
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: period: %i\n",
-                                                                          mLbm->period);
+                                                                          mSimulationState->GetTimeStepsPerCycle());
 
-      snapshots_period = (lSnapshotsPerCycle == 0)
-        ? 1000000000
-        : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period
-            / lSnapshotsPerCycle));
+      snapshots_period
+          = (lSnapshotsPerCycle == 0)
+            ? 1000000000
+            : hemelb::util::NumericalFunctions::max(1U,
+                                                    (unsigned int) (mSimulationState->GetTimeStepsPerCycle()
+                                                        / lSnapshotsPerCycle));
 
       images_period
           = (lImagesPerCycle == 0)
             ? 1000000000
-            : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period
-                / lImagesPerCycle));
+            : hemelb::util::NumericalFunctions::max(1U,
+                                                    (unsigned int) (mSimulationState->GetTimeStepsPerCycle()
+                                                        / lImagesPerCycle));
 
       mSimulationState->Reset();
       continue;
@@ -392,7 +403,8 @@ void SimulationMaster::RunSimulation(double iStartTime,
     double lPreImageTime = hemelb::util::myClock();
 
 #ifndef NO_STREAKLINES
-    mVisControl->ProgressStreaklines(mSimulationState->GetTimeStep(), mLbm->period);
+    mVisControl->ProgressStreaklines(mSimulationState->GetTimeStep(),
+                                     mSimulationState->GetTimeStepsPerCycle());
 #endif
 
     if (snapshotsCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
@@ -481,7 +493,7 @@ void SimulationMaster::RunSimulation(double iStartTime,
       is_finished = true;
       break;
     }
-    if (mLbm->period > 400000)
+    if (mSimulationState->GetTimeStepsPerCycle() > 400000)
     {
       is_unstable = true;
       break;
@@ -553,7 +565,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
     {
       fprintf(mTimingsFile,
               "Attention: simulation unstable with %li timesteps/cycle\n",
-              (unsigned long) mLbm->period);
+              (unsigned long) mSimulationState->GetTimeStepsPerCycle());
       fprintf(mTimingsFile, "Simulation is terminated\n");
     }
   }
@@ -562,7 +574,9 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
 
-      fprintf(mTimingsFile, "time steps per cycle: %li\n", (unsigned long) mLbm->period);
+      fprintf(mTimingsFile,
+              "time steps per cycle: %li\n",
+              (unsigned long) mSimulationState->GetTimeStepsPerCycle());
       fprintf(mTimingsFile, "\n");
 
       fprintf(mTimingsFile, "\n");
