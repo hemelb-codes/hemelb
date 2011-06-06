@@ -6,6 +6,13 @@ using hemelb::io::XdrWriter;
 
 #include "ConfigWriter.h"
 
+/*
+ * Extension of a hemelb::io::XdrWriter that delegates all it's writing to
+ * the ConfigWriter's bodyEncoder, but notes how many fluid sites, in how
+ *  much space, have been written. It then pushes this to the ConfigWriter's
+ *  headerEncoder.
+ */
+
 class BlockWriter : public XdrWriter {
 public:
 	BlockWriter(ConfigWriter &cfg);
@@ -23,8 +30,6 @@ protected:
 	void _write(T& val) {
 		this->configWriter->bodyEncoder->_write(val);
 	}
-
-
 };
 
 

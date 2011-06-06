@@ -7,7 +7,6 @@
 
 class Site {
 public:
-	Site();
 	unsigned int GetType() const;
 	unsigned int GetConfig() const;
 	Vector BoundaryNormal;
