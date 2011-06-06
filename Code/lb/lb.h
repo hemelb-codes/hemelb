@@ -31,7 +31,6 @@ namespace hemelb
 
         site_t total_fluid_sites;
         int inlets;
-        unsigned long period;
 
         distribn_t ConvertPressureToLatticeUnits(double pressure) const;
         distribn_t ConvertVelocityToLatticeUnits(double velocity) const;
