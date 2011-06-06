@@ -187,12 +187,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   mLbm->Initialise(lReceiveTranslator, mVisControl);
 
-  int images_period = (iImagesPerCycle == 0)
-    ? 1000000000
-    : hemelb::util::NumericalFunctions::max(1U, (unsigned int) (mLbm->period / iImagesPerCycle));
-
-  steeringCpt = new hemelb::steering::SteeringComponent(images_period,
-                                                        network,
+  steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         mVisControl,
                                                         mLbm,
                                                         &mNet,

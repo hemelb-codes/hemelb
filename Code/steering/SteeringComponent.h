@@ -15,8 +15,7 @@ namespace hemelb
     class SteeringComponent : public net::PhasedBroadcastRegular<false, 1, 0, true, false>
     {
       public:
-        SteeringComponent(int imagesPeriod,
-                          Network* iNetwork,
+        SteeringComponent(Network* iNetwork,
                           vis::Control* iVisControl,
                           lb::LBM* iLbm,
                           net::Net * iNet,
@@ -45,7 +44,6 @@ namespace hemelb
         const static int STEERABLE_PARAMETERS = 20;
         const static unsigned int SPREADFACTOR = 10;
 
-        int imagesPeriod;
         bool isConnected;
 
         Network* mNetwork;

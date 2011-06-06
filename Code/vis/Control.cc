@@ -287,6 +287,7 @@ namespace hemelb
             log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
                                                           it->first);
 
+            it->second->Reset();
             pixelsBuffer.push(it->second);
             resultsByStartIt.erase(it);
             found = true;
@@ -414,23 +415,25 @@ namespace hemelb
       // Receive the final image on proc 0.
       else if (netTop->GetLocalRank() == 0)
       {
-        MPI_Recv(&mScreen.pixels->pixelCount,
+        MPI_Recv(&recvBuffers[0].pixelCount,
                  1,
-                 MpiDataType(mScreen.pixels->pixelCount),
+                 MpiDataType(recvBuffers[0].pixelCount),
                  1,
                  20,
                  MPI_COMM_WORLD,
                  &status);
 
-        if (mScreen.pixels->pixelCount > 0)
+        if (recvBuffers[0].pixelCount > 0)
         {
-          MPI_Recv(mScreen.pixels->pixels,
-                   mScreen.pixels->pixelCount,
+          MPI_Recv(recvBuffers[0].pixels,
+                   recvBuffers[0].pixelCount,
                    MpiDataType<ColPixel> (),
                    1,
                    20,
                    MPI_COMM_WORLD,
                    &status);
+
+          mScreen.pixels->FoldIn(&recvBuffers[0], &mVisSettings);
         }
 
         ScreenPixels* pix;
