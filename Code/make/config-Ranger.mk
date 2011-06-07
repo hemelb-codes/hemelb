@@ -9,7 +9,3 @@ HEMELB_CXXFLAGS := -O3 -xW -diag-disable 654
 # The MPICH define is to get around a bug in the MPI2 C++ binding on MPICH
 HEMELB_DEFS += MPICH_IGNORE_CXX_SEEK
 
-PMETIS_BUILD := no
-PMETIS_INCLUDE_DIR := $(TACC_PMETIS_INC)
-PMETIS_LIBRARY_DIR := $(TACC_PMETIS_LIB)
-
