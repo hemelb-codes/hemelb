@@ -1,18 +1,18 @@
 # Get the package.
-wget http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/ParMetis-3.1.1.tar.gz
+wget http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/ParMetis-3.2.0.tar.gz
 
 # Unzip it
-gunzip ParMetis-3.1.1.tar.gz
+gunzip ParMetis-3.2.0.tar.gz
 
 # Make a directory to untar into.
 mkdir ../Code/parmetis
 
 # Untar it
-tar -xvf ParMetis-3.1.1.tar -C ../Code/parmetis
+#tar -xvf ParMetis-3.2.0.tar -C ../Code/parmetis
 
 # Edit the makefile
-emacs ../Code/parmetis/ParMetis-3.1.1/Makefile.in
+emacs ../Code/parmetis/ParMetis-3.2.0/Makefile.in
 
 # Make.
-make -C ../Code/parmetis/ParMetis-3.1.1
+make -C ../Code/parmetis/ParMetis-3.2.0
 
