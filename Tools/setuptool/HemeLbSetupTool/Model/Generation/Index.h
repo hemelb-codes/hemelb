@@ -5,7 +5,7 @@
 #include <iterator>
 #include <ostream>
 
-#define BOUNDS_CHECK
+//#define BOUNDS_CHECK
 
 #ifdef BOUNDS_CHECK
 #include <exception>
