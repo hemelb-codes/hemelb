@@ -18,6 +18,15 @@ Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
 	}
 }
 
+Block::~Block() {
+	SiteIterator end = this->sites.end();
+	SiteIterator current = this->sites.begin();
+	for (; current != end; ++current) {
+		// current will dereference to a Site*
+		delete *current;
+	}
+}
+
 Site& Block::GetGlobalSite(const Index& globalInd) {
 	bool local = true;
 	for (unsigned int i = 0; i < 3; ++i) {

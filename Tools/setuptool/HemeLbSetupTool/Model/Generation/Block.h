@@ -15,6 +15,8 @@ public:
 	//typedef std::vector<Site*>::iterator iterator;
 
 	Block(Domain&, const Index&, const unsigned int&);
+	~Block();
+
 	Site& GetGlobalSite(const Index&);
 	Site& GetLocalSite(const Index&);
 

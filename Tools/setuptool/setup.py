@@ -172,6 +172,6 @@ if __name__ == "__main__":
           author='Rupert Nash',
           author_email='rupert.nash@ucl.ac.uk',
           packages=['HemeLbSetupTool', 'HemeLbSetupTool.Bindings', 'HemeLbSetupTool.Util', 'HemeLbSetupTool.Model', 'HemeLbSetupTool.View', 'HemeLbSetupTool.Controller'],
-          scripts=['scripts/setuptool'],
+          scripts=['scripts/setuptool', 'scripts/countsites'],
           ext_modules=[generation_ext]
           )
