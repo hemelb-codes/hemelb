@@ -37,6 +37,8 @@ namespace hemelb
         bool GetDoRendering() const;
         Stability GetStability() const;
 
+        void DoubleTimeResolution();
+
       private:
         unsigned long CycleId;
         unsigned long TimeStep;

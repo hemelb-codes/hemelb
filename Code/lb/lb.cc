@@ -15,27 +15,27 @@ namespace hemelb
   {
     distribn_t LBM::ConvertPressureToLatticeUnits(double pressure) const
     {
-      double temp = (PULSATILE_PERIOD_s / ((double) period * voxel_size));
+      double temp = (PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle() * voxel_size));
       return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
           / BLOOD_DENSITY_Kg_per_m3;
     }
 
     double LBM::ConvertPressureToPhysicalUnits(distribn_t pressure) const
     {
-      double temp = ( ((double) period * voxel_size) / PULSATILE_PERIOD_s);
+      double temp = ( ((double) mState->GetTimeStepsPerCycle() * voxel_size) / PULSATILE_PERIOD_s);
       return REFERENCE_PRESSURE_mmHg + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3
           * temp * temp / mmHg_TO_PASCAL;
     }
 
     distribn_t LBM::ConvertPressureGradToLatticeUnits(double pressure_grad) const
     {
-      double temp = (PULSATILE_PERIOD_s / ((double) period * voxel_size));
+      double temp = (PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle() * voxel_size));
       return pressure_grad * mmHg_TO_PASCAL * temp * temp / BLOOD_DENSITY_Kg_per_m3;
     }
 
     double LBM::ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const
     {
-      double temp = ( ((double) period * voxel_size) / PULSATILE_PERIOD_s);
+      double temp = ( ((double) mState->GetTimeStepsPerCycle() * voxel_size) / PULSATILE_PERIOD_s);
       return pressure_grad * BLOOD_DENSITY_Kg_per_m3 * temp * temp / mmHg_TO_PASCAL;
     }
 
@@ -70,7 +70,7 @@ namespace hemelb
     void LBM::RecalculateTauViscosityOmega()
     {
       mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-          / (Cs2 * ((double) period * voxel_size * voxel_size));
+          / (Cs2 * ((double) mState->GetTimeStepsPerCycle() * voxel_size * voxel_size));
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
@@ -122,7 +122,7 @@ namespace hemelb
 
     void LBM::UpdateBoundaryDensities(unsigned long time_step)
     {
-      double w = 2.0 * PI / (double) period;
+      double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
 
       for (int i = 0; i < inlets; i++)
       {
@@ -147,7 +147,6 @@ namespace hemelb
              SimulationState* simState) :
       mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
     {
-      period = iSimulationConfig->StepsPerCycle;
       voxel_size = iSimulationConfig->VoxelSize;
 
       ReadParameters();
@@ -425,7 +424,8 @@ namespace hemelb
         outlet_density_avg[i] = ConvertPressureToPhysicalUnits(outlet_density_avg[i] * Cs2);
         outlet_density_amp[i] = ConvertPressureGradToPhysicalUnits(outlet_density_amp[i] * Cs2);
       }
-      period *= 2;
+
+      mState->DoubleTimeResolution();
 
       for (i = 0; i < inlets; i++)
       {
