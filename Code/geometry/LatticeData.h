@@ -2,8 +2,8 @@
 #define HEMELB_GEOMETRY_LATTICEDATA_H
 
 #include <cstdio>
-#include <parmetis.h>
 
+#include "parmetis/parmetis.h"
 #include "D3Q15.h"
 #include "constants.h"
 #include "SimConfig.h"
@@ -314,7 +314,7 @@ namespace hemelb
                                           const proc_t* procForEachBlock,
                                           const site_t* sitesPerBlock) const;
 
-            void GetFirstSiteIndexOnEachBlock(int* firstSiteIndexPerBlock,
+            void GetFirstSiteIndexOnEachBlock(idxtype* firstSiteIndexPerBlock,
                                               const site_t blockCount,
                                               const idxtype* vertexDistribution,
                                               const proc_t* procForEachBlock,
@@ -322,36 +322,36 @@ namespace hemelb
 
             void GetAdjacencyData(idxtype* adjacenciesPerVertex,
                                   std::vector<idxtype> &adjacencies,
-                                  const site_t localVertexCount,
+                                  const idxtype localVertexCount,
                                   const proc_t* procForEachBlock,
-                                  const int* firstSiteIndexPerBlock,
+                                  const idxtype* firstSiteIndexPerBlock,
                                   const GlobalLatticeData* bGlobLatDat) const;
 
             void CallParmetis(idxtype* partitionVector,
-                              unsigned int localVertexCount,
+                              idxtype localVertexCount,
                               idxtype* vtxDistribn,
                               idxtype* adjacenciesPerVertex,
                               idxtype* adjacencies);
 
-            idxtype* GetMovesList(int* movesFromEachProc,
-                                  const int* firstSiteIndexPerBlock,
+            idxtype* GetMovesList(idxtype* movesFromEachProc,
+                                  const idxtype* firstSiteIndexPerBlock,
                                   const proc_t* procForEachBlock,
                                   const site_t* sitesPerBlock,
-                                  const int* vtxDistribn,
-                                  const int* partitionVector,
+                                  const idxtype* vtxDistribn,
+                                  const idxtype* partitionVector,
                                   const GlobalLatticeData* bGlobLatDat);
 
             void RereadBlocks(GlobalLatticeData* bGlobLatDat,
-                              const int* movesPerProc,
-                              const int* movesList,
+                              const idxtype* movesPerProc,
+                              const idxtype* movesList,
                               const site_t* sitesPerBlock,
                               const unsigned int* bytesPerBlock,
                               const int* procForEachBlock);
 
             void ImplementMoves(GlobalLatticeData* bGlobLatDat,
                                 const proc_t* procForEachBlock,
-                                const int* movesFromEachProc,
-                                const int* movesList) const;
+                                const idxtype* movesFromEachProc,
+                                const idxtype* movesList) const;
 
             proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
