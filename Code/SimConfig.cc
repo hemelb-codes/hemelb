@@ -89,7 +89,7 @@ namespace hemelb
     if (iIsLoading)
     {
       char *dummy;
-      value = std::strtof(iParent->Attribute(iAttributeName)->c_str(), &dummy);
+      value = (float) std::strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
     }
     else
     {
