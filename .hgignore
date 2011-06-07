@@ -5,7 +5,8 @@ syntax: glob
 *~
 build/*
 Code/client/displayClient
-Code/parmetis/*
+Code/parmetis/libmetis.a
+Code/parmetis/libparmetis.a
 Scripts/ParMetis-3.1.1.tar
 .DS_Store
 *.orig
