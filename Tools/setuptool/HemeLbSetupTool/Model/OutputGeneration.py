@@ -190,7 +190,6 @@ class StageWriter(object):
         writer.Write()
         return
     pass
-ws = StageWriter('/Users/rupert/tmp/setuptooltest/stages').WriteOutput
 
 class IntegerAdder(vtkProgrammableFilter):
     """vtkFilter for adding an integer value to vtkPolyData's
