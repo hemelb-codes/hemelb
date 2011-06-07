@@ -7,6 +7,7 @@ build/*
 Code/client/displayClient
 Code/parmetis/libmetis.a
 Code/parmetis/libparmetis.a
+Code/parmetis/Graphs/*3.2.0
 Scripts/ParMetis-3.1.1.tar
 .DS_Store
 *.orig
