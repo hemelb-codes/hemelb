@@ -498,10 +498,10 @@ void Match_Local(CtrlType *ctrl, GraphType *graph, WorkSpaceType *wspace)
 void CreateCoarseGraph_Global(CtrlType *ctrl, GraphType *graph,
          WorkSpaceType *wspace, int cnvtxs)
 {
-  int h, i, j, k, l, ii, jj, ll, nnbrs, nvtxs, nedges, ncon;
-  int firstvtx, lastvtx, cfirstvtx, clastvtx, otherlastvtx;
+  idxtype h, i, j, k, l, ii, jj, ll, nnbrs, nvtxs, nedges, ncon;
+  idxtype firstvtx, lastvtx, cfirstvtx, clastvtx, otherlastvtx;
   int npes=ctrl->npes, mype=ctrl->mype;
-  int cnedges, nsend, nrecv, nkeepsize, nrecvsize, nsendsize, v, u;
+  idxtype cnedges, nsend, nrecv, nkeepsize, nrecvsize, nsendsize, v, u;
   idxtype *xadj, *ladjncy, *adjwgt, *vwgt, *vsize, *vtxdist, *home, *where;
   idxtype *match, *cmap, *rcmap, *scmap;
   idxtype *cxadj, *cadjncy, *cadjwgt, *cvwgt, *cvsize = NULL, *chome = NULL, 
