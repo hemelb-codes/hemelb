@@ -1,1 +1,2 @@
 Tests = ssh://hg@entropy.chem.ucl.ac.uk/hemelb-input
+Code/parmetis = ssh://ohm.chem.ucl.ac.uk/~hywel/parmetis
