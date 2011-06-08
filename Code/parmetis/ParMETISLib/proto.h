@@ -242,7 +242,7 @@ void ikeyvalsort_org(int, KeyValueType *);
 int IncKeyValueCmp(const void *, const void *);
 void dkeyvalsort(int, KeyValueType *);
 int DecKeyValueCmp(const void *, const void *);
-int BSearch(int, idxtype *, int);
+int BSearch(int, idxtype *, idxtype);
 void RandomPermute(int, idxtype *, int);
 void FastRandomPermute(int, idxtype *, int);
 int ispow2(int);

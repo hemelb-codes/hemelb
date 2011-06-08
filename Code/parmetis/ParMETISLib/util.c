@@ -378,7 +378,7 @@ int DecKeyValueCmp(const void *v1, const void *v2)
 * This function does a binary search on an array for a key and returns
 * the index
 **************************************************************************/
-int BSearch(int n, idxtype *array, int key)
+int BSearch(int n, idxtype *array, idxtype key)
 {
   int a=0, b=n, c;
 
@@ -395,7 +395,7 @@ int BSearch(int n, idxtype *array, int key)
       return c;
   }
 
-  errexit("Key %d not found!\n", key);
+  errexit("Key %" IDXTYPE_FORMAT " not found!\n", key);
 
   return 0;
 }
