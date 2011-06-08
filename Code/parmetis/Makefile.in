@@ -1,6 +1,6 @@
 
 # Which compiler to use
-CC = cc
+CC = mpicc.openmpi
 
 
 # What optimization level to use
@@ -15,7 +15,7 @@ INCDIR =
 COPTIONS = -DNDEBUG
 
 # Which loader to use
-LD = cc
+LD = mpicc.openmpi
 
 # In which directories to look for any additional libraries
 LIBDIR = 
