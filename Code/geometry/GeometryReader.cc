@@ -1145,20 +1145,20 @@ namespace hemelb
       }
 
       // Set the weights of each partition to be even, and to sum to 1.
-      int desiredPartitionSize = mTopologySize;
+      idxtype desiredPartitionSize = mTopologySize;
 
       float* domainWeights = new float[desiredPartitionSize];
-      for (int ii = 0; ii < desiredPartitionSize; ++ii)
+      for (idxtype ii = 0; ii < desiredPartitionSize; ++ii)
       {
         domainWeights[ii] = 1.0F / ((float) desiredPartitionSize);
       }
 
       // A bunch of values ParMetis needs.
-      int noConstraints = 1;
-      int weightFlag = 2;
-      int numberingFlag = 0;
-      int edgesCut = 0;
-      int options[4] = { 0, 0, 0, 0 };
+      idxtype noConstraints = 1;
+      idxtype weightFlag = 2;
+      idxtype numberingFlag = 0;
+      idxtype edgesCut = 0;
+      idxtype options[4] = { 0, 0, 0, 0 };
       float tolerance = 1.001F;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
@@ -1177,6 +1177,7 @@ namespace hemelb
                            &edgesCut,
                            partitionVector,
                            &mTopologyComm);
+      log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
 
       delete[] domainWeights;
       delete[] vertexWeight;
