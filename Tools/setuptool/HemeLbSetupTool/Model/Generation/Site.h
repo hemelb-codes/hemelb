@@ -67,7 +67,7 @@ protected:
 	Domain* domain;
 	unsigned int i;
 	Index index;
-
+	void AdvanceToValid();
 	bool IsCurrentInDomain();
 	virtual bool IsCurrentValid() = 0;
 	virtual Index GetVector();
@@ -78,9 +78,10 @@ class LaterNeighbourIterator: public NeighbourIteratorBase {
 public:
 	inline LaterNeighbourIterator(Site& site, unsigned int startpos = 0) :
 		NeighbourIteratorBase(site, startpos) {
+		this->AdvanceToValid();
 	}
 protected:
-	virtual bool IsCurrentValid();
+	bool IsCurrentValid();
 };
 
 // Iterator for getting all the later (i.e. further on in memory) neighbouring sites of a given site
@@ -88,8 +89,9 @@ class NeighbourIterator: public NeighbourIteratorBase {
 public:
 	inline NeighbourIterator(Site& site, unsigned int startpos = 0) :
 		NeighbourIteratorBase(site, startpos) {
+		this->AdvanceToValid();
 	}
 protected:
-	virtual bool IsCurrentValid();
+	bool IsCurrentValid();
 };
 #endif // HEMELBSETUPTOOL_SITE_H

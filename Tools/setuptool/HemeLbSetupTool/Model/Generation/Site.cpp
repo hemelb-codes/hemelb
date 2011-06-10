@@ -120,8 +120,16 @@ NeighbourIterator Site::endall() {
 
 NeighbourIteratorBase::NeighbourIteratorBase(Site& site, unsigned int startpos) :
 	site(&site), domain(&site.block.domain), i(startpos), index(site.index) {
-	// Advance to the first extant neighbour
-	while (this->i < Neighbours::n && !this->IsCurrentValid()) {
+	/* Should advance to the first valid neighbour
+	 * HOWEVER, we can't do that here, in the abstract class's c'tor
+	 * since the subclass c'tors haven't yet executed. The virtual
+	 * method table may not be in a well defined state and we need that for
+	 * IsCurrent Valid.
+	 */
+}
+void NeighbourIteratorBase::AdvanceToValid() {
+	// Advance zero or more times until we're at a vector that is valid.
+	while (this->i < Neighbours::n && !IsCurrentValid()) {
 		++this->i;
 	}
 }
@@ -162,9 +170,7 @@ NeighbourIteratorBase& NeighbourIteratorBase::operator++() {
 
 	// Go to the next, then keep advancing if it's not valid
 	++this->i;
-	while (this->i < Neighbours::n && !this->IsCurrentValid()) {
-		++this->i;
-	}
+	this->AdvanceToValid();
 	return *this;
 }
 
