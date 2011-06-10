@@ -103,7 +103,7 @@ LaterNeighbourIterator Site::begin() {
 	return LaterNeighbourIterator(*this);
 }
 LaterNeighbourIterator Site::end() {
-	return LaterNeighbourIterator(*this, Neighbours::nLater);
+	return LaterNeighbourIterator(*this, Neighbours::n);
 }
 // Get start and end NeighbourIterators for this
 NeighbourIterator Site::beginall() {
@@ -118,37 +118,17 @@ NeighbourIterator Site::endall() {
  * Implement the NeighbourIterators
  */
 
-NeighbourIteratorBase::NeighbourIteratorBase() {
-}
-
-// copy c'tor
-NeighbourIteratorBase::NeighbourIteratorBase(const NeighbourIteratorBase& other) :
-	site(other.site), domain(other.domain), i(other.i), maxI(other.maxI),
-			index(other.index) {
-}
-
-void NeighbourIteratorBase::Init(Site& site, unsigned int startpos) {
-	this->site = &site;
-	this->index = site.index;
-	this->domain = &site.block.domain;
-	this->i = startpos;
+NeighbourIteratorBase::NeighbourIteratorBase(Site& site, unsigned int startpos) :
+	site(&site), domain(&site.block.domain), i(startpos), index(site.index) {
 	// Advance to the first extant neighbour
-	while (this->i < this->maxI && !this->IsCurrentValid()) {
+	while (this->i < Neighbours::n && !this->IsCurrentValid()) {
 		++this->i;
 	}
 }
 
-// C'tor for a given place, default is start
-LaterNeighbourIterator::LaterNeighbourIterator(Site& site,
-		unsigned int startpos) {
-	this->maxI = Neighbours::nLater;
-	this->Init(site, startpos);
-}
-
-// C'tor for a given place, default is start
-NeighbourIterator::NeighbourIterator(Site& site, unsigned int startpos) {
-	this->maxI = Neighbours::n;
-	this->Init(site, startpos);
+// copy c'tor
+NeighbourIteratorBase::NeighbourIteratorBase(const NeighbourIteratorBase& other) :
+	site(other.site), domain(other.domain), i(other.i), index(other.index) {
 }
 
 // assignment operator
@@ -160,13 +140,12 @@ NeighbourIteratorBase& NeighbourIteratorBase::operator=(
 	this->site = other.site;
 	this->domain = other.domain;
 	this->i = other.i;
-	this->maxI = other.maxI;
 
 	return (*this);
 }
 
 // Is the current a site within the full domain?
-bool NeighbourIteratorBase::IsCurrentValid() {
+bool NeighbourIteratorBase::IsCurrentInDomain() {
 	this->index = this->site->index + this->GetVector();
 
 	for (unsigned int j = 0; j < 3; ++j) {
@@ -183,7 +162,7 @@ NeighbourIteratorBase& NeighbourIteratorBase::operator++() {
 
 	// Go to the next, then keep advancing if it's not valid
 	++this->i;
-	while (this->i < this->maxI && !this->IsCurrentValid()) {
+	while (this->i < Neighbours::n && !this->IsCurrentValid()) {
 		++this->i;
 	}
 	return *this;
@@ -207,17 +186,38 @@ NeighbourIteratorBase::pointer NeighbourIteratorBase::operator->() {
 	return &(*(*this));
 }
 
-unsigned int NeighbourIterator::GetNeighbourIndex() {
+// Index of neighbour
+unsigned int NeighbourIteratorBase::GetNeighbourIndex() {
 	return this->i;
 }
-unsigned int LaterNeighbourIterator::GetNeighbourIndex() {
-	return Neighbours::laterNeighbourIndices[this->i];
-}
+
 // Get the lattice vector for the current neighbour
-Index LaterNeighbourIterator::GetVector() {
-	return Neighbours::vectors[Neighbours::laterNeighbourIndices[this->i]];
-}
-// Get the lattice vector for the current neighbour
-Index NeighbourIterator::GetVector() {
+Index NeighbourIteratorBase::GetVector() {
 	return Neighbours::vectors[this->i];
+}
+
+// Normal iterator just checks the neighbour is in the domain
+bool NeighbourIterator::IsCurrentValid() {
+	return this->IsCurrentInDomain();
+}
+
+// Later one checks
+bool LaterNeighbourIterator::IsCurrentValid() {
+	if (this->IsCurrentInDomain()) {
+		// neighbour's in the domain, check it's block
+		int siteBlockIjk = this->domain->TranslateIndex(this->site->block.index);
+		int neighBlockIjk = this->domain->TranslateIndex(this->index / this->domain->GetBlockSize());
+		if (neighBlockIjk != siteBlockIjk) {
+			// block is different
+			return (neighBlockIjk > siteBlockIjk);
+		} else {
+			// sites are in the same block
+			int neighLocalIjk = this->site->block.TranslateIndex(this->index);
+			int siteLocalIjk = this->site->block.TranslateIndex(this->site->index);
+			return (neighLocalIjk > siteLocalIjk);
+		}
+
+	} else {
+		return false;
+	}
 }

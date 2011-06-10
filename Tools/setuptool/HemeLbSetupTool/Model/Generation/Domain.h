@@ -38,14 +38,6 @@ public:
 
 	GETTER(VoxelSize, double);SETTER(VoxelSize, double);
 
-protected:
-	Vector Origin;
-	Index BlockCounts;
-	Index SiteCounts;
-	unsigned int BlockSize;
-	double VoxelSize;
-
-	std::vector<Block*> blocks;
 	/*
 	 * These TranslateIndex member functions translate between 3d and 1a
 	 * indices, i.e.
@@ -84,6 +76,15 @@ protected:
 			const unsigned int& k) {
 		return (i * this->BlockCounts.y + j) * this->BlockCounts.z + k;
 	}
+
+protected:
+	Vector Origin;
+	Index BlockCounts;
+	Index SiteCounts;
+	unsigned int BlockSize;
+	double VoxelSize;
+
+	std::vector<Block*> blocks;
 
 	friend class BlockIterator;
 	friend class NeighbourIteratorBase;

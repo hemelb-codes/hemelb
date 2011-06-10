@@ -43,13 +43,14 @@ protected:
 	Block& block;
 	Index index;
 	friend class NeighbourIteratorBase;
+	friend class LaterNeighbourIterator;
 };
 
 // Base for iterating over neighbours
 class NeighbourIteratorBase: public std::iterator<std::forward_iterator_tag,
 		Site> {
 public:
-	NeighbourIteratorBase();
+	NeighbourIteratorBase(Site& site, unsigned int startpos = 0);
 	NeighbourIteratorBase(const NeighbourIteratorBase& other);
 
 	NeighbourIteratorBase& operator=(const NeighbourIteratorBase& other);
@@ -59,36 +60,36 @@ public:
 	reference operator*();
 	pointer operator->();
 
-	virtual unsigned int GetNeighbourIndex() = 0;
+	virtual unsigned int GetNeighbourIndex();
 
 protected:
 	Site* site;
 	Domain* domain;
 	unsigned int i;
-	unsigned int maxI;
 	Index index;
 
-	// Does the work of the constructor
-	void Init(Site& site, unsigned int startpos);
-	bool IsCurrentValid();
-	virtual Index GetVector() = 0;
+	bool IsCurrentInDomain();
+	virtual bool IsCurrentValid() = 0;
+	virtual Index GetVector();
 };
 
 // Iterator for getting all the later (i.e. further on in memory) neighbouring sites of a given site
 class LaterNeighbourIterator: public NeighbourIteratorBase {
 public:
-	LaterNeighbourIterator(Site& site, unsigned int startpos = 0);
-	unsigned int GetNeighbourIndex();
+	inline LaterNeighbourIterator(Site& site, unsigned int startpos = 0) :
+		NeighbourIteratorBase(site, startpos) {
+	}
 protected:
-	Index GetVector();
+	virtual bool IsCurrentValid();
 };
 
 // Iterator for getting all the later (i.e. further on in memory) neighbouring sites of a given site
 class NeighbourIterator: public NeighbourIteratorBase {
 public:
-	NeighbourIterator(Site& site, unsigned int startpos = 0);
-	unsigned int GetNeighbourIndex();
+	inline NeighbourIterator(Site& site, unsigned int startpos = 0) :
+		NeighbourIteratorBase(site, startpos) {
+	}
 protected:
-	Index GetVector();
+	virtual bool IsCurrentValid();
 };
 #endif // HEMELBSETUPTOOL_SITE_H
