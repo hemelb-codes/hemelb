@@ -56,7 +56,10 @@ public:
 			return x;
 		else if (i == 1)
 			return y;
-		else if (i == 2)
+		else
+#if BOUNDS_CHECK
+			if (i == 2)
+#endif
 			return z;
 
 #ifdef BOUNDS_CHECK
@@ -73,7 +76,10 @@ public:
 			return x;
 		else if (i == 1)
 			return y;
-		else if (i == 2)
+		else
+#ifdef BOUNDS_CHECK
+			if (i == 2)
+#endif
 			return z;
 #ifdef BOUNDS_CHECK
 		throw IndexError();

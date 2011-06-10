@@ -6,7 +6,8 @@
 #include "Index.h"
 //#include "Site.h"
 class Site;
-class Domain;
+//class Domain;
+#include "Domain.h"
 
 typedef std::vector<Site*> SiteVec;
 typedef SiteVec::iterator SiteIterator;
@@ -34,6 +35,7 @@ public:
 	inline const Index& GetIndex() {
 		return this->index;
 	}
+
 protected:
 	unsigned int size;
 	const Index index;
@@ -46,6 +48,7 @@ protected:
 		return (ind[0] * this->size + ind[1]) * this->size + ind[2];
 	}
 	friend class NeighbourIteratorBase;
+	friend class LaterNeighbourIterator;
 };
 
 #endif // HEMELBSETUPTOOL_BLOCK_H
