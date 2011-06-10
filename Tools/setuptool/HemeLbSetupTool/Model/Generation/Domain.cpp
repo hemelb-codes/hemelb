@@ -35,7 +35,6 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 		totalBlocks *= nBlocks;
 	}
 	this->blocks.resize(totalBlocks);
-	Log() << std::endl;
 	Log() << "Domain size " << this->BlockCounts << std::endl;
 }
 //
@@ -55,7 +54,6 @@ Block& Domain::GetBlock(const Index& index) {
 	Block* bp = this->blocks[i];
 	// If the block hasn't been created yet, do so.
 	if (!bp) {
-		Log() << "Creating block at " << index << std::endl;
 		bp = this->blocks[i] = new Block(*this, index, this->BlockSize);
 	}
 	return *bp;
@@ -130,7 +128,6 @@ BlockIterator& BlockIterator::operator++() {
 
 				// This block can no longer be reached from the current or later
 				// blocks, so delete, and set pointer to null
-				Log() << "Deleting block at " << Index(i, j, k) << std::endl;
 				pos = this->domain->TranslateIndex(i, j, k);
 				delete this->domain->blocks[pos];
 				this->domain->blocks[pos] = NULL;

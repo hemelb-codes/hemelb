@@ -107,6 +107,7 @@ void ConfigGenerator::Execute() {
  * WallDistance/Normal and BoundaryDistance/Normal.
  */
 void ConfigGenerator::ClassifySite(Site& site) {
+
 	if (this->IsFirstSite) {
 		/* We're the first site; the IsFluid flag will have been
 		 * set to True/False below for all other sites, but we
@@ -120,6 +121,7 @@ void ConfigGenerator::ClassifySite(Site& site) {
 
 	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end(); ++neighIt) {
 		Site& neigh = *neighIt;
+
 		unsigned int iNeigh = neighIt.GetNeighbourIndex();
 		this->Locator->IntersectWithLine(&site.Position[0], &neigh.Position[0],
 				this->hitPoints, this->hitCellIds);
