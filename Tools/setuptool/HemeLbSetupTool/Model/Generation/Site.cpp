@@ -98,6 +98,14 @@ unsigned int Site::GetConfig() {
 	return cfg;
 }
 
+const Index Site::GetDomainBlockCount() {
+	return block.GetDomain().GetBlockCounts();
+}
+
+const int Site::GetDomainBlockSize() {
+	return block.GetDomain().GetBlockSize();
+}
+
 // Get start and end LaterNeighbourIterators for this
 LaterNeighbourIterator Site::begin() {
 	return LaterNeighbourIterator(*this);
@@ -119,7 +127,7 @@ NeighbourIterator Site::endall() {
  */
 
 NeighbourIteratorBase::NeighbourIteratorBase(Site& site, unsigned int startpos) :
-	site(&site), domain(&site.block.domain), i(startpos), index(site.index) {
+	site(&site), domain(&site.block.domain), i(startpos) {
 	/* Should advance to the first valid neighbour
 	 * HOWEVER, we can't do that here, in the abstract class's c'tor
 	 * since the subclass c'tors haven't yet executed. The virtual
@@ -136,7 +144,7 @@ void NeighbourIteratorBase::AdvanceToValid() {
 
 // copy c'tor
 NeighbourIteratorBase::NeighbourIteratorBase(const NeighbourIteratorBase& other) :
-	site(other.site), domain(other.domain), i(other.i), index(other.index) {
+	site(other.site), domain(other.domain), i(other.i) {
 }
 
 // assignment operator
@@ -154,11 +162,11 @@ NeighbourIteratorBase& NeighbourIteratorBase::operator=(
 
 // Is the current a site within the full domain?
 bool NeighbourIteratorBase::IsCurrentInDomain() {
-	this->index = this->site->index + this->GetVector();
+	Index index = this->site->index + this->GetVector();
 
 	for (unsigned int j = 0; j < 3; ++j) {
 		// If ind is out of the Domain, the current is invalid
-		if (this->index[j] < 0 or this->index[j] >= this->domain->SiteCounts[j])
+		if (index[j] < 0 or index[j] >= this->domain->SiteCounts[j])
 			return false;
 	}
 	return true;
@@ -185,7 +193,7 @@ bool NeighbourIteratorBase::operator!=(const NeighbourIteratorBase& other) const
 
 // Dereference
 NeighbourIteratorBase::reference NeighbourIteratorBase::operator*() {
-	return this->domain->GetSite(this->index);
+	return this->domain->GetSite(this->site->index + GetVector());
 }
 // Member lookup
 NeighbourIteratorBase::pointer NeighbourIteratorBase::operator->() {
@@ -209,17 +217,22 @@ bool NeighbourIterator::IsCurrentValid() {
 
 // Later one checks
 bool LaterNeighbourIterator::IsCurrentValid() {
+	Index neighIndex = this->site->index + GetVector();
+
 	if (this->IsCurrentInDomain()) {
 		// neighbour's in the domain, check it's block
-		int siteBlockIjk = this->domain->TranslateIndex(this->site->block.index);
-		int neighBlockIjk = this->domain->TranslateIndex(this->index / this->domain->GetBlockSize());
+		int siteBlockIjk =
+				this->domain->TranslateIndex(this->site->block.index);
+		int neighBlockIjk = this->domain->TranslateIndex(
+				neighIndex / this->domain->GetBlockSize());
 		if (neighBlockIjk != siteBlockIjk) {
 			// block is different
 			return (neighBlockIjk > siteBlockIjk);
 		} else {
 			// sites are in the same block
-			int neighLocalIjk = this->site->block.TranslateIndex(this->index);
-			int siteLocalIjk = this->site->block.TranslateIndex(this->site->index);
+			int neighLocalIjk = this->site->block.TranslateIndex(neighIndex);
+			int siteLocalIjk = this->site->block.TranslateIndex(
+					this->site->index);
 			return (neighLocalIjk > siteLocalIjk);
 		}
 
