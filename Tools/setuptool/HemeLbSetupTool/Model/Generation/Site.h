@@ -38,6 +38,9 @@ public:
 	inline const Index& GetIndex() {
 		return this->index;
 	}
+	const Index GetDomainBlockCount();
+	const int GetDomainBlockSize();
+
 protected:
 	void Init();
 	Block& block;
@@ -66,11 +69,11 @@ protected:
 	Site* site;
 	Domain* domain;
 	unsigned int i;
-	Index index;
+
 	void AdvanceToValid();
 	bool IsCurrentInDomain();
 	virtual bool IsCurrentValid() = 0;
-	virtual Index GetVector();
+	Index GetVector();
 };
 
 // Iterator for getting all the later (i.e. further on in memory) neighbouring sites of a given site

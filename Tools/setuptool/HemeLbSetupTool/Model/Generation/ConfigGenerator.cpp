@@ -174,6 +174,16 @@ void ConfigGenerator::ClassifySite(Site& site) {
 		}
 	}
 
+	for (int ii = 0; ii < Neighbours::n; ++ii) {
+		Index neigh = site.GetIndex() + Neighbours::vectors[ii];
+
+		for (int jj = 0; jj < 3; ++jj) {
+			if (neigh[jj] < 0 || neigh[jj] >= (site.GetDomainBlockCount()[jj] * site.GetDomainBlockSize())) {
+				site.IsEdge = true;
+			}
+		}
+	}
+
 	if (!site.IsFluid or !site.IsEdge)
 		// Nothing more to do for solid sites or simple fluid sites
 		return;
