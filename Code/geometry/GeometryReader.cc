@@ -106,7 +106,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s",
                                                       bSimConfig->DataFilePath.c_str());
       }
-      fflush( NULL);
+      fflush(NULL);
 
       // Set the view to the file.
       std::string lMode = "native";
@@ -354,7 +354,7 @@ namespace hemelb
       while (nextBlockToRead < iGlobLatDat->GetBlockCount())
       {
         // ... track the blocks we're going to read, and how many bytes we'll require.
-        std::vector < site_t > thisReadBlocks;
+        std::vector<site_t> thisReadBlocks;
         int length = 0;
 
         // We only want to read valid blocks, up to MaxBlocks blocks, and we only want to read-in
@@ -637,10 +637,10 @@ namespace hemelb
         blockAssigned[ii] = false;
       }
 
-      std::vector < BlockLocation > *lCurrentEdge = new std::vector<BlockLocation>;
-      std::vector < BlockLocation > *lExpandedEdge = new std::vector<BlockLocation>;
+      std::vector<BlockLocation> *lCurrentEdge = new std::vector<BlockLocation>;
+      std::vector<BlockLocation> *lExpandedEdge = new std::vector<BlockLocation>;
 
-      int lBlockNumber = -1;
+      site_t lBlockNumber = -1;
 
       // Domain Decomposition.  Pick a site. Set it to the rank we are
       // looking at. Find its neighbours and put those on the same
@@ -711,7 +711,7 @@ namespace hemelb
 
               // When the new layer of edge sites has been found, swap the buffers for
               // the current and new layers of edge sites.
-              std::vector < BlockLocation > *tempP = lCurrentEdge;
+              std::vector<BlockLocation> *tempP = lCurrentEdge;
               lCurrentEdge = lExpandedEdge;
               lExpandedEdge = tempP;
             }
@@ -724,8 +724,7 @@ namespace hemelb
               ++currentUnit;
 
               unassignedBlocks -= lBlocksOnCurrentProc;
-              blocksPerUnit = (int) ceil((double) unassignedBlocks / (double) (unitCount
-                  - currentUnit));
+              blocksPerUnit = ceil((double) unassignedBlocks / (double) (unitCount - currentUnit));
 
               lBlocksOnCurrentProc = 0;
             }
@@ -845,7 +844,7 @@ namespace hemelb
       idxtype localVertexCount = vtxDistribn[mTopologyRank + 1] - vtxDistribn[mTopologyRank];
 
       idxtype* adjacenciesPerVertex = new idxtype[localVertexCount + 1];
-      std::vector < idxtype > lAdjacencies;
+      std::vector<idxtype> lAdjacencies;
 
       GetAdjacencyData(adjacenciesPerVertex,
                        lAdjacencies,
@@ -917,7 +916,7 @@ namespace hemelb
         vertexDistribn[ii] = 0;
       }
 
-      for (unsigned int ii = 0; ii < blockCount; ++ii)
+      for (site_t ii = 0; ii < blockCount; ++ii)
       {
         if (procForEachBlock[ii] >= 0)
         {
@@ -948,9 +947,9 @@ namespace hemelb
       // Now for each block (in ascending order), the smallest site index is the smallest site
       // index on its processor, incremented by the number of sites observed from that processor
       // so far.
-      for (unsigned int ii = 0; ii < blockCount; ++ii)
+      for (site_t ii = 0; ii < blockCount; ++ii)
       {
-        int proc = procForEachBlock[ii];
+        proc_t proc = procForEachBlock[ii];
         if (proc < 0)
         {
           firstSiteIndexPerBlock[ii] = -1;
@@ -975,7 +974,7 @@ namespace hemelb
     {
       adjacenciesPerVertex[0] = 0;
       idxtype lFluidVertex = 0;
-      int n = -1;
+      site_t n = -1;
 
       // For each block (counting up by lowest site id)...
       for (site_t i = 0; i < bGlobLatDat->GetXSiteCount(); i += bGlobLatDat->GetBlockSize())
@@ -1000,7 +999,7 @@ namespace hemelb
               continue;
             }
 
-            int m = -1;
+            site_t m = -1;
 
             // ... iterate over sites within the block...
             for (site_t site_i = i; site_i < i + bGlobLatDat->GetBlockSize(); site_i++)
@@ -1032,9 +1031,9 @@ namespace hemelb
                     }
 
                     // ... (that is actually being simulated and not a solid)...
-                    const int *proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
-                                                                                  neigh_j,
-                                                                                  neigh_k);
+                    const proc_t* proc_id_p = bGlobLatDat->GetProcIdFromGlobalCoords(neigh_i,
+                                                                                     neigh_j,
+                                                                                     neigh_k);
 
                     if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
@@ -1206,7 +1205,7 @@ namespace hemelb
     {
       // Right. Let's count how many sites we're going to have to move. Count the local number of
       // sites to be moved, and collect the site id and the destination processor.
-      std::vector < idxtype > moveData;
+      std::vector<idxtype> moveData;
 
       const idxtype myLowest = vtxDistribn[mTopologyRank];
       const idxtype myHighest = vtxDistribn[mTopologyRank + 1] - 1;
@@ -1368,14 +1367,14 @@ namespace hemelb
       // Initialise the array (of which proc each block belongs to) to what it was before.
       int* newProcForEachBlock = new int[bGlobLatDat->GetBlockCount()];
 
-      for (unsigned int lBlockNumber = 0; lBlockNumber < bGlobLatDat->GetBlockCount(); ++lBlockNumber)
+      for (site_t lBlockNumber = 0; lBlockNumber < bGlobLatDat->GetBlockCount(); ++lBlockNumber)
       {
         newProcForEachBlock[lBlockNumber] = procForEachBlock[lBlockNumber];
       }
 
       // Set the proc for each block to be the current proc whenever a site on that block is
       // going to be moved to the current proc.
-      unsigned int moveIndex = 0;
+      idxtype moveIndex = 0;
 
       for (unsigned int lFromProc = 0; lFromProc < mTopologySize; ++lFromProc)
       {
@@ -1435,7 +1434,7 @@ namespace hemelb
       }
 
       // Now implement the moves suggested by parmetis.
-      unsigned int moveIndex = 0;
+      idxtype moveIndex = 0;
 
       // For each source proc, go through as many moves as it had.
       for (unsigned int lFromProc = 0; lFromProc < mTopologySize; ++lFromProc)
@@ -1457,67 +1456,67 @@ namespace hemelb
               if (bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
                   != ConvertTopologyRankToGlobalRank((proc_t) lFromProc))
               {
-log              ::Logger::Log<log::Debug, log::OnePerCore>("Block %" IDXTYPE_FORMAT ", site %" IDXTYPE_FORMAT " from move %u was originally on proc %i, not proc %u.",
-                  block,
-                  site,
-                  moveIndex,
-                  bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site],
-                  lFromProc);
+                log::Logger::Log<log::Debug, log::OnePerCore>("Block %" IDXTYPE_FORMAT ", site %" IDXTYPE_FORMAT " from move %u was originally on proc %i, not proc %u.",
+                                                              block,
+                                                              site,
+                                                              moveIndex,
+                                                              bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site],
+                                                              lFromProc);
+              }
             }
+
+            // Implement the move.
+            bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
+                = ConvertTopologyRankToGlobalRank((proc_t) toProc);
           }
 
-          // Implement the move.
-          bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
-          = ConvertTopologyRankToGlobalRank((proc_t) toProc);
+          ++moveIndex;
+        }
+      }
+    }
+
+    proc_t LatticeData::GeometryReader::ConvertTopologyRankToGlobalRank(proc_t topologyRank) const
+    {
+      // If the global rank is not equal to the topology rank, we are not using rank 0 for
+      // LBM.
+      return (topology::NetworkTopology::Instance()->GetLocalRank() == mTopologyRank)
+        ? topologyRank
+        : (topologyRank + 1);
+    }
+
+    void LatticeData::GeometryReader::CreateFileReadType(MPI_Datatype* dataType,
+                                                         const site_t blockCount,
+                                                         const bool* readBlock,
+                                                         const unsigned int* bytesPerBlock) const
+    {
+      // Create vectors for each of the things we'll need to give to MPI_Type_create_struct
+      std::vector<MPI_Datatype> baseTypes;
+      std::vector<MPI_Aint> displacements;
+      std::vector<int> counts;
+
+      int currentDisplacement = 0;
+
+      // For each block, record the type (byte), number of bytes, and distance from the start
+      // of the file.
+      for (site_t block = 0; block < blockCount; ++block)
+      {
+        if (readBlock[block])
+        {
+          baseTypes.push_back(MPI_CHAR);
+          counts.push_back(bytesPerBlock[block]);
+          displacements.push_back(currentDisplacement);
         }
 
-        ++moveIndex;
-      }
-    }
-  }
-
-  proc_t LatticeData::GeometryReader::ConvertTopologyRankToGlobalRank(proc_t topologyRank) const
-  {
-    // If the global rank is not equal to the topology rank, we are not using rank 0 for
-    // LBM.
-    return (topology::NetworkTopology::Instance()->GetLocalRank() == mTopologyRank)
-    ? topologyRank
-    : (topologyRank + 1);
-  }
-
-  void LatticeData::GeometryReader::CreateFileReadType(MPI_Datatype* dataType,
-      const site_t blockCount,
-      const bool* readBlock,
-      const unsigned int* bytesPerBlock) const
-  {
-    // Create vectors for each of the things we'll need to give to MPI_Type_create_struct
-    std::vector<MPI_Datatype> baseTypes;
-    std::vector<MPI_Aint> displacements;
-    std::vector<int> counts;
-
-    int currentDisplacement = 0;
-
-    // For each block, record the type (byte), number of bytes, and distance from the start
-    // of the file.
-    for (site_t block = 0; block < blockCount; ++block)
-    {
-      if (readBlock[block])
-      {
-        baseTypes.push_back(MPI_CHAR);
-        counts.push_back(bytesPerBlock[block]);
-        displacements.push_back(currentDisplacement);
+        currentDisplacement += bytesPerBlock[block];
       }
 
-      currentDisplacement += bytesPerBlock[block];
+      // Create the type.
+      MPI_Type_create_struct((int) baseTypes.size(),
+                             &counts[0],
+                             &displacements[0],
+                             &baseTypes[0],
+                             dataType);
     }
 
-    // Create the type.
-    MPI_Type_create_struct((int) baseTypes.size(),
-        &counts[0],
-        &displacements[0],
-        &baseTypes[0],
-        dataType);
   }
-
-}
 }
