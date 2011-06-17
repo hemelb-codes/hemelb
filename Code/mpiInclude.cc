@@ -14,26 +14,20 @@ namespace hemelb
     return MPI_CHAR;
   }
   template<>
-  MPI_Datatype MpiDataTypeTraits<signed short int>::RegisterMpiDataType()
+  MPI_Datatype MpiDataTypeTraits<int16_t>::RegisterMpiDataType()
   {
     return MPI_SHORT;
   }
   template<>
-  MPI_Datatype MpiDataTypeTraits<signed int>::RegisterMpiDataType()
+  MPI_Datatype MpiDataTypeTraits<int32_t>::RegisterMpiDataType()
   {
     return MPI_INT;
   }
   template<>
-  MPI_Datatype MpiDataTypeTraits<signed long int>::RegisterMpiDataType()
+  MPI_Datatype MpiDataTypeTraits<int64_t>::RegisterMpiDataType()
   {
     return MPI_LONG_LONG;
   }
-  // Strictly, C++ doesn't have long long
-  //template<>
-  //MPI_Datatype MpiDataTypeTraits<int64_t>::RegisterMpiDataType()
-  //{
-  //  return MPI_LONG_LONG;
-  //}
   template<>
   MPI_Datatype MpiDataTypeTraits<signed char>::RegisterMpiDataType()
   {
@@ -45,26 +39,20 @@ namespace hemelb
     return MPI_UNSIGNED_CHAR;
   }
   template<>
-  MPI_Datatype MpiDataTypeTraits<unsigned short int>::RegisterMpiDataType()
+  MPI_Datatype MpiDataTypeTraits<uint16_t>::RegisterMpiDataType()
   {
     return MPI_UNSIGNED_SHORT;
   }
   template<>
-  MPI_Datatype MpiDataTypeTraits<unsigned int>::RegisterMpiDataType()
+  MPI_Datatype MpiDataTypeTraits<uint32_t>::RegisterMpiDataType()
   {
     return MPI_UNSIGNED;
   }
   template<>
-  MPI_Datatype MpiDataTypeTraits<unsigned long int>::RegisterMpiDataType()
+  MPI_Datatype MpiDataTypeTraits<uint64_t>::RegisterMpiDataType()
   {
     return MPI_UNSIGNED_LONG_LONG;
   }
-  // Strictly, C++ doesn't have long long
-  //template<>
-  //MPI_Datatype MpiDataTypeTraits<unsigned long long int>::RegisterMpiDataType()
-  //{
-  //  return MPI_UNSIGNED_LONG_LONG;
-  //}
   template<>
   MPI_Datatype MpiDataTypeTraits<float>::RegisterMpiDataType()
   {
