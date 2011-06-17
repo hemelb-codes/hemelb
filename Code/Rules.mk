@@ -7,7 +7,7 @@ TARGETS = $(EXE)
 # build system.
 # To rebuild that, go to the ParMetis directory and run make there.
 
-SUBDIRS = geometry steering vis lb net debug topology io xml util log
+SUBDIRS = steering vis lb net debug topology xml util geometry io log
 
 $(EXE)_DEPS = D3Q15.o \
         SimulationMaster.o \

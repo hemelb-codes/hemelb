@@ -1133,7 +1133,7 @@ namespace hemelb
       // Initialise the partition vector.
       for (idxtype ii = 0; ii < localVertexCount; ++ii)
       {
-        partitionVector[ii] = -1;
+        partitionVector[ii] = mTopologyRank;
       }
 
       // Weight all vertices evenly.

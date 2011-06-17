@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #include "mpiInclude.h"
 
 namespace hemelb
@@ -24,13 +26,13 @@ namespace hemelb
   template<>
   MPI_Datatype MpiDataTypeTraits<signed long int>::RegisterMpiDataType()
   {
-    return MPI_LONG;
+    return MPI_LONG_LONG;
   }
   // Strictly, C++ doesn't have long long
   //template<>
-  //MPI_Datatype MpiDataTypeTraits<signed long long int>::RegisterMpiDataType()
+  //MPI_Datatype MpiDataTypeTraits<int64_t>::RegisterMpiDataType()
   //{
-  //  return MPI_LONG_LONG_INT;
+  //  return MPI_LONG_LONG;
   //}
   template<>
   MPI_Datatype MpiDataTypeTraits<signed char>::RegisterMpiDataType()
@@ -55,7 +57,7 @@ namespace hemelb
   template<>
   MPI_Datatype MpiDataTypeTraits<unsigned long int>::RegisterMpiDataType()
   {
-    return MPI_UNSIGNED_LONG;
+    return MPI_UNSIGNED_LONG_LONG;
   }
   // Strictly, C++ doesn't have long long
   //template<>
