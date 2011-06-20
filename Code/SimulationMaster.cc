@@ -219,6 +219,7 @@ void SimulationMaster::RunSimulation(double iStartTime,
   bool is_unstable = false;
   int total_time_steps = 0;
 
+  // TODO ugh.
   unsigned int
       snapshots_period =
           (lSnapshotsPerCycle == 0)

@@ -1158,7 +1158,61 @@ namespace hemelb
       idxtype numberingFlag = 0;
       idxtype edgesCut = 0;
       idxtype options[4] = { 0, 0, 0, 0 };
+
+      if(log::Logger::ShouldDisplay<log::Debug>())
+      {
+        // Specify that some options are set and that we should
+        // debug everything.
+        options[0] = 1;
+        options[1] = 1023;
+      }
+
       float tolerance = 1.001F;
+
+      // If we're using debugging logs, check that the arguments are consistent across all cores.
+      // To verify: vtxDistribn, adjacenciesPerVertex, adjacencies
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        // vtxDistribn should be the same on all cores.
+        idxtype* vtxDistribnRecv = new idxtype[mTopologySize + 1];
+
+        MPI_Reduce_scatter(vtxDistribn,
+                           vtxDistribnRecv,
+                           mTopologySize + 1,
+                           MpiDataType(vtxDistribnRecv[0]),
+                           MPI_MIN,
+                           &mTopologyComm);
+
+        for (unsigned int ii = 0; ii < mTopologySize + 1; ++ii)
+        {
+          if (vtxDistribn[ii] != vtxDistribnRecv[ii])
+          {
+            log::Logger::Log<log::OnePerCore, log::Debug>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
+                                                          ii,
+                                                          vtxDistribn[ii],
+                                                          vtxDistribnRecv[ii]);
+          }
+        }
+
+        delete[] vtxDistribnRecv;
+
+        // The adjacency data should correspond across all cores.
+        // This is likely to be VERY time-consuming.
+        for (idxtype index = 0; index < localVertexCount; ++index)
+        {
+          idxtype vertex = vtxDistribn[mTopologyRank] + index;
+
+          for (idxtype adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1]
+              - adjacenciesPerVertex[index]); ++adjNumber)
+          {
+            idxtype adjacentVertex = adjacencies[adjacenciesPerVertex[index] + adjNumber];
+
+            // TODO
+            // IS IT POSSIBLE THAT PARMETIS ASSUMES THE ADJACENCIES WILL BE ORDERED? BECAUSE THEY AREN'T.
+
+          }
+        }
+      }
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
       ParMETIS_V3_PartKway(vtxDistribn,
