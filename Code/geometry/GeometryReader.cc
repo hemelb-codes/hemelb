@@ -1,4 +1,5 @@
 #include <math.h>
+#include <list>
 
 #include "debug/Debugger.h"
 #include "io/XdrMemReader.h"
@@ -724,7 +725,8 @@ namespace hemelb
               ++currentUnit;
 
               unassignedBlocks -= lBlocksOnCurrentProc;
-              blocksPerUnit = ceil((double) unassignedBlocks / (double) (unitCount - currentUnit));
+              blocksPerUnit = (site_t) ceil((double) unassignedBlocks / (double) (unitCount
+                  - currentUnit));
 
               lBlocksOnCurrentProc = 0;
             }
@@ -1159,12 +1161,12 @@ namespace hemelb
       idxtype edgesCut = 0;
       idxtype options[4] = { 0, 0, 0, 0 };
 
-      if(log::Logger::ShouldDisplay<log::Debug>())
+      if (log::Logger::ShouldDisplay<log::Debug>())
       {
         // Specify that some options are set and that we should
         // debug everything.
         options[0] = 1;
-        options[1] = 1023;
+        options[1] = 1 | 2 | 4 | 8 | 32 | 64;
       }
 
       float tolerance = 1.001F;
@@ -1176,18 +1178,18 @@ namespace hemelb
         // vtxDistribn should be the same on all cores.
         idxtype* vtxDistribnRecv = new idxtype[mTopologySize + 1];
 
-        MPI_Reduce_scatter(vtxDistribn,
-                           vtxDistribnRecv,
-                           mTopologySize + 1,
-                           MpiDataType(vtxDistribnRecv[0]),
-                           MPI_MIN,
-                           &mTopologyComm);
+        MPI_Allreduce(vtxDistribn,
+                      vtxDistribnRecv,
+                      mTopologySize + 1,
+                      MpiDataType(vtxDistribnRecv[0]),
+                      MPI_MIN,
+                      mTopologyComm);
 
         for (unsigned int ii = 0; ii < mTopologySize + 1; ++ii)
         {
           if (vtxDistribn[ii] != vtxDistribnRecv[ii])
           {
-            log::Logger::Log<log::OnePerCore, log::Debug>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
+            log::Logger::Log<log::Debug, log::OnePerCore>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
                                                           ii,
                                                           vtxDistribn[ii],
                                                           vtxDistribnRecv[ii]);
@@ -1196,22 +1198,183 @@ namespace hemelb
 
         delete[] vtxDistribnRecv;
 
+        // Create an array of lists to store all of this node's adjacencies, arranged by the
+        // proc the adjacent vertex is on.
+        std::list<idxtype>* adjByNeighProc = new std::list<idxtype>[mTopologySize];
+        for (proc_t ii = 0; ii < (proc_t) mTopologySize; ++ii)
+        {
+          adjByNeighProc[ii] = std::list<idxtype>();
+        }
+
         // The adjacency data should correspond across all cores.
         // This is likely to be VERY time-consuming.
         for (idxtype index = 0; index < localVertexCount; ++index)
         {
           idxtype vertex = vtxDistribn[mTopologyRank] + index;
 
+          // Iterate over each adjacency (of each vertex).
           for (idxtype adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1]
               - adjacenciesPerVertex[index]); ++adjNumber)
           {
             idxtype adjacentVertex = adjacencies[adjacenciesPerVertex[index] + adjNumber];
+            proc_t adjacentProc = -1;
 
-            // TODO
-            // IS IT POSSIBLE THAT PARMETIS ASSUMES THE ADJACENCIES WILL BE ORDERED? BECAUSE THEY AREN'T.
+            // Calculate the proc of the neighbouring vertex.
+            for (proc_t ii = 0; ii < (proc_t) mTopologySize; ++ii)
+            {
+              if (vtxDistribn[ii] <= adjacentVertex && vtxDistribn[ii + 1] > adjacentVertex)
+              {
+                adjacentProc = ii;
+                break;
+              }
+            }
 
+            // If it doesn't appear to belong to any proc, something's wrong.
+            if (adjacentProc == -1)
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("The vertex %li has a neighbour %li which doesn\'t appear to live on any processor.",
+                                                            vertex,
+                                                            adjacentVertex);
+              continue;
+            }
+
+            // Store the data if it does belong to a proc.
+            adjByNeighProc[adjacentProc].push_back(adjacentVertex);
+            adjByNeighProc[adjacentProc].push_back(vertex);
           }
         }
+
+        // Now spread and compare the adjacency information. Smaller ranks send data to larger
+        // ranks which receive the data and compare it.
+        for (proc_t neigh = 0; neigh < (proc_t) mTopologySize; ++neigh)
+        {
+          if (neigh > mTopologyRank)
+          {
+            // Send the array length.
+            idxtype count = adjByNeighProc[neigh].size();
+            MPI_Send(&count, 1, MpiDataType(count), neigh, 42, mTopologyComm);
+
+            // Create a sendable array (std::lists aren't organised in a sendable format).
+            idxtype* sendArray = new idxtype[count];
+
+            unsigned int ii = 0;
+
+            for (std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
+                != adjByNeighProc[neigh].end(); ++it)
+
+            {
+              sendArray[ii] = *it;
+              ++ii;
+            }
+
+            // Send the data to the neighbour.
+            MPI_Send(sendArray, (int) count, MpiDataType<idxtype> (), neigh, 43, mTopologyComm);
+
+            delete[] sendArray;
+
+            // Sending arrays don't perform comparison.
+            continue;
+          }
+
+          idxtype recvCount;
+          idxtype* recvData;
+
+          // If this is a greater rank number than the neighbour, receive the data.
+          if (neigh < mTopologyRank)
+          {
+            MPI_Recv(&recvCount,
+                     1,
+                     MpiDataType(recvCount),
+                     neigh,
+                     42,
+                     mTopologyComm,
+                     MPI_STATUS_IGNORE);
+
+            recvData = new idxtype[recvCount];
+
+            MPI_Recv(recvData,
+                     (int) recvCount,
+                     MpiDataType<idxtype> (),
+                     neigh,
+                     43,
+                     mTopologyComm,
+                     MPI_STATUS_IGNORE);
+          }
+          // Neigh == mTopologyRank, i.e. neighbouring vertices on the same proc
+          // Duplicate the data.
+          else
+          {
+            recvCount = adjByNeighProc[neigh].size();
+            recvData = new idxtype[recvCount];
+
+            int ii = 0;
+            for (std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
+                != adjByNeighProc[neigh].end(); ++it)
+
+            {
+              recvData[ii] = *it;
+              ++ii;
+            }
+
+          }
+
+          // Now we compare. First go through the received data which is ordered as (adjacent
+          // vertex, vertex) wrt the neighbouring proc.
+          for (idxtype ii = 0; ii < recvCount; ii += 2)
+          {
+            bool found = false;
+            std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin();
+
+            // Go through each neighbour we know about on this proc, and check whether it
+            // matches the current received neighbour-data.
+            while (it != adjByNeighProc[neigh].end())
+            {
+              std::list<idxtype>::iterator initial = it;
+
+              idxtype recvAdj = *it;
+              it++;
+              idxtype recvAdj2 = *it;
+              it++;
+
+              if (recvData[ii] == recvAdj2 && recvData[ii + 1] == recvAdj)
+              {
+                adjByNeighProc[neigh].erase(initial, it);
+                found = true;
+                break;
+              }
+            }
+
+            // No neighbour data on this proc matched the data received.
+            if (!found)
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Neighbour proc %i had adjacency (%li,%li) that wasn't present on this processor.",
+                                                            neigh,
+                                                            recvData[ii],
+                                                            recvData[ii + 1]);
+            }
+          }
+
+          // The local store of adjacencies should now be empty, if there was complete matching.
+          std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin();
+          while (it != adjByNeighProc[neigh].end())
+          {
+            idxtype adj1 = *it;
+            ++it;
+            idxtype adj2 = *it;
+            ++it;
+
+            // We had neighbour-data on this proc that didn't match that received.
+            log::Logger::Log<log::Debug, log::OnePerCore>("The local processor has adjacency (%li,%li) that isn't present on neighbouring processor %i.",
+                                                          adj1,
+                                                          adj2,
+                                                          neigh);
+
+          }
+
+          delete[] recvData;
+        }
+
+        delete[] adjByNeighProc;
       }
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
