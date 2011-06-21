@@ -1,5 +1,6 @@
 #include <math.h>
 #include <list>
+#include <map>
 
 #include "debug/Debugger.h"
 #include "io/XdrMemReader.h"
@@ -845,11 +846,11 @@ namespace hemelb
 
       idxtype localVertexCount = vtxDistribn[mTopologyRank + 1] - vtxDistribn[mTopologyRank];
 
-      idxtype* adjacenciesPerVertex = new idxtype[localVertexCount + 1];
-      std::vector<idxtype> lAdjacencies;
+      idxtype* adjacenciesPerVertex = new idxtype[localVertexCount + 1U];
+      idxtype* localAdjacencies;
 
       GetAdjacencyData(adjacenciesPerVertex,
-                       lAdjacencies,
+                       localAdjacencies,
                        localVertexCount,
                        procForEachBlock,
                        firstSiteIndexPerBlock,
@@ -862,8 +863,9 @@ namespace hemelb
                    localVertexCount,
                    vtxDistribn,
                    adjacenciesPerVertex,
-                   &lAdjacencies[0]);
+                   localAdjacencies);
 
+      delete[] localAdjacencies;
       delete[] adjacenciesPerVertex;
 
       // Convert the ParMetis results into a nice format.
@@ -968,12 +970,15 @@ namespace hemelb
     }
 
     void LatticeData::GeometryReader::GetAdjacencyData(idxtype* adjacenciesPerVertex,
-                                                       std::vector<idxtype> &adjacencies,
+                                                       idxtype* &localAdjacencies,
                                                        const idxtype localVertexCount,
                                                        const proc_t* procForEachBlock,
                                                        const idxtype* firstSiteIndexPerBlock,
                                                        const GlobalLatticeData* bGlobLatDat) const
     {
+      std::vector<idxtype> adj;
+
+      idxtype totalAdjacencies = 0;
       adjacenciesPerVertex[0] = 0;
       idxtype lFluidVertex = 0;
       site_t n = -1;
@@ -1077,14 +1082,15 @@ namespace hemelb
                     }
 
                     // then add this to the list of adjacencies.
-                    adjacencies.push_back((idxtype) neighGlobalSiteId);
+                    ++totalAdjacencies;
+                    adj.push_back((idxtype) neighGlobalSiteId);
                   }
 
                   // The cumulative count of adjacencies for this vertex is equal to the total
                   // number of adjacencies we've entered.
                   // NOTE: The prefix operator is correct here because
                   // the array has a leading 0 not relating to any site.
-                  adjacenciesPerVertex[++lFluidVertex] = (idxtype) adjacencies.size();
+                  adjacenciesPerVertex[++lFluidVertex] = (idxtype) totalAdjacencies;
                 }
               }
             }
@@ -1100,6 +1106,12 @@ namespace hemelb
           std::cerr << "Encountered a different number of vertices on two different parses: "
               << lFluidVertex << " and " << localVertexCount << "\n";
         }
+      }
+
+      localAdjacencies = new idxtype[totalAdjacencies];
+      for (idxtype ii = 0; ii < totalAdjacencies; ++ii)
+      {
+        localAdjacencies[ii] = adj[ii];
       }
     }
 
@@ -1171,6 +1183,38 @@ namespace hemelb
 
       float tolerance = 1.001F;
 
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        ValidateGraphData(vtxDistribn, localVertexCount, adjacenciesPerVertex, adjacencies);
+      }
+
+      log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
+      ParMETIS_V3_PartKway(vtxDistribn,
+                           adjacenciesPerVertex,
+                           adjacencies,
+                           vertexWeight,
+                           NULL,
+                           &weightFlag,
+                           &numberingFlag,
+                           &noConstraints,
+                           &desiredPartitionSize,
+                           domainWeights,
+                           &tolerance,
+                           options,
+                           &edgesCut,
+                           partitionVector,
+                           &mTopologyComm);
+      log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
+
+      delete[] domainWeights;
+      delete[] vertexWeight;
+    }
+
+    void LatticeData::GeometryReader::ValidateGraphData(idxtype* vtxDistribn,
+                                                        idxtype localVertexCount,
+                                                        idxtype* adjacenciesPerVertex,
+                                                        idxtype* adjacencies)
+    {
       // If we're using debugging logs, check that the arguments are consistent across all cores.
       // To verify: vtxDistribn, adjacenciesPerVertex, adjacencies
       if (log::Logger::ShouldDisplay<log::Debug>())
@@ -1200,10 +1244,11 @@ namespace hemelb
 
         // Create an array of lists to store all of this node's adjacencies, arranged by the
         // proc the adjacent vertex is on.
-        std::list<idxtype>* adjByNeighProc = new std::list<idxtype>[mTopologySize];
+        std::multimap<idxtype, idxtype>* adjByNeighProc =
+            new std::multimap<idxtype, idxtype>[mTopologySize];
         for (proc_t ii = 0; ii < (proc_t) mTopologySize; ++ii)
         {
-          adjByNeighProc[ii] = std::list<idxtype>();
+          adjByNeighProc[ii] = std::multimap<idxtype, idxtype>();
         }
 
         // The adjacency data should correspond across all cores.
@@ -1239,8 +1284,7 @@ namespace hemelb
             }
 
             // Store the data if it does belong to a proc.
-            adjByNeighProc[adjacentProc].push_back(adjacentVertex);
-            adjByNeighProc[adjacentProc].push_back(vertex);
+            adjByNeighProc[adjacentProc].insert(std::pair<idxtype, idxtype>(adjacentVertex, vertex));
           }
         }
 
@@ -1260,7 +1304,7 @@ namespace hemelb
           if (neigh < mTopologyRank)
           {
             // Send the array length.
-            counts[neigh] = adjByNeighProc[neigh].size();
+            counts[neigh] = 2 * adjByNeighProc[neigh].size();
             MPI_Isend(&counts[neigh],
                       1,
                       MpiDataType(counts[0]),
@@ -1274,11 +1318,12 @@ namespace hemelb
 
             unsigned int ii = 0;
 
-            for (std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
+            for (std::multimap<idxtype, idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
                 != adjByNeighProc[neigh].end(); ++it)
 
             {
-              data[neigh][ii] = *it;
+              data[neigh][2 * ii] = it->first;
+              data[neigh][2 * ii + 1] = it->second;
               ++ii;
             }
 
@@ -1332,15 +1377,16 @@ namespace hemelb
           // Duplicate the data.
           else
           {
-            counts[neigh] = adjByNeighProc[neigh].size();
+            counts[neigh] = 2 * adjByNeighProc[neigh].size();
             data[neigh] = new idxtype[counts[neigh]];
 
             int ii = 0;
-            for (std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
+            for (std::multimap<idxtype, idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
                 != adjByNeighProc[neigh].end(); ++it)
 
             {
-              data[neigh][ii] = *it;
+              data[neigh][2 * ii] = it->first;
+              data[neigh][2 * ii + 1] = it->second;
               ++ii;
             }
 
@@ -1351,22 +1397,18 @@ namespace hemelb
           for (idxtype ii = 0; ii < counts[neigh]; ii += 2)
           {
             bool found = false;
-            std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin();
 
             // Go through each neighbour we know about on this proc, and check whether it
             // matches the current received neighbour-data.
-            while (it != adjByNeighProc[neigh].end())
+            for (std::multimap<idxtype, idxtype>::iterator it =
+                adjByNeighProc[neigh].find(data[neigh][ii + 1]); it != adjByNeighProc[neigh].end(); ++it)
             {
-              std::list<idxtype>::iterator initial = it;
-
-              idxtype recvAdj = *it;
-              it++;
-              idxtype recvAdj2 = *it;
-              it++;
+              idxtype recvAdj = it -> first;
+              idxtype recvAdj2 = it->second;
 
               if (data[neigh][ii] == recvAdj2 && data[neigh][ii + 1] == recvAdj)
               {
-                adjByNeighProc[neigh].erase(initial, it);
+                adjByNeighProc[neigh].erase(it);
                 found = true;
                 break;
               }
@@ -1383,12 +1425,11 @@ namespace hemelb
           }
 
           // The local store of adjacencies should now be empty, if there was complete matching.
-          std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin();
+          std::multimap<idxtype, idxtype>::iterator it = adjByNeighProc[neigh].begin();
           while (it != adjByNeighProc[neigh].end())
           {
-            idxtype adj1 = *it;
-            ++it;
-            idxtype adj2 = *it;
+            idxtype adj1 = it->first;
+            idxtype adj2 = it->second;
             ++it;
 
             // We had neighbour-data on this proc that didn't match that received.
@@ -1416,27 +1457,6 @@ namespace hemelb
         delete[] data;
         delete[] adjByNeighProc;
       }
-
-      log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
-      ParMETIS_V3_PartKway(vtxDistribn,
-                           adjacenciesPerVertex,
-                           adjacencies,
-                           vertexWeight,
-                           NULL,
-                           &weightFlag,
-                           &numberingFlag,
-                           &noConstraints,
-                           &desiredPartitionSize,
-                           domainWeights,
-                           &tolerance,
-                           options,
-                           &edgesCut,
-                           partitionVector,
-                           &mTopologyComm);
-      log::Logger::Log<log::Debug, log::OnePerCore>("ParMetis returned.");
-
-      delete[] domainWeights;
-      delete[] vertexWeight;
     }
 
     /**
