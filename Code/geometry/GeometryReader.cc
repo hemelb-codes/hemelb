@@ -1244,18 +1244,33 @@ namespace hemelb
           }
         }
 
-        // Now spread and compare the adjacency information. Smaller ranks send data to larger
+        // Create variables for the neighbour data to go into.
+        idxtype* counts = new idxtype[mTopologySize];
+        idxtype** data = new idxtype*[mTopologySize];
+        MPI_Request* requests = new MPI_Request[2 * mTopologySize];
+
+        // Now spread and compare the adjacency information. Larger ranks send data to smaller
         // ranks which receive the data and compare it.
         for (proc_t neigh = 0; neigh < (proc_t) mTopologySize; ++neigh)
         {
-          if (neigh > mTopologyRank)
+          data[neigh] = NULL;
+          requests[2 * neigh] = MPI_REQUEST_NULL;
+          requests[2 * neigh + 1] = MPI_REQUEST_NULL;
+
+          if (neigh < mTopologyRank)
           {
             // Send the array length.
-            idxtype count = adjByNeighProc[neigh].size();
-            MPI_Send(&count, 1, MpiDataType(count), neigh, 42, mTopologyComm);
+            counts[neigh] = adjByNeighProc[neigh].size();
+            MPI_Isend(&counts[neigh],
+                      1,
+                      MpiDataType(counts[0]),
+                      neigh,
+                      42,
+                      mTopologyComm,
+                      &requests[2 * neigh]);
 
             // Create a sendable array (std::lists aren't organised in a sendable format).
-            idxtype* sendArray = new idxtype[count];
+            data[neigh] = new idxtype[counts[neigh]];
 
             unsigned int ii = 0;
 
@@ -1263,56 +1278,69 @@ namespace hemelb
                 != adjByNeighProc[neigh].end(); ++it)
 
             {
-              sendArray[ii] = *it;
+              data[neigh][ii] = *it;
               ++ii;
             }
 
             // Send the data to the neighbour.
-            MPI_Send(sendArray, (int) count, MpiDataType<idxtype> (), neigh, 43, mTopologyComm);
+            MPI_Isend(data[neigh],
+                      (int) counts[neigh],
+                      MpiDataType<idxtype> (),
+                      neigh,
+                      43,
+                      mTopologyComm,
+                      &requests[2 * neigh + 1]);
 
-            delete[] sendArray;
+            log::Logger::Log<log::Debug, log::OnePerCore>("Top rank %li sending neigh-compare data to %li",
+                                                          mTopologyRank,
+                                                          neigh);
 
             // Sending arrays don't perform comparison.
             continue;
           }
 
-          idxtype recvCount;
-          idxtype* recvData;
-
           // If this is a greater rank number than the neighbour, receive the data.
-          if (neigh < mTopologyRank)
+          if (neigh > mTopologyRank)
           {
-            MPI_Recv(&recvCount,
-                     1,
-                     MpiDataType(recvCount),
-                     neigh,
-                     42,
-                     mTopologyComm,
-                     MPI_STATUS_IGNORE);
+            MPI_Irecv(&counts[neigh],
+                      1,
+                      MpiDataType(counts[neigh]),
+                      neigh,
+                      42,
+                      mTopologyComm,
+                      &requests[2 * neigh]);
 
-            recvData = new idxtype[recvCount];
+            MPI_Wait(&requests[2 * neigh], MPI_STATUS_IGNORE);
 
-            MPI_Recv(recvData,
-                     (int) recvCount,
-                     MpiDataType<idxtype> (),
-                     neigh,
-                     43,
-                     mTopologyComm,
-                     MPI_STATUS_IGNORE);
+            data[neigh] = new idxtype[counts[neigh]];
+
+            MPI_Irecv(data[neigh],
+                      (int) counts[neigh],
+                      MpiDataType<idxtype> (),
+                      neigh,
+                      43,
+                      mTopologyComm,
+                      &requests[2 * neigh + 1]);
+
+            MPI_Wait(&requests[2 * neigh] + 1, MPI_STATUS_IGNORE);
+
+            log::Logger::Log<log::Debug, log::OnePerCore>("Top rank %li received neigh-compare data from %li",
+                                                          mTopologyRank,
+                                                          neigh);
           }
           // Neigh == mTopologyRank, i.e. neighbouring vertices on the same proc
           // Duplicate the data.
           else
           {
-            recvCount = adjByNeighProc[neigh].size();
-            recvData = new idxtype[recvCount];
+            counts[neigh] = adjByNeighProc[neigh].size();
+            data[neigh] = new idxtype[counts[neigh]];
 
             int ii = 0;
             for (std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
                 != adjByNeighProc[neigh].end(); ++it)
 
             {
-              recvData[ii] = *it;
+              data[neigh][ii] = *it;
               ++ii;
             }
 
@@ -1320,7 +1348,7 @@ namespace hemelb
 
           // Now we compare. First go through the received data which is ordered as (adjacent
           // vertex, vertex) wrt the neighbouring proc.
-          for (idxtype ii = 0; ii < recvCount; ii += 2)
+          for (idxtype ii = 0; ii < counts[neigh]; ii += 2)
           {
             bool found = false;
             std::list<idxtype>::iterator it = adjByNeighProc[neigh].begin();
@@ -1336,7 +1364,7 @@ namespace hemelb
               idxtype recvAdj2 = *it;
               it++;
 
-              if (recvData[ii] == recvAdj2 && recvData[ii + 1] == recvAdj)
+              if (data[neigh][ii] == recvAdj2 && data[neigh][ii + 1] == recvAdj)
               {
                 adjByNeighProc[neigh].erase(initial, it);
                 found = true;
@@ -1349,8 +1377,8 @@ namespace hemelb
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Neighbour proc %i had adjacency (%li,%li) that wasn't present on this processor.",
                                                             neigh,
-                                                            recvData[ii],
-                                                            recvData[ii + 1]);
+                                                            data[neigh][ii],
+                                                            data[neigh][ii + 1]);
             }
           }
 
@@ -1370,10 +1398,22 @@ namespace hemelb
                                                           neigh);
 
           }
-
-          delete[] recvData;
         }
 
+        // Wait for everything to complete before deallocating.
+        MPI_Waitall((int) mTopologySize, requests, MPI_STATUSES_IGNORE);
+
+        delete[] counts;
+        delete[] requests;
+
+        for (proc_t prc = 0; prc < (proc_t) mTopologySize; ++prc)
+        {
+          if (data[prc] != NULL)
+          {
+            delete[] data[prc];
+          }
+        }
+        delete[] data;
         delete[] adjByNeighProc;
       }
 
