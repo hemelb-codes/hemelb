@@ -307,6 +307,11 @@ namespace hemelb
                                              const proc_t* procForEachBlock,
                                              GlobalLatticeData* bGlobLatDat);
 
+            void ValidateGraphData(idxtype* vtxDistribn,
+                                   idxtype localVertexCount,
+                                   idxtype* adjacenciesPerVertex,
+                                   idxtype* adjacencies);
+
             site_t GetHeaderLength(site_t blockCount) const;
 
             void GetSiteDistributionArray(idxtype* vertexDistribn,
@@ -321,7 +326,7 @@ namespace hemelb
                                               const site_t* sitesPerBlock) const;
 
             void GetAdjacencyData(idxtype* adjacenciesPerVertex,
-                                  std::vector<idxtype> &adjacencies,
+                                  idxtype* &localAdjacencies,
                                   const idxtype localVertexCount,
                                   const proc_t* procForEachBlock,
                                   const idxtype* firstSiteIndexPerBlock,
