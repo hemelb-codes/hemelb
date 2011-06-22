@@ -1,7 +1,9 @@
 #include <string.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #include "debug/Debugger.h"
+#include "util/utilityFunctions.h"
 #include "vis/ScreenPixels.h"
 
 namespace hemelb
@@ -13,6 +15,9 @@ namespace hemelb
       PixelsX = 0;
       PixelsY = 0;
 
+      pixelArrayLength = 100;
+      pixels = new ColPixel[pixelArrayLength];
+
       Reset();
     }
 
@@ -22,7 +27,7 @@ namespace hemelb
 
     void ScreenPixels::Reset()
     {
-      pixelCount = 0;
+      storedPixels = 0;
 
       for (unsigned int ii = 0; ii < COLOURED_PIXELS_MAX; ++ii)
       {
@@ -32,17 +37,19 @@ namespace hemelb
 
     void ScreenPixels::FoldIn(const ScreenPixels* inScreen, const VisSettings* visSettings)
     {
-      if (pixelCount == 0)
+      if (storedPixels == 0)
       {
-        memcpy(pixels, inScreen->pixels, sizeof(ColPixel) * inScreen->pixelCount);
-        pixelCount = inScreen->pixelCount;
+        GuaranteeArraySize(inScreen->storedPixels);
+
+        memcpy(pixels, inScreen->pixels, sizeof(ColPixel) * inScreen->storedPixels);
+        storedPixels = inScreen->storedPixels;
         for (unsigned int ii = 0; ii < COLOURED_PIXELS_MAX; ++ii)
         {
           pixelId[ii] = inScreen->pixelId[ii];
         }
       }
 
-      AddPixels(inScreen->pixels, inScreen->pixelCount, visSettings);
+      AddPixels(inScreen->pixels, inScreen->storedPixels, visSettings);
     }
 
     void ScreenPixels::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
@@ -57,7 +64,7 @@ namespace hemelb
       }
       // Otherwise, if we have exceeded the maximum number of pixels, do nothing.
 
-      else if (pixelCount >= COLOURED_PIXELS_MAX)
+      else if (storedPixels >= COLOURED_PIXELS_MAX)
       {
         return;
       }
@@ -66,11 +73,13 @@ namespace hemelb
       else
       {
         // Put the pixel number into the store of ids.
-        pixelId[newPixel->GetI() * PixelsY + newPixel->GetJ()] = pixelCount;
+        pixelId[newPixel->GetI() * PixelsY + newPixel->GetJ()] = storedPixels;
+
+        GuaranteeArraySize(storedPixels + 1);
 
         // Add the pixel to the end of the list and move the end marker.
-        pixels[pixelCount] = *newPixel;
-        ++pixelCount;
+        pixels[storedPixels] = *newPixel;
+        ++storedPixels;
       }
     }
 
@@ -204,7 +213,7 @@ namespace hemelb
 
       *writer << GetPixelsX();
       *writer << GetPixelsY();
-      *writer << pixelCount;
+      *writer << storedPixels;
 
       WritePixels(writer, domainStats, visSettings);
     }
@@ -215,7 +224,7 @@ namespace hemelb
     {
       const int bits_per_char = sizeof(char) * 8;
 
-      for (unsigned int i = 0; i < pixelCount; i++)
+      for (unsigned int i = 0; i < storedPixels; i++)
       {
         const ColPixel col_pixel = pixels[i];
         // Use a ray-tracer function to get the necessary pixel data.
@@ -265,5 +274,44 @@ namespace hemelb
     {
       return PixelsY;
     }
+
+    void ScreenPixels::GuaranteeArraySize(unsigned int desiredSize)
+    {
+      if (pixelArrayLength < desiredSize)
+      {
+        // Expand 1.2 times the required size, to keep reallocs to a minimum.
+        unsigned int newSize = desiredSize + desiredSize / 5;
+        newSize = util::NumericalFunctions::min(newSize, COLOURED_PIXELS_MAX);
+
+        pixels = (ColPixel*) realloc(pixels, sizeof(ColPixel) * newSize);
+        pixelArrayLength = newSize;
+      }
+    }
+
+    unsigned int ScreenPixels::GetStoredPixelCount() const
+    {
+      return storedPixels;
+    }
+
+    unsigned int* ScreenPixels::GetStoredPixelCountPtr()
+    {
+      return &storedPixels;
+    }
+
+    /**
+     * Gets a pointer to the array of pixels.
+     *
+     * Because some functions will attempt to write to the array, but will have already
+     * written the array length, guarantee that the array will be big enough for the incoming
+     * count of stored pixels.
+     * @return
+     */
+    ColPixel* ScreenPixels::GetPixelArray()
+    {
+      GuaranteeArraySize(GetStoredPixelCount());
+
+      return pixels;
+    }
+
   }
 }
