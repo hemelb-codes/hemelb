@@ -53,7 +53,7 @@ namespace hemelb
       imageWriter << pix->GetPixelsX() << pix->GetPixelsY();
 
       // Write the length of the pixel data
-      imageWriter << (int) (pix->pixelCount * bytes_per_pixel_data);
+      imageWriter << (int) (pix->GetStoredPixelCount() * bytes_per_pixel_data);
 
       // Write the pixels themselves
       pix->WritePixels(&imageWriter, &mVisControl->mDomainStats, &mVisControl->mVisSettings);

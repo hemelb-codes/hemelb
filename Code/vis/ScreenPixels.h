@@ -34,13 +34,16 @@ namespace hemelb
         int GetPixelsX() const;
         int GetPixelsY() const;
 
-        void WritePixels(io::Writer* writer, const DomainStats* domainStats, const VisSettings* visSettings) const;
+        void WritePixels(io::Writer* writer,
+                         const DomainStats* domainStats,
+                         const VisSettings* visSettings) const;
         void WriteImage(io::Writer* writer,
                         const DomainStats* domainStats,
                         const VisSettings* visSettings) const;
 
-        ColPixel pixels[COLOURED_PIXELS_MAX];
-        unsigned int pixelCount;
+        unsigned int GetStoredPixelCount() const;
+        unsigned int* GetStoredPixelCountPtr();
+        ColPixel* GetPixelArray();
 
       private:
         template<bool xLimited> void RenderLineHelper(int x,
@@ -49,6 +52,15 @@ namespace hemelb
                                                       int incNE,
                                                       int limit,
                                                       const VisSettings* visSettings);
+
+        void GuaranteeArraySize(unsigned int desiredSize);
+
+        // Array of pixels, which may grow as time goes on.
+        ColPixel* pixels;
+        unsigned int pixelArrayLength;
+
+        // Count of pixels actually present in the array.
+        unsigned int storedPixels;
 
         int pixelId[COLOURED_PIXELS_MAX];
         unsigned int PixelsX, PixelsY;
