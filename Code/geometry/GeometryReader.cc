@@ -1220,7 +1220,7 @@ namespace hemelb
                     site_t neigh_j = site_j + D3Q15::CY[l];
                     site_t neigh_k = site_k + D3Q15::CZ[l];
 
-                    if (neigh_i <= 0 || neigh_j <= 0 || neigh_k <= 0
+                    if (neigh_i < 0 || neigh_j < 0 || neigh_k < 0
                         || !bGlobLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
                     {
                       continue;
@@ -1546,7 +1546,6 @@ namespace hemelb
               data[neigh][2 * ii + 1] = it->second;
               ++ii;
             }
-
           }
 
           // Now we compare. First go through the received data which is ordered as (adjacent
