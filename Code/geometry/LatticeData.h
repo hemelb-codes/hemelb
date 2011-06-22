@@ -314,6 +314,8 @@ namespace hemelb
 
             void ValidateGlobLatDat(GlobalLatticeData* iGlobLatDat);
 
+            void ValidateProcForEachBlock(proc_t* procForEachBlock, site_t blockCount);
+
             site_t GetHeaderLength(site_t blockCount) const;
 
             void GetSiteDistributionArray(idxtype* vertexDistribn,
