@@ -144,6 +144,8 @@ namespace hemelb
                            bGlobLatDat,
                            sitesPerBlock,
                            procForEachBlock);
+
+        ValidateProcForEachBlock(procForEachBlock, bGlobLatDat->GetBlockCount());
       }
 
       // Perform the initial read-in.
@@ -509,28 +511,44 @@ namespace hemelb
 
         proc_t* procForSiteRecv = new proc_t[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
         proc_t* dummyProcForSite = new proc_t[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+        unsigned int* dummySiteData = new unsigned int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+        unsigned int* siteDataRecv = new unsigned int[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+
         for (site_t ii = 0; ii < iGlobLatDat->GetSitesPerBlockVolumeUnit(); ++ii)
         {
-          dummyProcForSite[ii] = -1;
+          dummyProcForSite[ii] = BIG_NUMBER2;
+          dummySiteData[ii] = std::numeric_limits<unsigned int>::max();
         }
 
         for (site_t block = 0; block < iGlobLatDat->GetBlockCount(); ++block)
         {
-
           // We also validate that each processor has the same beliefs about each site.
           proc_t* myProcForSite = iGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite;
+          unsigned int* mySiteData = iGlobLatDat->Blocks[block].site_data;
 
           if (myProcForSite == NULL)
           {
             myProcForSite = dummyProcForSite;
           }
+          if (mySiteData == NULL)
+          {
+            mySiteData = dummySiteData;
+          }
 
-          // Reduce using a maximum to find the actual processor for each site.
+          // Reduce using a minimum to find the actual processor for each site (ignoring the
+          // BIG_NUMBER2 entries).
           MPI_Allreduce(myProcForSite,
                         procForSiteRecv,
                         (int) iGlobLatDat->GetSitesPerBlockVolumeUnit(),
                         MpiDataType(procForSiteRecv[0]),
-                        MPI_MAX,
+                        MPI_MIN,
+                        mTopologyComm);
+
+          MPI_Allreduce(mySiteData,
+                        siteDataRecv,
+                        (int) iGlobLatDat->GetSitesPerBlockVolumeUnit(),
+                        MpiDataType(mySiteData[0]),
+                        MPI_MIN,
                         mTopologyComm);
 
           for (site_t site = 0; site < iGlobLatDat->GetSitesPerBlockVolumeUnit(); ++site)
@@ -542,21 +560,34 @@ namespace hemelb
                                                             site,
                                                             block);
             }
-            else if (myProcForSite[site] != -1 && procForSiteRecv[site] != myProcForSite[site])
+            else if (myProcForSite[site] != BIG_NUMBER2 && procForSiteRecv[site]
+                != myProcForSite[site])
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
                                                             myProcForSite[site],
                                                             procForSiteRecv[site],
                                                             site,
                                                             block);
+            }
 
+            if (iGlobLatDat->Blocks[block].site_data != NULL)
+            {
+              if (mySiteData[site] != siteDataRecv[site])
+              {
+                log::Logger::Log<log::Debug, log::OnePerCore>("Different site data was found for site %li on block %li. One: %li, Two: %li .",
+                                                              site,
+                                                              block,
+                                                              mySiteData[site],
+                                                              siteDataRecv[site]);
+              }
             }
           }
         }
 
         delete[] procForSiteRecv;
         delete[] dummyProcForSite;
-
+        delete[] dummySiteData;
+        delete[] siteDataRecv;
       }
     }
 
@@ -669,6 +700,37 @@ namespace hemelb
                    iGlobLatDat);
 
       delete[] blockCountPerProc;
+    }
+
+    void LatticeData::GeometryReader::ValidateProcForEachBlock(proc_t* procForEachBlock,
+                                                               site_t blockCount)
+    {
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating procForEachBlock");
+
+        proc_t* procForEachBlockRecv = new proc_t[blockCount];
+
+        MPI_Allreduce(procForEachBlock,
+                      procForEachBlockRecv,
+                      (int) blockCount,
+                      MpiDataType<proc_t> (),
+                      MPI_MAX,
+                      mTopologyComm);
+
+        for (site_t block = 0; block < blockCount; ++block)
+        {
+          if (procForEachBlock[block] != procForEachBlockRecv[block])
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("At least one other proc thought block %li should be on proc %li but we locally had it as %li",
+                                                          block,
+                                                          procForEachBlock[block],
+                                                          procForEachBlockRecv[block]);
+          }
+        }
+
+        delete[] procForEachBlockRecv;
+      }
     }
 
     /**
@@ -925,6 +987,11 @@ namespace hemelb
                        firstSiteIndexPerBlock,
                        bGlobLatDat);
 
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        ValidateGraphData(vtxDistribn, localVertexCount, adjacenciesPerVertex, localAdjacencies);
+      }
+
       // Call parmetis.
       idxtype* partitionVector = new idxtype[localVertexCount];
 
@@ -1128,12 +1195,6 @@ namespace hemelb
 
             BlockData *map_block_p = &bGlobLatDat->Blocks[n];
 
-            // ... and only those with fluid sites...
-            if (map_block_p->site_data == NULL)
-            {
-              continue;
-            }
-
             site_t m = -1;
 
             // ... iterate over sites within the block...
@@ -1311,11 +1372,6 @@ namespace hemelb
 
       float tolerance = 1.001F;
 
-      if (log::Logger::ShouldDisplay<log::Debug>())
-      {
-        ValidateGraphData(vtxDistribn, localVertexCount, adjacenciesPerVertex, adjacencies);
-      }
-
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
       ParMETIS_V3_PartKway(vtxDistribn,
                            adjacenciesPerVertex,
@@ -1359,7 +1415,6 @@ namespace hemelb
         }
 
         // The adjacency data should correspond across all cores.
-        // This is likely to be VERY time-consuming.
         for (idxtype index = 0; index < localVertexCount; ++index)
         {
           idxtype vertex = vtxDistribn[mTopologyRank] + index;
@@ -1399,6 +1454,8 @@ namespace hemelb
         idxtype* counts = new idxtype[mTopologySize];
         idxtype** data = new idxtype*[mTopologySize];
         MPI_Request* requests = new MPI_Request[2 * mTopologySize];
+
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating neighbour data");
 
         // Now spread and compare the adjacency information. Larger ranks send data to smaller
         // ranks which receive the data and compare it.
@@ -1443,10 +1500,6 @@ namespace hemelb
                       mTopologyComm,
                       &requests[2 * neigh + 1]);
 
-            log::Logger::Log<log::Debug, log::OnePerCore>("Top rank %li sending neigh-compare data to %li",
-                                                          mTopologyRank,
-                                                          neigh);
-
             // Sending arrays don't perform comparison.
             continue;
           }
@@ -1475,10 +1528,6 @@ namespace hemelb
                       &requests[2 * neigh + 1]);
 
             MPI_Wait(&requests[2 * neigh] + 1, MPI_STATUS_IGNORE);
-
-            log::Logger::Log<log::Debug, log::OnePerCore>("Top rank %li received neigh-compare data from %li",
-                                                          mTopologyRank,
-                                                          neigh);
           }
           // Neigh == mTopologyRank, i.e. neighbouring vertices on the same proc
           // Duplicate the data.
