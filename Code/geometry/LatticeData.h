@@ -312,6 +312,8 @@ namespace hemelb
                                    idxtype* adjacenciesPerVertex,
                                    idxtype* adjacencies);
 
+            void ValidateGlobLatDat(GlobalLatticeData* iGlobLatDat);
+
             site_t GetHeaderLength(site_t blockCount) const;
 
             void GetSiteDistributionArray(idxtype* vertexDistribn,

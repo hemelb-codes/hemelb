@@ -163,6 +163,11 @@ namespace hemelb
                           bytesPerBlock,
                           procForEachBlock,
                           mTopologyRank);
+
+        if (log::Logger::ShouldDisplay<log::Debug>())
+        {
+          ValidateGlobLatDat(bGlobLatDat);
+        }
       }
 
       double lMiddle = util::myClock();
@@ -173,6 +178,11 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
         OptimiseDomainDecomposition(sitesPerBlock, bytesPerBlock, procForEachBlock, bGlobLatDat);
         log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
+
+        if (log::Logger::ShouldDisplay<log::Debug>())
+        {
+          ValidateGlobLatDat(bGlobLatDat);
+        }
 
         MPI_File_close(&file);
       }
@@ -489,6 +499,65 @@ namespace hemelb
 
       delete[] buffer;
       delete[] readBlock;
+    }
+
+    void LatticeData::GeometryReader::ValidateGlobLatDat(GlobalLatticeData* iGlobLatDat)
+    {
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating the GlobalLatticeData");
+
+        proc_t* procForSiteRecv = new proc_t[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+        proc_t* dummyProcForSite = new proc_t[iGlobLatDat->GetSitesPerBlockVolumeUnit()];
+        for (site_t ii = 0; ii < iGlobLatDat->GetSitesPerBlockVolumeUnit(); ++ii)
+        {
+          dummyProcForSite[ii] = -1;
+        }
+
+        for (site_t block = 0; block < iGlobLatDat->GetBlockCount(); ++block)
+        {
+
+          // We also validate that each processor has the same beliefs about each site.
+          proc_t* myProcForSite = iGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite;
+
+          if (myProcForSite == NULL)
+          {
+            myProcForSite = dummyProcForSite;
+          }
+
+          // Reduce using a maximum to find the actual processor for each site.
+          MPI_Allreduce(myProcForSite,
+                        procForSiteRecv,
+                        (int) iGlobLatDat->GetSitesPerBlockVolumeUnit(),
+                        MpiDataType(procForSiteRecv[0]),
+                        MPI_MAX,
+                        mTopologyComm);
+
+          for (site_t site = 0; site < iGlobLatDat->GetSitesPerBlockVolumeUnit(); ++site)
+          {
+            if (procForSiteRecv[site] == ConvertTopologyRankToGlobalRank(mTopologyRank)
+                && (myProcForSite[site] != ConvertTopologyRankToGlobalRank(mTopologyRank)))
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("Other cores think this core has site %li on block %li but it disagrees.",
+                                                            site,
+                                                            block);
+            }
+            else if (myProcForSite[site] != -1 && procForSiteRecv[site] != myProcForSite[site])
+            {
+              log::Logger::Log<log::Debug, log::OnePerCore>("This core thought that core %li has site %li on block %li but others think it's on core %li.",
+                                                            myProcForSite[site],
+                                                            procForSiteRecv[site],
+                                                            site,
+                                                            block);
+
+            }
+          }
+        }
+
+        delete[] procForSiteRecv;
+        delete[] dummyProcForSite;
+
+      }
     }
 
     /**
@@ -933,6 +1002,35 @@ namespace hemelb
       {
         vertexDistribn[ii + 1] += vertexDistribn[ii];
       }
+
+      // Validate if we're logging.
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating the vertex distribution.");
+
+        // vtxDistribn should be the same on all cores.
+        idxtype* vtxDistribnRecv = new idxtype[mTopologySize + 1];
+
+        MPI_Allreduce(vertexDistribn,
+                      vtxDistribnRecv,
+                      mTopologySize + 1,
+                      MpiDataType(vtxDistribnRecv[0]),
+                      MPI_MIN,
+                      mTopologyComm);
+
+        for (unsigned int ii = 0; ii < mTopologySize + 1; ++ii)
+        {
+          if (vertexDistribn[ii] != vtxDistribnRecv[ii])
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("vertexDistribn[%i] was %li but at least one other core had it as %li.",
+                                                          ii,
+                                                          vertexDistribn[ii],
+                                                          vtxDistribnRecv[ii]);
+          }
+        }
+
+        delete[] vtxDistribnRecv;
+      }
     }
 
     void LatticeData::GeometryReader::GetFirstSiteIndexOnEachBlock(idxtype* firstSiteIndexPerBlock,
@@ -967,6 +1065,36 @@ namespace hemelb
 
       // Clean up.
       delete[] firstSiteOnProc;
+
+      // Now, if logging debug info, we validate firstSiteIndexPerBlock
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating the firstSiteIndexPerBlock values.");
+
+        idxtype* firstSiteIndexPerBlockRecv = new idxtype[blockCount];
+
+        // Reduce finding the maximum across all nodes. Note that we have to use the maximum
+        // because some cores will have -1 for a block (indicating that it has no neighbours on
+        // that block.
+        MPI_Allreduce(firstSiteIndexPerBlock,
+                      firstSiteIndexPerBlockRecv,
+                      (int) blockCount,
+                      MpiDataType(firstSiteIndexPerBlock[0]),
+                      MPI_MAX,
+                      mTopologyComm);
+
+        for (site_t block = 0; block < blockCount; ++block)
+        {
+          if (firstSiteIndexPerBlock[block] >= 0 && firstSiteIndexPerBlock[block]
+              != firstSiteIndexPerBlockRecv[block])
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("This core had the first site index on block %li as %li but at least one other core had it as %li.",
+                                                          block,
+                                                          firstSiteIndexPerBlock[block],
+                                                          firstSiteIndexPerBlockRecv[block]);
+          }
+        }
+      }
     }
 
     void LatticeData::GeometryReader::GetAdjacencyData(idxtype* adjacenciesPerVertex,
@@ -1219,28 +1347,7 @@ namespace hemelb
       // To verify: vtxDistribn, adjacenciesPerVertex, adjacencies
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
-        // vtxDistribn should be the same on all cores.
-        idxtype* vtxDistribnRecv = new idxtype[mTopologySize + 1];
-
-        MPI_Allreduce(vtxDistribn,
-                      vtxDistribnRecv,
-                      mTopologySize + 1,
-                      MpiDataType(vtxDistribnRecv[0]),
-                      MPI_MIN,
-                      mTopologyComm);
-
-        for (unsigned int ii = 0; ii < mTopologySize + 1; ++ii)
-        {
-          if (vtxDistribn[ii] != vtxDistribnRecv[ii])
-          {
-            log::Logger::Log<log::Debug, log::OnePerCore>("vtxDistribn[%i] was %li but at least one other core had it as %li.",
-                                                          ii,
-                                                          vtxDistribn[ii],
-                                                          vtxDistribnRecv[ii]);
-          }
-        }
-
-        delete[] vtxDistribnRecv;
+        log::Logger::Log<log::Debug, log::OnePerCore>("Validating the graph adjacency structure");
 
         // Create an array of lists to store all of this node's adjacencies, arranged by the
         // proc the adjacent vertex is on.
@@ -1375,6 +1482,7 @@ namespace hemelb
           }
           // Neigh == mTopologyRank, i.e. neighbouring vertices on the same proc
           // Duplicate the data.
+
           else
           {
             counts[neigh] = 2 * adjByNeighProc[neigh].size();
