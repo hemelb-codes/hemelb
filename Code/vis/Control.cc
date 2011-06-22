@@ -209,8 +209,8 @@ namespace hemelb
         unsigned int counts[SPREADFACTOR];
         for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
         {
-          recvBuffers[ii].pixelCount = 0;
-          childNumbers[ii] = &recvBuffers[ii].pixelCount;
+          recvBuffers[ii].Reset();
+          childNumbers[ii] = recvBuffers[ii].GetStoredPixelCountPtr();
           counts[ii] = 1;
         }
 
@@ -224,8 +224,8 @@ namespace hemelb
         unsigned int counts[SPREADFACTOR];
         for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
         {
-          childData[ii] = recvBuffers[ii].pixels;
-          counts[ii] = recvBuffers[ii].pixelCount;
+          childData[ii] = recvBuffers[ii].GetPixelArray();
+          counts[ii] = recvBuffers[ii].GetStoredPixelCount();
         }
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel data.");
@@ -241,13 +241,13 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count.");
 
-        SendToParent<unsigned int> (&pixels->pixelCount, 1);
+        SendToParent<unsigned int> (pixels->GetStoredPixelCountPtr(), 1);
       }
       else if (splayNumber == 1)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data.");
 
-        SendToParent<ColPixel> (pixels->pixels, pixels->pixelCount);
+        SendToParent<ColPixel> (pixels->GetPixelArray(), pixels->GetStoredPixelCount());
       }
     }
 
@@ -346,17 +346,17 @@ namespace hemelb
           // If we're the sending proc, do the send.
           if (netTop->GetLocalRank() == sendingProc)
           {
-            MPI_Send(&mScreen.pixels->pixelCount,
+            MPI_Send(mScreen.pixels->GetStoredPixelCountPtr(),
                      1,
-                     MpiDataType(mScreen.pixels->pixelCount),
+                     MpiDataType(mScreen.pixels->GetStoredPixelCount()),
                      receivingProc,
                      20,
                      MPI_COMM_WORLD);
 
-            if (mScreen.pixels->pixelCount > 0)
+            if (mScreen.pixels->GetStoredPixelCount() > 0)
             {
-              MPI_Send(mScreen.pixels->pixels,
-                       mScreen.pixels->pixelCount,
+              MPI_Send(mScreen.pixels->GetPixelArray(),
+                       mScreen.pixels->GetStoredPixelCount(),
                        MpiDataType<ColPixel> (),
                        receivingProc,
                        20,
@@ -367,18 +367,18 @@ namespace hemelb
           // If we're the receiving proc, receive.
           else if (netTop->GetLocalRank() == receivingProc)
           {
-            MPI_Recv(&recvBuffers[0].pixelCount,
+            MPI_Recv(recvBuffers[0].GetStoredPixelCountPtr(),
                      1,
-                     MpiDataType(recvBuffers[0].pixelCount),
+                     MpiDataType(recvBuffers[0].GetStoredPixelCount()),
                      sendingProc,
                      20,
                      MPI_COMM_WORLD,
                      &status);
 
-            if (recvBuffers[0].pixelCount > 0)
+            if (recvBuffers[0].GetStoredPixelCount() > 0)
             {
-              MPI_Recv(recvBuffers[0].pixels,
-                       recvBuffers[0].pixelCount,
+              MPI_Recv(recvBuffers[0].GetPixelArray(),
+                       recvBuffers[0].GetStoredPixelCount(),
                        MpiDataType<ColPixel> (),
                        sendingProc,
                        20,
@@ -394,17 +394,17 @@ namespace hemelb
       // Send the final image from proc 1 to 0.
       if (netTop->GetLocalRank() == 1)
       {
-        MPI_Send(&mScreen.pixels->pixelCount,
+        MPI_Send(mScreen.pixels->GetStoredPixelCountPtr(),
                  1,
-                 MpiDataType(mScreen.pixels->pixelCount),
+                 MpiDataType(mScreen.pixels->GetStoredPixelCount()),
                  0,
                  20,
                  MPI_COMM_WORLD);
 
-        if (mScreen.pixels->pixelCount > 0)
+        if (mScreen.pixels->GetStoredPixelCount() > 0)
         {
-          MPI_Send(mScreen.pixels->pixels,
-                   mScreen.pixels->pixelCount,
+          MPI_Send(mScreen.pixels->GetPixelArray(),
+                   mScreen.pixels->GetStoredPixelCount(),
                    MpiDataType<ColPixel> (),
                    0,
                    20,
@@ -415,18 +415,18 @@ namespace hemelb
       // Receive the final image on proc 0.
       else if (netTop->GetLocalRank() == 0)
       {
-        MPI_Recv(&recvBuffers[0].pixelCount,
+        MPI_Recv(recvBuffers[0].GetStoredPixelCountPtr(),
                  1,
-                 MpiDataType(recvBuffers[0].pixelCount),
+                 MpiDataType(recvBuffers[0].GetStoredPixelCount()),
                  1,
                  20,
                  MPI_COMM_WORLD,
                  &status);
 
-        if (recvBuffers[0].pixelCount > 0)
+        if (recvBuffers[0].GetStoredPixelCount() > 0)
         {
-          MPI_Recv(recvBuffers[0].pixels,
-                   recvBuffers[0].pixelCount,
+          MPI_Recv(recvBuffers[0].GetPixelArray(),
+                   recvBuffers[0].GetStoredPixelCount(),
                    MpiDataType<ColPixel> (),
                    1,
                    20,

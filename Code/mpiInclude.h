@@ -55,7 +55,7 @@ namespace hemelb
     return MpiDataTypeTraits<T>::GetMpiDataType();
   }
   template<typename T>
-  inline const MPI_Datatype& MpiDataType(T& var)
+  inline const MPI_Datatype& MpiDataType(const T& var)
   {
     return MpiDataTypeTraits<T>::GetMpiDataType();
   }
