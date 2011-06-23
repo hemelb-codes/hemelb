@@ -21,6 +21,8 @@ namespace hemelb
       net::PhasedBroadcastIrregular<true, 2, 0, false, true>(net, simState, SPREADFACTOR),
           mLatDat(iLatDat)
     {
+      timeSpent = 0.0;
+
       mVisSettings.mStressType = iStressType;
 
       this->vis = new Vis;
@@ -179,6 +181,8 @@ namespace hemelb
 
     void Control::InitialAction(unsigned long startIteration)
     {
+      timeSpent -= util::myClock();
+
       Render();
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Render stored for phased imaging.");
@@ -199,10 +203,14 @@ namespace hemelb
       }
 
       resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(startIteration, pix));
+
+      timeSpent += util::myClock();
     }
 
     void Control::ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber)
     {
+      timeSpent -= util::myClock();
+
       if (splayNumber == 0)
       {
         unsigned int* childNumbers[SPREADFACTOR];
@@ -232,10 +240,14 @@ namespace hemelb
 
         ReceiveFromChildren<ColPixel> (childData, counts);
       }
+
+      timeSpent += util::myClock();
     }
 
     void Control::ProgressToParent(unsigned long startIteration, unsigned long splayNumber)
     {
+      timeSpent -= util::myClock();
+
       ScreenPixels* pixels = resultsByStartIt[startIteration];
       if (splayNumber == 0)
       {
@@ -249,10 +261,14 @@ namespace hemelb
 
         SendToParent<ColPixel> (pixels->GetPixelArray(), pixels->GetStoredPixelCount());
       }
+
+      timeSpent += util::myClock();
     }
 
     void Control::PostReceiveFromChildren(unsigned long startIteration, unsigned long splayNumber)
     {
+      timeSpent -= util::myClock();
+
       if (splayNumber == 1)
       {
         ScreenPixels* pixels = resultsByStartIt[startIteration];
@@ -264,6 +280,8 @@ namespace hemelb
           pixels->FoldIn(&recvBuffers[child], &mVisSettings);
         }
       }
+
+      timeSpent += util::myClock();
     }
 
     bool Control::IsRendering() const
@@ -273,6 +291,8 @@ namespace hemelb
 
     void Control::ClearOut(unsigned long startIt)
     {
+      timeSpent -= util::myClock();
+
       bool found;
 
       do
@@ -295,6 +315,8 @@ namespace hemelb
         }
       }
       while (found);
+
+      timeSpent += util::myClock();
     }
 
     const ScreenPixels* Control::GetResult(unsigned long startIt)
@@ -313,6 +335,8 @@ namespace hemelb
 
     void Control::InstantBroadcast(unsigned long startIteration)
     {
+      timeSpent -= util::myClock();
+
       log::Logger::Log<log::Debug, log::OnePerCore>("Performing instant imaging.");
 
       Render();
@@ -457,6 +481,8 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.",
                                                       base::mSimState->GetTimeStepsPassed());
       }
+
+      timeSpent += util::myClock();
     }
 
     void Control::SetMouseParams(double iPhysicalPressure, double iPhysicalStress)
@@ -477,11 +503,22 @@ namespace hemelb
 
     void Control::ProgressStreaklines(unsigned long time_step, unsigned long period)
     {
+      timeSpent -= util::myClock();
+
       myStreaker ->StreakLines(time_step, period, mLatDat);
+
+      timeSpent += util::myClock();
+    }
+
+    double Control::GetTimeSpent() const
+    {
+      return timeSpent;
     }
 
     void Control::Reset()
     {
+      timeSpent = 0.0;
+
       log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
 
       myStreaker->Restart();
