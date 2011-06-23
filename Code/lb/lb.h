@@ -53,6 +53,7 @@ namespace hemelb
                                      double stress_threshold_max_inv);
 
         hemelb::lb::LbmParameters *GetLbmParams();
+        double GetTimeSpent() const;
 
         site_t siteMins[3], siteMaxes[3];
 
@@ -95,15 +96,16 @@ namespace hemelb
         //TODO Get rid of this hack
         hemelb::lb::collisions::Collision* GetCollision(int i);
 
+        double timeSpent;
+
         distribn_t *inlet_density_avg, *inlet_density_amp;
         distribn_t *outlet_density_avg, *outlet_density_amp;
         distribn_t *inlet_density_phs, *outlet_density_phs;
         distribn_t* inlet_density, *outlet_density;
         double *inlet_normal;
         double voxel_size;
-        int outlets;
 
-        double mFileReadTime;
+        int outlets;
 
         SimConfig *mSimConfig;
         net::Net* mNet;

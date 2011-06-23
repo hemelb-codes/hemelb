@@ -72,6 +72,8 @@ namespace hemelb
         DomainStats mDomainStats;
         VisSettings mVisSettings;
 
+        double GetTimeSpent() const;
+
       protected:
         void InitialAction(unsigned long startIteration);
         void ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber);
@@ -108,6 +110,8 @@ namespace hemelb
         RayTracer *myRayTracer;
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
+
+        double timeSpent;
     };
   }
 }
