@@ -1546,7 +1546,6 @@ namespace hemelb
               data[neigh][2 * ii + 1] = it->second;
               ++ii;
             }
-
           }
 
           // Now we compare. First go through the received data which is ordered as (adjacent
