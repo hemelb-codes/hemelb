@@ -1220,7 +1220,7 @@ namespace hemelb
                     site_t neigh_j = site_j + D3Q15::CY[l];
                     site_t neigh_k = site_k + D3Q15::CZ[l];
 
-                    if (neigh_i <= 0 || neigh_j <= 0 || neigh_k <= 0
+                    if (neigh_i < 0 || neigh_j < 0 || neigh_k < 0
                         || !bGlobLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
                     {
                       continue;
@@ -1370,7 +1370,7 @@ namespace hemelb
         options[1] = 1 | 2 | 4 | 8 | 32 | 64;
       }
 
-      float tolerance = 1.001F;
+      float tolerance = 1.0005F;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
       ParMETIS_V3_PartKway(vtxDistribn,

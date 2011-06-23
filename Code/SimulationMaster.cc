@@ -30,6 +30,8 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
     Abort();
   }
 
+  mCreationTime = hemelb::util::myClock();
+
   hemelb::debug::Debugger::Init(iArgList[0]);
 
   mLatDat = NULL;
@@ -39,10 +41,8 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mVisControl = NULL;
   mSimulationState = NULL;
 
-  mLbTime = 0.0;
   mMPISendTime = 0.0;
   mMPIWaitTime = 0.0;
-  mImagingTime = 0.0;
   mSnapshotTime = 0.0;
 
   mImagesWritten = 0;
@@ -209,8 +209,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 /**
  * Begin the simulation.
  */
-void SimulationMaster::RunSimulation(double iStartTime,
-                                     std::string image_directory,
+void SimulationMaster::RunSimulation(std::string image_directory,
                                      std::string snapshot_directory,
                                      unsigned int lSnapshotsPerCycle,
                                      unsigned int lImagesPerCycle)
@@ -314,13 +313,11 @@ void SimulationMaster::RunSimulation(double iStartTime,
 
       mNet.Receive();
       {
-        double lPrePreSend = hemelb::util::myClock();
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
             != actors.end(); ++it)
         {
           (*it)->PreSend();
         }
-        mLbTime += (hemelb::util::myClock() - lPrePreSend);
       }
 
       {
@@ -330,13 +327,11 @@ void SimulationMaster::RunSimulation(double iStartTime,
       }
 
       {
-        double lPrePreReceive = hemelb::util::myClock();
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
             != actors.end(); ++it)
         {
           (*it)->PreReceive();
         }
-        mLbTime += (hemelb::util::myClock() - lPrePreReceive);
       }
 
       {
@@ -346,13 +341,11 @@ void SimulationMaster::RunSimulation(double iStartTime,
       }
 
       {
-        double lPrePostStep = hemelb::util::myClock();
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
             != actors.end(); ++it)
         {
           (*it)->PostReceive();
         }
-        mLbTime += (hemelb::util::myClock() - lPrePostStep);
       }
 
       for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
@@ -400,8 +393,6 @@ void SimulationMaster::RunSimulation(double iStartTime,
       continue;
     }
     mLbm->UpdateInletVelocities(mSimulationState->GetTimeStep());
-
-    double lPreImageTime = hemelb::util::myClock();
 
 #ifndef NO_STREAKLINES
     mVisControl->ProgressStreaklines(mSimulationState->GetTimeStep(),
@@ -471,7 +462,6 @@ void SimulationMaster::RunSimulation(double iStartTime,
     }
 
     double lPreSnapshotTime = hemelb::util::myClock();
-    mImagingTime += (lPreSnapshotTime - lPreImageTime);
 
     if (mSimulationState->GetTimeStep() % snapshots_period == 0)
     {
@@ -512,10 +502,7 @@ void SimulationMaster::RunSimulation(double iStartTime,
     }
   }
 
-  PostSimulation(total_time_steps,
-                 hemelb::util::myClock() - simulation_time,
-                 is_unstable,
-                 iStartTime);
+  PostSimulation(total_time_steps, hemelb::util::myClock() - simulation_time, is_unstable);
 }
 
 /**
@@ -537,10 +524,7 @@ void SimulationMaster::Abort()
  * This function writes several bits of timing data to
  * the timing file.
  */
-void SimulationMaster::PostSimulation(int iTotalTimeSteps,
-                                      double iSimulationTime,
-                                      bool iIsUnstable,
-                                      double iStartTime)
+void SimulationMaster::PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable)
 {
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
@@ -567,7 +551,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
       fprintf(mTimingsFile,
               "Attention: simulation unstable with %li timesteps/cycle\n",
               (unsigned long) mSimulationState->GetTimeStepsPerCycle());
-      fprintf(mTimingsFile, "Simulation is terminated\n");
+      fprintf(mTimingsFile, "Simulation terminated\n");
     }
   }
   else
@@ -589,7 +573,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
 
       fprintf(mTimingsFile,
               "total time (s):                            %.3f\n\n",
-               (hemelb::util::myClock() - iStartTime));
+               (hemelb::util::myClock() - mCreationTime));
 
       fprintf(mTimingsFile, "Sub-domains info:\n\n");
 
@@ -612,38 +596,20 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps,
  */
 void SimulationMaster::PrintTimingData()
 {
-  double lTimings[5] = { mLbTime, mMPISendTime, mMPIWaitTime, mImagingTime, mSnapshotTime };
-  std::string lNames[5] = { "LBM", "MPISend", "MPIWait", "Images", "Snaps" };
-
   // Note that CycleId is 1-indexed and will have just been incremented when we finish.
-  double cycles = (double) (mSimulationState->GetCycleId() - 1);
+  double cycles = hemelb::util::NumericalFunctions::max(1.0,
+                                                        (double) (mSimulationState->GetCycleId()
+                                                            - 1));
 
-  if (cycles > 0.0)
-  {
-    mLbTime /= cycles;
-    mMPISendTime /= cycles;
-    mMPIWaitTime /= cycles;
-  }
-
-  if (mImagesWritten > 0)
-  {
-    mImagingTime /= (double) mImagesWritten;
-  }
-
-  if (mSnapshotsWritten > 0)
-  {
-    mSnapshotTime /= (double) mSnapshotsWritten;
-  }
+  double lTimings[5] = { mLbm->GetTimeSpent() / cycles, mMPISendTime / cycles, mMPIWaitTime
+      / cycles, mVisControl->GetTimeSpent()
+      / hemelb::util::NumericalFunctions::max(1.0, (double) mImagesWritten), mSnapshotTime
+      / hemelb::util::NumericalFunctions::max(1.0, (double) mSnapshotsWritten) };
+  std::string lNames[5] = { "LBM", "MPISend", "MPIWait", "Images", "Snaps" };
 
   double lMins[5];
   double lMaxes[5];
   double lMeans[5];
-
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-  {
-    for (int ii = 0; ii < 3; ii++)
-      lTimings[ii] = 0.0;
-  }
 
   MPI_Reduce(lTimings, lMaxes, 5, hemelb::MpiDataType(lMaxes[0]), MPI_MAX, 0, MPI_COMM_WORLD);
   MPI_Reduce(lTimings, lMeans, 5, hemelb::MpiDataType(lMeans[0]), MPI_SUM, 0, MPI_COMM_WORLD);
@@ -651,25 +617,16 @@ void SimulationMaster::PrintTimingData()
   // Change the values for LBM and MPI on process 0 so they don't interfere with the min
   // operation (previously values were 0.0 so they won't affect max / mean
   // calc).
-  if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-  {
-    for (int ii = 0; ii < 3; ii++)
-      lTimings[ii] = std::numeric_limits<double>::max();
-  }
+
   MPI_Reduce(lTimings, lMins, 5, hemelb::MpiDataType(lMins[0]), MPI_MIN, 0, MPI_COMM_WORLD);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
-    if (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
-    {
-      for (int ii = 0; ii < 3; ii++)
-        lMeans[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount()
-            - 1);
-      for (int ii = 3; ii < 5; ii++)
-        lMeans[ii] /= (double) hemelb::topology::NetworkTopology::Instance()->GetProcessorCount();
-    }
+    for (int ii = 0; ii < 5; ii++)
+      lMeans[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount());
 
-    fprintf(mTimingsFile, "\n\nPer-proc timing data (secs per [cycle,image,snapshot]): \n\n");
+    fprintf(mTimingsFile,
+            "\n\nPer-proc timing data (secs per [cycle,cycle,cycle,image,snapshot]): \n\n");
     fprintf(mTimingsFile, "\t\tMin \tMean \tMax\n");
     for (int ii = 0; ii < 5; ii++)
     {

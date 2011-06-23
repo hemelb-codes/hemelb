@@ -199,6 +199,8 @@ namespace hemelb
 
     void LBM::SetInitialConditions()
     {
+      timeSpent = 0.0;
+
       distribn_t *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
       distribn_t density;
 
@@ -247,6 +249,8 @@ namespace hemelb
 
     void LBM::RequestComms()
     {
+      timeSpent -= util::myClock();
+
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
 
       for (std::vector<hemelb::topology::NeighbouringProcessor>::const_iterator it =
@@ -262,10 +266,14 @@ namespace hemelb
                                        (int) (*it).SharedFCount,
                                         (*it).Rank);
       }
+
+      timeSpent += util::myClock();
     }
 
     void LBM::PreSend()
     {
+      timeSpent -= util::myClock();
+
       site_t offset = mLatDat->GetInnerSiteCount();
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
@@ -278,10 +286,14 @@ namespace hemelb
                                                    mVisControl);
         offset += mLatDat->GetInterCollisionCount(collision_type);
       }
+
+      timeSpent += util::myClock();
     }
 
     void LBM::PreReceive()
     {
+      timeSpent -= util::myClock();
+
       site_t offset = 0;
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
@@ -294,10 +306,14 @@ namespace hemelb
                                                    mVisControl);
         offset += mLatDat->GetInnerCollisionCount(collision_type);
       }
+
+      timeSpent += util::myClock();
     }
 
     void LBM::PostReceive()
     {
+      timeSpent -= util::myClock();
+
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
@@ -332,12 +348,18 @@ namespace hemelb
                                                mVisControl);
         offset += mLatDat->GetInterCollisionCount(collision_type);
       }
+
+      timeSpent += util::myClock();
     }
 
     void LBM::EndIteration()
     {
+      timeSpent -= util::myClock();
+
       // Swap f_old and f_new ready for the next timestep.
       mLatDat->SwapOldAndNew();
+
+      timeSpent += util::myClock();
     }
 
     // Update peak and average inlet velocities local to the current subdomain.
@@ -405,6 +427,15 @@ namespace hemelb
           velocity = -sqrt(velocity) / density;
         }
       }
+    }
+
+    /**
+     * Return the amount of time spent doing lattice-Boltzmann
+     * @return
+     */
+    double LBM::GetTimeSpent() const
+    {
+      return timeSpent;
     }
 
     // In the case of instability, this function restart the simulation

@@ -19,8 +19,7 @@ class SimulationMaster
 
     int GetProcessorCount();
 
-    void RunSimulation(double iStartTime,
-                       std::string image_directory,
+    void RunSimulation(std::string image_directory,
                        std::string snapshot_directory,
                        unsigned int lSnapshotsPerCycle,
                        unsigned int lImagesPerCycle);
@@ -33,8 +32,7 @@ class SimulationMaster
   private:
     void PostSimulation(int iTotalTimeSteps,
                         double iSimulationTime,
-                        bool iIsUnstable,
-                        double iStartTime);
+                        bool iIsUnstable);
 
     void PrintTimingData();
 
@@ -56,15 +54,15 @@ class SimulationMaster
     int mImagesWritten;
     int mSnapshotsWritten;
 
+    double mCreationTime;
+
+    double mSnapshotTime;
     double mDomainDecompTime;
     double mFileReadTime;
     double mNetInitialiseTime;
 
-    double mLbTime;
     double mMPISendTime;
     double mMPIWaitTime;
-    double mImagingTime;
-    double mSnapshotTime;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */
