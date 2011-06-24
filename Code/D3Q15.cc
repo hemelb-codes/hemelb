@@ -137,6 +137,114 @@ namespace hemelb
     f_eq[14] = (temp1 + ( (1.0 / 16.0) * density_1) * temp2 * temp2) - ( (1.0 / 24.0) * temp2); // (-1, +1, +1)
   }
 
+  void D3Q15::CalculateEntropicFeq(const distribn_t &density,
+                                   const distribn_t &v_x,
+                                   const distribn_t &v_y,
+                                   const distribn_t &v_z,
+                                   distribn_t f_eq[])
+  {
+    double u_x = v_x / density;
+    double u_y = v_y / density;
+    double u_z = v_z / density;
+
+    double B_x = sqrt(1.0 + 3.0 * u_x * u_x);
+    double B_y = sqrt(1.0 + 3.0 * u_y * u_y);
+    double B_z = sqrt(1.0 + 3.0 * u_z * u_z);
+
+    double term1_x = 2.0 - B_x;
+    double term1_y = 2.0 - B_y;
+    double term1_z = 2.0 - B_z;
+
+    double term2_x = (2.0 * u_x + B_x) / (1.0 - u_x);
+    double term2_y = (2.0 * u_y + B_y) / (1.0 - u_y);
+    double term2_z = (2.0 * u_z + B_z) / (1.0 - u_z);
+
+    double term_xpos = term1_x * term2_x;
+    double term_xneg = term1_x / term2_x;
+    double term_ypos = term1_y * term2_y;
+    double term_yneg = term1_y / term2_y;
+    double term_zpos = term1_z * term2_z;
+    double term_zneg = term1_z / term2_z;
+
+    f_eq[0] = density * (2.0 / 9.0) * term1_x * term1_y * term1_z;
+
+    f_eq[1] = density * (1.0 / 9.0) * term_xpos * term1_y * term1_z;
+    f_eq[2] = density * (1.0 / 9.0) * term_xneg * term1_y * term1_z;
+    f_eq[3] = density * (1.0 / 9.0) * term1_x * term_ypos * term1_z;
+    f_eq[4] = density * (1.0 / 9.0) * term1_x * term_yneg * term1_z;
+    f_eq[5] = density * (1.0 / 9.0) * term1_x * term1_y * term_zpos;
+    f_eq[6] = density * (1.0 / 9.0) * term1_x * term1_y * term_zneg;
+
+    f_eq[7]  = density * (1.0 / 72.0) * term_xpos * term_ypos * term_zpos;
+    f_eq[8]  = density * (1.0 / 72.0) * term_xneg * term_yneg * term_zneg;
+    f_eq[9]  = density * (1.0 / 72.0) * term_xpos * term_ypos * term_zneg;
+    f_eq[10] = density * (1.0 / 72.0) * term_xneg * term_yneg * term_zpos;
+    f_eq[11] = density * (1.0 / 72.0) * term_xpos * term_yneg * term_zpos;
+    f_eq[12] = density * (1.0 / 72.0) * term_xneg * term_ypos * term_zneg;
+    f_eq[13] = density * (1.0 / 72.0) * term_xpos * term_yneg * term_zneg;
+    f_eq[14] = density * (1.0 / 72.0) * term_xneg * term_ypos * term_zpos;
+  }
+
+  void D3Q15::CalculateEntropicDensityVelocityFEq(const distribn_t f[],
+                                                  distribn_t &density,
+                                                  distribn_t &v_x,
+                                                  distribn_t &v_y,
+                                                  distribn_t &v_z,
+                                                  distribn_t f_eq[])
+  {
+    v_x = f[1] + (f[7] + f[9]) + (f[11] + f[13]);
+    v_y = f[3] + (f[12] + f[14]);
+    v_z = f[5] + f[10];
+
+    density = f[0] + (f[2] + f[4]) + (f[6] + f[8]) + v_x + v_y + v_z;
+
+    v_x -= f[2] + (f[8] + f[10]) + (f[12] + f[14]);
+    v_y += (f[7] + f[9]) - (f[4] + (f[8] + f[10]) + (f[11] + f[13]));
+    v_z += f[7] + f[11] + f[14] - ( (f[6] + f[8]) + f[9] + f[12] + f[13]);
+
+    double u_x = v_x / density;
+    double u_y = v_y / density;
+    double u_z = v_z / density;
+
+    double B_x = sqrt(1.0 + 3.0 * u_x * u_x);
+    double B_y = sqrt(1.0 + 3.0 * u_y * u_y);
+    double B_z = sqrt(1.0 + 3.0 * u_z * u_z);
+
+    double term1_x = 2.0 - B_x;
+    double term1_y = 2.0 - B_y;
+    double term1_z = 2.0 - B_z;
+
+    double term2_x = (2.0 * u_x + B_x) / (1.0 - u_x);
+    double term2_y = (2.0 * u_y + B_y) / (1.0 - u_y);
+    double term2_z = (2.0 * u_z + B_z) / (1.0 - u_z);
+
+    // pos and neg indicate whether second term is raised to the power +1 or -1
+    double term_xpos = term1_x * term2_x;
+    double term_xneg = term1_x / term2_x;
+    double term_ypos = term1_y * term2_y;
+    double term_yneg = term1_y / term2_y;
+    double term_zpos = term1_z * term2_z;
+    double term_zneg = term1_z / term2_z;
+
+    f_eq[0] = density * (2.0 / 9.0) * term1_x * term1_y * term1_z;
+
+    f_eq[1] = density * (1.0 / 9.0) * term_xpos * term1_y * term1_z;
+    f_eq[2] = density * (1.0 / 9.0) * term_xneg * term1_y * term1_z;
+    f_eq[3] = density * (1.0 / 9.0) * term1_x * term_ypos * term1_z;
+    f_eq[4] = density * (1.0 / 9.0) * term1_x * term_yneg * term1_z;
+    f_eq[5] = density * (1.0 / 9.0) * term1_x * term1_y * term_zpos;
+    f_eq[6] = density * (1.0 / 9.0) * term1_x * term1_y * term_zneg;
+
+    f_eq[7]  = density * (1.0 / 72.0) * term_xpos * term_ypos * term_zpos;
+    f_eq[8]  = density * (1.0 / 72.0) * term_xneg * term_yneg * term_zneg;
+    f_eq[9]  = density * (1.0 / 72.0) * term_xpos * term_ypos * term_zneg;
+    f_eq[10] = density * (1.0 / 72.0) * term_xneg * term_yneg * term_zpos;
+    f_eq[11] = density * (1.0 / 72.0) * term_xpos * term_yneg * term_zpos;
+    f_eq[12] = density * (1.0 / 72.0) * term_xneg * term_ypos * term_zneg;
+    f_eq[13] = density * (1.0 / 72.0) * term_xpos * term_yneg * term_zneg;
+    f_eq[14] = density * (1.0 / 72.0) * term_xneg * term_ypos * term_zpos;
+  }
+
   // von Mises stress computation given the non-equilibrium distribution functions.
   void D3Q15::CalculateVonMisesStress(const distribn_t f[],
                                       distribn_t &stress,

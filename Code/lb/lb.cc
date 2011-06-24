@@ -74,6 +74,8 @@ namespace hemelb
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
+      double dt = PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle());
+      mParams.Beta = dt / (2.0 * mParams.Tau + dt);
     }
 
     // Calculate the BCs for each boundary site type and the
@@ -141,6 +143,11 @@ namespace hemelb
       return &mParams;
     }
 
+    bool LBM::isEntropic() const
+    {
+      return doEntropic;
+    }
+
     LBM::LBM(SimConfig *iSimulationConfig,
              net::Net* net,
              geometry::LatticeData* latDat,
@@ -171,6 +178,8 @@ namespace hemelb
 
     void LBM::InitCollisions()
     {
+      doEntropic = true; // Set entropic collisions
+
       // TODO Note that the convergence checking is not yet implemented in the
       // new boundary condition hierarchy system.
       // It'd be nice to do this with something like
@@ -271,6 +280,7 @@ namespace hemelb
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->DoCollisions(mVisControl->IsRendering(),
+                                                   doEntropic,
                                                    offset,
                                                    mLatDat->GetInterCollisionCount(collision_type),
                                                    &mParams,
@@ -287,6 +297,7 @@ namespace hemelb
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->DoCollisions(mVisControl->IsRendering(),
+                                                   doEntropic,
                                                    offset,
                                                    mLatDat->GetInnerCollisionCount(collision_type),
                                                    &mParams,
@@ -314,6 +325,7 @@ namespace hemelb
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->PostStep(mVisControl->IsRendering(),
+                                               doEntropic,
                                                offset,
                                                mLatDat->GetInnerCollisionCount(collision_type),
                                                &mParams,
@@ -325,6 +337,7 @@ namespace hemelb
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
         GetCollision(collision_type)->PostStep(mVisControl->IsRendering(),
+                                               doEntropic,
                                                offset,
                                                mLatDat->GetInterCollisionCount(collision_type),
                                                &mParams,

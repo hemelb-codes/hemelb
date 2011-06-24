@@ -36,6 +36,17 @@ namespace hemelb
                                               distribn_t &v_y,
                                               distribn_t &v_z,
                                               distribn_t f_eq[]);
+      static void CalculateEntropicFeq(const distribn_t &density,
+                                       const distribn_t &v_x,
+                                       const distribn_t &v_y,
+                                       const distribn_t &v_z,
+                                       distribn_t f_eq[]);
+      static void CalculateEntropicDensityVelocityFEq(const distribn_t f[],
+                                                      distribn_t &density,
+                                                      distribn_t &v_x,
+                                                      distribn_t &v_y,
+                                                      distribn_t &v_z,
+                                                      distribn_t f_eq[]);
       static void CalculateVonMisesStress(const distribn_t f[],
                                           distribn_t &stress,
                                           const double iStressParameter);
