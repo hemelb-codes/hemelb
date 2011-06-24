@@ -122,6 +122,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                   int iSteeringSessionid,
                                   FILE * bTimingsFile)
 {
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
+
   mSimulationState = new hemelb::lb::SimulationState(iSimConfig->StepsPerCycle,
                                                      iSimConfig->NumCycles);
 
@@ -131,6 +133,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   hemelb::lb::LbmParameters params;
   hemelb::site_t totalFluidSites;
 
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
   mLatDat
       = new hemelb::geometry::LatticeData(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
                                           &totalFluidSites,
@@ -142,7 +145,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                           &mFileReadTime,
                                           &mDomainDecompTime);
 
-  // Initialise the Lbm.
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   mLbm = new hemelb::lb::LBM(iSimConfig, &mNet, mLatDat, mSimulationState);
 
   // TODO When we've taken the stress type out of the config file, this could be nicer.
@@ -170,7 +173,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   hemelb::site_t* lReceiveTranslator = mNet.Initialise(mLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
 
-  // Initialise the visualisation controller.
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising visualisation controller.");
   mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType,
                                          &mNet,
                                          mSimulationState,
@@ -214,6 +217,8 @@ void SimulationMaster::RunSimulation(std::string image_directory,
                                      unsigned int lSnapshotsPerCycle,
                                      unsigned int lImagesPerCycle)
 {
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
+
   double simulation_time = hemelb::util::myClock();
   bool is_unstable = false;
   int total_time_steps = 0;
@@ -503,6 +508,8 @@ void SimulationMaster::RunSimulation(std::string image_directory,
   }
 
   PostSimulation(total_time_steps, hemelb::util::myClock() - simulation_time, is_unstable);
+
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
 }
 
 /**
