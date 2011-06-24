@@ -50,6 +50,9 @@ namespace hemelb
 
     // Returns the number of seconds to 6dp elapsed since the Epoch
     double myClock();
+
+    template <class F>
+    double NewtonRaphson(F &func, double x0, double acc);
   }
 }
 
