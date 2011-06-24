@@ -106,7 +106,7 @@ namespace hemelb
       else
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s",
-                                                      bSimConfig->DataFilePath.c_str());
+                                                        bSimConfig->DataFilePath.c_str());
       }
       fflush(NULL);
 
@@ -173,6 +173,8 @@ namespace hemelb
       }
 
       double lMiddle = util::myClock();
+
+      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
 
       // Optimise.
       if (mParticipateInTopology)

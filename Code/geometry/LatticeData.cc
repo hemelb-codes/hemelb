@@ -1,6 +1,7 @@
 #include <map>
 #include <limits>
 
+#include "log/Logger.h"
 #include "topology/NetworkTopology.h"
 #include "geometry/LatticeData.h"
 #include "util/utilityFunctions.h"
@@ -24,6 +25,7 @@ namespace hemelb
       // Use a reader to read in the file.
       GeometryReader reader(reserveSteeringCore);
 
+      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
       reader.LoadAndDecompose(&globLatDat, bLbmParams, bSimConfig, lReadTime, lDecomposeTime);
 
       // Count the fluid sites on the local processor.
@@ -46,13 +48,9 @@ namespace hemelb
         }
       }
 
-      MPI_Allgather(&localFluidSites,
-                    1,
-                    MpiDataType<site_t>(),
-                    fluidSitePerProc,
-                    1,
-                    MpiDataType<site_t>(),
-                    MPI_COMM_WORLD);
+      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
+      MPI_Allgather(&localFluidSites, 1, MpiDataType<site_t> (), fluidSitePerProc, 1, MpiDataType<
+          site_t> (), MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       site_t localMins[3];
@@ -88,8 +86,8 @@ namespace hemelb
         }
       }
 
-      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t> (), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t> (), MPI_MAX, MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       *totalFluidSites = 0;
@@ -98,6 +96,7 @@ namespace hemelb
         *totalFluidSites += fluidSitePerProc[ii];
       }
 
+      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising localLatDat.");
       localLatDat.Initialise(fluidSitePerProc[localRank]);
     }
 

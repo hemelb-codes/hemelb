@@ -50,6 +50,7 @@ namespace hemelb
 
         static const LogLevel currentLogLevel;
         static int thisRank;
+        static double startTime;
     };
 
   }
