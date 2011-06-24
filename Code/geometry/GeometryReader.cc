@@ -1370,7 +1370,7 @@ namespace hemelb
         options[1] = 1 | 2 | 4 | 8 | 32 | 64;
       }
 
-      float tolerance = 1.0005F;
+      float tolerance = 1.001F;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
       ParMETIS_V3_PartKway(vtxDistribn,
