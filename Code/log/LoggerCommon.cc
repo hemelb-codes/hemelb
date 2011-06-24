@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 
+#include "util/utilityFunctions.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -9,6 +10,7 @@ namespace hemelb
   namespace log
   {
     int Logger::thisRank = -1;
+    double Logger::startTime = -1.0;
 
     template<>
     void Logger::LogInternal<OnePerCore>(std::string format, va_list args)
@@ -16,10 +18,11 @@ namespace hemelb
       if (thisRank < 0)
       {
         MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
+        startTime = util::myClock();
       }
 
-      char lead[20];
-      sprintf(lead, "[Rank %.6i]: ", thisRank);
+      char lead[40];
+      sprintf(lead, "[Rank %.6i, %.1fs]: ", thisRank, util::myClock() - startTime);
 
       std::string overFormat(lead);
       overFormat.append(format).append("\n");
@@ -33,11 +36,15 @@ namespace hemelb
       if (thisRank < 0)
       {
         MPI_Comm_rank(MPI_COMM_WORLD, &thisRank);
+        startTime = util::myClock();
       }
 
       if (thisRank == 0)
       {
-        std::string newFormat = "!";
+        char lead[20];
+        sprintf(lead, "![%.1fs]", util::myClock() - startTime);
+
+        std::string newFormat = std::string(lead);
         vprintf(newFormat.append(format).append("\n").c_str(), args);
       }
     }
