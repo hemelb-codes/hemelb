@@ -15,6 +15,7 @@ namespace hemelb
       {
         public:
           void DoCollisions(const bool iDoRayTracing,
+                            const bool iDoEntropic,
                             const site_t iFirstIndex,
                             const site_t iSiteCount,
                             const LbmParameters *iLbmParams,

@@ -1176,7 +1176,7 @@ namespace hemelb
         // vtxDistribn should be the same on all cores.
         idxtype* vtxDistribnRecv = new idxtype[mTopologySize + 1];
 
-        MPI_Reduce_scatter(vtxDistribn,
+        /*MPI_Reduce_scatter(vtxDistribn,
                            vtxDistribnRecv,
                            mTopologySize + 1,
                            MpiDataType(vtxDistribnRecv[0]),
@@ -1193,7 +1193,7 @@ namespace hemelb
                                                           vtxDistribnRecv[ii]);
           }
         }
-
+         */
         delete[] vtxDistribnRecv;
 
         // The adjacency data should correspond across all cores.
