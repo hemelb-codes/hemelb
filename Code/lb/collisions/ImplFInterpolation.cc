@@ -8,7 +8,6 @@ namespace hemelb
     {
 
       void ImplFInterpolation::DoCollisions(const bool iDoRayTracing,
-                                            const bool iDoEntropic,
                                             const site_t iFirstIndex,
                                             const site_t iSiteCount,
                                             const LbmParameters* iLbmParams,
@@ -26,7 +25,6 @@ namespace hemelb
       }
 
       void ImplFInterpolation::PostStep(const bool iDoRayTracing,
-                                        const bool iDoEntropic,
                                         const site_t iFirstIndex,
                                         const site_t iSiteCount,
                                         const LbmParameters* iLbmParams,
