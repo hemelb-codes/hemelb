@@ -56,8 +56,6 @@ namespace hemelb
 
         site_t siteMins[3], siteMaxes[3];
 
-        bool isEntropic() const;
-
       private:
         void RecalculateTauViscosityOmega();
         void SetInitialConditions();
@@ -86,8 +84,6 @@ namespace hemelb
 
         distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad) const;
         double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
-
-        bool doEntropic;
 
         hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
         hemelb::lb::collisions::WallCollision* mWallCollision;

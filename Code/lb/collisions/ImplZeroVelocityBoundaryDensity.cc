@@ -12,9 +12,7 @@ namespace hemelb
         mBoundaryDensityArray = iOutletDensityArray;
       }
 
-      void ImplZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,
-                                                         const bool iDoEntropic,
-                                                         const site_t iFirstIndex,
+      void ImplZeroVelocityBoundaryDensity::DoCollisions(const bool iDoRayTracing,                                                         const site_t iFirstIndex,
                                                          const site_t iSiteCount,
                                                          const LbmParameters* iLbmParams,
                                                          geometry::LatticeData* bLatDat,
