@@ -151,7 +151,12 @@ namespace hemelb
         if (sent < (long) sendBuf.length())
         {
           sendBuf.erase(0, sent);
-          sendBuf.append(buf, length);
+
+          // If the sending blocks, just ignore this most recent frame. This way, we stop the
+          // memory usage of the steering process spiralling, and keep current the images delivered
+          // to the client.
+          // What we *would* do is sendBuf.append(buf, length);
+
           return true;
         }
         // If not, we sent the whole buffer.
@@ -162,7 +167,7 @@ namespace hemelb
       }
 
       // If we sent the whole buffer, try to send the new data.
-      int sent_bytes = sendInternal(buf, length, socketToClient);
+      long sent_bytes = sendInternal(buf, length, socketToClient);
 
       // Is the socket broken?
       if (sent_bytes < 0)
