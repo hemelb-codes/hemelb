@@ -1,4 +1,5 @@
 #include "lb/collisions/InletOutletCollision.h"
+#include "lb/collisions/Visitor.h"
 
 namespace hemelb
 {
@@ -7,9 +8,26 @@ namespace hemelb
     namespace collisions
     {
 
-      InletOutletCollision::InletOutletCollision()
+      InletOutletCollision::InletOutletCollision(distribn_t* iOutletDensityArray)
       {
+        mBoundaryDensityArray = iOutletDensityArray;
+      }
 
+      void InletOutletCollision::Accept(Visitor* v,
+                                        const bool iDoRayTracing,
+                                        const site_t iFirstIndex,
+                                        const site_t iSiteCount,
+                                        const LbmParameters* iLbmParams,
+                                        geometry::LatticeData* bLatDat,
+                                        hemelb::vis::Control *iControl)
+      {
+        v->VisitInletOutlet(this,
+                            iDoRayTracing,
+                            iFirstIndex,
+                            iSiteCount,
+                            iLbmParams,
+                            bLatDat,
+                            iControl);
       }
 
     }
