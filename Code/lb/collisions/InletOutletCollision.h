@@ -12,8 +12,18 @@ namespace hemelb
 
       class InletOutletCollision : public Collision
       {
-        protected:
-          InletOutletCollision();
+        public:
+          InletOutletCollision(distribn_t* iOutletDensityArray);
+
+          virtual void Accept(Visitor* v,
+                              const bool iDoRayTracing,
+                              const site_t iFirstIndex,
+                              const site_t iSiteCount,
+                              const LbmParameters* iLbmParams,
+                              geometry::LatticeData* bLatDat,
+                              hemelb::vis::Control *iControl);
+
+          distribn_t* mBoundaryDensityArray;
       };
 
     }

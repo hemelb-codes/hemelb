@@ -6,6 +6,7 @@
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
 #include "lb/collisions/Collisions.h"
+#include "lb/collisions/Visitors.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 
@@ -85,6 +86,11 @@ namespace hemelb
         distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad) const;
         double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
+        // Visitors
+        hemelb::lb::collisions::StreamAndCollide* mStreamAndCollide;
+        hemelb::lb::collisions::PostStep* mPostStep;
+
+        // Collision objects
         hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
         hemelb::lb::collisions::WallCollision* mWallCollision;
         hemelb::lb::collisions::InletOutletCollision* mInletCollision;
