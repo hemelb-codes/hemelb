@@ -12,8 +12,14 @@ namespace hemelb
 
       class WallCollision : public Collision
       {
-        protected:
-          WallCollision();
+        public:
+          virtual void Accept(Visitor* v,
+                              const bool iDoRayTracing,
+                              const site_t iFirstIndex,
+                              const site_t iSiteCount,
+                              const LbmParameters* iLbmParams,
+                              geometry::LatticeData* bLatDat,
+                              hemelb::vis::Control *iControl);
       };
 
     }
