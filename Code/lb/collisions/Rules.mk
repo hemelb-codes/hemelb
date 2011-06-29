@@ -6,8 +6,7 @@ SRCS := Visitor.cc \
         InletOutletWallCollision.cc \
         MidFluidCollision.cc \
         WallCollision.cc \
-	StreamAndCollide.cc \
-	PostStep.cc \
+	HFunction.cc \
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
