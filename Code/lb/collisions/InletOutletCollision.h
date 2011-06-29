@@ -15,6 +15,8 @@ namespace hemelb
         public:
           InletOutletCollision(distribn_t* iOutletDensityArray);
 
+          distribn_t getBoundaryDensityArray(const int index);
+
           virtual void Accept(Visitor* v,
                               const bool iDoRayTracing,
                               const site_t iFirstIndex,
@@ -23,6 +25,7 @@ namespace hemelb
                               geometry::LatticeData* bLatDat,
                               hemelb::vis::Control *iControl);
 
+        private:
           distribn_t* mBoundaryDensityArray;
       };
 

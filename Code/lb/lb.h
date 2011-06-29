@@ -87,8 +87,8 @@ namespace hemelb
         double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
         // Visitors
-        hemelb::lb::collisions::StreamAndCollide* mStreamAndCollide;
-        hemelb::lb::collisions::PostStep* mPostStep;
+        hemelb::lb::collisions::StreamAndCollide<true>* mStreamAndCollide;
+        hemelb::lb::collisions::PostStep<true>* mPostStep;
 
         // Collision objects
         hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
