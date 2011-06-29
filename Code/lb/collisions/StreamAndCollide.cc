@@ -1,3 +1,8 @@
+/*
+ * This file is currently NOT in use since the class has been templated and all definitions
+ * had to be moved to the header file
+ */
+
 #include "lb/collisions/StreamAndCollide.h"
 
 namespace hemelb
@@ -6,18 +11,20 @@ namespace hemelb
   {
     namespace collisions
     {
-      StreamAndCollide::~StreamAndCollide()
+      template<bool tDoEntropic>
+      StreamAndCollide<tDoEntropic>::~StreamAndCollide()
       {
 
       }
 
-      void StreamAndCollide::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
-                                              const bool iDoRayTracing,
-                                              const site_t iFirstIndex,
-                                              const site_t iSiteCount,
-                                              const LbmParameters* iLbmParams,
-                                              geometry::LatticeData* bLatDat,
-                                              hemelb::vis::Control *iControl)
+      template<bool tDoEntropic>
+      void StreamAndCollide<tDoEntropic>::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
+                                                           const bool iDoRayTracing,
+                                                           const site_t iFirstIndex,
+                                                           const site_t iSiteCount,
+                                                           const LbmParameters* iLbmParams,
+                                                           geometry::LatticeData* bLatDat,
+                                                           hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
@@ -39,13 +46,14 @@ namespace hemelb
         }
       }
 
-      void StreamAndCollide::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
-                                                  const bool iDoRayTracing,
-                                                  const site_t iFirstIndex,
-                                                  const site_t iSiteCount,
-                                                  const LbmParameters* iLbmParams,
-                                                  geometry::LatticeData* bLatDat,
-                                                  hemelb::vis::Control *iControl)
+      template<bool tDoEntropic>
+      void StreamAndCollide<tDoEntropic>::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
+                                                               const bool iDoRayTracing,
+                                                               const site_t iFirstIndex,
+                                                               const site_t iSiteCount,
+                                                               const LbmParameters* iLbmParams,
+                                                               geometry::LatticeData* bLatDat,
+                                                               hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
@@ -67,13 +75,14 @@ namespace hemelb
         }
       }
 
-      void StreamAndCollide::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
-                                           const bool iDoRayTracing,
-                                           const site_t iFirstIndex,
-                                           const site_t iSiteCount,
-                                           const LbmParameters* iLbmParams,
-                                           geometry::LatticeData* bLatDat,
-                                           hemelb::vis::Control *iControl)
+      template<bool tDoEntropic>
+      void StreamAndCollide<tDoEntropic>::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
+                                                        const bool iDoRayTracing,
+                                                        const site_t iFirstIndex,
+                                                        const site_t iSiteCount,
+                                                        const LbmParameters* iLbmParams,
+                                                        geometry::LatticeData* bLatDat,
+                                                        hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
@@ -95,13 +104,14 @@ namespace hemelb
         }
       }
 
-      void StreamAndCollide::VisitWall(WallCollision* mWallCollision,
-                                       const bool iDoRayTracing,
-                                       const site_t iFirstIndex,
-                                       const site_t iSiteCount,
-                                       const LbmParameters* iLbmParams,
-                                       geometry::LatticeData* bLatDat,
-                                       hemelb::vis::Control *iControl)
+      template<bool tDoEntropic>
+      void StreamAndCollide<tDoEntropic>::VisitWall(WallCollision* mWallCollision,
+                                                    const bool iDoRayTracing,
+                                                    const site_t iFirstIndex,
+                                                    const site_t iSiteCount,
+                                                    const LbmParameters* iLbmParams,
+                                                    geometry::LatticeData* bLatDat,
+                                                    hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
@@ -123,13 +133,14 @@ namespace hemelb
         }
       }
 
+      template<bool tDoEntropic>
       template<bool tDoRayTracing>
-      void StreamAndCollide::FInterpolation(WallCollision* mWallCollision,
-                                            const site_t iFirstIndex,
-                                            const site_t iSiteCount,
-                                            const LbmParameters* iLbmParams,
-                                            geometry::LatticeData* bLatDat,
-                                            hemelb::vis::Control *iControl)
+      void StreamAndCollide<tDoEntropic>::FInterpolation(WallCollision* mWallCollision,
+                                                         const site_t iFirstIndex,
+                                                         const site_t iSiteCount,
+                                                         const LbmParameters* iLbmParams,
+                                                         geometry::LatticeData* bLatDat,
+                                                         hemelb::vis::Control *iControl)
       {
         for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
@@ -156,13 +167,14 @@ namespace hemelb
         }
       }
 
+      template<bool tDoEntropic>
       template<bool tDoRayTracing>
-      void StreamAndCollide::GuoZhengShi(WallCollision* mWallCollision,
-                                         const site_t iFirstIndex,
-                                         const site_t iSiteCount,
-                                         const LbmParameters* iLbmParams,
-                                         geometry::LatticeData* bLatDat,
-                                         hemelb::vis::Control *iControl)
+      void StreamAndCollide<tDoEntropic>::GuoZhengShi(WallCollision* mWallCollision,
+                                                      const site_t iFirstIndex,
+                                                      const site_t iSiteCount,
+                                                      const LbmParameters* iLbmParams,
+                                                      geometry::LatticeData* bLatDat,
+                                                      hemelb::vis::Control *iControl)
       {
         for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
@@ -259,13 +271,14 @@ namespace hemelb
         }
       }
 
+      template<bool tDoEntropic>
       template<bool tDoRayTracing>
-      void StreamAndCollide::NonZeroVelocityBoundaryDensity(InletOutletCollision* mInletOutletCollision,
-                                                            const site_t iFirstIndex,
-                                                            const site_t iSiteCount,
-                                                            const LbmParameters* iLbmParams,
-                                                            geometry::LatticeData* bLatDat,
-                                                            hemelb::vis::Control *iControl)
+      void StreamAndCollide<tDoEntropic>::NonZeroVelocityBoundaryDensity(InletOutletCollision* mInletOutletCollision,
+                                                                         const site_t iFirstIndex,
+                                                                         const site_t iSiteCount,
+                                                                         const LbmParameters* iLbmParams,
+                                                                         geometry::LatticeData* bLatDat,
+                                                                         hemelb::vis::Control *iControl)
       {
         for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
@@ -273,7 +286,8 @@ namespace hemelb
           distribn_t lFNeq[15];
           distribn_t lVx, lVy, lVz, lDummyDensity, lDensity;
 
-          lDensity = (*mInletOutletCollision).mBoundaryDensityArray[bLatDat->GetBoundaryId(lIndex)];
+          lDensity
+              = (*mInletOutletCollision).getBoundaryDensityArray(bLatDat->GetBoundaryId(lIndex));
 
           D3Q15::CalculateDensityAndVelocity(lFOld, lDummyDensity, lVx, lVy, lVz);
 
@@ -307,13 +321,14 @@ namespace hemelb
         }
       }
 
+      template<bool tDoEntropic>
       template<bool tDoRayTracing>
-      void StreamAndCollide::Regularised(WallCollision* mWallCollision,
-                                         const site_t iFirstIndex,
-                                         const site_t iSiteCount,
-                                         const LbmParameters* iLbmParams,
-                                         geometry::LatticeData* bLatDat,
-                                         hemelb::vis::Control *iControl)
+      void StreamAndCollide<tDoEntropic>::Regularised(WallCollision* mWallCollision,
+                                                      const site_t iFirstIndex,
+                                                      const site_t iSiteCount,
+                                                      const LbmParameters* iLbmParams,
+                                                      geometry::LatticeData* bLatDat,
+                                                      hemelb::vis::Control *iControl)
       {
         for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
@@ -530,13 +545,14 @@ namespace hemelb
         }
       }
 
+      template<bool tDoEntropic>
       template<bool tDoRayTracing>
-      void StreamAndCollide::SimpleBounceBack(WallCollision* mWallCollision,
-                                              const site_t iFirstIndex,
-                                              const site_t iSiteCount,
-                                              const LbmParameters* iLbmParams,
-                                              geometry::LatticeData* bLatDat,
-                                              hemelb::vis::Control *iControl)
+      void StreamAndCollide<tDoEntropic>::SimpleBounceBack(WallCollision* mWallCollision,
+                                                           const site_t iFirstIndex,
+                                                           const site_t iSiteCount,
+                                                           const LbmParameters* iLbmParams,
+                                                           geometry::LatticeData* bLatDat,
+                                                           hemelb::vis::Control *iControl)
       {
         for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {
@@ -576,13 +592,14 @@ namespace hemelb
         }
       }
 
+      template<bool tDoEntropic>
       template<bool tDoRayTracing>
-      void StreamAndCollide::SimpleCollideAndStream(MidFluidCollision* mMidFluidCollision,
-                                                    const site_t iFirstIndex,
-                                                    const site_t iSiteCount,
-                                                    const LbmParameters* iLbmParams,
-                                                    geometry::LatticeData* bLatDat,
-                                                    hemelb::vis::Control *iControl)
+      void StreamAndCollide<tDoEntropic>::SimpleCollideAndStream(MidFluidCollision* mMidFluidCollision,
+                                                                 const site_t iFirstIndex,
+                                                                 const site_t iSiteCount,
+                                                                 const LbmParameters* iLbmParams,
+                                                                 geometry::LatticeData* bLatDat,
+                                                                 hemelb::vis::Control *iControl)
       {
         for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
         {
@@ -611,13 +628,14 @@ namespace hemelb
         }
       }
 
+      template<bool tDoEntropic>
       template<bool tDoRayTracing>
-      void StreamAndCollide::ZeroVelocityBoundaryDensity(InletOutletWallCollision* mInletOutletWallCollision,
-                                                         const site_t iFirstIndex,
-                                                         const site_t iSiteCount,
-                                                         const LbmParameters* iLbmParams,
-                                                         geometry::LatticeData* bLatDat,
-                                                         hemelb::vis::Control *iControl)
+      void StreamAndCollide<tDoEntropic>::ZeroVelocityBoundaryDensity(InletOutletWallCollision* mInletOutletWallCollision,
+                                                                      const site_t iFirstIndex,
+                                                                      const site_t iSiteCount,
+                                                                      const LbmParameters* iLbmParams,
+                                                                      geometry::LatticeData* bLatDat,
+                                                                      hemelb::vis::Control *iControl)
       {
         for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
         {
@@ -626,7 +644,7 @@ namespace hemelb
           distribn_t lDensity;
 
           lDensity
-              = (*mInletOutletWallCollision).mBoundaryDensityArray[bLatDat->GetBoundaryId(iIndex)];
+              = (*mInletOutletWallCollision).getBoundaryDensityArray(bLatDat->GetBoundaryId(iIndex));
 
           for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
           {
@@ -654,13 +672,14 @@ namespace hemelb
         }
       }
 
+      template<bool tDoEntropic>
       template<bool tDoRayTracing>
-      void StreamAndCollide::ZeroVelocityEquilibrium(WallCollision* mWallCollision,
-                                                     const site_t iFirstIndex,
-                                                     const site_t iSiteCount,
-                                                     const LbmParameters* iLbmParams,
-                                                     geometry::LatticeData* bLatDat,
-                                                     hemelb::vis::Control *iControl)
+      void StreamAndCollide<tDoEntropic>::ZeroVelocityEquilibrium(WallCollision* mWallCollision,
+                                                                  const site_t iFirstIndex,
+                                                                  const site_t iSiteCount,
+                                                                  const LbmParameters* iLbmParams,
+                                                                  geometry::LatticeData* bLatDat,
+                                                                  hemelb::vis::Control *iControl)
       {
         for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
         {

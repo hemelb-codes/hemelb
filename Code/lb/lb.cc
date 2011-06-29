@@ -74,8 +74,7 @@ namespace hemelb
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
-      double dt = PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle());
-      mParams.Beta = dt / (2.0 * mParams.Tau + dt);
+      mParams.Beta = -1.0 / (2.0 * mParams.Tau);
     }
 
     // Calculate the BCs for each boundary site type and the
@@ -173,8 +172,8 @@ namespace hemelb
 
     void LBM::InitCollisions()
     {
-      mStreamAndCollide = new hemelb::lb::collisions::StreamAndCollide();
-      mPostStep = new hemelb::lb::collisions::PostStep();
+      mStreamAndCollide = new hemelb::lb::collisions::StreamAndCollide<true>();
+      mPostStep = new hemelb::lb::collisions::PostStep<true>();
 
       // TODO Note that the convergence checking is not yet implemented in the
       // new boundary condition hierarchy system.
@@ -464,6 +463,10 @@ namespace hemelb
       delete[] outlet_density_avg;
       delete[] outlet_density_amp;
       delete[] outlet_density_phs;
+
+      // Delete visitors
+      delete mStreamAndCollide;
+      delete mPostStep;
 
       // Delete the collision and stream objects we've been using
       delete mMidFluidCollision;
