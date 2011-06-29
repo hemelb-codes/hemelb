@@ -69,10 +69,9 @@ embedded !ELEMENT node. This may be addressed in the future.
 
 <h2> Tutorials. </h2>
 
-For the impatient, here are some tutorials to get you going. A great way to get started, 
+For the impatient, here is a tutorial to get you going. A great way to get started, 
 but it is worth your time to read this (very short) manual completely.
 
-- @subpage ticppTutorial
 - @subpage tutorial0
 
 <h2> Code Status.  </h2>
@@ -92,7 +91,7 @@ TinyXML projects you may find useful! (Descriptions provided by the projects.)
 <ul>
 <li> <b>TinyXPath</b> (http://tinyxpath.sourceforge.net). TinyXPath is a small footprint 
      XPath syntax decoder, written in C++.</li>
-<li> <b>@subpage ticpp</b> (http://code.google.com/p/ticpp/). TinyXML++ is a completely new 
+<li> <b>TinyXML++</b> (http://code.google.com/p/ticpp/). TinyXML++ is a completely new 
      interface to TinyXML that uses MANY of the C++ strengths. Templates, 
 	 exceptions, and much better error handling.</li>
 </ul>
@@ -414,7 +413,7 @@ relate to the DOM.
 	TiXmlDeclaration class. It will be the first child of the
 	document node.
 	
-	This is the only directive/special tag parsed by by TinyXML.
+	This is the only directive/special tag parsed by TinyXML.
 	Generally directive tags are stored in TiXmlUnknown so the 
 	commands wont be lost when it is saved back to disk.
 
@@ -500,7 +499,7 @@ distribution.
 <h2> References  </h2>
 
 The World Wide Web Consortium is the definitive standard body for 
-XML, and there web pages contain huge amounts of information. 
+XML, and their web pages contain huge amounts of information. 
 
 The definitive spec: <a href="http://www.w3.org/TR/2004/REC-xml-20040204/">
 http://www.w3.org/TR/2004/REC-xml-20040204/</a>

@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <vector>
-#include "xml/ticpp.h"
+#include "xml/tinyxml.h"
 
 namespace hemelb
 {
