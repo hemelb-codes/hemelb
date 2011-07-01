@@ -13,13 +13,13 @@ namespace hemelb
       class MidFluidCollision : public Collision
       {
         public:
-          virtual void Accept(Visitor* v,
-                              const bool iDoRayTracing,
-                              const site_t iFirstIndex,
-                              const site_t iSiteCount,
-                              const LbmParameters* iLbmParams,
-                              geometry::LatticeData* bLatDat,
-                              hemelb::vis::Control *iControl);
+          virtual void AcceptCollisionVisitor(CollisionVisitor* v,
+                                              const bool iDoRayTracing,
+                                              const site_t iFirstIndex,
+                                              const site_t iSiteCount,
+                                              const LbmParameters* iLbmParams,
+                                              geometry::LatticeData* bLatDat,
+                                              hemelb::vis::Control *iControl);
       };
 
     }

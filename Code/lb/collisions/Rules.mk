@@ -1,6 +1,6 @@
 include $(MK)/header.mk
 
-SRCS := Visitor.cc \
+SRCS := CollisionVisitor.cc \
 	Collision.cc \
         InletOutletCollision.cc \
         InletOutletWallCollision.cc \
