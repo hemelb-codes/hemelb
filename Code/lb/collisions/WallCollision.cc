@@ -1,5 +1,5 @@
 #include "lb/collisions/WallCollision.h"
-#include "lb/collisions/Visitor.h"
+#include "lb/collisions/CollisionVisitor.h"
 
 namespace hemelb
 {
@@ -8,13 +8,13 @@ namespace hemelb
     namespace collisions
     {
 
-      void WallCollision::Accept(Visitor* v,
-                                 const bool iDoRayTracing,
-                                 const site_t iFirstIndex,
-                                 const site_t iSiteCount,
-                                 const LbmParameters* iLbmParams,
-                                 geometry::LatticeData* bLatDat,
-                                 hemelb::vis::Control *iControl)
+      void WallCollision::AcceptCollisionVisitor(CollisionVisitor* v,
+                                                 const bool iDoRayTracing,
+                                                 const site_t iFirstIndex,
+                                                 const site_t iSiteCount,
+                                                 const LbmParameters* iLbmParams,
+                                                 geometry::LatticeData* bLatDat,
+                                                 hemelb::vis::Control *iControl)
       {
         v->VisitWall(this, iDoRayTracing, iFirstIndex, iSiteCount, iLbmParams, bLatDat, iControl);
       }

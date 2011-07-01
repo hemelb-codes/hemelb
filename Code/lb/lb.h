@@ -6,7 +6,7 @@
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
 #include "lb/collisions/Collisions.h"
-#include "lb/collisions/Visitors.h"
+#include "lb/collisions/CollisionVisitors.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 
@@ -74,6 +74,9 @@ namespace hemelb
                          distribn_t *vz,
                          distribn_t f_neq[]);
 
+        template<typename tMidFluidCollision, typename tWallCollision, typename tInletCollision,
+            typename tOutletCollision, typename tInletWallCollision, typename tOutletWallCollision,
+            bool tDoEntropic>
         void InitCollisions();
 
         void ReadParameters();
@@ -87,8 +90,8 @@ namespace hemelb
         double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
         // Visitors
-        hemelb::lb::collisions::StreamAndCollide<true>* mStreamAndCollide;
-        hemelb::lb::collisions::PostStep<true>* mPostStep;
+        hemelb::lb::collisions::CollisionVisitor* mStreamAndCollide;
+        hemelb::lb::collisions::CollisionVisitor* mPostStep;
 
         // Collision objects
         hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;

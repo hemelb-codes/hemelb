@@ -17,13 +17,13 @@ namespace hemelb
 
           distribn_t getBoundaryDensityArray(const int index);
 
-          virtual void Accept(Visitor* v,
-                              const bool iDoRayTracing,
-                              const site_t iFirstIndex,
-                              const site_t iSiteCount,
-                              const LbmParameters* iLbmParams,
-                              geometry::LatticeData* bLatDat,
-                              hemelb::vis::Control *iControl);
+          virtual void AcceptCollisionVisitor(CollisionVisitor* v,
+                                              const bool iDoRayTracing,
+                                              const site_t iFirstIndex,
+                                              const site_t iSiteCount,
+                                              const LbmParameters* iLbmParams,
+                                              geometry::LatticeData* bLatDat,
+                                              hemelb::vis::Control *iControl);
 
         private:
           distribn_t* mBoundaryDensityArray;

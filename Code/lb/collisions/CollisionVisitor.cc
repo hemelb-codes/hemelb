@@ -1,4 +1,4 @@
-#include "lb/collisions/Visitor.h"
+#include "lb/collisions/CollisionVisitor.h"
 
 namespace hemelb
 {
@@ -7,7 +7,7 @@ namespace hemelb
     namespace collisions
     {
 
-      void Visitor::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
+      void CollisionVisitor::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
                                      const bool iDoRayTracing,
                                      const site_t iFirstIndex,
                                      const site_t iSiteCount,
@@ -18,7 +18,7 @@ namespace hemelb
         // Standard implementation - do nothing.
       }
 
-      void Visitor::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
+      void CollisionVisitor::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
                                          const bool iDoRayTracing,
                                          const site_t iFirstIndex,
                                          const site_t iSiteCount,
@@ -29,7 +29,7 @@ namespace hemelb
         // Standard implementation - do nothing.
       }
 
-      void Visitor::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
+      void CollisionVisitor::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
                                   const bool iDoRayTracing,
                                   const site_t iFirstIndex,
                                   const site_t iSiteCount,
@@ -40,7 +40,7 @@ namespace hemelb
         // Standard implementation - do nothing.
       }
 
-      void Visitor::VisitWall(WallCollision* mWallCollision,
+      void CollisionVisitor::VisitWall(WallCollision* mWallCollision,
                               const bool iDoRayTracing,
                               const site_t iFirstIndex,
                               const site_t iSiteCount,
@@ -51,7 +51,7 @@ namespace hemelb
         // Standard implementation - do nothing.
       }
 
-      Visitor::Visitor()
+      CollisionVisitor::CollisionVisitor()
       {
 
       }

@@ -1,9 +1,9 @@
-#ifndef COLLISIONS_H_
-#define COLLISIONS_H_
+#ifndef HEMELB_LB_COLLISIONS_COLLISIONS_H
+#define HEMELB_LB_COLLISIONS_COLLISIONS_H
 
 #include "lb/collisions/InletOutletCollision.h"
 #include "lb/collisions/InletOutletWallCollision.h"
 #include "lb/collisions/MidFluidCollision.h"
 #include "lb/collisions/WallCollision.h"
 
-#endif /* COLLISIONS_H_ */
+#endif /* COLLISIONS_H */
