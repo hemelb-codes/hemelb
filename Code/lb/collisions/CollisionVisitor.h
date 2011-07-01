@@ -1,5 +1,5 @@
-#ifndef VISITOR_H
-#define VISITOR_H
+#ifndef HEMELB_LB_COLLISIONS_COLLISION_VISITOR_H
+#define HEMELB_LB_COLLISIONS_COLLISION_VISITOR_H
 
 #include "lb/collisions/Collisions.h"
 #include "vis/Control.h"
@@ -15,7 +15,13 @@ namespace hemelb
     namespace collisions
     {
 
-      class Visitor
+      /*
+       * The CollisionVisitor class separates the implementation of the streaming, collision and post step
+       * from the object structure. This was done in order to make extensions to different collision
+       * models easier via templating(impossible in the previous version as you cannot
+       * have virtual template functions).
+       */
+      class CollisionVisitor
       {
         public:
           virtual void VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
@@ -51,30 +57,30 @@ namespace hemelb
                                  hemelb::vis::Control *iControl);
 
         protected:
-          Visitor();
+          CollisionVisitor();
 
           template<bool tDoRayTracing>
-          void UpdateMinsAndMaxes(distribn_t iVx,
-                                  distribn_t iVy,
-                                  distribn_t iVz,
-                                  const site_t iSiteIndex,
-                                  const distribn_t* f_neq,
-                                  const distribn_t iDensity,
-                                  const geometry::LatticeData* iLatDat,
-                                  const LbmParameters* iLbmParams,
-                                  hemelb::vis::Control *iControl);
+          static void UpdateMinsAndMaxes(distribn_t iVx,
+                                         distribn_t iVy,
+                                         distribn_t iVz,
+                                         const site_t iSiteIndex,
+                                         const distribn_t* f_neq,
+                                         const distribn_t iDensity,
+                                         const geometry::LatticeData* iLatDat,
+                                         const LbmParameters* iLbmParams,
+                                         hemelb::vis::Control *iControl);
       };
 
       template<bool tDoRayTracing>
-      void Visitor::UpdateMinsAndMaxes(distribn_t iVx,
-                                       distribn_t iVy,
-                                       distribn_t iVz,
-                                       const site_t iSiteIndex,
-                                       const distribn_t* f_neq,
-                                       const distribn_t iDensity,
-                                       const geometry::LatticeData* iLatDat,
-                                       const LbmParameters* iLbmParams,
-                                       hemelb::vis::Control *iControl)
+      void CollisionVisitor::UpdateMinsAndMaxes(distribn_t iVx,
+                                                distribn_t iVy,
+                                                distribn_t iVz,
+                                                const site_t iSiteIndex,
+                                                const distribn_t* f_neq,
+                                                const distribn_t iDensity,
+                                                const geometry::LatticeData* iLatDat,
+                                                const LbmParameters* iLbmParams,
+                                                hemelb::vis::Control *iControl)
       {
         if (tDoRayTracing)
         {
@@ -110,4 +116,4 @@ namespace hemelb
   }
 }
 
-#endif /* VISITOR_H */
+#endif /* HEMELB_LB_COLLISIONS_COLLISION_VISITOR_H */

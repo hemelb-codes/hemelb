@@ -1,7 +1,7 @@
-#ifndef POSTSTEP_H
-#define POSTSTEP_H
+#ifndef HEMELB_LB_COLLISIONS_POSTSTEP_H
+#define HEMELB_LB_COLLISIONS_POSTSTEP_H
 
-#include "lb/collisions/Visitor.h"
+#include "lb/collisions/CollisionVisitor.h"
 
 namespace hemelb
 {
@@ -11,7 +11,7 @@ namespace hemelb
     {
 
       template<bool tDoEntropic>
-      class PostStep : public Visitor
+      class PostStep : public CollisionVisitor
       {
         public:
           virtual ~PostStep();
@@ -149,4 +149,4 @@ namespace hemelb
   }
 }
 
-#endif /* POSTSTEP_H */
+#endif /* HEMELB_LB_COLLISIONS_POSTSTEP_H */

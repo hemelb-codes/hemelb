@@ -1,7 +1,7 @@
-#ifndef STREAMANDCOLLIDE_H
-#define STREAMANDCOLLIDE_H
+#ifndef HEMELB_LB_COLLISIONS_STREAMANDCOLLIDE_H
+#define HEMELB_LB_COLLISIONS_STREAMANDCOLLIDE_H
 
-#include "lb/collisions/Visitor.h"
+#include "lb/collisions/CollisionVisitor.h"
 #include "lb/collisions/HFunction.h"
 #include "util/utilityFunctions.h"
 #include "D3Q15.h"
@@ -14,12 +14,9 @@ namespace hemelb
     {
 
       template<bool tDoEntropic>
-      class StreamAndCollide : public Visitor
+      class StreamAndCollide : public CollisionVisitor
       {
         public:
-          StreamAndCollide();
-          virtual ~StreamAndCollide();
-
           virtual void VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
                                         const bool iDoRayTracing,
                                         const site_t iFirstIndex,
@@ -54,47 +51,56 @@ namespace hemelb
 
         private:
           template<bool tDoRayTracing>
-          void FInterpolation(WallCollision* mWallCollision,
-                              const site_t iFirstIndex,
-                              const site_t iSiteCount,
-                              const LbmParameters* iLbmParams,
-                              geometry::LatticeData* bLatDat,
-                              hemelb::vis::Control *iControl);
+          static void FInterpolation(WallCollision* mWallCollision,
+                                     const site_t iFirstIndex,
+                                     const site_t iSiteCount,
+                                     const LbmParameters* iLbmParams,
+                                     geometry::LatticeData* bLatDat,
+                                     hemelb::vis::Control *iControl);
 
           template<bool tDoRayTracing>
-          void GuoZhengShi(WallCollision* mWallCollision,
-                           const site_t iFirstIndex,
-                           const site_t iSiteCount,
-                           const LbmParameters* iLbmParams,
-                           geometry::LatticeData* bLatDat,
-                           hemelb::vis::Control *iControl);
+          static void GuoZhengShi(WallCollision* mWallCollision,
+                                  const site_t iFirstIndex,
+                                  const site_t iSiteCount,
+                                  const LbmParameters* iLbmParams,
+                                  geometry::LatticeData* bLatDat,
+                                  hemelb::vis::Control *iControl);
 
           template<bool tDoRayTracing>
-          void NonZeroVelocityBoundaryDensity(InletOutletCollision* mInletOutletCollision,
-                                              const site_t iFirstIndex,
-                                              const site_t iSiteCount,
-                                              const LbmParameters* iLbmParams,
-                                              geometry::LatticeData* bLatDat,
-                                              hemelb::vis::Control *iControl);
+          static void NonZeroVelocityBoundaryDensity(InletOutletCollision* mInletOutletCollision,
+                                                     const site_t iFirstIndex,
+                                                     const site_t iSiteCount,
+                                                     const LbmParameters* iLbmParams,
+                                                     geometry::LatticeData* bLatDat,
+                                                     hemelb::vis::Control *iControl);
 
           template<bool tDoRayTracing>
-          void Regularised(WallCollision* mWallCollision,
-                           const site_t iFirstIndex,
-                           const site_t iSiteCount,
-                           const LbmParameters* iLbmParams,
-                           geometry::LatticeData* bLatDat,
-                           hemelb::vis::Control *iControl);
+          static void Regularised(WallCollision* mWallCollision,
+                                  const site_t iFirstIndex,
+                                  const site_t iSiteCount,
+                                  const LbmParameters* iLbmParams,
+                                  geometry::LatticeData* bLatDat,
+                                  hemelb::vis::Control *iControl);
 
           template<bool tDoRayTracing>
-          void SimpleBounceBack(WallCollision* mWallCollision,
-                                const site_t iFirstIndex,
-                                const site_t iSiteCount,
-                                const LbmParameters* iLbmParams,
-                                geometry::LatticeData* bLatDat,
-                                hemelb::vis::Control *iControl);
+          static void SimpleBounceBack(WallCollision* mWallCollision,
+                                       const site_t iFirstIndex,
+                                       const site_t iSiteCount,
+                                       const LbmParameters* iLbmParams,
+                                       geometry::LatticeData* bLatDat,
+                                       hemelb::vis::Control *iControl);
 
           template<bool tDoRayTracing>
-          void SimpleCollideAndStream(MidFluidCollision* mMidFluidCollision,
+          static void SimpleCollideAndStream(MidFluidCollision* mMidFluidCollision,
+                                             const site_t iFirstIndex,
+                                             const site_t iSiteCount,
+                                             const LbmParameters* iLbmParams,
+                                             geometry::LatticeData* bLatDat,
+                                             hemelb::vis::Control *iControl);
+
+          template<bool tDoRayTracing>
+          static void
+          ZeroVelocityBoundaryDensity(InletOutletWallCollision* mInletOutletWallCollision,
                                       const site_t iFirstIndex,
                                       const site_t iSiteCount,
                                       const LbmParameters* iLbmParams,
@@ -102,37 +108,16 @@ namespace hemelb
                                       hemelb::vis::Control *iControl);
 
           template<bool tDoRayTracing>
-          void ZeroVelocityBoundaryDensity(InletOutletWallCollision* mInletOutletWallCollision,
-                                           const site_t iFirstIndex,
-                                           const site_t iSiteCount,
-                                           const LbmParameters* iLbmParams,
-                                           geometry::LatticeData* bLatDat,
-                                           hemelb::vis::Control *iControl);
+          static void ZeroVelocityEquilibrium(WallCollision* mWallCollision,
+                                              const site_t iFirstIndex,
+                                              const site_t iSiteCount,
+                                              const LbmParameters* iLbmParams,
+                                              geometry::LatticeData* bLatDat,
+                                              hemelb::vis::Control *iControl);
 
-          template<bool tDoRayTracing>
-          void ZeroVelocityEquilibrium(WallCollision* mWallCollision,
-                                       const site_t iFirstIndex,
-                                       const site_t iSiteCount,
-                                       const LbmParameters* iLbmParams,
-                                       geometry::LatticeData* bLatDat,
-                                       hemelb::vis::Control *iControl);
-
-          HFunction* HFunc;
-          double getAlpha(distribn_t* lFOld, distribn_t* lFEq);
+          static double getAlpha(distribn_t* lFOld, distribn_t* lFEq);
 
       }; /* End of StreamAndCollide definition */
-
-      template<bool tDoEntropic>
-      StreamAndCollide<tDoEntropic>::StreamAndCollide()
-      {
-        HFunc = new HFunction();
-      }
-
-      template<bool tDoEntropic>
-      StreamAndCollide<tDoEntropic>::~StreamAndCollide()
-      {
-        delete HFunc;
-      }
 
       template<bool tDoEntropic>
       void StreamAndCollide<tDoEntropic>::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
@@ -864,39 +849,55 @@ namespace hemelb
       }
 
       template<bool tDoEntropic>
-      double StreamAndCollide<tDoEntropic>::getAlpha(distribn_t* lFOld, distribn_t* lFEq)
+      double StreamAndCollide<tDoEntropic>::getAlpha(distribn_t* lF, distribn_t* lFEq)
       {
         bool small = true;
         distribn_t deviation[D3Q15::NUMVECTORS];
-        double alpha;
 
         for (unsigned int i = 0; i < D3Q15::NUMVECTORS; i++)
         {
-          if (fabs(deviation[i] = (lFEq[i] - lFOld[i]) / lFOld[i]) > 0.01)
+          if (fabs(/* deviation[i] = */ (lFEq[i] - lF[i]) / lF[i]) > 0.01)
+          {
             small = false;
+            break;
+          }
         }
 
         if (small)
-        {
-          alpha = 2.0;
-        }
-        else
-        {
-          (*HFunc).setF(lFOld);
-          (*HFunc).setFEq(lFEq);
+          return 2.0;
 
-          alpha = (hemelb::util::NumericalFunctions::NewtonRaphson(HFunc, 2.0, 1.0E-6));
-        }
+        /*
+         if (small)
+         {
+         double a1 = 0.0, a2 = 0.0, a3 = 0.0, a4 = 0.0;
+         double deviation2[D3Q15::NUMVECTORS]; //Will be holding deviation[i]^n * (f_eq - f)
 
-        if (alpha != alpha)
-        {
-          std::cerr << "Found NaN. Just got alpha using " << (small
-            ? "3rd order"
-            : "NR") << std::endl;
-          exit(0);
-        }
+         for (unsigned int i = 0; i < D3Q15::NUMVECTORS; i++)
+         {
+         a1 += (deviation2[i] = deviation[i] * (lFEq[i] - lF[i]));
+         a2 += (deviation2[i] *= deviation[i]);
+         a3 += (deviation2[i] *= deviation[i]);
+         a4 += (deviation2[i] * deviation[i]);
+         }
 
-        return alpha;
+         a1 *= 0.5;
+         a2 *= -1.0 / 6.0;
+         a3 *= 1.0 / 12.0;
+         a4 *= -0.05;
+
+         // Alpha tends to 2 as deviation -> 0. The evaluation of alpha below fails if a1 is 0 so to prevent
+         // NaNs and to save some computation we just return 2
+         if (a1 < 1.0E-10)
+         return 2.0;
+
+         return (2.0 + 4.0 * (4 * a1 * a2 * (a2 + 5.0 * a3) - a1 * a1 * (a2 + 2.0 * a3
+         + 4.0 * a4) - 20.0 * a2 * a2 * a2) / (a1 * a1 * a1));
+         }
+         */
+
+        HFunction HFunc(lF, lFEq);
+
+        return (hemelb::util::NumericalFunctions::NewtonRaphson(&HFunc, 2.0, 1.0E-6));
 
       }
 
@@ -904,4 +905,4 @@ namespace hemelb
   }
 }
 
-#endif /* STREAMANDCOLLIDE_H */
+#endif /* HEMELB_LB_COLLISIONS_STREAMANDCOLLIDE_H */
