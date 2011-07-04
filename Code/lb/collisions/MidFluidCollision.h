@@ -13,6 +13,8 @@ namespace hemelb
       class MidFluidCollision : public Collision
       {
         public:
+          virtual ~MidFluidCollision();
+
           virtual void AcceptCollisionVisitor(CollisionVisitor* v,
                                               const bool iDoRayTracing,
                                               const site_t iFirstIndex,
