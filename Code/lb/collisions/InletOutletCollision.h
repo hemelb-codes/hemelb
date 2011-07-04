@@ -15,6 +15,8 @@ namespace hemelb
         public:
           InletOutletCollision(distribn_t* iOutletDensityArray);
 
+          ~InletOutletCollision();
+
           distribn_t getBoundaryDensityArray(const int index);
 
           virtual void AcceptCollisionVisitor(CollisionVisitor* v,

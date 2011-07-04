@@ -8,6 +8,11 @@ namespace hemelb
     namespace collisions
     {
 
+      MidFluidCollision::~MidFluidCollision()
+      {
+
+      }
+
       void MidFluidCollision::AcceptCollisionVisitor(CollisionVisitor* v,
                                                      const bool iDoRayTracing,
                                                      const site_t iFirstIndex,

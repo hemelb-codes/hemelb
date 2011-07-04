@@ -1,12 +1,14 @@
 include $(MK)/header.mk
 
-SRCS := CollisionVisitor.cc \
-	Collision.cc \
-        InletOutletCollision.cc \
-        InletOutletWallCollision.cc \
-        MidFluidCollision.cc \
-        WallCollision.cc \
-	HFunction.cc \
+SUBDIRS := implementations
+
+TARGETS := Collision.o \
+	   CollisionVisitor.o \
+	   InletOutletCollision.o \
+	   InletOutletWallCollision.o \
+	   MidFluidCollision.o \
+	   WallCollision.o \
+	   HFunction.o \
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
