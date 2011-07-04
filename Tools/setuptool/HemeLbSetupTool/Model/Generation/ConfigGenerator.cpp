@@ -47,10 +47,10 @@ void ConfigGenerator::Execute() {
 		// Open the BlockStarted context of the writer; this will
 		// deal with flushing the state to the file (or not, in the
 		//case where there are no fluid sites).
-		//		BlockWriter* blockWriterPtr = writer.StartNextBlock();
-		//		// Get a reference to make the syntax nicer below!
-		//		BlockWriter& blockWriter = *blockWriterPtr;
-		BlockWriter blockWriter = *writer.StartNextBlock();
+		BlockWriter* blockWriterPtr = writer.StartNextBlock();
+		// Get a reference to make the syntax nicer below!
+		BlockWriter& blockWriter = *blockWriterPtr;
+		// BlockWriter blockWriter = *writer.StartNextBlock();
 		Block& block = *blockIt;
 
 		for (SiteIterator siteIt = block.begin(); siteIt != block.end(); ++siteIt) {
@@ -93,6 +93,7 @@ void ConfigGenerator::Execute() {
 
 		}
 		blockWriter.Finish();
+		delete blockWriterPtr;
 	}
 	writer.Close();
 }
