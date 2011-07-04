@@ -17,7 +17,7 @@ BlockWriter::BlockWriter(ConfigWriter &cfg) :
 
 BlockWriter::~BlockWriter() {
 	delete this->memWriter;
-	delete this->buffer;
+	delete[] this->buffer;
 }
 
 void BlockWriter::IncrementFluidSitesCount() {
