@@ -24,6 +24,8 @@ namespace hemelb
       class CollisionVisitor
       {
         public:
+          virtual ~CollisionVisitor();
+
           virtual void VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
                                         const bool iDoRayTracing,
                                         const site_t iFirstIndex,
@@ -57,8 +59,6 @@ namespace hemelb
                                  hemelb::vis::Control *iControl);
 
         protected:
-          CollisionVisitor();
-
           template<bool tDoRayTracing>
           static void UpdateMinsAndMaxes(distribn_t iVx,
                                          distribn_t iVy,

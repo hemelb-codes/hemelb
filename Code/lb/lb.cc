@@ -152,11 +152,10 @@ namespace hemelb
 
       ReadParameters();
 
-      InitCollisions<hemelb::lb::collisions::MidFluidCollision,
-          hemelb::lb::collisions::WallCollision, hemelb::lb::collisions::InletOutletCollision,
-          hemelb::lb::collisions::InletOutletCollision,
-          hemelb::lb::collisions::InletOutletWallCollision,
-          hemelb::lb::collisions::InletOutletWallCollision, false> ();
+      InitCollisions<hemelb::lb::collisions::implementations::SimpleCollideAndStream<true>,
+          hemelb::lb::collisions::implementations::ZeroVelocityEquilibrium<true>,
+          hemelb::lb::collisions::implementations::NonZeroVelocityBoundaryDensity<true>,
+          hemelb::lb::collisions::implementations::ZeroVelocityBoundaryDensity<true> > ();
     }
 
     void LBM::CalculateMouseFlowField(float densityIn,
@@ -174,25 +173,26 @@ namespace hemelb
       mouse_stress = ConvertStressToPhysicalUnits(stress);
     }
 
-    template<typename tMidFluidCollision, typename tWallCollision, typename tInletCollision,
-        typename tOutletCollision, typename tInletWallCollision, typename tOutletWallCollision,
-        bool tDoEntropic>
+    template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+        typename tInletOutletWallCollision>
     void LBM::InitCollisions()
     {
-      mStreamAndCollide = new hemelb::lb::collisions::StreamAndCollide<tDoEntropic>();
-      mPostStep = new hemelb::lb::collisions::PostStep<tDoEntropic>();
+      mStreamAndCollide = new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision,
+          tWallCollision, tInletOutletCollision, tInletOutletWallCollision>();
+      mPostStep = new hemelb::lb::collisions::PostStep<tMidFluidCollision, tWallCollision,
+          tInletOutletCollision, tInletOutletWallCollision>();
 
       // TODO Note that the convergence checking is not yet implemented in the
       // new boundary condition hierarchy system.
       // It'd be nice to do this with something like
       // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
-      mMidFluidCollision = new tMidFluidCollision();
-      mWallCollision = new tWallCollision();
-      mInletCollision = new tInletCollision(inlet_density);
-      mOutletCollision = new tOutletCollision(outlet_density);
-      mInletWallCollision = new tInletWallCollision(inlet_density);
-      mOutletWallCollision = new tOutletWallCollision(outlet_density);
+      mMidFluidCollision = new hemelb::lb::collisions::MidFluidCollision();
+      mWallCollision = new hemelb::lb::collisions::WallCollision();
+      mInletCollision = new hemelb::lb::collisions::InletOutletCollision(inlet_density);
+      mOutletCollision = new hemelb::lb::collisions::InletOutletCollision(outlet_density);
+      mInletWallCollision = new hemelb::lb::collisions::InletOutletWallCollision(inlet_density);
+      mOutletWallCollision = new hemelb::lb::collisions::InletOutletWallCollision(outlet_density);
     }
 
     void LBM::Initialise(site_t* iFTranslator, vis::Control* iControl)

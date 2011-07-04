@@ -7,6 +7,7 @@
 #include "lb/SimulationState.h"
 #include "lb/collisions/Collisions.h"
 #include "lb/collisions/CollisionVisitors.h"
+#include "lb/collisions/implementations/Implementations.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 
@@ -74,9 +75,8 @@ namespace hemelb
                          distribn_t *vz,
                          distribn_t f_neq[]);
 
-        template<typename tMidFluidCollision, typename tWallCollision, typename tInletCollision,
-            typename tOutletCollision, typename tInletWallCollision, typename tOutletWallCollision,
-            bool tDoEntropic>
+        template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+                typename tInletOutletWallCollision>
         void InitCollisions();
 
         void ReadParameters();

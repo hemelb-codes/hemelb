@@ -2,6 +2,7 @@
 #define HEMELB_LB_COLLISIONS_POSTSTEP_H
 
 #include "lb/collisions/CollisionVisitor.h"
+#include "lb/collisions/implementations/Implementations.h"
 
 namespace hemelb
 {
@@ -10,7 +11,8 @@ namespace hemelb
     namespace collisions
     {
 
-      template<bool tDoEntropic>
+      template<typename tMidFluidCollision, typename tWallCollision,
+          typename tInletOutletCollision, typename tInletOutletWallCollision>
       class PostStep : public CollisionVisitor
       {
         public:
@@ -48,36 +50,19 @@ namespace hemelb
                                  geometry::LatticeData* bLatDat,
                                  hemelb::vis::Control *iControl);
 
-        private:
-          template<bool tDoRayTracing>
-          void FInterpolationPostStep(WallCollision* mWallCollision,
-                                      const site_t iFirstIndex,
-                                      const site_t iSiteCount,
-                                      const LbmParameters* iLbmParams,
-                                      geometry::LatticeData* bLatDat,
-                                      hemelb::vis::Control *iControl);
       };
 
-      template<bool tDoEntropic>
-      PostStep<tDoEntropic>::~PostStep()
+      template<typename tMidFluidCollision, typename tWallCollision,
+          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision, tInletOutletWallCollision>::~PostStep()
       {
 
       }
 
-      template<bool tDoEntropic>
-      void PostStep<tDoEntropic>::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
-                                                   const bool iDoRayTracing,
-                                                   const site_t iFirstIndex,
-                                                   const site_t iSiteCount,
-                                                   const LbmParameters* iLbmParams,
-                                                   geometry::LatticeData* bLatDat,
-                                                   hemelb::vis::Control *iControl)
-      {
-
-      }
-
-      template<bool tDoEntropic>
-      void PostStep<tDoEntropic>::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
+      template<typename tMidFluidCollision, typename tWallCollision,
+          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      void PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision,
+          tInletOutletWallCollision>::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
                                                        const bool iDoRayTracing,
                                                        const site_t iFirstIndex,
                                                        const site_t iSiteCount,
@@ -85,11 +70,92 @@ namespace hemelb
                                                        geometry::LatticeData* bLatDat,
                                                        hemelb::vis::Control *iControl)
       {
-
+        if (iDoRayTracing)
+        {
+          tInletOutletCollision::template DoPostStep<true>(mInletOutletCollision,
+                                                           iFirstIndex,
+                                                           iSiteCount,
+                                                           iLbmParams,
+                                                           bLatDat,
+                                                           iControl);
+        }
+        else
+        {
+          tInletOutletCollision::template DoPostStep<false>(mInletOutletCollision,
+                                                            iFirstIndex,
+                                                            iSiteCount,
+                                                            iLbmParams,
+                                                            bLatDat,
+                                                            iControl);
+        }
       }
 
-      template<bool tDoEntropic>
-      void PostStep<tDoEntropic>::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
+      template<typename tMidFluidCollision, typename tWallCollision,
+          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      void PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision,
+          tInletOutletWallCollision>::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
+                                                           const bool iDoRayTracing,
+                                                           const site_t iFirstIndex,
+                                                           const site_t iSiteCount,
+                                                           const LbmParameters* iLbmParams,
+                                                           geometry::LatticeData* bLatDat,
+                                                           hemelb::vis::Control *iControl)
+      {
+        if (iDoRayTracing)
+        {
+          tInletOutletWallCollision::template DoPostStep<true>(mInletOutletWallCollision,
+                                                               iFirstIndex,
+                                                               iSiteCount,
+                                                               iLbmParams,
+                                                               bLatDat,
+                                                               iControl);
+        }
+        else
+        {
+          tInletOutletWallCollision::template DoPostStep<false>(mInletOutletWallCollision,
+                                                                iFirstIndex,
+                                                                iSiteCount,
+                                                                iLbmParams,
+                                                                bLatDat,
+                                                                iControl);
+        }
+      }
+
+      template<typename tMidFluidCollision, typename tWallCollision,
+          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      void PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision,
+          tInletOutletWallCollision>::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
+                                                    const bool iDoRayTracing,
+                                                    const site_t iFirstIndex,
+                                                    const site_t iSiteCount,
+                                                    const LbmParameters* iLbmParams,
+                                                    geometry::LatticeData* bLatDat,
+                                                    hemelb::vis::Control *iControl)
+      {
+        if (iDoRayTracing)
+        {
+          tMidFluidCollision::template DoPostStep<true>(mMidFluidCollision,
+                                                        iFirstIndex,
+                                                        iSiteCount,
+                                                        iLbmParams,
+                                                        bLatDat,
+                                                        iControl);
+        }
+        else
+        {
+          tMidFluidCollision::template DoPostStep<false>(mMidFluidCollision,
+                                                         iFirstIndex,
+                                                         iSiteCount,
+                                                         iLbmParams,
+                                                         bLatDat,
+                                                         iControl);
+        }
+      }
+
+      template<typename tMidFluidCollision, typename tWallCollision,
+          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      void PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision,
+          tInletOutletWallCollision>::VisitWall(WallCollision* mWallCollision,
                                                 const bool iDoRayTracing,
                                                 const site_t iFirstIndex,
                                                 const site_t iSiteCount,
@@ -97,51 +163,23 @@ namespace hemelb
                                                 geometry::LatticeData* bLatDat,
                                                 hemelb::vis::Control *iControl)
       {
-
-      }
-
-      template<bool tDoEntropic>
-      void PostStep<tDoEntropic>::VisitWall(WallCollision* mWallCollision,
-                                            const bool iDoRayTracing,
-                                            const site_t iFirstIndex,
-                                            const site_t iSiteCount,
-                                            const LbmParameters* iLbmParams,
-                                            geometry::LatticeData* bLatDat,
-                                            hemelb::vis::Control *iControl)
-      {
-
-      }
-
-      template<bool tDoEntropic>
-      template<bool tDoRayTracing>
-      void PostStep<tDoEntropic>::FInterpolationPostStep(WallCollision* mWallCollision,
-                                                         const site_t iFirstIndex,
-                                                         const site_t iSiteCount,
-                                                         const LbmParameters* iLbmParams,
-                                                         geometry::LatticeData* bLatDat,
-                                                         hemelb::vis::Control *iControl)
-      {
-        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+        if (iDoRayTracing)
         {
-          // Handle odd indices, then evens - it's slightly easier to take the odd
-          // and even cases separately.
-          for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
-          {
-            if (bLatDat->HasBoundary(lIndex, l))
-            {
-              double twoQ = 2.0 * bLatDat->GetCutDistance(lIndex, l);
-
-              * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]))
-                  = (twoQ < 1.0)
-                    ? (*bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + l) + twoQ
-                        * (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + l)
-                            - *bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + l)))
-                    : (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l])
-                        + (1. / twoQ) * (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + l)
-                            - *bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS
-                                + D3Q15::INVERSEDIRECTIONS[l])));
-            }
-          }
+          tWallCollision::template DoPostStep<true>(mWallCollision,
+                                                    iFirstIndex,
+                                                    iSiteCount,
+                                                    iLbmParams,
+                                                    bLatDat,
+                                                    iControl);
+        }
+        else
+        {
+          tWallCollision::template DoPostStep<false>(mWallCollision,
+                                                     iFirstIndex,
+                                                     iSiteCount,
+                                                     iLbmParams,
+                                                     bLatDat,
+                                                     iControl);
         }
       }
 

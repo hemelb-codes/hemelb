@@ -13,6 +13,11 @@ namespace hemelb
         mBoundaryDensityArray = iOutletDensityArray;
       }
 
+      InletOutletCollision::~InletOutletCollision()
+      {
+
+      }
+
       distribn_t InletOutletCollision::getBoundaryDensityArray(const int index)
       {
         return mBoundaryDensityArray[index];
