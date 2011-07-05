@@ -12,7 +12,7 @@ namespace hemelb
       namespace implementations
       {
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         class ZeroVelocityEquilibrium : public Implementation
         {
 
@@ -35,14 +35,14 @@ namespace hemelb
 
         };
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void ZeroVelocityEquilibrium<tDoEntropic>::DoStreamAndCollide(WallCollision* mWallCollision,
-                                                                      const site_t iFirstIndex,
-                                                                      const site_t iSiteCount,
-                                                                      const LbmParameters* iLbmParams,
-                                                                      geometry::LatticeData* bLatDat,
-                                                                      hemelb::vis::Control *iControl)
+        void ZeroVelocityEquilibrium<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
+                                                                             const site_t iFirstIndex,
+                                                                             const site_t iSiteCount,
+                                                                             const LbmParameters* iLbmParams,
+                                                                             geometry::LatticeData* bLatDat,
+                                                                             hemelb::vis::Control *iControl)
         {
           for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
           {
@@ -63,10 +63,7 @@ namespace hemelb
             }
 
             // Temporarily store FEq in lFNeq
-            if (tDoEntropic)
-              D3Q15::CalculateEntropicFeq(lDensity, 0.0, 0.0, 0.0, lFOld);
-            else
-              D3Q15::CalculateFeq(lDensity, 0.0, 0.0, 0.0, lFOld);
+            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, 0.0, 0.0, 0.0, lFOld);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
@@ -86,14 +83,14 @@ namespace hemelb
           }
         }
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void ZeroVelocityEquilibrium<tDoEntropic>::DoPostStep(WallCollision* mWallCollision,
-                                                              const site_t iFirstIndex,
-                                                              const site_t iSiteCount,
-                                                              const LbmParameters* iLbmParams,
-                                                              geometry::LatticeData* bLatDat,
-                                                              hemelb::vis::Control *iControl)
+        void ZeroVelocityEquilibrium<tCollisionOperator>::DoPostStep(WallCollision* mWallCollision,
+                                                                     const site_t iFirstIndex,
+                                                                     const site_t iSiteCount,
+                                                                     const LbmParameters* iLbmParams,
+                                                                     geometry::LatticeData* bLatDat,
+                                                                     hemelb::vis::Control *iControl)
         {
 
         }

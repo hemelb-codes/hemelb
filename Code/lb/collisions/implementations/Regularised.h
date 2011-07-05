@@ -12,7 +12,7 @@ namespace hemelb
       namespace implementations
       {
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         class Regularised : public Implementation
         {
 
@@ -35,9 +35,9 @@ namespace hemelb
 
         };
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void Regularised<tDoEntropic>::DoStreamAndCollide(WallCollision* mWallCollision,
+        void Regularised<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
                                                           const site_t iFirstIndex,
                                                           const site_t iSiteCount,
                                                           const LbmParameters* iLbmParams,
@@ -259,9 +259,9 @@ namespace hemelb
           }
         }
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void Regularised<tDoEntropic>::DoPostStep(WallCollision* mWallCollision,
+        void Regularised<tCollisionOperator>::DoPostStep(WallCollision* mWallCollision,
                                                   const site_t iFirstIndex,
                                                   const site_t iSiteCount,
                                                   const LbmParameters* iLbmParams,

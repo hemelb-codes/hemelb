@@ -152,10 +152,12 @@ namespace hemelb
 
       ReadParameters();
 
-      InitCollisions<hemelb::lb::collisions::implementations::SimpleCollideAndStream<true>,
-          hemelb::lb::collisions::implementations::ZeroVelocityEquilibrium<true>,
-          hemelb::lb::collisions::implementations::NonZeroVelocityBoundaryDensity<true>,
-          hemelb::lb::collisions::implementations::ZeroVelocityBoundaryDensity<true> > ();
+      typedef hemelb::lb::collisions::implementations::LBGK CO;
+
+      InitCollisions<hemelb::lb::collisions::implementations::SimpleCollideAndStream<CO>,
+          hemelb::lb::collisions::implementations::ZeroVelocityEquilibrium<CO>,
+          hemelb::lb::collisions::implementations::NonZeroVelocityBoundaryDensity<CO>,
+          hemelb::lb::collisions::implementations::ZeroVelocityBoundaryDensity<CO> > ();
     }
 
     void LBM::CalculateMouseFlowField(float densityIn,

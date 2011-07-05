@@ -12,7 +12,7 @@ namespace hemelb
       namespace implementations
       {
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         class SimpleBounceBack : public Implementation
         {
 
@@ -35,9 +35,9 @@ namespace hemelb
 
         };
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void SimpleBounceBack<tDoEntropic>::DoStreamAndCollide(WallCollision* mWallCollision,
+        void SimpleBounceBack<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
                                                                const site_t iFirstIndex,
                                                                const site_t iSiteCount,
                                                                const LbmParameters* iLbmParams,
@@ -82,9 +82,9 @@ namespace hemelb
           }
         }
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void SimpleBounceBack<tDoEntropic>::DoPostStep(WallCollision* mWallCollision,
+        void SimpleBounceBack<tCollisionOperator>::DoPostStep(WallCollision* mWallCollision,
                                                        const site_t iFirstIndex,
                                                        const site_t iSiteCount,
                                                        const LbmParameters* iLbmParams,

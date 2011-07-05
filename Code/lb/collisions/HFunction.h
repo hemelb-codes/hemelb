@@ -19,13 +19,13 @@ namespace hemelb
       class HFunction
       {
         public:
-          HFunction(distribn_t* lF, distribn_t* lFEq);
+          HFunction(const distribn_t* lF,const distribn_t* lFEq);
 
           void operator()(const double alpha, double &H, double &dH);
 
         private:
-          distribn_t* mF;
-          distribn_t* mFEq;
+          const distribn_t* mF;
+          const distribn_t* mFEq;
 
           double h(double fi, double wi_1);
       };
