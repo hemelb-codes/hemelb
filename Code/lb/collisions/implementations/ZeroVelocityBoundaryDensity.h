@@ -12,7 +12,7 @@ namespace hemelb
       namespace implementations
       {
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         class ZeroVelocityBoundaryDensity : public Implementation
         {
 
@@ -35,9 +35,9 @@ namespace hemelb
 
         };
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void ZeroVelocityBoundaryDensity<tDoEntropic>::DoStreamAndCollide(InletOutletWallCollision* mInletOutletWallCollision,
+        void ZeroVelocityBoundaryDensity<tCollisionOperator>::DoStreamAndCollide(InletOutletWallCollision* mInletOutletWallCollision,
                                                                           const site_t iFirstIndex,
                                                                           const site_t iSiteCount,
                                                                           const LbmParameters* iLbmParams,
@@ -59,15 +59,12 @@ namespace hemelb
             }
 
             // Temporarily store FEq in FNeq
-            if (tDoEntropic)
-              D3Q15::CalculateEntropicFeq(lDensity, 0.0, 0.0, 0.0, lFOld);
-            else
-              D3Q15::CalculateFeq(lDensity, 0.0, 0.0, 0.0, lFOld);
+            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, 0.0, 0.0, 0.0, lFOld);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
               * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii];
-              lFNeq[ii] -= lFOld[ii];
+              lFNeq[ii] = lFNeq[ii] - lFOld[ii];
             }
 
             UpdateMinsAndMaxes<tDoRayTracing> (0.0,
@@ -82,9 +79,9 @@ namespace hemelb
           }
         }
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void ZeroVelocityBoundaryDensity<tDoEntropic>::DoPostStep(InletOutletWallCollision* mInletOutletWallCollision,
+        void ZeroVelocityBoundaryDensity<tCollisionOperator>::DoPostStep(InletOutletWallCollision* mInletOutletWallCollision,
                                                                   const site_t iFirstIndex,
                                                                   const site_t iSiteCount,
                                                                   const LbmParameters* iLbmParams,

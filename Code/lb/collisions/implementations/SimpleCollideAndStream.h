@@ -12,7 +12,7 @@ namespace hemelb
       namespace implementations
       {
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         class SimpleCollideAndStream : public Implementation
         {
 
@@ -35,14 +35,14 @@ namespace hemelb
 
         };
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void SimpleCollideAndStream<tDoEntropic>::DoStreamAndCollide(MidFluidCollision* mMidFluidCollision,
-                                                                     const site_t iFirstIndex,
-                                                                     const site_t iSiteCount,
-                                                                     const LbmParameters* iLbmParams,
-                                                                     geometry::LatticeData* bLatDat,
-                                                                     hemelb::vis::Control *iControl)
+        void SimpleCollideAndStream<tCollisionOperator>::DoStreamAndCollide(MidFluidCollision* mMidFluidCollision,
+                                                                            const site_t iFirstIndex,
+                                                                            const site_t iSiteCount,
+                                                                            const LbmParameters* iLbmParams,
+                                                                            geometry::LatticeData* bLatDat,
+                                                                            hemelb::vis::Control *iControl)
         {
           for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
           {
@@ -52,28 +52,13 @@ namespace hemelb
             double alpha;
 
             // Temporarily store f_eq in f_neq (rectified in next statement)
-            if (tDoEntropic)
-            {
-              D3Q15::CalculateEntropicDensityVelocityFEq(lFOld, lDensity, lVx, lVy, lVz, lFNeq);
-              alpha = getAlpha(lFOld, lFNeq); // lFNeq is actually lFeq at the moment
-            }
-            else
-            {
-              D3Q15::CalculateDensityVelocityFEq(lFOld, lDensity, lVx, lVy, lVz, lFNeq);
-            }
+            tCollisionOperator::getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFNeq);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
-              if (tDoEntropic)
-              {
-                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii] += alpha
-                    * iLbmParams->Beta * (lFNeq[ii] = lFOld[ii] - lFNeq[ii]);
-              }
-              else
-              {
-                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
-                    += iLbmParams->Omega * (lFNeq[ii] = lFOld[ii] - lFNeq[ii]);
-              }
+              // This also rectifies the lFNeq to actually store lFNeq and not lFEq
+              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
+                  += tCollisionOperator::getOperatorElement(lFOld[ii], lFNeq[ii], iLbmParams);
             }
 
             UpdateMinsAndMaxes<tDoRayTracing> (lVx,
@@ -88,14 +73,14 @@ namespace hemelb
           }
         }
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void SimpleCollideAndStream<tDoEntropic>::DoPostStep(MidFluidCollision* mMidFluidCollision,
-                                                             const site_t iFirstIndex,
-                                                             const site_t iSiteCount,
-                                                             const LbmParameters* iLbmParams,
-                                                             geometry::LatticeData* bLatDat,
-                                                             hemelb::vis::Control *iControl)
+        void SimpleCollideAndStream<tCollisionOperator>::DoPostStep(MidFluidCollision* mMidFluidCollision,
+                                                                    const site_t iFirstIndex,
+                                                                    const site_t iSiteCount,
+                                                                    const LbmParameters* iLbmParams,
+                                                                    geometry::LatticeData* bLatDat,
+                                                                    hemelb::vis::Control *iControl)
         {
 
         }

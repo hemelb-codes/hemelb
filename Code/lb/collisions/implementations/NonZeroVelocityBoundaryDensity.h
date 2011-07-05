@@ -12,7 +12,7 @@ namespace hemelb
       namespace implementations
       {
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         class NonZeroVelocityBoundaryDensity : public Implementation
         {
 
@@ -35,19 +35,19 @@ namespace hemelb
 
         };
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void NonZeroVelocityBoundaryDensity<tDoEntropic>::DoStreamAndCollide(InletOutletCollision* mInletOutletCollision,
-                                                                             const site_t iFirstIndex,
-                                                                             const site_t iSiteCount,
-                                                                             const LbmParameters* iLbmParams,
-                                                                             geometry::LatticeData* bLatDat,
-                                                                             hemelb::vis::Control *iControl)
+        void NonZeroVelocityBoundaryDensity<tCollisionOperator>::DoStreamAndCollide(InletOutletCollision* mInletOutletCollision,
+                                                                                    const site_t iFirstIndex,
+                                                                                    const site_t iSiteCount,
+                                                                                    const LbmParameters* iLbmParams,
+                                                                                    geometry::LatticeData* bLatDat,
+                                                                                    hemelb::vis::Control *iControl)
         {
           for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
           {
             distribn_t* lFOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
-            distribn_t lFNeq[15];
+            distribn_t lFNeq[D3Q15::NUMVECTORS];
             distribn_t lVx, lVy, lVz, lDummyDensity, lDensity;
 
             lDensity
@@ -61,19 +61,12 @@ namespace hemelb
             }
 
             // Temporarily store FEq in lFNeq (rectified later).
-            if (tDoEntropic)
-              D3Q15::CalculateEntropicFeq(lDensity, lVx, lVy, lVz, lFOld);
-            else
-              D3Q15::CalculateFeq(lDensity, lVx, lVy, lVz, lFOld);
+            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, lVx, lVy, lVz, lFOld);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
               * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = lFOld[ii];
-            }
-
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
-            {
-              lFNeq[ii] -= lFOld[ii];
+              lFNeq[ii] = lFNeq[ii] - lFOld[ii];
             }
 
             UpdateMinsAndMaxes<tDoRayTracing> (lVx,
@@ -88,14 +81,14 @@ namespace hemelb
           }
         }
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void NonZeroVelocityBoundaryDensity<tDoEntropic>::DoPostStep(InletOutletCollision* mInletOutletCollision,
-                                                                     const site_t iFirstIndex,
-                                                                     const site_t iSiteCount,
-                                                                     const LbmParameters* iLbmParams,
-                                                                     geometry::LatticeData* bLatDat,
-                                                                     hemelb::vis::Control *iControl)
+        void NonZeroVelocityBoundaryDensity<tCollisionOperator>::DoPostStep(InletOutletCollision* mInletOutletCollision,
+                                                                            const site_t iFirstIndex,
+                                                                            const site_t iSiteCount,
+                                                                            const LbmParameters* iLbmParams,
+                                                                            geometry::LatticeData* bLatDat,
+                                                                            hemelb::vis::Control *iControl)
         {
 
         }
