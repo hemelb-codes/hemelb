@@ -8,6 +8,7 @@
 #include "lb/collisions/Collisions.h"
 #include "lb/collisions/CollisionVisitors.h"
 #include "lb/collisions/implementations/Implementations.h"
+#include "lb/collisions/implementations/CollisionOperators.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 

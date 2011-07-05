@@ -7,7 +7,7 @@ namespace hemelb
     namespace collisions
     {
 
-      HFunction::HFunction(distribn_t* lF, distribn_t* lFEq)
+      HFunction::HFunction(const distribn_t* lF,const  distribn_t* lFEq)
       : mF(lF), mFEq(lFEq)
       {
       }

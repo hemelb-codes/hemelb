@@ -1,11 +1,10 @@
 #ifndef HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_IMPLEMENTATION_H
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_IMPLEMENTATION_H
 
-#include "lb/collisions/HFunction.h"
-#include "util/utilityFunctions.h"
-#include "D3Q15.h"
 #include "geometry/LatticeData.h"
 #include "vis/Control.h"
+#include "lb/LbmParameters.h"
+#include <math.h>
 
 namespace hemelb
 {
@@ -29,8 +28,6 @@ namespace hemelb
                                            const geometry::LatticeData* iLatDat,
                                            const LbmParameters* iLbmParams,
                                            hemelb::vis::Control *iControl);
-
-            static double getAlpha(distribn_t* lFOld, distribn_t* lFEq);
         };
 
         template<bool tDoRayTracing>

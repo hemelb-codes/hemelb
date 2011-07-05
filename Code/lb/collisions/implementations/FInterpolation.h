@@ -12,7 +12,7 @@ namespace hemelb
       namespace implementations
       {
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         class FInterpolation : public Implementation
         {
 
@@ -35,14 +35,14 @@ namespace hemelb
 
         };
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void FInterpolation<tDoEntropic>::DoStreamAndCollide(WallCollision* mWallCollision,
-                                                             const site_t iFirstIndex,
-                                                             const site_t iSiteCount,
-                                                             const LbmParameters* iLbmParams,
-                                                             geometry::LatticeData* bLatDat,
-                                                             hemelb::vis::Control *iControl)
+        void FInterpolation<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
+                                                                    const site_t iFirstIndex,
+                                                                    const site_t iSiteCount,
+                                                                    const LbmParameters* iLbmParams,
+                                                                    geometry::LatticeData* bLatDat,
+                                                                    hemelb::vis::Control *iControl)
         {
           for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
           {
@@ -69,14 +69,14 @@ namespace hemelb
           }
         }
 
-        template<bool tDoEntropic>
+        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void FInterpolation<tDoEntropic>::DoPostStep(WallCollision* mWallCollision,
-                                                     const site_t iFirstIndex,
-                                                     const site_t iSiteCount,
-                                                     const LbmParameters* iLbmParams,
-                                                     geometry::LatticeData* bLatDat,
-                                                     hemelb::vis::Control *iControl)
+        void FInterpolation<tCollisionOperator>::DoPostStep(WallCollision* mWallCollision,
+                                                            const site_t iFirstIndex,
+                                                            const site_t iSiteCount,
+                                                            const LbmParameters* iLbmParams,
+                                                            geometry::LatticeData* bLatDat,
+                                                            hemelb::vis::Control *iControl)
         {
           for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
           {
