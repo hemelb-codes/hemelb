@@ -14,7 +14,8 @@ namespace hemelb
                                  distribn_t &v_x,
                                  distribn_t &v_y,
                                  distribn_t &v_z,
-                                 distribn_t* f_eq)
+                                 distribn_t* f_eq,
+                                 const site_t index)
         {
           D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_eq);
         }
@@ -24,7 +25,8 @@ namespace hemelb
                                          const distribn_t &v_x,
                                          const distribn_t &v_y,
                                          const distribn_t &v_z,
-                                         distribn_t* f_eq)
+                                         distribn_t* f_eq,
+                                         const site_t index)
         {
           D3Q15::CalculateFeq(density, v_x, v_y, v_z, f_eq);
         }

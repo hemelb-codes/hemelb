@@ -52,7 +52,7 @@ namespace hemelb
             double alpha;
 
             // Temporarily store f_eq in f_neq (rectified in next statement)
-            tCollisionOperator::getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFNeq);
+            tCollisionOperator::getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFNeq, iIndex - iFirstIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
