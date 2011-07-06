@@ -71,7 +71,9 @@ namespace hemelb
             x0 = x;
             x = x0 - (f / df);
             if (fabs(x - x0) < acc)
+            {
               return x;
+            }
           }
 
           /*

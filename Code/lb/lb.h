@@ -11,6 +11,7 @@
 #include "lb/collisions/implementations/CollisionOperators.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
+#include <typeinfo>
 
 namespace hemelb
 {

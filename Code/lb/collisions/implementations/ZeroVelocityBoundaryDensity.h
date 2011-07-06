@@ -53,7 +53,7 @@ namespace hemelb
             lDensity
                 = (*mInletOutletWallCollision).getBoundaryDensityArray(bLatDat->GetBoundaryId(iIndex));
 
-            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, 0.0, 0.0, 0.0, lFEq);
+            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, 0.0, 0.0, 0.0, lFEq, iIndex - iFirstIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {

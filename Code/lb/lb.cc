@@ -152,7 +152,11 @@ namespace hemelb
 
       ReadParameters();
 
-      typedef hemelb::lb::collisions::implementations::LBGK CO;
+      typedef hemelb::lb::collisions::implementations::ELBM CO;
+      if(typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
+      {
+        hemelb::lb::collisions::implementations::ELBM::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
+      }
 
       InitCollisions<hemelb::lb::collisions::implementations::SimpleCollideAndStream<CO>,
           hemelb::lb::collisions::implementations::ZeroVelocityEquilibrium<CO>,
