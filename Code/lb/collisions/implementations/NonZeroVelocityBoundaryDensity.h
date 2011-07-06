@@ -55,7 +55,7 @@ namespace hemelb
 
             D3Q15::CalculateDensityAndVelocity(lFOld, lDummyDensity, lVx, lVy, lVz);
 
-            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq);
+            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, lIndex - iFirstIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
