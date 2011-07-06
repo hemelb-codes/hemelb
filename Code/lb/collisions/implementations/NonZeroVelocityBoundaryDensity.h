@@ -47,7 +47,7 @@ namespace hemelb
           for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
           {
             distribn_t* lFOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
-            distribn_t lFNeq[D3Q15::NUMVECTORS];
+            distribn_t lFNeq[D3Q15::NUMVECTORS], lFEq[D3Q15::NUMVECTORS];
             distribn_t lVx, lVy, lVz, lDummyDensity, lDensity;
 
             lDensity
@@ -55,18 +55,13 @@ namespace hemelb
 
             D3Q15::CalculateDensityAndVelocity(lFOld, lDummyDensity, lVx, lVy, lVz);
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
-            {
-              lFNeq[ii] = lFOld[ii];
-            }
-
-            // Temporarily store FEq in lFNeq (rectified later).
-            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, lVx, lVy, lVz, lFOld);
+            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
-              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = lFOld[ii];
-              lFNeq[ii] = lFNeq[ii] - lFOld[ii];
+              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = lFEq[ii];
+              lFNeq[ii] = lFOld[ii] - lFEq[ii];
+              lFOld[ii] = lFEq[ii];
             }
 
             UpdateMinsAndMaxes<tDoRayTracing> (lVx,

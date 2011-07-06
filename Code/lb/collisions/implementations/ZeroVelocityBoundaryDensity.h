@@ -47,24 +47,19 @@ namespace hemelb
           for (site_t iIndex = iFirstIndex; iIndex < (iFirstIndex + iSiteCount); iIndex++)
           {
             distribn_t* lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
-            distribn_t lFNeq[D3Q15::NUMVECTORS];
+            distribn_t lFNeq[D3Q15::NUMVECTORS], lFEq[D3Q15::NUMVECTORS];
             distribn_t lDensity;
 
             lDensity
                 = (*mInletOutletWallCollision).getBoundaryDensityArray(bLatDat->GetBoundaryId(iIndex));
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
-            {
-              lFNeq[ii] = lFOld[ii];
-            }
-
-            // Temporarily store FEq in FNeq
-            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, 0.0, 0.0, 0.0, lFOld);
+            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, 0.0, 0.0, 0.0, lFEq);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
-              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii];
-              lFNeq[ii] = lFNeq[ii] - lFOld[ii];
+              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFEq[ii];
+              lFNeq[ii] = lFOld[ii] - lFEq[ii];
+              lFOld[ii] = lFEq[ii];
             }
 
             UpdateMinsAndMaxes<tDoRayTracing> (0.0,
