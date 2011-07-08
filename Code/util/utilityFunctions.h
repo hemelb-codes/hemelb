@@ -60,17 +60,23 @@ namespace hemelb
          * The other two arguments for NewtonRaphson are the initial guess and desired accuracy.
          */
         template<class F>
-        static double NewtonRaphson(F* func, double x0, double acc)
+        static double NewtonRaphson(F* func,
+                                    double x0,
+                                    double alphaAcc,
+                                    double fAcc)
         {
-          double x = x0;
+          double x = x0, dx;
           double f, df;
+          (*func)(x, f, df);
 
           for (int i = 0; i < 20; i++)
           {
+            dx = f / df;
+            x -= dx;
+
             (*func)(x, f, df);
-            x0 = x;
-            x = x0 - (f / df);
-            if (fabs(x - x0) < acc)
+
+            if (fabs(dx) < alphaAcc || fabs(f) < fAcc)
             {
               return x;
             }
@@ -81,6 +87,89 @@ namespace hemelb
            */
 
           return x;
+        }
+
+        template<class F>
+        static double Brent(F* func, double xl, double xh, double alphaAcc, double fAcc)
+        {
+          double a = xl, fa;
+          double b = xh, fb;
+          double c = a, fc;
+          double d; // First set after first iteration hence mflag
+          double s, fs;
+
+          (*func)(a, fa);
+          (*func)(b, fb);
+          fc = fa;
+          fs = fb;
+
+          // The task of verifying whether a root is enclosed is left to caller
+
+          if (fabs(fa) < fabs(fb))
+          {
+            double temp = fa;
+            fa = fb;
+            fb = temp;
+            temp = a;
+            a = b;
+            b = temp;
+          }
+
+          bool mflag = true;
+
+          while (fabs(b - a) > alphaAcc /*&& fabs(fs) > fAcc*/)
+          {
+            if (fa != fc && fb != fc)
+            {
+              s = (a * fb * fc) / ( (fa - fb) * (fa - fc)) + (b * fa * fc) / ( (fb - fa)
+                  * (fb - fc)) + (c * fa * fb) / ( (fc - fa) * (fc - fb));
+            }
+            else
+            {
+              s = b - fb * (b - a) / (fb - fa);
+            }
+
+            if ( (a < b && s < (3 * a + b) / 4.0 && s > b) || (a > b && s > (3 * a + b) / 4.0 && s
+                < b) || (mflag && fabs(s - b) >= fabs(b - c) / 2.0) || (!mflag && fabs(s - b)
+                >= fabs(c - d) / 2.0) || (mflag && fabs(b - c) < alphaAcc) || (!mflag
+                && fabs(c - d) < alphaAcc))
+            {
+              s = (a + b) / 2.0;
+              mflag = true;
+            }
+            else
+            {
+              mflag = false;
+            }
+
+            (*func)(s, fs);
+            d = c;
+            c = b;
+            fc = fb;
+
+            if (fa * fs < 0)
+            {
+              b = s;
+              fb = fs;
+            }
+            else
+            {
+              a = s;
+              fa = fs;
+            }
+
+            if (fabs(fa) < fabs(fb))
+            {
+              double temp = fa;
+              fa = fb;
+              fb = temp;
+              temp = a;
+              a = b;
+              b = temp;
+            }
+          }
+
+          return s;
         }
     };
 
