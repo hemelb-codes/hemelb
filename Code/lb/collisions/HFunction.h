@@ -19,10 +19,12 @@ namespace hemelb
       class HFunction
       {
         public:
-          HFunction(const distribn_t* lF,const distribn_t* lFEq);
+          HFunction(const distribn_t* lF, const distribn_t* lFEq);
 
           void operator()(const double alpha, double &H, double &dH);
+          void operator()(const double alpha, double &H);
 
+          // TODO: Make private once testing finished
         private:
           const distribn_t* mF;
           const distribn_t* mFEq;
