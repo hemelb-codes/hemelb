@@ -7,8 +7,8 @@ namespace hemelb
     namespace collisions
     {
 
-      HFunction::HFunction(const distribn_t* lF,const  distribn_t* lFEq)
-      : mF(lF), mFEq(lFEq)
+      HFunction::HFunction(const distribn_t* lF, const distribn_t* lFEq) :
+        mF(lF), mFEq(lFEq)
       {
       }
 
@@ -39,9 +39,29 @@ namespace hemelb
         }
       }
 
+      void HFunction::operator()(const double alpha, double &H)
+      {
+        double f_alpha = mF[0] + alpha * (mFEq[0] - mF[0]);
+        H = h(fabs(f_alpha), 9.0 / 2.0) - h(mF[0], 9.0 / 2.0);
+
+        for (int i = 1; i < 7; i++)
+        {
+          f_alpha = mF[i] + alpha * (mFEq[i] - mF[i]);
+          H += h(fabs(f_alpha), 9.0) - h(mF[i], 9.0);
+        }
+
+        for (int i = 7; i < 15; i++)
+        {
+          f_alpha = mF[i] + alpha * (mFEq[i] - mF[i]);
+          H += h(fabs(f_alpha), 72.0) - h(mF[i], 72.0);
+        }
+      }
+
       double HFunction::h(double fi, double wi_1)
       {
-        return (fi > 1.0E-10 ? (fi * log(fi * wi_1)) : 0.0);
+        return (fi > 1.0E-10
+          ? (fi * log(fi * wi_1))
+          : 0.0);
       }
 
     }
