@@ -41,7 +41,7 @@ namespace hemelb
           private:
             static double* alpha;
             static size_t currentAlphaIndex;
-
+            static double getAlpha(const distribn_t* lFOld,const  distribn_t* lFEq, double prevAlpha);
         };
 
       }

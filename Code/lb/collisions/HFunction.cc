@@ -57,6 +57,23 @@ namespace hemelb
         }
       }
 
+      double HFunction::evaluate()
+      {
+        double H = h(mF[0], 9.0 / 2.0);
+
+        for (int i = 1; i < 7; i++)
+        {
+          H += h(mF[i], 9.0);
+        }
+
+        for (int i = 7; i < 15; i++)
+        {
+          H += h(mF[i], 72.0);
+        }
+
+        return H;
+      }
+
       double HFunction::h(double fi, double wi_1)
       {
         return (fi > 1.0E-10

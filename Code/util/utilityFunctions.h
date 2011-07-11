@@ -51,7 +51,11 @@ namespace hemelb
         {
           return max<T> (lowerBound, min(number, upperBound));
         }
+    };
 
+    class NumericalMethods
+    {
+      public:
         /*
          * The Newton_Raphson method takes in a functor with the operator () overloaded, which
          * should return void and take in three doubles: x, f, df. x is the variable to
@@ -60,23 +64,19 @@ namespace hemelb
          * The other two arguments for NewtonRaphson are the initial guess and desired accuracy.
          */
         template<class F>
-        static double NewtonRaphson(F* func,
-                                    double x0,
-                                    double alphaAcc,
-                                    double fAcc)
+        static double NewtonRaphson(F* func, double x0, double alphaAcc, double fAcc)
         {
           double x = x0, dx;
           double f, df;
-          (*func)(x, f, df);
 
           for (int i = 0; i < 20; i++)
           {
+            (*func)(x, f, df);
+
             dx = f / df;
             x -= dx;
 
-            (*func)(x, f, df);
-
-            if (fabs(dx) < alphaAcc || fabs(f) < fAcc)
+            if (fabs(dx) < alphaAcc)
             {
               return x;
             }
