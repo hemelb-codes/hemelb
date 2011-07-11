@@ -22,8 +22,6 @@ namespace hemelb
           protected:
             CollisionOperator();
 
-            static double getAlpha(const distribn_t* lFOld,const  distribn_t* lFEq, double prevAlpha);
-
         };
 
       }
