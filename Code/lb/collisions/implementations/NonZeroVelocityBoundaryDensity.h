@@ -49,13 +49,14 @@ namespace hemelb
             distribn_t* lFOld = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
             distribn_t lFNeq[D3Q15::NUMVECTORS], lFEq[D3Q15::NUMVECTORS];
             distribn_t lVx, lVy, lVz, lDummyDensity, lDensity;
+            site_t siteIndex = lIndex - iFirstIndex;
 
             lDensity
                 = (*mInletOutletCollision).getBoundaryDensityArray(bLatDat->GetBoundaryId(lIndex));
 
             D3Q15::CalculateDensityAndVelocity(lFOld, lDummyDensity, lVx, lVy, lVz);
 
-            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, lIndex - iFirstIndex);
+            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, siteIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
@@ -63,6 +64,9 @@ namespace hemelb
               lFNeq[ii] = lFOld[ii] - lFEq[ii];
               lFOld[ii] = lFEq[ii];
             }
+
+            // lFOld is the post-collision, pre-streaming distribution
+            tCollisionOperator::doPostCalculations(lFOld, bLatDat, lIndex - iFirstIndex);
 
             UpdateMinsAndMaxes<tDoRayTracing> (lVx,
                                                lVy,

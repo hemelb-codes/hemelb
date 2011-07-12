@@ -152,10 +152,14 @@ namespace hemelb
 
       ReadParameters();
 
-      typedef hemelb::lb::collisions::implementations::ELBM CO;
-      if(typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
+      typedef hemelb::lb::collisions::implementations::ELBM<true> CO;
+      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM<true>))
       {
-        hemelb::lb::collisions::implementations::ELBM::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
+        hemelb::lb::collisions::implementations::ELBM<true>::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
+      }
+      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM<false>))
+      {
+        hemelb::lb::collisions::implementations::ELBM<false>::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
       }
 
       InitCollisions<hemelb::lb::collisions::implementations::SimpleCollideAndStream<CO>,
