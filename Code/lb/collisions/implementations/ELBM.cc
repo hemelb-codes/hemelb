@@ -45,6 +45,17 @@ namespace hemelb
           alpha[index] = getAlpha(f, f_eq, alpha[index]);
         }
 
+        void ELBM::doPostCalculations(const distribn_t* f,
+                                      const distribn_t &density,
+                                      const distribn_t &v_x,
+                                      const distribn_t &v_y,
+                                      const distribn_t &v_z,
+                                      distribn_t* f_eq,
+                                      const site_t index)
+        {
+
+        }
+
         // Also updates lFEq_i to be lFNeq_i
         distribn_t ELBM::getOperatorElement(distribn_t &f_i,
                                             distribn_t &f_eq_i,
@@ -73,10 +84,8 @@ namespace hemelb
 
           if (small)
           {
-            return 2.0;
-
-            double alphaLower = 1.8, HLower;
-            double alphaHigher = 2.2, HHigher;
+            double alphaLower = 1.9, HLower;
+            double alphaHigher = 2.1, HHigher;
 
             HFunc(alphaLower, HLower);
             HFunc(alphaHigher, HHigher);
@@ -87,11 +96,7 @@ namespace hemelb
             if (HLower * HHigher >= 0.0)
               return 2.0;
 
-            return (hemelb::util::NumericalMethods::Brent(&HFunc,
-                                                          alphaLower,
-                                                          alphaHigher,
-                                                          1.0E-3,
-                                                          1.0E-10));
+            return (hemelb::util::NumericalMethods::Brent(&HFunc, alphaLower, alphaHigher, 1.0E-3));
           }
           else
           {
@@ -101,10 +106,7 @@ namespace hemelb
               : prevAlpha);
 
             // Accuracy is set to 1.0E-3 as this works for difftest.
-            return (hemelb::util::NumericalMethods::NewtonRaphson(&HFunc,
-                                                                  prevAlpha,
-                                                                  1.0E-3,
-                                                                  1.0E-10));
+            return (hemelb::util::NumericalMethods::NewtonRaphson(&HFunc, prevAlpha, 1.0E-3));
           }
 
         }
