@@ -67,7 +67,7 @@ ConfigWriter::ConfigWriter(const std::string& OutputConfigFile, int StressType,
 
 ConfigWriter::~ConfigWriter() {
 	delete this->headerEncoder;
-	delete this->headerBuffer;
+	delete[] this->headerBuffer;
 	// Check this is still here as Close() will delete this
 	if (this->bodyFile != NULL)
 		std::fclose(this->bodyFile);
