@@ -6,6 +6,7 @@
 #include "net/net.h"
 #include "steering/ImageSendComponent.h"
 #include "steering/SteeringComponent.h"
+#include "lb/collisions/implementations/ELBM.h"
 
 class SimulationMaster
 {

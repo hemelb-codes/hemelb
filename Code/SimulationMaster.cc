@@ -681,4 +681,6 @@ void SimulationMaster::PrintTimingData()
               lMaxes[ii]);
     }
   }
+
+  hemelb::lb::collisions::implementations::ELBM<true>::printHViolations();
 }

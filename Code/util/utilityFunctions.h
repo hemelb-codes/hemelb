@@ -64,7 +64,7 @@ namespace hemelb
          * The other two arguments for NewtonRaphson are the initial guess and desired accuracy.
          */
         template<class F>
-        static double NewtonRaphson(F* func, double x0, double alphaAcc, double fAcc)
+        static double NewtonRaphson(F* func, double x0, double alphaAcc)
         {
           double x = x0, dx;
           double f, df;
@@ -90,7 +90,7 @@ namespace hemelb
         }
 
         template<class F>
-        static double Brent(F* func, double xl, double xh, double alphaAcc, double fAcc)
+        static double Brent(F* func, double xl, double xh, double alphaAcc)
         {
           double a = xl, fa;
           double b = xh, fb;
@@ -117,7 +117,7 @@ namespace hemelb
 
           bool mflag = true;
 
-          while (fabs(b - a) > alphaAcc /*&& fabs(fs) > fAcc*/)
+          while (fabs(b - a) > alphaAcc)
           {
             if (fa != fc && fb != fc)
             {

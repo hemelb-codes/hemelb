@@ -32,6 +32,10 @@ namespace hemelb
                                               distribn_t* f_eq,
                                               const site_t index);
 
+            static void doPostCalculations(const distribn_t* f,
+                                           const geometry::LatticeData* bLatDat,
+                                           const site_t inde);
+
             static distribn_t getOperatorElement(distribn_t &f_i,
                                                  distribn_t &f_eq_i,
                                                  const LbmParameters* iLbmParams);
