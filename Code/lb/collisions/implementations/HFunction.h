@@ -23,7 +23,7 @@ namespace hemelb
 
           void operator()(const double alpha, double &H, double &dH);
           void operator()(const double alpha, double &H);
-          double evaluate();
+          double eval();
 
           // TODO: Make private once testing finished
         private:
