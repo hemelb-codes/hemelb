@@ -8,7 +8,6 @@ TARGETS := Collision.o \
 	   InletOutletWallCollision.o \
 	   MidFluidCollision.o \
 	   WallCollision.o \
-	   HFunction.o \
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
