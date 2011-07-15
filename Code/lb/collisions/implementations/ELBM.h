@@ -2,6 +2,7 @@
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_ELBM_H
 
 #include "lb/collisions/implementations/CollisionOperator.h"
+#include <cstdlib>
 
 namespace hemelb
 {

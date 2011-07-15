@@ -1,4 +1,6 @@
 #include "lb/collisions/implementations/ELBM.h"
+#include "lb/collisions/implementations/HFunction.h"
+#include "util/utilityFunctions.h"
 
 namespace hemelb
 {
@@ -73,8 +75,6 @@ namespace hemelb
 
           if (small)
           {
-            return 2.0;
-
             double alphaLower = 1.8, HLower;
             double alphaHigher = 2.2, HHigher;
 
@@ -90,8 +90,7 @@ namespace hemelb
             return (hemelb::util::NumericalMethods::Brent(&HFunc,
                                                           alphaLower,
                                                           alphaHigher,
-                                                          1.0E-3,
-                                                          1.0E-10));
+                                                          1.0E-3));
           }
           else
           {
@@ -103,8 +102,7 @@ namespace hemelb
             // Accuracy is set to 1.0E-3 as this works for difftest.
             return (hemelb::util::NumericalMethods::NewtonRaphson(&HFunc,
                                                                   prevAlpha,
-                                                                  1.0E-3,
-                                                                  1.0E-10));
+                                                                  1.0E-3));
           }
 
         }

@@ -1,4 +1,4 @@
-#include "lb/collisions/HFunction.h"
+#include "lb/collisions/implementations/HFunction.h"
 
 namespace hemelb
 {
@@ -57,7 +57,7 @@ namespace hemelb
         }
       }
 
-      double HFunction::evaluate()
+      double HFunction::eval()
       {
         double H = h(mF[0], 9.0 / 2.0);
 
