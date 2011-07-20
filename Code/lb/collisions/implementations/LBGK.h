@@ -33,7 +33,7 @@ namespace hemelb
                                               const site_t index);
 
             static distribn_t getOperatorElement(distribn_t &f_i,
-                                                 distribn_t &f_eq_i,
+                                                 distribn_t &f_neq_i,
                                                  const LbmParameters* iLbmParams);
 
         };

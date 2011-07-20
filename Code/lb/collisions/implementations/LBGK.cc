@@ -33,10 +33,10 @@ namespace hemelb
 
         // Also updates f_eq to be f_i
         distribn_t LBGK::getOperatorElement(distribn_t &f_i,
-                                            distribn_t &f_eq_i,
+                                            distribn_t &f_neq_i,
                                             const LbmParameters* iLbmParams)
         {
-          return (iLbmParams->Omega * (f_eq_i = f_i - f_eq_i));
+          return (iLbmParams->Omega * f_neq_i);
         }
 
       }
