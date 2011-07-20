@@ -47,12 +47,11 @@ namespace hemelb
           alpha[index] = getAlpha(f, f_eq, alpha[index]);
         }
 
-        // Also updates lFEq_i to be lFNeq_i
         distribn_t ELBM::getOperatorElement(distribn_t &f_i,
-                                            distribn_t &f_eq_i,
+                                            distribn_t &f_neq_i,
                                             const LbmParameters* iLbmParams)
         {
-          return (alpha[currentAlphaIndex] * iLbmParams->Beta * (f_eq_i = f_i - f_eq_i));
+          return (alpha[currentAlphaIndex] * iLbmParams->Beta * f_neq_i);
         }
 
         double ELBM::getAlpha(const distribn_t* lF, const distribn_t* lFEq, double prevAlpha)

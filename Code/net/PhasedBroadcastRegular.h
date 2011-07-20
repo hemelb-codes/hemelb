@@ -16,6 +16,7 @@ namespace hemelb
     class PhasedBroadcastRegular : public PhasedBroadcast<initialAction, splay, overlap, goDown,
         goUp>
     {
+      protected:
         // Typedef for the base class type, for convenience.
         typedef PhasedBroadcast<initialAction, splay, overlap, goDown, goUp> base;
 

@@ -48,15 +48,15 @@ namespace hemelb
           {
             distribn_t* lFOld = bLatDat->GetFOld(iIndex * D3Q15::NUMVECTORS);
             distribn_t lDensity, lVx, lVy, lVz;
-            distribn_t lFNeq[D3Q15::NUMVECTORS];
+            distribn_t lFNeq[D3Q15::NUMVECTORS], lFEq[D3Q15::NUMVECTORS];
             double alpha;
 
-            // Temporarily store f_eq in f_neq (rectified in next statement)
-            tCollisionOperator::getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFNeq, iIndex - iFirstIndex);
+            tCollisionOperator::getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, iIndex
+                - iFirstIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
-              // This also rectifies the lFNeq to actually store lFNeq and not lFEq
+              lFNeq[ii] = lFOld[ii] - lFEq[ii];
               * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
                   += tCollisionOperator::getOperatorElement(lFOld[ii], lFNeq[ii], iLbmParams);
             }
