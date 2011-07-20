@@ -152,7 +152,7 @@ namespace hemelb
 
       ReadParameters();
 
-      typedef hemelb::lb::collisions::implementations::ELBM CO;
+      typedef hemelb::lb::collisions::implementations::LBGK CO;
       if(typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
       {
         hemelb::lb::collisions::implementations::ELBM::createAlphaArray(mLatDat->GetLocalFluidSiteCount());

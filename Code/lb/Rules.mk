@@ -7,6 +7,7 @@ SUBDIRS := collisions
 $(TARGETS)_DEPS = lb.o \
                   io.o \
                   StabilityTester.o \
+                  EntropyTester.o \
                   SimulationState.o \
 		  $(foreach sd,$(SUBDIRS_$(d)),$(call subtree_tgts,$(sd)))
 
