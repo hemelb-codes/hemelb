@@ -98,9 +98,12 @@ namespace hemelb
 
         void initLayers();
         void Render();
+        ScreenPixels* GetReceiveBuffer(unsigned int startIteration, unsigned int child);
         ScreenPixels* GetPixFromBuffer();
 
-        ScreenPixels recvBuffers[SPREADFACTOR];
+        // Because of the 2-splay, we need to have two sets of receive buffers, so that comms
+        // on consecutive iterations don't overwrite one another.
+        ScreenPixels recvBuffers[2][SPREADFACTOR];
 
         std::stack<ScreenPixels*> pixelsBuffer;
         std::map<unsigned long, ScreenPixels*> resultsByStartIt;
