@@ -217,8 +217,9 @@ namespace hemelb
         unsigned int counts[SPREADFACTOR];
         for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
         {
-          recvBuffers[ii].Reset();
-          childNumbers[ii] = recvBuffers[ii].GetStoredPixelCountPtr();
+          ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, ii);
+          recvBuffer->Reset();
+          childNumbers[ii] = recvBuffer->GetStoredPixelCountPtr();
           counts[ii] = 1;
         }
 
@@ -232,11 +233,14 @@ namespace hemelb
         unsigned int counts[SPREADFACTOR];
         for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
         {
-          childData[ii] = recvBuffers[ii].GetPixelArray();
-          counts[ii] = recvBuffers[ii].GetStoredPixelCount();
-        }
+          ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, ii);
+          childData[ii] = recvBuffer->GetPixelArray();
+          counts[ii] = recvBuffer->GetStoredPixelCount();
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel data.");
+          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel data (from it %li, %li pixels).",
+                                                        startIteration,
+                                                        recvBuffer->GetStoredPixelCount());
+        }
 
         ReceiveFromChildren<ColPixel> (childData, counts);
       }
@@ -251,13 +255,17 @@ namespace hemelb
       ScreenPixels* pixels = resultsByStartIt[startIteration];
       if (splayNumber == 0)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count.");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count (from it %li, %li pixels).",
+                                                      startIteration,
+                                                      pixels->GetStoredPixelCount());
 
         SendToParent<unsigned int> (pixels->GetStoredPixelCountPtr(), 1);
       }
       else if (splayNumber == 1)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data.");
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data (from it %li, %li pixels).",
+                                                      startIteration,
+                                                      pixels->GetStoredPixelCount());
 
         SendToParent<ColPixel> (pixels->GetPixelArray(), pixels->GetStoredPixelCount());
       }
@@ -269,6 +277,12 @@ namespace hemelb
     {
       timeSpent -= util::myClock();
 
+      // The first time round, ensure that we have enough memory to receive the image data that
+      // will come next time.
+      if (splayNumber == 0)
+      {
+
+      }
       if (splayNumber == 1)
       {
         ScreenPixels* pixels = resultsByStartIt[startIteration];
@@ -277,7 +291,7 @@ namespace hemelb
 
         for (unsigned int child = 0; child < SPREADFACTOR; ++child)
         {
-          pixels->FoldIn(&recvBuffers[child], &mVisSettings);
+          pixels->FoldIn(GetReceiveBuffer(startIteration, child), &mVisSettings);
         }
       }
 
@@ -357,6 +371,7 @@ namespace hemelb
        * This continues until all data is passed back to processor one, which passes it to proc 0.
        */
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
+      ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, 0);
 
       // Start with a difference in rank of 1, doubling every time.
       for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
@@ -391,25 +406,20 @@ namespace hemelb
           // If we're the receiving proc, receive.
           else if (netTop->GetLocalRank() == receivingProc)
           {
-            MPI_Recv(recvBuffers[0].GetStoredPixelCountPtr(),
+            MPI_Recv(recvBuffer->GetStoredPixelCountPtr(),
                      1,
-                     MpiDataType(recvBuffers[0].GetStoredPixelCount()),
+                     MpiDataType(recvBuffer->GetStoredPixelCount()),
                      sendingProc,
                      20,
                      MPI_COMM_WORLD,
                      &status);
 
-            if (recvBuffers[0].GetStoredPixelCount() > 0)
+            if (recvBuffer->GetStoredPixelCount() > 0)
             {
-              MPI_Recv(recvBuffers[0].GetPixelArray(),
-                       recvBuffers[0].GetStoredPixelCount(),
-                       MpiDataType<ColPixel> (),
-                       sendingProc,
-                       20,
-                       MPI_COMM_WORLD,
-                       &status);
+              MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
+                  ColPixel> (), sendingProc, 20, MPI_COMM_WORLD, &status);
 
-              mScreen.pixels->FoldIn(&recvBuffers[0], &mVisSettings);
+              mScreen.pixels->FoldIn(recvBuffer, &mVisSettings);
             }
           }
         }
@@ -439,25 +449,20 @@ namespace hemelb
       // Receive the final image on proc 0.
       else if (netTop->GetLocalRank() == 0)
       {
-        MPI_Recv(recvBuffers[0].GetStoredPixelCountPtr(),
+        MPI_Recv(recvBuffer->GetStoredPixelCountPtr(),
                  1,
-                 MpiDataType(recvBuffers[0].GetStoredPixelCount()),
+                 MpiDataType(recvBuffer->GetStoredPixelCount()),
                  1,
                  20,
                  MPI_COMM_WORLD,
                  &status);
 
-        if (recvBuffers[0].GetStoredPixelCount() > 0)
+        if (recvBuffer->GetStoredPixelCount() > 0)
         {
-          MPI_Recv(recvBuffers[0].GetPixelArray(),
-                   recvBuffers[0].GetStoredPixelCount(),
-                   MpiDataType<ColPixel> (),
-                   1,
-                   20,
-                   MPI_COMM_WORLD,
-                   &status);
+          MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
+              ColPixel> (), 1, 20, MPI_COMM_WORLD, &status);
 
-          mScreen.pixels->FoldIn(&recvBuffers[0], &mVisSettings);
+          mScreen.pixels->FoldIn(recvBuffer, &mVisSettings);
         }
 
         ScreenPixels* pix;
@@ -513,6 +518,11 @@ namespace hemelb
     double Control::GetTimeSpent() const
     {
       return timeSpent;
+    }
+
+    ScreenPixels* Control::GetReceiveBuffer(unsigned int startIteration, unsigned int child)
+    {
+      return &recvBuffers[startIteration % 2][child];
     }
 
     void Control::Reset()
