@@ -5,6 +5,7 @@ syntax: glob
 *~
 build/*
 Code/client/displayClient
+Code/parmetis/build/*
 Code/parmetis/libmetis.a
 Code/parmetis/libparmetis.a
 Code/parmetis/Graphs/*3.2.0
