@@ -106,7 +106,7 @@ namespace hemelb
       else
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s",
-                                                        bSimConfig->DataFilePath.c_str());
+                                                      bSimConfig->DataFilePath.c_str());
       }
       fflush(NULL);
 
@@ -962,14 +962,14 @@ namespace hemelb
                                                                   GlobalLatticeData* bGlobLatDat)
     {
       // Get some arrays that ParMetis needs.
-      idxtype* vtxDistribn = new idxtype[mTopologySize + 1];
+      idx_t* vtxDistribn = new idx_t[mTopologySize + 1];
 
       GetSiteDistributionArray(vtxDistribn,
                                bGlobLatDat->GetBlockCount(),
                                procForEachBlock,
                                sitesPerBlock);
 
-      idxtype* firstSiteIndexPerBlock = new idxtype[bGlobLatDat->GetBlockCount()];
+      idx_t* firstSiteIndexPerBlock = new idx_t[bGlobLatDat->GetBlockCount()];
 
       GetFirstSiteIndexOnEachBlock(firstSiteIndexPerBlock,
                                    bGlobLatDat->GetBlockCount(),
@@ -977,10 +977,10 @@ namespace hemelb
                                    procForEachBlock,
                                    sitesPerBlock);
 
-      idxtype localVertexCount = vtxDistribn[mTopologyRank + 1] - vtxDistribn[mTopologyRank];
+      idx_t localVertexCount = vtxDistribn[mTopologyRank + 1] - vtxDistribn[mTopologyRank];
 
-      idxtype* adjacenciesPerVertex = new idxtype[localVertexCount + 1U];
-      idxtype* localAdjacencies;
+      idx_t* adjacenciesPerVertex = new idx_t[localVertexCount + 1U];
+      idx_t* localAdjacencies;
 
       GetAdjacencyData(adjacenciesPerVertex,
                        localAdjacencies,
@@ -995,7 +995,7 @@ namespace hemelb
       }
 
       // Call parmetis.
-      idxtype* partitionVector = new idxtype[localVertexCount];
+      idx_t* partitionVector = new idx_t[localVertexCount];
 
       CallParmetis(partitionVector,
                    localVertexCount,
@@ -1007,15 +1007,15 @@ namespace hemelb
       delete[] adjacenciesPerVertex;
 
       // Convert the ParMetis results into a nice format.
-      idxtype* allMoves = new idxtype[mTopologySize];
+      idx_t* allMoves = new idx_t[mTopologySize];
 
-      idxtype* movesList = GetMovesList(allMoves,
-                                        firstSiteIndexPerBlock,
-                                        procForEachBlock,
-                                        sitesPerBlock,
-                                        vtxDistribn,
-                                        partitionVector,
-                                        bGlobLatDat);
+      idx_t* movesList = GetMovesList(allMoves,
+                                      firstSiteIndexPerBlock,
+                                      procForEachBlock,
+                                      sitesPerBlock,
+                                      vtxDistribn,
+                                      partitionVector,
+                                      bGlobLatDat);
 
       delete[] firstSiteIndexPerBlock;
       delete[] vtxDistribn;
@@ -1047,7 +1047,7 @@ namespace hemelb
      * @param procForEachBlock
      * @param sitesPerBlock
      */
-    void LatticeData::GeometryReader::GetSiteDistributionArray(idxtype* vertexDistribn,
+    void LatticeData::GeometryReader::GetSiteDistributionArray(idx_t* vertexDistribn,
                                                                const site_t blockCount,
                                                                const proc_t* procForEachBlock,
                                                                const site_t* sitesPerBlock) const
@@ -1062,7 +1062,7 @@ namespace hemelb
       {
         if (procForEachBlock[ii] >= 0)
         {
-          vertexDistribn[1 + procForEachBlock[ii]] += (idxtype) sitesPerBlock[ii];
+          vertexDistribn[1 + procForEachBlock[ii]] += (idx_t) sitesPerBlock[ii];
         }
       }
 
@@ -1078,7 +1078,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the vertex distribution.");
 
         // vtxDistribn should be the same on all cores.
-        idxtype* vtxDistribnRecv = new idxtype[mTopologySize + 1];
+        idx_t* vtxDistribnRecv = new idx_t[mTopologySize + 1];
 
         MPI_Allreduce(vertexDistribn,
                       vtxDistribnRecv,
@@ -1102,9 +1102,9 @@ namespace hemelb
       }
     }
 
-    void LatticeData::GeometryReader::GetFirstSiteIndexOnEachBlock(idxtype* firstSiteIndexPerBlock,
+    void LatticeData::GeometryReader::GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
                                                                    const site_t blockCount,
-                                                                   const idxtype* vertexDistribution,
+                                                                   const idx_t* vertexDistribution,
                                                                    const proc_t* procForEachBlock,
                                                                    const site_t* sitesPerBlock) const
     {
@@ -1127,7 +1127,7 @@ namespace hemelb
         }
         else
         {
-          firstSiteIndexPerBlock[ii] = (idxtype) firstSiteOnProc[proc];
+          firstSiteIndexPerBlock[ii] = (idx_t) firstSiteOnProc[proc];
           firstSiteOnProc[proc] += sitesPerBlock[ii];
         }
       }
@@ -1140,7 +1140,7 @@ namespace hemelb
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating the firstSiteIndexPerBlock values.");
 
-        idxtype* firstSiteIndexPerBlockRecv = new idxtype[blockCount];
+        idx_t* firstSiteIndexPerBlockRecv = new idx_t[blockCount];
 
         // Reduce finding the maximum across all nodes. Note that we have to use the maximum
         // because some cores will have -1 for a block (indicating that it has no neighbours on
@@ -1166,18 +1166,18 @@ namespace hemelb
       }
     }
 
-    void LatticeData::GeometryReader::GetAdjacencyData(idxtype* adjacenciesPerVertex,
-                                                       idxtype* &localAdjacencies,
-                                                       const idxtype localVertexCount,
+    void LatticeData::GeometryReader::GetAdjacencyData(idx_t* adjacenciesPerVertex,
+                                                       idx_t* &localAdjacencies,
+                                                       const idx_t localVertexCount,
                                                        const proc_t* procForEachBlock,
-                                                       const idxtype* firstSiteIndexPerBlock,
+                                                       const idx_t* firstSiteIndexPerBlock,
                                                        const GlobalLatticeData* bGlobLatDat) const
     {
-      std::vector<idxtype> adj;
+      std::vector<idx_t> adj;
 
-      idxtype totalAdjacencies = 0;
+      idx_t totalAdjacencies = 0;
       adjacenciesPerVertex[0] = 0;
-      idxtype lFluidVertex = 0;
+      idx_t lFluidVertex = 0;
       site_t n = -1;
 
       // For each block (counting up by lowest site id)...
@@ -1274,14 +1274,14 @@ namespace hemelb
 
                     // then add this to the list of adjacencies.
                     ++totalAdjacencies;
-                    adj.push_back((idxtype) neighGlobalSiteId);
+                    adj.push_back((idx_t) neighGlobalSiteId);
                   }
 
                   // The cumulative count of adjacencies for this vertex is equal to the total
                   // number of adjacencies we've entered.
                   // NOTE: The prefix operator is correct here because
                   // the array has a leading 0 not relating to any site.
-                  adjacenciesPerVertex[++lFluidVertex] = (idxtype) totalAdjacencies;
+                  adjacenciesPerVertex[++lFluidVertex] = (idx_t) totalAdjacencies;
                 }
               }
             }
@@ -1299,18 +1299,18 @@ namespace hemelb
         }
       }
 
-      localAdjacencies = new idxtype[totalAdjacencies];
-      for (idxtype ii = 0; ii < totalAdjacencies; ++ii)
+      localAdjacencies = new idx_t[totalAdjacencies];
+      for (idx_t ii = 0; ii < totalAdjacencies; ++ii)
       {
         localAdjacencies[ii] = adj[ii];
       }
     }
 
-    void LatticeData::GeometryReader::CallParmetis(idxtype* partitionVector,
-                                                   idxtype localVertexCount,
-                                                   idxtype* vtxDistribn,
-                                                   idxtype* adjacenciesPerVertex,
-                                                   idxtype* adjacencies)
+    void LatticeData::GeometryReader::CallParmetis(idx_t* partitionVector,
+                                                   idx_t localVertexCount,
+                                                   idx_t* vtxDistribn,
+                                                   idx_t* adjacenciesPerVertex,
+                                                   idx_t* adjacencies)
     {
       // From the ParMETIS documentation:
       // --------------------------------
@@ -1336,33 +1336,33 @@ namespace hemelb
 
 
       // Initialise the partition vector.
-      for (idxtype ii = 0; ii < localVertexCount; ++ii)
+      for (idx_t ii = 0; ii < localVertexCount; ++ii)
       {
         partitionVector[ii] = mTopologyRank;
       }
 
       // Weight all vertices evenly.
-      idxtype* vertexWeight = new idxtype[localVertexCount];
-      for (idxtype ii = 0; ii < localVertexCount; ++ii)
+      idx_t* vertexWeight = new idx_t[localVertexCount];
+      for (idx_t ii = 0; ii < localVertexCount; ++ii)
       {
         vertexWeight[ii] = 1;
       }
 
       // Set the weights of each partition to be even, and to sum to 1.
-      idxtype desiredPartitionSize = mTopologySize;
+      idx_t desiredPartitionSize = mTopologySize;
 
-      float* domainWeights = new float[desiredPartitionSize];
-      for (idxtype ii = 0; ii < desiredPartitionSize; ++ii)
+      real_t* domainWeights = new real_t[desiredPartitionSize];
+      for (idx_t ii = 0; ii < desiredPartitionSize; ++ii)
       {
-        domainWeights[ii] = 1.0F / ((float) desiredPartitionSize);
+        domainWeights[ii] = 1.0 / ((real_t) desiredPartitionSize);
       }
 
       // A bunch of values ParMetis needs.
-      idxtype noConstraints = 1;
-      idxtype weightFlag = 2;
-      idxtype numberingFlag = 0;
-      idxtype edgesCut = 0;
-      idxtype options[4] = { 0, 0, 0, 0 };
+      idx_t noConstraints = 1;
+      idx_t weightFlag = 2;
+      idx_t numberingFlag = 0;
+      idx_t edgesCut = 0;
+      idx_t options[4] = { 0, 0, 0, 0 };
 
       if (log::Logger::ShouldDisplay<log::Debug>())
       {
@@ -1372,7 +1372,7 @@ namespace hemelb
         options[1] = 1 | 2 | 4 | 8 | 32 | 64;
       }
 
-      float tolerance = 1.001F;
+      real_t tolerance = 1.001F;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Calling ParMetis");
       ParMETIS_V3_PartKway(vtxDistribn,
@@ -1396,10 +1396,10 @@ namespace hemelb
       delete[] vertexWeight;
     }
 
-    void LatticeData::GeometryReader::ValidateGraphData(idxtype* vtxDistribn,
-                                                        idxtype localVertexCount,
-                                                        idxtype* adjacenciesPerVertex,
-                                                        idxtype* adjacencies)
+    void LatticeData::GeometryReader::ValidateGraphData(idx_t* vtxDistribn,
+                                                        idx_t localVertexCount,
+                                                        idx_t* adjacenciesPerVertex,
+                                                        idx_t* adjacencies)
     {
       // If we're using debugging logs, check that the arguments are consistent across all cores.
       // To verify: vtxDistribn, adjacenciesPerVertex, adjacencies
@@ -1409,23 +1409,23 @@ namespace hemelb
 
         // Create an array of lists to store all of this node's adjacencies, arranged by the
         // proc the adjacent vertex is on.
-        std::multimap<idxtype, idxtype>* adjByNeighProc =
-            new std::multimap<idxtype, idxtype>[mTopologySize];
+        std::multimap<idx_t, idx_t>* adjByNeighProc =
+            new std::multimap<idx_t, idx_t>[mTopologySize];
         for (proc_t ii = 0; ii < (proc_t) mTopologySize; ++ii)
         {
-          adjByNeighProc[ii] = std::multimap<idxtype, idxtype>();
+          adjByNeighProc[ii] = std::multimap<idx_t, idx_t>();
         }
 
         // The adjacency data should correspond across all cores.
-        for (idxtype index = 0; index < localVertexCount; ++index)
+        for (idx_t index = 0; index < localVertexCount; ++index)
         {
-          idxtype vertex = vtxDistribn[mTopologyRank] + index;
+          idx_t vertex = vtxDistribn[mTopologyRank] + index;
 
           // Iterate over each adjacency (of each vertex).
-          for (idxtype adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1]
+          for (idx_t adjNumber = 0; adjNumber < (adjacenciesPerVertex[index + 1]
               - adjacenciesPerVertex[index]); ++adjNumber)
           {
-            idxtype adjacentVertex = adjacencies[adjacenciesPerVertex[index] + adjNumber];
+            idx_t adjacentVertex = adjacencies[adjacenciesPerVertex[index] + adjNumber];
             proc_t adjacentProc = -1;
 
             // Calculate the proc of the neighbouring vertex.
@@ -1448,13 +1448,13 @@ namespace hemelb
             }
 
             // Store the data if it does belong to a proc.
-            adjByNeighProc[adjacentProc].insert(std::pair<idxtype, idxtype>(adjacentVertex, vertex));
+            adjByNeighProc[adjacentProc].insert(std::pair<idx_t, idx_t>(adjacentVertex, vertex));
           }
         }
 
         // Create variables for the neighbour data to go into.
-        idxtype* counts = new idxtype[mTopologySize];
-        idxtype** data = new idxtype*[mTopologySize];
+        idx_t* counts = new idx_t[mTopologySize];
+        idx_t** data = new idx_t*[mTopologySize];
         MPI_Request* requests = new MPI_Request[2 * mTopologySize];
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Validating neighbour data");
@@ -1480,11 +1480,11 @@ namespace hemelb
                       &requests[2 * neigh]);
 
             // Create a sendable array (std::lists aren't organised in a sendable format).
-            data[neigh] = new idxtype[counts[neigh]];
+            data[neigh] = new idx_t[counts[neigh]];
 
             unsigned int ii = 0;
 
-            for (std::multimap<idxtype, idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
                 != adjByNeighProc[neigh].end(); ++it)
 
             {
@@ -1496,7 +1496,7 @@ namespace hemelb
             // Send the data to the neighbour.
             MPI_Isend(data[neigh],
                       (int) counts[neigh],
-                      MpiDataType<idxtype> (),
+                      MpiDataType<idx_t> (),
                       neigh,
                       43,
                       mTopologyComm,
@@ -1519,11 +1519,11 @@ namespace hemelb
 
             MPI_Wait(&requests[2 * neigh], MPI_STATUS_IGNORE);
 
-            data[neigh] = new idxtype[counts[neigh]];
+            data[neigh] = new idx_t[counts[neigh]];
 
             MPI_Irecv(data[neigh],
                       (int) counts[neigh],
-                      MpiDataType<idxtype> (),
+                      MpiDataType<idx_t> (),
                       neigh,
                       43,
                       mTopologyComm,
@@ -1537,10 +1537,10 @@ namespace hemelb
           else
           {
             counts[neigh] = 2 * adjByNeighProc[neigh].size();
-            data[neigh] = new idxtype[counts[neigh]];
+            data[neigh] = new idx_t[counts[neigh]];
 
             int ii = 0;
-            for (std::multimap<idxtype, idxtype>::iterator it = adjByNeighProc[neigh].begin(); it
+            for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
                 != adjByNeighProc[neigh].end(); ++it)
 
             {
@@ -1552,17 +1552,17 @@ namespace hemelb
 
           // Now we compare. First go through the received data which is ordered as (adjacent
           // vertex, vertex) wrt the neighbouring proc.
-          for (idxtype ii = 0; ii < counts[neigh]; ii += 2)
+          for (idx_t ii = 0; ii < counts[neigh]; ii += 2)
           {
             bool found = false;
 
             // Go through each neighbour we know about on this proc, and check whether it
             // matches the current received neighbour-data.
-            for (std::multimap<idxtype, idxtype>::iterator it =
+            for (std::multimap<idx_t, idx_t>::iterator it =
                 adjByNeighProc[neigh].find(data[neigh][ii + 1]); it != adjByNeighProc[neigh].end(); ++it)
             {
-              idxtype recvAdj = it -> first;
-              idxtype recvAdj2 = it->second;
+              idx_t recvAdj = it -> first;
+              idx_t recvAdj2 = it->second;
 
               if (data[neigh][ii] == recvAdj2 && data[neigh][ii + 1] == recvAdj)
               {
@@ -1583,11 +1583,11 @@ namespace hemelb
           }
 
           // The local store of adjacencies should now be empty, if there was complete matching.
-          std::multimap<idxtype, idxtype>::iterator it = adjByNeighProc[neigh].begin();
+          std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin();
           while (it != adjByNeighProc[neigh].end())
           {
-            idxtype adj1 = it->first;
-            idxtype adj2 = it->second;
+            idx_t adj1 = it->first;
+            idx_t adj2 = it->second;
             ++it;
 
             // We had neighbour-data on this proc that didn't match that received.
@@ -1630,33 +1630,33 @@ namespace hemelb
      * @param partitionVector
      * @return
      */
-    idxtype* LatticeData::GeometryReader::GetMovesList(idxtype* movesFromEachProc,
-                                                       const idxtype* firstSiteIndexPerBlock,
-                                                       const proc_t* procForEachBlock,
-                                                       const site_t* sitesPerBlock,
-                                                       const idxtype* vtxDistribn,
-                                                       const idxtype* partitionVector,
-                                                       const GlobalLatticeData* bGlobLatDat)
+    idx_t* LatticeData::GeometryReader::GetMovesList(idx_t* movesFromEachProc,
+                                                     const idx_t* firstSiteIndexPerBlock,
+                                                     const proc_t* procForEachBlock,
+                                                     const site_t* sitesPerBlock,
+                                                     const idx_t* vtxDistribn,
+                                                     const idx_t* partitionVector,
+                                                     const GlobalLatticeData* bGlobLatDat)
     {
       // Right. Let's count how many sites we're going to have to move. Count the local number of
       // sites to be moved, and collect the site id and the destination processor.
-      std::vector<idxtype> moveData;
+      std::vector<idx_t> moveData;
 
-      const idxtype myLowest = vtxDistribn[mTopologyRank];
-      const idxtype myHighest = vtxDistribn[mTopologyRank + 1] - 1;
+      const idx_t myLowest = vtxDistribn[mTopologyRank];
+      const idx_t myHighest = vtxDistribn[mTopologyRank + 1] - 1;
 
       // For each local fluid site...
-      for (idxtype ii = 0; ii <= (myHighest - myLowest); ++ii)
+      for (idx_t ii = 0; ii <= (myHighest - myLowest); ++ii)
       {
         // ... if it's going elsewhere...
         if (partitionVector[ii] != mTopologyRank)
         {
           // ... get it's id on the local processor...
-          idxtype localFluidSiteId = myLowest + ii;
+          idx_t localFluidSiteId = myLowest + ii;
 
           // ... find out which block it's on, by going through all blocks until we find one
           // with firstIdOnBlock <= localFluidSiteId < (firstIdOnBlock + sitesOnBlock)...
-          idxtype fluidSiteBlock = 0;
+          idx_t fluidSiteBlock = 0;
 
           while ( (procForEachBlock[fluidSiteBlock] < 0) || (firstSiteIndexPerBlock[fluidSiteBlock]
               > localFluidSiteId) || ( (firstSiteIndexPerBlock[fluidSiteBlock]
@@ -1667,8 +1667,8 @@ namespace hemelb
 
           // ... and find its site id within that block. Start by working out how many fluid sites
           // we have to pass before we arrive at the fluid site we're after...
-          idxtype fluidSitesToPass = localFluidSiteId - firstSiteIndexPerBlock[fluidSiteBlock];
-          idxtype lSiteIndex = 0;
+          idx_t fluidSitesToPass = localFluidSiteId - firstSiteIndexPerBlock[fluidSiteBlock];
+          idx_t lSiteIndex = 0;
 
           while (true)
           {
@@ -1728,7 +1728,7 @@ namespace hemelb
 
       // Spread the move-count data around, so all processes now how many moves each process is
       // doing.
-      idxtype moves = moveData.size() / 3;
+      idx_t moves = moveData.size() / 3;
       MPI_Allgather(&moves,
                     1,
                     MpiDataType(moves),
@@ -1738,7 +1738,7 @@ namespace hemelb
                     mTopologyComm);
 
       // Count the total moves.
-      idxtype totalMoves = 0;
+      idx_t totalMoves = 0;
 
       for (unsigned int ii = 0; ii < mTopologySize; ++ii)
       {
@@ -1747,11 +1747,11 @@ namespace hemelb
 
       // Now share all the lists of moves - create a MPI type...
       MPI_Datatype lMoveType;
-      MPI_Type_contiguous(3, MpiDataType<idxtype> (), &lMoveType);
+      MPI_Type_contiguous(3, MpiDataType<idx_t> (), &lMoveType);
       MPI_Type_commit(&lMoveType);
 
       // ... create a destination array...
-      idxtype* movesList = new idxtype[3 * totalMoves];
+      idx_t* movesList = new idx_t[3 * totalMoves];
 
       // ... create an array of offsets into the destination array for each rank...
       int* offsets = new int[mTopologySize];
@@ -1793,8 +1793,8 @@ namespace hemelb
     }
 
     void LatticeData::GeometryReader::RereadBlocks(GlobalLatticeData* bGlobLatDat,
-                                                   const idxtype* movesPerProc,
-                                                   const idxtype* movesList,
+                                                   const idx_t* movesPerProc,
+                                                   const idx_t* movesList,
                                                    const site_t* sitesPerBlock,
                                                    const unsigned int* bytesPerBlock,
                                                    const int* procForEachBlock)
@@ -1809,17 +1809,17 @@ namespace hemelb
 
       // Set the proc for each block to be the current proc whenever a site on that block is
       // going to be moved to the current proc.
-      idxtype moveIndex = 0;
+      idx_t moveIndex = 0;
 
       for (unsigned int lFromProc = 0; lFromProc < mTopologySize; ++lFromProc)
       {
-        for (idxtype lMoveNumber = 0; lMoveNumber < movesPerProc[lFromProc]; ++lMoveNumber)
+        for (idx_t lMoveNumber = 0; lMoveNumber < movesPerProc[lFromProc]; ++lMoveNumber)
         {
-          idxtype block = movesList[3 * moveIndex];
-          idxtype toProc = movesList[3 * moveIndex + 2];
+          idx_t block = movesList[3 * moveIndex];
+          idx_t toProc = movesList[3 * moveIndex + 2];
           ++moveIndex;
 
-          if (toProc == (idxtype) mTopologyRank)
+          if (toProc == (idx_t) mTopologyRank)
           {
             newProcForEachBlock[block] = mTopologyRank;
           }
@@ -1839,8 +1839,8 @@ namespace hemelb
 
     void LatticeData::GeometryReader::ImplementMoves(GlobalLatticeData* bGlobLatDat,
                                                      const proc_t* procForEachBlock,
-                                                     const idxtype* movesFromEachProc,
-                                                     const idxtype* movesList) const
+                                                     const idx_t* movesFromEachProc,
+                                                     const idx_t* movesList) const
     {
       // First all, set the proc rank for each site to what it originally was before
       // domain decomposition optimisation. Go through each block...
@@ -1869,17 +1869,17 @@ namespace hemelb
       }
 
       // Now implement the moves suggested by parmetis.
-      idxtype moveIndex = 0;
+      idx_t moveIndex = 0;
 
       // For each source proc, go through as many moves as it had.
       for (unsigned int lFromProc = 0; lFromProc < mTopologySize; ++lFromProc)
       {
-        for (idxtype lMoveNumber = 0; lMoveNumber < movesFromEachProc[lFromProc]; ++lMoveNumber)
+        for (idx_t lMoveNumber = 0; lMoveNumber < movesFromEachProc[lFromProc]; ++lMoveNumber)
         {
           // For each move, get the block, site and destination proc.
-          idxtype block = movesList[3 * moveIndex];
-          idxtype site = movesList[3 * moveIndex + 1];
-          idxtype toProc = movesList[3 * moveIndex + 2];
+          idx_t block = movesList[3 * moveIndex];
+          idx_t site = movesList[3 * moveIndex + 1];
+          idx_t toProc = movesList[3 * moveIndex + 2];
 
           // Only implement the move if we have read that block's data.
           if (bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite != NULL)
@@ -1891,7 +1891,7 @@ namespace hemelb
               if (bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
                   != ConvertTopologyRankToGlobalRank((proc_t) lFromProc))
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Block %" IDXTYPE_FORMAT ", site %" IDXTYPE_FORMAT " from move %u was originally on proc %i, not proc %u.",
+                log::Logger::Log<log::Debug, log::OnePerCore>("Block %ld, site %ld from move %u was originally on proc %i, not proc %u.",
                                                               block,
                                                               site,
                                                               moveIndex,

@@ -3,7 +3,7 @@
 
 #include <cstdio>
 
-#include "parmetis/parmetis.h"
+#include "parmetis.h"
 #include "D3Q15.h"
 #include "constants.h"
 #include "SimConfig.h"
@@ -307,10 +307,10 @@ namespace hemelb
                                              const proc_t* procForEachBlock,
                                              GlobalLatticeData* bGlobLatDat);
 
-            void ValidateGraphData(idxtype* vtxDistribn,
-                                   idxtype localVertexCount,
-                                   idxtype* adjacenciesPerVertex,
-                                   idxtype* adjacencies);
+            void ValidateGraphData(idx_t* vtxDistribn,
+                                   idx_t localVertexCount,
+                                   idx_t* adjacenciesPerVertex,
+                                   idx_t* adjacencies);
 
             void ValidateGlobLatDat(GlobalLatticeData* iGlobLatDat);
 
@@ -318,49 +318,49 @@ namespace hemelb
 
             site_t GetHeaderLength(site_t blockCount) const;
 
-            void GetSiteDistributionArray(idxtype* vertexDistribn,
+            void GetSiteDistributionArray(idx_t* vertexDistribn,
                                           const site_t blockCount,
                                           const proc_t* procForEachBlock,
                                           const site_t* sitesPerBlock) const;
 
-            void GetFirstSiteIndexOnEachBlock(idxtype* firstSiteIndexPerBlock,
+            void GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
                                               const site_t blockCount,
-                                              const idxtype* vertexDistribution,
+                                              const idx_t* vertexDistribution,
                                               const proc_t* procForEachBlock,
                                               const site_t* sitesPerBlock) const;
 
-            void GetAdjacencyData(idxtype* adjacenciesPerVertex,
-                                  idxtype* &localAdjacencies,
-                                  const idxtype localVertexCount,
+            void GetAdjacencyData(idx_t* adjacenciesPerVertex,
+                                  idx_t* &localAdjacencies,
+                                  const idx_t localVertexCount,
                                   const proc_t* procForEachBlock,
-                                  const idxtype* firstSiteIndexPerBlock,
+                                  const idx_t* firstSiteIndexPerBlock,
                                   const GlobalLatticeData* bGlobLatDat) const;
 
-            void CallParmetis(idxtype* partitionVector,
-                              idxtype localVertexCount,
-                              idxtype* vtxDistribn,
-                              idxtype* adjacenciesPerVertex,
-                              idxtype* adjacencies);
+            void CallParmetis(idx_t* partitionVector,
+                              idx_t localVertexCount,
+                              idx_t* vtxDistribn,
+                              idx_t* adjacenciesPerVertex,
+                              idx_t* adjacencies);
 
-            idxtype* GetMovesList(idxtype* movesFromEachProc,
-                                  const idxtype* firstSiteIndexPerBlock,
-                                  const proc_t* procForEachBlock,
-                                  const site_t* sitesPerBlock,
-                                  const idxtype* vtxDistribn,
-                                  const idxtype* partitionVector,
-                                  const GlobalLatticeData* bGlobLatDat);
+            idx_t* GetMovesList(idx_t* movesFromEachProc,
+                                const idx_t* firstSiteIndexPerBlock,
+                                const proc_t* procForEachBlock,
+                                const site_t* sitesPerBlock,
+                                const idx_t* vtxDistribn,
+                                const idx_t* partitionVector,
+                                const GlobalLatticeData* bGlobLatDat);
 
             void RereadBlocks(GlobalLatticeData* bGlobLatDat,
-                              const idxtype* movesPerProc,
-                              const idxtype* movesList,
+                              const idx_t* movesPerProc,
+                              const idx_t* movesList,
                               const site_t* sitesPerBlock,
                               const unsigned int* bytesPerBlock,
                               const int* procForEachBlock);
 
             void ImplementMoves(GlobalLatticeData* bGlobLatDat,
                                 const proc_t* procForEachBlock,
-                                const idxtype* movesFromEachProc,
-                                const idxtype* movesList) const;
+                                const idx_t* movesFromEachProc,
+                                const idx_t* movesList) const;
 
             proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
 
