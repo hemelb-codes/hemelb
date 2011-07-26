@@ -29,8 +29,18 @@ namespace hemelb
      indicate if the pixel is coloured via the ray tracing technique
      and/or a glyph and/or a particle/pathlet */
 
-    // Class to control and use the effects of different visualisation
-    // methods.
+    /**
+     * Class to control and use the effects of different visualisation methods.
+     *
+     * We use irregular phased broadcasting because we don't know in advance which iterations we'll
+     * need to generate images on.
+     *
+     * The initial action is used to render the image on each core. 2 communications are required
+     * between each pair of nodes so that the number of pixels can be communicated before the pixels
+     * themselves. No overlap is possible between communications at different depths as the pixels
+     * must be merged before they can be passed on. We don't need to pass info top-down, we only
+     * pass image components upwards towards the top node.
+     */
     class Control : public net::PhasedBroadcastIrregular<true, 2, 0, false, true>
     {
       public:

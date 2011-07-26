@@ -25,7 +25,30 @@ namespace hemelb
      */
 
     /**
-     * This class is made general using template parameters.
+     * PhasedBroadcast - a class to control the general process of communication between
+     * all nodes over multiple iterations. By using a common interface, we can ensure that
+     * communication happens asynchronously at a single point in each iteration - only one
+     * communication from any node to any other node will be performed, giving efficient
+     * performance.
+     *
+     * Communication uses a tree structure with a single top-level node, and a constant number of
+     * children per node down the tree. All nodes at the same depth communicate on the same
+     * iteration with nodes either above or below them (depending on the position through the
+     * communication programme defined above). The class supports actions that have to be performed
+     * before any communication begins, followed by potentially multiple, overlapping communication
+     * stages between related nodes in each consecutive pair of depths in the tree. Communication
+     * can be up the tree towards the topmost node, down the tree (beginning at the topmost node)
+     * or both (down the tree then up). An action to be performed on all nodes, when communication
+     * from top to bottom of the tree has been completed, is also supported.
+     *
+     * The class is called via the IteratedAction interface. Classes that use this interface should
+     * derive from either PhasedBroadcastRegular (for communication that is to happen at regular
+     * intervals) or PhasedBroadcastIrregular (for communication that is to happen at irregular
+     * intervals). The derived class should override one or more virtual functions in the chosen
+     * base class, and should perform communication using the templated
+     * [SendTo|ReceiveFrom][Children|Parent] functions defined in this class.
+     *
+     * This class is made general using template parameters:
      *
      * initialAction = if true, an extra iteration occurs at the start of each broadcast cycle
      * splay = the number of consecutive iterations communication between a pair of nodes needs to
