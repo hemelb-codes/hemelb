@@ -8,6 +8,18 @@ namespace hemelb
 {
   namespace lb
   {
+    /**
+     * Class to repeatedly assess the stability of the simulation, using the PhasedBroadcast
+     * interface.
+     *
+     * PhasedBroadcastRegular is used because we know in advance which iterations we will
+     * want to communicate on. The default parameters suffice: no initial action is necessary
+     * because we can assess the stability just before communicating (it doesn't have to happen
+     * at the same time on all nodes), only one communication is needed between depths, which
+     * can't overlap. We go down the tree to pass the overall stability to all nodes, and we go up
+     * the tree to compose the local stability for all nodes to discover whether the simulation as
+     * a whole is stable.
+     */
     class StabilityTester : public net::PhasedBroadcastRegular<>
     {
       public:
