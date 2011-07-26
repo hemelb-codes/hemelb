@@ -9,7 +9,7 @@ namespace hemelb
   {
     /**
      * PhasedBroadcastRegular - a class for performing phased broadcasts starting at regular
-     * intervals.
+     * intervals. A longer description is given in PhasedBroadcast.h.
      */
     template<bool initialAction = false, unsigned splay = 1, unsigned overlap = 0, bool goDown =
         true, bool goUp = true>

@@ -11,7 +11,7 @@ namespace hemelb
   {
     /**
      * PhasedBroadcastIrregular - a class for performing phased broadcasts that are not restricted
-     * to starting at regular intervals.
+     * to starting at regular intervals. A longer description is given in PhasedBroadcast.h.
      */
     template<bool initAction = false, unsigned splay = 1, unsigned ovrlp = 0, bool down = true,
         bool up = true>

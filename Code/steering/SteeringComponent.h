@@ -12,6 +12,13 @@ namespace hemelb
 {
   namespace steering
   {
+    /**
+     * SteeringComponent - class for passing steering data to all nodes.
+     *
+     * We pass this data at regular intervals. No initial action is required by all nodes, and
+     * we only need to pass from the top-most node (which handles network communication) downwards,
+     * on one iteration between each pair of consecutive depths.
+     */
     class SteeringComponent : public net::PhasedBroadcastRegular<false, 1, 0, true, false>
     {
       public:
