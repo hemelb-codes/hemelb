@@ -31,6 +31,13 @@ namespace hemelb
           D3Q15::CalculateFeq(density, v_x, v_y, v_z, f_eq);
         }
 
+        void LBGK::doPostCalculations(const distribn_t* f,
+                                      const geometry::LatticeData* bLatDat,
+                                      const site_t inde)
+        {
+
+        }
+
         // Also updates f_eq to be f_i
         distribn_t LBGK::getOperatorElement(distribn_t &f_i,
                                             distribn_t &f_neq_i,
