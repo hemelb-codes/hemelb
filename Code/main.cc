@@ -148,7 +148,8 @@ int main(int argc, char *argv[])
                         image_directory,
                         snapshot_directory,
                         lSnapshotsPerCycle,
-                        lImagesPerCycle);
+                        lImagesPerCycle,
+                        false);
 
   if (lMaster.IsCurrentProcTheIOProc())
   {
