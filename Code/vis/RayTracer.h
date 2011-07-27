@@ -14,6 +14,32 @@ namespace hemelb
 {
   namespace vis
   {
+    // Some sort of coordinates.
+    struct Location
+    {
+      site_t i, j, k;
+      
+      Location() {};
+
+      Location(site_t iI, site_t iJ, site_t iK)
+      {
+	i = iI;
+	j = iJ;
+	k = iK;
+      }
+    };
+
+    struct Cluster
+    {
+      Cluster();
+
+      float minmax_x[2], minmax_y[2], minmax_z[2];
+      
+      float x[3];
+      
+      unsigned short int blocks_x, blocks_y, blocks_z;
+    };
+
     class RayTracer
     {
       public:
@@ -55,20 +81,6 @@ namespace hemelb
             float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
         };
 
-        struct Cluster
-        {
-            float minmax_x[2], minmax_y[2], minmax_z[2];
-
-            float x[3];
-
-            unsigned short int blocks_x, blocks_y, blocks_z;
-        };
-
-        // Some sort of coordinates.
-        struct Location
-        {
-            site_t i, j, k;
-        };
 
         void UpdateRayData(const float flow_field[3],
                            float ray_t,
