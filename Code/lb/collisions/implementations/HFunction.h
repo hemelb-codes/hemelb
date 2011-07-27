@@ -2,8 +2,10 @@
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_HFUNCTION_H
 
 #include <math.h>
-#include "constants.h"
 #include <cstdlib>
+
+#include "constants.h"
+#include "D3Q15.h"
 
 namespace hemelb
 {
@@ -27,11 +29,13 @@ namespace hemelb
             void operator()(const double alpha, double &H);
             double eval();
 
-            // TODO: Make private once testing finished
           private:
             const distribn_t* mF;
             const distribn_t* mFEq;
 
+            void CalculateFalphaAndHInternal(const double alpha,
+                                             double fAlpha[D3Q15::NUMVECTORS],
+                                             double &H);
             double h(double fi, double wi_1);
         };
 

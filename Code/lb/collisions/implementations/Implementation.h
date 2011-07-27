@@ -27,50 +27,39 @@ namespace hemelb
                                            const distribn_t iDensity,
                                            const geometry::LatticeData* iLatDat,
                                            const LbmParameters* iLbmParams,
-                                           hemelb::vis::Control *iControl);
+                                           hemelb::vis::Control *iControl)
+            {
+              if (tDoRayTracing)
+              {
+                distribn_t rtStress;
+
+                if (iLbmParams->StressType == ShearStress)
+                {
+                  if (iLatDat->GetNormalToWall(iSiteIndex)[0] > NO_VALUE)
+                  {
+                    rtStress = NO_VALUE;
+                  }
+                  else
+                  {
+                    D3Q15::CalculateShearStress(iDensity,
+                                                f_neq,
+                                                iLatDat->GetNormalToWall(iSiteIndex),
+                                                rtStress,
+                                                iLbmParams->StressParameter);
+                  }
+                }
+                else
+                {
+                  D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams->StressParameter);
+                }
+
+                // TODO: It'd be nice if the /iDensity were unnecessary.
+                distribn_t lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
+                iControl->RegisterSite(iSiteIndex, iDensity, lVelocity, rtStress);
+              }
+            }
+
         };
-
-        template<bool tDoRayTracing>
-        void Implementation::UpdateMinsAndMaxes(distribn_t iVx,
-                                                distribn_t iVy,
-                                                distribn_t iVz,
-                                                const site_t iSiteIndex,
-                                                const distribn_t* f_neq,
-                                                const distribn_t iDensity,
-                                                const geometry::LatticeData* iLatDat,
-                                                const LbmParameters* iLbmParams,
-                                                hemelb::vis::Control *iControl)
-        {
-          if (tDoRayTracing)
-          {
-            distribn_t rtStress;
-
-            if (iLbmParams->StressType == ShearStress)
-            {
-              if (iLatDat->GetNormalToWall(iSiteIndex)[0] > NO_VALUE)
-              {
-                rtStress = NO_VALUE;
-              }
-              else
-              {
-                D3Q15::CalculateShearStress(iDensity,
-                                            f_neq,
-                                            iLatDat->GetNormalToWall(iSiteIndex),
-                                            rtStress,
-                                            iLbmParams->StressParameter);
-              }
-            }
-            else
-            {
-              D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams->StressParameter);
-            }
-
-            // TODO: It'd be nice if the /iDensity were unnecessary.
-            distribn_t lVelocity = sqrt(iVx * iVx + iVy * iVy + iVz * iVz) / iDensity;
-            iControl->RegisterSite(iSiteIndex, iDensity, lVelocity, rtStress);
-          }
-        }
-
       }
     }
   }

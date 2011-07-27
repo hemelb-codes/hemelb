@@ -16,10 +16,6 @@ namespace hemelb
     class PhasedBroadcastRegular : public PhasedBroadcast<initialAction, splay, overlap, goDown,
         goUp>
     {
-      protected:
-        // Typedef for the base class type, for convenience.
-        typedef PhasedBroadcast<initialAction, splay, overlap, goDown, goUp> base;
-
       public:
         /**
          * Constructor that calls the base class's constructor.
@@ -187,6 +183,10 @@ namespace hemelb
         }
 
       protected:
+
+        // Typedef for the base class type, for convenience.
+        typedef PhasedBroadcast<initialAction, splay, overlap, goDown, goUp> base;
+
         /**
          * Overridable function for the initial action performed by a node at the beginning of the
          * cycle. Only has an effect if the template paramter initialAction is true.

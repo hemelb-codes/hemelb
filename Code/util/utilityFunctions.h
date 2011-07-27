@@ -1,7 +1,6 @@
 #ifndef HEMELB_UTILITYFUNCTIONS_H
 #define HEMELB_UTILITYFUNCTIONS_H
 
-#include "util/utilityFunctions.h"
 #include <math.h>
 #include <iostream>
 #include <cstdlib>
