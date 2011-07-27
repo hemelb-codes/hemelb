@@ -15,6 +15,8 @@ namespace hemelb
       static const int CY[NUMVECTORS];
       static const int CZ[NUMVECTORS];
 
+      static const double EQMWEIGHTS[NUMVECTORS];
+
       // The index of the inverse direction of each discrete velocity vector
       static const int INVERSEDIRECTIONS[NUMVECTORS];
 
