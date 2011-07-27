@@ -2,6 +2,7 @@
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_SIMPLECOLLIDEANDSTREAM_H
 
 #include "lb/collisions/implementations/Implementation.h"
+#include "lb/collisions/implementations/HFunction.h"
 
 namespace hemelb
 {

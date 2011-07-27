@@ -176,7 +176,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   mStabilityTester = new hemelb::lb::StabilityTester(mLatDat, &mNet, mSimulationState);
 
-  unsigned int typesTested[1] = { 0 };
+  int typesTested[1] = { 0 };
   mEntropyTester = new hemelb::lb::EntropyTester(typesTested, 1, mLatDat, &mNet, mSimulationState);
 
   double seconds = hemelb::util::myClock();
@@ -227,7 +227,8 @@ void SimulationMaster::RunSimulation(double iStartTime,
                                      std::string image_directory,
                                      std::string snapshot_directory,
                                      unsigned int lSnapshotsPerCycle,
-                                     unsigned int lImagesPerCycle)
+                                     unsigned int lImagesPerCycle,
+                                     bool doEntropyTest)
 {
   double simulation_time = hemelb::util::myClock();
   bool is_unstable = false;
@@ -262,7 +263,8 @@ void SimulationMaster::RunSimulation(double iStartTime,
   actors.push_back(mLbm);
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
-  actors.push_back(mEntropyTester);
+  if (doEntropyTest)
+    actors.push_back(mEntropyTester);
   actors.push_back(mVisControl);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())

@@ -156,6 +156,7 @@ namespace hemelb
       if(typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
       {
         hemelb::lb::collisions::implementations::ELBM::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
+        hemelb::lb::collisions::implementations::ELBM::setTau(&mParams.Tau);
       }
 
       InitCollisions<hemelb::lb::collisions::implementations::SimpleCollideAndStream<CO>,
