@@ -123,9 +123,9 @@ namespace hemelb
 
         double HFunction::h(double fi, double wi_1)
         {
-          return (fi > 1.0E-10
-            ? (fi * log(fi * wi_1))
-            : 0.0);
+          // Assumes distributions are unlikely to be 0.0
+          // If they go negative stabilityTester catches it anyway
+          return fi * log(fi * wi_1);
         }
 
       }

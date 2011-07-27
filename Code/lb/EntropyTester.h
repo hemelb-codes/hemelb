@@ -9,10 +9,10 @@ namespace hemelb
   namespace lb
   {
 
-    class EntropyTester : public net::PhasedBroadcastRegular<>
+    class EntropyTester : public net::PhasedBroadcastRegular<false, 1, 1, false, true>
     {
       public:
-        EntropyTester(unsigned int* collisionTypes,
+        EntropyTester(int* collisionTypes,
                       unsigned int typesTested,
                       const geometry::LatticeData * iLatDat,
                       net::Net* net,
@@ -20,8 +20,7 @@ namespace hemelb
 
         ~EntropyTester();
 
-        virtual void RequestComms();
-        virtual void PreReceive();
+        void PreReceive();
 
         /**
          * Override the reset method in the base class, to reset the stability variables.
@@ -34,8 +33,6 @@ namespace hemelb
          * to send data about this node and its childrens' stabilities up towards the root.
          */
         void ProgressFromChildren(unsigned long splayNumber);
-        void ProgressFromParent(unsigned long splayNumber);
-        void ProgressToChildren(unsigned long splayNumber);
         void ProgressToParent(unsigned long splayNumber);
 
         /**
@@ -49,11 +46,6 @@ namespace hemelb
          */
         void PostReceiveFromChildren(unsigned long splayNumber);
 
-        /**
-         * Apply the stability value sent by the root node to the simulation logic.
-         */
-        void Effect();
-
       private:
         /**
          * Slightly arbitrary spread factor for the tree.
@@ -66,10 +58,6 @@ namespace hemelb
          * Stability value of this node and its children to propagate upwards.
          */
         int mUpwardsStability;
-        /**
-         * Stability value as understood by the root node, to pass downwards.
-         */
-        int mDownwardsStability;
         /**
          * Array for storing the passed-up stability values from child nodes.
          */

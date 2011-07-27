@@ -90,7 +90,7 @@ namespace hemelb
         }
 
         template<class F>
-        static double Brent(F* func, double xl, double xh, double alphaAcc)
+        static double Brent(F* func, double xl, double xh, double alphaAcc, double fAcc)
         {
           double a = xl, fa;
           double b = xh, fb;
@@ -117,7 +117,7 @@ namespace hemelb
 
           bool mflag = true;
 
-          while (fabs(b - a) > alphaAcc)
+          while (fabs(b - a) > alphaAcc && fabs(fb) > fAcc && fabs(fs) > fAcc)
           {
             if (fa != fc && fb != fc)
             {
@@ -169,7 +169,10 @@ namespace hemelb
             }
           }
 
-          return s;
+          if (fabs(fb) < fabs(fs))
+            return b;
+          else
+            return s;
         }
     };
 

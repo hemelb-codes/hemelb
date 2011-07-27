@@ -19,6 +19,8 @@ namespace hemelb
           public:
             static void createAlphaArray(const size_t size);
 
+            static void setTau(double* t);
+
             static void getSiteValues(const distribn_t* f,
                                       distribn_t &density,
                                       distribn_t &v_x,
@@ -27,6 +29,7 @@ namespace hemelb
                                       distribn_t* f_eq,
                                       const site_t index);
 
+            // WARNING: DOES NOT CALCULATE ALPHA, BECAUSE NON OF THE CURRENT BCS USE IT
             static void getBoundarySiteValues(const distribn_t* f,
                                               const distribn_t &density,
                                               const distribn_t &v_x,
@@ -40,6 +43,7 @@ namespace hemelb
                                                  const LbmParameters* iLbmParams);
 
           private:
+            static double* tau;
             static double* alpha;
             static size_t currentAlphaIndex;
             static double getAlpha(const distribn_t* lFOld,const  distribn_t* lFEq, double prevAlpha);

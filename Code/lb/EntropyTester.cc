@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "log/Logger.h"
 #include "lb/EntropyTester.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
@@ -11,13 +12,13 @@ namespace hemelb
   namespace lb
   {
 
-    EntropyTester::EntropyTester(unsigned int* collisionTypes,
+    EntropyTester::EntropyTester(int* collisionTypes,
                                  unsigned int typesTested,
                                  const geometry::LatticeData * iLatDat,
                                  net::Net* net,
                                  SimulationState* simState) :
-      net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
-          mSimState(simState)
+      net::PhasedBroadcastRegular<false, 1, 1, false, true>(net, simState, SPREADFACTOR),
+          mLatDat(iLatDat), mSimState(simState)
     {
       mCollisionTypeTested = new bool[COLLISION_TYPES];
       for (unsigned int i = 0; i < COLLISION_TYPES; i++)
@@ -43,90 +44,12 @@ namespace hemelb
     {
       // Re-initialise all values to be Stable.
       mUpwardsStability = Stable;
-      mDownwardsStability = Stable;
 
       mSimState->SetStability(Stable);
 
       for (unsigned int ii = 0; ii < SPREADFACTOR; ii++)
       {
         mChildrensStability[ii] = Stable;
-      }
-    }
-
-    void EntropyTester::RequestComms()
-    {
-      if (mUpwardsStability != Unstable)
-      {
-        site_t offset = 0;
-
-        for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-        {
-          if (mCollisionTypeTested[collision_type])
-          {
-            for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(collision_type); i++)
-            {
-              HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
-              mHPreCollision[i] = HFunc.eval();
-            }
-          }
-
-          offset += mLatDat->GetInnerCollisionCount(collision_type);
-        }
-
-        for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-        {
-          if (mCollisionTypeTested[collision_type])
-          {
-            for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(collision_type); i++)
-            {
-              HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
-              mHPreCollision[i] = HFunc.eval();
-            }
-          }
-
-          offset += mLatDat->GetInterCollisionCount(collision_type);
-        }
-      }
-
-      const unsigned long iCycleNumber = Get0IndexedIterationNumber();
-      const unsigned long firstAscent = base::GetFirstAscending();
-      const unsigned long firstDescent = base::GetFirstDescending();
-      const unsigned long traversalLength = base::GetTraverseTime();
-
-      // Nothing to do for initial action case.
-
-      // Next, deal with the case of a cycle with an initial pass down the tree.
-      if (iCycleNumber >= firstDescent && iCycleNumber < firstAscent)
-      {
-        unsigned long sendOverlap;
-        unsigned long receiveOverlap;
-
-        if (base::GetSendChildrenOverlap(iCycleNumber - firstDescent, &sendOverlap))
-        {
-          ProgressToChildren(sendOverlap);
-        }
-
-        if (base::GetReceiveParentOverlap(iCycleNumber - firstDescent, &receiveOverlap))
-        {
-          ProgressFromParent(receiveOverlap);
-        }
-      }
-
-      // And deal with the case of a cycle with a pass up the tree.
-      if (iCycleNumber >= firstAscent)
-      {
-        unsigned long sendOverlap;
-        unsigned long receiveOverlap;
-
-        if (base::GetSendParentOverlap(iCycleNumber - firstAscent, &sendOverlap))
-        {
-          ProgressToParent(sendOverlap);
-        }
-
-        if (base::GetReceiveChildrenOverlap(iCycleNumber - firstAscent, &receiveOverlap))
-        {
-          ProgressFromChildren(receiveOverlap);
-        }
       }
     }
 
@@ -139,6 +62,12 @@ namespace hemelb
         site_t offset = 0;
         double dH = 0.0;
 
+        // The order of arguments in max is important
+        // If distributions go negative HFunc.eval() will return a NaN. Due to the
+        // nature of NaN and the structure of max, dH will be assigned as NaN if this is the case
+        // This is what we want, because the EntropyTester will fail otherwise and abort when
+        // it is simply sufficient to wait until StabilityTester restarts.
+
         for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
         {
           if (mCollisionTypeTested[collision_type])
@@ -146,7 +75,7 @@ namespace hemelb
             for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(collision_type); i++)
             {
               HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
-              dH = util::NumericalFunctions::max(HFunc.eval() - mHPreCollision[i], dH);
+              dH = util::NumericalFunctions::max(dH, HFunc.eval() - mHPreCollision[i]);
             }
           }
 
@@ -160,17 +89,24 @@ namespace hemelb
             for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(collision_type); i++)
             {
               HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
-              dH = util::NumericalFunctions::max(HFunc.eval() - mHPreCollision[i], dH);
+              dH = util::NumericalFunctions::max(dH, HFunc.eval() - mHPreCollision[i]);
             }
           }
 
           offset += mLatDat->GetInterCollisionCount(collision_type);
         }
 
-        if (dH > 1.0E-10)
+        /*
+         * Ideally dH should never be greater than zero. However, because H is positive definite accuracy as well as
+         * rounding and truncation errors can make dH greater than zero in certain cases. The tolerance
+         * is limited by the accuracy of the simulation (including the accuracy to which alpha is calculated)
+         * The tolerance has to be at least as big as the accuracy to which alpha is calculated
+         */
+        if (dH > 1.0E-6)
         {
-          mUpwardsStability = Unstable;
-          // If mDownwardsStability is also set to unstable program freezes...
+          std::cout << dH << std::endl;
+
+          //mUpwardsStability = Unstable;
         }
       }
     }
@@ -196,29 +132,57 @@ namespace hemelb
       ReceiveFromChildren<int> (mChildrensStability, 1);
     }
 
-    void EntropyTester::ProgressFromParent(unsigned long splayNumber)
-    {
-      ReceiveFromParent<int> (&mDownwardsStability, 1);
-    }
-
-    void EntropyTester::ProgressToChildren(unsigned long splayNumber)
-    {
-      SendToChildren<int> (&mDownwardsStability, 1);
-    }
-
     void EntropyTester::ProgressToParent(unsigned long splayNumber)
     {
+      // Store pre-collision values. Don't bother if unstable already
+      if (mUpwardsStability != Unstable)
+      {
+        site_t offset = 0;
+
+        for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+        {
+          if (mCollisionTypeTested[collision_type])
+          {
+            for (site_t i = offset; i < offset + mLatDat->GetInnerCollisionCount(collision_type); i++)
+            {
+              HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
+              mHPreCollision[i] = HFunc.eval();
+            }
+          }
+
+          offset += mLatDat->GetInnerCollisionCount(collision_type);
+        }
+
+        for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
+        {
+          if (mCollisionTypeTested[collision_type])
+          {
+            for (site_t i = offset; i < offset + mLatDat->GetInterCollisionCount(collision_type); i++)
+            {
+              HFunction HFunc(mLatDat->GetFOld(i * D3Q15::NUMVECTORS), NULL);
+              mHPreCollision[i] = HFunc.eval();
+            }
+          }
+
+          offset += mLatDat->GetInterCollisionCount(collision_type);
+        }
+      }
+
       SendToParent<int> (&mUpwardsStability, 1);
     }
 
     void EntropyTester::TopNodeAction()
     {
-      mDownwardsStability = mUpwardsStability;
-    }
+      if (mUpwardsStability == Unstable)
+      {
+        std::cout << "!H Theorem violated!" << std::endl;
+        int err = MPI_Abort(MPI_COMM_WORLD, 1);
 
-    void EntropyTester::Effect()
-    {
-      mSimState->SetStability((Stability) mDownwardsStability);
+        // This gives us something to work from when we have an error - we get the rank
+        // that calls abort, and we get a stack-trace from the exception having been thrown.
+        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Aborting");
+        exit(1);
+      }
     }
 
   }
