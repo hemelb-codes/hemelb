@@ -2,6 +2,7 @@
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_FINTERPOLATION_H
 
 #include "lb/collisions/implementations/Implementation.h"
+#include "lb/collisions/implementations/CollisionOperator.h"
 
 namespace hemelb
 {
@@ -12,13 +13,13 @@ namespace hemelb
       namespace implementations
       {
 
-        template<typename tCollisionOperator>
         class FInterpolation : public Implementation
         {
 
           public:
             template<bool tDoRayTracing>
             static void DoStreamAndCollide(WallCollision* mWallCollision,
+                                           CollisionOperator* iCollisionOperator,
                                            const site_t iFirstIndex,
                                            const site_t iSiteCount,
                                            const LbmParameters* iLbmParams,
@@ -35,14 +36,14 @@ namespace hemelb
 
         };
 
-        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void FInterpolation<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
-                                                                    const site_t iFirstIndex,
-                                                                    const site_t iSiteCount,
-                                                                    const LbmParameters* iLbmParams,
-                                                                    geometry::LatticeData* bLatDat,
-                                                                    hemelb::vis::Control *iControl)
+        void FInterpolation::DoStreamAndCollide(WallCollision* mWallCollision,
+                                                CollisionOperator* iCollisionOperator,
+                                                const site_t iFirstIndex,
+                                                const site_t iSiteCount,
+                                                const LbmParameters* iLbmParams,
+                                                geometry::LatticeData* bLatDat,
+                                                hemelb::vis::Control *iControl)
         {
           for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
           {
@@ -69,14 +70,13 @@ namespace hemelb
           }
         }
 
-        template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void FInterpolation<tCollisionOperator>::DoPostStep(WallCollision* mWallCollision,
-                                                            const site_t iFirstIndex,
-                                                            const site_t iSiteCount,
-                                                            const LbmParameters* iLbmParams,
-                                                            geometry::LatticeData* bLatDat,
-                                                            hemelb::vis::Control *iControl)
+        void FInterpolation::DoPostStep(WallCollision* mWallCollision,
+                                        const site_t iFirstIndex,
+                                        const site_t iSiteCount,
+                                        const LbmParameters* iLbmParams,
+                                        geometry::LatticeData* bLatDat,
+                                        hemelb::vis::Control *iControl)
         {
           for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
           {

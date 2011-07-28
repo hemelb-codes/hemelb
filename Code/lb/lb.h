@@ -78,7 +78,7 @@ namespace hemelb
                          distribn_t f_neq[]);
 
         template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
-                typename tInletOutletWallCollision>
+                typename tInletOutletWallCollision, typename tCollisionOperator>
         void InitCollisions();
 
         void ReadParameters();
@@ -94,6 +94,10 @@ namespace hemelb
         // Visitors
         hemelb::lb::collisions::CollisionVisitor* mStreamAndCollide;
         hemelb::lb::collisions::CollisionVisitor* mPostStep;
+
+        // COllision Operator
+        typedef hemelb::lb::collisions::implementations::LBGK CO;
+        CO* mCollisionOperator;
 
         // Collision objects
         hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
