@@ -176,8 +176,16 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   mStabilityTester = new hemelb::lb::StabilityTester(mLatDat, &mNet, mSimulationState);
 
-  int typesTested[1] = { 0 };
-  mEntropyTester = new hemelb::lb::EntropyTester(typesTested, 1, mLatDat, &mNet, mSimulationState);
+  if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
+  {
+    int typesTested[1] = { 0 };
+    mEntropyTester
+        = new hemelb::lb::EntropyTester(typesTested, 1, mLatDat, &mNet, mSimulationState);
+  }
+  else
+  {
+    mEntropyTester = NULL;
+  }
 
   double seconds = hemelb::util::myClock();
   hemelb::site_t* lReceiveTranslator = mNet.Initialise(mLatDat);
@@ -227,8 +235,7 @@ void SimulationMaster::RunSimulation(double iStartTime,
                                      std::string image_directory,
                                      std::string snapshot_directory,
                                      unsigned int lSnapshotsPerCycle,
-                                     unsigned int lImagesPerCycle,
-                                     bool doEntropyTest)
+                                     unsigned int lImagesPerCycle)
 {
   double simulation_time = hemelb::util::myClock();
   bool is_unstable = false;
@@ -263,8 +270,10 @@ void SimulationMaster::RunSimulation(double iStartTime,
   actors.push_back(mLbm);
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
-  if (doEntropyTest)
+  if (mEntropyTester != NULL)
+  {
     actors.push_back(mEntropyTester);
+  }
   actors.push_back(mVisControl);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -330,6 +339,7 @@ void SimulationMaster::RunSimulation(double iStartTime,
       }
 
       mNet.Receive();
+
       {
         double lPrePreSend = hemelb::util::myClock();
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it

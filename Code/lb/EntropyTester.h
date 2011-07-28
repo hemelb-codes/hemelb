@@ -47,6 +47,12 @@ namespace hemelb
         void PostReceiveFromChildren(unsigned long splayNumber);
 
       private:
+        enum HTHEOREM
+        {
+          OBEYED,
+          DISOBEYED
+        };
+
         /**
          * Slightly arbitrary spread factor for the tree.
          */
@@ -57,17 +63,13 @@ namespace hemelb
         /**
          * Stability value of this node and its children to propagate upwards.
          */
-        int mUpwardsStability;
+        int mUpwardsValue;
         /**
          * Array for storing the passed-up stability values from child nodes.
          */
-        int mChildrensStability[SPREADFACTOR];
-        /**
-         * Pointer to the simulation state used in the rest of the simulation.
-         */
-        lb::SimulationState* mSimState;
+        int mChildrensValues[SPREADFACTOR];
 
-        bool* mCollisionTypeTested;
+        bool mCollisionTypesTested[COLLISION_TYPES];
         double* mHPreCollision;
     };
 
