@@ -152,17 +152,12 @@ namespace hemelb
 
       ReadParameters();
 
-      typedef hemelb::lb::collisions::implementations::LBGK CO;
-      if(typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
-      {
-        hemelb::lb::collisions::implementations::ELBM::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
-        hemelb::lb::collisions::implementations::ELBM::setTau(&mParams.Tau);
-      }
+      mCollisionOperator = new CO(mLatDat, &mParams);
 
       InitCollisions<hemelb::lb::collisions::implementations::SimpleCollideAndStream<CO>,
           hemelb::lb::collisions::implementations::ZeroVelocityEquilibrium<CO>,
           hemelb::lb::collisions::implementations::NonZeroVelocityBoundaryDensity<CO>,
-          hemelb::lb::collisions::implementations::ZeroVelocityBoundaryDensity<CO> > ();
+          hemelb::lb::collisions::implementations::ZeroVelocityBoundaryDensity<CO>, CO> ();
     }
 
     void LBM::CalculateMouseFlowField(float densityIn,
@@ -181,11 +176,12 @@ namespace hemelb
     }
 
     template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
-        typename tInletOutletWallCollision>
+        typename tInletOutletWallCollision, typename tCollisionOperator>
     void LBM::InitCollisions()
     {
-      mStreamAndCollide = new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision,
-          tWallCollision, tInletOutletCollision, tInletOutletWallCollision>();
+      mStreamAndCollide
+          = new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision, tWallCollision,
+              tInletOutletCollision, tInletOutletWallCollision, tCollisionOperator>(mCollisionOperator);
       mPostStep = new hemelb::lb::collisions::PostStep<tMidFluidCollision, tWallCollision,
           tInletOutletCollision, tInletOutletWallCollision>();
 
@@ -459,6 +455,8 @@ namespace hemelb
       RecalculateTauViscosityOmega();
 
       SetInitialConditions();
+
+      mCollisionOperator->Reset(mLatDat, &mParams);
     }
 
     LBM::~LBM()
@@ -481,6 +479,9 @@ namespace hemelb
       // Delete visitors
       delete mStreamAndCollide;
       delete mPostStep;
+
+      // Delete Collision Operator
+      delete mCollisionOperator;
 
       // Delete the collision and stream objects we've been using
       delete mMidFluidCollision;

@@ -2,7 +2,7 @@
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_SIMPLECOLLIDEANDSTREAM_H
 
 #include "lb/collisions/implementations/Implementation.h"
-#include "lb/collisions/implementations/HFunction.h"
+#include "lb/collisions/implementations/CollisionOperator.h"
 
 namespace hemelb
 {
@@ -19,7 +19,8 @@ namespace hemelb
 
           public:
             template<bool tDoRayTracing>
-            static void DoStreamAndCollide(MidFluidCollision* mMidFluidCollision,
+            static void DoStreamAndCollide(MidFluidCollision* iMidFluidCollision,
+                                           tCollisionOperator* iCollisionOperator,
                                            const site_t iFirstIndex,
                                            const site_t iSiteCount,
                                            const LbmParameters* iLbmParams,
@@ -27,7 +28,7 @@ namespace hemelb
                                            hemelb::vis::Control *iControl);
 
             template<bool tDoRayTracing>
-            static void DoPostStep(MidFluidCollision* mMidFluidCollision,
+            static void DoPostStep(MidFluidCollision* iMidFluidCollision,
                                    const site_t iFirstIndex,
                                    const site_t iSiteCount,
                                    const LbmParameters* iLbmParams,
@@ -38,7 +39,8 @@ namespace hemelb
 
         template<typename tCollisionOperator>
         template<bool tDoRayTracing>
-        void SimpleCollideAndStream<tCollisionOperator>::DoStreamAndCollide(MidFluidCollision* mMidFluidCollision,
+        void SimpleCollideAndStream<tCollisionOperator>::DoStreamAndCollide(MidFluidCollision* iMidFluidCollision,
+                                                                            tCollisionOperator* iCollisionOperator,
                                                                             const site_t iFirstIndex,
                                                                             const site_t iSiteCount,
                                                                             const LbmParameters* iLbmParams,
@@ -52,14 +54,14 @@ namespace hemelb
             distribn_t lFNeq[D3Q15::NUMVECTORS], lFEq[D3Q15::NUMVECTORS];
             double alpha;
 
-            tCollisionOperator::getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, iIndex
+            iCollisionOperator->getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, iIndex
                 - iFirstIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
               lFNeq[ii] = lFOld[ii] - lFEq[ii];
               * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
-                  += tCollisionOperator::getOperatorElement(lFOld[ii], lFNeq[ii], iLbmParams);
+                  += iCollisionOperator->getOperatorElement(lFOld[ii], lFNeq[ii]);
             }
 
             UpdateMinsAndMaxes<tDoRayTracing> (lVx,
