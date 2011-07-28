@@ -2,6 +2,7 @@
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_NONZEROVELOCITYBOUNDARYDENSITY_H
 
 #include "lb/collisions/implementations/Implementation.h"
+#include "lb/collisions/implementations/CollisionOperator.h"
 
 namespace hemelb
 {
@@ -19,6 +20,7 @@ namespace hemelb
           public:
             template<bool tDoRayTracing>
             static void DoStreamAndCollide(InletOutletCollision* mInletOutletCollision,
+                                           tCollisionOperator* iCollisionOperator,
                                            const site_t iFirstIndex,
                                            const site_t iSiteCount,
                                            const LbmParameters* iLbmParams,
@@ -38,6 +40,7 @@ namespace hemelb
         template<typename tCollisionOperator>
         template<bool tDoRayTracing>
         void NonZeroVelocityBoundaryDensity<tCollisionOperator>::DoStreamAndCollide(InletOutletCollision* mInletOutletCollision,
+                                                                                    tCollisionOperator* iCollisionOperator,
                                                                                     const site_t iFirstIndex,
                                                                                     const site_t iSiteCount,
                                                                                     const LbmParameters* iLbmParams,
@@ -56,7 +59,13 @@ namespace hemelb
 
             D3Q15::CalculateDensityAndVelocity(lFOld, lDummyDensity, lVx, lVy, lVz);
 
-            tCollisionOperator::getBoundarySiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, siteIndex);
+            iCollisionOperator->getBoundarySiteValues(lFOld,
+                                                      lDensity,
+                                                      lVx,
+                                                      lVy,
+                                                      lVz,
+                                                      lFEq,
+                                                      siteIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
@@ -64,9 +73,6 @@ namespace hemelb
               lFNeq[ii] = lFOld[ii] - lFEq[ii];
               lFOld[ii] = lFEq[ii];
             }
-
-            // lFOld is the post-collision, pre-streaming distribution
-            tCollisionOperator::doPostCalculations(lFOld, bLatDat, lIndex - iFirstIndex);
 
             UpdateMinsAndMaxes<tDoRayTracing> (lVx,
                                                lVy,

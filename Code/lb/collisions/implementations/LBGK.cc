@@ -8,6 +8,20 @@ namespace hemelb
     {
       namespace implementations
       {
+        LBGK::LBGK(const geometry::LatticeData* iLatDat, const lb::LbmParameters* iLbmParams)
+        {
+          Reset(iLatDat, iLbmParams);
+        }
+
+        void LBGK::Reset(const geometry::LatticeData* iLatDat, const lb::LbmParameters* iLbmParams)
+        {
+          Omega = iLbmParams->Omega;
+        }
+
+        LBGK::~LBGK()
+        {
+
+        }
 
         void LBGK::getSiteValues(const distribn_t* f,
                                  distribn_t &density,
@@ -31,19 +45,9 @@ namespace hemelb
           D3Q15::CalculateFeq(density, v_x, v_y, v_z, f_eq);
         }
 
-        void LBGK::doPostCalculations(const distribn_t* f,
-                                      const geometry::LatticeData* bLatDat,
-                                      const site_t inde)
+        distribn_t LBGK::getOperatorElement(distribn_t &f_i, distribn_t &f_neq_i)
         {
-
-        }
-
-        // Also updates f_eq to be f_i
-        distribn_t LBGK::getOperatorElement(distribn_t &f_i,
-                                            distribn_t &f_neq_i,
-                                            const LbmParameters* iLbmParams)
-        {
-          return (iLbmParams->Omega * f_neq_i);
+          return (Omega * f_neq_i);
         }
 
       }

@@ -12,10 +12,13 @@ namespace hemelb
     {
 
       template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+          typename tInletOutletCollision, typename tInletOutletWallCollision,
+          typename tCollisionOperator>
       class StreamAndCollide : public CollisionVisitor
       {
         public:
+              StreamAndCollide(tCollisionOperator* iCollisionOperator);
+
           virtual ~StreamAndCollide();
 
           virtual void VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
@@ -50,30 +53,45 @@ namespace hemelb
                                  geometry::LatticeData* bLatDat,
                                  hemelb::vis::Control *iControl);
 
+        private:
+          tCollisionOperator* mCollisionOperator;
+
       }; /* End of StreamAndCollide definition */
 
       template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+          typename tInletOutletCollision, typename tInletOutletWallCollision,
+          typename tCollisionOperator>
       StreamAndCollide<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::~StreamAndCollide()
+          tInletOutletWallCollision, tCollisionOperator>::StreamAndCollide(tCollisionOperator* iCollisionOperator)
+      {
+        mCollisionOperator = iCollisionOperator;
+      }
+
+      template<typename tMidFluidCollision, typename tWallCollision,
+          typename tInletOutletCollision, typename tInletOutletWallCollision,
+          typename tCollisionOperator>
+      StreamAndCollide<tMidFluidCollision, tWallCollision, tInletOutletCollision,
+          tInletOutletWallCollision, tCollisionOperator>::~StreamAndCollide()
       {
 
       }
 
       template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+          typename tInletOutletCollision, typename tInletOutletWallCollision,
+          typename tCollisionOperator>
       void StreamAndCollide<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
-                                                       const bool iDoRayTracing,
-                                                       const site_t iFirstIndex,
-                                                       const site_t iSiteCount,
-                                                       const LbmParameters* iLbmParams,
-                                                       geometry::LatticeData* bLatDat,
-                                                       hemelb::vis::Control *iControl)
+          tInletOutletWallCollision, tCollisionOperator>::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
+                                                                           const bool iDoRayTracing,
+                                                                           const site_t iFirstIndex,
+                                                                           const site_t iSiteCount,
+                                                                           const LbmParameters* iLbmParams,
+                                                                           geometry::LatticeData* bLatDat,
+                                                                           hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
           tInletOutletCollision::template DoStreamAndCollide<true>(mInletOutletCollision,
+                                                                   mCollisionOperator,
                                                                    iFirstIndex,
                                                                    iSiteCount,
                                                                    iLbmParams,
@@ -83,6 +101,7 @@ namespace hemelb
         else
         {
           tInletOutletCollision::template DoStreamAndCollide<false>(mInletOutletCollision,
+                                                                    mCollisionOperator,
                                                                     iFirstIndex,
                                                                     iSiteCount,
                                                                     iLbmParams,
@@ -92,19 +111,21 @@ namespace hemelb
       }
 
       template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+          typename tInletOutletCollision, typename tInletOutletWallCollision,
+          typename tCollisionOperator>
       void StreamAndCollide<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
-                                                           const bool iDoRayTracing,
-                                                           const site_t iFirstIndex,
-                                                           const site_t iSiteCount,
-                                                           const LbmParameters* iLbmParams,
-                                                           geometry::LatticeData* bLatDat,
-                                                           hemelb::vis::Control *iControl)
+          tInletOutletWallCollision, tCollisionOperator>::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
+                                                                               const bool iDoRayTracing,
+                                                                               const site_t iFirstIndex,
+                                                                               const site_t iSiteCount,
+                                                                               const LbmParameters* iLbmParams,
+                                                                               geometry::LatticeData* bLatDat,
+                                                                               hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
           tInletOutletWallCollision::template DoStreamAndCollide<true>(mInletOutletWallCollision,
+                                                                       mCollisionOperator,
                                                                        iFirstIndex,
                                                                        iSiteCount,
                                                                        iLbmParams,
@@ -114,6 +135,7 @@ namespace hemelb
         else
         {
           tInletOutletWallCollision::template DoStreamAndCollide<false>(mInletOutletWallCollision,
+                                                                        mCollisionOperator,
                                                                         iFirstIndex,
                                                                         iSiteCount,
                                                                         iLbmParams,
@@ -123,19 +145,21 @@ namespace hemelb
       }
 
       template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+          typename tInletOutletCollision, typename tInletOutletWallCollision,
+          typename tCollisionOperator>
       void StreamAndCollide<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
-                                                    const bool iDoRayTracing,
-                                                    const site_t iFirstIndex,
-                                                    const site_t iSiteCount,
-                                                    const LbmParameters* iLbmParams,
-                                                    geometry::LatticeData* bLatDat,
-                                                    hemelb::vis::Control *iControl)
+          tInletOutletWallCollision, tCollisionOperator>::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
+                                                                        const bool iDoRayTracing,
+                                                                        const site_t iFirstIndex,
+                                                                        const site_t iSiteCount,
+                                                                        const LbmParameters* iLbmParams,
+                                                                        geometry::LatticeData* bLatDat,
+                                                                        hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
           tMidFluidCollision::template DoStreamAndCollide<true>(mMidFluidCollision,
+                                                                mCollisionOperator,
                                                                 iFirstIndex,
                                                                 iSiteCount,
                                                                 iLbmParams,
@@ -145,6 +169,7 @@ namespace hemelb
         else
         {
           tMidFluidCollision::template DoStreamAndCollide<false>(mMidFluidCollision,
+                                                                 mCollisionOperator,
                                                                  iFirstIndex,
                                                                  iSiteCount,
                                                                  iLbmParams,
@@ -154,19 +179,21 @@ namespace hemelb
       }
 
       template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+          typename tInletOutletCollision, typename tInletOutletWallCollision,
+          typename tCollisionOperator>
       void StreamAndCollide<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::VisitWall(WallCollision* mWallCollision,
-                                                const bool iDoRayTracing,
-                                                const site_t iFirstIndex,
-                                                const site_t iSiteCount,
-                                                const LbmParameters* iLbmParams,
-                                                geometry::LatticeData* bLatDat,
-                                                hemelb::vis::Control *iControl)
+          tInletOutletWallCollision, tCollisionOperator>::VisitWall(WallCollision* mWallCollision,
+                                                                    const bool iDoRayTracing,
+                                                                    const site_t iFirstIndex,
+                                                                    const site_t iSiteCount,
+                                                                    const LbmParameters* iLbmParams,
+                                                                    geometry::LatticeData* bLatDat,
+                                                                    hemelb::vis::Control *iControl)
       {
         if (iDoRayTracing)
         {
           tWallCollision::template DoStreamAndCollide<true>(mWallCollision,
+                                                            mCollisionOperator,
                                                             iFirstIndex,
                                                             iSiteCount,
                                                             iLbmParams,
@@ -176,6 +203,7 @@ namespace hemelb
         else
         {
           tWallCollision::template DoStreamAndCollide<false>(mWallCollision,
+                                                             mCollisionOperator,
                                                              iFirstIndex,
                                                              iSiteCount,
                                                              iLbmParams,

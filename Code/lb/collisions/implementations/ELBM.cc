@@ -2,6 +2,8 @@
 #include "lb/collisions/implementations/HFunction.h"
 #include "util/utilityFunctions.h"
 
+#include <cstdlib>
+
 namespace hemelb
 {
   namespace lb
@@ -10,21 +12,26 @@ namespace hemelb
     {
       namespace implementations
       {
-
-        double* ELBM::alpha;
-        size_t ELBM::currentAlphaIndex;
-        double* ELBM::tau;
-
-        void ELBM::createAlphaArray(const size_t size)
+        ELBM::ELBM(const geometry::LatticeData* iLatDat, const lb::LbmParameters* iLbmParams)
         {
-          alpha = new double[size];
-          for (size_t i = 0; i < size; i++)
-            alpha[i] = 2.0;
+          alpha = new double[iLatDat->GetLocalFluidSiteCount()];
+
+          Reset(iLatDat, iLbmParams);
         }
 
-        void ELBM::setTau(double* t)
+        void ELBM::Reset(const geometry::LatticeData* iLatDat, const lb::LbmParameters* iLbmParams)
         {
-          tau = t;
+          for (size_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
+            alpha[i] = 2.0;
+
+          Beta = iLbmParams->Beta;
+          Tau = iLbmParams->Tau;
+          currentAlphaIndex = 0;
+        }
+
+        ELBM::~ELBM()
+        {
+          delete[] alpha;
         }
 
         void ELBM::getSiteValues(const distribn_t* f,
@@ -54,11 +61,9 @@ namespace hemelb
           //alpha[index] = getAlpha(f, f_eq, alpha[index]);
         }
 
-        distribn_t ELBM::getOperatorElement(distribn_t &f_i,
-                                            distribn_t &f_neq_i,
-                                            const LbmParameters* iLbmParams)
+        distribn_t ELBM::getOperatorElement(distribn_t &f_i, distribn_t &f_neq_i)
         {
-          return (alpha[currentAlphaIndex] * iLbmParams->Beta * f_neq_i);
+          return (alpha[currentAlphaIndex] * Beta * f_neq_i);
         }
 
         double ELBM::getAlpha(const distribn_t* lF, const distribn_t* lFEq, double prevAlpha)
@@ -71,7 +76,9 @@ namespace hemelb
             // Papers suggest f_eq - f < 0.001 or (f_eq - f)/f < 0.01 for the point to have approx alpha = 2
             // Accuracy can change depending on stability requirements, because the more NR evaluations it skips
             // the more of the simulation is in the LBGK limit.
+
             deviation = util::NumericalFunctions::max(fabs( (lFEq[i] - lF[i]) / lF[i]), deviation);
+
             if (deviation > 1.0E-2)
             {
               big = true;
@@ -95,8 +102,8 @@ namespace hemelb
             HFunction HFunc(lF, lFEq);
 
             // The bracket is very large, but it should guarantee that a root is enclosed
-            double alphaLower = 2.0 * (*tau), HLower;
-            double alphaHigher = 2.0 * (*tau) / deviation, HHigher;
+            double alphaLower = 2.0 * Tau, HLower;
+            double alphaHigher = 2.0 * Tau / deviation, HHigher;
 
             HFunc(alphaLower, HLower);
             HFunc(alphaHigher, HHigher);
@@ -106,7 +113,11 @@ namespace hemelb
             if (HLower * HHigher >= 0.0)
               return 2.0;
 
-            return (hemelb::util::NumericalMethods::Brent(&HFunc, alphaLower, alphaHigher, 1.0E-3, 1.0E-3));
+            return (hemelb::util::NumericalMethods::Brent(&HFunc,
+                                                          alphaLower,
+                                                          alphaHigher,
+                                                          1.0E-3,
+                                                          1.0E-3));
           }
 
         }
