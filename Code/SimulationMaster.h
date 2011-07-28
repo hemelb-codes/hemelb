@@ -24,8 +24,7 @@ class SimulationMaster
                        std::string image_directory,
                        std::string snapshot_directory,
                        unsigned int lSnapshotsPerCycle,
-                       unsigned int lImagesPerCycle,
-                       bool doEntropyTest);
+                       unsigned int lImagesPerCycle);
 
     void Initialise(hemelb::SimConfig *iSimConfig,
                     unsigned int iImagesPerCycle,
