@@ -43,7 +43,7 @@ namespace hemelb
 
           private:
             double Beta;
-            double Tau;
+            double TwoTau;
             double* alpha;
             size_t currentAlphaIndex;
 

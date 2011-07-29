@@ -100,13 +100,10 @@ namespace hemelb
          * Ideally dH should never be greater than zero. However, because H is positive definite accuracy as well as
          * rounding and truncation errors can make dH greater than zero in certain cases. The tolerance
          * is limited by the accuracy of the simulation (including the accuracy to which alpha is calculated)
-         * The tolerance has to be at least as big as the accuracy to which alpha is calculated
          */
-        if (dH > 1.0E-6)
+        if (dH > 1.0E-3)
         {
-          std::cout << dH << std::endl;
-
-          //mUpwardsStability = Unstable;
+          mUpwardsStability = Unstable;
         }
       }
     }
