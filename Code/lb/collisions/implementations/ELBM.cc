@@ -92,11 +92,10 @@ namespace hemelb
             HFunction HFunc(lF, lFEq);
 
             // This is in case previous Alpha was calculated to be zero (does happen occasionally if f_eq - f is small
-            prevAlpha = (prevAlpha < 1.8
+            prevAlpha = (prevAlpha < TwoTau
               ? 2.0
               : prevAlpha);
 
-            // Accuracy is set to 1.0E-3 as this works for difftest.
             return (hemelb::util::NumericalMethods::NewtonRaphson(&HFunc, prevAlpha, 1.0E-6));
           }
           else
