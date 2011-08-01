@@ -1,7 +1,11 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HEMELB_CFG_ON_OSX
+#include <GLUT/glut.h>
+#else
 #include <GL/glut.h>
+#endif// HEMELB_CFG_OSX
 #include <rpc/types.h>
 #include <rpc/rpc.h>
 #include <cstring>
