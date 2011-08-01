@@ -1,12 +1,17 @@
 target = visim
 
 CC = g++
+ifeq ($(HEMELB_MACHINE),OSX)
+CFLAGS = -framework OpenGL -framework GLUT -framework Foundation -O4 -DHEMELB_CFG_ON_OSX
+else
 CFLAGS = -O4 -L/usr/include/GT/ -lglut -lGLU
+endif
 
 objects = visualize_images.o
 
-$(target) : $(objects)
-	$(CC) $(CFLAGS) $(objects) -o $@
+src =  visualize_images.cc
+$(target) : $(src)
+	$(CC) $(CFLAGS)  $< -o $@
 
 
 .PHONY : clean
