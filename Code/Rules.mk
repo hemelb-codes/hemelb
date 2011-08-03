@@ -13,7 +13,7 @@ $(EXE)_DEPS = D3Q15.o \
         SimulationMaster.o \
         SimConfig.o \
         main.o \
-	mpiInclude.o \
+        mpiInclude.o \
         $(SUBDIRS_TGTS)
 
 include $(MK)/footer.mk

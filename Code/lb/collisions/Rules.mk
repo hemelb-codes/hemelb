@@ -1,18 +1,9 @@
 include $(MK)/header.mk
 
-SRCS := Collision.cc \
-        InletOutletCollision.cc \
-        InletOutletWallCollision.cc \
-        MidFluidCollision.cc \
-        WallCollision.cc \
-        ImplNonZeroVelocityBoundaryDensity.cc \
-        ImplSimpleCollideAndStream.cc \
-        ImplZeroVelocityBoundaryDensity.cc \
-        ImplZeroVelocityEquilibrium.cc \
-        ImplFInterpolation.cc \
-        ImplGuoZhengShi.cc \
-        ImplRegularised.cc \
-        ImplSimpleBounceBack.cc \
+SUBDIRS := implementations
+
+TARGETS := CollisionVisitor.o \
+           CollisionOperator.o
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

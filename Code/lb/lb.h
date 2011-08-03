@@ -5,9 +5,13 @@
 #include "net/IteratedAction.h"
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
-#include "lb/collisions/Collisions.h"
+#include "lb/streamers/Collisions.h"
+#include "lb/collisions/CollisionVisitors.h"
+#include "lb/streamers/Implementations.h"
+#include "lb/collisions/CollisionOperators.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
+#include <typeinfo>
 
 namespace hemelb
 {
@@ -74,6 +78,8 @@ namespace hemelb
                          distribn_t *vz,
                          distribn_t f_neq[]);
 
+        template<typename tMidFluidCollision, typename tWallCollision,
+            typename tInletOutletCollision, typename tInletOutletWallCollision>
         void InitCollisions();
 
         void ReadParameters();
@@ -86,15 +92,20 @@ namespace hemelb
         distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad) const;
         double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
-        hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
-        hemelb::lb::collisions::WallCollision* mWallCollision;
-        hemelb::lb::collisions::InletOutletCollision* mInletCollision;
-        hemelb::lb::collisions::InletOutletCollision* mOutletCollision;
-        hemelb::lb::collisions::InletOutletWallCollision* mInletWallCollision;
-        hemelb::lb::collisions::InletOutletWallCollision* mOutletWallCollision;
+        // Visitors
+        hemelb::lb::collisions::CollisionVisitor* mStreamAndCollide;
+        hemelb::lb::collisions::CollisionVisitor* mPostStep;
+
+        // Collision objects
+        hemelb::lb::streamers::MidFluidCollision* mMidFluidCollision;
+        hemelb::lb::streamers::WallCollision* mWallCollision;
+        hemelb::lb::streamers::InletOutletCollision* mInletCollision;
+        hemelb::lb::streamers::InletOutletCollision* mOutletCollision;
+        hemelb::lb::streamers::InletOutletWallCollision* mInletWallCollision;
+        hemelb::lb::streamers::InletOutletWallCollision* mOutletWallCollision;
 
         //TODO Get rid of this hack
-        hemelb::lb::collisions::Collision* GetCollision(int i);
+        hemelb::lb::streamers::Collision* GetCollision(int i);
 
         double timeSpent;
 

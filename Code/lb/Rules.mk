@@ -1,14 +1,16 @@
 include $(MK)/header.mk
 
-TARGETS := libHemeLbMethod.$(LIBEXT)
+TARGETS := libHemeLbLb.$(LIBEXT)
 
-SUBDIRS := collisions
+SUBDIRS := collisions streamers
 
-$(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
-                   lb.o \
-                   io.o \
-                   StabilityTester.o \
-                   SimulationState.o
+$(TARGETS)_DEPS = lb.o \
+                  io.o \
+                  HFunction.o \
+                  StabilityTester.o \
+                  EntropyTester.o \
+                  SimulationState.o \
+                  $(foreach sd,$(SUBDIRS_$(d)),$(call subtree_tgts,$(sd)))
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

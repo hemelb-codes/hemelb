@@ -15,6 +15,8 @@ namespace hemelb
       static const int CY[NUMVECTORS];
       static const int CZ[NUMVECTORS];
 
+      static const double EQMWEIGHTS[NUMVECTORS];
+
       // The index of the inverse direction of each discrete velocity vector
       static const int INVERSEDIRECTIONS[NUMVECTORS];
 
@@ -36,6 +38,17 @@ namespace hemelb
                                               distribn_t &v_y,
                                               distribn_t &v_z,
                                               distribn_t f_eq[]);
+      static void CalculateEntropicFeq(const distribn_t &density,
+                                       const distribn_t &v_x,
+                                       const distribn_t &v_y,
+                                       const distribn_t &v_z,
+                                       distribn_t f_eq[]);
+      static void CalculateEntropicDensityVelocityFEq(const distribn_t f[],
+                                                      distribn_t &density,
+                                                      distribn_t &v_x,
+                                                      distribn_t &v_y,
+                                                      distribn_t &v_z,
+                                                      distribn_t f_eq[]);
       static void CalculateVonMisesStress(const distribn_t f[],
                                           distribn_t &stress,
                                           const double iStressParameter);

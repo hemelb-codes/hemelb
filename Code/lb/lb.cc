@@ -16,15 +16,16 @@ namespace hemelb
     distribn_t LBM::ConvertPressureToLatticeUnits(double pressure) const
     {
       double temp = (PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle() * voxel_size));
-      return Cs2 + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
-          / BLOOD_DENSITY_Kg_per_m3;
+      return Cs2
+          + (pressure - REFERENCE_PRESSURE_mmHg) * mmHg_TO_PASCAL * temp * temp
+              / BLOOD_DENSITY_Kg_per_m3;
     }
 
     double LBM::ConvertPressureToPhysicalUnits(distribn_t pressure) const
     {
       double temp = ( ((double) mState->GetTimeStepsPerCycle() * voxel_size) / PULSATILE_PERIOD_s);
-      return REFERENCE_PRESSURE_mmHg + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3
-          * temp * temp / mmHg_TO_PASCAL;
+      return REFERENCE_PRESSURE_mmHg
+          + ( (pressure / Cs2 - 1.0) * Cs2) * BLOOD_DENSITY_Kg_per_m3 * temp * temp / mmHg_TO_PASCAL;
     }
 
     distribn_t LBM::ConvertPressureGradToLatticeUnits(double pressure_grad) const
@@ -41,39 +42,41 @@ namespace hemelb
 
     distribn_t LBM::ConvertVelocityToLatticeUnits(double velocity) const
     {
-      return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) / (BLOOD_VISCOSITY_Pa_s
-          / BLOOD_DENSITY_Kg_per_m3);
+      return velocity * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size)
+          / (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3);
     }
 
     double LBM::ConvertVelocityToPhysicalUnits(distribn_t velocity) const
     {
       // convert velocity from lattice units to physical units (m/s)
-      return velocity * (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / ( ( (mParams.Tau - 0.5)
-          / 3.0) * voxel_size);
+      return velocity * (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
+          / ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size);
     }
 
     distribn_t LBM::ConvertStressToLatticeUnits(double stress) const
     {
       return stress * (BLOOD_DENSITY_Kg_per_m3 / (BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s))
-          * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0)
-          * voxel_size);
+          * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size)
+          * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size);
     }
 
     double LBM::ConvertStressToPhysicalUnits(distribn_t stress) const
     {
       // convert stress from lattice units to physical units (Pa)
-      return stress * BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s / (BLOOD_DENSITY_Kg_per_m3
-          * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size) * ( ( (mParams.Tau - 0.5) / 3.0)
-          * voxel_size));
+      return stress * BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s
+          / (BLOOD_DENSITY_Kg_per_m3 * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size)
+              * ( ( (mParams.Tau - 0.5) / 3.0) * voxel_size));
     }
 
     void LBM::RecalculateTauViscosityOmega()
     {
-      mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-          / (Cs2 * ((double) mState->GetTimeStepsPerCycle() * voxel_size * voxel_size));
+      mParams.Tau = 0.5
+          + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
+              / (Cs2 * ((double) mState->GetTimeStepsPerCycle() * voxel_size * voxel_size));
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
+      mParams.Beta = -1.0 / (2.0 * mParams.Tau);
     }
 
     // Calculate the BCs for each boundary site type and the
@@ -126,13 +129,13 @@ namespace hemelb
 
       for (int i = 0; i < inlets; i++)
       {
-        inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double) time_step
-            + inlet_density_phs[i]);
+        inlet_density[i] = inlet_density_avg[i]
+            + inlet_density_amp[i] * cos(w * (double) time_step + inlet_density_phs[i]);
       }
       for (int i = 0; i < outlets; i++)
       {
-        outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i] * cos(w
-            * (double) time_step + outlet_density_phs[i]);
+        outlet_density[i] = outlet_density_avg[i]
+            + outlet_density_amp[i] * cos(w * (double) time_step + outlet_density_phs[i]);
       }
     }
 
@@ -145,13 +148,23 @@ namespace hemelb
              net::Net* net,
              geometry::LatticeData* latDat,
              SimulationState* simState) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
+        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
     {
       voxel_size = iSimulationConfig->VoxelSize;
 
       ReadParameters();
 
-      InitCollisions();
+      typedef hemelb::lb::collisions::implementations::LBGK CO;
+      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
+      {
+        hemelb::lb::collisions::implementations::ELBM::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
+        hemelb::lb::collisions::implementations::ELBM::setTau(&mParams.Tau);
+      }
+
+      InitCollisions<hemelb::lb::streamers::implementations::SimpleCollideAndStream<CO>,
+          hemelb::lb::streamers::implementations::ZeroVelocityEquilibrium<CO>,
+          hemelb::lb::streamers::implementations::NonZeroVelocityBoundaryDensity<CO>,
+          hemelb::lb::streamers::implementations::ZeroVelocityBoundaryDensity<CO> >();
     }
 
     void LBM::CalculateMouseFlowField(float densityIn,
@@ -169,23 +182,26 @@ namespace hemelb
       mouse_stress = ConvertStressToPhysicalUnits(stress);
     }
 
+    template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+        typename tInletOutletWallCollision>
     void LBM::InitCollisions()
     {
+      mStreamAndCollide = new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision,
+          tWallCollision, tInletOutletCollision, tInletOutletWallCollision>();
+      mPostStep = new hemelb::lb::collisions::PostStep<tMidFluidCollision, tWallCollision,
+          tInletOutletCollision, tInletOutletWallCollision>();
+
       // TODO Note that the convergence checking is not yet implemented in the
       // new boundary condition hierarchy system.
       // It'd be nice to do this with something like
       // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
-      mMidFluidCollision = new hemelb::lb::collisions::ImplSimpleCollideAndStream();
-      mWallCollision = new hemelb::lb::collisions::ImplZeroVelocityEquilibrium();
-      mInletCollision
-          = new hemelb::lb::collisions::ImplNonZeroVelocityBoundaryDensity(inlet_density);
-      mOutletCollision
-          = new hemelb::lb::collisions::ImplNonZeroVelocityBoundaryDensity(outlet_density);
-      mInletWallCollision
-          = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(inlet_density);
-      mOutletWallCollision
-          = new hemelb::lb::collisions::ImplZeroVelocityBoundaryDensity(outlet_density);
+      mMidFluidCollision = new hemelb::lb::streamers::MidFluidCollision();
+      mWallCollision = new hemelb::lb::streamers::WallCollision();
+      mInletCollision = new hemelb::lb::streamers::InletOutletCollision(inlet_density);
+      mOutletCollision = new hemelb::lb::streamers::InletOutletCollision(outlet_density);
+      mInletWallCollision = new hemelb::lb::streamers::InletOutletWallCollision(inlet_density);
+      mOutletWallCollision = new hemelb::lb::streamers::InletOutletWallCollision(outlet_density);
     }
 
     void LBM::Initialise(site_t* iFTranslator, vis::Control* iControl)
@@ -227,7 +243,7 @@ namespace hemelb
     }
 
     // TODO HACK
-    hemelb::lb::collisions::Collision* LBM::GetCollision(int i)
+    hemelb::lb::streamers::Collision* LBM::GetCollision(int i)
     {
       switch (i)
       {
@@ -257,14 +273,14 @@ namespace hemelb
           netTop->NeighbouringProcs.begin(); it != netTop->NeighbouringProcs.end(); it++)
       {
         // Request the receive into the appropriate bit of FOld.
-        mNet->RequestReceive<distribn_t> (mLatDat->GetFOld( (*it).FirstSharedF),
-                                          (int) (*it).SharedFCount,
-                                           (*it).Rank);
+        mNet->RequestReceive<distribn_t>(mLatDat->GetFOld( (*it).FirstSharedF),
+                                         (int) (*it).SharedFCount,
+                                         (*it).Rank);
 
         // Request the send from the right bit of FNew.
-        mNet->RequestSend<distribn_t> (mLatDat->GetFNew( (*it).FirstSharedF),
-                                       (int) (*it).SharedFCount,
-                                        (*it).Rank);
+        mNet->RequestSend<distribn_t>(mLatDat->GetFNew( (*it).FirstSharedF),
+                                      (int) (*it).SharedFCount,
+                                      (*it).Rank);
       }
 
       timeSpent += util::myClock();
@@ -278,12 +294,13 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->DoCollisions(mVisControl->IsRendering(),
-                                                   offset,
-                                                   mLatDat->GetInterCollisionCount(collision_type),
-                                                   &mParams,
-                                                   mLatDat,
-                                                   mVisControl);
+        GetCollision(collision_type)->AcceptCollisionVisitor(mStreamAndCollide,
+                                                             mVisControl->IsRendering(),
+                                                             offset,
+                                                             mLatDat->GetInterCollisionCount(collision_type),
+                                                             &mParams,
+                                                             mLatDat,
+                                                             mVisControl);
         offset += mLatDat->GetInterCollisionCount(collision_type);
       }
 
@@ -298,12 +315,13 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->DoCollisions(mVisControl->IsRendering(),
-                                                   offset,
-                                                   mLatDat->GetInnerCollisionCount(collision_type),
-                                                   &mParams,
-                                                   mLatDat,
-                                                   mVisControl);
+        GetCollision(collision_type)->AcceptCollisionVisitor(mStreamAndCollide,
+                                                             mVisControl->IsRendering(),
+                                                             offset,
+                                                             mLatDat->GetInnerCollisionCount(collision_type),
+                                                             &mParams,
+                                                             mLatDat,
+                                                             mVisControl);
         offset += mLatDat->GetInnerCollisionCount(collision_type);
       }
 
@@ -320,8 +338,8 @@ namespace hemelb
 
       for (site_t i = 0; i < netTop->TotalSharedFs; i++)
       {
-        *mLatDat->GetFNew(receivedFTranslator[i])
-            = *mLatDat->GetFOld(netTop->NeighbouringProcs[0].FirstSharedF + i);
+        *mLatDat->GetFNew(receivedFTranslator[i]) =
+            *mLatDat->GetFOld(netTop->NeighbouringProcs[0].FirstSharedF + i);
       }
 
       // Do any cleanup steps necessary on boundary nodes
@@ -329,23 +347,25 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(mVisControl->IsRendering(),
-                                               offset,
-                                               mLatDat->GetInnerCollisionCount(collision_type),
-                                               &mParams,
-                                               mLatDat,
-                                               mVisControl);
+        GetCollision(collision_type)->AcceptCollisionVisitor(mPostStep,
+                                                             mVisControl->IsRendering(),
+                                                             offset,
+                                                             mLatDat->GetInnerCollisionCount(collision_type),
+                                                             &mParams,
+                                                             mLatDat,
+                                                             mVisControl);
         offset += mLatDat->GetInnerCollisionCount(collision_type);
       }
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
-        GetCollision(collision_type)->PostStep(mVisControl->IsRendering(),
-                                               offset,
-                                               mLatDat->GetInterCollisionCount(collision_type),
-                                               &mParams,
-                                               mLatDat,
-                                               mVisControl);
+        GetCollision(collision_type)->AcceptCollisionVisitor(mPostStep,
+                                                             mVisControl->IsRendering(),
+                                                             offset,
+                                                             mLatDat->GetInterCollisionCount(collision_type),
+                                                             &mParams,
+                                                             mLatDat,
+                                                             mVisControl);
         offset += mLatDat->GetInterCollisionCount(collision_type);
       }
 
@@ -490,6 +510,10 @@ namespace hemelb
       delete[] outlet_density_avg;
       delete[] outlet_density_amp;
       delete[] outlet_density_phs;
+
+      // Delete visitors
+      delete mStreamAndCollide;
+      delete mPostStep;
 
       // Delete the collision and stream objects we've been using
       delete mMidFluidCollision;
