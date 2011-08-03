@@ -7,7 +7,7 @@ HEMELB_DEBUG_LEVEL := 0
 HEMELB_STEERING_LIB := $(or $(HEMELB_STEERING_LIB),basic)
 
 PMETIS_INCLUDE_DIR := $(TOP)/parmetis/include $(TOP)/parmetis/metis/include
-PMETIS_LIBRARY_DIR := $(TOP)/parmetis
+PMETIS_LIBRARY_DIR := $(TOP)/parmetis/build/Linux-x86_64/libmetis/ $(TOP)/parmetis/build/Linux-x86_64/libparmetis/
 HEMELB_CFLAGS :=
 HEMELB_CXXFLAGS := -g -pedantic -Wall -Wextra -Wno-unused
 HEMELB_DEFS := TIXML_USE_STL
