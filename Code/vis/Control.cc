@@ -11,6 +11,7 @@
 #include "io/XdrFileWriter.h"
 
 namespace hemelb
+		
 {
   namespace vis
   {
