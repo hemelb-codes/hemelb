@@ -54,9 +54,13 @@ namespace hemelb
     {
       float minmax_x[2], minmax_y[2], minmax_z[2];
       
-      float x[3];
+      //Stores the lowest x, y and z point of the Cluster 
+      float blockCoordinates[3];
       
-      unsigned short int blocks_x, blocks_y, blocks_z;
+      //Stores the size of the cluster
+      unsigned short int blocks_x;
+      unsigned short int blocks_y;
+      unsigned short int blocks_z;
     };
 
     class RayTracer

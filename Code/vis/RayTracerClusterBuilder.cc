@@ -77,9 +77,9 @@ namespace hemelb
 		  n++;
 		  if(!m_is_block_visited[n])
 		    {
-		      FindNewClusterStartingHere(
-						 n,
-						 Location(i, j, k));
+		      FindNewClusterStartingHere
+			(n,
+			 Location(i, j, k));
 		    }
 		}
 	    }
@@ -114,9 +114,10 @@ namespace hemelb
 	  m_current_location = m_sites_to_visit.top();
 	  m_sites_to_visit.pop();
 
-	  site_t block_id = mLatDat
-	    ->GetBlockIdFromBlockCoords(    				     m_current_location.i,
-									     m_current_location.j,				             m_current_location.k);
+	  site_t block_id = mLatDat->GetBlockIdFromBlockCoords
+	    (m_current_location.i,
+	     m_current_location.j,			             
+	     m_current_location.k);
 
 	  //Mark visited
 	  m_is_block_visited[block_id] = true;
@@ -233,11 +234,11 @@ namespace hemelb
     void RayTracerClusterBuilder::StoreCluster()
     {
       Cluster lNewCluster;
-      lNewCluster.x[0] = (float) (m_current_cluster_min.i * mLatDat->GetBlockSize()) - 0.5F
+      lNewCluster.blockCoordinates[0] = (float) (m_current_cluster_min.i * mLatDat->GetBlockSize()) - 0.5F
 	* (float) mLatDat->GetXSiteCount();
-      lNewCluster.x[1] = (float) (m_current_cluster_min.j * mLatDat->GetBlockSize()) - 0.5F
+      lNewCluster.blockCoordinates[1] = (float) (m_current_cluster_min.j * mLatDat->GetBlockSize()) - 0.5F
 	* (float) mLatDat->GetYSiteCount();
-      lNewCluster.x[2] = (float) (m_current_cluster_min.k * mLatDat->GetBlockSize()) - 0.5F
+      lNewCluster.blockCoordinates[2] = (float) (m_current_cluster_min.k * mLatDat->GetBlockSize()) - 0.5F
 	* (float) mLatDat->GetZSiteCount();
 
       lNewCluster.blocks_x = (unsigned short) (1 + m_current_cluster_max.i - m_current_cluster_min.i);
@@ -245,9 +246,9 @@ namespace hemelb
       lNewCluster.blocks_z = (unsigned short) (1 + m_current_cluster_max.k - m_current_cluster_min.k);
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("found cluster %i, %i, %i, %i, %i, %i ", 
-									  lNewCluster.x[0],
-									  lNewCluster.x[1],
-									  lNewCluster.x[2],
+									  lNewCluster.blockCoordinates[0],
+									  lNewCluster.blockCoordinates[1],
+									  lNewCluster.blockCoordinates[2],
 									  lNewCluster.blocks_x,
 									  lNewCluster.blocks_y,
 									  lNewCluster.blocks_z
@@ -297,31 +298,7 @@ namespace hemelb
 		  m_cluster_flow_field[i_cluster_id][n]
 		    = new float[mLatDat->GetSitesPerBlockVolumeUnit() * VIS_FIELDS];
 
-		  int l_site_id  = -1;
-
-		  Location site_coordinates_of_block = block_coordinates * mLatDat->GetBlockSize();
-		  Location siteLocOnBlock;
-		  for (siteLocOnBlock.i = 0; siteLocOnBlock.i < mLatDat->GetBlockSize(); siteLocOnBlock.i++)
-		    {
-		      for (siteLocOnBlock.j = 0; siteLocOnBlock.j < mLatDat->GetBlockSize(); siteLocOnBlock.j++)
-			{
-			  for (siteLocOnBlock.k = 0; siteLocOnBlock.k < mLatDat->GetBlockSize(); siteLocOnBlock.k++)
-			    {
-			      ++l_site_id;
-			  
-			      UpdateFlowField(lBlock, n, i_cluster_id, l_site_id);
-			  	  
-			      //Come back to l
-			      UpdateMinLocation(m_current_min_voxel, siteLocOnBlock + block_coordinates);
-			      UpdateMaxLocation(m_current_max_voxel, siteLocOnBlock + block_coordinates);
-			    }
-			} 
-		    }
-		 
-
-
-            
-
+		  UpdateBlockMaxMinsAndFlowField(lBlock, n, i_cluster_id,block_coordinates);
 		} // for k
 	    } // for j
 	} // for i
@@ -339,7 +316,33 @@ namespace hemelb
 	  
     }
     
-    void RayTracerClusterBuilder::UpdateFlowField
+    void RayTracerClusterBuilder::UpdateBlockMaxMinsAndFlowField
+    (geometry::LatticeData::BlockData * lBlock, unsigned int n, unsigned int i_cluster_id, Location i_block_coordinates)
+    {
+      int l_site_id  = -1;
+    
+      Location site_coordinates_of_block = i_block_coordinates * mLatDat->GetBlockSize();
+      Location siteLocOnBlock;
+
+      for (siteLocOnBlock.i = 0; siteLocOnBlock.i < mLatDat->GetBlockSize(); siteLocOnBlock.i++)
+	{
+	  for (siteLocOnBlock.j = 0; siteLocOnBlock.j < mLatDat->GetBlockSize(); siteLocOnBlock.j++)
+	    {
+	      for (siteLocOnBlock.k = 0; siteLocOnBlock.k < mLatDat->GetBlockSize(); siteLocOnBlock.k++)
+		{
+		  ++l_site_id;
+			  
+		  UpdateSiteFlowField(lBlock, n, i_cluster_id, l_site_id);
+			  	  
+		  //Come back to l
+		  UpdateMinLocation(m_current_min_voxel, siteLocOnBlock + i_block_coordinates);
+		  UpdateMaxLocation(m_current_max_voxel, siteLocOnBlock + i_block_coordinates);
+		}
+	    } 
+	}
+    }
+    
+    void RayTracerClusterBuilder::UpdateSiteFlowField
     ( geometry::LatticeData::BlockData * i_block,
       unsigned int n, unsigned int i_cluster_id, int l_site_id)
     {
@@ -406,6 +409,7 @@ namespace hemelb
 	(io_store_location.k, 
 	 i_compare_location.k);
     }
+
 
   }
 }

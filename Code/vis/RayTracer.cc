@@ -492,7 +492,7 @@ namespace hemelb
         float cluster_x[3];
         for (int l = 0; l < 3; l++)
         {
-          cluster_x[l] = thisCluster->x[l] - viewpointCentre[l];
+          cluster_x[l] = thisCluster->blockCoordinates[l] - viewpointCentre[l];
         }
 
         float **block_flow_field = cluster_flow_field[clusterId];
