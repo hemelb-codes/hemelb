@@ -22,23 +22,6 @@ namespace hemelb
   {
     namespace raytracer 
     {
-      struct Cluster
-      {
-	//Stores the lowest and greatest x, y, and z site locations 
-	//of the cluster in terms of site units relative to 
-	//the centre location
-	Location<float> minSite;
-	Location<float> maxSite;
-
-	//Stores the lowest x, y and z block location of the Cluster 
-	//in terms of site units relative to the centre location
-	Location<float> minBlock;
-        
-	//Stores the size of the cluster in terms of the number of blocks
-	unsigned short int blocksX;
-	unsigned short int blocksY;
-	unsigned short int blocksZ;
-      };
 
       class RayTracer
       {
@@ -62,6 +45,24 @@ namespace hemelb
 	void Render();
 
       private:
+
+      struct Cluster
+      {
+	//Stores the lowest and greatest x, y, and z site locations 
+	//of the cluster in terms of site units relative to 
+	//the centre location
+	Location<float> minSite;
+	Location<float> maxSite;
+
+	//Stores the lowest x, y and z block location of the Cluster 
+	//in terms of site units relative to the centre location
+	Location<float> minBlock;
+        
+	//Stores the size of the cluster in terms of the number of blocks
+	unsigned short int blocksX;
+	unsigned short int blocksY;
+	unsigned short int blocksZ;
+      };
 
 	class ClusterBuilder
 	{
