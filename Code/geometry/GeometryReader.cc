@@ -1891,12 +1891,12 @@ namespace hemelb
               if (bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site]
                   != ConvertTopologyRankToGlobalRank((proc_t) lFromProc))
               {
-                log::Logger::Log<log::Debug, log::OnePerCore>("Block %" IDXTYPE_FORMAT ", site %" IDXTYPE_FORMAT " from move %u was originally on proc %i, not proc %u.",
-                                                              block,
-                                                              site,
-                                                              moveIndex,
-                                                              bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site],
-                                                              lFromProc);
+		// log::Logger::Log<log::Debug, log::OnePerCore>("Block %" IDXTYPE_FORMAT ", site %" IDXTYPE_FORMAT " from move %u was originally on proc %i, not proc %u.",
+                //                                              block,
+                //                                              site,
+                //                                              moveIndex,
+                //                                              bGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site],
+		//                                               lFromProc);
               }
             }
 

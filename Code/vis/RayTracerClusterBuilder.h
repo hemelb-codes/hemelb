@@ -44,6 +44,8 @@ namespace hemelb
 
       void StoreCluster();
 
+      void ProcessCluster(unsigned int i_cluster_id);
+
       bool* m_is_block_visited;
 
    
