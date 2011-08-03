@@ -24,7 +24,7 @@ namespace hemelb
 	 );
       ~RayTracerClusterBuilder();
       void BuildClusters();
-
+      
 
     private:
       void LocateClusters();
@@ -39,14 +39,17 @@ namespace hemelb
       bool BlockValidAndNeedsVisiting(Location block);
       bool SitesAssignedToLocalProcessorInBlock
 	(geometry::LatticeData::BlockData * iBlock);
-
+      
       void UpdateClusterMaxAndMin();
 
       void StoreCluster();
 
       void ProcessCluster(unsigned int i_cluster_id);
 
-      void UpdateFlowField
+      void UpdateBlockMaxMinsAndFlowField(geometry::LatticeData::BlockData * lBlock, unsigned int n,
+					  unsigned int i_cluster_id, Location i_block_coordinates);
+
+      void UpdateSiteFlowField
 	(geometry::LatticeData::BlockData * i_block,
 	 unsigned int n, unsigned int i_cluster_id, int l_site_id);
 
