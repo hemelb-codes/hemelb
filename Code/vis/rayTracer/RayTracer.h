@@ -2,6 +2,7 @@
 #define HEMELB_VIS_RAYTRACER_H
 
 #include <stack>
+#include <vector>
 
 #include "constants.h"
 #include "geometry/LatticeData.h"
@@ -23,15 +24,20 @@ namespace hemelb
     {
       struct Cluster
       {
-	float minmax_x[2], minmax_y[2], minmax_z[2];
-      
-	//Stores the lowest x, y and z point of the Cluster 
-	float blockCoordinates[3];
-      
-	//Stores the size of the cluster
-	unsigned short int blocks_x;
-	unsigned short int blocks_y;
-	unsigned short int blocks_z;
+	//Stores the lowest and greatest x, y, and z site locations 
+	//of the cluster in terms of site units relative to 
+	//the centre location
+	Location<float> minSite;
+	Location<float> maxSite;
+
+	//Stores the lowest x, y and z block location of the Cluster 
+	//in terms of site units relative to the centre location
+	Location<float> minBlock;
+        
+	//Stores the size of the cluster in terms of the number of blocks
+	unsigned short int blocksX;
+	unsigned short int blocksY;
+	unsigned short int blocksZ;
       };
 
       class RayTracer
@@ -76,11 +82,11 @@ namespace hemelb
 	  public:
 	    RectangularIterator();
 
-	    Location GetLocation();
+	    Location<site_t> GetLocation();
 			
 	    site_t CurrentNumber();
 
-	    site_t GetNumberFromLocation(Location iLocation);
+	    site_t GetNumberFromLocation(Location<site_t> iLocation);
 
 	    bool Iterate();
 
@@ -91,7 +97,7 @@ namespace hemelb
 	    virtual site_t GetZCount() = 0;
 			
 	  protected:
-	    Location mCurrentLocation;
+	    Location<site_t> mCurrentLocation;
 	    site_t mCurrentNumber;
 	  };
 
@@ -107,9 +113,11 @@ namespace hemelb
 
 	    virtual site_t GetZCount();
 
+	    site_t GetBlockSize();
+
 	  private:
 	    const geometry::LatticeData * mLatticeData;
-	    const site_t iBlockId;
+	    const site_t mBlockId;
 
 	  };
 		    
@@ -117,14 +125,22 @@ namespace hemelb
 	  {
 	  public:
 	    BlockIterator(const geometry::LatticeData * iLatDat);
+	    ~BlockIterator();
 
 	    site_t CurrentBlockNumber();
+
+	    Location<site_t> GetLowestSiteCoordinates();
 		
 	    bool GoToNextUnvisitedBlock();
 		
 	    geometry::LatticeData::BlockData * GetBlockData();
+	    geometry::LatticeData::BlockData * GetBlockData(const Location<site_t>& iLocation);
 
+	    site_t GetBlockSize();
+	    
 	    SiteIterator GetSiteIterator();
+	    
+	    SiteIterator GetSiteIterator(const Location<site_t>& iLocation);
 
 	    virtual site_t GetXCount();
 
@@ -132,19 +148,17 @@ namespace hemelb
 
 	    virtual site_t GetZCount();
 
-	    bool BlockValid(Location block);
+	    bool BlockValid(Location<site_t> block);
 
 	    bool BlockVisited(site_t n);
 
-	    bool BlockVisited(Location n);
+	    bool BlockVisited(Location<site_t> n);
 
 	    bool CurrentBlockVisited();
 
 	    void MarkBlockVisited();
 	    void MarkBlockVisited(site_t n);
-	    void MarkBlockVisited(Location location);
-
-	    bool SitesAssignedToLocalProcessorInBlock();
+	    void MarkBlockVisited(Location<site_t> location);
 
 	  private:
 	    bool GoToNextBlock();
@@ -152,72 +166,55 @@ namespace hemelb
 	    const geometry::LatticeData * mLatticeData;
 
 	    bool* mBlockVisited;
-	  
 	  };
+
 
 	  void LocateClusters();
       
 	  // If the site hasn't been visited, finds a new rectangular
 	  // cluster containing this site
 	  void FindNewCluster();
-	  void AddNeighbouringBlocks(Location iCurrentLocation,
-				     std::stack<Location> iBlocksToVisit);
-
-	  bool BlockValidAndNeedsVisiting(Location block);
+	  void AddNeighbouringBlocks(Location<site_t> iCurrentLocation,
+				     std::stack<Location<site_t> >& ioBlocksToVisit);
 
 	  bool SitesAssignedToLocalProcessorInBlock
 	    (geometry::LatticeData::BlockData * iBlock);
       
-	  void StoreCluster(Location iClusterMin, Location iClusterMax);
+	  void AddCluster(Location<site_t> iClusterBlockMin,
+			  Location<site_t> iClusterBlockMax,
+			  Location<site_t> iClusterVoxelMin,
+			  Location<site_t> iClusterVoxelMax);
 
-	  void ProcessCluster(site_t i_cluster_id);
+	  void ProcessCluster(unsigned int iClusterId);
 
-	  void UpdateBlockMaxMinsAndFlowField(geometry::LatticeData::BlockData * lBlock, site_t n,
-					      site_t i_cluster_id, Location i_block_coordinates);
+	  void UpdateFlowField
+	    (geometry::LatticeData::BlockData * lBlock, site_t n, 
+	     unsigned int iClusterId, Location<site_t> i_block_coordinates);
 
 	  void UpdateSiteFlowField
 	    (geometry::LatticeData::BlockData * i_block,
-	     site_t n, site_t i_cluster_id, int l_site_id);
+	     site_t n, unsigned int iClusterId, unsigned int l_site_id);
 
-	  Location GetSiteCoordinatesOfBlock
-	    (site_t i_cluster_id, Location offset);
-
-	  static void UpdateMinLocation(Location io_store_location, Location i_compare_location);
-
-	  static void UpdateMaxLocation(Location io_store_location, Location i_compare_location);
+	  Location<site_t> GetSiteCoordinatesOfBlock
+	    (site_t iClusterId, Location<site_t> offset);
 
 	  BlockIterator mBlockIterator;
 
    
-	  //The algorithm stores a list of locations on route 
-	  //effectively performing a depth first search
-	  //on the cluster
-	  //The algorithm operates at block level, so 
-	  //all locations are in terms of blocks 
+	  std::vector<Cluster> & mClusters;
+	  float **& mClusterVoxel;
+	  float ***& mClusterFlowField;
 
-		    
-		    
-	  //The clusters are the exception to the rule -
-	  //the centre is stored in terms of number of
-	  //sites as a float float, though the extent is
-	  //number of blocks.
-	  std::vector<Cluster> & m_clusters;
-	  float **& m_cluster_voxel;
-	  float ***& m_cluster_flow_field;
 
-	  //These minimums are stored in terms of block
-	  //location - essentially duplicating the 
-	  //cluster data
-	  std::vector<Location> m_cluster_block_mins; 
+	  std::vector<Location<site_t> > mClusterBlockMins; 
 
-	  //These are stored in site_coordinates
-	  Location m_current_min_voxel;
-	  Location m_current_max_voxel;
 
-	  const geometry::LatticeData*& mLatDat;
-	  short int *m_cluster_id_of_block;
+	  const geometry::LatticeData*& mLatticeData;
+	  short int *mClusterIdOfBlock;
       
-      
+	  static const short int NOTASSIGNEDTOCLUSTER = -1; 
+
+	  static const Location<site_t> mNeighbours[26];
 	};
 
 	struct Ray
@@ -281,7 +278,7 @@ namespace hemelb
 	const float mBlockSizeFloat;
 	const float mBlockSizeInverse;
 	const site_t block_size2, block_size3, block_size_1;
-	const site_t blocks_yz;
+	const site_t blocksYz;
       };
     }
   }
