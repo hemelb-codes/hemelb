@@ -4,6 +4,7 @@ TARGETS := libHemeLbVis.$(LIBEXT)
 SRCS := ColPixel.cc \
         GlyphDrawer.cc \
         RayTracer.cc \
+	RayTracerClusterBuilder.cc \
         StreaklineDrawer.cc \
         Control.cc \
         Screen.cc \

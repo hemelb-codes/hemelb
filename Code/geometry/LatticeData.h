@@ -123,6 +123,7 @@ namespace hemelb
 
         site_t GetBlockIdFromBlockCoords(site_t i, site_t j, site_t k) const;
 
+	bool IsValidBlockSite(site_t i, site_t j, site_t k) const;
         bool IsValidLatticeSite(site_t i, site_t j, site_t k) const;
 
         const proc_t* GetProcIdFromGlobalCoords(site_t siteI, site_t siteJ, site_t siteK) const;
@@ -207,6 +208,7 @@ namespace hemelb
 
             site_t GetSitesPerBlockVolumeUnit() const;
 
+	    bool IsValidBlockSite(site_t i, site_t j, site_t k) const;
             bool IsValidLatticeSite(site_t i, site_t j, site_t k) const;
 
             BlockData * Blocks;
