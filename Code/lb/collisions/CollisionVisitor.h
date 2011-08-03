@@ -1,7 +1,7 @@
-#ifndef HEMELB_LB_COLLISIONS_COLLISION_VISITOR_H
-#define HEMELB_LB_COLLISIONS_COLLISION_VISITOR_H
+#ifndef HEMELB_LB_COLLISIONS_VISITOR_H
+#define HEMELB_LB_COLLISIONS_VISITOR_H
 
-#include "lb/collisions/Collisions.h"
+#include "lb/streamers/Collisions.h"
 #include "vis/Control.h"
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
@@ -26,7 +26,7 @@ namespace hemelb
         public:
           virtual ~CollisionVisitor();
 
-          virtual void VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
+          virtual void VisitInletOutlet(streamers::InletOutletCollision* mInletOutletCollision,
                                         const bool iDoRayTracing,
                                         const site_t iFirstIndex,
                                         const site_t iSiteCount,
@@ -34,7 +34,7 @@ namespace hemelb
                                         geometry::LatticeData* bLatDat,
                                         hemelb::vis::Control *iControl);
 
-          virtual void VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
+          virtual void VisitInletOutletWall(streamers::InletOutletWallCollision* mInletOutletWallCollision,
                                             const bool iDoRayTracing,
                                             const site_t iFirstIndex,
                                             const site_t iSiteCount,
@@ -42,7 +42,7 @@ namespace hemelb
                                             geometry::LatticeData* bLatDat,
                                             hemelb::vis::Control *iControl);
 
-          virtual void VisitMidFluid(MidFluidCollision* mMidFluidCollision,
+          virtual void VisitMidFluid(streamers::MidFluidCollision* mMidFluidCollision,
                                      const bool iDoRayTracing,
                                      const site_t iFirstIndex,
                                      const site_t iSiteCount,
@@ -50,7 +50,7 @@ namespace hemelb
                                      geometry::LatticeData* bLatDat,
                                      hemelb::vis::Control *iControl);
 
-          virtual void VisitWall(WallCollision* mWallCollision,
+          virtual void VisitWall(streamers::WallCollision* mWallCollision,
                                  const bool iDoRayTracing,
                                  const site_t iFirstIndex,
                                  const site_t iSiteCount,
@@ -116,4 +116,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_COLLISIONS_COLLISION_VISITOR_H */
+#endif /* HEMELB_LB_COLLISIONS_VISITOR_H */

@@ -7,7 +7,7 @@
 #include "debug/Debugger.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
-#include "lb/collisions/implementations/HFunction.h"
+#include "lb/HFunction.h"
 
 #include "topology/NetworkTopology.h"
 

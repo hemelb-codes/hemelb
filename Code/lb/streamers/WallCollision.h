@@ -1,19 +1,19 @@
-#ifndef HEMELB_LB_COLLISIONS_WALLCOLLISION_H
-#define HEMELB_LB_COLLISIONS_WALLCOLLISION_H
+#ifndef HEMELB_LB_STREAMERS_WALLCOLLISION_H
+#define HEMELB_LB_STREAMERS_WALLCOLLISION_H
 
-#include "lb/collisions/Collision.h"
+#include "lb/streamers/Collision.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
 
       class WallCollision : public Collision
       {
         public:
-          virtual void AcceptCollisionVisitor(CollisionVisitor* v,
+          virtual void AcceptCollisionVisitor(collisions::CollisionVisitor* v,
                                               const bool iDoRayTracing,
                                               const site_t iFirstIndex,
                                               const site_t iSiteCount,
@@ -25,4 +25,4 @@ namespace hemelb
     }
   }
 }
-#endif /* HEMELB_LB_COLLISIONS_WALLCOLLISION_H */
+#endif /* HEMELB_LB_STREAMERS_WALLCOLLISION_H */

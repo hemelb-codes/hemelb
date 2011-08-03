@@ -2,7 +2,7 @@
 #define HEMELB_LB_COLLISIONS_POSTSTEP_H
 
 #include "lb/collisions/CollisionVisitor.h"
-#include "lb/collisions/implementations/Implementations.h"
+#include "lb/streamers/Implementations.h"
 
 namespace hemelb
 {
@@ -11,14 +11,14 @@ namespace hemelb
     namespace collisions
     {
 
-      template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+          typename tInletOutletWallCollision>
       class PostStep : public CollisionVisitor
       {
         public:
           virtual ~PostStep();
 
-          virtual void VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
+          virtual void VisitInletOutlet(streamers::InletOutletCollision* mInletOutletCollision,
                                         const bool iDoRayTracing,
                                         const site_t iFirstIndex,
                                         const site_t iSiteCount,
@@ -26,7 +26,7 @@ namespace hemelb
                                         geometry::LatticeData* bLatDat,
                                         hemelb::vis::Control *iControl);
 
-          virtual void VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
+          virtual void VisitInletOutletWall(streamers::InletOutletWallCollision* mInletOutletWallCollision,
                                             const bool iDoRayTracing,
                                             const site_t iFirstIndex,
                                             const site_t iSiteCount,
@@ -34,7 +34,7 @@ namespace hemelb
                                             geometry::LatticeData* bLatDat,
                                             hemelb::vis::Control *iControl);
 
-          virtual void VisitMidFluid(MidFluidCollision* mMidFluidCollision,
+          virtual void VisitMidFluid(streamers::MidFluidCollision* mMidFluidCollision,
                                      const bool iDoRayTracing,
                                      const site_t iFirstIndex,
                                      const site_t iSiteCount,
@@ -42,7 +42,7 @@ namespace hemelb
                                      geometry::LatticeData* bLatDat,
                                      hemelb::vis::Control *iControl);
 
-          virtual void VisitWall(WallCollision* mWallCollision,
+          virtual void VisitWall(streamers::WallCollision* mWallCollision,
                                  const bool iDoRayTracing,
                                  const site_t iFirstIndex,
                                  const site_t iSiteCount,
@@ -52,17 +52,17 @@ namespace hemelb
 
       };
 
-      template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+          typename tInletOutletWallCollision>
       PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision, tInletOutletWallCollision>::~PostStep()
       {
 
       }
 
-      template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+          typename tInletOutletWallCollision>
       void PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::VisitInletOutlet(InletOutletCollision* mInletOutletCollision,
+          tInletOutletWallCollision>::VisitInletOutlet(streamers::InletOutletCollision* mInletOutletCollision,
                                                        const bool iDoRayTracing,
                                                        const site_t iFirstIndex,
                                                        const site_t iSiteCount,
@@ -90,10 +90,10 @@ namespace hemelb
         }
       }
 
-      template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+          typename tInletOutletWallCollision>
       void PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::VisitInletOutletWall(InletOutletWallCollision* mInletOutletWallCollision,
+          tInletOutletWallCollision>::VisitInletOutletWall(streamers::InletOutletWallCollision* mInletOutletWallCollision,
                                                            const bool iDoRayTracing,
                                                            const site_t iFirstIndex,
                                                            const site_t iSiteCount,
@@ -121,10 +121,10 @@ namespace hemelb
         }
       }
 
-      template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+          typename tInletOutletWallCollision>
       void PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::VisitMidFluid(MidFluidCollision* mMidFluidCollision,
+          tInletOutletWallCollision>::VisitMidFluid(streamers::MidFluidCollision* mMidFluidCollision,
                                                     const bool iDoRayTracing,
                                                     const site_t iFirstIndex,
                                                     const site_t iSiteCount,
@@ -152,10 +152,10 @@ namespace hemelb
         }
       }
 
-      template<typename tMidFluidCollision, typename tWallCollision,
-          typename tInletOutletCollision, typename tInletOutletWallCollision>
+      template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
+          typename tInletOutletWallCollision>
       void PostStep<tMidFluidCollision, tWallCollision, tInletOutletCollision,
-          tInletOutletWallCollision>::VisitWall(WallCollision* mWallCollision,
+          tInletOutletWallCollision>::VisitWall(streamers::WallCollision* mWallCollision,
                                                 const bool iDoRayTracing,
                                                 const site_t iFirstIndex,
                                                 const site_t iSiteCount,

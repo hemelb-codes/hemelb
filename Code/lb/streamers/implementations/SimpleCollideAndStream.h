@@ -1,14 +1,14 @@
-#ifndef HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_SIMPLECOLLIDEANDSTREAM_H
-#define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_SIMPLECOLLIDEANDSTREAM_H
+#ifndef HEMELB_LB_STREAMERS_IMPLEMENTATIONS_SIMPLECOLLIDEANDSTREAM_H
+#define HEMELB_LB_STREAMERS_IMPLEMENTATIONS_SIMPLECOLLIDEANDSTREAM_H
 
-#include "lb/collisions/implementations/Implementation.h"
-#include "lb/collisions/implementations/HFunction.h"
+#include "lb/streamers/Implementation.h"
+#include "lb/HFunction.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
       namespace implementations
       {
@@ -52,25 +52,23 @@ namespace hemelb
             distribn_t lFNeq[D3Q15::NUMVECTORS], lFEq[D3Q15::NUMVECTORS];
             double alpha;
 
-            tCollisionOperator::getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, iIndex
-                - iFirstIndex);
+            tCollisionOperator::getSiteValues(lFOld,
+                                              lDensity,
+                                              lVx,
+                                              lVy,
+                                              lVz,
+                                              lFEq,
+                                              iIndex - iFirstIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
               lFNeq[ii] = lFOld[ii] - lFEq[ii];
-              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
-                  += tCollisionOperator::getOperatorElement(lFOld[ii], lFNeq[ii], iLbmParams);
+              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii] +=
+                  tCollisionOperator::getOperatorElement(lFOld[ii], lFNeq[ii], iLbmParams);
             }
 
-            UpdateMinsAndMaxes<tDoRayTracing> (lVx,
-                                               lVy,
-                                               lVz,
-                                               iIndex,
-                                               lFNeq,
-                                               lDensity,
-                                               bLatDat,
-                                               iLbmParams,
-                                               iControl);
+            UpdateMinsAndMaxes < tDoRayTracing
+                > (lVx, lVy, lVz, iIndex, lFNeq, lDensity, bLatDat, iLbmParams, iControl);
           }
         }
 
@@ -91,4 +89,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_SIMPLECOLLIDEANDSTREAM */
+#endif /* HEMELB_LB_STREAMERS_IMPLEMENTATIONS_SIMPLECOLLIDEANDSTREAM */

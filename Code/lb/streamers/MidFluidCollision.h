@@ -1,13 +1,13 @@
-#ifndef HEMELB_LB_COLLISIONS_MIDFLUIDCOLLISION_H
-#define HEMELB_LB_COLLISIONS_MIDFLUIDCOLLISION_H
+#ifndef HEMELB_LB_STREAMERS_MIDFLUIDCOLLISION_H
+#define HEMELB_LB_STREAMERS_MIDFLUIDCOLLISION_H
 
-#include "lb/collisions/Collision.h"
+#include "lb/streamers/Collision.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
 
       class MidFluidCollision : public Collision
@@ -15,7 +15,7 @@ namespace hemelb
         public:
           virtual ~MidFluidCollision();
 
-          virtual void AcceptCollisionVisitor(CollisionVisitor* v,
+          virtual void AcceptCollisionVisitor(collisions::CollisionVisitor* v,
                                               const bool iDoRayTracing,
                                               const site_t iFirstIndex,
                                               const site_t iSiteCount,
@@ -27,4 +27,4 @@ namespace hemelb
     }
   }
 }
-#endif /* HEMELB_LB_COLLISIONS_MIDFLUIDCOLLISION_H */
+#endif /* HEMELB_LB_STREAMERS_MIDFLUIDCOLLISION_H */

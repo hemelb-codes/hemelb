@@ -1,10 +1,10 @@
-#include "lb/collisions/Collision.h"
+#include "lb/streamers/Collision.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
 
       Collision::~Collision()
