@@ -37,14 +37,27 @@ namespace hemelb
       void CheckNeighbouringBlocks();
 
       bool BlockValidAndNeedsVisiting(Location block);
-      bool SitesAssignedToLocalProcessorInBlock(
-	   geometry::LatticeData::BlockData * iBlock);
+      bool SitesAssignedToLocalProcessorInBlock
+	(geometry::LatticeData::BlockData * iBlock);
 
-      void UpdateMaxAndMin();
+      void UpdateClusterMaxAndMin();
 
       void StoreCluster();
 
       void ProcessCluster(unsigned int i_cluster_id);
+
+      void UpdateFlowField
+	(geometry::LatticeData::BlockData * i_block,
+	 unsigned int n, unsigned int i_cluster_id, int l_site_id);
+
+      Location GetSiteCoordinatesOfBlock
+	(unsigned int i_cluster_id, Location offset);
+
+      static void UpdateMinLocation(Location io_store_location, Location i_compare_location);
+
+      static void UpdateMaxLocation(Location io_store_location, Location i_compare_location);
+
+      
 
       bool* m_is_block_visited;
 
@@ -69,14 +82,18 @@ namespace hemelb
       float **& m_cluster_voxel;
       float ***& m_cluster_flow_field;
 
-      //The minimums are stored in terms of block
+      //These minimums are stored in terms of block
       //location - essentially duplicating the 
       //cluster data
       std::vector<Location> m_cluster_block_mins; 
 
+      //These are stored in site_coordinates
+      Location m_current_min_voxel;
+      Location m_current_max_voxel;
+
       const geometry::LatticeData*& mLatDat;
       short int *m_cluster_id_of_block;
-
+      
       
     };
   }
