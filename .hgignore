@@ -3,6 +3,7 @@ syntax: glob
 *.o
 *.d
 *~
+.metadata/*
 build/*
 Code/client/displayClient
 Code/parmetis/build/*
