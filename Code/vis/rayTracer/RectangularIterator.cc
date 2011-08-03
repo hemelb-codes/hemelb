@@ -2,61 +2,61 @@
 
 namespace hemelb
 {
-    namespace vis 
+  namespace vis 
+  {
+    namespace raytracer 
     {
-	namespace raytracer 
-	{
-	    RayTracer::ClusterBuilder::RectangularIterator::RectangularIterator()
-		: mCurrentLocation(0)
-	    {
-		mCurrentNumber=0;
-	    }
+      RayTracer::ClusterBuilder::RectangularIterator::RectangularIterator()
+	: mCurrentLocation(0)
+      {
+	mCurrentNumber=0;
+      }
 	
-	    Location RayTracer::ClusterBuilder::RectangularIterator::GetLocation()
-	    {
-		return mCurrentLocation;
-	    }
+      Location<site_t> RayTracer::ClusterBuilder::RectangularIterator::GetLocation()
+      {
+	return mCurrentLocation;
+      }
 
-	    site_t  RayTracer::ClusterBuilder::RectangularIterator::CurrentNumber()
-	    {
-		return mCurrentNumber;
-	    }
+      site_t  RayTracer::ClusterBuilder::RectangularIterator::CurrentNumber()
+      {
+	return mCurrentNumber;
+      }
 
-	    site_t RayTracer::ClusterBuilder::RectangularIterator::
-	    GetNumberFromLocation(Location iLocation)
-	    {
-		return ((iLocation.i * GetYCount() + iLocation.j) 
-			* GetZCount()) + iLocation.k;
-	    }
+      site_t RayTracer::ClusterBuilder::RectangularIterator::
+      GetNumberFromLocation(Location<site_t> iLocation)
+      {
+	return ((iLocation.i * GetYCount() + iLocation.j) 
+		* GetZCount()) + iLocation.k;
+      }
 	    
 
-	    bool RayTracer::ClusterBuilder::RectangularIterator::Iterate()
-	    {
-		mCurrentNumber++;
+      bool RayTracer::ClusterBuilder::RectangularIterator::Iterate()
+      {
+	mCurrentNumber++;
 
-		mCurrentLocation.k++;
-		if(mCurrentLocation.k < GetZCount())
-		{
-		    return true;
-		}
+	mCurrentLocation.k++;
+	if(mCurrentLocation.k < GetZCount())
+	{
+	  return true;
+	}
 	
 		
-		mCurrentLocation.k = 0;
-		mCurrentLocation.j++;
-		if(mCurrentLocation.j < GetYCount())
-		{
-		    return true;
-		}
+	mCurrentLocation.k = 0;
+	mCurrentLocation.j++;
+	if(mCurrentLocation.j < GetYCount())
+	{
+	  return true;
+	}
 		
-		mCurrentLocation.j = 0;
-		mCurrentLocation.i++;
+	mCurrentLocation.j = 0;
+	mCurrentLocation.i++;
 			 
-		if(mCurrentLocation.i < GetXCount())
-		{
-		    return true;
-		}
-		return false;
-	    }
- 	}
+	if(mCurrentLocation.i < GetXCount())
+	{
+	  return true;
+	}
+	return false;
+      }
     }
+  }
 }

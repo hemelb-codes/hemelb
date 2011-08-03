@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "geometry/LatticeData.h"
 #include "vis/rayTracer/Location.h"
 #include "vis/rayTracer/RayTracer.h"
@@ -20,10 +22,24 @@ namespace hemelb
 	     n++)
 	{
 	  mBlockVisited[n] = false;
-	}
-		
+	}		
       }
-		
+
+      RayTracer::ClusterBuilder::BlockIterator::~BlockIterator()
+      {
+	delete[] mBlockVisited;
+      }
+      
+      site_t RayTracer::ClusterBuilder::BlockIterator::CurrentBlockNumber()
+      {
+	return CurrentNumber();
+      }
+
+      Location<site_t> RayTracer::ClusterBuilder::BlockIterator::GetLowestSiteCoordinates()
+      {
+	return GetLocation()*mLatticeData->GetBlockSize();
+      }
+      		
       bool RayTracer::ClusterBuilder::BlockIterator::GoToNextUnvisitedBlock()
       {
 	while (CurrentBlockVisited())
@@ -44,20 +60,33 @@ namespace hemelb
 	return mLatticeData->GetBlock(mCurrentNumber);
       }
 
+      geometry::LatticeData::BlockData *
+      RayTracer::ClusterBuilder::BlockIterator::GetBlockData
+      (const Location<site_t>& iLocation)
+      {
+	return mLatticeData->GetBlock(GetNumberFromLocation(iLocation));
+      }      
+
+      site_t RayTracer::ClusterBuilder::BlockIterator::GetBlockSize()
+      {
+	return mLatticeData->GetBlockSize();
+      }
+
       RayTracer::ClusterBuilder::SiteIterator 
       RayTracer::ClusterBuilder::BlockIterator::GetSiteIterator()
       {
 	return SiteIterator(mLatticeData, CurrentBlockNumber());
-      }
+      }	
 
-		
-		
-      site_t RayTracer::ClusterBuilder::BlockIterator::CurrentBlockNumber()
+      RayTracer::ClusterBuilder::SiteIterator 
+      RayTracer::ClusterBuilder::BlockIterator::GetSiteIterator(const Location<site_t>& iLocation)
       {
-	return CurrentNumber();
-      }
+	return SiteIterator(mLatticeData, GetNumberFromLocation(iLocation));
+      }	
 
-      bool RayTracer::ClusterBuilder::BlockIterator::BlockValid(Location iBlock)
+      
+
+      bool RayTracer::ClusterBuilder::BlockIterator::BlockValid(Location<site_t> iBlock)
       {
 	return mLatticeData->IsValidBlockSite
 	  (iBlock.i,
@@ -70,7 +99,7 @@ namespace hemelb
 	return mBlockVisited[iN];
       }
 
-      bool RayTracer::ClusterBuilder::BlockIterator::BlockVisited(Location iLocation)
+      bool RayTracer::ClusterBuilder::BlockIterator::BlockVisited(Location <site_t>iLocation)
       {
 
 	return mBlockVisited[GetNumberFromLocation(iLocation)];
@@ -87,63 +116,40 @@ namespace hemelb
 	MarkBlockVisited(CurrentBlockNumber());
       }
 	    
-      void RayTracer::ClusterBuilder::BlockIterator::MarkBlockVisited(site_t n)
+      void RayTracer::ClusterBuilder::BlockIterator::MarkBlockVisited(site_t iBlockId)
       {
-	mBlockVisited[CurrentBlockNumber()] = true;
+	mBlockVisited[iBlockId] = true;
       }
 
-      void RayTracer::ClusterBuilder::BlockIterator::MarkBlockVisited(Location location)
+      void RayTracer::ClusterBuilder::BlockIterator::MarkBlockVisited(Location<site_t> iLocation)
       {
-	MarkBlockVisited(mLatticeData->GetBlockIdFromBlockCoords
-			 (location.i,
-			  location.j,
-			  location.k));
+	site_t lNumber = GetNumberFromLocation(iLocation);
+	assert(lNumber < mLatticeData->GetBlockCount());
+	MarkBlockVisited(lNumber);
       }
 
-      bool RayTracer::ClusterBuilder::BlockIterator::
-      SitesAssignedToLocalProcessorInBlock()
+
+      bool RayTracer::ClusterBuilder::BlockIterator::GoToNextBlock()
       {
-	if (GetBlockData()->
-	    ProcessorRankForEachBlockSite == NULL)
-	{
-	  return false;
-	}
-
-	for (unsigned int siteId = 0;
-	     siteId < mLatticeData->
-	       GetSitesPerBlockVolumeUnit(); 
-	     siteId++)
-	     {
-	       if (topology::NetworkTopology::Instance()->GetLocalRank() == 
-		   GetBlockData()->ProcessorRankForEachBlockSite[siteId])
-	       {
-		 return true;
-	       }
-	     }
-	       return false;
-	     }
-
-	bool RayTracer::ClusterBuilder::BlockIterator::GoToNextBlock()
-	{
-	  return Iterate();
-	}
+	return Iterate();
+      }
 	  
-	site_t RayTracer::ClusterBuilder::BlockIterator::GetXCount() 
-	{
-	  return mLatticeData->GetXBlockCount();
-	}
+      site_t RayTracer::ClusterBuilder::BlockIterator::GetXCount() 
+      {
+	return mLatticeData->GetXBlockCount();
+      }
 
-	site_t RayTracer::ClusterBuilder::BlockIterator::GetYCount()
-	{
-	  return mLatticeData->GetYBlockCount();
-	}
+      site_t RayTracer::ClusterBuilder::BlockIterator::GetYCount()
+      {
+	return mLatticeData->GetYBlockCount();
+      }
 
-	site_t RayTracer::ClusterBuilder::BlockIterator::GetZCount() 
-	{
-	  return mLatticeData->GetZBlockCount();
-	}
+      site_t RayTracer::ClusterBuilder::BlockIterator::GetZCount() 
+      {
+	return mLatticeData->GetZBlockCount();
+      }
 
 	   
-      }
     }
   }
+}
