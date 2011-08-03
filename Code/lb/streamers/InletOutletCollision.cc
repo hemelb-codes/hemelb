@@ -1,11 +1,11 @@
-#include "lb/collisions/InletOutletCollision.h"
+#include "lb/streamers/InletOutletCollision.h"
 #include "lb/collisions/CollisionVisitor.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
 
       InletOutletCollision::InletOutletCollision(distribn_t* iOutletDensityArray)
@@ -23,7 +23,7 @@ namespace hemelb
         return mBoundaryDensityArray[index];
       }
 
-      void InletOutletCollision::AcceptCollisionVisitor(CollisionVisitor* v,
+      void InletOutletCollision::AcceptCollisionVisitor(collisions::CollisionVisitor* v,
                                                         const bool iDoRayTracing,
                                                         const site_t iFirstIndex,
                                                         const site_t iSiteCount,

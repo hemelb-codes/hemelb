@@ -1,25 +1,26 @@
-#ifndef HEMELB_LB_COLLISIONS_INLETOUTLETCOLLISION_H
-#define HEMELB_LB_COLLISIONS_INLETOUTLETCOLLISION_H
+#ifndef HEMELB_LB_STREAMERS_INLETOUTLETWALLCOLLISION_H
+#define HEMELB_LB_STREAMERS_INLETOUTLETWALLCOLLISION_H
 
-#include "lb/collisions/Collision.h"
+#include "lb/streamers/Collision.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
 
-      class InletOutletCollision : public Collision
+      class InletOutletWallCollision : public Collision
       {
-        public:
-          InletOutletCollision(distribn_t* iOutletDensityArray);
 
-          ~InletOutletCollision();
+        public:
+          InletOutletWallCollision(distribn_t* iOutletDensityArray);
+
+          virtual ~InletOutletWallCollision();
 
           distribn_t getBoundaryDensityArray(const int index);
 
-          virtual void AcceptCollisionVisitor(CollisionVisitor* v,
+          virtual void AcceptCollisionVisitor(collisions::CollisionVisitor* v,
                                               const bool iDoRayTracing,
                                               const site_t iFirstIndex,
                                               const site_t iSiteCount,
@@ -29,9 +30,10 @@ namespace hemelb
 
         private:
           distribn_t* mBoundaryDensityArray;
+
       };
 
     }
   }
 }
-#endif /* HEMELB_LB_COLLISIONS_INLETOUTLETCOLLISION_H */
+#endif /* HEMELB_LB_STREAMERS_INLETOUTLETWALLCOLLISION_H */

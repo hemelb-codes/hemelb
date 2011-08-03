@@ -1,11 +1,11 @@
-#include "lb/collisions/MidFluidCollision.h"
+#include "lb/streamers/MidFluidCollision.h"
 #include "lb/collisions/CollisionVisitor.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
 
       MidFluidCollision::~MidFluidCollision()
@@ -13,7 +13,7 @@ namespace hemelb
 
       }
 
-      void MidFluidCollision::AcceptCollisionVisitor(CollisionVisitor* v,
+      void MidFluidCollision::AcceptCollisionVisitor(collisions::CollisionVisitor* v,
                                                      const bool iDoRayTracing,
                                                      const site_t iFirstIndex,
                                                      const site_t iSiteCount,

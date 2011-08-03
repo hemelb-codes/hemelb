@@ -1,13 +1,13 @@
-#ifndef HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_GUOZHENGSHI_H
-#define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_GUOZHENGSHI_H
+#ifndef HEMELB_LB_STREAMERS_IMPLEMENTATIONS_GUOZHENGSHI_H
+#define HEMELB_LB_STREAMERS_IMPLEMENTATIONS_GUOZHENGSHI_H
 
-#include "lb/collisions/implementations/Implementation.h"
+#include "lb/streamers/Implementation.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
       namespace implementations
       {
@@ -158,4 +158,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_GUOZHENGSHI_H */
+#endif /* HEMELB_LB_STREAMERS_IMPLEMENTATIONS_GUOZHENGSHI_H */

@@ -5,10 +5,10 @@
 #include "net/IteratedAction.h"
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
-#include "lb/collisions/Collisions.h"
+#include "lb/streamers/Collisions.h"
 #include "lb/collisions/CollisionVisitors.h"
-#include "lb/collisions/implementations/Implementations.h"
-#include "lb/collisions/implementations/CollisionOperators.h"
+#include "lb/streamers/Implementations.h"
+#include "lb/collisions/CollisionOperators.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 #include <typeinfo>
@@ -77,8 +77,8 @@ namespace hemelb
                          distribn_t *vz,
                          distribn_t f_neq[]);
 
-        template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
-                typename tInletOutletWallCollision>
+        template<typename tMidFluidCollision, typename tWallCollision,
+            typename tInletOutletCollision, typename tInletOutletWallCollision>
         void InitCollisions();
 
         void ReadParameters();
@@ -96,15 +96,15 @@ namespace hemelb
         hemelb::lb::collisions::CollisionVisitor* mPostStep;
 
         // Collision objects
-        hemelb::lb::collisions::MidFluidCollision* mMidFluidCollision;
-        hemelb::lb::collisions::WallCollision* mWallCollision;
-        hemelb::lb::collisions::InletOutletCollision* mInletCollision;
-        hemelb::lb::collisions::InletOutletCollision* mOutletCollision;
-        hemelb::lb::collisions::InletOutletWallCollision* mInletWallCollision;
-        hemelb::lb::collisions::InletOutletWallCollision* mOutletWallCollision;
+        hemelb::lb::streamers::MidFluidCollision* mMidFluidCollision;
+        hemelb::lb::streamers::WallCollision* mWallCollision;
+        hemelb::lb::streamers::InletOutletCollision* mInletCollision;
+        hemelb::lb::streamers::InletOutletCollision* mOutletCollision;
+        hemelb::lb::streamers::InletOutletWallCollision* mInletWallCollision;
+        hemelb::lb::streamers::InletOutletWallCollision* mOutletWallCollision;
 
         //TODO Get rid of this hack
-        hemelb::lb::collisions::Collision* GetCollision(int i);
+        hemelb::lb::streamers::Collision* GetCollision(int i);
 
         distribn_t *inlet_density_avg, *inlet_density_amp;
         distribn_t *outlet_density_avg, *outlet_density_amp;

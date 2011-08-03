@@ -1,13 +1,13 @@
-#ifndef HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_SIMPLEBOUNCEBACK_H
-#define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_SIMPLEBOUNCEBACK_H
+#ifndef HEMELB_LB_STREAMERS_IMPLEMENTATIONS_SIMPLEBOUNCEBACK_H
+#define HEMELB_LB_STREAMERS_IMPLEMENTATIONS_SIMPLEBOUNCEBACK_H
 
-#include "lb/collisions/implementations/Implementation.h"
+#include "lb/streamers/Implementation.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
       namespace implementations
       {
@@ -15,7 +15,6 @@ namespace hemelb
         template<typename tCollisionOperator>
         class SimpleBounceBack : public Implementation
         {
-
           public:
             template<bool tDoRayTracing>
             static void DoStreamAndCollide(WallCollision* mWallCollision,
@@ -99,4 +98,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_SIMPLEBOUNCEBACK_H */
+#endif /* HEMELB_LB_STREAMERS_IMPLEMENTATIONS_SIMPLEBOUNCEBACK_H */

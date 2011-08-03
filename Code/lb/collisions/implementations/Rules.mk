@@ -1,10 +1,7 @@
 include $(MK)/header.mk
 
-TARGETS := HFunction.o \
-           CollisionOperator.o \
-           LBGK.o \
-           ELBM.o \
-           HFunction.o
+TARGETS := LBGK.o \
+           ELBM.o
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

@@ -1,5 +1,5 @@
 #include "lb/collisions/implementations/ELBM.h"
-#include "lb/collisions/implementations/HFunction.h"
+#include "lb/HFunction.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
