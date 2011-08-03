@@ -1,13 +1,13 @@
-#ifndef HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_REGULARISED_H
-#define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_REGULARISED_H
+#ifndef HEMELB_LB_STREAMERS_IMPLEMENTATIONS_REGULARISED_H
+#define HEMELB_LB_STREAMERS_IMPLEMENTATIONS_REGULARISED_H
 
-#include "lb/collisions/implementations/Implementation.h"
+#include "lb/streamers/Implementation.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
       namespace implementations
       {
@@ -59,7 +59,7 @@ namespace hemelb
             // (fi = fiEq + fopp(i) - fopp(i)Eq)
             distribn_t fTemp[15];
 
-            for (int l = 0; l < 15; l++)
+            for (int l = 0; l < 15; ++l)
               fTemp[l] = f[l];
 
             if (bLatDat->HasBoundary(lIndex, 1))
@@ -276,4 +276,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_REGULARISED_H */
+#endif /* HEMELB_LB_STREAMERS_IMPLEMENTATIONS_REGULARISED_H */

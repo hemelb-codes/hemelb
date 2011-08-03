@@ -1,14 +1,14 @@
-#include "lb/collisions/WallCollision.h"
+#include "lb/streamers/WallCollision.h"
 #include "lb/collisions/CollisionVisitor.h"
 
 namespace hemelb
 {
   namespace lb
   {
-    namespace collisions
+    namespace streamers
     {
 
-      void WallCollision::AcceptCollisionVisitor(CollisionVisitor* v,
+      void WallCollision::AcceptCollisionVisitor(collisions::CollisionVisitor* v,
                                                  const bool iDoRayTracing,
                                                  const site_t iFirstIndex,
                                                  const site_t iSiteCount,

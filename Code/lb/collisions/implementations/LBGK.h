@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_LBGK_H
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_LBGK_H
 
-#include "lb/collisions/implementations/CollisionOperator.h"
+#include "lb/collisions/CollisionOperator.h"
 
 namespace hemelb
 {

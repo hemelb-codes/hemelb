@@ -2,12 +2,8 @@ include $(MK)/header.mk
 
 SUBDIRS := implementations
 
-TARGETS := Collision.o \
-	   CollisionVisitor.o \
-	   InletOutletCollision.o \
-	   InletOutletWallCollision.o \
-	   MidFluidCollision.o \
-	   WallCollision.o \
+TARGETS := CollisionVisitor.o \
+           CollisionOperator.o
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

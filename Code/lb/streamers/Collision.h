@@ -1,9 +1,10 @@
-#ifndef HEMELB_LB_COLLISIONS_COLLISION_H
-#define HEMELB_LB_COLLISIONS_COLLISION_H
+#ifndef HEMELB_LB_STREAMERS_COLLISION_H
+#define HEMELB_LB_STREAMERS_COLLISION_H
 
 #include "vis/Control.h"
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
+
 
 namespace hemelb
 {
@@ -11,15 +12,17 @@ namespace hemelb
   {
     namespace collisions
     {
+      class CollisionVisitor;
+    }
 
-      class CollisionVisitor; // To deal with circular dependency of collision and visitor
-
+    namespace streamers
+    {
       class Collision
       {
         public:
           virtual ~Collision();
 
-          virtual void AcceptCollisionVisitor(CollisionVisitor* v,
+          virtual void AcceptCollisionVisitor(hemelb::lb::collisions::CollisionVisitor* v,
                                               const bool iDoRayTracing,
                                               const site_t iFirstIndex,
                                               const site_t iSiteCount,
@@ -33,4 +36,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_COLLISIONS_COLLISION_H */
+#endif /* HEMELB_LB_STREAMERS_COLLISION_H */
