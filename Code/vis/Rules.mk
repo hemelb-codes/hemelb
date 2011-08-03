@@ -6,12 +6,12 @@ SUBDIRS := rayTracer
 
 $(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
 	ColPixel.o \
-        GlyphDrawer.o \
+	GlyphDrawer.o \
 	StreaklineDrawer.o \
-        Control.o \
+	Control.o \
 	Screen.o \
-        ScreenPixels.o \
-        Viewpoint.o 
+	ScreenPixels.o \
+	Viewpoint.o 
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
