@@ -119,14 +119,6 @@ namespace hemelb
           }
         }
 
-        /**
-         * Overridable function to reset the state of the broadcaster.
-         */
-        virtual void Reset()
-        {
-
-        }
-
       protected:
 
         const lb::SimulationState * mSimState;

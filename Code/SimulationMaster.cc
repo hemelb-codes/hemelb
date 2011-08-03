@@ -7,6 +7,9 @@
 #include "debug/Debugger.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
+#include "lb/HFunction.h"
+
+#include "topology/NetworkTopology.h"
 
 #include <map>
 #include <limits>
@@ -47,6 +50,7 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
 
   mImagesWritten = 0;
   mSnapshotsWritten = 0;
+
 }
 
 /**
@@ -90,10 +94,16 @@ SimulationMaster::~SimulationMaster()
     delete mStabilityTester;
   }
 
+  if (mEntropyTester != NULL)
+  {
+    delete mEntropyTester;
+  }
+
   if (mSimulationState != NULL)
   {
     delete mSimulationState;
   }
+
 }
 
 /**
@@ -169,6 +179,17 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   mStabilityTester = new hemelb::lb::StabilityTester(mLatDat, &mNet, mSimulationState);
 
+  if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
+  {
+    int typesTested[1] = { 0 };
+    mEntropyTester
+        = new hemelb::lb::EntropyTester(typesTested, 1, mLatDat, &mNet, mSimulationState);
+  }
+  else
+  {
+    mEntropyTester = NULL;
+  }
+
   double seconds = hemelb::util::myClock();
   hemelb::site_t* lReceiveTranslator = mNet.Initialise(mLatDat);
   mNetInitialiseTime = hemelb::util::myClock() - seconds;
@@ -207,6 +228,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                              iSimConfig->VisLongitude,
                              iSimConfig->VisLatitude,
                              iSimConfig->VisZoom);
+
 }
 
 /**
@@ -252,6 +274,10 @@ void SimulationMaster::RunSimulation(std::string image_directory,
   actors.push_back(mLbm);
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
+  if (mEntropyTester != NULL)
+  {
+    actors.push_back(mEntropyTester);
+  }
   actors.push_back(mVisControl);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -317,6 +343,7 @@ void SimulationMaster::RunSimulation(std::string image_directory,
       }
 
       mNet.Receive();
+
       {
         for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
             != actors.end(); ++it)
@@ -596,6 +623,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps, double iSimulationTim
   }
 
   PrintTimingData();
+
 }
 
 /**

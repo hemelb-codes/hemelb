@@ -6,6 +6,7 @@
 #include "net/net.h"
 #include "steering/ImageSendComponent.h"
 #include "steering/SteeringComponent.h"
+#include "lb/EntropyTester.h"
 
 class SimulationMaster
 {
@@ -46,6 +47,7 @@ class SimulationMaster
 
     hemelb::lb::SimulationState* mSimulationState;
     hemelb::lb::StabilityTester* mStabilityTester;
+    hemelb::lb::EntropyTester* mEntropyTester;
     hemelb::lb::LBM *mLbm;
     hemelb::net::Net mNet;
 
