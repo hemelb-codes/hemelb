@@ -14,7 +14,6 @@ namespace hemelb
 {
   namespace vis
   {
-    // Some sort of coordinates.
     struct Location
     {
       site_t i, j, k;
@@ -27,6 +26,28 @@ namespace hemelb
 	j = iJ;
 	k = iK;
       }
+
+      Location(site_t iX)
+      {
+	i=iX;
+	j=iX;
+	k=iX;
+      }
+
+      Location operator+(const Location right)
+      {
+	return Location(this->i + right.i,
+			this->j + right.j,
+			this->k + right.k);
+      }
+
+      Location operator*(const site_t multiplier)
+      {
+	return Location(this->i * multiplier,
+			this->j * multiplier,
+			this->k * multiplier);
+      }
+
     };
 
     struct Cluster

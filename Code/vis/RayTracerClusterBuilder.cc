@@ -35,23 +35,22 @@ namespace hemelb
  
     RayTracerClusterBuilder::~RayTracerClusterBuilder()
     {
-        delete[] m_cluster_id_of_block;
+      delete[] m_cluster_id_of_block;
     }
     
     void RayTracerClusterBuilder::BuildClusters()
     {
       LocateClusters();
   
-      m_cluster_voxel = new float *[mLatDat->GetLocalFluidSiteCount() * VIS_FIELDS];
+      m_cluster_voxel = new float * [mLatDat->GetLocalFluidSiteCount() * VIS_FIELDS];
 
-      m_cluster_flow_field = new float **[m_clusters.size()];
+      m_cluster_flow_field = new float ** [m_clusters.size()];
 
       // For every cluster
       for (unsigned int lThisClusterId = 0; lThisClusterId < m_clusters.size(); lThisClusterId++)
 	{
-	   ProcessCluster(lThisClusterId);	  
+	  ProcessCluster(lThisClusterId);	  
 	}
-
 
     }
 
@@ -124,7 +123,7 @@ namespace hemelb
 
 	  //Update the maximum and minimum x,y and z
 	  //range of the cluster
-	  UpdateMaxAndMin();
+	  UpdateClusterMaxAndMin();
 
 	  //Update the cluster id of the given block
 	  m_cluster_id_of_block[block_id] = (short int) m_clusters.size();
@@ -192,7 +191,7 @@ namespace hemelb
       return SitesAssignedToLocalProcessorInBlock(lBlock);
     }
 
-    void RayTracerClusterBuilder::UpdateMaxAndMin()
+    void RayTracerClusterBuilder::UpdateClusterMaxAndMin()
     {
       m_current_cluster_min.i = 
 	util::NumericalFunctions::min(m_current_cluster_min.i, m_current_location.i);
@@ -267,102 +266,146 @@ namespace hemelb
 						       lCluster->blocks_y * 
 						       lCluster->blocks_z]; 
       
-      site_t voxel_min[3], voxel_max[3];
-	  for (int l = 0; l < 3; l++)
-	    {
-	      voxel_min[l] = std::numeric_limits<site_t>::max();
-	      voxel_max[l] = std::numeric_limits<site_t>::min();
-	    }
+      m_current_min_voxel = Location(std::numeric_limits<site_t>::max());
+      m_current_max_voxel =  Location(std::numeric_limits<site_t>::min());
 
-	  int n = -1;
+      int n = -1;
 
-	  for (site_t i = 0; i < lCluster->blocks_x; i++)
+      for (site_t i = 0; i < lCluster->blocks_x; i++)
+	{
+	  for (site_t j = 0; j < lCluster->blocks_y; j++)
 	    {
-	      for (site_t j = 0; j < lCluster->blocks_y; j++)
+	      for (site_t k = 0; k < lCluster->blocks_z; k++)
 		{
-		  for (site_t k = 0; k < lCluster->blocks_z; k++)
+		  ++n;
+
+		  Location block_coordinates = Location(i, j, k) + m_cluster_block_mins[i_cluster_id];
+		  site_t block_id = mLatDat->GetBlockIdFromBlockCoords
+		    (block_coordinates.i,
+		     block_coordinates.j,
+		     block_coordinates.k);
+
+		  m_cluster_flow_field[i_cluster_id][n] = NULL;
+
+		  if (m_cluster_id_of_block[block_id] != (short int) i_cluster_id)
 		    {
-		      ++n;
+		      continue;
+		    }
 
-		      site_t block_coord[3];
-		      Location* mins = &m_cluster_block_mins[i_cluster_id];
-		      block_coord[0] = (i + mins->i) * mLatDat->GetBlockSize();
-		      block_coord[1] = (j + mins->j) * mLatDat->GetBlockSize();
-		      block_coord[2] = (k + mins->k) * mLatDat->GetBlockSize();
+		  geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock(block_id);
 
-		      site_t block_id = ( (i + mins->i) * mLatDat->GetYBlockCount() + (j + mins->j))
-			* mLatDat->GetZBlockCount() + (k + mins->k);
+		  m_cluster_flow_field[i_cluster_id][n]
+		    = new float[mLatDat->GetSitesPerBlockVolumeUnit() * VIS_FIELDS];
 
-		      m_cluster_flow_field[i_cluster_id][n] = NULL;
+		  int l_site_id  = -1;
 
-		      if (m_cluster_id_of_block[block_id] != (short int) i_cluster_id)
+		  Location site_coordinates_of_block = block_coordinates * mLatDat->GetBlockSize();
+		  Location siteLocOnBlock;
+		  for (siteLocOnBlock.i = 0; siteLocOnBlock.i < mLatDat->GetBlockSize(); siteLocOnBlock.i++)
+		    {
+		      for (siteLocOnBlock.j = 0; siteLocOnBlock.j < mLatDat->GetBlockSize(); siteLocOnBlock.j++)
 			{
-			  continue;
-			}
-
-		      geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock(block_id);
-
-		      m_cluster_flow_field[i_cluster_id][n]
-			= new float[mLatDat->GetSitesPerBlockVolumeUnit() * VIS_FIELDS];
-
-		      int m = -1;
-
-		      site_t siteLocOnBlock[3];
-		      for (siteLocOnBlock[0] = 0; siteLocOnBlock[0] < mLatDat->GetBlockSize(); siteLocOnBlock[0]++)
-			for (siteLocOnBlock[1] = 0; siteLocOnBlock[1] < mLatDat->GetBlockSize(); siteLocOnBlock[1]++)
-			  for (siteLocOnBlock[2] = 0; siteLocOnBlock[2] < mLatDat->GetBlockSize(); siteLocOnBlock[2]++)
+			  for (siteLocOnBlock.k = 0; siteLocOnBlock.k < mLatDat->GetBlockSize(); siteLocOnBlock.k++)
 			    {
-			      unsigned int my_site_id;
-			      my_site_id = lBlock->site_data[++m];
-
-			      if (my_site_id & BIG_NUMBER3)
-				{
-				  for (unsigned int l = 0; l < VIS_FIELDS; l++)
-				    m_cluster_flow_field[i_cluster_id][n][m * VIS_FIELDS + l] = -1.0F;
-
-				  continue;
-				}
-
-			      for (unsigned int l = 0; l < VIS_FIELDS; l++)
-				{
-				  m_cluster_flow_field[i_cluster_id][n][m * VIS_FIELDS + l] = 1.0F;
-				}
-
-			      for (unsigned int l = 0; l < VIS_FIELDS; l++)
-				{
-				  m_cluster_voxel[my_site_id * VIS_FIELDS + l]
-				    = &m_cluster_flow_field[i_cluster_id][n][m * VIS_FIELDS + l];
-				}
-
-			      for (int l = 0; l < 3; l++)
-				{
-				  voxel_min[l] = util::NumericalFunctions::min(voxel_min[l], siteLocOnBlock[l]
-									       + block_coord[l]);
-				  voxel_max[l] = util::NumericalFunctions::max(voxel_max[l], siteLocOnBlock[l]
-									       + block_coord[l]);
-				}
-
-			    } // for ii[0..2]
+			      ++l_site_id;
+			  
+			      UpdateFlowField(lBlock, n, i_cluster_id, l_site_id);
+			  	  
+			      //Come back to l
+			      UpdateMinLocation(m_current_min_voxel, siteLocOnBlock + block_coordinates);
+			      UpdateMaxLocation(m_current_max_voxel, siteLocOnBlock + block_coordinates);
+			    }
+			} 
+		    }
+		 
 
 
             
 
-		    } // for k
-		} // for j
-	    } // for i
+		} // for k
+	    } // for j
+	} // for i
 
-	  lCluster->minmax_x[0] = (float) voxel_min[0] - 0.5F * (float) mLatDat->GetXSiteCount();
-	  lCluster->minmax_y[0] = (float) voxel_min[1] - 0.5F * (float) mLatDat->GetYSiteCount();
-	  lCluster->minmax_z[0] = (float) voxel_min[2] - 0.5F * (float) mLatDat->GetZSiteCount();
+      lCluster->minmax_x[0] = (float) m_current_min_voxel.i - 0.5F * (float) mLatDat->GetXSiteCount();
+      lCluster->minmax_y[0] = (float) m_current_min_voxel.j - 0.5F * (float) mLatDat->GetYSiteCount();
+      lCluster->minmax_z[0] = (float) m_current_min_voxel.k - 0.5F * (float) mLatDat->GetZSiteCount();
 
-	  lCluster->minmax_x[1] = (float) (voxel_max[0] + 1) - 0.5F
-            * (float) mLatDat->GetXSiteCount();
-	  lCluster->minmax_y[1] = (float) (voxel_max[1] + 1) - 0.5F
-            * (float) mLatDat->GetYSiteCount();
-	  lCluster->minmax_z[1] = (float) (voxel_max[2] + 1) - 0.5F
-            * (float) mLatDat->GetZSiteCount();
+      lCluster->minmax_x[1] = (float) (m_current_max_voxel.i + 1) - 0.5F
+	* (float) mLatDat->GetXSiteCount();
+      lCluster->minmax_y[1] = (float) (m_current_max_voxel.j + 1) - 0.5F
+	* (float) mLatDat->GetYSiteCount();
+      lCluster->minmax_z[1] = (float) (m_current_max_voxel.k + 1) - 0.5F
+	* (float) mLatDat->GetZSiteCount();
 	  
     }
     
+    void RayTracerClusterBuilder::UpdateFlowField
+    ( geometry::LatticeData::BlockData * i_block,
+      unsigned int n, unsigned int i_cluster_id, int l_site_id)
+    {
+      //TODO: Clean this
+      
+      unsigned int site_datum = i_block->site_data[l_site_id];
+      
+      //If site is solid
+      if (site_datum & BIG_NUMBER3)
+	{
+	  for (unsigned int l = 0; l < VIS_FIELDS; l++)
+	    {		
+	      m_cluster_flow_field[i_cluster_id][n][l_site_id * VIS_FIELDS + l] = -1.0F;
+	    }
+	}
+      else {
+	for (unsigned int l = 0; l < VIS_FIELDS; l++)
+	  {
+	    m_cluster_flow_field[i_cluster_id][n][l_site_id * VIS_FIELDS + l] = 1.0F;
+	  }
+
+	for (unsigned int l = 0; l < VIS_FIELDS; l++)
+	  {
+	    m_cluster_voxel[site_datum * VIS_FIELDS + l]
+	      = &m_cluster_flow_field[i_cluster_id][n][l_site_id * VIS_FIELDS + l];
+	  }
+      }
+		
+    }
+    
+
+    void RayTracerClusterBuilder::UpdateMinLocation(Location io_store_location, Location i_compare_location)
+    {
+      io_store_location.i = 
+	util::NumericalFunctions::min
+	(io_store_location.i, 
+	 i_compare_location.i);
+
+      io_store_location.j = 
+	util::NumericalFunctions::min
+	(io_store_location.j, 
+	 i_compare_location.j);
+
+      io_store_location.k = 
+	util::NumericalFunctions::min
+	(io_store_location.k, 
+	 i_compare_location.k);
+    }
+
+    void RayTracerClusterBuilder::UpdateMaxLocation(Location io_store_location, Location i_compare_location)
+    {
+      io_store_location.i = 
+	util::NumericalFunctions::max
+	(io_store_location.i, 
+	 i_compare_location.i);
+
+      io_store_location.j = 
+	util::NumericalFunctions::max
+	(io_store_location.j, 
+	 i_compare_location.j);
+
+      io_store_location.k = 
+	util::NumericalFunctions::max
+	(io_store_location.k, 
+	 i_compare_location.k);
+    }
+
   }
 }
