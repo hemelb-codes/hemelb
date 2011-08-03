@@ -7,7 +7,6 @@
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
-#include "vis/RayTracerClusterBuilder.h"
 
 namespace hemelb
 {
@@ -457,7 +456,7 @@ namespace hemelb
 
     void RayTracer::BuildClusters()
     {
-      RayTracerClusterBuilder clusterBuilder(mLatDat, mClusters, cluster_voxel, cluster_flow_field);
+      ClusterBuilder clusterBuilder(mLatDat, mClusters, cluster_voxel, cluster_flow_field);
       clusterBuilder.BuildClusters();
     }
 
