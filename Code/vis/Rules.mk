@@ -1,17 +1,17 @@
 include $(MK)/header.mk
 
 TARGETS := libHemeLbVis.$(LIBEXT)
-SRCS := ColPixel.cc \
-        GlyphDrawer.cc \
-        RayTracer.cc \
-	ClusterBuilder.cc \
-        StreaklineDrawer.cc \
-        Control.cc \
-        Screen.cc \
-        ScreenPixels.cc \
-        Viewpoint.cc
 
-$(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
+SUBDIRS := rayTracer
+
+$(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
+	ColPixel.o \
+        GlyphDrawer.o \
+	StreaklineDrawer.o \
+        Control.o \
+	Screen.o \
+        ScreenPixels.o \
+        Viewpoint.o 
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
