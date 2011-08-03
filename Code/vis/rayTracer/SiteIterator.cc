@@ -6,27 +6,33 @@ namespace hemelb
   {
     namespace raytracer 
     {
-      RayTracer::ClusterBuilder::SiteIterator::SiteIterator(const geometry::LatticeData:LatticeData * iLatticeData, site_t iBlockd)
-      {
-	mLatticeData = iLatticeData;
-	mBlockId = iBlockId;
+      RayTracer::ClusterBuilder::SiteIterator::SiteIterator(const geometry::LatticeData::LatticeData * iLatticeData,
+							    const site_t iBlockId)
+	: mLatticeData(iLatticeData),
+	  mBlockId(iBlockId)
+      { 	
       }
       
 
-      virtual site_t RayTracer::ClusterBuilder::SiteIterator::GetXCount()
+      site_t RayTracer::ClusterBuilder::SiteIterator::GetXCount()
       {
-	mLatticeData->getBlockSize();
+	return GetBlockSize();
       }
 
-      virtual site_t RayTracer::ClusterBuilder::SiteIterator::GetYCount()
+      site_t RayTracer::ClusterBuilder::SiteIterator::GetYCount()
       {
-	mLatticeData->getBlockSize();
+	return GetBlockSize();
       }
-      virtual site_t RayTracer::ClusterBuilder::SiteIterator::GetZCount()
+
+      site_t RayTracer::ClusterBuilder::SiteIterator::GetZCount()
       {
-	mLatticeData->getBlockSize();
+	return GetBlockSize();
       }
-	
+
+      site_t RayTracer::ClusterBuilder::SiteIterator::GetBlockSize()
+      {
+	return mLatticeData->GetBlockSize();
+      }	
     }
   }
 }
