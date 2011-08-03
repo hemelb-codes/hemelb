@@ -31,8 +31,6 @@ namespace hemelb
 
     struct Cluster
     {
-      Cluster();
-
       float minmax_x[2], minmax_y[2], minmax_z[2];
       
       float x[3];
