@@ -57,8 +57,6 @@ namespace hemelb
         inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii].Normal.z;
       }
 
-      UpdateBoundaryDensities(0);
-
       RecalculateTauViscosityOmega();
     }
 

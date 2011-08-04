@@ -9,6 +9,7 @@
 #include "lb/collisions/CollisionVisitors.h"
 #include "lb/collisions/implementations/Implementations.h"
 #include "lb/collisions/implementations/CollisionOperators.h"
+#include "lb/BoundaryComms.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 #include <typeinfo>
@@ -120,6 +121,7 @@ namespace hemelb
 
         double mFileReadTime;
 
+        BoundaryComms* mBoundaryComms;
         SimConfig *mSimConfig;
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
