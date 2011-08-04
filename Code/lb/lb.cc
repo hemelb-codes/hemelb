@@ -123,18 +123,19 @@ namespace hemelb
 
     void LBM::UpdateBoundaryDensities(unsigned long time_step)
     {
-      double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+        mBoundaryComms->UpdateBoundaryDensities(time_step,
+                                                mState->GetTimeStepsPerCycle(),
+                                                inlet_density,
+                                                inlet_density_avg,
+                                                inlet_density_amp,
+                                                inlet_density_phs,
+                                                outlet_density,
+                                                outlet_density_avg,
+                                                outlet_density_amp,
+                                                outlet_density_phs);
 
-      for (int i = 0; i < inlets; i++)
-      {
-        inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double) time_step
-            + inlet_density_phs[i]);
-      }
-      for (int i = 0; i < outlets; i++)
-      {
-        outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i] * cos(w
-            * (double) time_step + outlet_density_phs[i]);
-      }
+      mBoundaryComms->BroadcastBoundaryDensities(inlet_density, outlet_density);
     }
 
     hemelb::lb::LbmParameters *LBM::GetLbmParams()
@@ -158,6 +159,7 @@ namespace hemelb
           hemelb::lb::collisions::implementations::ZeroVelocityEquilibrium<CO>,
           hemelb::lb::collisions::implementations::NonZeroVelocityBoundaryDensity<CO>,
           hemelb::lb::collisions::implementations::ZeroVelocityBoundaryDensity<CO>, CO> ();
+
     }
 
     void LBM::CalculateMouseFlowField(float densityIn,
@@ -200,6 +202,9 @@ namespace hemelb
 
     void LBM::Initialise(site_t* iFTranslator, vis::Control* iControl)
     {
+      // Cannot be created earlier, because site data hasn't been set at the tim eof LBM construction
+      mBoundaryComms = new BoundaryComms(mLatDat, mSimConfig);
+
       receivedFTranslator = iFTranslator;
 
       SetInitialConditions();
@@ -209,6 +214,8 @@ namespace hemelb
 
     void LBM::SetInitialConditions()
     {
+      UpdateBoundaryDensities(0);
+
       distribn_t *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
       distribn_t density;
 
@@ -271,6 +278,7 @@ namespace hemelb
         mNet->RequestSend<distribn_t> (mLatDat->GetFNew( (*it).FirstSharedF),
                                        (int) (*it).SharedFCount,
                                         (*it).Rank);
+
       }
     }
 
