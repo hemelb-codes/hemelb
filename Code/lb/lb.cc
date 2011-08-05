@@ -124,16 +124,20 @@ namespace hemelb
     void LBM::UpdateBoundaryDensities(unsigned long time_step)
     {
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-        mBoundaryComms->UpdateBoundaryDensities(time_step,
-                                                mState->GetTimeStepsPerCycle(),
-                                                inlet_density,
-                                                inlet_density_avg,
-                                                inlet_density_amp,
-                                                inlet_density_phs,
-                                                outlet_density,
-                                                outlet_density_avg,
-                                                outlet_density_amp,
-                                                outlet_density_phs);
+      {
+        double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
+
+        for (int i = 0; i < inlets; i++)
+        {
+          inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w
+              * (double) time_step + inlet_density_phs[i]);
+        }
+        for (int i = 0; i < outlets; i++)
+        {
+          outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i] * cos(w
+              * (double) time_step + outlet_density_phs[i]);
+        }
+      }
 
       mBoundaryComms->BroadcastBoundaryDensities(inlet_density, outlet_density);
     }
