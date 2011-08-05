@@ -8,6 +8,13 @@ namespace hemelb
   namespace lb
   {
 
+    /*
+     * This class deals with in/outlet boundary conditions. UpdateBoundaryConditions will calculate/obtain
+     * all inlet/outlet boundary values. It should only be called by BCproc. Every in/outlet will
+     * have a corresponding communicator which includes the BCproc and all processes that contain the
+     * given in/outlet. Once per cycle BroadcastBoundaryDensities needs to be called so that BCproc
+     * updates the relevant processes with the new values.
+     */
     class BoundaryComms
     {
       public:
@@ -31,16 +38,16 @@ namespace hemelb
         proc_t BCproc; // Process responsible for sending out BC info
 
         // Total number of inlets/outlets in simulation
-        size_t nTotInlets;
-        size_t nTotOutlets;
+        int nTotInlets;
+        int nTotOutlets;
 
         // Number of inlets/outlets on this process
-        size_t nInlets;
-        size_t nOutlets;
+        int nInlets;
+        int nOutlets;
 
         // List of indices of inlets/outlets on this process
-        std::vector<int>* inlets;
-        std::vector<int>* outlets;
+        std::vector<int> inlets;
+        std::vector<int> outlets;
 
         // Communicators and groups
         MPI_Comm* outlet_comms;
@@ -48,25 +55,9 @@ namespace hemelb
         MPI_Group* outlet_groups;
         MPI_Group* inlet_groups;
 
-        template<typename T>
-        bool member(std::vector<T> &list, T element);
-
         // Just for testing ATM
         void printStuff();
-
     };
-
-    template<typename T>
-    bool BoundaryComms::member(std::vector<T> &list, T element)
-    {
-      for (unsigned int i = 0; i < list.size(); i++)
-      {
-        if (element == list[i])
-          return true;
-      }
-
-      return false;
-    }
 
   }
 }

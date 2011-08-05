@@ -5,6 +5,7 @@
 #include <math.h>
 #include <iostream>
 #include <cstdlib>
+#include <vector>
 
 // Static class for simple functions that could be useful in many places
 namespace hemelb
@@ -96,7 +97,13 @@ namespace hemelb
          * so they need to be passed on as well.
          */
         template<class F>
-        static double Brent(F* func, double xl, double fl, double xh, double fh, double alphaAcc, double fAcc)
+        static double Brent(F* func,
+                            double xl,
+                            double fl,
+                            double xh,
+                            double fh,
+                            double alphaAcc,
+                            double fAcc)
         {
           double a = xl, fa = fl;
           double b = xh, fb = fh;
@@ -172,6 +179,44 @@ namespace hemelb
             return b;
           else
             return s;
+        }
+    };
+
+    class VectorFunctions
+    {
+      public:
+        template<typename T>
+        static bool member(std::vector<T> &list, T element)
+        {
+          for (unsigned int i = 0; i < list.size(); i++)
+          {
+            if (element == list[i])
+              return true;
+          }
+
+          return false;
+        }
+
+        template<typename T>
+        static void BubbleSort(std::vector<T> &list)
+        {
+          bool swapped = true;
+
+          while (swapped)
+          {
+            swapped = false;
+
+            for (int i = 0; i < (int) list.size() - 1; i++)
+            {
+              if (list[i] > list[i + 1])
+              {
+                T temp = list[i];
+                list[i] = list[i + 1];
+                list[i + 1] = temp;
+                swapped = true;
+              }
+            }
+          }
         }
     };
 
