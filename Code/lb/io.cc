@@ -62,20 +62,26 @@ namespace hemelb
 
     void LBM::allocateInlets(int nInlets)
     {
-      nInlets = hemelb::util::NumericalFunctions::max<int>(1, nInlets);
-      inlet_density = new distribn_t[nInlets];
-      inlet_density_avg = new distribn_t[nInlets];
-      inlet_density_amp = new distribn_t[nInlets];
-      inlet_density_phs = new distribn_t[nInlets];
+      unsigned long size = hemelb::util::NumericalFunctions::max<int>(1, nInlets);
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+        size *= mState->GetTimeStepsPerCycle();
+
+      inlet_density = new distribn_t[size];
+      inlet_density_avg = new distribn_t[size];
+      inlet_density_amp = new distribn_t[size];
+      inlet_density_phs = new distribn_t[size];
     }
 
     void LBM::allocateOutlets(int nOutlets)
     {
-      nOutlets = hemelb::util::NumericalFunctions::max<int>(1, nOutlets);
-      outlet_density = new distribn_t[nOutlets];
-      outlet_density_avg = new distribn_t[nOutlets];
-      outlet_density_amp = new distribn_t[nOutlets];
-      outlet_density_phs = new distribn_t[nOutlets];
+      unsigned long size = hemelb::util::NumericalFunctions::max<int>(1, nOutlets);
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+        size *= mState->GetTimeStepsPerCycle();
+
+      outlet_density = new distribn_t[size];
+      outlet_density_avg = new distribn_t[size];
+      outlet_density_amp = new distribn_t[size];
+      outlet_density_phs = new distribn_t[size];
     }
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name)

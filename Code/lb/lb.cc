@@ -121,25 +121,39 @@ namespace hemelb
 
     }
 
-    void LBM::UpdateBoundaryDensities(unsigned long time_step)
+    void LBM::InitialiseBoundaryDensities()
     {
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
 
-        for (int i = 0; i < inlets; i++)
+        for (unsigned long time_step = 0; time_step < mState->GetTimeStepsPerCycle(); time_step++)
         {
-          inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w
-              * (double) time_step + inlet_density_phs[i]);
+          for (int i = 0; i < inlets; i++)
+          {
+            inlet_density[time_step * inlets + i] = inlet_density_avg[i]
+                + inlet_density_amp[i] * cos(w * (double) time_step + inlet_density_phs[i]);
+          }
+          for (int i = 0; i < outlets; i++)
+          {
+            outlet_density[time_step * outlets + i] = outlet_density_avg[i]
+                + outlet_density_amp[i] * cos(w * (double) time_step + outlet_density_phs[i]);
+          }
         }
-        for (int i = 0; i < outlets; i++)
-        {
-          outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i] * cos(w
-              * (double) time_step + outlet_density_phs[i]);
-        }
-      }
 
-      mBoundaryComms->BroadcastBoundaryDensities(inlet_density, outlet_density);
+      }
+    }
+
+    void LBM::UpdateBoundaryDensities(unsigned long time_step)
+    {
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        time_step = time_step % mState->GetTimeStepsPerCycle();
+        mBoundaryComms->BroadcastBoundaryDensities(&inlet_density[time_step * inlets],
+                                                   &outlet_density[time_step * outlets]);
+      }
+      else
+        mBoundaryComms->BroadcastBoundaryDensities(inlet_density, outlet_density);
     }
 
     hemelb::lb::LbmParameters *LBM::GetLbmParams()
@@ -218,6 +232,7 @@ namespace hemelb
 
     void LBM::SetInitialConditions()
     {
+      InitialiseBoundaryDensities();
       UpdateBoundaryDensities(0);
 
       distribn_t *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
