@@ -206,31 +206,6 @@ namespace hemelb
       delete[] inlet_groups;
     }
 
-    void BoundaryComms::UpdateBoundaryDensities(unsigned long time_step,
-                                                unsigned long timeStepsPerCycle,
-                                                distribn_t* inlet_density,
-                                                distribn_t* inlet_density_avg,
-                                                distribn_t* inlet_density_amp,
-                                                distribn_t* inlet_density_phs,
-                                                distribn_t* outlet_density,
-                                                distribn_t* outlet_density_avg,
-                                                distribn_t* outlet_density_amp,
-                                                distribn_t* outlet_density_phs)
-    {
-      double w = 2.0 * PI / (double) timeStepsPerCycle;
-
-      for (int i = 0; i < nTotInlets; i++)
-      {
-        inlet_density[i] = inlet_density_avg[i] + inlet_density_amp[i] * cos(w * (double) time_step
-            + inlet_density_phs[i]);
-      }
-      for (int i = 0; i < nTotOutlets; i++)
-      {
-        outlet_density[i] = outlet_density_avg[i] + outlet_density_amp[i] * cos(w
-            * (double) time_step + outlet_density_phs[i]);
-      }
-    }
-
     void BoundaryComms::BroadcastBoundaryDensities(distribn_t* inlet_density,
                                                    distribn_t* outlet_density)
     {
