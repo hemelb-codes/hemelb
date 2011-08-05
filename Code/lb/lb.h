@@ -41,6 +41,7 @@ namespace hemelb
         distribn_t ConvertVelocityToLatticeUnits(double velocity) const;
         distribn_t ConvertStressToLatticeUnits(double stress) const;
 
+        void InitialiseBoundaryDensities();
         void UpdateBoundaryDensities(unsigned long time_step);
         void UpdateInletVelocities(unsigned long time_step);
 
@@ -114,7 +115,7 @@ namespace hemelb
         distribn_t *inlet_density_avg, *inlet_density_amp;
         distribn_t *outlet_density_avg, *outlet_density_amp;
         distribn_t *inlet_density_phs, *outlet_density_phs;
-        distribn_t* inlet_density, *outlet_density;
+        distribn_t *inlet_density, *outlet_density;
         double *inlet_normal;
         double voxel_size;
         int outlets;
