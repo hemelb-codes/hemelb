@@ -262,19 +262,10 @@ namespace hemelb
 	  //This allows a cluster voxel site ID (as part of the 1D structure for)
 	  //storing sites to be mapped to the data stored in the 3D structure 
 	  //for the ray tracer by means of pointers.
-	  //The structure acts as a  hash table - the remainined (%) of dividing
-	  //the cluster voxel ID against NUMBEROFCLUSTERVOXELMAPS indicates which map
-	  //to look up. This is chosen because the cluster voxel IDs tend to be spare
-	  //but large blocks of consecutive numbers.
-	  std::vector<
-	    std::map<site_t, SiteData_t*> > 
-	    mClusterVoxelDataPointers;
-
+	  std::vector<SiteData_t*> mClusterVoxelDataPointers;
 
 	  const geometry::LatticeData*& mLatticeData;
 	  short int *mClusterIdOfBlock;
-      
-	  static const unsigned int NUMBEROFCLUSTERVOXELMAPS = 1024;
 
 	  static const short int NOTASSIGNEDTOCLUSTER = -1; 
 
