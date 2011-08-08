@@ -42,9 +42,24 @@ namespace hemelb
 	// Render the current state into an image.
 	void Render();
 
+	//Stores the data about an individual voxel 
+	class SiteData_t
+	{
+	public:
+	  float Density;
+	  float Velocity;
+	  float Stress;
+
+	SiteData_t(float iValue) :
+	  Density(iValue), Velocity(iValue), Stress(iValue) {}
+	};
+
 	//The cluster structure stores data relating to the clusters
 	//used by the RayTracaer, in an optimal format
 	//Clusters are produced by the ClusterFactory
+	//Caution: the data within the flow field is altered by means
+	//of pointers obtained from the GetClusterVoxelDataPointer
+	//method
 	class Cluster
 	{
 	public:
@@ -62,7 +77,7 @@ namespace hemelb
 	  unsigned short int blocksY;
 	  unsigned short int blocksZ;
 
-	  std::vector<std::vector<float> > FlowField;
+	  std::vector<std::vector<SiteData_t> > SiteData;
 
 	};
 
@@ -79,7 +94,7 @@ namespace hemelb
 	  
 	  std::vector<Cluster>& GetClusters();
 
-	  float* GetClusterVoxelDataPointer(site_t iSiteId, site_t iL);
+	  SiteData_t* GetClusterVoxelDataPointer(site_t iSiteId);
 
 	private:
 	  //Volume tracker is used to sequentially traverse a 
@@ -217,27 +232,29 @@ namespace hemelb
 	  //Adds "flow-field" data to the cluster
 	  void ProcessCluster(unsigned int iClusterId);
 
-	  void UpdateFlowField
+	  void UpdateSiteData
 	    (geometry::LatticeData::BlockData * lBlock, site_t n, 
 	     unsigned int iClusterId, Location<site_t> i_block_coordinates);
 
-	  void UpdateSiteFlowField
+	  void UpdateSiteSiteData
 	    (geometry::LatticeData::BlockData * iBlock,
 	     site_t n, unsigned int iClusterId, unsigned int l_site_id);
 
 	  Location<site_t> GetSiteCoordinatesOfBlock
 	    (site_t iClusterId, Location<site_t> offset);
 
-	  float* GetDataPointerClusterVoxelSiteId(site_t iSiteId);
+	  SiteData_t* GetDataPointerClusterVoxelSiteId(site_t iSiteId);
 
 	  void SetDataPointerForClusterVoxelSiteId
-	    (site_t iClusterVortexSiteId, float* iDataPointer);
+	    (site_t iClusterVortexSiteId, 
+	     SiteData_t* iDataPointer);
 	  
-
-
 	  BlockTraverser mBlockTraverser;
-
-   
+	  
+	  //Caution: the data within mClusters is altered by means
+	  //of pointers obtained from the GetClusterVoxelDataPointer
+	  //method. No insertion of copying must therefore take place 
+	  //on mClusters once building is complete
 	  std::vector<Cluster> mClusters;
 	 
 	  std::vector<Location<site_t> > mClusterBlockMins; 
@@ -250,7 +267,7 @@ namespace hemelb
 	  //to look up. This is chosen because the cluster voxel IDs tend to be spare
 	  //but large blocks of consecutive numbers.
 	  std::vector<
-	    std::map<site_t, float*> > 
+	    std::map<site_t, SiteData_t*> > 
 	    mClusterVoxelDataPointers;
 
 
@@ -283,14 +300,14 @@ namespace hemelb
 	};
 
 
-	void UpdateRayData(const float flow_field[3],
+	void UpdateRayData(const SiteData_t* iSiteData,
 			   float ray_t,
 			   float ray_segment,
 			   Ray* bCurrentRay);
 
 	void TraverseVoxels(const float block_min[3],
 			    const float block_x[3],
-			    const float voxel_flow_field[],
+			    const SiteData_t* iSiteData,
 			    float t,
 			    Ray* bCurrentRay,
 			    const bool xyz_is_1[3]);
