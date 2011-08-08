@@ -1,3 +1,4 @@
+//#define NDEBUG;
 #include <assert.h>
 
 #include "geometry/LatticeData.h"
@@ -12,6 +13,7 @@ namespace hemelb
     {
       RayTracer::ClusterBuilder::BlockTraverser::BlockTraverser
       (const geometry::LatticeData* iLatDat)
+	: VolumeTraverser()
       {
 	mLatticeData = iLatDat;
 		
@@ -42,7 +44,7 @@ namespace hemelb
       		
       bool RayTracer::ClusterBuilder::BlockTraverser::GoToNextUnvisitedBlock()
       {
-	assert(!IsCurrentBlockVisited());
+	assert(IsCurrentBlockVisited());
 	do 
 	{
 	  bool validBlock = GoToNextBlock();
@@ -75,13 +77,13 @@ namespace hemelb
       }
 
       RayTracer::ClusterBuilder::SiteTraverser 
-      RayTracer::ClusterBuilder::BlockTraverser::GetSiteIteratorForCurrentBlock()
+      RayTracer::ClusterBuilder::BlockTraverser::GetSiteTraverserForCurrentBlock()
       {
 	return SiteTraverser(mLatticeData, CurrentBlockNumber());
       }	
 
       RayTracer::ClusterBuilder::SiteTraverser 
-      RayTracer::ClusterBuilder::BlockTraverser::GetSiteIteratorForLocation(const Location<site_t>& iLocation)
+      RayTracer::ClusterBuilder::BlockTraverser::GetSiteTraverserForLocation(const Location<site_t>& iLocation)
       {
 	return SiteTraverser(mLatticeData, GetIndexFromLocation(iLocation));
       }	

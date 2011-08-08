@@ -1,6 +1,7 @@
 include $(MK)/header.mk
 
 SRCS :=	BlockIterator.cc \
+	Cluster.cc \
 	ClusterBuilder.cc \
 	RayTracer.cc \
 	RectangularIterator.cc \

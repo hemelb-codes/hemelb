@@ -1,6 +1,7 @@
 #ifndef HEMELB_VIS_RAYTRACER_H
 #define HEMELB_VIS_RAYTRACER_H
 
+#include <map>
 #include <stack>
 #include <vector>
 
@@ -20,7 +21,6 @@ namespace hemelb
   {
     namespace raytracer 
     {
-
       class RayTracer
       {
       public:
@@ -45,11 +45,11 @@ namespace hemelb
 	//The cluster structure stores data relating to the clusters
 	//used by the RayTracaer, in an optimal format
 	//Clusters are produced by the ClusterFactory
-	struct Cluster
+	class Cluster
 	{
-	  //Stores the lowest and greatest x, y, and z site locations 
-	  //of the cluster in terms of site units relative to 
-	  //the centre location
+	public:
+	  Cluster();
+
 	  Location<float> minSite;
 	  Location<float> maxSite;
 
@@ -61,6 +61,9 @@ namespace hemelb
 	  unsigned short int blocksX;
 	  unsigned short int blocksY;
 	  unsigned short int blocksZ;
+
+	  std::vector<std::vector<float> > FlowField;
+
 	};
 
       private:
@@ -69,15 +72,14 @@ namespace hemelb
 	{
 	public:
 	  ClusterBuilder
-	    (const geometry::LatticeData*& iLatDat,
-	     float **& oClusterVoxel,
-	     float ***& oClusterFlowField
-	      );
+	    (const geometry::LatticeData*& iLatDat);
 	  ~ClusterBuilder();
 	  
 	  void BuildClusters();
 	  
-	  std::vector<Cluster> GetClusters();
+	  std::vector<Cluster>& GetClusters();
+
+	  float* GetClusterVoxelDataPointer(site_t iSiteId, site_t iL);
 
 	private:
 	  //Volume tracker is used to sequentially traverse a 
@@ -157,9 +159,9 @@ namespace hemelb
 
 	    site_t GetBlockSize();
 	    
-	    SiteTraverser GetSiteIteratorForCurrentBlock();
+	    SiteTraverser GetSiteTraverserForCurrentBlock();
 	    
-	    SiteTraverser GetSiteIteratorForLocation(const Location<site_t>& iLocation);
+	    SiteTraverser GetSiteTraverserForLocation(const Location<site_t>& iLocation);
 
 	    virtual site_t GetXCount();
 
@@ -220,26 +222,43 @@ namespace hemelb
 	     unsigned int iClusterId, Location<site_t> i_block_coordinates);
 
 	  void UpdateSiteFlowField
-	    (geometry::LatticeData::BlockData * i_block,
+	    (geometry::LatticeData::BlockData * iBlock,
 	     site_t n, unsigned int iClusterId, unsigned int l_site_id);
 
 	  Location<site_t> GetSiteCoordinatesOfBlock
 	    (site_t iClusterId, Location<site_t> offset);
 
-	  BlockTraverser mBlockIterator;
+	  float* GetDataPointerClusterVoxelSiteId(site_t iSiteId);
+
+	  void SetDataPointerForClusterVoxelSiteId
+	    (site_t iClusterVortexSiteId, float* iDataPointer);
+	  
+
+
+	  BlockTraverser mBlockTraverser;
 
    
 	  std::vector<Cluster> mClusters;
-	  float **& mClusterVoxel;
-	  float ***& mClusterFlowField;
-
-
+	 
 	  std::vector<Location<site_t> > mClusterBlockMins; 
+	 
+	  //This allows a cluster voxel site ID (as part of the 1D structure for)
+	  //storing sites to be mapped to the data stored in the 3D structure 
+	  //for the ray tracer by means of pointers.
+	  //The structure acts as a  hash table - the remainined (%) of dividing
+	  //the cluster voxel ID against NUMBEROFCLUSTERVOXELMAPS indicates which map
+	  //to look up. This is chosen because the cluster voxel IDs tend to be spare
+	  //but large blocks of consecutive numbers.
+	  std::vector<
+	    std::map<site_t, float*> > 
+	    mClusterVoxelDataPointers;
 
 
 	  const geometry::LatticeData*& mLatticeData;
 	  short int *mClusterIdOfBlock;
       
+	  static const unsigned int NUMBEROFCLUSTERVOXELMAPS = 1024;
+
 	  static const short int NOTASSIGNEDTOCLUSTER = -1; 
 
 	  static const Location<site_t> mNeighbours[26];
@@ -279,7 +298,6 @@ namespace hemelb
 	void TraverseBlocks(const Cluster* cluster,
 			    const bool xyz_Is_1[3],
 			    const float ray_dx[3],
-			    float **block_flow_field,
 			    Ray *bCurrentRay);
 
 	void AABBvsRay(const AABB* aabb,
@@ -290,18 +308,14 @@ namespace hemelb
 
 	void UpdateColour(float dt, const float palette[3], float col[3]);
 
-	void BuildClusters();
-
+	ClusterBuilder mClusterBuilder;
+	
 	const geometry::LatticeData* mLatDat;
 
 	const DomainStats* mDomainStats;
 	Screen* mScreen;
 	Viewpoint* mViewpoint;
 	VisSettings* mVisSettings;
-
-	std::vector<Cluster> mClusters;
-	float **cluster_voxel;
-	float ***cluster_flow_field;
 
 	const float mBlockSizeFloat;
 	const float mBlockSizeInverse;

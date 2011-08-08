@@ -1,12 +1,15 @@
+//#define NDEBUG;
+#include <assert.h>
+
+
 #include <math.h>
 #include <stdlib.h>
 #include <vector>
 #include <limits>
-#include <assert.h>
 
 #include "debug/Debugger.h"
 #include "lb/LbmParameters.h"
-#include "util/utilityFunctions.h"
+#include "util/utilityFunctions.h" 
 #include "vis/rayTracer/Location.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "log/Logger.h"
@@ -266,10 +269,9 @@ namespace hemelb
 	}
       }
 
-      void RayTracer::TraverseBlocks(const Cluster* cluster,
+      void RayTracer::TraverseBlocks(const Cluster* cluster, 
 				     const bool xyz_Is_1[3],
 				     const float ray_dx[3],
-				     float **block_flow_field,
 				     Ray *bCurrentRay)
       {
 
@@ -297,13 +299,15 @@ namespace hemelb
 	int k = i_vec[2];
 
 	float block_x[3];
-	if (block_flow_field[i + j + k] != NULL)
+	if (!cluster->FlowField[i + j + k].empty())
 	{
 	  block_x[0] = -block_min[0];
 	  block_x[1] = -block_min[1];
 	  block_x[2] = -block_min[2];
 
-	  TraverseVoxels(block_min, block_x, block_flow_field[i + j + k], 0.0F, bCurrentRay, xyz_Is_1);
+	  TraverseVoxels(block_min, block_x, &cluster->FlowField[i + j + k][0], 0.0F, bCurrentRay, xyz_Is_1);
+	  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>
+	  ("Success");
 	}
 
 	float t_max[3];
@@ -335,7 +339,7 @@ namespace hemelb
 		block_min[0] -= mBlockSizeFloat;
 	      }
 
-	      if (block_flow_field[i + j + k] != NULL)
+	      if (!cluster->FlowField[i + j + k].empty())
 	      {
 		block_x[0] = t_max[0] * bCurrentRay->Direction[0] - block_min[0];
 		block_x[1] = t_max[0] * bCurrentRay->Direction[1] - block_min[1];
@@ -343,7 +347,7 @@ namespace hemelb
 
 		TraverseVoxels(block_min,
 			       block_x,
-			       block_flow_field[i + j + k],
+			       &cluster->FlowField[i + j + k][0],
 			       t_max[0],
 			       bCurrentRay,
 			       xyz_Is_1);
@@ -368,7 +372,7 @@ namespace hemelb
 		block_min[2] -= mBlockSizeFloat;
 	      }
 
-	      if (block_flow_field[i + j + k] != NULL)
+	      if (!cluster->FlowField[i + j + k].empty())
 	      {
 		block_x[0] = t_max[2] * bCurrentRay->Direction[0] - block_min[0];
 		block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
@@ -376,7 +380,7 @@ namespace hemelb
 
 		TraverseVoxels(block_min,
 			       block_x,
-			       block_flow_field[i + j + k],
+			       &cluster->FlowField[i + j + k][0],
 			       t_max[2],
 			       bCurrentRay,
 			       xyz_Is_1);
@@ -404,7 +408,7 @@ namespace hemelb
 		block_min[1] -= mBlockSizeFloat;
 	      }
 
-	      if (block_flow_field[i + j + k] != NULL)
+	      if (!cluster->FlowField[i + j + k].empty())
 	      {
 		block_x[0] = t_max[1] * bCurrentRay->Direction[0] - block_min[0];
 		block_x[1] = t_max[1] * bCurrentRay->Direction[1] - block_min[1];
@@ -412,7 +416,7 @@ namespace hemelb
 
 		TraverseVoxels(block_min,
 			       block_x,
-			       block_flow_field[i + j + k],
+			       &cluster->FlowField[i + j + k][0],
 			       t_max[1],
 			       bCurrentRay,
 			       xyz_Is_1);
@@ -437,7 +441,7 @@ namespace hemelb
 		block_min[2] -= mBlockSizeFloat;
 	      }
 
-	      if (block_flow_field[i + j + k] != NULL)
+	      if (!cluster->FlowField[i + j + k].empty())
 	      {
 		block_x[0] = t_max[2] * bCurrentRay->Direction[0] - block_min[0];
 		block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
@@ -445,7 +449,7 @@ namespace hemelb
 
 		TraverseVoxels(block_min,
 			       block_x,
-			       block_flow_field[i + j + k],
+			       &cluster->FlowField[i + j + k][0],
 			       t_max[2],
 			       bCurrentRay,
 			       xyz_Is_1);
@@ -459,19 +463,12 @@ namespace hemelb
 	}
       }
 
-      void RayTracer::BuildClusters()
-      {
-	ClusterBuilder clusterBuilder(mLatDat, cluster_voxel, cluster_flow_field);
-	clusterBuilder.BuildClusters();
-	
-	mClusters = clusterBuilder.GetClusters();
-      }
-
       RayTracer::RayTracer(const geometry::LatticeData* iLatDat,
 			   const DomainStats* iDomainStats,
 			   Screen* iScreen,
 			   Viewpoint* iViewpoint,
 			   VisSettings* iVisSettings) :
+	mClusterBuilder(iLatDat),
 	mLatDat(iLatDat), mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint),
 	mVisSettings(iVisSettings), mBlockSizeFloat((float) mLatDat->GetBlockSize()),
 	mBlockSizeInverse(1.F / mBlockSizeFloat), block_size2(mLatDat->GetBlockSize()
@@ -479,7 +476,7 @@ namespace hemelb
 	block_size_1(mLatDat->GetBlockSize() - 1), blocksYz(mLatDat->GetYBlockCount()
 							    * mLatDat->GetZBlockCount())
       {
-	BuildClusters();
+	mClusterBuilder.BuildClusters();
       }
 
       void RayTracer::Render()
@@ -489,19 +486,17 @@ namespace hemelb
 
 	const float* viewpointCentre = mViewpoint->GetViewpointCentre();
 
-	for (unsigned int clusterId = 0; clusterId < mClusters.size(); clusterId++)
+	for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
 	{
-	  const Cluster* thisCluster = &mClusters[clusterId];
+	  const Cluster* thisCluster = &mClusterBuilder.GetClusters()[clusterId];
 
-	  // the image-based projection of the mClusters bounding box is
+	  // the image-based projection of the mClusterBuilder.GetClusters() bounding box is
 	  // calculated here
 	  float cluster_x[3];
 	  cluster_x[0] = thisCluster->minBlock.x - viewpointCentre[0];
 	  cluster_x[1] = thisCluster->minBlock.y - viewpointCentre[1];
 	  cluster_x[2] = thisCluster->minBlock.z - viewpointCentre[2];
 		    
-
-	  float **block_flow_field = cluster_flow_field[clusterId];
 
 	  float subimageMins[2], subimageMaxes[2];
 
@@ -645,7 +640,7 @@ namespace hemelb
 	      lRay.MinT = std::numeric_limits<float>::max();
 	      lRay.Density = -1.0F;
 
-	      TraverseBlocks(thisCluster, lRayInPositiveDirection, ray_dx, block_flow_field, &lRay);
+	      TraverseBlocks(thisCluster, lRayInPositiveDirection, ray_dx, &lRay);
 
 	      if (lRay.MinT == std::numeric_limits<float>::max())
 	      {
@@ -674,35 +669,23 @@ namespace hemelb
 					 distribn_t stress)
       {
 	assert(static_cast<site_t>(static_cast<unsigned int>(i)) == i);
-
-	if(cluster_voxel[3 * i] == NULL)
-	{
-	  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>
-	    ("Failed to access cluster voxel at site %u",(unsigned int) i); 
-	  assert(false);
-	}
-
-	cluster_voxel[3 * i][0] = (float) density;
-	cluster_voxel[3 * i][1] = (float) velocity;
-	cluster_voxel[3 * i][2] = (float) stress;
+	
+	
+	mClusterBuilder.GetClusterVoxelDataPointer(i,0)[0] =
+	  (float) density;
+	mClusterBuilder.GetClusterVoxelDataPointer(i,0)[1] =
+	  (float) velocity;
+	mClusterBuilder.GetClusterVoxelDataPointer(i,0)[2] =
+	  (float) stress;
+	
+	
+	//cluster_voxel[3 * i][0] = (float) density;
+	//cluster_voxel[3 * i][1] = (float) velocity;
+ 	//cluster_voxel[3 * i][2] = (float) stress;
       }
 
       RayTracer::~RayTracer()
       {
-	for (unsigned int n = 0; n < mClusters.size(); n++)
-	{
-	  for (int m = 0; m < (mClusters[n].blocksX * mClusters[n].blocksY * mClusters[n].blocksZ); m++)
-	  {
-	    if (cluster_flow_field[n][m] != NULL)
-	    {
-	      delete[] cluster_flow_field[n][m];
-	    }
-	  }
-	  delete[] cluster_flow_field[n];
-	}
-
-	delete[] cluster_flow_field;
-	delete[] cluster_voxel;
       }
     }
   }
