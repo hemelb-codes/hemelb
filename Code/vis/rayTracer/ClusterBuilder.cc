@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <iostream>
-
+ 
 #include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
@@ -355,8 +355,9 @@ namespace hemelb
 
 	      geometry::LatticeData::BlockData * lBlock = mLatticeData->GetBlock(block_id);
 	      
-	      lCluster->SiteData[lBlockNum].reserve(
-		mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS);
+	      //By default all values are -1 for solids
+	      lCluster->SiteData[lBlockNum].resize(
+		mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS, SiteData_t(-1.0F));
 
 	      UpdateSiteData(lBlock, lBlockNum, iClusterId, block_coordinates);
 	    } // for k
@@ -383,7 +384,7 @@ namespace hemelb
 	    {
 	      ++l_site_id;
 
-	      UpdateSiteSiteData(lBlock, iBlockNum, iClusterId, l_site_id);
+	      UpdateSiteDataAtSite(lBlock, iBlockNum, iClusterId, l_site_id);
 
 	    }
 	  }
@@ -392,7 +393,7 @@ namespace hemelb
       
 
 	     
-      void RayTracer::ClusterBuilder::UpdateSiteSiteData
+      void RayTracer::ClusterBuilder::UpdateSiteDataAtSite
       ( geometry::LatticeData::BlockData * iBlock,
 	site_t iBlockNum, unsigned int iClusterId, unsigned int lSiteIdOnBlock)
       {
@@ -400,12 +401,8 @@ namespace hemelb
       
 	unsigned int lClusterVoxelSiteId = iBlock->site_data[lSiteIdOnBlock];
 
-      	//If site is solid or not on the current processor [net.cc]
-	if (lClusterVoxelSiteId == BIG_NUMBER3)
-	{
-	  mClusters[iClusterId].SiteData[iBlockNum][lSiteIdOnBlock] = SiteData_t(-1.0F);
-	}
-	else 
+      	//If site not a solid and on  the current processor [net.cc]
+	if (lClusterVoxelSiteId != BIG_NUMBER3)
 	{
 	  mClusters[iClusterId].SiteData[iBlockNum][lSiteIdOnBlock] = SiteData_t(1.0F);
 	

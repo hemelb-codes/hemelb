@@ -306,8 +306,6 @@ namespace hemelb
 	  block_x[2] = -block_min[2];
 
 	  TraverseVoxels(block_min, block_x, &cluster->SiteData[i + j + k][0], 0.0F, bCurrentRay, xyz_Is_1);
-	  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>
-	  ("Success");
 	}
 
 	float t_max[3];
