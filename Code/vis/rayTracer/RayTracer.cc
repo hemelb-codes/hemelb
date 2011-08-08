@@ -66,12 +66,12 @@ namespace hemelb
 	}
       }
 
-      void RayTracer::UpdateRayData(const float flow_field[3],
+      void RayTracer::UpdateRayData(const SiteData_t* iSiteData,
 				    float ray_t,
 				    float ray_segment,
 				    Ray* bCurrentRay)
       {
-	if (flow_field[0] < 0.0F)
+	if (iSiteData->Density < 0.0F)
 	{
 	  return; // solid voxel
 	}
@@ -79,7 +79,7 @@ namespace hemelb
 	float palette[3];
 
 	// update the volume rendering of the velocity flow field
-	ColPixel::PickColour(flow_field[1] * (float) mDomainStats->velocity_threshold_max_inv,
+	ColPixel::PickColour(iSiteData->Velocity * (float) mDomainStats->velocity_threshold_max_inv,
 			     palette);
 
 	UpdateColour(ray_segment, palette, bCurrentRay->VelocityColour);
@@ -87,7 +87,7 @@ namespace hemelb
 	if (mVisSettings->mStressType != lb::ShearStress)
 	{
 	  // update the volume rendering of the von Mises stress flow field
-	  float scaled_stress = flow_field[2] * (float) mDomainStats->stress_threshold_max_inv;
+	  float scaled_stress = iSiteData->Stress * (float) mDomainStats->stress_threshold_max_inv;
 
 	  ColPixel::PickColour(scaled_stress, palette);
 
@@ -104,15 +104,15 @@ namespace hemelb
 	bCurrentRay->MinT = ray_t;
 
 	// keep track of the density nearest to the view point
-	bCurrentRay->Density = flow_field[0];
+	bCurrentRay->Density = iSiteData->Density;
 
 	// keep track of the stress nearest to the view point
-	bCurrentRay->Stress = flow_field[2];		
+	bCurrentRay->Stress = iSiteData->Stress;		
       }
 
       void RayTracer::TraverseVoxels(const float block_min[3],
 				     const float block_x[3],
-				     const float voxel_flow_field[],
+				     const SiteData_t* iSiteData,
 				     float t,
 				     Ray* bCurrentRay,
 				     const bool xyz_is_1[3])
@@ -144,7 +144,7 @@ namespace hemelb
 	  {
 	    if (t_max[0] < t_max[2])
 	    {
-	      UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS],
+	      UpdateRayData(&iSiteData[i+j+k],
 			    t,
 			    t_max[0] - t,
 			    bCurrentRay);
@@ -174,7 +174,7 @@ namespace hemelb
 	    }
 	    else
 	    {
-	      UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS],
+	      UpdateRayData(&iSiteData[(i + j + k)],
 			    t,
 			    t_max[2] - t,
 			    bCurrentRay);
@@ -207,7 +207,7 @@ namespace hemelb
 	  {
 	    if (t_max[1] < t_max[2])
 	    {
-	      UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS],
+	      UpdateRayData(&iSiteData[i + j + k],
 			    t,
 			    t_max[1] - t,
 			    bCurrentRay);
@@ -237,7 +237,7 @@ namespace hemelb
 	    }
 	    else
 	    {
-	      UpdateRayData(&voxel_flow_field[ (i + j + k) * VIS_FIELDS],
+	      UpdateRayData(&iSiteData[i + j + k],
 			    t,
 			    t_max[2] - t,
 			    bCurrentRay);
@@ -299,13 +299,13 @@ namespace hemelb
 	int k = i_vec[2];
 
 	float block_x[3];
-	if (!cluster->FlowField[i + j + k].empty())
+	if (!cluster->SiteData[i + j + k].empty())
 	{
 	  block_x[0] = -block_min[0];
 	  block_x[1] = -block_min[1];
 	  block_x[2] = -block_min[2];
 
-	  TraverseVoxels(block_min, block_x, &cluster->FlowField[i + j + k][0], 0.0F, bCurrentRay, xyz_Is_1);
+	  TraverseVoxels(block_min, block_x, &cluster->SiteData[i + j + k][0], 0.0F, bCurrentRay, xyz_Is_1);
 	  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>
 	  ("Success");
 	}
@@ -339,7 +339,7 @@ namespace hemelb
 		block_min[0] -= mBlockSizeFloat;
 	      }
 
-	      if (!cluster->FlowField[i + j + k].empty())
+	      if (!cluster->SiteData[i + j + k].empty())
 	      {
 		block_x[0] = t_max[0] * bCurrentRay->Direction[0] - block_min[0];
 		block_x[1] = t_max[0] * bCurrentRay->Direction[1] - block_min[1];
@@ -347,7 +347,7 @@ namespace hemelb
 
 		TraverseVoxels(block_min,
 			       block_x,
-			       &cluster->FlowField[i + j + k][0],
+			       &cluster->SiteData[i + j + k][0],
 			       t_max[0],
 			       bCurrentRay,
 			       xyz_Is_1);
@@ -372,7 +372,7 @@ namespace hemelb
 		block_min[2] -= mBlockSizeFloat;
 	      }
 
-	      if (!cluster->FlowField[i + j + k].empty())
+	      if (!cluster->SiteData[i + j + k].empty())
 	      {
 		block_x[0] = t_max[2] * bCurrentRay->Direction[0] - block_min[0];
 		block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
@@ -380,7 +380,7 @@ namespace hemelb
 
 		TraverseVoxels(block_min,
 			       block_x,
-			       &cluster->FlowField[i + j + k][0],
+			       &cluster->SiteData[i + j + k][0],
 			       t_max[2],
 			       bCurrentRay,
 			       xyz_Is_1);
@@ -408,7 +408,7 @@ namespace hemelb
 		block_min[1] -= mBlockSizeFloat;
 	      }
 
-	      if (!cluster->FlowField[i + j + k].empty())
+	      if (!cluster->SiteData[i + j + k].empty())
 	      {
 		block_x[0] = t_max[1] * bCurrentRay->Direction[0] - block_min[0];
 		block_x[1] = t_max[1] * bCurrentRay->Direction[1] - block_min[1];
@@ -416,7 +416,7 @@ namespace hemelb
 
 		TraverseVoxels(block_min,
 			       block_x,
-			       &cluster->FlowField[i + j + k][0],
+			       &cluster->SiteData[i + j + k][0],
 			       t_max[1],
 			       bCurrentRay,
 			       xyz_Is_1);
@@ -441,7 +441,7 @@ namespace hemelb
 		block_min[2] -= mBlockSizeFloat;
 	      }
 
-	      if (!cluster->FlowField[i + j + k].empty())
+	      if (!cluster->SiteData[i + j + k].empty())
 	      {
 		block_x[0] = t_max[2] * bCurrentRay->Direction[0] - block_min[0];
 		block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
@@ -449,7 +449,7 @@ namespace hemelb
 
 		TraverseVoxels(block_min,
 			       block_x,
-			       &cluster->FlowField[i + j + k][0],
+			       &cluster->SiteData[i + j + k][0],
 			       t_max[2],
 			       bCurrentRay,
 			       xyz_Is_1);
@@ -671,17 +671,12 @@ namespace hemelb
 	assert(static_cast<site_t>(static_cast<unsigned int>(i)) == i);
 	
 	
-	mClusterBuilder.GetClusterVoxelDataPointer(i,0)[0] =
+	mClusterBuilder.GetClusterVoxelDataPointer(i)->Density =
 	  (float) density;
-	mClusterBuilder.GetClusterVoxelDataPointer(i,0)[1] =
+	mClusterBuilder.GetClusterVoxelDataPointer(i)->Velocity =
 	  (float) velocity;
-	mClusterBuilder.GetClusterVoxelDataPointer(i,0)[2] =
+	mClusterBuilder.GetClusterVoxelDataPointer(i)->Stress =
 	  (float) stress;
-	
-	
-	//cluster_voxel[3 * i][0] = (float) density;
-	//cluster_voxel[3 * i][1] = (float) velocity;
- 	//cluster_voxel[3 * i][2] = (float) stress;
       }
 
       RayTracer::~RayTracer()
