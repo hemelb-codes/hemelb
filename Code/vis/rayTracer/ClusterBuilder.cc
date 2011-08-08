@@ -1,4 +1,4 @@
-//#define NDEBUG;
+//#define NDEBUG
 #include <assert.h>
 #include <map>
 #include <vector>
@@ -22,7 +22,6 @@ namespace hemelb
       RayTracer::ClusterBuilder::ClusterBuilder
       (const geometry::LatticeData*& iLatticeData) :
 	mBlockTraverser(iLatticeData),
-	mClusterVoxelDataPointers(NUMBEROFCLUSTERVOXELMAPS),
 	mLatticeData(iLatticeData)
 	
       {
@@ -359,6 +358,9 @@ namespace hemelb
 	      lCluster->SiteData[lBlockNum].resize(
 		mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS, SiteData_t(-1.0F));
 
+	      //The vector must be large enough to store all pointers
+	      mClusterVoxelDataPointers.resize(mLatticeData->GetLocalFluidSiteCount());
+
 	      UpdateSiteData(lBlock, lBlockNum, iClusterId, block_coordinates);
 	    } // for k
 	  } // for j
@@ -413,34 +415,28 @@ namespace hemelb
 	    mClusters[iClusterId].SiteData[iBlockNum].begin() + lSiteIdOnBlock;
 
 	  SiteData_t* lSiteDataLocation = &(*lSiteDataIterator); 
-	
+	  
 	  //This one's for the C programmers out there
-	  SetDataPointerForClusterVoxelSiteId
-	    (lClusterVoxelSiteId, &(*lSiteDataLocation)); 
+	 hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
+	   ("Siteid: %u", (unsigned int) lClusterVoxelSiteId);
+	 SetDataPointerForClusterVoxelSiteId(lClusterVoxelSiteId, &(*lSiteDataLocation)); 
 	}
       }
     
 
       RayTracer::SiteData_t* RayTracer::ClusterBuilder::GetDataPointerClusterVoxelSiteId(site_t iClusterVortexSiteId)
       {
-	assert(mClusterVoxelDataPointers
-	       [iClusterVortexSiteId%NUMBEROFCLUSTERVOXELMAPS].
-	       count(iClusterVortexSiteId)==1);
-	
-	return mClusterVoxelDataPointers
-	  [iClusterVortexSiteId%NUMBEROFCLUSTERVOXELMAPS]
-	  [iClusterVortexSiteId];
+	return mClusterVoxelDataPointers[iClusterVortexSiteId];
       }
 
       void RayTracer::ClusterBuilder::SetDataPointerForClusterVoxelSiteId
       (site_t iClusterVortexSiteId, SiteData_t* iDataPointer)
       {
-	assert(mClusterVoxelDataPointers
-	       [iClusterVortexSiteId%NUMBEROFCLUSTERVOXELMAPS].count(iClusterVortexSiteId)==0);
-	
-	mClusterVoxelDataPointers
-	  [iClusterVortexSiteId%NUMBEROFCLUSTERVOXELMAPS]
-	  [iClusterVortexSiteId] = iDataPointer;
+#ifndef NDEBUG
+	mClusterVoxelDataPointers.at(iClusterVortexSiteId) = iDataPointer;
+#else 
+	mClusterVoxelDataPointers[iClusterVortexSiteId] = iDataPointer;
+#endif
       }
 
     }
