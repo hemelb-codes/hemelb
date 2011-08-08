@@ -236,7 +236,7 @@ namespace hemelb
 	    (geometry::LatticeData::BlockData * lBlock, site_t n, 
 	     unsigned int iClusterId, Location<site_t> i_block_coordinates);
 
-	  void UpdateSiteSiteData
+	  void UpdateSiteDataAtSite
 	    (geometry::LatticeData::BlockData * iBlock,
 	     site_t n, unsigned int iClusterId, unsigned int l_site_id);
 
