@@ -11,50 +11,57 @@ namespace hemelb
   {
     namespace raytracer 
     {
+      //Location is essentially a 3D vector, storing the 
+      //x, y and z co-ordinate in the templated numeric type
+      //Other methods are defined for convenience
       template <class T = site_t> 
 	class Location
 	{
 	public:
-	T i, j, k;
+	T x, y, z;
 
 	Location() {};
 
-	Location(T iI, T iJ, T iK) :
-	i(iI), j(iJ), k(iK)
+	Location(T iX, T iY, T iZ) :
+	x(iX), y(iY), z(iZ)
 	{}
       
 	Location(T iX) :
-	i(iX), j(iX), k(iX)
+	x(iX), y(iX), z(iX)
 	{}
 
+	//Copy constructor - can be used to perform type converstion 
 	template < class OldTypeT >
 	Location<T>(const Location<OldTypeT> & iOldLocation)
 	{
-	  i = static_cast<T>(iOldLocation.i);
-	  j = static_cast<T>(iOldLocation.j);
-	  k = static_cast<T>(iOldLocation.k);
+	  x = static_cast<T>(iOldLocation.x);
+	  y = static_cast<T>(iOldLocation.y);
+	  z = static_cast<T>(iOldLocation.z);
 	}
 	
+	//Vector addition
 	Location<T> operator+(const Location<T> right)
 	{
-	  return Location(i + right.i,
-			  j + right.j,
-			  k + right.k);
+	  return Location(x + right.x,
+			  y + right.y,
+			  z + right.z);
 	}
 
+	//Vector subraction
 	Location<T> operator-(const Location<T> right)
 	{
-	  return Location(i - right.i,
-			  j - right.j,
-			  k - right.k);
+	  return Location(x - right.x,
+			  y - right.y,
+			  z - right.z);
 	}
-
+	
+	//Scalar multiplication
 	template < class MultiplierT >
 	Location<T> operator*(const MultiplierT multiplier)
 	{
-	  return Location(i * multiplier,
-			  j * multiplier,
-			  k * multiplier);
+	  return Location(x * multiplier,
+			  y * multiplier,
+			  z * multiplier);
 	}
 
 	static Location<T> MaxLimit() 
@@ -67,40 +74,44 @@ namespace hemelb
 	  return Location(std::numeric_limits<T>::min());
 	}
 
-	static void UpdateMinLocation(Location& io_store_location, const Location& i_compare_location)
+	//Updates the Location in the first Location paramter with the smallest of each
+	//of the x, y and z co-ordinates independently of both Locations
+	static void UpdateMinLocation(Location<T>& io_store_location, const Location<T>& i_compare_location)
 	{
-	  io_store_location.i = 
+	  io_store_location.x = 
 	  util::NumericalFunctions::min
-	  (io_store_location.i, 
-	   i_compare_location.i);
+	  (io_store_location.x, 
+	   i_compare_location.x);
 
-	  io_store_location.j = 
+	  io_store_location.y = 
 	  util::NumericalFunctions::min
-	  (io_store_location.j, 
-	   i_compare_location.j);
+	  (io_store_location.y, 
+	   i_compare_location.y);
 
-	  io_store_location.k = 
+	  io_store_location.z = 
 	  util::NumericalFunctions::min
-	  (io_store_location.k, 
-	   i_compare_location.k);
+	  (io_store_location.z, 
+	   i_compare_location.z);
 	}
       
-	static void UpdateMaxLocation(Location& io_store_location, const Location& i_compare_location)
+	//Updates the Location in the first Location paramter with the largest of each
+	//of the x, y and z co-ordinates independently of both Locations
+	static void UpdateMaxLocation(Location<T>& io_store_location, const Location<T>& i_compare_location)
 	{
-	  io_store_location.i = 
+	  io_store_location.x = 
 	  util::NumericalFunctions::max
-	  (io_store_location.i, 
-	   i_compare_location.i);
+	  (io_store_location.x, 
+	   i_compare_location.x);
 
-	  io_store_location.j = 
+	  io_store_location.y = 
 	  util::NumericalFunctions::max
-	  (io_store_location.j, 
-	   i_compare_location.j);
+	  (io_store_location.y, 
+	   i_compare_location.y);
 
-	  io_store_location.k = 
+	  io_store_location.z = 
 	  util::NumericalFunctions::max
-	  (io_store_location.k, 
-	   i_compare_location.k);
+	  (io_store_location.z, 
+	   i_compare_location.z);
 	}
 	
 	};
