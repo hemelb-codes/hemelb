@@ -42,40 +42,42 @@ namespace hemelb
 	// Render the current state into an image.
 	void Render();
 
-      private:
-      //The cluster structure stores data relating to the clusters
-      //used by the RayTracaer, in an optimal format
-      //Clusters are produced by the ClusterFactory
-      struct Cluster
-      {
-	//Stores the lowest and greatest x, y, and z site locations 
-	//of the cluster in terms of site units relative to 
-	//the centre location
-	Location<float> minSite;
-	Location<float> maxSite;
+	//The cluster structure stores data relating to the clusters
+	//used by the RayTracaer, in an optimal format
+	//Clusters are produced by the ClusterFactory
+	struct Cluster
+	{
+	  //Stores the lowest and greatest x, y, and z site locations 
+	  //of the cluster in terms of site units relative to 
+	  //the centre location
+	  Location<float> minSite;
+	  Location<float> maxSite;
 
-	//Stores the lowest x, y and z block location of the Cluster 
-	//in terms of site units relative to the centre location
-	Location<float> minBlock;
+	  //Stores the lowest x, y and z block location of the Cluster 
+	  //in terms of site units relative to the centre location
+	  Location<float> minBlock;
         
-	//Stores the size of the cluster in terms of the number of blocks
-	unsigned short int blocksX;
-	unsigned short int blocksY;
-	unsigned short int blocksZ;
-      };
+	  //Stores the size of the cluster in terms of the number of blocks
+	  unsigned short int blocksX;
+	  unsigned short int blocksY;
+	  unsigned short int blocksZ;
+	};
+
+      private:
 
 	class ClusterBuilder
 	{
 	public:
 	  ClusterBuilder
 	    (const geometry::LatticeData*& iLatDat,
-	     std::vector<Cluster> & oClusters,
 	     float **& oClusterVoxel,
 	     float ***& oClusterFlowField
 	      );
 	  ~ClusterBuilder();
+	  
 	  void BuildClusters();
-      
+	  
+	  std::vector<Cluster> GetClusters();
 
 	private:
 	  //Volume tracker is used to sequentially traverse a 
@@ -113,7 +115,7 @@ namespace hemelb
 	  {
 	  public:
 	    SiteTraverser(const geometry::LatticeData * iLatticeDat, 
-			 const site_t iBlockId);
+			  const site_t iBlockId);
 			
 	    virtual site_t GetXCount();
 
@@ -227,7 +229,7 @@ namespace hemelb
 	  BlockTraverser mBlockIterator;
 
    
-	  std::vector<Cluster> & mClusters;
+	  std::vector<Cluster> mClusters;
 	  float **& mClusterVoxel;
 	  float ***& mClusterFlowField;
 

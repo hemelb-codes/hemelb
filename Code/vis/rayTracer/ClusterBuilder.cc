@@ -17,12 +17,10 @@ namespace hemelb
     {
       RayTracer::ClusterBuilder::ClusterBuilder
       (const geometry::LatticeData*& iLatticeData,
-       std::vector<Cluster> & oClusters,
        float **& oClusterVoxel,
        float ***& oClusterFlowField
 	) :
 	mBlockIterator(iLatticeData),
-	mClusters(oClusters),
 	mClusterVoxel(oClusterVoxel),
 	mClusterFlowField(oClusterFlowField),
 	mLatticeData(iLatticeData)
@@ -59,7 +57,11 @@ namespace hemelb
 	{
 	  ProcessCluster(lThisClusterId);	  
 	}
+      }
 
+      std::vector<RayTracer::Cluster> RayTracer::ClusterBuilder::GetClusters()
+      {
+	return mClusters;
       }
 
       void RayTracer::ClusterBuilder::LocateClusters()

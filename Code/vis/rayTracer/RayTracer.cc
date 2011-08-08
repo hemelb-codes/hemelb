@@ -461,8 +461,10 @@ namespace hemelb
 
       void RayTracer::BuildClusters()
       {
-	ClusterBuilder clusterBuilder(mLatDat, mClusters, cluster_voxel, cluster_flow_field);
+	ClusterBuilder clusterBuilder(mLatDat, cluster_voxel, cluster_flow_field);
 	clusterBuilder.BuildClusters();
+	
+	mClusters = clusterBuilder.GetClusters();
       }
 
       RayTracer::RayTracer(const geometry::LatticeData* iLatDat,
