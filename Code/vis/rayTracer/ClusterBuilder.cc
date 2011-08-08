@@ -35,6 +35,8 @@ namespace hemelb
 	{
 	  mClusterIdOfBlock[lId] = NOTASSIGNEDTOCLUSTER;
 	}
+
+	assert(VIS_FIELDS == 3);
       }
  
       RayTracer::ClusterBuilder::~ClusterBuilder()
@@ -60,9 +62,9 @@ namespace hemelb
 	return mClusters;
       }
 
-      float* RayTracer::ClusterBuilder::GetClusterVoxelDataPointer(site_t iVoxelSiteId,site_t iL)
+      RayTracer::SiteData_t* RayTracer::ClusterBuilder::GetClusterVoxelDataPointer(site_t iVoxelSiteId)
       {
-	return GetDataPointerClusterVoxelSiteId(iVoxelSiteId)+iL;
+	return GetDataPointerClusterVoxelSiteId(iVoxelSiteId);
       }
 
       void RayTracer::ClusterBuilder::LocateClusters()
@@ -147,7 +149,8 @@ namespace hemelb
 	    //Check all the neighbouring blocks to see if they need visiting. Add them to the stack.
 	    AddNeighbouringBlocks(lCurrentLocation, lBlocksToProcess);
 	  }
-	}	
+	}
+	
 	AddCluster(lClusterBlockMin, lClusterBlockMax, lClusterSiteMin, lClusterSiteMax);
       }
 
@@ -315,9 +318,9 @@ namespace hemelb
 
 
 	Cluster* lCluster = &mClusters[iClusterId];
-	lCluster->FlowField = std::vector<std::vector<float> >(lCluster->blocksX * 
-						lCluster->blocksY * 
-						lCluster->blocksZ); 
+	lCluster->SiteData = std::vector<std::vector<SiteData_t> >(lCluster->blocksX * 
+								   lCluster->blocksY * 
+								   lCluster->blocksZ); 
 
 	site_t lBlockNum = -1;
 	for (site_t i = 0; i < lCluster->blocksX; i++)
@@ -352,10 +355,10 @@ namespace hemelb
 
 	      geometry::LatticeData::BlockData * lBlock = mLatticeData->GetBlock(block_id);
 	      
-	      lCluster->FlowField[lBlockNum].reserve(
+	      lCluster->SiteData[lBlockNum].reserve(
 		mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS);
 
-	      UpdateFlowField(lBlock, lBlockNum, iClusterId, block_coordinates);
+	      UpdateSiteData(lBlock, lBlockNum, iClusterId, block_coordinates);
 	    } // for k
 	  } // for j
 	} // for i
@@ -364,7 +367,7 @@ namespace hemelb
       }
       
 
-      void RayTracer::ClusterBuilder::UpdateFlowField
+      void RayTracer::ClusterBuilder::UpdateSiteData
       (geometry::LatticeData::BlockData * lBlock, site_t iBlockNum,  unsigned int iClusterId, Location<site_t>i_block_coordinates)
       {
 	unsigned int l_site_id = -1;
@@ -380,7 +383,7 @@ namespace hemelb
 	    {
 	      ++l_site_id;
 
-	      UpdateSiteFlowField(lBlock, iBlockNum, iClusterId, l_site_id);
+	      UpdateSiteSiteData(lBlock, iBlockNum, iClusterId, l_site_id);
 
 	    }
 	  }
@@ -389,45 +392,39 @@ namespace hemelb
       
 
 	     
-      void RayTracer::ClusterBuilder::UpdateSiteFlowField
+      void RayTracer::ClusterBuilder::UpdateSiteSiteData
       ( geometry::LatticeData::BlockData * iBlock,
 	site_t iBlockNum, unsigned int iClusterId, unsigned int lSiteIdOnBlock)
       {
 	//TODO: Clean this
       
 	unsigned int lClusterVoxelSiteId = iBlock->site_data[lSiteIdOnBlock];
-      
 
-
-	//If site is solid or not on the current processor [net.cc]
+      	//If site is solid or not on the current processor [net.cc]
 	if (lClusterVoxelSiteId == BIG_NUMBER3)
 	{
-	  for (site_t l = 0; l < VIS_FIELDS; l++)
-	  {		
-	      mClusters[iClusterId].FlowField[iBlockNum][lSiteIdOnBlock * VIS_FIELDS + l] = -1.0F;
-	  }
+	  mClusters[iClusterId].SiteData[iBlockNum][lSiteIdOnBlock] = SiteData_t(-1.0F);
 	}
 	else 
 	{
-	  for (site_t l = 0; l < VIS_FIELDS; l++)
-	  {
-	    mClusters[iClusterId].FlowField[iBlockNum][lSiteIdOnBlock * VIS_FIELDS + l] = 1.0F;
-	  }
+	  mClusters[iClusterId].SiteData[iBlockNum][lSiteIdOnBlock] = SiteData_t(1.0F);
+	
 
 	  //For efficiency we want to store a pointer to the site data grouped by the ClusterVortexID
 	  //(1D organisation of sites)
-	  std::vector<float>::iterator lSiteDataIterator = 
-	    mClusters[iClusterId].FlowField[iBlockNum].begin() + lSiteIdOnBlock * VIS_FIELDS;
+	  std::vector<SiteData_t>::iterator lSiteDataIterator = 
+	    mClusters[iClusterId].SiteData[iBlockNum].begin() + lSiteIdOnBlock;
 
-	  float* lSiteDataLocation = &(*lSiteDataIterator); 
-
+	  SiteData_t* lSiteDataLocation = &(*lSiteDataIterator); 
+	
 	  //This one's for the C programmers out there
 	  SetDataPointerForClusterVoxelSiteId
 	    (lClusterVoxelSiteId, &(*lSiteDataLocation)); 
 	}
       }
+    
 
-      float* RayTracer::ClusterBuilder::GetDataPointerClusterVoxelSiteId(site_t iClusterVortexSiteId)
+      RayTracer::SiteData_t* RayTracer::ClusterBuilder::GetDataPointerClusterVoxelSiteId(site_t iClusterVortexSiteId)
       {
 	assert(mClusterVoxelDataPointers
 	       [iClusterVortexSiteId%NUMBEROFCLUSTERVOXELMAPS].
@@ -439,7 +436,7 @@ namespace hemelb
       }
 
       void RayTracer::ClusterBuilder::SetDataPointerForClusterVoxelSiteId
-      (site_t iClusterVortexSiteId, float* iDataPointer)
+      (site_t iClusterVortexSiteId, SiteData_t* iDataPointer)
       {
 	assert(mClusterVoxelDataPointers
 	       [iClusterVortexSiteId%NUMBEROFCLUSTERVOXELMAPS].count(iClusterVortexSiteId)==0);
