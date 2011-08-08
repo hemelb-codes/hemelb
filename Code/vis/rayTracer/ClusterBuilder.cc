@@ -17,14 +17,14 @@ namespace hemelb
     {
       RayTracer::ClusterBuilder::ClusterBuilder
       (const geometry::LatticeData*& iLatticeData,
-       std::vector<Cluster> & i_clusters,
-       float **& i_cluster_voxel,
-       float ***& i_cluster_flow_field
+       std::vector<Cluster> & oClusters,
+       float **& oClusterVoxel,
+       float ***& oClusterFlowField
 	) :
 	mBlockIterator(iLatticeData),
-	mClusters(i_clusters),
-	mClusterVoxel(i_cluster_voxel),
-	mClusterFlowField(i_cluster_flow_field),
+	mClusters(oClusters),
+	mClusterVoxel(oClusterVoxel),
+	mClusterFlowField(oClusterFlowField),
 	mLatticeData(iLatticeData)
       {
 
@@ -68,11 +68,11 @@ namespace hemelb
 	while (mBlockIterator.GoToNextUnvisitedBlock())
 	{
 	  //Mark the block visited 
-	  mBlockIterator.MarkBlockVisited();
+	  mBlockIterator.MarkCurrentBlockVisited();
 	  
 	  //If there are sites assigned to the local processor, search for the
 	  //cluster of connected sites
-	  if (SitesAssignedToLocalProcessorInBlock(mBlockIterator.GetBlockData()))
+	  if (AreSitesAssignedToLocalProcessorRankInBlock(mBlockIterator.GetCurrentBlockData()))
 	  {
 	    FindNewCluster();
 	  }
@@ -96,7 +96,7 @@ namespace hemelb
 	std::stack<Location<site_t> > lBlocksToProcess;
 
 	//Set up the initial condition
-	lBlocksToProcess.push(mBlockIterator.GetLocation());
+	lBlocksToProcess.push(mBlockIterator.GetCurrentLocation());
 
 	//Loop over the cluster via neighbours until
 	//all blocks have been processed
@@ -107,38 +107,38 @@ namespace hemelb
 	  Location<site_t> lCurrentLocation = lBlocksToProcess.top();
 	  lBlocksToProcess.pop();
 	    
-	  if(SitesAssignedToLocalProcessorInBlock(
-	       mBlockIterator.GetBlockData(lCurrentLocation)))
+	  if(AreSitesAssignedToLocalProcessorRankInBlock(
+	       mBlockIterator.GetBlockDataForLocation(lCurrentLocation)))
 	  {
 	    //Update block range of the cluster
 	    Location<site_t>::UpdateMinLocation(lClusterBlockMin, lCurrentLocation);
 	    Location<site_t>::UpdateMaxLocation(lClusterBlockMax, lCurrentLocation);
 	     
 	    //Update the cluster id of the given block
-	    site_t lBlockID = mBlockIterator.GetNumberFromLocation(lCurrentLocation);
+	    site_t lBlockID = mBlockIterator.GetIndexFromLocation(lCurrentLocation);
 	    mClusterIdOfBlock[lBlockID] = (short int) mClusters.size();
 
 	    //Loop through all the sites on the block, to 
 	    //update the site bounds on the cluster
-	    SiteIterator lSiteIterator = mBlockIterator.GetSiteIterator(lCurrentLocation);
+	    SiteTraverser lSiteIterator = mBlockIterator.GetSiteIteratorForLocation(lCurrentLocation);
 	    do
 	    { 
 	      //If the site is not a solid
-	      if (mBlockIterator.GetBlockData(lCurrentLocation)->
-		  site_data[lSiteIterator.CurrentNumber()] != BIG_NUMBER3)
+	      if (mBlockIterator.GetBlockDataForLocation(lCurrentLocation)->
+		  site_data[lSiteIterator.GetCurrentIndex()] != BIG_NUMBER3)
 	      {
 		Location<site_t>::UpdateMinLocation(lClusterSiteMin,
-					    lSiteIterator.GetLocation() +
-					    lCurrentLocation*
-					    lSiteIterator.GetBlockSize());
+						    lSiteIterator.GetCurrentLocation() +
+						    lCurrentLocation*
+						    mBlockIterator.GetBlockSize());
 		
 		Location<site_t>::UpdateMaxLocation(lClusterSiteMax,
-					    lSiteIterator.GetLocation() +
-					    lCurrentLocation*
-					    lSiteIterator.GetBlockSize());
+						    lSiteIterator.GetCurrentLocation() +
+						    lCurrentLocation*
+						    mBlockIterator.GetBlockSize());
 	      }   
 	    }
-	    while (lSiteIterator.Iterate());
+	    while (lSiteIterator.TraverseOne());
 			
 	    //Check all the neighbouring blocks to see if they need visiting. Add them to the stack.
 	    AddNeighbouringBlocks(lCurrentLocation, lBlocksToProcess);
@@ -198,10 +198,10 @@ namespace hemelb
 		
 	  //The neighouring block location might not exist
 	  //eg negative co-ordinates
-	  if (mBlockIterator.BlockValid(lNeighbouringBlock))
+	  if (mBlockIterator.IsValidLocation(lNeighbouringBlock))
 	  {
 	    //Ensure that the block hasn't been visited before
-	    if(!mBlockIterator.BlockVisited(lNeighbouringBlock))
+	    if(!mBlockIterator.IsBlockVisited(lNeighbouringBlock))
 	    {
 	      //Add to the stack
 	      oBlocksToProcess.push(lNeighbouringBlock);
@@ -214,7 +214,7 @@ namespace hemelb
 	}
       }
 
-      bool RayTracer::ClusterBuilder::SitesAssignedToLocalProcessorInBlock
+      bool RayTracer::ClusterBuilder::AreSitesAssignedToLocalProcessorRankInBlock
       (geometry::LatticeData::BlockData * iBlock)
       {
 	if (iBlock->
@@ -243,21 +243,21 @@ namespace hemelb
       {
 	//The friendly locations must be turned into a format usable by the ray tracer
 	Cluster lNewCluster;
-	lNewCluster.minBlock.i = (float) (iClusterBlockMin.i * mLatticeData->GetBlockSize()) - 0.5F
+	lNewCluster.minBlock.x = (float) (iClusterBlockMin.x * mLatticeData->GetBlockSize()) - 0.5F
 	  * (float) mLatticeData->GetXSiteCount();
-	lNewCluster.minBlock.j = (float) (iClusterBlockMin.j * mLatticeData->GetBlockSize()) - 0.5F
+	lNewCluster.minBlock.y = (float) (iClusterBlockMin.y * mLatticeData->GetBlockSize()) - 0.5F
 	  * (float) mLatticeData->GetYSiteCount();
-	lNewCluster.minBlock.k = (float) (iClusterBlockMin.k * mLatticeData->GetBlockSize()) - 0.5F
+	lNewCluster.minBlock.z = (float) (iClusterBlockMin.z * mLatticeData->GetBlockSize()) - 0.5F
 	  * (float) mLatticeData->GetZSiteCount();
 
-	lNewCluster.blocksX = static_cast<unsigned short>(1 + iClusterBlockMax.i - iClusterBlockMin.i);
-	lNewCluster.blocksY = static_cast<unsigned short>(1 + iClusterBlockMax.j - iClusterBlockMin.j);
-	lNewCluster.blocksZ = static_cast<unsigned short>(1 + iClusterBlockMax.k - iClusterBlockMin.k);
+	lNewCluster.blocksX = static_cast<unsigned short>(1 + iClusterBlockMax.x - iClusterBlockMin.x);
+	lNewCluster.blocksY = static_cast<unsigned short>(1 + iClusterBlockMax.y - iClusterBlockMin.y);
+	lNewCluster.blocksZ = static_cast<unsigned short>(1 + iClusterBlockMax.z - iClusterBlockMin.z);
 
 	//Ensure that value does not change in casting
-	assert(static_cast<site_t>(lNewCluster.blocksX) == (1 + iClusterBlockMax.i - iClusterBlockMin.i));
-        assert(static_cast<site_t>(lNewCluster.blocksY) == (1 + iClusterBlockMax.j - iClusterBlockMin.j));
-        assert(static_cast<site_t>(lNewCluster.blocksZ) == (1 + iClusterBlockMax.k - iClusterBlockMin.k));
+	assert(static_cast<site_t>(lNewCluster.blocksX) == (1 + iClusterBlockMax.x - iClusterBlockMin.x));
+        assert(static_cast<site_t>(lNewCluster.blocksY) == (1 + iClusterBlockMax.y - iClusterBlockMin.y));
+        assert(static_cast<site_t>(lNewCluster.blocksZ) == (1 + iClusterBlockMax.z - iClusterBlockMin.z));
 	
 	lNewCluster.minSite = Location<float>(iClusterVoxelMin) -
 	  Location<float>((float) mLatticeData->GetXSiteCount(),
@@ -271,30 +271,30 @@ namespace hemelb
 
 	hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>
 	  ("Found cluster: %f, %f, %f, %hu, %hu, %hu, %f, %f, %f, %f, %f, %f",
-	   lNewCluster.minBlock.i,
-	   lNewCluster.minBlock.j,
-	   lNewCluster.minBlock.k,
+	   lNewCluster.minBlock.x,
+	   lNewCluster.minBlock.y,
+	   lNewCluster.minBlock.z,
 	   lNewCluster.blocksX,
 	   lNewCluster.blocksY,
 	   lNewCluster.blocksZ,
-	   lNewCluster.minSite.i,
-	   lNewCluster.minSite.j,
-	   lNewCluster.minSite.k,
-	   lNewCluster.maxSite.i,
-	   lNewCluster.maxSite.j,
-	   lNewCluster.maxSite.k
+	   lNewCluster.minSite.x,
+	   lNewCluster.minSite.y,
+	   lNewCluster.minSite.z,
+	   lNewCluster.maxSite.x,
+	   lNewCluster.maxSite.y,
+	   lNewCluster.maxSite.z
 	    );
 
 	hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Cluster min:  %u, %u, %u ", 
-									       (unsigned int)iClusterBlockMin.i,
-									       (unsigned int)iClusterBlockMin.j,
-									       (unsigned int)iClusterBlockMin.k);
+									      (unsigned int)iClusterBlockMin.x,
+									      (unsigned int)iClusterBlockMin.y,
+									      (unsigned int)iClusterBlockMin.z);
 
 
 	hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Cluster max:  %u, %u, %u ", 
-									       (unsigned int)iClusterBlockMax.i,
-									       (unsigned int)iClusterBlockMax.j,
-									       (unsigned int)iClusterBlockMax.k);
+									      (unsigned int)iClusterBlockMax.x,
+									      (unsigned int)iClusterBlockMax.y,
+									      (unsigned int)iClusterBlockMax.z);
 
 	mClusters.push_back(lNewCluster);
 
@@ -307,14 +307,14 @@ namespace hemelb
       void RayTracer::ClusterBuilder::ProcessCluster(unsigned int iClusterId)
       {
 	hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
-		("Examining cluster id = %u", (unsigned int) iClusterId);
+	  ("Examining cluster id = %u", (unsigned int) iClusterId);
 
 
 	Cluster* lCluster = &mClusters[iClusterId];
 
 	mClusterFlowField[iClusterId] = new float *[lCluster->blocksX * 
-						      lCluster->blocksY * 
-						      lCluster->blocksZ]; 
+						    lCluster->blocksY * 
+						    lCluster->blocksZ]; 
 
 	site_t lBlockNum = -1;
 	for (site_t i = 0; i < lCluster->blocksX; i++)
@@ -331,14 +331,14 @@ namespace hemelb
 	      
 	      Location<site_t>block_coordinates = Location<site_t>(i, j, k) + mClusterBlockMins[iClusterId];
 	      site_t block_id = mLatticeData->GetBlockIdFromBlockCoords
-		(block_coordinates.i,
-		 block_coordinates.j,
-		 block_coordinates.k);
+		(block_coordinates.x,
+		 block_coordinates.y,
+		 block_coordinates.z);
 	      
 	      Location<site_t>* mins = &mClusterBlockMins[iClusterId]; 
 	      assert(block_id == 
-		     ( (i + mins->i) * mLatticeData->GetYBlockCount() + (j + mins->j))
-		     * mLatticeData->GetZBlockCount() + (k + mins->k) 
+		     ( (i + mins->x) * mLatticeData->GetYBlockCount() + (j + mins->y))
+		     * mLatticeData->GetZBlockCount() + (k + mins->z) 
 		);
 
 	      
@@ -370,11 +370,11 @@ namespace hemelb
 	//Location site_coordinates_of_block = i_block_coordinates * mLatticeData->GetBlockSize();
 	Location<site_t>siteLocOnBlock;
 
-	for (siteLocOnBlock.i = 0; siteLocOnBlock.i < mLatticeData->GetBlockSize(); siteLocOnBlock.i++)
+	for (siteLocOnBlock.x = 0; siteLocOnBlock.x < mLatticeData->GetBlockSize(); siteLocOnBlock.x++)
 	{
-	  for (siteLocOnBlock.j = 0; siteLocOnBlock.j < mLatticeData->GetBlockSize(); siteLocOnBlock.j++)
+	  for (siteLocOnBlock.y = 0; siteLocOnBlock.y < mLatticeData->GetBlockSize(); siteLocOnBlock.y++)
 	  {
-	    for (siteLocOnBlock.k = 0; siteLocOnBlock.k < mLatticeData->GetBlockSize(); siteLocOnBlock.k++)
+	    for (siteLocOnBlock.z = 0; siteLocOnBlock.z < mLatticeData->GetBlockSize(); siteLocOnBlock.z++)
 	    {
 	      ++l_site_id;
 
@@ -406,8 +406,6 @@ namespace hemelb
 	  }
 	}
 	else {
-	  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>
-	    ("Found site correspoding to voxel site id %u", lClusterVoxelSiteId);
 
 	  for (site_t l = 0; l < VIS_FIELDS; l++)
 	  {

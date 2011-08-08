@@ -494,9 +494,9 @@ namespace hemelb
 	  // the image-based projection of the mClusters bounding box is
 	  // calculated here
 	  float cluster_x[3];
-	  cluster_x[0] = thisCluster->minBlock.i - viewpointCentre[0];
-	  cluster_x[1] = thisCluster->minBlock.j - viewpointCentre[1];
-	  cluster_x[2] = thisCluster->minBlock.k - viewpointCentre[2];
+	  cluster_x[0] = thisCluster->minBlock.x - viewpointCentre[0];
+	  cluster_x[1] = thisCluster->minBlock.y - viewpointCentre[1];
+	  cluster_x[2] = thisCluster->minBlock.z - viewpointCentre[2];
 		    
 
 	  float **block_flow_field = cluster_flow_field[clusterId];
@@ -511,16 +511,16 @@ namespace hemelb
 	  // Temp fix due to refactoring of cluster builder
 
 	  float lMinMax_x[2];
-	  lMinMax_x[0] = thisCluster->minSite.i;
-	  lMinMax_x[1] = thisCluster->maxSite.i;
+	  lMinMax_x[0] = thisCluster->minSite.x;
+	  lMinMax_x[1] = thisCluster->maxSite.x;
 
 	  float lMinMax_y[2];
-	  lMinMax_y[0] = thisCluster->minSite.j;
-	  lMinMax_y[1] = thisCluster->maxSite.j;
+	  lMinMax_y[0] = thisCluster->minSite.y;
+	  lMinMax_y[1] = thisCluster->maxSite.y;
 
 	  float lMinMax_z[2];
-	  lMinMax_z[0] = thisCluster->minSite.k;
-	  lMinMax_z[1] = thisCluster->maxSite.k;  
+	  lMinMax_z[0] = thisCluster->minSite.z;
+	  lMinMax_z[1] = thisCluster->maxSite.z;  
 
 	  for (int i = 0; i < 2; i++)
 	  {
@@ -567,12 +567,12 @@ namespace hemelb
 							   - 1);
 
 	  AABB aabb;
-	  aabb.acc_1 = thisCluster->maxSite.i - viewpointCentre[0];
-	  aabb.acc_2 = thisCluster->minSite.i - viewpointCentre[0];
-	  aabb.acc_3 = thisCluster->maxSite.j - viewpointCentre[1];
-	  aabb.acc_4 = thisCluster->minSite.j - viewpointCentre[1];
-	  aabb.acc_5 = thisCluster->maxSite.k - viewpointCentre[2];
-	  aabb.acc_6 = thisCluster->minSite.k - viewpointCentre[2];
+	  aabb.acc_1 = thisCluster->maxSite.x - viewpointCentre[0];
+	  aabb.acc_2 = thisCluster->minSite.x - viewpointCentre[0];
+	  aabb.acc_3 = thisCluster->maxSite.y - viewpointCentre[1];
+	  aabb.acc_4 = thisCluster->minSite.y - viewpointCentre[1];
+	  aabb.acc_5 = thisCluster->maxSite.z - viewpointCentre[2];
+	  aabb.acc_6 = thisCluster->minSite.z - viewpointCentre[2];
 
 	  float par3[3];
 	  const float* vtx = mScreen->GetVtx();

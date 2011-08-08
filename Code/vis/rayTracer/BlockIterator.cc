@@ -10,7 +10,7 @@ namespace hemelb
   {
     namespace raytracer
     {
-      RayTracer::ClusterBuilder::BlockIterator::BlockIterator
+      RayTracer::ClusterBuilder::BlockTraverser::BlockTraverser
       (const geometry::LatticeData* iLatDat)
       {
 	mLatticeData = iLatDat;
@@ -25,24 +25,25 @@ namespace hemelb
 	}		
       }
 
-      RayTracer::ClusterBuilder::BlockIterator::~BlockIterator()
+      RayTracer::ClusterBuilder::BlockTraverser::~BlockTraverser()
       {
 	delete[] mBlockVisited;
       }
       
-      site_t RayTracer::ClusterBuilder::BlockIterator::CurrentBlockNumber()
+      site_t RayTracer::ClusterBuilder::BlockTraverser::CurrentBlockNumber()
       {
-	return CurrentNumber();
+	return GetCurrentIndex();
       }
 
-      Location<site_t> RayTracer::ClusterBuilder::BlockIterator::GetLowestSiteCoordinates()
+      Location<site_t> RayTracer::ClusterBuilder::BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
       {
-	return GetLocation()*mLatticeData->GetBlockSize();
+	return GetCurrentLocation()*mLatticeData->GetBlockSize();
       }
       		
-      bool RayTracer::ClusterBuilder::BlockIterator::GoToNextUnvisitedBlock()
+      bool RayTracer::ClusterBuilder::BlockTraverser::GoToNextUnvisitedBlock()
       {
-	while (CurrentBlockVisited())
+	assert(!IsCurrentBlockVisited());
+	do 
 	{
 	  bool validBlock = GoToNextBlock();
 	  if(!validBlock)
@@ -50,101 +51,102 @@ namespace hemelb
 	    return false;
 	  }
 	}
+	while (IsCurrentBlockVisited());
 
 	return true;
       }
 	    
       geometry::LatticeData::BlockData *
-      RayTracer::ClusterBuilder::BlockIterator::GetBlockData()
+      RayTracer::ClusterBuilder::BlockTraverser::GetCurrentBlockData()
       {
 	return mLatticeData->GetBlock(mCurrentNumber);
       }
 
       geometry::LatticeData::BlockData *
-      RayTracer::ClusterBuilder::BlockIterator::GetBlockData
+      RayTracer::ClusterBuilder::BlockTraverser::GetBlockDataForLocation
       (const Location<site_t>& iLocation)
       {
-	return mLatticeData->GetBlock(GetNumberFromLocation(iLocation));
+	return mLatticeData->GetBlock(GetIndexFromLocation(iLocation));
       }      
 
-      site_t RayTracer::ClusterBuilder::BlockIterator::GetBlockSize()
+      site_t RayTracer::ClusterBuilder::BlockTraverser::GetBlockSize()
       {
 	return mLatticeData->GetBlockSize();
       }
 
-      RayTracer::ClusterBuilder::SiteIterator 
-      RayTracer::ClusterBuilder::BlockIterator::GetSiteIterator()
+      RayTracer::ClusterBuilder::SiteTraverser 
+      RayTracer::ClusterBuilder::BlockTraverser::GetSiteIteratorForCurrentBlock()
       {
-	return SiteIterator(mLatticeData, CurrentBlockNumber());
+	return SiteTraverser(mLatticeData, CurrentBlockNumber());
       }	
 
-      RayTracer::ClusterBuilder::SiteIterator 
-      RayTracer::ClusterBuilder::BlockIterator::GetSiteIterator(const Location<site_t>& iLocation)
+      RayTracer::ClusterBuilder::SiteTraverser 
+      RayTracer::ClusterBuilder::BlockTraverser::GetSiteIteratorForLocation(const Location<site_t>& iLocation)
       {
-	return SiteIterator(mLatticeData, GetNumberFromLocation(iLocation));
+	return SiteTraverser(mLatticeData, GetIndexFromLocation(iLocation));
       }	
 
       
 
-      bool RayTracer::ClusterBuilder::BlockIterator::BlockValid(Location<site_t> iBlock)
+      bool RayTracer::ClusterBuilder::BlockTraverser::IsValidLocation(Location<site_t> iBlock)
       {
 	return mLatticeData->IsValidBlockSite
-	  (iBlock.i,
-	   iBlock.j,
-	   iBlock.k);
+	  (iBlock.x,
+	   iBlock.y,
+	   iBlock.z);
       }
 
-      bool RayTracer::ClusterBuilder::BlockIterator::BlockVisited(site_t iN)
+      bool RayTracer::ClusterBuilder::BlockTraverser::IsBlockVisited(site_t iN)
       {
 	return mBlockVisited[iN];
       }
 
-      bool RayTracer::ClusterBuilder::BlockIterator::BlockVisited(Location <site_t>iLocation)
+      bool RayTracer::ClusterBuilder::BlockTraverser::IsBlockVisited(Location <site_t>iLocation)
       {
 
-	return mBlockVisited[GetNumberFromLocation(iLocation)];
+	return mBlockVisited[GetIndexFromLocation(iLocation)];
       }
 	    
 
-      bool RayTracer::ClusterBuilder::BlockIterator::CurrentBlockVisited()
+      bool RayTracer::ClusterBuilder::BlockTraverser::IsCurrentBlockVisited()
       {
-	return BlockVisited(CurrentBlockNumber());
+	return IsBlockVisited(CurrentBlockNumber());
       }
 
-      void RayTracer::ClusterBuilder::BlockIterator::MarkBlockVisited()
+      void RayTracer::ClusterBuilder::BlockTraverser::MarkCurrentBlockVisited()
       {
 	MarkBlockVisited(CurrentBlockNumber());
       }
 	    
-      void RayTracer::ClusterBuilder::BlockIterator::MarkBlockVisited(site_t iBlockId)
+      void RayTracer::ClusterBuilder::BlockTraverser::MarkBlockVisited(site_t iBlockId)
       {
 	mBlockVisited[iBlockId] = true;
       }
 
-      void RayTracer::ClusterBuilder::BlockIterator::MarkBlockVisited(Location<site_t> iLocation)
+      void RayTracer::ClusterBuilder::BlockTraverser::MarkBlockVisited(Location<site_t> iLocation)
       {
-	site_t lNumber = GetNumberFromLocation(iLocation);
+	site_t lNumber = GetIndexFromLocation(iLocation);
 	assert(lNumber < mLatticeData->GetBlockCount());
 	MarkBlockVisited(lNumber);
       }
 
 
-      bool RayTracer::ClusterBuilder::BlockIterator::GoToNextBlock()
+      bool RayTracer::ClusterBuilder::BlockTraverser::GoToNextBlock()
       {
-	return Iterate();
+	return TraverseOne();
       }
 	  
-      site_t RayTracer::ClusterBuilder::BlockIterator::GetXCount() 
+      site_t RayTracer::ClusterBuilder::BlockTraverser::GetXCount() 
       {
 	return mLatticeData->GetXBlockCount();
       }
 
-      site_t RayTracer::ClusterBuilder::BlockIterator::GetYCount()
+      site_t RayTracer::ClusterBuilder::BlockTraverser::GetYCount()
       {
 	return mLatticeData->GetYBlockCount();
       }
 
-      site_t RayTracer::ClusterBuilder::BlockIterator::GetZCount() 
+      site_t RayTracer::ClusterBuilder::BlockTraverser::GetZCount() 
       {
 	return mLatticeData->GetZBlockCount();
       }
