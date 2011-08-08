@@ -14,8 +14,6 @@
 #include "vis/VisSettings.h"
 #include "vis/rayTracer/Location.h"
 
-
-
 namespace hemelb
 {
   namespace vis
@@ -45,7 +43,9 @@ namespace hemelb
 	void Render();
 
       private:
-
+      //The cluster structure stores data relating to the clusters
+      //used by the RayTracaer, in an optimal format
+      //Clusters are produced by the ClusterFactory
       struct Cluster
       {
 	//Stores the lowest and greatest x, y, and z site locations 
@@ -69,43 +69,50 @@ namespace hemelb
 	public:
 	  ClusterBuilder
 	    (const geometry::LatticeData*& iLatDat,
-	     std::vector<Cluster> & i_clusters,
-	     float **& i_cluster_voxel,
-	     float ***& i_cluster_flow_field
+	     std::vector<Cluster> & oClusters,
+	     float **& oClusterVoxel,
+	     float ***& oClusterFlowField
 	      );
 	  ~ClusterBuilder();
 	  void BuildClusters();
       
 
 	private:
-	  class RectangularIterator
+	  //Volume tracker is used to sequentially traverse a 
+	  //3D structure maintaining the index and Location 
+	  //within volume
+	  class VolumeTraverser
 	  {
 	  public:
-	    RectangularIterator();
+	    VolumeTraverser();
 
-	    Location<site_t> GetLocation();
+	    Location<site_t> GetCurrentLocation();
 			
-	    site_t CurrentNumber();
+	    site_t GetCurrentIndex();
 
-	    site_t GetNumberFromLocation(Location<site_t> iLocation);
+	    site_t GetIndexFromLocation(Location<site_t> iLocation);
 
-	    bool Iterate();
+	    //Increments the index by one and update the location accordingly
+	    //Returns true if successful or false if the whole volume has been
+	    //traversed
+	    bool TraverseOne();
 
+	    //Virtual methods which must be defined for correct traversal
 	    virtual site_t GetXCount() = 0;
-
 	    virtual site_t GetYCount() = 0;
-
 	    virtual site_t GetZCount() = 0;
 			
 	  protected:
 	    Location<site_t> mCurrentLocation;
 	    site_t mCurrentNumber;
 	  };
-
-	  class SiteIterator : public RectangularIterator
+	  
+	  //SiteTraverse is used to traverse the sites in a speficied block
+	  //within the lattice data
+	  class SiteTraverser : public VolumeTraverser
 	  {
 	  public:
-	    SiteIterator(const geometry::LatticeData * iLatticeDat, 
+	    SiteTraverser(const geometry::LatticeData * iLatticeDat, 
 			 const site_t iBlockId);
 			
 	    virtual site_t GetXCount();
@@ -114,34 +121,43 @@ namespace hemelb
 
 	    virtual site_t GetZCount();
 
+	  private:
+	    //Returns the block size in number of sites
 	    site_t GetBlockSize();
 
-	  private:
 	    const geometry::LatticeData * mLatticeData;
 	    const site_t mBlockId;
 
 	  };
-		    
-	  class BlockIterator : public RectangularIterator
+	
+  	  //BlockTraverser is used to traverse the blocks in a lattice sequentially.
+	  //The class also contains a record of which blocks have been visited, which
+	  //is neccessary for the algoritm which uses this. No locations are automatically
+	  //marked visited, and methods have been created to assist with random access
+	  //of the lattice data as required by the algorithm
+	  class BlockTraverser : public VolumeTraverser
 	  {
 	  public:
-	    BlockIterator(const geometry::LatticeData * iLatDat);
-	    ~BlockIterator();
+	    BlockTraverser(const geometry::LatticeData * iLatDat);
+	    ~BlockTraverser();
 
 	    site_t CurrentBlockNumber();
-
-	    Location<site_t> GetLowestSiteCoordinates();
-		
+	    
+	    Location<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
+	
+	    //Tranverses the block until the next unvisited block is reached.
+	    //Returns false if the end of the Volume is reached
 	    bool GoToNextUnvisitedBlock();
 		
-	    geometry::LatticeData::BlockData * GetBlockData();
-	    geometry::LatticeData::BlockData * GetBlockData(const Location<site_t>& iLocation);
+	    geometry::LatticeData::BlockData * GetCurrentBlockData();
+
+	    geometry::LatticeData::BlockData * GetBlockDataForLocation(const Location<site_t>& iLocation);
 
 	    site_t GetBlockSize();
 	    
-	    SiteIterator GetSiteIterator();
+	    SiteTraverser GetSiteIteratorForCurrentBlock();
 	    
-	    SiteIterator GetSiteIterator(const Location<site_t>& iLocation);
+	    SiteTraverser GetSiteIteratorForLocation(const Location<site_t>& iLocation);
 
 	    virtual site_t GetXCount();
 
@@ -149,15 +165,15 @@ namespace hemelb
 
 	    virtual site_t GetZCount();
 
-	    bool BlockValid(Location<site_t> block);
+	    bool IsValidLocation(Location<site_t> block);
+	    
+	    bool IsCurrentBlockVisited();
 
-	    bool BlockVisited(site_t n);
+	    bool IsBlockVisited(site_t n);
+	    bool IsBlockVisited(Location<site_t> n);
 
-	    bool BlockVisited(Location<site_t> n);
+	    void MarkCurrentBlockVisited();
 
-	    bool CurrentBlockVisited();
-
-	    void MarkBlockVisited();
 	    void MarkBlockVisited(site_t n);
 	    void MarkBlockVisited(Location<site_t> location);
 
@@ -169,23 +185,32 @@ namespace hemelb
 	    bool* mBlockVisited;
 	  };
 
-
+	  //Locates all the clusters in the lattice structure and the 
 	  void LocateClusters();
       
 	  // If the site hasn't been visited, finds a new rectangular
 	  // cluster containing this site
 	  void FindNewCluster();
+
+	  //Adds neighbouring blocks of the input location to the input stack
 	  void AddNeighbouringBlocks(Location<site_t> iCurrentLocation,
 				     std::stack<Location<site_t> >& ioBlocksToVisit);
 
-	  bool SitesAssignedToLocalProcessorInBlock
+	  //Returns true if there are sites in the given block associated with the 
+	  //local processor rank 
+	  bool AreSitesAssignedToLocalProcessorRankInBlock
 	    (geometry::LatticeData::BlockData * iBlock);
       
+	  //Adds a new cluster by taking in the required data in interget format
+	  //and converting it to that used by the raytracer
+	  //NB: Futher processing is required on the cluster before it can be used 
+	  //by the ray tracer, which is handled by the ProcessCluster method
 	  void AddCluster(Location<site_t> iClusterBlockMin,
 			  Location<site_t> iClusterBlockMax,
 			  Location<site_t> iClusterVoxelMin,
 			  Location<site_t> iClusterVoxelMax);
 
+	  //Adds "flow-field" data to the cluster
 	  void ProcessCluster(unsigned int iClusterId);
 
 	  void UpdateFlowField
@@ -199,7 +224,7 @@ namespace hemelb
 	  Location<site_t> GetSiteCoordinatesOfBlock
 	    (site_t iClusterId, Location<site_t> offset);
 
-	  BlockIterator mBlockIterator;
+	  BlockTraverser mBlockIterator;
 
    
 	  std::vector<Cluster> & mClusters;

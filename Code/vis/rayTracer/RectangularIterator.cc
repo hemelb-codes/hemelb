@@ -6,52 +6,52 @@ namespace hemelb
   {
     namespace raytracer 
     {
-      RayTracer::ClusterBuilder::RectangularIterator::RectangularIterator()
+      RayTracer::ClusterBuilder::VolumeTraverser::VolumeTraverser()
 	: mCurrentLocation(0)
       {
 	mCurrentNumber=0;
       }
 	
-      Location<site_t> RayTracer::ClusterBuilder::RectangularIterator::GetLocation()
+      Location<site_t> RayTracer::ClusterBuilder::VolumeTraverser::GetCurrentLocation()
       {
 	return mCurrentLocation;
       }
 
-      site_t  RayTracer::ClusterBuilder::RectangularIterator::CurrentNumber()
+      site_t  RayTracer::ClusterBuilder::VolumeTraverser::GetCurrentIndex()
       {
 	return mCurrentNumber;
       }
 
-      site_t RayTracer::ClusterBuilder::RectangularIterator::
-      GetNumberFromLocation(Location<site_t> iLocation)
+      site_t RayTracer::ClusterBuilder::VolumeTraverser::
+      GetIndexFromLocation(Location<site_t> iLocation)
       {
-	return ((iLocation.i * GetYCount() + iLocation.j) 
-		* GetZCount()) + iLocation.k;
+	return ((iLocation.x * GetYCount() + iLocation.y) 
+		* GetZCount()) + iLocation.z;
       }
 	    
 
-      bool RayTracer::ClusterBuilder::RectangularIterator::Iterate()
+      bool RayTracer::ClusterBuilder::VolumeTraverser::TraverseOne()
       {
 	mCurrentNumber++;
 
-	mCurrentLocation.k++;
-	if(mCurrentLocation.k < GetZCount())
+	mCurrentLocation.z++;
+	if(mCurrentLocation.z < GetZCount())
 	{
 	  return true;
 	}
 	
 		
-	mCurrentLocation.k = 0;
-	mCurrentLocation.j++;
-	if(mCurrentLocation.j < GetYCount())
+	mCurrentLocation.z = 0;
+	mCurrentLocation.y++;
+	if(mCurrentLocation.y < GetYCount())
 	{
 	  return true;
 	}
 		
-	mCurrentLocation.j = 0;
-	mCurrentLocation.i++;
+	mCurrentLocation.y = 0;
+	mCurrentLocation.x++;
 			 
-	if(mCurrentLocation.i < GetXCount())
+	if(mCurrentLocation.x < GetXCount())
 	{
 	  return true;
 	}
