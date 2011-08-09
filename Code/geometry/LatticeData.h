@@ -114,6 +114,11 @@ namespace hemelb
         site_t GetYBlockCount() const;
         site_t GetZBlockCount() const;
 
+        distribn_t GetVoxelSize() const;
+        distribn_t GetXOrigin() const;
+        distribn_t GetYOrigin() const;
+        distribn_t GetZOrigin() const;
+
         unsigned int GetLog2BlockSize() const;
 
         site_t GetBlockSize() const;
@@ -193,7 +198,11 @@ namespace hemelb
             void SetBasicDetails(site_t iBlocksX,
                                  site_t iBlocksY,
                                  site_t iBlocksZ,
-                                 site_t iBlockSize);
+                                 site_t iBlockSize,
+                                 distribn_t iVoxelSize,
+                                 distribn_t iOriginX,
+                                 distribn_t iOriginY,
+                                 distribn_t iOriginZ);
 
             site_t GetXSiteCount() const;
             site_t GetYSiteCount() const;
@@ -204,6 +213,11 @@ namespace hemelb
 
             site_t GetBlockSize() const;
             site_t GetBlockCount() const;
+
+            distribn_t GetVoxelSize() const;
+            distribn_t GetXOrigin() const;
+            distribn_t GetYOrigin() const;
+            distribn_t GetZOrigin() const;
 
             site_t GetSitesPerBlockVolumeUnit() const;
 
@@ -242,6 +256,8 @@ namespace hemelb
             site_t mSitesX, mSitesY, mSitesZ;
             site_t mBlocksX, mBlocksY, mBlocksZ;
             site_t mBlockSize;
+            distribn_t mVoxelSize;
+            distribn_t mOriginX, mOriginY, mOriginZ;
         };
 
         class GeometryReader

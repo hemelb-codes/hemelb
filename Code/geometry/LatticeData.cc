@@ -49,8 +49,13 @@ namespace hemelb
       }
 
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
-      MPI_Allgather(&localFluidSites, 1, MpiDataType<site_t> (), fluidSitePerProc, 1, MpiDataType<
-          site_t> (), MPI_COMM_WORLD);
+      MPI_Allgather(&localFluidSites,
+                    1,
+                    MpiDataType<site_t> (),
+                    fluidSitePerProc,
+                    1,
+                    MpiDataType<site_t> (),
+                    MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       site_t localMins[3];
@@ -158,8 +163,9 @@ namespace hemelb
                     if (!IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
                     {
                       // Set the neighbour location to the rubbish site.
-                      SetNeighbourLocation(site_map, l, GetLocalFluidSiteCount()
-                          * D3Q15::NUMVECTORS);
+                      SetNeighbourLocation(site_map,
+                                           l,
+                                           GetLocalFluidSiteCount() * D3Q15::NUMVECTORS);
                       continue;
                     }
 
@@ -169,8 +175,9 @@ namespace hemelb
                     if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
                       // initialize f_id to the rubbish site.
-                      SetNeighbourLocation(site_map, l, GetLocalFluidSiteCount()
-                          * D3Q15::NUMVECTORS);
+                      SetNeighbourLocation(site_map,
+                                           l,
+                                           GetLocalFluidSiteCount() * D3Q15::NUMVECTORS);
                       continue;
                     }
                     // If on the same proc, set f_id of the
@@ -269,6 +276,22 @@ namespace hemelb
     site_t LatticeData::GetZBlockCount() const
     {
       return globLatDat.GetZBlockCount();
+    }
+    distribn_t LatticeData::GetVoxelSize() const
+    {
+      return globLatDat.GetVoxelSize();
+    }
+    distribn_t LatticeData::GetXOrigin() const
+    {
+      return globLatDat.GetXOrigin();
+    }
+    distribn_t LatticeData::GetYOrigin() const
+    {
+      return globLatDat.GetYOrigin();
+    }
+    distribn_t LatticeData::GetZOrigin() const
+    {
+      return globLatDat.GetZOrigin();
     }
 
     unsigned int LatticeData::GetLog2BlockSize() const

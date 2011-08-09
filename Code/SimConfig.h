@@ -32,7 +32,6 @@ namespace hemelb
 
       void Save(std::string iPath);
 
-      double VoxelSize;
       std::string DataFilePath;
       std::vector<InOutLet> Inlets;
       std::vector<InOutLet> Outlets;

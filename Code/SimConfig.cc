@@ -57,7 +57,6 @@ namespace hemelb
     DoIO(lSimulationElement, "cyclesteps", iIsLoading, StepsPerCycle);
 
     TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
-    DoIO(lGeometryElement, "voxelsize", iIsLoading, VoxelSize);
     DoIO(GetChild(lGeometryElement, "datafile", iIsLoading), "path", iIsLoading, DataFilePath);
 
     DoIO(GetChild(iTopNode, "inlets", iIsLoading), iIsLoading, Inlets, "inlet");
