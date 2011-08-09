@@ -661,8 +661,7 @@ class XmlWriter(object):
 
     def DoGeometry(self):
         geom = SubElement(self.root, 'geometry')
-        geom.set('voxelsize', str(self.profile.VoxelSize))
-
+        
         data = SubElement(geom, 'datafile')
         data.set('path', os.path.relpath(self.profile.OutputConfigFile,
                                          os.path.split(self.profile.OutputXmlFile)[0]))
