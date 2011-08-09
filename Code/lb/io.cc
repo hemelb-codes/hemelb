@@ -145,7 +145,7 @@ namespace hemelb
         char lBuffer[lPreambleLength];
         hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lBuffer, lPreambleLength);
 
-        lWriter << stability << voxel_size << (int) siteMins[0] << (int) siteMins[1]
+        lWriter << stability << mLatDat->GetVoxelSize() << (int) siteMins[0] << (int) siteMins[1]
             << (int) siteMins[2] << (int) siteMaxes[0] << (int) siteMaxes[1] << (int) siteMaxes[2]
             << (int) (1 + siteMaxes[0] - siteMins[0]) << (int) (1 + siteMaxes[1] - siteMins[1])
             << (int) (1 + siteMaxes[2] - siteMins[2]) << (int) total_fluid_sites;

@@ -240,7 +240,7 @@ namespace hemelb
 
       // Variables we'll read.
       unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
-      double voxelSize, siteZeroWorldPosition[3];
+      double voxelSize, origin[3];
 
       // Read in the values.
       preambleReader.readUnsignedInt(stressType);
@@ -251,13 +251,20 @@ namespace hemelb
       preambleReader.readDouble(voxelSize);
       for (unsigned int i = 0; i < 3; ++i)
       {
-        preambleReader.readDouble(siteZeroWorldPosition[i]);
+        preambleReader.readDouble(origin[i]);
       }
 
       // Pass the read in variables to the objects that need them.
       bParams->StressType = (lb::StressTypes) stressType;
 
-      bGlobalLatticeData->SetBasicDetails(blocksX, blocksY, blocksZ, blockSize);
+      bGlobalLatticeData->SetBasicDetails(blocksX,
+                                          blocksY,
+                                          blocksZ,
+                                          blockSize,
+                                          voxelSize,
+                                          origin[0],
+                                          origin[1],
+                                          origin[2]);
     }
 
     /**

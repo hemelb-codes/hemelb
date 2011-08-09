@@ -8,12 +8,20 @@ namespace hemelb
     void LatticeData::GlobalLatticeData::SetBasicDetails(site_t iBlocksX,
                                                          site_t iBlocksY,
                                                          site_t iBlocksZ,
-                                                         site_t iBlockSize)
+                                                         site_t iBlockSize,
+                                                         distribn_t iVoxelSize,
+                                                         distribn_t iOriginX,
+                                                         distribn_t iOriginY,
+                                                         distribn_t iOriginZ)
     {
       mBlocksX = iBlocksX;
       mBlocksY = iBlocksY;
       mBlocksZ = iBlocksZ;
       mBlockSize = iBlockSize;
+      mVoxelSize = iVoxelSize;
+      mOriginX = iOriginX;
+      mOriginY = iOriginY;
+      mOriginZ = iOriginZ;
 
       mSitesX = mBlocksX * mBlockSize;
       mSitesY = mBlocksY * mBlockSize;
@@ -73,6 +81,22 @@ namespace hemelb
     site_t LatticeData::GlobalLatticeData::GetBlockCount() const
     {
       return mBlockCount;
+    }
+    distribn_t LatticeData::GlobalLatticeData::GetVoxelSize() const
+    {
+      return mVoxelSize;
+    }
+    distribn_t LatticeData::GlobalLatticeData::GetXOrigin() const
+    {
+      return mOriginX;
+    }
+    distribn_t LatticeData::GlobalLatticeData::GetYOrigin() const
+    {
+      return mOriginY;
+    }
+    distribn_t LatticeData::GlobalLatticeData::GetZOrigin() const
+    {
+      return mOriginZ;
     }
 
     site_t LatticeData::GlobalLatticeData::GetSitesPerBlockVolumeUnit() const

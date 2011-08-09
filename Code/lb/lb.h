@@ -114,7 +114,6 @@ namespace hemelb
         distribn_t *inlet_density_phs, *outlet_density_phs;
         distribn_t* inlet_density, *outlet_density;
         double *inlet_normal;
-        double voxel_size;
 
         int outlets;
 
