@@ -1,11 +1,11 @@
 include $(MK)/header.mk
 
-SRCS :=	BlockIterator.cc \
+SRCS :=	BlockTraverser.cc \
 	Cluster.cc \
 	ClusterBuilder.cc \
 	RayTracer.cc \
-	RectangularIterator.cc \
-	SiteIterator.cc \
+	VolumeTraverser.cc \
+	SiteTraverser.cc \
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

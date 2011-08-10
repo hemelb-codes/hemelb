@@ -10,7 +10,7 @@
 #include "debug/Debugger.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h" 
-#include "vis/rayTracer/Location.h"
+#include "vis/Location.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "log/Logger.h"
 
@@ -22,29 +22,31 @@ namespace hemelb
     {
       // TODO RENAME THIS FUNCTION
       void RayTracer::AABBvsRay(const AABB* aabb,
-				const float inverseDirection[3],
-				const bool xyzComponentIsPositive[3],
+				const Location<float>& inverseDirection,
+				const Location<bool>& xyzComponentIsPositive,
 				float* t_near,
 				float* t_far)
       {
-	float tx0 = (xyzComponentIsPositive[0]
+	float tx0 = (xyzComponentIsPositive.x
 		     ? aabb->acc_2
-		     : aabb->acc_1) * inverseDirection[0];
-	float tx1 = (xyzComponentIsPositive[0]
+		     : aabb->acc_1) * inverseDirection.x;
+	float tx1 = (xyzComponentIsPositive.x
 		     ? aabb->acc_1
-		     : aabb->acc_2) * inverseDirection[0];
-	float ty0 = (xyzComponentIsPositive[1]
+		     : aabb->acc_2) * inverseDirection.x;
+
+	float ty0 = (xyzComponentIsPositive.y
 		     ? aabb->acc_4
-		     : aabb->acc_3) * inverseDirection[1];
-	float ty1 = (xyzComponentIsPositive[1]
+		     : aabb->acc_3) * inverseDirection.y;
+	float ty1 = (xyzComponentIsPositive.y
 		     ? aabb->acc_3
-		     : aabb->acc_4) * inverseDirection[1];
-	float tz0 = (xyzComponentIsPositive[2]
+		     : aabb->acc_4) * inverseDirection.y;
+
+	float tz0 = (xyzComponentIsPositive.z
 		     ? aabb->acc_6
-		     : aabb->acc_5) * inverseDirection[2];
-	float tz1 = (xyzComponentIsPositive[2]
+		     : aabb->acc_5) * inverseDirection.z;
+	float tz1 = (xyzComponentIsPositive.z
 		     ? aabb->acc_5
-		     : aabb->acc_6) * inverseDirection[2];
+		     : aabb->acc_6) * inverseDirection.z;
 
 	*t_near = fmaxf(tx0, fmaxf(ty0, tz0));
 	*t_far = fminf(tx1, fminf(ty1, tz1));
@@ -110,29 +112,41 @@ namespace hemelb
 	bCurrentRay->Stress = iSiteData->Stress;		
       }
 
-      void RayTracer::TraverseVoxels(const float block_min[3],
-				     const float block_x[3],
+      void RayTracer::TraverseVoxels(const Location<float>& block_min,
+				     const Location<float>& block_x,
 				     const SiteData_t* iSiteData,
 				     float t,
 				     Ray* bCurrentRay,
-				     const bool xyz_is_1[3])
+				     const Location<bool>& xyz_Is_1)
       {
 	site_t i_vec[3];
 
-	for (int i = 0; i < 3; i++)
-	{
-	  i_vec[i] = util::NumericalFunctions::enforceBounds<site_t>((site_t) block_x[i],
+	i_vec[0] = util::NumericalFunctions::enforceBounds<site_t>((site_t) block_x.x,
 								     0,
 								     block_size_1);
-	}
 
-	float t_max[3];
-	for (int i = 0; i < 3; i++)
-	{
-	  t_max[i] = (block_min[i] + (float) (xyz_is_1[i]
-					      ? i_vec[i] + 1
-					      : i_vec[i])) * bCurrentRay->InverseDirection[i];
-	}
+	i_vec[1] = util::NumericalFunctions::enforceBounds<site_t>((site_t) block_x.y,
+								     0,
+								     block_size_1);
+
+	i_vec[2] = util::NumericalFunctions::enforceBounds<site_t>((site_t) block_x.z,
+								     0,
+								     block_size_1);
+	
+
+	Location<float> t_max;
+	t_max.x = (block_min.x + (float) (xyz_Is_1.x
+					      ? i_vec[0] + 1
+					      : i_vec[0])) * bCurrentRay->InverseDirection.x;
+
+	t_max.y = (block_min.y + (float) (xyz_Is_1.y
+					      ? i_vec[1] + 1
+					      : i_vec[1])) * bCurrentRay->InverseDirection.y;
+
+	t_max.z = (block_min.z + (float) (xyz_Is_1.z
+					      ? i_vec[2] + 1
+					      : i_vec[2])) * bCurrentRay->InverseDirection.z;
+
 
 	site_t i = i_vec[0] * block_size2;
 	site_t j = i_vec[1] * mLatDat->GetBlockSize();
@@ -140,23 +154,23 @@ namespace hemelb
 
 	while (true)
 	{
-	  if (t_max[0] < t_max[1])
+	  if (t_max.x < t_max.y)
 	  {
-	    if (t_max[0] < t_max[2])
+	    if (t_max.x < t_max.z)
 	    {
 	      UpdateRayData(&iSiteData[i+j+k],
 			    t,
-			    t_max[0] - t,
+			    t_max.x - t,
 			    bCurrentRay);
 
-	      if (xyz_is_1[0])
+	      if (xyz_Is_1.x)
 	      {
 		if ( (i += block_size2) >= block_size3)
 		{
 		  return;
 		}
-		t = t_max[0];
-		t_max[0] += bCurrentRay->InverseDirection[0];
+		t = t_max.x;
+		t_max.x += bCurrentRay->InverseDirection.x;
 	      }
 	      else
 	      {
@@ -168,25 +182,25 @@ namespace hemelb
 		{
 		  i -= block_size2;
 		}
-		t = t_max[0];
-		t_max[0] -= bCurrentRay->InverseDirection[0];
+		t = t_max.x;
+		t_max.x -= bCurrentRay->InverseDirection.x;
 	      }
 	    }
 	    else
 	    {
 	      UpdateRayData(&iSiteData[(i + j + k)],
 			    t,
-			    t_max[2] - t,
+			    t_max.z - t,
 			    bCurrentRay);
 
-	      if (xyz_is_1[2])
+	      if (xyz_Is_1.z)
 	      {
 		if (++k >= mLatDat->GetBlockSize())
 		{
 		  return;
 		}
-		t = t_max[2];
-		t_max[2] += bCurrentRay->InverseDirection[2];
+		t = t_max.z;
+		t_max.z += bCurrentRay->InverseDirection.z;
 	      }
 	      else
 	      {
@@ -198,28 +212,28 @@ namespace hemelb
 		{
 		  --k;
 		}
-		t = t_max[2];
-		t_max[2] -= bCurrentRay->InverseDirection[2];
+		t = t_max.z;
+		t_max.z -= bCurrentRay->InverseDirection.z;
 	      }
 	    }
 	  }
 	  else
 	  {
-	    if (t_max[1] < t_max[2])
+	    if (t_max.y < t_max.z)
 	    {
 	      UpdateRayData(&iSiteData[i + j + k],
 			    t,
-			    t_max[1] - t,
+			    t_max.y - t,
 			    bCurrentRay);
 
-	      if (xyz_is_1[1])
+	      if (xyz_Is_1.y)
 	      {
 		if ( (j += mLatDat->GetBlockSize()) >= block_size2)
 		{
 		  return;
 		}
-		t = t_max[1];
-		t_max[1] += bCurrentRay->InverseDirection[1];
+		t = t_max.y;
+		t_max.y += bCurrentRay->InverseDirection.y;
 	      }
 	      else
 	      {
@@ -231,25 +245,25 @@ namespace hemelb
 		{
 		  j -= mLatDat->GetBlockSize();
 		}
-		t = t_max[1];
-		t_max[1] -= bCurrentRay->InverseDirection[1];
+		t = t_max.y;
+		t_max.y -= bCurrentRay->InverseDirection.y;
 	      }
 	    }
 	    else
 	    {
 	      UpdateRayData(&iSiteData[i + j + k],
 			    t,
-			    t_max[2] - t,
+			    t_max.z - t,
 			    bCurrentRay);
 
-	      if (xyz_is_1[2])
+	      if (xyz_Is_1.z)
 	      {
 		if (++k >= mLatDat->GetBlockSize())
 		{
 		  return;
 		}
-		t = t_max[2];
-		t_max[2] += bCurrentRay->InverseDirection[2];
+		t = t_max.z;
+		t_max.z += bCurrentRay->InverseDirection.z;
 	      }
 	      else
 	      {
@@ -261,8 +275,8 @@ namespace hemelb
 		{
 		  --k;
 		}
-		t = t_max[2];
-		t_max[2] -= bCurrentRay->InverseDirection[2];
+		t = t_max.z;
+		t_max.z -= bCurrentRay->InverseDirection.z;
 	      }
 	    }
 	  }
@@ -270,192 +284,208 @@ namespace hemelb
       }
 
       void RayTracer::TraverseBlocks(const Cluster* cluster, 
-				     const bool xyz_Is_1[3],
-				     const float ray_dx[3],
+				     const Location<bool>& xyz_Is_1,
+				     const Location<float>& ray_dx,
 				     Ray *bCurrentRay)
       {
 
-	int cluster_blocks_vec[3];
-	cluster_blocks_vec[0] = cluster->blocksX - 1;
-	cluster_blocks_vec[1] = cluster->blocksY - 1;
-	cluster_blocks_vec[2] = cluster->blocksZ - 1;
+	Location<int> cluster_blocks_vec;
+	cluster_blocks_vec.x = cluster->blocksX - 1;
+	cluster_blocks_vec.y = cluster->blocksY - 1;
+	cluster_blocks_vec.z = cluster->blocksZ - 1;
 	int cluster_blocksZ = cluster->blocksZ;
 	int cluster_blocksYz = (int) cluster->blocksY * (int) cluster->blocksZ;
 	int cluster_blocks = (int) cluster->blocksX * cluster_blocksYz;
 
-	int i_vec[3];
-	float block_min[3];
+	Location<int> i_vec;
+	Location<float> block_min;
 
-	for (int l = 0; l < 3; l++)
-	{
-	  i_vec[l] = util::NumericalFunctions::enforceBounds(cluster_blocks_vec[l],
-							     0,
-							     (int) (mBlockSizeInverse * ray_dx[l]));
-	  block_min[l] = (float) i_vec[l] * mBlockSizeFloat - ray_dx[l];
-	}
+	i_vec.x = util::NumericalFunctions::enforceBounds(
+	  cluster_blocks_vec.x,
+	  0,
+	  (int) (mBlockSizeInverse * ray_dx.x));
+	
+	i_vec.y = util::NumericalFunctions::enforceBounds(
+	  cluster_blocks_vec.y,
+	  0,
+	  (int) (mBlockSizeInverse * ray_dx.y));
+	
+	i_vec.z = util::NumericalFunctions::enforceBounds(
+	  cluster_blocks_vec.z,
+	  0,
+	  (int) (mBlockSizeInverse * ray_dx.z));
 
-	int i = i_vec[0] * cluster_blocksYz;
-	int j = i_vec[1] * cluster_blocksZ;
-	int k = i_vec[2];
+	block_min = Location<float>(i_vec) * mBlockSizeFloat - 
+	  Location<float>(ray_dx.x,ray_dx.y,ray_dx.z);
+	
 
-	float block_x[3];
+	int i = i_vec.x * cluster_blocksYz;
+	int j = i_vec.y * cluster_blocksZ;
+	int k = i_vec.z;
+
+	Location<float> block_x;
 	if (!cluster->SiteData[i + j + k].empty())
 	{
-	  block_x[0] = -block_min[0];
-	  block_x[1] = -block_min[1];
-	  block_x[2] = -block_min[2];
+	  block_x = block_min * -1.0F;
 
 	  TraverseVoxels(block_min, block_x, &cluster->SiteData[i + j + k][0], 0.0F, bCurrentRay, xyz_Is_1);
 	}
 
-	float t_max[3];
-	float t_delta[3];
-	for (int l = 0; l < 3; l++)
-	{
-	  t_max[l] = (xyz_Is_1[l]
-		      ? block_min[l] + mBlockSizeFloat
-		      : block_min[l]) * bCurrentRay->InverseDirection[l];
-	  t_delta[l] = mBlockSizeFloat * bCurrentRay->InverseDirection[l];
-	}
+	Location <float> t_max;
 
+	t_max.x = (xyz_Is_1.x
+		    ? block_min.x + mBlockSizeFloat
+		   : block_min.x) * bCurrentRay->InverseDirection.x;
+
+	t_max.y = (xyz_Is_1.y
+		    ? block_min.y + mBlockSizeFloat
+		   : block_min.y) * bCurrentRay->InverseDirection.y;
+
+	t_max.z = (xyz_Is_1.z
+		   ? block_min.z + mBlockSizeFloat
+		   : block_min.z) * bCurrentRay->InverseDirection.z;
+
+
+	Location<float> t_delta = bCurrentRay->InverseDirection * mBlockSizeFloat;
+	
 	while (true)
 	{
-	  if (t_max[0] < t_max[1])
+	  if (t_max.x < t_max.y)
 	  {
-	    if (t_max[0] < t_max[2])
+	    if (t_max.x < t_max.z)
 	    {
-	      if (xyz_Is_1[0])
+	      if (xyz_Is_1.x)
 	      {
 		if ( (i += cluster_blocksYz) >= cluster_blocks)
 		  return;
-		block_min[0] += mBlockSizeFloat;
+		block_min.x += mBlockSizeFloat;
 	      }
 	      else
 	      {
 		if ( (i -= cluster_blocksYz) < 0)
 		  return;
-		block_min[0] -= mBlockSizeFloat;
+		block_min.x -= mBlockSizeFloat;
 	      }
 
 	      if (!cluster->SiteData[i + j + k].empty())
 	      {
-		block_x[0] = t_max[0] * bCurrentRay->Direction[0] - block_min[0];
-		block_x[1] = t_max[0] * bCurrentRay->Direction[1] - block_min[1];
-		block_x[2] = t_max[0] * bCurrentRay->Direction[2] - block_min[2];
+		block_x.x = t_max.x * bCurrentRay->Direction.x - block_min.x;
+		block_x.y = t_max.x * bCurrentRay->Direction.y - block_min.y;
+		block_x.z = t_max.x * bCurrentRay->Direction.z - block_min.z;
 
 		TraverseVoxels(block_min,
 			       block_x,
 			       &cluster->SiteData[i + j + k][0],
-			       t_max[0],
+			       t_max.x,
 			       bCurrentRay,
 			       xyz_Is_1);
 	      }
 
-	      t_max[0] = xyz_Is_1[0]
-		? t_max[0] + t_delta[0]
-		: t_max[0] - t_delta[0];
+	      t_max.x = xyz_Is_1.x
+		? t_max.x + t_delta.x
+		: t_max.x - t_delta.x;
 	    }
 	    else
 	    {
-	      if (xyz_Is_1[2])
+	      if (xyz_Is_1.z)
 	      {
 		if (++k >= cluster_blocksZ)
 		  return;
-		block_min[2] += mBlockSizeFloat;
+		block_min.z += mBlockSizeFloat;
 	      }
 	      else
 	      {
 		if (--k < 0)
 		  return;
-		block_min[2] -= mBlockSizeFloat;
+		block_min.z -= mBlockSizeFloat;
 	      }
 
 	      if (!cluster->SiteData[i + j + k].empty())
 	      {
-		block_x[0] = t_max[2] * bCurrentRay->Direction[0] - block_min[0];
-		block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
-		block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
+		block_x.x = t_max.z * bCurrentRay->Direction.x - block_min.x;
+		block_x.y = t_max.z * bCurrentRay->Direction.y - block_min.y;
+		block_x.z = t_max.z * bCurrentRay->Direction.z - block_min.z;
 
 		TraverseVoxels(block_min,
 			       block_x,
 			       &cluster->SiteData[i + j + k][0],
-			       t_max[2],
+			       t_max.z,
 			       bCurrentRay,
 			       xyz_Is_1);
 	      }
 
-	      t_max[2] = xyz_Is_1[2]
-		? t_max[2] + t_delta[2]
-		: t_max[2] - t_delta[2];
+	      t_max.z = xyz_Is_1.z
+		? t_max.z + t_delta.z
+		: t_max.z - t_delta.z;
 	    }
 	  }
 	  else
 	  {
-	    if (t_max[1] < t_max[2])
+	    if (t_max.y < t_max.z)
 	    {
-	      if (xyz_Is_1[1])
+	      if (xyz_Is_1.y)
 	      {
 		if ( (j += cluster_blocksZ) >= cluster_blocksYz)
 		  return;
-		block_min[1] += mBlockSizeFloat;
+		block_min.y += mBlockSizeFloat;
 	      }
 	      else
 	      {
 		if ( (j -= cluster_blocksZ) < 0)
 		  return;
-		block_min[1] -= mBlockSizeFloat;
+		block_min.y -= mBlockSizeFloat;
 	      }
 
 	      if (!cluster->SiteData[i + j + k].empty())
 	      {
-		block_x[0] = t_max[1] * bCurrentRay->Direction[0] - block_min[0];
-		block_x[1] = t_max[1] * bCurrentRay->Direction[1] - block_min[1];
-		block_x[2] = t_max[1] * bCurrentRay->Direction[2] - block_min[2];
+		block_x.x = t_max.y * bCurrentRay->Direction.x - block_min.x;
+		block_x.y = t_max.y * bCurrentRay->Direction.y - block_min.y;
+		block_x.z = t_max.y * bCurrentRay->Direction.z - block_min.z;
 
 		TraverseVoxels(block_min,
 			       block_x,
 			       &cluster->SiteData[i + j + k][0],
-			       t_max[1],
+			       t_max.y,
 			       bCurrentRay,
 			       xyz_Is_1);
 	      }
 
-	      t_max[1] = xyz_Is_1[1]
-		? t_max[1] + t_delta[1]
-		: t_max[1] - t_delta[1];
+	      t_max.y = xyz_Is_1.y
+		? t_max.y + t_delta.y
+		: t_max.y - t_delta.y;
 	    }
 	    else
 	    {
-	      if (xyz_Is_1[2])
+	      if (xyz_Is_1.z)
 	      {
 		if (++k >= cluster_blocksZ)
 		  return;
-		block_min[2] += mBlockSizeFloat;
+		block_min.z += mBlockSizeFloat;
 	      }
 	      else
 	      {
 		if (--k < 0)
 		  return;
-		block_min[2] -= mBlockSizeFloat;
+		block_min.z -= mBlockSizeFloat;
 	      }
 
 	      if (!cluster->SiteData[i + j + k].empty())
 	      {
-		block_x[0] = t_max[2] * bCurrentRay->Direction[0] - block_min[0];
-		block_x[1] = t_max[2] * bCurrentRay->Direction[1] - block_min[1];
-		block_x[2] = t_max[2] * bCurrentRay->Direction[2] - block_min[2];
+		block_x.x = t_max.z * bCurrentRay->Direction.x - block_min.x;
+		block_x.y = t_max.z * bCurrentRay->Direction.y - block_min.y;
+		block_x.z = t_max.z * bCurrentRay->Direction.z - block_min.z;
 
 		TraverseVoxels(block_min,
 			       block_x,
 			       &cluster->SiteData[i + j + k][0],
-			       t_max[2],
+			       t_max.z,
 			       bCurrentRay,
 			       xyz_Is_1);
 	      }
 
-	      t_max[2] = xyz_Is_1[2]
-		? t_max[2] + t_delta[2]
-		: t_max[2] - t_delta[2];
+	      t_max.z = xyz_Is_1.z
+		? t_max.z + t_delta.z
+		: t_max.z - t_delta.z;
 	    }
 	  }
 	}
@@ -479,10 +509,10 @@ namespace hemelb
 
       void RayTracer::Render()
       {
-	const float* const projectedUnitX = mScreen->GetUnitVectorProjectionX();
-	const float* const projectedUnitY = mScreen->GetUnitVectorProjectionY();
+	const Location<float>& projectedUnitX = mScreen->GetUnitVectorProjectionX();
+	const Location<float>& projectedUnitY = mScreen->GetUnitVectorProjectionY();
 
-	const float* viewpointCentre = mViewpoint->GetViewpointCentre();
+	Location<float> viewpointCentre = mViewpoint->GetViewpointCentre();
 
 	for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
 	{
@@ -490,18 +520,14 @@ namespace hemelb
 
 	  // the image-based projection of the mClusterBuilder.GetClusters() bounding box is
 	  // calculated here
-	  float cluster_x[3];
-	  cluster_x[0] = thisCluster->minBlock.x - viewpointCentre[0];
-	  cluster_x[1] = thisCluster->minBlock.y - viewpointCentre[1];
-	  cluster_x[2] = thisCluster->minBlock.z - viewpointCentre[2];
-		    
-
+	  Location <float> cluster_x = thisCluster->minBlock - viewpointCentre;
+	  
 	  float subimageMins[2], subimageMaxes[2];
 
 	  subimageMins[0] = subimageMins[1] = std::numeric_limits<float>::max();
 	  subimageMaxes[0] = subimageMaxes[1] = std::numeric_limits<float>::min();
 
-	  float p1[3];
+	  Location<float> p1;
 
 	  // Temp fix due to refactoring of cluster builder
 
@@ -519,32 +545,34 @@ namespace hemelb
 
 	  for (int i = 0; i < 2; i++)
 	  {
-	    p1[0] = lMinMax_x[i];
+	    p1.x = lMinMax_x[i];
 
 	    for (int j = 0; j < 2; j++)
 	    {
-	      p1[1] = lMinMax_y[j];
+	      p1.y = lMinMax_y[j];
 
 	      for (int k = 0; k < 2; k++)
 	      {
-		p1[2] = lMinMax_z[k];
+		p1.z = lMinMax_z[k];
 
-		float p2[3];
-		mViewpoint->Project(p1, p2);
+		Location<float> p2 = mViewpoint->Project(p1);
 
-		subimageMins[0] = fminf(subimageMins[0], p2[0]);
-		subimageMaxes[0] = fmaxf(subimageMaxes[0], p2[0]);
+		subimageMins[0] = fminf(subimageMins[0], p2.x);
+		subimageMaxes[0] = fmaxf(subimageMaxes[0], p2.x);
 
-		subimageMins[1] = fminf(subimageMins[1], p2[1]);
-		subimageMaxes[1] = fmaxf(subimageMaxes[1], p2[1]);
+		subimageMins[1] = fminf(subimageMins[1], p2.y);
+		subimageMaxes[1] = fmaxf(subimageMaxes[1], p2.y);
 	      }
 	    }
 	  }
 
 	  int subimageMinXY[2], subimageMaxXY[2];
 
-	  mScreen->Transform<int> (subimageMins, subimageMinXY);
-	  mScreen->Transform<int> (subimageMaxes, subimageMaxXY);
+	  mScreen->Transform<int> (subimageMins[0], subimageMins[1], 
+				   subimageMinXY[0], subimageMinXY[1]);
+
+	  mScreen->Transform<int> (subimageMaxes[0], subimageMaxes[1],
+				   subimageMaxXY[0], subimageMaxXY[1]);
 
 	  // If the entire sub-image is off the screen, continue to the next cluster.
 	  if (subimageMinXY[0] >= mScreen->GetPixelsX() || subimageMaxXY[0] < 0 || subimageMinXY[1]
@@ -562,56 +590,51 @@ namespace hemelb
 							   - 1);
 
 	  AABB aabb;
-	  aabb.acc_1 = thisCluster->maxSite.x - viewpointCentre[0];
-	  aabb.acc_2 = thisCluster->minSite.x - viewpointCentre[0];
-	  aabb.acc_3 = thisCluster->maxSite.y - viewpointCentre[1];
-	  aabb.acc_4 = thisCluster->minSite.y - viewpointCentre[1];
-	  aabb.acc_5 = thisCluster->maxSite.z - viewpointCentre[2];
-	  aabb.acc_6 = thisCluster->minSite.z - viewpointCentre[2];
+	  aabb.acc_1 = thisCluster->maxSite.x - viewpointCentre.x;
+	  aabb.acc_2 = thisCluster->minSite.x - viewpointCentre.x;
+	  aabb.acc_3 = thisCluster->maxSite.y - viewpointCentre.y;
+	  aabb.acc_4 = thisCluster->minSite.y - viewpointCentre.y;
+	  aabb.acc_5 = thisCluster->maxSite.z - viewpointCentre.z;
+	  aabb.acc_6 = thisCluster->minSite.z - viewpointCentre.z;
 
-	  float par3[3];
-	  const float* vtx = mScreen->GetVtx();
-	  for (int l = 0; l < 3; l++)
-	  {
-	    par3[l] = vtx[l] + (float) subimageMinXY[0] * projectedUnitX[l]
-	      + (float) subimageMinXY[1] * projectedUnitY[l];
-	  }
+	  Location<float> par3;
+	  const Location<float>& vtx = mScreen->GetVtx();
+	  
+	  par3 = vtx + projectedUnitX * (float) subimageMinXY[0]
+	    + projectedUnitY * (float) subimageMinXY[1];
+	  
 
 	  for (int subImageX = subimageMinXY[0]; subImageX <= subimageMaxXY[0]; ++subImageX)
 	  {
-	    float lRayDirection[3];
-	    for (int l = 0; l < 3; l++)
-	    {
-	      lRayDirection[l] = par3[l];
-	    }
+	    Location<float> lRayDirection = par3;
 
 	    for (int subImageY = subimageMinXY[1]; subImageY <= subimageMaxXY[1]; ++subImageY)
 	    {
 	      Ray lRay;
 
-	      lRay.Direction[0] = lRayDirection[0];
-	      lRay.Direction[1] = lRayDirection[1];
-	      lRay.Direction[2] = lRayDirection[2];
+	      lRay.Direction.x = lRayDirection.x;
+	      lRay.Direction.y = lRayDirection.y;
+	      lRay.Direction.z = lRayDirection.z;
 
-	      float lInverseDirectionMagnitude = 1.0F / sqrtf(lRayDirection[0] * lRayDirection[0]
-							      + lRayDirection[1] * lRayDirection[1] + lRayDirection[2] * lRayDirection[2]);
+	      float lInverseDirectionMagnitude = 1.0F / sqrtf(lRayDirection.x * lRayDirection.x
+							      + lRayDirection.y * lRayDirection.y + lRayDirection.z * lRayDirection.z);
 
-	      lRay.Direction[0] *= lInverseDirectionMagnitude;
-	      lRay.Direction[1] *= lInverseDirectionMagnitude;
-	      lRay.Direction[2] *= lInverseDirectionMagnitude;
+	      lRay.Direction.x *= lInverseDirectionMagnitude;
+	      lRay.Direction.y *= lInverseDirectionMagnitude;
+	      lRay.Direction.z *= lInverseDirectionMagnitude;
 	      // 
-	      lRay.InverseDirection[0] = 1.0F / lRay.Direction[0];
-	      lRay.InverseDirection[1] = 1.0F / lRay.Direction[1];
-	      lRay.InverseDirection[2] = 1.0F / lRay.Direction[2];
+	      lRay.InverseDirection.x = 1.0F / lRay.Direction.x;
+	      lRay.InverseDirection.y = 1.0F / lRay.Direction.y;
+	      lRay.InverseDirection.z = 1.0F / lRay.Direction.z;
 
-	      bool lRayInPositiveDirection[3];
-	      lRayInPositiveDirection[0] = lRay.Direction[0] > 0.0F;
-	      lRayInPositiveDirection[1] = lRay.Direction[1] > 0.0F;
-	      lRayInPositiveDirection[2] = lRay.Direction[2] > 0.0F;
+	      Location<bool> lRayInPositiveDirection;
+	      lRayInPositiveDirection.x = lRay.Direction.x > 0.0F;
+	      lRayInPositiveDirection.y = lRay.Direction.y > 0.0F;
+	      lRayInPositiveDirection.z = lRay.Direction.z > 0.0F;
 
-	      lRayDirection[0] += projectedUnitY[0];
-	      lRayDirection[1] += projectedUnitY[1];
-	      lRayDirection[2] += projectedUnitY[2];
+	      lRayDirection.x += projectedUnitY.x;
+	      lRayDirection.y += projectedUnitY.y;
+	      lRayDirection.z += projectedUnitY.z;
 
 	      float t_near, t_far;
 	      AABBvsRay(&aabb, lRay.InverseDirection, lRayInPositiveDirection, &t_near, &t_far);
@@ -621,10 +644,7 @@ namespace hemelb
 		continue;
 	      }
 
-	      float ray_dx[3];
-	      ray_dx[0] = t_near * lRay.Direction[0] - cluster_x[0];
-	      ray_dx[1] = t_near * lRay.Direction[1] - cluster_x[1];
-	      ray_dx[2] = t_near * lRay.Direction[2] - cluster_x[2];
+	      Location <float> ray_dx = t_near * lRay.Direction - cluster_x;
 
 	      lRay.VelocityColour[0] = 0.0F;
 	      lRay.VelocityColour[1] = 0.0F;
@@ -654,9 +674,7 @@ namespace hemelb
 
 	      mScreen->AddPixel(&col_pixel, mVisSettings);
 	    }
-	    par3[0] += projectedUnitX[0];
-	    par3[1] += projectedUnitX[1];
-	    par3[2] += projectedUnitX[2];
+	    par3+=projectedUnitX;
 	  }
 	}
       }

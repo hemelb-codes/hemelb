@@ -3,6 +3,7 @@
 
 #include "io/Writer.h"
 #include "ColPixel.h"
+#include "vis/Location.h"
 
 namespace hemelb
 {
@@ -23,8 +24,8 @@ namespace hemelb
                        unsigned int pixelCount,
                        const VisSettings* visSettings);
 
-        void RenderLine(const float endPoint1[3],
-                        const float endPoint2[3],
+        void RenderLine(const Location<float>& endPoint1,
+                        const Location<float>& endPoint2,
                         const VisSettings* visSettings);
 
         static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;

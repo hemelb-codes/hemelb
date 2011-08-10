@@ -42,8 +42,8 @@ namespace hemelb
      * @param iStressType
      * @param mode
      */
-    void Screen::RenderLine(const float endPoint1[3],
-                            const float endPoint2[3],
+    void Screen::RenderLine(const Location<float>& endPoint1,
+                            const Location<float>& endPoint2,
                             const VisSettings* visSettings)
     {
       pixels->RenderLine(endPoint1, endPoint2, visSettings);
@@ -59,29 +59,25 @@ namespace hemelb
       MaxXValue = maxX;
       MaxYValue = maxX;
 
-      viewpoint->RotateToViewpoint(MaxXValue, 0.0F, 0.0F, UnitVectorProjectionX);
-      viewpoint->RotateToViewpoint(0.0F, MaxYValue, 0.0F, UnitVectorProjectionY);
+      UnitVectorProjectionX = viewpoint->RotateToViewpoint(Location<float>(MaxXValue, 0.0F, 0.0F));
+      UnitVectorProjectionY = viewpoint->RotateToViewpoint(Location<float>(0.0F, MaxYValue, 0.0F));
 
       pixels->SetSize(pixelsX, pixelsY);
 
       ScaleX = (float) pixels->GetPixelsX() / (2.F * MaxXValue);
       ScaleY = (float) pixels->GetPixelsY() / (2.F * MaxYValue);
 
-      float radVector[3];
-      viewpoint->RotateToViewpoint(0.F, 0.F, -rad, radVector);
+      Location<float> radVector = viewpoint->RotateToViewpoint(Location<float>(0.F, 0.F, -rad));
 
-      for (int ii = 0; ii < 3; ++ii)
-      {
-        vtx[ii] = (0.5F * radVector[ii]) - UnitVectorProjectionX[ii] - UnitVectorProjectionY[ii];
-      }
+      mVtx = radVector*0.5F - UnitVectorProjectionX - UnitVectorProjectionY;
 
-      UnitVectorProjectionX[0] *= (2.F / (float) pixels->GetPixelsX());
-      UnitVectorProjectionX[1] *= (2.F / (float) pixels->GetPixelsX());
-      UnitVectorProjectionX[2] *= (2.F / (float) pixels->GetPixelsX());
+      UnitVectorProjectionX.x *= (2.F / (float) pixels->GetPixelsX());
+      UnitVectorProjectionX.y *= (2.F / (float) pixels->GetPixelsX());
+      UnitVectorProjectionX.z *= (2.F / (float) pixels->GetPixelsX());
 
-      UnitVectorProjectionY[0] *= (2.F / (float) pixels->GetPixelsY());
-      UnitVectorProjectionY[1] *= (2.F / (float) pixels->GetPixelsY());
-      UnitVectorProjectionY[2] *= (2.F / (float) pixels->GetPixelsY());
+      UnitVectorProjectionY.x *= (2.F / (float) pixels->GetPixelsY());
+      UnitVectorProjectionY.y *= (2.F / (float) pixels->GetPixelsY());
+      UnitVectorProjectionY.z *= (2.F / (float) pixels->GetPixelsY());
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
@@ -118,15 +114,15 @@ namespace hemelb
       return pixels->GetStoredPixelCount();
     }
 
-    const float* Screen::GetVtx() const
+    const Location<float>& Screen::GetVtx() const
     {
-      return vtx;
+      return mVtx;
     }
-    const float* Screen::GetUnitVectorProjectionX() const
+    const Location<float>& Screen::GetUnitVectorProjectionX() const
     {
       return UnitVectorProjectionX;
     }
-    const float* Screen::GetUnitVectorProjectionY() const
+    const Location<float>& Screen::GetUnitVectorProjectionY() const
     {
       return UnitVectorProjectionY;
     }
