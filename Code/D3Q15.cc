@@ -340,4 +340,37 @@ namespace hemelb
     // shear_stress^2 + normal_stress^2 = stress_vector^2
     stress = sqrt(square_stress_vector - normal_stress * normal_stress);
   }
+
+  double D3Q15::CalculateStrainRateTensorComponent(const unsigned iRow, const unsigned iColumn, const double &iTau, const distribn_t iFNeq[])
+  {
+    double strain_rate_tensor_i_j=0.0;
+    const int *Cs[3] = { CX, CY, CZ };
+
+    for (unsigned vec_index = 0; vec_index < NUMVECTORS; vec_index++)
+    {
+      strain_rate_tensor_i_j += iFNeq[vec_index] * (Cs[iRow][vec_index] * Cs[iColumn][vec_index]);
+    }
+
+    strain_rate_tensor_i_j *= -3.0/(2.0 * iTau);
+
+    return strain_rate_tensor_i_j;
+  }
+
+  double D3Q15::CalculateShearRate(const double &iTau, const distribn_t &iFNeq)
+  {
+    double shear_rate=0.0;
+
+    for (unsigned row=0; row<3; row++)
+    {
+      for (unsigned column=0; column<3; column++)
+      {
+        shear_rate += D3Q15::CalculateStrainRateTensorComponent(row, column, iTau, &iFNeq);
+      }
+    }
+
+    shear_rate = 2*sqrt(shear_rate);
+
+    return shear_rate;
+  }
+
 }
