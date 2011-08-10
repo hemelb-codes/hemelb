@@ -3,6 +3,7 @@
 
 #include "io/Writer.h"
 #include "vis/ColPixel.h"
+#include "vis/Location.h"
 #include "vis/ScreenPixels.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
@@ -20,8 +21,8 @@ namespace hemelb
         ~Screen();
 
         void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
-        void RenderLine(const float endPoint1[3],
-                        const float endPoint2[3],
+        void RenderLine(const Location<float>& endPoint1,
+			const Location<float>& endPoint2,
                         const VisSettings* visSettings);
 
         void Set(float maxX,
@@ -44,15 +45,15 @@ namespace hemelb
          * @param output
          */
         template<typename T>
-        void Transform(float* input, T output[2]) const
+	  void Transform(const float& inputX, const float& inputY, T& outputX, T& outputY) const
         {
-          output[0] = (T) (ScaleX * (input[0] + MaxXValue));
-          output[1] = (T) (ScaleY * (input[1] + MaxYValue));
+          outputX = (T) (ScaleX * (inputX + MaxXValue));
+          outputY = (T) (ScaleY * (inputY + MaxYValue));
         }
 
-        const float* GetVtx() const;
-        const float* GetUnitVectorProjectionX() const;
-        const float* GetUnitVectorProjectionY() const;
+        const Location<float>& GetVtx() const;
+        const Location<float>& GetUnitVectorProjectionX() const;
+        const Location<float>& GetUnitVectorProjectionY() const;
         int GetPixelsX() const;
         int GetPixelsY() const;
 
@@ -66,11 +67,11 @@ namespace hemelb
       private:
         float ScaleX, ScaleY;
         float MaxXValue, MaxYValue;
-        float vtx[3];
+        Location<float> mVtx;
 
         // Projection of unit vectors along screen axes into normal space.
-        float UnitVectorProjectionX[3];
-        float UnitVectorProjectionY[3];
+	Location<float>  UnitVectorProjectionX;
+        Location<float> UnitVectorProjectionY;
 
         ScreenPixels* pixels;
     };

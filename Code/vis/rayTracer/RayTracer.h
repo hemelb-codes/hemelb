@@ -13,7 +13,7 @@
 #include "vis/Screen.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
-#include "vis/rayTracer/Location.h"
+#include "vis/Location.h"
 
 namespace hemelb
 {
@@ -23,6 +23,9 @@ namespace hemelb
     {
       class RayTracer
       {
+	//Class also contains nested classes Cluster and  ClusterBuilder, itself 
+	//containing VolumeTraverser, SiteTraverser and BlockTraverser
+
       public:
 	// Constructor and destructor do all the usual stuff.
 	RayTracer(const geometry::LatticeData* iLatDat,
@@ -43,7 +46,7 @@ namespace hemelb
 	void Render();
 
 	//Stores the data about an individual voxel 
-	class SiteData_t
+	struct SiteData_t
 	{
 	public:
 	  float Density;
@@ -120,7 +123,7 @@ namespace hemelb
 	    virtual site_t GetXCount() = 0;
 	    virtual site_t GetYCount() = 0;
 	    virtual site_t GetZCount() = 0;
-			
+	    
 	  protected:
 	    Location<site_t> mCurrentLocation;
 	    site_t mCurrentNumber;
@@ -274,8 +277,8 @@ namespace hemelb
 
 	struct Ray
 	{
-	  float Direction[3];
-	  float InverseDirection[3];
+	  Location<float> Direction;
+	  Location <float> InverseDirection;
 	  float Length;
 
 	  float VelocityColour[3];
@@ -296,21 +299,21 @@ namespace hemelb
 			   float ray_segment,
 			   Ray* bCurrentRay);
 
-	void TraverseVoxels(const float block_min[3],
-			    const float block_x[3],
+	void TraverseVoxels(const Location<float>& block_min,
+			    const Location<float>& block_x,
 			    const SiteData_t* iSiteData,
 			    float t,
 			    Ray* bCurrentRay,
-			    const bool xyz_is_1[3]);
+			    const Location<bool>& xyz_is_1);
 
 	void TraverseBlocks(const Cluster* cluster,
-			    const bool xyz_Is_1[3],
-			    const float ray_dx[3],
+			    const Location<bool>& xyz_Is_1,
+			    const Location<float>& ray_dx,
 			    Ray *bCurrentRay);
 
 	void AABBvsRay(const AABB* aabb,
-		       const float inverseDirection[3],
-		       const bool xyzComponentIsPositive[3],
+		       const Location<float>& inverseDirection,
+		       const Location<bool>& xyzComponentIsPositive,
 		       float* t_near,
 		       float* t_far);
 

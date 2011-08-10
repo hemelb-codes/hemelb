@@ -1,28 +1,31 @@
 #include <math.h>
 
+
+#include "vis/Location.h"
 #include "vis/Viewpoint.h"
 
 namespace hemelb
 {
   namespace vis
   {
-    void Viewpoint::RotateToViewpoint(float iXIn, float iYIn, float iZIn, float rotatedVector[3]) const
+    Viewpoint::Viewpoint()
+      //mViewpointCentre(0.0F) 
+    {}
+    
+    Location<float> Viewpoint::RotateToViewpoint(const Location<float>& iVector) const
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
 
-      Rotate(SinXRotation, CosXRotation, SinYRotation, CosYRotation, iXIn, iYIn, iZIn,
-             rotatedVector);
+      return Rotate(SinXRotation, CosXRotation, SinYRotation, CosYRotation, iVector);
     }
 
-    void Viewpoint::Rotate(float sinX,
-                           float cosX,
-                           float sinY,
-                           float cosY,
-                           float xIn,
-                           float yIn,
-                           float zIn,
-                           float rotatedVector[3]) const
+    Location <float> Viewpoint::Rotate
+    (float iSinX,
+     float iCosX,
+     float iSinY,
+     float iCosY,
+     const Location<float>& iVector)
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
@@ -35,28 +38,35 @@ namespace hemelb
       // Out = (Ycos(iThetaX) + Zsin(iThetaX)                                        )
       //       (Zcos(iThetaX)cos(iThetaY) - Ysin(iThetaX)cos(iThetaY) - Xsin(iThetaY))
 
-      const float lTemp = zIn * cosX - yIn * sinX;
-
-      rotatedVector[0] = lTemp * sinY + xIn * cosY;
-      rotatedVector[1] = zIn * sinX + yIn * cosX;
-      rotatedVector[2] = lTemp * cosY - xIn * sinY;
+      const float lTemp = iVector.z * iCosX - iVector.y * iSinX;
+      
+      return Location <float>(
+	lTemp*iSinY + iVector.x*iCosY,
+	iVector.z * iSinX + iVector.y * iCosX,
+	lTemp * iCosY - iVector.x * iSinY);
     }
 
-    void Viewpoint::Project(const float p1[], float p2[]) const
+    Location<float> Viewpoint::Project(const Location<float>& p1) const
     {
-      float x1[3], x2[3];
+      Location<float> x1;
+      
 
-      for (int l = 0; l < 3; l++)
-      {
-        x1[l] = p1[l] - x[l];
-      }
+      x1 = p1 - mViewpointCentre;
+      float temp1 = x1.x;
+      x1.x = x1.y;
+      x1.y = temp1;
+      
+      Location<float> x2 = Rotate( -SinYRotation, CosYRotation, 
+				  -SinXRotation, CosXRotation, x1);
+      
+      
 
-      Rotate(-SinYRotation, CosYRotation, -SinXRotation, CosXRotation, x1[1], x1[0], x1[2], x2);
+      float temp2 = mDistance / (-x2.z);
+     
+      return Location <float> (temp2 * x2.y,
+			       temp2 * x2.x,
+			       -x2.z);
 
-      float temp = dist / (p2[2] = -x2[2]);
-
-      p2[0] = temp * x2[1];
-      p2[1] = temp * x2[0];
     }
 
     /**
@@ -67,11 +77,12 @@ namespace hemelb
      * @param localCentre
      * @param distance
      */
-    void Viewpoint::SetViewpointPosition(float longitude,
-                                         float latitude,
-                                         float localCentre[3],
-                                         float rad,
-                                         float distance)
+    void Viewpoint::SetViewpointPosition(
+      float longitude,
+      float latitude,
+      const Location<float>& iLocalCentre,
+      float rad,
+      float iDistance)
     {
       SinYRotation = sinf(longitude);
       CosYRotation = cosf(longitude);
@@ -79,18 +90,16 @@ namespace hemelb
       SinXRotation = sinf(latitude);
       CosXRotation = cosf(latitude);
 
-      RotateToViewpoint(0., 0., rad, x);
+      mViewpointCentre = RotateToViewpoint(Location<float>(0., 0., rad));
 
-      x[0] += localCentre[0];
-      x[1] += localCentre[1];
-      x[2] += localCentre[2];
+      mViewpointCentre += iLocalCentre;
 
-      dist = distance;
+      mDistance = iDistance;
     }
 
-    const float* Viewpoint::GetViewpointCentre() const
+    const Location<float>& Viewpoint::GetViewpointCentre() const
     {
-      return &x[0];
+      return mViewpointCentre;
     }
 
   }
