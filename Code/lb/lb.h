@@ -10,6 +10,7 @@
 #include "lb/collisions/implementations/Implementations.h"
 #include "lb/collisions/implementations/CollisionOperators.h"
 #include "lb/BoundaryComms.h"
+#include "util/UnitConverter.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 #include <typeinfo>
@@ -37,17 +38,18 @@ namespace hemelb
         site_t total_fluid_sites;
         int inlets;
 
-        distribn_t ConvertPressureToLatticeUnits(double pressure) const;
-        distribn_t ConvertVelocityToLatticeUnits(double velocity) const;
-        distribn_t ConvertStressToLatticeUnits(double stress) const;
-
-        void InitialiseBoundaryDensities();
         void UpdateBoundaryDensities(unsigned long time_step);
         void UpdateInletVelocities(unsigned long time_step);
 
-        void Initialise(site_t* iFTranslator, vis::Control* iControl);
+        void
+        Initialise(site_t* iFTranslator,
+                   vis::Control* iControl,
+                   BoundaryComms* iBoundaryComms,
+                   util::UnitConverter* iUnits);
 
-        void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
+        void WriteConfigParallel(hemelb::lb::Stability stability,
+                                 std::string output_file_name,
+                                 BoundaryComms* iBoundaryComms);
         void ReadVisParameters();
 
         void CalculateMouseFlowField(float densityIn,
@@ -66,32 +68,14 @@ namespace hemelb
         void RecalculateTauViscosityOmega();
         void SetInitialConditions();
 
-        double ConvertPressureToPhysicalUnits(double distribn_t) const;
-        double ConvertStressToPhysicalUnits(double distribn_t) const;
-        double ConvertVelocityToPhysicalUnits(double distribn_t) const;
-
-        void CalculateBC(distribn_t f[],
-                         hemelb::geometry::LatticeData::SiteType iSiteType,
-                         unsigned int iBoundaryId,
-                         distribn_t *density,
-                         distribn_t *vx,
-                         distribn_t *vy,
-                         distribn_t *vz,
-                         distribn_t f_neq[]);
-
-        template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
-                typename tInletOutletWallCollision, typename tCollisionOperator>
-        void InitCollisions();
+        template<typename tMidFluidCollision, typename tWallCollision,
+            typename tInletOutletCollision, typename tInletOutletWallCollision,
+            typename tCollisionOperator>
+        void InitCollisions(BoundaryComms* iBoundaryComms);
 
         void ReadParameters();
 
-        void allocateInlets(int nInlets);
-        void allocateOutlets(int nOutlets);
-
         void handleIOError(int iError);
-
-        distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad) const;
-        double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
         // Visitors
         hemelb::lb::collisions::CollisionVisitor* mStreamAndCollide;
@@ -112,17 +96,16 @@ namespace hemelb
         //TODO Get rid of this hack
         hemelb::lb::collisions::Collision* GetCollision(int i);
 
-        distribn_t *inlet_density_avg, *inlet_density_amp;
+        // Here only for initial conditions and some vis. Would be better if could do without these
         distribn_t *outlet_density_avg, *outlet_density_amp;
-        distribn_t *inlet_density_phs, *outlet_density_phs;
-        distribn_t *inlet_density, *outlet_density;
+        distribn_t *inlet_density_avg, *inlet_density_amp;
+
         double *inlet_normal;
         double voxel_size;
         int outlets;
 
         double mFileReadTime;
 
-        BoundaryComms* mBoundaryComms;
         SimConfig *mSimConfig;
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
@@ -130,6 +113,8 @@ namespace hemelb
 
         LbmParameters mParams;
         vis::Control* mVisControl;
+
+        util::UnitConverter* mUnits;
 
         site_t* receivedFTranslator;
     };

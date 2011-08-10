@@ -1,7 +1,10 @@
 #ifndef HEMELB_LB_BOUNDARYCOMMS_H
 #define HEMELB_LB_BOUNDARYCOMMS_H
 
+#include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
+#include "lb/SimulationState.h"
+#include "util/UnitConverter.h"
 
 namespace hemelb
 {
@@ -15,16 +18,46 @@ namespace hemelb
      * given in/outlet. Once per cycle BroadcastBoundaryDensities needs to be called so that BCproc
      * updates the relevant processes with the new values.
      */
-    class BoundaryComms
+    class BoundaryComms : public net::IteratedAction
     {
       public:
-        BoundaryComms(const geometry::LatticeData* iLatDat, const SimConfig* iSimConfig);
+        BoundaryComms(const geometry::LatticeData* iLatDat,
+                      SimConfig* iSimConfig,
+                      SimulationState* iSimState,
+                      util::UnitConverter* iUnits);
         ~BoundaryComms();
 
-        void BroadcastBoundaryDensities(distribn_t* inlet_density, distribn_t* outlet_density);
+        void RequestComms();
+        void Reset();
+
+        void InitialiseBoundaryDensities();
+        void BroadcastBoundaryDensities();
+        void CalculateBC(distribn_t f[],
+                         hemelb::geometry::LatticeData::SiteType iSiteType,
+                         unsigned int iBoundaryId,
+                         distribn_t *density,
+                         distribn_t *vx,
+                         distribn_t *vy,
+                         distribn_t *vz,
+                         distribn_t f_neq[]);
+
+        distribn_t GetInletDensity(int i);
+        distribn_t GetOutletDensity(int i);
+
+        // The densities
+        // Unfortunately made public, because of a lot of old code relying on this being in LBM
+        distribn_t *inlet_density, *outlet_density;
+        distribn_t *inlet_density_avg, *outlet_density_avg;
+        distribn_t *inlet_density_amp, *outlet_density_amp;
+        distribn_t *inlet_density_phs, *outlet_density_phs;
 
       private:
         proc_t BCproc; // Process responsible for sending out BC info
+        distribn_t *inlet_density_cycle, *outlet_density_cycle;
+
+        void ReadParameters();
+        void allocateInlets();
+        void allocateOutlets();
 
         // Total number of inlets/outlets in simulation
         int nTotInlets;
@@ -44,8 +77,9 @@ namespace hemelb
         MPI_Group* outlet_groups;
         MPI_Group* inlet_groups;
 
-        // Just for testing ATM
-        void printStuff();
+        SimulationState* mState;
+        SimConfig* mSimConfig;
+        util::UnitConverter* mUnits;
     };
 
   }
