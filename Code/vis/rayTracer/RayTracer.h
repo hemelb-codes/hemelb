@@ -13,7 +13,7 @@
 #include "vis/Screen.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
-#include "vis/Location.h"
+#include "vis/Vector3D.h"
 
 namespace hemelb
 {
@@ -68,12 +68,12 @@ namespace hemelb
 	public:
 	  Cluster();
 
-	  Location<float> minSite;
-	  Location<float> maxSite;
+	  Vector3D<float> minSite;
+	  Vector3D<float> maxSite;
 
 	  //Stores the lowest x, y and z block location of the Cluster 
 	  //in terms of site units relative to the centre location
-	  Location<float> minBlock;
+	  Vector3D<float> minBlock;
         
 	  //Stores the size of the cluster in terms of the number of blocks
 	  unsigned short int blocksX;
@@ -108,11 +108,11 @@ namespace hemelb
 	  public:
 	    VolumeTraverser();
 
-	    Location<site_t> GetCurrentLocation();
+	    Vector3D<site_t> GetCurrentLocation();
 			
 	    site_t GetCurrentIndex();
 
-	    site_t GetIndexFromLocation(Location<site_t> iLocation);
+	    site_t GetIndexFromLocation(Vector3D<site_t> iLocation);
 
 	    //Increments the index by one and update the location accordingly
 	    //Returns true if successful or false if the whole volume has been
@@ -125,7 +125,7 @@ namespace hemelb
 	    virtual site_t GetZCount() = 0;
 	    
 	  protected:
-	    Location<site_t> mCurrentLocation;
+	    Vector3D<site_t> mCurrentLocation;
 	    site_t mCurrentNumber;
 	  };
 	  
@@ -165,7 +165,7 @@ namespace hemelb
 
 	    site_t CurrentBlockNumber();
 	    
-	    Location<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
+	    Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
 	
 	    //Tranverses the block until the next unvisited block is reached.
 	    //Returns false if the end of the Volume is reached
@@ -173,13 +173,13 @@ namespace hemelb
 		
 	    geometry::LatticeData::BlockData * GetCurrentBlockData();
 
-	    geometry::LatticeData::BlockData * GetBlockDataForLocation(const Location<site_t>& iLocation);
+	    geometry::LatticeData::BlockData * GetBlockDataForLocation(const Vector3D<site_t>& iLocation);
 
 	    site_t GetBlockSize();
 	    
 	    SiteTraverser GetSiteTraverserForCurrentBlock();
 	    
-	    SiteTraverser GetSiteTraverserForLocation(const Location<site_t>& iLocation);
+	    SiteTraverser GetSiteTraverserForLocation(const Vector3D<site_t>& iLocation);
 
 	    virtual site_t GetXCount();
 
@@ -187,17 +187,17 @@ namespace hemelb
 
 	    virtual site_t GetZCount();
 
-	    bool IsValidLocation(Location<site_t> block);
+	    bool IsValidLocation(Vector3D<site_t> block);
 	    
 	    bool IsCurrentBlockVisited();
 
 	    bool IsBlockVisited(site_t n);
-	    bool IsBlockVisited(Location<site_t> n);
+	    bool IsBlockVisited(Vector3D<site_t> n);
 
 	    void MarkCurrentBlockVisited();
 
 	    void MarkBlockVisited(site_t n);
-	    void MarkBlockVisited(Location<site_t> location);
+	    void MarkBlockVisited(Vector3D<site_t> location);
 
 	  private:
 	    bool GoToNextBlock();
@@ -215,8 +215,8 @@ namespace hemelb
 	  void FindNewCluster();
 
 	  //Adds neighbouring blocks of the input location to the input stack
-	  void AddNeighbouringBlocks(Location<site_t> iCurrentLocation,
-				     std::stack<Location<site_t> >& ioBlocksToVisit);
+	  void AddNeighbouringBlocks(Vector3D<site_t> iCurrentLocation,
+				     std::stack<Vector3D<site_t> >& ioBlocksToVisit);
 
 	  //Returns true if there are sites in the given block associated with the 
 	  //local processor rank 
@@ -227,24 +227,24 @@ namespace hemelb
 	  //and converting it to that used by the raytracer
 	  //NB: Futher processing is required on the cluster before it can be used 
 	  //by the ray tracer, which is handled by the ProcessCluster method
-	  void AddCluster(Location<site_t> iClusterBlockMin,
-			  Location<site_t> iClusterBlockMax,
-			  Location<site_t> iClusterVoxelMin,
-			  Location<site_t> iClusterVoxelMax);
+	  void AddCluster(Vector3D<site_t> iClusterBlockMin,
+			  Vector3D<site_t> iClusterBlockMax,
+			  Vector3D<site_t> iClusterVoxelMin,
+			  Vector3D<site_t> iClusterVoxelMax);
 
 	  //Adds "flow-field" data to the cluster
 	  void ProcessCluster(unsigned int iClusterId);
 
 	  void UpdateSiteData
 	    (geometry::LatticeData::BlockData * lBlock, site_t n, 
-	     unsigned int iClusterId, Location<site_t> i_block_coordinates);
+	     unsigned int iClusterId, Vector3D<site_t> i_block_coordinates);
 
 	  void UpdateSiteDataAtSite
 	    (geometry::LatticeData::BlockData * iBlock,
 	     site_t n, unsigned int iClusterId, unsigned int l_site_id);
 
-	  Location<site_t> GetSiteCoordinatesOfBlock
-	    (site_t iClusterId, Location<site_t> offset);
+	  Vector3D<site_t> GetSiteCoordinatesOfBlock
+	    (site_t iClusterId, Vector3D<site_t> offset);
 
 	  SiteData_t* GetDataPointerClusterVoxelSiteId(site_t iSiteId);
 
@@ -260,7 +260,7 @@ namespace hemelb
 	  //on mClusters once building is complete
 	  std::vector<Cluster> mClusters;
 	 
-	  std::vector<Location<site_t> > mClusterBlockMins; 
+	  std::vector<Vector3D<site_t> > mClusterBlockMins; 
 	 
 	  //This allows a cluster voxel site ID (as part of the 1D structure for)
 	  //storing sites to be mapped to the data stored in the 3D structure 
@@ -272,13 +272,13 @@ namespace hemelb
 
 	  static const short int NOTASSIGNEDTOCLUSTER = -1; 
 
-	  static const Location<site_t> mNeighbours[26];
+	  static const Vector3D<site_t> mNeighbours[26];
 	};
 
 	struct Ray
 	{
-	  Location<float> Direction;
-	  Location <float> InverseDirection;
+	  Vector3D<float> Direction;
+	  Vector3D <float> InverseDirection;
 	  float Length;
 
 	  float VelocityColour[3];
@@ -299,21 +299,21 @@ namespace hemelb
 			   float ray_segment,
 			   Ray* bCurrentRay);
 
-	void TraverseVoxels(const Location<float>& block_min,
-			    const Location<float>& block_x,
+	void TraverseVoxels(const Vector3D<float>& block_min,
+			    const Vector3D<float>& block_x,
 			    const SiteData_t* iSiteData,
 			    float t,
 			    Ray* bCurrentRay,
-			    const Location<bool>& xyz_is_1);
+			    const Vector3D<bool>& xyz_is_1);
 
 	void TraverseBlocks(const Cluster* cluster,
-			    const Location<bool>& xyz_Is_1,
-			    const Location<float>& ray_dx,
+			    const Vector3D<bool>& xyz_Is_1,
+			    const Vector3D<float>& ray_dx,
 			    Ray *bCurrentRay);
 
 	void AABBvsRay(const AABB* aabb,
-		       const Location<float>& inverseDirection,
-		       const Location<bool>& xyzComponentIsPositive,
+		       const Vector3D<float>& inverseDirection,
+		       const Vector3D<bool>& xyzComponentIsPositive,
 		       float* t_near,
 		       float* t_far);
 
