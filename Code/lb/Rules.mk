@@ -2,7 +2,7 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbLb.$(LIBEXT)
 
-SUBDIRS := collisions streamers
+SUBDIRS := collisions streamers rheology_models
 
 $(TARGETS)_DEPS = lb.o \
                   io.o \
