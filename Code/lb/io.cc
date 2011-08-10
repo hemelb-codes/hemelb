@@ -19,34 +19,10 @@ namespace hemelb
 {
   namespace lb
   {
-    /*!
-     through this function the processor 0 reads the LB parameters
-     and then communicate them to the other processors
-     */
     void LBM::ReadParameters()
     {
       inlets = (int) mSimConfig->Inlets.size();
-      allocateInlets(inlets);
-
-      for (int n = 0; n < inlets; n++)
-      {
-        hemelb::SimConfig::InOutLet *lInlet = &mSimConfig->Inlets[n];
-
-        inlet_density_avg[n] = ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
-        inlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
-        inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
-      }
-
       outlets = (int) mSimConfig->Outlets.size();
-      allocateOutlets(outlets);
-
-      for (int n = 0; n < outlets; n++)
-      {
-        hemelb::SimConfig::InOutLet *lOutlet = &mSimConfig->Outlets[n];
-        outlet_density_avg[n] = ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
-        outlet_density_amp[n] = ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
-        outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
-      }
 
       inlet_normal = new distribn_t[3 * inlets];
 
@@ -60,31 +36,9 @@ namespace hemelb
       RecalculateTauViscosityOmega();
     }
 
-    void LBM::allocateInlets(int nInlets)
-    {
-      unsigned long size = hemelb::util::NumericalFunctions::max<int>(1, nInlets);
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-        size *= mState->GetTimeStepsPerCycle();
-
-      inlet_density = new distribn_t[size];
-      inlet_density_avg = new distribn_t[size];
-      inlet_density_amp = new distribn_t[size];
-      inlet_density_phs = new distribn_t[size];
-    }
-
-    void LBM::allocateOutlets(int nOutlets)
-    {
-      unsigned long size = hemelb::util::NumericalFunctions::max<int>(1, nOutlets);
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-        size *= mState->GetTimeStepsPerCycle();
-
-      outlet_density = new distribn_t[size];
-      outlet_density_avg = new distribn_t[size];
-      outlet_density_amp = new distribn_t[size];
-      outlet_density_phs = new distribn_t[size];
-    }
-
-    void LBM::WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name)
+    void LBM::WriteConfigParallel(hemelb::lb::Stability stability,
+                                  std::string output_file_name,
+                                  BoundaryComms* iBoundaryComms)
     {
       /* This routine writes the flow field on file. The data are gathered
        to the root processor and written from there.  The format
@@ -250,14 +204,14 @@ namespace hemelb
                   }
                   else
                   { // not FLUID_TYPE
-                    CalculateBC(mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS),
-                                mLatDat->GetSiteType(my_site_id),
-                                mLatDat->GetBoundaryId(my_site_id),
-                                &density,
-                                &vx,
-                                &vy,
-                                &vz,
-                                f_neq);
+                    iBoundaryComms->CalculateBC(mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS),
+                                                mLatDat->GetSiteType(my_site_id),
+                                                mLatDat->GetBoundaryId(my_site_id),
+                                                &density,
+                                                &vx,
+                                                &vy,
+                                                &vz,
+                                                f_neq);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
@@ -285,13 +239,13 @@ namespace hemelb
                   vz /= density;
 
                   // conversion from lattice to physical units
-                  pressure = ConvertPressureToPhysicalUnits(density * Cs2);
+                  pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
 
-                  vx = ConvertVelocityToPhysicalUnits(vx);
-                  vy = ConvertVelocityToPhysicalUnits(vy);
-                  vz = ConvertVelocityToPhysicalUnits(vz);
+                  vx = mUnits->ConvertVelocityToPhysicalUnits(vx);
+                  vy = mUnits->ConvertVelocityToPhysicalUnits(vy);
+                  vz = mUnits->ConvertVelocityToPhysicalUnits(vz);
 
-                  stress = ConvertStressToPhysicalUnits(stress);
+                  stress = mUnits->ConvertStressToPhysicalUnits(stress);
 
                   lWriter << (int) (site_i - siteMins[0]) << (int) (site_j - siteMins[1])
                       << (int) (site_k - siteMins[2]);
@@ -321,8 +275,8 @@ namespace hemelb
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
       distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
-      distribn_t velocity_max = ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
-      distribn_t stress_max = ConvertStressToLatticeUnits(mSimConfig->MaxStress);
+      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
+      distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
 
       for (int i = 0; i < inlets; i++)
       {

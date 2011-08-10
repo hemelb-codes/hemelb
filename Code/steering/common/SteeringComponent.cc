@@ -59,18 +59,18 @@ namespace hemelb
 
       distribn_t
           lattice_density_min =
-              mLbm->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_min)
+              mUnits->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_min)
                   / Cs2;
       distribn_t
           lattice_density_max =
-              mLbm->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_max)
+              mUnits->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_max)
                   / Cs2;
       distribn_t
           lattice_velocity_max =
-              mLbm->ConvertVelocityToLatticeUnits(mVisControl->mDomainStats.physical_velocity_threshold_max);
+              mUnits->ConvertVelocityToLatticeUnits(mVisControl->mDomainStats.physical_velocity_threshold_max);
       distribn_t
           lattice_stress_max =
-              mLbm->ConvertStressToLatticeUnits(mVisControl->mDomainStats.physical_stress_threshold_max);
+              mUnits->ConvertStressToLatticeUnits(mVisControl->mDomainStats.physical_stress_threshold_max);
 
       mVisControl->SetProjection((int) pixels_x,
                                  (int) pixels_y,
