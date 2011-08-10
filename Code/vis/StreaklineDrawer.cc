@@ -799,8 +799,8 @@ namespace hemelb
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
-        Location<float> p1;
-	Location<float> p2;
+        Vector3D<float> p1;
+	Vector3D<float> p2;
         p1.x = particleVec[n].x - float (iLatDat->GetXSiteCount() >> 1);
         p1.y = particleVec[n].y - float (iLatDat->GetYSiteCount() >> 1);
         p1.z = particleVec[n].z - float (iLatDat->GetZSiteCount() >> 1);

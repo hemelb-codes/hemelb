@@ -2,7 +2,7 @@
 #include <assert.h>
 
 #include "geometry/LatticeData.h"
-#include "vis/Location.h"
+#include "vis/Vector3D.h"
 #include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
@@ -37,7 +37,7 @@ namespace hemelb
 	return GetCurrentIndex();
       }
 
-      Location<site_t> RayTracer::ClusterBuilder::BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
+      Vector3D<site_t> RayTracer::ClusterBuilder::BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
       {
 	return GetCurrentLocation()*mLatticeData->GetBlockSize();
       }
@@ -66,7 +66,7 @@ namespace hemelb
 
       geometry::LatticeData::BlockData *
       RayTracer::ClusterBuilder::BlockTraverser::GetBlockDataForLocation
-      (const Location<site_t>& iLocation)
+      (const Vector3D<site_t>& iLocation)
       {
 	return mLatticeData->GetBlock(GetIndexFromLocation(iLocation));
       }      
@@ -83,14 +83,14 @@ namespace hemelb
       }	
 
       RayTracer::ClusterBuilder::SiteTraverser 
-      RayTracer::ClusterBuilder::BlockTraverser::GetSiteTraverserForLocation(const Location<site_t>& iLocation)
+      RayTracer::ClusterBuilder::BlockTraverser::GetSiteTraverserForLocation(const Vector3D<site_t>& iLocation)
       {
 	return SiteTraverser(mLatticeData, GetIndexFromLocation(iLocation));
       }	
 
       
 
-      bool RayTracer::ClusterBuilder::BlockTraverser::IsValidLocation(Location<site_t> iBlock)
+      bool RayTracer::ClusterBuilder::BlockTraverser::IsValidLocation(Vector3D<site_t> iBlock)
       {
 	return mLatticeData->IsValidBlockSite
 	  (iBlock.x,
@@ -103,7 +103,7 @@ namespace hemelb
 	return mBlockVisited[iN];
       }
 
-      bool RayTracer::ClusterBuilder::BlockTraverser::IsBlockVisited(Location <site_t>iLocation)
+      bool RayTracer::ClusterBuilder::BlockTraverser::IsBlockVisited(Vector3D<site_t>iLocation)
       {
 
 	return mBlockVisited[GetIndexFromLocation(iLocation)];
@@ -125,7 +125,7 @@ namespace hemelb
 	mBlockVisited[iBlockId] = true;
       }
 
-      void RayTracer::ClusterBuilder::BlockTraverser::MarkBlockVisited(Location<site_t> iLocation)
+      void RayTracer::ClusterBuilder::BlockTraverser::MarkBlockVisited(Vector3D<site_t> iLocation)
       {
 	site_t lNumber = GetIndexFromLocation(iLocation);
 	assert(lNumber < mLatticeData->GetBlockCount());

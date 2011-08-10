@@ -42,8 +42,8 @@ namespace hemelb
      * @param iStressType
      * @param mode
      */
-    void Screen::RenderLine(const Location<float>& endPoint1,
-                            const Location<float>& endPoint2,
+    void Screen::RenderLine(const Vector3D<float>& endPoint1,
+                            const Vector3D<float>& endPoint2,
                             const VisSettings* visSettings)
     {
       pixels->RenderLine(endPoint1, endPoint2, visSettings);
@@ -59,15 +59,15 @@ namespace hemelb
       MaxXValue = maxX;
       MaxYValue = maxX;
 
-      UnitVectorProjectionX = viewpoint->RotateToViewpoint(Location<float>(MaxXValue, 0.0F, 0.0F));
-      UnitVectorProjectionY = viewpoint->RotateToViewpoint(Location<float>(0.0F, MaxYValue, 0.0F));
+      UnitVectorProjectionX = viewpoint->RotateToViewpoint(Vector3D<float>(MaxXValue, 0.0F, 0.0F));
+      UnitVectorProjectionY = viewpoint->RotateToViewpoint(Vector3D<float>(0.0F, MaxYValue, 0.0F));
 
       pixels->SetSize(pixelsX, pixelsY);
 
       ScaleX = (float) pixels->GetPixelsX() / (2.F * MaxXValue);
       ScaleY = (float) pixels->GetPixelsY() / (2.F * MaxYValue);
 
-      Location<float> radVector = viewpoint->RotateToViewpoint(Location<float>(0.F, 0.F, -rad));
+      Vector3D<float> radVector = viewpoint->RotateToViewpoint(Vector3D<float>(0.F, 0.F, -rad));
 
       mVtx = radVector*0.5F - UnitVectorProjectionX - UnitVectorProjectionY;
 
@@ -114,15 +114,15 @@ namespace hemelb
       return pixels->GetStoredPixelCount();
     }
 
-    const Location<float>& Screen::GetVtx() const
+    const Vector3D<float>& Screen::GetVtx() const
     {
       return mVtx;
     }
-    const Location<float>& Screen::GetUnitVectorProjectionX() const
+    const Vector3D<float>& Screen::GetUnitVectorProjectionX() const
     {
       return UnitVectorProjectionX;
     }
-    const Location<float>& Screen::GetUnitVectorProjectionY() const
+    const Vector3D<float>& Screen::GetUnitVectorProjectionY() const
     {
       return UnitVectorProjectionY;
     }

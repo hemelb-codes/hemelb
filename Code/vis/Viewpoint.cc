@@ -1,18 +1,18 @@
 #include <math.h>
 
 
-#include "vis/Location.h"
+#include "vis/Vector3D.h"
 #include "vis/Viewpoint.h"
 
 namespace hemelb
 {
   namespace vis
   {
-    Viewpoint::Viewpoint()
-      //mViewpointCentre(0.0F) 
+    Viewpoint::Viewpoint() :
+      mViewpointCentre(0.0F) 
     {}
     
-    Location<float> Viewpoint::RotateToViewpoint(const Location<float>& iVector) const
+    Vector3D<float> Viewpoint::RotateToViewpoint(const Vector3D<float>& iVector) const
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
@@ -20,12 +20,12 @@ namespace hemelb
       return Rotate(SinXRotation, CosXRotation, SinYRotation, CosYRotation, iVector);
     }
 
-    Location <float> Viewpoint::Rotate
+    Vector3D <float> Viewpoint::Rotate
     (float iSinX,
      float iCosX,
      float iSinY,
      float iCosY,
-     const Location<float>& iVector)
+     const Vector3D<float>& iVector)
     {
       // A rotation of iThetaX clockwise about the x-axis
       // Followed by a rotation of iThetaY anticlockwise about the y-axis.
@@ -40,15 +40,15 @@ namespace hemelb
 
       const float lTemp = iVector.z * iCosX - iVector.y * iSinX;
       
-      return Location <float>(
+      return Vector3D <float>(
 	lTemp*iSinY + iVector.x*iCosY,
 	iVector.z * iSinX + iVector.y * iCosX,
 	lTemp * iCosY - iVector.x * iSinY);
     }
 
-    Location<float> Viewpoint::Project(const Location<float>& p1) const
+    Vector3D<float> Viewpoint::Project(const Vector3D<float>& p1) const
     {
-      Location<float> x1;
+      Vector3D<float> x1;
       
 
       x1 = p1 - mViewpointCentre;
@@ -56,14 +56,14 @@ namespace hemelb
       x1.x = x1.y;
       x1.y = temp1;
       
-      Location<float> x2 = Rotate( -SinYRotation, CosYRotation, 
+      Vector3D<float> x2 = Rotate( -SinYRotation, CosYRotation, 
 				  -SinXRotation, CosXRotation, x1);
       
       
 
       float temp2 = mDistance / (-x2.z);
      
-      return Location <float> (temp2 * x2.y,
+      return Vector3D <float> (temp2 * x2.y,
 			       temp2 * x2.x,
 			       -x2.z);
 
@@ -80,7 +80,7 @@ namespace hemelb
     void Viewpoint::SetViewpointPosition(
       float longitude,
       float latitude,
-      const Location<float>& iLocalCentre,
+      const Vector3D<float>& iLocalCentre,
       float rad,
       float iDistance)
     {
@@ -90,14 +90,14 @@ namespace hemelb
       SinXRotation = sinf(latitude);
       CosXRotation = cosf(latitude);
 
-      mViewpointCentre = RotateToViewpoint(Location<float>(0., 0., rad));
+      mViewpointCentre = RotateToViewpoint(Vector3D<float>(0., 0., rad));
 
       mViewpointCentre += iLocalCentre;
 
       mDistance = iDistance;
     }
 
-    const Location<float>& Viewpoint::GetViewpointCentre() const
+    const Vector3D<float>& Viewpoint::GetViewpointCentre() const
     {
       return mViewpointCentre;
     }
