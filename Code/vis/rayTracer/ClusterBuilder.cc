@@ -9,7 +9,7 @@
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
-#include "vis/rayTracer/Location.h"
+#include "vis/Location.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "log/Logger.h"
 

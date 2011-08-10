@@ -122,7 +122,7 @@ namespace hemelb
       float rad = 5.F * vis->system_size;
       float dist = 0.5F * rad;
 
-      float centre[3] = { iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z };
+      Location<float> centre = Location<float>( iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z );
 
       mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
           * (float) DEG_TO_RAD, centre, rad, dist);

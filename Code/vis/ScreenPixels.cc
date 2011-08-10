@@ -101,19 +101,19 @@ namespace hemelb
      * @param iStressType
      * @param mode
      */
-    void ScreenPixels::RenderLine(const float endPoint1[3],
-                                  const float endPoint2[3],
+    void ScreenPixels::RenderLine(const Location<float>& endPoint1,
+				  const Location<float>& endPoint2,
                                   const VisSettings* visSettings)
     {
       // Store end points of the line and 'current' point (x and y).
-      int x = int (endPoint1[0]);
-      int y = int (endPoint1[1]);
+      int x = int (endPoint1.x);
+      int y = int (endPoint1.y);
 
       int x1, y1, x2, y2;
-      if (endPoint2[0] < endPoint1[0])
+      if (endPoint2.x < endPoint1.x)
       {
-        x1 = int (endPoint2[0]);
-        y1 = int (endPoint2[1]);
+        x1 = int (endPoint2.x);
+        y1 = int (endPoint2.y);
         x2 = x;
         y2 = y;
       }
@@ -121,8 +121,8 @@ namespace hemelb
       {
         x1 = x;
         y1 = y;
-        x2 = int (endPoint2[0]);
-        y2 = int (endPoint2[1]);
+        x2 = int (endPoint2.x);
+        y2 = int (endPoint2.y);
       }
 
       // Set dx with the difference between x-values at the endpoints.

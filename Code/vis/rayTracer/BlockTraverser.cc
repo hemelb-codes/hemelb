@@ -2,7 +2,7 @@
 #include <assert.h>
 
 #include "geometry/LatticeData.h"
-#include "vis/rayTracer/Location.h"
+#include "vis/Location.h"
 #include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
