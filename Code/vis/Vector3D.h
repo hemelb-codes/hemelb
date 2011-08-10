@@ -9,44 +9,55 @@ namespace hemelb
 {
   namespace vis
   {
-    //Location is essentially a 3D vector, storing the 
+    //Vector3D is essentially a 3D vector, storing the 
     //x, y and z co-ordinate in the templated numeric type
     //Other methods are defined for convenience
     template <class T = site_t> 
-      class Location
+      class Vector3D
       {
       public:
       T x, y, z;
 
-      Location() {};
+      Vector3D() {};
 
-      Location(T iX, T iY, T iZ) :
+      Vector3D(T iX, T iY, T iZ) :
       x(iX), y(iY), z(iZ)
       {}
       
-      Location(T iX) :
+      Vector3D(T iX) :
       x(iX), y(iX), z(iX)
       {}
 
       //Copy constructor - can be used to perform type converstion 
       template < class OldTypeT >
-      Location<T>(const Location<OldTypeT> & iOldLocation)
+      Vector3D<T>(const Vector3D<OldTypeT> & iOldVector3D)
       {
-	x = static_cast<T>(iOldLocation.x);
-	y = static_cast<T>(iOldLocation.y);
-	z = static_cast<T>(iOldLocation.z);
+	x = static_cast<T>(iOldVector3D.x);
+	y = static_cast<T>(iOldVector3D.y);
+	z = static_cast<T>(iOldVector3D.z);
       }
+
+      //Equality
+      bool operator==(const Vector3D<T> right) 
+      {
+	if(x != right.x) { return false; }
+	if(y != right.y) { return false; }
+	if(z != right.z) { return false; }
+	
+	return true;
+      }
+      
 	
       //Vector addition
-      Location<T> operator+(const Location<T> right) const
+      Vector3D<T> operator+(const Vector3D<T> right) const
       {
-	return Location(x + right.x,
+	return Vector3D(x + right.x,
 			y + right.y,
 			z + right.z);
       }
 
       //Vector addition
-      void operator+=(const Location<T> right) 
+      void operator+=(const Vector3D<T> right) 
       {
 	x += right.x;
 	y += right.y;
@@ -55,35 +66,35 @@ namespace hemelb
       
 
       //Vector subraction
-      Location<T> operator-(const Location<T> right) const
+      Vector3D<T> operator-(const Vector3D<T> right) const
       {
-	return Location(x - right.x,
+	return Vector3D(x - right.x,
 			y - right.y,
 			z - right.z);
       }
 	
       //Scalar multiplication
       template < class MultiplierT >
-      Location<T> operator*(const MultiplierT multiplier) const
+      Vector3D<T> operator*(const MultiplierT multiplier) const
       {
-	return Location(x * multiplier,
+	return Vector3D(x * multiplier,
 			y * multiplier,
 			z * multiplier);
       }
 
-      static Location<T> MaxLimit() 
+      static Vector3D<T> MaxLimit() 
       {
-	return Location(std::numeric_limits<T>::max());
+	return Vector3D(std::numeric_limits<T>::max());
       }
 
-      static Location<T> MinLimit()
+      static Vector3D<T> MinLimit()
       {
-	return Location(std::numeric_limits<T>::min());
+	return Vector3D(std::numeric_limits<T>::min());
       }
 
-      //Updates the Location in the first Location paramter with the smallest of each
-      //of the x, y and z co-ordinates independently of both Locations
-      static void UpdateMinLocation(Location<T>& io_store_location, const Location<T>& i_compare_location)
+      //Updates the Vector3D in the first Vector3D paramter with the smallest of each
+      //of the x, y and z co-ordinates independently of both Vector3Ds
+      static void UpdateMinVector3D(Vector3D<T>& io_store_location, const Vector3D<T>& i_compare_location)
       {
 	io_store_location.x = 
 	util::NumericalFunctions::min
@@ -101,9 +112,9 @@ namespace hemelb
 	 i_compare_location.z);
       }
       
-      //Updates the Location in the first Location paramter with the largest of each
-      //of the x, y and z co-ordinates independently of both Locations
-      static void UpdateMaxLocation(Location<T>& io_store_location, const Location<T>& i_compare_location)
+      //Updates the Vector3D in the first Vector3D paramter with the largest of each
+      //of the x, y and z co-ordinates independently of both Vector3Ds
+      static void UpdateMaxVector3D(Vector3D<T>& io_store_location, const Vector3D<T>& i_compare_location)
       {
 	io_store_location.x = 
 	util::NumericalFunctions::max
@@ -124,19 +135,19 @@ namespace hemelb
       };
 
     template <class T>
-    Location<T> operator+(const Location<T> left, const Location <T> right) 
+    Vector3D<T> operator+(const Vector3D<T> left, const Vector3D <T> right) 
     {
       return left + right;
     }
    
     template <class T>
-    Location<T> operator-(const Location<T> left, const Location <T> right)
+    Vector3D<T> operator-(const Vector3D<T> left, const Vector3D <T> right)
     {
       return left - right;
     }
     
     template <class T>
-    Location<T> operator*(const T left, const Location <T> right)
+    Vector3D<T> operator*(const T left, const Vector3D <T> right)
     {
       return right*left;
     }

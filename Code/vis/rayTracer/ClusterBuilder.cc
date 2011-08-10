@@ -9,7 +9,7 @@
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
-#include "vis/Location.h"
+#include "vis/Vector3D.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "log/Logger.h"
 
@@ -89,16 +89,16 @@ namespace hemelb
 	//These locations will eventually contain the bounds of the
 	//rectangular cluster, both in terms of block number and
 	//site numbers
-	Location<site_t> lClusterBlockMin = Location<site_t>::MaxLimit();
-	Location<site_t> lClusterBlockMax = Location<site_t>::MinLimit();
-	Location<site_t> lClusterSiteMin = Location<site_t>::MaxLimit();
-	Location<site_t> lClusterSiteMax = Location<site_t>::MinLimit();
+	Vector3D<site_t> lClusterBlockMin = Vector3D<site_t>::MaxLimit();
+	Vector3D<site_t> lClusterBlockMax = Vector3D<site_t>::MinLimit();
+	Vector3D<site_t> lClusterSiteMin = Vector3D<site_t>::MaxLimit();
+	Vector3D<site_t> lClusterSiteMax = Vector3D<site_t>::MinLimit();
 
 	//To discover the cluster, we continually visit the neighbours 
 	//of sequential blocks 
 	//We keep a stack of all the sites that must be processed 
 	//and sequentially add neighbours to it
-	std::stack<Location<site_t> > lBlocksToProcess;
+	std::stack<Vector3D<site_t> > lBlocksToProcess;
 
 	//Set up the initial condition
 	lBlocksToProcess.push(mBlockTraverser.GetCurrentLocation());
@@ -109,15 +109,15 @@ namespace hemelb
 	{
 	  //Get location off the top of the stack
 	  //(we could actually take anything off the stack)
-	  Location<site_t> lCurrentLocation = lBlocksToProcess.top();
+	  Vector3D<site_t> lCurrentLocation = lBlocksToProcess.top();
 	  lBlocksToProcess.pop();
 	    
 	  if(AreSitesAssignedToLocalProcessorRankInBlock(
 	       mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)))
 	  {
 	    //Update block range of the cluster
-	    Location<site_t>::UpdateMinLocation(lClusterBlockMin, lCurrentLocation);
-	    Location<site_t>::UpdateMaxLocation(lClusterBlockMax, lCurrentLocation);
+	    Vector3D<site_t>::UpdateMinVector3D(lClusterBlockMin, lCurrentLocation);
+	    Vector3D<site_t>::UpdateMaxVector3D(lClusterBlockMax, lCurrentLocation);
 	     
 	    //Update the cluster id of the given block
 	    site_t lBlockID = mBlockTraverser.GetIndexFromLocation(lCurrentLocation);
@@ -132,12 +132,12 @@ namespace hemelb
 	      if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->
 		  site_data[lSiteTraverser.GetCurrentIndex()] != BIG_NUMBER3)
 	      {
-		Location<site_t>::UpdateMinLocation(lClusterSiteMin,
+		Vector3D<site_t>::UpdateMinVector3D(lClusterSiteMin,
 						    lSiteTraverser.GetCurrentLocation() +
 						    lCurrentLocation*
 						    mBlockTraverser.GetBlockSize());
 		
-		Location<site_t>::UpdateMaxLocation(lClusterSiteMax,
+		Vector3D<site_t>::UpdateMaxVector3D(lClusterSiteMax,
 						    lSiteTraverser.GetCurrentLocation() +
 						    lCurrentLocation*
 						    mBlockTraverser.GetBlockSize());
@@ -153,54 +153,54 @@ namespace hemelb
 	AddCluster(lClusterBlockMin, lClusterBlockMax, lClusterSiteMin, lClusterSiteMax);
       }
 
-      const Location<site_t> RayTracer::ClusterBuilder::mNeighbours[26] =
+      const Vector3D<site_t> RayTracer::ClusterBuilder::mNeighbours[26] =
       {
-	Location<site_t>(-1, -1, -1),
-	Location<site_t>(-1, -1,  0),
-	Location<site_t>(-1, -1,  1),
+	Vector3D<site_t>(-1, -1, -1),
+	Vector3D<site_t>(-1, -1,  0),
+	Vector3D<site_t>(-1, -1,  1),
 		    
-	Location<site_t>(-1,  0, -1),
-	Location<site_t>(-1,  0,  0),
-	Location<site_t>(-1,  0,  1),
+	Vector3D<site_t>(-1,  0, -1),
+	Vector3D<site_t>(-1,  0,  0),
+	Vector3D<site_t>(-1,  0,  1),
 
-	Location<site_t>(-1,  1, -1),
-	Location<site_t>(-1,  1,  0),
-	Location<site_t>(-1,  1,  1),
+	Vector3D<site_t>(-1,  1, -1),
+	Vector3D<site_t>(-1,  1,  0),
+	Vector3D<site_t>(-1,  1,  1),
 
 		    
-	Location<site_t>( 0, -1, -1),
-	Location<site_t>( 0, -1,  0),
-	Location<site_t>( 0, -1,  1),
+	Vector3D<site_t>( 0, -1, -1),
+	Vector3D<site_t>( 0, -1,  0),
+	Vector3D<site_t>( 0, -1,  1),
 		    
-	Location<site_t>( 0,  0, -1),
+	Vector3D<site_t>( 0,  0, -1),
 	// 0 0 0 is same site
-	Location<site_t>( 0,  0,  1),
+	Vector3D<site_t>( 0,  0,  1),
 
-	Location<site_t>( 0,  1, -1),
-	Location<site_t>( 0,  1,  0),
-	Location<site_t>( 0,  1,  1),
+	Vector3D<site_t>( 0,  1, -1),
+	Vector3D<site_t>( 0,  1,  0),
+	Vector3D<site_t>( 0,  1,  1),
 
-	Location<site_t>( 1, -1, -1),
-	Location<site_t>( 1, -1,  0),
-	Location<site_t>( 1, -1,  1),
+	Vector3D<site_t>( 1, -1, -1),
+	Vector3D<site_t>( 1, -1,  0),
+	Vector3D<site_t>( 1, -1,  1),
 		    
-	Location<site_t>( 1,  0, -1),
-	Location<site_t>( 1,  0,  0),
-	Location<site_t>( 1,  0,  1),
+	Vector3D<site_t>( 1,  0, -1),
+	Vector3D<site_t>( 1,  0,  0),
+	Vector3D<site_t>( 1,  0,  1),
 
-	Location<site_t>( 1,  1, -1),
-	Location<site_t>( 1,  1,  0),
-	Location<site_t>( 1,  1,  1)
+	Vector3D<site_t>( 1,  1, -1),
+	Vector3D<site_t>( 1,  1,  0),
+	Vector3D<site_t>( 1,  1,  1)
       };
 
       void RayTracer::ClusterBuilder::AddNeighbouringBlocks
-      (Location<site_t> iCurrentLocation, 
-       std::stack<Location<site_t> >& oBlocksToProcess)
+      (Vector3D<site_t> iCurrentLocation, 
+       std::stack<Vector3D<site_t> >& oBlocksToProcess)
       {
 	// Loop over all neighbouring blocks
 	for (int l = 0; l < 26; l++)
 	{
-	  Location<site_t> lNeighbouringBlock = iCurrentLocation + mNeighbours[l];
+	  Vector3D<site_t> lNeighbouringBlock = iCurrentLocation + mNeighbours[l];
 		
 	  //The neighouring block location might not exist
 	  //eg negative co-ordinates
@@ -242,10 +242,10 @@ namespace hemelb
 	return false;
       } 
 
-      void RayTracer::ClusterBuilder::AddCluster(Location<site_t> iClusterBlockMin,
-						 Location<site_t> iClusterBlockMax,
-						 Location<site_t> iClusterVoxelMin, 
-						 Location<site_t> iClusterVoxelMax)
+      void RayTracer::ClusterBuilder::AddCluster(Vector3D<site_t> iClusterBlockMin,
+						 Vector3D<site_t> iClusterBlockMax,
+						 Vector3D<site_t> iClusterVoxelMin, 
+						 Vector3D<site_t> iClusterVoxelMax)
       {
 	//The friendly locations must be turned into a format usable by the ray tracer
 	Cluster lNewCluster;
@@ -265,13 +265,13 @@ namespace hemelb
         assert(static_cast<site_t>(lNewCluster.blocksY) == (1 + iClusterBlockMax.y - iClusterBlockMin.y));
         assert(static_cast<site_t>(lNewCluster.blocksZ) == (1 + iClusterBlockMax.z - iClusterBlockMin.z));
 	
-	lNewCluster.minSite = Location<float>(iClusterVoxelMin) -
-	  Location<float>((float) mLatticeData->GetXSiteCount(),
+	lNewCluster.minSite = Vector3D<float>(iClusterVoxelMin) -
+	  Vector3D<float>((float) mLatticeData->GetXSiteCount(),
 			  (float) mLatticeData->GetYSiteCount(),
 			  (float) mLatticeData->GetZSiteCount()) * 0.5F;
 	
-	lNewCluster.maxSite = Location<float>(iClusterVoxelMax + Location<site_t>(1)) - 
-	  Location<float>(0.5F * (float) mLatticeData->GetXSiteCount(),
+	lNewCluster.maxSite = Vector3D<float>(iClusterVoxelMax + Vector3D<site_t>(1)) - 
+	  Vector3D<float>(0.5F * (float) mLatticeData->GetXSiteCount(),
 			  0.5F * (float) mLatticeData->GetYSiteCount(),
 			  0.5F * (float) mLatticeData->GetZSiteCount());
 
@@ -334,13 +334,13 @@ namespace hemelb
 		("Examining block number = %u", (unsigned int) lBlockNum);
 
 	      
-	      Location<site_t>block_coordinates = Location<site_t>(i, j, k) + mClusterBlockMins[iClusterId];
+	      Vector3D<site_t>block_coordinates = Vector3D<site_t>(i, j, k) + mClusterBlockMins[iClusterId];
 	      site_t block_id = mLatticeData->GetBlockIdFromBlockCoords
 		(block_coordinates.x,
 		 block_coordinates.y,
 		 block_coordinates.z);
 	      
-	      Location<site_t>* mins = &mClusterBlockMins[iClusterId]; 
+	      Vector3D<site_t>* mins = &mClusterBlockMins[iClusterId]; 
 	      assert(block_id == 
 		     ( (i + mins->x) * mLatticeData->GetYBlockCount() + (j + mins->y))
 		     * mLatticeData->GetZBlockCount() + (k + mins->z) 
@@ -371,12 +371,12 @@ namespace hemelb
       
 
       void RayTracer::ClusterBuilder::UpdateSiteData
-      (geometry::LatticeData::BlockData * lBlock, site_t iBlockNum,  unsigned int iClusterId, Location<site_t>i_block_coordinates)
+      (geometry::LatticeData::BlockData * lBlock, site_t iBlockNum,  unsigned int iClusterId, Vector3D<site_t>i_block_coordinates)
       {
 	unsigned int l_site_id = -1;
 
 	//Location site_coordinates_of_block = i_block_coordinates * mLatticeData->GetBlockSize();
-	Location<site_t>siteLocOnBlock;
+	Vector3D<site_t>siteLocOnBlock;
 
 	for (siteLocOnBlock.x = 0; siteLocOnBlock.x < mLatticeData->GetBlockSize(); siteLocOnBlock.x++)
 	{

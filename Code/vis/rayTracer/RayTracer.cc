@@ -10,7 +10,7 @@
 #include "debug/Debugger.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h" 
-#include "vis/Location.h"
+#include "vis/Vector3D.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "log/Logger.h"
 
@@ -22,8 +22,8 @@ namespace hemelb
     {
       // TODO RENAME THIS FUNCTION
       void RayTracer::AABBvsRay(const AABB* aabb,
-				const Location<float>& inverseDirection,
-				const Location<bool>& xyzComponentIsPositive,
+				const Vector3D<float>& inverseDirection,
+				const Vector3D<bool>& xyzComponentIsPositive,
 				float* t_near,
 				float* t_far)
       {
@@ -112,12 +112,12 @@ namespace hemelb
 	bCurrentRay->Stress = iSiteData->Stress;		
       }
 
-      void RayTracer::TraverseVoxels(const Location<float>& block_min,
-				     const Location<float>& block_x,
+      void RayTracer::TraverseVoxels(const Vector3D<float>& block_min,
+				     const Vector3D<float>& block_x,
 				     const SiteData_t* iSiteData,
 				     float t,
 				     Ray* bCurrentRay,
-				     const Location<bool>& xyz_Is_1)
+				     const Vector3D<bool>& xyz_Is_1)
       {
 	site_t i_vec[3];
 
@@ -134,7 +134,7 @@ namespace hemelb
 								     block_size_1);
 	
 
-	Location<float> t_max;
+	Vector3D<float> t_max;
 	t_max.x = (block_min.x + (float) (xyz_Is_1.x
 					      ? i_vec[0] + 1
 					      : i_vec[0])) * bCurrentRay->InverseDirection.x;
@@ -284,12 +284,12 @@ namespace hemelb
       }
 
       void RayTracer::TraverseBlocks(const Cluster* cluster, 
-				     const Location<bool>& xyz_Is_1,
-				     const Location<float>& ray_dx,
+				     const Vector3D<bool>& xyz_Is_1,
+				     const Vector3D<float>& ray_dx,
 				     Ray *bCurrentRay)
       {
 
-	Location<int> cluster_blocks_vec;
+	Vector3D<int> cluster_blocks_vec;
 	cluster_blocks_vec.x = cluster->blocksX - 1;
 	cluster_blocks_vec.y = cluster->blocksY - 1;
 	cluster_blocks_vec.z = cluster->blocksZ - 1;
@@ -297,8 +297,8 @@ namespace hemelb
 	int cluster_blocksYz = (int) cluster->blocksY * (int) cluster->blocksZ;
 	int cluster_blocks = (int) cluster->blocksX * cluster_blocksYz;
 
-	Location<int> i_vec;
-	Location<float> block_min;
+	Vector3D<int> i_vec;
+	Vector3D<float> block_min;
 
 	i_vec.x = util::NumericalFunctions::enforceBounds(
 	  cluster_blocks_vec.x,
@@ -315,15 +315,15 @@ namespace hemelb
 	  0,
 	  (int) (mBlockSizeInverse * ray_dx.z));
 
-	block_min = Location<float>(i_vec) * mBlockSizeFloat - 
-	  Location<float>(ray_dx.x,ray_dx.y,ray_dx.z);
+	block_min = Vector3D<float>(i_vec) * mBlockSizeFloat - 
+	  Vector3D<float>(ray_dx.x,ray_dx.y,ray_dx.z);
 	
 
 	int i = i_vec.x * cluster_blocksYz;
 	int j = i_vec.y * cluster_blocksZ;
 	int k = i_vec.z;
 
-	Location<float> block_x;
+	Vector3D<float> block_x;
 	if (!cluster->SiteData[i + j + k].empty())
 	{
 	  block_x = block_min * -1.0F;
@@ -331,7 +331,7 @@ namespace hemelb
 	  TraverseVoxels(block_min, block_x, &cluster->SiteData[i + j + k][0], 0.0F, bCurrentRay, xyz_Is_1);
 	}
 
-	Location <float> t_max;
+	Vector3D <float> t_max;
 
 	t_max.x = (xyz_Is_1.x
 		    ? block_min.x + mBlockSizeFloat
@@ -346,7 +346,7 @@ namespace hemelb
 		   : block_min.z) * bCurrentRay->InverseDirection.z;
 
 
-	Location<float> t_delta = bCurrentRay->InverseDirection * mBlockSizeFloat;
+	Vector3D<float> t_delta = bCurrentRay->InverseDirection * mBlockSizeFloat;
 	
 	while (true)
 	{
@@ -509,10 +509,10 @@ namespace hemelb
 
       void RayTracer::Render()
       {
-	const Location<float>& projectedUnitX = mScreen->GetUnitVectorProjectionX();
-	const Location<float>& projectedUnitY = mScreen->GetUnitVectorProjectionY();
+	const Vector3D<float>& projectedUnitX = mScreen->GetUnitVectorProjectionX();
+	const Vector3D<float>& projectedUnitY = mScreen->GetUnitVectorProjectionY();
 
-	Location<float> viewpointCentre = mViewpoint->GetViewpointCentre();
+	Vector3D<float> viewpointCentre = mViewpoint->GetViewpointCentre();
 
 	for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
 	{
@@ -520,14 +520,14 @@ namespace hemelb
 
 	  // the image-based projection of the mClusterBuilder.GetClusters() bounding box is
 	  // calculated here
-	  Location <float> cluster_x = thisCluster->minBlock - viewpointCentre;
+	  Vector3D <float> cluster_x = thisCluster->minBlock - viewpointCentre;
 	  
 	  float subimageMins[2], subimageMaxes[2];
 
 	  subimageMins[0] = subimageMins[1] = std::numeric_limits<float>::max();
 	  subimageMaxes[0] = subimageMaxes[1] = std::numeric_limits<float>::min();
 
-	  Location<float> p1;
+	  Vector3D<float> p1;
 
 	  // Temp fix due to refactoring of cluster builder
 
@@ -555,7 +555,7 @@ namespace hemelb
 	      {
 		p1.z = lMinMax_z[k];
 
-		Location<float> p2 = mViewpoint->Project(p1);
+		Vector3D<float> p2 = mViewpoint->Project(p1);
 
 		subimageMins[0] = fminf(subimageMins[0], p2.x);
 		subimageMaxes[0] = fmaxf(subimageMaxes[0], p2.x);
@@ -597,8 +597,8 @@ namespace hemelb
 	  aabb.acc_5 = thisCluster->maxSite.z - viewpointCentre.z;
 	  aabb.acc_6 = thisCluster->minSite.z - viewpointCentre.z;
 
-	  Location<float> par3;
-	  const Location<float>& vtx = mScreen->GetVtx();
+	  Vector3D<float> par3;
+	  const Vector3D<float>& vtx = mScreen->GetVtx();
 	  
 	  par3 = vtx + projectedUnitX * (float) subimageMinXY[0]
 	    + projectedUnitY * (float) subimageMinXY[1];
@@ -606,7 +606,7 @@ namespace hemelb
 
 	  for (int subImageX = subimageMinXY[0]; subImageX <= subimageMaxXY[0]; ++subImageX)
 	  {
-	    Location<float> lRayDirection = par3;
+	    Vector3D<float> lRayDirection = par3;
 
 	    for (int subImageY = subimageMinXY[1]; subImageY <= subimageMaxXY[1]; ++subImageY)
 	    {
@@ -627,7 +627,7 @@ namespace hemelb
 	      lRay.InverseDirection.y = 1.0F / lRay.Direction.y;
 	      lRay.InverseDirection.z = 1.0F / lRay.Direction.z;
 
-	      Location<bool> lRayInPositiveDirection;
+	      Vector3D<bool> lRayInPositiveDirection;
 	      lRayInPositiveDirection.x = lRay.Direction.x > 0.0F;
 	      lRayInPositiveDirection.y = lRay.Direction.y > 0.0F;
 	      lRayInPositiveDirection.z = lRay.Direction.z > 0.0F;
@@ -644,7 +644,7 @@ namespace hemelb
 		continue;
 	      }
 
-	      Location <float> ray_dx = t_near * lRay.Direction - cluster_x;
+	      Vector3D <float> ray_dx = t_near * lRay.Direction - cluster_x;
 
 	      lRay.VelocityColour[0] = 0.0F;
 	      lRay.VelocityColour[1] = 0.0F;

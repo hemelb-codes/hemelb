@@ -12,7 +12,7 @@ namespace hemelb
 	mCurrentNumber=0;
       }
 	
-      Location<site_t> RayTracer::ClusterBuilder::VolumeTraverser::GetCurrentLocation()
+      Vector3D<site_t> RayTracer::ClusterBuilder::VolumeTraverser::GetCurrentLocation()
       {
 	return mCurrentLocation;
       }
@@ -23,7 +23,7 @@ namespace hemelb
       }
 
       site_t RayTracer::ClusterBuilder::VolumeTraverser::
-      GetIndexFromLocation(Location<site_t> iLocation)
+      GetIndexFromLocation(Vector3D<site_t> iLocation)
       {
 	return ((iLocation.x * GetYCount() + iLocation.y) 
 		* GetZCount()) + iLocation.z;

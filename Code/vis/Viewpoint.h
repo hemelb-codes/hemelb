@@ -1,7 +1,7 @@
 #ifndef HEMELB_VIS_VIEWPOINT_H
 #define HEMELB_VIS_VIEWPOINT_H
 
-#include "vis/Location.h"
+#include "vis/Vector3D.h"
 
 namespace hemelb
 {
@@ -12,31 +12,31 @@ namespace hemelb
     public:
       Viewpoint();
  
-      Location<float> RotateToViewpoint(const Location<float>& iVector) const;
+      Vector3D<float> RotateToViewpoint(const Vector3D<float>& iVector) const;
 
-      Location <float> Project(const Location<float>& p1) const;
+      Vector3D <float> Project(const Vector3D<float>& p1) const;
 
       void SetViewpointPosition(float longitude,
 				float latitude,
-				const Location<float>& iLocalCentre,
+				const Vector3D<float>& iLocalCentre,
 				float rad,
 				float distance);
 
-      const Location<float>& GetViewpointCentre() const;
+      const Vector3D<float>& GetViewpointCentre() const;
 
     private:
-      static Location <float> Rotate(
+      static Vector3D <float> Rotate(
 	float iSinX,
 	float iCosX,
 	float iSinY,
 	float iCosY,
-	const Location<float>& iVector);
+	const Vector3D<float>& iVector);
 	  
       float mDistance;
       float SinYRotation, CosYRotation;
       float SinXRotation, CosXRotation;
       
-      Location<float> mViewpointCentre;
+      Vector3D<float> mViewpointCentre;
     };
   }
 }
