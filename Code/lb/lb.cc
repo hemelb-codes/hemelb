@@ -8,6 +8,7 @@
 #include "lb/lb.h"
 #include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
+#include "lb/rheology_models/CassonRheologyModel.h"
 
 namespace hemelb
 {
@@ -155,10 +156,19 @@ namespace hemelb
       ReadParameters();
 
       typedef hemelb::lb::collisions::implementations::LBGK CO;
+
+      //hemelb::lb::collisions::implementations::LBGKNN<CassonRheologyModel> CO;
+
       if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
       {
         hemelb::lb::collisions::implementations::ELBM::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
         hemelb::lb::collisions::implementations::ELBM::setTau(&mParams.Tau);
+      }
+
+      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel>))
+      {
+        hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel>::createTauArray(mLatDat->GetLocalFluidSiteCount(),
+                                                                          mParams.Tau);
       }
 
       InitCollisions<hemelb::lb::streamers::implementations::SimpleCollideAndStream<CO>,
