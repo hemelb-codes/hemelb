@@ -5,12 +5,13 @@
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
-#include "vis/RayTracer.h"
+#include "vis/rayTracer/RayTracer.h"
 #include "vis/GlyphDrawer.h"
 
 #include "io/XdrFileWriter.h"
 
 namespace hemelb
+		
 {
   namespace vis
   {
@@ -96,7 +97,7 @@ namespace hemelb
       mVisSettings.ctr_y = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[1] + maxes[1]));
       mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
-      myRayTracer = new RayTracer(mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
+      myRayTracer = new raytracer::RayTracer(mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
       myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
@@ -121,7 +122,7 @@ namespace hemelb
       float rad = 5.F * vis->system_size;
       float dist = 0.5F * rad;
 
-      float centre[3] = { iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z };
+      Vector3D<float> centre = Vector3D<float>( iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z );
 
       mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
           * (float) DEG_TO_RAD, centre, rad, dist);

@@ -1,39 +1,42 @@
 #ifndef HEMELB_VIS_VIEWPOINT_H
 #define HEMELB_VIS_VIEWPOINT_H
 
+#include "vis/Vector3D.h"
+
 namespace hemelb
 {
   namespace vis
   {
     class Viewpoint
     {
-      public:
-        void RotateToViewpoint(float iXIn, float iYIn, float iZIn, float rotatedVector[3]) const;
+    public:
+      Viewpoint();
+ 
+      Vector3D<float> RotateToViewpoint(const Vector3D<float>& iVector) const;
 
-        void Project(const float p1[], float p2[]) const;
+      Vector3D <float> Project(const Vector3D<float>& p1) const;
 
-        void SetViewpointPosition(float longitude,
-                                  float latitude,
-                                  float localCentre[3],
-                                  float rad,
-                                  float distance);
+      void SetViewpointPosition(float longitude,
+				float latitude,
+				const Vector3D<float>& iLocalCentre,
+				float rad,
+				float distance);
 
-        const float* GetViewpointCentre() const;
+      const Vector3D<float>& GetViewpointCentre() const;
 
-      private:
-        void Rotate(float sinX,
-                    float cosX,
-                    float sinY,
-                    float cosY,
-                    float xIn,
-                    float yIn,
-                    float zIn,
-                    float rotatedVector[3]) const;
-
-        float dist;
-        float SinYRotation, CosYRotation;
-        float SinXRotation, CosXRotation;
-        float x[3];
+    private:
+      static Vector3D <float> Rotate(
+	float iSinX,
+	float iCosX,
+	float iSinY,
+	float iCosY,
+	const Vector3D<float>& iVector);
+	  
+      float mDistance;
+      float SinYRotation, CosYRotation;
+      float SinXRotation, CosXRotation;
+      
+      Vector3D<float> mViewpointCentre;
     };
   }
 }
