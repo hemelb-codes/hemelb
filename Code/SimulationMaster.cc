@@ -75,6 +75,11 @@ SimulationMaster::~SimulationMaster()
     delete mLbm;
   }
 
+  if (mBoundaryComms != NULL)
+  {
+    delete mBoundaryComms;
+  }
+
   if (network != NULL)
   {
     delete network;
@@ -102,6 +107,11 @@ SimulationMaster::~SimulationMaster()
   if (mSimulationState != NULL)
   {
     delete mSimulationState;
+  }
+
+  if (mUnits != NULL)
+  {
+    delete mUnits;
   }
 
 }
@@ -198,13 +208,18 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                             network);
   }
 
-  mLbm->Initialise(lReceiveTranslator, mVisControl);
+  mUnits = new hemelb::util::UnitConverter(mLbm->GetLbmParams(), mSimulationState, iSimConfig);
+
+  mBoundaryComms = new hemelb::lb::BoundaryComms(mLatDat, iSimConfig, mSimulationState, mUnits);
+
+  mLbm->Initialise(lReceiveTranslator, mVisControl, mBoundaryComms, mUnits);
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         mVisControl,
                                                         mLbm,
                                                         &mNet,
-                                                        mSimulationState);
+                                                        mSimulationState,
+                                                        mUnits);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();
@@ -217,7 +232,6 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                              iSimConfig->VisLongitude,
                              iSimConfig->VisLatitude,
                              iSimConfig->VisZoom);
-
 }
 
 /**
@@ -260,6 +274,7 @@ void SimulationMaster::RunSimulation(double iStartTime,
   mapType networkImagesCompleted;
 
   std::vector<hemelb::net::IteratedAction*> actors;
+  actors.push_back(mBoundaryComms);
   actors.push_back(mLbm);
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
@@ -317,8 +332,6 @@ void SimulationMaster::RunSimulation(double iStartTime,
                                                                           write_snapshot_image,
                                                                           mSimulationState->GetDoRendering());
     }
-
-    mLbm->UpdateBoundaryDensities(mSimulationState->GetTimeStep());
 
     // Cycle.
 
@@ -496,7 +509,9 @@ void SimulationMaster::RunSimulation(double iStartTime,
       snprintf(snapshot_filename, 255, "snapshot_%06li.dat", mSimulationState->GetTimeStep());
 
       mSnapshotsWritten++;
-      mLbm->WriteConfigParallel(stability, snapshot_directory + std::string(snapshot_filename));
+      mLbm->WriteConfigParallel(stability,
+                                snapshot_directory + std::string(snapshot_filename),
+                                mBoundaryComms);
     }
 
     mSnapshotTime += (hemelb::util::myClock() - lPreSnapshotTime);

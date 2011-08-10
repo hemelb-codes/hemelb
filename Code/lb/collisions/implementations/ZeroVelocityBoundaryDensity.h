@@ -55,7 +55,7 @@ namespace hemelb
             site_t siteIndex = iIndex - iFirstIndex;
 
             lDensity
-                = (*mInletOutletWallCollision).getBoundaryDensityArray(bLatDat->GetBoundaryId(iIndex));
+                = mInletOutletWallCollision->getBoundaryDensityArray(bLatDat->GetBoundaryId(iIndex));
 
             iCollisionOperator->getBoundarySiteValues(lFOld,
                                                       lDensity,

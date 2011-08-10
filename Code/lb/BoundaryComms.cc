@@ -8,7 +8,11 @@ namespace hemelb
   namespace lb
   {
 
-    BoundaryComms::BoundaryComms(const geometry::LatticeData* iLatDat, const SimConfig* mSimConfig)
+    BoundaryComms::BoundaryComms(const geometry::LatticeData* iLatDat,
+                                 SimConfig* iSimConfig,
+                                 SimulationState* iSimState,
+                                 util::UnitConverter* iUnits) :
+      net::IteratedAction(), mState(iSimState), mSimConfig(iSimConfig), mUnits(iUnits)
     {
       // Work out stuff for simulation (ie. should give same result on all procs)
       proc_t BCrank = 0;
@@ -21,6 +25,8 @@ namespace hemelb
 
       nTotInlets = (int) mSimConfig->Inlets.size();
       nTotOutlets = (int) mSimConfig->Outlets.size();
+
+      ReadParameters();
 
       inlet_groups = new MPI_Group[nTotInlets];
       inlet_comms = new MPI_Comm[nTotInlets];
@@ -70,8 +76,6 @@ namespace hemelb
       // on a different communicator.
       util::VectorFunctions::BubbleSort(inlets);
       util::VectorFunctions::BubbleSort(outlets);
-
-      printStuff();
 
       // Now all processes must find out which process belongs to what group
 
@@ -176,6 +180,8 @@ namespace hemelb
         MPI_Comm_create(MPI_COMM_WORLD, outlet_groups[i], &outlet_comms[i]);
       }
 
+      InitialiseBoundaryDensities();
+
       // Clear up
 
       for (int i = 0; i < nTotInlets; i++)
@@ -199,6 +205,28 @@ namespace hemelb
 
     BoundaryComms::~BoundaryComms()
     {
+
+      // The density arrays
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        delete[] inlet_density_cycle;
+        delete[] outlet_density_cycle;
+      }
+      else
+      {
+        // On the BCproc these just point to the appropriate part of *_density_cycle array which
+        // by now doesn't exist anymore
+        delete[] inlet_density;
+        delete[] outlet_density;
+      }
+
+      delete[] inlet_density_avg;
+      delete[] outlet_density_avg;
+      delete[] inlet_density_amp;
+      delete[] outlet_density_amp;
+      delete[] inlet_density_phs;
+      delete[] outlet_density_phs;
+
       // Communicators and groups
       delete[] outlet_comms;
       delete[] inlet_comms;
@@ -206,8 +234,45 @@ namespace hemelb
       delete[] inlet_groups;
     }
 
-    void BoundaryComms::BroadcastBoundaryDensities(distribn_t* inlet_density,
-                                                   distribn_t* outlet_density)
+    void BoundaryComms::InitialiseBoundaryDensities()
+    {
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
+
+        for (unsigned long time_step = 0; time_step < mState->GetTimeStepsPerCycle(); time_step++)
+        {
+          for (int i = 0; i < nTotInlets; i++)
+          {
+            inlet_density_cycle[time_step * nTotInlets + i] = inlet_density_avg[i]
+                + inlet_density_amp[i] * cos(w * (double) time_step + inlet_density_phs[i]);
+          }
+          for (int i = 0; i < nTotOutlets; i++)
+          {
+            outlet_density_cycle[time_step * nTotOutlets + i] = outlet_density_avg[i]
+                + outlet_density_amp[i] * cos(w * (double) time_step + outlet_density_phs[i]);
+          }
+        }
+
+        inlet_density = inlet_density_cycle;
+        outlet_density = outlet_density_cycle;
+      }
+
+      BroadcastBoundaryDensities();
+    }
+
+    void BoundaryComms::RequestComms()
+    {
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        unsigned long time_step = mState->GetTimeStep() % mState->GetTimeStepsPerCycle();
+        inlet_density = &inlet_density_cycle[time_step * nTotInlets];
+        outlet_density = &outlet_density_cycle[time_step * nTotOutlets];
+      }
+      BroadcastBoundaryDensities();
+    }
+
+    void BoundaryComms::BroadcastBoundaryDensities()
     {
       for (int i = 0; i < nInlets; i++)
       {
@@ -227,24 +292,155 @@ namespace hemelb
       }
     }
 
-    void BoundaryComms::printStuff()
+    void BoundaryComms::ReadParameters()
     {
-      std::cout << topology::NetworkTopology::Instance()->GetLocalRank() << " nInlets: " << nInlets
-          << "/" << nTotInlets << " nOutlets: " << nOutlets << "/" << nTotOutlets << " inlets: ";
+      allocateInlets();
 
-      for (unsigned int i = 0; i < inlets.size(); i++)
+      for (int n = 0; n < nTotInlets; n++)
       {
-        std::cout << inlets[i] << " ";
+        hemelb::SimConfig::InOutLet *lInlet = &mSimConfig->Inlets[n];
+
+        inlet_density_avg[n] = mUnits->ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
+        inlet_density_amp[n] = mUnits->ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
+        inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
       }
 
-      std::cout << "outlets: ";
+      allocateOutlets();
 
-      for (unsigned int i = 0; i < outlets.size(); i++)
+      for (int n = 0; n < nTotOutlets; n++)
       {
-        std::cout << outlets[i] << " ";
+        hemelb::SimConfig::InOutLet *lOutlet = &mSimConfig->Outlets[n];
+        outlet_density_avg[n] = mUnits->ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
+        outlet_density_amp[n] = mUnits->ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
+        outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
       }
 
-      std::cout << std::endl;
+    }
+
+    void BoundaryComms::allocateInlets()
+    {
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        inlet_density_cycle = new distribn_t[util::NumericalFunctions::max<int>(1, nTotInlets)
+            * mState->GetTimeStepsPerCycle()];
+      }
+      else
+      {
+        inlet_density = new distribn_t[nTotInlets];
+      }
+
+      inlet_density_avg = new distribn_t[nTotInlets];
+      inlet_density_amp = new distribn_t[nTotInlets];
+      inlet_density_phs = new distribn_t[nTotInlets];
+    }
+
+    void BoundaryComms::allocateOutlets()
+    {
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        outlet_density_cycle = new distribn_t[util::NumericalFunctions::max<int>(1, nTotOutlets)
+            * mState->GetTimeStepsPerCycle()];
+      }
+      else
+      {
+        outlet_density = new distribn_t[nTotOutlets];
+      }
+
+      outlet_density_avg = new distribn_t[nTotOutlets];
+      outlet_density_amp = new distribn_t[nTotOutlets];
+      outlet_density_phs = new distribn_t[nTotOutlets];
+    }
+
+    void BoundaryComms::Reset()
+    {
+      int i;
+
+      for (i = 0; i < nTotInlets; i++)
+      {
+        inlet_density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(inlet_density_avg[i] * Cs2);
+        inlet_density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(inlet_density_amp[i]
+            * Cs2);
+      }
+      for (i = 0; i < nTotOutlets; i++)
+      {
+        outlet_density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(outlet_density_avg[i] * Cs2);
+        outlet_density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(outlet_density_amp[i]
+            * Cs2);
+      }
+
+      mState->DoubleTimeResolution();
+
+      for (i = 0; i < nTotInlets; i++)
+      {
+        inlet_density_avg[i] = mUnits->ConvertPressureToLatticeUnits(inlet_density_avg[i]) / Cs2;
+        inlet_density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(inlet_density_amp[i])
+            / Cs2;
+      }
+      for (i = 0; i < nTotOutlets; i++)
+      {
+        outlet_density_avg[i] = mUnits->ConvertPressureToLatticeUnits(outlet_density_avg[i]) / Cs2;
+        outlet_density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(outlet_density_amp[i])
+            / Cs2;
+      }
+
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        delete[] inlet_density_cycle;
+        delete[] outlet_density_cycle;
+
+        inlet_density_cycle = new distribn_t[hemelb::util::NumericalFunctions::max<int>(1,
+                                                                                        nTotInlets)
+            * mState->GetTimeStepsPerCycle()];
+        outlet_density_cycle
+            = new distribn_t[hemelb::util::NumericalFunctions::max<int>(1, nTotOutlets)
+                * mState->GetTimeStepsPerCycle()];
+      }
+
+      InitialiseBoundaryDensities();
+    }
+
+    // Calculate the BCs for each boundary site type and the
+    // non-equilibrium distribution functions.
+    void BoundaryComms::CalculateBC(distribn_t f[],
+                                    hemelb::geometry::LatticeData::SiteType iSiteType,
+                                    unsigned int iBoundaryId,
+                                    distribn_t *density,
+                                    distribn_t *vx,
+                                    distribn_t *vy,
+                                    distribn_t *vz,
+                                    distribn_t f_neq[])
+    {
+      distribn_t dummy_density;
+
+      for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+      {
+        f_neq[l] = f[l];
+      }
+
+      if (iSiteType == hemelb::geometry::LatticeData::FLUID_TYPE)
+      {
+        D3Q15::CalculateDensityAndVelocity(f, *density, *vx, *vy, *vz);
+      }
+      else
+      {
+        if (iSiteType == hemelb::geometry::LatticeData::INLET_TYPE)
+        {
+          *density = inlet_density[iBoundaryId];
+        }
+        else
+        {
+          *density = outlet_density[iBoundaryId];
+        }
+
+        D3Q15::CalculateDensityAndVelocity(f, dummy_density, *vx, *vy, *vz);
+        D3Q15::CalculateFeq(*density, *vx, *vy, *vz, f);
+
+      }
+      for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+      {
+        f_neq[l] -= f[l];
+      }
+
     }
 
   }
