@@ -57,6 +57,12 @@ namespace hemelb
                                        const double nor[],
                                        distribn_t &stress,
                                        const double &iStressParameter);
+      static double CalculateStrainRateTensorComponent(const unsigned iRow,
+                                                       const unsigned iColumn,
+                                                       const double &iTau,
+                                                       const distribn_t iFNeq[]);
+      static double CalculateShearRate(const double &iTau,
+                                       const distribn_t &iFNeq);
   };
 }
 #endif /* HEMELB_D3Q15_H */
