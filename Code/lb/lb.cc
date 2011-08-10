@@ -9,6 +9,7 @@
 #include "util/utilityFunctions.h"
 #include "vis/RayTracer.h"
 #include "lb/rheology_models/CassonRheologyModel.h"
+#include "lb/rheology_models/TruncatedPowerLawRheologyModel.h"
 
 namespace hemelb
 {
@@ -157,7 +158,8 @@ namespace hemelb
 
       typedef hemelb::lb::collisions::implementations::LBGK CO;
 
-      //hemelb::lb::collisions::implementations::LBGKNN<CassonRheologyModel> CO;
+      //typedef hemelb::lb::collisions::implementations::LBGKNN<CassonRheologyModel> CO;
+      //typedef hemelb::lb::collisions::implementations::LBGKNN<TruncatedPowerLawRheologyModel> CO;
 
       if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
       {
@@ -168,8 +170,15 @@ namespace hemelb
       if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel>))
       {
         hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel>::createTauArray(mLatDat->GetLocalFluidSiteCount(),
-                                                                          mParams.Tau);
+                                                                                                                          mParams.Tau);
       }
+
+      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel>))
+      {
+        hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel>::createTauArray(mLatDat->GetLocalFluidSiteCount(),
+                                                                                                                                     mParams.Tau);
+      }
+
 
       InitCollisions<hemelb::lb::streamers::implementations::SimpleCollideAndStream<CO>,
           hemelb::lb::streamers::implementations::ZeroVelocityEquilibrium<CO>,
