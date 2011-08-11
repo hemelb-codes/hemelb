@@ -1,8 +1,10 @@
+import os.path
 import re
 import numpy as np
 from enthought import units as U
 
 from .orderer import continuousOrder
+from .series import SnapCollection
 
 # The units used by HemeLB, which are canonical, in a way.
 hlbUnits = {'position' : U.length.mm,
@@ -161,3 +163,51 @@ def findStart(filename, AllData=False):
         continue
     
     raise ValueError("File '%s' does not appear to have a '[Data]' section." % self.filename)
+
+class Cfx(SnapCollection):
+    """Collection of CFX snapshots, as produced by Savvas."""
+    
+    loader = staticmethod(CfxSnapshot)
+    snapPattern = '*.txt'
+
+    @staticmethod
+    def snapToTime(snap, delimiter):
+        return float(
+            os.path.splitext(os.path.basename(snap))[0].split(delimiter)[1][:-1]
+            )
+
+    def orderSnap(self, snap):
+        return continuousOrder(snap)
+    
+    pass
+
+class CfxCentreLine(SnapCollection):
+    """Collection of CFX centre line snapshots, as produced by Hywel."""
+    
+    loader = staticmethod(CfxCentreLineSnapshot)
+    snapPattern = '*.txt'
+
+    @staticmethod
+    def snapToTime(snap, delimiter):
+        return float(
+            os.path.splitext(os.path.basename(snap))[0].split(delimiter)[1][:-1]
+            )
+
+    pass
+
+class SteadyCfx(Cfx):
+    """A slight hack; this class returns the same snapshot for any
+    requested time. Intended for use with steady state simulations
+    that are time-independent."""
+    
+    def __init__(self, filename, tol=tol):
+        base, self.snapPattern = os.path.split(filename)
+        return Cfx.__init__(self, base, tol=tol)
+    
+    def __getitem__(self, time):
+        return Cfx.__getitem__(self, 0.)
+    
+    @staticmethod
+    def snapToTime(snap, delimiter):
+        return 0.
+    pass
