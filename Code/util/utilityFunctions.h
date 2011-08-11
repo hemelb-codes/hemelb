@@ -197,27 +197,6 @@ namespace hemelb
           return false;
         }
 
-        template<typename T>
-        static void BubbleSort(std::vector<T> &list)
-        {
-          bool swapped = true;
-
-          while (swapped)
-          {
-            swapped = false;
-
-            for (int i = 0; i < (int) list.size() - 1; i++)
-            {
-              if (list[i] > list[i + 1])
-              {
-                T temp = list[i];
-                list[i] = list[i + 1];
-                list[i + 1] = temp;
-                swapped = true;
-              }
-            }
-          }
-        }
     };
 
     // Returns the number of seconds to 6dp elapsed since the Epoch
