@@ -28,10 +28,13 @@ namespace hemelb
         ~BoundaryComms();
 
         void RequestComms();
+        void EndIteration();
         void Reset();
 
+        void WaitForComms(const int index, unsigned int IOtype);
+
         void InitialiseBoundaryDensities();
-        void BroadcastBoundaryDensities();
+        void SendBoundaryDensities();
         void CalculateBC(distribn_t f[],
                          hemelb::geometry::LatticeData::SiteType iSiteType,
                          unsigned int iBoundaryId,
@@ -46,10 +49,10 @@ namespace hemelb
 
         // The densities
         // Unfortunately made public, because of a lot of old code relying on this being in LBM
+        // TODO: Make private
         distribn_t *inlet_density, *outlet_density;
         distribn_t *inlet_density_avg, *outlet_density_avg;
         distribn_t *inlet_density_amp, *outlet_density_amp;
-        distribn_t *inlet_density_phs, *outlet_density_phs;
 
       private:
         proc_t BCproc; // Process responsible for sending out BC info
@@ -63,6 +66,8 @@ namespace hemelb
         int nTotInlets;
         int nTotOutlets;
 
+        distribn_t *inlet_density_phs, *outlet_density_phs;
+
         // Number of inlets/outlets on this process
         int nInlets;
         int nOutlets;
@@ -71,11 +76,22 @@ namespace hemelb
         std::vector<int> inlets;
         std::vector<int> outlets;
 
-        // Communicators and groups
-        MPI_Comm* outlet_comms;
-        MPI_Comm* inlet_comms;
-        MPI_Group* outlet_groups;
-        MPI_Group* inlet_groups;
+        // These are only assigned on the BC proc as it is the only one that needs to know
+        // which proc has which IOlet
+        int* inletRequestOffset;
+        int* outletRequestOffset;
+        int* nInletProcs;
+        int* nOutletProcs;
+        int** inletProcsList;
+        int** outletProcsList;
+
+        MPI_Request* inlet_request;
+        MPI_Request* outlet_request;
+        MPI_Status* inlet_status;
+        MPI_Status* outlet_status;
+
+        bool* inletCommAlreadyChecked;
+        bool* outletCommAlreadyChecked;
 
         SimulationState* mState;
         SimConfig* mSimConfig;

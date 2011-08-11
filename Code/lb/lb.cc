@@ -72,13 +72,13 @@ namespace hemelb
       mMidFluidCollision = new hemelb::lb::collisions::MidFluidCollision();
       mWallCollision = new hemelb::lb::collisions::WallCollision();
       mInletCollision
-          = new hemelb::lb::collisions::InletOutletCollision(iBoundaryComms->inlet_density);
+          = new hemelb::lb::collisions::InletOutletCollision(iBoundaryComms, INLET);
       mOutletCollision
-          = new hemelb::lb::collisions::InletOutletCollision(iBoundaryComms->outlet_density);
+          = new hemelb::lb::collisions::InletOutletCollision(iBoundaryComms, OUTLET);
       mInletWallCollision
-          = new hemelb::lb::collisions::InletOutletWallCollision(iBoundaryComms->inlet_density);
+          = new hemelb::lb::collisions::InletOutletWallCollision(iBoundaryComms, INLET);
       mOutletWallCollision
-          = new hemelb::lb::collisions::InletOutletWallCollision(iBoundaryComms->outlet_density);
+          = new hemelb::lb::collisions::InletOutletWallCollision(iBoundaryComms, OUTLET);
     }
 
     void LBM::Initialise(site_t* iFTranslator,

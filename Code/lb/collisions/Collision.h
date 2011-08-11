@@ -4,6 +4,7 @@
 #include "vis/Control.h"
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
+#include "lb/BoundaryComms.h"
 
 namespace hemelb
 {
