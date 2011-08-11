@@ -14,7 +14,7 @@ namespace hemelb
       {
 
         public:
-          InletOutletWallCollision(distribn_t* iOutletDensityArray);
+          InletOutletWallCollision(BoundaryComms* iBoundaryComms, unsigned int iIOtype);
 
           virtual ~InletOutletWallCollision();
 
@@ -28,8 +28,11 @@ namespace hemelb
                                               geometry::LatticeData* bLatDat,
                                               hemelb::vis::Control *iControl);
 
+          const unsigned int IOtype;
+
         private:
           distribn_t* mBoundaryDensityArray;
+          BoundaryComms* mBoundaryComms;
 
       };
 

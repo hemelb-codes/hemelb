@@ -7,9 +7,14 @@ namespace hemelb
   {
     namespace collisions
     {
-      InletOutletWallCollision::InletOutletWallCollision(distribn_t* iOutletDensityArray)
+      InletOutletWallCollision::InletOutletWallCollision(BoundaryComms* iBoundaryComms,
+                                                         unsigned int iIOtype) :
+        IOtype(iIOtype), mBoundaryComms(iBoundaryComms)
       {
-        mBoundaryDensityArray = iOutletDensityArray;
+        if (IOtype == INLET)
+          mBoundaryDensityArray = mBoundaryComms->inlet_density;
+        else if (IOtype == OUTLET)
+          mBoundaryDensityArray = mBoundaryComms->outlet_density;
       }
 
       InletOutletWallCollision::~InletOutletWallCollision()
@@ -19,6 +24,8 @@ namespace hemelb
 
       distribn_t InletOutletWallCollision::getBoundaryDensityArray(const int index)
       {
+        mBoundaryComms->WaitForComms(index, IOtype);
+
         return mBoundaryDensityArray[index];
       }
 

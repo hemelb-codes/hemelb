@@ -26,12 +26,15 @@ namespace hemelb
       nTotInlets = (int) mSimConfig->Inlets.size();
       nTotOutlets = (int) mSimConfig->Outlets.size();
 
-      ReadParameters();
+      inletCommAlreadyChecked = new bool[nTotInlets];
+      outletCommAlreadyChecked = new bool[nTotOutlets];
 
-      inlet_groups = new MPI_Group[nTotInlets];
-      inlet_comms = new MPI_Comm[nTotInlets];
-      outlet_groups = new MPI_Group[nTotOutlets];
-      outlet_comms = new MPI_Comm[nTotOutlets];
+      for (int i = 0; i < nTotInlets; i++)
+        inletCommAlreadyChecked[i] = false;
+      for (int i = 0; i < nTotOutlets; i++)
+        outletCommAlreadyChecked[i] = false;
+
+      ReadParameters();
 
       // Work out which and how many inlets/outlets on this process
 
@@ -42,15 +45,20 @@ namespace hemelb
       outlets = std::vector<int>(0);
 
       // Put all in/outlets onto BCproc
-      if (topology::NetworkTopology::Instance()->GetLocalRank() == BCproc)
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         nInlets = nTotInlets;
-        for (int i = 0; i < nTotInlets; i++)
-          inlets.push_back((int) i);
-
         nOutlets = nTotOutlets;
+
+        nInletProcs = new int[nTotInlets];
+        nOutletProcs = new int[nTotOutlets];
+        inletProcsList = new int*[nTotInlets];
+        outletProcsList = new int*[nTotOutlets];
+
+        for (int i = 0; i < nTotInlets; i++)
+          nInletProcs[i] = 0;
         for (int i = 0; i < nTotOutlets; i++)
-          outlets.push_back((int) i);
+          nOutletProcs[i] = 0;
       }
 
       for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
@@ -69,137 +77,172 @@ namespace hemelb
         }
       }
 
-      // Have to be sorted in order to prevent deadlocks when broadcasting
-      // e.g. One process has two inlets, say 3 and 7. BCproc will always have them in order
-      // so it will attempt to broadcast inlet 3 data first. If the process with 3 and 7 asks
-      // for inlet 7 first we will have a deadlock, since it will be waiting for a broadcast
-      // on a different communicator.
-      util::VectorFunctions::BubbleSort(inlets);
-      util::VectorFunctions::BubbleSort(outlets);
+      // Now BC process must find out which process belongs to what group
 
-      // Now all processes must find out which process belongs to what group
-
-      // These should be bool, but MPI only supports MPI_INT
-      // For each inlet/outlet there is an array of length equal to total number of procs.
-      // Each stores true/false value. True if proc of rank equal to the index contains
-      // the given inlet/outlet.
-      int **inletProcsList = new int*[nTotInlets];
-      int **outletProcsList = new int*[nTotOutlets];
-
-      int nProcs = topology::NetworkTopology::Instance()->GetProcessorCount();
-
-      for (int i = 0; i < nTotInlets; i++)
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        inletProcsList[i] = new int[nProcs];
-      }
+        // These should be bool, but MPI only supports MPI_INT
+        // For each inlet/outlet there is an array of length equal to total number of procs.
+        // Each stores true/false value. True if proc of rank equal to the index contains
+        // the given inlet/outlet.
+        int **inletBoolList = new int*[nTotInlets];
+        int **outletBoolList = new int*[nTotOutlets];
 
-      for (int i = 0; i < nTotOutlets; i++)
-      {
-        outletProcsList[i] = new int[nProcs];
-      }
+        int nProcs = topology::NetworkTopology::Instance()->GetProcessorCount();
 
-      // This is where the info about whether a proc contains a given inlet/outlet is sent/received
-      // If it does contain the given inlet/outlet it sends a true value, else it sends a false.
-      for (int i = 0; i < nTotInlets; i++)
-      {
-        int inletOnThisProc = util::VectorFunctions::member(inlets, i); // true if inlet i is on this proc
-
-        MPI_Allgather(&inletOnThisProc, 1, MPI_INT, inletProcsList[i], 1, MPI_INT, MPI_COMM_WORLD);
-      }
-      for (int i = 0; i < nTotOutlets; i++)
-      {
-        int outletOnThisProc = util::VectorFunctions::member(outlets, i); // true if outlet i is on this proc
-
-        MPI_Allgather(&outletOnThisProc, 1, MPI_INT, outletProcsList[i], 1, MPI_INT, MPI_COMM_WORLD);
-      }
-
-      // Now we have an array for each group with true (1) at indices corresponding to
-      // processes that are members of that group. We have to convert this into arrays
-      // of ints which store a list of processor ranks.
-
-      int **inletGroupMembers = new int*[nTotInlets];
-      int **outletGroupMembers = new int*[nTotOutlets];
-
-      MPI_Group orig_group;
-
-      MPI_Comm_group(MPI_COMM_WORLD, &orig_group);
-
-      for (int i = 0; i < nTotInlets; i++)
-      {
-        int nGroupMembers = 0;
-
-        for (int j = 0; j < nProcs; j++)
+        for (int i = 0; i < nTotInlets; i++)
         {
-          if (inletProcsList[i][j])
-            nGroupMembers++;
+          inletBoolList[i] = new int[nProcs];
         }
 
-        inletGroupMembers[i] = new int[nGroupMembers];
-
-        int memberIndex = 0;
-
-        for (int j = 0; j < nProcs; j++)
+        for (int i = 0; i < nTotOutlets; i++)
         {
-          if (inletProcsList[i][j])
+          outletBoolList[i] = new int[nProcs];
+        }
+
+        MPI_Status tempStat;
+
+        // Non-BC procs will be sending at this point
+        for (int i = 0; i < nTotInlets; i++)
+        {
+          for (int proc = 0; proc < nProcs; proc++)
           {
-            inletGroupMembers[i][memberIndex] = j;
-            memberIndex++;
+            if (proc != BCproc)
+            {
+              MPI_Recv(&inletBoolList[i][proc], 1, MPI_INT, proc, 100, MPI_COMM_WORLD, &tempStat);
+            }
+            else
+              inletBoolList[i][proc] = false;
           }
         }
 
-        // Create the group and comm now
-        MPI_Group_incl(orig_group, nGroupMembers, inletGroupMembers[i], &inlet_groups[i]);
-        MPI_Comm_create(MPI_COMM_WORLD, inlet_groups[i], &inlet_comms[i]);
-      }
-
-      for (int i = 0; i < nTotOutlets; i++)
-      {
-        int nGroupMembers = 0;
-
-        for (int j = 0; j < nProcs; j++)
+        for (int i = 0; i < nTotOutlets; i++)
         {
-          if (outletProcsList[i][j])
-            nGroupMembers++;
-        }
-
-        outletGroupMembers[i] = new int[nGroupMembers];
-
-        int memberIndex = 0;
-
-        for (int j = 0; j < nProcs; j++)
-        {
-          if (outletProcsList[i][j])
+          for (int proc = 0; proc < nProcs; proc++)
           {
-            outletGroupMembers[i][memberIndex] = j;
-            memberIndex++;
+            if (proc != BCproc)
+            {
+              MPI_Recv(&outletBoolList[i][proc], 1, MPI_INT, proc, 101, MPI_COMM_WORLD, &tempStat);
+            }
+            else
+              outletBoolList[i][proc] = false;
           }
         }
 
-        // Create the group and comm now
-        MPI_Group_incl(orig_group, nGroupMembers, outletGroupMembers[i], &outlet_groups[i]);
-        MPI_Comm_create(MPI_COMM_WORLD, outlet_groups[i], &outlet_comms[i]);
+        // Now we have an array for each IOlet with true (1) at indices corresponding to
+        // processes that are members of that group. We have to convert this into arrays
+        // of ints which store a list of processor ranks.
+
+        for (int i = 0; i < nTotInlets; i++)
+        {
+          for (int j = 0; j < nProcs; j++)
+          {
+            if (inletBoolList[i][j])
+              nInletProcs[i]++;
+          }
+
+          inletProcsList[i] = new int[nInletProcs[i]];
+
+          int memberIndex = 0;
+
+          for (int j = 0; j < nProcs; j++)
+          {
+            if (inletBoolList[i][j])
+            {
+              inletProcsList[i][memberIndex] = j;
+              memberIndex++;
+            }
+          }
+        }
+
+        for (int i = 0; i < nTotOutlets; i++)
+        {
+          for (int j = 0; j < nProcs; j++)
+          {
+            if (outletBoolList[i][j])
+              nOutletProcs[i]++;
+          }
+
+          outletProcsList[i] = new int[nOutletProcs[i]];
+
+          int memberIndex = 0;
+
+          for (int j = 0; j < nProcs; j++)
+          {
+            if (outletBoolList[i][j])
+            {
+              outletProcsList[i][memberIndex] = j;
+              memberIndex++;
+            }
+          }
+        }
+
+        // Clear up
+        for (int i = 0; i < nTotInlets; i++)
+        {
+          delete[] inletBoolList[i];
+        }
+
+        for (int i = 0; i < nTotOutlets; i++)
+        {
+          delete[] outletBoolList[i];
+        }
+
+        delete[] inletBoolList;
+        delete[] outletBoolList;
+
+      }
+      else
+      {
+        // This is where the info about whether a proc contains a given inlet/outlet is sent
+        // If it does contain the given inlet/outlet it sends a true value, else it sends a false.
+        for (int i = 0; i < nTotInlets; i++)
+        {
+          int inletOnThisProc = util::VectorFunctions::member(inlets, i); // true if inlet i is on this proc
+
+          MPI_Ssend(&inletOnThisProc, 1, MPI_INT, BCproc, 100, MPI_COMM_WORLD);
+        }
+        for (int i = 0; i < nTotOutlets; i++)
+        {
+          int outletOnThisProc = util::VectorFunctions::member(outlets, i); // true if outlet i is on this proc
+
+          MPI_Ssend(&outletOnThisProc, 1, MPI_INT, BCproc, 101, MPI_COMM_WORLD);
+        }
+      }
+
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        int nInletRequests = 0;
+        int nOutletRequests = 0;
+
+        inletRequestOffset = new int[nTotInlets];
+        outletRequestOffset = new int[nTotOutlets];
+
+        for (int i = 0; i < nTotInlets; i++)
+        {
+          inletRequestOffset[i] = nInletRequests;
+          nInletRequests += nInletProcs[i];
+        }
+        for (int i = 0; i < nTotOutlets; i++)
+        {
+          outletRequestOffset[i] = nOutletRequests;
+          nOutletRequests += nOutletProcs[i];
+        }
+
+        inlet_request = new MPI_Request[nInletRequests];
+        outlet_request = new MPI_Request[nOutletRequests];
+        inlet_status = new MPI_Status[nInletRequests];
+        outlet_status = new MPI_Status[nOutletRequests];
+      }
+      else
+      {
+        inlet_request = new MPI_Request[nTotInlets];
+        outlet_request = new MPI_Request[nTotOutlets];
+        inlet_status = new MPI_Status[nTotInlets];
+        outlet_status = new MPI_Status[nTotOutlets];
       }
 
       InitialiseBoundaryDensities();
-
-      // Clear up
-
-      for (int i = 0; i < nTotInlets; i++)
-      {
-        delete[] inletProcsList[i];
-        delete[] inletGroupMembers[i];
-      }
-
-      for (int i = 0; i < nTotOutlets; i++)
-      {
-        delete[] outletProcsList[i];
-        delete[] outletGroupMembers[i];
-      }
-
-      delete[] inletProcsList;
-      delete[] inletGroupMembers;
-      delete[] outletProcsList;
-      delete[] outletGroupMembers;
 
     }
 
@@ -211,6 +254,19 @@ namespace hemelb
       {
         delete[] inlet_density_cycle;
         delete[] outlet_density_cycle;
+
+        for (int i = 0; i < nTotInlets; i++)
+        {
+          delete[] inletProcsList[i];
+          delete[] outletProcsList[i];
+        }
+
+        delete[] inletRequestOffset;
+        delete[] outletRequestOffset;
+        delete[] inletProcsList;
+        delete[] outletProcsList;
+        delete[] nInletProcs;
+        delete[] nOutletProcs;
       }
       else
       {
@@ -228,10 +284,46 @@ namespace hemelb
       delete[] outlet_density_phs;
 
       // Communicators and groups
-      delete[] outlet_comms;
-      delete[] inlet_comms;
-      delete[] outlet_groups;
-      delete[] inlet_groups;
+      delete[] outlet_request;
+      delete[] inlet_request;
+      delete[] outlet_status;
+      delete[] inlet_status;
+    }
+
+    void BoundaryComms::WaitForComms(const int index, unsigned int IOtype)
+    {
+      if (IOtype == INLET)
+      {
+        if (!inletCommAlreadyChecked[index])
+        {
+          if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+          {
+            MPI_Waitall(nInletProcs[index],
+                        &inlet_request[inletRequestOffset[index]],
+                        &inlet_status[inletRequestOffset[index]]);
+          }
+          else
+          {
+            MPI_Wait(&inlet_request[index], &inlet_status[index]);
+          }
+        }
+      }
+      else if (IOtype == OUTLET)
+      {
+        if (!outletCommAlreadyChecked[index])
+        {
+          if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+          {
+            MPI_Waitall(nOutletProcs[index],
+                        &outlet_request[outletRequestOffset[index]],
+                        &outlet_status[outletRequestOffset[index]]);
+          }
+          else
+          {
+            MPI_Wait(&outlet_request[index], &outlet_status[index]);
+          }
+        }
+      }
     }
 
     void BoundaryComms::InitialiseBoundaryDensities()
@@ -258,7 +350,7 @@ namespace hemelb
         outlet_density = outlet_density_cycle;
       }
 
-      BroadcastBoundaryDensities();
+      SendBoundaryDensities();
     }
 
     void BoundaryComms::RequestComms()
@@ -269,26 +361,88 @@ namespace hemelb
         inlet_density = &inlet_density_cycle[time_step * nTotInlets];
         outlet_density = &outlet_density_cycle[time_step * nTotOutlets];
       }
-      BroadcastBoundaryDensities();
+
+      SendBoundaryDensities();
     }
 
-    void BoundaryComms::BroadcastBoundaryDensities()
+    void BoundaryComms::EndIteration()
     {
-      for (int i = 0; i < nInlets; i++)
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        MPI_Bcast(&inlet_density[inlets[i]],
-                  1,
-                  hemelb::MpiDataType(inlet_density[0]),
-                  BCproc,
-                  inlet_comms[inlets[i]]);
+        for (int i = 0; i < nTotInlets; i++)
+          inletCommAlreadyChecked[i] = false;
+        for (int i = 0; i < nTotOutlets; i++)
+          outletCommAlreadyChecked[i] = false;
       }
-      for (int i = 0; i < nOutlets; i++)
+      else
       {
-        MPI_Bcast(&outlet_density[outlets[i]],
-                  1,
-                  hemelb::MpiDataType(outlet_density[0]),
-                  BCproc,
-                  outlet_comms[outlets[i]]);
+        for (int i = 0; i < nInlets; i++)
+          inletCommAlreadyChecked[inlets[i]] = false;
+        for (int i = 0; i < nOutlets; i++)
+          outletCommAlreadyChecked[outlets[i]] = false;
+      }
+    }
+
+    void BoundaryComms::SendBoundaryDensities()
+    {
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        int message = 0;
+
+        for (int i = 0; i < nTotInlets; i++)
+        {
+          for (int proc = 0; proc < nInletProcs[i]; proc++)
+          {
+            MPI_Isend(&inlet_density[i],
+                      1,
+                      hemelb::MpiDataType(inlet_density[0]),
+                      inletProcsList[i][proc],
+                      100,
+                      MPI_COMM_WORLD,
+                      &inlet_request[message++]);
+          }
+        }
+
+        message = 0;
+
+        for (int i = 0; i < nTotOutlets; i++)
+        {
+          for (int proc = 0; proc < nOutletProcs[i]; proc++)
+          {
+            MPI_Isend(&outlet_density[i],
+                      1,
+                      hemelb::MpiDataType(outlet_density[0]),
+                      outletProcsList[i][proc],
+                      101,
+                      MPI_COMM_WORLD,
+                      &outlet_request[message++]);
+
+          }
+        }
+      }
+      else
+      {
+        for (int i = 0; i < nInlets; i++)
+        {
+          MPI_Irecv(&inlet_density[inlets[i]],
+                    1,
+                    hemelb::MpiDataType(inlet_density[0]),
+                    BCproc,
+                    100,
+                    MPI_COMM_WORLD,
+                    &inlet_request[inlets[i]]);
+        }
+
+        for (int i = 0; i < nOutlets; i++)
+        {
+          MPI_Irecv(&outlet_density[outlets[i]],
+                    1,
+                    hemelb::MpiDataType(outlet_density[0]),
+                    BCproc,
+                    101,
+                    MPI_COMM_WORLD,
+                    &outlet_request[outlets[i]]);
+        }
       }
     }
 
