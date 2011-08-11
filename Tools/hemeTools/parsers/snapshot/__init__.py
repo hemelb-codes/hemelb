@@ -1,5 +1,6 @@
 import numpy as np
 import xdrlib
+import warnings
 
 from .. import HemeLbMagicNumber
 
@@ -136,13 +137,15 @@ class PositionlessSnapshot(BaseSnapshot):
         from os.path import exists
 
         if exists (coordsFile):
-            from .coordinates import Transformer
+            from ...coordinates import Transformer
             trans = Transformer(coordsFile)
 
             self.position = 1e-3 * trans.siteToStl(self.grid + self.bb_min)
             return
         else:
-            self.position = self.grid + self.bb_min
+            # The coords file is missing!
+            warnings.warn('Missing coordinates file "%s", assuming origin at [0,0,0]' % coordsFile, stacklevel=2)
+            self.position = (self.grid + self.bb_min) * self.voxel_size # + origin, but we'll just assume it's zero here.
 
     pass
 
