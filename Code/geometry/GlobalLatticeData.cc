@@ -104,6 +104,13 @@ namespace hemelb
       return mSitesPerBlockVolumeUnit;
     }
 
+    bool LatticeData::GlobalLatticeData::IsValidBlockSite(site_t i, site_t j, site_t k) const
+    {
+      return i < mBlocksX && j < mBlocksY && k < mBlocksZ &&
+	i > -1 &&           j > -1      && k > -1;
+    }
+    
+
     bool LatticeData::GlobalLatticeData::IsValidLatticeSite(site_t i, site_t j, site_t k) const
     {
       return i < mSitesX && j < mSitesY && k < mSitesZ;
