@@ -1,7 +1,7 @@
 import os.path
 import glob
-from .snapshots import HemeLbSnapshot, CfxSnapshot, CfxCentreLineSnapshot
-from .snapOrderer import order, continuousOrder
+from . import HemeLbSnapshot, CfxSnapshot, CfxCentreLineSnapshot
+from .orderer import order, continuousOrder
 import numpy as N
 
 tol = 1e-8
