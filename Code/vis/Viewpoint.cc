@@ -91,7 +91,7 @@ namespace hemelb
       //Carry out a perspective projection on an infinite spanning screen 
       //between the eye and the subject.
       //Reverse the sign such that depth is positive (I believe).  
-      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>
+      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
  	("Depth: %f", -lLocationCamCoordinates.z);
 
       return Vector3D <float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
