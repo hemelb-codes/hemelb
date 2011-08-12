@@ -7,36 +7,86 @@ namespace hemelb
 {
   namespace vis
   {
+    /**
+     * Holds the position of the viewpoint or camera location and performs 
+     * projection of points in world coordinates into 3D screen co-ordinates
+     */
     class Viewpoint
     {
+      //See http://en.wikipedia.org/wiki/3D_projection#Perspective_projection
     public:
       Viewpoint();
  
-      Vector3D<float> RotateToViewpoint(const Vector3D<float>& iVector) const;
+    /**
+     * Chanes a location in camera coordinates into world coordinates
+     * Note that both co-ordinate systems share the same (0,0,0) point
+     * and the camera is at (0,0,radius) in camera coordinates
+     * 
+     */
+      Vector3D<float> RotateCameraCoordinatesToWorldCoordinates(const Vector3D<float>& iVector) const;
 
-      Vector3D <float> Project(const Vector3D<float>& p1) const;
+      /**
+       * Does the reverse of the above
+       *
+       */
+      Vector3D<float> RotateWorldToCameraCoordinates(const Vector3D<float>& iVector) const;
+      
+      /**
+       * Projects a location in world-cordinates onto the infinite screen, 
+       * by translating and rotating such as to give coordintes relative
+       * to the camera, and then applying a perspective projection
+       */
+      Vector3D<float> Project(const Vector3D<float>& p1) const;
 
-      void SetViewpointPosition(float longitude,
-				float latitude,
+    /**
+     * Sets the position of the Camera or Viewpoint
+     *
+     * In Word co-ordinates, the camera is located at radius from 
+     * the local centre, and pointing at an angle indicated by the
+     * latitude and longitude.
+     *
+     * @param iLongitude - longitude in radians.
+     * @param iLatitude - latitude in radians.
+     * @param iLocalCentre - where the camera should point in world-coordinates
+     * @param iRadius - the distance of the camera from this local centre
+     * @param iDistanceFromEyeToScreen - the distance of the inifite screen
+     * from the viewer. Allows for zoom
+     */
+      void SetViewpointPosition(float iLongitude,
+				float iLatitude,
 				const Vector3D<float>& iLocalCentre,
-				float rad,
-				float distance);
+				float iRadius,
+				float iDistanceFromEyeToScreen);
 
-      const Vector3D<float>& GetViewpointCentre() const;
+      const Vector3D<float>& GetViewpointCentreLocation() const;
 
     private:
+      //Performs a vector rotation using stored
+      //Sin and Cosine Values
       static Vector3D <float> Rotate(
-	float iSinX,
-	float iCosX,
-	float iSinY,
-	float iCosY,
+	float iSinThetaX,
+	float iCosThetaX,
+	float iSinThetaY,
+	float iCosThetaY,
+	const Vector3D<float>& iVector);
+      
+      //Reverses a vector rotation of the above
+      static Vector3D <float> UnRotate(
+	float iSinThetaX,
+	float iCosThetaX,
+	float iThetaY,
+	float iCosThetaY,
 	const Vector3D<float>& iVector);
 	  
-      float mDistance;
-      float SinYRotation, CosYRotation;
-      float SinXRotation, CosXRotation;
+      float mDistanceFromEyeToScreen;
+
+      float mSinLongitude;
+      float mCosLongitude;
+      float mSinLatitude;
+      float mCosLatitude;
       
-      Vector3D<float> mViewpointCentre;
+      //Stores the viewpoint Location in world co-ordinate
+      Vector3D<float> mViewpointLocation;
     };
   }
 }

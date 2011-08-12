@@ -1,6 +1,6 @@
 #include <math.h>
 
-
+#include "log/Logger.h"
 #include "vis/Vector3D.h"
 #include "vis/Viewpoint.h"
 
@@ -9,26 +9,31 @@ namespace hemelb
   namespace vis
   {
     Viewpoint::Viewpoint() :
-      mViewpointCentre(0.0F) 
+      mViewpointLocation(0.0F) 
     {}
     
-    Vector3D<float> Viewpoint::RotateToViewpoint(const Vector3D<float>& iVector) const
+    Vector3D<float> Viewpoint::RotateCameraCoordinatesToWorldCoordinates(const Vector3D<float>& iVector) const
     {
-      // A rotation of iThetaX clockwise about the x-axis
-      // Followed by a rotation of iThetaY anticlockwise about the y-axis.
+      // A rotation of iThetaX clockwise looking up the x-axis (increasing)
+      // Followed by a rotation of iThetaY anticlockwise looking up the y-axis.
+      return Rotate(mSinLatitude, mCosLatitude, mSinLongitude, mCosLongitude, iVector);
+    }
 
-      return Rotate(SinXRotation, CosXRotation, SinYRotation, CosYRotation, iVector);
+    Vector3D<float> Viewpoint::RotateWorldToCameraCoordinates(const Vector3D<float>& iVector) const
+    {
+      // The reverse of the above
+      return UnRotate(mSinLatitude, mCosLatitude, mSinLongitude, mCosLongitude, iVector);
     }
 
     Vector3D <float> Viewpoint::Rotate
-    (float iSinX,
-     float iCosX,
-     float iSinY,
-     float iCosY,
+    (float iSinThetaX,
+     float iCosThetaX,
+     float iSinThetaY,
+     float iCosThetaY,
      const Vector3D<float>& iVector)
     {
-      // A rotation of iThetaX clockwise about the x-axis
-      // Followed by a rotation of iThetaY anticlockwise about the y-axis.
+      // A rotation of iThetaX clockwise looking down the x-axis
+      // Followed by a rotation of iThetaY anticlockwise looking down the y-axis.
       // In matrices:
       //       (cos(iThetaY)  0 sin(iThetaY)) (1 0            0              )
       // Out = (0             1 0           ) (0 cos(-iThetaX) -sin(-iThetaX)) In
@@ -38,68 +43,93 @@ namespace hemelb
       // Out = (Ycos(iThetaX) + Zsin(iThetaX)                                        )
       //       (Zcos(iThetaX)cos(iThetaY) - Ysin(iThetaX)cos(iThetaY) - Xsin(iThetaY))
 
-      const float lTemp = iVector.z * iCosX - iVector.y * iSinX;
+      const float lTemp = iVector.z * iCosThetaX - iVector.y * iSinThetaX;
       
       return Vector3D <float>(
-	lTemp*iSinY + iVector.x*iCosY,
-	iVector.z * iSinX + iVector.y * iCosX,
-	lTemp * iCosY - iVector.x * iSinY);
+	lTemp*iSinThetaY + iVector.x*iCosThetaY,
+	iVector.z * iSinThetaX + iVector.y * iCosThetaX,
+	lTemp * iCosThetaY - iVector.x * iSinThetaY);
     }
 
-    Vector3D<float> Viewpoint::Project(const Vector3D<float>& p1) const
+    Vector3D <float> Viewpoint::UnRotate
+    (float iSinThetaX,
+     float iCosThetaX,
+     float iSinThetaY,
+     float iCosThetaY,
+     const Vector3D<float>& iVector)
     {
-      Vector3D<float> x1;
-      
+      // A rotation of iThetaY aniclockwise looking down the y-axis
+      // Followed by a rotation of iThetaX clockwise looking down the x-axis.
+      // In matrices:
+      //       (1 0             0            )(cos(-iThetaY) 0 sin(-iThetaY)) 
+      // Out = (0 cos(iThetaX)  -sin(iThetaX))(0             1 0           ) In
+      //       (0 sin(iThetaX) cos(iThetaX) )(-sin(-iThetaY) 0 cos(-iThetaY)) 
+      //
+      // This is the Rotation matrix inversed / transposted
+      // ie (AB)^-1 = (AB)^t = B^t A^T
 
-      x1 = p1 - mViewpointCentre;
-      float temp1 = x1.x;
-      x1.x = x1.y;
-      x1.y = temp1;
+      const float lTemp = iVector.x * iSinThetaY + iVector.z * iCosThetaY;
       
-      Vector3D<float> x2 = Rotate( -SinYRotation, CosYRotation, 
-				  -SinXRotation, CosXRotation, x1);
-      
-      
-
-      float temp2 = mDistance / (-x2.z);
-     
-      return Vector3D <float> (temp2 * x2.y,
-			       temp2 * x2.x,
-			       -x2.z);
-
+      return Vector3D <float>(
+	iVector.x*iCosThetaY - iVector.z*iSinThetaY,
+	-lTemp*iSinThetaX + iVector.y*iCosThetaX,
+	lTemp*iCosThetaX + iVector.y*iSinThetaX);
     }
 
-    /**
-     * Set the position of the viewpoint.
-     *
-     * @param longitude in radians.
-     * @param latitude in radians.
-     * @param localCentre
-     * @param distance
-     */
+    Vector3D<float> Viewpoint::Project(const Vector3D<float>& iWorldLocation) const
+    {
+      //Calculate the location of the point relative to the viewpoint 
+      Vector3D<float> lLocationRelativeToViewPoint = iWorldLocation - mViewpointLocation;
+      
+      //Rotate the location vector in the opposite manner to that of the camera
+      Vector3D<float> lLocationCamCoordinates = 
+	RotateWorldToCameraCoordinates(lLocationRelativeToViewPoint);
+      // NB - the oringinal code was not doing this but a reflection rotation
+      // and then back reflectiond which produced similar images.
+      // It was believed that this was in error. 
+      
+      //Carry out a perspective projection on an infinite spanning screen 
+      //between the eye and the subject.
+      //Reverse the sign such that depth is positive (I believe).  
+      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>
+ 	("Depth: %f", -lLocationCamCoordinates.z);
+
+      return Vector3D <float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+				* lLocationCamCoordinates.x,
+				 mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z) 
+				* lLocationCamCoordinates.y,
+				-lLocationCamCoordinates.z);
+    }
+
     void Viewpoint::SetViewpointPosition(
-      float longitude,
-      float latitude,
+      float iLongitude,
+      float iLatitude,
       const Vector3D<float>& iLocalCentre,
-      float rad,
-      float iDistance)
+      float iRadius,
+      float iDistanceFromEyeToScreen)
     {
-      SinYRotation = sinf(longitude);
-      CosYRotation = cosf(longitude);
+      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
+       	("Latitude: %f / Longitude: %f", iLatitude, iLongitude);
+      mSinLongitude = sinf(iLongitude);
+      mCosLongitude = cosf(iLongitude);
+    
+      mSinLatitude = sinf(iLatitude);
+      mCosLatitude = cosf(iLatitude);
 
-      SinXRotation = sinf(latitude);
-      CosXRotation = cosf(latitude);
+      // Z in the camera co-ordinates indicates the distance from the centre
+      // the viewpoint into the camera prior rotation.
+      mViewpointLocation = RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0., 0., iRadius));
 
-      mViewpointCentre = RotateToViewpoint(Vector3D<float>(0., 0., rad));
+      //Translate the camera location to allow it to point at 
+      //a local centre rather than the world centre
+      mViewpointLocation += iLocalCentre;
 
-      mViewpointCentre += iLocalCentre;
-
-      mDistance = iDistance;
+      mDistanceFromEyeToScreen = iDistanceFromEyeToScreen;
     }
 
-    const Vector3D<float>& Viewpoint::GetViewpointCentre() const
+    const Vector3D<float>& Viewpoint::GetViewpointCentreLocation() const
     {
-      return mViewpointCentre;
+      return mViewpointLocation;
     }
 
   }
