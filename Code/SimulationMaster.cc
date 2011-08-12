@@ -215,20 +215,11 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                         mVisControl,
                                                         mLbm,
                                                         &mNet,
-                                                        mSimulationState);
+                                                        mSimulationState,
+							*iSimConfig);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();
-
-  mVisControl->SetProjection(512,
-                             512,
-                             iSimConfig->VisCentre.x,
-                             iSimConfig->VisCentre.y,
-                             iSimConfig->VisCentre.z,
-                             iSimConfig->VisLongitude,
-                             iSimConfig->VisLatitude,
-                             iSimConfig->VisZoom);
-
 }
 
 /**
