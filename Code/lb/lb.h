@@ -10,6 +10,7 @@
 #include "lb/collisions/implementations/Implementations.h"
 #include "lb/collisions/implementations/CollisionOperators.h"
 #include "lb/BoundaryComms.h"
+#include "lb/BoundaryValues.h"
 #include "util/UnitConverter.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
@@ -44,12 +45,14 @@ namespace hemelb
         void
         Initialise(site_t* iFTranslator,
                    vis::Control* iControl,
-                   BoundaryComms* iBoundaryComms,
+                   BoundaryComms* iInletComms,
+                   BoundaryComms* iOutletComms,
                    util::UnitConverter* iUnits);
 
         void WriteConfigParallel(hemelb::lb::Stability stability,
                                  std::string output_file_name,
-                                 BoundaryComms* iBoundaryComms);
+                                 BoundaryComms* iInletComms,
+                                 BoundaryComms* iOutletComms);
         void ReadVisParameters();
 
         void CalculateMouseFlowField(float densityIn,
@@ -71,7 +74,7 @@ namespace hemelb
         template<typename tMidFluidCollision, typename tWallCollision,
             typename tInletOutletCollision, typename tInletOutletWallCollision,
             typename tCollisionOperator>
-        void InitCollisions(BoundaryComms* iBoundaryComms);
+        void InitCollisions(BoundaryComms* iInletComms, BoundaryComms* iOutletComms);
 
         void ReadParameters();
 
@@ -96,10 +99,6 @@ namespace hemelb
         //TODO Get rid of this hack
         hemelb::lb::collisions::Collision* GetCollision(int i);
 
-        // Here only for initial conditions and some vis. Would be better if could do without these
-        distribn_t *outlet_density_avg, *outlet_density_amp;
-        distribn_t *inlet_density_avg, *inlet_density_amp;
-
         double *inlet_normal;
         double voxel_size;
         int outlets;
@@ -110,6 +109,7 @@ namespace hemelb
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
+        BoundaryValues* mBoundaryValues;
 
         LbmParameters mParams;
         vis::Control* mVisControl;
