@@ -512,7 +512,7 @@ namespace hemelb
 	const Vector3D<float>& projectedUnitX = mScreen->GetUnitVectorProjectionX();
 	const Vector3D<float>& projectedUnitY = mScreen->GetUnitVectorProjectionY();
 
-	Vector3D<float> viewpointCentre = mViewpoint->GetViewpointCentre();
+	Vector3D<float> viewpointCentre = mViewpoint->GetViewpointCentreLocation();
 
 	for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
 	{
@@ -528,8 +528,6 @@ namespace hemelb
 	  subimageMaxes[0] = subimageMaxes[1] = std::numeric_limits<float>::min();
 
 	  Vector3D<float> p1;
-
-	  // Temp fix due to refactoring of cluster builder
 
 	  float lMinMax_x[2];
 	  lMinMax_x[0] = thisCluster->minSite.x;
