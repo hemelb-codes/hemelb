@@ -56,7 +56,7 @@ namespace hemelb
 
     template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
         typename tInletOutletWallCollision, typename tCollisionOperator>
-    void LBM::InitCollisions(BoundaryComms* iBoundaryComms)
+    void LBM::InitCollisions(BoundaryComms* iInletComms, BoundaryComms* iOutletComms)
     {
       mStreamAndCollide
           = new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision, tWallCollision,
@@ -71,34 +71,34 @@ namespace hemelb
 
       mMidFluidCollision = new hemelb::lb::collisions::MidFluidCollision();
       mWallCollision = new hemelb::lb::collisions::WallCollision();
-      mInletCollision
-          = new hemelb::lb::collisions::InletOutletCollision(iBoundaryComms, INLET);
-      mOutletCollision
-          = new hemelb::lb::collisions::InletOutletCollision(iBoundaryComms, OUTLET);
-      mInletWallCollision
-          = new hemelb::lb::collisions::InletOutletWallCollision(iBoundaryComms, INLET);
-      mOutletWallCollision
-          = new hemelb::lb::collisions::InletOutletWallCollision(iBoundaryComms, OUTLET);
+      mInletCollision = new hemelb::lb::collisions::InletOutletCollision(iInletComms);
+      mOutletCollision = new hemelb::lb::collisions::InletOutletCollision(iOutletComms);
+      mInletWallCollision = new hemelb::lb::collisions::InletOutletWallCollision(iInletComms);
+      mOutletWallCollision = new hemelb::lb::collisions::InletOutletWallCollision(iOutletComms);
     }
 
     void LBM::Initialise(site_t* iFTranslator,
                          vis::Control* iControl,
-                         BoundaryComms* iBoundaryComms,
+                         BoundaryComms* iInletComms,
+                         BoundaryComms* iOutletComms,
                          util::UnitConverter* iUnits)
     {
       mUnits = iUnits;
 
-      outlet_density_avg = iBoundaryComms->outlet_density_avg;
-      outlet_density_amp = iBoundaryComms->outlet_density_amp;
-      inlet_density_avg = iBoundaryComms->inlet_density_avg;
-      inlet_density_amp = iBoundaryComms->inlet_density_amp;
+      mBoundaryValues = new BoundaryValues(iInletComms,
+                                           iOutletComms,
+                                           mLatDat,
+                                           mSimConfig,
+                                           mState,
+                                           iUnits);
 
       mCollisionOperator = new CO(mLatDat, &mParams);
 
       InitCollisions<hemelb::lb::collisions::implementations::SimpleCollideAndStream<CO>,
           hemelb::lb::collisions::implementations::ZeroVelocityEquilibrium<CO>,
           hemelb::lb::collisions::implementations::NonZeroVelocityBoundaryDensity<CO>,
-          hemelb::lb::collisions::implementations::ZeroVelocityBoundaryDensity<CO>, CO> (iBoundaryComms);
+          hemelb::lb::collisions::implementations::ZeroVelocityBoundaryDensity<CO>, CO> (iInletComms,
+                                                                                         iOutletComms);
 
       receivedFTranslator = iFTranslator;
 
@@ -112,13 +112,7 @@ namespace hemelb
       distribn_t *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
       distribn_t density;
 
-      density = 0.;
-
-      for (int i = 0; i < outlets; i++)
-      {
-        density += outlet_density_avg[i] - outlet_density_amp[i];
-      }
-      density /= outlets;
+      density = mBoundaryValues->GetInitialDensity();
 
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
@@ -327,6 +321,8 @@ namespace hemelb
     // that depends on this change.
     void LBM::Reset()
     {
+      mBoundaryValues->Reset();
+
       RecalculateTauViscosityOmega();
 
       SetInitialConditions();

@@ -54,7 +54,8 @@ class SimulationMaster
     hemelb::lb::StabilityTester* mStabilityTester;
     hemelb::lb::EntropyTester* mEntropyTester;
     hemelb::lb::LBM* mLbm;
-    hemelb::lb::BoundaryComms* mBoundaryComms;
+    hemelb::lb::BoundaryComms* mInletComms;
+    hemelb::lb::BoundaryComms* mOutletComms;
     hemelb::net::Net mNet;
 
     hemelb::util::UnitConverter* mUnits;
