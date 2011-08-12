@@ -13,12 +13,14 @@ namespace hemelb
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
-                                         lb::SimulationState * iSimState) :
+                                         lb::SimulationState * iSimState,
+					 SimConfig& iSimConfig) :
       net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-          mNetwork(iNetwork), mLbm(iLbm), mSimState(iSimState),
-          mVisControl(iVisControl)
+      mNetwork(iNetwork), mLbm(iLbm), mSimState(iSimState),
+      mVisControl(iVisControl)
     {
-      Reset();
+      Reset(iSimConfig);
+      AssignValues();
     }
 
     void SteeringComponent::ProgressFromParent(unsigned long splayNumber)
