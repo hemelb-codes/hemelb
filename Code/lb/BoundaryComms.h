@@ -21,81 +21,44 @@ namespace hemelb
     class BoundaryComms : public net::IteratedAction
     {
       public:
-        BoundaryComms(const geometry::LatticeData* iLatDat,
-                      SimConfig* iSimConfig,
-                      SimulationState* iSimState,
-                      util::UnitConverter* iUnits);
+        BoundaryComms(SimulationState* iSimState, int iTotIOlets);
         ~BoundaryComms();
+
+        void Initialise(geometry::LatticeData::SiteType IOtype,
+                        geometry::LatticeData* iLatDat,
+                        distribn_t* iDensityCycle);
 
         void RequestComms();
         void EndIteration();
         void Reset();
 
-        void WaitForComms(const int index, unsigned int IOtype);
-
-        void InitialiseBoundaryDensities();
-        void SendBoundaryDensities();
-        void CalculateBC(distribn_t f[],
-                         hemelb::geometry::LatticeData::SiteType iSiteType,
-                         unsigned int iBoundaryId,
-                         distribn_t *density,
-                         distribn_t *vx,
-                         distribn_t *vy,
-                         distribn_t *vz,
-                         distribn_t f_neq[]);
-
-        distribn_t GetInletDensity(int i);
-        distribn_t GetOutletDensity(int i);
-
-        // The densities
-        // Unfortunately made public, because of a lot of old code relying on this being in LBM
-        // TODO: Make private
-        distribn_t *inlet_density, *outlet_density;
-        distribn_t *inlet_density_avg, *outlet_density_avg;
-        distribn_t *inlet_density_amp, *outlet_density_amp;
+        distribn_t GetBoundaryDensity(const int index);
+        void WaitAllComms();
 
       private:
         proc_t BCproc; // Process responsible for sending out BC info
-        distribn_t *inlet_density_cycle, *outlet_density_cycle;
-
-        void ReadParameters();
-        void allocateInlets();
-        void allocateOutlets();
+        distribn_t *density_cycle;
+        distribn_t *density;
 
         // Total number of inlets/outlets in simulation
-        int nTotInlets;
-        int nTotOutlets;
-
-        distribn_t *inlet_density_phs, *outlet_density_phs;
+        int nTotIOlets;
 
         // Number of inlets/outlets on this process
-        int nInlets;
-        int nOutlets;
+        int nIOlets;
 
         // List of indices of inlets/outlets on this process
-        std::vector<int> inlets;
-        std::vector<int> outlets;
+        std::vector<int> IOlets;
 
         // These are only assigned on the BC proc as it is the only one that needs to know
         // which proc has which IOlet
-        int* inletRequestOffset;
-        int* outletRequestOffset;
-        int* nInletProcs;
-        int* nOutletProcs;
-        int** inletProcsList;
-        int** outletProcsList;
+        int* requestOffset;
+        int* nProcs;
+        int** procsList;
 
-        MPI_Request* inlet_request;
-        MPI_Request* outlet_request;
-        MPI_Status* inlet_status;
-        MPI_Status* outlet_status;
-
-        bool* inletCommAlreadyChecked;
-        bool* outletCommAlreadyChecked;
+        MPI_Request* request;
+        MPI_Status* status;
 
         SimulationState* mState;
-        SimConfig* mSimConfig;
-        util::UnitConverter* mUnits;
     };
 
   }

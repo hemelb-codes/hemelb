@@ -75,9 +75,14 @@ SimulationMaster::~SimulationMaster()
     delete mLbm;
   }
 
-  if (mBoundaryComms != NULL)
+  if (mInletComms != NULL)
   {
-    delete mBoundaryComms;
+    delete mInletComms;
+  }
+
+  if (mOutletComms != NULL)
+  {
+    delete mOutletComms;
   }
 
   if (network != NULL)
@@ -210,9 +215,11 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   mUnits = new hemelb::util::UnitConverter(mLbm->GetLbmParams(), mSimulationState, iSimConfig);
 
-  mBoundaryComms = new hemelb::lb::BoundaryComms(mLatDat, iSimConfig, mSimulationState, mUnits);
+  mInletComms = new hemelb::lb::BoundaryComms(mSimulationState, (int) iSimConfig->Inlets.size());
 
-  mLbm->Initialise(lReceiveTranslator, mVisControl, mBoundaryComms, mUnits);
+  mOutletComms = new hemelb::lb::BoundaryComms(mSimulationState, (int) iSimConfig->Outlets.size());
+
+  mLbm->Initialise(lReceiveTranslator, mVisControl, mInletComms, mOutletComms, mUnits);
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         mVisControl,
@@ -274,8 +281,9 @@ void SimulationMaster::RunSimulation(double iStartTime,
   mapType networkImagesCompleted;
 
   std::vector<hemelb::net::IteratedAction*> actors;
-  actors.push_back(mBoundaryComms);
   actors.push_back(mLbm);
+  actors.push_back(mInletComms);
+  actors.push_back(mOutletComms);
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
   if (doEntropyTest)
@@ -511,7 +519,8 @@ void SimulationMaster::RunSimulation(double iStartTime,
       mSnapshotsWritten++;
       mLbm->WriteConfigParallel(stability,
                                 snapshot_directory + std::string(snapshot_filename),
-                                mBoundaryComms);
+                                mInletComms,
+                                mOutletComms);
     }
 
     mSnapshotTime += (hemelb::util::myClock() - lPreSnapshotTime);

@@ -38,7 +38,8 @@ namespace hemelb
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability,
                                   std::string output_file_name,
-                                  BoundaryComms* iBoundaryComms)
+                                  BoundaryComms* iInletComms,
+                                  BoundaryComms* iOutletComms)
     {
       /* This routine writes the flow field on file. The data are gathered
        to the root processor and written from there.  The format
@@ -204,14 +205,16 @@ namespace hemelb
                   }
                   else
                   { // not FLUID_TYPE
-                    iBoundaryComms->CalculateBC(mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS),
-                                                mLatDat->GetSiteType(my_site_id),
-                                                mLatDat->GetBoundaryId(my_site_id),
-                                                &density,
-                                                &vx,
-                                                &vy,
-                                                &vz,
-                                                f_neq);
+                    mBoundaryValues->CalculateBC(mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS),
+                                                 mLatDat->GetSiteType(my_site_id),
+                                                 mLatDat->GetBoundaryId(my_site_id),
+                                                 &density,
+                                                 &vx,
+                                                 &vy,
+                                                 &vz,
+                                                 f_neq,
+                                                 iInletComms,
+                                                 iOutletComms);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
@@ -280,17 +283,17 @@ namespace hemelb
 
       for (int i = 0; i < inlets; i++)
       {
-        density_min = util::NumericalFunctions::min(density_min, inlet_density_avg[i]
-            - inlet_density_amp[i]);
-        density_max = util::NumericalFunctions::max(density_max, inlet_density_avg[i]
-            + inlet_density_amp[i]);
+        density_min = util::NumericalFunctions::min(density_min,
+                                                    mBoundaryValues->GetInletDensityMin(i));
+        density_max = util::NumericalFunctions::max(density_max,
+                                                    mBoundaryValues->GetInletDensityMax(i));
       }
       for (int i = 0; i < outlets; i++)
       {
-        density_min = util::NumericalFunctions::min(density_min, outlet_density_avg[i]
-            - outlet_density_amp[i]);
-        density_max = util::NumericalFunctions::max(density_max, outlet_density_avg[i]
-            + outlet_density_amp[i]);
+        density_min = util::NumericalFunctions::min(density_min,
+                                                    mBoundaryValues->GetOutletDensityMin(i));
+        density_max = util::NumericalFunctions::max(density_max,
+                                                    mBoundaryValues->GetOutletDensityMax(i));
       }
 
       distribn_t lDensity_threshold_min = density_min;
