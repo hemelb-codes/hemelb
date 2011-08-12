@@ -14,6 +14,7 @@
 #include "io/XdrMemWriter.h"
 #include "io/AsciiFileWriter.h"
 #include "geometry/LatticeData.h"
+#include "io/formats/snapshot.h"
 
 namespace hemelb
 {
@@ -82,33 +83,8 @@ namespace hemelb
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name)
     {
-      /* This routine writes the flow field on file. The data are gathered
-       to the root processor and written from there.  The format
-       comprises:
-
-       0- Flag for simulation stability, 0 or 1
-
-       1- Voxel size in physical units (units of m)
-
-       2- vertex coords of the minimum bounding box with minimum values
-       (x, y and z values)
-
-       3- vertex coords of the minimum bounding box with maximum values
-       (x, y and z values)
-
-       4- #voxels within the minimum bounding box along the x, y, z axes
-       (3 values)
-
-       5- total number of fluid voxels
-
-       6-And then a list of the fluid voxels... For each fluid voxel:
-
-       a- the (x, y, z) coordinates in lattice units (3 values)
-       b- the pressure in physical units (mmHg)
-       c- (x,y,z) components of the velocity field in physical units (3
-       values, m/s)
-       d- the von Mises stress in physical units (Pa) (the stored shear
-       stress is equal to -1 if the fluid voxel is not at the wall)
+      /* This routine writes the flow field on file, using MPIO to coordinate
+       * the writing. The format is detailed in io/formats/snapshot.h
        */
 
       if (stability == hemelb::lb::Unstable)
@@ -127,12 +103,6 @@ namespace hemelb
                     MPI_INFO_NULL,
                     &lOutputFile);
 
-      /* Preamble has an enum (int) for stability, a double for voxel size,
-       * 3 ints for minimum (x,y,z) in bounding box, 3 ints for maximum (x,y,z)
-       * in bounding box, 3 ints for number of coords in each of (x,y,z),
-       * 1 int for number of fluid voxels.*/
-      const int lPreambleLength = 4 + 8 + (3 * 4) + (3 * 4) + (3 * 4) + 4;
-
       std::string lReadMode = "native";
 
       MPI_Datatype viewType = MpiDataType<char> ();
@@ -142,34 +112,41 @@ namespace hemelb
 
       if (netTop->IsCurrentProcTheIOProc())
       {
-        char lBuffer[lPreambleLength];
-        hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lBuffer, lPreambleLength);
+        // Write the header according to format detailed in snapshot.h
+        char lBuffer[io::formats::snapshot::HeaderLength];
+        io::XdrMemWriter lWriter = io::XdrMemWriter(lBuffer, io::formats::snapshot::HeaderLength);
+        lWriter << (unsigned int) io::formats::HemeLbMagicNumber
+            << (unsigned int) io::formats::snapshot::MagicNumber
+            << (unsigned int) io::formats::snapshot::VersionNumber;
+        lWriter << (unsigned int) io::formats::snapshot::HeaderLength;
+        lWriter << stability;
+        lWriter << mLatDat->GetVoxelSize();
+        lWriter << mLatDat->GetXOrigin() << mLatDat->GetYOrigin() << mLatDat->GetZOrigin();
+        lWriter << (int) siteMins[0] << (int) siteMins[1] << (int) siteMins[2];
+        lWriter << (int) siteMaxes[0] << (int) siteMaxes[1] << (int) siteMaxes[2];
+        lWriter << (int) total_fluid_sites;
 
-        lWriter << stability << mLatDat->GetVoxelSize() << (int) siteMins[0] << (int) siteMins[1]
-            << (int) siteMins[2] << (int) siteMaxes[0] << (int) siteMaxes[1] << (int) siteMaxes[2]
-            << (int) (1 + siteMaxes[0] - siteMins[0]) << (int) (1 + siteMaxes[1] - siteMins[1])
-            << (int) (1 + siteMaxes[2] - siteMins[2]) << (int) total_fluid_sites;
-
-        MPI_File_write(lOutputFile, lBuffer, lPreambleLength, MpiDataType(lBuffer[0]), &lStatus);
+        MPI_File_write(lOutputFile,
+                       lBuffer,
+                       io::formats::snapshot::HeaderLength,
+                       MpiDataType(lBuffer[0]),
+                       &lStatus);
       }
 
-      /*
-       For each fluid voxel, we write
-       a- the (x, y, z) coordinates in lattice units (3 ints)
-       b- the pressure in physical units (mmHg, 1 x float)
-       c- (x,y,z) components of the velocity field in physical units (3
-       values, m/s, floats)
-       d- the von Mises stress in physical units (Pa) (the stored shear
-       stress is equal to -1 if the fluid voxel is not at the wall, 1 x float)
+      /* Now we write a record for each voxel.
+       * Each task is responsible for creating (locally) a buffer which
+       * contains all the records for the fluid sites for which it's
+       * responsible. We then use MPIO to write these buffers (in rank order)
+       * into the file after the header.
        */
 
-      const short int lOneFluidSiteLength = (3 * 4) + (5 * 4);
-
-      site_t lLocalSitesInitialOffset = lPreambleLength;
+      // This is the position in the file where the local task's voxels will be written.
+      site_t lLocalSitesInitialOffset = io::formats::snapshot::HeaderLength;
 
       for (proc_t ii = 0; ii < netTop->GetLocalRank(); ii++)
       {
-        lLocalSitesInitialOffset += lOneFluidSiteLength * netTop->FluidSitesOnEachProcessor[ii];
+        lLocalSitesInitialOffset += io::formats::snapshot::VoxelRecordLength
+            * netTop->FluidSitesOnEachProcessor[ii];
       }
 
       MPI_File_set_view(lOutputFile,
@@ -179,17 +156,17 @@ namespace hemelb
                         &lReadMode[0],
                         MPI_INFO_NULL);
 
-      site_t lLocalWriteLength = lOneFluidSiteLength
+      site_t lLocalWriteLength = io::formats::snapshot::VoxelRecordLength
           * netTop->FluidSitesOnEachProcessor[netTop->GetLocalRank()];
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
       hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lFluidSiteBuffer,
                                                                   (unsigned int) lLocalWriteLength);
 
       /* The following loops scan over every single macrocell (block). If
-       the block is non-empty, it scans the fluid sites within that block
-       If the site is fluid, it calculates the flow field and then is
-       converted to physical units and stored in a buffer to send to the
-       root processor */
+       * the block is non-empty, it scans the sites within that block. If the
+       * site is fluid and present on the current task, it calculates the
+       * flow field and encodes it to the local buffer.
+       */
 
       site_t n = -1;
       for (site_t i = 0; i < mLatDat->GetXSiteCount(); i += mLatDat->GetBlockSize())
@@ -236,7 +213,12 @@ namespace hemelb
                   if (mLatDat->GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
                   {
                     D3Q15::CalculateDensityVelocityFEq(mLatDat->GetFOld(my_site_id
-                        * D3Q15::NUMVECTORS), density, vx, vy, vz, f_eq);
+                                                           * D3Q15::NUMVECTORS),
+                                                       density,
+                                                       vx,
+                                                       vy,
+                                                       vz,
+                                                       f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
@@ -292,15 +274,15 @@ namespace hemelb
                   lWriter << (int) (site_i - siteMins[0]) << (int) (site_j - siteMins[1])
                       << (int) (site_k - siteMins[2]);
 
-                  lWriter << float (pressure) << float (vx) << float (vy) << float (vz)
-                      << float (stress);
+                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
+                      << float(stress);
                 }
               }
             }
           }
         }
       }
-
+      // Hand the buffers over to MPIO to write to the file.
       MPI_File_write_all(lOutputFile,
                          lFluidSiteBuffer,
                          (int) lLocalWriteLength,
@@ -322,17 +304,17 @@ namespace hemelb
 
       for (int i = 0; i < inlets; i++)
       {
-        density_min = util::NumericalFunctions::min(density_min, inlet_density_avg[i]
-            - inlet_density_amp[i]);
-        density_max = util::NumericalFunctions::max(density_max, inlet_density_avg[i]
-            + inlet_density_amp[i]);
+        density_min = util::NumericalFunctions::min(density_min,
+                                                    inlet_density_avg[i] - inlet_density_amp[i]);
+        density_max = util::NumericalFunctions::max(density_max,
+                                                    inlet_density_avg[i] + inlet_density_amp[i]);
       }
       for (int i = 0; i < outlets; i++)
       {
-        density_min = util::NumericalFunctions::min(density_min, outlet_density_avg[i]
-            - outlet_density_amp[i]);
-        density_max = util::NumericalFunctions::max(density_max, outlet_density_avg[i]
-            + outlet_density_amp[i]);
+        density_min = util::NumericalFunctions::min(density_min,
+                                                    outlet_density_avg[i] - outlet_density_amp[i]);
+        density_max = util::NumericalFunctions::max(density_max,
+                                                    outlet_density_avg[i] + outlet_density_amp[i]);
       }
 
       distribn_t lDensity_threshold_min = density_min;
