@@ -24,8 +24,10 @@ def order(snap):
     
     return new
 
-# This creates an array of indices which give an ordering to a 3D vector array.
+
 def computeIncreasingGridIndex(snap):
+    """This creates an array of indices which give an ordering to a 3D vector array.
+    """
     # We first move each position to be in a range [0, max-min]
     # Then can order by i * (max-min)^2 + j * (max-min) + k. Sweet!
     # THIS IS A HACK BUT I JUST WANT IT TO WORK. Better than multiplying by 100 would be
@@ -37,10 +39,11 @@ def computeIncreasingGridIndex(snap):
             (snap.position[:,1])) * (max-min) + \
             (snap.position[:,2])
 
-# This takes an (i,j,k) indexed array and arranges it in a natural order (for 
-# each i (increasing) go through each j (increasing) and for each (i,j) go 
-# through each k (increasing).
 def continuousOrder(snap):
+    """This takes an (i,j,k) indexed array and arranges it in a natural order (for 
+    each i (increasing) go through each j (increasing) and for each (i,j) go 
+    through each k (increasing).
+    """
     idx = computeIncreasingGridIndex(snap)
     idxIdx = idx.argsort()
     
