@@ -19,11 +19,12 @@ namespace hemelb
                                          vis::Control* iVisControl,
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
-                                         lb::SimulationState * iSimState) :
+                                         lb::SimulationState * iSimState,
+					 SimConfig& iSimConfig) :
       net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-          mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl)
+      mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl)
     {
-      Reset();
+      Reset(iSimConfig);
       AssignValues();
     }
 
