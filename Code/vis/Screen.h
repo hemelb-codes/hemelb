@@ -22,7 +22,7 @@ namespace hemelb
 
         void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
         void RenderLine(const Vector3D<float>& endPoint1,
-			const Vector3D<float>& endPoint2,
+                        const Vector3D<float>& endPoint2,
                         const VisSettings* visSettings);
 
         void Set(float maxX,
@@ -45,7 +45,7 @@ namespace hemelb
          * @param output
          */
         template<typename T>
-	  void Transform(const float& inputX, const float& inputY, T& outputX, T& outputY) const
+        void Transform(const float& inputX, const float& inputY, T& outputX, T& outputY) const
         {
           outputX = (T) (ScaleX * (inputX + MaxXValue));
           outputY = (T) (ScaleY * (inputY + MaxYValue));
@@ -70,7 +70,7 @@ namespace hemelb
         Vector3D<float> mVtx;
 
         // Projection of unit vectors along screen axes into normal space.
-	Vector3D<float>  UnitVectorProjectionX;
+        Vector3D<float> UnitVectorProjectionX;
         Vector3D<float> UnitVectorProjectionY;
 
         ScreenPixels* pixels;

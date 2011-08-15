@@ -50,9 +50,9 @@ namespace hemelb
             // Create a glyph at the desired location
             Glyph lGlyph;
 
-            lGlyph.x = float (i + site_i) - 0.5F * float (mLatDat->GetXSiteCount());
-            lGlyph.y = float (j + site_j) - 0.5F * float (mLatDat->GetYSiteCount());
-            lGlyph.z = float (k + site_k) - 0.5F * float (mLatDat->GetZSiteCount());
+            lGlyph.x = float(i + site_i) - 0.5F * float(mLatDat->GetXSiteCount());
+            lGlyph.y = float(j + site_j) - 0.5F * float(mLatDat->GetYSiteCount());
+            lGlyph.z = float(k + site_k) - 0.5F * float(mLatDat->GetZSiteCount());
 
             lGlyph.f = mLatDat->GetFOld(map_block_p->site_data[siteIdOnBlock] * D3Q15::NUMVECTORS);
 
@@ -87,19 +87,15 @@ namespace hemelb
 
         // ... calculate the two ends of the line we're going to draw...
         Vector3D<float> p1;
-	Vector3D<float> p2;
-	
-	p1 = Vector3D <float>(mGlyphs[n].x,
-			      mGlyphs[n].y,
-			      mGlyphs[n].z);
+        Vector3D<float> p2;
 
-	p2 = p1 + Vector3D<float>(vx * temp,
-				  vy * temp,
-				  vz * temp);
+        p1 = Vector3D<float> (mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
+
+        p2 = p1 + Vector3D<float> (vx * temp, vy * temp, vz * temp);
 
         // ... transform to the location on the screen, and render.
         Vector3D<float> p3;
-	Vector3D<float> p4;
+        Vector3D<float> p4;
 
         p3 = mViewpoint->Project(p1);
         p4 = mViewpoint->Project(p2);

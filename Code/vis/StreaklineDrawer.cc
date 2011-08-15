@@ -221,7 +221,11 @@ namespace hemelb
               distribn_t density, vx, vy, vz;
 
               D3Q15::CalculateDensityAndVelocity(iLatDat->GetFOld(vel_site_data_p->site_id
-                  * D3Q15::NUMVECTORS), density, vx, vy, vz);
+                                                     * D3Q15::NUMVECTORS),
+                                                 density,
+                                                 vx,
+                                                 vy,
+                                                 vz);
 
               v[i][j][k][0] = vel_site_data_p->vx = (float) (vx / density);
               v[i][j][k][1] = vel_site_data_p->vy = (float) (vy / density);
@@ -302,14 +306,14 @@ namespace hemelb
                   const site_t startK = util::NumericalFunctions::max<int>(0, (int) site_k - 1);
 
                   const site_t endI =
-                      util::NumericalFunctions::min<site_t>(iLatDat->GetXSiteCount() - 1, site_i
-                          + 1);
+                      util::NumericalFunctions::min<site_t>(iLatDat->GetXSiteCount() - 1,
+                                                            site_i + 1);
                   const site_t endJ =
-                      util::NumericalFunctions::min<site_t>(iLatDat->GetYSiteCount() - 1, site_j
-                          + 1);
+                      util::NumericalFunctions::min<site_t>(iLatDat->GetYSiteCount() - 1,
+                                                            site_j + 1);
                   const site_t endK =
-                      util::NumericalFunctions::min<site_t>(iLatDat->GetZSiteCount() - 1, site_k
-                          + 1);
+                      util::NumericalFunctions::min<site_t>(iLatDat->GetZSiteCount() - 1,
+                                                            site_k + 1);
 
                   for (site_t neigh_i = startI; neigh_i <= endI; neigh_i++)
                   {
@@ -800,14 +804,14 @@ namespace hemelb
       for (unsigned int n = 0; n < nParticles; n++)
       {
         Vector3D<float> p1;
-	Vector3D<float> p2;
-        p1.x = particleVec[n].x - float (iLatDat->GetXSiteCount() >> 1);
-        p1.y = particleVec[n].y - float (iLatDat->GetYSiteCount() >> 1);
-        p1.z = particleVec[n].z - float (iLatDat->GetZSiteCount() >> 1);
+        Vector3D<float> p2;
+        p1.x = particleVec[n].x - float(iLatDat->GetXSiteCount() >> 1);
+        p1.y = particleVec[n].y - float(iLatDat->GetYSiteCount() >> 1);
+        p1.z = particleVec[n].z - float(iLatDat->GetZSiteCount() >> 1);
 
         int x[2];
         p2 = mViewpoint->Project(p1);
-        mScreen->Transform<int> (p2.x, p2.y, x[0],x [1]);
+        mScreen->Transform<int> (p2.x, p2.y, x[0], x[1]);
 
         if (! (x[0] < 0 || x[0] >= pixels_x || x[1] < 0 || x[1] >= pixels_y))
         {
@@ -825,8 +829,8 @@ namespace hemelb
       // Set the particle creation period to be every time step, unless there are >=10000
       // timesteps per cycle
       unsigned int particle_creation_period =
-          util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle
-              / 5000));
+          util::NumericalFunctions::max<unsigned int>(1,
+                                                      (unsigned int) (time_steps_per_cycle / 5000));
 
       int timestepsBetweenStreaklinesRounded = (int) (0.5F + (float) time_steps_per_cycle
           / mVisSettings->streaklines_per_pulsatile_period);

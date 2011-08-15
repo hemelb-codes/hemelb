@@ -11,7 +11,7 @@
 #include "io/XdrFileWriter.h"
 
 namespace hemelb
-		
+
 {
   namespace vis
   {
@@ -29,9 +29,9 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float (iLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float (iLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float (iLatDat->GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float(iLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float(iLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float(iLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -97,7 +97,11 @@ namespace hemelb
       mVisSettings.ctr_y = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[1] + maxes[1]));
       mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
-      myRayTracer = new raytracer::RayTracer(mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
+      myRayTracer = new raytracer::RayTracer(mLatDat,
+                                             &mDomainStats,
+                                             &mScreen,
+                                             &mViewpoint,
+                                             &mVisSettings);
       myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
@@ -122,10 +126,13 @@ namespace hemelb
       float rad = 5.F * vis->system_size;
       float dist = 0.5F * rad;
 
-      Vector3D<float> centre = Vector3D<float>( iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z );
+      Vector3D<float> centre = Vector3D<float> (iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
 
-      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
-          * (float) DEG_TO_RAD, centre, rad, dist);
+      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
+                                      iLatitude * (float) DEG_TO_RAD,
+                                      centre,
+                                      rad,
+                                      dist);
 
       mScreen.Set( (0.5F * vis->system_size) / iZoom,
                    (0.5F * vis->system_size) / iZoom,
@@ -417,8 +424,13 @@ namespace hemelb
 
             if (recvBuffer->GetStoredPixelCount() > 0)
             {
-              MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
-                  ColPixel> (), sendingProc, 20, MPI_COMM_WORLD, &status);
+              MPI_Recv(recvBuffer->GetPixelArray(),
+                       recvBuffer->GetStoredPixelCount(),
+                       MpiDataType<ColPixel> (),
+                       sendingProc,
+                       20,
+                       MPI_COMM_WORLD,
+                       &status);
 
               mScreen.pixels->FoldIn(recvBuffer, &mVisSettings);
             }
@@ -460,8 +472,13 @@ namespace hemelb
 
         if (recvBuffer->GetStoredPixelCount() > 0)
         {
-          MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
-              ColPixel> (), 1, 20, MPI_COMM_WORLD, &status);
+          MPI_Recv(recvBuffer->GetPixelArray(),
+                   recvBuffer->GetStoredPixelCount(),
+                   MpiDataType<ColPixel> (),
+                   1,
+                   20,
+                   MPI_COMM_WORLD,
+                   &status);
 
           mScreen.pixels->FoldIn(recvBuffer, &mVisSettings);
         }

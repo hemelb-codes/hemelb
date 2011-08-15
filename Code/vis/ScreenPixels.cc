@@ -102,18 +102,18 @@ namespace hemelb
      * @param mode
      */
     void ScreenPixels::RenderLine(const Vector3D<float>& endPoint1,
-				  const Vector3D<float>& endPoint2,
+                                  const Vector3D<float>& endPoint2,
                                   const VisSettings* visSettings)
     {
       // Store end points of the line and 'current' point (x and y).
-      int x = int (endPoint1.x);
-      int y = int (endPoint1.y);
+      int x = int(endPoint1.x);
+      int y = int(endPoint1.y);
 
       int x1, y1, x2, y2;
       if (endPoint2.x < endPoint1.x)
       {
-        x1 = int (endPoint2.x);
-        y1 = int (endPoint2.y);
+        x1 = int(endPoint2.x);
+        y1 = int(endPoint2.y);
         x2 = x;
         y2 = y;
       }
@@ -121,8 +121,8 @@ namespace hemelb
       {
         x1 = x;
         y1 = y;
-        x2 = int (endPoint2.x);
-        y2 = int (endPoint2.y);
+        x2 = int(endPoint2.x);
+        y2 = int(endPoint2.y);
       }
 
       // Set dx with the difference between x-values at the endpoints.
