@@ -42,9 +42,13 @@ namespace hemelb
 
     void BoundaryComms::Initialise(geometry::LatticeData::SiteType IOtype,
                                    geometry::LatticeData* iLatDat,
-                                   distribn_t* iDensityCycle)
+                                   std::vector<distribn_t>* iDensityCycleVector)
     {
-      density_cycle = iDensityCycle;
+      density_cycle_vector = iDensityCycleVector;
+      density_cycle = new distribn_t[density_cycle_vector->size()];
+
+      for (unsigned int i = 0; i < density_cycle_vector->size(); i++)
+        density_cycle[i] = (*density_cycle_vector)[i];
 
       // Work out which and how many inlets/outlets on this process
       nIOlets = 0;
@@ -259,6 +263,11 @@ namespace hemelb
 
     void BoundaryComms::Reset()
     {
+      density_cycle = new distribn_t[density_cycle_vector->size()];
+
+      for (unsigned int i = 0; i < density_cycle_vector->size(); i++)
+        density_cycle[i] = (*density_cycle_vector)[i];
+
       // density_cycle should be reset by now
       RequestComms();
       WaitAllComms();

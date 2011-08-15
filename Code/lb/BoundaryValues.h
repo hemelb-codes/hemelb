@@ -48,7 +48,7 @@ namespace hemelb
 
         int nTotInlets, nTotOutlets;
 
-        distribn_t *inlet_density_cycle, *outlet_density_cycle;
+        std::vector<distribn_t> inlet_density_cycle, outlet_density_cycle;
         distribn_t *inlet_density_avg, *outlet_density_avg;
         distribn_t *inlet_density_amp, *outlet_density_amp;
         distribn_t *inlet_density_phs, *outlet_density_phs;
