@@ -26,7 +26,7 @@ namespace hemelb
 
         void Initialise(geometry::LatticeData::SiteType IOtype,
                         geometry::LatticeData* iLatDat,
-                        distribn_t* iDensityCycle);
+                        std::vector<distribn_t>* iDensityCycleVector);
 
         void RequestComms();
         void EndIteration();
@@ -37,6 +37,7 @@ namespace hemelb
 
       private:
         proc_t BCproc; // Process responsible for sending out BC info
+        std::vector<distribn_t>* density_cycle_vector;
         distribn_t *density_cycle;
         distribn_t *density;
 
