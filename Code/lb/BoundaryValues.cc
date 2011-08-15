@@ -19,13 +19,16 @@ namespace hemelb
       nTotInlets = (int) iSimConfig->Inlets.size();
       nTotOutlets = (int) iSimConfig->Outlets.size();
 
+      inlet_density_cycle = std::vector<distribn_t>(0);
+      outlet_density_cycle = std::vector<distribn_t>(0);
+
       ReadParameters();
 
       InitialiseBoundaryDensities();
 
-      iInletComms->Initialise(geometry::LatticeData::INLET_TYPE, iLatDat, inlet_density_cycle);
+      iInletComms->Initialise(geometry::LatticeData::INLET_TYPE, iLatDat, &inlet_density_cycle);
 
-      iOutletComms->Initialise(geometry::LatticeData::OUTLET_TYPE, iLatDat, outlet_density_cycle);
+      iOutletComms->Initialise(geometry::LatticeData::OUTLET_TYPE, iLatDat, &outlet_density_cycle);
     }
 
     BoundaryValues::~BoundaryValues()
@@ -84,8 +87,8 @@ namespace hemelb
     {
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        inlet_density_cycle = new distribn_t[util::NumericalFunctions::max<int>(1, nTotInlets)
-            * mState->GetTimeStepsPerCycle()];
+        inlet_density_cycle.resize(util::NumericalFunctions::max<int>(1, nTotInlets)
+            * mState->GetTimeStepsPerCycle());
       }
 
       inlet_density_avg = new distribn_t[nTotInlets];
@@ -97,8 +100,8 @@ namespace hemelb
     {
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        outlet_density_cycle = new distribn_t[util::NumericalFunctions::max<int>(1, nTotOutlets)
-            * mState->GetTimeStepsPerCycle()];
+        outlet_density_cycle.resize(util::NumericalFunctions::max<int>(1, nTotOutlets)
+            * mState->GetTimeStepsPerCycle());
       }
 
       outlet_density_avg = new distribn_t[nTotOutlets];
@@ -176,15 +179,10 @@ namespace hemelb
 
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        delete[] inlet_density_cycle;
-        delete[] outlet_density_cycle;
-
-        inlet_density_cycle = new distribn_t[hemelb::util::NumericalFunctions::max<int>(1,
-                                                                                        nTotInlets)
-            * mState->GetTimeStepsPerCycle()];
-        outlet_density_cycle
-            = new distribn_t[hemelb::util::NumericalFunctions::max<int>(1, nTotOutlets)
-                * mState->GetTimeStepsPerCycle()];
+        inlet_density_cycle.resize(hemelb::util::NumericalFunctions::max<int>(1, nTotInlets)
+            * mState->GetTimeStepsPerCycle());
+        outlet_density_cycle.resize(hemelb::util::NumericalFunctions::max<int>(1, nTotOutlets)
+            * mState->GetTimeStepsPerCycle());
       }
 
       InitialiseBoundaryDensities();
