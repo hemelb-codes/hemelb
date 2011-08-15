@@ -120,7 +120,7 @@ namespace hemelb
         geometry::LatticeData* mLatDat;
         Screen mScreen;
         Vis* vis;
-	raytracer::RayTracer *myRayTracer;
+        raytracer::RayTracer *myRayTracer;
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
 

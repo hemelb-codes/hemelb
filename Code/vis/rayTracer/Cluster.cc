@@ -6,8 +6,10 @@ namespace hemelb
   {
     namespace raytracer
     {
-      RayTracer::Cluster::Cluster() { }
-       
+      RayTracer::Cluster::Cluster()
+      {
+      }
+
     }
   }
 }

@@ -2,37 +2,35 @@
 
 namespace hemelb
 {
-  namespace vis 
+  namespace vis
   {
-    namespace raytracer 
+    namespace raytracer
     {
       RayTracer::ClusterBuilder::SiteTraverser::SiteTraverser(const geometry::LatticeData::LatticeData * iLatticeData,
-							    const site_t iBlockId)
-	: mLatticeData(iLatticeData),
-	  mBlockId(iBlockId)
-      { 	
+                                                              const site_t iBlockId) :
+        mLatticeData(iLatticeData), mBlockId(iBlockId)
+      {
       }
-      
 
       site_t RayTracer::ClusterBuilder::SiteTraverser::GetXCount()
       {
-	return GetBlockSize();
+        return GetBlockSize();
       }
 
       site_t RayTracer::ClusterBuilder::SiteTraverser::GetYCount()
       {
-	return GetBlockSize();
+        return GetBlockSize();
       }
 
       site_t RayTracer::ClusterBuilder::SiteTraverser::GetZCount()
       {
-	return GetBlockSize();
+        return GetBlockSize();
       }
 
       site_t RayTracer::ClusterBuilder::SiteTraverser::GetBlockSize()
       {
-	return mLatticeData->GetBlockSize();
-      }	
+        return mLatticeData->GetBlockSize();
+      }
     }
   }
 }

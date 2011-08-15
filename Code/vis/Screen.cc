@@ -59,20 +59,24 @@ namespace hemelb
       MaxXValue = maxX;
       MaxYValue = maxX;
 
-      UnitVectorProjectionX = viewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(MaxXValue, 0.0F, 0.0F));
-      UnitVectorProjectionY = viewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0.0F, MaxYValue, 0.0F));
+      UnitVectorProjectionX
+          = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(Vector3D<float> (MaxXValue,
+                                                                                   0.0F,
+                                                                                   0.0F));
+      UnitVectorProjectionY
+          = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(Vector3D<float> (0.0F,
+                                                                                   MaxYValue,
+                                                                                   0.0F));
 
       pixels->SetSize(pixelsX, pixelsY);
 
       ScaleX = (float) pixels->GetPixelsX() / (2.F * MaxXValue);
       ScaleY = (float) pixels->GetPixelsY() / (2.F * MaxYValue);
 
-      Vector3D<float> radVector = viewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0.F, 0.F, -rad));
+      Vector3D<float> radVector = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(Vector3D<
+          float> (0.F, 0.F, -rad));
 
-      mVtx = radVector*0.5F - UnitVectorProjectionX - UnitVectorProjectionY;
+      mVtx = radVector * 0.5F - UnitVectorProjectionX - UnitVectorProjectionY;
 
       UnitVectorProjectionX.x *= (2.F / (float) pixels->GetPixelsX());
       UnitVectorProjectionX.y *= (2.F / (float) pixels->GetPixelsX());
@@ -99,7 +103,7 @@ namespace hemelb
 
       for (unsigned int i = 0; i < pixels->GetStoredPixelCount(); i++)
       {
-        if (screenPix[i].IsRT() && int (screenPix[i].GetI()) == mouseX && int (screenPix[i].GetJ())
+        if (screenPix[i].IsRT() && int(screenPix[i].GetI()) == mouseX && int(screenPix[i].GetJ())
             == mouseY)
         {
           *density = screenPix[i].GetDensity();

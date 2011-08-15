@@ -361,9 +361,21 @@ namespace hemelb
     int col_pixel_count = 15;
     int col_pixel_blocklengths[15] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
 
-    MPI_Datatype col_pixel_types[15] = { MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-                                         MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT, MPI_FLOAT,
-                                         MPI_FLOAT, MPI_FLOAT, MPI_INT, MPI_INT, MPI_UB };
+    MPI_Datatype col_pixel_types[15] = { MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_FLOAT,
+                                         MPI_INT,
+                                         MPI_INT,
+                                         MPI_UB };
 
     MPI_Aint col_pixel_disps[15];
 
