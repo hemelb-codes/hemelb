@@ -19,319 +19,320 @@ namespace hemelb
 {
   namespace vis
   {
-    namespace raytracer 
+    namespace raytracer
     {
       class RayTracer
       {
-	//Class also contains nested classes Cluster and  ClusterBuilder, itself 
-	//containing VolumeTraverser, SiteTraverser and BlockTraverser
+          //Class also contains nested classes Cluster and  ClusterBuilder, itself
+          //containing VolumeTraverser, SiteTraverser and BlockTraverser
 
-      public:
-	// Constructor and destructor do all the usual stuff.
-	RayTracer(const geometry::LatticeData* iLatDat,
-		  const DomainStats* iDomainStats,
-		  Screen* iScreen,
-		  Viewpoint* iViewpoint,
-		  VisSettings* iVisSettings);
-	~RayTracer();
+        public:
+          // Constructor and destructor do all the usual stuff.
+          RayTracer(const geometry::LatticeData* iLatDat,
+                    const DomainStats* iDomainStats,
+                    Screen* iScreen,
+                    Viewpoint* iViewpoint,
+                    VisSettings* iVisSettings);
+          ~RayTracer();
 
-	// Method to update the voxel corresponding to site i with its
-	// newly calculated density, velocity and stress.
-	void UpdateClusterVoxel(site_t i,
-				distribn_t density,
-				distribn_t velocity,
-				distribn_t stress);
+          // Method to update the voxel corresponding to site i with its
+          // newly calculated density, velocity and stress.
+          void UpdateClusterVoxel(site_t i,
+                                  distribn_t density,
+                                  distribn_t velocity,
+                                  distribn_t stress);
 
-	// Render the current state into an image.
-	void Render();
+          // Render the current state into an image.
+          void Render();
 
-	//Stores the data about an individual voxel 
-	struct SiteData_t
-	{
-	public:
-	  float Density;
-	  float Velocity;
-	  float Stress;
+          //Stores the data about an individual voxel
+          struct SiteData_t
+          {
+            public:
+              float Density;
+              float Velocity;
+              float Stress;
 
-	SiteData_t(float iValue) :
-	  Density(iValue), Velocity(iValue), Stress(iValue) {}
-	};
+              SiteData_t(float iValue) :
+                Density(iValue), Velocity(iValue), Stress(iValue)
+              {
+              }
+          };
 
-	//The cluster structure stores data relating to the clusters
-	//used by the RayTracaer, in an optimal format
-	//Clusters are produced by the ClusterFactory
-	//Caution: the data within the flow field is altered by means
-	//of pointers obtained from the GetClusterVoxelDataPointer
-	//method
-	class Cluster
-	{
-	public:
-	  Cluster();
+          //The cluster structure stores data relating to the clusters
+          //used by the RayTracaer, in an optimal format
+          //Clusters are produced by the ClusterFactory
+          //Caution: the data within the flow field is altered by means
+          //of pointers obtained from the GetClusterVoxelDataPointer
+          //method
+          class Cluster
+          {
+            public:
+              Cluster();
 
-	  Vector3D<float> minSite;
-	  Vector3D<float> maxSite;
+              Vector3D<float> minSite;
+              Vector3D<float> maxSite;
 
-	  //Stores the lowest x, y and z block location of the Cluster 
-	  //in terms of site units relative to the centre location
-	  Vector3D<float> minBlock;
-        
-	  //Stores the size of the cluster in terms of the number of blocks
-	  unsigned short int blocksX;
-	  unsigned short int blocksY;
-	  unsigned short int blocksZ;
+              //Stores the lowest x, y and z block location of the Cluster
+              //in terms of site units relative to the centre location
+              Vector3D<float> minBlock;
 
-	  std::vector<std::vector<SiteData_t> > SiteData;
+              //Stores the size of the cluster in terms of the number of blocks
+              unsigned short int blocksX;
+              unsigned short int blocksY;
+              unsigned short int blocksZ;
 
-	};
+              std::vector<std::vector<SiteData_t> > SiteData;
 
-      private:
+          };
 
-	class ClusterBuilder
-	{
-	public:
-	  ClusterBuilder
-	    (const geometry::LatticeData*& iLatDat);
-	  ~ClusterBuilder();
-	  
-	  void BuildClusters();
-	  
-	  std::vector<Cluster>& GetClusters();
+        private:
 
-	  SiteData_t* GetClusterVoxelDataPointer(site_t iSiteId);
+          class ClusterBuilder
+          {
+            public:
+              ClusterBuilder(const geometry::LatticeData*& iLatDat);
+              ~ClusterBuilder();
 
-	private:
-	  //Volume tracker is used to sequentially traverse a 
-	  //3D structure maintaining the index and Location 
-	  //within volume
-	  class VolumeTraverser
-	  {
-	  public:
-	    VolumeTraverser();
+              void BuildClusters();
 
-	    Vector3D<site_t> GetCurrentLocation();
-			
-	    site_t GetCurrentIndex();
+              std::vector<Cluster>& GetClusters();
 
-	    site_t GetIndexFromLocation(Vector3D<site_t> iLocation);
+              SiteData_t* GetClusterVoxelDataPointer(site_t iSiteId);
 
-	    //Increments the index by one and update the location accordingly
-	    //Returns true if successful or false if the whole volume has been
-	    //traversed
-	    bool TraverseOne();
+            private:
+              //Volume tracker is used to sequentially traverse a
+              //3D structure maintaining the index and Location
+              //within volume
+              class VolumeTraverser
+              {
+                public:
+                  VolumeTraverser();
 
-	    //Virtual methods which must be defined for correct traversal
-	    virtual site_t GetXCount() = 0;
-	    virtual site_t GetYCount() = 0;
-	    virtual site_t GetZCount() = 0;
-	    
-	  protected:
-	    Vector3D<site_t> mCurrentLocation;
-	    site_t mCurrentNumber;
-	  };
-	  
-	  //SiteTraverse is used to traverse the sites in a speficied block
-	  //within the lattice data
-	  class SiteTraverser : public VolumeTraverser
-	  {
-	  public:
-	    SiteTraverser(const geometry::LatticeData * iLatticeDat, 
-			  const site_t iBlockId);
-			
-	    virtual site_t GetXCount();
+                  Vector3D<site_t> GetCurrentLocation();
 
-	    virtual site_t GetYCount();
+                  site_t GetCurrentIndex();
 
-	    virtual site_t GetZCount();
+                  site_t GetIndexFromLocation(Vector3D<site_t> iLocation);
 
-	  private:
-	    //Returns the block size in number of sites
-	    site_t GetBlockSize();
+                  //Increments the index by one and update the location accordingly
+                  //Returns true if successful or false if the whole volume has been
+                  //traversed
+                  bool TraverseOne();
 
-	    const geometry::LatticeData * mLatticeData;
-	    const site_t mBlockId;
+                  //Virtual methods which must be defined for correct traversal
+                  virtual site_t GetXCount() = 0;
+                  virtual site_t GetYCount() = 0;
+                  virtual site_t GetZCount() = 0;
 
-	  };
-	
-  	  //BlockTraverser is used to traverse the blocks in a lattice sequentially.
-	  //The class also contains a record of which blocks have been visited, which
-	  //is neccessary for the algoritm which uses this. No locations are automatically
-	  //marked visited, and methods have been created to assist with random access
-	  //of the lattice data as required by the algorithm
-	  class BlockTraverser : public VolumeTraverser
-	  {
-	  public:
-	    BlockTraverser(const geometry::LatticeData * iLatDat);
-	    ~BlockTraverser();
+                protected:
+                  Vector3D<site_t> mCurrentLocation;
+                  site_t mCurrentNumber;
+              };
 
-	    site_t CurrentBlockNumber();
-	    
-	    Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
-	
-	    //Tranverses the block until the next unvisited block is reached.
-	    //Returns false if the end of the Volume is reached
-	    bool GoToNextUnvisitedBlock();
-		
-	    geometry::LatticeData::BlockData * GetCurrentBlockData();
+              //SiteTraverse is used to traverse the sites in a speficied block
+              //within the lattice data
+              class SiteTraverser : public VolumeTraverser
+              {
+                public:
+                  SiteTraverser(const geometry::LatticeData * iLatticeDat, const site_t iBlockId);
 
-	    geometry::LatticeData::BlockData * GetBlockDataForLocation(const Vector3D<site_t>& iLocation);
+                  virtual site_t GetXCount();
 
-	    site_t GetBlockSize();
-	    
-	    SiteTraverser GetSiteTraverserForCurrentBlock();
-	    
-	    SiteTraverser GetSiteTraverserForLocation(const Vector3D<site_t>& iLocation);
+                  virtual site_t GetYCount();
 
-	    virtual site_t GetXCount();
+                  virtual site_t GetZCount();
 
-	    virtual site_t GetYCount();
+                private:
+                  //Returns the block size in number of sites
+                  site_t GetBlockSize();
 
-	    virtual site_t GetZCount();
+                  const geometry::LatticeData * mLatticeData;
+                  const site_t mBlockId;
 
-	    bool IsValidLocation(Vector3D<site_t> block);
-	    
-	    bool IsCurrentBlockVisited();
+              };
 
-	    bool IsBlockVisited(site_t n);
-	    bool IsBlockVisited(Vector3D<site_t> n);
+              //BlockTraverser is used to traverse the blocks in a lattice sequentially.
+              //The class also contains a record of which blocks have been visited, which
+              //is neccessary for the algoritm which uses this. No locations are automatically
+              //marked visited, and methods have been created to assist with random access
+              //of the lattice data as required by the algorithm
+              class BlockTraverser : public VolumeTraverser
+              {
+                public:
+                  BlockTraverser(const geometry::LatticeData * iLatDat);
+                  ~BlockTraverser();
 
-	    void MarkCurrentBlockVisited();
+                  site_t CurrentBlockNumber();
 
-	    void MarkBlockVisited(site_t n);
-	    void MarkBlockVisited(Vector3D<site_t> location);
+                  Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
 
-	  private:
-	    bool GoToNextBlock();
+                  //Tranverses the block until the next unvisited block is reached.
+                  //Returns false if the end of the Volume is reached
+                  bool GoToNextUnvisitedBlock();
 
-	    const geometry::LatticeData * mLatticeData;
+                  geometry::LatticeData::BlockData * GetCurrentBlockData();
 
-	    bool* mBlockVisited;
-	  };
+                  geometry::LatticeData::BlockData
+                      * GetBlockDataForLocation(const Vector3D<site_t>& iLocation);
 
-	  //Locates all the clusters in the lattice structure and the 
-	  void LocateClusters();
-      
-	  // If the site hasn't been visited, finds a new rectangular
-	  // cluster containing this site
-	  void FindNewCluster();
+                  site_t GetBlockSize();
 
-	  //Adds neighbouring blocks of the input location to the input stack
-	  void AddNeighbouringBlocks(Vector3D<site_t> iCurrentLocation,
-				     std::stack<Vector3D<site_t> >& ioBlocksToVisit);
+                  SiteTraverser GetSiteTraverserForCurrentBlock();
 
-	  //Returns true if there are sites in the given block associated with the 
-	  //local processor rank 
-	  bool AreSitesAssignedToLocalProcessorRankInBlock
-	    (geometry::LatticeData::BlockData * iBlock);
-      
-	  //Adds a new cluster by taking in the required data in interget format
-	  //and converting it to that used by the raytracer
-	  //NB: Futher processing is required on the cluster before it can be used 
-	  //by the ray tracer, which is handled by the ProcessCluster method
-	  void AddCluster(Vector3D<site_t> iClusterBlockMin,
-			  Vector3D<site_t> iClusterBlockMax,
-			  Vector3D<site_t> iClusterVoxelMin,
-			  Vector3D<site_t> iClusterVoxelMax);
+                  SiteTraverser GetSiteTraverserForLocation(const Vector3D<site_t>& iLocation);
 
-	  //Adds "flow-field" data to the cluster
-	  void ProcessCluster(unsigned int iClusterId);
+                  virtual site_t GetXCount();
 
-	  void UpdateSiteData
-	    (geometry::LatticeData::BlockData * lBlock, site_t n, 
-	     unsigned int iClusterId, Vector3D<site_t> i_block_coordinates);
+                  virtual site_t GetYCount();
 
-	  void UpdateSiteDataAtSite
-	    (geometry::LatticeData::BlockData * iBlock,
-	     site_t n, unsigned int iClusterId, unsigned int l_site_id);
+                  virtual site_t GetZCount();
 
-	  Vector3D<site_t> GetSiteCoordinatesOfBlock
-	    (site_t iClusterId, Vector3D<site_t> offset);
+                  bool IsValidLocation(Vector3D<site_t> block);
 
-	  SiteData_t* GetDataPointerClusterVoxelSiteId(site_t iSiteId);
+                  bool IsCurrentBlockVisited();
 
-	  void SetDataPointerForClusterVoxelSiteId
-	    (site_t iClusterVortexSiteId, 
-	     SiteData_t* iDataPointer);
-	  
-	  BlockTraverser mBlockTraverser;
-	  
-	  //Caution: the data within mClusters is altered by means
-	  //of pointers obtained from the GetClusterVoxelDataPointer
-	  //method. No insertion of copying must therefore take place 
-	  //on mClusters once building is complete
-	  std::vector<Cluster> mClusters;
-	 
-	  std::vector<Vector3D<site_t> > mClusterBlockMins; 
-	 
-	  //This allows a cluster voxel site ID (as part of the 1D structure for)
-	  //storing sites to be mapped to the data stored in the 3D structure 
-	  //for the ray tracer by means of pointers.
-	  std::vector<SiteData_t*> mClusterVoxelDataPointers;
+                  bool IsBlockVisited(site_t n);
+                  bool IsBlockVisited(Vector3D<site_t> n);
 
-	  const geometry::LatticeData*& mLatticeData;
-	  short int *mClusterIdOfBlock;
+                  void MarkCurrentBlockVisited();
 
-	  static const short int NOTASSIGNEDTOCLUSTER = -1; 
+                  void MarkBlockVisited(site_t n);
+                  void MarkBlockVisited(Vector3D<site_t> location);
 
-	  static const Vector3D<site_t> mNeighbours[26];
-	};
+                private:
+                  bool GoToNextBlock();
 
-	struct Ray
-	{
-	  Vector3D<float> Direction;
-	  Vector3D <float> InverseDirection;
-	  float Length;
+                  const geometry::LatticeData * mLatticeData;
 
-	  float VelocityColour[3];
-	  float StressColour[3];
-	  float Stress;
-	  float Density;
-	  float MinT;
-	};
+                  bool* mBlockVisited;
+              };
 
-	struct AABB
-	{
-	  float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
-	};
+              //Locates all the clusters in the lattice structure and the
+              void LocateClusters();
 
+              // If the site hasn't been visited, finds a new rectangular
+              // cluster containing this site
+              void FindNewCluster();
 
-	void UpdateRayData(const SiteData_t* iSiteData,
-			   float ray_t,
-			   float ray_segment,
-			   Ray* bCurrentRay);
+              //Adds neighbouring blocks of the input location to the input stack
+              void AddNeighbouringBlocks(Vector3D<site_t> iCurrentLocation,
+                                         std::stack<Vector3D<site_t> >& ioBlocksToVisit);
 
-	void TraverseVoxels(const Vector3D<float>& block_min,
-			    const Vector3D<float>& block_x,
-			    const SiteData_t* iSiteData,
-			    float t,
-			    Ray* bCurrentRay,
-			    const Vector3D<bool>& xyz_is_1);
+              //Returns true if there are sites in the given block associated with the
+              //local processor rank
+              bool
+                  AreSitesAssignedToLocalProcessorRankInBlock(geometry::LatticeData::BlockData * iBlock);
 
-	void TraverseBlocks(const Cluster* cluster,
-			    const Vector3D<bool>& xyz_Is_1,
-			    const Vector3D<float>& ray_dx,
-			    Ray *bCurrentRay);
+              //Adds a new cluster by taking in the required data in interget format
+              //and converting it to that used by the raytracer
+              //NB: Futher processing is required on the cluster before it can be used
+              //by the ray tracer, which is handled by the ProcessCluster method
+              void AddCluster(Vector3D<site_t> iClusterBlockMin,
+                              Vector3D<site_t> iClusterBlockMax,
+                              Vector3D<site_t> iClusterVoxelMin,
+                              Vector3D<site_t> iClusterVoxelMax);
 
-	void AABBvsRay(const AABB* aabb,
-		       const Vector3D<float>& inverseDirection,
-		       const Vector3D<bool>& xyzComponentIsPositive,
-		       float* t_near,
-		       float* t_far);
+              //Adds "flow-field" data to the cluster
+              void ProcessCluster(unsigned int iClusterId);
 
-	void UpdateColour(float dt, const float palette[3], float col[3]);
+              void UpdateSiteData(geometry::LatticeData::BlockData * lBlock,
+                                  site_t n,
+                                  unsigned int iClusterId,
+                                  Vector3D<site_t> i_block_coordinates);
 
-	ClusterBuilder mClusterBuilder;
-	
-	const geometry::LatticeData* mLatDat;
+              void UpdateSiteDataAtSite(geometry::LatticeData::BlockData * iBlock,
+                                        site_t n,
+                                        unsigned int iClusterId,
+                                        unsigned int l_site_id);
 
-	const DomainStats* mDomainStats;
-	Screen* mScreen;
-	Viewpoint* mViewpoint;
-	VisSettings* mVisSettings;
+              Vector3D<site_t>
+                  GetSiteCoordinatesOfBlock(site_t iClusterId, Vector3D<site_t> offset);
 
-	const float mBlockSizeFloat;
-	const float mBlockSizeInverse;
-	const site_t block_size2, block_size3, block_size_1;
-	const site_t blocksYz;
+              SiteData_t* GetDataPointerClusterVoxelSiteId(site_t iSiteId);
+
+              void SetDataPointerForClusterVoxelSiteId(site_t iClusterVortexSiteId,
+                                                       SiteData_t* iDataPointer);
+
+              BlockTraverser mBlockTraverser;
+
+              //Caution: the data within mClusters is altered by means
+              //of pointers obtained from the GetClusterVoxelDataPointer
+              //method. No insertion of copying must therefore take place
+              //on mClusters once building is complete
+              std::vector<Cluster> mClusters;
+
+              std::vector<Vector3D<site_t> > mClusterBlockMins;
+
+              //This allows a cluster voxel site ID (as part of the 1D structure for)
+              //storing sites to be mapped to the data stored in the 3D structure
+              //for the ray tracer by means of pointers.
+              std::vector<SiteData_t*> mClusterVoxelDataPointers;
+
+              const geometry::LatticeData*& mLatticeData;
+              short int *mClusterIdOfBlock;
+
+              static const short int NOTASSIGNEDTOCLUSTER = -1;
+
+              static const Vector3D<site_t> mNeighbours[26];
+          };
+
+          struct Ray
+          {
+              Vector3D<float> Direction;
+              Vector3D<float> InverseDirection;
+              float Length;
+
+              float VelocityColour[3];
+              float StressColour[3];
+              float Stress;
+              float Density;
+              float MinT;
+          };
+
+          struct AABB
+          {
+              float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
+          };
+
+          void UpdateRayData(const SiteData_t* iSiteData,
+                             float ray_t,
+                             float ray_segment,
+                             Ray* bCurrentRay);
+
+          void TraverseVoxels(const Vector3D<float>& block_min,
+                              const Vector3D<float>& block_x,
+                              const SiteData_t* iSiteData,
+                              float t,
+                              Ray* bCurrentRay,
+                              const Vector3D<bool>& xyz_is_1);
+
+          void TraverseBlocks(const Cluster* cluster,
+                              const Vector3D<bool>& xyz_Is_1,
+                              const Vector3D<float>& ray_dx,
+                              Ray *bCurrentRay);
+
+          void AABBvsRay(const AABB* aabb,
+                         const Vector3D<float>& inverseDirection,
+                         const Vector3D<bool>& xyzComponentIsPositive,
+                         float* t_near,
+                         float* t_far);
+
+          void UpdateColour(float dt, const float palette[3], float col[3]);
+
+          ClusterBuilder mClusterBuilder;
+
+          const geometry::LatticeData* mLatDat;
+
+          const DomainStats* mDomainStats;
+          Screen* mScreen;
+          Viewpoint* mViewpoint;
+          VisSettings* mVisSettings;
+
+          const float mBlockSizeFloat;
+          const float mBlockSizeInverse;
+          const site_t block_size2, block_size3, block_size_1;
+          const site_t blocksYz;
       };
     }
   }

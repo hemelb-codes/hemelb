@@ -9,9 +9,10 @@ namespace hemelb
   namespace vis
   {
     Viewpoint::Viewpoint() :
-      mViewpointLocation(0.0F) 
-    {}
-    
+      mViewpointLocation(0.0F)
+    {
+    }
+
     Vector3D<float> Viewpoint::RotateCameraCoordinatesToWorldCoordinates(const Vector3D<float>& iVector) const
     {
       // A rotation of iThetaX clockwise looking up the x-axis (increasing)
@@ -25,12 +26,11 @@ namespace hemelb
       return UnRotate(mSinLatitude, mCosLatitude, mSinLongitude, mCosLongitude, iVector);
     }
 
-    Vector3D <float> Viewpoint::Rotate
-    (float iSinThetaX,
-     float iCosThetaX,
-     float iSinThetaY,
-     float iCosThetaY,
-     const Vector3D<float>& iVector)
+    Vector3D<float> Viewpoint::Rotate(float iSinThetaX,
+                                      float iCosThetaX,
+                                      float iSinThetaY,
+                                      float iCosThetaY,
+                                      const Vector3D<float>& iVector)
     {
       // A rotation of iThetaX clockwise looking down the x-axis
       // Followed by a rotation of iThetaY anticlockwise looking down the y-axis.
@@ -44,19 +44,17 @@ namespace hemelb
       //       (Zcos(iThetaX)cos(iThetaY) - Ysin(iThetaX)cos(iThetaY) - Xsin(iThetaY))
 
       const float lTemp = iVector.z * iCosThetaX - iVector.y * iSinThetaX;
-      
-      return Vector3D <float>(
-	lTemp*iSinThetaY + iVector.x*iCosThetaY,
-	iVector.z * iSinThetaX + iVector.y * iCosThetaX,
-	lTemp * iCosThetaY - iVector.x * iSinThetaY);
+
+      return Vector3D<float> (lTemp * iSinThetaY + iVector.x * iCosThetaY,
+                              iVector.z * iSinThetaX + iVector.y * iCosThetaX,
+                              lTemp * iCosThetaY - iVector.x * iSinThetaY);
     }
 
-    Vector3D <float> Viewpoint::UnRotate
-    (float iSinThetaX,
-     float iCosThetaX,
-     float iSinThetaY,
-     float iCosThetaY,
-     const Vector3D<float>& iVector)
+    Vector3D<float> Viewpoint::UnRotate(float iSinThetaX,
+                                        float iCosThetaX,
+                                        float iSinThetaY,
+                                        float iCosThetaY,
+                                        const Vector3D<float>& iVector)
     {
       // A rotation of iThetaY aniclockwise looking down the y-axis
       // Followed by a rotation of iThetaX clockwise looking down the x-axis.
@@ -69,56 +67,57 @@ namespace hemelb
       // ie (AB)^-1 = (AB)^t = B^t A^T
 
       const float lTemp = iVector.x * iSinThetaY + iVector.z * iCosThetaY;
-      
-      return Vector3D <float>(
-	iVector.x*iCosThetaY - iVector.z*iSinThetaY,
-	-lTemp*iSinThetaX + iVector.y*iCosThetaX,
-	lTemp*iCosThetaX + iVector.y*iSinThetaX);
+
+      return Vector3D<float> (iVector.x * iCosThetaY - iVector.z * iSinThetaY,
+                              -lTemp * iSinThetaX + iVector.y * iCosThetaX,
+                              lTemp * iCosThetaX + iVector.y * iSinThetaX);
     }
 
     Vector3D<float> Viewpoint::Project(const Vector3D<float>& iWorldLocation) const
     {
       //Calculate the location of the point relative to the viewpoint 
       Vector3D<float> lLocationRelativeToViewPoint = iWorldLocation - mViewpointLocation;
-      
+
       //Rotate the location vector in the opposite manner to that of the camera
-      Vector3D<float> lLocationCamCoordinates = 
-	RotateWorldToCameraCoordinates(lLocationRelativeToViewPoint);
+      Vector3D<float> lLocationCamCoordinates =
+          RotateWorldToCameraCoordinates(lLocationRelativeToViewPoint);
       // NB - the oringinal code was not doing this but a reflection rotation
       // and then back reflectiond which produced similar images.
       // It was believed that this was in error. 
-      
+
       //Carry out a perspective projection on an infinite spanning screen 
       //between the eye and the subject.
       //Reverse the sign such that depth is positive (I believe).  
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
- 	("Depth: %f", -lLocationCamCoordinates.z);
+      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Depth: %f",
+                                                                            -lLocationCamCoordinates.z);
 
-      return Vector3D <float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
-				* lLocationCamCoordinates.x,
-				 mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z) 
-				* lLocationCamCoordinates.y,
-				-lLocationCamCoordinates.z);
+      return Vector3D<float> (mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+                                  * lLocationCamCoordinates.x,
+                              mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+                                  * lLocationCamCoordinates.y,
+                              -lLocationCamCoordinates.z);
     }
 
-    void Viewpoint::SetViewpointPosition(
-      float iLongitude,
-      float iLatitude,
-      const Vector3D<float>& iLocalCentre,
-      float iRadius,
-      float iDistanceFromEyeToScreen)
+    void Viewpoint::SetViewpointPosition(float iLongitude,
+                                         float iLatitude,
+                                         const Vector3D<float>& iLocalCentre,
+                                         float iRadius,
+                                         float iDistanceFromEyeToScreen)
     {
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
-       	("Latitude: %f / Longitude: %f", iLatitude, iLongitude);
+      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Latitude: %f / Longitude: %f",
+                                                                            iLatitude,
+                                                                            iLongitude);
       mSinLongitude = sinf(iLongitude);
       mCosLongitude = cosf(iLongitude);
-    
+
       mSinLatitude = sinf(iLatitude);
       mCosLatitude = cosf(iLatitude);
 
       // Z in the camera co-ordinates indicates the distance from the centre
       // the viewpoint into the camera prior rotation.
-      mViewpointLocation = RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0., 0., iRadius));
+      mViewpointLocation = RotateCameraCoordinatesToWorldCoordinates(Vector3D<float> (0.,
+                                                                                      0.,
+                                                                                      iRadius));
 
       //Translate the camera location to allow it to point at 
       //a local centre rather than the world centre
