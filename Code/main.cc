@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     fclose(timings_ptr);
   }
 
-  delete lSimulationConfig;
+ delete lSimulationConfig;
 
   return (0);
 }

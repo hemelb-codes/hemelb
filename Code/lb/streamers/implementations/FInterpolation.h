@@ -19,6 +19,7 @@ namespace hemelb
           public:
             template<bool tDoRayTracing>
             static void DoStreamAndCollide(WallCollision* mWallCollision,
+                                           tCollisionOperator* iCollisionOperator,
                                            const site_t iFirstIndex,
                                            const site_t iSiteCount,
                                            const LbmParameters* iLbmParams,
@@ -38,6 +39,7 @@ namespace hemelb
         template<typename tCollisionOperator>
         template<bool tDoRayTracing>
         void FInterpolation<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
+                                                                    tCollisionOperator* iCollisionOperator,
                                                                     const site_t iFirstIndex,
                                                                     const site_t iSiteCount,
                                                                     const LbmParameters* iLbmParams,

@@ -25,6 +25,7 @@ namespace hemelb
           double PPhase;
           Vector Position;
           Vector Normal;
+          std::string PFilePath;
       };
 
       static SimConfig *Load(const char *iPath);

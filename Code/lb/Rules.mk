@@ -10,6 +10,8 @@ $(TARGETS)_DEPS = lb.o \
                   StabilityTester.o \
                   EntropyTester.o \
                   SimulationState.o \
+                  BoundaryComms.o \
+                  BoundaryValues.o \
                   $(foreach sd,$(SUBDIRS_$(d)),$(call subtree_tgts,$(sd)))
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
