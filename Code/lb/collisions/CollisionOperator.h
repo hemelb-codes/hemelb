@@ -14,7 +14,6 @@ namespace hemelb
     {
       class CollisionOperator
       {
-
         protected:
           CollisionOperator();
 
