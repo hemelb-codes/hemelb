@@ -20,6 +20,7 @@ namespace hemelb
           public:
             template<bool tDoRayTracing>
             static void DoStreamAndCollide(MidFluidCollision* mMidFluidCollision,
+                                           tCollisionOperator* iCollisionOperator,
                                            const site_t iFirstIndex,
                                            const site_t iSiteCount,
                                            const LbmParameters* iLbmParams,
@@ -39,6 +40,7 @@ namespace hemelb
         template<typename tCollisionOperator>
         template<bool tDoRayTracing>
         void SimpleCollideAndStream<tCollisionOperator>::DoStreamAndCollide(MidFluidCollision* mMidFluidCollision,
+                                                                            tCollisionOperator* iCollisionOperator,
                                                                             const site_t iFirstIndex,
                                                                             const site_t iSiteCount,
                                                                             const LbmParameters* iLbmParams,
@@ -52,23 +54,25 @@ namespace hemelb
             distribn_t lFNeq[D3Q15::NUMVECTORS], lFEq[D3Q15::NUMVECTORS];
             double alpha;
 
-            tCollisionOperator::getSiteValues(lFOld,
-                                              lDensity,
-                                              lVx,
-                                              lVy,
-                                              lVz,
-                                              lFEq,
-                                              iIndex - iFirstIndex);
+            iCollisionOperator->getSiteValues(lFOld, lDensity, lVx, lVy, lVz, lFEq, iIndex
+                - iFirstIndex);
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
               lFNeq[ii] = lFOld[ii] - lFEq[ii];
-              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii] +=
-                  tCollisionOperator::getOperatorElement(lFOld[ii], lFNeq[ii], iLbmParams);
+              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
+                  += iCollisionOperator->getOperatorElement(lFOld[ii], lFNeq[ii]);
             }
 
-            UpdateMinsAndMaxes < tDoRayTracing
-                > (lVx, lVy, lVz, iIndex, lFNeq, lDensity, bLatDat, iLbmParams, iControl);
+            UpdateMinsAndMaxes<tDoRayTracing> (lVx,
+                                               lVy,
+                                               lVz,
+                                               iIndex,
+                                               lFNeq,
+                                               lDensity,
+                                               bLatDat,
+                                               iLbmParams,
+                                               iControl);
           }
         }
 

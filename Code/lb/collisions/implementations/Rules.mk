@@ -1,7 +1,7 @@
 include $(MK)/header.mk
 
 TARGETS := LBGK.o \
-           ELBM.o
+	   ELBM.o \
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

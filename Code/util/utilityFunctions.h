@@ -1,9 +1,11 @@
 #ifndef HEMELB_UTILITYFUNCTIONS_H
 #define HEMELB_UTILITYFUNCTIONS_H
 
+#include "util/utilityFunctions.h"
 #include <math.h>
 #include <iostream>
 #include <cstdlib>
+#include <vector>
 
 // Static class for simple functions that could be useful in many places
 namespace hemelb
@@ -88,21 +90,26 @@ namespace hemelb
           return x;
         }
 
+        /*
+         * Finds root using Brent's method. Needs to be given a bracket enclosing the root.
+         * The caller must check if a root is enclosed so that he can specify the result in that case
+         * Since it must check for this it will have the values of the function at those points
+         * so they need to be passed on as well.
+         */
         template<class F>
-        static double Brent(F* func, double xl, double xh, double alphaAcc, double fAcc)
+        static double Brent(F* func,
+                            double xl,
+                            double fl,
+                            double xh,
+                            double fh,
+                            double alphaAcc,
+                            double fAcc)
         {
-          double a = xl, fa;
-          double b = xh, fb;
-          double c = a, fc;
+          double a = xl, fa = fl;
+          double b = xh, fb = fh;
+          double c = a, fc = fa;
           double d; // First set after first iteration hence mflag
-          double s, fs;
-
-          (*func)(a, fa);
-          (*func)(b, fb);
-          fc = fa;
-          fs = fb;
-
-          // The task of verifying whether a root is enclosed is left to caller
+          double s, fs = fb;
 
           if (fabs(fa) < fabs(fb))
           {
@@ -173,6 +180,23 @@ namespace hemelb
           else
             return s;
         }
+    };
+
+    class VectorFunctions
+    {
+      public:
+        template<typename T>
+        static bool member(std::vector<T> &list, T element)
+        {
+          for (unsigned int i = 0; i < list.size(); i++)
+          {
+            if (element == list[i])
+              return true;
+          }
+
+          return false;
+        }
+
     };
 
     // Returns the number of seconds to 6dp elapsed since the Epoch

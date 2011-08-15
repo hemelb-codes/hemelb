@@ -7,6 +7,8 @@
 #include "steering/ImageSendComponent.h"
 #include "steering/SteeringComponent.h"
 #include "lb/EntropyTester.h"
+#include "lb/BoundaryComms.h"
+#include "util/UnitConverter.h"
 
 class SimulationMaster
 {
@@ -48,8 +50,12 @@ class SimulationMaster
     hemelb::lb::SimulationState* mSimulationState;
     hemelb::lb::StabilityTester* mStabilityTester;
     hemelb::lb::EntropyTester* mEntropyTester;
-    hemelb::lb::LBM *mLbm;
+    hemelb::lb::LBM* mLbm;
+    hemelb::lb::BoundaryComms* mInletComms;
+    hemelb::lb::BoundaryComms* mOutletComms;
     hemelb::net::Net mNet;
+
+    hemelb::util::UnitConverter* mUnits;
 
     hemelb::vis::Control* mVisControl;
 

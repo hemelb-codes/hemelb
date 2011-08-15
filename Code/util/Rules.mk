@@ -2,7 +2,8 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbUtil.$(LIBEXT)
 SRCS := fileutils.cc \
-        utilityFunctions.cc
+        utilityFunctions.cc \
+        UnitConverter.cc
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 
