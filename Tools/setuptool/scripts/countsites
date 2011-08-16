@@ -3,7 +3,12 @@
 import xdrlib
 import numpy as np
 
-def CountFluidSites(filename):
+def CountFluidSites(filename, verbosity=1):
+    summary = 'FileName = "{filename}"\n'
+    for var in 'StressType BlockCounts BlockSize VoxelSize Origin TotalFluidSites'.split():
+        summary += '\t%s = {%s}\n' % (var,var)
+        continue
+    
     cfg = file(filename)
     preamble = cfg.read(5*4 + 4*8)
     un = xdrlib.Unpacker(preamble)
@@ -13,6 +18,8 @@ def CountFluidSites(filename):
     BlockSize = un.unpack_uint()
 
     TotalBlocks = np.prod(BlockCounts)
+    VoxelSize = un.unpack_double()
+    Origin = [un.unpack_double() for i in xrange(3)]
     
     header = cfg.read(2 * TotalBlocks * 4)
     un = xdrlib.Unpacker(header)
@@ -24,11 +31,30 @@ def CountFluidSites(filename):
         FluidSitesPerBlock[i] = un.unpack_uint()
         BytesPerBlock[i] = un.unpack_uint()
 
-    return FluidSitesPerBlock.sum()
+    TotalFluidSites = FluidSitesPerBlock.sum()
+
+    if verbosity == 0:
+        return TotalFluidSites
+    elif verbosity == 1:
+        return summary.format(**locals())
+
+    # verbosity >= 2
+    summary = summary.format(**locals())
+    summary += '\t\tIndex\tSites\tBytes\n'
+    for i in xrange(TotalBlocks):
+        summary += '\t\t%d\t%d\t%d\n' % (i, FluidSitesPerBlock[i], BytesPerBlock[i])
+        continue
+    
+    return summary
 
 if __name__ == "__main__":
     import sys
-
-    for fn in sys.argv[1:]:
-        print CountFluidSites(fn)
+    verbosity = 0
+    inputs = sys.argv[1:]
+    while inputs[0] == '-v':
+        inputs.pop(0)
+        verbosity += 1
+    
+    for fn in inputs:
+        print CountFluidSites(fn, verbosity)
         
