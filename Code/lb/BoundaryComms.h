@@ -33,10 +33,16 @@ namespace hemelb
         void Reset();
 
         distribn_t GetBoundaryDensity(const int index);
-        void WaitAllComms();
+        void SendAndWaitAllComms();
 
       private:
         proc_t BCproc; // Process responsible for sending out BC info
+
+        /*
+         * The vector gets resized and updated in the BoundaryValues object. All values are copied
+         * into a C-style array to take advantage of being able to pass a pointer to any element
+         * of the array
+         */
         std::vector<distribn_t>* density_cycle_vector;
         distribn_t *density_cycle;
         distribn_t *density;
