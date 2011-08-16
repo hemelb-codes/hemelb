@@ -108,22 +108,22 @@ BlockIterator& BlockIterator::operator++() {
 	// need to handle that case.
 	int pos;
 	// Delete any unnecessary blocks
-	for (int i = this->current.x - 1; i < this->current.x + 1; ++i) {
+	for (int i = this->current[0] - 1; i < this->current[0] + 1; ++i) {
 		if (i < 0)
 			continue;
-		if (i == this->current.x && i != this->maxima.x)
+		if (i == this->current[0] && i != this->maxima[0])
 			continue;
 
-		for (int j = this->current.y - 1; j < this->current.y + 1; ++j) {
+		for (int j = this->current[1] - 1; j < this->current[1] + 1; ++j) {
 			if (j < 0)
 				continue;
-			if (j == this->current.y && j != this->maxima.y)
+			if (j == this->current[1] && j != this->maxima[1])
 				continue;
 
-			for (int k = this->current.z - 1; k < this->current.z + 1; ++k) {
+			for (int k = this->current[2] - 1; k < this->current[2] + 1; ++k) {
 				if (k < 0)
 					continue;
-				if (k == this->current.z && k != this->maxima.z)
+				if (k == this->current[2] && k != this->maxima[2])
 					continue;
 
 				// This block can no longer be reached from the current or later
@@ -136,15 +136,15 @@ BlockIterator& BlockIterator::operator++() {
 	}
 
 	// Update the index vector
-	this->current.z += 1;
-	if (this->current.z == this->domain->BlockCounts.z) {
-		this->current.z = 0;
+	this->current[2] += 1;
+	if (this->current[2] == this->domain->BlockCounts[2]) {
+		this->current[2] = 0;
 
-		this->current.y += 1;
-		if (this->current.y == this->domain->BlockCounts.y) {
-			this->current.y = 0;
+		this->current[1] += 1;
+		if (this->current[1] == this->domain->BlockCounts[1]) {
+			this->current[1] = 0;
 
-			this->current.x += 1;
+			this->current[0] += 1;
 		}
 	}
 	return *this;
