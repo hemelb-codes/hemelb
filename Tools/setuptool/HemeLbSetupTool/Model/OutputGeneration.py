@@ -16,11 +16,7 @@ np.seterr(divide='ignore')
 def DVfromV(v):
     """Translate a Model.Vector.Vector to a Generation.DoubleVector.
     """
-    dv = Generation.DoubleVector()
-    dv.x = v.x
-    dv.y = v.y
-    dv.z = v.z
-    return dv
+    return Generation.DoubleVector(v.x, v.y, v.z)
 
 class ConfigGenerator(object):
     def __init__(self, profile):
