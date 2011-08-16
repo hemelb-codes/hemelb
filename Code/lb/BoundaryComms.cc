@@ -35,6 +35,11 @@ namespace hemelb
         delete[] nProcs;
       }
 
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+        delete[] density_cycle;
+      else
+        delete[] density;
+
       // Communicators and groups
       delete[] request;
       delete[] status;
@@ -44,11 +49,20 @@ namespace hemelb
                                    geometry::LatticeData* iLatDat,
                                    std::vector<distribn_t>* iDensityCycleVector)
     {
-      density_cycle_vector = iDensityCycleVector;
-      density_cycle = new distribn_t[density_cycle_vector->size()];
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        density_cycle_vector = iDensityCycleVector;
+        density_cycle = new distribn_t[density_cycle_vector->size()];
 
-      for (unsigned int i = 0; i < density_cycle_vector->size(); i++)
-        density_cycle[i] = (*density_cycle_vector)[i];
+        for (unsigned int i = 0; i < density_cycle_vector->size(); i++)
+          density_cycle[i] = (*density_cycle_vector)[i];
+
+        density = density_cycle;
+      }
+      else
+      {
+        density = new distribn_t[nTotIOlets];
+      }
 
       // Work out which and how many inlets/outlets on this process
       nIOlets = 0;
@@ -160,8 +174,6 @@ namespace hemelb
 
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        density = density_cycle;
-
         int nRequests = 0;
 
         requestOffset = new int[nTotIOlets];
@@ -177,13 +189,11 @@ namespace hemelb
       }
       else
       {
-        density = new distribn_t[nTotIOlets];
         request = new MPI_Request[nTotIOlets];
         status = new MPI_Status[nTotIOlets];
       }
 
-      RequestComms();
-      WaitAllComms();
+      SendAndWaitAllComms();
     }
 
     // This assumes that the BCproc never receives
@@ -194,8 +204,12 @@ namespace hemelb
       return density[index];
     }
 
-    void BoundaryComms::WaitAllComms()
+    void BoundaryComms::SendAndWaitAllComms()
     {
+      // This will get BCproc to send and all others to receive
+      RequestComms();
+
+      // Now wait for all to complete
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
         for (int i = 0; i < nTotIOlets; i++)
@@ -263,14 +277,18 @@ namespace hemelb
 
     void BoundaryComms::Reset()
     {
-      density_cycle = new distribn_t[density_cycle_vector->size()];
+      // density_cycle_vector should be resized and reinitialised by now
 
-      for (unsigned int i = 0; i < density_cycle_vector->size(); i++)
-        density_cycle[i] = (*density_cycle_vector)[i];
+      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      {
+        delete[] density_cycle;
+        density_cycle = new distribn_t[density_cycle_vector->size()];
 
-      // density_cycle should be reset by now
-      RequestComms();
-      WaitAllComms();
+        for (unsigned int i = 0; i < density_cycle_vector->size(); i++)
+          density_cycle[i] = (*density_cycle_vector)[i];
+      }
+
+      SendAndWaitAllComms();
     }
 
   }
