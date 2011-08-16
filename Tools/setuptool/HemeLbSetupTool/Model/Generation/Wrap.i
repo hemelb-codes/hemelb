@@ -98,6 +98,37 @@ namespace std {
 %ignore Iterator;
 %ignore Vec3::operator%;
 %ignore Vec3::operator[];
+
+%extend Vec3 {
+  // Python specific wrapping of operator[]
+  Vec3::value_type __getitem__(int i) {
+    // $self is a pointer to Vec3
+    return (*$self)[i];
+  }
+  void __setitem__(int i, Vec3::value_type val) {
+    // $self is a pointer to Vec3
+    (*$self)[i] = val;
+  }
+  %pythoncode %{
+    def __str__(self):
+        return "Vec3(%s, %s, %s)" % (self[0], self[1], self[2])
+  %}
+};
+
+%feature("shadow") Vec3::__getitem__ %{
+def __getitem__(self, i):
+    if i < 0 or i > 2:
+        raise IndexError("Vec3 index out of range")
+    return $action(self, i)
+%}
+
+%feature("shadow") Vec3::__setitem__ %{
+def __setitem__(self, i, val):
+    if i < 0 or i > 2:
+        raise IndexError("Vec3 index out of range")
+    return $action(self, i, val)
+%}
+
 %ignore Vec3::Magnitude;
 %include Index.h
 %template (DoubleVector) Vec3<double>;
