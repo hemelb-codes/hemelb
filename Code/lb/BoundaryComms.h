@@ -35,6 +35,8 @@ namespace hemelb
         distribn_t GetBoundaryDensity(const int index);
         void SendAndWaitAllComms();
 
+        bool IsCurrentProcTheBCProc();
+
       private:
         proc_t BCproc; // Process responsible for sending out BC info
 
