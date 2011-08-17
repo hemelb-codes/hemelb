@@ -172,12 +172,7 @@ namespace hemelb
                   if (mLatDat->GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
                   {
                     D3Q15::CalculateDensityVelocityFEq(mLatDat->GetFOld(my_site_id
-                                                           * D3Q15::NUMVECTORS),
-                                                       density,
-                                                       vx,
-                                                       vy,
-                                                       vz,
-                                                       f_eq);
+                        * D3Q15::NUMVECTORS), density, vx, vy, vz, f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
@@ -187,16 +182,16 @@ namespace hemelb
                   }
                   else
                   { // not FLUID_TYPE
-                    mBoundaryValues->CalculateBC(mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS),
-                                                 mLatDat->GetSiteType(my_site_id),
-                                                 mLatDat->GetBoundaryId(my_site_id),
-                                                 &density,
-                                                 &vx,
-                                                 &vy,
-                                                 &vz,
-                                                 f_neq,
-                                                 iInletComms,
-                                                 iOutletComms);
+                    CalculateBC(mLatDat->GetFOld(my_site_id * D3Q15::NUMVECTORS),
+                                mLatDat->GetSiteType(my_site_id),
+                                mLatDat->GetBoundaryId(my_site_id),
+                                &density,
+                                &vx,
+                                &vy,
+                                &vz,
+                                f_neq,
+                                iInletComms,
+                                iOutletComms);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
@@ -235,8 +230,8 @@ namespace hemelb
                   lWriter << (int) (site_i - siteMins[0]) << (int) (site_j - siteMins[1])
                       << (int) (site_k - siteMins[2]);
 
-                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
-                      << float(stress);
+                  lWriter << float (pressure) << float (vx) << float (vy) << float (vz)
+                      << float (stress);
                 }
               }
             }
@@ -255,6 +250,52 @@ namespace hemelb
       delete[] lFluidSiteBuffer;
     }
 
+    // Calculate the BCs for each boundary site type and the
+    // non-equilibrium distribution functions.
+    void LBM::CalculateBC(distribn_t f[],
+                          hemelb::geometry::LatticeData::SiteType iSiteType,
+                          unsigned int iBoundaryId,
+                          distribn_t *density,
+                          distribn_t *vx,
+                          distribn_t *vy,
+                          distribn_t *vz,
+                          distribn_t f_neq[],
+                          BoundaryComms* iInletComms,
+                          BoundaryComms* iOutletComms)
+    {
+      distribn_t dummy_density;
+
+      for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+      {
+        f_neq[l] = f[l];
+      }
+
+      if (iSiteType == hemelb::geometry::LatticeData::FLUID_TYPE)
+      {
+        D3Q15::CalculateDensityAndVelocity(f, *density, *vx, *vy, *vz);
+      }
+      else
+      {
+        if (iSiteType == hemelb::geometry::LatticeData::INLET_TYPE)
+        {
+          *density = iInletComms->GetBoundaryDensity(iBoundaryId);
+        }
+        else
+        {
+          *density = iOutletComms->GetBoundaryDensity(iBoundaryId);
+        }
+
+        D3Q15::CalculateDensityAndVelocity(f, dummy_density, *vx, *vy, *vz);
+        D3Q15::CalculateFeq(*density, *vx, *vy, *vz, f);
+
+      }
+      for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
+      {
+        f_neq[l] -= f[l];
+      }
+
+    }
+
     void LBM::ReadVisParameters()
     {
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
@@ -265,17 +306,13 @@ namespace hemelb
 
       for (int i = 0; i < inlets; i++)
       {
-        density_min = util::NumericalFunctions::min(density_min,
-                                                    mBoundaryValues->GetInletDensityMin(i));
-        density_max = util::NumericalFunctions::max(density_max,
-                                                    mBoundaryValues->GetInletDensityMax(i));
+        density_min = util::NumericalFunctions::min(density_min, mInletValues->GetDensityMin(i));
+        density_max = util::NumericalFunctions::max(density_max, mInletValues->GetDensityMax(i));
       }
       for (int i = 0; i < outlets; i++)
       {
-        density_min = util::NumericalFunctions::min(density_min,
-                                                    mBoundaryValues->GetOutletDensityMin(i));
-        density_max = util::NumericalFunctions::max(density_max,
-                                                    mBoundaryValues->GetOutletDensityMax(i));
+        density_min = util::NumericalFunctions::min(density_min, mOutletValues->GetDensityMin(i));
+        density_max = util::NumericalFunctions::max(density_max, mOutletValues->GetDensityMax(i));
       }
 
       distribn_t lDensity_threshold_min = density_min;

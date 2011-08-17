@@ -66,6 +66,9 @@ namespace hemelb
           while (! (x >= xs[i] && x <= xs[i + 1]))
             i++;
 
+          if (xs[i] == xs[i + 1])
+            return (ys[i] + ys[i + 1]) / ((T) 2);
+
           return (ys[i] + (x - xs[i]) / (xs[i + 1] - xs[i]) * (ys[i + 1] - ys[i]));
         }
     };

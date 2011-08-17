@@ -86,12 +86,19 @@ namespace hemelb
     {
       mUnits = iUnits;
 
-      mBoundaryValues = new BoundaryValues(iInletComms,
-                                           iOutletComms,
-                                           mLatDat,
-                                           mSimConfig,
-                                           mState,
-                                           iUnits);
+      mInletValues = new BoundaryValues(iInletComms,
+                                        geometry::LatticeData::INLET_TYPE,
+                                        mLatDat,
+                                        mSimConfig,
+                                        mState,
+                                        iUnits);
+
+      mOutletValues = new BoundaryValues(iOutletComms,
+                                         geometry::LatticeData::OUTLET_TYPE,
+                                         mLatDat,
+                                         mSimConfig,
+                                         mState,
+                                         iUnits);
 
       mCollisionOperator = new CO(mLatDat, &mParams);
 
@@ -113,9 +120,12 @@ namespace hemelb
       timeSpent = 0.0;
 
       distribn_t *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
-      distribn_t density;
+      distribn_t density = 0.0;
 
-      density = mBoundaryValues->GetInitialDensity();
+      for (int i = 0; i < outlets; i++)
+        density += mOutletValues->GetDensityMin(i);
+
+      density /= outlets;
 
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
@@ -353,7 +363,13 @@ namespace hemelb
     // that depends on this change.
     void LBM::Reset()
     {
-      mBoundaryValues->Reset();
+      mInletValues->ResetPrePeriodDoubling();
+      mOutletValues->ResetPrePeriodDoubling();
+
+      mState->DoubleTimeResolution();
+
+      mInletValues->ResetPostPeriodDoubling();
+      mOutletValues->ResetPostPeriodDoubling();
 
       RecalculateTauViscosityOmega();
 
@@ -373,6 +389,9 @@ namespace hemelb
 
       // Delete Collision Operator
       delete mCollisionOperator;
+
+      delete mInletValues;
+      delete mOutletValues;
 
       // Delete the collision and stream objects we've been using
       delete mMidFluidCollision;
