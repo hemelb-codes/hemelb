@@ -78,6 +78,16 @@ namespace hemelb
         void InitCollisions(BoundaryComms* iInletComms, BoundaryComms* iOutletComms);
 
         void ReadParameters();
+        void CalculateBC(distribn_t f[],
+                         hemelb::geometry::LatticeData::SiteType iSiteType,
+                         unsigned int iBoundaryId,
+                         distribn_t *density,
+                         distribn_t *vx,
+                         distribn_t *vy,
+                         distribn_t *vz,
+                         distribn_t f_neq[],
+                         BoundaryComms* iInletComms,
+                         BoundaryComms* iOutletComms);
 
         void handleIOError(int iError);
 
@@ -110,7 +120,7 @@ namespace hemelb
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
-        BoundaryValues* mBoundaryValues;
+        BoundaryValues *mInletValues, *mOutletValues;
 
         LbmParameters mParams;
         vis::Control* mVisControl;
