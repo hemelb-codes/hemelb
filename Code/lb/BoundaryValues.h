@@ -44,7 +44,18 @@ namespace hemelb
         void allocateInlets();
         void allocateOutlets();
 
+        void FindIOletDensityExtrema();
+
         void InitialiseBoundaryDensities();
+        void InitialiseCosCycle(int i,
+                                int IOlets,
+                                distribn_t* density_avg,
+                                distribn_t* density_amp,
+                                distribn_t* density_phs,
+                                std::vector<distribn_t> &density_cycle);
+        void InitialiseFromFile(int i,
+                                std::string &filename,
+                                std::vector<distribn_t> &density_cycle);
 
         int nTotInlets, nTotOutlets;
 
@@ -52,6 +63,10 @@ namespace hemelb
         distribn_t *inlet_density_avg, *outlet_density_avg;
         distribn_t *inlet_density_amp, *outlet_density_amp;
         distribn_t *inlet_density_phs, *outlet_density_phs;
+        distribn_t *inlet_density_min, *outlet_density_min;
+        distribn_t *inlet_density_max, *outlet_density_max;
+
+        std::string *inlet_file, *outlet_file;
 
         SimulationState* mState;
         SimConfig* mSimConfig;
