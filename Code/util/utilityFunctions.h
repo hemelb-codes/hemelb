@@ -52,6 +52,22 @@ namespace hemelb
         {
           return max<T> (lowerBound, min(number, upperBound));
         }
+
+        template<typename T>
+        static T LinearInterpolate(std::vector<T> &xs, std::vector<T> &ys, T x)
+        {
+          int i = 0;
+
+          if (x < xs[0])
+            return ys[0];
+          else if (x > xs[xs.size() - 1])
+            return ys[xs.size() - 1];
+
+          while (! (x >= xs[i] && x <= xs[i + 1]))
+            i++;
+
+          return (ys[i] + (x - xs[i]) / (xs[i + 1] - xs[i]) * (ys[i + 1] - ys[i]));
+        }
     };
 
     class NumericalMethods

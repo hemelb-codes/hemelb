@@ -1,6 +1,8 @@
 #include "lb/BoundaryValues.h"
 #include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
+#include "util/fileutils.h"
+#include <fstream>
 #include <math.h>
 
 namespace hemelb
@@ -33,28 +35,139 @@ namespace hemelb
 
     BoundaryValues::~BoundaryValues()
     {
+      delete[] inlet_density_avg;
+      delete[] inlet_density_amp;
+      delete[] inlet_density_phs;
+      delete[] inlet_density_min;
+      delete[] inlet_density_max;
+      delete[] inlet_file;
 
+      delete[] outlet_density_avg;
+      delete[] outlet_density_amp;
+      delete[] outlet_density_phs;
+      delete[] outlet_density_min;
+      delete[] outlet_density_max;
+      delete[] outlet_file;
     }
 
     void BoundaryValues::InitialiseBoundaryDensities()
     {
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
       {
-        double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
 
-        for (unsigned long time_step = 0; time_step < mState->GetTimeStepsPerCycle(); time_step++)
+        for (int i = 0; i < nTotInlets; i++)
         {
-          for (int i = 0; i < nTotInlets; i++)
+          if (inlet_file[i] == "")
           {
-            inlet_density_cycle[time_step * nTotInlets + i] = inlet_density_avg[i]
-                + inlet_density_amp[i] * cos(w * (double) time_step + inlet_density_phs[i]);
+            InitialiseCosCycle(i,
+                               nTotInlets,
+                               inlet_density_avg,
+                               inlet_density_amp,
+                               inlet_density_phs,
+                               inlet_density_cycle);
           }
-          for (int i = 0; i < nTotOutlets; i++)
+          else
           {
-            outlet_density_cycle[time_step * nTotOutlets + i] = outlet_density_avg[i]
-                + outlet_density_amp[i] * cos(w * (double) time_step + outlet_density_phs[i]);
+            InitialiseFromFile(i, inlet_file[i], inlet_density_cycle);
           }
         }
+
+        for (int i = 0; i < nTotOutlets; i++)
+        {
+          if (outlet_file[i] == "")
+          {
+            InitialiseCosCycle(i,
+                               nTotOutlets,
+                               outlet_density_avg,
+                               outlet_density_amp,
+                               outlet_density_phs,
+                               outlet_density_cycle);
+          }
+          else
+          {
+            InitialiseFromFile(i, outlet_file[i], outlet_density_cycle);
+          }
+        }
+
+        FindIOletDensityExtrema();
+      }
+
+      MPI_Bcast(inlet_density_min,
+                nTotInlets,
+                hemelb::MpiDataType(inlet_density_min[0]),
+                0,
+                MPI_COMM_WORLD);
+
+      MPI_Bcast(inlet_density_max,
+                nTotInlets,
+                hemelb::MpiDataType(inlet_density_max[0]),
+                0,
+                MPI_COMM_WORLD);
+
+      MPI_Bcast(outlet_density_min,
+                nTotOutlets,
+                hemelb::MpiDataType(outlet_density_min[0]),
+                0,
+                MPI_COMM_WORLD);
+
+      MPI_Bcast(outlet_density_max,
+                nTotOutlets,
+                hemelb::MpiDataType(outlet_density_max[0]),
+                0,
+                MPI_COMM_WORLD);
+    }
+
+    void BoundaryValues::InitialiseCosCycle(int i,
+                                            int IOlets,
+                                            distribn_t* density_avg,
+                                            distribn_t* density_amp,
+                                            distribn_t* density_phs,
+                                            std::vector<distribn_t> &density_cycle)
+    {
+      double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
+
+      for (unsigned long time_step = 0; time_step < mState->GetTimeStepsPerCycle(); time_step++)
+      {
+        density_cycle[time_step * IOlets + i] = density_avg[i] + density_amp[i] * cos(w
+            * (double) time_step + density_phs[i]);
+      }
+    }
+
+    void BoundaryValues::InitialiseFromFile(int i,
+                                            std::string &filename,
+                                            std::vector<distribn_t> &density_cycle)
+    {
+      // First read in values from file into vectors
+
+      std::vector<double> time(0);
+      std::vector<double> value(0);
+
+      double timeTemp, valueTemp;
+
+      util::check_file(filename.c_str());
+      std::ifstream datafile(filename.c_str());
+
+      while (datafile.good())
+      {
+        datafile >> timeTemp >> valueTemp;
+        time.push_back(timeTemp);
+        value.push_back(valueTemp);
+      }
+
+      datafile.close();
+
+      // Now convert these vectors into arrays using linear interpolation
+
+      for (unsigned long time_step = 0; time_step < mState->GetTimeStepsPerCycle(); time_step++)
+      {
+        double point = time[0] + (double) time_step / (double) mState->GetTimeStepsPerCycle()
+            * (time[time.size() - 1] - time[0]);
+
+        density_cycle[time_step * nTotInlets + i]
+            = mUnits->ConvertPressureToLatticeUnits(util::NumericalFunctions::LinearInterpolate(time,
+                                                                                                value,
+                                                                                                point))
+                / Cs2;
       }
     }
 
@@ -69,6 +182,8 @@ namespace hemelb
         inlet_density_avg[n] = mUnits->ConvertPressureToLatticeUnits(lInlet->PMean) / Cs2;
         inlet_density_amp[n] = mUnits->ConvertPressureGradToLatticeUnits(lInlet->PAmp) / Cs2;
         inlet_density_phs[n] = lInlet->PPhase * DEG_TO_RAD;
+
+        inlet_file[n] = lInlet->PFilePath;
       }
 
       allocateOutlets();
@@ -76,9 +191,12 @@ namespace hemelb
       for (int n = 0; n < nTotOutlets; n++)
       {
         hemelb::SimConfig::InOutLet *lOutlet = &mSimConfig->Outlets[n];
+
         outlet_density_avg[n] = mUnits->ConvertPressureToLatticeUnits(lOutlet->PMean) / Cs2;
         outlet_density_amp[n] = mUnits->ConvertPressureGradToLatticeUnits(lOutlet->PAmp) / Cs2;
         outlet_density_phs[n] = lOutlet->PPhase * DEG_TO_RAD;
+
+        outlet_file[n] = lOutlet->PFilePath;
       }
 
     }
@@ -94,6 +212,10 @@ namespace hemelb
       inlet_density_avg = new distribn_t[nTotInlets];
       inlet_density_amp = new distribn_t[nTotInlets];
       inlet_density_phs = new distribn_t[nTotInlets];
+      inlet_density_min = new distribn_t[nTotInlets];
+      inlet_density_max = new distribn_t[nTotInlets];
+
+      inlet_file = new std::string[nTotInlets];
     }
 
     void BoundaryValues::allocateOutlets()
@@ -107,6 +229,56 @@ namespace hemelb
       outlet_density_avg = new distribn_t[nTotOutlets];
       outlet_density_amp = new distribn_t[nTotOutlets];
       outlet_density_phs = new distribn_t[nTotOutlets];
+      outlet_density_min = new distribn_t[nTotOutlets];
+      outlet_density_max = new distribn_t[nTotOutlets];
+
+      outlet_file = new std::string[nTotOutlets];
+    }
+
+    void BoundaryValues::FindIOletDensityExtrema()
+    {
+      for (int i = 0; i < nTotInlets; i++)
+      {
+        if (inlet_file[i] == "")
+        {
+          inlet_density_min[i] = inlet_density_cycle[0];
+          inlet_density_max[i] = inlet_density_cycle[0];
+
+          for (unsigned int j = 0; j < inlet_density_cycle.size(); j++)
+          {
+            inlet_density_min[i] = util::NumericalFunctions::min(inlet_density_min[i],
+                                                                 inlet_density_cycle[j]);
+            inlet_density_max[i] = util::NumericalFunctions::max(inlet_density_max[i],
+                                                                 inlet_density_cycle[j]);
+          }
+        }
+        else
+        {
+          inlet_density_min[i] = inlet_density_avg[i] - inlet_density_amp[i];
+          inlet_density_max[i] = inlet_density_avg[i] + inlet_density_amp[i];
+        }
+      }
+      for (int i = 0; i < nTotOutlets; i++)
+      {
+        if (outlet_file[i] == "")
+        {
+          outlet_density_min[i] = outlet_density_cycle[0];
+          outlet_density_max[i] = outlet_density_cycle[0];
+
+          for (unsigned int j = 0; j < outlet_density_cycle.size(); j++)
+          {
+            outlet_density_min[i] = util::NumericalFunctions::min(outlet_density_min[i],
+                                                                  outlet_density_cycle[j]);
+            outlet_density_max[i] = util::NumericalFunctions::max(outlet_density_max[i],
+                                                                  outlet_density_cycle[j]);
+          }
+        }
+        else
+        {
+          outlet_density_min[i] = outlet_density_avg[i] - outlet_density_amp[i];
+          outlet_density_max[i] = outlet_density_avg[i] + outlet_density_amp[i];
+        }
+      }
     }
 
     distribn_t BoundaryValues::GetInitialDensity()
@@ -117,7 +289,7 @@ namespace hemelb
 
       for (int i = 0; i < nTotOutlets; i++)
       {
-        density += outlet_density_avg[i] - outlet_density_amp[i];
+        density += GetOutletDensityMin(i);
       }
 
       density /= nTotOutlets;
@@ -127,22 +299,22 @@ namespace hemelb
 
     distribn_t BoundaryValues::GetInletDensityMin(int iBoundaryId)
     {
-      return inlet_density_avg[iBoundaryId] - inlet_density_amp[iBoundaryId];
+      return inlet_density_min[iBoundaryId];
     }
 
     distribn_t BoundaryValues::GetInletDensityMax(int iBoundaryId)
     {
-      return inlet_density_avg[iBoundaryId] + inlet_density_amp[iBoundaryId];
+      return inlet_density_max[iBoundaryId];
     }
 
     distribn_t BoundaryValues::GetOutletDensityMin(int iBoundaryId)
     {
-      return outlet_density_avg[iBoundaryId] - outlet_density_amp[iBoundaryId];
+      return outlet_density_min[iBoundaryId];
     }
 
     distribn_t BoundaryValues::GetOutletDensityMax(int iBoundaryId)
     {
-      return outlet_density_avg[iBoundaryId] + outlet_density_amp[iBoundaryId];
+      return outlet_density_max[iBoundaryId];
     }
 
     void BoundaryValues::Reset()
@@ -151,30 +323,44 @@ namespace hemelb
 
       for (i = 0; i < nTotInlets; i++)
       {
-        inlet_density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(inlet_density_avg[i] * Cs2);
-        inlet_density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(inlet_density_amp[i]
-            * Cs2);
+        if (inlet_file[i] != "")
+        {
+          inlet_density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(inlet_density_avg[i] * Cs2);
+          inlet_density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(inlet_density_amp[i]
+              * Cs2);
+        }
       }
       for (i = 0; i < nTotOutlets; i++)
       {
-        outlet_density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(outlet_density_avg[i] * Cs2);
-        outlet_density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(outlet_density_amp[i]
-            * Cs2);
+        if (outlet_file[i] != "")
+        {
+          outlet_density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(outlet_density_avg[i]
+              * Cs2);
+          outlet_density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(outlet_density_amp[i]
+              * Cs2);
+        }
       }
 
       mState->DoubleTimeResolution();
 
       for (i = 0; i < nTotInlets; i++)
       {
-        inlet_density_avg[i] = mUnits->ConvertPressureToLatticeUnits(inlet_density_avg[i]) / Cs2;
-        inlet_density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(inlet_density_amp[i])
-            / Cs2;
+        if (inlet_file[i] != "")
+        {
+          inlet_density_avg[i] = mUnits->ConvertPressureToLatticeUnits(inlet_density_avg[i]) / Cs2;
+          inlet_density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(inlet_density_amp[i])
+              / Cs2;
+        }
       }
       for (i = 0; i < nTotOutlets; i++)
       {
-        outlet_density_avg[i] = mUnits->ConvertPressureToLatticeUnits(outlet_density_avg[i]) / Cs2;
-        outlet_density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(outlet_density_amp[i])
-            / Cs2;
+        if (outlet_file[i] != "")
+        {
+          outlet_density_avg[i] = mUnits->ConvertPressureToLatticeUnits(outlet_density_avg[i])
+              / Cs2;
+          outlet_density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(outlet_density_amp[i])
+              / Cs2;
+        }
       }
 
       if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())

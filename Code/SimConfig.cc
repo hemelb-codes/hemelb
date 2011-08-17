@@ -220,6 +220,7 @@ namespace hemelb
     TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
     TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
+    DoIO(lPressureElement, "path", iIsLoading, value.PFilePath);
     DoIO(lPressureElement, "mean", iIsLoading, value.PMean);
     DoIO(lPressureElement, "amplitude", iIsLoading, value.PAmp);
     DoIO(lPressureElement, "phase", iIsLoading, value.PPhase);
