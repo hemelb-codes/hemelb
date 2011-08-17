@@ -11,21 +11,19 @@ namespace hemelb
     BoundaryComms::BoundaryComms(SimulationState* iSimState, int iTotIOlets) :
       net::IteratedAction(), nTotIOlets(iTotIOlets), mState(iSimState)
     {
-      // Work out stuff for simulation (ie. should give same result on all procs)
       proc_t BCrank = 0;
 
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
         BCrank = topology::NetworkTopology::Instance()->GetLocalRank();
 
       // Since only one proc will update BCrank, the sum of all BCrank is the BCproc
       MPI_Allreduce(&BCrank, &BCproc, 1, hemelb::MpiDataType(BCrank), MPI_SUM, MPI_COMM_WORLD);
-
     }
 
     BoundaryComms::~BoundaryComms()
     {
 
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         for (int i = 0; i < nTotIOlets; i++)
           delete[] procsList[i];
@@ -35,7 +33,7 @@ namespace hemelb
         delete[] nProcs;
       }
 
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
         delete[] density_cycle;
       else
         delete[] density;
@@ -45,11 +43,16 @@ namespace hemelb
       delete[] status;
     }
 
+    inline bool BoundaryComms::IsCurrentProcTheBCProc()
+    {
+      return topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
+    }
+
     void BoundaryComms::Initialise(geometry::LatticeData::SiteType IOtype,
                                    geometry::LatticeData* iLatDat,
                                    std::vector<distribn_t>* iDensityCycleVector)
     {
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         density_cycle_vector = iDensityCycleVector;
         density_cycle = new distribn_t[density_cycle_vector->size()];
@@ -68,7 +71,7 @@ namespace hemelb
       nIOlets = 0;
       IOlets = std::vector<int>(0);
 
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         nIOlets = nTotIOlets;
 
@@ -91,7 +94,7 @@ namespace hemelb
 
       // Now BC process must find out which process belongs to what group
 
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         // These should be bool, but MPI only supports MPI_INT
         // For each inlet/outlet there is an array of length equal to total number of procs.
@@ -172,7 +175,7 @@ namespace hemelb
         }
       }
 
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         int nRequests = 0;
 
@@ -210,7 +213,7 @@ namespace hemelb
       RequestComms();
 
       // Now wait for all to complete
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         for (int i = 0; i < nTotIOlets; i++)
         {
@@ -228,7 +231,7 @@ namespace hemelb
 
     void BoundaryComms::RequestComms()
     {
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         unsigned long time_step = mState->GetTimeStep() % mState->GetTimeStepsPerCycle();
         density = &density_cycle[time_step * nTotIOlets];
@@ -268,7 +271,7 @@ namespace hemelb
     {
       // Don't move on to next step with BC proc until all messages have been sent
       // Precautionary measure to make sure proc doesn't overwrite, before message is sent
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         for (int i = 0; i < nTotIOlets; i++)
           MPI_Waitall(nProcs[i], &request[requestOffset[i]], &status[requestOffset[i]]);
@@ -279,7 +282,7 @@ namespace hemelb
     {
       // density_cycle_vector should be resized and reinitialised by now
 
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         delete[] density_cycle;
         density_cycle = new distribn_t[density_cycle_vector->size()];

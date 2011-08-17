@@ -18,6 +18,14 @@ namespace hemelb
                                    util::UnitConverter* iUnits) :
       mState(iSimState), mSimConfig(iSimConfig), mUnits(iUnits)
     {
+      proc_t BCrank = 0;
+
+      if (IsCurrentProcTheBCProc())
+        BCrank = topology::NetworkTopology::Instance()->GetLocalRank();
+
+      // Since only one proc will update BCrank, the sum of all BCrank is the BCproc
+      MPI_Allreduce(&BCrank, &BCproc, 1, hemelb::MpiDataType(BCrank), MPI_SUM, MPI_COMM_WORLD);
+
       nTotIOlets = (IOtype == geometry::LatticeData::INLET_TYPE
         ? (int) iSimConfig->Inlets.size()
         : (int) iSimConfig->Outlets.size());
@@ -41,9 +49,14 @@ namespace hemelb
       delete[] filename;
     }
 
+    bool BoundaryValues::IsCurrentProcTheBCProc()
+    {
+      return topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
+    }
+
     void BoundaryValues::InitialiseBoundaryDensities()
     {
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
 
         for (int i = 0; i < nTotIOlets; i++)
@@ -61,9 +74,17 @@ namespace hemelb
         FindDensityExtrema();
       }
 
-      MPI_Bcast(density_min, nTotIOlets, hemelb::MpiDataType(density_min[0]), 0, MPI_COMM_WORLD);
+      MPI_Bcast(density_min,
+                nTotIOlets,
+                hemelb::MpiDataType(density_min[0]),
+                BCproc,
+                MPI_COMM_WORLD);
 
-      MPI_Bcast(density_max, nTotIOlets, hemelb::MpiDataType(density_max[0]), 0, MPI_COMM_WORLD);
+      MPI_Bcast(density_max,
+                nTotIOlets,
+                hemelb::MpiDataType(density_max[0]),
+                BCproc,
+                MPI_COMM_WORLD);
     }
 
     void BoundaryValues::InitialiseCosCycle(int i)
@@ -161,7 +182,7 @@ namespace hemelb
 
     void BoundaryValues::allocate()
     {
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         density_cycle.resize(util::NumericalFunctions::max<int>(1, nTotIOlets)
             * mState->GetTimeStepsPerCycle());
@@ -217,7 +238,7 @@ namespace hemelb
         density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(density_amp[i]) / Cs2;
       }
 
-      if (topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+      if (IsCurrentProcTheBCProc())
       {
         density_cycle.resize(hemelb::util::NumericalFunctions::max<int>(1, nTotIOlets)
             * mState->GetTimeStepsPerCycle());

@@ -25,7 +25,11 @@ namespace hemelb
         void ResetPrePeriodDoubling();
         void ResetPostPeriodDoubling();
 
+        bool IsCurrentProcTheBCProc();
+
       private:
+        proc_t BCproc;
+
         void ReadParameters(geometry::LatticeData::SiteType IOtype);
         void allocate();
 
