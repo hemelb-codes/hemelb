@@ -39,8 +39,8 @@ namespace hemelb
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability,
                                   std::string output_file_name,
-                                  BoundaryComms* iInletComms,
-                                  BoundaryComms* iOutletComms)
+                                  boundaries::BoundaryComms* iInletComms,
+                                  boundaries::BoundaryComms* iOutletComms)
     {
       /* This routine writes the flow field on file, using MPIO to coordinate
        * the writing. The format is detailed in io/formats/snapshot.h
@@ -260,8 +260,8 @@ namespace hemelb
                           distribn_t *vy,
                           distribn_t *vz,
                           distribn_t f_neq[],
-                          BoundaryComms* iInletComms,
-                          BoundaryComms* iOutletComms)
+                          boundaries::BoundaryComms* iInletComms,
+                          boundaries::BoundaryComms* iOutletComms)
     {
       distribn_t dummy_density;
 

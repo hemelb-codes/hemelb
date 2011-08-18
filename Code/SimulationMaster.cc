@@ -226,9 +226,11 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   mUnits = new hemelb::util::UnitConverter(mLbm->GetLbmParams(), mSimulationState, mLatDat);
 
-  mInletComms = new hemelb::lb::BoundaryComms(mSimulationState, (int) iSimConfig->Inlets.size());
+  mInletComms = new hemelb::lb::boundaries::BoundaryComms(mSimulationState,
+                                                          (int) iSimConfig->Inlets.size());
 
-  mOutletComms = new hemelb::lb::BoundaryComms(mSimulationState, (int) iSimConfig->Outlets.size());
+  mOutletComms = new hemelb::lb::boundaries::BoundaryComms(mSimulationState,
+                                                           (int) iSimConfig->Outlets.size());
 
   mLbm->Initialise(lReceiveTranslator, mVisControl, mInletComms, mOutletComms, mUnits);
 
@@ -546,7 +548,7 @@ void SimulationMaster::RunSimulation(std::string image_directory,
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
                                                                           mSimulationState->GetCycleId());
 
-      fflush(NULL);
+      fflush( NULL);
     }
   }
 

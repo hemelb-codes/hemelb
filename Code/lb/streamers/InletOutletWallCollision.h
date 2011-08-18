@@ -14,7 +14,7 @@ namespace hemelb
       {
 
         public:
-          InletOutletWallCollision(BoundaryComms* iBoundaryComms);
+          InletOutletWallCollision(boundaries::BoundaryComms* iBoundaryComms);
 
           virtual ~InletOutletWallCollision();
 
@@ -29,7 +29,7 @@ namespace hemelb
                                               hemelb::vis::Control *iControl);
 
         private:
-          BoundaryComms* mBoundaryComms;
+          boundaries::BoundaryComms* mBoundaryComms;
 
       };
 
