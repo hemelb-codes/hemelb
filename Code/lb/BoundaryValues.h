@@ -50,6 +50,9 @@ namespace hemelb
         distribn_t *density_max;
 
         std::string *filename;
+        // Can just check equality with empty string, but despite its simplicity it still
+        // confused me so I use a bool array initialised at construction
+        bool *read_from_file;
 
         SimulationState* mState;
         SimConfig* mSimConfig;

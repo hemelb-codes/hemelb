@@ -133,11 +133,15 @@ namespace hemelb
   {
     if (iIsLoading)
     {
-      iValue = std::string(iParent->Attribute(iAttributeName)->c_str());
+      if (iParent->Attribute(iAttributeName) == 0)
+        iValue = "";
+      else
+        iValue = std::string(iParent->Attribute(iAttributeName)->c_str());
     }
     else
     {
-      iParent->SetAttribute(iAttributeName, iValue);
+      if (iValue != "")
+        iParent->SetAttribute(iAttributeName, iValue);
     }
   }
 
@@ -221,9 +225,12 @@ namespace hemelb
     TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
     DoIO(lPressureElement, "path", iIsLoading, value.PFilePath);
-    DoIO(lPressureElement, "mean", iIsLoading, value.PMean);
-    DoIO(lPressureElement, "amplitude", iIsLoading, value.PAmp);
-    DoIO(lPressureElement, "phase", iIsLoading, value.PPhase);
+    if (value.PFilePath == "")
+    {
+      DoIO(lPressureElement, "mean", iIsLoading, value.PMean);
+      DoIO(lPressureElement, "amplitude", iIsLoading, value.PAmp);
+      DoIO(lPressureElement, "phase", iIsLoading, value.PPhase);
+    }
 
     DoIO(lPositionElement, iIsLoading, value.Position);
     DoIO(lNormalElement, iIsLoading, value.Normal);
