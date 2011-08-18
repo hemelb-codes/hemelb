@@ -7,7 +7,7 @@
 #include "steering/ImageSendComponent.h"
 #include "steering/SteeringComponent.h"
 #include "lb/EntropyTester.h"
-#include "lb/BoundaryComms.h"
+#include "lb/boundaries/BoundaryValues.h"
 #include "util/UnitConverter.h"
 
 class SimulationMaster
@@ -33,9 +33,7 @@ class SimulationMaster
                     FILE * bTimingsFile);
 
   private:
-    void PostSimulation(int iTotalTimeSteps,
-                        double iSimulationTime,
-                        bool iIsUnstable);
+    void PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable);
 
     void PrintTimingData();
 
@@ -51,8 +49,8 @@ class SimulationMaster
     hemelb::lb::StabilityTester* mStabilityTester;
     hemelb::lb::EntropyTester* mEntropyTester;
     hemelb::lb::LBM* mLbm;
-    hemelb::lb::BoundaryComms* mInletComms;
-    hemelb::lb::BoundaryComms* mOutletComms;
+    hemelb::lb::boundaries::BoundaryComms* mInletComms;
+    hemelb::lb::boundaries::BoundaryComms* mOutletComms;
     hemelb::net::Net mNet;
 
     hemelb::util::UnitConverter* mUnits;

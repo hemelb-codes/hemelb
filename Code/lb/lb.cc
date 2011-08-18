@@ -57,7 +57,8 @@ namespace hemelb
 
     template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
         typename tInletOutletWallCollision, typename tCollisionOperator>
-    void LBM::InitCollisions(BoundaryComms* iInletComms, BoundaryComms* iOutletComms)
+    void LBM::InitCollisions(boundaries::BoundaryComms* iInletComms,
+                             boundaries::BoundaryComms* iOutletComms)
     {
       mStreamAndCollide
           = new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision, tWallCollision,
@@ -80,25 +81,25 @@ namespace hemelb
 
     void LBM::Initialise(site_t* iFTranslator,
                          vis::Control* iControl,
-                         BoundaryComms* iInletComms,
-                         BoundaryComms* iOutletComms,
+                         boundaries::BoundaryComms* iInletComms,
+                         boundaries::BoundaryComms* iOutletComms,
                          util::UnitConverter* iUnits)
     {
       mUnits = iUnits;
 
-      mInletValues = new BoundaryValues(iInletComms,
-                                        geometry::LatticeData::INLET_TYPE,
-                                        mLatDat,
-                                        mSimConfig,
-                                        mState,
-                                        iUnits);
+      mInletValues = new boundaries::BoundaryValues(iInletComms,
+                                                    geometry::LatticeData::INLET_TYPE,
+                                                    mLatDat,
+                                                    mSimConfig,
+                                                    mState,
+                                                    iUnits);
 
-      mOutletValues = new BoundaryValues(iOutletComms,
-                                         geometry::LatticeData::OUTLET_TYPE,
-                                         mLatDat,
-                                         mSimConfig,
-                                         mState,
-                                         iUnits);
+      mOutletValues = new boundaries::BoundaryValues(iOutletComms,
+                                                     geometry::LatticeData::OUTLET_TYPE,
+                                                     mLatDat,
+                                                     mSimConfig,
+                                                     mState,
+                                                     iUnits);
 
       mCollisionOperator = new CO(mLatDat, &mParams);
 
