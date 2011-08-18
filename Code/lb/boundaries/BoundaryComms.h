@@ -1,7 +1,6 @@
 #ifndef HEMELB_LB_BOUNDARIES_BOUNDARYCOMMS_H
 #define HEMELB_LB_BOUNDARIES_BOUNDARYCOMMS_H
 
-#include "net/IteratedAction.h"
 #include "geometry/LatticeData.h"
 #include "lb/SimulationState.h"
 #include "util/UnitConverter.h"
@@ -20,36 +19,30 @@ namespace hemelb
        * given in/outlet. Once per cycle BroadcastBoundaryDensities needs to be called so that BCproc
        * updates the relevant processes with the new values.
        */
-      class BoundaryComms : public net::IteratedAction
+      class BoundaryComms
       {
         public:
-          BoundaryComms(SimulationState* iSimState, int iTotIOlets);
+          BoundaryComms(SimulationState* iSimState,
+                        int iTotIOlets,
+                        geometry::LatticeData::SiteType IOtype,
+                        geometry::LatticeData* iLatDat);
           ~BoundaryComms();
 
-          void Initialise(geometry::LatticeData::SiteType IOtype,
-                          geometry::LatticeData* iLatDat,
-                          std::vector<distribn_t>* iDensityCycleVector);
+          void Wait(const int index);
 
-          void RequestComms();
-          void EndIteration();
-          void Reset();
-
-          distribn_t GetBoundaryDensity(const int index);
-          void SendAndWaitAllComms();
+          void SendAndReceive(distribn_t* density);
+          void WaitAllComms();
+          void FinishSend();
 
           bool IsCurrentProcTheBCProc();
+          proc_t GetBCProcRank();
 
         private:
           proc_t BCproc; // Process responsible for sending out BC info
 
-          /*
-           * The vector gets resized and updated in the BoundaryValues object. All values are copied
-           * into a C-style array to take advantage of being able to pass a pointer to any element
-           * of the array
-           */
-          std::vector<distribn_t>* density_cycle_vector;
-          distribn_t *density_cycle;
-          distribn_t *density;
+          void FindBCProcRank();
+          void FindIOlets(geometry::LatticeData::SiteType IOtype, geometry::LatticeData* iLatDat);
+          void GatherProcList();
 
           // Total number of inlets/outlets in simulation
           int nTotIOlets;

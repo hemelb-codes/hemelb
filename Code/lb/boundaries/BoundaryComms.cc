@@ -10,8 +10,51 @@ namespace hemelb
     namespace boundaries
     {
 
-      BoundaryComms::BoundaryComms(SimulationState* iSimState, int iTotIOlets) :
-        net::IteratedAction(), nTotIOlets(iTotIOlets), mState(iSimState)
+      BoundaryComms::BoundaryComms(SimulationState* iSimState,
+                                   int iTotIOlets,
+                                   geometry::LatticeData::SiteType IOtype,
+                                   geometry::LatticeData* iLatDat) :
+        nTotIOlets(iTotIOlets), mState(iSimState)
+      {
+        FindBCProcRank();
+
+        FindIOlets(IOtype, iLatDat);
+
+        if (IsCurrentProcTheBCProc())
+        {
+          nProcs = new int[nTotIOlets];
+          procsList = new int*[nTotIOlets];
+
+          for (int i = 0; i < nTotIOlets; i++)
+            nProcs[i] = 0;
+        }
+
+        // Now BC process must find out which process belongs to what group
+        GatherProcList();
+
+        if (IsCurrentProcTheBCProc())
+        {
+          int nRequests = 0;
+
+          requestOffset = new int[nTotIOlets];
+
+          for (int i = 0; i < nTotIOlets; i++)
+          {
+            requestOffset[i] = nRequests;
+            nRequests += nProcs[i];
+          }
+
+          request = new MPI_Request[nRequests];
+          status = new MPI_Status[nRequests];
+        }
+        else
+        {
+          request = new MPI_Request[nTotIOlets];
+          status = new MPI_Status[nTotIOlets];
+        }
+      }
+
+      void BoundaryComms::FindBCProcRank()
       {
         proc_t BCrank = 0;
 
@@ -22,67 +65,11 @@ namespace hemelb
         MPI_Allreduce(&BCrank, &BCproc, 1, hemelb::MpiDataType(BCrank), MPI_SUM, MPI_COMM_WORLD);
       }
 
-      BoundaryComms::~BoundaryComms()
+      void BoundaryComms::FindIOlets(geometry::LatticeData::SiteType IOtype,
+                                     geometry::LatticeData* iLatDat)
       {
-
-        if (IsCurrentProcTheBCProc())
-        {
-          for (int i = 0; i < nTotIOlets; i++)
-            delete[] procsList[i];
-
-          delete[] requestOffset;
-          delete[] procsList;
-          delete[] nProcs;
-        }
-
-        if (IsCurrentProcTheBCProc())
-          delete[] density_cycle;
-        else
-          delete[] density;
-
-        // Communicators and groups
-        delete[] request;
-        delete[] status;
-      }
-
-      inline bool BoundaryComms::IsCurrentProcTheBCProc()
-      {
-        return topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
-      }
-
-      void BoundaryComms::Initialise(geometry::LatticeData::SiteType IOtype,
-                                     geometry::LatticeData* iLatDat,
-                                     std::vector<distribn_t>* iDensityCycleVector)
-      {
-        if (IsCurrentProcTheBCProc())
-        {
-          density_cycle_vector = iDensityCycleVector;
-          density_cycle = new distribn_t[density_cycle_vector->size()];
-
-          for (unsigned int i = 0; i < density_cycle_vector->size(); i++)
-            density_cycle[i] = (*density_cycle_vector)[i];
-
-          density = density_cycle;
-        }
-        else
-        {
-          density = new distribn_t[nTotIOlets];
-        }
-
-        // Work out which and how many inlets/outlets on this process
         nIOlets = 0;
         IOlets = std::vector<int>(0);
-
-        if (IsCurrentProcTheBCProc())
-        {
-          nIOlets = nTotIOlets;
-
-          nProcs = new int[nTotIOlets];
-          procsList = new int*[nTotIOlets];
-
-          for (int i = 0; i < nTotIOlets; i++)
-            nProcs[i] = 0;
-        }
 
         for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
         {
@@ -93,9 +80,10 @@ namespace hemelb
             IOlets.push_back(iLatDat->GetBoundaryId(i));
           }
         }
+      }
 
-        // Now BC process must find out which process belongs to what group
-
+      void BoundaryComms::GatherProcList()
+      {
         if (IsCurrentProcTheBCProc())
         {
           // These should be bool, but MPI only supports MPI_INT
@@ -176,44 +164,44 @@ namespace hemelb
             MPI_Ssend(&IOletOnThisProc, 1, MPI_INT, BCproc, 100, MPI_COMM_WORLD);
           }
         }
+      }
+
+      BoundaryComms::~BoundaryComms()
+      {
 
         if (IsCurrentProcTheBCProc())
         {
-          int nRequests = 0;
-
-          requestOffset = new int[nTotIOlets];
-
           for (int i = 0; i < nTotIOlets; i++)
-          {
-            requestOffset[i] = nRequests;
-            nRequests += nProcs[i];
-          }
+            delete[] procsList[i];
 
-          request = new MPI_Request[nRequests];
-          status = new MPI_Status[nRequests];
-        }
-        else
-        {
-          request = new MPI_Request[nTotIOlets];
-          status = new MPI_Status[nTotIOlets];
+          delete[] requestOffset;
+          delete[] procsList;
+          delete[] nProcs;
         }
 
-        SendAndWaitAllComms();
+        // Communicators and groups
+        delete[] request;
+        delete[] status;
+      }
+
+      inline bool BoundaryComms::IsCurrentProcTheBCProc()
+      {
+        return topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
+      }
+
+      proc_t BoundaryComms::GetBCProcRank()
+      {
+        return BCproc;
       }
 
       // This assumes that the BCproc never receives
-      distribn_t BoundaryComms::GetBoundaryDensity(const int index)
+      void BoundaryComms::Wait(const int index)
       {
         MPI_Wait(&request[index], &status[index]);
-
-        return density[index];
       }
 
-      void BoundaryComms::SendAndWaitAllComms()
+      void BoundaryComms::WaitAllComms()
       {
-        // This will get BCproc to send and all others to receive
-        RequestComms();
-
         // Now wait for all to complete
         if (IsCurrentProcTheBCProc())
         {
@@ -231,13 +219,10 @@ namespace hemelb
         }
       }
 
-      void BoundaryComms::RequestComms()
+      void BoundaryComms::SendAndReceive(distribn_t* density)
       {
         if (IsCurrentProcTheBCProc())
         {
-          unsigned long time_step = mState->GetTimeStep() % mState->GetTimeStepsPerCycle();
-          density = &density_cycle[time_step * nTotIOlets];
-
           int message = 0;
 
           for (int i = 0; i < nTotIOlets; i++)
@@ -269,7 +254,7 @@ namespace hemelb
         }
       }
 
-      void BoundaryComms::EndIteration()
+      void BoundaryComms::FinishSend()
       {
         // Don't move on to next step with BC proc until all messages have been sent
         // Precautionary measure to make sure proc doesn't overwrite, before message is sent
@@ -278,22 +263,6 @@ namespace hemelb
           for (int i = 0; i < nTotIOlets; i++)
             MPI_Waitall(nProcs[i], &request[requestOffset[i]], &status[requestOffset[i]]);
         }
-      }
-
-      void BoundaryComms::Reset()
-      {
-        // density_cycle_vector should be resized and reinitialised by now
-
-        if (IsCurrentProcTheBCProc())
-        {
-          delete[] density_cycle;
-          density_cycle = new distribn_t[density_cycle_vector->size()];
-
-          for (unsigned int i = 0; i < density_cycle_vector->size(); i++)
-            density_cycle[i] = (*density_cycle_vector)[i];
-        }
-
-        SendAndWaitAllComms();
       }
 
     }

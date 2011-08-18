@@ -37,10 +37,7 @@ namespace hemelb
       RecalculateTauViscosityOmega();
     }
 
-    void LBM::WriteConfigParallel(hemelb::lb::Stability stability,
-                                  std::string output_file_name,
-                                  boundaries::BoundaryComms* iInletComms,
-                                  boundaries::BoundaryComms* iOutletComms)
+    void LBM::WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name)
     {
       /* This routine writes the flow field on file, using MPIO to coordinate
        * the writing. The format is detailed in io/formats/snapshot.h
@@ -189,9 +186,7 @@ namespace hemelb
                                 &vx,
                                 &vy,
                                 &vz,
-                                f_neq,
-                                iInletComms,
-                                iOutletComms);
+                                f_neq);
                   }
 
                   if (mParams.StressType == hemelb::lb::ShearStress)
@@ -259,9 +254,7 @@ namespace hemelb
                           distribn_t *vx,
                           distribn_t *vy,
                           distribn_t *vz,
-                          distribn_t f_neq[],
-                          boundaries::BoundaryComms* iInletComms,
-                          boundaries::BoundaryComms* iOutletComms)
+                          distribn_t f_neq[])
     {
       distribn_t dummy_density;
 
@@ -278,11 +271,11 @@ namespace hemelb
       {
         if (iSiteType == hemelb::geometry::LatticeData::INLET_TYPE)
         {
-          *density = iInletComms->GetBoundaryDensity(iBoundaryId);
+          *density = mInletValues->GetBoundaryDensity(iBoundaryId);
         }
         else
         {
-          *density = iOutletComms->GetBoundaryDensity(iBoundaryId);
+          *density = mOutletValues->GetBoundaryDensity(iBoundaryId);
         }
 
         D3Q15::CalculateDensityAndVelocity(f, dummy_density, *vx, *vy, *vz);
