@@ -2,6 +2,7 @@
 #define HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H
 
 #include "lb/boundaries/BoundaryComms.h"
+#include "net/IteratedAction.h"
 
 namespace hemelb
 {
@@ -10,27 +11,33 @@ namespace hemelb
     namespace boundaries
     {
 
-      class BoundaryValues
+      class BoundaryValues : public net::IteratedAction
       {
         public:
-          BoundaryValues(BoundaryComms* iComms,
-                         geometry::LatticeData::SiteType IOtype,
+          BoundaryValues(geometry::LatticeData::SiteType IOtype,
                          geometry::LatticeData* iLatDat,
                          SimConfig* iSimConfig,
                          SimulationState* iSimState,
                          util::UnitConverter* iUnits);
           ~BoundaryValues();
 
+          void RequestComms();
+          void EndIteration();
+          void Reset();
+
+          void ResetPrePeriodChange();
+          void ResetPostPeriodChange();
+
+          distribn_t GetBoundaryDensity(const int index);
+
           distribn_t GetDensityMin(int iBoundaryId);
           distribn_t GetDensityMax(int iBoundaryId);
-
-          void ResetPrePeriodDoubling();
-          void ResetPostPeriodDoubling();
 
           bool IsCurrentProcTheBCProc();
 
         private:
           proc_t BCproc;
+          BoundaryComms* mComms;
 
           void ReadParameters(geometry::LatticeData::SiteType IOtype);
           void allocate();
@@ -44,7 +51,8 @@ namespace hemelb
 
           int nTotIOlets;
 
-          std::vector<distribn_t> density_cycle;
+          distribn_t *density_cycle;
+          distribn_t *density;
           distribn_t *density_avg;
           distribn_t *density_amp;
           distribn_t *density_phs;
@@ -55,6 +63,8 @@ namespace hemelb
           // Can just check equality with empty string, but despite its simplicity it still
           // confused me so I use a bool array initialised at construction
           bool *read_from_file;
+          // Saves on wait calls
+          bool *CommFinished;
 
           SimulationState* mState;
           SimConfig* mSimConfig;
