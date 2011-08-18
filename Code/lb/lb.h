@@ -44,14 +44,11 @@ namespace hemelb
         void
         Initialise(site_t* iFTranslator,
                    vis::Control* iControl,
-                   boundaries::BoundaryComms* iInletComms,
-                   boundaries::BoundaryComms* iOutletComms,
+                   boundaries::BoundaryValues* iInletValues,
+                   boundaries::BoundaryValues* iOutletValues,
                    util::UnitConverter* iUnits);
 
-        void WriteConfigParallel(hemelb::lb::Stability stability,
-                                 std::string output_file_name,
-                                 boundaries::BoundaryComms* iInletComms,
-                                 boundaries::BoundaryComms* iOutletComms);
+        void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
         void ReadVisParameters();
 
         void CalculateMouseFlowField(float densityIn,
@@ -74,8 +71,7 @@ namespace hemelb
         template<typename tMidFluidCollision, typename tWallCollision,
             typename tInletOutletCollision, typename tInletOutletWallCollision,
             typename tCollisionOperator>
-        void InitCollisions(boundaries::BoundaryComms* iInletComms,
-                            boundaries::BoundaryComms* iOutletComms);
+        void InitCollisions();
 
         void ReadParameters();
         void CalculateBC(distribn_t f[],
@@ -85,9 +81,7 @@ namespace hemelb
                          distribn_t *vx,
                          distribn_t *vy,
                          distribn_t *vz,
-                         distribn_t f_neq[],
-                         boundaries::BoundaryComms* iInletComms,
-                         boundaries::BoundaryComms* iOutletComms);
+                         distribn_t f_neq[]);
 
         void handleIOError(int iError);
 

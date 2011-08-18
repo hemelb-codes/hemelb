@@ -8,8 +8,8 @@ namespace hemelb
     namespace streamers
     {
 
-      InletOutletCollision::InletOutletCollision(boundaries::BoundaryComms* iBoundaryComms) :
-        mBoundaryComms(iBoundaryComms)
+      InletOutletCollision::InletOutletCollision(boundaries::BoundaryValues* iBoundaryValues) :
+        mBoundaryValues(iBoundaryValues)
       {
 
       }
@@ -21,7 +21,7 @@ namespace hemelb
 
       distribn_t InletOutletCollision::getBoundaryDensityArray(const int index)
       {
-        return mBoundaryComms->GetBoundaryDensity(index);
+        return mBoundaryValues->GetBoundaryDensity(index);
       }
 
       void InletOutletCollision::AcceptCollisionVisitor(collisions::CollisionVisitor* v,
