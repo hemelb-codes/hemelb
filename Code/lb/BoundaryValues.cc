@@ -49,7 +49,7 @@ namespace hemelb
       delete[] filename;
     }
 
-    bool BoundaryValues::IsCurrentProcTheBCProc()
+    inline bool BoundaryValues::IsCurrentProcTheBCProc()
     {
       return topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
     }
@@ -58,16 +58,15 @@ namespace hemelb
     {
       if (IsCurrentProcTheBCProc())
       {
-
         for (int i = 0; i < nTotIOlets; i++)
         {
-          if (filename[i] == "")
+          if (read_from_file[i])
           {
-            InitialiseCosCycle(i);
+            InitialiseFromFile(i);
           }
           else
           {
-            InitialiseFromFile(i);
+            InitialiseCosCycle(i);
           }
         }
 
@@ -176,6 +175,11 @@ namespace hemelb
         density_amp[n] = mUnits->ConvertPressureGradToLatticeUnits(lIOlet->PAmp) / Cs2;
         density_phs[n] = lIOlet->PPhase * DEG_TO_RAD;
         filename[n] = lIOlet->PFilePath;
+
+        if (filename[n] == "")
+          read_from_file[n] = false;
+        else
+          read_from_file[n] = true;
       }
 
     }
@@ -194,6 +198,7 @@ namespace hemelb
       density_min = new distribn_t[nTotIOlets];
       density_max = new distribn_t[nTotIOlets];
       filename = new std::string[nTotIOlets];
+      read_from_file = new bool[nTotIOlets];
     }
 
     void BoundaryValues::FindDensityExtrema()
@@ -225,8 +230,11 @@ namespace hemelb
     {
       for (int i = 0; i < nTotIOlets; i++)
       {
-        density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(density_avg[i] * Cs2);
-        density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(density_amp[i] * Cs2);
+        if (!read_from_file[i])
+        {
+          density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(density_avg[i] * Cs2);
+          density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(density_amp[i] * Cs2);
+        }
       }
     }
 
@@ -234,8 +242,11 @@ namespace hemelb
     {
       for (int i = 0; i < nTotIOlets; i++)
       {
-        density_avg[i] = mUnits->ConvertPressureToLatticeUnits(density_avg[i]) / Cs2;
-        density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(density_amp[i]) / Cs2;
+        if (!read_from_file[i])
+        {
+          density_avg[i] = mUnits->ConvertPressureToLatticeUnits(density_avg[i]) / Cs2;
+          density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(density_amp[i]) / Cs2;
+        }
       }
 
       if (IsCurrentProcTheBCProc())
