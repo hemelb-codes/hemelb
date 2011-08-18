@@ -8,7 +8,7 @@ namespace hemelb
     namespace streamers
     {
 
-      InletOutletCollision::InletOutletCollision(BoundaryComms* iBoundaryComms) :
+      InletOutletCollision::InletOutletCollision(boundaries::BoundaryComms* iBoundaryComms) :
         mBoundaryComms(iBoundaryComms)
       {
 

@@ -9,8 +9,7 @@
 #include "lb/collisions/CollisionVisitors.h"
 #include "lb/streamers/Implementations.h"
 #include "lb/collisions/CollisionOperators.h"
-#include "lb/BoundaryComms.h"
-#include "lb/BoundaryValues.h"
+#include "lb/boundaries/BoundaryValues.h"
 #include "util/UnitConverter.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
@@ -45,14 +44,14 @@ namespace hemelb
         void
         Initialise(site_t* iFTranslator,
                    vis::Control* iControl,
-                   BoundaryComms* iInletComms,
-                   BoundaryComms* iOutletComms,
+                   boundaries::BoundaryComms* iInletComms,
+                   boundaries::BoundaryComms* iOutletComms,
                    util::UnitConverter* iUnits);
 
         void WriteConfigParallel(hemelb::lb::Stability stability,
                                  std::string output_file_name,
-                                 BoundaryComms* iInletComms,
-                                 BoundaryComms* iOutletComms);
+                                 boundaries::BoundaryComms* iInletComms,
+                                 boundaries::BoundaryComms* iOutletComms);
         void ReadVisParameters();
 
         void CalculateMouseFlowField(float densityIn,
@@ -75,7 +74,8 @@ namespace hemelb
         template<typename tMidFluidCollision, typename tWallCollision,
             typename tInletOutletCollision, typename tInletOutletWallCollision,
             typename tCollisionOperator>
-        void InitCollisions(BoundaryComms* iInletComms, BoundaryComms* iOutletComms);
+        void InitCollisions(boundaries::BoundaryComms* iInletComms,
+                            boundaries::BoundaryComms* iOutletComms);
 
         void ReadParameters();
         void CalculateBC(distribn_t f[],
@@ -86,8 +86,8 @@ namespace hemelb
                          distribn_t *vy,
                          distribn_t *vz,
                          distribn_t f_neq[],
-                         BoundaryComms* iInletComms,
-                         BoundaryComms* iOutletComms);
+                         boundaries::BoundaryComms* iInletComms,
+                         boundaries::BoundaryComms* iOutletComms);
 
         void handleIOError(int iError);
 
@@ -120,7 +120,7 @@ namespace hemelb
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
-        BoundaryValues *mInletValues, *mOutletValues;
+        boundaries::BoundaryValues *mInletValues, *mOutletValues;
 
         LbmParameters mParams;
         vis::Control* mVisControl;
