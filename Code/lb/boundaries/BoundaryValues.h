@@ -37,7 +37,13 @@ namespace hemelb
 
         private:
           proc_t BCproc;
-          BoundaryComms* mComms;
+          void FindBCProcRank();
+
+          BoundaryComms** mComms;
+          bool IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
+                                 geometry::LatticeData* iLatDat,
+                                 int iBoundaryId);
+          void GatherProcList(int index, bool hasBoundary);
 
           void ReadParameters(geometry::LatticeData::SiteType IOtype);
           void allocate();
@@ -50,6 +56,11 @@ namespace hemelb
           void SortValuesFromFile(std::vector<double> &time, std::vector<double> &value);
 
           int nTotIOlets;
+          // Number of IOlets and vector of their indices for communication purposes
+          int nIOlets;
+          std::vector<int> iolets;
+          int* nProcs;
+          int** procsList;
 
           distribn_t *density_cycle;
           distribn_t *density;
