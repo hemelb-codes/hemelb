@@ -25,13 +25,37 @@ namespace hemelb
 
         ReadParameters(IOtype);
 
-        mComms = new BoundaryComms(mState, (int) mSimConfig->Inlets.size(), IOtype, iLatDat);
-        BCproc = mComms->GetBCProcRank();
+        FindBCProcRank();
+
+        nProcs = new int[nTotIOlets];
+        procsList = new int*[nTotIOlets];
+        mComms = new BoundaryComms*[nTotIOlets];
+
+        nIOlets = 0;
+        iolets = std::vector<int>(0);
+
+        for (int i = 0; i < nTotIOlets; i++)
+        {
+          bool IOletOnThisProc = IsIOletOnThisProc(IOtype, iLatDat, i);
+
+          GatherProcList(i, IOletOnThisProc);
+
+          if (IOletOnThisProc || IsCurrentProcTheBCProc())
+          {
+            nIOlets++;
+            iolets.push_back(i);
+
+            mComms[i] = new BoundaryComms(mState, nProcs[i], procsList[i], IOletOnThisProc, BCproc);
+          }
+        }
 
         InitialiseBoundaryDensities();
 
-        mComms->SendAndReceive(density);
-        mComms->WaitAllComms();
+        for (int i = 0; i < nIOlets; i++)
+        {
+          mComms[iolets[i]]->SendAndReceive(&density[iolets[i]]);
+          mComms[iolets[i]]->WaitAllComms();
+        }
       }
 
       BoundaryValues::~BoundaryValues()
@@ -43,7 +67,105 @@ namespace hemelb
         delete[] density_max;
         delete[] filename;
 
-        delete mComms;
+        for (int i = 0; i < nIOlets; i++)
+          delete mComms[iolets[i]];
+        delete[] mComms;
+
+        delete[] nProcs;
+        for (int i = 0; i < nTotIOlets; i++)
+          delete[] procsList[i];
+        delete[] procsList;
+      }
+
+      void BoundaryValues::FindBCProcRank()
+      {
+        proc_t BCrank = 0;
+
+        if (IsCurrentProcTheBCProc())
+          BCrank = topology::NetworkTopology::Instance()->GetLocalRank();
+
+        // Since only one proc will update BCrank, the sum of all BCrank is the BCproc
+        MPI_Allreduce(&BCrank, &BCproc, 1, hemelb::MpiDataType(BCrank), MPI_SUM, MPI_COMM_WORLD);
+      }
+
+      bool BoundaryValues::IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
+                                             geometry::LatticeData* iLatDat,
+                                             int iBoundaryId)
+      {
+        for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
+          if (iLatDat->GetSiteType(i) == IOtype && iLatDat->GetBoundaryId(i) == iBoundaryId)
+            return true;
+
+        return false;
+      }
+
+      void BoundaryValues::GatherProcList(int index, bool hasBoundary)
+      {
+        nProcs[index] = 0;
+
+        // This is where the info about whether a proc contains the given inlet/outlet is sent
+        // If it does contain the given inlet/outlet it sends a true value, else it sends a false.
+        int IOletOnThisProc = hasBoundary; // true if inlet i is on this proc
+
+        MPI_Request tempReq;
+        MPI_Status tempStat;
+
+        MPI_Isend(&IOletOnThisProc, 1, MPI_INT, BCproc, 100, MPI_COMM_WORLD, &tempReq);
+
+        if (IsCurrentProcTheBCProc())
+        {
+          int nTotProcs = topology::NetworkTopology::Instance()->GetProcessorCount();
+
+          // These should be bool, but MPI only supports MPI_INT
+          // For each inlet/outlet there is an array of length equal to total number of procs.
+          // Each stores true/false value. True if proc of rank equal to the index contains
+          // the given inlet/outlet.
+          int *boolList = new int[nTotProcs];
+
+          MPI_Status* tempStatArray = new MPI_Status[nTotProcs];
+          MPI_Request* tempReqArray = new MPI_Request[nTotProcs];
+
+          for (int proc = 0; proc < nTotProcs; proc++)
+          {
+            MPI_Irecv(&boolList[proc], 1, MPI_INT, proc, 100, MPI_COMM_WORLD, &tempReqArray[proc]);
+          }
+
+          MPI_Waitall(nTotProcs, tempReqArray, tempStatArray);
+
+          // Now we have an array for each IOlet with true (1) at indices corresponding to
+          // processes that are members of that group. We have to convert this into arrays
+          // of ints which store a list of processor ranks.
+
+          for (int j = 0; j < nTotProcs; j++)
+          {
+            if (boolList[j])
+              nProcs[index]++;
+          }
+
+          procsList[index] = new int[nProcs[index]];
+
+          int memberIndex = 0;
+
+          for (int j = 0; j < nTotProcs; j++)
+          {
+            if (boolList[j])
+            {
+              procsList[index][memberIndex] = j;
+              memberIndex++;
+            }
+          }
+
+          // Clear up
+          delete[] boolList;
+          delete[] tempReqArray;
+          delete[] tempStatArray;
+        }
+        else
+        {
+          procsList[index] = NULL;
+        }
+
+        MPI_Wait(&tempReq, &tempStat);
       }
 
       inline bool BoundaryValues::IsCurrentProcTheBCProc()
@@ -59,20 +181,23 @@ namespace hemelb
           density = &density_cycle[time_step * nTotIOlets];
         }
 
-        mComms->SendAndReceive(density);
+        for (int i = 0; i < nIOlets; i++)
+          mComms[iolets[i]]->SendAndReceive(&density[iolets[i]]);
       }
 
       void BoundaryValues::EndIteration()
       {
-        for (int i = 0; i < nTotIOlets; i++)
-          CommFinished[i] = false;
-
-        mComms->FinishSend();
+        for (int i = 0; i < nIOlets; i++)
+        {
+          CommFinished[iolets[i]] = false;
+          mComms[iolets[i]]->FinishSend();
+        }
       }
 
       void BoundaryValues::Reset()
       {
-        mComms->WaitAllComms();
+        for (int i = 0; i < nIOlets; i++)
+          mComms[iolets[i]]->WaitAllComms();
       }
 
       void BoundaryValues::ResetPrePeriodChange()
@@ -109,7 +234,8 @@ namespace hemelb
 
         InitialiseBoundaryDensities();
 
-        mComms->SendAndReceive(density);
+        for (int i = 0; i < nIOlets; i++)
+          mComms[iolets[i]]->SendAndReceive(&density[iolets[i]]);
       }
 
       void BoundaryValues::InitialiseBoundaryDensities()
@@ -294,7 +420,7 @@ namespace hemelb
       {
         if (!CommFinished[index])
         {
-          mComms->Wait(index);
+          mComms[index]->Wait();
           CommFinished[index] = true;
         }
 
