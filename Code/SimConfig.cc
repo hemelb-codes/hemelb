@@ -231,6 +231,8 @@ namespace hemelb
       DoIO(lPressureElement, "amplitude", iIsLoading, value.PAmp);
       DoIO(lPressureElement, "phase", iIsLoading, value.PPhase);
     }
+    DoIO(lPressureElement, "minimum", iIsLoading, value.PMin);
+    DoIO(lPressureElement, "maximum", iIsLoading, value.PMax);
 
     DoIO(lPositionElement, iIsLoading, value.Position);
     DoIO(lNormalElement, iIsLoading, value.Normal);

@@ -70,7 +70,7 @@ namespace hemelb
           {
             MPI_Isend(density,
                       1,
-                      hemelb::MpiDataType(density[0]),
+                      hemelb::MpiDataType(*density),
                       procsList[proc],
                       100,
                       MPI_COMM_WORLD,
@@ -79,7 +79,7 @@ namespace hemelb
             if (hasBoundary)
               MPI_Irecv(density,
                         1,
-                        hemelb::MpiDataType(density[0]),
+                        hemelb::MpiDataType(*density),
                         BCproc,
                         100,
                         MPI_COMM_WORLD,
@@ -90,7 +90,7 @@ namespace hemelb
         {
           MPI_Irecv(density,
                     1,
-                    hemelb::MpiDataType(density[0]),
+                    hemelb::MpiDataType(*density),
                     BCproc,
                     100,
                     MPI_COMM_WORLD,

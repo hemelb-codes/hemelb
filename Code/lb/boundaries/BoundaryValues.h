@@ -48,11 +48,14 @@ namespace hemelb
           void ReadParameters(geometry::LatticeData::SiteType IOtype);
           void allocate();
 
-          void FindDensityExtrema();
-
           void InitialiseBoundaryDensities();
+          void UpdateBoundaryDensities();
+
           void InitialiseCosCycle(int i);
+          void UpdateCosCycle(int i);
+
           void InitialiseFromFile(int i);
+
           void SortValuesFromFile(std::vector<double> &time, std::vector<double> &value);
 
           int nTotIOlets;
@@ -63,6 +66,7 @@ namespace hemelb
           int** procsList;
 
           distribn_t *density_cycle;
+          unsigned long *density_period;
           distribn_t *density;
           distribn_t *density_avg;
           distribn_t *density_amp;
