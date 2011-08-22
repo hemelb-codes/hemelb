@@ -1,4 +1,4 @@
-#include "vis/rayTracer/RayTracer.h"
+#include "vis/rayTracer/Cluster.h"
 
 namespace hemelb
 {
@@ -7,6 +7,11 @@ namespace hemelb
     namespace raytracer
     {
       Cluster::Cluster() { }
+
+      void Cluster::ResizeVectors()
+      {
+	SiteData.resize(blocksX*blocksY*blocksZ);
+      }
        
     }
   }

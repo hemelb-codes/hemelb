@@ -1,7 +1,10 @@
 #ifndef HEMELB_VIS_RAYTRACER_CLUSTER_H
 #define HEMELB_VIS_RAYTRACER_CLUSTER_H
 
+#include <vector>
+
 #include "vis/rayTracer/SiteData.h"
+#include "vis/Vector3D.h"
 
 namespace hemelb
 {
@@ -19,6 +22,9 @@ namespace hemelb
 	{
 	public:
 	  Cluster();
+
+	  //Resizes the vectors so as to be the correct size based on the stored sizes
+	  virtual void ResizeVectors();
 
 	  Vector3D<float> minSite;
 	  Vector3D<float> maxSite;
