@@ -52,6 +52,12 @@ namespace hemelb
 	*t_far = fminf(tx1, fminf(ty1, tz1));
       }
 
+      void RayTracer::BuildClusters()
+      {
+	mClusterBuilder = new ClusterBuilder(mLatDat);
+	mClusterBuilder->BuildClusters();
+      }
+
       /**
        * Update a colour vector to include a section of known length through a
        * solid of known colour.
@@ -496,15 +502,14 @@ namespace hemelb
 			   Screen* iScreen,
 			   Viewpoint* iViewpoint,
 			   VisSettings* iVisSettings) :
-	mClusterBuilder(iLatDat),
-	mLatDat(iLatDat), mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint),
+  	mLatDat(iLatDat), mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint),
 	mVisSettings(iVisSettings), mBlockSizeFloat((float) mLatDat->GetBlockSize()),
 	mBlockSizeInverse(1.F / mBlockSizeFloat), block_size2(mLatDat->GetBlockSize()
 							      * mLatDat->GetBlockSize()), block_size3(mLatDat->GetBlockSize() * block_size2),
 	block_size_1(mLatDat->GetBlockSize() - 1), blocksYz(mLatDat->GetYBlockCount()
 							    * mLatDat->GetZBlockCount())
       {
-	mClusterBuilder.BuildClusters();
+	mClusterBuilder = NULL;
       }
 
       void RayTracer::Render()
@@ -514,11 +519,11 @@ namespace hemelb
 
 	Vector3D<float> viewpointCentre = mViewpoint->GetViewpointCentreLocation();
 
-	for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
+	for (unsigned int clusterId = 0; clusterId < mClusterBuilder->GetClusters().size(); clusterId++)
 	{
-	  const Cluster* thisCluster = &mClusterBuilder.GetClusters()[clusterId];
+	  const Cluster* thisCluster = mClusterBuilder->GetClusters()[clusterId];
 
-	  // the image-based projection of the mClusterBuilder.GetClusters() bounding box is
+	  // the image-based projection of the mClusterBuilder->GetClusters() bounding box is
 	  // calculated here
 	  Vector3D <float> cluster_x = thisCluster->minBlock - viewpointCentre;
 	  
@@ -685,16 +690,17 @@ namespace hemelb
 	assert(static_cast<site_t>(static_cast<unsigned int>(i)) == i);
 	
 	
-	mClusterBuilder.GetClusterVoxelDataPointer(i)->Density =
+	mClusterBuilder->GetClusterVoxelDataPointer(i)->Density =
 	  (float) density;
-	mClusterBuilder.GetClusterVoxelDataPointer(i)->Velocity =
+	mClusterBuilder->GetClusterVoxelDataPointer(i)->Velocity =
 	  (float) velocity;
-	mClusterBuilder.GetClusterVoxelDataPointer(i)->Stress =
+	mClusterBuilder->GetClusterVoxelDataPointer(i)->Stress =
 	  (float) stress;
       }
 
       RayTracer::~RayTracer()
       {
+	delete mClusterBuilder;
       }
     }
   }
