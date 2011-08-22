@@ -6,23 +6,23 @@ namespace hemelb
   {
     namespace raytracer 
     {
-      RayTracer::ClusterBuilder::VolumeTraverser::VolumeTraverser()
+      VolumeTraverser::VolumeTraverser()
 	: mCurrentLocation(0)
       {
 	mCurrentNumber=0;
       }
 	
-      Vector3D<site_t> RayTracer::ClusterBuilder::VolumeTraverser::GetCurrentLocation()
+      Vector3D<site_t> VolumeTraverser::GetCurrentLocation()
       {
 	return mCurrentLocation;
       }
 
-      site_t  RayTracer::ClusterBuilder::VolumeTraverser::GetCurrentIndex()
+      site_t  VolumeTraverser::GetCurrentIndex()
       {
 	return mCurrentNumber;
       }
 
-      site_t RayTracer::ClusterBuilder::VolumeTraverser::
+      site_t VolumeTraverser::
       GetIndexFromLocation(Vector3D<site_t> iLocation)
       {
 	return ((iLocation.x * GetYCount() + iLocation.y) 
@@ -30,7 +30,7 @@ namespace hemelb
       }
 	    
 
-      bool RayTracer::ClusterBuilder::VolumeTraverser::TraverseOne()
+      bool VolumeTraverser::TraverseOne()
       {
 	mCurrentNumber++;
 

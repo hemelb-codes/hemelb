@@ -11,7 +11,7 @@ namespace hemelb
   {
     namespace raytracer
     {
-      RayTracer::ClusterBuilder::BlockTraverser::BlockTraverser
+      BlockTraverser::BlockTraverser
       (const geometry::LatticeData* iLatDat)
 	: VolumeTraverser()
       {
@@ -27,22 +27,22 @@ namespace hemelb
 	}		
       }
 
-      RayTracer::ClusterBuilder::BlockTraverser::~BlockTraverser()
+      BlockTraverser::~BlockTraverser()
       {
 	delete[] mBlockVisited;
       }
       
-      site_t RayTracer::ClusterBuilder::BlockTraverser::CurrentBlockNumber()
+      site_t BlockTraverser::CurrentBlockNumber()
       {
 	return GetCurrentIndex();
       }
 
-      Vector3D<site_t> RayTracer::ClusterBuilder::BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
+      Vector3D<site_t> BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
       {
 	return GetCurrentLocation()*mLatticeData->GetBlockSize();
       }
       		
-      bool RayTracer::ClusterBuilder::BlockTraverser::GoToNextUnvisitedBlock()
+      bool BlockTraverser::GoToNextUnvisitedBlock()
       {
 	assert(IsCurrentBlockVisited());
 	do 
@@ -59,38 +59,38 @@ namespace hemelb
       }
 	    
       geometry::LatticeData::BlockData *
-      RayTracer::ClusterBuilder::BlockTraverser::GetCurrentBlockData()
+      BlockTraverser::GetCurrentBlockData()
       {
 	return mLatticeData->GetBlock(mCurrentNumber);
       }
 
       geometry::LatticeData::BlockData *
-      RayTracer::ClusterBuilder::BlockTraverser::GetBlockDataForLocation
+      BlockTraverser::GetBlockDataForLocation
       (const Vector3D<site_t>& iLocation)
       {
 	return mLatticeData->GetBlock(GetIndexFromLocation(iLocation));
       }      
 
-      site_t RayTracer::ClusterBuilder::BlockTraverser::GetBlockSize()
+      site_t BlockTraverser::GetBlockSize()
       {
 	return mLatticeData->GetBlockSize();
       }
 
-      RayTracer::ClusterBuilder::SiteTraverser 
-      RayTracer::ClusterBuilder::BlockTraverser::GetSiteTraverserForCurrentBlock()
+      SiteTraverser 
+      BlockTraverser::GetSiteTraverserForCurrentBlock()
       {
 	return SiteTraverser(mLatticeData, CurrentBlockNumber());
       }	
 
-      RayTracer::ClusterBuilder::SiteTraverser 
-      RayTracer::ClusterBuilder::BlockTraverser::GetSiteTraverserForLocation(const Vector3D<site_t>& iLocation)
+      SiteTraverser 
+      BlockTraverser::GetSiteTraverserForLocation(const Vector3D<site_t>& iLocation)
       {
 	return SiteTraverser(mLatticeData, GetIndexFromLocation(iLocation));
       }	
 
       
 
-      bool RayTracer::ClusterBuilder::BlockTraverser::IsValidLocation(Vector3D<site_t> iBlock)
+      bool BlockTraverser::IsValidLocation(Vector3D<site_t> iBlock)
       {
 	return mLatticeData->IsValidBlockSite
 	  (iBlock.x,
@@ -98,34 +98,34 @@ namespace hemelb
 	   iBlock.z);
       }
 
-      bool RayTracer::ClusterBuilder::BlockTraverser::IsBlockVisited(site_t iN)
+      bool BlockTraverser::IsBlockVisited(site_t iN)
       {
 	return mBlockVisited[iN];
       }
 
-      bool RayTracer::ClusterBuilder::BlockTraverser::IsBlockVisited(Vector3D<site_t>iLocation)
+      bool BlockTraverser::IsBlockVisited(Vector3D<site_t>iLocation)
       {
 
 	return mBlockVisited[GetIndexFromLocation(iLocation)];
       }
 	    
 
-      bool RayTracer::ClusterBuilder::BlockTraverser::IsCurrentBlockVisited()
+      bool BlockTraverser::IsCurrentBlockVisited()
       {
 	return IsBlockVisited(CurrentBlockNumber());
       }
 
-      void RayTracer::ClusterBuilder::BlockTraverser::MarkCurrentBlockVisited()
+      void BlockTraverser::MarkCurrentBlockVisited()
       {
 	MarkBlockVisited(CurrentBlockNumber());
       }
 	    
-      void RayTracer::ClusterBuilder::BlockTraverser::MarkBlockVisited(site_t iBlockId)
+      void BlockTraverser::MarkBlockVisited(site_t iBlockId)
       {
 	mBlockVisited[iBlockId] = true;
       }
 
-      void RayTracer::ClusterBuilder::BlockTraverser::MarkBlockVisited(Vector3D<site_t> iLocation)
+      void BlockTraverser::MarkBlockVisited(Vector3D<site_t> iLocation)
       {
 	site_t lNumber = GetIndexFromLocation(iLocation);
 	assert(lNumber < mLatticeData->GetBlockCount());
@@ -133,22 +133,22 @@ namespace hemelb
       }
 
 
-      bool RayTracer::ClusterBuilder::BlockTraverser::GoToNextBlock()
+      bool BlockTraverser::GoToNextBlock()
       {
 	return TraverseOne();
       }
 	  
-      site_t RayTracer::ClusterBuilder::BlockTraverser::GetXCount() 
+      site_t BlockTraverser::GetXCount() 
       {
 	return mLatticeData->GetXBlockCount();
       }
 
-      site_t RayTracer::ClusterBuilder::BlockTraverser::GetYCount()
+      site_t BlockTraverser::GetYCount()
       {
 	return mLatticeData->GetYBlockCount();
       }
 
-      site_t RayTracer::ClusterBuilder::BlockTraverser::GetZCount() 
+      site_t BlockTraverser::GetZCount() 
       {
 	return mLatticeData->GetZBlockCount();
       }

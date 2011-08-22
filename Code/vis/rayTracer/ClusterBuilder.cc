@@ -10,8 +10,14 @@
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 #include "vis/Vector3D.h"
+#include "vis/rayTracer/BlockTraverser.h"
+#include "vis/rayTracer/ClusterBuilder.h"
 #include "vis/rayTracer/RayTracer.h"
+#include "vis/rayTracer/SiteData.h"
+#include "vis/rayTracer/SiteTraverser.h"
+#include "vis/rayTracer/VolumeTraverser.h"
 #include "log/Logger.h"
+
 
 namespace hemelb
 {
@@ -19,7 +25,7 @@ namespace hemelb
   {
     namespace raytracer
     {
-      RayTracer::ClusterBuilder::ClusterBuilder
+      ClusterBuilder::ClusterBuilder
       (const geometry::LatticeData*& iLatticeData) :
 	mBlockTraverser(iLatticeData),
 	mLatticeData(iLatticeData)
@@ -38,12 +44,12 @@ namespace hemelb
 	assert(VIS_FIELDS == 3);
       }
  
-      RayTracer::ClusterBuilder::~ClusterBuilder()
+      ClusterBuilder::~ClusterBuilder()
       {
 	delete[] mClusterIdOfBlock;
       }
     
-      void RayTracer::ClusterBuilder::BuildClusters()
+      void ClusterBuilder::BuildClusters()
       {
 	//Initially locate all clusters, locating their
 	//range by block span and site span
@@ -56,17 +62,17 @@ namespace hemelb
 	}
       }
 
-      std::vector<RayTracer::Cluster>& RayTracer::ClusterBuilder::GetClusters()
+      std::vector<Cluster>& ClusterBuilder::GetClusters()
       {
 	return mClusters;
       }
 
-      RayTracer::SiteData_t* RayTracer::ClusterBuilder::GetClusterVoxelDataPointer(site_t iVoxelSiteId)
+      SiteData_t* ClusterBuilder::GetClusterVoxelDataPointer(site_t iVoxelSiteId)
       {
 	return GetDataPointerClusterVoxelSiteId(iVoxelSiteId);
       }
 
-      void RayTracer::ClusterBuilder::LocateClusters()
+      void ClusterBuilder::LocateClusters()
       {
 	// Run through all unvisited blocks finding clusters
 	do
@@ -84,7 +90,7 @@ namespace hemelb
 	while (mBlockTraverser.GoToNextUnvisitedBlock());
       }	 
 
-      void RayTracer::ClusterBuilder::FindNewCluster()
+      void ClusterBuilder::FindNewCluster()
       { 
 	//These locations will eventually contain the bounds of the
 	//rectangular cluster, both in terms of block number and
@@ -153,7 +159,7 @@ namespace hemelb
 	AddCluster(lClusterBlockMin, lClusterBlockMax, lClusterSiteMin, lClusterSiteMax);
       }
 
-      const Vector3D<site_t> RayTracer::ClusterBuilder::mNeighbours[26] =
+      const Vector3D<site_t> ClusterBuilder::mNeighbours[26] =
       {
 	Vector3D<site_t>(-1, -1, -1),
 	Vector3D<site_t>(-1, -1,  0),
@@ -193,7 +199,7 @@ namespace hemelb
 	Vector3D<site_t>( 1,  1,  1)
       };
 
-      void RayTracer::ClusterBuilder::AddNeighbouringBlocks
+      void ClusterBuilder::AddNeighbouringBlocks
       (Vector3D<site_t> iCurrentLocation, 
        std::stack<Vector3D<site_t> >& oBlocksToProcess)
       {
@@ -220,7 +226,7 @@ namespace hemelb
 	}
       }
 
-      bool RayTracer::ClusterBuilder::AreSitesAssignedToLocalProcessorRankInBlock
+      bool ClusterBuilder::AreSitesAssignedToLocalProcessorRankInBlock
       (geometry::LatticeData::BlockData * iBlock)
       {
 	if (iBlock->
@@ -242,7 +248,7 @@ namespace hemelb
 	return false;
       } 
 
-      void RayTracer::ClusterBuilder::AddCluster(Vector3D<site_t> iClusterBlockMin,
+      void ClusterBuilder::AddCluster(Vector3D<site_t> iClusterBlockMin,
 						 Vector3D<site_t> iClusterBlockMax,
 						 Vector3D<site_t> iClusterVoxelMin, 
 						 Vector3D<site_t> iClusterVoxelMax)
@@ -310,7 +316,7 @@ namespace hemelb
       }
 
 
-      void RayTracer::ClusterBuilder::ProcessCluster(unsigned int iClusterId)
+      void ClusterBuilder::ProcessCluster(unsigned int iClusterId)
       {
 	hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
 	  ("Examining cluster id = %u", (unsigned int) iClusterId);
@@ -370,7 +376,7 @@ namespace hemelb
       }
       
 
-      void RayTracer::ClusterBuilder::UpdateSiteData
+      void ClusterBuilder::UpdateSiteData
       (geometry::LatticeData::BlockData * lBlock, site_t iBlockNum,  unsigned int iClusterId, Vector3D<site_t>i_block_coordinates)
       {
 	unsigned int l_site_id = -1;
@@ -395,7 +401,7 @@ namespace hemelb
       
 
 	     
-      void RayTracer::ClusterBuilder::UpdateSiteDataAtSite
+      void ClusterBuilder::UpdateSiteDataAtSite
       ( geometry::LatticeData::BlockData * iBlock,
 	site_t iBlockNum, unsigned int iClusterId, unsigned int lSiteIdOnBlock)
       {
@@ -424,12 +430,12 @@ namespace hemelb
       }
     
 
-      RayTracer::SiteData_t* RayTracer::ClusterBuilder::GetDataPointerClusterVoxelSiteId(site_t iClusterVortexSiteId)
+      SiteData_t* ClusterBuilder::GetDataPointerClusterVoxelSiteId(site_t iClusterVortexSiteId)
       {
 	return mClusterVoxelDataPointers[iClusterVortexSiteId];
       }
 
-      void RayTracer::ClusterBuilder::SetDataPointerForClusterVoxelSiteId
+      void ClusterBuilder::SetDataPointerForClusterVoxelSiteId
       (site_t iClusterVortexSiteId, SiteData_t* iDataPointer)
       {
 #ifndef NDEBUG
