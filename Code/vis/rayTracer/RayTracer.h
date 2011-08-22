@@ -26,9 +26,6 @@ namespace hemelb
     {
       class RayTracer
       {
-	//Class also contains nested classes Cluster and  ClusterBuilder, itself 
-	//containing VolumeTraverser, SiteTraverser and BlockTraverser
-
       public:
 	// Constructor and destructor do all the usual stuff.
 	RayTracer(const geometry::LatticeData* iLatDat,
@@ -37,6 +34,11 @@ namespace hemelb
 		  Viewpoint* iViewpoint,
 		  VisSettings* iVisSettings);
 	~RayTracer();
+
+	//Calls the cluster builder to build the clusters
+	//Must be explicitly called after construction as the method is 
+	//virtual 
+	virtual void BuildClusters();
 
 	// Method to update the voxel corresponding to site i with its
 	// newly calculated density, velocity and stress.
@@ -48,7 +50,9 @@ namespace hemelb
 	// Render the current state into an image.
 	void Render();
 
-
+      protected:
+	ClusterBuilder* mClusterBuilder;
+	const geometry::LatticeData* mLatDat;
 
       private:
 	struct Ray
@@ -94,11 +98,7 @@ namespace hemelb
 		       float* t_far);
 
 	void UpdateColour(float dt, const float palette[3], float col[3]);
-
-	ClusterBuilder mClusterBuilder;
 	
-	const geometry::LatticeData* mLatDat;
-
 	const DomainStats* mDomainStats;
 	Screen* mScreen;
 	Viewpoint* mViewpoint;

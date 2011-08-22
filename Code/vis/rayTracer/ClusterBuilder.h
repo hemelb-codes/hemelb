@@ -19,13 +19,24 @@ namespace hemelb
       public:
 	ClusterBuilder
 	  (const geometry::LatticeData*& iLatDat);
-	~ClusterBuilder();
+        ~ClusterBuilder();
 	  
 	void BuildClusters();
 	  
-	std::vector<Cluster>& GetClusters();
+	std::vector<Cluster*>& GetClusters();
 
 	SiteData_t* GetClusterVoxelDataPointer(site_t iSiteId);
+
+      protected:
+	void UpdateDensityVelocityAndStress(site_t iBlockNum, unsigned int iClusterId, unsigned int iSiteIdOnBlock, unsigned int iClusterVoxelSiteId);
+
+	//Caution: the data within mClusters is altered by means
+	//of pointers obtained from the GetClusterVoxelDataPointer
+	//method. No insertion of copying must therefore take place
+	//on mClusters once building is complete
+	std::vector<Cluster*> mClusters;
+
+	const geometry::LatticeData*& mLatticeData;
 
       private:
 	//Locates all the clusters in the lattice structure and the
@@ -43,6 +54,9 @@ namespace hemelb
 	bool AreSitesAssignedToLocalProcessorRankInBlock
 	  (geometry::LatticeData::BlockData * iBlock);
 
+	//Creates a cluster of the correct type
+	virtual Cluster* CreateNewCluster();
+
 	//Adds a new cluster by taking in the required data in interget format
 	//and converting it to that used by the raytracer
 	//NB: Futher processing is required on the cluster before it can be used
@@ -56,13 +70,13 @@ namespace hemelb
 	void ProcessCluster(unsigned int iClusterId);
 
 	void UpdateSiteData
-	  (geometry::LatticeData::BlockData * lBlock, site_t n,
-	   unsigned int iClusterId, Vector3D<site_t> i_block_coordinates);
+	  (site_t iBlockId, site_t iBlockNum,  unsigned int iClusterId,
+	   Vector3D<site_t>i_block_coordinates);
 
-	void UpdateSiteDataAtSite
-	  (geometry::LatticeData::BlockData * iBlock,
-	   site_t n, unsigned int iClusterId, unsigned int l_site_id);
-
+	virtual void UpdateSiteDataAtSite
+	  (site_t iBlockId, site_t iBlockNum, 
+	   unsigned int iClusterId, unsigned int iSiteIdOnBlock);
+	
 	Vector3D<site_t> GetSiteCoordinatesOfBlock
 	  (site_t iClusterId, Vector3D<site_t> offset);
 
@@ -74,12 +88,6 @@ namespace hemelb
 
 	BlockTraverser mBlockTraverser;
 
-	//Caution: the data within mClusters is altered by means
-	//of pointers obtained from the GetClusterVoxelDataPointer
-	//method. No insertion of copying must therefore take place
-	//on mClusters once building is complete
-	std::vector<Cluster> mClusters;
-
 	std::vector<Vector3D<site_t> > mClusterBlockMins;
 
 	//This allows a cluster voxel site ID (as part of the 1D structure for)
@@ -87,7 +95,6 @@ namespace hemelb
 	//for the ray tracer by means of pointers.
 	std::vector<SiteData_t*> mClusterVoxelDataPointers;
 
-	const geometry::LatticeData*& mLatticeData;
 	short int *mClusterIdOfBlock;
 
 	static const short int NOTASSIGNEDTOCLUSTER = -1;
