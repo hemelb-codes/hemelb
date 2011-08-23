@@ -2,6 +2,7 @@
 #define HEMELB_VIS_VIEWPOINT_H
 
 #include "vis/Vector3D.h"
+#include "vis/XYCoordinates.h"
 
 namespace hemelb
 {
@@ -38,6 +39,12 @@ namespace hemelb
        */
       Vector3D<float> Project(const Vector3D<float>& p1) const;
 
+      /**
+       * Same as project but doesn't return a z component
+       *
+       */
+      XYCoordinates<float> FlatProject(const Vector3D<float>& iWorldLocation) const;
+
     /**
      * Sets the position of the Camera or Viewpoint
      *
@@ -59,8 +66,12 @@ namespace hemelb
 				float iDistanceFromEyeToScreen);
 
       const Vector3D<float>& GetViewpointCentreLocation() const;
+      
+      float mDistanceFromEyeToScreen;
 
     private:
+      Vector3D<float> GetViewPointLocationInCameraCoordinates(const Vector3D<float>& iWorldLocation) const;
+   
       //Performs a vector rotation using stored
       //Sin and Cosine Values
       static Vector3D <float> Rotate(
@@ -77,8 +88,6 @@ namespace hemelb
 	float iThetaY,
 	float iCosThetaY,
 	const Vector3D<float>& iVector);
-	  
-      float mDistanceFromEyeToScreen;
 
       float mSinLongitude;
       float mCosLongitude;

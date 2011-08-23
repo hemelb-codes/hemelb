@@ -11,6 +11,7 @@
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h" 
 #include "vis/Vector3D.h"
+#include "vis/XYCoordinates.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "log/Logger.h"
 
@@ -517,101 +518,125 @@ namespace hemelb
 	const Vector3D<float>& projectedUnitX = mScreen->GetUnitVectorProjectionX();
 	const Vector3D<float>& projectedUnitY = mScreen->GetUnitVectorProjectionY();
 
-	Vector3D<float> viewpointCentre = mViewpoint->GetViewpointCentreLocation();
-
 	for (unsigned int clusterId = 0; clusterId < mClusterBuilder->GetClusters().size(); clusterId++)
 	{
-	  const Cluster* thisCluster = mClusterBuilder->GetClusters()[clusterId];
+	  RenderCluster(*mClusterBuilder->GetClusters()[clusterId]);
+	}
+      }
 
-	  // the image-based projection of the mClusterBuilder->GetClusters() bounding box is
-	  // calculated here
-	  Vector3D <float> cluster_x = thisCluster->minBlock - viewpointCentre;
+      void RayTracer::RenderCluster(const Cluster& iCluster)
+      {
+	Vector3D <float> lLowerSiteCordinatesOfClusterRelativeToViewpoint = 
+	  iCluster.minBlock - mViewpoint->GetViewpointCentreLocation();
 	  
-	  float subimageMins[2], subimageMaxes[2];
+	//The extent of the cluster when projected (ie the subimage) 
+	//is determined by projecting all eight verticies of the cuboid
+	
+	XYCoordinates<float> lSubImageLowerLeft = XYCoordinates<float>::MaxLimit();
+	XYCoordinates<float> lSubImageUpperRight = XYCoordinates<float>::MinLimit();
 
-	  subimageMins[0] = subimageMins[1] = std::numeric_limits<float>::max();
-	  subimageMaxes[0] = subimageMaxes[1] = std::numeric_limits<float>::min();
+	UpdateSubImageExtentForCorner(Vector3D<float>(
+					iCluster.minSite.x,
+					iCluster.minSite.y,
+					iCluster.minSite.z),
+				      lSubImageLowerLeft,
+				      lSubImageUpperRight);
 
-	  Vector3D<float> p1;
+	UpdateSubImageExtentForCorner(Vector3D<float>(
+					iCluster.minSite.x,
+					iCluster.minSite.y,
+					iCluster.maxSite.z),
+				      lSubImageLowerLeft,
+				      lSubImageUpperRight);
 
-	  float lMinMax_x[2];
-	  lMinMax_x[0] = thisCluster->minSite.x;
-	  lMinMax_x[1] = thisCluster->maxSite.x;
+	UpdateSubImageExtentForCorner(Vector3D<float>(
+					iCluster.minSite.x,
+					iCluster.maxSite.y,
+					iCluster.minSite.z),
+				      lSubImageLowerLeft,
+				      lSubImageUpperRight);
 
-	  float lMinMax_y[2];
-	  lMinMax_y[0] = thisCluster->minSite.y;
-	  lMinMax_y[1] = thisCluster->maxSite.y;
+	UpdateSubImageExtentForCorner(Vector3D<float>(
+					iCluster.minSite.x,
+					iCluster.maxSite.y,
+					iCluster.maxSite.z),
+				      lSubImageLowerLeft,
+				      lSubImageUpperRight);
 
-	  float lMinMax_z[2];
-	  lMinMax_z[0] = thisCluster->minSite.z;
-	  lMinMax_z[1] = thisCluster->maxSite.z;  
+	UpdateSubImageExtentForCorner(Vector3D<float>(
+					iCluster.maxSite.x,
+					iCluster.minSite.y,
+					iCluster.minSite.z),
+				      lSubImageLowerLeft,
+				      lSubImageUpperRight);
 
-	  for (int i = 0; i < 2; i++)
-	  {
-	    p1.x = lMinMax_x[i];
+	UpdateSubImageExtentForCorner(Vector3D<float>(
+					iCluster.maxSite.x,
+					iCluster.minSite.y,
+					iCluster.maxSite.z),
+				      lSubImageLowerLeft,
+				      lSubImageUpperRight);
 
-	    for (int j = 0; j < 2; j++)
-	    {
-	      p1.y = lMinMax_y[j];
+	UpdateSubImageExtentForCorner(Vector3D<float>(
+					iCluster.maxSite.x,
+					iCluster.maxSite.y,
+					iCluster.minSite.z),
+				      lSubImageLowerLeft,
+				      lSubImageUpperRight);
 
-	      for (int k = 0; k < 2; k++)
-	      {
-		p1.z = lMinMax_z[k];
+	UpdateSubImageExtentForCorner(Vector3D<float>(
+					iCluster.maxSite.x,
+					iCluster.maxSite.y,
+					iCluster.maxSite.z),
+				      lSubImageLowerLeft,
+				      lSubImageUpperRight);
+	
+	XYCoordinates<int> lSubImageLowerLeftPixelCoordinates = 
+	  mScreen->TransformScreenToPixelCoordinates<int> (lSubImageLowerLeft);
 
-		Vector3D<float> p2 = mViewpoint->Project(p1);
+	XYCoordinates<int> lSubImageUpperRightPixelCoordinates = 
+	  mScreen->TransformScreenToPixelCoordinates<int> (lSubImageUpperRight);
 
-		subimageMins[0] = fminf(subimageMins[0], p2.x);
-		subimageMaxes[0] = fmaxf(subimageMaxes[0], p2.x);
+	// If the entire sub-image is off the screen, continue to the next cluster.
+	if (lSubImageLowerLeftPixelCoordinates.x >= mScreen->GetPixelsX() || lSubImageUpperRightPixelCoordinates.x < 0 || lSubImageLowerLeftPixelCoordinates.y
+	    >= mScreen->GetPixelsY() || lSubImageUpperRightPixelCoordinates.y < 0)
+	{
+	  return;
+	}
 
-		subimageMins[1] = fminf(subimageMins[1], p2.y);
-		subimageMaxes[1] = fmaxf(subimageMaxes[1], p2.y);
-	      }
-	    }
-	  }
+	// Crop the sub-image to the screen.
+	lSubImageLowerLeftPixelCoordinates.x = util::NumericalFunctions::
+	  max(lSubImageLowerLeftPixelCoordinates.x, 0);
+	
+	lSubImageUpperRightPixelCoordinates.x = util::NumericalFunctions::
+	  min(lSubImageUpperRightPixelCoordinates.x, mScreen->GetPixelsX() - 1);
+	
+	lSubImageLowerLeftPixelCoordinates.y = util::NumericalFunctions::
+	  max(lSubImageLowerLeftPixelCoordinates.y, 0);
 
-	  int subimageMinXY[2], subimageMaxXY[2];
+	lSubImageUpperRightPixelCoordinates.y = util::NumericalFunctions::
+	  min(lSubImageUpperRightPixelCoordinates.y, mScreen->GetPixelsY() - 1);
 
-	  mScreen->Transform<int> (subimageMins[0], subimageMins[1], 
-				   subimageMinXY[0], subimageMinXY[1]);
+	AABB aabb;
+	aabb.acc_1 = iCluster.maxSite.x - mViewpoint->GetViewpointCentreLocation().x;
+	aabb.acc_2 = iCluster.minSite.x - mViewpoint->GetViewpointCentreLocation().x;
+	aabb.acc_3 = iCluster.maxSite.y - mViewpoint->GetViewpointCentreLocation().y;
+	aabb.acc_4 = iCluster.minSite.y - mViewpoint->GetViewpointCentreLocation().y;
+	aabb.acc_5 = iCluster.maxSite.z - mViewpoint->GetViewpointCentreLocation().z;
+	aabb.acc_6 = iCluster.minSite.z - mViewpoint->GetViewpointCentreLocation().z;
 
-	  mScreen->Transform<int> (subimageMaxes[0], subimageMaxes[1],
-				   subimageMaxXY[0], subimageMaxXY[1]);
-
-	  // If the entire sub-image is off the screen, continue to the next cluster.
-	  if (subimageMinXY[0] >= mScreen->GetPixelsX() || subimageMaxXY[0] < 0 || subimageMinXY[1]
-	      >= mScreen->GetPixelsY() || subimageMaxXY[1] < 0)
-	  {
-	    continue;
-	  }
-
-	  // Crop the sub-image to the screen.
-	  subimageMinXY[0] = util::NumericalFunctions::max(subimageMinXY[0], 0);
-	  subimageMaxXY[0] = util::NumericalFunctions::min(subimageMaxXY[0], mScreen->GetPixelsX()
-							   - 1);
-	  subimageMinXY[1] = util::NumericalFunctions::max(subimageMinXY[1], 0);
-	  subimageMaxXY[1] = util::NumericalFunctions::min(subimageMaxXY[1], mScreen->GetPixelsY()
-							   - 1);
-
-	  AABB aabb;
-	  aabb.acc_1 = thisCluster->maxSite.x - viewpointCentre.x;
-	  aabb.acc_2 = thisCluster->minSite.x - viewpointCentre.x;
-	  aabb.acc_3 = thisCluster->maxSite.y - viewpointCentre.y;
-	  aabb.acc_4 = thisCluster->minSite.y - viewpointCentre.y;
-	  aabb.acc_5 = thisCluster->maxSite.z - viewpointCentre.z;
-	  aabb.acc_6 = thisCluster->minSite.z - viewpointCentre.z;
-
-	  Vector3D<float> par3;
-	  const Vector3D<float>& vtx = mScreen->GetVtx();
+	Vector3D<float> par3;
+	const Vector3D<float>& vtx = mScreen->GetVtx();
 	  
-	  par3 = vtx + projectedUnitX * (float) subimageMinXY[0]
-	    + projectedUnitY * (float) subimageMinXY[1];
+	par3 = vtx + mScreen->GetUnitVectorProjectionX() * (float) lSubImageLowerLeftPixelCoordinates.x
+	  + mScreen->GetUnitVectorProjectionY() * (float) lSubImageLowerLeftPixelCoordinates.y;
 	  
 
-	  for (int subImageX = subimageMinXY[0]; subImageX <= subimageMaxXY[0]; ++subImageX)
+	  for (int subImageX = lSubImageLowerLeftPixelCoordinates.x; subImageX <= lSubImageUpperRightPixelCoordinates.x; ++subImageX)
 	  {
 	    Vector3D<float> lRayDirection = par3;
 
-	    for (int subImageY = subimageMinXY[1]; subImageY <= subimageMaxXY[1]; ++subImageY)
+	    for (int subImageY = lSubImageLowerLeftPixelCoordinates.y; subImageY <= lSubImageUpperRightPixelCoordinates.y; ++subImageY)
 	    {
 	      Ray lRay;
 
@@ -625,7 +650,7 @@ namespace hemelb
 	      lRay.Direction.x *= lInverseDirectionMagnitude;
 	      lRay.Direction.y *= lInverseDirectionMagnitude;
 	      lRay.Direction.z *= lInverseDirectionMagnitude;
-	      // 
+	       
 	      lRay.InverseDirection.x = 1.0F / lRay.Direction.x;
 	      lRay.InverseDirection.y = 1.0F / lRay.Direction.y;
 	      lRay.InverseDirection.z = 1.0F / lRay.Direction.z;
@@ -635,9 +660,9 @@ namespace hemelb
 	      lRayInPositiveDirection.y = lRay.Direction.y > 0.0F;
 	      lRayInPositiveDirection.z = lRay.Direction.z > 0.0F;
 
-	      lRayDirection.x += projectedUnitY.x;
-	      lRayDirection.y += projectedUnitY.y;
-	      lRayDirection.z += projectedUnitY.z;
+	      lRayDirection.x += mScreen->GetUnitVectorProjectionY().x;
+	      lRayDirection.y += mScreen->GetUnitVectorProjectionY().y;
+	      lRayDirection.z += mScreen->GetUnitVectorProjectionY().z;
 
 	      float t_near, t_far;
 	      AABBvsRay(&aabb, lRay.InverseDirection, lRayInPositiveDirection, &t_near, &t_far);
@@ -647,7 +672,8 @@ namespace hemelb
 		continue;
 	      }
 
-	      Vector3D <float> ray_dx = t_near * lRay.Direction - cluster_x;
+	      Vector3D <float> ray_dx = t_near * lRay.Direction -
+		lLowerSiteCordinatesOfClusterRelativeToViewpoint;
 
 	      lRay.VelocityColour[0] = 0.0F;
 	      lRay.VelocityColour[1] = 0.0F;
@@ -661,7 +687,7 @@ namespace hemelb
 	      lRay.MinT = std::numeric_limits<float>::max();
 	      lRay.Density = -1.0F;
 
-	      TraverseBlocks(thisCluster, lRayInPositiveDirection, ray_dx, &lRay);
+	      TraverseBlocks(&iCluster, lRayInPositiveDirection, ray_dx, &lRay);
 
 	      if (lRay.MinT == std::numeric_limits<float>::max())
 	      {
@@ -677,9 +703,19 @@ namespace hemelb
 
 	      mScreen->AddPixel(&col_pixel, mVisSettings);
 	    }
-	    par3+=projectedUnitX;
+	    par3+=mScreen->GetUnitVectorProjectionX();
 	  }
-	}
+      }
+
+      void RayTracer::UpdateSubImageExtentForCorner
+      (const Vector3D<float>& iCorner,
+       XYCoordinates<float>& ioSubImageLowerLeft,
+       XYCoordinates<float>& ioSubImageUpperRight)
+      {
+	XYCoordinates<float> lCornerProjection = mViewpoint->FlatProject(iCorner);
+
+	XYCoordinates<float>::UpdateMinXYCoordinates(ioSubImageLowerLeft, lCornerProjection);
+	XYCoordinates<float>::UpdateMaxXYCoordinates(ioSubImageUpperRight, lCornerProjection);
       }
 
       void RayTracer::UpdateClusterVoxel(site_t i,

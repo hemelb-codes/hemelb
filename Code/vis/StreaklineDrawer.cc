@@ -6,6 +6,7 @@
 #include "vis/StreaklineDrawer.h"
 #include "vis/Control.h"
 #include "vis/ColPixel.h"
+#include "vis/XYCoordinates.h"
 
 namespace hemelb
 {
@@ -800,18 +801,17 @@ namespace hemelb
       for (unsigned int n = 0; n < nParticles; n++)
       {
         Vector3D<float> p1;
-	Vector3D<float> p2;
         p1.x = particleVec[n].x - float (iLatDat->GetXSiteCount() >> 1);
         p1.y = particleVec[n].y - float (iLatDat->GetYSiteCount() >> 1);
         p1.z = particleVec[n].z - float (iLatDat->GetZSiteCount() >> 1);
 
-        int x[2];
-        p2 = mViewpoint->Project(p1);
-        mScreen->Transform<int> (p2.x, p2.y, x[0],x [1]);
+        Vector3D<float> p2 = mViewpoint->Project(p1);
+        
+	XYCoordinates<int> x = mScreen->TransformScreenToPixelCoordinates<int> (XYCoordinates<float>(p2.x, p2.y));
 
-        if (! (x[0] < 0 || x[0] >= pixels_x || x[1] < 0 || x[1] >= pixels_y))
+        if (! (x.x < 0 || x.x >= pixels_x || x.y < 0 || x.y >= pixels_y))
         {
-          ColPixel col_pixel(x[0], x[1], particleVec[n].vel, p2.z, particleVec[n].inlet_id);
+          ColPixel col_pixel(x.x, x.y, particleVec[n].vel, p2.z, particleVec[n].inlet_id);
           mScreen->AddPixel(&col_pixel, mVisSettings);
         }
       }

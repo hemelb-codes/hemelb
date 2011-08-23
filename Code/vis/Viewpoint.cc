@@ -3,6 +3,7 @@
 #include "log/Logger.h"
 #include "vis/Vector3D.h"
 #include "vis/Viewpoint.h"
+#include "vis/XYCoordinates.h"
 
 namespace hemelb
 {
@@ -78,12 +79,8 @@ namespace hemelb
 
     Vector3D<float> Viewpoint::Project(const Vector3D<float>& iWorldLocation) const
     {
-      //Calculate the location of the point relative to the viewpoint 
-      Vector3D<float> lLocationRelativeToViewPoint = iWorldLocation - mViewpointLocation;
-      
-      //Rotate the location vector in the opposite manner to that of the camera
-      Vector3D<float> lLocationCamCoordinates = 
-	RotateWorldToCameraCoordinates(lLocationRelativeToViewPoint);
+      Vector3D<float> lLocationCamCoordinates = GetViewPointLocationInCameraCoordinates(iWorldLocation);
+
       // NB - the oringinal code was not doing this but a reflection rotation
       // and then back reflectiond which produced similar images.
       // It was believed that this was in error. 
@@ -91,15 +88,23 @@ namespace hemelb
       //Carry out a perspective projection on an infinite spanning screen 
       //between the eye and the subject.
       //Reverse the sign such that depth is positive (I believe).  
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
- 	("Depth: %f", -lLocationCamCoordinates.z);
-
       return Vector3D <float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
 				* lLocationCamCoordinates.x,
 				 mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z) 
 				* lLocationCamCoordinates.y,
 				-lLocationCamCoordinates.z);
     }
+
+    XYCoordinates<float> Viewpoint::FlatProject(const Vector3D<float>& iWorldLocation) const
+    {
+      Vector3D<float> lLocationCamCoordinates = GetViewPointLocationInCameraCoordinates(iWorldLocation);
+      
+      return XYCoordinates<float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+				* lLocationCamCoordinates.x,
+				 mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z) 
+				* lLocationCamCoordinates.y);
+    }
+
 
     void Viewpoint::SetViewpointPosition(
       float iLongitude,
@@ -130,6 +135,15 @@ namespace hemelb
     const Vector3D<float>& Viewpoint::GetViewpointCentreLocation() const
     {
       return mViewpointLocation;
+    }
+
+    Vector3D<float> Viewpoint::GetViewPointLocationInCameraCoordinates(const Vector3D<float>& iWorldLocation) const
+    {
+      //Calculate the location of the point relative to the viewpoint 
+      Vector3D<float> lLocationRelativeToViewPoint = iWorldLocation - mViewpointLocation;
+      
+      //Rotate the location vector in the opposite manner to that of the camera
+      return RotateWorldToCameraCoordinates(lLocationRelativeToViewPoint);
     }
 
   }

@@ -121,7 +121,7 @@ namespace hemelb
                                 const float &iZoom)
     {
       float rad = 5.F * vis->system_size;
-      float dist = 0.5F * rad;
+      float dist = 0.75F * rad;
 
       Vector3D<float> centre = Vector3D<float>( iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z );
 
@@ -387,17 +387,17 @@ namespace hemelb
           // If we're the sending proc, do the send.
           if (netTop->GetLocalRank() == sendingProc)
           {
-            MPI_Send(mScreen.pixels->GetStoredPixelCountPtr(),
+            MPI_Send(mScreen.mPixels->GetStoredPixelCountPtr(),
                      1,
-                     MpiDataType(mScreen.pixels->GetStoredPixelCount()),
+                     MpiDataType(mScreen.mPixels->GetStoredPixelCount()),
                      receivingProc,
                      20,
                      MPI_COMM_WORLD);
 
-            if (mScreen.pixels->GetStoredPixelCount() > 0)
+            if (mScreen.mPixels->GetStoredPixelCount() > 0)
             {
-              MPI_Send(mScreen.pixels->GetPixelArray(),
-                       mScreen.pixels->GetStoredPixelCount(),
+              MPI_Send(mScreen.mPixels->GetPixelArray(),
+                       mScreen.mPixels->GetStoredPixelCount(),
                        MpiDataType<ColPixel> (),
                        receivingProc,
                        20,
@@ -421,7 +421,7 @@ namespace hemelb
               MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
                   ColPixel> (), sendingProc, 20, MPI_COMM_WORLD, &status);
 
-              mScreen.pixels->FoldIn(recvBuffer, &mVisSettings);
+              mScreen.mPixels->FoldIn(recvBuffer, &mVisSettings);
             }
           }
         }
@@ -430,17 +430,17 @@ namespace hemelb
       // Send the final image from proc 1 to 0.
       if (netTop->GetLocalRank() == 1)
       {
-        MPI_Send(mScreen.pixels->GetStoredPixelCountPtr(),
+        MPI_Send(mScreen.mPixels->GetStoredPixelCountPtr(),
                  1,
-                 MpiDataType(mScreen.pixels->GetStoredPixelCount()),
+                 MpiDataType(mScreen.mPixels->GetStoredPixelCount()),
                  0,
                  20,
                  MPI_COMM_WORLD);
 
-        if (mScreen.pixels->GetStoredPixelCount() > 0)
+        if (mScreen.mPixels->GetStoredPixelCount() > 0)
         {
-          MPI_Send(mScreen.pixels->GetPixelArray(),
-                   mScreen.pixels->GetStoredPixelCount(),
+          MPI_Send(mScreen.mPixels->GetPixelArray(),
+                   mScreen.mPixels->GetStoredPixelCount(),
                    MpiDataType<ColPixel> (),
                    0,
                    20,
@@ -464,7 +464,7 @@ namespace hemelb
           MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
               ColPixel> (), 1, 20, MPI_COMM_WORLD, &status);
 
-          mScreen.pixels->FoldIn(recvBuffer, &mVisSettings);
+          mScreen.mPixels->FoldIn(recvBuffer, &mVisSettings);
         }
 
         ScreenPixels* pix;
