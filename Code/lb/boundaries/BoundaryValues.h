@@ -2,6 +2,7 @@
 #define HEMELB_LB_BOUNDARIES_BOUNDARYVALUES_H
 
 #include "lb/boundaries/BoundaryComms.h"
+#include "topology/NetworkTopology.h"
 #include "net/IteratedAction.h"
 
 namespace hemelb
@@ -33,7 +34,7 @@ namespace hemelb
           distribn_t GetDensityMin(int iBoundaryId);
           distribn_t GetDensityMax(int iBoundaryId);
 
-          bool IsCurrentProcTheBCProc();
+          static bool IsCurrentProcTheBCProc();
 
         private:
           proc_t BCproc;
@@ -43,7 +44,7 @@ namespace hemelb
           bool IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
                                  geometry::LatticeData* iLatDat,
                                  int iBoundaryId);
-          void GatherProcList(int index, bool hasBoundary);
+          std::vector<int> GatherProcList(bool hasBoundary);
 
           void ReadParameters(geometry::LatticeData::SiteType IOtype);
           void allocate();
@@ -62,8 +63,6 @@ namespace hemelb
           // Number of IOlets and vector of their indices for communication purposes
           int nIOlets;
           std::vector<int> iolets;
-          int* nProcs;
-          int** procsList;
 
           distribn_t *density_cycle;
           unsigned long *density_period;

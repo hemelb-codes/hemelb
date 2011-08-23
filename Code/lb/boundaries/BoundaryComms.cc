@@ -1,4 +1,5 @@
 #include "lb/boundaries/BoundaryComms.h"
+#include "lb/boundaries/BoundaryValues.h"
 #include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 #include <math.h>
@@ -11,14 +12,13 @@ namespace hemelb
     {
 
       BoundaryComms::BoundaryComms(SimulationState* iSimState,
-                                   int iProcs,
-                                   int* iProcsList,
+                                   std::vector<int> &iProcsList,
                                    bool iHasBoundary,
                                    proc_t iBCproc) :
-        BCproc(iBCproc), hasBoundary(iHasBoundary), nProcs(iProcs), procsList(iProcsList),
+        BCproc(iBCproc), hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList),
             mState(iSimState)
       {
-        if (IsCurrentProcTheBCProc())
+        if (BoundaryValues::IsCurrentProcTheBCProc())
         {
           sendRequest = new MPI_Request[nProcs];
           sendStatus = new MPI_Status[nProcs];
@@ -28,43 +28,38 @@ namespace hemelb
       BoundaryComms::~BoundaryComms()
       {
 
-        if (IsCurrentProcTheBCProc())
+        if (BoundaryValues::IsCurrentProcTheBCProc())
         {
           delete[] sendRequest;
           delete[] sendStatus;
         }
       }
 
-      inline bool BoundaryComms::IsCurrentProcTheBCProc()
-      {
-        return topology::NetworkTopology::Instance()->GetLocalRank() == BCproc;
-      }
-
       void BoundaryComms::Wait()
       {
-        MPI_Wait(&request, &status);
+        MPI_Wait(&receiveRequest, &receiveStatus);
       }
 
       void BoundaryComms::WaitAllComms()
       {
         // Now wait for all to complete
-        if (IsCurrentProcTheBCProc())
+        if (BoundaryValues::IsCurrentProcTheBCProc())
         {
           MPI_Waitall(nProcs, sendRequest, sendStatus);
 
           if (hasBoundary)
-            MPI_Wait(&request, &status);
+            MPI_Wait(&receiveRequest, &receiveStatus);
         }
         else
         {
-          MPI_Wait(&request, &status);
+          MPI_Wait(&receiveRequest, &receiveStatus);
         }
 
       }
 
       void BoundaryComms::SendAndReceive(distribn_t* density)
       {
-        if (IsCurrentProcTheBCProc())
+        if (BoundaryValues::IsCurrentProcTheBCProc())
         {
           for (int proc = 0; proc < nProcs; proc++)
           {
@@ -77,13 +72,15 @@ namespace hemelb
                       &sendRequest[proc]);
 
             if (hasBoundary)
+            {
               MPI_Irecv(density,
                         1,
                         hemelb::MpiDataType(*density),
                         BCproc,
                         100,
                         MPI_COMM_WORLD,
-                        &request);
+                        &receiveRequest);
+            }
           }
         }
         else
@@ -94,7 +91,7 @@ namespace hemelb
                     BCproc,
                     100,
                     MPI_COMM_WORLD,
-                    &request);
+                    &receiveRequest);
         }
       }
 
@@ -102,7 +99,7 @@ namespace hemelb
       {
         // Don't move on to next step with BC proc until all messages have been sent
         // Precautionary measure to make sure proc doesn't overwrite, before message is sent
-        if (IsCurrentProcTheBCProc())
+        if (BoundaryValues::IsCurrentProcTheBCProc())
         {
           MPI_Waitall(nProcs, sendRequest, sendStatus);
         }
