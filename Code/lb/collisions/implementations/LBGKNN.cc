@@ -1,6 +1,7 @@
 #include "lb/collisions/implementations/LBGKNN.h"
 #include "lb/rheology_models/CassonRheologyModel.h"
 #include "lb/rheology_models/TruncatedPowerLawRheologyModel.h"
+#include <cmath>
 
 namespace hemelb
 {
@@ -17,7 +18,11 @@ namespace hemelb
         size_t LBGKNN<tNonNewtonianModel>::mCurrentTauIndex;
 
         template<class tNonNewtonianModel>
-        distribn_t LBGKNN<tNonNewtonianModel>::mCurrentDensity;
+        const geometry::LatticeData* LBGKNN<tNonNewtonianModel>::mLatDat;
+
+        template<class tNonNewtonianModel>
+        const SimulationState* LBGKNN<tNonNewtonianModel>::mState;
+
 
         template<class tNonNewtonianModel>
         void LBGKNN<tNonNewtonianModel>::createTauArray(const site_t& iSize,
@@ -25,6 +30,15 @@ namespace hemelb
         {
             LBGKNN<tNonNewtonianModel>::mTau.resize(iSize,iDefaultTau);
         }
+
+        template<class tNonNewtonianModel>
+        void LBGKNN<tNonNewtonianModel>::setStateObjects(const geometry::LatticeData* iLatDat,
+                             const SimulationState* iState)
+        {
+            LBGKNN<tNonNewtonianModel>::mLatDat = iLatDat;
+            LBGKNN<tNonNewtonianModel>::mState = iState;
+        }
+
 
         template<class tNonNewtonianModel>
         void LBGKNN<tNonNewtonianModel>::getSiteValues(const distribn_t* f,
@@ -36,9 +50,24 @@ namespace hemelb
                                                        const site_t index)
         {
           mCurrentTauIndex = index;
-          mCurrentDensity = density;
 
           D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_eq);
+
+          // TODO redundant, f_neq is computed again when returning control to DoStreamAndCollide, it could be optimised.
+          distribn_t f_neq[D3Q15::NUMVECTORS];
+          for (unsigned f_index = 0; f_index < D3Q15::NUMVECTORS; f_index++)
+          {
+            f_neq[f_index] = f[f_index] - f_eq[f_index];
+          }
+
+          double old_tau_value = LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex];
+          double shear_rate = D3Q15::CalculateShearRate(old_tau_value, f_neq);
+          LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex] = tNonNewtonianModel::CalculateTauForShearRate(shear_rate,
+                                                                                                            density,
+                                                                                                            mLatDat->GetVoxelSize(),
+                                                                                                            mState->GetTimeStepsPerCycle());
+          // In some rheology models viscosity tends to infinity as shear rate goes to zero.
+          assert( !std::isinf(LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex]) );
         }
 
 //        void LBGK::getBoundarySiteValues(const distribn_t* f,
@@ -64,11 +93,8 @@ namespace hemelb
                                                                   distribn_t &f_neq_i,
                                                                   const LbmParameters* iLbmParams)
         {
-            double old_tau_value = LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex];
-            double shear_rate = D3Q15::CalculateShearRate(old_tau_value, f_neq_i);
-            LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex] = tNonNewtonianModel::CalculateTauForShearRate(shear_rate, mCurrentDensity);;
-
-            return (f_neq_i/LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex]);
+            double omega = -1.0/LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex];
+            return (omega * f_neq_i);
         }
 
 

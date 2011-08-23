@@ -2,8 +2,8 @@
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_LBGKNN_H
 
 #include "lb/collisions/implementations/LBGK.h"
-
 #include "lb/rheology_models/CassonRheologyModel.h"
+#include "lb/SimulationState.h"
 
 namespace hemelb
 {
@@ -27,8 +27,21 @@ namespace hemelb
             /*
              * Creates the relevant data structures for allowing different values of tau
              * across the domain.
+             *
+             * @param iSize number of local lattice sites
+             * @param iDefaultTau default value for the relaxation parameter tau
              */
             static void createTauArray(const site_t& iSize, const double& iDefaultTau);
+
+            /*
+             * Store pointers to the LatticeData and SimulationState objects so that voxel
+             * size and time step length can be accessed during the simulation.
+             *
+             * @param iLatDat pointer to the main LatticeData object.
+             * @param iState pointer to the main SimulationState object.
+             */
+            static void setStateObjects(const geometry::LatticeData* iLatDat,
+                                        const SimulationState* iState);
 
             static void getSiteValues(const distribn_t* f,
                                       distribn_t &density,
@@ -59,13 +72,22 @@ namespace hemelb
             static std::vector<double> mTau;
 
             /*
-             * Since getOperatorElement doesn't get the index of the site it is working with,
-             * or the local density, we store them when getSiteValues is called (which is
-             * supposed to happen before)
+             * Since getOperatorElement doesn't get the index of the site it is working with
+             * we store it when getSiteValues is called (which is supposed to happen before)
              */
             static size_t mCurrentTauIndex;
-            static distribn_t mCurrentDensity;
 
+            /*
+             * Pointer to the LatticeData object containing information about the computational
+             * domain.
+             */
+            static const geometry::LatticeData* mLatDat;
+
+            /*
+             * Pointer to the SimulationState object containing information about time step
+             * duration.
+             */
+            static const SimulationState* mState;
         };
       }
     }

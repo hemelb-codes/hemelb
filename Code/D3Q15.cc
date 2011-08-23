@@ -1,5 +1,5 @@
 #include "D3Q15.h"
-#include <math.h>
+#include <cmath>
 
 namespace hemelb
 {
@@ -356,15 +356,17 @@ namespace hemelb
     return strain_rate_tensor_i_j;
   }
 
-  double D3Q15::CalculateShearRate(const double &iTau, const distribn_t &iFNeq)
+  double D3Q15::CalculateShearRate(const double &iTau, const distribn_t iFNeq[])
   {
     double shear_rate=0.0;
+    double strain_rate_tensor_i_j;
 
     for (unsigned row=0; row<3; row++)
     {
       for (unsigned column=0; column<3; column++)
       {
-        shear_rate += D3Q15::CalculateStrainRateTensorComponent(row, column, iTau, &iFNeq);
+        strain_rate_tensor_i_j = D3Q15::CalculateStrainRateTensorComponent(row, column, iTau, iFNeq);
+        shear_rate += strain_rate_tensor_i_j*strain_rate_tensor_i_j;
       }
     }
 

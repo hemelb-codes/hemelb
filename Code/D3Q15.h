@@ -62,7 +62,7 @@ namespace hemelb
                                                        const double &iTau,
                                                        const distribn_t iFNeq[]);
       static double CalculateShearRate(const double &iTau,
-                                       const distribn_t &iFNeq);
+                                       const distribn_t iFNeq[]);
   };
 }
 #endif /* HEMELB_D3Q15_H */
