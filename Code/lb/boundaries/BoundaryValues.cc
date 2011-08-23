@@ -1,6 +1,7 @@
 #include "lb/boundaries/BoundaryValues.h"
 #include "util/utilityFunctions.h"
 #include "util/fileutils.h"
+#include <algorithm>
 #include <fstream>
 #include <math.h>
 
@@ -12,10 +13,10 @@ namespace hemelb
     {
 
       BoundaryValues::BoundaryValues(geometry::LatticeData::SiteType IOtype,
-                                       geometry::LatticeData* iLatDat,
-                                       SimConfig* iSimConfig,
-                                       SimulationState* iSimState,
-                                       util::UnitConverter* iUnits) :
+                                     geometry::LatticeData* iLatDat,
+                                     SimConfig* iSimConfig,
+                                     SimulationState* iSimState,
+                                     util::UnitConverter* iUnits) :
         net::IteratedAction(), mState(iSimState), mSimConfig(iSimConfig), mUnits(iUnits)
       {
         nTotIOlets = (IOtype == geometry::LatticeData::INLET_TYPE
@@ -95,8 +96,8 @@ namespace hemelb
       }
 
       bool BoundaryValues::IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
-                                              geometry::LatticeData* iLatDat,
-                                              int iBoundaryId)
+                                             geometry::LatticeData* iLatDat,
+                                             int iBoundaryId)
       {
         for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
           if (iLatDat->GetSiteType(i) == IOtype && iLatDat->GetBoundaryId(i) == iBoundaryId)
@@ -282,11 +283,22 @@ namespace hemelb
         }
       }
 
+      struct time_value_pair
+      {
+        public:
+          double time;
+          double value;
+
+          static bool CompareTimeValue(time_value_pair time_value_1, time_value_pair time_value_2)
+          {
+            return time_value_1.time < time_value_2.time;
+          }
+      };
+
       void BoundaryValues::InitialiseFromFile(int i)
       {
         // First read in values from file into vectors
-        std::vector<double> time(0);
-        std::vector<double> value(0);
+        std::vector<time_value_pair> TimeValuePair(0);
 
         double timeTemp, valueTemp;
 
@@ -296,16 +308,27 @@ namespace hemelb
         while (datafile.good())
         {
           datafile >> timeTemp >> valueTemp;
-          time.push_back(timeTemp);
-          value.push_back(valueTemp);
+          time_value_pair tvPair;
+          tvPair.time = timeTemp;
+          tvPair.value = valueTemp;
+
+          TimeValuePair.push_back(tvPair);
         }
 
         datafile.close();
 
-        SortValuesFromFile(time, value);
+        std::sort(TimeValuePair.begin(), TimeValuePair.end(), time_value_pair::CompareTimeValue);
+
+        std::vector<double> time(0);
+        std::vector<double> value(0);
+
+        for (unsigned int ii = 0; ii < TimeValuePair.size(); ii++)
+        {
+          time.push_back(TimeValuePair[ii].time);
+          value.push_back(TimeValuePair[ii].value);
+        }
 
         // Now convert these vectors into arrays using linear interpolation
-
         for (unsigned long time_step = 0; time_step < mState->GetTimeStepsPerCycle(); time_step++)
         {
           double point = time[0] + (double) time_step / (double) mState->GetTimeStepsPerCycle()
