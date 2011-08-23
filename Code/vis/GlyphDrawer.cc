@@ -98,14 +98,11 @@ namespace hemelb
 				  vz * temp);
 
         // ... transform to the location on the screen, and render.
-        Vector3D<float> p3;
-	Vector3D<float> p4;
+        XYCoordinates<float> p3 = mViewpoint->FlatProject(p1);
+        XYCoordinates<float> p4 = mViewpoint->FlatProject(p2);
 
-        p3 = mViewpoint->Project(p1);
-        p4 = mViewpoint->Project(p2);
-
-        mScreen->Transform<float> (p3.x, p3.y, p3.x, p3.y);
-        mScreen->Transform<float> (p4.x, p4.y, p4.x, p4.y);
+        p3 = mScreen->TransformScreenToPixelCoordinates<float> (p3);
+        p4 = mScreen->TransformScreenToPixelCoordinates<float> (p4);
 
         mScreen->RenderLine(p3, p4, mVisSettings);
       }

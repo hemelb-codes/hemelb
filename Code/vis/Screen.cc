@@ -14,12 +14,12 @@ namespace hemelb
 
     Screen::Screen()
     {
-      pixels = new ScreenPixels();
+      mPixels= new ScreenPixels();
     }
 
     Screen::~Screen()
     {
-      delete pixels;
+      delete mPixels;
     }
 
     /**
@@ -31,7 +31,7 @@ namespace hemelb
      */
     void Screen::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
     {
-      pixels->AddPixel(newPixel, visSettings);
+      mPixels->AddPixel(newPixel, visSettings);
     }
 
     /**
@@ -42,11 +42,11 @@ namespace hemelb
      * @param iStressType
      * @param mode
      */
-    void Screen::RenderLine(const Vector3D<float>& endPoint1,
-                            const Vector3D<float>& endPoint2,
+    void Screen::RenderLine(const XYCoordinates<float>& endPoint1,
+                            const XYCoordinates<float>& endPoint2,
                             const VisSettings* visSettings)
     {
-      pixels->RenderLine(endPoint1, endPoint2, visSettings);
+      mPixels->RenderLine(endPoint1, endPoint2, visSettings);
     }
 
     void Screen::Set(float maxX,
@@ -54,50 +54,48 @@ namespace hemelb
                      int pixelsX,
                      int pixelsY,
                      float rad,
-                     const Viewpoint* viewpoint)
+                     const Viewpoint* iViewpoint)
     {
       MaxXValue = maxX;
       MaxYValue = maxX;
 
-      UnitVectorProjectionX = viewpoint->
+      mPixels->SetSize(pixelsX, pixelsY);
+
+      ScaleX = (float) mPixels->GetPixelsX() / (2.F * MaxXValue);
+      ScaleY = (float) mPixels->GetPixelsY() / (2.F * MaxYValue);
+
+      Vector3D<float> lCameraToLocalCentreVector = iViewpoint->
+	RotateCameraCoordinatesToWorldCoordinates
+	(Vector3D<float>(0.F, 0.F, -iViewpoint->mDistanceFromEyeToScreen));
+
+      Vector3D<float> lMiddleCentreToMiddleRightOfScreen = iViewpoint->
 	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(MaxXValue, 0.0F, 0.0F));
-      UnitVectorProjectionY = viewpoint->
+
+      Vector3D<float> lLowerCentreToTopCentreOfScreen = iViewpoint->
 	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0.0F, MaxYValue, 0.0F));
 
-      pixels->SetSize(pixelsX, pixelsY);
+      mVtx = (lCameraToLocalCentreVector - lMiddleCentreToMiddleRightOfScreen) - lLowerCentreToTopCentreOfScreen;
 
-      ScaleX = (float) pixels->GetPixelsX() / (2.F * MaxXValue);
-      ScaleY = (float) pixels->GetPixelsY() / (2.F * MaxYValue);
-
-      Vector3D<float> radVector = viewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0.F, 0.F, -rad));
-
-      mVtx = radVector*0.5F - UnitVectorProjectionX - UnitVectorProjectionY;
-
-      UnitVectorProjectionX.x *= (2.F / (float) pixels->GetPixelsX());
-      UnitVectorProjectionX.y *= (2.F / (float) pixels->GetPixelsX());
-      UnitVectorProjectionX.z *= (2.F / (float) pixels->GetPixelsX());
-
-      UnitVectorProjectionY.x *= (2.F / (float) pixels->GetPixelsY());
-      UnitVectorProjectionY.y *= (2.F / (float) pixels->GetPixelsY());
-      UnitVectorProjectionY.z *= (2.F / (float) pixels->GetPixelsY());
+      UnitVectorProjectionX = lMiddleCentreToMiddleRightOfScreen * (2.F / (float) mPixels->GetPixelsX());
+  
+      UnitVectorProjectionY = lLowerCentreToTopCentreOfScreen * (2.F / (float) mPixels->GetPixelsY());
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
     {
-      pixels->SetSize(newPixelsX, newPixelsY);
+      mPixels->SetSize(newPixelsX, newPixelsY);
     }
 
     void Screen::Reset()
     {
-      pixels->Reset();
+      mPixels->Reset();
     }
 
     bool Screen::MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress)
     {
-      const ColPixel* screenPix = pixels->GetPixelArray();
+      const ColPixel* screenPix = mPixels->GetPixelArray();
 
-      for (unsigned int i = 0; i < pixels->GetStoredPixelCount(); i++)
+      for (unsigned int i = 0; i < mPixels->GetStoredPixelCount(); i++)
       {
         if (screenPix[i].IsRT() && int (screenPix[i].GetI()) == mouseX && int (screenPix[i].GetJ())
             == mouseY)
@@ -114,7 +112,7 @@ namespace hemelb
 
     unsigned int Screen::GetPixelCount() const
     {
-      return pixels->GetStoredPixelCount();
+      return mPixels->GetStoredPixelCount();
     }
 
     const Vector3D<float>& Screen::GetVtx() const
@@ -131,22 +129,22 @@ namespace hemelb
     }
     int Screen::GetPixelsX() const
     {
-      return pixels->GetPixelsX();
+      return mPixels->GetPixelsX();
     }
     int Screen::GetPixelsY() const
     {
-      return pixels->GetPixelsY();
+      return mPixels->GetPixelsY();
     }
 
     ScreenPixels* Screen::SwapBuffers(ScreenPixels* inPix)
     {
-      ScreenPixels* temp = pixels;
-      pixels = inPix;
+      ScreenPixels* temp = mPixels;
+      mPixels = inPix;
       return temp;
     }
     const ScreenPixels* Screen::GetPixels() const
     {
-      return pixels;
+      return mPixels;
     }
   }
 }

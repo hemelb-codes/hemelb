@@ -7,6 +7,7 @@
 #include "vis/ScreenPixels.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
+#include "vis/XYCoordinates.h"
 
 namespace hemelb
 {
@@ -21,9 +22,9 @@ namespace hemelb
         ~Screen();
 
         void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
-        void RenderLine(const Vector3D<float>& endPoint1,
-			const Vector3D<float>& endPoint2,
-                        const VisSettings* visSettings);
+        void RenderLine(const XYCoordinates<float>& endPoint1,
+                            const XYCoordinates<float>& endPoint2,
+			const VisSettings* visSettings);
 
         void Set(float maxX,
                  float maxY,
@@ -45,10 +46,13 @@ namespace hemelb
          * @param output
          */
         template<typename T>
-	  void Transform(const float& inputX, const float& inputY, T& outputX, T& outputY) const
+	  XYCoordinates<T> TransformScreenToPixelCoordinates
+	  (const XYCoordinates<float>& iXYIn) const
         {
-          outputX = (T) (ScaleX * (inputX + MaxXValue));
-          outputY = (T) (ScaleY * (inputY + MaxYValue));
+          return XYCoordinates<T>(
+	    static_cast<T>(ScaleX * (iXYIn.x + MaxXValue)),
+	    static_cast<T>(ScaleY * (iXYIn.y + MaxYValue))
+	    );
         }
 
         const Vector3D<float>& GetVtx() const;
@@ -66,6 +70,8 @@ namespace hemelb
 
       private:
         float ScaleX, ScaleY;
+
+	// 
         float MaxXValue, MaxYValue;
         Vector3D<float> mVtx;
 
@@ -73,7 +79,7 @@ namespace hemelb
 	Vector3D<float>  UnitVectorProjectionX;
         Vector3D<float> UnitVectorProjectionY;
 
-        ScreenPixels* pixels;
+        ScreenPixels* mPixels;
     };
   }
 }
