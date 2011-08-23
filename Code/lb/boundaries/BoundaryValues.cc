@@ -1,5 +1,4 @@
 #include "lb/boundaries/BoundaryValues.h"
-#include "topology/NetworkTopology.h"
 #include "util/utilityFunctions.h"
 #include "util/fileutils.h"
 #include <fstream>
@@ -13,10 +12,10 @@ namespace hemelb
     {
 
       BoundaryValues::BoundaryValues(geometry::LatticeData::SiteType IOtype,
-                                     geometry::LatticeData* iLatDat,
-                                     SimConfig* iSimConfig,
-                                     SimulationState* iSimState,
-                                     util::UnitConverter* iUnits) :
+                                       geometry::LatticeData* iLatDat,
+                                       SimConfig* iSimConfig,
+                                       SimulationState* iSimState,
+                                       util::UnitConverter* iUnits) :
         net::IteratedAction(), mState(iSimState), mSimConfig(iSimConfig), mUnits(iUnits)
       {
         nTotIOlets = (IOtype == geometry::LatticeData::INLET_TYPE
@@ -27,8 +26,7 @@ namespace hemelb
 
         FindBCProcRank();
 
-        nProcs = new int[nTotIOlets];
-        procsList = new int*[nTotIOlets];
+        std::vector<int> *procsList = new std::vector<int>[nTotIOlets];
         mComms = new BoundaryComms*[nTotIOlets];
 
         nIOlets = 0;
@@ -38,14 +36,14 @@ namespace hemelb
         {
           bool IOletOnThisProc = IsIOletOnThisProc(IOtype, iLatDat, i);
 
-          GatherProcList(i, IOletOnThisProc);
+          procsList[i] = GatherProcList(IOletOnThisProc);
 
           if (IOletOnThisProc || IsCurrentProcTheBCProc())
           {
             nIOlets++;
             iolets.push_back(i);
 
-            mComms[i] = new BoundaryComms(mState, nProcs[i], procsList[i], IOletOnThisProc, BCproc);
+            mComms[i] = new BoundaryComms(mState, procsList[i], IOletOnThisProc, BCproc);
           }
         }
 
@@ -56,6 +54,9 @@ namespace hemelb
           mComms[iolets[i]]->SendAndReceive(&density[iolets[i]]);
           mComms[iolets[i]]->WaitAllComms();
         }
+
+        // Clear up
+        delete[] procsList;
       }
 
       BoundaryValues::~BoundaryValues()
@@ -64,9 +65,6 @@ namespace hemelb
         {
           delete[] density_cycle;
           delete[] density_period;
-
-          for (int i = 0; i < nTotIOlets; i++)
-            delete[] procsList[i];
         }
         else
         {
@@ -83,9 +81,6 @@ namespace hemelb
         for (int i = 0; i < nIOlets; i++)
           delete mComms[iolets[i]];
         delete[] mComms;
-
-        delete[] nProcs;
-        delete[] procsList;
       }
 
       void BoundaryValues::FindBCProcRank()
@@ -100,8 +95,8 @@ namespace hemelb
       }
 
       bool BoundaryValues::IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
-                                             geometry::LatticeData* iLatDat,
-                                             int iBoundaryId)
+                                              geometry::LatticeData* iLatDat,
+                                              int iBoundaryId)
       {
         for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
           if (iLatDat->GetSiteType(i) == IOtype && iLatDat->GetBoundaryId(i) == iBoundaryId)
@@ -110,76 +105,51 @@ namespace hemelb
         return false;
       }
 
-      void BoundaryValues::GatherProcList(int index, bool hasBoundary)
+      std::vector<int> BoundaryValues::GatherProcList(bool hasBoundary)
       {
-        nProcs[index] = 0;
+        std::vector<int> procsList(0);
 
         // This is where the info about whether a proc contains the given inlet/outlet is sent
         // If it does contain the given inlet/outlet it sends a true value, else it sends a false.
         int IOletOnThisProc = hasBoundary; // true if inlet i is on this proc
 
-        MPI_Request tempReq;
-        MPI_Status tempStat;
+        // These should be bool, but MPI only supports MPI_INT
+        // For each inlet/outlet there is an array of length equal to total number of procs.
+        // Each stores true/false value. True if proc of rank equal to the index contains
+        // the given inlet/outlet.
+        int nTotProcs = topology::NetworkTopology::Instance()->GetProcessorCount();
+        int *boolList = new int[nTotProcs];
 
-        MPI_Isend(&IOletOnThisProc, 1, MPI_INT, BCproc, 100, MPI_COMM_WORLD, &tempReq);
+        MPI_Gather(&IOletOnThisProc,
+                   1,
+                   hemelb::MpiDataType(IOletOnThisProc),
+                   boolList,
+                   1,
+                   hemelb::MpiDataType(boolList[0]),
+                   BCproc,
+                   MPI_COMM_WORLD);
 
         if (IsCurrentProcTheBCProc())
         {
-          int nTotProcs = topology::NetworkTopology::Instance()->GetProcessorCount();
-
-          // These should be bool, but MPI only supports MPI_INT
-          // For each inlet/outlet there is an array of length equal to total number of procs.
-          // Each stores true/false value. True if proc of rank equal to the index contains
-          // the given inlet/outlet.
-          int *boolList = new int[nTotProcs];
-
-          MPI_Status* tempStatArray = new MPI_Status[nTotProcs];
-          MPI_Request* tempReqArray = new MPI_Request[nTotProcs];
-
-          for (int proc = 0; proc < nTotProcs; proc++)
-          {
-            MPI_Irecv(&boolList[proc], 1, MPI_INT, proc, 100, MPI_COMM_WORLD, &tempReqArray[proc]);
-          }
-
-          MPI_Waitall(nTotProcs, tempReqArray, tempStatArray);
-
           // Now we have an array for each IOlet with true (1) at indices corresponding to
           // processes that are members of that group. We have to convert this into arrays
           // of ints which store a list of processor ranks.
-
-          for (int j = 0; j < nTotProcs; j++)
-          {
-            if (boolList[j])
-              nProcs[index]++;
-          }
-
-          procsList[index] = new int[nProcs[index]];
-
-          int memberIndex = 0;
-
           for (int j = 0; j < nTotProcs; j++)
           {
             if (boolList[j])
             {
-              procsList[index][memberIndex] = j;
-              memberIndex++;
+              procsList.push_back(j);
             }
           }
-
-          // Clear up
-          delete[] boolList;
-          delete[] tempReqArray;
-          delete[] tempStatArray;
-        }
-        else
-        {
-          procsList[index] = NULL;
         }
 
-        MPI_Wait(&tempReq, &tempStat);
+        // Clear up
+        delete[] boolList;
+
+        return procsList;
       }
 
-      inline bool BoundaryValues::IsCurrentProcTheBCProc()
+      bool BoundaryValues::IsCurrentProcTheBCProc()
       {
         return topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
       }
@@ -252,7 +222,9 @@ namespace hemelb
       void BoundaryValues::Reset()
       {
         for (int i = 0; i < nIOlets; i++)
+        {
           mComms[iolets[i]]->WaitAllComms();
+        }
       }
 
       void BoundaryValues::InitialiseBoundaryDensities()
@@ -348,7 +320,8 @@ namespace hemelb
 
       // Sorts both the time and value vector so that time values are in incrementing order
       // Uses bubble sort as it is used only when initialising and reseting
-      void BoundaryValues::SortValuesFromFile(std::vector<double> &time, std::vector<double> &value)
+      void BoundaryValues::SortValuesFromFile(std::vector<double> &time,
+                                               std::vector<double> &value)
       {
         bool swapped = true;
 
@@ -389,7 +362,7 @@ namespace hemelb
           }
 
           filename[n] = lIOlet->PFilePath;
-          read_from_file[n] = !(filename[n] == "");
+          read_from_file[n] = ! (filename[n] == "");
 
           if (!read_from_file[n])
           {

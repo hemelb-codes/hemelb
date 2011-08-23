@@ -16,8 +16,7 @@ namespace hemelb
       {
         public:
           BoundaryComms(SimulationState* iSimState,
-                        int iProcs,
-                        int* iProcsList,
+                        std::vector<int> &iProcsList,
                         bool iHasBoundary,
                         proc_t iBCproc);
           ~BoundaryComms();
@@ -28,8 +27,6 @@ namespace hemelb
           void WaitAllComms();
           void FinishSend();
 
-          bool IsCurrentProcTheBCProc();
-
         private:
           proc_t BCproc; // Process responsible for sending out BC info
 
@@ -39,13 +36,13 @@ namespace hemelb
           // These are only assigned on the BC proc as it is the only one that needs to know
           // which proc has which IOlet
           int nProcs;
-          int* procsList;
+          std::vector<int> procsList;
 
           MPI_Request* sendRequest;
           MPI_Status* sendStatus;
 
-          MPI_Request request;
-          MPI_Status status;
+          MPI_Request receiveRequest;
+          MPI_Status receiveStatus;
 
           SimulationState* mState;
       };
