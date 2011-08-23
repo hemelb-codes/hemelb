@@ -4,6 +4,7 @@
 #include "io/Writer.h"
 #include "ColPixel.h"
 #include "vis/Vector3D.h"
+#include "vis/XYCoordinates.h"
 
 namespace hemelb
 {
@@ -24,9 +25,9 @@ namespace hemelb
                        unsigned int pixelCount,
                        const VisSettings* visSettings);
 
-        void RenderLine(const Vector3D<float>& endPoint1,
-                        const Vector3D<float>& endPoint2,
-                        const VisSettings* visSettings);
+        void RenderLine(const XYCoordinates<float>& endPoint1,
+			const XYCoordinates<float>& endPoint2,
+			const VisSettings* visSettings);
 
         static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
 

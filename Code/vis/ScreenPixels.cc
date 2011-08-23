@@ -101,8 +101,8 @@ namespace hemelb
      * @param iStressType
      * @param mode
      */
-    void ScreenPixels::RenderLine(const Vector3D<float>& endPoint1,
-				  const Vector3D<float>& endPoint2,
+    void ScreenPixels::RenderLine(const XYCoordinates<float>& endPoint1,
+				  const XYCoordinates<float>& endPoint2,
                                   const VisSettings* visSettings)
     {
       // Store end points of the line and 'current' point (x and y).

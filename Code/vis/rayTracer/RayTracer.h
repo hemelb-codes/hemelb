@@ -14,6 +14,7 @@
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 #include "vis/Vector3D.h"
+#include "vis/XYCoordinates.h"
 #include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/ClusterBuilder.h"
 #include "vis/rayTracer/SiteData.h"
@@ -73,7 +74,13 @@ namespace hemelb
 	  float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
 	};
 
+	void RenderCluster(const Cluster& iCluster);
 
+	void UpdateSubImageExtentForCorner
+	  (const Vector3D<float>& iCorner,
+	   XYCoordinates<float>& ioSubImageLowerLeft,
+	   XYCoordinates<float>& ioSubImageUpperRight);
+	  
 	void UpdateRayData(const SiteData_t* iSiteData,
 			   float ray_t,
 			   float ray_segment,
