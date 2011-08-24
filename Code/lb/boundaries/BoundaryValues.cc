@@ -289,9 +289,9 @@ namespace hemelb
           double time;
           double value;
 
-          static bool CompareTimeValue(time_value_pair time_value_1, time_value_pair time_value_2)
+          bool operator<(const time_value_pair other_time_value_pair) const
           {
-            return time_value_1.time < time_value_2.time;
+            return time < other_time_value_pair.time;
           }
       };
 
@@ -317,7 +317,7 @@ namespace hemelb
 
         datafile.close();
 
-        std::sort(TimeValuePair.begin(), TimeValuePair.end(), time_value_pair::CompareTimeValue);
+        std::sort(TimeValuePair.begin(), TimeValuePair.end());
 
         std::vector<double> time(0);
         std::vector<double> value(0);
@@ -338,34 +338,6 @@ namespace hemelb
 
           density_cycle[time_step * nTotIOlets + i]
               = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
-        }
-      }
-
-      // Sorts both the time and value vector so that time values are in incrementing order
-      // Uses bubble sort as it is used only when initialising and reseting
-      void BoundaryValues::SortValuesFromFile(std::vector<double> &time,
-                                               std::vector<double> &value)
-      {
-        bool swapped = true;
-
-        while (swapped)
-        {
-          swapped = false;
-          for (int i = 0; i < (int) time.size() - 1; i++)
-          {
-            if (time[i] > time[i + 1])
-            {
-              double temp = time[i];
-              time[i] = time[i + 1];
-              time[i + 1] = temp;
-
-              temp = value[i];
-              value[i] = value[i + 1];
-              value[i + 1] = temp;
-
-              swapped = true;
-            }
-          }
         }
       }
 
