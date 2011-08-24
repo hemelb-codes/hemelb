@@ -156,10 +156,10 @@ namespace hemelb
 
       ReadParameters();
 
-      typedef hemelb::lb::collisions::implementations::LBGK CO;
+      //typedef hemelb::lb::collisions::implementations::LBGK CO;
 
       //typedef hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel> CO;
-      //typedef hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel> CO;
+      typedef hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel> CO;
 
       if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
       {

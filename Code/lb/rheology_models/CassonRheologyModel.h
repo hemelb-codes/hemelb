@@ -11,7 +11,9 @@ namespace hemelb
     {
       // Casson model constants
       static const double K0 = 0.1937; // Pa^{1/2}
-      static const double K1 = 0.055; // (Pa s)^{1/2}
+      static const double K1 = 0.055; // (Pa*s)^{1/2}
+
+      static const double CASSON_MAX_VISCOSITY = 0.16; // Pa*s
 
       class CassonRheologyModel : public AbstractRheologyModel
       {
@@ -27,7 +29,7 @@ namespace hemelb
           static double CalculateTauForShearRate(const double &iShearRate,
                                                  const distribn_t &iDensity,
                                                  const double &iVoxelSize,
-                                                 const unsigned &iTimeStepsPerCycle);
+                                                 const double &iTimeStep);
       };
     }
   }
