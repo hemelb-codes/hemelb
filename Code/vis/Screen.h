@@ -22,6 +22,7 @@ namespace hemelb
         ~Screen();
 
         void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
+
         void RenderLine(const XYCoordinates<float>& endPoint1,
                             const XYCoordinates<float>& endPoint2,
 			const VisSettings* visSettings);
@@ -50,14 +51,14 @@ namespace hemelb
 	  (const XYCoordinates<float>& iXYIn) const
         {
           return XYCoordinates<T>(
-	    static_cast<T>(ScaleX * (iXYIn.x + MaxXValue)),
-	    static_cast<T>(ScaleY * (iXYIn.y + MaxYValue))
+	    static_cast<T>(mPixelsPerUnitX * (iXYIn.x + mMaxXValue)),
+	    static_cast<T>(mPixelsPerUnitY * (iXYIn.y + mMaxYValue))
 	    );
         }
 
-        const Vector3D<float>& GetVtx() const;
-        const Vector3D<float>& GetUnitVectorProjectionX() const;
-        const Vector3D<float>& GetUnitVectorProjectionY() const;
+        const Vector3D<float>& GetCameraToBottomLeftOfScreenVector() const;
+        const Vector3D<float>& GetPixelUnitVectorProjectionX() const;
+        const Vector3D<float>& GetPixelUnitVectorProjectionY() const;
         int GetPixelsX() const;
         int GetPixelsY() const;
 
@@ -69,15 +70,20 @@ namespace hemelb
         unsigned int GetPixelCount() const;
 
       private:
-        float ScaleX, ScaleY;
+        //The number of pixels per unit of X or Y in screen coordinates
+	float mPixelsPerUnitX;
+	float mPixelsPerUnitY;
 
-	// 
-        float MaxXValue, MaxYValue;
-        Vector3D<float> mVtx;
+	//The extent of the screen in screen coordintes 
+	//(from -mmMaxXValue to mmMaxXValue)
+        float mMaxXValue;
+	float mMaxYValue;
+	
+        Vector3D<float> mCameraToBottomLeftOfScreen;
 
         // Projection of unit vectors along screen axes into normal space.
-	Vector3D<float>  UnitVectorProjectionX;
-        Vector3D<float> UnitVectorProjectionY;
+	Vector3D<float>  mPixelUnitVectorProjectionX;
+        Vector3D<float> mPixelUnitVectorProjectionY;
 
         ScreenPixels* mPixels;
     };
