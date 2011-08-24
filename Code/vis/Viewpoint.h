@@ -65,12 +65,12 @@ namespace hemelb
 				float iRadius,
 				float iDistanceFromEyeToScreen);
 
-      const Vector3D<float>& GetViewpointCentreLocation() const;
+      const Vector3D<float>& GetViewpointLocation() const;
       
       float mDistanceFromEyeToScreen;
 
     private:
-      Vector3D<float> GetViewPointLocationInCameraCoordinates(const Vector3D<float>& iWorldLocation) const;
+      Vector3D<float> GetLocationInCameraCoordinates(const Vector3D<float>& iWorldLocation) const;
    
       //Performs a vector rotation using stored
       //Sin and Cosine Values
@@ -95,7 +95,7 @@ namespace hemelb
       float mCosLatitude;
       
       //Stores the viewpoint Location in world co-ordinate
-      Vector3D<float> mViewpointLocation;
+      Vector3D<float> mViewpointLocationInWorldCoordinates;
     };
   }
 }

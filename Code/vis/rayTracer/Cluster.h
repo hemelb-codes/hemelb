@@ -26,6 +26,8 @@ namespace hemelb
 	  //Resizes the vectors so as to be the correct size based on the stored sizes
 	  virtual void ResizeVectors();
 
+	  //The min and maximum site location, in site units 
+	  //relative to the centre of the lattice
 	  Vector3D<float> minSite;
 	  Vector3D<float> maxSite;
 

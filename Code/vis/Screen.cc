@@ -56,29 +56,29 @@ namespace hemelb
                      float rad,
                      const Viewpoint* iViewpoint)
     {
-      MaxXValue = maxX;
-      MaxYValue = maxX;
+      mMaxXValue = maxX;
+      mMaxYValue = maxX;
 
       mPixels->SetSize(pixelsX, pixelsY);
 
-      ScaleX = (float) mPixels->GetPixelsX() / (2.F * MaxXValue);
-      ScaleY = (float) mPixels->GetPixelsY() / (2.F * MaxYValue);
+      mPixelsPerUnitX = (float) mPixels->GetPixelsX() / (2.F * mMaxXValue);
+      mPixelsPerUnitY = (float) mPixels->GetPixelsY() / (2.F * mMaxYValue);
 
       Vector3D<float> lCameraToLocalCentreVector = iViewpoint->
 	RotateCameraCoordinatesToWorldCoordinates
 	(Vector3D<float>(0.F, 0.F, -iViewpoint->mDistanceFromEyeToScreen));
 
       Vector3D<float> lMiddleCentreToMiddleRightOfScreen = iViewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(MaxXValue, 0.0F, 0.0F));
+	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(mMaxXValue, 0.0F, 0.0F));
 
       Vector3D<float> lLowerCentreToTopCentreOfScreen = iViewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0.0F, MaxYValue, 0.0F));
+	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0.0F, mMaxYValue, 0.0F));
 
-      mVtx = (lCameraToLocalCentreVector - lMiddleCentreToMiddleRightOfScreen) - lLowerCentreToTopCentreOfScreen;
+      mCameraToBottomLeftOfScreen = (lCameraToLocalCentreVector - lMiddleCentreToMiddleRightOfScreen) - lLowerCentreToTopCentreOfScreen;
 
-      UnitVectorProjectionX = lMiddleCentreToMiddleRightOfScreen * (2.F / (float) mPixels->GetPixelsX());
+      mPixelUnitVectorProjectionX = lMiddleCentreToMiddleRightOfScreen * (2.F / (float) mPixels->GetPixelsX());
   
-      UnitVectorProjectionY = lLowerCentreToTopCentreOfScreen * (2.F / (float) mPixels->GetPixelsY());
+      mPixelUnitVectorProjectionY = lLowerCentreToTopCentreOfScreen * (2.F / (float) mPixels->GetPixelsY());
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
@@ -115,17 +115,17 @@ namespace hemelb
       return mPixels->GetStoredPixelCount();
     }
 
-    const Vector3D<float>& Screen::GetVtx() const
+    const Vector3D<float>& Screen::GetCameraToBottomLeftOfScreenVector() const
     {
-      return mVtx;
+      return mCameraToBottomLeftOfScreen;
     }
-    const Vector3D<float>& Screen::GetUnitVectorProjectionX() const
+    const Vector3D<float>& Screen::GetPixelUnitVectorProjectionX() const
     {
-      return UnitVectorProjectionX;
+      return mPixelUnitVectorProjectionX;
     }
-    const Vector3D<float>& Screen::GetUnitVectorProjectionY() const
+    const Vector3D<float>& Screen::GetPixelUnitVectorProjectionY() const
     {
-      return UnitVectorProjectionY;
+      return mPixelUnitVectorProjectionY;
     }
     int Screen::GetPixelsX() const
     {
