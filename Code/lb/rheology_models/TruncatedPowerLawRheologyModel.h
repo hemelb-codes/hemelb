@@ -35,7 +35,7 @@ namespace hemelb
           static double CalculateTauForShearRate(const double &iShearRate,
                                                  const distribn_t &iDensity,
                                                  const double &iVoxelSize,
-                                                 const unsigned &iTimeStepsPerCycle);
+                                                 const double &iTimeStep);
       };
     }
   }
