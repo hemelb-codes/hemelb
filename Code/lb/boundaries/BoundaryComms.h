@@ -30,7 +30,7 @@ namespace hemelb
         private:
           proc_t BCproc; // Process responsible for sending out BC info
 
-          // This is only relevant for the BCproc if it itself has boundaries
+          // This is necessary to support BC proc having fluid sites
           bool hasBoundary;
 
           // These are only assigned on the BC proc as it is the only one that needs to know

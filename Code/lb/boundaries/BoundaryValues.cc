@@ -173,8 +173,15 @@ namespace hemelb
       {
         for (int i = 0; i < nIOlets; i++)
         {
-          CommFinished[iolets[i]] = false;
           mComms[iolets[i]]->FinishSend();
+        }
+      }
+
+      void BoundaryValues::FinishReceive()
+      {
+        for (int i = 0; i < nIOlets; i++)
+        {
+          mComms[iolets[i]]->Wait();
         }
       }
 
@@ -253,9 +260,12 @@ namespace hemelb
       void BoundaryValues::UpdateBoundaryDensities()
       {
         for (int i = 0; i < nTotIOlets; i++)
-          if (density_period[i] != 0)
-            if ( (mState->GetTimeStep() - 1) % density_period[i] == 0)
-              UpdateCosCycle(i);
+        {
+          if (density_period[i] != 0 && (mState->GetTimeStep() - 1) % density_period[i] == 0)
+          {
+            UpdateCosCycle(i);
+          }
+        }
       }
 
       void BoundaryValues::InitialiseCosCycle(int i)
@@ -367,8 +377,6 @@ namespace hemelb
           }
           density_min[n] = mUnits->ConvertPressureToLatticeUnits(lIOlet->PMin) / Cs2;
           density_max[n] = mUnits->ConvertPressureToLatticeUnits(lIOlet->PMax) / Cs2;
-
-          CommFinished[n] = false;
         }
 
       }
@@ -395,17 +403,11 @@ namespace hemelb
         density_max = new distribn_t[nTotIOlets];
         filename = new std::string[nTotIOlets];
         read_from_file = new bool[nTotIOlets];
-        CommFinished = new bool[nTotIOlets];
       }
 
+      // This assumes the program has already waited for comms to finish before
       distribn_t BoundaryValues::GetBoundaryDensity(const int index)
       {
-        if (!CommFinished[index])
-        {
-          mComms[index]->Wait();
-          CommFinished[index] = true;
-        }
-
         return density[index];
       }
 

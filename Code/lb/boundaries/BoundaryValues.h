@@ -26,6 +26,8 @@ namespace hemelb
           void EndIteration();
           void Reset();
 
+          void FinishReceive();
+
           void ResetPrePeriodChange();
           void ResetPostPeriodChange();
 
@@ -77,8 +79,6 @@ namespace hemelb
           // Can just check equality with empty string, but despite its simplicity it still
           // confused me so I use a bool array initialised at construction
           bool *read_from_file;
-          // Saves on wait calls
-          bool *CommFinished;
 
           SimulationState* mState;
           SimConfig* mSimConfig;
