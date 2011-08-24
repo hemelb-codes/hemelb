@@ -183,6 +183,19 @@ namespace hemelb
 
       for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
       {
+        // Wait for all boundaryComms to finish
+        // TODO: This check is ugly, not ideal place or way to do it
+        if (GetCollision(collision_type) == mInletCollision || GetCollision(collision_type)
+            == mInletWallCollision)
+        {
+          mInletValues->FinishReceive();
+        }
+        else if (GetCollision(collision_type) == mOutletCollision || GetCollision(collision_type)
+            == mOutletWallCollision)
+        {
+          mOutletValues->FinishReceive();
+        }
+
         GetCollision(collision_type)->AcceptCollisionVisitor(mStreamAndCollide,
                                                              mVisControl->IsRendering(),
                                                              offset,
