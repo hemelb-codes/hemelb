@@ -10,7 +10,7 @@ namespace hemelb
   namespace vis
   {
     Viewpoint::Viewpoint() :
-      mViewpointLocation(0.0F) 
+      mViewpointLocationInWorldCoordinates(0.0F) 
     {}
     
     Vector3D<float> Viewpoint::RotateCameraCoordinatesToWorldCoordinates(const Vector3D<float>& iVector) const
@@ -79,7 +79,7 @@ namespace hemelb
 
     Vector3D<float> Viewpoint::Project(const Vector3D<float>& iWorldLocation) const
     {
-      Vector3D<float> lLocationCamCoordinates = GetViewPointLocationInCameraCoordinates(iWorldLocation);
+      Vector3D<float> lLocationCamCoordinates = GetLocationInCameraCoordinates(iWorldLocation);
 
       // NB - the oringinal code was not doing this but a reflection rotation
       // and then back reflectiond which produced similar images.
@@ -97,7 +97,7 @@ namespace hemelb
 
     XYCoordinates<float> Viewpoint::FlatProject(const Vector3D<float>& iWorldLocation) const
     {
-      Vector3D<float> lLocationCamCoordinates = GetViewPointLocationInCameraCoordinates(iWorldLocation);
+      Vector3D<float> lLocationCamCoordinates = GetLocationInCameraCoordinates(iWorldLocation);
       
       return XYCoordinates<float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
 				* lLocationCamCoordinates.x,
@@ -121,26 +121,26 @@ namespace hemelb
       mSinLatitude = sinf(iLatitude);
       mCosLatitude = cosf(iLatitude);
 
-      // Z in the camera co-ordinates indicates the distance from the centre
-      // the viewpoint into the camera prior rotation.
-      mViewpointLocation = RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0., 0., iRadius));
+      //The camera is located at 0,0,radius from the world centre in camera co-ordinates 
+      mViewpointLocationInWorldCoordinates = RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0., 0., iRadius));
 
       //Translate the camera location to allow it to point at 
       //a local centre rather than the world centre
-      mViewpointLocation += iLocalCentre;
+      mViewpointLocationInWorldCoordinates += iLocalCentre;
 
       mDistanceFromEyeToScreen = iDistanceFromEyeToScreen;
     }
 
-    const Vector3D<float>& Viewpoint::GetViewpointCentreLocation() const
+    const Vector3D<float>& Viewpoint::GetViewpointLocation() const
     {
-      return mViewpointLocation;
+      return mViewpointLocationInWorldCoordinates;
     }
 
-    Vector3D<float> Viewpoint::GetViewPointLocationInCameraCoordinates(const Vector3D<float>& iWorldLocation) const
+    Vector3D<float> Viewpoint::GetLocationInCameraCoordinates(const Vector3D<float>& iWorldLocation) const
     {
       //Calculate the location of the point relative to the viewpoint 
-      Vector3D<float> lLocationRelativeToViewPoint = iWorldLocation - mViewpointLocation;
+      Vector3D<float> lLocationRelativeToViewPoint = 
+	iWorldLocation - mViewpointLocationInWorldCoordinates;
       
       //Rotate the location vector in the opposite manner to that of the camera
       return RotateWorldToCameraCoordinates(lLocationRelativeToViewPoint);

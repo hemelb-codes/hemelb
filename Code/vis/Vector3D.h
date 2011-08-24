@@ -63,6 +63,17 @@ namespace hemelb
 	y += right.y;
 	z += right.z;
       }
+
+      //Normalisation
+      void Normalise()
+      {
+	T lInverseMagnitude = 1.0F /
+	sqrt(x*x+y*y+z*z);
+
+	x*=lInverseMagnitude;
+	y*=lInverseMagnitude;
+	z*=lInverseMagnitude;
+      }
       
 
       //Vector subraction
