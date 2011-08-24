@@ -61,11 +61,13 @@ namespace hemelb
           }
 
           double old_tau_value = LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex];
+          // TODO no need to compute timestep duration for *every* site every time step
+          double timestep = PULSATILE_PERIOD_s / (double) mState->GetTimeStepsPerCycle();
           double shear_rate = D3Q15::CalculateShearRate(old_tau_value, f_neq);
           LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex] = tNonNewtonianModel::CalculateTauForShearRate(shear_rate,
                                                                                                             density,
                                                                                                             mLatDat->GetVoxelSize(),
-                                                                                                            mState->GetTimeStepsPerCycle());
+                                                                                                            timestep);
           // In some rheology models viscosity tends to infinity as shear rate goes to zero.
           assert( !std::isinf(LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex]) );
         }

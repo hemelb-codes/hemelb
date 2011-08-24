@@ -1,6 +1,7 @@
 include $(MK)/header.mk
 
-TARGETS := CassonRheologyModel.o \
+TARGETS := AbstractRheologyModel.o \
+		   CassonRheologyModel.o \
            TruncatedPowerLawRheologyModel.o
            
 INCLUDES_$(d) := $(INCLUDES_$(parent))
