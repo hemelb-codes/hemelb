@@ -18,8 +18,7 @@ namespace hemelb
                    double iPMin,
                    double iPMax,
                    util::Vector3D iPosition,
-                   util::Vector3D iNormal,
-                   util::UnitConverter* iUnits);
+                   util::Vector3D iNormal);
           virtual ~InOutLet();
 
           // Should be called before simulation starts running (including after a reset)
@@ -43,7 +42,6 @@ namespace hemelb
           util::Vector3D GetNormal();
 
         protected:
-          util::UnitConverter* mUnits;
           const unsigned long UpdatePeriod;
 
         private:

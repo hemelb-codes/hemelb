@@ -113,12 +113,6 @@ SimulationMaster::~SimulationMaster()
   {
     delete mSimulationState;
   }
-
-  if (mUnits != NULL)
-  {
-    delete mUnits;
-  }
-
 }
 
 /**
@@ -173,6 +167,10 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   mLbm = new hemelb::lb::LBM(iSimConfig, &mNet, mLatDat, mSimulationState);
 
+  hemelb::util::UnitConverter::Initialise(mLbm->GetLbmParams(),
+                                          mSimulationState,
+                                          mLatDat->GetVoxelSize());
+
   // TODO When we've taken the stress type out of the config file, this could be nicer.
   for (int ii = 0; ii < 3; ++ii)
   {
@@ -224,31 +222,26 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                             network);
   }
 
-  mUnits = new hemelb::util::UnitConverter(mLbm->GetLbmParams(), mSimulationState, mLatDat);
-
   mInletValues
       = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
                                                    mLatDat,
                                                    iSimConfig,
-                                                   mSimulationState,
-                                                   mUnits);
+                                                   mSimulationState);
 
   mOutletValues
       = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::OUTLET_TYPE,
                                                    mLatDat,
                                                    iSimConfig,
-                                                   mSimulationState,
-                                                   mUnits);
+                                                   mSimulationState);
 
-  mLbm->Initialise(lReceiveTranslator, mVisControl, mInletValues, mOutletValues, mUnits);
+  mLbm->Initialise(lReceiveTranslator, mVisControl, mInletValues, mOutletValues);
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         mVisControl,
                                                         mLbm,
                                                         &mNet,
                                                         mSimulationState,
-                                                        *iSimConfig,
-                                                        mUnits);
+                                                        *iSimConfig);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();
