@@ -56,8 +56,7 @@ namespace hemelb
                           lb::LBM* iLbm,
                           net::Net * iNet,
                           lb::SimulationState * iSimState,
-                          SimConfig& iSimConfig,
-                          util::UnitConverter* iUnits);
+                          SimConfig& iSimConfig);
 
         static bool RequiresSeparateSteeringCore();
 
@@ -89,8 +88,6 @@ namespace hemelb
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
         float privateSteeringParams[STEERABLE_PARAMETERS + 1];
-
-        util::UnitConverter* mUnits;
     };
   }
 }

@@ -18,7 +18,6 @@ namespace hemelb
                        double iPMax,
                        util::Vector3D iPosition,
                        util::Vector3D iNormal,
-                       util::UnitConverter* iUnits,
                        std::string iPFilePath);
           virtual ~InOutLetFile();
 

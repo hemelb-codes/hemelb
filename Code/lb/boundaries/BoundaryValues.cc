@@ -15,9 +15,8 @@ namespace hemelb
       BoundaryValues::BoundaryValues(geometry::LatticeData::SiteType IOtype,
                                      geometry::LatticeData* iLatDat,
                                      SimConfig* iSimConfig,
-                                     SimulationState* iSimState,
-                                     util::UnitConverter* iUnits) :
-        net::IteratedAction(), mState(iSimState), mSimConfig(iSimConfig), mUnits(iUnits)
+                                     SimulationState* iSimState) :
+        net::IteratedAction(), mState(iSimState), mSimConfig(iSimConfig)
       {
         nTotIOlets = (IOtype == geometry::LatticeData::INLET_TYPE
           ? (int) iSimConfig->Inlets.size()
@@ -191,10 +190,14 @@ namespace hemelb
         {
           if (!read_from_file[i])
           {
-            density_avg[i] = mUnits->ConvertPressureToPhysicalUnits(density_avg[i] * Cs2);
-            density_amp[i] = mUnits->ConvertPressureGradToPhysicalUnits(density_amp[i] * Cs2);
-            density_min[i] = mUnits->ConvertPressureToPhysicalUnits(density_min[i] * Cs2);
-            density_max[i] = mUnits->ConvertPressureToPhysicalUnits(density_max[i] * Cs2);
+            density_avg[i] = util::UnitConverter::ConvertPressureToPhysicalUnits(density_avg[i]
+                * Cs2);
+            density_amp[i] = util::UnitConverter::ConvertPressureGradToPhysicalUnits(density_amp[i]
+                * Cs2);
+            density_min[i] = util::UnitConverter::ConvertPressureToPhysicalUnits(density_min[i]
+                * Cs2);
+            density_max[i] = util::UnitConverter::ConvertPressureToPhysicalUnits(density_max[i]
+                * Cs2);
           }
         }
       }
@@ -206,10 +209,14 @@ namespace hemelb
         {
           if (!read_from_file[i])
           {
-            density_avg[i] = mUnits->ConvertPressureToLatticeUnits(density_avg[i]) / Cs2;
-            density_amp[i] = mUnits->ConvertPressureGradToLatticeUnits(density_amp[i]) / Cs2;
-            density_min[i] = mUnits->ConvertPressureToLatticeUnits(density_min[i]) / Cs2;
-            density_max[i] = mUnits->ConvertPressureToLatticeUnits(density_max[i]) / Cs2;
+            density_avg[i] = util::UnitConverter::ConvertPressureToLatticeUnits(density_avg[i])
+                / Cs2;
+            density_amp[i] = util::UnitConverter::ConvertPressureGradToLatticeUnits(density_amp[i])
+                / Cs2;
+            density_min[i] = util::UnitConverter::ConvertPressureToLatticeUnits(density_min[i])
+                / Cs2;
+            density_max[i] = util::UnitConverter::ConvertPressureToLatticeUnits(density_max[i])
+                / Cs2;
           }
         }
 
@@ -347,7 +354,7 @@ namespace hemelb
           double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
 
           density_cycle[time_step * nTotIOlets + i]
-              = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
+              = util::UnitConverter::ConvertPressureToLatticeUnits(pressure) / Cs2;
         }
       }
 
@@ -371,12 +378,12 @@ namespace hemelb
 
           if (!read_from_file[n])
           {
-            density_avg[n] = mUnits->ConvertPressureToLatticeUnits(lIOlet->PMean) / Cs2;
-            density_amp[n] = mUnits->ConvertPressureGradToLatticeUnits(lIOlet->PAmp) / Cs2;
+            density_avg[n] = util::UnitConverter::ConvertPressureToLatticeUnits(lIOlet->PMean) / Cs2;
+            density_amp[n] = util::UnitConverter::ConvertPressureGradToLatticeUnits(lIOlet->PAmp) / Cs2;
             density_phs[n] = lIOlet->PPhase * DEG_TO_RAD;
           }
-          density_min[n] = mUnits->ConvertPressureToLatticeUnits(lIOlet->PMin) / Cs2;
-          density_max[n] = mUnits->ConvertPressureToLatticeUnits(lIOlet->PMax) / Cs2;
+          density_min[n] = util::UnitConverter::ConvertPressureToLatticeUnits(lIOlet->PMin) / Cs2;
+          density_max[n] = util::UnitConverter::ConvertPressureToLatticeUnits(lIOlet->PMax) / Cs2;
         }
 
       }

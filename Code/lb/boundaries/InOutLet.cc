@@ -11,12 +11,11 @@ namespace hemelb
                          double iPMin,
                          double iPMax,
                          util::Vector3D iPosition,
-                         util::Vector3D iNormal,
-                         util::UnitConverter* iUnits) :
-        mUnits(iUnits), UpdatePeriod(iPeriod), PressureMinPhysical(iPMin),
-            PressureMaxPhysical(iPMax), Position(iPosition), Normal(iNormal)
+                         util::Vector3D iNormal) :
+        UpdatePeriod(iPeriod), PressureMinPhysical(iPMin), PressureMaxPhysical(iPMax),
+            Position(iPosition), Normal(iNormal)
       {
-        ResetValues();
+
       }
 
       InOutLet::~InOutLet()
@@ -27,6 +26,8 @@ namespace hemelb
       void InOutLet::InitialiseCycle(std::vector<distribn_t> &density_cycle,
                                      const SimulationState *iState)
       {
+        ResetValues();
+
         if (UpdatePeriod == 0)
         {
           density_cycle.resize(iState->GetTimeStepsPerCycle());
@@ -59,8 +60,10 @@ namespace hemelb
 
       void InOutLet::ResetCommonLatticeValues()
       {
-        DensityMinLattice = mUnits->ConvertPressureToLatticeUnits(PressureMinPhysical) / Cs2;
-        DensityMaxLattice = mUnits->ConvertPressureToLatticeUnits(PressureMaxPhysical) / Cs2;
+        DensityMinLattice = util::UnitConverter::ConvertPressureToLatticeUnits(PressureMinPhysical)
+            / Cs2;
+        DensityMaxLattice = util::UnitConverter::ConvertPressureToLatticeUnits(PressureMaxPhysical)
+            / Cs2;
       }
 
       distribn_t InOutLet::GetDensityMin()

@@ -5,13 +5,17 @@ namespace hemelb
 {
   namespace util
   {
+    lb::LbmParameters* UnitConverter::mParams;
+    lb::SimulationState* UnitConverter::mState;
+    double UnitConverter::voxel_size;
 
-    UnitConverter::UnitConverter(lb::LbmParameters* iParams,
-                                 lb::SimulationState* iState,
-                                 geometry::LatticeData* iLatDat) :
-      mParams(iParams), mState(iState), voxel_size(iLatDat->GetVoxelSize())
+    void UnitConverter::Initialise(lb::LbmParameters* iParams,
+                                   lb::SimulationState* iState,
+                                   distribn_t iVoxelSize)
     {
-
+      mParams = iParams;
+      mState = iState;
+      voxel_size = iVoxelSize;
     }
 
     distribn_t UnitConverter::ConvertPressureToLatticeUnits(double pressure) const

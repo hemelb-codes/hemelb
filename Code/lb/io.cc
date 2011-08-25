@@ -214,13 +214,13 @@ namespace hemelb
                   vz /= density;
 
                   // conversion from lattice to physical units
-                  pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
+                  pressure = util::UnitConverter::ConvertPressureToPhysicalUnits(density * Cs2);
 
-                  vx = mUnits->ConvertVelocityToPhysicalUnits(vx);
-                  vy = mUnits->ConvertVelocityToPhysicalUnits(vy);
-                  vz = mUnits->ConvertVelocityToPhysicalUnits(vz);
+                  vx = util::UnitConverter::ConvertVelocityToPhysicalUnits(vx);
+                  vy = util::UnitConverter::ConvertVelocityToPhysicalUnits(vy);
+                  vz = util::UnitConverter::ConvertVelocityToPhysicalUnits(vz);
 
-                  stress = mUnits->ConvertStressToPhysicalUnits(stress);
+                  stress = util::UnitConverter::ConvertStressToPhysicalUnits(stress);
 
                   lWriter << (int) (site_i - siteMins[0]) << (int) (site_j - siteMins[1])
                       << (int) (site_k - siteMins[2]);
@@ -294,8 +294,10 @@ namespace hemelb
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
       distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
-      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
-      distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
+      distribn_t velocity_max =
+          util::UnitConverter::ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
+      distribn_t stress_max =
+          util::UnitConverter::ConvertStressToLatticeUnits(mSimConfig->MaxStress);
 
       for (int i = 0; i < inlets; i++)
       {

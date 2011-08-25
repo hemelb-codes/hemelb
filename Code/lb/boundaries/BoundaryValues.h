@@ -18,8 +18,7 @@ namespace hemelb
           BoundaryValues(geometry::LatticeData::SiteType IOtype,
                          geometry::LatticeData* iLatDat,
                          SimConfig* iSimConfig,
-                         SimulationState* iSimState,
-                         util::UnitConverter* iUnits);
+                         SimulationState* iSimState);
           ~BoundaryValues();
 
           void RequestComms();
@@ -82,7 +81,6 @@ namespace hemelb
 
           SimulationState* mState;
           SimConfig* mSimConfig;
-          util::UnitConverter* mUnits;
       };
 
     }
