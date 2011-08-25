@@ -11,11 +11,10 @@ namespace hemelb
                                      double iPMax,
                                      util::Vector3D iPosition,
                                      util::Vector3D iNormal,
-                                     util::UnitConverter* iUnits,
                                      double iPMean,
                                      double iPAmp,
                                      double iPPhase) :
-        InOutLet(iPeriod, iPMin, iPMax, iPosition, iNormal, iUnits), PressureMeanPhysical(iPMean),
+        InOutLet(iPeriod, iPMin, iPMax, iPosition, iNormal), PressureMeanPhysical(iPMean),
             PressureAmpPhysical(iPAmp), Phase(iPPhase)
       {
 
@@ -40,8 +39,10 @@ namespace hemelb
 
       void InOutLetCosine::ResetValues()
       {
-        DensityMeanLattice = mUnits->ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
-        DensityAmpLattice = mUnits->ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
+        DensityMeanLattice
+            = util::UnitConverter::ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
+        DensityAmpLattice
+            = util::UnitConverter::ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
 
         ResetCommonLatticeValues();
       }

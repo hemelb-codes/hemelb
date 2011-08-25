@@ -28,9 +28,8 @@ namespace hemelb
                                  double iPMax,
                                  util::Vector3D iPosition,
                                  util::Vector3D iNormal,
-                                 util::UnitConverter* iUnits,
                                  std::string iPFilePath) :
-        InOutLet(iPeriod, iPMin, iPMax, iPosition, iNormal, iUnits), PressureFilePath(iPFilePath)
+        InOutLet(iPeriod, iPMin, iPMax, iPosition, iNormal), PressureFilePath(iPFilePath)
       {
 
       }
@@ -83,7 +82,8 @@ namespace hemelb
 
           double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
 
-          density_cycle[time_step] = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
+          density_cycle[time_step] = util::UnitConverter::ConvertPressureToLatticeUnits(pressure)
+              / Cs2;
         }
       }
 
