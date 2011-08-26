@@ -6,10 +6,9 @@ namespace hemelb
   {
     namespace raytracer 
     {
-      SiteTraverser::SiteTraverser(const geometry::LatticeData::LatticeData * iLatticeData,
-							    const site_t iBlockId)
-	: mLatticeData(iLatticeData),
-	  mBlockId(iBlockId)
+      SiteTraverser::SiteTraverser(const geometry::LatticeData::LatticeData * iLatticeData)
+	: mLatticeData(iLatticeData)
+	  
       { 	
       }
       

@@ -17,6 +17,8 @@ namespace hemelb
 
 	Vector3D<site_t> GetCurrentLocation();
 			
+	void SetCurrentLocation(const Vector3D<site_t>& iLocation);
+
 	site_t GetCurrentIndex();
 
 	site_t GetIndexFromLocation(Vector3D<site_t> iLocation);
@@ -25,6 +27,16 @@ namespace hemelb
 	//Returns true if successful or false if the whole volume has been
 	//traversed
 	bool TraverseOne();
+
+	void IncrementX();
+	void IncrementY();
+	void IncrementZ();
+	
+	void DecrementX();
+	void DecrementY();
+	void DecrementZ();
+
+	bool CurrentLocationValid();
 
 	//Virtual methods which must be defined for correct traversal
 	virtual site_t GetXCount() = 0;

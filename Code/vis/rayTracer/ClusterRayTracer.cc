@@ -6,6 +6,7 @@
 #include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/ClusterRayTracer.h"
 #include "vis/rayTracer/Ray.h"
+#include "vis/rayTracer/SiteTraverser.h"
 
 #include "vis/Vector3D.h"
 
@@ -330,201 +331,231 @@ namespace hemelb
 			       lMinUnitRaysBasedOnZ);
       }
 
-      void ClusterRayTracer::TraverseVoxels(const Vector3D<float>& block_min,
-					    const Vector3D<float>& iLocationInBlock,
-					    const SiteData_t* iStartOfSiteDataForBlock,
-					    float t,
-					    Ray* bCurrentRay,
-					    const Vector3D<bool>& xyz_Is_1)
+      void ClusterRayTracer::TraverseVoxels(
+	const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
+	const Vector3D<float>& iLocationInBlock,
+	const SiteData_t* iSiteData,
+	float iRayLengthTraversedSoFar,
+	Ray* bCurrentRay)
       {
-	Vector3D<site_t> lLocationInBlock = EnforceBlockBounds(iLocationInBlock);
+	//Work out which site we're currently in
+	Vector3D<site_t> lTruncatedLocationInBlock = RoundToNearestVoxel(iLocationInBlock);
+	
+	SiteTraverser lSiteTraverser(&mLatticeData);
+	lSiteTraverser.SetCurrentLocation(lTruncatedLocationInBlock);
 
-	Vector3D<float> t_max;
-	t_max.x = (block_min.x + (float) (xyz_Is_1.x
-					  ? lLocationInBlock.x + 1
-					  : lLocationInBlock.x)) * bCurrentRay->GetInverseDirection().x;
+	//In order to trace the rays through the voxels, we need to 
+	//keep track of how far the ray can travel to the next
+	//voxel in each of the three directions in ray units
+	Vector3D<float> lRayUnitsBeforeNextVoxel =
+	  CalculateRayUnitsBeforeNextVoxel(iFirstRayClusterIntersectionToBlockLowerSite, 
+					   Vector3D<float>(lTruncatedLocationInBlock),
+					   *bCurrentRay);
 
-	t_max.y = (block_min.y + (float) (xyz_Is_1.y
-					  ? lLocationInBlock.y + 1
-					  : lLocationInBlock.y)) * bCurrentRay->GetInverseDirection().y;
-
-	t_max.z = (block_min.z + (float) (xyz_Is_1.z
-					  ? lLocationInBlock.z + 1
-					  : lLocationInBlock.z)) * bCurrentRay->GetInverseDirection().z;
-
-	site_t lBlockSizeSquared = mLatticeData.GetBlockSize()*mLatticeData.GetBlockSize();
-	site_t lBlockSizeCubed = lBlockSizeSquared*mLatticeData.GetBlockSize();
-
-	site_t i = lLocationInBlock.x * lBlockSizeSquared;
-	site_t j = lLocationInBlock.y * mLatticeData.GetBlockSize();
-	site_t k = lLocationInBlock.z;
-
-	while (true)
+	while(lSiteTraverser.CurrentLocationValid())
 	{
-	  if (t_max.x < t_max.y)
+	  //Firstly, work out in which direction we 
+	  //can travel the least ray units before reaching 
+	  //a vortex side
+	  Direction::Direction lDirectionOfLeastTravel =
+	    DirectionOfLeastTravel(lRayUnitsBeforeNextVoxel);
+	  
+	  float lMinRayUnitsBeforeNextVoxel; 
+	  //Find out how far the ray can move 
+	  switch (lDirectionOfLeastTravel)
 	  {
-	    if (t_max.x < t_max.z)
-	    {
-	      UpdateRayData(&iStartOfSiteDataForBlock[i+j+k],
-			    t,
-			    t_max.x - t,
-			    bCurrentRay);
+	  case Direction::X:
+	    lMinRayUnitsBeforeNextVoxel = lRayUnitsBeforeNextVoxel.x;
+	    break;
 
-	      if (xyz_Is_1.x)
-	      {
-		if ( (i += lBlockSizeSquared) >= lBlockSizeCubed)
-		{
-		  return;
-		}
-		t = t_max.x;
-		t_max.x += 1.0F * bCurrentRay->GetInverseDirection().x;
-	      }
-	      else
-	      {
-		if (i < lBlockSizeSquared)
-		{
-		  return;
-		}
-		else
-		{
-		  i -= lBlockSizeSquared;
-		}
-		t = t_max.x;
-		t_max.x -= 1.0F * bCurrentRay->GetInverseDirection().x;
-	      }
+	  case Direction::Y:
+	    lMinRayUnitsBeforeNextVoxel = lRayUnitsBeforeNextVoxel.y;
+	    break;
+	  
+	  case Direction::Z:
+	    lMinRayUnitsBeforeNextVoxel = lRayUnitsBeforeNextVoxel.z;
+	    break;
+	  }
+	  
+	  // Update the ray data
+	  // The ray may have been sitting on the fence, in which case 
+	  // there is little sence in updating ray data
+	  if(lMinRayUnitsBeforeNextVoxel - iRayLengthTraversedSoFar > 0.001F)
+	  {
+	    UpdateRayData(&iSiteData[lSiteTraverser.GetCurrentIndex()],
+			  iRayLengthTraversedSoFar,
+			  lMinRayUnitsBeforeNextVoxel - iRayLengthTraversedSoFar,
+			  bCurrentRay);
+	    }
+	  
+	  //Update ray length traversed so far
+	  iRayLengthTraversedSoFar = lMinRayUnitsBeforeNextVoxel;
+
+	  //Update the block location and RayUnitsBeforeNextVoxel
+	  //in each direction
+	  switch (lDirectionOfLeastTravel)
+	  {
+	  case Direction::X:
+	    if (bCurrentRay->XIncreasing())
+	    {
+	      lSiteTraverser.IncrementX();
+	      lRayUnitsBeforeNextVoxel.x += bCurrentRay->GetInverseDirection().x;
 	    }
 	    else
 	    {
-	      UpdateRayData(&iStartOfSiteDataForBlock[(i + j + k)],
-			    t,
-			    t_max.z - t,
-			    bCurrentRay);
-
-	      if (xyz_Is_1.z)
-	      {
-		if (++k >= mLatticeData.GetBlockSize())
-		{
-		  return;
-		}
-		t = t_max.z;
-		t_max.z += 1.0F * bCurrentRay->GetInverseDirection().z;
-	      }
-	      else
-	      {
-		if (k == 0)
-		{
-		  return;
-		}
-		else
-		{
-		  --k;
-		}
-		t = t_max.z;
-		t_max.z -= 1.0F * bCurrentRay->GetInverseDirection().z;
-	      }
+	      lSiteTraverser.DecrementX();
+	      lRayUnitsBeforeNextVoxel.x -= bCurrentRay->GetInverseDirection().x;
 	    }
-	  }
-	  else
-	  {
-	    if (t_max.y < t_max.z)
-	    {
-	      UpdateRayData(&iStartOfSiteDataForBlock[i + j + k],
-			    t,
-			    t_max.y - t,
-			    bCurrentRay);
 
-	      if (xyz_Is_1.y)
-	      {
-		if ( (j += mLatticeData.GetBlockSize()) >= lBlockSizeSquared)
-		{
-		  return;
-		}
-		t = t_max.y;
-		t_max.y += 1.0F * bCurrentRay->GetInverseDirection().y;
-	      }
-	      else
-	      {
-		if (j < mLatticeData.GetBlockSize())
-		{
-		  return;
-		}
-		else
-		{
-		  j -= mLatticeData.GetBlockSize();
-		}
-		t = t_max.y;
-		t_max.y -= 1.0F * bCurrentRay->GetInverseDirection().y;
-	      }
+	    break;
+
+	  case Direction::Y:
+	    if (bCurrentRay->YIncreasing())
+	    {
+	      lSiteTraverser.IncrementY();
+	      lRayUnitsBeforeNextVoxel.y += bCurrentRay->GetInverseDirection().y;
 	    }
 	    else
 	    {
-	      UpdateRayData(&iStartOfSiteDataForBlock[i + j + k],
-			    t,
-			    t_max.z - t,
-			    bCurrentRay);
-
-	      if (xyz_Is_1.z)
-	      {
-		if (++k >= mLatticeData.GetBlockSize())
-		{
-		  return;
-		}
-		t = t_max.z;
-		t_max.z += 1.0F * bCurrentRay->GetInverseDirection().z;
-	      }
-	      else
-	      {
-		if (k == 0)
-		{
-		  return;
-		}
-		else
-		{
-		  --k;
-		}
-		t = t_max.z;
-		t_max.z -= 1.0F * bCurrentRay->GetInverseDirection().z;
-	      }
+	      lSiteTraverser.DecrementY();
+	      lRayUnitsBeforeNextVoxel.y -= bCurrentRay->GetInverseDirection().y;
 	    }
+	    break;
+	  
+	  case Direction::Z:
+	    if (bCurrentRay->ZIncreasing())
+	    {
+	      lSiteTraverser.IncrementZ();
+	      lRayUnitsBeforeNextVoxel.z += bCurrentRay->GetInverseDirection().z;
+	    }
+	    else
+	    {
+	      lSiteTraverser.DecrementZ();
+	      lRayUnitsBeforeNextVoxel.z -= bCurrentRay->GetInverseDirection().z;
+	    }   
+	    break;
 	  }
+
 	}
       }
 
       Vector3D<site_t> ClusterRayTracer::
-      EnforceBlockBounds(const Vector3D<float>& iUnboundLocation)
+      RoundToNearestVoxel(const Vector3D<float>& iUnboundLocation)
       {
-	Vector3D<site_t> lLocationInBlock;
-	lLocationInBlock.x = util::NumericalFunctions::
-	  enforceBounds<site_t>((site_t) iUnboundLocation.x,
+	Vector3D<site_t> lVoxelLocationInBlock;
+	
+	//Due to rounding errors, it's possible for the site location within a block
+	//to be outside the wrong block
+	lVoxelLocationInBlock.x = util::NumericalFunctions::
+	enforceBounds<site_t>((site_t) iUnboundLocation.x,
 				0,
 				mLatticeData.GetBlockSize() - 1);
 	  
-	lLocationInBlock.y  = util::NumericalFunctions::
+	lVoxelLocationInBlock.y  = util::NumericalFunctions::
 	  enforceBounds<site_t>((site_t) iUnboundLocation.y,
 				0,
 				mLatticeData.GetBlockSize() - 1);
 
-	lLocationInBlock.z = util::NumericalFunctions::
+	lVoxelLocationInBlock.z = util::NumericalFunctions::
 	  enforceBounds<site_t>((site_t) iUnboundLocation.z,
 				0,
 				mLatticeData.GetBlockSize() - 1);
 
-	return lLocationInBlock;
+	return lVoxelLocationInBlock;
       }
  
+      Vector3D<float> ClusterRayTracer::CalculateRayUnitsBeforeNextVoxel
+      (const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
+       const Vector3D<site_t>& iTruncatedLocationInBlock, const Ray& iRay)
+      {
+	Vector3D<float> lRayUnits;
+	
+	//The ray has already travelled iFirstRayClusterIntersectionToBlockLowerSite
+        //If the ray is increasing in the co-ordinte it can travel as far
+	//as the truncated location + 1, otherwise just the truncated location
+        //for each co-ordinate
+
+	lRayUnits.x = iFirstRayClusterIntersectionToBlockLowerSite.x
+	  + static_cast<float>(iTruncatedLocationInBlock.x);
+	if(iRay.XIncreasing())
+	{
+	  lRayUnits.x += 1.0F;
+	}
+	//Convert from site units into ray units
+	lRayUnits.x *= iRay.GetInverseDirection().x;
+
+	lRayUnits.y = iFirstRayClusterIntersectionToBlockLowerSite.y
+	  + static_cast<float>(iTruncatedLocationInBlock.y);
+	if(iRay.YIncreasing())
+	{
+	  lRayUnits.y += 1.0F;
+	}
+	lRayUnits.y *= iRay.GetInverseDirection().y;
+
+	lRayUnits.z = iFirstRayClusterIntersectionToBlockLowerSite.z
+	  + static_cast<float>(iTruncatedLocationInBlock.z);
+	if(iRay.ZIncreasing())
+	{
+	  lRayUnits.z += 1.0F;
+	}
+	lRayUnits.z *= iRay.GetInverseDirection().z;
+
+	return lRayUnits;
+      }
+
+    Direction::Direction ClusterRayTracer::
+    DirectionOfLeastTravel
+    (Vector3D<float> iRayUnitsBeforeNextVoxel)
+    {
+      if (iRayUnitsBeforeNextVoxel.x <
+	iRayUnitsBeforeNextVoxel.y)
+      {
+	//X is less than Y
+	if (iRayUnitsBeforeNextVoxel.x <
+	iRayUnitsBeforeNextVoxel.z)
+	{
+	  //X is less than Y and X
+	  return Direction::X;
+	}
+	else
+	{
+	  //X is less than Y
+	  //Z is less Than X (And Y)
+	  return Direction::Z;
+	}
+      }
+      else
+      {
+	// Y is less than X
+	if (iRayUnitsBeforeNextVoxel.y <
+	iRayUnitsBeforeNextVoxel.z)
+	{
+	  //Y is less than X and Z
+	  return Direction::Y;
+	}
+	else
+	{
+	  //Y is less than X
+	  //Z is less than Y (and so X)
+	  return Direction::Z;
+	}
+	
+      }
+    }
+    
 
       void ClusterRayTracer::TraverseBlocks(const Cluster& iCluster, 
-				     const Vector3D<bool>& xyz_Is_1,
-				     const Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
+					    const Vector3D<bool>& xyz_Is_1,
+					    const Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
 				     Ray *bCurrentRay)
       {
 	int cluster_blocksZ = iCluster.blocksZ;
 	int cluster_blocksYz = (int) iCluster.blocksY * (int) iCluster.blocksZ;
 	int cluster_blocks = (int) iCluster.blocksX * cluster_blocksYz;
 
-	Vector3D<float> block_min;
+	Vector3D<float> iFirstRayClusterIntersectionToBlockLowerSite;
 
-	float lBlockSizeFloat = mLatticeData.GetBlockSize();
+	float lBlockSizeFloat = static_cast<float>(mLatticeData.GetBlockSize());
 
  	Vector3D<unsigned int> lBlockCoordinatesOfFirstIntersectionBlock = 
 	  GetBlockCoordinatesOfFirstIntersectionBlock(iCluster, iLowerSiteToFirstRayClusterIntersection);
@@ -539,12 +570,12 @@ namespace hemelb
 
 	//unsigned int lBlockId = iCluster.GetBlockIdFrom3DBlockLocation(lBlockCoordinatesOfFirstIntersectionBlock);
 
-	Vector3D<float> block_x;
+	Vector3D<float> lSiteLocationWithinBlock;
 	if (!iCluster.SiteData[i + j + k].empty())
 	{
-	  block_x = lFirstIntersectionToBlockLowerSite * -1.0F;
+	  lSiteLocationWithinBlock = lFirstIntersectionToBlockLowerSite * -1.0F;
 
-	  TraverseVoxels(lFirstIntersectionToBlockLowerSite, block_x, &iCluster.SiteData[i + j + k][0], 0.0F, bCurrentRay, xyz_Is_1);
+	  TraverseVoxels(lFirstIntersectionToBlockLowerSite, lSiteLocationWithinBlock, &iCluster.SiteData[i + j + k][0], 0.0F, bCurrentRay);
 	}
 
 	Vector3D <float> t_max;
@@ -585,16 +616,15 @@ namespace hemelb
 
 	      if (!iCluster.SiteData[i + j + k].empty())
 	      {
-		block_x.x = t_max.x * bCurrentRay->GetDirection().x - lFirstIntersectionToBlockLowerSite.x;
-		block_x.y = t_max.x * bCurrentRay->GetDirection().y - lFirstIntersectionToBlockLowerSite.y;
-		block_x.z = t_max.x * bCurrentRay->GetDirection().z - lFirstIntersectionToBlockLowerSite.z;
+		lSiteLocationWithinBlock.x = t_max.x * bCurrentRay->GetDirection().x - lFirstIntersectionToBlockLowerSite.x;
+		lSiteLocationWithinBlock.y = t_max.x * bCurrentRay->GetDirection().y - lFirstIntersectionToBlockLowerSite.y;
+		lSiteLocationWithinBlock.z = t_max.x * bCurrentRay->GetDirection().z - lFirstIntersectionToBlockLowerSite.z;
 
 		TraverseVoxels(lFirstIntersectionToBlockLowerSite,
-			       block_x,
+			       lSiteLocationWithinBlock,
 			       &iCluster.SiteData[i + j + k][0],
 			       t_max.x,
-			       bCurrentRay,
-			       xyz_Is_1);
+			       bCurrentRay);
 	      }
 
 	      t_max.x = xyz_Is_1.x
@@ -618,16 +648,15 @@ namespace hemelb
 
 	      if (!iCluster.SiteData[i + j + k].empty())
 	      {
-		block_x.x = t_max.z * bCurrentRay->GetDirection().x - lFirstIntersectionToBlockLowerSite.x;
-		block_x.y = t_max.z * bCurrentRay->GetDirection().y - lFirstIntersectionToBlockLowerSite.y;
-		block_x.z = t_max.z * bCurrentRay->GetDirection().z - lFirstIntersectionToBlockLowerSite.z;
+		lSiteLocationWithinBlock.x = t_max.z * bCurrentRay->GetDirection().x - lFirstIntersectionToBlockLowerSite.x;
+		lSiteLocationWithinBlock.y = t_max.z * bCurrentRay->GetDirection().y - lFirstIntersectionToBlockLowerSite.y;
+		lSiteLocationWithinBlock.z = t_max.z * bCurrentRay->GetDirection().z - lFirstIntersectionToBlockLowerSite.z;
 
 		TraverseVoxels(lFirstIntersectionToBlockLowerSite,
-			       block_x,
+			       lSiteLocationWithinBlock,
 			       &iCluster.SiteData[i + j + k][0],
 			       t_max.z,
-			       bCurrentRay,
-			       xyz_Is_1);
+			       bCurrentRay);
 	      }
 
 	      t_max.z = xyz_Is_1.z
@@ -654,16 +683,15 @@ namespace hemelb
 
 	      if (!iCluster.SiteData[i + j + k].empty())
 	      {
-		block_x.x = t_max.y * bCurrentRay->GetDirection().x - lFirstIntersectionToBlockLowerSite.x;
-		block_x.y = t_max.y * bCurrentRay->GetDirection().y - lFirstIntersectionToBlockLowerSite.y;
-		block_x.z = t_max.y * bCurrentRay->GetDirection().z - lFirstIntersectionToBlockLowerSite.z;
+		lSiteLocationWithinBlock.x = t_max.y * bCurrentRay->GetDirection().x - lFirstIntersectionToBlockLowerSite.x;
+		lSiteLocationWithinBlock.y = t_max.y * bCurrentRay->GetDirection().y - lFirstIntersectionToBlockLowerSite.y;
+		lSiteLocationWithinBlock.z = t_max.y * bCurrentRay->GetDirection().z - lFirstIntersectionToBlockLowerSite.z;
 
 		TraverseVoxels(lFirstIntersectionToBlockLowerSite,
-			       block_x,
+			       lSiteLocationWithinBlock,
 			       &iCluster.SiteData[i + j + k][0],
 			       t_max.y,
-			       bCurrentRay,
-			       xyz_Is_1);
+			       bCurrentRay);
 	      }
 
 	      t_max.y = xyz_Is_1.y
@@ -687,16 +715,15 @@ namespace hemelb
 
 	      if (!iCluster.SiteData[i + j + k].empty())
 	      {
-		block_x.x = t_max.z * bCurrentRay->GetDirection().x - lFirstIntersectionToBlockLowerSite.x;
-		block_x.y = t_max.z * bCurrentRay->GetDirection().y - lFirstIntersectionToBlockLowerSite.y;
-		block_x.z = t_max.z * bCurrentRay->GetDirection().z - lFirstIntersectionToBlockLowerSite.z;
+		lSiteLocationWithinBlock.x = t_max.z * bCurrentRay->GetDirection().x - lFirstIntersectionToBlockLowerSite.x;
+		lSiteLocationWithinBlock.y = t_max.z * bCurrentRay->GetDirection().y - lFirstIntersectionToBlockLowerSite.y;
+		lSiteLocationWithinBlock.z = t_max.z * bCurrentRay->GetDirection().z - lFirstIntersectionToBlockLowerSite.z;
 
 		TraverseVoxels(lFirstIntersectionToBlockLowerSite,
-			       block_x,
+			       lSiteLocationWithinBlock,
 			       &iCluster.SiteData[i + j + k][0],
 			       t_max.z,
-			       bCurrentRay,
-			       xyz_Is_1);
+			       bCurrentRay);
 	      }
 
 	      t_max.z = xyz_Is_1.z
@@ -712,42 +739,34 @@ namespace hemelb
 	const Cluster& iCluster,
 	Vector3D<float> iLowerSiteToFirstRayClusterIntersection)
       {
-	Vector3D<unsigned int> lBlockCoordinatesOFFirstIntersectionBlock;
+	Vector3D<unsigned int> lBlockCoordinatesOfFirstIntersectionBlock;
 
 	//Perform the truncated division and ensure that the 
 	//coordinates are valid to allow for numerical errors
-	
-	lBlockCoordinatesOFFirstIntersectionBlock.x = (unsigned int)
+	lBlockCoordinatesOfFirstIntersectionBlock.x = (unsigned int)
 	  util::NumericalFunctions::enforceBounds(
 	  iCluster.blocksX - 1,
 	  0,
-	  (int) (1.0F / mLatticeData.GetBlockSize() * iLowerSiteToFirstRayClusterIntersection.x));
+	  (int) (1.0F / static_cast<float>(mLatticeData.GetBlockSize()) 
+		 * iLowerSiteToFirstRayClusterIntersection.x));
 	
-	lBlockCoordinatesOFFirstIntersectionBlock.y = (unsigned int)
+	lBlockCoordinatesOfFirstIntersectionBlock.y = (unsigned int)
 	  util::NumericalFunctions::enforceBounds(
 	  iCluster.blocksY - 1,
 	  0,
-	  (int) (1.0F / mLatticeData.GetBlockSize() * iLowerSiteToFirstRayClusterIntersection.y));
+	  (int) (1.0F / static_cast<float>(mLatticeData.GetBlockSize()) 
+		 * iLowerSiteToFirstRayClusterIntersection.y));
 	
-	lBlockCoordinatesOFFirstIntersectionBlock.z = (unsigned int)
+	lBlockCoordinatesOfFirstIntersectionBlock.z = (unsigned int)
 	  util::NumericalFunctions::enforceBounds(
 	  iCluster.blocksZ - 1,
 	  0,
-	  (int) (1.0F / mLatticeData.GetBlockSize() * iLowerSiteToFirstRayClusterIntersection.z));
+	  (int) (1.0F / static_cast<float>(mLatticeData.GetBlockSize()) 
+		 * iLowerSiteToFirstRayClusterIntersection.z));
 
-	return lBlockCoordinatesOFFirstIntersectionBlock;
+	return lBlockCoordinatesOfFirstIntersectionBlock;
       }
       
-
-
-
-
-
-
-
-
-
-
 
       void ClusterRayTracer::UpdateRayData(const SiteData_t* iSiteData,
 				    float ray_t,

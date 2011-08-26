@@ -18,6 +18,10 @@ namespace hemelb
 	Vector3D<float> GetDirection() const;
 	Vector3D<float> GetInverseDirection() const;
 
+	bool XIncreasing() const;
+	bool YIncreasing() const;
+	bool ZIncreasing() const;
+	
 	float Length;
 
 	float VelocityColour[3];
