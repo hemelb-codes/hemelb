@@ -3,9 +3,13 @@
 
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
+#include "xml/tinyxml.h"
 
 namespace hemelb
 {
+
+  class SimConfig;
+
   namespace lb
   {
     namespace boundaries
@@ -14,12 +18,12 @@ namespace hemelb
       class InOutLet
       {
         public:
-          InOutLet(unsigned long iPeriod,
-                   double iPMin,
-                   double iPMax,
-                   util::Vector3D iPosition,
-                   util::Vector3D iNormal);
+          InOutLet();
           virtual ~InOutLet();
+
+          virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig) = 0;
+
+          virtual InOutLet* Clone() = 0;
 
           // Should be called before simulation starts running (including after a reset)
           // Resizes density_cycle and calls CalculateCycle
@@ -33,26 +37,21 @@ namespace hemelb
           virtual void ResetValues();
           void ResetCommonLatticeValues();
 
-          distribn_t density;
-
           distribn_t GetDensityMin();
           distribn_t GetDensityMax();
 
-          util::Vector3D GetPosition();
-          util::Vector3D GetNormal();
+          distribn_t density;
+          unsigned long UpdatePeriod;
 
-        protected:
-          const unsigned long UpdatePeriod;
+          double PressureMinPhysical;
+          double PressureMaxPhysical;
+
+          util::Vector3D Position;
+          util::Vector3D Normal;
 
         private:
-          const double PressureMinPhysical;
           distribn_t DensityMinLattice;
-
-          const double PressureMaxPhysical;
           distribn_t DensityMaxLattice;
-
-          const util::Vector3D Position;
-          const util::Vector3D Normal;
 
       };
 

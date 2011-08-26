@@ -29,9 +29,9 @@ namespace hemelb
 
       for (int ii = 0; ii < inlets; ii++)
       {
-        inlet_normal[3 * ii] = mSimConfig->Inlets[ii].Normal.x;
-        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii].Normal.y;
-        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii].Normal.z;
+        inlet_normal[3 * ii] = mSimConfig->Inlets[ii]->Normal.x;
+        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
+        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
       }
 
       RecalculateTauViscosityOmega();
