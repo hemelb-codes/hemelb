@@ -25,7 +25,7 @@ namespace hemelb
       };
 
       InOutLetFile::InOutLetFile() :
-        InOutLet()
+        InOutLetCycle<0, false>()
       {
 
       }
@@ -38,7 +38,6 @@ namespace hemelb
       InOutLet* InOutLetFile::Clone()
       {
         InOutLetFile* copy = new InOutLetFile();
-        copy->UpdatePeriod = this->UpdatePeriod;
         copy->PressureMinPhysical = this->PressureMinPhysical;
         copy->PressureMaxPhysical = this->PressureMaxPhysical;
         copy->Position = this->Position;

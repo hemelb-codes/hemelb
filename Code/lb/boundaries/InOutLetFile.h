@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_BOUNDARIES_INOUTLETFILE_H
 #define HEMELB_LB_BOUNDARIES_INOUTLETFILE_H
 
-#include "lb/boundaries/InOutLet.h"
+#include "lb/boundaries/InOutLetCycle.h"
 
 namespace hemelb
 {
@@ -10,7 +10,7 @@ namespace hemelb
     namespace boundaries
     {
 
-      class InOutLetFile : public InOutLet
+      class InOutLetFile : public InOutLetCycle<0, false>
       {
         public:
           InOutLetFile();
