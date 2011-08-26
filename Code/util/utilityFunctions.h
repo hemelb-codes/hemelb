@@ -60,7 +60,7 @@ namespace hemelb
          * should return void and take in three doubles: x, f, df. x is the variable to
          * be solved for, f and df are the function and derivative values at x respectively.
          * The function calculates f and df at the given x and stores in the given f and df.
-         * The other two arguments for NewtonRaphson are the initial guess and desired accuracy.
+         * The other two arguments for NewtonRaphson are the initial guess and desired accuracy. 
          */
         template<class F>
         static double NewtonRaphson(F* func, double x0, double alphaAcc)
