@@ -68,10 +68,17 @@ namespace hemelb
 			    Ray* bCurrentRay,
 			    const Vector3D<bool>& xyz_is_1);
 
-	void TraverseBlocks(const Cluster* cluster,
+	Vector3D<site_t> EnforceBlockBounds(const Vector3D<float>& iUnboundLocation);
+      
+
+	void TraverseBlocks(const Cluster& iCluster,
 			    const Vector3D<bool>& xyz_Is_1,
-			    const Vector3D<float>& ray_dx,
+			    const Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
 			    Ray *bCurrentRay);
+	
+	Vector3D<unsigned int> GetBlockCoordinatesOfFirstIntersectionBlock(
+	const Cluster& iCluster,
+	Vector3D<float> iLowerSiteToFirstRayClusterIntersection);
 	
 	void UpdateRayData(const SiteData_t* iSiteData,
 			   float ray_t,
