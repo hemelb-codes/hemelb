@@ -26,6 +26,16 @@ namespace hemelb
   {
     namespace raytracer 
     {
+      namespace Direction 
+      {
+	enum Direction
+	{
+	  X,
+	  Y,
+	  Z
+	};
+      }
+
       class ClusterRayTracer
       {
       public:
@@ -65,11 +75,16 @@ namespace hemelb
 			    const Vector3D<float>& block_x,
 			    const SiteData_t* iSiteData,
 			    float t,
-			    Ray* bCurrentRay,
-			    const Vector3D<bool>& xyz_is_1);
+			    Ray* bCurrentRay);
 
-	Vector3D<site_t> EnforceBlockBounds(const Vector3D<float>& iUnboundLocation);
+	Vector3D<float> CalculateRayUnitsBeforeNextVoxel
+	  (const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
+	   const Vector3D<site_t>& iTruncatedLocationInBlock, const Ray& iRay);
+
+	Vector3D<site_t> RoundToNearestVoxel(const Vector3D<float>& iUnboundLocation);
       
+	Direction::Direction DirectionOfLeastTravel
+	  (Vector3D<float> iRayUnitsBeforeNextVoxel);
 
 	void TraverseBlocks(const Cluster& iCluster,
 			    const Vector3D<bool>& xyz_Is_1,

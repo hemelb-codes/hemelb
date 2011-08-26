@@ -68,7 +68,7 @@ namespace hemelb
       void Normalise()
       {
 	T lInverseMagnitude = 1.0F /
-	sqrt(x*x+y*y+z*z);
+	sqrtf(x*x+y*y+z*z);
 
 	x*=lInverseMagnitude;
 	y*=lInverseMagnitude;

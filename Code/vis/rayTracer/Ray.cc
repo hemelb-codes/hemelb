@@ -42,6 +42,21 @@ namespace hemelb
 	return mInverseDirection;
       }
 
+      bool Ray::XIncreasing() const
+      {
+	return GetDirection().x > 0.0F;
+      }
+
+      bool Ray::YIncreasing() const
+      {
+	return GetDirection().y > 0.0F;
+      }
+
+      bool Ray::ZIncreasing() const
+      {
+	return GetDirection().z > 0.0F;
+      }
+
     }
   }
 }

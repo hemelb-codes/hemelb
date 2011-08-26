@@ -14,8 +14,7 @@ namespace hemelb
       class SiteTraverser : public VolumeTraverser
       {
       public:
-	SiteTraverser(const geometry::LatticeData * iLatticeDat,
-		      const site_t iBlockId);
+	SiteTraverser(const geometry::LatticeData * iLatticeDat);
 
 	virtual site_t GetXCount();
 
@@ -28,8 +27,6 @@ namespace hemelb
 	site_t GetBlockSize();
 
 	const geometry::LatticeData * mLatticeData;
-	const site_t mBlockId;
-
       }; 
     }
   }

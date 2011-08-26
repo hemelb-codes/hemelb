@@ -53,18 +53,10 @@ namespace hemelb
       }
 
       SiteTraverser 
-      BlockTraverser::GetSiteTraverserForCurrentBlock()
+      BlockTraverser::GetSiteTraverser()
       {
-	return SiteTraverser(mLatticeData, CurrentBlockNumber());
-      }	
-
-      SiteTraverser 
-      BlockTraverser::GetSiteTraverserForLocation(const Vector3D<site_t>& iLocation)
-      {
-	return SiteTraverser(mLatticeData, GetIndexFromLocation(iLocation));
-      }	
-
-      
+	return SiteTraverser(mLatticeData);
+      }	      
 
       bool BlockTraverser::IsValidLocation(Vector3D<site_t> iBlock)
       {

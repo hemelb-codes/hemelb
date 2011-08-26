@@ -28,9 +28,7 @@ namespace hemelb
 
 	site_t GetBlockSize();
 
-	SiteTraverser GetSiteTraverserForCurrentBlock();
-
-	SiteTraverser GetSiteTraverserForLocation(const Vector3D<site_t>& iLocation);
+	SiteTraverser GetSiteTraverser();
 
 	virtual site_t GetXCount();
 
