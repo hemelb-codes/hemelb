@@ -225,13 +225,13 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mInletValues
       = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
                                                    mLatDat,
-                                                   iSimConfig,
+                                                   iSimConfig->Inlets,
                                                    mSimulationState);
 
   mOutletValues
       = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::OUTLET_TYPE,
                                                    mLatDat,
-                                                   iSimConfig,
+                                                   iSimConfig->Outlets,
                                                    mSimulationState);
 
   mLbm->Initialise(lReceiveTranslator, mVisControl, mInletValues, mOutletValues);
@@ -287,9 +287,9 @@ void SimulationMaster::RunSimulation(std::string image_directory,
   mapType networkImagesCompleted;
 
   std::vector<hemelb::net::IteratedAction*> actors;
+  actors.push_back(mLbm);
   actors.push_back(mInletValues);
   actors.push_back(mOutletValues);
-  actors.push_back(mLbm);
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
   if (mEntropyTester != NULL)

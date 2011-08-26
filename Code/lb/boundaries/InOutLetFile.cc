@@ -1,5 +1,6 @@
 #include "lb/boundaries/InOutLetFile.h"
 #include "util/fileutils.h"
+#include "SimConfig.h"
 #include <fstream>
 #include <algorithm>
 
@@ -23,15 +24,28 @@ namespace hemelb
           }
       };
 
-      InOutLetFile::InOutLetFile(unsigned long iPeriod,
-                                 double iPMin,
-                                 double iPMax,
-                                 util::Vector3D iPosition,
-                                 util::Vector3D iNormal,
-                                 std::string iPFilePath) :
-        InOutLet(iPeriod, iPMin, iPMax, iPosition, iNormal), PressureFilePath(iPFilePath)
+      InOutLetFile::InOutLetFile() :
+        InOutLet()
       {
 
+      }
+
+      void InOutLetFile::DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig)
+      {
+        iSimConfig->DoIO(iParent, iIsLoading, this);
+      }
+
+      InOutLet* InOutLetFile::Clone()
+      {
+        InOutLetFile* copy = new InOutLetFile();
+        copy->UpdatePeriod = this->UpdatePeriod;
+        copy->PressureMinPhysical = this->PressureMinPhysical;
+        copy->PressureMaxPhysical = this->PressureMaxPhysical;
+        copy->Position = this->Position;
+        copy->Normal = this->Normal;
+        copy->PressureFilePath = this->PressureFilePath;
+
+        return copy;
       }
 
       InOutLetFile::~InOutLetFile()

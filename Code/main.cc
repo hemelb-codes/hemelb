@@ -142,17 +142,14 @@ int main(int argc, char *argv[])
 
   lMaster.Initialise(lSimulationConfig, lImagesPerCycle, (int) lSteeringSessionId, timings_ptr);
 
-  lMaster.RunSimulation(image_directory,
-                        snapshot_directory,
-                        lSnapshotsPerCycle,
-                        lImagesPerCycle);
+  lMaster.RunSimulation(image_directory, snapshot_directory, lSnapshotsPerCycle, lImagesPerCycle);
 
   if (lMaster.IsCurrentProcTheIOProc())
   {
     fclose(timings_ptr);
   }
 
- delete lSimulationConfig;
+  delete lSimulationConfig;
 
   return (0);
 }

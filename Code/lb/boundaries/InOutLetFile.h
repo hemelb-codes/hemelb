@@ -13,18 +13,15 @@ namespace hemelb
       class InOutLetFile : public InOutLet
       {
         public:
-          InOutLetFile(unsigned long iPeriod,
-                       double iPMin,
-                       double iPMax,
-                       util::Vector3D iPosition,
-                       util::Vector3D iNormal,
-                       std::string iPFilePath);
+          InOutLetFile();
           virtual ~InOutLetFile();
 
-          virtual void CalculateCycle(std::vector<distribn_t> &density_cycle,
-                                   const SimulationState *iState);
+          virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig);
+          virtual InOutLet* Clone();
 
-        private:
+          virtual void CalculateCycle(std::vector<distribn_t> &density_cycle,
+                                      const SimulationState *iState);
+
           std::string PressureFilePath;
       };
 

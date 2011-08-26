@@ -19,6 +19,14 @@ namespace hemelb
 
   SimConfig::~SimConfig()
   {
+    for (unsigned int i = 0; i < Inlets.size(); i++)
+    {
+      delete Inlets[i];
+    }
+    for (unsigned int i = 0; i < Outlets.size(); i++)
+    {
+      delete Outlets[i];
+    }
   }
 
   SimConfig *SimConfig::Load(const char *iPath)
@@ -191,10 +199,8 @@ namespace hemelb
     }
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent,
-                       bool iIsLoading,
-                       std::vector<InOutLet> &bResult,
-                       std::string iChildNodeName)
+  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, std::vector<
+      lb::boundaries::InOutLet*> &bResult, std::string iChildNodeName)
   {
     if (iIsLoading)
     {
@@ -202,8 +208,23 @@ namespace hemelb
 
       while (lCurrentLet != NULL)
       {
-        InOutLet lNew;
-        DoIO(lCurrentLet, iIsLoading, lNew);
+        // Determine which InOutlet to create
+        std::string PFilePath;
+        DoIO(GetChild(GetChild(iParent, iChildNodeName, iIsLoading), "pressure", iIsLoading),
+             "path",
+             iIsLoading,
+             PFilePath);
+        lb::boundaries::InOutLet *lNew;
+        if (PFilePath == "")
+        {
+          lNew = new lb::boundaries::InOutLetCosine();
+        }
+        else
+        {
+          lNew = new lb::boundaries::InOutLetFile();
+        }
+
+        lNew->DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, this);
         bResult.push_back(lNew);
         lCurrentLet = lCurrentLet->NextSiblingElement(iChildNodeName);
       }
@@ -213,32 +234,51 @@ namespace hemelb
       for (unsigned int ii = 0; ii < bResult.size(); ii++)
       {
         // NB we're good up to 99 io-lets here.
-        DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, bResult[ii]);
+        bResult[ii]->DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, this);
       }
     }
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, InOutLet &value)
+  void SimConfig::DoIO(TiXmlElement *iParent,
+                       bool iIsLoading,
+                       lb::boundaries::InOutLetCosine* const value)
   {
     TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
     TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
     TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
-    DoIO(lPressureElement, "path", iIsLoading, value.PFilePath);
-    if (value.PFilePath == "")
-    {
-      DoIO(lPressureElement, "mean", iIsLoading, value.PMean);
-      DoIO(lPressureElement, "amplitude", iIsLoading, value.PAmp);
-      DoIO(lPressureElement, "phase", iIsLoading, value.PPhase);
-    }
-    DoIO(lPressureElement, "minimum", iIsLoading, value.PMin);
-    DoIO(lPressureElement, "maximum", iIsLoading, value.PMax);
+    DoIO(lPressureElement, "mean", iIsLoading, value->PressureMeanPhysical);
+    DoIO(lPressureElement, "amplitude", iIsLoading, value->PressureAmpPhysical);
+    DoIO(lPressureElement, "phase", iIsLoading, value->Phase);
+    DoIO(lPressureElement, "minimum", iIsLoading, value->PressureMinPhysical);
+    DoIO(lPressureElement, "maximum", iIsLoading, value->PressureMaxPhysical);
 
-    DoIO(lPositionElement, iIsLoading, value.Position);
-    DoIO(lNormalElement, iIsLoading, value.Normal);
+    DoIO(lPositionElement, iIsLoading, value->Position);
+    DoIO(lNormalElement, iIsLoading, value->Normal);
+
+    value->UpdatePeriod = 0;
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, Vector &iValue)
+  void SimConfig::DoIO(TiXmlElement *iParent,
+                       bool iIsLoading,
+                       lb::boundaries::InOutLetFile* const value)
+  {
+    TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
+    TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
+    TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
+
+    DoIO(lPressureElement, "path", iIsLoading, value->PressureFilePath);
+
+    DoIO(lPressureElement, "minimum", iIsLoading, value->PressureMinPhysical);
+    DoIO(lPressureElement, "maximum", iIsLoading, value->PressureMaxPhysical);
+
+    DoIO(lPositionElement, iIsLoading, value->Position);
+    DoIO(lNormalElement, iIsLoading, value->Normal);
+
+    value->UpdatePeriod = 0;
+  }
+
+  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, util::Vector3D &iValue)
   {
     DoIO(iParent, "x", iIsLoading, iValue.x);
     DoIO(iParent, "y", iIsLoading, iValue.y);

@@ -1,4 +1,5 @@
 #include "lb/boundaries/InOutLet.h"
+#include "debug/Debugger.h"
 
 namespace hemelb
 {
@@ -7,13 +8,7 @@ namespace hemelb
     namespace boundaries
     {
 
-      InOutLet::InOutLet(unsigned long iPeriod,
-                         double iPMin,
-                         double iPMax,
-                         util::Vector3D iPosition,
-                         util::Vector3D iNormal) :
-        UpdatePeriod(iPeriod), PressureMinPhysical(iPMin), PressureMaxPhysical(iPMax),
-            Position(iPosition), Normal(iNormal)
+      InOutLet::InOutLet()
       {
 
       }
@@ -26,6 +21,7 @@ namespace hemelb
       void InOutLet::InitialiseCycle(std::vector<distribn_t> &density_cycle,
                                      const SimulationState *iState)
       {
+        // Should be done anyway
         ResetValues();
 
         if (UpdatePeriod == 0)
@@ -47,7 +43,7 @@ namespace hemelb
         {
           return;
         }
-        else
+        else if ( (iState->GetTimeStep() - 1) % UpdatePeriod == 0)
         {
           CalculateCycle(density_cycle, iState);
         }
@@ -74,16 +70,6 @@ namespace hemelb
       distribn_t InOutLet::GetDensityMax()
       {
         return DensityMaxLattice;
-      }
-
-      util::Vector3D InOutLet::GetPosition()
-      {
-        return Position;
-      }
-
-      util::Vector3D InOutLet::GetNormal()
-      {
-        return Normal;
       }
 
     }

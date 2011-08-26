@@ -23,7 +23,9 @@ namespace hemelb
 
           void Wait();
 
-          void SendAndReceive(distribn_t* density);
+          // It is up to the caller to make sure only BCproc calls send
+          void Send(distribn_t* density);
+          void Receive(distribn_t* density);
           void WaitAllComms();
           void FinishSend();
 

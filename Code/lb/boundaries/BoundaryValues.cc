@@ -14,26 +14,25 @@ namespace hemelb
 
       BoundaryValues::BoundaryValues(geometry::LatticeData::SiteType IOtype,
                                      geometry::LatticeData* iLatDat,
-                                     SimConfig* iSimConfig,
+                                     std::vector<InOutLet*> &iiolets,
                                      SimulationState* iSimState) :
-        net::IteratedAction(), mState(iSimState), mSimConfig(iSimConfig)
+        net::IteratedAction(), mState(iSimState)
       {
-        nTotIOlets = (IOtype == geometry::LatticeData::INLET_TYPE
-          ? (int) iSimConfig->Inlets.size()
-          : (int) iSimConfig->Outlets.size());
-
-        ReadParameters(IOtype);
+        nTotIOlets = (int) iiolets.size();
 
         FindBCProcRank();
 
         std::vector<int> *procsList = new std::vector<int>[nTotIOlets];
-        mComms = new BoundaryComms*[nTotIOlets];
 
         nIOlets = 0;
-        iolets = std::vector<int>(0);
+        ioletIDs.resize(0);
+        iolets.resize(0);
+        mComms.resize(0);
 
         for (int i = 0; i < nTotIOlets; i++)
         {
+          iolets.push_back(iiolets[i]->Clone());
+
           bool IOletOnThisProc = IsIOletOnThisProc(IOtype, iLatDat, i);
 
           procsList[i] = GatherProcList(IOletOnThisProc);
@@ -41,22 +40,46 @@ namespace hemelb
           if (IOletOnThisProc || IsCurrentProcTheBCProc())
           {
             nIOlets++;
-            iolets.push_back(i);
-
-            mComms[i] = new BoundaryComms(mState, procsList[i], IOletOnThisProc, BCproc);
+            ioletIDs.push_back(i);
+            mComms.push_back(new BoundaryComms(mState, procsList[i], IOletOnThisProc, BCproc));
           }
         }
 
-        InitialiseBoundaryDensities();
+        for (int i = 0; i < nTotIOlets; i++)
+        {
+          iolets[i]->ResetValues();
+        }
+
+        if (IsCurrentProcTheBCProc())
+        {
+          density_cycle = new std::vector<distribn_t>[nIOlets];
+          for (int i = 0; i < nIOlets; i++)
+          {
+            iolets[i]->InitialiseCycle(density_cycle[i], mState);
+          }
+        }
+
+        if (IsCurrentProcTheBCProc())
+        {
+          for (int i = 0; i < nIOlets; i++)
+          {
+            mComms[i]->Send(&density_cycle[i][0]);
+          }
+        }
 
         for (int i = 0; i < nIOlets; i++)
         {
-          mComms[iolets[i]]->SendAndReceive(&density[iolets[i]]);
-          mComms[iolets[i]]->WaitAllComms();
+          mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
+        }
+
+        for (int i = 0; i < nIOlets; i++)
+        {
+          mComms[i]->WaitAllComms();
         }
 
         // Clear up
         delete[] procsList;
+
       }
 
       BoundaryValues::~BoundaryValues()
@@ -64,23 +87,17 @@ namespace hemelb
         if (IsCurrentProcTheBCProc())
         {
           delete[] density_cycle;
-          delete[] density_period;
         }
-        else
-        {
-          delete[] density;
-        }
-
-        delete[] density_avg;
-        delete[] density_amp;
-        delete[] density_phs;
-        delete[] density_min;
-        delete[] density_max;
-        delete[] filename;
 
         for (int i = 0; i < nIOlets; i++)
-          delete mComms[iolets[i]];
-        delete[] mComms;
+        {
+          delete iolets[i];
+        }
+
+        for (int i = 0; i < nIOlets; i++)
+        {
+          delete mComms[i];
+        }
       }
 
       void BoundaryValues::FindBCProcRank()
@@ -99,8 +116,12 @@ namespace hemelb
                                              int iBoundaryId)
       {
         for (site_t i = 0; i < iLatDat->GetLocalFluidSiteCount(); i++)
+        {
           if (iLatDat->GetSiteType(i) == IOtype && iLatDat->GetBoundaryId(i) == iBoundaryId)
+          {
             return true;
+          }
+        }
 
         return false;
       }
@@ -158,21 +179,25 @@ namespace hemelb
       {
         if (IsCurrentProcTheBCProc())
         {
-          UpdateBoundaryDensities();
-
-          unsigned long time_step = (mState->GetTimeStep() - 1) % mState->GetTimeStepsPerCycle();
-          density = &density_cycle[time_step * nTotIOlets];
+          for (int i = 0; i < nIOlets; i++)
+          {
+            unsigned long time_step = (mState->GetTimeStep() - 1) % density_cycle[i].size();
+            iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
+            mComms[i]->Send(&density_cycle[i][time_step]);
+          }
         }
 
         for (int i = 0; i < nIOlets; i++)
-          mComms[iolets[i]]->SendAndReceive(&density[iolets[i]]);
+        {
+          mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
+        }
       }
 
       void BoundaryValues::EndIteration()
       {
         for (int i = 0; i < nIOlets; i++)
         {
-          mComms[iolets[i]]->FinishSend();
+          mComms[i]->FinishSend();
         }
       }
 
@@ -180,252 +205,51 @@ namespace hemelb
       {
         for (int i = 0; i < nIOlets; i++)
         {
-          mComms[iolets[i]]->Wait();
+          mComms[i]->Wait();
         }
-      }
-
-      void BoundaryValues::ResetPrePeriodChange()
-      {
-        for (int i = 0; i < nTotIOlets; i++)
-        {
-          if (!read_from_file[i])
-          {
-            density_avg[i] = util::UnitConverter::ConvertPressureToPhysicalUnits(density_avg[i]
-                * Cs2);
-            density_amp[i] = util::UnitConverter::ConvertPressureGradToPhysicalUnits(density_amp[i]
-                * Cs2);
-            density_min[i] = util::UnitConverter::ConvertPressureToPhysicalUnits(density_min[i]
-                * Cs2);
-            density_max[i] = util::UnitConverter::ConvertPressureToPhysicalUnits(density_max[i]
-                * Cs2);
-          }
-        }
-      }
-
-      void BoundaryValues::ResetPostPeriodChange()
-      {
-        // This should occur with the new value of time steps per cycle so need to specify
-        for (int i = 0; i < nTotIOlets; i++)
-        {
-          if (!read_from_file[i])
-          {
-            density_avg[i] = util::UnitConverter::ConvertPressureToLatticeUnits(density_avg[i])
-                / Cs2;
-            density_amp[i] = util::UnitConverter::ConvertPressureGradToLatticeUnits(density_amp[i])
-                / Cs2;
-            density_min[i] = util::UnitConverter::ConvertPressureToLatticeUnits(density_min[i])
-                / Cs2;
-            density_max[i] = util::UnitConverter::ConvertPressureToLatticeUnits(density_max[i])
-                / Cs2;
-          }
-        }
-
-        if (IsCurrentProcTheBCProc())
-        {
-          delete[] density_cycle;
-          density_cycle = new distribn_t[hemelb::util::NumericalFunctions::max<int>(1, nTotIOlets)
-              * mState->GetTimeStepsPerCycle()];
-          density = density_cycle;
-        }
-
-        InitialiseBoundaryDensities();
-
-        for (int i = 0; i < nIOlets; i++)
-          mComms[iolets[i]]->SendAndReceive(&density[iolets[i]]);
       }
 
       void BoundaryValues::Reset()
       {
-        for (int i = 0; i < nIOlets; i++)
-        {
-          mComms[iolets[i]]->WaitAllComms();
-        }
-      }
-
-      void BoundaryValues::InitialiseBoundaryDensities()
-      {
-        if (IsCurrentProcTheBCProc())
-        {
-          for (int i = 0; i < nTotIOlets; i++)
-          {
-            if (read_from_file[i])
-            {
-              InitialiseFromFile(i);
-            }
-            else
-            {
-              if (density_period[i] == 0)
-                InitialiseCosCycle(i);
-              else
-                UpdateCosCycle(i);
-            }
-          }
-        }
-      }
-
-      // Should only be called by BCproc
-      void BoundaryValues::UpdateBoundaryDensities()
-      {
         for (int i = 0; i < nTotIOlets; i++)
         {
-          if (density_period[i] != 0 && (mState->GetTimeStep() - 1) % density_period[i] == 0)
-          {
-            UpdateCosCycle(i);
-          }
-        }
-      }
-
-      void BoundaryValues::InitialiseCosCycle(int i)
-      {
-        double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
-
-        for (unsigned long time_step = 0; time_step < mState->GetTimeStepsPerCycle(); time_step++)
-        {
-          density_cycle[time_step * nTotIOlets + i] = density_avg[i] + density_amp[i] * cos(w
-              * (double) time_step + density_phs[i]);
-        }
-      }
-
-      void BoundaryValues::UpdateCosCycle(int i)
-      {
-        double w = 2.0 * PI / (double) mState->GetTimeStepsPerCycle();
-
-        for (unsigned long time_step = mState->GetTimeStep() - 1; time_step
-            < (mState->GetTimeStep() - 1) + density_period[i]; time_step++)
-        {
-          unsigned long tStep = time_step % mState->GetTimeStepsPerCycle();
-
-          density_cycle[tStep * nTotIOlets + i] = density_avg[i] + density_amp[i] * cos(w
-              * (double) tStep + density_phs[i]);
-        }
-      }
-
-      struct time_value_pair
-      {
-        public:
-          double time;
-          double value;
-
-          bool operator<(const time_value_pair other_time_value_pair) const
-          {
-            return time < other_time_value_pair.time;
-          }
-      };
-
-      void BoundaryValues::InitialiseFromFile(int i)
-      {
-        // First read in values from file into vectors
-        std::vector<time_value_pair> TimeValuePair(0);
-
-        double timeTemp, valueTemp;
-
-        util::check_file(filename[i].c_str());
-        std::ifstream datafile(filename[i].c_str());
-
-        while (datafile.good())
-        {
-          datafile >> timeTemp >> valueTemp;
-          time_value_pair tvPair;
-          tvPair.time = timeTemp;
-          tvPair.value = valueTemp;
-
-          TimeValuePair.push_back(tvPair);
+          iolets[i]->ResetValues();
         }
 
-        datafile.close();
-
-        std::sort(TimeValuePair.begin(), TimeValuePair.end());
-
-        std::vector<double> time(0);
-        std::vector<double> value(0);
-
-        for (unsigned int ii = 0; ii < TimeValuePair.size(); ii++)
-        {
-          time.push_back(TimeValuePair[ii].time);
-          value.push_back(TimeValuePair[ii].value);
-        }
-
-        // Now convert these vectors into arrays using linear interpolation
-        for (unsigned long time_step = 0; time_step < mState->GetTimeStepsPerCycle(); time_step++)
-        {
-          double point = time[0] + (double) time_step / (double) mState->GetTimeStepsPerCycle()
-              * (time[time.size() - 1] - time[0]);
-
-          double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
-
-          density_cycle[time_step * nTotIOlets + i]
-              = util::UnitConverter::ConvertPressureToLatticeUnits(pressure) / Cs2;
-        }
-      }
-
-      void BoundaryValues::ReadParameters(geometry::LatticeData::SiteType IOtype)
-      {
-        allocate();
-
-        for (int n = 0; n < nTotIOlets; n++)
-        {
-          hemelb::SimConfig::InOutLet *lIOlet = (IOtype == geometry::LatticeData::INLET_TYPE
-            ? &mSimConfig->Inlets[n]
-            : &mSimConfig->Outlets[n]);
-
-          if (IsCurrentProcTheBCProc())
-          {
-            density_period[n] = 0;
-          }
-
-          filename[n] = lIOlet->PFilePath;
-          read_from_file[n] = ! (filename[n] == "");
-
-          if (!read_from_file[n])
-          {
-            density_avg[n] = util::UnitConverter::ConvertPressureToLatticeUnits(lIOlet->PMean) / Cs2;
-            density_amp[n] = util::UnitConverter::ConvertPressureGradToLatticeUnits(lIOlet->PAmp) / Cs2;
-            density_phs[n] = lIOlet->PPhase * DEG_TO_RAD;
-          }
-          density_min[n] = util::UnitConverter::ConvertPressureToLatticeUnits(lIOlet->PMin) / Cs2;
-          density_max[n] = util::UnitConverter::ConvertPressureToLatticeUnits(lIOlet->PMax) / Cs2;
-        }
-
-      }
-
-      void BoundaryValues::allocate()
-      {
         if (IsCurrentProcTheBCProc())
         {
-          density_cycle = new distribn_t[util::NumericalFunctions::max<int>(1, nTotIOlets)
-              * mState->GetTimeStepsPerCycle()];
-          density = density_cycle;
-
-          density_period = new unsigned long[nTotIOlets];
+          for (int i = 0; i < nIOlets; i++)
+          {
+            iolets[ioletIDs[i]]->InitialiseCycle(density_cycle[i], mState);
+            mComms[i]->Send(&density_cycle[i][0]);
+          }
         }
-        else
+
+        for (int i = 0; i < nIOlets; i++)
         {
-          density = new distribn_t[nTotIOlets];
+          mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
         }
 
-        density_avg = new distribn_t[nTotIOlets];
-        density_amp = new distribn_t[nTotIOlets];
-        density_phs = new distribn_t[nTotIOlets];
-        density_min = new distribn_t[nTotIOlets];
-        density_max = new distribn_t[nTotIOlets];
-        filename = new std::string[nTotIOlets];
-        read_from_file = new bool[nTotIOlets];
+        for (int i = 0; i < nIOlets; i++)
+        {
+          mComms[i]->WaitAllComms();
+        }
       }
 
       // This assumes the program has already waited for comms to finish before
       distribn_t BoundaryValues::GetBoundaryDensity(const int index)
       {
-        return density[index];
+        return iolets[index]->density;
       }
 
       distribn_t BoundaryValues::GetDensityMin(int iBoundaryId)
       {
-        return density_min[iBoundaryId];
+        return iolets[iBoundaryId]->GetDensityMin();
       }
 
       distribn_t BoundaryValues::GetDensityMax(int iBoundaryId)
       {
-        return density_max[iBoundaryId];
+        return iolets[iBoundaryId]->GetDensityMax();
       }
 
     }
