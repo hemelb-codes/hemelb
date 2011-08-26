@@ -4,41 +4,23 @@
 #include <string.h>
 #include <vector>
 #include "xml/tinyxml.h"
+#include "util/Vector3D.h"
+#include "lb/boundaries/InOutLets.h"
 
 namespace hemelb
 {
   class SimConfig
   {
     public:
-
-      struct Vector
-      {
-          float x;
-          float y;
-          float z;
-      };
-
-      struct InOutLet
-      {
-          double PMean;
-          double PAmp;
-          double PPhase;
-          double PMin;
-          double PMax;
-          Vector Position;
-          Vector Normal;
-          std::string PFilePath;
-      };
-
       static SimConfig *Load(const char *iPath);
       ~SimConfig();
 
       void Save(std::string iPath);
 
       std::string DataFilePath;
-      std::vector<InOutLet> Inlets;
-      std::vector<InOutLet> Outlets;
-      Vector VisCentre;
+      std::vector<lb::boundaries::InOutLet*> Inlets;
+      std::vector<lb::boundaries::InOutLet*> Outlets;
+      util::Vector3D VisCentre;
       float VisLongitude;
       float VisLatitude;
       float VisZoom;
@@ -48,6 +30,8 @@ namespace hemelb
       unsigned long NumCycles;
       long StepsPerCycle;
 
+      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, lb::boundaries::InOutLetCosine* value);
+      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, lb::boundaries::InOutLetFile* value);
     private:
       SimConfig();
       void DoIO(TiXmlElement *iXmlNode, bool iIsLoading);
@@ -64,10 +48,9 @@ namespace hemelb
                 std::string &iValue);
       void DoIO(TiXmlElement *iXmlNode,
                 bool iIsLoading,
-                std::vector<InOutLet> &value,
+                std::vector<lb::boundaries::InOutLet*> &value,
                 std::string iChildNodeName);
-      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, InOutLet &value);
-      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, Vector &iValue);
+      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D &iValue);
       TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);
   };
 }

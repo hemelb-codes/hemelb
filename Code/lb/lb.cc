@@ -362,13 +362,7 @@ namespace hemelb
     // that depends on this change.
     void LBM::Reset()
     {
-      mInletValues->ResetPrePeriodChange();
-      mOutletValues->ResetPrePeriodChange();
-
       mState->DoubleTimeResolution();
-
-      mInletValues->ResetPostPeriodChange();
-      mOutletValues->ResetPostPeriodChange();
 
       RecalculateTauViscosityOmega();
 

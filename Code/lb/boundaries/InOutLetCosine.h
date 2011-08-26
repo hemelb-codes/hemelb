@@ -13,29 +13,28 @@ namespace hemelb
       class InOutLetCosine : public InOutLet
       {
         public:
-          InOutLetCosine(unsigned long iPeriod,
-                         double iPMin,
-                         double iPMax,
-                         util::Vector3D iPosition,
-                         util::Vector3D iNormal,
-                         double iPMean,
-                         double iPAmp,
-                         double iPPhase);
+          InOutLetCosine();
           virtual ~InOutLetCosine();
+
+          virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig);
+          virtual InOutLet* Clone();
 
           virtual void CalculateCycle(std::vector<distribn_t> &density_cycle,
                                       const SimulationState *iState);
 
           virtual void ResetValues();
 
-        private:
-          double PressureMeanPhysical;
-          distribn_t DensityMeanLattice;
+          distribn_t GetDensityMean();
+          distribn_t GetDensityAmp();
 
+          double PressureMeanPhysical;
           double PressureAmpPhysical;
-          distribn_t DensityAmpLattice;
 
           double Phase;
+
+        private:
+          distribn_t DensityMeanLattice;
+          distribn_t DensityAmpLattice;
 
       };
 
