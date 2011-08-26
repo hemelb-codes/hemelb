@@ -23,6 +23,9 @@ namespace hemelb
 	public:
 	  Cluster();
 
+	  unsigned int GetBlockIdFrom3DBlockLocation(
+	    Vector3D<unsigned int>iLocation) const;
+
 	  //Resizes the vectors so as to be the correct size based on the stored sizes
 	  virtual void ResizeVectors();
 
