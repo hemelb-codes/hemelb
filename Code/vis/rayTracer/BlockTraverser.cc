@@ -3,6 +3,7 @@
 
 #include "geometry/LatticeData.h"
 #include "vis/Vector3D.h"
+#include "vis/rayTracer/BlockTraverser.h"
 #include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
@@ -15,21 +16,11 @@ namespace hemelb
       (const geometry::LatticeData* iLatDat)
 	: VolumeTraverser()
       {
-	mLatticeData = iLatDat;
-		
-	//Initially no blocks have been visited
-	mBlockVisited = new bool[mLatticeData->GetBlockCount()];
-	for (site_t n = 0; 
-	     n < mLatticeData->GetBlockCount(); 
-	     n++)
-	{
-	  mBlockVisited[n] = false;
-	}		
+	mLatticeData = iLatDat;		
       }
 
       BlockTraverser::~BlockTraverser()
       {
-	delete[] mBlockVisited;
       }
       
       site_t BlockTraverser::CurrentBlockNumber()
@@ -42,22 +33,7 @@ namespace hemelb
 	return GetCurrentLocation()*mLatticeData->GetBlockSize();
       }
       		
-      bool BlockTraverser::GoToNextUnvisitedBlock()
-      {
-	assert(IsCurrentBlockVisited());
-	do 
-	{
-	  bool validBlock = GoToNextBlock();
-	  if(!validBlock)
-	  {
-	    return false;
-	  }
-	}
-	while (IsCurrentBlockVisited());
-
-	return true;
-      }
-	    
+   	    
       geometry::LatticeData::BlockData *
       BlockTraverser::GetCurrentBlockData()
       {
@@ -97,42 +73,7 @@ namespace hemelb
 	   iBlock.y,
 	   iBlock.z);
       }
-
-      bool BlockTraverser::IsBlockVisited(site_t iN)
-      {
-	return mBlockVisited[iN];
-      }
-
-      bool BlockTraverser::IsBlockVisited(Vector3D<site_t>iLocation)
-      {
-
-	return mBlockVisited[GetIndexFromLocation(iLocation)];
-      }
-	    
-
-      bool BlockTraverser::IsCurrentBlockVisited()
-      {
-	return IsBlockVisited(CurrentBlockNumber());
-      }
-
-      void BlockTraverser::MarkCurrentBlockVisited()
-      {
-	MarkBlockVisited(CurrentBlockNumber());
-      }
-	    
-      void BlockTraverser::MarkBlockVisited(site_t iBlockId)
-      {
-	mBlockVisited[iBlockId] = true;
-      }
-
-      void BlockTraverser::MarkBlockVisited(Vector3D<site_t> iLocation)
-      {
-	site_t lNumber = GetIndexFromLocation(iLocation);
-	assert(lNumber < mLatticeData->GetBlockCount());
-	MarkBlockVisited(lNumber);
-      }
-
-
+  
       bool BlockTraverser::GoToNextBlock()
       {
 	return TraverseOne();

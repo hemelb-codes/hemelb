@@ -1,6 +1,7 @@
 include $(MK)/header.mk
 
 SRCS :=	BlockTraverser.cc \
+	BlockTraverserWithVisitedBlockTracker.cc \
 	Cluster.cc \
 	ClusterWithWallNormals.cc \
 	ClusterBuilder.cc \

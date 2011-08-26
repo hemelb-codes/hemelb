@@ -4,7 +4,7 @@
 #include <stack>
 
 #include "vis/Vector3D.h"
-#include "vis/rayTracer/BlockTraverser.h"
+#include "vis/rayTracer/BlockTraverserWithVisitedBlockTracker.h"
 #include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/SiteData.h"
 
@@ -86,7 +86,8 @@ namespace hemelb
 	  (site_t iClusterVortexSiteId,
 	   SiteData_t* iDataPointer);
 
-	BlockTraverser mBlockTraverser;
+	BlockTraverserWithVisitedBlockTracker
+	  mBlockTraverser;
 
 	std::vector<Vector3D<site_t> > mClusterBlockMins;
 
