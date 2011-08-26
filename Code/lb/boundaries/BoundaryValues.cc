@@ -41,41 +41,20 @@ namespace hemelb
           {
             nIOlets++;
             ioletIDs.push_back(i);
-            mComms.push_back(new BoundaryComms(mState, procsList[i], IOletOnThisProc, BCproc));
+            if (iolets[i]->DoComms())
+            {
+              mComms.push_back(new BoundaryComms(mState, procsList[i], IOletOnThisProc, BCproc));
+            }
+            else
+            {
+              mComms.push_back(NULL);
+            }
           }
         }
 
-        for (int i = 0; i < nTotIOlets; i++)
-        {
-          iolets[i]->ResetValues();
-        }
+        density_cycle = new std::vector<distribn_t>[nIOlets];
 
-        if (IsCurrentProcTheBCProc())
-        {
-          density_cycle = new std::vector<distribn_t>[nIOlets];
-          for (int i = 0; i < nIOlets; i++)
-          {
-            iolets[i]->InitialiseCycle(density_cycle[i], mState);
-          }
-        }
-
-        if (IsCurrentProcTheBCProc())
-        {
-          for (int i = 0; i < nIOlets; i++)
-          {
-            mComms[i]->Send(&density_cycle[i][0]);
-          }
-        }
-
-        for (int i = 0; i < nIOlets; i++)
-        {
-          mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
-        }
-
-        for (int i = 0; i < nIOlets; i++)
-        {
-          mComms[i]->WaitAllComms();
-        }
+        Reset();
 
         // Clear up
         delete[] procsList;
@@ -84,10 +63,8 @@ namespace hemelb
 
       BoundaryValues::~BoundaryValues()
       {
-        if (IsCurrentProcTheBCProc())
-        {
-          delete[] density_cycle;
-        }
+
+        delete[] density_cycle;
 
         for (int i = 0; i < nIOlets; i++)
         {
@@ -96,7 +73,10 @@ namespace hemelb
 
         for (int i = 0; i < nIOlets; i++)
         {
-          delete mComms[i];
+          if (mComms[i] != NULL)
+          {
+            delete mComms[i];
+          }
         }
       }
 
@@ -182,14 +162,34 @@ namespace hemelb
           for (int i = 0; i < nIOlets; i++)
           {
             unsigned long time_step = (mState->GetTimeStep() - 1) % density_cycle[i].size();
-            iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
-            mComms[i]->Send(&density_cycle[i][time_step]);
+
+            if (iolets[ioletIDs[i]]->DoComms())
+            {
+              iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
+              mComms[i]->Send(&density_cycle[i][time_step]);
+            }
+            else
+            {
+              iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
+              iolets[ioletIDs[i]]->density = density_cycle[i][time_step];
+            }
           }
         }
-
-        for (int i = 0; i < nIOlets; i++)
+        else
         {
-          mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
+          for (int i = 0; i < nIOlets; i++)
+          {
+            if (iolets[ioletIDs[i]]->DoComms())
+            {
+              mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
+            }
+            else
+            {
+              unsigned long time_step = (mState->GetTimeStep() - 1) % density_cycle[i].size();
+              iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
+              iolets[ioletIDs[i]]->density = density_cycle[i][time_step];
+            }
+          }
         }
       }
 
@@ -197,7 +197,10 @@ namespace hemelb
       {
         for (int i = 0; i < nIOlets; i++)
         {
-          mComms[i]->FinishSend();
+          if (iolets[ioletIDs[i]]->DoComms())
+          {
+            mComms[i]->FinishSend();
+          }
         }
       }
 
@@ -205,7 +208,10 @@ namespace hemelb
       {
         for (int i = 0; i < nIOlets; i++)
         {
-          mComms[i]->Wait();
+          if (iolets[ioletIDs[i]]->DoComms())
+          {
+            mComms[i]->Wait();
+          }
         }
       }
 
@@ -216,23 +222,33 @@ namespace hemelb
           iolets[i]->ResetValues();
         }
 
-        if (IsCurrentProcTheBCProc())
+        for (int i = 0; i < nIOlets; i++)
         {
-          for (int i = 0; i < nIOlets; i++)
+          if (iolets[ioletIDs[i]]->DoComms())
+          {
+            if (IsCurrentProcTheBCProc())
+            {
+              iolets[ioletIDs[i]]->InitialiseCycle(density_cycle[i], mState);
+              mComms[i]->Send(&density_cycle[i][0]);
+            }
+            else
+            {
+              mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
+            }
+          }
+          else
           {
             iolets[ioletIDs[i]]->InitialiseCycle(density_cycle[i], mState);
-            mComms[i]->Send(&density_cycle[i][0]);
+            iolets[ioletIDs[i]]->density = density_cycle[i][0];
           }
         }
 
         for (int i = 0; i < nIOlets; i++)
         {
-          mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
-        }
-
-        for (int i = 0; i < nIOlets; i++)
-        {
-          mComms[i]->WaitAllComms();
+          if (iolets[ioletIDs[i]]->DoComms())
+          {
+            mComms[i]->WaitAllComms();
+          }
         }
       }
 

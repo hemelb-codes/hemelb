@@ -9,7 +9,7 @@ namespace hemelb
     namespace boundaries
     {
       InOutLetCosine::InOutLetCosine() :
-        InOutLet()
+        InOutLetCycle<1, false>()
       {
 
       }
@@ -22,7 +22,6 @@ namespace hemelb
       InOutLet* InOutLetCosine::Clone()
       {
         InOutLetCosine* copy = new InOutLetCosine();
-        copy->UpdatePeriod = this->UpdatePeriod;
         copy->PressureMinPhysical = this->PressureMinPhysical;
         copy->PressureMaxPhysical = this->PressureMaxPhysical;
         copy->Position = this->Position;

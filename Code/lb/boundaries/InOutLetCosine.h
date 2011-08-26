@@ -1,7 +1,7 @@
 #ifndef HEMELB_LB_BOUNDARIES_INOUTLETCOSINE_H
 #define HEMELB_LB_BOUNDARIES_INOUTLETCOSINE_H
 
-#include "lb/boundaries/InOutLet.h"
+#include "lb/boundaries/InOutLetCycle.h"
 
 namespace hemelb
 {
@@ -10,7 +10,7 @@ namespace hemelb
     namespace boundaries
     {
 
-      class InOutLetCosine : public InOutLet
+      class InOutLetCosine : public InOutLetCycle<1, false>
       {
         public:
           InOutLetCosine();
