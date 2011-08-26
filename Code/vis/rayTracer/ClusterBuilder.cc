@@ -135,7 +135,7 @@ namespace hemelb
 
 	    //Loop through all the sites on the block, to 
 	    //update the site bounds on the cluster
-	    SiteTraverser lSiteTraverser = mBlockTraverser.GetSiteTraverserForLocation(lCurrentLocation);
+	    SiteTraverser lSiteTraverser = mBlockTraverser.GetSiteTraverser();
 	    do
 	    { 
 	      //If the site is not a solid

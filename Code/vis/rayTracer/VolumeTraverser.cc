@@ -17,6 +17,13 @@ namespace hemelb
 	return mCurrentLocation;
       }
 
+      void VolumeTraverser::SetCurrentLocation(
+	const Vector3D<site_t>& iLocation)
+      {
+	mCurrentLocation = iLocation;
+	mCurrentNumber = GetIndexFromLocation(iLocation);
+      }
+
       site_t  VolumeTraverser::GetCurrentIndex()
       {
 	return mCurrentNumber;
@@ -56,6 +63,62 @@ namespace hemelb
 	  return true;
 	}
 	return false;
+      }
+
+      void VolumeTraverser::IncrementX()
+      {
+	mCurrentLocation.x++;
+	mCurrentNumber += GetZCount() * GetYCount();
+      }
+
+      void VolumeTraverser::IncrementY()
+      {
+	mCurrentLocation.y++;
+	mCurrentNumber += GetZCount();
+      }
+
+       void VolumeTraverser::IncrementZ()
+      {
+	mCurrentLocation.z++;
+	mCurrentNumber++;
+      }
+
+      void VolumeTraverser::DecrementX()
+      {
+	mCurrentLocation.x--;
+	mCurrentNumber -= GetZCount() * GetYCount();
+      }
+
+      void VolumeTraverser::DecrementY()
+      {
+	mCurrentLocation.y--;
+	mCurrentNumber -= GetZCount();
+      }
+
+       void VolumeTraverser::DecrementZ()
+      {
+	mCurrentLocation.z--;
+	mCurrentNumber--;
+      }
+      
+      bool VolumeTraverser::CurrentLocationValid()
+      {
+	if (GetCurrentIndex() < 0)
+	{
+	  return false;
+	}
+
+	if (mCurrentLocation.x < 0 ||
+	    mCurrentLocation.y < 0 ||
+	    mCurrentLocation.z < 0 ||
+	    mCurrentLocation.x >= GetXCount() ||
+	    mCurrentLocation.y >= GetYCount() ||
+	    mCurrentLocation.z >= GetZCount())
+	{
+	  return false;
+	}
+	
+	return true;
       }
     }
   }
