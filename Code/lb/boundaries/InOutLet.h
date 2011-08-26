@@ -27,12 +27,13 @@ namespace hemelb
 
           // Should be called before simulation starts running (including after a reset)
           // Resizes density_cycle and calls CalculateCycle
-          void InitialiseCycle(std::vector<distribn_t> &density_cycle,
-                               const SimulationState *iState);
-          void UpdateCycle(std::vector<distribn_t> &density_cycle, const SimulationState *iState);
-
+          virtual void InitialiseCycle(std::vector<distribn_t> &density_cycle,
+                                       const SimulationState *iState) = 0;
+          virtual void UpdateCycle(std::vector<distribn_t> &density_cycle,
+                                   const SimulationState *iState) = 0;
           virtual void CalculateCycle(std::vector<distribn_t> &density_cycle,
                                       const SimulationState *iState) = 0;
+          virtual bool DoComms() = 0;
 
           virtual void ResetValues();
           void ResetCommonLatticeValues();
