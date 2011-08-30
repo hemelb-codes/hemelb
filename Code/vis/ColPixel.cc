@@ -55,7 +55,7 @@ namespace hemelb
     {
       i.isRt = true;
 
-      t = tIn;
+      LengthBeforeRayFirstCluster = tIn;
       dt = dtIn;
 
       density = densityIn;
@@ -100,9 +100,9 @@ namespace hemelb
 
         dt += fromPixel->dt;
 
-        if (fromPixel->t < t)
+        if (fromPixel->LengthBeforeRayFirstCluster < LengthBeforeRayFirstCluster)
         {
-          t = fromPixel->t;
+          LengthBeforeRayFirstCluster = fromPixel->LengthBeforeRayFirstCluster;
           density = fromPixel->density;
           stress = fromPixel->stress;
         }
@@ -122,7 +122,7 @@ namespace hemelb
           stress_b = fromPixel->stress_b;
         }
 
-        t = fromPixel->t;
+        LengthBeforeRayFirstCluster = fromPixel->LengthBeforeRayFirstCluster;
         dt = fromPixel->dt;
         density = fromPixel->density;
         stress = fromPixel->stress;

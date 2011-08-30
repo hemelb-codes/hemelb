@@ -75,7 +75,7 @@ namespace hemelb
 			    const Vector3D<float>& block_x,
 			    const SiteData_t* iSiteData,
 			    float t,
-			    Ray& bCurrentRay);
+			    Ray& ioRay);
 
 	Vector3D<float> CalculateRayUnitsBeforeNextVoxel
 	  (const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
@@ -88,7 +88,7 @@ namespace hemelb
 
 	void TraverseBlocks(const Cluster& iCluster,
 			    const Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
-			    Ray& iRay);
+			    Ray& ioRay);
 	
 	Vector3D<unsigned int> GetBlockCoordinatesOfFirstIntersectionBlock(
 	const Cluster& iCluster,
@@ -99,11 +99,11 @@ namespace hemelb
 	   const Ray& iRay);
 	
 	void UpdateRayData(const SiteData_t* iSiteData,
-			   float ray_t,
-			   float ray_segment,
-			   Ray* bCurrentRay);
+			   float iLengthFromClusterFirstIntersectionToVoxel,
+			   float iRayLengthInVoxel,
+			   Ray& ioRay);
 
-	void UpdateColour(float dt, const float palette[3], float col[3]);
+	void UpdateColour(float iDt, const float palette[3], float iCol[3]);
 
 	const Viewpoint& mViewpoint;
 
@@ -128,9 +128,7 @@ namespace hemelb
 	//locations respectively
 	//(Formerly AABB)
 	Vector3D<float> mViewpointCentreToMaxSite;
-	Vector3D<float> mViewpointCentreToMinSite;
-
-	
+	Vector3D<float> mViewpointCentreToMinSite;	
       };
     }
   }

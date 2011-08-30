@@ -28,7 +28,7 @@ namespace hemelb
 	StressColour[2] = 0.0F;
 
 	Length = 0.0F;
-	MinT = std::numeric_limits<float>::max();
+	LengthToFirstRayIntersection = std::numeric_limits<float>::max();
 	Density = -1.0F;
       }
       
