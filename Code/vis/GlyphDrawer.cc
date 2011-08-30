@@ -50,9 +50,9 @@ namespace hemelb
             // Create a glyph at the desired location
             Glyph lGlyph;
 
-            lGlyph.x = float (i + site_i) - 0.5F * float (mLatDat->GetXSiteCount());
-            lGlyph.y = float (j + site_j) - 0.5F * float (mLatDat->GetYSiteCount());
-            lGlyph.z = float (k + site_k) - 0.5F * float (mLatDat->GetZSiteCount());
+            lGlyph.x = float(i + site_i) - 0.5F * float(mLatDat->GetXSiteCount());
+            lGlyph.y = float(j + site_j) - 0.5F * float(mLatDat->GetYSiteCount());
+            lGlyph.z = float(k + site_k) - 0.5F * float(mLatDat->GetZSiteCount());
 
             lGlyph.f = mLatDat->GetFOld(map_block_p->site_data[siteIdOnBlock] * D3Q15::NUMVECTORS);
 

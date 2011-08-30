@@ -46,6 +46,24 @@ namespace hemelb
 			 const hemelb::geometry::LatticeData& iLatticeData);
 	  
 	void RenderCluster(const Cluster& iCluster);
+
+      protected:
+	void GetRayUnitsFromViewpointToCluster
+	  (const Ray & iRay, float & oMaximumRayUnits,
+	   float & oMinimumRayUnits);
+
+	void CastRay(const Cluster& iCluster,
+		     Ray& iRay, 
+		     float iMaximumRayUnits, 
+		     float iMinimumRayUnits);
+
+	const Viewpoint& mViewpoint;
+
+	Screen& mScreen;
+
+	const DomainStats& mDomainStats;
+
+	const VisSettings& mVisSettings;
       
       private:
 	void CalculateSubImage(const Cluster& iCluster);
@@ -65,16 +83,13 @@ namespace hemelb
 
 	void CastRayForPixel(const Cluster& iCluster,
 			     const XYCoordinates<int>& iPixel,
-			     Vector3D<float> iRayDirection);
+			     const Vector3D<float>& iRayDirection);
 
-	void GetRayUnitsFromViewpointToCluster
-	  (const Ray & iRay, float & oMaximumRayUnits,
-	   float & oMinimumRayUnits);
-
-	void TraverseVoxels(const Vector3D<float>& block_min,
-			    const Vector3D<float>& block_x,
-			    const SiteData_t* iSiteData,
-			    float t,
+	void TraverseVoxels(const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
+			    const Vector3D<float>& iLocationInBlock,
+			    const Cluster& iCluster,
+			    site_t iBlockNumber,
+			    float iRayLengthTraversedSoFar,
 			    Ray& ioRay);
 
 	Vector3D<float> CalculateRayUnitsBeforeNextVoxel
@@ -98,20 +113,14 @@ namespace hemelb
 	  (const Vector3D<float>& lFirstIntersectionToBlockLowerSite,
 	   const Ray& iRay);
 	
-	void UpdateRayData(const SiteData_t* iSiteData,
-			   float iLengthFromClusterFirstIntersectionToVoxel,
-			   float iRayLengthInVoxel,
-			   Ray& ioRay);
+	virtual void UpdateRayData(const Cluster& iCluster,
+				   site_t iBlockNumber,
+				   site_t iSiteNumber,
+				   float iLengthFromClusterFirstIntersectionToVoxel,
+				   float iRayLengthInVoxel,
+				   Ray& ioRay);
 
 	void UpdateColour(float iDt, const float palette[3], float iCol[3]);
-
-	const Viewpoint& mViewpoint;
-
-	Screen& mScreen;
-
-	const DomainStats& mDomainStats;
-
-	const VisSettings& mVisSettings;
 
 	const hemelb::geometry::LatticeData& mLatticeData;
 

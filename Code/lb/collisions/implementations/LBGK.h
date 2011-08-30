@@ -16,29 +16,33 @@ namespace hemelb
         {
 
           public:
-            static void getSiteValues(const distribn_t* f,
-                                      distribn_t &density,
-                                      distribn_t &v_x,
-                                      distribn_t &v_y,
-                                      distribn_t &v_z,
-                                      distribn_t* f_eq,
-                                      const site_t index);
+            LBGK(const geometry::LatticeData* iLatDat, const lb::LbmParameters* iLbmParams);
 
-            static void getBoundarySiteValues(const distribn_t* f,
-                                              const distribn_t &density,
-                                              const distribn_t &v_x,
-                                              const distribn_t &v_y,
-                                              const distribn_t &v_z,
-                                              distribn_t* f_eq,
-                                              const site_t index);
+            ~LBGK();
 
-            static void doPostCalculations(const distribn_t* f,
-                                           const geometry::LatticeData* bLatDat,
-                                           const site_t inde);
+            void getSiteValues(const distribn_t* f,
+                               distribn_t &density,
+                               distribn_t &v_x,
+                               distribn_t &v_y,
+                               distribn_t &v_z,
+                               distribn_t* f_eq,
+                               const site_t index);
 
-            static distribn_t getOperatorElement(distribn_t &f_i,
-                                                 distribn_t &f_neq_i,
-                                                 const LbmParameters* iLbmParams);
+            void getBoundarySiteValues(const distribn_t* f,
+                                       const distribn_t &density,
+                                       const distribn_t &v_x,
+                                       const distribn_t &v_y,
+                                       const distribn_t &v_z,
+                                       distribn_t* f_eq,
+                                       const site_t index);
+
+            distribn_t getOperatorElement(distribn_t &f_i,
+                                          distribn_t &f_neq_i);
+
+            void Reset(const geometry::LatticeData* iLatDat,const lb::LbmParameters* iLbmParams);
+
+          private:
+            double Omega;
 
         };
 

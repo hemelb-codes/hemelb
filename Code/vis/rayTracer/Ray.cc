@@ -10,10 +10,11 @@ namespace hemelb
   {
     namespace raytracer 
     {
-      Ray::Ray(Vector3D<float> iDirection) :
-	mDirection(iDirection)
-	//Caution: ensure normalised 
+      Ray::Ray(Vector3D<float> iDirection)
       {
+	iDirection.Normalise();
+	mDirection = iDirection;
+	
 	mInverseDirection = Vector3D<float>
 	  ( 1.0F/iDirection.x,
 	    1.0F/iDirection.y,

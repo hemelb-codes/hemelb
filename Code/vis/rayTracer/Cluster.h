@@ -34,7 +34,10 @@ namespace hemelb
 	  
 	  //Get SiteData arary for site
 	  const SiteData_t* GetSiteData(site_t iBlockNumber) const;
-	  
+
+	  const SiteData_t* GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const;
+      
+
 	  //The min and maximum site location, in site units 
 	  //relative to the centre of the lattice
 	  Vector3D<float> minSite;

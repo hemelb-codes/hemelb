@@ -7,10 +7,12 @@ SRCS :=	BlockTraverser.cc \
 	ClusterBuilder.cc \
 	ClusterBuilderWithWallNormals.cc \
 	ClusterRayTracer.cc \
+	ClusterRayTracerEnhanced.cc \
 	ClusterTraverser.cc \
 	Ray.cc \
+	RayEnhanced.cc \
 	RayTracer.cc \
-	RayTracerWithLighting.cc \
+	RayTracerEnhanced.cc \
 	VolumeTraverser.cc \
 	SiteTraverser.cc \
 

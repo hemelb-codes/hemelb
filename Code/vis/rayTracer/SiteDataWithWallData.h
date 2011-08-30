@@ -1,6 +1,8 @@
 #ifndef HEMELB_VIS_SITEDATAWITHWALLDATA_H
 #define HEMELB_VIS_SITEDATAWITHWALLDATA_H
 
+#include "vis/rayTracer/SiteData.h";
+
 namespace hemelb
 {
   namespace vis
@@ -8,7 +10,7 @@ namespace hemelb
     namespace raytracer 
     {
       //Stores the data about an individual voxel 
-      struct SiteDataWithWallData : public SiteDate
+      struct SiteDataWithWallData : public SiteData
       {
       public:
 	double* WallData;

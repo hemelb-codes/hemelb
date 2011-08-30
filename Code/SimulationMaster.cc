@@ -75,6 +75,16 @@ SimulationMaster::~SimulationMaster()
     delete mLbm;
   }
 
+  if (mInletValues != NULL)
+  {
+    delete mInletValues;
+  }
+
+  if (mOutletValues != NULL)
+  {
+    delete mOutletValues;
+  }
+
   if (network != NULL)
   {
     delete network;
@@ -102,6 +112,11 @@ SimulationMaster::~SimulationMaster()
   if (mSimulationState != NULL)
   {
     delete mSimulationState;
+  }
+
+  if (mUnits != NULL)
+  {
+    delete mUnits;
   }
 
 }
@@ -209,14 +224,31 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                             network);
   }
 
-  mLbm->Initialise(lReceiveTranslator, mVisControl);
+  mUnits = new hemelb::util::UnitConverter(mLbm->GetLbmParams(), mSimulationState, mLatDat);
+
+  mInletValues
+      = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
+                                                   mLatDat,
+                                                   iSimConfig,
+                                                   mSimulationState,
+                                                   mUnits);
+
+  mOutletValues
+      = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::OUTLET_TYPE,
+                                                   mLatDat,
+                                                   iSimConfig,
+                                                   mSimulationState,
+                                                   mUnits);
+
+  mLbm->Initialise(lReceiveTranslator, mVisControl, mInletValues, mOutletValues, mUnits);
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         mVisControl,
                                                         mLbm,
                                                         &mNet,
                                                         mSimulationState,
-							*iSimConfig);
+                                                        *iSimConfig,
+                                                        mUnits);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();
@@ -262,6 +294,8 @@ void SimulationMaster::RunSimulation(std::string image_directory,
   mapType networkImagesCompleted;
 
   std::vector<hemelb::net::IteratedAction*> actors;
+  actors.push_back(mInletValues);
+  actors.push_back(mOutletValues);
   actors.push_back(mLbm);
   actors.push_back(steeringCpt);
   actors.push_back(mStabilityTester);
@@ -321,8 +355,6 @@ void SimulationMaster::RunSimulation(std::string image_directory,
                                                                           write_snapshot_image,
                                                                           mSimulationState->GetDoRendering());
     }
-
-    mLbm->UpdateBoundaryDensities(mSimulationState->GetTimeStep());
 
     // Cycle.
 
@@ -521,7 +553,7 @@ void SimulationMaster::RunSimulation(std::string image_directory,
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
                                                                           mSimulationState->GetCycleId());
 
-      fflush(NULL);
+      fflush( NULL);
     }
   }
 
