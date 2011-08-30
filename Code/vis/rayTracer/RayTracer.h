@@ -50,7 +50,7 @@ namespace hemelb
 				distribn_t stress);
 
 	// Render the current state into an image.
-	void Render();
+	virtual void Render();
 
       protected:
 	ClusterBuilder* mClusterBuilder;

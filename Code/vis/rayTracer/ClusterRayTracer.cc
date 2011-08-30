@@ -209,11 +209,8 @@ namespace hemelb
 
       void ClusterRayTracer::CastRayForPixel(const Cluster& iCluster, 
 					     const XYCoordinates<int>& iPixel,
-					     Vector3D<float> iRayDirection)
+					     const Vector3D<float>& iRayDirection)
       {
-	//This changes the vector hence the vector must be a copy
-	iRayDirection.Normalise();
-
 	Ray lRay(iRayDirection);
 
 	//These tell us how many ray units get us into the cluster
@@ -222,37 +219,44 @@ namespace hemelb
 	float lMinimumRayUnits;
 	GetRayUnitsFromViewpointToCluster
 	  (lRay, lMaximumRayUnits, lMinimumRayUnits);
+	
+	CastRay(iCluster, lRay, lMaximumRayUnits, lMinimumRayUnits);
 
+	//Make sure the ray hasn't reached infinity
+	if (lRay.LengthToFirstRayIntersection != std::numeric_limits<float>::max())
+	{
+	  ColPixel col_pixel(iPixel.x, iPixel.y, lRay.LengthToFirstRayIntersection + lMinimumRayUnits, lRay.Length, 
+			     (lRay.Density - (float) mDomainStats.density_threshold_min)
+			     * (float) mDomainStats.density_threshold_minmax_inv, lRay.Stress
+			     != std::numeric_limits<float>::max()
+			     ? lRay.Stress * (float) mDomainStats.stress_threshold_max_inv
+			     : std::numeric_limits<float>::max(), lRay.VelocityColour, lRay.StressColour);
+
+	  mScreen.AddPixel(&col_pixel, &mVisSettings);
+	}
+      }
+
+      void ClusterRayTracer::CastRay(const Cluster& iCluster,
+				     Ray& iRay, 
+				     float iMaximumRayUnits, 
+				     float iMinimumRayUnits)
+      {
 	//It's possible for the ray to totally miss the cluster
 	//This is because the sub-image is square while the cluster
 	// projection won't be in most circumstances
-	if(lMaximumRayUnits < lMinimumRayUnits)
+	if(iMaximumRayUnits < iMinimumRayUnits)
 	{
 	  return;
 	}
 
 	Vector3D <float> lLowerSiteToFirstRayClusterIntersection = 
-	  lMinimumRayUnits * lRay.GetDirection() -
+	  iMinimumRayUnits * iRay.GetDirection() -
 	  mLowerSiteCordinatesOfClusterRelativeToViewpoint;
 	
-	TraverseBlocks(iCluster, lLowerSiteToFirstRayClusterIntersection, lRay);
+	TraverseBlocks(iCluster, lLowerSiteToFirstRayClusterIntersection, iRay);
 	
-	//If the Ray has reached infinity
-	if (lRay.LengthToFirstRayIntersection == std::numeric_limits<float>::max())
-	{
-	  return;
-	}
-
-	ColPixel col_pixel(iPixel.x, iPixel.y, lRay.LengthToFirstRayIntersection + lMinimumRayUnits, lRay.Length, 
-			   (lRay.Density - (float) mDomainStats.density_threshold_min)
-			   * (float) mDomainStats.density_threshold_minmax_inv, lRay.Stress
-			   != std::numeric_limits<float>::max()
-			   ? lRay.Stress * (float) mDomainStats.stress_threshold_max_inv
-			   : std::numeric_limits<float>::max(), lRay.VelocityColour, lRay.StressColour);
-
-	mScreen.AddPixel(&col_pixel, &mVisSettings);
       }
-
+    
 
       void ClusterRayTracer::GetRayUnitsFromViewpointToCluster
       (const Ray & iRay, 
@@ -329,7 +333,8 @@ namespace hemelb
       void ClusterRayTracer::TraverseVoxels(
 	const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
 	const Vector3D<float>& iLocationInBlock,
-	const SiteData_t* iSiteData,
+	const Cluster& iCluster,
+	site_t iBlockNumber,
 	float iRayLengthTraversedSoFar,
 	Ray& ioRay)
       {
@@ -377,7 +382,9 @@ namespace hemelb
 	  // there is little sence in updating ray data
 	  if(lMinRayUnitsBeforeNextVoxel - iRayLengthTraversedSoFar > 0.001F)
 	  {
-	    UpdateRayData(&iSiteData[lSiteTraverser.GetCurrentIndex()],
+	    UpdateRayData(iCluster,
+			  iBlockNumber,
+			  lSiteTraverser.GetCurrentIndex(),
 			  iRayLengthTraversedSoFar,
 			  lMinRayUnitsBeforeNextVoxel - iRayLengthTraversedSoFar,
 			  ioRay);
@@ -603,8 +610,8 @@ namespace hemelb
 
 	    TraverseVoxels(lFirstIntersectionToBlockLowerSite,
 			   lSiteLocationWithinBlock,
-			   iCluster.GetSiteData
-			   (lClusterTraverser.GetCurrentIndex()),
+			   iCluster,
+			   lClusterTraverser.GetCurrentIndex(),
 			   lSiteUnitsTraversed,
 			   ioRay);
 	  }
@@ -739,12 +746,17 @@ namespace hemelb
       }
 
 
-      void ClusterRayTracer::UpdateRayData(const SiteData_t* iSiteData,
-				    float iLengthFromClusterFirstIntersectionToVoxel,
-				    float iRayLengthInVoxel,
-				    Ray& ioRay)
+      void ClusterRayTracer::UpdateRayData
+      (const Cluster& iCluster,
+       site_t iBlockNumber,
+       site_t iSiteNumber,
+       float iLengthFromClusterFirstIntersectionToVoxel,
+       float iRayLengthInVoxel,
+       Ray& ioRay)
       {
-	if (iSiteData->Density < 0.0F)
+	const SiteData_t* lSiteData = iCluster.GetSiteData(iBlockNumber, iSiteNumber);
+	
+	if (lSiteData->Density < 0.0F)
 	{
 	  return; // solid voxel
 	}
@@ -752,7 +764,7 @@ namespace hemelb
 	float lPalette[3];
 
 	// update the volume rendering of the velocity flow field
-	ColPixel::PickColour(iSiteData->Velocity * (float) mDomainStats.velocity_threshold_max_inv,
+	ColPixel::PickColour(lSiteData->Velocity * (float) mDomainStats.velocity_threshold_max_inv,
 			     lPalette);
 
 	UpdateColour(iRayLengthInVoxel, lPalette, ioRay.VelocityColour);
@@ -760,7 +772,7 @@ namespace hemelb
 	if (mVisSettings.mStressType != lb::ShearStress)
 	{
 	  // update the volume rendering of the von Mises stress flow field
-	  float lScaledStress = iSiteData->Stress * (float) mDomainStats.stress_threshold_max_inv;
+	  float lScaledStress = lSiteData->Stress * (float) mDomainStats.stress_threshold_max_inv;
 
 	  ColPixel::PickColour(lScaledStress, lPalette);
 
@@ -774,10 +786,10 @@ namespace hemelb
 	  ioRay.LengthToFirstRayIntersection = iLengthFromClusterFirstIntersectionToVoxel;
 
 	  // keep track of the density nearest to the view point
-	  ioRay.Density = iSiteData->Density;
+	  ioRay.Density = lSiteData->Density;
 	  
 	  // keep track of the stress nearest to the view point
-	  ioRay.Stress = iSiteData->Stress;		
+	  ioRay.Stress = lSiteData->Stress;		
 	}
       }
 

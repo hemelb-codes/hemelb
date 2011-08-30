@@ -74,6 +74,14 @@ namespace hemelb
 	y*=lInverseMagnitude;
 	z*=lInverseMagnitude;
       }
+
+      //Dot produt
+      T DotProduct(Vector3D<T> iVector)
+      {
+	return (x*iVector.x +
+		y*iVector.y +
+		z*iVector.z);
+      }
       
 
       //Vector subraction

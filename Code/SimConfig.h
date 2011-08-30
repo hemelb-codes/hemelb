@@ -23,8 +23,11 @@ namespace hemelb
           double PMean;
           double PAmp;
           double PPhase;
+          double PMin;
+          double PMax;
           Vector Position;
           Vector Normal;
+          std::string PFilePath;
       };
 
       static SimConfig *Load(const char *iPath);

@@ -24,8 +24,8 @@ namespace hemelb
         void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
 
         void RenderLine(const XYCoordinates<float>& endPoint1,
-                            const XYCoordinates<float>& endPoint2,
-			const VisSettings* visSettings);
+                        const XYCoordinates<float>& endPoint2,
+			            const VisSettings* visSettings);
 
         void Set(float maxX,
                  float maxY,

@@ -2,7 +2,6 @@
 #define HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_ELBM_H
 
 #include "lb/collisions/CollisionOperator.h"
-#include <cstdlib>
 
 namespace hemelb
 {
@@ -17,36 +16,38 @@ namespace hemelb
         {
 
           public:
-            static void createAlphaArray(const size_t size);
+            ELBM(const geometry::LatticeData* iLatDat, const lb::LbmParameters* iLbmParams);
 
-            static void setTau(double* t);
+            ~ELBM();
 
-            static void getSiteValues(const distribn_t* f,
-                                      distribn_t &density,
-                                      distribn_t &v_x,
-                                      distribn_t &v_y,
-                                      distribn_t &v_z,
-                                      distribn_t* f_eq,
-                                      const site_t index);
+            void getSiteValues(const distribn_t* f,
+                               distribn_t &density,
+                               distribn_t &v_x,
+                               distribn_t &v_y,
+                               distribn_t &v_z,
+                               distribn_t* f_eq,
+                               const site_t index);
 
             // WARNING: DOES NOT CALCULATE ALPHA, BECAUSE NON OF THE CURRENT BCS USE IT
-            static void getBoundarySiteValues(const distribn_t* f,
-                                              const distribn_t &density,
-                                              const distribn_t &v_x,
-                                              const distribn_t &v_y,
-                                              const distribn_t &v_z,
-                                              distribn_t* f_eq,
-                                              const site_t index);
+            void getBoundarySiteValues(const distribn_t* f,
+                                       const distribn_t &density,
+                                       const distribn_t &v_x,
+                                       const distribn_t &v_y,
+                                       const distribn_t &v_z,
+                                       distribn_t* f_eq,
+                                       const site_t index);
 
-            static distribn_t getOperatorElement(distribn_t &f_i,
-                                                 distribn_t &f_neq_i,
-                                                 const LbmParameters* iLbmParams);
+            distribn_t getOperatorElement(distribn_t &f_i, distribn_t &f_neq_i);
+
+            void Reset(const geometry::LatticeData* iLatDat, const lb::LbmParameters* iLbmParams);
 
           private:
-            static double* tau;
-            static double* alpha;
-            static size_t currentAlphaIndex;
-            static double getAlpha(const distribn_t* lFOld,const  distribn_t* lFEq, double prevAlpha);
+            double Beta;
+            double TwoTau;
+            double* alpha;
+            size_t currentAlphaIndex;
+
+            double getAlpha(const distribn_t* lFOld, const distribn_t* lFEq, double prevAlpha);
         };
 
       }

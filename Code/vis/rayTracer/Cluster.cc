@@ -31,8 +31,10 @@ namespace hemelb
 	return &(SiteData[iBlockNumber][0]);
       }
 
-
-       
+      const SiteData_t* Cluster::GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const
+      {
+	return &(SiteData[iBlockNumber][iSiteNumber]);
+      }
     }
   }
 }
