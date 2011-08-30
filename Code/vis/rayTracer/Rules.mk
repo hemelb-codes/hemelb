@@ -7,6 +7,7 @@ SRCS :=	BlockTraverser.cc \
 	ClusterBuilder.cc \
 	ClusterBuilderWithWallNormals.cc \
 	ClusterRayTracer.cc \
+	ClusterTraverser.cc \
 	Ray.cc \
 	RayTracer.cc \
 	RayTracerWithLighting.cc \
