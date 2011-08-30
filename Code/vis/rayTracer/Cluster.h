@@ -29,6 +29,12 @@ namespace hemelb
 	  //Resizes the vectors so as to be the correct size based on the stored sizes
 	  virtual void ResizeVectors();
 
+	  //Returns true if there is site data for a given block
+	  bool BlockContainsSites(site_t iBlockNumber) const;
+	  
+	  //Get SiteData arary for site
+	  const SiteData_t* GetSiteData(site_t iBlockNumber) const;
+	  
 	  //The min and maximum site location, in site units 
 	  //relative to the centre of the lattice
 	  Vector3D<float> minSite;
