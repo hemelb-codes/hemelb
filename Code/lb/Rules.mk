@@ -2,15 +2,12 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbLb.$(LIBEXT)
 
-SUBDIRS := collisions streamers
-
 $(TARGETS)_DEPS = lb.o \
                   io.o \
                   HFunction.o \
                   StabilityTester.o \
                   EntropyTester.o \
-                  SimulationState.o \
-                  $(foreach sd,$(SUBDIRS_$(d)),$(call subtree_tgts,$(sd)))
+                  SimulationState.o
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
