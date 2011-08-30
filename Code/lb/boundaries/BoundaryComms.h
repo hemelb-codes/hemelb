@@ -40,8 +40,8 @@ namespace hemelb
           int nProcs;
           std::vector<int> procsList;
 
-          MPI_Request* sendRequest;
-          MPI_Status* sendStatus;
+          MPI_Request *sendRequest;
+          MPI_Status *sendStatus;
 
           MPI_Request receiveRequest;
           MPI_Status receiveStatus;
