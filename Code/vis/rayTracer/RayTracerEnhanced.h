@@ -12,6 +12,12 @@ namespace hemelb
       class RayTracerEnhanced : public RayTracer
       {
       public:
+	RayTracerEnhanced(const geometry::LatticeData* iLatDat,
+			  const DomainStats* iDomainStats,
+			  Screen* iScreen,
+			  Viewpoint* iViewpoint,
+			  VisSettings* iVisSettings);
+
 	virtual void BuildClusters();
 
 	virtual void Render();
