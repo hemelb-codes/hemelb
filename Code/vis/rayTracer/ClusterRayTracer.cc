@@ -143,7 +143,6 @@ namespace hemelb
 	    mSubImageLowerLeftPixelCoordinates.y >= mScreen.GetPixelsY() ||
 	    mSubImageUpperRightPixelCoordinates.y < 0)
 	{
-	   std::cout << "Off screen" << std::endl;
 	   return true;
 	}
 	else
@@ -235,15 +234,16 @@ namespace hemelb
 	Vector3D <float> lLowerSiteToFirstRayClusterIntersection = 
 	  lMinimumRayUnits * lRay.GetDirection() -
 	  mLowerSiteCordinatesOfClusterRelativeToViewpoint;
-
+	
 	TraverseBlocks(iCluster, lLowerSiteToFirstRayClusterIntersection, lRay);
-
-	if (lRay.MinT == std::numeric_limits<float>::max())
+	
+	//If the Ray has reached infinity
+	if (lRay.LengthToFirstRayIntersection == std::numeric_limits<float>::max())
 	{
 	  return;
 	}
 
-	ColPixel col_pixel(iPixel.x, iPixel.y, lRay.MinT + lMinimumRayUnits, lRay.Length, 
+	ColPixel col_pixel(iPixel.x, iPixel.y, lRay.LengthToFirstRayIntersection + lMinimumRayUnits, lRay.Length, 
 			   (lRay.Density - (float) mDomainStats.density_threshold_min)
 			   * (float) mDomainStats.density_threshold_minmax_inv, lRay.Stress
 			   != std::numeric_limits<float>::max()
@@ -331,7 +331,7 @@ namespace hemelb
 	const Vector3D<float>& iLocationInBlock,
 	const SiteData_t* iSiteData,
 	float iRayLengthTraversedSoFar,
-	Ray& iRay)
+	Ray& ioRay)
       {
 	//Work out which site we're currently in
 	Vector3D<site_t> lTruncatedLocationInBlock = RoundToNearestVoxel(iLocationInBlock);
@@ -345,7 +345,7 @@ namespace hemelb
 	Vector3D<float> lRayUnitsBeforeNextVoxel =
 	  CalculateRayUnitsBeforeNextVoxel(iFirstRayClusterIntersectionToBlockLowerSite, 
 					   Vector3D<float>(lTruncatedLocationInBlock),
-					   iRay);
+					   ioRay);
 
 	while(lSiteTraverser.CurrentLocationValid())
 	{
@@ -380,8 +380,8 @@ namespace hemelb
 	    UpdateRayData(&iSiteData[lSiteTraverser.GetCurrentIndex()],
 			  iRayLengthTraversedSoFar,
 			  lMinRayUnitsBeforeNextVoxel - iRayLengthTraversedSoFar,
-			  &iRay);
-	    }
+			  ioRay);
+	  }
 	  
 	  //Update ray length traversed so far
 	  iRayLengthTraversedSoFar = lMinRayUnitsBeforeNextVoxel;
@@ -391,42 +391,42 @@ namespace hemelb
 	  switch (lDirectionOfLeastTravel)
 	  {
 	  case Direction::X:
-	    if (iRay.XIncreasing())
+	    if (ioRay.XIncreasing())
 	    {
 	      lSiteTraverser.IncrementX();
-	      lRayUnitsBeforeNextVoxel.x += iRay.GetInverseDirection().x;
+	      lRayUnitsBeforeNextVoxel.x += ioRay.GetInverseDirection().x;
 	    }
 	    else
 	    {
 	      lSiteTraverser.DecrementX();
-	      lRayUnitsBeforeNextVoxel.x -= iRay.GetInverseDirection().x;
+	      lRayUnitsBeforeNextVoxel.x -= ioRay.GetInverseDirection().x;
 	    }
 
 	    break;
 
 	  case Direction::Y:
-	    if (iRay.YIncreasing())
+	    if (ioRay.YIncreasing())
 	    {
 	      lSiteTraverser.IncrementY();
-	      lRayUnitsBeforeNextVoxel.y += iRay.GetInverseDirection().y;
+	      lRayUnitsBeforeNextVoxel.y += ioRay.GetInverseDirection().y;
 	    }
 	    else
 	    {
 	      lSiteTraverser.DecrementY();
-	      lRayUnitsBeforeNextVoxel.y -= iRay.GetInverseDirection().y;
+	      lRayUnitsBeforeNextVoxel.y -= ioRay.GetInverseDirection().y;
 	    }
 	    break;
 	  
 	  case Direction::Z:
-	    if (iRay.ZIncreasing())
+	    if (ioRay.ZIncreasing())
 	    {
 	      lSiteTraverser.IncrementZ();
-	      lRayUnitsBeforeNextVoxel.z += iRay.GetInverseDirection().z;
+	      lRayUnitsBeforeNextVoxel.z += ioRay.GetInverseDirection().z;
 	    }
 	    else
 	    {
 	      lSiteTraverser.DecrementZ();
-	      lRayUnitsBeforeNextVoxel.z -= iRay.GetInverseDirection().z;
+	      lRayUnitsBeforeNextVoxel.z -= ioRay.GetInverseDirection().z;
 	    }   
 	    break;
 	  }
@@ -541,7 +541,7 @@ namespace hemelb
 
       void ClusterRayTracer::TraverseBlocks(const Cluster& iCluster, 
 					    const Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
-					    Ray& iRay)
+					    Ray& ioRay)
       {
 	float lBlockSizeFloat = static_cast<float>(mLatticeData.GetBlockSize());
 	
@@ -577,16 +577,17 @@ namespace hemelb
 	Vector3D<float> lRayUnitsBeforeNextBlock = 
 	  CalculateRayUnitsBeforeNextBlock
 	  (lFirstIntersectionToBlockLowerSite,
-	   iRay);
+	   ioRay);
 
 	//The number of ray units in a block in each direction 
 	//are cached.
-	Vector3D<float> lBlockRayUnitIncrement = iRay.GetInverseDirection() 
+	Vector3D<float> lBlockRayUnitIncrement = ioRay.GetInverseDirection() 
 	  * lBlockSizeFloat;
 	
-	//We need to track how many ray units have been traversed 
+	//We need to track how many site units have been traversed
+	//(ray direction normalises to 1)
 	//from the point of first intersection
-	float lRayUnitsTraversed = 0.0F;
+	float lSiteUnitsTraversed = 0.0F;
 
 	while (lClusterTraverser.CurrentLocationValid())
 	{
@@ -597,23 +598,23 @@ namespace hemelb
 	  {
 	    //Recalculate the site location within the block
 	    lSiteLocationWithinBlock = 
-	    lRayUnitsTraversed * iRay.GetDirection() -
+	    lSiteUnitsTraversed * ioRay.GetDirection() -
 	    lFirstIntersectionToBlockLowerSite;
 
 	    TraverseVoxels(lFirstIntersectionToBlockLowerSite,
 			   lSiteLocationWithinBlock,
 			   iCluster.GetSiteData
 			   (lClusterTraverser.GetCurrentIndex()),
-			   lRayUnitsTraversed,
-			   iRay);
+			   lSiteUnitsTraversed,
+			   ioRay);
 	  }
 
 	  //Move to another block
 	  switch (lDirectionOfLeastTravel)
 	  {
 	  case Direction::X:
-	    lRayUnitsTraversed = lRayUnitsBeforeNextBlock.x;
-	    if (iRay.XIncreasing())
+	    lSiteUnitsTraversed = lRayUnitsBeforeNextBlock.x;
+	    if (ioRay.XIncreasing())
 	    {
 	      lClusterTraverser.IncrementX();
 	      lFirstIntersectionToBlockLowerSite.x += lBlockSizeFloat;
@@ -628,8 +629,8 @@ namespace hemelb
 	    break;
 
 	  case Direction::Y:
-	    lRayUnitsTraversed = lRayUnitsBeforeNextBlock.y;
-	    if (iRay.YIncreasing())
+	    lSiteUnitsTraversed = lRayUnitsBeforeNextBlock.y;
+	    if (ioRay.YIncreasing())
 	    {
 	      lClusterTraverser.IncrementY();
 	      lFirstIntersectionToBlockLowerSite.y += lBlockSizeFloat;
@@ -644,8 +645,8 @@ namespace hemelb
 	    break;
 	  
 	  case Direction::Z:
-	    lRayUnitsTraversed = lRayUnitsBeforeNextBlock.z;
-	    if (iRay.ZIncreasing())
+	    lSiteUnitsTraversed = lRayUnitsBeforeNextBlock.z;
+	    if (ioRay.ZIncreasing())
 	    {
 	      lClusterTraverser.IncrementZ();
 	      lFirstIntersectionToBlockLowerSite.z += lBlockSizeFloat;
@@ -739,62 +740,60 @@ namespace hemelb
 
 
       void ClusterRayTracer::UpdateRayData(const SiteData_t* iSiteData,
-				    float ray_t,
-				    float ray_segment,
-				    Ray* iRay)
+				    float iLengthFromClusterFirstIntersectionToVoxel,
+				    float iRayLengthInVoxel,
+				    Ray& ioRay)
       {
 	if (iSiteData->Density < 0.0F)
 	{
 	  return; // solid voxel
 	}
 
-	float palette[3];
+	float lPalette[3];
 
 	// update the volume rendering of the velocity flow field
 	ColPixel::PickColour(iSiteData->Velocity * (float) mDomainStats.velocity_threshold_max_inv,
-			     palette);
+			     lPalette);
 
-	UpdateColour(ray_segment, palette, iRay->VelocityColour);
+	UpdateColour(iRayLengthInVoxel, lPalette, ioRay.VelocityColour);
 
 	if (mVisSettings.mStressType != lb::ShearStress)
 	{
 	  // update the volume rendering of the von Mises stress flow field
-	  float scaled_stress = iSiteData->Stress * (float) mDomainStats.stress_threshold_max_inv;
+	  float lScaledStress = iSiteData->Stress * (float) mDomainStats.stress_threshold_max_inv;
 
-	  ColPixel::PickColour(scaled_stress, palette);
+	  ColPixel::PickColour(lScaledStress, lPalette);
 
-	  UpdateColour(ray_segment, palette, iRay->StressColour);
+	  UpdateColour(iRayLengthInVoxel, lPalette, ioRay.StressColour);
 	}
 
-	iRay->Length += ray_segment;
+	ioRay.Length += iRayLengthInVoxel;
 
-	if (iRay->Density >= 0.0F)
+	if (ioRay.Density < 0.0F)
 	{
-	  return;
+	  ioRay.LengthToFirstRayIntersection = iLengthFromClusterFirstIntersectionToVoxel;
+
+	  // keep track of the density nearest to the view point
+	  ioRay.Density = iSiteData->Density;
+	  
+	  // keep track of the stress nearest to the view point
+	  ioRay.Stress = iSiteData->Stress;		
 	}
-
-	iRay->MinT = ray_t;
-
-	// keep track of the density nearest to the view point
-	iRay->Density = iSiteData->Density;
-
-	// keep track of the stress nearest to the view point
-	iRay->Stress = iSiteData->Stress;		
       }
 
       /**
        * Update a colour vector to include a section of known length through a
        * solid of known colour.
        *
-       * @param dt
-       * @param palette
-       * @param col
+       * @param iDt
+       * @param lPalette
+       * @param iCol
        */
-      void ClusterRayTracer::UpdateColour(float dt, const float palette[3], float col[3])
+      void ClusterRayTracer::UpdateColour(float iDt, const float iPalette[3], float iCol[3])
       {
 	for (int ii = 0; ii < 3; ++ii)
 	{
-	  col[ii] += dt * palette[ii];
+	  iCol[ii] += iDt * iPalette[ii];
 	}
       }
 

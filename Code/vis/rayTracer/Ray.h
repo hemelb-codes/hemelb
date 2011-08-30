@@ -28,7 +28,7 @@ namespace hemelb
 	float StressColour[3];
 	float Stress;
 	float Density;
-	float MinT;
+	float LengthToFirstRayIntersection;
 	
       private:
 	Vector3D<float> mDirection;

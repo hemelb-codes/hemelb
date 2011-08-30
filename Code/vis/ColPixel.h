@@ -71,7 +71,8 @@ namespace hemelb
         struct PixelId i;
 
         // Ray tracer pixel data
-        float t, dt;
+        float LengthBeforeRayFirstCluster;
+	float dt;
         float vel_r, vel_g, vel_b;
         float stress_r, stress_g, stress_b;
         float density;
