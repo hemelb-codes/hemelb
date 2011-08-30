@@ -1,7 +1,9 @@
 //#define NDEBUG;
 #include <cassert>
+#include <iostream>
 
 #include "vis/rayTracer/ClusterRayTracerEnhanced.h"
+#include "vis/rayTracer/ClusterWithWallNormals.h"
 #include "vis/rayTracer/RayEnhanced.h"
 
 #include "vis/Vector3D.h"
@@ -24,6 +26,7 @@ namespace hemelb
 			 iVisSettings,
 			 iLatticeData)
       {
+	
       }
 
       void ClusterRayTracerEnhanced::CastRayForPixel
@@ -45,6 +48,12 @@ namespace hemelb
 	//Make sure the ray hasn't reached infinity
 	if (lRay.LengthToFirstRayIntersection != std::numeric_limits<float>::max())
 	{
+	  for (int i = 0; i < 3; i++)
+	  {
+	    //std::cout << "Intensity:" << lRay.GetIntensity() << std::endl;
+	    lRay.VelocityColour[i] *= lRay.GetIntensity();
+	  }
+
 	  ColPixel col_pixel(iPixel.x, iPixel.y, lRay.LengthToFirstRayIntersection + lMinimumRayUnits, lRay.Length, 
 			     (lRay.Density - (float) mDomainStats.density_threshold_min)
 			     * (float) mDomainStats.density_threshold_minmax_inv, lRay.Stress
@@ -52,11 +61,12 @@ namespace hemelb
 			     ? lRay.Stress * (float) mDomainStats.stress_threshold_max_inv
 			     : std::numeric_limits<float>::max(), lRay.VelocityColour, lRay.StressColour);
 
+	
 	  mScreen.AddPixel(&col_pixel, &mVisSettings);
 	}
       }
 
-      void ClusterRayTracer::UpdateRayData
+      void ClusterRayTracerEnhanced::UpdateRayData
       (const Cluster& iCluster,
        site_t iBlockNumber,
        site_t iSiteNumber,
@@ -64,7 +74,7 @@ namespace hemelb
        float iRayLengthInVoxel,
        Ray& ioRay)
       {
-		const SiteData_t* lSiteData = iCluster.GetSiteData(iBlockNumber, iSiteNumber);
+	const SiteData_t* lSiteData = iCluster.GetSiteData(iBlockNumber, iSiteNumber);
 	
 	if (lSiteData->Density < 0.0F)
 	{
@@ -100,6 +110,36 @@ namespace hemelb
 	  
 	  // keep track of the stress nearest to the view point
 	  ioRay.Stress = lSiteData->Stress;	
+	}
+
+	const ClusterWithWallNormals& lCluster = 
+	  dynamic_cast<const ClusterWithWallNormals&>(iCluster); 
+	
+	double const* lWallNormal = lCluster.GetWallData(iBlockNumber, iSiteNumber);
+	if (lWallNormal != NULL)
+	{/*
+	  std::cout << "Ray x:" << ioRay.GetDirection().x
+		    << "y:" << ioRay.GetDirection().y
+		    << "z:" << ioRay.GetDirection().z
+		    << std::endl;
+	 
+	  std::cout << "Normal x:" << lWallNormal[0]
+		    << "y:" << lWallNormal[1]
+		    << "z:" << lWallNormal[2]
+		    << std::endl;
+	 */
+	  
+	  Vector3D<float> lWallNormalVector = Vector3D<float>
+	    (lWallNormal[0],
+	     lWallNormal[1],
+	     lWallNormal[2]); 
+	  
+	  RayEnhanced& lRay = dynamic_cast<RayEnhanced&>(ioRay);
+	  lRay.HandleWallIntersection(lWallNormalVector);	  
+	}
+	else 
+	{
+	  std::cout << "blah--------------";
 	}
       }
 

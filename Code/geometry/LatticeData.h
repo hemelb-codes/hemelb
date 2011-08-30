@@ -33,6 +33,12 @@ namespace hemelb
         // Data about an element of the domain wall
         struct WallData
         {
+	  WallData()
+	    {
+	      // Set to a default value for no wall normal
+	      wall_nor[0] = -1.0f; 
+	    }
+	  
             // estimated wall normal (if the site is close to the wall);
             double wall_nor[3];
             // cut distances along the 14 non-zero lattice vectors;

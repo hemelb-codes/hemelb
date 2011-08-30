@@ -13,6 +13,7 @@ namespace hemelb
       {
       public:
 	Ray();
+	virtual ~Ray() {};
 	Ray(Vector3D<float> iDirection);
 
 	Vector3D<float> GetDirection() const;

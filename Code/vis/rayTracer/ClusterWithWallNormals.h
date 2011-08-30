@@ -18,7 +18,9 @@ namespace hemelb
 	  ~ClusterWithWallNormals();
 
 	  virtual void ResizeVectors();
-
+	  
+	   double const* GetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+     
 	  std::vector<std::vector<double*> > WallNormals;
 	};
 

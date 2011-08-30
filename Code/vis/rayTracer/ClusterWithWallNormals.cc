@@ -15,7 +15,12 @@ namespace hemelb
 	SiteData.resize(blocksX*blocksY*blocksZ);
 	WallNormals.resize(blocksX*blocksY*blocksZ);
       }
-       
+      
+      double const*  ClusterWithWallNormals::GetWallData
+      (site_t iBlockNumber, site_t iSiteNumber) const
+      {
+	return WallNormals[iBlockNumber][iSiteNumber];
+      }
     }
   }
 }

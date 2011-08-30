@@ -56,6 +56,11 @@ namespace hemelb
 	ClusterBuilder* mClusterBuilder;
 	const geometry::LatticeData* mLatDat;
 
+	const DomainStats* mDomainStats;
+	Screen* mScreen;
+	Viewpoint* mViewpoint;
+	VisSettings* mVisSettings;
+
       private:
 
 	struct AABB
@@ -63,13 +68,7 @@ namespace hemelb
 	  float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
 	};
   
-	
-	const DomainStats* mDomainStats;
-	Screen* mScreen;
-	Viewpoint* mViewpoint;
-	VisSettings* mVisSettings;
-
-	const float mBlockSizeFloat;
+       	const float mBlockSizeFloat;
 	const float mBlockSizeInverse;
 	const site_t block_size2, block_size3, block_size_1;
 	const site_t blocksYz;

@@ -290,7 +290,7 @@ namespace hemelb
               if (Blocks[block].wall_data == NULL)
               {
                 Blocks[block].wall_data = new WallData[GetSitesPerBlockVolumeUnit()];
-              }
+	      }
 
               if (GetCollisionType(*site_type) & INLET || GetCollisionType(*site_type) & OUTLET)
               {

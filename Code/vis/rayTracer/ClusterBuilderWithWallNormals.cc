@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "vis/rayTracer/ClusterWithWallNormals.h"
 #include "vis/rayTracer/ClusterBuilderWithWallNormals.h"
 
@@ -17,6 +19,18 @@ namespace hemelb
       {
 	return new ClusterWithWallNormals();
       }    
+
+      void ClusterBuilderWithWallNormals::ResizeVectorsForBlock(Cluster& iCluster, site_t lBlockNum)
+      {
+	ClusterBuilder::ResizeVectorsForBlock(iCluster, lBlockNum);
+
+	ClusterWithWallNormals& lCluster = dynamic_cast
+	  <ClusterWithWallNormals&>(iCluster);
+	
+	lCluster.WallNormals.at(lBlockNum).resize(
+	  mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS, NULL);
+      }
+
 
       void ClusterBuilderWithWallNormals::UpdateSiteDataAtSite
       ( site_t iBlockId, site_t iBlockNum, 
@@ -40,16 +54,11 @@ namespace hemelb
 	unsigned int iSiteIdOnBlock, unsigned int iClusterVoxelSiteId)
       {
 	ClusterWithWallNormals* lCluster = 
-	  static_cast<ClusterWithWallNormals*>
+	  dynamic_cast<ClusterWithWallNormals*>
 	  (mClusters[iClusterId]);
-
-	if (iBlock->wall_data == NULL)
+	if(iBlock->wall_data[iSiteIdOnBlock].wall_nor[0] != -1.0F)
 	{
-	  lCluster->WallNormals[iBlockNum][iSiteIdOnBlock] = NULL;
-	}
-	else
-	{
-	  lCluster->WallNormals[iBlockNum][iSiteIdOnBlock] = iBlock->wall_data->wall_nor;
+	  lCluster->WallNormals[iBlockNum][iSiteIdOnBlock] = iBlock->wall_data[iSiteIdOnBlock].wall_nor;
 	}
       }
     }

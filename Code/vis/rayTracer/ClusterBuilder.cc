@@ -263,7 +263,7 @@ namespace hemelb
 				      Vector3D<site_t> iClusterVoxelMax)
       {
 	//The friendly locations must be turned into a format usable by the ray tracer
-	Cluster* lNewCluster = new Cluster();
+	Cluster* lNewCluster = CreateNewCluster();
 	lNewCluster->minBlock.x = (float) (iClusterBlockMin.x * mLatticeData->GetBlockSize()) - 0.5F
 	  * (float) mLatticeData->GetXSiteCount();
 	lNewCluster->minBlock.y = (float) (iClusterBlockMin.y * mLatticeData->GetBlockSize()) - 0.5F
@@ -366,17 +366,21 @@ namespace hemelb
 		continue;
 	      }
 	      
-	      //By default all values are -1 for solids
-	      lCluster->SiteData[lBlockNum].resize(
-		mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS, SiteData_t(-1.0F));
+	      ResizeVectorsForBlock(*lCluster, lBlockNum);
 
-	      //The vector must be large enough to store all pointers
 	      mClusterVoxelDataPointers.resize(mLatticeData->GetLocalFluidSiteCount());
 
 	      UpdateSiteData(lBlockId, lBlockNum, iClusterId, block_coordinates);
 	    } // for k
 	  } // for j
 	} // for i
+      }
+      
+      void ClusterBuilder::ResizeVectorsForBlock(Cluster& iCluster, site_t lBlockNum)
+      {
+	//By default all values are -1 for solids
+	iCluster.SiteData[lBlockNum].resize(
+	  mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS, SiteData_t(-1.0F));
       }
 
       void ClusterBuilder::UpdateSiteData

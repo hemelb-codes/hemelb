@@ -18,6 +18,10 @@ namespace hemelb
 
       private:
 	virtual Cluster* CreateNewCluster();
+
+	virtual void ResizeVectorsForBlock
+	  (Cluster& iCluster,
+	   site_t lBlockNum);
 	
 	virtual void UpdateSiteDataAtSite
 	  (site_t iBlockId, site_t iBlockNum, 
