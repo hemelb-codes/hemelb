@@ -200,7 +200,7 @@ namespace hemelb
   }
 
   void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, std::vector<
-      lb::boundaries::InOutLet*> &bResult, std::string iChildNodeName)
+      lb::boundaries::iolets::InOutLet*> &bResult, std::string iChildNodeName)
   {
     if (iIsLoading)
     {
@@ -214,14 +214,14 @@ namespace hemelb
              "path",
              iIsLoading,
              PFilePath);
-        lb::boundaries::InOutLet *lNew;
+        lb::boundaries::iolets::InOutLet *lNew;
         if (PFilePath == "")
         {
-          lNew = new lb::boundaries::InOutLetCosine();
+          lNew = new lb::boundaries::iolets::InOutLetCosine();
         }
         else
         {
-          lNew = new lb::boundaries::InOutLetFile();
+          lNew = new lb::boundaries::iolets::InOutLetFile();
         }
 
         lNew->DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, this);
@@ -241,7 +241,7 @@ namespace hemelb
 
   void SimConfig::DoIO(TiXmlElement *iParent,
                        bool iIsLoading,
-                       lb::boundaries::InOutLetCosine* const value)
+                       lb::boundaries::iolets::InOutLetCosine* const value)
   {
     TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
     TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
@@ -261,7 +261,7 @@ namespace hemelb
 
   void SimConfig::DoIO(TiXmlElement *iParent,
                        bool iIsLoading,
-                       lb::boundaries::InOutLetFile* const value)
+                       lb::boundaries::iolets::InOutLetFile* const value)
   {
     TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
     TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
