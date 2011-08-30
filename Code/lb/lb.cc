@@ -154,17 +154,7 @@ namespace hemelb
 
       ReadParameters();
 
-      typedef hemelb::lb::collisions::implementations::LBGK CO;
-      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
-      {
-        hemelb::lb::collisions::implementations::ELBM::createAlphaArray(mLatDat->GetLocalFluidSiteCount());
-        hemelb::lb::collisions::implementations::ELBM::setTau(&mParams.Tau);
-      }
-
-      InitCollisions<hemelb::lb::streamers::implementations::SimpleCollideAndStream<CO>,
-          hemelb::lb::streamers::implementations::ZeroVelocityEquilibrium<CO>,
-          hemelb::lb::streamers::implementations::NonZeroVelocityBoundaryDensity<CO>,
-          hemelb::lb::streamers::implementations::ZeroVelocityBoundaryDensity<CO> >();
+      InitCollisions();
     }
 
     void LBM::CalculateMouseFlowField(float densityIn,
@@ -182,26 +172,43 @@ namespace hemelb
       mouse_stress = ConvertStressToPhysicalUnits(stress);
     }
 
-    template<typename tMidFluidCollision, typename tWallCollision, typename tInletOutletCollision,
-        typename tInletOutletWallCollision>
     void LBM::InitCollisions()
     {
-      mStreamAndCollide = new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision,
-          tWallCollision, tInletOutletCollision, tInletOutletWallCollision>();
-      mPostStep = new hemelb::lb::collisions::PostStep<tMidFluidCollision, tWallCollision,
-          tInletOutletCollision, tInletOutletWallCollision>();
-
       // TODO Note that the convergence checking is not yet implemented in the
       // new boundary condition hierarchy system.
       // It'd be nice to do this with something like
       // MidFluidCollision = new ConvergenceCheckingWrapper(new WhateverMidFluidCollision());
 
-      mMidFluidCollision = new hemelb::lb::streamers::MidFluidCollision();
-      mWallCollision = new hemelb::lb::streamers::WallCollision();
-      mInletCollision = new hemelb::lb::streamers::InletOutletCollision(inlet_density);
-      mOutletCollision = new hemelb::lb::streamers::InletOutletCollision(outlet_density);
-      mInletWallCollision = new hemelb::lb::streamers::InletOutletWallCollision(inlet_density);
-      mOutletWallCollision = new hemelb::lb::streamers::InletOutletWallCollision(outlet_density);
+      kernels::InitParams initParams = kernels::InitParams();
+      initParams.latDat = mLatDat;
+
+      initParams.siteCount = mLatDat->GetInnerCollisionCount(0)
+          + mLatDat->GetInterCollisionCount(0);
+      mMidFluidCollision = new tMidFluidCollision(initParams);
+
+      initParams.siteCount = mLatDat->GetInnerCollisionCount(1)
+          + mLatDat->GetInterCollisionCount(1);
+      mWallCollision = new tWallCollision(initParams);
+
+      initParams.siteCount = mLatDat->GetInnerCollisionCount(2)
+          + mLatDat->GetInterCollisionCount(2);
+      initParams.boundaryDensityArray = inlet_density;
+      mInletCollision = new tInletOutletCollision(initParams);
+
+      initParams.siteCount = mLatDat->GetInnerCollisionCount(3)
+          + mLatDat->GetInterCollisionCount(3);
+      initParams.boundaryDensityArray = outlet_density;
+      mOutletCollision = new tInletOutletCollision(initParams);
+
+      initParams.siteCount = mLatDat->GetInnerCollisionCount(4)
+          + mLatDat->GetInterCollisionCount(4);
+      initParams.boundaryDensityArray = inlet_density;
+      mInletWallCollision = new tInletOutletWallCollision(initParams);
+
+      initParams.siteCount = mLatDat->GetInnerCollisionCount(5)
+          + mLatDat->GetInterCollisionCount(5);
+      initParams.boundaryDensityArray = outlet_density;
+      mOutletWallCollision = new tInletOutletWallCollision(initParams);
     }
 
     void LBM::Initialise(site_t* iFTranslator, vis::Control* iControl)
@@ -242,27 +249,6 @@ namespace hemelb
       }
     }
 
-    // TODO HACK
-    hemelb::lb::streamers::Collision* LBM::GetCollision(int i)
-    {
-      switch (i)
-      {
-        case 0:
-          return mMidFluidCollision;
-        case 1:
-          return mWallCollision;
-        case 2:
-          return mInletCollision;
-        case 3:
-          return mOutletCollision;
-        case 4:
-          return mInletWallCollision;
-        case 5:
-          return mOutletWallCollision;
-      }
-      return NULL;
-    }
-
     void LBM::RequestComms()
     {
       timeSpent -= util::myClock();
@@ -292,17 +278,22 @@ namespace hemelb
 
       site_t offset = mLatDat->GetInnerSiteCount();
 
-      for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-      {
-        GetCollision(collision_type)->AcceptCollisionVisitor(mStreamAndCollide,
-                                                             mVisControl->IsRendering(),
-                                                             offset,
-                                                             mLatDat->GetInterCollisionCount(collision_type),
-                                                             &mParams,
-                                                             mLatDat,
-                                                             mVisControl);
-        offset += mLatDat->GetInterCollisionCount(collision_type);
-      }
+      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetInterCollisionCount(0));
+      offset += mLatDat->GetInterCollisionCount(0);
+
+      StreamAndCollide(mWallCollision, offset, mLatDat->GetInterCollisionCount(1));
+      offset += mLatDat->GetInterCollisionCount(1);
+
+      StreamAndCollide(mInletCollision, offset, mLatDat->GetInterCollisionCount(2));
+      offset += mLatDat->GetInterCollisionCount(2);
+
+      StreamAndCollide(mOutletCollision, offset, mLatDat->GetInterCollisionCount(3));
+      offset += mLatDat->GetInterCollisionCount(3);
+
+      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetInterCollisionCount(4));
+      offset += mLatDat->GetInterCollisionCount(4);
+
+      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetInterCollisionCount(5));
 
       timeSpent += util::myClock();
     }
@@ -313,17 +304,22 @@ namespace hemelb
 
       site_t offset = 0;
 
-      for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-      {
-        GetCollision(collision_type)->AcceptCollisionVisitor(mStreamAndCollide,
-                                                             mVisControl->IsRendering(),
-                                                             offset,
-                                                             mLatDat->GetInnerCollisionCount(collision_type),
-                                                             &mParams,
-                                                             mLatDat,
-                                                             mVisControl);
-        offset += mLatDat->GetInnerCollisionCount(collision_type);
-      }
+      StreamAndCollide(mMidFluidCollision, offset, mLatDat->GetInnerCollisionCount(0));
+      offset += mLatDat->GetInnerCollisionCount(0);
+
+      StreamAndCollide(mWallCollision, offset, mLatDat->GetInnerCollisionCount(1));
+      offset += mLatDat->GetInnerCollisionCount(1);
+
+      StreamAndCollide(mInletCollision, offset, mLatDat->GetInnerCollisionCount(2));
+      offset += mLatDat->GetInnerCollisionCount(2);
+
+      StreamAndCollide(mOutletCollision, offset, mLatDat->GetInnerCollisionCount(3));
+      offset += mLatDat->GetInnerCollisionCount(3);
+
+      StreamAndCollide(mInletWallCollision, offset, mLatDat->GetInnerCollisionCount(4));
+      offset += mLatDat->GetInnerCollisionCount(4);
+
+      StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetInnerCollisionCount(5));
 
       timeSpent += util::myClock();
     }
@@ -343,31 +339,43 @@ namespace hemelb
       }
 
       // Do any cleanup steps necessary on boundary nodes
-      size_t offset = 0;
+      site_t offset = 0;
 
-      for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-      {
-        GetCollision(collision_type)->AcceptCollisionVisitor(mPostStep,
-                                                             mVisControl->IsRendering(),
-                                                             offset,
-                                                             mLatDat->GetInnerCollisionCount(collision_type),
-                                                             &mParams,
-                                                             mLatDat,
-                                                             mVisControl);
-        offset += mLatDat->GetInnerCollisionCount(collision_type);
-      }
+      //TODO yup, this is horrible. If you read this, please improve the following code.
+      PostStep(mMidFluidCollision, offset, mLatDat->GetInterCollisionCount(0));
+      offset += mLatDat->GetInterCollisionCount(0);
 
-      for (unsigned int collision_type = 0; collision_type < COLLISION_TYPES; collision_type++)
-      {
-        GetCollision(collision_type)->AcceptCollisionVisitor(mPostStep,
-                                                             mVisControl->IsRendering(),
-                                                             offset,
-                                                             mLatDat->GetInterCollisionCount(collision_type),
-                                                             &mParams,
-                                                             mLatDat,
-                                                             mVisControl);
-        offset += mLatDat->GetInterCollisionCount(collision_type);
-      }
+      PostStep(mWallCollision, offset, mLatDat->GetInterCollisionCount(1));
+      offset += mLatDat->GetInterCollisionCount(1);
+
+      PostStep(mInletCollision, offset, mLatDat->GetInterCollisionCount(2));
+      offset += mLatDat->GetInterCollisionCount(2);
+
+      PostStep(mOutletCollision, offset, mLatDat->GetInterCollisionCount(3));
+      offset += mLatDat->GetInterCollisionCount(3);
+
+      PostStep(mInletWallCollision, offset, mLatDat->GetInterCollisionCount(4));
+      offset += mLatDat->GetInterCollisionCount(4);
+
+      PostStep(mOutletWallCollision, offset, mLatDat->GetInterCollisionCount(5));
+      offset += mLatDat->GetInterCollisionCount(5);
+
+      PostStep(mMidFluidCollision, offset, mLatDat->GetInnerCollisionCount(0));
+      offset += mLatDat->GetInnerCollisionCount(0);
+
+      PostStep(mWallCollision, offset, mLatDat->GetInnerCollisionCount(1));
+      offset += mLatDat->GetInnerCollisionCount(1);
+
+      PostStep(mInletCollision, offset, mLatDat->GetInnerCollisionCount(2));
+      offset += mLatDat->GetInnerCollisionCount(2);
+
+      PostStep(mOutletCollision, offset, mLatDat->GetInnerCollisionCount(3));
+      offset += mLatDat->GetInnerCollisionCount(3);
+
+      PostStep(mInletWallCollision, offset, mLatDat->GetInnerCollisionCount(4));
+      offset += mLatDat->GetInnerCollisionCount(4);
+
+      PostStep(mOutletWallCollision, offset, mLatDat->GetInnerCollisionCount(5));
 
       timeSpent += util::myClock();
     }
@@ -510,10 +518,6 @@ namespace hemelb
       delete[] outlet_density_avg;
       delete[] outlet_density_amp;
       delete[] outlet_density_phs;
-
-      // Delete visitors
-      delete mStreamAndCollide;
-      delete mPostStep;
 
       // Delete the collision and stream objects we've been using
       delete mMidFluidCollision;
