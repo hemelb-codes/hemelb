@@ -20,11 +20,11 @@ namespace hemelb
 
       Vector3D() {};
 
-      Vector3D(T iX, T iY, T iZ) :
+      Vector3D(const T iX, const T iY, const T iZ) :
       x(iX), y(iY), z(iZ)
       {}
       
-      Vector3D(T iX) :
+      Vector3D(const T iX) :
       x(iX), y(iX), z(iX)
       {}
 

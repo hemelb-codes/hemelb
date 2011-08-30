@@ -12,13 +12,22 @@ namespace hemelb
   {
     namespace raytracer 
     {
+      RayTracerEnhanced::RayTracerEnhanced(const geometry::LatticeData* iLatDat,
+					   const DomainStats* iDomainStats,
+					   Screen* iScreen,
+					   Viewpoint* iViewpoint,
+					   VisSettings* iVisSettings) :
+	RayTracer(iLatDat, iDomainStats, iScreen, iViewpoint, iVisSettings)
+      {
+      }      
+
       void RayTracerEnhanced::BuildClusters()
       {
 	mClusterBuilder = new ClusterBuilderWithWallNormals(mLatDat);
 	mClusterBuilder->BuildClusters();
       }
 
-      void RayTracer::Render()
+      void RayTracerEnhanced::Render()
       {
 	ClusterRayTracerEnhanced lClusterRayTracer(*mViewpoint, *mScreen, *mDomainStats, *mVisSettings, *mLatDat);
 

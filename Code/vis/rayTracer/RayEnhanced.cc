@@ -1,4 +1,6 @@
 #include <limits>
+#include <iostream>
+#include <cmath>
 
 #include "vis/rayTracer/RayEnhanced.h"
 #include "vis/Vector3D.h"
@@ -17,7 +19,7 @@ namespace hemelb
 	Ray(iDirection)
 	//Caution: ensure normalised 
       {
-	mIntensity = 0.0F;
+	mIntensity = 1.0F;
       }
 
       float RayEnhanced::GetIntensity()
@@ -30,7 +32,9 @@ namespace hemelb
 	//Calculate the absolute dot product of the wall
 	//vector normal and the ray direction
 	float lDotProduct = 
-	  GetDirection().DotProduct(iWallNormal);
+	  fabs(GetDirection().DotProduct(iWallNormal));
+
+	std::cout << "Dot product" << lDotProduct << std::endl;
 
 	//We want the attentuation to be between 
 	//mMinLogIntensityMultiple and 1

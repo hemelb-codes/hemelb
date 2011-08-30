@@ -57,6 +57,8 @@ namespace hemelb
 		     float iMaximumRayUnits, 
 		     float iMinimumRayUnits);
 
+	void UpdateColour(float iDt, const float palette[3], float iCol[3]);
+
 	const Viewpoint& mViewpoint;
 
 	Screen& mScreen;
@@ -81,7 +83,7 @@ namespace hemelb
 
 	void CastRaysForEachPixel(const Cluster& iCluster);
 
-	void CastRayForPixel(const Cluster& iCluster,
+	virtual void CastRayForPixel(const Cluster& iCluster,
 			     const XYCoordinates<int>& iPixel,
 			     const Vector3D<float>& iRayDirection);
 
@@ -119,8 +121,6 @@ namespace hemelb
 				   float iLengthFromClusterFirstIntersectionToVoxel,
 				   float iRayLengthInVoxel,
 				   Ray& ioRay);
-
-	void UpdateColour(float iDt, const float palette[3], float iCol[3]);
 
 	const hemelb::geometry::LatticeData& mLatticeData;
 

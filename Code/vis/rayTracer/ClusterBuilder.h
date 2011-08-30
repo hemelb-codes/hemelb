@@ -30,6 +30,8 @@ namespace hemelb
       protected:
 	void UpdateDensityVelocityAndStress(site_t iBlockNum, unsigned int iClusterId, unsigned int iSiteIdOnBlock, unsigned int iClusterVoxelSiteId);
 
+	virtual void ResizeVectorsForBlock(Cluster& iCluster, site_t lBlockNum);
+
 	//Caution: the data within mClusters is altered by means
 	//of pointers obtained from the GetClusterVoxelDataPointer
 	//method. No insertion of copying must therefore take place
