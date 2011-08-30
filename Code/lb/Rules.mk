@@ -2,7 +2,7 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbLb.$(LIBEXT)
 
-SUBDIRS := collisions streamers
+SUBDIRS := collisions streamers boundaries
 
 $(TARGETS)_DEPS = lb.o \
                   io.o \

@@ -9,6 +9,8 @@
 #include "lb/collisions/CollisionVisitors.h"
 #include "lb/streamers/Implementations.h"
 #include "lb/collisions/CollisionOperators.h"
+#include "lb/boundaries/BoundaryValues.h"
+#include "util/UnitConverter.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
 #include <typeinfo>
@@ -36,14 +38,15 @@ namespace hemelb
         site_t total_fluid_sites;
         int inlets;
 
-        distribn_t ConvertPressureToLatticeUnits(double pressure) const;
-        distribn_t ConvertVelocityToLatticeUnits(double velocity) const;
-        distribn_t ConvertStressToLatticeUnits(double stress) const;
-
         void UpdateBoundaryDensities(unsigned long time_step);
         void UpdateInletVelocities(unsigned long time_step);
 
-        void Initialise(site_t* iFTranslator, vis::Control* iControl);
+        void
+        Initialise(site_t* iFTranslator,
+                   vis::Control* iControl,
+                   boundaries::BoundaryValues* iInletValues,
+                   boundaries::BoundaryValues* iOutletValues,
+                   util::UnitConverter* iUnits);
 
         void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
         void ReadVisParameters();
@@ -65,10 +68,12 @@ namespace hemelb
         void RecalculateTauViscosityOmega();
         void SetInitialConditions();
 
-        double ConvertPressureToPhysicalUnits(double distribn_t) const;
-        double ConvertStressToPhysicalUnits(double distribn_t) const;
-        double ConvertVelocityToPhysicalUnits(double distribn_t) const;
+        template<typename tMidFluidCollision, typename tWallCollision,
+            typename tInletOutletCollision, typename tInletOutletWallCollision,
+            typename tCollisionOperator>
+        void InitCollisions();
 
+        void ReadParameters();
         void CalculateBC(distribn_t f[],
                          hemelb::geometry::LatticeData::SiteType iSiteType,
                          unsigned int iBoundaryId,
@@ -78,23 +83,15 @@ namespace hemelb
                          distribn_t *vz,
                          distribn_t f_neq[]);
 
-        template<typename tMidFluidCollision, typename tWallCollision,
-            typename tInletOutletCollision, typename tInletOutletWallCollision>
-        void InitCollisions();
-
-        void ReadParameters();
-
-        void allocateInlets(int nInlets);
-        void allocateOutlets(int nOutlets);
-
         void handleIOError(int iError);
-
-        distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad) const;
-        double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
         // Visitors
         hemelb::lb::collisions::CollisionVisitor* mStreamAndCollide;
         hemelb::lb::collisions::CollisionVisitor* mPostStep;
+
+        // COllision Operator
+        typedef hemelb::lb::collisions::implementations::LBGK CO;
+        CO* mCollisionOperator;
 
         // Collision objects
         hemelb::lb::streamers::MidFluidCollision* mMidFluidCollision;
@@ -109,10 +106,6 @@ namespace hemelb
 
         double timeSpent;
 
-        distribn_t *inlet_density_avg, *inlet_density_amp;
-        distribn_t *outlet_density_avg, *outlet_density_amp;
-        distribn_t *inlet_density_phs, *outlet_density_phs;
-        distribn_t* inlet_density, *outlet_density;
         double *inlet_normal;
 
         int outlets;
@@ -121,9 +114,12 @@ namespace hemelb
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
+        boundaries::BoundaryValues *mInletValues, *mOutletValues;
 
         LbmParameters mParams;
         vis::Control* mVisControl;
+
+        util::UnitConverter* mUnits;
 
         site_t* receivedFTranslator;
     };

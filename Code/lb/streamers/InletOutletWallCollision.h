@@ -14,7 +14,7 @@ namespace hemelb
       {
 
         public:
-          InletOutletWallCollision(distribn_t* iOutletDensityArray);
+          InletOutletWallCollision(boundaries::BoundaryValues* iBoundaryValues);
 
           virtual ~InletOutletWallCollision();
 
@@ -29,7 +29,7 @@ namespace hemelb
                                               hemelb::vis::Control *iControl);
 
         private:
-          distribn_t* mBoundaryDensityArray;
+          boundaries::BoundaryValues* mBoundaryValues;
 
       };
 

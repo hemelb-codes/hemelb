@@ -807,7 +807,7 @@ namespace hemelb
 
         Vector3D<float> p2 = mViewpoint->Project(p1);
         
-	XYCoordinates<int> x = mScreen->TransformScreenToPixelCoordinates<int> (XYCoordinates<float>(p2.x, p2.y));
+	    XYCoordinates<int> x = mScreen->TransformScreenToPixelCoordinates<int> (XYCoordinates<float>(p2.x, p2.y));
 
         if (! (x.x < 0 || x.x >= pixels_x || x.y < 0 || x.y >= pixels_y))
         {
