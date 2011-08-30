@@ -4,7 +4,7 @@
 #include "lb/boundaries/BoundaryComms.h"
 #include "topology/NetworkTopology.h"
 #include "net/IteratedAction.h"
-#include "lb/boundaries/InOutLet.h"
+#include "lb/boundaries/iolets/InOutLet.h"
 
 namespace hemelb
 {
@@ -18,7 +18,7 @@ namespace hemelb
         public:
           BoundaryValues(geometry::LatticeData::SiteType IOtype,
                          geometry::LatticeData* iLatDat,
-                         std::vector<InOutLet*> &iiolets,
+                         std::vector<iolets::InOutLet*> &iiolets,
                          SimulationState* iSimState);
           ~BoundaryValues();
 
@@ -49,7 +49,7 @@ namespace hemelb
           // Number of IOlets and vector of their indices for communication purposes
           int nIOlets;
           std::vector<int> ioletIDs;
-          std::vector<InOutLet*> iolets;
+          std::vector<iolets::InOutLet*> iolets;
 
           std::vector<distribn_t>* density_cycle;
 

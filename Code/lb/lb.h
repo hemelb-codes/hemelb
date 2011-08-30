@@ -93,15 +93,7 @@ namespace hemelb
         CO* mCollisionOperator;
 
         // Collision objects
-        hemelb::lb::streamers::MidFluidCollision* mMidFluidCollision;
-        hemelb::lb::streamers::WallCollision* mWallCollision;
-        hemelb::lb::streamers::InletOutletCollision* mInletCollision;
-        hemelb::lb::streamers::InletOutletCollision* mOutletCollision;
-        hemelb::lb::streamers::InletOutletWallCollision* mInletWallCollision;
-        hemelb::lb::streamers::InletOutletWallCollision* mOutletWallCollision;
-
-        //TODO Get rid of this hack
-        hemelb::lb::streamers::Collision* GetCollision(int i);
+        std::vector<hemelb::lb::streamers::Collision*> mCollisions;
 
         double timeSpent;
 

@@ -1,9 +1,8 @@
 include $(MK)/header.mk
 
-SUBDIRS := iolets
-
-TARGETS = BoundaryValues.o \
-	  BoundaryComms.o 
+TARGETS = InOutLet.o \
+	  InOutLetCosine.o \
+	  InOutLetFile.o
 	  
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

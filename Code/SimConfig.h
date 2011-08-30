@@ -5,7 +5,7 @@
 #include <vector>
 #include "xml/tinyxml.h"
 #include "util/Vector3D.h"
-#include "lb/boundaries/InOutLets.h"
+#include "lb/boundaries/iolets/InOutLets.h"
 
 namespace hemelb
 {
@@ -18,8 +18,8 @@ namespace hemelb
       void Save(std::string iPath);
 
       std::string DataFilePath;
-      std::vector<lb::boundaries::InOutLet*> Inlets;
-      std::vector<lb::boundaries::InOutLet*> Outlets;
+      std::vector<lb::boundaries::iolets::InOutLet*> Inlets;
+      std::vector<lb::boundaries::iolets::InOutLet*> Outlets;
       util::Vector3D VisCentre;
       float VisLongitude;
       float VisLatitude;
@@ -30,8 +30,12 @@ namespace hemelb
       unsigned long NumCycles;
       long StepsPerCycle;
 
-      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, lb::boundaries::InOutLetCosine* value);
-      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, lb::boundaries::InOutLetFile* value);
+      void DoIO(TiXmlElement *iXmlNode,
+                bool iIsLoading,
+                lb::boundaries::iolets::InOutLetCosine* value);
+      void DoIO(TiXmlElement *iXmlNode,
+                bool iIsLoading,
+                lb::boundaries::iolets::InOutLetFile* value);
     private:
       SimConfig();
       void DoIO(TiXmlElement *iXmlNode, bool iIsLoading);
@@ -46,10 +50,8 @@ namespace hemelb
                 std::string iAttributeName,
                 bool iIsLoading,
                 std::string &iValue);
-      void DoIO(TiXmlElement *iXmlNode,
-                bool iIsLoading,
-                std::vector<lb::boundaries::InOutLet*> &value,
-                std::string iChildNodeName);
+      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, std::vector<
+          lb::boundaries::iolets::InOutLet*> &value, std::string iChildNodeName);
       void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D &iValue);
       TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);
   };
