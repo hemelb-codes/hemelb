@@ -75,7 +75,7 @@ namespace hemelb
 			    const Vector3D<float>& block_x,
 			    const SiteData_t* iSiteData,
 			    float t,
-			    Ray* bCurrentRay);
+			    Ray& bCurrentRay);
 
 	Vector3D<float> CalculateRayUnitsBeforeNextVoxel
 	  (const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
@@ -84,16 +84,19 @@ namespace hemelb
 	Vector3D<site_t> RoundToNearestVoxel(const Vector3D<float>& iUnboundLocation);
       
 	Direction::Direction DirectionOfLeastTravel
-	  (Vector3D<float> iRayUnitsBeforeNextVoxel);
+	  (Vector3D<float> iRayUnitsBeforeNextVoxelOrBlock);
 
 	void TraverseBlocks(const Cluster& iCluster,
-			    const Vector3D<bool>& xyz_Is_1,
 			    const Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
-			    Ray *bCurrentRay);
+			    Ray& iRay);
 	
 	Vector3D<unsigned int> GetBlockCoordinatesOfFirstIntersectionBlock(
 	const Cluster& iCluster,
 	Vector3D<float> iLowerSiteToFirstRayClusterIntersection);
+
+	Vector3D<float> CalculateRayUnitsBeforeNextBlock
+	  (const Vector3D<float>& lFirstIntersectionToBlockLowerSite,
+	   const Ray& iRay);
 	
 	void UpdateRayData(const SiteData_t* iSiteData,
 			   float ray_t,
