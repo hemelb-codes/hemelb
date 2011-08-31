@@ -19,7 +19,10 @@
 #include "vis/ColPixel.h"
 #include "vis/GlyphDrawer.h"
 #include "vis/StreaklineDrawer.h"
-#include "vis/rayTracer/RayTracerEnhanced.h"
+
+#include "vis/rayTracer/ClusterWithWallNormals.h"
+#include "vis/rayTracer/RayEnhanced.h"
+#include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
 {
@@ -120,7 +123,8 @@ namespace hemelb
         geometry::LatticeData* mLatDat;
         Screen mScreen;
         Vis* vis;
-        raytracer::RayTracerEnhanced *myRayTracer;
+        raytracer::RayTracer<raytracer::ClusterWithWallNormals,
+	  raytracer::RayEnhanced> *myRayTracer;
         GlyphDrawer *myGlypher;
         StreaklineDrawer *myStreaker;
 
