@@ -12,49 +12,65 @@ namespace hemelb
   {
     namespace raytracer 
     {
-	//The cluster structure stores data relating to the clusters
-	//used by the RayTracaer, in an optimal format
-	//Clusters are produced by the ClusterFactory
-	//Caution: the data within the flow field is altered by means
-	//of pointers obtained from the GetClusterVoxelDataPointer
-	//method
+      //The cluster structure stores data relating to the clusters
+      //used by the RayTracer, in an optimal format
+      //Cluster are produced by the ClusterSharedFactory
+      //Caution: the data within the flow field is altered by means
+      //of pointers obtained from the GetClusterSharedVoxelDataPointer
+      //method
+      template <typename Derived>
 	class Cluster
+      {
+      public:
+	unsigned int GetBlockIdFrom3DBlockLocation(
+	  Vector3D<unsigned int>iLocation) const
 	{
-	public:
-	  Cluster();
+	  return static_cast<Derived*>(this)->GetBlockIdFrom3DBlockLocation(iLocation);
+	}
 
-	  unsigned int GetBlockIdFrom3DBlockLocation(
-	    Vector3D<unsigned int>iLocation) const;
+	//Resizes the vectors so as to be the correct size based on the stored sizes
+	void ResizeVectors()
+	{
+	  static_cast<Derived*>(this)->ResizeVectors();
+	}
 
-	  //Resizes the vectors so as to be the correct size based on the stored sizes
-	  virtual void ResizeVectors();
+	void ResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
+	{
+	  static_cast<Derived*>(this)->ResizeVectorsForBlock(iBlockNumber, iSize);
+	}
 
-	  //Returns true if there is site data for a given block
-	  bool BlockContainsSites(site_t iBlockNumber) const;
+	//Returns true if there is site data for a given block
+	bool BlockContainsSites(site_t iBlockNumber) const
+	{
+	  return static_cast<Derived*>(this)->BlockContainsSites(iBlockNumber);
+	}
 	  
-	  //Get SiteData arary for site
-	  const SiteData_t* GetSiteData(site_t iBlockNumber) const;
+	//Get SiteData arary for site
+	const SiteData_t* GetSiteData(site_t iBlockNumber) const
+	{
+	  return static_cast<Derived*>(this)->GetSiteData(iBlockNumber);
+	}	    
 
-	  const SiteData_t* GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const;
+	const SiteData_t* GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const
+	{
+	  return static_cast<Derived*>(this)->GetSiteData(iBlockNumber, iSiteNumber);
+	}
       
+	double const* GetWallData(site_t iBlockNumber, site_t iSiteNumber) const
+	{
+	  return static_cast<Derived*>(this)->GetWallData(iBlockNumber, iSiteNumber);
+	}	  
 
-	  //The min and maximum site location, in site units 
-	  //relative to the centre of the lattice
-	  Vector3D<float> minSite;
-	  Vector3D<float> maxSite;
+	void SetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData)
+	{
+	  return static_cast<Derived*>(this)->SetWallData(iBlockNumber, iSiteNumber, iData);
+	}
 
-	  //Stores the lowest x, y and z block location of the Cluster 
-	  //in terms of site units relative to the centre location
-	  Vector3D<float> minBlock;
-        
-	  //Stores the size of the cluster in terms of the number of blocks
-	  unsigned short int blocksX;
-	  unsigned short int blocksY;
-	  unsigned short int blocksZ;
-
-	  std::vector<std::vector<SiteData_t> > SiteData;
-
-	};
+	static bool NeedsWallNormals()
+	{
+	  return Derived::NeedsWallNormals();
+	}
+      };
 
     }
   }

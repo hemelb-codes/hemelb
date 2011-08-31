@@ -5,7 +5,9 @@
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
-#include "vis/rayTracer/RayTracerEnhanced.h"
+#include "vis/rayTracer/RayEnhanced.h"
+#include "vis/rayTracer/RayTracer.h"
+#include "vis/rayTracer/ClusterWithWallNormals.h"
 #include "vis/GlyphDrawer.h"
 
 #include "io/XdrFileWriter.h"
@@ -97,7 +99,9 @@ namespace hemelb
       mVisSettings.ctr_y = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[1] + maxes[1]));
       mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
-      myRayTracer = new raytracer::RayTracerEnhanced(mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
+      myRayTracer = new raytracer::RayTracer
+	<raytracer::ClusterWithWallNormals, raytracer::RayEnhanced>(
+	  mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
       myRayTracer->BuildClusters(); 
       myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
