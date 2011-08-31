@@ -12,6 +12,15 @@ namespace hemelb
       namespace iolets
       {
 
+        /*
+         * Template values are chosen to be tUpdatePeriod = 0 and tComms = false
+         * If a trace is read from a file it should be done once and then stored
+         * on each relevant proc. If memory is a concern tComms can be set to true
+         * and then only the BCproc will keep the entire trace in memory
+         * WARNING: - be cautious of setting tUpdatePeriod to something else other than
+         * zero, because it may not be what you expect - see comments on CalculateCycle in
+         * cc file.
+         */
         class InOutLetFile : public InOutLetCycle<0, false>
         {
           public:

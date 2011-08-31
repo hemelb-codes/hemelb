@@ -241,7 +241,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                         mLbm,
                                                         &mNet,
                                                         mSimulationState,
-                                                        *iSimConfig);
+                                                        iSimConfig);
 
   // Read in the visualisation parameters.
   mLbm->ReadVisParameters();

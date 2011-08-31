@@ -94,28 +94,28 @@ namespace hemelb
       mVisControl->mDomainStats.stress_threshold_max_inv = 1.0F / lattice_stress_max;
     }
 
-    void SteeringComponent::Reset(SimConfig& iSimConfig)
+    void SteeringComponent::Reset(SimConfig* iSimConfig)
     {
       readyForNextImage = false;
       isConnected = false;
       updatedMouseCoords = false;
 
       // scene center (dx,dy,dz)
-      privateSteeringParams[parameter::SceneCentreX] = iSimConfig.VisCentre.x;
-      privateSteeringParams[parameter::SceneCentreY] = iSimConfig.VisCentre.y;
-      privateSteeringParams[parameter::SceneCentreZ] = iSimConfig.VisCentre.z;
+      privateSteeringParams[parameter::SceneCentreX] = iSimConfig->VisCentre.x;
+      privateSteeringParams[parameter::SceneCentreY] = iSimConfig->VisCentre.y;
+      privateSteeringParams[parameter::SceneCentreZ] = iSimConfig->VisCentre.z;
 
       // longitude and latitude
-      privateSteeringParams[parameter::Longitude] = iSimConfig.VisLongitude;
-      privateSteeringParams[parameter::Latitude] = iSimConfig.VisLatitude;
+      privateSteeringParams[parameter::Longitude] = iSimConfig->VisLongitude;
+      privateSteeringParams[parameter::Latitude] = iSimConfig->VisLatitude;
 
       // zoom and brightness
-      privateSteeringParams[parameter::Zoom] = iSimConfig.VisZoom;
-      privateSteeringParams[parameter::Brightness] = iSimConfig.VisBrightness;
+      privateSteeringParams[parameter::Zoom] = iSimConfig->VisZoom;
+      privateSteeringParams[parameter::Brightness] = iSimConfig->VisBrightness;
 
       // velocity and stress ranges
-      privateSteeringParams[parameter::PhysicalVelocityThresholdMax] = iSimConfig.MaxVelocity;
-      privateSteeringParams[parameter::PhysicalStressThrehsholdMaximum] = iSimConfig.MaxStress;
+      privateSteeringParams[parameter::PhysicalVelocityThresholdMax] = iSimConfig->MaxVelocity;
+      privateSteeringParams[parameter::PhysicalStressThrehsholdMaximum] = iSimConfig->MaxStress;
 
       // Minimum pressure and maximum pressure for Colour mapping
       privateSteeringParams[parameter::PhysicalPressureThresholdMinimum] = 80.0F;
