@@ -1,14 +1,23 @@
 #ifndef HEMELB_VIS_RAYTRACER_H
 #define HEMELB_VIS_RAYTRACER_H
 
+//#define NDEBUG;
+#include <assert.h>
+
 #include <map>
 #include <stack>
 #include <vector>
+#include <math.h>
+#include <stdlib.h>
+#include <limits>
 
 #include "constants.h"
+#include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
+#include "lb/LbmParameters.h"
+#include "log/Logger.h"
 #include "topology/NetworkTopology.h"
-
+#include "util/utilityFunctions.h" 
 #include "vis/DomainStats.h"
 #include "vis/Screen.h"
 #include "vis/Viewpoint.h"
@@ -17,7 +26,9 @@
 #include "vis/XYCoordinates.h"
 #include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/ClusterBuilder.h"
+#include "vis/rayTracer/ClusterRayTracer.h"
 #include "vis/rayTracer/Ray.h"
+#include "vis/rayTracer/RayTracer.h"
 #include "vis/rayTracer/SiteData.h"
 
 namespace hemelb
@@ -26,52 +37,73 @@ namespace hemelb
   {
     namespace raytracer 
     {
-      class RayTracer
+      template <typename ClusterType, typename RayType>
+	class RayTracer
       {
       public:
 	// Constructor and destructor do all the usual stuff.
-	RayTracer(const geometry::LatticeData* iLatDat,
-		  const DomainStats* iDomainStats,
-		  Screen* iScreen,
-		  Viewpoint* iViewpoint,
-		  VisSettings* iVisSettings);
-	~RayTracer();
+      RayTracer(const geometry::LatticeData* iLatDat,
+		const DomainStats* iDomainStats,
+		Screen* iScreen,
+		Viewpoint* iViewpoint,
+		VisSettings* iVisSettings) :
+	  mClusterBuilder(iLatDat),
+	  mLatDat(iLatDat),
+	  mDomainStats(iDomainStats),
+	  mScreen(iScreen), 
+	  mViewpoint(iViewpoint),
+	  mVisSettings(iVisSettings)
+	  {
+	  }
+
+
+	  ~RayTracer()
+	  {
+	  }
 
 	//Calls the cluster builder to build the clusters
-	//Must be explicitly called after construction as the method is 
-	//virtual 
-	virtual void BuildClusters();
+	void BuildClusters()
+	{
+	  mClusterBuilder.BuildClusters();
+	}
 
 	// Method to update the voxel corresponding to site i with its
 	// newly calculated density, velocity and stress.
 	void UpdateClusterVoxel(site_t i,
 				distribn_t density,
 				distribn_t velocity,
-				distribn_t stress);
+				distribn_t stress)
+	{
+	  assert(static_cast<site_t>(static_cast<unsigned int>(i)) == i);
+	  
+	  mClusterBuilder.GetClusterVoxelDataPointer(i)->Density =
+	    (float) density;
+	  mClusterBuilder.GetClusterVoxelDataPointer(i)->Velocity =
+	    (float) velocity;
+	  mClusterBuilder.GetClusterVoxelDataPointer(i)->Stress =
+	    (float) stress;
+	}
 
 	// Render the current state into an image.
-	virtual void Render();
+	void Render()
+	{
+	  ClusterRayTracer<ClusterType, RayType> 
+	    lClusterRayTracer(*mViewpoint, *mScreen, *mDomainStats, *mVisSettings, *mLatDat);
 
-      protected:
-	ClusterBuilder* mClusterBuilder;
+	  for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
+	  {
+	    lClusterRayTracer.RenderCluster(mClusterBuilder.GetClusters()[clusterId]);
+	  }
+	}
+
+      private:
+	ClusterBuilder<ClusterType> mClusterBuilder;
 	const geometry::LatticeData* mLatDat;
 
 	const DomainStats* mDomainStats;
 	Screen* mScreen;
 	Viewpoint* mViewpoint;
 	VisSettings* mVisSettings;
-
-      private:
-
-	struct AABB
-	{
-	  float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
-	};
-  
-       	const float mBlockSizeFloat;
-	const float mBlockSizeInverse;
-	const site_t block_size2, block_size3, block_size_1;
-	const site_t blocksYz;
       };
     }
   }

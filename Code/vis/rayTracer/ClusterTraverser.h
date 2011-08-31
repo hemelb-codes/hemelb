@@ -11,23 +11,32 @@ namespace hemelb
     namespace raytracer 
     {
       //ClusterTraverser is used to traverse the cluster
+      template <typename ClusterType>
       class ClusterTraverser : public VolumeTraverser
       {
       public:
-	ClusterTraverser(const Cluster& iCluster);
-	~ClusterTraverser();
+        ClusterTraverser(const ClusterType& iCluster) :
+	mCluster(iCluster)
+	{
+	}
 
-	site_t CurrentClusterNumber();
+	virtual site_t GetXCount()
+	{
+	  return mCluster.blocksX;
+	}
 
-	Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentCluster();
+	virtual site_t GetYCount()
+	{
+	  return mCluster.blocksY;
+	}
 
-	virtual site_t GetXCount();
-
-	virtual site_t GetYCount();
-
-	virtual site_t GetZCount();
-
-	const Cluster& mCluster;
+	virtual site_t GetZCount()
+	{
+	  return mCluster.blocksZ;
+	}
+	
+      private:
+	const ClusterType& mCluster;
       }; 
     }
   }

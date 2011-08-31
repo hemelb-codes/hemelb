@@ -21,7 +21,7 @@ namespace hemelb
 
 	virtual void ResizeVectorsForBlock
 	  (Cluster& iCluster,
-	   site_t lBlockNum);
+	   site_t iBlockNum);
 	
 	virtual void UpdateSiteDataAtSite
 	  (site_t iBlockId, site_t iBlockNum, 
