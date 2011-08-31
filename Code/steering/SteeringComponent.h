@@ -56,14 +56,14 @@ namespace hemelb
                           lb::LBM* iLbm,
                           net::Net * iNet,
                           lb::SimulationState * iSimState,
-                          SimConfig& iSimConfig);
+                          SimConfig* iSimConfig);
 
         static bool RequiresSeparateSteeringCore();
 
         /*
          * This function initialises all of the steering parameters, on all nodes.
          */
-        void Reset(SimConfig& iSimConfig);
+        void Reset(SimConfig* iSimConfig);
 
         bool readyForNextImage;
         bool updatedMouseCoords;

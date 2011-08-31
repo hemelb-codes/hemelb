@@ -25,18 +25,22 @@ namespace hemelb
         std::vector<int> *procsList = new std::vector<int>[nTotIOlets];
 
         nIOlets = 0;
+        // Probably unnecessary resizes, but makes it clear that they're meant to be empty
         ioletIDs.resize(0);
         iolets.resize(0);
         mComms.resize(0);
 
+        // Determine which iolets need comms and create them
         for (int i = 0; i < nTotIOlets; i++)
         {
+          // First create a copy of all iolets
           iolets.push_back(iiolets[i]->Clone());
 
           bool IOletOnThisProc = IsIOletOnThisProc(IOtype, iLatDat, i);
-
           procsList[i] = GatherProcList(IOletOnThisProc);
 
+          // With information on whether a proc has an IOlet and the list of procs for each IOlte
+          // on the BC task we can create the comms
           if (IOletOnThisProc || IsCurrentProcTheBCProc())
           {
             nIOlets++;
@@ -54,6 +58,7 @@ namespace hemelb
 
         density_cycle = new std::vector<distribn_t>[nIOlets];
 
+        // Send out initial values
         Reset();
 
         // Clear up
@@ -168,29 +173,23 @@ namespace hemelb
               iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
               mComms[i]->Send(&density_cycle[i][time_step]);
             }
-            else
-            {
-              iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
-              iolets[ioletIDs[i]]->density = density_cycle[i][time_step];
-            }
           }
         }
-        else
+
+        for (int i = 0; i < nIOlets; i++)
         {
-          for (int i = 0; i < nIOlets; i++)
+          if (iolets[ioletIDs[i]]->DoComms())
           {
-            if (iolets[ioletIDs[i]]->DoComms())
-            {
-              mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
-            }
-            else
-            {
-              unsigned long time_step = (mState->GetTimeStep() - 1) % density_cycle[i].size();
-              iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
-              iolets[ioletIDs[i]]->density = density_cycle[i][time_step];
-            }
+            mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
+          }
+          else
+          {
+            unsigned long time_step = (mState->GetTimeStep() - 1) % density_cycle[i].size();
+            iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
+            iolets[ioletIDs[i]]->density = density_cycle[i][time_step];
           }
         }
+
       }
 
       void BoundaryValues::EndIteration()
@@ -231,10 +230,8 @@ namespace hemelb
               iolets[ioletIDs[i]]->InitialiseCycle(density_cycle[i], mState);
               mComms[i]->Send(&density_cycle[i][0]);
             }
-            else
-            {
-              mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
-            }
+
+            mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
           }
           else
           {
