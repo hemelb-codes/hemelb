@@ -59,16 +59,27 @@ namespace hemelb
           int i = 0;
 
           if (x < xs[0])
+          {
             return ys[0];
+          }
           else if (x > xs[xs.size() - 1])
+          {
             return ys[xs.size() - 1];
+          }
 
           while (! (x >= xs[i] && x <= xs[i + 1]))
+          {
             i++;
+          }
 
+          // In case repeat values are read in or discontinuities are present in the trace
           if (xs[i] == xs[i + 1])
+          {
             return (ys[i] + ys[i + 1]) / ((T) 2);
+          }
 
+          // Linear interpolation of function f(x) between two points A and B
+          // f(A) + (fraction along x axis between A and B) * (f(B) - f(A))
           return (ys[i] + (x - xs[i]) / (xs[i + 1] - xs[i]) * (ys[i + 1] - ys[i]));
         }
     };
@@ -199,23 +210,6 @@ namespace hemelb
           else
             return s;
         }
-    };
-
-    class VectorFunctions
-    {
-      public:
-        template<typename T>
-        static bool member(std::vector<T> &list, T element)
-        {
-          for (unsigned int i = 0; i < list.size(); i++)
-          {
-            if (element == list[i])
-              return true;
-          }
-
-          return false;
-        }
-
     };
 
     // Returns the number of seconds to 6dp elapsed since the Epoch

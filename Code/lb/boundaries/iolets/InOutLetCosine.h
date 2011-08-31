@@ -12,6 +12,11 @@ namespace hemelb
       namespace iolets
       {
 
+        /*
+         * Template values are chosen to be tUpdatePeriod = 1 and tComms = false
+         * The cosine pressure trace can be easily calculated locally by any proc and
+         * there is no need to store values for any time step beyond the current one
+         */
         class InOutLetCosine : public InOutLetCycle<1, false>
         {
           public:

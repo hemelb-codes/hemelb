@@ -1,5 +1,6 @@
 #include "lb/boundaries/iolets/InOutLetFile.h"
 #include "util/fileutils.h"
+#include "util/utilityStructs.h"
 #include "SimConfig.h"
 #include <fstream>
 #include <algorithm>
@@ -12,20 +13,6 @@ namespace hemelb
     {
       namespace iolets
       {
-        // This is used to sort read in values
-        // Allows sorting time-value pairs using the standard library sort
-        struct time_value_pair
-        {
-          public:
-            double time;
-            double value;
-
-            bool operator<(const time_value_pair other_time_value_pair) const
-            {
-              return time < other_time_value_pair.time;
-            }
-        };
-
         InOutLetFile::InOutLetFile() :
           InOutLetCycle<0, false> ()
         {
@@ -54,11 +41,15 @@ namespace hemelb
 
         }
 
+        // This reads in a file and interpolates between points to generate a cycle
+        // IMPORTANT: to allow reading in data taken at irregular intervals the user
+        // needs to make sure that the last point in the file coincides with the first
+        // point of a new cycle for a continuous trace.
         void InOutLetFile::CalculateCycle(std::vector<distribn_t> &density_cycle,
                                           const SimulationState *iState)
         {
           // First read in values from file into vectors
-          std::vector<time_value_pair> TimeValuePair(0);
+          std::vector<util::key_value_pair<double, double> > TimeValuePair(0);
 
           double timeTemp, valueTemp;
 
@@ -68,8 +59,8 @@ namespace hemelb
           while (datafile.good())
           {
             datafile >> timeTemp >> valueTemp;
-            time_value_pair tvPair;
-            tvPair.time = timeTemp;
+            util::key_value_pair<double, double> tvPair;
+            tvPair.key = timeTemp;
             tvPair.value = valueTemp;
 
             TimeValuePair.push_back(tvPair);
@@ -85,14 +76,14 @@ namespace hemelb
           // Must convert into vectors since LinearInterpolate works on a pair of vectors
           for (unsigned int ii = 0; ii < TimeValuePair.size(); ii++)
           {
-            time.push_back(TimeValuePair[ii].time);
+            time.push_back(TimeValuePair[ii].key);
             value.push_back(TimeValuePair[ii].value);
           }
 
           // Now convert these vectors into arrays using linear interpolation
           for (unsigned int time_step = 0; time_step < density_cycle.size(); time_step++)
           {
-            double point = time[0] + (double) time_step / (double) density_cycle.size()
+            double point = time[0] + ((double) time_step / (double) density_cycle.size())
                 * (time[time.size() - 1] - time[0]);
 
             double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);

@@ -142,14 +142,20 @@ namespace hemelb
     if (iIsLoading)
     {
       if (iParent->Attribute(iAttributeName) == 0)
+      {
         iValue = "";
+      }
       else
+      {
         iValue = std::string(iParent->Attribute(iAttributeName)->c_str());
+      }
     }
     else
     {
       if (iValue != "")
+      {
         iParent->SetAttribute(iAttributeName, iValue);
+      }
     }
   }
 
@@ -209,6 +215,7 @@ namespace hemelb
       while (lCurrentLet != NULL)
       {
         // Determine which InOutlet to create
+        // This is done by checking if a path is specified
         std::string PFilePath;
         DoIO(GetChild(GetChild(iParent, iChildNodeName, iIsLoading), "pressure", iIsLoading),
              "path",
@@ -217,10 +224,12 @@ namespace hemelb
         lb::boundaries::iolets::InOutLet *lNew;
         if (PFilePath == "")
         {
+          // If no file is specified we use a cosine trace
           lNew = new lb::boundaries::iolets::InOutLetCosine();
         }
         else
         {
+          // If there is a file specified we use it
           lNew = new lb::boundaries::iolets::InOutLetFile();
         }
 
