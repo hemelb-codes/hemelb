@@ -2,6 +2,7 @@
 #include "util/fileutils.h"
 #include "util/utilityStructs.h"
 #include "SimConfig.h"
+#include "log/Logger.h"
 #include <fstream>
 #include <algorithm>
 
@@ -63,7 +64,19 @@ namespace hemelb
             tvPair.key = timeTemp;
             tvPair.value = valueTemp;
 
-            TimeValuePair.push_back(tvPair);
+            // Don't enter repeat values
+            if (TimeValuePair.size() == 0)
+            {
+              TimeValuePair.push_back(tvPair);
+            }
+            else
+            {
+              if (tvPair.key != TimeValuePair[TimeValuePair.size() - 1].key || tvPair.value
+                  != TimeValuePair[TimeValuePair.size() - 1].value)
+              {
+                TimeValuePair.push_back(tvPair);
+              }
+            }
           }
 
           datafile.close();
@@ -78,6 +91,14 @@ namespace hemelb
           {
             time.push_back(TimeValuePair[ii].key);
             value.push_back(TimeValuePair[ii].value);
+          }
+
+          // Check if last point's value matches the first
+          if (value[value.size() - 1] != value[0])
+          {
+            log::Logger::Log<log::Info, log::OnePerCore>("Last point's value does not match the first point's value in %s\nExiting.",
+                                                         PressureFilePath.c_str());
+            exit(0);
           }
 
           // Now convert these vectors into arrays using linear interpolation

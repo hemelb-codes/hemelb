@@ -2,6 +2,7 @@
 #define HEMELB_UTILITYFUNCTIONS_H
 
 #include "util/utilityFunctions.h"
+#include "log/Logger.h"
 #include <math.h>
 #include <iostream>
 #include <cstdlib>
@@ -58,13 +59,16 @@ namespace hemelb
         {
           int i = 0;
 
-          if (x < xs[0])
+          if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
           {
-            return ys[0];
-          }
-          else if (x > xs[xs.size() - 1])
-          {
-            return ys[xs.size() - 1];
+            if (x < xs[0] || x > xs[xs.size() - 1])
+            {
+              log::Logger::Log<log::Info, log::OnePerCore>("Linear Interpolation beyond bounds: ");
+              log::Logger::Log<log::Info, log::OnePerCore>("%f is not between %f and %f",
+                                                           x,
+                                                           xs[0],
+                                                           xs[xs.size() - 1]);
+            }
           }
 
           while (! (x >= xs[i] && x <= xs[i + 1]))
@@ -73,9 +77,18 @@ namespace hemelb
           }
 
           // In case repeat values are read in or discontinuities are present in the trace
-          if (xs[i] == xs[i + 1])
+          // Average taken in case of a discontinuity. Repeat points should just contract to one.
+          //if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
           {
-            return (ys[i] + ys[i + 1]) / ((T) 2);
+            if (xs[i] == xs[i + 1])
+            {
+              log::Logger::Log<log::Info, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
+              log::Logger::Log<log::Info, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
+                                                           xs[i],
+                                                           ys[i],
+                                                           xs[i + 1],
+                                                           ys[i + 1]);
+            }
           }
 
           // Linear interpolation of function f(x) between two points A and B

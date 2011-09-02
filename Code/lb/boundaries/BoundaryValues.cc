@@ -20,8 +20,6 @@ namespace hemelb
       {
         nTotIOlets = (int) iiolets.size();
 
-        FindBCProcRank();
-
         std::vector<int> *procsList = new std::vector<int>[nTotIOlets];
 
         nIOlets = 0;
@@ -47,10 +45,11 @@ namespace hemelb
             ioletIDs.push_back(i);
             if (iolets[i]->DoComms())
             {
-              mComms.push_back(new BoundaryComms(mState, procsList[i], IOletOnThisProc, BCproc));
+              mComms.push_back(new BoundaryComms(mState, procsList[i], IOletOnThisProc));
             }
             else
             {
+              // NULL values fill up space to make indexing easier
               mComms.push_back(NULL);
             }
           }
@@ -83,17 +82,6 @@ namespace hemelb
             delete mComms[i];
           }
         }
-      }
-
-      void BoundaryValues::FindBCProcRank()
-      {
-        proc_t BCrank = 0;
-
-        if (IsCurrentProcTheBCProc())
-          BCrank = topology::NetworkTopology::Instance()->GetLocalRank();
-
-        // Since only one proc will update BCrank, the sum of all BCrank is the BCproc
-        MPI_Allreduce(&BCrank, &BCproc, 1, hemelb::MpiDataType(BCrank), MPI_SUM, MPI_COMM_WORLD);
       }
 
       bool BoundaryValues::IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
@@ -132,7 +120,7 @@ namespace hemelb
                    boolList,
                    1,
                    hemelb::MpiDataType(boolList[0]),
-                   BCproc,
+                   GetBCProcRank(),
                    MPI_COMM_WORLD);
 
         if (IsCurrentProcTheBCProc())
@@ -157,7 +145,12 @@ namespace hemelb
 
       bool BoundaryValues::IsCurrentProcTheBCProc()
       {
-        return topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc();
+        return topology::NetworkTopology::Instance()->GetLocalRank() == GetBCProcRank();
+      }
+
+      proc_t BoundaryValues::GetBCProcRank()
+      {
+        return 0;
       }
 
       void BoundaryValues::RequestComms()
@@ -166,7 +159,7 @@ namespace hemelb
         {
           for (int i = 0; i < nIOlets; i++)
           {
-            unsigned long time_step = (mState->GetTimeStep() - 1) % density_cycle[i].size();
+            unsigned long time_step = (mState->Get0IndexedTimeStep()) % density_cycle[i].size();
 
             if (iolets[ioletIDs[i]]->DoComms())
             {
@@ -184,7 +177,7 @@ namespace hemelb
           }
           else
           {
-            unsigned long time_step = (mState->GetTimeStep() - 1) % density_cycle[i].size();
+            unsigned long time_step = (mState->Get0IndexedTimeStep()) % density_cycle[i].size();
             iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
             iolets[ioletIDs[i]]->density = density_cycle[i][time_step];
           }
