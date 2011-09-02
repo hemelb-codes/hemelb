@@ -1305,12 +1305,6 @@ namespace hemelb
               << lFluidVertex << " and " << localVertexCount << "\n";
         }
       }
-
-      localAdjacencies = new idx_t[totalAdjacencies];
-      for (idx_t ii = 0; ii < totalAdjacencies; ++ii)
-      {
-        localAdjacencies[ii] = adj[ii];
-      }
     }
 
     void LatticeData::GeometryReader::CallParmetis(idx_t* partitionVector,
