@@ -366,8 +366,6 @@ namespace hemelb
                                                                         block_coordinates.y,
                                                                         block_coordinates.z);
 
-              Vector3D<site_t>* mins = &mClusterBlockMins[iClusterId];
-
               if (mClusterIdOfBlock[block_id] != (short int) iClusterId)
               {
                 continue;
