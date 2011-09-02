@@ -1,6 +1,3 @@
-//#define NDEBUG;
-#include <assert.h>
-
 #include "geometry/LatticeData.h"
 #include "vis/Vector3D.h"
 #include "vis/rayTracer/RayTracer.h"
@@ -41,7 +38,6 @@ namespace hemelb
 
       bool RayTracer::ClusterBuilder::BlockTraverser::GoToNextUnvisitedBlock()
       {
-        assert(IsCurrentBlockVisited());
         do
         {
           bool validBlock = GoToNextBlock();
@@ -85,7 +81,7 @@ namespace hemelb
 
       bool RayTracer::ClusterBuilder::BlockTraverser::IsValidLocation(Vector3D<site_t> iBlock)
       {
-        return mLatticeData->IsValidBlockSite(iBlock.x, iBlock.y, iBlock.z);
+        return mLatticeData->IsValidBlock(iBlock.x, iBlock.y, iBlock.z);
       }
 
       bool RayTracer::ClusterBuilder::BlockTraverser::IsBlockVisited(site_t iN)
@@ -117,7 +113,6 @@ namespace hemelb
       void RayTracer::ClusterBuilder::BlockTraverser::MarkBlockVisited(Vector3D<site_t> iLocation)
       {
         site_t lNumber = GetIndexFromLocation(iLocation);
-        assert(lNumber < mLatticeData->GetBlockCount());
         MarkBlockVisited(lNumber);
       }
 
