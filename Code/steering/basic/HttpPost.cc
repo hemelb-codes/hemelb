@@ -32,7 +32,6 @@ namespace hemelb
       // This really does modify the strings passed in. Without
       // checking their lengths, of course.
       char hostname[256];
-      char ip_addr[16];
 
       // On specific machines, just get the host name and insert it into the rank_0_host_details parameter
 #ifdef NGS2Leeds
@@ -79,6 +78,8 @@ namespace hemelb
           printf("address is not IP4..\n");
           continue;
         }
+
+        char ip_addr[16];
 
         sprintf(ip_addr,
                 "%d.%d.%d.%d",
