@@ -211,23 +211,6 @@ namespace hemelb
         }
     };
 
-    class VectorFunctions
-    {
-      public:
-        template<typename T>
-        static bool member(std::vector<T> &list, T element)
-        {
-          for (unsigned int i = 0; i < list.size(); i++)
-          {
-            if (element == list[i])
-              return true;
-          }
-
-          return false;
-        }
-
-    };
-
     // Returns the number of seconds to 6dp elapsed since the Epoch
     double myClock();
   }

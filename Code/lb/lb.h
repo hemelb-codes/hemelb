@@ -5,10 +5,9 @@
 #include "net/IteratedAction.h"
 #include "topology/NetworkTopology.h"
 #include "lb/SimulationState.h"
-#include "lb/streamers/Collisions.h"
-#include "lb/collisions/CollisionVisitors.h"
-#include "lb/streamers/Implementations.h"
-#include "lb/collisions/CollisionOperators.h"
+#include "lb/kernels/Kernels.h"
+#include "lb/collisions/Collisions.h"
+#include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
 #include "util/UnitConverter.h"
 #include "vis/ColPixel.h"
@@ -21,6 +20,17 @@ namespace hemelb
   {
     class LBM : public net::IteratedAction
     {
+      private:
+        // TODO These should eventually be template parameters that are given to the generic LBM object.
+        // At the moment, doing this will cause problems with other objects that have a pointer to the
+        // LBM (and hence would also need to be templated, on the LBM-type).
+        typedef streamers::SimpleCollideAndStream<collisions::Normal<kernels::LBGK> > tMidFluidCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibrium<kernels::LBGK> > tWallCollision;
+        typedef streamers::SimpleCollideAndStream<
+            collisions::NonZeroVelocityEquilibriumFixedDensity<kernels::LBGK> > tInletOutletCollision;
+        typedef streamers::SimpleCollideAndStream<
+            collisions::ZeroVelocityEquilibriumFixedDensity<kernels::LBGK> > tInletOutletWallCollision;
+
       public:
         LBM(hemelb::SimConfig *iSimulationConfig,
             net::Net* net,
@@ -68,9 +78,6 @@ namespace hemelb
         void RecalculateTauViscosityOmega();
         void SetInitialConditions();
 
-        template<typename tMidFluidCollision, typename tWallCollision,
-            typename tInletOutletCollision, typename tInletOutletWallCollision,
-            typename tCollisionOperator>
         void InitCollisions();
 
         void ReadParameters();
@@ -85,24 +92,57 @@ namespace hemelb
 
         void handleIOError(int iError);
 
-        // Visitors
-        hemelb::lb::collisions::CollisionVisitor* mStreamAndCollide;
-        hemelb::lb::collisions::CollisionVisitor* mPostStep;
-
-        // COllision Operator
-        typedef hemelb::lb::collisions::implementations::LBGK CO;
-        CO* mCollisionOperator;
-
         // Collision objects
-        hemelb::lb::streamers::MidFluidCollision* mMidFluidCollision;
-        hemelb::lb::streamers::WallCollision* mWallCollision;
-        hemelb::lb::streamers::InletOutletCollision* mInletCollision;
-        hemelb::lb::streamers::InletOutletCollision* mOutletCollision;
-        hemelb::lb::streamers::InletOutletWallCollision* mInletWallCollision;
-        hemelb::lb::streamers::InletOutletWallCollision* mOutletWallCollision;
+        tMidFluidCollision* mMidFluidCollision;
+        tWallCollision* mWallCollision;
+        tInletOutletCollision* mInletCollision;
+        tInletOutletCollision* mOutletCollision;
+        tInletOutletWallCollision* mInletWallCollision;
+        tInletOutletWallCollision* mOutletWallCollision;
 
-        //TODO Get rid of this hack
-        hemelb::lb::streamers::Collision* GetCollision(int i);
+        template<typename Collision>
+        void StreamAndCollide(Collision* collision,
+                              const site_t iFirstIndex,
+                              const site_t iSiteCount)
+        {
+          if (mVisControl->IsRendering())
+          {
+            collision->template DoStreamAndCollide<true>(iFirstIndex,
+                                                         iSiteCount,
+                                                         &mParams,
+                                                         mLatDat,
+                                                         mVisControl);
+          }
+          else
+          {
+            collision->template DoStreamAndCollide<false>(iFirstIndex,
+                                                          iSiteCount,
+                                                          &mParams,
+                                                          mLatDat,
+                                                          mVisControl);
+          }
+        }
+
+        template<typename Collision>
+        void PostStep(Collision* collision, const site_t iFirstIndex, const site_t iSiteCount)
+        {
+          if (mVisControl->IsRendering())
+          {
+            collision->template DoPostStep<true>(iFirstIndex,
+                                                 iSiteCount,
+                                                 &mParams,
+                                                 mLatDat,
+                                                 mVisControl);
+          }
+          else
+          {
+            collision->template DoPostStep<false>(iFirstIndex,
+                                                  iSiteCount,
+                                                  &mParams,
+                                                  mLatDat,
+                                                  mVisControl);
+          }
+        }
 
         double timeSpent;
 
