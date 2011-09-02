@@ -17,8 +17,7 @@ namespace hemelb
         public:
           BoundaryComms(SimulationState* iSimState,
                         std::vector<int> &iProcsList,
-                        bool iHasBoundary,
-                        proc_t iBCproc);
+                        bool iHasBoundary);
           ~BoundaryComms();
 
           void Wait();
@@ -30,8 +29,6 @@ namespace hemelb
           void FinishSend();
 
         private:
-          proc_t bcRootproc; // Process responsible for sending out BC info
-
           // This is necessary to support BC proc having fluid sites
           bool hasBoundary;
 

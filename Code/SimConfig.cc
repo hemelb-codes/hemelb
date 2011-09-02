@@ -141,6 +141,7 @@ namespace hemelb
   {
     if (iIsLoading)
     {
+      // Compare to 0 not NULL, because that's what Attribute in TinyXml returns
       if (iParent->Attribute(iAttributeName) == 0)
       {
         iValue = "";
