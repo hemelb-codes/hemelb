@@ -34,11 +34,9 @@ namespace hemelb
           distribn_t GetDensityMax(int iBoundaryId);
 
           static bool IsCurrentProcTheBCProc();
+          static proc_t GetBCProcRank();
 
         private:
-          proc_t BCproc;
-          void FindBCProcRank();
-
           std::vector<BoundaryComms*> mComms;
           bool IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
                                  geometry::LatticeData* iLatDat,
@@ -49,6 +47,7 @@ namespace hemelb
           // Number of IOlets and vector of their indices for communication purposes
           int nIOlets;
           std::vector<int> ioletIDs;
+          // Has to be a vector of pointers for InOutLet polymorphism
           std::vector<iolets::InOutLet*> iolets;
 
           std::vector<distribn_t>* density_cycle;

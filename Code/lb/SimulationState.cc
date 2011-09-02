@@ -65,6 +65,11 @@ namespace hemelb
       return TimeStep;
     }
 
+    unsigned long SimulationState::Get0IndexedTimeStep() const
+    {
+      return TimeStep - 1;
+    }
+
     unsigned long SimulationState::GetTimeStepsPerCycle() const
     {
       return TimeStepsPerCycle;

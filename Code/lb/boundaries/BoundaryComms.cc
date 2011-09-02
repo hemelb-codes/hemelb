@@ -13,10 +13,9 @@ namespace hemelb
 
       BoundaryComms::BoundaryComms(SimulationState* iSimState,
                                    std::vector<int> &iProcsList,
-                                   bool iHasBoundary,
-                                   proc_t iBCproc) :
-        bcRootproc(iBCproc), hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()),
-            procsList(iProcsList), mState(iSimState)
+                                   bool iHasBoundary) :
+        hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList),
+            mState(iSimState)
       {
         // Only BC proc sends
         if (BoundaryValues::IsCurrentProcTheBCProc())
@@ -88,7 +87,7 @@ namespace hemelb
           MPI_Irecv(density,
                     1,
                     hemelb::MpiDataType(*density),
-                    bcRootproc,
+                    BoundaryValues::GetBCProcRank(),
                     100,
                     MPI_COMM_WORLD,
                     &receiveRequest);

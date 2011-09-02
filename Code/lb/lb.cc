@@ -21,7 +21,7 @@ namespace hemelb
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
-      mParams.Beta = -1.0 / (2.0 * mParams.Tau);
+      mParams.Beta = -1.0 / (2.0 * mParams.Tau); // This is just Omega / 2.0 by pure coincidence
     }
 
     hemelb::lb::LbmParameters *LBM::GetLbmParams()

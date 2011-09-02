@@ -48,7 +48,7 @@ namespace hemelb
           for (unsigned int time_step = 0; time_step < density_cycle.size(); time_step++)
           {
             density_cycle[time_step] = DensityMeanLattice + DensityAmpLattice * cos(w
-                * (double) (time_step + iState->GetTimeStep() - 1) + Phase);
+                * (double) (time_step + iState->Get0IndexedTimeStep()) + Phase);
           }
         }
 
