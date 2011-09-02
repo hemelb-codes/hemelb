@@ -50,7 +50,7 @@ namespace hemelb
         template<typename T>
         static T enforceBounds(T number, T lowerBound, T upperBound)
         {
-          return max<T> (lowerBound, min(number, upperBound));
+          return max<T>(lowerBound, min(number, upperBound));
         }
 
         template<typename T>
@@ -59,15 +59,23 @@ namespace hemelb
           int i = 0;
 
           if (x < xs[0])
+          {
             return ys[0];
+          }
           else if (x > xs[xs.size() - 1])
+          {
             return ys[xs.size() - 1];
+          }
 
           while (! (x >= xs[i] && x <= xs[i + 1]))
+          {
             i++;
+          }
 
           if (xs[i] == xs[i + 1])
+          {
             return (ys[i] + ys[i + 1]) / ((T) 2);
+          }
 
           return (ys[i] + (x - xs[i]) / (xs[i + 1] - xs[i]) * (ys[i + 1] - ys[i]));
         }
@@ -146,18 +154,20 @@ namespace hemelb
           {
             if (fa != fc && fb != fc)
             {
-              s = (a * fb * fc) / ( (fa - fb) * (fa - fc)) + (b * fa * fc) / ( (fb - fa)
-                  * (fb - fc)) + (c * fa * fb) / ( (fc - fa) * (fc - fb));
+              s = (a * fb * fc) / ( (fa - fb) * (fa - fc))
+                  + (b * fa * fc) / ( (fb - fa) * (fb - fc))
+                  + (c * fa * fb) / ( (fc - fa) * (fc - fb));
             }
             else
             {
               s = b - fb * (b - a) / (fb - fa);
             }
 
-            if ( (a < b && s < (3 * a + b) / 4.0 && s > b) || (a > b && s > (3 * a + b) / 4.0 && s
-                < b) || (mflag && fabs(s - b) >= fabs(b - c) / 2.0) || (!mflag && fabs(s - b)
-                >= fabs(c - d) / 2.0) || (mflag && fabs(b - c) < alphaAcc) || (!mflag
-                && fabs(c - d) < alphaAcc))
+            if ( (a < b && s < (3 * a + b) / 4.0 && s > b)
+                || (a > b && s > (3 * a + b) / 4.0 && s < b)
+                || (mflag && fabs(s - b) >= fabs(b - c) / 2.0)
+                || (!mflag && fabs(s - b) >= fabs(c - d) / 2.0) || (mflag && fabs(b - c) < alphaAcc)
+                || (!mflag && fabs(c - d) < alphaAcc))
             {
               s = (a + b) / 2.0;
               mflag = true;

@@ -1,5 +1,3 @@
-//#define NDEBUG
-#include <assert.h>
 #include <map>
 #include <vector>
 
@@ -30,8 +28,6 @@ namespace hemelb
         {
           mClusterIdOfBlock[lId] = NOTASSIGNEDTOCLUSTER;
         }
-
-        assert(VIS_FIELDS == 3);
       }
 
       RayTracer::ClusterBuilder::~ClusterBuilder()
@@ -302,11 +298,6 @@ namespace hemelb
         lNewCluster.blocksZ = static_cast<unsigned short> (1 + iClusterBlockMax.z
             - iClusterBlockMin.z);
 
-        //Ensure that value does not change in casting
-        assert(static_cast<site_t>(lNewCluster.blocksX) == (1 + iClusterBlockMax.x - iClusterBlockMin.x));
-        assert(static_cast<site_t>(lNewCluster.blocksY) == (1 + iClusterBlockMax.y - iClusterBlockMin.y));
-        assert(static_cast<site_t>(lNewCluster.blocksZ) == (1 + iClusterBlockMax.z - iClusterBlockMin.z));
-
         lNewCluster.minSite = Vector3D<float> (iClusterVoxelMin)
             - Vector3D<float> ((float) mLatticeData->GetXSiteCount(),
                                (float) mLatticeData->GetYSiteCount(),
@@ -376,10 +367,6 @@ namespace hemelb
                                                                         block_coordinates.z);
 
               Vector3D<site_t>* mins = &mClusterBlockMins[iClusterId];
-              assert(block_id ==
-                  ( (i + mins->x) * mLatticeData->GetYBlockCount() + (j + mins->y))
-                  * mLatticeData->GetZBlockCount() + (k + mins->z)
-              );
 
               if (mClusterIdOfBlock[block_id] != (short int) iClusterId)
               {
@@ -465,11 +452,7 @@ namespace hemelb
       void RayTracer::ClusterBuilder::SetDataPointerForClusterVoxelSiteId(site_t iClusterVortexSiteId,
                                                                           SiteData_t* iDataPointer)
       {
-#ifndef NDEBUG
-        mClusterVoxelDataPointers.at(iClusterVortexSiteId) = iDataPointer;
-#else 
         mClusterVoxelDataPointers[iClusterVortexSiteId] = iDataPointer;
-#endif
       }
 
     }
