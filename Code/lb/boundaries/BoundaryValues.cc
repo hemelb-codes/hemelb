@@ -241,9 +241,13 @@ namespace hemelb
             else
             {
               if (density_period[i] == 0)
+              {
                 InitialiseCosCycle(i);
+              }
               else
+              {
                 UpdateCosCycle(i);
+              }
             }
           }
         }
