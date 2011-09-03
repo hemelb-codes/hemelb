@@ -238,6 +238,11 @@ namespace hemelb
     TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
     DoIO(lPressureElement, "path", iIsLoading, value.PFilePath);
+
+    // TODO In the case of a sinusoidal pressure condition, the specification of minimum and maximum
+    // is redundant and therefore should be removed. In the case of a file, they should be
+    // calculated from the file anyway.
+
     if (value.PFilePath == "")
     {
       DoIO(lPressureElement, "mean", iIsLoading, value.PMean);
