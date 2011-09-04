@@ -9,22 +9,29 @@ namespace hemelb
   {
     namespace rheology_models
     {
+      template <class CONCRETE_CLASS>
       class AbstractRheologyModel
       {
         public:
           /*
-           *  Computes the local viscosity (eta) corresponding to shear rate, density,
-           *  voxel size and time step duration according to a given rheology model.
+           *  Computes the relaxation parameter tau according to equation (2.37) in
+           *  Marco's thesis.
            *
-           *  We do not implement this method here and let subclasses do it according
-           *  to different rheology models.
+           *  tau = 0.5 + (timestep * nu) / (Cs2 * voxelsize^2)
            *
-           *  @param iShearRate local shear rate value.
+           *  Cs2 is the dimensionless speed of the sound squared.
+           *  nu is the kinematic viscosity (m^2/s).
+           *
+           *  This method relies on CalculateViscosityForShearRate to compute nu based
+           *  on a given shear rate, density, and a given rheology model.
+           *
+           *  @param iShearRate local shear rate value (s^{-1}).
            *  @param iDensity local density. TODO at the moment this value is not used
            *         in any subclass.
            *  @param iVoxelSize voxel size.
-           *  @param iTimeStepsPerCycle number of time steps per cycle. Used to compute
-           *         time step duration.
+           *  @param iTimeStep time step duration.
+           *
+           *  @return relaxation time (dimensionless)
            */
           static double CalculateTauForShearRate(const double &iShearRate,
                                                  const distribn_t &iDensity,
@@ -32,18 +39,19 @@ namespace hemelb
                                                  const double &iTimeStep);
 
           /*
-           *  Computes the relaxation parameter tau from a given kinematic viscosity nu
-           *  according to equation (2.37) in Marco's thesis.
+           *  Computes the kinematic viscosity predicted by a given rheology model for
+           *  given shear rate and viscosity
            *
-           *  tau = 0.5 + (timestep * eta) / (Cs2 * density * voxelsize^2)
+           *  To be implemented in each AbstractRheologyModel subclass.
            *
-           *  Cs2 is the dimensionless speed of the sound squared.
+           *  @param iShearRate local shear rate value (s^{-1}).
+           *  @param iDensity local density. TODO at the moment this value is not used
+           *         in any subclass.
            *
-           *  @param iNu kinematic viscosity (m^2/s)
+           *  @return kinematic viscosity (m^2/s).
            */
-          static double CalculateTauForViscosity(const double &iNu,
-                                                 const double &iTimeStep,
-                                                 const double &iVoxelSize);
+          static double CalculateViscosityForShearRate(const double &iShearRate,
+                                                       const distribn_t &iDensity);
         private:
           AbstractRheologyModel();
       };

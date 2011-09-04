@@ -19,23 +19,24 @@ namespace hemelb
       static const double M_CONSTANT = BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3; // m^2/s
       static const double N_CONSTANT = 0.5; // dimensionless, n<1 shear thinning, n>1 shear thickening, n=1 newtonian with nu=M_CONSTANT
 
-      class TruncatedPowerLawRheologyModel : public AbstractRheologyModel
+      class TruncatedPowerLawRheologyModel : public AbstractRheologyModel<TruncatedPowerLawRheologyModel>
       {
         public:
           /*
-           * Compute tau for a given shear rate according to the truncated power-law:
+           *  Compute nu for a given shear rate according to the truncated power-law:
            *
-           *                    { M_CONSTANT * GAMMA_ZERO^{N_CONSTANT - 1},  if iShearRate<GAMMA_ZERO
-           * nu = eta/density = { M_CONSTANT *  GAMMA_INF^{N_CONSTANT - 1},  if iShearRate>GAMMA_INF
-           *                    { M_CONSTANT * iShearRate^{N_CONSTANT - 1},  otherwise
+           *                     { M_CONSTANT * GAMMA_ZERO^{N_CONSTANT - 1},  if iShearRate<GAMMA_ZERO
+           *  nu = eta/density = { M_CONSTANT *  GAMMA_INF^{N_CONSTANT - 1},  if iShearRate>GAMMA_INF
+           *                     { M_CONSTANT * iShearRate^{N_CONSTANT - 1},  otherwise
            *
-           * See AbstractRheologyModel.h for description of the arguments and how tau
-           * is computed from eta.
+           *  @param iShearRate local shear rate value (s^{-1}).
+           *  @param iDensity local density. TODO at the moment this value is not used
+           *         in any subclass.
+           *
+           *  @return kinematic viscosity (m^2/s).
            */
-          static double CalculateTauForShearRate(const double &iShearRate,
-                                                 const distribn_t &iDensity,
-                                                 const double &iVoxelSize,
-                                                 const double &iTimeStep);
+          static double CalculateViscosityForShearRate(const double &iShearRate,
+                                                       const distribn_t &iDensity);
       };
     }
   }

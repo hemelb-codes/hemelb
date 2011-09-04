@@ -1,6 +1,7 @@
 #include "lb/collisions/implementations/LBGKNN.h"
 #include "lb/rheology_models/CassonRheologyModel.h"
 #include "lb/rheology_models/TruncatedPowerLawRheologyModel.h"
+#include "lb/rheology_models/CarreauYasudaRheologyModel.h"
 #include <cmath>
 
 namespace hemelb
@@ -60,7 +61,9 @@ namespace hemelb
             f_neq[f_index] = f[f_index] - f_eq[f_index];
           }
 
+          assert(mCurrentTauIndex < LBGKNN<tNonNewtonianModel>::mTau.size());
           double old_tau_value = LBGKNN<tNonNewtonianModel>::mTau[mCurrentTauIndex];
+
           // TODO no need to compute timestep duration for *every* site every time step
           double timestep = PULSATILE_PERIOD_s / (double) mState->GetTimeStepsPerCycle();
           double shear_rate = D3Q15::CalculateShearRate(old_tau_value, f_neq);
@@ -100,9 +103,10 @@ namespace hemelb
         }
 
 
-        // Explicit instantiation
+        // Explicit instantiation (a way of splitting templated classes into .h and .cc files)
         template class LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel>;
         template class LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel>;
+        template class LBGKNN<hemelb::lb::rheology_models::CarreauYasudaRheologyModel>;
       }
     }
   }
