@@ -10,6 +10,7 @@
 #include "vis/RayTracer.h"
 #include "lb/rheology_models/CassonRheologyModel.h"
 #include "lb/rheology_models/TruncatedPowerLawRheologyModel.h"
+#include "lb/rheology_models/CarreauYasudaRheologyModel.h"
 
 namespace hemelb
 {
@@ -152,14 +153,15 @@ namespace hemelb
              SimulationState* simState) :
         mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
     {
-      // voxel_size = iSimulationConfig->VoxelSize;
-
       ReadParameters();
 
-      //typedef hemelb::lb::collisions::implementations::LBGK CO;
+      typedef hemelb::lb::collisions::implementations::LBGK CO;
 
-      //typedef hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel> CO;
-      typedef hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel> CO;
+      //typedef hemelb::lb::rheology_models::CassonRheologyModel RHEO_MODEL;
+      //typedef hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel RHEO_MODEL;
+      //typedef hemelb::lb::rheology_models::CarreauYasudaRheologyModel RHEO_MODEL;
+
+      //typedef hemelb::lb::collisions::implementations::LBGKNN<RHEO_MODEL> CO;
 
       if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
       {
@@ -167,20 +169,12 @@ namespace hemelb
         hemelb::lb::collisions::implementations::ELBM::setTau(&mParams.Tau);
       }
 
-      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel>))
+      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::LBGKNN<RHEO_MODEL>))
       {
-        hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel>::createTauArray(mLatDat->GetLocalFluidSiteCount(),
-                                                                                                                          mParams.Tau);
-        hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::CassonRheologyModel>::setStateObjects(mLatDat, mState);
+        hemelb::lb::collisions::implementations::LBGKNN<RHEO_MODEL>::createTauArray(mLatDat->GetLocalFluidSiteCount(),
+                                                                                    mParams.Tau);
+        hemelb::lb::collisions::implementations::LBGKNN<RHEO_MODEL>::setStateObjects(mLatDat, mState);
       }
-
-      if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel>))
-      {
-        hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel>::createTauArray(mLatDat->GetLocalFluidSiteCount(),
-                                                                                                                                     mParams.Tau);
-        hemelb::lb::collisions::implementations::LBGKNN<hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel>::setStateObjects(mLatDat, mState);
-      }
-
 
       InitCollisions<hemelb::lb::streamers::implementations::SimpleCollideAndStream<CO>,
           hemelb::lb::streamers::implementations::ZeroVelocityEquilibrium<CO>,
