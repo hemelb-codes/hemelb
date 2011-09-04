@@ -9,10 +9,8 @@ namespace hemelb
   {
     namespace rheology_models
     {
-      double CassonRheologyModel::CalculateTauForShearRate(const double &iShearRate,
-                                                           const distribn_t &iDensity,
-                                                           const double &iVoxelSize,
-                                                           const double &iTimeStep)
+      double CassonRheologyModel::CalculateViscosityForShearRate(const double &iShearRate,
+                                                                 const distribn_t &iDensity)
       {
         double k0_k1_gamma = K0 + K1*sqrt(iShearRate);
         double eta = (k0_k1_gamma*k0_k1_gamma)/iShearRate;
@@ -23,7 +21,7 @@ namespace hemelb
         // TODO Investigate whether we should be using the default blood density or the value computed locally (iDensity)
         double nu = eta/BLOOD_DENSITY_Kg_per_m3;
 
-        return CassonRheologyModel::CalculateTauForViscosity(nu, iTimeStep, iVoxelSize);
+        return nu;
       }
     }
   }
