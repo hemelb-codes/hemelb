@@ -15,21 +15,23 @@ namespace hemelb
 
       static const double CASSON_MAX_VISCOSITY = 0.16; // Pa*s
 
-      class CassonRheologyModel : public AbstractRheologyModel
+      class CassonRheologyModel : public AbstractRheologyModel<CassonRheologyModel>
       {
         public:
           /*
-           * Compute tau for a given shear rate according to the Casson model:
+           *  Compute nu for a given shear rate according to the Casson model:
            *
-           * eta = (K0 + K1*sqrt(iShearRate))^2 / iShearRate
+           *  eta = (K0 + K1*sqrt(iShearRate))^2 / iShearRate
+           *  nu = eta / density
            *
-           * See AbstractRheologyModel.h for description of the arguments and how tau
-           * is computed from eta.
+           *  @param iShearRate local shear rate value (s^{-1}).
+           *  @param iDensity local density. TODO at the moment this value is not used
+           *         in any subclass.
+           *
+           *  @return kinematic viscosity (m^2/s).
            */
-          static double CalculateTauForShearRate(const double &iShearRate,
-                                                 const distribn_t &iDensity,
-                                                 const double &iVoxelSize,
-                                                 const double &iTimeStep);
+          static double CalculateViscosityForShearRate(const double &iShearRate,
+                                                       const distribn_t &iDensity);
       };
     }
   }
