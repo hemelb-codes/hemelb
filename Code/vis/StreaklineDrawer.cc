@@ -811,8 +811,8 @@ namespace hemelb
 
         if (! (x.x < 0 || x.x >= pixels_x || x.y < 0 || x.y >= pixels_y))
         {
-          ColPixel col_pixel(x.x, x.y, particleVec[n].vel, p2.z, particleVec[n].inlet_id);
-          mScreen->AddPixel(&col_pixel, mVisSettings);
+          ColPixel<RayDataType_t> col_pixel(x.x, x.y, particleVec[n].vel, p2.z, particleVec[n].inlet_id);
+          mScreen->AddPixel(col_pixel, *mVisSettings);
         }
       }
     }

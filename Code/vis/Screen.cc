@@ -14,7 +14,7 @@ namespace hemelb
 
     Screen::Screen()
     {
-      mPixels= new ScreenPixels();
+      mPixels= new ScreenPixels<RayDataType_t>();
     }
 
     Screen::~Screen()
@@ -29,9 +29,18 @@ namespace hemelb
      * @param iStressType The stress type of the visualisation
      * @param mode Controls what aspects of the visualisation to display.
      */
-    void Screen::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
+    void Screen::AddPixel(const ColPixel<RayDataType_t>& newPixel, const VisSettings& iVisSettings)
     {
-      mPixels->AddPixel(newPixel, visSettings);
+      mPixels->AddPixel(newPixel, iVisSettings);
+    }
+
+    void Screen::AddRayData
+    ( const XYCoordinates<int>& iPixelCoordinates, 
+      const RayDataType_t& iRayData, 
+      const VisSettings& iVisSettings )
+    {
+      ColPixel<RayDataType_t> lNewPixel(iPixelCoordinates.x, iPixelCoordinates.y, iRayData);
+      AddPixel(lNewPixel, iVisSettings);
     }
 
     /**
@@ -93,11 +102,11 @@ namespace hemelb
 
     bool Screen::MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress)
     {
-      const ColPixel* screenPix = mPixels->GetPixelArray();
+      const ColPixel<RayDataType_t>* screenPix = mPixels->GetPixelArray();
 
       for (unsigned int i = 0; i < mPixels->GetStoredPixelCount(); i++)
       {
-        if (screenPix[i].IsRT() && int (screenPix[i].GetI()) == mouseX && int (screenPix[i].GetJ())
+        if (screenPix[i].ContainsRayData() && int (screenPix[i].GetI()) == mouseX && int (screenPix[i].GetJ())
             == mouseY)
         {
           *density = screenPix[i].GetDensity();
@@ -136,13 +145,13 @@ namespace hemelb
       return mPixels->GetPixelsY();
     }
 
-    ScreenPixels* Screen::SwapBuffers(ScreenPixels* inPix)
+    ScreenPixels<RayDataType_t>* Screen::SwapBuffers(ScreenPixels<RayDataType_t>* inPix)
     {
-      ScreenPixels* temp = mPixels;
+      ScreenPixels<RayDataType_t>* temp = mPixels;
       mPixels = inPix;
       return temp;
     }
-    const ScreenPixels* Screen::GetPixels() const
+    const ScreenPixels<RayDataType_t>* Screen::GetPixels() const
     {
       return mPixels;
     }

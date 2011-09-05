@@ -10,31 +10,31 @@ namespace hemelb
       ClusterWithWallNormals::ClusterWithWallNormals()
       { }
 
-      void ClusterWithWallNormals::ResizeVectors()
+      void ClusterWithWallNormals::DoResizeVectors()
       {
 	ResizeSharedVectors();
 	WallNormals.resize(blocksX*blocksY*blocksZ);
       }
 
-      void ClusterWithWallNormals::ResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
+      void ClusterWithWallNormals::DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
       {
-	ResizeVectorsForBlockShared(iBlockNumber,iSize);
+	DoResizeVectorsForBlockShared(iBlockNumber,iSize);
 	WallNormals[iBlockNumber].resize(iSize, NULL);
       }
       
-      double const*  ClusterWithWallNormals::GetWallData
+      double const*  ClusterWithWallNormals::DoGetWallData
       (site_t iBlockNumber, site_t iSiteNumber) const
       {
 	return WallNormals[iBlockNumber][iSiteNumber];
       }
 
-      void ClusterWithWallNormals::SetWallData
+      void ClusterWithWallNormals::DoSetWallData
       (site_t iBlockNumber, site_t iSiteNumber, double* iData)
       {
 	WallNormals[iBlockNumber][iSiteNumber] = iData;
       }
 
-      bool ClusterWithWallNormals::NeedsWallNormals()
+      bool ClusterWithWallNormals::DoNeedsWallNormals()
       {
 	return true;
       }

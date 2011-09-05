@@ -21,7 +21,6 @@
 #include "vis/StreaklineDrawer.h"
 
 #include "vis/rayTracer/ClusterWithWallNormals.h"
-#include "vis/rayTracer/RayEnhanced.h"
 #include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
@@ -77,7 +76,7 @@ namespace hemelb
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
 
-        const ScreenPixels* GetResult(unsigned long startIteration);
+        const ScreenPixels<RayDataType_t>* GetResult(unsigned long startIteration);
 
         bool IsRendering() const;
 
@@ -98,7 +97,7 @@ namespace hemelb
       private:
         typedef net::PhasedBroadcastIrregular<true, 2, 0, false, true> base;
         typedef net::PhasedBroadcast<true, 2, 0, false, true> deepbase;
-        typedef std::map<unsigned long, ScreenPixels*> mapType;
+        typedef std::map<unsigned long, ScreenPixels<RayDataType_t>*> mapType;
 
         // This is mainly constrained by the memory available per core.
         static const unsigned int SPREADFACTOR = 2;
@@ -111,22 +110,25 @@ namespace hemelb
 
         void initLayers();
         void Render();
-        ScreenPixels* GetReceiveBuffer(unsigned int startIteration, unsigned int child);
-        ScreenPixels* GetPixFromBuffer();
+        ScreenPixels<RayDataType_t>* GetReceiveBuffer(unsigned int startIteration, unsigned int child);
+        ScreenPixels<RayDataType_t>* GetPixFromBuffer();
 
         // Because of the 2-splay, we need to have two sets of receive buffers, so that comms
         // on consecutive iterations don't overwrite one another.
-        ScreenPixels recvBuffers[2][SPREADFACTOR];
+        ScreenPixels<RayDataType_t> recvBuffers[2][SPREADFACTOR];
 
-        std::stack<ScreenPixels*> pixelsBuffer;
-        std::map<unsigned long, ScreenPixels*> resultsByStartIt;
+        std::stack<ScreenPixels<RayDataType_t>*> pixelsBuffer;
+        std::map<unsigned long, ScreenPixels<RayDataType_t>*> resultsByStartIt;
         geometry::LatticeData* mLatDat;
         Screen mScreen;
         Vis* vis;
         raytracer::RayTracer<raytracer::ClusterWithWallNormals,
-	  raytracer::RayEnhanced> *myRayTracer;
+	  RayDataType_t> *myRayTracer;
         GlyphDrawer *myGlypher;
+
+#ifndef NO_STREAKLINES
         StreaklineDrawer *myStreaker;
+#endif
 
         double timeSpent;
     };
