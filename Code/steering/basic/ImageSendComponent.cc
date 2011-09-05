@@ -36,7 +36,7 @@ namespace hemelb
 
     // This is original code with minimal tweaks to make it work with
     // the new (Feb 2011) structure.
-    void ImageSendComponent::DoWork(const vis::ScreenPixels* pix)
+    void ImageSendComponent::DoWork(const vis::ScreenPixels<vis::RayDataType_t>* pix)
     {
       isConnected = mNetwork->IsConnected();
 

@@ -11,8 +11,7 @@ namespace hemelb
                              DomainStats* iDomainStats,
                              Viewpoint* iViewpoint,
                              VisSettings* iVisSettings) :
-      mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint),
-          mVisSettings(iVisSettings)
+        mLatDat(iLatDat), mScreen(iScreen), mDomainStats(iDomainStats), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
     {
       int n = -1;
 
@@ -87,22 +86,18 @@ namespace hemelb
 
         // ... calculate the two ends of the line we're going to draw...
         Vector3D<float> p1;
-	Vector3D<float> p2;
-	
-	p1 = Vector3D <float>(mGlyphs[n].x,
-			      mGlyphs[n].y,
-			      mGlyphs[n].z);
+        Vector3D<float> p2;
 
-	p2 = p1 + Vector3D<float>(vx * temp,
-				  vy * temp,
-				  vz * temp);
+        p1 = Vector3D<float>(mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
+
+        p2 = p1 + Vector3D<float>(vx * temp, vy * temp, vz * temp);
 
         // ... transform to the location on the screen, and render.
         XYCoordinates<float> p3 = mViewpoint->FlatProject(p1);
         XYCoordinates<float> p4 = mViewpoint->FlatProject(p2);
 
-        p3 = mScreen->TransformScreenToPixelCoordinates<float> (p3);
-        p4 = mScreen->TransformScreenToPixelCoordinates<float> (p4);
+        p3 = mScreen->TransformScreenToPixelCoordinates<float>(p3);
+        p4 = mScreen->TransformScreenToPixelCoordinates<float>(p4);
 
         mScreen->RenderLine(p3, p4, mVisSettings);
       }

@@ -13,23 +13,23 @@ namespace hemelb
       ClusterNormal::ClusterNormal()
       { }
 
-      void ClusterNormal::ResizeVectors()
+      void ClusterNormal::DoResizeVectors()
       {
 	ResizeSharedVectors();
       }
 
-      void ResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
+      void ClusterNormal::DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
       {
-	ResizeVectorsForBlockShared(iBlockNumber,iSize);
+	DoResizeVectorsForBlockShared(iBlockNumber,iSize);
       }
       
-      double const*  ClusterNormal::GetWallData
+      double const*  ClusterNormal::DoGetWallData
       (site_t iBlockNumber, site_t iSiteNumber) const
       {
 	return NULL;
       }
 
-      void ClusterNormal::SetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData)
+      void ClusterNormal::DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData)
       {
 	assert(false);
       }

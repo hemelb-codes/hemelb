@@ -25,7 +25,7 @@ namespace hemelb
 	public:
 	  ClusterShared() {}
 
-	  unsigned int GetBlockIdFrom3DBlockLocation(
+	  unsigned int DoGetBlockIdFrom3DBlockLocation(
 	    Vector3D<unsigned int>iLocation) const
 	  {
 	    return iLocation.x*blocksY*blocksZ
@@ -34,29 +34,29 @@ namespace hemelb
 	  }
 
 	  //Returns true if there is site data for a given block
-	  bool BlockContainsSites(site_t iBlockNumber) const
+	  bool DoBlockContainsSites(site_t iBlockNumber) const
 	  {
 	    return !SiteData[iBlockNumber].empty();
 	  }
 
-	  void ResizeVectorsForBlockShared(site_t iBlockNumber, site_t iSize)
+	  void DoResizeVectorsForBlockShared(site_t iBlockNumber, site_t iSize)
 	  {
 	    //By default all values are -1 for solids
 	    SiteData[iBlockNumber].resize(iSize, SiteData_t(-1.0F)); 
 	  }
 	  
 	  //Get SiteData arary for site
-	  const SiteData_t* GetSiteData(site_t iBlockNumber) const
+	  const SiteData_t* DoGetSiteData(site_t iBlockNumber) const
 	  {
 	    return &(SiteData[iBlockNumber][0]);
 	  }	    
 
-	  const SiteData_t* GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const
+	  const SiteData_t* DoGetSiteData(site_t iBlockNumber, site_t iSiteNumber) const
 	  {
 	    return &(SiteData[iBlockNumber][iSiteNumber]);
 	  }
       
-	  static bool NeedsWallNormals() //overridden
+	  static bool DoNeedsWallNormals() //overridden
 	  {
 	    return false; // By default
 	  }

@@ -7,6 +7,7 @@
 #include "lb/LbmParameters.h"
 #include "steering/Network.h"
 #include "steering/basic/SimulationParameters.h"
+#include "vis/Screen.h"
 
 namespace hemelb
 {
@@ -22,7 +23,7 @@ namespace hemelb
                            Network* iNetwork);
         ~ImageSendComponent();
 
-        void DoWork(const vis::ScreenPixels* pix);
+        void DoWork(const vis::ScreenPixels<hemelb::vis::RayDataType_t>* pix);
 
         bool ShouldRenderNewNetworkImage();
 
@@ -49,7 +50,8 @@ namespace hemelb
         // 1 * int (bytes of pixel data)
         // pixel data (variable, up to COLOURED_PIXELS_MAX * bytes_per_pixel_data)
         // SimulationParameters::paramsSizeB (metadata - mouse pressure and stress etc)
-        static const int maxSendSize = 2 * 4 + 1 * 4 + vis::ScreenPixels::COLOURED_PIXELS_MAX
+        static const int maxSendSize = 2 * 4 + 1 * 4 + 
+	  vis::ScreenPixels<vis::RayDataType_t>::COLOURED_PIXELS_MAX
             * bytes_per_pixel_data + SimulationParameters::paramsSizeB;
     };
   }
