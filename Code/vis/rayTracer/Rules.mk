@@ -2,9 +2,9 @@ include $(MK)/header.mk
 
 SRCS :=	BlockTraverser.cc \
 	BlockTraverserWithVisitedBlockTracker.cc \
+	ClusterNormal.cc \
 	ClusterWithWallNormals.cc \
-	Ray.cc \
-	RayEnhanced.cc \
+	RayDataNormal.cc \
 	VolumeTraverser.cc \
 	SiteTraverser.cc \
 

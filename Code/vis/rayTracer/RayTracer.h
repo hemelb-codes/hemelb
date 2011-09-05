@@ -37,7 +37,7 @@ namespace hemelb
   {
     namespace raytracer 
     {
-      template <typename ClusterType, typename RayType>
+      template <typename ClusterType, typename RayDataType>
 	class RayTracer
       {
       public:
@@ -87,7 +87,7 @@ namespace hemelb
 	// Render the current state into an image.
 	void Render()
 	{
-	  ClusterRayTracer<ClusterType, RayType> 
+	  ClusterRayTracer<ClusterType, RayDataType> 
 	    lClusterRayTracer(*mViewpoint, *mScreen, *mDomainStats, *mVisSettings, *mLatDat);
 
 	  for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)

@@ -3,8 +3,9 @@
 
 #include "io/Writer.h"
 #include "vis/ColPixel.h"
-#include "vis/Vector3D.h"
+#include "vis/rayTracer/RayDataNormal.h"
 #include "vis/ScreenPixels.h"
+#include "vis/Vector3D.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 #include "vis/XYCoordinates.h"
@@ -13,6 +14,9 @@ namespace hemelb
 {
   namespace vis
   {
+    //The ray data type used for the ray tracer
+    typedef raytracer::RayDataNormal RayDataType_t;
+    
     class Screen
     {
         friend class Control;
@@ -21,8 +25,13 @@ namespace hemelb
         Screen();
         ~Screen();
 
-        void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
+        void AddPixel(const ColPixel<RayDataType_t>& newPixel,
+		      const VisSettings& iVisSettings);
 
+	void AddRayData( const XYCoordinates<int>& iPixelCoordinates, 
+			 const RayDataType_t& iRayData,
+			 const VisSettings& iVisSettings);
+ 
         void RenderLine(const XYCoordinates<float>& endPoint1,
                         const XYCoordinates<float>& endPoint2,
 			            const VisSettings* visSettings);
@@ -62,8 +71,8 @@ namespace hemelb
         int GetPixelsX() const;
         int GetPixelsY() const;
 
-        ScreenPixels* SwapBuffers(ScreenPixels*);
-        const ScreenPixels* GetPixels() const;
+        ScreenPixels<RayDataType_t>* SwapBuffers(ScreenPixels<RayDataType_t>*);
+        const ScreenPixels<RayDataType_t>* GetPixels() const;
 
         bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
 
@@ -85,7 +94,7 @@ namespace hemelb
 	Vector3D<float>  mPixelUnitVectorProjectionX;
         Vector3D<float> mPixelUnitVectorProjectionY;
 
-        ScreenPixels* mPixels;
+        ScreenPixels<RayDataType_t>* mPixels;
     };
   }
 }

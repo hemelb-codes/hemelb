@@ -5,7 +5,6 @@
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
-#include "vis/rayTracer/RayEnhanced.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/rayTracer/ClusterWithWallNormals.h"
 #include "vis/GlyphDrawer.h"
@@ -100,7 +99,7 @@ namespace hemelb
       mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
       myRayTracer = new raytracer::RayTracer
-	<raytracer::ClusterWithWallNormals, raytracer::RayEnhanced>(
+	<raytracer::ClusterWithWallNormals, RayDataType_t>(
 	  mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
       myRayTracer->BuildClusters(); 
       myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
@@ -172,13 +171,13 @@ namespace hemelb
 
       if (mVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
-        myGlypher->Render();
+	myGlypher->Render();
       }
 #ifndef NO_STREAKLINES
       if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
-          == VisSettings::WALLANDSTREAKLINES)
+	  == VisSettings::WALLANDSTREAKLINES)
       {
-        myStreaker->render(mLatDat);
+	myStreaker->render(mLatDat);
       }
 #endif
 
@@ -193,22 +192,22 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Render stored for phased imaging.");
 
-      ScreenPixels* pix;
+      ScreenPixels<RayDataType_t>* pix;
 
       // If we don't have any in the buffer, create a new ScreenPixels object.
       if (pixelsBuffer.empty())
       {
-        pix = mScreen.SwapBuffers(new ScreenPixels());
+        pix = mScreen.SwapBuffers(new ScreenPixels<RayDataType_t>());
       }
       // Otherwise use a ScreenPixels object from the buffer.
       else
       {
-        ScreenPixels* buff = pixelsBuffer.top();
+        ScreenPixels<RayDataType_t>* buff = pixelsBuffer.top();
         pixelsBuffer.pop();
         pix = mScreen.SwapBuffers(buff);
       }
 
-      resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(startIteration, pix));
+      resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels<RayDataType_t>*>(startIteration, pix));
 
       timeSpent += util::myClock();
     }
@@ -223,7 +222,7 @@ namespace hemelb
         unsigned int counts[SPREADFACTOR];
         for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
         {
-          ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, ii);
+          ScreenPixels<RayDataType_t>* recvBuffer = GetReceiveBuffer(startIteration, ii);
           recvBuffer->Reset();
           childNumbers[ii] = recvBuffer->GetStoredPixelCountPtr();
           counts[ii] = 1;
@@ -235,11 +234,11 @@ namespace hemelb
       }
       else if (splayNumber == 1)
       {
-        ColPixel* childData[SPREADFACTOR];
+        ColPixel<RayDataType_t>* childData[SPREADFACTOR];
         unsigned int counts[SPREADFACTOR];
         for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
         {
-          ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, ii);
+          ScreenPixels<RayDataType_t>* recvBuffer = GetReceiveBuffer(startIteration, ii);
           childData[ii] = recvBuffer->GetPixelArray();
           counts[ii] = recvBuffer->GetStoredPixelCount();
 
@@ -248,7 +247,7 @@ namespace hemelb
                                                         recvBuffer->GetStoredPixelCount());
         }
 
-        ReceiveFromChildren<ColPixel> (childData, counts);
+        ReceiveFromChildren<ColPixel<RayDataType_t> > (childData, counts);
       }
 
       timeSpent += util::myClock();
@@ -258,7 +257,7 @@ namespace hemelb
     {
       timeSpent -= util::myClock();
 
-      ScreenPixels* pixels = resultsByStartIt[startIteration];
+      ScreenPixels<RayDataType_t>* pixels = resultsByStartIt[startIteration];
       if (splayNumber == 0)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count (from it %li, %li pixels).",
@@ -273,7 +272,7 @@ namespace hemelb
                                                       startIteration,
                                                       pixels->GetStoredPixelCount());
 
-        SendToParent<ColPixel> (pixels->GetPixelArray(), pixels->GetStoredPixelCount());
+        SendToParent<ColPixel<RayDataType_t> > (pixels->GetPixelArray(), pixels->GetStoredPixelCount());
       }
 
       timeSpent += util::myClock();
@@ -291,7 +290,7 @@ namespace hemelb
       }
       if (splayNumber == 1)
       {
-        ScreenPixels* pixels = resultsByStartIt[startIteration];
+        ScreenPixels<RayDataType_t>* pixels = resultsByStartIt[startIteration];
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Combining in child pixel data.");
 
@@ -339,7 +338,7 @@ namespace hemelb
       timeSpent += util::myClock();
     }
 
-    const ScreenPixels* Control::GetResult(unsigned long startIt)
+    const ScreenPixels<RayDataType_t>* Control::GetResult(unsigned long startIt)
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Getting image results from it %lu", startIt);
 
@@ -377,7 +376,7 @@ namespace hemelb
        * This continues until all data is passed back to processor one, which passes it to proc 0.
        */
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
-      ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, 0);
+      ScreenPixels<RayDataType_t>* recvBuffer = GetReceiveBuffer(startIteration, 0);
 
       // Start with a difference in rank of 1, doubling every time.
       for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
@@ -402,7 +401,7 @@ namespace hemelb
             {
               MPI_Send(mScreen.mPixels->GetPixelArray(),
                        mScreen.mPixels->GetStoredPixelCount(),
-                       MpiDataType<ColPixel> (),
+                       MpiDataType<ColPixel<RayDataType_t> > (),
                        receivingProc,
                        20,
                        MPI_COMM_WORLD);
@@ -423,7 +422,7 @@ namespace hemelb
             if (recvBuffer->GetStoredPixelCount() > 0)
             {
               MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
-                  ColPixel> (), sendingProc, 20, MPI_COMM_WORLD, &status);
+                  ColPixel<RayDataType_t> > (), sendingProc, 20, MPI_COMM_WORLD, &status);
 
               mScreen.mPixels->FoldIn(recvBuffer, &mVisSettings);
             }
@@ -445,7 +444,7 @@ namespace hemelb
         {
           MPI_Send(mScreen.mPixels->GetPixelArray(),
                    mScreen.mPixels->GetStoredPixelCount(),
-                   MpiDataType<ColPixel> (),
+                   MpiDataType<ColPixel<RayDataType_t> > (),
                    0,
                    20,
                    MPI_COMM_WORLD);
@@ -466,27 +465,27 @@ namespace hemelb
         if (recvBuffer->GetStoredPixelCount() > 0)
         {
           MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
-              ColPixel> (), 1, 20, MPI_COMM_WORLD, &status);
+              ColPixel<RayDataType_t> > (), 1, 20, MPI_COMM_WORLD, &status);
 
           mScreen.mPixels->FoldIn(recvBuffer, &mVisSettings);
         }
 
-        ScreenPixels* pix;
+        ScreenPixels<RayDataType_t>* pix;
 
         // Create a new pixels object if we don't have any spare ones in the buffer.
         if (pixelsBuffer.empty())
         {
-          pix = mScreen.SwapBuffers(new ScreenPixels());
+          pix = mScreen.SwapBuffers(new ScreenPixels<RayDataType_t>());
         }
         // Use a pixels object from the buffer when there is one.
         else
         {
-          ScreenPixels* newBuff = pixelsBuffer.top();
+          ScreenPixels<RayDataType_t>* newBuff = pixelsBuffer.top();
           pixelsBuffer.pop();
           pix = mScreen.SwapBuffers(newBuff);
         }
 
-        resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(base::mSimState->GetTimeStepsPassed(),
+        resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels<RayDataType_t>*>(base::mSimState->GetTimeStepsPassed(),
                                                                         pix));
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.",
@@ -516,7 +515,7 @@ namespace hemelb
     {
       timeSpent -= util::myClock();
 
-      myStreaker ->StreakLines(time_step, period, mLatDat);
+      myStreaker->StreakLines(time_step, period, mLatDat);
 
       timeSpent += util::myClock();
     }
@@ -526,7 +525,7 @@ namespace hemelb
       return timeSpent;
     }
 
-    ScreenPixels* Control::GetReceiveBuffer(unsigned int startIteration, unsigned int child)
+    ScreenPixels<RayDataType_t>* Control::GetReceiveBuffer(unsigned int startIteration, unsigned int child)
     {
       return &recvBuffers[startIteration % 2][child];
     }
@@ -536,8 +535,10 @@ namespace hemelb
       timeSpent = 0.0;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
-
+      
+#ifndef NO_STREAKLINES
       myStreaker->Restart();
+#endif
 
       base::Reset();
 
@@ -555,7 +556,7 @@ namespace hemelb
       delete myRayTracer;
 
       // Clear out the ScreenPixels used still in the results buffer.
-      for (std::map<unsigned long, ScreenPixels*>::iterator it = resultsByStartIt.begin(); it
+      for (std::map<unsigned long, ScreenPixels<RayDataType_t>*>::iterator it = resultsByStartIt.begin(); it
           != resultsByStartIt.end(); it++)
       {
         delete it->second;

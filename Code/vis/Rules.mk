@@ -5,12 +5,11 @@ TARGETS := libHemeLbVis.$(LIBEXT)
 SUBDIRS := rayTracer
 
 $(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
-	ColPixel.o \
+	ColPixelMPIDataTypes.o \
 	GlyphDrawer.o \
 	StreaklineDrawer.o \
 	Control.o \
 	Screen.o \
-	ScreenPixels.o \
 	Viewpoint.o 
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))

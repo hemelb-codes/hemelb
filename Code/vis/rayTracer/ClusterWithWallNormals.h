@@ -16,15 +16,15 @@ namespace hemelb
 	public:
 	  ClusterWithWallNormals();
 	  
-	  void ResizeVectors();
+	  void DoResizeVectors();
 
-	  void ResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
+	  void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
 
-	  double const* GetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+	  double const* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
 	 
-	  void SetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData);
+	  void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData);
        
-	  static bool NeedsWallNormals();
+	  static bool DoNeedsWallNormals();
 
 	private:
 	  std::vector<std::vector<double*> > WallNormals;
