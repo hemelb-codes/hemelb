@@ -65,7 +65,11 @@ namespace hemelb
     DoIO(lSimulationElement, "cyclesteps", iIsLoading, StepsPerCycle);
 
     TiXmlElement* lGeometryElement = GetChild(iTopNode, "geometry", iIsLoading);
-    DoIO(GetChild(lGeometryElement, "datafile", iIsLoading), "path", iIsLoading, DataFilePath);
+
+    if (lGeometryElement != NULL)
+    {
+      DoIO(GetChild(lGeometryElement, "datafile", iIsLoading), "path", iIsLoading, DataFilePath);
+    }
 
     DoIO(GetChild(iTopNode, "inlets", iIsLoading), iIsLoading, Inlets, "inlet");
 
@@ -118,8 +122,17 @@ namespace hemelb
   {
     if (iIsLoading)
     {
-      char *dummy;
-      value = std::strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
+      const std::string* data = iParent->Attribute(iAttributeName);
+
+      if (data != NULL)
+      {
+        char *dummy;
+        value = std::strtod(iParent->Attribute(iAttributeName)->c_str(), &dummy);
+      }
+      else
+      {
+        value = 0.0;
+      }
     }
     else
     {
@@ -260,13 +273,11 @@ namespace hemelb
     DoIO(lPressureElement, "mean", iIsLoading, value->PressureMeanPhysical);
     DoIO(lPressureElement, "amplitude", iIsLoading, value->PressureAmpPhysical);
     DoIO(lPressureElement, "phase", iIsLoading, value->Phase);
-    DoIO(lPressureElement, "minimum", iIsLoading, value->PressureMinPhysical);
-    DoIO(lPressureElement, "maximum", iIsLoading, value->PressureMaxPhysical);
+    value->PressureMinPhysical = value->PressureMeanPhysical - value->PressureAmpPhysical;
+    value->PressureMaxPhysical = value->PressureMeanPhysical + value->PressureAmpPhysical;
 
     DoIO(lPositionElement, iIsLoading, value->Position);
     DoIO(lNormalElement, iIsLoading, value->Normal);
-
-    value->UpdatePeriod = 0;
   }
 
   void SimConfig::DoIO(TiXmlElement *iParent,
@@ -279,13 +290,8 @@ namespace hemelb
 
     DoIO(lPressureElement, "path", iIsLoading, value->PressureFilePath);
 
-    DoIO(lPressureElement, "minimum", iIsLoading, value->PressureMinPhysical);
-    DoIO(lPressureElement, "maximum", iIsLoading, value->PressureMaxPhysical);
-
     DoIO(lPositionElement, iIsLoading, value->Position);
     DoIO(lNormalElement, iIsLoading, value->Normal);
-
-    value->UpdatePeriod = 0;
   }
 
   void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, util::Vector3D &iValue)

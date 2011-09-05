@@ -57,7 +57,7 @@ namespace hemelb
                      const Viewpoint* viewpoint)
     {
       MaxXValue = maxX;
-      MaxYValue = maxX;
+      MaxYValue = maxY;
 
       UnitVectorProjectionX
           = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(Vector3D<float> (MaxXValue,
