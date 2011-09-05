@@ -24,7 +24,7 @@ namespace hemelb
          *
          */
         Vector3D<float>
-            RotateCameraCoordinatesToWorldCoordinates(const Vector3D<float>& iVector) const;
+        RotateCameraCoordinatesToWorldCoordinates(const Vector3D<float>& iVector) const;
 
         /**
          * Does the reverse of the above
@@ -62,15 +62,19 @@ namespace hemelb
         const Vector3D<float>& GetViewpointCentreLocation() const;
 
       private:
-        //Performs a vector rotation using stored
-        //Sin and Cosine Values
+        /**
+         * Performs a vector rotation using stored
+         * Sin and Cosine Values
+         */
         static Vector3D<float> Rotate(float iSinThetaX,
                                       float iCosThetaX,
                                       float iSinThetaY,
                                       float iCosThetaY,
                                       const Vector3D<float>& iVector);
 
-        //Reverses a vector rotation of the above
+        /*
+         * Reverses a vector rotation of the above
+         */
         static Vector3D<float> UnRotate(float iSinThetaX,
                                         float iCosThetaX,
                                         float iThetaY,
@@ -84,7 +88,7 @@ namespace hemelb
         float mSinLatitude;
         float mCosLatitude;
 
-        //Stores the viewpoint Location in world co-ordinate
+        // Stores the viewpoint Location in world co-ordinate
         Vector3D<float> mViewpointLocation;
     };
   }

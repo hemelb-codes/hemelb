@@ -324,9 +324,9 @@ namespace hemelb
       return globLatDat.GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
     }
 
-    bool LatticeData::IsValidBlockSite(site_t i, site_t j, site_t k) const
+    bool LatticeData::IsValidBlock(site_t i, site_t j, site_t k) const
     {
-      return globLatDat.IsValidBlockSite(i, j, k);
+      return globLatDat.IsValidBlock(i, j, k);
     }
 
 
