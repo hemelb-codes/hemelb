@@ -87,8 +87,13 @@ namespace hemelb
           std::vector<double> value(0);
 
           // Must convert into vectors since LinearInterpolate works on a pair of vectors
+          // Determine min and max pressure on the way
+          PressureMinPhysical = TimeValuePair[0].value;
+          PressureMaxPhysical = TimeValuePair[0].value;
           for (unsigned int ii = 0; ii < TimeValuePair.size(); ii++)
           {
+            PressureMinPhysical = util::NumericalFunctions::min(PressureMinPhysical, TimeValuePair[ii].value);
+            PressureMaxPhysical = util::NumericalFunctions::max(PressureMaxPhysical, TimeValuePair[ii].value);
             time.push_back(TimeValuePair[ii].key);
             value.push_back(TimeValuePair[ii].value);
           }

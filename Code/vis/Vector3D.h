@@ -1,5 +1,5 @@
-#ifndef HEMELB_VIS_RAYTRACER_LOCATION_H
-#define HEMELB_VIS_RAYTRACER_LOCATION_H
+#ifndef HEMELB_VIS_RAYTRACER_VECTOR3D_H
+#define HEMELB_VIS_RAYTRACER_VECTOR3D_H
 
 #include "constants.h"
 #include "util/utilityFunctions.h"
@@ -8,9 +8,9 @@ namespace hemelb
 {
   namespace vis
   {
-    //Vector3D is essentially a 3D vector, storing the 
-    //x, y and z co-ordinate in the templated numeric type
-    //Other methods are defined for convenience
+    // Vector3D represents a 3D vector, storing the
+    // x, y and z co-ordinate in the templated numeric type
+    // Other methods are defined for convenience
     template<class T = site_t>
     class Vector3D
     {
@@ -23,22 +23,22 @@ namespace hemelb
         ;
 
         Vector3D(T iX, T iY, T iZ) :
-          x(iX), y(iY), z(iZ)
+            x(iX), y(iY), z(iZ)
         {
         }
 
         Vector3D(T iX) :
-          x(iX), y(iX), z(iX)
+            x(iX), y(iX), z(iX)
         {
         }
 
         //Copy constructor - can be used to perform type converstion
         template<class OldTypeT>
-        Vector3D<T> (const Vector3D<OldTypeT> & iOldVector3D)
+        Vector3D<T>(const Vector3D<OldTypeT> & iOldVector3D)
         {
-          x = static_cast<T> (iOldVector3D.x);
-          y = static_cast<T> (iOldVector3D.y);
-          z = static_cast<T> (iOldVector3D.z);
+          x = static_cast<T>(iOldVector3D.x);
+          y = static_cast<T>(iOldVector3D.y);
+          z = static_cast<T>(iOldVector3D.z);
         }
 
         //Equality
@@ -149,4 +149,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_VIS_RAYTRACER_LOCATION_H
+#endif // HEMELB_VIS_RAYTRACER_VECTOR3D_H
