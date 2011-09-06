@@ -1,5 +1,5 @@
-#ifndef HEMELB_VIS_RAYTRACER_RAYDATANORMAL_H
-#define HEMELB_VIS_RAYTRACER_RAYDATANORMAL_H
+#ifndef HEMELB_VIS_RAYTRACER_RAYDATAENHANCED_H
+#define HEMELB_VIS_RAYTRACER_RAYDATAENHANCED_H
 
 #include "mpiInclude.h"
 #include "vis/DomainStats.h"
@@ -14,13 +14,13 @@ namespace hemelb
   {
     namespace raytracer
     {
-      class RayDataNormal : public RayData<RayDataNormal>
+      class RayDataEnhanced : public RayData<RayDataEnhanced>
       {
       public:
-	RayDataNormal();
+	RayDataEnhanced();
 	
 	void DoUpdateData(const SiteData_t& iSiteData, 
-			  const double* iWallNormal, 
+			  const double* iWallNormal,
 			  const Vector3D<float>& iRayDirection,
 			  const float iRayLengthInVoxel,
 			  const float iAbsoluteDistanceFromViewpoint,
@@ -29,7 +29,7 @@ namespace hemelb
 	//Passed as references since pointer can't be
 	//meaningly transfered over MPI
 	
-	void DoMergeIn(const RayDataNormal& iOtherRayData,
+	void DoMergeIn(const RayDataEnhanced& iOtherRayData,
 		       const VisSettings& iVisSettings);
 
 	void DoGetVelocityColour(unsigned char oColour[3]) const;
@@ -37,18 +37,27 @@ namespace hemelb
 	void DoGetStressColour(unsigned char oColour[3]) const;
 
 	bool DoContainsRayData() const;
-
-	void UpdateVelocityColour(float iDt, const float iPalette[3]);
-
-	void UpdateStressColour(float iDt, const float iPalette[3]);
+	
+	float GetVelocitySum() const;
+     
+	float GetStressSum() const;
       
-	private:
-	float mVelR, mVelG, mVelB;
-	float mStressR, mStressG, mStressB;
+	float GetIntensity() const;
+
+	float GetAverageVelocity() const;
+      
+	float GetAverageStress() const;
+
+      private:
+	float mVelocitySum;
+	float mStressSum;
+	float mIntensity;
+	
+	const static float mMinLogIntensityMultiple;
         };
     }
   }
 
 }
 
-#endif // HEMELB_VIS_RAYTRACER_RAYDATANORMAL_H
+#endif // HEMELB_VIS_RAYTRACER_RAYDATAENHANCED_H

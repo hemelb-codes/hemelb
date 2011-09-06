@@ -4,6 +4,8 @@ SRCS :=	BlockTraverser.cc \
 	BlockTraverserWithVisitedBlockTracker.cc \
 	ClusterNormal.cc \
 	ClusterWithWallNormals.cc \
+	HSLToRGBConverter.cc \
+	RayDataEnhanced.cc \
 	RayDataNormal.cc \
 	VolumeTraverser.cc \
 	SiteTraverser.cc \

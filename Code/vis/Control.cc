@@ -99,7 +99,7 @@ namespace hemelb
       mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
       myRayTracer = new raytracer::RayTracer
-	<raytracer::ClusterWithWallNormals, RayDataType_t>(
+	<ClusterType_t, RayDataType_t>(
 	  mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
       myRayTracer->BuildClusters(); 
       myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
