@@ -61,7 +61,8 @@ namespace hemelb
 			const VisSettings& iVisSettings)
 	{
 	  mRayData.UpdateData(iSiteData,
-			      iWallNormal, 
+			      iWallNormal,
+			      GetDirection(),
 			      iRayLengthInVoxel,
 			      iRayUnitsInCluster + mRayUnitsTraversedToCluster,
 			      iDomainStats,

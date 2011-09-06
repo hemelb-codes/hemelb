@@ -27,6 +27,7 @@ namespace hemelb
 
       void RayDataNormal::DoUpdateData(const SiteData_t& iSiteData, 
 				       const double* iWallNormal, 
+				       const Vector3D<float>& iRayDirection,
 				       const float iRayLengthInVoxel,
 				       const float iAbsoluteDistanceFromViewpoint,
 				       const DomainStats& iDomainStats,
