@@ -25,6 +25,7 @@ namespace hemelb
 
   // TODO almost certainly filth.
   const distribn_t NO_VALUE = std::numeric_limits<distribn_t>::max();
+  const float NO_VALUE_F = std::numeric_limits<float>::max();
   const int BIG_NUMBER2 = 1 << 30;
   const unsigned int BIG_NUMBER3 = 1U << 31U;
 
