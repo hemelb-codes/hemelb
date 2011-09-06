@@ -3,7 +3,9 @@
 
 #include "io/Writer.h"
 #include "vis/ColPixel.h"
+#include "vis/rayTracer/RayDataEnhanced.h"
 #include "vis/rayTracer/RayDataNormal.h"
+#include "vis/rayTracer/ClusterWithWallNormals.h"
 #include "vis/ScreenPixels.h"
 #include "vis/Vector3D.h"
 #include "vis/Viewpoint.h"
@@ -14,9 +16,10 @@ namespace hemelb
 {
   namespace vis
   {
-    //The ray data type used for the ray tracer
+    //The ray data type and cluster type used for the ray tracer
     typedef raytracer::RayDataNormal RayDataType_t;
-    
+    typedef raytracer::ClusterWithWallNormals ClusterType_t;
+
     class Screen
     {
         friend class Control;

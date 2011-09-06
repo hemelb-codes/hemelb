@@ -76,7 +76,7 @@ namespace hemelb
       }
 
       //Dot produt
-      T DotProduct(Vector3D<T> iVector)
+      T DotProduct(Vector3D<T> iVector) const 
       {
 	return (x*iVector.x +
 		y*iVector.y +

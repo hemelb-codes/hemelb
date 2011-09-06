@@ -122,8 +122,7 @@ namespace hemelb
         geometry::LatticeData* mLatDat;
         Screen mScreen;
         Vis* vis;
-        raytracer::RayTracer<raytracer::ClusterWithWallNormals,
-	  RayDataType_t> *myRayTracer;
+        raytracer::RayTracer<ClusterType_t, RayDataType_t> *myRayTracer;
         GlyphDrawer *myGlypher;
 
 #ifndef NO_STREAKLINES

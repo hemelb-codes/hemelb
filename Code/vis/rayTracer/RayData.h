@@ -3,7 +3,7 @@
 
 //#define NDEBUG
 #include "assert.h"
-#include <cmath>
+
 
 #include "constants.h"
 #include "mpiInclude.h"
@@ -33,40 +33,43 @@ namespace hemelb
 	  mLengthBeforeRayFirstCluster = NO_VALUE_F;
 	}
 
-	void UpdateData(const SiteData_t& iSiteData,
+	void UpdateData(const raytracer::SiteData_t& iSiteData,
 			const double* iWallNormal,
+			const Vector3D<float>& iRayDirection,
 			const float iRayLengthInVoxel,
 			const float iAbsoluteDistanceFromViewpoint,
 			const DomainStats& iDomainStats,
 			const VisSettings& iVisSettings)
 	{
-	  //Check to make sure non-solid
-	  if (iSiteData.Density > 0.0F)
+	  if (iSiteData.Density < 0.0F)
 	  {
-	    static_cast<Derived*>(this)->DoUpdateData(iSiteData,
-						      iWallNormal, 
-						      iRayLengthInVoxel,
-						      iAbsoluteDistanceFromViewpoint,
-						      iDomainStats,
-						      iVisSettings);
-
-	    if (GetCumulativeLengthInFluid() == 0.0F)
-	    {
-	      SetLengthBeforeRayFirstCluster(iAbsoluteDistanceFromViewpoint);
-
-	      // Keep track of the density nearest to the viewpoint
-	      SetNearestDensity((iSiteData.Density - 
-				 (float) iDomainStats.density_threshold_min) *
-				(float) iDomainStats.density_threshold_minmax_inv);
-	  
-	      // Keep track of the stress nearest to the viewpoint
-	      SetNearestStress(iSiteData.Stress * 
-			       static_cast<float>(iDomainStats.stress_threshold_max_inv));		
-	    }
-
-	    SetCumulativeLengthInFluid(
-	      GetCumulativeLengthInFluid() + iRayLengthInVoxel);
+	    return; // solid voxel
 	  }
+
+	  static_cast<Derived*>(this)->DoUpdateData(iSiteData,
+						    iWallNormal, 
+						    iRayDirection,
+						    iRayLengthInVoxel,
+						    iAbsoluteDistanceFromViewpoint,
+						    iDomainStats,
+						    iVisSettings);
+
+	  if (GetCumulativeLengthInFluid() == 0.0F)
+	  {
+	    SetLengthBeforeRayFirstCluster(iAbsoluteDistanceFromViewpoint);
+
+	    // Keep track of the density nearest to the viewpoint
+	    SetNearestDensity((iSiteData.Density - 
+			       (float) iDomainStats.density_threshold_min) *
+			      (float) iDomainStats.density_threshold_minmax_inv);
+	  
+	    // Keep track of the stress nearest to the viewpoint
+	    SetNearestStress(iSiteData.Stress * 
+			     static_cast<float>(iDomainStats.stress_threshold_max_inv));		
+	  }
+
+	  SetCumulativeLengthInFluid(
+	    GetCumulativeLengthInFluid() + iRayLengthInVoxel);
 	}
 
 	void MergeIn(const Derived& iOtherRayData, const VisSettings& iVisSettings)
