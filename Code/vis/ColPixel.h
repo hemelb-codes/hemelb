@@ -140,10 +140,10 @@ namespace hemelb
 	    // store von Mises stress volume rendering colour
 	    mRayData.GetStressColour(&rgb_data[3]);
 	  }
-	  else if (mRayData.mStressAtNearestPoint < ((float) NO_VALUE))
+	  else if (mRayData.GetNearestStress() < NO_VALUE_F)
 	  {
 	    float stress_col[3];
-	    PickColour(mRayData.mStressAtNearestPoint, stress_col);
+	    PickColour(mRayData.GetNearestStress(), stress_col);
 
 	    // store wall shear stress colour
 	    MakePixelColour(int(255.0F * stress_col[0]),
@@ -168,8 +168,8 @@ namespace hemelb
 	    && visSettings->mode == VisSettings::ISOSURFACES)
 	{
 	  float density_col[3], stress_col[3];
-	  PickColour(mRayData.mDensityAtNearestPoint, density_col);
-	  PickColour(mRayData.mStressAtNearestPoint, stress_col);
+	  PickColour(mRayData.GetNearestDensity(), density_col);
+	  PickColour(mRayData.GetNearestStress(), stress_col);
 
 	  // store wall pressure colour
 	  MakePixelColour(int(255.0F * density_col[0]),
@@ -188,8 +188,8 @@ namespace hemelb
 		 && visSettings->mode == VisSettings::ISOSURFACESANDGLYPHS)
 	{
 	  float density_col[3], stress_col[3];
-	  PickColour(mRayData.mDensityAtNearestPoint, density_col);
-	  PickColour(mRayData.mStressAtNearestPoint, stress_col);
+	  PickColour(mRayData.GetNearestDensity(), density_col);
+	  PickColour(mRayData.GetNearestStress(), stress_col);
 
 	  if (ContainsRayData())
 	  {
@@ -246,19 +246,19 @@ namespace hemelb
 	{
 	  // store pressure colour
 	  rgb_data[6] = rgb_data[7] = rgb_data[8] =
-	    (unsigned char) util::NumericalFunctions::enforceBounds(int(127.5F
-									* mRayData.mDensityAtNearestPoint),
-								    0,
-								    127);
-
+	    (unsigned char) util::NumericalFunctions::enforceBounds(
+	      int(127.5F * mRayData.GetNearestDensity()),
+	      0,
+	      127);
+	  
 	  // store shear stress or von Mises stress
-	  if (mRayData.mStressAtNearestPoint < ((float) NO_VALUE))
+	  if (mRayData.GetNearestStress() <  NO_VALUE_F) 
 	  {
 	    rgb_data[9] = rgb_data[10] = rgb_data[11] =
-	      (unsigned char) util::NumericalFunctions::enforceBounds(int(127.5F
-									  * mRayData.mStressAtNearestPoint),
-								      0,
-								      127);
+	      (unsigned char) util::NumericalFunctions::enforceBounds(
+		int(127.5F * mRayData.GetNearestStress()),
+		0,
+		127);
 	  }
 	  else
 	  {
@@ -269,12 +269,12 @@ namespace hemelb
 
       float GetDensity() const
       {
-	return mRayData.mDensityAtNearestPoint;
+	return mRayData.GetNearestDensity();
       }
 
       float GetStress() const
       {
-	return mRayData.mStressAtNearestPoint;
+	return mRayData.GetNearestStress();
       }
 
       bool ContainsRayData() const

@@ -1,3 +1,5 @@
+//#define NDEBUG;
+#include <assert.h>
 #include <iostream>
 
 #include "vis/rayTracer/RayDataNormal.h"
@@ -14,9 +16,6 @@ namespace hemelb
       
       RayDataNormal::RayDataNormal()
       {
-	//A cheap way of indicating no ray data
-	mCumulativeLengthInFluid = 0.0F;
-
 	mVelR = 0.0F;
 	mVelG = 0.0F;
 	mVelB = 0.0F;
@@ -34,10 +33,7 @@ namespace hemelb
 				       const VisSettings& iVisSettings)
       {
 
-	if (iSiteData.Density < 0.0F)
-	{
-	  return; // solid voxel
-	}
+	assert(iSiteData.Density >= 0.0F);
 	
 	float lPalette[3];
 
@@ -56,56 +52,27 @@ namespace hemelb
 
 	  UpdateStressColour(iRayLengthInVoxel, lPalette);
 	}
-
-	if (mCumulativeLengthInFluid == 0.0F)
-	{
-	  mLengthBeforeRayFirstCluster = iAbsoluteDistanceFromViewpoint;
-
-	  // keep track of the density nearest to the view point
-	  mDensityAtNearestPoint = (iSiteData.Density - 
-				    (float) iDomainStats.density_threshold_min) *
-	    (float) iDomainStats.density_threshold_minmax_inv;
-	  
-	    // keep track of the stress nearest to the view point
-	    if(iSiteData.Stress == std::numeric_limits<float>::max())
-	    {
-	      mStressAtNearestPoint = std::numeric_limits<float>::max();
-	    }
-	    else 
-	    {
-	      mStressAtNearestPoint = iSiteData.Stress * 
-		static_cast<float>(iDomainStats.stress_threshold_max_inv);		
-	    }
-	}
-
-	mCumulativeLengthInFluid += iRayLengthInVoxel;
       }
       
       void RayDataNormal::DoGetVelocityColour(unsigned char oColour[3]) const
       {
-	oColour[0] = static_cast <unsigned char> ((mVelR*255.0F) / mCumulativeLengthInFluid);
-	oColour[1] = static_cast <unsigned char> ((mVelG*255.0F) / mCumulativeLengthInFluid);
-	oColour[2] = static_cast <unsigned char> ((mVelB*255.0F) / mCumulativeLengthInFluid);
+	oColour[0] = static_cast <unsigned char> ((mVelR*255.0F) / GetCumulativeLengthInFluid());
+	oColour[1] = static_cast <unsigned char> ((mVelG*255.0F) / GetCumulativeLengthInFluid());
+	oColour[2] = static_cast <unsigned char> ((mVelB*255.0F) / GetCumulativeLengthInFluid());
       }
     
 
       void RayDataNormal::DoGetStressColour(unsigned char oColour[3]) const
       {
-	oColour[0] = static_cast<unsigned char> ((mStressR*255.0F) / mCumulativeLengthInFluid);
-	oColour[1] = static_cast<unsigned char> ((mStressG*255.0F) / mCumulativeLengthInFluid);
-	oColour[2] = static_cast<unsigned char> ((mStressB*255.0F) / mCumulativeLengthInFluid);
+	oColour[0] = static_cast<unsigned char> ((mStressR*255.0F) / GetCumulativeLengthInFluid());
+	oColour[1] = static_cast<unsigned char> ((mStressG*255.0F) / GetCumulativeLengthInFluid());
+	oColour[2] = static_cast<unsigned char> ((mStressB*255.0F) / GetCumulativeLengthInFluid());
       }
 
-      bool RayDataNormal::DoContainsRayData() const
-      {
-	return mCumulativeLengthInFluid != 0.0F;
-      }
-
+     
       void RayDataNormal::DoMergeIn(const RayDataNormal& iOtherRayData,
 				    const VisSettings& iVisSettings)
       {
-	
-	// Both are ray-tracing
 	mVelR += iOtherRayData.mVelR;
 	mVelG += iOtherRayData.mVelG;
 	mVelB += iOtherRayData.mVelB;
@@ -116,18 +83,6 @@ namespace hemelb
 	  mStressG += iOtherRayData.mStressG;
 	  mStressB += iOtherRayData.mStressB;
 	}
-
-	mCumulativeLengthInFluid += iOtherRayData.mCumulativeLengthInFluid;
-
-	assert(mCumulativeLengthInFluid > 0.0F);
-
-	if (iOtherRayData.mLengthBeforeRayFirstCluster < mLengthBeforeRayFirstCluster)
-	{
-	  mLengthBeforeRayFirstCluster = iOtherRayData.mLengthBeforeRayFirstCluster;
-	  mDensityAtNearestPoint = iOtherRayData.mDensityAtNearestPoint;
-	  mStressAtNearestPoint = iOtherRayData.mStressAtNearestPoint;
-	}
-
       }
     
       void RayDataNormal::UpdateVelocityColour(float iDt, const float iPalette[3])
@@ -142,8 +97,7 @@ namespace hemelb
 	mStressR += iDt * iPalette[0];
 	mStressG += iDt * iPalette[1];
 	mStressB += iDt * iPalette[2];
-      }
-      
+      }     
     }
   }
 
