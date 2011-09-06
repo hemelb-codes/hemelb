@@ -40,16 +40,11 @@ namespace hemelb
 	void UpdateVelocityColour(float iDt, const float iPalette[3]);
 
 	void UpdateStressColour(float iDt, const float iPalette[3]);
-
-	float mLengthBeforeRayFirstCluster;
-	float mCumulativeLengthInFluid;
+      
+	private:
 	float mVelR, mVelG, mVelB;
 	float mStressR, mStressG, mStressB;
-        
-	float mDensityAtNearestPoint;
-	float mStressAtNearestPoint;
-
-      };
+        };
     }
   }
 
