@@ -526,11 +526,13 @@ namespace hemelb
 
     void Control::ProgressStreaklines(unsigned long time_step, unsigned long period)
     {
+#ifndef NO_STREAKLINES
       timeSpent -= util::myClock();
 
       myStreaker ->StreakLines(time_step, period, mLatDat);
 
       timeSpent += util::myClock();
+#endif
     }
 
     double Control::GetTimeSpent() const
@@ -549,7 +551,9 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
 
+#ifndef NO_STREAKLINES
       myStreaker->Restart();
+#endif
 
       base::Reset();
 

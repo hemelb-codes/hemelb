@@ -38,8 +38,6 @@ namespace hemelb
         mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
     {
       ReadParameters();
-
-      InitCollisions();
     }
 
     void LBM::CalculateMouseFlowField(float densityIn,
