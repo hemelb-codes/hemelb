@@ -15,6 +15,8 @@ namespace hemelb
     // TODO the streaker needs to be fixed. The lines drawn differ depending on how many proccesors
     // are used to do the visualisation. This is a bug.
 
+    // TODO something goes wrong with an ISend here with tag=30 on Ranger. This needs fixing.
+
     // Function to initialise the velocity field at given coordinates.
     void StreaklineDrawer::initializeVelFieldBlock(const geometry::LatticeData* iLatDat,
                                                    site_t site_i,
