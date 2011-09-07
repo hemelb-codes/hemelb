@@ -1,7 +1,7 @@
 # -*- mode: makefile;-*-
 include $(MK)/header.mk
 
-TARGETS = $(EXE)
+TARGETS = $(EXE) $(UNITTESTS)
 
 # Note that ParMetis doesn't count as a subdirectory because it uses its own
 # build system.
@@ -15,6 +15,14 @@ $(EXE)_DEPS = D3Q15.o \
         main.o \
         mpiInclude.o \
         $(SUBDIRS_TGTS)
+
+SUBDIRS = steering vis lb net debug topology xml util geometry io log unittests
+
+$(UNITTESTS)_DEPS = D3Q15.o \
+                    SimulationMaster.o \
+                    SimConfig.o \
+                    mpiInclude.o \
+                    $(SUBDIRS_TGTS)
 
 include $(MK)/footer.mk
 # This is just a convenience - to let you know when make has stopped
