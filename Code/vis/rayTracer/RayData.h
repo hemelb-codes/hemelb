@@ -33,43 +33,54 @@ namespace hemelb
 	  mLengthBeforeRayFirstCluster = NO_VALUE_F;
 	}
 
-	void UpdateData(const raytracer::SiteData_t& iSiteData,
-			const double* iWallNormal,
-			const Vector3D<float>& iRayDirection,
-			const float iRayLengthInVoxel,
-			const float iAbsoluteDistanceFromViewpoint,
-			const DomainStats& iDomainStats,
-			const VisSettings& iVisSettings)
+	void UpdateDataForNormalFluidSite(const raytracer::SiteData_t& iSiteData,
+					  const Vector3D<float>& iRayDirection,
+					  const float iRayLengthInVoxel,
+					  const float iAbsoluteDistanceFromViewpoint,
+					  const DomainStats& iDomainStats,
+					  const VisSettings& iVisSettings)
 	{
-	  if (iSiteData.Density < 0.0F)
-	  {
-	    return; // solid voxel
-	  }
+	  UpdateDataCommon(iSiteData,
+			   iRayDirection,
+			   iRayLengthInVoxel,
+			   iAbsoluteDistanceFromViewpoint,
+			   iDomainStats,
+			   iVisSettings);
 
-	  static_cast<Derived*>(this)->DoUpdateData(iSiteData,
-						    iWallNormal, 
-						    iRayDirection,
-						    iRayLengthInVoxel,
-						    iAbsoluteDistanceFromViewpoint,
-						    iDomainStats,
-						    iVisSettings);
+	  static_cast<Derived*>(this)->DoUpdateDataForNormalFluidSite
+	    ( iSiteData, 
+	      iRayDirection,
+	      iRayLengthInVoxel,
+	      iAbsoluteDistanceFromViewpoint,
+	      iDomainStats,
+	      iVisSettings );
+	}
 
-	  if (GetCumulativeLengthInFluid() == 0.0F)
-	  {
-	    SetLengthBeforeRayFirstCluster(iAbsoluteDistanceFromViewpoint);
+	void UpdateDataForWallSite(const raytracer::SiteData_t& iSiteData,
+				   const Vector3D<float>& iRayDirection,
+				   const float iRayLengthInVoxel,
+				   const float iAbsoluteDistanceFromViewpoint,
+				   const DomainStats& iDomainStats,
+				   const VisSettings& iVisSettings,
+				   const double* iWallNormal)
+	{
+	  assert(iWallNormal != NULL);
 
-	    // Keep track of the density nearest to the viewpoint
-	    SetNearestDensity((iSiteData.Density - 
-			       (float) iDomainStats.density_threshold_min) *
-			      (float) iDomainStats.density_threshold_minmax_inv);
-	  
-	    // Keep track of the stress nearest to the viewpoint
-	    SetNearestStress(iSiteData.Stress * 
-			     static_cast<float>(iDomainStats.stress_threshold_max_inv));		
-	  }
+	  UpdateDataCommon(iSiteData,
+			   iRayDirection,
+			   iRayLengthInVoxel,
+			   iAbsoluteDistanceFromViewpoint,
+			   iDomainStats,
+			   iVisSettings);
 
-	  SetCumulativeLengthInFluid(
-	    GetCumulativeLengthInFluid() + iRayLengthInVoxel);
+	  static_cast<Derived*>(this)->DoUpdateDataForWallSite
+	    ( iSiteData, 
+	      iRayDirection,
+	      iRayLengthInVoxel,
+	      iAbsoluteDistanceFromViewpoint,
+	      iDomainStats,
+	      iVisSettings,
+	      iWallNormal);
 	}
 
 	void MergeIn(const Derived& iOtherRayData, const VisSettings& iVisSettings)
@@ -136,6 +147,37 @@ namespace hemelb
 	float mDensityAtNearestPoint;
 	float mStressAtNearestPoint;
 	
+	void UpdateDataCommon(const raytracer::SiteData_t& iSiteData,
+			      const Vector3D<float>& iRayDirection,
+			      const float iRayLengthInVoxel,
+			      const float iAbsoluteDistanceFromViewpoint,
+			      const DomainStats& iDomainStats,
+			      const VisSettings& iVisSettings)
+	{
+	  assert(iSiteData.Density != 0.0F);
+	 
+	  if (GetCumulativeLengthInFluid() == 0.0F)
+	  {
+	    SetLengthBeforeRayFirstCluster(iAbsoluteDistanceFromViewpoint);
+
+	    // Keep track of the density nearest to the viewpoint
+	    SetNearestDensity((iSiteData.Density - 
+			       (float) iDomainStats.density_threshold_min) *
+			      (float) iDomainStats.density_threshold_minmax_inv);
+	  
+	    if (iVisSettings.mStressType == lb::VonMises ||
+		iVisSettings.mStressType == lb::ShearStress)
+	    {
+	      // Keep track of the stress nearest to the viewpoint
+	      SetNearestStress(iSiteData.Stress * 
+			       static_cast<float>(iDomainStats.stress_threshold_max_inv));		
+	    }
+	  }
+
+	  SetCumulativeLengthInFluid(
+	    GetCumulativeLengthInFluid() + iRayLengthInVoxel);
+	}
+			      
 	void SetNearestStress(float iStress) 
 	{
 	  mStressAtNearestPoint = iStress;

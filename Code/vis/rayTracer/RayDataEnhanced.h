@@ -19,22 +19,29 @@ namespace hemelb
       public:
 	RayDataEnhanced();
 	
-	void DoUpdateData(const SiteData_t& iSiteData, 
-			  const double* iWallNormal,
-			  const Vector3D<float>& iRayDirection,
-			  const float iRayLengthInVoxel,
-			  const float iAbsoluteDistanceFromViewpoint,
-			  const DomainStats& iDomainStats,
-			  const VisSettings& iVisSettings);
+	void DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
+					    const Vector3D<float>& iRayDirection,
+					    const float iRayLengthInVoxel,
+					    const float iAbsoluteDistanceFromViewpoint,
+					    const DomainStats& iDomainStats,
+					    const VisSettings& iVisSettings);
 	//Passed as references since pointer can't be
 	//meaningly transfered over MPI
 	
-	void DoMergeIn(const RayDataEnhanced& iOtherRayData,
-		       const VisSettings& iVisSettings);
-
+	void DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
+				     const Vector3D<float>& iRayDirection,
+				     const float iRayLengthInVoxel,
+				     const float iAbsoluteDistanceFromViewpoint,
+				     const DomainStats& iDomainStats,
+				     const VisSettings& iVisSettings,
+				     const double* iWallNormal);
+	  
 	void DoGetVelocityColour(unsigned char oColour[3]) const;
  
 	void DoGetStressColour(unsigned char oColour[3]) const;
+
+	void DoMergeIn(const RayDataEnhanced& iOtherRayData,
+		       const VisSettings& iVisSettings);
 
 	bool DoContainsRayData() const;
 	
@@ -49,11 +56,17 @@ namespace hemelb
 	float GetAverageStress() const;
 
       private:
+	float GetLightnessValue() const;
+
+	float mIntensity;
 	float mVelocitySum;
 	float mStressSum;
-	float mIntensity;
+
 	
-	const static float mMinLogIntensityMultiple;
+	const static float mIntensityMultipleThroughPerpendicularWalls;
+
+	const static float mLowestLightness;
+	const static float mHighestLightness;
         };
     }
   }
