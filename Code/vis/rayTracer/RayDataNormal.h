@@ -13,21 +13,28 @@ namespace hemelb
   namespace vis
   {
     namespace raytracer
-    {
+    { 
       class RayDataNormal : public RayData<RayDataNormal>
       {
       public:
 	RayDataNormal();
 	
-	void DoUpdateData(const SiteData_t& iSiteData, 
-			  const double* iWallNormal, 
-			  const Vector3D<float>& iRayDirection,
-			  const float iRayLengthInVoxel,
-			  const float iAbsoluteDistanceFromViewpoint,
-			  const DomainStats& iDomainStats,
-			  const VisSettings& iVisSettings);
+	void DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
+					    const Vector3D<float>& iRayDirection,
+					    const float iRayLengthInVoxel,
+					    const float iAbsoluteDistanceFromViewpoint,
+					    const DomainStats& iDomainStats,
+					    const VisSettings& iVisSettings);
 	//Passed as references since pointer can't be
 	//meaningly transfered over MPI
+	
+	void DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
+				     const Vector3D<float>& iRayDirection,
+				     const float iRayLengthInVoxel,
+				     const float iAbsoluteDistanceFromViewpoint,
+				     const DomainStats& iDomainStats,
+				     const VisSettings& iVisSettings,
+				     const double* iWallNormal);
 	
 	void DoMergeIn(const RayDataNormal& iOtherRayData,
 		       const VisSettings& iVisSettings);
@@ -42,10 +49,10 @@ namespace hemelb
 
 	void UpdateStressColour(float iDt, const float iPalette[3]);
       
-	private:
+      private:
 	float mVelR, mVelG, mVelB;
 	float mStressR, mStressG, mStressB;
-        };
+      };	
     }
   }
 

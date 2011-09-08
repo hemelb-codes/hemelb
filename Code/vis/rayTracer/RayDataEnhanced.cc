@@ -1,7 +1,9 @@
 //#define NDEBUG;
 #include <assert.h>
+#include <cmath>
 #include <iostream>
 
+#include "util/utilityFunctions.h"
 #include "vis/rayTracer/RayDataEnhanced.h"
 #include "vis/rayTracer/HSLToRGBConverter.h"
 #include "vis/ColPixel.h"
@@ -14,45 +16,66 @@ namespace hemelb
   {
     namespace raytracer
     {
-      const float RayDataEnhanced::mMinLogIntensityMultiple = 0.5F;
+      const float RayDataEnhanced::mIntensityMultipleThroughPerpendicularWalls = 0.75F;
+      const float RayDataEnhanced::mLowestLightness = 0.3F;
+      const float RayDataEnhanced::mHighestLightness = 0.8F;
+
 
       RayDataEnhanced::RayDataEnhanced() :
 	mVelocitySum(0.0F),
 	mStressSum(0.0F),
-	mIntensity(0.0F)
+	mIntensity(1.0F)
       {
       }
 
-      void RayDataEnhanced::DoUpdateData(const SiteData_t& iSiteData, 
-					 const double* iWallNormal, 
-					 const Vector3D<float>& iRayDirection,
-					 const float iRayLengthInVoxel,
-					 const float iAbsoluteDistanceFromViewpoint,
-					 const DomainStats& iDomainStats,
-					 const VisSettings& iVisSettings)
+      void RayDataEnhanced::DoUpdateDataForNormalFluidSite
+      ( const SiteData_t& iSiteData, 
+	const Vector3D<float>& iRayDirection,
+	const float iRayLengthInVoxel,
+	const float iAbsoluteDistanceFromViewpoint,
+	const DomainStats& iDomainStats,
+	const VisSettings& iVisSettings )
       {
-	//assert(iSiteData.Density >= 0.0F);
-	
 	mVelocitySum += iSiteData.Velocity * (float) iDomainStats.velocity_threshold_max_inv;
 	
-	if (iVisSettings.mStressType != lb::ShearStress)
+	iSiteData.Velocity * (float) iDomainStats.velocity_threshold_max_inv;
+
+	if (iVisSettings.mStressType == lb::VonMises)
 	{
 	  // update the volume rendering of the von Mises stress flow field
 	  mStressSum = iSiteData.Stress * (float) iDomainStats.stress_threshold_max_inv;
 	}
+      }
 
-        //Calculate the absolute dot product of the wall
+      void RayDataEnhanced::DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
+						    const Vector3D<float>& iRayDirection,
+						    const float iRayLengthInVoxel,
+						    const float iAbsoluteDistanceFromViewpoint,
+						    const DomainStats& iDomainStats,
+						    const VisSettings& iVisSettings,
+						    const double* iWallNormal)
+      {
+	DoUpdateDataForNormalFluidSite(iSiteData,
+				       iRayDirection,
+				       iRayLengthInVoxel,
+				       iAbsoluteDistanceFromViewpoint,
+				       iDomainStats,
+				       iVisSettings);
+
+	//Calculate the absolute dot product of the wall
 	//vector normal and the ray direction
+	Vector3D<float> lWallNormal = 
+	  Vector3D<float>(static_cast<float>(iWallNormal[0]),
+			  static_cast<float>(iWallNormal[1]),
+			  static_cast<float>(iWallNormal[2]));
+	  
 	float lDotProduct =
-	  fabs(iRayDirection.DotProduct(
-		 Vector3D<float>(iWallNormal[0],
-				 iWallNormal[1],
-				 iWallNormal[2])));
+	  fabs(iRayDirection.DotProduct(lWallNormal));
 
 	//We want the attentuation to be between
-	//mMinLogIntensityMultiple and 1
-	float lIntensityMultiple = mMinLogIntensityMultiple +
-	  (1.0F-mMinLogIntensityMultiple)*lDotProduct;
+	//mIntensityMultipleThroughPerpendicularWalls and 1
+	float lIntensityMultiple = mIntensityMultipleThroughPerpendicularWalls +
+	  (1.0F-mIntensityMultipleThroughPerpendicularWalls)*lDotProduct;
 
 	//Scale the current intensity of the ray
 	mIntensity *= lIntensityMultiple; 
@@ -60,24 +83,39 @@ namespace hemelb
       
       void RayDataEnhanced::DoGetVelocityColour(unsigned char oColour[3]) const
       {
-	HSLToRGBConverter::ConvertHSLToRGB(GetAverageVelocity()*180.0F,
+	// We want the velocity hue to be between 240 degress
+	// and 0 degrees
+
+	float lVelocityHue = 120.0F*GetAverageVelocity() + 240.0F;
+
+	if (lVelocityHue >= 360.0F)
+	{
+	  lVelocityHue = 0.0F;
+	}
+	
+	HSLToRGBConverter::ConvertHSLToRGB(lVelocityHue,
 					   1.0F,
-					   GetIntensity(),
+					   GetLightnessValue(),
 					   oColour);
       }
     
 
       void RayDataEnhanced::DoGetStressColour(unsigned char oColour[3]) const
       {
-	HSLToRGBConverter::ConvertHSLToRGB(0.0F,
-					   GetAverageStress(),
-					   GetIntensity(),
+	float lStressSaturation =
+	  util::NumericalFunctions::enforceBounds<float>(0.5F+7.5F*GetAverageStress(),
+							 0.0F,
+							 1.0F);
+	
+	HSLToRGBConverter::ConvertHSLToRGB(230.0F,
+					   lStressSaturation,
+					   GetLightnessValue(),
 					   oColour);
       }
 
      
       void RayDataEnhanced::DoMergeIn(const RayDataEnhanced& iOtherRayData,
-				    const VisSettings& iVisSettings)
+				      const VisSettings& iVisSettings)
       {
 	mVelocitySum += iOtherRayData.GetVelocitySum();
 
@@ -112,6 +150,17 @@ namespace hemelb
       float RayDataEnhanced::GetAverageStress() const
       {
 	return GetStressSum()/GetCumulativeLengthInFluid();
+      }
+
+      float RayDataEnhanced::GetLightnessValue() const
+      {
+	assert(GetIntensity() >= 0.0F && mIntensity <= 1.0F);
+	float lLightnessValue = GetIntensity()*
+	  (mHighestLightness - mLowestLightness) +
+	  mLowestLightness;
+	
+	assert(lLightnessValue >= mLowestLightness && mHighestLightness <= 1.0F);
+	return lLightnessValue;
       }
     }
   }

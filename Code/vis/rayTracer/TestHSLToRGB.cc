@@ -22,7 +22,7 @@ int main( int argc, const char* argv[] )
     hemelb::vis::raytracer::HSLToRGBConverter::ConvertHSLToRGB
       (lHue, lSaturation, lLightness, lRGB);
 
-    std::cout << "R: " << (int)lRGB[0] 
+    std::cout << " R: " << (int)lRGB[0] 
 	      << " G: " << (int)lRGB[1] 
 	      << " B: " << (int)lRGB[2] 
 	      << std::endl;
