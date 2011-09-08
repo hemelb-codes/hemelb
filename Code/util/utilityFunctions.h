@@ -5,6 +5,7 @@
 #include <math.h>
 #include <iostream>
 #include <cstdlib>
+#include <limits>
 #include <vector>
 
 // Static class for simple functions that could be useful in many places
@@ -71,6 +72,20 @@ namespace hemelb
 
           return (ys[i] + (x - xs[i]) / (xs[i + 1] - xs[i]) * (ys[i + 1] - ys[i]));
         }
+	
+	template<typename T>
+	  static T CapIfInfinite(T iNum)
+	{
+	  if (iNum > std::numeric_limits<T>::max())
+	  {
+	    return std::numeric_limits<T>::max();
+	  }
+	  
+	  if (iNum < std::numeric_limits<T>::min())
+	  {
+	    return std::numeric_limits<T>::min();
+	  }
+	}
     };
 
     class NumericalMethods

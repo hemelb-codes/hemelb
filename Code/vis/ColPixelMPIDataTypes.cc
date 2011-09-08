@@ -5,6 +5,7 @@
 
 namespace hemelb
 {
+
   template<>
   MPI_Datatype MpiDataTypeTraits<hemelb::vis::ColPixel<hemelb::vis::raytracer::RayDataNormal> >::RegisterMpiDataType()
   {
@@ -32,7 +33,7 @@ namespace hemelb
       if (col_pixel_types[i - 1] == MPI_FLOAT)
       {
         col_pixel_disps[i] = col_pixel_disps[i - 1]
-            + (sizeof(float) * col_pixel_blocklengths[i - 1]);
+	  + (sizeof(float) * col_pixel_blocklengths[i - 1]);
       }
       else if (col_pixel_types[i - 1] == MPI_INT)
       {
@@ -87,7 +88,7 @@ namespace hemelb
       if (col_pixel_types[i - 1] == MPI_FLOAT)
       {
         col_pixel_disps[i] = col_pixel_disps[i - 1]
-            + (sizeof(float) * col_pixel_blocklengths[i - 1]);
+	  + (sizeof(float) * col_pixel_blocklengths[i - 1]);
       }
       else if (col_pixel_types[i - 1] == MPI_INT)
       {
@@ -97,10 +98,10 @@ namespace hemelb
       {
 	col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(unsigned) * col_pixel_blocklengths[i - 1]);
       }
-      else if (col_pixel_types[i - 1] == MpiDataTypeTraits<hemelb::vis::raytracer::RayDataNormal>
+      else if (col_pixel_types[i - 1] == MpiDataTypeTraits<hemelb::vis::raytracer::RayDataEnhanced>
 	       ::GetMpiDataType())
       {
-	col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(hemelb::vis::raytracer::RayDataNormal)
+	col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(hemelb::vis::raytracer::RayDataEnhanced)
 						       * col_pixel_blocklengths[i - 1]);
       }
       

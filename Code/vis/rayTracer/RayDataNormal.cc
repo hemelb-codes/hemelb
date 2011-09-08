@@ -25,15 +25,13 @@ namespace hemelb
 	mStressB = 0.0F;
       }
 
-      void RayDataNormal::DoUpdateData(const SiteData_t& iSiteData, 
-				       const double* iWallNormal, 
-				       const Vector3D<float>& iRayDirection,
-				       const float iRayLengthInVoxel,
-				       const float iAbsoluteDistanceFromViewpoint,
-				       const DomainStats& iDomainStats,
-				       const VisSettings& iVisSettings)
+      void RayDataNormal::DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
+							 const Vector3D<float>& iRayDirection,
+							 const float iRayLengthInVoxel,
+							 const float iAbsoluteDistanceFromViewpoint,
+							 const DomainStats& iDomainStats,
+							 const VisSettings& iVisSettings)
       {
-
 	assert(iSiteData.Density >= 0.0F);
 	
 	float lPalette[3];
@@ -53,6 +51,22 @@ namespace hemelb
 
 	  UpdateStressColour(iRayLengthInVoxel, lPalette);
 	}
+      }
+
+      void RayDataNormal::DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
+						    const Vector3D<float>& iRayDirection,
+						    const float iRayLengthInVoxel,
+						    const float iAbsoluteDistanceFromViewpoint,
+						    const DomainStats& iDomainStats,
+						    const VisSettings& iVisSettings,
+						    const double* iWallNormal)
+      {
+	DoUpdateDataForNormalFluidSite(iSiteData,
+				       iRayDirection,
+				       iRayLengthInVoxel,
+				       iAbsoluteDistanceFromViewpoint,
+				       iDomainStats,
+				       iVisSettings);
       }
       
       void RayDataNormal::DoGetVelocityColour(unsigned char oColour[3]) const
@@ -147,5 +161,6 @@ namespace hemelb
 		    &type);
     MPI_Type_commit(&type);
     return type;
-  }
+  } 
 }
+    

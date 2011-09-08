@@ -27,13 +27,19 @@ namespace hemelb
           PixelsY = 0;
 
           pixelArrayLength = 100;
-          pixels = new ColPixel<RayDataType> [pixelArrayLength];
+
+	  pixels = (ColPixel<RayDataType>*) malloc(sizeof(ColPixel<RayDataType>) * pixelArrayLength);
 
           Reset();
         }
 
         ~ScreenPixels()
         {
+	  for (int i = 0; i < storedPixels; i++)
+	  {
+	    pixels[i].~ColPixel<RayDataType>();
+	  }
+	  free(pixels);
         }
 
         void Reset()

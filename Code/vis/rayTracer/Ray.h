@@ -1,8 +1,11 @@
 #ifndef HEMELB_VIS_RAY_H
 #define HEMELB_VIS_RAY_H
 
+#include <cassert>
+#include <iostream>
 #include <limits>
 
+#include "util/utilityFunctions.h"
 #include "vis/rayTracer/SiteData.h"
 #include "vis/rayTracer/RayDataNormal.h"
 #include "vis/Vector3D.h"
@@ -26,7 +29,8 @@ namespace hemelb
 	    ( 1.0F/iDirection.x,
 	      1.0F/iDirection.y,
 	      1.0F/iDirection.z );
-	}
+
+       	}
       
 	Vector3D<float> GetDirection() const
 	{
@@ -53,21 +57,36 @@ namespace hemelb
 	  return GetDirection().z > 0.0F;
 	}
 
-	void UpdateData(const SiteData_t& iSiteData,
-			const double* iWallNormal,
+	void UpdateDataForWallSite(const SiteData_t& iSiteData,
 			const float iRayLengthInVoxel,
 			const float iRayUnitsInCluster,
 			const DomainStats& iDomainStats,
-			const VisSettings& iVisSettings)
+			const VisSettings& iVisSettings,
+			const double* iWallNormal)
 	{
-	  mRayData.UpdateData(iSiteData,
-			      iWallNormal,
-			      GetDirection(),
-			      iRayLengthInVoxel,
-			      iRayUnitsInCluster + mRayUnitsTraversedToCluster,
-			      iDomainStats,
-			      iVisSettings);
+	  mRayData.UpdateDataForWallSite(iSiteData,
+					 GetDirection(),
+					 iRayLengthInVoxel,
+					 iRayUnitsInCluster + mRayUnitsTraversedToCluster,
+					 iDomainStats,
+					 iVisSettings,
+					 iWallNormal);
 	}
+	
+	void UpdateDataForNormalFluidSite(const SiteData_t& iSiteData,
+				     const float iRayLengthInVoxel,
+				     const float iRayUnitsInCluster,
+				     const DomainStats& iDomainStats,
+				     const VisSettings& iVisSettings)
+	{
+	  mRayData.UpdateDataForNormalFluidSite(iSiteData,
+						GetDirection(),
+						iRayLengthInVoxel,
+						iRayUnitsInCluster + mRayUnitsTraversedToCluster,
+						iDomainStats,
+						iVisSettings);
+	}
+	
 
 	RayDataType GetRayData()
 	{

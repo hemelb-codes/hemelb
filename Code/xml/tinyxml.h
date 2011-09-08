@@ -1718,7 +1718,8 @@ private:
 /** Print to memory functionality. The TiXmlPrinter is useful when you need to:
 
 	-# Print to memory (especially in non-STL mode)
-	-# Control formatting (line endings, etc.)
+	-# Control 
+		   formatting (line endings, etc.)
 
 	When constructed, the TiXmlPrinter is in its default "pretty printing" mode.
 	Before calling Accept() you can call methods to control the printing

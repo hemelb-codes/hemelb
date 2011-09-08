@@ -1,5 +1,6 @@
 #include <vector>
 #include <math.h>
+#include <iostream>
 #include <limits>
 
 #include "log/Logger.h"
@@ -174,8 +175,7 @@ namespace hemelb
 	myGlypher->Render();
       }
 #ifndef NO_STREAKLINES
-      if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
-	  == VisSettings::WALLANDSTREAKLINES)
+      if (mVisSettings.mode == VisSettings::WALLANDSTREAKLINES)
       {
 	myStreaker->render(mLatDat);
       }
