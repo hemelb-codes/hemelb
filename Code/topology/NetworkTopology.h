@@ -67,6 +67,7 @@ namespace hemelb
         // Machine Id where each processor is.
         unsigned int* MachineIdOfEachProc;
 
+        static bool initialised;
         static NetworkTopology instance;
     };
   }
