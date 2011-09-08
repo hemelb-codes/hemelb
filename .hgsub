@@ -1,1 +1,1 @@
-Tests = ssh://hg@entropy.chem.ucl.ac.uk/hemelb-input
+RegressionTests = ssh://hg@entropy.chem.ucl.ac.uk/hemelb-input

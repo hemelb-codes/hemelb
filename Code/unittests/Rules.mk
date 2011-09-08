@@ -2,11 +2,7 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbUnitTests.$(LIBEXT)
 
-SUBDIRS := lbtests
-
-$(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
-                  main.o \
-                  $(foreach sd,$(SUBDIRS_$(d)),$(call subtree_tgts,$(sd)))
+$(TARGETS)_DEPS = main.o
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
