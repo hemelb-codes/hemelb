@@ -7,6 +7,7 @@ namespace hemelb
   namespace topology
   {
     NetworkTopology NetworkTopology::instance;
+    bool NetworkTopology::initialised = false;
 
     // Must be specified to prevent the default constructor being public.
     NetworkTopology::NetworkTopology()
@@ -21,6 +22,8 @@ namespace hemelb
 
     void NetworkTopology::Init(int * argCount, char *** argList, bool* oSuccess)
     {
+      initialised = true;
+
       MPI_Init(argCount, argList);
 
       int tempSize = 0, tempRank = 0;
@@ -37,12 +40,15 @@ namespace hemelb
 
     NetworkTopology::~NetworkTopology()
     {
-      MPI_Finalize();
+      if (initialised)
+      {
+        MPI_Finalize();
 
-      delete[] NeighbourIndexFromProcRank;
-      delete[] FluidSitesOnEachProcessor;
-      delete[] ProcCountOnEachMachine;
-      delete[] MachineIdOfEachProc;
+        delete[] NeighbourIndexFromProcRank;
+        delete[] FluidSitesOnEachProcessor;
+        delete[] ProcCountOnEachMachine;
+        delete[] MachineIdOfEachProc;
+      }
     }
 
     bool NetworkTopology::IsCurrentProcTheIOProc() const

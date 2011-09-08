@@ -21,7 +21,9 @@ namespace hemelb
         public:
           LbTestSuite()
           {
-            addTest(new CppUnit::TestCaller<KernelTests>("runTest", &KernelTests::runTest));
+            addTest(new CppUnit::TestCaller<KernelTests>("TestEntropic",
+                                                         &KernelTests::TestEntropic));
+            addTest(new CppUnit::TestCaller<KernelTests>("TestLBGK", &KernelTests::TestLBGK));
           }
 
         private:
