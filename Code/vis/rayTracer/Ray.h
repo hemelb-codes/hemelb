@@ -102,7 +102,11 @@ namespace hemelb
 	{
 	  mRayUnitsTraversedToCluster = iRayUnitsTraversedToCluster;
 	}
-	
+
+	bool IsRayCompletelyAttenuated() const
+	{
+	  return mRayData.IsRayCompletelyAttenuated();
+	}
 
       private:
 	Vector3D<float> mDirection;

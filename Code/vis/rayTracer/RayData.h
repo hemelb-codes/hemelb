@@ -140,6 +140,11 @@ namespace hemelb
 	  return mLengthBeforeRayFirstCluster;
 	}
 
+	bool IsRayCompletelyAttenuated() const
+	{
+	  return static_cast<const Derived*>(this)->DoIsRayCompletelyAttenuated();
+	}
+
       private:
 	float mLengthBeforeRayFirstCluster;
 	float mCumulativeLengthInFluid;

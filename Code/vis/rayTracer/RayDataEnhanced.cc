@@ -70,12 +70,20 @@ namespace hemelb
 			  static_cast<float>(iWallNormal[2]));
 	  
 	float lDotProduct =
-	  fabs(iRayDirection.DotProduct(lWallNormal));
+	  iRayDirection.DotProduct
+	  (lWallNormal);
+
+	//If the wall is facing us
+	if (lDotProduct < 0.0F)
+	{
+	  PerformDepthCuing(iAbsoluteDistanceFromViewpoint,
+			    iVisSettings);
+	}
 
 	//We want the attentuation to be between
 	//mIntensityMultipleThroughPerpendicularWalls and 1
 	float lIntensityMultiple = mIntensityMultipleThroughPerpendicularWalls +
-	  (1.0F-mIntensityMultipleThroughPerpendicularWalls)*lDotProduct;
+	  (1.0F-mIntensityMultipleThroughPerpendicularWalls)*fabs(lDotProduct);
 
 	//Scale the current intensity of the ray
 	mIntensity *= lIntensityMultiple; 
@@ -152,6 +160,13 @@ namespace hemelb
 	return GetStressSum()/GetCumulativeLengthInFluid();
       }
 
+      bool RayDataEnhanced::DoIsRayCompletelyAttenuated() const
+      {
+	//Roughly less than 1/255 will correspond to
+	//mLowestLightless
+	return GetIntensity() < 0.005F;
+      }
+
       float RayDataEnhanced::GetLightnessValue() const
       {
 	assert(GetIntensity() >= 0.0F && mIntensity <= 1.0F);
@@ -162,6 +177,22 @@ namespace hemelb
 	assert(lLightnessValue >= mLowestLightness && mHighestLightness <= 1.0F);
 	return lLightnessValue;
       }
+
+      void RayDataEnhanced::PerformDepthCuing
+      ( float iAbsoluteDistanceFromViewpoint,
+	const VisSettings& iVisSettings )
+      {
+	assert(iAbsoluteDistanceFromViewpoint <= 
+	       iVisSettings.maximumDrawDistance);
+
+	//Multiply the intensity linearly between 0.0 and 1.0
+	//for maximum draw distance to near 
+	mIntensity *= 1.0F - 
+	  iAbsoluteDistanceFromViewpoint/
+	  iVisSettings.maximumDrawDistance;
+      }
+
+
     }
   }
 

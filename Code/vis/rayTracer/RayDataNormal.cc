@@ -113,6 +113,12 @@ namespace hemelb
 	mStressG += iDt * iPalette[1];
 	mStressB += iDt * iPalette[2];
       }     
+
+      bool RayDataNormal::DoIsRayCompletelyAttenuated() const
+      {
+	//The ray is never completely attenuated
+	return false;
+      }
     }
   }
 
