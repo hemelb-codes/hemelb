@@ -549,7 +549,9 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
 
+#ifndef NO_STREAKLINES
       myStreaker->Restart();
+#endif
 
       base::Reset();
 

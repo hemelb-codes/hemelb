@@ -150,9 +150,9 @@ namespace hemelb
         {
           double a = xl, fa = fl;
           double b = xh, fb = fh;
-          double c = a, fc = fa;
+          double c, fc;
           double d; // First set after first iteration hence mflag
-          double s, fs = fb;
+          double s = b, fs = fb;
 
           if (fabs(fa) < fabs(fb))
           {
@@ -163,6 +163,9 @@ namespace hemelb
             a = b;
             b = temp;
           }
+
+          c = a;
+          fc = fa;
 
           bool mflag = true;
 
@@ -178,10 +181,20 @@ namespace hemelb
               s = b - fb * (b - a) / (fb - fa);
             }
 
-            if ( (a < b && s < (3 * a + b) / 4.0 && s > b) || (a > b && s > (3 * a + b) / 4.0 && s
-                < b) || (mflag && fabs(s - b) >= fabs(b - c) / 2.0) || (!mflag && fabs(s - b)
-                >= fabs(c - d) / 2.0) || (mflag && fabs(b - c) < alphaAcc) || (!mflag
-                && fabs(c - d) < alphaAcc))
+            // s is not between (3a + b)/4 and b
+            bool condition1 = (a < b
+              ? (s < (3 * a + b) / 4.0 || s > b)
+              : (s > (3 * a + b) / 4.0 || s < b));
+            // mflag is set and |s−b| ≥ |b−c| / 2)
+            bool condition2 = mflag && fabs(s - b) >= fabs(b - c) / 2.0;
+            // mflag is cleared and |s−b| ≥ |c−d| / 2
+            bool condition3 = !mflag && fabs(s - b) >= fabs(c - d) / 2.0;
+            // mflag is set and |b−c| < |δ|
+            bool condition4 = mflag && fabs(b - c) < alphaAcc;
+            // mflag is cleared and |c−d| < |δ|
+            bool condition5 = !mflag && fabs(c - d) < alphaAcc;
+
+            if (condition1 || condition2 || condition3 || condition4 || condition5)
             {
               s = (a + b) / 2.0;
               mflag = true;
