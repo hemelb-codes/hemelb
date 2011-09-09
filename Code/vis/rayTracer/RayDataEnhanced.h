@@ -55,14 +55,19 @@ namespace hemelb
       
 	float GetAverageStress() const;
 
+	bool DoIsRayCompletelyAttenuated() const;
+
       private:
 	float GetLightnessValue() const;
+	
+	void PerformDepthCuing
+	  ( float iAbsoluteDistanceFromViewpoint,
+	    const VisSettings& iVisSettings );
 
 	float mIntensity;
 	float mVelocitySum;
 	float mStressSum;
 
-	
 	const static float mIntensityMultipleThroughPerpendicularWalls;
 
 	const static float mLowestLightness;

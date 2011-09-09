@@ -115,6 +115,7 @@ namespace hemelb
     {
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
        	("Latitude: %f / Longitude: %f", iLatitude, iLongitude);
+
       mSinLongitude = sinf(iLongitude);
       mCosLongitude = cosf(iLongitude);
     
