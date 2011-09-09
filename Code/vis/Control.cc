@@ -124,8 +124,11 @@ namespace hemelb
                                 const float &iLatitude,
                                 const float &iZoom)
     {
-      float rad = 5.F * vis->system_size;
+      float rad = 1.F * vis->system_size;
       float dist = 0.75F * rad;
+
+      //For now set the maximum draw distance to twice the radius;
+      mVisSettings.maximumDrawDistance = 2.0F * rad;
 
       Vector3D<float> centre = Vector3D<float>( iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z );
 
