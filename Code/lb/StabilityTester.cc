@@ -70,7 +70,9 @@ namespace hemelb
         {
           for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
           {
-            if (*mLatDat->GetFNew(i * D3Q15::NUMVECTORS + l) < 0.0)
+            distribn_t value = *mLatDat->GetFNew(i * D3Q15::NUMVECTORS + l);
+
+            if (value < 0.0 || value != value)
             {
               mUpwardsStability = Unstable;
             }
