@@ -36,18 +36,15 @@ namespace hemelb
             int timeStepsPerCycle = 1000;
             double voxelSize = 0.01;
 
-            lbmParams.Tau = 0.5
-                + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-                    / (Cs2 * ( ((double) timeStepsPerCycle) * voxelSize * voxelSize));
-            lbmParams.Omega = -1.0 / lbmParams.Tau;
-            lbmParams.StressParameter = (1.0 - 1.0 / (2.0 * lbmParams.Tau)) / sqrt(2.0);
-            lbmParams.Beta = -1.0 / (2.0 * lbmParams.Tau);
+            lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s / (distribn_t) timeStepsPerCycle,
+                                              voxelSize);
           }
 
           void tearDown()
           {
             delete entropic;
             delete lbgk;
+            delete lbmParams;
           }
 
           void TestEntropic()
@@ -98,22 +95,22 @@ namespace hemelb
             // Now compare the expected and actual values.
             distribn_t allowedError = 1e-10;
 
-            CompareHydros(expectedDensity0,
-                          expectedVelocity0[0],
-                          expectedVelocity0[1],
-                          expectedVelocity0[2],
-                          expectedFEq0,
-                          "Entropic, case 0",
-                          hydroVars0,
-                          allowedError);
-            CompareHydros(expectedDensity1,
-                          expectedVelocity1[0],
-                          expectedVelocity1[1],
-                          expectedVelocity1[2],
-                          expectedFEq1,
-                          "Entropic, case 1",
-                          hydroVars1,
-                          allowedError);
+            KernelTestsHelper::CompareHydros(expectedDensity0,
+                                             expectedVelocity0[0],
+                                             expectedVelocity0[1],
+                                             expectedVelocity0[2],
+                                             expectedFEq0,
+                                             "Entropic, case 0",
+                                             hydroVars0,
+                                             allowedError);
+            KernelTestsHelper::CompareHydros(expectedDensity1,
+                                             expectedVelocity1[0],
+                                             expectedVelocity1[1],
+                                             expectedVelocity1[2],
+                                             expectedFEq1,
+                                             "Entropic, case 1",
+                                             hydroVars1,
+                                             allowedError);
 
             // Do the collision and test the result.
             distribn_t postCollision0[D3Q15::NUMVECTORS];
@@ -128,8 +125,8 @@ namespace hemelb
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
-              postCollision0[ii] = entropic->DoCollide(&lbmParams, hydroVars0, ii);
-              postCollision1[ii] = entropic->DoCollide(&lbmParams, hydroVars1, ii);
+              postCollision0[ii] = entropic->DoCollide(lbmParams, hydroVars0, ii);
+              postCollision1[ii] = entropic->DoCollide(lbmParams, hydroVars1, ii);
             }
 
             // Get the expected post-collision densities.
@@ -138,14 +135,14 @@ namespace hemelb
 
             KernelTestsHelper::CalculateEntropicCollision<D3Q15>(f_original,
                                                                  hydroVars0.f_eq,
-                                                                 lbmParams.Tau,
-                                                                 lbmParams.Beta,
+                                                                 lbmParams->Tau(),
+                                                                 lbmParams->Beta(),
                                                                  expectedPostCollision0);
 
             KernelTestsHelper::CalculateEntropicCollision<D3Q15>(f_original,
                                                                  hydroVars1.f_eq,
-                                                                 lbmParams.Tau,
-                                                                 lbmParams.Beta,
+                                                                 lbmParams->Tau(),
+                                                                 lbmParams->Beta(),
                                                                  expectedPostCollision1);
 
             // Compare.
@@ -214,22 +211,22 @@ namespace hemelb
             // Now compare the expected and actual values.
             distribn_t allowedError = 1e-10;
 
-            CompareHydros(expectedDensity0,
-                          expectedVelocity0[0],
-                          expectedVelocity0[1],
-                          expectedVelocity0[2],
-                          expectedFEq0,
-                          "LBGK, case 0",
-                          hydroVars0,
-                          allowedError);
-            CompareHydros(expectedDensity1,
-                          expectedVelocity1[0],
-                          expectedVelocity1[1],
-                          expectedVelocity1[2],
-                          expectedFEq1,
-                          "LBGK, case 1",
-                          hydroVars1,
-                          allowedError);
+            KernelTestsHelper::CompareHydros(expectedDensity0,
+                                             expectedVelocity0[0],
+                                             expectedVelocity0[1],
+                                             expectedVelocity0[2],
+                                             expectedFEq0,
+                                             "LBGK, case 0",
+                                             hydroVars0,
+                                             allowedError);
+            KernelTestsHelper::CompareHydros(expectedDensity1,
+                                             expectedVelocity1[0],
+                                             expectedVelocity1[1],
+                                             expectedVelocity1[2],
+                                             expectedFEq1,
+                                             "LBGK, case 1",
+                                             hydroVars1,
+                                             allowedError);
 
             // Do the collision and test the result.
             distribn_t postCollision0[D3Q15::NUMVECTORS];
@@ -244,8 +241,8 @@ namespace hemelb
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
-              postCollision0[ii] = lbgk->DoCollide(&lbmParams, hydroVars0, ii);
-              postCollision1[ii] = lbgk->DoCollide(&lbmParams, hydroVars1, ii);
+              postCollision0[ii] = lbgk->DoCollide(lbmParams, hydroVars0, ii);
+              postCollision1[ii] = lbgk->DoCollide(lbmParams, hydroVars1, ii);
             }
 
             // Get the expected post-collision densities.
@@ -254,12 +251,12 @@ namespace hemelb
 
             KernelTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
                                                              hydroVars0.f_eq,
-                                                             lbmParams.Omega,
+                                                             lbmParams->Omega(),
                                                              expectedPostCollision0);
 
             KernelTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
                                                              hydroVars1.f_eq,
-                                                             lbmParams.Omega,
+                                                             lbmParams->Omega(),
                                                              expectedPostCollision1);
 
             // Compare.
@@ -281,50 +278,7 @@ namespace hemelb
           }
 
         private:
-          template<typename Kernel>
-          void CompareHydros(distribn_t expectedDensity,
-                             distribn_t expectedVx,
-                             distribn_t expectedVy,
-                             distribn_t expectedVz,
-                             distribn_t expectedFEq[D3Q15::NUMVECTORS],
-                             std::string id,
-                             lb::kernels::HydroVars<Kernel> &hydroVars,
-                             distribn_t allowedError)
-          {
-            // Compare density
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id,
-                                                 expectedDensity,
-                                                 hydroVars.density,
-                                                 allowedError);
-
-            // Compare velocity
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vx " + id,
-                                                 expectedVx,
-                                                 hydroVars.v_x,
-                                                 allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vy " + id,
-                                                 expectedVy,
-                                                 hydroVars.v_y,
-                                                 allowedError);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id,
-                                                 expectedVz,
-                                                 hydroVars.v_z,
-                                                 allowedError);
-
-            // Compare equilibrium f
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              std::stringstream message("FEq ");
-              message << ii << " " << id;
-
-              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                   expectedFEq[ii],
-                                                   hydroVars.f_eq[ii],
-                                                   allowedError);
-            }
-          }
-
-          lb::LbmParameters lbmParams;
+          lb::LbmParameters* lbmParams;
           lb::kernels::Entropic* entropic;
           lb::kernels::LBGK* lbgk;
       };

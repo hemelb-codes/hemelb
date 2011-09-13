@@ -15,8 +15,7 @@ namespace hemelb
                                    std::vector<int> &iProcsList,
                                    bool iHasBoundary,
                                    proc_t iBCproc) :
-        BCproc(iBCproc), hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList),
-            mState(iSimState)
+          BCproc(iBCproc), hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList), mState(iSimState)
       {
         if (BoundaryValues::IsCurrentProcTheBCProc())
         {
@@ -37,7 +36,10 @@ namespace hemelb
 
       void BoundaryComms::Wait()
       {
-        MPI_Wait(&receiveRequest, &receiveStatus);
+        if (hasBoundary || !BoundaryValues::IsCurrentProcTheBCProc())
+        {
+          MPI_Wait(&receiveRequest, &receiveStatus);
+        }
       }
 
       void BoundaryComms::WaitAllComms()

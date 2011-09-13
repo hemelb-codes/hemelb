@@ -48,7 +48,7 @@ namespace hemelb
       unsigned long NumCycles;
       long StepsPerCycle;
 
-    private:
+    protected:
       SimConfig();
       void DoIO(TiXmlElement *iXmlNode, bool iIsLoading);
       void DoIO(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, long &value);

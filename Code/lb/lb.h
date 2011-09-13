@@ -24,12 +24,15 @@ namespace hemelb
         // TODO These should eventually be template parameters that are given to the generic LBM object.
         // At the moment, doing this will cause problems with other objects that have a pointer to the
         // LBM (and hence would also need to be templated, on the LBM-type).
-        typedef streamers::SimpleCollideAndStream<collisions::Normal<kernels::LBGK> > tMidFluidCollision;
-        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibrium<kernels::LBGK> > tWallCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::Normal<kernels::LBGK> >
+            tMidFluidCollision;
         typedef streamers::SimpleCollideAndStream<
-            collisions::NonZeroVelocityEquilibriumFixedDensity<kernels::LBGK> > tInletOutletCollision;
+            collisions::ZeroVelocityEquilibrium<kernels::LBGK> > tWallCollision;
         typedef streamers::SimpleCollideAndStream<
-            collisions::ZeroVelocityEquilibriumFixedDensity<kernels::LBGK> > tInletOutletWallCollision;
+            collisions::NonZeroVelocityEquilibriumFixedDensity<kernels::LBGK> >
+            tInletOutletCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<
+            kernels::LBGK> > tInletOutletWallCollision;
 
       public:
         LBM(hemelb::SimConfig *iSimulationConfig,
@@ -75,7 +78,6 @@ namespace hemelb
         site_t siteMins[3], siteMaxes[3];
 
       private:
-        void RecalculateTauViscosityOmega();
         void SetInitialConditions();
 
         void InitCollisions();
@@ -107,19 +109,19 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoStreamAndCollide<true>(iFirstIndex,
-                                                         iSiteCount,
-                                                         &mParams,
-                                                         mLatDat,
-                                                         mVisControl);
-          }
-          else
-          {
-            collision->template DoStreamAndCollide<false>(iFirstIndex,
+            collision->template DoStreamAndCollide<true> (iFirstIndex,
                                                           iSiteCount,
                                                           &mParams,
                                                           mLatDat,
                                                           mVisControl);
+          }
+          else
+          {
+            collision->template DoStreamAndCollide<false> (iFirstIndex,
+                                                           iSiteCount,
+                                                           &mParams,
+                                                           mLatDat,
+                                                           mVisControl);
           }
         }
 
@@ -128,19 +130,19 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoPostStep<true>(iFirstIndex,
-                                                 iSiteCount,
-                                                 &mParams,
-                                                 mLatDat,
-                                                 mVisControl);
-          }
-          else
-          {
-            collision->template DoPostStep<false>(iFirstIndex,
+            collision->template DoPostStep<true> (iFirstIndex,
                                                   iSiteCount,
                                                   &mParams,
                                                   mLatDat,
                                                   mVisControl);
+          }
+          else
+          {
+            collision->template DoPostStep<false> (iFirstIndex,
+                                                   iSiteCount,
+                                                   &mParams,
+                                                   mLatDat,
+                                                   mVisControl);
           }
         }
 

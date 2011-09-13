@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include "constants.h"
+#include "lb/kernels/BaseKernel.h"
 
 namespace hemelb
 {
@@ -13,6 +14,23 @@ namespace hemelb
       class KernelTestsHelper
       {
         public:
+          template<typename Lattice>
+          static void CalculateRhoVelocity(const distribn_t f[Lattice::NUMVECTORS],
+                                           distribn_t& rho,
+                                           distribn_t v[3])
+          {
+            rho = 0.0;
+
+            v[0] = v[1] = v[2] = 0.0;
+            for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
+            {
+              rho += f[ii];
+              v[0] += f[ii] * (float) Lattice::CX[ii];
+              v[1] += f[ii] * (float) Lattice::CY[ii];
+              v[2] += f[ii] * (float) Lattice::CZ[ii];
+            }
+          }
+
           template<typename Lattice>
           static void CalculateVelocity(const distribn_t f[Lattice::NUMVECTORS], distribn_t v[3])
           {
@@ -111,6 +129,49 @@ namespace hemelb
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               f_collided[ii] = f[ii] + omega * (f[ii] - f_eq[ii]);
+            }
+          }
+
+          template<typename Kernel>
+          static void CompareHydros(distribn_t expectedDensity,
+                                    distribn_t expectedVx,
+                                    distribn_t expectedVy,
+                                    distribn_t expectedVz,
+                                    distribn_t expectedFEq[D3Q15::NUMVECTORS],
+                                    std::string id,
+                                    lb::kernels::HydroVars<Kernel> &hydroVars,
+                                    distribn_t allowedError)
+          {
+            // Compare density
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Density " + id,
+                                                 expectedDensity,
+                                                 hydroVars.density,
+                                                 allowedError);
+
+            // Compare velocity
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vx " + id,
+                                                 expectedVx,
+                                                 hydroVars.v_x,
+                                                 allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vy " + id,
+                                                 expectedVy,
+                                                 hydroVars.v_y,
+                                                 allowedError);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Vz " + id,
+                                                 expectedVz,
+                                                 hydroVars.v_z,
+                                                 allowedError);
+
+            // Compare equilibrium f
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              std::stringstream message("FEq ");
+              message << ii << " " << id;
+
+              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
+                                                   expectedFEq[ii],
+                                                   hydroVars.f_eq[ii],
+                                                   allowedError);
             }
           }
       };

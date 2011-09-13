@@ -45,7 +45,7 @@ namespace hemelb
                                HydroVars<LBGK>& hydroVars,
                                unsigned int direction)
           {
-            return hydroVars.f[direction] + hydroVars.f_neq[direction] * lbmParams->Omega;
+            return hydroVars.f[direction] + hydroVars.f_neq[direction] * lbmParams->Omega();
           }
 
           void DoReset(InitParams* init)

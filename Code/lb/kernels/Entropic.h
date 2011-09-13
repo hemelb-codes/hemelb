@@ -23,7 +23,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase(f)
+            HydroVarsBase(f)
           {
 
           }
@@ -78,11 +78,12 @@ namespace hemelb
           {
             // TODO this calculation is being done in the wrong place, so it's now being done per
             // lattice site.
-            hydroVars.alpha = CalculateAlpha(lbmParams->Tau, hydroVars, oldAlpha[hydroVars.index]);
+            hydroVars.alpha
+                = CalculateAlpha(lbmParams->Tau(), hydroVars, oldAlpha[hydroVars.index]);
             oldAlpha[hydroVars.index] = hydroVars.alpha;
 
-            return hydroVars.f[direction]
-                + (hydroVars.alpha * lbmParams->Beta) * hydroVars.f_neq[direction];
+            return hydroVars.f[direction] + (hydroVars.alpha * lbmParams->Beta())
+                * hydroVars.f_neq[direction];
           }
 
           void Reset(InitParams* init)
@@ -109,8 +110,7 @@ namespace hemelb
               // Accuracy can change depending on stability requirements, because the more NR evaluations it skips
               // the more of the simulation is in the LBGK limit.
               deviation = util::NumericalFunctions::max(fabs( (hydroVars.f_eq[i] - hydroVars.f[i])
-                                                            / hydroVars.f[i]),
-                                                        deviation);
+                  / hydroVars.f[i]), deviation);
               if (deviation > 1.0E-2)
               {
                 big = true;
@@ -124,9 +124,9 @@ namespace hemelb
               HFunction HFunc(hydroVars.f, hydroVars.f_eq);
 
               // This is in case previous Alpha was calculated to be zero (does happen occasionally if f_eq - f is small
-              prevAlpha = (prevAlpha < 2.0 * tau ?
-                2.0 :
-                prevAlpha);
+              prevAlpha = (prevAlpha < 2.0 * tau
+                ? 2.0
+                : prevAlpha);
 
               return (hemelb::util::NumericalMethods::NewtonRaphson(&HFunc, prevAlpha, 1.0E-6));
             }
