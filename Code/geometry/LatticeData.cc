@@ -10,6 +10,11 @@ namespace hemelb
 {
   namespace geometry
   {
+    LatticeData::LatticeData()
+    {
+
+    }
+
     LatticeData::LatticeData(const bool reserveSteeringCore,
                              site_t* totalFluidSites,
                              site_t siteMins[3],
@@ -49,13 +54,8 @@ namespace hemelb
       }
 
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
-      MPI_Allgather(&localFluidSites,
-                    1,
-                    MpiDataType<site_t> (),
-                    fluidSitePerProc,
-                    1,
-                    MpiDataType<site_t> (),
-                    MPI_COMM_WORLD);
+      MPI_Allgather(&localFluidSites, 1, MpiDataType<site_t> (), fluidSitePerProc, 1, MpiDataType<
+          site_t> (), MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       site_t localMins[3];
@@ -163,9 +163,8 @@ namespace hemelb
                     if (!IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
                     {
                       // Set the neighbour location to the rubbish site.
-                      SetNeighbourLocation(site_map,
-                                           l,
-                                           GetLocalFluidSiteCount() * D3Q15::NUMVECTORS);
+                      SetNeighbourLocation(site_map, l, GetLocalFluidSiteCount()
+                          * D3Q15::NUMVECTORS);
                       continue;
                     }
 
@@ -175,9 +174,8 @@ namespace hemelb
                     if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
                       // initialize f_id to the rubbish site.
-                      SetNeighbourLocation(site_map,
-                                           l,
-                                           GetLocalFluidSiteCount() * D3Q15::NUMVECTORS);
+                      SetNeighbourLocation(site_map, l, GetLocalFluidSiteCount()
+                          * D3Q15::NUMVECTORS);
                       continue;
                     }
                     // If on the same proc, set f_id of the
@@ -328,7 +326,6 @@ namespace hemelb
     {
       return globLatDat.IsValidBlock(i, j, k);
     }
-
 
     bool LatticeData::IsValidLatticeSite(site_t i, site_t j, site_t k) const
     {

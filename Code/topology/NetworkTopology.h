@@ -67,6 +67,11 @@ namespace hemelb
         // Machine Id where each processor is.
         unsigned int* MachineIdOfEachProc;
 
+        /**
+         * This variable is necessary, because the destructor for this static object will always
+         * be called, regardless of whether the init method (that actually initialises the MPI
+         * environment) is called.
+         */
         static bool initialised;
         static NetworkTopology instance;
     };

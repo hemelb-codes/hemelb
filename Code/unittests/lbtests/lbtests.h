@@ -5,6 +5,7 @@
 #include <cppunit/TestFixture.h>
 
 #include "unittests/lbtests/KernelTests.h"
+#include "unittests/lbtests/CollisionTests.h"
 
 namespace hemelb
 {
@@ -24,9 +25,16 @@ namespace hemelb
             addTest(new CppUnit::TestCaller<KernelTests>("TestEntropic",
                                                          &KernelTests::TestEntropic));
             addTest(new CppUnit::TestCaller<KernelTests>("TestLBGK", &KernelTests::TestLBGK));
-          }
 
-        private:
+            addTest(new CppUnit::TestCaller<CollisionTests>("TestNonZeroVelocityEquilibriumFixedDensity",
+                                                            &CollisionTests::TestNonZeroVelocityEquilibriumFixedDensity));
+            addTest(new CppUnit::TestCaller<CollisionTests>("TestZeroVelocityEquilibriumFixedDensity",
+                                                            &CollisionTests::TestZeroVelocityEquilibriumFixedDensity));
+            addTest(new CppUnit::TestCaller<CollisionTests>("TestZeroVelocityEquilibrium",
+                                                            &CollisionTests::TestZeroVelocityEquilibrium));
+            addTest(new CppUnit::TestCaller<CollisionTests>("TestNormal",
+                                                            &CollisionTests::TestNormal));
+          }
       };
 
     }

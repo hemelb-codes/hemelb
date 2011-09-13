@@ -347,8 +347,7 @@ namespace hemelb
 
       // Sorts both the time and value vector so that time values are in incrementing order
       // Uses bubble sort as it is used only when initialising and reseting
-      void BoundaryValues::SortValuesFromFile(std::vector<double> &time,
-                                               std::vector<double> &value)
+      void BoundaryValues::SortValuesFromFile(std::vector<double> &time, std::vector<double> &value)
       {
         bool swapped = true;
 
