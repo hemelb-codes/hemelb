@@ -155,7 +155,8 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mTimingsFile = bTimingsFile;
 
   hemelb::site_t mins[3], maxes[3];
-  hemelb::lb::LbmParameters params;
+  // TODO The way we initialise LbmParameters is not great.
+  hemelb::lb::LbmParameters params(1000, 0.1);
   hemelb::site_t totalFluidSites;
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
