@@ -19,7 +19,7 @@ namespace hemelb
          * @return
          */
         TestLatticeData() :
-          LatticeData()
+            LatticeData()
         {
           globLatDat.SetBasicDetails(1, 1, 1, 4, 0.01, 0.0, 0.0, 0.0);
 
@@ -31,12 +31,12 @@ namespace hemelb
 
           BlockData* block = &globLatDat.Blocks[0];
 
-          block->ProcessorRankForEachBlockSite
-              = new proc_t[globLatDat.GetSitesPerBlockVolumeUnit()];
-          block->site_data = new unsigned int[globLatDat.GetSitesPerBlockVolumeUnit()];
+          block->ProcessorRankForEachBlockSite =
+              new proc_t[globLatDat.GetSitesPerBlockVolumeUnit()];block
+          ->site_data = new unsigned int[globLatDat.GetSitesPerBlockVolumeUnit()];
 
           // Iterate through the fluid sides and assign variables as necessary.
-          for (unsigned int ii = 0; ii < COLLISION_TYPES; ++ii)
+          for(unsigned int ii = 0; ii < COLLISION_TYPES; ++ii)
           {
             localLatDat.my_inner_collisions[ii] = 0;
             localLatDat.my_inter_collisions[ii] = 0;
@@ -117,6 +117,8 @@ namespace hemelb
               }
             }
           }
+
+          InitialiseNeighbourLookup(NULL, 0, localLatDat.mSiteData);
         }
 
         ~TestLatticeData()

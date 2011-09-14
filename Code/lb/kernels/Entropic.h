@@ -76,8 +76,7 @@ namespace hemelb
                                HydroVars<Entropic>& hydroVars,
                                unsigned int direction)
           {
-            // TODO this calculation is being done in the wrong place, so it's now being done per
-            // lattice site.
+            // TODO this calculation is being done in the wrong place and hence happens 15* too often.
             hydroVars.alpha
                 = CalculateAlpha(lbmParams->Tau(), hydroVars, oldAlpha[hydroVars.index]);
             oldAlpha[hydroVars.index] = hydroVars.alpha;
