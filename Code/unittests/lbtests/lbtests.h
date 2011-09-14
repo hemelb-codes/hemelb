@@ -6,6 +6,7 @@
 
 #include "unittests/lbtests/KernelTests.h"
 #include "unittests/lbtests/CollisionTests.h"
+#include "unittests/lbtests/StreamerTests.h"
 
 namespace hemelb
 {
@@ -34,6 +35,9 @@ namespace hemelb
                                                             &CollisionTests::TestZeroVelocityEquilibrium));
             addTest(new CppUnit::TestCaller<CollisionTests>("TestNormal",
                                                             &CollisionTests::TestNormal));
+
+            addTest(new CppUnit::TestCaller<StreamerTests>("TestSimpleCollideAndStream",
+                                                           &StreamerTests::TestSimpleCollideAndStream));
           }
       };
 

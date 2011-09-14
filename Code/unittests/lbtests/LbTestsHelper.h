@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTESTS_LBTESTS_KERNELTESTSHELPER_H
-#define HEMELB_UNITTESTS_LBTESTS_KERNELTESTSHELPER_H
+#ifndef HEMELB_UNITTESTS_LBTESTS_LBTESTSHELPER_H
+#define HEMELB_UNITTESTS_LBTESTS_LBTESTSHELPER_H
 
 #include <cmath>
 #include "constants.h"
@@ -11,7 +11,7 @@ namespace hemelb
   {
     namespace lbtests
     {
-      class KernelTestsHelper
+      class LbTestsHelper
       {
         public:
           template<typename Lattice>
@@ -179,4 +179,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_UNITTESTS_LBTESTS_KERNELTESTSHELPER_H */
+#endif /* HEMELB_UNITTESTS_LBTESTS_LBTESTSHELPER_H */
