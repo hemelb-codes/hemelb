@@ -69,17 +69,21 @@ namespace hemelb
 
           void tearDown()
           {
+            delete latDat;
+            delete simConfig;
+            delete simState;
+            delete unitConverter;
+            delete lbmParams;
+
+            delete inletBoundary;
+            delete outletBoundary;
+
             delete lbgk;
+
             delete nonZeroVFixedDensityILet;
             delete zeroVFixedDensityOLet;
             delete zeroVEqm;
             delete normal;
-
-            delete latDat;
-            delete simConfig;
-            delete simState;
-            delete lbmParams;
-            delete unitConverter;
           }
 
           void TestNonZeroVelocityEquilibriumFixedDensity()
@@ -104,16 +108,16 @@ namespace hemelb
             distribn_t expectedRho = inletBoundary->GetBoundaryDensity(0);
             distribn_t expectedV[3];
 
-            KernelTestsHelper::CalculateVelocity<D3Q15>(fOld, expectedV);
+            LbTestsHelper::CalculateVelocity<D3Q15>(fOld, expectedV);
             distribn_t expectedFeq[D3Q15::NUMVECTORS];
-            KernelTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
                                                         expectedV[0],
                                                         expectedV[1],
                                                         expectedV[2],
                                                         expectedFeq);
 
             // Compare.
-            KernelTestsHelper::CompareHydros(expectedRho,
+            LbTestsHelper::CompareHydros(expectedRho,
                                              expectedV[0],
                                              expectedV[1],
                                              expectedV[2],
@@ -158,14 +162,14 @@ namespace hemelb
             distribn_t expectedV[3] = { 0., 0., 0. };
 
             distribn_t expectedFeq[D3Q15::NUMVECTORS];
-            KernelTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
                                                         expectedV[0],
                                                         expectedV[1],
                                                         expectedV[2],
                                                         expectedFeq);
 
             // Compare.
-            KernelTestsHelper::CompareHydros(expectedRho,
+            LbTestsHelper::CompareHydros(expectedRho,
                                              expectedV[0],
                                              expectedV[1],
                                              expectedV[2],
@@ -215,14 +219,14 @@ namespace hemelb
             }
 
             distribn_t expectedFeq[D3Q15::NUMVECTORS];
-            KernelTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
                                                         expectedV[0],
                                                         expectedV[1],
                                                         expectedV[2],
                                                         expectedFeq);
 
             // Compare.
-            KernelTestsHelper::CompareHydros(expectedRho,
+            LbTestsHelper::CompareHydros(expectedRho,
                                              expectedV[0],
                                              expectedV[1],
                                              expectedV[2],
@@ -264,17 +268,17 @@ namespace hemelb
             distribn_t expectedRho;
             distribn_t expectedV[3];
 
-            KernelTestsHelper::CalculateRhoVelocity<D3Q15>(fOld, expectedRho, expectedV);
+            LbTestsHelper::CalculateRhoVelocity<D3Q15>(fOld, expectedRho, expectedV);
 
             distribn_t expectedFeq[D3Q15::NUMVECTORS];
-            KernelTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
+            LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedRho,
                                                         expectedV[0],
                                                         expectedV[1],
                                                         expectedV[2],
                                                         expectedFeq);
 
             // Compare.
-            KernelTestsHelper::CompareHydros(expectedRho,
+            LbTestsHelper::CompareHydros(expectedRho,
                                              expectedV[0],
                                              expectedV[1],
                                              expectedV[2],

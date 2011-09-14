@@ -44,11 +44,11 @@ namespace hemelb
                                 geometry::LatticeData* bLatDat,
                                 hemelb::vis::Control *iControl)
           {
-            static_cast<StreamerImpl*> (this)->DoStreamAndCollide<tDoRayTracing> (iFirstIndex,
-                                                                                  iSiteCount,
-                                                                                  iLbmParams,
-                                                                                  bLatDat,
-                                                                                  iControl);
+            static_cast<StreamerImpl*>(this)->template DoStreamAndCollide<tDoRayTracing>(iFirstIndex,
+                                                                                         iSiteCount,
+                                                                                         iLbmParams,
+                                                                                         bLatDat,
+                                                                                         iControl);
           }
 
           template<bool tDoRayTracing>
@@ -58,16 +58,16 @@ namespace hemelb
                         geometry::LatticeData* bLatDat,
                         hemelb::vis::Control *iControl)
           {
-            static_cast<StreamerImpl*> (this)->DoPostStep<tDoRayTracing> (iFirstIndex,
-                                                                          iSiteCount,
-                                                                          iLbmParams,
-                                                                          bLatDat,
-                                                                          iControl);
+            static_cast<StreamerImpl*>(this)->DoPostStep<tDoRayTracing>(iFirstIndex,
+                                                                        iSiteCount,
+                                                                        iLbmParams,
+                                                                        bLatDat,
+                                                                        iControl);
           }
 
           void Reset(kernels::InitParams* init)
           {
-            static_cast<StreamerImpl*> (this)->DoReset(init);
+            static_cast<StreamerImpl*>(this)->DoReset(init);
           }
 
         protected:
