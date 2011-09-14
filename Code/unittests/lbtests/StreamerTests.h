@@ -33,6 +33,9 @@ namespace hemelb
             lb::kernels::InitParams initParams;
             initParams.latDat = latDat;
             normalCollision = new lb::collisions::Normal<lb::kernels::LBGK>(initParams);
+
+            simpleCollideAndStream = new lb::streamers::SimpleCollideAndStream<
+                lb::collisions::Normal<lb::kernels::LBGK> >(initParams);
           }
 
           void tearDown()
@@ -57,7 +60,7 @@ namespace hemelb
             // distinguishable.
             for (site_t ii = 0; ii < latDat->GetLocalFluidSiteCount(); ++ii)
             {
-              distribn_t* fOld = latDat->GetFOld(ii);
+              distribn_t* fOld = latDat->GetFOld(ii * D3Q15::NUMVECTORS);
               for (unsigned int jj = 0; jj < D3Q15::NUMVECTORS; ++jj)
               {
                 fOld[jj] = ((distribn_t) (jj + 1)) / 10.0 + ((distribn_t) (ii + 1)) / 100.0;
@@ -72,42 +75,49 @@ namespace hemelb
                                                             NULL);
 
             // Now, go over each lattice site and check each value in f_new is correct.
-            for (site_t ii = 0; ii < latDat->GetLocalFluidSiteCount(); ++ii)
-            {
-              distribn_t* fNew = latDat->GetFOld(ii);
-              for (unsigned int jj = 0; jj < D3Q15::NUMVECTORS; ++jj)
-              {
-                site_t streamedIndex = latDat->GetStreamedIndex(ii, jj);
+            for (site_t streamedToSite = 0; streamedToSite < latDat->GetLocalFluidSiteCount();
+                ++streamedToSite)
+                {
+              distribn_t* streamedToFNew = latDat->GetFNew(D3Q15::NUMVECTORS * streamedToSite);
+
+              for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS;
+                  ++streamedDirection)
+                  {
+
+                site_t streamerIndex =
+                    latDat->GetStreamedIndex(streamedToSite,
+                                             D3Q15::INVERSEDIRECTIONS[streamedDirection]);
 
                 // If this site streamed somewhere sensible, it must have been streamed to.
-                if (streamedIndex >= 0
-                    && streamedIndex < (D3Q15::NUMVECTORS * latDat->GetLocalFluidSiteCount()))
+                if (streamerIndex >= 0
+                    && streamerIndex < (D3Q15::NUMVECTORS * latDat->GetLocalFluidSiteCount()))
                 {
-                  site_t streamedSite = streamedIndex / D3Q15::NUMVECTORS;
+                  site_t streamerSiteId = streamerIndex / D3Q15::NUMVECTORS;
 
-                  // Calculate fOld at this site.
-                  distribn_t fOld[D3Q15::NUMVECTORS];
+                  // Calculate streamerFOld at this site.
+                  distribn_t streamerFOld[D3Q15::NUMVECTORS];
                   for (unsigned int kk = 0; kk < D3Q15::NUMVECTORS; ++kk)
                   {
-                    fOld[kk] = ((distribn_t) (kk + 1)) / 10.0
-                        + ((distribn_t) (streamedSite + 1)) / 100.0;
+                    streamerFOld[kk] = ((distribn_t) (kk + 1)) / 10.0
+                        + ((distribn_t) (streamerSiteId + 1)) / 100.0;
                   }
 
-                  // Calculate what the value streamed to site ii should be.
-                  lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
-                  normalCollision->CalculatePreCollision(hydroVars, streamedSite);
+                  // Calculate what the value streamed to site streamedToSite should be.
+                  lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
+                  normalCollision->CalculatePreCollision(streamerHydroVars, streamerSiteId);
                   for (unsigned int kk = 0; kk < D3Q15::NUMVECTORS; ++kk)
                   {
-                    hydroVars.f_neq[kk] = hydroVars.f[kk] - hydroVars.f_eq[kk];
+                    streamerHydroVars.f_neq[kk] = streamerHydroVars.f[kk]
+                        - streamerHydroVars.f_eq[kk];
                   }
 
                   // F_new should be equal to the value that was streamed from this other site
-                  // in the direction /opposite/ to the direction we're streaming from.
+                  // in the same direction as we're streaming from.
                   CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("SimpleCollideAndStream, StreamAndCollide",
                                                        normalCollision->Collide(lbmParams,
-                                                                                D3Q15::INVERSEDIRECTIONS[jj],
-                                                                                hydroVars),
-                                                       fNew[jj],
+                                                                                streamedDirection,
+                                                                                streamerHydroVars),
+                                                       streamedToFNew[streamedDirection],
                                                        allowedError);
                 }
               }
