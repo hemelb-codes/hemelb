@@ -7,7 +7,6 @@
 
 namespace hemelb
 {
-
   class SimConfig;
 
   namespace lb
@@ -23,7 +22,7 @@ namespace hemelb
             InOutLet();
             virtual ~InOutLet();
 
-            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig) = 0;
+            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig*) = 0;
 
             virtual InOutLet* Clone() = 0;
 
@@ -40,6 +39,8 @@ namespace hemelb
             virtual void ResetValues();
             void ResetCommonLatticeValues();
 
+            void Initialise(const util::UnitConverter* units);
+
             distribn_t GetDensityMin();
             distribn_t GetDensityMax();
 
@@ -51,6 +52,9 @@ namespace hemelb
 
             util::Vector3D Position;
             util::Vector3D Normal;
+
+          protected:
+            const util::UnitConverter* mUnits;
 
           private:
             distribn_t DensityMinLattice;

@@ -11,7 +11,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetCosine::InOutLetCosine() :
-          InOutLetCycle<1, false> ()
+            InOutLetCycle<1, false>()
         {
 
         }
@@ -23,14 +23,7 @@ namespace hemelb
 
         InOutLet* InOutLetCosine::Clone()
         {
-          InOutLetCosine* copy = new InOutLetCosine();
-          copy->PressureMinPhysical = this->PressureMinPhysical;
-          copy->PressureMaxPhysical = this->PressureMaxPhysical;
-          copy->Position = this->Position;
-          copy->Normal = this->Normal;
-          copy->PressureMeanPhysical = this->PressureMeanPhysical;
-          copy->PressureAmpPhysical = this->PressureAmpPhysical;
-          copy->Phase = this->Phase;
+          InOutLetCosine* copy = new InOutLetCosine(*this);
 
           return copy;
         }
@@ -47,17 +40,16 @@ namespace hemelb
 
           for (unsigned int time_step = 0; time_step < density_cycle.size(); time_step++)
           {
-            density_cycle[time_step] = DensityMeanLattice + DensityAmpLattice * cos(w
-                * (double) (time_step + iState->Get0IndexedTimeStep()) + Phase);
+            density_cycle[time_step] = DensityMeanLattice
+                + DensityAmpLattice
+                    * cos(w * (double) (time_step + iState->Get0IndexedTimeStep()) + Phase);
           }
         }
 
         void InOutLetCosine::ResetValues()
         {
-          DensityMeanLattice
-              = util::UnitConverter::ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
-          DensityAmpLattice
-              = util::UnitConverter::ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
+          DensityMeanLattice = mUnits->ConvertPressureToLatticeUnits(PressureMeanPhysical) / Cs2;
+          DensityAmpLattice = mUnits->ConvertPressureGradToLatticeUnits(PressureAmpPhysical) / Cs2;
 
           ResetCommonLatticeValues();
         }

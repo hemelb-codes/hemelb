@@ -1,10 +1,11 @@
+#include <algorithm>
+#include <fstream>
+
 #include "lb/boundaries/iolets/InOutLetFile.h"
+#include "log/Logger.h"
 #include "util/fileutils.h"
 #include "util/utilityStructs.h"
 #include "SimConfig.h"
-#include "log/Logger.h"
-#include <fstream>
-#include <algorithm>
 
 namespace hemelb
 {
@@ -15,7 +16,7 @@ namespace hemelb
       namespace iolets
       {
         InOutLetFile::InOutLetFile() :
-          InOutLetCycle<0, false> ()
+            InOutLetCycle<0, false>()
         {
 
         }
@@ -27,12 +28,7 @@ namespace hemelb
 
         InOutLet* InOutLetFile::Clone()
         {
-          InOutLetFile* copy = new InOutLetFile();
-          copy->PressureMinPhysical = this->PressureMinPhysical;
-          copy->PressureMaxPhysical = this->PressureMaxPhysical;
-          copy->Position = this->Position;
-          copy->Normal = this->Normal;
-          copy->PressureFilePath = this->PressureFilePath;
+          InOutLetFile* copy = new InOutLetFile(*this);
 
           return copy;
         }
@@ -71,8 +67,8 @@ namespace hemelb
             }
             else
             {
-              if (tvPair.key != TimeValuePair[TimeValuePair.size() - 1].key || tvPair.value
-                  != TimeValuePair[TimeValuePair.size() - 1].value)
+              if (tvPair.key != TimeValuePair[TimeValuePair.size() - 1].key
+                  || tvPair.value != TimeValuePair[TimeValuePair.size() - 1].value)
               {
                 TimeValuePair.push_back(tvPair);
               }
@@ -92,8 +88,10 @@ namespace hemelb
           PressureMaxPhysical = TimeValuePair[0].value;
           for (unsigned int ii = 0; ii < TimeValuePair.size(); ii++)
           {
-            PressureMinPhysical = util::NumericalFunctions::min(PressureMinPhysical, TimeValuePair[ii].value);
-            PressureMaxPhysical = util::NumericalFunctions::max(PressureMaxPhysical, TimeValuePair[ii].value);
+            PressureMinPhysical = util::NumericalFunctions::min(PressureMinPhysical,
+                                                                TimeValuePair[ii].value);
+            PressureMaxPhysical = util::NumericalFunctions::max(PressureMaxPhysical,
+                                                                TimeValuePair[ii].value);
             time.push_back(TimeValuePair[ii].key);
             value.push_back(TimeValuePair[ii].value);
           }
@@ -109,13 +107,13 @@ namespace hemelb
           // Now convert these vectors into arrays using linear interpolation
           for (unsigned int time_step = 0; time_step < density_cycle.size(); time_step++)
           {
-            double point = time[0] + ((double) time_step / (double) density_cycle.size())
-                * (time[time.size() - 1] - time[0]);
+            double point = time[0]
+                + ((double) time_step / (double) density_cycle.size())
+                    * (time[time.size() - 1] - time[0]);
 
             double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
 
-            density_cycle[time_step] = util::UnitConverter::ConvertPressureToLatticeUnits(pressure)
-                / Cs2;
+            density_cycle[time_step] = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
           }
         }
 

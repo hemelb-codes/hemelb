@@ -15,24 +15,25 @@ namespace hemelb
       BoundaryValues::BoundaryValues(geometry::LatticeData::SiteType IOtype,
                                      geometry::LatticeData* iLatDat,
                                      std::vector<iolets::InOutLet*> &iiolets,
-                                     SimulationState* iSimState) :
-        net::IteratedAction(), mState(iSimState)
+                                     SimulationState* iSimState,
+                                     util::UnitConverter* units) :
+        net::IteratedAction(), mState(iSimState), mUnits(units)
       {
         nTotIOlets = (int) iiolets.size();
 
         std::vector<int> *procsList = new std::vector<int>[nTotIOlets];
 
         nIOlets = 0;
-        // Probably unnecessary resizes, but makes it clear that they're meant to be empty
-        ioletIDs.resize(0);
-        iolets.resize(0);
-        mComms.resize(0);
 
         // Determine which iolets need comms and create them
         for (int i = 0; i < nTotIOlets; i++)
         {
           // First create a copy of all iolets
-          iolets.push_back(iiolets[i]->Clone());
+          iolets::InOutLet* iolet = iiolets[i]->Clone();
+
+          iolet->Initialise(mUnits);
+
+          iolets.push_back(iolet);
 
           bool IOletOnThisProc = IsIOletOnThisProc(IOtype, iLatDat, i);
           procsList[i] = GatherProcList(IOletOnThisProc);
@@ -209,11 +210,6 @@ namespace hemelb
 
       void BoundaryValues::Reset()
       {
-        for (int i = 0; i < nTotIOlets; i++)
-        {
-          iolets[i]->ResetValues();
-        }
-
         for (int i = 0; i < nIOlets; i++)
         {
           if (iolets[ioletIDs[i]]->DoComms())
@@ -231,6 +227,11 @@ namespace hemelb
             iolets[ioletIDs[i]]->InitialiseCycle(density_cycle[i], mState);
             iolets[ioletIDs[i]]->density = density_cycle[i][0];
           }
+        }
+
+        for(int i = 0; i < nTotIOlets; ++i)
+        {
+          iolets[i]->ResetValues();
         }
 
         for (int i = 0; i < nIOlets; i++)

@@ -58,7 +58,8 @@ namespace hemelb
         Initialise(site_t* iFTranslator,
                    vis::Control* iControl,
                    boundaries::BoundaryValues* iInletValues,
-                   boundaries::BoundaryValues* iOutletValues);
+                   boundaries::BoundaryValues* iOutletValues,
+                   util::UnitConverter* iUnits);
 
         void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
         void ReadVisParameters();
@@ -160,6 +161,8 @@ namespace hemelb
 
         LbmParameters mParams;
         vis::Control* mVisControl;
+
+        util::UnitConverter* mUnits;
 
         site_t* receivedFTranslator;
     };
