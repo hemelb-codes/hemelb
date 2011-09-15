@@ -35,8 +35,6 @@ namespace hemelb
              SimulationState* simState) :
       mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
     {
-      // voxel_size = iSimulationConfig->VoxelSize;
-
       ReadParameters();
 
       InitCollisions();
@@ -53,8 +51,8 @@ namespace hemelb
       double density = density_threshold_min + densityIn / density_threshold_minmax_inv;
       double stress = stressIn / stress_threshold_max_inv;
 
-      mouse_pressure = util::UnitConverter::ConvertPressureToPhysicalUnits(density * Cs2);
-      mouse_stress = util::UnitConverter::ConvertStressToPhysicalUnits(stress);
+      mouse_pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
+      mouse_stress = mUnits->ConvertStressToPhysicalUnits(stress);
     }
 
     void LBM::InitCollisions()
@@ -99,11 +97,12 @@ namespace hemelb
     void LBM::Initialise(site_t* iFTranslator,
                          vis::Control* iControl,
                          boundaries::BoundaryValues* iInletValues,
-                         boundaries::BoundaryValues* iOutletValues)
+                         boundaries::BoundaryValues* iOutletValues,
+                         util::UnitConverter* iUnits)
     {
       mInletValues = iInletValues;
-
       mOutletValues = iOutletValues;
+      mUnits = iUnits;
 
       InitCollisions();
 

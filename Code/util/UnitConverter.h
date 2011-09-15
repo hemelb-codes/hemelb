@@ -13,23 +13,23 @@ namespace hemelb
     class UnitConverter
     {
       public:
-        static void Initialise(lb::LbmParameters* iParams,
-                               lb::SimulationState* iState,
-                               distribn_t iVoxelSize);
+        UnitConverter(lb::LbmParameters* iParams,
+                      lb::SimulationState* iState,
+                      double voxelSize);
 
-        static distribn_t ConvertPressureToLatticeUnits(double pressure);
-        static distribn_t ConvertVelocityToLatticeUnits(double velocity);
-        static distribn_t ConvertStressToLatticeUnits(double stress);
-        static distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad);
-        static double ConvertPressureToPhysicalUnits(double pressure);
-        static double ConvertStressToPhysicalUnits(double stress);
-        static double ConvertVelocityToPhysicalUnits(double velocity);
-        static double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad);
+        distribn_t ConvertPressureToLatticeUnits(double pressure) const;
+        distribn_t ConvertVelocityToLatticeUnits(double velocity) const;
+        distribn_t ConvertStressToLatticeUnits(double stress) const;
+        distribn_t ConvertPressureGradToLatticeUnits(double pressure_grad) const;
+        double ConvertPressureToPhysicalUnits(double pressure) const;
+        double ConvertStressToPhysicalUnits(double stress) const;
+        double ConvertVelocityToPhysicalUnits(double velocity) const;
+        double ConvertPressureGradToPhysicalUnits(distribn_t pressure_grad) const;
 
       private:
-        static lb::LbmParameters* mParams;
-        static lb::SimulationState* mState;
-        static double voxel_size;
+        lb::LbmParameters* mParams;
+        lb::SimulationState* mState;
+        double voxel_size;
     };
 
   }

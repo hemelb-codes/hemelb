@@ -11,6 +11,10 @@
 namespace hemelb
 {
 
+  // TODO really, the functions that take a TiXML object, a bool, a string and some basic type
+  // should go into some Tiny XML abstraction layer. This would remove the need for the IOLet
+  // types to know about the SimConfig object (and get rid of a circular dependency).
+
   SimConfig::SimConfig()
   {
     // This constructor only exists to prevent instantiation without
@@ -19,14 +23,6 @@ namespace hemelb
 
   SimConfig::~SimConfig()
   {
-    for (unsigned int i = 0; i < Inlets.size(); i++)
-    {
-      delete Inlets[i];
-    }
-    for (unsigned int i = 0; i < Outlets.size(); i++)
-    {
-      delete Outlets[i];
-    }
   }
 
   SimConfig *SimConfig::Load(const char *iPath)

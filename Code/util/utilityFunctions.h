@@ -51,7 +51,7 @@ namespace hemelb
         template<typename T>
         static T enforceBounds(T number, T lowerBound, T upperBound)
         {
-          return max<T> (lowerBound, min(number, upperBound));
+          return max<T>(lowerBound, min(number, upperBound));
         }
 
         template<typename T>
@@ -63,11 +63,10 @@ namespace hemelb
           {
             if (x < xs[0] || x > xs[xs.size() - 1])
             {
-              log::Logger::Log<log::Info, log::OnePerCore>("Linear Interpolation beyond bounds: ");
-              log::Logger::Log<log::Info, log::OnePerCore>("%f is not between %f and %f",
-                                                           x,
-                                                           xs[0],
-                                                           xs[xs.size() - 1]);
+              log::Logger::Log<log::Debug, log::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
+                                                            x,
+                                                            xs[0],
+                                                            xs[xs.size() - 1]);
             }
           }
 
@@ -76,18 +75,17 @@ namespace hemelb
             i++;
           }
 
-          // In case repeat values are read in or discontinuities are present in the trace
-          // Average taken in case of a discontinuity. Repeat points should just contract to one.
-          //if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
+          // If discontinuities are present in the trace the correct behaviour is ill-defined.
+          if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
           {
             if (xs[i] == xs[i + 1])
             {
-              log::Logger::Log<log::Info, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
-              log::Logger::Log<log::Info, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
-                                                           xs[i],
-                                                           ys[i],
-                                                           xs[i + 1],
-                                                           ys[i + 1]);
+              log::Logger::Log<log::Debug, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
+              log::Logger::Log<log::Debug, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
+                                                            xs[i],
+                                                            ys[i],
+                                                            xs[i + 1],
+                                                            ys[i + 1]);
             }
           }
 
@@ -173,8 +171,9 @@ namespace hemelb
           {
             if (fa != fc && fb != fc)
             {
-              s = (a * fb * fc) / ( (fa - fb) * (fa - fc)) + (b * fa * fc) / ( (fb - fa)
-                  * (fb - fc)) + (c * fa * fb) / ( (fc - fa) * (fc - fb));
+              s = (a * fb * fc) / ( (fa - fb) * (fa - fc))
+                  + (b * fa * fc) / ( (fb - fa) * (fb - fc))
+                  + (c * fa * fb) / ( (fc - fa) * (fc - fb));
             }
             else
             {
@@ -182,10 +181,10 @@ namespace hemelb
             }
 
             // s is not between (3a + b)/4 and b
-            bool condition1 = (a < b
-              ? (s < (3 * a + b) / 4.0 || s > b)
-              : (s > (3 * a + b) / 4.0 || s < b));
-            // mflag is set and |s−b| ≥ |b−c| / 2)
+            bool condition1 = (a < b ?
+              (s < (3 * a + b) / 4.0 || s > b)
+              : (s > (3 * a + b) / 4.0 || s < b))
+;            // mflag is set and |s−b| ≥ |b−c| / 2)
             bool condition2 = mflag && fabs(s - b) >= fabs(b - c) / 2.0;
             // mflag is cleared and |s−b| ≥ |c−d| / 2
             bool condition3 = !mflag && fabs(s - b) >= fabs(c - d) / 2.0;

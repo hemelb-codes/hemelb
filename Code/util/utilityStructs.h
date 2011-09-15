@@ -1,5 +1,5 @@
-#ifndef HEMELB_UTILITYSTRUCTS_H
-#define HEMELB_UTILITYSTRUCTS_H
+#ifndef HEMELB_UTIL_UTILITYSTRUCTS_H
+#define HEMELB_UTIL_UTILITYSTRUCTS_H
 
 namespace hemelb
 {
@@ -23,4 +23,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_UTILITYSTRUCTS_H */
+#endif /* HEMELB_UTIL_UTILITYSTRUCTS_H */

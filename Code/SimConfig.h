@@ -18,6 +18,8 @@ namespace hemelb
       void Save(std::string iPath);
 
       std::string DataFilePath;
+      // These have to contain pointers because there are multiple derived types that might be
+      // instantiated.
       std::vector<lb::boundaries::iolets::InOutLet*> Inlets;
       std::vector<lb::boundaries::iolets::InOutLet*> Outlets;
       util::Vector3D VisCentre;
@@ -46,7 +48,7 @@ namespace hemelb
                 unsigned long &value);
       void DoIO(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, float &value);
       void DoIO(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, double &value);
-      void DoIO(TiXmlElement *iXmlNode,
+      void DoIO(TiXmlElement* iXmlNode,
                 std::string iAttributeName,
                 bool iIsLoading,
                 std::string &iValue);
