@@ -3,7 +3,6 @@
 import xdrlib
 import numpy as np
 import pdb
-import math
 
 class Domain(object):
     def __init__(self, cfgFileName):
@@ -193,10 +192,6 @@ def GetSiteAttr(domain, attr, otype=int):
     getter = np.vectorize(lambda s: getattr(s, attr), otypes=[otype])
     return getter(domain.Sites)
 
-def norm(vec):
-    sqVec = vec**2
-    return math.sqrt(sqVec[0]+sqVec[1]+sqVec[2])
-
 if __name__ == "__main__":
     import sys
     from enthought.tvtk.api import tvtk as vtk
@@ -218,9 +213,10 @@ if __name__ == "__main__":
     j=0
 
     nSites=0
+    nFluid=0
+    nSolid=0
     nInlet=0
-    pos = [0,0,0]
-    diameter = 0
+    nOutlet=0
 
     for i in xrange(dom.TotalBlocks):
         nSites += dom.BlockFluidSiteCounts[i]
@@ -229,10 +225,18 @@ if __name__ == "__main__":
     for i[0] in xrange(dom.BlockCounts[0] * dom.BlockSize):
         for i[1] in xrange(dom.BlockCounts[1] * dom.BlockSize):
             for i[2] in xrange(dom.BlockCounts[2] * dom.BlockSize):
-                if dom.Sites[i[0], i[1], i[2]].Type == INLET_TYPE and dom.Sites[i[0], i[1], i[2]].Edge:
-                    if nInlet != 0:
-                        diameter = max(norm(dom.Sites[i[0], i[1], i[2]].Position - pos), diameter)
+                if dom.Sites[i[0], i[1], i[2]].Type == FLUID_TYPE:
+                    nFluid += 1
+                elif dom.Sites[i[0], i[1], i[2]].Type == SOLID_TYPE:
+                    nSolid += 1
+                elif dom.Sites[i[0], i[1], i[2]].Type == INLET_TYPE:
                     nInlet += 1
-                    pos = dom.Sites[i[0], i[1], i[2]].Position
+                elif dom.Sites[i[0], i[1], i[2]].Type == OUTLET_TYPE:
+                    nOutlet += 1
 
-    print str(diameter)
+    print "Total sites: " + str(nSites) 
+    print "Fluid: " + str(nFluid)
+    print "Solid: " + str(nSolid)
+    print "Inlet: " + str(nInlet)
+    print "Outlet: " + str(nOutlet) 
+    

@@ -72,7 +72,8 @@ namespace hemelb
           {
             distribn_t value = *mLatDat->GetFNew(i * D3Q15::NUMVECTORS + l);
 
-            if (value < 0.0 || value != value)
+            // Note that by testing for value > 0.0, we also catch stray NaNs.
+            if (! (value > 0.0))
             {
               mUpwardsStability = Unstable;
             }

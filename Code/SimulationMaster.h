@@ -53,6 +53,8 @@ class SimulationMaster
     hemelb::lb::boundaries::BoundaryValues* mOutletValues;
     hemelb::net::Net mNet;
 
+    hemelb::util::UnitConverter* mUnits;
+
     hemelb::vis::Control* mVisControl;
 
     int mImagesWritten;

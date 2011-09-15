@@ -19,7 +19,8 @@ namespace hemelb
           BoundaryValues(geometry::LatticeData::SiteType IOtype,
                          geometry::LatticeData* iLatDat,
                          std::vector<iolets::InOutLet*> &iiolets,
-                         SimulationState* iSimState);
+                         SimulationState* iSimState,
+                         util::UnitConverter* units);
           ~BoundaryValues();
 
           void RequestComms();
@@ -53,6 +54,7 @@ namespace hemelb
           std::vector<distribn_t>* density_cycle;
 
           SimulationState* mState;
+          util::UnitConverter* mUnits;
       };
 
     }

@@ -13,33 +13,30 @@ namespace hemelb
 {
   namespace steering
   {
-    namespace parameter
+    enum parameter
     {
-      enum parameter
-      {
-        SceneCentreX = 0,
-        SceneCentreY = 1,
-        SceneCentreZ = 2,
-        Longitude = 3,
-        Latitude = 4,
-        Zoom = 5,
-        Brightness = 6,
-        PhysicalVelocityThresholdMax = 7,
-        PhysicalStressThrehsholdMaximum = 8,
-        PhysicalPressureThresholdMinimum = 9,
-        PhysicalPressureThresholdMaximum = 10,
-        GlyphLength = 11,
-        PixelsX = 12,
-        PixelsY = 13,
-        NewMouseX = 14,
-        NewMouseY = 15,
-        SetIsTerminal = 16,
-        Mode = 17,
-        StreaklinePerPulsatilePeriod = 18,
-        StreallineLength = 19,
-        SetDoRendering = 20
-      };
-    }
+      SceneCentreX = 0,
+      SceneCentreY = 1,
+      SceneCentreZ = 2,
+      Longitude = 3,
+      Latitude = 4,
+      Zoom = 5,
+      Brightness = 6,
+      PhysicalVelocityThresholdMax = 7,
+      PhysicalStressThrehsholdMaximum = 8,
+      PhysicalPressureThresholdMinimum = 9,
+      PhysicalPressureThresholdMaximum = 10,
+      GlyphLength = 11,
+      PixelsX = 12,
+      PixelsY = 13,
+      NewMouseX = 14,
+      NewMouseY = 15,
+      SetIsTerminal = 16,
+      Mode = 17,
+      StreaklinePerPulsatilePeriod = 18,
+      StreallineLength = 19,
+      SetDoRendering = 20
+    };
 
     /**
      * SteeringComponent - class for passing steering data to all nodes.
@@ -56,7 +53,8 @@ namespace hemelb
                           lb::LBM* iLbm,
                           net::Net * iNet,
                           lb::SimulationState * iSimState,
-                          SimConfig* iSimConfig);
+                          SimConfig* iSimConfig,
+                          util::UnitConverter* iUnits);
 
         static bool RequiresSeparateSteeringCore();
 
@@ -87,9 +85,9 @@ namespace hemelb
         lb::LBM* mLbm;
         lb::SimulationState* mSimState;
         vis::Control* mVisControl;
-        float privateSteeringParams[STEERABLE_PARAMETERS + 1];
-    };
+        float privateSteeringParams[STEERABLE_PARAMETERS + 1];util::UnitConverter* mUnits;
+      };
+    }
   }
-}
 
 #endif /* HEMELB_STEERING_STEERINGCOMPONENT_H */

@@ -86,22 +86,15 @@ namespace hemelb
             * mDomainStats->velocity_threshold_max_inv / density;
 
         // ... calculate the two ends of the line we're going to draw...
-        Vector3D<float> p1;
-        Vector3D<float> p2;
-
-        p1 = Vector3D<float> (mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
-
-        p2 = p1 + Vector3D<float> (vx * temp, vy * temp, vz * temp);
+        Vector3D<distribn_t> p1 = Vector3D<distribn_t> (mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
+        Vector3D<distribn_t> p2 = p1 + Vector3D<distribn_t> (vx * temp, vy * temp, vz * temp);
 
         // ... transform to the location on the screen, and render.
-        Vector3D<float> p3;
-        Vector3D<float> p4;
+        Vector3D<distribn_t> p3 = mViewpoint->Project(p1);
+        Vector3D<distribn_t> p4 = mViewpoint->Project(p2);
 
-        p3 = mViewpoint->Project(p1);
-        p4 = mViewpoint->Project(p2);
-
-        mScreen->Transform<float> (p3.x, p3.y, p3.x, p3.y);
-        mScreen->Transform<float> (p4.x, p4.y, p4.x, p4.y);
+        mScreen->Transform<distribn_t> (p3.x, p3.y, p3.x, p3.y);
+        mScreen->Transform<distribn_t> (p4.x, p4.y, p4.x, p4.y);
 
         mScreen->RenderLine(p3, p4, mVisSettings);
       }
