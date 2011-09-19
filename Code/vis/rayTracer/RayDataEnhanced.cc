@@ -15,16 +15,16 @@ namespace hemelb
   namespace vis
   {
     namespace raytracer
-    {
-      const float RayDataEnhanced::mIntensityMultipleThroughPerpendicularWalls = 0.75F;
-      const float RayDataEnhanced::mLowestLightness = 0.3F;
-      const float RayDataEnhanced::mHighestLightness = 0.8F;
+    {   
+      const float RayDataEnhanced::mSurfaceNormalLightnessRange = 0.3F;
+      const float RayDataEnhanced::mParallelSurfaceAttenuation = 0.5F;
 
+      const float RayDataEnhanced::mLowestLightness = 0.3F;
 
       RayDataEnhanced::RayDataEnhanced() :
 	mVelocitySum(0.0F),
 	mStressSum(0.0F),
-	mIntensity(1.0F)
+	mSurfaceNormalLightness(1.0F)
       {
       }
 
@@ -70,26 +70,15 @@ namespace hemelb
 			  static_cast<float>(iWallNormal[2]));
 	  
 	float lDotProduct =
-	  iRayDirection.DotProduct
-	  (lWallNormal);
+	  fabs(iRayDirection.DotProduct(lWallNormal));
 
-	//If the wall is facing us
-	if (lDotProduct < 0.0F)
-	{
-	  PerformDepthCuing(iAbsoluteDistanceFromViewpoint,
-			    iVisSettings);
-	}
-
-	//We want the attentuation to be between
-	//mIntensityMultipleThroughPerpendicularWalls and 1
-	float lIntensityMultiple = mIntensityMultipleThroughPerpendicularWalls +
-	  (1.0F-mIntensityMultipleThroughPerpendicularWalls)*fabs(lDotProduct);
-
-	//Scale the current intensity of the ray
-	mIntensity *= lIntensityMultiple; 
+	//Scale the current intensity of the ray by half the dot product 
+	mSurfaceNormalLightness *= (mParallelSurfaceAttenuation + 
+				    mParallelSurfaceAttenuation*fabs(lDotProduct)); 
       }
       
-      void RayDataEnhanced::DoGetVelocityColour(unsigned char oColour[3]) const
+      void RayDataEnhanced::DoGetVelocityColour(unsigned char oColour[3],
+						const float iNormalisedDistanceToFirstCluster) const
       {
 	// We want the velocity hue to be between 240 degress
 	// and 0 degrees
@@ -103,12 +92,13 @@ namespace hemelb
 	
 	HSLToRGBConverter::ConvertHSLToRGB(lVelocityHue,
 					   1.0F,
-					   GetLightnessValue(),
+					   GetLightnessValue(iNormalisedDistanceToFirstCluster),
 					   oColour);
       }
     
 
-      void RayDataEnhanced::DoGetStressColour(unsigned char oColour[3]) const
+      void RayDataEnhanced::DoGetStressColour(unsigned char oColour[3],
+					      const float iNormalisedDistanceToFirstCluster) const
       {
 	float lStressSaturation =
 	  util::NumericalFunctions::enforceBounds<float>(0.5F+7.5F*GetAverageStress(),
@@ -117,7 +107,7 @@ namespace hemelb
 	
 	HSLToRGBConverter::ConvertHSLToRGB(230.0F,
 					   lStressSaturation,
-					   GetLightnessValue(),
+					   GetLightnessValue(iNormalisedDistanceToFirstCluster),
 					   oColour);
       }
 
@@ -132,7 +122,7 @@ namespace hemelb
 	  mStressSum += iOtherRayData.GetStressSum();;
 	}
 	
-	mIntensity *= iOtherRayData.GetIntensity();
+	mSurfaceNormalLightness *= iOtherRayData.GetSurfaceNormalLightness();
       }
     
       float RayDataEnhanced::GetVelocitySum() const
@@ -145,9 +135,9 @@ namespace hemelb
 	return mStressSum;
       }
       
-      float RayDataEnhanced::GetIntensity() const
+      float RayDataEnhanced::GetSurfaceNormalLightness() const
       {
-	return mIntensity;
+	return mSurfaceNormalLightness;
       }
 
       float RayDataEnhanced::GetAverageVelocity() const
@@ -160,39 +150,28 @@ namespace hemelb
 	return GetStressSum()/GetCumulativeLengthInFluid();
       }
 
-      bool RayDataEnhanced::DoIsRayCompletelyAttenuated() const
+      float RayDataEnhanced::GetLightnessValue(const float iNormalisedDistance) const
       {
-	//Roughly less than 1/255 will correspond to
-	//mLowestLightless
-	return GetIntensity() < 0.005F;
-      }
+	assert(GetSurfaceNormalLightness() >= 0.0F && GetSurfaceNormalLightness() <= 1.0F);
 
-      float RayDataEnhanced::GetLightnessValue() const
-      {
-	assert(GetIntensity() >= 0.0F && mIntensity <= 1.0F);
-	float lLightnessValue = GetIntensity()*
-	  (mHighestLightness - mLowestLightness) +
-	  mLowestLightness;
+	//To implement depth cuing, set the smallest lightness value to between 
+        //the mimimum lightness and 1.0F based on the normalised distance between 
+	//the viewpoint and the first cluster hit 
+	float lLightnessValue = mLowestLightness + (1.0F - 0.3F)*iNormalisedDistance;
 	
-	assert(lLightnessValue >= mLowestLightness && mHighestLightness <= 1.0F);
-	return lLightnessValue;
+	//Map the surface normal lightness to between this value and
+	//mSurfaceNormalLightnessRange above this
+	lLightnessValue += GetSurfaceNormalLightness()*mSurfaceNormalLightnessRange;
+	
+	if (lLightnessValue < 1.0F)
+	{
+	  return lLightnessValue;
+	}
+	else 
+	{
+	  return 1.0F;
+	}
       }
-
-      void RayDataEnhanced::PerformDepthCuing
-      ( float iAbsoluteDistanceFromViewpoint,
-	const VisSettings& iVisSettings )
-      {
-	assert(iAbsoluteDistanceFromViewpoint <= 
-	       iVisSettings.maximumDrawDistance);
-
-	//Multiply the intensity linearly between 0.0 and 1.0
-	//for maximum draw distance to near 
-	mIntensity *= 1.0F - 
-	  iAbsoluteDistanceFromViewpoint/
-	  iVisSettings.maximumDrawDistance;
-      }
-
-
     }
   }
 

@@ -48,8 +48,6 @@ namespace hemelb
 	void UpdateVelocityColour(float iDt, const float iPalette[3]);
 
 	void UpdateStressColour(float iDt, const float iPalette[3]);
-
-	bool DoIsRayCompletelyAttenuated() const;
       
       private:
 	float mVelR, mVelG, mVelB;

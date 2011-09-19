@@ -316,7 +316,7 @@ namespace hemelb
 	  }
 	}
 
-	void CastRayForPixel(const ClusterType& iCluster,
+	virtual void CastRayForPixel(const ClusterType& iCluster,
 				     const XYCoordinates<int>& iPixelCoordinates,
 				     const Vector3D<float>& iRayDirection)
 	{
@@ -358,8 +358,7 @@ namespace hemelb
 					     Vector3D<float>(lTruncatedLocationInBlock),
 					     ioRay);
 
-	  while (lSiteTraverser.CurrentLocationValid() &&
-		 !ioRay.IsRayCompletelyAttenuated() )
+	  while (lSiteTraverser.CurrentLocationValid())
 	  {
 	    //Firstly, work out in which direction we
 	    //can travel the least ray units before reaching
@@ -469,7 +468,7 @@ namespace hemelb
 	      break;
 	    }
 
-	  }// end while
+	  }
 	}
 
 	Vector3D<float> CalculateRayUnitsBeforeNextVoxel
@@ -646,8 +645,7 @@ namespace hemelb
 	  //from the point of first intersection of the cluster
 	  float lSiteUnitsTraversed = 0.0F;
 
-	  while (lClusterTraverser.CurrentLocationValid() &&
-		 !ioRay.IsRayCompletelyAttenuated())
+	  while (lClusterTraverser.CurrentLocationValid())
 	  {
 	    Direction::Direction lDirectionOfLeastTravel =
 	      DirectionOfLeastTravel(lRayUnitsBeforeNextBlock);
@@ -831,8 +829,7 @@ namespace hemelb
 	//(Formerly AABB)
 	Vector3D<float> mViewpointCentreToMaxSite;
 	Vector3D<float> mViewpointCentreToMinSite;
-      };
-    }
+      };}
   }
 }
 

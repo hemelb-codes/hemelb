@@ -36,9 +36,11 @@ namespace hemelb
 				     const VisSettings& iVisSettings,
 				     const double* iWallNormal);
 	  
-	void DoGetVelocityColour(unsigned char oColour[3]) const;
+	void DoGetVelocityColour(unsigned char oColour[3],
+				 const float iNormalisedDistance) const;
  
-	void DoGetStressColour(unsigned char oColour[3]) const;
+	void DoGetStressColour(unsigned char oColour[3],
+			       const float iNormalisedDistance) const;
 
 	void DoMergeIn(const RayDataEnhanced& iOtherRayData,
 		       const VisSettings& iVisSettings);
@@ -49,29 +51,24 @@ namespace hemelb
      
 	float GetStressSum() const;
       
-	float GetIntensity() const;
+	float GetSurfaceNormalLightness() const;
 
 	float GetAverageVelocity() const;
       
 	float GetAverageStress() const;
 
-	bool DoIsRayCompletelyAttenuated() const;
-
       private:
-	float GetLightnessValue() const;
-	
-	void PerformDepthCuing
-	  ( float iAbsoluteDistanceFromViewpoint,
-	    const VisSettings& iVisSettings );
+	float GetLightnessValue(const float iNormalisedDistance) const;
 
-	float mIntensity;
+	float mSurfaceNormalLightness;
 	float mVelocitySum;
 	float mStressSum;
 
-	const static float mIntensityMultipleThroughPerpendicularWalls;
+	
+	const static float mSurfaceNormalLightnessRange;
+	const static float mParallelSurfaceAttenuation;
 
 	const static float mLowestLightness;
-	const static float mHighestLightness;
         };
     }
   }
