@@ -145,12 +145,12 @@ namespace hemelb
 	if (ContainsRayData())
 	{
 	  // store velocity volume rendering colour
-	  mRayData.GetVelocityColour(&rgb_data[0]);
+	  mRayData.GetVelocityColour(&rgb_data[0], *visSettings);
 
 	  if (visSettings->mStressType == lb::VonMises)
 	  {
 	    // store von Mises stress volume rendering colour
-	    mRayData.GetStressColour(&rgb_data[3]);
+	    mRayData.GetStressColour(&rgb_data[3], *visSettings);
 	  }
 	  else if (mRayData.GetNearestStress() == lb::ShearStress)
 	  {

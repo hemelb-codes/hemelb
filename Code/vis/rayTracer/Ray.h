@@ -20,7 +20,8 @@ namespace hemelb
 	class Ray
       {
       public:
-	Ray(Vector3D<float> iDirection)
+      Ray(Vector3D<float> iDirection) :
+	mInWall(false)
 	{
 	  iDirection.Normalise();
 	  mDirection = iDirection;
@@ -64,21 +65,35 @@ namespace hemelb
 			const VisSettings& iVisSettings,
 			const double* iWallNormal)
 	{
-	  mRayData.UpdateDataForWallSite(iSiteData,
+	  if (!mInWall)
+	  {
+	    mRayData.UpdateDataForWallSite(iSiteData,
 					 GetDirection(),
 					 iRayLengthInVoxel,
 					 iRayUnitsInCluster + mRayUnitsTraversedToCluster,
 					 iDomainStats,
 					 iVisSettings,
 					 iWallNormal);
+	    mInWall = true;
+	  }
+	  else
+	  {
+	    UpdateDataForNormalFluidSite(iSiteData,
+					 iRayLengthInVoxel,
+					 iRayUnitsInCluster,
+					 iDomainStats,
+					 iVisSettings);
+	  }
 	}
 	
 	void UpdateDataForNormalFluidSite(const SiteData_t& iSiteData,
-				     const float iRayLengthInVoxel,
-				     const float iRayUnitsInCluster,
-				     const DomainStats& iDomainStats,
-				     const VisSettings& iVisSettings)
+					  const float iRayLengthInVoxel,
+					  const float iRayUnitsInCluster,
+					  const DomainStats& iDomainStats,
+					  const VisSettings& iVisSettings)
 	{
+	  mInWall = false;
+	  
 	  mRayData.UpdateDataForNormalFluidSite(iSiteData,
 						GetDirection(),
 						iRayLengthInVoxel,
@@ -102,15 +117,13 @@ namespace hemelb
 	{
 	  mRayUnitsTraversedToCluster = iRayUnitsTraversedToCluster;
 	}
-
-	bool IsRayCompletelyAttenuated() const
-	{
-	  return mRayData.IsRayCompletelyAttenuated();
-	}
+	
 
       private:
 	Vector3D<float> mDirection;
 	Vector3D<float> mInverseDirection;
+
+	bool mInWall;
 
 	float mRayUnitsTraversedToCluster;
 
