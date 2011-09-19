@@ -341,7 +341,7 @@ namespace hemelb
     stress = sqrt(square_stress_vector - normal_stress * normal_stress);
   }
 
-  double D3Q15::CalculateStrainRateTensorComponent(const unsigned iRow, const unsigned iColumn, const double &iTau, const distribn_t iFNeq[])
+  double D3Q15::CalculateStrainRateTensorComponent(const unsigned iRow, const unsigned iColumn, const double &iTau, const distribn_t iFNeq[], const double &iTimeStep, const double &iSpaceStep, const distribn_t iDensity)
   {
     double strain_rate_tensor_i_j=0.0;
     const int *Cs[3] = { CX, CY, CZ };
@@ -351,12 +351,13 @@ namespace hemelb
       strain_rate_tensor_i_j += iFNeq[vec_index] * (Cs[iRow][vec_index] * Cs[iColumn][vec_index]);
     }
 
-    strain_rate_tensor_i_j *= -3.0/(2.0 * iTau);
+    // TODO Different expressions for strain rate tensor based on velocity distribution function found in the literature. Make sure it is dimensionally consistent
+    strain_rate_tensor_i_j *= -1.0/(2.0 * iTau * iTimeStep * iDensity * Cs2);
 
     return strain_rate_tensor_i_j;
   }
 
-  double D3Q15::CalculateShearRate(const double &iTau, const distribn_t iFNeq[])
+  double D3Q15::CalculateShearRate(const double &iTau, const distribn_t iFNeq[], const double &iTimeStep, const double &iSpaceStep, const distribn_t iDensity)
   {
     double shear_rate=0.0;
     double strain_rate_tensor_i_j;
@@ -365,12 +366,13 @@ namespace hemelb
     {
       for (unsigned column=0; column<3; column++)
       {
-        strain_rate_tensor_i_j = D3Q15::CalculateStrainRateTensorComponent(row, column, iTau, iFNeq);
+        strain_rate_tensor_i_j = D3Q15::CalculateStrainRateTensorComponent(row, column, iTau, iFNeq, iTimeStep, iSpaceStep, iDensity);
         shear_rate += strain_rate_tensor_i_j*strain_rate_tensor_i_j;
       }
     }
 
-    shear_rate = 2*sqrt(shear_rate);
+    // TODO Different expressions for the shear-rate can be found in different publicatios: 2*sqrt(s_ij * s_ij), sqrt(2 * s_ij * s_ij), sqrt(s_ij * s_ij)
+    shear_rate = sqrt(shear_rate);
 
     return shear_rate;
   }
