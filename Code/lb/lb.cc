@@ -157,10 +157,9 @@ namespace hemelb
 
       typedef hemelb::lb::collisions::implementations::LBGK CO;
 
-      //typedef hemelb::lb::rheology_models::CassonRheologyModel RHEO_MODEL;
+      typedef hemelb::lb::rheology_models::CassonRheologyModel RHEO_MODEL;
       //typedef hemelb::lb::rheology_models::TruncatedPowerLawRheologyModel RHEO_MODEL;
       //typedef hemelb::lb::rheology_models::CarreauYasudaRheologyModel RHEO_MODEL;
-
       //typedef hemelb::lb::collisions::implementations::LBGKNN<RHEO_MODEL> CO;
 
       if (typeid(CO) == typeid(hemelb::lb::collisions::implementations::ELBM))
