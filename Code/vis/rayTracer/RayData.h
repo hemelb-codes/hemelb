@@ -105,14 +105,22 @@ namespace hemelb
 	  }
 	}
 
-	void GetVelocityColour(unsigned char oColour[3]) const
+	void GetVelocityColour(unsigned char oColour[3], 
+			       const VisSettings& iVisSettings) const
 	{
-	  return static_cast<const Derived*>(this)->DoGetVelocityColour(oColour);
+	  return static_cast<const Derived*>(this)->
+	    DoGetVelocityColour(oColour, 
+				GetLengthBeforeRayFirstCluster() /
+				iVisSettings.maximumDrawDistance);
 	}
 
-	void GetStressColour(unsigned char oColour[3]) const
+	void GetStressColour(unsigned char oColour[3],
+			     const VisSettings& iVisSettings) const
 	{
-	  return static_cast<const Derived*>(this)->DoGetStressColour(oColour);
+	  return static_cast<const Derived*>(this)->
+	    DoGetStressColour(oColour, 
+			      GetLengthBeforeRayFirstCluster() /
+			      iVisSettings.maximumDrawDistance);
 	}
 
 	bool ContainsRayData() const
@@ -138,11 +146,6 @@ namespace hemelb
 	float GetLengthBeforeRayFirstCluster() const
 	{
 	  return mLengthBeforeRayFirstCluster;
-	}
-
-	bool IsRayCompletelyAttenuated() const
-	{
-	  return static_cast<const Derived*>(this)->DoIsRayCompletelyAttenuated();
 	}
 
       private:
