@@ -29,9 +29,9 @@ namespace hemelb
 
       for (int ii = 0; ii < inlets; ii++)
       {
-        inlet_normal[3 * ii] = mSimConfig->Inlets[ii].Normal.x;
-        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii].Normal.y;
-        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii].Normal.z;
+        inlet_normal[3 * ii] = mSimConfig->Inlets[ii]->Normal.x;
+        inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
+        inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
       }
 
       RecalculateTauViscosityOmega();
@@ -294,8 +294,10 @@ namespace hemelb
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
       distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
-      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
-      distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
+      distribn_t velocity_max =
+          mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
+      distribn_t stress_max =
+          mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
 
       for (int i = 0; i < inlets; i++)
       {

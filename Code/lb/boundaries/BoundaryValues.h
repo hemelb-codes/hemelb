@@ -4,6 +4,7 @@
 #include "lb/boundaries/BoundaryComms.h"
 #include "topology/NetworkTopology.h"
 #include "net/IteratedAction.h"
+#include "lb/boundaries/iolets/InOutLet.h"
 
 namespace hemelb
 {
@@ -17,17 +18,16 @@ namespace hemelb
         public:
           BoundaryValues(geometry::LatticeData::SiteType IOtype,
                          geometry::LatticeData* iLatDat,
-                         SimConfig* iSimConfig,
+                         std::vector<iolets::InOutLet*> &iiolets,
                          SimulationState* iSimState,
-                         util::UnitConverter* iUnits);
+                         util::UnitConverter* units);
           ~BoundaryValues();
 
           void RequestComms();
           void EndIteration();
           void Reset();
 
-          void ResetPrePeriodChange();
-          void ResetPostPeriodChange();
+          void FinishReceive();
 
           distribn_t GetBoundaryDensity(const int index);
 
@@ -35,53 +35,25 @@ namespace hemelb
           distribn_t GetDensityMax(int iBoundaryId);
 
           static bool IsCurrentProcTheBCProc();
+          static proc_t GetBCProcRank();
 
         private:
-          proc_t BCproc;
-          void FindBCProcRank();
-
-          BoundaryComms** mComms;
+          std::vector<BoundaryComms*> mComms;
           bool IsIOletOnThisProc(geometry::LatticeData::SiteType IOtype,
                                  geometry::LatticeData* iLatDat,
                                  int iBoundaryId);
           std::vector<int> GatherProcList(bool hasBoundary);
 
-          void ReadParameters(geometry::LatticeData::SiteType IOtype);
-          void allocate();
-
-          void InitialiseBoundaryDensities();
-          void UpdateBoundaryDensities();
-
-          void InitialiseCosCycle(int i);
-          void UpdateCosCycle(int i);
-
-          void InitialiseFromFile(int i);
-
-          void SortValuesFromFile(std::vector<double> &time, std::vector<double> &value);
-
           int nTotIOlets;
           // Number of IOlets and vector of their indices for communication purposes
           int nIOlets;
-          std::vector<int> iolets;
+          std::vector<int> ioletIDs;
+          // Has to be a vector of pointers for InOutLet polymorphism
+          std::vector<iolets::InOutLet*> iolets;
 
-          distribn_t *density_cycle;
-          unsigned long *density_period;
-          distribn_t *density;
-          distribn_t *density_avg;
-          distribn_t *density_amp;
-          distribn_t *density_phs;
-          distribn_t *density_min;
-          distribn_t *density_max;
-
-          std::string *filename;
-          // Can just check equality with empty string, but despite its simplicity it still
-          // confused me so I use a bool array initialised at construction
-          bool *read_from_file;
-          // Saves on wait calls
-          bool *CommFinished;
+          std::vector<distribn_t>* densityCycle;
 
           SimulationState* mState;
-          SimConfig* mSimConfig;
           util::UnitConverter* mUnits;
       };
 

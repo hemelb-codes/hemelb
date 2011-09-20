@@ -308,7 +308,7 @@ namespace hemelb
                     0.5F * (float) mLatticeData->GetYSiteCount(),
                     0.5F * (float) mLatticeData->GetZSiteCount());
 
-        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Found cluster: %f, %f, %f, %hu, %hu, %hu, %f, %f, %f, %f, %f, %f",
+        hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Found cluster: %f, %f, %f, %hu, %hu, %hu, %f, %f, %f, %f, %f, %f",
                                                                              lNewCluster.minBlock.x,
                                                                              lNewCluster.minBlock.y,
                                                                              lNewCluster.minBlock.z,
@@ -341,9 +341,6 @@ namespace hemelb
 
       void RayTracer::ClusterBuilder::ProcessCluster(unsigned int iClusterId)
       {
-        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Examining cluster id = %u",
-                                                                              (unsigned int) iClusterId);
-
         Cluster* lCluster = &mClusters[iClusterId];
         lCluster->SiteData = std::vector<std::vector<SiteData_t> >(lCluster->blocksX
             * lCluster->blocksY * lCluster->blocksZ);
@@ -356,9 +353,6 @@ namespace hemelb
             for (site_t k = 0; k < lCluster->blocksZ; k++)
             {
               ++lBlockNum;
-
-              hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Examining block number = %u",
-                                                                                    (unsigned int) lBlockNum);
 
               Vector3D<site_t> block_coordinates = Vector3D<site_t> (i, j, k)
                   + mClusterBlockMins[iClusterId];
@@ -435,9 +429,6 @@ namespace hemelb
 
           SiteData_t* lSiteDataLocation = & (*lSiteDataIterator);
 
-          //This one's for the C programmers out there
-          hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Siteid: %u",
-                                                                                (unsigned int) lClusterVoxelSiteId);
           SetDataPointerForClusterVoxelSiteId(lClusterVoxelSiteId, & (*lSiteDataLocation));
         }
       }
