@@ -11,8 +11,10 @@ namespace hemelb
       class HSLToRGBConverter
       {
       public:
-	//iHue is between 0.0F and 360.0F
-	//the other two between 0.0F and 1.0F
+	//Converts a colour in HSL coordinates to
+	//RGB coordinates (between 0 and 255)
+	//iHue must be between 0.0F and 360.0F in degrees
+	//and the other two between 0.0F and 1.0F
 	static void ConvertHSLToRGB
 	  ( float iHue, 
 	    float iSaturation, 
