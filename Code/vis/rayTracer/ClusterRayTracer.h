@@ -12,7 +12,7 @@
 #include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/ClusterTraverser.h"
 #include "vis/rayTracer/Ray.h"
-#include "vis/rayTracer/SiteTraverser.h"
+#include "vis/SiteTraverser.h"
 #include "vis/Screen.h"
 #include "vis/Vector3D.h"
 
@@ -347,7 +347,7 @@ namespace hemelb
 	  //Work out which site we're currently in
 	  Vector3D<site_t> lTruncatedLocationInBlock = RoundToNearestVoxel(iLocationInBlock);
 
-	  SiteTraverser lSiteTraverser(&mLatticeData);
+	  SiteTraverser lSiteTraverser(mLatticeData);
 	  lSiteTraverser.SetCurrentLocation(lTruncatedLocationInBlock);
 
 	  //In order to trace the rays through the voxels, we need to

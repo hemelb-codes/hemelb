@@ -3,6 +3,8 @@
 
 #include "util/utilityFunctions.h"
 
+#include "vis/BlockTraverser.h"
+#include "vis/SiteTraverser.h"
 #include "vis/StreaklineDrawer.h"
 #include "vis/Control.h"
 #include "vis/ColPixel.h"
@@ -21,20 +23,14 @@ namespace hemelb
                                        Screen& iScreen,
                                        const Viewpoint& iViewpoint,
                                        const VisSettings& iVisSettings) :
-      mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
+      mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings),
+      mParticleVec(8192),
+      mParticleSeedVec(64)
     {
-      particleVec.reserve(10000);
       nParticles = 0;
-      particleSeedVec.reserve(100);
       nParticleSeeds = 0;
 
-      num_blocks = iLatDat.GetBlockCount();
-      velocity_field = new VelocityField[iLatDat.GetBlockCount()];
-
-      for (site_t n = 0; n < iLatDat.GetBlockCount(); n++)
-      {
-        velocity_field[n].vel_site_data = NULL;
-      }
+      velocity_field.resize(iLatDat.GetBlockCount());
 
       counter = 1;
       site_t inlet_sites = 0;
@@ -42,134 +38,157 @@ namespace hemelb
 
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
 
-      for (site_t i = 0; i < iLatDat.GetXSiteCount(); i += iLatDat.GetBlockSize())
+      BlockTraverser lBlockTraverser(iLatDat);
+      do
       {
-        for (site_t j = 0; j < iLatDat.GetYSiteCount(); j += iLatDat.GetBlockSize())
-        {
-          for (site_t k = 0; k < iLatDat.GetZSiteCount(); k += iLatDat.GetBlockSize())
-          {
-            geometry::LatticeData::BlockData* lBlock = iLatDat.GetBlock(n);
+	geometry::LatticeData::BlockData* lBlock = 
+	  lBlockTraverser.GetCurrentBlockData();
 
-            ++n;
+	
+	if (lBlock->site_data == NULL)
+	{
+	  continue;
+	}
 
-            if (lBlock->site_data == NULL)
-            {
-              continue;
-            }
+	SiteTraverser lSiteTraverser(iLatDat);
+	do
+	{
+	  if (netTop->GetLocalRank() != 
+	      lBlock->ProcessorRankForEachBlockSite
+	      [lSiteTraverser.GetCurrentIndex()])
+	  {
+	    continue;
+	  }
 
-            int m = -1;
+	  const site_t startI = util::NumericalFunctions::max<int>
+	    (0, 
+	     lBlockTraverser.GetX()*lBlockTraverser.GetBlockSize() +
+	     lSiteTraverser.GetX() - 1);
+	  
+	  const site_t startJ = util::NumericalFunctions::max<int>
+	    (0, 
+	     lBlockTraverser.GetY()*lBlockTraverser.GetBlockSize() +
+	     lSiteTraverser.GetY() - 1);
+	
+	  const site_t startK = util::NumericalFunctions::max<int>
+	    (0, 
+	     lBlockTraverser.GetZ()*lBlockTraverser.GetBlockSize() +
+	     lSiteTraverser.GetZ() - 1);
 
-            for (site_t site_i = i; site_i < i + iLatDat.GetBlockSize(); site_i++)
-            {
-              for (site_t site_j = j; site_j < j + iLatDat.GetBlockSize(); site_j++)
-              {
-                for (site_t site_k = k; site_k < k + iLatDat.GetBlockSize(); site_k++)
-                {
+	  const site_t endI =
+	    util::NumericalFunctions::min<site_t>
+	    (iLatDat.GetXSiteCount() - 1,
+	     lBlockTraverser.GetX()*lBlockTraverser.GetBlockSize() +
+	     lSiteTraverser.GetX() + 1);
+	
+	  const site_t endJ =
+	    util::NumericalFunctions::min<site_t>
+	    (iLatDat.GetYSiteCount() - 1,
+	     lBlockTraverser.GetY()*lBlockTraverser.GetBlockSize() +
+	     lSiteTraverser.GetY() + 1);
+	
+	  const site_t endK =
+	    util::NumericalFunctions::min<site_t>
+	    (iLatDat.GetZSiteCount() - 1,
+	     lBlockTraverser.GetZ()*lBlockTraverser.GetBlockSize() +
+	     lSiteTraverser.GetZ() + 1);
+	
 
-                  m++;
-                  if (netTop->GetLocalRank() != lBlock->ProcessorRankForEachBlockSite[m])
-                    continue;
+	for (site_t neigh_i = startI; neigh_i <= endI; neigh_i++)
+	{
+	  for (site_t neigh_j = startJ; neigh_j <= endJ; neigh_j++)
+	  {
+	    for (site_t neigh_k = startK; neigh_k <= endK; neigh_k++)
+	    {
+	      const proc_t* neigh_proc_id = iLatDat.GetProcIdFromGlobalCoords(neigh_i,
+									      neigh_j,
+									      neigh_k);
 
-                  const site_t startI = util::NumericalFunctions::max<int>(0, (int) site_i - 1);
-                  const site_t startJ = util::NumericalFunctions::max<int>(0, (int) site_j - 1);
-                  const site_t startK = util::NumericalFunctions::max<int>(0, (int) site_k - 1);
+	      if (neigh_proc_id == NULL || *neigh_proc_id == BIG_NUMBER2)
+	      {
+		continue;
+	      }
 
-                  const site_t endI =
-		    util::NumericalFunctions::min<site_t>(iLatDat.GetXSiteCount() - 1, site_i
-							  + 1);
-                  const site_t endJ =
-		    util::NumericalFunctions::min<site_t>(iLatDat.GetYSiteCount() - 1, site_j
-							  + 1);
-                  const site_t endK =
-		    util::NumericalFunctions::min<site_t>(iLatDat.GetZSiteCount() - 1, site_k
-							  + 1);
+	      initializeVelFieldBlock(iLatDat, neigh_i, neigh_j, neigh_k, *neigh_proc_id);
 
-                  for (site_t neigh_i = startI; neigh_i <= endI; neigh_i++)
-                  {
-                    for (site_t neigh_j = startJ; neigh_j <= endJ; neigh_j++)
-                    {
-                      for (site_t neigh_k = startK; neigh_k <= endK; neigh_k++)
-                      {
-                        const proc_t* neigh_proc_id = iLatDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                                         neigh_j,
-                                                                                         neigh_k);
+	      if (netTop->GetLocalRank() == *neigh_proc_id)
+	      {
+		continue;
+	      }
 
-                        if (neigh_proc_id == NULL || *neigh_proc_id == BIG_NUMBER2)
-                        {
-                          continue;
-                        }
+	      VelSiteData* vel_site_data_p = velSiteDataPointer(iLatDat,
+								neigh_i,
+								neigh_j,
+								neigh_k);
 
-                        initializeVelFieldBlock(iLatDat, neigh_i, neigh_j, neigh_k, *neigh_proc_id);
+	      if (vel_site_data_p->counter == counter)
+	      {
+		continue;
+	      }
 
-                        if (netTop->GetLocalRank() == *neigh_proc_id)
-                        {
-                          continue;
-                        }
+	      vel_site_data_p->counter = counter;
 
-                        VelSiteData* vel_site_data_p = velSiteDataPointer(iLatDat,
-                                                                          neigh_i,
-                                                                          neigh_j,
-                                                                          neigh_k);
+	      bool seenSelf = false;
+	      for (size_t mm = 0; mm < mNeighProcs.size() && !seenSelf; mm++)
+	      {
+		if (*neigh_proc_id == mNeighProcs[mm].id)
+		{
+		  seenSelf = true;
+		  ++mNeighProcs[mm].send_vs;
+		}
+	      }
+	      if (seenSelf)
+	      {
+		continue;
+	      }
 
-                        if (vel_site_data_p->counter == counter)
-                        {
-                          continue;
-                        }
+	      NeighProc lNew;
 
-                        vel_site_data_p->counter = counter;
+	      lNew.id = *neigh_proc_id;
+	      lNew.send_vs = 1;
+	      mNeighProcs.push_back(lNew);
+	    }
+	  }
+	}
 
-                        bool seenSelf = false;
-                        for (size_t mm = 0; mm < mNeighProcs.size() && !seenSelf; mm++)
-                        {
-                          if (*neigh_proc_id == mNeighProcs[mm].id)
-                          {
-                            seenSelf = true;
-                            ++mNeighProcs[mm].send_vs;
-                          }
-                        }
-                        if (seenSelf)
-                        {
-                          continue;
-                        }
+	site_t lSiteIndex = lBlock->site_data[lSiteTraverser.GetCurrentIndex()];
 
-                        NeighProc lNew;
+	// if the lattice site is not an inlet
+	if (iLatDat.GetSiteType(lSiteIndex) != geometry::LatticeData::INLET_TYPE)
+	{
+	  continue;
+	}
+	++inlet_sites;
 
-                        lNew.id = *neigh_proc_id;
-                        lNew.send_vs = 1;
-                        mNeighProcs.push_back(lNew);
-                      }
-                    }
-                  }
+	if (inlet_sites % 50 != 0)
+	{
+	  continue;
+	}
 
-                  site_t lSiteIndex = lBlock->site_data[m];
+	if (nParticleSeeds == mParticleSeedVec.capacity())
+	{
+	  mParticleSeedVec.reserve(2 * mParticleSeedVec.capacity());
+	}
+	mParticleSeedVec[nParticleSeeds].x = 
+	  (float) lBlockTraverser.GetX()*lBlockTraverser.GetBlockSize() +
+	     lSiteTraverser.GetX();
+	
+	mParticleSeedVec[nParticleSeeds].y = 
+	  (float) lBlockTraverser.GetY()*lBlockTraverser.GetBlockSize() +
+	  lSiteTraverser.GetY();
+		
+	mParticleSeedVec[nParticleSeeds].z = 
+	  (float) lBlockTraverser.GetZ()*lBlockTraverser.GetBlockSize() +
+	  lSiteTraverser.GetZ();
 
-                  // if the lattice site is not an inlet
-                  if (iLatDat.GetSiteType(lSiteIndex) != geometry::LatticeData::INLET_TYPE)
-                  {
-                    continue;
-                  }
-                  ++inlet_sites;
+	mParticleSeedVec[nParticleSeeds].inlet_id = iLatDat.GetBoundaryId(lSiteIndex);
+	++nParticleSeeds;
 
-                  if (inlet_sites % 50 != 0)
-                  {
-                    continue;
-                  }
-
-                  if (nParticleSeeds == particleSeedVec.capacity())
-                  {
-                    particleSeedVec.reserve(2 * particleSeedVec.capacity());
-                  }
-                  particleSeedVec[nParticleSeeds].x = (float) site_i;
-                  particleSeedVec[nParticleSeeds].y = (float) site_j;
-                  particleSeedVec[nParticleSeeds].z = (float) site_k;
-                  particleSeedVec[nParticleSeeds].inlet_id = iLatDat.GetBoundaryId(lSiteIndex);
-                  ++nParticleSeeds;
-                }
-              }
-            }
-          }
-        }
+	}
+	while (lSiteTraverser.TraverseOne());
       }
+      while (lBlockTraverser.TraverseOne());
+    
 
       shared_vs = 0;
 
@@ -226,19 +245,21 @@ namespace hemelb
 
       for (n = 0; n < iLatDat.GetBlockCount(); n++)
       {
-        if (velocity_field[n].vel_site_data == NULL)
+        if (velocity_field[n].empty())
+	{
           continue;
-
+	}
+	
         for (site_t m = 0; m < iLatDat.GetSitesPerBlockVolumeUnit(); m++)
         {
-          velocity_field[n].vel_site_data[m].counter = counter;
+          velocity_field[n][m].counter = counter;
         }
         if (iLatDat.GetBlock(n)->site_data == NULL)
           continue;
 
         for (site_t m = 0; m < iLatDat.GetSitesPerBlockVolumeUnit(); m++)
         {
-          velocity_field[n].vel_site_data[m].site_id = iLatDat.GetBlock(n)->site_data[m];
+          velocity_field[n][m].site_id = iLatDat.GetBlock(n)->site_data[m];
         }
       }
       procs = netTop->GetProcessorCount();
@@ -266,17 +287,8 @@ namespace hemelb
         delete[] s_to_send;
       }
 
-      for (site_t m = 0; m < num_blocks; m++)
-      {
-        if (velocity_field[m].vel_site_data != NULL)
-        {
-          delete[] velocity_field[m].vel_site_data;
-        }
-      }
-
-      delete[] velocity_field;
-      particleSeedVec.clear();
-      particleVec.clear();
+      mParticleSeedVec.clear();
+      mParticleVec.clear();
     }
 
     // Reset the streakline drawer.
@@ -301,7 +313,7 @@ namespace hemelb
 
       if ((float) (time_steps % timestepsBetweenStreaklinesRounded)
           <= (mVisSettings.streakline_length / 100.0F) * ((float) time_steps_per_cycle
-							   / mVisSettings.streaklines_per_pulsatile_period) && time_steps
+							  / mVisSettings.streaklines_per_pulsatile_period) && time_steps
           % particle_creation_period == 0)
       {
         createSeedParticles();
@@ -326,9 +338,9 @@ namespace hemelb
       for (unsigned int n = 0; n < nParticles; n++)
       {
         Vector3D<float> p1;
-        p1.x = particleVec[n].x - float (iLatDat.GetXSiteCount() >> 1);
-        p1.y = particleVec[n].y - float (iLatDat.GetYSiteCount() >> 1);
-        p1.z = particleVec[n].z - float (iLatDat.GetZSiteCount() >> 1);
+        p1.x = mParticleVec[n].x - float (iLatDat.GetXSiteCount() >> 1);
+        p1.y = mParticleVec[n].y - float (iLatDat.GetYSiteCount() >> 1);
+        p1.z = mParticleVec[n].z - float (iLatDat.GetZSiteCount() >> 1);
 
         Vector3D<float> p2 = mViewpoint.Project(p1);
         
@@ -336,7 +348,7 @@ namespace hemelb
 
         if (! (x.x < 0 || x.x >= pixels_x || x.y < 0 || x.y >= pixels_y))
         {
-          ColPixel<RayDataType_t> col_pixel(x.x, x.y, particleVec[n].vel, p2.z, particleVec[n].inlet_id);
+          ColPixel<RayDataType_t> col_pixel(x.x, x.y, mParticleVec[n].vel, p2.z, mParticleVec[n].inlet_id);
           mScreen.AddPixel(col_pixel, mVisSettings);
         }
       }
@@ -347,11 +359,11 @@ namespace hemelb
     {
       for (unsigned int n = 0; n < nParticleSeeds; n++)
       {
-        createParticle(particleSeedVec[n].x,
-                       particleSeedVec[n].y,
-                       particleSeedVec[n].z,
+        createParticle(mParticleSeedVec[n].x,
+                       mParticleSeedVec[n].y,
+                       mParticleSeedVec[n].z,
                        0.0F,
-                       particleSeedVec[n].inlet_id);
+                       mParticleSeedVec[n].inlet_id);
       }
     }
 
@@ -359,16 +371,16 @@ namespace hemelb
     void StreaklineDrawer::createParticle(float x, float y, float z, float vel, int inlet_id)
     {
 
-      if (nParticles == particleVec.capacity())
+      if (nParticles == mParticleVec.capacity())
       {
-        particleVec.reserve(2 * particleVec.capacity());
+        mParticleVec.reserve(2 * mParticleVec.capacity());
       }
 
-      particleVec[nParticles].x = x;
-      particleVec[nParticles].y = y;
-      particleVec[nParticles].z = z;
-      particleVec[nParticles].vel = vel;
-      particleVec[nParticles].inlet_id = inlet_id;
+      mParticleVec[nParticles].x = x;
+      mParticleVec[nParticles].y = y;
+      mParticleVec[nParticles].z = z;
+      mParticleVec[nParticles].vel = vel;
+      mParticleVec[nParticles].inlet_id = inlet_id;
       ++nParticles;
     }
 
@@ -386,14 +398,14 @@ namespace hemelb
       // its data are replaced with those of the last particle;
       if (p_index != nParticles)
       {
-        particleVec[p_index].x = particleVec[nParticles].x;
-        particleVec[p_index].y = particleVec[nParticles].y;
-        particleVec[p_index].z = particleVec[nParticles].z;
-        particleVec[p_index].vx = particleVec[nParticles].vx;
-        particleVec[p_index].vy = particleVec[nParticles].vy;
-        particleVec[p_index].vz = particleVec[nParticles].vz;
-        particleVec[p_index].vel = particleVec[nParticles].vel;
-        particleVec[p_index].inlet_id = particleVec[nParticles].inlet_id;
+        mParticleVec[p_index].x = mParticleVec[nParticles].x;
+        mParticleVec[p_index].y = mParticleVec[nParticles].y;
+        mParticleVec[p_index].z = mParticleVec[nParticles].z;
+        mParticleVec[p_index].vx = mParticleVec[nParticles].vx;
+        mParticleVec[p_index].vy = mParticleVec[nParticles].vy;
+        mParticleVec[p_index].vz = mParticleVec[nParticles].vz;
+        mParticleVec[p_index].vel = mParticleVec[nParticles].vel;
+        mParticleVec[p_index].inlet_id = mParticleVec[nParticles].inlet_id;
       }
 
     }
@@ -414,16 +426,10 @@ namespace hemelb
 
       site_t block_id = iLatDat.GetBlockIdFromBlockCoords(i, j, k);
 
-      if (velocity_field[block_id].vel_site_data == NULL)
+      if (velocity_field[block_id].empty())
       {
-        velocity_field[block_id].vel_site_data
-	  = new VelSiteData[iLatDat.GetSitesPerBlockVolumeUnit()];
-
-        for (site_t site_id = 0; site_id < iLatDat.GetSitesPerBlockVolumeUnit(); site_id++)
-        {
-          velocity_field[block_id].vel_site_data[site_id].proc_id = -1;
-          velocity_field[block_id].vel_site_data[site_id].counter = 0;
-        }
+        velocity_field[block_id] = 
+	  std::vector<VelSiteData>(iLatDat.GetSitesPerBlockVolumeUnit());
       }
 
       site_t ii = site_i - (i << iLatDat.GetLog2BlockSize());
@@ -432,7 +438,7 @@ namespace hemelb
 
       site_t site_id =
 	( ( (ii << iLatDat.GetLog2BlockSize()) + jj) << iLatDat.GetLog2BlockSize()) + kk;
-      velocity_field[block_id].vel_site_data[site_id].proc_id = proc_id;
+      velocity_field[block_id][site_id].proc_id = proc_id;
     }
 
     // Returns the velocity site data for a given index, or NULL if the index isn't valid / has
@@ -453,7 +459,7 @@ namespace hemelb
 
       site_t block_id = iLatDat.GetBlockIdFromBlockCoords(i, j, k);
 
-      if (velocity_field[block_id].vel_site_data == NULL)
+      if (velocity_field[block_id].empty())
       {
         return NULL;
       }
@@ -464,7 +470,7 @@ namespace hemelb
       site_t site_id =
 	( ( (ii << iLatDat.GetLog2BlockSize()) + jj) << iLatDat.GetLog2BlockSize()) + kk;
 
-      return &velocity_field[block_id].vel_site_data[site_id];
+      return &velocity_field[block_id][site_id];
     }
 
     // Interpolates a velocity field to get the velocity at the position of a particle.
@@ -502,9 +508,9 @@ namespace hemelb
                                          int *is_interior,
                                          const geometry::LatticeData& iLatDat)
     {
-      site_t site_i = (site_t) particleVec[p_index].x;
-      site_t site_j = (site_t) particleVec[p_index].y;
-      site_t site_k = (site_t) particleVec[p_index].z;
+      site_t site_i = (site_t) mParticleVec[p_index].x;
+      site_t site_j = (site_t) mParticleVec[p_index].y;
+      site_t site_k = (site_t) mParticleVec[p_index].z;
 
       *is_interior = 1;
 
@@ -553,7 +559,7 @@ namespace hemelb
               distribn_t density, vx, vy, vz;
 
               D3Q15::CalculateDensityAndVelocity(iLatDat.GetFOld(vel_site_data_p->site_id
-								  * D3Q15::NUMVECTORS), density, vx, vy, vz);
+								 * D3Q15::NUMVECTORS), density, vx, vy, vz);
 
               v[i][j][k][0] = vel_site_data_p->vx = (float) (vx / density);
               v[i][j][k][1] = vel_site_data_p->vy = (float) (vy / density);
@@ -575,7 +581,7 @@ namespace hemelb
       }
     }
 
-     // Update the velocity field.
+    // Update the velocity field.
     void StreaklineDrawer::updateVelField(int stage_id, const geometry::LatticeData& iLatDat)
     {
       unsigned int particles_temp = nParticles;
@@ -593,24 +599,24 @@ namespace hemelb
 
         float interp_v[3];
 
-        particleVelocity(&particleVec[n], v, interp_v);
+        particleVelocity(&mParticleVec[n], v, interp_v);
         float vel = interp_v[0] * interp_v[0] + interp_v[1] * interp_v[1] + interp_v[2]
 	  * interp_v[2];
 
         if (vel > 1.0F)
         {
-          particleVec[n].vel = 1.0F;
-          particleVec[n].vx = interp_v[0] / sqrtf(vel);
-          particleVec[n].vy = interp_v[1] / sqrtf(vel);
-          particleVec[n].vz = interp_v[2] / sqrtf(vel);
+          mParticleVec[n].vel = 1.0F;
+          mParticleVec[n].vx = interp_v[0] / sqrtf(vel);
+          mParticleVec[n].vy = interp_v[1] / sqrtf(vel);
+          mParticleVec[n].vz = interp_v[2] / sqrtf(vel);
 
         }
         else if (vel > 1.0e-8)
         {
-          particleVec[n].vel = sqrtf(vel);
-          particleVec[n].vx = interp_v[0];
-          particleVec[n].vy = interp_v[1];
-          particleVec[n].vz = interp_v[2];
+          mParticleVec[n].vel = sqrtf(vel);
+          mParticleVec[n].vx = interp_v[0];
+          mParticleVec[n].vy = interp_v[1];
+          mParticleVec[n].vz = interp_v[2];
 
         }
         else
@@ -626,9 +632,9 @@ namespace hemelb
       for (unsigned int n = 0; n < nParticles; n++)
       {
         // particle coords updating (dt = 1)
-        particleVec[n].x += particleVec[n].vx;
-        particleVec[n].y += particleVec[n].vy;
-        particleVec[n].z += particleVec[n].vz;
+        mParticleVec[n].x += mParticleVec[n].vx;
+        mParticleVec[n].y += mParticleVec[n].vy;
+        mParticleVec[n].z += mParticleVec[n].vz;
       }
     }
 
@@ -800,9 +806,9 @@ namespace hemelb
 
       for (int n = (int) (particles_temp - 1); n >= 0; n--)
       {
-        site_t site_i = (unsigned int) particleVec[n].x;
-        site_t site_j = (unsigned int) particleVec[n].y;
-        site_t site_k = (unsigned int) particleVec[n].z;
+        site_t site_i = (unsigned int) mParticleVec[n].x;
+        site_t site_j = (unsigned int) mParticleVec[n].y;
+        site_t site_k = (unsigned int) mParticleVec[n].z;
 
         VelSiteData *vel_site_data_p = velSiteDataPointer(iLatDat, site_i, site_j, site_k);
 
@@ -819,11 +825,11 @@ namespace hemelb
           mNeighProcs[m].p_to_send.reserve(5 * particles_to_send_max);
         }
 
-        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 0] = particleVec[n].x;
-        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 1] = particleVec[n].y;
-        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 2] = particleVec[n].z;
-        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 3] = particleVec[n].vel;
-        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 4] = (float) particleVec[n].inlet_id
+        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 0] = mParticleVec[n].x;
+        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 1] = mParticleVec[n].y;
+        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 2] = mParticleVec[n].z;
+        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 3] = mParticleVec[n].vel;
+        mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 4] = (float) mParticleVec[n].inlet_id
 	  + 0.1F;
         ++mNeighProcs[m].send_ps;
 

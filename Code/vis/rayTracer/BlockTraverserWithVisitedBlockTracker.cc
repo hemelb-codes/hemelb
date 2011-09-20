@@ -13,13 +13,13 @@ namespace hemelb
     namespace raytracer
     {
       BlockTraverserWithVisitedBlockTracker::BlockTraverserWithVisitedBlockTracker
-      (const geometry::LatticeData* iLatDat)
+      (const geometry::LatticeData& iLatDat)
 	: BlockTraverser(iLatDat)
       {
 	//Initially no blocks have been visited
-	mBlockVisited = new bool[mLatticeData->GetBlockCount()];
+	mBlockVisited = new bool[mLatticeData.GetBlockCount()];
 	for (site_t n = 0; 
-	     n < mLatticeData->GetBlockCount(); 
+	     n < mLatticeData.GetBlockCount(); 
 	     n++)
 	{
 	  mBlockVisited[n] = false;
@@ -78,7 +78,7 @@ namespace hemelb
       void BlockTraverserWithVisitedBlockTracker::MarkBlockVisited(Vector3D<site_t> iLocation)
       {
 	site_t lNumber = GetIndexFromLocation(iLocation);
-	assert(lNumber < mLatticeData->GetBlockCount());
+	assert(lNumber < mLatticeData.GetBlockCount());
 	MarkBlockVisited(lNumber);
       }	   
     }
