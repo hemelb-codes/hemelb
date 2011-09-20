@@ -33,14 +33,14 @@ namespace hemelb
 
         }
 
-        void InOutLetCosine::CalculateCycle(std::vector<distribn_t> &density_cycle,
+        void InOutLetCosine::CalculateCycle(std::vector<distribn_t> &densityCycle,
                                             const SimulationState *iState)
         {
           double w = 2.0 * PI / (double) iState->GetTimeStepsPerCycle();
 
-          for (unsigned int time_step = 0; time_step < density_cycle.size(); time_step++)
+          for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
           {
-            density_cycle[time_step] = DensityMeanLattice
+            densityCycle[time_step] = DensityMeanLattice
                 + DensityAmpLattice
                     * cos(w * (double) (time_step + iState->Get0IndexedTimeStep()) + Phase);
           }

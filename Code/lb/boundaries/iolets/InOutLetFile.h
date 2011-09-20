@@ -30,7 +30,7 @@ namespace hemelb
             virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig);
             virtual InOutLet* Clone();
 
-            virtual void CalculateCycle(std::vector<distribn_t> &density_cycle,
+            virtual void CalculateCycle(std::vector<distribn_t> &densityCycle,
                                         const SimulationState *iState);
 
             std::string PressureFilePath;

@@ -9,7 +9,7 @@ namespace hemelb
   namespace vis
   {
     Viewpoint::Viewpoint() :
-        mViewpointLocation(0.0F)
+      mViewpointLocation(0.0F)
     {
     }
 
@@ -46,9 +46,9 @@ namespace hemelb
 
       const float lTemp = iVector.z * iCosThetaX - iVector.y * iSinThetaX;
 
-      return Vector3D<distribn_t>(lTemp * iSinThetaY + iVector.x * iCosThetaY,
-                                  iVector.z * iSinThetaX + iVector.y * iCosThetaX,
-                                  lTemp * iCosThetaY - iVector.x * iSinThetaY);
+      return Vector3D<distribn_t> (lTemp * iSinThetaY + iVector.x * iCosThetaY,
+                                   iVector.z * iSinThetaX + iVector.y * iCosThetaX,
+                                   lTemp * iCosThetaY - iVector.x * iSinThetaY);
     }
 
     Vector3D<distribn_t> Viewpoint::UnRotate(float iSinThetaX,
@@ -69,9 +69,9 @@ namespace hemelb
 
       const float lTemp = iVector.x * iSinThetaY + iVector.z * iCosThetaY;
 
-      return Vector3D<distribn_t>(iVector.x * iCosThetaY - iVector.z * iSinThetaY,
-                                  -lTemp * iSinThetaX + iVector.y * iCosThetaX,
-                                  lTemp * iCosThetaX + iVector.y * iSinThetaX);
+      return Vector3D<distribn_t> (iVector.x * iCosThetaY - iVector.z * iSinThetaY,
+                                   -lTemp * iSinThetaX + iVector.y * iCosThetaX,
+                                   lTemp * iCosThetaX + iVector.y * iSinThetaX);
     }
 
     Vector3D<distribn_t> Viewpoint::Project(const Vector3D<distribn_t>& iWorldLocation) const
@@ -92,11 +92,11 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Depth: %f",
                                                                             -lLocationCamCoordinates.z);
 
-      return Vector3D<distribn_t>(mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
-                                      * lLocationCamCoordinates.x,
-                                  mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
-                                      * lLocationCamCoordinates.y,
-                                  -lLocationCamCoordinates.z);
+      return Vector3D<distribn_t> (mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+                                       * lLocationCamCoordinates.x,
+                                   mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+                                       * lLocationCamCoordinates.y,
+                                   -lLocationCamCoordinates.z);
     }
 
     void Viewpoint::SetViewpointPosition(float iLongitude,
@@ -116,9 +116,8 @@ namespace hemelb
 
       // Z in the camera co-ordinates indicates the distance from the centre
       // the viewpoint into the camera prior rotation.
-      mViewpointLocation = RotateCameraCoordinatesToWorldCoordinates(Vector3D<distribn_t>(0.,
-                                                                                          0.,
-                                                                                          iRadius));
+      mViewpointLocation
+          = RotateCameraCoordinatesToWorldCoordinates(Vector3D<distribn_t> (0., 0., iRadius));
 
       //Translate the camera location to allow it to point at 
       //a local centre rather than the world centre

@@ -51,7 +51,7 @@ namespace hemelb
           // Has to be a vector of pointers for InOutLet polymorphism
           std::vector<iolets::InOutLet*> iolets;
 
-          std::vector<distribn_t>* density_cycle;
+          std::vector<distribn_t>* densityCycle;
 
           SimulationState* mState;
           util::UnitConverter* mUnits;

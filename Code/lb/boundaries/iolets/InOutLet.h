@@ -27,12 +27,12 @@ namespace hemelb
             virtual InOutLet* Clone() = 0;
 
             // Should be called before simulation starts running (including after a reset)
-            // Resizes density_cycle and calls CalculateCycle
-            virtual void InitialiseCycle(std::vector<distribn_t> &density_cycle,
+            // Resizes densityCycle and calls CalculateCycle
+            virtual void InitialiseCycle(std::vector<distribn_t> &densityCycle,
                                          const SimulationState *iState) = 0;
-            virtual void UpdateCycle(std::vector<distribn_t> &density_cycle,
+            virtual void UpdateCycle(std::vector<distribn_t> &densityCycle,
                                      const SimulationState *iState) = 0;
-            virtual void CalculateCycle(std::vector<distribn_t> &density_cycle,
+            virtual void CalculateCycle(std::vector<distribn_t> &densityCycle,
                                         const SimulationState *iState) = 0;
             virtual bool DoComms() = 0;
 
