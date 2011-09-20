@@ -51,47 +51,48 @@ namespace hemelb
         template<typename T>
         static T enforceBounds(T number, T lowerBound, T upperBound)
         {
-          return max<T>(lowerBound, min(number, upperBound));
+          return max<T> (lowerBound, min(number, upperBound));
         }
 
         template<typename T>
-        static T LinearInterpolate(std::vector<T> &xs, std::vector<T> &ys, T x)
+        static T LinearInterpolate(std::vector<T> &xVector, std::vector<T> &yVector, T targetX)
         {
-          int i = 0;
+          int lowerIndex = 0;
 
           if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
           {
-            if (x < xs[0] || x > xs[xs.size() - 1])
+            if (targetX < xVector[0] || targetX > xVector[xVector.size() - 1])
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Linear Interpolation beyond bounds: %f is not between %f and %f",
-                                                            x,
-                                                            xs[0],
-                                                            xs[xs.size() - 1]);
+                                                            targetX,
+                                                            xVector[0],
+                                                            xVector[xVector.size() - 1]);
             }
           }
 
-          while (! (x >= xs[i] && x <= xs[i + 1]))
+          while (! (targetX >= xVector[lowerIndex] && targetX <= xVector[lowerIndex + 1]))
           {
-            i++;
+            lowerIndex++;
           }
 
           // If discontinuities are present in the trace the correct behaviour is ill-defined.
           if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
           {
-            if (xs[i] == xs[i + 1])
+            if (xVector[lowerIndex] == xVector[lowerIndex + 1])
             {
               log::Logger::Log<log::Debug, log::OnePerCore>("Multiple points for same x value in LinearInterpolate: ");
               log::Logger::Log<log::Debug, log::OnePerCore>("(%f, %f) and (%f, %f). Division by zero!",
-                                                            xs[i],
-                                                            ys[i],
-                                                            xs[i + 1],
-                                                            ys[i + 1]);
+                                                            xVector[lowerIndex],
+                                                            yVector[lowerIndex],
+                                                            xVector[lowerIndex + 1],
+                                                            yVector[lowerIndex + 1]);
             }
           }
 
           // Linear interpolation of function f(x) between two points A and B
           // f(A) + (fraction along x axis between A and B) * (f(B) - f(A))
-          return (ys[i] + (x - xs[i]) / (xs[i + 1] - xs[i]) * (ys[i + 1] - ys[i]));
+          return (yVector[lowerIndex] + (targetX - xVector[lowerIndex]) / (xVector[lowerIndex + 1]
+              - xVector[lowerIndex]) * (yVector[lowerIndex + 1] - yVector[lowerIndex]));
         }
     };
 
@@ -139,63 +140,65 @@ namespace hemelb
          */
         template<class F>
         static double Brent(F* func,
-                            double xl,
-                            double fl,
-                            double xh,
-                            double fh,
-                            double alphaAcc,
-                            double fAcc)
+                            double xLowerIn,
+                            double yLowerIn,
+                            double xHigherIn,
+                            double yHigherIn,
+                            double xAccuracy,
+                            double yAccuracy)
         {
-          double a = xl, fa = fl;
-          double b = xh, fb = fh;
-          double c, fc;
-          double d; // First set after first iteration hence mflag
-          double s = b, fs = fb;
+          double xLower = xLowerIn, yLower = yLowerIn;
+          double xHigher = xHigherIn, yHigher = yHigherIn;
+          double xBoundNew, yBoundNew;
+          double xBoundOld; // First set after first iteration hence mflag
+          double xSolution = xHigher, ySolution = yHigher;
 
-          if (fabs(fa) < fabs(fb))
+          if (fabs(yLower) < fabs(yHigher))
           {
-            double temp = fa;
-            fa = fb;
-            fb = temp;
-            temp = a;
-            a = b;
-            b = temp;
+            double temp = yLower;
+            yLower = yHigher;
+            yHigher = temp;
+            temp = xLower;
+            xLower = xHigher;
+            xHigher = temp;
           }
 
-          c = a;
-          fc = fa;
+          xBoundNew = xLower;
+          yBoundNew = yLower;
 
           bool mflag = true;
 
-          while (fabs(b - a) > alphaAcc && fabs(fb) > fAcc && fabs(fs) > fAcc)
+          while (fabs(xHigher - xLower) > xAccuracy && fabs(yHigher) > yAccuracy && fabs(ySolution)
+              > yAccuracy)
           {
-            if (fa != fc && fb != fc)
+            if (yLower != yBoundNew && yHigher != yBoundNew)
             {
-              s = (a * fb * fc) / ( (fa - fb) * (fa - fc))
-                  + (b * fa * fc) / ( (fb - fa) * (fb - fc))
-                  + (c * fa * fb) / ( (fc - fa) * (fc - fb));
+              xSolution = (xLower * yHigher * yBoundNew) / ( (yLower - yHigher) * (yLower
+                  - yBoundNew)) + (xHigher * yLower * yBoundNew) / ( (yHigher - yLower) * (yHigher
+                  - yBoundNew)) + (xBoundNew * yLower * yHigher) / ( (yBoundNew - yLower)
+                  * (yBoundNew - yHigher));
             }
             else
             {
-              s = b - fb * (b - a) / (fb - fa);
+              xSolution = xHigher - yHigher * (xHigher - xLower) / (yHigher - yLower);
             }
 
             // s is not between (3a + b)/4 and b
-            bool condition1 = (a < b ?
-              (s < (3 * a + b) / 4.0 || s > b)
-              : (s > (3 * a + b) / 4.0 || s < b))
-;            // mflag is set and |s−b| ≥ |b−c| / 2)
-            bool condition2 = mflag && fabs(s - b) >= fabs(b - c) / 2.0;
+            bool condition1 = (xLower < xHigher
+              ? (xSolution < (3 * xLower + xHigher) / 4.0 || xSolution > xHigher)
+              : (xSolution > (3 * xLower + xHigher) / 4.0 || xSolution < xHigher)); // mflag is set and |s−b| ≥ |b−c| / 2)
+            bool condition2 = mflag && fabs(xSolution - xHigher) >= fabs(xHigher - xBoundNew) / 2.0;
             // mflag is cleared and |s−b| ≥ |c−d| / 2
-            bool condition3 = !mflag && fabs(s - b) >= fabs(c - d) / 2.0;
+            bool condition3 = !mflag && fabs(xSolution - xHigher) >= fabs(xBoundNew - xBoundOld)
+                / 2.0;
             // mflag is set and |b−c| < |δ|
-            bool condition4 = mflag && fabs(b - c) < alphaAcc;
+            bool condition4 = mflag && fabs(xHigher - xBoundNew) < xAccuracy;
             // mflag is cleared and |c−d| < |δ|
-            bool condition5 = !mflag && fabs(c - d) < alphaAcc;
+            bool condition5 = !mflag && fabs(xBoundNew - xBoundOld) < xAccuracy;
 
             if (condition1 || condition2 || condition3 || condition4 || condition5)
             {
-              s = (a + b) / 2.0;
+              xSolution = (xLower + xHigher) / 2.0;
               mflag = true;
             }
             else
@@ -203,37 +206,37 @@ namespace hemelb
               mflag = false;
             }
 
-            (*func)(s, fs);
-            d = c;
-            c = b;
-            fc = fb;
+            (*func)(xSolution, ySolution);
+            xBoundOld = xBoundNew;
+            xBoundNew = xHigher;
+            yBoundNew = yHigher;
 
-            if (fa * fs < 0)
+            if (yLower * ySolution < 0)
             {
-              b = s;
-              fb = fs;
+              xHigher = xSolution;
+              yHigher = ySolution;
             }
             else
             {
-              a = s;
-              fa = fs;
+              xLower = xSolution;
+              yLower = ySolution;
             }
 
-            if (fabs(fa) < fabs(fb))
+            if (fabs(yLower) < fabs(yHigher))
             {
-              double temp = fa;
-              fa = fb;
-              fb = temp;
-              temp = a;
-              a = b;
-              b = temp;
+              double temp = yLower;
+              yLower = yHigher;
+              yHigher = temp;
+              temp = xLower;
+              xLower = xHigher;
+              xHigher = temp;
             }
           }
 
-          if (fabs(fb) < fabs(fs))
-            return b;
+          if (fabs(yHigher) < fabs(ySolution))
+            return xHigher;
           else
-            return s;
+            return xSolution;
         }
     };
 

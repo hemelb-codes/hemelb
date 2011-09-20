@@ -42,7 +42,7 @@ namespace hemelb
         // IMPORTANT: to allow reading in data taken at irregular intervals the user
         // needs to make sure that the last point in the file coincides with the first
         // point of a new cycle for a continuous trace.
-        void InOutLetFile::CalculateCycle(std::vector<distribn_t> &density_cycle,
+        void InOutLetFile::CalculateCycle(std::vector<distribn_t> &densityCycle,
                                           const SimulationState *iState)
         {
           // First read in values from file into vectors
@@ -105,15 +105,15 @@ namespace hemelb
           }
 
           // Now convert these vectors into arrays using linear interpolation
-          for (unsigned int time_step = 0; time_step < density_cycle.size(); time_step++)
+          for (unsigned int time_step = 0; time_step < densityCycle.size(); time_step++)
           {
             double point = time[0]
-                + ((double) time_step / (double) density_cycle.size())
+                + ((double) time_step / (double) densityCycle.size())
                     * (time[time.size() - 1] - time[0]);
 
             double pressure = util::NumericalFunctions::LinearInterpolate(time, value, point);
 
-            density_cycle[time_step] = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
+            densityCycle[time_step] = mUnits->ConvertPressureToLatticeUnits(pressure) / Cs2;
           }
         }
 

@@ -223,7 +223,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                             network);
   }
 
-  mUnits = new hemelb::util::UnitConverter(mLbm->GetLbmParams(), mSimulationState, mLatDat->GetVoxelSize());
+  mUnits = new hemelb::util::UnitConverter(mLbm->GetLbmParams(),
+                                           mSimulationState,
+                                           mLatDat->GetVoxelSize());
 
   mInletValues
       = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
@@ -464,8 +466,10 @@ void SimulationMaster::RunSimulation(std::string image_directory,
         if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
         {
           char image_filename[255];
-          snprintf(image_filename, 255, "%08li.dat", 1 + ( (it->second - 1)
-              % mSimulationState->GetTimeStepsPerCycle()));
+          snprintf(image_filename,
+                   255,
+                   "%08li.dat",
+                   1 + ( (it->second - 1) % mSimulationState->GetTimeStepsPerCycle()));
           hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(image_directory
               + std::string(image_filename));
 
