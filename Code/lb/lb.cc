@@ -15,15 +15,13 @@ namespace hemelb
   {
     void LBM::RecalculateTauViscosityOmega()
     {
-      mParams.Tau = 0.5
-          + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-              / (Cs2
-                  * ((double) mState->GetTimeStepsPerCycle() * mLatDat->GetVoxelSize()
-                      * mLatDat->GetVoxelSize()));
+      mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
+          / (Cs2 * ((double) mState->GetTimeStepsPerCycle() * mLatDat->GetVoxelSize()
+              * mLatDat->GetVoxelSize()));
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
-      mParams.Beta = -1.0 / (2.0 * mParams.Tau);
+      mParams.Beta = -1.0 / (2.0 * mParams.Tau); // This is just Omega / 2.0 by pure coincidence
     }
 
     hemelb::lb::LbmParameters *LBM::GetLbmParams()
@@ -35,7 +33,7 @@ namespace hemelb
              net::Net* net,
              geometry::LatticeData* latDat,
              SimulationState* simState) :
-        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
+      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
     {
       ReadParameters();
     }
@@ -100,11 +98,9 @@ namespace hemelb
                          boundaries::BoundaryValues* iOutletValues,
                          util::UnitConverter* iUnits)
     {
-      mUnits = iUnits;
-
       mInletValues = iInletValues;
-
       mOutletValues = iOutletValues;
+      mUnits = iUnits;
 
       InitCollisions();
 
@@ -153,14 +149,14 @@ namespace hemelb
           netTop->NeighbouringProcs.begin(); it != netTop->NeighbouringProcs.end(); it++)
       {
         // Request the receive into the appropriate bit of FOld.
-        mNet->RequestReceive<distribn_t>(mLatDat->GetFOld( (*it).FirstSharedF),
-                                         (int) (*it).SharedFCount,
-                                         (*it).Rank);
+        mNet->RequestReceive<distribn_t> (mLatDat->GetFOld( (*it).FirstSharedF),
+                                          (int) (*it).SharedFCount,
+                                           (*it).Rank);
 
         // Request the send from the right bit of FNew.
-        mNet->RequestSend<distribn_t>(mLatDat->GetFNew( (*it).FirstSharedF),
-                                      (int) (*it).SharedFCount,
-                                      (*it).Rank);
+        mNet->RequestSend<distribn_t> (mLatDat->GetFNew( (*it).FirstSharedF),
+                                       (int) (*it).SharedFCount,
+                                        (*it).Rank);
 
       }
 
@@ -179,9 +175,11 @@ namespace hemelb
       StreamAndCollide(mWallCollision, offset, mLatDat->GetInterCollisionCount(1));
       offset += mLatDat->GetInterCollisionCount(1);
 
+      mInletValues->FinishReceive();
       StreamAndCollide(mInletCollision, offset, mLatDat->GetInterCollisionCount(2));
       offset += mLatDat->GetInterCollisionCount(2);
 
+      mOutletValues->FinishReceive();
       StreamAndCollide(mOutletCollision, offset, mLatDat->GetInterCollisionCount(3));
       offset += mLatDat->GetInterCollisionCount(3);
 
@@ -229,8 +227,8 @@ namespace hemelb
 
       for (site_t i = 0; i < netTop->TotalSharedFs; i++)
       {
-        *mLatDat->GetFNew(receivedFTranslator[i]) =
-            *mLatDat->GetFOld(netTop->NeighbouringProcs[0].FirstSharedF + i);
+        *mLatDat->GetFNew(receivedFTranslator[i])
+            = *mLatDat->GetFOld(netTop->NeighbouringProcs[0].FirstSharedF + i);
       }
 
       // Do any cleanup steps necessary on boundary nodes
@@ -366,13 +364,7 @@ namespace hemelb
     // that depends on this change.
     void LBM::Reset()
     {
-      mInletValues->ResetPrePeriodChange();
-      mOutletValues->ResetPrePeriodChange();
-
       mState->DoubleTimeResolution();
-
-      mInletValues->ResetPostPeriodChange();
-      mOutletValues->ResetPostPeriodChange();
 
       RecalculateTauViscosityOmega();
 

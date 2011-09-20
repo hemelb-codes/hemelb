@@ -28,6 +28,7 @@ namespace hemelb
 
         unsigned long GetCycleId() const;
         unsigned long GetTimeStep() const;
+        unsigned long Get0IndexedTimeStep() const;
         unsigned long GetTimeStepsPerCycle() const;
         unsigned long GetNumberOfCycles() const;
         unsigned long GetTimeStepsPassed() const;

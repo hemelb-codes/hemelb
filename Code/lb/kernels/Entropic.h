@@ -162,7 +162,7 @@ namespace hemelb
                                                             alphaHigher,
                                                             HHigher,
                                                             1.0E-6,
-                                                            1.0E-6));
+                                                            1.0E-12));
             }
 
           }

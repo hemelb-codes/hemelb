@@ -2,7 +2,6 @@
 #define HEMELB_UTIL_UNITCONVERTER_H
 
 #include "lb/LbmParameters.h"
-#include "geometry/LatticeData.h"
 #include "lb/SimulationState.h"
 #include "constants.h"
 
@@ -16,7 +15,7 @@ namespace hemelb
       public:
         UnitConverter(lb::LbmParameters* iParams,
                       lb::SimulationState* iState,
-                      geometry::LatticeData* iLatDat);
+                      double voxelSize);
 
         distribn_t ConvertPressureToLatticeUnits(double pressure) const;
         distribn_t ConvertVelocityToLatticeUnits(double velocity) const;
