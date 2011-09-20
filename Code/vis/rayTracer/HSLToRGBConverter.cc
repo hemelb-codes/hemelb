@@ -13,6 +13,9 @@ namespace hemelb
   {
     namespace raytracer
     {
+      
+      //See http://en.wikipedia.org/wiki/HSL_and_HSV for the
+      //formulae used
       //TODO: Possibly replace truncation with rounding?
       void HSLToRGBConverter::ConvertHSLToRGB
       ( float iHue, 
@@ -24,6 +27,12 @@ namespace hemelb
 	assert(iSaturation >= 0.0F && iSaturation <=1.0F);
 	assert(iLightness >= 0.0F && iLightness <=1.0F);
 
+	//All values are stored as 32-bit unsigned integers
+	//stored within 16-bits, to allow multiplication between
+	//two values 
+
+	//All values are scaled up to be between 0 and the
+	//maximum value of a 16-bit interger
 	static const uint32_t DegreesScalar = 
 	  std::numeric_limits<uint16_t>::max()/360;
 

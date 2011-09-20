@@ -19,6 +19,8 @@ namespace hemelb
   {
     namespace raytracer
     {
+      //The abstract base type for RayData, using the CRTP pattern
+      //Contains functionality common to all derived types
       template<typename Derived>
 	class RayData
       {
@@ -33,6 +35,9 @@ namespace hemelb
 	  mLengthBeforeRayFirstCluster = NO_VALUE_F;
 	}
 
+	//Used to process the ray data for a normal (non-wall) fluid site
+	//Cals the method common to all ray data processing classes 
+	//and then the derived class method
 	void UpdateDataForNormalFluidSite(const raytracer::SiteData_t& iSiteData,
 					  const Vector3D<float>& iRayDirection,
 					  const float iRayLengthInVoxel,
@@ -55,6 +60,7 @@ namespace hemelb
 	      iVisSettings );
 	}
 
+	//Processes the ray data for a normal (non wall) fluid site
 	void UpdateDataForWallSite(const raytracer::SiteData_t& iSiteData,
 				   const Vector3D<float>& iRayDirection,
 				   const float iRayLengthInVoxel,
@@ -81,15 +87,15 @@ namespace hemelb
 	      iWallNormal);
 	}
 
+	//Merges in the data from another segment of ray (from another core)
 	void MergeIn(const Derived& iOtherRayData, const VisSettings& iVisSettings)
 	{
+	  // Carry out the merging specific to the derived class
 	  static_cast<Derived*>(this)->DoMergeIn(iOtherRayData, iVisSettings);
 
 	  ///Sum length in fluid
 	  SetCumulativeLengthInFluid(
 	    GetCumulativeLengthInFluid() + iOtherRayData.GetCumulativeLengthInFluid());
-
-	  assert(GetCumulativeLengthInFluid() > 0.0F);
 
 	  //Update data relating to site nearest to viewpoint
 	  if (iOtherRayData.GetLengthBeforeRayFirstCluster() 
@@ -103,6 +109,7 @@ namespace hemelb
 	  }
 	}
 
+	//Obtains the colour representing the velocity ray trace
 	void GetVelocityColour(unsigned char oColour[3], 
 			       const VisSettings& iVisSettings) const
 	{
@@ -111,7 +118,8 @@ namespace hemelb
 				GetLengthBeforeRayFirstCluster() /
 				iVisSettings.maximumDrawDistance);
 	}
-
+	
+	//Obtains the colour representing the stress ray trace
 	void GetStressColour(unsigned char oColour[3],
 			     const VisSettings& iVisSettings) const
 	{
@@ -121,6 +129,8 @@ namespace hemelb
 			      iVisSettings.maximumDrawDistance);
 	}
 
+	//Whether or not the data contained in the instance has valid
+	//ray data, or if it has just been constructed
 	bool ContainsRayData() const
 	{
 	  return (GetCumulativeLengthInFluid() != 0.0F);
@@ -152,7 +162,10 @@ namespace hemelb
 
 	float mDensityAtNearestPoint;
 	float mStressAtNearestPoint;
-	
+
+	//Perform processing of the ray data common to all derived
+	//types, ie cumulative length in the fluid, nearest stress
+	//and density. 
 	void UpdateDataCommon(const raytracer::SiteData_t& iSiteData,
 			      const Vector3D<float>& iRayDirection,
 			      const float iRayLengthInVoxel,
