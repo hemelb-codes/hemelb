@@ -28,7 +28,6 @@ namespace hemelb
       void RayDataNormal::DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
 							 const Vector3D<float>& iRayDirection,
 							 const float iRayLengthInVoxel,
-							 const float iAbsoluteDistanceFromViewpoint,
 							 const DomainStats& iDomainStats,
 							 const VisSettings& iVisSettings)
       {
@@ -56,7 +55,6 @@ namespace hemelb
       void RayDataNormal::DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
 						    const Vector3D<float>& iRayDirection,
 						    const float iRayLengthInVoxel,
-						    const float iAbsoluteDistanceFromViewpoint,
 						    const DomainStats& iDomainStats,
 						    const VisSettings& iVisSettings,
 						    const double* iWallNormal)
@@ -64,7 +62,6 @@ namespace hemelb
 	DoUpdateDataForNormalFluidSite(iSiteData,
 				       iRayDirection,
 				       iRayLengthInVoxel,
-				       iAbsoluteDistanceFromViewpoint,
 				       iDomainStats,
 				       iVisSettings);
       }

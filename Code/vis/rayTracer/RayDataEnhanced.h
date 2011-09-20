@@ -25,6 +25,11 @@ namespace hemelb
 	};
       }
 
+      //RayDataEnhanced - performs and average velocity and stress ray trace
+      //with surface normal highlighting and optional depth cuing to enhance the
+      //3D perception
+
+      //NB functions prefixed Do should only be called by the base class
       template <DepthCuing::DepthCuing depthCuing>
 	class RayDataEnhanced : public RayData<RayDataEnhanced<depthCuing> >
       {
@@ -43,27 +48,33 @@ namespace hemelb
 					    const DomainStats& iDomainStats,
 					    const VisSettings& iVisSettings)
 	{
+	  //Add the velocity multiplied by the ray length in each voxel,
 	  mVelocitySum += 
 	    iSiteData.Velocity * 
 	    iRayLengthInVoxel *
 	    (float) iDomainStats.velocity_threshold_max_inv;
+	  //TODO: move iDomainStats.velocity_threshold_max_inv elsewhere
+	  //so the multiplication only happens once per ray
+	  //Likewise for iDomainStats.stress_threshold_max_inv;
 	
 	  if (iVisSettings.mStressType == lb::VonMises)
 	  {
-	    // update the volume rendering of the von Mises stress flow field
+	    //Update the volume rendering of the von Mises stress flow field
 	    mStressSum = iSiteData.Stress *
 	      iRayLengthInVoxel *
 	      (float) iDomainStats.stress_threshold_max_inv;
 	  }
 	}
 	
+	//Processes the data for wall sites
 	void DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
 				     const Vector3D<float>& iRayDirection,
 				     const float iRayLengthInVoxel,
 				     const DomainStats& iDomainStats,
 				     const VisSettings& iVisSettings,
 				     const double* iWallNormal)
-	{
+	{ 
+	  //Do everything that would be done for a normal fluid site
 	  DoUpdateDataForNormalFluidSite(iSiteData,
 					 iRayDirection,
 					 iRayLengthInVoxel,
@@ -85,7 +96,8 @@ namespace hemelb
 	  mSurfaceNormalLightness *= (mParallelSurfaceAttenuation + 
 				      (1.0F - mParallelSurfaceAttenuation)*fabs(lDotProduct)); 
 	}
-	  
+	 
+       	//Obtains the colour representing the velocity ray trace
 	void DoGetVelocityColour(unsigned char oColour[3],
 				 const float iNormalisedDistanceToFirstCluster) const
 	{
@@ -105,6 +117,7 @@ namespace hemelb
 					     oColour);
 	}
  
+	//Obtains the colour representing the stress ray trace
 	void DoGetStressColour(unsigned char oColour[3],
 			       const float iNormalisedDistanceToFirstCluster) const
 	{
@@ -119,9 +132,12 @@ namespace hemelb
 					     oColour);
 	}
 
+        //Carries out the merging of the ray data in this
+	//inherited type, for different segments of the same ray
 	void DoMergeIn(const RayDataEnhanced& iOtherRayData,
 		       const VisSettings& iVisSettings)
 	{
+	  //Add together velocities and stress sums
 	  mVelocitySum += iOtherRayData.GetVelocitySum();
 
 	  if (iVisSettings.mStressType != lb::ShearStress)
@@ -129,6 +145,7 @@ namespace hemelb
 	    mStressSum += iOtherRayData.GetStressSum();;
 	  }
 	
+	  //Multiply the surface lightness
 	  mSurfaceNormalLightness *= iOtherRayData.GetSurfaceNormalLightness();
 	}
 
@@ -160,6 +177,9 @@ namespace hemelb
 	}
 
       private:
+	//Obtain the lightness value for the ray, based on
+	//the lightness obtained through surface normals
+	//and optional depth cuing
 	float GetLightnessValue(const float iNormalisedDistance) const
 	{
 	  assert(GetSurfaceNormalLightness() >= 0.0F && GetSurfaceNormalLightness() <= 1.0F);
@@ -174,9 +194,10 @@ namespace hemelb
 	    //Set the smallest lightness value to between
             //the mimimum lightness and 1.0F based on the normalised distance between
 	    //the viewpoint and the first cluster hit
+	    //Add onto this the surface normal lightness
 	    float lLightnessValue = mLowestLightness +
-	      GetSurfaceNormalLightness()*mSurfaceNormalLightnessRange +
-	      (1.0F - mLowestLightness)*iNormalisedDistance;
+	      (1.0F - mLowestLightness)*iNormalisedDistance +
+	      GetSurfaceNormalLightness()*mSurfaceNormalLightnessRange;
 
 	    if(lLightnessValue > 1.0F)
 	    {
@@ -187,10 +208,11 @@ namespace hemelb
 	  else if (depthCuing == DepthCuing::DARKNESS)
 	  {
 	    //Set the maximum lightness to be between 0.8F and mLowestLighness
-	    //based on the noramlised distance
-	    float lLightnessValue = (GetSurfaceNormalLightness() - 1.0F) *
-	      mSurfaceNormalLightnessRange +
-	      0.8F*(1.0F - iNormalisedDistance);
+	    //based on the noramlised distance and take off the surface normal
+            //lightness
+	    float lLightnessValue = 0.8F*(1.0F - iNormalisedDistance) +
+	      (GetSurfaceNormalLightness() - 1.0F) *
+	      mSurfaceNormalLightnessRange;
 		    
 	    if (lLightnessValue < mLowestLightness)
 	    {
