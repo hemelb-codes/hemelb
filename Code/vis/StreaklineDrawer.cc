@@ -17,10 +17,10 @@ namespace hemelb
     // are used to do the visualisation. This is a bug.
 
     // Constructor, populating fields from lattice data objects.
-    StreaklineDrawer::StreaklineDrawer(geometry::LatticeData* iLatDat,
-                                       Screen* iScreen,
-                                       Viewpoint* iViewpoint,
-                                       VisSettings* iVisSettings) :
+    StreaklineDrawer::StreaklineDrawer(const geometry::LatticeData& iLatDat,
+                                       Screen& iScreen,
+                                       const Viewpoint& iViewpoint,
+                                       const VisSettings& iVisSettings) :
       mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
     {
       particleVec.reserve(10000);
@@ -28,10 +28,10 @@ namespace hemelb
       particleSeedVec.reserve(100);
       nParticleSeeds = 0;
 
-      num_blocks = iLatDat->GetBlockCount();
-      velocity_field = new VelocityField[iLatDat->GetBlockCount()];
+      num_blocks = iLatDat.GetBlockCount();
+      velocity_field = new VelocityField[iLatDat.GetBlockCount()];
 
-      for (site_t n = 0; n < iLatDat->GetBlockCount(); n++)
+      for (site_t n = 0; n < iLatDat.GetBlockCount(); n++)
       {
         velocity_field[n].vel_site_data = NULL;
       }
@@ -42,13 +42,13 @@ namespace hemelb
 
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
 
-      for (site_t i = 0; i < iLatDat->GetXSiteCount(); i += iLatDat->GetBlockSize())
+      for (site_t i = 0; i < iLatDat.GetXSiteCount(); i += iLatDat.GetBlockSize())
       {
-        for (site_t j = 0; j < iLatDat->GetYSiteCount(); j += iLatDat->GetBlockSize())
+        for (site_t j = 0; j < iLatDat.GetYSiteCount(); j += iLatDat.GetBlockSize())
         {
-          for (site_t k = 0; k < iLatDat->GetZSiteCount(); k += iLatDat->GetBlockSize())
+          for (site_t k = 0; k < iLatDat.GetZSiteCount(); k += iLatDat.GetBlockSize())
           {
-            geometry::LatticeData::BlockData* lBlock = iLatDat->GetBlock(n);
+            geometry::LatticeData::BlockData* lBlock = iLatDat.GetBlock(n);
 
             ++n;
 
@@ -59,11 +59,11 @@ namespace hemelb
 
             int m = -1;
 
-            for (site_t site_i = i; site_i < i + iLatDat->GetBlockSize(); site_i++)
+            for (site_t site_i = i; site_i < i + iLatDat.GetBlockSize(); site_i++)
             {
-              for (site_t site_j = j; site_j < j + iLatDat->GetBlockSize(); site_j++)
+              for (site_t site_j = j; site_j < j + iLatDat.GetBlockSize(); site_j++)
               {
-                for (site_t site_k = k; site_k < k + iLatDat->GetBlockSize(); site_k++)
+                for (site_t site_k = k; site_k < k + iLatDat.GetBlockSize(); site_k++)
                 {
 
                   m++;
@@ -75,13 +75,13 @@ namespace hemelb
                   const site_t startK = util::NumericalFunctions::max<int>(0, (int) site_k - 1);
 
                   const site_t endI =
-		    util::NumericalFunctions::min<site_t>(iLatDat->GetXSiteCount() - 1, site_i
+		    util::NumericalFunctions::min<site_t>(iLatDat.GetXSiteCount() - 1, site_i
 							  + 1);
                   const site_t endJ =
-		    util::NumericalFunctions::min<site_t>(iLatDat->GetYSiteCount() - 1, site_j
+		    util::NumericalFunctions::min<site_t>(iLatDat.GetYSiteCount() - 1, site_j
 							  + 1);
                   const site_t endK =
-		    util::NumericalFunctions::min<site_t>(iLatDat->GetZSiteCount() - 1, site_k
+		    util::NumericalFunctions::min<site_t>(iLatDat.GetZSiteCount() - 1, site_k
 							  + 1);
 
                   for (site_t neigh_i = startI; neigh_i <= endI; neigh_i++)
@@ -90,7 +90,7 @@ namespace hemelb
                     {
                       for (site_t neigh_k = startK; neigh_k <= endK; neigh_k++)
                       {
-                        const proc_t* neigh_proc_id = iLatDat->GetProcIdFromGlobalCoords(neigh_i,
+                        const proc_t* neigh_proc_id = iLatDat.GetProcIdFromGlobalCoords(neigh_i,
                                                                                          neigh_j,
                                                                                          neigh_k);
 
@@ -144,7 +144,7 @@ namespace hemelb
                   site_t lSiteIndex = lBlock->site_data[m];
 
                   // if the lattice site is not an inlet
-                  if (iLatDat->GetSiteType(lSiteIndex) != geometry::LatticeData::INLET_TYPE)
+                  if (iLatDat.GetSiteType(lSiteIndex) != geometry::LatticeData::INLET_TYPE)
                   {
                     continue;
                   }
@@ -162,7 +162,7 @@ namespace hemelb
                   particleSeedVec[nParticleSeeds].x = (float) site_i;
                   particleSeedVec[nParticleSeeds].y = (float) site_j;
                   particleSeedVec[nParticleSeeds].z = (float) site_k;
-                  particleSeedVec[nParticleSeeds].inlet_id = iLatDat->GetBoundaryId(lSiteIndex);
+                  particleSeedVec[nParticleSeeds].inlet_id = iLatDat.GetBoundaryId(lSiteIndex);
                   ++nParticleSeeds;
                 }
               }
@@ -224,21 +224,21 @@ namespace hemelb
 
       counter = 0;
 
-      for (n = 0; n < iLatDat->GetBlockCount(); n++)
+      for (n = 0; n < iLatDat.GetBlockCount(); n++)
       {
         if (velocity_field[n].vel_site_data == NULL)
           continue;
 
-        for (site_t m = 0; m < iLatDat->GetSitesPerBlockVolumeUnit(); m++)
+        for (site_t m = 0; m < iLatDat.GetSitesPerBlockVolumeUnit(); m++)
         {
           velocity_field[n].vel_site_data[m].counter = counter;
         }
-        if (iLatDat->GetBlock(n)->site_data == NULL)
+        if (iLatDat.GetBlock(n)->site_data == NULL)
           continue;
 
-        for (site_t m = 0; m < iLatDat->GetSitesPerBlockVolumeUnit(); m++)
+        for (site_t m = 0; m < iLatDat.GetSitesPerBlockVolumeUnit(); m++)
         {
-          velocity_field[n].vel_site_data[m].site_id = iLatDat->GetBlock(n)->site_data[m];
+          velocity_field[n].vel_site_data[m].site_id = iLatDat.GetBlock(n)->site_data[m];
         }
       }
       procs = netTop->GetProcessorCount();
@@ -288,7 +288,7 @@ namespace hemelb
     // Draw streaklines
     void StreaklineDrawer::StreakLines(unsigned long time_steps,
                                        unsigned long time_steps_per_cycle,
-                                       geometry::LatticeData* iLatDat)
+                                       const geometry::LatticeData& iLatDat)
     {
       // Set the particle creation period to be every time step, unless there are >=10000
       // timesteps per cycle
@@ -297,11 +297,11 @@ namespace hemelb
 								       / 5000));
 
       int timestepsBetweenStreaklinesRounded = (int) (0.5F + (float) time_steps_per_cycle
-						      / mVisSettings->streaklines_per_pulsatile_period);
+						      / mVisSettings.streaklines_per_pulsatile_period);
 
       if ((float) (time_steps % timestepsBetweenStreaklinesRounded)
-          <= (mVisSettings->streakline_length / 100.0F) * ((float) time_steps_per_cycle
-							   / mVisSettings->streaklines_per_pulsatile_period) && time_steps
+          <= (mVisSettings.streakline_length / 100.0F) * ((float) time_steps_per_cycle
+							   / mVisSettings.streaklines_per_pulsatile_period) && time_steps
           % particle_creation_period == 0)
       {
         createSeedParticles();
@@ -318,26 +318,26 @@ namespace hemelb
     }
 
     // Render the streaklines
-    void StreaklineDrawer::render(geometry::LatticeData* iLatDat)
+    void StreaklineDrawer::render(const geometry::LatticeData& iLatDat)
     {
-      int pixels_x = mScreen->GetPixelsX();
-      int pixels_y = mScreen->GetPixelsY();
+      int pixels_x = mScreen.GetPixelsX();
+      int pixels_y = mScreen.GetPixelsY();
 
       for (unsigned int n = 0; n < nParticles; n++)
       {
         Vector3D<float> p1;
-        p1.x = particleVec[n].x - float (iLatDat->GetXSiteCount() >> 1);
-        p1.y = particleVec[n].y - float (iLatDat->GetYSiteCount() >> 1);
-        p1.z = particleVec[n].z - float (iLatDat->GetZSiteCount() >> 1);
+        p1.x = particleVec[n].x - float (iLatDat.GetXSiteCount() >> 1);
+        p1.y = particleVec[n].y - float (iLatDat.GetYSiteCount() >> 1);
+        p1.z = particleVec[n].z - float (iLatDat.GetZSiteCount() >> 1);
 
-        Vector3D<float> p2 = mViewpoint->Project(p1);
+        Vector3D<float> p2 = mViewpoint.Project(p1);
         
-	XYCoordinates<int> x = mScreen->TransformScreenToPixelCoordinates<int> (XYCoordinates<float>(p2.x, p2.y));
+	XYCoordinates<int> x = mScreen.TransformScreenToPixelCoordinates<int> (XYCoordinates<float>(p2.x, p2.y));
 
         if (! (x.x < 0 || x.x >= pixels_x || x.y < 0 || x.y >= pixels_y))
         {
           ColPixel<RayDataType_t> col_pixel(x.x, x.y, particleVec[n].vel, p2.z, particleVec[n].inlet_id);
-          mScreen->AddPixel(col_pixel, *mVisSettings);
+          mScreen.AddPixel(col_pixel, mVisSettings);
         }
       }
     }
@@ -402,67 +402,67 @@ namespace hemelb
     
 
     // Function to initialise the velocity field at given coordinates.
-    void StreaklineDrawer::initializeVelFieldBlock(const geometry::LatticeData* iLatDat,
+    void StreaklineDrawer::initializeVelFieldBlock(const geometry::LatticeData& iLatDat,
                                                    site_t site_i,
                                                    site_t site_j,
                                                    site_t site_k,
                                                    proc_t proc_id)
     {
-      site_t i = site_i >> iLatDat->GetLog2BlockSize();
-      site_t j = site_j >> iLatDat->GetLog2BlockSize();
-      site_t k = site_k >> iLatDat->GetLog2BlockSize();
+      site_t i = site_i >> iLatDat.GetLog2BlockSize();
+      site_t j = site_j >> iLatDat.GetLog2BlockSize();
+      site_t k = site_k >> iLatDat.GetLog2BlockSize();
 
-      site_t block_id = iLatDat->GetBlockIdFromBlockCoords(i, j, k);
+      site_t block_id = iLatDat.GetBlockIdFromBlockCoords(i, j, k);
 
       if (velocity_field[block_id].vel_site_data == NULL)
       {
         velocity_field[block_id].vel_site_data
-	  = new VelSiteData[iLatDat->GetSitesPerBlockVolumeUnit()];
+	  = new VelSiteData[iLatDat.GetSitesPerBlockVolumeUnit()];
 
-        for (site_t site_id = 0; site_id < iLatDat->GetSitesPerBlockVolumeUnit(); site_id++)
+        for (site_t site_id = 0; site_id < iLatDat.GetSitesPerBlockVolumeUnit(); site_id++)
         {
           velocity_field[block_id].vel_site_data[site_id].proc_id = -1;
           velocity_field[block_id].vel_site_data[site_id].counter = 0;
         }
       }
 
-      site_t ii = site_i - (i << iLatDat->GetLog2BlockSize());
-      site_t jj = site_j - (j << iLatDat->GetLog2BlockSize());
-      site_t kk = site_k - (k << iLatDat->GetLog2BlockSize());
+      site_t ii = site_i - (i << iLatDat.GetLog2BlockSize());
+      site_t jj = site_j - (j << iLatDat.GetLog2BlockSize());
+      site_t kk = site_k - (k << iLatDat.GetLog2BlockSize());
 
       site_t site_id =
-	( ( (ii << iLatDat->GetLog2BlockSize()) + jj) << iLatDat->GetLog2BlockSize()) + kk;
+	( ( (ii << iLatDat.GetLog2BlockSize()) + jj) << iLatDat.GetLog2BlockSize()) + kk;
       velocity_field[block_id].vel_site_data[site_id].proc_id = proc_id;
     }
 
     // Returns the velocity site data for a given index, or NULL if the index isn't valid / has
     // no data.
-    StreaklineDrawer::VelSiteData *StreaklineDrawer::velSiteDataPointer(geometry::LatticeData* iLatDat,
+    StreaklineDrawer::VelSiteData *StreaklineDrawer::velSiteDataPointer(const geometry::LatticeData& iLatDat,
                                                                         site_t site_i,
                                                                         site_t site_j,
                                                                         site_t site_k)
     {
-      if (site_i >= iLatDat->GetXSiteCount() || site_j >= iLatDat->GetYSiteCount() || site_k
-          >= iLatDat->GetZSiteCount())
+      if (site_i >= iLatDat.GetXSiteCount() || site_j >= iLatDat.GetYSiteCount() || site_k
+          >= iLatDat.GetZSiteCount())
       {
         return NULL;
       }
-      site_t i = site_i >> iLatDat->GetLog2BlockSize();
-      site_t j = site_j >> iLatDat->GetLog2BlockSize();
-      site_t k = site_k >> iLatDat->GetLog2BlockSize();
+      site_t i = site_i >> iLatDat.GetLog2BlockSize();
+      site_t j = site_j >> iLatDat.GetLog2BlockSize();
+      site_t k = site_k >> iLatDat.GetLog2BlockSize();
 
-      site_t block_id = iLatDat->GetBlockIdFromBlockCoords(i, j, k);
+      site_t block_id = iLatDat.GetBlockIdFromBlockCoords(i, j, k);
 
       if (velocity_field[block_id].vel_site_data == NULL)
       {
         return NULL;
       }
-      site_t ii = site_i - (i << iLatDat->GetLog2BlockSize());
-      site_t jj = site_j - (j << iLatDat->GetLog2BlockSize());
-      site_t kk = site_k - (k << iLatDat->GetLog2BlockSize());
+      site_t ii = site_i - (i << iLatDat.GetLog2BlockSize());
+      site_t jj = site_j - (j << iLatDat.GetLog2BlockSize());
+      site_t kk = site_k - (k << iLatDat.GetLog2BlockSize());
 
       site_t site_id =
-	( ( (ii << iLatDat->GetLog2BlockSize()) + jj) << iLatDat->GetLog2BlockSize()) + kk;
+	( ( (ii << iLatDat.GetLog2BlockSize()) + jj) << iLatDat.GetLog2BlockSize()) + kk;
 
       return &velocity_field[block_id].vel_site_data[site_id];
     }
@@ -500,7 +500,7 @@ namespace hemelb
     void StreaklineDrawer::localVelField(int p_index,
                                          float v[2][2][2][3],
                                          int *is_interior,
-                                         geometry::LatticeData* iLatDat)
+                                         const geometry::LatticeData& iLatDat)
     {
       site_t site_i = (site_t) particleVec[p_index].x;
       site_t site_j = (site_t) particleVec[p_index].y;
@@ -552,7 +552,7 @@ namespace hemelb
               vel_site_data_p->counter = counter;
               distribn_t density, vx, vy, vz;
 
-              D3Q15::CalculateDensityAndVelocity(iLatDat->GetFOld(vel_site_data_p->site_id
+              D3Q15::CalculateDensityAndVelocity(iLatDat.GetFOld(vel_site_data_p->site_id
 								  * D3Q15::NUMVECTORS), density, vx, vy, vz);
 
               v[i][j][k][0] = vel_site_data_p->vx = (float) (vx / density);
@@ -576,7 +576,7 @@ namespace hemelb
     }
 
      // Update the velocity field.
-    void StreaklineDrawer::updateVelField(int stage_id, geometry::LatticeData* iLatDat)
+    void StreaklineDrawer::updateVelField(int stage_id, const geometry::LatticeData& iLatDat)
     {
       unsigned int particles_temp = nParticles;
 
@@ -693,7 +693,7 @@ namespace hemelb
     }
 
     // Communicate velocities to other processors.
-    void StreaklineDrawer::communicateVelocities(geometry::LatticeData* iLatDat)
+    void StreaklineDrawer::communicateVelocities(const geometry::LatticeData& iLatDat)
     {
       for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
@@ -777,7 +777,7 @@ namespace hemelb
 
    
     // Communicate that particles current state to other processors.
-    void StreaklineDrawer::communicateParticles(geometry::LatticeData* iLatDat)
+    void StreaklineDrawer::communicateParticles(const geometry::LatticeData& iLatDat)
     {
       for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
