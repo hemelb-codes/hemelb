@@ -14,7 +14,11 @@ namespace hemelb
         // Don't allow shear rates outside [GAMMA_ZERO, GAMMA_INF]
         double gamma = hemelb::util::NumericalFunctions::max(GAMMA_ZERO,
                                                              hemelb::util::NumericalFunctions::min(GAMMA_INF, iShearRate));
-        double nu = M_CONSTANT * pow(gamma, N_CONSTANT-1);
+        double eta = M_CONSTANT * pow(gamma, N_CONSTANT-1);
+
+        // TODO Investigate whether we should be using BLOOD_DENSITY_Kg_per_m3*iDensity
+        double nu = eta/BLOOD_DENSITY_Kg_per_m3;
+
         return nu;
       }
     }
