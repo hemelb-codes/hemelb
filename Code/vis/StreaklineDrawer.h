@@ -28,10 +28,10 @@ namespace hemelb
     {
       public:
         // Constructor and destructor.
-        StreaklineDrawer(geometry::LatticeData* iLatDat,
-                         Screen* iScreen,
-                         Viewpoint* iViewpoint,
-                         VisSettings* iVisSettings);
+        StreaklineDrawer(const geometry::LatticeData& iLatDat,
+                         Screen& iScreen,
+                         const Viewpoint& iViewpoint,
+                         const VisSettings& iVisSettings);
         ~StreaklineDrawer();
 
         // Method to reset streakline drawer
@@ -40,8 +40,9 @@ namespace hemelb
         // Drawing methods.
         void StreakLines(unsigned long time_steps,
                          unsigned long time_steps_per_cycle,
-                         geometry::LatticeData* iLatDat);
-        void render(geometry::LatticeData* iLatDat);
+                         const geometry::LatticeData& iLatDat);
+	
+        void render(const geometry::LatticeData& iLatDat);
 
       private:
 
@@ -120,33 +121,35 @@ namespace hemelb
         void deleteParticle(unsigned int p_index);
 
         // Private functions for initialising the velocity field.
-        void initializeVelFieldBlock(const geometry::LatticeData* iLatDat,
+        void initializeVelFieldBlock(const geometry::LatticeData& iLatDat,
                                      site_t site_i,
                                      site_t site_j,
                                      site_t site_k,
                                      proc_t proc_id);
-        VelSiteData *velSiteDataPointer(geometry::LatticeData* iLatDat,
+	
+        VelSiteData *velSiteDataPointer(const geometry::LatticeData& iLatDat,
                                         site_t site_i,
                                         site_t site_j,
                                         site_t site_k);
         void particleVelocity(Particle *particle_p, float v[2][2][2][3], float interp_v[3]);
-        void localVelField(int p_index,
+       
+	void localVelField(int p_index,
                            float v[2][2][2][3],
                            int *is_interior,
-                           geometry::LatticeData* iLatDat);
+                           const geometry::LatticeData& iLatDat);
 
         // Private functions for updating the velocity field and the particles in it.
-        void updateVelField(int stage_id, geometry::LatticeData* iLatDat);
+        void updateVelField(int stage_id, const geometry::LatticeData& iLatDat);
         void updateParticles();
 
         // Private functions for inter-proc communication.
         void communicateSiteIds();
-        void communicateVelocities(geometry::LatticeData* iLatDat);
-        void communicateParticles(geometry::LatticeData* iLatDat);
+        void communicateVelocities(const geometry::LatticeData& iLatDat);
+        void communicateParticles(const geometry::LatticeData& iLatDat);
 
-        Screen* mScreen;
-        Viewpoint* mViewpoint;
-        VisSettings* mVisSettings;
+	Screen& mScreen;
+        const Viewpoint& mViewpoint;
+        const VisSettings& mVisSettings;
     };
 
   }
