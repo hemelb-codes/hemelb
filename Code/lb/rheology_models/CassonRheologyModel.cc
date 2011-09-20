@@ -18,7 +18,7 @@ namespace hemelb
         // In the Casson rheology model, viscosity tends to infinity as shear rate goes to zero. Bound it.
         eta = hemelb::util::NumericalFunctions::min(eta, CASSON_MAX_VISCOSITY);
 
-        // TODO Investigate whether we should be using the default blood density or the value computed locally (iDensity)
+        // TODO Investigate whether we should be using BLOOD_DENSITY_Kg_per_m3*iDensity
         double nu = eta/BLOOD_DENSITY_Kg_per_m3;
 
         return nu;
