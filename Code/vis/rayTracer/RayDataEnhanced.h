@@ -104,8 +104,7 @@ namespace hemelb
 	
 	  HSLToRGBConverter::ConvertHSLToRGB(230.0F,
 					     lStressSaturation,
-					     //GetLightnessValue(iNormalisedDistanceToFirstCluster),
-					     0.5F,
+					     GetLightnessValue(iNormalisedDistanceToFirstCluster),
 					     oColour);
 	}
 
@@ -161,7 +160,7 @@ namespace hemelb
 	    //To implement depth cuing, set the smallest lightness value to between 
 	    //the mimimum lightness and 1.0F based on the normalised distance between 
 	    //the viewpoint and the first cluster hit 
-	    lLightnessValue += (1.0F - 0.3F)*iNormalisedDistance;
+	    lLightnessValue += (1.0F - mLowestLightness)*iNormalisedDistance;
 
 	    if(lLightnessValue > 1.0F)
 	    {
