@@ -18,8 +18,8 @@ namespace hemelb
          * for some IOlets to be updated at regular intervals from the BCproc whilst allowing others
          * with simpler updating rules to update locally and save on communications.
          *
-         * tUpdatePeriod - density_cycle is recalculated every tUpdatePeriod time steps. If
-         *                 it is 0 then the density_cycle is only initialised at the begining
+         * tUpdatePeriod - densityCycle is recalculated every tUpdatePeriod time steps. If
+         *                 it is 0 then the densityCycle is only initialised at the begining
          *                 and updated only when simulation is reset
          *
          * tComms - if true BCproc updates values and sends them out. If false relevant procs update
@@ -29,9 +29,9 @@ namespace hemelb
         class InOutLetCycle : public InOutLet
         {
           public:
-            virtual void InitialiseCycle(std::vector<distribn_t> &density_cycle,
+            virtual void InitialiseCycle(std::vector<distribn_t> &densityCycle,
                                          const SimulationState *iState);
-            virtual void UpdateCycle(std::vector<distribn_t> &density_cycle,
+            virtual void UpdateCycle(std::vector<distribn_t> &densityCycle,
                                      const SimulationState *iState);
             virtual bool DoComms();
 
@@ -54,7 +54,7 @@ namespace hemelb
         }
 
         template<unsigned long tUpdatePeriod, bool tComms>
-        void InOutLetCycle<tUpdatePeriod, tComms>::InitialiseCycle(std::vector<distribn_t> &density_cycle,
+        void InOutLetCycle<tUpdatePeriod, tComms>::InitialiseCycle(std::vector<distribn_t> &densityCycle,
                                                                    const SimulationState *iState)
         {
           // Currently this is unnecessary, but it may be only done here in the future
@@ -63,18 +63,18 @@ namespace hemelb
 
           if (tUpdatePeriod == 0)
           {
-            density_cycle.resize(iState->GetTimeStepsPerCycle());
+            densityCycle.resize(iState->GetTimeStepsPerCycle());
           }
           else
           {
-            density_cycle.resize(tUpdatePeriod);
+            densityCycle.resize(tUpdatePeriod);
           }
 
-          CalculateCycle(density_cycle, iState);
+          CalculateCycle(densityCycle, iState);
         }
 
         template<unsigned long tUpdatePeriod, bool tComms>
-        void InOutLetCycle<tUpdatePeriod, tComms>::UpdateCycle(std::vector<distribn_t> &density_cycle,
+        void InOutLetCycle<tUpdatePeriod, tComms>::UpdateCycle(std::vector<distribn_t> &densityCycle,
                                                                const SimulationState *iState)
         {
           if (tUpdatePeriod == 0)
@@ -83,7 +83,7 @@ namespace hemelb
           }
           else if (iState->Get0IndexedTimeStep() % tUpdatePeriod == 0)
           {
-            CalculateCycle(density_cycle, iState);
+            CalculateCycle(densityCycle, iState);
           }
         }
 

@@ -56,7 +56,7 @@ namespace hemelb
           }
         }
 
-        density_cycle = new std::vector<distribn_t>[nIOlets];
+        densityCycle = new std::vector<distribn_t>[nIOlets];
 
         // Send out initial values
         Reset();
@@ -69,7 +69,7 @@ namespace hemelb
       BoundaryValues::~BoundaryValues()
       {
 
-        delete[] density_cycle;
+        delete[] densityCycle;
 
         for (int i = 0; i < nIOlets; i++)
         {
@@ -160,12 +160,12 @@ namespace hemelb
         {
           for (int i = 0; i < nIOlets; i++)
           {
-            unsigned long time_step = (mState->Get0IndexedTimeStep()) % density_cycle[i].size();
+            unsigned long time_step = (mState->Get0IndexedTimeStep()) % densityCycle[i].size();
 
             if (iolets[ioletIDs[i]]->DoComms())
             {
-              iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
-              mComms[i]->Send(&density_cycle[i][time_step]);
+              iolets[ioletIDs[i]]->UpdateCycle(densityCycle[i], mState);
+              mComms[i]->Send(&densityCycle[i][time_step]);
             }
           }
         }
@@ -178,9 +178,9 @@ namespace hemelb
           }
           else
           {
-            unsigned long time_step = (mState->Get0IndexedTimeStep()) % density_cycle[i].size();
-            iolets[ioletIDs[i]]->UpdateCycle(density_cycle[i], mState);
-            iolets[ioletIDs[i]]->density = density_cycle[i][time_step];
+            unsigned long time_step = (mState->Get0IndexedTimeStep()) % densityCycle[i].size();
+            iolets[ioletIDs[i]]->UpdateCycle(densityCycle[i], mState);
+            iolets[ioletIDs[i]]->density = densityCycle[i][time_step];
           }
         }
 
@@ -216,16 +216,16 @@ namespace hemelb
           {
             if (IsCurrentProcTheBCProc())
             {
-              iolets[ioletIDs[i]]->InitialiseCycle(density_cycle[i], mState);
-              mComms[i]->Send(&density_cycle[i][0]);
+              iolets[ioletIDs[i]]->InitialiseCycle(densityCycle[i], mState);
+              mComms[i]->Send(&densityCycle[i][0]);
             }
 
             mComms[i]->Receive(&iolets[ioletIDs[i]]->density);
           }
           else
           {
-            iolets[ioletIDs[i]]->InitialiseCycle(density_cycle[i], mState);
-            iolets[ioletIDs[i]]->density = density_cycle[i][0];
+            iolets[ioletIDs[i]]->InitialiseCycle(densityCycle[i], mState);
+            iolets[ioletIDs[i]]->density = densityCycle[i][0];
           }
         }
 
