@@ -17,15 +17,18 @@ namespace hemelb
 {
   namespace vis
   {
-    //TODO Some of this class's members could be combined with the topology-aware classes
-    // (and obv be initialised when they are).
-
-    /**
-     * Class that controls the drawing of streaklines - lines that trace
-     * the path of an imaginary particle were it dropped into the fluid.
-     */
-    class StreaklineDrawer
+    namespace streaklinedrawer
     {
+
+      //TODO Some of this class's members could be combined with the topology-aware classes
+      // (and obv be initialised when they are).
+
+      /**
+       * Class that controls the drawing of streaklines - lines that trace
+       * the path of an imaginary particle were it dropped into the fluid.
+       */
+      class StreaklineDrawer
+      {
       public:
         // Constructor and destructor.
         StreaklineDrawer(const geometry::LatticeData& iLatDat,
@@ -49,10 +52,10 @@ namespace hemelb
         // Struct for a particle dropped into the fluid.
         struct Particle
         {
-            float x, y, z;
-            float vx, vy, vz;
-            float vel;
-            unsigned int inlet_id;
+	  float x, y, z;
+	  float vx, vy, vz;
+	  float vel;
+	  unsigned int inlet_id;
         };
 
         // Struct for information about the velocity field at some point.
@@ -65,23 +68,23 @@ namespace hemelb
 	      counter = 0;
 	    }
 
-            proc_t proc_id;
-            site_t counter, site_id;
-            float vx, vy, vz;
+	  proc_t proc_id;
+	  site_t counter, site_id;
+	  float vx, vy, vz;
         };
 
 	// Struct for one processor to hold information about its neighbouring processors.
         typedef std::vector<float> FloatVector;
         struct NeighProc
         {
-            proc_t id;
-            site_t send_ps, recv_ps;
-            site_t send_vs, recv_vs;
+	  proc_t id;
+	  site_t send_ps, recv_ps;
+	  site_t send_vs, recv_vs;
 
-            FloatVector p_to_send, p_to_recv;
-            float *v_to_send, *v_to_recv;
+	  FloatVector p_to_send, p_to_recv;
+	  float *v_to_send, *v_to_recv;
 
-            site_t *s_to_send, *s_to_recv;
+	  site_t *s_to_send, *s_to_recv;
         };
 
         // Counter keeps track of the number of VelSiteDatas created
@@ -148,8 +151,8 @@ namespace hemelb
 	Screen& mScreen;
         const Viewpoint& mViewpoint;
         const VisSettings& mVisSettings;
-    };
-
+      };
+    }
   }
 }
 

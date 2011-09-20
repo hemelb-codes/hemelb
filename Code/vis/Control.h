@@ -18,7 +18,7 @@
 
 #include "vis/ColPixel.h"
 #include "vis/GlyphDrawer.h"
-#include "vis/StreaklineDrawer.h"
+#include "vis/streaklineDrawer/StreaklineDrawer.h"
 
 #include "vis/rayTracer/ClusterWithWallNormals.h"
 #include "vis/rayTracer/RayTracer.h"
@@ -126,7 +126,7 @@ namespace hemelb
         GlyphDrawer *myGlypher;
 
 #ifndef NO_STREAKLINES
-        StreaklineDrawer *myStreaker;
+	streaklinedrawer::StreaklineDrawer *myStreaker;
 #endif
 
         double timeSpent;
