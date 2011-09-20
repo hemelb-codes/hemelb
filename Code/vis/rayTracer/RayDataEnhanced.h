@@ -15,8 +15,18 @@ namespace hemelb
   {
     namespace raytracer
     {
-      template <bool DepthCuing>
-	class RayDataEnhanced : public RayData<RayDataEnhanced<DepthCuing> >
+      namespace DepthCuing
+      {
+	enum DepthCuing 
+	{ 
+	  NONE,
+	  MIST,
+	  DARKNESS
+	};
+      }
+
+      template <DepthCuing::DepthCuing depthCuing>
+	class RayDataEnhanced : public RayData<RayDataEnhanced<depthCuing> >
       {
       public:
       RayDataEnhanced() :
@@ -139,13 +149,13 @@ namespace hemelb
 	float GetAverageVelocity() const
 	{
 	  return GetVelocitySum()/
-	    RayData<RayDataEnhanced<DepthCuing> >::GetCumulativeLengthInFluid();
+	    RayData<RayDataEnhanced<depthCuing> >::GetCumulativeLengthInFluid();
 	}
       
 	float GetAverageStress() const
 	{
 	  return GetStressSum()/
-	    RayData<RayDataEnhanced<DepthCuing> >::GetCumulativeLengthInFluid();
+	    RayData<RayDataEnhanced<depthCuing> >::GetCumulativeLengthInFluid();
 	}
 
       private:
@@ -153,23 +163,41 @@ namespace hemelb
 	{
 	  assert(GetSurfaceNormalLightness() >= 0.0F && GetSurfaceNormalLightness() <= 1.0F);
 
-	  float lLightnessValue = mLowestLightness + GetSurfaceNormalLightness()*mSurfaceNormalLightnessRange;
-
-	  if(DepthCuing)
+	  if(depthCuing == DepthCuing::NONE)
 	  {
-	    //To implement depth cuing, set the smallest lightness value to between 
-	    //the mimimum lightness and 1.0F based on the normalised distance between 
-	    //the viewpoint and the first cluster hit 
-	    lLightnessValue += (1.0F - mLowestLightness)*iNormalisedDistance;
+	    return mLowestLightness +
+	      GetSurfaceNormalLightness()*mSurfaceNormalLightnessRange;
+	  }
+	  else if (depthCuing == DepthCuing::MIST)
+	  {
+	    //Set the smallest lightness value to between
+            //the mimimum lightness and 1.0F based on the normalised distance between
+	    //the viewpoint and the first cluster hit
+	    float lLightnessValue = mLowestLightness +
+	      GetSurfaceNormalLightness()*mSurfaceNormalLightnessRange +
+	      (1.0F - mLowestLightness)*iNormalisedDistance;
 
 	    if(lLightnessValue > 1.0F)
 	    {
 	      return 1.0F;
+	    } 
+	    return lLightnessValue;
+	  }
+	  else if (depthCuing == DepthCuing::DARKNESS)
+	  {
+	    //Set the maximum lightness to be between 0.8F and mLowestLighness
+	    //based on the noramlised distance
+	    float lLightnessValue = (GetSurfaceNormalLightness() - 1.0F) *
+	      mSurfaceNormalLightnessRange +
+	      0.8F*(1.0F - iNormalisedDistance);
+		    
+	    if (lLightnessValue < mLowestLightness)
+	    {
+	      return mLowestLightness;
 	    }
-	    
+	    return lLightnessValue;
 	  }
 	  
-	  return lLightnessValue;
 	}
 
 	float mSurfaceNormalLightness;
