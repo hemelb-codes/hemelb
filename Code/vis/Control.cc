@@ -106,7 +106,7 @@ namespace hemelb
       myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(mLatDat, &mScreen, &mViewpoint, &mVisSettings);
+      myStreaker = new StreaklineDrawer(*mLatDat, mScreen, mViewpoint, mVisSettings);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -180,7 +180,7 @@ namespace hemelb
 #ifndef NO_STREAKLINES
       if (mVisSettings.mode == VisSettings::WALLANDSTREAKLINES)
       {
-	myStreaker->render(mLatDat);
+	myStreaker->render(*mLatDat);
       }
 #endif
 
@@ -518,7 +518,7 @@ namespace hemelb
     {
       timeSpent -= util::myClock();
 
-      myStreaker->StreakLines(time_step, period, mLatDat);
+      myStreaker->StreakLines(time_step, period, *mLatDat);
 
       timeSpent += util::myClock();
     }
