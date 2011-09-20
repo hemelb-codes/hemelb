@@ -36,28 +36,30 @@ namespace hemelb
 	  {
 	  }
 	
+	//Processes the ray data for a normal (non wall) fluid site
 	void DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
 					    const Vector3D<float>& iRayDirection,
 					    const float iRayLengthInVoxel,
-					    const float iAbsoluteDistanceFromViewpoint,
 					    const DomainStats& iDomainStats,
 					    const VisSettings& iVisSettings)
 	{
-	  mVelocitySum += iSiteData.Velocity * (float) iDomainStats.velocity_threshold_max_inv;
+	  mVelocitySum += 
+	    iSiteData.Velocity * 
+	    iRayLengthInVoxel *
+	    (float) iDomainStats.velocity_threshold_max_inv;
 	
-	  iSiteData.Velocity * (float) iDomainStats.velocity_threshold_max_inv;
-
 	  if (iVisSettings.mStressType == lb::VonMises)
 	  {
 	    // update the volume rendering of the von Mises stress flow field
-	    mStressSum = iSiteData.Stress * (float) iDomainStats.stress_threshold_max_inv;
+	    mStressSum = iSiteData.Stress *
+	      iRayLengthInVoxel *
+	      (float) iDomainStats.stress_threshold_max_inv;
 	  }
 	}
 	
 	void DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
 				     const Vector3D<float>& iRayDirection,
 				     const float iRayLengthInVoxel,
-				     const float iAbsoluteDistanceFromViewpoint,
 				     const DomainStats& iDomainStats,
 				     const VisSettings& iVisSettings,
 				     const double* iWallNormal)
@@ -65,7 +67,6 @@ namespace hemelb
 	  DoUpdateDataForNormalFluidSite(iSiteData,
 					 iRayDirection,
 					 iRayLengthInVoxel,
-					 iAbsoluteDistanceFromViewpoint,
 					 iDomainStats,
 					 iVisSettings);
 

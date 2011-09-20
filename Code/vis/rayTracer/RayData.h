@@ -51,7 +51,6 @@ namespace hemelb
 	    ( iSiteData, 
 	      iRayDirection,
 	      iRayLengthInVoxel,
-	      iAbsoluteDistanceFromViewpoint,
 	      iDomainStats,
 	      iVisSettings );
 	}
@@ -77,7 +76,6 @@ namespace hemelb
 	    ( iSiteData, 
 	      iRayDirection,
 	      iRayLengthInVoxel,
-	      iAbsoluteDistanceFromViewpoint,
 	      iDomainStats,
 	      iVisSettings,
 	      iWallNormal);
