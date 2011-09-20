@@ -152,7 +152,7 @@ namespace hemelb
 	    // store von Mises stress volume rendering colour
 	    mRayData.GetStressColour(&rgb_data[3], *visSettings);
 	  }
-	  else if (mRayData.GetNearestStress() == lb::ShearStress)
+	  else if (visSettings->mStressType == lb::ShearStress)
 	  {
 	    float stress_col[3];
 	    PickColour(mRayData.GetNearestStress(), stress_col);
