@@ -13,15 +13,20 @@ namespace hemelb
 
       BoundaryComms::BoundaryComms(SimulationState* iSimState,
                                    std::vector<int> &iProcsList,
-                                   bool iHasBoundary,
-                                   proc_t iBCproc) :
-        BCproc(iBCproc), hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList),
+                                   bool iHasBoundary) :
+        hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList),
             mState(iSimState)
       {
+        // Only BC proc sends
         if (BoundaryValues::IsCurrentProcTheBCProc())
         {
           sendRequest = new MPI_Request[nProcs];
           sendStatus = new MPI_Status[nProcs];
+        }
+        else
+        {
+          sendRequest = NULL;
+          sendStatus = NULL;
         }
       }
 
@@ -37,7 +42,10 @@ namespace hemelb
 
       void BoundaryComms::Wait()
       {
-        MPI_Wait(&receiveRequest, &receiveStatus);
+        if (hasBoundary)
+        {
+          MPI_Wait(&receiveRequest, &receiveStatus);
+        }
       }
 
       void BoundaryComms::WaitAllComms()
@@ -57,38 +65,29 @@ namespace hemelb
 
       }
 
-      void BoundaryComms::SendAndReceive(distribn_t* density)
+      // It is up to the caller to make sure only BCproc calls send
+      void BoundaryComms::Send(distribn_t* density)
       {
-        if (BoundaryValues::IsCurrentProcTheBCProc())
+        for (int proc = 0; proc < nProcs; proc++)
         {
-          for (int proc = 0; proc < nProcs; proc++)
-          {
-            MPI_Isend(density,
-                      1,
-                      hemelb::MpiDataType(*density),
-                      procsList[proc],
-                      100,
-                      MPI_COMM_WORLD,
-                      &sendRequest[proc]);
-
-            if (hasBoundary)
-            {
-              MPI_Irecv(density,
-                        1,
-                        hemelb::MpiDataType(*density),
-                        BCproc,
-                        100,
-                        MPI_COMM_WORLD,
-                        &receiveRequest);
-            }
-          }
+          MPI_Isend(density,
+                    1,
+                    hemelb::MpiDataType(*density),
+                    procsList[proc],
+                    100,
+                    MPI_COMM_WORLD,
+                    &sendRequest[proc]);
         }
-        else
+      }
+
+      void BoundaryComms::Receive(distribn_t* density)
+      {
+        if (hasBoundary)
         {
           MPI_Irecv(density,
                     1,
                     hemelb::MpiDataType(*density),
-                    BCproc,
+                    BoundaryValues::GetBCProcRank(),
                     100,
                     MPI_COMM_WORLD,
                     &receiveRequest);

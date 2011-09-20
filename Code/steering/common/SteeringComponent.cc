@@ -6,33 +6,36 @@ namespace hemelb
   {
     void SteeringComponent::AssignValues()
     {
-      mVisControl->mVisSettings.ctr_x += privateSteeringParams[parameter::SceneCentreX];
-      mVisControl->mVisSettings.ctr_y += privateSteeringParams[parameter::SceneCentreY];
-      mVisControl->mVisSettings.ctr_z += privateSteeringParams[parameter::SceneCentreZ];
+      mVisControl->mVisSettings.ctr_x += privateSteeringParams[SceneCentreX];
+      mVisControl->mVisSettings.ctr_y += privateSteeringParams[SceneCentreY];
+      mVisControl->mVisSettings.ctr_z += privateSteeringParams[SceneCentreZ];
 
-      float longitude = privateSteeringParams[parameter::Longitude];
-      float latitude = privateSteeringParams[parameter::Latitude];
+      float longitude = privateSteeringParams[Longitude];
+      float latitude = privateSteeringParams[Latitude];
 
-      float zoom = privateSteeringParams[parameter::Zoom];
+      float zoom = privateSteeringParams[Zoom];
 
-      mVisControl->mVisSettings.brightness = privateSteeringParams[parameter::Brightness];
-
-      // The minimum value here is by default 0.0 all the time
-      mVisControl->mDomainStats.physical_velocity_threshold_max = privateSteeringParams[parameter::PhysicalVelocityThresholdMax];
+      mVisControl->mVisSettings.brightness = privateSteeringParams[Brightness];
 
       // The minimum value here is by default 0.0 all the time
-      mVisControl->mDomainStats.physical_stress_threshold_max = privateSteeringParams[parameter::PhysicalStressThrehsholdMaximum];
+      mVisControl->mDomainStats.physical_velocity_threshold_max
+          = privateSteeringParams[PhysicalVelocityThresholdMax];
 
-      mVisControl->mDomainStats.physical_pressure_threshold_min = privateSteeringParams[parameter::PhysicalPressureThresholdMinimum];
+      // The minimum value here is by default 0.0 all the time
+      mVisControl->mDomainStats.physical_stress_threshold_max
+          = privateSteeringParams[PhysicalStressThrehsholdMaximum];
+
+      mVisControl->mDomainStats.physical_pressure_threshold_min
+          = privateSteeringParams[PhysicalPressureThresholdMinimum];
       mVisControl->mDomainStats.physical_pressure_threshold_max = privateSteeringParams[10];
 
-      mVisControl->mVisSettings.glyphLength = privateSteeringParams[parameter::GlyphLength];
+      mVisControl->mVisSettings.glyphLength = privateSteeringParams[GlyphLength];
 
-      float pixels_x = privateSteeringParams[parameter::PixelsX];
-      float pixels_y = privateSteeringParams[parameter::PixelsY];
+      float pixels_x = privateSteeringParams[PixelsX];
+      float pixels_y = privateSteeringParams[PixelsY];
 
-      int newMouseX = int (privateSteeringParams[parameter::NewMouseX]);
-      int newMouseY = int (privateSteeringParams[parameter::NewMouseY]);
+      int newMouseX = int (privateSteeringParams[NewMouseX]);
+      int newMouseY = int (privateSteeringParams[NewMouseY]);
 
       if (newMouseX != mVisControl->mVisSettings.mouse_x || newMouseY
           != mVisControl->mVisSettings.mouse_y)
@@ -42,24 +45,26 @@ namespace hemelb
         mVisControl->mVisSettings.mouse_y = newMouseY;
       }
 
-      mSimState->SetIsTerminating(1 == (int) privateSteeringParams[parameter::SetIsTerminal]);
+      mSimState->SetIsTerminating(1 == (int) privateSteeringParams[SetIsTerminal]);
 
       // To swap between glyphs and streak line rendering...
       // 0 - Only display the isosurfaces (wall pressure and stress)
       // 1 - Isosurface and glyphs
       // 2 - Wall pattern streak lines
-      mVisControl->mVisSettings.mode = (vis::VisSettings::Mode) (privateSteeringParams[parameter::Mode]);
+      mVisControl->mVisSettings.mode
+          = (vis::VisSettings::Mode) (privateSteeringParams[Mode]);
 
-      mVisControl->mVisSettings.streaklines_per_pulsatile_period = privateSteeringParams[parameter::StreaklinePerPulsatilePeriod];
-      mVisControl->mVisSettings.streakline_length = privateSteeringParams[parameter::StreallineLength];
+      mVisControl->mVisSettings.streaklines_per_pulsatile_period
+          = privateSteeringParams[StreaklinePerPulsatilePeriod];
+      mVisControl->mVisSettings.streakline_length
+          = privateSteeringParams[StreallineLength];
 
-      mSimState->SetDoRendering(1 == (int) privateSteeringParams[parameter::SetDoRendering]);
+      mSimState->SetDoRendering(1 == (int) privateSteeringParams[SetDoRendering]);
 
       mVisControl->UpdateImageSize((int) pixels_x, (int) pixels_y);
 
-      distribn_t
-          lattice_density_min =
-              mUnits->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_min)
+      distribn_t lattice_density_min =
+          mUnits->ConvertPressureToLatticeUnits(mVisControl->mDomainStats.physical_pressure_threshold_min)
                   / Cs2;
       distribn_t
           lattice_density_max =
@@ -88,65 +93,58 @@ namespace hemelb
       mVisControl->mDomainStats.stress_threshold_max_inv = 1.0F / lattice_stress_max;
     }
 
-    void SteeringComponent::Reset(SimConfig& iSimConfig)
+    void SteeringComponent::Reset(SimConfig* iSimConfig)
     {
       readyForNextImage = false;
       isConnected = false;
       updatedMouseCoords = false;
 
       // scene center (dx,dy,dz)
-      privateSteeringParams[parameter::SceneCentreX] = 
-	iSimConfig.VisCentre.x;
-      privateSteeringParams[parameter::SceneCentreY] = 
-	iSimConfig.VisCentre.y;
-      privateSteeringParams[parameter::SceneCentreZ] = 
-	iSimConfig.VisCentre.z;
+      privateSteeringParams[SceneCentreX] = iSimConfig->VisCentre.x;
+      privateSteeringParams[SceneCentreY] = iSimConfig->VisCentre.y;
+      privateSteeringParams[SceneCentreZ] = iSimConfig->VisCentre.z;
 
       // longitude and latitude
-      privateSteeringParams[parameter::Longitude] = 
-	iSimConfig.VisLongitude;
-      privateSteeringParams[parameter::Latitude] = 
-	iSimConfig.VisLatitude;
+      privateSteeringParams[Longitude] = iSimConfig->VisLongitude;
+      privateSteeringParams[Latitude] = iSimConfig->VisLatitude;
 
       // zoom and brightness
-      privateSteeringParams[parameter::Zoom] = 
-	iSimConfig.VisZoom;
-      privateSteeringParams[parameter::Brightness] = 
-	iSimConfig.VisBrightness;
+      privateSteeringParams[Zoom] = iSimConfig->VisZoom;
+      privateSteeringParams[Brightness] = iSimConfig->VisBrightness;
 
       // velocity and stress ranges
-      privateSteeringParams[parameter::PhysicalVelocityThresholdMax] = iSimConfig.MaxVelocity;
-      privateSteeringParams[parameter::PhysicalStressThrehsholdMaximum] = iSimConfig.MaxStress;
+      privateSteeringParams[PhysicalVelocityThresholdMax] = iSimConfig->MaxVelocity;
+      privateSteeringParams[PhysicalStressThrehsholdMaximum] = iSimConfig->MaxStress;
 
       // Minimum pressure and maximum pressure for Colour mapping
-      privateSteeringParams[parameter::PhysicalPressureThresholdMinimum] = 80.0F;
+      privateSteeringParams[PhysicalPressureThresholdMinimum] = 80.0F;
       privateSteeringParams[10] = 120.0F;
 
       // Glyph length
-      privateSteeringParams[parameter::GlyphLength] = 1.0F;
+      privateSteeringParams[GlyphLength] = 1.0F;
 
       // Rendered frame size, pixel x and pixel y
-      privateSteeringParams[parameter::PixelsX] = 512.0F;
-      privateSteeringParams[parameter::PixelsY] = 512.0F;
+      privateSteeringParams[PixelsX] = 512.0F;
+      privateSteeringParams[PixelsY] = 512.0F;
 
       // x-y position of the mouse of the client
-      privateSteeringParams[parameter::NewMouseX] = -1.0F;
-      privateSteeringParams[parameter::NewMouseY] = -1.0F;
+      privateSteeringParams[NewMouseX] = -1.0F;
+      privateSteeringParams[NewMouseY] = -1.0F;
 
       // signal useful to terminate the simulation
-      privateSteeringParams[parameter::SetIsTerminal] = 0.0F;
+      privateSteeringParams[SetIsTerminal] = 0.0F;
 
       // Vis_mode
-      privateSteeringParams[parameter::Mode] = 0.0F;
+      privateSteeringParams[Mode] = 0.0F;
 
       // vis_streaklines_per_pulsatile_period
-      privateSteeringParams[parameter::StreaklinePerPulsatilePeriod] = 5.0F;
+      privateSteeringParams[StreaklinePerPulsatilePeriod] = 5.0F;
 
       // vis_streakline_length
-      privateSteeringParams[parameter::StreallineLength] = 100.0F;
+      privateSteeringParams[StreallineLength] = 100.0F;
 
       // Value of DoRendering
-      privateSteeringParams[parameter::SetDoRendering] = 0.0F;
+      privateSteeringParams[SetDoRendering] = 0.0F;
     }
   }
 }

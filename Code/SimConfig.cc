@@ -11,6 +11,10 @@
 namespace hemelb
 {
 
+  // TODO really, the functions that take a TiXML object, a bool, a string and some basic type
+  // should go into some Tiny XML abstraction layer. This would remove the need for the IOLet
+  // types to know about the SimConfig object (and get rid of a circular dependency).
+
   SimConfig::SimConfig()
   {
     // This constructor only exists to prevent instantiation without
@@ -146,15 +150,22 @@ namespace hemelb
   {
     if (iIsLoading)
     {
+      // Compare to 0 not NULL, because that's what Attribute in TinyXml returns
       if (iParent->Attribute(iAttributeName) == 0)
+      {
         iValue = "";
+      }
       else
+      {
         iValue = std::string(iParent->Attribute(iAttributeName)->c_str());
+      }
     }
     else
     {
       if (iValue != "")
+      {
         iParent->SetAttribute(iAttributeName, iValue);
+      }
     }
   }
 
@@ -204,10 +215,8 @@ namespace hemelb
     }
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent,
-                       bool iIsLoading,
-                       std::vector<InOutLet> &bResult,
-                       std::string iChildNodeName)
+  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, std::vector<
+      lb::boundaries::iolets::InOutLet*> &bResult, std::string iChildNodeName)
   {
     if (iIsLoading)
     {
@@ -215,8 +224,26 @@ namespace hemelb
 
       while (lCurrentLet != NULL)
       {
-        InOutLet lNew;
-        DoIO(lCurrentLet, iIsLoading, lNew);
+        // Determine which InOutlet to create
+        // This is done by checking if a path is specified
+        std::string PFilePath;
+        DoIO(GetChild(GetChild(iParent, iChildNodeName, iIsLoading), "pressure", iIsLoading),
+             "path",
+             iIsLoading,
+             PFilePath);
+        lb::boundaries::iolets::InOutLet *lNew;
+        if (PFilePath == "")
+        {
+          // If no file is specified we use a cosine trace
+          lNew = new lb::boundaries::iolets::InOutLetCosine();
+        }
+        else
+        {
+          // If there is a file specified we use it
+          lNew = new lb::boundaries::iolets::InOutLetFile();
+        }
+
+        lNew->DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, this);
         bResult.push_back(lNew);
         lCurrentLet = lCurrentLet->NextSiblingElement(iChildNodeName);
       }
@@ -226,37 +253,44 @@ namespace hemelb
       for (unsigned int ii = 0; ii < bResult.size(); ii++)
       {
         // NB we're good up to 99 io-lets here.
-        DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, bResult[ii]);
+        bResult[ii]->DoIO(GetChild(iParent, iChildNodeName, iIsLoading), iIsLoading, this);
       }
     }
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, InOutLet &value)
+  void SimConfig::DoIO(TiXmlElement *iParent,
+                       bool iIsLoading,
+                       lb::boundaries::iolets::InOutLetCosine* const value)
   {
     TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
     TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
     TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
 
-    DoIO(lPressureElement, "path", iIsLoading, value.PFilePath);
+    DoIO(lPressureElement, "mean", iIsLoading, value->PressureMeanPhysical);
+    DoIO(lPressureElement, "amplitude", iIsLoading, value->PressureAmpPhysical);
+    DoIO(lPressureElement, "phase", iIsLoading, value->Phase);
+    value->PressureMinPhysical = value->PressureMeanPhysical - value->PressureAmpPhysical;
+    value->PressureMaxPhysical = value->PressureMeanPhysical + value->PressureAmpPhysical;
 
-    // TODO In the case of a sinusoidal pressure condition, the specification of minimum and maximum
-    // is redundant and therefore should be removed. In the case of a file, they should be
-    // calculated from the file anyway.
-
-    if (value.PFilePath == "")
-    {
-      DoIO(lPressureElement, "mean", iIsLoading, value.PMean);
-      DoIO(lPressureElement, "amplitude", iIsLoading, value.PAmp);
-      DoIO(lPressureElement, "phase", iIsLoading, value.PPhase);
-    }
-    DoIO(lPressureElement, "minimum", iIsLoading, value.PMin);
-    DoIO(lPressureElement, "maximum", iIsLoading, value.PMax);
-
-    DoIO(lPositionElement, iIsLoading, value.Position);
-    DoIO(lNormalElement, iIsLoading, value.Normal);
+    DoIO(lPositionElement, iIsLoading, value->Position);
+    DoIO(lNormalElement, iIsLoading, value->Normal);
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, Vector &iValue)
+  void SimConfig::DoIO(TiXmlElement *iParent,
+                       bool iIsLoading,
+                       lb::boundaries::iolets::InOutLetFile* const value)
+  {
+    TiXmlElement* lPositionElement = GetChild(iParent, "position", iIsLoading);
+    TiXmlElement* lNormalElement = GetChild(iParent, "normal", iIsLoading);
+    TiXmlElement* lPressureElement = GetChild(iParent, "pressure", iIsLoading);
+
+    DoIO(lPressureElement, "path", iIsLoading, value->PressureFilePath);
+
+    DoIO(lPositionElement, iIsLoading, value->Position);
+    DoIO(lNormalElement, iIsLoading, value->Normal);
+  }
+
+  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, util::Vector3D &iValue)
   {
     DoIO(iParent, "x", iIsLoading, iValue.x);
     DoIO(iParent, "y", iIsLoading, iValue.y);
