@@ -17,8 +17,8 @@
 #include "vis/rayTracer/ClusterBuilder.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/rayTracer/SiteData.h"
-#include "vis/rayTracer/SiteTraverser.h"
-#include "vis/rayTracer/VolumeTraverser.h"
+#include "vis/SiteTraverser.h"
+#include "vis/VolumeTraverser.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -33,7 +33,7 @@ namespace hemelb
       public:
 	ClusterBuilder
 	  (const geometry::LatticeData* iLatticeData) :
-	  mBlockTraverser(iLatticeData)
+	  mBlockTraverser(*iLatticeData)
 	{
 	  mLatticeData = iLatticeData;
 

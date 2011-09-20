@@ -1,9 +1,9 @@
 #ifndef HEMELB_VIS_BLOCKTRAVERSERWITHVISITEDBLOCKTRACKER_H
 #define HEMELB_VIS_BLOCKTRAVERSERWITHVISITEDBLOCKTRACKER_H
 
-#include "vis/rayTracer/VolumeTraverser.h"
-#include "vis/rayTracer/SiteTraverser.h"
-#include "vis/rayTracer/BlockTraverser.h"
+#include "vis/VolumeTraverser.h"
+#include "vis/SiteTraverser.h"
+#include "vis/BlockTraverser.h"
 
 namespace hemelb
 {
@@ -23,7 +23,8 @@ namespace hemelb
       {
       public:
 	BlockTraverserWithVisitedBlockTracker
-	  (const geometry::LatticeData * iLatDat);
+	  (const geometry::LatticeData& iLatDat);
+
 	~BlockTraverserWithVisitedBlockTracker();
 
 	//Tranverses the block until the next unvisited block is reached.
