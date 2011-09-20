@@ -2,13 +2,12 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbVis.$(LIBEXT)
 
-SUBDIRS := rayTracer
+SUBDIRS := rayTracer streaklineDrawer
 
 $(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
 	BlockTraverser.o \
 	ColPixelMPIDataTypes.o \
 	GlyphDrawer.o \
-	StreaklineDrawer.o \
 	Control.o \
 	Screen.o \
 	SiteTraverser.o \
