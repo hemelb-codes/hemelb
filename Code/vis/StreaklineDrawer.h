@@ -58,18 +58,19 @@ namespace hemelb
         // Struct for information about the velocity field at some point.
         struct VelSiteData
         {
+	public:
+	  VelSiteData()
+	    {
+	      proc_id = -1;
+	      counter = 0;
+	    }
+
             proc_t proc_id;
             site_t counter, site_id;
             float vx, vy, vz;
         };
 
-        // Struct to contain the whole velocity field.
-        struct VelocityField
-        {
-            VelSiteData *vel_site_data;
-        };
-
-        // Struct for one processor to hold information about its neighbouring processors.
+	// Struct for one processor to hold information about its neighbouring processors.
         typedef std::vector<float> FloatVector;
         struct NeighProc
         {
@@ -82,10 +83,6 @@ namespace hemelb
 
             site_t *s_to_send, *s_to_recv;
         };
-
-        // Necessary to keep a local store of the number of blocks created, so that we can
-        // write a correct constructor. Alternative (TODO) is to use a vector.
-        site_t num_blocks;
 
         // Counter keeps track of the number of VelSiteDatas created
         site_t counter;
@@ -100,10 +97,11 @@ namespace hemelb
         site_t shared_vs;
         proc_t procs;
 
-        // Pointers to the structs.
-        VelocityField *velocity_field;
-        std::vector<Particle> particleVec;
-        std::vector<Particle> particleSeedVec;
+	//Vector containing VelocityFields
+	std::vector<std::vector<VelSiteData> > velocity_field;
+	
+        std::vector<Particle> mParticleVec;
+        std::vector<Particle> mParticleSeedVec;
 
         // Arrays for communicating between processors.
         float *v_to_send, *v_to_recv;

@@ -2,7 +2,7 @@
 #define HEMELB_VIS_CLUSTERTRAVERSER_H
 
 #include "vis/rayTracer/Cluster.h"
-#include "vis/rayTracer/VolumeTraverser.h"
+#include "vis/VolumeTraverser.h"
 
 namespace hemelb
 {
