@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTESTS_TESTLATTICEDATA_H
-#define HEMELB_UNITTESTS_TESTLATTICEDATA_H
+#ifndef HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
+#define HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 
 #include "geometry/LatticeData.h"
 
@@ -7,18 +7,18 @@ namespace hemelb
 {
   namespace unittests
   {
-    class TestLatticeData : public geometry::LatticeData
+    class FourCubeLatticeData : public geometry::LatticeData
     {
       public:
         /**
-         * The default constructor makes a 4 x 4 x 4 cube of sites from (0,0,0) to (3,3,3).
+         * The constructor makes a 4 x 4 x 4 cube of sites from (0,0,0) to (3,3,3).
          * The plane (x,y,0) is an inlet (boundary 0).
          * The plane (x,y,3) is an outlet (boundary 1).
          * The planes (0,y,z), (3,y,z), (x,0,z) and (x,3,z) are all walls.
          *
          * @return
          */
-        TestLatticeData() :
+        FourCubeLatticeData() :
             LatticeData()
         {
           globLatDat.SetBasicDetails(1, 1, 1, 4, 0.01, 0.0, 0.0, 0.0);
@@ -121,7 +121,7 @@ namespace hemelb
           InitialiseNeighbourLookup(NULL, 0, localLatDat.mSiteData);
         }
 
-        ~TestLatticeData()
+        ~FourCubeLatticeData()
         {
 
         }
@@ -129,4 +129,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_UNITTESTS_TESTLATTICEDATA_H */
+#endif /* HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H */
