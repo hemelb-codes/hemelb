@@ -14,23 +14,23 @@ namespace hemelb
     //Other methods are defined for convenience
     template <class T> 
       class Vector3D
-      {
-      public:
+    {
+    public:
       T x, y, z;
 
       Vector3D() {};
 
-      Vector3D(const T iX, const T iY, const T iZ) :
+    Vector3D(const T iX, const T iY, const T iZ) :
       x(iX), y(iY), z(iZ)
       {}
       
-      Vector3D(const T iX) :
+    Vector3D(const T iX) :
       x(iX), y(iX), z(iX)
       {}
 
-      //Copy constructor - can be used to perform type converstion 
+      //Copy constructor - can be used to perform type conversion 
       template < class OldTypeT >
-      Vector3D<T>(const Vector3D<OldTypeT> & iOldVector3D)
+	Vector3D<T>(const Vector3D<OldTypeT> & iOldVector3D)
       {
 	x = static_cast<T>(iOldVector3D.x);
 	y = static_cast<T>(iOldVector3D.y);
@@ -57,25 +57,27 @@ namespace hemelb
       }
 
       //Vector addition
-      void operator+=(const Vector3D<T> right) 
+      Vector3D& operator+=(const Vector3D<T> right) 
       {
 	x += right.x;
 	y += right.y;
 	z += right.z;
+	
+	return *this;
       }
 
       //Normalisation
       void Normalise()
       {
 	T lInverseMagnitude = 1.0F /
-	sqrtf(x*x+y*y+z*z);
+	  sqrtf(x*x+y*y+z*z);
 
 	x*=lInverseMagnitude;
 	y*=lInverseMagnitude;
 	z*=lInverseMagnitude;
       }
-
-      //Dot produt
+      
+      //Dot product
       T DotProduct(Vector3D<T> iVector) const 
       {
 	return (x*iVector.x +
@@ -94,11 +96,39 @@ namespace hemelb
 	
       //Scalar multiplication
       template < class MultiplierT >
-      Vector3D<T> operator*(const MultiplierT multiplier) const
+	Vector3D<T> operator*(const MultiplierT multiplier) const
       {
 	return Vector3D(x * multiplier,
 			y * multiplier,
 			z * multiplier);
+      }
+
+      //Updates the Vector3D in with the smallest of each of the x, y and z
+      //co-ordinates independently of both Vector3Ds
+      void UpdatePointwiseMin(const Vector3D<T>& iCompareVector)
+      {
+	x = util::NumericalFunctions::min
+	  (x, iCompareVector.x);
+
+ 	y = util::NumericalFunctions::min
+	  (y, iCompareVector.y);
+	
+	z = util::NumericalFunctions::min
+	  (z, iCompareVector.z);
+      }
+      
+      //Updates the Vector3D with the largest of each of the x, y and z
+      //co-ordinates independently of both Vector3Ds
+      void UpdatePointwiseMax(const Vector3D<T>& iCompareVector)
+      {
+	x = util::NumericalFunctions::max
+	  (x, iCompareVector.x);
+
+ 	y = util::NumericalFunctions::max
+	  (y, iCompareVector.y);
+	
+	z = util::NumericalFunctions::max
+	  (z, iCompareVector.z);
       }
 
       static Vector3D<T> MaxLimit() 
@@ -111,47 +141,7 @@ namespace hemelb
 	return Vector3D(std::numeric_limits<T>::min());
       }
 
-      //Updates the Vector3D in the first Vector3D paramter with the smallest of each
-      //of the x, y and z co-ordinates independently of both Vector3Ds
-      static void UpdateMinVector3D(Vector3D<T>& io_store_location, const Vector3D<T>& i_compare_location)
-      {
-	io_store_location.x = 
-	util::NumericalFunctions::min
-	(io_store_location.x, 
-	 i_compare_location.x);
-
-	io_store_location.y = 
-	util::NumericalFunctions::min
-	(io_store_location.y, 
-	 i_compare_location.y);
-
-	io_store_location.z = 
-	util::NumericalFunctions::min
-	(io_store_location.z, 
-	 i_compare_location.z);
-      }
-      
-      //Updates the Vector3D in the first Vector3D paramter with the largest of each
-      //of the x, y and z co-ordinates independently of both Vector3Ds
-      static void UpdateMaxVector3D(Vector3D<T>& io_store_location, const Vector3D<T>& i_compare_location)
-      {
-	io_store_location.x = 
-	util::NumericalFunctions::max
-	(io_store_location.x, 
-	 i_compare_location.x);
-
-	io_store_location.y = 
-	util::NumericalFunctions::max
-	(io_store_location.y, 
-	 i_compare_location.y);
-
-	io_store_location.z = 
-	util::NumericalFunctions::max
-	(io_store_location.z, 
-	 i_compare_location.z);
-      }
-	
-      };
+    };
 
     template <class T>
       Vector3D<T> operator+(const Vector3D<T> left, const Vector3D <T> right) 
@@ -165,8 +155,8 @@ namespace hemelb
       return left - right;
     }
     
-    template <class T>
-      Vector3D<T> operator*(const T left, const Vector3D <T> right)
+    template <class Tleft, class Tright>
+      Vector3D<Tright> operator*(const Tleft left, const Vector3D<Tright> right)
     {
       return right*left;
     }
