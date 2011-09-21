@@ -56,18 +56,18 @@ namespace hemelb
      * @param iLatitude - latitude in radians.
      * @param iLocalCentre - where the camera should point in world-coordinates
      * @param iRadius - the distance of the camera from this local centre
-     * @param iDistanceFromEyeToScreen - the distance of the inifite screen
+     * @param iDistanceFromCameraToScreen - the distance of the inifite screen
      * from the viewer. Allows for zoom
      */
       void SetViewpointPosition(float iLongitude,
 				float iLatitude,
 				const util::Vector3D<float>& iLocalCentre,
 				float iRadius,
-				float iDistanceFromEyeToScreen);
+				float iDistanceFromCameraToScreen);
 
       const util::Vector3D<float>& GetViewpointLocation() const;
       
-      float mDistanceFromEyeToScreen;
+      float GetDistanceFromCameraToScreen() const;
 
     private:
       util::Vector3D<float> GetLocationInCameraCoordinates(const util::Vector3D<float>& iWorldLocation) const;
@@ -85,7 +85,7 @@ namespace hemelb
       static util::Vector3D <float> UnRotate(
 	float iSinThetaX,
 	float iCosThetaX,
-	float iThetaY,
+	float iSinThetaY,
 	float iCosThetaY,
 	const util::Vector3D<float>& iVector);
 
@@ -96,6 +96,8 @@ namespace hemelb
       
       //Stores the viewpoint Location in world co-ordinate
       util::Vector3D<float> mViewpointLocationInWorldCoordinates;
+
+      float mDistanceFromCameraToScreen;
     };
   }
 }

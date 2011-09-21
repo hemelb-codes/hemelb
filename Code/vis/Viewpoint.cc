@@ -80,17 +80,13 @@ namespace hemelb
     util::Vector3D<float> Viewpoint::Project(const util::Vector3D<float>& iWorldLocation) const
     {
       util::Vector3D<float> lLocationCamCoordinates = GetLocationInCameraCoordinates(iWorldLocation);
-
-      // NB - the oringinal code was not doing this but a reflection rotation
-      // and then back reflectiond which produced similar images.
-      // It was believed that this was in error. 
       
       //Carry out a perspective projection on an infinite spanning screen 
-      //between the eye and the subject.
+      //between the camera and the subject.
       //Reverse the sign such that depth is positive (I believe).  
-      return util::Vector3D <float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+      return util::Vector3D <float> ( mDistanceFromCameraToScreen / (-lLocationCamCoordinates.z)
 				* lLocationCamCoordinates.x,
-				 mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z) 
+				 mDistanceFromCameraToScreen / (-lLocationCamCoordinates.z) 
 				* lLocationCamCoordinates.y,
 				-lLocationCamCoordinates.z);
     }
@@ -99,9 +95,9 @@ namespace hemelb
     {
       util::Vector3D<float> lLocationCamCoordinates = GetLocationInCameraCoordinates(iWorldLocation);
       
-      return XYCoordinates<float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+      return XYCoordinates<float> ( mDistanceFromCameraToScreen / (-lLocationCamCoordinates.z)
 				* lLocationCamCoordinates.x,
-				 mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z) 
+				 mDistanceFromCameraToScreen / (-lLocationCamCoordinates.z) 
 				* lLocationCamCoordinates.y);
     }
 
@@ -111,7 +107,7 @@ namespace hemelb
       float iLatitude,
       const util::Vector3D<float>& iLocalCentre,
       float iRadius,
-      float iDistanceFromEyeToScreen)
+      float iDistanceFromCameraToScreen)
     {
       hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>
        	("Latitude: %f / Longitude: %f", iLatitude, iLongitude);
@@ -129,12 +125,17 @@ namespace hemelb
       //a local centre rather than the world centre
       mViewpointLocationInWorldCoordinates += iLocalCentre;
 
-      mDistanceFromEyeToScreen = iDistanceFromEyeToScreen;
+      mDistanceFromCameraToScreen = iDistanceFromCameraToScreen;
     }
 
     const util::Vector3D<float>& Viewpoint::GetViewpointLocation() const
     {
       return mViewpointLocationInWorldCoordinates;
+    }
+
+    float Viewpoint::GetDistanceFromCameraToScreen() const
+    {
+      return mDistanceFromCameraToScreen;
     }
 
     util::Vector3D<float> Viewpoint::GetLocationInCameraCoordinates(const util::Vector3D<float>& iWorldLocation) const
