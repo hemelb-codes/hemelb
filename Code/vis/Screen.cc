@@ -75,7 +75,8 @@ namespace hemelb
 
       util::Vector3D<float> lCameraToLocalCentreVector = iViewpoint->
 	RotateCameraCoordinatesToWorldCoordinates
-	(util::Vector3D<float>(0.F, 0.F, -iViewpoint->mDistanceFromEyeToScreen));
+	(util::Vector3D<float>(0.F, 0.F, 
+			       -iViewpoint->GetDistanceFromCameraToScreen()));
 
       util::Vector3D<float> lMiddleCentreToMiddleRightOfScreen = iViewpoint->
 	RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(mMaxXValue, 0.0F, 0.0F));
