@@ -11,7 +11,7 @@
 #include "vis/VisSettings.h"
 #include "vis/rayTracer/SiteData.h"
 #include "lb/LbmParameters.h"
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -39,7 +39,7 @@ namespace hemelb
 	//Cals the method common to all ray data processing classes 
 	//and then the derived class method
 	void UpdateDataForNormalFluidSite(const raytracer::SiteData_t& iSiteData,
-					  const Vector3D<float>& iRayDirection,
+					  const util::Vector3D<float>& iRayDirection,
 					  const float iRayLengthInVoxel,
 					  const float iAbsoluteDistanceFromViewpoint,
 					  const DomainStats& iDomainStats,
@@ -62,7 +62,7 @@ namespace hemelb
 
 	//Processes the ray data for a normal (non wall) fluid site
 	void UpdateDataForWallSite(const raytracer::SiteData_t& iSiteData,
-				   const Vector3D<float>& iRayDirection,
+				   const util::Vector3D<float>& iRayDirection,
 				   const float iRayLengthInVoxel,
 				   const float iAbsoluteDistanceFromViewpoint,
 				   const DomainStats& iDomainStats,
@@ -167,7 +167,7 @@ namespace hemelb
 	//types, ie cumulative length in the fluid, nearest stress
 	//and density. 
 	void UpdateDataCommon(const raytracer::SiteData_t& iSiteData,
-			      const Vector3D<float>& iRayDirection,
+			      const util::Vector3D<float>& iRayDirection,
 			      const float iRayLengthInVoxel,
 			      const float iAbsoluteDistanceFromViewpoint,
 			      const DomainStats& iDomainStats,

@@ -166,12 +166,12 @@ namespace hemelb
 	
 	for (unsigned int n = 0; n < lParticles.size(); n++)
 	{
-	  Vector3D<float> p1;
+	  util::Vector3D<float> p1;
 	  p1.x = lParticles[n].x - float (iLatDat.GetXSiteCount() >> 1);
 	  p1.y = lParticles[n].y - float (iLatDat.GetYSiteCount() >> 1);
 	  p1.z = lParticles[n].z - float (iLatDat.GetZSiteCount() >> 1);
 
-	  Vector3D<float> p2 = mViewpoint.Project(p1);
+	  util::Vector3D<float> p2 = mViewpoint.Project(p1);
         
 	  XYCoordinates<int> x = mScreen.TransformScreenToPixelCoordinates<int> (XYCoordinates<float>(p2.x, p2.y));
 

@@ -8,13 +8,13 @@
 #include <limits>
 
 #include "util/utilityFunctions.h"
+#include "util/Vector3D.h"
 #include "vis/DomainStats.h"
 #include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/ClusterTraverser.h"
 #include "vis/rayTracer/Ray.h"
 #include "vis/SiteTraverser.h"
 #include "vis/Screen.h"
-#include "vis/Vector3D.h"
 
 namespace hemelb
 {
@@ -160,7 +160,7 @@ namespace hemelb
 
 	  ioRay.SetRayLengthTraversedToCluster(iMinimumRayUnits);
 
-	  Vector3D<float> lLowerSiteToFirstRayClusterIntersection = iMinimumRayUnits
+	  util::Vector3D<float> lLowerSiteToFirstRayClusterIntersection = iMinimumRayUnits
 	    * ioRay.GetDirection() - mLowerSiteCordinatesOfClusterRelativeToViewpoint;
 
 	  TraverseBlocks(iCluster, lLowerSiteToFirstRayClusterIntersection, ioRay);
@@ -182,49 +182,49 @@ namespace hemelb
 	  XYCoordinates<float> lSubImageLowerLeft = XYCoordinates<float>::MaxLimit();
 	  XYCoordinates<float> lSubImageUpperRight = XYCoordinates<float>::MinLimit();
 
-	  UpdateSubImageExtentForCorner(Vector3D<float>(iCluster.minSite.x,
+	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.minSite.x,
 							iCluster.minSite.y,
 							iCluster.minSite.z),
 					lSubImageLowerLeft,
 					lSubImageUpperRight);
 
-	  UpdateSubImageExtentForCorner(Vector3D<float>(iCluster.minSite.x,
-							iCluster.minSite.y,
-							iCluster.maxSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(Vector3D<float>(iCluster.minSite.x,
-							iCluster.maxSite.y,
-							iCluster.minSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(Vector3D<float>(iCluster.minSite.x,
-							iCluster.maxSite.y,
-							iCluster.maxSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(Vector3D<float>(iCluster.maxSite.x,
-							iCluster.minSite.y,
-							iCluster.minSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(Vector3D<float>(iCluster.maxSite.x,
+	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.minSite.x,
 							iCluster.minSite.y,
 							iCluster.maxSite.z),
 					lSubImageLowerLeft,
 					lSubImageUpperRight);
 
-	  UpdateSubImageExtentForCorner(Vector3D<float>(iCluster.maxSite.x,
+	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.minSite.x,
 							iCluster.maxSite.y,
 							iCluster.minSite.z),
 					lSubImageLowerLeft,
 					lSubImageUpperRight);
 
-	  UpdateSubImageExtentForCorner(Vector3D<float>(iCluster.maxSite.x,
+	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.minSite.x,
+							iCluster.maxSite.y,
+							iCluster.maxSite.z),
+					lSubImageLowerLeft,
+					lSubImageUpperRight);
+
+	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.maxSite.x,
+							iCluster.minSite.y,
+							iCluster.minSite.z),
+					lSubImageLowerLeft,
+					lSubImageUpperRight);
+
+	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.maxSite.x,
+							iCluster.minSite.y,
+							iCluster.maxSite.z),
+					lSubImageLowerLeft,
+					lSubImageUpperRight);
+
+	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.maxSite.x,
+							iCluster.maxSite.y,
+							iCluster.minSite.z),
+					lSubImageLowerLeft,
+					lSubImageUpperRight);
+
+	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.maxSite.x,
 							iCluster.maxSite.y,
 							iCluster.maxSite.z),
 					lSubImageLowerLeft,
@@ -237,7 +237,7 @@ namespace hemelb
 	    mScreen.template TransformScreenToPixelCoordinates<int>(lSubImageUpperRight);
 	}
 
-	void UpdateSubImageExtentForCorner(const Vector3D<float>& iCorner,
+	void UpdateSubImageExtentForCorner(const util::Vector3D<float>& iCorner,
 					   XYCoordinates<float>& ioSubImageLowerLeft,
 					   XYCoordinates<float>& ioSubImageUpperRight)
 	{
@@ -299,11 +299,11 @@ namespace hemelb
 	  XYCoordinates<int> lPixel;
 
 	  //Loop over all the pixels
-	  Vector3D<float> lCameraToBottomRow = mCameraToBottomLeftPixel;
+	  util::Vector3D<float> lCameraToBottomRow = mCameraToBottomLeftPixel;
 	  for (lPixel.x = mSubImageLowerLeftPixelCoordinates.x;
 	       lPixel.x <= mSubImageUpperRightPixelCoordinates.x; ++lPixel.x)
 	  {
-	    Vector3D<float> lCameraToPixel = lCameraToBottomRow;
+	    util::Vector3D<float> lCameraToPixel = lCameraToBottomRow;
 	    for (lPixel.y = mSubImageLowerLeftPixelCoordinates.y;
 		 lPixel.y <= mSubImageUpperRightPixelCoordinates.y; ++lPixel.y)
 	    {
@@ -318,7 +318,7 @@ namespace hemelb
 
 	virtual void CastRayForPixel(const ClusterType& iCluster,
 				     const XYCoordinates<int>& iPixelCoordinates,
-				     const Vector3D<float>& iRayDirection)
+				     const util::Vector3D<float>& iRayDirection)
 	{
 	  Ray<RayDataType> lRay(iRayDirection);
 
@@ -337,15 +337,15 @@ namespace hemelb
 	  }
 	}
 
-	void TraverseVoxels(const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
-			    const Vector3D<float>& iLocationInBlock,
+	void TraverseVoxels(const util::Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
+			    const util::Vector3D<float>& iLocationInBlock,
 			    const ClusterType& iCluster,
 			    site_t iBlockNumber,
 			    float iRayLengthTraversedSoFar,
 			    Ray<RayDataType>& ioRay)
 	{
 	  //Work out which site we're currently in
-	  Vector3D<site_t> lTruncatedLocationInBlock = RoundToNearestVoxel(iLocationInBlock);
+	  util::Vector3D<site_t> lTruncatedLocationInBlock = RoundToNearestVoxel(iLocationInBlock);
 
 	  SiteTraverser lSiteTraverser(mLatticeData);
 	  lSiteTraverser.SetCurrentLocation(lTruncatedLocationInBlock);
@@ -353,9 +353,9 @@ namespace hemelb
 	  //In order to trace the rays through the voxels, we need to
 	  //keep track of how far the ray can travel to the next
 	  //voxel in each of the three directions in ray units
-	  Vector3D<float> lRayUnitsBeforeNextVoxel =
+	  util::Vector3D<float> lRayUnitsBeforeNextVoxel =
 	    CalculateRayUnitsBeforeNextVoxel(iFirstRayClusterIntersectionToBlockLowerSite,
-					     Vector3D<float>(lTruncatedLocationInBlock),
+					     util::Vector3D<float>(lTruncatedLocationInBlock),
 					     ioRay);
 
 	  while (lSiteTraverser.CurrentLocationValid())
@@ -471,12 +471,12 @@ namespace hemelb
 	  }
 	}
 
-	Vector3D<float> CalculateRayUnitsBeforeNextVoxel
-	  (const Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
-	   const Vector3D<site_t>& iTruncatedLocationInBlock,
+	util::Vector3D<float> CalculateRayUnitsBeforeNextVoxel
+	  (const util::Vector3D<float>& iFirstRayClusterIntersectionToBlockLowerSite,
+	   const util::Vector3D<site_t>& iTruncatedLocationInBlock,
 	   const Ray<RayDataType>& iRay)
 	{
-	  Vector3D<float> lRayUnits;
+	  util::Vector3D<float> lRayUnits;
 
 	  //The ray has already travelled iFirstRayClusterIntersectionToBlockLowerSite
 	  //If the ray is increasing in the co-ordinte it can travel as far
@@ -535,9 +535,9 @@ namespace hemelb
 	  return lRayUnits;
 	}
 
-	Vector3D<site_t> RoundToNearestVoxel(const Vector3D<float>& iUnboundLocation)
+	util::Vector3D<site_t> RoundToNearestVoxel(const util::Vector3D<float>& iUnboundLocation)
 	{
-	  Vector3D<site_t> lVoxelLocationInBlock;
+	  util::Vector3D<site_t> lVoxelLocationInBlock;
 
 	  //Due to rounding errors, it's possible for the site location within a block
 	  //to be outside the wrong block
@@ -559,7 +559,7 @@ namespace hemelb
 	  return lVoxelLocationInBlock;
 	}
 
-	Direction::Direction DirectionOfLeastTravel(Vector3D<float> iRayUnitsBeforeNextVoxelOrBlock)
+	Direction::Direction DirectionOfLeastTravel(util::Vector3D<float> iRayUnitsBeforeNextVoxelOrBlock)
 	{
 	    
 	  if (iRayUnitsBeforeNextVoxelOrBlock.x < iRayUnitsBeforeNextVoxelOrBlock.y)
@@ -596,14 +596,14 @@ namespace hemelb
 	}
 
 	void TraverseBlocks(const ClusterType& iCluster,
-			    const Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
+			    const util::Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
 			    Ray<RayDataType>& ioRay)
 	{
 	  float lBlockSizeFloat = static_cast<float>(mLatticeData.GetBlockSize());
 
 	  //Calculate the coordinates of the block within the cluster where
 	  //the ray first intersects
-	  Vector3D <site_t> lBlockCoordinatesOfFirstIntersectionBlock =
+	  util::Vector3D <site_t> lBlockCoordinatesOfFirstIntersectionBlock =
 	    GetBlockCoordinatesOfFirstIntersectionBlock(
 	      iCluster, iLowerSiteToFirstRayClusterIntersection);
 
@@ -618,26 +618,26 @@ namespace hemelb
 	  //(0,0,0) within the block. This is required to locate how
 	  //far the ray has travelled and where each part is in relation to
 	  //voxel sites
-	  Vector3D<float> lFirstIntersectionToBlockLowerSite =
-	    Vector3D<float>(lBlockCoordinatesOfFirstIntersectionBlock) * lBlockSizeFloat -
+	  util::Vector3D<float> lFirstIntersectionToBlockLowerSite =
+	    util::Vector3D<float>(lBlockCoordinatesOfFirstIntersectionBlock) * lBlockSizeFloat -
 	    iLowerSiteToFirstRayClusterIntersection;
 
 	  //The location where the ray hits each block (relative to site coordintes (0,0,0))
 	  //must be calculated to allow correct traversal. Initially this the negative of
 	  //the vector between the first intersection in the cluster and site (0,0,0)
-	  Vector3D <float> lSiteLocationWithinBlock = lFirstIntersectionToBlockLowerSite * -1.0F;
+	  util::Vector3D <float> lSiteLocationWithinBlock = lFirstIntersectionToBlockLowerSite * -1.0F;
 
 	  //We need to know how many ray units can be traversed before
 	  //a new block is hit. The initial value is calculated based on
 	  //the location of first intersection
-	  Vector3D<float> lRayUnitsBeforeNextBlock =
+	  util::Vector3D<float> lRayUnitsBeforeNextBlock =
 	    CalculateRayUnitsBeforeNextBlock
 	    (lFirstIntersectionToBlockLowerSite,
 	     ioRay);
 
 	  //The number of ray units in a block in each direction
 	  //are cached.
-	  Vector3D<float> lBlockRayUnitIncrement = ioRay.GetInverseDirection()
+	  util::Vector3D<float> lBlockRayUnitIncrement = ioRay.GetInverseDirection()
 	    * lBlockSizeFloat;
 
 	  //We need to track how many site units have been traversed
@@ -721,11 +721,11 @@ namespace hemelb
 
 	}
 
-	Vector3D<unsigned int> GetBlockCoordinatesOfFirstIntersectionBlock(
+	util::Vector3D<unsigned int> GetBlockCoordinatesOfFirstIntersectionBlock(
 	  const ClusterType& iCluster,
-	  Vector3D<float> iLowerSiteToFirstRayClusterIntersection)
+	  util::Vector3D<float> iLowerSiteToFirstRayClusterIntersection)
 	{
-	  Vector3D<unsigned int> lBlockCoordinatesOfFirstIntersectionBlock;
+	  util::Vector3D<unsigned int> lBlockCoordinatesOfFirstIntersectionBlock;
 
 	  //Perform the truncated division and ensure that the
 	  //coordinates are valid to allow for numerical errors
@@ -753,11 +753,11 @@ namespace hemelb
 	  return lBlockCoordinatesOfFirstIntersectionBlock;
 	}
 
-	Vector3D<float> CalculateRayUnitsBeforeNextBlock
-	  (const Vector3D<float>& lFirstIntersectionToBlockLowerSite,
+	util::Vector3D<float> CalculateRayUnitsBeforeNextBlock
+	  (const util::Vector3D<float>& lFirstIntersectionToBlockLowerSite,
 	   const Ray<RayDataType>& iRay)
 	{
-	  Vector3D<float> lRayUnits;
+	  util::Vector3D<float> lRayUnits;
 
 	  //The ray is currently at the first intersection
 	  //The number of ray units for a given co-ordinate is the
@@ -815,9 +815,9 @@ namespace hemelb
         
 	const hemelb::geometry::LatticeData& mLatticeData;
 
-	Vector3D<float> mCameraToBottomLeftPixel;
+	util::Vector3D<float> mCameraToBottomLeftPixel;
 
-	Vector3D<float> mLowerSiteCordinatesOfClusterRelativeToViewpoint;
+	util::Vector3D<float> mLowerSiteCordinatesOfClusterRelativeToViewpoint;
 
 	XYCoordinates<int> mSubImageLowerLeftPixelCoordinates;
 
@@ -827,8 +827,8 @@ namespace hemelb
 	//to the maximum and minimum site span
 	//locations respectively
 	//(Formerly AABB)
-	Vector3D<float> mViewpointCentreToMaxSite;
-	Vector3D<float> mViewpointCentreToMinSite;
+	util::Vector3D<float> mViewpointCentreToMaxSite;
+	util::Vector3D<float> mViewpointCentreToMinSite;
       };}
   }
 }

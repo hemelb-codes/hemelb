@@ -2,7 +2,7 @@
 #include <assert.h>
 
 #include "geometry/LatticeData.h"
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 #include "vis/BlockTraverser.h"
 #include "vis/rayTracer/RayTracer.h"
 
@@ -26,7 +26,7 @@ namespace hemelb
       return GetCurrentIndex();
     }
 
-    Vector3D<site_t> BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
+    util::Vector3D<site_t> BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
     {
       return GetCurrentLocation()*mLatticeData.GetBlockSize();
     }
@@ -40,7 +40,7 @@ namespace hemelb
 
     geometry::LatticeData::BlockData *
     BlockTraverser::GetBlockDataForLocation
-    (const Vector3D<site_t>& iLocation)
+    (const util::Vector3D<site_t>& iLocation)
     {
       return mLatticeData.GetBlock(GetIndexFromLocation(iLocation));
     }      
@@ -56,7 +56,7 @@ namespace hemelb
       return SiteTraverser(mLatticeData);
     }	      
 
-    bool BlockTraverser::IsValidLocation(Vector3D<site_t> iBlock)
+    bool BlockTraverser::IsValidLocation(util::Vector3D<site_t> iBlock)
     {
       return mLatticeData.IsValidBlockSite
 	(iBlock.x,

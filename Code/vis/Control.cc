@@ -131,7 +131,7 @@ namespace hemelb
       //For now set the maximum draw distance to twice the radius;
       mVisSettings.maximumDrawDistance = 2.0F * rad;
 
-      Vector3D<float> centre = Vector3D<float>( iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z );
+      util::Vector3D<float> centre = util::Vector3D<float>( iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z );
 
       mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
           * (float) DEG_TO_RAD, centre, rad, dist);

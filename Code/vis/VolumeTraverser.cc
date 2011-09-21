@@ -10,13 +10,13 @@ namespace hemelb
     {
     }
 	
-    Vector3D<site_t> VolumeTraverser::GetCurrentLocation()
+    util::Vector3D<site_t> VolumeTraverser::GetCurrentLocation()
     {
       return mCurrentLocation;
     }
 
     void VolumeTraverser::SetCurrentLocation(
-      const Vector3D<site_t>& iLocation)
+      const util::Vector3D<site_t>& iLocation)
     {
       mCurrentLocation = iLocation;
       mCurrentNumber = GetIndexFromLocation(iLocation);
@@ -43,7 +43,7 @@ namespace hemelb
     }
 
     site_t VolumeTraverser::
-    GetIndexFromLocation(Vector3D<site_t> iLocation)
+    GetIndexFromLocation(util::Vector3D<site_t> iLocation)
     {
       return ((iLocation.x * GetYCount() + iLocation.y) 
 	      * GetZCount()) + iLocation.z;

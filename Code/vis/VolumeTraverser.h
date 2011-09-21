@@ -1,7 +1,7 @@
 #ifndef HEMELB_VIS_RAYTRACER_VOLUMETRAVERSER_H
 #define HEMELB_VIS_RAYTRACER_VOLUMETRAVERSER_H
 
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -15,9 +15,9 @@ namespace hemelb
     public:
       VolumeTraverser();
 
-      Vector3D<site_t> GetCurrentLocation();
+      util::Vector3D<site_t> GetCurrentLocation();
 			
-      void SetCurrentLocation(const Vector3D<site_t>& iLocation);
+      void SetCurrentLocation(const util::Vector3D<site_t>& iLocation);
 
       site_t GetX();
       
@@ -27,7 +27,7 @@ namespace hemelb
       
       site_t GetCurrentIndex();
 
-      site_t GetIndexFromLocation(Vector3D<site_t> iLocation);
+      site_t GetIndexFromLocation(util::Vector3D<site_t> iLocation);
 
       //Increments the index by one and update the location accordingly
       //Returns true if successful or false if the whole volume has been
@@ -50,7 +50,7 @@ namespace hemelb
       virtual site_t GetZCount() = 0;
 	    
     protected:
-      Vector3D<site_t> mCurrentLocation;
+      util::Vector3D<site_t> mCurrentLocation;
       site_t mCurrentNumber;
     };
   }

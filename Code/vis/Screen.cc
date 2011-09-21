@@ -73,15 +73,15 @@ namespace hemelb
       mPixelsPerUnitX = (float) mPixels->GetPixelsX() / (2.F * mMaxXValue);
       mPixelsPerUnitY = (float) mPixels->GetPixelsY() / (2.F * mMaxYValue);
 
-      Vector3D<float> lCameraToLocalCentreVector = iViewpoint->
+      util::Vector3D<float> lCameraToLocalCentreVector = iViewpoint->
 	RotateCameraCoordinatesToWorldCoordinates
-	(Vector3D<float>(0.F, 0.F, -iViewpoint->mDistanceFromEyeToScreen));
+	(util::Vector3D<float>(0.F, 0.F, -iViewpoint->mDistanceFromEyeToScreen));
 
-      Vector3D<float> lMiddleCentreToMiddleRightOfScreen = iViewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(mMaxXValue, 0.0F, 0.0F));
+      util::Vector3D<float> lMiddleCentreToMiddleRightOfScreen = iViewpoint->
+	RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(mMaxXValue, 0.0F, 0.0F));
 
-      Vector3D<float> lLowerCentreToTopCentreOfScreen = iViewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0.0F, mMaxYValue, 0.0F));
+      util::Vector3D<float> lLowerCentreToTopCentreOfScreen = iViewpoint->
+	RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0.0F, mMaxYValue, 0.0F));
 
       mCameraToBottomLeftOfScreen = (lCameraToLocalCentreVector - lMiddleCentreToMiddleRightOfScreen) - lLowerCentreToTopCentreOfScreen;
 
@@ -124,15 +124,15 @@ namespace hemelb
       return mPixels->GetStoredPixelCount();
     }
 
-    const Vector3D<float>& Screen::GetCameraToBottomLeftOfScreenVector() const
+    const util::Vector3D<float>& Screen::GetCameraToBottomLeftOfScreenVector() const
     {
       return mCameraToBottomLeftOfScreen;
     }
-    const Vector3D<float>& Screen::GetPixelUnitVectorProjectionX() const
+    const util::Vector3D<float>& Screen::GetPixelUnitVectorProjectionX() const
     {
       return mPixelUnitVectorProjectionX;
     }
-    const Vector3D<float>& Screen::GetPixelUnitVectorProjectionY() const
+    const util::Vector3D<float>& Screen::GetPixelUnitVectorProjectionY() const
     {
       return mPixelUnitVectorProjectionY;
     }
