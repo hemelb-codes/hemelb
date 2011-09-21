@@ -7,8 +7,8 @@
 #include "lb/collisions/Collisions.h"
 #include "lb/SimulationState.h"
 #include "topology/NetworkTopology.h"
-#include "unittests/TestLatticeData.h"
-#include "unittests/TestSimConfig.h"
+#include "unittests/FourCubeLatticeData.h"
+#include "unittests/OneInOneOutSimConfig.h"
 #include "util/UnitConverter.h"
 
 namespace hemelb
@@ -26,19 +26,24 @@ namespace hemelb
         public:
           void setUp()
           {
+            // Initialise the network topology (necessary for using the inlets and oulets.
             int args = 1;
             char** argv = NULL;
             bool success;
             topology::NetworkTopology::Instance()->Init(&args, &argv, &success);
 
-            latDat = new TestLatticeData();
-            simConfig = new TestSimConfig();
+            // Create a four-cube lattice data and a sim config with one inlet and one outlet.
+            latDat = new FourCubeLatticeData();
+            simConfig = new OneInOneOutSimConfig();
+
+            // use these to initialise the simulations state, LBM parameters and a unit converter.
             simState = new lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
             lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s
                                                   / (distribn_t) simState->GetTimeStepsPerCycle(),
                                               latDat->GetVoxelSize());
             unitConverter = new util::UnitConverter(lbmParams, simState, latDat);
 
+            // Create the inlet and outlet boundary objects.
             inletBoundary = new lb::boundaries::BoundaryValues(geometry::LatticeData::INLET_TYPE,
                                                                latDat,
                                                                simConfig,
@@ -50,12 +55,15 @@ namespace hemelb
                                                                 simState,
                                                                 unitConverter);
 
+            // Initialise a kernel of the same type that all our collisions will have.
             lb::kernels::InitParams initParams;
 
             initParams.latDat = latDat;
 
             lbgk = new lb::kernels::LBGK(initParams);
 
+            // Initialise all 4 types of conditions, using boundary objects for the collision types
+            // that will need them.
             initParams.boundaryObject = inletBoundary;
             nonZeroVFixedDensityILet = new lb::collisions::NonZeroVelocityEquilibriumFixedDensity<
                 lb::kernels::LBGK>(initParams);

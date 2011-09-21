@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTESTS_TESTSIMCONFIG_H
-#define HEMELB_UNITTESTS_TESTSIMCONFIG_H
+#ifndef HEMELB_UNITTESTS_ONEINONEOUTSIMCONFIG_H
+#define HEMELB_UNITTESTS_ONEINONEOUTSIMCONFIG_H
 
 #include "SimConfig.h"
 
@@ -7,10 +7,10 @@ namespace hemelb
 {
   namespace unittests
   {
-    class TestSimConfig : public SimConfig
+    class OneInOneOutSimConfig : public SimConfig
     {
       public:
-        TestSimConfig() :
+        OneInOneOutSimConfig() :
           SimConfig()
         {
           InOutLet inlet;
@@ -38,4 +38,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_UNITTESTS_TESTSIMCONFIG_H */
+#endif /* HEMELB_UNITTESTS_ONEINONEOUTSIMCONFIG_H */
