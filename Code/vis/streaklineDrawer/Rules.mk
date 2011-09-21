@@ -1,6 +1,9 @@
 include $(MK)/header.mk
 
-SRCS :=	StreaklineDrawer.cc
+SRCS :=	Particle.cc \
+	Particles.cc \
+	StreaklineDrawer.cc \
+	VelocityField.cc
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
