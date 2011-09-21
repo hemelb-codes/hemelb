@@ -137,9 +137,9 @@ namespace hemelb
 		 mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)))
 	    {
 	      //Update block range of the cluster
-	      util::Vector3D<site_t>::UpdateMinVector3D(lClusterBlockMin, lCurrentLocation);
-	      util::Vector3D<site_t>::UpdateMaxVector3D(lClusterBlockMax, lCurrentLocation);
-	     
+	      lClusterBlockMin.UpdatePointwiseMin(lCurrentLocation);
+	      lClusterBlockMax.UpdatePointwiseMax(lCurrentLocation);
+	      
 	      //Update the cluster id of the given block
 	      site_t lBlockID = mBlockTraverser.GetIndexFromLocation(lCurrentLocation);
 	      mClusterIdOfBlock[lBlockID] = (short int) mClusters.size();
@@ -153,15 +153,13 @@ namespace hemelb
 		if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->
 		    site_data[lSiteTraverser.GetCurrentIndex()] != BIG_NUMBER3)
 		{
-		  util::Vector3D<site_t>::UpdateMinVector3D(lClusterSiteMin,
-							    lSiteTraverser.GetCurrentLocation() +
-							    lCurrentLocation*
-							    mBlockTraverser.GetBlockSize());
+		  lClusterSiteMin.UpdatePointwiseMin
+		    ( lSiteTraverser.GetCurrentLocation() +
+		      lCurrentLocation*mBlockTraverser.GetBlockSize());
 		
-		  util::Vector3D<site_t>::UpdateMaxVector3D(lClusterSiteMax,
-							    lSiteTraverser.GetCurrentLocation() +
-							    lCurrentLocation*
-							    mBlockTraverser.GetBlockSize());
+		  lClusterSiteMax.UpdatePointwiseMax
+		    ( lSiteTraverser.GetCurrentLocation() +
+		      lCurrentLocation*mBlockTraverser.GetBlockSize());
 		}   
 	      }
 	      while (lSiteTraverser.TraverseOne());
