@@ -3,9 +3,10 @@
 
 #include <vector>
 
+#include "util/Vector3D.h"
+
 #include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/SiteData.h"
-#include "vis/Vector3D.h"
 
 namespace hemelb
 {
@@ -26,7 +27,7 @@ namespace hemelb
 	  ClusterShared() {}
 
 	  unsigned int DoGetBlockIdFrom3DBlockLocation(
-	    Vector3D<unsigned int>iLocation) const
+	    util::Vector3D<unsigned int>iLocation) const
 	  {
 	    return iLocation.x*blocksY*blocksZ
 	      + iLocation.y*blocksZ
@@ -63,12 +64,12 @@ namespace hemelb
 
 	  //The min and maximum site location, in site units 
 	  //relative to the centre of the lattice
-	  Vector3D<float> minSite;
-	  Vector3D<float> maxSite;
+	  util::Vector3D<float> minSite;
+	  util::Vector3D<float> maxSite;
 
 	  //Stores the lowest x, y and z block location of the ClusterShared 
 	  //in terms of site units relative to the centre location
-	  Vector3D<float> minBlock;
+	  util::Vector3D<float> minBlock;
         
 	  //Stores the size of the cluster in terms of the number of blocks
 	  unsigned short int blocksX;

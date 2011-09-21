@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include "log/Logger.h"
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 #include "vis/Viewpoint.h"
 #include "vis/XYCoordinates.h"
 
@@ -13,25 +13,25 @@ namespace hemelb
       mViewpointLocationInWorldCoordinates(0.0F) 
     {}
     
-    Vector3D<float> Viewpoint::RotateCameraCoordinatesToWorldCoordinates(const Vector3D<float>& iVector) const
+    util::Vector3D<float> Viewpoint::RotateCameraCoordinatesToWorldCoordinates(const util::Vector3D<float>& iVector) const
     {
       // A rotation of iThetaX clockwise looking up the x-axis (increasing)
       // Followed by a rotation of iThetaY anticlockwise looking up the y-axis.
       return Rotate(mSinLatitude, mCosLatitude, mSinLongitude, mCosLongitude, iVector);
     }
 
-    Vector3D<float> Viewpoint::RotateWorldToCameraCoordinates(const Vector3D<float>& iVector) const
+    util::Vector3D<float> Viewpoint::RotateWorldToCameraCoordinates(const util::Vector3D<float>& iVector) const
     {
       // The reverse of the above
       return UnRotate(mSinLatitude, mCosLatitude, mSinLongitude, mCosLongitude, iVector);
     }
 
-    Vector3D <float> Viewpoint::Rotate
+    util::Vector3D <float> Viewpoint::Rotate
     (float iSinThetaX,
      float iCosThetaX,
      float iSinThetaY,
      float iCosThetaY,
-     const Vector3D<float>& iVector)
+     const util::Vector3D<float>& iVector)
     {
       // A rotation of iThetaX clockwise looking down the x-axis
       // Followed by a rotation of iThetaY anticlockwise looking down the y-axis.
@@ -46,18 +46,18 @@ namespace hemelb
 
       const float lTemp = iVector.z * iCosThetaX - iVector.y * iSinThetaX;
       
-      return Vector3D <float>(
+      return util::Vector3D <float>(
 	lTemp*iSinThetaY + iVector.x*iCosThetaY,
 	iVector.z * iSinThetaX + iVector.y * iCosThetaX,
 	lTemp * iCosThetaY - iVector.x * iSinThetaY);
     }
 
-    Vector3D <float> Viewpoint::UnRotate
+    util::Vector3D <float> Viewpoint::UnRotate
     (float iSinThetaX,
      float iCosThetaX,
      float iSinThetaY,
      float iCosThetaY,
-     const Vector3D<float>& iVector)
+     const util::Vector3D<float>& iVector)
     {
       // A rotation of iThetaY aniclockwise looking down the y-axis
       // Followed by a rotation of iThetaX clockwise looking down the x-axis.
@@ -71,15 +71,15 @@ namespace hemelb
 
       const float lTemp = iVector.x * iSinThetaY + iVector.z * iCosThetaY;
       
-      return Vector3D <float>(
+      return util::Vector3D <float>(
 	iVector.x*iCosThetaY - iVector.z*iSinThetaY,
 	-lTemp*iSinThetaX + iVector.y*iCosThetaX,
 	lTemp*iCosThetaX + iVector.y*iSinThetaX);
     }
 
-    Vector3D<float> Viewpoint::Project(const Vector3D<float>& iWorldLocation) const
+    util::Vector3D<float> Viewpoint::Project(const util::Vector3D<float>& iWorldLocation) const
     {
-      Vector3D<float> lLocationCamCoordinates = GetLocationInCameraCoordinates(iWorldLocation);
+      util::Vector3D<float> lLocationCamCoordinates = GetLocationInCameraCoordinates(iWorldLocation);
 
       // NB - the oringinal code was not doing this but a reflection rotation
       // and then back reflectiond which produced similar images.
@@ -88,16 +88,16 @@ namespace hemelb
       //Carry out a perspective projection on an infinite spanning screen 
       //between the eye and the subject.
       //Reverse the sign such that depth is positive (I believe).  
-      return Vector3D <float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+      return util::Vector3D <float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
 				* lLocationCamCoordinates.x,
 				 mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z) 
 				* lLocationCamCoordinates.y,
 				-lLocationCamCoordinates.z);
     }
 
-    XYCoordinates<float> Viewpoint::FlatProject(const Vector3D<float>& iWorldLocation) const
+    XYCoordinates<float> Viewpoint::FlatProject(const util::Vector3D<float>& iWorldLocation) const
     {
-      Vector3D<float> lLocationCamCoordinates = GetLocationInCameraCoordinates(iWorldLocation);
+      util::Vector3D<float> lLocationCamCoordinates = GetLocationInCameraCoordinates(iWorldLocation);
       
       return XYCoordinates<float> ( mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
 				* lLocationCamCoordinates.x,
@@ -109,7 +109,7 @@ namespace hemelb
     void Viewpoint::SetViewpointPosition(
       float iLongitude,
       float iLatitude,
-      const Vector3D<float>& iLocalCentre,
+      const util::Vector3D<float>& iLocalCentre,
       float iRadius,
       float iDistanceFromEyeToScreen)
     {
@@ -123,7 +123,7 @@ namespace hemelb
       mCosLatitude = cosf(iLatitude);
 
       //The camera is located at 0,0,radius from the world centre in camera co-ordinates 
-      mViewpointLocationInWorldCoordinates = RotateCameraCoordinatesToWorldCoordinates(Vector3D<float>(0., 0., iRadius));
+      mViewpointLocationInWorldCoordinates = RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0., 0., iRadius));
 
       //Translate the camera location to allow it to point at 
       //a local centre rather than the world centre
@@ -132,15 +132,15 @@ namespace hemelb
       mDistanceFromEyeToScreen = iDistanceFromEyeToScreen;
     }
 
-    const Vector3D<float>& Viewpoint::GetViewpointLocation() const
+    const util::Vector3D<float>& Viewpoint::GetViewpointLocation() const
     {
       return mViewpointLocationInWorldCoordinates;
     }
 
-    Vector3D<float> Viewpoint::GetLocationInCameraCoordinates(const Vector3D<float>& iWorldLocation) const
+    util::Vector3D<float> Viewpoint::GetLocationInCameraCoordinates(const util::Vector3D<float>& iWorldLocation) const
     {
       //Calculate the location of the point relative to the viewpoint 
-      Vector3D<float> lLocationRelativeToViewPoint = 
+      util::Vector3D<float> lLocationRelativeToViewPoint = 
 	iWorldLocation - mViewpointLocationInWorldCoordinates;
       
       //Rotate the location vector in the opposite manner to that of the camera

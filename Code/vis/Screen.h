@@ -2,13 +2,13 @@
 #define HEMELB_VIS_SCREEN_H
 
 #include "io/Writer.h"
+#include "util/Vector3D.h"
 #include "vis/ColPixel.h"
 #include "vis/rayTracer/RayDataEnhanced.h"
 #include "vis/rayTracer/RayDataNormal.h"
 #include "vis/rayTracer/ClusterNormal.h"
 #include "vis/rayTracer/ClusterWithWallNormals.h"
 #include "vis/ScreenPixels.h"
-#include "vis/Vector3D.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 #include "vis/XYCoordinates.h"
@@ -69,9 +69,9 @@ namespace hemelb
 	    );
         }
 
-        const Vector3D<float>& GetCameraToBottomLeftOfScreenVector() const;
-        const Vector3D<float>& GetPixelUnitVectorProjectionX() const;
-        const Vector3D<float>& GetPixelUnitVectorProjectionY() const;
+        const util::Vector3D<float>& GetCameraToBottomLeftOfScreenVector() const;
+        const util::Vector3D<float>& GetPixelUnitVectorProjectionX() const;
+        const util::Vector3D<float>& GetPixelUnitVectorProjectionY() const;
         int GetPixelsX() const;
         int GetPixelsY() const;
 
@@ -92,11 +92,11 @@ namespace hemelb
         float mMaxXValue;
 	float mMaxYValue;
 	
-        Vector3D<float> mCameraToBottomLeftOfScreen;
+        util::Vector3D<float> mCameraToBottomLeftOfScreen;
 
         // Projection of unit vectors along screen axes into normal space.
-	Vector3D<float>  mPixelUnitVectorProjectionX;
-        Vector3D<float> mPixelUnitVectorProjectionY;
+	util::Vector3D<float>  mPixelUnitVectorProjectionX;
+        util::Vector3D<float> mPixelUnitVectorProjectionY;
 
         ScreenPixels<RayDataType_t>* mPixels;
     };

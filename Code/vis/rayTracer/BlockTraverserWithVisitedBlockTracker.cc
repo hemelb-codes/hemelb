@@ -2,7 +2,7 @@
 #include <assert.h>
 
 #include "geometry/LatticeData.h"
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 #include "vis/rayTracer/BlockTraverserWithVisitedBlockTracker.h"
 #include "vis/rayTracer/RayTracer.h"
 
@@ -53,7 +53,7 @@ namespace hemelb
 	return mBlockVisited[iN];
       }
 
-      bool BlockTraverserWithVisitedBlockTracker::IsBlockVisited(Vector3D<site_t>iLocation)
+      bool BlockTraverserWithVisitedBlockTracker::IsBlockVisited(util::Vector3D<site_t>iLocation)
       {
 
 	return mBlockVisited[GetIndexFromLocation(iLocation)];
@@ -75,7 +75,7 @@ namespace hemelb
 	mBlockVisited[iBlockId] = true;
       }
 
-      void BlockTraverserWithVisitedBlockTracker::MarkBlockVisited(Vector3D<site_t> iLocation)
+      void BlockTraverserWithVisitedBlockTracker::MarkBlockVisited(util::Vector3D<site_t> iLocation)
       {
 	site_t lNumber = GetIndexFromLocation(iLocation);
 	assert(lNumber < mLatticeData.GetBlockCount());

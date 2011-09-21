@@ -17,12 +17,12 @@ namespace hemelb
 
       site_t CurrentBlockNumber();
 
-      Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
+      util::Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
 
 
       geometry::LatticeData::BlockData * GetCurrentBlockData();
 
-      geometry::LatticeData::BlockData * GetBlockDataForLocation(const Vector3D<site_t>& iLocation);
+      geometry::LatticeData::BlockData * GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation);
 
       site_t GetBlockSize();
 
@@ -34,7 +34,7 @@ namespace hemelb
 
       virtual site_t GetZCount();
 
-      bool IsValidLocation(Vector3D<site_t> block);
+      bool IsValidLocation(util::Vector3D<site_t> block);
 
 
     protected:

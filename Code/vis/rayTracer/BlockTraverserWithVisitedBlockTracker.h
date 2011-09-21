@@ -34,12 +34,12 @@ namespace hemelb
 	bool IsCurrentBlockVisited();
 
 	bool IsBlockVisited(site_t n);
-	bool IsBlockVisited(Vector3D<site_t> n);
+	bool IsBlockVisited(util::Vector3D<site_t> n);
 
 	void MarkCurrentBlockVisited();
 
 	void MarkBlockVisited(site_t n);
-	void MarkBlockVisited(Vector3D<site_t> location);
+	void MarkBlockVisited(util::Vector3D<site_t> location);
 
       private:
 	bool* mBlockVisited;
