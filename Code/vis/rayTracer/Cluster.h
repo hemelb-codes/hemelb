@@ -3,8 +3,10 @@
 
 #include <vector>
 
+#include "util/Vector3D.h"
+
 #include "vis/rayTracer/SiteData.h"
-#include "vis/Vector3D.h"
+
 
 namespace hemelb
 {
@@ -23,7 +25,7 @@ namespace hemelb
       {
       public:
 	unsigned int GetBlockIdFrom3DBlockLocation(
-	  Vector3D<unsigned int>iLocation) const
+	  util::Vector3D<unsigned int>iLocation) const
 	{
 	  return static_cast<Derived*>(this)->DoGetBlockIdFrom3DBlockLocation(iLocation);
 	}

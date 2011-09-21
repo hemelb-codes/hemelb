@@ -85,12 +85,12 @@ namespace hemelb
             * mDomainStats->velocity_threshold_max_inv / density;
 
         // ... calculate the two ends of the line we're going to draw...
-        Vector3D<float> p1;
-        Vector3D<float> p2;
+        util::Vector3D<float> p1;
+        util::Vector3D<float> p2;
 
-        p1 = Vector3D<float>(mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
+        p1 = util::Vector3D<float>(mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
 
-        p2 = p1 + Vector3D<float>(vx * temp, vy * temp, vz * temp);
+        p2 = p1 + util::Vector3D<float>(vx * temp, vy * temp, vz * temp);
 
         // ... transform to the location on the screen, and render.
         XYCoordinates<float> p3 = mViewpoint->FlatProject(p1);

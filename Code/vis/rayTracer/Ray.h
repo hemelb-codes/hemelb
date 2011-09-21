@@ -6,9 +6,9 @@
 #include <limits>
 
 #include "util/utilityFunctions.h"
+#include "util/Vector3D.h"
 #include "vis/rayTracer/SiteData.h"
 #include "vis/rayTracer/RayDataNormal.h"
-#include "vis/Vector3D.h"
 
 namespace hemelb
 {
@@ -20,25 +20,25 @@ namespace hemelb
 	class Ray
       {
       public:
-      Ray(Vector3D<float> iDirection) :
+      Ray(util::Vector3D<float> iDirection) :
 	mInWall(false)
 	{
 	  iDirection.Normalise();
 	  mDirection = iDirection;
 	
-	  mInverseDirection = Vector3D<float>
+	  mInverseDirection = util::Vector3D<float>
 	    ( 1.0F/iDirection.x,
 	      1.0F/iDirection.y,
 	      1.0F/iDirection.z );
 
        	}
       
-	Vector3D<float> GetDirection() const
+	util::Vector3D<float> GetDirection() const
 	{
 	  return mDirection;
 	}
 
-	Vector3D<float> GetInverseDirection() const
+	util::Vector3D<float> GetInverseDirection() const
 	{
 	  return mInverseDirection;
 	}
@@ -120,8 +120,8 @@ namespace hemelb
 	
 
       private:
-	Vector3D<float> mDirection;
-	Vector3D<float> mInverseDirection;
+	util::Vector3D<float> mDirection;
+	util::Vector3D<float> mInverseDirection;
 
 	bool mInWall;
 

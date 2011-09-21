@@ -9,8 +9,8 @@
 #include "io/Writer.h"
 #include "ColPixel.h"
 #include "util/utilityFunctions.h"
+#include "util/Vector3D.h"
 #include "vis/ScreenPixels.h"
-#include "vis/Vector3D.h"
 #include "vis/XYCoordinates.h"
 
 namespace hemelb

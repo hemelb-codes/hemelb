@@ -2,10 +2,10 @@
 #include <assert.h>
 #include <iostream>
 
+#include "util/Vector3D.h"
 #include "vis/rayTracer/RayDataNormal.h"
 #include "vis/ColPixel.h"
 #include "vis/DomainStats.h"
-#include "vis/Vector3D.h"
 
 namespace hemelb
 {
@@ -26,7 +26,7 @@ namespace hemelb
       }
 
       void RayDataNormal::DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
-							 const Vector3D<float>& iRayDirection,
+							 const util::Vector3D<float>& iRayDirection,
 							 const float iRayLengthInVoxel,
 							 const DomainStats& iDomainStats,
 							 const VisSettings& iVisSettings)
@@ -53,11 +53,11 @@ namespace hemelb
       }
 
       void RayDataNormal::DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
-						    const Vector3D<float>& iRayDirection,
-						    const float iRayLengthInVoxel,
-						    const DomainStats& iDomainStats,
-						    const VisSettings& iVisSettings,
-						    const double* iWallNormal)
+						  const util::Vector3D<float>& iRayDirection,
+						  const float iRayLengthInVoxel,
+						  const DomainStats& iDomainStats,
+						  const VisSettings& iVisSettings,
+						  const double* iWallNormal)
       {
 	DoUpdateDataForNormalFluidSite(iSiteData,
 				       iRayDirection,

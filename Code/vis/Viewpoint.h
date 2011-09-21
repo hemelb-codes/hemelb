@@ -1,7 +1,7 @@
 #ifndef HEMELB_VIS_VIEWPOINT_H
 #define HEMELB_VIS_VIEWPOINT_H
 
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 #include "vis/XYCoordinates.h"
 
 namespace hemelb
@@ -24,26 +24,26 @@ namespace hemelb
      * and the camera is at (0,0,radius) in camera coordinates
      * 
      */
-      Vector3D<float> RotateCameraCoordinatesToWorldCoordinates(const Vector3D<float>& iVector) const;
+      util::Vector3D<float> RotateCameraCoordinatesToWorldCoordinates(const util::Vector3D<float>& iVector) const;
 
       /**
        * Does the reverse of the above
        *
        */
-      Vector3D<float> RotateWorldToCameraCoordinates(const Vector3D<float>& iVector) const;
+      util::Vector3D<float> RotateWorldToCameraCoordinates(const util::Vector3D<float>& iVector) const;
       
       /**
        * Projects a location in world-cordinates onto the infinite screen, 
        * by translating and rotating such as to give coordintes relative
        * to the camera, and then applying a perspective projection
        */
-      Vector3D<float> Project(const Vector3D<float>& p1) const;
+      util::Vector3D<float> Project(const util::Vector3D<float>& p1) const;
 
       /**
        * Same as project but doesn't return a z component
        *
        */
-      XYCoordinates<float> FlatProject(const Vector3D<float>& iWorldLocation) const;
+      XYCoordinates<float> FlatProject(const util::Vector3D<float>& iWorldLocation) const;
 
     /**
      * Sets the position of the Camera or Viewpoint
@@ -61,33 +61,33 @@ namespace hemelb
      */
       void SetViewpointPosition(float iLongitude,
 				float iLatitude,
-				const Vector3D<float>& iLocalCentre,
+				const util::Vector3D<float>& iLocalCentre,
 				float iRadius,
 				float iDistanceFromEyeToScreen);
 
-      const Vector3D<float>& GetViewpointLocation() const;
+      const util::Vector3D<float>& GetViewpointLocation() const;
       
       float mDistanceFromEyeToScreen;
 
     private:
-      Vector3D<float> GetLocationInCameraCoordinates(const Vector3D<float>& iWorldLocation) const;
+      util::Vector3D<float> GetLocationInCameraCoordinates(const util::Vector3D<float>& iWorldLocation) const;
    
       //Performs a vector rotation using stored
       //Sin and Cosine Values
-      static Vector3D <float> Rotate(
+      static util::Vector3D <float> Rotate(
 	float iSinThetaX,
 	float iCosThetaX,
 	float iSinThetaY,
 	float iCosThetaY,
-	const Vector3D<float>& iVector);
+	const util::Vector3D<float>& iVector);
       
       //Reverses a vector rotation of the above
-      static Vector3D <float> UnRotate(
+      static util::Vector3D <float> UnRotate(
 	float iSinThetaX,
 	float iCosThetaX,
 	float iThetaY,
 	float iCosThetaY,
-	const Vector3D<float>& iVector);
+	const util::Vector3D<float>& iVector);
 
       float mSinLongitude;
       float mCosLongitude;
@@ -95,7 +95,7 @@ namespace hemelb
       float mCosLatitude;
       
       //Stores the viewpoint Location in world co-ordinate
-      Vector3D<float> mViewpointLocationInWorldCoordinates;
+      util::Vector3D<float> mViewpointLocationInWorldCoordinates;
     };
   }
 }

@@ -12,7 +12,7 @@
 #include "geometry/LatticeData.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 #include "vis/rayTracer/BlockTraverserWithVisitedBlockTracker.h"
 #include "vis/rayTracer/ClusterBuilder.h"
 #include "vis/rayTracer/RayTracer.h"
@@ -110,16 +110,16 @@ namespace hemelb
 	  //These locations will eventually contain the bounds of the
 	  //rectangular cluster, both in terms of block number and
 	  //site numbers
-	  Vector3D<site_t> lClusterBlockMin = Vector3D<site_t>::MaxLimit();
-	  Vector3D<site_t> lClusterBlockMax = Vector3D<site_t>::MinLimit();
-	  Vector3D<site_t> lClusterSiteMin = Vector3D<site_t>::MaxLimit();
-	  Vector3D<site_t> lClusterSiteMax = Vector3D<site_t>::MinLimit();
+	  util::Vector3D<site_t> lClusterBlockMin = util::Vector3D<site_t>::MaxLimit();
+	  util::Vector3D<site_t> lClusterBlockMax = util::Vector3D<site_t>::MinLimit();
+	  util::Vector3D<site_t> lClusterSiteMin = util::Vector3D<site_t>::MaxLimit();
+	  util::Vector3D<site_t> lClusterSiteMax = util::Vector3D<site_t>::MinLimit();
 
 	  //To discover the cluster, we continually visit the neighbours 
 	  //of sequential blocks 
 	  //We keep a stack of all the sites that must be processed 
 	  //and sequentially add neighbours to it
-	  std::stack<Vector3D<site_t> > lBlocksToProcess;
+	  std::stack<util::Vector3D<site_t> > lBlocksToProcess;
 
 	  //Set up the initial condition
 	  lBlocksToProcess.push(mBlockTraverser.GetCurrentLocation());
@@ -130,15 +130,15 @@ namespace hemelb
 	  {
 	    //Get location off the top of the stack
 	    //(we could actually take anything off the stack)
-	    Vector3D<site_t> lCurrentLocation = lBlocksToProcess.top();
+	    util::Vector3D<site_t> lCurrentLocation = lBlocksToProcess.top();
 	    lBlocksToProcess.pop();
 	    
 	    if(AreSitesAssignedToLocalProcessorRankInBlock(
 		 mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)))
 	    {
 	      //Update block range of the cluster
-	      Vector3D<site_t>::UpdateMinVector3D(lClusterBlockMin, lCurrentLocation);
-	      Vector3D<site_t>::UpdateMaxVector3D(lClusterBlockMax, lCurrentLocation);
+	      util::Vector3D<site_t>::UpdateMinVector3D(lClusterBlockMin, lCurrentLocation);
+	      util::Vector3D<site_t>::UpdateMaxVector3D(lClusterBlockMax, lCurrentLocation);
 	     
 	      //Update the cluster id of the given block
 	      site_t lBlockID = mBlockTraverser.GetIndexFromLocation(lCurrentLocation);
@@ -153,15 +153,15 @@ namespace hemelb
 		if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->
 		    site_data[lSiteTraverser.GetCurrentIndex()] != BIG_NUMBER3)
 		{
-		  Vector3D<site_t>::UpdateMinVector3D(lClusterSiteMin,
-						      lSiteTraverser.GetCurrentLocation() +
-						      lCurrentLocation*
-						      mBlockTraverser.GetBlockSize());
+		  util::Vector3D<site_t>::UpdateMinVector3D(lClusterSiteMin,
+							    lSiteTraverser.GetCurrentLocation() +
+							    lCurrentLocation*
+							    mBlockTraverser.GetBlockSize());
 		
-		  Vector3D<site_t>::UpdateMaxVector3D(lClusterSiteMax,
-						      lSiteTraverser.GetCurrentLocation() +
-						      lCurrentLocation*
-						      mBlockTraverser.GetBlockSize());
+		  util::Vector3D<site_t>::UpdateMaxVector3D(lClusterSiteMax,
+							    lSiteTraverser.GetCurrentLocation() +
+							    lCurrentLocation*
+							    mBlockTraverser.GetBlockSize());
 		}   
 	      }
 	      while (lSiteTraverser.TraverseOne());
@@ -175,13 +175,13 @@ namespace hemelb
 	}
 
 	//Adds neighbouring blocks of the input location to the input stack
-	void AddNeighbouringBlocks(Vector3D<site_t> iCurrentLocation,
-				   std::stack<Vector3D<site_t> >& oBlocksToProcess)
+	void AddNeighbouringBlocks(util::Vector3D<site_t> iCurrentLocation,
+				   std::stack<util::Vector3D<site_t> >& oBlocksToProcess)
 	{
 	  // Loop over all neighbouring blocks
 	  for (int l = 0; l < 26; l++)
 	  {
-	    Vector3D<site_t> lNeighbouringBlock = iCurrentLocation + mNeighbours[l];
+	    util::Vector3D<site_t> lNeighbouringBlock = iCurrentLocation + mNeighbours[l];
 		
 	    //The neighouring block location might not exist
 	    //eg negative co-ordinates
@@ -229,10 +229,10 @@ namespace hemelb
 	//and converting it to that used by the raytracer
 	//NB: Futher processing is required on the cluster before it can be used
 	//by the ray tracer, which is handled by the ProcessCluster method
-	void AddCluster(Vector3D<site_t> iClusterBlockMin,
-			Vector3D<site_t> iClusterBlockMax,
-			Vector3D<site_t> iClusterVoxelMin,
-			Vector3D<site_t> iClusterVoxelMax)
+	void AddCluster(util::Vector3D<site_t> iClusterBlockMin,
+			util::Vector3D<site_t> iClusterBlockMax,
+			util::Vector3D<site_t> iClusterVoxelMin,
+			util::Vector3D<site_t> iClusterVoxelMax)
 	{
 //The friendly locations must be turned into a format usable by the ray tracer
 	  ClusterType lNewCluster;
@@ -252,13 +252,13 @@ namespace hemelb
 	  assert(static_cast<site_t>(lNewCluster.blocksY) == (1 + iClusterBlockMax.y - iClusterBlockMin.y));
 	  assert(static_cast<site_t>(lNewCluster.blocksZ) == (1 + iClusterBlockMax.z - iClusterBlockMin.z));
 	
-	  lNewCluster.minSite = Vector3D<float>(iClusterVoxelMin) -
-	    Vector3D<float>((float) mLatticeData->GetXSiteCount(),
+	  lNewCluster.minSite = util::Vector3D<float>(iClusterVoxelMin) -
+	    util::Vector3D<float>((float) mLatticeData->GetXSiteCount(),
 			    (float) mLatticeData->GetYSiteCount(),
 			    (float) mLatticeData->GetZSiteCount()) * 0.5F;
 	
-	  lNewCluster.maxSite = Vector3D<float>(iClusterVoxelMax + Vector3D<site_t>(1)) - 
-	    Vector3D<float>(0.5F * (float) mLatticeData->GetXSiteCount(),
+	  lNewCluster.maxSite = util::Vector3D<float>(iClusterVoxelMax + util::Vector3D<site_t>(1)) - 
+	    util::Vector3D<float>(0.5F * (float) mLatticeData->GetXSiteCount(),
 			    0.5F * (float) mLatticeData->GetYSiteCount(),
 			    0.5F * (float) mLatticeData->GetZSiteCount());
 
@@ -320,13 +320,13 @@ namespace hemelb
 		  ("Examining block number = %u", (unsigned int) lBlockNum);
 
 	      
-		Vector3D<site_t>block_coordinates = Vector3D<site_t>(i, j, k) + mClusterBlockMins[iClusterId];
+		util::Vector3D<site_t>block_coordinates = util::Vector3D<site_t>(i, j, k) + mClusterBlockMins[iClusterId];
 		site_t lBlockId = mLatticeData->GetBlockIdFromBlockCoords
 		  (block_coordinates.x,
 		   block_coordinates.y,
 		   block_coordinates.z);
 	      
-		Vector3D<site_t>* mins = &mClusterBlockMins[iClusterId]; 
+		util::Vector3D<site_t>* mins = &mClusterBlockMins[iClusterId]; 
 		assert(lBlockId == 
 		       ( (i + mins->x) * mLatticeData->GetYBlockCount() + (j + mins->y))
 		       * mLatticeData->GetZBlockCount() + (k + mins->z) 
@@ -350,12 +350,12 @@ namespace hemelb
 
 	void UpdateSiteData
 	  (site_t iBlockId, site_t iBlockNum,  ClusterType& iCluster,
-	   Vector3D<site_t>i_block_coordinates)
+	   util::Vector3D<site_t>i_block_coordinates)
 	{
 	  unsigned int lSiteId = -1;
 
 	  //Location site_coordinates_of_block = i_block_coordinates * mLatticeData->GetBlockSize();
-	  Vector3D<site_t>siteLocOnBlock;
+	  util::Vector3D<site_t>siteLocOnBlock;
 
 	  for (siteLocOnBlock.x = 0; siteLocOnBlock.x < mLatticeData->GetBlockSize(); siteLocOnBlock.x++)
 	  {
@@ -423,8 +423,8 @@ namespace hemelb
 	}
 	
 	
-	Vector3D<site_t> GetSiteCoordinatesOfBlock
-	  (site_t iClusterId, Vector3D<site_t> offset);
+	util::Vector3D<site_t> GetSiteCoordinatesOfBlock
+	  (site_t iClusterId, util::Vector3D<site_t> offset);
 
 	SiteData_t* GetDataPointerClusterVoxelSiteId(site_t iClusterVortexSiteId)
 	{
@@ -454,7 +454,7 @@ namespace hemelb
 	BlockTraverserWithVisitedBlockTracker
 	  mBlockTraverser;
 
-	std::vector<Vector3D<site_t> > mClusterBlockMins;
+	std::vector<util::Vector3D<site_t> > mClusterBlockMins;
 
 	//This allows a cluster voxel site ID (as part of the 1D structure for)
 	//storing sites to be mapped to the data stored in the 3D structure
@@ -465,39 +465,39 @@ namespace hemelb
 
 	static const short int NOTASSIGNEDTOCLUSTER = -1;
 
-	static const Vector3D<site_t> mNeighbours[26];
+	static const util::Vector3D<site_t> mNeighbours[26];
       };
       
       template <typename ClusterType> 
-	const Vector3D<site_t> ClusterBuilder<ClusterType>::mNeighbours[26] =
+	const util::Vector3D<site_t> ClusterBuilder<ClusterType>::mNeighbours[26] =
 	{
-	  Vector3D<site_t>(-1, -1, -1),
-	  Vector3D<site_t>(-1, -1, 0),
-	  Vector3D<site_t>(-1, -1, 1),
-	  Vector3D<site_t>(-1, 0, -1),
-	  Vector3D<site_t>(-1, 0, 0),
-	  Vector3D<site_t>(-1, 0, 1),
-	  Vector3D<site_t>(-1, 1, -1),
-	  Vector3D<site_t>(-1, 1, 0),
-	  Vector3D<site_t>(-1, 1, 1),
-	  Vector3D<site_t>( 0, -1, -1),
-	  Vector3D<site_t>( 0, -1, 0),
-	  Vector3D<site_t>( 0, -1, 1),
-	  Vector3D<site_t>( 0, 0, -1),
+	  util::Vector3D<site_t>(-1, -1, -1),
+	  util::Vector3D<site_t>(-1, -1, 0),
+	  util::Vector3D<site_t>(-1, -1, 1),
+	  util::Vector3D<site_t>(-1, 0, -1),
+	  util::Vector3D<site_t>(-1, 0, 0),
+	  util::Vector3D<site_t>(-1, 0, 1),
+	  util::Vector3D<site_t>(-1, 1, -1),
+	  util::Vector3D<site_t>(-1, 1, 0),
+	  util::Vector3D<site_t>(-1, 1, 1),
+	  util::Vector3D<site_t>( 0, -1, -1),
+	  util::Vector3D<site_t>( 0, -1, 0),
+	  util::Vector3D<site_t>( 0, -1, 1),
+	  util::Vector3D<site_t>( 0, 0, -1),
 	  // 0 0 0 is same site
-	  Vector3D<site_t>( 0, 0, 1),
-	  Vector3D<site_t>( 0, 1, -1),
-	  Vector3D<site_t>( 0, 1, 0),
-	  Vector3D<site_t>( 0, 1, 1),
-	  Vector3D<site_t>( 1, -1, -1),
-	  Vector3D<site_t>( 1, -1, 0),
-	  Vector3D<site_t>( 1, -1, 1),
-	  Vector3D<site_t>( 1, 0, -1),
-	  Vector3D<site_t>( 1, 0, 0),
-	  Vector3D<site_t>( 1, 0, 1),
-	  Vector3D<site_t>( 1, 1, -1),
-	  Vector3D<site_t>( 1, 1, 0),
-	  Vector3D<site_t>( 1, 1, 1)
+	  util::Vector3D<site_t>( 0, 0, 1),
+	  util::Vector3D<site_t>( 0, 1, -1),
+	  util::Vector3D<site_t>( 0, 1, 0),
+	  util::Vector3D<site_t>( 0, 1, 1),
+	  util::Vector3D<site_t>( 1, -1, -1),
+	  util::Vector3D<site_t>( 1, -1, 0),
+	  util::Vector3D<site_t>( 1, -1, 1),
+	  util::Vector3D<site_t>( 1, 0, -1),
+	  util::Vector3D<site_t>( 1, 0, 0),
+	  util::Vector3D<site_t>( 1, 0, 1),
+	  util::Vector3D<site_t>( 1, 1, -1),
+	  util::Vector3D<site_t>( 1, 1, 0),
+	  util::Vector3D<site_t>( 1, 1, 1)
 	}; 
       
     }

@@ -5,7 +5,7 @@
 #include "vis/DomainStats.h"
 #include "vis/rayTracer/RayData.h"
 #include "vis/VisSettings.h"
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 #include "lb/LbmParameters.h"
 
 namespace hemelb
@@ -22,7 +22,7 @@ namespace hemelb
 	
         //Used to process the ray data for a normal (non-wall) fluid site
 	void DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
-					    const Vector3D<float>& iRayDirection,
+					    const util::Vector3D<float>& iRayDirection,
 					    const float iRayLengthInVoxel,
 					    const DomainStats& iDomainStats,
 					    const VisSettings& iVisSettings);
@@ -31,7 +31,7 @@ namespace hemelb
 
 	//Used to process the ray data for wall site
 	void DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
-				     const Vector3D<float>& iRayDirection,
+				     const util::Vector3D<float>& iRayDirection,
 				     const float iRayLengthInVoxel,
 				     const DomainStats& iDomainStats,
 				     const VisSettings& iVisSettings,
