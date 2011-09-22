@@ -53,7 +53,6 @@ namespace hemelb
 	    ( iSiteData, 
 	      iRayDirection,
 	      iRayLengthInVoxel,
-	      iDomainStats,
 	      iVisSettings );
 	}
 
@@ -79,7 +78,6 @@ namespace hemelb
 	    ( iSiteData, 
 	      iRayDirection,
 	      iRayLengthInVoxel,
-	      iDomainStats,
 	      iVisSettings,
 	      iWallNormal);
 	}
@@ -108,22 +106,26 @@ namespace hemelb
 
 	// Obtains the colour representing the velocity ray trace
 	void GetVelocityColour(unsigned char oColour[3], 
-			       const VisSettings& iVisSettings) const
+			       const VisSettings& iVisSettings,
+			       const DomainStats& iDomainStats) const
 	{
 	  return static_cast<const Derived*>(this)->
 	    DoGetVelocityColour(oColour, 
 				GetLengthBeforeRayFirstCluster() /
-				iVisSettings.maximumDrawDistance);
+				iVisSettings.maximumDrawDistance,
+				iDomainStats);
 	}
 	
 	// Obtains the colour representing the stress ray trace
 	void GetStressColour(unsigned char oColour[3],
-			     const VisSettings& iVisSettings) const
+			     const VisSettings& iVisSettings,
+			     const DomainStats& iDomainStats) const
 	{
 	  return static_cast<const Derived*>(this)->
 	    DoGetStressColour(oColour, 
 			      GetLengthBeforeRayFirstCluster() /
-			      iVisSettings.maximumDrawDistance);
+			      iVisSettings.maximumDrawDistance,
+			      iDomainStats);
 	}
 
 	// Whether or not the data contained in the instance has valid

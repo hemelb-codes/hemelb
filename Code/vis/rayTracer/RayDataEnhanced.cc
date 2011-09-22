@@ -16,6 +16,24 @@ namespace hemelb
       const float RayDataEnhanced<DepthCuing::MIST>::mLowestLightness = 0.3F;
 
       template <>
+      const float RayDataEnhanced<DepthCuing::MIST>::mVelocityHueMin = 240.0F;
+     
+      template <>
+      const float RayDataEnhanced<DepthCuing::MIST>::mVelocityHueRange = 120.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::MIST>::mVelocitySaturation = 1.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::MIST>::mStressHue = 230.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::MIST>::mStressSaturationRange = 0.5F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::MIST>::mStressSaturationMin = 0.5F;    
+     
+      template <>
       const float RayDataEnhanced<DepthCuing::NONE>::mSurfaceNormalLightnessRange = 0.5F;
 
       template <>
@@ -23,6 +41,24 @@ namespace hemelb
       
       template <>
       const float RayDataEnhanced<DepthCuing::NONE>::mLowestLightness = 0.3F;
+      
+      template <>
+      const float RayDataEnhanced<DepthCuing::NONE>::mVelocityHueMin = 240.0F;
+     
+      template <>
+      const float RayDataEnhanced<DepthCuing::NONE>::mVelocityHueRange = 120.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::NONE>::mVelocitySaturation = 1.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::NONE>::mStressHue = 230.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::NONE>::mStressSaturationRange = 0.5F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::NONE>::mStressSaturationMin = 0.5F;    
 
       template <>
       const float RayDataEnhanced<DepthCuing::DARKNESS>::mSurfaceNormalLightnessRange = 0.3F;
@@ -32,6 +68,24 @@ namespace hemelb
       
       template <>
       const float RayDataEnhanced<DepthCuing::DARKNESS>::mLowestLightness = 0.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::DARKNESS>::mVelocityHueMin = 240.0F;
+     
+      template <>
+      const float RayDataEnhanced<DepthCuing::DARKNESS>::mVelocityHueRange = 120.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::DARKNESS>::mVelocitySaturation = 1.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::DARKNESS>::mStressHue = 230.0F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::DARKNESS>::mStressSaturationRange = 0.5F;
+
+      template <>
+      const float RayDataEnhanced<DepthCuing::DARKNESS>::mStressSaturationMin = 0.5F;    
     }
   }
 

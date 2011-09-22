@@ -23,17 +23,12 @@ namespace hemelb
 	void DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
 					    const util::Vector3D<float>& iRayDirection,
 					    const float iRayLengthInVoxel,
-					    const DomainStats& iDomainStats,
 					    const VisSettings& iVisSettings);
-
-        // Domain States and VisSettings are passed as references every time
-	// since references/pointers can't be meaningly transfered over MPI
-
+      
 	// Used to process the ray data for wall site
 	void DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
 				     const util::Vector3D<float>& iRayDirection,
 				     const float iRayLengthInVoxel,
-				     const DomainStats& iDomainStats,
 				     const VisSettings& iVisSettings,
 				     const double* iWallNormal);
 	
@@ -42,11 +37,18 @@ namespace hemelb
 	void DoMergeIn(const RayDataNormal& iOtherRayData,
 		       const VisSettings& iVisSettings);
 
-	// Obtains the colour representing the velocity ray trace
-	void DoGetVelocityColour(unsigned char oColour[3]) const;
+	//Obtains the colour representing the velocity ray trace
+	void DoGetVelocityColour(unsigned char oColour[3],
+				 const float iNormalisedDistanceToFirstCluster,
+	                         const DomainStats& iDomainStats) const;
  
 	// Obtains the colour representing the stress ray trace
-	void DoGetStressColour(unsigned char oColour[3]) const;
+	void DoGetStressColour(unsigned char oColour[3],
+			       const float iNormalisedDistanceToFirstCluster,
+			       const DomainStats& iDomainStats) const;
+	
+        // We need this because RayDataNormal uses it for every voxel update
+	static const DomainStats* mDomainStats;
 
       private:
 	void UpdateVelocityColour(float iDt, const float iPalette[3]);

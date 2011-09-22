@@ -28,7 +28,6 @@ namespace hemelb
       void RayDataNormal::DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
 							 const util::Vector3D<float>& iRayDirection,
 							 const float iRayLengthInVoxel,
-							 const DomainStats& iDomainStats,
 							 const VisSettings& iVisSettings)
       {
 	assert(iSiteData.GetDensity() >= 0.0F);
@@ -37,7 +36,7 @@ namespace hemelb
 
 	// update the volume rendering of the velocity flow field
 	ColPixel<RayDataNormal>::PickColour(iSiteData.GetVelocity()
-					    * (float) iDomainStats.velocity_threshold_max_inv,
+					    * (float) mDomainStats->velocity_threshold_max_inv,
 					    lPalette);
 
 	UpdateVelocityColour(iRayLengthInVoxel, lPalette);
@@ -46,7 +45,7 @@ namespace hemelb
 	{
 	  // update the volume rendering of the von Mises stress flow field
 	  float lScaledStress = iSiteData.GetStress()
-	    * (float) iDomainStats.stress_threshold_max_inv;
+	    * (float) mDomainStats->stress_threshold_max_inv;
 
 	  ColPixel<RayDataNormal>::PickColour(lScaledStress, lPalette);
 
@@ -57,18 +56,18 @@ namespace hemelb
       void RayDataNormal::DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
 						  const util::Vector3D<float>& iRayDirection,
 						  const float iRayLengthInVoxel,
-						  const DomainStats& iDomainStats,
 						  const VisSettings& iVisSettings,
 						  const double* iWallNormal)
       {
 	DoUpdateDataForNormalFluidSite(iSiteData,
 				       iRayDirection,
 				       iRayLengthInVoxel,
-				       iDomainStats,
 				       iVisSettings);
       }
       
-      void RayDataNormal::DoGetVelocityColour(unsigned char oColour[3]) const
+      void RayDataNormal::DoGetVelocityColour(unsigned char oColour[3],
+					      const float iNormalisedDistanceToFirstCluster,
+					      const DomainStats& iDomainStats) const
       {
 	oColour[0] = static_cast <unsigned char> ((mVelR*255.0F) / GetCumulativeLengthInFluid());
 	oColour[1] = static_cast <unsigned char> ((mVelG*255.0F) / GetCumulativeLengthInFluid());
@@ -76,7 +75,9 @@ namespace hemelb
       }
     
 
-      void RayDataNormal::DoGetStressColour(unsigned char oColour[3]) const
+      void RayDataNormal::DoGetStressColour(unsigned char oColour[3],
+					    const float iNormalisedDistanceToFirstCluster,
+					    const DomainStats& iDomainStats) const
       {
 	oColour[0] = static_cast<unsigned char> ((mStressR*255.0F) / GetCumulativeLengthInFluid());
 	oColour[1] = static_cast<unsigned char> ((mStressG*255.0F) / GetCumulativeLengthInFluid());
@@ -112,6 +113,8 @@ namespace hemelb
 	mStressG += iDt * iPalette[1];
 	mStressB += iDt * iPalette[2];
       }     
+
+      const DomainStats* RayDataNormal::mDomainStats = NULL;
     }
   }
 
