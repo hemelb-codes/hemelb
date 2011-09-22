@@ -13,6 +13,7 @@ namespace std {
 %begin %{
 #include <Python.h>
 #include "Iolet.h"
+#include <stddef.h> 
 %}
 
 %{
