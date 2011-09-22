@@ -33,8 +33,6 @@ namespace hemelb
         inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii]->Normal.y;
         inlet_normal[3 * ii + 2] = mSimConfig->Inlets[ii]->Normal.z;
       }
-
-      RecalculateTauViscosityOmega();
     }
 
     void LBM::WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name)
@@ -201,12 +199,12 @@ namespace hemelb
                                                   f_neq,
                                                   &mLatDat->GetNormalToWall(my_site_id)[0],
                                                   stress,
-                                                  mParams.StressParameter);
+                                                  mParams.StressParameter());
                     }
                   }
                   else
                   {
-                    D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.StressParameter);
+                    D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.StressParameter());
                   }
 
                   vx /= density;

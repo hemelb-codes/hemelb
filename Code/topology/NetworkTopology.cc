@@ -7,6 +7,7 @@ namespace hemelb
   namespace topology
   {
     NetworkTopology NetworkTopology::instance;
+    bool NetworkTopology::initialised = false;
 
     // Must be specified to prevent the default constructor being public.
     NetworkTopology::NetworkTopology()
@@ -21,28 +22,36 @@ namespace hemelb
 
     void NetworkTopology::Init(int * argCount, char *** argList, bool* oSuccess)
     {
-      MPI_Init(argCount, argList);
+      if (!initialised)
+      {
+        initialised = true;
 
-      int tempSize = 0, tempRank = 0;
-      MPI_Comm_size(MPI_COMM_WORLD, &tempSize);
-      MPI_Comm_rank(MPI_COMM_WORLD, &tempRank);
+        MPI_Init(argCount, argList);
 
-      processorCount = (proc_t) tempSize;
-      localRank = (proc_t) tempRank;
+        int tempSize = 0, tempRank = 0;
+        MPI_Comm_size(MPI_COMM_WORLD, &tempSize);
+        MPI_Comm_rank(MPI_COMM_WORLD, &tempRank);
 
-      *oSuccess = InitialiseMachineInfo();
+        processorCount = (proc_t) tempSize;
+        localRank = (proc_t) tempRank;
 
-      FluidSitesOnEachProcessor = new site_t[processorCount];
+        *oSuccess = InitialiseMachineInfo();
+
+        FluidSitesOnEachProcessor = new site_t[processorCount];
+      }
     }
 
     NetworkTopology::~NetworkTopology()
     {
-      MPI_Finalize();
+      if (initialised)
+      {
+        MPI_Finalize();
 
-      delete[] NeighbourIndexFromProcRank;
-      delete[] FluidSitesOnEachProcessor;
-      delete[] ProcCountOnEachMachine;
-      delete[] MachineIdOfEachProc;
+        delete[] NeighbourIndexFromProcRank;
+        delete[] FluidSitesOnEachProcessor;
+        delete[] ProcCountOnEachMachine;
+        delete[] MachineIdOfEachProc;
+      }
     }
 
     bool NetworkTopology::IsCurrentProcTheIOProc() const

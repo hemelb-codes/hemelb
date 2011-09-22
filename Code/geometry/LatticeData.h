@@ -150,7 +150,14 @@ namespace hemelb
         site_t GetInterCollisionCount(unsigned int collisionType) const;
         unsigned int GetCollisionType(unsigned int site_data) const;
 
-      private:
+      protected:
+        /**
+         * The protected default constructor does nothing. It exists to allow derivation from this
+         * class for the purpose of testing.
+         * @return
+         */
+        LatticeData();
+
         class LocalLatticeData
         {
           public:
@@ -169,8 +176,7 @@ namespace hemelb
 
             void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
             void SetWallNormal(site_t iSiteIndex, const double iNormal[3]);
-            void
-            SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
+            void SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
 
             void SetSharedSiteCount(site_t iSharedCount);
 
