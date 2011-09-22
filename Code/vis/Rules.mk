@@ -5,14 +5,11 @@ TARGETS := libHemeLbVis.$(LIBEXT)
 SUBDIRS := rayTracer streaklineDrawer
 
 $(TARGETS)_DEPS = $(SUBDIRS_TGTS) \
-	BlockTraverser.o \
 	ColPixelMPIDataTypes.o \
 	GlyphDrawer.o \
 	Control.o \
 	Screen.o \
-	SiteTraverser.o \
-	Viewpoint.o \
-	VolumeTraverser.o
+	Viewpoint.o 
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

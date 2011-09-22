@@ -7,13 +7,13 @@
 #include <iostream>
 #include <limits>
 
+#include "geometry/SiteTraverser.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
 #include "vis/DomainStats.h"
 #include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/ClusterTraverser.h"
 #include "vis/rayTracer/Ray.h"
-#include "vis/SiteTraverser.h"
 #include "vis/Screen.h"
 
 namespace hemelb
@@ -243,8 +243,8 @@ namespace hemelb
 	{
 	  XYCoordinates<float> lCornerProjection = mViewpoint.FlatProject(iCorner);
 
-	  XYCoordinates<float>::UpdateMinXYCoordinates(ioSubImageLowerLeft, lCornerProjection);
-	  XYCoordinates<float>::UpdateMaxXYCoordinates(ioSubImageUpperRight, lCornerProjection);
+	  ioSubImageLowerLeft.UpdatePointwiseMin(lCornerProjection);
+	  ioSubImageUpperRight.UpdatePointwiseMax(lCornerProjection);
 	}
 
 	bool SubImageOffScreen()
@@ -347,7 +347,7 @@ namespace hemelb
 	  //Work out which site we're currently in
 	  util::Vector3D<site_t> lTruncatedLocationInBlock = RoundToNearestVoxel(iLocationInBlock);
 
-	  SiteTraverser lSiteTraverser(mLatticeData);
+	  geometry::SiteTraverser lSiteTraverser(mLatticeData);
 	  lSiteTraverser.SetCurrentLocation(lTruncatedLocationInBlock);
 
 	  //In order to trace the rays through the voxels, we need to

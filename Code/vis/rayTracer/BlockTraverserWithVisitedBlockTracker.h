@@ -1,9 +1,8 @@
 #ifndef HEMELB_VIS_BLOCKTRAVERSERWITHVISITEDBLOCKTRACKER_H
 #define HEMELB_VIS_BLOCKTRAVERSERWITHVISITEDBLOCKTRACKER_H
 
-#include "vis/VolumeTraverser.h"
-#include "vis/SiteTraverser.h"
-#include "vis/BlockTraverser.h"
+#include "geometry/SiteTraverser.h"
+#include "geometry/BlockTraverser.h"
 
 namespace hemelb
 {
@@ -12,14 +11,13 @@ namespace hemelb
     namespace raytracer 
     {
       
-      // On top BlockTraverse, this class also contains 
-      // arecord
-      //of which blocks have been visited, which
+      //On top of BlockTraverser, this class also contains 
+      //a record of which blocks have been visited, which
       //is neccessary for the algoritm which uses this. No locations are automatically
       //marked visited, and methods have been created to assist with random access
       //of the lattice data as required by the algorithm
       class BlockTraverserWithVisitedBlockTracker
-	: public BlockTraverser
+	: public geometry::BlockTraverser
       {
       public:
 	BlockTraverserWithVisitedBlockTracker

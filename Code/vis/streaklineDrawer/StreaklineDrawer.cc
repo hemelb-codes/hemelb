@@ -2,10 +2,9 @@
 #include <vector>
 #include <iostream>
 
+#include "geometry/BlockTraverser.h"
+#include "geometry/SiteTraverser.h"
 #include "util/utilityFunctions.h"
-
-#include "vis/BlockTraverser.h"
-#include "vis/SiteTraverser.h"
 #include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/Control.h"
 #include "vis/ColPixel.h"

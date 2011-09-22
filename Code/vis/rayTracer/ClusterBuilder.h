@@ -10,6 +10,8 @@
  
 #include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
+#include "geometry/SiteTraverser.h"
+#include "geometry/VolumeTraverser.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
@@ -17,8 +19,6 @@
 #include "vis/rayTracer/ClusterBuilder.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/rayTracer/SiteData.h"
-#include "vis/SiteTraverser.h"
-#include "vis/VolumeTraverser.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -146,7 +146,7 @@ namespace hemelb
 
 	      //Loop through all the sites on the block, to 
 	      //update the site bounds on the cluster
-	      SiteTraverser lSiteTraverser = mBlockTraverser.GetSiteTraverser();
+	      geometry::SiteTraverser lSiteTraverser = mBlockTraverser.GetSiteTraverser();
 	      do
 	      { 
 		//If the site is not a solid
