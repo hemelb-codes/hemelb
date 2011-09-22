@@ -173,14 +173,14 @@ namespace hemelb
 			      const DomainStats& iDomainStats,
 			      const VisSettings& iVisSettings)
 	{
-	  assert(iSiteData.Density != 0.0F);
+	  assert(iSiteData.GetDensity() != 0.0F);
 	 
 	  if (GetCumulativeLengthInFluid() == 0.0F)
 	  {
 	    SetLengthBeforeRayFirstCluster(iAbsoluteDistanceFromViewpoint);
 
 	    // Keep track of the density nearest to the viewpoint
-	    SetNearestDensity((iSiteData.Density - 
+	    SetNearestDensity((iSiteData.GetDensity() - 
 			       (float) iDomainStats.density_threshold_min) *
 			      (float) iDomainStats.density_threshold_minmax_inv);
 	  
@@ -188,7 +188,7 @@ namespace hemelb
 		iVisSettings.mStressType == lb::ShearStress)
 	    {
 	      // Keep track of the stress nearest to the viewpoint
-	      SetNearestStress(iSiteData.Stress * 
+	      SetNearestStress(iSiteData.GetStress() * 
 			       static_cast<float>(iDomainStats.stress_threshold_max_inv));		
 	    }
 	  }
