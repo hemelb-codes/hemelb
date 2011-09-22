@@ -43,6 +43,9 @@ namespace hemelb
 		       const hemelb::geometry::LatticeData& iLatticeData) :
 	mViewpoint(iViewpoint), mScreen(iScreen), mDomainStats(iDomainStats), mVisSettings(iVisSettings), mLatticeData(iLatticeData)
 	{
+	  // TODO: This is absolutely horrible, but neccessary until RayDataNormal is
+	  // removed. 
+	  RayDataNormal::mDomainStats = &iDomainStats;
 	}
 
 	void RenderCluster(const ClusterType& iCluster)
