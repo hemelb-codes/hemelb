@@ -84,10 +84,18 @@ namespace hemelb
 	  float lDotProduct =
 	   iRayDirection.DotProduct(lWallNormal);
 
-	  //Scale the surface normal lightness between mParallelSurfaceAttenuation
-	  //and 1.0F
-	  mSurfaceNormalLightness *= (mParallelSurfaceAttenuation + 
-					(1.0F - mParallelSurfaceAttenuation)*fabs(lDotProduct)); 
+	  // Scale the surface normal lightness between mParallelSurfaceAttenuation
+	  // and 1.0F
+	  // Keep a copy for the special case
+	    mLastSurfaceNormalLightnessMultiplier = (mParallelSurfaceAttenuation + 
+						     (1.0F - mParallelSurfaceAttenuation)*fabs(lDotProduct)); 
+
+	    mSurfaceNormalLightness *= mLastSurfaceNormalLightnessMultiplier;
+	}
+
+	void DoProcessTangentingVessel()
+	{
+	  mSurfaceNormalLightness *= mLastSurfaceNormalLightnessMultiplier;
 	}
 	 
        	//Obtains the colour representing the velocity ray trace
@@ -226,6 +234,11 @@ namespace hemelb
 	float mVelocitySum;
 	float mStressSum;
 
+	// The last surface normal lightness multiplier
+	// is retained for the case of tangenting a vessel
+	// ie only passing through walls sites
+	// NB: Keep this last as it isn't sent over MPI
+	float mLastSurfaceNormalLightnessMultiplier;
 	
 	const static float mSurfaceNormalLightnessRange;
 	const static float mParallelSurfaceAttenuation;

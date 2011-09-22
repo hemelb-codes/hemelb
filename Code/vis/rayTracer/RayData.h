@@ -82,6 +82,11 @@ namespace hemelb
 	      iWallNormal);
 	}
 
+	void ProcessTangentingVessel()
+	{
+	  static_cast<Derived*>(this)->DoProcessTangentingVessel();
+	}
+
 	// Merges in the data from another segment of ray (from another core)
 	void MergeIn(const Derived& iOtherRayData, const VisSettings& iVisSettings)
 	{
@@ -154,6 +159,9 @@ namespace hemelb
 	{
 	  return mLengthBeforeRayFirstCluster;
 	}
+
+      protected:
+	static const float mLongestDistanceInVoxelInverse;
 
       private:
 	float mLengthBeforeRayFirstCluster;
