@@ -13,17 +13,6 @@ namespace hemelb
 {
   namespace lb
   {
-    void LBM::RecalculateTauViscosityOmega()
-    {
-      mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-          / (Cs2 * ((double) mState->GetTimeStepsPerCycle() * mLatDat->GetVoxelSize()
-              * mLatDat->GetVoxelSize()));
-
-      mParams.Omega = -1.0 / mParams.Tau;
-      mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
-      mParams.Beta = -1.0 / (2.0 * mParams.Tau); // This is just Omega / 2.0 by pure coincidence
-    }
-
     hemelb::lb::LbmParameters *LBM::GetLbmParams()
     {
       return &mParams;
@@ -33,7 +22,9 @@ namespace hemelb
              net::Net* net,
              geometry::LatticeData* latDat,
              SimulationState* simState) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
+      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
+          mParams(PULSATILE_PERIOD_s / (distribn_t) simState->GetTimeStepsPerCycle(),
+                  latDat->GetVoxelSize())
     {
       ReadParameters();
     }
@@ -366,7 +357,8 @@ namespace hemelb
     {
       mState->DoubleTimeResolution();
 
-      RecalculateTauViscosityOmega();
+      mParams.Update(PULSATILE_PERIOD_s / (distribn_t) mState->GetTimeStepsPerCycle(),
+                     mLatDat->GetVoxelSize());
 
       SetInitialConditions();
 

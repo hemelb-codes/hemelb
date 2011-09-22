@@ -18,13 +18,12 @@ namespace hemelb
     namespace raytracer
     {
       RayTracer::ClusterBuilder::ClusterBuilder(const geometry::LatticeData*& iLatticeData) :
-        mBlockTraverser(iLatticeData), mLatticeData(iLatticeData)
+          mBlockTraverser(iLatticeData), mLatticeData(iLatticeData)
 
       {
         //Each block is assigned a cluster id once it has been
         //assigned to a cluster
-        mClusterIdOfBlock = new short int[mLatticeData->GetBlockCount()];
-        for (site_t lId = 0; lId < mLatticeData->GetBlockCount(); lId++)
+        mClusterIdOfBlock = new short int[mLatticeData->GetBlockCount()];for (site_t lId = 0; lId <mLatticeData->GetBlockCount(); lId++)
         {
           mClusterIdOfBlock[lId] = NOTASSIGNEDTOCLUSTER;
         }
@@ -121,7 +120,7 @@ namespace hemelb
             do
             {
               //If the site is not a solid
-              if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)-> site_data[lSiteTraverser.GetCurrentIndex()]
+              if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->site_data[lSiteTraverser.GetCurrentIndex()]
                   != BIG_NUMBER3)
               {
                 Vector3D<site_t>::UpdateMinVector3D(lClusterSiteMin,
@@ -145,93 +144,93 @@ namespace hemelb
         AddCluster(lClusterBlockMin, lClusterBlockMax, lClusterSiteMin, lClusterSiteMax);
       }
 
-      const Vector3D<site_t> RayTracer::ClusterBuilder::mNeighbours[26] = { Vector3D<site_t> (-1,
-                                                                                              -1,
-                                                                                              -1),
-                                                                            Vector3D<site_t> (-1,
-                                                                                              -1,
-                                                                                              0),
-                                                                            Vector3D<site_t> (-1,
-                                                                                              -1,
-                                                                                              1),
+      const Vector3D<site_t> RayTracer::ClusterBuilder::mNeighbours[26] = { Vector3D<site_t>(-1,
+                                                                                             -1,
+                                                                                             -1),
+                                                                            Vector3D<site_t>(-1,
+                                                                                             -1,
+                                                                                             0),
+                                                                            Vector3D<site_t>(-1,
+                                                                                             -1,
+                                                                                             1),
 
-                                                                            Vector3D<site_t> (-1,
-                                                                                              0,
-                                                                                              -1),
-                                                                            Vector3D<site_t> (-1,
-                                                                                              0,
-                                                                                              0),
-                                                                            Vector3D<site_t> (-1,
-                                                                                              0,
-                                                                                              1),
+                                                                            Vector3D<site_t>(-1,
+                                                                                             0,
+                                                                                             -1),
+                                                                            Vector3D<site_t>(-1,
+                                                                                             0,
+                                                                                             0),
+                                                                            Vector3D<site_t>(-1,
+                                                                                             0,
+                                                                                             1),
 
-                                                                            Vector3D<site_t> (-1,
-                                                                                              1,
-                                                                                              -1),
-                                                                            Vector3D<site_t> (-1,
-                                                                                              1,
-                                                                                              0),
-                                                                            Vector3D<site_t> (-1,
-                                                                                              1,
-                                                                                              1),
+                                                                            Vector3D<site_t>(-1,
+                                                                                             1,
+                                                                                             -1),
+                                                                            Vector3D<site_t>(-1,
+                                                                                             1,
+                                                                                             0),
+                                                                            Vector3D<site_t>(-1,
+                                                                                             1,
+                                                                                             1),
 
-                                                                            Vector3D<site_t> (0,
-                                                                                              -1,
-                                                                                              -1),
-                                                                            Vector3D<site_t> (0,
-                                                                                              -1,
-                                                                                              0),
-                                                                            Vector3D<site_t> (0,
-                                                                                              -1,
-                                                                                              1),
+                                                                            Vector3D<site_t>(0,
+                                                                                             -1,
+                                                                                             -1),
+                                                                            Vector3D<site_t>(0,
+                                                                                             -1,
+                                                                                             0),
+                                                                            Vector3D<site_t>(0,
+                                                                                             -1,
+                                                                                             1),
 
-                                                                            Vector3D<site_t> (0,
-                                                                                              0,
-                                                                                              -1),
+                                                                            Vector3D<site_t>(0,
+                                                                                             0,
+                                                                                             -1),
                                                                             // 0 0 0 is same site
-                                                                            Vector3D<site_t> (0,
-                                                                                              0,
-                                                                                              1),
+                                                                            Vector3D<site_t>(0,
+                                                                                             0,
+                                                                                             1),
 
-                                                                            Vector3D<site_t> (0,
-                                                                                              1,
-                                                                                              -1),
-                                                                            Vector3D<site_t> (0,
-                                                                                              1,
-                                                                                              0),
-                                                                            Vector3D<site_t> (0,
-                                                                                              1,
-                                                                                              1),
+                                                                            Vector3D<site_t>(0,
+                                                                                             1,
+                                                                                             -1),
+                                                                            Vector3D<site_t>(0,
+                                                                                             1,
+                                                                                             0),
+                                                                            Vector3D<site_t>(0,
+                                                                                             1,
+                                                                                             1),
 
-                                                                            Vector3D<site_t> (1,
-                                                                                              -1,
-                                                                                              -1),
-                                                                            Vector3D<site_t> (1,
-                                                                                              -1,
-                                                                                              0),
-                                                                            Vector3D<site_t> (1,
-                                                                                              -1,
-                                                                                              1),
+                                                                            Vector3D<site_t>(1,
+                                                                                             -1,
+                                                                                             -1),
+                                                                            Vector3D<site_t>(1,
+                                                                                             -1,
+                                                                                             0),
+                                                                            Vector3D<site_t>(1,
+                                                                                             -1,
+                                                                                             1),
 
-                                                                            Vector3D<site_t> (1,
-                                                                                              0,
-                                                                                              -1),
-                                                                            Vector3D<site_t> (1,
-                                                                                              0,
-                                                                                              0),
-                                                                            Vector3D<site_t> (1,
-                                                                                              0,
-                                                                                              1),
+                                                                            Vector3D<site_t>(1,
+                                                                                             0,
+                                                                                             -1),
+                                                                            Vector3D<site_t>(1,
+                                                                                             0,
+                                                                                             0),
+                                                                            Vector3D<site_t>(1,
+                                                                                             0,
+                                                                                             1),
 
-                                                                            Vector3D<site_t> (1,
-                                                                                              1,
-                                                                                              -1),
-                                                                            Vector3D<site_t> (1,
-                                                                                              1,
-                                                                                              0),
-                                                                            Vector3D<site_t> (1,
-                                                                                              1,
-                                                                                              1) };
+                                                                            Vector3D<site_t>(1,
+                                                                                             1,
+                                                                                             -1),
+                                                                            Vector3D<site_t>(1,
+                                                                                             1,
+                                                                                             0),
+                                                                            Vector3D<site_t>(1,
+                                                                                             1,
+                                                                                             1) };
 
       void RayTracer::ClusterBuilder::AddNeighbouringBlocks(Vector3D<site_t> iCurrentLocation,
                                                             std::stack<Vector3D<site_t> >& oBlocksToProcess)
@@ -261,7 +260,7 @@ namespace hemelb
 
       bool RayTracer::ClusterBuilder::AreSitesAssignedToLocalProcessorRankInBlock(geometry::LatticeData::BlockData * iBlock)
       {
-        if (iBlock-> ProcessorRankForEachBlockSite == NULL)
+        if (iBlock->ProcessorRankForEachBlockSite == NULL)
         {
           return false;
         }
@@ -284,43 +283,41 @@ namespace hemelb
       {
         //The friendly locations must be turned into a format usable by the ray tracer
         Cluster lNewCluster;
-        lNewCluster.minBlock.x = (float) (iClusterBlockMin.x * mLatticeData->GetBlockSize()) - 0.5F
-            * (float) mLatticeData->GetXSiteCount();
-        lNewCluster.minBlock.y = (float) (iClusterBlockMin.y * mLatticeData->GetBlockSize()) - 0.5F
-            * (float) mLatticeData->GetYSiteCount();
-        lNewCluster.minBlock.z = (float) (iClusterBlockMin.z * mLatticeData->GetBlockSize()) - 0.5F
-            * (float) mLatticeData->GetZSiteCount();
+        lNewCluster.minBlock.x = (float) (iClusterBlockMin.x * mLatticeData->GetBlockSize())
+            - 0.5F * (float) mLatticeData->GetXSiteCount();
+        lNewCluster.minBlock.y = (float) (iClusterBlockMin.y * mLatticeData->GetBlockSize())
+            - 0.5F * (float) mLatticeData->GetYSiteCount();
+        lNewCluster.minBlock.z = (float) (iClusterBlockMin.z * mLatticeData->GetBlockSize())
+            - 0.5F * (float) mLatticeData->GetZSiteCount();
 
-        lNewCluster.blocksX = static_cast<unsigned short> (1 + iClusterBlockMax.x
-            - iClusterBlockMin.x);
-        lNewCluster.blocksY = static_cast<unsigned short> (1 + iClusterBlockMax.y
-            - iClusterBlockMin.y);
-        lNewCluster.blocksZ = static_cast<unsigned short> (1 + iClusterBlockMax.z
-            - iClusterBlockMin.z);
+        lNewCluster.blocksX = static_cast<unsigned short>(1 + iClusterBlockMax.x
+            - iClusterBlockMin.x);lNewCluster
+        .blocksY = static_cast<unsigned short>(1 + iClusterBlockMax.y - iClusterBlockMin.y);lNewCluster
+        .blocksZ = static_cast<unsigned short>(1 + iClusterBlockMax.z - iClusterBlockMin.z);
 
-        lNewCluster.minSite = Vector3D<float> (iClusterVoxelMin)
-            - Vector3D<float> ((float) mLatticeData->GetXSiteCount(),
-                               (float) mLatticeData->GetYSiteCount(),
-                               (float) mLatticeData->GetZSiteCount()) * 0.5F;
+lNewCluster        .minSite = Vector3D<float>(iClusterVoxelMin)
+            - Vector3D<float>((float) mLatticeData->GetXSiteCount(),
+                              (float) mLatticeData->GetYSiteCount(),
+                              (float) mLatticeData->GetZSiteCount()) * 0.5F;
 
-        lNewCluster.maxSite = Vector3D<float> (iClusterVoxelMax + Vector3D<site_t> (1)) - Vector3D<
-            float> (0.5F * (float) mLatticeData->GetXSiteCount(),
-                    0.5F * (float) mLatticeData->GetYSiteCount(),
-                    0.5F * (float) mLatticeData->GetZSiteCount());
+        lNewCluster.maxSite = Vector3D<float>(iClusterVoxelMax + Vector3D<site_t>(1))
+            - Vector3D<float>(0.5F * (float) mLatticeData->GetXSiteCount(),
+                              0.5F * (float) mLatticeData->GetYSiteCount(),
+                              0.5F * (float) mLatticeData->GetZSiteCount());
 
-        hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::OnePerCore>("Found cluster: %f, %f, %f, %hu, %hu, %hu, %f, %f, %f, %f, %f, %f",
-                                                                             lNewCluster.minBlock.x,
-                                                                             lNewCluster.minBlock.y,
-                                                                             lNewCluster.minBlock.z,
-                                                                             lNewCluster.blocksX,
-                                                                             lNewCluster.blocksY,
-                                                                             lNewCluster.blocksZ,
-                                                                             lNewCluster.minSite.x,
-                                                                             lNewCluster.minSite.y,
-                                                                             lNewCluster.minSite.z,
-                                                                             lNewCluster.maxSite.x,
-                                                                             lNewCluster.maxSite.y,
-                                                                             lNewCluster.maxSite.z);
+        hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Found cluster: %f, %f, %f, %hu, %hu, %hu, %f, %f, %f, %f, %f, %f",
+                                                                              lNewCluster.minBlock.x,
+                                                                              lNewCluster.minBlock.y,
+                                                                              lNewCluster.minBlock.z,
+                                                                              lNewCluster.blocksX,
+                                                                              lNewCluster.blocksY,
+                                                                              lNewCluster.blocksZ,
+                                                                              lNewCluster.minSite.x,
+                                                                              lNewCluster.minSite.y,
+                                                                              lNewCluster.minSite.z,
+                                                                              lNewCluster.maxSite.x,
+                                                                              lNewCluster.maxSite.y,
+                                                                              lNewCluster.maxSite.z);
 
         hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Cluster min:  %u, %u, %u ",
                                                                               (unsigned int) iClusterBlockMin.x,
@@ -354,7 +351,7 @@ namespace hemelb
             {
               ++lBlockNum;
 
-              Vector3D<site_t> block_coordinates = Vector3D<site_t> (i, j, k)
+              Vector3D<site_t> block_coordinates = Vector3D<site_t>(i, j, k)
                   + mClusterBlockMins[iClusterId];
               site_t block_id = mLatticeData->GetBlockIdFromBlockCoords(block_coordinates.x,
                                                                         block_coordinates.y,
@@ -380,7 +377,6 @@ namespace hemelb
           } // for j
         } // for i
 
-
       }
 
       void RayTracer::ClusterBuilder::UpdateSiteData(geometry::LatticeData::BlockData * lBlock,
@@ -393,12 +389,15 @@ namespace hemelb
         //Location site_coordinates_of_block = i_block_coordinates * mLatticeData->GetBlockSize();
         Vector3D<site_t> siteLocOnBlock;
 
-        for (siteLocOnBlock.x = 0; siteLocOnBlock.x < mLatticeData->GetBlockSize(); siteLocOnBlock.x++)
-        {
-          for (siteLocOnBlock.y = 0; siteLocOnBlock.y < mLatticeData->GetBlockSize(); siteLocOnBlock.y++)
-          {
-            for (siteLocOnBlock.z = 0; siteLocOnBlock.z < mLatticeData->GetBlockSize(); siteLocOnBlock.z++)
+        for (siteLocOnBlock.x = 0; siteLocOnBlock.x < mLatticeData->GetBlockSize();
+            siteLocOnBlock.x++)
             {
+          for (siteLocOnBlock.y = 0; siteLocOnBlock.y < mLatticeData->GetBlockSize();
+              siteLocOnBlock.y++)
+              {
+            for (siteLocOnBlock.z = 0; siteLocOnBlock.z < mLatticeData->GetBlockSize();
+                siteLocOnBlock.z++)
+                {
               ++l_site_id;
 
               UpdateSiteDataAtSite(lBlock, iBlockNum, iClusterId, l_site_id);

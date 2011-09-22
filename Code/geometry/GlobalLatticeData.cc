@@ -111,7 +111,7 @@ namespace hemelb
 
     bool LatticeData::GlobalLatticeData::IsValidLatticeSite(site_t i, site_t j, site_t k) const
     {
-      return i < mSitesX && j < mSitesY && k < mSitesZ;
+      return i >= 0 && j >= 0 && k >= 0 && i < mSitesX && j < mSitesY && k < mSitesZ;
     }
 
     LatticeData::GlobalLatticeData::~GlobalLatticeData()

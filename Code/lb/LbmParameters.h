@@ -1,5 +1,8 @@
-#ifndef HEMELB_LB_LBMCONFIG_H
-#define HEMELB_LB_LBMCONFIG_H
+#ifndef HEMELB_LB_LBMPARAMETERS_H
+#define HEMELB_LB_LBMPARAMETERS_H
+
+#include <cmath>
+#include "constants.h"
 
 namespace hemelb
 {
@@ -14,13 +17,51 @@ namespace hemelb
 
     struct LbmParameters
     {
-        double Omega;
-        double Tau;
-        double StressParameter;
-        double Beta;  // Viscous dissipation in ELBM
+      public:
+        LbmParameters(distribn_t timeStepLength, distribn_t voxelSize)
+        {
+          Update(timeStepLength, voxelSize);
+        }
+
+        void Update(distribn_t timeStepLength, distribn_t voxelSize)
+        {
+          tau = 0.5 + (timeStepLength * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / (Cs2
+              * voxelSize * voxelSize);
+
+          omega = -1.0 / tau;
+          stressParameter = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
+          beta = -1.0 / (2.0 * tau);
+        }
+
+        distribn_t Omega() const
+        {
+          return omega;
+        }
+
+        distribn_t Tau() const
+        {
+          return tau;
+        }
+
+        distribn_t StressParameter() const
+        {
+          return stressParameter;
+        }
+
+        distribn_t Beta() const
+        {
+          return beta;
+        }
+
         StressTypes StressType;
+
+      private:
+        distribn_t omega;
+        distribn_t tau;
+        distribn_t stressParameter;
+        distribn_t beta; // Viscous dissipation in ELBM
     };
   }
 }
 
-#endif //HEMELB_LB_LBMCONFIG_H
+#endif //HEMELB_LB_LBMPARAMETERS_H
