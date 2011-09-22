@@ -392,7 +392,7 @@ namespace hemelb
 		iCluster.GetSiteData(iBlockNumber,
 				     lSiteTraverser.GetCurrentIndex());
 	      
-	      if(lSiteData->Density >= 0.0F) // Ensure fluid site
+	      if(lSiteData->GetDensity() >= 0.0F) // Ensure fluid site
 	      {
 
 		const double* lWallData = iCluster.GetWallData
