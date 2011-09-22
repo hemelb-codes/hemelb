@@ -1,9 +1,7 @@
-#ifndef HEMELB_VIS_RAYDATA_H
-#define HEMELB_VIS_RAYDATA_H
+#ifndef HEMELB_VIS_RAYTRACER_RAYDATA_H
+#define HEMELB_VIS_RAYTRACER_RAYDATA_H
 
-//#define NDEBUG
 #include "assert.h"
-
 
 #include "constants.h"
 #include "mpiInclude.h"
@@ -19,25 +17,24 @@ namespace hemelb
   {
     namespace raytracer
     {
-      //The abstract base type for RayData, using the CRTP pattern
-      //Contains functionality common to all derived types
+      /**
+       * The abstract base type for RayData, using the CRTP pattern
+       * Contains functionality common to all derived types
+       */
+      
       template<typename Derived>
 	class RayData
       {
       public:
 	RayData()
 	{
-	  //A cheap way of indicating no ray data
+	  // A cheap way of indicating no ray data
 	  mCumulativeLengthInFluid = 0.0F;
-	
-	  mStressAtNearestPoint = NO_VALUE_F;
-	  mDensityAtNearestPoint = NO_VALUE_F;
-	  mLengthBeforeRayFirstCluster = NO_VALUE_F;
 	}
 
-	//Used to process the ray data for a normal (non-wall) fluid site
-	//Cals the method common to all ray data processing classes 
-	//and then the derived class method
+	// Used to process the ray data for a normal (non-wall) fluid site
+	// Calls the method common to all ray data processing classes 
+	// and then the derived class method
 	void UpdateDataForNormalFluidSite(const raytracer::SiteData_t& iSiteData,
 					  const util::Vector3D<float>& iRayDirection,
 					  const float iRayLengthInVoxel,
@@ -45,7 +42,7 @@ namespace hemelb
 					  const DomainStats& iDomainStats,
 					  const VisSettings& iVisSettings)
 	{
-	  UpdateDataCommon(iSiteData,
+	  UpdateRayDataCommon(iSiteData,
 			   iRayDirection,
 			   iRayLengthInVoxel,
 			   iAbsoluteDistanceFromViewpoint,
@@ -60,7 +57,7 @@ namespace hemelb
 	      iVisSettings );
 	}
 
-	//Processes the ray data for a normal (non wall) fluid site
+	// Processes the ray data for a normal (non wall) fluid site
 	void UpdateDataForWallSite(const raytracer::SiteData_t& iSiteData,
 				   const util::Vector3D<float>& iRayDirection,
 				   const float iRayLengthInVoxel,
@@ -71,7 +68,7 @@ namespace hemelb
 	{
 	  assert(iWallNormal != NULL);
 
-	  UpdateDataCommon(iSiteData,
+	  UpdateRayDataCommon(iSiteData,
 			   iRayDirection,
 			   iRayLengthInVoxel,
 			   iAbsoluteDistanceFromViewpoint,
@@ -87,17 +84,17 @@ namespace hemelb
 	      iWallNormal);
 	}
 
-	//Merges in the data from another segment of ray (from another core)
+	// Merges in the data from another segment of ray (from another core)
 	void MergeIn(const Derived& iOtherRayData, const VisSettings& iVisSettings)
 	{
 	  // Carry out the merging specific to the derived class
 	  static_cast<Derived*>(this)->DoMergeIn(iOtherRayData, iVisSettings);
 
-	  ///Sum length in fluid
+	  // Sum length in fluid
 	  SetCumulativeLengthInFluid(
 	    GetCumulativeLengthInFluid() + iOtherRayData.GetCumulativeLengthInFluid());
 
-	  //Update data relating to site nearest to viewpoint
+	  // Update data relating to site nearest to viewpoint
 	  if (iOtherRayData.GetLengthBeforeRayFirstCluster() 
 	      < this->GetLengthBeforeRayFirstCluster())
 	  {
@@ -109,7 +106,7 @@ namespace hemelb
 	  }
 	}
 
-	//Obtains the colour representing the velocity ray trace
+	// Obtains the colour representing the velocity ray trace
 	void GetVelocityColour(unsigned char oColour[3], 
 			       const VisSettings& iVisSettings) const
 	{
@@ -119,7 +116,7 @@ namespace hemelb
 				iVisSettings.maximumDrawDistance);
 	}
 	
-	//Obtains the colour representing the stress ray trace
+	// Obtains the colour representing the stress ray trace
 	void GetStressColour(unsigned char oColour[3],
 			     const VisSettings& iVisSettings) const
 	{
@@ -129,8 +126,8 @@ namespace hemelb
 			      iVisSettings.maximumDrawDistance);
 	}
 
-	//Whether or not the data contained in the instance has valid
-	//ray data, or if it has just been constructed
+	// Whether or not the data contained in the instance has valid
+	// ray data, or if it has just been constructed
 	bool ContainsRayData() const
 	{
 	  return (GetCumulativeLengthInFluid() != 0.0F);
@@ -163,10 +160,10 @@ namespace hemelb
 	float mDensityAtNearestPoint;
 	float mStressAtNearestPoint;
 
-	//Perform processing of the ray data common to all derived
-	//types, ie cumulative length in the fluid, nearest stress
-	//and density. 
-	void UpdateDataCommon(const raytracer::SiteData_t& iSiteData,
+	// Perform processing of the ray data common to all derived
+	// types, ie cumulative length in the fluid, nearest stress
+	// and density. 
+	void UpdateRayDataCommon(const raytracer::SiteData_t& iSiteData,
 			      const util::Vector3D<float>& iRayDirection,
 			      const float iRayLengthInVoxel,
 			      const float iAbsoluteDistanceFromViewpoint,
@@ -221,4 +218,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_VIS_RAYTRACERDATA_H
+#endif // HEMELB_VIS_RAYTRACER_RAYDATA_H
