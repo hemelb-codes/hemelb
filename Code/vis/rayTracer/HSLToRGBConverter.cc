@@ -1,11 +1,13 @@
-//#define NDEBUG;
 #include <assert.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits>
 
+//#include "vis/raytracer/HSLToRGBConverter.h"
 #include "HSLToRGBConverter.h"
+
 
 namespace hemelb
 {
@@ -13,11 +15,10 @@ namespace hemelb
   {
     namespace raytracer
     {
-      
       //See http://en.wikipedia.org/wiki/HSL_and_HSV for the
       //formulae used
       //TODO: Possibly replace truncation with rounding?
-      void HSLToRGBConverter::ConvertHSLToRGB
+      void HSLToRGBConverter::Convert
       ( float iHue, 
 	float iSaturation, 
 	float iLightness,
