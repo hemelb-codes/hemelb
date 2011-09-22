@@ -420,7 +420,10 @@ namespace hemelb
 					      lWallData);
 		}
 	      }
-	      
+	      else
+	      {
+		ioRay.ProcessSolidSite();
+	      }
 	    }
 
 	    //Update ray length traversed so far
