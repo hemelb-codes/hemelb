@@ -18,7 +18,12 @@ namespace hemelb
     namespace lbtests
     {
       /**
-       * Class to test the collision operators. Note that we are only testing these here, so we
+       * Class to test the collision operators. These tests are for the functions involved in
+       * calculating the post-collision values, specifically CalculatePreCollision and Collide.
+       * For each collision operator, we test that these functions return the expected values of
+       * hydrodynamic quantities and f-distribution values.
+       *
+       * Note that we are only testing collision operators here, so we
        * can assume that the kernel objects work perfectly.
        */
       class CollisionTests : public CppUnit::TestFixture

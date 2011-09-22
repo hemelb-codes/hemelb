@@ -11,6 +11,13 @@ namespace hemelb
   {
     namespace lbtests
     {
+      /**
+       * StreamerTests:
+       *
+       * This class tests the streamer implementations. We assume the collision operators are
+       * correct (as they're tested elsewhere), then compare the post-streamed values with
+       * the values we expect to have been streamed there.
+       */
       class StreamerTests : public CppUnit::TestFixture
       {
         public:
