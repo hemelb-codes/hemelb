@@ -1,14 +1,16 @@
-#ifndef HEMELB_VIS_BLOCKTRAVERSER_H
-#define HEMELB_VIS_BLOCKTRAVERSER_H
+#ifndef HEMELB_GEOMETRY_BLOCKTRAVERSER_H
+#define HEMELB_GEOMETRY_BLOCKTRAVERSER_H
 
-#include "vis/VolumeTraverser.h"
-#include "vis/SiteTraverser.h"
+#include "geometry/VolumeTraverser.h"
+#include "geometry/SiteTraverser.h"
 
 namespace hemelb
 {
-  namespace vis
+  namespace geometry
   {    
-    //BlockTraverser is used to traverse the blocks in a lattice sequentially.
+    /**
+     *BlockTraverser is used to traverse the blocks in a lattice sequentially.
+     */
     class BlockTraverser : public VolumeTraverser
     {
     public:
@@ -36,7 +38,6 @@ namespace hemelb
 
       bool IsValidLocation(util::Vector3D<site_t> block);
 
-
     protected:
       bool GoToNextBlock();
 
@@ -45,5 +46,4 @@ namespace hemelb
   }
 }
 
-
-#endif // HEMELB_VIS_BLOCKTRAVERSER_H
+#endif // HEMELB_GEOMETRY_BLOCKTRAVERSER_H

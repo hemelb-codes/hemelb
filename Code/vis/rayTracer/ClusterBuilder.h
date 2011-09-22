@@ -1,21 +1,19 @@
 #ifndef HEMELB_VIS_RAYTRACER_CLUSTERBUILDER_H
 #define HEMELB_VIS_RAYTRACER_CLUSTERBUILDER_H
 
-//#define NDEBUG
 #include <assert.h>
 #include <map>
 #include <vector>
 
 #include <iostream>
  
-#include "debug/Debugger.h"
+#include "geometry/BlockTraverserWithVisitedBlockTracker.h"
 #include "geometry/LatticeData.h"
 #include "geometry/SiteTraverser.h"
 #include "geometry/VolumeTraverser.h"
 #include "lb/LbmParameters.h"
 #include "util/utilityFunctions.h"
 #include "util/Vector3D.h"
-#include "vis/rayTracer/BlockTraverserWithVisitedBlockTracker.h"
 #include "vis/rayTracer/ClusterBuilder.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/rayTracer/SiteData.h"
@@ -449,7 +447,7 @@ namespace hemelb
 	const geometry::LatticeData* mLatticeData;
 
 
-	BlockTraverserWithVisitedBlockTracker
+	geometry::BlockTraverserWithVisitedBlockTracker
 	  mBlockTraverser;
 
 	std::vector<util::Vector3D<site_t> > mClusterBlockMins;

@@ -3,6 +3,7 @@
 
 #include "log/Logger.h"
 #include "topology/NetworkTopology.h"
+#include "geometry/BlockTraverser.h"
 #include "geometry/LatticeData.h"
 #include "util/utilityFunctions.h"
 
@@ -338,6 +339,11 @@ namespace hemelb
     LatticeData::BlockData* LatticeData::GetBlock(site_t blockNumber) const
     {
       return &globLatDat.Blocks[blockNumber];
+    }
+
+    BlockTraverser LatticeData::GetBlockTraverser() const
+    {
+      return BlockTraverser(*this);
     }
 
     distribn_t* LatticeData::GetFOld(site_t siteNumber) const

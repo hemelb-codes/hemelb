@@ -1,12 +1,16 @@
-#include "vis/rayTracer/RayTracer.h"
+#include "geometry/VolumeTraverser.h"
 
 namespace hemelb
 {
-  namespace vis 
+  namespace geometry 
   {
     VolumeTraverser::VolumeTraverser()
       : mCurrentLocation(0),
 	mCurrentNumber(0)
+    {
+    }
+
+    VolumeTraverser::~VolumeTraverser()
     {
     }
 	
@@ -48,7 +52,6 @@ namespace hemelb
       return ((iLocation.x * GetYCount() + iLocation.y) 
 	      * GetZCount()) + iLocation.z;
     }
-	    
 
     bool VolumeTraverser::TraverseOne()
     {

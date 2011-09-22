@@ -1,15 +1,19 @@
-#include "vis/rayTracer/RayTracer.h"
+#include "geometry/SiteTraverser.h"
 
 namespace hemelb
 {
-  namespace vis 
+  namespace geometry 
   {
     SiteTraverser::SiteTraverser(const geometry::LatticeData::LatticeData& iLatticeData)
       : mLatticeData(iLatticeData)
 	  
     { 	
     }
-      
+
+    SiteTraverser::~SiteTraverser()
+    {
+    }
+
     site_t SiteTraverser::GetXCount()
     {
       return GetBlockSize();

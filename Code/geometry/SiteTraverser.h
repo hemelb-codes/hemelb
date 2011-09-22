@@ -1,19 +1,23 @@
-#ifndef HEMELB_VIS_RAYTRACER_SITETRAVERSER_H
-#define HEMELB_VIS_RAYTRACER_SITETRAVERSER_H
+#ifndef HEMELB_GEOMETRY_SITETRAVERSER_H
+#define HEMELB_GEOMETRY_SITETRAVERSER_H
 
 #include "geometry/LatticeData.h"
-#include "vis/VolumeTraverser.h"
+#include "geometry/VolumeTraverser.h"
 
 namespace hemelb
 {
-  namespace vis
+  namespace geometry
   {  
-    //SiteTraverse is used to traverse the sites in a speficied block
-    //within the lattice data
+    /**
+     * SiteTraverser is used to traverse the sites in a speficied block
+     * within the lattice data
+     */
     class SiteTraverser : public VolumeTraverser
     {
     public:
       SiteTraverser(const geometry::LatticeData & iLatticeDat);
+      
+      virtual ~SiteTraverser();
 
       virtual site_t GetXCount();
 
@@ -32,4 +36,4 @@ namespace hemelb
 }
 
 
-#endif // HEMELB_VIS_RAYTRACER_SITETRAVERSER_H
+#endif // HEMELB_GEOMETRY_SITETRAVERSER_H

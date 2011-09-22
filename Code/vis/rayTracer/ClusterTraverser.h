@@ -20,6 +20,10 @@ namespace hemelb
 	{
 	}
 
+	virtual ~ClusterTraverser()
+	{
+	}
+
 	virtual site_t GetXCount()
 	{
 	  return mCluster.blocksX;
