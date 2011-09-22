@@ -17,7 +17,9 @@ namespace hemelb
     {
 
       /**
-       * Class containing tests for the functionality of the lattice-Boltzmann kernels.
+       * Class containing tests for the functionality of the lattice-Boltzmann kernels. This
+       * includes the functions for calculating hydrodynamic variables and for performing
+       * collisions.
        */
       class KernelTests : public CppUnit::TestFixture
       {
@@ -47,7 +49,7 @@ namespace hemelb
             delete lbmParams;
           }
 
-          void TestEntropic()
+          void TestEntropicCalculationsAndCollision()
           {
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
@@ -57,6 +59,12 @@ namespace hemelb
               f_original[ii] = ((float) (1 + ii)) / 10.0;
             }
 
+            /*
+             * Case 0: use the function that calculates density, velocity and
+             * f_eq.
+             * Case 1: use the function that leaves density and velocity and
+             * calculates f_eq.
+             */
             lb::kernels::HydroVars<lb::kernels::Entropic> hydroVars0(f_original);
             lb::kernels::HydroVars<lb::kernels::Entropic> hydroVars1(f_original);
 
@@ -71,9 +79,9 @@ namespace hemelb
 
             entropic->CalculateFeq(hydroVars1, 1);
 
-            // Calculate expected values.
+            // Calculate expected values in both cases.
             distribn_t expectedDensity0 = 12.0; // (sum 1 to 15) / 10
-            distribn_t expectedDensity1 = 1.0; // Unchanged
+            distribn_t expectedDensity1 = 1.0; // Should be unchanged
 
             distribn_t expectedVelocity0[3];
             LbTestsHelper::CalculateVelocity<D3Q15>(hydroVars0.f, expectedVelocity0);
@@ -81,36 +89,36 @@ namespace hemelb
 
             distribn_t expectedFEq0[D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateEntropicEqmF<D3Q15>(expectedDensity0,
-                                                            expectedVelocity0[0],
-                                                            expectedVelocity0[1],
-                                                            expectedVelocity0[2],
-                                                            expectedFEq0);
+                                                        expectedVelocity0[0],
+                                                        expectedVelocity0[1],
+                                                        expectedVelocity0[2],
+                                                        expectedFEq0);
             distribn_t expectedFEq1[D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateEntropicEqmF<D3Q15>(expectedDensity1,
-                                                            expectedVelocity1[0],
-                                                            expectedVelocity1[1],
-                                                            expectedVelocity1[2],
-                                                            expectedFEq1);
+                                                        expectedVelocity1[0],
+                                                        expectedVelocity1[1],
+                                                        expectedVelocity1[2],
+                                                        expectedFEq1);
 
-            // Now compare the expected and actual values.
+            // Now compare the expected and actual values in both cases.
             distribn_t allowedError = 1e-10;
 
             LbTestsHelper::CompareHydros(expectedDensity0,
-                                             expectedVelocity0[0],
-                                             expectedVelocity0[1],
-                                             expectedVelocity0[2],
-                                             expectedFEq0,
-                                             "Entropic, case 0",
-                                             hydroVars0,
-                                             allowedError);
+                                         expectedVelocity0[0],
+                                         expectedVelocity0[1],
+                                         expectedVelocity0[2],
+                                         expectedFEq0,
+                                         "Entropic, case 0",
+                                         hydroVars0,
+                                         allowedError);
             LbTestsHelper::CompareHydros(expectedDensity1,
-                                             expectedVelocity1[0],
-                                             expectedVelocity1[1],
-                                             expectedVelocity1[2],
-                                             expectedFEq1,
-                                             "Entropic, case 1",
-                                             hydroVars1,
-                                             allowedError);
+                                         expectedVelocity1[0],
+                                         expectedVelocity1[1],
+                                         expectedVelocity1[2],
+                                         expectedFEq1,
+                                         "Entropic, case 1",
+                                         hydroVars1,
+                                         allowedError);
 
             // Do the collision and test the result.
             distribn_t postCollision0[D3Q15::NUMVECTORS];
@@ -134,16 +142,16 @@ namespace hemelb
             distribn_t expectedPostCollision1[D3Q15::NUMVECTORS];
 
             LbTestsHelper::CalculateEntropicCollision<D3Q15>(f_original,
-                                                                 hydroVars0.f_eq,
-                                                                 lbmParams->Tau(),
-                                                                 lbmParams->Beta(),
-                                                                 expectedPostCollision0);
+                                                             hydroVars0.f_eq,
+                                                             lbmParams->Tau(),
+                                                             lbmParams->Beta(),
+                                                             expectedPostCollision0);
 
             LbTestsHelper::CalculateEntropicCollision<D3Q15>(f_original,
-                                                                 hydroVars1.f_eq,
-                                                                 lbmParams->Tau(),
-                                                                 lbmParams->Beta(),
-                                                                 expectedPostCollision1);
+                                                             hydroVars1.f_eq,
+                                                             lbmParams->Tau(),
+                                                             lbmParams->Beta(),
+                                                             expectedPostCollision1);
 
             // Compare.
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
@@ -163,7 +171,7 @@ namespace hemelb
             }
           }
 
-          void TestLBGK()
+          void TestLBGKCalculationsAndCollision()
           {
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
@@ -173,6 +181,12 @@ namespace hemelb
               f_original[ii] = ((float) (1 + ii)) / 10.0;
             }
 
+            /*
+             * Case 0: test the kernel function for calculating density, velocity
+             * and f_eq.
+             * Case 1: test the function that uses a given density and velocity, and
+             * calculates f_eq.
+             */
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars0(f_original);
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars1(f_original);
 
@@ -197,36 +211,36 @@ namespace hemelb
 
             distribn_t expectedFEq0[D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedDensity0,
-                                                        expectedVelocity0[0],
-                                                        expectedVelocity0[1],
-                                                        expectedVelocity0[2],
-                                                        expectedFEq0);
+                                                    expectedVelocity0[0],
+                                                    expectedVelocity0[1],
+                                                    expectedVelocity0[2],
+                                                    expectedFEq0);
             distribn_t expectedFEq1[D3Q15::NUMVECTORS];
             LbTestsHelper::CalculateLBGKEqmF<D3Q15>(expectedDensity1,
-                                                        expectedVelocity1[0],
-                                                        expectedVelocity1[1],
-                                                        expectedVelocity1[2],
-                                                        expectedFEq1);
+                                                    expectedVelocity1[0],
+                                                    expectedVelocity1[1],
+                                                    expectedVelocity1[2],
+                                                    expectedFEq1);
 
             // Now compare the expected and actual values.
             distribn_t allowedError = 1e-10;
 
             LbTestsHelper::CompareHydros(expectedDensity0,
-                                             expectedVelocity0[0],
-                                             expectedVelocity0[1],
-                                             expectedVelocity0[2],
-                                             expectedFEq0,
-                                             "LBGK, case 0",
-                                             hydroVars0,
-                                             allowedError);
+                                         expectedVelocity0[0],
+                                         expectedVelocity0[1],
+                                         expectedVelocity0[2],
+                                         expectedFEq0,
+                                         "LBGK, case 0",
+                                         hydroVars0,
+                                         allowedError);
             LbTestsHelper::CompareHydros(expectedDensity1,
-                                             expectedVelocity1[0],
-                                             expectedVelocity1[1],
-                                             expectedVelocity1[2],
-                                             expectedFEq1,
-                                             "LBGK, case 1",
-                                             hydroVars1,
-                                             allowedError);
+                                         expectedVelocity1[0],
+                                         expectedVelocity1[1],
+                                         expectedVelocity1[2],
+                                         expectedFEq1,
+                                         "LBGK, case 1",
+                                         hydroVars1,
+                                         allowedError);
 
             // Do the collision and test the result.
             distribn_t postCollision0[D3Q15::NUMVECTORS];
@@ -250,14 +264,14 @@ namespace hemelb
             distribn_t expectedPostCollision1[D3Q15::NUMVECTORS];
 
             LbTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
-                                                             hydroVars0.f_eq,
-                                                             lbmParams->Omega(),
-                                                             expectedPostCollision0);
+                                                         hydroVars0.f_eq,
+                                                         lbmParams->Omega(),
+                                                         expectedPostCollision0);
 
             LbTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
-                                                             hydroVars1.f_eq,
-                                                             lbmParams->Omega(),
-                                                             expectedPostCollision1);
+                                                         hydroVars1.f_eq,
+                                                         lbmParams->Omega(),
+                                                         expectedPostCollision1);
 
             // Compare.
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
