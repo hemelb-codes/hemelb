@@ -1,7 +1,6 @@
 include $(MK)/header.mk
 
-SRCS :=	BlockTraverserWithVisitedBlockTracker.cc \
-	ClusterNormal.cc \
+SRCS :=	ClusterNormal.cc \
 	ClusterWithWallNormals.cc \
 	HSLToRGBConverter.cc \
 	RayDataEnhanced.cc \

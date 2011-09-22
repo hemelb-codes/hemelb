@@ -17,6 +17,8 @@ namespace hemelb
 {
   namespace geometry
   {
+    class BlockTraverser;
+
     class LatticeData
     {
       public:
@@ -140,6 +142,7 @@ namespace hemelb
         const proc_t* GetProcIdFromGlobalCoords(site_t siteI, site_t siteJ, site_t siteK) const;
 
         BlockData* GetBlock(site_t blockNumber) const;
+	BlockTraverser GetBlockTraverser() const;
 
         distribn_t* GetFOld(site_t siteNumber) const;
         distribn_t* GetFNew(site_t siteNumber) const;

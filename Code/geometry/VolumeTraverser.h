@@ -1,19 +1,21 @@
-#ifndef HEMELB_VIS_RAYTRACER_VOLUMETRAVERSER_H
-#define HEMELB_VIS_RAYTRACER_VOLUMETRAVERSER_H
+#ifndef HEMELB_GEOMETRY_VOLUMETRAVERSER_H
+#define HEMELB_GEOMETRY_VOLUMETRAVERSER_H
 
 #include "util/Vector3D.h"
 
 namespace hemelb
 {
-  namespace vis
+  namespace geometry
   {
-    //Volume traverse is used to sequentially traverse a 
-    //3D structure maintaining the index and Location 
-    //within volume
+    /**
+     * VolumeTraverser is used to sequentially traverse a 
+     * 3D structure maintaining the index and Location 
+     * within volume
+     */
     class VolumeTraverser
     {
     public:
-      VolumeTraverser();
+      virtual ~VolumeTraverser();
 
       util::Vector3D<site_t> GetCurrentLocation();
 			
@@ -50,11 +52,12 @@ namespace hemelb
       virtual site_t GetZCount() = 0;
 	    
     protected:
+      VolumeTraverser();
+
       util::Vector3D<site_t> mCurrentLocation;
       site_t mCurrentNumber;
     };
   }
 }
 
-
-#endif // HEMELB_VIS_RAYTRACER_VOLUMETRAVERSER_H
+#endif // HEMELB_GEOMETRY_VOLUMETRAVERSER_H

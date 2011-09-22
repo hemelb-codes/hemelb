@@ -1,6 +1,7 @@
 include $(MK)/header.mk
 
 SRCS := BlockTraverser.cc \
+	BlockTraverserWithVisitedBlockTracker.cc \
 	GeometryReader.cc \
         GlobalLatticeData.cc \
         LatticeData.cc \

@@ -1,14 +1,11 @@
-//#define NDEBUG;
-#include <assert.h>
-
+#include "geometry/BlockTraverser.h"
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
-#include "vis/BlockTraverser.h"
 #include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
 {
-  namespace vis
+  namespace geometry
   {
     BlockTraverser::BlockTraverser
     (const geometry::LatticeData& iLatDat)
@@ -29,8 +26,7 @@ namespace hemelb
     util::Vector3D<site_t> BlockTraverser::GetSiteCoordinatesOfLowestSiteInCurrentBlock()
     {
       return GetCurrentLocation()*mLatticeData.GetBlockSize();
-    }
-      		
+    }	
    	    
     geometry::LatticeData::BlockData *
     BlockTraverser::GetCurrentBlockData()
