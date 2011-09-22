@@ -1,10 +1,7 @@
 #ifndef HEMELB_VIS_COLPIXEL_H
 #define HEMELB_VIS_COLPIXEL_H
 
-//#define NDEBUG
 #include <math.h>
-#include <assert.h>
-#include <iostream>
 
 #include "mpiInclude.h"
 #include "util/utilityFunctions.h"
@@ -69,9 +66,7 @@ namespace hemelb
 	// Now merge glyph data
 	// TODO - do we really need all this? 
 	// It may be cheaper to merge in all cases.
-	if (iVisSettings.mStressType != lb::ShearStress
-	    && (iVisSettings.mode == VisSettings::ISOSURFACES
-		|| iVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS))
+	if (iVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
 	{
 	  if (iOtherPixel.IsGlyph())
 	  {
@@ -227,13 +222,14 @@ namespace hemelb
 		stress_col[1] += 1.0F;
 		stress_col[2] += 1.0F;
 	      }
+	     
 	      // store wall pressure (+glyph) colour
 	      MakePixelColour(int(127.5F * density_col[0]),
 			      int(127.5F * density_col[1]),
 			      int(127.5F * density_col[2]),
 			      &rgb_data[6]);
 
-	      if (visSettings->mStressType == lb::VonMises &&
+	      if (visSettings->mStressType == lb::VonMises ||
 		  visSettings->mStressType == lb::ShearStress)
 	      {
 		// store shear stress / von Mises stress (+glyph) colour
@@ -262,8 +258,6 @@ namespace hemelb
 	//visSettings->mode == VisSettings::ISOSURFACESANDGLYPHS))
 	else if (IsStreakline())
 	{
-	  assert(visSettings->mode == VisSettings::WALLANDSTREAKLINES);
-
 	  float scaled_vel = (float) (particle_vel * iDomainStats->velocity_threshold_max_inv);
 	  float particle_col[3];
 	  PickColour(scaled_vel, particle_col);
@@ -281,7 +275,6 @@ namespace hemelb
 	}
 	else
 	{  
-	  assert(visSettings->mode == VisSettings::WALLANDSTREAKLINES);
 	  if (ContainsRayData())
 	  {
 	    // store pressure colour
@@ -332,114 +325,64 @@ namespace hemelb
       {
 	return mRayData;
       }
-
-
-/*
+	
       void SetI(unsigned int iI)
       {
-	mI = iI;
+	mI = iI | (mI & mMostSignificantBit);
       }
 
       void SetJ(unsigned int iJ)
       {
-	mJ = iJ;
+	mJ = iJ | (mJ & mMostSignificantBit);
       }	  
 	  
       unsigned int GetI() const
       {
-	return mI;
+	return mI & ~mMostSignificantBit;
       }
 
       unsigned int GetJ() const
       {
-	return mJ;
+	return mJ & ~mMostSignificantBit;
       }
 
       void SetGlyph(bool iIsGlyph)
       {
-	mIsGlyph = iIsGlyph;
+	if (iIsGlyph)
+	{
+	  mI = mI | mMostSignificantBit;
+	}
+	else
+	{
+	  mI = mI & ~mMostSignificantBit;
+	}
       }
 
-      unsigned int mIsGlyph;
 
       bool IsGlyph() const
       {
-	return mIsGlyph;
+	return mI & mMostSignificantBit;
       }
 
       void SetStreakline(bool iIsStreakline)
       {
-	mIsStreakline = iIsStreakline;
+	if (iIsStreakline)
+	{
+	  mJ = mJ | mMostSignificantBit;
+	  assert(IsStreakline());
+	}
+	else
+	{
+	  mJ = mJ & ~mMostSignificantBit;
+	  assert(!IsStreakline());
+	}
       }
-      unsigned int mIsStreakline;
+
 
       bool IsStreakline() const
       {
-	return mIsStreakline;;
-      }*/
-
-	
-  void SetI(unsigned int iI)
-  {
-  assert(!(iI & mMostSignificantBit));
-  mI = iI | (mI & mMostSignificantBit);
-  }
-
-  void SetJ(unsigned int iJ)
-  {
-  assert(!(iJ & mMostSignificantBit));
-  mJ = iJ | (mJ && mMostSignificantBit);
-  }	  
-	  
-  unsigned int GetI() const
-  {
-  return mI & ~mMostSignificantBit;
-  }
-
-  unsigned int GetJ() const
-  {
-  return mJ & ~mMostSignificantBit;
-  }
-
-  void SetGlyph(bool iIsGlyph)
-  {
-  if (iIsGlyph)
-  {
-  mI = mI | mMostSignificantBit;
-  assert(IsGlyph());
-  }
-  else
-  {
-  mI = mI & ~mMostSignificantBit;
-  assert(!IsGlyph());
-  }
-  }
-
-
-  bool IsGlyph() const
-  {
-  return mI & mMostSignificantBit;
-  }
-
-  void SetStreakline(bool iIsStreakline)
-  {
-  if (iIsStreakline)
-  {
-  mJ = mJ | mMostSignificantBit;
-  assert(IsStreakline());
-  }
-  else
-  {
-  mJ = mJ & ~mMostSignificantBit;
-  assert(!IsStreakline());
-  }
-  }
-
-
-  bool IsStreakline() const
-  {
-    return mJ & mMostSignificantBit;
-  }
+	return mJ & mMostSignificantBit;
+      }
 
       static void PickColour(float value, float colour[3])
       {
