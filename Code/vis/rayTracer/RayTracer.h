@@ -76,12 +76,12 @@ namespace hemelb
 	{
 	  assert(static_cast<site_t>(static_cast<unsigned int>(i)) == i);
 	  
-	  mClusterBuilder.GetClusterVoxelDataPointer(i)->Density =
-	    (float) density;
-	  mClusterBuilder.GetClusterVoxelDataPointer(i)->Velocity =
-	    (float) velocity;
-	  mClusterBuilder.GetClusterVoxelDataPointer(i)->Stress =
-	    (float) stress;
+	  mClusterBuilder.GetClusterVoxelDataPointer(i)->
+	    SetDensity(static_cast<float>(density));
+	  mClusterBuilder.GetClusterVoxelDataPointer(i)->
+	    SetVelocity(static_cast<float>(velocity));
+	  mClusterBuilder.GetClusterVoxelDataPointer(i)->
+	    SetStress(static_cast<float>(stress));
 	}
 
 	// Render the current state into an image.

@@ -50,7 +50,7 @@ namespace hemelb
 	{
 	  //Add the velocity multiplied by the ray length in each voxel,
 	  mVelocitySum += 
-	    iSiteData.Velocity * 
+	    iSiteData.GetVelocity() * 
 	    iRayLengthInVoxel *
 	    (float) iDomainStats.velocity_threshold_max_inv;
 	  //TODO: move iDomainStats.velocity_threshold_max_inv elsewhere
@@ -60,7 +60,7 @@ namespace hemelb
 	  if (iVisSettings.mStressType == lb::VonMises)
 	  {
 	    //Update the volume rendering of the von Mises stress flow field
-	    mStressSum = iSiteData.Stress *
+	    mStressSum = iSiteData.GetStress() *
 	      iRayLengthInVoxel *
 	      (float) iDomainStats.stress_threshold_max_inv;
 	  }

@@ -31,12 +31,13 @@ namespace hemelb
 							 const DomainStats& iDomainStats,
 							 const VisSettings& iVisSettings)
       {
-	assert(iSiteData.Density >= 0.0F);
+	assert(iSiteData.GetDensity() >= 0.0F);
 	
 	float lPalette[3];
 
 	// update the volume rendering of the velocity flow field
-	ColPixel<RayDataNormal>::PickColour(iSiteData.Velocity * (float) iDomainStats.velocity_threshold_max_inv,
+	ColPixel<RayDataNormal>::PickColour(iSiteData.GetVelocity()
+					    * (float) iDomainStats.velocity_threshold_max_inv,
 					    lPalette);
 
 	UpdateVelocityColour(iRayLengthInVoxel, lPalette);
@@ -44,7 +45,8 @@ namespace hemelb
 	if (iVisSettings.mStressType != lb::ShearStress)
 	{
 	  // update the volume rendering of the von Mises stress flow field
-	  float lScaledStress = iSiteData.Stress * (float) iDomainStats.stress_threshold_max_inv;
+	  float lScaledStress = iSiteData.GetStress()
+	    * (float) iDomainStats.stress_threshold_max_inv;
 
 	  ColPixel<RayDataNormal>::PickColour(lScaledStress, lPalette);
 
