@@ -1,8 +1,8 @@
 #ifndef HEMELB_VIS_CLUSTERTRAVERSER_H
 #define HEMELB_VIS_CLUSTERTRAVERSER_H
 
+#include "geometry/VolumeTraverser.h"
 #include "vis/rayTracer/Cluster.h"
-#include "vis/VolumeTraverser.h"
 
 namespace hemelb
 {
@@ -12,7 +12,7 @@ namespace hemelb
     {
       //ClusterTraverser is used to traverse the cluster
       template <typename ClusterType>
-      class ClusterTraverser : public VolumeTraverser
+	class ClusterTraverser : public geometry::VolumeTraverser
       {
       public:
         ClusterTraverser(const ClusterType& iCluster) :
