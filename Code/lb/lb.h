@@ -78,7 +78,6 @@ namespace hemelb
         site_t siteMins[3], siteMaxes[3];
 
       private:
-        void RecalculateTauViscosityOmega();
         void SetInitialConditions();
 
         void InitCollisions();
@@ -110,19 +109,19 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template DoStreamAndCollide<true> (iFirstIndex,
-                                                          iSiteCount,
-                                                          &mParams,
-                                                          mLatDat,
-                                                          mVisControl);
+            collision->template StreamAndCollide<true>(iFirstIndex,
+                                                       iSiteCount,
+                                                       &mParams,
+                                                       mLatDat,
+                                                       mVisControl);
           }
           else
           {
-            collision->template DoStreamAndCollide<false> (iFirstIndex,
-                                                           iSiteCount,
-                                                           &mParams,
-                                                           mLatDat,
-                                                           mVisControl);
+            collision->template StreamAndCollide<false>(iFirstIndex,
+                                                        iSiteCount,
+                                                        &mParams,
+                                                        mLatDat,
+                                                        mVisControl);
           }
         }
 

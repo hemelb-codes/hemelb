@@ -38,8 +38,10 @@ namespace hemelb
       void DoIO(TiXmlElement *iXmlNode,
                 bool iIsLoading,
                 lb::boundaries::iolets::InOutLetFile* value);
-    private:
+    protected:
       SimConfig();
+
+    private:
       void DoIO(TiXmlElement *iXmlNode, bool iIsLoading);
       void DoIO(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, long &value);
       void DoIO(TiXmlElement* iXmlNode,

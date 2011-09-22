@@ -14,8 +14,7 @@ namespace hemelb
       BoundaryComms::BoundaryComms(SimulationState* iSimState,
                                    std::vector<int> &iProcsList,
                                    bool iHasBoundary) :
-        hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList),
-            mState(iSimState)
+        hasBoundary(iHasBoundary), nProcs((int) iProcsList.size()), procsList(iProcsList)
       {
         // Only BC proc sends
         if (BoundaryValues::IsCurrentProcTheBCProc())
