@@ -2,30 +2,43 @@
 
 #include "HSLToRGBConverter.h"
 
+void TestColour( float iHue, 
+		 float iSaturation, 
+		 float iLightness,
+		 float iExpectedRed,
+		 float iExpectedGreen,
+		 float iExpectedBlue )
+{
+  std::cout << "Testing HSL " 
+	    << iHue << ", " 
+	    << iSaturation << ", "
+	    << iLightness << ": ";
+
+  unsigned char lRGB[3];
+  
+  hemelb::vis::raytracer::HSLToRGBConverter::Convert
+    (iHue, iSaturation, iLightness, lRGB);
+
+  if (iExpectedRed == lRGB[0] &&
+      iExpectedGreen == lRGB[1] &&
+      iExpectedBlue == lRGB[2])
+  {
+    std::cout << "passed" << std::endl;
+  }
+  else
+  {
+    std::cout << "failed - got "
+	      << static_cast<int>(lRGB[0]) << ", "
+	      << static_cast<int>(lRGB[1]) << ", "
+	      << static_cast<int>(lRGB[2]) << ", "
+	      << std::endl;
+  }
+}
+
 int main( int argc, const char* argv[] )
 {
-  while (1)
-  {
-    float lHue;
-    std::cout<< "Hue: " << std::endl;
-    std::cin >> lHue;
-
-    float lSaturation;
-    std::cout << "Saturation: " << std::endl;
-    std::cin >> lSaturation;
-
-    float lLightness;
-    std::cout << "Lightness: " << std::endl;
-    std::cin >> lLightness;
- 
-    unsigned char lRGB[3];
-    hemelb::vis::raytracer::HSLToRGBConverter::ConvertHSLToRGB
-      (lHue, lSaturation, lLightness, lRGB);
-
-    std::cout << " R: " << (int)lRGB[0] 
-	      << " G: " << (int)lRGB[1] 
-	      << " B: " << (int)lRGB[2] 
-	      << std::endl;
- }
-
+  TestColour(0, 0, 0, 0, 0, 0);
+  TestColour(1, 1, 1, 255, 255, 255);
+  
+  TestColour(250, 0.5, 0.5, 84, 63, 191);
 }
