@@ -23,6 +23,7 @@ namespace hemelb
 
     ScreenPixels::~ScreenPixels()
     {
+      delete[] pixels; 
     }
 
     void ScreenPixels::Reset()

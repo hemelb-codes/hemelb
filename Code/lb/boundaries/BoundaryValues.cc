@@ -71,7 +71,7 @@ namespace hemelb
 
         delete[] densityCycle;
 
-        for (int i = 0; i < nIOlets; i++)
+        for (int i = 0; i < nTotIOlets; i++)
         {
           delete iolets[i];
         }
