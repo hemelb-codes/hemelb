@@ -1,5 +1,5 @@
-#ifndef HEMELB_VIS_RAYTRACER_XYCOORDINATE_H
-#define HEMELB_VIS_RAYTRACER_XYCOORDINATE_H
+#ifndef HEMELB_VIS_XYCOORDINATES_H
+#define HEMELB_VIS_XYCOORDINATES_H
 
 #include "constants.h"
 #include "util/utilityFunctions.h"
@@ -11,23 +11,23 @@ namespace hemelb
   {
     template <class T> 
       class XYCoordinates
-      {
-      public:
+    {
+    public:
       T x, y;
 
       XYCoordinates() {};
 
-      XYCoordinates(T iX, T iY) :
+    XYCoordinates(T iX, T iY) :
       x(iX), y(iY)
       {}
       
-      XYCoordinates(T iN) :
+    XYCoordinates(T iN) :
       x(iN), y(iN)
       {}
 
       //Copy constructor - can be used to perform type converstion 
       template < class OldTypeT >
-      XYCoordinates<T>(const XYCoordinates<OldTypeT> & iOldXYCoordinates)
+	XYCoordinates<T>(const XYCoordinates<OldTypeT> & iOldXYCoordinates)
       {
 	x = static_cast<T>(iOldXYCoordinates.x);
 	y = static_cast<T>(iOldXYCoordinates.y);
@@ -46,14 +46,16 @@ namespace hemelb
       XYCoordinates<T> operator+(const XYCoordinates<T> right) const
       {
 	return XYCoordinates(x + right.x,
-			   y + right.y);
+			     y + right.y);
       }
 
       //Vector addition
-      void operator+=(const XYCoordinates<T> right) 
+      XYCoordinates<T>& operator+=(const XYCoordinates<T> right) 
       {
 	x += right.x;
 	y += right.y;
+	
+	return *this;
       }
       
 
@@ -61,15 +63,37 @@ namespace hemelb
       XYCoordinates<T> operator-(const XYCoordinates<T> right) const
       {
 	return XYCoordinates(x - right.x,
-			   y - right.y);
+			     y - right.y);
       }
 	
       //Scalar multiplication
       template < class MultiplierT >
-      XYCoordinates<T> operator*(const MultiplierT multiplier) const
+	XYCoordinates<T> operator*(const MultiplierT multiplier) const
       {
 	return XYCoordinates(x * multiplier,
-			   y * multiplier);
+			     y * multiplier);
+      }
+      
+      //Updates the XYCoordinates with the smallest of each
+      //of the x and y co-ordinatess independently of both XYCoordinates
+      void UpdatePointwiseMin(const XYCoordinates<T>& iCompareLocation)
+      {
+	x = util::NumericalFunctions::min
+	  (x, iCompareLocation.x);
+
+	y = util::NumericalFunctions::min
+	  (y, iCompareLocation.y);
+      } 
+      
+      //Updates the XYCoordinates with the largest of each
+      //of the x and y co-ordinates independently of both XYCoordinates
+       void UpdatePointwiseMax(const XYCoordinates<T>& iCompareLocation)
+      {
+	x = util::NumericalFunctions::max
+	  (x, iCompareLocation.x);
+
+	y = util::NumericalFunctions::max
+	  (y, iCompareLocation.y);
       }
 
       static XYCoordinates<T> MaxLimit() 
@@ -81,57 +105,26 @@ namespace hemelb
       {
 	return XYCoordinates(std::numeric_limits<T>::min());
       }
-
-      //Updates the XYCoordinates in the first XYCoordinates paramter with the smallest of each
-      //of the x and y co-ordinatess independently of both XYCoordinates
-      static void UpdateMinXYCoordinates(XYCoordinates<T>& io_store_location, const XYCoordinates<T>& i_compare_location)
-      {
-	io_store_location.x = 
-	util::NumericalFunctions::min
-	(io_store_location.x, 
-	 i_compare_location.x);
-
-	io_store_location.y = 
-	util::NumericalFunctions::min
-	(io_store_location.y, 
-	 i_compare_location.y);
-      } 
-      
-      //Updates the XYCoordinates in the first XYCoordinate paramter with the largest of each
-      //of the x and y co-ordinates independently of both XYCoordinates
-      static void UpdateMaxXYCoordinates(XYCoordinates<T>& io_store_location, const XYCoordinates<T>& i_compare_location)
-      {
-	io_store_location.x = 
-	util::NumericalFunctions::max
-	(io_store_location.x, 
-	 i_compare_location.x);
-
-	io_store_location.y = 
-	util::NumericalFunctions::max
-	(io_store_location.y, 
-	 i_compare_location.y);
-      }
-	
-      };
+    };
 
     template <class T>
-    XYCoordinates<T> operator+(const XYCoordinates<T> left, const XYCoordinates <T> right) 
+      XYCoordinates<T> operator+(const XYCoordinates<T> left, const XYCoordinates <T> right) 
     {
       return left + right;
     }
    
     template <class T>
-    XYCoordinates<T> operator-(const XYCoordinates<T> left, const XYCoordinates <T> right)
+      XYCoordinates<T> operator-(const XYCoordinates<T> left, const XYCoordinates <T> right)
     {
       return left - right;
     }
     
-    template <class T>
-    XYCoordinates<T> operator*(const T left, const XYCoordinates <T> right)
+    template <class TLeft, class TRight>
+      XYCoordinates<TRight> operator*(const TLeft left, const XYCoordinates <TRight> right)
     {
       return right*left;
     }
   }
 }
 
-#endif // HEMELB_VIS_RAYTRACER_XYCOORDINATES_H
+#endif // HEMELB_VIS_XYCOORDINATES_H

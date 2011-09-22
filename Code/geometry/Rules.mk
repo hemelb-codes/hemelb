@@ -1,9 +1,13 @@
 include $(MK)/header.mk
 
-SRCS := LocalLatticeData.cc \
+SRCS := BlockTraverser.cc \
+	GeometryReader.cc \
         GlobalLatticeData.cc \
         LatticeData.cc \
-        GeometryReader.cc
+	LocalLatticeData.cc \
+	SiteTraverser.cc \
+	VolumeTraverser.cc
+        
 
 TARGETS := libHemeLbGeometry.$(LIBEXT)
 

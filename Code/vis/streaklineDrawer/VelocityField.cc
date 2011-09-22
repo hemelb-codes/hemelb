@@ -2,10 +2,11 @@
 #include <vector>
 #include <cassert>
 
+#include "geometry/BlockTraverser.h"
+#include "geometry/SiteTraverser.h"
 #include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/streaklineDrawer/VelocityField.h"
-#include "vis/BlockTraverser.h"
-#include "vis/SiteTraverser.h"
+
 
 namespace hemelb
 {
@@ -26,7 +27,7 @@ namespace hemelb
 
 	site_t inlet_sites = 0;
 
-	BlockTraverser lBlockTraverser(iLatDat);
+	geometry::BlockTraverser lBlockTraverser(iLatDat);
 	do
 	{
 	  geometry::LatticeData::BlockData* lBlock = 
@@ -38,7 +39,7 @@ namespace hemelb
 	    continue;
 	  }
 
-	  SiteTraverser lSiteTraverser(iLatDat);
+	  geometry::SiteTraverser lSiteTraverser(iLatDat);
 	  do
 	  {
 	    if (topology::NetworkTopology::Instance()->GetLocalRank() != 
