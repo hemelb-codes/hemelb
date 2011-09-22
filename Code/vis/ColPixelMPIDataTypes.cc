@@ -9,12 +9,10 @@ namespace hemelb
   template<>
   MPI_Datatype MpiDataTypeTraits<hemelb::vis::ColPixel<hemelb::vis::raytracer::RayDataNormal> >::RegisterMpiDataType()
   {
-    int col_pixel_count = 9;
-    int col_pixel_blocklengths[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    int col_pixel_count = 7;
+    int col_pixel_blocklengths[7] = { 1, 1, 1, 1, 1, 1, 1 };
 
-    MPI_Datatype col_pixel_types[9] = { 
-      MPI_UNSIGNED,
-      MPI_UNSIGNED,
+    MPI_Datatype col_pixel_types[7] = { 
       MPI_UNSIGNED,
       MPI_UNSIGNED,
       MpiDataTypeTraits<hemelb::vis::raytracer::RayDataNormal>
@@ -24,7 +22,7 @@ namespace hemelb
       MPI_INT,
       MPI_UB };
     
-    MPI_Aint col_pixel_disps[9];
+    MPI_Aint col_pixel_disps[7];
 
     col_pixel_disps[0] = 0;
 
@@ -66,12 +64,10 @@ namespace hemelb
 				 <hemelb::vis::raytracer::RayDataEnhanced
 				  <vis::raytracer::DepthCuing::MIST> > >::RegisterMpiDataType()
   {
-    int col_pixel_count = 9;
-    int col_pixel_blocklengths[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    int col_pixel_count = 7;
+    int col_pixel_blocklengths[7] = { 1, 1, 1, 1, 1, 1, 1};
 
-    MPI_Datatype col_pixel_types[9] = { 
-      MPI_UNSIGNED,
-      MPI_UNSIGNED,
+    MPI_Datatype col_pixel_types[7] = { 
       MPI_UNSIGNED,
       MPI_UNSIGNED,
       MpiDataTypeTraits<hemelb::vis::raytracer::RayDataEnhanced
@@ -82,7 +78,7 @@ namespace hemelb
       MPI_INT,
       MPI_UB };
     
-    MPI_Aint col_pixel_disps[9];
+    MPI_Aint col_pixel_disps[7];
 
     col_pixel_disps[0] = 0;
 
@@ -126,12 +122,10 @@ namespace hemelb
 				 <hemelb::vis::raytracer::RayDataEnhanced
 				  <vis::raytracer::DepthCuing::DARKNESS> > >::RegisterMpiDataType()
   {
-    int col_pixel_count = 9;
-    int col_pixel_blocklengths[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    int col_pixel_count = 7;
+    int col_pixel_blocklengths[7] = { 1, 1, 1, 1, 1, 1, 1};
 
-    MPI_Datatype col_pixel_types[9] = { 
-      MPI_UNSIGNED,
-      MPI_UNSIGNED,
+    MPI_Datatype col_pixel_types[7] = { 
       MPI_UNSIGNED,
       MPI_UNSIGNED,
       MpiDataTypeTraits<hemelb::vis::raytracer::RayDataEnhanced
@@ -142,7 +136,7 @@ namespace hemelb
       MPI_INT,
       MPI_UB };
     
-    MPI_Aint col_pixel_disps[9];
+    MPI_Aint col_pixel_disps[7];
 
     col_pixel_disps[0] = 0;
 
@@ -186,12 +180,10 @@ namespace hemelb
 				 <hemelb::vis::raytracer::RayDataEnhanced
 				  <vis::raytracer::DepthCuing::NONE> > >::RegisterMpiDataType()
   {
-    int col_pixel_count = 9;
-    int col_pixel_blocklengths[9] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+    int col_pixel_count = 7;
+    int col_pixel_blocklengths[7] = { 1, 1, 1, 1, 1, 1, 1};
 
-    MPI_Datatype col_pixel_types[9] = { 
-      MPI_UNSIGNED,
-      MPI_UNSIGNED,
+    MPI_Datatype col_pixel_types[7] = { 
       MPI_UNSIGNED,
       MPI_UNSIGNED,
       MpiDataTypeTraits<hemelb::vis::raytracer::RayDataEnhanced
@@ -202,7 +194,7 @@ namespace hemelb
       MPI_INT,
       MPI_UB };
     
-    MPI_Aint col_pixel_disps[9];
+    MPI_Aint col_pixel_disps[7];
 
     col_pixel_disps[0] = 0;
 

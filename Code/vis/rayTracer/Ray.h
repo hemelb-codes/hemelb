@@ -1,7 +1,6 @@
 #ifndef HEMELB_VIS_RAY_H
 #define HEMELB_VIS_RAY_H
 
-#include <cassert>
 #include <iostream>
 #include <limits>
 

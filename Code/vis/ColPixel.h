@@ -333,6 +333,8 @@ namespace hemelb
 	return mRayData;
       }
 
+
+/*
       void SetI(unsigned int iI)
       {
 	mI = iI;
@@ -374,9 +376,9 @@ namespace hemelb
       bool IsStreakline() const
       {
 	return mIsStreakline;;
-      }
+      }*/
 
-/*
+	
   void SetI(unsigned int iI)
   {
   assert(!(iI & mMostSignificantBit));
@@ -403,37 +405,41 @@ namespace hemelb
   {
   if (iIsGlyph)
   {
-  mI = mI & mMostSignificantBit;
+  mI = mI | mMostSignificantBit;
+  assert(IsGlyph());
   }
   else
   {
   mI = mI & ~mMostSignificantBit;
+  assert(!IsGlyph());
   }
   }
 
 
   bool IsGlyph() const
   {
-  return mI && mMostSignificantBit;
+  return mI & mMostSignificantBit;
   }
 
   void SetStreakline(bool iIsStreakline)
   {
   if (iIsStreakline)
   {
-  mJ = mJ & mMostSignificantBit;
+  mJ = mJ | mMostSignificantBit;
+  assert(IsStreakline());
   }
   else
   {
   mJ = mJ & ~mMostSignificantBit;
+  assert(!IsStreakline());
   }
   }
 
 
   bool IsStreakline() const
   {
-  return mJ && mMostSignificantBit;
-  }*/
+    return mJ & mMostSignificantBit;
+  }
 
       static void PickColour(float value, float colour[3])
       {
