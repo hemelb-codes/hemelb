@@ -25,11 +25,12 @@ namespace hemelb
 	};
       }
 
-      //RayDataEnhanced - performs and average velocity and stress ray trace
-      //with surface normal highlighting and optional depth cuing to enhance the
-      //3D perception
-
-      //NB functions prefixed Do should only be called by the base class
+      /**
+       * RayDataEnhanced - sums velocity and stress data of the ray trace and provides
+       * with surface normal highlighting and optional depth cuing to enhance the
+       * 3D perception.
+       * NB functions prefixed Do should only be called by the base class
+       */
       template <DepthCuing::DepthCuing depthCuing>
 	class RayDataEnhanced : public RayData<RayDataEnhanced<depthCuing> >
       {
@@ -45,24 +46,18 @@ namespace hemelb
 	void DoUpdateDataForNormalFluidSite(const SiteData_t& iSiteData, 
 					    const util::Vector3D<float>& iRayDirection,
 					    const float iRayLengthInVoxel,
-					    const DomainStats& iDomainStats,
 					    const VisSettings& iVisSettings)
 	{
 	  //Add the velocity multiplied by the ray length in each voxel,
 	  mVelocitySum += 
 	    iSiteData.GetVelocity() * 
-	    iRayLengthInVoxel *
-	    (float) iDomainStats.velocity_threshold_max_inv;
-	  //TODO: move iDomainStats.velocity_threshold_max_inv elsewhere
-	  //so the multiplication only happens once per ray
-	  //Likewise for iDomainStats.stress_threshold_max_inv;
+	    iRayLengthInVoxel;
 	
 	  if (iVisSettings.mStressType == lb::VonMises)
 	  {
 	    //Update the volume rendering of the von Mises stress flow field
 	    mStressSum = iSiteData.GetStress() *
-	      iRayLengthInVoxel *
-	      (float) iDomainStats.stress_threshold_max_inv;
+	      iRayLengthInVoxel;
 	  }
 	}
 	
@@ -70,7 +65,6 @@ namespace hemelb
 	void DoUpdateDataForWallSite(const SiteData_t& iSiteData, 
 				     const util::Vector3D<float>& iRayDirection,
 				     const float iRayLengthInVoxel,
-				     const DomainStats& iDomainStats,
 				     const VisSettings& iVisSettings,
 				     const double* iWallNormal)
 	{ 
@@ -78,7 +72,6 @@ namespace hemelb
 	  DoUpdateDataForNormalFluidSite(iSiteData,
 					 iRayDirection,
 					 iRayLengthInVoxel,
-					 iDomainStats,
 					 iVisSettings);
 
 	  //Calculate the absolute dot product of the wall
@@ -89,22 +82,23 @@ namespace hemelb
 				  static_cast<float>(iWallNormal[2]));
 	  
 	  float lDotProduct =
-	    fabs(iRayDirection.DotProduct(lWallNormal));
+	   iRayDirection.DotProduct(lWallNormal);
 
 	  //Scale the surface normal lightness between mParallelSurfaceAttenuation
 	  //and 1.0F
 	  mSurfaceNormalLightness *= (mParallelSurfaceAttenuation + 
-				      (1.0F - mParallelSurfaceAttenuation)*fabs(lDotProduct)); 
+					(1.0F - mParallelSurfaceAttenuation)*fabs(lDotProduct)); 
 	}
 	 
        	//Obtains the colour representing the velocity ray trace
 	void DoGetVelocityColour(unsigned char oColour[3],
-				 const float iNormalisedDistanceToFirstCluster) const
+				 const float iNormalisedDistanceToFirstCluster,
+	                         const DomainStats& iDomainStats) const
 	{
-	  // We want the velocity hue to be between 240 degress
-	  // and 0 degrees
-
-	  float lVelocityHue = 120.0F*GetAverageVelocity() + 240.0F;
+	  float lVelocityHue = mVelocityHueRange*
+	    GetAverageVelocity()*
+	    static_cast<float>(iDomainStats.velocity_threshold_max_inv) +
+	    mVelocityHueMin;
 
 	  if (lVelocityHue >= 360.0F)
 	  {
@@ -112,21 +106,26 @@ namespace hemelb
 	  }
 	
 	  HSLToRGBConverter::Convert(lVelocityHue,
-				     1.0F,
+				     mVelocitySaturation,
 				     GetLightnessValue(iNormalisedDistanceToFirstCluster),
 				     oColour);
 	}
  
 	//Obtains the colour representing the stress ray trace
 	void DoGetStressColour(unsigned char oColour[3],
-			       const float iNormalisedDistanceToFirstCluster) const
+			       const float iNormalisedDistanceToFirstCluster,
+			       const DomainStats& iDomainStats) const
 	{
 	  float lStressSaturation =
-	    util::NumericalFunctions::enforceBounds<float>(0.5F+7.5F*GetAverageStress(),
-							   0.0F,
-							   1.0F);
+	    util::NumericalFunctions::enforceBounds<float>
+	    ( mStressSaturationMin +
+	      mStressSaturationRange*
+	      GetAverageStress()*
+	      static_cast<float>(iDomainStats.stress_threshold_max_inv),
+	      0.0F,
+	      1.0F );
 	
-	  HSLToRGBConverter::Convert(230.0F,
+	  HSLToRGBConverter::Convert(mStressHue,
 				     lStressSaturation,
 				     GetLightnessValue(iNormalisedDistanceToFirstCluster),
 				     oColour);
@@ -208,7 +207,7 @@ namespace hemelb
 	  else if (depthCuing == DepthCuing::DARKNESS)
 	  {
 	    //Set the maximum lightness to be between 0.8F and mLowestLighness
-	    //based on the noramlised distance and take off the surface normal
+	    //based on the normalised distance and take off the surface normal
             //lightness
 	    float lLightnessValue = 0.8F*(1.0F - iNormalisedDistance) +
 	      (GetSurfaceNormalLightness() - 1.0F) *
@@ -232,6 +231,14 @@ namespace hemelb
 	const static float mParallelSurfaceAttenuation;
 
 	const static float mLowestLightness;
+
+	const static float mVelocityHueMin;
+	const static float mVelocityHueRange;
+	const static float mVelocitySaturation;
+
+	const static float mStressHue;
+	const static float mStressSaturationRange;
+	const static float mStressSaturationMin;	
       };
     }
   }
