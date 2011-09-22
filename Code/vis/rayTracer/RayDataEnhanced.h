@@ -111,10 +111,10 @@ namespace hemelb
 	    lVelocityHue = 0.0F;
 	  }
 	
-	  HSLToRGBConverter::ConvertHSLToRGB(lVelocityHue,
-					     1.0F,
-					     GetLightnessValue(iNormalisedDistanceToFirstCluster),
-					     oColour);
+	  HSLToRGBConverter::Convert(lVelocityHue,
+				     1.0F,
+				     GetLightnessValue(iNormalisedDistanceToFirstCluster),
+				     oColour);
 	}
  
 	//Obtains the colour representing the stress ray trace
@@ -126,10 +126,10 @@ namespace hemelb
 							   0.0F,
 							   1.0F);
 	
-	  HSLToRGBConverter::ConvertHSLToRGB(230.0F,
-					     lStressSaturation,
-					     GetLightnessValue(iNormalisedDistanceToFirstCluster),
-					     oColour);
+	  HSLToRGBConverter::Convert(230.0F,
+				     lStressSaturation,
+				     GetLightnessValue(iNormalisedDistanceToFirstCluster),
+				     oColour);
 	}
 
         //Carries out the merging of the ray data in this
