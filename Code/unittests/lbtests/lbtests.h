@@ -23,9 +23,10 @@ namespace hemelb
         public:
           LbTestSuite()
           {
-            addTest(new CppUnit::TestCaller<KernelTests>("TestEntropic",
-                                                         &KernelTests::TestEntropic));
-            addTest(new CppUnit::TestCaller<KernelTests>("TestLBGK", &KernelTests::TestLBGK));
+            addTest(new CppUnit::TestCaller<KernelTests>("TestEntropicCalculationsAndCollision",
+                                                         &KernelTests::TestEntropicCalculationsAndCollision));
+            addTest(new CppUnit::TestCaller<KernelTests>("TestLBGKCalculationsAndCollision",
+                                                         &KernelTests::TestLBGKCalculationsAndCollision));
 
             addTest(new CppUnit::TestCaller<CollisionTests>("TestNonZeroVelocityEquilibriumFixedDensity",
                                                             &CollisionTests::TestNonZeroVelocityEquilibriumFixedDensity));
