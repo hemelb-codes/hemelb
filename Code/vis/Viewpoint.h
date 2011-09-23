@@ -14,90 +14,88 @@ namespace hemelb
      */
     class Viewpoint
     {
-      //See http://en.wikipedia.org/wiki/3D_projection#Perspective_projection
-    public:
-      Viewpoint();
- 
-    /**
-     * Chanes a location in camera coordinates into world coordinates
-     * Note that both co-ordinate systems share the same (0,0,0) point
-     * and the camera is at (0,0,radius) in camera coordinates
-     * 
-     */
-      util::Vector3D<float> RotateCameraCoordinatesToWorldCoordinates(const util::Vector3D<float>& iVector) const;
+        //See http://en.wikipedia.org/wiki/3D_projection#Perspective_projection
+      public:
+        Viewpoint();
 
-      /**
-       * Does the reverse of the above
-       *
-       */
-      util::Vector3D<float> RotateWorldToCameraCoordinates(const util::Vector3D<float>& iVector) const;
-      
-      /**
-       * Projects a location in world-cordinates onto the infinite screen, 
-       * by translating and rotating such as to give coordintes relative
-       * to the camera, and then applying a perspective projection
-       */
-      util::Vector3D<float> Project(const util::Vector3D<float>& p1) const;
+        /**
+         * Chanes a location in camera coordinates into world coordinates
+         * Note that both co-ordinate systems share the same (0,0,0) point
+         * and the camera is at (0,0,radius) in camera coordinates
+         * 
+         */
+        util::Vector3D<float> RotateCameraCoordinatesToWorldCoordinates(const util::Vector3D<float>& iVector) const;
 
-      /**
-       * Same as project but doesn't return a z component
-       *
-       */
-      XYCoordinates<float> FlatProject(const util::Vector3D<float>& iWorldLocation) const;
+        /**
+         * Does the reverse of the above
+         *
+         */
+        util::Vector3D<float> RotateWorldToCameraCoordinates(const util::Vector3D<float>& iVector) const;
 
-    /**
-     * Sets the position of the Camera or Viewpoint
-     *
-     * In Word co-ordinates, the camera is located at radius from 
-     * the local centre, and pointing at an angle indicated by the
-     * latitude and longitude.
-     *
-     * @param iLongitude - longitude in radians.
-     * @param iLatitude - latitude in radians.
-     * @param iLocalCentre - where the camera should point in world-coordinates
-     * @param iRadius - the distance of the camera from this local centre
-     * @param iDistanceFromCameraToScreen - the distance of the inifite screen
-     * from the viewer. Allows for zoom
-     */
-      void SetViewpointPosition(float iLongitude,
-				float iLatitude,
-				const util::Vector3D<float>& iLocalCentre,
-				float iRadius,
-				float iDistanceFromCameraToScreen);
+        /**
+         * Projects a location in world-cordinates onto the infinite screen, 
+         * by translating and rotating such as to give coordintes relative
+         * to the camera, and then applying a perspective projection
+         */
+        util::Vector3D<float> Project(const util::Vector3D<float>& p1) const;
 
-      const util::Vector3D<float>& GetViewpointLocation() const;
-      
-      float GetDistanceFromCameraToScreen() const;
+        /**
+         * Same as project but doesn't return a z component
+         *
+         */
+        XYCoordinates<float> FlatProject(const util::Vector3D<float>& iWorldLocation) const;
 
-    private:
-      util::Vector3D<float> GetLocationInCameraCoordinates(const util::Vector3D<float>& iWorldLocation) const;
-   
-      //Performs a vector rotation using stored
-      //Sin and Cosine Values
-      static util::Vector3D <float> Rotate(
-	float iSinThetaX,
-	float iCosThetaX,
-	float iSinThetaY,
-	float iCosThetaY,
-	const util::Vector3D<float>& iVector);
-      
-      //Reverses a vector rotation of the above
-      static util::Vector3D <float> UnRotate(
-	float iSinThetaX,
-	float iCosThetaX,
-	float iSinThetaY,
-	float iCosThetaY,
-	const util::Vector3D<float>& iVector);
+        /**
+         * Sets the position of the Camera or Viewpoint
+         *
+         * In Word co-ordinates, the camera is located at radius from 
+         * the local centre, and pointing at an angle indicated by the
+         * latitude and longitude.
+         *
+         * @param iLongitude - longitude in radians.
+         * @param iLatitude - latitude in radians.
+         * @param iLocalCentre - where the camera should point in world-coordinates
+         * @param iRadius - the distance of the camera from this local centre
+         * @param iDistanceFromCameraToScreen - the distance of the inifite screen
+         * from the viewer. Allows for zoom
+         */
+        void SetViewpointPosition(float iLongitude,
+                                  float iLatitude,
+                                  const util::Vector3D<float>& iLocalCentre,
+                                  float iRadius,
+                                  float iDistanceFromCameraToScreen);
 
-      float mSinLongitude;
-      float mCosLongitude;
-      float mSinLatitude;
-      float mCosLatitude;
-      
-      //Stores the viewpoint Location in world co-ordinate
-      util::Vector3D<float> mViewpointLocationInWorldCoordinates;
+        const util::Vector3D<float>& GetViewpointLocation() const;
 
-      float mDistanceFromCameraToScreen;
+        float GetDistanceFromCameraToScreen() const;
+
+      private:
+        util::Vector3D<float> GetLocationInCameraCoordinates(const util::Vector3D<float>& iWorldLocation) const;
+
+        //Performs a vector rotation using stored
+        //Sin and Cosine Values
+        static util::Vector3D<float> Rotate(float iSinThetaX,
+                                            float iCosThetaX,
+                                            float iSinThetaY,
+                                            float iCosThetaY,
+                                            const util::Vector3D<float>& iVector);
+
+        //Reverses a vector rotation of the above
+        static util::Vector3D<float> UnRotate(float iSinThetaX,
+                                              float iCosThetaX,
+                                              float iSinThetaY,
+                                              float iCosThetaY,
+                                              const util::Vector3D<float>& iVector);
+
+        float mSinLongitude;
+        float mCosLongitude;
+        float mSinLatitude;
+        float mCosLatitude;
+
+        //Stores the viewpoint Location in world co-ordinate
+        util::Vector3D<float> mViewpointLocationInWorldCoordinates;
+
+        float mDistanceFromCameraToScreen;
     };
   }
 }

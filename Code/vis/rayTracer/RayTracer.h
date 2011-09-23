@@ -35,75 +35,70 @@ namespace hemelb
 {
   namespace vis
   {
-    namespace raytracer 
+    namespace raytracer
     {
-      template <typename ClusterType, typename RayDataType>
-	class RayTracer
+      template<typename ClusterType, typename RayDataType>
+      class RayTracer
       {
-      public:
-	// Constructor and destructor do all the usual stuff.
-      RayTracer(const geometry::LatticeData* iLatDat,
-		const DomainStats* iDomainStats,
-		Screen* iScreen,
-		Viewpoint* iViewpoint,
-		VisSettings* iVisSettings) :
-	  mClusterBuilder(iLatDat),
-	  mLatDat(iLatDat),
-	  mDomainStats(iDomainStats),
-	  mScreen(iScreen), 
-	  mViewpoint(iViewpoint),
-	  mVisSettings(iVisSettings)
-	  {
-	  }
+        public:
+          // Constructor and destructor do all the usual stuff.
+          RayTracer(const geometry::LatticeData* iLatDat,
+                    const DomainStats* iDomainStats,
+                    Screen* iScreen,
+                    Viewpoint* iViewpoint,
+                    VisSettings* iVisSettings) :
+              mClusterBuilder(iLatDat), mLatDat(iLatDat), mDomainStats(iDomainStats), mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
+          {
+          }
 
+          ~RayTracer()
+          {
+          }
 
-	  ~RayTracer()
-	  {
-	  }
+          //Calls the cluster builder to build the clusters
+          void BuildClusters()
+          {
+            mClusterBuilder.BuildClusters();
+          }
 
-	//Calls the cluster builder to build the clusters
-	void BuildClusters()
-	{
-	  mClusterBuilder.BuildClusters();
-	}
+          // Method to update the voxel corresponding to site i with its
+          // newly calculated density, velocity and stress.
+          void UpdateClusterVoxel(site_t i,
+                                  distribn_t density,
+                                  distribn_t velocity,
+                                  distribn_t stress)
+          {
+            assert(static_cast<site_t>(static_cast<unsigned int>(i)) == i);
 
-	// Method to update the voxel corresponding to site i with its
-	// newly calculated density, velocity and stress.
-	void UpdateClusterVoxel(site_t i,
-				distribn_t density,
-				distribn_t velocity,
-				distribn_t stress)
-	{
-	  assert(static_cast<site_t>(static_cast<unsigned int>(i)) == i);
-	  
-	  mClusterBuilder.GetClusterVoxelDataPointer(i)->
-	    SetDensity(static_cast<float>(density));
-	  mClusterBuilder.GetClusterVoxelDataPointer(i)->
-	    SetVelocity(static_cast<float>(velocity));
-	  mClusterBuilder.GetClusterVoxelDataPointer(i)->
-	    SetStress(static_cast<float>(stress));
-	}
+            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetDensity(static_cast<float>(density));
+            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetVelocity(static_cast<float>(velocity));
+            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetStress(static_cast<float>(stress));
+          }
 
-	// Render the current state into an image.
-	void Render()
-	{
-	  ClusterRayTracer<ClusterType, RayDataType> 
-	    lClusterRayTracer(*mViewpoint, *mScreen, *mDomainStats, *mVisSettings, *mLatDat);
+          // Render the current state into an image.
+          void Render()
+          {
+            ClusterRayTracer<ClusterType, RayDataType> lClusterRayTracer(*mViewpoint,
+                                                                         *mScreen,
+                                                                         *mDomainStats,
+                                                                         *mVisSettings,
+                                                                         *mLatDat);
 
-	  for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size(); clusterId++)
-	  {
-	    lClusterRayTracer.RenderCluster(mClusterBuilder.GetClusters()[clusterId]);
-	  }
-	}
+            for (unsigned int clusterId = 0; clusterId < mClusterBuilder.GetClusters().size();
+                clusterId++)
+                {
+              lClusterRayTracer.RenderCluster(mClusterBuilder.GetClusters()[clusterId]);
+            }
+          }
 
-      private:
-	ClusterBuilder<ClusterType> mClusterBuilder;
-	const geometry::LatticeData* mLatDat;
+        private:
+          ClusterBuilder<ClusterType> mClusterBuilder;
+          const geometry::LatticeData* mLatDat;
 
-	const DomainStats* mDomainStats;
-	Screen* mScreen;
-	Viewpoint* mViewpoint;
-	VisSettings* mVisSettings;
+          const DomainStats* mDomainStats;
+          Screen* mScreen;
+          Viewpoint* mViewpoint;
+          VisSettings* mVisSettings;
       };
     }
   }

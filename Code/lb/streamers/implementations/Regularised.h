@@ -141,14 +141,14 @@ namespace hemelb
                 + f_neq[13] + f_neq[14];
 
             piMatrix[0][0] = f_neq[1] + f_neq[2] + diagSum;
-            piMatrix[0][1] = f_neq[7] + f_neq[8] + f_neq[9] + f_neq[10] - (f_neq[11] + f_neq[12]
-                + f_neq[13] + f_neq[14]);
-            piMatrix[0][2] = f_neq[7] + f_neq[8] + f_neq[11] + f_neq[12] - (f_neq[9] + f_neq[10]
-                + f_neq[13] + f_neq[14]);
+            piMatrix[0][1] = f_neq[7] + f_neq[8] + f_neq[9] + f_neq[10]
+                - (f_neq[11] + f_neq[12] + f_neq[13] + f_neq[14]);
+            piMatrix[0][2] = f_neq[7] + f_neq[8] + f_neq[11] + f_neq[12]
+                - (f_neq[9] + f_neq[10] + f_neq[13] + f_neq[14]);
             piMatrix[1][0] = piMatrix[0][1];
             piMatrix[1][1] = f_neq[3] + f_neq[4] + diagSum;
-            piMatrix[1][2] = f_neq[7] + f_neq[8] + f_neq[13] + f_neq[14] - (f_neq[9] + f_neq[10]
-                + f_neq[11] + f_neq[12]);
+            piMatrix[1][2] = f_neq[7] + f_neq[8] + f_neq[13] + f_neq[14]
+                - (f_neq[9] + f_neq[10] + f_neq[11] + f_neq[12]);
             piMatrix[2][0] = piMatrix[0][2];
             piMatrix[2][1] = piMatrix[1][2];
             piMatrix[2][2] = f_neq[5] + f_neq[6] + diagSum;
@@ -160,19 +160,19 @@ namespace hemelb
             // Qi = e_i e_i - (speed of sound ^ 2) * Identity
             // Then gi = fiEq + t_i (the 2/9, 1/9, 1/72 stuff) (Qi . PI (inner product)) / 2 * speed of sound^4
             // Or:  gi = fiEq + t_i (the 2/9, 1/9, 1/72 stuff) ((e_i e_i . PI (inner product)) / 2 * speed of sound^4 - specialNumber)
-            distribn_t specialNumber = (2.0 / 9.0) * Cs2 * (piMatrix[0][0] + piMatrix[1][1]
-                + piMatrix[2][2]);
+            distribn_t specialNumber = (2.0 / 9.0) * Cs2
+                * (piMatrix[0][0] + piMatrix[1][1] + piMatrix[2][2]);
             distribn_t piMatrixSum = piMatrix[0][0] + piMatrix[0][1] + piMatrix[0][2]
-                + piMatrix[1][0] + piMatrix[1][1] + piMatrix[1][2] + piMatrix[2][0]
-                + piMatrix[2][1] + piMatrix[2][2];
+                + piMatrix[1][0] + piMatrix[1][1] + piMatrix[1][2] + piMatrix[2][0] + piMatrix[2][1]
+                + piMatrix[2][2];
 
             // The gi (here; f) are then collided and streamed
             * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, 0))) = ( (2.0 / 9.0) * density
-                - (1.0 / 3.0) * ( (v_xx + v_yy + v_zz) * density_1)) + (1.0 + iLbmParams->Omega)
-                * (f_neq[0] = -specialNumber);
+                - (1.0 / 3.0) * ( (v_xx + v_yy + v_zz) * density_1))
+                + (1.0 + iLbmParams->Omega) * (f_neq[0] = -specialNumber);
 
-            distribn_t temp1 = (1.0 / 9.0) * density - (1.0 / 6.0) * ( (v_xx + v_yy + v_zz)
-                * density_1);
+            distribn_t temp1 = (1.0 / 9.0) * density
+                - (1.0 / 6.0) * ( (v_xx + v_yy + v_zz) * density_1);
             specialNumber *= 1.0 / 2.0;
 
             // Now apply bounce-back to the components that require it, from fTemp
@@ -189,26 +189,32 @@ namespace hemelb
               }
             }
 
-            * (bLatDat->GetFNew(lStreamTo[1])) = temp1 + (0.5 * density_1) * v_xx + (1.0 / 3.0)
-                * v_x + (1.0 + iLbmParams->Omega) * (f_neq[1] = (1.0 / 9.0) * piMatrix[0][0]
-                - specialNumber); // (+1, 0, 0)
-            * (bLatDat->GetFNew(lStreamTo[2])) = temp1 + (0.5 * density_1) * v_xx - (1.0 / 3.0)
-                * v_x + (1.0 + iLbmParams->Omega) * (f_neq[2] = (1.0 / 9.0) * piMatrix[0][0]
-                - specialNumber); // (+1, 0, 0)
+            * (bLatDat->GetFNew(lStreamTo[1])) = temp1 + (0.5 * density_1) * v_xx
+                + (1.0 / 3.0) * v_x
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[1] = (1.0 / 9.0) * piMatrix[0][0] - specialNumber); // (+1, 0, 0)
+            * (bLatDat->GetFNew(lStreamTo[2])) = temp1 + (0.5 * density_1) * v_xx
+                - (1.0 / 3.0) * v_x
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[2] = (1.0 / 9.0) * piMatrix[0][0] - specialNumber); // (+1, 0, 0)
 
-            * (bLatDat->GetFNew(lStreamTo[3])) = temp1 + (0.5 * density_1) * v_yy + (1.0 / 3.0)
-                * v_y + (1.0 + iLbmParams->Omega) * (f_neq[3] = (1.0 / 9.0) * piMatrix[1][1]
-                - specialNumber); // (0, +1, 0)
-            * (bLatDat->GetFNew(lStreamTo[4])) = temp1 + (0.5 * density_1) * v_yy - (1.0 / 3.0)
-                * v_y + (1.0 + iLbmParams->Omega) * (f_neq[4] = (1.0 / 9.0) * piMatrix[1][1]
-                - specialNumber); // (0, +1, 0)
+            * (bLatDat->GetFNew(lStreamTo[3])) = temp1 + (0.5 * density_1) * v_yy
+                + (1.0 / 3.0) * v_y
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[3] = (1.0 / 9.0) * piMatrix[1][1] - specialNumber); // (0, +1, 0)
+            * (bLatDat->GetFNew(lStreamTo[4])) = temp1 + (0.5 * density_1) * v_yy
+                - (1.0 / 3.0) * v_y
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[4] = (1.0 / 9.0) * piMatrix[1][1] - specialNumber); // (0, +1, 0)
 
-            * (bLatDat->GetFNew(lStreamTo[5])) = temp1 + (0.5 * density_1) * v_zz + (1.0 / 3.0)
-                * v_z + (1.0 + iLbmParams->Omega) * (f_neq[5] = (1.0 / 9.0) * piMatrix[2][2]
-                - specialNumber); // (0, +1, 0)
-            * (bLatDat->GetFNew(lStreamTo[6])) = temp1 + (0.5 * density_1) * v_zz - (1.0 / 3.0)
-                * v_z + (1.0 + iLbmParams->Omega) * (f_neq[6] = (1.0 / 9.0) * piMatrix[2][2]
-                - specialNumber); // (0, +1, 0)
+            * (bLatDat->GetFNew(lStreamTo[5])) = temp1 + (0.5 * density_1) * v_zz
+                + (1.0 / 3.0) * v_z
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[5] = (1.0 / 9.0) * piMatrix[2][2] - specialNumber); // (0, +1, 0)
+            * (bLatDat->GetFNew(lStreamTo[6])) = temp1 + (0.5 * density_1) * v_zz
+                - (1.0 / 3.0) * v_z
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[6] = (1.0 / 9.0) * piMatrix[2][2] - specialNumber); // (0, +1, 0)
 
             temp1 *= (1.0 / 8.0);
             specialNumber *= (1.0 / 8.0);
@@ -216,48 +222,55 @@ namespace hemelb
             distribn_t temp2 = (v_x + v_y) + v_z;
 
             * (bLatDat->GetFNew(lStreamTo[7])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-                + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[7] = ( (1.0 / 72.0)
-                * piMatrixSum - specialNumber)); // (+1, +1, +1)
+                + (1.0 / 24.0) * temp2
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[7] = ( (1.0 / 72.0) * piMatrixSum - specialNumber)); // (+1, +1, +1)
             * (bLatDat->GetFNew(lStreamTo[8])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-                + (-1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[8] = ( (1.0 / 72.0)
-                * piMatrixSum - specialNumber)); // (-1, -1, -1)
+                + (-1.0 / 24.0) * temp2
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[8] = ( (1.0 / 72.0) * piMatrixSum - specialNumber)); // (-1, -1, -1)
 
             temp2 = (v_x + v_y) - v_z;
 
             * (bLatDat->GetFNew(lStreamTo[9])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-                + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[9] = ( (1.0 / 72.0)
-                * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2])) - specialNumber)); // (+1, +1, -1)
+                + (1.0 / 24.0) * temp2
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[9] = ( (1.0 / 72.0)
+                        * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2])) - specialNumber)); // (+1, +1, -1)
             * (bLatDat->GetFNew(lStreamTo[10])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-                + (-1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[10] = ( (1.0 / 72.0)
-                * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2])) - specialNumber)); // (-1, -1, +1)
+                + (-1.0 / 24.0) * temp2
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[10] = ( (1.0 / 72.0)
+                        * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2])) - specialNumber)); // (-1, -1, +1)
 
             temp2 = (v_x - v_y) + v_z;
 
             * (bLatDat->GetFNew(lStreamTo[11])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-                + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[11] = ( (1.0 / 72.0)
-                * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2])) - specialNumber)); // (+1, -1, +1)
+                + (1.0 / 24.0) * temp2
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[11] = ( (1.0 / 72.0)
+                        * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2])) - specialNumber)); // (+1, -1, +1)
             * (bLatDat->GetFNew(lStreamTo[12])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-                + (-1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[12] = ( (1.0 / 72.0)
-                * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2])) - specialNumber)); // (-1, +1, -1)
+                + (-1.0 / 24.0) * temp2
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[12] = ( (1.0 / 72.0)
+                        * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2])) - specialNumber)); // (-1, +1, -1)
 
             temp2 = (v_x - v_y) - v_z;
 
             * (bLatDat->GetFNew(lStreamTo[13])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-                + (1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[13] = ( (1.0 / 72.0)
-                * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (+1, -1, -1)
+                + (1.0 / 24.0) * temp2
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[13] = ( (1.0 / 72.0)
+                        * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (+1, -1, -1)
             * (bLatDat->GetFNew(lStreamTo[14])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-                + (-1.0 / 24.0) * temp2 + (1.0 + iLbmParams->Omega) * (f_neq[14] = ( (1.0 / 72.0)
-                * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (-1, +1, +1)
+                + (-1.0 / 24.0) * temp2
+                + (1.0 + iLbmParams->Omega)
+                    * (f_neq[14] = ( (1.0 / 72.0)
+                        * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (-1, +1, +1)
 
-            UpdateMinsAndMaxes<tDoRayTracing> (v_x,
-                                               v_y,
-                                               v_z,
-                                               lIndex,
-                                               f_neq,
-                                               density,
-                                               bLatDat,
-                                               iLbmParams,
-                                               iControl);
+            UpdateMinsAndMaxes < tDoRayTracing
+                > (v_x, v_y, v_z, lIndex, f_neq, density, bLatDat, iLbmParams, iControl);
           }
         }
 

@@ -8,24 +8,24 @@ namespace hemelb
 {
   namespace vis
   {
-    namespace raytracer 
+    namespace raytracer
     {
-      class ClusterNormal : public ClusterShared <ClusterNormal>
-	{
-	public:
-	  ClusterNormal();
+      class ClusterNormal : public ClusterShared<ClusterNormal>
+      {
+        public:
+          ClusterNormal();
 
-	  void DoResizeVectors();
-	  
-	  void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
+          void DoResizeVectors();
 
-	  double const* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+          void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
 
-	  void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData);
+          double const* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
 
-	private:
-	  std::vector<std::vector<double*> > WallNormals;
-	};
+          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData);
+
+        private:
+          std::vector<std::vector<double*> > WallNormals;
+      };
 
     }
   }

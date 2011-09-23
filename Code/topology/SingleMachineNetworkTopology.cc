@@ -27,8 +27,8 @@ namespace hemelb
       depths = 1;
       machineCount = 1;
 
-      MachineIdOfEachProc = new unsigned int[GetProcessorCount()];
-      ProcCountOnEachMachine = new proc_t[machineCount];
+      MachineIdOfEachProc = new unsigned int[GetProcessorCount()];ProcCountOnEachMachine
+      = new proc_t[machineCount];
 
       for (proc_t i = 0; i < GetProcessorCount(); i++)
       {

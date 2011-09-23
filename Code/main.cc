@@ -96,16 +96,16 @@ int main(int argc, char *argv[])
   if (lOutputDir.length() == 0)
   {
     lOutputDir = ( (lLastForwardSlash == std::string::npos)
-      ? "./"
-      : lInputFile.substr(0, lLastForwardSlash)) + "results";
-  }
+    ? "./"
+    : lInputFile.substr(0, lLastForwardSlash))
++      "results";
+    }
 
   FILE *timings_ptr = NULL;
   std::string image_directory = lOutputDir + "/Images/";
   std::string snapshot_directory = lOutputDir + "/Snapshots/";
 
   // Actually create the directories.
-
 
   if (lMaster.IsCurrentProcTheIOProc())
   {
@@ -123,8 +123,9 @@ int main(int argc, char *argv[])
     // Save the computed config out to disk in the output directory so we have
     // a record of the total state used.
     std::string lFileNameComponent = std::string( (lLastForwardSlash == std::string::npos)
-      ? lInputFile
-      : lInputFile.substr(lLastForwardSlash));
+    ? lInputFile
+    : lInputFile.substr(lLastForwardSlash))
+;
     lSimulationConfig->Save(lOutputDir + "/" + lFileNameComponent);
 
     char timings_name[256];
@@ -142,17 +143,14 @@ int main(int argc, char *argv[])
 
   lMaster.Initialise(lSimulationConfig, lImagesPerCycle, (int) lSteeringSessionId, timings_ptr);
 
-  lMaster.RunSimulation(image_directory,
-                        snapshot_directory,
-                        lSnapshotsPerCycle,
-                        lImagesPerCycle);
+  lMaster.RunSimulation(image_directory, snapshot_directory, lSnapshotsPerCycle, lImagesPerCycle);
 
   if (lMaster.IsCurrentProcTheIOProc())
   {
     fclose(timings_ptr);
   }
 
- delete lSimulationConfig;
+  delete lSimulationConfig;
 
   return (0);
 }

@@ -22,10 +22,9 @@ namespace hemelb
       // f_id is allocated so we know which sites to get information from.
       mFNeighbours = new site_t[LocalFluidSites * D3Q15::NUMVECTORS];
 
-      mSiteData = new unsigned int[LocalFluidSites];
-      mWallNormalAtSite = new double[LocalFluidSites * 3];
-      mDistanceToWall = new double[LocalFluidSites * (D3Q15::NUMVECTORS - 1)];
-    }
+mSiteData      = new unsigned int[LocalFluidSites];
+      mWallNormalAtSite = new double[LocalFluidSites * 3];mDistanceToWall
+      = new double[LocalFluidSites * (D3Q15::NUMVECTORS - 1)];}
 
     void LatticeData::LocalLatticeData::SetSharedSiteCount(site_t iSharedCount)
     {
@@ -34,23 +33,28 @@ namespace hemelb
       // an if condition at every timestep at every boundary site.  We also allocate space for the
       // shared distribution functions.  We need twice as much space when we check the convergence
       // and the extra distribution functions are
-      FOld = new distribn_t[LocalFluidSites * D3Q15::NUMVECTORS + 1 + iSharedCount];
-      FNew = new distribn_t[LocalFluidSites * D3Q15::NUMVECTORS + 1 + iSharedCount];
-    }
+      FOld = new distribn_t[LocalFluidSites * D3Q15::NUMVECTORS + 1 + iSharedCount];FNew = new distribn_t[LocalFluidSites * D3Q15::NUMVECTORS + 1 + iSharedCount];
+    } 
 
     LatticeData::LocalLatticeData::~LocalLatticeData()
     {
-      if (FOld != NULL)
+      if (FOld != NULL
+        )
         delete[] FOld;
-      if (FNew != NULL)
+      if (FNew != NULL
+        )
         delete[] FNew;
-      if (mSiteData != NULL)
+      if (mSiteData != NULL
+        )
         delete[] mSiteData;
-      if (mFNeighbours != NULL)
+      if (mFNeighbours != NULL
+        )
         delete[] mFNeighbours;
-      if (mDistanceToWall != NULL)
+      if (mDistanceToWall != NULL
+        )
         delete[] mDistanceToWall;
-      if (mWallNormalAtSite != NULL)
+      if (mWallNormalAtSite != NULL
+        )
         delete[] mWallNormalAtSite;
     }
 
@@ -107,11 +111,10 @@ namespace hemelb
 
     void LatticeData::LocalLatticeData::SetDistanceToWall(site_t iSiteIndex,
                                                           const double iCutDistance[D3Q15::NUMVECTORS
-                                                              - 1])
-    {
-      for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-        mDistanceToWall[iSiteIndex * (D3Q15::NUMVECTORS - 1) + l] = iCutDistance[l];
-    }
+                                                              - 1]){
+                                                          for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
+                                                          mDistanceToWall[iSiteIndex * (D3Q15::NUMVECTORS - 1) + l] = iCutDistance[l];
+                                                        }
 
-  }
-}
+                                                      }
+                                                    }

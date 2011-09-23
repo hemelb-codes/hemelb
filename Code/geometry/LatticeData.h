@@ -35,392 +35,390 @@ namespace hemelb
         // Data about an element of the domain wall
         struct WallData
         {
-	  WallData()
-	    {
-	      // Set to a default value for no wall normal
-	      wall_nor[0] = -1.0f; 
-	    }
-	  
+            WallData()
+            {
+              // Set to a default value for no wall normal
+              wall_nor[0] = -1.0f;
+            }
+
             // estimated wall normal (if the site is close to the wall);
             double wall_nor[3];
             // cut distances along the 14 non-zero lattice vectors;
             // each one is between 0 and 1 if the surface cuts the corresponding
             // vector or is equal to "NO_VALUE" otherwise
-            double cut_dist[D3Q15::NUMVECTORS - 1];
-        };
+            double cut_dist[D3Q15::NUMVECTORS - 1];};
 
-        // Data about each global block in the lattice,
-        // site_data[] is an array containing individual lattice site data
-        // within a global block.
-        struct BlockData
-        {
-            BlockData()
+            // Data about each global block in the lattice,
+            // site_data[] is an array containing individual lattice site data
+            // within a global block.
+            struct BlockData
             {
-              ProcessorRankForEachBlockSite = NULL;
-              wall_data = NULL;
-              site_data = NULL;
-            }
-
-            ~BlockData()
-            {
-              if (ProcessorRankForEachBlockSite != NULL)
+              BlockData()
               {
-                delete[] ProcessorRankForEachBlockSite;
                 ProcessorRankForEachBlockSite = NULL;
-              }
-              if (wall_data != NULL)
-              {
-                delete[] wall_data;
                 wall_data = NULL;
-              }
-              if (site_data != NULL)
-              {
-                delete[] site_data;
                 site_data = NULL;
               }
-            }
 
-            // An array of the ranks on which each lattice site within the block resides.
-            proc_t* ProcessorRankForEachBlockSite;
-            // Information about wall / inlet / outlet position and orientation for
-            // each site.
-            WallData *wall_data;
-            // The "site data" for each site.
-            unsigned int *site_data;
-        };
+              ~BlockData()
+              {
+                if (ProcessorRankForEachBlockSite != NULL)
+                {
+                  delete[] ProcessorRankForEachBlockSite;
+                  ProcessorRankForEachBlockSite = NULL;
+                }
+                if (wall_data != NULL)
+                {
+                  delete[] wall_data;
+                  wall_data = NULL;
+                }
+                if (site_data != NULL)
+                {
+                  delete[] site_data;
+                  site_data = NULL;
+                }
+              }
 
-        LatticeData(const bool reserveSteeringCore,
-                    site_t* totalFluidSites,
-                    site_t siteMins[3],
-                    site_t siteMaxes[3],
-                    site_t* fluidSitePerProc,
-                    lb::LbmParameters* bLbmParams,
-                    SimConfig* bSimConfig,
-                    double* lReadTime,
-                    double* lDecomposeTime);
+              // An array of the ranks on which each lattice site within the block resides.
+              proc_t* ProcessorRankForEachBlockSite;
+              // Information about wall / inlet / outlet position and orientation for
+              // each site.
+              WallData *wall_data;
+              // The "site data" for each site.
+              unsigned int *site_data;
+            };
 
-        void InitialiseNeighbourLookup(site_t** bSharedFLocationForEachProc,
-                                       proc_t localRank,
-                                       const unsigned int* iSiteDataForThisRank);
+            LatticeData(const bool reserveSteeringCore,
+                site_t* totalFluidSites,
+                site_t siteMins[3],
+                site_t siteMaxes[3],
+                site_t* fluidSitePerProc,
+                lb::LbmParameters* bLbmParams,
+                SimConfig* bSimConfig,
+                double* lReadTime,
+                double* lDecomposeTime);
 
-        void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
-
-        void SetSiteCounts(site_t innerSites,
-                           site_t interCollisions[COLLISION_TYPES],
-                           site_t innerCollisions[COLLISION_TYPES],
-                           site_t sharedSites);
-
-        void SwapOldAndNew();
-
-        const double* GetNormalToWall(site_t iSiteIndex) const;
-
-        site_t GetXSiteCount() const;
-        site_t GetYSiteCount() const;
-        site_t GetZSiteCount() const;
-
-        site_t GetXBlockCount() const;
-        site_t GetYBlockCount() const;
-        site_t GetZBlockCount() const;
-
-        distribn_t GetVoxelSize() const;
-        distribn_t GetXOrigin() const;
-        distribn_t GetYOrigin() const;
-        distribn_t GetZOrigin() const;
-
-        unsigned int GetLog2BlockSize() const;
-
-        site_t GetBlockSize() const;
-        site_t GetBlockCount() const;
-
-        site_t GetSitesPerBlockVolumeUnit() const;
-
-        site_t GetBlockIdFromBlockCoords(site_t i, site_t j, site_t k) const;
-
-        bool IsValidBlockSite(site_t i, site_t j, site_t k) const;
-        bool IsValidLatticeSite(site_t i, site_t j, site_t k) const;
-
-        const proc_t* GetProcIdFromGlobalCoords(site_t siteI, site_t siteJ, site_t siteK) const;
-
-        BlockData* GetBlock(site_t blockNumber) const;
-	BlockTraverser GetBlockTraverser() const;
-
-        distribn_t* GetFOld(site_t siteNumber) const;
-        distribn_t* GetFNew(site_t siteNumber) const;
-        site_t GetLocalFluidSiteCount() const;
-        SiteType GetSiteType(site_t iSiteIndex) const;
-        int GetBoundaryId(site_t iSiteIndex) const;
-        site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
-        bool HasBoundary(site_t iSiteIndex, int iDirection) const;
-        double GetCutDistance(site_t iSiteIndex, int iDirection) const;
-        unsigned int GetSiteData(site_t iSiteIndex) const;
-        unsigned int GetContiguousSiteId(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
-        site_t GetInnerSiteCount() const;
-        site_t GetInnerCollisionCount(unsigned int collisionType) const;
-        site_t GetInterCollisionCount(unsigned int collisionType) const;
-        unsigned int GetCollisionType(unsigned int site_data) const;
-
-      private:
-        class LocalLatticeData
-        {
-          public:
-            LocalLatticeData();
-            ~LocalLatticeData();
-
-            void Initialise(site_t iLocalFluidSites);
-
-            site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
-            double GetCutDistance(site_t iSiteIndex, int iDirection) const;
-            bool HasBoundary(site_t iSiteIndex, int iDirection) const;
-            int GetBoundaryId(site_t iSiteIndex) const;
-            const double *GetNormalToWall(site_t iSiteIndex) const;
-            SiteType GetSiteType(site_t iSiteIndex) const;
-            site_t GetLocalFluidSiteCount() const;
+            void InitialiseNeighbourLookup(site_t** bSharedFLocationForEachProc,
+                proc_t localRank,
+                const unsigned int* iSiteDataForThisRank);
 
             void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
-            void SetWallNormal(site_t iSiteIndex, const double iNormal[3]);
-            void
-            SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
 
-            void SetSharedSiteCount(site_t iSharedCount);
+            void SetSiteCounts(site_t innerSites,
+                site_t interCollisions[COLLISION_TYPES],
+                site_t innerCollisions[COLLISION_TYPES],
+                site_t sharedSites);
 
-          public:
-            site_t my_inner_sites;
-            site_t my_inner_collisions[COLLISION_TYPES];
-            site_t my_inter_collisions[COLLISION_TYPES];
+            void SwapOldAndNew();
 
-            distribn_t *FOld;
-            distribn_t *FNew;
-
-            // TODO sadly this has to be public, due to some budgetry in the way we determine site type.
-            // SiteType || FluidSite and SiteType && FluidSite have different significances...
-            unsigned int *mSiteData;
-
-          private:
-            site_t LocalFluidSites;
-            site_t* mFNeighbours;
-            double *mDistanceToWall;
-            double *mWallNormalAtSite;
-        };
-
-        class GlobalLatticeData
-        {
-          public:
-            void SetBasicDetails(site_t iBlocksX,
-                                 site_t iBlocksY,
-                                 site_t iBlocksZ,
-                                 site_t iBlockSize,
-                                 distribn_t iVoxelSize,
-                                 distribn_t iOriginX,
-                                 distribn_t iOriginY,
-                                 distribn_t iOriginZ);
+            const double* GetNormalToWall(site_t iSiteIndex) const;
 
             site_t GetXSiteCount() const;
             site_t GetYSiteCount() const;
             site_t GetZSiteCount() const;
+
             site_t GetXBlockCount() const;
             site_t GetYBlockCount() const;
             site_t GetZBlockCount() const;
-
-            site_t GetBlockSize() const;
-            site_t GetBlockCount() const;
 
             distribn_t GetVoxelSize() const;
             distribn_t GetXOrigin() const;
             distribn_t GetYOrigin() const;
             distribn_t GetZOrigin() const;
 
+            unsigned int GetLog2BlockSize() const;
+
+            site_t GetBlockSize() const;
+            site_t GetBlockCount() const;
+
             site_t GetSitesPerBlockVolumeUnit() const;
+
+            site_t GetBlockIdFromBlockCoords(site_t i, site_t j, site_t k) const;
 
             bool IsValidBlockSite(site_t i, site_t j, site_t k) const;
             bool IsValidLatticeSite(site_t i, site_t j, site_t k) const;
 
-            BlockData * Blocks;
+            const proc_t* GetProcIdFromGlobalCoords(site_t siteI, site_t siteJ, site_t siteK) const;
 
-            ~GlobalLatticeData();
+            BlockData* GetBlock(site_t blockNumber) const;
+            BlockTraverser GetBlockTraverser() const;
 
-            // Returns the type of collision/streaming update for the fluid site
-            // with data "site_data".
+            distribn_t* GetFOld(site_t siteNumber) const;
+            distribn_t* GetFNew(site_t siteNumber) const;
+            site_t GetLocalFluidSiteCount() const;
+            SiteType GetSiteType(site_t iSiteIndex) const;
+            int GetBoundaryId(site_t iSiteIndex) const;
+            site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
+            bool HasBoundary(site_t iSiteIndex, int iDirection) const;
+            double GetCutDistance(site_t iSiteIndex, int iDirection) const;
+            unsigned int GetSiteData(site_t iSiteIndex) const;
+            unsigned int GetContiguousSiteId(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
+            site_t GetInnerSiteCount() const;
+            site_t GetInnerCollisionCount(unsigned int collisionType) const;
+            site_t GetInterCollisionCount(unsigned int collisionType) const;
             unsigned int GetCollisionType(unsigned int site_data) const;
 
-            // Function that finds the pointer to the rank on which a particular site
-            // resides. If the site is in an empty block, return NULL.
-            const proc_t
-            * GetProcIdFromGlobalCoords(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
-
-            // Function that gets the index of a block from its coordinates.
-            site_t GetBlockIdFromBlockCoords(site_t blockI, site_t blockJ, site_t blockK) const;
-
-            void GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const;
-            site_t GetSiteCoord(site_t block, site_t localSiteCoord) const;
-
-            unsigned int GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
-
-            void ReadBlock(site_t block, io::XdrReader* reader);
-
-          public:
-            // TODO public temporarily, until all usages are internal to the class.
-            unsigned int Log2BlockSize;
-
-          private:
-            site_t mSitesPerBlockVolumeUnit;
-            site_t mBlockCount;
-            site_t mSitesX, mSitesY, mSitesZ;
-            site_t mBlocksX, mBlocksY, mBlocksZ;
-            site_t mBlockSize;
-            distribn_t mVoxelSize;
-            distribn_t mOriginX, mOriginY, mOriginZ;
-        };
-
-        class GeometryReader
-        {
-          public:
-            GeometryReader(const bool reserveSteeringCore);
-            ~GeometryReader();
-
-            void LoadAndDecompose(GlobalLatticeData* bGlobalLatticeData,
-                                  lb::LbmParameters* bLbmParams,
-                                  SimConfig* bSimConfig,
-                                  double* lReadTime,
-                                  double* lDecomposeTime);
-
-          private:
-            struct BlockLocation
+            private:
+            class LocalLatticeData
             {
-                site_t i, j, k;
+              public:
+              LocalLatticeData();
+              ~LocalLatticeData();
+
+              void Initialise(site_t iLocalFluidSites);
+
+              site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
+              double GetCutDistance(site_t iSiteIndex, int iDirection) const;
+              bool HasBoundary(site_t iSiteIndex, int iDirection) const;
+              int GetBoundaryId(site_t iSiteIndex) const;
+              const double *GetNormalToWall(site_t iSiteIndex) const;
+              SiteType GetSiteType(site_t iSiteIndex) const;
+              site_t GetLocalFluidSiteCount() const;
+
+              void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
+              void SetWallNormal(site_t iSiteIndex, const double iNormal[3]);
+              void
+              SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
+
+              void SetSharedSiteCount(site_t iSharedCount);
+
+              public:
+              site_t my_inner_sites;
+              site_t my_inner_collisions[COLLISION_TYPES];
+              site_t my_inter_collisions[COLLISION_TYPES];
+
+              distribn_t *FOld;
+              distribn_t *FNew;
+
+              // TODO sadly this has to be public, due to some budgetry in the way we determine site type.
+              // SiteType || FluidSite and SiteType && FluidSite have different significances...
+              unsigned int *mSiteData;
+
+              private:
+              site_t LocalFluidSites;
+              site_t* mFNeighbours;
+              double *mDistanceToWall;
+              double *mWallNormalAtSite;
             };
 
-            void ReadPreamble(lb::LbmParameters* bParams, GlobalLatticeData* bGlobalLatticeData);
+            class GlobalLatticeData
+            {
+              public:
+              void SetBasicDetails(site_t iBlocksX,
+                  site_t iBlocksY,
+                  site_t iBlocksZ,
+                  site_t iBlockSize,
+                  distribn_t iVoxelSize,
+                  distribn_t iOriginX,
+                  distribn_t iOriginY,
+                  distribn_t iOriginZ);
 
-            void ReadHeader(site_t iBlockCount,
-                            site_t* sitesInEachBlock,
-                            unsigned int* bytesUsedByBlockInDataFile);
+              site_t GetXSiteCount() const;
+              site_t GetYSiteCount() const;
+              site_t GetZSiteCount() const;
+              site_t GetXBlockCount() const;
+              site_t GetYBlockCount() const;
+              site_t GetZBlockCount() const;
 
-            void BlockDecomposition(const site_t iBlockCount,
-                                    const GlobalLatticeData* iGlobLatDat,
-                                    const site_t* fluidSitePerBlock,
-                                    proc_t* initialProcForEachBlock);
+              site_t GetBlockSize() const;
+              site_t GetBlockCount() const;
 
-            void DivideBlocks(site_t unassignedBlocks,
-                              site_t totalBlockCount,
-                              proc_t unitCount,
-                              site_t* blocksOnEachUnit,
-                              proc_t* unitForEachBlock,
-                              const site_t* fluidSitesPerBlock,
-                              const GlobalLatticeData* iGlobLatDat);
+              distribn_t GetVoxelSize() const;
+              distribn_t GetXOrigin() const;
+              distribn_t GetYOrigin() const;
+              distribn_t GetZOrigin() const;
 
-            void ReadInLocalBlocks(GlobalLatticeData* iGlobLatDat,
-                                   const site_t* sitesPerBlock,
-                                   const unsigned int* bytesPerBlock,
-                                   const proc_t* unitForEachBlock,
-                                   const proc_t localRank);
+              site_t GetSitesPerBlockVolumeUnit() const;
 
-            void DecideWhichBlocksToRead(bool* readBlock,
-                                         const proc_t* unitForEachBlock,
-                                         const proc_t localRank,
-                                         const GlobalLatticeData* iGlobLatDat);
+              bool IsValidBlockSite(site_t i, site_t j, site_t k) const;
+              bool IsValidLatticeSite(site_t i, site_t j, site_t k) const;
 
-            bool Expand(std::vector<BlockLocation>* edgeBlocks,
-                        std::vector<BlockLocation>* expansionBlocks,
-                        const GlobalLatticeData* iGlobLatDat,
-                        const site_t* fluidSitesPerBlock,
-                        bool* blockAssigned,
-                        proc_t currentUnit,
-                        proc_t* unitForEachBlock,
-                        site_t &blocksOnCurrentUnit,
-                        site_t blocksPerUnit);
+              BlockData * Blocks;
 
-            void OptimiseDomainDecomposition(const site_t* sitesPerBlock,
-                                             const unsigned int* bytesPerBlock,
-                                             const proc_t* procForEachBlock,
-                                             GlobalLatticeData* bGlobLatDat);
+              ~GlobalLatticeData();
 
-            void ValidateGraphData(idx_t* vtxDistribn,
-                                   idx_t localVertexCount,
-                                   idx_t* adjacenciesPerVertex,
-                                   idx_t* adjacencies);
+              // Returns the type of collision/streaming update for the fluid site
+              // with data "site_data".
+              unsigned int GetCollisionType(unsigned int site_data) const;
 
-            void ValidateGlobLatDat(GlobalLatticeData* iGlobLatDat);
+              // Function that finds the pointer to the rank on which a particular site
+              // resides. If the site is in an empty block, return NULL.
+              const proc_t
+              * GetProcIdFromGlobalCoords(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
-            void ValidateProcForEachBlock(proc_t* procForEachBlock, site_t blockCount);
+              // Function that gets the index of a block from its coordinates.
+              site_t GetBlockIdFromBlockCoords(site_t blockI, site_t blockJ, site_t blockK) const;
 
-            site_t GetHeaderLength(site_t blockCount) const;
+              void GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const;
+              site_t GetSiteCoord(site_t block, site_t localSiteCoord) const;
 
-            void GetSiteDistributionArray(idx_t* vertexDistribn,
-                                          const site_t blockCount,
-                                          const proc_t* procForEachBlock,
-                                          const site_t* sitesPerBlock) const;
+              unsigned int GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
-            void GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
-                                              const site_t blockCount,
-                                              const idx_t* vertexDistribution,
-                                              const proc_t* procForEachBlock,
-                                              const site_t* sitesPerBlock) const;
+              void ReadBlock(site_t block, io::XdrReader* reader);
 
-            void GetAdjacencyData(idx_t* adjacenciesPerVertex,
-                                  idx_t* &localAdjacencies,
-                                  const idx_t localVertexCount,
-                                  const proc_t* procForEachBlock,
-                                  const idx_t* firstSiteIndexPerBlock,
-                                  const GlobalLatticeData* bGlobLatDat) const;
+              public:
+              // TODO public temporarily, until all usages are internal to the class.
+              unsigned int Log2BlockSize;
 
-            void CallParmetis(idx_t* partitionVector,
-                              idx_t localVertexCount,
-                              idx_t* vtxDistribn,
-                              idx_t* adjacenciesPerVertex,
-                              idx_t* adjacencies);
+              private:
+              site_t mSitesPerBlockVolumeUnit;
+              site_t mBlockCount;
+              site_t mSitesX, mSitesY, mSitesZ;
+              site_t mBlocksX, mBlocksY, mBlocksZ;
+              site_t mBlockSize;
+              distribn_t mVoxelSize;
+              distribn_t mOriginX, mOriginY, mOriginZ;
+            };
 
-            idx_t* GetMovesList(idx_t* movesFromEachProc,
-                                const idx_t* firstSiteIndexPerBlock,
-                                const proc_t* procForEachBlock,
-                                const site_t* sitesPerBlock,
-                                const idx_t* vtxDistribn,
-                                const idx_t* partitionVector,
-                                const GlobalLatticeData* bGlobLatDat);
+            class GeometryReader
+            {
+              public:
+              GeometryReader(const bool reserveSteeringCore);
+              ~GeometryReader();
 
-            void RereadBlocks(GlobalLatticeData* bGlobLatDat,
-                              const idx_t* movesPerProc,
-                              const idx_t* movesList,
-                              const site_t* sitesPerBlock,
-                              const unsigned int* bytesPerBlock,
-                              const int* procForEachBlock);
+              void LoadAndDecompose(GlobalLatticeData* bGlobalLatticeData,
+                  lb::LbmParameters* bLbmParams,
+                  SimConfig* bSimConfig,
+                  double* lReadTime,
+                  double* lDecomposeTime);
 
-            void ImplementMoves(GlobalLatticeData* bGlobLatDat,
-                                const proc_t* procForEachBlock,
-                                const idx_t* movesFromEachProc,
-                                const idx_t* movesList) const;
+              private:
+              struct BlockLocation
+              {
+                site_t i, j, k;
+              };
 
-            proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
+              void ReadPreamble(lb::LbmParameters* bParams, GlobalLatticeData* bGlobalLatticeData);
 
-            void CreateFileReadType(MPI_Datatype* dataType,
-                                    const site_t blockCount,
-                                    const bool* readBlock,
-                                    const unsigned int* bytesPerBlock) const;
+              void ReadHeader(site_t iBlockCount,
+                  site_t* sitesInEachBlock,
+                  unsigned int* bytesUsedByBlockInDataFile);
 
-            // The config file starts with:
-            // * 1 unsigned int for stress type
-            // * 3 unsigned ints for the number of blocks in the x, y, z directions
-            // * 1 unsigned int for the block size (number of sites along one edge of a block)
-            // * 1 double for the voxel size
-            // * 3 doubles for the world-position of site 0
-            static const int PreambleBytes = 5 * 4 + 4 * 8;
+              void BlockDecomposition(const site_t iBlockCount,
+                  const GlobalLatticeData* iGlobLatDat,
+                  const site_t* fluidSitePerBlock,
+                  proc_t* initialProcForEachBlock);
 
-            MPI_File file;
-            MPI_Info fileInfo;
-            MPI_Comm mTopologyComm;
-            MPI_Group mTopologyGroup;
-            int mTopologyRank;
-            unsigned int mTopologySize;
-            bool mParticipateInTopology;
-        };
+              void DivideBlocks(site_t unassignedBlocks,
+                  site_t totalBlockCount,
+                  proc_t unitCount,
+                  site_t* blocksOnEachUnit,
+                  proc_t* unitForEachBlock,
+                  const site_t* fluidSitesPerBlock,
+                  const GlobalLatticeData* iGlobLatDat);
 
-        void SetSiteData(site_t siteIndex, unsigned int siteData);
-        void SetWallNormal(site_t siteIndex, double normal[3]);
-        void SetWallDistance(site_t siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1]);
+              void ReadInLocalBlocks(GlobalLatticeData* iGlobLatDat,
+                  const site_t* sitesPerBlock,
+                  const unsigned int* bytesPerBlock,
+                  const proc_t* unitForEachBlock,
+                  const proc_t localRank);
 
-        LocalLatticeData localLatDat;
-        GlobalLatticeData globLatDat;
-    };
-  }
-}
+              void DecideWhichBlocksToRead(bool* readBlock,
+                  const proc_t* unitForEachBlock,
+                  const proc_t localRank,
+                  const GlobalLatticeData* iGlobLatDat);
+
+              bool Expand(std::vector<BlockLocation>* edgeBlocks,
+                  std::vector<BlockLocation>* expansionBlocks,
+                  const GlobalLatticeData* iGlobLatDat,
+                  const site_t* fluidSitesPerBlock,
+                  bool* blockAssigned,
+                  proc_t currentUnit,
+                  proc_t* unitForEachBlock,
+                  site_t &blocksOnCurrentUnit,
+                  site_t blocksPerUnit);
+
+              void OptimiseDomainDecomposition(const site_t* sitesPerBlock,
+                  const unsigned int* bytesPerBlock,
+                  const proc_t* procForEachBlock,
+                  GlobalLatticeData* bGlobLatDat);
+
+              void ValidateGraphData(idx_t* vtxDistribn,
+                  idx_t localVertexCount,
+                  idx_t* adjacenciesPerVertex,
+                  idx_t* adjacencies);
+
+              void ValidateGlobLatDat(GlobalLatticeData* iGlobLatDat);
+
+              void ValidateProcForEachBlock(proc_t* procForEachBlock, site_t blockCount);
+
+              site_t GetHeaderLength(site_t blockCount) const;
+
+              void GetSiteDistributionArray(idx_t* vertexDistribn,
+                  const site_t blockCount,
+                  const proc_t* procForEachBlock,
+                  const site_t* sitesPerBlock) const;
+
+              void GetFirstSiteIndexOnEachBlock(idx_t* firstSiteIndexPerBlock,
+                  const site_t blockCount,
+                  const idx_t* vertexDistribution,
+                  const proc_t* procForEachBlock,
+                  const site_t* sitesPerBlock) const;
+
+              void GetAdjacencyData(idx_t* adjacenciesPerVertex,
+                  idx_t* &localAdjacencies,
+                  const idx_t localVertexCount,
+                  const proc_t* procForEachBlock,
+                  const idx_t* firstSiteIndexPerBlock,
+                  const GlobalLatticeData* bGlobLatDat) const;
+
+              void CallParmetis(idx_t* partitionVector,
+                  idx_t localVertexCount,
+                  idx_t* vtxDistribn,
+                  idx_t* adjacenciesPerVertex,
+                  idx_t* adjacencies);
+
+              idx_t* GetMovesList(idx_t* movesFromEachProc,
+                  const idx_t* firstSiteIndexPerBlock,
+                  const proc_t* procForEachBlock,
+                  const site_t* sitesPerBlock,
+                  const idx_t* vtxDistribn,
+                  const idx_t* partitionVector,
+                  const GlobalLatticeData* bGlobLatDat);
+
+              void RereadBlocks(GlobalLatticeData* bGlobLatDat,
+                  const idx_t* movesPerProc,
+                  const idx_t* movesList,
+                  const site_t* sitesPerBlock,
+                  const unsigned int* bytesPerBlock,
+                  const int* procForEachBlock);
+
+              void ImplementMoves(GlobalLatticeData* bGlobLatDat,
+                  const proc_t* procForEachBlock,
+                  const idx_t* movesFromEachProc,
+                  const idx_t* movesList) const;
+
+              proc_t ConvertTopologyRankToGlobalRank(proc_t topologyRank) const;
+
+              void CreateFileReadType(MPI_Datatype* dataType,
+                  const site_t blockCount,
+                  const bool* readBlock,
+                  const unsigned int* bytesPerBlock) const;
+
+              // The config file starts with:
+              // * 1 unsigned int for stress type
+              // * 3 unsigned ints for the number of blocks in the x, y, z directions
+              // * 1 unsigned int for the block size (number of sites along one edge of a block)
+              // * 1 double for the voxel size
+              // * 3 doubles for the world-position of site 0
+              static const int PreambleBytes = 5 * 4 + 4 * 8;
+
+              MPI_File file;
+              MPI_Info fileInfo;
+              MPI_Comm mTopologyComm;
+              MPI_Group mTopologyGroup;
+              int mTopologyRank;
+              unsigned int mTopologySize;
+              bool mParticipateInTopology;
+            };
+
+            void SetSiteData(site_t siteIndex, unsigned int siteData);
+            void SetWallNormal(site_t siteIndex, double normal[3]);
+            void SetWallDistance(site_t siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1]);
+
+            LocalLatticeData localLatDat;
+            GlobalLatticeData globLatDat;
+          };}
+      }
 
 #endif /* HEMELB_GEOMETRY_LATTICEDATA_H */

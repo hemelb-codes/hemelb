@@ -13,7 +13,7 @@
 #include "io/XdrFileWriter.h"
 
 namespace hemelb
-		
+
 {
   namespace vis
   {
@@ -21,8 +21,8 @@ namespace hemelb
                      net::Net* net,
                      lb::SimulationState* simState,
                      geometry::LatticeData* iLatDat) :
-      net::PhasedBroadcastIrregular<true, 2, 0, false, true>(net, simState, SPREADFACTOR),
-          mLatDat(iLatDat)
+        net::PhasedBroadcastIrregular<true, 2, 0, false, true>(net, simState, SPREADFACTOR),
+        mLatDat(iLatDat)
     {
       timeSpent = 0.0;
 
@@ -31,9 +31,9 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float (iLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float (iLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float (iLatDat->GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float(iLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float(iLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float(iLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -92,22 +92,26 @@ namespace hemelb
       localMaxes[1] = block_max_y;
       localMaxes[2] = block_max_z;
 
-      MPI_Allreduce(localMins, mins, 3, MpiDataType<site_t> (), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, maxes, 3, MpiDataType<site_t> (), MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, mins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, maxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
 
       mVisSettings.ctr_x = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[0] + maxes[0]));
       mVisSettings.ctr_y = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[1] + maxes[1]));
       mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
-      myRayTracer = new raytracer::RayTracer
-	<ClusterType_t, RayDataType_t>(
-	  mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
-      myRayTracer->BuildClusters(); 
+      myRayTracer = new raytracer::RayTracer<ClusterType_t, RayDataType_t>(mLatDat,
+                                                                           &mDomainStats,
+                                                                           &mScreen,
+                                                                           &mViewpoint,
+                                                                           &mVisSettings);
+      myRayTracer->BuildClusters();
       myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new streaklinedrawer::StreaklineDrawer
-	(*mLatDat, mScreen, mViewpoint, mVisSettings);
+      myStreaker = new streaklinedrawer::StreaklineDrawer(*mLatDat,
+                                                          mScreen,
+                                                          mViewpoint,
+                                                          mVisSettings);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -131,13 +135,18 @@ namespace hemelb
       //For now set the maximum draw distance to twice the radius;
       mVisSettings.maximumDrawDistance = 2.0F * rad;
 
-      util::Vector3D<float> centre = util::Vector3D<float>( iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z );
+      util::Vector3D<float> centre = util::Vector3D<float>(iLocal_ctr_x,
+                                                           iLocal_ctr_y,
+                                                           iLocal_ctr_z);
 
-      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
-          * (float) DEG_TO_RAD, centre, rad, dist);
+      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
+                                      iLatitude * (float) DEG_TO_RAD,
+                                      centre,
+                                      rad,
+                                      dist);
 
       mScreen.Set( (0.5F * vis->system_size) / iZoom,
-                   (0.5F * vis->system_size) / iZoom,
+                  (0.5F * vis->system_size) / iZoom,
                   iPixels_x,
                   iPixels_y,
                   rad,
@@ -176,12 +185,12 @@ namespace hemelb
 
       if (mVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
-	myGlypher->Render();
+        myGlypher->Render();
       }
 #ifndef NO_STREAKLINES
       if (mVisSettings.mode == VisSettings::WALLANDSTREAKLINES)
       {
-	myStreaker->render(*mLatDat);
+        myStreaker->render(*mLatDat);
       }
 #endif
 
@@ -211,7 +220,8 @@ namespace hemelb
         pix = mScreen.SwapBuffers(buff);
       }
 
-      resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels<RayDataType_t>*>(startIteration, pix));
+      resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels<RayDataType_t>*>(startIteration,
+                                                                                     pix));
 
       timeSpent += util::myClock();
     }
@@ -234,7 +244,7 @@ namespace hemelb
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel count.");
 
-        ReceiveFromChildren<unsigned int> (childNumbers, counts);
+        ReceiveFromChildren<unsigned int>(childNumbers, counts);
       }
       else if (splayNumber == 1)
       {
@@ -251,7 +261,7 @@ namespace hemelb
                                                         recvBuffer->GetStoredPixelCount());
         }
 
-        ReceiveFromChildren<ColPixel<RayDataType_t> > (childData, counts);
+        ReceiveFromChildren<ColPixel<RayDataType_t> >(childData, counts);
       }
 
       timeSpent += util::myClock();
@@ -268,7 +278,7 @@ namespace hemelb
                                                       startIteration,
                                                       pixels->GetStoredPixelCount());
 
-        SendToParent<unsigned int> (pixels->GetStoredPixelCountPtr(), 1);
+        SendToParent<unsigned int>(pixels->GetStoredPixelCountPtr(), 1);
       }
       else if (splayNumber == 1)
       {
@@ -276,7 +286,8 @@ namespace hemelb
                                                       startIteration,
                                                       pixels->GetStoredPixelCount());
 
-        SendToParent<ColPixel<RayDataType_t> > (pixels->GetPixelArray(), pixels->GetStoredPixelCount());
+        SendToParent<ColPixel<RayDataType_t> >(pixels->GetPixelArray(),
+                                               pixels->GetStoredPixelCount());
       }
 
       timeSpent += util::myClock();
@@ -386,9 +397,9 @@ namespace hemelb
       for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
       {
         // The receiving proc is all the ranks that are 1 modulo (deltaRank * 2)
-        for (proc_t receivingProc = 1; receivingProc < (netTop->GetProcessorCount() - deltaRank); receivingProc
-            += deltaRank << 1)
-        {
+        for (proc_t receivingProc = 1; receivingProc < (netTop->GetProcessorCount() - deltaRank);
+            receivingProc += deltaRank << 1)
+            {
           proc_t sendingProc = receivingProc + deltaRank;
 
           // If we're the sending proc, do the send.
@@ -405,7 +416,7 @@ namespace hemelb
             {
               MPI_Send(mScreen.mPixels->GetPixelArray(),
                        mScreen.mPixels->GetStoredPixelCount(),
-                       MpiDataType<ColPixel<RayDataType_t> > (),
+                       MpiDataType<ColPixel<RayDataType_t> >(),
                        receivingProc,
                        20,
                        MPI_COMM_WORLD);
@@ -425,8 +436,13 @@ namespace hemelb
 
             if (recvBuffer->GetStoredPixelCount() > 0)
             {
-              MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
-                  ColPixel<RayDataType_t> > (), sendingProc, 20, MPI_COMM_WORLD, &status);
+              MPI_Recv(recvBuffer->GetPixelArray(),
+                       recvBuffer->GetStoredPixelCount(),
+                       MpiDataType<ColPixel<RayDataType_t> >(),
+                       sendingProc,
+                       20,
+                       MPI_COMM_WORLD,
+                       &status);
 
               mScreen.mPixels->FoldIn(recvBuffer, &mVisSettings);
             }
@@ -448,7 +464,7 @@ namespace hemelb
         {
           MPI_Send(mScreen.mPixels->GetPixelArray(),
                    mScreen.mPixels->GetStoredPixelCount(),
-                   MpiDataType<ColPixel<RayDataType_t> > (),
+                   MpiDataType<ColPixel<RayDataType_t> >(),
                    0,
                    20,
                    MPI_COMM_WORLD);
@@ -468,8 +484,13 @@ namespace hemelb
 
         if (recvBuffer->GetStoredPixelCount() > 0)
         {
-          MPI_Recv(recvBuffer->GetPixelArray(), recvBuffer->GetStoredPixelCount(), MpiDataType<
-              ColPixel<RayDataType_t> > (), 1, 20, MPI_COMM_WORLD, &status);
+          MPI_Recv(recvBuffer->GetPixelArray(),
+                   recvBuffer->GetStoredPixelCount(),
+                   MpiDataType<ColPixel<RayDataType_t> >(),
+                   1,
+                   20,
+                   MPI_COMM_WORLD,
+                   &status);
 
           mScreen.mPixels->FoldIn(recvBuffer, &mVisSettings);
         }
@@ -490,7 +511,7 @@ namespace hemelb
         }
 
         resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels<RayDataType_t>*>(base::mSimState->GetTimeStepsPassed(),
-                                                                        pix));
+                                                                                       pix));
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.",
                                                       base::mSimState->GetTimeStepsPassed());
@@ -529,7 +550,8 @@ namespace hemelb
       return timeSpent;
     }
 
-    ScreenPixels<RayDataType_t>* Control::GetReceiveBuffer(unsigned int startIteration, unsigned int child)
+    ScreenPixels<RayDataType_t>* Control::GetReceiveBuffer(unsigned int startIteration,
+                                                           unsigned int child)
     {
       return &recvBuffers[startIteration % 2][child];
     }
@@ -539,7 +561,7 @@ namespace hemelb
       timeSpent = 0.0;
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
-      
+
 #ifndef NO_STREAKLINES
       myStreaker->Restart();
 #endif
@@ -560,8 +582,8 @@ namespace hemelb
       delete myRayTracer;
 
       // Clear out the ScreenPixels used still in the results buffer.
-      for (std::map<unsigned long, ScreenPixels<RayDataType_t>*>::iterator it = resultsByStartIt.begin(); it
-          != resultsByStartIt.end(); it++)
+      for (std::map<unsigned long, ScreenPixels<RayDataType_t>*>::iterator it =
+          resultsByStartIt.begin(); it != resultsByStartIt.end(); it++)
       {
         delete it->second;
       }

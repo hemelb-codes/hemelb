@@ -17,7 +17,7 @@ namespace hemelb
         double Omega;
         double Tau;
         double StressParameter;
-        double Beta;  // Viscous dissipation in ELBM
+        double Beta; // Viscous dissipation in ELBM
         StressTypes StressType;
     };
   }

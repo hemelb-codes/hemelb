@@ -7,33 +7,32 @@
 namespace hemelb
 {
   namespace geometry
-  {  
+  {
     /**
      * SiteTraverser is used to traverse the sites in a speficied block
      * within the lattice data
      */
     class SiteTraverser : public VolumeTraverser
     {
-    public:
-      SiteTraverser(const geometry::LatticeData & iLatticeDat);
-      
-      virtual ~SiteTraverser();
+      public:
+        SiteTraverser(const geometry::LatticeData & iLatticeDat);
 
-      virtual site_t GetXCount();
+        virtual ~SiteTraverser();
 
-      virtual site_t GetYCount();
+        virtual site_t GetXCount();
 
-      virtual site_t GetZCount();
+        virtual site_t GetYCount();
 
-    private:
-      //Returns the block size in number of sites
-      site_t GetBlockSize();
+        virtual site_t GetZCount();
 
-      const geometry::LatticeData & mLatticeData;
-    }; 
-    
+      private:
+        //Returns the block size in number of sites
+        site_t GetBlockSize();
+
+        const geometry::LatticeData & mLatticeData;
+    };
+
   }
 }
-
 
 #endif // HEMELB_GEOMETRY_SITETRAVERSER_H

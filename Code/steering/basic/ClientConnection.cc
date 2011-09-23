@@ -118,8 +118,9 @@ namespace hemelb
           }
 
           // Try to accept a socket (from the non-blocking socket)
-          mCurrentSocket
-              = accept(mListeningSocket, (struct sockaddr *) &clientAddress, &socketSize);
+          mCurrentSocket = accept(mListeningSocket,
+                                  (struct sockaddr *) &clientAddress,
+                                  &socketSize);
 
           // We've got a socket - make that socket non-blocking too.
           if (mCurrentSocket > 0)
