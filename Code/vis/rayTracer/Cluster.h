@@ -73,7 +73,6 @@ namespace hemelb
 	  return Derived::DoNeedsWallNormals();
 	}
       };
-
     }
   }
 }
