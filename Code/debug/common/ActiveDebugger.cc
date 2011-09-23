@@ -23,7 +23,7 @@ namespace hemelb
   {
 
     ActiveDebugger::ActiveDebugger(char* executable) :
-      Debugger(executable), mAmAttached(false), mPIds(NULL)
+        Debugger(executable), mAmAttached(false), mPIds(NULL)
     {
     }
 
@@ -67,9 +67,10 @@ namespace hemelb
       pid_t childPid = 0;
 
       MPI_Gather((void*) &pId, 1, MpiDataType(pId), (void*) & (mPIds->front()), 1,
-                 MpiDataType(mPIds->front()), 0, MPI_COMM_WORLD);
+      MpiDataType(mPIds->front()), 0, MPI_COMM_WORLD)
+                 ;
 
-      if (rank == 0)
+if(      rank == 0)
       {
         childPid = fork();
 
@@ -108,10 +109,10 @@ namespace hemelb
         int pId = getpid();
 
         MPI_Gather((void*) &pId, 1, MpiDataType(pId), (void*) & (mPIds->front()), 1,
-                   MpiDataType(mPIds->front()), 0, MPI_COMM_WORLD);
+        MpiDataType(mPIds->front()), 0, MPI_COMM_WORLD)
+                   ;
 
-      }
-    }
+}                 }
 
     void ActiveDebugger::SpawnDebuggers(void)
     {
@@ -152,7 +153,7 @@ namespace hemelb
       char **argv = new char *[args.size() + 1];
 
       // convert to C array of char arrays.
-      for (unsigned int i = 0; i < args.size(); ++i)
+for(      unsigned int i = 0; i < args.size(); ++i)
       {
         argv[i] = new char[args[i].length() + 1]; // for terminating null
         std::strcpy(argv[i], args[i].c_str());
@@ -166,8 +167,7 @@ namespace hemelb
 
       // OK- that didn't work if we get here, better die (since we're
       // the extra process). Print the error code too.
-      std::cerr << "Couldn't exec() script to launch debuggers, error code "
-          << errno << std::endl;
+      std::cerr << "Couldn't exec() script to launch debuggers, error code " << errno << std::endl;
       // Now print the command we wanted to exec()
       for (VoS::iterator it = args.begin(); it < args.end(); it++)
       {

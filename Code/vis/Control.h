@@ -110,7 +110,8 @@ namespace hemelb
 
         void initLayers();
         void Render();
-        ScreenPixels<RayDataType_t>* GetReceiveBuffer(unsigned int startIteration, unsigned int child);
+        ScreenPixels<RayDataType_t>* GetReceiveBuffer(unsigned int startIteration,
+                                                      unsigned int child);
         ScreenPixels<RayDataType_t>* GetPixFromBuffer();
 
         // Because of the 2-splay, we need to have two sets of receive buffers, so that comms
@@ -126,7 +127,7 @@ namespace hemelb
         GlyphDrawer *myGlypher;
 
 #ifndef NO_STREAKLINES
-	streaklinedrawer::StreaklineDrawer *myStreaker;
+        streaklinedrawer::StreaklineDrawer *myStreaker;
 #endif
 
         double timeSpent;

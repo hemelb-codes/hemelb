@@ -4,125 +4,126 @@
 #include "constants.h"
 #include "util/utilityFunctions.h"
 
-
 namespace hemelb
 {
   namespace vis
   {
-    template <class T> 
-      class XYCoordinates
+    template<class T>
+    class XYCoordinates
     {
-    public:
-      T x, y;
+      public:
+        T x, y;
 
-      XYCoordinates() {};
+        XYCoordinates()
+        {
+        }
+        ;
 
-    XYCoordinates(T iX, T iY) :
-      x(iX), y(iY)
-      {}
-      
-    XYCoordinates(T iN) :
-      x(iN), y(iN)
-      {}
+        XYCoordinates(T iX, T iY) :
+            x(iX), y(iY)
+        {
+        }
 
-      //Copy constructor - can be used to perform type converstion 
-      template < class OldTypeT >
-	XYCoordinates<T>(const XYCoordinates<OldTypeT> & iOldXYCoordinates)
-      {
-	x = static_cast<T>(iOldXYCoordinates.x);
-	y = static_cast<T>(iOldXYCoordinates.y);
-      }
+        XYCoordinates(T iN) :
+            x(iN), y(iN)
+        {
+        }
 
-      //Equality
-      bool operator==(const XYCoordinates<T> right) 
-      {
-	if(x != right.x) { return false; }
-	if(y != right.y) { return false; }
-	return true;
-      }
-      
-	
-      //Vector addition
-      XYCoordinates<T> operator+(const XYCoordinates<T> right) const
-      {
-	return XYCoordinates(x + right.x,
-			     y + right.y);
-      }
+        //Copy constructor - can be used to perform type converstion 
+        template<class OldTypeT>
+        XYCoordinates<T>(const XYCoordinates<OldTypeT> & iOldXYCoordinates)
+        {
+          x = static_cast<T>(iOldXYCoordinates.x);
+          y = static_cast<T>(iOldXYCoordinates.y);
+        }
 
-      //Vector addition
-      XYCoordinates<T>& operator+=(const XYCoordinates<T> right) 
-      {
-	x += right.x;
-	y += right.y;
-	
-	return *this;
-      }
-      
+        //Equality
+        bool operator==(const XYCoordinates<T> right)
+        {
+          if (x != right.x)
+          {
+            return false;
+          }
+          if (y != right.y)
+          {
+            return false;
+          }
+          return true;
+        }
 
-      //Vector subtraction
-      XYCoordinates<T> operator-(const XYCoordinates<T> right) const
-      {
-	return XYCoordinates(x - right.x,
-			     y - right.y);
-      }
-	
-      //Scalar multiplication
-      template < class MultiplierT >
-	XYCoordinates<T> operator*(const MultiplierT multiplier) const
-      {
-	return XYCoordinates(x * multiplier,
-			     y * multiplier);
-      }
-      
-      //Updates the XYCoordinates with the smallest of each
-      //of the x and y co-ordinatess independently of both XYCoordinates
-      void UpdatePointwiseMin(const XYCoordinates<T>& iCompareLocation)
-      {
-	x = util::NumericalFunctions::min
-	  (x, iCompareLocation.x);
+        //Vector addition
+        XYCoordinates<T> operator+(const XYCoordinates<T> right) const
+        {
+          return XYCoordinates(x + right.x, y + right.y);
+        }
 
-	y = util::NumericalFunctions::min
-	  (y, iCompareLocation.y);
-      } 
-      
-      //Updates the XYCoordinates with the largest of each
-      //of the x and y co-ordinates independently of both XYCoordinates
-       void UpdatePointwiseMax(const XYCoordinates<T>& iCompareLocation)
-      {
-	x = util::NumericalFunctions::max
-	  (x, iCompareLocation.x);
+        //Vector addition
+        XYCoordinates<T>& operator+=(const XYCoordinates<T> right)
+        {
+          x += right.x;
+          y += right.y;
 
-	y = util::NumericalFunctions::max
-	  (y, iCompareLocation.y);
-      }
+          return *this;
+        }
 
-      static XYCoordinates<T> MaxLimit() 
-      {
-	return XYCoordinates(std::numeric_limits<T>::max());
-      }
+        //Vector subtraction
+        XYCoordinates<T> operator-(const XYCoordinates<T> right) const
+        {
+          return XYCoordinates(x - right.x, y - right.y);
+        }
 
-      static XYCoordinates<T> MinLimit()
-      {
-	return XYCoordinates(std::numeric_limits<T>::min());
-      }
+        //Scalar multiplication
+        template<class MultiplierT>
+        XYCoordinates<T> operator*(const MultiplierT multiplier) const
+        {
+          return XYCoordinates(x * multiplier, y * multiplier);
+        }
+
+        //Updates the XYCoordinates with the smallest of each
+        //of the x and y co-ordinatess independently of both XYCoordinates
+        void UpdatePointwiseMin(const XYCoordinates<T>& iCompareLocation)
+        {
+          x = util::NumericalFunctions::min(x, iCompareLocation.x);
+
+          y = util::NumericalFunctions::min(y, iCompareLocation.y);
+        }
+
+        //Updates the XYCoordinates with the largest of each
+        //of the x and y co-ordinates independently of both XYCoordinates
+        void UpdatePointwiseMax(const XYCoordinates<T>& iCompareLocation)
+        {
+          x = util::NumericalFunctions::max(x, iCompareLocation.x);
+
+          y = util::NumericalFunctions::max(y, iCompareLocation.y);
+        }
+
+        static XYCoordinates<T> MaxLimit()
+        {
+          return XYCoordinates(std::numeric_limits<T>::max());
+        }
+
+        static XYCoordinates<T> MinLimit()
+        {
+          return XYCoordinates(std::numeric_limits<T>::min());
+        }
     };
 
-    template <class T>
-      XYCoordinates<T> operator+(const XYCoordinates<T> left, const XYCoordinates <T> right) 
+    template<class T>
+    XYCoordinates<T> operator+(const XYCoordinates<T> left, const XYCoordinates<T> right)
     {
       return left + right;
     }
-   
-    template <class T>
-      XYCoordinates<T> operator-(const XYCoordinates<T> left, const XYCoordinates <T> right)
+
+    template<class T>
+    XYCoordinates<T> operator-(const XYCoordinates<T> left, const XYCoordinates<T> right)
     {
       return left - right;
     }
-    
-    template <class TLeft, class TRight>
-      XYCoordinates<TRight> operator*(const TLeft left, const XYCoordinates <TRight> right)
+
+    template<class TLeft, class TRight>
+    XYCoordinates<TRight> operator*(const TLeft left, const XYCoordinates<TRight> right)
     {
-      return right*left;
+      return right * left;
     }
   }
 }

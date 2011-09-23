@@ -4,31 +4,30 @@
 #include "vis/rayTracer/ClusterShared.h"
 #include "vis/rayTracer/SiteData.h"
 
-
 namespace hemelb
 {
   namespace vis
   {
-    namespace raytracer 
+    namespace raytracer
     {
-      class ClusterWithWallNormals : public ClusterShared <ClusterWithWallNormals>
-	{
-	public:
-	  ClusterWithWallNormals();
-	  
-	  void DoResizeVectors();
+      class ClusterWithWallNormals : public ClusterShared<ClusterWithWallNormals>
+      {
+        public:
+          ClusterWithWallNormals();
 
-	  void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
+          void DoResizeVectors();
 
-	  double const* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
-	 
-	  void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData);
-       
-	  static bool DoNeedsWallNormals();
+          void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
 
-	private:
-	  std::vector<std::vector<double*> > WallNormals;
-	};
+          double const* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+
+          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData);
+
+          static bool DoNeedsWallNormals();
+
+        private:
+          std::vector<std::vector<double*> > WallNormals;
+      };
 
     }
   }

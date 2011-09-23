@@ -43,10 +43,10 @@ namespace hemelb
 
       machineCount = 0;
 
-      MachineIdOfEachProc = new int[GetProcessorCount()];
-      ProcCountOnEachMachine = new int[GetProcessorCount()];
+      MachineIdOfEachProc = new int[GetProcessorCount()];ProcCountOnEachMachine
+      = new int[GetProcessorCount()];
 
-      for (i = 0; i < GetProcessorCount(); i++)
+for(      i = 0; i < GetProcessorCount(); i++)
       {
         ProcCountOnEachMachine[i] = 0;
       }

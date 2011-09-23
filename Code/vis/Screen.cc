@@ -14,7 +14,7 @@ namespace hemelb
 
     Screen::Screen()
     {
-      mPixels= new ScreenPixels<RayDataType_t>();
+      mPixels = new ScreenPixels<RayDataType_t>();
     }
 
     Screen::~Screen()
@@ -34,10 +34,9 @@ namespace hemelb
       mPixels->AddPixel(newPixel, iVisSettings);
     }
 
-    void Screen::AddRayData
-    ( const XYCoordinates<int>& iPixelCoordinates, 
-      const RayDataType_t& iRayData, 
-      const VisSettings& iVisSettings )
+    void Screen::AddRayData(const XYCoordinates<int>& iPixelCoordinates,
+                            const RayDataType_t& iRayData,
+                            const VisSettings& iVisSettings)
     {
       ColPixel<RayDataType_t> lNewPixel(iPixelCoordinates.x, iPixelCoordinates.y, iRayData);
       AddPixel(lNewPixel, iVisSettings);
@@ -73,22 +72,30 @@ namespace hemelb
       mPixelsPerUnitX = (float) mPixels->GetPixelsX() / (2.F * mMaxXValue);
       mPixelsPerUnitY = (float) mPixels->GetPixelsY() / (2.F * mMaxYValue);
 
-      util::Vector3D<float> lCameraToLocalCentreVector = iViewpoint->
-	RotateCameraCoordinatesToWorldCoordinates
-	(util::Vector3D<float>(0.F, 0.F, 
-			       -iViewpoint->GetDistanceFromCameraToScreen()));
+      util::Vector3D<float> lCameraToLocalCentreVector =
+          iViewpoint->RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0.F,
+                                                                                      0.F,
+                                                                                      -iViewpoint->GetDistanceFromCameraToScreen()));
 
-      util::Vector3D<float> lMiddleCentreToMiddleRightOfScreen = iViewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(mMaxXValue, 0.0F, 0.0F));
+      util::Vector3D<float> lMiddleCentreToMiddleRightOfScreen =
+          iViewpoint->RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(mMaxXValue,
+                                                                                      0.0F,
+                                                                                      0.0F));
 
-      util::Vector3D<float> lLowerCentreToTopCentreOfScreen = iViewpoint->
-	RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0.0F, mMaxYValue, 0.0F));
+      util::Vector3D<float> lLowerCentreToTopCentreOfScreen =
+          iViewpoint->RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0.0F,
+                                                                                      mMaxYValue,
+                                                                                      0.0F));
 
-      mCameraToBottomLeftOfScreen = (lCameraToLocalCentreVector - lMiddleCentreToMiddleRightOfScreen) - lLowerCentreToTopCentreOfScreen;
+      mCameraToBottomLeftOfScreen =
+          (lCameraToLocalCentreVector - lMiddleCentreToMiddleRightOfScreen)
+              - lLowerCentreToTopCentreOfScreen;
 
-      mPixelUnitVectorProjectionX = lMiddleCentreToMiddleRightOfScreen * (2.F / (float) mPixels->GetPixelsX());
-  
-      mPixelUnitVectorProjectionY = lLowerCentreToTopCentreOfScreen * (2.F / (float) mPixels->GetPixelsY());
+      mPixelUnitVectorProjectionX = lMiddleCentreToMiddleRightOfScreen
+          * (2.F / (float) mPixels->GetPixelsX());
+
+      mPixelUnitVectorProjectionY = lLowerCentreToTopCentreOfScreen
+          * (2.F / (float) mPixels->GetPixelsY());
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
@@ -107,8 +114,8 @@ namespace hemelb
 
       for (unsigned int i = 0; i < mPixels->GetStoredPixelCount(); i++)
       {
-        if (screenPix[i].ContainsRayData() && int (screenPix[i].GetI()) == mouseX && int (screenPix[i].GetJ())
-            == mouseY)
+        if (screenPix[i].ContainsRayData() && int(screenPix[i].GetI()) == mouseX
+            && int(screenPix[i].GetJ()) == mouseY)
         {
           *density = screenPix[i].GetDensity();
           *stress = screenPix[i].GetStress();

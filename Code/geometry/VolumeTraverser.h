@@ -14,48 +14,48 @@ namespace hemelb
      */
     class VolumeTraverser
     {
-    public:
-      virtual ~VolumeTraverser();
+      public:
+        virtual ~VolumeTraverser();
 
-      util::Vector3D<site_t> GetCurrentLocation();
-			
-      void SetCurrentLocation(const util::Vector3D<site_t>& iLocation);
+        util::Vector3D<site_t> GetCurrentLocation();
 
-      site_t GetX();
-      
-      site_t GetY();
-      
-      site_t GetZ();
-      
-      site_t GetCurrentIndex();
+        void SetCurrentLocation(const util::Vector3D<site_t>& iLocation);
 
-      site_t GetIndexFromLocation(util::Vector3D<site_t> iLocation);
+        site_t GetX();
 
-      //Increments the index by one and update the location accordingly
-      //Returns true if successful or false if the whole volume has been
-      //traversed
-      bool TraverseOne();
+        site_t GetY();
 
-      void IncrementX();
-      void IncrementY();
-      void IncrementZ();
-	
-      void DecrementX();
-      void DecrementY();
-      void DecrementZ();
+        site_t GetZ();
 
-      bool CurrentLocationValid();
+        site_t GetCurrentIndex();
 
-      //Virtual methods which must be defined for correct traversal
-      virtual site_t GetXCount() = 0;
-      virtual site_t GetYCount() = 0;
-      virtual site_t GetZCount() = 0;
-	    
-    protected:
-      VolumeTraverser();
+        site_t GetIndexFromLocation(util::Vector3D<site_t> iLocation);
 
-      util::Vector3D<site_t> mCurrentLocation;
-      site_t mCurrentNumber;
+        //Increments the index by one and update the location accordingly
+        //Returns true if successful or false if the whole volume has been
+        //traversed
+        bool TraverseOne();
+
+        void IncrementX();
+        void IncrementY();
+        void IncrementZ();
+
+        void DecrementX();
+        void DecrementY();
+        void DecrementZ();
+
+        bool CurrentLocationValid();
+
+        //Virtual methods which must be defined for correct traversal
+        virtual site_t GetXCount() = 0;
+        virtual site_t GetYCount() = 0;
+        virtual site_t GetZCount() = 0;
+
+      protected:
+        VolumeTraverser();
+
+        util::Vector3D<site_t> mCurrentLocation;
+        site_t mCurrentNumber;
     };
   }
 }

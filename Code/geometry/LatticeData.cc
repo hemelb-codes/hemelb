@@ -20,7 +20,7 @@ namespace hemelb
                              SimConfig* bSimConfig,
                              double* lReadTime,
                              double* lDecomposeTime) :
-      localLatDat(), globLatDat()
+        localLatDat(), globLatDat()
 
     {
       // Use a reader to read in the file.
@@ -39,8 +39,9 @@ namespace hemelb
       {
         if (globLatDat.Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
         {
-          for (site_t lSiteIndex = 0; lSiteIndex < globLatDat.GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
-          {
+          for (site_t lSiteIndex = 0; lSiteIndex < globLatDat.GetSitesPerBlockVolumeUnit();
+              ++lSiteIndex)
+              {
             if (globLatDat.Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex] == localRank)
             {
               ++localFluidSites;
@@ -52,10 +53,10 @@ namespace hemelb
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
       MPI_Allgather(&localFluidSites,
                     1,
-                    MpiDataType<site_t> (),
+                    MpiDataType<site_t>(),
                     fluidSitePerProc,
                     1,
-                    MpiDataType<site_t> (),
+                    MpiDataType<site_t>(),
                     MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
@@ -92,8 +93,8 @@ namespace hemelb
         }
       }
 
-      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t> (), MPI_MIN, MPI_COMM_WORLD);
-      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t> (), MPI_MAX, MPI_COMM_WORLD);
+      MPI_Allreduce(localMins, siteMins, 3, MpiDataType<site_t>(), MPI_MIN, MPI_COMM_WORLD);
+      MPI_Allreduce(localMaxes, siteMaxes, 3, MpiDataType<site_t>(), MPI_MAX, MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       *totalFluidSites = 0;
@@ -209,8 +210,9 @@ namespace hemelb
                       // on this process are shared with the
                       // neighbour.
                       site_t fluidSitesHandled = (sitesHandledPerProc.count(neigh_proc_index) > 0)
-                        ? sitesHandledPerProc[neigh_proc_index]
-                        : 0;
+                      ?
+                        sitesHandledPerProc[neigh_proc_index] :
+                        0;
 
                       site_t* f_data_p =
                           &bSharedFLocationForEachProc[neigh_proc_index][fluidSitesHandled << 2];
@@ -320,7 +322,9 @@ namespace hemelb
       return globLatDat.GetBlockIdFromBlockCoords(i, j, k);
     }
 
-    const proc_t* LatticeData::GetProcIdFromGlobalCoords(site_t siteI, site_t siteJ, site_t siteK) const
+    const proc_t* LatticeData::GetProcIdFromGlobalCoords(site_t siteI,
+                                                         site_t siteJ,
+                                                         site_t siteK) const
     {
       return globLatDat.GetProcIdFromGlobalCoords(siteI, siteJ, siteK);
     }
@@ -329,7 +333,6 @@ namespace hemelb
     {
       return globLatDat.IsValidBlockSite(i, j, k);
     }
-
 
     bool LatticeData::IsValidLatticeSite(site_t i, site_t j, site_t k) const
     {
@@ -427,10 +430,9 @@ namespace hemelb
     {
       localLatDat.SetWallNormal(siteIndex, normal);
     }
-    void LatticeData::SetWallDistance(site_t siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1])
-    {
-      localLatDat.SetDistanceToWall(siteIndex, cutDistance);
-    }
+    void LatticeData::SetWallDistance(site_t siteIndex, double cutDistance[D3Q15::NUMVECTORS - 1]){
+    localLatDat.SetDistanceToWall(siteIndex, cutDistance);
+  }
 
     site_t LatticeData::GetInnerSiteCount() const
     {

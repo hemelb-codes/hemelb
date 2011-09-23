@@ -28,18 +28,19 @@ namespace hemelb
 
           pixelArrayLength = 100;
 
-	  pixels = (ColPixel<RayDataType>*) malloc(sizeof(ColPixel<RayDataType>) * pixelArrayLength);
+          pixels = (ColPixel<RayDataType>*) malloc(sizeof(ColPixel<RayDataType> )
+              * pixelArrayLength);
 
           Reset();
         }
 
         ~ScreenPixels()
         {
-	  for (int i = 0; i < storedPixels; i++)
-	  {
-	    pixels[i].~ColPixel<RayDataType>();
-	  }
-	  free(pixels);
+          for (int i = 0; i < storedPixels; i++)
+          {
+            pixels[i].~ColPixel<RayDataType>();
+          }
+          free(pixels);
         }
 
         void Reset()
@@ -71,7 +72,7 @@ namespace hemelb
           AddPixels(inScreen->pixels, inScreen->storedPixels, visSettings);
         }
 
-      void AddPixel(const ColPixel<RayDataType>& newPixel, const VisSettings& iVisSettings)
+        void AddPixel(const ColPixel<RayDataType>& newPixel, const VisSettings& iVisSettings)
         {
           // Get the id of the pixel if we've already added one at the same location.
           int id = pixelId[newPixel.GetI() * PixelsY + newPixel.GetJ()];

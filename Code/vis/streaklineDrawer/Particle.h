@@ -9,24 +9,17 @@ namespace hemelb
     {
       struct Particle
       {
-      public:
-	Particle(float iX, 
-		 float iY, 
-		 float iZ,
-		 unsigned int iInletId);
+        public:
+          Particle(float iX, float iY, float iZ, unsigned int iInletId);
 
-	Particle(float iX, 
-		 float iY, 
-		 float iZ,
-		 float iVel,
-		 unsigned int iInletId);
-	
-	float x, y, z;
-	float vx, vy, vz;
-	float vel;
-	unsigned int inletID;
+          Particle(float iX, float iY, float iZ, float iVel, unsigned int iInletId);
+
+          float x, y, z;
+          float vx, vy, vz;
+          float vel;
+          unsigned int inletID;
       };
-       
+
     }
   }
 }

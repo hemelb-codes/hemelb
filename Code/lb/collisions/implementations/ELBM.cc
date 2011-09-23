@@ -16,7 +16,7 @@ namespace hemelb
         {
           alpha = new double[iLatDat->GetLocalFluidSiteCount()];
 
-          Reset(iLatDat, iLbmParams);
+Reset          (iLatDat, iLbmParams);
         }
 
         void ELBM::Reset(const geometry::LatticeData* iLatDat, const lb::LbmParameters* iLbmParams)
@@ -92,9 +92,9 @@ namespace hemelb
             HFunction HFunc(lF, lFEq);
 
             // This is in case previous Alpha was calculated to be zero (does happen occasionally if f_eq - f is small
-            prevAlpha = (prevAlpha < TwoTau
-              ? 2.0
-              : prevAlpha);
+            prevAlpha = (prevAlpha < TwoTau ?
+              2.0 :
+              prevAlpha);
 
             return (hemelb::util::NumericalMethods::NewtonRaphson(&HFunc, prevAlpha, 1.0E-6));
           }

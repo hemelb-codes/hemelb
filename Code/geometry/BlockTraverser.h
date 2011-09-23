@@ -7,42 +7,41 @@
 namespace hemelb
 {
   namespace geometry
-  {    
+  {
     /**
      *BlockTraverser is used to traverse the blocks in a lattice sequentially.
      */
     class BlockTraverser : public VolumeTraverser
     {
-    public:
-      BlockTraverser(const geometry::LatticeData& iLatDat);
-      ~BlockTraverser();
+      public:
+        BlockTraverser(const geometry::LatticeData& iLatDat);
+        ~BlockTraverser();
 
-      site_t CurrentBlockNumber();
+        site_t CurrentBlockNumber();
 
-      util::Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
+        util::Vector3D<site_t> GetSiteCoordinatesOfLowestSiteInCurrentBlock();
 
+        geometry::LatticeData::BlockData * GetCurrentBlockData();
 
-      geometry::LatticeData::BlockData * GetCurrentBlockData();
+        geometry::LatticeData::BlockData * GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation);
 
-      geometry::LatticeData::BlockData * GetBlockDataForLocation(const util::Vector3D<site_t>& iLocation);
+        site_t GetBlockSize();
 
-      site_t GetBlockSize();
+        SiteTraverser GetSiteTraverser();
 
-      SiteTraverser GetSiteTraverser();
+        virtual site_t GetXCount();
 
-      virtual site_t GetXCount();
+        virtual site_t GetYCount();
 
-      virtual site_t GetYCount();
+        virtual site_t GetZCount();
 
-      virtual site_t GetZCount();
+        bool IsValidLocation(util::Vector3D<site_t> block);
 
-      bool IsValidLocation(util::Vector3D<site_t> block);
+      protected:
+        bool GoToNextBlock();
 
-    protected:
-      bool GoToNextBlock();
-
-      const geometry::LatticeData & mLatticeData;
-    }; 
+        const geometry::LatticeData & mLatticeData;
+    };
   }
 }
 

@@ -1,21 +1,7 @@
-
-
-
-
-
-
 namespace hemelb
 {
   namespace vis
   {
-    
-
-  
-
-  
-   
-
-    
 
   }
 }
