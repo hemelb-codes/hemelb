@@ -1,6 +1,3 @@
-//#define NDEBUG
-#include <cassert>
-
 #include "geometry/LatticeData.h"
 #include "vis/rayTracer/ClusterNormal.h"
 
@@ -31,7 +28,6 @@ namespace hemelb
 
       void ClusterNormal::DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData)
       {
-	assert(false);
       }
 
     }

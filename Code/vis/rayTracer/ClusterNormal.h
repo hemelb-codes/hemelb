@@ -4,7 +4,6 @@
 #include "vis/rayTracer/ClusterShared.h"
 #include "vis/rayTracer/SiteData.h"
 
-
 namespace hemelb
 {
   namespace vis
