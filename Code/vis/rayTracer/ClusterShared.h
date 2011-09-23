@@ -61,6 +61,46 @@ namespace hemelb
 	  {
 	    return false; // By default
 	  }
+	  
+	  const std::vector<util::Vector3D<float> > 
+	    GetCorners() const
+	  {
+	    std::vector<util::Vector3D<float> > lCorners;
+
+	    lCorners.push_back(util::Vector3D<float>(minSite.x,
+						     minSite.y,
+						     minSite.z));
+			    
+	    lCorners.push_back(util::Vector3D<float>(minSite.x,
+						     minSite.y,
+						     maxSite.z));
+
+	    lCorners.push_back(util::Vector3D<float>(minSite.x,
+						     maxSite.y,
+						     minSite.z));
+
+	    lCorners.push_back(util::Vector3D<float>(minSite.x,
+						     maxSite.y,
+						     maxSite.z));
+
+	    lCorners.push_back(util::Vector3D<float>(maxSite.x,
+						     minSite.y,
+						     minSite.z));
+
+	    lCorners.push_back(util::Vector3D<float>(maxSite.x,
+						     minSite.y,
+						     maxSite.z));
+
+	    lCorners.push_back(util::Vector3D<float>(maxSite.x,
+						     maxSite.y,
+						     minSite.z));
+
+	    lCorners.push_back(util::Vector3D<float>(maxSite.x,
+						     maxSite.y,
+						     maxSite.z));
+
+	    return lCorners;
+	  }
 
 	  //The min and maximum site location, in site units 
 	  //relative to the centre of the lattice

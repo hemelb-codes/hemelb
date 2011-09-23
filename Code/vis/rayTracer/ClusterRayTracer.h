@@ -1,7 +1,6 @@
-#ifndef HEMELB_VIS_CLUSTERRAYTRACER_H
-#define HEMELB_VIS_CLUSTERRAYTRACER_H
+#ifndef HEMELB_VIS_RAYTRACER_CLUSTERRAYTRACER_H
+#define HEMELB_VIS_RAYTRACER_CLUSTERRAYTRACER_H
 
-//#define NDEBUG;
 #include <cmath> 
 #include <cassert>
 #include <iostream>
@@ -22,16 +21,6 @@ namespace hemelb
   {
     namespace raytracer
     {
-      namespace Direction
-      {
-        enum Direction
-        {
-          X,
-          Y,
-          Z
-        };
-      }
-
       template<typename ClusterType, typename RayDataType>
 	class ClusterRayTracer
       {
@@ -41,7 +30,11 @@ namespace hemelb
 		       const DomainStats& iDomainStats,
 		       const VisSettings& iVisSettings,
 		       const hemelb::geometry::LatticeData& iLatticeData) :
-	mViewpoint(iViewpoint), mScreen(iScreen), mDomainStats(iDomainStats), mVisSettings(iVisSettings), mLatticeData(iLatticeData)
+	mViewpoint(iViewpoint),
+	  mScreen(iScreen),
+	  mDomainStats(iDomainStats), 
+	  mVisSettings(iVisSettings),
+	  mLatticeData(iLatticeData)
 	{
 	  // TODO: This is absolutely horrible, but neccessary until RayDataNormal is
 	  // removed. 
@@ -71,12 +64,12 @@ namespace hemelb
 	  CastRaysForEachPixel(iCluster);
 	}
 
-      protected:
+      private:
 	void GetRayUnitsFromViewpointToCluster(const Ray<RayDataType> & iRay,
 					       float & oMaximumRayUnits,
 					       float & oMinimumRayUnits)
 	{
-	  //(Remember that iRay.mDirection is normalised)
+	  // (Remember that iRay.mDirection is normalised)
 	  float lMaxUnitRaysBasedOnX;
 	  float lMinUnitRaysBasedOnX;
 	  if (iRay.GetDirection().x > 0.0F)
@@ -169,69 +162,23 @@ namespace hemelb
 	  TraverseBlocks(iCluster, lLowerSiteToFirstRayClusterIntersection, ioRay);
 	}
 
-	const Viewpoint& mViewpoint;
-
-	Screen& mScreen;
-
-	const DomainStats& mDomainStats;
-
-	const VisSettings& mVisSettings;
-
-      private:
 	void CalculateSubImage(const ClusterType& iCluster)
 	{
 	  //The extent of the cluster when projected (ie the subimage)
-	  //is determined by projecting all eight verticies of the cuboid
+	  //is determined by projecting all eight vertices of the cuboid
 	  XYCoordinates<float> lSubImageLowerLeft = XYCoordinates<float>::MaxLimit();
 	  XYCoordinates<float> lSubImageUpperRight = XYCoordinates<float>::MinLimit();
 
-	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.minSite.x,
-							iCluster.minSite.y,
-							iCluster.minSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.minSite.x,
-							iCluster.minSite.y,
-							iCluster.maxSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.minSite.x,
-							iCluster.maxSite.y,
-							iCluster.minSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.minSite.x,
-							iCluster.maxSite.y,
-							iCluster.maxSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.maxSite.x,
-							iCluster.minSite.y,
-							iCluster.minSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.maxSite.x,
-							iCluster.minSite.y,
-							iCluster.maxSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.maxSite.x,
-							iCluster.maxSite.y,
-							iCluster.minSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
-
-	  UpdateSubImageExtentForCorner(util::Vector3D<float>(iCluster.maxSite.x,
-							iCluster.maxSite.y,
-							iCluster.maxSite.z),
-					lSubImageLowerLeft,
-					lSubImageUpperRight);
+	  const std::vector<util::Vector3D<float> > lCorners = iCluster.GetCorners();
+	
+	  for(std::vector<util::Vector3D<float> >::const_iterator lIt = lCorners.begin();
+	      lIt != lCorners.end();
+	      lIt++)
+	  {
+	    UpdateSubImageExtentForCorner(*lIt,
+					  lSubImageLowerLeft,
+					  lSubImageUpperRight);
+	  }
 
 	  mSubImageLowerLeftPixelCoordinates = 
 	    mScreen.template TransformScreenToPixelCoordinates<int>(lSubImageLowerLeft);
@@ -252,19 +199,12 @@ namespace hemelb
 
 	bool SubImageOffScreen()
 	{
-	  if (mSubImageLowerLeftPixelCoordinates.x >= mScreen.GetPixelsX()
-	      || mSubImageUpperRightPixelCoordinates.x < 0
-	      || mSubImageLowerLeftPixelCoordinates.y >= mScreen.GetPixelsY()
-	      || mSubImageUpperRightPixelCoordinates.y < 0)
-	  {
-	    return true;
-	  }
-	  else
-	  {
-	    return false;
-	  }
+	  return (mSubImageLowerLeftPixelCoordinates.x >= mScreen.GetPixelsX()
+		  || mSubImageUpperRightPixelCoordinates.x < 0
+		  || mSubImageLowerLeftPixelCoordinates.y >= mScreen.GetPixelsY()
+		  || mSubImageUpperRightPixelCoordinates.y < 0);
 	}
-
+	
 	void CropSubImageToScreen()
 	{
 	  mSubImageLowerLeftPixelCoordinates.x =
@@ -284,7 +224,6 @@ namespace hemelb
 
 	void CalculateVectorsToClusterSpanAndLowerLeftPixel(const ClusterType& iCluster)
 	{
-	  //This used to be AABB
 	  mViewpointCentreToMaxSite = iCluster.maxSite - mViewpoint.GetViewpointLocation();
 
 	  mViewpointCentreToMinSite = iCluster.minSite - mViewpoint.GetViewpointLocation();
@@ -363,29 +302,16 @@ namespace hemelb
 
 	  while (lSiteTraverser.CurrentLocationValid())
 	  {
-	    //Firstly, work out in which direction we
-	    //can travel the least ray units before reaching
-	    //a vortex side
-	    Direction::Direction lDirectionOfLeastTravel =
+	    // Firstly, work out in which direction we
+	    // can travel the least ray units before reaching
+	    // a vortex side
+	    util::Direction::Direction lDirectionOfLeastTravel =
 	      DirectionOfLeastTravel(lRayUnitsBeforeNextVoxel);
-
-	    float lMinRayUnitsBeforeNextVoxel;
-	    //Find out how far the ray can move
-	    switch (lDirectionOfLeastTravel)
-	    {
-	    case Direction::X:
-	      lMinRayUnitsBeforeNextVoxel = lRayUnitsBeforeNextVoxel.x;
-	      break;
-
-	    case Direction::Y:
-	      lMinRayUnitsBeforeNextVoxel = lRayUnitsBeforeNextVoxel.y;
-	      break;
-
-	    case Direction::Z:
-	      lMinRayUnitsBeforeNextVoxel = lRayUnitsBeforeNextVoxel.z;
-	      break;
-	    }
-
+	    
+	    // Find out how far the ray can move
+	    float lMinRayUnitsBeforeNextVoxel =
+	      lRayUnitsBeforeNextVoxel.GetByDirection(lDirectionOfLeastTravel);
+	    
 	    // Update the ray data
 	    // The ray may have been sitting on the fence, in which case
 	    // there is little sence in updating ray data
@@ -433,7 +359,7 @@ namespace hemelb
 	    //in each direction
 	    switch (lDirectionOfLeastTravel)
 	    {
-	    case Direction::X:
+	    case util::Direction::X:
 	      if (ioRay.XIncreasing())
 	      {
 		lSiteTraverser.IncrementX();
@@ -447,7 +373,7 @@ namespace hemelb
 
 	      break;
 
-	    case Direction::Y:
+	    case util::Direction::Y:
 	      if (ioRay.YIncreasing())
 	      {
 		lSiteTraverser.IncrementY();
@@ -460,7 +386,7 @@ namespace hemelb
 	      }
 	      break;
 
-	    case Direction::Z:
+	    case util::Direction::Z:
 	      if (ioRay.ZIncreasing())
 	      {
 		lSiteTraverser.IncrementZ();
@@ -565,7 +491,7 @@ namespace hemelb
 	  return lVoxelLocationInBlock;
 	}
 
-	Direction::Direction DirectionOfLeastTravel(util::Vector3D<float> iRayUnitsBeforeNextVoxelOrBlock)
+	util::Direction::Direction DirectionOfLeastTravel(util::Vector3D<float> iRayUnitsBeforeNextVoxelOrBlock)
 	{
 	    
 	  if (iRayUnitsBeforeNextVoxelOrBlock.x < iRayUnitsBeforeNextVoxelOrBlock.y)
@@ -574,13 +500,13 @@ namespace hemelb
 	    if (iRayUnitsBeforeNextVoxelOrBlock.x < iRayUnitsBeforeNextVoxelOrBlock.z)
 	    {
 	      //X is less than Y and X
-	      return Direction::X;
+	      return util::Direction::X;
 	    }
 	    else
 	    {
 	      //X is less than Y
 	      //Z is less Than X (And Y)
-	      return Direction::Z;
+	      return util::Direction::Z;
 	    }
 	  }
 	  else
@@ -589,13 +515,13 @@ namespace hemelb
 	    if (iRayUnitsBeforeNextVoxelOrBlock.y < iRayUnitsBeforeNextVoxelOrBlock.z)
 	    {
 	      //Y is less than X and Z
-	      return Direction::Y;
+	      return util::Direction::Y;
 	    }
 	    else
 	    {
 	      //Y is less than X
 	      //Z is less than Y (and so X)
-	      return Direction::Z;
+	      return util::Direction::Z;
 	    }
 
 	  }
@@ -653,12 +579,9 @@ namespace hemelb
 
 	  while (lClusterTraverser.CurrentLocationValid())
 	  {
-	    Direction::Direction lDirectionOfLeastTravel =
-	      DirectionOfLeastTravel(lRayUnitsBeforeNextBlock);
-
-	    if (iCluster.BlockContainsSites(lClusterTraverser.GetCurrentIndex()))
+	     if (iCluster.BlockContainsSites(lClusterTraverser.GetCurrentIndex()))
 	    {
-	      //Recalculate the site location within the block
+	      // Recalculate the site location within the block
 	      lSiteLocationWithinBlock =
 		lSiteUnitsTraversed * ioRay.GetDirection() -
 		lFirstIntersectionToBlockLowerSite;
@@ -671,11 +594,20 @@ namespace hemelb
 			     ioRay);
 	    }
 
-	    //Move to another block
+	    // The direction of least travel is the direction of 
+	    // the next block that will be hit by the ray
+	    // relative to the current block.
+	     util::Direction::Direction lDirectionOfLeastTravel =
+	      DirectionOfLeastTravel(lRayUnitsBeforeNextBlock);
+
+	    //Move to the next block based on the direction 
+	    //of least travel and update variables accordingly
+	     lSiteUnitsTraversed = 
+	       lRayUnitsBeforeNextBlock.GetByDirection(lDirectionOfLeastTravel);
+	     
 	    switch (lDirectionOfLeastTravel)
 	    {
-	    case Direction::X:
-	      lSiteUnitsTraversed = lRayUnitsBeforeNextBlock.x;
+	    case util::Direction::X:
 	      if (ioRay.XIncreasing())
 	      {
 		lClusterTraverser.IncrementX();
@@ -690,8 +622,7 @@ namespace hemelb
 	      }
 	      break;
 
-	    case Direction::Y:
-	      lSiteUnitsTraversed = lRayUnitsBeforeNextBlock.y;
+	    case util::Direction::Y:
 	      if (ioRay.YIncreasing())
 	      {
 		lClusterTraverser.IncrementY();
@@ -706,8 +637,7 @@ namespace hemelb
 	      }
 	      break;
 
-	    case Direction::Z:
-	      lSiteUnitsTraversed = lRayUnitsBeforeNextBlock.z;
+	    case util::Direction::Z:
 	      if (ioRay.ZIncreasing())
 	      {
 		lClusterTraverser.IncrementZ();
@@ -818,6 +748,13 @@ namespace hemelb
 	  return lRayUnits;
 	}
 
+	const Viewpoint& mViewpoint;
+
+	Screen& mScreen;
+
+	const DomainStats& mDomainStats;
+
+	const VisSettings& mVisSettings;
         
 	const hemelb::geometry::LatticeData& mLatticeData;
 
@@ -832,11 +769,11 @@ namespace hemelb
 	//Vectors from the viewpoint centre
 	//to the maximum and minimum site span
 	//locations respectively
-	//(Formerly AABB)
 	util::Vector3D<float> mViewpointCentreToMaxSite;
 	util::Vector3D<float> mViewpointCentreToMinSite;
-      };}
+      };
+    }
   }
 }
 
-#endif // HEMELB_VIS_CLUSTERRENDERER_H
+#endif // HEMELB_VIS_RAYTRACER_CLUSTERRAYTRACER_H
