@@ -8,43 +8,42 @@ namespace hemelb
 {
   namespace vis
   {
-    namespace raytracer 
+    namespace raytracer
     {
       //ClusterTraverser is used to traverse the cluster
-      template <typename ClusterType>
-	class ClusterTraverser : public geometry::VolumeTraverser
+      template<typename ClusterType>
+      class ClusterTraverser : public geometry::VolumeTraverser
       {
-      public:
-        ClusterTraverser(const ClusterType& iCluster) :
-	mCluster(iCluster)
-	{
-	}
+        public:
+          ClusterTraverser(const ClusterType& iCluster) :
+              mCluster(iCluster)
+          {
+          }
 
-	virtual ~ClusterTraverser()
-	{
-	}
+          virtual ~ClusterTraverser()
+          {
+          }
 
-	virtual site_t GetXCount()
-	{
-	  return mCluster.blocksX;
-	}
+          virtual site_t GetXCount()
+          {
+            return mCluster.blocksX;
+          }
 
-	virtual site_t GetYCount()
-	{
-	  return mCluster.blocksY;
-	}
+          virtual site_t GetYCount()
+          {
+            return mCluster.blocksY;
+          }
 
-	virtual site_t GetZCount()
-	{
-	  return mCluster.blocksZ;
-	}
-	
-      private:
-	const ClusterType& mCluster;
-      }; 
+          virtual site_t GetZCount()
+          {
+            return mCluster.blocksZ;
+          }
+
+        private:
+          const ClusterType& mCluster;
+      };
     }
   }
 }
-
 
 #endif // HEMELB_VIS_RAYTRACER_CLUSTERTRAVERSER_H

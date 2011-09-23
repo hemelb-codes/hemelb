@@ -34,71 +34,65 @@ namespace hemelb
        */
       class StreaklineDrawer
       {
-      public:
-        // Constructor and destructor.
-        StreaklineDrawer(const geometry::LatticeData& iLatDat,
-                         Screen& iScreen,
-                         const Viewpoint& iViewpoint,
-                         const VisSettings& iVisSettings);
-        ~StreaklineDrawer();
+        public:
+          // Constructor and destructor.
+          StreaklineDrawer(const geometry::LatticeData& iLatDat,
+                           Screen& iScreen,
+                           const Viewpoint& iViewpoint,
+                           const VisSettings& iVisSettings);
+          ~StreaklineDrawer();
 
-        // Method to reset streakline drawer
-        void Restart();
+          // Method to reset streakline drawer
+          void Restart();
 
-        // Drawing methods.
-        void StreakLines(unsigned long time_steps,
-                         unsigned long time_steps_per_cycle,
-                         const geometry::LatticeData& iLatDat);
-	
-        void render(const geometry::LatticeData& iLatDat);
+          // Drawing methods.
+          void StreakLines(unsigned long time_steps,
+                           unsigned long time_steps_per_cycle,
+                           const geometry::LatticeData& iLatDat);
 
-      private:
-	// Private functions for updating the velocity field and the particles in it.
-        void updateVelField(int stage_id, const geometry::LatticeData& iLatDat);
-        void updateParticles();
-	
-     public:
-	// Variables for counting the processors involved etc.
-        site_t shared_vs;
-        proc_t procs;
+          void render(const geometry::LatticeData& iLatDat);
 
+        private:
+          // Private functions for updating the velocity field and the particles in it.
+          void updateVelField(int stage_id, const geometry::LatticeData& iLatDat);
+          void updateParticles();
 
-      
-        std::vector<Particle> mParticleSeeds;
+        public:
+          // Variables for counting the processors involved etc.
+          site_t shared_vs;
+          proc_t procs;
 
-      private:
+          std::vector<Particle> mParticleSeeds;
 
+        private:
 
+          // Arrays for communicating between processors.
+          float *v_to_send, *v_to_recv;
+          site_t *s_to_send, *s_to_recv;
 
-        // Arrays for communicating between processors.
-        float *v_to_send, *v_to_recv;
-        site_t *s_to_send, *s_to_recv;
-	
-      public:
-        proc_t *from_proc_id_to_neigh_proc_index;
+        public:
+          proc_t *from_proc_id_to_neigh_proc_index;
 
+          std::vector<NeighProc> mNeighProcs;
 
-        std::vector<NeighProc> mNeighProcs;
+        private:
+          // Require these for inter-processor comms.
+          MPI_Request *req;
 
-      private:      
-        // Require these for inter-processor comms.
-        MPI_Request *req;
+          // Private functions for the creation / deletion of particles.
+          void createSeedParticles();
 
-        // Private functions for the creation / deletion of particles.
-        void createSeedParticles();
-    
+          // Private functions for inter-proc communication.
+          void communicateSiteIds();
+          void communicateVelocities(const geometry::LatticeData& iLatDat);
 
-        // Private functions for inter-proc communication.
-        void communicateSiteIds();
-        void communicateVelocities(const geometry::LatticeData& iLatDat);
-       
-	VelocityField mVelocityField;
+          VelocityField mVelocityField;
 
-	Particles mParticles;
+          Particles mParticles;
 
-	Screen& mScreen;
-        const Viewpoint& mViewpoint;
-        const VisSettings& mVisSettings;
+          Screen& mScreen;
+          const Viewpoint& mViewpoint;
+          const VisSettings& mVisSettings;
       };
     }
   }

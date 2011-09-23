@@ -11,14 +11,14 @@ namespace hemelb
     {
       struct NeighProc
       {
-	proc_t id;
-	site_t send_ps, recv_ps;
-	site_t send_vs, recv_vs;
+          proc_t id;
+          site_t send_ps, recv_ps;
+          site_t send_vs, recv_vs;
 
-	std::vector<float> p_to_send, p_to_recv;
-	float *v_to_send, *v_to_recv;
+          std::vector<float> p_to_send, p_to_recv;
+          float *v_to_send, *v_to_recv;
 
-	site_t *s_to_send, *s_to_recv;
+          site_t *s_to_send, *s_to_recv;
       };
     }
   }

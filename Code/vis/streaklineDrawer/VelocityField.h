@@ -12,7 +12,6 @@
 #include "vis/streaklineDrawer/NeighProc.h"
 #include "vis/streaklineDrawer/VelocitySiteData.h"
 
-
 namespace hemelb
 {
   namespace vis
@@ -23,55 +22,52 @@ namespace hemelb
 
       class VelocityField
       {
-      public:
-        VelocityField(std::vector<NeighProc>& iNeighProcs);
+        public:
+          VelocityField(std::vector<NeighProc>& iNeighProcs);
 
-	void BuildVelocityField(const geometry::LatticeData& iLatDat,
-				StreaklineDrawer* iStreaklineDrawer);
+          void BuildVelocityField(const geometry::LatticeData& iLatDat,
+                                  StreaklineDrawer* iStreaklineDrawer);
 
-	bool BlockContainsData(size_t iBlockNumber);
+          bool BlockContainsData(size_t iBlockNumber);
 
-	VelocitySiteData& GetSiteData(size_t iBlockNumber, size_t iSiteNumber);
-      
-	VelocitySiteData* velSiteDataPointer(const geometry::LatticeData& iLatDat,
-					     site_t site_i,
-					     site_t site_j,
-					     site_t site_k);
+          VelocitySiteData& GetSiteData(size_t iBlockNumber, size_t iSiteNumber);
 
-	// Counter keeps track of the number of VelSiteDatas created
-        site_t counter;
+          VelocitySiteData* velSiteDataPointer(const geometry::LatticeData& iLatDat,
+                                               site_t site_i,
+                                               site_t site_j,
+                                               site_t site_k);
 
+          // Counter keeps track of the number of VelSiteDatas created
+          site_t counter;
 
-	void localVelField(site_t iX,
-			   site_t iY,
-			   site_t iZ,
-                           float v[2][2][2][3],
-			   int *is_interior,
-                           const geometry::LatticeData& iLatDat,
-			   StreaklineDrawer* iStreaklineDrawer);
+          void localVelField(site_t iX,
+                             site_t iY,
+                             site_t iZ,
+                             float v[2][2][2][3],
+                             int *is_interior,
+                             const geometry::LatticeData& iLatDat,
+                             StreaklineDrawer* iStreaklineDrawer);
 
-      
-	// Private functions for initialising the velocity field.
-        void initializeVelFieldBlock(const geometry::LatticeData& iLatDat,
-                                     site_t site_i,
-                                     site_t site_j,
-                                     site_t site_k,
-                                     proc_t proc_id,
-				     StreaklineDrawer* iStreaklineDrawer);
+          // Private functions for initialising the velocity field.
+          void initializeVelFieldBlock(const geometry::LatticeData& iLatDat,
+                                       site_t site_i,
+                                       site_t site_j,
+                                       site_t site_k,
+                                       proc_t proc_id,
+                                       StreaklineDrawer* iStreaklineDrawer);
 
-	void GetVelocityAtPoint(float x,
-				float y,
-				float z,
-				float v[2][2][2][3], float interp_v[3]);
+          void GetVelocityAtPoint(float x,
+                                  float y,
+                                  float z,
+                                  float v[2][2][2][3],
+                                  float interp_v[3]);
 
-      private:
+        private:
 
+          //Vector containing VelocityFields
+          std::vector<std::vector<VelocitySiteData> > mVelocityField;
 
-	//Vector containing VelocityFields
-	std::vector<std::vector<VelocitySiteData> > mVelocityField;
-
-	std::vector<NeighProc>& mNeighProcs;
-
+          std::vector<NeighProc>& mNeighProcs;
 
       };
     }

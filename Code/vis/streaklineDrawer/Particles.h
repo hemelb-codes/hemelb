@@ -22,32 +22,32 @@ namespace hemelb
     {
       class Particles
       {
-      public:
-	Particles(std::vector<NeighProc>& iNeighProcs);
+        public:
+          Particles(std::vector<NeighProc>& iNeighProcs);
 
-	void AddParticle(const Particle& iParticle);
+          void AddParticle(const Particle& iParticle);
 
-	std::vector<Particle>& GetParticles();
+          std::vector<Particle>& GetParticles();
 
-	size_t GetNumberOfParticles();
-	
-	void DeleteParticle(site_t iIndex);
+          size_t GetNumberOfParticles();
 
-	void DeleteAll();
+          void DeleteParticle(site_t iIndex);
 
-	void ProcessParticleMovement();
+          void DeleteAll();
 
-	void CommunicateParticles(const geometry::LatticeData& iLatDat,
-				  MPI_Request* iReq,
-				  proc_t iProcs,
-				  VelocityField& iVelocityField,
-				  proc_t* iFromProcIDToNeighProcIndex);				  
-	
-      private:
-	std::vector<Particle> mParticles;
+          void ProcessParticleMovement();
 
-	std::vector<NeighProc>& mNeighProcs;
-       
+          void CommunicateParticles(const geometry::LatticeData& iLatDat,
+                                    MPI_Request* iReq,
+                                    proc_t iProcs,
+                                    VelocityField& iVelocityField,
+                                    proc_t* iFromProcIDToNeighProcIndex);
+
+        private:
+          std::vector<Particle> mParticles;
+
+          std::vector<NeighProc>& mNeighProcs;
+
       };
     }
   }

@@ -55,19 +55,12 @@ namespace hemelb
 
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
             {
-              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = f[ii]
-                  += iLbmParams->Omega * (f_neq[ii] = f[ii] - f_neq[ii]);
+              * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = f[ii] +=
+                  iLbmParams->Omega * (f_neq[ii] = f[ii] - f_neq[ii]);
             }
 
-            UpdateMinsAndMaxes<tDoRayTracing> (v_x,
-                                               v_y,
-                                               v_z,
-                                               lIndex,
-                                               f_neq,
-                                               density,
-                                               bLatDat,
-                                               iLbmParams,
-                                               iControl);
+            UpdateMinsAndMaxes < tDoRayTracing
+                > (v_x, v_y, v_z, lIndex, f_neq, density, bLatDat, iLbmParams, iControl);
           }
         }
 
@@ -90,15 +83,19 @@ namespace hemelb
               {
                 double twoQ = 2.0 * bLatDat->GetCutDistance(lIndex, l);
 
-                * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l]))
-                    = (twoQ < 1.0)
-                      ? (*bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + l) + twoQ
-                          * (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + l)
-                              - *bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + l)))
-                      : (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l])
-                          + (1. / twoQ) * (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + l)
-                              - *bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS
-                                  + D3Q15::INVERSEDIRECTIONS[l])));
+                * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l])) =
+                    (twoQ < 1.0)
+                    ?
+                      (*bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + l)
+                          + twoQ
+                              * (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + l)
+                                  - *bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + l)))
+                          :
+                      (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l])
+                          + (1. / twoQ)
+                              * (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + l)
+                                  - *bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS
+                                      + D3Q15::INVERSEDIRECTIONS[l])));
               }
             }
           }

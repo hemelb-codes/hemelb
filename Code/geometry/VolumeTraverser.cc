@@ -2,31 +2,29 @@
 
 namespace hemelb
 {
-  namespace geometry 
+  namespace geometry
   {
-    VolumeTraverser::VolumeTraverser()
-      : mCurrentLocation(0),
-	mCurrentNumber(0)
+    VolumeTraverser::VolumeTraverser() :
+        mCurrentLocation(0), mCurrentNumber(0)
     {
     }
 
     VolumeTraverser::~VolumeTraverser()
     {
     }
-	
+
     util::Vector3D<site_t> VolumeTraverser::GetCurrentLocation()
     {
       return mCurrentLocation;
     }
 
-    void VolumeTraverser::SetCurrentLocation(
-      const util::Vector3D<site_t>& iLocation)
+    void VolumeTraverser::SetCurrentLocation(const util::Vector3D<site_t>& iLocation)
     {
       mCurrentLocation = iLocation;
       mCurrentNumber = GetIndexFromLocation(iLocation);
     }
 
-    site_t  VolumeTraverser::GetCurrentIndex()
+    site_t VolumeTraverser::GetCurrentIndex()
     {
       return mCurrentNumber;
     }
@@ -46,11 +44,9 @@ namespace hemelb
       return mCurrentLocation.z;
     }
 
-    site_t VolumeTraverser::
-    GetIndexFromLocation(util::Vector3D<site_t> iLocation)
+    site_t VolumeTraverser::GetIndexFromLocation(util::Vector3D<site_t> iLocation)
     {
-      return ((iLocation.x * GetYCount() + iLocation.y) 
-	      * GetZCount()) + iLocation.z;
+      return ( (iLocation.x * GetYCount() + iLocation.y) * GetZCount()) + iLocation.z;
     }
 
     bool VolumeTraverser::TraverseOne()
@@ -58,25 +54,24 @@ namespace hemelb
       mCurrentNumber++;
 
       mCurrentLocation.z++;
-      if(mCurrentLocation.z < GetZCount())
+      if (mCurrentLocation.z < GetZCount())
       {
-	return true;
+        return true;
       }
-	
-		
+
       mCurrentLocation.z = 0;
       mCurrentLocation.y++;
-      if(mCurrentLocation.y < GetYCount())
+      if (mCurrentLocation.y < GetYCount())
       {
-	return true;
+        return true;
       }
-		
+
       mCurrentLocation.y = 0;
       mCurrentLocation.x++;
-			 
-      if(mCurrentLocation.x < GetXCount())
+
+      if (mCurrentLocation.x < GetXCount())
       {
-	return true;
+        return true;
       }
       return false;
     }
@@ -116,24 +111,21 @@ namespace hemelb
       mCurrentLocation.z--;
       mCurrentNumber--;
     }
-      
+
     bool VolumeTraverser::CurrentLocationValid()
     {
       if (GetCurrentIndex() < 0)
       {
-	return false;
+        return false;
       }
 
-      if (mCurrentLocation.x < 0 ||
-	  mCurrentLocation.y < 0 ||
-	  mCurrentLocation.z < 0 ||
-	  mCurrentLocation.x >= GetXCount() ||
-	  mCurrentLocation.y >= GetYCount() ||
-	  mCurrentLocation.z >= GetZCount())
+      if (mCurrentLocation.x < 0 || mCurrentLocation.y < 0 || mCurrentLocation.z < 0
+          || mCurrentLocation.x >= GetXCount() || mCurrentLocation.y >= GetYCount()
+          || mCurrentLocation.z >= GetZCount())
       {
-	return false;
+        return false;
       }
-	
+
       return true;
     }
   }

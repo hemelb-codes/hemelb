@@ -22,8 +22,8 @@ namespace hemelb
                                          lb::SimulationState * iSimState,
                                          SimConfig& iSimConfig,
                                          util::UnitConverter* iUnits) :
-      net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
-          mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl), mUnits(iUnits)
+        net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
+        mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl), mUnits(iUnits)
     {
       Reset(iSimConfig);
       AssignValues();

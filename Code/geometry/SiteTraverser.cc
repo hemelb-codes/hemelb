@@ -2,12 +2,12 @@
 
 namespace hemelb
 {
-  namespace geometry 
+  namespace geometry
   {
-    SiteTraverser::SiteTraverser(const geometry::LatticeData::LatticeData& iLatticeData)
-      : mLatticeData(iLatticeData)
-	  
-    { 	
+    SiteTraverser::SiteTraverser(const geometry::LatticeData::LatticeData& iLatticeData) :
+        mLatticeData(iLatticeData)
+
+    {
     }
 
     SiteTraverser::~SiteTraverser()
@@ -32,6 +32,6 @@ namespace hemelb
     site_t SiteTraverser::GetBlockSize()
     {
       return mLatticeData.GetBlockSize();
-    }	
+    }
   }
 }

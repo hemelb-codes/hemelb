@@ -17,8 +17,7 @@ namespace hemelb
                                            vis::Control* iControl,
                                            const lb::LbmParameters* iLbmParams,
                                            Network* iNetwork) :
-      mNetwork(iNetwork), mLbm(lbm), mSimState(iSimState), mVisControl(iControl),
-          mLbmParams(iLbmParams)
+        mNetwork(iNetwork), mLbm(lbm), mSimState(iSimState), mVisControl(iControl), mLbmParams(iLbmParams)
     {
       xdrSendBuffer = new char[maxSendSize];
 
@@ -101,8 +100,8 @@ namespace hemelb
         }
         else
         {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Image-send component requesting new render, %f seconds since last one.",
-                                                        deltaTime);
+          log::Logger::Log < log::Debug, log::OnePerCore
+              > ("Image-send component requesting new render, %f seconds since last one.", deltaTime);
           lastRender = frameTimeStart;
           return true;
         }

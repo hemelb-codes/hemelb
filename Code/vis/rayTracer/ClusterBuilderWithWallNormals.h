@@ -8,29 +8,28 @@ namespace hemelb
 {
   namespace vis
   {
-    namespace raytracer 
+    namespace raytracer
     {
       class ClusterBuilderWithWallNormals : public ClusterBuilder
       {
-      public:
-	ClusterBuilderWithWallNormals
-	  (const geometry::LatticeData*& iLatticeData);
+        public:
+          ClusterBuilderWithWallNormals(const geometry::LatticeData*& iLatticeData);
 
-      private:
-	virtual Cluster* CreateNewCluster();
+        private:
+          virtual Cluster* CreateNewCluster();
 
-	virtual void ResizeVectorsForBlock
-	  (Cluster& iCluster,
-	   site_t iBlockNum);
-	
-	virtual void UpdateSiteDataAtSite
-	  (site_t iBlockId, site_t iBlockNum, 
-	   unsigned int iClusterId, unsigned int iSiteIdOnBlock);
+          virtual void ResizeVectorsForBlock(Cluster& iCluster, site_t iBlockNum);
 
-	void UpdateWallNormalAtSite
-	  (geometry::LatticeData::BlockData * iBlock,
-	   site_t iBlockNum, unsigned int iClusterId,
-	   unsigned int iSiteIdOnBlock, unsigned int iClusterVoxelSiteId);
+          virtual void UpdateSiteDataAtSite(site_t iBlockId,
+                                            site_t iBlockNum,
+                                            unsigned int iClusterId,
+                                            unsigned int iSiteIdOnBlock);
+
+          void UpdateWallNormalAtSite(geometry::LatticeData::BlockData * iBlock,
+                                      site_t iBlockNum,
+                                      unsigned int iClusterId,
+                                      unsigned int iSiteIdOnBlock,
+                                      unsigned int iClusterVoxelSiteId);
 
       };
     }

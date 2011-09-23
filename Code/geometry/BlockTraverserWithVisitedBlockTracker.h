@@ -7,7 +7,7 @@
 namespace hemelb
 {
   namespace geometry
-  {      
+  {
     /**
      * On top of BlockTraverser, this class also contains 
      * a record of which blocks have been visited, which
@@ -15,34 +15,31 @@ namespace hemelb
      * marked visited, and methods have been created to assist with random access
      * of the lattice data as required by the algorithm
      */
-    class BlockTraverserWithVisitedBlockTracker
-      : public geometry::BlockTraverser
+    class BlockTraverserWithVisitedBlockTracker : public geometry::BlockTraverser
     {
-    public:
-      BlockTraverserWithVisitedBlockTracker
-	(const geometry::LatticeData& iLatDat);
+      public:
+        BlockTraverserWithVisitedBlockTracker(const geometry::LatticeData& iLatDat);
 
-      virtual ~BlockTraverserWithVisitedBlockTracker();
+        virtual ~BlockTraverserWithVisitedBlockTracker();
 
-      //Tranverses the block until the next unvisited block is reached.
-      //Returns false if the end of the Volume is reached
-      bool GoToNextUnvisitedBlock();
-	
-      bool IsCurrentBlockVisited();
+        //Tranverses the block until the next unvisited block is reached.
+        //Returns false if the end of the Volume is reached
+        bool GoToNextUnvisitedBlock();
 
-      bool IsBlockVisited(size_t n);
-      bool IsBlockVisited(util::Vector3D<site_t> n);
+        bool IsCurrentBlockVisited();
 
-      void MarkCurrentBlockVisited();
+        bool IsBlockVisited(size_t n);
+        bool IsBlockVisited(util::Vector3D<site_t> n);
 
-      void MarkBlockVisited(size_t n);
-      void MarkBlockVisited(util::Vector3D<site_t> location);
+        void MarkCurrentBlockVisited();
 
-    private:
-      std::vector<bool> mBlockVisited;
-    }; 
+        void MarkBlockVisited(size_t n);
+        void MarkBlockVisited(util::Vector3D<site_t> location);
+
+      private:
+        std::vector<bool> mBlockVisited;
+    };
   }
 }
-
 
 #endif // HEMELB_GEOMETRY_BLOCKTRAVERSERWITHVISITEDBLOCKTRACKER_H

@@ -9,7 +9,7 @@ namespace hemelb
     {
 
       InletOutletCollision::InletOutletCollision(boundaries::BoundaryValues* iBoundaryValues) :
-        mBoundaryValues(iBoundaryValues)
+          mBoundaryValues(iBoundaryValues)
       {
 
       }

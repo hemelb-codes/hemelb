@@ -10,29 +10,27 @@ namespace hemelb
 {
   namespace geometry
   {
-    BlockTraverserWithVisitedBlockTracker::BlockTraverserWithVisitedBlockTracker
-    (const geometry::LatticeData& iLatDat)
-      : BlockTraverser(iLatDat),
-	//Initially no blocks have been visited
-	mBlockVisited(iLatDat.GetBlockCount(),false)
-    {	
+    BlockTraverserWithVisitedBlockTracker::BlockTraverserWithVisitedBlockTracker(const geometry::LatticeData& iLatDat) :
+        BlockTraverser(iLatDat),
+        //Initially no blocks have been visited
+        mBlockVisited(iLatDat.GetBlockCount(), false)
+    {
     }
 
     BlockTraverserWithVisitedBlockTracker::~BlockTraverserWithVisitedBlockTracker()
     {
     }
-      
-           		
+
     bool BlockTraverserWithVisitedBlockTracker::GoToNextUnvisitedBlock()
     {
       assert(IsCurrentBlockVisited());
-      do 
+      do
       {
-	bool validBlock = GoToNextBlock();
-	if(!validBlock)
-	{
-	  return false;
-	}
+        bool validBlock = GoToNextBlock();
+        if (!validBlock)
+        {
+          return false;
+        }
       }
       while (IsCurrentBlockVisited());
 
@@ -44,12 +42,11 @@ namespace hemelb
       return mBlockVisited[iN];
     }
 
-    bool BlockTraverserWithVisitedBlockTracker::IsBlockVisited(util::Vector3D<site_t>iLocation)
+    bool BlockTraverserWithVisitedBlockTracker::IsBlockVisited(util::Vector3D<site_t> iLocation)
     {
 
       return mBlockVisited[GetIndexFromLocation(iLocation)];
     }
-	    
 
     bool BlockTraverserWithVisitedBlockTracker::IsCurrentBlockVisited()
     {
@@ -60,7 +57,7 @@ namespace hemelb
     {
       MarkBlockVisited(CurrentBlockNumber());
     }
-	    
+
     void BlockTraverserWithVisitedBlockTracker::MarkBlockVisited(size_t iBlockId)
     {
       mBlockVisited[iBlockId] = true;
@@ -71,6 +68,6 @@ namespace hemelb
       site_t lNumber = GetIndexFromLocation(iLocation);
       assert(lNumber < mLatticeData.GetBlockCount());
       MarkBlockVisited(lNumber);
-    }	   
+    }
   }
 }

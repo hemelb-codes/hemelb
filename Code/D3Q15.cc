@@ -7,9 +7,21 @@ namespace hemelb
   const int D3Q15::CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };
   const int D3Q15::CZ[] = { 0, 0, 0, 0, 0, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1 };
 
-  const double D3Q15::EQMWEIGHTS[] = { 2.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0, 1.0
-      / 9.0, 1.0 / 9.0, 1.0 / 72.0, 1.0 / 72.0, 1.0 / 72.0, 1.0 / 72.0, 1.0 / 72.0, 1.0 / 72.0, 1.0
-      / 72.0, 1.0 / 72.0 };
+  const double D3Q15::EQMWEIGHTS[] = { 2.0 / 9.0,
+                                       1.0 / 9.0,
+                                       1.0 / 9.0,
+                                       1.0 / 9.0,
+                                       1.0 / 9.0,
+                                       1.0 / 9.0,
+                                       1.0 / 9.0,
+                                       1.0 / 72.0,
+                                       1.0 / 72.0,
+                                       1.0 / 72.0,
+                                       1.0 / 72.0,
+                                       1.0 / 72.0,
+                                       1.0 / 72.0,
+                                       1.0 / 72.0,
+                                       1.0 / 72.0 };
 
   const int D3Q15::INVERSEDIRECTIONS[] = { 0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13 };
 
@@ -277,8 +289,8 @@ namespace hemelb
     distribn_t sigma_xz = (f[7] + f[8]) - (f[9] + f[10]) + (f[11] + f[12]) - (f[13] + f[14]);
     distribn_t sigma_yz = (f[7] + f[8]) - (f[9] + f[10]) - (f[11] + f[12]) + (f[13] + f[14]);
 
-    distribn_t a = sigma_xx_yy * sigma_xx_yy + sigma_yy_zz * sigma_yy_zz + sigma_xx_zz
-        * sigma_xx_zz;
+    distribn_t a = sigma_xx_yy * sigma_xx_yy + sigma_yy_zz * sigma_yy_zz
+        + sigma_xx_zz * sigma_xx_zz;
     distribn_t b = sigma_xy * sigma_xy + sigma_xz * sigma_xz + sigma_yz * sigma_yz;
 
     stress = iStressParameter * sqrt(a + 6.0 * b);

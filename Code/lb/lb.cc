@@ -15,9 +15,11 @@ namespace hemelb
   {
     void LBM::RecalculateTauViscosityOmega()
     {
-      mParams.Tau = 0.5 + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-          / (Cs2 * ((double) mState->GetTimeStepsPerCycle() * mLatDat->GetVoxelSize()
-              * mLatDat->GetVoxelSize()));
+      mParams.Tau = 0.5
+          + (PULSATILE_PERIOD_s * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
+              / (Cs2
+                  * ((double) mState->GetTimeStepsPerCycle() * mLatDat->GetVoxelSize()
+                      * mLatDat->GetVoxelSize()));
 
       mParams.Omega = -1.0 / mParams.Tau;
       mParams.StressParameter = (1.0 - 1.0 / (2.0 * mParams.Tau)) / sqrt(2.0);
@@ -33,7 +35,7 @@ namespace hemelb
              net::Net* net,
              geometry::LatticeData* latDat,
              SimulationState* simState) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
+        mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState)
     {
       // voxel_size = iSimulationConfig->VoxelSize;
 
@@ -59,8 +61,8 @@ namespace hemelb
         typename tInletOutletWallCollision, typename tCollisionOperator>
     void LBM::InitCollisions()
     {
-      mStreamAndCollide
-          = new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision, tWallCollision,
+      mStreamAndCollide =
+          new hemelb::lb::collisions::StreamAndCollide<tMidFluidCollision, tWallCollision,
               tInletOutletCollision, tInletOutletWallCollision, tCollisionOperator>(mCollisionOperator);
       mPostStep = new hemelb::lb::collisions::PostStep<tMidFluidCollision, tWallCollision,
           tInletOutletCollision, tInletOutletWallCollision>();
@@ -95,7 +97,7 @@ namespace hemelb
       InitCollisions<hemelb::lb::streamers::implementations::SimpleCollideAndStream<CO>,
           hemelb::lb::streamers::implementations::ZeroVelocityEquilibrium<CO>,
           hemelb::lb::streamers::implementations::NonZeroVelocityBoundaryDensity<CO>,
-          hemelb::lb::streamers::implementations::ZeroVelocityBoundaryDensity<CO>, CO> ();
+          hemelb::lb::streamers::implementations::ZeroVelocityBoundaryDensity<CO>, CO>();
 
       receivedFTranslator = iFTranslator;
 
@@ -161,14 +163,12 @@ namespace hemelb
           netTop->NeighbouringProcs.begin(); it != netTop->NeighbouringProcs.end(); it++)
       {
         // Request the receive into the appropriate bit of FOld.
-        mNet->RequestReceive<distribn_t> (mLatDat->GetFOld( (*it).FirstSharedF),
-                                          (int) (*it).SharedFCount,
-                                           (*it).Rank);
+        mNet->RequestReceive < distribn_t
+            > (mLatDat->GetFOld( (*it).FirstSharedF), (int) (*it).SharedFCount, (*it).Rank);
 
         // Request the send from the right bit of FNew.
-        mNet->RequestSend<distribn_t> (mLatDat->GetFNew( (*it).FirstSharedF),
-                                       (int) (*it).SharedFCount,
-                                        (*it).Rank);
+        mNet->RequestSend < distribn_t
+            > (mLatDat->GetFNew( (*it).FirstSharedF), (int) (*it).SharedFCount, (*it).Rank);
 
       }
 
@@ -227,8 +227,8 @@ namespace hemelb
 
       for (site_t i = 0; i < netTop->TotalSharedFs; i++)
       {
-        *mLatDat->GetFNew(receivedFTranslator[i])
-            = *mLatDat->GetFOld(netTop->NeighbouringProcs[0].FirstSharedF + i);
+        *mLatDat->GetFNew(receivedFTranslator[i]) =
+            *mLatDat->GetFOld(netTop->NeighbouringProcs[0].FirstSharedF + i);
       }
 
       // Do any cleanup steps necessary on boundary nodes

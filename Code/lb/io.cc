@@ -27,7 +27,7 @@ namespace hemelb
 
       inlet_normal = new distribn_t[3 * inlets];
 
-      for (int ii = 0; ii < inlets; ii++)
+for(      int ii = 0; ii < inlets; ii++)
       {
         inlet_normal[3 * ii] = mSimConfig->Inlets[ii].Normal.x;
         inlet_normal[3 * ii + 1] = mSimConfig->Inlets[ii].Normal.y;
@@ -53,15 +53,13 @@ namespace hemelb
 
       MPI_File lOutputFile;
 
-      MPI_File_open(MPI_COMM_WORLD,
-                    &output_file_name[0],
-                    MPI_MODE_WRONLY | MPI_MODE_CREATE,
-                    MPI_INFO_NULL,
-                    &lOutputFile);
+      MPI_File_open(MPI_COMM_WORLD, &output_file_name[0], MPI_MODE_WRONLY | MPI_MODE_CREATE,
+      MPI_INFO_NULL,
+      &lOutputFile);
 
       std::string lReadMode = "native";
 
-      MPI_Datatype viewType = MpiDataType<char> ();
+      MPI_Datatype viewType = MpiDataType<char>();
       MPI_File_set_view(lOutputFile, 0, viewType, viewType, &lReadMode[0], MPI_INFO_NULL);
 
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
@@ -160,8 +158,8 @@ namespace hemelb
                   if (my_site_id & BIG_NUMBER3)
                     continue;
 
-                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS],
-                      f_neq[D3Q15::NUMVECTORS], stress, pressure;
+                  distribn_t density, vx, vy, vz, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS],
+                      stress, pressure;
 
                   // TODO Utter filth. The cases where the whole site data is exactly equal
                   // to "FLUID_TYPE" and where just the type-component of the whole site data
@@ -169,7 +167,12 @@ namespace hemelb
                   if (mLatDat->GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
                   {
                     D3Q15::CalculateDensityVelocityFEq(mLatDat->GetFOld(my_site_id
-                        * D3Q15::NUMVECTORS), density, vx, vy, vz, f_eq);
+                                                           * D3Q15::NUMVECTORS),
+                                                       density,
+                                                       vx,
+                                                       vy,
+                                                       vz,
+                                                       f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
@@ -225,8 +228,8 @@ namespace hemelb
                   lWriter << (int) (site_i - siteMins[0]) << (int) (site_j - siteMins[1])
                       << (int) (site_k - siteMins[2]);
 
-                  lWriter << float (pressure) << float (vx) << float (vy) << float (vz)
-                      << float (stress);
+                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
+                      << float(stress);
                 }
               }
             }
@@ -291,8 +294,8 @@ namespace hemelb
 
     void LBM::ReadVisParameters()
     {
-      distribn_t density_min = std::numeric_limits<distribn_t>::max();
-      distribn_t density_max = std::numeric_limits<distribn_t>::min();
+      distribn_t density_min = std::numeric_limits < distribn_t > ::max();
+      distribn_t density_max = std::numeric_limits < distribn_t > ::min();
 
       distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
       distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);

@@ -8,22 +8,22 @@ namespace hemelb
     namespace raytracer
     {
       ClusterNormal::ClusterNormal()
-      { }
+      {
+      }
 
       void ClusterNormal::DoResizeVectors()
       {
-	ResizeSharedVectors();
+        ResizeSharedVectors();
       }
 
       void ClusterNormal::DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
       {
-	DoResizeVectorsForBlockShared(iBlockNumber,iSize);
+        DoResizeVectorsForBlockShared(iBlockNumber, iSize);
       }
-      
-      double const*  ClusterNormal::DoGetWallData
-      (site_t iBlockNumber, site_t iSiteNumber) const
+
+      double const* ClusterNormal::DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const
       {
-	return NULL;
+        return NULL;
       }
 
       void ClusterNormal::DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData)
