@@ -1,5 +1,5 @@
-#ifndef HEMELB_VIS_CLUSTERTRAVERSER_H
-#define HEMELB_VIS_CLUSTERTRAVERSER_H
+#ifndef HEMELB_VIS_RAYTRACER_CLUSTERTRAVERSER_H
+#define HEMELB_VIS_RAYTRACER_CLUSTERTRAVERSER_H
 
 #include "geometry/VolumeTraverser.h"
 #include "vis/rayTracer/Cluster.h"
@@ -47,4 +47,4 @@ namespace hemelb
 }
 
 
-#endif // HEMELB_VIS_CLUSTERTRAVERSER_H
+#endif // HEMELB_VIS_RAYTRACER_CLUSTERTRAVERSER_H
