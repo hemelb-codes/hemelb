@@ -9,6 +9,16 @@ namespace hemelb
 {
   namespace util
   {
+      namespace Direction
+      {
+        enum Direction
+        {
+          X,
+          Y,
+          Z
+        };
+      }
+
     //Vector3D is essentially a 3D vector, storing the 
     //x, y and z co-ordinate in the templated numeric type
     //Other methods are defined for convenience
@@ -27,6 +37,24 @@ namespace hemelb
     Vector3D(const T iX) :
       x(iX), y(iX), z(iX)
       {}
+
+      T GetByDirection(Direction::Direction lDirection)
+      {
+	switch (lDirection)
+	{
+	case Direction::X:
+	  return x;
+	  break;
+
+	case Direction::Y:
+	  return y;
+	  break;
+
+	case Direction::Z:
+	  return z;
+	  break;
+	}
+      }
 
       //Copy constructor - can be used to perform type conversion 
       template < class OldTypeT >
