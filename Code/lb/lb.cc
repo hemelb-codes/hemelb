@@ -53,6 +53,7 @@ namespace hemelb
 
       kernels::InitParams initParams = kernels::InitParams();
       initParams.latDat = mLatDat;
+      initParams.lbmParams = &mParams;
 
       initParams.siteCount = mLatDat->GetInnerCollisionCount(0)
           + mLatDat->GetInterCollisionCount(0);

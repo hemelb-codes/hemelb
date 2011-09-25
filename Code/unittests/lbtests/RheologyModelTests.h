@@ -1,0 +1,100 @@
+#ifndef HEMELB_UNITTESTS_LBTESTS_RHEOLOGYMODELTESTS_H
+#define HEMELB_UNITTESTS_LBTESTS_RHEOLOGYMODELTESTS_H
+
+#include <cppunit/TestFixture.h>
+#include "lb/rheology_models/RheologyModels.h"
+
+namespace hemelb
+{
+  namespace unittests
+  {
+    namespace lbtests
+    {
+
+      /**
+       * Class containing tests for the functionality of the non-newtonian rheology models.
+       *
+       * The idea here is that I ran the models for a wide range of shear-rates, plotted the
+       * results and compared against the literature to a good agreement. Here we just test
+       * each of the models against a few known values . It should be enough to detect bugs
+       * introduced in any of the components involved.
+       */
+      class RheologyModelTests : public CppUnit::TestFixture
+      {
+        public:
+          void setUp()
+          {
+            density = 1.0;
+
+            shearRates.push_back(1e-4);
+            shearRates.push_back(1e-2);
+            shearRates.push_back(1);
+            shearRates.push_back(1e2);
+            shearRates.push_back(1e4);
+
+            carreauViscosities.push_back(0.0001579855);
+            carreauViscosities.push_back(0.0001283352);
+            carreauViscosities.push_back(2.597279780e-05);
+            carreauViscosities.push_back(4.282559500e-06);
+            carreauViscosities.push_back(3.521182515e-06);
+
+            cassonViscosities.push_back(0.00016);
+            cassonViscosities.push_back(0.00016);
+            cassonViscosities.push_back(6.185169e-05);
+            cassonViscosities.push_back(5.5308969e-06);
+            cassonViscosities.push_back(3.241821969e-06);
+
+            powerLawViscosities.push_back(0.00016);
+            powerLawViscosities.push_back(4e-05);
+            powerLawViscosities.push_back(4e-06);
+            powerLawViscosities.push_back(3.500030078e-06);
+            powerLawViscosities.push_back(3.500030078e-06);
+          }
+
+          void tearDown()
+          {
+          }
+
+          template<class RHEOLOGY_MODEL>
+          void CompareModelAgainsHardcodedValues(const std::vector<distribn_t>& shearRates, const std::vector<distribn_t>& truthViscosities, const std::string& modelName) const
+          {
+              CPPUNIT_ASSERT_EQUAL(shearRates.size(), truthViscosities.size());
+
+              std::vector<distribn_t>::const_iterator shearRate;
+              std::vector<distribn_t>::const_iterator truthVis;
+              for ( shearRate = shearRates.begin(), truthVis = truthViscosities.begin();
+                   shearRate != shearRates.end();
+                   ++shearRate, ++truthVis)
+              {
+                distribn_t viscosity = RHEOLOGY_MODEL::CalculateViscosityForShearRate(*shearRate, density);
+
+                std::stringstream message;
+                message << "Wrong " << modelName << " viscosity for shear rate " << *shearRate;
+                CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
+                                                     *truthVis,
+                                                     viscosity,
+                                                     1e-10);
+              }
+          }
+
+          void TestRheologyModels()
+          {
+            CompareModelAgainsHardcodedValues<lb::rheology_models::CarreauYasudaRheologyModel>(shearRates, carreauViscosities, "CarreauYasuda");
+            CompareModelAgainsHardcodedValues<lb::rheology_models::CassonRheologyModel>(shearRates, cassonViscosities, "Casson");
+            CompareModelAgainsHardcodedValues<lb::rheology_models::TruncatedPowerLawRheologyModel>(shearRates, powerLawViscosities, "TruncatedPowerLaw");
+          }
+
+        private:
+
+          distribn_t density;
+          std::vector<distribn_t> shearRates;
+          std::vector<distribn_t> carreauViscosities;
+          std::vector<distribn_t> cassonViscosities;
+          std::vector<distribn_t> powerLawViscosities;
+
+      };
+    }
+  }
+}
+
+#endif /* HEMELB_UNITTESTS_LBTESTS_RHEOLOGYMODELTESTS_H */
