@@ -7,6 +7,7 @@
 #include "unittests/lbtests/KernelTests.h"
 #include "unittests/lbtests/CollisionTests.h"
 #include "unittests/lbtests/StreamerTests.h"
+#include "unittests/lbtests/RheologyModelTests.h"
 
 namespace hemelb
 {
@@ -27,6 +28,8 @@ namespace hemelb
                                                          &KernelTests::TestEntropicCalculationsAndCollision));
             addTest(new CppUnit::TestCaller<KernelTests>("TestLBGKCalculationsAndCollision",
                                                          &KernelTests::TestLBGKCalculationsAndCollision));
+            addTest(new CppUnit::TestCaller<KernelTests>("TestLBGKNNCalculationsAndCollision",
+                                                         &KernelTests::TestLBGKNNCalculationsAndCollision));
 
             addTest(new CppUnit::TestCaller<CollisionTests>("TestNonZeroVelocityEquilibriumFixedDensity",
                                                             &CollisionTests::TestNonZeroVelocityEquilibriumFixedDensity));
@@ -39,6 +42,9 @@ namespace hemelb
 
             addTest(new CppUnit::TestCaller<StreamerTests>("TestSimpleCollideAndStream",
                                                            &StreamerTests::TestSimpleCollideAndStream));
+
+            addTest(new CppUnit::TestCaller<RheologyModelTests>("TestRheologyModels",
+                                                                &RheologyModelTests::TestRheologyModels));
           }
       };
 
