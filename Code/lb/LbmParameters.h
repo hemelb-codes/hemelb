@@ -25,12 +25,19 @@ namespace hemelb
 
         void Update(distribn_t timeStepLength, distribn_t voxelSize)
         {
+          timestep = timeStepLength;
           tau = 0.5 + (timeStepLength * BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3) / (Cs2
               * voxelSize * voxelSize);
 
           omega = -1.0 / tau;
           stressParameter = (1.0 - 1.0 / (2.0 * tau)) / sqrt(2.0);
           beta = -1.0 / (2.0 * tau);
+        }
+
+        // TODO naming convention question: shall this method be called TimeStep like the rest in the struct or start with a verb?
+        distribn_t GetTimeStep() const
+        {
+          return timestep;
         }
 
         distribn_t Omega() const
@@ -56,6 +63,7 @@ namespace hemelb
         StressTypes StressType;
 
       private:
+        distribn_t timestep;
         distribn_t omega;
         distribn_t tau;
         distribn_t stressParameter;
