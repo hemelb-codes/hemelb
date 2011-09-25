@@ -9,6 +9,7 @@
 #include "lb/collisions/Collisions.h"
 #include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
+#include "lb/rheology_models/RheologyModels.h"
 #include "util/UnitConverter.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
@@ -24,15 +25,27 @@ namespace hemelb
         // TODO These should eventually be template parameters that are given to the generic LBM object.
         // At the moment, doing this will cause problems with other objects that have a pointer to the
         // LBM (and hence would also need to be templated, on the LBM-type).
-        typedef streamers::SimpleCollideAndStream<collisions::Normal<kernels::LBGK> >
+
+        // Models of non-newtonian rheology currently implemented.
+        //typedef rheology_models::CarreauYasudaRheologyModel RHEO_MODEL;
+        //typedef rheology_models::CassonRheologyModel RHEO_MODEL;
+        //typedef rheology_models::TruncatedPowerLawRheologyModel RHEO_MODEL;
+
+        // LGBK operator with support for non-newtonian flow
+        //typedef kernels::LBGKNN<RHEO_MODEL> LB_KERNEL;
+
+        // Standard LBGK collision operator
+        typedef kernels::LBGK LB_KERNEL;
+
+        typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> >
             tMidFluidCollision;
         typedef streamers::SimpleCollideAndStream<
-            collisions::ZeroVelocityEquilibrium<kernels::LBGK> > tWallCollision;
+            collisions::ZeroVelocityEquilibrium<LB_KERNEL> > tWallCollision;
         typedef streamers::SimpleCollideAndStream<
-            collisions::NonZeroVelocityEquilibriumFixedDensity<kernels::LBGK> >
+            collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> >
             tInletOutletCollision;
         typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<
-            kernels::LBGK> > tInletOutletWallCollision;
+            LB_KERNEL> > tInletOutletWallCollision;
 
       public:
         LBM(hemelb::SimConfig *iSimulationConfig,
