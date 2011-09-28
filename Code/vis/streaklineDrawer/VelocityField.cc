@@ -182,7 +182,7 @@ namespace hemelb
             mVelocityField[n][m].counter = counter;
           }
           if (iLatDat.GetBlock(n)->site_data == NULL
-            )
+          )
             continue;
 
           for (site_t m = 0; m < iLatDat.GetSitesPerBlockVolumeUnit(); m++)
@@ -346,9 +346,12 @@ namespace hemelb
                 proc_t m =
                     iStreaklineDrawer->from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
 
-                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 0] = neigh_i;
-                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 1] = neigh_j;
-                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 2] = neigh_k;
+                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 0] =
+                    neigh_i;
+                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 1] =
+                    neigh_j;
+                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 2] =
+                    neigh_k;
                 ++ (mNeighbouringProcessors[m].send_vs);
               }
             }

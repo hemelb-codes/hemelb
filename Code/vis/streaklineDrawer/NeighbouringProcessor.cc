@@ -4,7 +4,6 @@
 #include "constants.h"
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
 
-
 namespace hemelb
 {
   namespace vis
@@ -12,127 +11,119 @@ namespace hemelb
     namespace streaklinedrawer
     {
       SendableParticle::SendableParticle() :
-	mX(0.0F),
-	mY(0.0F),
-	mZ(0.0F),
-	mVel(0.0F),
-	mInletID(-1)
+          mX(0.0F), mY(0.0F), mZ(0.0F), mVel(0.0F), mInletID(-1)
       {
       }
 
       SendableParticle::SendableParticle(const Particle& iParticle)
       {
-	mX = iParticle.x;
-	mY = iParticle.y;
-	mZ = iParticle.z;
-	
-	mVel = iParticle.vel;
-	
-	mInletID = iParticle.inletID;
+        mX = iParticle.x;
+        mY = iParticle.y;
+        mZ = iParticle.z;
+
+        mVel = iParticle.vel;
+
+        mInletID = iParticle.inletID;
       }
 
       Particle SendableParticle::GetParticle()
       {
-	return (Particle(mX, mY, mZ, mInletID));
+        return (Particle(mX, mY, mZ, mInletID));
       }
 
       NeighbouringProcessor::NeighbouringProcessor(proc_t iID) :
-	mID(iID)
+          mID(iID)
       {
       }
-      
+
       void NeighbouringProcessor::AddParticleToSend(const Particle& iParticle)
       {
-	mParticlesToSend.push_back(SendableParticle(iParticle));
+        mParticlesToSend.push_back(SendableParticle(iParticle));
       }
 
       bool NeighbouringProcessor::ParticlesToBeRetrieved()
       {
-	return(mParticlesToReceive.size() > 0);
+        return (mParticlesToReceive.size() > 0);
       }
 
-      const Particle&  NeighbouringProcessor::RetrieveNextReceivedParticle()
+      const Particle& NeighbouringProcessor::RetrieveNextReceivedParticle()
       {
-	const Particle& lParticle(mParticlesToReceive.back().GetParticle());
-	mParticlesToReceive.pop_back();
-	
-	return lParticle;
+        const Particle& lParticle(mParticlesToReceive.back().GetParticle());
+        mParticlesToReceive.pop_back();
+
+        return lParticle;
       }
 
       void NeighbouringProcessor::PrepareToReceiveParticles()
       {
-	MPI_Irecv(&mNumberOfParticlesToReceive,
-		  1, //Count
-		  MpiDataType<site_t>(), //Type
-		  mID, //Destination
-		  30, //Tag
-		  MPI_COMM_WORLD, //Comm
-		  &mReceiveRequest); //Request
+        MPI_Irecv(&mNumberOfParticlesToReceive, 1, //Count
+                  MpiDataType<site_t>(), //Type
+                  mID, //Destination
+                  30, //Tag
+                  MPI_COMM_WORLD, //Comm
+                  &mReceiveRequest); //Request
       }
 
       void NeighbouringProcessor::PrepareToSendParticles()
       {
-	site_t lParticlesToSend = mParticlesToSend.size();
-	MPI_Isend(&lParticlesToSend,
-		  1, // Count
-		  MpiDataType<site_t>(), //Type
-		  mID, //Destination
-		  30, //Tag
-		  MPI_COMM_WORLD, // Com
-		  &mSendRequest); // Request
+        site_t lParticlesToSend = mParticlesToSend.size();
+        MPI_Isend(&lParticlesToSend, 1, // Count
+                  MpiDataType<site_t>(), //Type
+                  mID, //Destination
+                  30, //Tag
+                  MPI_COMM_WORLD, // Com
+                  &mSendRequest); // Request
       }
 
       void NeighbouringProcessor::WaitForPreparationToReceiveParticles()
       {
-	MPI_Wait(&mReceiveRequest, MPI_STATUS_IGNORE);
-  }
+        MPI_Wait(&mReceiveRequest, MPI_STATUS_IGNORE);
+      }
 
       void NeighbouringProcessor::SendParticles()
       {
-	if(mParticlesToSend.size() > 0)
-	{
-	  MPI_Isend(&mParticlesToSend[0],
-		    mParticlesToSend.size(), //Count
-		    MpiDataType<SendableParticle>(), //Type
-		    mID, //Destination
-		    40, //Tag
-		    MPI_COMM_WORLD, //Comm
-		    &mSendRequest); //Request
-	}
+        if (mParticlesToSend.size() > 0)
+        {
+          MPI_Isend(&mParticlesToSend[0], mParticlesToSend.size(), //Count
+                    MpiDataType<SendableParticle>(), //Type
+                    mID, //Destination
+                    40, //Tag
+                    MPI_COMM_WORLD, //Comm
+                    &mSendRequest); //Request
+        }
       }
 
       void NeighbouringProcessor::WaitForParticlesToBeSent()
       {
-	if(mParticlesToSend.size() > 0)
-	{
-	  MPI_Wait(&mSendRequest, MPI_STATUS_IGNORE);
-	}
-	 //TODO: need to clear them?
+        if (mParticlesToSend.size() > 0)
+        {
+          MPI_Wait(&mSendRequest, MPI_STATUS_IGNORE);
+        }
+        //TODO: need to clear them?
       }
 
       void NeighbouringProcessor::ReceiveParticles()
       {
 
-	mParticlesToReceive.resize(mNumberOfParticlesToReceive);
+        mParticlesToReceive.resize(mNumberOfParticlesToReceive);
 
-	if(mNumberOfParticlesToReceive > 0)
-	{
-	    MPI_Irecv(&mParticlesToReceive[0],
-		      mNumberOfParticlesToReceive, //Count
-		      MpiDataType<SendableParticle>(), //Type
-		      mID, //Source
-		      40, //Tag
-		      MPI_COMM_WORLD, //Comm
-		      &mReceiveRequest); //Request
-	}
+        if (mNumberOfParticlesToReceive > 0)
+        {
+          MPI_Irecv(&mParticlesToReceive[0], mNumberOfParticlesToReceive, //Count
+                    MpiDataType<SendableParticle>(), //Type
+                    mID, //Source
+                    40, //Tag
+                    MPI_COMM_WORLD, //Comm
+                    &mReceiveRequest); //Request
+        }
       }
 
       void NeighbouringProcessor::WaitForParticlesToBeReceived()
       {
-	if(mParticlesToReceive.size() > 0)
-	{
-	  MPI_Wait(&mReceiveRequest, MPI_STATUS_IGNORE);
-	}
+        if (mParticlesToReceive.size() > 0)
+        {
+          MPI_Wait(&mReceiveRequest, MPI_STATUS_IGNORE);
+        }
       }
     }
   }
@@ -141,15 +132,14 @@ namespace hemelb
   MPI_Datatype MpiDataTypeTraits<hemelb::vis::streaklinedrawer::SendableParticle>::RegisterMpiDataType()
   {
     int col_pixel_count = 6;
-    int col_pixel_blocklengths[6] = { 1, 1, 1, 1, 1,1 };
+    int col_pixel_blocklengths[6] = { 1, 1, 1, 1, 1, 1 };
 
-    MPI_Datatype col_pixel_types[6] =
-        { MPI_FLOAT,
-	  MPI_FLOAT,
-          MPI_FLOAT,
-          MPI_FLOAT,
-          MPI_UNSIGNED,
-          MPI_UB };
+    MPI_Datatype col_pixel_types[6] = { MPI_FLOAT,
+                                        MPI_FLOAT,
+                                        MPI_FLOAT,
+                                        MPI_FLOAT,
+                                        MPI_UNSIGNED,
+                                        MPI_UB };
 
     MPI_Aint col_pixel_disps[6];
 
@@ -171,7 +161,7 @@ namespace hemelb
         col_pixel_disps[i] = col_pixel_disps[i - 1]
             + (sizeof(unsigned) * col_pixel_blocklengths[i - 1]);
       }
-     
+
     }
     MPI_Datatype type;
     MPI_Type_struct(col_pixel_count,

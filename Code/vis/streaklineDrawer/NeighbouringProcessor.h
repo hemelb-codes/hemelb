@@ -14,65 +14,62 @@ namespace hemelb
     {
       class SendableParticle
       {
-      public:
-	SendableParticle();
-	SendableParticle(const Particle& iParticle);
+        public:
+          SendableParticle();
+          SendableParticle(const Particle& iParticle);
 
-	Particle GetParticle();
+          Particle GetParticle();
 
-      private:
-	float mX;
-	float mY;
-	float mZ;
+        private:
+          float mX;
+          float mY;
+          float mZ;
 
-	float mVel;
+          float mVel;
 
-	unsigned int mInletID;
+          unsigned int mInletID;
       };
 
       class NeighbouringProcessor
       {
-      public:
-	NeighbouringProcessor(proc_t iID);
+        public:
+          NeighbouringProcessor(proc_t iID);
 
-	void AddParticleToSend(const Particle& iParticle);
+          void AddParticleToSend(const Particle& iParticle);
 
-	bool ParticlesToBeRetrieved();
+          bool ParticlesToBeRetrieved();
 
-	const Particle& RetrieveNextReceivedParticle();
+          const Particle& RetrieveNextReceivedParticle();
 
-	void PrepareToReceiveParticles();
+          void PrepareToReceiveParticles();
 
-	void PrepareToSendParticles();
+          void PrepareToSendParticles();
 
-	void WaitForPreparationToReceiveParticles();
+          void WaitForPreparationToReceiveParticles();
 
-	void SendParticles();
-	
-	void WaitForParticlesToBeSent();
+          void SendParticles();
 
-	void ReceiveParticles();
+          void WaitForParticlesToBeSent();
 
-	void WaitForParticlesToBeReceived();
+          void ReceiveParticles();
 
-	proc_t mID;
+          void WaitForParticlesToBeReceived();
 
-	
-	site_t send_vs, recv_vs;
-	  
-	float *v_to_send, *v_to_recv;
-	site_t *s_to_send, *s_to_recv;
-     
-      private:
-	std::vector<SendableParticle> mParticlesToSend;
+          proc_t mID;
 
-	size_t mNumberOfParticlesToReceive;
-	std::vector<SendableParticle> mParticlesToReceive;
+          site_t send_vs, recv_vs;
 
+          float *v_to_send, *v_to_recv;
+          site_t *s_to_send, *s_to_recv;
 
+        private:
+          std::vector<SendableParticle> mParticlesToSend;
 
-	MPI_Request mSendRequest;
-	MPI_Request mReceiveRequest;
+          size_t mNumberOfParticlesToReceive;
+          std::vector<SendableParticle> mParticlesToReceive;
+
+          MPI_Request mSendRequest;
+          MPI_Request mReceiveRequest;
       };
     }
   }
