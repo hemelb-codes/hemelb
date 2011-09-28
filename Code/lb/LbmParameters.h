@@ -34,28 +34,27 @@ namespace hemelb
           beta = -1.0 / (2.0 * tau);
         }
 
-        // TODO naming convention question: shall this method be called TimeStep like the rest in the struct or start with a verb?
         distribn_t GetTimeStep() const
         {
           return timestep;
         }
 
-        distribn_t Omega() const
+        distribn_t GetOmega() const
         {
           return omega;
         }
 
-        distribn_t Tau() const
+        distribn_t GetTau() const
         {
           return tau;
         }
 
-        distribn_t StressParameter() const
+        distribn_t GetStressParameter() const
         {
           return stressParameter;
         }
 
-        distribn_t Beta() const
+        distribn_t GetBeta() const
         {
           return beta;
         }

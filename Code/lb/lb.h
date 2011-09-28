@@ -9,7 +9,7 @@
 #include "lb/collisions/Collisions.h"
 #include "lb/streamers/Streamers.h"
 #include "lb/boundaries/BoundaryValues.h"
-#include "lb/rheology_models/RheologyModels.h"
+#include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "util/UnitConverter.h"
 #include "vis/ColPixel.h"
 #include "SimConfig.h"
@@ -27,9 +27,9 @@ namespace hemelb
         // LBM (and hence would also need to be templated, on the LBM-type).
 
         // Models of non-newtonian rheology currently implemented.
-        //typedef rheology_models::CarreauYasudaRheologyModel RHEO_MODEL;
-        //typedef rheology_models::CassonRheologyModel RHEO_MODEL;
-        //typedef rheology_models::TruncatedPowerLawRheologyModel RHEO_MODEL;
+        //typedef kernels::rheologyModels::CarreauYasudaRheologyModel RHEO_MODEL;
+        //typedef kernels::rheologyModels::CassonRheologyModel RHEO_MODEL;
+        //typedef kernels::rheologyModels::TruncatedPowerLawRheologyModel RHEO_MODEL;
 
         // LGBK operator with support for non-newtonian flow
         //typedef kernels::LBGKNN<RHEO_MODEL> LB_KERNEL;
@@ -39,11 +39,10 @@ namespace hemelb
 
         typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> >
             tMidFluidCollision;
+        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibrium<LB_KERNEL> >
+            tWallCollision;
         typedef streamers::SimpleCollideAndStream<
-            collisions::ZeroVelocityEquilibrium<LB_KERNEL> > tWallCollision;
-        typedef streamers::SimpleCollideAndStream<
-            collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> >
-            tInletOutletCollision;
+            collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletCollision;
         typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<
             LB_KERNEL> > tInletOutletWallCollision;
 
@@ -122,19 +121,19 @@ namespace hemelb
         {
           if (mVisControl->IsRendering())
           {
-            collision->template StreamAndCollide<true>(iFirstIndex,
-                                                       iSiteCount,
-                                                       &mParams,
-                                                       mLatDat,
-                                                       mVisControl);
-          }
-          else
-          {
-            collision->template StreamAndCollide<false>(iFirstIndex,
+            collision->template StreamAndCollide<true> (iFirstIndex,
                                                         iSiteCount,
                                                         &mParams,
                                                         mLatDat,
                                                         mVisControl);
+          }
+          else
+          {
+            collision->template StreamAndCollide<false> (iFirstIndex,
+                                                         iSiteCount,
+                                                         &mParams,
+                                                         mLatDat,
+                                                         mVisControl);
           }
         }
 
