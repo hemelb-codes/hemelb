@@ -65,19 +65,19 @@ namespace hemelb
       {
         for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-	  mNeighbouringProcessors[m].PrepareToReceiveParticles();
-	}
+          mNeighbouringProcessors[m].PrepareToReceiveParticles();
+        }
         /*for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
-        {
-          mNeighbouringProcessors[m].send_ps = 0;
-	  }*/
+         {
+         mNeighbouringProcessors[m].send_ps = 0;
+         }*/
 
         unsigned int particles_temp = GetNumberOfParticles();
 
         proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
 
-        for (int n = (int) (particles_temp - 1);n >= 0; n--) { 
-	  site_t site_i = (unsigned int) mParticles[n].x;
+        for (int n = (int) (particles_temp - 1);n >= 0; n--) { site_t
+          site_i = (unsigned int) mParticles[n].x;
           site_t site_j = (unsigned int) mParticles[n].y;
           site_t site_k = (unsigned int) mParticles[n].z;
 
@@ -93,16 +93,15 @@ namespace hemelb
           }
           proc_t m = iFromProcIDToNeighbouringProcessorIndex[vel_site_data_p->proc_id];
 
-	  
           mNeighbouringProcessors[m].AddParticleToSend(mParticles[n]);
           DeleteParticle(n);
         }
 
         for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-	  mNeighbouringProcessors[m].PrepareToSendParticles();
+          mNeighbouringProcessors[m].PrepareToSendParticles();
         }
-	  
+
         for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
           mNeighbouringProcessors[m].WaitForPreparationToReceiveParticles();
@@ -110,26 +109,26 @@ namespace hemelb
 
         for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-	  mNeighbouringProcessors[m].SendParticles();
-        }
-	for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
-        {
-	  mNeighbouringProcessors[m].WaitForParticlesToBeSent();
+          mNeighbouringProcessors[m].SendParticles();
         }
         for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-	  mNeighbouringProcessors[m].ReceiveParticles();
-	}
-	for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
+          mNeighbouringProcessors[m].WaitForParticlesToBeSent();
+        }
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-	  mNeighbouringProcessors[m].WaitForParticlesToBeReceived();
+          mNeighbouringProcessors[m].ReceiveParticles();
+        }
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
+        {
+          mNeighbouringProcessors[m].WaitForParticlesToBeReceived();
 
-	  while (mNeighbouringProcessors[m].ParticlesToBeRetrieved())
-	  {
-	    AddParticle(mNeighbouringProcessors[m].RetrieveNextReceivedParticle());
-	  }
-	}
-        
+          while (mNeighbouringProcessors[m].ParticlesToBeRetrieved())
+          {
+            AddParticle(mNeighbouringProcessors[m].RetrieveNextReceivedParticle());
+          }
+        }
+
       }
     }
   }

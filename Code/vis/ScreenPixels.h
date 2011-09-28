@@ -20,7 +20,7 @@ namespace hemelb
     template<typename RayDataType>
     struct ScreenPixels
     {
-      public:			
+      public:
         ScreenPixels()
         {
           PixelsX = 0;

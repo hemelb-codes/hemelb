@@ -38,7 +38,7 @@ namespace hemelb
                             const RayDataType_t& iRayData,
                             const VisSettings& iVisSettings)
     {
-     ColPixel<RayDataType_t> lNewPixel(iPixelCoordinates.x, iPixelCoordinates.y, iRayData);
+      ColPixel<RayDataType_t> lNewPixel(iPixelCoordinates.x, iPixelCoordinates.y, iRayData);
       AddPixel(lNewPixel, iVisSettings);
     }
 

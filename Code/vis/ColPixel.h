@@ -370,7 +370,7 @@ namespace hemelb
           else
           {
             mJ = mJ & ~mMostSignificantBit;
-	  }
+          }
         }
 
         bool IsStreakline() const
