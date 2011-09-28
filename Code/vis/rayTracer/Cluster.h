@@ -25,45 +25,45 @@ namespace hemelb
         public:
           unsigned int GetBlockIdFrom3DBlockLocation(util::Vector3D<unsigned int> iLocation) const
           {
-            return static_cast<Derived*>(this)->DoGetBlockIdFrom3DBlockLocation(iLocation);
+            return ((Derived*)(this))->DoGetBlockIdFrom3DBlockLocation(iLocation);
           }
 
           //Resizes the vectors so as to be the correct size based on the stored sizes
           void ResizeVectors()
           {
-            static_cast<Derived*>(this)->DoResizeVectors();
+            ((Derived*)(this))->DoResizeVectors();
           }
 
           void ResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
           {
-            static_cast<Derived*>(this)->DoResizeVectorsForBlock(iBlockNumber, iSize);
+            ((Derived*)(this))->DoResizeVectorsForBlock(iBlockNumber, iSize);
           }
 
           //Returns true if there is site data for a given block
           bool BlockContainsSites(site_t iBlockNumber) const
           {
-            return static_cast<const Derived*>(this)->DoBlockContainsSites(iBlockNumber);
+            return ((const Derived*)(this))->DoBlockContainsSites(iBlockNumber);
           }
 
           //Get SiteData arary for site
           const SiteData_t* GetSiteData(site_t iBlockNumber) const
           {
-            return static_cast<const Derived*>(this)->DoGetSiteData(iBlockNumber);
+            return ((const Derived*)(this))->DoGetSiteData(iBlockNumber);
           }
 
           const SiteData_t* GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const
           {
-            return static_cast<const Derived*>(this)->DoGetSiteData(iBlockNumber, iSiteNumber);
+            return ((const Derived*)(this))->DoGetSiteData(iBlockNumber, iSiteNumber);
           }
 
           const double* GetWallData(site_t iBlockNumber, site_t iSiteNumber) const
           {
-            return static_cast<const Derived*>(this)->DoGetWallData(iBlockNumber, iSiteNumber);
+            return ((const Derived*)(this))->DoGetWallData(iBlockNumber, iSiteNumber);
           }
 
           void SetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData)
           {
-            return static_cast<Derived*>(this)->DoSetWallData(iBlockNumber, iSiteNumber, iData);
+            return ((Derived*)(this))->DoSetWallData(iBlockNumber, iSiteNumber, iData);
           }
 
           static bool NeedsWallNormals()

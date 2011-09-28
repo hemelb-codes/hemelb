@@ -1,5 +1,3 @@
-//#define NDEBUG;
-#include <assert.h>
 #include <iostream>
 
 #include "util/Vector3D.h"
@@ -30,9 +28,7 @@ namespace hemelb
                                                          const float iRayLengthInVoxel,
                                                          const VisSettings& iVisSettings)
       {
-        assert(iSiteData.GetDensity() >= 0.0F);
-
-        float lPalette[3];
+	float lPalette[3];
 
         // update the volume rendering of the velocity flow field
         ColPixel<RayDataNormal>::PickColour(iSiteData.GetVelocity()
@@ -66,17 +62,17 @@ namespace hemelb
                                               const float iNormalisedDistanceToFirstCluster,
                                               const DomainStats& iDomainStats) const
       {
-        oColour[0] = static_cast<unsigned char>( (mVelR * 255.0F) / GetCumulativeLengthInFluid());oColour[1] = static_cast <unsigned char> ((mVelG*255.0F) / GetCumulativeLengthInFluid());
-	oColour[2] = static_cast <unsigned char> ((mVelB*255.0F) / GetCumulativeLengthInFluid());
+        oColour[0] = (unsigned char)( (mVelR * 255.0F) / GetCumulativeLengthInFluid());oColour[1] = (unsigned char) ((mVelG*255.0F) / GetCumulativeLengthInFluid());
+	oColour[2] = (unsigned char) ((mVelB*255.0F) / GetCumulativeLengthInFluid());
       }
 
       void RayDataNormal::DoGetStressColour(unsigned char oColour[3],
                                             const float iNormalisedDistanceToFirstCluster,
                                             const DomainStats& iDomainStats) const
       {
-        oColour[0] = static_cast<unsigned char>( (mStressR * 255.0F)
-            / GetCumulativeLengthInFluid());oColour[1] = static_cast<unsigned char> ((mStressG*255.0F) /GetCumulativeLengthInFluid());
-	oColour[2] = static_cast<unsigned char> ((mStressB*255.0F) / GetCumulativeLengthInFluid());
+        oColour[0] = (unsigned char)( (mStressR * 255.0F)
+            / GetCumulativeLengthInFluid());oColour[1] = (unsigned char) ((mStressG*255.0F) /GetCumulativeLengthInFluid());
+	oColour[2] = (unsigned char) ((mStressB*255.0F) / GetCumulativeLengthInFluid());
       }
 
       void RayDataNormal::DoMergeIn(const RayDataNormal& iOtherRayData,
