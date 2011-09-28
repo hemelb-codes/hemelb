@@ -100,9 +100,13 @@ namespace hemelb
 
       void RayDataNormal::UpdateStressColour(float iDt, const float iPalette[3])
       {
-        mStressR += iDt * iPalette[0];
-        mStressG += iDt * iPalette[1];
-        mStressB += iDt * iPalette[2];
+		mStressR += iDt * iPalette[0];
+		mStressG += iDt * iPalette[1];
+		mStressB += iDt * iPalette[2];
+      }   
+
+      void RayDataNormal::DoProcessTangentingVessel()
+      {
       }
 
       const DomainStats* RayDataNormal::mDomainStats = NULL;
