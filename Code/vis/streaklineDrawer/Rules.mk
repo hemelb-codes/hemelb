@@ -1,6 +1,7 @@
 include $(MK)/header.mk
 
-SRCS :=	Particle.cc \
+SRCS :=	NeighbouringProcessor.cc \
+	Particle.cc \
 	Particles.cc \
 	StreaklineDrawer.cc \
 	VelocityField.cc

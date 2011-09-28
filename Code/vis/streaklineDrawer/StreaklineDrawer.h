@@ -9,7 +9,7 @@
 #include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
-#include "vis/streaklineDrawer/NeighProc.h"
+#include "vis/streaklineDrawer/NeighbouringProcessor.h"
 #include "vis/streaklineDrawer/Particle.h"
 #include "vis/streaklineDrawer/Particles.h"
 #include "vis/streaklineDrawer/VelocityField.h"
@@ -73,7 +73,7 @@ namespace hemelb
         public:
           proc_t *from_proc_id_to_neigh_proc_index;
 
-          std::vector<NeighProc> mNeighProcs;
+          std::vector<NeighbouringProcessor> mNeighbouringProcessors;
 
         private:
           // Require these for inter-processor comms.

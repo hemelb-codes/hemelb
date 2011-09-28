@@ -9,7 +9,7 @@
 #include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
-#include "vis/streaklineDrawer/NeighProc.h"
+#include "vis/streaklineDrawer/NeighbouringProcessor.h"
 #include "vis/streaklineDrawer/Particle.h"
 #include "vis/streaklineDrawer/VelocityField.h"
 #include "vis/streaklineDrawer/VelocitySiteData.h"
@@ -23,7 +23,7 @@ namespace hemelb
       class Particles
       {
         public:
-          Particles(std::vector<NeighProc>& iNeighProcs);
+	Particles(std::vector<NeighbouringProcessor>& iNeighbouringProcessors);
 
           void AddParticle(const Particle& iParticle);
 
@@ -41,12 +41,12 @@ namespace hemelb
                                     MPI_Request* iReq,
                                     proc_t iProcs,
                                     VelocityField& iVelocityField,
-                                    proc_t* iFromProcIDToNeighProcIndex);
+                                    proc_t* iFromProcIDToNeighbouringProcessorIndex);
 
         private:
           std::vector<Particle> mParticles;
 
-          std::vector<NeighProc>& mNeighProcs;
+          std::vector<NeighbouringProcessor>& mNeighbouringProcessors;
 
       };
     }
