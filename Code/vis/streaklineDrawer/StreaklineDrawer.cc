@@ -24,11 +24,7 @@ namespace hemelb
                                          Screen& iScreen,
                                          const Viewpoint& iViewpoint, // 
                                          const VisSettings& iVisSettings) :
-          mVelocityField(mNeighbouringProcessors),
-	  mScreen(iScreen),
-	  mViewpoint(iViewpoint),
-	  mVisSettings(iVisSettings),
-	  mParticles(mNeighbouringProcessors)
+          mVelocityField(mNeighbouringProcessors), mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings), mParticles(mNeighbouringProcessors)
       {
 
         site_t n = 0;

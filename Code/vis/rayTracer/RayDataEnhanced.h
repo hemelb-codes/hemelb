@@ -71,10 +71,9 @@ namespace hemelb
 
             //Calculate the absolute dot product of the wall
             //vector normal and the ray direction
-            util::Vector3D<float> lWallNormal =
-                util::Vector3D<float>((float)(iWallNormal[0]),
-                                      (float)(iWallNormal[1]),
-                                      (float)(iWallNormal[2]));
+            util::Vector3D<float> lWallNormal = util::Vector3D<float>((float) (iWallNormal[0]),
+                                                                      (float) (iWallNormal[1]),
+                                                                      (float) (iWallNormal[2]));
 
             float lDotProduct = iRayDirection.DotProduct(lWallNormal);
 
@@ -98,7 +97,7 @@ namespace hemelb
                                    const DomainStats& iDomainStats) const
           {
             float lVelocityHue = mVelocityHueRange * GetAverageVelocity()
-                * (float)(iDomainStats.velocity_threshold_max_inv) + mVelocityHueMin;
+                * (float) (iDomainStats.velocity_threshold_max_inv) + mVelocityHueMin;
 
             if (lVelocityHue >= 360.0F)
             {
@@ -117,12 +116,12 @@ namespace hemelb
                                  const DomainStats& iDomainStats) const
           {
             float lStressSaturation =
-	      util::NumericalFunctions::enforceBounds<float>(mStressSaturationMin
-							     + mStressSaturationRange
-							     * GetAverageStress()
-							     * (float)(iDomainStats.stress_threshold_max_inv),
-							     0.0F,
-							     1.0F);
+                util::NumericalFunctions::enforceBounds<float>(mStressSaturationMin
+                                                                   + mStressSaturationRange
+                                                                       * GetAverageStress()
+                                                                       * (float) (iDomainStats.stress_threshold_max_inv),
+                                                               0.0F,
+                                                               1.0F);
 
             HSLToRGBConverter::Convert(mStressHue,
                                        lStressSaturation,
@@ -180,7 +179,7 @@ namespace hemelb
           //and optional depth cuing
           float GetLightnessValue(const float iNormalisedDistance) const
           {
-	    if (depthCuing == DepthCuing::NONE)
+            if (depthCuing == DepthCuing::NONE)
             {
               return mLowestLightness + GetSurfaceNormalLightness() * mSurfaceNormalLightnessRange;
             }

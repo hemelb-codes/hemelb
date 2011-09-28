@@ -47,10 +47,10 @@ namespace hemelb
                                 iDomainStats,
                                 iVisSettings);
 
-            ((Derived*)(this))->DoUpdateDataForNormalFluidSite(iSiteData,
-                                                                        iRayDirection,
-                                                                        iRayLengthInVoxel,
-                                                                        iVisSettings);
+            ((Derived*) (this))->DoUpdateDataForNormalFluidSite(iSiteData,
+                                                                iRayDirection,
+                                                                iRayLengthInVoxel,
+                                                                iVisSettings);
           }
 
           // Processes the ray data for a normal (non wall) fluid site
@@ -62,30 +62,30 @@ namespace hemelb
                                      const VisSettings& iVisSettings,
                                      const double* iWallNormal)
           {
-             UpdateRayDataCommon(iSiteData,
+            UpdateRayDataCommon(iSiteData,
                                 iRayDirection,
                                 iRayLengthInVoxel,
                                 iAbsoluteDistanceFromViewpoint,
                                 iDomainStats,
                                 iVisSettings);
 
-            ((Derived*)(this))->DoUpdateDataForWallSite(iSiteData,
-                                                                 iRayDirection,
-                                                                 iRayLengthInVoxel,
-                                                                 iVisSettings,
-                                                                 iWallNormal);
+            ((Derived*) (this))->DoUpdateDataForWallSite(iSiteData,
+                                                         iRayDirection,
+                                                         iRayLengthInVoxel,
+                                                         iVisSettings,
+                                                         iWallNormal);
           }
 
           void ProcessTangentingVessel()
           {
-            ((Derived*)(this))->DoProcessTangentingVessel();
+            ((Derived*) (this))->DoProcessTangentingVessel();
           }
 
           // Merges in the data from another segment of ray (from another core)
           void MergeIn(const Derived& iOtherRayData, const VisSettings& iVisSettings)
           {
             // Carry out the merging specific to the derived class
-            ((Derived*)(this))->DoMergeIn(iOtherRayData, iVisSettings);
+            ((Derived*) (this))->DoMergeIn(iOtherRayData, iVisSettings);
 
             // Sum length in fluid
             SetCumulativeLengthInFluid(GetCumulativeLengthInFluid()
@@ -107,10 +107,10 @@ namespace hemelb
                                  const VisSettings& iVisSettings,
                                  const DomainStats& iDomainStats) const
           {
-            ((const Derived*)(this))->DoGetVelocityColour(oColour,
-								   GetLengthBeforeRayFirstCluster()
-								   / iVisSettings.maximumDrawDistance,
-								   iDomainStats);
+            ((const Derived*) (this))->DoGetVelocityColour(oColour,
+                                                           GetLengthBeforeRayFirstCluster()
+                                                               / iVisSettings.maximumDrawDistance,
+                                                           iDomainStats);
           }
 
           // Obtains the colour representing the stress ray trace
@@ -118,10 +118,10 @@ namespace hemelb
                                const VisSettings& iVisSettings,
                                const DomainStats& iDomainStats) const
           {
-            ((const Derived*)(this))->DoGetStressColour(oColour,
-								 GetLengthBeforeRayFirstCluster()
-								 / iVisSettings.maximumDrawDistance,
-								 iDomainStats);
+            ((const Derived*) (this))->DoGetStressColour(oColour,
+                                                         GetLengthBeforeRayFirstCluster()
+                                                             / iVisSettings.maximumDrawDistance,
+                                                         iDomainStats);
           }
 
           // Whether or not the data contained in the instance has valid
@@ -185,7 +185,7 @@ namespace hemelb
               {
                 // Keep track of the stress nearest to the viewpoint
                 SetNearestStress(iSiteData.GetStress()
-                    * (float)(iDomainStats.stress_threshold_max_inv));
+                    * (float) (iDomainStats.stress_threshold_max_inv));
               }
             }
 

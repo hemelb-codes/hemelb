@@ -23,7 +23,7 @@ namespace hemelb
       class Particles
       {
         public:
-	Particles(std::vector<NeighbouringProcessor>& iNeighbouringProcessors);
+          Particles(std::vector<NeighbouringProcessor>& iNeighbouringProcessors);
 
           void AddParticle(const Particle& iParticle);
 

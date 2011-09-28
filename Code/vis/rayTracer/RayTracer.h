@@ -65,9 +65,9 @@ namespace hemelb
                                   distribn_t velocity,
                                   distribn_t stress)
           {
-            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetDensity((float)(density));
-	    mClusterBuilder.GetClusterVoxelDataPointer(i)->SetVelocity((float)(velocity));
-	    mClusterBuilder.GetClusterVoxelDataPointer(i)->SetStress((float)(stress));
+            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetDensity((float) (density));
+            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetVelocity((float) (velocity));
+            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetStress((float) (stress));
           }
 
           // Render the current state into an image.
