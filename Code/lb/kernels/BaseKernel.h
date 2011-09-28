@@ -24,7 +24,7 @@ namespace hemelb
       {
         protected:
           HydroVarsBase(const distribn_t* const f) :
-              f(f)
+            f(f)
           {
           }
 
@@ -38,7 +38,7 @@ namespace hemelb
       {
         public:
           HydroVars(const distribn_t* const f) :
-              HydroVarsBase(f)
+            HydroVarsBase(f)
           {
 
           }
@@ -99,24 +99,24 @@ namespace hemelb
 
           void CalculateDensityVelocityFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*>(this)->DoCalculateDensityVelocityFeq(hydroVars, index);
+            static_cast<KernelImpl*> (this)->DoCalculateDensityVelocityFeq(hydroVars, index);
           }
 
           void CalculateFeq(KHydroVars& hydroVars, site_t index)
           {
-            static_cast<KernelImpl*>(this)->DoCalculateFeq(hydroVars, index);
+            static_cast<KernelImpl*> (this)->DoCalculateFeq(hydroVars, index);
           }
 
           distribn_t Collide(const LbmParameters* lbmParams,
                              KHydroVars& hydroVars,
                              unsigned int directionIndex)
           {
-            return static_cast<KernelImpl*>(this)->DoCollide(lbmParams, hydroVars, directionIndex);
+            return static_cast<KernelImpl*> (this)->DoCollide(lbmParams, hydroVars, directionIndex);
           }
 
           void Reset(InitParams* init)
           {
-            static_cast<KernelImpl*>(this)->DoReset(init);
+            static_cast<KernelImpl*> (this)->DoReset(init);
           }
       };
 
@@ -124,4 +124,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_COLLISIONS_IMPLEMENTATIONS_ENTROPICKERNEL_H */
+#endif /* HEMELB_LB_KERNELS_BASEKERNEL_H */
