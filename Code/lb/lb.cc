@@ -22,7 +22,10 @@ namespace hemelb
              net::Net* net,
              geometry::LatticeData* latDat,
              SimulationState* simState) :
-      mSimConfig(iSimulationConfig), mNet(net), mLatDat(latDat), mState(simState),
+          mSimConfig(iSimulationConfig),
+          mNet(net),
+          mLatDat(latDat),
+          mState(simState),
           mParams(PULSATILE_PERIOD_s / (distribn_t) simState->GetTimeStepsPerCycle(),
                   latDat->GetVoxelSize())
     {

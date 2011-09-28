@@ -188,8 +188,8 @@ namespace hemelb
     distribn_t sigma_xz = (f[7] + f[8]) - (f[9] + f[10]) + (f[11] + f[12]) - (f[13] + f[14]);
     distribn_t sigma_yz = (f[7] + f[8]) - (f[9] + f[10]) - (f[11] + f[12]) + (f[13] + f[14]);
 
-    distribn_t a = sigma_xx_yy * sigma_xx_yy + sigma_yy_zz * sigma_yy_zz
-        + sigma_xx_zz * sigma_xx_zz;
+    distribn_t a = sigma_xx_yy * sigma_xx_yy + sigma_yy_zz * sigma_yy_zz + sigma_xx_zz
+        * sigma_xx_zz;
     distribn_t b = sigma_xy * sigma_xy + sigma_xz * sigma_xz + sigma_yz * sigma_yz;
 
     stress = iStressParameter * sqrt(a + 6.0 * b);
@@ -252,9 +252,13 @@ namespace hemelb
     stress = sqrt(square_stress_vector - normal_stress * normal_stress);
   }
 
-  double D3Q15::CalculateStrainRateTensorComponent(const unsigned &iRow, const unsigned &iColumn, const double &iTau, const distribn_t iFNeq[], const double &iTimeStep, const double &iSpaceStep, const distribn_t &iDensity)
+  distribn_t D3Q15::CalculateStrainRateTensorComponent(const unsigned &iRow,
+                                                       const unsigned &iColumn,
+                                                       const distribn_t &iTau,
+                                                       const distribn_t iFNeq[],
+                                                       const distribn_t &iDensity)
   {
-    double strain_rate_tensor_i_j=0.0;
+    distribn_t strain_rate_tensor_i_j = 0.0;
     const int *Cs[3] = { CX, CY, CZ };
 
     for (unsigned vec_index = 0; vec_index < NUMVECTORS; vec_index++)
@@ -262,27 +266,31 @@ namespace hemelb
       strain_rate_tensor_i_j += iFNeq[vec_index] * (Cs[iRow][vec_index] * Cs[iColumn][vec_index]);
     }
 
-    // TODO Different expressions for strain rate tensor based on velocity distribution function found in the literature. Make sure it is dimensionally consistent
-    strain_rate_tensor_i_j *= -1.0/(2.0 * iTau * iTimeStep * iDensity * Cs2);
+    strain_rate_tensor_i_j *= -1.0 / (2.0 * iTau * iDensity * Cs2);
 
     return strain_rate_tensor_i_j;
   }
 
-  double D3Q15::CalculateShearRate(const double &iTau, const distribn_t iFNeq[], const double &iTimeStep, const double &iSpaceStep, const distribn_t &iDensity)
+  distribn_t D3Q15::CalculateShearRate(const distribn_t &iTau,
+                                       const distribn_t iFNeq[],
+                                       const distribn_t &iDensity)
   {
-    double shear_rate=0.0;
-    double strain_rate_tensor_i_j;
+    distribn_t shear_rate = 0.0;
+    distribn_t strain_rate_tensor_i_j;
 
-    for (unsigned row=0; row<3; row++)
+    for (unsigned row = 0; row < 3; row++)
     {
-      for (unsigned column=0; column<3; column++)
+      for (unsigned column = 0; column < 3; column++)
       {
-        strain_rate_tensor_i_j = D3Q15::CalculateStrainRateTensorComponent(row, column, iTau, iFNeq, iTimeStep, iSpaceStep, iDensity);
-        shear_rate += strain_rate_tensor_i_j*strain_rate_tensor_i_j;
+        strain_rate_tensor_i_j = D3Q15::CalculateStrainRateTensorComponent(row,
+                                                                           column,
+                                                                           iTau,
+                                                                           iFNeq,
+                                                                           iDensity);
+        shear_rate += strain_rate_tensor_i_j * strain_rate_tensor_i_j;
       }
     }
 
-    // TODO Different expressions for the shear-rate can be found in different publicatios: 2*sqrt(s_ij * s_ij), sqrt(2 * s_ij * s_ij), sqrt(s_ij * s_ij)
     shear_rate = sqrt(shear_rate);
 
     return shear_rate;

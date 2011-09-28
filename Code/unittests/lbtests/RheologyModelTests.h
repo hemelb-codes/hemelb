@@ -2,7 +2,7 @@
 #define HEMELB_UNITTESTS_LBTESTS_RHEOLOGYMODELTESTS_H
 
 #include <cppunit/TestFixture.h>
-#include "lb/rheology_models/RheologyModels.h"
+#include "lb/kernels/rheologyModels/RheologyModels.h"
 
 namespace hemelb
 {
@@ -56,32 +56,38 @@ namespace hemelb
           }
 
           template<class RHEOLOGY_MODEL>
-          void CompareModelAgainsHardcodedValues(const std::vector<distribn_t>& shearRates, const std::vector<distribn_t>& truthViscosities, const std::string& modelName) const
+          void CompareModelAgainsHardcodedValues(const std::vector<distribn_t>& shearRates,
+                                                 const std::vector<distribn_t>& truthViscosities,
+                                                 const std::string& modelName) const
           {
-              CPPUNIT_ASSERT_EQUAL(shearRates.size(), truthViscosities.size());
+            CPPUNIT_ASSERT_EQUAL(shearRates.size(), truthViscosities.size());
 
-              std::vector<distribn_t>::const_iterator shearRate;
-              std::vector<distribn_t>::const_iterator truthVis;
-              for ( shearRate = shearRates.begin(), truthVis = truthViscosities.begin();
-                   shearRate != shearRates.end();
-                   ++shearRate, ++truthVis)
-              {
-                distribn_t viscosity = RHEOLOGY_MODEL::CalculateViscosityForShearRate(*shearRate, density);
+            std::vector<distribn_t>::const_iterator shearRate;
+            std::vector<distribn_t>::const_iterator truthVis;
+            for (shearRate = shearRates.begin(), truthVis = truthViscosities.begin();
+                 shearRate != shearRates.end();
+                 ++shearRate, ++truthVis)
+            {
+              distribn_t viscosity = RHEOLOGY_MODEL::CalculateViscosityForShearRate(*shearRate,
+                                                                                    density);
 
-                std::stringstream message;
-                message << "Wrong " << modelName << " viscosity for shear rate " << *shearRate;
-                CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
-                                                     *truthVis,
-                                                     viscosity,
-                                                     1e-10);
-              }
+              std::stringstream message;
+              message << "Wrong " << modelName << " viscosity for shear rate " << *shearRate;
+              CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(), *truthVis, viscosity, 1e-10);
+            }
           }
 
-          void TestRheologyModels()
+          void TestrheologyModels()
           {
-            CompareModelAgainsHardcodedValues<lb::rheology_models::CarreauYasudaRheologyModel>(shearRates, carreauViscosities, "CarreauYasuda");
-            CompareModelAgainsHardcodedValues<lb::rheology_models::CassonRheologyModel>(shearRates, cassonViscosities, "Casson");
-            CompareModelAgainsHardcodedValues<lb::rheology_models::TruncatedPowerLawRheologyModel>(shearRates, powerLawViscosities, "TruncatedPowerLaw");
+            CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> (shearRates,
+                                                                                                carreauViscosities,
+                                                                                                "CarreauYasuda");
+            CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::CassonRheologyModel> (shearRates,
+                                                                                         cassonViscosities,
+                                                                                         "Casson");
+            CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::TruncatedPowerLawRheologyModel> (shearRates,
+                                                                                                    powerLawViscosities,
+                                                                                                    "TruncatedPowerLaw");
           }
 
         private:

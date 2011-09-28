@@ -2,7 +2,7 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbLb.$(LIBEXT)
 
-SUBDIRS := boundaries rheology_models
+SUBDIRS := boundaries kernels
 
 $(TARGETS)_DEPS = lb.o \
                   io.o \
