@@ -78,10 +78,10 @@ namespace hemelb
           {
             // TODO this calculation is being done in the wrong place and hence happens 15* too often.
             hydroVars.alpha
-                = CalculateAlpha(lbmParams->Tau(), hydroVars, oldAlpha[hydroVars.index]);
+                = CalculateAlpha(lbmParams->GetTau(), hydroVars, oldAlpha[hydroVars.index]);
             oldAlpha[hydroVars.index] = hydroVars.alpha;
 
-            return hydroVars.f[direction] + (hydroVars.alpha * lbmParams->Beta())
+            return hydroVars.f[direction] + (hydroVars.alpha * lbmParams->GetBeta())
                 * hydroVars.f_neq[direction];
           }
 

@@ -98,12 +98,12 @@ namespace hemelb
                                               f_neq,
                                               iLatDat->GetNormalToWall(iSiteIndex),
                                               rtStress,
-                                              iLbmParams->StressParameter());
+                                              iLbmParams->GetStressParameter());
                 }
               }
               else
               {
-                D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams->StressParameter());
+                D3Q15::CalculateVonMisesStress(f_neq, rtStress, iLbmParams->GetStressParameter());
               }
 
               // TODO: It'd be nice if the /iDensity were unnecessary.

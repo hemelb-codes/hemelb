@@ -199,12 +199,12 @@ namespace hemelb
                                                   f_neq,
                                                   &mLatDat->GetNormalToWall(my_site_id)[0],
                                                   stress,
-                                                  mParams.StressParameter());
+                                                  mParams.GetStressParameter());
                     }
                   }
                   else
                   {
-                    D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.StressParameter());
+                    D3Q15::CalculateVonMisesStress(f_neq, stress, mParams.GetStressParameter());
                   }
 
                   vx /= density;

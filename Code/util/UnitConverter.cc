@@ -43,7 +43,7 @@ namespace hemelb
 
     distribn_t UnitConverter::ConvertVelocityToLatticeUnits(double velocity) const
     {
-      return velocity * ( ( (mParams->Tau() - 0.5) / 3.0) * voxel_size)
+      return velocity * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size)
           / (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3);
     }
 
@@ -51,22 +51,22 @@ namespace hemelb
     {
       // convert velocity from lattice units to physical units (m/s)
       return velocity * (BLOOD_VISCOSITY_Pa_s / BLOOD_DENSITY_Kg_per_m3)
-          / ( ( (mParams->Tau() - 0.5) / 3.0) * voxel_size);
+          / ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size);
     }
 
     distribn_t UnitConverter::ConvertStressToLatticeUnits(double stress) const
     {
       return stress * (BLOOD_DENSITY_Kg_per_m3 / (BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s))
-          * ( ( (mParams->Tau() - 0.5) / 3.0) * voxel_size)
-          * ( ( (mParams->Tau() - 0.5) / 3.0) * voxel_size);
+          * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size)
+          * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size);
     }
 
     double UnitConverter::ConvertStressToPhysicalUnits(distribn_t stress) const
     {
       // convert stress from lattice units to physical units (Pa)
       return stress * BLOOD_VISCOSITY_Pa_s * BLOOD_VISCOSITY_Pa_s
-          / (BLOOD_DENSITY_Kg_per_m3 * ( ( (mParams->Tau() - 0.5) / 3.0) * voxel_size)
-              * ( ( (mParams->Tau() - 0.5) / 3.0) * voxel_size));
+          / (BLOOD_DENSITY_Kg_per_m3 * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size)
+              * ( ( (mParams->GetTau() - 0.5) / 3.0) * voxel_size));
     }
 
   }
