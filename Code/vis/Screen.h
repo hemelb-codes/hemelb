@@ -18,8 +18,8 @@ namespace hemelb
   namespace vis
   {
     //The ray data type and cluster type used for the ray tracer
-    //typedef raytracer::RayDataNormal RayDataType_t;
-    typedef raytracer::RayDataEnhanced<raytracer::DepthCuing::MIST> RayDataType_t;
+    typedef raytracer::RayDataNormal RayDataType_t;
+    //typedef raytracer::RayDataEnhanced<raytracer::DepthCuing::MIST> RayDataType_t;
     typedef raytracer::ClusterWithWallNormals ClusterType_t;
 
     class Screen
