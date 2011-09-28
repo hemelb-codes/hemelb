@@ -112,7 +112,11 @@ namespace hemelb
 	mStressR += iDt * iPalette[0];
 	mStressG += iDt * iPalette[1];
 	mStressB += iDt * iPalette[2];
-      }     
+      }   
+
+      void RayDataNormal::DoProcessTangentingVessel()
+      {
+      }
 
       const DomainStats* RayDataNormal::mDomainStats = NULL;
     }
