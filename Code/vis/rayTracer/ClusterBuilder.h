@@ -1,7 +1,6 @@
 #ifndef HEMELB_VIS_RAYTRACER_CLUSTERBUILDER_H
 #define HEMELB_VIS_RAYTRACER_CLUSTERBUILDER_H
 
-#include <assert.h>
 #include <map>
 #include <vector>		
 
@@ -41,7 +40,6 @@ namespace hemelb
             {
               mClusterIdOfBlock[lId] = NOTASSIGNEDTOCLUSTER;
             }
-            assert(VIS_FIELDS == 3);
           }
 
           ~ClusterBuilder()
@@ -231,15 +229,10 @@ namespace hemelb
             lNewCluster.minBlock.z = (float) (iClusterBlockMin.z * mLatticeData->GetBlockSize())
                 - 0.5F * (float) mLatticeData->GetZSiteCount();
 
-            lNewCluster.blocksX = static_cast<unsigned short>(1 + iClusterBlockMax.x
+            lNewCluster.blocksX =(unsigned short)(1 + iClusterBlockMax.x
                 - iClusterBlockMin.x);lNewCluster
-            .blocksY = static_cast<unsigned short>(1 + iClusterBlockMax.y - iClusterBlockMin.y);lNewCluster
-            .blocksZ = static_cast<unsigned short>(1 + iClusterBlockMax.z - iClusterBlockMin.z);
-
-            //Ensure that value does not change in casting
-assert            (static_cast<site_t>(lNewCluster.blocksX) == (1 + iClusterBlockMax.x - iClusterBlockMin.x));
-            assert(static_cast<site_t>(lNewCluster.blocksY) == (1 + iClusterBlockMax.y - iClusterBlockMin.y));
-            assert(static_cast<site_t>(lNewCluster.blocksZ) == (1 + iClusterBlockMax.z - iClusterBlockMin.z));
+            .blocksY =(unsigned short)(1 + iClusterBlockMax.y - iClusterBlockMin.y);lNewCluster
+            .blocksZ =(unsigned short)(1 + iClusterBlockMax.z - iClusterBlockMin.z);
 
             lNewCluster.minSite = util::Vector3D<float>(iClusterVoxelMin)
                 - util::Vector3D<float>((float) mLatticeData->GetXSiteCount(),

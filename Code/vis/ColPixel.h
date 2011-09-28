@@ -366,13 +366,11 @@ namespace hemelb
           if (iIsStreakline)
           {
             mJ = mJ | mMostSignificantBit;
-            assert(IsStreakline());
           }
           else
           {
             mJ = mJ & ~mMostSignificantBit;
-            assert(!IsStreakline());
-          }
+	  }
         }
 
         bool IsStreakline() const

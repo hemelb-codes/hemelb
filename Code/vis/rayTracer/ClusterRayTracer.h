@@ -2,7 +2,6 @@
 #define HEMELB_VIS_RAYTRACER_CLUSTERRAYTRACER_H
 
 #include <cmath> 
-#include <cassert>
 #include <iostream>
 #include <limits>
 
@@ -421,7 +420,7 @@ namespace hemelb
             else
             {
               lRayUnits.x = iFirstRayClusterIntersectionToBlockLowerSite.x
-                  + static_cast<float>(iTruncatedLocationInBlock.x);
+                  + (float)(iTruncatedLocationInBlock.x);
               if (iRay.XIncreasing())
               {
                 lRayUnits.x += 1.0F;
@@ -437,7 +436,7 @@ namespace hemelb
             else
             {
               lRayUnits.y = iFirstRayClusterIntersectionToBlockLowerSite.y
-                  + static_cast<float>(iTruncatedLocationInBlock.y);
+                  + (float)(iTruncatedLocationInBlock.y);
               if (iRay.YIncreasing())
               {
                 lRayUnits.y += 1.0F;
@@ -452,7 +451,7 @@ namespace hemelb
             else
             {
               lRayUnits.z = iFirstRayClusterIntersectionToBlockLowerSite.z
-                  + static_cast<float>(iTruncatedLocationInBlock.z);
+                  + (float)(iTruncatedLocationInBlock.z);
               if (iRay.ZIncreasing())
               {
                 lRayUnits.z += 1.0F;
@@ -527,7 +526,7 @@ namespace hemelb
                               const util::Vector3D<float>& iLowerSiteToFirstRayClusterIntersection,
                               Ray<RayDataType>& ioRay)
           {
-            float lBlockSizeFloat = static_cast<float>(mLatticeData.GetBlockSize());
+            float lBlockSizeFloat = (float)(mLatticeData.GetBlockSize());
 
             //Calculate the coordinates of the block within the cluster where
             //the ray first intersects
@@ -665,21 +664,21 @@ namespace hemelb
                 util::NumericalFunctions::enforceBounds(
                     iCluster.blocksX - 1,
                     0,
-                    (int) (1.0F / static_cast<float>(mLatticeData.GetBlockSize())
+                    (int) (1.0F / (float)(mLatticeData.GetBlockSize())
                         * iLowerSiteToFirstRayClusterIntersection.x));
 
                 lBlockCoordinatesOfFirstIntersectionBlock.y = (unsigned int)
                 util::NumericalFunctions::enforceBounds(
                     iCluster.blocksY - 1,
                     0,
-                    (int) (1.0F / static_cast<float>(mLatticeData.GetBlockSize())
+                    (int) (1.0F / (float)(mLatticeData.GetBlockSize())
                         * iLowerSiteToFirstRayClusterIntersection.y));
 
                 lBlockCoordinatesOfFirstIntersectionBlock.z = (unsigned int)
                 util::NumericalFunctions::enforceBounds(
                     iCluster.blocksZ - 1,
                     0,
-                    (int) (1.0F / static_cast<float>(mLatticeData.GetBlockSize())
+                    (int) (1.0F / (float)(mLatticeData.GetBlockSize())
                         * iLowerSiteToFirstRayClusterIntersection.z));
 
                 return lBlockCoordinatesOfFirstIntersectionBlock;
@@ -707,7 +706,7 @@ namespace hemelb
                   //distance to the next block
                   if(iRay.XIncreasing())
                   {
-                    lRayUnits.x += static_cast<float>(mLatticeData.GetBlockSize());
+                    lRayUnits.x += (float)(mLatticeData.GetBlockSize());
                   }
                   //Turn this from site units into ray units
                   lRayUnits.x *= iRay.GetInverseDirection().x;
@@ -722,7 +721,7 @@ namespace hemelb
                   lRayUnits.y = lFirstIntersectionToBlockLowerSite.y;
                   if(iRay.YIncreasing())
                   {
-                    lRayUnits.y += static_cast<float>(mLatticeData.GetBlockSize());
+                    lRayUnits.y += (float)(mLatticeData.GetBlockSize());
                   }
                   lRayUnits.y *= iRay.GetInverseDirection().y;
                 }
@@ -736,7 +735,7 @@ namespace hemelb
                   lRayUnits.z = lFirstIntersectionToBlockLowerSite.z;
                   if(iRay.ZIncreasing())
                   {
-                    lRayUnits.z += static_cast<float>(mLatticeData.GetBlockSize());
+                    lRayUnits.z += (float)(mLatticeData.GetBlockSize());
                   }
                   lRayUnits.z *= iRay.GetInverseDirection().z;
                 }

@@ -1,8 +1,6 @@
 #ifndef HEMELB_VIS_RAYTRACER_RAYDATA_H
 #define HEMELB_VIS_RAYTRACER_RAYDATA_H
 
-#include "assert.h"
-
 #include "constants.h"
 #include "mpiInclude.h"
 #include "vis/DomainStats.h"
@@ -49,7 +47,7 @@ namespace hemelb
                                 iDomainStats,
                                 iVisSettings);
 
-            static_cast<Derived*>(this)->DoUpdateDataForNormalFluidSite(iSiteData,
+            ((Derived*)(this))->DoUpdateDataForNormalFluidSite(iSiteData,
                                                                         iRayDirection,
                                                                         iRayLengthInVoxel,
                                                                         iVisSettings);
@@ -64,16 +62,14 @@ namespace hemelb
                                      const VisSettings& iVisSettings,
                                      const double* iWallNormal)
           {
-            assert(iWallNormal != NULL);
-
-            UpdateRayDataCommon(iSiteData,
+             UpdateRayDataCommon(iSiteData,
                                 iRayDirection,
                                 iRayLengthInVoxel,
                                 iAbsoluteDistanceFromViewpoint,
                                 iDomainStats,
                                 iVisSettings);
 
-            static_cast<Derived*>(this)->DoUpdateDataForWallSite(iSiteData,
+            ((Derived*)(this))->DoUpdateDataForWallSite(iSiteData,
                                                                  iRayDirection,
                                                                  iRayLengthInVoxel,
                                                                  iVisSettings,
@@ -82,14 +78,14 @@ namespace hemelb
 
           void ProcessTangentingVessel()
           {
-            static_cast<Derived*>(this)->DoProcessTangentingVessel();
+            ((Derived*)(this))->DoProcessTangentingVessel();
           }
 
           // Merges in the data from another segment of ray (from another core)
           void MergeIn(const Derived& iOtherRayData, const VisSettings& iVisSettings)
           {
             // Carry out the merging specific to the derived class
-            static_cast<Derived*>(this)->DoMergeIn(iOtherRayData, iVisSettings);
+            ((Derived*)(this))->DoMergeIn(iOtherRayData, iVisSettings);
 
             // Sum length in fluid
             SetCumulativeLengthInFluid(GetCumulativeLengthInFluid()
@@ -111,7 +107,7 @@ namespace hemelb
                                  const VisSettings& iVisSettings,
                                  const DomainStats& iDomainStats) const
           {
-            static_cast<const Derived*>(this)->DoGetVelocityColour(oColour,
+            ((const Derived*)(this))->DoGetVelocityColour(oColour,
 								   GetLengthBeforeRayFirstCluster()
 								   / iVisSettings.maximumDrawDistance,
 								   iDomainStats);
@@ -122,7 +118,7 @@ namespace hemelb
                                const VisSettings& iVisSettings,
                                const DomainStats& iDomainStats) const
           {
-            static_cast<const Derived*>(this)->DoGetStressColour(oColour,
+            ((const Derived*)(this))->DoGetStressColour(oColour,
 								 GetLengthBeforeRayFirstCluster()
 								 / iVisSettings.maximumDrawDistance,
 								 iDomainStats);
@@ -175,8 +171,6 @@ namespace hemelb
                                    const DomainStats& iDomainStats,
                                    const VisSettings& iVisSettings)
           {
-            assert(iSiteData.GetDensity() != 0.0F);
-
             if (GetCumulativeLengthInFluid() == 0.0F)
             {
               SetLengthBeforeRayFirstCluster(iAbsoluteDistanceFromViewpoint);
@@ -191,7 +185,7 @@ namespace hemelb
               {
                 // Keep track of the stress nearest to the viewpoint
                 SetNearestStress(iSiteData.GetStress()
-                    * static_cast<float>(iDomainStats.stress_threshold_max_inv));
+                    * (float)(iDomainStats.stress_threshold_max_inv));
               }
             }
 
