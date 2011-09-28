@@ -46,6 +46,8 @@ namespace hemelb
 	void DoGetStressColour(unsigned char oColour[3],
 			       const float iNormalisedDistanceToFirstCluster,
 			       const DomainStats& iDomainStats) const;
+
+	void DoProcessTangentingVessel();
 	
         // We need this because RayDataNormal uses it for every voxel update
 	static const DomainStats* mDomainStats;
