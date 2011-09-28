@@ -9,8 +9,8 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      Particles::Particles(std::vector<NeighProc>& iNeighProcs) :
-          mNeighProcs(iNeighProcs)
+      Particles::Particles(std::vector<NeighbouringProcessor>& iNeighbouringProcessors) :
+          mNeighbouringProcessors(iNeighbouringProcessors)
       {
       }
 
@@ -31,7 +31,7 @@ namespace hemelb
 
       void Particles::DeleteParticle(site_t iIndex)
       {
-        assert(mParticles.size() > iIndex);
+        assert(mParticles.size() > static_cast<size_t>(iIndex));
 
         //Move the particle at the end to position
         mParticles[iIndex] = mParticles.back();
@@ -61,29 +61,23 @@ namespace hemelb
                                            MPI_Request* iReq,
                                            proc_t iProcs,
                                            VelocityField& iVelocityField,
-                                           proc_t* iFromProcIDToNeighProcIndex)
+                                           proc_t* iFromProcIDToNeighbouringProcessorIndex)
       {
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          MPI_Irecv(&mNeighProcs[m].recv_ps,
-                    1,
-                    MpiDataType<site_t>(),
-                    mNeighProcs[m].id,
-                    30,
-                    MPI_COMM_WORLD,
-                    &iReq[iProcs + mNeighProcs[m].id]);
-        }
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+	  mNeighbouringProcessors[m].PrepareToReceiveParticles();
+	}
+        /*for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          mNeighProcs[m].send_ps = 0;
-        }
+          mNeighbouringProcessors[m].send_ps = 0;
+	  }*/
 
         unsigned int particles_temp = GetNumberOfParticles();
 
         proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
 
-        for (int n = (int) (particles_temp - 1);n >= 0; n--) { site_t
-          site_i = (unsigned int) mParticles[n].x;
+        for (int n = (int) (particles_temp - 1);n >= 0; n--) { 
+	  site_t site_i = (unsigned int) mParticles[n].x;
           site_t site_j = (unsigned int) mParticles[n].y;
           site_t site_k = (unsigned int) mParticles[n].z;
 
@@ -97,72 +91,45 @@ namespace hemelb
           {
             continue;
           }
-          proc_t m = iFromProcIDToNeighProcIndex[vel_site_data_p->proc_id];
+          proc_t m = iFromProcIDToNeighbouringProcessorIndex[vel_site_data_p->proc_id];
 
-          mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 0] = mParticles[n].x;
-          mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 1] = mParticles[n].y;
-          mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 2] = mParticles[n].z;
-          mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 3] = mParticles[n].vel;
-          mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 4] = (float) mParticles[n].inletID
-              + 0.1F;
-          ++mNeighProcs[m].send_ps;
-
+	  
+          mNeighbouringProcessors[m].AddParticleToSend(mParticles[n]);
           DeleteParticle(n);
         }
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
-        {
-          MPI_Isend(&mNeighProcs[m].send_ps,
-                    1,
-                    MpiDataType<site_t>(),
-                    mNeighProcs[m].id,
-                    30,
-                    MPI_COMM_WORLD,
-                    &iReq[mNeighProcs[m].id]);
 
-        }
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          MPI_Wait(&iReq[iProcs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
+	  mNeighbouringProcessors[m].PrepareToSendParticles();
+        }
+	  
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
+        {
+          mNeighbouringProcessors[m].WaitForPreparationToReceiveParticles();
         }
 
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          if (mNeighProcs[m].send_ps > 0)
-          {
-            MPI_Isend(&mNeighProcs[m].p_to_send[0],
-                      (int) mNeighProcs[m].send_ps * 5,
-                      MpiDataType(mNeighProcs[m].p_to_send[0]),
-                      mNeighProcs[m].id,
-                      40,
-                      MPI_COMM_WORLD,
-                      &iReq[mNeighProcs[m].id]);
-
-            MPI_Wait(&iReq[mNeighProcs[m].id], MPI_STATUS_IGNORE);
-          }
+	  mNeighbouringProcessors[m].SendParticles();
         }
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+	for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          if (mNeighProcs[m].recv_ps > 0)
-          {
-            MPI_Irecv(&mNeighProcs[m].p_to_recv[0],
-                      (int) mNeighProcs[m].recv_ps * 5,
-                      MpiDataType(mNeighProcs[m].p_to_recv[0]),
-                      mNeighProcs[m].id,
-                      40,
-                      MPI_COMM_WORLD,
-                      &iReq[iProcs + mNeighProcs[m].id]);
-            MPI_Wait(&iReq[iProcs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
-
-            for (proc_t n = 0; n < mNeighProcs[m].recv_ps; n++)
-            {
-              AddParticle(Particle(mNeighProcs[m].p_to_recv[5 * n + 0],
-                                   mNeighProcs[m].p_to_recv[5 * n + 1],
-                                   mNeighProcs[m].p_to_recv[5 * n + 2],
-                                   mNeighProcs[m].p_to_recv[5 * n + 3],
-                                   (int) mNeighProcs[m].p_to_recv[5 * n + 4]));
-            }
-          }
+	  mNeighbouringProcessors[m].WaitForParticlesToBeSent();
         }
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
+        {
+	  mNeighbouringProcessors[m].ReceiveParticles();
+	}
+	for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
+        {
+	  mNeighbouringProcessors[m].WaitForParticlesToBeReceived();
+
+	  while (mNeighbouringProcessors[m].ParticlesToBeRetrieved())
+	  {
+	    AddParticle(mNeighbouringProcessors[m].RetrieveNextReceivedParticle());
+	  }
+	}
+        
       }
     }
   }

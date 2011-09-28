@@ -9,7 +9,7 @@
 #include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
-#include "vis/streaklineDrawer/NeighProc.h"
+#include "vis/streaklineDrawer/NeighbouringProcessor.h"
 #include "vis/streaklineDrawer/VelocitySiteData.h"
 
 namespace hemelb
@@ -23,7 +23,7 @@ namespace hemelb
       class VelocityField
       {
         public:
-          VelocityField(std::vector<NeighProc>& iNeighProcs);
+          VelocityField(std::vector<NeighbouringProcessor>& iNeighbouringProcessors);
 
           void BuildVelocityField(const geometry::LatticeData& iLatDat,
                                   StreaklineDrawer* iStreaklineDrawer);
@@ -67,7 +67,7 @@ namespace hemelb
           //Vector containing VelocityFields
           std::vector<std::vector<VelocitySiteData> > mVelocityField;
 
-          std::vector<NeighProc>& mNeighProcs;
+          std::vector<NeighbouringProcessor>& mNeighbouringProcessors;
 
       };
     }

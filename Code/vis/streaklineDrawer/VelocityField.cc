@@ -13,8 +13,8 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      VelocityField::VelocityField(std::vector<NeighProc>& iNeighProcs) :
-          mNeighProcs(iNeighProcs)
+      VelocityField::VelocityField(std::vector<NeighbouringProcessor>& iNeighbouringProcessors) :
+          mNeighbouringProcessors(iNeighbouringProcessors)
       {
         counter = 1;
       }
@@ -121,12 +121,12 @@ namespace hemelb
                   vel_site_data_p->counter = counter;
 
                   bool seenSelf = false;
-                  for (size_t mm = 0; mm < mNeighProcs.size() && !seenSelf; mm++)
+                  for (size_t mm = 0; mm < mNeighbouringProcessors.size() && !seenSelf; mm++)
                   {
-                    if (*neigh_proc_id == mNeighProcs[mm].id)
+                    if (*neigh_proc_id == mNeighbouringProcessors[mm].mID)
                     {
                       seenSelf = true;
-                      ++mNeighProcs[mm].send_vs;
+                      ++mNeighbouringProcessors[mm].send_vs;
                     }
                   }
                   if (seenSelf)
@@ -134,11 +134,10 @@ namespace hemelb
                     continue;
                   }
 
-                  NeighProc lNew;
+                  NeighbouringProcessor lNew(*neigh_proc_id);
 
-                  lNew.id = *neigh_proc_id;
                   lNew.send_vs = 1;
-                  mNeighProcs.push_back(lNew);
+                  mNeighbouringProcessors.push_back(lNew);
                 }
               }
             }
@@ -347,10 +346,10 @@ namespace hemelb
                 proc_t m =
                     iStreaklineDrawer->from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
 
-                mNeighProcs[m].s_to_send[3 * mNeighProcs[m].send_vs + 0] = neigh_i;
-                mNeighProcs[m].s_to_send[3 * mNeighProcs[m].send_vs + 1] = neigh_j;
-                mNeighProcs[m].s_to_send[3 * mNeighProcs[m].send_vs + 2] = neigh_k;
-                ++ (mNeighProcs[m].send_vs);
+                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 0] = neigh_i;
+                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 1] = neigh_j;
+                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 2] = neigh_k;
+                ++ (mNeighbouringProcessors[m].send_vs);
               }
             }
           }

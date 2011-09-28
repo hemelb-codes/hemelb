@@ -30,7 +30,11 @@ namespace hemelb
                            const DomainStats& iDomainStats,
                            const VisSettings& iVisSettings,
                            const hemelb::geometry::LatticeData& iLatticeData) :
-              mViewpoint(iViewpoint), mScreen(iScreen), mDomainStats(iDomainStats), mVisSettings(iVisSettings), mLatticeData(iLatticeData)
+              mViewpoint(iViewpoint),
+		mScreen(iScreen),
+		mDomainStats(iDomainStats),
+		mVisSettings(iVisSettings),
+		mLatticeData(iLatticeData)
           {
             // TODO: This is absolutely horrible, but neccessary until RayDataNormal is
             // removed. 
@@ -527,7 +531,7 @@ namespace hemelb
 
             //Calculate the coordinates of the block within the cluster where
             //the ray first intersects
-util                ::Vector3D <site_t> lBlockCoordinatesOfFirstIntersectionBlock =
+	    util::Vector3D <site_t> lBlockCoordinatesOfFirstIntersectionBlock =
                 GetBlockCoordinatesOfFirstIntersectionBlock(
                     iCluster, iLowerSiteToFirstRayClusterIntersection);
 
