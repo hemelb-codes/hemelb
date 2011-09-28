@@ -24,7 +24,11 @@ namespace hemelb
                                          Screen& iScreen,
                                          const Viewpoint& iViewpoint, // 
                                          const VisSettings& iVisSettings) :
-          mVelocityField(mNeighProcs), mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings), mParticles(mNeighProcs)
+          mVelocityField(mNeighbouringProcessors),
+	  mScreen(iScreen),
+	  mViewpoint(iViewpoint),
+	  mVisSettings(iVisSettings),
+	  mParticles(mNeighbouringProcessors)
       {
 
         site_t n = 0;
@@ -35,9 +39,9 @@ namespace hemelb
 
         shared_vs = 0;
 
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          shared_vs += mNeighProcs[m].send_vs;
+          shared_vs += mNeighbouringProcessors[m].send_vs;
         }
         if (shared_vs > 0)
         {
@@ -48,17 +52,17 @@ namespace hemelb
         }
         shared_vs = 0;
 
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          mNeighProcs[m].s_to_send = &s_to_send[shared_vs * 3];
-          mNeighProcs[m].s_to_recv = &s_to_recv[shared_vs * 3];
+          mNeighbouringProcessors[m].s_to_send = &s_to_send[shared_vs * 3];
+          mNeighbouringProcessors[m].s_to_recv = &s_to_recv[shared_vs * 3];
 
-          mNeighProcs[m].v_to_send = &v_to_send[shared_vs * 3];
-          mNeighProcs[m].v_to_recv = &v_to_recv[shared_vs * 3];
+          mNeighbouringProcessors[m].v_to_send = &v_to_send[shared_vs * 3];
+          mNeighbouringProcessors[m].v_to_recv = &v_to_recv[shared_vs * 3];
 
-          shared_vs += mNeighProcs[m].send_vs;
+          shared_vs += mNeighbouringProcessors[m].send_vs;
 
-          mNeighProcs[m].send_vs = 0;
+          mNeighbouringProcessors[m].send_vs = 0;
         }
 
         req = new MPI_Request[2 * netTop->GetProcessorCount()];
@@ -69,9 +73,9 @@ for(        proc_t m = 0; m < netTop->GetProcessorCount(); m++)
         {
           from_proc_id_to_neigh_proc_index[m] = -1;
         }
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          from_proc_id_to_neigh_proc_index[mNeighProcs[m].id] = (proc_t) m;
+          from_proc_id_to_neigh_proc_index[mNeighbouringProcessors[m].mID] = (proc_t) m;
         }
 
         procs = netTop->GetProcessorCount();
@@ -82,12 +86,6 @@ for(        proc_t m = 0; m < netTop->GetProcessorCount(); m++)
       {
         delete[] from_proc_id_to_neigh_proc_index;
         delete[] req;
-
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
-        {
-          mNeighProcs[m].p_to_recv.clear();
-          mNeighProcs[m].p_to_send.clear();
-        }
 
         if (shared_vs > 0)
         {
@@ -245,56 +243,56 @@ for(        proc_t m = 0; m < netTop->GetProcessorCount(); m++)
       // Communicate site ids to other processors.
       void StreaklineDrawer::communicateSiteIds()
       {
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          MPI_Irecv(&mNeighProcs[m].recv_vs,
+          MPI_Irecv(&mNeighbouringProcessors[m].recv_vs,
                     1,
-                    MpiDataType(mNeighProcs[m].recv_vs),
-                    mNeighProcs[m].id,
+                    MpiDataType(mNeighbouringProcessors[m].recv_vs),
+                    mNeighbouringProcessors[m].mID,
                     30,
                     MPI_COMM_WORLD,
-                    &req[procs + mNeighProcs[m].id]);
-          MPI_Isend(&mNeighProcs[m].send_vs,
+                    &req[procs + mNeighbouringProcessors[m].mID]);
+          MPI_Isend(&mNeighbouringProcessors[m].send_vs,
                     1,
-                    MpiDataType(mNeighProcs[m].send_vs),
-                    mNeighProcs[m].id,
+                    MpiDataType(mNeighbouringProcessors[m].send_vs),
+                    mNeighbouringProcessors[m].mID,
                     30,
                     MPI_COMM_WORLD,
-                    &req[mNeighProcs[m].id]);
-          MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
+                    &req[mNeighbouringProcessors[m].mID]);
+          MPI_Wait(&req[mNeighbouringProcessors[m].mID], MPI_STATUS_IGNORE);
         }
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
+          MPI_Wait(&req[procs + mNeighbouringProcessors[m].mID], MPI_STATUS_IGNORE);
 
-          if (mNeighProcs[m].recv_vs > 0)
+          if (mNeighbouringProcessors[m].recv_vs > 0)
           {
-            MPI_Irecv(mNeighProcs[m].s_to_recv,
-                      (int) mNeighProcs[m].recv_vs * 3,
-                      MpiDataType(mNeighProcs[m].s_to_recv[0]),
-                      mNeighProcs[m].id,
+            MPI_Irecv(mNeighbouringProcessors[m].s_to_recv,
+                      (int) mNeighbouringProcessors[m].recv_vs * 3,
+                      MpiDataType(mNeighbouringProcessors[m].s_to_recv[0]),
+                      mNeighbouringProcessors[m].mID,
                       40,
                       MPI_COMM_WORLD,
-                      &req[procs + mNeighProcs[m].id]);
+                      &req[procs + mNeighbouringProcessors[m].mID]);
           }
-          if (mNeighProcs[m].send_vs > 0)
+          if (mNeighbouringProcessors[m].send_vs > 0)
           {
-            MPI_Isend(mNeighProcs[m].s_to_send,
-                      (int) mNeighProcs[m].send_vs * 3,
-                      MpiDataType(mNeighProcs[m].s_to_send[0]),
-                      mNeighProcs[m].id,
+            MPI_Isend(mNeighbouringProcessors[m].s_to_send,
+                      (int) mNeighbouringProcessors[m].send_vs * 3,
+                      MpiDataType(mNeighbouringProcessors[m].s_to_send[0]),
+                      mNeighbouringProcessors[m].mID,
                       40,
                       MPI_COMM_WORLD,
-                      &req[mNeighProcs[m].id]);
+                      &req[mNeighbouringProcessors[m].mID]);
 
-            MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
+            MPI_Wait(&req[mNeighbouringProcessors[m].mID], MPI_STATUS_IGNORE);
           }
         }
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          if (mNeighProcs[m].recv_vs > 0)
+          if (mNeighbouringProcessors[m].recv_vs > 0)
           {
-            MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
+            MPI_Wait(&req[procs + mNeighbouringProcessors[m].mID], MPI_STATUS_IGNORE);
           }
         }
       }
@@ -302,27 +300,27 @@ for(        proc_t m = 0; m < netTop->GetProcessorCount(); m++)
       // Communicate velocities to other processors.
       void StreaklineDrawer::communicateVelocities(const geometry::LatticeData& iLatDat)
       {
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          if (mNeighProcs[m].send_vs > 0)
+          if (mNeighbouringProcessors[m].send_vs > 0)
           {
-            MPI_Irecv(mNeighProcs[m].v_to_recv,
-                      (int) mNeighProcs[m].send_vs * 3,
-                      MpiDataType(mNeighProcs[m].v_to_recv[0]),
-                      mNeighProcs[m].id,
+            MPI_Irecv(mNeighbouringProcessors[m].v_to_recv,
+                      (int) mNeighbouringProcessors[m].send_vs * 3,
+                      MpiDataType(mNeighbouringProcessors[m].v_to_recv[0]),
+                      mNeighbouringProcessors[m].mID,
                       30,
                       MPI_COMM_WORLD,
-                      &req[procs + mNeighProcs[m].id]);
+                      &req[procs + mNeighbouringProcessors[m].mID]);
           }
         }
 
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          for (site_t n = 0; n < mNeighProcs[m].recv_vs; n++)
+          for (site_t n = 0; n < mNeighbouringProcessors[m].recv_vs; n++)
           {
-            site_t site_i = mNeighProcs[m].s_to_recv[3 * n + 0];
-            site_t site_j = mNeighProcs[m].s_to_recv[3 * n + 1];
-            site_t site_k = mNeighProcs[m].s_to_recv[3 * n + 2];
+            site_t site_i = mNeighbouringProcessors[m].s_to_recv[3 * n + 0];
+            site_t site_j = mNeighbouringProcessors[m].s_to_recv[3 * n + 1];
+            site_t site_k = mNeighbouringProcessors[m].s_to_recv[3 * n + 2];
 
             const VelocitySiteData* vel_site_data_p = mVelocityField.velSiteDataPointer(iLatDat,
                                                                                         site_i,
@@ -331,43 +329,43 @@ for(        proc_t m = 0; m < netTop->GetProcessorCount(); m++)
 
             if (vel_site_data_p != NULL)
             {
-              mNeighProcs[m].v_to_send[3 * n + 0] = vel_site_data_p->vx;
-              mNeighProcs[m].v_to_send[3 * n + 1] = vel_site_data_p->vy;
-              mNeighProcs[m].v_to_send[3 * n + 2] = vel_site_data_p->vz;
+              mNeighbouringProcessors[m].v_to_send[3 * n + 0] = vel_site_data_p->vx;
+              mNeighbouringProcessors[m].v_to_send[3 * n + 1] = vel_site_data_p->vy;
+              mNeighbouringProcessors[m].v_to_send[3 * n + 2] = vel_site_data_p->vz;
             }
             else
             {
-              mNeighProcs[m].v_to_send[3 * n + 0] = 0.;
-              mNeighProcs[m].v_to_send[3 * n + 1] = 0.;
-              mNeighProcs[m].v_to_send[3 * n + 2] = 0.;
+              mNeighbouringProcessors[m].v_to_send[3 * n + 0] = 0.;
+              mNeighbouringProcessors[m].v_to_send[3 * n + 1] = 0.;
+              mNeighbouringProcessors[m].v_to_send[3 * n + 2] = 0.;
             }
           }
-          if (mNeighProcs[m].recv_vs > 0)
+          if (mNeighbouringProcessors[m].recv_vs > 0)
           {
-            MPI_Isend(mNeighProcs[m].v_to_send,
-                      (int) mNeighProcs[m].recv_vs * 3,
-                      MpiDataType(mNeighProcs[m].v_to_send[0]),
-                      mNeighProcs[m].id,
+            MPI_Isend(mNeighbouringProcessors[m].v_to_send,
+                      (int) mNeighbouringProcessors[m].recv_vs * 3,
+                      MpiDataType(mNeighbouringProcessors[m].v_to_send[0]),
+                      mNeighbouringProcessors[m].mID,
                       30,
                       MPI_COMM_WORLD,
-                      &req[mNeighProcs[m].id]);
+                      &req[mNeighbouringProcessors[m].mID]);
 
-            MPI_Wait(&req[mNeighProcs[m].id], MPI_STATUS_IGNORE);
+            MPI_Wait(&req[mNeighbouringProcessors[m].mID], MPI_STATUS_IGNORE);
           }
         }
 
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          if (mNeighProcs[m].send_vs <= 0)
+          if (mNeighbouringProcessors[m].send_vs <= 0)
             continue;
 
-          MPI_Wait(&req[procs + mNeighProcs[m].id], MPI_STATUS_IGNORE);
+          MPI_Wait(&req[procs + mNeighbouringProcessors[m].mID], MPI_STATUS_IGNORE);
 
-          for (site_t n = 0; n < mNeighProcs[m].send_vs; n++)
+          for (site_t n = 0; n < mNeighbouringProcessors[m].send_vs; n++)
           {
-            site_t neigh_i = mNeighProcs[m].s_to_send[3 * n + 0];
-            site_t neigh_j = mNeighProcs[m].s_to_send[3 * n + 1];
-            site_t neigh_k = mNeighProcs[m].s_to_send[3 * n + 2];
+            site_t neigh_i = mNeighbouringProcessors[m].s_to_send[3 * n + 0];
+            site_t neigh_j = mNeighbouringProcessors[m].s_to_send[3 * n + 1];
+            site_t neigh_k = mNeighbouringProcessors[m].s_to_send[3 * n + 2];
 
             VelocitySiteData* vel_site_data_p = mVelocityField.velSiteDataPointer(iLatDat,
                                                                                   neigh_i,
@@ -376,15 +374,15 @@ for(        proc_t m = 0; m < netTop->GetProcessorCount(); m++)
 
             if (vel_site_data_p != NULL)
             {
-              vel_site_data_p->vx = mNeighProcs[m].v_to_recv[3 * n + 0];
-              vel_site_data_p->vy = mNeighProcs[m].v_to_recv[3 * n + 1];
-              vel_site_data_p->vz = mNeighProcs[m].v_to_recv[3 * n + 2];
+              vel_site_data_p->vx = mNeighbouringProcessors[m].v_to_recv[3 * n + 0];
+              vel_site_data_p->vy = mNeighbouringProcessors[m].v_to_recv[3 * n + 1];
+              vel_site_data_p->vz = mNeighbouringProcessors[m].v_to_recv[3 * n + 2];
             }
           }
         }
-        for (size_t m = 0; m < mNeighProcs.size(); m++)
+        for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
         {
-          mNeighProcs[m].send_vs = 0;
+          mNeighbouringProcessors[m].send_vs = 0;
         }
       }
 
