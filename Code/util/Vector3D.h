@@ -60,9 +60,9 @@ namespace hemelb
       template < class OldTypeT >
 	Vector3D<T>(const Vector3D<OldTypeT> & iOldVector3D)
       {
-	x = static_cast<T>(iOldVector3D.x);
-	y = static_cast<T>(iOldVector3D.y);
-	z = static_cast<T>(iOldVector3D.z);
+	x = (T)(iOldVector3D.x);
+	y = (T)(iOldVector3D.y);
+	z = (T)(iOldVector3D.z);
       }
 
       //Equality

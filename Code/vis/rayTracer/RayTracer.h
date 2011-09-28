@@ -1,9 +1,6 @@
 #ifndef HEMELB_VIS_RAYTRACER_H
 #define HEMELB_VIS_RAYTRACER_H
 
-//#define NDEBUG;
-#include <assert.h>
-
 #include <map>
 #include <stack>
 #include <vector>
@@ -68,11 +65,9 @@ namespace hemelb
                                   distribn_t velocity,
                                   distribn_t stress)
           {
-            assert(static_cast<site_t>(static_cast<unsigned int>(i)) == i);
-
-            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetDensity(static_cast<float>(density));
-            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetVelocity(static_cast<float>(velocity));
-            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetStress(static_cast<float>(stress));
+            mClusterBuilder.GetClusterVoxelDataPointer(i)->SetDensity((float)(density));
+	    mClusterBuilder.GetClusterVoxelDataPointer(i)->SetVelocity((float)(velocity));
+	    mClusterBuilder.GetClusterVoxelDataPointer(i)->SetStress((float)(stress));
           }
 
           // Render the current state into an image.

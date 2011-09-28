@@ -1,6 +1,3 @@
-//#define NDEBUG;
-#include <assert.h>
-
 #include "geometry/BlockTraverserWithVisitedBlockTracker.h"
 #include "geometry/LatticeData.h"
 #include "util/Vector3D.h"
@@ -23,7 +20,6 @@ namespace hemelb
 
     bool BlockTraverserWithVisitedBlockTracker::GoToNextUnvisitedBlock()
     {
-      assert(IsCurrentBlockVisited());
       do
       {
         bool validBlock = GoToNextBlock();
@@ -66,7 +62,6 @@ namespace hemelb
     void BlockTraverserWithVisitedBlockTracker::MarkBlockVisited(util::Vector3D<site_t> iLocation)
     {
       site_t lNumber = GetIndexFromLocation(iLocation);
-      assert(lNumber < mLatticeData.GetBlockCount());
       MarkBlockVisited(lNumber);
     }
   }
