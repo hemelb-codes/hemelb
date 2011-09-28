@@ -46,6 +46,8 @@ namespace hemelb
                                  const float iNormalisedDistanceToFirstCluster,
                                  const DomainStats& iDomainStats) const;
 
+		  void DoProcessTangentingVessel();
+
           // We need this because RayDataNormal uses it for every voxel update
           static const DomainStats* mDomainStats;
 
