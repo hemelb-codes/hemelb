@@ -12,7 +12,7 @@ namespace hemelb
     {
 
       /**
-       * Class containing tests for the functionality of the non-newtonian rheology models.
+       * Class containing tests for the functionality of the non-Newtonian rheology models.
        *
        * The idea here is that I ran the models for a wide range of shear-rates, plotted the
        * results and compared against the literature to a good agreement. Here we just test
@@ -77,17 +77,17 @@ namespace hemelb
             }
           }
 
-          void TestrheologyModels()
+          void TestRheologyModels()
           {
             CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> (shearRates,
-                                                                                                carreauViscosities,
-                                                                                                "CarreauYasuda");
+                                                                                                        carreauViscosities,
+                                                                                                        "CarreauYasuda");
             CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::CassonRheologyModel> (shearRates,
-                                                                                         cassonViscosities,
-                                                                                         "Casson");
+                                                                                                 cassonViscosities,
+                                                                                                 "Casson");
             CompareModelAgainsHardcodedValues<lb::kernels::rheologyModels::TruncatedPowerLawRheologyModel> (shearRates,
-                                                                                                    powerLawViscosities,
-                                                                                                    "TruncatedPowerLaw");
+                                                                                                            powerLawViscosities,
+                                                                                                            "TruncatedPowerLaw");
           }
 
         private:

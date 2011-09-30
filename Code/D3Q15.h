@@ -80,7 +80,7 @@ namespace hemelb
       /*
        * Computes shear-rate according to the expression
        *
-       *    gamma = sqrt( sum_over_i_j( S[i,j]*S[i,j] ) )
+       *    gamma_dot = sqrt( sum_over_i_j( S[i,j]*S[i,j] ) )
        *
        * where S is the strain-rate tensor.
        *
