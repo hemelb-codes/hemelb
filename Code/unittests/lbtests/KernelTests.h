@@ -420,7 +420,7 @@ namespace hemelb
 
               /*
                * A second call to the Calculate* functions will make sure that the newly computed
-               * tau is used in DoCollide as opposite to the default newtonian tau used during the
+               * tau is used in DoCollide as opposite to the default Newtonian tau used during the
                * first time step.
                */
               lbgknn0->CalculateDensityVelocityFeq(*hydroVars0, site_index);

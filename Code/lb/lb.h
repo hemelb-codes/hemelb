@@ -26,12 +26,12 @@ namespace hemelb
         // At the moment, doing this will cause problems with other objects that have a pointer to the
         // LBM (and hence would also need to be templated, on the LBM-type).
 
-        // Models of non-newtonian rheology currently implemented.
+        // Models of non-Newtonian rheology currently implemented.
         //typedef kernels::rheologyModels::CarreauYasudaRheologyModel RHEO_MODEL;
         //typedef kernels::rheologyModels::CassonRheologyModel RHEO_MODEL;
         //typedef kernels::rheologyModels::TruncatedPowerLawRheologyModel RHEO_MODEL;
 
-        // LGBK operator with support for non-newtonian flow
+        // LGBK operator with support for non-Newtonian flow
         //typedef kernels::LBGKNN<RHEO_MODEL> LB_KERNEL;
 
         // Standard LBGK collision operator
