@@ -1,15 +1,20 @@
 import os.path
 import glob
 import numpy as np
+import collections
 
 from . import HemeLbSnapshot
 from .orderer import order, continuousOrder
 
 tol = 1e-8
 
-class SnapCollection(object):
-    """Abstract class for managing a collection of snapshots. Indexed
-    by intra-cycle time."""
+class SnapCollection(collections.Mapping):
+    """Abstract class for managing a collection of snapshots.
+
+    It is a mapping (i.e. inherits collections.Mapping) from time
+    values (floats) to Snapshots. It therefore supports the
+    non-mutating methods of a standard dict (keys(), values(), etc.).
+    """
     
     period_s = 60.0/70.0
     
