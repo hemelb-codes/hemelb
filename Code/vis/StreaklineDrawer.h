@@ -2,6 +2,7 @@
 #define HEMELB_VIS_STREAKLINEDRAWER_H
 
 #include <vector>
+#include <map>
 
 #include "constants.h"
 #include "mpiInclude.h"
@@ -9,7 +10,11 @@
 #include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
+#include "vis/PixelSetStore.h"
+#include "vis/PixelSet.h"
+#include "vis/BasicPixel.h"
 #include "vis/Screen.h"
+#include "vis/StreakPixel.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 
@@ -24,7 +29,7 @@ namespace hemelb
      * Class that controls the drawing of streaklines - lines that trace
      * the path of an imaginary particle were it dropped into the fluid.
      */
-    class StreaklineDrawer
+    class StreaklineDrawer : public PixelSetStore<PixelSet<StreakPixel> >
     {
       public:
         // Constructor and destructor.
@@ -41,10 +46,9 @@ namespace hemelb
         void StreakLines(unsigned long time_steps,
                          unsigned long time_steps_per_cycle,
                          geometry::LatticeData* iLatDat);
-        void render(geometry::LatticeData* iLatDat);
+        PixelSet<StreakPixel>* Render(geometry::LatticeData* iLatDat);
 
       private:
-
         // Struct for a particle dropped into the fluid.
         struct Particle
         {

@@ -11,7 +11,6 @@
 #include "lb/boundaries/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "util/UnitConverter.h"
-#include "vis/ColPixel.h"
 #include "SimConfig.h"
 #include <typeinfo>
 

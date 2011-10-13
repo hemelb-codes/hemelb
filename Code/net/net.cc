@@ -716,30 +716,6 @@ namespace hemelb
       }
     }
 
-    //    // Helper functions to add ints to the list.
-    //    void Net::AddToList(int* iNew, int iLength, ProcComms *bMetaData)
-    //    {
-    //      bMetaData->PointerList.push_back(iNew);
-    //      bMetaData->LengthList.push_back(iLength);
-    //      bMetaData->TypeList.push_back(MpiDataType(iNew));
-    //    }
-    //
-    //    // Helper functions to add doubles to the list.
-    //    void Net::AddToList(double* iNew, int iLength, ProcComms *bMetaData)
-    //    {
-    //      bMetaData->PointerList.push_back(iNew);
-    //      bMetaData->LengthList.push_back(iLength);
-    //      bMetaData->TypeList.push_back(MpiDataType(iNew));
-    //    }
-    //
-    //    // Helper functions to add floats to the list.
-    //    void Net::AddToList(float* iNew, int iLength, ProcComms *bMetaData)
-    //    {
-    //      bMetaData->PointerList.push_back(iNew);
-    //      bMetaData->LengthList.push_back(iLength);
-    //      bMetaData->TypeList.push_back(MpiDataType(iNew));
-    //    }
-
     // Makes sure the MPI_Datatypes for sending and receiving have been created for every neighbour.
     void Net::EnsurePreparedToSendReceive()
     {

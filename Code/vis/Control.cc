@@ -16,11 +16,11 @@ namespace hemelb
   namespace vis
   {
     Control::Control(lb::StressTypes iStressType,
-                     net::Net* net,
+                     net::Net* netIn,
                      lb::SimulationState* simState,
                      geometry::LatticeData* iLatDat) :
-      net::PhasedBroadcastIrregular<true, 2, 0, false, true>(net, simState, SPREADFACTOR),
-          mLatDat(iLatDat)
+      net::PhasedBroadcastIrregular<true, 2, 0, false, true>(netIn, simState, SPREADFACTOR),
+          net(netIn), mLatDat(iLatDat)
     {
       timeSpent = 0.0;
 
@@ -29,9 +29,9 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float(iLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float(iLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float(iLatDat->GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float (iLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float (iLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float (iLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -128,11 +128,8 @@ namespace hemelb
 
       Vector3D<float> centre = Vector3D<float> (iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
 
-      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
-                                      iLatitude * (float) DEG_TO_RAD,
-                                      centre,
-                                      rad,
-                                      dist);
+      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
+          * (float) DEG_TO_RAD, centre, rad, dist);
 
       mScreen.Set( (0.5F * vis->system_size) / iZoom,
                    (0.5F * vis->system_size) / iZoom,
@@ -166,53 +163,113 @@ namespace hemelb
       mScreen.Resize(pixels_x, pixels_y);
     }
 
-    void Control::Render()
+    void Control::Render(unsigned long startIteration)
     {
-      mScreen.Reset();
+      log::Logger::Log<log::Debug, log::OnePerCore>("Rendering.");
 
-      myRayTracer->Render();
+      PixelSet<raytracer::RayPixel>* ray = myRayTracer->Render();
+
+      PixelSet<BasicPixel>* glyph = NULL;
 
       if (mVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
-        myGlypher->Render();
+        glyph = myGlypher->Render();
       }
+      else
+      {
+        glyph = myGlypher->GetUnusedPixelSet();
+        glyph->Clear();
+      }
+
+      PixelSet<StreakPixel>* streak = NULL;
+
 #ifndef NO_STREAKLINES
       if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
           == VisSettings::WALLANDSTREAKLINES)
       {
-        myStreaker->render(mLatDat);
+        streak = myStreaker->Render(mLatDat);
       }
 #endif
 
-      log::Logger::Log<log::Debug, log::OnePerCore>("Rendering.");
+      localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration,
+                                                                       Rendering(glyph, ray, streak)));
     }
 
     void Control::InitialAction(unsigned long startIteration)
     {
       timeSpent -= util::myClock();
 
-      Render();
+      Render(startIteration);
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Render stored for phased imaging.");
 
-      ScreenPixels* pix;
-
-      // If we don't have any in the buffer, create a new ScreenPixels object.
-      if (pixelsBuffer.empty())
-      {
-        pix = mScreen.SwapBuffers(new ScreenPixels());
-      }
-      // Otherwise use a ScreenPixels object from the buffer.
-      else
-      {
-        ScreenPixels* buff = pixelsBuffer.top();
-        pixelsBuffer.pop();
-        pix = mScreen.SwapBuffers(buff);
-      }
-
-      resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(startIteration, pix));
-
       timeSpent += util::myClock();
+    }
+
+    void Control::WriteImage(io::Writer* writer,
+                             const PixelSet<ResultPixel>& imagePixels,
+                             const DomainStats* domainStats,
+                             const VisSettings* visSettings) const
+    {
+      *writer << (int) visSettings->mode;
+
+      *writer << domainStats->physical_pressure_threshold_min
+          << domainStats->physical_pressure_threshold_max
+          << domainStats->physical_velocity_threshold_max
+          << domainStats->physical_stress_threshold_max;
+
+      *writer << mScreen.GetPixelsX();
+      *writer << mScreen.GetPixelsY();
+      *writer << (int) imagePixels.GetPixelCount();
+
+      WritePixels(writer, imagePixels, domainStats, visSettings);
+    }
+
+    int Control::GetPixelsX() const
+    {
+      return mScreen.GetPixelsX();
+    }
+
+    int Control::GetPixelsY() const
+    {
+      return mScreen.GetPixelsY();
+    }
+
+    void Control::WritePixels(io::Writer* writer,
+                              const PixelSet<ResultPixel>& imagePixels,
+                              const DomainStats* domainStats,
+                              const VisSettings* visSettings) const
+    {
+      const int bits_per_char = sizeof(char) * 8;
+
+      for (unsigned int i = 0; i < imagePixels.GetPixelCount(); i++)
+      {
+        const ResultPixel pixel = imagePixels.GetPixels()[i];
+
+        // Use a ray-tracer function to get the necessary pixel data.
+        int index;
+        unsigned char rgb_data[12];
+
+        pixel.WritePixel(&index, rgb_data, domainStats, visSettings);
+
+        *writer << index;
+
+        int pix_data[3];
+        pix_data[0] = (rgb_data[0] << (3 * bits_per_char)) + (rgb_data[1] << (2 * bits_per_char))
+            + (rgb_data[2] << bits_per_char) + rgb_data[3];
+
+        pix_data[1] = (rgb_data[4] << (3 * bits_per_char)) + (rgb_data[5] << (2 * bits_per_char))
+            + (rgb_data[6] << bits_per_char) + rgb_data[7];
+
+        pix_data[2] = (rgb_data[8] << (3 * bits_per_char)) + (rgb_data[9] << (2 * bits_per_char))
+            + (rgb_data[10] << bits_per_char) + rgb_data[11];
+
+        for (int i = 0; i < 3; i++)
+        {
+          *writer << pix_data[i];
+        }
+        *writer << io::Writer::eol;
+      }
     }
 
     void Control::ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber)
@@ -221,36 +278,38 @@ namespace hemelb
 
       if (splayNumber == 0)
       {
-        unsigned int* childNumbers[SPREADFACTOR];
-        unsigned int counts[SPREADFACTOR];
-        for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
+        for (unsigned int ii = 0; ii < GetChildren().size(); ++ii)
         {
-          ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, ii);
-          recvBuffer->Reset();
-          childNumbers[ii] = recvBuffer->GetStoredPixelCountPtr();
-          counts[ii] = 1;
+          Rendering lRendering(myGlypher->GetUnusedPixelSet(),
+                               myRayTracer->GetUnusedPixelSet(),
+                               myStreaker != NULL
+                                 ? myStreaker->GetUnusedPixelSet()
+                                 : NULL);
+
+          lRendering.ReceivePixelCounts(net, GetChildren()[ii]);
+
+          childrenResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration,
+                                                                              lRendering));
         }
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel count.");
-
-        ReceiveFromChildren<unsigned int> (childNumbers, counts);
       }
       else if (splayNumber == 1)
       {
-        ColPixel* childData[SPREADFACTOR];
-        unsigned int counts[SPREADFACTOR];
-        for (unsigned int ii = 0; ii < SPREADFACTOR; ++ii)
+        std::multimap<unsigned long, Rendering>::iterator renderings =
+            childrenResultsByStartIt.equal_range(startIteration).first;
+
+        for (unsigned int ii = 0; ii < GetChildren().size(); ++ii)
         {
-          ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, ii);
-          childData[ii] = recvBuffer->GetPixelArray();
-          counts[ii] = recvBuffer->GetStoredPixelCount();
+          Rendering& received = (*renderings).second;
 
-          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel data (from it %li, %li pixels).",
-                                                        startIteration,
-                                                        recvBuffer->GetStoredPixelCount());
+          log::Logger::Log<log::Debug, log::OnePerCore>("Receiving child image pixel data (from it %li).",
+                                                        startIteration);
+
+          received.ReceivePixelData(net, GetChildren()[ii]);
+
+          renderings++;
         }
-
-        ReceiveFromChildren<ColPixel> (childData, counts);
       }
 
       timeSpent += util::myClock();
@@ -260,22 +319,20 @@ namespace hemelb
     {
       timeSpent -= util::myClock();
 
-      ScreenPixels* pixels = resultsByStartIt[startIteration];
+      Rendering& rendering = (*localResultsByStartIt.find(startIteration)).second;
       if (splayNumber == 0)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count (from it %li, %li pixels).",
-                                                      startIteration,
-                                                      pixels->GetStoredPixelCount());
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel count (from it %li).",
+                                                      startIteration);
 
-        SendToParent<unsigned int> (pixels->GetStoredPixelCountPtr(), 1);
+        rendering.SendPixelCounts(net, GetParent());
       }
       else if (splayNumber == 1)
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data (from it %li, %li pixels).",
-                                                      startIteration,
-                                                      pixels->GetStoredPixelCount());
+        log::Logger::Log<log::Debug, log::OnePerCore>("Sending pixel data (from it %li).",
+                                                      startIteration);
 
-        SendToParent<ColPixel> (pixels->GetPixelArray(), pixels->GetStoredPixelCount());
+        rendering.SendPixelData(net, GetParent());
       }
 
       timeSpent += util::myClock();
@@ -293,17 +350,42 @@ namespace hemelb
       }
       if (splayNumber == 1)
       {
-        ScreenPixels* pixels = resultsByStartIt[startIteration];
+        std::pair<std::multimap<unsigned long, Rendering>::iterator, std::multimap<unsigned long,
+            Rendering>::iterator> its = childrenResultsByStartIt.equal_range(startIteration);
+
+        Rendering local = (*localResultsByStartIt.find(startIteration)).second;
+
+        std::multimap<unsigned long, Rendering>::iterator rendering = its.first;
+        while (rendering != its.second)
+        {
+          local.Combine( (*rendering).second);
+
+          (*rendering).second.ReleaseAll();
+
+          rendering++;
+        }
+
+        if (its.first != its.second)
+        {
+          its.first++;
+          childrenResultsByStartIt.erase(its.first, its.second);
+        }
 
         log::Logger::Log<log::Debug, log::OnePerCore>("Combining in child pixel data.");
-
-        for (unsigned int child = 0; child < SPREADFACTOR; ++child)
-        {
-          pixels->FoldIn(GetReceiveBuffer(startIteration, child), &mVisSettings);
-        }
       }
 
       timeSpent += util::myClock();
+    }
+
+    void Control::PostSendToParent(unsigned long startIteration, unsigned long splayNumber)
+    {
+      if (splayNumber == 1)
+      {
+        Rendering& rendering = (*localResultsByStartIt.find(startIteration)).second;
+        rendering.ReleaseAll();
+
+        localResultsByStartIt.erase(startIteration);
+      }
     }
 
     bool Control::IsRendering() const
@@ -321,17 +403,59 @@ namespace hemelb
       {
         found = false;
 
-        if (resultsByStartIt.size() > 0)
+        if (localResultsByStartIt.size() > 0)
         {
-          mapType::iterator it = resultsByStartIt.begin();
+          mapType::iterator it = localResultsByStartIt.begin();
           if (it->first <= startIt)
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
                                                           it->first);
 
-            it->second->Reset();
-            pixelsBuffer.push(it->second);
-            resultsByStartIt.erase(it);
+            (*it).second.ReleaseAll();
+
+            localResultsByStartIt.erase(it);
+            found = true;
+          }
+        }
+      }
+      while (found);
+
+      do
+      {
+        found = false;
+
+        if (childrenResultsByStartIt.size() > 0)
+        {
+          mapType::iterator it = childrenResultsByStartIt.begin();
+          if ( (*it).first <= startIt)
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
+                                                           (*it).first);
+
+            (*it).second.ReleaseAll();
+
+            childrenResultsByStartIt.erase(it);
+            found = true;
+          }
+        }
+      }
+      while (found);
+
+      do
+      {
+        found = false;
+
+        if (renderingsByStartIt.size() > 0)
+        {
+          std::multimap<unsigned long, PixelSet<ResultPixel>*>::iterator it =
+              renderingsByStartIt.begin();
+          if ( (*it).first <= startIt)
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("Clearing out image cache from it %lu",
+                                                           (*it).first);
+
+            (*it).second->Release();
+            renderingsByStartIt.erase(it);
             found = true;
           }
         }
@@ -341,13 +465,24 @@ namespace hemelb
       timeSpent += util::myClock();
     }
 
-    const ScreenPixels* Control::GetResult(unsigned long startIt)
+    const PixelSet<ResultPixel>* Control::GetResult(unsigned long startIt)
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Getting image results from it %lu", startIt);
 
-      if (resultsByStartIt.count(startIt) != 0)
+      if (renderingsByStartIt.count(startIt) != 0)
       {
-        return resultsByStartIt[startIt];
+        return (*renderingsByStartIt.find(startIt)).second;
+      }
+
+      if (localResultsByStartIt.count(startIt) != 0)
+      {
+        Rendering finalRender = (*localResultsByStartIt.find(startIt)).second;
+        PixelSet<ResultPixel>* result = GetUnusedPixelSet();
+
+        finalRender.PopulateResultSet(result);
+
+        renderingsByStartIt.insert(std::pair<unsigned long, PixelSet<ResultPixel>*>(startIt, result));
+        return result;
       }
       else
       {
@@ -361,7 +496,7 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Performing instant imaging.");
 
-      Render();
+      Render(startIteration);
 
       // Status object for MPI comms.
       MPI_Status status;
@@ -379,7 +514,16 @@ namespace hemelb
        * This continues until all data is passed back to processor one, which passes it to proc 0.
        */
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
-      ScreenPixels* recvBuffer = GetReceiveBuffer(startIteration, 0);
+      net::Net tempNet;
+
+      Rendering* localBuffer = localResultsByStartIt.count(startIteration) > 0
+        ? & (*localResultsByStartIt.find(startIteration)).second
+        : NULL;
+      Rendering receiveBuffer(myGlypher->GetUnusedPixelSet(),
+                              myRayTracer->GetUnusedPixelSet(),
+                              myStreaker == NULL
+                                ? NULL
+                                : myStreaker->GetUnusedPixelSet());
 
       // Start with a difference in rank of 1, doubling every time.
       for (proc_t deltaRank = 1; deltaRank < netTop->GetProcessorCount(); deltaRank <<= 1)
@@ -393,47 +537,32 @@ namespace hemelb
           // If we're the sending proc, do the send.
           if (netTop->GetLocalRank() == sendingProc)
           {
-            MPI_Send(mScreen.pixels->GetStoredPixelCountPtr(),
-                     1,
-                     MpiDataType(mScreen.pixels->GetStoredPixelCount()),
-                     receivingProc,
-                     20,
-                     MPI_COMM_WORLD);
+            localBuffer->SendPixelCounts(&tempNet, receivingProc);
 
-            if (mScreen.pixels->GetStoredPixelCount() > 0)
-            {
-              MPI_Send(mScreen.pixels->GetPixelArray(),
-                       mScreen.pixels->GetStoredPixelCount(),
-                       MpiDataType<ColPixel> (),
-                       receivingProc,
-                       20,
-                       MPI_COMM_WORLD);
-            }
+            tempNet.Send();
+            tempNet.Wait();
+
+            localBuffer->SendPixelData(&tempNet, receivingProc);
+
+            tempNet.Send();
+            tempNet.Wait();
           }
 
           // If we're the receiving proc, receive.
+
           else if (netTop->GetLocalRank() == receivingProc)
           {
-            MPI_Recv(recvBuffer->GetStoredPixelCountPtr(),
-                     1,
-                     MpiDataType(recvBuffer->GetStoredPixelCount()),
-                     sendingProc,
-                     20,
-                     MPI_COMM_WORLD,
-                     &status);
+            receiveBuffer.ReceivePixelCounts(&tempNet, sendingProc);
 
-            if (recvBuffer->GetStoredPixelCount() > 0)
-            {
-              MPI_Recv(recvBuffer->GetPixelArray(),
-                       recvBuffer->GetStoredPixelCount(),
-                       MpiDataType<ColPixel> (),
-                       sendingProc,
-                       20,
-                       MPI_COMM_WORLD,
-                       &status);
+            tempNet.Receive();
+            tempNet.Wait();
 
-              mScreen.pixels->FoldIn(recvBuffer, &mVisSettings);
-            }
+            receiveBuffer.ReceivePixelData(&tempNet, sendingProc);
+
+            tempNet.Receive();
+            tempNet.Wait();
+
+            localBuffer->Combine(receiveBuffer);
           }
         }
       }
@@ -441,68 +570,40 @@ namespace hemelb
       // Send the final image from proc 1 to 0.
       if (netTop->GetLocalRank() == 1)
       {
-        MPI_Send(mScreen.pixels->GetStoredPixelCountPtr(),
-                 1,
-                 MpiDataType(mScreen.pixels->GetStoredPixelCount()),
-                 0,
-                 20,
-                 MPI_COMM_WORLD);
+        localBuffer->SendPixelCounts(&tempNet, 0);
 
-        if (mScreen.pixels->GetStoredPixelCount() > 0)
-        {
-          MPI_Send(mScreen.pixels->GetPixelArray(),
-                   mScreen.pixels->GetStoredPixelCount(),
-                   MpiDataType<ColPixel> (),
-                   0,
-                   20,
-                   MPI_COMM_WORLD);
-        }
+        tempNet.Send();
+        tempNet.Wait();
 
+        localBuffer->SendPixelData(&tempNet, 0);
+
+        tempNet.Send();
+        tempNet.Wait();
       }
       // Receive the final image on proc 0.
+
       else if (netTop->GetLocalRank() == 0)
       {
-        MPI_Recv(recvBuffer->GetStoredPixelCountPtr(),
-                 1,
-                 MpiDataType(recvBuffer->GetStoredPixelCount()),
-                 1,
-                 20,
-                 MPI_COMM_WORLD,
-                 &status);
+        receiveBuffer.ReceivePixelCounts(&tempNet, 1);
 
-        if (recvBuffer->GetStoredPixelCount() > 0)
-        {
-          MPI_Recv(recvBuffer->GetPixelArray(),
-                   recvBuffer->GetStoredPixelCount(),
-                   MpiDataType<ColPixel> (),
-                   1,
-                   20,
-                   MPI_COMM_WORLD,
-                   &status);
+        tempNet.Receive();
+        tempNet.Wait();
 
-          mScreen.pixels->FoldIn(recvBuffer, &mVisSettings);
-        }
+        receiveBuffer.ReceivePixelData(&tempNet, 1);
 
-        ScreenPixels* pix;
+        tempNet.Receive();
+        tempNet.Wait();
 
-        // Create a new pixels object if we don't have any spare ones in the buffer.
-        if (pixelsBuffer.empty())
-        {
-          pix = mScreen.SwapBuffers(new ScreenPixels());
-        }
-        // Use a pixels object from the buffer when there is one.
-        else
-        {
-          ScreenPixels* newBuff = pixelsBuffer.top();
-          pixelsBuffer.pop();
-          pix = mScreen.SwapBuffers(newBuff);
-        }
+        localResultsByStartIt.erase(startIteration);
+        localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration,
+                                                                         Rendering(receiveBuffer)));
 
-        resultsByStartIt.insert(std::pair<unsigned long, ScreenPixels*>(base::mSimState->GetTimeStepsPassed(),
-                                                                        pix));
+        log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.", startIteration);
+      }
 
-        log::Logger::Log<log::Debug, log::OnePerCore>("Inserting image at it %lu.",
-                                                      base::mSimState->GetTimeStepsPassed());
+      if (netTop->GetLocalRank() != 0)
+      {
+        receiveBuffer.ReleaseAll();
       }
 
       timeSpent += util::myClock();
@@ -514,14 +615,30 @@ namespace hemelb
       mVisSettings.mouse_stress = iPhysicalStress;
     }
 
-    bool Control::MouseIsOverPixel(float* density, float* stress)
+    bool Control::MouseIsOverPixel(const PixelSet<ResultPixel>* result,
+                                   float* density,
+                                   float* stress)
     {
       if (mVisSettings.mouse_x < 0 || mVisSettings.mouse_y < 0)
       {
         return false;
       }
 
-      return mScreen.MouseIsOverPixel(mVisSettings.mouse_x, mVisSettings.mouse_y, density, stress);
+      const std::vector<ResultPixel>& screenPix = result->GetPixels();
+
+      for (std::vector<ResultPixel>::const_iterator it = screenPix.begin(); it != screenPix.end(); it++)
+      {
+        if ( (*it).GetRayPixel() != NULL && (*it).GetI() == mVisSettings.mouse_x && (*it).GetJ()
+            == mVisSettings.mouse_y)
+        {
+          *density = (*it).GetRayPixel()->GetDensity();
+          *stress = (*it).GetRayPixel()->GetStress();
+
+          return true;
+        }
+      }
+
+      return false;
     }
 
     void Control::ProgressStreaklines(unsigned long time_step, unsigned long period)
@@ -538,11 +655,6 @@ namespace hemelb
     double Control::GetTimeSpent() const
     {
       return timeSpent;
-    }
-
-    ScreenPixels* Control::GetReceiveBuffer(unsigned int startIteration, unsigned int child)
-    {
-      return &recvBuffers[startIteration % 2][child];
     }
 
     void Control::Reset()
@@ -569,20 +681,6 @@ namespace hemelb
       delete vis;
       delete myGlypher;
       delete myRayTracer;
-
-      // Clear out the ScreenPixels used still in the results buffer.
-      for (std::map<unsigned long, ScreenPixels*>::iterator it = resultsByStartIt.begin(); it
-          != resultsByStartIt.end(); it++)
-      {
-        delete it->second;
-      }
-
-      // Clear out the ScreenPixels objects from the pixelsBuffer.
-      while (!pixelsBuffer.empty())
-      {
-        delete pixelsBuffer.top();
-        pixelsBuffer.pop();
-      }
     }
 
   } // namespace vis
