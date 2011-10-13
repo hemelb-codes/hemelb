@@ -42,7 +42,7 @@ namespace hemelb
                                unsigned int directionIndex,
                                kernels::HydroVars<KernelType>& iHydroVars)
           {
-            return iHydroVars.f_eq[directionIndex];
+            return iHydroVars.GetFEq().f[directionIndex];
           }
 
           void DoReset(kernels::InitParams* init)
