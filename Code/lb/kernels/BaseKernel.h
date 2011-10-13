@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include "constants.h"
 #include "lb/boundaries/BoundaryValues.h"
+#include "lb/kernels/rheologyModels/RheologyModels.h"
 
 namespace hemelb
 {
@@ -20,8 +21,18 @@ namespace hemelb
        * (Google for 'CRTP traits'). Each kernel implementation can also specialise this template.
        */
 
+      struct FVector
+      {
+        public:
+          distribn_t f[D3Q15::NUMVECTORS];
+      };
+
       struct HydroVarsBase
       {
+          friend class Entropic;
+          friend class LBGK;
+          template<class rheologyModel> friend class LBGKNN;
+
         protected:
           HydroVarsBase(const distribn_t* const f) :
             f(f)
@@ -29,8 +40,21 @@ namespace hemelb
           }
 
         public:
-          distribn_t density, v_x, v_y, v_z, f_eq[D3Q15::NUMVECTORS], f_neq[D3Q15::NUMVECTORS];
+          distribn_t density, v_x, v_y, v_z;
           const distribn_t* const f;
+
+          const FVector& GetFEq()
+          {
+            return f_eq;
+          }
+
+          const FVector& GetFNeq()
+          {
+            return f_neq;
+          }
+
+        protected:
+          FVector f_eq, f_neq;
       };
 
       template<typename KernelImpl>

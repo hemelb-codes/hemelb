@@ -59,7 +59,12 @@ namespace hemelb
                                                        hydroVars.v_x,
                                                        hydroVars.v_y,
                                                        hydroVars.v_z,
-                                                       hydroVars.f_eq);
+                                                       hydroVars.f_eq.f);
+
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+            }
           }
 
           void DoCalculateFeq(HydroVars<Entropic>& hydroVars, site_t index)
@@ -69,7 +74,12 @@ namespace hemelb
                                         hydroVars.v_x,
                                         hydroVars.v_y,
                                         hydroVars.v_z,
-                                        hydroVars.f_eq);
+                                        hydroVars.f_eq.f);
+
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+            }
           }
 
           distribn_t DoCollide(const LbmParameters* const lbmParams,
@@ -77,12 +87,13 @@ namespace hemelb
                                unsigned int direction)
           {
             // TODO this calculation is being done in the wrong place and hence happens 15* too often.
-            hydroVars.alpha
-                = CalculateAlpha(lbmParams->GetTau(), hydroVars, oldAlpha[hydroVars.index]);
+            hydroVars.alpha = CalculateAlpha(lbmParams->GetTau(),
+                                             hydroVars,
+                                             oldAlpha[hydroVars.index]);
             oldAlpha[hydroVars.index] = hydroVars.alpha;
 
             return hydroVars.f[direction] + (hydroVars.alpha * lbmParams->GetBeta())
-                * hydroVars.f_neq[direction];
+                * hydroVars.f_neq.f[direction];
           }
 
           void Reset(InitParams* init)
@@ -108,8 +119,9 @@ namespace hemelb
               // Papers suggest f_eq - f < 0.001 or (f_eq - f)/f < 0.01 for the point to have approx alpha = 2
               // Accuracy can change depending on stability requirements, because the more NR evaluations it skips
               // the more of the simulation is in the LBGK limit.
-              deviation = util::NumericalFunctions::max(fabs( (hydroVars.f_eq[i] - hydroVars.f[i])
-                  / hydroVars.f[i]), deviation);
+              deviation
+                  = util::NumericalFunctions::max(fabs( (hydroVars.f_eq.f[i] - hydroVars.f[i])
+                      / hydroVars.f[i]), deviation);
               if (deviation > 1.0E-2)
               {
                 big = true;
@@ -120,7 +132,7 @@ namespace hemelb
 
             if (big)
             {
-              HFunction HFunc(hydroVars.f, hydroVars.f_eq);
+              HFunction HFunc(hydroVars.f, hydroVars.f_eq.f);
 
               // This is in case previous Alpha was calculated to be zero (does happen occasionally if f_eq - f is small
               prevAlpha = (prevAlpha < 2.0 * tau
@@ -139,7 +151,7 @@ namespace hemelb
                 return 2.0;
               }
 
-              HFunction HFunc(hydroVars.f, hydroVars.f_eq);
+              HFunction HFunc(hydroVars.f, hydroVars.f_eq.f);
 
               // The bracket is very large, but it should guarantee that a root is enclosed
               double alphaLower = 2.0 * (tau), HLower;

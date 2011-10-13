@@ -304,11 +304,6 @@ namespace hemelb
             // distribution.
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
-              hydroVars.f_neq[ii] = hydroVars.f[ii] - hydroVars.f_eq[ii];
-            }
-
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE("Normal, collide",
                                                    lbgk->Collide(lbmParams, hydroVars, ii),
                                                    normal->Collide(lbmParams, ii, hydroVars),

@@ -112,11 +112,6 @@ namespace hemelb
                   // Calculate what the value streamed to site streamedToSite should be.
                   lb::kernels::HydroVars<lb::kernels::LBGK> streamerHydroVars(streamerFOld);
                   normalCollision->CalculatePreCollision(streamerHydroVars, streamerSiteId);
-                  for (unsigned int kk = 0; kk < D3Q15::NUMVECTORS; ++kk)
-                  {
-                    streamerHydroVars.f_neq[kk] = streamerHydroVars.f[kk]
-                        - streamerHydroVars.f_eq[kk];
-                  }
 
                   // F_new should be equal to the value that was streamed from this other site
                   // in the same direction as we're streaming from.
