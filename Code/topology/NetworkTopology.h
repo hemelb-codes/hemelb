@@ -28,6 +28,7 @@ namespace hemelb
     {
       public:
         static NetworkTopology* Instance();
+        ~NetworkTopology();
 
         void Init(int * argCount, char *** argList, bool * oMachineDiscoverySuccess);
         bool IsCurrentProcTheIOProc() const;
@@ -51,7 +52,6 @@ namespace hemelb
 
       private:
         NetworkTopology();
-        ~NetworkTopology();
         bool InitialiseMachineInfo();
 
         proc_t localRank;

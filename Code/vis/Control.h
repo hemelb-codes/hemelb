@@ -12,23 +12,19 @@
 #include "net/PhasedBroadcastIrregular.h"
 
 #include "vis/DomainStats.h"
+#include "vis/GlyphDrawer.h"
+#include "vis/rayTracer/RayTracer.h"
+#include "vis/Rendering.h"
+#include "vis/ResultPixel.h"
 #include "vis/Screen.h"
+#include "vis/StreaklineDrawer.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
-
-#include "vis/ColPixel.h"
-#include "vis/GlyphDrawer.h"
-#include "vis/StreaklineDrawer.h"
-#include "vis/rayTracer/RayTracer.h"
 
 namespace hemelb
 {
   namespace vis
   {
-    /* the last three digits of the pixel identifier are used to
-     indicate if the pixel is coloured via the ray tracing technique
-     and/or a glyph and/or a particle/pathlet */
-
     /**
      * Class to control and use the effects of different visualisation methods.
      *
@@ -41,7 +37,8 @@ namespace hemelb
      * must be merged before they can be passed on. We don't need to pass info top-down, we only
      * pass image components upwards towards the top node.
      */
-    class Control : public net::PhasedBroadcastIrregular<true, 2, 0, false, true>
+    class Control : public net::PhasedBroadcastIrregular<true, 2, 0, false, true>,
+                    private PixelSetStore<PixelSet<ResultPixel> >
     {
       public:
         Control(lb::StressTypes iStressType,
@@ -65,7 +62,7 @@ namespace hemelb
                            const float &latitude,
                            const float &zoom);
 
-        bool MouseIsOverPixel(float* density, float* stress);
+        bool MouseIsOverPixel(const PixelSet<ResultPixel>* result, float* density, float* stress);
 
         void ProgressStreaklines(unsigned long time_step, unsigned long period);
         void Reset();
@@ -74,9 +71,21 @@ namespace hemelb
         void SetMouseParams(double iPhysicalPressure, double iPhysicalStress);
         void RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress);
 
-        const ScreenPixels* GetResult(unsigned long startIteration);
+        const PixelSet<ResultPixel>* GetResult(unsigned long startIteration);
+
+        void WritePixels(io::Writer* writer,
+                         const PixelSet<ResultPixel>& imagePixels,
+                         const DomainStats* domainStats,
+                         const VisSettings* visSettings) const;
+        void WriteImage(io::Writer* writer,
+                        const PixelSet<ResultPixel>& imagePixels,
+                        const DomainStats* domainStats,
+                        const VisSettings* visSettings) const;
 
         bool IsRendering() const;
+
+        int GetPixelsX() const;
+        int GetPixelsY() const;
 
         Viewpoint mViewpoint;
         DomainStats mDomainStats;
@@ -89,13 +98,14 @@ namespace hemelb
         void ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber);
         void ProgressToParent(unsigned long startIteration, unsigned long splayNumber);
         void PostReceiveFromChildren(unsigned long startIteration, unsigned long splayNumber);
+        void PostSendToParent(unsigned long startIteration, unsigned long splayNumber);
         void ClearOut(unsigned long startIteration);
         void InstantBroadcast(unsigned long startIteration);
 
       private:
         typedef net::PhasedBroadcastIrregular<true, 2, 0, false, true> base;
         typedef net::PhasedBroadcast<true, 2, 0, false, true> deepbase;
-        typedef std::map<unsigned long, ScreenPixels*> mapType;
+        typedef std::map<unsigned long, Rendering> mapType;
 
         // This is mainly constrained by the memory available per core.
         static const unsigned int SPREADFACTOR = 2;
@@ -107,16 +117,14 @@ namespace hemelb
         };
 
         void initLayers();
-        void Render();
-        ScreenPixels* GetReceiveBuffer(unsigned int startIteration, unsigned int child);
-        ScreenPixels* GetPixFromBuffer();
+        void Render(unsigned long startIteration);
 
-        // Because of the 2-splay, we need to have two sets of receive buffers, so that comms
-        // on consecutive iterations don't overwrite one another.
-        ScreenPixels recvBuffers[2][SPREADFACTOR];
+        std::map<unsigned long, Rendering> localResultsByStartIt;
+        std::multimap<unsigned long, Rendering> childrenResultsByStartIt;
+        std::multimap<unsigned long, PixelSet<ResultPixel>*> renderingsByStartIt;
 
-        std::stack<ScreenPixels*> pixelsBuffer;
-        std::map<unsigned long, ScreenPixels*> resultsByStartIt;
+        net::Net* net;
+
         geometry::LatticeData* mLatDat;
         Screen mScreen;
         Vis* vis;

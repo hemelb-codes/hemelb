@@ -46,9 +46,8 @@ namespace hemelb
 
       const float lTemp = iVector.z * iCosThetaX - iVector.y * iSinThetaX;
 
-      return Vector3D<distribn_t> (lTemp * iSinThetaY + iVector.x * iCosThetaY,
-                                   iVector.z * iSinThetaX + iVector.y * iCosThetaX,
-                                   lTemp * iCosThetaY - iVector.x * iSinThetaY);
+      return Vector3D<distribn_t> (lTemp * iSinThetaY + iVector.x * iCosThetaY, iVector.z
+          * iSinThetaX + iVector.y * iCosThetaX, lTemp * iCosThetaY - iVector.x * iSinThetaY);
     }
 
     Vector3D<distribn_t> Viewpoint::UnRotate(float iSinThetaX,
@@ -69,9 +68,8 @@ namespace hemelb
 
       const float lTemp = iVector.x * iSinThetaY + iVector.z * iCosThetaY;
 
-      return Vector3D<distribn_t> (iVector.x * iCosThetaY - iVector.z * iSinThetaY,
-                                   -lTemp * iSinThetaX + iVector.y * iCosThetaX,
-                                   lTemp * iCosThetaX + iVector.y * iSinThetaX);
+      return Vector3D<distribn_t> (iVector.x * iCosThetaY - iVector.z * iSinThetaY, -lTemp
+          * iSinThetaX + iVector.y * iCosThetaX, lTemp * iCosThetaX + iVector.y * iSinThetaX);
     }
 
     Vector3D<distribn_t> Viewpoint::Project(const Vector3D<distribn_t>& iWorldLocation) const
@@ -89,25 +87,14 @@ namespace hemelb
       //Carry out a perspective projection on an infinite spanning screen 
       //between the eye and the subject.
       //Reverse the sign such that depth is positive (I believe).  
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Depth: %f",
-                                                                            -lLocationCamCoordinates.z);
-
       return Vector3D<distribn_t> (mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
-                                       * lLocationCamCoordinates.x,
-                                   mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
-                                       * lLocationCamCoordinates.y,
-                                   -lLocationCamCoordinates.z);
+          * lLocationCamCoordinates.x, mDistanceFromEyeToScreen / (-lLocationCamCoordinates.z)
+          * lLocationCamCoordinates.y, -lLocationCamCoordinates.z);
     }
 
-    void Viewpoint::SetViewpointPosition(float iLongitude,
-                                         float iLatitude,
-                                         const Vector3D<distribn_t>& iLocalCentre,
-                                         float iRadius,
-                                         float iDistanceFromEyeToScreen)
+    void Viewpoint::SetViewpointPosition(float iLongitude, float iLatitude, const Vector3D<
+        distribn_t>& iLocalCentre, float iRadius, float iDistanceFromEyeToScreen)
     {
-      hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Latitude: %f / Longitude: %f",
-                                                                            iLatitude,
-                                                                            iLongitude);
       mSinLongitude = sinf(iLongitude);
       mCosLongitude = cosf(iLongitude);
 

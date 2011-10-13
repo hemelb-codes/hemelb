@@ -17,7 +17,7 @@ namespace hemelb
     {
     }
 
-    void ImageSendComponent::DoWork(const vis::ScreenPixels* pix)
+    void ImageSendComponent::DoWork(const vis::PixelSet<vis::ResultPixel>* pix)
     {
 
     }

@@ -2,9 +2,7 @@
 #define HEMELB_VIS_SCREEN_H
 
 #include "io/Writer.h"
-#include "vis/ColPixel.h"
 #include "vis/Vector3D.h"
-#include "vis/ScreenPixels.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 
@@ -14,16 +12,11 @@ namespace hemelb
   {
     class Screen
     {
-        friend class Control;
-
       public:
+        static const unsigned int COLOURED_PIXELS_MAX = 2048 * 2048;
+
         Screen();
         ~Screen();
-
-        void AddPixel(const ColPixel* newPixel, const VisSettings* visSettings);
-        void RenderLine(const Vector3D<float>& endPoint1,
-                        const Vector3D<float>& endPoint2,
-                        const VisSettings* visSettings);
 
         void Set(float maxX,
                  float maxY,
@@ -33,8 +26,6 @@ namespace hemelb
                  const Viewpoint* viewpoint);
 
         void Resize(unsigned int pixelsX, unsigned int pixelsY);
-
-        void Reset();
 
         /**
          * Does a transform from input array into output array. This function
@@ -57,23 +48,17 @@ namespace hemelb
         int GetPixelsX() const;
         int GetPixelsY() const;
 
-        ScreenPixels* SwapBuffers(ScreenPixels*);
-        const ScreenPixels* GetPixels() const;
-
         bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
-
-        unsigned int GetPixelCount() const;
 
       private:
         float ScaleX, ScaleY;
+        int xPixels, yPixels;
         float MaxXValue, MaxYValue;
         Vector3D<float> mVtx;
 
         // Projection of unit vectors along screen axes into normal space.
         Vector3D<float> UnitVectorProjectionX;
         Vector3D<float> UnitVectorProjectionY;
-
-        ScreenPixels* pixels;
     };
   }
 }

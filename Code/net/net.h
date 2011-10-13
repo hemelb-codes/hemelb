@@ -106,11 +106,6 @@ namespace hemelb
 
         ProcComms* GetProcComms(proc_t iRank, bool iIsSend);
 
-        //void AddToList(int* iNew, int iLength, ProcComms* bMetaData);
-        //
-        //void AddToList(double* iNew, int iLength, ProcComms* bMetaData);
-        //
-        //void AddToList(float* iNew, int iLength, ProcComms* bMetaData);
         template<typename T>
         void AddToList(T* iNew, int iLength, ProcComms *bMetaData)
         {
