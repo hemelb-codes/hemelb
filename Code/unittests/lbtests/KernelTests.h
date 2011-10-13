@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "lb/kernels/Kernels.h"
-#include "lb/kernels/rheologyModels/rheologyModels.h"
+#include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "unittests/lbtests/LbTestsHelper.h"
 #include "unittests/FourCubeLatticeData.h"
 
