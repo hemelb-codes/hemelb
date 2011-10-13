@@ -6,6 +6,7 @@ SRCS := BlockTraverser.cc \
         RayTracer.cc \
         VolumeTraverser.cc \
         SiteTraverser.cc \
+        RayPixel.cc
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 

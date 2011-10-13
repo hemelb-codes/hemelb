@@ -22,7 +22,7 @@ namespace hemelb
                            Network* iNetwork);
         ~ImageSendComponent();
 
-        void DoWork(const vis::ScreenPixels* pix);
+        void DoWork(const vis::PixelSet<vis::ResultPixel>* pix);
 
         bool ShouldRenderNewNetworkImage();
 
@@ -49,8 +49,10 @@ namespace hemelb
         // 1 * int (bytes of pixel data)
         // pixel data (variable, up to COLOURED_PIXELS_MAX * bytes_per_pixel_data)
         // SimulationParameters::paramsSizeB (metadata - mouse pressure and stress etc)
-        static const int maxSendSize = 2 * 4 + 1 * 4 + vis::ScreenPixels::COLOURED_PIXELS_MAX
-            * bytes_per_pixel_data + SimulationParameters::paramsSizeB;
+        static const unsigned int XdrIntLength = 4;
+        static const unsigned int maxSendSize = 2 * XdrIntLength + 1 * XdrIntLength
+            + vis::Screen::COLOURED_PIXELS_MAX * bytes_per_pixel_data
+            + SimulationParameters::paramsSizeB;
     };
   }
 }

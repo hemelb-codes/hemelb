@@ -36,7 +36,7 @@ namespace hemelb
 
     // This is original code with minimal tweaks to make it work with
     // the new (Feb 2011) structure.
-    void ImageSendComponent::DoWork(const vis::ScreenPixels* pix)
+    void ImageSendComponent::DoWork(const vis::PixelSet<vis::ResultPixel>* pix)
     {
       isConnected = mNetwork->IsConnected();
 
@@ -50,13 +50,16 @@ namespace hemelb
       unsigned int initialPosition = imageWriter.getCurrentStreamPosition();
 
       // Write the dimensions of the image, in terms of pixel count.
-      imageWriter << pix->GetPixelsX() << pix->GetPixelsY();
+      imageWriter << mVisControl->GetPixelsX() << mVisControl->GetPixelsY();
 
       // Write the length of the pixel data
-      imageWriter << (int) (pix->GetStoredPixelCount() * bytes_per_pixel_data);
+      imageWriter << (int) (pix->GetPixelCount() * bytes_per_pixel_data);
 
       // Write the pixels themselves
-      pix->WritePixels(&imageWriter, &mVisControl->mDomainStats, &mVisControl->mVisSettings);
+      mVisControl->WritePixels(&imageWriter,
+                               *pix,
+                               &mVisControl->mDomainStats,
+                               &mVisControl->mVisSettings);
 
       // Write the numerical data from the simulation, wanted by the client.
       {

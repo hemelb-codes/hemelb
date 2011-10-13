@@ -359,6 +359,20 @@ namespace hemelb
           }
         }
 
+        /**
+         * Returns the number of the parent node.
+         * @return
+         */
+        int GetParent() const
+        {
+          return mParent;
+        }
+
+        const std::vector<int>& GetChildren() const
+        {
+          return mChildren;
+        }
+
       private:
         static const int NOPARENT = -1;
 
