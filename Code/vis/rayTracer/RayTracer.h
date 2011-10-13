@@ -9,7 +9,11 @@
 #include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 
+#include "vis/PixelSetStore.h"
+#include "vis/PixelSet.h"
+#include "vis/BasicPixel.h"
 #include "vis/DomainStats.h"
+#include "vis/rayTracer/RayPixel.h"
 #include "vis/Screen.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
@@ -21,7 +25,7 @@ namespace hemelb
   {
     namespace raytracer
     {
-      class RayTracer
+      class RayTracer : public PixelSetStore<PixelSet<RayPixel> >
       {
           //Class also contains nested classes Cluster and  ClusterBuilder, itself
           //containing VolumeTraverser, SiteTraverser and BlockTraverser
@@ -43,54 +47,55 @@ namespace hemelb
                                   distribn_t stress);
 
           // Render the current state into an image.
-          void Render();
-
-          //Stores the data about an individual voxel
-          struct SiteData_t
-          {
-            public:
-              float Density;
-              float Velocity;
-              float Stress;
-
-              SiteData_t(float iValue) :
-                Density(iValue), Velocity(iValue), Stress(iValue)
-              {
-              }
-          };
-
-          //The cluster structure stores data relating to the clusters
-          //used by the RayTracaer, in an optimal format
-          //Clusters are produced by the ClusterFactory
-          //Caution: the data within the flow field is altered by means
-          //of pointers obtained from the GetClusterVoxelDataPointer
-          //method
-          class Cluster
-          {
-            public:
-              Cluster();
-
-              Vector3D<float> minSite;
-              Vector3D<float> maxSite;
-
-              //Stores the lowest x, y and z block location of the Cluster
-              //in terms of site units relative to the centre location
-              Vector3D<float> minBlock;
-
-              //Stores the size of the cluster in terms of the number of blocks
-              unsigned short int blocksX;
-              unsigned short int blocksY;
-              unsigned short int blocksZ;
-
-              std::vector<std::vector<SiteData_t> > SiteData;
-
-          };
+          PixelSet<RayPixel>* Render();
 
         private:
-
           class ClusterBuilder
           {
             public:
+
+              //Stores the data about an individual voxel
+              struct SiteData_t
+              {
+                public:
+                  float Density;
+                  float Velocity;
+                  float Stress;
+
+                  SiteData_t(float iValue) :
+                    Density(iValue), Velocity(iValue), Stress(iValue)
+                  {
+                  }
+              };
+
+              //The cluster structure stores data relating to the clusters
+              //used by the RayTracaer, in an optimal format
+              //Clusters are produced by the ClusterFactory
+              //Caution: the data within the flow field is altered by means
+              //of pointers obtained from the GetClusterVoxelDataPointer
+              //method
+              class Cluster
+              {
+                public:
+
+                  Cluster();
+
+                  Vector3D<float> minSite;
+                  Vector3D<float> maxSite;
+
+                  //Stores the lowest x, y and z block location of the Cluster
+                  //in terms of site units relative to the centre location
+                  Vector3D<float> minBlock;
+
+                  //Stores the size of the cluster in terms of the number of blocks
+                  unsigned short int blocksX;
+                  unsigned short int blocksY;
+                  unsigned short int blocksZ;
+
+                  std::vector<std::vector<SiteData_t> > SiteData;
+
+              };
+
               ClusterBuilder(const geometry::LatticeData*& iLatDat);
               ~ClusterBuilder();
 
@@ -174,7 +179,7 @@ namespace hemelb
                   geometry::LatticeData::BlockData * GetCurrentBlockData();
 
                   geometry::LatticeData::BlockData
-                      * GetBlockDataForLocation(const Vector3D<site_t>& iLocation);
+                  * GetBlockDataForLocation(const Vector3D<site_t>& iLocation);
 
                   site_t GetBlockSize();
 
@@ -216,8 +221,8 @@ namespace hemelb
               void FindNewCluster();
 
               //Adds neighbouring blocks of the input location to the input stack
-              void AddNeighbouringBlocks(Vector3D<site_t> iCurrentLocation,
-                                         std::stack<Vector3D<site_t> >& ioBlocksToVisit);
+              void AddNeighbouringBlocks(Vector3D<site_t> iCurrentLocation, std::stack<Vector3D<
+                  site_t> >& ioBlocksToVisit);
 
               //Returns true if there are sites in the given block associated with the
               //local processor rank
@@ -247,7 +252,7 @@ namespace hemelb
                                         unsigned int l_site_id);
 
               Vector3D<site_t>
-                  GetSiteCoordinatesOfBlock(site_t iClusterId, Vector3D<site_t> offset);
+              GetSiteCoordinatesOfBlock(site_t iClusterId, Vector3D<site_t> offset);
 
               SiteData_t* GetDataPointerClusterVoxelSiteId(site_t iSiteId);
 
@@ -295,28 +300,25 @@ namespace hemelb
               float acc_1, acc_2, acc_3, acc_4, acc_5, acc_6;
           };
 
-          void UpdateRayData(const SiteData_t* iSiteData,
+          void UpdateRayData(const ClusterBuilder::SiteData_t* iSiteData,
                              float ray_t,
                              float ray_segment,
                              Ray* bCurrentRay);
 
           void TraverseVoxels(const Vector3D<float>& block_min,
                               const Vector3D<float>& block_x,
-                              const SiteData_t* iSiteData,
+                              const ClusterBuilder::SiteData_t* iSiteData,
                               float t,
                               Ray* bCurrentRay,
                               const Vector3D<bool>& xyz_is_1);
 
-          void TraverseBlocks(const Cluster* cluster,
+          void TraverseBlocks(const ClusterBuilder::Cluster* cluster,
                               const Vector3D<bool>& xyz_Is_1,
                               const Vector3D<float>& ray_dx,
                               Ray *bCurrentRay);
 
-          void AABBvsRay(const AABB* aabb,
-                         const Vector3D<float>& inverseDirection,
-                         const Vector3D<bool>& xyzComponentIsPositive,
-                         float* t_near,
-                         float* t_far);
+          void AABBvsRay(const AABB* aabb, const Vector3D<float>& inverseDirection, const Vector3D<
+              bool>& xyzComponentIsPositive, float* t_near, float* t_far);
 
           void UpdateColour(float dt, const float palette[3], float col[3]);
 

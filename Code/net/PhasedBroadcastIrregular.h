@@ -100,12 +100,14 @@ namespace hemelb
                 unsigned long sendOverlap;
                 unsigned long receiveOverlap;
 
-                if (base::GetSendChildrenOverlap(progress - firstDescent, &sendOverlap))
+                if (base::GetSendChildrenOverlap(progress - firstDescent, &sendOverlap)
+                    && !base::GetChildren().empty())
                 {
                   ProgressToChildren(*it, sendOverlap);
                 }
 
-                if (base::GetReceiveParentOverlap(progress - firstDescent, &receiveOverlap))
+                if (base::GetReceiveParentOverlap(progress - firstDescent, &receiveOverlap)
+                    && base::GetParent() >= 0)
                 {
                   ProgressFromParent(*it, receiveOverlap);
                 }
@@ -120,12 +122,14 @@ namespace hemelb
                 unsigned long sendOverlap;
                 unsigned long receiveOverlap;
 
-                if (base::GetSendParentOverlap(progress - firstAscent, &sendOverlap))
+                if (base::GetSendParentOverlap(progress - firstAscent, &sendOverlap)
+                    && base::GetParent() >= 0)
                 {
                   ProgressToParent(*it, sendOverlap);
                 }
 
-                if (base::GetReceiveChildrenOverlap(progress - firstAscent, &receiveOverlap))
+                if (base::GetReceiveChildrenOverlap(progress - firstAscent, &receiveOverlap)
+                    && !base::GetChildren().empty())
                 {
                   ProgressFromChildren(*it, receiveOverlap);
                 }
@@ -133,7 +137,7 @@ namespace hemelb
             }
           }
 
-          unsigned long searchValue = currentIt - base::GetRoundTripLength() - 1;
+          unsigned long searchValue = currentIt - (base::GetRoundTripLength() + 1);
 
           // Use this time to clear out the array. We do this once every iteration so it
           // suffices to get rid of one value.
@@ -209,9 +213,18 @@ namespace hemelb
               {
                 unsigned long receiveOverlap;
 
-                if (base::GetReceiveChildrenOverlap(progress - firstAscent, &receiveOverlap))
+                if (base::GetReceiveChildrenOverlap(progress - firstAscent, &receiveOverlap)
+                    && !base::GetChildren().empty())
                 {
                   PostReceiveFromChildren(*it, receiveOverlap);
+                }
+
+                unsigned long sendOverlap;
+
+                if (base::GetSendParentOverlap(progress - firstAscent, &sendOverlap)
+                    && base::GetParent() >= 0)
+                {
+                  PostSendToParent(*it, sendOverlap);
                 }
               }
             }
@@ -330,6 +343,16 @@ namespace hemelb
          * parameter splayNumber is 0 indexed and less than splay.
          */
         virtual void PostReceiveFromParent(unsigned long startIteration, unsigned long splayNumber)
+        {
+
+        }
+
+        /**
+         * Overridable function, called by a node after data has been sent to its parent.
+         * @param startIteration The iteration on which this phased send began.
+         * @param splayNumber The number of steps we have passed through this phase of the sending.
+         */
+        virtual void PostSendToParent(unsigned long startIteration, unsigned long splayNumber)
         {
 
         }

@@ -467,16 +467,18 @@ void SimulationMaster::RunSimulation(std::string image_directory,
         if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
         {
           char image_filename[255];
-          snprintf(image_filename,
-                   255,
-                   "%08li.dat",
-                   1 + ( (it->second - 1) % mSimulationState->GetTimeStepsPerCycle()));
+          snprintf(image_filename, 255, "%08li.dat", 1 + ( (it->second - 1)
+              % mSimulationState->GetTimeStepsPerCycle()));
           hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(image_directory
               + std::string(image_filename));
 
-          mVisControl->GetResult(it->second)->WriteImage(&writer,
-                                                         &mVisControl->mDomainStats,
-                                                         &mVisControl->mVisSettings);
+          const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
+              mVisControl->GetResult(it->second);
+
+          mVisControl ->WriteImage(&writer,
+                                   *result,
+                                   &mVisControl->mDomainStats,
+                                   &mVisControl->mVisSettings);
         }
       }
 
@@ -492,11 +494,14 @@ void SimulationMaster::RunSimulation(std::string image_directory,
         if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
         {
 
+          const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
+              mVisControl->GetResult(it->second);
+
           if (steeringCpt->updatedMouseCoords)
           {
             float density, stress;
 
-            if (mVisControl->MouseIsOverPixel(&density, &stress))
+            if (mVisControl->MouseIsOverPixel(result, &density, &stress))
             {
               double mouse_pressure, mouse_stress;
               mLbm->CalculateMouseFlowField(density,
@@ -512,7 +517,7 @@ void SimulationMaster::RunSimulation(std::string image_directory,
             steeringCpt->updatedMouseCoords = false;
           }
 
-          imageSendCpt->DoWork(mVisControl->GetResult(it->second));
+          imageSendCpt->DoWork(result);
 
         }
       }

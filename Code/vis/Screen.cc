@@ -9,44 +9,12 @@ namespace hemelb
   namespace vis
   {
 
-    // TODO This is probably going to have to be cleverly redesigned. We need to pass the images around over several iterations without
-    // interference between the steering and written-to-disk images.
-
     Screen::Screen()
     {
-      pixels = new ScreenPixels();
     }
 
     Screen::~Screen()
     {
-      delete pixels;
-    }
-
-    /**
-     * Add a pixel to the screen.
-     *
-     * @param newPixel The new pixel to be added
-     * @param iStressType The stress type of the visualisation
-     * @param mode Controls what aspects of the visualisation to display.
-     */
-    void Screen::AddPixel(const ColPixel* newPixel, const VisSettings* visSettings)
-    {
-      pixels->AddPixel(newPixel, visSettings);
-    }
-
-    /**
-     * Render a line between two points on the screen.
-     *
-     * @param endPoint1
-     * @param endPoint2
-     * @param iStressType
-     * @param mode
-     */
-    void Screen::RenderLine(const Vector3D<float>& endPoint1,
-                            const Vector3D<float>& endPoint2,
-                            const VisSettings* visSettings)
-    {
-      pixels->RenderLine(endPoint1, endPoint2, visSettings);
     }
 
     void Screen::Set(float maxX,
@@ -68,57 +36,32 @@ namespace hemelb
                                                                                    MaxYValue,
                                                                                    0.0F));
 
-      pixels->SetSize(pixelsX, pixelsY);
+      Resize(pixelsX, pixelsY);
 
-      ScaleX = (float) pixels->GetPixelsX() / (2.F * MaxXValue);
-      ScaleY = (float) pixels->GetPixelsY() / (2.F * MaxYValue);
+      ScaleX = (float) xPixels / (2.F * MaxXValue);
+      ScaleY = (float) yPixels / (2.F * MaxYValue);
 
       Vector3D<float> radVector = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(Vector3D<
           float> (0.F, 0.F, -rad));
 
       mVtx = radVector * 0.5F - UnitVectorProjectionX - UnitVectorProjectionY;
 
-      UnitVectorProjectionX.x *= (2.F / (float) pixels->GetPixelsX());
-      UnitVectorProjectionX.y *= (2.F / (float) pixels->GetPixelsX());
-      UnitVectorProjectionX.z *= (2.F / (float) pixels->GetPixelsX());
+      UnitVectorProjectionX.x *= (2.F / (float) xPixels);
+      UnitVectorProjectionX.y *= (2.F / (float) xPixels);
+      UnitVectorProjectionX.z *= (2.F / (float) xPixels);
 
-      UnitVectorProjectionY.x *= (2.F / (float) pixels->GetPixelsY());
-      UnitVectorProjectionY.y *= (2.F / (float) pixels->GetPixelsY());
-      UnitVectorProjectionY.z *= (2.F / (float) pixels->GetPixelsY());
+      UnitVectorProjectionY.x *= (2.F / (float) yPixels);
+      UnitVectorProjectionY.y *= (2.F / (float) yPixels);
+      UnitVectorProjectionY.z *= (2.F / (float) yPixels);
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
     {
-      pixels->SetSize(newPixelsX, newPixelsY);
-    }
-
-    void Screen::Reset()
-    {
-      pixels->Reset();
-    }
-
-    bool Screen::MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress)
-    {
-      const ColPixel* screenPix = pixels->GetPixelArray();
-
-      for (unsigned int i = 0; i < pixels->GetStoredPixelCount(); i++)
+      if (newPixelsX * newPixelsY <= COLOURED_PIXELS_MAX)
       {
-        if (screenPix[i].IsRT() && int(screenPix[i].GetI()) == mouseX && int(screenPix[i].GetJ())
-            == mouseY)
-        {
-          *density = screenPix[i].GetDensity();
-          *stress = screenPix[i].GetStress();
-
-          return true;
-        }
+        xPixels = newPixelsX;
+        yPixels = newPixelsY;
       }
-
-      return false;
-    }
-
-    unsigned int Screen::GetPixelCount() const
-    {
-      return pixels->GetStoredPixelCount();
     }
 
     const Vector3D<float>& Screen::GetVtx() const
@@ -135,22 +78,11 @@ namespace hemelb
     }
     int Screen::GetPixelsX() const
     {
-      return pixels->GetPixelsX();
+      return xPixels;
     }
     int Screen::GetPixelsY() const
     {
-      return pixels->GetPixelsY();
-    }
-
-    ScreenPixels* Screen::SwapBuffers(ScreenPixels* inPix)
-    {
-      ScreenPixels* temp = pixels;
-      pixels = inPix;
-      return temp;
-    }
-    const ScreenPixels* Screen::GetPixels() const
-    {
-      return pixels;
+      return yPixels;
     }
   }
 }

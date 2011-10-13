@@ -3,19 +3,23 @@
 
 #include "geometry/LatticeData.h"
 
+#include "vis/BasicPixel.h"
+#include "vis/PixelSet.h"
+#include "vis/PixelSetStore.h"
 #include "vis/Screen.h"
 #include "vis/DomainStats.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 
 #include <vector>
+#include <set>
 
 namespace hemelb
 {
   namespace vis
   {
     // Class for drawing glyphs.
-    class GlyphDrawer
+    class GlyphDrawer : public PixelSetStore<PixelSet<BasicPixel> >
     {
       public:
         // Constructor and destructor
@@ -27,7 +31,7 @@ namespace hemelb
         ~GlyphDrawer();
 
         // Function to perform the rendering.
-        void Render();
+        PixelSet<BasicPixel>* Render();
 
       private:
         // A struct to represent a single glyph.
@@ -37,6 +41,20 @@ namespace hemelb
             distribn_t *f;
         };
 
+        void RenderLine(const Vector3D<float>& endPoint1,
+                        const Vector3D<float>& endPoint2,
+                        const VisSettings* visSettings,
+                        PixelSet<BasicPixel>*);
+
+        template<bool xLimited>
+        void RenderLineHelper(int x,
+                              int y,
+                              int incE,
+                              int incNE,
+                              int limit,
+                              const VisSettings* visSettings,
+                              PixelSet<BasicPixel>*);
+
         geometry::LatticeData* mLatDat;
 
         Screen* mScreen;
@@ -45,6 +63,7 @@ namespace hemelb
         VisSettings* mVisSettings;
 
         std::vector<Glyph> mGlyphs;
+
     };
 
   }
