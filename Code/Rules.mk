@@ -16,7 +16,7 @@ $(EXE)_DEPS = D3Q15.o \
         mpiInclude.o \
         $(SUBDIRS_TGTS)
 
-SUBDIRS = steering vis lb net debug topology xml util geometry io log unittests
+SUBDIRS = unittests steering vis lb net debug topology xml util geometry io log
 
 $(UNITTESTS)_DEPS = D3Q15.o \
                     SimulationMaster.o \
