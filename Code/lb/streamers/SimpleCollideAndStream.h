@@ -20,7 +20,7 @@ namespace hemelb
 
         public:
           SimpleCollideAndStream(kernels::InitParams& initParams) :
-              collider(initParams)
+            collider(initParams)
           {
 
           }
@@ -42,16 +42,15 @@ namespace hemelb
 
               for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
               {
-                hydroVars.f_neq[ii] = lFOld[ii] - hydroVars.f_eq[ii];
-                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii] =
-                    collider.Collide(iLbmParams, ii, hydroVars);
+                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(iIndex, ii))) = lFOld[ii]
+                    = collider.Collide(iLbmParams, ii, hydroVars);
               }
 
               BaseStreamer<SimpleCollideAndStream>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
                                                                                                hydroVars.v_y,
                                                                                                hydroVars.v_z,
                                                                                                iIndex,
-                                                                                               hydroVars.f_neq,
+                                                                                               hydroVars.GetFNeq().f,
                                                                                                hydroVars.density,
                                                                                                bLatDat,
                                                                                                iLbmParams,

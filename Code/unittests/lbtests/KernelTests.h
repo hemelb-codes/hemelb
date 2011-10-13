@@ -46,8 +46,10 @@ namespace hemelb
              *  We need two kernel instances if we want to work with two different sets of data (and keep the computed
              *  values of tau consistent). One to be used with CalculateDensityVelocityFeq and another with CalculateFeq.
              */
-            lbgknn0 = new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
-            lbgknn1 = new lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
+            lbgknn0 = new lb::kernels::LBGKNN<
+                lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
+            lbgknn1 = new lb::kernels::LBGKNN<
+                lb::kernels::rheologyModels::CarreauYasudaRheologyModel>(initParams);
 
             numSites = initParams.latDat->GetLocalFluidSiteCount();
           }
@@ -124,6 +126,7 @@ namespace hemelb
                                          "Entropic, case 0",
                                          hydroVars0,
                                          allowedError);
+
             LbTestsHelper::CompareHydros(expectedDensity1,
                                          expectedVelocity1[0],
                                          expectedVelocity1[1],
@@ -137,13 +140,6 @@ namespace hemelb
             distribn_t postCollision0[D3Q15::NUMVECTORS];
             distribn_t postCollision1[D3Q15::NUMVECTORS];
 
-            // Set the values in f_neq.
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              hydroVars0.f_neq[ii] = f_original[ii] - hydroVars0.f_eq[ii];
-              hydroVars1.f_neq[ii] = f_original[ii] - hydroVars1.f_eq[ii];
-            }
-
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
               postCollision0[ii] = entropic->DoCollide(lbmParams, hydroVars0, ii);
@@ -155,13 +151,13 @@ namespace hemelb
             distribn_t expectedPostCollision1[D3Q15::NUMVECTORS];
 
             LbTestsHelper::CalculateEntropicCollision<D3Q15>(f_original,
-                                                             hydroVars0.f_eq,
+                                                             hydroVars0.GetFEq().f,
                                                              lbmParams->GetTau(),
                                                              lbmParams->GetBeta(),
                                                              expectedPostCollision0);
 
             LbTestsHelper::CalculateEntropicCollision<D3Q15>(f_original,
-                                                             hydroVars1.f_eq,
+                                                             hydroVars1.GetFEq().f,
                                                              lbmParams->GetTau(),
                                                              lbmParams->GetBeta(),
                                                              expectedPostCollision1);
@@ -259,13 +255,6 @@ namespace hemelb
             distribn_t postCollision0[D3Q15::NUMVECTORS];
             distribn_t postCollision1[D3Q15::NUMVECTORS];
 
-            // Set the values in f_neq.
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              hydroVars0.f_neq[ii] = f_original[ii] - hydroVars0.f_eq[ii];
-              hydroVars1.f_neq[ii] = f_original[ii] - hydroVars1.f_eq[ii];
-            }
-
             for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
             {
               postCollision0[ii] = lbgk->DoCollide(lbmParams, hydroVars0, ii);
@@ -277,12 +266,12 @@ namespace hemelb
             distribn_t expectedPostCollision1[D3Q15::NUMVECTORS];
 
             LbTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
-                                                         hydroVars0.f_eq,
+                                                         hydroVars0.GetFEq().f,
                                                          lbmParams->GetOmega(),
                                                          expectedPostCollision0);
 
             LbTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
-                                                         hydroVars1.f_eq,
+                                                         hydroVars1.GetFEq().f,
                                                          lbmParams->GetOmega(),
                                                          expectedPostCollision1);
 
@@ -322,7 +311,8 @@ namespace hemelb
               f_setB[ii] = ((float) (D3Q15::NUMVECTORS - ii)) / 10.0;
             }
 
-            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> LB_KERNEL;
+            typedef lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel>
+                LB_KERNEL;
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetA(f_setA), hydroVars1SetA(f_setA);
             lb::kernels::HydroVars<LB_KERNEL> hydroVars0SetB(f_setB), hydroVars1SetB(f_setB);
             lb::kernels::HydroVars<LB_KERNEL> *hydroVars0 = NULL, *hydroVars1 = NULL;
@@ -427,7 +417,9 @@ namespace hemelb
               lbgknn1->CalculateFeq(*hydroVars1, site_index);
 
               distribn_t computedTau0 = hydroVars0->tau;
-              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn0->GetTauValues().size());
+              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ",
+                                           numSites,
+                                           (site_t) lbgknn0->GetTauValues().size());
 
               distribn_t expectedTau0 = site_index % 2
                 ? 0.50009134451
@@ -441,7 +433,9 @@ namespace hemelb
                                                    numTolerance);
 
               distribn_t computedTau1 = hydroVars1->tau;
-              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ", numSites, (site_t) lbgknn1->GetTauValues().size());
+              CPPUNIT_ASSERT_EQUAL_MESSAGE("Tau array size ",
+                                           numSites,
+                                           (site_t) lbgknn1->GetTauValues().size());
 
               distribn_t expectedTau1 = site_index % 2
                 ? 0.50009013551
@@ -461,13 +455,6 @@ namespace hemelb
               distribn_t postCollision0[D3Q15::NUMVECTORS];
               distribn_t postCollision1[D3Q15::NUMVECTORS];
 
-              // Set the values in f_neq.
-              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-              {
-                hydroVars0->f_neq[ii] = f_original[ii] - hydroVars0->f_eq[ii];
-                hydroVars1->f_neq[ii] = f_original[ii] - hydroVars1->f_eq[ii];
-              }
-
               for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
               {
                 postCollision0[ii] = lbgknn0->DoCollide(lbmParams, *hydroVars0, ii);
@@ -482,12 +469,12 @@ namespace hemelb
               distribn_t localOmega1 = -1.0 / computedTau1;
 
               LbTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
-                                                           hydroVars0->f_eq,
+                                                           hydroVars0->GetFEq().f,
                                                            localOmega0,
                                                            expectedPostCollision0);
 
               LbTestsHelper::CalculateLBGKCollision<D3Q15>(f_original,
-                                                           hydroVars1->f_eq,
+                                                           hydroVars1->GetFEq().f,
                                                            localOmega1,
                                                            expectedPostCollision1);
 
@@ -515,7 +502,8 @@ namespace hemelb
           lb::LbmParameters* lbmParams;
           lb::kernels::Entropic* entropic;
           lb::kernels::LBGK* lbgk;
-          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> *lbgknn0, *lbgknn1;
+          lb::kernels::LBGKNN<lb::kernels::rheologyModels::CarreauYasudaRheologyModel> *lbgknn0,
+              *lbgknn1;
           site_t numSites;
       };
 

@@ -12,6 +12,19 @@ namespace hemelb
   {
     namespace kernels
     {
+      class LBGK;
+
+      template<>
+      struct HydroVars<LBGK> : public HydroVarsBase
+      {
+        public:
+          HydroVars(const distribn_t* const f) :
+            HydroVarsBase(f)
+          {
+
+          }
+      };
+
       /**
        * LBGK: This class implements the LBGK single-relaxation time kernel.
        */
@@ -29,7 +42,12 @@ namespace hemelb
                                                hydroVars.v_x,
                                                hydroVars.v_y,
                                                hydroVars.v_z,
-                                               hydroVars.f_eq);
+                                               hydroVars.f_eq.f);
+
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+            }
           }
 
           void DoCalculateFeq(HydroVars<LBGK>& hydroVars, site_t index)
@@ -38,14 +56,19 @@ namespace hemelb
                                 hydroVars.v_x,
                                 hydroVars.v_y,
                                 hydroVars.v_z,
-                                hydroVars.f_eq);
+                                hydroVars.f_eq.f);
+
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+            }
           }
 
           distribn_t DoCollide(const LbmParameters* const lbmParams,
                                HydroVars<LBGK>& hydroVars,
                                unsigned int direction)
           {
-            return hydroVars.f[direction] + hydroVars.f_neq[direction] * lbmParams->GetOmega();
+            return hydroVars.f[direction] + hydroVars.f_neq.f[direction] * lbmParams->GetOmega();
           }
 
           void DoReset(InitParams* init)

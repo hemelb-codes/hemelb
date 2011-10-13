@@ -170,7 +170,7 @@ namespace hemelb
 
               CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message.str(),
                                                    expectedFEq[ii],
-                                                   hydroVars.f_eq[ii],
+                                                   hydroVars.GetFEq().f[ii],
                                                    allowedError);
             }
           }

@@ -49,7 +49,12 @@ namespace hemelb
                                                hydroVars.v_x,
                                                hydroVars.v_y,
                                                hydroVars.v_z,
-                                               hydroVars.f_eq);
+                                               hydroVars.f_eq.f);
+
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+            }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
             assert(index < (site_t) mTau.size());
@@ -65,7 +70,12 @@ namespace hemelb
                                 hydroVars.v_x,
                                 hydroVars.v_y,
                                 hydroVars.v_z,
-                                hydroVars.f_eq);
+                                hydroVars.f_eq.f);
+
+            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+            {
+              hydroVars.f_neq.f[ii] = hydroVars.f[ii] - hydroVars.f_eq.f[ii];
+            }
 
             // Use the value of tau computed during the previous time step in coming calls to DoCollide
             assert(index < (site_t) mTau.size());
@@ -80,7 +90,7 @@ namespace hemelb
                                unsigned int direction)
           {
             double omega = -1.0 / hydroVars.tau;
-            return hydroVars.f[direction] + hydroVars.f_neq[direction] * omega;
+            return hydroVars.f[direction] + hydroVars.GetFNeq().f[direction] * omega;
           }
 
           void DoReset(InitParams* initParams)
@@ -145,14 +155,16 @@ namespace hemelb
              */
             for (unsigned f_index = 0; f_index < D3Q15::NUMVECTORS; f_index++)
             {
-              hydroVars.f_neq[f_index] = hydroVars.f[f_index] - hydroVars.f_eq[f_index];
+              hydroVars.f_neq.f[f_index] = hydroVars.f[f_index] - hydroVars.f_eq.f[f_index];
             }
 
             /*
              * Shear-rate returned by CalculateShearRate is dimensionless and CalculateTauForShearRate
              * wants it in units of s^{-1}
              */
-            double shear_rate = D3Q15::CalculateShearRate(localTau, hydroVars.f_neq, hydroVars.density) / mTimeStep;
+            double shear_rate = D3Q15::CalculateShearRate(localTau,
+                                                          hydroVars.f_neq.f,
+                                                          hydroVars.density) / mTimeStep;
 
             // Update tau
             localTau = tRheologyModel::CalculateTauForShearRate(shear_rate,
@@ -161,8 +173,8 @@ namespace hemelb
                                                                 mTimeStep);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
-            assert( !std::isinf(localTau) );
-            assert( !std::isnan(localTau) );
+            assert(!std::isinf(localTau));
+            assert(!std::isnan(localTau));
           }
       };
     }
