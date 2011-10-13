@@ -13,6 +13,7 @@ Code/parmetis/Graphs/*3.2.0
 Scripts/ParMetis-3.1.1.tar
 .DS_Store
 *.orig
+*.rej
 Tools/visim/visim
 Tests/diffTest/CleanImages/*.ppm
 Tests/diffTest/checkpoint.tmp

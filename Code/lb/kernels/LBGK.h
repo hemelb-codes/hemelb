@@ -12,19 +12,6 @@ namespace hemelb
   {
     namespace kernels
     {
-      class LBGK;
-
-      template<>
-      struct HydroVars<LBGK> : public HydroVarsBase
-      {
-        public:
-          HydroVars(const distribn_t* const f) :
-            HydroVarsBase(f)
-          {
-
-          }
-      };
-
       /**
        * LBGK: This class implements the LBGK single-relaxation time kernel.
        */
