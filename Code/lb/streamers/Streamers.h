@@ -7,10 +7,10 @@
 //#include "lb/streamers/GuoZhengShi.h"
 // Unusable
 //#include "lb/streamers/Regularised.h"
-// Unusable
-//#include "lb/streamers/SimpleBounceBack.h"
+
 
 // Usable
+#include "lb/streamers/SimpleBounceBack.h"
 #include "lb/streamers/SimpleCollideAndStream.h"
 
 #endif /* HEMELB_LB_STREAMERS_STREAMERS_H */
