@@ -36,6 +36,15 @@ class SnapCollection(collections.Mapping):
         self.times = times
         return
 
+    def __len__(self):
+        return len(self.times)
+
+    def __iter__(self):
+        """This must return an iterator over the keys, i.e. the times
+        of snapshots.
+        """
+        return iter(self.times)
+    
     def __getitem__(self, time):
         i = self.times.searchsorted(time)
         n = len(self.times)
