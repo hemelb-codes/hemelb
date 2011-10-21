@@ -1,4 +1,3 @@
-
 #include "Site.h"
 #include "Block.h"
 #include "Domain.h"
@@ -10,37 +9,68 @@ Domain::Domain(double VoxelSize, double SurfaceBounds[6],
 	double min, max, size, extra, siteZero;
 	int nSites, nBlocks, remainder, totalBlocks = 1;
 
+	/*
+	 * Here we are setting the location of our domain's origin in the input
+	 * space and the number of sites along each axis. Sites will all have
+	 * positions of:
+	 * 		Origin + Index * VoxelSize,
+	 * where:
+	 * 		0 <= Index[i] < nSites[i]
+	 *
+	 * We also require that there be at least one solid site outside the fluid
+	 * sites. For the case of axis-aligned faces which are an integer number
+	 * of VoxelSizes apart (e.g. synthetic datasets!) this can cause numerical
+	 * issues for the classifier if all the points that are "outside" are very
+	 * close to the surface so we further require that these sites are a
+	 * little further from the bounding box of the PolyData.
+	 */
 	for (unsigned int i = 0; i < 3; ++i) {
+		// Bounds of the vtkPolyData
 		min = SurfaceBounds[2 * i];
 		max = SurfaceBounds[2 * i + 1];
 		size = max - min;
-		// int() truncates, we add 2 to make sure there's enough
-		// room for the sites just outside.
-		nSites = int(size / VoxelSize) + 2;
 
-		// The extra space.
-		// Minus one, since we want the number of links, not "fence posts"
+		nSites = int(size / VoxelSize);
+		/* Since int() truncates, we have:
+		 * 		0 < size/VoxelSize - nSites < 1.
+		 * Hence we need nSites + 1 links and therefore nSites + 2 sites
+		 */
+		nSites += 2;
+
+		/* The extra distance from size to the distance from x[0] to x[nSites -1]
+		 */
 		extra = (nSites - 1) * VoxelSize - size;
-		// We want to balance this equally with the placement of
-		// the first site.
+
+		/* To avoid numerical problems with the classifier, ensure that the
+		 * sites just outside the fluid region are at least 1% of a VoxelSize
+		 * away.
+		 */
+		if (extra < VoxelSize / 100.) {
+			// They weren't, so add one to the # sites and recalculate extra
+			nSites += 1;
+			extra = (nSites - 1) * VoxelSize - size;
+		}
+
+		/* Now ensure this extra space is equally balanced before & after the
+		 * fluid region with the placement of the first site.
+		 */
 		siteZero = min - 0.5 * extra;
 
+		// Now work out how many blocks we require.
 		nBlocks = nSites / BlockSize;
 		remainder = nSites % BlockSize;
 		if (remainder)
 			++nBlocks;
+		// Set the member vars for this axis
 		this->Origin[i] = siteZero;
 		this->BlockCounts[i] = nBlocks;
 		this->SiteCounts[i] = nBlocks * BlockSize;
 		totalBlocks *= nBlocks;
 	}
+	// Resize the block vector
 	this->blocks.resize(totalBlocks);
 	Log() << "Domain size " << this->BlockCounts << std::endl;
 }
-//
-//Domain::~Domain() {
-//	delete this->blocks;
-//}
 
 Vector Domain::CalcPositionFromIndex(const Index& index) const {
 	Vector ans(index);
