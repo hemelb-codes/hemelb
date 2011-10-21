@@ -26,6 +26,7 @@ public:
 	~ConfigGenerator();
 	void Execute();
 	void ClassifySite(Site& site);
+	bool GetIsFluid(Site& site);
 
 	inline double GetVoxelSize(void) {
 		return this->VoxelSize;
