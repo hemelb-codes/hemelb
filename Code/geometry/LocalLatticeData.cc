@@ -65,11 +65,23 @@ namespace hemelb
       return mDistanceToWall[iSiteIndex * (D3Q15::NUMVECTORS - 1) + iDirection - 1];
     }
 
-    bool LatticeData::LocalLatticeData::HasBoundary(site_t iSiteIndex, int iDirection) const
+    bool LatticeData::LocalLatticeData::HasBoundary(const site_t siteIndex, const int direction) const
     {
-      unsigned int lBoundaryConfig = (mSiteData[iSiteIndex] & BOUNDARY_CONFIG_MASK)
-          >> BOUNDARY_CONFIG_SHIFT;
-      return (lBoundaryConfig & (1U << (iDirection - 1))) != 0;
+      /*
+       * Have a boundary in the specified direction if the corresponding bit of the boundary config is set.
+       * Direction 0 points to the current site, hence there can be no boundary.
+       */
+      if (direction > 0)
+      {
+        const unsigned int directionMask = 1U << (direction - 1);
+        const unsigned int boundaryBits = (mSiteData[siteIndex] & BOUNDARY_CONFIG_MASK);
+        const unsigned int shiftedBoundaryBits = boundaryBits >> BOUNDARY_CONFIG_SHIFT;
+        return (shiftedBoundaryBits & directionMask) != 0;
+      }
+      else
+      {
+        return false;
+      }
     }
 
     int LatticeData::LocalLatticeData::GetBoundaryId(site_t iSiteIndex) const
