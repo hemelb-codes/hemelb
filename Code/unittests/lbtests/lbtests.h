@@ -42,6 +42,8 @@ namespace hemelb
 
             addTest(new CppUnit::TestCaller<StreamerTests>("TestSimpleCollideAndStream",
                                                            &StreamerTests::TestSimpleCollideAndStream));
+            addTest(new CppUnit::TestCaller<StreamerTests>("TestFInterpolation",
+                                                           &StreamerTests::TestFInterpolation));
 
             addTest(new CppUnit::TestCaller<RheologyModelTests>("TestRheologyModels",
                                                                 &RheologyModelTests::TestRheologyModels));

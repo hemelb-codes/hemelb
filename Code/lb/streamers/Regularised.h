@@ -3,282 +3,174 @@
 
 #include "lb/streamers/BaseStreamer.h"
 
-/**
- * TODO This class hasn't been modified to fit the new kernel / collision / streamer
- * hierarchy. This needs to happen before it can be used in the LBM.
- */
 namespace hemelb
 {
   namespace lb
   {
     namespace streamers
     {
-
-      template<typename tCollisionOperator>
-      class Regularised : public Implementation
+      // TODO REFACTOR this class to be just a collision, using the BounceBack streamer.
+      template<typename CollisionType>
+      class Regularised : public BaseStreamer<Regularised<CollisionType> >
       {
+        private:
+          CollisionType collider;
 
         public:
+          Regularised(kernels::InitParams& initParams) :
+            collider(initParams)
+          {
+
+          }
+
           template<bool tDoRayTracing>
-          void DoStreamAndCollide(WallCollision* mWallCollision,
-                                  const site_t iFirstIndex,
+          void DoStreamAndCollide(const site_t iFirstIndex,
                                   const site_t iSiteCount,
                                   const LbmParameters* iLbmParams,
                                   geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl);
+                                  hemelb::vis::Control *iControl)
+          {
+            for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
+            {
+              distribn_t* f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
+
+              // First calculate the density and macro-velocity
+              // TEMPORARILY STORE f_eq IN f_neq BUT THE FUNCTION RETURNS f_eq. THIS IS SORTED
+              // OUT IN A SUBSEQUENT FOR LOOP.
+              collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
+
+              // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
+              // (fi = fiEq + fopp(i) - fopp(i)Eq)
+              distribn_t fTemp[15];
+
+              for (int l = 0; l < 15; ++l)
+              {
+                if (bLatDat->HasBoundary(lIndex, l))
+                {
+                  fTemp[l] = f[D3Q15::INVERSEDIRECTIONS[l]] + 3.0 * D3Q15::EQMWEIGHTS[l]
+                      * (hydroVars.v_x * D3Q15::CX[l] + hydroVars.v_y * D3Q15::CY[l]
+                          + hydroVars.v_z * D3Q15::CZ[l]);
+                }
+                else
+                {
+                  fTemp[l] = f[l];
+                }
+              }
+
+              distribn_t f_neq[D3Q15::NUMVECTORS];
+              for (int l = 0; l < 15; ++l)
+              {
+                f_neq[l] = fTemp[l] - hydroVars.GetFEq().f[l];
+              }
+
+              distribn_t density_1 = 1. / hydroVars.density;
+              distribn_t v_xx = hydroVars.v_x * hydroVars.v_x;
+              distribn_t v_yy = hydroVars.v_y * hydroVars.v_y;
+              distribn_t v_zz = hydroVars.v_z * hydroVars.v_z;
+
+              // Pi = sum_i e_i e_i f_i
+              // zeta = Pi / 2 (Cs^4)
+              Order2Tensor zeta = D3Q15::CalculatePiTensor(f_neq);
+
+              for (int m = 0; m < 3; m++)
+              {
+                for (int n = 0; n < 3; n++)
+                {
+                  zeta[m][n] /= (2.0 * Cs2 * Cs2);
+                }
+              }
+
+              // chi = Cs^2 I : zeta
+              const distribn_t chi = Cs2 * (zeta[0][0] + zeta[1][1] + zeta[2][2]);
+
+              // Now apply bounce-back to the components that require it, from fTemp
+              site_t lStreamTo[15];
+              for (int l = 0; l < 15; l++)
+              {
+                if (bLatDat->HasBoundary(lIndex, l))
+                {
+                  lStreamTo[l] = lIndex * 15 + D3Q15::INVERSEDIRECTIONS[l];
+                }
+                else
+                {
+                  lStreamTo[l] = bLatDat->GetStreamedIndex(lIndex, l);
+                }
+              }
+
+              const int *Cs[3] = { D3Q15::CX, D3Q15::CY, D3Q15::CZ };
+
+              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
+              {
+                // Calculate the dot-product of the velocity with the direction vector.
+                distribn_t vSum = hydroVars.v_x * (float) D3Q15::CX[ii] + hydroVars.v_y
+                    * (float) D3Q15::CY[ii] + hydroVars.v_z * (float) D3Q15::CZ[ii];
+
+                // Calculate the squared magnitude of the velocity.
+                distribn_t v2Sum = hydroVars.v_x * hydroVars.v_x + hydroVars.v_y * hydroVars.v_y
+                    + hydroVars.v_z * hydroVars.v_z;
+
+                // F eqm = density proportional component...
+                distribn_t streamed = hydroVars.density;
+
+                // ... - v^2 component...
+                streamed -= ( (3.0 / 2.0) * v2Sum / hydroVars.density);
+
+                // ... + v^1 component
+                streamed += 3.0 * vSum + (9.0 / 2.0) * vSum * vSum / hydroVars.density;
+
+                // Multiply by eqm weight.
+                streamed *= D3Q15::EQMWEIGHTS[ii];
+
+                // According to Latt & Chopard (Physical Review E77, 2008),
+                // f_neq[i] = (LatticeWeight[i] / (2 Cs^4)) *
+                //            Q_i : Pi(n_eq)
+                // Where Q_i = c_i c_i - Cs^2 I
+                // and Pi(n_eq) = Sum{i} (c_i c_i f_i)
+                //
+                // We pre-compute zeta = Pi(neq) / (2 Cs^4)
+                //             and chi =  Cs^2 I : zeta
+                // Hence we can compute f_neq[i] = LatticeWeight[i] * ((c_i c_i) : zeta - chi)
+                f_neq[ii] = -chi;
+
+                for (int aa = 0; aa < 3; ++aa)
+                {
+                  for (int bb = 0; bb < 3; ++bb)
+                  {
+                    f_neq[ii] += (float (Cs[aa][ii] * Cs[bb][ii])) * zeta[aa][bb];
+                  }
+                }
+
+                f_neq[ii] *= D3Q15::EQMWEIGHTS[ii];
+
+                * (bLatDat->GetFNew(lStreamTo[ii])) = streamed + (1.0 + iLbmParams->GetOmega())
+                    * f_neq[ii];
+              }
+
+              BaseStreamer<Regularised>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
+                                                                                    hydroVars.v_y,
+                                                                                    hydroVars.v_z,
+                                                                                    lIndex,
+                                                                                    hydroVars.GetFNeq().f,
+                                                                                    hydroVars.density,
+                                                                                    bLatDat,
+                                                                                    iLbmParams,
+                                                                                    iControl);
+            }
+          }
 
           template<bool tDoRayTracing>
-          void DoPostStep(WallCollision* mWallCollision,
-                          const site_t iFirstIndex,
+          void DoPostStep(const site_t iFirstIndex,
                           const site_t iSiteCount,
                           const LbmParameters* iLbmParams,
                           geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl);
+                          hemelb::vis::Control *iControl)
+          {
+
+          }
 
       };
-
-      template<typename tCollisionOperator>
-      template<bool tDoRayTracing>
-      void Regularised<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
-                                                               const site_t iFirstIndex,
-                                                               const site_t iSiteCount,
-                                                               const LbmParameters* iLbmParams,
-                                                               geometry::LatticeData* bLatDat,
-                                                               hemelb::vis::Control *iControl)
-      {
-        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
-        {
-          distribn_t *f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
-          distribn_t density, v_x, v_y, v_z;
-          distribn_t f_neq[15];
-
-          // First calculate the density and macro-velocity
-          // TEMPORARILY STORE f_eq IN f_neq BUT THE FUNCTION RETURNS f_eq. THIS IS SORTED
-          // OUT IN A SUBSEQUENT FOR LOOP.
-          D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_neq);
-
-          // To evaluate PI, first let unknown particle populations take value given by bounce-back of off-equilibrium parts
-          // (fi = fiEq + fopp(i) - fopp(i)Eq)
-          distribn_t fTemp[15];
-
-          for (int l = 0; l < 15; ++l)
-            fTemp[l] = f[l];
-
-          if (bLatDat->HasBoundary(lIndex, 1))
-          {
-            fTemp[1] = f[2] + (2.0 / 3.0) * v_x;
-          }
-          if (bLatDat->HasBoundary(lIndex, 2))
-          {
-            fTemp[2] = f[1] - (2.0 / 3.0) * v_x;
-          }
-          if (bLatDat->HasBoundary(lIndex, 3))
-          {
-            fTemp[3] = f[4] + (2.0 / 3.0) * v_y;
-          }
-          if (bLatDat->HasBoundary(lIndex, 4))
-          {
-            fTemp[4] = f[3] - (2.0 / 3.0) * v_y;
-          }
-          if (bLatDat->HasBoundary(lIndex, 5))
-          {
-            fTemp[5] = f[6] + (2.0 / 3.0) * v_z;
-          }
-          if (bLatDat->HasBoundary(lIndex, 6))
-          {
-            fTemp[6] = f[5] - (2.0 / 3.0) * v_z;
-          }
-          if (bLatDat->HasBoundary(lIndex, 7))
-          {
-            fTemp[7] = f[8] + (2.0 / 24.0) * ( (v_x + v_y) + v_z);
-          }
-          if (bLatDat->HasBoundary(lIndex, 8))
-          {
-            fTemp[8] = f[7] - (2.0 / 24.0) * ( (v_x + v_y) + v_z);
-          }
-          if (bLatDat->HasBoundary(lIndex, 9))
-          {
-            fTemp[9] = f[10] + (2.0 / 24.0) * ( (v_x + v_y) - v_z);
-          }
-          if (bLatDat->HasBoundary(lIndex, 10))
-          {
-            fTemp[10] = f[9] - (2.0 / 24.0) * ( (v_x + v_y) - v_z);
-          }
-          if (bLatDat->HasBoundary(lIndex, 11))
-          {
-            fTemp[11] = f[12] + (2.0 / 24.0) * ( (v_x - v_y) + v_z);
-          }
-          if (bLatDat->HasBoundary(lIndex, 12))
-          {
-            fTemp[12] = f[11] - (2.0 / 24.0) * ( (v_x - v_y) + v_z);
-          }
-          if (bLatDat->HasBoundary(lIndex, 13))
-          {
-            fTemp[13] = f[14] + (2.0 / 24.0) * ( (v_x - v_y) - v_z);
-          }
-          if (bLatDat->HasBoundary(lIndex, 14))
-          {
-            fTemp[14] = f[13] - (2.0 / 24.0) * ( (v_x - v_y) - v_z);
-          }
-
-          // UP TO THIS POINT, F_NEQ ACTUALLY CONTAINS F_EQ. AT THIS
-          // STAGE WE REPLACE IT WITH THE ACTUAL NON-EQ VALUE, POST
-          // BOUNCING_BACK WHERE NEEDED.
-          for (int l = 0; l < 15; l++)
-          {
-            f_neq[l] = fTemp[l] - f_neq[l];
-          }
-
-          distribn_t density_1 = 1. / density;
-          distribn_t v_xx = v_x * v_x;
-          distribn_t v_yy = v_y * v_y;
-          distribn_t v_zz = v_z * v_z;
-
-          // PI = sum_i e_i e_i f_i
-          distribn_t piMatrix[3][3];
-
-          distribn_t diagSum = f_neq[7] + f_neq[8] + f_neq[9] + f_neq[10] + f_neq[11] + f_neq[12]
-              + f_neq[13] + f_neq[14];
-
-          piMatrix[0][0] = f_neq[1] + f_neq[2] + diagSum;
-          piMatrix[0][1] = f_neq[7] + f_neq[8] + f_neq[9] + f_neq[10]
-              - (f_neq[11] + f_neq[12] + f_neq[13] + f_neq[14]);
-          piMatrix[0][2] = f_neq[7] + f_neq[8] + f_neq[11] + f_neq[12]
-              - (f_neq[9] + f_neq[10] + f_neq[13] + f_neq[14]);
-          piMatrix[1][0] = piMatrix[0][1];
-          piMatrix[1][1] = f_neq[3] + f_neq[4] + diagSum;
-          piMatrix[1][2] = f_neq[7] + f_neq[8] + f_neq[13] + f_neq[14]
-              - (f_neq[9] + f_neq[10] + f_neq[11] + f_neq[12]);
-          piMatrix[2][0] = piMatrix[0][2];
-          piMatrix[2][1] = piMatrix[1][2];
-          piMatrix[2][2] = f_neq[5] + f_neq[6] + diagSum;
-
-          for (int m = 0; m < 3; m++)
-            for (int n = 0; n < 3; n++)
-              piMatrix[m][n] /= (2.0 * Cs2 * Cs2);
-
-          // Qi = e_i e_i - (speed of sound ^ 2) * Identity
-          // Then gi = fiEq + t_i (the 2/9, 1/9, 1/72 stuff) (Qi . PI (inner product)) / 2 * speed of sound^4
-          // Or:  gi = fiEq + t_i (the 2/9, 1/9, 1/72 stuff) ((e_i e_i . PI (inner product)) / 2 * speed of sound^4 - specialNumber)
-          distribn_t specialNumber = (2.0 / 9.0) * Cs2
-              * (piMatrix[0][0] + piMatrix[1][1] + piMatrix[2][2]);
-          distribn_t piMatrixSum = piMatrix[0][0] + piMatrix[0][1] + piMatrix[0][2] + piMatrix[1][0]
-              + piMatrix[1][1] + piMatrix[1][2] + piMatrix[2][0] + piMatrix[2][1] + piMatrix[2][2];
-
-          // The gi (here; f) are then collided and streamed
-          * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, 0))) = ( (2.0 / 9.0) * density
-              - (1.0 / 3.0) * ( (v_xx + v_yy + v_zz) * density_1))
-              + (1.0 + iLbmParams->Omega) * (f_neq[0] = -specialNumber);
-
-          distribn_t temp1 = (1.0 / 9.0) * density
-              - (1.0 / 6.0) * ( (v_xx + v_yy + v_zz) * density_1);
-          specialNumber *= 1.0 / 2.0;
-
-          // Now apply bounce-back to the components that require it, from fTemp
-          site_t lStreamTo[15];
-          for (int l = 1; l < 15; l++)
-          {
-            if (bLatDat->HasBoundary(lIndex, l))
-            {
-              lStreamTo[l] = lIndex * 15 + D3Q15::INVERSEDIRECTIONS[l];
-            }
-            else
-            {
-              lStreamTo[l] = bLatDat->GetStreamedIndex(lIndex, l);
-            }
-          }
-
-          * (bLatDat->GetFNew(lStreamTo[1])) = temp1 + (0.5 * density_1) * v_xx + (1.0 / 3.0) * v_x
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[1] = (1.0 / 9.0) * piMatrix[0][0] - specialNumber); // (+1, 0, 0)
-          * (bLatDat->GetFNew(lStreamTo[2])) = temp1 + (0.5 * density_1) * v_xx - (1.0 / 3.0) * v_x
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[2] = (1.0 / 9.0) * piMatrix[0][0] - specialNumber); // (+1, 0, 0)
-
-          * (bLatDat->GetFNew(lStreamTo[3])) = temp1 + (0.5 * density_1) * v_yy + (1.0 / 3.0) * v_y
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[3] = (1.0 / 9.0) * piMatrix[1][1] - specialNumber); // (0, +1, 0)
-          * (bLatDat->GetFNew(lStreamTo[4])) = temp1 + (0.5 * density_1) * v_yy - (1.0 / 3.0) * v_y
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[4] = (1.0 / 9.0) * piMatrix[1][1] - specialNumber); // (0, +1, 0)
-
-          * (bLatDat->GetFNew(lStreamTo[5])) = temp1 + (0.5 * density_1) * v_zz + (1.0 / 3.0) * v_z
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[5] = (1.0 / 9.0) * piMatrix[2][2] - specialNumber); // (0, +1, 0)
-          * (bLatDat->GetFNew(lStreamTo[6])) = temp1 + (0.5 * density_1) * v_zz - (1.0 / 3.0) * v_z
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[6] = (1.0 / 9.0) * piMatrix[2][2] - specialNumber); // (0, +1, 0)
-
-          temp1 *= (1.0 / 8.0);
-          specialNumber *= (1.0 / 8.0);
-
-          distribn_t temp2 = (v_x + v_y) + v_z;
-
-          * (bLatDat->GetFNew(lStreamTo[7])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-              + (1.0 / 24.0) * temp2
-              + (1.0 + iLbmParams->Omega) * (f_neq[7] =
-                  ( (1.0 / 72.0) * piMatrixSum - specialNumber)); // (+1, +1, +1)
-          * (bLatDat->GetFNew(lStreamTo[8])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-              + (-1.0 / 24.0) * temp2
-              + (1.0 + iLbmParams->Omega) * (f_neq[8] =
-                  ( (1.0 / 72.0) * piMatrixSum - specialNumber)); // (-1, -1, -1)
-
-          temp2 = (v_x + v_y) - v_z;
-
-          * (bLatDat->GetFNew(lStreamTo[9])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-              + (1.0 / 24.0) * temp2
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[9] = ( (1.0 / 72.0)
-                      * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2])) - specialNumber)); // (+1, +1, -1)
-          * (bLatDat->GetFNew(lStreamTo[10])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-              + (-1.0 / 24.0) * temp2
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[10] = ( (1.0 / 72.0)
-                      * (piMatrixSum - 4.0 * (piMatrix[0][2] + piMatrix[1][2])) - specialNumber)); // (-1, -1, +1)
-
-          temp2 = (v_x - v_y) + v_z;
-
-          * (bLatDat->GetFNew(lStreamTo[11])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-              + (1.0 / 24.0) * temp2
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[11] = ( (1.0 / 72.0)
-                      * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2])) - specialNumber)); // (+1, -1, +1)
-          * (bLatDat->GetFNew(lStreamTo[12])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-              + (-1.0 / 24.0) * temp2
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[12] = ( (1.0 / 72.0)
-                      * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[1][2])) - specialNumber)); // (-1, +1, -1)
-
-          temp2 = (v_x - v_y) - v_z;
-
-          * (bLatDat->GetFNew(lStreamTo[13])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-              + (1.0 / 24.0) * temp2
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[13] = ( (1.0 / 72.0)
-                      * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (+1, -1, -1)
-          * (bLatDat->GetFNew(lStreamTo[14])) = temp1 + (1.0 / 16.0) * density_1 * temp2 * temp2
-              + (-1.0 / 24.0) * temp2
-              + (1.0 + iLbmParams->Omega)
-                  * (f_neq[14] = ( (1.0 / 72.0)
-                      * (piMatrixSum - 4.0 * (piMatrix[0][1] + piMatrix[0][2])) - specialNumber)); // (-1, +1, +1)
-
-          UpdateMinsAndMaxes < tDoRayTracing
-              > (v_x, v_y, v_z, lIndex, f_neq, density, bLatDat, iLbmParams, iControl);
-        }
-      }
-
-      template<typename tCollisionOperator>
-      template<bool tDoRayTracing>
-      void Regularised<tCollisionOperator>::DoPostStep(WallCollision* mWallCollision,
-                                                       const site_t iFirstIndex,
-                                                       const site_t iSiteCount,
-                                                       const LbmParameters* iLbmParams,
-                                                       geometry::LatticeData* bLatDat,
-                                                       hemelb::vis::Control *iControl)
-      {
-
-      }
-
     }
   }
 }
