@@ -3,11 +3,6 @@
 
 #include "lb/streamers/BaseStreamer.h"
 
-/**
- * TODO This class hasn't been modified to fit the new kernel / collision / streamer
- * hierarchy. This needs to happen before it can be used in the LBM.
- */
-
 namespace hemelb
 {
   namespace lb
@@ -15,93 +10,116 @@ namespace hemelb
     namespace streamers
     {
 
-      template<typename tCollisionOperator>
-      class FInterpolation : public Implementation
+      template<typename CollisionType>
+      class FInterpolation : public BaseStreamer<FInterpolation<CollisionType> >
       {
+        private:
+          CollisionType collider;
 
         public:
-          template<bool tDoRayTracing>
-          void DoStreamAndCollide(WallCollision* mWallCollision,
-                                  const site_t iFirstIndex,
-                                  const site_t iSiteCount,
-                                  const LbmParameters* iLbmParams,
-                                  geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl);
-
-          template<bool tDoRayTracing>
-          void DoPostStep(WallCollision* mWallCollision,
-                          const site_t iFirstIndex,
-                          const site_t iSiteCount,
-                          const LbmParameters* iLbmParams,
-                          geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl);
-
-      };
-
-      template<typename tCollisionOperator>
-      template<bool tDoRayTracing>
-      void FInterpolation<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
-                                                                  const site_t iFirstIndex,
-                                                                  const site_t iSiteCount,
-                                                                  const LbmParameters* iLbmParams,
-                                                                  geometry::LatticeData* bLatDat,
-                                                                  hemelb::vis::Control *iControl)
-      {
-        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
-        {
-          distribn_t* f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
-          distribn_t density, v_x, v_y, v_z, f_neq[15];
-          // Temporarily store f_eq in f_neq. Rectified later.
-          D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, f_neq);
-
-          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+          FInterpolation(kernels::InitParams& initParams) :
+            collider(initParams)
           {
-            * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = f[ii] += iLbmParams->Omega
-                * (f_neq[ii] = f[ii] - f_neq[ii]);
+
           }
 
-          UpdateMinsAndMaxes < tDoRayTracing
-              > (v_x, v_y, v_z, lIndex, f_neq, density, bLatDat, iLbmParams, iControl);
-        }
-      }
-
-      template<typename tCollisionOperator>
-      template<bool tDoRayTracing>
-      void FInterpolation<tCollisionOperator>::DoPostStep(WallCollision* mWallCollision,
-                                                          const site_t iFirstIndex,
-                                                          const site_t iSiteCount,
-                                                          const LbmParameters* iLbmParams,
-                                                          geometry::LatticeData* bLatDat,
-                                                          hemelb::vis::Control *iControl)
-      {
-        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
-        {
-          // Handle odd indices, then evens - it's slightly easier to take the odd
-          // and even cases separately.
-          for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+          template<bool tDoRayTracing>
+          void DoStreamAndCollide(const site_t firstIndex,
+                                  const site_t siteCount,
+                                  const LbmParameters* const iLbmParams,
+                                  geometry::LatticeData* const latticeData,
+                                  hemelb::vis::Control *visControl)
           {
-            if (bLatDat->HasBoundary(lIndex, l))
+            for (site_t index = firstIndex; index < (firstIndex + siteCount); index++)
             {
-              double twoQ = 2.0 * bLatDat->GetCutDistance(lIndex, l);
+              distribn_t* distribution = latticeData->GetFOld(index * D3Q15::NUMVECTORS);
 
-              * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l])) =
-                  (twoQ < 1.0)
-                  ?
-                    (*bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + l)
-                        + twoQ
-                            * (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + l)
-                                - *bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + l)))
-                        :
-                    (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + D3Q15::INVERSEDIRECTIONS[l])
-                        + (1. / twoQ)
-                            * (*bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS + l)
-                                - *bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS
-                                    + D3Q15::INVERSEDIRECTIONS[l])));
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(distribution);
+
+              // In the first step, we stream and collide as we would for the SimpleCollideAndStream
+              // streamer.
+              collider.CalculatePreCollision(hydroVars, index - firstIndex);
+
+              for (unsigned int direction = 0; direction < D3Q15::NUMVECTORS; direction++)
+              {
+                // Note that the post-step of this boundary condition relies on the post-collsion
+                // value being written over f_old.
+                distribution[direction] = collider.Collide(iLbmParams, direction, hydroVars);
+
+                * (latticeData->GetFNew(latticeData->GetStreamedIndex(index, direction)))
+                    = distribution[direction];
+              }
+
+              BaseStreamer<FInterpolation>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
+                                                                                       hydroVars.v_y,
+                                                                                       hydroVars.v_z,
+                                                                                       index,
+                                                                                       hydroVars.GetFNeq().f,
+                                                                                       hydroVars.density,
+                                                                                       latticeData,
+                                                                                       iLbmParams,
+                                                                                       visControl);
             }
           }
-        }
-      }
 
+          template<bool tDoRayTracing>
+          void DoPostStep(const site_t firstIndex,
+                          const site_t siteCount,
+                          const LbmParameters* lbmParameters,
+                          geometry::LatticeData* latticeData,
+                          hemelb::vis::Control *visControl)
+          {
+            for (site_t siteIndex = firstIndex; siteIndex < (firstIndex + siteCount); siteIndex++)
+            {
+              // Iterate over the direction indices.
+              for (unsigned int direction = 1; direction < D3Q15::NUMVECTORS; direction++)
+              {
+                // If there's a boundary in that direction and none in the other direction, do the
+                // f-interpolation.
+                if (latticeData->HasBoundary(siteIndex, direction))
+                {
+                  int inverseDirection = D3Q15::INVERSEDIRECTIONS[direction];
+
+                  if (!latticeData->HasBoundary(siteIndex, inverseDirection))
+                  {
+                    // Calculate 2 x the distance to the boundary.
+                    distribn_t twoQ = 2.0 * latticeData->GetCutDistance(siteIndex, direction);
+
+                    distribn_t thisDirectionNew = *latticeData->GetFNew(siteIndex
+                        * D3Q15::NUMVECTORS + direction);
+                    distribn_t thisDirectionOld = *latticeData->GetFOld(siteIndex
+                        * D3Q15::NUMVECTORS + direction);
+                    distribn_t oppDirectionOld = *latticeData->GetFOld(siteIndex
+                        * D3Q15::NUMVECTORS + inverseDirection);
+
+                    // Interpolate between the values of the f direction to work out a new streamed value.
+                    distribn_t streamed = (twoQ < 1.0)
+                      ? (thisDirectionNew + twoQ * (thisDirectionOld - thisDirectionNew))
+                      : (oppDirectionOld + (1. / twoQ) * (thisDirectionOld - oppDirectionOld));
+
+                    // This streamed value is assigned to the f-distribution in the direction facing
+                    // away from the boundary.
+                    * (latticeData->GetFNew(siteIndex * D3Q15::NUMVECTORS + inverseDirection))
+                        = streamed;
+                  }
+                  // If there are boundaries in both directions perform simple bounce-back using the
+                  // post-collision values in f_old.
+                  else
+                  {
+                    * (latticeData->GetFNew(siteIndex * D3Q15::NUMVECTORS + inverseDirection))
+                        = *latticeData->GetFOld(siteIndex * D3Q15::NUMVECTORS + direction);
+                  }
+                }
+              }
+            }
+          }
+
+          void DoReset(kernels::InitParams* init)
+          {
+            collider.Reset(init);
+          }
+
+      };
     }
   }
 }

@@ -44,8 +44,7 @@ namespace hemelb
             // use these to initialise the simulations state, LBM parameters and a unit converter.
             simState = new lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
             lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s
-                                                  / (distribn_t) simState->GetTimeStepsPerCycle(),
-                                              latDat->GetVoxelSize());
+                / (distribn_t) simState->GetTimeStepsPerCycle(), latDat->GetVoxelSize());
             unitConverter = new util::UnitConverter(lbmParams, simState, latDat->GetVoxelSize());
 
             // Create the inlet and outlet boundary objects.
@@ -106,10 +105,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              fOld[ii] = ((distribn_t) (ii + 1)) / 10.0;
-            }
+            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -159,10 +155,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              fOld[ii] = ((distribn_t) (ii + 1)) / 10.0;
-            }
+            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -211,10 +204,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              fOld[ii] = ((distribn_t) (ii + 1)) / 10.0;
-            }
+            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -266,10 +256,7 @@ namespace hemelb
             // Initialise the fOld and the hydro vars.
             distribn_t fOld[D3Q15::NUMVECTORS];
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              fOld[ii] = ((distribn_t) (ii + 1)) / 10.0;
-            }
+            LbTestsHelper::InitialiseAnisotropicTestData(0, fOld);
 
             lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(fOld);
 
@@ -323,8 +310,10 @@ namespace hemelb
 
           lb::kernels::LBGK* lbgk;
 
-          lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK> * nonZeroVFixedDensityILet;
-          lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK>* zeroVFixedDensityOLet;
+          lb::collisions::NonZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK>
+              * nonZeroVFixedDensityILet;
+          lb::collisions::ZeroVelocityEquilibriumFixedDensity<lb::kernels::LBGK>
+              * zeroVFixedDensityOLet;
           lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK>* zeroVEqm;
           lb::collisions::Normal<lb::kernels::LBGK>* normal;
       };
