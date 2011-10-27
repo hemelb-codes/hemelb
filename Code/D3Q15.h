@@ -4,6 +4,22 @@
 #include "constants.h"
 namespace hemelb
 {
+  struct Order2Tensor
+  {
+      distribn_t tensor[3][3];
+
+      /**
+       * Convenience accessor.
+       *
+       * * @param row
+       * @return
+       */
+      distribn_t* operator [](const unsigned int row)
+      {
+        return tensor[row];
+      }
+  };
+
   class D3Q15
   {
     public:
@@ -14,6 +30,7 @@ namespace hemelb
       static const int CX[NUMVECTORS];
       static const int CY[NUMVECTORS];
       static const int CZ[NUMVECTORS];
+      static const int* discreteVelocityVectors[3];
 
       static const double EQMWEIGHTS[NUMVECTORS];
 
@@ -52,6 +69,16 @@ namespace hemelb
       static void CalculateVonMisesStress(const distribn_t f[],
                                           distribn_t &stress,
                                           const double iStressParameter);
+
+      /**
+       * Computes the Pi tensor, the second-order moment of the f-distribution.
+       * Pi = Sum over directions {c_i c_i f_i}
+       *
+       * @param f
+       * @return
+       */
+      static Order2Tensor CalculatePiTensor(const distribn_t* const f);
+
       static void CalculateShearStress(const distribn_t &density,
                                        const distribn_t f[],
                                        const double nor[],

@@ -1,6 +1,7 @@
 #ifndef HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 #define HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 
+#include <cstdlib>
 #include "geometry/LatticeData.h"
 
 namespace hemelb
@@ -19,7 +20,7 @@ namespace hemelb
          * @return
          */
         FourCubeLatticeData() :
-            LatticeData()
+          LatticeData()
         {
           globLatDat.SetBasicDetails(1, 1, 1, 4, 0.01, 0.0, 0.0, 0.0);
 
@@ -31,15 +32,16 @@ namespace hemelb
 
           BlockData* block = &globLatDat.Blocks[0];
 
-          block->ProcessorRankForEachBlockSite =
-              new proc_t[globLatDat.GetSitesPerBlockVolumeUnit()];block
-          ->site_data = new unsigned int[globLatDat.GetSitesPerBlockVolumeUnit()];
+          block->ProcessorRankForEachBlockSite
+              = new proc_t[globLatDat.GetSitesPerBlockVolumeUnit()];
+          block ->site_data = new unsigned int[globLatDat.GetSitesPerBlockVolumeUnit()];
+          block->wall_data = new LatticeData::WallData[globLatDat.GetSitesPerBlockVolumeUnit()];
 
           // Iterate through the fluid sides and assign variables as necessary.
-          for(unsigned int ii = 0; ii < COLLISION_TYPES; ++ii)
+          for (unsigned int collisionType = 0; collisionType < COLLISION_TYPES; ++collisionType)
           {
-            localLatDat.my_inner_collisions[ii] = 0;
-            localLatDat.my_inter_collisions[ii] = 0;
+            localLatDat.my_inner_collisions[collisionType] = 0;
+            localLatDat.my_inter_collisions[collisionType] = 0;
           }
 
           site_t index = -1;
@@ -66,13 +68,12 @@ namespace hemelb
                 // Near inlet
                 if (zMin)
                 {
-                  localLatDat.mSiteData[index] |= INLET;
+                  localLatDat.mSiteData[index] |= INLET_TYPE;
                   localLatDat.mSiteData[index] |= 0 << BOUNDARY_ID_SHIFT;
 
                   // Also near wall
                   if (nearWall)
                   {
-                    localLatDat.mSiteData[index] |= EDGE;
                     collType = 4;
                   }
                   else
@@ -83,12 +84,11 @@ namespace hemelb
                 // Near outlet
                 else if (zMax)
                 {
-                  localLatDat.mSiteData[index] |= OUTLET;
+                  localLatDat.mSiteData[index] |= OUTLET_TYPE;
                   localLatDat.mSiteData[index] |= 0 << BOUNDARY_ID_SHIFT;
 
                   if (nearWall)
                   {
-                    localLatDat.mSiteData[index] |= EDGE;
                     collType = 5;
                   }
                   else
@@ -99,16 +99,27 @@ namespace hemelb
                 // Not near in/outlet
                 else
                 {
+                  localLatDat.mSiteData[index] |= FLUID_TYPE;
                   if (nearWall)
                   {
-                    localLatDat.mSiteData[index] |= EDGE;
                     collType = 1;
                   }
                   else
                   {
-                    localLatDat.mSiteData[index] |= FLUID;
                     collType = 0;
                   }
+                }
+
+                for (unsigned int ll = 1; ll < D3Q15::NUMVECTORS; ++ll)
+                {
+                  if (!globLatDat.IsValidLatticeSite(i + D3Q15::CX[ll], j + D3Q15::CY[ll], k
+                      + D3Q15::CZ[ll]))
+                  {
+                    localLatDat.mSiteData[index] |= 1U << (BOUNDARY_CONFIG_SHIFT + ll - 1);
+                    block->wall_data[index].cut_dist[ll - 1] = double (std::rand() % 10000)
+                        / 10000.0;
+                  }
+                  localLatDat.SetDistanceToWall(index, block->wall_data[index].cut_dist);
                 }
 
                 localLatDat.my_inner_collisions[collType]++;

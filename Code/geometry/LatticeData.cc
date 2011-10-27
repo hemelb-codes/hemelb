@@ -367,7 +367,7 @@ namespace hemelb
       return localLatDat.GetStreamedIndex(iSiteIndex, iDirectionIndex);
     }
 
-    bool LatticeData::HasBoundary(site_t iSiteIndex, int iDirection) const
+    bool LatticeData::HasBoundary(const site_t iSiteIndex, const int iDirection) const
     {
       return localLatDat.HasBoundary(iSiteIndex, iDirection);
     }
