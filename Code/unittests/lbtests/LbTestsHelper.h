@@ -83,8 +83,8 @@ namespace hemelb
             for (unsigned int ii = 0; ii < Lattice::NUMVECTORS; ++ii)
             {
               // Calculate the dot-product of the velocity with the direction vector.
-              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii]
-                  + v_z * (float) Lattice::CZ[ii];
+              distribn_t vSum = v_x * (float) Lattice::CX[ii] + v_y * (float) Lattice::CY[ii] + v_z
+                  * (float) Lattice::CZ[ii];
 
               // Calculate the squared magnitude of the velocity.
               distribn_t v2Sum = v_x * v_x + v_y * v_y + v_z * v_z;
@@ -172,6 +172,24 @@ namespace hemelb
                                                    expectedFEq[ii],
                                                    hydroVars.GetFEq().f[ii],
                                                    allowedError);
+            }
+          }
+
+          static void InitialiseAnisotropicTestData(hemelb::geometry::LatticeData* latticeData)
+          {
+            for (site_t site = 0; site < latticeData->GetLocalFluidSiteCount(); ++site)
+            {
+              distribn_t* fOld = latticeData->GetFOld(site * D3Q15::NUMVECTORS);
+              InitialiseAnisotropicTestData(site, fOld);
+            }
+          }
+
+          static void InitialiseAnisotropicTestData(site_t site, distribn_t* distribution)
+          {
+            for (unsigned int direction = 0; direction < D3Q15::NUMVECTORS; ++direction)
+            {
+              distribution[direction] = ((distribn_t) (direction + 1)) / 10.0
+                  + ((distribn_t) (site)) / 100.0;
             }
           }
       };

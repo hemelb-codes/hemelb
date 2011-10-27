@@ -141,7 +141,7 @@ namespace hemelb
         SiteType GetSiteType(site_t iSiteIndex) const;
         int GetBoundaryId(site_t iSiteIndex) const;
         site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
-        bool HasBoundary(site_t iSiteIndex, int iDirection) const;
+        bool HasBoundary(const site_t iSiteIndex, const int iDirection) const;
         double GetCutDistance(site_t iSiteIndex, int iDirection) const;
         unsigned int GetSiteData(site_t iSiteIndex) const;
         unsigned int GetContiguousSiteId(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
@@ -168,7 +168,7 @@ namespace hemelb
 
             site_t GetStreamedIndex(site_t iSiteIndex, unsigned int iDirectionIndex) const;
             double GetCutDistance(site_t iSiteIndex, int iDirection) const;
-            bool HasBoundary(site_t iSiteIndex, int iDirection) const;
+            bool HasBoundary(const site_t iSiteIndex, const int iDirection) const;
             int GetBoundaryId(site_t iSiteIndex) const;
             const double *GetNormalToWall(site_t iSiteIndex) const;
             SiteType GetSiteType(site_t iSiteIndex) const;
@@ -176,7 +176,8 @@ namespace hemelb
 
             void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
             void SetWallNormal(site_t iSiteIndex, const double iNormal[3]);
-            void SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS - 1]);
+            void SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS
+                - 1]);
 
             void SetSharedSiteCount(site_t iSharedCount);
 
