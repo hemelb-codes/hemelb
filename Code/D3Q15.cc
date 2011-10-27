@@ -6,6 +6,7 @@ namespace hemelb
   const int D3Q15::CX[] = { 0, 1, -1, 0, 0, 0, 0, 1, -1, 1, -1, 1, -1, 1, -1 };
   const int D3Q15::CY[] = { 0, 0, 0, 1, -1, 0, 0, 1, -1, 1, -1, -1, 1, -1, 1 };
   const int D3Q15::CZ[] = { 0, 0, 0, 0, 0, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1 };
+  const int* D3Q15::discreteVelocityVectors[] = { CX, CY, CZ };
 
   const distribn_t D3Q15::EQMWEIGHTS[] = { 2.0 / 9.0,
                                            1.0 / 9.0,
@@ -250,6 +251,35 @@ namespace hemelb
     }
     // shear_stress^2 + normal_stress^2 = stress_vector^2
     stress = sqrt(square_stress_vector - normal_stress * normal_stress);
+  }
+
+  Order2Tensor D3Q15::CalculatePiTensor(const distribn_t* const f)
+  {
+    Order2Tensor ret;
+
+    // Fill in 0,0 1,0 1,1 2,0 2,1 2,2
+    for (int ii = 0; ii < 3; ++ii)
+    {
+      for (int jj = 0; jj <= ii; ++jj)
+      {
+        ret[ii][jj] = 0.0;
+        for (unsigned int l = 0; l < NUMVECTORS; ++l)
+        {
+          ret[ii][jj] += f[l] * discreteVelocityVectors[ii][l] * discreteVelocityVectors[jj][l];
+        }
+      }
+    }
+
+    // Exploit the symmetry to fill in 0,1 0,2 1,2
+    for (int ii = 0; ii < 3; ++ii)
+    {
+      for (int jj = ii + 1; jj < 3; ++jj)
+      {
+        ret[ii][jj] = ret[jj][ii];
+      }
+    }
+
+    return ret;
   }
 
   distribn_t D3Q15::CalculateStrainRateTensorComponent(const unsigned &iRow,
