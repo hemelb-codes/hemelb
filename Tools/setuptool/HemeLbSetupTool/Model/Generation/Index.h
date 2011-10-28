@@ -5,188 +5,165 @@
 #include <iterator>
 #include <ostream>
 
-//#define BOUNDS_CHECK
-
-#ifdef BOUNDS_CHECK
-#include <exception>
-
 class IndexError: public std::exception {
 	virtual const char* what() const throw () {
 		return "IndexError";
 	}
 };
-#endif
 
+// Fully defined below.
 template<typename T> class Iterator;
 
 template<typename T>
 class Vec3 {
+protected:
+	// Change this to true for debugging of Vec3 problems
+	enum {
+		CHECKBOUNDS = false
+	};
+	T impl[3];
 public:
-	T x, y, z;
-
 	// Ctors
-	Vec3(T InX, T InY, T InZ) :
-		x(InX), y(InY), z(InZ) {
+	Vec3(T InX, T InY, T InZ) {
+		this->impl[0] = InX;
+		this->impl[1] = InY;
+		this->impl[2] = InZ;
 	}
 
-	Vec3() :
-		x(0), y(0), z(0) {
+	Vec3() {
+		this->impl[0] = 0;
+		this->impl[1] = 0;
+		this->impl[2] = 0;
 	}
 
-	Vec3(const Vec3& other) :
-		x(other.x), y(other.y), z(other.z) {
+	Vec3(const Vec3& other) {
+		this->impl[0] = other.impl[0];
+		this->impl[1] = other.impl[1];
+		this->impl[2] = other.impl[2];
 	}
 
 	template<typename U>
-	Vec3(const Vec3<U>& other) :
-		x(T(other.x)), y(T(other.y)), z(T(other.z)) {
-
+	Vec3(const Vec3<U>& other) {
+		this->impl[0] = T(other.impl[0]);
+		this->impl[1] = T(other.impl[1]);
+		this->impl[2] = T(other.impl[2]);
 	}
+
 	// Operator Overloads
 	bool operator==(const Vec3& other) const {
-		return (x == other.x && y == other.y && z == other.z);
+		return (this->impl[0] == other.impl[0] && this->impl[1]
+				== other.impl[1] && this->impl[2] == other.impl[2]);
 	}
 
 	T& operator[](const int i) {
-#ifdef BOUNDS_CHECK
-		if (i < 0)
-			throw IndexError();
-#endif
-		if (i == 0)
-			return x;
-		else if (i == 1)
-			return y;
-		else
-#if BOUNDS_CHECK
-			if (i == 2)
-#endif
-			return z;
-
-#ifdef BOUNDS_CHECK
-		throw IndexError();
-#endif
+		if (CHECKBOUNDS) {
+			if (i < 0 || i > 2)
+				throw IndexError();
+		}
+		return this->impl[i];
 	}
 
 	const T& operator[](const int i) const {
-#ifdef BOUNDS_CHECK
-		if (i < 0)
-			throw IndexError();
-#endif
-		if (i == 0)
-			return x;
-		else if (i == 1)
-			return y;
-		else
-#ifdef BOUNDS_CHECK
-			if (i == 2)
-#endif
-			return z;
-#ifdef BOUNDS_CHECK
-		throw IndexError();
-#endif
+		if (CHECKBOUNDS) {
+			if (i < 0 || i > 2)
+				throw IndexError();
+		}
+		return this->impl[i];
 	}
 
-	//#else
-	//	T& operator[](const int i) {
-	//		if (i == 0)
-	//		return x;
-	//		else if (i == 1)
-	//		return y;
-	//		else
-	//		return z;
-	//	}
-	//	const T& operator[](const int i) const {
-	//		if (i == 0)
-	//		return x;
-	//		else if (i == 1)
-	//		return y;
-	//		else
-	//		return z;
-	//	}
-	//#endif
-
 	Vec3 operator+(const Vec3& V2) const {
-		return Vec3(x + V2.x, y + V2.y, z + V2.z);
+		return Vec3(this->impl[0] + V2.impl[0], this->impl[1] + V2.impl[1],
+				this->impl[2] + V2.impl[2]);
 	}
 
 	Vec3 operator-(const Vec3& V2) const {
-		return Vec3(x - V2.x, y - V2.y, z - V2.z);
+		return Vec3(this->impl[0] - V2.impl[0], this->impl[1] - V2.impl[1],
+				this->impl[2] - V2.impl[2]);
 	}
 
 	Vec3 operator+(const T& val) const {
-		return Vec3(x + val, y + val, z + val);
+		return Vec3(this->impl[0] + val, this->impl[1] + val,
+				this->impl[2] + val);
 	}
 
 	Vec3 operator-(const T& val) const {
-		return Vec3(x - val, y - val, z - val);
+		return Vec3(this->impl[0] - val, this->impl[1] - val,
+				this->impl[2] - val);
 	}
 
 	Vec3 operator-() const {
-		return Vec3(-x, -y, -z);
+		return Vec3(-this->impl[0], -this->impl[1], -this->impl[2]);
 	}
 
 	Vec3 operator/(T S) const {
-		return Vec3(x / S, y / S, z / S);
+		return Vec3(this->impl[0] / S, this->impl[1] / S, this->impl[2] / S);
 	}
 
 	Vec3 operator%(T S) const {
-		return Vec3(x % S, y % S, z % S);
+		return Vec3(this->impl[0] % S, this->impl[1] % S, this->impl[2] % S);
 	}
 
 	Vec3 operator*(T S) const {
-		return Vec3(x * S, y * S, z * S);
+		return Vec3(this->impl[0] * S, this->impl[1] * S, this->impl[2] * S);
 	}
 
 	Vec3& operator+=(const Vec3& V2) {
-		x += V2.x;
-		y += V2.y;
-		z += V2.z;
+		this->impl[0] += V2.impl[0];
+		this->impl[1] += V2.impl[1];
+		this->impl[2] += V2.impl[2];
 		return *this;
 	}
 
 	Vec3& operator-=(const Vec3& V2) {
-		x -= V2.x;
-		y -= V2.y;
-		z -= V2.z;
+		this->impl[0] -= V2.impl[0];
+		this->impl[1] -= V2.impl[1];
+		this->impl[2] -= V2.impl[2];
 		return *this;
 	}
 
 	Vec3& operator/=(T S) {
-		x /= S;
-		y /= S;
-		z /= S;
+		this->impl[0] /= S;
+		this->impl[1] /= S;
+		this->impl[2] /= S;
 		return *this;
 	}
 
 	Vec3 operator*=(T S) {
-		x *= S;
-		y *= S;
-		z *= S;
+		this->impl[0] *= S;
+		this->impl[1] *= S;
+		this->impl[2] *= S;
 		return *this;
 	}
 
 	// Functions
 	static T Dot(const Vec3 &V1, const Vec3 &V2) {
-		return V1.x * V2.x + V1.y * V2.y + V1.z * V2.z;
+		return V1.impl[0] * V2.impl[0] + V1.impl[1] * V2.impl[1] + V1.impl[2]
+				* V2.impl[2];
 	}
 
 	T Dot(const Vec3 &V1) const {
-		return V1.x * x + V1.y * y + V1.z * z;
+		return V1.impl[0] * this->impl[0] + V1.impl[1] * this->impl[1]
+				+ V1.impl[2] * this->impl[2];
 	}
 
 	static Vec3 Cross(const Vec3& V1, const Vec3 &V2) {
-		return Vec3(V1.y * V2.z - V1.z * V2.y, V1.z * V2.x - V1.x * V2.z,
-				V1.x * V2.y - V1.y * V2.x);
+		return Vec3(V1.impl[1] * V2.impl[2] - V1.impl[2] * V2.impl[1],
+				V1.impl[2] * V2.impl[0] - V1.impl[0] * V2.impl[2],
+				V1.impl[0] * V2.impl[1] - V1.impl[1] * V2.impl[0]);
 	}
 
 	Vec3 Cross(const Vec3 &V2) const {
-		return Vec3(y * V2.z - z * V2.y, z * V2.x - x * V2.z,
-				x * V2.y - y * V2.x);
+		return Vec3(this->impl[1] * V2.impl[2] - this->impl[2] * V2.impl[1],
+				this->impl[2] * V2.impl[0] - this->impl[0] * V2.impl[2],
+				this->impl[0] * V2.impl[1] - this->impl[1] * V2.impl[0]);
 	}
 
 	template<typename U>
 	U Magnitude() const {
-		return U(std::sqrt(x * x + y * y + z * z));
+		return U(
+				std::sqrt(
+						this->impl[0] * this->impl[0] + this->impl[1]
+								* this->impl[1] + this->impl[2] * this->impl[2]));
 	}
 
 	static T Distance(const Vec3& V1, const Vec3& V2) {
@@ -205,6 +182,8 @@ public:
 		(*this) * (1. / mag);
 		return;
 	}
+
+	typedef T value_type;
 	typedef Iterator<T> iterator;
 	iterator begin() {
 		return iterator(*this, 0U);
@@ -213,19 +192,21 @@ public:
 	iterator end() {
 		return iterator(*this, 3U);
 	}
-
-	//friend std::ostream& operator<< (std::ostream& o, Vec3<T> const& v3);
+	// Be friends with all other Vec3 instantiations.
+	template<class > friend class Vec3;
 };
 
 template<typename T>
 std::ostream& operator<<(std::ostream& o, Vec3<T> const& v3) {
-	return o << "x: " << v3.x << "; y: " << v3.y << "; z: " << v3.z;
+	return o << "x: " << v3[0] << "; y: " << v3[1] << "; z: " << v3[2];
 }
 
 template<typename T>
 class Iterator: public std::iterator<std::forward_iterator_tag, T> {
+public:
+	typedef Vec3<T> vector;
 protected:
-	Vec3<T>* vec;
+	vector* vec;
 	unsigned int i;
 
 public:
@@ -233,7 +214,7 @@ public:
 		vec(NULL), i(0) {
 	}
 
-	Iterator(Vec3<T>& vec, unsigned int i = 0) :
+	Iterator(vector& vec, unsigned int i = 0) :
 		vec(&vec), i(i) {
 	}
 
@@ -276,21 +257,4 @@ public:
 typedef Vec3<int> Index;
 typedef Vec3<double> Vector;
 
-//class BlockIndex: public Index {
-//};
-//class GlobalSiteIndex: public Index {
-//public:
-//	BlockIndex ToBlock(int n) const {
-//		BlockIndex ans (*reinterpret_cast<const BlockIndex*> (this));
-//		ans /= n;
-//		return ans;
-//	}
-//};
-//class LocalSiteIndex: public Index {
-//};
-
-//template<typename T, typename U>
-//Vec3<T> convert(const Vec3<U> source) {
-//	return Vec3<T> (T(source.x), T(source.y), T(source.z));
-//}
 #endif // HEMELBSETUPTOOL_INDEX_H
