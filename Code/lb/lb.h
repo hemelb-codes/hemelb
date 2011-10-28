@@ -16,8 +16,15 @@
 
 namespace hemelb
 {
+  /**
+   * Namespace 'lb' contains classes for the scientific core of the Lattice Boltzman simulation
+   */
   namespace lb
   {
+    /**
+     * Class providing core Lattice Boltzmann functionality.
+     * Implements the IteratedAction interface.
+     */
     class LBM : public net::IteratedAction
     {
       private:
@@ -46,25 +53,37 @@ namespace hemelb
             LB_KERNEL> > tInletOutletWallCollision;
 
       public:
+        /**
+         * Constructor, stage 1.
+         * Object so initialized is not ready for simulation.
+         * Must have Initialise(...) called also. Constructor separated due to need to access
+         * the partially initialized LBM in order to initialize the arguments to the second construction phase.
+         */
         LBM(hemelb::SimConfig *iSimulationConfig,
             net::Net* net,
             geometry::LatticeData* latDat,
             SimulationState* simState);
         ~LBM();
 
-        void RequestComms();
-        void PreSend();
-        void PreReceive();
-        void PostReceive();
-        void EndIteration();
-        void Reset();
 
+        void RequestComms(); ///< part of IteratedAction interface.
+        void PreSend(); ///< part of IteratedAction interface.
+        void PreReceive(); ///< part of IteratedAction interface.
+        void PostReceive(); ///< part of IteratedAction interface.
+        void EndIteration(); ///< part of IteratedAction interface.
+        void Reset(); ///< part of IteratedAction interface.
+
+        // TODO -- replace public member with accessor #26
         site_t total_fluid_sites;
         int inlets;
 
-        void UpdateBoundaryDensities(unsigned long time_step);
-        void UpdateInletVelocities(unsigned long time_step);
+        // TODO -- replace built in type unsigned int with typedef #24
+        void UpdateInletVelocities(unsigned long time_step); ///< Update peak and average inlet velocities local to the current subdomain.
 
+        /**
+         * Second constructor.
+         *
+         */
         void
         Initialise(site_t* iFTranslator,
                    vis::Control* iControl,
@@ -72,16 +91,22 @@ namespace hemelb
                    boundaries::BoundaryValues* iOutletValues,
                    util::UnitConverter* iUnits);
 
-        void WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name);
+        /**
+         * This routine writes the flow field on file, using MPIO to coordinate
+         * the writing. The format is detailed in io/formats/snapshot.h
+         */
+        // TODO filename argument should be const, but cannot be due to MPI constness issue #30
+        void WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const;
         void ReadVisParameters();
 
-        void CalculateMouseFlowField(float densityIn,
-                                     float stressIn,
-                                     distribn_t &mouse_pressure,
-                                     distribn_t &mouse_stress,
-                                     double density_threshold_min,
-                                     double density_threshold_minmax_inv,
-                                     double stress_threshold_max_inv);
+        void CalculateMouseFlowField(const ScreenDensity densityIn,
+                                     const ScreenStress stressIn,
+                                     const LatticeDensity density_threshold_min,
+                                     const LatticeDensity density_threshold_minmax_inv,
+                                     const LatticeStress stress_threshold_max_inv,
+                                     PhysicalPressure &mouse_pressure,
+                                     PhysicalStress &mouse_stress
+                                     );
 
         hemelb::lb::LbmParameters *GetLbmParams();
         double GetTimeSpent() const;
@@ -94,14 +119,19 @@ namespace hemelb
         void InitCollisions();
 
         void ReadParameters();
+
+        /***
+         *  Calculate the BCs for each boundary site type and the
+         *  non-equilibrium distribution functions.
+         */
         void CalculateBC(distribn_t f[],
-                         hemelb::geometry::LatticeData::SiteType iSiteType,
-                         unsigned int iBoundaryId,
+                         hemelb::geometry::LatticeData::SiteType const iSiteType,
+                         unsigned int const iBoundaryId,
                          distribn_t *density,
                          distribn_t *vx,
                          distribn_t *vy,
                          distribn_t *vz,
-                         distribn_t f_neq[]);
+                         distribn_t f_neq[]) const;
 
         void handleIOError(int iError);
 
