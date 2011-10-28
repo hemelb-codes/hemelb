@@ -9,19 +9,19 @@ void Neighbours::Init() {
 		Neighbours::norms[i] = Neighbours::vectors[i].Magnitude<double>();
 
 		// Figure out if this takes us to a later site
-		if (Neighbours::vectors[i].x > 0) {
+		if (Neighbours::vectors[i][0] > 0) {
 			// yes
 			Neighbours::laterNeighbourIndices[iLater] = i;
 			iLater++;
-		} else if (Neighbours::vectors[i].x == 0) {
+		} else if (Neighbours::vectors[i][0] == 0) {
 			// Maybe
-			if (Neighbours::vectors[i].y > 0) {
+			if (Neighbours::vectors[i][1] > 0) {
 				// yes
 				Neighbours::laterNeighbourIndices[iLater] = i;
 				iLater++;
-			} else if (Neighbours::vectors[i].y == 0) {
+			} else if (Neighbours::vectors[i][1] == 0) {
 				// Maybe
-				if (Neighbours::vectors[i].z > 0) {
+				if (Neighbours::vectors[i][2] > 0) {
 					// yes
 					Neighbours::laterNeighbourIndices[iLater] = i;
 					iLater++;

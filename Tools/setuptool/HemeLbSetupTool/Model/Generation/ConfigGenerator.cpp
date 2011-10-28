@@ -46,7 +46,7 @@ void ConfigGenerator::Execute() {
 	for (BlockIterator blockIt = domain.begin(); blockIt != domain.end(); ++blockIt) {
 		// Open the BlockStarted context of the writer; this will
 		// deal with flushing the state to the file (or not, in the
-		//case where there are no fluid sites).
+		// case where there are no fluid sites).
 		BlockWriter* blockWriterPtr = writer.StartNextBlock();
 		// Get references to make the syntax nicer below!
 		BlockWriter& blockWriter = *blockWriterPtr;
@@ -97,6 +97,19 @@ void ConfigGenerator::Execute() {
 	writer.Close();
 }
 
+bool ConfigGenerator::GetIsFluid(Site& site) {
+	if (!site.IsFluidKnown) {
+		if (this->Locator->InsideOrOutside(&site.Position[0]) < 0) {
+			// -1 => inside surface
+			site.IsFluid = true;
+		} else {
+			site.IsFluid = false;
+		}
+		site.IsFluidKnown = true;
+	}
+	return site.IsFluid;
+}
+
 /*
  * Perform classification of the supplied sites. Note that
  * this will alter the connected sites that have yet to be
@@ -108,88 +121,41 @@ void ConfigGenerator::Execute() {
  */
 void ConfigGenerator::ClassifySite(Site& site) {
 
-	if (this->IsFirstSite) {
-		/* We're the first site; the IsFluid flag will have been
-		 * set to True/False below for all other sites, but we
-		 * need to bootstrap the process here.
-		 *
-		 * We know that the site at 0,0,0 must be solid.
-		 */
-		this->IsFirstSite = false;
-		site.IsFluid = false;
+	if (!this->GetIsFluid(site)) {
+		// Nothing to do for solid sites
+		return;
 	}
 
-	for (LaterNeighbourIterator neighIt = site.begin(); neighIt != site.end(); ++neighIt) {
+	for (NeighbourIterator neighIt = site.beginall(); neighIt != site.endall(); ++neighIt) {
 		Site& neigh = *neighIt;
+		if (!this->GetIsFluid(neigh)) {
+			// Link to a solid site
+			site.IsEdge = true;
+			unsigned int iNeigh = neighIt.GetNeighbourIndex();
 
-		unsigned int iNeigh = neighIt.GetNeighbourIndex();
-		this->Locator->IntersectWithLine(&site.Position[0], &neigh.Position[0],
-				this->hitPoints, this->hitCellIds);
-		unsigned int nHits = this->hitPoints->GetNumberOfPoints();
+			this->Locator->IntersectWithLine(&site.Position[0],
+					&neigh.Position[0], this->hitPoints, this->hitCellIds);
+			Vector hitPoint;
+			/*
+			 * First hit, assign the distance (in STL units for
+			 * now) to first intersection (i.e. CutDistance)
+			 * and the ID of the vtkPolygon which we
+			 * intersected (CutCellId).
+			 */
+			this->hitPoints->GetPoint(0, &hitPoint[0]);
+			site.CutDistances[iNeigh] = (hitPoint - site.Position).Magnitude<
+					double> ();
+			site.CutCellIds[iNeigh] = this->hitCellIds->GetId(0);
 
-		Vector hitPoint;
-		for (unsigned int iHit = 0; iHit < nHits; ++iHit) {
-			if (iHit == 0) {
-				/*
-				 * First hit, assign the distance (in STL units for
-				 * now) to first intersection (i.e. CutDistance)
-				 * and the ID of the vtkPolygon which we
-				 * intersected (CutCellId). We also now know we're
-				 * an edge site.
-				 */
-				site.IsEdge = true;
-
-				this->hitPoints->GetPoint(iHit, &hitPoint[0]);
-				site.CutDistances[iNeigh]
-						= (hitPoint - site.Position).Magnitude<double> ();
-				site.CutCellIds[iNeigh] = this->hitCellIds->GetId(iHit);
-			}
-		}
-
-		/*
-		 * If we had any hits, we need to set the last one for the
-		 * reverse link.
-		 */
-		if (nHits > 0) {
-			neigh.IsEdge = true;
-
-			this->hitPoints->GetPoint(nHits - 1, &hitPoint[0]);
-
-			// this should be the inverse direction, right?
-			neigh.CutDistances[Neighbours::inverses[iNeigh]] = (hitPoint
-					- neigh.Position).Magnitude<double> ();
-			neigh.CutCellIds[Neighbours::inverses[iNeigh]]
-					= this->hitCellIds->GetId(nHits - 1);
-		}
-
-		// Set the neighbour's fluid flag
-		if (nHits % 2 == 0) {
-			// Even nHits => we crossed the surface and then back
-			// to where we were.
-			neigh.IsFluid = site.IsFluid;
-		} else {
-			// Odd nHits => we're now on the other side of the
-			// surface.
-			neigh.IsFluid = !site.IsFluid;
 		}
 	}
 
-	for (int ii = 0; ii < Neighbours::n; ++ii) {
-		Index neigh = site.GetIndex() + Neighbours::vectors[ii];
-
-		for (int jj = 0; jj < 3; ++jj) {
-			if (neigh[jj] < 0 || neigh[jj] >= (site.GetDomainBlockCount()[jj] * site.GetDomainBlockSize())) {
-				site.IsEdge = true;
-			}
-		}
-	}
-
-	if (!site.IsFluid or !site.IsEdge)
-		// Nothing more to do for solid sites or simple fluid sites
+	if (!site.IsEdge)
+		// Nothing more to do for simple fluid sites
 		return;
 
 	/*
-	 * These CutDistances need to be fractions of the corresponding
+	 * The CutDistances need to be fractions of the corresponding
 	 * lattice vector, rather than distances in lattice units or
 	 * physical units. HOWEVER, we need to know the distances to
 	 * the walls and Iolets in plain lattice units below, so only
