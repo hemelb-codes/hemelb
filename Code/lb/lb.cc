@@ -32,16 +32,17 @@ namespace hemelb
       ReadParameters();
     }
 
-    void LBM::CalculateMouseFlowField(float densityIn,
-                                      float stressIn,
-                                      distribn_t &mouse_pressure,
-                                      distribn_t &mouse_stress,
-                                      double density_threshold_min,
-                                      double density_threshold_minmax_inv,
-                                      double stress_threshold_max_inv)
+    void LBM::CalculateMouseFlowField(const ScreenDensity densityIn,
+                                      const ScreenStress stressIn,
+                                      const LatticeDensity density_threshold_min,
+                                      const LatticeDensity density_threshold_minmax_inv,
+                                      const LatticeStress stress_threshold_max_inv,
+                                      PhysicalPressure &mouse_pressure,
+                                      PhysicalStress &mouse_stress
+                                      )
     {
-      double density = density_threshold_min + densityIn / density_threshold_minmax_inv;
-      double stress = stressIn / stress_threshold_max_inv;
+      LatticeDensity density = density_threshold_min + densityIn / density_threshold_minmax_inv;
+      LatticeStress stress = stressIn / stress_threshold_max_inv;
 
       mouse_pressure = mUnits->ConvertPressureToPhysicalUnits(density * Cs2);
       mouse_stress = mUnits->ConvertStressToPhysicalUnits(stress);
