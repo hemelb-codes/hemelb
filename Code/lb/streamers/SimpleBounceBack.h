@@ -42,10 +42,8 @@ namespace hemelb
               {
                 // The actual bounce-back lines, including streaming and collision. Basically swap
                 // the non-equilibrium components of f in each of the opposing pairs of directions.
-                site_t lStreamTo = (bLatDat->HasBoundary(lIndex, ii))
-                ?
-                  ( (lIndex * D3Q15::NUMVECTORS) + D3Q15::INVERSEDIRECTIONS[ii])
-                  :
+                site_t lStreamTo = (bLatDat->HasBoundary(lIndex, ii)) ?
+                  (lIndex * D3Q15::NUMVECTORS) + D3Q15::INVERSEDIRECTIONS[ii]:
                   bLatDat->GetStreamedIndex(lIndex, ii);
 
                 // Remember, oFNeq currently hold the equilibrium distribution. We
