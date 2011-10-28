@@ -13,6 +13,8 @@ namespace hemelb
   {
     namespace lbtests
     {
+      static const distribn_t allowedError = 1e-10;
+
       /**
        * StreamerTests:
        *
@@ -23,6 +25,7 @@ namespace hemelb
       class StreamerTests : public CppUnit::TestFixture
       {
         public:
+
           void setUp()
           {
             int args = 1;
@@ -66,8 +69,6 @@ namespace hemelb
 
           void TestSimpleCollideAndStream()
           {
-            const distribn_t allowedError = 1e-10;
-
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
@@ -121,8 +122,6 @@ namespace hemelb
 
           void TestFInterpolation()
           {
-            const distribn_t allowedError = 1e-10;
-
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
@@ -277,18 +276,16 @@ namespace hemelb
 
           void TestSimpleBounceBack()
           {
-            const distribn_t allowedError = 1e-10;
-
             // Initialise fOld in the lattice data. We choose values so that each site has
             // an anisotropic distribution function, and that each site's function is
             // distinguishable.
             LbTestsHelper::InitialiseAnisotropicTestData(latDat);
 
-            site_t firstWallSite = latDat->GetInnerCollisionCount(0) + 1;
-            unsigned numWallSites = latDat->GetInnerCollisionCount(1) - firstWallSite;
+            site_t firstWallSite = latDat->GetInnerCollisionCount(0);
+            unsigned wallSitesCount = latDat->GetInnerCollisionCount(1) - firstWallSite;
 
             // Check that the lattice has sites labeled as wall (otherwise this test is void)
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("Number of non-wall sites", numWallSites, 15u);
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Number of non-wall sites", wallSitesCount, 16u);
 
             site_t offset = 0;
 
@@ -323,12 +320,13 @@ namespace hemelb
                                          latDat->GetLocalFluidSiteCount());
 
             /*
-             *  Loop over the wall sites and check whether they got properly streamed to or bounced back
+             *  Loop over the wall sites and check whether they got properly streamed on or bounced back
              *  depending on where they sit relative to the wall. We ignore mid-Fluid sites since
              *  StreamAndCollide was tested before.
              */
-            for (site_t streamedToSite = firstWallSite; streamedToSite < numWallSites; streamedToSite++)
+            for (unsigned wallSiteLocalIndex = 0; wallSiteLocalIndex < wallSitesCount; wallSiteLocalIndex++)
             {
+              site_t streamedToSite = firstWallSite + wallSiteLocalIndex;
               distribn_t* streamedToFNew = latDat->GetFNew(D3Q15::NUMVECTORS * streamedToSite);
 
               for (unsigned int streamedDirection = 0; streamedDirection < D3Q15::NUMVECTORS; ++streamedDirection)
@@ -365,9 +363,9 @@ namespace hemelb
                 else
                 {
                   // The streamer index shows that no one has streamed to streamedToSite direction
-                  // streamedDirection, therefore bounce back has happened in that site
+                  // streamedDirection, therefore bounce back has happened in that site for that direction
 
-                  // Initialise streamedToSiteFOld with the original date
+                  // Initialise streamedToSiteFOld with the original data
                   distribn_t streamerToSiteFOld[D3Q15::NUMVECTORS];
                   LbTestsHelper::InitialiseAnisotropicTestData(streamedToSite, streamerToSiteFOld);
                   lb::kernels::HydroVars<lb::kernels::LBGK> hydroVars(streamerToSiteFOld);
@@ -380,7 +378,7 @@ namespace hemelb
                     streamedToSitePostColl[kk] = normalCollision->Collide(lbmParams, kk, hydroVars);
                   }
 
-                  // After streaming FNew in a given direction must be FOld in the opposite direction
+                  // After streaming FNew in a given direction must be f post-collision in the opposite direction
                   // following collision
                   std::stringstream msg(std::stringstream::in);
                   msg << "Simple bounce-back: site " << streamedToSite << " direction "
@@ -411,6 +409,8 @@ namespace hemelb
           lb::streamers::GuoZhengShi<lb::collisions::Normal<lb::kernels::LBGK> > * guoZhengShi;
           lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK> >
               * simpleBounceBack;
+
+//          distribn_t allowedError;
 
       };
     }
