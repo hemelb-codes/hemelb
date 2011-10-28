@@ -69,10 +69,7 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              f_original[ii] = ((float) (1 + ii)) / 10.0;
-            }
+            LbTestsHelper::InitialiseAnisotropicTestData(0, f_original);
 
             /*
              * Case 0: use the function that calculates density, velocity and
@@ -185,10 +182,7 @@ namespace hemelb
             // Initialise the original f distribution to something asymmetric.
             distribn_t f_original[D3Q15::NUMVECTORS];
 
-            for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ++ii)
-            {
-              f_original[ii] = ((float) (1 + ii)) / 10.0;
-            }
+            LbTestsHelper::InitialiseAnisotropicTestData(0, f_original);
 
             /*
              * Case 0: test the kernel function for calculating density, velocity
