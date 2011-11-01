@@ -172,13 +172,9 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   mLbm = new hemelb::lb::LBM(iSimConfig, &mNet, mLatDat, mSimulationState);
+  mLbm->SetSiteMinima(mins);
+  mLbm->SetSiteMaxima(maxes);
 
-  // TODO When we've taken the stress type out of the config file, this could be nicer.
-  for (int ii = 0; ii < 3; ++ii)
-  {
-    mLbm->siteMins[ii] = mins[ii];
-    mLbm->siteMaxes[ii] = maxes[ii];
-  }
   mLbm->GetLbmParams()->StressType = params.StressType;
   mLbm->SetTotalFluidSiteCount(totalFluidSites);
 

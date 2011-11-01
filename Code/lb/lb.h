@@ -76,6 +76,10 @@ namespace hemelb
         void SetTotalFluidSiteCount(site_t);
         int InletCount() const;
 
+        void SetSiteMinima(const site_t * const minima);
+        void SetSiteMaxima(const site_t * const maxima);
+
+
         // TODO -- replace built in type unsigned int with typedef #24
         void UpdateInletVelocities(unsigned long time_step); ///< Update peak and average inlet velocities local to the current subdomain.
 
@@ -109,8 +113,6 @@ namespace hemelb
 
         hemelb::lb::LbmParameters *GetLbmParams();
         double GetTimeSpent() const;
-
-        site_t siteMins[3], siteMaxes[3];
 
       private:
         void SetInitialConditions();
@@ -192,6 +194,8 @@ namespace hemelb
         site_t total_fluid_sites;
         int inlets;
         int outlets;
+
+        site_t siteMins[3], siteMaxes[3];
 
         SimConfig *mSimConfig;
         net::Net* mNet;
