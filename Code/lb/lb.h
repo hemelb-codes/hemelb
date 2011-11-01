@@ -73,9 +73,9 @@ namespace hemelb
         void EndIteration(); ///< part of IteratedAction interface.
         void Reset(); ///< part of IteratedAction interface.
 
-        // TODO -- replace public member with accessor #26
-        site_t total_fluid_sites;
-        int inlets;
+        site_t TotalFluidSiteCount() const;
+        void SetTotalFluidSiteCount(site_t);
+        int InletCount() const;
 
         // TODO -- replace built in type unsigned int with typedef #24
         void UpdateInletVelocities(unsigned long time_step); ///< Update peak and average inlet velocities local to the current subdomain.
@@ -190,7 +190,8 @@ namespace hemelb
         double timeSpent;
 
         double *inlet_normal;
-
+        site_t total_fluid_sites;
+        int inlets;
         int outlets;
 
         SimConfig *mSimConfig;
@@ -205,7 +206,20 @@ namespace hemelb
         util::UnitConverter* mUnits;
 
         site_t* receivedFTranslator;
-    };
-  }
-}
+    }; // Class
+
+    inline int LBM::InletCount() const {
+      return inlets;
+    }
+
+    inline site_t LBM::TotalFluidSiteCount() const {
+      return total_fluid_sites;
+    }
+
+    inline void LBM::SetTotalFluidSiteCount(site_t sites) {
+      total_fluid_sites=sites;
+    }
+
+  } // Namespace lb
+} // Namespace hemelb
 #endif // HEMELB_LB_H

@@ -3,150 +3,139 @@
 
 #include "lb/streamers/BaseStreamer.h"
 
-/**
- * TODO This class hasn't been modified to fit the new kernel / collision / streamer
- * hierarchy. This needs to happen before it can be used in the LBM.
- */
 namespace hemelb
 {
   namespace lb
   {
     namespace streamers
     {
-      template<typename tCollisionOperator>
-      class GuoZhengShi : public Implementation
+      template<typename CollisionType>
+      class GuoZhengShi : public BaseStreamer<GuoZhengShi<CollisionType> >
       {
+        private:
+          CollisionType collider;
 
         public:
+          GuoZhengShi(kernels::InitParams& initParams) :
+            collider(initParams)
+          {
+
+          }
+
           template<bool tDoRayTracing>
-          void DoStreamAndCollide(WallCollision* mWallCollision,
-                                  const site_t iFirstIndex,
+          void DoStreamAndCollide(const site_t iFirstIndex,
                                   const site_t iSiteCount,
                                   const LbmParameters* iLbmParams,
                                   geometry::LatticeData* bLatDat,
-                                  hemelb::vis::Control *iControl);
-
-          template<bool tDoRayTracing>
-          void DoPostStep(WallCollision* mWallCollision,
-                          const site_t iFirstIndex,
-                          const site_t iSiteCount,
-                          const LbmParameters* iLbmParams,
-                          geometry::LatticeData* bLatDat,
-                          hemelb::vis::Control *iControl);
-
-      };
-
-      template<typename tCollisionOperator>
-      template<bool tDoRayTracing>
-      void GuoZhengShi<tCollisionOperator>::DoStreamAndCollide(WallCollision* mWallCollision,
-                                                               const site_t iFirstIndex,
-                                                               const site_t iSiteCount,
-                                                               const LbmParameters* iLbmParams,
-                                                               geometry::LatticeData* bLatDat,
-                                                               hemelb::vis::Control *iControl)
-      {
-        for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
-        {
-
-          // First do a normal collision & streaming step, as if we were mid-fluid.
-          // NOTE that we use the version that preserves f_old.
-          // NOTE that this handily works out the equilibrium density, v_x, v_y and v_z for us
-          distribn_t lFEq[15];
-          distribn_t f_neq[15];
-          distribn_t density, v_x, v_y, v_z;
-          distribn_t* f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
-
-          D3Q15::CalculateDensityVelocityFEq(f, density, v_x, v_y, v_z, lFEq);
-
-          for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
+                                  hemelb::vis::Control *iControl)
           {
-            * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii))) = f[ii]
-                + iLbmParams->Omega * (f_neq[ii] = f[ii] - lFEq[ii]);
-          }
-
-          // Now fill in the un-streamed-to distributions (those that point away from boundaries).
-          for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
-          {
-            int lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
-
-            if (bLatDat->HasBoundary(lIndex, l))
+            for (site_t lIndex = iFirstIndex; lIndex < (iFirstIndex + iSiteCount); lIndex++)
             {
-              double delta = bLatDat->GetCutDistance(lIndex, l);
-              double uWall[3];
-              distribn_t fNeq;
+              // First do a normal collision & streaming step, as if we were mid-fluid.
+              distribn_t* f = bLatDat->GetFOld(lIndex * D3Q15::NUMVECTORS);
+              kernels::HydroVars<typename CollisionType::CKernel> hydroVars(f);
 
-              // Work out uw1 (noting that ub is 0 until we implement moving walls)
-              uWall[0] = (1 - 1. / delta) * v_x;
-              uWall[1] = (1 - 1. / delta) * v_y;
-              uWall[2] = (1 - 1. / delta) * v_z;
-              fNeq = f_neq[lAwayFromWallIndex];
+              collider.CalculatePreCollision(hydroVars, lIndex - iFirstIndex);
 
-              // Interpolate with uw2 if delta < 0.75
-              if (delta < 0.75)
+              for (unsigned int ii = 0; ii < D3Q15::NUMVECTORS; ii++)
               {
-                // Only do the extra interpolation if there's gonna be a point there to interpolate from, i.e. there's no boundary
-                // in the direction of awayFromWallIndex
-                if (!bLatDat->HasBoundary(lIndex, lAwayFromWallIndex))
+                * (bLatDat->GetFNew(bLatDat->GetStreamedIndex(lIndex, ii)))
+                    = collider.Collide(iLbmParams, ii, hydroVars);
+              }
+
+              // Now fill in the un-streamed-to distributions (those that point away from boundaries).
+              for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
+              {
+                if (bLatDat->HasBoundary(lIndex, l))
                 {
-                  // Need some info about the next node away from the wall in this direction...
-                  site_t nextIOut = bLatDat->GetStreamedIndex(lIndex, lAwayFromWallIndex)
-                      / D3Q15::NUMVECTORS;
-                  distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
+                  int lAwayFromWallIndex = D3Q15::INVERSEDIRECTIONS[l];
 
-                  D3Q15::CalculateDensityVelocityFEq(bLatDat->GetFOld(nextIOut * D3Q15::NUMVECTORS),
-                                                     nextNodeDensity,
-                                                     nextNodeV[0],
-                                                     nextNodeV[1],
-                                                     nextNodeV[2],
-                                                     nextNodeFEq);
+                  double delta = bLatDat->GetCutDistance(lIndex, l);
 
-                  for (int a = 0; a < 3; a++)
-                    uWall[a] = delta * uWall[a]
-                        + (1. - delta) * (delta - 1.) * nextNodeV[a] / (1. + delta);
+                  // Work out uw1 (noting that ub is 0 until we implement moving walls)
+                  double uWall[3];
+                  uWall[0] = (1 - 1. / delta) * hydroVars.v_x;
+                  uWall[1] = (1 - 1. / delta) * hydroVars.v_y;
+                  uWall[2] = (1 - 1. / delta) * hydroVars.v_z;
+                  distribn_t fNeqAwayFromWall = hydroVars.GetFNeq().f[lAwayFromWallIndex];
 
-                  fNeq = delta * fNeq
-                      + (1. - delta)
+                  // Interpolate with uw2 if delta < 0.75
+                  if (delta < 0.75)
+                  {
+                    // Only do the extra interpolation if there's gonna be a point there to interpolate from, i.e. there's no boundary
+                    // in the direction of awayFromWallIndex
+                    if (!bLatDat->HasBoundary(lIndex, lAwayFromWallIndex))
+                    {
+                      // Need some info about the next node away from the wall in this direction...
+                      site_t nextIOut = bLatDat->GetStreamedIndex(lIndex, lAwayFromWallIndex)
+                          / D3Q15::NUMVECTORS;
+                      distribn_t nextNodeDensity, nextNodeV[3], nextNodeFEq[D3Q15::NUMVECTORS];
+
+                      D3Q15::CalculateDensityVelocityFEq(bLatDat->GetFOld(nextIOut
+                                                             * D3Q15::NUMVECTORS),
+                                                         nextNodeDensity,
+                                                         nextNodeV[0],
+                                                         nextNodeV[1],
+                                                         nextNodeV[2],
+                                                         nextNodeFEq);
+
+                      for (int a = 0; a < 3; a++)
+                      {
+                        uWall[a] = delta * uWall[a] - (1. - delta) * (1. - delta) * nextNodeV[a]
+                            / (1. + delta);
+                      }
+
+                      fNeqAwayFromWall = delta * fNeqAwayFromWall + (1. - delta)
                           * (*bLatDat->GetFOld(nextIOut * D3Q15::NUMVECTORS + lAwayFromWallIndex)
                               - nextNodeFEq[lAwayFromWallIndex]);
-                }
-                // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
-                else
-                {
-                  for (int a = 0; a < 3; a++)
-                    uWall[a] = 0.0; //delta * uWall[a];
+                    }
+                    // If there's nothing to extrapolate from we, very lamely, do a 0VE-style operation to fill in the missing velocity.
+                    else
+                    {
+                      for (int a = 0; a < 3; a++)
+                      {
+                        uWall[a] = 0.0; //delta * uWall[a];
+                      }
 
-                  fNeq = 0.0; //delta * fNeq;
+                      fNeqAwayFromWall = 0.0; //delta * fNeq;
+                    }
+                  }
+
+                  // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
+                  // Note that we assume that the density is the same as at this node
+                  distribn_t fEqTemp[D3Q15::NUMVECTORS];
+                  D3Q15::CalculateFeq(hydroVars.density, uWall[0], uWall[1], uWall[2], fEqTemp);
+
+                  // Collide and stream!
+                  * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex))
+                      = fEqTemp[lAwayFromWallIndex] + (1.0 + iLbmParams->GetOmega())
+                          * fNeqAwayFromWall;
                 }
               }
 
-              // Use a helper function to calculate the actual value of f_eq in the desired direction at the wall node.
-              // Note that we assume that the density is the same as at this node
-              distribn_t fEqTemp[D3Q15::NUMVECTORS];
-              D3Q15::CalculateFeq(density, uWall[0], uWall[1], uWall[2], fEqTemp);
-
-              // Collide and stream!
-              * (bLatDat->GetFNew(lIndex * D3Q15::NUMVECTORS + lAwayFromWallIndex)) =
-                  fEqTemp[lAwayFromWallIndex] + (1.0 + iLbmParams->Omega) * fNeq;
+              BaseStreamer<GuoZhengShi>::template UpdateMinsAndMaxes<tDoRayTracing>(hydroVars.v_x,
+                                                                                    hydroVars.v_y,
+                                                                                    hydroVars.v_z,
+                                                                                    lIndex,
+                                                                                    hydroVars.GetFNeq().f,
+                                                                                    hydroVars.density,
+                                                                                    bLatDat,
+                                                                                    iLbmParams,
+                                                                                    iControl);
             }
           }
 
-          UpdateMinsAndMaxes < tDoRayTracing
-              > (v_x, v_y, v_z, lIndex, f_neq, density, bLatDat, iLbmParams, iControl);
-        }
-      }
+          template<bool tDoRayTracing>
+          void DoPostStep(const site_t iFirstIndex,
+                          const site_t iSiteCount,
+                          const LbmParameters* iLbmParams,
+                          geometry::LatticeData* bLatDat,
+                          hemelb::vis::Control *iControl)
+          {
 
-      template<typename tCollisionOperator>
-      template<bool tDoRayTracing>
-      void GuoZhengShi<tCollisionOperator>::DoPostStep(WallCollision* mWallCollision,
-                                                       const site_t iFirstIndex,
-                                                       const site_t iSiteCount,
-                                                       const LbmParameters* iLbmParams,
-                                                       geometry::LatticeData* bLatDat,
-                                                       hemelb::vis::Control *iControl)
-      {
+          }
 
-      }
-
+      };
     }
   }
 }
