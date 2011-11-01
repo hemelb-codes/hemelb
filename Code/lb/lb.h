@@ -45,8 +45,7 @@ namespace hemelb
 
         typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> >
             tMidFluidCollision;
-        typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibrium<LB_KERNEL> >
-            tWallCollision;
+        typedef streamers::SimpleBounceBack<collisions::Normal<kernels::LBGK> > tWallCollision;
         typedef streamers::SimpleCollideAndStream<
             collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletCollision;
         typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<
