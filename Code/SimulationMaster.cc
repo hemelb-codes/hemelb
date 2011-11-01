@@ -180,7 +180,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
     mLbm->siteMaxes[ii] = maxes[ii];
   }
   mLbm->GetLbmParams()->StressType = params.StressType;
-  mLbm->total_fluid_sites = totalFluidSites;
+  mLbm->SetTotalFluidSiteCount(totalFluidSites);
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -602,7 +602,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps, double iSimulationTim
     fprintf(mTimingsFile,
             "topology depths checked: %i\n\n",
             hemelb::topology::NetworkTopology::Instance()->GetDepths());
-    fprintf(mTimingsFile, "fluid sites: %li\n\n", mLbm->total_fluid_sites);
+    fprintf(mTimingsFile, "fluid sites: %li\n\n", mLbm->TotalFluidSiteCount());
     fprintf(mTimingsFile,
             "cycles and total time steps: %li, %i \n\n",
              (mSimulationState->GetCycleId() - 1), // Note that the cycle-id is 1-indexed.
