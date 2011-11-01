@@ -8,9 +8,9 @@ Block::Block(Domain& dom, const Index& ind, const unsigned int& size) :
 	size(size), index(ind), min(ind * size), max((ind + 1) * size), domain(dom) {
 	this->sites.resize(size * size * size);
 	unsigned int ijk = 0;
-	for (unsigned int i = ind.x * size; i < (ind.x + 1) * size; ++i) {
-		for (unsigned int j = ind.y * size; j < (ind.y + 1) * size; ++j) {
-			for (unsigned int k = ind.z * size; k < (ind.z + 1) * size; ++k) {
+	for (unsigned int i = ind[0] * size; i < (ind[0] + 1) * size; ++i) {
+		for (unsigned int j = ind[1] * size; j < (ind[1] + 1) * size; ++j) {
+			for (unsigned int k = ind[2] * size; k < (ind[2] + 1) * size; ++k) {
 				this->sites[ijk] = new Site(*this, i, j, k);
 				++ijk;
 			}
