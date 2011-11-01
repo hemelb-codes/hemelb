@@ -355,6 +355,20 @@ namespace hemelb
       return timeSpent;
     }
 
+    void LBM::SetSiteMinima(site_t const * const minima) {
+      for (int ii = 0; ii < 3; ++ii)
+      {
+        siteMins[ii] = minima[ii];
+      }
+    }
+
+    void LBM::SetSiteMaxima(site_t const * const maxima) {
+      for (int ii = 0; ii < 3; ++ii)
+      {
+        siteMaxes[ii] = maxima[ii];
+      }
+    }
+
     // In the case of instability, this function restart the simulation
     // with twice as many time steps per period and update the parameters
     // that depends on this change.
