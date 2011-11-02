@@ -113,9 +113,9 @@ namespace hemelb
     void StreaklineDrawer::createParticle(float x, float y, float z, float vel, int inlet_id)
     {
 
-      if (nParticles == particleVec.capacity())
+      if (nParticles == particleVec.size())
       {
-        particleVec.reserve(2 * particleVec.capacity());
+        particleVec.resize(2 * particleVec.size());
       }
 
       particleVec[nParticles].x = x;
@@ -251,9 +251,9 @@ namespace hemelb
                                        VisSettings* iVisSettings) :
       mScreen(iScreen), mViewpoint(iViewpoint), mVisSettings(iVisSettings)
     {
-      particleVec.reserve(10000);
+      particleVec.resize(10000);
       nParticles = 0;
-      particleSeedVec.reserve(100);
+      particleSeedVec.resize(100);
       nParticleSeeds = 0;
 
       num_blocks = iLatDat->GetBlockCount();
@@ -383,9 +383,9 @@ namespace hemelb
                     continue;
                   }
 
-                  if (nParticleSeeds == particleSeedVec.capacity())
+                  if (nParticleSeeds == particleSeedVec.size())
                   {
-                    particleSeedVec.reserve(2 * particleSeedVec.capacity());
+                    particleSeedVec.resize(2 * particleSeedVec.size());
                   }
                   particleSeedVec[nParticleSeeds].x = (float) site_i;
                   particleSeedVec[nParticleSeeds].y = (float) site_j;
@@ -433,8 +433,8 @@ namespace hemelb
 
       for (size_t m = 0; m < mNeighProcs.size(); m++)
       {
-        mNeighProcs[m].p_to_send.reserve(5 * particles_to_send_max);
-        mNeighProcs[m].p_to_recv.reserve(5 * particles_to_recv_max);
+        mNeighProcs[m].p_to_send.resize(5 * particles_to_send_max);
+        mNeighProcs[m].p_to_recv.resize(5 * particles_to_recv_max);
       }
 
       req = new MPI_Request[2 * netTop->GetProcessorCount()];
@@ -715,7 +715,7 @@ namespace hemelb
         if (mNeighProcs[m].send_ps == particles_to_send_max)
         {
           particles_to_send_max *= 2;
-          mNeighProcs[m].p_to_send.reserve(5 * particles_to_send_max);
+          mNeighProcs[m].p_to_send.resize(5 * particles_to_send_max);
         }
 
         mNeighProcs[m].p_to_send[5 * mNeighProcs[m].send_ps + 0] = particleVec[n].x;
@@ -769,7 +769,7 @@ namespace hemelb
             particles_to_recv_max
                 = util::NumericalFunctions::max(particles_to_recv_max,
                                                 (unsigned int) mNeighProcs[m].recv_ps);
-            mNeighProcs[m].p_to_recv.reserve(5 * particles_to_recv_max);
+            mNeighProcs[m].p_to_recv.resize(5 * particles_to_recv_max);
           }
           MPI_Irecv(&mNeighProcs[m].p_to_recv[0],
                     (int) mNeighProcs[m].recv_ps * 5,
@@ -848,7 +848,6 @@ namespace hemelb
       }
 
       ++counter;
-
       updateVelField(0, iLatDat);
       communicateSiteIds();
       communicateVelocities(iLatDat);
