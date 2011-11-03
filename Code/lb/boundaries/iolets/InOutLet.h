@@ -7,7 +7,7 @@
 
 namespace hemelb
 {
-  class SimConfig;
+  namespace configuration{ class SimConfig; }
 
   namespace lb
   {
@@ -22,7 +22,7 @@ namespace hemelb
             InOutLet();
             virtual ~InOutLet();
 
-            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig*) = 0;
+            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig*) = 0;
 
             virtual InOutLet* Clone() = 0;
 

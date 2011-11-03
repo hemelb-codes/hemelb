@@ -18,7 +18,7 @@ namespace hemelb
       return &mParams;
     }
 
-    LBM::LBM(SimConfig *iSimulationConfig,
+    LBM::LBM(configuration::SimConfig *iSimulationConfig,
              net::Net* net,
              geometry::LatticeData* latDat,
              SimulationState* simState) :

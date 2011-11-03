@@ -11,7 +11,7 @@
 #include "lb/boundaries/BoundaryValues.h"
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "util/UnitConverter.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 #include <typeinfo>
 
 namespace hemelb
@@ -58,7 +58,7 @@ namespace hemelb
          * Must have Initialise(...) called also. Constructor separated due to need to access
          * the partially initialized LBM in order to initialize the arguments to the second construction phase.
          */
-        LBM(hemelb::SimConfig *iSimulationConfig,
+        LBM(hemelb::configuration::SimConfig *iSimulationConfig,
             net::Net* net,
             geometry::LatticeData* latDat,
             SimulationState* simState);
@@ -197,7 +197,7 @@ namespace hemelb
 
         site_t siteMins[3], siteMaxes[3];
 
-        SimConfig *mSimConfig;
+        configuration::SimConfig *mSimConfig;
         net::Net* mNet;
         geometry::LatticeData* mLatDat;
         SimulationState* mState;
