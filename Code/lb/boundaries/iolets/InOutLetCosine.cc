@@ -1,5 +1,5 @@
 #include "lb/boundaries/iolets/InOutLetCosine.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 #include "topology/NetworkTopology.h"
 
 namespace hemelb
@@ -16,7 +16,7 @@ namespace hemelb
 
         }
 
-        void InOutLetCosine::DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig)
+        void InOutLetCosine::DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig)
         {
           iSimConfig->DoIO(iParent, iIsLoading, this);
         }

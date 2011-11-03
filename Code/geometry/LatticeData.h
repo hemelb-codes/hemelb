@@ -6,7 +6,7 @@
 #include "parmetis.h"
 #include "D3Q15.h"
 #include "constants.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 #include "mpiInclude.h"
 #include "io/XdrReader.h"
 // TODO Remove the stress type from the data file, so we can remove the dependence
@@ -87,7 +87,7 @@ namespace hemelb
                     site_t siteMaxes[3],
                     site_t* fluidSitePerProc,
                     lb::LbmParameters* bLbmParams,
-                    SimConfig* bSimConfig,
+                    configuration::SimConfig* bSimConfig,
                     double* lReadTime,
                     double* lDecomposeTime);
 
@@ -277,7 +277,7 @@ namespace hemelb
 
             void LoadAndDecompose(GlobalLatticeData* bGlobalLatticeData,
                                   lb::LbmParameters* bLbmParams,
-                                  SimConfig* bSimConfig,
+                                  configuration::SimConfig* bSimConfig,
                                   double* lReadTime,
                                   double* lDecomposeTime);
 

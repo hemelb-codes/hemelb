@@ -394,7 +394,7 @@ namespace hemelb
 
         private:
           geometry::LatticeData* latDat;
-          SimConfig* simConfig;
+          configuration::SimConfig* simConfig;
           lb::SimulationState* simState;
           util::UnitConverter* unitConverter;
           lb::LbmParameters* lbmParams;

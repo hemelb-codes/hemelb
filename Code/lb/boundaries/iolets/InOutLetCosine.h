@@ -23,7 +23,7 @@ namespace hemelb
             InOutLetCosine();
             virtual ~InOutLetCosine();
 
-            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig);
+            virtual void DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig);
             virtual InOutLet* Clone();
 
             virtual void CalculateCycle(std::vector<distribn_t> &densityCycle,
