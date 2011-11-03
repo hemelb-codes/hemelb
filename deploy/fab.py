@@ -69,9 +69,9 @@ def regression_test():
 		get("results",os.path.join("remote_files","%(host)s","%(path)s"))
 		
 @task
-def revert():
+def revert(args="--all"):
 	with cd(env.repository_path):
-		run("hg revert --all")
+		run("hg revert %s"%args)
 		
 @task
 def patch(args=""):
