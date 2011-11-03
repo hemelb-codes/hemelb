@@ -76,8 +76,8 @@ namespace hemelb
         void SetTotalFluidSiteCount(site_t);
         int InletCount() const;
 
-        void SetSiteMinima(const site_t * const minima);
-        void SetSiteMaxima(const site_t * const maxima);
+        void SetSiteMinima(const site_t * const minima); ///< Used in initialization
+        void SetSiteMaxima(const site_t * const maxima); ///< Used in initialization
 
 
         // TODO -- replace built in type unsigned int with typedef #24
