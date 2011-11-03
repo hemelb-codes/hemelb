@@ -91,63 +91,13 @@ int main(int argc, char *argv[])
   }
 
   hemelb::SimConfig *lSimulationConfig = hemelb::SimConfig::Load(lInputFile.c_str());
-
-  unsigned long lLastForwardSlash = lInputFile.rfind('/');
-  if (lOutputDir.length() == 0)
-  {
-    lOutputDir = ( (lLastForwardSlash == std::string::npos)
-    ? "./"
-    : lInputFile.substr(0, lLastForwardSlash))
-+      "results";
-    }
-
-  FILE *timings_ptr = NULL;
-  std::string image_directory = lOutputDir + "/Images/";
-  std::string snapshot_directory = lOutputDir + "/Snapshots/";
-
   // Actually create the directories.
 
-  if (lMaster.IsCurrentProcTheIOProc())
-  {
-    if (hemelb::util::DoesDirectoryExist(lOutputDir.c_str()))
-    {
-      hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("\nOutput directory \"%s\" already exists. Exiting.",
-                                                                          lOutputDir.c_str());
-      lMaster.Abort();
-    }
+  lMaster.SetupReporting(lOutputDir,lInputFile);
 
-    hemelb::util::MakeDirAllRXW(lOutputDir);
-    hemelb::util::MakeDirAllRXW(image_directory);
-    hemelb::util::MakeDirAllRXW(snapshot_directory);
+  lMaster.Initialise(lSimulationConfig, lImagesPerCycle, (int) lSteeringSessionId);
 
-    // Save the computed config out to disk in the output directory so we have
-    // a record of the total state used.
-    std::string lFileNameComponent = std::string( (lLastForwardSlash == std::string::npos)
-    ? lInputFile
-    : lInputFile.substr(lLastForwardSlash))
-;    lSimulationConfig->Save(lOutputDir + "/" + lFileNameComponent);
-
-    char timings_name[256];
-    char procs_string[256];
-
-    sprintf(procs_string, "%i", lMaster.GetProcessorCount());
-    strcpy(timings_name, lOutputDir.c_str());
-    strcat(timings_name, "/timings");
-    strcat(timings_name, procs_string);
-    strcat(timings_name, ".asc");
-    timings_ptr = fopen(timings_name, "w");
-    fprintf(timings_ptr, "***********************************************************\n");
-    fprintf(timings_ptr, "Opening config file:\n %s\n", lInputFile.c_str());
-  }
-
-  lMaster.Initialise(lSimulationConfig, lImagesPerCycle, (int) lSteeringSessionId, timings_ptr);
-
-  lMaster.RunSimulation(image_directory, snapshot_directory, lSnapshotsPerCycle, lImagesPerCycle);
-
-  if (lMaster.IsCurrentProcTheIOProc())
-  {
-    fclose(timings_ptr);
-  }
+  lMaster.RunSimulation(lSnapshotsPerCycle, lImagesPerCycle);
 
   delete lSimulationConfig;
 
