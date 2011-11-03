@@ -9,11 +9,12 @@
 #include "lb/EntropyTester.h"
 #include "lb/boundaries/BoundaryValues.h"
 #include "util/UnitConverter.h"
+#include "configuration/CommandLine.h"
 
 class SimulationMaster
 {
   public:
-    SimulationMaster(int iArgCount, char *iArgList[]);
+    SimulationMaster(hemelb::configuration::CommandLine &options);
     ~SimulationMaster();
 
     void Abort();
@@ -29,8 +30,6 @@ class SimulationMaster
   private:
     void Initialise();
     void SetupReporting(); // set up the reporting file
-    void ParseArguments(int argc, char **argv);
-    void PrintUsage();
     void PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable);
 
     void PrintTimingData();

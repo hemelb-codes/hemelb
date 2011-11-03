@@ -20,13 +20,12 @@ namespace hemelb
       return &instance;
     }
 
-    void NetworkTopology::Init(int * argCount, char *** argList, bool* oSuccess)
+    void NetworkTopology::Init(int argCount, char ** argList, bool* oSuccess)
     {
       if (!initialised)
       {
         initialised = true;
-
-        MPI_Init(argCount, argList);
+        MPI_Init(&argCount, &argList);
 
         int tempSize = 0, tempRank = 0;
         MPI_Comm_size(MPI_COMM_WORLD, &tempSize);

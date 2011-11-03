@@ -31,7 +31,7 @@ namespace hemelb
             int args = 1;
             char** argv = NULL;
             bool success;
-            topology::NetworkTopology::Instance()->Init(&args, &argv, &success);
+            topology::NetworkTopology::Instance()->Init(args, argv, &success);
 
             latDat = new FourCubeLatticeData();
             simConfig = new OneInOneOutSimConfig();

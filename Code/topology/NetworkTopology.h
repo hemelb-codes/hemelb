@@ -30,7 +30,7 @@ namespace hemelb
         static NetworkTopology* Instance();
         ~NetworkTopology();
 
-        void Init(int * argCount, char *** argList, bool * oMachineDiscoverySuccess);
+        void Init(int argCount, char ** argList, bool * oMachineDiscoverySuccess);
         bool IsCurrentProcTheIOProc() const;
 
         // Functions for getting the rank of this processor and the total size

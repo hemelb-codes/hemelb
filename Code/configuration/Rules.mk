@@ -1,7 +1,8 @@
 include $(MK)/header.mk
 
 TARGETS := libConfiguration.$(LIBEXT)
-SRCS := SimConfig.cc
+SRCS := SimConfig.cc \
+		CommandLine.cc
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 
