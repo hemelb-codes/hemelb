@@ -3,7 +3,7 @@
 
 #include <cppunit/TestFixture.h>
 
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 #include "lb/collisions/Collisions.h"
 #include "lb/SimulationState.h"
 #include "topology/NetworkTopology.h"
@@ -300,7 +300,7 @@ namespace hemelb
 
         private:
           geometry::LatticeData* latDat;
-          SimConfig* simConfig;
+          configuration::SimConfig* simConfig;
           lb::SimulationState* simState;
           util::UnitConverter* unitConverter;
           lb::LbmParameters* lbmParams;

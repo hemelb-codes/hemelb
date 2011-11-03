@@ -41,7 +41,7 @@ class SimulationMaster
     std::string snapshotDirectory;
     std::string imageDirectory;
 
-    hemelb::SimConfig *simConfig;
+    hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* mLatDat;
 
     hemelb::steering::Network* network;

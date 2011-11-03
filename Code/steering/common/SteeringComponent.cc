@@ -93,7 +93,7 @@ namespace hemelb
       mVisControl->mDomainStats.stress_threshold_max_inv = 1.0F / lattice_stress_max;
     }
 
-    void SteeringComponent::Reset(SimConfig* iSimConfig)
+    void SteeringComponent::Reset(configuration::SimConfig* iSimConfig)
     {
       readyForNextImage = false;
       isConnected = false;

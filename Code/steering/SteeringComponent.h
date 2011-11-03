@@ -4,7 +4,7 @@
 #include "net/PhasedBroadcastRegular.h"
 #include "lb/lb.h"
 #include "lb/SimulationState.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 #include "steering/Network.h"
 #include "vis/DomainStats.h"
 #include "vis/Control.h"
@@ -53,7 +53,7 @@ namespace hemelb
                           lb::LBM* iLbm,
                           net::Net * iNet,
                           lb::SimulationState * iSimState,
-                          SimConfig* iSimConfig,
+                          configuration::SimConfig* iSimConfig,
                           util::UnitConverter* iUnits);
 
         static bool RequiresSeparateSteeringCore();
@@ -61,7 +61,7 @@ namespace hemelb
         /*
          * This function initialises all of the steering parameters, on all nodes.
          */
-        void Reset(SimConfig* iSimConfig);
+        void Reset(configuration::SimConfig* iSimConfig);
 
         bool readyForNextImage;
         bool updatedMouseCoords;

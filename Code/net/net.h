@@ -7,7 +7,7 @@
 #include "constants.h"
 #include "mpiInclude.h"
 #include "D3Q15.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 
 #include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"

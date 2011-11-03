@@ -14,7 +14,7 @@ namespace hemelb
                                          lb::LBM* iLbm,
                                          net::Net * iNet,
                                          lb::SimulationState * iSimState,
-                                         SimConfig* iSimConfig,
+                                         configuration::SimConfig* iSimConfig,
                                          util::UnitConverter* iUnits) :
       net::PhasedBroadcastRegular<false, 1, 0, true, false>(iNet, iSimState, SPREADFACTOR),
           mNetwork(iNetwork), mLbm(iLbm), mSimState(iSimState), mVisControl(iVisControl),

@@ -1,5 +1,5 @@
 #include "SimulationMaster.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 
 #include "io/XdrFileWriter.h"
 #include "util/utilityFunctions.h"
@@ -58,7 +58,7 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mImagesWritten = 0;
   mSnapshotsWritten = 0;
   ParseArguments(iArgCount,iArgList);
-  simConfig = hemelb::SimConfig::Load(inputFile.c_str());
+  simConfig = hemelb::configuration::SimConfig::Load(inputFile.c_str());
   SetupReporting();
   Initialise();
 
