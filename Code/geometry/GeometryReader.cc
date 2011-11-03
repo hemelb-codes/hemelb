@@ -68,7 +68,7 @@ namespace hemelb
 
     void LatticeData::GeometryReader::LoadAndDecompose(GlobalLatticeData* bGlobLatDat,
                                                        lb::LbmParameters* bLbmParams,
-                                                       SimConfig* bSimConfig,
+                                                       configuration::SimConfig* bSimConfig,
                                                        double* oReadTime,
                                                        double* oOptimiseTime)
     {

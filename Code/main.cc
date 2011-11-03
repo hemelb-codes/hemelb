@@ -8,7 +8,6 @@
 #include "lb/lb.h"
 #include "log/Logger.h"
 
-#include "SimConfig.h"
 #include "SimulationMaster.h"
 
 #include "debug/Debugger.h"

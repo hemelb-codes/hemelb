@@ -5,7 +5,7 @@
 #include "log/Logger.h"
 #include "util/fileutils.h"
 #include "util/utilityStructs.h"
-#include "SimConfig.h"
+#include "configuration/SimConfig.h"
 
 namespace hemelb
 {
@@ -21,7 +21,7 @@ namespace hemelb
 
         }
 
-        void InOutLetFile::DoIO(TiXmlElement *iParent, bool iIsLoading, SimConfig* iSimConfig)
+        void InOutLetFile::DoIO(TiXmlElement *iParent, bool iIsLoading, configuration::SimConfig* iSimConfig)
         {
           iSimConfig->DoIO(iParent, iIsLoading, this);
         }

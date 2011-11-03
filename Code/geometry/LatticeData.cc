@@ -21,7 +21,7 @@ namespace hemelb
                              site_t siteMaxes[3],
                              site_t* fluidSitePerProc,
                              lb::LbmParameters* bLbmParams,
-                             SimConfig* bSimConfig,
+                             configuration::SimConfig* bSimConfig,
                              double* lReadTime,
                              double* lDecomposeTime) :
       localLatDat(), globLatDat()
