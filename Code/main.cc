@@ -34,72 +34,8 @@ int main(int argc, char *argv[])
 
   SimulationMaster lMaster = SimulationMaster(argc, argv);
 
-  // This is currently where all default command-line arguments are.
-  std::string lInputFile = "config.xml";
-  std::string lOutputDir = "";
-  unsigned int lSnapshotsPerCycle = 10;
-  unsigned int lImagesPerCycle = 10;
-  unsigned int lSteeringSessionId = 1;
+  lMaster.RunSimulation();
 
-  // There should be an odd number of arguments since the parameters occur in pairs.
-  if ( (argc % 2) == 0)
-  {
-    if (lMaster.IsCurrentProcTheIOProc())
-    {
-      PrintUsage(argv[0]);
-    }
-    lMaster.Abort();
-  }
-
-  // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
-  // is the <parametervalue>.
-  for (int ii = 1; ii < argc; ii += 2)
-  {
-    char* lParamName = argv[ii];
-    char* lParamValue = argv[ii + 1];
-    if (strcmp(lParamName, "-in") == 0)
-    {
-      lInputFile = std::string(lParamValue);
-    }
-    else if (strcmp(lParamName, "-out") == 0)
-    {
-      lOutputDir = std::string(lParamValue);
-    }
-    else if (strcmp(lParamName, "-s") == 0)
-    {
-      char * dummy;
-      lSnapshotsPerCycle = (unsigned int) (strtoul(lParamValue, &dummy, 10));
-    }
-    else if (strcmp(lParamName, "-i") == 0)
-    {
-      char *dummy;
-      lImagesPerCycle = (unsigned int) (strtoul(lParamValue, &dummy, 10));
-    }
-    else if (strcmp(lParamName, "-ss") == 0)
-    {
-      char *dummy;
-      lSteeringSessionId = (unsigned int) (strtoul(lParamValue, &dummy, 10));
-    }
-    else
-    {
-      if (lMaster.IsCurrentProcTheIOProc())
-      {
-        PrintUsage(argv[0]);
-      }
-      lMaster.Abort();
-    }
-  }
-
-  hemelb::SimConfig *lSimulationConfig = hemelb::SimConfig::Load(lInputFile.c_str());
-  // Actually create the directories.
-
-  lMaster.SetupReporting(lOutputDir,lInputFile);
-
-  lMaster.Initialise(lSimulationConfig, lImagesPerCycle, (int) lSteeringSessionId);
-
-  lMaster.RunSimulation(lSnapshotsPerCycle, lImagesPerCycle);
-
-  delete lSimulationConfig;
 
   return (0);
 }

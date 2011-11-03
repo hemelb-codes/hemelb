@@ -44,19 +44,95 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
   mVisControl = NULL;
   mSimulationState = NULL;
 
+  // This is currently where all default command-line arguments are.
+  inputFile = "config.xml";
+  outputDir = "";
+  snapshotsPerCycle = 10;
+  imagesPerCycle = 10;
+  steeringSessionId = 1;
+
   mMPISendTime = 0.0;
   mMPIWaitTime = 0.0;
   mSnapshotTime = 0.0;
 
   mImagesWritten = 0;
   mSnapshotsWritten = 0;
+  ParseArguments(iArgCount,iArgList);
+  simConfig = hemelb::SimConfig::Load(inputFile.c_str());
+  SetupReporting();
+  Initialise();
 
 }
 
-void SimulationMaster::SetupReporting(std::string const & candidateOutputDir,
-                                      std::string const & inputFile)
+void SimulationMaster::ParseArguments(int argc, char **argv){
+
+  // There should be an odd number of arguments since the parameters occur in pairs.
+    if ( (argc % 2) == 0)
+    {
+      if (IsCurrentProcTheIOProc())
+      {
+        PrintUsage();
+      }
+      Abort();
+    }
+
+  // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
+  // is the <parametervalue>.
+  for (int ii = 1; ii < argc; ii += 2)
+  {
+    char* lParamName = argv[ii];
+    char* lParamValue = argv[ii + 1];
+    if (strcmp(lParamName, "-in") == 0)
+    {
+      inputFile = std::string(lParamValue);
+    }
+    else if (strcmp(lParamName, "-out") == 0)
+    {
+      outputDir = std::string(lParamValue);
+    }
+    else if (strcmp(lParamName, "-s") == 0)
+    {
+      char * dummy;
+      snapshotsPerCycle = (unsigned int) (strtoul(lParamValue, &dummy, 10));
+    }
+    else if (strcmp(lParamName, "-i") == 0)
+    {
+      char *dummy;
+      imagesPerCycle = (unsigned int) (strtoul(lParamValue, &dummy, 10));
+    }
+    else if (strcmp(lParamName, "-ss") == 0)
+    {
+      char *dummy;
+      steeringSessionId = (unsigned int) (strtoul(lParamValue, &dummy, 10));
+    }
+    else
+    {
+      if (IsCurrentProcTheIOProc())
+      {
+        PrintUsage();
+      }
+      Abort();
+    }
+  }
+}
+
+void SimulationMaster::PrintUsage()
 {
-  outputDir=candidateOutputDir;
+  printf("-!-!-!-!-!-!-!-!-!-!-!-!");
+  printf("Correct usage: hemelb [-<Parameter Name> <Parameter Value>]* \n");
+  printf("Parameter name and significance:\n");
+  printf("-in \t Path to the configuration xml file (default is config.xml)\n");
+  printf("-out \t Path to the output folder (default is based on input file, e.g. config_xml_results)\n");
+  printf("-s \t Number of snapshots to take per cycle (default 10)\n");
+  printf("-i \t Number of images to create per cycle (default is 10)\n");
+  printf("-ss \t Steering session identifier (default is 1)\n");
+  printf("-!-!-!-!-!-!-!-!-!-!-!-!");
+}
+
+void SimulationMaster::SetupReporting()
+{
+
+  std::string configLeafName;
   unsigned long lLastForwardSlash = inputFile.rfind('/');
   if (lLastForwardSlash == std::string::npos) {
     // input file supplied is in current folder
@@ -92,6 +168,8 @@ void SimulationMaster::SetupReporting(std::string const & candidateOutputDir,
       hemelb::util::MakeDirAllRXW(imageDirectory);
       hemelb::util::MakeDirAllRXW(snapshotDirectory);
 
+      simConfig->Save(outputDir + "/" + configLeafName);
+
       char timings_name[256];
       char procs_string[256];
 
@@ -105,15 +183,6 @@ void SimulationMaster::SetupReporting(std::string const & candidateOutputDir,
       fprintf(mTimingsFile, "***********************************************************\n");
       fprintf(mTimingsFile, "Opening config file:\n %s\n", inputFile.c_str());
     }
-}
-
-void SimulationMaster::SaveConfigToResults(hemelb::SimConfig *iSimConfig)
-{
-  // Save the computed config out to disk in the output directory so we have
-  // a record of the total state used.
-
-  iSimConfig->Save(outputDir + "/" + configLeafName);
-
 }
 
 /**
@@ -186,6 +255,7 @@ SimulationMaster::~SimulationMaster()
   {
     delete mUnits;
   }
+  delete simConfig;
 }
 
 /**
@@ -209,15 +279,13 @@ int SimulationMaster::GetProcessorCount()
  * Initialises various elements of the simulation if necessary - steering,
  * domain decomposition, LBM and visualisation.
  */
-void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
-                                  unsigned int iImagesPerCycle,
-                                  int iSteeringSessionid)
+void SimulationMaster::Initialise()
 {
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
-  SaveConfigToResults(iSimConfig);
-  mSimulationState = new hemelb::lb::SimulationState(iSimConfig->StepsPerCycle,
-                                                     iSimConfig->NumCycles);
+
+  mSimulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle,
+                                                     simConfig->NumCycles);
 
   hemelb::site_t mins[3], maxes[3];
   // TODO The way we initialise LbmParameters is not great.
@@ -232,12 +300,12 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                           maxes,
                                           hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor,
                                           &params,
-                                          iSimConfig,
+                                          simConfig,
                                           &mFileReadTime,
                                           &mDomainDecompTime);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
-  mLbm = new hemelb::lb::LBM(iSimConfig, &mNet, mLatDat, mSimulationState);
+  mLbm = new hemelb::lb::LBM(simConfig, &mNet, mLatDat, mSimulationState);
   mLbm->SetSiteMinima(mins);
   mLbm->SetSiteMaxima(maxes);
 
@@ -247,7 +315,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
-    network = new hemelb::steering::Network(iSteeringSessionid);
+    network = new hemelb::steering::Network(steeringSessionId);
   }
   else
   {
@@ -293,14 +361,14 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
   mInletValues
       = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
                                                    mLatDat,
-                                                   iSimConfig->Inlets,
+                                                   simConfig->Inlets,
                                                    mSimulationState,
                                                    mUnits);
 
   mOutletValues
       = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::OUTLET_TYPE,
                                                    mLatDat,
-                                                   iSimConfig->Outlets,
+                                                   simConfig->Outlets,
                                                    mSimulationState,
                                                    mUnits);
 
@@ -311,7 +379,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                                         mLbm,
                                                         &mNet,
                                                         mSimulationState,
-                                                        iSimConfig,
+                                                        simConfig,
                                                         mUnits);
 
   // Read in the visualisation parameters.
@@ -321,9 +389,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 /**
  * Begin the simulation.
  */
-void SimulationMaster::RunSimulation(
-                                     unsigned int lSnapshotsPerCycle,
-                                     unsigned int lImagesPerCycle)
+void SimulationMaster::RunSimulation()
 {
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
 
@@ -334,19 +400,19 @@ void SimulationMaster::RunSimulation(
   // TODO ugh.
   unsigned int
       snapshots_period =
-          (lSnapshotsPerCycle == 0)
+          (snapshotsPerCycle == 0)
             ? 1000000000
             : hemelb::util::NumericalFunctions::max(1U,
                                                     (unsigned int) (mSimulationState->GetTimeStepsPerCycle()
-                                                        / lSnapshotsPerCycle));
+                                                        / snapshotsPerCycle));
 
   unsigned int
       images_period =
-          (lImagesPerCycle == 0)
+          (imagesPerCycle == 0)
             ? 1000000000
             : hemelb::util::NumericalFunctions::max(1U,
                                                     (unsigned int) (mSimulationState->GetTimeStepsPerCycle()
-                                                        / lImagesPerCycle));
+                                                        / imagesPerCycle));
 
   bool is_finished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
@@ -494,18 +560,18 @@ void SimulationMaster::RunSimulation(
                                                                           mSimulationState->GetTimeStepsPerCycle());
 
       snapshots_period
-          = (lSnapshotsPerCycle == 0)
+          = (snapshotsPerCycle == 0)
             ? 1000000000
             : hemelb::util::NumericalFunctions::max(1U,
                                                     (unsigned int) (mSimulationState->GetTimeStepsPerCycle()
-                                                        / lSnapshotsPerCycle));
+                                                        / snapshotsPerCycle));
 
       images_period
-          = (lImagesPerCycle == 0)
+          = (imagesPerCycle == 0)
             ? 1000000000
             : hemelb::util::NumericalFunctions::max(1U,
                                                     (unsigned int) (mSimulationState->GetTimeStepsPerCycle()
-                                                        / lImagesPerCycle));
+                                                        / imagesPerCycle));
 
       mSimulationState->Reset();
       continue;

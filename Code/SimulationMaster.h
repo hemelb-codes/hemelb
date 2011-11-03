@@ -22,29 +22,26 @@ class SimulationMaster
 
     int GetProcessorCount();
 
-    void RunSimulation(unsigned int lSnapshotsPerCycle,
-                       unsigned int lImagesPerCycle);
+    void RunSimulation();
 
-    void Initialise(hemelb::SimConfig *iSimConfig,
-                    unsigned int iImagesPerCycle,
-                    int iSteeringSessionid);
 
-    void SetupReporting(std::string const & candidateOutputDir,
-                        std::string const & inputFile); // set up the reporting file
 
   private:
-    void SaveConfigToResults(hemelb::SimConfig *iSimConfig);
+    void Initialise();
+    void SetupReporting(); // set up the reporting file
+    void ParseArguments(int argc, char **argv);
+    void PrintUsage();
     void PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable);
 
     void PrintTimingData();
 
     FILE *mTimingsFile;
     std::string outputDir;
-    std::string configLeafName;
+    std::string inputFile;
     std::string snapshotDirectory;
     std::string imageDirectory;
 
-
+    hemelb::SimConfig *simConfig;
     hemelb::geometry::LatticeData* mLatDat;
 
     hemelb::steering::Network* network;
@@ -75,6 +72,10 @@ class SimulationMaster
 
     double mMPISendTime;
     double mMPIWaitTime;
+
+    unsigned int snapshotsPerCycle;
+    unsigned int imagesPerCycle;
+    int steeringSessionId;
 };
 
 #endif /* HEMELB_SIMULATIONMASTER_H */
