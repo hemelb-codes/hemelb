@@ -53,6 +53,69 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
 
 }
 
+void SimulationMaster::SetupReporting(std::string const & candidateOutputDir,
+                                      std::string const & inputFile)
+{
+  outputDir=candidateOutputDir;
+  unsigned long lLastForwardSlash = inputFile.rfind('/');
+  if (lLastForwardSlash == std::string::npos) {
+    // input file supplied is in current folder
+    configLeafName= inputFile;
+    if (outputDir.length() == 0) {
+      // no output dir given, defaulting to local.
+      outputDir="./results";
+    }
+  } else {
+    // input file supplied is a path to the input file
+    configLeafName=  inputFile.substr(lLastForwardSlash);
+    if (outputDir.length() == 0) {
+      // no output dir given, defaulting to location of input file.
+     outputDir=inputFile.substr(0, lLastForwardSlash)+"results";
+    }
+  }
+
+  imageDirectory = outputDir + "/Images/";
+  snapshotDirectory = outputDir + "/Snapshots/";
+
+  if (IsCurrentProcTheIOProc())
+    {
+      if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
+      {
+        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("\nOutput directory \"%s\" already exists. Exiting.",
+                                                                            outputDir.c_str());
+        Abort();
+        return;
+      }
+
+
+      hemelb::util::MakeDirAllRXW(outputDir);
+      hemelb::util::MakeDirAllRXW(imageDirectory);
+      hemelb::util::MakeDirAllRXW(snapshotDirectory);
+
+      char timings_name[256];
+      char procs_string[256];
+
+      sprintf(procs_string, "%i", GetProcessorCount());
+      strcpy(timings_name, outputDir.c_str());
+      strcat(timings_name, "/timings");
+      strcat(timings_name, procs_string);
+      strcat(timings_name, ".asc");
+
+      mTimingsFile = fopen(timings_name, "w");
+      fprintf(mTimingsFile, "***********************************************************\n");
+      fprintf(mTimingsFile, "Opening config file:\n %s\n", inputFile.c_str());
+    }
+}
+
+void SimulationMaster::SaveConfigToResults(hemelb::SimConfig *iSimConfig)
+{
+  // Save the computed config out to disk in the output directory so we have
+  // a record of the total state used.
+
+  iSimConfig->Save(outputDir + "/" + configLeafName);
+
+}
+
 /**
  * Destructor for the SimulationMaster class.
  *
@@ -60,6 +123,11 @@ SimulationMaster::SimulationMaster(int iArgCount, char *iArgList[])
  */
 SimulationMaster::~SimulationMaster()
 {
+
+  if (IsCurrentProcTheIOProc())
+  {
+   fclose(mTimingsFile);
+  }
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     delete imageSendCpt;
@@ -143,15 +211,13 @@ int SimulationMaster::GetProcessorCount()
  */
 void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
                                   unsigned int iImagesPerCycle,
-                                  int iSteeringSessionid,
-                                  FILE * bTimingsFile)
+                                  int iSteeringSessionid)
 {
-  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
 
+  hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
+  SaveConfigToResults(iSimConfig);
   mSimulationState = new hemelb::lb::SimulationState(iSimConfig->StepsPerCycle,
                                                      iSimConfig->NumCycles);
-
-  mTimingsFile = bTimingsFile;
 
   hemelb::site_t mins[3], maxes[3];
   // TODO The way we initialise LbmParameters is not great.
@@ -255,8 +321,7 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 /**
  * Begin the simulation.
  */
-void SimulationMaster::RunSimulation(std::string image_directory,
-                                     std::string snapshot_directory,
+void SimulationMaster::RunSimulation(
                                      unsigned int lSnapshotsPerCycle,
                                      unsigned int lImagesPerCycle)
 {
@@ -412,8 +477,8 @@ void SimulationMaster::RunSimulation(std::string image_directory,
 
     if (mSimulationState->GetStability() == hemelb::lb::Unstable)
     {
-      hemelb::util::DeleteDirContents(snapshot_directory);
-      hemelb::util::DeleteDirContents(image_directory);
+      hemelb::util::DeleteDirContents(snapshotDirectory);
+      hemelb::util::DeleteDirContents(imageDirectory);
 
       for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
           != actors.end(); ++it)
@@ -465,7 +530,7 @@ void SimulationMaster::RunSimulation(std::string image_directory,
           char image_filename[255];
           snprintf(image_filename, 255, "%08li.dat", 1 + ( (it->second - 1)
               % mSimulationState->GetTimeStepsPerCycle()));
-          hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(image_directory
+          hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(imageDirectory
               + std::string(image_filename));
 
           const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
@@ -529,7 +594,7 @@ void SimulationMaster::RunSimulation(std::string image_directory,
       snprintf(snapshot_filename, 255, "snapshot_%06li.dat", mSimulationState->GetTimeStep());
 
       mSnapshotsWritten++;
-      mLbm->WriteConfigParallel(stability, snapshot_directory + std::string(snapshot_filename));
+      mLbm->WriteConfigParallel(stability, snapshotDirectory + std::string(snapshot_filename));
     }
 
     mSnapshotTime += (hemelb::util::myClock() - lPreSnapshotTime);

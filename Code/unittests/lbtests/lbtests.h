@@ -8,6 +8,7 @@
 #include "unittests/lbtests/CollisionTests.h"
 #include "unittests/lbtests/StreamerTests.h"
 #include "unittests/lbtests/RheologyModelTests.h"
+#include "unittests/lbtests/SimulationMasterTests.h"
 
 namespace hemelb
 {
@@ -49,6 +50,8 @@ namespace hemelb
 
             addTest(new CppUnit::TestCaller<RheologyModelTests>("TestRheologyModels",
                                                                 &RheologyModelTests::TestRheologyModels));
+            addTest(new CppUnit::TestCaller<SimulationMasterTests>("TestReport",
+                                                                            &SimulationMasterTests::TestReport));
           }
       };
 
