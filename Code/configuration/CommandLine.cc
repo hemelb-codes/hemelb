@@ -1,23 +1,37 @@
 #include "CommandLine.h"
 namespace hemelb{
-   namespace configuration
-   {
-     CommandLine::CommandLine(int aargc, char **aargv):
-      inputFile("input.xml"),
-      outputDir(""),
-      snapshotsPerCycle(10),
-      imagesPerCycle(10),
-      steeringSessionId(1),
-      argc(aargc),
-      argv(aargv),
-      ok(false)
-     {
+  namespace configuration
+  {
+    CommandLine::CommandLine(int aargc, char **aargv):
+          inputFile("input.xml"),
+          outputDir(""),
+          snapshotsPerCycle(10),
+          imagesPerCycle(10),
+          steeringSessionId(1),
+          argc(aargc),
+          argv(aargv),
+          ok(false)
+    {
+
+      // Initialise the network discovery. If this fails, abort.
+      // Needs to go first, because need to know if am the IO process for printing usage.
+
+      bool lTopologySuccess = true;
+      hemelb::topology::NetworkTopology::Instance()->Init(argc,argv, &lTopologySuccess);
+
+      if (!lTopologySuccess)
+      {
+        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
+        PrintUsage();
+        return;
+      }
 
       // There should be an odd number of arguments since the parameters occur in pairs.
-        if ( (argc % 2) == 0)
-        {
-          return;
-        }
+      if ( (argc % 2) == 0)
+      {
+        PrintUsage();
+        return;
+      }
 
       // All arguments are parsed in pairs, one is a "-<paramName>" type, and one
       // is the <parametervalue>.
@@ -50,10 +64,12 @@ namespace hemelb{
         }
         else
         {
+          PrintUsage();
           return;
         }
-        ok=true;
       }
+
+      ok=true;
     }
 
     void CommandLine::PrintUsage()

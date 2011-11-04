@@ -10,6 +10,8 @@
 #include "lb/boundaries/BoundaryValues.h"
 #include "util/UnitConverter.h"
 #include "configuration/CommandLine.h"
+#include "reporting/fileManager.h"
+#include "reporting/reporter.h"
 
 class SimulationMaster
 {
@@ -28,20 +30,14 @@ class SimulationMaster
 
 
   private:
+    void PrintTimingData();
     void Initialise();
     void SetupReporting(); // set up the reporting file
     void PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable);
 
-    void PrintTimingData();
-
-    FILE *mTimingsFile;
-    std::string outputDir;
-    std::string inputFile;
-    std::string snapshotDirectory;
-    std::string imageDirectory;
-
     hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* mLatDat;
+    hemelb::reporting::FileManager* fileManager;
 
     hemelb::steering::Network* network;
     hemelb::steering::ImageSendComponent *imageSendCpt;

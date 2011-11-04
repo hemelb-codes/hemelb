@@ -1,0 +1,5 @@
+namespace hemelb{
+  namespace reporting {
+
+  }
+}

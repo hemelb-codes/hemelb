@@ -1,5 +1,9 @@
-#include <string>
+#ifndef HEMELB_COMMANDLINE_H
+#define HEMELB_COMMANDLINE_H
 
+#include <string>
+#include "topology/NetworkTopology.h"
+#include "log/Logger.h"
 namespace hemelb{
   namespace configuration{
     class CommandLine {
@@ -42,3 +46,5 @@ namespace hemelb{
     };
   }
 }
+
+#endif

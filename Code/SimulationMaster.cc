@@ -24,18 +24,6 @@
 SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
 {
   if (options.HasProblems()) {
-    if (IsCurrentProcTheIOProc()) {
-      options.PrintUsage();
-    }
-    Abort();
-  }
-  // Initialise the network discovery. If this fails, abort.
-  bool lTopologySuccess = true;
-  hemelb::topology::NetworkTopology::Instance()->Init(options.ArgumentCount(), options.Arguments(), &lTopologySuccess);
-
-  if (!lTopologySuccess)
-  {
-    hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
     Abort();
   }
 
@@ -59,72 +47,19 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   mImagesWritten = 0;
   mSnapshotsWritten = 0;
 
-  inputFile = options.GetInputFile();
-  outputDir = options.GetOutputDir();
   snapshotsPerCycle = options.NumberOfSnapshotsPerCycle();
   imagesPerCycle = options.NumberOfImagesPerCycle();
   steeringSessionId = options.GetSteeringSessionId();;
-
-  SetupReporting();
-  simConfig = hemelb::configuration::SimConfig::Load(inputFile.c_str());
+  fileManager=new hemelb::reporting::FileManager(options,IsCurrentProcTheIOProc(),GetProcessorCount());
+  if (fileManager->HasProblems())
+  {
+    Abort();
+  }
+  simConfig = hemelb::configuration::SimConfig::Load(fileManager->GetInputFile().c_str());
+  //simConfig->Save(fileManager->GetInputFile()+"foo");
+  fileManager->SaveConfiguration(simConfig);
   Initialise();
 
-}
-
-void SimulationMaster::SetupReporting()
-{
-
-  std::string configLeafName;
-  unsigned long lLastForwardSlash = inputFile.rfind('/');
-  if (lLastForwardSlash == std::string::npos) {
-    // input file supplied is in current folder
-    configLeafName= inputFile;
-    if (outputDir.length() == 0) {
-      // no output dir given, defaulting to local.
-      outputDir="./results";
-    }
-  } else {
-    // input file supplied is a path to the input file
-    configLeafName=  inputFile.substr(lLastForwardSlash);
-    if (outputDir.length() == 0) {
-      // no output dir given, defaulting to location of input file.
-     outputDir=inputFile.substr(0, lLastForwardSlash)+"results";
-    }
-  }
-
-  imageDirectory = outputDir + "/Images/";
-  snapshotDirectory = outputDir + "/Snapshots/";
-
-  if (IsCurrentProcTheIOProc())
-    {
-      if (hemelb::util::DoesDirectoryExist(outputDir.c_str()))
-      {
-        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("\nOutput directory \"%s\" already exists. Exiting.",
-                                                                            outputDir.c_str());
-        Abort();
-        return;
-      }
-
-
-      hemelb::util::MakeDirAllRXW(outputDir);
-      hemelb::util::MakeDirAllRXW(imageDirectory);
-      hemelb::util::MakeDirAllRXW(snapshotDirectory);
-
-      simConfig->Save(outputDir + "/" + configLeafName);
-
-      char timings_name[256];
-      char procs_string[256];
-
-      sprintf(procs_string, "%i", GetProcessorCount());
-      strcpy(timings_name, outputDir.c_str());
-      strcat(timings_name, "/timings");
-      strcat(timings_name, procs_string);
-      strcat(timings_name, ".asc");
-
-      mTimingsFile = fopen(timings_name, "w");
-      fprintf(mTimingsFile, "***********************************************************\n");
-      fprintf(mTimingsFile, "Opening config file:\n %s\n", inputFile.c_str());
-    }
 }
 
 /**
@@ -135,10 +70,7 @@ void SimulationMaster::SetupReporting()
 SimulationMaster::~SimulationMaster()
 {
 
-  if (IsCurrentProcTheIOProc())
-  {
-   fclose(mTimingsFile);
-  }
+
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     delete imageSendCpt;
@@ -198,6 +130,7 @@ SimulationMaster::~SimulationMaster()
     delete mUnits;
   }
   delete simConfig;
+  delete fileManager;
 }
 
 /**
@@ -485,8 +418,7 @@ void SimulationMaster::RunSimulation()
 
     if (mSimulationState->GetStability() == hemelb::lb::Unstable)
     {
-      hemelb::util::DeleteDirContents(snapshotDirectory);
-      hemelb::util::DeleteDirContents(imageDirectory);
+      fileManager->EmptyOutputDirectories();
 
       for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
           != actors.end(); ++it)
@@ -535,16 +467,14 @@ void SimulationMaster::RunSimulation()
 
         if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
         {
-          char image_filename[255];
-          snprintf(image_filename, 255, "%08li.dat", 1 + ( (it->second - 1)
-              % mSimulationState->GetTimeStepsPerCycle()));
-          hemelb::io::XdrFileWriter writer = hemelb::io::XdrFileWriter(imageDirectory
-              + std::string(image_filename));
+
+          hemelb::io::XdrFileWriter * writer = fileManager->XdrImageWriter(
+              1 + ( (it->second - 1) % mSimulationState->GetTimeStepsPerCycle()));
 
           const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
               mVisControl->GetResult(it->second);
 
-          mVisControl ->WriteImage(&writer,
+          mVisControl ->WriteImage(writer,
                                    *result,
                                    &mVisControl->mDomainStats,
                                    &mVisControl->mVisSettings);
@@ -598,11 +528,8 @@ void SimulationMaster::RunSimulation()
 
     if (mSimulationState->GetTimeStep() % snapshots_period == 0)
     {
-      char snapshot_filename[255];
-      snprintf(snapshot_filename, 255, "snapshot_%06li.dat", mSimulationState->GetTimeStep());
-
       mSnapshotsWritten++;
-      mLbm->WriteConfigParallel(stability, snapshotDirectory + std::string(snapshot_filename));
+      mLbm->WriteConfigParallel(stability, fileManager->SnapshotPath(mSimulationState->GetTimeStep()));
     }
 
     mSnapshotTime += (hemelb::util::myClock() - lPreSnapshotTime);
@@ -626,7 +553,7 @@ void SimulationMaster::RunSimulation()
     if (mSimulationState->GetTimeStep() == mSimulationState->GetTimeStepsPerCycle()
         && hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
-      fprintf(mTimingsFile, "cycle id: %li\n", mSimulationState->GetCycleId());
+      fprintf(fileManager->ReportFile(), "cycle id: %li\n", mSimulationState->GetCycleId());
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
                                                                           mSimulationState->GetCycleId());
@@ -663,30 +590,30 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps, double iSimulationTim
 {
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
-    fprintf(mTimingsFile, "\n");
-    fprintf(mTimingsFile,
+    fprintf(fileManager->ReportFile(), "\n");
+    fprintf(fileManager->ReportFile(),
             "threads: %i, machines checked: %i\n\n",
             hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(),
             hemelb::topology::NetworkTopology::Instance()->GetMachineCount());
-    fprintf(mTimingsFile,
+    fprintf(fileManager->ReportFile(),
             "topology depths checked: %i\n\n",
             hemelb::topology::NetworkTopology::Instance()->GetDepths());
-    fprintf(mTimingsFile, "fluid sites: %li\n\n", mLbm->TotalFluidSiteCount());
-    fprintf(mTimingsFile,
+    fprintf(fileManager->ReportFile(), "fluid sites: %li\n\n", mLbm->TotalFluidSiteCount());
+    fprintf(fileManager->ReportFile(),
             "cycles and total time steps: %li, %i \n\n",
              (mSimulationState->GetCycleId() - 1), // Note that the cycle-id is 1-indexed.
             iTotalTimeSteps);
-    fprintf(mTimingsFile, "time steps per second: %.3f\n\n", iTotalTimeSteps / iSimulationTime);
+    fprintf(fileManager->ReportFile(), "time steps per second: %.3f\n\n", iTotalTimeSteps / iSimulationTime);
   }
 
   if (iIsUnstable)
   {
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
-      fprintf(mTimingsFile,
+      fprintf(fileManager->ReportFile(),
               "Attention: simulation unstable with %li timesteps/cycle\n",
               (unsigned long) mSimulationState->GetTimeStepsPerCycle());
-      fprintf(mTimingsFile, "Simulation terminated\n");
+      fprintf(fileManager->ReportFile(), "Simulation terminated\n");
     }
   }
   else
@@ -694,28 +621,28 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps, double iSimulationTim
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
 
-      fprintf(mTimingsFile,
+      fprintf(fileManager->ReportFile(),
               "time steps per cycle: %li\n",
               (unsigned long) mSimulationState->GetTimeStepsPerCycle());
-      fprintf(mTimingsFile, "\n");
+      fprintf(fileManager->ReportFile(), "\n");
 
-      fprintf(mTimingsFile, "\n");
+      fprintf(fileManager->ReportFile(), "\n");
 
-      fprintf(mTimingsFile, "\n");
-      fprintf(mTimingsFile, "decomposition optimisation time (s):       %.3f\n", mDomainDecompTime);
-      fprintf(mTimingsFile, "pre-processing buffer management time (s): %.3f\n", mNetInitialiseTime);
-      fprintf(mTimingsFile, "input configuration reading time (s):      %.3f\n", mFileReadTime);
+      fprintf(fileManager->ReportFile(), "\n");
+      fprintf(fileManager->ReportFile(), "decomposition optimisation time (s):       %.3f\n", mDomainDecompTime);
+      fprintf(fileManager->ReportFile(), "pre-processing buffer management time (s): %.3f\n", mNetInitialiseTime);
+      fprintf(fileManager->ReportFile(), "input configuration reading time (s):      %.3f\n", mFileReadTime);
 
-      fprintf(mTimingsFile,
+      fprintf(fileManager->ReportFile(),
               "total time (s):                            %.3f\n\n",
                (hemelb::util::myClock() - mCreationTime));
 
-      fprintf(mTimingsFile, "Sub-domains info:\n\n");
+      fprintf(fileManager->ReportFile(), "Sub-domains info:\n\n");
 
       for (hemelb::proc_t n = 0; n
           < hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(); n++)
       {
-        fprintf(mTimingsFile,
+        fprintf(fileManager->ReportFile(),
                 "rank: %lu, fluid sites: %lu\n",
                 (unsigned long) n,
                 (unsigned long) hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor[n]);
@@ -761,12 +688,12 @@ void SimulationMaster::PrintTimingData()
     for (int ii = 0; ii < 5; ii++)
       lMeans[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount());
 
-    fprintf(mTimingsFile,
+    fprintf(fileManager->ReportFile(),
             "\n\nPer-proc timing data (secs per [cycle,cycle,cycle,image,snapshot]): \n\n");
-    fprintf(mTimingsFile, "\t\tMin \tMean \tMax\n");
+    fprintf(fileManager->ReportFile(), "\t\tMin \tMean \tMax\n");
     for (int ii = 0; ii < 5; ii++)
     {
-      fprintf(mTimingsFile,
+      fprintf(fileManager->ReportFile(),
               "%s\t\t%.3g\t%.3g\t%.3g\n",
               lNames[ii].c_str(),
               lMins[ii],
