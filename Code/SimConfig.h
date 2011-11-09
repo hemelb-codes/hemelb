@@ -22,7 +22,7 @@ namespace hemelb
       // instantiated.
       std::vector<lb::boundaries::iolets::InOutLet*> Inlets;
       std::vector<lb::boundaries::iolets::InOutLet*> Outlets;
-      util::Vector3D VisCentre;
+      util::Vector3D<float> VisCentre;
       float VisLongitude;
       float VisLatitude;
       float VisZoom;
@@ -54,9 +54,11 @@ namespace hemelb
                 std::string iAttributeName,
                 bool iIsLoading,
                 std::string &iValue);
-      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, std::vector<
-          lb::boundaries::iolets::InOutLet*> &value, std::string iChildNodeName);
-      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D &iValue);
+      void DoIO(TiXmlElement *iXmlNode,
+                bool iIsLoading,
+                std::vector<lb::boundaries::iolets::InOutLet*> &value,
+                std::string iChildNodeName);
+      void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);
       TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);
   };
 }

@@ -26,7 +26,7 @@ namespace hemelb
             ++n;
 
             // Get the block data for this block - if it has no site data, move on.
-            geometry::LatticeData::BlockData * map_block_p = mLatDat->GetBlock(n);
+            geometry::BlockData * map_block_p = mLatDat->GetBlock(n);
 
             if (map_block_p->site_data == NULL)
             {
@@ -50,9 +50,9 @@ namespace hemelb
             // Create a glyph at the desired location
             Glyph lGlyph;
 
-            lGlyph.x = float (i + site_i) - 0.5F * float (mLatDat->GetXSiteCount());
-            lGlyph.y = float (j + site_j) - 0.5F * float (mLatDat->GetYSiteCount());
-            lGlyph.z = float (k + site_k) - 0.5F * float (mLatDat->GetZSiteCount());
+            lGlyph.x = float(i + site_i) - 0.5F * float(mLatDat->GetXSiteCount());
+            lGlyph.y = float(j + site_j) - 0.5F * float(mLatDat->GetYSiteCount());
+            lGlyph.z = float(k + site_k) - 0.5F * float(mLatDat->GetZSiteCount());
 
             lGlyph.f = mLatDat->GetFOld(map_block_p->site_data[siteIdOnBlock] * D3Q15::NUMVECTORS);
 
@@ -78,21 +78,21 @@ namespace hemelb
      * @param iStressType
      * @param mode
      */
-    void GlyphDrawer::RenderLine(const Vector3D<float>& endPoint1,
-                                 const Vector3D<float>& endPoint2,
+    void GlyphDrawer::RenderLine(const XYCoordinates<float>& endPoint1,
+                                 const XYCoordinates<float>& endPoint2,
                                  const VisSettings* visSettings,
                                  PixelSet<BasicPixel>* pixelSet)
     {
       // Store end points of the line and 'current' point (x and y).
-      int x = int (endPoint1.x);
-      int y = int (endPoint1.y);
+      int x = int(endPoint1.x);
+      int y = int(endPoint1.y);
 
       // Ensure increasing x from point 1 to point 2.
       int x1, y1, x2, y2;
       if (endPoint2.x < endPoint1.x)
       {
-        x1 = int (endPoint2.x);
-        y1 = int (endPoint2.y);
+        x1 = int(endPoint2.x);
+        y1 = int(endPoint2.y);
         x2 = x;
         y2 = y;
       }
@@ -100,8 +100,8 @@ namespace hemelb
       {
         x1 = x;
         y1 = y;
-        x2 = int (endPoint2.x);
-        y2 = int (endPoint2.y);
+        x2 = int(endPoint2.x);
+        y2 = int(endPoint2.y);
       }
 
       // Ensure increasing y.
@@ -203,15 +203,15 @@ namespace hemelb
             * mDomainStats->velocity_threshold_max_inv / density;
 
         // ... calculate the two ends of the line we're going to draw...
-        Vector3D<distribn_t> p1 = Vector3D<distribn_t> (mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
-        Vector3D<distribn_t> p2 = p1 + Vector3D<distribn_t> (vx * temp, vy * temp, vz * temp);
+        util::Vector3D<float> p1 = util::Vector3D<float>(mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
+        util::Vector3D<float> p2 = p1 + util::Vector3D<float>(vx * temp, vy * temp, vz * temp);
 
         // ... transform to the location on the screen, and render.
-        Vector3D<distribn_t> p3 = mViewpoint->Project(p1);
-        Vector3D<distribn_t> p4 = mViewpoint->Project(p2);
+        XYCoordinates<float> p3 = mViewpoint->FlatProject(p1);
+        XYCoordinates<float> p4 = mViewpoint->FlatProject(p2);
 
-        mScreen->Transform<distribn_t> (p3.x, p3.y, p3.x, p3.y);
-        mScreen->Transform<distribn_t> (p4.x, p4.y, p4.x, p4.y);
+        p3 = mScreen->TransformScreenToPixelCoordinates<float> (p3);
+        p4 = mScreen->TransformScreenToPixelCoordinates<float> (p4);
 
         RenderLine(p3, p4, mVisSettings, pixelSet);
       }
