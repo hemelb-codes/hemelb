@@ -3,9 +3,9 @@
 
 #include "vis/BasicPixel.h"
 #include "vis/PixelSet.h"
-#include "vis/rayTracer/RayPixel.h"
+#include "vis/rayTracer/RayDataNormal.h"
 #include "vis/ResultPixel.h"
-#include "vis/StreakPixel.h"
+#include "vis/streaklineDrawer/StreakPixel.h"
 
 namespace hemelb
 {
@@ -18,8 +18,9 @@ namespace hemelb
     class Rendering
     {
       public:
-        Rendering(PixelSet<BasicPixel>* glyph, PixelSet<raytracer::RayPixel>* ray, PixelSet<
-            StreakPixel>* streak);
+        Rendering(PixelSet<BasicPixel>* glyph,
+                  PixelSet<raytracer::RayDataNormal>* ray,
+                  PixelSet<streaklinedrawer::StreakPixel>* streak);
         void ReleaseAll();
 
         void ReceivePixelCounts(net::Net* inNet, proc_t source);
@@ -45,8 +46,8 @@ namespace hemelb
         }
 
         PixelSet<BasicPixel>* glyphResult;
-        PixelSet<raytracer::RayPixel>* rayResult;
-        PixelSet<StreakPixel>* streakResult;
+        PixelSet<raytracer::RayDataNormal>* rayResult;
+        PixelSet<streaklinedrawer::StreakPixel>* streakResult;
     };
   }
 }

@@ -215,8 +215,10 @@ namespace hemelb
     }
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, std::vector<
-      lb::boundaries::iolets::InOutLet*> &bResult, std::string iChildNodeName)
+  void SimConfig::DoIO(TiXmlElement *iParent,
+                       bool iIsLoading,
+                       std::vector<lb::boundaries::iolets::InOutLet*> &bResult,
+                       std::string iChildNodeName)
   {
     if (iIsLoading)
     {
@@ -290,7 +292,7 @@ namespace hemelb
     DoIO(lNormalElement, iIsLoading, value->Normal);
   }
 
-  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, util::Vector3D &iValue)
+  void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, util::Vector3D<float> &iValue)
   {
     DoIO(iParent, "x", iIsLoading, iValue.x);
     DoIO(iParent, "y", iIsLoading, iValue.y);

@@ -96,10 +96,9 @@ int main(int argc, char *argv[])
   if (lOutputDir.length() == 0)
   {
     lOutputDir = ( (lLastForwardSlash == std::string::npos)
-    ? "./"
-    : lInputFile.substr(0, lLastForwardSlash))
-+      "results";
-    }
+      ? "./"
+      : lInputFile.substr(0, lLastForwardSlash)) + "results";
+  }
 
   FILE *timings_ptr = NULL;
   std::string image_directory = lOutputDir + "/Images/";
@@ -123,9 +122,9 @@ int main(int argc, char *argv[])
     // Save the computed config out to disk in the output directory so we have
     // a record of the total state used.
     std::string lFileNameComponent = std::string( (lLastForwardSlash == std::string::npos)
-    ? lInputFile
-    : lInputFile.substr(lLastForwardSlash))
-;    lSimulationConfig->Save(lOutputDir + "/" + lFileNameComponent);
+      ? lInputFile
+      : lInputFile.substr(lLastForwardSlash));
+    lSimulationConfig->Save(lOutputDir + "/" + lFileNameComponent);
 
     char timings_name[256];
     char procs_string[256];

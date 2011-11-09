@@ -58,7 +58,7 @@ namespace hemelb
         template<typename TagType>
         void SetTag(typename TagType::WrappedType value)
         {
-          TagType* tag = static_cast<TagType*> (mTags[TagType::TagString]);
+          TagType* tag = static_cast<TagType*>(mTags[TagType::TagString]);
           tag->SetInstanceValues(value);
         }
 
@@ -66,8 +66,7 @@ namespace hemelb
         template<typename TagType>
         void RegisterTag(TagType* tag)
         {
-          mTags.insert(PairType(TagType::TagString,
-                                static_cast<_private::TagBase*> (tag)));
+          mTags.insert(PairType(TagType::TagString, static_cast<_private::TagBase*>(tag)));
         }
 
         ContainerType mTags;
