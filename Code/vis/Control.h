@@ -13,11 +13,14 @@
 
 #include "vis/DomainStats.h"
 #include "vis/GlyphDrawer.h"
+#include "vis/rayTracer/ClusterWithWallNormals.h"
+#include "vis/rayTracer/RayDataNormal.h"
+#include "vis/rayTracer/RayDataEnhanced.h"
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/Rendering.h"
 #include "vis/ResultPixel.h"
 #include "vis/Screen.h"
-#include "vis/StreaklineDrawer.h"
+#include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 
@@ -75,12 +78,12 @@ namespace hemelb
 
         void WritePixels(io::Writer* writer,
                          const PixelSet<ResultPixel>& imagePixels,
-                         const DomainStats* domainStats,
-                         const VisSettings* visSettings) const;
+                         const DomainStats& domainStats,
+                         const VisSettings& visSettings) const;
         void WriteImage(io::Writer* writer,
                         const PixelSet<ResultPixel>& imagePixels,
-                        const DomainStats* domainStats,
-                        const VisSettings* visSettings) const;
+                        const DomainStats& domainStats,
+                        const VisSettings& visSettings) const;
 
         bool IsRendering() const;
 
@@ -128,9 +131,10 @@ namespace hemelb
         geometry::LatticeData* mLatDat;
         Screen mScreen;
         Vis* vis;
-        raytracer::RayTracer *myRayTracer;
+        raytracer::RayTracer<raytracer::ClusterWithWallNormals, raytracer::RayDataNormal>
+            *normalRayTracer;
         GlyphDrawer *myGlypher;
-        StreaklineDrawer *myStreaker;
+        streaklinedrawer::StreaklineDrawer *myStreaker;
 
         double timeSpent;
     };

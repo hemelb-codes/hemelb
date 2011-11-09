@@ -58,8 +58,8 @@ namespace hemelb
       // Write the pixels themselves
       mVisControl->WritePixels(&imageWriter,
                                *pix,
-                               &mVisControl->mDomainStats,
-                               &mVisControl->mVisSettings);
+                               mVisControl->mDomainStats,
+                               mVisControl->mVisSettings);
 
       // Write the numerical data from the simulation, wanted by the client.
       {
