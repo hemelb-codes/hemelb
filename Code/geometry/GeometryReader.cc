@@ -108,7 +108,7 @@ namespace hemelb
         log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s",
                                                       bSimConfig->DataFilePath.c_str());
       }
-      fflush(NULL);
+      fflush( NULL);
 
       // Set the view to the file.
       std::string lMode = "native";

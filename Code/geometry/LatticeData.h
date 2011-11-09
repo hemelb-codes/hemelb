@@ -8,6 +8,7 @@
 #include "constants.h"
 #include "SimConfig.h"
 #include "mpiInclude.h"
+#include "geometry/BlockTraverser.h"
 #include "io/XdrReader.h"
 // TODO Remove the stress type from the data file, so we can remove the dependence
 // on LbmParams here.
@@ -27,58 +28,6 @@ namespace hemelb
           FLUID_TYPE = 1U,
           INLET_TYPE = 2U,
           OUTLET_TYPE = 3U
-        };
-
-        //TODO Ideally we'd hide implementation details like this.
-        // Data about an element of the domain wall
-        struct WallData
-        {
-            // estimated wall normal (if the site is close to the wall);
-            double wall_nor[3];
-            // cut distances along the 14 non-zero lattice vectors;
-            // each one is between 0 and 1 if the surface cuts the corresponding
-            // vector or is equal to "NO_VALUE" otherwise
-            double cut_dist[D3Q15::NUMVECTORS - 1];
-        };
-
-        // Data about each global block in the lattice,
-        // site_data[] is an array containing individual lattice site data
-        // within a global block.
-        struct BlockData
-        {
-            BlockData()
-            {
-              ProcessorRankForEachBlockSite = NULL;
-              wall_data = NULL;
-              site_data = NULL;
-            }
-
-            ~BlockData()
-            {
-              if (ProcessorRankForEachBlockSite != NULL)
-              {
-                delete[] ProcessorRankForEachBlockSite;
-                ProcessorRankForEachBlockSite = NULL;
-              }
-              if (wall_data != NULL)
-              {
-                delete[] wall_data;
-                wall_data = NULL;
-              }
-              if (site_data != NULL)
-              {
-                delete[] site_data;
-                site_data = NULL;
-              }
-            }
-
-            // An array of the ranks on which each lattice site within the block resides.
-            proc_t* ProcessorRankForEachBlockSite;
-            // Information about wall / inlet / outlet position and orientation for
-            // each site.
-            WallData *wall_data;
-            // The "site data" for each site.
-            unsigned int *site_data;
         };
 
         LatticeData(const bool reserveSteeringCore,
@@ -134,6 +83,7 @@ namespace hemelb
         const proc_t* GetProcIdFromGlobalCoords(site_t siteI, site_t siteJ, site_t siteK) const;
 
         BlockData* GetBlock(site_t blockNumber) const;
+        BlockTraverser GetBlockTraverser() const;
 
         distribn_t* GetFOld(site_t siteNumber) const;
         distribn_t* GetFNew(site_t siteNumber) const;
@@ -176,8 +126,8 @@ namespace hemelb
 
             void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
             void SetWallNormal(site_t iSiteIndex, const double iNormal[3]);
-            void SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS
-                - 1]);
+            void SetDistanceToWall(site_t iSiteIndex,
+                                   const double iCutDistance[D3Q15::NUMVECTORS - 1]);
 
             void SetSharedSiteCount(site_t iSharedCount);
 

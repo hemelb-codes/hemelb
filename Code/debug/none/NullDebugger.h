@@ -7,18 +7,19 @@ namespace hemelb
 {
   namespace debug
   {
-    class NullDebugger : public Debugger {
-    public:
-       void BreakHere(void);
-       void Print(const char* iFormat, ...);
+    class NullDebugger : public Debugger
+    {
+      public:
+        void BreakHere(void);
+        void Print(const char* iFormat, ...);
 
-    protected:
-      void Attach(void);
-      NullDebugger(char* executable);
-      friend Debugger* PlatformDebuggerFactory(char* executable);  
+      protected:
+        void Attach(void);
+        NullDebugger(char* executable);
+        friend Debugger* PlatformDebuggerFactory(char* executable);
     };
-    
-    Debugger* PlatformDebuggerFactory(char* executable);  
+
+    Debugger* PlatformDebuggerFactory(char* executable);
   }
 }
 

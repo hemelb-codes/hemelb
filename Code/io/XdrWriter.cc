@@ -24,7 +24,6 @@ namespace hemelb
 #define xdr_uint32_t xdr_u_int32_t
 #define xdr_uint64_t xdr_u_int64_t
 #endif //  HEMELB_CFG_ON_BSD
-
     void XdrWriter::_write(int16_t const& shortToWrite)
     {
       xdr_int16_t(&mXdr, const_cast<int16_t *> (&shortToWrite));
@@ -69,7 +68,7 @@ namespace hemelb
     unsigned int XdrWriter::getCurrentStreamPosition() const
     {
       // The XDR function does not modify the instance, but is not const in the declaration.
-      return xdr_getpos(const_cast<XDR*>(&mXdr));
+      return xdr_getpos(const_cast<XDR*> (&mXdr));
     }
 
     // No field/record separators in XDR files

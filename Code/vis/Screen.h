@@ -2,7 +2,7 @@
 #define HEMELB_VIS_SCREEN_H
 
 #include "io/Writer.h"
-#include "vis/Vector3D.h"
+#include "util/Vector3D.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
 
@@ -36,29 +36,35 @@ namespace hemelb
          * @param output
          */
         template<typename T>
-        void Transform(const float& inputX, const float& inputY, T& outputX, T& outputY) const
+        XYCoordinates<T> TransformScreenToPixelCoordinates(const XYCoordinates<float>& iXYIn) const
         {
-          outputX = (T) (ScaleX * (inputX + MaxXValue));
-          outputY = (T) (ScaleY * (inputY + MaxYValue));
+          return XYCoordinates<T> (static_cast<T> (mPixelsPerUnitX * (iXYIn.x + MaxXValue)),
+                                   static_cast<T> (mPixelsPerUnitY * (iXYIn.y + MaxYValue)));
         }
 
-        const Vector3D<float>& GetVtx() const;
-        const Vector3D<float>& GetUnitVectorProjectionX() const;
-        const Vector3D<float>& GetUnitVectorProjectionY() const;
+        const util::Vector3D<float>& GetCameraToBottomLeftOfScreenVector() const;
+        const util::Vector3D<float>& GetPixelUnitVectorProjectionX() const;
+        const util::Vector3D<float>& GetPixelUnitVectorProjectionY() const;
         int GetPixelsX() const;
         int GetPixelsY() const;
 
-        bool MouseIsOverPixel(int mouseX, int mouseY, float* density, float* stress);
-
       private:
-        float ScaleX, ScaleY;
         int xPixels, yPixels;
-        float MaxXValue, MaxYValue;
-        Vector3D<float> mVtx;
+
+        //The number of pixels per unit of X or Y in screen coordinates
+        float mPixelsPerUnitX;
+        float mPixelsPerUnitY;
+
+        //The extent of the screen in screen coordintes
+        //(from -MaxXValue to MaxXValue)
+        float MaxXValue;
+        float MaxYValue;
+
+        util::Vector3D<float> mCameraToBottomLeftOfScreen;
 
         // Projection of unit vectors along screen axes into normal space.
-        Vector3D<float> UnitVectorProjectionX;
-        Vector3D<float> UnitVectorProjectionY;
+        util::Vector3D<float> mPixelUnitVectorProjectionX;
+        util::Vector3D<float> mPixelUnitVectorProjectionY;
     };
   }
 }

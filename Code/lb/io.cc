@@ -167,7 +167,12 @@ namespace hemelb
                   if (mLatDat->GetSiteData(my_site_id) == geometry::LatticeData::FLUID_TYPE)
                   {
                     D3Q15::CalculateDensityVelocityFEq(mLatDat->GetFOld(my_site_id
-                        * D3Q15::NUMVECTORS), density, vx, vy, vz, f_eq);
+                                                           * D3Q15::NUMVECTORS),
+                                                       density,
+                                                       vx,
+                                                       vy,
+                                                       vz,
+                                                       f_eq);
 
                     for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
                     {
@@ -223,8 +228,8 @@ namespace hemelb
                   lWriter << (int) (site_i - siteMins[0]) << (int) (site_j - siteMins[1])
                       << (int) (site_k - siteMins[2]);
 
-                  lWriter << float (pressure) << float (vx) << float (vy) << float (vz)
-                      << float (stress);
+                  lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
+                      << float(stress);
                 }
               }
             }
@@ -292,10 +297,8 @@ namespace hemelb
       distribn_t density_min = std::numeric_limits<distribn_t>::max();
       distribn_t density_max = std::numeric_limits<distribn_t>::min();
 
-      distribn_t velocity_max =
-          mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
-      distribn_t stress_max =
-          mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
+      distribn_t velocity_max = mUnits->ConvertVelocityToLatticeUnits(mSimConfig->MaxVelocity);
+      distribn_t stress_max = mUnits->ConvertStressToLatticeUnits(mSimConfig->MaxStress);
 
       for (int i = 0; i < inlets; i++)
       {
