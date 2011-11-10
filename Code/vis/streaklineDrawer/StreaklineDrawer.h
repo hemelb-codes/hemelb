@@ -27,10 +27,6 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-
-      // Method to reset streakline drawer
-      void Restart();
-
       /**
        * Class that controls the drawing of streaklines - lines that trace
        * the path of an imaginary particle were it dropped into the fluid.
@@ -53,30 +49,22 @@ namespace hemelb
 
           PixelSet<StreakPixel>* Render();
 
+          std::vector<Particle> mParticleSeeds;
+          proc_t *from_proc_id_to_neigh_proc_index;
+
         private:
-          // Private functions for updating the velocity field and the particles in it.
+          // Functions for updating the velocity field and the particles in it.
           void updateVelField(int stage_id);
           void updateParticles();
-
-        public:
-          // Variables for counting the processors involved etc.
-          site_t shared_vs;
-          proc_t procs;
-
-          std::vector<Particle> mParticleSeeds;
-
-        private:
 
           // Arrays for communicating between processors.
           float *v_to_send, *v_to_recv;
           site_t *s_to_send, *s_to_recv;
 
-        public:
-          proc_t *from_proc_id_to_neigh_proc_index;
+          // Variables for counting the processors involved etc.
+          site_t shared_vs;
+          proc_t procs;
 
-          std::vector<NeighbouringProcessor> mNeighbouringProcessors;
-
-        private:
           // Require these for inter-processor comms.
           MPI_Request *req;
 
@@ -87,6 +75,7 @@ namespace hemelb
           void communicateSiteIds();
           void communicateVelocities();
 
+          std::vector<NeighbouringProcessor> mNeighbouringProcessors;
           const geometry::LatticeData& latDat;
           Particles mParticles;
           Screen& mScreen;

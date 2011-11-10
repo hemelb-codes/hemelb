@@ -14,7 +14,7 @@ namespace hemelb
 
     }
 
-    distribn_t UnitConverter::ConvertPressureToLatticeUnits(double pressure) const
+    LatticePressure UnitConverter::ConvertPressureToLatticeUnits(PhysicalPressure pressure) const
     {
       double temp = (PULSATILE_PERIOD_s / ((double) mState->GetTimeStepsPerCycle() * voxel_size));
       return Cs2
@@ -22,7 +22,7 @@ namespace hemelb
               / BLOOD_DENSITY_Kg_per_m3;
     }
 
-    double UnitConverter::ConvertPressureToPhysicalUnits(distribn_t pressure) const
+    PhysicalPressure UnitConverter::ConvertPressureToPhysicalUnits(LatticePressure pressure) const
     {
       double temp = ( ((double) mState->GetTimeStepsPerCycle() * voxel_size) / PULSATILE_PERIOD_s);
       return REFERENCE_PRESSURE_mmHg
