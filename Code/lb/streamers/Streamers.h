@@ -1,10 +1,10 @@
 #ifndef HEMELB_LB_STREAMERS_STREAMERS_H
 #define HEMELB_LB_STREAMERS_STREAMERS_H
 
-// Unusable
-//#include "lb/streamers/SimpleBounceBack.h"
+
 
 // Usable
+#include "lb/streamers/SimpleBounceBack.h"
 #include "lb/streamers/SimpleCollideAndStream.h"
 #include "lb/streamers/FInterpolation.h"
 #include "lb/streamers/GuoZhengShi.h"

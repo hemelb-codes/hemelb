@@ -35,7 +35,7 @@ namespace hemelb
       }
     }
 
-    void LBM::WriteConfigParallel(hemelb::lb::Stability stability, std::string output_file_name)
+    void LBM::WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const
     {
       /* This routine writes the flow field on file, using MPIO to coordinate
        * the writing. The format is detailed in io/formats/snapshot.h
@@ -251,13 +251,13 @@ namespace hemelb
     // Calculate the BCs for each boundary site type and the
     // non-equilibrium distribution functions.
     void LBM::CalculateBC(distribn_t f[],
-                          hemelb::geometry::LatticeData::SiteType iSiteType,
-                          unsigned int iBoundaryId,
+                          hemelb::geometry::LatticeData::SiteType const iSiteType,
+                          unsigned int const iBoundaryId,
                           distribn_t *density,
                           distribn_t *vx,
                           distribn_t *vy,
                           distribn_t *vz,
-                          distribn_t f_neq[])
+                          distribn_t f_neq[]) const
     {
       distribn_t dummy_density;
 

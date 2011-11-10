@@ -335,7 +335,7 @@ namespace hemelb
                                       unsigned int iSiteIdOnBlock)
           {
 
-            if (iBlock->wall_data[iSiteIdOnBlock].wall_nor[0] != -1.0F)
+            if (iBlock->wall_data != NULL && iBlock->wall_data[iSiteIdOnBlock].wall_nor[0] != -1.0F)
             {
               iCluster.SetWallData(iBlockNum,
                                    iSiteIdOnBlock,

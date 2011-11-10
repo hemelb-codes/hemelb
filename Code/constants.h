@@ -3,19 +3,11 @@
 
 #include <limits>
 #include <stdint.h>
-
+#include "units.h"
 //#include "mpiInclude.h"
 
 namespace hemelb
 {
-
-  // Basic types for use in HemeLB. Any variable which scales as a function of the number of sites
-  // can have type site_t, processors proc_t.
-  // Any variable whose precision should roughly match that of the lattice sites' velocity
-  // distributions can have type distribn_t.
-  typedef int64_t site_t;
-  typedef int proc_t;
-  typedef double distribn_t;
 
   const unsigned int COLLISION_TYPES = 6;
   const double PI = 3.14159265358979323846264338327950288;
