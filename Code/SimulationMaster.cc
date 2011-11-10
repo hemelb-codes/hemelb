@@ -172,15 +172,11 @@ void SimulationMaster::Initialise(hemelb::SimConfig *iSimConfig,
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   mLbm = new hemelb::lb::LBM(iSimConfig, &mNet, mLatDat, mSimulationState);
+  mLbm->SetSiteMinima(mins);
+  mLbm->SetSiteMaxima(maxes);
 
-  // TODO When we've taken the stress type out of the config file, this could be nicer.
-  for (int ii = 0; ii < 3; ++ii)
-  {
-    mLbm->siteMins[ii] = mins[ii];
-    mLbm->siteMaxes[ii] = maxes[ii];
-  }
   mLbm->GetLbmParams()->StressType = params.StressType;
-  mLbm->total_fluid_sites = totalFluidSites;
+  mLbm->SetTotalFluidSiteCount(totalFluidSites);
 
   // Initialise and begin the steering.
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -604,7 +600,7 @@ void SimulationMaster::PostSimulation(int iTotalTimeSteps, double iSimulationTim
     fprintf(mTimingsFile,
             "topology depths checked: %i\n\n",
             hemelb::topology::NetworkTopology::Instance()->GetDepths());
-    fprintf(mTimingsFile, "fluid sites: %li\n\n", mLbm->total_fluid_sites);
+    fprintf(mTimingsFile, "fluid sites: %li\n\n", mLbm->TotalFluidSiteCount());
     fprintf(mTimingsFile,
             "cycles and total time steps: %li, %i \n\n",
              (mSimulationState->GetCycleId() - 1), // Note that the cycle-id is 1-indexed.
