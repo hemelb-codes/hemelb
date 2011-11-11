@@ -268,7 +268,7 @@ namespace hemelb
                                                                         lBlockCoordinates.y,
                                                                         lBlockCoordinates.z);
 
-              if (mClusterIdOfBlock[lBlockId] == iClusterId)
+              if (mClusterIdOfBlock[lBlockId] == (short) iClusterId)
               {
                 ResizeVectorsForBlock(lCluster, lClusterTraverser.GetCurrentIndex());
 
@@ -293,7 +293,7 @@ namespace hemelb
           virtual void UpdateSiteDataAtSite(site_t iBlockId,
                                             site_t iBlockNum,
                                             ClusterType& iCluster,
-                                            unsigned int iSiteIdOnBlock)
+                                            site_t iSiteIdOnBlock)
           {
             geometry::BlockData * lBlock = mLatticeData->GetBlock(iBlockId);
             unsigned int lClusterVoxelSiteId = lBlock->site_data[iSiteIdOnBlock];
@@ -314,7 +314,7 @@ namespace hemelb
 
           void UpdateDensityVelocityAndStress(site_t iBlockNum,
                                               ClusterType& iCluster,
-                                              unsigned int iSiteIdOnBlock,
+                                              site_t iSiteIdOnBlock,
                                               unsigned int iClusterVoxelSiteId)
           {
             iCluster.SiteData[iBlockNum][iSiteIdOnBlock] = SiteData_t(1.0F);
@@ -332,7 +332,7 @@ namespace hemelb
           void UpdateWallNormalAtSite(geometry::BlockData * iBlock,
                                       site_t iBlockNum,
                                       ClusterType& iCluster,
-                                      unsigned int iSiteIdOnBlock)
+                                      site_t iSiteIdOnBlock)
           {
 
             if (iBlock->wall_data != NULL && iBlock->wall_data[iSiteIdOnBlock].wall_nor[0] != -1.0F)

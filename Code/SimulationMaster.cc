@@ -501,7 +501,7 @@ void SimulationMaster::RunSimulation(std::string image_directory,
 
             if (mVisControl->MouseIsOverPixel(result, &density, &stress))
             {
-              double mouse_pressure, mouse_stress;
+              double mouse_pressure = 0.0, mouse_stress = 0.0;
               mLbm->CalculateMouseFlowField(density,
                                             stress,
                                             mouse_pressure,

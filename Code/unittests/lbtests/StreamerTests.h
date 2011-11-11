@@ -282,10 +282,10 @@ namespace hemelb
             LbTestsHelper::InitialiseAnisotropicTestData(latDat);
 
             site_t firstWallSite = latDat->GetInnerCollisionCount(0);
-            unsigned wallSitesCount = latDat->GetInnerCollisionCount(1) - firstWallSite;
+            site_t wallSitesCount = latDat->GetInnerCollisionCount(1) - firstWallSite;
 
             // Check that the lattice has sites labeled as wall (otherwise this test is void)
-            CPPUNIT_ASSERT_EQUAL_MESSAGE("Number of non-wall sites", wallSitesCount, 16u);
+            CPPUNIT_ASSERT_EQUAL_MESSAGE("Number of non-wall sites", wallSitesCount, (site_t) 16);
 
             site_t offset = 0;
 
@@ -324,7 +324,7 @@ namespace hemelb
              *  depending on where they sit relative to the wall. We ignore mid-Fluid sites since
              *  StreamAndCollide was tested before.
              */
-            for (unsigned wallSiteLocalIndex = 0; wallSiteLocalIndex < wallSitesCount; wallSiteLocalIndex++)
+            for (site_t wallSiteLocalIndex = 0; wallSiteLocalIndex < wallSitesCount; wallSiteLocalIndex++)
             {
               site_t streamedToSite = firstWallSite + wallSiteLocalIndex;
               distribn_t* streamedToFNew = latDat->GetFNew(D3Q15::NUMVECTORS * streamedToSite);
@@ -410,7 +410,7 @@ namespace hemelb
           lb::streamers::SimpleBounceBack<lb::collisions::Normal<lb::kernels::LBGK> >
               * simpleBounceBack;
 
-//          distribn_t allowedError;
+          //          distribn_t allowedError;
 
       };
     }

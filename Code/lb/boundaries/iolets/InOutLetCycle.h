@@ -42,7 +42,7 @@ namespace hemelb
 
         template<unsigned long tUpdatePeriod, bool tComms>
         InOutLetCycle<tUpdatePeriod, tComms>::InOutLetCycle() :
-            InOutLet()
+          InOutLet()
         {
 
         }
@@ -77,11 +77,7 @@ namespace hemelb
         void InOutLetCycle<tUpdatePeriod, tComms>::UpdateCycle(std::vector<distribn_t> &densityCycle,
                                                                const SimulationState *iState)
         {
-          if (tUpdatePeriod == 0)
-          {
-            return;
-          }
-          else if (iState->Get0IndexedTimeStep() % tUpdatePeriod == 0)
+          if (tUpdatePeriod != 0 && iState->Get0IndexedTimeStep() % tUpdatePeriod == 0)
           {
             CalculateCycle(densityCycle, iState);
           }
@@ -92,7 +88,6 @@ namespace hemelb
         {
           return tComms;
         }
-
       }
     }
   }
