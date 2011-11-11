@@ -46,22 +46,22 @@ namespace hemelb
             }
 
             const site_t startI =
-                util::NumericalFunctions::max<int>(0,
-                                                   lBlockTraverser.GetX()
-                                                       * lBlockTraverser.GetBlockSize()
-                                                       + lSiteTraverser.GetX() - 1);
+                util::NumericalFunctions::max<site_t>(0,
+                                                      lBlockTraverser.GetX()
+                                                          * lBlockTraverser.GetBlockSize()
+                                                          + lSiteTraverser.GetX() - 1);
 
             const site_t startJ =
-                util::NumericalFunctions::max<int>(0,
-                                                   lBlockTraverser.GetY()
-                                                       * lBlockTraverser.GetBlockSize()
-                                                       + lSiteTraverser.GetY() - 1);
+                util::NumericalFunctions::max<site_t>(0,
+                                                      lBlockTraverser.GetY()
+                                                          * lBlockTraverser.GetBlockSize()
+                                                          + lSiteTraverser.GetY() - 1);
 
             const site_t startK =
-                util::NumericalFunctions::max<int>(0,
-                                                   lBlockTraverser.GetZ()
-                                                       * lBlockTraverser.GetBlockSize()
-                                                       + lSiteTraverser.GetZ() - 1);
+                util::NumericalFunctions::max<site_t>(0,
+                                                      lBlockTraverser.GetZ()
+                                                          * lBlockTraverser.GetBlockSize()
+                                                          + lSiteTraverser.GetZ() - 1);
 
             const site_t endI =
                 util::NumericalFunctions::min<site_t>(iLatDat.GetXSiteCount() - 1,

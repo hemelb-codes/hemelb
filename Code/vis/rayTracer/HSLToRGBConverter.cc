@@ -36,9 +36,9 @@ namespace hemelb
         static const uint32_t OtherScalar = std::numeric_limits<uint16_t>::max();
 
         //Cast the inputs accodingly
-        uint32_t lHue = (uint32_t) (iHue * (float) (DegreesScalar));
-        uint32_t lSaturation = (uint32_t) (iSaturation * (float) (OtherScalar));
-        uint32_t lLightness = (uint32_t) (iLightness * (float) (OtherScalar));
+        uint32_t lHue = (uint32_t)(iHue * (float) (DegreesScalar));
+        uint32_t lSaturation = (uint32_t)(iSaturation * (float) (OtherScalar));
+        uint32_t lLightness = (uint32_t)(iLightness * (float) (OtherScalar));
 
         //Calculate the Chroma - a division by OtherScalar is 
         //required for the Chroma to remain between 0
@@ -93,7 +93,10 @@ namespace hemelb
             lBlue = lChroma;
             break;
 
-          case 5:
+            // lHueInt is guaranteed to be 0-5, but having a default case rather than 'case 5:'
+            // prevents a compiler warning (that lRed, lGreen and lBlue may not have been
+            // assigned)
+          default:
             lRed = lChroma;
             lGreen = 0.0F;
             lBlue = lIntermediate;

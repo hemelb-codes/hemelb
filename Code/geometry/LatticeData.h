@@ -267,6 +267,17 @@ namespace hemelb
                                          const proc_t localRank,
                                          const GlobalLatticeData* iGlobLatDat);
 
+            void ReadInBlock(GlobalLatticeData* iGlobLatDat,
+                             MPI_Offset offsetSoFar,
+                             char* buffer,
+                             int* procsWantingThisBlockBuffer,
+                             const site_t blockNumber,
+                             const site_t sites,
+                             const unsigned int bytes,
+                             const int neededOnThisRank);
+
+            proc_t GetReadingCoreForBlock(site_t blockNumber);
+
             bool Expand(std::vector<BlockLocation>* edgeBlocks,
                         std::vector<BlockLocation>* expansionBlocks,
                         const GlobalLatticeData* iGlobLatDat,
@@ -351,6 +362,8 @@ namespace hemelb
             // * 1 double for the voxel size
             // * 3 doubles for the world-position of site 0
             static const int PreambleBytes = 5 * 4 + 4 * 8;
+            static const proc_t HEADER_READING_RANK = 0;
+            static const proc_t READING_GROUP_SIZE = 5;
 
             MPI_File file;
             MPI_Info fileInfo;
@@ -358,6 +371,9 @@ namespace hemelb
             MPI_Group mTopologyGroup;
             int mTopologyRank;
             unsigned int mTopologySize;
+            MPI_Comm currentComm;
+            int currentCommRank;
+            int currentCommSize;
             bool mParticipateInTopology;
         };
 
