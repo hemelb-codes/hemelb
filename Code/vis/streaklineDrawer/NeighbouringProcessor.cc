@@ -11,7 +11,7 @@ namespace hemelb
     namespace streaklinedrawer
     {
       SendableParticle::SendableParticle() :
-          mX(0.0F), mY(0.0F), mZ(0.0F), mVel(0.0F), mInletID(-1)
+        mX(0.0F), mY(0.0F), mZ(0.0F), mVel(0.0F), mInletID(-1)
       {
       }
 
@@ -32,7 +32,7 @@ namespace hemelb
       }
 
       NeighbouringProcessor::NeighbouringProcessor(proc_t iID) :
-          mID(iID)
+        mID(iID)
       {
       }
 
@@ -57,7 +57,7 @@ namespace hemelb
       void NeighbouringProcessor::PrepareToReceiveParticles()
       {
         MPI_Irecv(&mNumberOfParticlesToReceive, 1, //Count
-                  MpiDataType<site_t>(), //Type
+                  MpiDataType<site_t> (), //Type
                   mID, //Destination
                   30, //Tag
                   MPI_COMM_WORLD, //Comm
@@ -68,7 +68,7 @@ namespace hemelb
       {
         site_t lParticlesToSend = mParticlesToSend.size();
         MPI_Isend(&lParticlesToSend, 1, // Count
-                  MpiDataType<site_t>(), //Type
+                  MpiDataType<site_t> (), //Type
                   mID, //Destination
                   30, //Tag
                   MPI_COMM_WORLD, // Com
@@ -84,8 +84,8 @@ namespace hemelb
       {
         if (mParticlesToSend.size() > 0)
         {
-          MPI_Isend(&mParticlesToSend[0], mParticlesToSend.size(), //Count
-                    MpiDataType<SendableParticle>(), //Type
+          MPI_Isend(&mParticlesToSend[0], (int) mParticlesToSend.size(), //Count
+                    MpiDataType<SendableParticle> (), //Type
                     mID, //Destination
                     40, //Tag
                     MPI_COMM_WORLD, //Comm
@@ -109,8 +109,8 @@ namespace hemelb
 
         if (mNumberOfParticlesToReceive > 0)
         {
-          MPI_Irecv(&mParticlesToReceive[0], mNumberOfParticlesToReceive, //Count
-                    MpiDataType<SendableParticle>(), //Type
+          MPI_Irecv(&mParticlesToReceive[0], (int) mNumberOfParticlesToReceive, //Count
+                    MpiDataType<SendableParticle> (), //Type
                     mID, //Source
                     40, //Tag
                     MPI_COMM_WORLD, //Comm
@@ -149,8 +149,8 @@ namespace hemelb
     {
       if (col_pixel_types[i - 1] == MPI_FLOAT)
       {
-        col_pixel_disps[i] = col_pixel_disps[i - 1]
-            + (sizeof(float) * col_pixel_blocklengths[i - 1]);
+        col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(float)
+            * col_pixel_blocklengths[i - 1]);
       }
       else if (col_pixel_types[i - 1] == MPI_INT)
       {
@@ -158,8 +158,8 @@ namespace hemelb
       }
       else if (col_pixel_types[i - 1] == MPI_UNSIGNED)
       {
-        col_pixel_disps[i] = col_pixel_disps[i - 1]
-            + (sizeof(unsigned) * col_pixel_blocklengths[i - 1]);
+        col_pixel_disps[i] = col_pixel_disps[i - 1] + (sizeof(unsigned) * col_pixel_blocklengths[i
+            - 1]);
       }
 
     }

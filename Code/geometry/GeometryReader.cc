@@ -5,6 +5,7 @@
 #include "debug/Debugger.h"
 #include "io/XdrMemReader.h"
 #include "geometry/LatticeData.h"
+#include "net/net.h"
 #include "topology/NetworkTopology.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
@@ -96,6 +97,10 @@ namespace hemelb
                              fileInfo,
                              &file);
 
+      currentCommRank = topology::NetworkTopology::Instance()->GetLocalRank();
+      currentCommSize = topology::NetworkTopology::Instance()->GetProcessorCount();
+      currentComm = MPI_COMM_WORLD;
+
       if (lError != 0)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Unable to open file %s, exiting",
@@ -160,6 +165,10 @@ namespace hemelb
         // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
         // local to this node.
         MPI_File_open(mTopologyComm, &bSimConfig->DataFilePath[0], MPI_MODE_RDONLY, fileInfo, &file);
+
+        currentCommRank = mTopologyRank;
+        currentCommSize = mTopologySize;
+        currentComm = mTopologyComm;
 
         ReadInLocalBlocks(bGlobLatDat,
                           sitesPerBlock,
@@ -227,13 +236,20 @@ namespace hemelb
       // Read in the file preamble into a buffer.
       char lPreambleBuffer[PreambleBytes];
 
-      MPI_Status lStatus;
+      if (currentCommRank == HEADER_READING_RANK)
+      {
+        MPI_File_read(file,
+                      lPreambleBuffer,
+                      PreambleBytes,
+                      MpiDataType(lPreambleBuffer[0]),
+                      MPI_STATUS_IGNORE);
+      }
 
-      MPI_File_read_all(file,
-                        lPreambleBuffer,
-                        PreambleBytes,
-                        MpiDataType(lPreambleBuffer[0]),
-                        &lStatus);
+      MPI_Bcast(lPreambleBuffer,
+                PreambleBytes,
+                MpiDataType<char> (),
+                HEADER_READING_RANK,
+                currentComm);
 
       // Create an Xdr translator based on the read-in data.
       hemelb::io::XdrReader preambleReader = hemelb::io::XdrMemReader(lPreambleBuffer,
@@ -292,13 +308,20 @@ namespace hemelb
       // Allocate a buffer to read into, then do the reading.
       char* lHeaderBuffer = new char[headerByteCount];
 
-      MPI_Status lStatus;
+      if (currentCommRank == HEADER_READING_RANK)
+      {
+        MPI_File_read(file,
+                      lHeaderBuffer,
+                      (int) headerByteCount,
+                      MpiDataType(lHeaderBuffer[0]),
+                      MPI_STATUS_IGNORE);
+      }
 
-      MPI_File_read_all(file,
-                        lHeaderBuffer,
-                        (int) headerByteCount,
-                        MpiDataType(lHeaderBuffer[0]),
-                        &lStatus);
+      MPI_Bcast(lHeaderBuffer,
+                (int) headerByteCount,
+                MpiDataType<char> (),
+                HEADER_READING_RANK,
+                currentComm);
 
       // Create a Xdr translation object to translate from binary
       hemelb::io::XdrReader preambleReader =
@@ -361,156 +384,143 @@ namespace hemelb
 
       DecideWhichBlocksToRead(readBlock, unitForEachBlock, localRank, iGlobLatDat);
 
+      const site_t maxBytesPerBlock = (iGlobLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
+          + D3Q15::NUMVECTORS - 1));
+
+      if (log::Logger::ShouldDisplay<log::Debug>())
+      {
+        for (site_t block = 0; block > iGlobLatDat->GetBlockCount(); ++block)
+        {
+          if (bytesPerBlock[block] > maxBytesPerBlock)
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("Block %i is %i bytes when the longest possible block should be %i bytes: ",
+                                                          block,
+                                                          bytesPerBlock[block],
+                                                          maxBytesPerBlock);
+          }
+        }
+      }
+
+      // Allocate a buffer to read into.
+      char* buffer = new char[maxBytesPerBlock];
+      int* procsWantingThisBlock = new int[currentCommSize];
+
       // Set the view and read in.
       MPI_Offset lOffset = PreambleBytes + GetHeaderLength(iGlobLatDat->GetBlockCount());
 
-      // Allocate a buffer to read into.
-      const site_t maxBytesPerBlock = (iGlobLatDat->GetSitesPerBlockVolumeUnit()) * (4 * 1 + 8 * (4
-          + D3Q15::NUMVECTORS - 1));
-      const unsigned int MaxBlocksToReadInOneGo = 100;
-
-      char* buffer = new char[maxBytesPerBlock * MaxBlocksToReadInOneGo];
-
       // Track the next block we should look at.
-      site_t nextBlockToRead = 0;
-
-      // While the next block is valid...
-      while (nextBlockToRead < iGlobLatDat->GetBlockCount())
+      for (site_t nextBlockToRead = 0; nextBlockToRead < iGlobLatDat->GetBlockCount(); ++nextBlockToRead)
       {
-        // ... track the blocks we're going to read, and how many bytes we'll require.
-        std::vector<site_t> thisReadBlocks;
-        int length = 0;
+        ReadInBlock(iGlobLatDat,
+                    lOffset,
+                    buffer,
+                    procsWantingThisBlock,
+                    nextBlockToRead,
+                    sitesPerBlock[nextBlockToRead],
+                    bytesPerBlock[nextBlockToRead],
+                    readBlock[nextBlockToRead]);
 
-        // We only want to read valid blocks, up to MaxBlocks blocks, and we only want to read-in
-        // consecutive blocks.
-        for (; nextBlockToRead < iGlobLatDat->GetBlockCount(); ++nextBlockToRead)
-        {
-          if (thisReadBlocks.size() == MaxBlocksToReadInOneGo)
-          {
-            break;
-          }
-
-          // If this is a block we're not going to read in...
-          if (bytesPerBlock[nextBlockToRead] == 0 || !readBlock[nextBlockToRead])
-          {
-            // ... and we've not read any blocks yet, add to the start position of the read
-            // and keep going until we find a block we do want to read.
-            if (thisReadBlocks.size() == 0)
-            {
-              if (bytesPerBlock[nextBlockToRead] > 0)
-              {
-                lOffset += bytesPerBlock[nextBlockToRead];
-              }
-
-              continue;
-            }
-            // Alternatively, if we've read some blocks, break because we'd read a
-            // non-contiguous set if we continued.
-
-            else
-            {
-              break;
-            }
-          }
-
-          // We're going to read this block. Add it to the list, add its length to the total
-          // read length.
-          thisReadBlocks.push_back(nextBlockToRead);
-          length += bytesPerBlock[nextBlockToRead];
-        }
-
-        // If the length is going to overflow the buffer print an error.
-        if (length > (MaxBlocksToReadInOneGo * maxBytesPerBlock))
-        {
-          log::Logger::Log<log::Debug, log::OnePerCore>("Read in %i bytes when the longest read was presumed to be: ",
-                                                        length,
-                                                         (MaxBlocksToReadInOneGo * maxBytesPerBlock));
-        }
-
-        // Read the data.
-        int error = MPI_File_read_at(file, lOffset, buffer, length, MPI_CHAR, MPI_STATUS_IGNORE);
-
-        // Make sure we don't re-read a section of the file next time.
-        lOffset += length;
-
-        // Check for any errors in the file-reading.
-        if (error != 0)
-        {
-          log::Logger::Log<log::Info, log::OnePerCore>("Unable to read file (at section just before block %i)",
-                                                       nextBlockToRead);
-        }
-
-        // Create an Xdr interpreter.
-        io::XdrMemReader lReader(buffer, length);
-
-        unsigned int lCurrentPosition = lReader.GetPosition();
-
-        // Go through the blocks.
-        for (std::vector<site_t>::const_iterator it = thisReadBlocks.begin(); it
-            < thisReadBlocks.end(); ++it)
-        {
-          // Let the GlobLatDat read the block.
-          iGlobLatDat->ReadBlock(*it, &lReader);
-
-          // If debugging, check we've read the right length.
-          if (log::Logger::ShouldDisplay<log::Debug>())
-          {
-            unsigned int lNewPosition = lReader.GetPosition();
-
-            // Check we've moved the right amount through the file.
-            if (lNewPosition != (lCurrentPosition + bytesPerBlock[*it]))
-            {
-              log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting block %i to take up %i bytes but it actually took up %u bytes",
-                                                            *it,
-                                                             (lNewPosition - lCurrentPosition),
-                                                            bytesPerBlock[*it]);
-            }
-
-            // Check the bytes for each block fit our expectations.
-            if (bytesPerBlock[*it] > maxBytesPerBlock)
-            {
-              log::Logger::Log<log::Debug, log::OnePerCore>("Block %i takes up %i bytes but we thought the maximum was %u bytes",
-                                                            *it,
-                                                            maxBytesPerBlock);
-            }
-
-            lCurrentPosition = lNewPosition;
-          }
-        }
-      }
-
-      // If debug-level logging, check that we've read in as many sites as anticipated.
-      if (log::Logger::ShouldDisplay<log::Debug>())
-      {
-        for (site_t block = 0; block < iGlobLatDat->GetBlockCount(); ++block)
-        {
-          // For each block to be read.
-          if (bytesPerBlock[block] > 0 && readBlock[block])
-          {
-            // Count the sites read,
-            site_t numSitesRead = 0;
-            for (site_t site = 0; site < iGlobLatDat->GetSitesPerBlockVolumeUnit(); ++site)
-            {
-              if (iGlobLatDat->Blocks[block].ProcessorRankForEachBlockSite[site] != BIG_NUMBER2)
-              {
-                ++numSitesRead;
-              }
-            }
-
-            // Compare with the sites we expected to read.
-            if (numSitesRead != sitesPerBlock[block])
-            {
-              log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
-                                                            sitesPerBlock[block],
-                                                            block,
-                                                            numSitesRead);
-            }
-          }
-        }
+        lOffset += bytesPerBlock[nextBlockToRead];
       }
 
       delete[] buffer;
+      delete[] procsWantingThisBlock;
       delete[] readBlock;
+    }
+
+    void LatticeData::GeometryReader::ReadInBlock(GlobalLatticeData* iGlobLatDat,
+                                                  MPI_Offset offsetSoFar,
+                                                  char* buffer,
+                                                  int* procsWantingThisBlockBuffer,
+                                                  const site_t blockNumber,
+                                                  const site_t sites,
+                                                  const unsigned int bytes,
+                                                  const int neededOnThisRank)
+    {
+      // Easy case if there are no sites on the block.
+      if (sites <= 0)
+      {
+        return;
+      }
+
+      proc_t readingCore = GetReadingCoreForBlock(blockNumber);
+
+      int neededHere = neededOnThisRank;
+
+      MPI_Gather(&neededHere,
+                 1,
+                 MpiDataType<int> (),
+                 procsWantingThisBlockBuffer,
+                 1,
+                 MpiDataType<int> (),
+                 readingCore,
+                 currentComm);
+
+      net::Net net = net::Net(currentComm);
+
+      if (readingCore == currentCommRank)
+      {
+        // Read the data.
+        MPI_File_read_at(file, offsetSoFar, buffer, bytes, MPI_CHAR, MPI_STATUS_IGNORE);
+
+        // Spread it.
+        for (proc_t receiver = 0; receiver < currentCommSize; receiver++)
+        {
+          if (receiver != currentCommRank && procsWantingThisBlockBuffer[receiver])
+          {
+            net.RequestSend(buffer, bytes, receiver);
+          }
+        }
+      }
+      else if (neededOnThisRank)
+      {
+        net.RequestReceive(buffer, bytes, readingCore);
+      }
+      else
+      {
+        return;
+      }
+
+      net.Send();
+      net.Receive();
+      net.Wait();
+
+      if (neededOnThisRank)
+      {
+        // Create an Xdr interpreter.
+        io::XdrMemReader lReader(buffer, bytes);
+
+        iGlobLatDat->ReadBlock(blockNumber, &lReader);
+
+        // If debug-level logging, check that we've read in as many sites as anticipated.
+        if (log::Logger::ShouldDisplay<log::Debug>())
+        {
+          // Count the sites read,
+          site_t numSitesRead = 0;
+          for (site_t site = 0; site < iGlobLatDat->GetSitesPerBlockVolumeUnit(); ++site)
+          {
+            if (iGlobLatDat->Blocks[blockNumber].ProcessorRankForEachBlockSite[site] != BIG_NUMBER2)
+            {
+              ++numSitesRead;
+            }
+          }
+
+          // Compare with the sites we expected to read.
+          if (numSitesRead != sites)
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("Was expecting %i fluid sites on block %i but actually read %i",
+                                                          sites,
+                                                          blockNumber,
+                                                          numSitesRead);
+          }
+        }
+      }
+    }
+
+    proc_t LatticeData::GeometryReader::GetReadingCoreForBlock(site_t blockNumber)
+    {
+      return proc_t(blockNumber
+          % util::NumericalFunctions::min(READING_GROUP_SIZE, currentCommSize));
     }
 
     void LatticeData::GeometryReader::ValidateGlobLatDat(GlobalLatticeData* iGlobLatDat)

@@ -53,7 +53,9 @@ namespace hemelb
               return y;
               break;
 
-            case Direction::Z:
+              // It can only be Direction::Z, but having the default case prevents a compiler
+              // warning (that we might not return anything).
+            default:
               return z;
               break;
           }
