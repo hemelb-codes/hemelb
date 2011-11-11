@@ -21,6 +21,8 @@ namespace hemelb
     {
       public:
         Net();
+        Net(MPI_Comm commObject);
+
         ~Net();
 
         site_t* Initialise(geometry::LatticeData* bLatDat);
@@ -131,6 +133,8 @@ namespace hemelb
         // on each core, but also to minimise creation / deletion overheads.
         std::vector<MPI_Request> mRequests;
         std::vector<MPI_Status> mStatuses;
+
+        MPI_Comm communicator;
     };
 
   }

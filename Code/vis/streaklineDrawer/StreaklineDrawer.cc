@@ -187,14 +187,14 @@ namespace hemelb
       {
         std::vector<Particle>& lParticles = mParticles.GetParticles();
 
-        for (unsigned int n = lParticles.size() - 1; n < lParticles.size(); n--)
+        for (size_t n = lParticles.size() - 1; n < lParticles.size(); n--)
         {
           float v[2][2][2][3];
           int is_interior;
 
-          mVelocityField.localVelField(lParticles[n].x,
-                                       lParticles[n].y,
-                                       lParticles[n].z,
+          mVelocityField.localVelField((site_t) lParticles[n].x,
+                                       (site_t) lParticles[n].y,
+                                       (site_t) lParticles[n].z,
                                        v,
                                        &is_interior,
                                        latDat,
