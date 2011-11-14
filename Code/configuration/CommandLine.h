@@ -7,6 +7,9 @@
 #include "log/Logger.h"
 namespace hemelb{
   namespace configuration{
+      /***
+       *
+       */
     class CommandLine {
       public:
         CommandLine(int aargc, char **aargv);

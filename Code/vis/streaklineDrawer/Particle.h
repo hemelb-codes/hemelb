@@ -10,6 +10,8 @@ namespace hemelb
       struct Particle
       {
         public:
+          Particle();
+
           Particle(float iX, float iY, float iZ, unsigned int iInletId);
 
           Particle(float iX, float iY, float iZ, float iVel, unsigned int iInletId);
