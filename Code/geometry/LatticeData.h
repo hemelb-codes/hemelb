@@ -267,6 +267,34 @@ namespace hemelb
                                          const proc_t localRank,
                                          const GlobalLatticeData* iGlobLatDat);
 
+            /**
+             * Reads in a single block and ensures it is distributed to all cores that need it.
+             * @param iGlobLatDat
+             * @param offsetSoFar
+             * @param buffer
+             * @param procsWantingThisBlockBuffer
+             * @param blockNumber
+             * @param sites
+             * @param bytes
+             * @param neededOnThisRank
+             */
+            void ReadInBlock(GlobalLatticeData* iGlobLatDat,
+                             MPI_Offset offsetSoFar,
+                             char* buffer,
+                             int* procsWantingThisBlockBuffer,
+                             const site_t blockNumber,
+                             const site_t sites,
+                             const unsigned int bytes,
+                             const int neededOnThisRank);
+
+            /**
+             * Calculates the number of the rank used to read in a given block.
+             *
+             * @param blockNumber
+             * @return
+             */
+            proc_t GetReadingCoreForBlock(site_t blockNumber);
+
             bool Expand(std::vector<BlockLocation>* edgeBlocks,
                         std::vector<BlockLocation>* expansionBlocks,
                         const GlobalLatticeData* iGlobLatDat,
@@ -350,15 +378,20 @@ namespace hemelb
             // * 1 unsigned int for the block size (number of sites along one edge of a block)
             // * 1 double for the voxel size
             // * 3 doubles for the world-position of site 0
-            static const int PreambleBytes = 5 * 4 + 4 * 8;
+            static const int preambleBytes = 5 * 4 + 4 * 8;
+            static const proc_t HEADER_READING_RANK = 0;
+            static const proc_t READING_GROUP_SIZE = 5;
 
             MPI_File file;
             MPI_Info fileInfo;
-            MPI_Comm mTopologyComm;
-            MPI_Group mTopologyGroup;
-            int mTopologyRank;
-            unsigned int mTopologySize;
-            bool mParticipateInTopology;
+            MPI_Comm topologyComm;
+            MPI_Group topologyGroup;
+            int topologyRank;
+            unsigned int topologySize;
+            MPI_Comm currentComm;
+            int currentCommRank;
+            int currentCommSize;
+            bool participateInTopology;
         };
 
         void SetSiteData(site_t siteIndex, unsigned int siteData);
