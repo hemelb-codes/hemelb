@@ -498,6 +498,7 @@ void SimulationMaster::GenerateNetworkImages(){
     if (snapshotsCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
     {
       WriteLocalImages();
+
     }
 
     if (networkImagesCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)

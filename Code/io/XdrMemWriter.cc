@@ -9,7 +9,8 @@ namespace hemelb
   {
 
     // Constructor for a Xdr writer held in a memory buffer.
-    XdrMemWriter::XdrMemWriter(char* dataBuffer, unsigned int dataLength) {
+    XdrMemWriter::XdrMemWriter(char* dataBuffer, unsigned int dataLength)
+    {
       xdrmem_create(&mXdr, dataBuffer, dataLength, XDR_ENCODE);
     }
 
@@ -18,6 +19,6 @@ namespace hemelb
     {
       xdr_destroy(&mXdr);
     }
-    
+
   }
 }

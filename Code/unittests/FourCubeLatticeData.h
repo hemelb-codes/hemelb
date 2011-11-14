@@ -30,12 +30,12 @@ namespace hemelb
           localLatDat.Initialise(localLatDat.my_inner_sites);
           localLatDat.SetSharedSiteCount(0);
 
-          BlockData* block = &globLatDat.Blocks[0];
+          geometry::BlockData* block = &globLatDat.Blocks[0];
 
           block->ProcessorRankForEachBlockSite
               = new proc_t[globLatDat.GetSitesPerBlockVolumeUnit()];
           block ->site_data = new unsigned int[globLatDat.GetSitesPerBlockVolumeUnit()];
-          block->wall_data = new LatticeData::WallData[globLatDat.GetSitesPerBlockVolumeUnit()];
+          block->wall_data = new geometry::WallData[globLatDat.GetSitesPerBlockVolumeUnit()];
 
           // Iterate through the fluid sides and assign variables as necessary.
           for (unsigned int collisionType = 0; collisionType < COLLISION_TYPES; ++collisionType)
@@ -112,11 +112,12 @@ namespace hemelb
 
                 for (unsigned int ll = 1; ll < D3Q15::NUMVECTORS; ++ll)
                 {
-                  if (!globLatDat.IsValidLatticeSite(i + D3Q15::CX[ll], j + D3Q15::CY[ll], k
-                      + D3Q15::CZ[ll]))
+                  if (!globLatDat.IsValidLatticeSite(i + D3Q15::CX[ll],
+                                                     j + D3Q15::CY[ll],
+                                                     k + D3Q15::CZ[ll]))
                   {
                     localLatDat.mSiteData[index] |= 1U << (BOUNDARY_CONFIG_SHIFT + ll - 1);
-                    block->wall_data[index].cut_dist[ll - 1] = double (std::rand() % 10000)
+                    block->wall_data[index].cut_dist[ll - 1] = double(std::rand() % 10000)
                         / 10000.0;
                   }
                   localLatDat.SetDistanceToWall(index, block->wall_data[index].cut_dist);
