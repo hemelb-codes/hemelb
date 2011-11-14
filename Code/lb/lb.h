@@ -12,7 +12,6 @@
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "util/UnitConverter.h"
 #include "configuration/SimConfig.h"
-#include <typeinfo>
 
 namespace hemelb
 {

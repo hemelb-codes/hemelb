@@ -13,73 +13,73 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      VelocityField::VelocityField(std::vector<NeighbouringProcessor>& iNeighbouringProcessors) :
-        mNeighbouringProcessors(iNeighbouringProcessors)
+      VelocityField::VelocityField(std::vector<NeighbouringProcessor>& neighbouringProcessorsIn) :
+        neighbouringProcessors(neighbouringProcessorsIn)
       {
         counter = 1;
       }
 
-      void VelocityField::BuildVelocityField(const geometry::LatticeData& iLatDat,
-                                             StreaklineDrawer* iStreaklineDrawer)
+      void VelocityField::BuildVelocityField(const geometry::LatticeData& latDat,
+                                             StreaklineDrawer* streaklineDrawer)
       {
-        mVelocityField.resize(iLatDat.GetBlockCount());
+        velocityField.resize(latDat.GetBlockCount());
 
         site_t inlet_sites = 0;
 
-        geometry::BlockTraverser lBlockTraverser(iLatDat);
+        geometry::BlockTraverser blockTraverser(latDat);
         do
         {
-          geometry::BlockData* lBlock = lBlockTraverser.GetCurrentBlockData();
+          geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
 
-          if (lBlock->site_data == NULL)
+          if (block->site_data == NULL)
           {
             continue;
           }
 
-          geometry::SiteTraverser lSiteTraverser(iLatDat);
+          geometry::SiteTraverser siteTraverser(latDat);
           do
           {
             if (topology::NetworkTopology::Instance()->GetLocalRank()
-                != lBlock->ProcessorRankForEachBlockSite[lSiteTraverser.GetCurrentIndex()])
+                != block->ProcessorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
             {
               continue;
             }
 
             const site_t startI =
-                util::NumericalFunctions::max<int>(0,
-                                                   lBlockTraverser.GetX()
-                                                       * lBlockTraverser.GetBlockSize()
-                                                       + lSiteTraverser.GetX() - 1);
+                util::NumericalFunctions::max<site_t>(0,
+                                                      blockTraverser.GetX()
+                                                          * blockTraverser.GetBlockSize()
+                                                          + siteTraverser.GetX() - 1);
 
             const site_t startJ =
-                util::NumericalFunctions::max<int>(0,
-                                                   lBlockTraverser.GetY()
-                                                       * lBlockTraverser.GetBlockSize()
-                                                       + lSiteTraverser.GetY() - 1);
+                util::NumericalFunctions::max<site_t>(0,
+                                                      blockTraverser.GetY()
+                                                          * blockTraverser.GetBlockSize()
+                                                          + siteTraverser.GetY() - 1);
 
             const site_t startK =
-                util::NumericalFunctions::max<int>(0,
-                                                   lBlockTraverser.GetZ()
-                                                       * lBlockTraverser.GetBlockSize()
-                                                       + lSiteTraverser.GetZ() - 1);
+                util::NumericalFunctions::max<site_t>(0,
+                                                      blockTraverser.GetZ()
+                                                          * blockTraverser.GetBlockSize()
+                                                          + siteTraverser.GetZ() - 1);
 
             const site_t endI =
-                util::NumericalFunctions::min<site_t>(iLatDat.GetXSiteCount() - 1,
-                                                      lBlockTraverser.GetX()
-                                                          * lBlockTraverser.GetBlockSize()
-                                                          + lSiteTraverser.GetX() + 1);
+                util::NumericalFunctions::min<site_t>(latDat.GetXSiteCount() - 1,
+                                                      blockTraverser.GetX()
+                                                          * blockTraverser.GetBlockSize()
+                                                          + siteTraverser.GetX() + 1);
 
             const site_t endJ =
-                util::NumericalFunctions::min<site_t>(iLatDat.GetYSiteCount() - 1,
-                                                      lBlockTraverser.GetY()
-                                                          * lBlockTraverser.GetBlockSize()
-                                                          + lSiteTraverser.GetY() + 1);
+                util::NumericalFunctions::min<site_t>(latDat.GetYSiteCount() - 1,
+                                                      blockTraverser.GetY()
+                                                          * blockTraverser.GetBlockSize()
+                                                          + siteTraverser.GetY() + 1);
 
             const site_t endK =
-                util::NumericalFunctions::min<site_t>(iLatDat.GetZSiteCount() - 1,
-                                                      lBlockTraverser.GetZ()
-                                                          * lBlockTraverser.GetBlockSize()
-                                                          + lSiteTraverser.GetZ() + 1);
+                util::NumericalFunctions::min<site_t>(latDat.GetZSiteCount() - 1,
+                                                      blockTraverser.GetZ()
+                                                          * blockTraverser.GetBlockSize()
+                                                          + siteTraverser.GetZ() + 1);
 
             for (site_t neigh_i = startI; neigh_i <= endI; neigh_i++)
             {
@@ -87,28 +87,28 @@ namespace hemelb
               {
                 for (site_t neigh_k = startK; neigh_k <= endK; neigh_k++)
                 {
-                  const proc_t* neigh_proc_id = iLatDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                                  neigh_j,
-                                                                                  neigh_k);
+                  const proc_t* neigh_proc_id = latDat.GetProcIdFromGlobalCoords(neigh_i,
+                                                                                 neigh_j,
+                                                                                 neigh_k);
 
                   if (neigh_proc_id == NULL || *neigh_proc_id == BIG_NUMBER2)
                   {
                     continue;
                   }
 
-                  initializeVelFieldBlock(iLatDat,
+                  initializeVelFieldBlock(latDat,
                                           neigh_i,
                                           neigh_j,
                                           neigh_k,
                                           *neigh_proc_id,
-                                          iStreaklineDrawer);
+                                          streaklineDrawer);
 
                   if (topology::NetworkTopology::Instance()->GetLocalRank() == *neigh_proc_id)
                   {
                     continue;
                   }
 
-                  VelocitySiteData* vel_site_data_p = velSiteDataPointer(iLatDat,
+                  VelocitySiteData* vel_site_data_p = velSiteDataPointer(latDat,
                                                                          neigh_i,
                                                                          neigh_j,
                                                                          neigh_k);
@@ -121,12 +121,12 @@ namespace hemelb
                   vel_site_data_p->counter = counter;
 
                   bool seenSelf = false;
-                  for (size_t mm = 0; mm < mNeighbouringProcessors.size() && !seenSelf; mm++)
+                  for (size_t mm = 0; mm < neighbouringProcessors.size() && !seenSelf; mm++)
                   {
-                    if (*neigh_proc_id == mNeighbouringProcessors[mm].mID)
+                    if (*neigh_proc_id == neighbouringProcessors[mm].mID)
                     {
                       seenSelf = true;
-                      ++mNeighbouringProcessors[mm].send_vs;
+                      ++neighbouringProcessors[mm].send_vs;
                     }
                   }
                   if (seenSelf)
@@ -134,18 +134,18 @@ namespace hemelb
                     continue;
                   }
 
-                  NeighbouringProcessor lNew(*neigh_proc_id);
+                  NeighbouringProcessor newParticle(*neigh_proc_id);
 
-                  lNew.send_vs = 1;
-                  mNeighbouringProcessors.push_back(lNew);
+                  newParticle.send_vs = 1;
+                  neighbouringProcessors.push_back(newParticle);
                 }
               }
             }
 
-            site_t lSiteIndex = lBlock->site_data[lSiteTraverser.GetCurrentIndex()];
+            site_t siteIndex = block->site_data[siteTraverser.GetCurrentIndex()];
 
             // if the lattice site is not an inlet
-            if (iLatDat.GetSiteType(lSiteIndex) != geometry::LatticeData::INLET_TYPE)
+            if (latDat.GetSiteType(siteIndex) != geometry::LatticeData::INLET_TYPE)
             {
               continue;
             }
@@ -156,124 +156,124 @@ namespace hemelb
               continue;
             }
 
-            iStreaklineDrawer->mParticleSeeds.push_back(Particle(static_cast<float> (lBlockTraverser.GetX()
-                                                                     * lBlockTraverser.GetBlockSize()
-                                                                     + lSiteTraverser.GetX()),
-                                                                 static_cast<float> (lBlockTraverser.GetY()
-                                                                     * lBlockTraverser.GetBlockSize()
-                                                                     + lSiteTraverser.GetY()),
-                                                                 static_cast<float> (lBlockTraverser.GetZ()
-                                                                     * lBlockTraverser.GetBlockSize()
-                                                                     + lSiteTraverser.GetZ()),
-                                                                 iLatDat.GetBoundaryId(lSiteIndex)));
+            streaklineDrawer->particleSeeds.push_back(Particle(static_cast<float> (blockTraverser.GetX()
+                                                                   * blockTraverser.GetBlockSize()
+                                                                   + siteTraverser.GetX()),
+                                                               static_cast<float> (blockTraverser.GetY()
+                                                                   * blockTraverser.GetBlockSize()
+                                                                   + siteTraverser.GetY()),
+                                                               static_cast<float> (blockTraverser.GetZ()
+                                                                   * blockTraverser.GetBlockSize()
+                                                                   + siteTraverser.GetZ()),
+                                                               latDat.GetBoundaryId(siteIndex)));
 
           }
-          while (lSiteTraverser.TraverseOne());
+          while (siteTraverser.TraverseOne());
         }
-        while (lBlockTraverser.TraverseOne());
+        while (blockTraverser.TraverseOne());
 
-        for (site_t n = 0; n < iLatDat.GetBlockCount(); n++)
+        for (site_t n = 0; n < latDat.GetBlockCount(); n++)
         {
-          if (mVelocityField[n].empty())
+          if (velocityField[n].empty())
           {
             continue;
           }
 
-          for (site_t m = 0; m < iLatDat.GetSitesPerBlockVolumeUnit(); m++)
+          for (site_t m = 0; m < latDat.GetSitesPerBlockVolumeUnit(); m++)
           {
-            mVelocityField[n][m].counter = counter;
+            velocityField[n][m].counter = counter;
           }
-          if (iLatDat.GetBlock(n)->site_data == NULL)
+          if (latDat.GetBlock(n)->site_data == NULL)
             continue;
 
-          for (site_t m = 0; m < iLatDat.GetSitesPerBlockVolumeUnit(); m++)
+          for (site_t m = 0; m < latDat.GetSitesPerBlockVolumeUnit(); m++)
           {
-            mVelocityField[n][m].site_id = iLatDat.GetBlock(n)->site_data[m];
+            velocityField[n][m].site_id = latDat.GetBlock(n)->site_data[m];
           }
         }
 
         counter = 0;
       }
 
-      bool VelocityField::BlockContainsData(size_t iBlockNumber)
+      bool VelocityField::BlockContainsData(size_t blockNumber)
       {
-        return !mVelocityField[iBlockNumber].empty();
+        return !velocityField[blockNumber].empty();
       }
 
-      VelocitySiteData& VelocityField::GetSiteData(size_t iBlockNumber, size_t iSiteNumber)
+      VelocitySiteData& VelocityField::GetSiteData(size_t blockNumber, size_t siteNumber)
       {
-        return mVelocityField[iBlockNumber][iSiteNumber];
+        return velocityField[blockNumber][siteNumber];
       }
 
       // Returns the velocity site data for a given index, or NULL if the index isn't valid / has
       // no data.
-      VelocitySiteData* VelocityField::velSiteDataPointer(const geometry::LatticeData& iLatDat,
+      VelocitySiteData* VelocityField::velSiteDataPointer(const geometry::LatticeData& latDat,
                                                           site_t site_i,
                                                           site_t site_j,
                                                           site_t site_k)
       {
-        if (site_i >= iLatDat.GetXSiteCount() || site_j >= iLatDat.GetYSiteCount() || site_k
-            >= iLatDat.GetZSiteCount())
+        if (site_i >= latDat.GetXSiteCount() || site_j >= latDat.GetYSiteCount() || site_k
+            >= latDat.GetZSiteCount())
         {
           return NULL;
         }
-        site_t i = site_i >> iLatDat.GetLog2BlockSize();
-        site_t j = site_j >> iLatDat.GetLog2BlockSize();
-        site_t k = site_k >> iLatDat.GetLog2BlockSize();
+        site_t i = site_i >> latDat.GetLog2BlockSize();
+        site_t j = site_j >> latDat.GetLog2BlockSize();
+        site_t k = site_k >> latDat.GetLog2BlockSize();
 
-        site_t block_id = iLatDat.GetBlockIdFromBlockCoords(i, j, k);
+        site_t block_id = latDat.GetBlockIdFromBlockCoords(i, j, k);
 
         if (!BlockContainsData(static_cast<size_t> (block_id)))
         {
           return NULL;
         }
-        site_t ii = site_i - (i << iLatDat.GetLog2BlockSize());
-        site_t jj = site_j - (j << iLatDat.GetLog2BlockSize());
-        site_t kk = site_k - (k << iLatDat.GetLog2BlockSize());
+        site_t ii = site_i - (i << latDat.GetLog2BlockSize());
+        site_t jj = site_j - (j << latDat.GetLog2BlockSize());
+        site_t kk = site_k - (k << latDat.GetLog2BlockSize());
 
-        site_t site_id =
-            ( ( (ii << iLatDat.GetLog2BlockSize()) + jj) << iLatDat.GetLog2BlockSize()) + kk;
+        site_t site_id = ( ( (ii << latDat.GetLog2BlockSize()) + jj) << latDat.GetLog2BlockSize())
+            + kk;
 
         return &GetSiteData(block_id, site_id);
       }
 
       // Function to initialise the velocity field at given coordinates.
-      void VelocityField::initializeVelFieldBlock(const geometry::LatticeData& iLatDat,
+      void VelocityField::initializeVelFieldBlock(const geometry::LatticeData& latDat,
                                                   site_t site_i,
                                                   site_t site_j,
                                                   site_t site_k,
                                                   proc_t proc_id,
-                                                  StreaklineDrawer* iStreaklineDrawer)
+                                                  StreaklineDrawer* streaklineDrawer)
       {
-        site_t i = site_i >> iLatDat.GetLog2BlockSize();
-        site_t j = site_j >> iLatDat.GetLog2BlockSize();
-        site_t k = site_k >> iLatDat.GetLog2BlockSize();
+        site_t i = site_i >> latDat.GetLog2BlockSize();
+        site_t j = site_j >> latDat.GetLog2BlockSize();
+        site_t k = site_k >> latDat.GetLog2BlockSize();
 
-        site_t block_id = iLatDat.GetBlockIdFromBlockCoords(i, j, k);
+        site_t block_id = latDat.GetBlockIdFromBlockCoords(i, j, k);
 
         if (!BlockContainsData(block_id))
         {
-          mVelocityField[block_id]
-              = std::vector<VelocitySiteData>(iLatDat.GetSitesPerBlockVolumeUnit());
+          velocityField[block_id]
+              = std::vector<VelocitySiteData>(latDat.GetSitesPerBlockVolumeUnit());
         }
 
-        site_t ii = site_i - (i << iLatDat.GetLog2BlockSize());
-        site_t jj = site_j - (j << iLatDat.GetLog2BlockSize());
-        site_t kk = site_k - (k << iLatDat.GetLog2BlockSize());
+        site_t ii = site_i - (i << latDat.GetLog2BlockSize());
+        site_t jj = site_j - (j << latDat.GetLog2BlockSize());
+        site_t kk = site_k - (k << latDat.GetLog2BlockSize());
 
-        site_t site_id =
-            ( ( (ii << iLatDat.GetLog2BlockSize()) + jj) << iLatDat.GetLog2BlockSize()) + kk;
-        mVelocityField[block_id][site_id].proc_id = proc_id;
+        site_t site_id = ( ( (ii << latDat.GetLog2BlockSize()) + jj) << latDat.GetLog2BlockSize())
+            + kk;
+        velocityField[block_id][site_id].proc_id = proc_id;
       }
 
       // Populate the matrix v with all the velocity field data at each index.
-      void VelocityField::localVelField(site_t iX,
-                                        site_t iY,
-                                        site_t iZ,
+      void VelocityField::localVelField(site_t x,
+                                        site_t y,
+                                        site_t z,
                                         float v[2][2][2][3],
                                         int *is_interior,
-                                        const geometry::LatticeData& iLatDat,
-                                        StreaklineDrawer* iStreaklineDrawer)
+                                        const geometry::LatticeData& latDat,
+                                        StreaklineDrawer* streaklineDrawer)
       {
         /*
          site_t site_i = (site_t) iStreaklineDrawer->mParticleVec[p_index].x;
@@ -286,17 +286,17 @@ namespace hemelb
 
         for (unsigned int i = 0; i < 2; i++)
         {
-          site_t neigh_i = iX + i;
+          site_t neigh_i = x + i;
 
           for (unsigned int j = 0; j < 2; j++)
           {
-            site_t neigh_j = iY + j;
+            site_t neigh_j = y + j;
 
             for (unsigned int k = 0; k < 2; k++)
             {
-              site_t neigh_k = iZ + k;
+              site_t neigh_k = z + k;
 
-              VelocitySiteData *vel_site_data_p = velSiteDataPointer(iLatDat,
+              VelocitySiteData *vel_site_data_p = velSiteDataPointer(latDat,
                                                                      neigh_i,
                                                                      neigh_j,
                                                                      neigh_k);
@@ -329,7 +329,7 @@ namespace hemelb
                 vel_site_data_p->counter = counter;
                 distribn_t density, vx, vy, vz;
 
-                D3Q15::CalculateDensityAndVelocity(iLatDat.GetFOld(vel_site_data_p->site_id
+                D3Q15::CalculateDensityAndVelocity(latDat.GetFOld(vel_site_data_p->site_id
                                                        * D3Q15::NUMVECTORS),
                                                    density,
                                                    vx,
@@ -345,15 +345,15 @@ namespace hemelb
                 vel_site_data_p->counter = counter;
 
                 proc_t m =
-                    iStreaklineDrawer->from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
+                    streaklineDrawer->from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
 
-                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 0]
+                neighbouringProcessors[m].s_to_send[3 * neighbouringProcessors[m].send_vs + 0]
                     = neigh_i;
-                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 1]
+                neighbouringProcessors[m].s_to_send[3 * neighbouringProcessors[m].send_vs + 1]
                     = neigh_j;
-                mNeighbouringProcessors[m].s_to_send[3 * mNeighbouringProcessors[m].send_vs + 2]
+                neighbouringProcessors[m].s_to_send[3 * neighbouringProcessors[m].send_vs + 2]
                     = neigh_k;
-                ++ (mNeighbouringProcessors[m].send_vs);
+                ++ (neighbouringProcessors[m].send_vs);
               }
             }
           }
