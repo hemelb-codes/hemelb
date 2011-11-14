@@ -240,7 +240,7 @@ namespace hemelb
 
       for (site_t lBlockNumber = 0; lBlockNumber < iLatDat->GetBlockCount(); lBlockNumber++)
       {
-        geometry::LatticeData::BlockData* lCurrentDataBlock = iLatDat->GetBlock(lBlockNumber);
+        geometry::BlockData* lCurrentDataBlock = iLatDat->GetBlock(lBlockNumber);
 
         // If we are in a block of solids, move to the next block.
         if (lCurrentDataBlock->site_data == NULL)
@@ -249,7 +249,7 @@ namespace hemelb
         }
 
         // If we have some fluid sites, point to mProcessorsForEachBlock and map_block.
-        geometry::LatticeData::BlockData * proc_block_p = iLatDat->GetBlock(lBlockNumber);
+        geometry::BlockData * proc_block_p = iLatDat->GetBlock(lBlockNumber);
 
         // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
         // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
@@ -342,7 +342,7 @@ namespace hemelb
         {
           for (site_t k = 0; k < bLatDat->GetZSiteCount(); k += bLatDat->GetBlockSize())
           {
-            geometry::LatticeData::BlockData * map_block_p = bLatDat->GetBlock(++n);
+            geometry::BlockData * map_block_p = bLatDat->GetBlock(++n);
 
             if (map_block_p->site_data == NULL)
             {
@@ -518,7 +518,7 @@ namespace hemelb
         {
           for (site_t k = 0; k < bLatDat->GetZSiteCount(); k += bLatDat->GetBlockSize())
           {
-            geometry::LatticeData::BlockData * map_block_p = bLatDat->GetBlock(++n);
+            geometry::BlockData * map_block_p = bLatDat->GetBlock(++n);
 
             // If we are in a block of solids, continue.
             if (map_block_p->site_data == NULL)

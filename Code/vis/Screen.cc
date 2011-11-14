@@ -27,32 +27,43 @@ namespace hemelb
       MaxXValue = maxX;
       MaxYValue = maxY;
 
-      UnitVectorProjectionX
-          = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(Vector3D<float> (MaxXValue,
-                                                                                   0.0F,
-                                                                                   0.0F));
-      UnitVectorProjectionY
-          = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(Vector3D<float> (0.0F,
-                                                                                   MaxYValue,
-                                                                                   0.0F));
+      mPixelUnitVectorProjectionX
+          = viewpoint->RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(MaxXValue,
+                                                                                       0.0F,
+                                                                                       0.0F));
+      mPixelUnitVectorProjectionY
+          = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0.0F,
+                                                                                        MaxYValue,
+                                                                                        0.0F));
 
       Resize(pixelsX, pixelsY);
 
-      ScaleX = (float) xPixels / (2.F * MaxXValue);
-      ScaleY = (float) yPixels / (2.F * MaxYValue);
+      mPixelsPerUnitX = (float) GetPixelsX() / (2.F * MaxXValue);
+      mPixelsPerUnitY = (float) GetPixelsY() / (2.F * MaxYValue);
 
-      Vector3D<float> radVector = viewpoint-> RotateCameraCoordinatesToWorldCoordinates(Vector3D<
-          float> (0.F, 0.F, -rad));
+      util::Vector3D<float>
+          lCameraToLocalCentreVector =
+              viewpoint->RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0.F,
+                                                                                         0.F,
+                                                                                         -viewpoint->GetDistanceFromCameraToScreen()));
 
-      mVtx = radVector * 0.5F - UnitVectorProjectionX - UnitVectorProjectionY;
+      util::Vector3D<float> lMiddleCentreToMiddleRightOfScreen =
+          viewpoint->RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(MaxXValue,
+                                                                                     0.0F,
+                                                                                     0.0F));
 
-      UnitVectorProjectionX.x *= (2.F / (float) xPixels);
-      UnitVectorProjectionX.y *= (2.F / (float) xPixels);
-      UnitVectorProjectionX.z *= (2.F / (float) xPixels);
+      util::Vector3D<float> lLowerCentreToTopCentreOfScreen =
+          viewpoint->RotateCameraCoordinatesToWorldCoordinates(util::Vector3D<float>(0.0F,
+                                                                                     MaxYValue,
+                                                                                     0.0F));
 
-      UnitVectorProjectionY.x *= (2.F / (float) yPixels);
-      UnitVectorProjectionY.y *= (2.F / (float) yPixels);
-      UnitVectorProjectionY.z *= (2.F / (float) yPixels);
+      mCameraToBottomLeftOfScreen = (lCameraToLocalCentreVector
+          - lMiddleCentreToMiddleRightOfScreen) - lLowerCentreToTopCentreOfScreen;
+
+      mPixelUnitVectorProjectionX = lMiddleCentreToMiddleRightOfScreen * (2.F
+          / (float) GetPixelsX());
+
+      mPixelUnitVectorProjectionY = lLowerCentreToTopCentreOfScreen * (2.F / (float) GetPixelsY());
     }
 
     void Screen::Resize(unsigned int newPixelsX, unsigned int newPixelsY)
@@ -64,17 +75,17 @@ namespace hemelb
       }
     }
 
-    const Vector3D<float>& Screen::GetVtx() const
+    const util::Vector3D<float>& Screen::GetCameraToBottomLeftOfScreenVector() const
     {
-      return mVtx;
+      return mCameraToBottomLeftOfScreen;
     }
-    const Vector3D<float>& Screen::GetUnitVectorProjectionX() const
+    const util::Vector3D<float>& Screen::GetPixelUnitVectorProjectionX() const
     {
-      return UnitVectorProjectionX;
+      return mPixelUnitVectorProjectionX;
     }
-    const Vector3D<float>& Screen::GetUnitVectorProjectionY() const
+    const util::Vector3D<float>& Screen::GetPixelUnitVectorProjectionY() const
     {
-      return UnitVectorProjectionY;
+      return mPixelUnitVectorProjectionY;
     }
     int Screen::GetPixelsX() const
     {

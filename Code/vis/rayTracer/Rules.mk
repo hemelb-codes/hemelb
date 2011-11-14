@@ -1,12 +1,10 @@
 include $(MK)/header.mk
 
-SRCS := BlockTraverser.cc \
-        Cluster.cc \
-        ClusterBuilder.cc \
-        RayTracer.cc \
-        VolumeTraverser.cc \
-        SiteTraverser.cc \
-        RayPixel.cc
+SRCS := ClusterNormal.cc \
+        ClusterWithWallNormals.cc \
+        HSLToRGBConverter.cc \
+        RayDataEnhanced.cc \
+        RayDataNormal.cc
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
