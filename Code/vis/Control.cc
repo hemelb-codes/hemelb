@@ -107,6 +107,8 @@ namespace hemelb
                                                           mScreen,
                                                           mViewpoint,
                                                           mVisSettings);
+#else
+      myStreaker = NULL;
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -177,7 +179,7 @@ namespace hemelb
 
       PixelSet<raytracer::RayDataNormal>* ray = normalRayTracer->Render();
 
-      PixelSet<BasicPixel>* glyph = NULL;
+      PixelSet < BasicPixel > *glyph = NULL;
 
       if (mVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
@@ -189,7 +191,7 @@ namespace hemelb
         glyph->Clear();
       }
 
-      PixelSet<streaklinedrawer::StreakPixel>* streak = NULL;
+      PixelSet < streaklinedrawer::StreakPixel > *streak = NULL;
 
 #ifndef NO_STREAKLINES
       if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
@@ -485,7 +487,7 @@ namespace hemelb
       if (localResultsByStartIt.count(startIt) != 0)
       {
         Rendering finalRender = (*localResultsByStartIt.find(startIt)).second;
-        PixelSet<ResultPixel>* result = GetUnusedPixelSet();
+        PixelSet < ResultPixel > *result = GetUnusedPixelSet();
 
         finalRender.PopulateResultSet(result);
 

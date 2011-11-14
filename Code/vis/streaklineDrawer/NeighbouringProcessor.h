@@ -12,24 +12,6 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      class SendableParticle
-      {
-        public:
-          SendableParticle();
-          SendableParticle(const Particle& iParticle);
-
-          Particle GetParticle();
-
-        private:
-          float mX;
-          float mY;
-          float mZ;
-
-          float mVel;
-
-          unsigned int mInletID;
-      };
-
       class NeighbouringProcessor
       {
         public:
@@ -63,10 +45,10 @@ namespace hemelb
           site_t *s_to_send, *s_to_recv;
 
         private:
-          std::vector<SendableParticle> mParticlesToSend;
+          std::vector<Particle> mParticlesToSend;
 
           size_t mNumberOfParticlesToReceive;
-          std::vector<SendableParticle> mParticlesToReceive;
+          std::vector<Particle> mParticlesToReceive;
 
           MPI_Request mSendRequest;
           MPI_Request mReceiveRequest;
