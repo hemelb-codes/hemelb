@@ -350,8 +350,8 @@ void SimulationMaster::WriteLocalImages(){
 
       mVisControl ->WriteImage(writer,
                                *result,
-                               &mVisControl->mDomainStats,
-                               &mVisControl->mVisSettings);
+                               mVisControl->mDomainStats,
+                               mVisControl->mVisSettings);
     }
   }
 
