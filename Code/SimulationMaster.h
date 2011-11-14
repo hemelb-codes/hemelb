@@ -34,10 +34,18 @@ class SimulationMaster
     void Initialise();
     void SetupReporting(); // set up the reporting file
     void PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable);
-
+    unsigned int OutputPeriod(unsigned int frequency);
+    void HandleActors();
+    void ResetUnstableSimulation();
+    void WriteLocalImages();
+    void GenerateNetworkImages();
     hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* mLatDat;
     hemelb::reporting::FileManager* fileManager;
+    typedef std::multimap<unsigned long, unsigned long> mapType;
+
+    mapType snapshotsCompleted;
+    mapType networkImagesCompleted;
 
     hemelb::steering::Network* network;
     hemelb::steering::ImageSendComponent *imageSendCpt;
@@ -54,6 +62,8 @@ class SimulationMaster
     hemelb::util::UnitConverter* mUnits;
 
     hemelb::vis::Control* mVisControl;
+
+    std::vector<hemelb::net::IteratedAction*> actors;
 
     int mImagesWritten;
     int mSnapshotsWritten;
