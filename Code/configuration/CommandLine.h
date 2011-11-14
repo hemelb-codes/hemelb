@@ -2,6 +2,7 @@
 #define HEMELB_COMMANDLINE_H
 
 #include <string>
+#include <stdlib.h>
 #include "topology/NetworkTopology.h"
 #include "log/Logger.h"
 namespace hemelb{
