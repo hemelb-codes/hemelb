@@ -26,10 +26,10 @@ namespace hemelb
       class ClusterBuilder
       {
         public:
-          ClusterBuilder(const geometry::LatticeData* iLatticeData) :
-            mBlockTraverser(*iLatticeData)
+          ClusterBuilder(const geometry::LatticeData* latticeData) :
+            mBlockTraverser(*latticeData)
           {
-            mLatticeData = iLatticeData;
+            mLatticeData = latticeData;
 
             //Each block is assigned a cluster id once it has been
             //assigned to a cluster
@@ -69,10 +69,10 @@ namespace hemelb
           }
 
         private:
-          void ResizeVectorsForBlock(ClusterType& iCluster, site_t iBlockNum)
+          void ResizeVectorsForBlock(ClusterType& cluster, site_t blockNum)
           {
-            iCluster.ResizeVectorsForBlock(iBlockNum,
-                                           mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS);
+            cluster.ResizeVectorsForBlock(blockNum,
+                                          mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS);
           }
 
           // Locates all the clusters in the lattice structure and the
@@ -101,63 +101,63 @@ namespace hemelb
             //These locations will eventually contain the bounds of the
             //rectangular cluster, both in terms of block number and
             //site numbers
-            util::Vector3D<site_t> lClusterBlockMin = util::Vector3D<site_t>::MaxLimit();
-            util::Vector3D<site_t> lClusterBlockMax = util::Vector3D<site_t>::MinLimit();
-            util::Vector3D<site_t> lClusterSiteMin = util::Vector3D<site_t>::MaxLimit();
-            util::Vector3D<site_t> lClusterSiteMax = util::Vector3D<site_t>::MinLimit();
+            util::Vector3D<site_t> clusterBlockMin = util::Vector3D<site_t>::MaxLimit();
+            util::Vector3D<site_t> clusterBlockMax = util::Vector3D<site_t>::MinLimit();
+            util::Vector3D<site_t> clusterSiteMin = util::Vector3D<site_t>::MaxLimit();
+            util::Vector3D<site_t> clusterSiteMax = util::Vector3D<site_t>::MinLimit();
 
             //To discover the cluster, we continually visit the neighbours 
             //of sequential blocks 
             //We keep a stack of all the sites that must be processed 
             //and sequentially add neighbours to it
-            std::stack<util::Vector3D<site_t> > lBlocksToProcess;
+            std::stack<util::Vector3D<site_t> > blocksToProcess;
 
             //Set up the initial condition
-            lBlocksToProcess.push(mBlockTraverser.GetCurrentLocation());
+            blocksToProcess.push(mBlockTraverser.GetCurrentLocation());
 
             //Loop over the cluster via neighbours until
             //all blocks have been processed
-            while (!lBlocksToProcess.empty())
+            while (!blocksToProcess.empty())
             {
               //Get location off the top of the stack
               //(we could actually take anything off the stack)
-              util::Vector3D<site_t> lCurrentLocation = lBlocksToProcess.top();
-              lBlocksToProcess.pop();
+              util::Vector3D<site_t> lCurrentLocation = blocksToProcess.top();
+              blocksToProcess.pop();
 
               if (AreSitesAssignedToLocalProcessorRankInBlock(mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)))
               {
                 //Update block range of the cluster
-                lClusterBlockMin.UpdatePointwiseMin(lCurrentLocation);
-                lClusterBlockMax.UpdatePointwiseMax(lCurrentLocation);
+                clusterBlockMin.UpdatePointwiseMin(lCurrentLocation);
+                clusterBlockMax.UpdatePointwiseMax(lCurrentLocation);
 
                 //Update the cluster id of the given block
-                site_t lBlockID = mBlockTraverser.GetIndexFromLocation(lCurrentLocation);
-                mClusterIdOfBlock[lBlockID] = (short int) mClusters.size();
+                site_t blockId = mBlockTraverser.GetIndexFromLocation(lCurrentLocation);
+                mClusterIdOfBlock[blockId] = (short int) mClusters.size();
 
                 //Loop through all the sites on the block, to 
                 //update the site bounds on the cluster
-                geometry::SiteTraverser lSiteTraverser = mBlockTraverser.GetSiteTraverser();
+                geometry::SiteTraverser siteTraverser = mBlockTraverser.GetSiteTraverser();
                 do
                 {
                   //If the site is not a solid
-                  if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->site_data[lSiteTraverser.GetCurrentIndex()]
+                  if (mBlockTraverser.GetBlockDataForLocation(lCurrentLocation)->site_data[siteTraverser.GetCurrentIndex()]
                       != BIG_NUMBER3)
                   {
-                    lClusterSiteMin.UpdatePointwiseMin(lSiteTraverser.GetCurrentLocation()
+                    clusterSiteMin.UpdatePointwiseMin(siteTraverser.GetCurrentLocation()
                         + lCurrentLocation * mBlockTraverser.GetBlockSize());
 
-                    lClusterSiteMax.UpdatePointwiseMax(lSiteTraverser.GetCurrentLocation()
+                    clusterSiteMax.UpdatePointwiseMax(siteTraverser.GetCurrentLocation()
                         + lCurrentLocation * mBlockTraverser.GetBlockSize());
                   }
                 }
-                while (lSiteTraverser.TraverseOne());
+                while (siteTraverser.TraverseOne());
 
                 //Check all the neighbouring blocks to see if they need visiting. Add them to the stack.
-                AddNeighbouringBlocks(lCurrentLocation, lBlocksToProcess);
+                AddNeighbouringBlocks(lCurrentLocation, blocksToProcess);
               }
             }
 
-            AddCluster(lClusterBlockMin, lClusterBlockMax, lClusterSiteMin, lClusterSiteMax);
+            AddCluster(clusterBlockMin, clusterBlockMax, clusterSiteMin, clusterSiteMax);
           }
 
           //Adds neighbouring blocks of the input location to the input stack
@@ -189,9 +189,9 @@ namespace hemelb
 
           //Returns true if there are sites in the given block associated with the
           //local processor rank
-          bool AreSitesAssignedToLocalProcessorRankInBlock(geometry::BlockData * iBlock)
+          bool AreSitesAssignedToLocalProcessorRankInBlock(geometry::BlockData * block)
           {
-            if (iBlock->ProcessorRankForEachBlockSite == NULL)
+            if (block->ProcessorRankForEachBlockSite == NULL)
             {
               return false;
             }
@@ -199,7 +199,7 @@ namespace hemelb
             for (unsigned int siteId = 0; siteId < mLatticeData->GetSitesPerBlockVolumeUnit(); siteId++)
             {
               if (topology::NetworkTopology::Instance()->GetLocalRank()
-                  == iBlock->ProcessorRankForEachBlockSite[siteId])
+                  == block->ProcessorRankForEachBlockSite[siteId])
               {
                 return true;
               }
@@ -211,147 +211,142 @@ namespace hemelb
           //and converting it to that used by the raytracer
           //NB: Futher processing is required on the cluster before it can be used
           //by the ray tracer, which is handled by the ProcessCluster method
-          void AddCluster(util::Vector3D<site_t> iClusterBlockMin,
-                          util::Vector3D<site_t> iClusterBlockMax,
-                          util::Vector3D<site_t> iClusterVoxelMin,
-                          util::Vector3D<site_t> iClusterVoxelMax)
+          void AddCluster(util::Vector3D<site_t> clusterBlockMin,
+                          util::Vector3D<site_t> clusterBlockMax,
+                          util::Vector3D<site_t> clusterVoxelMin,
+                          util::Vector3D<site_t> clusterVoxelMax)
           {
             //The friendly locations must be turned into a format usable by the ray tracer
             ClusterType lNewCluster;
-            lNewCluster.minBlock.x = (float) (iClusterBlockMin.x * mLatticeData->GetBlockSize())
+            lNewCluster.minBlock.x = (float) (clusterBlockMin.x * mLatticeData->GetBlockSize())
                 - 0.5F * (float) mLatticeData->GetXSiteCount();
-            lNewCluster.minBlock.y = (float) (iClusterBlockMin.y * mLatticeData->GetBlockSize())
+            lNewCluster.minBlock.y = (float) (clusterBlockMin.y * mLatticeData->GetBlockSize())
                 - 0.5F * (float) mLatticeData->GetYSiteCount();
-            lNewCluster.minBlock.z = (float) (iClusterBlockMin.z * mLatticeData->GetBlockSize())
+            lNewCluster.minBlock.z = (float) (clusterBlockMin.z * mLatticeData->GetBlockSize())
                 - 0.5F * (float) mLatticeData->GetZSiteCount();
 
-            lNewCluster.blocksX = (unsigned short) (1 + iClusterBlockMax.x - iClusterBlockMin.x);
-            lNewCluster .blocksY = (unsigned short) (1 + iClusterBlockMax.y - iClusterBlockMin.y);
-            lNewCluster .blocksZ = (unsigned short) (1 + iClusterBlockMax.z - iClusterBlockMin.z);
+            lNewCluster.blocksX = (unsigned short) (1 + clusterBlockMax.x - clusterBlockMin.x);
+            lNewCluster .blocksY = (unsigned short) (1 + clusterBlockMax.y - clusterBlockMin.y);
+            lNewCluster .blocksZ = (unsigned short) (1 + clusterBlockMax.z - clusterBlockMin.z);
 
-            lNewCluster.minSite = util::Vector3D<float>(iClusterVoxelMin)
+            lNewCluster.minSite = util::Vector3D<float>(clusterVoxelMin)
                 - util::Vector3D<float>((float) mLatticeData->GetXSiteCount(),
                                         (float) mLatticeData->GetYSiteCount(),
                                         (float) mLatticeData->GetZSiteCount()) * 0.5F;
 
-            lNewCluster.maxSite = util::Vector3D<float>(iClusterVoxelMax
-                + util::Vector3D<site_t>(1))
-                - util::Vector3D<float>(0.5F * (float) mLatticeData->GetXSiteCount(),
-                                        0.5F * (float) mLatticeData->GetYSiteCount(),
-                                        0.5F * (float) mLatticeData->GetZSiteCount());
+            lNewCluster.maxSite
+                = util::Vector3D<float>(clusterVoxelMax + util::Vector3D<site_t>(1))
+                    - util::Vector3D<float>(0.5F * (float) mLatticeData->GetXSiteCount(),
+                                            0.5F * (float) mLatticeData->GetYSiteCount(),
+                                            0.5F * (float) mLatticeData->GetZSiteCount());
 
             mClusters.push_back(lNewCluster);
 
             //We need to store the cluster block minimum in
             //order to process the cluster
-            mClusterBlockMins.push_back(iClusterBlockMin);
+            mClusterBlockMins.push_back(clusterBlockMin);
           }
 
           //Adds "flow-field" data to the cluster
-          void ProcessCluster(unsigned int iClusterId)
+          void ProcessCluster(unsigned int clusterId)
           {
             hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Examining cluster id = %u",
-                                                                                  (unsigned int) iClusterId);
+                                                                                  (unsigned int) clusterId);
 
-            ClusterType& lCluster(mClusters[iClusterId]);
+            ClusterType& cluster(mClusters[clusterId]);
 
-            lCluster.ResizeVectors();
+            cluster.ResizeVectors();
 
-            ClusterTraverser<ClusterType> lClusterTraverser(lCluster);
+            ClusterTraverser<ClusterType> clusterTraverser(cluster);
 
             do
             {
-              util::Vector3D<site_t> lBlockCoordinates = lClusterTraverser.GetCurrentLocation()
-                  + mClusterBlockMins[iClusterId];
+              util::Vector3D<site_t> blockCoordinates = clusterTraverser.GetCurrentLocation()
+                  + mClusterBlockMins[clusterId];
 
-              site_t lBlockId = mLatticeData->GetBlockIdFromBlockCoords(lBlockCoordinates.x,
-                                                                        lBlockCoordinates.y,
-                                                                        lBlockCoordinates.z);
+              site_t blockId = mLatticeData->GetBlockIdFromBlockCoords(blockCoordinates.x,
+                                                                       blockCoordinates.y,
+                                                                       blockCoordinates.z);
 
-              if (mClusterIdOfBlock[lBlockId] == iClusterId)
+              if (mClusterIdOfBlock[blockId] == (short) clusterId)
               {
-                ResizeVectorsForBlock(lCluster, lClusterTraverser.GetCurrentIndex());
+                ResizeVectorsForBlock(cluster, clusterTraverser.GetCurrentIndex());
 
                 mClusterVoxelDataPointers.resize(mLatticeData->GetLocalFluidSiteCount());
 
-                UpdateSiteData(lBlockId, lClusterTraverser.GetCurrentIndex(), lCluster);
+                UpdateSiteData(blockId, clusterTraverser.GetCurrentIndex(), cluster);
               }
             }
-            while (lClusterTraverser.TraverseOne());
+            while (clusterTraverser.TraverseOne());
           }
 
-          void UpdateSiteData(site_t iBlockId, site_t iBlockNum, ClusterType& iCluster)
+          void UpdateSiteData(site_t blockId, site_t blockNum, ClusterType& cluster)
           {
-            geometry::SiteTraverser lSiteTraverser(*mLatticeData);
+            geometry::SiteTraverser siteTraverser(*mLatticeData);
             do
             {
-              UpdateSiteDataAtSite(iBlockId, iBlockNum, iCluster, lSiteTraverser.GetCurrentIndex());
+              UpdateSiteDataAtSite(blockId, blockNum, cluster, siteTraverser.GetCurrentIndex());
             }
-            while (lSiteTraverser.TraverseOne());
+            while (siteTraverser.TraverseOne());
           }
 
-          virtual void UpdateSiteDataAtSite(site_t iBlockId,
-                                            site_t iBlockNum,
-                                            ClusterType& iCluster,
-                                            unsigned int iSiteIdOnBlock)
+          virtual void UpdateSiteDataAtSite(site_t blockId,
+                                            site_t blockNum,
+                                            ClusterType& cluster,
+                                            site_t siteIdOnBlock)
           {
-            geometry::BlockData * lBlock = mLatticeData->GetBlock(iBlockId);
-            unsigned int lClusterVoxelSiteId = lBlock->site_data[iSiteIdOnBlock];
+            geometry::BlockData * block = mLatticeData->GetBlock(blockId);
+            unsigned int clusterVoxelSiteId = block->site_data[siteIdOnBlock];
 
             //If site not a solid and on the current processor [net.cc]
-            if (lClusterVoxelSiteId != BIG_NUMBER3)
+            if (clusterVoxelSiteId != BIG_NUMBER3)
             {
-              UpdateDensityVelocityAndStress(iBlockNum,
-                                             iCluster,
-                                             iSiteIdOnBlock,
-                                             lClusterVoxelSiteId);
+              UpdateDensityVelocityAndStress(blockNum, cluster, siteIdOnBlock, clusterVoxelSiteId);
               if (ClusterType::NeedsWallNormals())
               {
-                UpdateWallNormalAtSite(lBlock, iBlockNum, iCluster, iSiteIdOnBlock);
+                UpdateWallNormalAtSite(block, blockNum, cluster, siteIdOnBlock);
               }
             }
           }
 
-          void UpdateDensityVelocityAndStress(site_t iBlockNum,
-                                              ClusterType& iCluster,
-                                              unsigned int iSiteIdOnBlock,
-                                              unsigned int iClusterVoxelSiteId)
+          void UpdateDensityVelocityAndStress(site_t blockNum,
+                                              ClusterType& cluster,
+                                              site_t siteIdOnBlock,
+                                              unsigned int clusterVoxelSiteId)
           {
-            iCluster.SiteData[iBlockNum][iSiteIdOnBlock] = SiteData_t(1.0F);
+            cluster.SiteData[blockNum][siteIdOnBlock] = SiteData_t(1.0F);
 
             //For efficiency we want to store a pointer to the site data grouped by the ClusterVortexID
             //(1D organisation of sites)
-            std::vector<SiteData_t>::iterator lSiteDataIterator =
-                iCluster.SiteData[iBlockNum].begin() + iSiteIdOnBlock;
+            std::vector<SiteData_t>::iterator siteDataIterator = cluster.SiteData[blockNum].begin()
+                + siteIdOnBlock;
 
-            SiteData_t* lSiteDataLocation = & (*lSiteDataIterator);
+            SiteData_t* siteDataLocation = & (*siteDataIterator);
 
-            SetDataPointerForClusterVoxelSiteId(iClusterVoxelSiteId, & (*lSiteDataLocation));
+            SetDataPointerForClusterVoxelSiteId(clusterVoxelSiteId, & (*siteDataLocation));
           }
 
-          void UpdateWallNormalAtSite(geometry::BlockData * iBlock,
-                                      site_t iBlockNum,
-                                      ClusterType& iCluster,
-                                      unsigned int iSiteIdOnBlock)
+          void UpdateWallNormalAtSite(geometry::BlockData * block,
+                                      site_t blockNum,
+                                      ClusterType& cluster,
+                                      site_t siteIdOnBlock)
           {
 
-            if (iBlock->wall_data != NULL && iBlock->wall_data[iSiteIdOnBlock].wall_nor[0] != -1.0F)
+            if (block->wall_data != NULL && block->wall_data[siteIdOnBlock].wall_nor[0] != -1.0F)
             {
-              iCluster.SetWallData(iBlockNum,
-                                   iSiteIdOnBlock,
-                                   iBlock->wall_data[iSiteIdOnBlock].wall_nor);
+              cluster.SetWallData(blockNum, siteIdOnBlock, block->wall_data[siteIdOnBlock].wall_nor);
             }
           }
 
-          SiteData_t* GetDataPointerClusterVoxelSiteId(site_t iClusterVortexSiteId)
+          SiteData_t* GetDataPointerClusterVoxelSiteId(site_t clusterVortexSiteId)
           {
-            return mClusterVoxelDataPointers[iClusterVortexSiteId];
+            return mClusterVoxelDataPointers[clusterVortexSiteId];
           }
 
-          void SetDataPointerForClusterVoxelSiteId(site_t iClusterVortexSiteId,
-                                                   SiteData_t* iDataPointer)
+          void SetDataPointerForClusterVoxelSiteId(site_t clusterVortexSiteId,
+                                                   SiteData_t* dataPointer)
           {
-            mClusterVoxelDataPointers[iClusterVortexSiteId] = iDataPointer;
+            mClusterVoxelDataPointers[clusterVortexSiteId] = dataPointer;
           }
 
           //Caution: the data within mClusters is altered by means
