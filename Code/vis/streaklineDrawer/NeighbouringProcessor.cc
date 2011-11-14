@@ -45,8 +45,8 @@ namespace hemelb
 
       void NeighbouringProcessor::PrepareToSendParticles()
       {
-        site_t lParticlesToSend = mParticlesToSend.size();
-        MPI_Isend(&lParticlesToSend, 1, // Count
+        site_t particlesToSend = mParticlesToSend.size();
+        MPI_Isend(&particlesToSend, 1, // Count
                   MpiDataType<site_t>(), //Type
                   mID, //Destination
                   30, //Tag
@@ -78,7 +78,6 @@ namespace hemelb
         {
           MPI_Wait(&mSendRequest, MPI_STATUS_IGNORE);
         }
-        //TODO: need to clear them?
         mParticlesToSend.clear();
       }
 

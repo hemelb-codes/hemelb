@@ -23,7 +23,7 @@ namespace hemelb
           virtual void UpdateSiteDataAtSite(site_t iBlockId,
                                             site_t iBlockNum,
                                             unsigned int iClusterId,
-                                            unsigned int iSiteIdOnBlock);
+                                            site_t iSiteIdOnBlock);
 
           void UpdateWallNormalAtSite(geometry::LatticeData::BlockData * iBlock,
                                       site_t iBlockNum,

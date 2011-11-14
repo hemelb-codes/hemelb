@@ -146,17 +146,17 @@ namespace hemelb
         int pixels_x = mScreen.GetPixelsX();
         int pixels_y = mScreen.GetPixelsY();
 
-        const std::vector<Particle>& lParticles = mParticles.GetParticles();
+        const std::vector<Particle>& particles = mParticles.GetParticles();
 
         PixelSet<StreakPixel>* set = GetUnusedPixelSet();
         set->Clear();
 
-        for (unsigned int n = 0; n < lParticles.size(); n++)
+        for (unsigned int n = 0; n < particles.size(); n++)
         {
           util::Vector3D<float> p1;
-          p1.x = lParticles[n].x - float(latDat.GetXSiteCount() >> 1);
-          p1.y = lParticles[n].y - float(latDat.GetYSiteCount() >> 1);
-          p1.z = lParticles[n].z - float(latDat.GetZSiteCount() >> 1);
+          p1.x = particles[n].x - float(latDat.GetXSiteCount() >> 1);
+          p1.y = particles[n].y - float(latDat.GetYSiteCount() >> 1);
+          p1.z = particles[n].z - float(latDat.GetZSiteCount() >> 1);
 
           util::Vector3D<float> p2 = mViewpoint.Project(p1);
 
@@ -165,7 +165,7 @@ namespace hemelb
 
           if (! (x.x < 0 || x.x >= pixels_x || x.y < 0 || x.y >= pixels_y))
           {
-            StreakPixel pixel(x.x, x.y, lParticles[n].vel, p2.z, lParticles[n].inletID);
+            StreakPixel pixel(x.x, x.y, particles[n].vel, p2.z, particles[n].inletID);
             set->AddPixel(pixel);
           }
         }
@@ -176,25 +176,25 @@ namespace hemelb
       // Create seed particles to begin the streaklines.
       void StreaklineDrawer::createSeedParticles()
       {
-        for (unsigned int n = 0; n < mParticleSeeds.size(); n++)
+        for (unsigned int n = 0; n < particleSeeds.size(); n++)
         {
-          mParticles.AddParticle(mParticleSeeds[n]);
+          mParticles.AddParticle(particleSeeds[n]);
         }
       }
 
       // Update the velocity field.
       void StreaklineDrawer::updateVelField(int stage_id)
       {
-        std::vector<Particle>& lParticles = mParticles.GetParticles();
+        std::vector<Particle>& particles = mParticles.GetParticles();
 
-        for (unsigned int n = lParticles.size() - 1; n < lParticles.size(); n--)
+        for (size_t n = particles.size() - 1; n < particles.size(); n--)
         {
           float v[2][2][2][3];
           int is_interior;
 
-          mVelocityField.localVelField(lParticles[n].x,
-                                       lParticles[n].y,
-                                       lParticles[n].z,
+          mVelocityField.localVelField((site_t) particles[n].x,
+                                       (site_t) particles[n].y,
+                                       (site_t) particles[n].z,
                                        v,
                                        &is_interior,
                                        latDat,
@@ -207,9 +207,9 @@ namespace hemelb
 
           float interp_v[3];
 
-          mVelocityField.GetVelocityAtPoint(lParticles[n].x,
-                                            lParticles[n].y,
-                                            lParticles[n].z,
+          mVelocityField.GetVelocityAtPoint(particles[n].x,
+                                            particles[n].y,
+                                            particles[n].z,
                                             v,
                                             interp_v);
 
@@ -218,18 +218,18 @@ namespace hemelb
 
           if (vel > 1.0F)
           {
-            lParticles[n].vel = 1.0F;
-            lParticles[n].vx = interp_v[0] / sqrtf(vel);
-            lParticles[n].vy = interp_v[1] / sqrtf(vel);
-            lParticles[n].vz = interp_v[2] / sqrtf(vel);
+            particles[n].vel = 1.0F;
+            particles[n].vx = interp_v[0] / sqrtf(vel);
+            particles[n].vy = interp_v[1] / sqrtf(vel);
+            particles[n].vz = interp_v[2] / sqrtf(vel);
 
           }
           else if (vel > 1.0e-8)
           {
-            lParticles[n].vel = sqrtf(vel);
-            lParticles[n].vx = interp_v[0];
-            lParticles[n].vy = interp_v[1];
-            lParticles[n].vz = interp_v[2];
+            particles[n].vel = sqrtf(vel);
+            particles[n].vx = interp_v[0];
+            particles[n].vy = interp_v[1];
+            particles[n].vz = interp_v[2];
 
           }
           else
