@@ -44,9 +44,9 @@ namespace hemelb
     void ActiveDebugger::Print(const char* iFormat, ...)
     {
       va_list args;
-      va_start (args, iFormat);
-      vprintf (iFormat, args);
-      va_end (args);
+      va_start(args, iFormat);
+      vprintf(iFormat, args);
+      va_end(args);
     }
 
     void ActiveDebugger::Attach(void)
@@ -66,8 +66,14 @@ namespace hemelb
       int pId = getpid();
       pid_t childPid = 0;
 
-      MPI_Gather((void*) &pId, 1, MpiDataType(pId), (void*) & (mPIds->front()), 1,
-                 MpiDataType(mPIds->front()), 0, MPI_COMM_WORLD);
+      MPI_Gather((void*) &pId,
+                 1,
+                 MpiDataType(pId),
+                 (void*) & (mPIds->front()),
+                 1,
+                 MpiDataType(mPIds->front()),
+                 0,
+                 MPI_COMM_WORLD);
 
       if (rank == 0)
       {
@@ -107,8 +113,14 @@ namespace hemelb
 
         int pId = getpid();
 
-        MPI_Gather((void*) &pId, 1, MpiDataType(pId), (void*) & (mPIds->front()), 1,
-                   MpiDataType(mPIds->front()), 0, MPI_COMM_WORLD);
+        MPI_Gather((void*) &pId,
+                   1,
+                   MpiDataType(pId),
+                   (void*) & (mPIds->front()),
+                   1,
+                   MpiDataType(mPIds->front()),
+                   0,
+                   MPI_COMM_WORLD);
 
       }
     }
@@ -166,8 +178,7 @@ namespace hemelb
 
       // OK- that didn't work if we get here, better die (since we're
       // the extra process). Print the error code too.
-      std::cerr << "Couldn't exec() script to launch debuggers, error code "
-          << errno << std::endl;
+      std::cerr << "Couldn't exec() script to launch debuggers, error code " << errno << std::endl;
       // Now print the command we wanted to exec()
       for (VoS::iterator it = args.begin(); it < args.end(); it++)
       {

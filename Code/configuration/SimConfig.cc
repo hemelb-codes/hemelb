@@ -291,7 +291,7 @@ namespace hemelb
       DoIO(lNormalElement, iIsLoading, value->Normal);
     }
 
-    void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, util::Vector3D &iValue)
+    void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, util::Vector3D<float> &iValue)
     {
       DoIO(iParent, "x", iIsLoading, iValue.x);
       DoIO(iParent, "y", iIsLoading, iValue.y);

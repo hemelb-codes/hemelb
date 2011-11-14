@@ -45,7 +45,7 @@ namespace hemelb
 
         typedef streamers::SimpleCollideAndStream<collisions::Normal<LB_KERNEL> >
             tMidFluidCollision;
-        typedef streamers::SimpleBounceBack<collisions::Normal<kernels::LBGK> > tWallCollision;
+        typedef streamers::SimpleBounceBack<collisions::Normal<LB_KERNEL> > tWallCollision;
         typedef streamers::SimpleCollideAndStream<
             collisions::NonZeroVelocityEquilibriumFixedDensity<LB_KERNEL> > tInletOutletCollision;
         typedef streamers::SimpleCollideAndStream<collisions::ZeroVelocityEquilibriumFixedDensity<
@@ -63,7 +63,6 @@ namespace hemelb
             geometry::LatticeData* latDat,
             SimulationState* simState);
         ~LBM();
-
 
         void RequestComms(); ///< part of IteratedAction interface.
         void PreSend(); ///< part of IteratedAction interface.
@@ -99,7 +98,8 @@ namespace hemelb
          * the writing. The format is detailed in io/formats/snapshot.h
          */
         // TODO filename argument should be const, but cannot be due to MPI constness issue #30
-        void WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const;
+        void WriteConfigParallel(hemelb::lb::Stability const stability,
+                                 std::string output_file_name) const;
         void ReadVisParameters();
 
         void CalculateMouseFlowField(const ScreenDensity densityIn,
@@ -108,8 +108,7 @@ namespace hemelb
                                      const LatticeDensity density_threshold_minmax_inv,
                                      const LatticeStress stress_threshold_max_inv,
                                      PhysicalPressure &mouse_pressure,
-                                     PhysicalStress &mouse_stress
-                                     );
+                                     PhysicalStress &mouse_stress);
 
         hemelb::lb::LbmParameters *GetLbmParams();
         double GetTimeSpent() const;
@@ -211,16 +210,19 @@ namespace hemelb
         site_t* receivedFTranslator;
     }; // Class
 
-    inline int LBM::InletCount() const {
+    inline int LBM::InletCount() const
+    {
       return inlets;
     }
 
-    inline site_t LBM::TotalFluidSiteCount() const {
+    inline site_t LBM::TotalFluidSiteCount() const
+    {
       return total_fluid_sites;
     }
 
-    inline void LBM::SetTotalFluidSiteCount(site_t sites) {
-      total_fluid_sites=sites;
+    inline void LBM::SetTotalFluidSiteCount(site_t sites)
+    {
+      total_fluid_sites = sites;
     }
 
   } // Namespace lb

@@ -41,8 +41,8 @@ namespace hemelb
             distribn_t *f;
         };
 
-        void RenderLine(const Vector3D<float>& endPoint1,
-                        const Vector3D<float>& endPoint2,
+        void RenderLine(const XYCoordinates<float>& endPoint1,
+                        const XYCoordinates<float>& endPoint2,
                         const VisSettings* visSettings,
                         PixelSet<BasicPixel>*);
 
