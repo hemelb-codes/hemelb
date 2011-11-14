@@ -533,9 +533,9 @@ void SimulationMaster::GenerateNetworkImages(){
     }
 
     if (mSimulationState->GetTimeStep() == mSimulationState->GetTimeStepsPerCycle()
-        && hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+        && IsCurrentProcTheIOProc())
     {
-      fprintf(fileManager->ReportFile(), "cycle id: %li\n", mSimulationState->GetCycleId());
+      fileManager->Report()->Cycle(mSimulationState->GetCycleId());
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
                                                                           mSimulationState->GetCycleId());
@@ -572,7 +572,7 @@ void SimulationMaster::GenerateNetworkImages(){
  {
    if (IsCurrentProcTheIOProc())
    {
-     fileManager->ReportPhase1(mLbm->TotalFluidSiteCount(),
+     fileManager->Report()->Phase1(mLbm->TotalFluidSiteCount(),
                                iTotalTimeSteps,
                                mSimulationState->GetCycleId(),
                                iSimulationTime, iIsUnstable, mSimulationState->GetTimeStepsPerCycle(),
@@ -618,6 +618,6 @@ void SimulationMaster::GenerateNetworkImages(){
        lMeans[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount());
      }
 
-     fileManager->ReportProcessorTimings(lNames,lMins,lMeans,lMaxes);
+     fileManager->Report()->ProcessorTimings(lNames,lMins,lMeans,lMaxes);
    }
  }
