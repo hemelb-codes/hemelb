@@ -10,8 +10,8 @@
 #include "lb/boundaries/BoundaryValues.h"
 #include "util/UnitConverter.h"
 #include "configuration/CommandLine.h"
-#include "reporting/fileManager.h"
-#include "reporting/reporter.h"
+#include "reporting/FileManager.h"
+#include "reporting/Reporter.h"
 
 class SimulationMaster
 {
