@@ -45,7 +45,6 @@ namespace hemelb
 
         private:
           std::vector<Particle> mParticles;
-
           std::vector<NeighbouringProcessor>& mNeighbouringProcessors;
 
       };
