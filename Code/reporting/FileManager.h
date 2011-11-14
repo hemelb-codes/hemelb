@@ -4,7 +4,7 @@
 #include <string>
 #include "configuration/CommandLine.h"
 #include "util/fileutils.h"
-#include "log/logger.h"
+#include "log/Logger.h"
 #include "configuration/SimConfig.h"
 #include "io/XdrFileWriter.h"
 namespace hemelb
