@@ -10,7 +10,7 @@ namespace hemelb
     namespace streaklinedrawer
     {
       Particles::Particles(std::vector<NeighbouringProcessor>& iNeighbouringProcessors) :
-          mNeighbouringProcessors(iNeighbouringProcessors)
+        mNeighbouringProcessors(iNeighbouringProcessors)
       {
       }
 
@@ -31,7 +31,7 @@ namespace hemelb
 
       void Particles::DeleteParticle(site_t iIndex)
       {
-        assert(mParticles.size() > static_cast<size_t>(iIndex));
+        assert(mParticles.size() > static_cast<size_t> (iIndex));
 
         //Move the particle at the end to position
         mParticles[iIndex] = mParticles.back();
@@ -67,19 +67,16 @@ namespace hemelb
         {
           mNeighbouringProcessors[m].PrepareToReceiveParticles();
         }
-        /*for (size_t m = 0; m < mNeighbouringProcessors.size(); m++)
-         {
-         mNeighbouringProcessors[m].send_ps = 0;
-         }*/
 
         unsigned int particles_temp = GetNumberOfParticles();
 
         proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
 
-        for (int n = (int) (particles_temp - 1);n >= 0; n--) { site_t
-          site_i = (unsigned int) mParticles[n].x;
-          site_t site_j = (unsigned int) mParticles[n].y;
-          site_t site_k = (unsigned int) mParticles[n].z;
+        for (int n = (int) (particles_temp - 1); n >= 0; n--)
+        {
+          site_t site_i = (site_t) mParticles[n].x;
+          site_t site_j = (site_t) mParticles[n].y;
+          site_t site_k = (site_t) mParticles[n].z;
 
           VelocitySiteData* vel_site_data_p = iVelocityField.velSiteDataPointer(iLatDat,
                                                                                 site_i,
