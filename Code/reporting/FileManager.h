@@ -20,6 +20,10 @@ namespace hemelb
         {
           return(!ok);
         }
+        void ReportPhase1(long int site_count, int total_time_steps, long int cycle_id, double simulation_time, bool unstable,
+                          unsigned long time_steps_per_cycle,
+                          double decomposition_time, double initialise_time, double read_time, double creation_time);
+        void ReportProcessorTimings(std::string *const names,double *const mins,double *const means,double *const maxes);
         const std::string & GetInputFile() const;
         const std::string & GetSnapshotDirectory() const;
         const std::string & GetImageDirectory() const;
