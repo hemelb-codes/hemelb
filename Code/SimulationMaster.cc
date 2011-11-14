@@ -570,66 +570,13 @@ void SimulationMaster::GenerateNetworkImages(){
   */
  void SimulationMaster::PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable)
  {
-   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+   if (IsCurrentProcTheIOProc())
    {
-     fprintf(fileManager->ReportFile(), "\n");
-     fprintf(fileManager->ReportFile(),
-             "threads: %i, machines checked: %i\n\n",
-             hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(),
-             hemelb::topology::NetworkTopology::Instance()->GetMachineCount());
-     fprintf(fileManager->ReportFile(),
-             "topology depths checked: %i\n\n",
-             hemelb::topology::NetworkTopology::Instance()->GetDepths());
-     fprintf(fileManager->ReportFile(), "fluid sites: %li\n\n", mLbm->TotalFluidSiteCount());
-     fprintf(fileManager->ReportFile(),
-             "cycles and total time steps: %li, %i \n\n",
-             (mSimulationState->GetCycleId() - 1), // Note that the cycle-id is 1-indexed.
-             iTotalTimeSteps);
-     fprintf(fileManager->ReportFile(), "time steps per second: %.3f\n\n", iTotalTimeSteps / iSimulationTime);
-   }
-
-   if (iIsUnstable)
-   {
-     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-     {
-       fprintf(fileManager->ReportFile(),
-               "Attention: simulation unstable with %li timesteps/cycle\n",
-               (unsigned long) mSimulationState->GetTimeStepsPerCycle());
-       fprintf(fileManager->ReportFile(), "Simulation terminated\n");
-     }
-   }
-   else
-   {
-     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
-     {
-
-       fprintf(fileManager->ReportFile(),
-               "time steps per cycle: %li\n",
-               (unsigned long) mSimulationState->GetTimeStepsPerCycle());
-       fprintf(fileManager->ReportFile(), "\n");
-
-       fprintf(fileManager->ReportFile(), "\n");
-
-       fprintf(fileManager->ReportFile(), "\n");
-       fprintf(fileManager->ReportFile(), "decomposition optimisation time (s):       %.3f\n", mDomainDecompTime);
-       fprintf(fileManager->ReportFile(), "pre-processing buffer management time (s): %.3f\n", mNetInitialiseTime);
-       fprintf(fileManager->ReportFile(), "input configuration reading time (s):      %.3f\n", mFileReadTime);
-
-       fprintf(fileManager->ReportFile(),
-               "total time (s):                            %.3f\n\n",
-               (hemelb::util::myClock() - mCreationTime));
-
-       fprintf(fileManager->ReportFile(), "Sub-domains info:\n\n");
-
-       for (hemelb::proc_t n = 0; n
-       < hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(); n++)
-       {
-         fprintf(fileManager->ReportFile(),
-                 "rank: %lu, fluid sites: %lu\n",
-                 (unsigned long) n,
-                 (unsigned long) hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor[n]);
-       }
-     }
+     fileManager->ReportPhase1(mLbm->TotalFluidSiteCount(),
+                               iTotalTimeSteps,
+                               mSimulationState->GetCycleId(),
+                               iSimulationTime, iIsUnstable, mSimulationState->GetTimeStepsPerCycle(),
+                               mDomainDecompTime, mNetInitialiseTime, mFileReadTime, mCreationTime);
    }
 
    PrintTimingData();
@@ -665,22 +612,12 @@ void SimulationMaster::GenerateNetworkImages(){
 
    MPI_Reduce(lTimings, lMins, 5, hemelb::MpiDataType(lMins[0]), MPI_MIN, 0, MPI_COMM_WORLD);
 
-   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
+   if (IsCurrentProcTheIOProc())
    {
-     for (int ii = 0; ii < 5; ii++)
+     for (int ii = 0; ii < 5; ii++) {
        lMeans[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount());
-
-     fprintf(fileManager->ReportFile(),
-             "\n\nPer-proc timing data (secs per [cycle,cycle,cycle,image,snapshot]): \n\n");
-     fprintf(fileManager->ReportFile(), "\t\tMin \tMean \tMax\n");
-     for (int ii = 0; ii < 5; ii++)
-     {
-       fprintf(fileManager->ReportFile(),
-               "%s\t\t%.3g\t%.3g\t%.3g\n",
-               lNames[ii].c_str(),
-               lMins[ii],
-               lMeans[ii],
-               lMaxes[ii]);
      }
+
+     fileManager->ReportProcessorTimings(lNames,lMins,lMeans,lMaxes);
    }
  }
