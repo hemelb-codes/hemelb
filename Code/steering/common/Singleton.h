@@ -27,7 +27,7 @@ namespace hemelb
             {
               Singleton<Derived>::singleton = new Derived();
             }
-            return static_cast<Derived*> (Singleton<Derived>::singleton);
+            return static_cast<Derived*>(Singleton<Derived>::singleton);
           }
       };
 

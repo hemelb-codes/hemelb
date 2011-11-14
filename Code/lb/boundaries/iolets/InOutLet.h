@@ -50,8 +50,8 @@ namespace hemelb
             double PressureMinPhysical;
             double PressureMaxPhysical;
 
-            util::Vector3D Position;
-            util::Vector3D Normal;
+            util::Vector3D<float> Position;
+            util::Vector3D<float> Normal;
 
           protected:
             const util::UnitConverter* mUnits;

@@ -5,8 +5,8 @@
 
 #include "util/utilityFunctions.h"
 #include "vis/BasicPixel.h"
-#include "vis/rayTracer/RayPixel.h"
-#include "vis/StreakPixel.h"
+#include "vis/rayTracer/RayDataNormal.h"
+#include "vis/streaklineDrawer/StreakPixel.h"
 #include "vis/VisSettings.h"
 #include "vis/DomainStats.h"
 
@@ -19,18 +19,18 @@ namespace hemelb
       public:
         ResultPixel(const BasicPixel* glyph);
 
-        ResultPixel(const raytracer::RayPixel* ray);
+        ResultPixel(const raytracer::RayDataNormal* ray);
 
-        ResultPixel(const StreakPixel* streak);
+        ResultPixel(const streaklinedrawer::StreakPixel* streak);
 
-        const raytracer::RayPixel* GetRayPixel() const;
+        const raytracer::RayDataNormal* GetRayPixel() const;
 
         void Combine(const ResultPixel& other);
 
         void WritePixel(int *pixel_index,
                         unsigned char rgb_data[12],
-                        const DomainStats* iDomainStats,
-                        const VisSettings* visSettings) const;
+                        const DomainStats& iDomainStats,
+                        const VisSettings& visSettings) const;
 
       private:
 
@@ -39,8 +39,8 @@ namespace hemelb
         static void MakePixelColour(int rawRed, int rawGreen, int rawBlue, unsigned char* dest);
 
         bool hasGlyph;
-        const raytracer::RayPixel* rayPixel;
-        const StreakPixel* streakPixel;
+        const raytracer::RayDataNormal* normalRayPixel;
+        const streaklinedrawer::StreakPixel* streakPixel;
     };
   }
 }

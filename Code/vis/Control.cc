@@ -29,9 +29,9 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float (iLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float (iLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float (iLatDat->GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float(iLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float(iLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float(iLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -63,7 +63,7 @@ namespace hemelb
           {
             n++;
 
-            geometry::LatticeData::BlockData * lBlock = mLatDat->GetBlock(n);
+            geometry::BlockData * lBlock = mLatDat->GetBlock(n);
             if (lBlock->ProcessorRankForEachBlockSite == NULL)
             {
               continue;
@@ -97,15 +97,16 @@ namespace hemelb
       mVisSettings.ctr_y = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[1] + maxes[1]));
       mVisSettings.ctr_z = 0.5F * (float) (mLatDat->GetBlockSize() * (mins[2] + maxes[2]));
 
-      myRayTracer = new raytracer::RayTracer(mLatDat,
-                                             &mDomainStats,
-                                             &mScreen,
-                                             &mViewpoint,
-                                             &mVisSettings);
+      normalRayTracer = new raytracer::RayTracer<raytracer::ClusterWithWallNormals,
+          raytracer::RayDataNormal>(mLatDat, &mDomainStats, &mScreen, &mViewpoint, &mVisSettings);
+
       myGlypher = new GlyphDrawer(mLatDat, &mScreen, &mDomainStats, &mViewpoint, &mVisSettings);
 
 #ifndef NO_STREAKLINES
-      myStreaker = new StreaklineDrawer(mLatDat, &mScreen, &mViewpoint, &mVisSettings);
+      myStreaker = new streaklinedrawer::StreaklineDrawer(*mLatDat,
+                                                          mScreen,
+                                                          mViewpoint,
+                                                          mVisSettings);
 #endif
       // Note that rtInit does stuff to this->ctr_x (because this has
       // to be global)
@@ -126,10 +127,17 @@ namespace hemelb
       float rad = 5.F * vis->system_size;
       float dist = 0.5F * rad;
 
-      Vector3D<float> centre = Vector3D<float> (iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
+      //For now set the maximum draw distance to twice the radius;
+      mVisSettings.maximumDrawDistance = 2.0F * rad;
 
-      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
-          * (float) DEG_TO_RAD, centre, rad, dist);
+      util::Vector3D<float> centre =
+          util::Vector3D<float>(iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
+
+      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
+                                      iLatitude * (float) DEG_TO_RAD,
+                                      centre,
+                                      rad,
+                                      dist);
 
       mScreen.Set( (0.5F * vis->system_size) / iZoom,
                    (0.5F * vis->system_size) / iZoom,
@@ -141,7 +149,7 @@ namespace hemelb
 
     void Control::RegisterSite(site_t i, distribn_t density, distribn_t velocity, distribn_t stress)
     {
-      myRayTracer->UpdateClusterVoxel(i, density, velocity, stress);
+      normalRayTracer->UpdateClusterVoxel(i, density, velocity, stress);
     }
 
     void Control::SetSomeParams(const float iBrightness,
@@ -167,7 +175,7 @@ namespace hemelb
     {
       log::Logger::Log<log::Debug, log::OnePerCore>("Rendering.");
 
-      PixelSet<raytracer::RayPixel>* ray = myRayTracer->Render();
+      PixelSet<raytracer::RayDataNormal>* ray = normalRayTracer->Render();
 
       PixelSet<BasicPixel>* glyph = NULL;
 
@@ -181,13 +189,13 @@ namespace hemelb
         glyph->Clear();
       }
 
-      PixelSet<StreakPixel>* streak = NULL;
+      PixelSet<streaklinedrawer::StreakPixel>* streak = NULL;
 
 #ifndef NO_STREAKLINES
       if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
           == VisSettings::WALLANDSTREAKLINES)
       {
-        streak = myStreaker->Render(mLatDat);
+        streak = myStreaker->Render();
       }
 #endif
 
@@ -208,15 +216,15 @@ namespace hemelb
 
     void Control::WriteImage(io::Writer* writer,
                              const PixelSet<ResultPixel>& imagePixels,
-                             const DomainStats* domainStats,
-                             const VisSettings* visSettings) const
+                             const DomainStats& domainStats,
+                             const VisSettings& visSettings) const
     {
-      *writer << (int) visSettings->mode;
+      *writer << (int) visSettings.mode;
 
-      *writer << domainStats->physical_pressure_threshold_min
-          << domainStats->physical_pressure_threshold_max
-          << domainStats->physical_velocity_threshold_max
-          << domainStats->physical_stress_threshold_max;
+      *writer << domainStats.physical_pressure_threshold_min
+          << domainStats.physical_pressure_threshold_max
+          << domainStats.physical_velocity_threshold_max
+          << domainStats.physical_stress_threshold_max;
 
       *writer << mScreen.GetPixelsX();
       *writer << mScreen.GetPixelsY();
@@ -237,8 +245,8 @@ namespace hemelb
 
     void Control::WritePixels(io::Writer* writer,
                               const PixelSet<ResultPixel>& imagePixels,
-                              const DomainStats* domainStats,
-                              const VisSettings* visSettings) const
+                              const DomainStats& domainStats,
+                              const VisSettings& visSettings) const
     {
       const int bits_per_char = sizeof(char) * 8;
 
@@ -281,7 +289,7 @@ namespace hemelb
         for (unsigned int ii = 0; ii < GetChildren().size(); ++ii)
         {
           Rendering lRendering(myGlypher->GetUnusedPixelSet(),
-                               myRayTracer->GetUnusedPixelSet(),
+                               normalRayTracer->GetUnusedPixelSet(),
                                myStreaker != NULL
                                  ? myStreaker->GetUnusedPixelSet()
                                  : NULL);
@@ -520,7 +528,7 @@ namespace hemelb
         ? & (*localResultsByStartIt.find(startIteration)).second
         : NULL;
       Rendering receiveBuffer(myGlypher->GetUnusedPixelSet(),
-                              myRayTracer->GetUnusedPixelSet(),
+                              normalRayTracer->GetUnusedPixelSet(),
                               myStreaker == NULL
                                 ? NULL
                                 : myStreaker->GetUnusedPixelSet());
@@ -631,8 +639,8 @@ namespace hemelb
         if ( (*it).GetRayPixel() != NULL && (*it).GetI() == mVisSettings.mouse_x && (*it).GetJ()
             == mVisSettings.mouse_y)
         {
-          *density = (*it).GetRayPixel()->GetDensity();
-          *stress = (*it).GetRayPixel()->GetStress();
+          *density = (*it).GetRayPixel()->GetNearestDensity();
+          *stress = (*it).GetRayPixel()->GetNearestStress();
 
           return true;
         }
@@ -646,7 +654,7 @@ namespace hemelb
 #ifndef NO_STREAKLINES
       timeSpent -= util::myClock();
 
-      myStreaker ->StreakLines(time_step, period, mLatDat);
+      myStreaker ->StreakLines(time_step, period);
 
       timeSpent += util::myClock();
 #endif
@@ -680,7 +688,7 @@ namespace hemelb
 
       delete vis;
       delete myGlypher;
-      delete myRayTracer;
+      delete normalRayTracer;
     }
 
   } // namespace vis
