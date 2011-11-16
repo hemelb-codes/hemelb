@@ -2,7 +2,7 @@ include $(MK)/header.mk
 
 TARGETS := libHemeLbConfiguration.$(LIBEXT)
 SRCS := SimConfig.cc \
-		CommandLine.cc
+		CommandLine.cc 
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 

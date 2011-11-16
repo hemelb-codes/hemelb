@@ -21,13 +21,13 @@ namespace hemelb
     LBM::LBM(configuration::SimConfig *iSimulationConfig,
              net::Net* net,
              geometry::LatticeData* latDat,
-             SimulationState* simState) :
+             SimulationState* simState, reporting::Timer &atimer) :
           mSimConfig(iSimulationConfig),
           mNet(net),
           mLatDat(latDat),
           mState(simState),
           mParams(PULSATILE_PERIOD_s / (distribn_t) simState->GetTimeStepsPerCycle(),
-                  latDat->GetVoxelSize())
+                  latDat->GetVoxelSize()), timer(atimer)
     {
       ReadParameters();
     }
@@ -109,7 +109,6 @@ namespace hemelb
 
     void LBM::SetInitialConditions()
     {
-      timeSpent = 0.0;
 
       distribn_t *f_old_p, *f_new_p, f_eq[D3Q15::NUMVECTORS];
       distribn_t density = 0.0;
@@ -137,7 +136,7 @@ namespace hemelb
 
     void LBM::RequestComms()
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
 
@@ -156,12 +155,12 @@ namespace hemelb
 
       }
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     void LBM::PreSend()
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       site_t offset = mLatDat->GetInnerSiteCount();
 
@@ -184,12 +183,12 @@ namespace hemelb
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetInterCollisionCount(5));
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     void LBM::PreReceive()
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       site_t offset = 0;
 
@@ -210,12 +209,12 @@ namespace hemelb
 
       StreamAndCollide(mOutletWallCollision, offset, mLatDat->GetInnerCollisionCount(5));
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     void LBM::PostReceive()
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       // Copy the distribution functions received from the neighbouring
       // processors into the destination buffer "f_new".
@@ -266,17 +265,17 @@ namespace hemelb
 
       PostStep(mOutletWallCollision, offset, mLatDat->GetInnerCollisionCount(5));
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     void LBM::EndIteration()
     {
-      timeSpent -= util::myClock();
+      timer.Start();
 
       // Swap f_old and f_new ready for the next timestep.
       mLatDat->SwapOldAndNew();
 
-      timeSpent += util::myClock();
+      timer.Stop();
     }
 
     // Update peak and average inlet velocities local to the current subdomain.
@@ -344,15 +343,6 @@ namespace hemelb
           velocity = -sqrt(velocity) / density;
         }
       }
-    }
-
-    /**
-     * Return the amount of time spent doing lattice-Boltzmann
-     * @return
-     */
-    double LBM::GetTimeSpent() const
-    {
-      return timeSpent;
     }
 
     void LBM::SetSiteMinima(site_t const * const minima) {

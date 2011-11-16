@@ -23,6 +23,7 @@
 #include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"
+#include "reporting/Timers.h"
 
 namespace hemelb
 {
@@ -47,7 +48,7 @@ namespace hemelb
         Control(lb::StressTypes iStressType,
                 net::Net* net,
                 lb::SimulationState* simState,
-                geometry::LatticeData* iLatDat);
+                geometry::LatticeData* iLatDat, reporting::Timer &atimer);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
@@ -94,8 +95,6 @@ namespace hemelb
         DomainStats mDomainStats;
         VisSettings mVisSettings;
 
-        double GetTimeSpent() const;
-
       protected:
         void InitialAction(unsigned long startIteration);
         void ProgressFromChildren(unsigned long startIteration, unsigned long splayNumber);
@@ -136,7 +135,7 @@ namespace hemelb
         GlyphDrawer *myGlypher;
         streaklinedrawer::StreaklineDrawer *myStreaker;
 
-        double timeSpent;
+        reporting::Timer &timer;
     };
   }
 }
