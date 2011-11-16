@@ -83,10 +83,10 @@ namespace hemelb
       void RayDataNormal::MakeColourComponent(float value, unsigned char& colour) const
       {
         colour
-            = (unsigned char) util::NumericalFunctions::enforceBounds<unsigned char>(value
-                                                                                         / GetCumulativeLengthInFluid(),
-                                                                                     0,
-                                                                                     255);
+            = util::NumericalFunctions::enforceBounds<unsigned char>((unsigned char) (value
+                                                                         / GetCumulativeLengthInFluid()),
+                                                                     0,
+                                                                     255);
       }
 
       void RayDataNormal::DoCombine(const RayDataNormal& iOtherRayData)

@@ -4,7 +4,7 @@
 #include <limits>
 
 #include "vis/rayTracer/HSLToRGBConverter.h"
-//#include "HSLToRGBConverter.h"
+#include "log/Logger.h"
 
 namespace hemelb
 {
@@ -36,9 +36,9 @@ namespace hemelb
         static const uint32_t OtherScalar = std::numeric_limits<uint16_t>::max();
 
         //Cast the inputs accodingly
-        uint32_t lHue = (uint32_t) (iHue * (float) (DegreesScalar));
-        uint32_t lSaturation = (uint32_t) (iSaturation * (float) (OtherScalar));
-        uint32_t lLightness = (uint32_t) (iLightness * (float) (OtherScalar));
+        uint32_t lHue = (uint32_t)(iHue * (float) (DegreesScalar));
+        uint32_t lSaturation = (uint32_t)(iSaturation * (float) (OtherScalar));
+        uint32_t lLightness = (uint32_t)(iLightness * (float) (OtherScalar));
 
         //Calculate the Chroma - a division by OtherScalar is 
         //required for the Chroma to remain between 0
@@ -98,6 +98,9 @@ namespace hemelb
             lGreen = 0.0F;
             lBlue = lIntermediate;
             break;
+
+          default:
+            log::Logger::Log<log::Info, log::OnePerCore>("Failed while using hue in HslToRgbConvertor.");
         }
 
         // A value to divide the results by to map them 

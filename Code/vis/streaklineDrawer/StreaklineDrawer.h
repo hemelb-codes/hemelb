@@ -49,7 +49,7 @@ namespace hemelb
 
           PixelSet<StreakPixel>* Render();
 
-          std::vector<Particle> mParticleSeeds;
+          std::vector<Particle> particleSeeds;
           proc_t *from_proc_id_to_neigh_proc_index;
 
         private:
