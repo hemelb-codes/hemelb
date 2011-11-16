@@ -22,8 +22,7 @@ namespace hemelb
                              site_t* fluidSitePerProc,
                              lb::LbmParameters* bLbmParams,
                              configuration::SimConfig* bSimConfig,
-                             double* lReadTime,
-                             double* lDecomposeTime) :
+                             reporting::Timers &timings) :
       localLatDat(), globLatDat()
 
     {
@@ -31,7 +30,7 @@ namespace hemelb
       GeometryReader reader(reserveSteeringCore);
 
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Loading file and decomposing geometry.");
-      reader.LoadAndDecompose(&globLatDat, bLbmParams, bSimConfig, lReadTime, lDecomposeTime);
+      reader.LoadAndDecompose(&globLatDat, bLbmParams, bSimConfig, timings);
 
       // Count the fluid sites on the local processor.
       proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();

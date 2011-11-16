@@ -37,8 +37,8 @@ namespace hemelb{
 
 
     void Reporter::Phase1(long int site_count, int total_time_steps, long int cycle_id,
-                          double simulation_time, bool unstable, unsigned long time_steps_per_cycle,
-                          double decomposition_time, double initialise_time, double read_time, double creation_time){
+                           bool unstable, unsigned long time_steps_per_cycle,
+                          Timers &timings){
 
       fprintf(ReportFile(), "\n");
       fprintf(ReportFile(),
@@ -53,7 +53,7 @@ namespace hemelb{
               "cycles and total time steps: %li, %i \n\n",
               (cycle_id - 1), // Note that the cycle-id is 1-indexed.
               total_time_steps);
-      fprintf(ReportFile(), "time steps per second: %.3f\n\n", total_time_steps / simulation_time);
+      fprintf(ReportFile(), "time steps per second: %.3f\n\n", total_time_steps / timings[Timers::simulation].Get());
 
       if (unstable)
       {
@@ -71,13 +71,13 @@ namespace hemelb{
       fprintf(ReportFile(), "\n");
 
       fprintf(ReportFile(), "\n");
-      fprintf(ReportFile(), "decomposition optimisation time (s):       %.3f\n", decomposition_time);
-      fprintf(ReportFile(), "pre-processing buffer management time (s): %.3f\n", initialise_time);
-      fprintf(ReportFile(), "input configuration reading time (s):      %.3f\n", read_time);
-
+      fprintf(ReportFile(), "decomposition optimisation time (s):       %.3f\n", timings[Timers::domainDecomposition].Get());
+      fprintf(ReportFile(), "pre-processing buffer management time (s): %.3f\n", timings[Timers::netInitialise].Get());
+      fprintf(ReportFile(), "input configuration reading time (s):      %.3f\n", timings[Timers::fileRead].Get());
+      timings[hemelb::reporting::Timers::total].Stop();
       fprintf(ReportFile(),
               "total time (s):                            %.3f\n\n",
-              (hemelb::util::myClock() - creation_time));
+              (timings[Timers::total].Get()));
 
       fprintf(ReportFile(), "Sub-domains info:\n\n");
 

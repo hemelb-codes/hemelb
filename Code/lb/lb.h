@@ -12,6 +12,7 @@
 #include "lb/kernels/rheologyModels/RheologyModels.h"
 #include "util/UnitConverter.h"
 #include "configuration/SimConfig.h"
+#include "reporting/Timers.h"
 #include <typeinfo>
 
 namespace hemelb
@@ -61,7 +62,7 @@ namespace hemelb
         LBM(hemelb::configuration::SimConfig *iSimulationConfig,
             net::Net* net,
             geometry::LatticeData* latDat,
-            SimulationState* simState);
+            SimulationState* simState, reporting::Timer &atimer);
         ~LBM();
 
         void RequestComms(); ///< part of IteratedAction interface.
@@ -111,7 +112,6 @@ namespace hemelb
                                      PhysicalStress &mouse_stress);
 
         hemelb::lb::LbmParameters *GetLbmParams();
-        double GetTimeSpent() const;
 
       private:
         void SetInitialConditions();
@@ -187,8 +187,6 @@ namespace hemelb
           }
         }
 
-        double timeSpent;
-
         double *inlet_normal;
         site_t total_fluid_sites;
         int inlets;
@@ -208,6 +206,7 @@ namespace hemelb
         util::UnitConverter* mUnits;
 
         site_t* receivedFTranslator;
+        reporting::Timer &timer;
     }; // Class
 
     inline int LBM::InletCount() const

@@ -69,10 +69,9 @@ namespace hemelb
     void LatticeData::GeometryReader::LoadAndDecompose(GlobalLatticeData* bGlobLatDat,
                                                        lb::LbmParameters* bLbmParams,
                                                        configuration::SimConfig* bSimConfig,
-                                                       double* oReadTime,
-                                                       double* oOptimiseTime)
+                                                       reporting::Timers &timings)
     {
-      double lStart = util::myClock();
+      timings[hemelb::reporting::Timers::fileRead].Start();
 
       int lError;
 
@@ -173,10 +172,10 @@ namespace hemelb
         }
       }
 
-      double lMiddle = util::myClock();
+      timings[hemelb::reporting::Timers::fileRead].Stop();
 
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Begin optimising the domain decomposition.");
-
+      timings[hemelb::reporting::Timers::domainDecomposition].Start();
       // Optimise.
       if (mParticipateInTopology)
       {
@@ -195,8 +194,7 @@ namespace hemelb
       // Finish up - close the file, set the timings, deallocate memory.
       MPI_Info_free(&fileInfo);
 
-      *oReadTime = lMiddle - lStart;
-      *oOptimiseTime = util::myClock() - lMiddle;
+      timings[hemelb::reporting::Timers::domainDecomposition].Stop();
 
       delete[] sitesPerBlock;
       delete[] bytesPerBlock;
