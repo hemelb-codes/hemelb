@@ -1,7 +1,7 @@
 include $(MK)/header.mk
 
 TARGETS := libHemeLbReporting.$(LIBEXT)
-SRCS := FileManager.cc Reporter.cc
+SRCS := FileManager.cc Reporter.cc Timers.cc
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 
