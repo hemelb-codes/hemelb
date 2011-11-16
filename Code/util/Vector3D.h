@@ -2,6 +2,7 @@
 #define HEMELB_UTIL_VECTOR3D_H
 
 #include "constants.h"
+#include "log/Logger.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -56,6 +57,9 @@ namespace hemelb
             case Direction::Z:
               return z;
               break;
+
+            default:
+              log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
           }
         }
 

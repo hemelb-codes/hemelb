@@ -206,7 +206,7 @@ namespace hemelb
                     MpiDataType<site_t> (),
                     neigh_proc_p->Rank,
                     10,
-                    MPI_COMM_WORLD,
+                    communicator,
                     &mRequests[m]);
         }
         else
@@ -216,7 +216,7 @@ namespace hemelb
                     MpiDataType<site_t> (),
                     neigh_proc_p->Rank,
                     10,
-                    MPI_COMM_WORLD,
+                    communicator,
                     &mRequests[m]);
         }
       }
@@ -644,7 +644,7 @@ namespace hemelb
                   it->second.Type,
                   it->first,
                   10,
-                  MPI_COMM_WORLD,
+                  communicator,
                   &mRequests[m]);
         ++m;
       }
@@ -665,7 +665,7 @@ namespace hemelb
                   it->second.Type,
                   it->first,
                   10,
-                  MPI_COMM_WORLD,
+                  communicator,
                   &mRequests[mReceiveProcessorComms.size() + m]);
 
         ++m;
@@ -781,6 +781,13 @@ namespace hemelb
     Net::Net()
     {
       sendReceivePrepped = false;
+      communicator = MPI_COMM_WORLD;
+    }
+
+    Net::Net(MPI_Comm commObject)
+    {
+      sendReceivePrepped = false;
+      communicator = commObject;
     }
 
     /*!
