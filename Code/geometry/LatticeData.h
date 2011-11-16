@@ -13,6 +13,7 @@
 // TODO Remove the stress type from the data file, so we can remove the dependence
 // on LbmParams here.
 #include "lb/LbmParameters.h"
+#include "reporting/Timers.h"
 
 namespace hemelb
 {
@@ -37,8 +38,7 @@ namespace hemelb
                     site_t* fluidSitePerProc,
                     lb::LbmParameters* bLbmParams,
                     configuration::SimConfig* bSimConfig,
-                    double* lReadTime,
-                    double* lDecomposeTime);
+                    reporting::Timers &timings);
 
         void InitialiseNeighbourLookup(site_t** bSharedFLocationForEachProc,
                                        proc_t localRank,
@@ -228,8 +228,7 @@ namespace hemelb
             void LoadAndDecompose(GlobalLatticeData* bGlobalLatticeData,
                                   lb::LbmParameters* bLbmParams,
                                   configuration::SimConfig* bSimConfig,
-                                  double* lReadTime,
-                                  double* lDecomposeTime);
+                                  reporting::Timers &timings);
 
           private:
             struct BlockLocation

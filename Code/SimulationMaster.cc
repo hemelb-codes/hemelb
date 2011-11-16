@@ -21,13 +21,14 @@
  * Initialises member variables including the network topology
  * object.
  */
-SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
+SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options):
+  timings()
 {
   if (options.HasProblems()) {
     Abort();
   }
 
-  mCreationTime = hemelb::util::myClock();
+  timings[hemelb::reporting::Timers::total].Start();
 
   hemelb::debug::Debugger::Init(options.Arguments()[0]);
 
@@ -37,12 +38,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   steeringCpt = NULL;
   mVisControl = NULL;
   mSimulationState = NULL;
-
-
-
-  mMPISendTime = 0.0;
-  mMPIWaitTime = 0.0;
-  mSnapshotTime = 0.0;
 
   mImagesWritten = 0;
   mSnapshotsWritten = 0;
@@ -58,6 +53,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   simConfig = hemelb::configuration::SimConfig::Load(fileManager->GetInputFile().c_str());
   //simConfig->Save(fileManager->GetInputFile()+"foo");
   fileManager->SaveConfiguration(simConfig);
+
   Initialise();
 
 }
@@ -176,11 +172,10 @@ void SimulationMaster::Initialise()
                                       hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor,
                                       &params,
                                       simConfig,
-                                      &mFileReadTime,
-                                      &mDomainDecompTime);
+                                      timings);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
-  mLbm = new hemelb::lb::LBM(simConfig, &mNet, mLatDat, mSimulationState);
+  mLbm = new hemelb::lb::LBM(simConfig, &mNet, mLatDat, mSimulationState, timings[hemelb::reporting::Timers::lb]);
   mLbm->SetSiteMinima(mins);
   mLbm->SetSiteMaxima(maxes);
 
@@ -210,15 +205,15 @@ void SimulationMaster::Initialise()
     mEntropyTester = NULL;
   }
 
-  double seconds = hemelb::util::myClock();
+  timings[hemelb::reporting::Timers::netInitialise].Start();
   hemelb::site_t* lReceiveTranslator = mNet.Initialise(mLatDat);
-  mNetInitialiseTime = hemelb::util::myClock() - seconds;
+  timings[hemelb::reporting::Timers::netInitialise].Stop();
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising visualisation controller.");
   mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType,
                                          &mNet,
                                          mSimulationState,
-                                         mLatDat);
+                                         mLatDat, timings[hemelb::reporting::Timers::visualisation]);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
@@ -283,10 +278,9 @@ void SimulationMaster::HandleActors()
   {
     (*it)->PreSend();
   }
-
-  double lPreSendTime = hemelb::util::myClock();
+  timings[hemelb::reporting::Timers::mpiSend].Start();
   mNet.Send();
-  mMPISendTime += (hemelb::util::myClock() - lPreSendTime);
+  timings[hemelb::reporting::Timers::mpiSend].Stop();
 
   for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
   != actors.end(); ++it)
@@ -294,9 +288,9 @@ void SimulationMaster::HandleActors()
     (*it)->PreReceive();
   }
 
-  double lPreWaitTime = hemelb::util::myClock();
+  timings[hemelb::reporting::Timers::mpiWait].Start();
   mNet.Wait();
-  mMPIWaitTime += (hemelb::util::myClock() - lPreWaitTime);
+  timings[hemelb::reporting::Timers::mpiWait].Stop();
 
   for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
   != actors.end(); ++it)
@@ -404,7 +398,7 @@ void SimulationMaster::GenerateNetworkImages(){
 {
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
 
-  double simulation_time = hemelb::util::myClock();
+  timings[hemelb::reporting::Timers::simulation].Start();
   bool is_unstable = false;
   int total_time_steps = 0;
 
@@ -506,7 +500,7 @@ void SimulationMaster::GenerateNetworkImages(){
       GenerateNetworkImages();
     }
 
-    double lPreSnapshotTime = hemelb::util::myClock();
+    timings[hemelb::reporting::Timers::snapshot].Start();
 
     if (mSimulationState->GetTimeStep() % snapshots_period == 0)
     {
@@ -514,7 +508,7 @@ void SimulationMaster::GenerateNetworkImages(){
       mLbm->WriteConfigParallel(stability, fileManager->SnapshotPath(mSimulationState->GetTimeStep()));
     }
 
-    mSnapshotTime += (hemelb::util::myClock() - lPreSnapshotTime);
+    timings[hemelb::reporting::Timers::snapshot].Stop();
 
     if (stability == hemelb::lb::StableAndConverged)
     {
@@ -543,8 +537,8 @@ void SimulationMaster::GenerateNetworkImages(){
       fflush( NULL);
     }
   }
-
-  PostSimulation(total_time_steps, hemelb::util::myClock() - simulation_time, is_unstable);
+  timings[hemelb::reporting::Timers::simulation].Stop();
+  PostSimulation(total_time_steps, is_unstable);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
 }
@@ -568,15 +562,15 @@ void SimulationMaster::GenerateNetworkImages(){
   * This function writes several bits of timing data to
   * the timing file.
   */
- void SimulationMaster::PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable)
+ void SimulationMaster::PostSimulation(int iTotalTimeSteps, bool iIsUnstable)
  {
    if (IsCurrentProcTheIOProc())
    {
      fileManager->Report()->Phase1(mLbm->TotalFluidSiteCount(),
                                iTotalTimeSteps,
                                mSimulationState->GetCycleId(),
-                               iSimulationTime, iIsUnstable, mSimulationState->GetTimeStepsPerCycle(),
-                               mDomainDecompTime, mNetInitialiseTime, mFileReadTime, mCreationTime);
+                               iIsUnstable, mSimulationState->GetTimeStepsPerCycle(),
+                               timings);
    }
 
    PrintTimingData();
@@ -593,9 +587,9 @@ void SimulationMaster::GenerateNetworkImages(){
                                                          (double) (mSimulationState->GetCycleId()
                                                              - 1));
 
-   double lTimings[5] = { mLbm->GetTimeSpent() / cycles, mMPISendTime / cycles, mMPIWaitTime
-                          / cycles, mVisControl->GetTimeSpent()
-                          / hemelb::util::NumericalFunctions::max(1.0, (double) mImagesWritten), mSnapshotTime
+   double lTimings[5] = { timings[hemelb::reporting::Timers::lb].Get() / cycles, timings[hemelb::reporting::Timers::mpiSend].Get() / cycles, timings[hemelb::reporting::Timers::mpiWait].Get()
+                          / cycles, timings[hemelb::reporting::Timers::visualisation].Get()
+                          / hemelb::util::NumericalFunctions::max(1.0, (double) mImagesWritten), timings[hemelb::reporting::Timers::snapshot].Get()
                           / hemelb::util::NumericalFunctions::max(1.0, (double) mSnapshotsWritten) };
    std::string lNames[5] = { "LBM", "MPISend", "MPIWait", "Images", "Snaps" };
 

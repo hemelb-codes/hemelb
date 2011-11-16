@@ -12,6 +12,7 @@
 #include "configuration/CommandLine.h"
 #include "reporting/FileManager.h"
 #include "reporting/Reporter.h"
+#include "reporting/Timers.h"
 
 class SimulationMaster
 {
@@ -33,7 +34,7 @@ class SimulationMaster
     void PrintTimingData();
     void Initialise();
     void SetupReporting(); // set up the reporting file
-    void PostSimulation(int iTotalTimeSteps, double iSimulationTime, bool iIsUnstable);
+    void PostSimulation(int iTotalTimeSteps,  bool iIsUnstable);
     unsigned int OutputPeriod(unsigned int frequency);
     void HandleActors();
     void ResetUnstableSimulation();
@@ -42,6 +43,7 @@ class SimulationMaster
     hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* mLatDat;
     hemelb::reporting::FileManager* fileManager;
+    hemelb::reporting::Timers timings;
     typedef std::multimap<unsigned long, unsigned long> mapType;
 
     mapType snapshotsCompleted;
@@ -67,16 +69,6 @@ class SimulationMaster
 
     int mImagesWritten;
     int mSnapshotsWritten;
-
-    double mCreationTime;
-
-    double mSnapshotTime;
-    double mDomainDecompTime;
-    double mFileReadTime;
-    double mNetInitialiseTime;
-
-    double mMPISendTime;
-    double mMPIWaitTime;
 
     unsigned int snapshotsPerCycle;
     unsigned int imagesPerCycle;
