@@ -18,21 +18,21 @@ namespace hemelb
          * for some IOlets to be updated at regular intervals from the BCproc whilst allowing others
          * with simpler updating rules to update locally and save on communications.
          *
-         * tUpdatePeriod - densityCycle is recalculated every tUpdatePeriod time steps. If
+         * updatePeriod - densityCycle is recalculated every updatePeriod time steps. If
          *                 it is 0 then the densityCycle is only initialised at the begining
          *                 and updated only when simulation is reset
          *
-         * tComms - if true BCproc updates values and sends them out. If false relevant procs update
+         * comms - if true BCproc updates values and sends them out. If false relevant procs update
          *          locally.
          */
-        template<unsigned long tUpdatePeriod, bool tComms>
+        template<unsigned long updatePeriod, bool comms>
         class InOutLetCycle : public InOutLet
         {
           public:
             virtual void InitialiseCycle(std::vector<distribn_t> &densityCycle,
-                                         const SimulationState *iState);
+                                         const SimulationState *state);
             virtual void UpdateCycle(std::vector<distribn_t> &densityCycle,
-                                     const SimulationState *iState);
+                                     const SimulationState *state);
             virtual bool DoComms();
 
           protected:
@@ -40,59 +40,54 @@ namespace hemelb
             virtual ~InOutLetCycle();
         };
 
-        template<unsigned long tUpdatePeriod, bool tComms>
-        InOutLetCycle<tUpdatePeriod, tComms>::InOutLetCycle() :
-            InOutLet()
+        template<unsigned long updatePeriod, bool comms>
+        InOutLetCycle<updatePeriod, comms>::InOutLetCycle() :
+          InOutLet()
         {
 
         }
 
-        template<unsigned long tUpdatePeriod, bool tComms>
-        InOutLetCycle<tUpdatePeriod, tComms>::~InOutLetCycle()
+        template<unsigned long updatePeriod, bool comms>
+        InOutLetCycle<updatePeriod, comms>::~InOutLetCycle()
         {
 
         }
 
-        template<unsigned long tUpdatePeriod, bool tComms>
-        void InOutLetCycle<tUpdatePeriod, tComms>::InitialiseCycle(std::vector<distribn_t> &densityCycle,
-                                                                   const SimulationState *iState)
+        template<unsigned long updatePeriod, bool comms>
+        void InOutLetCycle<updatePeriod, comms>::InitialiseCycle(std::vector<distribn_t> &densityCycle,
+                                                                 const SimulationState *state)
         {
           // Currently this is unnecessary, but it may be only done here in the future
           // Only called when initialising so doesn't impact performance anyway
           ResetValues();
 
-          if (tUpdatePeriod == 0)
+          if (updatePeriod == 0)
           {
-            densityCycle.resize(iState->GetTimeStepsPerCycle());
+            densityCycle.resize(state->GetTimeStepsPerCycle());
           }
           else
           {
-            densityCycle.resize(tUpdatePeriod);
+            densityCycle.resize(updatePeriod);
           }
 
-          CalculateCycle(densityCycle, iState);
+          CalculateCycle(densityCycle, state);
         }
 
-        template<unsigned long tUpdatePeriod, bool tComms>
-        void InOutLetCycle<tUpdatePeriod, tComms>::UpdateCycle(std::vector<distribn_t> &densityCycle,
-                                                               const SimulationState *iState)
+        template<unsigned long updatePeriod, bool comms>
+        void InOutLetCycle<updatePeriod, comms>::UpdateCycle(std::vector<distribn_t> &densityCycle,
+                                                             const SimulationState *state)
         {
-          if (tUpdatePeriod == 0)
+          if (updatePeriod != 0 && state->Get0IndexedTimeStep() % updatePeriod == 0)
           {
-            return;
-          }
-          else if (iState->Get0IndexedTimeStep() % tUpdatePeriod == 0)
-          {
-            CalculateCycle(densityCycle, iState);
+            CalculateCycle(densityCycle, state);
           }
         }
 
-        template<unsigned long tUpdatePeriod, bool tComms>
-        bool InOutLetCycle<tUpdatePeriod, tComms>::DoComms()
+        template<unsigned long updatePeriod, bool comms>
+        bool InOutLetCycle<updatePeriod, comms>::DoComms()
         {
-          return tComms;
+          return comms;
         }
-
       }
     }
   }

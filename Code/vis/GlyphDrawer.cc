@@ -204,7 +204,9 @@ namespace hemelb
 
         // ... calculate the two ends of the line we're going to draw...
         util::Vector3D<float> p1 = util::Vector3D<float>(mGlyphs[n].x, mGlyphs[n].y, mGlyphs[n].z);
-        util::Vector3D<float> p2 = p1 + util::Vector3D<float>(vx * temp, vy * temp, vz * temp);
+        util::Vector3D<float> p2 = p1 + util::Vector3D<float>(float(vx * temp),
+                                                              float(vy * temp),
+                                                              float(vz * temp));
 
         // ... transform to the location on the screen, and render.
         XYCoordinates<float> p3 = mViewpoint->FlatProject(p1);
