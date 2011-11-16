@@ -65,9 +65,9 @@ namespace hemelb
         private:
 
           //Vector containing VelocityFields
-          std::vector<std::vector<VelocitySiteData> > mVelocityField;
+          std::vector<std::vector<VelocitySiteData> > velocityField;
 
-          std::vector<NeighbouringProcessor>& mNeighbouringProcessors;
+          std::vector<NeighbouringProcessor>& neighbouringProcessors;
 
       };
     }
