@@ -31,7 +31,6 @@ class SimulationMaster
 
 
   private:
-    void PrintTimingData();
     void Initialise();
     void SetupReporting(); // set up the reporting file
     void PostSimulation(int iTotalTimeSteps,  bool iIsUnstable);

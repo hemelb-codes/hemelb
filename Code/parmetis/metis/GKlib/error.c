@@ -6,7 +6,7 @@ This file contains functions dealing with error reporting and termination
 
 \author George
 \date 1/1/2007
-\version\verbatim $Id: error.c 10522 2011-07-08 21:05:23Z benjamin $ \endverbatim
+\version\verbatim $Id: error.c 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 
@@ -174,7 +174,7 @@ void gk_NonLocalExit_Handler(int signum)
 /**************************************************************************/
 char *gk_strerror(int errnum)
 {
-#ifdef WIN32 
+#if defined(WIN32) || defined(__MINGW32__)
   return strerror(errnum);
 #else 
 #ifndef SUNOS

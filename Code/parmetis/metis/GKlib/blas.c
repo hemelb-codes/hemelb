@@ -12,7 +12,7 @@ which is used for code generation.
 
 \date   Started 9/28/95
 \author George
-\version\verbatim $Id: blas.c 7612 2009-11-29 15:46:31Z karypis $ \endverbatim
+\version\verbatim $Id: blas.c 10783 2011-09-21 23:19:56Z karypis $ \endverbatim
 */
 
 #include <GKlib.h>
@@ -26,6 +26,7 @@ GK_MKBLAS(gk_c,   char,     intmax_t)
 GK_MKBLAS(gk_i,   int,      intmax_t)
 GK_MKBLAS(gk_i32, int32_t,  intmax_t)
 GK_MKBLAS(gk_i64, int64_t,  intmax_t)
+GK_MKBLAS(gk_z,   ssize_t,  ssize_t)
 GK_MKBLAS(gk_f,   float,    float)
 GK_MKBLAS(gk_d,   double,   double)
 GK_MKBLAS(gk_idx, gk_idx_t, intmax_t)

@@ -4,14 +4,14 @@
 
 \date   Started 3/28/07
 \author George
-\version\verbatim $Id: gk_mksort.h 8112 2010-03-20 05:43:20Z karypis $ \endverbatim
+\version\verbatim $Id: gk_mksort.h 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 
 #ifndef _GK_MKSORT_H_
 #define _GK_MKSORT_H_
 
-/* $Id: gk_mksort.h 8112 2010-03-20 05:43:20Z karypis $
+/* $Id: gk_mksort.h 10711 2011-08-31 22:23:04Z karypis $
  * Adopted from GNU glibc by Mjt.
  * See stdlib/qsort.c in glibc */
 

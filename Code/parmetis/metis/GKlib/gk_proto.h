@@ -4,7 +4,7 @@
 
 \date   Started 3/27/2007
 \author George
-\version\verbatim $Id: gk_proto.h 10522 2011-07-08 21:05:23Z benjamin $ \endverbatim
+\version\verbatim $Id: gk_proto.h 10797 2011-09-23 22:36:36Z karypis $ \endverbatim
 */
 
 #ifndef _GK_PROTO_H_
@@ -21,6 +21,7 @@ GK_MKBLAS_PROTO(gk_c,   char,     intmax_t)
 GK_MKBLAS_PROTO(gk_i,   int,      intmax_t)
 GK_MKBLAS_PROTO(gk_i32, int32_t,  intmax_t)
 GK_MKBLAS_PROTO(gk_i64, int64_t,  intmax_t)
+GK_MKBLAS_PROTO(gk_z,   ssize_t,  ssize_t)
 GK_MKBLAS_PROTO(gk_f,   float,    float)
 GK_MKBLAS_PROTO(gk_d,   double,   double)
 GK_MKBLAS_PROTO(gk_idx, gk_idx_t, intmax_t)
@@ -65,6 +66,7 @@ GK_MKALLOC_PROTO(gk_c,   char)
 GK_MKALLOC_PROTO(gk_i,   int)
 GK_MKALLOC_PROTO(gk_i32, int32_t)
 GK_MKALLOC_PROTO(gk_i64, int64_t)
+GK_MKALLOC_PROTO(gk_z,   ssize_t)
 GK_MKALLOC_PROTO(gk_f,   float)
 GK_MKALLOC_PROTO(gk_d,   double)
 GK_MKALLOC_PROTO(gk_idx, gk_idx_t)
@@ -73,6 +75,7 @@ GK_MKALLOC_PROTO(gk_ckv,   gk_ckv_t)
 GK_MKALLOC_PROTO(gk_ikv,   gk_ikv_t)
 GK_MKALLOC_PROTO(gk_i32kv, gk_i32kv_t)
 GK_MKALLOC_PROTO(gk_i64kv, gk_i64kv_t)
+GK_MKALLOC_PROTO(gk_zkv,   gk_zkv_t)
 GK_MKALLOC_PROTO(gk_fkv,   gk_fkv_t)
 GK_MKALLOC_PROTO(gk_dkv,   gk_dkv_t)
 GK_MKALLOC_PROTO(gk_skv,   gk_skv_t)
@@ -183,6 +186,8 @@ void gk_i32kvsorti(size_t, gk_i32kv_t *);
 void gk_i32kvsortd(size_t, gk_i32kv_t *);
 void gk_i64kvsorti(size_t, gk_i64kv_t *);
 void gk_i64kvsortd(size_t, gk_i64kv_t *);
+void gk_zkvsorti(size_t, gk_zkv_t *);
+void gk_zkvsortd(size_t, gk_zkv_t *);
 void gk_fkvsorti(size_t, gk_fkv_t *);
 void gk_fkvsortd(size_t, gk_fkv_t *);
 void gk_dkvsorti(size_t, gk_dkv_t *);
