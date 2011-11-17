@@ -232,7 +232,7 @@ class BlockProcessorWrapper(object):
         block index.
         """
         
-        GetLogger().debug('Process block %s' % str(bIdx))
+        GetLogger().debug('Process block {}'.format(bIdx))
         try:
             result = self.callable(domain, bIdx)
             
