@@ -4,7 +4,7 @@
 
   \author George
   \date 9/23/2008
-  \version\verbatim $Id: evaluate.c 5728 2008-11-25 21:16:13Z karypis $ \endverbatim
+  \version\verbatim $Id: evaluate.c 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 #include <GKlib.h>

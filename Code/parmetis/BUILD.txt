@@ -12,12 +12,13 @@ Configuration
 ParMETIS is primarily configured by passing options to make config. For
 example:
 
-     $ make config shared=1 cc=gcc-4.2
+     $ make config shared=1 
 
-would configure ParMETIS to be built as a shared library using GCC 4.2.
+would configure ParMETIS to be built as a shared library.
 
 Common configuration options are:
-  cc=[compiler]   - The C compiler to use [default is determined by CMake]
+  cc=[compiler]   - The C compiler to use [default is mpicc]
+  cxx=[compiler]  - The C++ compiler to use [default is mpicxx]
   shared=1        - Build a shared library instead of a static one 
                     [off by default]
   prefix=[PATH]   - Set the installation prefix [/usr/local/ by default]

@@ -4,7 +4,7 @@
 
 \date   Started 5/17/07
 \author George
-\version\verbatim $Id: gk_mkrandom.h 10461 2011-07-01 18:49:05Z karypis $ \endverbatim
+\version\verbatim $Id: gk_mkrandom.h 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 

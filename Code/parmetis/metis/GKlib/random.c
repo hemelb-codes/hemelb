@@ -5,7 +5,7 @@
 
 \date   Started 5/17/2007
 \author George
-\version\verbatim $Id: random.c 10461 2011-07-01 18:49:05Z karypis $ \endverbatim
+\version\verbatim $Id: random.c 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 #include <GKlib.h>

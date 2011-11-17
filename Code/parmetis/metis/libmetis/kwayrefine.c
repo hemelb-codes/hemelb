@@ -5,7 +5,7 @@
 \date   Started 7/28/1997
 \author George 
 \author  Copyright 1997-2009, Regents of the University of Minnesota 
-\version $Id: kwayrefine.c 10513 2011-07-07 22:06:03Z karypis $ 
+\version $Id: kwayrefine.c 10737 2011-09-13 13:37:25Z karypis $ 
 */
 
 #include "metislib.h"
@@ -203,10 +203,6 @@ void ComputeKWayPartitionParams(ctrl_t *ctrl, graph_t *graph)
               myrinfo->ed += adjwgt[j];
           }
 
-          /* Only ed-id>=0 nodes are considered to be in the boundary */
-          if (myrinfo->ed-myrinfo->id >= 0)
-            BNDInsert(nbnd, bndind, bndptr, i);
-
           /* Time to compute the particular external degrees */
           if (myrinfo->ed > 0) {
             mincut += myrinfo->ed;
@@ -232,6 +228,10 @@ void ComputeKWayPartitionParams(ctrl_t *ctrl, graph_t *graph)
             }
 
             ASSERT(myrinfo->nnbrs <= xadj[i+1]-xadj[i]);
+
+            /* Only ed-id>=0 nodes are considered to be in the boundary */
+            if (myrinfo->ed-myrinfo->id >= 0)
+              BNDInsert(nbnd, bndind, bndptr, i);
           }
           else {
             myrinfo->inbr = -1;
