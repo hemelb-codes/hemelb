@@ -3,7 +3,7 @@
  * 
  * George's library of most frequently used routines
  *
- * $Id: GKlib.h 10408 2011-06-25 16:25:17Z karypis $
+ * $Id: GKlib.h 10711 2011-08-31 22:23:04Z karypis $
  *
  */
 

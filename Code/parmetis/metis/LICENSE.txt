@@ -1,5 +1,5 @@
-Copyright Notice
-----------------
+Copyright & License Notice
+---------------------------
 
 The METIS package is copyrighted by the Regents of the University of
 Minnesota. It can be freely used for educational and research purposes 

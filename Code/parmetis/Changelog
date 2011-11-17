@@ -1,6 +1,30 @@
 
+Changes in version 4.0.2
+r10987; 2011-10-31 09:42:33 -0500 (Mon, 31 Oct 2011)
+
+- Updated cmake files to use mpicc/mpicxx by default and remove 
+  MPI auto-detection that has been creating problems.
+- Fixed refinement assert failure for 0 degree vertices.
+
+
+Changes in version 4.0.1
+r10758; 2011-09-15 17:09:42 -0500 (Thu, 15 Sep 2011)
+
+- Fixed issue with geometric partitioning and too few vertices.
+- Fixed memory leak related to progress reporting.
+
+
+Changes in version 4.0
+r10658; 2011-08-03 09:38:45 -0500 (Wed, 03 Aug 2011)
+
+- Switch to collective comm operations in geometric partitioning.
+- Fixed issues with numflag==1 and npes==1.
+- Added Visual studio support.
+- More manual updates.
+
+
 Changes in version 4.0rc1 
-r10592; 2011--07-16 16:17:53 -0500 (Sat, 16 Jul 2011)
+r10592; 2011-07-16 16:17:53 -0500 (Sat, 16 Jul 2011)
 
 - Improved the quality of the geometric partitioning routines. 
 - Removed the 4K limit on the maximum number of processors for

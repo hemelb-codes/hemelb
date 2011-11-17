@@ -8,7 +8,7 @@
  * Started 10/19/96
  * George
  *
- * $Id: rmetis.c 10558 2011-07-13 13:12:44Z karypis $
+ * $Id: rmetis.c 10612 2011-07-21 20:09:05Z karypis $
  *
  */
 
@@ -50,7 +50,7 @@ int ParMETIS_V3_RefineKway(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, idx_t *vw
 
   /* Take care the nparts == 1 case */
   if (*nparts == 1) {
-    iset(vtxdist[mype+1]-vtxdist[mype], 0, part); 
+    iset(vtxdist[mype+1]-vtxdist[mype], (*numflag == 0 ? 0 : 1), part); 
     *edgecut = 0;
     goto DONE;
   }

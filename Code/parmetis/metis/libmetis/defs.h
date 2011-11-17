@@ -8,7 +8,7 @@
  * Started 8/27/94
  * George
  *
- * $Id: defs.h 10550 2011-07-12 12:37:37Z karypis $
+ * $Id: defs.h 10943 2011-10-26 12:29:10Z karypis $
  *
  */
 
@@ -45,9 +45,7 @@
 #define LARGENIPARTS		6	/* Number of random initial partitions */
 #define SMALLNIPARTS		3	/* Number of random initial partitions */
 
-#define COARSEN_FRACTION	0.75	/* Node reduction between succesive coarsening levels */
-#define COARSEN_FRACTION2	0.99	/* Node reduction between succesive coarsening levels */
-
+#define COARSEN_FRACTION	0.85	/* Node reduction between succesive coarsening levels */
 
 #define COMPRESSION_FRACTION		0.85
 

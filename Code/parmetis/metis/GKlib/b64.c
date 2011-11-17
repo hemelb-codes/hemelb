@@ -7,14 +7,19 @@ routines.
 
 \date   Started 2/22/05
 \author George
-\version\verbatim $Id: b64.c 2327 2007-09-10 15:38:30Z rangwala $ \endverbatim
+\version\verbatim $Id: b64.c 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
+
+\verbatim 
+$Copyright$ 
+$License$
+\endverbatim
+
 */
 
 
 #include "GKlib.h"
 
 #define B64OFFSET       48      /* This is the '0' number */
-
 
 
 /******************************************************************************

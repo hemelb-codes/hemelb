@@ -30,7 +30,7 @@
  GCC does provides these definitions in stdint.h, but it may require some
  modifications on other architectures.
 --------------------------------------------------------------------------*/
-#define IDXTYPEWIDTH 64
+#define IDXTYPEWIDTH 32
 
 
 /*--------------------------------------------------------------------------
@@ -40,7 +40,7 @@
    32 : single precission floating point (float)
    64 : double precission floating point (double)
 --------------------------------------------------------------------------*/
-#define REALTYPEWIDTH 64
+#define REALTYPEWIDTH 32
 
 
 
@@ -157,7 +157,7 @@ typedef __int64 int64_t;
 /* Metis's version number */
 #define METIS_VER_MAJOR         5
 #define METIS_VER_MINOR         0
-#define METIS_VER_SUBMINOR      0
+#define METIS_VER_SUBMINOR      2
 
 /* The maximum length of the options[] array */
 #define METIS_NOPTIONS          40
