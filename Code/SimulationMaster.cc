@@ -564,54 +564,15 @@ void SimulationMaster::GenerateNetworkImages(){
   */
  void SimulationMaster::PostSimulation(int iTotalTimeSteps, bool iIsUnstable)
  {
+   timings.Reduce();
    if (IsCurrentProcTheIOProc())
    {
      fileManager->Report()->Phase1(mLbm->TotalFluidSiteCount(),
                                iTotalTimeSteps,
                                mSimulationState->GetCycleId(),
-                               iIsUnstable, mSimulationState->GetTimeStepsPerCycle(),
+                               iIsUnstable, mSimulationState->GetTimeStepsPerCycle(), mImagesWritten, mSnapshotsWritten,
                                timings);
    }
 
-   PrintTimingData();
-
  }
 
- /**
-  * Outputs a breakdown of the simulation time spent on different activities.
-  */
- void SimulationMaster::PrintTimingData()
- {
-   // Note that CycleId is 1-indexed and will have just been incremented when we finish.
-   double cycles = hemelb::util::NumericalFunctions::max(1.0,
-                                                         (double) (mSimulationState->GetCycleId()
-                                                             - 1));
-
-   double lTimings[5] = { timings[hemelb::reporting::Timers::lb].Get() / cycles, timings[hemelb::reporting::Timers::mpiSend].Get() / cycles, timings[hemelb::reporting::Timers::mpiWait].Get()
-                          / cycles, timings[hemelb::reporting::Timers::visualisation].Get()
-                          / hemelb::util::NumericalFunctions::max(1.0, (double) mImagesWritten), timings[hemelb::reporting::Timers::snapshot].Get()
-                          / hemelb::util::NumericalFunctions::max(1.0, (double) mSnapshotsWritten) };
-   std::string lNames[5] = { "LBM", "MPISend", "MPIWait", "Images", "Snaps" };
-
-   double lMins[5];
-   double lMaxes[5];
-   double lMeans[5];
-
-   MPI_Reduce(lTimings, lMaxes, 5, hemelb::MpiDataType(lMaxes[0]), MPI_MAX, 0, MPI_COMM_WORLD);
-   MPI_Reduce(lTimings, lMeans, 5, hemelb::MpiDataType(lMeans[0]), MPI_SUM, 0, MPI_COMM_WORLD);
-
-   // Change the values for LBM and MPI on process 0 so they don't interfere with the min
-   // operation (previously values were 0.0 so they won't affect max / mean
-   // calc).
-
-   MPI_Reduce(lTimings, lMins, 5, hemelb::MpiDataType(lMins[0]), MPI_MIN, 0, MPI_COMM_WORLD);
-
-   if (IsCurrentProcTheIOProc())
-   {
-     for (int ii = 0; ii < 5; ii++) {
-       lMeans[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount());
-     }
-
-     fileManager->Report()->ProcessorTimings(lNames,lMins,lMeans,lMaxes);
-   }
- }
