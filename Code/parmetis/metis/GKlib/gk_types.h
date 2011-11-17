@@ -4,7 +4,7 @@
 
 \date   Started 3/27/2007
 \author George
-\version\verbatim $Id: gk_types.h 7924 2010-02-03 23:30:54Z karypis $ \endverbatim
+\version\verbatim $Id: gk_types.h 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 #ifndef _GK_TYPES_H_

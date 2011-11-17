@@ -6,7 +6,7 @@ This file contains various functions that perform I/O.
 
 \date Started 4/10/95
 \author George
-\version\verbatim $Id: io.c 10162 2011-06-10 19:43:35Z benjamin $ \endverbatim
+\version\verbatim $Id: io.c 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 #ifdef HAVE_GETLINE

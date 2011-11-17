@@ -5,7 +5,7 @@
 \date Started 5/30/11
 \author George
 \author Copyright 1997-2011, Regents of the University of Minnesota 
-\version $Id: mcore.c 10494 2011-07-06 14:53:45Z karypis $
+\version $Id: mcore.c 10711 2011-08-31 22:23:04Z karypis $
 */
 
 #include <GKlib.h>
