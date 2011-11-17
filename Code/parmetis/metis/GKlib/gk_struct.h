@@ -4,7 +4,7 @@
 
 \date   Started 3/27/2007
 \author George
-\version\verbatim $Id: gk_struct.h 10407 2011-06-25 15:32:03Z karypis $ \endverbatim
+\version\verbatim $Id: gk_struct.h 10797 2011-09-23 22:36:36Z karypis $ \endverbatim
 */
 
 #ifndef _GK_STRUCT_H_
@@ -21,13 +21,14 @@ typedef struct {\
 } NAME;\
 
 /* The actual KeyVal data structures */
-GK_MKKEYVALUE_T(gk_ckv_t,   char,     gk_idx_t)
-GK_MKKEYVALUE_T(gk_ikv_t,   int,      gk_idx_t)
-GK_MKKEYVALUE_T(gk_i32kv_t, int32_t,  gk_idx_t)
-GK_MKKEYVALUE_T(gk_i64kv_t, int64_t,  gk_idx_t)
-GK_MKKEYVALUE_T(gk_fkv_t,   float,    gk_idx_t)
-GK_MKKEYVALUE_T(gk_dkv_t,   double,   gk_idx_t)
-GK_MKKEYVALUE_T(gk_skv_t,   char *,   gk_idx_t)
+GK_MKKEYVALUE_T(gk_ckv_t,   char,     ssize_t)
+GK_MKKEYVALUE_T(gk_ikv_t,   int,      ssize_t)
+GK_MKKEYVALUE_T(gk_i32kv_t, int32_t,  ssize_t)
+GK_MKKEYVALUE_T(gk_i64kv_t, int64_t,  ssize_t)
+GK_MKKEYVALUE_T(gk_zkv_t,   ssize_t,  ssize_t)
+GK_MKKEYVALUE_T(gk_fkv_t,   float,    ssize_t)
+GK_MKKEYVALUE_T(gk_dkv_t,   double,   ssize_t)
+GK_MKKEYVALUE_T(gk_skv_t,   char *,   ssize_t)
 GK_MKKEYVALUE_T(gk_idxkv_t, gk_idx_t, gk_idx_t)
 
 
@@ -58,9 +59,10 @@ GK_MKPQUEUE_T(gk_idxpq_t,  gk_idxkv_t)
  * The following data structure stores a sparse CSR format
  *-------------------------------------------------------------*/
 typedef struct gk_csr_t {
-  int nrows, ncols;
-  int *rowptr, *colptr, *rowids;
-  int *rowind, *colind, *colids;
+  int32_t nrows, ncols;
+  ssize_t *rowptr, *colptr;
+  int32_t *rowind, *colind;
+  int32_t *rowids, *colids;
   float *rowval, *colval;
   float *rnorms, *cnorms;
   float *rsums, *csums;

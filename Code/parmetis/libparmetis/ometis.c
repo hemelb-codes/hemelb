@@ -6,7 +6,7 @@
  *
  * \date Started 8/1/2008
  * \author George Karypis
- * \version\verbatim $Id: ometis.c 10536 2011-07-11 05:27:05Z karypis $ \endverbatime
+ * \version\verbatim $Id: ometis.c 10666 2011-08-04 05:22:36Z karypis $ \endverbatime
  *
  */
 
@@ -82,7 +82,9 @@ int ParMETIS_V32_NodeND(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy, idx_t *vwgt,
 
   dbglvl = (idbglvl == NULL ? 0 : *idbglvl);
 
+  ctrl->dbglvl = dbglvl;
   STARTTIMER(ctrl, ctrl->TotalTmr);
+  ctrl->dbglvl = 0;
   /*=======================================================================*/
   /*! Compute the initial k-way partitioning */
   /*=======================================================================*/

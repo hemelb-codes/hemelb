@@ -1,4 +1,28 @@
 
+metis-5.0.2
+------------------------------------------------------------------------
+r10974 | karypis | 2011-10-29 18:24:32 -0500 (Sat, 29 Oct 2011)
+
+- Fixed issue with high-degree vertices and mask-based compression.
+- Fixed issue with wrong COARSENING_FRACTION.
+- Modified coarsening schemes to better support non FE graphs.
+
+
+metis-5.0.1
+------------------------------------------------------------------------
+r10709 | karypis | 2011-08-31 16:07:57 -0500 (Wed, 31 Aug 2011)
+
+- Fixed critical bug in the mesh partitioning routines.
+
+
+metis-5.0
+------------------------------------------------------------------------
+r10667 | karypis | 2011-08-04 00:35:30 -0500 (Thu, 04 Aug 2011) 
+
+- Updated/corrected error messages.
+- Addressed some build issues.
+
+
 metis-5.0rc3
 ------------------------------------------------------------------------
 r10560 | karypis | 2011-07-13 08:19:10 -0500 (Wed, 13 Jul 2011)

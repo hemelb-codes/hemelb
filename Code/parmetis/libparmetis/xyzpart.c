@@ -8,7 +8,7 @@
  * Started 7/11/97
  * George
  *
- * $Id: xyzpart.c 10592 2011-07-16 21:17:53Z karypis $
+ * $Id: xyzpart.c 10755 2011-09-15 12:28:34Z karypis $
  *
  */
 
@@ -53,7 +53,6 @@ void Coordinate_Partition(ctrl_t *ctrl, graph_t *graph, idx_t ndims,
     cand[i].key = icoord;
     cand[i].val = firstvtx+i;
   }
-
 
   /* Partition using sorting */
   PseudoSampleSort(ctrl, graph, cand);
@@ -475,33 +474,34 @@ void SampleSort(ctrl_t *ctrl, graph_t *graph, ikv_t *elmnts)
 void PseudoSampleSort(ctrl_t *ctrl, graph_t *graph, ikv_t *elmnts)
 {
   idx_t npes=ctrl->npes, mype=ctrl->mype; 
-  idx_t i, j, k, nlsamples, nvtxs, nrecv, firstvtx, lastvtx;
-  idx_t *scounts, *rcounts, *vtxdist, *perm;
+  idx_t i, j, k, nlsamples, ntsamples, nvtxs, nrecv, firstvtx, lastvtx;
+  idx_t *scounts, *rcounts, *sdispls, *rdispls, *vtxdist, *perm;
   ikv_t *relmnts, *mypicks, *allpicks;
 
-  WCOREPUSH;
+STARTTIMER(ctrl, ctrl->AuxTmr1);
 
-  CommUpdateNnbrs(ctrl, npes);
+  WCOREPUSH;
 
   nvtxs   = graph->nvtxs;
   vtxdist = graph->vtxdist;
 
   /* determine the number of local samples */
-  nlsamples = (GlobalSESum(ctrl, graph->nedges) + graph->gnvtxs)/(npes*npes);
+  //nlsamples = (GlobalSESum(ctrl, graph->nedges) + graph->gnvtxs)/(npes*npes);
+  nlsamples = graph->gnvtxs/(npes*npes);
   if (nlsamples > npes)
     nlsamples = npes;
-  else if (nlsamples < 100)
-    nlsamples = 100;
+  else if (nlsamples < 75)
+    nlsamples = gk_min(75, npes); /* the 'npes' in the min is to account for small graphs */
 
-  if (nlsamples*npes > graph->gnvtxs)
-    nlsamples = 5 + graph->gnvtxs/(5*npes);
 
   IFSET(ctrl->dbglvl, DBG_INFO, 
       rprintf(ctrl, "PseudoSampleSort: nlsamples=%"PRIDX" of %"PRIDX"\n", nlsamples, npes));
 
-  /* get memory for the counts */
+  /* get memory for the counts and displacements */
   scounts = iwspacemalloc(ctrl, npes+1);
   rcounts = iwspacemalloc(ctrl, npes+1);
+  sdispls = iwspacemalloc(ctrl, npes+1);
+  rdispls = iwspacemalloc(ctrl, npes+1);
 
   /* get memory for the splitters */
   mypicks  = ikvwspacemalloc(ctrl, npes+1);
@@ -513,12 +513,27 @@ void PseudoSampleSort(ctrl_t *ctrl, graph_t *graph, ikv_t *elmnts)
   ikvsorti(nvtxs, elmnts);
 
   /* Select the local nlsamples-1 equally spaced elements */
-  for (i=1; i<nlsamples; i++) { 
-    mypicks[i-1].key = elmnts[i*nvtxs/nlsamples].key;
-    mypicks[i-1].val = elmnts[i*nvtxs/nlsamples].val;
+  for (i=0; i<nlsamples-1; i++) { 
+    if (nvtxs > 0) {  
+      k = (nvtxs/(3*nlsamples)            /* initial offset */
+           + i*nvtxs/nlsamples            /* increament */
+           + mype*nvtxs/(npes*nlsamples)  /* per-pe shift for nlsamples<npes */
+          )%nvtxs;
+      mypicks[i].key = elmnts[k].key;
+      mypicks[i].val = elmnts[k].val;
+    }
+    else {
+      /* Take care the case in which a processor has no elements, at which
+         point we still select nlsamples-1, but we set their .val to -1 to be 
+         removed later prior to sorting */
+      mypicks[i].val = -1;
+    }
   }
 
   /* PrintPairs(ctrl, nlsamples-1, mypicks, "Mypicks"); */
+
+STOPTIMER(ctrl, ctrl->AuxTmr1);
+STARTTIMER(ctrl, ctrl->AuxTmr2);
 
   /* Gather the picks to all the processors */
   gkMPI_Allgather((void *)mypicks, 2*(nlsamples-1), IDX_T, (void *)allpicks, 
@@ -526,20 +541,27 @@ void PseudoSampleSort(ctrl_t *ctrl, graph_t *graph, ikv_t *elmnts)
 
   /* PrintPairs(ctrl, npes*(nlsamples-1), allpicks, "Allpicks"); */
 
-  /* Sort all the picks */
-  ikvsortii(npes*(nlsamples-1), allpicks);
+  /* Remove any samples that have .val == -1 */
+  for (ntsamples=0, i=0; i<npes*(nlsamples-1); i++) {
+    if (allpicks[i].val != -1) 
+      allpicks[ntsamples++] = allpicks[i];
+  }
 
-  /* PrintPairs(ctrl, npes*(nlsamples-1), allpicks, "Allpicks"); */
+  /* Sort all the picks */
+  ikvsortii(ntsamples, allpicks);
+
 
   /* Select the final splitters. Set the boundaries to simplify coding */
   for (i=1; i<npes; i++)
-    mypicks[i] = allpicks[i*(nlsamples-1)];
+    mypicks[i] = allpicks[i*ntsamples/npes];
   mypicks[0].key    = IDX_MIN;
   mypicks[npes].key = IDX_MAX;
 
-  /* PrintPairs(ctrl, npes+1, mypicks, "Mypicks"); */
 
   WCOREPOP;  /* free allpicks */
+
+STOPTIMER(ctrl, ctrl->AuxTmr2);
+STARTTIMER(ctrl, ctrl->AuxTmr3);
 
   /* Compute the number of elements that belong to each bucket */
   iset(npes, 0, scounts);
@@ -550,33 +572,45 @@ void PseudoSampleSort(ctrl_t *ctrl, graph_t *graph, ikv_t *elmnts)
     else
       scounts[++j]++;
   }
+  PASSERT(ctrl, j < npes);
   gkMPI_Alltoall(scounts, 1, IDX_T, rcounts, 1, IDX_T, ctrl->comm);
 
-  MAKECSR(i, npes, scounts);
-  MAKECSR(i, npes, rcounts);
+  /* multiply raw counts by 2 to account for the ikv_t type */
+  sdispls[0] = rdispls[0] = 0;
+  for (i=0; i<npes; i++) {
+    scounts[i] *= 2;
+    rcounts[i] *= 2;
+    sdispls[i+1] = sdispls[i] + scounts[i];
+    rdispls[i+1] = rdispls[i] + rcounts[i];
+  }
 
-/*
+STOPTIMER(ctrl, ctrl->AuxTmr3);
+STARTTIMER(ctrl, ctrl->AuxTmr4);
+
+  /*
   PrintVector(ctrl, npes+1, 0, scounts, "Scounts");
   PrintVector(ctrl, npes+1, 0, rcounts, "Rcounts");
-*/
+  */
 
   /* Allocate memory for sorted elements and receive them */
-  nrecv   = rcounts[npes];
+  nrecv   = rdispls[npes]/2;  /* The divide by 2 is to get the # of ikv_t elements */
   relmnts = ikvwspacemalloc(ctrl, nrecv);
 
-  /* Issue the receives first */
-  for (i=0; i<npes; i++) 
-    gkMPI_Irecv((void *)(relmnts+rcounts[i]), 2*(rcounts[i+1]-rcounts[i]), 
-        IDX_T, i, 1, ctrl->comm, ctrl->rreq+i);
+  IFSET(ctrl->dbglvl, DBG_INFO, 
+      rprintf(ctrl, "PseudoSampleSort: max_nrecv: %"PRIDX" of %"PRIDX"\n", 
+        GlobalSEMax(ctrl, nrecv), graph->gnvtxs/npes));
+  if (mype == 0 || mype == npes-1)
+    IFSET(ctrl->dbglvl, DBG_INFO, 
+        myprintf(ctrl, "PseudoSampleSort: nrecv: %"PRIDX" of %"PRIDX"\n", 
+          nrecv, graph->gnvtxs/npes));
 
-  /* Issue the sends next */
-  for (i=0; i<npes; i++) 
-    gkMPI_Isend((void *)(elmnts+scounts[i]), 2*(scounts[i+1]-scounts[i]), 
-        IDX_T, i, 1, ctrl->comm, ctrl->sreq+i);
 
-  gkMPI_Waitall(npes, ctrl->rreq, ctrl->statuses);
-  gkMPI_Waitall(npes, ctrl->sreq, ctrl->statuses);
+  gkMPI_Alltoallv((void *)elmnts,  scounts, sdispls, IDX_T,
+                  (void *)relmnts, rcounts, rdispls, IDX_T, 
+                  ctrl->comm);
 
+STOPTIMER(ctrl, ctrl->AuxTmr4);
+STARTTIMER(ctrl, ctrl->AuxTmr5);
 
   /* OK, now do the local sort of the relmnts. Use perm to keep track original order */
   perm = iwspacemalloc(ctrl, nrecv);
@@ -586,12 +620,9 @@ void PseudoSampleSort(ctrl_t *ctrl, graph_t *graph, ikv_t *elmnts)
   }
   ikvsorti(nrecv, relmnts);
 
-
   /* Compute what needs to be shifted */
   gkMPI_Scan((void *)(&nrecv), (void *)(&lastvtx), 1, IDX_T, MPI_SUM, ctrl->comm);
   firstvtx = lastvtx-nrecv;  
-
-  /*myprintf(ctrl, "first, last: %"PRIDX" %"PRIDX"\n", firstvtx, lastvtx); */
 
   for (j=0, i=0; i<npes; i++) {
     if (vtxdist[i+1] > firstvtx) {  /* Found the first PE that is passed me */
@@ -619,19 +650,13 @@ void PseudoSampleSort(ctrl_t *ctrl, graph_t *graph, ikv_t *elmnts)
     relmnts[i].val = perm[i];
   }
 
-  /* OK, now sent it back */
-  /* Issue the receives first */
-  for (i=0; i<npes; i++) 
-    gkMPI_Irecv((void *)(elmnts+scounts[i]), 2*(scounts[i+1]-scounts[i]), IDX_T, 
-        i, 1, ctrl->comm, ctrl->rreq+i);
+STOPTIMER(ctrl, ctrl->AuxTmr5);
+STARTTIMER(ctrl, ctrl->AuxTmr6);
 
-  /* Issue the sends next */
-  for (i=0; i<npes; i++) 
-    gkMPI_Isend((void *)(relmnts+rcounts[i]), 2*(rcounts[i+1]-rcounts[i]), IDX_T, 
-        i, 1, ctrl->comm, ctrl->sreq+i);
-
-  gkMPI_Waitall(npes, ctrl->rreq, ctrl->statuses);
-  gkMPI_Waitall(npes, ctrl->sreq, ctrl->statuses);
+  /* OK, now sent it back. The role of send/recv arrays is now reversed. */
+  gkMPI_Alltoallv((void *)relmnts, rcounts, rdispls, IDX_T,
+                  (void *)elmnts,  scounts, sdispls, IDX_T, 
+                  ctrl->comm);
 
 
   /* Construct a partition for the graph */
@@ -646,6 +671,8 @@ void PseudoSampleSort(ctrl_t *ctrl, graph_t *graph, ikv_t *elmnts)
   }
 
   WCOREPOP;
+
+STOPTIMER(ctrl, ctrl->AuxTmr6);
 }
 
 

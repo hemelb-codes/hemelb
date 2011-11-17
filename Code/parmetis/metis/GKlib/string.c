@@ -9,7 +9,7 @@ of standard functions (but with enhanced functionality).
 
 \date Started 11/1/99
 \author George
-\version $Id: string.c 7021 2009-06-22 22:10:19Z karypis $
+\version $Id: string.c 10711 2011-08-31 22:23:04Z karypis $
 */
 /************************************************************************/
 
@@ -482,7 +482,7 @@ char *gk_time2str(time_t time)
 
 
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__MINGW32__)
 /************************************************************************/
 /*! \brief Converts a date/time string into its equivalent time_t value
 

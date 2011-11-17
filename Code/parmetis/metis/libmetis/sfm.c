@@ -8,7 +8,7 @@
  * Started 8/1/97
  * George
  *
- * $Id: sfm.c 10515 2011-07-08 15:46:18Z karypis $
+ * $Id: sfm.c 10874 2011-10-17 23:13:00Z karypis $
  *
  */
 
@@ -267,7 +267,7 @@ void FM_2WayNodeRefine1Sided(ctrl_t *ctrl, graph_t *graph, idx_t niter)
   idx_t *mptr, *mind, *swaps;
   rpq_t *queue; 
   nrinfo_t *rinfo;
-  idx_t higain, oldgain, mincut, initcut, mincutorder;	
+  idx_t higain, mincut, initcut, mincutorder;	
   idx_t pass, to, other, limit;
   idx_t badmaxpwgt, mindiff, newdiff;
   real_t mult;
@@ -324,6 +324,7 @@ void FM_2WayNodeRefine1Sided(ctrl_t *ctrl, graph_t *graph, idx_t niter)
     /******************************************************
     * Get into the FM loop
     *******************************************************/
+    IFSET(ctrl->dbglvl, METIS_DBG_TIME, gk_startcputimer(ctrl->Aux3Tmr));
     mptr[0] = nmind = 0;
     mindiff = iabs(pwgts[0]-pwgts[1]);
     for (nswaps=0; nswaps<nvtxs; nswaps++) {
@@ -365,6 +366,7 @@ void FM_2WayNodeRefine1Sided(ctrl_t *ctrl, graph_t *graph, idx_t niter)
       /**********************************************************
       * Update the degrees of the affected nodes
       ***********************************************************/
+      IFSET(ctrl->dbglvl, METIS_DBG_TIME, gk_startcputimer(ctrl->Aux1Tmr));
       for (j=xadj[higain]; j<xadj[higain+1]; j++) {
         k = adjncy[j];
 
@@ -386,11 +388,10 @@ void FM_2WayNodeRefine1Sided(ctrl_t *ctrl, graph_t *graph, idx_t niter)
             if (where[kk] != 2) 
               edegrees[where[kk]] += vwgt[kk];
             else {
-              oldgain = vwgt[kk]-rinfo[kk].edegrees[other];
               rinfo[kk].edegrees[other] -= vwgt[k];
 
               /* Since the moves are one-sided this vertex has not been moved yet */
-              rpqUpdate(queue, kk, oldgain+vwgt[k]); 
+              rpqUpdate(queue, kk, vwgt[kk]-rinfo[kk].edegrees[other]); 
             }
           }
 
@@ -399,6 +400,7 @@ void FM_2WayNodeRefine1Sided(ctrl_t *ctrl, graph_t *graph, idx_t niter)
         }
       }
       mptr[nswaps+1] = nmind;
+      IFSET(ctrl->dbglvl, METIS_DBG_TIME, gk_stopcputimer(ctrl->Aux1Tmr));
 
 
       IFSET(ctrl->dbglvl, METIS_DBG_MOVEINFO,
@@ -406,11 +408,13 @@ void FM_2WayNodeRefine1Sided(ctrl_t *ctrl, graph_t *graph, idx_t niter)
                 higain, to, (vwgt[higain]-rinfo[higain].edegrees[other]), vwgt[higain], 
                 pwgts[0], pwgts[1], pwgts[2], nswaps, limit));
     }
+    IFSET(ctrl->dbglvl, METIS_DBG_TIME, gk_stopcputimer(ctrl->Aux3Tmr));
 
 
     /****************************************************************
     * Roll back computation 
     *****************************************************************/
+    IFSET(ctrl->dbglvl, METIS_DBG_TIME, gk_startcputimer(ctrl->Aux2Tmr));
     for (nswaps--; nswaps>mincutorder; nswaps--) {
       higain = swaps[nswaps];
 
@@ -445,6 +449,7 @@ void FM_2WayNodeRefine1Sided(ctrl_t *ctrl, graph_t *graph, idx_t niter)
         }
       }
     }
+    IFSET(ctrl->dbglvl, METIS_DBG_TIME, gk_stopcputimer(ctrl->Aux2Tmr));
 
     ASSERT(mincut == pwgts[2]);
 
