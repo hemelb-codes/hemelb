@@ -161,6 +161,17 @@ Lattice = D3Q15Lattice
 
 class CheckingLoader(AsyncBlockProcessingLoader):
     BLOCK_REPORT_PERIOD = 100
+    
+    def __init__(self, *args, **kwargs):
+        self.Verbose = kwargs.pop('verbose', False)
+        AsyncBlockProcessingLoader.__init__(self, *args, **kwargs)
+        return
+
+    def Info(self, message):
+        if self.Verbose:
+            print message
+        return
+    
     def Load(self):
         self.StartReportingThread()
         # Use a try finally to ensure the error thread gets cleaned
@@ -175,23 +186,20 @@ class CheckingLoader(AsyncBlockProcessingLoader):
     def OnBlockProcessed(self, bIdx):
         bIjk = self.Domain.BlockIndexer.NdToOne(bIdx)
         if bIjk % self.BLOCK_REPORT_PERIOD == 0:
-            print 'Checked block %d of %d' % (bIjk, self.Domain.TotalBlocks)
+            self.Info('Checked block {} of {}'
+                      .format(bIjk, self.Domain.TotalBlocks))
             pass
-        return AsyncBlockProcessingLoader.OnBlockProcessed(self, bIdx)
+        return AsyncBlockProcessingLoader.OnBlockProcessed(self,
+                                                           bIdx)
         
     def OnEndPreamble(self):
         """Loaded the very basic domain information. Give a status
         report.
         """
-        print ('-----\nInfo: stress type = ' +
-               str(self.Domain.StressType) + ', sites per block = ' +
-               str(self.Domain.BlockSize ** 3) + ', blocks: ' +
-               str(self.Domain.BlockCounts[0]) + 'x' +
-               str(self.Domain.BlockCounts[1]) + 'x' +
-               str(self.Domain.BlockCounts[2]) + ', vox size = ' +
-               str(self.Domain.VoxelSize) + ', origin = ' +
-               str(self.Domain.Origin) + '\n-----\n')
-        
+        fields = ['StressType', 'BlockSize', 'BlockCounts',
+                  'VoxelSize', 'Origin']
+        template = '\n'.join('%s: {0.%s}' % (f, f) for f in fields)
+        self.Info(template.format(self.Domain))
         return
     
     def OnEndHeader(self):
@@ -200,7 +208,7 @@ class CheckingLoader(AsyncBlockProcessingLoader):
         size.
         """
         fluidSiteCount = np.sum(self.Domain.BlockFluidSiteCounts)
-        print '-----Fluid Site Count = %d\n-----\n' % fluidSiteCount
+        self.Info('NumberOfFluidSites: {}'.format(fluidSiteCount))
         
         # For consistency, if BlockDataLength[i] == 0 then
         # BlockFluidSiteCounts[i] must also be zero, and vice versa
@@ -277,11 +285,15 @@ class CheckingLoader(AsyncBlockProcessingLoader):
         they're the sentinal value (None), in which case we return,
         killing the reporing thread.
         """
+        hadErrors = False
         while True:
             errList = self.ReportQueue.get()
             if errList is None:
-                # Got the sentinal
+                # Got the sentinal, so we need to exit
+                # First, set a flag to indicate the presence of errors.
+                self.HadErrors = hadErrors
                 break
+            hadErrors = True
             for e in errList:
                 print e
     
@@ -516,15 +528,33 @@ class BlockChecker(object):
     pass
     
 if __name__ == "__main__":
-    import sys
-    # Uncomment the 2 lines below for debugging
-    # from hemeTools.parsers.config.multiprocess import GetLogger
-    # GetLogger().setLevel('DEBUG')
-
-    ldr = CheckingLoader(sys.argv[1])
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='Analyze a HemeLB input file for self-consistency.',
+        epilog='The return value indicates the presence of detected errors.'
+        )
+    parser.add_argument('-q', '--quiet',
+                        action='store_true', default=False,
+                        help='enable quiet mode, which supresses non-error output')
+    parser.add_argument('--debug',
+                        action='store_true', default=False,
+                        help='enable debugging output')
+    parser.add_argument('input', nargs=1,
+                        help='the input file to check')
+    args = parser.parse_args()
+    
+    if args.debug:
+        from hemeTools.parsers.config.multiprocess import GetLogger
+        GetLogger().setLevel('DEBUG')
+        pass
+    
+    ldr = CheckingLoader(args.input[0],
+                         verbose=(not args.quiet))
     dom = ldr.Load()
-
-
+    
+    if ldr.HadErrors:
+        raise SystemExit(1)
+    
     
 
 
