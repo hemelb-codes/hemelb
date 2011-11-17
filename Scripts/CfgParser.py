@@ -10,7 +10,6 @@ from hemeTools.parsers.config.cfg import *
 from hemeTools.parsers.config import cfg
 from hemeTools.parsers.config.multiprocess import AsyncBlockProcessingLoader
 
-from multiprocessing.util import debug
 import pdb
 
 class EmptyErrorCollectionFormatError(Exception):
@@ -519,10 +518,9 @@ class BlockChecker(object):
     
 if __name__ == "__main__":
     import sys
-    # Uncomment 3 lines below for debugging
-    # import multiprocessing.util
-    # logger = multiprocessing.log_to_stderr()
-    # logger.setLevel(multiprocessing.SUBDEBUG)
+    # Uncomment the 2 lines below for debugging
+    # from hemeTools.parsers.config.multiprocess import GetLogger
+    # GetLogger().setLevel('DEBUG')
 
     ldr = CheckingLoader(sys.argv[1])
     dom = ldr.Load()
