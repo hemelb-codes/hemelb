@@ -3,13 +3,126 @@ import os.path
 import numpy as np
 import threading
 import Queue
+import collections
 
-from hemeTools.parsers.config.freeing import FreeingConfigLoader
-from hemeTools.parsers.config.generic import AllSolidBlock
+from hemeTools.parsers.config.generic import OutOfDomainSite, AllSolidBlock
 from hemeTools.parsers.config.cfg import *
 from hemeTools.parsers.config import cfg
 from hemeTools.parsers.config.multiprocess import AsyncBlockProcessingLoader
+
+from multiprocessing.util import debug
 import pdb
+
+class EmptyErrorCollectionFormatError(Exception):
+    pass
+
+class Error(object):
+    """Base class to hold info about the error in a config file.
+    """
+    def __init__(self, message):
+        self.message = message
+        return
+    
+    _template = '{message}'
+    
+    def Format(self):
+        return self._template.format(**self.__dict__)
+    
+    def Indent(self, text):
+        return '    ' + text
+    
+    pass
+    
+class DomainError(Error):
+    """Config file errors to do with domain global data.
+    """
+    pass
+
+class ErrorCollection(Error):
+    """A container for Errors.
+    """
+    def __init__(self, item):
+        self.item = item
+        self.itemErrors = []
+        self.subItemErrors = collections.OrderedDict()
+        return
+
+    @property
+    def TotalErrors(self):
+        return len(self.itemErrors) + len(self.subItemErrors)
+    
+    def Format(self, indent=0):
+        nErr = self.TotalErrors
+        if nErr == 0:
+            return []
+        elif nErr == 1:
+            self.errString = 'Error'
+        else:
+            self.errString = 'Errors'
+            pass
+        
+        errLines = ['{errString} in {item}:'.format(**self.__dict__)]
+        for iErr in self.itemErrors:
+            errLines.append(self.Indent(iErr.Format()))
+            continue
+
+        for siErrColl in self.subItemErrors.itervalues():
+            try:
+                subLines = siErrColl.Format()
+                errLines.extend(self.Indent(sl) for sl in subLines)
+            except EmptyErrorCollectionFormatError:
+                pass
+            continue
+
+        return errLines
+    pass
+
+class BlockErrorCollection(ErrorCollection):
+    """Container for errors to do with a particular block.
+    """
+    def AddBlockError(self, message):
+        self.itemErrors.append(BlockError(self.item, message))
+        return
+    
+    def AddSiteError(self, site, message):
+        try:
+            siteErrorCollection = self.subItemErrors[site]
+        except KeyError:
+            siteErrorCollection = self.subItemErrors[site] = SiteErrorCollection(site)
+            pass
+        
+        siteErrorCollection.Add(message)
+        return
+    
+    pass
+        
+class SiteErrorCollection(ErrorCollection):
+    """Container for errors to do with a particular site.
+    """
+    def Add(self, message):
+        self.itemErrors.append(SiteError(self.item, message))
+        return
+    
+    pass
+    
+class BlockError(Error):
+    """An error attached a block's data.
+    """
+    def __init__(self, block, message):
+        Error.__init__(self, message)
+        self.block = block
+        return
+    pass
+
+class SiteError(Error):
+    """An error in a site's data.
+    """
+    def __init__(self, site, message):
+        Error.__init__(self, message)
+        self.site = site
+        self.block = site.Block
+        return
+    pass
 
 class CheckingLoader(AsyncBlockProcessingLoader):
     BLOCK_REPORT_PERIOD = 100
@@ -33,21 +146,12 @@ class CheckingLoader(AsyncBlockProcessingLoader):
     
     # Neighbour deltas are the vectors which when added to a fluid
     # site position vector give the location of a putative neighbour.
-    neighs = np.array([[ 1, 0, 0],
-                       [-1, 0, 0],
-                       [ 0, 1, 0],
-                       [ 0,-1, 0],
-                       [ 0, 0, 1],
-                       [ 0, 0,-1],
-                       [ 1, 1, 1],
-                       [ 1, 1,-1],
-                       [ 1,-1, 1],
-                       [ 1,-1,-1],
-                       [-1, 1, 1],
-                       [-1, 1,-1],
-                       [-1,-1, 1],
-                       [-1,-1,-1]])
+    velocities = np.array([[ 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1],
+                           [ 0, 0, 0, 1,-1, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1],
+                           [ 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1, 1,-1,-1, 1]]).transpose()
 
+    neighs = velocities[1:]
+    
     def OnEndPreamble(self):
         print ('-----\nInfo: stress type = ' +
                str(self.Domain.StressType) + ', sites per block = ' +
@@ -62,12 +166,26 @@ class CheckingLoader(AsyncBlockProcessingLoader):
     
     def OnEndHeader(self):
         print '-----\nFluid Site Count = ' + str(np.sum(self.Domain.BlockFluidSiteCounts)) + '\n-----\n'
-    
+        # CONSTRAINT 0: if BlockDataLength[i] == 0 then BlockFluidSiteCounts[i] must also be zero and vice versa
+        for bIjk, bIdx in self.Domain.BlockIndexer.IterBoth():
+            if self.BlockDataLength[bIjk] == 0 and self.Domain.BlockFluidSiteCounts[bIjk] != 0:
+                self.PrintError(
+                    BlockError(self.Domain.GetBlock(bIdx),
+                                'Header states no data but specifies some fluid sites').Format()
+                                )
+                
+            if self.Domain.BlockFluidSiteCounts[bIjk] == 0 and self.BlockDataLength[bIjk] != 0:
+                self.PrintError(
+                    BlockError(self.Domain.GetBlock(bIdx),
+                                'Header states no fluid sites but specifies some data').Format()
+                                )
+                
+                    
         # CONSTRAINT 1: the length of the file must be equal to the
         # value we calculate from the headers.
         if (self.PreambleBytes + self.HeaderBytes + np.sum(self.BlockDataLength)) != os.path.getsize(self.FileName):
-            self.PrintError('ERROR: File length appears incorrect.')
-
+            self.PrintError(DomainError('File length does not match file metadata').Format())
+            
         self.Checker = BlockChecker(self)
         self.SetBlockProcessor(self.Checker)
         return
@@ -124,12 +242,6 @@ class BlockChecker(object):
         self.domainExtremeSite = loader.Domain.BlockCounts * loader.Domain.BlockSize - 1
         return
 
-    def PrintErrors(self, errors):
-        for e in errors:
-            print 'ERROR: ' + e
-            continue
-        return
-        
     def __call__(self, block):
         """Now we iterate over every site on the block, and check the following constraints.
         
@@ -151,14 +263,14 @@ class BlockChecker(object):
         # parallel. HOWEVER, we are pickling the unexecuted instance
         # created above out to each process to be run serially.
         self.block = block
-        self.errors = []
+        self.blockErrors = BlockErrorCollection(block)
         self.numFluid = 0
         
         dom = block.Domain
         
         if isinstance(block, AllSolidBlock):
             self.CheckFluidSiteCount()
-            return self.errors
+            return self.blockErrors.Format()
         
         i = block.Index
         j = np.zeros(3, dtype=int)
@@ -172,8 +284,9 @@ class BlockChecker(object):
 
                     site = block.GetSite(j)
                     type = site.Type
-                    edge = site.Edge
-
+                    edge = site.IsEdge
+                    AddSiteError = lambda msg: self.blockErrors.AddSiteError(site, msg)
+                    
                     if not (site.Config == cfg.SOLID_TYPE or site.Config == cfg.FLUID_TYPE):
                         isTypeKnown = False
                         if type == cfg.INLET_TYPE or type == cfg.OUTLET_TYPE:
@@ -185,7 +298,7 @@ class BlockChecker(object):
                             pass
 
                         if not isTypeKnown:
-                            self.errors.append('Site doesn\'t appear to have any fitting type.')
+                            AddSiteError('Site doesn\'t appear to have any fitting type.')
                             pass
                         pass
 
@@ -195,75 +308,67 @@ class BlockChecker(object):
                         self.numFluid += 1
                         pass
 
-                    nonFluidNeighs = 0
+                    nSolidNeighs = 0
                     offender = np.array([0,0,0])
                     invalid = False
-                    for delta in self.neighs:
-                        neigh = j + delta
-                        if min(neigh) < 0 or min(self.domainExtremeSite - neigh) < 0:
-                            nonFluidNeighs += 1
-                            offender = neigh
-                            invalid = True
-                            break
+                    for iNeigh, delta in enumerate(self.neighs):
+                        neigh = block.GetSite(j + delta)
 
-                        elif block.GetSite(neigh).Type == cfg.SOLID_TYPE:
-                            nonFluidNeighs += 1
-                            offender = neigh
-                            break
-                        continue
+                        if isinstance(neigh, OutOfDomainSite):
+                            AddSiteError('Fluid site has out-of-bounds neighbour {}'.format(neigh))
+                        if neigh.IsSolid:
+                            nSolidNeighs += 1
+                            
+                            if site.Type == cfg.FLUID_TYPE and not edge:
+                                AddSiteError('Simple-fluid site has solid neighbour {}'.format(neigh))
+                                pass
 
-                    # CON 3
-                    if type == cfg.FLUID_TYPE and not edge:
-                        if nonFluidNeighs != 0:
-                            self.errors.append(
-                                         'Fluid site at ' + str(j) + ' has type, edge of ' + str(type) + ', ' + str(edge) + ' and has some neighbours that aren\'t valid or are solids, e.g. site at ' + str(offender) + (' which is out-of-bounds' if invalid else ('with type ' + str(block.GetSite(offender).Type))))
+                            if site.CutDistances[iNeigh] < 0. or site.CutDistances[iNeigh] >= 1.:
+                                AddSiteError('Link to solid {neigh} has invalid CutDistance = {cd}'.format(neigh=neigh, cd=site.CutDistances[iNeigh]))
+                                
+                        else:           # neigh is fluid
+                            
+                            if site.CutDistances is not None and \
+                                site.CutDistances[iNeigh] != np.inf:
+                                AddSiteError('Link to fluid {neigh} has non-infinite CutDistance = {cd}'.format(neigh=neigh, cd=site.CutDistances[iNeigh]))
+                                pass
+                            
                             pass
-                        pass
-
+                        
+                        continue        # for loop over neighbours
+                    
                     # CON 4
-                    if type != cfg.FLUID_TYPE or edge:
-                        if nonFluidNeighs <= 0:
-                            self.errors.append('Site is non-normal fluid but has all valid fluid neighbours.')
+                    if (type == cfg.INLET_TYPE or type == cfg.OUTLET_TYPE or edge) and nSolidNeighs == 0:
+                            AddSiteError('Non--simple-fluid site has all valid fluid neighbours.')
                             pass
-                        pass
-
-                    if type != cfg.FLUID_TYPE:
-                        # CON 5
-                        if min(site.CutDistances >= 1.):
-                            self.errors.append('Non-fluid site had no cut distances between 0 and 1')
-
-                        for cutDist in site.CutDistances:
-                            if cutDist < 0. or (cutDist > 1 and cutDist != float('inf')):
-                                # CON 6
-                                self.errors.append('Invalid cut distance of ' + str(cutDist))
-
+                    
                     if type == cfg.INLET_TYPE or type == cfg.OUTLET_TYPE:
                         normMag = np.sum(site.BoundaryNormal ** 2) ** 0.5
                         # CON 7
                         if abs(normMag - 1) >= 0.001:
-                            self.errors.append('Boundary normal had non-unity magnitude: ' + str(site.BoundaryNormal))
+                            AddSiteError('Boundary normal {} has non-unity magnitude'.format(site.BoundaryNormal))
                         # CON 8
-                        if site.BoundaryDistance <= 0. or site.BoundaryDistance >= 1.:
-                            self.errors.append('Boundary distance was not in [0,1]: ' + str(site.BoundaryDistance))
+                        if site.BoundaryDistance <= 0. or site.BoundaryDistance >= np.sqrt(3.):
+                            AddSiteError('Boundary distance ({}) not in [0,sqrt(3)]'.format(site.BoundaryDistance))
 
                     if edge:
                         normMag = np.sum(site.WallNormal ** 2) ** 0.5
                         # CON 9
                         if abs(normMag - 1) >= 0.001:
-                            self.errors.append('Wall normal had non-unity magnitude: ' + str(site.WallNormal))
+                            AddSiteError('Wall normal {} has non-unity magnitude'.format(site.WallNormal))
                         # CON 10
                         if site.WallDistance <= 0. or site.WallDistance >= (3.0**0.5):
-                            self.errors.append('Wall distance was not in [0,root(3)]: ' + str(site.WallDistance))
+                            AddSiteError('Wall distance ({}) not in [0,sqrt(3)]'.format(site.WallDistance))
                     continue
                 continue
             continue
         self.CheckFluidSiteCount()
-        return self.errors
+        return self.blockErrors.Format()
     
     def CheckFluidSiteCount(self):
         # CON 2
         if self.numFluid != self.block.nFluidSites:
-            self.errors.append('Fluid site counts not equal.')
+            self.blockErrors.AddBlockError('File fluid site counts not equal to number loaded')
             pass
         return
         
