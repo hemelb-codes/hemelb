@@ -120,7 +120,7 @@ class SiteError(Error):
     def __init__(self, site, message):
         Error.__init__(self, message)
         self.site = site
-        self.block = site.Block
+        self.block = site.GetBlock()
         return
     pass
 
@@ -301,7 +301,7 @@ class BlockChecker(object):
     
     """
     
-    def __call__(self, block):
+    def __call__(self, domain, bInd):
         """Now we iterate over every site on the block, and check
         constraints as specified in the Check* methods.
         
@@ -315,17 +315,16 @@ class BlockChecker(object):
         # pickling the unexecuted instance created above out to each
         # process to be run per-block. Once results have been sent
         # back, the executed object is destroyed.
+        block = domain.GetBlock(bInd)
         self.block = block
         blockErrors = BlockErrorCollection(block)
         self.numFluid = 0
         
-        dom = block.Domain
+        dom = block.GetDomain()
         
         if isinstance(block, AllSolidBlock):
             self.CheckFluidSiteCount(blockErrors.AddBlockError)
             return blockErrors.Format()
-        
-        bInd = block.Index
         
         # gs = global site
         # ls = local site
@@ -408,7 +407,7 @@ class BlockChecker(object):
         """
         nSolidNeighs = 0
         for iNeigh, delta in enumerate(Lattice.neighs):
-            neigh = site.Block.GetSite(site.Index + delta)
+            neigh = site.GetBlock().GetSite(site.Index + delta)
 
             if isinstance(neigh, OutOfDomainSite):
                 addSiteError('Fluid site has out-of-domain neighbour {}'.format(neigh))

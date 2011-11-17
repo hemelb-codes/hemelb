@@ -1,6 +1,6 @@
 import itertools
 import numpy as np
-
+import weakref
 from . import cfg
 
 class NdIndexConverter(object):
@@ -155,18 +155,31 @@ class Block(object):
      - GetSite(sgIdx)
     """
     def __init__(self, domain, index):
-        self.Domain = domain
+        self.GetDomain = weakref.ref(domain)
         self.Index = index
         self.nFluidSites = 0
         self.Sites = None
         return
+    
+    def __getstate__(self):
+        picdic = self.__dict__.copy()
+        picdic['Domain'] = self.GetDomain()
+        assert picdic['Domain'] is not None
+        del picdic['GetDomain']
+        return picdic
+    
+    def __setstate__(self, picdic):
+        picdic['GetDomain'] = weakref.ref(picdic['Domain'])
+        del picdic['Domain']
+        self.__dict__.update(picdic)
+        return
 
     def GetLocalSite(self, slIdx):
-        assert np.all(slIdx >= 0) and np.all(slIdx < self.Domain.BlockSize)
-        return self.Sites[self.Domain.BlockSiteIndexer.NdToOne(slIdx)]
+        assert np.all(slIdx >= 0) and np.all(slIdx < self.GetDomain().BlockSize)
+        return self.Sites[self.GetDomain().BlockSiteIndexer.NdToOne(slIdx)]
 
     def GetSite(self, sgIdx):
-        return self.Domain.GetSite(sgIdx)
+        return self.GetDomain().GetSite(sgIdx)
 
     def DeleteSites(self):
         del self.Sites
@@ -175,7 +188,7 @@ class Block(object):
     _template = 'Block [' + ', '.join('{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}' % (i,i,i,i) for i in xrange(3)) + ']'
     
     def __format__(self, format_spec):
-        bc = self.Domain.BlockCounts
+        bc = self.GetDomain().BlockCounts
         widths = np.ceil(np.log10(bc)).astype(int)
         
         return self._template.format(self.Index, bc, widths)
@@ -191,11 +204,12 @@ class NotYetLoadedBlock(Block):
 
 class Site(object):
     def __init__(self, block, sgIdx):
-        self.Block = block
+        self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
         
         self.Config = None
-        self.Position = block.Domain.Origin + block.Domain.VoxelSize * sgIdx
+        dom = block.GetDomain()
+        self.Position = dom.Origin + dom.VoxelSize * sgIdx
         
         self.BoundaryNormal = None
         self.BoundaryDistance = None
@@ -204,6 +218,19 @@ class Site(object):
 
         self.CutDistances = None
         
+        return
+    
+    def __getstate__(self):
+        picdic = self.__dict__.copy()
+        picdic['Block'] = self.GetBlock()
+        assert picdic['Block'] is not None
+        del picdic['GetBlock']
+        return picdic
+    
+    def __setstate__(self, picdic):
+        picdic['GetBlock'] = weakref.ref(picdic['Block'])
+        del picdic['Block']
+        self.__dict__.update(picdic)
         return
     
     @property
@@ -228,7 +255,7 @@ class Site(object):
     _template = 'Site [' + ', '.join('{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}' % (i,i,i,i) for i in xrange(3)) + ']'
     
     def __format__(self, format_spec):
-        sc = self.Block.Domain.SiteCounts
+        sc = self.GetBlock().GetDomain().SiteCounts
         widths = np.ceil(np.log10(sc)).astype(int)
         
         return self._template.format(self.Index, sc, widths)
@@ -238,8 +265,8 @@ class Site(object):
 class OutOfDomainBlock(Block):
     
     def GetLocalSite(self, slIdx):
-        assert np.all(slIdx >= 0) and np.all(slIdx < self.Domain.BlockSize)
-        sgIdx = self.Index * self.Domain.BlockSize + slIdx
+        assert np.all(slIdx >= 0) and np.all(slIdx < self.GetDomain().BlockSize)
+        sgIdx = self.Index * self.GetDomain().BlockSize + slIdx
         return OutOfDomainSite(self, sgIdx)
     
     pass
@@ -247,7 +274,7 @@ class OutOfDomainBlock(Block):
 class OutOfDomainSite(Site):
     def __init__(self, block, sgIdx):
         self.Config = cfg.SOLID_TYPE
-        self.Block = block
+        self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
         return
     pass
@@ -256,14 +283,14 @@ class OutOfDomainSite(Site):
 class AllSolidBlock(Block):
 
     def GetLocalSite(self, slIndx):
-        assert np.all(slIndx >= 0) and np.all(slIndx < self.Domain.BlockSize)
+        assert np.all(slIndx >= 0) and np.all(slIndx < self.GetDomain().BlockSize)
         return AllSolidSite(self, slIndx)
 
     pass
 
 class AllSolidSite(Site):
     def __init__(self, block, sgIdx):
-        self.Block = block
+        self.GetBlock = weakref.ref(block)
         self.Index = sgIdx
         self.Config = cfg.SOLID_TYPE
         return
