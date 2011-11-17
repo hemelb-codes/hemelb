@@ -28,7 +28,6 @@ void AdaptGraph(graph_t *graph, idx_t afactor, MPI_Comm comm)
   gkMPI_Comm_rank(comm, &mype);
 
   srand(mype*afactor);
-  srand48(mype*afactor);
 
   nvtxs = graph->nvtxs;
   xadj = graph->xadj;
@@ -91,7 +90,6 @@ void AdaptGraph2(graph_t *graph, idx_t afactor, MPI_Comm comm)
   gkMPI_Comm_rank(comm, &mype);
 
   srand(mype*afactor);
-  srand48(mype*afactor);
 
   nvtxs = graph->nvtxs;
   xadj = graph->xadj;

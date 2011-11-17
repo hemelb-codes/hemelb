@@ -8,7 +8,7 @@
  * Started 7/24/97
  * George
  *
- * $Id: timing.c 10467 2011-07-02 17:57:30Z karypis $
+ * $Id: timing.c 10942 2011-10-26 12:28:40Z karypis $
  *
  */
 
@@ -29,6 +29,9 @@ void InitTimers(ctrl_t *ctrl)
   gk_clearcputimer(ctrl->RefTmr);
   gk_clearcputimer(ctrl->ProjectTmr);
   gk_clearcputimer(ctrl->SplitTmr);
+  gk_clearcputimer(ctrl->Aux1Tmr);
+  gk_clearcputimer(ctrl->Aux2Tmr);
+  gk_clearcputimer(ctrl->Aux3Tmr);
 }
 
 
@@ -48,6 +51,11 @@ void PrintTimers(ctrl_t *ctrl)
   printf("\n          Refinement: \t\t\t %7.3"PRREAL"", gk_getcputimer(ctrl->RefTmr));
   printf("\n          Projection: \t\t\t %7.3"PRREAL"", gk_getcputimer(ctrl->ProjectTmr));
   printf("\n     Splitting: \t\t %7.3"PRREAL"", gk_getcputimer(ctrl->SplitTmr));
+/*
+  printf("\n       Aux1Tmr: \t\t %7.3"PRREAL"", gk_getcputimer(ctrl->Aux1Tmr));
+  printf("\n       Aux2Tmr: \t\t %7.3"PRREAL"", gk_getcputimer(ctrl->Aux2Tmr));
+  printf("\n       Aux3Tmr: \t\t %7.3"PRREAL"", gk_getcputimer(ctrl->Aux3Tmr));
+*/
   printf("\n********************************************************************\n");
 }
 

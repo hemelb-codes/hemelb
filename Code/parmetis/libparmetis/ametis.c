@@ -8,7 +8,7 @@
  * Started 10/19/96
  * George
  *
- * $Id: ametis.c 10558 2011-07-13 13:12:44Z karypis $
+ * $Id: ametis.c 10757 2011-09-15 22:07:47Z karypis $
  *
  */
 
@@ -50,7 +50,7 @@ int ParMETIS_V3_AdaptiveRepart(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
 
   /* Take care the nparts == 1 case */
   if (*nparts == 1) {
-    iset(vtxdist[mype+1]-vtxdist[mype], 0, part); 
+    iset(vtxdist[mype+1]-vtxdist[mype], (*numflag == 0 ? 0 : 1), part); 
     *edgecut = 0;
     goto DONE;
   }
@@ -171,6 +171,9 @@ void Adaptive_Partition(ctrl_t *ctrl, graph_t *graph)
       for (i=0; i<graph->ncon; i++) 
         rprintf(ctrl, "%.3"PRREAL" ", lbvec[i]);
       rprintf(ctrl, "\n");
+
+      /* free memory allocated by ComputePartitionParams */
+      gk_free((void **)&graph->ckrinfo, &graph->lnpwgts, &graph->gnpwgts, LTERM);
     }
 
     /* check if no coarsening took place */

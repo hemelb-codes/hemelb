@@ -4,7 +4,7 @@
 
 \date   Started 4/12/2007
 \author George
-\version\verbatim $Id: util.c 1514 2007-04-20 18:13:54Z karypis $ \endverbatim
+\version\verbatim $Id: util.c 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 

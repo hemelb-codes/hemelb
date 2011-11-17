@@ -8,12 +8,13 @@ prefix     = not-set
 gklib_path = not-set
 metis_path = not-set
 shared     = not-set
-cc         = not-set
+cc         = mpicc
+cxx        = mpicxx
 
 
 # Basically proxies everything to the builddir cmake.
 
-PKGNAME = parmetis-4.0a3
+PKGNAME = parmetis-4.0.2
 
 cputype = $(shell uname -m | sed "s/\\ /_/g")
 systype = $(shell uname -s)
@@ -52,6 +53,9 @@ ifneq ($(shared), not-set)
 endif
 ifneq ($(cc), not-set)
     CONFIG_FLAGS += -DCMAKE_C_COMPILER=$(cc)
+endif
+ifneq ($(cxx), not-set)
+    CONFIG_FLAGS += -DCMAKE_CXX_COMPILER=$(cxx)
 endif
 
 define run-config

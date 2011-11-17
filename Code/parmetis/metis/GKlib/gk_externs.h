@@ -4,7 +4,7 @@
 
 \date   Started 3/27/2007
 \author George
-\version\verbatim $Id: gk_externs.h 10494 2011-07-06 14:53:45Z karypis $ \endverbatim
+\version\verbatim $Id: gk_externs.h 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 #ifndef _GK_EXTERNS_H_

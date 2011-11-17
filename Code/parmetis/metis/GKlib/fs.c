@@ -7,7 +7,7 @@ the filesystem in a portable way.
 
 \date Started 4/10/95
 \author George
-\version\verbatim $Id: fs.c 9856 2011-04-30 17:52:43Z karypis $ \endverbatim
+\version\verbatim $Id: fs.c 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 

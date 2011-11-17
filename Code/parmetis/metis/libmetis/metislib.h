@@ -8,7 +8,7 @@
  * Started 8/27/94
  * George
  *
- * $Id: metislib.h 10260 2011-06-14 22:10:29Z karypis $
+ * $Id: metislib.h 10655 2011-08-02 17:38:11Z benjamin $
  */
 
 #ifndef _LIBMETIS_METISLIB_H_
@@ -36,11 +36,6 @@
   #undef rint
 #endif
 #define rint(x) ((idx_t)((x)+0.5))  /* MSC does not have rint() function */
-#endif
-
-
-#if defined(COMPILER_GCC)
-extern char* strdup (const char *);
 #endif
 
 #endif
