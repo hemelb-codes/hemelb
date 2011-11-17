@@ -9,6 +9,7 @@ import multiprocessing.util
 import copy
 import signal
 import traceback
+import weakref
 import numpy as np
 import pdb
 from .generic import NdIndexConverter, Domain, Block, OutOfDomainBlock, AllSolidBlock
@@ -97,7 +98,7 @@ class PartialBlock(Block):
         Block this is mirroring and the vector from the block at the
         centre of the SubDomain to this Block.
         """
-        self.Domain = newDomain
+        self.GetDomain = weakref.ref(newDomain)
         self.Index = parent.Index
         self.nFluidSites = parent.nFluidSites
         
@@ -127,7 +128,7 @@ class PartialBlock(Block):
                 for sIdx[2] in iters[2]:
                     sIjk = newDomain.BlockSiteIndexer.NdToOne(sIdx)
                     site = copy.copy(parent.Sites[sIjk])
-                    site.Block = self
+                    site.GetBlock = weakref.ref(self)
                     self.Sites[sIjk] = site
                     continue
                 continue
@@ -136,11 +137,12 @@ class PartialBlock(Block):
         return
 
     def GetLocalSite(self, sIndex):
-        assert np.all(sIndex >= 0) and np.all(sIndex < self.Domain.BlockSize)
-        return self.Sites[self.Domain.BlockSiteIndexer.NdToOne(sIndex)]
+        dom = self.GetDomain()
+        assert np.all(sIndex >= 0) and np.all(sIndex < dom.BlockSize)
+        return self.Sites[dom.BlockSiteIndexer.NdToOne(sIndex)]
 
     def GetSite(self, sIndex):
-        return self.Domain.GetSite(sIndex)
+        return self.GetDomain().GetSite(sIndex)
     
     pass
 
@@ -181,9 +183,8 @@ class AsyncBlockProcessingLoader(FreeingConfigLoader):
     def OnBlockNeighboursAvailable(self, bIdx):
         GetLogger().debug('Submit block ' + str(bIdx))
         sd = SubDomain(self.Domain, bIdx)
-        b = sd.GetBlock(bIdx)
         self._Workers.apply_async(self._BlockProcessor,
-                                  args=(b, ),
+                                  args=(sd, bIdx),
                                   callback=self._HandleBlockResult)
         return
     
@@ -225,15 +226,15 @@ class BlockProcessorWrapper(object):
         self.callable = callable
         return
     
-    def __call__(self, block):
+    def __call__(self, domain, bIdx):
         """Executed in the worker process. This deals with calling the
         user function and returning the result packaged up with the
         block index.
         """
         
-        GetLogger().debug('Process block %s' % str(block.Index))
+        GetLogger().debug('Process block %s' % str(bIdx))
         try:
-            result = self.callable(block)
+            result = self.callable(domain, bIdx)
             
         except Exception as e:
             # multiprocessing.Pool normally just swallows any
@@ -245,6 +246,6 @@ class BlockProcessorWrapper(object):
             raise
         
         # It was fine, give a normal answer
-        return (block.Index, result)
+        return (bIdx, result)
     
     pass
