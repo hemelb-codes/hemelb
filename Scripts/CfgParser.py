@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import os.path
 import numpy as np
-
+import threading
+import Queue
 
 from hemeTools.parsers.config.freeing import FreeingConfigLoader
 from hemeTools.parsers.config.generic import AllSolidBlock
@@ -12,7 +13,17 @@ import pdb
 
 class CheckingLoader(AsyncBlockProcessingLoader):
     BLOCK_REPORT_PERIOD = 100
-    
+    def Load(self):
+        self.StartReportingThread()
+        # Use a try finally to ensure the error thread gets cleaned
+        # up, even if we get an exception.
+        try:
+            ans = AsyncBlockProcessingLoader.Load(self)
+        finally:
+            self.EndReportingThread()
+            
+        return ans
+
     def OnBlockProcessed(self, bIdx):
         bIjk = self.Domain.BlockIndexer.NdToOne(bIdx)
         if bIjk % self.BLOCK_REPORT_PERIOD == 0:
@@ -55,11 +66,54 @@ class CheckingLoader(AsyncBlockProcessingLoader):
         # CONSTRAINT 1: the length of the file must be equal to the
         # value we calculate from the headers.
         if (self.PreambleBytes + self.HeaderBytes + np.sum(self.BlockDataLength)) != os.path.getsize(self.FileName):
-            print 'ERROR: File length appears incorrect.'
+            self.PrintError('ERROR: File length appears incorrect.')
 
         self.Checker = BlockChecker(self)
         self.SetBlockProcessor(self.Checker)
-        self.HandleBlockProcessingResult = self.Checker.PrintErrors
+        return
+
+    def HandleBlockProcessingResult(self, result):
+        # Result is a list of errors; only bother sending it if there
+        # are items
+        if len(result):
+            self.ReportQueue.put(result)
+        return
+        
+    def PrintError(self, err):
+        self.ReportQueue.put([err])
+        return
+    
+    def StartReportingThread(self):
+        """Start a thread to deal with writing our reports.
+        """
+        self.ReportQueue = Queue.Queue()
+        self.ReportingThread = threading.Thread(target=self.ReportingThreadMain,
+                                                    name='ReportingThread')
+        self.ReportingThread.start()
+        return
+    
+    def ReportingThreadMain(self):
+        """This is the entry point for the reporting thread. Make sure
+        we're thread-safe here!
+
+        We will just take items off the queue and print them unless
+        they're the sentinal value (None), in which case we return,
+        killing the reporing thread.
+        """
+        while True:
+            errList = self.ReportQueue.get()
+            if errList is None:
+                # Got the sentinal
+                break
+            for e in errList:
+                print e
+    
+    def EndReportingThread(self):
+        """Kill the reporting thread by sending the sentinal value and
+        clean up.
+        """
+        self.ReportQueue.put(None)
+        self.ReportingThread.join()
         return
     
     pass
