@@ -15,7 +15,7 @@ namespace hemelb{
         ~Reporter();
         void Cycle(long int cycle_id);
         void Phase1(long int site_count, int total_time_steps, long int cycle_id,  bool unstable,
-                    unsigned long time_steps_per_cycle,
+                    unsigned long time_steps_per_cycle, unsigned int image_count, unsigned int snapshot_count,
                     Timers &timings);
         void ProcessorTimings(std::string *const names,double *const mins,double *const means,double *const maxes);
       private:
