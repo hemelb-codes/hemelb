@@ -90,8 +90,17 @@ class FreeingConfigLoader(ConfigLoader):
                     self.OnBlockNeighboursProcessed(nIdx)
                     pass
                 continue
+            if np.alltrue(self.IsBlockDone):
+                self.OnAllBlocksProcessed()
+                
         return
-        
+
+    def OnAllBlocksProcessed(self):
+        """This method is triggered once all blocks have been marked
+        as processed.
+        """
+        return
+    
     def OnBlockNeighboursProcessed(self, bIdx):
         self.Domain.DeleteBlock(bIdx)
         return
