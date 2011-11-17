@@ -60,6 +60,8 @@ namespace hemelb{
       fprintf(ReportFile(), "\n");
 
       fprintf(ReportFile(), "\n");
+      fprintf(ReportFile(),
+              "total time (s):                            %.3f\n\n",
               (timings[Timers::total].Get()));
 
       fprintf(ReportFile(), "Sub-domains info:\n\n");
