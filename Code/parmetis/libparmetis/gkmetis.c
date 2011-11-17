@@ -9,7 +9,7 @@
  * Started 10/19/96
  * George
  *
- * $Id: gkmetis.c 10588 2011-07-16 19:02:31Z karypis $
+ * $Id: gkmetis.c 10663 2011-08-04 03:54:49Z karypis $
  *
  */
 
@@ -50,10 +50,9 @@ int ParMETIS_V3_PartGeomKway(idx_t *vtxdist, idx_t *xadj, idx_t *adjncy,
   npes = ctrl->npes;
   mype = ctrl->mype;
 
-
   /* Take care the nparts == 1 case */
   if (*nparts == 1) {
-    iset(vtxdist[mype+1]-vtxdist[mype], 0, part);
+    iset(vtxdist[mype+1]-vtxdist[mype], (*numflag == 0 ? 0 : 1), part);
     *edgecut = 0;
     goto DONE;
   }
@@ -198,6 +197,7 @@ int ParMETIS_V3_PartGeom(idx_t *vtxdist, idx_t *ndims, real_t *xyz, idx_t *part,
 
   /* Setup the ctrl */
   ctrl = SetupCtrl(PARMETIS_OP_GMETIS, NULL, 1, 1, NULL, NULL, *comm);
+  /*ctrl->dbglvl=15;*/
   npes = ctrl->npes;
   mype = ctrl->mype;
 
@@ -235,6 +235,7 @@ int ParMETIS_V3_PartGeom(idx_t *vtxdist, idx_t *ndims, real_t *xyz, idx_t *part,
 
   STOPTIMER(ctrl, ctrl->TotalTmr);
   IFSET(ctrl->dbglvl, DBG_TIME, PrintTimingInfo(ctrl));
+
 
   gk_free((void **)&xadj, (void **)&adjncy, LTERM);
   FreeInitialGraphAndRemap(graph);

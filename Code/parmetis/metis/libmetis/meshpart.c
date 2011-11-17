@@ -8,7 +8,7 @@
  * Started 9/29/97
  * George
  *
- * $Id: meshpart.c 10495 2011-07-06 16:04:45Z karypis $
+ * $Id: meshpart.c 10709 2011-08-31 21:07:57Z karypis $
  *
  */
 
@@ -201,7 +201,7 @@ void InduceRowPartFromColumnPart(idx_t nrows, idx_t *rowptr, idx_t *rowind,
 
     me = cpart[rowind[rowptr[i]]];
     for (j=rowptr[i]+1; j<rowptr[i+1]; j++) {
-      if (rpart[rowind[j]] != me)
+      if (cpart[rowind[j]] != me)
         break;
     }
     if (j == rowptr[i+1]) {

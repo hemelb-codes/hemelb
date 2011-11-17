@@ -7,7 +7,7 @@ Pdb reader (parser).  Loads arrays of pointers for easy backbone access.
 
 \date Started 10/20/06
 \author Kevin
-\version $Id: pdb.c 9363 2011-02-04 22:26:51Z karypis $
+\version $Id: pdb.c 10711 2011-08-31 22:23:04Z karypis $
 */
 /************************************************************************/
 #include <GKlib.h>

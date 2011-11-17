@@ -4,7 +4,7 @@
 
 \date   Started 4/09/07
 \author George
-\version\verbatim $Id: gk_mkpqueue.h 10516 2011-07-08 15:46:24Z karypis $ \endverbatim
+\version\verbatim $Id: gk_mkpqueue.h 10941 2011-10-26 12:03:31Z karypis $ \endverbatim
 */
 
 
@@ -190,7 +190,7 @@ int FPRFX ## Delete(PQT *queue, VT node)\
 /*************************************************************************/\
 /*! This function updates the key values associated for a particular item */ \
 /**************************************************************************/\
-int FPRFX ## Update(PQT *queue, VT node, KT newkey)\
+void FPRFX ## Update(PQT *queue, VT node, KT newkey)\
 {\
   gk_idx_t i, j, nnodes;\
   KT oldkey;\
@@ -244,7 +244,7 @@ int FPRFX ## Update(PQT *queue, VT node, KT newkey)\
 \
   ASSERT2(FPRFX ## CheckHeap(queue));\
 \
-  return 0;\
+  return;\
 }\
 \
 \
@@ -417,7 +417,7 @@ int FPRFX ## CheckHeap(PQT *queue)\
   size_t FPRFX ## Length(PQT *queue);\
   int    FPRFX ## Insert(PQT *queue, VT node, KT key);\
   int    FPRFX ## Delete(PQT *queue, VT node);\
-  int    FPRFX ## Update(PQT *queue, VT node, KT newkey);\
+  void   FPRFX ## Update(PQT *queue, VT node, KT newkey);\
   VT     FPRFX ## GetTop(PQT *queue);\
   VT     FPRFX ## SeeTopVal(PQT *queue);\
   KT     FPRFX ## SeeTopKey(PQT *queue);\

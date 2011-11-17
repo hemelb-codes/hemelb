@@ -4,7 +4,7 @@
 
 \date   Started 4/4/2007
 \author George
-\version\verbatim $Id: gksort.c 4761 2008-06-14 14:28:49Z karypis $ \endverbatim
+\version\verbatim $Id: gksort.c 10711 2011-08-31 22:23:04Z karypis $ \endverbatim
 */
 
 #include <GKlib.h>

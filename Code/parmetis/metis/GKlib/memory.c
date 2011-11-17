@@ -9,7 +9,7 @@ can be used to define other memory allocation routines.
 
 \date   Started 4/3/2007
 \author George
-\version\verbatim $Id: memory.c 10561 2011-07-13 13:19:54Z karypis $ \endverbatim
+\version\verbatim $Id: memory.c 10783 2011-09-21 23:19:56Z karypis $ \endverbatim
 */
 
 
@@ -26,6 +26,7 @@ GK_MKALLOC(gk_c,   char)
 GK_MKALLOC(gk_i,   int)
 GK_MKALLOC(gk_i32, int32_t)
 GK_MKALLOC(gk_i64, int64_t)
+GK_MKALLOC(gk_z,   ssize_t)
 GK_MKALLOC(gk_f,   float)
 GK_MKALLOC(gk_d,   double)
 GK_MKALLOC(gk_idx, gk_idx_t)
@@ -34,6 +35,7 @@ GK_MKALLOC(gk_ckv,   gk_ckv_t)
 GK_MKALLOC(gk_ikv,   gk_ikv_t)
 GK_MKALLOC(gk_i32kv, gk_i32kv_t)
 GK_MKALLOC(gk_i64kv, gk_i64kv_t)
+GK_MKALLOC(gk_zkv,   gk_zkv_t)
 GK_MKALLOC(gk_fkv,   gk_fkv_t)
 GK_MKALLOC(gk_dkv,   gk_dkv_t)
 GK_MKALLOC(gk_skv,   gk_skv_t)
