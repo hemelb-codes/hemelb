@@ -4,7 +4,7 @@
 
 \date 6/12/2008
 \author George
-\version \verbatim $Id: fis.c 7915 2010-02-01 23:35:28Z karypis $ \endverbatim
+\version \verbatim $Id: fis.c 10796 2011-09-23 21:33:09Z karypis $ \endverbatim
 */
 
 #include <GKlib.h>
@@ -13,11 +13,11 @@
 /*! Data structures for the code */
 /*************************************************************************/
 typedef struct {
-  int minlen, maxlen;
-  int minfreq, maxfreq;
+  ssize_t minlen, maxlen;
+  ssize_t minfreq, maxfreq;
   char *filename;
   int silent;
-  int nitemsets;
+  ssize_t nitemsets;
   char *clabelfile;
   char **clabels;
 } params_t;
@@ -100,8 +100,8 @@ static char shorthelpstr[][100] = {
 void print_init_info(params_t *params, gk_csr_t *mat);
 void print_final_info(params_t *params);
 params_t *parse_cmdline(int argc, char *argv[]);
-void print_an_itemset(void *stateptr, int nitems, int *itemind, 
-                      int ntrans, int *tranind);
+void print_an_itemset(void *stateptr, ssize_t nitems, ssize_t *itemind, 
+                      ssize_t ntrans, ssize_t *tranind);
 
 
 /*************************************************************************/
@@ -109,7 +109,7 @@ void print_an_itemset(void *stateptr, int nitems, int *itemind,
 /**************************************************************************/
 int main(int argc, char *argv[])
 {
-  int i;
+  ssize_t i;
   char line[8192];
   FILE *fpin;
   params_t *params;
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
   params->clabels = (char **)gk_malloc(mat->ncols*sizeof(char *), "main: clabels");
   if (params->clabelfile == NULL) {
     for (i=0; i<mat->ncols; i++) {
-      sprintf(line, "%d", i);
+      sprintf(line, "%zd", i);
       params->clabels[i] = gk_strdup(line);
     }
   }
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
       params->minfreq, params->maxfreq, params->minlen, params->maxlen,
       &print_an_itemset, (void *)params);
 
-  printf("Total itemsets found: %d\n", params->nitemsets);
+  printf("Total itemsets found: %zd\n", params->nitemsets);
 
   print_final_info(params);
 }  
@@ -161,12 +161,12 @@ void print_init_info(params_t *params, gk_csr_t *mat)
   printf("*******************************************************************************\n");
   printf(" fis\n\n");
   printf("Matrix Information ---------------------------------------------------------\n");
-  printf(" input file=%s, [%d, %d, %d]\n", 
+  printf(" input file=%s, [%zd, %zd, %zd]\n", 
       params->filename, mat->nrows, mat->ncols, mat->rowptr[mat->nrows]);
 
   printf("\n");
   printf("Options --------------------------------------------------------------------\n");
-  printf(" minlen=%d, maxlen=%d, minfeq=%d, maxfreq=%d\n",
+  printf(" minlen=%zd, maxlen=%zd, minfeq=%zd, maxfreq=%zd\n",
       params->minlen, params->maxlen, params->minfreq, params->maxfreq);
 
   printf("\n");
@@ -181,8 +181,8 @@ void print_final_info(params_t *params)
 {
   printf("\n");
   printf("Memory Usage Information -----------------------------------------------------\n");
-  printf("   Maximum memory used:              %10jd bytes\n", (intmax_t) gk_GetMaxMemoryUsed());
-  printf("   Current memory used:              %10jd bytes\n", (intmax_t) gk_GetCurMemoryUsed());
+  printf("   Maximum memory used:              %10zd bytes\n", (ssize_t) gk_GetMaxMemoryUsed());
+  printf("   Current memory used:              %10zd bytes\n", (ssize_t) gk_GetCurMemoryUsed());
   printf("********************************************************************************\n");
 }
 
@@ -264,22 +264,22 @@ params_t *parse_cmdline(int argc, char *argv[])
 /*************************************************************************/
 /*! This is the callback function for the itemset discovery routine */
 /*************************************************************************/
-void print_an_itemset(void *stateptr, int nitems, int *itemids, 
-                      int ntrans, int *transids)
+void print_an_itemset(void *stateptr, ssize_t nitems, ssize_t *itemids, 
+                      ssize_t ntrans, ssize_t *transids)
 {
-  int i;
+  ssize_t i;
   params_t *params;
 
   params = (params_t *)stateptr;
   params->nitemsets++;
 
   if (!params->silent) {
-    printf("%4d %4d %4d => ", params->nitemsets, nitems, ntrans);
+    printf("%4zd %4zd %4zd => ", params->nitemsets, nitems, ntrans);
     for (i=0; i<nitems; i++)
       printf(" %s", params->clabels[itemids[i]]);
     printf("\n");
     for (i=0; i<ntrans; i++)
-      printf(" %d\n", transids[i]);
+      printf(" %zd\n", transids[i]);
     printf("\n");
   }
 }

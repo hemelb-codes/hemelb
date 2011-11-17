@@ -9,11 +9,12 @@ set(METIS_PATH METIS CACHE PATH "path to METIS")
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${METIS_PATH} metis)
 
 # Search for MPI.
-include(FindMPI)
-if(NOT MPI_FOUND)
-  message(FATAL_ERROR "mpi is not found")
-endif()
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MPI_COMPILE_FLAGS}")
+# GK commented this out as it seems to be creating problems
+# include(FindMPI)
+# if(NOT MPI_FOUND)
+#   message(FATAL_ERROR "mpi is not found")
+# endif()
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${MPI_COMPILE_FLAGS}")
 
 # Prepare libraries.
 if(SHARED)

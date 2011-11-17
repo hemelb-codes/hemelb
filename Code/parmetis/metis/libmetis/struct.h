@@ -8,7 +8,7 @@
  * Started 9/26/95
  * George
  *
- * $Id: struct.h 10513 2011-07-07 22:06:03Z karypis $
+ * $Id: struct.h 10874 2011-10-17 23:13:00Z karypis $
  */
 
 #ifndef _LIBMETIS_STRUCT_H_
@@ -173,7 +173,7 @@ typedef struct ctrl_t {
 
   /* Various Timers */
   double TotalTmr, InitPartTmr, MatchTmr, ContractTmr, CoarsenTmr, UncoarsenTmr, 
-         RefTmr, ProjectTmr, SplitTmr;
+         RefTmr, ProjectTmr, SplitTmr, Aux1Tmr, Aux2Tmr, Aux3Tmr;
 
   /* Workspace information */
   gk_mcore_t *mcore;    /*!< The persistent memory core for within function 

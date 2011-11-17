@@ -8,7 +8,7 @@
  * Started 3/1/96
  * George
  *
- * $Id: kwayrefine.c 10541 2011-07-11 15:50:58Z karypis $
+ * $Id: kwayrefine.c 10987 2011-10-31 14:42:33Z karypis $
  */
 
 #include <parmetislib.h>
@@ -377,7 +377,7 @@ void KWayFM(ctrl_t *ctrl, graph_t *graph, idx_t npasses)
 
         /* check for a potential improvement */
         myrinfo = graph->ckrinfo + i;
-        if (myrinfo->ed < myrinfo->id) 
+        if (myrinfo->ed == 0 || myrinfo->ed < myrinfo->id) 
           continue;
 
         PASSERT(ctrl, myrinfo->inbr != -1);
@@ -922,7 +922,7 @@ void KWayBalance(ctrl_t *ctrl, graph_t *graph, idx_t npasses)
 
         /* check for a potential improvement */
         myrinfo = graph->ckrinfo+i;
-        if (myrinfo->ed < myrinfo->id) 
+        if (myrinfo->ed == 0 || myrinfo->ed < myrinfo->id) 
           continue;
 
         PASSERT(ctrl, myrinfo->inbr != -1);

@@ -10,7 +10,7 @@ these routines where defined.
 
 \date   Started 4/4/07
 \author George
-\version\verbatim $Id: sort.c 7612 2009-11-29 15:46:31Z karypis $ \endverbatim
+\version\verbatim $Id: sort.c 10796 2011-09-23 21:33:09Z karypis $ \endverbatim
 */
 
 #include <GKlib.h>
@@ -214,6 +214,28 @@ void gk_i64kvsortd(size_t n, gk_i64kv_t *base)
 #define ikey_gt(a, b) ((a)->key > (b)->key)
   GK_MKQSORT(gk_i64kv_t, base, n, ikey_gt);
 #undef ikey_gt
+}
+
+
+/*************************************************************************/
+/*! Sorts an array of gk_zkv_t in increasing order */
+/*************************************************************************/
+void gk_zkvsorti(size_t n, gk_zkv_t *base)
+{
+#define zkey_lt(a, b) ((a)->key < (b)->key)
+  GK_MKQSORT(gk_zkv_t, base, n, zkey_lt);
+#undef zkey_lt
+}
+
+
+/*************************************************************************/
+/*! Sorts an array of gk_zkv_t in decreasing order */
+/*************************************************************************/
+void gk_zkvsortd(size_t n, gk_zkv_t *base)
+{
+#define zkey_gt(a, b) ((a)->key > (b)->key)
+  GK_MKQSORT(gk_zkv_t, base, n, zkey_gt);
+#undef zkey_gt
 }
 
 
