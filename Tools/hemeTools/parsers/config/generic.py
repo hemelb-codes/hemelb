@@ -239,14 +239,16 @@ class OutOfDomainBlock(Block):
     
     def GetLocalSite(self, slIdx):
         assert np.all(slIdx >= 0) and np.all(slIdx < self.Domain.BlockSize)
-        return OutOfDomainSite(self)
+        sgIdx = self.Index * self.Domain.BlockSize + slIdx
+        return OutOfDomainSite(self, sgIdx)
     
     pass
 
 class OutOfDomainSite(Site):
-    def __init__(self, block):
+    def __init__(self, block, sgIdx):
         self.Config = cfg.SOLID_TYPE
         self.Block = block
+        self.Index = sgIdx
         return
     pass
 
