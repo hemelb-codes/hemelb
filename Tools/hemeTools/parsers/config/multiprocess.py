@@ -1,16 +1,11 @@
 """ConfigLoader which will process blocks asynchronously in parallel.
 
-For debugging, add the following to the top of your __main__:
-
-import multiprocessing
-logger = multiprocessing.log_to_stderr()
-logger.setLevel(multiprocessing.SUBDEBUG)
-
-and use multiprocessing.util.debug to print messages within the code
-to be executed per-block. This will also print tracebacks from any
-uncaught exceptions from your per-block code.
+For debugging, either set a new logger with an appropriately higher
+level of logging or get the current logger and set its level. Then use
+GetLogger().debug to print messages within the code to be executed
+per-block.
 """
-import multiprocessing
+import multiprocessing.util
 import copy
 import signal
 import traceback
@@ -19,7 +14,18 @@ import pdb
 from .generic import NdIndexConverter, Domain, Block, OutOfDomainBlock, AllSolidBlock
 from .freeing import FreeingConfigLoader
 
-from multiprocessing.util import debug
+# Simple method for doing logging here. Use the multiprocessing logger
+# by default.
+def GetLogger():
+    global _logger
+    if _logger is None:
+        _logger = multiprocessing.log_to_stderr()
+    return _logger
+def SetLogger(logger):
+    global _logger
+    _logger = logger
+    return
+_logger = None
 
 class SubDomain(Domain):
     """A Domain subclass that only has a subset of the full
@@ -173,7 +179,7 @@ class AsyncBlockProcessingLoader(FreeingConfigLoader):
         return
     
     def OnBlockNeighboursAvailable(self, bIdx):
-        debug('Submit block ' + str(bIdx))
+        GetLogger().debug('Submit block ' + str(bIdx))
         sd = SubDomain(self.Domain, bIdx)
         b = sd.GetBlock(bIdx)
         self._Workers.apply_async(self._BlockProcessor,
@@ -183,7 +189,7 @@ class AsyncBlockProcessingLoader(FreeingConfigLoader):
     
     def _HandleBlockResult(self, args):
         bIdx, result = args
-        debug('Got results for block ' + str(bIdx))
+        GetLogger().debug('Got results for block ' + str(bIdx))
         self.HandleBlockProcessingResult(result)
         self.OnBlockProcessed(bIdx)
         return
@@ -225,14 +231,15 @@ class BlockProcessorWrapper(object):
         block index.
         """
         
-        debug('Process block %s' % str(block.Index))
+        GetLogger().debug('Process block %s' % str(block.Index))
         try:
             result = self.callable(block)
             
         except Exception as e:
-            # Here we add some debugging help. If multiprocessing's
-            # debugging is on, it will arrange to log the traceback
-            debug(traceback.format_exc())
+            # multiprocessing.Pool normally just swallows any
+            # exceptions.  Here we log the exception at a high level
+            # to give some feedback of problems.
+            GetLogger().critical(traceback.format_exc())
             # Re-raise the original exception so the Pool worker can
             # clean up
             raise
