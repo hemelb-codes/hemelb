@@ -172,6 +172,14 @@ class Block(object):
         del self.Sites
         return
     
+    _template = 'Block [' + ', '.join('{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}' % (i,i,i,i) for i in xrange(3)) + ']'
+    
+    def __format__(self, format_spec):
+        bc = self.Domain.BlockCounts
+        widths = np.ceil(np.log10(bc)).astype(int)
+        
+        return self._template.format(self.Index, bc, widths)
+    
     pass
 
     
@@ -208,8 +216,22 @@ class Site(object):
     def BoundaryId(self):
         return cfg.GetBoundaryId(self.Config)
     @property
-    def Edge(self):
+    def IsEdge(self):
         return bool(cfg.GetPressureEdge(self.Config))
+    @property
+    def IsSolid(self):
+        return (self.Type == cfg.SOLID_TYPE)
+    @property
+    def IsFluid(self):
+        return not self.IsSolid
+    
+    _template = 'Site [' + ', '.join('{0[%d]:{2[%d]}}/{1[%d]:{2[%d]}}' % (i,i,i,i) for i in xrange(3)) + ']'
+    
+    def __format__(self, format_spec):
+        sc = self.Block.Domain.SiteCounts
+        widths = np.ceil(np.log10(sc)).astype(int)
+        
+        return self._template.format(self.Index, sc, widths)
     
     pass
 
