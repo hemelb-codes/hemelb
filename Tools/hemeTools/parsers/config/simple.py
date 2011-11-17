@@ -149,7 +149,7 @@ class ConfigLoader(object):
                 s.BoundaryNormal = np.array([loader.unpack_double() for i in xrange(3)], dtype=np.double)
                 s.BoundaryDistance = loader.unpack_double()
                             
-            if s.Edge:
+            if s.IsEdge:
                 s.WallNormal = np.array([loader.unpack_double() for i in xrange(3)], dtype=np.double)
                 s.WallDistance = loader.unpack_double()
                                         
