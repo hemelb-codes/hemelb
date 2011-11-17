@@ -125,6 +125,41 @@ class SiteError(Error):
         return
     pass
 
+class D3Q15Lattice(object):
+    """Represent needed properties of the LB lattice. Velocities must
+    be ordered in the same way as the rest of HemeLB.
+    """
+    
+    # Neighbour deltas are the vectors which when added to a fluid
+    # site position vector give the location of a putative neighbour.
+    velocities = np.array([[ 0,  0,  0],
+                           [ 1,  0,  0],
+                           [-1,  0,  0],
+                           [ 0,  1,  0],
+                           [ 0, -1,  0],
+                           [ 0,  0,  1],
+                           [ 0,  0, -1],
+                           [ 1,  1,  1],
+                           [-1, -1, -1],
+                           [ 1,  1, -1],
+                           [-1, -1,  1],
+                           [ 1, -1,  1],
+                           [-1,  1, -1],
+                           [ 1, -1, -1],
+                           [-1,  1,  1]])
+    norms = np.sqrt(np.sum(velocities**2, axis=-1))
+    minNorm = norms.min()
+    maxNorm = norms.max()
+    
+    @classmethod
+    def IsInNormRange(cls, x):
+        return x >= cls.minNorm and x <= cls.maxNorm
+    
+    neighs = velocities[1:]
+    pass
+
+Lattice = D3Q15Lattice
+
 class CheckingLoader(AsyncBlockProcessingLoader):
     BLOCK_REPORT_PERIOD = 100
     def Load(self):
@@ -144,28 +179,11 @@ class CheckingLoader(AsyncBlockProcessingLoader):
             print 'Checked block %d of %d' % (bIjk, self.Domain.TotalBlocks)
             pass
         return AsyncBlockProcessingLoader.OnBlockProcessed(self, bIdx)
-    
-    # Neighbour deltas are the vectors which when added to a fluid
-    # site position vector give the location of a putative neighbour.
-    velocities = np.array([[ 0,  0,  0],
-                           [ 1,  0,  0],
-                           [-1,  0,  0],
-                           [ 0,  1,  0],
-                           [ 0, -1,  0],
-                           [ 0,  0,  1],
-                           [ 0,  0, -1],
-                           [ 1,  1,  1],
-                           [-1, -1, -1],
-                           [ 1,  1, -1],
-                           [-1, -1,  1],
-                           [ 1, -1,  1],
-                           [-1,  1, -1],
-                           [ 1, -1, -1],
-                           [-1,  1,  1]])
-
-    neighs = velocities[1:]
-    
+        
     def OnEndPreamble(self):
+        """Loaded the very basic domain information. Give a status
+        report.
+        """
         print ('-----\nInfo: stress type = ' +
                str(self.Domain.StressType) + ', sites per block = ' +
                str(self.Domain.BlockSize ** 3) + ', blocks: ' +
@@ -178,28 +196,55 @@ class CheckingLoader(AsyncBlockProcessingLoader):
         return
     
     def OnEndHeader(self):
-        print '-----Fluid Site Count = %d\n-----\n' % np.sum(self.Domain.BlockFluidSiteCounts)
-        # CONSTRAINT 0: if BlockDataLength[i] == 0 then BlockFluidSiteCounts[i] must also be zero and vice versa
+        """All header data now loaded. Give a status report and check
+        consistency of header data with itself and the actual file
+        size.
+        """
+        fluidSiteCount = np.sum(self.Domain.BlockFluidSiteCounts)
+        print '-----Fluid Site Count = %d\n-----\n' % fluidSiteCount
+        
+        # For consistency, if BlockDataLength[i] == 0 then
+        # BlockFluidSiteCounts[i] must also be zero, and vice versa
         for bIjk, bIdx in self.Domain.BlockIndexer.IterBoth():
-            if self.BlockDataLength[bIjk] == 0 and self.Domain.BlockFluidSiteCounts[bIjk] != 0:
-                self.PrintError(
-                    BlockError(self.Domain.GetBlock(bIdx),
-                                'Header states no data but specifies some fluid sites').Format()
-                                )
+            if (self.BlockDataLength[bIjk] == 0 and
+                self.Domain.BlockFluidSiteCounts[bIjk] != 0):
                 
-            if self.Domain.BlockFluidSiteCounts[bIjk] == 0 and self.BlockDataLength[bIjk] != 0:
                 self.PrintError(
-                    BlockError(self.Domain.GetBlock(bIdx),
-                                'Header states no fluid sites but specifies some data').Format()
-                                )
-                
-                    
-        # CONSTRAINT 1: the length of the file must be equal to the
-        # value we calculate from the headers.
-        if (self.PreambleBytes + self.HeaderBytes + np.sum(self.BlockDataLength)) != os.path.getsize(self.FileName):
-            self.PrintError(DomainError('File length does not match file metadata').Format())
+                    BlockError(
+                        self.Domain.GetBlock(bIdx),
+                        'Header states no data but specifies some '
+                        'fluid sites'
+                        ).Format()
+                    )
+                pass
             
-        self.Checker = BlockChecker(self)
+            if (self.Domain.BlockFluidSiteCounts[bIjk] == 0 and
+                self.BlockDataLength[bIjk] != 0):
+                self.PrintError(
+                    BlockError(
+                        self.Domain.GetBlock(bIdx),
+                        'Header states no fluid sites but specifies '
+                        'some data').Format()
+                    )
+                pass
+            continue
+        
+        # The length of the file must be equal to the value we
+        # calculate from the headers.
+        claimedFileSize = (
+            self.PreambleBytes + 
+            self.HeaderBytes +
+            np.sum(self.BlockDataLength)
+            )
+        if claimedFileSize != os.path.getsize(self.FileName):
+            self.PrintError(
+                DomainError(
+                    'File length does not match file metadata'
+                    ).Format()
+                )
+            pass
+        
+        self.Checker = BlockChecker()
         self.SetBlockProcessor(self.Checker)
         return
 
@@ -218,8 +263,10 @@ class CheckingLoader(AsyncBlockProcessingLoader):
         """Start a thread to deal with writing our reports.
         """
         self.ReportQueue = Queue.Queue()
-        self.ReportingThread = threading.Thread(target=self.ReportingThreadMain,
-                                                    name='ReportingThread')
+        self.ReportingThread = threading.Thread(
+            target=self.ReportingThreadMain,
+            name='ReportingThread'
+            )
         self.ReportingThread.start()
         return
     
@@ -250,40 +297,34 @@ class CheckingLoader(AsyncBlockProcessingLoader):
     pass
 
 class BlockChecker(object):
-    def __init__(self, loader):        
-        self.neighs = loader.neighs
-        self.domainExtremeSite = loader.Domain.BlockCounts * loader.Domain.BlockSize - 1
-        return
-
+    """Callable object that is run in a separate process to check a
+    single block for consistency.
+    
+    """
+    
     def __call__(self, block):
-        """Now we iterate over every site on the block, and check the following constraints.
+        """Now we iterate over every site on the block, and check
+        constraints as specified in the Check* methods.
         
-        CONSTRAINT 2: the number of non-solid sites on each block must equal that declared in the header.
-        CONSTRAINT 3: every site which has a fluid type (and isn't an edge) can have no invalid or solid-type neighbours.
-        CONSTRAINT 4: every site which is not a fluid type must have at least one invalid or solid-type neighbour.
-        CONSTRAINT 5: if the site is not of fluid or solid type, at least one of the cut distances must be between 0 and 1
-        CONSTRAINT 6: if the site is not of fluid or solid type, all cut distances must be between 0 and 1 or be infinite
-        CONSTRAINT 7: if the site is of inlet or outlet type, the magnitude of the boundary normal must be 1
-        CONSTRAINT 8: if the site is of inlet or outlet type, the boundary distance must be between 0 and 1
-        CONSTRAINT 9: if the site is an edge, the magnitude of the wall normal must be 1
-        CONSTRAINT 10: if the site is an edge, the distance to the wall must be between 0 and root(3)
-
-        A list of error messages is returned.
+        A list of error STRINGS is returned, i.e. the result of
+        calling Format() on the accumulated Error object.
         """
 
-        # So this may look dodgy, using an instance attribute to store
-        # the errors when we are running a load of these in
-        # parallel. HOWEVER, we are pickling the unexecuted instance
-        # created above out to each process to be run serially.
+        # So this may LOOK dodgy, using an instance attribute to store
+        # the errors when we've only instantiated one of these and are
+        # checking a load of blocks in parallel. HOWEVER, we are
+        # pickling the unexecuted instance created above out to each
+        # process to be run per-block. Once results have been sent
+        # back, the executed object is destroyed.
         self.block = block
-        self.blockErrors = BlockErrorCollection(block)
+        blockErrors = BlockErrorCollection(block)
         self.numFluid = 0
         
         dom = block.Domain
         
         if isinstance(block, AllSolidBlock):
-            self.CheckFluidSiteCount()
-            return self.blockErrors.Format()
+            self.CheckFluidSiteCount(blockErrors.AddBlockError)
+            return blockErrors.Format()
         
         bInd = block.Index
         
@@ -293,93 +334,187 @@ class BlockChecker(object):
             lsInd = np.array(lsInd)
             
             site = block.GetLocalSite(lsInd)
-            # quick helper function to add an error to this site's error list
-            AddSiteError = lambda msg: self.blockErrors.AddSiteError(site, msg)
-
-            # Some basic sanity checking on the cfg
-            if not (site.Config == cfg.SOLID_TYPE or site.Config == cfg.FLUID_TYPE):
-                isTypeKnown = False
-                if site.Type == cfg.INLET_TYPE or site.Type == cfg.OUTLET_TYPE:
-                    isTypeKnown = True
-                    pass
-
-                if site.IsEdge:
-                    isTypeKnown = True
-                    pass
-
-                if not isTypeKnown:
-                    AddSiteError('Site doesn\'t appear to have any fitting type for config = 0b{:032b}')
-                    pass
-                pass
-
+            # Quick helper function to add an error to this site's
+            # error list
+            addSiteError = lambda msg: blockErrors.AddSiteError(site, msg)
+            
+            self.CheckBasicConfigConsistency(site, addSiteError)
+            
             if site.Type == cfg.SOLID_TYPE:
-                # Solid sites we don't check in detail since they have no more data
-               continue
-            else:
-                self.numFluid += 1
-                pass
-
-            # Loop over the LB velocity set, checking link properties
-            nSolidNeighs = 0
-            for iNeigh, delta in enumerate(self.neighs):
-                neigh = block.GetSite(site.Index + delta)
-
-                if isinstance(neigh, OutOfDomainSite):
-                    AddSiteError('Fluid site has out-of-bounds neighbour {}'.format(neigh))
-                if neigh.IsSolid:
-                    nSolidNeighs += 1
-
-                    if site.Type == cfg.FLUID_TYPE and not site.IsEdge:
-                        AddSiteError('Simple-fluid site has solid neighbour {}'.format(neigh))
-                        pass
-
-                    if site.CutDistances[iNeigh] < 0. or site.CutDistances[iNeigh] >= 1.:
-                        AddSiteError('Link to solid {neigh} has invalid CutDistance = {cd}'.format(neigh=neigh, cd=site.CutDistances[iNeigh]))
-
-                else:           # neigh is fluid
-
-                    if site.CutDistances is not None and \
-                        site.CutDistances[iNeigh] != np.inf:
-                        AddSiteError('Link to fluid {neigh} has non-infinite CutDistance = {cd}'.format(neigh=neigh, cd=site.CutDistances[iNeigh]))
-                        pass
-
-                    pass
-
-                continue        # for loop over neighbours
-
-            # CON 4
-            if (site.Type == cfg.INLET_TYPE or site.Type == cfg.OUTLET_TYPE or site.IsEdge) and nSolidNeighs == 0:
-                    AddSiteError('Non--simple-fluid site has all valid fluid neighbours.')
-                    pass
-
-            if site.Type == cfg.INLET_TYPE or site.Type == cfg.OUTLET_TYPE:
-                normMag = np.sum(site.BoundaryNormal ** 2) ** 0.5
-                # CON 7
-                if abs(normMag - 1) >= 0.001:
-                    AddSiteError('Boundary normal {} has non-unity magnitude'.format(site.BoundaryNormal))
-                # CON 8
-                if site.BoundaryDistance <= 0. or site.BoundaryDistance >= np.sqrt(3.):
-                    AddSiteError('Boundary distance ({}) not in [0,sqrt(3)]'.format(site.BoundaryDistance))
-
-            if site.IsEdge:
-                normMag = np.sum(site.WallNormal ** 2) ** 0.5
-                # CON 9
-                if abs(normMag - 1) >= 0.001:
-                    AddSiteError('Wall normal {} has non-unity magnitude'.format(site.WallNormal))
-                # CON 10
-                if site.WallDistance <= 0. or site.WallDistance >= (3.0**0.5):
-                            AddSiteError('Wall distance ({}) not in [0,sqrt(3)]'.format(site.WallDistance))
+                # Solid sites we don't check in detail since they have
+                # no more data
+                continue
+            
+            self.numFluid += 1
+           
+            self.CheckFluidSiteLinks(site, addSiteError)
+            self.CheckSiteBoundaryData(site, addSiteError)
+            self.CheckSiteWallData(site, addSiteError)
+            
             continue
-        self.CheckFluidSiteCount()
-        return self.blockErrors.Format()
+        
+        self.CheckFluidSiteCount(blockErrors.AddBlockError)
+        return blockErrors.Format()
     
-    def CheckFluidSiteCount(self):
-        # CON 2
+    def CheckFluidSiteCount(self, addBlockError):
+        """The number of non-solid sites on each block must equal that
+        declared in the header.
+        """
         if self.numFluid != self.block.nFluidSites:
-            self.blockErrors.AddBlockError('File fluid site counts not equal to number loaded')
+            addBlockError('File fluid site counts not equal to number loaded')
             pass
         return
+    
+    def CheckBasicConfigConsistency(self, site, addSiteError):
+        """Some basic sanity checking on the value of the 'cfg'
+        uint32.
+        """
+        if not (site.Config == cfg.SOLID_TYPE or
+                site.Config == cfg.FLUID_TYPE):
+            isTypeKnown = False
+            if (site.Type == cfg.INLET_TYPE or
+                site.Type == cfg.OUTLET_TYPE):
+                isTypeKnown = True
+                pass
+
+            if site.IsEdge:
+                isTypeKnown = True
+                pass
+
+            if not isTypeKnown:
+                addSiteError('Site doesn\'t appear to have any fitting type for config = 0b{:032b}'.format(site.Config))
+                pass
+            pass
+        return
+
+    def CheckFluidSiteLinks(self, site, addSiteError):
+        """Loop over the LB velocity set, checking link properties and
+        whether the type (fluid only or fluid and edge) is consistent
+        with the neighbours' types.  More concretely:
+
+        - fluid sites must have no out-of-domain neighbours;
+
+        - non-edge fluid sites must have no solid neighbours;
+
+        - inlet/outlet/edge fluid sites must have a cut distance array;
+
+        - links to solid sites must have a cut distance in [0,1];
+
+        - links to fluid sites must either have no cut distance array
+          or have an infinite cut distance, and
+
+        - inlet/outlet/edge fluid sites must have at least one solid
+          neighbour.
+
+        """
+        nSolidNeighs = 0
+        for iNeigh, delta in enumerate(Lattice.neighs):
+            neigh = site.Block.GetSite(site.Index + delta)
+
+            if isinstance(neigh, OutOfDomainSite):
+                addSiteError('Fluid site has out-of-domain neighbour {}'.format(neigh))
+                pass
+            
+            if neigh.IsSolid:
+                nSolidNeighs += 1
+
+                if site.Type == cfg.FLUID_TYPE and not site.IsEdge:
+                    addSiteError('Simple-fluid site has solid neighbour {}'.format(neigh))
+                    pass
+
+                if site.CutDistances is None:
+                    addSiteError('No CutDistance array for fluid site with solid neighbour {}'.format(neigh))
+                    
+                elif (site.CutDistances[iNeigh] < 0. or
+                    site.CutDistances[iNeigh] >= 1.):
+                    
+                    addSiteError('Link to solid {neigh} has invalid '
+                                 'CutDistance = {cd}'.format(neigh=neigh,
+                                                             cd=site.CutDistances[iNeigh]))
+                    pass
+                
+            else:                       # neigh is fluid
+
+                if (site.CutDistances is not None and 
+                    site.CutDistances[iNeigh] != np.inf):
+                    
+                    addSiteError('Link to fluid {neigh} has non-infinite '
+                                 'CutDistance = {cd}'.format(neigh=neigh,
+                                                             cd=site.CutDistances[iNeigh]))
+                    pass
+                
+                pass 
+
+            continue                    # for loop over neighbours
         
+        
+        if ((site.Type == cfg.INLET_TYPE or
+             site.Type == cfg.OUTLET_TYPE or
+             site.IsEdge) and
+            nSolidNeighs == 0):
+            addSiteError('Non--simple-fluid site has all valid fluid neighbours.')
+            pass
+        
+        return
+
+    def CheckSiteBoundaryData(self, site, addSiteError):
+        """Boundaries are inlets and outlets. Check some properties:
+        
+        - that the magnitude of the normal is very close to 1, and
+
+        - that the distance is in [0, sqrt(3)]
+        """
+        
+        if not (site.Type == cfg.INLET_TYPE or
+                site.Type == cfg.OUTLET_TYPE):
+            return
+        
+        normMag = np.sum(site.BoundaryNormal ** 2) ** 0.5
+        
+        if abs(normMag - 1) >= 0.001:
+            addSiteError('Boundary normal {} has non-unity magnitude'.format(site.BoundaryNormal))
+            pass
+        
+        if not Lattice.IsInNormRange(site.BoundaryDistance):
+            addSiteError(
+                'Boundary distance ({}) not in [{}, {}]'.format(
+                    site.BoundaryDistance,
+                    Lattice.minNorm,
+                    Lattice.maxNorm
+                    )
+                )
+            pass
+        
+        return
+    
+    def CheckSiteWallData(self, site, addSiteError):
+        """Walls are the solid boundaries of the simulation. Check
+        some properties:
+        
+        - that the magnitude of the normal is very close to 1, and
+
+        - that the distance is in [0, sqrt(3)]
+        """
+        if not site.IsEdge:
+            return
+        
+        normMag = np.sum(site.WallNormal ** 2) ** 0.5
+        
+        if abs(normMag - 1) >= 0.001:
+            addSiteError('Wall normal {} has non-unity magnitude'.format(site.WallNormal))
+            pass
+        
+        if not Lattice.IsInNormRange(site.WallDistance):
+            addSiteError(
+                'Wall distance ({}) not in [{}, {}]'.format(
+                    site.WallDistance,
+                    Lattice.minNorm,
+                    Lattice.maxNorm
+                    )
+                )
+            pass
+        
+        return
     pass
     
 if __name__ == "__main__":
