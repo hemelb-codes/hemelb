@@ -287,10 +287,16 @@ class CheckingLoader(AsyncBlockProcessingLoader):
         """
         hadErrors = False
         while True:
+            # ReportQueue's a Queue.Queue so this is OK
+            # (It will block until we get something)
             errList = self.ReportQueue.get()
             if errList is None:
                 # Got the sentinal, so we need to exit
                 # First, set a flag to indicate the presence of errors.
+                
+                # This assignment is OK since the main thread waits on
+                # us after putting the sentinal into the queue (see
+                # EndReportingThread).
                 self.HadErrors = hadErrors
                 break
             hadErrors = True
@@ -408,7 +414,8 @@ class BlockChecker(object):
 
         - inlet/outlet/edge fluid sites must have a cut distance array;
 
-        - links to solid sites must have a cut distance in [0,1];
+        - links to solid sites must have a cut distance in [0,1] (it
+          is a fraction of the lattice vector);
 
         - links to fluid sites must either have no cut distance array
           or have an infinite cut distance, and
@@ -472,7 +479,8 @@ class BlockChecker(object):
         
         - that the magnitude of the normal is very close to 1, and
 
-        - that the distance is in [0, sqrt(3)]
+        - that the distance (in lattice units) is in the range allowed
+          for the lattice
         """
         
         if not (site.Type == cfg.INLET_TYPE or
@@ -502,8 +510,9 @@ class BlockChecker(object):
         some properties:
         
         - that the magnitude of the normal is very close to 1, and
-
-        - that the distance is in [0, sqrt(3)]
+        
+        - that the distance (in lattice units) is in the range allowed
+          for the lattice
         """
         if not site.IsEdge:
             return
