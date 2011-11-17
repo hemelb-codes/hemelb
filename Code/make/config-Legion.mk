@@ -1,5 +1,7 @@
-CXX := mpicxx
+include $(MK)/config-linux.mk
+
+CXX := mpiCC
 EXE := hemelb
 
-HEMELB_CXXFLAGS := -O3 -xT -ipo
-HEMELB_DEFS := BENCH NOOPENMP
+HEMELB_CXXFLAGS := -O4
+HEMELB_DEFS += BENCH NOOPENMP
