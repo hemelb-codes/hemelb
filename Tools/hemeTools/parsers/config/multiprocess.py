@@ -189,11 +189,22 @@ class AsyncBlockProcessingLoader(FreeingConfigLoader):
         return
 
     def _LoadBody(self):
-        FreeingConfigLoader._LoadBody(self)
-        self._Workers.close()
-        self._Workers.join()
+        # This try block ensures that the Pool is cleaned propery. In
+        # the normal case, the input queue is closed and drained. If
+        # an exception occurs, the workers are killed before the
+        # exception is allow to propagate. In both cases the processes
+        # must be joined.
+        try:
+            FreeingConfigLoader._LoadBody(self)
+        except:
+            self._Workers.terminate()
+            raise
+        else:
+            self._Workers.close()
+        finally:
+            self._Workers.join()
         return
-    
+
     pass
 
 class BlockProcessorWrapper(object):
