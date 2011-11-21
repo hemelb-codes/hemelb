@@ -11,18 +11,17 @@ namespace hemelb{
   namespace reporting {
     class Reporter {
       public:
-        Reporter(bool doio, const std::string &name, std::string &inputFile);
+        Reporter(const std::string &path, const std::string &inputFile, const long int asite_count, Timers&timers);
         ~Reporter();
         void Cycle();
         void TimeStep(){timestep_count++;}
         void Image();
         void Snapshot();
-        void Phase1(long int site_count, bool unstable,
-                    Timers &timings);
-        void ProcessorTimings(std::string *const names,double *const mins,double *const means,double *const maxes);
+        void Write();
+        void Stability(bool astability){stability=astability;}
       private:
         FILE *ReportFile(){
-            return mTimingsFile;
+          return mTimingsFile;
         }
         bool doIo;
         FILE *mTimingsFile;
@@ -30,6 +29,9 @@ namespace hemelb{
         unsigned int snapshot_count;
         unsigned int image_count;
         unsigned long int timestep_count;
+        long int site_count;
+        bool stability;
+        Timers &timings;
     };
   }
 }
