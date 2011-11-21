@@ -3,8 +3,8 @@ namespace hemelb
 {
   namespace reporting
   {
-    Reporter::Reporter(bool doio, const std::string &name, std::string &inputFile) :
-        doIo(doio), cycle_count(0), timestep_count(0)
+    Reporter::Reporter(const std::string &name, const std::string &inputFile, const long int asite_count, Timers& timers) :
+       cycle_count(0), timestep_count(0), site_count(asite_count),stability(false),  timings(timers)
     {
       mTimingsFile = fopen(name.c_str(), "w");
       fprintf(mTimingsFile, "***********************************************************\n");
@@ -34,17 +34,7 @@ namespace hemelb
       fprintf(ReportFile(), "Snapshot written: %u\n", snapshot_count);
     }
 
-    void Reporter::ProcessorTimings(std::string * const names,
-                                    double * const mins,
-                                    double * const means,
-                                    double * const maxes)
-    {
-
-    }
-
-    void Reporter::Phase1(long int site_count,
-                          bool unstable,
-                          Timers &timings)
+    void Reporter::Write()
     {
 
       fprintf(ReportFile(), "\n");
@@ -64,7 +54,7 @@ namespace hemelb
               "time steps per second: %.3f\n\n",
               timestep_count / timings[Timers::simulation].Get());
 
-      if (unstable)
+      if (!stability)
       {
         fprintf(ReportFile(),
                 "Attention: simulation unstable with %lu timesteps/cycle\n",

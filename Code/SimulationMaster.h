@@ -33,7 +33,6 @@ class SimulationMaster
   private:
     void Initialise();
     void SetupReporting(); // set up the reporting file
-    void PostSimulation(bool iIsUnstable);
     unsigned int OutputPeriod(unsigned int frequency);
     void HandleActors();
     void ResetUnstableSimulation();
@@ -43,6 +42,7 @@ class SimulationMaster
     hemelb::geometry::LatticeData* mLatDat;
     hemelb::reporting::FileManager* fileManager;
     hemelb::reporting::Timers timings;
+    hemelb::reporting::Reporter* reporter;
     typedef std::multimap<unsigned long, unsigned long> mapType;
 
     mapType snapshotsCompleted;
