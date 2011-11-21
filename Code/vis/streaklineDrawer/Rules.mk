@@ -2,7 +2,7 @@ include $(MK)/header.mk
 
 SRCS := NeighbouringProcessor.cc \
         Particle.cc \
-        Particles.cc \
+        ParticleManager.cc \
         StreaklineDrawer.cc \
         StreakPixel.cc \
         VelocityField.cc

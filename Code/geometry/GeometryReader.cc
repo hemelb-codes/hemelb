@@ -67,7 +67,6 @@ namespace hemelb
       }
     }
 
-
     void LatticeData::GeometryReader::LoadAndDecompose(GlobalLatticeData* globLatDat,
                                                        lb::LbmParameters* lbmParams,
                                                        configuration::SimConfig* simConfig,
@@ -439,14 +438,8 @@ namespace hemelb
 
       int neededHere = neededOnThisRank;
 
-      MPI_Gather(&neededHere,
-                 1,
-                 MpiDataType<int> (),
-                 procsWantingThisBlockBuffer,
-                 1,
-                 MpiDataType<int> (),
-                 readingCore,
-                 currentComm);
+      MPI_Gather(&neededHere, 1, MpiDataType<int> (), procsWantingThisBlockBuffer, 1, MpiDataType<
+          int> (), readingCore, currentComm);
 
       net::Net net = net::Net(currentComm);
 
@@ -1241,9 +1234,8 @@ namespace hemelb
                     }
 
                     // ... (that is actually being simulated and not a solid)...
-                    const proc_t* proc_id_p = globLatDat->GetProcIdFromGlobalCoords(neigh_i,
-                                                                                    neigh_j,
-                                                                                    neigh_k);
+                    const proc_t* proc_id_p = globLatDat->GetProcIdFromGlobalCoords(util::Vector3D<
+                        site_t>(neigh_i, neigh_j, neigh_k));
 
                     if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
@@ -1364,7 +1356,7 @@ namespace hemelb
       real_t* domainWeights = new real_t[desiredPartitionSize];
       for (idx_t ii = 0; ii < desiredPartitionSize; ++ii)
       {
-        domainWeights[ii] = 1.0 / ((real_t) desiredPartitionSize);
+        domainWeights[ii] = (real_t) (1.0) / ((real_t) desiredPartitionSize);
       }
 
       // A bunch of values ParMetis needs.
