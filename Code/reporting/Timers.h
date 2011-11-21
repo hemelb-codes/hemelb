@@ -3,18 +3,34 @@
 
 #include <vector>
 #include "util/utilityFunctions.h"
-
+#include "topology/NetworkTopology.h"
 namespace hemelb
 {
   namespace reporting
   {
     class HemeLBClockPolicy
     {
-      public:
+      protected:
         static double CurrentTime()
         {
           return hemelb::util::myClock();
         }
+    };
+
+    class MPICommsPolicy
+    {
+      protected:
+        int Reduce(void *sendbuf,
+                   void *recvbuf,
+                   int count,
+                   MPI_Datatype datatype,
+                   MPI_Op op,
+                   int root,
+                   MPI_Comm comm)
+        {
+          return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+        }
+
     };
 
     template<class ClockPolicy> class TimerBase : public ClockPolicy
@@ -48,7 +64,7 @@ namespace hemelb
     /***
      * Manages a set of timings associated with the run
      */
-    template<class ClockPolicy> class TimersBase
+    template<class ClockPolicy, class CommsPolicy> class TimersBase : public CommsPolicy
     {
       public:
         typedef TimerBase<ClockPolicy> Timer;
@@ -91,15 +107,27 @@ namespace hemelb
         {
           return timers[t];
         }
-        void Reduce();
+        void Reduce(){
+          double timings[numberOfTimers];
+          for (unsigned int ii = 0; ii < numberOfTimers; ii++) {
+            timings[ii] = timers[ii].Get();
+          }
+
+          CommsPolicy::Reduce(timings, &maxes[0], numberOfTimers, hemelb::MpiDataType<double>(), MPI_MAX, 0, MPI_COMM_WORLD);
+          CommsPolicy::Reduce(timings, &means[0], numberOfTimers, hemelb::MpiDataType<double>(), MPI_SUM, 0, MPI_COMM_WORLD);
+          CommsPolicy::Reduce(timings, &mins[0],  numberOfTimers, hemelb::MpiDataType<double>(), MPI_MIN, 0, MPI_COMM_WORLD);
+          for (unsigned int ii = 0; ii < numberOfTimers; ii++) {
+            means[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount());
+          }
+        };
       private:
         std::vector<Timer> timers;
         std::vector<double> maxes;
         std::vector<double> mins;
         std::vector<double> means;
     };
-    typedef hemelb::reporting::TimerBase<hemelb::reporting::HemeLBClockPolicy> Timer;
-    typedef hemelb::reporting::TimersBase<hemelb::reporting::HemeLBClockPolicy> Timers;
+    typedef TimerBase<HemeLBClockPolicy> Timer;
+    typedef TimersBase<HemeLBClockPolicy, MPICommsPolicy> Timers;
   }
 
   static const std::string timerNames[hemelb::reporting::Timers::numberOfTimers] =

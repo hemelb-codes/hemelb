@@ -564,6 +564,7 @@ void SimulationMaster::GenerateNetworkImages(){
   */
  void SimulationMaster::PostSimulation(int iTotalTimeSteps, bool iIsUnstable)
  {
+   timings[hemelb::reporting::Timers::total].Stop();
    timings.Reduce();
    if (IsCurrentProcTheIOProc())
    {
