@@ -13,9 +13,11 @@ namespace hemelb{
       public:
         Reporter(bool doio, const std::string &name, std::string &inputFile);
         ~Reporter();
-        void Cycle(long int cycle_id);
-        void Phase1(long int site_count, int total_time_steps, long int cycle_id,  bool unstable,
-                    unsigned long time_steps_per_cycle, unsigned int image_count, unsigned int snapshot_count,
+        void Cycle();
+        void TimeStep(){timestep_count++;}
+        void Image();
+        void Snapshot();
+        void Phase1(long int site_count, bool unstable,
                     Timers &timings);
         void ProcessorTimings(std::string *const names,double *const mins,double *const means,double *const maxes);
       private:
@@ -24,6 +26,10 @@ namespace hemelb{
         }
         bool doIo;
         FILE *mTimingsFile;
+        unsigned int cycle_count;
+        unsigned int snapshot_count;
+        unsigned int image_count;
+        unsigned long int timestep_count;
     };
   }
 }
