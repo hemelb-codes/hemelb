@@ -64,6 +64,7 @@ namespace hemelb
     /***
      * Manages a set of timings associated with the run
      */
+
     template<class ClockPolicy, class CommsPolicy> class TimersBase : public CommsPolicy
     {
       public:
