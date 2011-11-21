@@ -161,14 +161,13 @@ namespace hemelb
 
     // Function that finds the pointer to the rank on which a particular site
     // resides. If the site is in an empty block, return NULL.
-    const proc_t* LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(site_t iSiteI,
-                                                                            site_t iSiteJ,
-                                                                            site_t iSiteK) const
+    const proc_t* LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(const util::Vector3D<
+        site_t> globalSiteCoords) const
     {
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-      site_t i = iSiteI >> Log2BlockSize;
-      site_t j = iSiteJ >> Log2BlockSize;
-      site_t k = iSiteK >> Log2BlockSize;
+      site_t i = globalSiteCoords.x >> Log2BlockSize;
+      site_t j = globalSiteCoords.y >> Log2BlockSize;
+      site_t k = globalSiteCoords.z >> Log2BlockSize;
 
       // Get the block from the block identifiers.
       BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(i, j, k)];
@@ -181,9 +180,9 @@ namespace hemelb
       else
       {
         // Find site coordinates within the block
-        site_t ii = iSiteI - (i << Log2BlockSize);
-        site_t jj = iSiteJ - (j << Log2BlockSize);
-        site_t kk = iSiteK - (k << Log2BlockSize);
+        site_t ii = globalSiteCoords.x - (i << Log2BlockSize);
+        site_t jj = globalSiteCoords.y - (j << Log2BlockSize);
+        site_t kk = globalSiteCoords.z - (k << Log2BlockSize);
 
         // Return pointer to ProcessorRankForEachBlockSite[site] (the only member of
         // mProcessorsForEachBlock)
@@ -204,10 +203,7 @@ namespace hemelb
     // Function to get a pointer to the site_data for a site.
     // If the site is in an empty block, return NULL.
 
-    void LatticeData::GlobalLatticeData::GetBlockIJK(site_t block,
-                                                     site_t* i,
-                                                     site_t* j,
-                                                     site_t* k) const
+    void LatticeData::GlobalLatticeData::GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const
     {
       *k = block % GetZBlockCount();
       site_t ij = block / GetZBlockCount();
@@ -218,6 +214,18 @@ namespace hemelb
     site_t LatticeData::GlobalLatticeData::GetSiteCoord(site_t block, site_t localSiteCoord) const
     {
       return (block << Log2BlockSize) + localSiteCoord;
+    }
+
+    const util::Vector3D<site_t> LatticeData::GlobalLatticeData::GetGlobalCoords(site_t blockNumber,
+                                                                                 const util::Vector3D<
+                                                                                     site_t>& localSiteCoords) const
+    {
+      site_t blockI, blockJ, blockK;
+      GetBlockIJK(blockNumber, &blockI, &blockJ, &blockK);
+
+      return util::Vector3D<site_t>(GetSiteCoord(blockI, localSiteCoords.x),
+                                    GetSiteCoord(blockJ, localSiteCoords.y),
+                                    GetSiteCoord(blockK, localSiteCoords.z));
     }
 
     unsigned int LatticeData::GlobalLatticeData::GetSiteData(site_t iSiteI,
@@ -245,102 +253,103 @@ namespace hemelb
     {
       if (Blocks[block].site_data == NULL)
       {
-        Blocks[block].site_data = new unsigned int[GetSitesPerBlockVolumeUnit()];}
-        if (Blocks[block].ProcessorRankForEachBlockSite == NULL)
+        Blocks[block].site_data = new unsigned int[GetSitesPerBlockVolumeUnit()];
+      }
+      if (Blocks[block].ProcessorRankForEachBlockSite == NULL)
+      {
+        Blocks[block].ProcessorRankForEachBlockSite = new proc_t[GetSitesPerBlockVolumeUnit()];
+      }
+
+      site_t m = -1;
+      site_t blockI, blockJ, blockK;
+
+      GetBlockIJK(block, &blockI, &blockJ, &blockK);
+
+      for (site_t ii = 0; ii < GetBlockSize(); ii++)
+      {
+        site_t site_i = GetSiteCoord(block, ii);
+
+        for (site_t jj = 0; jj < GetBlockSize(); jj++)
         {
-          Blocks[block].ProcessorRankForEachBlockSite = new proc_t[GetSitesPerBlockVolumeUnit()];
-        }
+          site_t site_j = GetSiteCoord(block, jj);
 
-        site_t m = -1;
-        site_t blockI, blockJ, blockK;
-
-        GetBlockIJK(block, &blockI, &blockJ, &blockK);
-
-        for (site_t ii = 0; ii < GetBlockSize(); ii++)
-        {
-          site_t site_i = GetSiteCoord(block, ii);
-
-          for (site_t jj = 0; jj < GetBlockSize(); jj++)
+          for (site_t kk = 0; kk < GetBlockSize(); kk++)
           {
-            site_t site_j = GetSiteCoord(block, jj);
+            site_t site_k = GetSiteCoord(block, kk);
 
-            for (site_t kk = 0; kk < GetBlockSize(); kk++)
+            ++m;
+
+            unsigned int *site_type = &Blocks[block].site_data[m];
+            if (!reader->readUnsignedInt(*site_type))
             {
-              site_t site_k = GetSiteCoord(block, kk);
-
-              ++m;
-
-              unsigned int *site_type = &Blocks[block].site_data[m];
-              if (!reader->readUnsignedInt(*site_type))
-              {
-                std::cout << "Error reading site type\n";
-              }
-
-              if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
-              {
-                Blocks[block].ProcessorRankForEachBlockSite[m] = BIG_NUMBER2;
-                continue;
-              }
-
-              Blocks[block].ProcessorRankForEachBlockSite[m] = -1;
-
-              if (GetCollisionType(*site_type) != FLUID)
-              {
-                // Neither solid nor simple fluid
-            if (Blocks[block].wall_data == NULL)
-            {
-              Blocks[block].wall_data = new WallData[GetSitesPerBlockVolumeUnit()];
+              std::cout << "Error reading site type\n";
             }
 
-            if (GetCollisionType(*site_type) & INLET || GetCollisionType(*site_type) & OUTLET)
+            if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
             {
-              double temp;
-              // INLET or OUTLET or both.
-              // These values are the boundary normal and the boundary distance.
-              for (int l = 0; l < 3; l++)
+              Blocks[block].ProcessorRankForEachBlockSite[m] = BIG_NUMBER2;
+              continue;
+            }
+
+            Blocks[block].ProcessorRankForEachBlockSite[m] = -1;
+
+            if (GetCollisionType(*site_type) != FLUID)
+            {
+              // Neither solid nor simple fluid
+              if (Blocks[block].wall_data == NULL)
               {
+                Blocks[block].wall_data = new WallData[GetSitesPerBlockVolumeUnit()];
+              }
+
+              if (GetCollisionType(*site_type) & INLET || GetCollisionType(*site_type) & OUTLET)
+              {
+                double temp;
+                // INLET or OUTLET or both.
+                // These values are the boundary normal and the boundary distance.
+                for (int l = 0; l < 3; l++)
+                {
+                  if (!reader->readDouble(temp))
+                  {
+                    std::cout << "Error reading boundary normals\n";
+                  }
+                }
+
                 if (!reader->readDouble(temp))
                 {
-                  std::cout << "Error reading boundary normals\n";
+                  std::cout << "Error reading boundary distances\n";
                 }
               }
 
-              if (!reader->readDouble(temp))
+              if (GetCollisionType(*site_type) & EDGE)
               {
-                std::cout << "Error reading boundary distances\n";
-              }
-            }
-
-            if (GetCollisionType(*site_type) & EDGE)
-            {
-              // EDGE bit set
-              for (int l = 0; l < 3; l++)
-              {
-                if (!reader->readDouble(Blocks[block].wall_data[m].wall_nor[l]))
+                // EDGE bit set
+                for (int l = 0; l < 3; l++)
                 {
-                  std::cout << "Error reading edge normal\n";
+                  if (!reader->readDouble(Blocks[block].wall_data[m].wall_nor[l]))
+                  {
+                    std::cout << "Error reading edge normal\n";
+                  }
+                }
+
+                double temp;
+                if (!reader->readDouble(temp))
+                {
+                  std::cout << "Error reading edge distance\n";
                 }
               }
 
-              double temp;
-              if (!reader->readDouble(temp))
+              for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
               {
-                std::cout << "Error reading edge distance\n";
+                if (!reader->readDouble(Blocks[block].wall_data[m].cut_dist[l]))
+                {
+                  std::cout << "Error reading cut distances\n";
+                }
               }
             }
+          } // kk
+        } // jj
+      } // ii
+    }
 
-            for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
-            {
-              if (!reader->readDouble(Blocks[block].wall_data[m].cut_dist[l]))
-              {
-                std::cout << "Error reading cut distances\n";
-              }
-            }
-          }
-        } // kk
-      } // jj
-    } // ii
   }
-
-}
 }

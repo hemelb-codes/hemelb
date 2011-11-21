@@ -14,6 +14,7 @@
 // on LbmParams here.
 #include "lb/LbmParameters.h"
 #include "reporting/Timers.h"
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -80,7 +81,7 @@ namespace hemelb
         bool IsValidBlock(site_t i, site_t j, site_t k) const;
         bool IsValidLatticeSite(site_t i, site_t j, site_t k) const;
 
-        const proc_t* GetProcIdFromGlobalCoords(site_t siteI, site_t siteJ, site_t siteK) const;
+        const proc_t* GetProcIdFromGlobalCoords(const util::Vector3D<site_t> globalSiteCoords) const;
 
         BlockData* GetBlock(site_t blockNumber) const;
         BlockTraverser GetBlockTraverser() const;
@@ -95,6 +96,9 @@ namespace hemelb
         double GetCutDistance(site_t iSiteIndex, int iDirection) const;
         unsigned int GetSiteData(site_t iSiteIndex) const;
         unsigned int GetContiguousSiteId(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
+        const util::Vector3D<site_t> GetGlobalCoords(site_t blockNumber, const util::Vector3D<
+            site_t>& localSiteCoords) const;
+
         site_t GetInnerSiteCount() const;
         site_t GetInnerCollisionCount(unsigned int collisionType) const;
         site_t GetInterCollisionCount(unsigned int collisionType) const;
@@ -126,8 +130,8 @@ namespace hemelb
 
             void SetNeighbourLocation(site_t iSiteIndex, unsigned int iDirection, site_t iValue);
             void SetWallNormal(site_t iSiteIndex, const double iNormal[3]);
-            void SetDistanceToWall(site_t iSiteIndex,
-                                   const double iCutDistance[D3Q15::NUMVECTORS - 1]);
+            void SetDistanceToWall(site_t iSiteIndex, const double iCutDistance[D3Q15::NUMVECTORS
+                - 1]);
 
             void SetSharedSiteCount(site_t iSharedCount);
 
@@ -193,14 +197,15 @@ namespace hemelb
             // Function that finds the pointer to the rank on which a particular site
             // resides. If the site is in an empty block, return NULL.
             const proc_t
-            * GetProcIdFromGlobalCoords(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
+            * GetProcIdFromGlobalCoords(const util::Vector3D<site_t> globalSiteCoords) const;
 
             // Function that gets the index of a block from its coordinates.
             site_t GetBlockIdFromBlockCoords(site_t blockI, site_t blockJ, site_t blockK) const;
 
             void GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const;
             site_t GetSiteCoord(site_t block, site_t localSiteCoord) const;
-
+            const util::Vector3D<site_t> GetGlobalCoords(site_t blockNumber, const util::Vector3D<
+                site_t>& localSiteCoords) const;
             unsigned int GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
             void ReadBlock(site_t block, io::XdrReader* reader);

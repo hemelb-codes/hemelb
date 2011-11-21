@@ -175,6 +175,15 @@ namespace hemelb
           return Vector3D(std::numeric_limits<T>::min());
         }
 
+        static Vector3D<T> Unity()
+        {
+          return Vector3D<T> (1);
+        }
+
+        static Vector3D<T> Zero()
+        {
+          return Vector3D<T> (0);
+        }
     };
 
   }
