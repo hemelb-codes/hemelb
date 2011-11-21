@@ -4,7 +4,7 @@
 namespace hemelb{
   namespace reporting{
 
-    void Timers::Reduce(){
+    template <> void Timers::Reduce(){
 
       timers[total].Stop();
       double timings[numberOfTimers];
