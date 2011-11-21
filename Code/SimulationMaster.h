@@ -33,7 +33,7 @@ class SimulationMaster
   private:
     void Initialise();
     void SetupReporting(); // set up the reporting file
-    void PostSimulation(int iTotalTimeSteps,  bool iIsUnstable);
+    void PostSimulation(bool iIsUnstable);
     unsigned int OutputPeriod(unsigned int frequency);
     void HandleActors();
     void ResetUnstableSimulation();
@@ -65,9 +65,6 @@ class SimulationMaster
     hemelb::vis::Control* mVisControl;
 
     std::vector<hemelb::net::IteratedAction*> actors;
-
-    int mImagesWritten;
-    int mSnapshotsWritten;
 
     unsigned int snapshotsPerCycle;
     unsigned int imagesPerCycle;
