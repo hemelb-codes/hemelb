@@ -27,8 +27,8 @@ int main(int argc, char **argv)
   // Add the top suite to the test runner
   CppUnit::TestRunner runner;
 
-  runner.addTest(new hemelb::unittests::lbtests::LbTestSuite());
-  runner.addTest(new hemelb::unittests::vistests::VisTestSuite());
+  CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
+  runner.addTest( registry.makeTest() );
 
   try
   {
