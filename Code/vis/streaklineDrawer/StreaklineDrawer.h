@@ -1,5 +1,5 @@
-#ifndef HEMELB_VIS_STREAKLINEDRAWER_H
-#define HEMELB_VIS_STREAKLINEDRAWER_H
+#ifndef HEMELB_VIS_STREAKLINEDRAWER_STREAKLINEDRAWER_H
+#define HEMELB_VIS_STREAKLINEDRAWER_STREAKLINEDRAWER_H
 
 #include <vector>
 #include <map>
@@ -7,13 +7,13 @@
 #include "constants.h"
 #include "mpiInclude.h"
 
+#include "debug/Debugger.h"
 #include "geometry/LatticeData.h"
 #include "topology/NetworkTopology.h"
 #include "vis/PixelSet.h"
 #include "vis/PixelSetStore.h"
 #include "vis/streaklineDrawer/NeighbouringProcessor.h"
-#include "vis/streaklineDrawer/Particle.h"
-#include "vis/streaklineDrawer/Particles.h"
+#include "vis/streaklineDrawer/ParticleManager.h"
 #include "vis/streaklineDrawer/VelocityField.h"
 #include "vis/streaklineDrawer/VelocitySiteData.h"
 #include "vis/Screen.h"
@@ -36,7 +36,7 @@ namespace hemelb
         public:
           // Constructor and destructor.
           StreaklineDrawer(const geometry::LatticeData& iLatDat,
-                           Screen& iScreen,
+                           const Screen& iScreen,
                            const Viewpoint& iViewpoint,
                            const VisSettings& iVisSettings);
           ~StreaklineDrawer();
@@ -50,36 +50,30 @@ namespace hemelb
           PixelSet<StreakPixel>* Render();
 
           std::vector<Particle> particleSeeds;
-          proc_t *from_proc_id_to_neigh_proc_index;
 
         private:
-          // Functions for updating the velocity field and the particles in it.
-          void updateVelField(int stage_id);
+          // Function for updating the velocity field and the particles in it.
+          void UpdateVelocityFieldForAllParticles();
+          void UpdateVelocityFieldForCommunicatedSites();
+
           void updateParticles();
 
-          // Arrays for communicating between processors.
-          float *v_to_send, *v_to_recv;
-          site_t *s_to_send, *s_to_recv;
-
           // Variables for counting the processors involved etc.
-          site_t shared_vs;
           proc_t procs;
-
-          // Require these for inter-processor comms.
-          MPI_Request *req;
 
           // Private functions for the creation / deletion of particles.
           void createSeedParticles();
 
           // Private functions for inter-proc communication.
-          void communicateSiteIds();
-          void communicateVelocities();
+          void CommunicateSiteIds();
+          void CommunicateVelocities();
 
-          std::vector<NeighbouringProcessor> mNeighbouringProcessors;
+          std::map<proc_t, NeighbouringProcessor> neighbouringProcessors;
+
           const geometry::LatticeData& latDat;
-          Particles mParticles;
-          Screen& mScreen;
-          VelocityField mVelocityField;
+          ParticleManager particleManager;
+          const Screen& mScreen;
+          VelocityField velocityField;
           const Viewpoint& mViewpoint;
           const VisSettings& mVisSettings;
       };
@@ -87,4 +81,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_VIS_STREAKLINEDRAWER_H
+#endif // HEMELB_VIS_STREAKLINEDRAWER_STREAKLINEDRAWER_H
