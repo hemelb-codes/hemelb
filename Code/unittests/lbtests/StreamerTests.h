@@ -24,6 +24,11 @@ namespace hemelb
        */
       class StreamerTests : public CppUnit::TestFixture
       {
+        CPPUNIT_TEST_SUITE( StreamerTests );
+        CPPUNIT_TEST( TestSimpleCollideAndStream );
+        CPPUNIT_TEST( TestFInterpolation );
+        CPPUNIT_TEST( TestSimpleBounceBack );
+        CPPUNIT_TEST_SUITE_END();
         public:
 
           void setUp()
@@ -411,6 +416,7 @@ namespace hemelb
               * simpleBounceBack;
 
       };
+      CPPUNIT_TEST_SUITE_REGISTRATION( StreamerTests );
     }
   }
 }
