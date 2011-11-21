@@ -1,6 +1,5 @@
 #ifndef HEMELB_UNITTESTS_LBTESTS_KERNELTESTS_H
 #define HEMELB_UNITTESTS_LBTESTS_KERNELTESTS_H
-#include <cppunit/extensions/HelperMacros.h>
 
 #include <cstring>
 #include <sstream>

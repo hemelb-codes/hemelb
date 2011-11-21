@@ -1,9 +1,9 @@
-#include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/XmlOutputter.h>
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
 #include <cppunit/TestRunner.h>
 #include <cppunit/TextTestProgressListener.h>
+#include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
 #include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
