@@ -5,7 +5,6 @@
 #include "configuration/CommandLine.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
-#include "reporting/Reporter.h"
 #include "configuration/SimConfig.h"
 #include "io/XdrFileWriter.h"
 namespace hemelb
@@ -16,30 +15,27 @@ namespace hemelb
     {
       public:
         FileManager(configuration::CommandLine & commandLine, const bool &io, const int &processorCount);
-        ~FileManager();
         bool HasProblems() const
         {
           return(!ok);
         }
-        Reporter *Report() {return report;}
-
         const std::string & GetInputFile() const;
         const std::string & GetSnapshotDirectory() const;
         const std::string & GetImageDirectory() const;
+        const std::string & GetReportPath() const;
         void SaveConfiguration(configuration::SimConfig * simConfig);
         void EmptyOutputDirectories();
         hemelb::io::XdrFileWriter * XdrImageWriter(const long int time);
         const std::string SnapshotPath(unsigned long time) const;
       private:
-        void ReportHeader();
         void GuessOutputDir();
         void InitialiseReport(const int & processorCount);
-        Reporter *report;
         std::string outputDir;
         std::string inputFile;
         std::string snapshotDirectory;
         std::string imageDirectory;
         std::string configLeafName;
+        std::string timings_name;
         configuration::CommandLine &options;
         bool ok;
         bool doIo;

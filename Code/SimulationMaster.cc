@@ -48,11 +48,11 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
     Abort();
   }
   simConfig = hemelb::configuration::SimConfig::Load(fileManager->GetInputFile().c_str());
-  //simConfig->Save(fileManager->GetInputFile()+"foo");
   fileManager->SaveConfiguration(simConfig);
-
   Initialise();
-
+  if (IsCurrentProcTheIOProc()){
+    reporter=new hemelb::reporting::Reporter(fileManager->GetReportPath(), fileManager->GetInputFile(), mLbm->TotalFluidSiteCount(),timings);
+  }
 }
 
 /**
@@ -124,6 +124,9 @@ SimulationMaster::~SimulationMaster()
   }
   delete simConfig;
   delete fileManager;
+  if (IsCurrentProcTheIOProc()){
+    delete reporter;
+  }
 }
 
 /**
@@ -331,7 +334,7 @@ void SimulationMaster::WriteLocalImages(){
 
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
-      fileManager->Report()->Image();
+      reporter->Image();
       hemelb::io::XdrFileWriter * writer = fileManager->XdrImageWriter(
           1 + ( (it->second - 1) % mSimulationState->GetTimeStepsPerCycle()));
 
@@ -424,7 +427,7 @@ void SimulationMaster::GenerateNetworkImages(){
   {
     if (IsCurrentProcTheIOProc())
     {
-      fileManager->Report()->TimeStep();
+      reporter->TimeStep();
     }
 
     bool write_snapshot_image = ( (mSimulationState->GetTimeStep() % images_period) == 0)
@@ -503,7 +506,7 @@ void SimulationMaster::GenerateNetworkImages(){
     {
       if (IsCurrentProcTheIOProc())
       {
-        fileManager->Report()->Snapshot();
+        reporter->Snapshot();
       }
       mLbm->WriteConfigParallel(stability, fileManager->SnapshotPath(mSimulationState->GetTimeStep()));
     }
@@ -522,14 +525,16 @@ void SimulationMaster::GenerateNetworkImages(){
     }
     if (mSimulationState->GetTimeStepsPerCycle() > 400000)
     {
-      is_unstable = true;
+      if (IsCurrentProcTheIOProc()){
+        reporter->Stability(false);
+      }
       break;
     }
 
     if (mSimulationState->GetTimeStep() == mSimulationState->GetTimeStepsPerCycle()
         && IsCurrentProcTheIOProc())
     {
-      fileManager->Report()->Cycle();
+      reporter->Cycle();
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
                                                                           mSimulationState->GetCycleId());
@@ -538,8 +543,12 @@ void SimulationMaster::GenerateNetworkImages(){
     }
   }
   timings[hemelb::reporting::Timers::simulation].Stop();
-  PostSimulation(is_unstable);
-
+  timings[hemelb::reporting::Timers::total].Stop();
+    timings.Reduce();
+    if (IsCurrentProcTheIOProc())
+    {
+      reporter->Write();
+    }
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
 }
 
@@ -556,22 +565,5 @@ void SimulationMaster::GenerateNetworkImages(){
    exit(1);
  }
 
- /**
-  * Steps that are taken when the simulation is complete.
-  *
-  * This function writes several bits of timing data to
-  * the timing file.
-  */
- void SimulationMaster::PostSimulation(bool iIsUnstable)
- {
-   timings[hemelb::reporting::Timers::total].Stop();
-   timings.Reduce();
-   if (IsCurrentProcTheIOProc())
-   {
-     fileManager->Report()->Phase1(mLbm->TotalFluidSiteCount(),
-                               iIsUnstable,
-                               timings);
-   }
 
- }
 
