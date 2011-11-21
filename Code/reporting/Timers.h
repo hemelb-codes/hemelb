@@ -3,15 +3,24 @@
 
 #include <vector>
 #include "util/utilityFunctions.h"
+
 namespace hemelb
 {
   namespace reporting
   {
-
-    class Timer
+    class HemeLBClockPolicy
     {
       public:
-        Timer() :
+        static double CurrentTime()
+        {
+          return hemelb::util::myClock();
+        }
+    };
+
+    template<class ClockPolicy> class TimerBase : public ClockPolicy
+    {
+      public:
+        TimerBase() :
             start(0), time(0)
         {
         }
@@ -25,27 +34,24 @@ namespace hemelb
         }
         void Start()
         {
-          start = CurrentTime();
+          start = ClockPolicy::CurrentTime();
         }
         void Stop()
         {
-          time += CurrentTime() - start;
+          time += ClockPolicy::CurrentTime() - start;
         }
       private:
         double start;
         double time;
-        static double CurrentTime()
-        {
-          return hemelb::util::myClock();
-        }
     };
 
     /***
      * Manages a set of timings associated with the run
      */
-    class Timers
+    template<class ClockPolicy> class TimersBase
     {
       public:
+        typedef TimerBase<ClockPolicy> Timer;
         enum TimerName
         {
           total,
@@ -61,7 +67,7 @@ namespace hemelb
           last
         };
         static const unsigned int numberOfTimers = last;
-        Timers() :
+        TimersBase() :
             timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
         {
         }
@@ -92,6 +98,8 @@ namespace hemelb
         std::vector<double> mins;
         std::vector<double> means;
     };
+    typedef hemelb::reporting::TimerBase<hemelb::reporting::HemeLBClockPolicy> Timer;
+    typedef hemelb::reporting::TimersBase<hemelb::reporting::HemeLBClockPolicy> Timers;
   }
 
   static const std::string timerNames[hemelb::reporting::Timers::numberOfTimers] =
