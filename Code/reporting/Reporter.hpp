@@ -5,84 +5,78 @@ namespace hemelb
 {
   namespace reporting
   {
-    template<class TimersPolicy> ReporterBase<TimersPolicy>::ReporterBase(const std::string &name,
+    template<class TimersPolicy, class WriterPolicy> ReporterBase<TimersPolicy, WriterPolicy>::ReporterBase(const std::string &name,
                        const std::string &inputFile,
                        const long int asite_count,
                        TimersPolicy& timers) :
-        cycle_count(0), timestep_count(0), site_count(asite_count), stability(false), timings(timers)
+        WriterPolicy(name),cycle_count(0), timestep_count(0), site_count(asite_count), stability(false), timings(timers)
     {
-      mTimingsFile = fopen(name.c_str(), "w");
-      fprintf(mTimingsFile, "***********************************************************\n");
-      fprintf(mTimingsFile, "Opening config file:\n %s\n", inputFile.c_str());
+      WriterPolicy::Print( "***********************************************************\n");
+      WriterPolicy::Print("Opening config file:\n %s\n", inputFile.c_str());
     }
 
-    template<class TimersPolicy> ReporterBase<TimersPolicy>::~ReporterBase()
-    {
-      fclose(mTimingsFile);
-    }
-
-    template<class TimersPolicy> void ReporterBase<TimersPolicy>::Cycle()
+    template<class TimersPolicy, class WriterPolicy> void ReporterBase<TimersPolicy, WriterPolicy>::Cycle()
     {
       cycle_count++;
-      fprintf(ReportFile(), "cycle id: %u\n", cycle_count);
+      WriterPolicy::Print("cycle id: %u\n", cycle_count);
     }
 
-    template<class TimersPolicy> void ReporterBase<TimersPolicy>::Image()
+    template<class TimersPolicy, class WriterPolicy> void ReporterBase<TimersPolicy, WriterPolicy>::Image()
     {
       image_count++;
-      fprintf(ReportFile(), "Image written: %u\n", image_count);
+      WriterPolicy::Print( "Image written: %u\n", image_count);
     }
 
-    template<class TimersPolicy> void ReporterBase<TimersPolicy>::Snapshot()
+    template<class TimersPolicy, class WriterPolicy> void ReporterBase<TimersPolicy, WriterPolicy>::Snapshot()
     {
       snapshot_count++;
-      fprintf(ReportFile(), "Snapshot written: %u\n", snapshot_count);
+      WriterPolicy::Print( "Snapshot written: %u\n", snapshot_count);
     }
 
-    template<class TimersPolicy> void ReporterBase<TimersPolicy>::Write()
+    template<class TimersPolicy, class WriterPolicy> void ReporterBase<TimersPolicy, WriterPolicy>::Write()
     {
 
-      fprintf(ReportFile(), "\n");
-      fprintf(ReportFile(),
+      WriterPolicy::Print( "\n");
+      WriterPolicy::Print(
               "threads: %i, machines checked: %i\n\n",
               hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(),
               hemelb::topology::NetworkTopology::Instance()->GetMachineCount());
-      fprintf(ReportFile(),
+      WriterPolicy::Print(
               "topology depths checked: %i\n\n",
               hemelb::topology::NetworkTopology::Instance()->GetDepths());
-      fprintf(ReportFile(), "fluid sites: %li\n\n", site_count);
-      fprintf(ReportFile(),
+      WriterPolicy::Print( "fluid sites: %li\n\n", site_count);
+      WriterPolicy::Print(
               "cycles and total time steps: %u, %lu \n\n",
               cycle_count,
               timestep_count);
-      fprintf(ReportFile(),
+      WriterPolicy::Print(
               "time steps per second: %.3f\n\n",
               timestep_count / timings[TimersPolicy::simulation].Get());
 
       if (!stability)
       {
-        fprintf(ReportFile(),
+        WriterPolicy::Print(
                 "Attention: simulation unstable with %lu timesteps/cycle\n",
                 timestep_count / cycle_count);
-        fprintf(ReportFile(), "Simulation terminated\n");
+        WriterPolicy::Print( "Simulation terminated\n");
       }
 
-      fprintf(ReportFile(), "time steps per cycle: %lu\n", timestep_count / cycle_count);
-      fprintf(ReportFile(), "\n");
+      WriterPolicy::Print( "time steps per cycle: %lu\n", timestep_count / cycle_count);
+      WriterPolicy::Print( "\n");
 
-      fprintf(ReportFile(), "\n");
+      WriterPolicy::Print( "\n");
 
-      fprintf(ReportFile(), "\n");
-      fprintf(ReportFile(),
+      WriterPolicy::Print( "\n");
+      WriterPolicy::Print(
               "total time (s):                            %.3f\n\n",
               (timings[TimersPolicy::total].Get()));
 
-      fprintf(ReportFile(), "Sub-domains info:\n\n");
+      WriterPolicy::Print( "Sub-domains info:\n\n");
 
       for (hemelb::proc_t n = 0;
           n < hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(); n++)
       {
-        fprintf(ReportFile(),
+        WriterPolicy::Print(
                 "rank: %lu, fluid sites: %lu\n",
                 (unsigned long) n,
                 (unsigned long) hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor[n]);
@@ -102,12 +96,12 @@ namespace hemelb
                                                         snapshot_count,
                                                         1.0 };
 
-      fprintf(ReportFile(),
+      WriterPolicy::Print(
               "\n\nPer-proc timing data (secs per [simulation,simulation,simulation,simulation,cycle,image,cycle,cycle,snapshot,simulation]): \n\n");
-      fprintf(ReportFile(), "\t\tLocal \tMin \tMean \tMax\n");
+      WriterPolicy::Print( "\t\tLocal \tMin \tMean \tMax\n");
       for (unsigned int ii = 0; ii < TimersPolicy::numberOfTimers; ii++)
       {
-        fprintf(ReportFile(),
+        WriterPolicy::Print(
                 "%s\t\t%.3g\t%.3g\t%.3g\t%.3g\n",
                 timerNames[ii].c_str(),
                 timings[ii].Get(),
