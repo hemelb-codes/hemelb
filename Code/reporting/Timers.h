@@ -3,36 +3,11 @@
 
 #include <vector>
 #include "util/utilityFunctions.h"
-#include "topology/NetworkTopology.h"
+#include "Policies.h"
 namespace hemelb
 {
   namespace reporting
   {
-    class HemeLBClockPolicy
-    {
-      protected:
-        static double CurrentTime()
-        {
-          return hemelb::util::myClock();
-        }
-    };
-
-    class MPICommsPolicy
-    {
-      protected:
-        int Reduce(void *sendbuf,
-                   void *recvbuf,
-                   int count,
-                   MPI_Datatype datatype,
-                   MPI_Op op,
-                   int root,
-                   MPI_Comm comm)
-        {
-          return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
-        }
-
-    };
-
     template<class ClockPolicy> class TimerBase : public ClockPolicy
     {
       public:
