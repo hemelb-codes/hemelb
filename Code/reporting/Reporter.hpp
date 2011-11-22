@@ -5,45 +5,45 @@ namespace hemelb
 {
   namespace reporting
   {
-    template<class TimersPolicy, class WriterPolicy> ReporterBase<TimersPolicy, WriterPolicy>::ReporterBase(const std::string &name,
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> ReporterBase<TimersPolicy, WriterPolicy, CommsPolicy>::ReporterBase(const std::string &name,
                        const std::string &inputFile,
                        const long int asite_count,
                        TimersPolicy& timers) :
-        WriterPolicy(name),cycle_count(0), timestep_count(0), site_count(asite_count), stability(false), timings(timers)
+        WriterPolicy(name),cycle_count(0), snapshot_count(0), image_count(0), timestep_count(0), site_count(asite_count), stability(true), timings(timers)
     {
       WriterPolicy::Print( "***********************************************************\n");
       WriterPolicy::Print("Opening config file:\n %s\n", inputFile.c_str());
     }
 
-    template<class TimersPolicy, class WriterPolicy> void ReporterBase<TimersPolicy, WriterPolicy>::Cycle()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<TimersPolicy, WriterPolicy, CommsPolicy>::Cycle()
     {
       cycle_count++;
       WriterPolicy::Print("cycle id: %u\n", cycle_count);
     }
 
-    template<class TimersPolicy, class WriterPolicy> void ReporterBase<TimersPolicy, WriterPolicy>::Image()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<TimersPolicy, WriterPolicy, CommsPolicy>::Image()
     {
       image_count++;
       WriterPolicy::Print( "Image written: %u\n", image_count);
     }
 
-    template<class TimersPolicy, class WriterPolicy> void ReporterBase<TimersPolicy, WriterPolicy>::Snapshot()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<TimersPolicy, WriterPolicy, CommsPolicy>::Snapshot()
     {
       snapshot_count++;
       WriterPolicy::Print( "Snapshot written: %u\n", snapshot_count);
     }
 
-    template<class TimersPolicy, class WriterPolicy> void ReporterBase<TimersPolicy, WriterPolicy>::Write()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<TimersPolicy, WriterPolicy, CommsPolicy>::Write()
     {
 
       WriterPolicy::Print( "\n");
       WriterPolicy::Print(
               "threads: %i, machines checked: %i\n\n",
-              hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(),
-              hemelb::topology::NetworkTopology::Instance()->GetMachineCount());
+             CommsPolicy::GetProcessorCount(),
+              CommsPolicy::GetMachineCount());
       WriterPolicy::Print(
               "topology depths checked: %i\n\n",
-              hemelb::topology::NetworkTopology::Instance()->GetDepths());
+              CommsPolicy::GetDepths());
       WriterPolicy::Print( "fluid sites: %li\n\n", site_count);
       WriterPolicy::Print(
               "cycles and total time steps: %u, %lu \n\n",
@@ -74,12 +74,12 @@ namespace hemelb
       WriterPolicy::Print( "Sub-domains info:\n\n");
 
       for (hemelb::proc_t n = 0;
-          n < hemelb::topology::NetworkTopology::Instance()->GetProcessorCount(); n++)
+          n < CommsPolicy::GetProcessorCount(); n++)
       {
         WriterPolicy::Print(
                 "rank: %lu, fluid sites: %lu\n",
                 (unsigned long) n,
-                (unsigned long) hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor[n]);
+                (unsigned long) CommsPolicy::FluidSitesOnProcessor(n));
       }
 
       // Note that CycleId is 1-indexed and will have just been incremented when we finish.
