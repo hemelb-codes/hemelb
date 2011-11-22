@@ -2,6 +2,7 @@
 #define HEMELB_REPORTER_H
 
 #include <string>
+#include <stdarg.h>
 #include "configuration/SimConfig.h"
 #include "configuration/CommandLine.h"
 #include "log/Logger.h"
@@ -9,10 +10,31 @@
 #include "reporting/Timers.h"
 namespace hemelb{
   namespace reporting {
-   template<class TimersPolicy> class ReporterBase {
+    // abstracting this policy so we can mock it to test the reporter
+    class FileWriterPolicy {
+      public:
+        FileWriterPolicy(const std::string &path){
+          file = fopen(path.c_str(), "w");
+        }
+        ~FileWriterPolicy()
+        {
+          fclose(file);
+        }
+      protected:
+        void Print(const char * format, ...){
+          std::va_list arg;
+          va_start(arg, format);
+          vfprintf(file,format, arg);
+          va_end(arg);
+        }
+      private:
+        FILE* file;
+    };
+
+
+   template<class TimersPolicy, class WriterPolicy> class ReporterBase : public WriterPolicy {
       public:
         ReporterBase(const std::string &path, const std::string &inputFile, const long int asite_count, TimersPolicy&timers);
-        ~ReporterBase();
         void Cycle();
         void TimeStep(){timestep_count++;}
         void Image();
@@ -20,11 +42,7 @@ namespace hemelb{
         void Write();
         void Stability(bool astability){stability=astability;}
       private:
-        FILE *ReportFile(){
-          return mTimingsFile;
-        }
         bool doIo;
-        FILE *mTimingsFile;
         unsigned int cycle_count;
         unsigned int snapshot_count;
         unsigned int image_count;
@@ -34,7 +52,7 @@ namespace hemelb{
         TimersPolicy &timings;
     };
 
-   typedef ReporterBase<Timers> Reporter;
+   typedef ReporterBase<Timers,FileWriterPolicy> Reporter;
   }
 }
 
