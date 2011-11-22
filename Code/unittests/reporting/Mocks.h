@@ -53,6 +53,31 @@ namespace hemelb
         private:
           unsigned int calls;
       };
+
+      class WriterMock
+      {
+        public:
+          WriterMock(const std::string &path):results(0)
+          {
+            CPPUNIT_ASSERT_EQUAL(std::string("mock_path"),path);
+          }
+          ~WriterMock()
+          {
+          }
+          std::vector<std::string> & Results(){return results;}
+        protected:
+          void Print(const char * format, ...)
+          {
+            char buffer[1000];
+            std::va_list arg;
+            va_start(arg, format);
+            vsprintf(buffer, format, arg);
+            va_end(arg);
+            results.push_back(std::string(buffer));
+          }
+        private:
+           std::vector<std::string> results;
+      };
     }
   }
 }

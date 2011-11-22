@@ -19,12 +19,13 @@ namespace hemelb
       class ReporterTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE(ReporterTests);
+          CPPUNIT_TEST(TestInit);
           CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
-            timers = new Timers();
-            reporter = new ReporterBase<TimersMock>("examplepath","exampleinputfile",1000,*timers);
+            timers = new TimersMock();
+            reporter = new ReporterBase<TimersMock,WriterMock>("mock_path","exampleinputfile",1000,*timers);
           }
 
           void tearDown()
@@ -33,10 +34,13 @@ namespace hemelb
             delete timers;
           }
 
-
+          void TestInit()
+          {
+            CPPUNIT_ASSERT_EQUAL((size_t) 8,reporter->Results().back().find("config file:\n exampleinputfile\n"));
+          }
 
         private:
-          ReporterBase<TimersMock> *reporter;
+          ReporterBase<TimersMock,WriterMock> *reporter;
           TimersMock *timers;
       };
 
