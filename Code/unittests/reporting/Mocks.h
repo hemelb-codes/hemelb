@@ -50,6 +50,18 @@ namespace hemelb
             calls++;
             return 0;
           }
+          size_t FluidSitesOnProcessor(int n){
+            return n*1000;
+          }
+          proc_t GetProcessorCount(){
+            return 5;
+          }
+          unsigned int GetMachineCount(){
+            return 4;
+          }
+          int GetDepths(){
+            return 3;
+          }
         private:
           unsigned int calls;
       };
