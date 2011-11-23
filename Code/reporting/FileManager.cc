@@ -94,7 +94,8 @@ namespace hemelb
         configLeafName=  inputFile.substr(lLastForwardSlash);
         if (outputDir.length() == 0) {
           // no output dir given, defaulting to location of input file.
-          outputDir=inputFile.substr(0, lLastForwardSlash)+"results";
+          // note substr is end-exclusive and start-inclusive
+          outputDir=inputFile.substr(0, lLastForwardSlash+1)+"results";
         }
       }
     }

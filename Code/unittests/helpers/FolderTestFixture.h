@@ -7,35 +7,41 @@ namespace hemelb{
     class FolderTestFixture: public CppUnit::TestFixture {
 
       public:
-      FolderTestFixture(){
-        std::stringstream temp_path_stream;
-        temp_path_stream<<"HemeLBTest"<<time(NULL) << std::flush;
-        temp_path=temp_path_stream.str();
-      }
       void setUp(){
+        std::stringstream temp_path_stream;
+        temp_path_stream<< util::GetTemporaryDir()<<"/"<<"HemeLBTest"<< util::GetUUID() << std::flush;
+        temp_path=temp_path_stream.str();
         // store current location
         origin=util::GetCurrentDir();
-        // move to a temporary folder
-        util::ChangeDirectory(util::GetTemporaryDir());
+
         // create a folder to work in
         util::MakeDirAllRXW(temp_path);
-        util::ChangeDirectory(temp_path);
-
+        MoveToTempdir();
       }
+
       void tearDown(){
-        // return to origin
+        ReturnToOrigin();
         // doesn't matter not to clean up in tempdir.
-        util::ChangeDirectory(origin);
-
       }
+
       protected:
-        void AssertPresent(const std::string &fname){
-          CPPUNIT_ASSERT(util::DoesDirectoryExist(fname.c_str()));
-        }
+      void ReturnToOrigin(){
+        // return to origin
+        util::ChangeDirectory(origin);
+      }
+
+      void MoveToTempdir(){
+        util::ChangeDirectory(GetTempdir());
+      }
+      void AssertPresent(const std::string &fname){
+        CPPUNIT_ASSERT(util::DoesDirectoryExist(fname.c_str()));
+      }
+      const std::string & GetTempdir(){
+        return temp_path;
+      }
       private:
       std::string origin;
       std::string temp_path;
-
     };
   }
 }
