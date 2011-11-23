@@ -29,6 +29,11 @@ namespace hemelb
     return MPI_LONG_LONG;
   }
   template<>
+  MPI_Datatype MpiDataTypeTraits<unsigned long>::RegisterMpiDataType()
+  {
+    return MPI_UNSIGNED_LONG;
+  }
+  template<>
   MPI_Datatype MpiDataTypeTraits<signed char>::RegisterMpiDataType()
   {
     return MPI_SIGNED_CHAR;
