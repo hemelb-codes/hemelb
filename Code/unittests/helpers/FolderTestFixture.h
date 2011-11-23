@@ -1,7 +1,8 @@
 #ifndef HEMELB_UNITTESTS_HELPERS_FOLDERTESTFIXTURE_H
 #define HEMELB_UNITTESTS_HELPERS_FOLDERTESTFIXTURE_H
 #include <cppunit/TestFixture.h>
-#include <ctime>
+#include <cmath>
+#include <iomanip>
 namespace hemelb{
   namespace unittests{
     class FolderTestFixture: public CppUnit::TestFixture {
@@ -9,7 +10,9 @@ namespace hemelb{
       public:
       void setUp(){
         std::stringstream temp_path_stream;
-        temp_path_stream<< util::GetTemporaryDir()<<"/"<<"HemeLBTest"<< util::GetUUID() << std::flush;
+        // next line is a hack to get the build working again
+        // I will try to find a portable uuid solution
+        temp_path_stream<< util::GetTemporaryDir()<<"/"<<"HemeLBTest"<< std::fixed << floor(util::myClock()*100000) << std::flush;
         temp_path=temp_path_stream.str();
         // store current location
         origin=util::GetCurrentDir();

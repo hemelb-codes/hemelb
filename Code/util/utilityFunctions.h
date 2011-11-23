@@ -242,7 +242,6 @@ namespace hemelb
 
     // Returns the number of seconds to 6dp elapsed since the Epoch
     double myClock();
-    std::string GetUUID();
   }
 }
 
