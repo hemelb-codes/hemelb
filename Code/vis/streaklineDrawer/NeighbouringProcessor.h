@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "mpiInclude.h"
+#include "net/net.h"
 #include "util/Vector3D.h"
 #include "vis/streaklineDrawer/Particle.h"
 
@@ -16,53 +16,34 @@ namespace hemelb
       class NeighbouringProcessor
       {
         public:
+          // Constructors
           NeighbouringProcessor();
-
           NeighbouringProcessor(proc_t iID);
 
+          // Functions for communicating particles.
           void AddParticleToSend(const Particle& iParticle);
-
           bool ParticlesToBeRetrieved();
-
           const Particle& PopNextReceivedParticle();
+          void ClearParticleSendingList();
 
-          void PrepareToReceiveParticles();
+          void ExchangeParticleCounts(net::Net& net);
+          void ExchangeParticles(net::Net& net);
 
-          void PrepareToSendParticles();
-
-          void WaitForPreparationToReceiveParticles();
-
-          void SendParticles();
-
-          void WaitForParticlesToBeSent();
-
-          void ReceiveParticles();
-
-          void WaitForParticlesToBeReceived();
-
+          // Functions for communicating velocity data.
           void AddSiteToRequestVelocityDataFor(site_t, site_t, site_t);
-
-          void ExchangeSiteIds();
-
-          void WaitForSiteIdExchange();
-
-          void ExchangeVelocitiesForRequestedSites();
-
-          void WaitForVelocityExchange();
-
-          site_t GetSitesToReceiveCount();
-
-          const util::Vector3D<float>& GetReceivedVelocity(const size_t receivedIndex) const;
-          const util::Vector3D<site_t>& GetSiteCoordsBeingReceived(const size_t receivedIndex) const;
-
+          site_t GetNumberOfSitesRequestedByNeighbour();
+          const util::Vector3D<float>& GetReceivedVelocityField(const size_t receivedIndex) const;
+          const util::Vector3D<site_t>& GetSiteCoordsBeingRequestedByNeighbour(const size_t receivedIndex) const;
           void SetVelocityFieldToSend(const size_t sendIndex,
                                       const util::Vector3D<float>& velocityFieldToSend);
 
-          size_t GetSendingSiteCount() const;
+          const util::Vector3D<site_t>& GetSendingSiteCoorinates(size_t sendIndex) const;
+          size_t GetNumberOfSitesRequestedByThisCore() const;
+          void ClearListOfRequestedSites();
 
-          util::Vector3D<site_t>& GetSiteCoorinates(size_t sendIndex);
-
-          void ClearSendingSites();
+          void ExchangeSiteIdCounts(net::Net& net);
+          void ExchangeSiteIds(net::Net& net);
+          void ExchangeVelocitiesForRequestedSites(net::Net& net);
 
         private:
           size_t numberOfParticlesToSend;
@@ -71,25 +52,16 @@ namespace hemelb
           size_t numberOfParticlesToReceive;
           std::vector<Particle> particlesToReceive;
 
-          site_t receivedSitesCount;
-          site_t sentSitesCount;
+          site_t numberOfSiteBeingRequestedByNeighbour;
+          site_t numberOfSitesRequestedByThisCore;
 
-          std::vector<util::Vector3D<float> > sentVelocityField;
-          std::vector<util::Vector3D<float> > receivedVelocityField;
+          std::vector<util::Vector3D<site_t> > siteCoordsRequestedByThisCore;
+          std::vector<util::Vector3D<site_t> > siteCoordsRequestedByNeighbour;
 
-          std::vector<util::Vector3D<site_t> > siteCoordsToSend;
-          std::vector<util::Vector3D<site_t> > siteCoordsToReceive;
+          std::vector<util::Vector3D<float> > velocityFieldDataForNeighbour;
+          std::vector<util::Vector3D<float> > velocityFieldDataFromNeighbour;
 
           proc_t neighbourRank;
-
-          MPI_Request siteIdSendRequest;
-          MPI_Request siteIdReceiveRequest;
-
-          MPI_Request velocitySendRequest;
-          MPI_Request velocityReceiveRequest;
-
-          MPI_Request sendRequest;
-          MPI_Request receiveRequest;
       };
     }
   }
