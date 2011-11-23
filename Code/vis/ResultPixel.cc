@@ -129,7 +129,6 @@ namespace hemelb
         {
           if (!hasGlyph)
           {
-
             density_col[0] += 1.0F;
             density_col[1] += 1.0F;
             density_col[2] += 1.0F;

@@ -1,5 +1,7 @@
-#ifndef HEMELB_VIS_PARTICLE_H
-#define HEMELB_VIS_PARTICLE_H
+#ifndef HEMELB_VIS_STREAKLINEDRAWER_PARTICLE_H
+#define HEMELB_VIS_STREAKLINEDRAWER_PARTICLE_H
+
+#include "util/Vector3D.h"
 
 namespace hemelb
 {
@@ -14,10 +16,8 @@ namespace hemelb
 
           Particle(float iX, float iY, float iZ, unsigned int iInletId);
 
-          Particle(float iX, float iY, float iZ, float iVel, unsigned int iInletId);
-
-          float x, y, z;
-          float vx, vy, vz;
+          util::Vector3D<float> position;
+          util::Vector3D<float> velocity;
           float vel;
           unsigned int inletID;
       };
@@ -26,4 +26,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_VIS_PARTICLE_H
+#endif // HEMELB_VIS_STREAKLINEDRAWER_PARTICLE_H

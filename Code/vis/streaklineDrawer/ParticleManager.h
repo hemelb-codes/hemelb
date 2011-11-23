@@ -1,7 +1,8 @@
-#ifndef HEMELB_VIS_PARTICLES_H
-#define HEMELB_VIS_PARTICLES_H
+#ifndef HEMELB_VIS_STREAKLINEDRAWER_PARTICLEMANAGER_H
+#define HEMELB_VIS_STREAKLINEDRAWER_PARTICLEMANAGER_H
 
 #include <vector>
+#include <map>
 
 #include "constants.h"
 #include "mpiInclude.h"
@@ -20,36 +21,33 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      class Particles
+      class ParticleManager
       {
         public:
-          Particles(std::vector<NeighbouringProcessor>& iNeighbouringProcessors);
+          // Constructor
+          ParticleManager(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors);
 
+          // Functions for manipulating the particle store
           void AddParticle(const Particle& iParticle);
-
           std::vector<Particle>& GetParticles();
-
-          size_t GetNumberOfParticles();
-
+          size_t GetNumberOfLocalParticles() const;
           void DeleteParticle(site_t iIndex);
-
           void DeleteAll();
 
+          // Function for updating the particles' positions.
           void ProcessParticleMovement();
 
+          // Function for moving the particles between cores.
           void CommunicateParticles(const geometry::LatticeData& iLatDat,
-                                    MPI_Request* iReq,
-                                    proc_t iProcs,
-                                    VelocityField& iVelocityField,
-                                    proc_t* iFromProcIDToNeighbouringProcessorIndex);
+                                    VelocityField& iVelocityField);
 
         private:
-          std::vector<Particle> mParticles;
-          std::vector<NeighbouringProcessor>& mNeighbouringProcessors;
+          std::vector<Particle> particles;
+          std::map<proc_t, NeighbouringProcessor>& neighbouringProcessors;
 
       };
     }
   }
 }
 
-#endif // HEMELB_VIS_STREAKLINEDRAWER_H
+#endif // HEMELB_VIS_STREAKLINEDRAWER_PARTICLEMANAGER_H
