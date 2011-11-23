@@ -15,11 +15,11 @@ namespace hemelb
 
       protected:
         void Attach(void);
-        NullDebugger(char* executable);
-        friend Debugger* PlatformDebuggerFactory(char* executable);
+        NullDebugger(const char* const executable);
+        friend Debugger* PlatformDebuggerFactory(const char* const executable);
     };
 
-    Debugger* PlatformDebuggerFactory(char* executable);
+    Debugger* PlatformDebuggerFactory(const char* const executable);
   }
 }
 

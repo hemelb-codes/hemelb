@@ -28,6 +28,12 @@ namespace hemelb
        */
       class CollisionTests : public CppUnit::TestFixture
       {
+        CPPUNIT_TEST_SUITE( CollisionTests );
+        CPPUNIT_TEST( TestNonZeroVelocityEquilibriumFixedDensity );
+        CPPUNIT_TEST( TestZeroVelocityEquilibriumFixedDensity );
+        CPPUNIT_TEST( TestZeroVelocityEquilibrium );
+        CPPUNIT_TEST( TestNormal );
+        CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -317,6 +323,7 @@ namespace hemelb
           lb::collisions::ZeroVelocityEquilibrium<lb::kernels::LBGK>* zeroVEqm;
           lb::collisions::Normal<lb::kernels::LBGK>* normal;
       };
+      CPPUNIT_TEST_SUITE_REGISTRATION( CollisionTests );
     }
   }
 }
