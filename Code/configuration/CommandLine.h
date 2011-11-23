@@ -12,7 +12,7 @@ namespace hemelb{
        */
     class CommandLine {
       public:
-        CommandLine(int aargc, char **aargv);
+        CommandLine(int aargc, const char *const *const aargv);
         void PrintUsage();
         unsigned int NumberOfSnapshotsPerCycle() const {
           return(snapshotsPerCycle);
@@ -32,7 +32,7 @@ namespace hemelb{
         int ArgumentCount() const {
           return(argc);
         }
-        char ** Arguments() { // Should try to make this const
+        const char *const *const Arguments() {
           return(argv);
         }
         bool HasProblems() {
@@ -45,7 +45,7 @@ namespace hemelb{
         unsigned int imagesPerCycle;
         int steeringSessionId;
         int argc;
-        char ** argv;
+        const char *const *const argv;
         bool ok;
     };
   }

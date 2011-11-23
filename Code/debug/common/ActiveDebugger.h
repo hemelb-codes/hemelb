@@ -27,7 +27,7 @@ namespace hemelb
         typedef std::vector<std::string> VoS;// Vector of Strings
 
         // C'tor
-        ActiveDebugger(char* executable);
+        ActiveDebugger(const char* const executable);
 
         bool mAmAttached;// Indicate attachment state
         VoI* mPIds;// vector of process IDs
