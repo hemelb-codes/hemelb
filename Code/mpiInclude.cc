@@ -28,11 +28,13 @@ namespace hemelb
   {
     return MPI_LONG_LONG;
   }
+#ifdef __APPLE__
   template<>
-  MPI_Datatype MpiDataTypeTraits<unsigned long>::RegisterMpiDataType()
+  MPI_Datatype MpiDataTypeTraits<size_t>::RegisterMpiDataType()
   {
     return MPI_UNSIGNED_LONG;
   }
+#endif
   template<>
   MPI_Datatype MpiDataTypeTraits<signed char>::RegisterMpiDataType()
   {
