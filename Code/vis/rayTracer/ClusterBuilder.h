@@ -250,9 +250,6 @@ namespace hemelb
           //Adds "flow-field" data to the cluster
           void ProcessCluster(unsigned int clusterId)
           {
-            hemelb::log::Logger::Log<hemelb::log::Debug, hemelb::log::OnePerCore>("Examining cluster id = %u",
-                                                                                  (unsigned int) clusterId);
-
             ClusterType& cluster(mClusters[clusterId]);
 
             cluster.ResizeVectors();

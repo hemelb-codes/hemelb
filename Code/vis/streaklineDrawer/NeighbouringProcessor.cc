@@ -11,135 +11,155 @@ namespace hemelb
     namespace streaklinedrawer
     {
 
-      NeighbouringProcessor::NeighbouringProcessor(proc_t iID) :
-          mID(iID)
+      NeighbouringProcessor::NeighbouringProcessor()
       {
       }
 
-      void NeighbouringProcessor::AddParticleToSend(const Particle& iParticle)
+      NeighbouringProcessor::NeighbouringProcessor(proc_t neighbourRankIn) :
+        neighbourRank(neighbourRankIn)
       {
-        mParticlesToSend.push_back(iParticle);
+      }
+
+      void NeighbouringProcessor::AddParticleToSend(const Particle& particle)
+      {
+        particlesToSend.push_back(particle);
       }
 
       bool NeighbouringProcessor::ParticlesToBeRetrieved()
       {
-        return (mParticlesToReceive.size() > 0);
+        return (particlesToReceive.size() > 0);
       }
 
-      const Particle& NeighbouringProcessor::RetrieveNextReceivedParticle()
+      const Particle& NeighbouringProcessor::PopNextReceivedParticle()
       {
-        const Particle& lParticle = mParticlesToReceive.back();
-        mParticlesToReceive.pop_back();
+        const Particle& lParticle = particlesToReceive.back();
+        particlesToReceive.pop_back();
         return lParticle;
       }
 
-      void NeighbouringProcessor::PrepareToReceiveParticles()
+      void NeighbouringProcessor::ExchangeParticleCounts(net::Net& net)
       {
-        MPI_Irecv(&mNumberOfParticlesToReceive, 1, //Count
-                  MpiDataType<site_t>(), //Type
-                  mID, //Destination
-                  30, //Tag
-                  MPI_COMM_WORLD, //Comm
-                  &mReceiveRequest); //Request
+        numberOfParticlesToSend = particlesToSend.size();
+        net.RequestSend(&numberOfParticlesToSend, 1, neighbourRank);
+        net.RequestReceive(&numberOfParticlesToReceive, 1, neighbourRank);
       }
 
-      void NeighbouringProcessor::PrepareToSendParticles()
+      void NeighbouringProcessor::ClearParticleSendingList()
       {
-        site_t particlesToSend = mParticlesToSend.size();
-        MPI_Isend(&particlesToSend, 1, // Count
-                  MpiDataType<site_t>(), //Type
-                  mID, //Destination
-                  30, //Tag
-                  MPI_COMM_WORLD, // Com
-                  &mSendRequest); // Request
+        particlesToSend.clear();
       }
 
-      void NeighbouringProcessor::WaitForPreparationToReceiveParticles()
+      void NeighbouringProcessor::ExchangeParticles(net::Net& net)
       {
-        MPI_Wait(&mReceiveRequest, MPI_STATUS_IGNORE);
-      }
-
-      void NeighbouringProcessor::SendParticles()
-      {
-        if (mParticlesToSend.size() > 0)
+        if (numberOfParticlesToReceive > 0)
         {
-          MPI_Isend(&mParticlesToSend[0], mParticlesToSend.size(), //Count
-                    MpiDataType<Particle>(), //Type
-                    mID, //Destination
-                    40, //Tag
-                    MPI_COMM_WORLD, //Comm
-                    &mSendRequest); //Request
+          particlesToReceive.resize(numberOfParticlesToReceive);
+
+          net.RequestReceive(&particlesToReceive[0],
+                             (int) numberOfParticlesToReceive,
+                             neighbourRank);
+        }
+
+        if (particlesToSend.size() > 0)
+        {
+          net.RequestSend(&particlesToSend[0], (int) particlesToSend.size(), neighbourRank); //Request
         }
       }
 
-      void NeighbouringProcessor::WaitForParticlesToBeSent()
+      void NeighbouringProcessor::AddSiteToRequestVelocityDataFor(site_t siteI,
+                                                                  site_t siteJ,
+                                                                  site_t siteK)
       {
-        if (mParticlesToSend.size() > 0)
-        {
-          MPI_Wait(&mSendRequest, MPI_STATUS_IGNORE);
-        }
-        mParticlesToSend.clear();
+        siteCoordsRequestedByThisCore.push_back(util::Vector3D<site_t>(siteI, siteJ, siteK));
       }
 
-      void NeighbouringProcessor::ReceiveParticles()
+      void NeighbouringProcessor::ExchangeSiteIdCounts(net::Net& net)
       {
+        numberOfSitesRequestedByThisCore = siteCoordsRequestedByThisCore.size();
 
-        mParticlesToReceive.resize(mNumberOfParticlesToReceive);
+        net.RequestReceive(&numberOfSiteBeingRequestedByNeighbour, 1, neighbourRank);
+        net.RequestSend(&numberOfSitesRequestedByThisCore, 1, neighbourRank);
+      }
 
-        if (mNumberOfParticlesToReceive > 0)
+      void NeighbouringProcessor::ExchangeSiteIds(net::Net& net)
+      {
+        if (numberOfSiteBeingRequestedByNeighbour > 0)
         {
-          MPI_Irecv(&mParticlesToReceive[0], mNumberOfParticlesToReceive, //Count
-                    MpiDataType<Particle>(), //Type
-                    mID, //Source
-                    40, //Tag
-                    MPI_COMM_WORLD, //Comm
-                    &mReceiveRequest); //Request
+          siteCoordsRequestedByNeighbour.resize(numberOfSiteBeingRequestedByNeighbour);
+          velocityFieldDataForNeighbour.resize(numberOfSiteBeingRequestedByNeighbour);
+
+          net.RequestReceive(&siteCoordsRequestedByNeighbour[0],
+                             (int) numberOfSiteBeingRequestedByNeighbour,
+                             neighbourRank);
+        }
+
+        if (numberOfSitesRequestedByThisCore > 0)
+        {
+          velocityFieldDataFromNeighbour.resize(numberOfSitesRequestedByThisCore);
+
+          net.RequestSend(&siteCoordsRequestedByThisCore[0],
+                          (int) numberOfSitesRequestedByThisCore,
+                          neighbourRank);
         }
       }
 
-      void NeighbouringProcessor::WaitForParticlesToBeReceived()
+      void NeighbouringProcessor::ExchangeVelocitiesForRequestedSites(net::Net& net)
       {
-        if (mParticlesToReceive.size() > 0)
+        if (numberOfSitesRequestedByThisCore > 0)
         {
-          MPI_Wait(&mReceiveRequest, MPI_STATUS_IGNORE);
+          velocityFieldDataFromNeighbour.resize(numberOfSitesRequestedByThisCore);
+
+          net.RequestReceive(&velocityFieldDataFromNeighbour[0],
+                             (int) numberOfSitesRequestedByThisCore,
+                             neighbourRank);
+        }
+
+        if (numberOfSiteBeingRequestedByNeighbour > 0)
+        {
+          velocityFieldDataForNeighbour.resize(numberOfSiteBeingRequestedByNeighbour);
+
+          net.RequestSend(&velocityFieldDataForNeighbour[0],
+                          (int) numberOfSiteBeingRequestedByNeighbour,
+                          neighbourRank);
         }
       }
+
+      site_t NeighbouringProcessor::GetNumberOfSitesRequestedByNeighbour()
+      {
+        return siteCoordsRequestedByNeighbour.size();
+      }
+
+      const util::Vector3D<float>& NeighbouringProcessor::GetReceivedVelocityField(const size_t receivedIndex) const
+      {
+        return velocityFieldDataFromNeighbour[receivedIndex];
+      }
+
+      const util::Vector3D<site_t>& NeighbouringProcessor::GetSiteCoordsBeingRequestedByNeighbour(const size_t receivedIndex) const
+      {
+        return siteCoordsRequestedByNeighbour[receivedIndex];
+      }
+
+      void NeighbouringProcessor::SetVelocityFieldToSend(const size_t sendIndex,
+                                                         const util::Vector3D<float>& velocityFieldToSend)
+      {
+        velocityFieldDataForNeighbour[sendIndex] = velocityFieldToSend;
+      }
+
+      size_t NeighbouringProcessor::GetNumberOfSitesRequestedByThisCore() const
+      {
+        return siteCoordsRequestedByThisCore.size();
+      }
+
+      const util::Vector3D<site_t>& NeighbouringProcessor::GetSendingSiteCoorinates(size_t sendIndex) const
+      {
+        return siteCoordsRequestedByThisCore[sendIndex];
+      }
+
+      void NeighbouringProcessor::ClearListOfRequestedSites()
+      {
+        siteCoordsRequestedByThisCore.clear();
+      }
+
     }
-  }
-
-  template<>
-  MPI_Datatype MpiDataTypeTraits<hemelb::vis::streaklinedrawer::Particle>::RegisterMpiDataType()
-  {
-    const int elementCount = 7;
-    int elementBlockLengths[elementCount] = { 1, 1, 1, 1, 1, 1, 1 };
-
-    MPI_Datatype elementTypes[elementCount] = { MPI_LB,
-                                                    MPI_FLOAT,
-                                                    MPI_FLOAT,
-                                                    MPI_FLOAT,
-                                                    MPI_FLOAT,
-                                                    MPI_UNSIGNED,
-                                                    MPI_UB };
-
-    MPI_Aint elementDisplacements[elementCount];
-
-    vis::streaklinedrawer::Particle particle[2];
-
-    MPI_Address(&particle[0], &elementDisplacements[0]);
-    MPI_Address(&particle[0].x, &elementDisplacements[1]);
-    MPI_Address(&particle[0].y, &elementDisplacements[2]);
-    MPI_Address(&particle[0].z, &elementDisplacements[3]);
-    MPI_Address(&particle[0].vel, &elementDisplacements[4]);
-    MPI_Address(&particle[0].inletID, &elementDisplacements[5]);
-    MPI_Address(&particle[1], &elementDisplacements[6]);
-     for (int element = elementCount - 1; element >= 0; element--) {
-       elementDisplacements[element] -= elementDisplacements[0];
-     }
-
-
-    MPI_Datatype type;
-    MPI_Type_struct(elementCount, elementBlockLengths, elementDisplacements, elementTypes, &type);
-    MPI_Type_commit(&type);
-    return type;
   }
 }

@@ -1,7 +1,8 @@
-#ifndef HEMELB_VIS_VELOCITYFIELD_H
-#define HEMELB_VIS_VELOCITYFIELD_H
+#ifndef HEMELB_VIS_STREAKLINEDRAWER_VELOCITYFIELD_H
+#define HEMELB_VIS_STREAKLINEDRAWER_VELOCITYFIELD_H
 
 #include <vector>
+#include <map>
 
 #include "constants.h"
 #include "mpiInclude.h"
@@ -18,60 +19,55 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      class StreaklineDrawer;
-
       class VelocityField
       {
         public:
-          VelocityField(std::vector<NeighbouringProcessor>& iNeighbouringProcessors);
+          VelocityField(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors);
 
-          void BuildVelocityField(const geometry::LatticeData& iLatDat,
-                                  StreaklineDrawer* iStreaklineDrawer);
+          void BuildVelocityField(const geometry::LatticeData& latDat);
 
-          bool BlockContainsData(size_t iBlockNumber);
+          bool BlockContainsData(size_t iBlockNumber) const;
 
-          VelocitySiteData& GetSiteData(size_t iBlockNumber, size_t iSiteNumber);
+          VelocitySiteData* GetVelocitySiteData(const geometry::LatticeData& latDat,
+                                                const util::Vector3D<site_t>& location);
 
-          VelocitySiteData* velSiteDataPointer(const geometry::LatticeData& iLatDat,
-                                               site_t site_i,
-                                               site_t site_j,
-                                               site_t site_k);
+          void GetVelocityFieldAroundPoint(const util::Vector3D<site_t> location,
+                                           const geometry::LatticeData& latDat,
+                                           util::Vector3D<float> localVelocityField[2][2][2]);
 
-          // Counter keeps track of the number of VelSiteDatas created
-          site_t counter;
+          util::Vector3D<float>
+          InterpolateVelocityForPoint(const util::Vector3D<float> position,
+                                      const util::Vector3D<float> localVelocityField[2][2][2]) const;
 
-          void localVelField(site_t iX,
-                             site_t iY,
-                             site_t iZ,
-                             float v[2][2][2][3],
-                             int *is_interior,
-                             const geometry::LatticeData& iLatDat,
-                             StreaklineDrawer* iStreaklineDrawer);
+          void InvalidateAllCalculatedVelocities();
 
-          // Private functions for initialising the velocity field.
-          void initializeVelFieldBlock(const geometry::LatticeData& iLatDat,
-                                       site_t site_i,
-                                       site_t site_j,
-                                       site_t site_k,
-                                       proc_t proc_id,
-                                       StreaklineDrawer* iStreaklineDrawer);
+          void UpdateLocalField(const util::Vector3D<site_t>& position,
+                                const geometry::LatticeData& latDat);
 
-          void GetVelocityAtPoint(float x,
-                                  float y,
-                                  float z,
-                                  float v[2][2][2][3],
-                                  float interp_v[3]);
+          bool NeededFromNeighbour(const util::Vector3D<site_t> location,
+                                   const geometry::LatticeData& latDat,
+                                   proc_t* sourceProcessor);
 
         private:
+          void UpdateLocalField(VelocitySiteData* localVelocitySiteData,
+                                const geometry::LatticeData& latDat);
 
-          //Vector containing VelocityFields
+          // Counter to make sure the velocity field blocks are correct for the current iteration.
+          site_t counter;
+
+          VelocitySiteData& GetSiteData(site_t iBlockNumber, site_t iSiteNumber);
+
+          void InitializeVelocityFieldBlock(const geometry::LatticeData& latDat,
+                                            const util::Vector3D<site_t> location,
+                                            const proc_t proc_id);
+
+          // Vector containing VelocityFields
           std::vector<std::vector<VelocitySiteData> > velocityField;
-
-          std::vector<NeighbouringProcessor>& neighbouringProcessors;
+          std::map<proc_t, NeighbouringProcessor>& neighbouringProcessors;
 
       };
     }
   }
 }
 
-#endif // HEMELB_VIS_STREAKLINEDRAWER_H
+#endif // HEMELB_VIS_STREAKLINEDRAWER_VELOCITYFIELD_H

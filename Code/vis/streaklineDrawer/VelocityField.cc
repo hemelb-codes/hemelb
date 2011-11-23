@@ -4,7 +4,6 @@
 
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
-#include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/streaklineDrawer/VelocityField.h"
 
 namespace hemelb
@@ -13,19 +12,16 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      VelocityField::VelocityField(std::vector<NeighbouringProcessor>& neighbouringProcessorsIn) :
-        neighbouringProcessors(neighbouringProcessorsIn)
+      VelocityField::VelocityField(std::map<proc_t, NeighbouringProcessor>& neighbouringProcessorsIn) :
+        counter(0), neighbouringProcessors(neighbouringProcessorsIn)
       {
-        counter = 1;
       }
 
-      void VelocityField::BuildVelocityField(const geometry::LatticeData& latDat,
-                                             StreaklineDrawer* streaklineDrawer)
+      void VelocityField::BuildVelocityField(const geometry::LatticeData& latDat)
       {
         velocityField.resize(latDat.GetBlockCount());
 
-        site_t inlet_sites = 0;
-
+        // Iterate over each block with some sites on this rank.
         geometry::BlockTraverser blockTraverser(latDat);
         do
         {
@@ -39,12 +35,14 @@ namespace hemelb
           geometry::SiteTraverser siteTraverser(latDat);
           do
           {
+            // Only interested if the site lives on this rank.
             if (topology::NetworkTopology::Instance()->GetLocalRank()
                 != block->ProcessorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
             {
               continue;
             }
 
+            // Calculate the bounds of the unit cube around the current site (within the lattice)
             const site_t startI =
                 util::NumericalFunctions::max<site_t>(0,
                                                       blockTraverser.GetX()
@@ -81,97 +79,57 @@ namespace hemelb
                                                           * blockTraverser.GetBlockSize()
                                                           + siteTraverser.GetZ() + 1);
 
+            // Iterate over the sites in the unit cube.
             for (site_t neigh_i = startI; neigh_i <= endI; neigh_i++)
             {
               for (site_t neigh_j = startJ; neigh_j <= endJ; neigh_j++)
               {
                 for (site_t neigh_k = startK; neigh_k <= endK; neigh_k++)
                 {
-                  const proc_t* neigh_proc_id = latDat.GetProcIdFromGlobalCoords(neigh_i,
-                                                                                 neigh_j,
-                                                                                 neigh_k);
+                  // Get the rank that the neighbour lives on.
+                  const proc_t* neigh_proc_id = latDat.GetProcIdFromGlobalCoords(util::Vector3D<
+                      site_t>(neigh_i, neigh_j, neigh_k));
 
+                  // If we have data for it, we should initialise a block in the velocity field
+                  // for the neighbour site.
                   if (neigh_proc_id == NULL || *neigh_proc_id == BIG_NUMBER2)
                   {
                     continue;
                   }
 
-                  initializeVelFieldBlock(latDat,
-                                          neigh_i,
-                                          neigh_j,
-                                          neigh_k,
-                                          *neigh_proc_id,
-                                          streaklineDrawer);
+                  InitializeVelocityFieldBlock(latDat,
+                                               util::Vector3D<site_t>(neigh_i, neigh_j, neigh_k),
+                                               *neigh_proc_id);
 
+                  // If the neighbour is on this rank, ignore it.
                   if (topology::NetworkTopology::Instance()->GetLocalRank() == *neigh_proc_id)
                   {
                     continue;
                   }
 
-                  VelocitySiteData* vel_site_data_p = velSiteDataPointer(latDat,
-                                                                         neigh_i,
-                                                                         neigh_j,
-                                                                         neigh_k);
+                  // If it's on another rank, make sure that we have a NeighbouringProcessor object
+                  // for it.
+                  VelocitySiteData
+                      * vel_site_data_p = GetVelocitySiteData(latDat,
+                                                              util::Vector3D<site_t>(neigh_i,
+                                                                                     neigh_j,
+                                                                                     neigh_k));
 
-                  if (vel_site_data_p->counter == counter)
+                  if (neighbouringProcessors.count(*neigh_proc_id) == 0)
                   {
-                    continue;
+                    NeighbouringProcessor newProc(*neigh_proc_id);
+                    neighbouringProcessors[*neigh_proc_id] = newProc;
                   }
-
-                  vel_site_data_p->counter = counter;
-
-                  bool seenSelf = false;
-                  for (size_t mm = 0; mm < neighbouringProcessors.size() && !seenSelf; mm++)
-                  {
-                    if (*neigh_proc_id == neighbouringProcessors[mm].mID)
-                    {
-                      seenSelf = true;
-                      ++neighbouringProcessors[mm].send_vs;
-                    }
-                  }
-                  if (seenSelf)
-                  {
-                    continue;
-                  }
-
-                  NeighbouringProcessor newParticle(*neigh_proc_id);
-
-                  newParticle.send_vs = 1;
-                  neighbouringProcessors.push_back(newParticle);
                 }
               }
             }
-
-            site_t siteIndex = block->site_data[siteTraverser.GetCurrentIndex()];
-
-            // if the lattice site is not an inlet
-            if (latDat.GetSiteType(siteIndex) != geometry::LatticeData::INLET_TYPE)
-            {
-              continue;
-            }
-            ++inlet_sites;
-
-            if (inlet_sites % 50 != 0)
-            {
-              continue;
-            }
-
-            streaklineDrawer->particleSeeds.push_back(Particle(static_cast<float> (blockTraverser.GetX()
-                                                                   * blockTraverser.GetBlockSize()
-                                                                   + siteTraverser.GetX()),
-                                                               static_cast<float> (blockTraverser.GetY()
-                                                                   * blockTraverser.GetBlockSize()
-                                                                   + siteTraverser.GetY()),
-                                                               static_cast<float> (blockTraverser.GetZ()
-                                                                   * blockTraverser.GetBlockSize()
-                                                                   + siteTraverser.GetZ()),
-                                                               latDat.GetBoundaryId(siteIndex)));
-
           }
           while (siteTraverser.TraverseOne());
         }
         while (blockTraverser.TraverseOne());
 
+        // Iterate over the blocks, updating the value of the counter variable wherever
+        // there is velocity field data.
         for (site_t n = 0; n < latDat.GetBlockCount(); n++)
         {
           if (velocityField[n].empty())
@@ -179,47 +137,43 @@ namespace hemelb
             continue;
           }
 
-          for (site_t m = 0; m < latDat.GetSitesPerBlockVolumeUnit(); m++)
-          {
-            velocityField[n][m].counter = counter;
-          }
           if (latDat.GetBlock(n)->site_data == NULL)
+          {
             continue;
+          }
 
+          // Update the site id on each velocity field unit as required.
           for (site_t m = 0; m < latDat.GetSitesPerBlockVolumeUnit(); m++)
           {
             velocityField[n][m].site_id = latDat.GetBlock(n)->site_data[m];
           }
         }
-
-        counter = 0;
       }
 
-      bool VelocityField::BlockContainsData(size_t blockNumber)
+      bool VelocityField::BlockContainsData(size_t blockNumber) const
       {
         return !velocityField[blockNumber].empty();
       }
 
-      VelocitySiteData& VelocityField::GetSiteData(size_t blockNumber, size_t siteNumber)
+      VelocitySiteData& VelocityField::GetSiteData(site_t blockNumber, site_t siteNumber)
       {
         return velocityField[blockNumber][siteNumber];
       }
 
       // Returns the velocity site data for a given index, or NULL if the index isn't valid / has
       // no data.
-      VelocitySiteData* VelocityField::velSiteDataPointer(const geometry::LatticeData& latDat,
-                                                          site_t site_i,
-                                                          site_t site_j,
-                                                          site_t site_k)
+      VelocitySiteData* VelocityField::GetVelocitySiteData(const geometry::LatticeData& latDat,
+                                                           const util::Vector3D<site_t>& location)
       {
-        if (site_i >= latDat.GetXSiteCount() || site_j >= latDat.GetYSiteCount() || site_k
-            >= latDat.GetZSiteCount())
+        if (!latDat.IsValidLatticeSite(location.x, location.y, location.z))
         {
           return NULL;
         }
-        site_t i = site_i >> latDat.GetLog2BlockSize();
-        site_t j = site_j >> latDat.GetLog2BlockSize();
-        site_t k = site_k >> latDat.GetLog2BlockSize();
+
+        // TODO this stuff should be encapsulated in the LatticeData
+        site_t i = location.x >> latDat.GetLog2BlockSize();
+        site_t j = location.y >> latDat.GetLog2BlockSize();
+        site_t k = location.z >> latDat.GetLog2BlockSize();
 
         site_t block_id = latDat.GetBlockIdFromBlockCoords(i, j, k);
 
@@ -227,9 +181,10 @@ namespace hemelb
         {
           return NULL;
         }
-        site_t ii = site_i - (i << latDat.GetLog2BlockSize());
-        site_t jj = site_j - (j << latDat.GetLog2BlockSize());
-        site_t kk = site_k - (k << latDat.GetLog2BlockSize());
+
+        site_t ii = location.x - (i << latDat.GetLog2BlockSize());
+        site_t jj = location.y - (j << latDat.GetLog2BlockSize());
+        site_t kk = location.z - (k << latDat.GetLog2BlockSize());
 
         site_t site_id = ( ( (ii << latDat.GetLog2BlockSize()) + jj) << latDat.GetLog2BlockSize())
             + kk;
@@ -238,16 +193,14 @@ namespace hemelb
       }
 
       // Function to initialise the velocity field at given coordinates.
-      void VelocityField::initializeVelFieldBlock(const geometry::LatticeData& latDat,
-                                                  site_t site_i,
-                                                  site_t site_j,
-                                                  site_t site_k,
-                                                  proc_t proc_id,
-                                                  StreaklineDrawer* streaklineDrawer)
+      void VelocityField::InitializeVelocityFieldBlock(const geometry::LatticeData& latDat,
+                                                       const util::Vector3D<site_t> location,
+                                                       const proc_t proc_id)
       {
-        site_t i = site_i >> latDat.GetLog2BlockSize();
-        site_t j = site_j >> latDat.GetLog2BlockSize();
-        site_t k = site_k >> latDat.GetLog2BlockSize();
+        // TODO this stuff should be encapsulated in the LatticeData
+        site_t i = location.x >> latDat.GetLog2BlockSize();
+        site_t j = location.y >> latDat.GetLog2BlockSize();
+        site_t k = location.z >> latDat.GetLog2BlockSize();
 
         site_t block_id = latDat.GetBlockIdFromBlockCoords(i, j, k);
 
@@ -257,9 +210,9 @@ namespace hemelb
               = std::vector<VelocitySiteData>(latDat.GetSitesPerBlockVolumeUnit());
         }
 
-        site_t ii = site_i - (i << latDat.GetLog2BlockSize());
-        site_t jj = site_j - (j << latDat.GetLog2BlockSize());
-        site_t kk = site_k - (k << latDat.GetLog2BlockSize());
+        site_t ii = location.x - (i << latDat.GetLog2BlockSize());
+        site_t jj = location.y - (j << latDat.GetLog2BlockSize());
+        site_t kk = location.z - (k << latDat.GetLog2BlockSize());
 
         site_t site_id = ( ( (ii << latDat.GetLog2BlockSize()) + jj) << latDat.GetLog2BlockSize())
             + kk;
@@ -267,126 +220,152 @@ namespace hemelb
       }
 
       // Populate the matrix v with all the velocity field data at each index.
-      void VelocityField::localVelField(site_t x,
-                                        site_t y,
-                                        site_t z,
-                                        float v[2][2][2][3],
-                                        int *is_interior,
-                                        const geometry::LatticeData& latDat,
-                                        StreaklineDrawer* streaklineDrawer)
+      // Returns true if this the area resides entirely on this core.
+      void VelocityField::GetVelocityFieldAroundPoint(const util::Vector3D<site_t> location,
+                                                      const geometry::LatticeData& latDat,
+                                                      util::Vector3D<float> localVelocityField[2][2][2])
       {
-        /*
-         site_t site_i = (site_t) iStreaklineDrawer->mParticleVec[p_index].x;
-         site_t site_j = (site_t) iStreaklineDrawer->mParticleVec[p_index].y;
-         site_t site_k = (site_t) iStreaklineDrawer->mParticleVec[p_index].z;*/
-
-        *is_interior = 1;
-
         const proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
 
-        for (unsigned int i = 0; i < 2; i++)
+        for (int unitGridI = 0; unitGridI <= 1; ++unitGridI)
         {
-          site_t neigh_i = x + i;
+          site_t neighbourI = location.x + unitGridI;
 
-          for (unsigned int j = 0; j < 2; j++)
+          for (int unitGridJ = 0; unitGridJ <= 1; ++unitGridJ)
           {
-            site_t neigh_j = y + j;
+            site_t neighbourJ = location.y + unitGridJ;
 
-            for (unsigned int k = 0; k < 2; k++)
+            for (int unitGridK = 0; unitGridK <= 1; ++unitGridK)
             {
-              site_t neigh_k = z + k;
+              site_t neighbourK = location.z + unitGridK;
 
-              VelocitySiteData *vel_site_data_p = velSiteDataPointer(latDat,
-                                                                     neigh_i,
-                                                                     neigh_j,
-                                                                     neigh_k);
-
-              if (vel_site_data_p == NULL || vel_site_data_p->proc_id == -1)
+              if (!latDat.IsValidLatticeSite(neighbourI, neighbourJ, neighbourK))
               {
                 // it is a solid site and the velocity is
                 // assumed to be zero
-                v[i][j][k][0] = v[i][j][k][1] = v[i][j][k][2] = 0.0F;
+                localVelocityField[unitGridI][unitGridJ][unitGridK] = util::Vector3D<float>::Zero();
                 continue;
               }
-              if (thisRank != vel_site_data_p->proc_id)
-              {
-                *is_interior = 0;
-              }
-              if (vel_site_data_p->counter == counter)
-              {
-                // This means that the local velocity has already been
-                // calculated at the current time step if the site
-                // belongs to the current processor; if not, the
-                // following instructions have no effect
-                v[i][j][k][0] = vel_site_data_p->vx;
-                v[i][j][k][1] = vel_site_data_p->vy;
-                v[i][j][k][2] = vel_site_data_p->vz;
-              }
-              else if (thisRank == vel_site_data_p->proc_id)
-              {
-                // the local counter is set equal to the global one
-                // and the local velocity is calculated
-                vel_site_data_p->counter = counter;
-                distribn_t density, vx, vy, vz;
 
-                D3Q15::CalculateDensityAndVelocity(latDat.GetFOld(vel_site_data_p->site_id
-                                                       * D3Q15::NUMVECTORS),
-                                                   density,
-                                                   vx,
-                                                   vy,
-                                                   vz);
+              VelocitySiteData *vel_site_data_p =
+                  GetVelocitySiteData(latDat,
+                                      util::Vector3D<site_t>(neighbourI, neighbourJ, neighbourK));
 
-                v[i][j][k][0] = vel_site_data_p->vx = (float) (vx / density);
-                v[i][j][k][1] = vel_site_data_p->vy = (float) (vy / density);
-                v[i][j][k][2] = vel_site_data_p->vz = (float) (vz / density);
-              }
-              else
+              if (vel_site_data_p->proc_id == -1)
               {
-                vel_site_data_p->counter = counter;
-
-                proc_t m =
-                    streaklineDrawer->from_proc_id_to_neigh_proc_index[vel_site_data_p->proc_id];
-
-                neighbouringProcessors[m].s_to_send[3 * neighbouringProcessors[m].send_vs + 0]
-                    = neigh_i;
-                neighbouringProcessors[m].s_to_send[3 * neighbouringProcessors[m].send_vs + 1]
-                    = neigh_j;
-                neighbouringProcessors[m].s_to_send[3 * neighbouringProcessors[m].send_vs + 2]
-                    = neigh_k;
-                ++ (neighbouringProcessors[m].send_vs);
+                // it is a solid site and the velocity is
+                // assumed to be zero
+                localVelocityField[unitGridI][unitGridJ][unitGridK] = util::Vector3D<float>::Zero();
+                continue;
               }
+
+              if (vel_site_data_p->counter != counter)
+              {
+                UpdateLocalField(vel_site_data_p, latDat);
+              }
+
+              localVelocityField[unitGridI][unitGridJ][unitGridK] = vel_site_data_p->velocity;
             }
           }
         }
       }
 
-      // Interpolates a velocity field to get the velocity at the position of a particle.
-      void VelocityField::GetVelocityAtPoint(float x,
-                                             float y,
-                                             float z,
-                                             float v[2][2][2][3],
-                                             float interp_v[3])
+      bool VelocityField::NeededFromNeighbour(const util::Vector3D<site_t> location,
+                                              const geometry::LatticeData& latDat,
+                                              proc_t* sourceProcessor)
       {
-        float v_00z, v_01z, v_10z, v_11z, v_0y, v_1y;
+        const proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
 
+        if (!latDat.IsValidLatticeSite(location.x, location.y, location.z))
+        {
+          return false;
+        }
+
+        VelocitySiteData *vel_site_data_p = GetVelocitySiteData(latDat, location);
+
+        if (vel_site_data_p->proc_id == -1 || vel_site_data_p->proc_id == thisRank
+            || vel_site_data_p->counter == counter)
+        {
+          return false;
+        }
+
+        vel_site_data_p->counter = counter;
+        *sourceProcessor = vel_site_data_p->proc_id;
+
+        return true;
+      }
+
+      void VelocityField::UpdateLocalField(const util::Vector3D<site_t>& position,
+                                           const geometry::LatticeData& latDat)
+      {
+        VelocitySiteData *localVelocitySiteData = GetVelocitySiteData(latDat, position);
+
+        if (log::Logger::ShouldDisplay<log::Debug>())
+        {
+          if (topology::NetworkTopology::Instance()->GetLocalRank()
+              != localVelocitySiteData->proc_id)
+          {
+            log::Logger::Log<log::Debug, log::OnePerCore>("Got a request for velocity data "
+              "that actually seems to be on rank %i", localVelocitySiteData->proc_id);
+          }
+        }
+
+        UpdateLocalField(localVelocitySiteData, latDat);
+      }
+
+      void VelocityField::UpdateLocalField(VelocitySiteData* localVelocitySiteData,
+                                           const geometry::LatticeData& latDat)
+      {
+        // the local counter is set equal to the global one
+        // and the local velocity is calculated
+        localVelocitySiteData->counter = counter;
+        distribn_t density, vx, vy, vz;
+
+        D3Q15::CalculateDensityAndVelocity(latDat.GetFOld(localVelocitySiteData->site_id
+                                               * D3Q15::NUMVECTORS),
+                                           density,
+                                           vx,
+                                           vy,
+                                           vz);
+
+        localVelocitySiteData->velocity.x = (float) (vx / density);
+        localVelocitySiteData->velocity.y = (float) (vy / density);
+        localVelocitySiteData->velocity.z = (float) (vz / density);
+      }
+
+      // Interpolates a velocity field to get the velocity at the position of a particle.
+      util::Vector3D<float> VelocityField::InterpolateVelocityForPoint(const util::Vector3D<float> point,
+                                                                       const util::Vector3D<float> localVelocityField[2][2][2]) const
+      {
         float dummy;
 
-        float dx = modff(x, &dummy);
-        float dy = modff(y, &dummy);
-        float dz = modff(z, &dummy);
+        // Get the fractional parts of each of x, y, z
+        float dx = modff(point.x, &dummy);
+        float dy = modff(point.y, &dummy);
+        float dz = modff(point.z, &dummy);
 
-        for (int l = 0; l < 3; l++)
+        util::Vector3D<float> yInterpolatedVelocity[2];
+
+        for (int unitX = 0; unitX <= 1; unitX++)
         {
-          v_00z = (1.F - dz) * v[0][0][0][l] + dz * v[0][0][1][l];
-          v_01z = (1.F - dz) * v[0][1][0][l] + dz * v[0][1][1][l];
-          v_10z = (1.F - dz) * v[1][0][0][l] + dz * v[1][0][1][l];
-          v_11z = (1.F - dz) * v[1][1][0][l] + dz * v[1][1][1][l];
+          util::Vector3D<float> zInterpolatedVelocityForThisX[2];
 
-          v_0y = (1.F - dy) * v_00z + dy * v_01z;
-          v_1y = (1.F - dy) * v_10z + dy * v_11z;
+          for (int unitY = 0; unitY <= 1; unitY++)
+          {
+            zInterpolatedVelocityForThisX[unitY] = localVelocityField[unitX][unitY][0] * (1.F - dz)
+                + localVelocityField[unitX][unitY][1] * dz;
+          }
 
-          interp_v[l] = (1.F - dx) * v_0y + dx * v_1y;
+          yInterpolatedVelocity[unitX] = zInterpolatedVelocityForThisX[0] * (1.F - dy)
+              + zInterpolatedVelocityForThisX[1] * dy;
         }
+
+        return yInterpolatedVelocity[0] * (1.F - dx) + yInterpolatedVelocity[1] * dx;
+      }
+
+      void VelocityField::InvalidateAllCalculatedVelocities()
+      {
+        ++counter;
       }
 
     }
