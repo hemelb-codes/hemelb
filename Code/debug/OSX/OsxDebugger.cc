@@ -6,7 +6,7 @@ namespace hemelb
 {
   namespace debug
   {
-    OsxDebugger::OsxDebugger(char* executable) : ActiveDebugger(executable) {}
+    OsxDebugger::OsxDebugger(const char* const executable) : ActiveDebugger(executable) {}
     
     const std::string OsxDebugger::GetPlatformInterpreter(void) const {
       return std::string("osascript");
@@ -26,7 +26,7 @@ namespace hemelb
       return debugOsxDir + "/resume.gdb";
     }
 
-    Debugger* PlatformDebuggerFactory(char *executable) {
+    Debugger* PlatformDebuggerFactory(const char * const executable) {
       return new OsxDebugger(executable);
     }
  

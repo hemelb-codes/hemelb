@@ -20,7 +20,7 @@ namespace hemelb
           {
             FolderTestFixture::setUp();
             int argc=9;
-            char* argv[9];
+            const char* argv[9];
             int processorCount=5;
             argv[0]="hemelb";
             argv[1]="-in";
