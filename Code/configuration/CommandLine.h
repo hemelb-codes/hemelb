@@ -7,9 +7,6 @@
 #include "log/Logger.h"
 namespace hemelb{
   namespace configuration{
-      /***
-       *
-       */
     class CommandLine {
       public:
         CommandLine(int aargc, const char *const *const aargv);
@@ -32,7 +29,7 @@ namespace hemelb{
         int ArgumentCount() const {
           return(argc);
         }
-        const char *const *const Arguments() {
+        const char *const * Arguments() {
           return(argv);
         }
         bool HasProblems() {

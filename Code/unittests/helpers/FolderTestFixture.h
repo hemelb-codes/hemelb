@@ -11,7 +11,7 @@ namespace hemelb{
       void setUp(){
         std::stringstream temp_path_stream;
         // next line is a hack to get the build working again
-        // I will try to find a portable uuid solution
+        // TODO: find a portable uuid solution. BOOST?
         temp_path_stream<< util::GetTemporaryDir()<<"/"<<"HemeLBTest"<< std::fixed << floor(util::myClock()*100000) << std::flush;
         temp_path=temp_path_stream.str();
         // store current location
