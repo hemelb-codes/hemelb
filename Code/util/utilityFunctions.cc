@@ -1,5 +1,4 @@
 #include "mpiInclude.h"
-#include <uuid/uuid.h>
 namespace hemelb
 {
   namespace util
