@@ -64,6 +64,39 @@ namespace hemelb
 
     }
 
+    void ChangeDirectory(const char * target){
+      chdir(target);
+    }
+
+    void ChangeDirectory(const std::string & target){
+      chdir(target.c_str());
+    }
+
+    void GetCurrentDir(char * result, int bufflength){
+      getcwd(result,bufflength);
+    }
+
+    std::string GetCurrentDir(){
+      char buff[1000];
+      GetCurrentDir(buff,1000);
+      return std::string(buff); // return by copy.
+    }
+
+    // This copied from BOOST. TODO: Use boost
+    const char * GetTemporaryDir(){
+      const char *dirname;
+      dirname = std::getenv("TMP");
+      if(NULL == dirname)
+        dirname = std::getenv("TMPDIR");
+      if(NULL == dirname)
+        dirname = std::getenv("TEMP");
+      if(NULL == dirname){
+        //assert(false); // no temp directory found
+        dirname = ".";
+      }
+      return dirname;
+    }
+
     // Delete all files within a directory.
     int DeleteDirContents(std::string pathname)
     {

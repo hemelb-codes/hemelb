@@ -6,7 +6,7 @@ namespace hemelb
 {
   namespace debug
   {
-    LinuxDebugger::LinuxDebugger(char* executable) :
+    LinuxDebugger::LinuxDebugger(const char* const executable) :
       ActiveDebugger(executable) {}
     
     const std::string LinuxDebugger::GetPlatformInterpreter(void) const {
@@ -27,7 +27,7 @@ namespace hemelb
       return debugLinuxDir + "/resume.gdb";
     }
     
-    Debugger* PlatformDebuggerFactory(char *executable) {
+    Debugger* PlatformDebuggerFactory(const char * const executable) {
       return new LinuxDebugger(executable);
     }
  

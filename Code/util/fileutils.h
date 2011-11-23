@@ -39,6 +39,13 @@ namespace hemelb
     // the containing directory).
     std::string NormalizePathRelativeToPath(std::string inPath,
                                             std::string basePath);
+
+    const char * GetTemporaryDir();
+
+    void ChangeDirectory(const char * target);
+    void ChangeDirectory(const std::string &target);
+    void GetCurrentDir(char * result, int bufflength);
+    std::string GetCurrentDir();
   }
 }
 #endif // HEMELB_FILEUTILS_H

@@ -105,7 +105,10 @@ class Domain(object):
         
     @property
     def TotalBlocks(self):
-        return np.prod(self._BlockCounts)
+        # Numpy up-casting rules mean that numpy.uint x python int
+        # may promote to a float, but this is platform dependent...
+        # Ensure that this is python int to be platform independent.
+        return int(np.prod(self._BlockCounts))
 
     @property
     def BlockSize(self):
