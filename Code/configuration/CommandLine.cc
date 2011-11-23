@@ -2,7 +2,7 @@
 namespace hemelb{
   namespace configuration
   {
-    CommandLine::CommandLine(int aargc, char **aargv):
+    CommandLine::CommandLine(int aargc, const char *const*const aargv):
           inputFile("input.xml"),
           outputDir(""),
           snapshotsPerCycle(10),
@@ -17,7 +17,8 @@ namespace hemelb{
       // Needs to go first, because need to know if am the IO process for printing usage.
 
       bool lTopologySuccess = true;
-      hemelb::topology::NetworkTopology::Instance()->Init(argc,argv, &lTopologySuccess);
+      // MPI C doesn't provide const-correct interface, so cast away the const on argv.
+      hemelb::topology::NetworkTopology::Instance()->Init(argc,const_cast<char**>(argv), &lTopologySuccess);
 
       if (!lTopologySuccess)
       {
@@ -37,8 +38,8 @@ namespace hemelb{
       // is the <parametervalue>.
       for (int ii = 1; ii < argc; ii += 2)
       {
-        char* lParamName = argv[ii];
-        char* lParamValue = argv[ii + 1];
+        const char* const lParamName = argv[ii];
+        const char* const lParamValue = argv[ii + 1];
         if (strcmp(lParamName, "-in") == 0)
         {
           inputFile = std::string(lParamValue);

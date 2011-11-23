@@ -2,29 +2,36 @@
 #define HEMELB_REPORTER_H
 
 #include <string>
+#include <stdarg.h>
 #include "configuration/SimConfig.h"
 #include "configuration/CommandLine.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
-#include "reporting/Timers.h"
+#include "Timers.h"
+#include "Policies.h"
 namespace hemelb{
   namespace reporting {
-    class Reporter {
+   template<class TimersPolicy, class WriterPolicy, class CommsPolicy> class ReporterBase : public WriterPolicy, public CommsPolicy {
       public:
-        Reporter(bool doio, const std::string &name, std::string &inputFile);
-        ~Reporter();
-        void Cycle(long int cycle_id);
-        void Phase1(long int site_count, int total_time_steps, long int cycle_id,  bool unstable,
-                    unsigned long time_steps_per_cycle,
-                    Timers &timings);
-        void ProcessorTimings(std::string *const names,double *const mins,double *const means,double *const maxes);
+        ReporterBase(const std::string &path, const std::string &inputFile, const long int asite_count, TimersPolicy&timers);
+        void Cycle();
+        void TimeStep(){timestep_count++;}
+        void Image();
+        void Snapshot();
+        void Write();
+        void Stability(bool astability){stability=astability;}
       private:
-        FILE *ReportFile(){
-            return mTimingsFile;
-        }
         bool doIo;
-        FILE *mTimingsFile;
+        unsigned int cycle_count;
+        unsigned int snapshot_count;
+        unsigned int image_count;
+        unsigned long int timestep_count;
+        long int site_count;
+        bool stability;
+        TimersPolicy &timings;
     };
+
+   typedef ReporterBase<Timers,FileWriterPolicy,MPICommsPolicy> Reporter;
   }
 }
 

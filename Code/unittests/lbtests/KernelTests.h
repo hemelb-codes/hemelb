@@ -1,7 +1,6 @@
 #ifndef HEMELB_UNITTESTS_LBTESTS_KERNELTESTS_H
 #define HEMELB_UNITTESTS_LBTESTS_KERNELTESTS_H
 
-#include <cppunit/TestFixture.h>
 #include <cstring>
 #include <sstream>
 
@@ -24,6 +23,11 @@ namespace hemelb
        */
       class KernelTests : public CppUnit::TestFixture
       {
+        CPPUNIT_TEST_SUITE( KernelTests );
+        CPPUNIT_TEST( TestEntropicCalculationsAndCollision );
+        CPPUNIT_TEST( TestLBGKCalculationsAndCollision );
+        CPPUNIT_TEST( TestLBGKNNCalculationsAndCollision );
+        CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -500,7 +504,7 @@ namespace hemelb
               *lbgknn1;
           site_t numSites;
       };
-
+      CPPUNIT_TEST_SUITE_REGISTRATION( KernelTests );
     }
   }
 }

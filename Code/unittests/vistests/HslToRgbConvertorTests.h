@@ -11,6 +11,9 @@ namespace hemelb
     {
       class HslToRgbConvertorTests : public CppUnit::TestFixture
       {
+        CPPUNIT_TEST_SUITE( HslToRgbConvertorTests );
+        CPPUNIT_TEST( TestColours );
+        CPPUNIT_TEST_SUITE_END();
         public:
           void TestColours()
           {
@@ -43,6 +46,7 @@ namespace hemelb
           }
 
       };
+      CPPUNIT_TEST_SUITE_REGISTRATION( HslToRgbConvertorTests );
     }
   }
 }
