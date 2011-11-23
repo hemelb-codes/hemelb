@@ -39,9 +39,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   mVisControl = NULL;
   mSimulationState = NULL;
 
-  mImagesWritten = 0;
-  mSnapshotsWritten = 0;
-
   snapshotsPerCycle = options.NumberOfSnapshotsPerCycle();
   imagesPerCycle = options.NumberOfImagesPerCycle();
   steeringSessionId = options.GetSteeringSessionId();;
@@ -51,11 +48,11 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
     Abort();
   }
   simConfig = hemelb::configuration::SimConfig::Load(fileManager->GetInputFile().c_str());
-  //simConfig->Save(fileManager->GetInputFile()+"foo");
   fileManager->SaveConfiguration(simConfig);
-
   Initialise();
-
+  if (IsCurrentProcTheIOProc()){
+    reporter=new hemelb::reporting::Reporter(fileManager->GetReportPath(), fileManager->GetInputFile(), mLbm->TotalFluidSiteCount(),timings);
+  }
 }
 
 /**
@@ -127,6 +124,9 @@ SimulationMaster::~SimulationMaster()
   }
   delete simConfig;
   delete fileManager;
+  if (IsCurrentProcTheIOProc()){
+    delete reporter;
+  }
 }
 
 /**
@@ -331,11 +331,10 @@ void SimulationMaster::WriteLocalImages(){
       snapshotsCompleted.find(mSimulationState->GetTimeStepsPassed()); it
       != snapshotsCompleted.end() && it->first == mSimulationState->GetTimeStepsPassed(); ++it)
   {
-    mImagesWritten++;
 
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
-
+      reporter->Image();
       hemelb::io::XdrFileWriter * writer = fileManager->XdrImageWriter(
           1 + ( (it->second - 1) % mSimulationState->GetTimeStepsPerCycle()));
 
@@ -400,8 +399,6 @@ void SimulationMaster::GenerateNetworkImages(){
 
   timings[hemelb::reporting::Timers::simulation].Start();
   bool is_unstable = false;
-  int total_time_steps = 0;
-
   unsigned int snapshots_period = OutputPeriod(snapshotsPerCycle);
   unsigned int images_period = OutputPeriod(imagesPerCycle);
 
@@ -428,7 +425,10 @@ void SimulationMaster::GenerateNetworkImages(){
   for (; mSimulationState->GetTimeStepsPassed() <= mSimulationState->GetTotalTimeSteps()
   && !is_finished; mSimulationState->Increment())
   {
-    ++total_time_steps;
+    if (IsCurrentProcTheIOProc())
+    {
+      reporter->TimeStep();
+    }
 
     bool write_snapshot_image = ( (mSimulationState->GetTimeStep() % images_period) == 0)
                           ? true
@@ -504,7 +504,10 @@ void SimulationMaster::GenerateNetworkImages(){
 
     if (mSimulationState->GetTimeStep() % snapshots_period == 0)
     {
-      mSnapshotsWritten++;
+      if (IsCurrentProcTheIOProc())
+      {
+        reporter->Snapshot();
+      }
       mLbm->WriteConfigParallel(stability, fileManager->SnapshotPath(mSimulationState->GetTimeStep()));
     }
 
@@ -522,14 +525,16 @@ void SimulationMaster::GenerateNetworkImages(){
     }
     if (mSimulationState->GetTimeStepsPerCycle() > 400000)
     {
-      is_unstable = true;
+      if (IsCurrentProcTheIOProc()){
+        reporter->Stability(false);
+      }
       break;
     }
 
     if (mSimulationState->GetTimeStep() == mSimulationState->GetTimeStepsPerCycle()
         && IsCurrentProcTheIOProc())
     {
-      fileManager->Report()->Cycle(mSimulationState->GetCycleId());
+      reporter->Cycle();
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
                                                                           mSimulationState->GetCycleId());
@@ -538,8 +543,12 @@ void SimulationMaster::GenerateNetworkImages(){
     }
   }
   timings[hemelb::reporting::Timers::simulation].Stop();
-  PostSimulation(total_time_steps, is_unstable);
-
+  timings[hemelb::reporting::Timers::total].Stop();
+    timings.Reduce();
+    if (IsCurrentProcTheIOProc())
+    {
+      reporter->Write();
+    }
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
 }
 
@@ -556,62 +565,5 @@ void SimulationMaster::GenerateNetworkImages(){
    exit(1);
  }
 
- /**
-  * Steps that are taken when the simulation is complete.
-  *
-  * This function writes several bits of timing data to
-  * the timing file.
-  */
- void SimulationMaster::PostSimulation(int iTotalTimeSteps, bool iIsUnstable)
- {
-   if (IsCurrentProcTheIOProc())
-   {
-     fileManager->Report()->Phase1(mLbm->TotalFluidSiteCount(),
-                               iTotalTimeSteps,
-                               mSimulationState->GetCycleId(),
-                               iIsUnstable, mSimulationState->GetTimeStepsPerCycle(),
-                               timings);
-   }
 
-   PrintTimingData();
 
- }
-
- /**
-  * Outputs a breakdown of the simulation time spent on different activities.
-  */
- void SimulationMaster::PrintTimingData()
- {
-   // Note that CycleId is 1-indexed and will have just been incremented when we finish.
-   double cycles = hemelb::util::NumericalFunctions::max(1.0,
-                                                         (double) (mSimulationState->GetCycleId()
-                                                             - 1));
-
-   double lTimings[5] = { timings[hemelb::reporting::Timers::lb].Get() / cycles, timings[hemelb::reporting::Timers::mpiSend].Get() / cycles, timings[hemelb::reporting::Timers::mpiWait].Get()
-                          / cycles, timings[hemelb::reporting::Timers::visualisation].Get()
-                          / hemelb::util::NumericalFunctions::max(1.0, (double) mImagesWritten), timings[hemelb::reporting::Timers::snapshot].Get()
-                          / hemelb::util::NumericalFunctions::max(1.0, (double) mSnapshotsWritten) };
-   std::string lNames[5] = { "LBM", "MPISend", "MPIWait", "Images", "Snaps" };
-
-   double lMins[5];
-   double lMaxes[5];
-   double lMeans[5];
-
-   MPI_Reduce(lTimings, lMaxes, 5, hemelb::MpiDataType(lMaxes[0]), MPI_MAX, 0, MPI_COMM_WORLD);
-   MPI_Reduce(lTimings, lMeans, 5, hemelb::MpiDataType(lMeans[0]), MPI_SUM, 0, MPI_COMM_WORLD);
-
-   // Change the values for LBM and MPI on process 0 so they don't interfere with the min
-   // operation (previously values were 0.0 so they won't affect max / mean
-   // calc).
-
-   MPI_Reduce(lTimings, lMins, 5, hemelb::MpiDataType(lMins[0]), MPI_MIN, 0, MPI_COMM_WORLD);
-
-   if (IsCurrentProcTheIOProc())
-   {
-     for (int ii = 0; ii < 5; ii++) {
-       lMeans[ii] /= (double) (hemelb::topology::NetworkTopology::Instance()->GetProcessorCount());
-     }
-
-     fileManager->Report()->ProcessorTimings(lNames,lMins,lMeans,lMaxes);
-   }
- }

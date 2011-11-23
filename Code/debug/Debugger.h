@@ -16,14 +16,14 @@ namespace hemelb
          */
       public:
         // the singleton pattern
-        static Debugger* Init(char *);
+        static Debugger* Init(const char *const);
         static Debugger* Get(void);
 
         virtual void BreakHere(void) = 0;
         virtual void Print(const char* iFormat, ...) = 0;
 
       protected:
-        Debugger(char* executable);
+        Debugger(const char* const executable);
         virtual ~Debugger();
 
         virtual void Attach() = 0;
@@ -35,7 +35,7 @@ namespace hemelb
 
     };
 
-    Debugger* PlatformDebuggerFactory(char* executable);
+    Debugger* PlatformDebuggerFactory(const char* const executable);
 
   }
 }

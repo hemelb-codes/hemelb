@@ -29,22 +29,14 @@ namespace hemelb
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);
         hemelb::util::MakeDirAllRXW(snapshotDirectory);
-
-        std::stringstream timings_name;
-        timings_name<< outputDir << "/timings" << processorCount << ".asc" << std::flush;
-        report=new Reporter(doIo, timings_name.str(),inputFile);
+        std::stringstream timings_name_stream;
+        timings_name_stream<< outputDir << "/timings" << processorCount << ".asc" << std::flush;
+        timings_name=timings_name_stream.str();
       }
 
       ok=true;
     }
 
-    FileManager::~FileManager()
-    {
-      if (doIo)
-      {
-        delete report;
-      }
-    }
     const std::string & FileManager::GetInputFile() const {
       return(inputFile);
     }
@@ -54,7 +46,9 @@ namespace hemelb
     const std::string & FileManager::GetImageDirectory() const {
       return(imageDirectory);
     }
-
+    const std::string & FileManager::GetReportPath() const {
+          return(timings_name);
+    }
 
     void FileManager::EmptyOutputDirectories()
     {
@@ -100,7 +94,8 @@ namespace hemelb
         configLeafName=  inputFile.substr(lLastForwardSlash);
         if (outputDir.length() == 0) {
           // no output dir given, defaulting to location of input file.
-          outputDir=inputFile.substr(0, lLastForwardSlash)+"results";
+          // note substr is end-exclusive and start-inclusive
+          outputDir=inputFile.substr(0, lLastForwardSlash+1)+"results";
         }
       }
     }

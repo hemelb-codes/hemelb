@@ -1,12 +1,14 @@
-#include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/XmlOutputter.h>
 #include <cppunit/TestResult.h>
 #include <cppunit/TestResultCollector.h>
 #include <cppunit/TestRunner.h>
 #include <cppunit/TextTestProgressListener.h>
+#include <cppunit/extensions/HelperMacros.h>
 #include <stdexcept>
 #include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
+#include "unittests/reporting/reporting.h"
+#include "unittests/SimulationMasterTests.h"
 
 int main(int argc, char **argv)
 {
@@ -27,8 +29,8 @@ int main(int argc, char **argv)
   // Add the top suite to the test runner
   CppUnit::TestRunner runner;
 
-  runner.addTest(new hemelb::unittests::lbtests::LbTestSuite());
-  runner.addTest(new hemelb::unittests::vistests::VisTestSuite());
+  CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
+  runner.addTest( registry.makeTest() );
 
   try
   {
