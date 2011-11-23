@@ -24,29 +24,22 @@ namespace hemelb
       class ParticleManager
       {
         public:
+          // Constructor
           ParticleManager(std::map<proc_t, NeighbouringProcessor>& iNeighbouringProcessors);
 
+          // Functions for manipulating the particle store
           void AddParticle(const Particle& iParticle);
-
           std::vector<Particle>& GetParticles();
-
           size_t GetNumberOfLocalParticles() const;
-
           void DeleteParticle(site_t iIndex);
-
           void DeleteAll();
 
+          // Function for updating the particles' positions.
           void ProcessParticleMovement();
 
+          // Function for moving the particles between cores.
           void CommunicateParticles(const geometry::LatticeData& iLatDat,
-                                    proc_t iProcs,
                                     VelocityField& iVelocityField);
-
-          /**
-           * Function for debugging purposes. Logs information about the current state of the
-           * particles.
-           */
-          void PrintParticleCount();
 
         private:
           std::vector<Particle> particles;
