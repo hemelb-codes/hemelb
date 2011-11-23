@@ -16,12 +16,12 @@ namespace hemelb
     {
     }
 
-    NullDebugger::NullDebugger(char* executable) :
+    NullDebugger::NullDebugger(const char* const executable) :
       Debugger(executable)
     {
     }
 
-    Debugger* PlatformDebuggerFactory(char *executable)
+    Debugger* PlatformDebuggerFactory(const char * const executable)
     {
       return new NullDebugger(executable);
     }
