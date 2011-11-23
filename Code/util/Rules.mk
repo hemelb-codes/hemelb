@@ -3,7 +3,8 @@ include $(MK)/header.mk
 TARGETS := libHemeLbUtil.$(LIBEXT)
 SRCS := fileutils.cc \
         utilityFunctions.cc \
-        UnitConverter.cc
+        UnitConverter.cc \
+        Vector3D.cc
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 

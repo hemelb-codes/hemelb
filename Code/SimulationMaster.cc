@@ -198,7 +198,7 @@ void SimulationMaster::Initialise()
   {
     int typesTested[1] = { 0 };
     mEntropyTester
-    = new hemelb::lb::EntropyTester(typesTested, 1, mLatDat, &mNet, mSimulationState);
+    = NULL;//new hemelb::lb::EntropyTester(typesTested, 1, mLatDat, &mNet, mSimulationState);
   }
   else
   {

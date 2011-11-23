@@ -18,9 +18,10 @@ namespace hemelb
     Control::Control(lb::StressTypes iStressType,
                      net::Net* netIn,
                      lb::SimulationState* simState,
-                     geometry::LatticeData* iLatDat, reporting::Timer &atimer) :
+                     geometry::LatticeData* iLatDat,
+                     reporting::Timer &atimer) :
       net::PhasedBroadcastIrregular<true, 2, 0, false, true>(netIn, simState, SPREADFACTOR),
-          net(netIn), mLatDat(iLatDat),timer(atimer)
+          net(netIn), mLatDat(iLatDat), timer(atimer)
     {
 
       mVisSettings.mStressType = iStressType;
@@ -28,9 +29,9 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float(iLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float(iLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float(iLatDat->GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float (iLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float (iLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float (iLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -134,11 +135,8 @@ namespace hemelb
       util::Vector3D<float> centre =
           util::Vector3D<float>(iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
 
-      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
-                                      iLatitude * (float) DEG_TO_RAD,
-                                      centre,
-                                      rad,
-                                      dist);
+      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
+          * (float) DEG_TO_RAD, centre, rad, dist);
 
       mScreen.Set( (0.5F * vis->system_size) / iZoom,
                    (0.5F * vis->system_size) / iZoom,
@@ -178,7 +176,7 @@ namespace hemelb
 
       PixelSet<raytracer::RayDataNormal>* ray = normalRayTracer->Render();
 
-      PixelSet < BasicPixel > *glyph = NULL;
+      PixelSet<BasicPixel> *glyph = NULL;
 
       if (mVisSettings.mode == VisSettings::ISOSURFACESANDGLYPHS)
       {
@@ -190,15 +188,13 @@ namespace hemelb
         glyph->Clear();
       }
 
-      PixelSet < streaklinedrawer::StreakPixel > *streak = NULL;
+      PixelSet<streaklinedrawer::StreakPixel> *streak = NULL;
 
-#ifndef NO_STREAKLINES
-      if (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
-          == VisSettings::WALLANDSTREAKLINES)
+      if (myStreaker != NULL && (mVisSettings.mStressType == lb::ShearStress || mVisSettings.mode
+          == VisSettings::WALLANDSTREAKLINES))
       {
         streak = myStreaker->Render();
       }
-#endif
 
       localResultsByStartIt.insert(std::pair<unsigned long, Rendering>(startIteration,
                                                                        Rendering(glyph, ray, streak)));
@@ -321,7 +317,7 @@ namespace hemelb
         }
       }
 
-     timer.Stop();
+      timer.Stop();
     }
 
     void Control::ProgressToParent(unsigned long startIteration, unsigned long splayNumber)
@@ -486,7 +482,7 @@ namespace hemelb
       if (localResultsByStartIt.count(startIt) != 0)
       {
         Rendering finalRender = (*localResultsByStartIt.find(startIt)).second;
-        PixelSet < ResultPixel > *result = GetUnusedPixelSet();
+        PixelSet<ResultPixel> *result = GetUnusedPixelSet();
 
         finalRender.PopulateResultSet(result);
 
@@ -652,13 +648,12 @@ namespace hemelb
 
     void Control::ProgressStreaklines(unsigned long time_step, unsigned long period)
     {
-#ifndef NO_STREAKLINES
-      timer.Start();
-
-      myStreaker ->StreakLines(time_step, period);
-
-      timer.Stop();
-#endif
+      if (myStreaker != NULL)
+      {
+        timer.Start();
+        myStreaker ->ProgressStreaklines(time_step, period);
+        timer.Stop();
+      }
     }
 
     void Control::Reset()
@@ -667,9 +662,10 @@ namespace hemelb
 
       log::Logger::Log<log::Debug, log::OnePerCore>("Resetting image controller.");
 
-#ifndef NO_STREAKLINES
-      myStreaker->Restart();
-#endif
+      if (myStreaker != NULL)
+      {
+        myStreaker->Restart();
+      }
 
       base::Reset();
 
@@ -678,9 +674,10 @@ namespace hemelb
 
     Control::~Control()
     {
-#ifndef NO_STREAKLINES
-      delete myStreaker;
-#endif
+      if (myStreaker != NULL)
+      {
+        delete myStreaker;
+      }
 
       delete vis;
       delete myGlypher;
