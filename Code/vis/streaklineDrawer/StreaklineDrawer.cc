@@ -5,8 +5,8 @@
 #include "geometry/BlockTraverser.h"
 #include "geometry/SiteTraverser.h"
 #include "util/utilityFunctions.h"
-#include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/Control.h"
+#include "vis/streaklineDrawer/StreaklineDrawer.h"
 #include "vis/streaklineDrawer/StreakPixel.h"
 #include "vis/XYCoordinates.h"
 
@@ -16,26 +16,16 @@ namespace hemelb
   {
     namespace streaklinedrawer
     {
-      // TODO the streaker needs to be fixed. The lines drawn differ depending on how many proccesors
-      // are used to do the visualisation. This is a bug.
-
       // Constructor, populating fields from lattice data objects.
       StreaklineDrawer::StreaklineDrawer(const geometry::LatticeData& iLatDat,
                                          const Screen& iScreen,
                                          const Viewpoint& iViewpoint, //
                                          const VisSettings& iVisSettings) :
-        latDat(iLatDat), particleManager(neighbouringProcessors), mScreen(iScreen),
-            velocityField(neighbouringProcessors), mViewpoint(iViewpoint),
-            mVisSettings(iVisSettings)
+        latDat(iLatDat), screen(iScreen), viewpoint(iViewpoint), visSettings(iVisSettings),
+            particleManager(neighbouringProcessors), velocityField(neighbouringProcessors)
       {
-
-        site_t n = 0;
-
-        topology::NetworkTopology* netTop = topology::NetworkTopology::Instance();
-
-        velocityField.BuildVelocityField(iLatDat, this);
-
-        procs = netTop->GetProcessorCount();
+        velocityField.BuildVelocityField(iLatDat);
+        ChooseSeedParticles();
       }
 
       // Destructor
@@ -50,53 +40,58 @@ namespace hemelb
       }
 
       // Create streakline particles and move them.
-      void StreaklineDrawer::StreakLines(unsigned long time_steps,
-                                         unsigned long time_steps_per_cycle)
+      void StreaklineDrawer::ProgressStreaklines(unsigned long time_steps,
+                                                 unsigned long time_steps_per_cycle)
       {
         // Set the particle creation period to be every time step, unless there are >=10000
         // timesteps per cycle
-        unsigned int particle_creation_period =
-            util::NumericalFunctions::max<unsigned int>(1, (unsigned int) (time_steps_per_cycle
-                / 5000));
+        unsigned int
+            particle_creation_period =
+                util::NumericalFunctions::max<unsigned int>(1,
+                                                            (unsigned int) (time_steps_per_cycle
+                                                                / 5000));
 
         int timestepsBetweenStreaklinesRounded = (int) (0.5F + (float) time_steps_per_cycle
-            / mVisSettings.streaklines_per_pulsatile_period);
+            / visSettings.streaklines_per_pulsatile_period);
 
         if ((float) (time_steps % timestepsBetweenStreaklinesRounded)
-            <= (mVisSettings.streakline_length / 100.0F) * ((float) time_steps_per_cycle
-                / mVisSettings.streaklines_per_pulsatile_period) && time_steps
+            <= (visSettings.streakline_length / 100.0F) * ((float) time_steps_per_cycle
+                / visSettings.streaklines_per_pulsatile_period) && time_steps
             % particle_creation_period == 0)
         {
-          createSeedParticles();
+          CreateParticlesFromSeeds();
         }
-
-        bool debugThisIt = time_steps == 500 || time_steps == 1000;
 
         velocityField.InvalidateAllCalculatedVelocities();
 
-        UpdateVelocityFieldForCommunicatedSites();
+        // Decide which sites we will need velocity data for in order to move particles
+        WorkOutVelocityDataNeededForParticles();
 
+        // Communicate this with other processors.
         CommunicateSiteIds();
 
+        // Recalculate velocities at the sites requested from this rank.
+        UpdateVelocityFieldForCommunicatedSites();
+
+        // Communicate the velocities back to the sites that requested them.
         CommunicateVelocities();
 
-        UpdateVelocityFieldForAllParticles();
+        // Update our local velocity field is sufficient to update all particles and prune
+        // those that are stationary.
+        UpdateVelocityFieldForAllParticlesAndPrune();
 
+        // Process the particles' movement.
         particleManager.ProcessParticleMovement();
 
-        particleManager.CommunicateParticles(latDat, procs, velocityField);
-
-        if (debugThisIt)
-        {
-          particleManager.PrintParticleCount();
-        }
+        // Communicate any particles that have crossed into the territory of another rank.
+        particleManager.CommunicateParticles(latDat, velocityField);
       }
 
       // Render the streaklines
       PixelSet<StreakPixel>* StreaklineDrawer::Render()
       {
-        int pixels_x = mScreen.GetPixelsX();
-        int pixels_y = mScreen.GetPixelsY();
+        int pixels_x = screen.GetPixelsX();
+        int pixels_y = screen.GetPixelsY();
 
         const std::vector<Particle>& particles = particleManager.GetParticles();
 
@@ -106,14 +101,14 @@ namespace hemelb
         for (unsigned int n = 0; n < particles.size(); n++)
         {
           util::Vector3D<float> p1;
-          p1.x = particles[n].x - float (latDat.GetXSiteCount() >> 1);
-          p1.y = particles[n].y - float (latDat.GetYSiteCount() >> 1);
-          p1.z = particles[n].z - float (latDat.GetZSiteCount() >> 1);
+          p1.x = particles[n].position.x - float(latDat.GetXSiteCount() >> 1);
+          p1.y = particles[n].position.y - float(latDat.GetYSiteCount() >> 1);
+          p1.z = particles[n].position.z - float(latDat.GetZSiteCount() >> 1);
 
-          util::Vector3D<float> p2 = mViewpoint.Project(p1);
+          util::Vector3D<float> p2 = viewpoint.Project(p1);
 
-          XYCoordinates<int> x = mScreen.TransformScreenToPixelCoordinates<int> (XYCoordinates<
-              float> (p2.x, p2.y));
+          XYCoordinates<int> x =
+              screen.TransformScreenToPixelCoordinates<int> (XYCoordinates<float> (p2.x, p2.y));
 
           if (! (x.x < 0 || x.x >= pixels_x || x.y < 0 || x.y >= pixels_y))
           {
@@ -125,8 +120,63 @@ namespace hemelb
         return set;
       }
 
+      void StreaklineDrawer::ChooseSeedParticles()
+      {
+        site_t inlet_sites = 0;
+
+        geometry::BlockTraverser blockTraverser(latDat);
+        do
+        {
+          geometry::BlockData* block = blockTraverser.GetCurrentBlockData();
+
+          if (block->site_data == NULL)
+          {
+            continue;
+          }
+
+          geometry::SiteTraverser siteTraverser(latDat);
+          do
+          {
+            if (topology::NetworkTopology::Instance()->GetLocalRank()
+                != block->ProcessorRankForEachBlockSite[siteTraverser.GetCurrentIndex()])
+            {
+              continue;
+            }
+
+            site_t siteIndex = block->site_data[siteTraverser.GetCurrentIndex()];
+
+            // if the lattice site is not an inlet
+            if (latDat.GetSiteType(siteIndex) != geometry::LatticeData::INLET_TYPE)
+            {
+              continue;
+            }
+            ++inlet_sites;
+
+            // TODO this is a problem on multiple cores.
+            if (inlet_sites % 50 != 0)
+            {
+              continue;
+            }
+
+            particleSeeds.push_back(Particle(static_cast<float> (blockTraverser.GetX()
+                                                 * blockTraverser.GetBlockSize()
+                                                 + siteTraverser.GetX()),
+                                             static_cast<float> (blockTraverser.GetY()
+                                                 * blockTraverser.GetBlockSize()
+                                                 + siteTraverser.GetY()),
+                                             static_cast<float> (blockTraverser.GetZ()
+                                                 * blockTraverser.GetBlockSize()
+                                                 + siteTraverser.GetZ()),
+                                             latDat.GetBoundaryId(siteIndex)));
+
+          }
+          while (siteTraverser.TraverseOne());
+        }
+        while (blockTraverser.TraverseOne());
+      }
+
       // Create seed particles to begin the streaklines.
-      void StreaklineDrawer::createSeedParticles()
+      void StreaklineDrawer::CreateParticlesFromSeeds()
       {
         for (unsigned int n = 0; n < particleSeeds.size(); n++)
         {
@@ -134,50 +184,76 @@ namespace hemelb
         }
       }
 
-      void StreaklineDrawer::UpdateVelocityFieldForAllParticles()
+      void StreaklineDrawer::WorkOutVelocityDataNeededForParticles()
       {
-        std::vector<Particle>& particles = particleManager.GetParticles();
+        std::vector<Particle> &particles = particleManager.GetParticles();
 
         // Note that we iterate through the array back to front because at the end of this
         // loop we delete a particle. Iterating back to front ensures that we end up
         // visiting each particle.
         for (int n = (int) particles.size() - 1; n >= 0; --n)
         {
-          float v[2][2][2][3];
-          int is_interior;
+          Particle& particle = particles[n];
 
-          velocityField.GetVelocityFieldAroundPoint(util::Vector3D<site_t>((site_t) particles[n].x,
-                                                                           (site_t) particles[n].y,
-                                                                           (site_t) particles[n].z),
+          for (int unitGridI = 0; unitGridI <= 1; ++unitGridI)
+          {
+            site_t neighbourI = particle.position.x + unitGridI;
+
+            for (int unitGridJ = 0; unitGridJ <= 1; ++unitGridJ)
+            {
+              site_t neighbourJ = particle.position.y + unitGridJ;
+
+              for (int unitGridK = 0; unitGridK <= 1; ++unitGridK)
+              {
+                site_t neighbourK = particle.position.z + unitGridK;
+
+                proc_t sourceProcessor;
+
+                if (velocityField.NeededFromNeighbour(util::Vector3D<site_t>(neighbourI,
+                                                                             neighbourJ,
+                                                                             neighbourK),
+                                                      latDat,
+                                                      &sourceProcessor))
+                {
+                  neighbouringProcessors[sourceProcessor].AddSiteToRequestVelocityDataFor(neighbourI,
+                                                                                          neighbourJ,
+                                                                                          neighbourK);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      void StreaklineDrawer::UpdateVelocityFieldForAllParticlesAndPrune()
+      {
+        std::vector<Particle> &particles = particleManager.GetParticles();
+
+        // Note that we iterate through the array back to front because at the end of this
+        // loop we delete a particle. Iterating back to front ensures that we end up
+        // visiting each particle.
+        for (int n = (int) particles.size() - 1; n >= 0; --n)
+        {
+          util::Vector3D<float> localVelocityField[2][2][2];
+
+          velocityField.GetVelocityFieldAroundPoint(util::Vector3D<site_t>(particles[n].position),
                                                     latDat,
-                                                    v);
+                                                    localVelocityField);
 
-          float interp_v[3];
+          util::Vector3D<float> interp_v =
+              velocityField.InterpolateVelocityForPoint(particles[n].position, localVelocityField);
 
-          velocityField.InterpolateVelocityForPoint(particles[n].x,
-                                                    particles[n].y,
-                                                    particles[n].z,
-                                                    v,
-                                                    interp_v);
-
-          float vel = interp_v[0] * interp_v[0] + interp_v[1] * interp_v[1] + interp_v[2]
-              * interp_v[2];
+          float vel = interp_v.DotProduct(interp_v);
 
           if (vel > 1.0F)
           {
             particles[n].vel = 1.0F;
-            particles[n].vx = interp_v[0] / sqrtf(vel);
-            particles[n].vy = interp_v[1] / sqrtf(vel);
-            particles[n].vz = interp_v[2] / sqrtf(vel);
-
+            particles[n].velocity = interp_v * float(1.0 / sqrtf(vel));
           }
           else if (vel > 1.0e-8)
           {
             particles[n].vel = sqrtf(vel);
-            particles[n].vx = interp_v[0];
-            particles[n].vy = interp_v[1];
-            particles[n].vz = interp_v[2];
-
+            particles[n].velocity = interp_v;
           }
           else
           {
@@ -194,14 +270,12 @@ namespace hemelb
           NeighbouringProcessor& proc = (*neighProc).second;
 
           for (site_t sendingVelocityIndex = 0; sendingVelocityIndex
-              < proc.GetSitesToReceiveCount(); sendingVelocityIndex++)
+              < proc.GetNumberOfSitesRequestedByNeighbour(); sendingVelocityIndex++)
           {
             const util::Vector3D<site_t>& siteCoords =
-                proc.GetSiteCoordsBeingReceived(sendingVelocityIndex);
+                proc.GetSiteCoordsBeingRequestedByNeighbour(sendingVelocityIndex);
 
-            float dummy1[2][2][2][3];
-
-            velocityField.GetVelocityFieldAroundPoint(siteCoords, latDat, dummy1);
+            velocityField.UpdateLocalField(siteCoords, latDat);
           }
         }
       }
@@ -209,80 +283,78 @@ namespace hemelb
       // Communicate site ids to other processors.
       void StreaklineDrawer::CommunicateSiteIds()
       {
+        net::Net net;
+
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
         {
-          (*proc).second.ExchangeSiteIds();
+          (*proc).second.ExchangeSiteIdCounts(net);
         }
+
+        net.Receive();
+        net.Send();
+        net.Wait();
+
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
         {
-          (*proc).second.WaitForSiteIdExchange();
+          (*proc).second.ExchangeSiteIds(net);
         }
+
+        net.Receive();
+        net.Send();
+        net.Wait();
       }
 
       // Communicate velocities to other processors.
       void StreaklineDrawer::CommunicateVelocities()
       {
+        net::Net net;
+
+        for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
+            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
+        {
+          (*proc).second.ExchangeVelocitiesForRequestedSites(net);
+        }
+
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
         {
           NeighbouringProcessor& neighbourProc = (*proc).second;
 
-          for (site_t n = 0; n < neighbourProc.GetSitesToReceiveCount(); n++)
+          for (site_t n = 0; n < neighbourProc.GetNumberOfSitesRequestedByNeighbour(); n++)
           {
-            const util::Vector3D<site_t> siteCoords = neighbourProc.GetSiteCoordsBeingReceived(n);
+            const util::Vector3D<site_t> siteCoords =
+                neighbourProc.GetSiteCoordsBeingRequestedByNeighbour(n);
 
             const VelocitySiteData* velocityDataForSite =
                 velocityField.GetVelocitySiteData(latDat, siteCoords);
 
-            neighbourProc.SetVelocityFieldToSend(n, velocityDataForSite != NULL
-              ? util::Vector3D<float>(velocityDataForSite->vx,
-                                      velocityDataForSite->vy,
-                                      velocityDataForSite->vz)
-              : util::Vector3D<float>(0., 0., 0.));
+            neighbourProc.SetVelocityFieldToSend(n, velocityDataForSite->velocity);
           }
         }
 
-        for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
-        {
-          (*proc).second.ExchangeVelocitiesForRequestedSites();
-        }
-        for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
-            neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
-        {
-          (*proc).second.WaitForVelocityExchange();
-        }
+        net.Receive();
+        net.Send();
+        net.Wait();
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
         {
           NeighbouringProcessor& neighbourProc = (*proc).second;
 
-          if (neighbourProc.GetSendingSiteCount() == 0)
-            continue;
-
-          for (size_t n = 0; n < neighbourProc.GetSendingSiteCount(); n++)
+          for (size_t n = 0; n < neighbourProc.GetNumberOfSitesRequestedByThisCore(); n++)
           {
-            util::Vector3D<site_t>& coords = neighbourProc.GetSiteCoorinates(n);
-
-            VelocitySiteData* vel_site_data_p = velocityField.GetVelocitySiteData(latDat, coords);
-
-            if (vel_site_data_p != NULL)
-            {
-              const util::Vector3D<float>& velocity = neighbourProc.GetReceivedVelocity(n);
-              vel_site_data_p->vx = velocity.x;
-              vel_site_data_p->vy = velocity.y;
-              vel_site_data_p->vz = velocity.z;
-            }
+            const util::Vector3D<site_t> &coords = neighbourProc.GetSendingSiteCoorinates(n);
+            velocityField.GetVelocitySiteData(latDat, coords)->velocity
+                = neighbourProc.GetReceivedVelocityField(n);
           }
         }
 
         for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
         {
-          (*proc).second.ClearSendingSites();
+          (*proc).second.ClearListOfRequestedSites();
         }
       }
 

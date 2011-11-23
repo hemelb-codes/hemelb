@@ -63,6 +63,48 @@ namespace hemelb
           }
         }
 
+        T& operator[](int index)
+        {
+          switch (index)
+          {
+            case 0:
+              return x;
+              break;
+
+            case 1:
+              return y;
+              break;
+
+            case 2:
+              return z;
+              break;
+
+            default:
+              log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
+          }
+        }
+
+        const T& operator[](int index) const
+        {
+          switch (index)
+          {
+            case 0:
+              return x;
+              break;
+
+            case 1:
+              return y;
+              break;
+
+            case 2:
+              return z;
+              break;
+
+            default:
+              log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
+          }
+        }
+
         //Copy constructor - can be used to perform type conversion
         template<class OldTypeT>
         Vector3D<T> (const Vector3D<OldTypeT> & iOldVector3D)
@@ -125,7 +167,7 @@ namespace hemelb
         }
 
         //Dot product
-        T DotProduct(Vector3D<T> iVector) const
+        T DotProduct(const Vector3D<T> iVector) const
         {
           return (x * iVector.x + y * iVector.y + z * iVector.z);
         }
@@ -185,7 +227,6 @@ namespace hemelb
           return Vector3D<T> (0);
         }
     };
-
   }
 }
 

@@ -45,37 +45,33 @@ namespace hemelb
           void Restart();
 
           // Drawing methods.
-          void StreakLines(unsigned long time_steps, unsigned long time_steps_per_cycle);
-
+          void ProgressStreaklines(unsigned long time_steps, unsigned long time_steps_per_cycle);
           PixelSet<StreakPixel>* Render();
-
-          std::vector<Particle> particleSeeds;
 
         private:
           // Function for updating the velocity field and the particles in it.
-          void UpdateVelocityFieldForAllParticles();
+          void UpdateVelocityFieldForAllParticlesAndPrune();
           void UpdateVelocityFieldForCommunicatedSites();
 
-          void updateParticles();
-
-          // Variables for counting the processors involved etc.
-          proc_t procs;
-
           // Private functions for the creation / deletion of particles.
-          void createSeedParticles();
+          void ChooseSeedParticles();
+          void CreateParticlesFromSeeds();
 
           // Private functions for inter-proc communication.
           void CommunicateSiteIds();
           void CommunicateVelocities();
-
-          std::map<proc_t, NeighbouringProcessor> neighbouringProcessors;
+          void WorkOutVelocityDataNeededForParticles();
 
           const geometry::LatticeData& latDat;
+          const Screen& screen;
+          const Viewpoint& viewpoint;
+          const VisSettings& visSettings;
+
+          std::map<proc_t, NeighbouringProcessor> neighbouringProcessors;
           ParticleManager particleManager;
-          const Screen& mScreen;
           VelocityField velocityField;
-          const Viewpoint& mViewpoint;
-          const VisSettings& mVisSettings;
+
+          std::vector<Particle> particleSeeds;
       };
     }
   }

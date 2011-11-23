@@ -651,7 +651,7 @@ namespace hemelb
       if (myStreaker != NULL)
       {
         timer.Start();
-        myStreaker ->StreakLines(time_step, period);
+        myStreaker ->ProgressStreaklines(time_step, period);
         timer.Stop();
       }
     }
