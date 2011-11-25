@@ -1,6 +1,7 @@
 #ifndef HEMELB_UTIL_VECTOR3D_H
 #define HEMELB_UTIL_VECTOR3D_H
 
+#include <cassert>
 #include "constants.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
@@ -59,7 +60,9 @@ namespace hemelb
               break;
 
             default:
+              // TODO need to find a way of handling this case better.
               log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
+              assert(false);
           }
         }
 
@@ -80,7 +83,9 @@ namespace hemelb
               break;
 
             default:
+              // TODO need to find a way of handling this case better.
               log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
+              assert(false);
           }
         }
 
@@ -101,7 +106,9 @@ namespace hemelb
               break;
 
             default:
+              // TODO need to find a way of handling this case better.
               log::Logger::Log<log::Info, log::OnePerCore>("Failed while accessing a direction in Vector3D.");
+              assert(false);
           }
         }
 
@@ -167,9 +174,9 @@ namespace hemelb
         }
 
         //Dot product
-        T DotProduct(const Vector3D<T> iVector) const
+        T DotProduct(const Vector3D<T>& otherVector) const
         {
-          return (x * iVector.x + y * iVector.y + z * iVector.z);
+          return (x * otherVector.x + y * otherVector.y + z * otherVector.z);
         }
 
         //Vector subraction
