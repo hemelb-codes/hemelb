@@ -8,6 +8,7 @@ namespace hemelb
   {
     namespace reporting
     {
+      using namespace helpers;
       using namespace hemelb::reporting;
 
       class FileManagerTests : public FolderTestFixture
