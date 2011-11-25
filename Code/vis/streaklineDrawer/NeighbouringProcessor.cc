@@ -124,33 +124,33 @@ namespace hemelb
         }
       }
 
-      site_t NeighbouringProcessor::GetNumberOfSitesRequestedByNeighbour()
+      site_t NeighbouringProcessor::GetNumberOfSitesRequestedByNeighbour() const
       {
         return siteCoordsRequestedByNeighbour.size();
       }
 
-      const util::Vector3D<float>& NeighbouringProcessor::GetReceivedVelocityField(const size_t receivedIndex) const
+      const util::Vector3D<float>& NeighbouringProcessor::GetReceivedVelocityField(const site_t receivedIndex) const
       {
         return velocityFieldDataFromNeighbour[receivedIndex];
       }
 
-      const util::Vector3D<site_t>& NeighbouringProcessor::GetSiteCoordsBeingRequestedByNeighbour(const size_t receivedIndex) const
+      const util::Vector3D<site_t>& NeighbouringProcessor::GetSiteCoordsBeingRequestedByNeighbour(const site_t receivedIndex) const
       {
         return siteCoordsRequestedByNeighbour[receivedIndex];
       }
 
-      void NeighbouringProcessor::SetVelocityFieldToSend(const size_t sendIndex,
+      void NeighbouringProcessor::SetVelocityFieldToSend(const site_t sendIndex,
                                                          const util::Vector3D<float>& velocityFieldToSend)
       {
         velocityFieldDataForNeighbour[sendIndex] = velocityFieldToSend;
       }
 
-      size_t NeighbouringProcessor::GetNumberOfSitesRequestedByThisCore() const
+      site_t NeighbouringProcessor::GetNumberOfSitesRequestedByThisCore() const
       {
         return siteCoordsRequestedByThisCore.size();
       }
 
-      const util::Vector3D<site_t>& NeighbouringProcessor::GetSendingSiteCoorinates(size_t sendIndex) const
+      const util::Vector3D<site_t>& NeighbouringProcessor::GetSendingSiteCoorinates(site_t sendIndex) const
       {
         return siteCoordsRequestedByThisCore[sendIndex];
       }
