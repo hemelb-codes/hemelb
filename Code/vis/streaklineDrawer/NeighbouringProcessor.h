@@ -31,14 +31,15 @@ namespace hemelb
 
           // Functions for communicating velocity data.
           void AddSiteToRequestVelocityDataFor(site_t, site_t, site_t);
-          site_t GetNumberOfSitesRequestedByNeighbour();
-          const util::Vector3D<float>& GetReceivedVelocityField(const size_t receivedIndex) const;
-          const util::Vector3D<site_t>& GetSiteCoordsBeingRequestedByNeighbour(const size_t receivedIndex) const;
-          void SetVelocityFieldToSend(const size_t sendIndex,
+          site_t GetNumberOfSitesRequestedByNeighbour() const;
+          const util::Vector3D<float>& GetReceivedVelocityField(const site_t receivedIndex) const;
+          const util::Vector3D<site_t>
+          & GetSiteCoordsBeingRequestedByNeighbour(const site_t receivedIndex) const;
+          void SetVelocityFieldToSend(const site_t sendIndex,
                                       const util::Vector3D<float>& velocityFieldToSend);
 
-          const util::Vector3D<site_t>& GetSendingSiteCoorinates(size_t sendIndex) const;
-          size_t GetNumberOfSitesRequestedByThisCore() const;
+          const util::Vector3D<site_t>& GetSendingSiteCoorinates(site_t sendIndex) const;
+          site_t GetNumberOfSitesRequestedByThisCore() const;
           void ClearListOfRequestedSites();
 
           void ExchangeSiteIdCounts(net::Net& net);
@@ -46,10 +47,10 @@ namespace hemelb
           void ExchangeVelocitiesForRequestedSites(net::Net& net);
 
         private:
-          size_t numberOfParticlesToSend;
+          site_t numberOfParticlesToSend;
           std::vector<Particle> particlesToSend;
 
-          size_t numberOfParticlesToReceive;
+          site_t numberOfParticlesToReceive;
           std::vector<Particle> particlesToReceive;
 
           site_t numberOfSiteBeingRequestedByNeighbour;
