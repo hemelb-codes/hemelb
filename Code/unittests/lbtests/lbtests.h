@@ -5,6 +5,7 @@
 #include "unittests/lbtests/CollisionTests.h"
 #include "unittests/lbtests/StreamerTests.h"
 #include "unittests/lbtests/RheologyModelTests.h"
+#include "unittests/lbtests/IncompressibilityCheckerTests.h"
 
 
 #endif /* HEMELB_UNITTESTS_LBTESTS_LBTESTS_H */

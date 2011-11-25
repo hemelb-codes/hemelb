@@ -53,8 +53,13 @@ namespace hemelb
       }
 
       hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
-      MPI_Allgather(&localFluidSites, 1, MpiDataType<site_t> (), fluidSitePerProc, 1, MpiDataType<
-          site_t> (), MPI_COMM_WORLD);
+      MPI_Allgather(&localFluidSites,
+                    1,
+                    MpiDataType<site_t> (),
+                    fluidSitePerProc,
+                    1,
+                    MpiDataType<site_t> (),
+                    MPI_COMM_WORLD);
 
       //TODO this is a total hack just for now.
       site_t localMins[3];
@@ -156,29 +161,31 @@ namespace hemelb
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
                   {
                     // Work out positions of neighbours.
-                    site_t neigh_i = site_i + D3Q15::CX[l];
-                    site_t neigh_j = site_j + D3Q15::CY[l];
-                    site_t neigh_k = site_k + D3Q15::CZ[l];
+                    site_t neighbourI = site_i + D3Q15::CX[l];
+                    site_t neighbourJ = site_j + D3Q15::CY[l];
+                    site_t neighbourK = site_k + D3Q15::CZ[l];
 
-                    if (!IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
+                    if (!IsValidLatticeSite(neighbourI, neighbourJ, neighbourK))
                     {
                       // Set the neighbour location to the rubbish site.
-                      SetNeighbourLocation(site_map, l, GetLocalFluidSiteCount()
-                          * D3Q15::NUMVECTORS);
+                      SetNeighbourLocation(site_map,
+                                           l,
+                                           GetLocalFluidSiteCount() * D3Q15::NUMVECTORS);
                       continue;
                     }
 
                     // Get the id of the processor which the neighbouring site lies on.
-                    const proc_t
-                        * proc_id_p = GetProcIdFromGlobalCoords(util::Vector3D<site_t>(neigh_i,
-                                                                                       neigh_j,
-                                                                                       neigh_k));
+                    const proc_t * proc_id_p =
+                        GetProcIdFromGlobalCoords(util::Vector3D<site_t>(neighbourI,
+                                                                         neighbourJ,
+                                                                         neighbourK));
 
                     if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
                       // initialize f_id to the rubbish site.
-                      SetNeighbourLocation(site_map, l, GetLocalFluidSiteCount()
-                          * D3Q15::NUMVECTORS);
+                      SetNeighbourLocation(site_map,
+                                           l,
+                                           GetLocalFluidSiteCount() * D3Q15::NUMVECTORS);
                       continue;
                     }
                     // If on the same proc, set f_id of the
@@ -190,7 +197,7 @@ namespace hemelb
                     else if (localRank == *proc_id_p)
                     {
                       // Pointer to the neighbour.
-                      site_t contigSiteId = GetContiguousSiteId(neigh_i, neigh_j, neigh_k);
+                      site_t contigSiteId = GetContiguousSiteId(neighbourI, neighbourJ, neighbourK);
 
                       SetNeighbourLocation(site_map, l, contigSiteId * D3Q15::NUMVECTORS + l);
 
@@ -297,7 +304,7 @@ namespace hemelb
 
     unsigned int LatticeData::GetLog2BlockSize() const
     {
-      return globLatDat.Log2BlockSize;
+      return globLatDat.log2BlockSize;
     }
 
     site_t LatticeData::GetBlockSize() const
@@ -320,7 +327,7 @@ namespace hemelb
       return globLatDat.GetBlockIdFromBlockCoords(i, j, k);
     }
 
-    const proc_t* LatticeData::GetProcIdFromGlobalCoords(const util::Vector3D<site_t> globalSiteCoords) const
+    const proc_t* LatticeData::GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const
     {
       return globLatDat.GetProcIdFromGlobalCoords(globalSiteCoords);
     }
@@ -385,9 +392,9 @@ namespace hemelb
       return localLatDat.mSiteData[iSiteIndex];
     }
 
-    unsigned int LatticeData::GetContiguousSiteId(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const
+    unsigned int LatticeData::GetContiguousSiteId(site_t siteI, site_t siteJ, site_t siteK) const
     {
-      return globLatDat.GetSiteData(iSiteI, iSiteJ, iSiteK);
+      return globLatDat.GetSiteData(siteI, siteJ, siteK);
     }
 
     const util::Vector3D<site_t> LatticeData::GetGlobalCoords(site_t blockNumber,
