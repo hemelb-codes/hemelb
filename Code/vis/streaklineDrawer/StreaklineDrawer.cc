@@ -264,10 +264,10 @@ namespace hemelb
 
       void StreaklineDrawer::UpdateVelocityFieldForCommunicatedSites()
       {
-        for (std::map<proc_t, NeighbouringProcessor>::iterator neighProc =
+        for (std::map<proc_t, NeighbouringProcessor>::const_iterator neighProc =
             neighbouringProcessors.begin(); neighProc != neighbouringProcessors.end(); neighProc++)
         {
-          NeighbouringProcessor& proc = (*neighProc).second;
+          const NeighbouringProcessor& proc = (*neighProc).second;
 
           for (site_t sendingVelocityIndex = 0; sendingVelocityIndex
               < proc.GetNumberOfSitesRequestedByNeighbour(); sendingVelocityIndex++)
@@ -338,12 +338,12 @@ namespace hemelb
         net.Send();
         net.Wait();
 
-        for (std::map<proc_t, NeighbouringProcessor>::iterator proc =
+        for (std::map<proc_t, NeighbouringProcessor>::const_iterator proc =
             neighbouringProcessors.begin(); proc != neighbouringProcessors.end(); proc++)
         {
-          NeighbouringProcessor& neighbourProc = (*proc).second;
+          const NeighbouringProcessor& neighbourProc = (*proc).second;
 
-          for (size_t n = 0; n < neighbourProc.GetNumberOfSitesRequestedByThisCore(); n++)
+          for (site_t n = 0; n < neighbourProc.GetNumberOfSitesRequestedByThisCore(); n++)
           {
             const util::Vector3D<site_t> &coords = neighbourProc.GetSendingSiteCoorinates(n);
             velocityField.GetVelocitySiteData(latDat, coords)->velocity
