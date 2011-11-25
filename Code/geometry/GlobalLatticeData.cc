@@ -31,11 +31,11 @@ namespace hemelb
 
       // A shift value we'll need later = log_2(block_size)
       site_t i = mBlockSize;
-      Log2BlockSize = 0;
+      log2BlockSize = 0;
       while (i > 1)
       {
         i >>= 1;
-        ++Log2BlockSize;
+        ++log2BlockSize;
       }
 
       mBlockCount = mBlocksX * mBlocksY * mBlocksZ;
@@ -162,32 +162,32 @@ namespace hemelb
     // Function that finds the pointer to the rank on which a particular site
     // resides. If the site is in an empty block, return NULL.
     const proc_t* LatticeData::GlobalLatticeData::GetProcIdFromGlobalCoords(const util::Vector3D<
-        site_t> globalSiteCoords) const
+        site_t>& globalSiteCoords) const
     {
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-      site_t i = globalSiteCoords.x >> Log2BlockSize;
-      site_t j = globalSiteCoords.y >> Log2BlockSize;
-      site_t k = globalSiteCoords.z >> Log2BlockSize;
+      site_t blockI = globalSiteCoords.x >> log2BlockSize;
+      site_t blockJ = globalSiteCoords.y >> log2BlockSize;
+      site_t blockK = globalSiteCoords.z >> log2BlockSize;
 
       // Get the block from the block identifiers.
-      BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(i, j, k)];
+      BlockData * block = &Blocks[GetBlockIdFromBlockCoords(blockI, blockJ, blockK)];
 
       // If an empty (solid) block is addressed, return a NULL pointer.
-      if (lBlock->ProcessorRankForEachBlockSite == NULL)
+      if (block->ProcessorRankForEachBlockSite == NULL)
       {
         return NULL;
       }
       else
       {
         // Find site coordinates within the block
-        site_t ii = globalSiteCoords.x - (i << Log2BlockSize);
-        site_t jj = globalSiteCoords.y - (j << Log2BlockSize);
-        site_t kk = globalSiteCoords.z - (k << Log2BlockSize);
+        site_t siteI = globalSiteCoords.x - (blockI << log2BlockSize);
+        site_t siteJ = globalSiteCoords.y - (blockJ << log2BlockSize);
+        site_t siteK = globalSiteCoords.z - (blockK << log2BlockSize);
 
         // Return pointer to ProcessorRankForEachBlockSite[site] (the only member of
         // mProcessorsForEachBlock)
-        return &lBlock->ProcessorRankForEachBlockSite[ ( ( (ii << Log2BlockSize) + jj)
-            << Log2BlockSize) + kk];
+        return &block->ProcessorRankForEachBlockSite[ ( ( (siteI << log2BlockSize) + siteJ)
+            << log2BlockSize) + siteK];
       }
     }
 
@@ -203,17 +203,20 @@ namespace hemelb
     // Function to get a pointer to the site_data for a site.
     // If the site is in an empty block, return NULL.
 
-    void LatticeData::GlobalLatticeData::GetBlockIJK(site_t block, site_t* i, site_t* j, site_t* k) const
+    void LatticeData::GlobalLatticeData::GetBlockIJK(site_t block,
+                                                     site_t* blockI,
+                                                     site_t* blockJ,
+                                                     site_t* blockK) const
     {
-      *k = block % GetZBlockCount();
-      site_t ij = block / GetZBlockCount();
-      *j = ij % GetYBlockCount();
-      *i = ij / GetYBlockCount();
+      *blockK = block % GetZBlockCount();
+      site_t blockIJData = block / GetZBlockCount();
+      *blockJ = blockIJData % GetYBlockCount();
+      *blockI = blockIJData / GetYBlockCount();
     }
 
     site_t LatticeData::GlobalLatticeData::GetSiteCoord(site_t block, site_t localSiteCoord) const
     {
-      return (block << Log2BlockSize) + localSiteCoord;
+      return (block << log2BlockSize) + localSiteCoord;
     }
 
     const util::Vector3D<site_t> LatticeData::GlobalLatticeData::GetGlobalCoords(site_t blockNumber,
@@ -228,25 +231,26 @@ namespace hemelb
                                     GetSiteCoord(blockK, localSiteCoords.z));
     }
 
-    unsigned int LatticeData::GlobalLatticeData::GetSiteData(site_t iSiteI,
-                                                             site_t iSiteJ,
-                                                             site_t iSiteK) const
+    unsigned int LatticeData::GlobalLatticeData::GetSiteData(site_t siteI,
+                                                             site_t siteJ,
+                                                             site_t siteK) const
     {
       // Block identifiers (i, j, k) of the site (site_i, site_j, site_k)
-      site_t i = iSiteI >> Log2BlockSize;
-      site_t j = iSiteJ >> Log2BlockSize;
-      site_t k = iSiteK >> Log2BlockSize;
+      site_t blockI = siteI >> log2BlockSize;
+      site_t blockJ = siteJ >> log2BlockSize;
+      site_t blockK = siteK >> log2BlockSize;
 
       // Pointer to the block
-      BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(i, j, k)];
+      BlockData * lBlock = &Blocks[GetBlockIdFromBlockCoords(blockI, blockJ, blockK)];
 
       // Find site coordinates within the block
-      site_t ii = iSiteI - (i << Log2BlockSize);
-      site_t jj = iSiteJ - (j << Log2BlockSize);
-      site_t kk = iSiteK - (k << Log2BlockSize);
+      site_t localSiteI = siteI - (blockI << log2BlockSize);
+      site_t localSiteJ = siteJ - (blockJ << log2BlockSize);
+      site_t localSiteK = siteK - (blockK << log2BlockSize);
 
       // Return pointer to site_data[site]
-      return lBlock->site_data[ ( ( (ii << Log2BlockSize) + jj) << Log2BlockSize) + kk];
+      return lBlock->site_data[ ( ( (localSiteI << log2BlockSize) + localSiteJ) << log2BlockSize)
+          + localSiteK];
     }
 
     void LatticeData::GlobalLatticeData::ReadBlock(const site_t block, io::XdrReader* reader)
@@ -260,26 +264,26 @@ namespace hemelb
         Blocks[block].ProcessorRankForEachBlockSite = new proc_t[GetSitesPerBlockVolumeUnit()];
       }
 
-      site_t m = -1;
+      site_t localSiteIndex = -1;
       site_t blockI, blockJ, blockK;
 
       GetBlockIJK(block, &blockI, &blockJ, &blockK);
 
-      for (site_t ii = 0; ii < GetBlockSize(); ii++)
+      for (site_t localSiteI = 0; localSiteI < GetBlockSize(); localSiteI++)
       {
-        site_t site_i = GetSiteCoord(block, ii);
+        site_t globalSiteI = GetSiteCoord(block, localSiteI);
 
-        for (site_t jj = 0; jj < GetBlockSize(); jj++)
+        for (site_t localSiteJ = 0; localSiteJ < GetBlockSize(); localSiteJ++)
         {
-          site_t site_j = GetSiteCoord(block, jj);
+          site_t globalSiteJ = GetSiteCoord(block, localSiteJ);
 
-          for (site_t kk = 0; kk < GetBlockSize(); kk++)
+          for (site_t localSiteK = 0; localSiteK < GetBlockSize(); localSiteK++)
           {
-            site_t site_k = GetSiteCoord(block, kk);
+            site_t globalSiteK = GetSiteCoord(block, localSiteK);
 
-            ++m;
+            ++localSiteIndex;
 
-            unsigned int *site_type = &Blocks[block].site_data[m];
+            unsigned int *site_type = &Blocks[block].site_data[localSiteIndex];
             if (!reader->readUnsignedInt(*site_type))
             {
               std::cout << "Error reading site type\n";
@@ -287,11 +291,11 @@ namespace hemelb
 
             if ( (*site_type & SITE_TYPE_MASK) == SOLID_TYPE)
             {
-              Blocks[block].ProcessorRankForEachBlockSite[m] = BIG_NUMBER2;
+              Blocks[block].ProcessorRankForEachBlockSite[localSiteIndex] = BIG_NUMBER2;
               continue;
             }
 
-            Blocks[block].ProcessorRankForEachBlockSite[m] = -1;
+            Blocks[block].ProcessorRankForEachBlockSite[localSiteIndex] = -1;
 
             if (GetCollisionType(*site_type) != FLUID)
             {
@@ -306,7 +310,7 @@ namespace hemelb
                 double temp;
                 // INLET or OUTLET or both.
                 // These values are the boundary normal and the boundary distance.
-                for (int l = 0; l < 3; l++)
+                for (int dimension = 0; dimension < 3; dimension++)
                 {
                   if (!reader->readDouble(temp))
                   {
@@ -323,9 +327,9 @@ namespace hemelb
               if (GetCollisionType(*site_type) & EDGE)
               {
                 // EDGE bit set
-                for (int l = 0; l < 3; l++)
+                for (int dimension = 0; dimension < 3; dimension++)
                 {
-                  if (!reader->readDouble(Blocks[block].wall_data[m].wall_nor[l]))
+                  if (!reader->readDouble(Blocks[block].wall_data[localSiteIndex].wall_nor[dimension]))
                   {
                     std::cout << "Error reading edge normal\n";
                   }
@@ -338,9 +342,9 @@ namespace hemelb
                 }
               }
 
-              for (unsigned int l = 0; l < (D3Q15::NUMVECTORS - 1); l++)
+              for (unsigned int direction = 0; direction < (D3Q15::NUMVECTORS - 1); direction++)
               {
-                if (!reader->readDouble(Blocks[block].wall_data[m].cut_dist[l]))
+                if (!reader->readDouble(Blocks[block].wall_data[localSiteIndex].cut_dist[direction]))
                 {
                   std::cout << "Error reading cut distances\n";
                 }

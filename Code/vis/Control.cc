@@ -29,9 +29,9 @@ namespace hemelb
       this->vis = new Vis;
 
       //sites_x etc are globals declared in net.h
-      vis->half_dim[0] = 0.5F * float (iLatDat->GetXSiteCount());
-      vis->half_dim[1] = 0.5F * float (iLatDat->GetYSiteCount());
-      vis->half_dim[2] = 0.5F * float (iLatDat->GetZSiteCount());
+      vis->half_dim[0] = 0.5F * float(iLatDat->GetXSiteCount());
+      vis->half_dim[1] = 0.5F * float(iLatDat->GetYSiteCount());
+      vis->half_dim[2] = 0.5F * float(iLatDat->GetZSiteCount());
 
       vis->system_size = 2.F * fmaxf(vis->half_dim[0], fmaxf(vis->half_dim[1], vis->half_dim[2]));
 
@@ -135,8 +135,11 @@ namespace hemelb
       util::Vector3D<float> centre =
           util::Vector3D<float>(iLocal_ctr_x, iLocal_ctr_y, iLocal_ctr_z);
 
-      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD, iLatitude
-          * (float) DEG_TO_RAD, centre, rad, dist);
+      mViewpoint.SetViewpointPosition(iLongitude * (float) DEG_TO_RAD,
+                                      iLatitude * (float) DEG_TO_RAD,
+                                      centre,
+                                      rad,
+                                      dist);
 
       mScreen.Set( (0.5F * vis->system_size) / iZoom,
                    (0.5F * vis->system_size) / iZoom,
@@ -674,11 +677,7 @@ namespace hemelb
 
     Control::~Control()
     {
-      if (myStreaker != NULL)
-      {
-        delete myStreaker;
-      }
-
+      delete myStreaker;
       delete vis;
       delete myGlypher;
       delete normalRayTracer;

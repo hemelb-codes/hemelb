@@ -138,9 +138,9 @@ namespace hemelb
 
       if (!participateInTopology)
       {
-        for (site_t ii = 0; ii < globLatDat->GetBlockCount(); ++ii)
+        for (site_t block = 0; block < globLatDat->GetBlockCount(); ++block)
         {
-          procForEachBlock[ii] = -1;
+          procForEachBlock[block] = -1;
         }
       }
       else
@@ -319,14 +319,14 @@ namespace hemelb
           hemelb::io::XdrMemReader(headerBuffer, (unsigned int) headerByteCount);
 
       // Read in all the data.
-      for (site_t ii = 0; ii < blockCount; ii++)
+      for (site_t block = 0; block < blockCount; block++)
       {
         unsigned int sites, bytes;
         preambleReader.readUnsignedInt(sites);
         preambleReader.readUnsignedInt(bytes);
 
-        sitesInEachBlock[ii] = sites;
-        bytesUsedByBlockInDataFile[ii] = bytes;
+        sitesInEachBlock[block] = sites;
+        bytesUsedByBlockInDataFile[block] = bytes;
       }
 
       delete[] headerBuffer;
@@ -438,8 +438,14 @@ namespace hemelb
 
       int neededHere = neededOnThisRank;
 
-      MPI_Gather(&neededHere, 1, MpiDataType<int> (), procsWantingThisBlockBuffer, 1, MpiDataType<
-          int> (), readingCore, currentComm);
+      MPI_Gather(&neededHere,
+                 1,
+                 MpiDataType<int> (),
+                 procsWantingThisBlockBuffer,
+                 1,
+                 MpiDataType<int> (),
+                 readingCore,
+                 currentComm);
 
       net::Net net = net::Net(currentComm);
 
@@ -521,10 +527,10 @@ namespace hemelb
         unsigned
         int* siteDataRecv = new unsigned int[globLatDat->GetSitesPerBlockVolumeUnit()];
 
-        for (site_t ii = 0; ii < globLatDat->GetSitesPerBlockVolumeUnit(); ++ii)
+        for (site_t localSite = 0; localSite < globLatDat->GetSitesPerBlockVolumeUnit(); ++localSite)
         {
-          dummyProcForSite[ii] = BIG_NUMBER2;
-          dummySiteData[ii] = std::numeric_limits<unsigned int>::max();
+          dummyProcForSite[localSite] = BIG_NUMBER2;
+          dummySiteData[localSite] = std::numeric_limits<unsigned int>::max();
         }
 
         for (site_t block = 0; block < globLatDat->GetBlockCount(); ++block)
@@ -683,18 +689,18 @@ namespace hemelb
 
       // Count of block sites.
       site_t unvisitedFluidBlockCount = 0;
-      for (site_t ii = 0; ii < blockCount; ++ii)
+      for (site_t block = 0; block < blockCount; ++block)
       {
-        if (fluidSitePerBlock[ii] != 0)
+        if (fluidSitePerBlock[block] != 0)
         {
           ++unvisitedFluidBlockCount;
         }
       }
 
       // Initialise site count per processor
-      for (unsigned int ii = 0; ii < topologySize; ++ii)
+      for (unsigned int rank = 0; rank < topologySize; ++rank)
       {
-        blockCountPerProc[ii] = 0;
+        blockCountPerProc[rank] = 0;
       }
 
       // Divide blocks between the processors.
@@ -772,9 +778,9 @@ namespace hemelb
       // Create an array to monitor whether each block has been assigned yet.
       bool *blockAssigned = new bool[blockCount];
 
-      for (site_t ii = 0; ii < blockCount; ++ii)
+      for (site_t block = 0; block < blockCount; ++block)
       {
-        blockAssigned[ii] = false;
+        blockAssigned[block] = false;
       }
 
       std::vector<BlockLocation> *currentEdge = new std::vector<BlockLocation>;
@@ -916,16 +922,16 @@ namespace hemelb
         for (unsigned int l = 1; l < D3Q15::NUMVECTORS && blocksOnCurrentUnit < blocksPerUnit; l++)
         {
           // Record neighbour location.
-          site_t neigh_i = lNew->i + D3Q15::CX[l];
-          site_t neigh_j = lNew->j + D3Q15::CY[l];
-          site_t neigh_k = lNew->k + D3Q15::CZ[l];
+          site_t neighbourI = lNew->i + D3Q15::CX[l];
+          site_t neighbourJ = lNew->j + D3Q15::CY[l];
+          site_t neighbourK = lNew->k + D3Q15::CZ[l];
 
           // Move on if neighbour is outside the bounding box.
-          if (neigh_i == -1 || neigh_i == globLatDat->GetXBlockCount())
+          if (neighbourI == -1 || neighbourI == globLatDat->GetXBlockCount())
             continue;
-          if (neigh_j == -1 || neigh_j == globLatDat->GetYBlockCount())
+          if (neighbourJ == -1 || neighbourJ == globLatDat->GetYBlockCount())
             continue;
-          if (neigh_k == -1 || neigh_k == globLatDat->GetZBlockCount())
+          if (neighbourK == -1 || neighbourK == globLatDat->GetZBlockCount())
             continue;
 
           // Move on if the neighbour is in a block of solids (in which case
@@ -933,7 +939,9 @@ namespace hemelb
           // been assigned to a rank (in which case ProcessorRankForEachBlockSite != -1).  ProcessorRankForEachBlockSite
           // was initialized in lbmReadConfig in io.cc.
 
-          site_t neighBlockId = globLatDat->GetBlockIdFromBlockCoords(neigh_i, neigh_j, neigh_k);
+          site_t neighBlockId = globLatDat->GetBlockIdFromBlockCoords(neighbourI,
+                                                                      neighbourJ,
+                                                                      neighbourK);
 
           // Don't use this block if it has no fluid sites, or if it has already been assigned to a processor.
           if (fluidSitesPerBlock[neighBlockId] == 0 || blockAssigned[neighBlockId])
@@ -951,9 +959,9 @@ namespace hemelb
 
           // Record the location of the neighbour.
           BlockLocation lNewB;
-          lNewB.i = neigh_i;
-          lNewB.j = neigh_j;
-          lNewB.k = neigh_k;
+          lNewB.i = neighbourI;
+          lNewB.j = neighbourJ;
+          lNewB.k = neighbourK;
           expansionBlocks->push_back(lNewB);
         }
       }
@@ -1058,23 +1066,23 @@ namespace hemelb
                                                                const site_t* sitesPerBlock) const
     {
       // Firstly, count the sites per processor.
-      for (unsigned int ii = 0; ii < (topologySize + 1); ++ii)
+      for (unsigned int rank = 0; rank < (topologySize + 1); ++rank)
       {
-        vertexDistribn[ii] = 0;
+        vertexDistribn[rank] = 0;
       }
 
-      for (site_t ii = 0; ii < blockCount; ++ii)
+      for (site_t block = 0; block < blockCount; ++block)
       {
-        if (procForEachBlock[ii] >= 0)
+        if (procForEachBlock[block] >= 0)
         {
-          vertexDistribn[1 + procForEachBlock[ii]] += (idx_t) sitesPerBlock[ii];
+          vertexDistribn[1 + procForEachBlock[block]] += (idx_t) sitesPerBlock[block];
         }
       }
 
       // Now make the count cumulative.
-      for (unsigned int ii = 0; ii < topologySize; ++ii)
+      for (unsigned int rank = 0; rank < topologySize; ++rank)
       {
-        vertexDistribn[ii + 1] += vertexDistribn[ii];
+        vertexDistribn[rank + 1] += vertexDistribn[rank];
       }
 
       // Validate if we're logging.
@@ -1092,14 +1100,14 @@ namespace hemelb
                       MPI_MIN,
                       topologyComm);
 
-        for (unsigned int ii = 0; ii < topologySize + 1; ++ii)
+        for (unsigned int rank = 0; rank < topologySize + 1; ++rank)
         {
-          if (vertexDistribn[ii] != vtxDistribnRecv[ii])
+          if (vertexDistribn[rank] != vtxDistribnRecv[rank])
           {
             log::Logger::Log<log::Debug, log::OnePerCore>("vertexDistribn[%i] was %li but at least one other core had it as %li.",
-                                                          ii,
-                                                          vertexDistribn[ii],
-                                                          vtxDistribnRecv[ii]);
+                                                          rank,
+                                                          vertexDistribn[rank],
+                                                          vtxDistribnRecv[rank]);
           }
         }
 
@@ -1115,25 +1123,25 @@ namespace hemelb
     {
       // First calculate the lowest site index on each proc - relatively easy.
       site_t* firstSiteOnProc = new site_t[topologySize];
-      for (unsigned int ii = 0; ii < topologySize; ++ii)
+      for (unsigned int rank = 0; rank < topologySize; ++rank)
       {
-        firstSiteOnProc[ii] = vertexDistribution[ii];
+        firstSiteOnProc[rank] = vertexDistribution[rank];
       }
 
       // Now for each block (in ascending order), the smallest site index is the smallest site
       // index on its processor, incremented by the number of sites observed from that processor
       // so far.
-      for (site_t ii = 0; ii < blockCount; ++ii)
+      for (site_t block = 0; block < blockCount; ++block)
       {
-        proc_t proc = procForEachBlock[ii];
+        proc_t proc = procForEachBlock[block];
         if (proc < 0)
         {
-          firstSiteIndexPerBlock[ii] = -1;
+          firstSiteIndexPerBlock[block] = -1;
         }
         else
         {
-          firstSiteIndexPerBlock[ii] = (idx_t) firstSiteOnProc[proc];
-          firstSiteOnProc[proc] += sitesPerBlock[ii];
+          firstSiteIndexPerBlock[block] = (idx_t) firstSiteOnProc[proc];
+          firstSiteOnProc[proc] += sitesPerBlock[block];
         }
       }
 
@@ -1223,19 +1231,19 @@ namespace hemelb
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
                   {
                     // ... which leads to a valid neighbouring site...
-                    site_t neigh_i = site_i + D3Q15::CX[l];
-                    site_t neigh_j = site_j + D3Q15::CY[l];
-                    site_t neigh_k = site_k + D3Q15::CZ[l];
+                    site_t neighbourI = site_i + D3Q15::CX[l];
+                    site_t neighbourJ = site_j + D3Q15::CY[l];
+                    site_t neighbourK = site_k + D3Q15::CZ[l];
 
-                    if (neigh_i < 0 || neigh_j < 0 || neigh_k < 0
-                        || !globLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
+                    if (neighbourI < 0 || neighbourJ < 0 || neighbourK < 0
+                        || !globLatDat->IsValidLatticeSite(neighbourI, neighbourJ, neighbourK))
                     {
                       continue;
                     }
 
                     // ... (that is actually being simulated and not a solid)...
                     const proc_t* proc_id_p = globLatDat->GetProcIdFromGlobalCoords(util::Vector3D<
-                        site_t>(neigh_i, neigh_j, neigh_k));
+                        site_t>(neighbourI, neighbourJ, neighbourK));
 
                     if (proc_id_p == NULL || *proc_id_p == BIG_NUMBER2)
                     {
@@ -1243,21 +1251,24 @@ namespace hemelb
                     }
 
                     // ... get some info about the position of the neighbouring site.
-                    site_t neighBlockI = neigh_i >> globLatDat->Log2BlockSize;
-                    site_t neighBlockJ = neigh_j >> globLatDat->Log2BlockSize;
-                    site_t neighBlockK = neigh_k >> globLatDat->Log2BlockSize;
+                    site_t neighBlockI = neighbourI >> globLatDat->log2BlockSize;
+                    site_t neighBlockJ = neighbourJ >> globLatDat->log2BlockSize;
+                    site_t neighBlockK = neighbourK >> globLatDat->log2BlockSize;
 
-                    site_t neighLocalSiteI = neigh_i - (neighBlockI << globLatDat->Log2BlockSize);
-                    site_t neighLocalSiteJ = neigh_j - (neighBlockJ << globLatDat->Log2BlockSize);
-                    site_t neighLocalSiteK = neigh_k - (neighBlockK << globLatDat->Log2BlockSize);
+                    site_t neighLocalSiteI = neighbourI
+                        - (neighBlockI << globLatDat->log2BlockSize);
+                    site_t neighLocalSiteJ = neighbourJ
+                        - (neighBlockJ << globLatDat->log2BlockSize);
+                    site_t neighLocalSiteK = neighbourK
+                        - (neighBlockK << globLatDat->log2BlockSize);
 
                     site_t neighBlockId = globLatDat->GetBlockIdFromBlockCoords(neighBlockI,
                                                                                 neighBlockJ,
                                                                                 neighBlockK);
 
                     // Now get the local id of the neighbour on its block,
-                    site_t localSiteId = ( ( (neighLocalSiteI << globLatDat->Log2BlockSize)
-                        + neighLocalSiteJ) << globLatDat->Log2BlockSize) + neighLocalSiteK;
+                    site_t localSiteId = ( ( (neighLocalSiteI << globLatDat->log2BlockSize)
+                        + neighLocalSiteJ) << globLatDat->log2BlockSize) + neighLocalSiteK;
 
                     // calculate the site's id over the whole geometry,
                     site_t neighGlobalSiteId = firstSiteIndexPerBlock[neighBlockId];
@@ -1303,9 +1314,9 @@ namespace hemelb
       }
 
       localAdjacencies = new idx_t[totalAdjacencies];
-      for (idx_t ii = 0; ii < totalAdjacencies; ++ii)
+      for (idx_t adjacency = 0; adjacency < totalAdjacencies; ++adjacency)
       {
-        localAdjacencies[ii] = adj[ii];
+        localAdjacencies[adjacency] = adj[adjacency];
       }
     }
 
@@ -1338,25 +1349,25 @@ namespace hemelb
       // comm* is a pointer to the MPI communicator of the processes involved
 
       // Initialise the partition vector.
-      for (idx_t ii = 0; ii < localVertexCount; ++ii)
+      for (idx_t vertexIndex = 0; vertexIndex < localVertexCount; ++vertexIndex)
       {
-        partitionVector[ii] = topologyRank;
+        partitionVector[vertexIndex] = topologyRank;
       }
 
       // Weight all vertices evenly.
       idx_t* vertexWeight = new idx_t[localVertexCount];
-      for (idx_t ii = 0; ii < localVertexCount; ++ii)
+      for (idx_t vertexIndex = 0; vertexIndex < localVertexCount; ++vertexIndex)
       {
-        vertexWeight[ii] = 1;
+        vertexWeight[vertexIndex] = 1;
       }
 
       // Set the weights of each partition to be even, and to sum to 1.
       idx_t desiredPartitionSize = topologySize;
 
       real_t* domainWeights = new real_t[desiredPartitionSize];
-      for (idx_t ii = 0; ii < desiredPartitionSize; ++ii)
+      for (idx_t rank = 0; rank < desiredPartitionSize; ++rank)
       {
-        domainWeights[ii] = (real_t) (1.0) / ((real_t) desiredPartitionSize);
+        domainWeights[rank] = (real_t) (1.0) / ((real_t) desiredPartitionSize);
       }
 
       // A bunch of values ParMetis needs.
@@ -1412,9 +1423,9 @@ namespace hemelb
         // Create an array of lists to store all of this node's adjacencies, arranged by the
         // proc the adjacent vertex is on.
         std::multimap<idx_t, idx_t>* adjByNeighProc = new std::multimap<idx_t, idx_t>[topologySize];
-        for (proc_t ii = 0; ii < (proc_t) topologySize; ++ii)
+        for (proc_t proc = 0; proc < (proc_t) topologySize; ++proc)
         {
-          adjByNeighProc[ii] = std::multimap<idx_t, idx_t>();
+          adjByNeighProc[proc] = std::multimap<idx_t, idx_t>();
         }
 
         // The adjacency data should correspond across all cores.
@@ -1430,11 +1441,11 @@ namespace hemelb
             proc_t adjacentProc = -1;
 
             // Calculate the proc of the neighbouring vertex.
-            for (proc_t ii = 0; ii < (proc_t) topologySize; ++ii)
+            for (proc_t proc = 0; proc < (proc_t) topologySize; ++proc)
             {
-              if (vtxDistribn[ii] <= adjacentVertex && vtxDistribn[ii + 1] > adjacentVertex)
+              if (vtxDistribn[proc] <= adjacentVertex && vtxDistribn[proc + 1] > adjacentVertex)
               {
-                adjacentProc = ii;
+                adjacentProc = proc;
                 break;
               }
             }
@@ -1483,15 +1494,15 @@ namespace hemelb
             // Create a sendable array (std::lists aren't organised in a sendable format).
             data[neigh] = new idx_t[counts[neigh]];
 
-            unsigned int ii = 0;
+            unsigned int adjacencyIndex = 0;
 
             for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
                 != adjByNeighProc[neigh].end(); ++it)
 
             {
-              data[neigh][2 * ii] = it->first;
-              data[neigh][2 * ii + 1] = it->second;
-              ++ii;
+              data[neigh][2 * adjacencyIndex] = it->first;
+              data[neigh][2 * adjacencyIndex + 1] = it->second;
+              ++adjacencyIndex;
             }
 
             // Send the data to the neighbour.
@@ -1540,14 +1551,14 @@ namespace hemelb
             counts[neigh] = 2 * adjByNeighProc[neigh].size();
             data[neigh] = new idx_t[counts[neigh]];
 
-            int ii = 0;
+            int adjacencyIndex = 0;
             for (std::multimap<idx_t, idx_t>::iterator it = adjByNeighProc[neigh].begin(); it
                 != adjByNeighProc[neigh].end(); ++it)
 
             {
-              data[neigh][2 * ii] = it->first;
-              data[neigh][2 * ii + 1] = it->second;
-              ++ii;
+              data[neigh][2 * adjacencyIndex] = it->first;
+              data[neigh][2 * adjacencyIndex + 1] = it->second;
+              ++adjacencyIndex;
             }
           }
 

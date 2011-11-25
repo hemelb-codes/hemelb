@@ -80,15 +80,15 @@ namespace hemelb
                                                           + siteTraverser.GetZ() + 1);
 
             // Iterate over the sites in the unit cube.
-            for (site_t neigh_i = startI; neigh_i <= endI; neigh_i++)
+            for (site_t neighbourI = startI; neighbourI <= endI; neighbourI++)
             {
-              for (site_t neigh_j = startJ; neigh_j <= endJ; neigh_j++)
+              for (site_t neighbourJ = startJ; neighbourJ <= endJ; neighbourJ++)
               {
-                for (site_t neigh_k = startK; neigh_k <= endK; neigh_k++)
+                for (site_t neighbourK = startK; neighbourK <= endK; neighbourK++)
                 {
                   // Get the rank that the neighbour lives on.
                   const proc_t* neigh_proc_id = latDat.GetProcIdFromGlobalCoords(util::Vector3D<
-                      site_t>(neigh_i, neigh_j, neigh_k));
+                      site_t>(neighbourI, neighbourJ, neighbourK));
 
                   // If we have data for it, we should initialise a block in the velocity field
                   // for the neighbour site.
@@ -98,7 +98,9 @@ namespace hemelb
                   }
 
                   InitializeVelocityFieldBlock(latDat,
-                                               util::Vector3D<site_t>(neigh_i, neigh_j, neigh_k),
+                                               util::Vector3D<site_t>(neighbourI,
+                                                                      neighbourJ,
+                                                                      neighbourK),
                                                *neigh_proc_id);
 
                   // If the neighbour is on this rank, ignore it.
@@ -111,9 +113,9 @@ namespace hemelb
                   // for it.
                   VelocitySiteData
                       * vel_site_data_p = GetVelocitySiteData(latDat,
-                                                              util::Vector3D<site_t>(neigh_i,
-                                                                                     neigh_j,
-                                                                                     neigh_k));
+                                                              util::Vector3D<site_t>(neighbourI,
+                                                                                     neighbourJ,
+                                                                                     neighbourK));
 
                   if (neighbouringProcessors.count(*neigh_proc_id) == 0)
                   {
@@ -130,22 +132,23 @@ namespace hemelb
 
         // Iterate over the blocks, updating the value of the counter variable wherever
         // there is velocity field data.
-        for (site_t n = 0; n < latDat.GetBlockCount(); n++)
+        for (site_t block = 0; block < latDat.GetBlockCount(); block++)
         {
-          if (velocityField[n].empty())
+          if (velocityField[block].empty())
           {
             continue;
           }
 
-          if (latDat.GetBlock(n)->site_data == NULL)
+          if (latDat.GetBlock(block)->site_data == NULL)
           {
             continue;
           }
 
           // Update the site id on each velocity field unit as required.
-          for (site_t m = 0; m < latDat.GetSitesPerBlockVolumeUnit(); m++)
+          for (site_t localSiteId = 0; localSiteId < latDat.GetSitesPerBlockVolumeUnit(); localSiteId++)
           {
-            velocityField[n][m].site_id = latDat.GetBlock(n)->site_data[m];
+            velocityField[block][localSiteId].site_id
+                = latDat.GetBlock(block)->site_data[localSiteId];
           }
         }
       }
@@ -171,23 +174,23 @@ namespace hemelb
         }
 
         // TODO this stuff should be encapsulated in the LatticeData
-        site_t i = location.x >> latDat.GetLog2BlockSize();
-        site_t j = location.y >> latDat.GetLog2BlockSize();
-        site_t k = location.z >> latDat.GetLog2BlockSize();
+        site_t blockI = location.x >> latDat.GetLog2BlockSize();
+        site_t blockJ = location.y >> latDat.GetLog2BlockSize();
+        site_t blockK = location.z >> latDat.GetLog2BlockSize();
 
-        site_t block_id = latDat.GetBlockIdFromBlockCoords(i, j, k);
+        site_t block_id = latDat.GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
 
         if (!BlockContainsData(static_cast<size_t> (block_id)))
         {
           return NULL;
         }
 
-        site_t ii = location.x - (i << latDat.GetLog2BlockSize());
-        site_t jj = location.y - (j << latDat.GetLog2BlockSize());
-        site_t kk = location.z - (k << latDat.GetLog2BlockSize());
+        site_t localSiteI = location.x - (blockI << latDat.GetLog2BlockSize());
+        site_t localSiteJ = location.y - (blockJ << latDat.GetLog2BlockSize());
+        site_t localSiteK = location.z - (blockK << latDat.GetLog2BlockSize());
 
-        site_t site_id = ( ( (ii << latDat.GetLog2BlockSize()) + jj) << latDat.GetLog2BlockSize())
-            + kk;
+        site_t site_id = ( ( (localSiteI << latDat.GetLog2BlockSize()) + localSiteJ)
+            << latDat.GetLog2BlockSize()) + localSiteK;
 
         return &GetSiteData(block_id, site_id);
       }
@@ -198,25 +201,25 @@ namespace hemelb
                                                        const proc_t proc_id)
       {
         // TODO this stuff should be encapsulated in the LatticeData
-        site_t i = location.x >> latDat.GetLog2BlockSize();
-        site_t j = location.y >> latDat.GetLog2BlockSize();
-        site_t k = location.z >> latDat.GetLog2BlockSize();
+        site_t blockI = location.x >> latDat.GetLog2BlockSize();
+        site_t blockJ = location.y >> latDat.GetLog2BlockSize();
+        site_t blockK = location.z >> latDat.GetLog2BlockSize();
 
-        site_t block_id = latDat.GetBlockIdFromBlockCoords(i, j, k);
+        site_t blockId = latDat.GetBlockIdFromBlockCoords(blockI, blockJ, blockK);
 
-        if (!BlockContainsData(block_id))
+        if (!BlockContainsData(blockId))
         {
-          velocityField[block_id]
+          velocityField[blockId]
               = std::vector<VelocitySiteData>(latDat.GetSitesPerBlockVolumeUnit());
         }
 
-        site_t ii = location.x - (i << latDat.GetLog2BlockSize());
-        site_t jj = location.y - (j << latDat.GetLog2BlockSize());
-        site_t kk = location.z - (k << latDat.GetLog2BlockSize());
+        site_t localSiteI = location.x - (blockI << latDat.GetLog2BlockSize());
+        site_t localSiteJ = location.y - (blockJ << latDat.GetLog2BlockSize());
+        site_t localSiteK = location.z - (blockK << latDat.GetLog2BlockSize());
 
-        site_t site_id = ( ( (ii << latDat.GetLog2BlockSize()) + jj) << latDat.GetLog2BlockSize())
-            + kk;
-        velocityField[block_id][site_id].proc_id = proc_id;
+        site_t localSiteId = ( ( (localSiteI << latDat.GetLog2BlockSize()) + localSiteJ)
+            << latDat.GetLog2BlockSize()) + localSiteK;
+        velocityField[blockId][localSiteId].proc_id = proc_id;
       }
 
       // Populate the matrix v with all the velocity field data at each index.
