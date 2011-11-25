@@ -372,18 +372,18 @@ namespace hemelb
                   for (unsigned int l = 1; l < D3Q15::NUMVECTORS; l++)
                   {
                     // Find the neighbour site co-ords in this direction.
-                    site_t neigh_i = site_i + D3Q15::CX[l];
-                    site_t neigh_j = site_j + D3Q15::CY[l];
-                    site_t neigh_k = site_k + D3Q15::CZ[l];
+                    site_t neighbourI = site_i + D3Q15::CX[l];
+                    site_t neighbourJ = site_j + D3Q15::CY[l];
+                    site_t neighbourK = site_k + D3Q15::CZ[l];
 
-                    if (!bLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
+                    if (!bLatDat->IsValidLatticeSite(neighbourI, neighbourJ, neighbourK))
                     {
                       continue;
                     }
 
                     // Find the processor Id for that neighbour.
                     const proc_t* proc_id_p = bLatDat->GetProcIdFromGlobalCoords(util::Vector3D<
-                        site_t>(neigh_i, neigh_j, neigh_k));
+                        site_t>(neighbourI, neighbourJ, neighbourK));
 
                     // Move on if the neighbour is in a block of solids (in which case
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==
@@ -578,18 +578,18 @@ namespace hemelb
                   for (unsigned int q = 1; q < D3Q15::NUMVECTORS; q++)
                   {
                     // Find the neighbour site co-ords in this direction.
-                    site_t neigh_i = site_i + D3Q15::CX[q];
-                    site_t neigh_j = site_j + D3Q15::CY[q];
-                    site_t neigh_k = site_k + D3Q15::CZ[q];
+                    site_t neighbourI = site_i + D3Q15::CX[q];
+                    site_t neighbourJ = site_j + D3Q15::CY[q];
+                    site_t neighbourK = site_k + D3Q15::CZ[q];
 
-                    if (!bLatDat->IsValidLatticeSite(neigh_i, neigh_j, neigh_k))
+                    if (!bLatDat->IsValidLatticeSite(neighbourI, neighbourJ, neighbourK))
                     {
                       continue;
                     }
 
                     // Find the processor Id for that neighbour.
                     const proc_t* proc_id_p = bLatDat->GetProcIdFromGlobalCoords(util::Vector3D<
-                        site_t>(neigh_i, neigh_j, neigh_k));
+                        site_t>(neighbourI, neighbourJ, neighbourK));
 
                     // Move on if the neighbour is in a block of solids (in which case
                     // the pointer to ProcessorRankForEachBlockSite is NULL) or it is solid (in which case ProcessorRankForEachBlockSite ==

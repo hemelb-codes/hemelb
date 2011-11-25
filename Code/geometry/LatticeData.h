@@ -81,7 +81,7 @@ namespace hemelb
         bool IsValidBlock(site_t i, site_t j, site_t k) const;
         bool IsValidLatticeSite(site_t i, site_t j, site_t k) const;
 
-        const proc_t* GetProcIdFromGlobalCoords(const util::Vector3D<site_t> globalSiteCoords) const;
+        const proc_t* GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
 
         BlockData* GetBlock(site_t blockNumber) const;
         BlockTraverser GetBlockTraverser() const;
@@ -197,7 +197,7 @@ namespace hemelb
             // Function that finds the pointer to the rank on which a particular site
             // resides. If the site is in an empty block, return NULL.
             const proc_t
-            * GetProcIdFromGlobalCoords(const util::Vector3D<site_t> globalSiteCoords) const;
+            * GetProcIdFromGlobalCoords(const util::Vector3D<site_t>& globalSiteCoords) const;
 
             // Function that gets the index of a block from its coordinates.
             site_t GetBlockIdFromBlockCoords(site_t blockI, site_t blockJ, site_t blockK) const;
@@ -212,7 +212,7 @@ namespace hemelb
 
           public:
             // TODO public temporarily, until all usages are internal to the class.
-            unsigned int Log2BlockSize;
+            unsigned int log2BlockSize;
 
           private:
             site_t mSitesPerBlockVolumeUnit;
