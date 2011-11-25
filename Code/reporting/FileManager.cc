@@ -4,12 +4,14 @@ namespace hemelb
 {
   namespace reporting
   {
-    FileManager::FileManager(configuration::CommandLine &commandLine, const bool & io, const int & processorCount):
-                                                            options(commandLine), ok(false),doIo(io)
+    FileManager::FileManager(configuration::CommandLine &commandLine,
+                             const bool & io,
+                             const int & processorCount) :
+        options(commandLine), ok(false), doIo(io)
     {
 
-      inputFile=options.GetInputFile();
-      outputDir=options.GetOutputDir();
+      inputFile = options.GetInputFile();
+      outputDir = options.GetOutputDir();
 
       GuessOutputDir();
 
@@ -25,29 +27,32 @@ namespace hemelb
           return;
         }
 
-
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);
         hemelb::util::MakeDirAllRXW(snapshotDirectory);
         std::stringstream timings_name_stream;
-        timings_name_stream<< outputDir << "/timings" << processorCount << ".asc" << std::flush;
-        timings_name=timings_name_stream.str();
+        timings_name_stream << outputDir << "/timings" << processorCount << ".asc" << std::flush;
+        timings_name = timings_name_stream.str();
       }
 
-      ok=true;
+      ok = true;
     }
 
-    const std::string & FileManager::GetInputFile() const {
-      return(inputFile);
+    const std::string & FileManager::GetInputFile() const
+    {
+      return inputFile;
     }
-    const std::string & FileManager::GetSnapshotDirectory() const {
-      return(snapshotDirectory);
+    const std::string & FileManager::GetSnapshotDirectory() const
+    {
+      return snapshotDirectory;
     }
-    const std::string & FileManager::GetImageDirectory() const {
-      return(imageDirectory);
+    const std::string & FileManager::GetImageDirectory() const
+    {
+      return imageDirectory;
     }
-    const std::string & FileManager::GetReportPath() const {
-          return(timings_name);
+    const std::string & FileManager::GetReportPath() const
+    {
+      return timings_name;
     }
 
     void FileManager::EmptyOutputDirectories()
@@ -56,23 +61,24 @@ namespace hemelb
       hemelb::util::DeleteDirContents(imageDirectory);
     }
 
-
-
-    hemelb::io::XdrFileWriter * FileManager::XdrImageWriter(const long int time){
+    hemelb::io::XdrFileWriter * FileManager::XdrImageWriter(const long int time)
+    {
       char filename[255];
       snprintf(filename, 255, "%08li.dat", time);
-      return(new hemelb::io::XdrFileWriter(imageDirectory + std::string(filename)));
+      return (new hemelb::io::XdrFileWriter(imageDirectory + std::string(filename)));
     }
 
-    const std::string FileManager::SnapshotPath(unsigned long time) const {
+    const std::string FileManager::SnapshotPath(unsigned long time) const
+    {
       char snapshot_filename[255];
       snprintf(snapshot_filename, 255, "snapshot_%06li.dat", time);
-      return(snapshotDirectory+std::string(snapshot_filename)); // by copy
+      return (snapshotDirectory + std::string(snapshot_filename)); // by copy
     }
 
     void FileManager::SaveConfiguration(configuration::SimConfig * simConfig)
     {
-      if (doIo) {
+      if (doIo)
+      {
         simConfig->Save(outputDir + "/" + configLeafName);
       }
     }
@@ -83,23 +89,25 @@ namespace hemelb
       if (lLastForwardSlash == std::string::npos)
       {
         // input file supplied is in current folder
-        configLeafName= inputFile;
+        configLeafName = inputFile;
         if (outputDir.length() == 0)
         {
           // no output dir given, defaulting to local.
-          outputDir="./results";
+          outputDir = "./results";
         }
-      } else {
+      }
+      else
+      {
         // input file supplied is a path to the input file
-        configLeafName=  inputFile.substr(lLastForwardSlash);
-        if (outputDir.length() == 0) {
+        configLeafName = inputFile.substr(lLastForwardSlash);
+        if (outputDir.length() == 0)
+        {
           // no output dir given, defaulting to location of input file.
           // note substr is end-exclusive and start-inclusive
-          outputDir=inputFile.substr(0, lLastForwardSlash+1)+"results";
+          outputDir = inputFile.substr(0, lLastForwardSlash + 1) + "results";
         }
       }
     }
   }
 }
-
 
