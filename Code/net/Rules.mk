@@ -2,7 +2,8 @@
 
 TARGETS := libHemeLbNet.$(LIBEXT)
 SRCS := net.cc \
-        IteratedAction.cc
+        IteratedAction.cc \
+        BroadcastMock.cc
 
 $(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
 
