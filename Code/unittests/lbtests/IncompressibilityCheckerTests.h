@@ -47,15 +47,16 @@ namespace hemelb
 
             FourCubeLatticeData latticeData;
             LbTestsHelper::InitialiseAnisotropicTestData(&latticeData);
+            latticeData.SwapOldAndNew();
             lb::IncompressibilityChecker<net::BroadcastMock> incompChecker(&latticeData,
                                                                            &net,
                                                                            &simulationState);
 
             // These are the smallest and largest density values in FourCubeLatticeData by default
             AdvanceActorOneTimeStep(incompChecker);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(4.985112, incompChecker.GetGlobalSmallestDensity(), eps);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(20.626241, incompChecker.GetGlobalLargestDensity(), eps);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(15.641129, incompChecker.GetMaxDensityDifference(), eps);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(10, incompChecker.GetGlobalSmallestDensity(), eps);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(21.45, incompChecker.GetGlobalLargestDensity(), eps);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(11.45, incompChecker.GetMaxDensityDifference(), eps);
 
             // The broadcast mock injects some smaller and larger densities coming from one of the children
             AdvanceActorOneTimeStep(incompChecker);
