@@ -46,6 +46,7 @@ namespace hemelb
             lb::SimulationState simulationState(1000, 1);
 
             FourCubeLatticeData latticeData;
+            LbTestsHelper::InitialiseAnisotropicTestData(&latticeData);
             lb::IncompressibilityChecker<net::BroadcastMock> incompChecker(&latticeData,
                                                                            &net,
                                                                            &simulationState);
