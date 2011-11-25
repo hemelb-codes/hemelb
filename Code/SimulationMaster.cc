@@ -21,10 +21,11 @@
  * Initialises member variables including the network topology
  * object.
  */
-SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options):
+SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options) :
   timings()
 {
-  if (options.HasProblems()) {
+  if (options.HasProblems())
+  {
     Abort();
   }
 
@@ -41,8 +42,11 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
 
   snapshotsPerCycle = options.NumberOfSnapshotsPerCycle();
   imagesPerCycle = options.NumberOfImagesPerCycle();
-  steeringSessionId = options.GetSteeringSessionId();;
-  fileManager=new hemelb::reporting::FileManager(options,IsCurrentProcTheIOProc(),GetProcessorCount());
+  steeringSessionId = options.GetSteeringSessionId();
+  ;
+  fileManager = new hemelb::reporting::FileManager(options,
+                                                   IsCurrentProcTheIOProc(),
+                                                   GetProcessorCount());
   if (fileManager->HasProblems())
   {
     Abort();
@@ -50,8 +54,12 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   simConfig = hemelb::configuration::SimConfig::Load(fileManager->GetInputFile().c_str());
   fileManager->SaveConfiguration(simConfig);
   Initialise();
-  if (IsCurrentProcTheIOProc()){
-    reporter=new hemelb::reporting::Reporter(fileManager->GetReportPath(), fileManager->GetInputFile(), mLbm->TotalFluidSiteCount(),timings);
+  if (IsCurrentProcTheIOProc())
+  {
+    reporter = new hemelb::reporting::Reporter(fileManager->GetReportPath(),
+                                               fileManager->GetInputFile(),
+                                               mLbm->TotalFluidSiteCount(),
+                                               timings);
   }
 }
 
@@ -62,7 +70,6 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
  */
 SimulationMaster::~SimulationMaster()
 {
-
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
@@ -124,7 +131,8 @@ SimulationMaster::~SimulationMaster()
   }
   delete simConfig;
   delete fileManager;
-  if (IsCurrentProcTheIOProc()){
+  if (IsCurrentProcTheIOProc())
+  {
     delete reporter;
   }
 }
@@ -155,8 +163,8 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
 
-  mSimulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle,
-                                                     simConfig->NumCycles);
+  mSimulationState
+      = new hemelb::lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
 
   hemelb::site_t mins[3], maxes[3];
   // TODO The way we initialise LbmParameters is not great.
@@ -165,17 +173,21 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LatticeData.");
   mLatDat
-  = new hemelb::geometry::LatticeData(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
-                                      &totalFluidSites,
-                                      mins,
-                                      maxes,
-                                      hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor,
-                                      &params,
-                                      simConfig,
-                                      timings);
+      = new hemelb::geometry::LatticeData(hemelb::steering::SteeringComponent::RequiresSeparateSteeringCore(),
+                                          &totalFluidSites,
+                                          mins,
+                                          maxes,
+                                          hemelb::topology::NetworkTopology::Instance()->FluidSitesOnEachProcessor,
+                                          &params,
+                                          simConfig,
+                                          timings);
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
-  mLbm = new hemelb::lb::LBM(simConfig, &mNet, mLatDat, mSimulationState, timings[hemelb::reporting::Timers::lb]);
+  mLbm = new hemelb::lb::LBM(simConfig,
+                             &mNet,
+                             mLatDat,
+                             mSimulationState,
+                             timings[hemelb::reporting::Timers::lb]);
   mLbm->SetSiteMinima(mins);
   mLbm->SetSiteMaxima(maxes);
 
@@ -194,16 +206,7 @@ void SimulationMaster::Initialise()
 
   mStabilityTester = new hemelb::lb::StabilityTester(mLatDat, &mNet, mSimulationState);
 
-  if (hemelb::log::Logger::ShouldDisplay<hemelb::log::Debug>())
-  {
-    int typesTested[1] = { 0 };
-    mEntropyTester
-    = NULL;//new hemelb::lb::EntropyTester(typesTested, 1, mLatDat, &mNet, mSimulationState);
-  }
-  else
-  {
-    mEntropyTester = NULL;
-  }
+  mEntropyTester = NULL;
 
   timings[hemelb::reporting::Timers::netInitialise].Start();
   hemelb::site_t* lReceiveTranslator = mNet.Initialise(mLatDat);
@@ -213,7 +216,8 @@ void SimulationMaster::Initialise()
   mVisControl = new hemelb::vis::Control(mLbm->GetLbmParams()->StressType,
                                          &mNet,
                                          mSimulationState,
-                                         mLatDat, timings[hemelb::reporting::Timers::visualisation]);
+                                         mLatDat,
+                                         timings[hemelb::reporting::Timers::visualisation]);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
@@ -229,18 +233,18 @@ void SimulationMaster::Initialise()
                                            mLatDat->GetVoxelSize());
 
   mInletValues
-  = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
-                                               mLatDat,
-                                               simConfig->Inlets,
-                                               mSimulationState,
-                                               mUnits);
+      = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
+                                                   mLatDat,
+                                                   simConfig->Inlets,
+                                                   mSimulationState,
+                                                   mUnits);
 
   mOutletValues
-  = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::OUTLET_TYPE,
-                                               mLatDat,
-                                               simConfig->Outlets,
-                                               mSimulationState,
-                                               mUnits);
+      = new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::OUTLET_TYPE,
+                                                   mLatDat,
+                                                   simConfig->Outlets,
+                                                   mSimulationState,
+                                                   mUnits);
 
   mLbm->Initialise(lReceiveTranslator, mVisControl, mInletValues, mOutletValues, mUnits);
 
@@ -256,25 +260,25 @@ void SimulationMaster::Initialise()
   mLbm->ReadVisParameters();
 }
 
-unsigned int SimulationMaster::OutputPeriod(unsigned int frequency){
-  if (frequency==0){
+unsigned int SimulationMaster::OutputPeriod(unsigned int frequency)
+{
+  if (frequency == 0)
+  {
     return 1000000000;
   }
-  unsigned long roundedPeriod=mSimulationState->GetTimeStepsPerCycle()/frequency;
-  return hemelb::util::NumericalFunctions::max(1U,(unsigned int) roundedPeriod);
+  unsigned long roundedPeriod = mSimulationState->GetTimeStepsPerCycle() / frequency;
+  return hemelb::util::NumericalFunctions::max(1U, (unsigned int) roundedPeriod);
 }
 
 void SimulationMaster::HandleActors()
 {
-  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-  != actors.end(); ++it)
+  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it != actors.end(); ++it)
   {
     (*it)->RequestComms();
   }
 
   mNet.Receive();
-  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-  != actors.end(); ++it)
+  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it != actors.end(); ++it)
   {
     (*it)->PreSend();
   }
@@ -282,8 +286,7 @@ void SimulationMaster::HandleActors()
   mNet.Send();
   timings[hemelb::reporting::Timers::mpiSend].Stop();
 
-  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-  != actors.end(); ++it)
+  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it != actors.end(); ++it)
   {
     (*it)->PreReceive();
   }
@@ -292,25 +295,22 @@ void SimulationMaster::HandleActors()
   mNet.Wait();
   timings[hemelb::reporting::Timers::mpiWait].Stop();
 
-  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-  != actors.end(); ++it)
+  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it != actors.end(); ++it)
   {
     (*it)->PostReceive();
   }
 
-  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-  != actors.end(); ++it)
+  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it != actors.end(); ++it)
   {
     (*it)->EndIteration();
   }
 }
 
-
-void SimulationMaster::ResetUnstableSimulation(){
+void SimulationMaster::ResetUnstableSimulation()
+{
   fileManager->EmptyOutputDirectories();
 
-  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it
-  != actors.end(); ++it)
+  for (std::vector<hemelb::net::IteratedAction*>::iterator it = actors.begin(); it != actors.end(); ++it)
   {
     (*it)->Reset();
   }
@@ -322,11 +322,11 @@ void SimulationMaster::ResetUnstableSimulation(){
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: period: %i\n",
                                                                       mSimulationState->GetTimeStepsPerCycle());
 
-
   mSimulationState->Reset();
 }
 
-void SimulationMaster::WriteLocalImages(){
+void SimulationMaster::WriteLocalImages()
+{
   for (std::multimap<unsigned long, unsigned long>::const_iterator it =
       snapshotsCompleted.find(mSimulationState->GetTimeStepsPassed()); it
       != snapshotsCompleted.end() && it->first == mSimulationState->GetTimeStepsPassed(); ++it)
@@ -335,8 +335,8 @@ void SimulationMaster::WriteLocalImages(){
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       reporter->Image();
-      hemelb::io::XdrFileWriter * writer = fileManager->XdrImageWriter(
-          1 + ( (it->second - 1) % mSimulationState->GetTimeStepsPerCycle()));
+      hemelb::io::XdrFileWriter * writer = fileManager->XdrImageWriter(1 + ( (it->second - 1)
+          % mSimulationState->GetTimeStepsPerCycle()));
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
           mVisControl->GetResult(it->second);
@@ -351,7 +351,8 @@ void SimulationMaster::WriteLocalImages(){
   snapshotsCompleted.erase(mSimulationState->GetTimeStepsPassed());
 }
 
-void SimulationMaster::GenerateNetworkImages(){
+void SimulationMaster::GenerateNetworkImages()
+{
   for (std::multimap<unsigned long, unsigned long>::const_iterator it =
       networkImagesCompleted.find(mSimulationState->GetTimeStepsPassed()); it
       != networkImagesCompleted.end() && it->first == mSimulationState->GetTimeStepsPassed(); ++it)
@@ -393,7 +394,7 @@ void SimulationMaster::GenerateNetworkImages(){
 /**
  * Begin the simulation.
  */
- void SimulationMaster::RunSimulation()
+void SimulationMaster::RunSimulation()
 {
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
 
@@ -404,7 +405,6 @@ void SimulationMaster::GenerateNetworkImages(){
 
   bool is_finished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
-
 
   actors.push_back(mLbm);
   actors.push_back(mInletValues);
@@ -423,7 +423,7 @@ void SimulationMaster::GenerateNetworkImages(){
   }
 
   for (; mSimulationState->GetTimeStepsPassed() <= mSimulationState->GetTotalTimeSteps()
-  && !is_finished; mSimulationState->Increment())
+      && !is_finished; mSimulationState->Increment())
   {
     if (IsCurrentProcTheIOProc())
     {
@@ -431,8 +431,8 @@ void SimulationMaster::GenerateNetworkImages(){
     }
 
     bool write_snapshot_image = ( (mSimulationState->GetTimeStep() % images_period) == 0)
-                          ? true
-                              : false;
+      ? true
+      : false;
 
     // Make sure we're rendering if we're writing this iteration.
     if (write_snapshot_image)
@@ -508,7 +508,8 @@ void SimulationMaster::GenerateNetworkImages(){
       {
         reporter->Snapshot();
       }
-      mLbm->WriteConfigParallel(stability, fileManager->SnapshotPath(mSimulationState->GetTimeStep()));
+      mLbm->WriteConfigParallel(stability,
+                                fileManager->SnapshotPath(mSimulationState->GetTimeStep()));
     }
 
     timings[hemelb::reporting::Timers::snapshot].Stop();
@@ -525,7 +526,8 @@ void SimulationMaster::GenerateNetworkImages(){
     }
     if (mSimulationState->GetTimeStepsPerCycle() > 400000)
     {
-      if (IsCurrentProcTheIOProc()){
+      if (IsCurrentProcTheIOProc())
+      {
         reporter->Stability(false);
       }
       break;
@@ -544,26 +546,24 @@ void SimulationMaster::GenerateNetworkImages(){
   }
   timings[hemelb::reporting::Timers::simulation].Stop();
   timings[hemelb::reporting::Timers::total].Stop();
-    timings.Reduce();
-    if (IsCurrentProcTheIOProc())
-    {
-      reporter->Write();
-    }
+  timings.Reduce();
+  if (IsCurrentProcTheIOProc())
+  {
+    reporter->Write();
+  }
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Finish running simulation.");
 }
 
- /**
-  * Called on error to abort the simulation and pull-down the MPI environment.
-  */
- void SimulationMaster::Abort()
- {
-   int err = MPI_Abort(MPI_COMM_WORLD, 1);
+/**
+ * Called on error to abort the simulation and pull-down the MPI environment.
+ */
+void SimulationMaster::Abort()
+{
+  int err = MPI_Abort(MPI_COMM_WORLD, 1);
 
-   // This gives us something to work from when we have an error - we get the rank
-   // that calls abort, and we get a stack-trace from the exception having been thrown.
-   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Aborting");
-   exit(1);
- }
-
-
+  // This gives us something to work from when we have an error - we get the rank
+  // that calls abort, and we get a stack-trace from the exception having been thrown.
+  hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Aborting");
+  exit(1);
+}
 
