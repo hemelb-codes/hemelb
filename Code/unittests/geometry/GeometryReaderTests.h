@@ -3,6 +3,7 @@
 #include "geometry/LatticeData.h"
 #include <cppunit/TestFixture.h>
 #include "unittests/resources/Resource.h"
+#include "unittests/FourCubeLatticeData.h"
 namespace hemelb
 {
   namespace unittests
@@ -32,6 +33,7 @@ namespace hemelb
           CPPUNIT_TEST_SUITE(GeometryReaderTests);
           CPPUNIT_TEST(TestConstruct);
           CPPUNIT_TEST(TestRead);
+          CPPUNIT_TEST(TestSameAsFourCube);
           CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
@@ -39,7 +41,8 @@ namespace hemelb
             reader = new TestableLatticeData::GeometryReader(false);
             globalLattice= new TestableLatticeData::GlobalLatticeData();
             params=new lb::LbmParameters(1000, 0.1);
-            simConfig = configuration::SimConfig::Load( Resource("config.xml").Path().c_str());
+            fourCube=new FourCubeLatticeData();
+            simConfig = configuration::SimConfig::Load( Resource("four_cube.xml").Path().c_str());
           }
 
           void tearDown()
@@ -57,12 +60,27 @@ namespace hemelb
             reader->LoadAndDecompose(globalLattice, params, simConfig, timings);
           }
 
+          void TestSameAsFourCube()
+          {
+            reader->LoadAndDecompose(globalLattice, params, simConfig, timings);
+            for (site_t i=0;i<4;i++){
+              for (site_t j=0;j<4;j++){
+                for (site_t k=0;k<4;k++){
+                  //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
+                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSiteData(i*16+j*4+k),globalLattice->GetSiteData(i,j,k));
+                }
+              }
+            }
+
+          }
+
         private:
           TestableLatticeData::GeometryReader *reader;
           TestableLatticeData::GlobalLatticeData *globalLattice;
           configuration::SimConfig * simConfig;
           reporting::Timers timings;
           lb::LbmParameters *params;
+          FourCubeLatticeData *fourCube;
 
       };
 
