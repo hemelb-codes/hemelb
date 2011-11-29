@@ -3,7 +3,7 @@
 #include <map>
 
 #include "debug/Debugger.h"
-#include "io/XdrMemReader.h"
+#include "io/writers/xdr/XdrMemReader.h"
 #include "geometry/LatticeData.h"
 #include "net/net.h"
 #include "topology/NetworkTopology.h"
@@ -243,8 +243,8 @@ namespace hemelb
                 currentComm);
 
       // Create an Xdr translator based on the read-in data.
-      hemelb::io::XdrReader preambleReader =
-          hemelb::io::XdrMemReader(preambleBuffer, preambleBytes);
+      hemelb::io::writers::xdr::XdrReader preambleReader =
+          hemelb::io::writers::xdr::XdrMemReader(preambleBuffer, preambleBytes);
 
       // Variables we'll read.
       unsigned int stressType, blocksX, blocksY, blocksZ, blockSize;
@@ -315,8 +315,8 @@ namespace hemelb
                 currentComm);
 
       // Create a Xdr translation object to translate from binary
-      hemelb::io::XdrReader preambleReader =
-          hemelb::io::XdrMemReader(headerBuffer, (unsigned int) headerByteCount);
+      hemelb::io::writers::xdr::XdrReader preambleReader =
+          hemelb::io::writers::xdr::XdrMemReader(headerBuffer, (unsigned int) headerByteCount);
 
       // Read in all the data.
       for (site_t block = 0; block < blockCount; block++)
@@ -479,7 +479,7 @@ namespace hemelb
       if (neededOnThisRank)
       {
         // Create an Xdr interpreter.
-        io::XdrMemReader lReader(buffer, bytes);
+        io::writers::xdr::XdrMemReader lReader(buffer, bytes);
 
         globLatDat->ReadBlock(blockNumber, &lReader);
 

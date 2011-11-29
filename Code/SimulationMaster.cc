@@ -1,7 +1,7 @@
 #include "SimulationMaster.h"
 #include "configuration/SimConfig.h"
 
-#include "io/XdrFileWriter.h"
+#include "io/writers/xdr/XdrFileWriter.h"
 #include "util/utilityFunctions.h"
 #include "geometry/LatticeData.h"
 #include "debug/Debugger.h"
@@ -335,7 +335,7 @@ void SimulationMaster::WriteLocalImages()
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       reporter->Image();
-      hemelb::io::XdrFileWriter * writer = fileManager->XdrImageWriter(1 + ( (it->second - 1)
+      hemelb::io::writers::xdr::XdrFileWriter * writer = fileManager->XdrImageWriter(1 + ( (it->second - 1)
           % mSimulationState->GetTimeStepsPerCycle()));
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
