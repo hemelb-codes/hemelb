@@ -1,3 +1,5 @@
+#ifndef HEMELB_XML_TINYXML_H
+#define HEMELB_XML_TINYXML_H
 /*
 www.sourceforge.net/projects/tinyxml
 Original code by Lee Thomason (www.grinninglizard.com)
@@ -21,10 +23,6 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-
-
-#ifndef TINYXML_INCLUDED
-#define TINYXML_INCLUDED
 
 #ifdef _MSC_VER
 #pragma warning( push )
@@ -1802,4 +1800,4 @@ private:
 #pragma warning( pop )
 #endif
 
-#endif
+#endif HEMELB_XML_TINYXML_H
