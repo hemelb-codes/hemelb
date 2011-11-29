@@ -1,5 +1,6 @@
 #ifndef HEMELB_XML_TINYXML_H
 #define HEMELB_XML_TINYXML_H
+
 /*
 www.sourceforge.net/projects/tinyxml
 Original code by Lee Thomason (www.grinninglizard.com)
@@ -1800,4 +1801,4 @@ private:
 #pragma warning( pop )
 #endif
 
-#endif HEMELB_XML_TINYXML_H
+#endif //HEMELB_XML_TINYXML_H
