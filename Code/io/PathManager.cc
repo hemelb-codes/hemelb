@@ -2,7 +2,7 @@
 #include <sstream>
 namespace hemelb
 {
-  namespace reporting
+  namespace io
   {
     PathManager::PathManager(configuration::CommandLine &commandLine,
                              const bool & io,
