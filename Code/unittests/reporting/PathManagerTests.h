@@ -1,6 +1,6 @@
 #ifndef HEMELB_UNITTESTS_REPORTING_FILEMANAGER_H
 #define HEMELB_UNITTESTS_REPORTING_FILEMANAGER_H
-#include "reporting/FileManager.h"
+#include "reporting/PathManager.h"
 #include "unittests/helpers/FolderTestFixture.h"
 namespace hemelb
 {
@@ -11,9 +11,9 @@ namespace hemelb
       using namespace helpers;
       using namespace hemelb::reporting;
 
-      class FileManagerTests : public FolderTestFixture
+      class PathManagerTests : public FolderTestFixture
       {
-          CPPUNIT_TEST_SUITE(FileManagerTests);
+          CPPUNIT_TEST_SUITE(PathManagerTests);
           CPPUNIT_TEST(TestCreateLocalConfig);
           CPPUNIT_TEST(TestNameInventionLocalConfig);
           CPPUNIT_TEST(TestCreatePathConfig);
@@ -70,7 +70,7 @@ namespace hemelb
 
           void ConstructManager(){
             configuration::CommandLine cl=configuration::CommandLine(argc,argv);
-            fileManager=new FileManager(cl,true,processorCount);
+            fileManager=new PathManager(cl,true,processorCount);
           }
 
           void ConstructPathConfigManager(){
@@ -84,11 +84,11 @@ namespace hemelb
           int argc;
           int processorCount;
           const char* argv[9];
-          FileManager *fileManager;
+          PathManager *fileManager;
       };
 
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(FileManagerTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION(PathManagerTests);
     }
   }
 }

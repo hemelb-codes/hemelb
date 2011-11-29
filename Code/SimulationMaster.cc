@@ -44,7 +44,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   imagesPerCycle = options.NumberOfImagesPerCycle();
   steeringSessionId = options.GetSteeringSessionId();
   ;
-  fileManager = new hemelb::reporting::FileManager(options,
+  fileManager = new hemelb::reporting::PathManager(options,
                                                    IsCurrentProcTheIOProc(),
                                                    GetProcessorCount());
   if (fileManager->HasProblems())
