@@ -40,7 +40,7 @@ namespace hemelb
     std::string NormalizePathRelativeToPath(std::string inPath,
                                             std::string basePath);
 
-    const char * GetTemporaryDir();
+    std::string GetTemporaryDir();
 
     void ChangeDirectory(const char * target);
     void ChangeDirectory(const std::string &target);
