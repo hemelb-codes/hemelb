@@ -1,6 +1,6 @@
-#ifndef HEMELB_UNITTESTS_REPORTING_PATHMANAGERTESTS_H
-#define HEMELB_UNITTESTS_REPORTING_PATHMANAGERTESTS_H
-#include "reporting/PathManager.h"
+#ifndef HEMELB_UNITTESTS_IO_PATHMANAGERTESTS_H
+#define HEMELB_UNITTESTS_IO_PATHMANAGERTESTS_H
+#include "io/PathManager.h"
 #include "unittests/helpers/FolderTestFixture.h"
 namespace hemelb
 {
@@ -9,7 +9,7 @@ namespace hemelb
     namespace reporting
     {
       using namespace helpers;
-      using namespace hemelb::reporting;
+      using namespace hemelb::io;
 
       class PathManagerTests : public FolderTestFixture
       {

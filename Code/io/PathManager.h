@@ -1,5 +1,5 @@
-#ifndef HEMELB_REPORTING_PATHMANAGER_H
-#define HEMELB_REPORTING_PATHMANAGER_H
+#ifndef HEMELB_IO_PATHMANAGER_H
+#define HEMELB_IO_PATHMANAGER_H
 
 #include <string>
 #include "configuration/CommandLine.h"
@@ -9,7 +9,7 @@
 #include "io/writers/xdr/XdrFileWriter.h"
 namespace hemelb
 {
-  namespace reporting
+  namespace io
   {
     class PathManager
     {
@@ -43,4 +43,4 @@ namespace hemelb
   }
 }
 
-#endif //HEMELB_REPORTING_PATHMANAGER_H
+#endif //HEMELB_IO_PATHMANAGER_H
