@@ -253,7 +253,7 @@ namespace hemelb
           + localSiteK];
     }
 
-    void LatticeData::GlobalLatticeData::ReadBlock(const site_t block, io::XdrReader* reader)
+    void LatticeData::GlobalLatticeData::ReadBlock(const site_t block, io::writers::xdr::XdrReader* reader)
     {
       if (Blocks[block].site_data == NULL)
       {

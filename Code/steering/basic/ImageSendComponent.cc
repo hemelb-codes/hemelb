@@ -4,7 +4,7 @@
 #include "log/Logger.h"
 #include "steering/ImageSendComponent.h"
 #include "steering/Network.h"
-#include "io/XdrMemWriter.h"
+#include "io/writers/xdr/XdrMemWriter.h"
 #include "util/utilityFunctions.h"
 
 namespace hemelb
@@ -45,7 +45,7 @@ namespace hemelb
         return;
       }
 
-      io::XdrMemWriter imageWriter = io::XdrMemWriter(xdrSendBuffer, maxSendSize);
+      io::writers::xdr::XdrMemWriter imageWriter = io::writers::xdr::XdrMemWriter(xdrSendBuffer, maxSendSize);
 
       unsigned int initialPosition = imageWriter.getCurrentStreamPosition();
 
