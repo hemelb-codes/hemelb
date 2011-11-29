@@ -10,7 +10,7 @@
 #include "lb/boundaries/BoundaryValues.h"
 #include "util/UnitConverter.h"
 #include "configuration/CommandLine.h"
-#include "reporting/PathManager.h"
+#include "io/PathManager.h"
 #include "reporting/Reporter.h"
 #include "reporting/Timers.h"
 
@@ -40,7 +40,7 @@ class SimulationMaster
     void GenerateNetworkImages();
     hemelb::configuration::SimConfig *simConfig;
     hemelb::geometry::LatticeData* mLatDat;
-    hemelb::reporting::PathManager* fileManager;
+    hemelb::io::PathManager* fileManager;
     hemelb::reporting::Timers timings;
     hemelb::reporting::Reporter* reporter;
     typedef std::multimap<unsigned long, unsigned long> mapType;
