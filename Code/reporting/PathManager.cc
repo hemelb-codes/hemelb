@@ -1,10 +1,10 @@
-#include "FileManager.h"
+#include "PathManager.h"
 #include <sstream>
 namespace hemelb
 {
   namespace reporting
   {
-    FileManager::FileManager(configuration::CommandLine &commandLine,
+    PathManager::PathManager(configuration::CommandLine &commandLine,
                              const bool & io,
                              const int & processorCount) :
         options(commandLine), ok(false), doIo(io)
@@ -38,44 +38,44 @@ namespace hemelb
       ok = true;
     }
 
-    const std::string & FileManager::GetInputFile() const
+    const std::string & PathManager::GetInputFile() const
     {
       return inputFile;
     }
-    const std::string & FileManager::GetSnapshotDirectory() const
+    const std::string & PathManager::GetSnapshotDirectory() const
     {
       return snapshotDirectory;
     }
-    const std::string & FileManager::GetImageDirectory() const
+    const std::string & PathManager::GetImageDirectory() const
     {
       return imageDirectory;
     }
-    const std::string & FileManager::GetReportPath() const
+    const std::string & PathManager::GetReportPath() const
     {
       return timings_name;
     }
 
-    void FileManager::EmptyOutputDirectories()
+    void PathManager::EmptyOutputDirectories()
     {
       hemelb::util::DeleteDirContents(snapshotDirectory);
       hemelb::util::DeleteDirContents(imageDirectory);
     }
 
-    hemelb::io::XdrFileWriter * FileManager::XdrImageWriter(const long int time)
+    hemelb::io::XdrFileWriter * PathManager::XdrImageWriter(const long int time)
     {
       char filename[255];
       snprintf(filename, 255, "%08li.dat", time);
       return (new hemelb::io::XdrFileWriter(imageDirectory + std::string(filename)));
     }
 
-    const std::string FileManager::SnapshotPath(unsigned long time) const
+    const std::string PathManager::SnapshotPath(unsigned long time) const
     {
       char snapshot_filename[255];
       snprintf(snapshot_filename, 255, "snapshot_%06li.dat", time);
       return (snapshotDirectory + std::string(snapshot_filename)); // by copy
     }
 
-    void FileManager::SaveConfiguration(configuration::SimConfig * simConfig)
+    void PathManager::SaveConfiguration(configuration::SimConfig * simConfig)
     {
       if (doIo)
       {
@@ -83,7 +83,7 @@ namespace hemelb
       }
     }
 
-    void FileManager::GuessOutputDir()
+    void PathManager::GuessOutputDir()
     {
       unsigned long lLastForwardSlash = inputFile.rfind('/');
       if (lLastForwardSlash == std::string::npos)
