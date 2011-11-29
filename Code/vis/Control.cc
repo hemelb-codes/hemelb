@@ -8,7 +8,7 @@
 #include "vis/rayTracer/RayTracer.h"
 #include "vis/GlyphDrawer.h"
 
-#include "io/XdrFileWriter.h"
+#include "io/writers/xdr/XdrFileWriter.h"
 
 namespace hemelb
 
@@ -214,7 +214,7 @@ namespace hemelb
       timer.Stop();
     }
 
-    void Control::WriteImage(io::Writer* writer,
+    void Control::WriteImage(io::writers::Writer* writer,
                              const PixelSet<ResultPixel>& imagePixels,
                              const DomainStats& domainStats,
                              const VisSettings& visSettings) const
@@ -243,7 +243,7 @@ namespace hemelb
       return mScreen.GetPixelsY();
     }
 
-    void Control::WritePixels(io::Writer* writer,
+    void Control::WritePixels(io::writers::Writer* writer,
                               const PixelSet<ResultPixel>& imagePixels,
                               const DomainStats& domainStats,
                               const VisSettings& visSettings) const
@@ -276,7 +276,7 @@ namespace hemelb
         {
           *writer << pix_data[i];
         }
-        *writer << io::Writer::eol;
+        *writer << io::writers::Writer::eol;
       }
     }
 

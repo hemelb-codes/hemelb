@@ -6,7 +6,7 @@
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "configuration/SimConfig.h"
-#include "io/XdrFileWriter.h"
+#include "io/writers/xdr/XdrFileWriter.h"
 namespace hemelb
 {
   namespace reporting
@@ -25,7 +25,7 @@ namespace hemelb
         const std::string & GetReportPath() const;
         void SaveConfiguration(configuration::SimConfig * simConfig);
         void EmptyOutputDirectories();
-        hemelb::io::XdrFileWriter * XdrImageWriter(const long int time);
+        hemelb::io::writers::xdr::XdrFileWriter * XdrImageWriter(const long int time);
         const std::string SnapshotPath(unsigned long time) const;
       private:
         void GuessOutputDir();

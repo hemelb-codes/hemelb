@@ -2,7 +2,7 @@
 
 #include "steering/SteeringComponent.h"
 #include "steering/Network.h"
-#include "io/XdrMemReader.h"
+#include "io/writers/xdr/XdrMemReader.h"
 #include "log/Logger.h"
 
 namespace hemelb
@@ -86,7 +86,7 @@ namespace hemelb
       if (newSteeringDataExists)
       {
         // Initialise the stream reader.
-        io::XdrMemReader steeringStream(steeringRecvBuffer, bytes);
+        io::writers::xdr::XdrMemReader steeringStream(steeringRecvBuffer, bytes);
 
         for (int i = 0; i < STEERABLE_PARAMETERS; i++)
           steeringStream.readFloat(privateSteeringParams[i]);

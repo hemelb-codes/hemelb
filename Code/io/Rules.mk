@@ -1,17 +1,10 @@
 include $(MK)/header.mk
 
 TARGETS := libHemeLbIo.$(LIBEXT)
-SRCS := Writer.cc \
-	XdrReader.cc \
-	XdrMemReader.cc \
-	XdrFileReader.cc \
-	XdrWriter.cc \
-	XdrFileWriter.cc \
-	XdrMemWriter.cc \
-	AsciiStreamWriter.cc \
-	AsciiFileWriter.cc
 
-$(TARGETS)_DEPS := $(subst .cc,.$(OBJEXT), $(SRCS))
+SUBDIRS := writers
+
+$(TARGETS)_DEPS = $(foreach sd,$(SUBDIRS_$(d)),$(call subtree_tgts,$(sd)))
 
 INCLUDES_$(d) := $(INCLUDES_$(parent))
 
