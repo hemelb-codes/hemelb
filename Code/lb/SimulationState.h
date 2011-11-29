@@ -1,5 +1,5 @@
-#ifndef SIMULATIONSTATE_H_
-#define SIMULATIONSTATE_H_
+#ifndef HEMELB_LB_SIMULATIONSTATE_H
+#define HEMELB_LB_SIMULATIONSTATE_H
 
 #include <semaphore.h>
 
