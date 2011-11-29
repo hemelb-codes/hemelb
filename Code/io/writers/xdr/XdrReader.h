@@ -1,5 +1,5 @@
-#ifndef HEMELB_IO_XDRREADER_H
-#define HEMELB_IO_XDRREADER_H
+#ifndef HEMELB_IO_WRITERS_XDR_XDRREADER_H
+#define HEMELB_IO_WRITERS_XDR_XDRREADER_H
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -41,4 +41,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_IO_XDRREADER_H
+#endif // HEMELB_IO_WRITERS_XDR_XDRREADER_H

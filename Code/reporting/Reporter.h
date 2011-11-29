@@ -1,5 +1,5 @@
-#ifndef HEMELB_REPORTER_H
-#define HEMELB_REPORTER_H
+#ifndef HEMELB_REPORTING_REPORTER_H
+#define HEMELB_REPORTING_REPORTER_H
 
 #include <string>
 #include <stdarg.h>
@@ -35,4 +35,4 @@ namespace hemelb{
   }
 }
 
-#endif
+#endif // HEMELB_REPORTING_REPORTER_H
