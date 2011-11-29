@@ -1,5 +1,5 @@
-#ifndef HEMELB_IO_XDRFILEWRITER_H
-#define HEMELB_IO_XDRFILEWRITER_H
+#ifndef HEMELB_IO_WRITERS_XDR_XDRFILEWRITER_H
+#define HEMELB_IO_WRITERS_XDR_XDRFILEWRITER_H
 
 #include <stdio.h>
 #include <string>
@@ -34,4 +34,4 @@ namespace hemelb
     } // namespace writers
   }
 }
-#endif // HEMELB_IO_XDRFILEWRITER_H
+#endif // HEMELB_IO_WRITERS_XDR_XDRFILEWRITER_H

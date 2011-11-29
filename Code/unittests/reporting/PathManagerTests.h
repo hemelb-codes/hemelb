@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTESTS_REPORTING_FILEMANAGER_H
-#define HEMELB_UNITTESTS_REPORTING_FILEMANAGER_H
+#ifndef HEMELB_UNITTESTS_REPORTING_PATHMANAGERTESTS_H
+#define HEMELB_UNITTESTS_REPORTING_PATHMANAGERTESTS_H
 #include "reporting/PathManager.h"
 #include "unittests/helpers/FolderTestFixture.h"
 namespace hemelb

@@ -1,5 +1,5 @@
-#ifndef HEMELB_FILEMANAGER_H
-#define HEMELB_FILEMANAGER_H
+#ifndef HEMELB_REPORTING_PATHMANAGER_H
+#define HEMELB_REPORTING_PATHMANAGER_H
 
 #include <string>
 #include "configuration/CommandLine.h"
@@ -43,4 +43,4 @@ namespace hemelb
   }
 }
 
-#endif
+#endif //HEMELB_REPORTING_PATHMANAGER_H
