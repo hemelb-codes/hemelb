@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_H
-#define HEMELB_LB_H
+#ifndef HEMELB_LB_LB_H
+#define HEMELB_LB_LB_H
 
 #include "net/net.h"
 #include "net/IteratedAction.h"
@@ -227,4 +227,4 @@ namespace hemelb
 
   } // Namespace lb
 } // Namespace hemelb
-#endif // HEMELB_LB_H
+#endif // HEMELB_LB_LB_H

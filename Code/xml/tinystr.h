@@ -1,3 +1,5 @@
+#ifndef HEMELB_XML_TINYSTR_H
+#define HEMELB_XML_TINYSTR_H
 /*
 www.sourceforge.net/projects/tinyxml
 
@@ -24,8 +26,7 @@ distribution.
 
 #ifndef TIXML_USE_STL
 
-#ifndef TIXML_STRING_INCLUDED
-#define TIXML_STRING_INCLUDED
+
 
 #include <assert.h>
 #include <string.h>
@@ -300,6 +301,6 @@ public :
 	}
 
 } ;
-
+#endif  // TIXML_USE_STL
 #endif	// TIXML_STRING_INCLUDED
-#endif	// TIXML_USE_STL
+
