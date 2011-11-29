@@ -3,6 +3,7 @@
 #include <cppunit/TestFixture.h>
 #include <cmath>
 #include <iomanip>
+#include "unittests/resources/Resource.h"
 namespace hemelb{
   namespace unittests{
     namespace helpers{
@@ -33,7 +34,10 @@ namespace hemelb{
           // return to origin
           util::ChangeDirectory(origin);
         }
-
+        void CopyResourceToTempdir(const std::string & resource){
+          bool ok = util::FileCopy(resources::Resource(resource).Path().c_str(),(temp_path+"/"+resource).c_str());
+          if (!ok) {std::cout << "Copy failed" << std::endl;}
+        }
         void MoveToTempdir(){
           util::ChangeDirectory(GetTempdir());
         }

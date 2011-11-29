@@ -1,8 +1,9 @@
-#ifndef HEMELB_UNITTESTS_SIMULATIONMASTERTESTS_H
-#define HEMELB_UNITTESTS_SIMULATIONMASTERTESTS_H
+#ifndef HEMELB_UNITTESTS_CONFIGURATION_COMMAND_LINE_TESTS_H
+#define HEMELB_UNITTESTS_CONFIGURATION_COMMAND_LINE_TESTS_H
 
 #include <cppunit/TestFixture.h>
-#include "SimulationMaster.h"
+#include "configuration/CommandLine.h"
+#include "unittests/resources/Resource.h"
 #include "unittests/helpers/FolderTestFixture.h"
 
 namespace hemelb
@@ -12,18 +13,21 @@ namespace hemelb
     /**
      * Class to test the simulation master.
      */
+    using namespace hemelb::configuration;
+    using namespace resources;
     using namespace helpers;
-    class SimulationMasterTests : public FolderTestFixture
+    class CommandLineTests : public FolderTestFixture
     {
-        CPPUNIT_TEST_SUITE( SimulationMasterTests );
-        CPPUNIT_TEST( TestRun );
+        CPPUNIT_TEST_SUITE( CommandLineTests );
+        CPPUNIT_TEST( TestConstruct );
         CPPUNIT_TEST_SUITE_END();
       public:
         void setUp()
         {
+          config_file=Resource("four_cube.xml").Path();
           argc=9;
           argv[0]="hemelb";
-          argv[2]="four_cube.xml";
+          argv[2]=config_file.c_str();
           argv[1]="-in";
           argv[3]="-i";
           argv[4]="1";
@@ -32,35 +36,30 @@ namespace hemelb
           argv[7]="-ss";
           argv[8]="1111";
           FolderTestFixture::setUp();
-          CopyResourceToTempdir("four_cube.xml");
-          CopyResourceToTempdir("four_cube.dat");
           options = new hemelb::configuration::CommandLine(argc,argv);
-          master = new SimulationMaster(*options);
         }
 
         void tearDown()
         {
           FolderTestFixture::tearDown();
-          delete master;
           delete options;
         }
 
 
-        void TestRun()
+        void TestConstruct()
         {
-          master->RunSimulation();
+          CPPUNIT_ASSERT(options);
         }
 
       private:
         int argc;
+        std::string config_file;
         hemelb::configuration::CommandLine *options;
-        SimulationMaster *master;
         const char* argv[9];
 
     };
-
-    CPPUNIT_TEST_SUITE_REGISTRATION( SimulationMasterTests );
+    CPPUNIT_TEST_SUITE_REGISTRATION( CommandLineTests );
   }
 }
 
-#endif /* HEMELB_UNITTESTS_SIMULATIONMASTERTESTS_H_ */
+#endif // ONCE
