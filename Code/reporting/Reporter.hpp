@@ -1,5 +1,5 @@
-#ifndef HEMELB_REPORTER_HPP
-#define HEMELB_REPORTER_HPP
+#ifndef HEMELB_REPORTING_REPORTER_HPP
+#define HEMELB_REPORTING_REPORTER_HPP
 #include "Reporter.h"
 namespace hemelb
 {
@@ -112,4 +112,4 @@ namespace hemelb
     }
   }
 }
-#endif
+#endif //HEMELB_REPORTING_REPORTER_HPP

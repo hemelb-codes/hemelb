@@ -1,5 +1,5 @@
-#ifndef HEMELB_UNITTESTS_RESOURCES_H
-#define HEMELB_UNITTESTS_RESOURCES_H
+#ifndef HEMELB_UNITTESTS_RESOURCES_RESOURCE_H
+#define HEMELB_UNITTESTS_RESOURCES_RESOURCE_H
 namespace hemelb{
   namespace unittests{
     namespace resources{

@@ -1,5 +1,5 @@
-#ifndef HEMELB_IO_WRITER_H
-#define HEMELB_IO_WRITER_H
+#ifndef HEMELB_IO_WRITERS_WRITER_H
+#define HEMELB_IO_WRITERS_WRITER_H
 #include <stdint.h>
 
 namespace hemelb
@@ -66,4 +66,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_IO_WRITER_H
+#endif // HEMELB_IO_WRITERS_WRITER_H
