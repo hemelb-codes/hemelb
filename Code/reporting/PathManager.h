@@ -11,10 +11,10 @@ namespace hemelb
 {
   namespace reporting
   {
-    class FileManager
+    class PathManager
     {
       public:
-        FileManager(configuration::CommandLine & commandLine, const bool &io, const int &processorCount);
+        PathManager(configuration::CommandLine & commandLine, const bool &io, const int &processorCount);
         bool HasProblems() const
         {
           return(!ok);
