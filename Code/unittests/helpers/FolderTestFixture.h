@@ -36,7 +36,7 @@ namespace hemelb{
         }
         void CopyResourceToTempdir(const std::string & resource){
           bool ok = util::FileCopy(resources::Resource(resource).Path().c_str(),(temp_path+"/"+resource).c_str());
-          if (!ok) {std::cout << "Copy failed" << std::endl;}
+          CPPUNIT_ASSERT(ok);
         }
         void MoveToTempdir(){
           util::ChangeDirectory(GetTempdir());
