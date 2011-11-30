@@ -1,11 +1,59 @@
-#include "BroadcastMock.h"
+#ifndef HEMELB_NET_BROADCASTMOCK_H
+#define HEMELB_NET_BROADCASTMOCK_H
+
+#include "net/PhasedBroadcastRegular.h"
+#include "lb/SimulationState.h"
+#include "net/net.h"
 
 namespace hemelb
 {
-
   namespace net
   {
+    class BroadcastMock : public net::PhasedBroadcastRegular<>
+    {
+        /*
+         * In this mock, we pretend that the current process is the root node of a phased
+         * broadcast and that a pair of values is going up the tree. The mock simulates
+         * three rounds of communications:
+         *  1) All children report (14,15).
+         *  2) One child reports (1,100) and the rest (14,15).
+         *  3) All back to (14,15).
+         */
 
+      public:
+        BroadcastMock(net::Net * net,
+                      const lb::SimulationState * simState,
+                      unsigned int spreadFactor);
+
+        virtual ~BroadcastMock();
+
+        /*
+         *  Overwritten IteraredAction methods that implement the mock.
+         */
+        void RequestComms();
+        void PostReceive();
+        void EndIteration();
+
+      protected:
+        /**
+         * Receives data from each child. This is a set length per child, and each child's
+         * data is inserted contiguously into the provided array.
+         *
+         * @param dataStart Pointer to the start of the array.
+         * @param countPerChild Number of elements to receive per child.
+         */
+        template<class T>
+        void ReceiveFromChildren(T* dataStart, int countPerChild);
+
+      private:
+        /** Number of children nodes in the tree */
+        unsigned spreadFactor;
+
+        /** Number of times that the phased broadcast has been completed */
+        unsigned callCounter;
+    };
+
+    /// TODO: Split file into .h and .cc ?
     BroadcastMock::BroadcastMock(net::Net * net,
                                  const lb::SimulationState * simState,
                                  unsigned int spreadFactor) :
@@ -51,7 +99,7 @@ namespace hemelb
         case 0:
           for (unsigned childIndex = 0; childIndex < spreadFactor; childIndex++)
           {
-            dataStart[childIndex * countPerChild] = 10.0;
+            dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
           }
           break;
@@ -59,7 +107,7 @@ namespace hemelb
         case 1:
           for (unsigned childIndex = 0; childIndex < spreadFactor - 1; childIndex++)
           {
-            dataStart[childIndex * countPerChild] = 10.0;
+            dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
           }
           dataStart[ (spreadFactor - 1) * countPerChild] = 1.0;
@@ -69,7 +117,7 @@ namespace hemelb
         case 2:
           for (unsigned childIndex = 0; childIndex < spreadFactor; childIndex++)
           {
-            dataStart[childIndex * countPerChild] = 10.0;
+            dataStart[childIndex * countPerChild] = 14.0;
             dataStart[childIndex * countPerChild + 1] = 15.0;
           }
           break;
@@ -80,7 +128,8 @@ namespace hemelb
       }
     }
 
-    // Explicit instantiation
-    template void BroadcastMock::ReceiveFromChildren<distribn_t>(distribn_t*, int);
   }
 }
+
+#endif /* HEMELB_NET_BROADCASTMOCK_H */
+

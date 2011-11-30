@@ -3,9 +3,9 @@
 
 #include <cppunit/TestFixture.h>
 
-#include "lb/IncompressibilityChecker.h"
+#include "lb/IncompressibilityChecker.hpp"
 #include "unittests/FourCubeLatticeData.h"
-#include "net/BroadcastMock.h"
+#include "BroadcastMock.h"
 
 namespace hemelb
 {
@@ -47,16 +47,30 @@ namespace hemelb
 
             FourCubeLatticeData latticeData;
             LbTestsHelper::InitialiseAnisotropicTestData(&latticeData);
-            latticeData.SwapOldAndNew();
+            latticeData.SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
+
             lb::IncompressibilityChecker<net::BroadcastMock> incompChecker(&latticeData,
                                                                            &net,
                                                                            &simulationState);
 
             // These are the smallest and largest density values in FourCubeLatticeData by default
+            /// TODO The lattice class below must be consistent with the one used in FourCubeLatticeData. Consider templating FourCubeLatticeData over lattice class, so both can be controlled from the test.
+            distribn_t numDirections = (distribn_t) D3Q15::NUMVECTORS;
+            distribn_t numSites = (distribn_t) latticeData.GetLocalFluidSiteCount();
+            distribn_t smallestDefaultDensity = numDirections * (numDirections + 1) / 20; // sum_{j=1}^{numDirections} j/10
+            distribn_t largestDefaultDensity = (numDirections * (numDirections + 1) / 20)
+                + ( (numSites - 1) * numDirections / 100); // sum_{j=1}^{numDirections} j/10 + (numSites-1)/100ì
+
             AdvanceActorOneTimeStep(incompChecker);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(10, incompChecker.GetGlobalSmallestDensity(), eps);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(21.45, incompChecker.GetGlobalLargestDensity(), eps);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(11.45, incompChecker.GetMaxDensityDifference(), eps);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(smallestDefaultDensity,
+                                         incompChecker.GetGlobalSmallestDensity(),
+                                         eps);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(largestDefaultDensity,
+                                         incompChecker.GetGlobalLargestDensity(),
+                                         eps);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(largestDefaultDensity - smallestDefaultDensity,
+                                         incompChecker.GetMaxDensityDifference(),
+                                         eps);
 
             // The broadcast mock injects some smaller and larger densities coming from one of the children
             AdvanceActorOneTimeStep(incompChecker);
