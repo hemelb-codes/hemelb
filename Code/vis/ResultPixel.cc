@@ -47,7 +47,7 @@ namespace hemelb
       }
     }
 
-    void ResultPixel::WritePixel(int *pixel_index,
+    void ResultPixel::WritePixel(unsigned* pixel_index,
                                  unsigned char rgb_data[12],
                                  const DomainStats& iDomainStats,
                                  const VisSettings& visSettings) const

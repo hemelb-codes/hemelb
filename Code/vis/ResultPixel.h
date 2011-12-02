@@ -27,7 +27,7 @@ namespace hemelb
 
         void Combine(const ResultPixel& other);
 
-        void WritePixel(int *pixel_index,
+        void WritePixel(unsigned* pixel_index,
                         unsigned char rgb_data[12],
                         const DomainStats& iDomainStats,
                         const VisSettings& visSettings) const;

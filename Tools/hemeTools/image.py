@@ -28,6 +28,11 @@ class Image(object):
                                                             ('r', N.uint8, 4),
                                                             ('g', N.uint8, 4),
                                                             ('b', N.uint8, 4)]).view(N.recarray)
+
+        # The above statement puts the pixel indices in the wrong order (i.e. j,i rather than i,j).
+        # This is corrected here.
+        self.pixels.index[:,0] = self.pixels.index[:, 0, [1,0]]
+
         return
     
     def old__init__(self, filename):
@@ -113,15 +118,22 @@ class Image(object):
         attrs = ('mode', 'pressure_threshold', 'velocity_max', 'stress_max', 'screen')
         for at in attrs:
             if not getattr(self, at) == getattr(other, at):
+                print 'differed on ' + at + ': ' + str(getattr(self, at)) + ' and ' + str(getattr(other, at))
                 return False
             continue
 
         if not N.alltrue(self.pixels.index == other.pixels.index):
-            return False
+            for i in range(self.pixels.index.shape[0]):
+                if not N.alltrue(self.pixels.index[i] == other.pixels.index[i]):
+                    print 'index: ' + str(i)
+                    print 'left array had ' + str(self.pixels.index[(i-1):(i+2)])
+                    print 'right array had ' + str(other.pixels.index[(i-1):(i+2)])
+                    return False
 
         for attr in ('r', 'g', 'b'):
             d = self.pixels[attr] - other.pixels[attr] + 128
-            if N.min(d) < (128-tol) and N.max(d) > (128+tol):
+            if N.min(d) <= (128-tol) or N.max(d) >= (128+tol):
+                print 'Differed on ' + attr + ' channel with delta range of ' + str(N.min(d) - 128) + ' - ' + str(N.max(d) - 128)
                 return False
             continue
         

@@ -345,6 +345,8 @@ void SimulationMaster::WriteLocalImages()
                                *result,
                                mVisControl->mDomainStats,
                                mVisControl->mVisSettings);
+
+      delete writer;
     }
   }
 
