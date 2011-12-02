@@ -57,7 +57,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
     reporter = new hemelb::reporting::Reporter(fileManager->GetReportPath(),
                                                fileManager->GetInputFile(),
                                                latticeBoltzmannModel->TotalFluidSiteCount(),
-                                               timings);
+                                               timings, *simulationState);
   }
 }
 
@@ -390,10 +390,6 @@ void SimulationMaster::RunSimulation()
       simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps()
           && !isFinished; simulationState->Increment())
   {
-    if (IsCurrentProcTheIOProc())
-    {
-      reporter->TimeStep();
-    }
 
     bool writeSnapshotImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
       true :
@@ -501,7 +497,6 @@ void SimulationMaster::RunSimulation()
     if (simulationState->GetTimeStep() == simulationState->GetTimeStepsPerCycle()
         && IsCurrentProcTheIOProc())
     {
-      reporter->Cycle();
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
                                                                           simulationState->GetCycleId());
