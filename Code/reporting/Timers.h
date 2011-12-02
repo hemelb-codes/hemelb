@@ -15,7 +15,7 @@ namespace hemelb
             start(0), time(0)
         {
         }
-        double Get()
+        double Get() const
         {
           return time;
         }
@@ -63,15 +63,15 @@ namespace hemelb
             timers(numberOfTimers), maxes(numberOfTimers), mins(numberOfTimers), means(numberOfTimers)
         {
         }
-        std::vector<double> &Maxes()
+        const std::vector<double> &Maxes() const
         {
           return maxes;
         }
-        std::vector<double> &Mins()
+        const std::vector<double> &Mins() const
         {
           return mins;
         }
-        std::vector<double> &Means()
+        const std::vector<double> &Means() const
         {
           return means;
         }
@@ -79,7 +79,15 @@ namespace hemelb
         {
           return timers[t];
         }
+        const Timer & operator[](TimerName t) const
+        {
+          return timers[t];
+        }
         Timer & operator[](unsigned int t)
+        {
+          return timers[t];
+        }
+        const Timer & operator[](unsigned int t) const
         {
           return timers[t];
         }
