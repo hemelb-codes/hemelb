@@ -8,9 +8,9 @@ namespace hemelb
     template<class TimersPolicy, class WriterPolicy, class CommsPolicy> ReporterBase<TimersPolicy,
         WriterPolicy, CommsPolicy>::ReporterBase(const std::string &name,
                                                  const std::string &inputFile,
-                                                 const long int asite_count,
+                                                 const long int aSiteCount,
                                                  TimersPolicy& timers) :
-        WriterPolicy(name), cycle_count(0), snapshot_count(0), image_count(0), timestep_count(0), site_count(asite_count), stability(true), timings(timers)
+        WriterPolicy(name), cycleCount(0), snapshotCount(0), imageCount(0), timestepCount(0), siteCount(aSiteCount), stability(true), timings(timers)
     {
       WriterPolicy::Print("***********************************************************\n");
       WriterPolicy::Print("Opening config file:\n %s\n", inputFile.c_str());
@@ -19,22 +19,22 @@ namespace hemelb
     template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<
         TimersPolicy, WriterPolicy, CommsPolicy>::Cycle()
     {
-      cycle_count++;
-      WriterPolicy::Print("cycle id: %u\n", cycle_count);
+      cycleCount++;
+      WriterPolicy::Print("cycle id: %u\n", cycleCount);
     }
 
     template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<
         TimersPolicy, WriterPolicy, CommsPolicy>::Image()
     {
-      image_count++;
-      WriterPolicy::Print("Image written: %u\n", image_count);
+      imageCount++;
+      WriterPolicy::Print("Image written: %u\n", imageCount);
     }
 
     template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<
         TimersPolicy, WriterPolicy, CommsPolicy>::Snapshot()
     {
-      snapshot_count++;
-      WriterPolicy::Print("Snapshot written: %u\n", snapshot_count);
+      snapshotCount++;
+      WriterPolicy::Print("Snapshot written: %u\n", snapshotCount);
     }
 
     template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<
@@ -46,19 +46,19 @@ namespace hemelb
                           CommsPolicy::GetProcessorCount(),
                           CommsPolicy::GetMachineCount());
       WriterPolicy::Print("topology depths checked: %i\n\n", CommsPolicy::GetDepths());
-      WriterPolicy::Print("fluid sites: %li\n\n", site_count);
-      WriterPolicy::Print("cycles and total time steps: %u, %lu \n\n", cycle_count, timestep_count);
+      WriterPolicy::Print("fluid sites: %li\n\n", siteCount);
+      WriterPolicy::Print("cycles and total time steps: %u, %lu \n\n", cycleCount, timestepCount);
       WriterPolicy::Print("time steps per second: %.3f\n\n",
-                          timestep_count / timings[TimersPolicy::simulation].Get());
+                          timestepCount / timings[TimersPolicy::simulation].Get());
 
       if (!stability)
       {
         WriterPolicy::Print("Attention: simulation unstable with %lu timesteps/cycle\n",
-                            timestep_count / cycle_count);
+                            timestepCount / cycleCount);
         WriterPolicy::Print("Simulation terminated\n");
       }
 
-      WriterPolicy::Print("time steps per cycle: %lu\n", timestep_count / cycle_count);
+      WriterPolicy::Print("time steps per cycle: %lu\n", timestepCount / cycleCount);
       WriterPolicy::Print("\n");
 
       WriterPolicy::Print("\n");
@@ -77,17 +77,17 @@ namespace hemelb
       }
 
       // Note that CycleId is 1-indexed and will have just been incremented when we finish.
-      double cycles = cycle_count;
+      double cycles = cycleCount;
 
       double normalisations[TimersPolicy::numberOfTimers] = { 1.0,
                                                               1.0,
                                                               1.0,
                                                               1.0,
                                                               cycles,
-                                                              image_count,
+                                                              imageCount,
                                                               cycles,
                                                               cycles,
-                                                              snapshot_count,
+                                                              snapshotCount,
                                                               1.0 };
 
       WriterPolicy::Print("\n\nPer-proc timing data (secs per [simulation,simulation,simulation,simulation,cycle,image,cycle,cycle,snapshot,simulation]): \n\n");
