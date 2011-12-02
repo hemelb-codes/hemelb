@@ -9,16 +9,16 @@ namespace hemelb
     class FileWriterPolicy
     {
       public:
-        FileWriterPolicy(const std::string &path)
+        FileWriterPolicy(const std::string &path):
+          file(fopen(path.c_str(), "w"))
         {
-          file = fopen(path.c_str(), "w");
         }
         ~FileWriterPolicy()
         {
           fclose(file);
         }
       protected:
-        void Print(const char * format, ...)
+        void Print(const char * format, ...) const
         {
           std::va_list arg;
           va_start(arg, format);
@@ -26,7 +26,7 @@ namespace hemelb
           va_end(arg);
         }
       private:
-        FILE* file;
+        FILE* const file;
     };
 
     class MPICommsPolicy
@@ -47,25 +47,25 @@ namespace hemelb
         {
           return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
         }
-        size_t FluidSitesOnProcessor(int n)
+        size_t FluidSitesOnProcessor(int n) const
         {
           return instance.FluidSitesOnEachProcessor[n];
         }
-        proc_t GetProcessorCount()
+        proc_t GetProcessorCount() const
         {
           return instance.GetProcessorCount();
         }
-        unsigned int GetMachineCount()
+        unsigned int GetMachineCount() const
         {
           return instance.GetMachineCount();
         }
-        int GetDepths()
+        int GetDepths() const
         {
           return instance.GetDepths();
         }
 
       private:
-        hemelb::topology::NetworkTopology& instance;
+        const hemelb::topology::NetworkTopology& instance;
     };
 
     class HemeLBClockPolicy
