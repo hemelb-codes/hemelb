@@ -30,9 +30,9 @@ namespace hemelb
         hemelb::util::MakeDirAllRXW(outputDir);
         hemelb::util::MakeDirAllRXW(imageDirectory);
         hemelb::util::MakeDirAllRXW(snapshotDirectory);
-        std::stringstream timings_name_stream;
-        timings_name_stream << outputDir << "/timings" << processorCount << ".asc" << std::flush;
-        timings_name = timings_name_stream.str();
+        std::stringstream reportNameStream;
+        reportNameStream << outputDir << "/timings" << processorCount << ".asc" << std::flush;
+        reportName = reportNameStream.str();
       }
 
       ok = true;
@@ -52,7 +52,7 @@ namespace hemelb
     }
     const std::string & PathManager::GetReportPath() const
     {
-      return timings_name;
+      return reportName;
     }
 
     void PathManager::EmptyOutputDirectories()
@@ -70,9 +70,9 @@ namespace hemelb
 
     const std::string PathManager::SnapshotPath(unsigned long time) const
     {
-      char snapshot_filename[255];
-      snprintf(snapshot_filename, 255, "snapshot_%06li.dat", time);
-      return (snapshotDirectory + std::string(snapshot_filename)); // by copy
+      char snapshotFilename[255];
+      snprintf(snapshotFilename, 255, "snapshot_%06li.dat", time);
+      return (snapshotDirectory + std::string(snapshotFilename)); // by copy
     }
 
     void PathManager::SaveConfiguration(configuration::SimConfig * simConfig)
