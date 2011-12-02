@@ -19,12 +19,12 @@ namespace hemelb
       public:
         ReporterBase(const std::string &path,
                      const std::string &inputFile,
-                     const long int asite_count,
-                     TimersPolicy&timers);
+                     const long int aSiteCount,
+                     TimersPolicy& timers);
         void Cycle();
         void TimeStep()
         {
-          timestep_count++;
+          timestepCount++;
         }
         void Image();
         void Snapshot();
@@ -35,11 +35,11 @@ namespace hemelb
         }
       private:
         bool doIo;
-        unsigned int cycle_count;
-        unsigned int snapshot_count;
-        unsigned int image_count;
-        unsigned long int timestep_count;
-        long int site_count;
+        unsigned int cycleCount;
+        unsigned int snapshotCount;
+        unsigned int imageCount;
+        unsigned long int timestepCount;
+        long int siteCount;
         bool stability;
         TimersPolicy &timings;
     };
