@@ -83,7 +83,7 @@ namespace hemelb
     }
 
     // This copied from BOOST. TODO: Use boost
-    const char * GetTemporaryDir(){
+   std::string GetTemporaryDir(){
       const char *dirname;
       dirname = std::getenv("TMP");
       if(NULL == dirname)
@@ -92,9 +92,9 @@ namespace hemelb
         dirname = std::getenv("TEMP");
       if(NULL == dirname){
         //assert(false); // no temp directory found
-        dirname = ".";
+        return GetCurrentDir();
       }
-      return dirname;
+      return std::string(dirname); // return by copy
     }
 
     // Delete all files within a directory.

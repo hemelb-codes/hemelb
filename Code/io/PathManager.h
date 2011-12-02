@@ -1,20 +1,20 @@
-#ifndef HEMELB_FILEMANAGER_H
-#define HEMELB_FILEMANAGER_H
+#ifndef HEMELB_IO_PATHMANAGER_H
+#define HEMELB_IO_PATHMANAGER_H
 
 #include <string>
 #include "configuration/CommandLine.h"
 #include "util/fileutils.h"
 #include "log/Logger.h"
 #include "configuration/SimConfig.h"
-#include "io/XdrFileWriter.h"
+#include "io/writers/xdr/XdrFileWriter.h"
 namespace hemelb
 {
-  namespace reporting
+  namespace io
   {
-    class FileManager
+    class PathManager
     {
       public:
-        FileManager(configuration::CommandLine & commandLine, const bool &io, const int &processorCount);
+        PathManager(configuration::CommandLine & commandLine, const bool &io, const int &processorCount);
         bool HasProblems() const
         {
           return(!ok);
@@ -25,7 +25,7 @@ namespace hemelb
         const std::string & GetReportPath() const;
         void SaveConfiguration(configuration::SimConfig * simConfig);
         void EmptyOutputDirectories();
-        hemelb::io::XdrFileWriter * XdrImageWriter(const long int time);
+        hemelb::io::writers::xdr::XdrFileWriter * XdrImageWriter(const long int time);
         const std::string SnapshotPath(unsigned long time) const;
       private:
         void GuessOutputDir();
@@ -43,4 +43,4 @@ namespace hemelb
   }
 }
 
-#endif
+#endif //HEMELB_IO_PATHMANAGER_H

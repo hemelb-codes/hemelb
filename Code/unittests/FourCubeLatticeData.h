@@ -75,6 +75,7 @@ namespace hemelb
                   if (nearWall)
                   {
                     collType = 4;
+                    localLatDat.mSiteData[index] |= PRESSURE_EDGE_MASK;
                   }
                   else
                   {
@@ -85,10 +86,11 @@ namespace hemelb
                 else if (zMax)
                 {
                   localLatDat.mSiteData[index] |= OUTLET_TYPE;
-                  localLatDat.mSiteData[index] |= 0 << BOUNDARY_ID_SHIFT;
+                  localLatDat.mSiteData[index] |= 1 << BOUNDARY_ID_SHIFT;
 
                   if (nearWall)
                   {
+                    localLatDat.mSiteData[index] |= PRESSURE_EDGE_MASK;
                     collType = 5;
                   }
                   else
@@ -102,6 +104,7 @@ namespace hemelb
                   localLatDat.mSiteData[index] |= FLUID_TYPE;
                   if (nearWall)
                   {
+                    localLatDat.mSiteData[index] |= PRESSURE_EDGE_MASK;
                     collType = 1;
                   }
                   else

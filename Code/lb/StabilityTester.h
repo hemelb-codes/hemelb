@@ -1,5 +1,5 @@
-#ifndef HEMELB_LB_STABILITYCHECKER_H
-#define HEMELB_LB_STABILITYCHECKER_H
+#ifndef HEMELB_LB_STABILITYTESTER_H
+#define HEMELB_LB_STABILITYTESTER_H
 
 #include "net/PhasedBroadcastRegular.h"
 #include "geometry/LatticeData.h"
@@ -86,4 +86,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_LB_STABILITYCHECKER_H */
+#endif /* HEMELB_LB_STABILITYTESTER_H */

@@ -5,9 +5,9 @@ def GetType(cfg):
     return cfg & SITE_TYPE_MASK
 def GetBoundaryConfig(cfg):
     return (cfg & BOUNDARY_CONFIG_MASK) >> BOUNDARY_CONFIG_SHIFT
-def GetBoundaryDirMask(cfg):
+def GetBoundaryDir(cfg):
     return (cfg & BOUNDARY_DIR_MASK) >> BOUNDARY_DIR_SHIFT
-def GetBoundaryIdMask(cfg):
+def GetBoundaryId(cfg):
     return (cfg & BOUNDARY_ID_MASK) >> BOUNDARY_ID_SHIFT
 def GetPressureEdge(cfg):
     return cfg & PRESSURE_EDGE_MASK
