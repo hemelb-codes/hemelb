@@ -37,7 +37,7 @@ namespace hemelb
         std::string snapshotDirectory;
         std::string imageDirectory;
         std::string configLeafName;
-        std::string timings_name;
+        std::string reportName;
         configuration::CommandLine &options;
         bool ok;
         bool doIo;
