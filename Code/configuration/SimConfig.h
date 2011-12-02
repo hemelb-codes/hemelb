@@ -17,7 +17,8 @@ namespace hemelb
         static SimConfig *Load(const char *iPath);
         ~SimConfig();
 
-        void Save(std::string iPath);
+        void Save(std::string iPath); // TODO this method should be able to be CONST
+        // but because it uses DoIo, which uses one function signature for both reading and writing, it cannot be.
 
         std::string DataFilePath;
         // These have to contain pointers because there are multiple derived types that might be
