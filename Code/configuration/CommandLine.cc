@@ -1,16 +1,10 @@
 #include "CommandLine.h"
-namespace hemelb{
+namespace hemelb
+{
   namespace configuration
   {
-    CommandLine::CommandLine(int aargc, const char *const*const aargv):
-          inputFile("input.xml"),
-          outputDir(""),
-          snapshotsPerCycle(10),
-          imagesPerCycle(10),
-          steeringSessionId(1),
-          argc(aargc),
-          argv(aargv),
-          ok(false)
+    CommandLine::CommandLine(int aargc, const char * const * const aargv) :
+        inputFile("input.xml"), outputDir(""), snapshotsPerCycle(10), imagesPerCycle(10), steeringSessionId(1), argc(aargc), argv(aargv), ok(false)
     {
 
       // Initialise the network discovery. If this fails, abort.
@@ -18,7 +12,9 @@ namespace hemelb{
 
       bool lTopologySuccess = true;
       // MPI C doesn't provide const-correct interface, so cast away the const on argv.
-      hemelb::topology::NetworkTopology::Instance()->Init(argc,const_cast<char**>(argv), &lTopologySuccess);
+      hemelb::topology::NetworkTopology::Instance()->Init(argc,
+                                                          const_cast<char**>(argv),
+                                                          &lTopologySuccess);
 
       if (!lTopologySuccess)
       {
@@ -70,7 +66,7 @@ namespace hemelb{
         }
       }
 
-      ok=true;
+      ok = true;
     }
 
     void CommandLine::PrintUsage()

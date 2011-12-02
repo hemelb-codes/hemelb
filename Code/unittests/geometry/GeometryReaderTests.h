@@ -39,10 +39,10 @@ namespace hemelb
           void setUp()
           {
             reader = new TestableLatticeData::GeometryReader(false);
-            globalLattice= new TestableLatticeData::GlobalLatticeData();
-            params=new lb::LbmParameters(1000, 0.1);
-            fourCube=new FourCubeLatticeData();
-            simConfig = configuration::SimConfig::Load( Resource("four_cube.xml").Path().c_str());
+            globalLattice = new TestableLatticeData::GlobalLatticeData();
+            params = new lb::LbmParameters(1000, 0.1);
+            fourCube = new FourCubeLatticeData();
+            simConfig = configuration::SimConfig::Load(Resource("four_cube.xml").Path().c_str());
           }
 
           void tearDown()
@@ -63,11 +63,15 @@ namespace hemelb
           void TestSameAsFourCube()
           {
             reader->LoadAndDecompose(globalLattice, params, simConfig, timings);
-            for (site_t i=0;i<4;i++){
-              for (site_t j=0;j<4;j++){
-                for (site_t k=0;k<4;k++){
+            for (site_t i = 0; i < 4; i++)
+            {
+              for (site_t j = 0; j < 4; j++)
+              {
+                for (site_t k = 0; k < 4; k++)
+                {
                   //std::cout << i << "," << j << "," << k << " > " << std::setbase(8) << fourCube->GetSiteData(i*16+j*4+k) << " : " << globalLattice->GetSiteData(i,j,k) << std::endl;
-                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSiteData(i*16+j*4+k),globalLattice->GetSiteData(i,j,k));
+                  CPPUNIT_ASSERT_EQUAL(fourCube->GetSiteData(i * 16 + j * 4 + k),
+                                       globalLattice->GetSiteData(i, j, k));
                 }
               }
             }
