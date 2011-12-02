@@ -14,10 +14,12 @@ namespace hemelb
     class PathManager
     {
       public:
-        PathManager(configuration::CommandLine & commandLine, const bool &io, const int &processorCount);
+        PathManager(configuration::CommandLine & commandLine,
+                    const bool &io,
+                    const int &processorCount);
         bool HasProblems() const
         {
-          return(!ok);
+          return (!ok);
         }
         const std::string & GetInputFile() const;
         const std::string & GetSnapshotDirectory() const;

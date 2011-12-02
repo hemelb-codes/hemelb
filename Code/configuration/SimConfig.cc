@@ -74,7 +74,9 @@ namespace hemelb
 
       TiXmlElement* lVisualisationElement = GetChild(iTopNode, "visualisation", iIsLoading);
       DoIO(GetChild(lVisualisationElement, "centre", iIsLoading), iIsLoading, VisCentre);
-      TiXmlElement *lOrientationElement = GetChild(lVisualisationElement, "orientation", iIsLoading);
+      TiXmlElement *lOrientationElement = GetChild(lVisualisationElement,
+                                                   "orientation",
+                                                   iIsLoading);
       DoIO(lOrientationElement, "longitude", iIsLoading, VisLongitude);
       DoIO(lOrientationElement, "latitude", iIsLoading, VisLatitude);
 
@@ -216,8 +218,10 @@ namespace hemelb
       }
     }
 
-    void SimConfig::DoIO(TiXmlElement *iParent, bool iIsLoading, std::vector<
-        lb::boundaries::iolets::InOutLet*> &bResult, std::string iChildNodeName)
+    void SimConfig::DoIO(TiXmlElement *iParent,
+                         bool iIsLoading,
+                         std::vector<lb::boundaries::iolets::InOutLet*> &bResult,
+                         std::string iChildNodeName)
     {
       if (iIsLoading)
       {

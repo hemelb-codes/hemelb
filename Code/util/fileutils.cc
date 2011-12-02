@@ -25,7 +25,6 @@ namespace hemelb
       // Function to select directory contents that are not "." or ".."
       // int selectOnlyContents (direct_t *entry);
 
-
       // Return true if file exists for reading, false if not.
       bool file_exists(const char * filename)
       {
@@ -64,33 +63,39 @@ namespace hemelb
 
     }
 
-    void ChangeDirectory(const char * target){
+    void ChangeDirectory(const char * target)
+    {
       chdir(target);
     }
 
-    void ChangeDirectory(const std::string & target){
+    void ChangeDirectory(const std::string & target)
+    {
       chdir(target.c_str());
     }
 
-    void GetCurrentDir(char * result, int bufflength){
-      getcwd(result,bufflength);
+    void GetCurrentDir(char * result, int bufflength)
+    {
+      getcwd(result, bufflength);
     }
 
-    std::string GetCurrentDir(){
+    std::string GetCurrentDir()
+    {
       char buff[1000];
-      GetCurrentDir(buff,1000);
+      GetCurrentDir(buff, 1000);
       return std::string(buff); // return by copy.
     }
 
     // This copied from BOOST. TODO: Use boost
-   std::string GetTemporaryDir(){
+    std::string GetTemporaryDir()
+    {
       const char *dirname;
       dirname = std::getenv("TMP");
-      if(NULL == dirname)
+      if (NULL == dirname)
         dirname = std::getenv("TMPDIR");
-      if(NULL == dirname)
+      if (NULL == dirname)
         dirname = std::getenv("TEMP");
-      if(NULL == dirname){
+      if (NULL == dirname)
+      {
         //assert(false); // no temp directory found
         return GetCurrentDir();
       }
