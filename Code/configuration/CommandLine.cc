@@ -10,13 +10,13 @@ namespace hemelb
       // Initialise the network discovery. If this fails, abort.
       // Needs to go first, because need to know if am the IO process for printing usage.
 
-      bool lTopologySuccess = true;
+      bool topologySuccess = true;
       // MPI C doesn't provide const-correct interface, so cast away the const on argv.
       hemelb::topology::NetworkTopology::Instance()->Init(argc,
                                                           const_cast<char**>(argv),
-                                                          &lTopologySuccess);
+                                                          &topologySuccess);
 
-      if (!lTopologySuccess)
+      if (!topologySuccess)
       {
         hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::OnePerCore>("Couldn't get machine information for this network topology. Aborting.\n");
         PrintUsage();
@@ -34,30 +34,30 @@ namespace hemelb
       // is the <parametervalue>.
       for (int ii = 1; ii < argc; ii += 2)
       {
-        const char* const lParamName = argv[ii];
-        const char* const lParamValue = argv[ii + 1];
-        if (strcmp(lParamName, "-in") == 0)
+        const char* const paramName = argv[ii];
+        const char* const paramValue = argv[ii + 1];
+        if (strcmp(paramName, "-in") == 0)
         {
-          inputFile = std::string(lParamValue);
+          inputFile = std::string(paramValue);
         }
-        else if (strcmp(lParamName, "-out") == 0)
+        else if (strcmp(paramName, "-out") == 0)
         {
-          outputDir = std::string(lParamValue);
+          outputDir = std::string(paramValue);
         }
-        else if (strcmp(lParamName, "-s") == 0)
+        else if (strcmp(paramName, "-s") == 0)
         {
           char * dummy;
-          snapshotsPerCycle = (unsigned int) (strtoul(lParamValue, &dummy, 10));
+          snapshotsPerCycle = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
-        else if (strcmp(lParamName, "-i") == 0)
+        else if (strcmp(paramName, "-i") == 0)
         {
           char *dummy;
-          imagesPerCycle = (unsigned int) (strtoul(lParamValue, &dummy, 10));
+          imagesPerCycle = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
-        else if (strcmp(lParamName, "-ss") == 0)
+        else if (strcmp(paramName, "-ss") == 0)
         {
           char *dummy;
-          steeringSessionId = (unsigned int) (strtoul(lParamValue, &dummy, 10));
+          steeringSessionId = (unsigned int) (strtoul(paramValue, &dummy, 10));
         }
         else
         {
