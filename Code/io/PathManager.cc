@@ -4,7 +4,7 @@ namespace hemelb
 {
   namespace io
   {
-    PathManager::PathManager(configuration::CommandLine &commandLine,
+    PathManager::PathManager(const configuration::CommandLine & commandLine,
                              const bool & io,
                              const int & processorCount) :
         options(commandLine), ok(false), doIo(io)
@@ -55,13 +55,13 @@ namespace hemelb
       return reportName;
     }
 
-    void PathManager::EmptyOutputDirectories()
+    void PathManager::EmptyOutputDirectories() const
     {
       hemelb::util::DeleteDirContents(snapshotDirectory);
       hemelb::util::DeleteDirContents(imageDirectory);
     }
 
-    hemelb::io::writers::xdr::XdrFileWriter * PathManager::XdrImageWriter(const long int time)
+    hemelb::io::writers::xdr::XdrFileWriter * PathManager::XdrImageWriter(const long int time) const
     {
       char filename[255];
       snprintf(filename, 255, "%08li.dat", time);
@@ -75,7 +75,7 @@ namespace hemelb
       return (snapshotDirectory + std::string(snapshotFilename)); // by copy
     }
 
-    void PathManager::SaveConfiguration(configuration::SimConfig * simConfig)
+    void PathManager::SaveConfiguration(configuration::SimConfig * const simConfig) const
     {
       if (doIo)
       {
