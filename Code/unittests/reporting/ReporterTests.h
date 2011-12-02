@@ -22,7 +22,6 @@ namespace hemelb
       {
           CPPUNIT_TEST_SUITE(ReporterTests);
           CPPUNIT_TEST(TestInit);
-          CPPUNIT_TEST(TestCycle);
           CPPUNIT_TEST(TestImage);
           CPPUNIT_TEST(TestSnapshot);
           CPPUNIT_TEST(TestMainReport);CPPUNIT_TEST_SUITE_END();
@@ -30,7 +29,8 @@ namespace hemelb
           void setUp()
           {
             timers = new TimersMock();
-            reporter = new ReporterMock("mock_path", "exampleinputfile", 1234, *timers);
+            state = new hemelb::lb::SimulationState(500,2);
+            reporter = new ReporterMock("mock_path", "exampleinputfile", 1234, *timers,*state);
           }
 
           void tearDown()
@@ -45,11 +45,6 @@ namespace hemelb
                                  reporter->Results().back().find("config file:\n exampleinputfile\n"));
           }
 
-          void TestCycle()
-          {
-            CheckRepeatedCallIncrementsCounter(std::mem_fun(&ReporterMock::Cycle),
-                                               std::string("cycle id"));
-          }
           void TestImage()
           {
             CheckRepeatedCallIncrementsCounter(std::mem_fun(&ReporterMock::Image),
@@ -73,8 +68,6 @@ namespace hemelb
               }
             }
             timers->Reduce(); // invoke the Timers MPI mock
-            reporter->Cycle();
-            reporter->Cycle();
             reporter->Snapshot();
             reporter->Snapshot();
             reporter->Snapshot();
@@ -84,8 +77,10 @@ namespace hemelb
             reporter->Image();
             for (unsigned int step = 0; step < 1000; step++)
             {
-              reporter->TimeStep();
+              state->Increment();
             }
+            CPPUNIT_ASSERT_EQUAL(3lu,state->GetCycleId());
+            CPPUNIT_ASSERT_EQUAL(1001lu,state->GetTimeStepsPassed());
             // Ok, we have our fixture -- now execute it.
             reporter->Write();
             // now we validate the lines from the report
@@ -161,6 +156,7 @@ namespace hemelb
         private:
           ReporterMock *reporter;
           TimersMock *timers;
+          lb::SimulationState *state;
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION(ReporterTests);
