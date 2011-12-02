@@ -10,18 +10,18 @@ namespace hemelb
       {
         public:
           ClockMock() :
-              fake_time(0)
+              fakeTime(0)
           {
           }
           ;
         protected:
           double CurrentTime()
           {
-            fake_time += 10.0;
-            return fake_time;
+            fakeTime += 10.0;
+            return fakeTime;
           }
         private:
-          double fake_time;
+          double fakeTime;
       };
 
       class MPICommsMock
