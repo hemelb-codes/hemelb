@@ -27,8 +27,8 @@ namespace hemelb
           }
           std::string ResourceFolder() const
           {
-            size_t lLastForwardSlash = FileName().rfind('/');
-            return FileName().substr(0, lLastForwardSlash + 1);
+            size_t lastForwardSlash = FileName().rfind('/');
+            return FileName().substr(0, lastForwardSlash + 1);
           }
           std::string resourceName;
       };

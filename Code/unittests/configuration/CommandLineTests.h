@@ -24,10 +24,10 @@ namespace hemelb
       public:
         void setUp()
         {
-          config_file = Resource("four_cube.xml").Path();
+          configFile = Resource("four_cube.xml").Path();
           argc = 9;
           argv[0] = "hemelb";
-          argv[2] = config_file.c_str();
+          argv[2] = configFile.c_str();
           argv[1] = "-in";
           argv[3] = "-i";
           argv[4] = "1";
@@ -52,7 +52,7 @@ namespace hemelb
 
       private:
         int argc;
-        std::string config_file;
+        std::string configFile;
         hemelb::configuration::CommandLine *options;
         const char* argv[9];
 
