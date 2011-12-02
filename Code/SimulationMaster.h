@@ -50,9 +50,9 @@ class SimulationMaster
     hemelb::steering::ImageSendComponent *imageSendCpt;
     hemelb::steering::SteeringComponent* steeringCpt;
 
-    hemelb::lb::SimulationState* mSimulationState;
-    hemelb::lb::StabilityTester* mStabilityTester;
-    hemelb::lb::EntropyTester* mEntropyTester;
+    hemelb::lb::SimulationState* simulationState;
+    hemelb::lb::StabilityTester* stabilityTester;
+    hemelb::lb::EntropyTester* entropyTester;
     hemelb::lb::LBM* latticeBoltzmannModel;
     hemelb::lb::boundaries::BoundaryValues* inletValues;
     hemelb::lb::boundaries::BoundaryValues* outletValues;
