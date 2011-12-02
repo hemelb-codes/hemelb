@@ -20,7 +20,7 @@ for filename in filenames:
 			ok=False
 			continue
 		if not secondmatch:
-			print "First line of %s doesn't have a compliant #define: %s" % (filename,secondline)
+			print "Second line of %s doesn't have a compliant #define: %s" % (filename,secondline)
 			ok=False
 			continue
 		firstguard=firstmatch.group(1)
