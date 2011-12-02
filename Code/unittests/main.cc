@@ -12,11 +12,24 @@
 #include "unittests/configuration/configuration.h"
 #include "unittests/geometry/geometry.h"
 #include "unittests/SimulationMasterTests.h"
+#include "unistd.h"
 
 int main(int argc, char **argv)
 {
-  std::string testPath = (argc > 1)
-    ? std::string(argv[1])
+  std::ostream * reportto=&std::cerr;
+  std::ofstream reportfile;
+  int opt;
+  while((opt=getopt(argc,argv,"o:"))!=-1){
+    switch (opt) {
+      case 'o':
+        reportfile.open(optarg);
+        reportto=&reportfile;
+        break;
+    }
+  }
+
+  std::string testPath = (optind < argc)
+    ? std::string(argv[optind])
     : "";
   // Create the event manager and test controller
   CppUnit::TestResult controller;
@@ -41,15 +54,16 @@ int main(int argc, char **argv)
     runner.run(controller, testPath);
 
     // Print test XML output to stderr
-    CppUnit::XmlOutputter outputter(&result, std::cerr);
+    CppUnit::XmlOutputter outputter(&result, *reportto);
     outputter.write();
   }
   catch (std::invalid_argument &e) // Test path not resolved
   {
     std::cerr << std::endl << "ERROR: " << e.what() << std::endl;
+    reportfile.close();
     return 1;
   }
-
+  reportfile.close();
   return result.wasSuccessful()
     ? 0
     : 1;
