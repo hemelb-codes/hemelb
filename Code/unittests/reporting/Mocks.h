@@ -50,16 +50,20 @@ namespace hemelb
             calls++;
             return 0;
           }
-          size_t FluidSitesOnProcessor(int n){
-            return n*1000;
+          size_t FluidSitesOnProcessor(int n)
+          {
+            return n * 1000;
           }
-          proc_t GetProcessorCount(){
+          proc_t GetProcessorCount()
+          {
             return 5;
           }
-          unsigned int GetMachineCount(){
+          unsigned int GetMachineCount()
+          {
             return 4;
           }
-          int GetDepths(){
+          int GetDepths()
+          {
             return 3;
           }
         private:
@@ -69,14 +73,18 @@ namespace hemelb
       class WriterMock
       {
         public:
-          WriterMock(const std::string &path):results(0)
+          WriterMock(const std::string &path) :
+              results(0)
           {
-            CPPUNIT_ASSERT_EQUAL(std::string("mock_path"),path);
+            CPPUNIT_ASSERT_EQUAL(std::string("mock_path"), path);
           }
           ~WriterMock()
           {
           }
-          std::vector<std::string> & Results(){return results;}
+          std::vector<std::string> & Results()
+          {
+            return results;
+          }
         protected:
           void Print(const char * format, ...)
           {
@@ -88,7 +96,7 @@ namespace hemelb
             results.push_back(std::string(buffer));
           }
         private:
-           std::vector<std::string> results;
+          std::vector<std::string> results;
       };
     }
   }

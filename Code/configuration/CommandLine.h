@@ -5,35 +5,46 @@
 #include <stdlib.h>
 #include "topology/NetworkTopology.h"
 #include "log/Logger.h"
-namespace hemelb{
-  namespace configuration{
-    class CommandLine {
+namespace hemelb
+{
+  namespace configuration
+  {
+    class CommandLine
+    {
       public:
-        CommandLine(int aargc, const char *const *const aargv);
+        CommandLine(int aargc, const char * const * const aargv);
         void PrintUsage();
-        unsigned int NumberOfSnapshotsPerCycle() const {
-          return(snapshotsPerCycle);
+        unsigned int NumberOfSnapshotsPerCycle() const
+        {
+          return (snapshotsPerCycle);
         }
-        unsigned int NumberOfImagesPerCycle() const {
-          return(imagesPerCycle);
+        unsigned int NumberOfImagesPerCycle() const
+        {
+          return (imagesPerCycle);
         }
-        std::string const & GetOutputDir() const {
-           return(outputDir);
+        std::string const & GetOutputDir() const
+        {
+          return (outputDir);
         }
-        std::string const & GetInputFile() const {
-           return(inputFile);
+        std::string const & GetInputFile() const
+        {
+          return (inputFile);
         }
-        int GetSteeringSessionId() const {
-           return(steeringSessionId);
+        int GetSteeringSessionId() const
+        {
+          return (steeringSessionId);
         }
-        int ArgumentCount() const {
-          return(argc);
+        int ArgumentCount() const
+        {
+          return (argc);
         }
-        const char *const * Arguments() {
-          return(argv);
+        const char * const * Arguments()
+        {
+          return (argv);
         }
-        bool HasProblems() {
-          return(!ok);
+        bool HasProblems()
+        {
+          return (!ok);
         }
       private:
         std::string inputFile;
@@ -42,7 +53,7 @@ namespace hemelb{
         unsigned int imagesPerCycle;
         int steeringSessionId;
         int argc;
-        const char *const *const argv;
+        const char * const * const argv;
         bool ok;
     };
   }

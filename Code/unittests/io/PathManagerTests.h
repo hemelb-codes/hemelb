@@ -23,17 +23,17 @@ namespace hemelb
           void setUp()
           {
             FolderTestFixture::setUp();
-            argc=9;
-            processorCount=5;
-            argv[0]="hemelb";
-            argv[2]="config.xml";
-            argv[1]="-in";
-            argv[3]="-i";
-            argv[4]="1";
-            argv[5]="-s";
-            argv[6]="1";
-            argv[7]="-ss";
-            argv[8]="1111";
+            argc = 9;
+            processorCount = 5;
+            argv[0] = "hemelb";
+            argv[2] = "config.xml";
+            argv[1] = "-in";
+            argv[3] = "-i";
+            argv[4] = "1";
+            argv[5] = "-s";
+            argv[6] = "1";
+            argv[7] = "-ss";
+            argv[8] = "1111";
           }
 
           void tearDown()
@@ -42,40 +42,48 @@ namespace hemelb
             delete fileManager;
           }
 
-          void TestCreateLocalConfig(){
+          void TestCreateLocalConfig()
+          {
             ConstructManager();
             AssertPresent("results");
             AssertPresent("results/Images");
             AssertPresent("results/Snapshots");
           }
 
-          void TestNameInventionLocalConfig(){
+          void TestNameInventionLocalConfig()
+          {
             ConstructManager();
-            CPPUNIT_ASSERT_EQUAL(std::string("./results/timings5.asc"),fileManager->GetReportPath());
+            CPPUNIT_ASSERT_EQUAL(std::string("./results/timings5.asc"),
+                                 fileManager->GetReportPath());
           }
 
-          void TestCreatePathConfig(){
+          void TestCreatePathConfig()
+          {
             ConstructPathConfigManager();
             AssertPresent("results");
             AssertPresent("results/Images");
             AssertPresent("results/Snapshots");
           }
 
-          void TestNameInventionPathConfig(){
+          void TestNameInventionPathConfig()
+          {
             ConstructPathConfigManager();
-            CPPUNIT_ASSERT_EQUAL(GetTempdir()+"/results/timings5.asc",fileManager->GetReportPath());
+            CPPUNIT_ASSERT_EQUAL(GetTempdir() + "/results/timings5.asc",
+                                 fileManager->GetReportPath());
           }
 
         private:
 
-          void ConstructManager(){
-            configuration::CommandLine cl=configuration::CommandLine(argc,argv);
-            fileManager=new PathManager(cl,true,processorCount);
+          void ConstructManager()
+          {
+            configuration::CommandLine cl = configuration::CommandLine(argc, argv);
+            fileManager = new PathManager(cl, true, processorCount);
           }
 
-          void ConstructPathConfigManager(){
-            std::string targetConfig=GetTempdir()+"/config.xml"; // note this resource doesn't exist -- not a problem
-            argv[2]=targetConfig.c_str();
+          void ConstructPathConfigManager()
+          {
+            std::string targetConfig = GetTempdir() + "/config.xml"; // note this resource doesn't exist -- not a problem
+            argv[2] = targetConfig.c_str();
             ReturnToOrigin(); // even if we're not in current dir, explicit path should cause the results to be created in the tmpdir
             ConstructManager();
             MoveToTempdir(); // go back to the tempdir and check the files were created in the right place
@@ -86,7 +94,6 @@ namespace hemelb
           const char* argv[9];
           PathManager *fileManager;
       };
-
 
       CPPUNIT_TEST_SUITE_REGISTRATION(PathManagerTests);
     }
