@@ -2,11 +2,15 @@
 #define HEMELB_REPORTING_POLICIES_H
 #include <stdarg.h>
 #include "topology/NetworkTopology.h"
-namespace hemelb{
-  namespace reporting{
-    class FileWriterPolicy {
+namespace hemelb
+{
+  namespace reporting
+  {
+    class FileWriterPolicy
+    {
       public:
-        FileWriterPolicy(const std::string &path){
+        FileWriterPolicy(const std::string &path)
+        {
           file = fopen(path.c_str(), "w");
         }
         ~FileWriterPolicy()
@@ -14,19 +18,24 @@ namespace hemelb{
           fclose(file);
         }
       protected:
-        void Print(const char * format, ...){
+        void Print(const char * format, ...)
+        {
           std::va_list arg;
           va_start(arg, format);
-          vfprintf(file,format, arg);
+          vfprintf(file, format, arg);
           va_end(arg);
         }
       private:
         FILE* file;
     };
 
-    class MPICommsPolicy {
+    class MPICommsPolicy
+    {
       public:
-        MPICommsPolicy():instance(*hemelb::topology::NetworkTopology::Instance()){}
+        MPICommsPolicy() :
+            instance(*hemelb::topology::NetworkTopology::Instance())
+        {
+        }
       protected:
         int Reduce(void *sendbuf,
                    void *recvbuf,
@@ -38,16 +47,20 @@ namespace hemelb{
         {
           return MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
         }
-        size_t FluidSitesOnProcessor(int n){
+        size_t FluidSitesOnProcessor(int n)
+        {
           return instance.FluidSitesOnEachProcessor[n];
         }
-        proc_t GetProcessorCount(){
+        proc_t GetProcessorCount()
+        {
           return instance.GetProcessorCount();
         }
-        unsigned int GetMachineCount(){
+        unsigned int GetMachineCount()
+        {
           return instance.GetMachineCount();
         }
-        int GetDepths(){
+        int GetDepths()
+        {
           return instance.GetDepths();
         }
 

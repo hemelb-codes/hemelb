@@ -9,17 +9,30 @@
 #include "util/fileutils.h"
 #include "Timers.h"
 #include "Policies.h"
-namespace hemelb{
-  namespace reporting {
-   template<class TimersPolicy, class WriterPolicy, class CommsPolicy> class ReporterBase : public WriterPolicy, public CommsPolicy {
+namespace hemelb
+{
+  namespace reporting
+  {
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> class ReporterBase : public WriterPolicy,
+                                                                                             public CommsPolicy
+    {
       public:
-        ReporterBase(const std::string &path, const std::string &inputFile, const long int asite_count, TimersPolicy&timers);
+        ReporterBase(const std::string &path,
+                     const std::string &inputFile,
+                     const long int asite_count,
+                     TimersPolicy&timers);
         void Cycle();
-        void TimeStep(){timestep_count++;}
+        void TimeStep()
+        {
+          timestep_count++;
+        }
         void Image();
         void Snapshot();
         void Write();
-        void Stability(bool astability){stability=astability;}
+        void Stability(bool astability)
+        {
+          stability = astability;
+        }
       private:
         bool doIo;
         unsigned int cycle_count;
@@ -31,7 +44,7 @@ namespace hemelb{
         TimersPolicy &timings;
     };
 
-   typedef ReporterBase<Timers,FileWriterPolicy,MPICommsPolicy> Reporter;
+    typedef ReporterBase<Timers, FileWriterPolicy, MPICommsPolicy> Reporter;
   }
 }
 

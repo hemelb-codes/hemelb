@@ -50,14 +50,22 @@ namespace hemelb
                   std::string iAttributeName,
                   bool iIsLoading,
                   unsigned long &value);
-        void DoIO(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, float &value);
-        void DoIO(TiXmlElement* iXmlNode, std::string iAttributeName, bool iIsLoading, double &value);
+        void DoIO(TiXmlElement* iXmlNode,
+                  std::string iAttributeName,
+                  bool iIsLoading,
+                  float &value);
+        void DoIO(TiXmlElement* iXmlNode,
+                  std::string iAttributeName,
+                  bool iIsLoading,
+                  double &value);
         void DoIO(TiXmlElement* iXmlNode,
                   std::string iAttributeName,
                   bool iIsLoading,
                   std::string &iValue);
-        void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, std::vector<
-            lb::boundaries::iolets::InOutLet*> &value, std::string iChildNodeName);
+        void DoIO(TiXmlElement *iXmlNode,
+                  bool iIsLoading,
+                  std::vector<lb::boundaries::iolets::InOutLet*> &value,
+                  std::string iChildNodeName);
         void DoIO(TiXmlElement *iXmlNode, bool iIsLoading, util::Vector3D<float> &iValue);
         TiXmlElement* GetChild(TiXmlElement *iParent, std::string iChildNodeName, bool iIsLoading);
     };

@@ -28,8 +28,6 @@ class SimulationMaster
 
     void RunSimulation();
 
-
-
   private:
     void Initialise();
     void SetupReporting(); // set up the reporting file
