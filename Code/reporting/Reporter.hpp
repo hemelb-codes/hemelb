@@ -9,7 +9,7 @@ namespace hemelb
         WriterPolicy, CommsPolicy>::ReporterBase(const std::string &name,
                                                  const std::string &inputFile,
                                                  const long int aSiteCount,
-                                                 TimersPolicy& timers) :
+                                                 const TimersPolicy& timers) :
         WriterPolicy(name), cycleCount(0), snapshotCount(0), imageCount(0), timestepCount(0), siteCount(aSiteCount), stability(true), timings(timers)
     {
       WriterPolicy::Print("***********************************************************\n");
