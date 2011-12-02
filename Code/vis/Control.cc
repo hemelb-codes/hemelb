@@ -252,17 +252,17 @@ namespace hemelb
 
       for (unsigned int i = 0; i < imagePixels.GetPixelCount(); i++)
       {
-        const ResultPixel pixel = imagePixels.GetPixels()[i];
+        const ResultPixel& pixel = imagePixels.GetPixels()[i];
 
         // Use a ray-tracer function to get the necessary pixel data.
-        int index;
+        unsigned index;
         unsigned char rgb_data[12];
 
         pixel.WritePixel(&index, rgb_data, domainStats, visSettings);
 
-        *writer << index;
+        *writer << (uint32_t) index;
 
-        int pix_data[3];
+        unsigned pix_data[3];
         pix_data[0] = (rgb_data[0] << (3 * bits_per_char)) + (rgb_data[1] << (2 * bits_per_char))
             + (rgb_data[2] << bits_per_char) + rgb_data[3];
 
@@ -274,7 +274,7 @@ namespace hemelb
 
         for (int i = 0; i < 3; i++)
         {
-          *writer << pix_data[i];
+          *writer << (uint32_t) pix_data[i];
         }
         *writer << io::Writer::eol;
       }
@@ -358,8 +358,8 @@ namespace hemelb
       }
       if (splayNumber == 1)
       {
-        std::pair<std::multimap<unsigned long, Rendering>::iterator, std::multimap<unsigned long,
-            Rendering>::iterator> its = childrenResultsByStartIt.equal_range(startIteration);
+        std::pair < std::multimap<unsigned long, Rendering>::iterator, std::multimap<unsigned long,
+            Rendering>::iterator > its = childrenResultsByStartIt.equal_range(startIteration);
 
         Rendering local = (*localResultsByStartIt.find(startIteration)).second;
 
