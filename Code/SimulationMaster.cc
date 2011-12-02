@@ -73,8 +73,8 @@ SimulationMaster::~SimulationMaster()
   {
     delete imageSendCpt;
   }
-delete latticeData;
- delete latticeBoltzmannModel;
+  delete latticeData;
+  delete latticeBoltzmannModel;
   delete inletValues;
   delete outletValues;
   delete network;
