@@ -1,5 +1,5 @@
-#ifndef HEMELB_COMMANDLINE_H
-#define HEMELB_COMMANDLINE_H
+#ifndef HEMELB_CONFIGURATION_COMMANDLINE_H
+#define HEMELB_CONFIGURATION_COMMANDLINE_H
 
 #include <string>
 #include <stdlib.h>
@@ -48,4 +48,4 @@ namespace hemelb{
   }
 }
 
-#endif
+#endif //HEMELB_CONFIGURATION_COMMANDLINE_H

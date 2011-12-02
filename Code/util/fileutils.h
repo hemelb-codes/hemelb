@@ -1,5 +1,5 @@
-#ifndef HEMELB_FILEUTILS_H
-#define HEMELB_FILEUTILS_H
+#ifndef HEMELB_UTIL_FILEUTILS_H
+#define HEMELB_UTIL_FILEUTILS_H
 
 #include <dirent.h>
 #include <string>
@@ -40,7 +40,7 @@ namespace hemelb
     std::string NormalizePathRelativeToPath(std::string inPath,
                                             std::string basePath);
 
-    const char * GetTemporaryDir();
+    std::string GetTemporaryDir();
 
     void ChangeDirectory(const char * target);
     void ChangeDirectory(const std::string &target);
@@ -48,4 +48,4 @@ namespace hemelb
     std::string GetCurrentDir();
   }
 }
-#endif // HEMELB_FILEUTILS_H
+#endif // HEMELB_UTIL_FILEUTILS_H

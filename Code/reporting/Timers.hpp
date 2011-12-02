@@ -1,5 +1,5 @@
-#ifndef HEMELB_TIMERS_HPP
-#define HEMELB_TIMERS_HPP
+#ifndef HEMELB_REPORTING_TIMERS_HPP
+#define HEMELB_REPORTING_TIMERS_HPP
 #include "Timers.h"
 namespace hemelb
 {
@@ -21,4 +21,4 @@ namespace hemelb
   }
 }
 
-#endif
+#endif // HEMELB_REPORTING_TIMERS_HPP
