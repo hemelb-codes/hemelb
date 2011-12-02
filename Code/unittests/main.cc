@@ -7,8 +7,10 @@
 #include <stdexcept>
 #include "unittests/lbtests/lbtests.h"
 #include "unittests/vistests/vistests.h"
+#include "unittests/io/io.h"
 #include "unittests/reporting/reporting.h"
 #include "unittests/configuration/configuration.h"
+#include "unittests/geometry/geometry.h"
 #include "unittests/SimulationMasterTests.h"
 
 int main(int argc, char **argv)

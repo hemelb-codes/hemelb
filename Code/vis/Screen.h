@@ -1,7 +1,7 @@
 #ifndef HEMELB_VIS_SCREEN_H
 #define HEMELB_VIS_SCREEN_H
 
-#include "io/Writer.h"
+#include "io/writers/Writer.h"
 #include "util/Vector3D.h"
 #include "vis/Viewpoint.h"
 #include "vis/VisSettings.h"

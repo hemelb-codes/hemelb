@@ -1,5 +1,5 @@
-#ifndef HEMELB_UTILITYFUNCTIONS_H
-#define HEMELB_UTILITYFUNCTIONS_H
+#ifndef HEMELB_UTIL_UTILITYFUNCTIONS_H
+#define HEMELB_UTIL_UTILITYFUNCTIONS_H
 
 #include "util/utilityFunctions.h"
 #include "log/Logger.h"

@@ -9,7 +9,7 @@
 #include "configuration/SimConfig.h"
 #include "mpiInclude.h"
 #include "geometry/BlockTraverser.h"
-#include "io/XdrReader.h"
+#include "io/writers/xdr/XdrReader.h"
 // TODO Remove the stress type from the data file, so we can remove the dependence
 // on LbmParams here.
 #include "lb/LbmParameters.h"
@@ -208,7 +208,7 @@ namespace hemelb
                 site_t>& localSiteCoords) const;
             unsigned int GetSiteData(site_t iSiteI, site_t iSiteJ, site_t iSiteK) const;
 
-            void ReadBlock(site_t block, io::XdrReader* reader);
+            void ReadBlock(site_t block, io::writers::xdr::XdrReader* reader);
 
           public:
             // TODO public temporarily, until all usages are internal to the class.

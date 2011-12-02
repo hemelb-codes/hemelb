@@ -6,7 +6,7 @@ namespace hemelb{
   namespace unittests{
     namespace configuration{
       using namespace hemelb::configuration;
-
+      using namespace resources;
       class SimConfigTests : public CppUnit::TestFixture
       {
         CPPUNIT_TEST_SUITE( SimConfigTests );

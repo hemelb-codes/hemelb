@@ -2,45 +2,64 @@
 #define HEMELB_UNITTESTS_SIMULATIONMASTERTESTS_H
 
 #include <cppunit/TestFixture.h>
-
-
+#include "SimulationMaster.h"
+#include "unittests/helpers/FolderTestFixture.h"
 
 namespace hemelb
 {
   namespace unittests
   {
-    namespace lbtests
+    /**
+     * Class to test the simulation master.
+     */
+    using namespace helpers;
+    class SimulationMasterTests : public FolderTestFixture
     {
-      /**
-       * Class to test the simulation master.
-       */
-      class SimulationMasterTests : public CppUnit::TestFixture
-      {
-          CPPUNIT_TEST_SUITE( SimulationMasterTests );
-          CPPUNIT_TEST( TestReport );
-          CPPUNIT_TEST_SUITE_END();
-        public:
-          void setUp()
-          {
+        CPPUNIT_TEST_SUITE( SimulationMasterTests );
+        CPPUNIT_TEST( TestRun );
+        CPPUNIT_TEST_SUITE_END();
+      public:
+        void setUp()
+        {
+          argc=9;
+          argv[0]="hemelb";
+          argv[2]="four_cube.xml";
+          argv[1]="-in";
+          argv[3]="-i";
+          argv[4]="1";
+          argv[5]="-s";
+          argv[6]="1";
+          argv[7]="-ss";
+          argv[8]="1111";
+          FolderTestFixture::setUp();
+          CopyResourceToTempdir("four_cube.xml");
+          CopyResourceToTempdir("four_cube.dat");
+          options = new hemelb::configuration::CommandLine(argc,argv);
+          master = new SimulationMaster(*options);
+        }
 
-          }
+        void tearDown()
+        {
+          FolderTestFixture::tearDown();
+          delete master;
+          delete options;
+        }
 
-          void tearDown()
-          {
 
-          }
+        void TestRun()
+        {
+          master->RunSimulation();
+        }
 
+      private:
+        int argc;
+        hemelb::configuration::CommandLine *options;
+        SimulationMaster *master;
+        const char* argv[9];
 
-          void TestReport()
-          {
+    };
 
-          }
-
-        private:
-
-      };
-      CPPUNIT_TEST_SUITE_REGISTRATION( SimulationMasterTests );
-    }
+    CPPUNIT_TEST_SUITE_REGISTRATION( SimulationMasterTests );
   }
 }
 

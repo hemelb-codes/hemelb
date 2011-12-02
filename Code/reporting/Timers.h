@@ -1,5 +1,5 @@
-#ifndef HEMELB_TIMERS_H
-#define HEMELB_TIMERS_H
+#ifndef HEMELB_REPORTING_TIMERS_H
+#define HEMELB_REPORTING_TIMERS_H
 
 #include <vector>
 #include "util/utilityFunctions.h"
@@ -107,4 +107,4 @@ namespace hemelb
         "Simulation total" };
 }
 
-#endif
+#endif //HEMELB_REPORTING_TIMERS_H

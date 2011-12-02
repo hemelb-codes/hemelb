@@ -1,5 +1,5 @@
-#ifndef HEMELB_SIMCONFIG_H
-#define HEMELB_SIMCONFIG_H
+#ifndef HEMELB_CONFIGURATION_SIMCONFIG_H
+#define HEMELB_CONFIGURATION_SIMCONFIG_H
 
 #include <string.h>
 #include <vector>
@@ -64,4 +64,4 @@ namespace hemelb
   }
 }
 
-#endif /* HEMELB_SIMCONFIG_H */
+#endif /* HEMELB_CONFIGURATION_SIMCONFIG_H */

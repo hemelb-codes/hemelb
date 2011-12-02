@@ -10,9 +10,9 @@
 #include "lb/lb.h"
 #include "net/net.h"
 #include "util/utilityFunctions.h"
-#include "io/XdrMemReader.h"
-#include "io/XdrMemWriter.h"
-#include "io/AsciiFileWriter.h"
+#include "io/writers/xdr/XdrMemReader.h"
+#include "io/writers/xdr/XdrMemWriter.h"
+#include "io/writers/ascii/AsciiFileWriter.h"
 #include "geometry/LatticeData.h"
 #include "io/formats/snapshot.h"
 
@@ -68,7 +68,7 @@ namespace hemelb
       {
         // Write the header according to format detailed in snapshot.h
         char lBuffer[io::formats::snapshot::HeaderLength];
-        io::XdrMemWriter lWriter = io::XdrMemWriter(lBuffer, io::formats::snapshot::HeaderLength);
+        io::writers::xdr::XdrMemWriter lWriter = io::writers::xdr::XdrMemWriter(lBuffer, io::formats::snapshot::HeaderLength);
         lWriter << (unsigned int) io::formats::HemeLbMagicNumber
             << (unsigned int) io::formats::snapshot::MagicNumber
             << (unsigned int) io::formats::snapshot::VersionNumber;
@@ -113,7 +113,7 @@ namespace hemelb
       site_t lLocalWriteLength = io::formats::snapshot::VoxelRecordLength
           * netTop->FluidSitesOnEachProcessor[netTop->GetLocalRank()];
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
-      hemelb::io::XdrMemWriter lWriter = hemelb::io::XdrMemWriter(lFluidSiteBuffer,
+      hemelb::io::writers::xdr::XdrMemWriter lWriter = hemelb::io::writers::xdr::XdrMemWriter(lFluidSiteBuffer,
                                                                   (unsigned int) lLocalWriteLength);
 
       /* The following loops scan over every single macrocell (block). If

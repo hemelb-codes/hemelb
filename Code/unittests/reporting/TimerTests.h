@@ -71,7 +71,8 @@ namespace hemelb
           CPPUNIT_TEST_SUITE(TimersTests);
           CPPUNIT_TEST(TestInitialization);
           CPPUNIT_TEST(TestTimersSeparate);
-          CPPUNIT_TEST(TestReduce);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST(TestReduce);
+          CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
