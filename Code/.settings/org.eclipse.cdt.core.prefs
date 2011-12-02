@@ -1,6 +1,14 @@
-#Fri Nov 18 15:33:06 GMT 2011
+#Fri Dec 02 14:45:42 GMT 2011
 eclipse.preferences.version=1
-environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<environment append\="true" appendContributed\="false">\n<variable delimiter\="\:" name\="HEMELB_MACHINE" operation\="append" value\="CCS"/>\n<variable delimiter\="\:" name\="PATH" operation\="append" value\="/usr/bin/"/>\n</environment>\n
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428=
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/HEMELB_MACHINE/delimiter=\:
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/HEMELB_MACHINE/operation=append
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/HEMELB_MACHINE/value=CCS
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/PATH/delimiter=\:
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/PATH/operation=append
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/PATH/value=/usr/bin/
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/append=true
+environment/project/cdt.managedbuild.toolchain.gnu.base.825880950.1300491428/appendContributed=false
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/delimiter=\:
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/operation=append
 environment/project/cdt.managedbuild.toolchain.gnu.base.825880950/HEMELB_MACHINE/value=CCS
