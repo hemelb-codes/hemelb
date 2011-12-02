@@ -303,6 +303,19 @@ namespace hemelb
               if (Blocks[block].wall_data == NULL)
               {
                 Blocks[block].wall_data = new WallData[GetSitesPerBlockVolumeUnit()];
+
+                // Initialise all the WallData objects to indicate a lack of walls / cuts.
+                for (unsigned int localSiteCount = 0; localSiteCount < GetSitesPerBlockVolumeUnit(); ++localSiteCount)
+                {
+                  for (unsigned int cutDirection = 0; cutDirection < D3Q15::NUMVECTORS - 1; ++cutDirection)
+                  {
+                    Blocks[block].wall_data[localSiteCount].cut_dist[cutDirection] = -1.0F;
+                  }
+                  for (unsigned int wallNormalDimension = 0; wallNormalDimension < 3; ++wallNormalDimension)
+                  {
+                    Blocks[block].wall_data[localSiteCount].wall_nor[wallNormalDimension] = -1.0F;
+                  }
+                }
               }
 
               if (GetCollisionType(*site_type) & INLET || GetCollisionType(*site_type) & OUTLET)
