@@ -20,7 +20,7 @@ namespace hemelb
         ReporterBase(const std::string &path,
                      const std::string &inputFile,
                      const long int aSiteCount,
-                     TimersPolicy& timers);
+                     const TimersPolicy& timers);
         void Cycle();
         void TimeStep()
         {
@@ -41,7 +41,7 @@ namespace hemelb
         unsigned long int timestepCount;
         long int siteCount;
         bool stability;
-        TimersPolicy &timings;
+        const TimersPolicy &timings;
     };
 
     typedef ReporterBase<Timers, FileWriterPolicy, MPICommsPolicy> Reporter;
