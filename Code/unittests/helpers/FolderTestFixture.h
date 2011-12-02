@@ -16,17 +16,17 @@ namespace hemelb
         public:
           void setUp()
           {
-            std::stringstream temp_path_stream;
+            std::stringstream tempPathStream;
             // next line is a hack to get the build working again
             // TODO: find a portable uuid solution. BOOST?
-            temp_path_stream << util::GetTemporaryDir() << "/" << "HemeLBTest" << std::fixed
+            tempPathStream << util::GetTemporaryDir() << "/" << "HemeLBTest" << std::fixed
                 << floor(util::myClock() * 100000) << std::flush;
-            temp_path = temp_path_stream.str();
+            tempPath = tempPathStream.str();
             // store current location
             origin = util::GetCurrentDir();
 
             // create a folder to work in
-            util::MakeDirAllRXW(temp_path);
+            util::MakeDirAllRXW(tempPath);
             MoveToTempdir();
           }
 
@@ -45,7 +45,7 @@ namespace hemelb
           void CopyResourceToTempdir(const std::string & resource)
           {
             bool ok = util::FileCopy(resources::Resource(resource).Path().c_str(),
-                                     (temp_path + "/" + resource).c_str());
+                                     (tempPath + "/" + resource).c_str());
             CPPUNIT_ASSERT(ok);
           }
           void MoveToTempdir()
@@ -59,11 +59,11 @@ namespace hemelb
           }
           const std::string & GetTempdir()
           {
-            return temp_path;
+            return tempPath;
           }
         private:
           std::string origin;
-          std::string temp_path;
+          std::string tempPath;
       };
     }
   }
