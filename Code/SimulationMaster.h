@@ -37,14 +37,14 @@ class SimulationMaster
     void WriteLocalImages();
     void GenerateNetworkImages();
     hemelb::configuration::SimConfig *simConfig;
-    hemelb::geometry::LatticeData* mLatDat;
+    hemelb::geometry::LatticeData* latticeData;
     hemelb::io::PathManager* fileManager;
     hemelb::reporting::Timers timings;
     hemelb::reporting::Reporter* reporter;
-    typedef std::multimap<unsigned long, unsigned long> mapType;
+    typedef std::multimap<unsigned long, unsigned long> MapType;
 
-    mapType snapshotsCompleted;
-    mapType networkImagesCompleted;
+    MapType snapshotsCompleted;
+    MapType networkImagesCompleted;
 
     hemelb::steering::Network* network;
     hemelb::steering::ImageSendComponent *imageSendCpt;
@@ -53,14 +53,14 @@ class SimulationMaster
     hemelb::lb::SimulationState* mSimulationState;
     hemelb::lb::StabilityTester* mStabilityTester;
     hemelb::lb::EntropyTester* mEntropyTester;
-    hemelb::lb::LBM* mLbm;
-    hemelb::lb::boundaries::BoundaryValues* mInletValues;
-    hemelb::lb::boundaries::BoundaryValues* mOutletValues;
-    hemelb::net::Net mNet;
+    hemelb::lb::LBM* latticeBoltzmannModel;
+    hemelb::lb::boundaries::BoundaryValues* inletValues;
+    hemelb::lb::boundaries::BoundaryValues* outletValues;
+    hemelb::net::Net communicationNet;
 
-    hemelb::util::UnitConverter* mUnits;
+    hemelb::util::UnitConverter* unitConvertor;
 
-    hemelb::vis::Control* mVisControl;
+    hemelb::vis::Control* visualisationControl;
 
     std::vector<hemelb::net::IteratedAction*> actors;
 
