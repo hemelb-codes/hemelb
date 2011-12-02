@@ -38,7 +38,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
   latticeBoltzmannModel = NULL;
   steeringCpt = NULL;
   visualisationControl = NULL;
-  mSimulationState = NULL;
+  simulationState = NULL;
 
   snapshotsPerCycle = options.NumberOfSnapshotsPerCycle();
   imagesPerCycle = options.NumberOfImagesPerCycle();
@@ -108,19 +108,19 @@ SimulationMaster::~SimulationMaster()
     delete visualisationControl;
   }
 
-  if (mStabilityTester != NULL)
+  if (stabilityTester != NULL)
   {
-    delete mStabilityTester;
+    delete stabilityTester;
   }
 
-  if (mEntropyTester != NULL)
+  if (entropyTester != NULL)
   {
-    delete mEntropyTester;
+    delete entropyTester;
   }
 
-  if (mSimulationState != NULL)
+  if (simulationState != NULL)
   {
-    delete mSimulationState;
+    delete simulationState;
   }
 
   if (unitConvertor != NULL)
@@ -161,7 +161,7 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
 
-  mSimulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle,
+  simulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle,
                                                      simConfig->NumCycles);
 
   hemelb::site_t mins[3], maxes[3];
@@ -184,7 +184,7 @@ void SimulationMaster::Initialise()
   latticeBoltzmannModel = new hemelb::lb::LBM(simConfig,
                              &communicationNet,
                              latticeData,
-                             mSimulationState,
+                             simulationState,
                              timings[hemelb::reporting::Timers::lb]);
   latticeBoltzmannModel->SetSiteMinima(mins);
   latticeBoltzmannModel->SetSiteMaxima(maxes);
@@ -202,55 +202,55 @@ void SimulationMaster::Initialise()
     network = NULL;
   }
 
-  mStabilityTester = new hemelb::lb::StabilityTester(latticeData, &communicationNet, mSimulationState);
+  stabilityTester = new hemelb::lb::StabilityTester(latticeData, &communicationNet, simulationState);
 
-  mEntropyTester = NULL;
+  entropyTester = NULL;
 
   timings[hemelb::reporting::Timers::netInitialise].Start();
-  hemelb::site_t* lReceiveTranslator = communicationNet.Initialise(latticeData);
+  hemelb::site_t* receiveTranslator = communicationNet.Initialise(latticeData);
   timings[hemelb::reporting::Timers::netInitialise].Stop();
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising visualisation controller.");
   visualisationControl = new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
                                          &communicationNet,
-                                         mSimulationState,
+                                         simulationState,
                                          latticeData,
                                          timings[hemelb::reporting::Timers::visualisation]);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
     imageSendCpt = new hemelb::steering::ImageSendComponent(latticeBoltzmannModel,
-                                                            mSimulationState,
+                                                            simulationState,
                                                             visualisationControl,
                                                             latticeBoltzmannModel->GetLbmParams(),
                                                             network);
   }
 
   unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
-                                           mSimulationState,
+                                           simulationState,
                                            latticeData->GetVoxelSize());
 
   inletValues =
       new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
                                                  latticeData,
                                                  simConfig->Inlets,
-                                                 mSimulationState,
+                                                 simulationState,
                                                  unitConvertor);
 
   outletValues =
       new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::OUTLET_TYPE,
                                                  latticeData,
                                                  simConfig->Outlets,
-                                                 mSimulationState,
+                                                 simulationState,
                                                  unitConvertor);
 
-  latticeBoltzmannModel->Initialise(lReceiveTranslator, visualisationControl, inletValues, outletValues, unitConvertor);
+  latticeBoltzmannModel->Initialise(receiveTranslator, visualisationControl, inletValues, outletValues, unitConvertor);
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         visualisationControl,
                                                         latticeBoltzmannModel,
                                                         &communicationNet,
-                                                        mSimulationState,
+                                                        simulationState,
                                                         simConfig,
                                                         unitConvertor);
 
@@ -264,7 +264,7 @@ unsigned int SimulationMaster::OutputPeriod(unsigned int frequency)
   {
     return 1000000000;
   }
-  unsigned long roundedPeriod = mSimulationState->GetTimeStepsPerCycle() / frequency;
+  unsigned long roundedPeriod = simulationState->GetTimeStepsPerCycle() / frequency;
   return hemelb::util::NumericalFunctions::max(1U, (unsigned int) roundedPeriod);
 }
 
@@ -324,23 +324,23 @@ void SimulationMaster::ResetUnstableSimulation()
 #endif
 
   hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("restarting: period: %i\n",
-                                                                      mSimulationState->GetTimeStepsPerCycle());
+                                                                      simulationState->GetTimeStepsPerCycle());
 
-  mSimulationState->Reset();
+  simulationState->Reset();
 }
 
 void SimulationMaster::WriteLocalImages()
 {
   for (std::multimap<unsigned long, unsigned long>::const_iterator it =
-      snapshotsCompleted.find(mSimulationState->GetTimeStepsPassed());
-      it != snapshotsCompleted.end() && it->first == mSimulationState->GetTimeStepsPassed(); ++it)
+      snapshotsCompleted.find(simulationState->GetTimeStepsPassed());
+      it != snapshotsCompleted.end() && it->first == simulationState->GetTimeStepsPassed(); ++it)
   {
 
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
       reporter->Image();
       hemelb::io::writers::xdr::XdrFileWriter * writer = fileManager->XdrImageWriter(1
-          + ( (it->second - 1) % mSimulationState->GetTimeStepsPerCycle()));
+          + ( (it->second - 1) % simulationState->GetTimeStepsPerCycle()));
 
       const hemelb::vis::PixelSet<hemelb::vis::ResultPixel>* result =
           visualisationControl->GetResult(it->second);
@@ -354,14 +354,14 @@ void SimulationMaster::WriteLocalImages()
     }
   }
 
-  snapshotsCompleted.erase(mSimulationState->GetTimeStepsPassed());
+  snapshotsCompleted.erase(simulationState->GetTimeStepsPassed());
 }
 
 void SimulationMaster::GenerateNetworkImages()
 {
   for (std::multimap<unsigned long, unsigned long>::const_iterator it =
-      networkImagesCompleted.find(mSimulationState->GetTimeStepsPassed());
-      it != networkImagesCompleted.end() && it->first == mSimulationState->GetTimeStepsPassed();
+      networkImagesCompleted.find(simulationState->GetTimeStepsPassed());
+      it != networkImagesCompleted.end() && it->first == simulationState->GetTimeStepsPassed();
       ++it)
   {
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
@@ -376,16 +376,16 @@ void SimulationMaster::GenerateNetworkImages()
 
         if (visualisationControl->MouseIsOverPixel(result, &density, &stress))
         {
-          double mouse_pressure, mouse_stress;
+          double mousePressure, mouseStress;
           latticeBoltzmannModel->CalculateMouseFlowField(density,
                                         stress,
-                                        mouse_pressure,
-                                        mouse_stress,
+                                        mousePressure,
+                                        mouseStress,
                                         visualisationControl->mDomainStats.density_threshold_min,
                                         visualisationControl->mDomainStats.density_threshold_minmax_inv,
                                         visualisationControl->mDomainStats.stress_threshold_max_inv);
 
-          visualisationControl->SetMouseParams(mouse_pressure, mouse_stress);
+          visualisationControl->SetMouseParams(mousePressure, mouseStress);
         }
         steeringCpt->updatedMouseCoords = false;
       }
@@ -395,7 +395,7 @@ void SimulationMaster::GenerateNetworkImages()
     }
   }
 
-  networkImagesCompleted.erase(mSimulationState->GetTimeStepsPassed());
+  networkImagesCompleted.erase(simulationState->GetTimeStepsPassed());
 }
 
 /**
@@ -406,21 +406,21 @@ void SimulationMaster::RunSimulation()
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning to run simulation.");
 
   timings[hemelb::reporting::Timers::simulation].Start();
-  bool is_unstable = false;
-  unsigned int snapshots_period = OutputPeriod(snapshotsPerCycle);
-  unsigned int images_period = OutputPeriod(imagesPerCycle);
+  bool isUnstable = false;
+  unsigned int snapshotsPeriod = OutputPeriod(snapshotsPerCycle);
+  unsigned int imagesPeriod = OutputPeriod(imagesPerCycle);
 
-  bool is_finished = false;
+  bool isFinished = false;
   hemelb::lb::Stability stability = hemelb::lb::Stable;
 
   actors.push_back(latticeBoltzmannModel);
   actors.push_back(inletValues);
   actors.push_back(outletValues);
   actors.push_back(steeringCpt);
-  actors.push_back(mStabilityTester);
-  if (mEntropyTester != NULL)
+  actors.push_back(stabilityTester);
+  if (entropyTester != NULL)
   {
-    actors.push_back(mEntropyTester);
+    actors.push_back(entropyTester);
   }
   actors.push_back(visualisationControl);
 
@@ -430,30 +430,30 @@ void SimulationMaster::RunSimulation()
   }
 
   for (;
-      mSimulationState->GetTimeStepsPassed() <= mSimulationState->GetTotalTimeSteps()
-          && !is_finished; mSimulationState->Increment())
+      simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps()
+          && !isFinished; simulationState->Increment())
   {
     if (IsCurrentProcTheIOProc())
     {
       reporter->TimeStep();
     }
 
-    bool write_snapshot_image = ( (mSimulationState->GetTimeStep() % images_period) == 0) ?
+    bool writeSnapshotImage = ( (simulationState->GetTimeStep() % imagesPeriod) == 0) ?
       true :
       false;
 
     // Make sure we're rendering if we're writing this iteration.
-    if (write_snapshot_image)
+    if (writeSnapshotImage)
     {
       snapshotsCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                        mSimulationState->GetTimeStepsPassed()));
+                                                                        simulationState->GetTimeStepsPassed()));
     }
 
-    if (mSimulationState->GetDoRendering())
+    if (simulationState->GetDoRendering())
     {
       networkImagesCompleted.insert(std::pair<unsigned long, unsigned long>(visualisationControl->Start(),
-                                                                            mSimulationState->GetTimeStepsPassed()));
-      mSimulationState->SetDoRendering(false);
+                                                                            simulationState->GetTimeStepsPassed()));
+      simulationState->SetDoRendering(false);
     }
 
     /* In the following two if blocks we do the core magic to ensure we only Render
@@ -463,76 +463,76 @@ void SimulationMaster::RunSimulation()
      instant of time since variables might be altered by the thread half way through?
      This is to be done. */
 
-    bool render_for_network_stream = false;
+    bool renderForNetworkStream = false;
     if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
     {
-      render_for_network_stream = imageSendCpt->ShouldRenderNewNetworkImage();
-      steeringCpt->readyForNextImage = render_for_network_stream;
+      renderForNetworkStream = imageSendCpt->ShouldRenderNewNetworkImage();
+      steeringCpt->readyForNextImage = renderForNetworkStream;
     }
 
-    if (mSimulationState->GetTimeStep() % 100 == 0)
+    if (simulationState->GetTimeStep() % 100 == 0)
     {
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("time step %i render_network_stream %i write_snapshot_image %i rendering %i",
-                                                                          mSimulationState->GetTimeStep(),
-                                                                          render_for_network_stream,
-                                                                          write_snapshot_image,
-                                                                          mSimulationState->GetDoRendering());
+                                                                          simulationState->GetTimeStep(),
+                                                                          renderForNetworkStream,
+                                                                          writeSnapshotImage,
+                                                                          simulationState->GetDoRendering());
     }
 
     HandleActors();
 
     stability = hemelb::lb::Stable;
 
-    if (mSimulationState->GetStability() == hemelb::lb::Unstable)
+    if (simulationState->GetStability() == hemelb::lb::Unstable)
     {
       ResetUnstableSimulation();
-      snapshots_period = OutputPeriod(snapshotsPerCycle);
-      images_period = OutputPeriod(imagesPerCycle);
+      snapshotsPeriod = OutputPeriod(snapshotsPerCycle);
+      imagesPeriod = OutputPeriod(imagesPerCycle);
       continue;
     }
-    latticeBoltzmannModel->UpdateInletVelocities(mSimulationState->GetTimeStep());
+    latticeBoltzmannModel->UpdateInletVelocities(simulationState->GetTimeStep());
 
 #ifndef NO_STREAKLINES
-    visualisationControl->ProgressStreaklines(mSimulationState->GetTimeStep(),
-                                     mSimulationState->GetTimeStepsPerCycle());
+    visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(),
+                                     simulationState->GetTimeStepsPerCycle());
 #endif
 
-    if (snapshotsCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
+    if (snapshotsCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
     {
       WriteLocalImages();
 
     }
 
-    if (networkImagesCompleted.count(mSimulationState->GetTimeStepsPassed()) > 0)
+    if (networkImagesCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
     {
       GenerateNetworkImages();
     }
 
     timings[hemelb::reporting::Timers::snapshot].Start();
 
-    if (mSimulationState->GetTimeStep() % snapshots_period == 0)
+    if (simulationState->GetTimeStep() % snapshotsPeriod == 0)
     {
       if (IsCurrentProcTheIOProc())
       {
         reporter->Snapshot();
       }
       latticeBoltzmannModel->WriteConfigParallel(stability,
-                                fileManager->SnapshotPath(mSimulationState->GetTimeStep()));
+                                fileManager->SnapshotPath(simulationState->GetTimeStep()));
     }
 
     timings[hemelb::reporting::Timers::snapshot].Stop();
 
     if (stability == hemelb::lb::StableAndConverged)
     {
-      is_finished = true;
+      isFinished = true;
       break;
     }
-    if (mSimulationState->GetIsTerminating())
+    if (simulationState->GetIsTerminating())
     {
-      is_finished = true;
+      isFinished = true;
       break;
     }
-    if (mSimulationState->GetTimeStepsPerCycle() > 400000)
+    if (simulationState->GetTimeStepsPerCycle() > 400000)
     {
       if (IsCurrentProcTheIOProc())
       {
@@ -541,13 +541,13 @@ void SimulationMaster::RunSimulation()
       break;
     }
 
-    if (mSimulationState->GetTimeStep() == mSimulationState->GetTimeStepsPerCycle()
+    if (simulationState->GetTimeStep() == simulationState->GetTimeStepsPerCycle()
         && IsCurrentProcTheIOProc())
     {
       reporter->Cycle();
 
       hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("cycle id: %li",
-                                                                          mSimulationState->GetCycleId());
+                                                                          simulationState->GetCycleId());
 
       fflush(NULL);
     }
