@@ -73,60 +73,17 @@ SimulationMaster::~SimulationMaster()
   {
     delete imageSendCpt;
   }
-
-  if (latticeData != NULL)
-  {
-    delete latticeData;
-  }
-
-  if (latticeBoltzmannModel != NULL)
-  {
-    delete latticeBoltzmannModel;
-  }
-
-  if (inletValues != NULL)
-  {
-    delete inletValues;
-  }
-
-  if (outletValues != NULL)
-  {
-    delete outletValues;
-  }
-
-  if (network != NULL)
-  {
-    delete network;
-  }
-  if (steeringCpt != NULL)
-  {
-    delete steeringCpt;
-  }
-
-  if (visualisationControl != NULL)
-  {
-    delete visualisationControl;
-  }
-
-  if (stabilityTester != NULL)
-  {
-    delete stabilityTester;
-  }
-
-  if (entropyTester != NULL)
-  {
-    delete entropyTester;
-  }
-
-  if (simulationState != NULL)
-  {
-    delete simulationState;
-  }
-
-  if (unitConvertor != NULL)
-  {
-    delete unitConvertor;
-  }
+  delete latticeData;
+  delete latticeBoltzmannModel;
+  delete inletValues;
+  delete outletValues;
+  delete network;
+  delete steeringCpt;
+  delete visualisationControl;
+  delete stabilityTester;
+  delete entropyTester;
+  delete simulationState;
+  delete unitConvertor;
   delete simConfig;
   delete fileManager;
   if (IsCurrentProcTheIOProc())
@@ -161,8 +118,7 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Beginning Initialisation.");
 
-  simulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle,
-                                                     simConfig->NumCycles);
+  simulationState = new hemelb::lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
 
   hemelb::site_t mins[3], maxes[3];
   // TODO The way we initialise LbmParameters is not great.
@@ -182,10 +138,10 @@ void SimulationMaster::Initialise()
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising LBM.");
   latticeBoltzmannModel = new hemelb::lb::LBM(simConfig,
-                             &communicationNet,
-                             latticeData,
-                             simulationState,
-                             timings[hemelb::reporting::Timers::lb]);
+                                              &communicationNet,
+                                              latticeData,
+                                              simulationState,
+                                              timings[hemelb::reporting::Timers::lb]);
   latticeBoltzmannModel->SetSiteMinima(mins);
   latticeBoltzmannModel->SetSiteMaxima(maxes);
 
@@ -202,7 +158,9 @@ void SimulationMaster::Initialise()
     network = NULL;
   }
 
-  stabilityTester = new hemelb::lb::StabilityTester(latticeData, &communicationNet, simulationState);
+  stabilityTester = new hemelb::lb::StabilityTester(latticeData,
+                                                    &communicationNet,
+                                                    simulationState);
 
   entropyTester = NULL;
 
@@ -211,11 +169,12 @@ void SimulationMaster::Initialise()
   timings[hemelb::reporting::Timers::netInitialise].Stop();
 
   hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Initialising visualisation controller.");
-  visualisationControl = new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
-                                         &communicationNet,
-                                         simulationState,
-                                         latticeData,
-                                         timings[hemelb::reporting::Timers::visualisation]);
+  visualisationControl =
+      new hemelb::vis::Control(latticeBoltzmannModel->GetLbmParams()->StressType,
+                               &communicationNet,
+                               simulationState,
+                               latticeData,
+                               timings[hemelb::reporting::Timers::visualisation]);
 
   if (hemelb::topology::NetworkTopology::Instance()->IsCurrentProcTheIOProc())
   {
@@ -227,8 +186,8 @@ void SimulationMaster::Initialise()
   }
 
   unitConvertor = new hemelb::util::UnitConverter(latticeBoltzmannModel->GetLbmParams(),
-                                           simulationState,
-                                           latticeData->GetVoxelSize());
+                                                  simulationState,
+                                                  latticeData->GetVoxelSize());
 
   inletValues =
       new hemelb::lb::boundaries::BoundaryValues(hemelb::geometry::LatticeData::INLET_TYPE,
@@ -244,7 +203,11 @@ void SimulationMaster::Initialise()
                                                  simulationState,
                                                  unitConvertor);
 
-  latticeBoltzmannModel->Initialise(receiveTranslator, visualisationControl, inletValues, outletValues, unitConvertor);
+  latticeBoltzmannModel->Initialise(receiveTranslator,
+                                    visualisationControl,
+                                    inletValues,
+                                    outletValues,
+                                    unitConvertor);
 
   steeringCpt = new hemelb::steering::SteeringComponent(network,
                                                         visualisationControl,
@@ -346,9 +309,9 @@ void SimulationMaster::WriteLocalImages()
           visualisationControl->GetResult(it->second);
 
       visualisationControl->WriteImage(writer,
-                              *result,
-                              visualisationControl->mDomainStats,
-                              visualisationControl->mVisSettings);
+                                       *result,
+                                       visualisationControl->mDomainStats,
+                                       visualisationControl->mVisSettings);
 
       delete writer;
     }
@@ -378,12 +341,12 @@ void SimulationMaster::GenerateNetworkImages()
         {
           double mousePressure, mouseStress;
           latticeBoltzmannModel->CalculateMouseFlowField(density,
-                                        stress,
-                                        mousePressure,
-                                        mouseStress,
-                                        visualisationControl->mDomainStats.density_threshold_min,
-                                        visualisationControl->mDomainStats.density_threshold_minmax_inv,
-                                        visualisationControl->mDomainStats.stress_threshold_max_inv);
+                                                         stress,
+                                                         mousePressure,
+                                                         mouseStress,
+                                                         visualisationControl->mDomainStats.density_threshold_min,
+                                                         visualisationControl->mDomainStats.density_threshold_minmax_inv,
+                                                         visualisationControl->mDomainStats.stress_threshold_max_inv);
 
           visualisationControl->SetMouseParams(mousePressure, mouseStress);
         }
@@ -430,8 +393,8 @@ void SimulationMaster::RunSimulation()
   }
 
   for (;
-      simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps()
-          && !isFinished; simulationState->Increment())
+      simulationState->GetTimeStepsPassed() <= simulationState->GetTotalTimeSteps() && !isFinished;
+      simulationState->Increment())
   {
     if (IsCurrentProcTheIOProc())
     {
@@ -494,7 +457,7 @@ void SimulationMaster::RunSimulation()
 
 #ifndef NO_STREAKLINES
     visualisationControl->ProgressStreaklines(simulationState->GetTimeStep(),
-                                     simulationState->GetTimeStepsPerCycle());
+                                              simulationState->GetTimeStepsPerCycle());
 #endif
 
     if (snapshotsCompleted.count(simulationState->GetTimeStepsPassed()) > 0)
@@ -517,7 +480,7 @@ void SimulationMaster::RunSimulation()
         reporter->Snapshot();
       }
       latticeBoltzmannModel->WriteConfigParallel(stability,
-                                fileManager->SnapshotPath(simulationState->GetTimeStep()));
+                                                 fileManager->SnapshotPath(simulationState->GetTimeStep()));
     }
 
     timings[hemelb::reporting::Timers::snapshot].Stop();
