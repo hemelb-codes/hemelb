@@ -77,11 +77,11 @@ namespace hemelb
 
         const PixelSet<ResultPixel>* GetResult(unsigned long startIteration);
 
-        void WritePixels(io::Writer* writer,
+        void WritePixels(io::writers::Writer* writer,
                          const PixelSet<ResultPixel>& imagePixels,
                          const DomainStats& domainStats,
                          const VisSettings& visSettings) const;
-        void WriteImage(io::Writer* writer,
+        void WriteImage(io::writers::Writer* writer,
                         const PixelSet<ResultPixel>& imagePixels,
                         const DomainStats& domainStats,
                         const VisSettings& visSettings) const;

@@ -1,5 +1,5 @@
-#ifndef HEMELB_NET_H
-#define HEMELB_NET_H
+#ifndef HEMELB_NET_NET_H
+#define HEMELB_NET_NET_H
 
 #include <vector>
 #include <map>
@@ -140,4 +140,4 @@ namespace hemelb
   }
 }
 
-#endif // HEMELB_NET_H
+#endif // HEMELB_NET_NET_H
