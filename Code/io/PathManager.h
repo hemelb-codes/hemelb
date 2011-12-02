@@ -14,7 +14,7 @@ namespace hemelb
     class PathManager
     {
       public:
-        PathManager(configuration::CommandLine & commandLine,
+        PathManager(const configuration::CommandLine & commandLine,
                     const bool &io,
                     const int &processorCount);
         bool HasProblems() const
@@ -25,9 +25,9 @@ namespace hemelb
         const std::string & GetSnapshotDirectory() const;
         const std::string & GetImageDirectory() const;
         const std::string & GetReportPath() const;
-        void SaveConfiguration(configuration::SimConfig * simConfig);
-        void EmptyOutputDirectories();
-        hemelb::io::writers::xdr::XdrFileWriter * XdrImageWriter(const long int time);
+        void SaveConfiguration(configuration::SimConfig * const simConfig) const;
+        void EmptyOutputDirectories() const;
+        hemelb::io::writers::xdr::XdrFileWriter * XdrImageWriter(const long int time) const;
         const std::string SnapshotPath(unsigned long time) const;
       private:
         void GuessOutputDir();
@@ -38,7 +38,7 @@ namespace hemelb
         std::string imageDirectory;
         std::string configLeafName;
         std::string reportName;
-        configuration::CommandLine &options;
+        const configuration::CommandLine &options;
         bool ok;
         bool doIo;
     };
