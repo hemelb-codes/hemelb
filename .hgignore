@@ -5,6 +5,7 @@ syntax: glob
 *~
 .metadata/*
 build/*
+Doc/*
 Code/client/displayClient
 Code/parmetis/build/*
 Code/parmetis/libmetis.a
