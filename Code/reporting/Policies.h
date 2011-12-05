@@ -1,7 +1,8 @@
 #ifndef HEMELB_REPORTING_POLICIES_H
 #define HEMELB_REPORTING_POLICIES_H
 
-/***
+/**
+ * @file
  * This file contains Policy classes defining how the report generator should interact with the file system, MPI, and the clock.
  * These are used as template arguments to the principal classes.
  * In file unittests/reporting/Mocks.h, mock versions of these policies are defined to facilitate testing.
@@ -13,7 +14,7 @@ namespace hemelb
 {
   namespace reporting
   {
-    /***
+    /**
      * Policy defining writing text output to a simple C-style file.
      * Mocked by hemelb::unittests::reporting::WriterMock
      */
