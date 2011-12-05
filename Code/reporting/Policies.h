@@ -8,14 +8,14 @@
  * In file unittests/reporting/Mocks.h, mock versions of these policies are defined to facilitate testing.
  */
 
-#include <stdarg.h>
 #include "topology/NetworkTopology.h"
+#include <fstream>
 namespace hemelb
 {
   namespace reporting
   {
     /**
-     * Policy defining writing text output to a simple C-style file.
+     * Policy defining writing text output to an output file.
      * Mocked by hemelb::unittests::reporting::WriterMock
      */
     class FileWriterPolicy
@@ -26,7 +26,7 @@ namespace hemelb
          * @param path Full or relative path to where the file should be opened.
          */
         FileWriterPolicy(const std::string &path):
-          file(fopen(path.c_str(), "w"))
+          file(path.c_str(), std::ios_base::out)
         {
         }
         /**
@@ -34,7 +34,7 @@ namespace hemelb
          */
         ~FileWriterPolicy()
         {
-          fclose(file);
+          file.close();
         }
       protected:
         /**
@@ -42,15 +42,20 @@ namespace hemelb
          * Uses variable argument list and a format string to write to the file.
          * @param format C printf style format string.
          */
-        void Print(const char * format, ...) const
+        void Print(const char * format, ...)
         {
+          char buffer[1000];
           std::va_list arg;
           va_start(arg, format);
-          vfprintf(file, format, arg);
+          vsprintf(buffer, format, arg);
           va_end(arg);
+          Stream() << std::string(buffer) << std::endl;
+        }
+        std::ostream & Stream(){
+          return file;
         }
       private:
-        FILE* const file; //! Handle of file used.
+        std::fstream file; //! file used.
     };
 
     /**
