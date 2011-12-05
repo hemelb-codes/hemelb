@@ -5,35 +5,35 @@ namespace hemelb
 {
   namespace reporting
   {
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> ReporterBase<TimersPolicy,
-        WriterPolicy, CommsPolicy, IncompressibilityCheckerPolicy>::ReporterBase(const std::string &name,
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> ReporterBase<TimersPolicy,
+        WriterPolicy, CommsPolicy, BroadcastPolicy>::ReporterBase(const std::string &name,
                                                  const std::string &inputFile,
                                                  const long int aSiteCount,
                                                  const TimersPolicy& timers,
                                                  const lb::SimulationState &aState,
-                                                 const IncompressibilityCheckerPolicy &aChecker) :
+                                                 const lb::IncompressibilityChecker<BroadcastPolicy> &aChecker) :
         WriterPolicy(name), snapshotCount(0), imageCount(0), siteCount(aSiteCount), stability(true), timings(timers), state(aState), incompressibilityChecker(aChecker)
     {
       WriterPolicy::Print("***********************************************************\n");
       WriterPolicy::Print("Opening config file:\n %s\n", inputFile.c_str());
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy, IncompressibilityCheckerPolicy>::Image()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
+        TimersPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Image()
     {
       imageCount++;
       WriterPolicy::Print("Image written: %u\n", imageCount);
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy, IncompressibilityCheckerPolicy>::Snapshot()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
+        TimersPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Snapshot()
     {
       snapshotCount++;
       WriterPolicy::Print("Snapshot written: %u\n", snapshotCount);
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy, IncompressibilityCheckerPolicy>::Write()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
+        TimersPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Write()
     {
 
       // Note that CycleId is 1-indexed and will have just been incremented when we finish.
