@@ -18,7 +18,7 @@ namespace hemelb
       using namespace hemelb::reporting;
 
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
-      typedef ReporterBase<TimersMock, WriterMock, MPICommsMock, net::BroadcastMock > ReporterMock;
+      typedef ReporterBase<ClockMock, WriterMock, MPICommsMock, net::BroadcastMock > ReporterMock;
 
       class ReporterTests : public CppUnit::TestFixture
       {
@@ -26,7 +26,8 @@ namespace hemelb
           CPPUNIT_TEST(TestInit);
           CPPUNIT_TEST(TestImage);
           CPPUNIT_TEST(TestSnapshot);
-          CPPUNIT_TEST(TestMainReport);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST(TestMainReport);
+          CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
