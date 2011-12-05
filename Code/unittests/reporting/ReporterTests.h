@@ -57,6 +57,7 @@ namespace hemelb
 
           void TestInit()
           {
+            std::cerr << reporter->Results().back() << std::endl;
             CPPUNIT_ASSERT_EQUAL((size_t) 8,
                                  reporter->Results().back().find("config file:\n exampleinputfile\n"));
           }
