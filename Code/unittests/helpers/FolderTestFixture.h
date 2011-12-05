@@ -44,6 +44,7 @@ namespace hemelb
           }
           void CopyResourceToTempdir(const std::string & resource)
           {
+            // TODO this should use a filesystem-independent path join (BOOST)
             bool ok = util::FileCopy(resources::Resource(resource).Path().c_str(),
                                      (tempPath + "/" + resource).c_str());
             CPPUNIT_ASSERT(ok);
