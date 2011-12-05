@@ -83,10 +83,21 @@ namespace hemelb
     template<class BroadcastPolicy>
     IncompressibilityChecker<BroadcastPolicy>::IncompressibilityChecker(const geometry::LatticeData * latticeData,
                                                                         net::Net* net,
-                                                                        SimulationState* simState) :
+                                                                        SimulationState* simState,
+                                                                        distribn_t maximumRelativeDensityDifferenceAllowed) :
       BroadcastPolicy(net, simState, SPREADFACTOR), mLatDat(latticeData), mSimState(simState),
+          maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),
           globalDensityTracker(NULL)
     {
+        /*
+         *  childrenDensitiesSerialised must be initialised to something sensible since ReceiveFromChildren won't
+         *  fill it in completely unless the logarithm base SPREADFACTOR of the number of processes is an integer.
+         */
+        for (unsigned int index = 0; index < SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE; index++)
+        {
+          childrenDensitiesSerialised[index] = REFERENCE_DENSITY;
+        }
+
     }
 
     template<class BroadcastPolicy>
@@ -97,23 +108,29 @@ namespace hemelb
     template<class BroadcastPolicy>
     distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalSmallestDensity()
     {
-      assert(globalDensityTracker != NULL);
+      assert(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MIN_DENSITY];
     }
 
     template<class BroadcastPolicy>
     distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalLargestDensity()
     {
-      assert(globalDensityTracker != NULL);
+      assert(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MAX_DENSITY];
     }
 
     template<class BroadcastPolicy>
-    distribn_t IncompressibilityChecker<BroadcastPolicy>::GetMaxDensityDifference()
+    double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifference()
     {
-      distribn_t maxDiff = GetGlobalLargestDensity() - GetGlobalSmallestDensity();
-      assert(maxDiff >= 0.0);
-      return maxDiff;
+      distribn_t maxDensityDiff = GetGlobalLargestDensity() - GetGlobalSmallestDensity();
+      assert(maxDensityDiff >= 0.0);
+      return maxDensityDiff / REFERENCE_DENSITY;
+    }
+
+    template<class BroadcastPolicy>
+    double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifferenceAllowed()
+    {
+      return maximumRelativeDensityDifferenceAllowed;
     }
 
     template<class BroadcastPolicy>
@@ -121,7 +138,7 @@ namespace hemelb
     {
       for (int childIndex = 0; childIndex < (int) SPREADFACTOR; childIndex++)
       {
-        DensityTracker childDensities(&childrenDensityTracker[childIndex
+        DensityTracker childDensities(&childrenDensitiesSerialised[childIndex
             * DensityTracker::DENSITY_TRACKER_SIZE]);
 
         upwardsDensityTracker.UpdateDensityTracker(childDensities);
@@ -131,7 +148,7 @@ namespace hemelb
     template<class BroadcastPolicy>
     void IncompressibilityChecker<BroadcastPolicy>::ProgressFromChildren(unsigned long splayNumber)
     {
-      this->ReceiveFromChildren(&childrenDensityTracker[0], DensityTracker::DENSITY_TRACKER_SIZE);
+      this->ReceiveFromChildren(childrenDensitiesSerialised, DensityTracker::DENSITY_TRACKER_SIZE);
     }
 
     template<class BroadcastPolicy>
@@ -180,8 +197,19 @@ namespace hemelb
     {
       globalDensityTracker = &downwardsDensityTracker;
     }
+
+    template<class BroadcastPolicy>
+    bool IncompressibilityChecker<BroadcastPolicy>::AreDensitiesAvailable()
+    {
+      return (globalDensityTracker != NULL);
+    }
+
+    template<class BroadcastPolicy>
+    bool IncompressibilityChecker<BroadcastPolicy>::IsDensityDiffWithinRange()
+    {
+      return (GetMaxRelativeDensityDifference() < maximumRelativeDensityDifferenceAllowed);
+    }
   }
 }
-
 
 #endif /* HEMELB_LB_INCOMPRESSIBILITYCHECKER_HPP */
