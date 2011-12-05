@@ -5,11 +5,11 @@ namespace hemelb
 {
   namespace reporting
   {
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> ReporterBase<TimersPolicy,
+    template<class ClockPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> ReporterBase<ClockPolicy,
         WriterPolicy, CommsPolicy, BroadcastPolicy>::ReporterBase(const std::string &name,
                                                  const std::string &inputFile,
                                                  const long int aSiteCount,
-                                                 const TimersPolicy& timers,
+                                                 const TimersBase<ClockPolicy,CommsPolicy>& timers,
                                                  const lb::SimulationState &aState,
                                                  const lb::IncompressibilityChecker<BroadcastPolicy> &aChecker) :
         WriterPolicy(name), snapshotCount(0), imageCount(0), siteCount(aSiteCount), stability(true), timings(timers), state(aState), incompressibilityChecker(aChecker)
@@ -18,22 +18,22 @@ namespace hemelb
       WriterPolicy::Print("Opening config file:\n %s\n", inputFile.c_str());
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Image()
+    template<class ClockPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
+        ClockPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Image()
     {
       imageCount++;
       WriterPolicy::Print("Image written: %u\n", imageCount);
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Snapshot()
+    template<class ClockPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
+        ClockPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Snapshot()
     {
       snapshotCount++;
       WriterPolicy::Print("Snapshot written: %u\n", snapshotCount);
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Write()
+    template<class ClockPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> void ReporterBase<
+        ClockPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::Write()
     {
 
       // Note that CycleId is 1-indexed and will have just been incremented when we finish.
@@ -50,7 +50,7 @@ namespace hemelb
                           state.GetTimeStepsPassed() - 1);
       WriterPolicy::Print("time steps per second: %.3f\n\n",
                           (state.GetTimeStepsPassed() - 1)
-                              / timings[TimersPolicy::simulation].Get());
+                              / timings[Timers::simulation].Get());
 
       if (incompressibilityChecker.AreDensitiesAvailable()
           && !incompressibilityChecker.IsDensityDiffWithinRange())
@@ -74,7 +74,7 @@ namespace hemelb
 
       WriterPolicy::Print("\n");
       WriterPolicy::Print("total time (s):                            %.3f\n\n",
-                          (timings[TimersPolicy::total].Get()));
+                          (timings[Timers::total].Get()));
 
       WriterPolicy::Print("Sub-domains info:\n\n");
 
@@ -85,7 +85,7 @@ namespace hemelb
                             (unsigned long) CommsPolicy::FluidSitesOnProcessor(n));
       }
 
-      double normalisations[TimersPolicy::numberOfTimers] = { 1.0,
+      double normalisations[Timers::numberOfTimers] = { 1.0,
                                                               1.0,
                                                               1.0,
                                                               1.0,
@@ -98,7 +98,7 @@ namespace hemelb
 
       WriterPolicy::Print("\n\nPer-proc timing data (secs per [simulation,simulation,simulation,simulation,cycle,image,cycle,cycle,snapshot,simulation]): \n\n");
       WriterPolicy::Print("\t\tLocal \tMin \tMean \tMax\n");
-      for (unsigned int ii = 0; ii < TimersPolicy::numberOfTimers; ii++)
+      for (unsigned int ii = 0; ii < Timers::numberOfTimers; ii++)
       {
         WriterPolicy::Print("%s\t\t%.3g\t%.3g\t%.3g\t%.3g\n",
                             timerNames[ii].c_str(),
