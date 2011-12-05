@@ -3,6 +3,6 @@ namespace hemelb
 {
   namespace reporting
   {
-    template class ReporterBase<Timers, FileWriterPolicy, MPICommsPolicy, lb::IncompressibilityChecker<> > ; // explicit instantiate
+    template class ReporterBase<Timers, FileWriterPolicy, MPICommsPolicy, net::PhasedBroadcastRegular<> > ; // explicit instantiate
   }
 }
