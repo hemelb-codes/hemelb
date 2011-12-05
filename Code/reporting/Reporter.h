@@ -17,9 +17,9 @@ namespace hemelb
      * Report generator class.
      * Class defining the creation of a report, intended for long-term archiving, describing what happened during a HemeLB run.
      * Accepts three policies as template arguments, defining:
-     * @argument TimersPolicy Performance timers to include in the report.
-     * @argument WriterPolicy How to write and format the report file.
-     * @argument CommsPolicy How to gather timing information across multiple processes
+     * @tparam TimersPolicy Performance timers to include in the report.
+     * @tparam WriterPolicy How to write and format the report file.
+     * @tparam CommsPolicy How to gather timing information across multiple processes
      */
     template<class TimersPolicy, class WriterPolicy, class CommsPolicy> class ReporterBase : public WriterPolicy,
                                                                                              public CommsPolicy
