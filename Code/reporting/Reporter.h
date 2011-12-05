@@ -9,6 +9,7 @@
 #include "util/fileutils.h"
 #include "Timers.h"
 #include "Policies.h"
+#include "lb/IncompressibilityChecker.h"
 namespace hemelb
 {
   namespace reporting
@@ -21,7 +22,7 @@ namespace hemelb
      * @tparam WriterPolicy How to write and format the report file.
      * @tparam CommsPolicy How to gather timing information across multiple processes
      */
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> class ReporterBase : public WriterPolicy,
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> class ReporterBase : public WriterPolicy,
                                                                                              public CommsPolicy
     {
       public:
@@ -37,7 +38,8 @@ namespace hemelb
                      const std::string &inputFile,
                      const long int aSiteCount,
                      const TimersPolicy& timers,
-                     const lb::SimulationState & aState);
+                     const lb::SimulationState & aState,
+                     const IncompressibilityCheckerPolicy& aChecker);
         void Image(); //! Inform the reporter that an image has been saved.
         void Snapshot(); //! Inform the reporter that a simulation snapshot has been taken.
         void Write(); //! Write the report to disk, (or wherever the WriterPolicy decides.)
@@ -53,12 +55,13 @@ namespace hemelb
         bool stability; //! Stability of the simulation.
         const TimersPolicy &timings; //! Reference to list of timers used to measure performance.
         const lb::SimulationState & state; //! Reference to state of ongoing simulation.
+        const IncompressibilityCheckerPolicy& incompressibilityChecker;
     };
 
     /**
      * Concrete realisation of the reporter with appropriate policies to be used.
      */
-    typedef ReporterBase<Timers, FileWriterPolicy, MPICommsPolicy> Reporter;
+    typedef ReporterBase<Timers, FileWriterPolicy, MPICommsPolicy, lb::IncompressibilityChecker<> > Reporter;
   }
 }
 

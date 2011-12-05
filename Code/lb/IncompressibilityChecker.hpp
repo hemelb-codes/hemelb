@@ -106,21 +106,21 @@ namespace hemelb
     }
 
     template<class BroadcastPolicy>
-    distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalSmallestDensity()
+    distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalSmallestDensity() const
     {
       assert(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MIN_DENSITY];
     }
 
     template<class BroadcastPolicy>
-    distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalLargestDensity()
+    distribn_t IncompressibilityChecker<BroadcastPolicy>::GetGlobalLargestDensity() const
     {
       assert(AreDensitiesAvailable());
       return (*globalDensityTracker)[DensityTracker::MAX_DENSITY];
     }
 
     template<class BroadcastPolicy>
-    double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifference()
+    double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifference() const
     {
       distribn_t maxDensityDiff = GetGlobalLargestDensity() - GetGlobalSmallestDensity();
       assert(maxDensityDiff >= 0.0);
@@ -128,7 +128,7 @@ namespace hemelb
     }
 
     template<class BroadcastPolicy>
-    double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifferenceAllowed()
+    double IncompressibilityChecker<BroadcastPolicy>::GetMaxRelativeDensityDifferenceAllowed() const
     {
       return maximumRelativeDensityDifferenceAllowed;
     }
@@ -199,13 +199,13 @@ namespace hemelb
     }
 
     template<class BroadcastPolicy>
-    bool IncompressibilityChecker<BroadcastPolicy>::AreDensitiesAvailable()
+    bool IncompressibilityChecker<BroadcastPolicy>::AreDensitiesAvailable() const
     {
       return (globalDensityTracker != NULL);
     }
 
     template<class BroadcastPolicy>
-    bool IncompressibilityChecker<BroadcastPolicy>::IsDensityDiffWithinRange()
+    bool IncompressibilityChecker<BroadcastPolicy>::IsDensityDiffWithinRange() const
     {
       return (GetMaxRelativeDensityDifference() < maximumRelativeDensityDifferenceAllowed);
     }
