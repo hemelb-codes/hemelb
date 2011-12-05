@@ -125,28 +125,28 @@ namespace hemelb
          *
          * @return smallest density
          */
-        distribn_t GetGlobalSmallestDensity();
+        distribn_t GetGlobalSmallestDensity() const;
 
         /**
          * Returns largest density in the domain as agreed by all the processes.
          *
          * @return largest density
          */
-        distribn_t GetGlobalLargestDensity();
+        distribn_t GetGlobalLargestDensity() const;
 
         /**
          * Return current maximum density difference across the domain (relative to domain reference density).
          *
          * @return current maximum density difference across the domain
          */
-        double GetMaxRelativeDensityDifference();
+        double GetMaxRelativeDensityDifference() const;
 
         /**
          * Return allowed maximum density difference across the domain (relative to domain reference density).
          *
          * @return allowed maximum density difference across the domain
          */
-        double GetMaxRelativeDensityDifferenceAllowed();
+        double GetMaxRelativeDensityDifferenceAllowed() const;
 
         /**
          * Returns whether the first max/min density reduction operation has finished and
@@ -154,14 +154,14 @@ namespace hemelb
          *
          * @return whether there are density values available
          */
-        bool AreDensitiesAvailable();
+        bool AreDensitiesAvailable() const;
 
         /**
          * Checks whether the maximum density difference is smaller that the maximum allowed.
          *
          * @return whether the maximum density difference is smaller that the maximum allowed
          */
-        bool IsDensityDiffWithinRange();
+        bool IsDensityDiffWithinRange() const;
 
       protected:
         /**
