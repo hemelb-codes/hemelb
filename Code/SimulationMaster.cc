@@ -58,7 +58,7 @@ SimulationMaster::SimulationMaster(hemelb::configuration::CommandLine & options)
                                                fileManager->GetInputFile(),
                                                latticeBoltzmannModel->TotalFluidSiteCount(),
                                                timings,
-                                               *simulationState);
+                                               *simulationState, *incompressibilityChecker);
   }
 }
 
@@ -434,13 +434,6 @@ void SimulationMaster::RunSimulation()
                                                                           writeSnapshotImage,
                                                                           simulationState->GetDoRendering());
 
-      if (incompressibilityChecker->AreDensitiesAvailable()
-          && !incompressibilityChecker->IsDensityDiffWithinRange())
-      {
-        hemelb::log::Logger::Log<hemelb::log::Info, hemelb::log::Singleton>("Maximum relative density difference allowed (%.1f%%) was violated: %.1f%%",
-                                                                            incompressibilityChecker->GetMaxRelativeDensityDifferenceAllowed()*100,
-                                                                            incompressibilityChecker->GetMaxRelativeDensityDifference()*100);
-      }
 
     }
 

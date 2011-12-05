@@ -5,38 +5,39 @@ namespace hemelb
 {
   namespace reporting
   {
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> ReporterBase<TimersPolicy,
-        WriterPolicy, CommsPolicy>::ReporterBase(const std::string &name,
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> ReporterBase<TimersPolicy,
+        WriterPolicy, CommsPolicy, IncompressibilityCheckerPolicy>::ReporterBase(const std::string &name,
                                                  const std::string &inputFile,
                                                  const long int aSiteCount,
                                                  const TimersPolicy& timers,
-                                                 const lb::SimulationState &aState) :
-        WriterPolicy(name), snapshotCount(0), imageCount(0), siteCount(aSiteCount), stability(true), timings(timers),state(aState)
+                                                 const lb::SimulationState &aState,
+                                                 const IncompressibilityCheckerPolicy &aChecker) :
+        WriterPolicy(name), snapshotCount(0), imageCount(0), siteCount(aSiteCount), stability(true), timings(timers), state(aState), incompressibilityChecker(aChecker)
     {
       WriterPolicy::Print("***********************************************************\n");
       WriterPolicy::Print("Opening config file:\n %s\n", inputFile.c_str());
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy>::Image()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> void ReporterBase<
+        TimersPolicy, WriterPolicy, CommsPolicy, IncompressibilityCheckerPolicy>::Image()
     {
       imageCount++;
       WriterPolicy::Print("Image written: %u\n", imageCount);
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy>::Snapshot()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> void ReporterBase<
+        TimersPolicy, WriterPolicy, CommsPolicy, IncompressibilityCheckerPolicy>::Snapshot()
     {
       snapshotCount++;
       WriterPolicy::Print("Snapshot written: %u\n", snapshotCount);
     }
 
-    template<class TimersPolicy, class WriterPolicy, class CommsPolicy> void ReporterBase<
-        TimersPolicy, WriterPolicy, CommsPolicy>::Write()
+    template<class TimersPolicy, class WriterPolicy, class CommsPolicy, class IncompressibilityCheckerPolicy> void ReporterBase<
+        TimersPolicy, WriterPolicy, CommsPolicy, IncompressibilityCheckerPolicy>::Write()
     {
 
-        // Note that CycleId is 1-indexed and will have just been incremented when we finish.
-       unsigned long cycles = state.GetCycleId()-1;
+      // Note that CycleId is 1-indexed and will have just been incremented when we finish.
+      unsigned long cycles = state.GetCycleId() - 1;
 
       WriterPolicy::Print("\n");
       WriterPolicy::Print("threads: %i, machines checked: %i\n\n",
@@ -44,9 +45,20 @@ namespace hemelb
                           CommsPolicy::GetMachineCount());
       WriterPolicy::Print("topology depths checked: %i\n\n", CommsPolicy::GetDepths());
       WriterPolicy::Print("fluid sites: %li\n\n", siteCount);
-      WriterPolicy::Print("cycles and total time steps: %lu, %lu \n\n", cycles, state.GetTimeStepsPassed()-1);
+      WriterPolicy::Print("cycles and total time steps: %lu, %lu \n\n",
+                          cycles,
+                          state.GetTimeStepsPassed() - 1);
       WriterPolicy::Print("time steps per second: %.3f\n\n",
-                          (state.GetTimeStepsPassed()-1) / timings[TimersPolicy::simulation].Get());
+                          (state.GetTimeStepsPassed() - 1)
+                              / timings[TimersPolicy::simulation].Get());
+
+      if (incompressibilityChecker.AreDensitiesAvailable()
+          && !incompressibilityChecker.IsDensityDiffWithinRange())
+      {
+        WriterPolicy::Print("Maximum relative density difference allowed (%.1f%%) was violated: %.1f%% \n\n",
+                            incompressibilityChecker.GetMaxRelativeDensityDifferenceAllowed() * 100,
+                            incompressibilityChecker.GetMaxRelativeDensityDifference() * 100);
+      }
 
       if (!stability)
       {
@@ -72,8 +84,6 @@ namespace hemelb
                             (unsigned long) n,
                             (unsigned long) CommsPolicy::FluidSitesOnProcessor(n));
       }
-
-
 
       double normalisations[TimersPolicy::numberOfTimers] = { 1.0,
                                                               1.0,
