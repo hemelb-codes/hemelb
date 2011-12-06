@@ -1,5 +1,0 @@
-CC=mpicxx
-FLAGS=-O3 -ipo -pthread -no-gcc
-DEFS=-DMPICH_IGNORE_CXX_SEEK
-EXE=hemelb
-LIBS=-static
