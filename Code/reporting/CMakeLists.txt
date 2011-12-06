@@ -1,0 +1,1 @@
+add_library(hemelb_reporting Reporter.cc Timers.cc)
