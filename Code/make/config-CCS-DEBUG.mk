@@ -1,8 +1,0 @@
-include $(MK)/config-CCS-base.mk
-
-HEMELB_DEBUG_LEVEL := 1
-HEMELB_LOG_LEVEL := debug
-HEMELB_DEFS += DEBUG
-
-HEMELB_CXXFLAGS += -O0 -g
-HEMELB_CCFLAGS += -O0 -g
