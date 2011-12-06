@@ -1,17 +1,23 @@
 #ifndef HEMELB_REPORTING_REPORTER_HPP
 #define HEMELB_REPORTING_REPORTER_HPP
 #include "Reporter.h"
+#include <iomanip>
 namespace hemelb
 {
   namespace reporting
   {
-    template<class ClockPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> ReporterBase<ClockPolicy,
-        WriterPolicy, CommsPolicy, BroadcastPolicy>::ReporterBase(const std::string &name,
-                                                 const std::string &inputFile,
-                                                 const long int aSiteCount,
-                                                 const TimersBase<ClockPolicy,CommsPolicy>& timers,
-                                                 const lb::SimulationState &aState,
-                                                 const lb::IncompressibilityChecker<BroadcastPolicy> &aChecker) :
+    template<class ClockPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> ReporterBase<
+        ClockPolicy, WriterPolicy, CommsPolicy, BroadcastPolicy>::ReporterBase(const std::string &name,
+                                                                               const std::string &inputFile,
+                                                                               const long int aSiteCount,
+                                                                               const TimersBase<
+                                                                                   ClockPolicy,
+                                                                                   CommsPolicy>& timers
+                                                                               ,
+                                                                               const lb::SimulationState &aState
+                                                                               ,
+                                                                               const lb::IncompressibilityChecker<
+                                                                                   BroadcastPolicy> &aChecker) :
         WriterPolicy(name), snapshotCount(0), imageCount(0), siteCount(aSiteCount), stability(true), timings(timers), state(aState), incompressibilityChecker(aChecker)
     {
       WriterPolicy::Print("***********************************************************\n");
@@ -38,7 +44,7 @@ namespace hemelb
 
       // Note that CycleId is 1-indexed and will have just been incremented when we finish.
       unsigned long cycles = state.GetCycleId() - 1;
-
+      WriterPolicy::Stream() << std::setprecision(3);
       WriterPolicy::Print("\n");
       WriterPolicy::Print("threads: %i, machines checked: %i\n\n",
                           CommsPolicy::GetProcessorCount(),
@@ -49,8 +55,7 @@ namespace hemelb
                           cycles,
                           state.GetTimeStepsPassed() - 1);
       WriterPolicy::Print("time steps per second: %.3f\n\n",
-                          (state.GetTimeStepsPassed() - 1)
-                              / timings[Timers::simulation].Get());
+                          (state.GetTimeStepsPassed() - 1) / timings[Timers::simulation].Get());
 
       if (incompressibilityChecker.AreDensitiesAvailable()
           && !incompressibilityChecker.IsDensityDiffWithinRange())
@@ -86,26 +91,24 @@ namespace hemelb
       }
 
       double normalisations[Timers::numberOfTimers] = { 1.0,
-                                                              1.0,
-                                                              1.0,
-                                                              1.0,
-                                                              cycles,
-                                                              imageCount,
-                                                              cycles,
-                                                              cycles,
-                                                              snapshotCount,
-                                                              1.0 };
+                                                        1.0,
+                                                        1.0,
+                                                        1.0,
+                                                        cycles,
+                                                        imageCount,
+                                                        cycles,
+                                                        cycles,
+                                                        snapshotCount,
+                                                        1.0 };
 
       WriterPolicy::Print("\n\nPer-proc timing data (secs per [simulation,simulation,simulation,simulation,cycle,image,cycle,cycle,snapshot,simulation]): \n\n");
       WriterPolicy::Print("\t\tLocal \tMin \tMean \tMax\n");
       for (unsigned int ii = 0; ii < Timers::numberOfTimers; ii++)
       {
-        WriterPolicy::Print("%s\t\t%.3g\t%.3g\t%.3g\t%.3g\n",
-                            timerNames[ii].c_str(),
-                            timings[ii].Get(),
-                            timings.Mins()[ii] / normalisations[ii],
-                            timings.Means()[ii] / normalisations[ii],
-                            timings.Maxes()[ii] / normalisations[ii]);
+        WriterPolicy::Stream() << timerNames[ii] << "\t\t" << timings[ii].Get() << "\t"
+            << timings.Mins()[ii] / normalisations[ii] << "\t"
+            << timings.Means()[ii] / normalisations[ii] << "\t"
+            << timings.Maxes()[ii] / normalisations[ii] << std::endl;
       }
     }
   }
