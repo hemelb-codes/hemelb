@@ -48,6 +48,7 @@ namespace hemelb
         void TestRun()
         {
           master->RunSimulation();
+          AssertPresent("results/timings1.asc");
         }
 
       private:
