@@ -31,7 +31,6 @@ namespace hemelb
       class GeometryReaderTests : public CppUnit::TestFixture
       {
           CPPUNIT_TEST_SUITE(GeometryReaderTests);
-          CPPUNIT_TEST(TestConstruct);
           CPPUNIT_TEST(TestRead);
           CPPUNIT_TEST(TestSameAsFourCube);
           CPPUNIT_TEST_SUITE_END();
@@ -48,11 +47,10 @@ namespace hemelb
           void tearDown()
           {
             delete reader;
-          }
-
-          void TestConstruct()
-          {
-            CPPUNIT_ASSERT(reader); // No smoke from construction
+            delete globalLattice;
+            delete params;
+            delete fourCube;
+            delete simConfig;
           }
 
           void TestRead()
