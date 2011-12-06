@@ -1,0 +1,1 @@
+add_library(hemelb_log LoggerCommon.cc LoggerDebug.cc LoggerInfo.cc LoggerWarning.cc)
