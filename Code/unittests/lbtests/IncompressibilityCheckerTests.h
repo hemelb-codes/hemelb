@@ -51,16 +51,19 @@ namespace hemelb
 
             lb::IncompressibilityChecker<net::BroadcastMock> incompChecker(&latticeData,
                                                                            &net,
-                                                                           &simulationState);
+                                                                           &simulationState,
+                                                                           10.0); // Will accept a max/min of (21.45, 12) but not (100,1)
 
             // These are the smallest and largest density values in FourCubeLatticeData by default
             /// TODO The lattice class below must be consistent with the one used in FourCubeLatticeData. Consider templating FourCubeLatticeData over lattice class, so both can be controlled from the test.
             distribn_t numDirections = (distribn_t) D3Q15::NUMVECTORS;
             distribn_t numSites = (distribn_t) latticeData.GetLocalFluidSiteCount();
-            distribn_t smallestDefaultDensity = numDirections * (numDirections + 1) / 20; // sum_{j=1}^{numDirections} j/10
+            distribn_t smallestDefaultDensity = numDirections * (numDirections + 1) / 20; // = sum_{j=1}^{numDirections} j/10 = 12 with current configuration of FourCubeLatticeData
             distribn_t largestDefaultDensity = (numDirections * (numDirections + 1) / 20)
-                + ( (numSites - 1) * numDirections / 100); // sum_{j=1}^{numDirections} j/10 + (numSites-1)/100ì
+                + ( (numSites - 1) * numDirections / 100); // = sum_{j=1}^{numDirections} j/10 + (numSites-1)/100 = 21.45 with current configuration of FourCubeLatticeData
 
+            // Not available until the first broadcast has finished
+            CPPUNIT_ASSERT(!incompChecker.AreDensitiesAvailable());
             AdvanceActorOneTimeStep(incompChecker);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(smallestDefaultDensity,
                                          incompChecker.GetGlobalSmallestDensity(),
@@ -68,21 +71,27 @@ namespace hemelb
             CPPUNIT_ASSERT_DOUBLES_EQUAL(largestDefaultDensity,
                                          incompChecker.GetGlobalLargestDensity(),
                                          eps);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(largestDefaultDensity - smallestDefaultDensity,
-                                         incompChecker.GetMaxDensityDifference(),
+            CPPUNIT_ASSERT_DOUBLES_EQUAL( (largestDefaultDensity - smallestDefaultDensity)
+                                             / hemelb::lb::REFERENCE_DENSITY,
+                                         incompChecker.GetMaxRelativeDensityDifference(),
                                          eps);
+            CPPUNIT_ASSERT(incompChecker.IsDensityDiffWithinRange());
 
-            // The broadcast mock injects some smaller and larger densities coming from one of the children
+            // The broadcast mock injects some smaller and larger densities (1,100) coming from one of the children
+            CPPUNIT_ASSERT(incompChecker.AreDensitiesAvailable());
             AdvanceActorOneTimeStep(incompChecker);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, incompChecker.GetGlobalSmallestDensity(), eps);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, incompChecker.GetGlobalLargestDensity(), eps);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(99.0, incompChecker.GetMaxDensityDifference(), eps);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(99.0, incompChecker.GetMaxRelativeDensityDifference(), eps);
+            CPPUNIT_ASSERT(!incompChecker.IsDensityDiffWithinRange());
 
             // The previous values are not reported by any children anymore. Testing that the checker remembers them
+            CPPUNIT_ASSERT(incompChecker.AreDensitiesAvailable());
             AdvanceActorOneTimeStep(incompChecker);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, incompChecker.GetGlobalSmallestDensity(), eps);
             CPPUNIT_ASSERT_DOUBLES_EQUAL(100.0, incompChecker.GetGlobalLargestDensity(), eps);
-            CPPUNIT_ASSERT_DOUBLES_EQUAL(99.0, incompChecker.GetMaxDensityDifference(), eps);
+            CPPUNIT_ASSERT_DOUBLES_EQUAL(99.0, incompChecker.GetMaxRelativeDensityDifference(), eps);
+            CPPUNIT_ASSERT(!incompChecker.IsDensityDiffWithinRange());
           }
 
         private:
