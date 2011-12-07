@@ -48,7 +48,8 @@ namespace hemelb
         Control(lb::StressTypes iStressType,
                 net::Net* net,
                 lb::SimulationState* simState,
-                geometry::LatticeData* iLatDat, reporting::Timer &atimer);
+                geometry::LatticeData* iLatDat,
+                reporting::Timer &atimer);
         ~Control();
 
         void SetSomeParams(const float iBrightness,
