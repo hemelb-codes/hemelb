@@ -11,7 +11,8 @@ namespace hemelb
                                                  const long int aSiteCount,
                                                  const TimersPolicy& timers,
                                                  const lb::SimulationState &aState) :
-        WriterPolicy(name), snapshotCount(0), imageCount(0), siteCount(aSiteCount), stability(true), timings(timers),state(aState)
+      WriterPolicy(name), snapshotCount(0), imageCount(0), siteCount(aSiteCount), stability(true),
+          timings(timers), state(aState)
     {
       WriterPolicy::Print("***********************************************************\n");
       WriterPolicy::Print("Opening config file:\n %s\n", inputFile.c_str());
@@ -35,8 +36,8 @@ namespace hemelb
         TimersPolicy, WriterPolicy, CommsPolicy>::Write()
     {
 
-        // Note that CycleId is 1-indexed and will have just been incremented when we finish.
-       unsigned long cycles = state.GetCycleId()-1;
+      // Note that CycleId is 1-indexed and will have just been incremented when we finish.
+      unsigned long cycles = state.GetCycleId() - 1;
 
       WriterPolicy::Print("\n");
       WriterPolicy::Print("threads: %i, machines checked: %i\n\n",
@@ -44,9 +45,12 @@ namespace hemelb
                           CommsPolicy::GetMachineCount());
       WriterPolicy::Print("topology depths checked: %i\n\n", CommsPolicy::GetDepths());
       WriterPolicy::Print("fluid sites: %li\n\n", siteCount);
-      WriterPolicy::Print("cycles and total time steps: %lu, %lu \n\n", cycles, state.GetTimeStepsPassed()-1);
+      WriterPolicy::Print("cycles and total time steps: %lu, %lu \n\n",
+                          cycles,
+                          state.GetTimeStepsPassed() - 1);
       WriterPolicy::Print("time steps per second: %.3f\n\n",
-                          (state.GetTimeStepsPassed()-1) / timings[TimersPolicy::simulation].Get());
+                          (double) (state.GetTimeStepsPassed() - 1)
+                              / timings[TimersPolicy::simulation].Get());
 
       if (!stability)
       {
@@ -62,7 +66,7 @@ namespace hemelb
 
       WriterPolicy::Print("\n");
       WriterPolicy::Print("total time (s):                            %.3f\n\n",
-                          (timings[TimersPolicy::total].Get()));
+                           (timings[TimersPolicy::total].Get()));
 
       WriterPolicy::Print("Sub-domains info:\n\n");
 
@@ -73,17 +77,15 @@ namespace hemelb
                             (unsigned long) CommsPolicy::FluidSitesOnProcessor(n));
       }
 
-
-
       double normalisations[TimersPolicy::numberOfTimers] = { 1.0,
                                                               1.0,
                                                               1.0,
                                                               1.0,
-                                                              cycles,
-                                                              imageCount,
-                                                              cycles,
-                                                              cycles,
-                                                              snapshotCount,
+                                                              (double) cycles,
+                                                              (double) imageCount,
+                                                              (double) cycles,
+                                                              (double) cycles,
+                                                              (double) snapshotCount,
                                                               1.0 };
 
       WriterPolicy::Print("\n\nPer-proc timing data (secs per [simulation,simulation,simulation,simulation,cycle,image,cycle,cycle,snapshot,simulation]): \n\n");

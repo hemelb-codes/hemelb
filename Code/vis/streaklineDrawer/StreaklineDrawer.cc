@@ -197,15 +197,15 @@ namespace hemelb
 
           for (int unitGridI = 0; unitGridI <= 1; ++unitGridI)
           {
-            site_t neighbourI = particle.position.x + unitGridI;
+            site_t neighbourI = (site_t) particle.position.x + unitGridI;
 
             for (int unitGridJ = 0; unitGridJ <= 1; ++unitGridJ)
             {
-              site_t neighbourJ = particle.position.y + unitGridJ;
+              site_t neighbourJ = (site_t) particle.position.y + unitGridJ;
 
               for (int unitGridK = 0; unitGridK <= 1; ++unitGridK)
               {
-                site_t neighbourK = particle.position.z + unitGridK;
+                site_t neighbourK = (site_t) particle.position.z + unitGridK;
 
                 proc_t sourceProcessor;
 

@@ -7,31 +7,35 @@ namespace hemelb
   {
     namespace raytracer
     {
-      ClusterWithWallNormals::ClusterWithWallNormals()
+      ClusterWithWallNormals::ClusterWithWallNormals(unsigned short xBlockCount,
+                                                     unsigned short yBlockCount,
+                                                     unsigned short zBlockCount,
+                                                     const util::Vector3D<float>& minimalSite,
+                                                     const util::Vector3D<float>& maximalSite,
+                                                     const util::Vector3D<float>& minimalSiteOnMinimalBlock) :
+            Cluster<ClusterWithWallNormals> (xBlockCount,
+                                             yBlockCount,
+                                             zBlockCount,
+                                             minimalSite,
+                                             maximalSite,
+                                             minimalSiteOnMinimalBlock)
       {
-      }
-
-      void ClusterWithWallNormals::DoResizeVectors()
-      {
-        ResizeSharedVectors();
-        WallNormals.resize(blocksX * blocksY * blocksZ);
+        WallNormals.resize(GetBlocksX() * GetBlocksY() * GetBlocksZ());
       }
 
       void ClusterWithWallNormals::DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
       {
-        DoResizeVectorsForBlockShared(iBlockNumber, iSize);
         WallNormals[iBlockNumber].resize(iSize, NULL);
       }
 
-      double const* ClusterWithWallNormals::DoGetWallData(site_t iBlockNumber,
-                                                          site_t iSiteNumber) const
+      const double* ClusterWithWallNormals::DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const
       {
         return WallNormals[iBlockNumber][iSiteNumber];
       }
 
       void ClusterWithWallNormals::DoSetWallData(site_t iBlockNumber,
                                                  site_t iSiteNumber,
-                                                 double* iData)
+                                                 const double* const iData)
       {
         WallNormals[iBlockNumber][iSiteNumber] = iData;
       }

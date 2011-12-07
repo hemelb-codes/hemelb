@@ -20,23 +20,19 @@ namespace hemelb
       {
         public:
           Ray(util::Vector3D<float> iDirection, int i, int j) :
-            mInWall(false), mPassedThroughNormalFluidSite(false), mRayData(i, j)
+
+            mDirection(iDirection.Normalise()),
+                mInverseDirection(1.0F / mDirection.x, 1.0F / mDirection.y, 1.0F / mDirection.z),
+                mInWall(false), mPassedThroughNormalFluidSite(false), mRayData(i, j)
           {
-            iDirection.Normalise();
-            mDirection = iDirection;
-
-            mInverseDirection = util::Vector3D<float>(1.0F / iDirection.x,
-                                                      1.0F / iDirection.y,
-                                                      1.0F / iDirection.z);
-
           }
 
-          util::Vector3D<float> GetDirection() const
+          const util::Vector3D<float>& GetDirection() const
           {
             return mDirection;
           }
 
-          util::Vector3D<float> GetInverseDirection() const
+          const util::Vector3D<float>& GetInverseDirection() const
           {
             return mInverseDirection;
           }
@@ -90,8 +86,8 @@ namespace hemelb
           }
 
           void UpdateDataForNormalFluidSite(const SiteData_t& iSiteData,
-                                            const float iRayLengthInVoxel,
-                                            const float iRayUnitsInCluster,
+                                            const float manhattanRayLengthThroughVoxel,
+                                            const float euclideanRayUnitsSpentInCluster,
                                             const DomainStats& iDomainStats,
                                             const VisSettings& iVisSettings)
           {
@@ -103,8 +99,9 @@ namespace hemelb
 
             mRayData.UpdateDataForNormalFluidSite(iSiteData,
                                                   GetDirection(),
-                                                  iRayLengthInVoxel,
-                                                  iRayUnitsInCluster + mRayUnitsTraversedToCluster,
+                                                  manhattanRayLengthThroughVoxel,
+                                                  euclideanRayUnitsSpentInCluster
+                                                      + mRayUnitsTraversedToCluster,
                                                   iDomainStats,
                                                   iVisSettings);
           }
@@ -138,8 +135,8 @@ namespace hemelb
           }
 
         private:
-          util::Vector3D<float> mDirection;
-          util::Vector3D<float> mInverseDirection;
+          const util::Vector3D<float> mDirection;
+          const util::Vector3D<float> mInverseDirection;
 
           //mInWall indicates whether the ray is in a wall or not 
           //- if a wall site has just been processed
