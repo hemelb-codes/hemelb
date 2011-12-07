@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <vector>
-#include "xml/tinyxml.h"
+#include "tinyxml.h"
 #include "util/Vector3D.h"
 #include "lb/boundaries/iolets/InOutLets.h"
 
