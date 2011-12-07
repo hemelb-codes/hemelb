@@ -83,8 +83,10 @@ namespace hemelb
           }
           std::vector<std::string> & Results()
           {
+           Stream();
             return results;
           }
+
         protected:
           void Print(const char * format, ...)
           {
@@ -93,10 +95,21 @@ namespace hemelb
             va_start(arg, format);
             vsprintf(buffer, format, arg);
             va_end(arg);
-            results.push_back(std::string(buffer));
+            Stream() << std::string(buffer) << std::endl;
+          }
+
+          std::ostream & Stream()
+          {
+            if (buffer.str() != "")
+            {
+              results.push_back(buffer.str());
+              buffer.str("");
+            }
+            return buffer;
           }
         private:
           std::vector<std::string> results;
+          std::stringstream buffer;
       };
     }
   }

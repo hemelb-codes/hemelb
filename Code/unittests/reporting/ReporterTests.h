@@ -5,6 +5,8 @@
 #include "reporting/Reporter.h"
 #include "reporting/Reporter.hpp"
 #include "reporting/Timers.h"
+#include "unittests/FourCubeLatticeData.h"
+#include "unittests/lbtests/LbTestsHelper.h"
 #include <functional>
 #include <iomanip>
 namespace hemelb
@@ -16,7 +18,7 @@ namespace hemelb
       using namespace hemelb::reporting;
 
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
-      typedef ReporterBase<TimersMock, WriterMock, MPICommsMock> ReporterMock;
+      typedef ReporterBase<ClockMock, WriterMock, MPICommsMock, net::BroadcastMock > ReporterMock;
 
       class ReporterTests : public CppUnit::TestFixture
       {
@@ -24,23 +26,38 @@ namespace hemelb
           CPPUNIT_TEST(TestInit);
           CPPUNIT_TEST(TestImage);
           CPPUNIT_TEST(TestSnapshot);
-          CPPUNIT_TEST(TestMainReport);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST(TestMainReport);
+          CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
             timers = new TimersMock();
-            state = new hemelb::lb::SimulationState(500,2);
-            reporter = new ReporterMock("mock_path", "exampleinputfile", 1234, *timers,*state);
+            state = new hemelb::lb::SimulationState(500, 2);
+            net = new net::Net();
+            latticeData = new FourCubeLatticeData();
+            lbtests::LbTestsHelper::InitialiseAnisotropicTestData(latticeData);
+            latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
+            incompChecker = new lb::IncompressibilityChecker<net::BroadcastMock>(latticeData, net, state, 10.0);
+            reporter = new ReporterMock("mock_path",
+                                        "exampleinputfile",
+                                        1234,
+                                        *timers,
+                                        *state,
+                                        *incompChecker);
           }
 
           void tearDown()
           {
             delete reporter;
             delete timers;
+            delete incompChecker;
+            delete net;
+
           }
 
           void TestInit()
           {
+            std::cerr << reporter->Results().back() << std::endl;
             CPPUNIT_ASSERT_EQUAL((size_t) 8,
                                  reporter->Results().back().find("config file:\n exampleinputfile\n"));
           }
@@ -79,8 +96,8 @@ namespace hemelb
             {
               state->Increment();
             }
-            CPPUNIT_ASSERT_EQUAL(3lu,state->GetCycleId());
-            CPPUNIT_ASSERT_EQUAL(1001lu,state->GetTimeStepsPassed());
+            CPPUNIT_ASSERT_EQUAL(3lu, state->GetCycleId());
+            CPPUNIT_ASSERT_EQUAL(1001lu, state->GetTimeStepsPassed());
             // Ok, we have our fixture -- now execute it.
             reporter->Write();
             // now we validate the lines from the report
@@ -148,8 +165,9 @@ namespace hemelb
             {
               normalisation = 2.0;
             }
-            expectation << timerNames[row] << "\t\t" << row * 10.0 << "\t" << row * 15.0 / normalisation
-                << "\t" << row * 10.0 / normalisation << "\t" << row * 5.0 / normalisation << std::flush;
+            expectation << timerNames[row] << "\t\t" << row * 10.0 << "\t"
+                << row * 15.0 / normalisation << "\t" << row * 10.0 / normalisation << "\t"
+                << row * 5.0 / normalisation << std::flush;
             CheckLastMessageContains(expectation.str());
           }
 
@@ -157,6 +175,10 @@ namespace hemelb
           ReporterMock *reporter;
           TimersMock *timers;
           lb::SimulationState *state;
+          lb::IncompressibilityChecker<net::BroadcastMock> *incompChecker;
+          net::Net *net;
+          FourCubeLatticeData *latticeData;
+
       };
 
       CPPUNIT_TEST_SUITE_REGISTRATION(ReporterTests);

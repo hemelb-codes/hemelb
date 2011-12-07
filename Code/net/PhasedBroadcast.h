@@ -151,6 +151,9 @@ namespace hemelb
          * Receives data from each child. This is a set length per child, and each child's
          * data is inserted contiguously into the provided array.
          *
+         * The user must handle the case where the number of children is smaller than the
+         * spread factor and the array pointed by dataStart is not completely filled in.
+         *
          * @param dataStart Pointer to the start of the array.
          * @param countPerChild Number of elements to receive per child.
          */
@@ -168,6 +171,9 @@ namespace hemelb
         /**
          * Receives data from each child. This is a variable length per child, and each child's
          * data is inserted into the appropriate array.
+         *
+         * The user must handle the case where the number of children is smaller than the
+         * spread factor and the array pointed by dataStart is not completely filled in.
          *
          * @param dataStart Pointer to the start of the array.
          * @param countPerChild Number of elements to receive per child.

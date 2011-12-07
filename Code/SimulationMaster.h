@@ -13,6 +13,7 @@
 #include "io/PathManager.h"
 #include "reporting/Reporter.h"
 #include "reporting/Timers.h"
+#include "lb/IncompressibilityChecker.hpp"
 
 class SimulationMaster
 {
@@ -53,6 +54,10 @@ class SimulationMaster
     hemelb::lb::SimulationState* simulationState;
     hemelb::lb::StabilityTester* stabilityTester;
     hemelb::lb::EntropyTester* entropyTester;
+
+    /** Actor in charge of checking the maximum density difference across the domain */
+    hemelb::lb::IncompressibilityChecker<>* incompressibilityChecker;
+
     hemelb::lb::LBM* latticeBoltzmannModel;
     hemelb::lb::boundaries::BoundaryValues* inletValues;
     hemelb::lb::boundaries::BoundaryValues* outletValues;
