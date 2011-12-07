@@ -1,26 +1,25 @@
 cmake_minimum_required (VERSION 2.8)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 project(HemeLB_Code)
-
 # ------MPI------------------
 # Require MPI for this project:
 find_package(MPI REQUIRED)
 set(CMAKE_CXX_COMPILE_FLAGS "${CMAKE_CXX_COMPILE_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} ${CMAKE_CXX_LINK_FLAGS}")
 include_directories(MPI_INCLUDE_PATH)
-target_link_libraries(hemelb ${MPI_LIBRARIES})
-target_link_libraries(unittests_hemelb )
 
 #------Parmetis  ------------
 find_package(Parmetis REQUIRED)
-include_directories(${PARMETIS_INCLUDE_DIRS})
-
+include_directories(${PARMETIS_INCLUDE_DIR})
+MESSAGE(STATUS "Found Parmetis: ${PARMETIS_LIBRARY}")
 #------CPPUnit ---------------
 find_package(CPPUnit REQUIRED)
-include_directories(${CPPUNIT_INCLUDE_DIRS})
+include_directories(${CPPUNIT_INCLUDE_DIR})
 
 #------TinyXML ----------------
 find_package(TinyXML REQUIRED)
-include_directories(${TINYXML_INCLUDE_DIRS})
+add_definitions(-DTIXML_USE_STL)
+include_directories(${TINYXML_INCLUDE_DIR})
 
 # ----------- HemeLB ------------------s
 
@@ -52,19 +51,18 @@ target_link_libraries(hemelb
 	${MPI_LIBRARIES}
 	${PARMETIS_LIBRARIES}
 	${TINYXML_LIBRARIES}
-	${CPPUNIT_LIBRARIES}
+	${CPPUNIT_LIBRARY}
 	)
 
 # ----------- HEMELB unittests ---------------
 add_executable(unittests_hemelb ${root_sources})
 add_subdirectory(unittests)
-add_dependencies(hemelb_unittests ${externals})
 target_link_libraries(unittests_hemelb 
 	hemelb_unittests 
 	${heme_libraries}
 	${MPI_LIBRARIES}
 	${PARMETIS_LIBRARIES}
 	${TINYXML_LIBRARIES}
-	${CPPUNIT_LIBRARIES})
+	${CPPUNIT_LIBRARY})
 
-
+INSTALL(TARGETS hemelb unittests_hemelb RUNTIME DESTINATION .)
