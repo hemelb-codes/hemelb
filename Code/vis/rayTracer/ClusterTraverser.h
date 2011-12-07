@@ -26,17 +26,17 @@ namespace hemelb
 
           site_t GetXCount() const
           {
-            return mCluster.blocksX;
+            return mCluster.GetBlocksX();
           }
 
           site_t GetYCount() const
           {
-            return mCluster.blocksY;
+            return mCluster.GetBlocksY();
           }
 
           site_t GetZCount() const
           {
-            return mCluster.blocksZ;
+            return mCluster.GetBlocksZ();
           }
 
         private:

@@ -27,7 +27,8 @@ namespace hemelb
       {
         public:
           ClusterBuilder(const geometry::LatticeData* latticeData) :
-            mBlockTraverser(*latticeData)
+            mBlockTraverser(*latticeData),
+                mClusterVoxelDataPointers(latticeData->GetLocalFluidSiteCount())
           {
             mLatticeData = latticeData;
 
@@ -65,16 +66,10 @@ namespace hemelb
 
           SiteData_t* GetClusterVoxelDataPointer(site_t iVoxelSiteId)
           {
-            return GetDataPointerClusterVoxelSiteId(iVoxelSiteId);
+            return mClusterVoxelDataPointers[iVoxelSiteId];
           }
 
         private:
-          void ResizeVectorsForBlock(ClusterType& cluster, site_t blockNum)
-          {
-            cluster.ResizeVectorsForBlock(blockNum,
-                                          mLatticeData->GetSitesPerBlockVolumeUnit() * VIS_FIELDS);
-          }
-
           // Locates all the clusters in the lattice structure and the
           void LocateClusters()
           {
@@ -216,29 +211,20 @@ namespace hemelb
                           util::Vector3D<site_t> clusterVoxelMin,
                           util::Vector3D<site_t> clusterVoxelMax)
           {
+            const util::Vector3D<float> halfLatticeSiteCount =
+                util::Vector3D<float>((float) mLatticeData->GetXSiteCount(),
+                                      (float) mLatticeData->GetYSiteCount(),
+                                      (float) mLatticeData->GetZSiteCount()) * 0.5F;
+
             //The friendly locations must be turned into a format usable by the ray tracer
-            ClusterType lNewCluster;
-            lNewCluster.minBlock.x = (float) (clusterBlockMin.x * mLatticeData->GetBlockSize())
-                - 0.5F * (float) mLatticeData->GetXSiteCount();
-            lNewCluster.minBlock.y = (float) (clusterBlockMin.y * mLatticeData->GetBlockSize())
-                - 0.5F * (float) mLatticeData->GetYSiteCount();
-            lNewCluster.minBlock.z = (float) (clusterBlockMin.z * mLatticeData->GetBlockSize())
-                - 0.5F * (float) mLatticeData->GetZSiteCount();
-
-            lNewCluster.blocksX = (unsigned short) (1 + clusterBlockMax.x - clusterBlockMin.x);
-            lNewCluster .blocksY = (unsigned short) (1 + clusterBlockMax.y - clusterBlockMin.y);
-            lNewCluster .blocksZ = (unsigned short) (1 + clusterBlockMax.z - clusterBlockMin.z);
-
-            lNewCluster.minSite = util::Vector3D<float>(clusterVoxelMin)
-                - util::Vector3D<float>((float) mLatticeData->GetXSiteCount(),
-                                        (float) mLatticeData->GetYSiteCount(),
-                                        (float) mLatticeData->GetZSiteCount()) * 0.5F;
-
-            lNewCluster.maxSite
-                = util::Vector3D<float>(clusterVoxelMax + util::Vector3D<site_t>(1))
-                    - util::Vector3D<float>(0.5F * (float) mLatticeData->GetXSiteCount(),
-                                            0.5F * (float) mLatticeData->GetYSiteCount(),
-                                            0.5F * (float) mLatticeData->GetZSiteCount());
+            ClusterType lNewCluster((unsigned short) (1 + clusterBlockMax.x - clusterBlockMin.x),
+                                    (unsigned short) (1 + clusterBlockMax.y - clusterBlockMin.y),
+                                    (unsigned short) (1 + clusterBlockMax.z - clusterBlockMin.z),
+                                    util::Vector3D<float>(clusterVoxelMin) - halfLatticeSiteCount,
+                                    util::Vector3D<float>(clusterVoxelMax
+                                        + util::Vector3D<site_t>(1)) - halfLatticeSiteCount,
+                                    util::Vector3D<float>(clusterBlockMin
+                                        * mLatticeData->GetBlockSize()) - halfLatticeSiteCount);
 
             mClusters.push_back(lNewCluster);
 
@@ -250,9 +236,7 @@ namespace hemelb
           //Adds "flow-field" data to the cluster
           void ProcessCluster(unsigned int clusterId)
           {
-            ClusterType& cluster(mClusters[clusterId]);
-
-            cluster.ResizeVectors();
+            ClusterType& cluster = mClusters[clusterId];
 
             ClusterTraverser<ClusterType> clusterTraverser(cluster);
 
@@ -267,28 +251,29 @@ namespace hemelb
 
               if (mClusterIdOfBlock[blockId] == (short) clusterId)
               {
-                ResizeVectorsForBlock(cluster, clusterTraverser.GetCurrentIndex());
-
-                mClusterVoxelDataPointers.resize(mLatticeData->GetLocalFluidSiteCount());
-
+                cluster.ResizeVectorsForBlock(clusterTraverser.GetCurrentIndex(),
+                                              mLatticeData->GetSitesPerBlockVolumeUnit());
                 UpdateSiteData(blockId, clusterTraverser.GetCurrentIndex(), cluster);
               }
             }
             while (clusterTraverser.TraverseOne());
           }
 
-          void UpdateSiteData(site_t blockId, site_t blockNum, ClusterType& cluster)
+          void UpdateSiteData(site_t blockId, site_t blockIndexWithinCluster, ClusterType& cluster)
           {
             geometry::SiteTraverser siteTraverser(*mLatticeData);
             do
             {
-              UpdateSiteDataAtSite(blockId, blockNum, cluster, siteTraverser.GetCurrentIndex());
+              UpdateSiteDataAtSite(blockId,
+                                   blockIndexWithinCluster,
+                                   cluster,
+                                   siteTraverser.GetCurrentIndex());
             }
             while (siteTraverser.TraverseOne());
           }
 
           virtual void UpdateSiteDataAtSite(site_t blockId,
-                                            site_t blockNum,
+                                            site_t blockIndexWithinCluster,
                                             ClusterType& cluster,
                                             site_t siteIdOnBlock)
           {
@@ -298,29 +283,24 @@ namespace hemelb
             //If site not a solid and on the current processor [net.cc]
             if (clusterVoxelSiteId != BIG_NUMBER3)
             {
-              UpdateDensityVelocityAndStress(blockNum, cluster, siteIdOnBlock, clusterVoxelSiteId);
+              InitialiseSiteData(blockIndexWithinCluster,
+                                 cluster,
+                                 siteIdOnBlock,
+                                 clusterVoxelSiteId);
               if (ClusterType::NeedsWallNormals())
               {
-                UpdateWallNormalAtSite(block, blockNum, cluster, siteIdOnBlock);
+                UpdateWallNormalAtSite(block, blockIndexWithinCluster, cluster, siteIdOnBlock);
               }
             }
           }
 
-          void UpdateDensityVelocityAndStress(site_t blockNum,
-                                              ClusterType& cluster,
-                                              site_t siteIdOnBlock,
-                                              unsigned int clusterVoxelSiteId)
+          void InitialiseSiteData(site_t blockNum,
+                                  ClusterType& cluster,
+                                  site_t siteIdOnBlock,
+                                  unsigned int clusterVoxelSiteId)
           {
-            cluster.SiteData[blockNum][siteIdOnBlock] = SiteData_t(1.0F);
-
-            //For efficiency we want to store a pointer to the site data grouped by the ClusterVortexID
-            //(1D organisation of sites)
-            std::vector<SiteData_t>::iterator siteDataIterator = cluster.SiteData[blockNum].begin()
-                + siteIdOnBlock;
-
-            SiteData_t* siteDataLocation = & (*siteDataIterator);
-
-            SetDataPointerForClusterVoxelSiteId(clusterVoxelSiteId, & (*siteDataLocation));
+            mClusterVoxelDataPointers[clusterVoxelSiteId] = &cluster.GetSiteData(blockNum,
+                                                                                 siteIdOnBlock);
           }
 
           void UpdateWallNormalAtSite(geometry::BlockData * block,
@@ -333,17 +313,6 @@ namespace hemelb
             {
               cluster.SetWallData(blockNum, siteIdOnBlock, block->wall_data[siteIdOnBlock].wall_nor);
             }
-          }
-
-          SiteData_t* GetDataPointerClusterVoxelSiteId(site_t clusterVortexSiteId)
-          {
-            return mClusterVoxelDataPointers[clusterVortexSiteId];
-          }
-
-          void SetDataPointerForClusterVoxelSiteId(site_t clusterVortexSiteId,
-                                                   SiteData_t* dataPointer)
-          {
-            mClusterVoxelDataPointers[clusterVortexSiteId] = dataPointer;
           }
 
           //Caution: the data within mClusters is altered by means

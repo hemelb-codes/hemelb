@@ -217,5 +217,26 @@ namespace hemelb
       dest[1] = (unsigned char) util::NumericalFunctions::enforceBounds(rawGreen, 0, 255);
       dest[2] = (unsigned char) util::NumericalFunctions::enforceBounds(rawBlue, 0, 255);
     }
+
+    void ResultPixel::LogDebuggingInformation() const
+    {
+      log::Logger::Log<log::Info, log::OnePerCore>("Pixel at (%i,%i) with (ray,streak,glyph)=(%i,%i,%i)",
+                                                   GetI(),
+                                                   GetJ(),
+                                                   normalRayPixel != NULL,
+                                                   streakPixel != NULL,
+                                                   hasGlyph);
+
+      if (normalRayPixel != NULL)
+      {
+        normalRayPixel->LogDebuggingInformation();
+      }
+
+      if (streakPixel != NULL)
+      {
+        streakPixel->LogDebuggingInformation();
+      }
+    }
+
   }
 }

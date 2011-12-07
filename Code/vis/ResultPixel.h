@@ -32,6 +32,11 @@ namespace hemelb
                         const DomainStats& iDomainStats,
                         const VisSettings& visSettings) const;
 
+        /*
+         * Debugging function to output details about the pixel to the logger.
+         */
+        void LogDebuggingInformation() const;
+
       private:
 
         static void PickColour(float value, float colour[3]);
