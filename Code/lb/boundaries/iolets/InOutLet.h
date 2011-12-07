@@ -3,7 +3,7 @@
 
 #include "util/Vector3D.h"
 #include "util/UnitConverter.h"
-#include "xml/tinyxml.h"
+#include "tinyxml.h"
 
 namespace hemelb
 {
