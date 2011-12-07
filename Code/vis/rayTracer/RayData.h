@@ -158,6 +158,18 @@ namespace hemelb
             return mLengthBeforeRayFirstCluster;
           }
 
+          void LogDebuggingInformation() const
+          {
+            log::Logger::Log<log::Info, log::OnePerCore>("Ray data at (%i,%i) with "
+                                                           "(lengthToFirstCluster, lengthInFluid, nearestDensity, nearest stress) = (%f, %f, %f, %f)",
+                                                         GetI(),
+                                                         GetJ(),
+                                                         GetLengthBeforeRayFirstCluster(),
+                                                         GetCumulativeLengthInFluid(),
+                                                         GetNearestDensity(),
+                                                         GetNearestStress());
+          }
+
         protected:
           static const float mLongestDistanceInVoxelInverse;
 
@@ -181,7 +193,7 @@ namespace hemelb
         private:
           // Perform processing of the ray data common to all derived
           // types, ie cumulative length in the fluid, nearest stress
-          // and density. 
+          // and density.
           void UpdateRayDataCommon(const raytracer::SiteData_t& iSiteData,
                                    const util::Vector3D<float>& iRayDirection,
                                    const float iRayLengthInVoxel,
