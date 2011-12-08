@@ -10,8 +10,14 @@ if (TINYXML_FOUND)
 	message("TinyXML already installed, no need to download")
 else(TINYXML_FOUND)
 	message("TinyXML not installed, will download and build")
-	set(TINYXML_TARBALL http://sourceforge.net/projects/tinyxml/files/tinyxml/2.6.2/tinyxml_2_6_2.tar.gz
-		CACHE STRING "Path to download TINYXML (can be local file://)")
+	find_file(TINYXML_TARBALL tinyxml_2_6_2.tar.gz 
+		DOC "Path to download TintXML (can be url http://)"
+		PATHS ${DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT TINYXML_TARBALL)
+		set(TINYXML_TARBALL http://sourceforge.net/projects/tinyxml/files/tinyxml/2.6.2/tinyxml_2_6_2.tar.gz
+			CACHE STRING "Path to download TinyXML (can be local file://)" FORCE)
+	endif(NOT TINYXML_TARBALL)
 	ExternalProject_Add(
 	   tinyxml
 		INSTALL_DIR ${DEPENDENCIES_PATH}
@@ -29,8 +35,15 @@ if (PARMETIS_FOUND)
 	message("Parmetis already installed, no need to download")
 else(PARMETIS_FOUND)
 	message("Parmetis not installed, will download and build")
-	set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz
-		CACHE STRING "Path to download Parmetis (can be local file://)")
+	find_file(PARMETIS_TARBALL parmetis-4.0.2.tar.gz 
+		DOC "Path to download Parmetis (can be url http://)"
+		PATHS ${DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT PARMETIS_TARBALL)
+		message("Here")
+		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz 
+		CACHE STRING "Path to download Parmetis (can be local file://)" FORCE)
+	endif(NOT PARMETIS_TARBALL)
 	ExternalProject_Add(
 	   parmetis
 		INSTALL_DIR ${DEPENDENCIES_PATH}
@@ -48,8 +61,14 @@ if (CPPUNIT_FOUND)
 	message("CPPUnit already installed, no need to download")
 else(CPPUNIT_FOUND)
 	message("CPPUnit not installed, will download and build")
-	set(CPPUNIT_TARBALL http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz
-		CACHE STRING "Path to download CPPUNIT (can be local file://)")
+	find_file(CPPUNIT_TARBALL cppunit-1.12.1.tar.gz 
+		DOC "Path to download CPPUNIT (can be url http://)"
+		PATHS ${DEPENDENCIES_PATH}/distributions
+	)
+	if(NOT CPPUNIT_TARBALL)
+		set(CPPUNIT_TARBALL http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz
+			CACHE STRING "Path to download CPPUNIT (can be local file://)" FORCE)
+	endif(NOT CPPUNIT_TARBALL)
 	ExternalProject_Add(
 	   cppunit
 		INSTALL_DIR ${DEPENDENCIES_PATH}
