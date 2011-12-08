@@ -47,8 +47,9 @@ endif(TIXML_USE_STL)
 include_directories(${TINYXML_INCLUDE_DIR})
 
 # ----------- HemeLB ------------------s
-
-add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
+if (APPLE)
+	add_definitions(-DHEMELB_CFG_ON_BSD -DHEMELB_CFG_ON_OSX)
+endif(APPLE)
 if (USE_HEMELB_DEBUGGER)
 	# Force a debug build, because the debugger makes no sense without debug symbols
 	set(CMAKE_BUILD_TYPE DEBUG)
