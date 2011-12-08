@@ -125,15 +125,20 @@ class Image(object):
         if not N.alltrue(self.pixels.index == other.pixels.index):
             for i in range(self.pixels.index.shape[0]):
                 if not N.alltrue(self.pixels.index[i] == other.pixels.index[i]):
-                    print 'index: ' + str(i)
-                    print 'left array had ' + str(self.pixels.index[(i-1):(i+2)])
-                    print 'right array had ' + str(other.pixels.index[(i-1):(i+2)])
+                    print 'Images differed on indices, first at index: ' + str(i)
+                    print 'left array had ' + str(self.pixels.index[i])
+                    print 'right array had ' + str(other.pixels.index[i])
                     return False
 
         for attr in ('r', 'g', 'b'):
             d = self.pixels[attr] - other.pixels[attr] + 128
-            if N.min(d) <= (128-tol) or N.max(d) >= (128+tol):
-                print 'Differed on ' + attr + ' channel with delta range of ' + str(N.min(d) - 128) + ' - ' + str(N.max(d) - 128)
+            if N.min(d) < (128-tol) or N.max(d) > (128+tol):
+                minArg = N.argmin(d, 0)[0][0]
+                maxArg = N.argmax(d, 0)[0][0]
+                print 'Differed on ' + attr + ' channel with delta range:'
+                print str(N.min(d) - 128) + ' between ' + str(self.pixels[minArg]) + ' and ' + str(other.pixels[minArg])
+                print 'and'
+                print str(N.max(d) - 128) + ' between ' + str(self.pixels[maxArg]) + ' and ' + str(other.pixels[maxArg])
                 return False
             continue
         
