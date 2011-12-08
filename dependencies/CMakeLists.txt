@@ -1,0 +1,67 @@
+cmake_minimum_required (VERSION 2.8)
+Project(HemeLB)
+set(DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
+include(ExternalProject)
+
+# --------- tinyxml -------------------
+find_package(TinyXML QUIET)
+if (TINYXML_FOUND)
+	message("TinyXML already installed, no need to download")
+else(TINYXML_FOUND)
+	message("TinyXML not installed, will download and build")
+	set(TINYXML_TARBALL http://sourceforge.net/projects/tinyxml/files/tinyxml/2.6.2/tinyxml_2_6_2.tar.gz
+		CACHE STRING "Path to download TINYXML (can be local file://)")
+	ExternalProject_Add(
+	   tinyxml
+		INSTALL_DIR ${DEPENDENCIES_PATH}
+		URL ${TINYXML_TARBALL}
+		CONFIGURE_COMMAND cmake <SOURCE_DIR> 
+		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+		-DTIXML_USE_STL=${TIXML_USE_STL}
+		PATCH_COMMAND cp ${DEPENDENCIES_PATH}/patches/tinyxml.cmake CMakeLists.txt
+	)
+endif(TINYXML_FOUND)
+
+# ------- parmetis --------------------
+find_package(Parmetis QUIET)
+if (PARMETIS_FOUND)
+	message("Parmetis already installed, no need to download")
+else(PARMETIS_FOUND)
+	message("Parmetis not installed, will download and build")
+	set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz
+		CACHE STRING "Path to download Parmetis (can be local file://)")
+	ExternalProject_Add(
+	   parmetis
+		INSTALL_DIR ${DEPENDENCIES_PATH}
+		URL ${PARMETIS_TARBALL}
+	   CONFIGURE_COMMAND make config prefix=<INSTALL_DIR> && cd metis && make config prefix=<INSTALL_DIR>
+		BUILD_IN_SOURCE 1
+		BUILD_COMMAND make MAKEFLAGS= #Workaround for bug in parmetis makefile treating switches as targets
+		INSTALL_COMMAND make install MAKEFLAGS= && cd metis && make install MAKEFLAGS=
+	)
+endif(PARMETIS_FOUND)
+
+# -------CPPUNIT -------------
+find_package(CPPUnit QUIET)
+if (CPPUNIT_FOUND)
+	message("CPPUnit already installed, no need to download")
+else(CPPUNIT_FOUND)
+	message("CPPUnit not installed, will download and build")
+	set(CPPUNIT_TARBALL http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz
+		CACHE STRING "Path to download CPPUNIT (can be local file://)")
+	ExternalProject_Add(
+	   cppunit
+		INSTALL_DIR ${DEPENDENCIES_PATH}
+		URL ${CPPUNIT_TARBALL}
+		PATCH_COMMAND autoreconf -fvi #autoreconf required on osx - based on contents of portfile
+	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot
+		BUILD_IN_SOURCE 1
+	)
+endif(CPPUNIT_FOUND)
+
+# ---------BOOST -----------------------
+#ExternalProject_Add(
+#   boost_project
+#	URL http://gitorious.org/boost/cmake/archive-tarball/cmake-1.48.0.tar.gz
+#)
