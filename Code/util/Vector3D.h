@@ -157,20 +157,20 @@ namespace hemelb
         }
 
         //Normalisation
-        void Normalise()
+        Vector3D<T>& Normalise()
         {
-          T magnitudeSquared = x * x + y * y + z * z;
-
-          if (magnitudeSquared == 0)
-          {
-            return;
-          }
-
-          T lInverseMagnitude = 1.0F / sqrtf(magnitudeSquared);
+          T lInverseMagnitude = 1.0F / GetMagnitude();
 
           x *= lInverseMagnitude;
           y *= lInverseMagnitude;
           z *= lInverseMagnitude;
+
+          return *this;
+        }
+
+        T GetMagnitude() const
+        {
+          return sqrtf(x * x + y * y + z * z);
         }
 
         //Dot product

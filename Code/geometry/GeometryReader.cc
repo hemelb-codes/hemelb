@@ -27,7 +27,7 @@ namespace hemelb
           || topology::NetworkTopology::Instance()->GetLocalRank() != 0;
 
       // Create our own group, without the root node.
-      if (reserveSteeringCore)
+      if (reserveSteeringCore && topology::NetworkTopology::Instance()->GetProcessorCount() > 1)
       {
         int lExclusions[1] = { 0 };
         MPI_Group_excl(worldGroup, 1, lExclusions, &topologyGroup);
@@ -1932,8 +1932,8 @@ namespace hemelb
                                                          const unsigned int* bytesPerBlock) const
     {
       // Create vectors for each of the things we'll need to give to MPI_Type_create_struct
-      std::vector<MPI_Datatype> baseTypes;
-      std::vector<MPI_Aint> displacements;
+      std::vector < MPI_Datatype > baseTypes;
+      std::vector < MPI_Aint > displacements;
       std::vector<int> counts;
 
       int currentDisplacement = 0;

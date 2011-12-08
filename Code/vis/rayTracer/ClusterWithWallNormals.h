@@ -1,7 +1,7 @@
 #ifndef HEMELB_VIS_RAYTRACER_CLUSTERWITHWALLNORMALS_H
 #define HEMELB_VIS_RAYTRACER_CLUSTERWITHWALLNORMALS_H
 
-#include "vis/rayTracer/ClusterShared.h"
+#include "vis/rayTracer/Cluster.h"
 #include "vis/rayTracer/SiteData.h"
 
 namespace hemelb
@@ -10,23 +10,26 @@ namespace hemelb
   {
     namespace raytracer
     {
-      class ClusterWithWallNormals : public ClusterShared<ClusterWithWallNormals>
+      class ClusterWithWallNormals : public Cluster<ClusterWithWallNormals>
       {
         public:
-          ClusterWithWallNormals();
-
-          void DoResizeVectors();
+          ClusterWithWallNormals(unsigned short xBlockCount,
+                                 unsigned short yBlockCount,
+                                 unsigned short zBlockCount,
+                                 const util::Vector3D<float>& minimalSite,
+                                 const util::Vector3D<float>& maximalSite,
+                                 const util::Vector3D<float>& minimalSiteOnMinimalBlock);
 
           void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize);
 
-          double const* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
+          const double* DoGetWallData(site_t iBlockNumber, site_t iSiteNumber) const;
 
-          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData);
+          void DoSetWallData(site_t iBlockNumber, site_t iSiteNumber, const double* const iData);
 
           static bool DoNeedsWallNormals();
 
         private:
-          std::vector<std::vector<double*> > WallNormals;
+          std::vector<std::vector<const double*> > WallNormals;
       };
 
     }

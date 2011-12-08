@@ -1,6 +1,7 @@
 #ifndef HEMELB_VIS_STREAKLINEDRAWER_STREAKPIXEL_H
 #define HEMELB_VIS_STREAKLINEDRAWER_STREAKPIXEL_H
 
+#include "log/Logger.h"
 #include "vis/BasicPixel.h"
 
 namespace hemelb
@@ -18,8 +19,7 @@ namespace hemelb
           }
 
           StreakPixel(int i, int j, float particleVelocity, float particleZ, int particleInlet) :
-            BasicPixel(i, j), particle_vel(particleVelocity), particle_z(particleZ),
-                particle_inlet_id(particleInlet)
+              BasicPixel(i, j), particle_vel(particleVelocity), particle_z(particleZ), particle_inlet_id(particleInlet)
           {
 
           }
@@ -70,6 +70,17 @@ namespace hemelb
             MPI_Type_struct(typeCount, blocklengths, displacements, types, &ret);
 
             return ret;
+          }
+
+          void LogDebuggingInformation() const
+          {
+            log::Logger::Log<log::Info, log::OnePerCore>("Streak pixel at (%i,%i) with "
+                                                         "(source inlet, velocity, z) = (%d, %f, %f)",
+                                                         GetI(),
+                                                         GetJ(),
+                                                         particle_inlet_id,
+                                                         particle_vel,
+                                                         particle_z);
           }
 
         private:

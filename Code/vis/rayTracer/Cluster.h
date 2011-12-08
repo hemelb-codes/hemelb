@@ -23,37 +23,44 @@ namespace hemelb
       class Cluster
       {
         public:
-          unsigned int GetBlockIdFrom3DBlockLocation(util::Vector3D<unsigned int> iLocation) const
+          Cluster(unsigned short xBlockCount,
+                  unsigned short yBlockCount,
+                  unsigned short zBlockCount,
+                  const util::Vector3D<float>& minimalSite,
+                  const util::Vector3D<float>& maximalSite,
+                  const util::Vector3D<float>& minimalSiteOnMinimalBlock) :
+            blocksX(xBlockCount), blocksY(yBlockCount), blocksZ(zBlockCount), minSite(minimalSite),
+                maxSite(maximalSite), leastSiteOnLeastBlockInImage(minimalSiteOnMinimalBlock)
+
           {
-            return ((Derived*) (this))->DoGetBlockIdFrom3DBlockLocation(iLocation);
+            SiteData.resize(blocksX * blocksY * blocksZ);
           }
 
-          //Resizes the vectors so as to be the correct size based on the stored sizes
-          void ResizeVectors()
+          unsigned int GetBlockIdFrom3DBlockLocation(const util::Vector3D<unsigned int>& iLocation) const
           {
-            ((Derived*) (this))->DoResizeVectors();
+            return iLocation.x * blocksY * blocksZ + iLocation.y * blocksZ + iLocation.z;
           }
 
-          void ResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
+          void ResizeVectorsForBlock(site_t iBlockNumber, site_t numberOfSites)
           {
-            ((Derived*) (this))->DoResizeVectorsForBlock(iBlockNumber, iSize);
+            SiteData[iBlockNumber].resize(numberOfSites, SiteData_t(-1.0F));
+            ((Derived*) (this))->DoResizeVectorsForBlock(iBlockNumber, numberOfSites);
           }
 
           //Returns true if there is site data for a given block
           bool BlockContainsSites(site_t iBlockNumber) const
           {
-            return ((const Derived*) (this))->DoBlockContainsSites(iBlockNumber);
+            return !SiteData[iBlockNumber].empty();
           }
 
-          //Get SiteData arary for site
-          const SiteData_t* GetSiteData(site_t iBlockNumber) const
+          const SiteData_t& GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const
           {
-            return ((const Derived*) (this))->DoGetSiteData(iBlockNumber);
+            return SiteData[iBlockNumber][iSiteNumber];
           }
 
-          const SiteData_t* GetSiteData(site_t iBlockNumber, site_t iSiteNumber) const
+          SiteData_t& GetSiteData(site_t iBlockNumber, site_t iSiteNumber)
           {
-            return ((const Derived*) (this))->DoGetSiteData(iBlockNumber, iSiteNumber);
+            return SiteData[iBlockNumber][iSiteNumber];
           }
 
           const double* GetWallData(site_t iBlockNumber, site_t iSiteNumber) const
@@ -61,7 +68,7 @@ namespace hemelb
             return ((const Derived*) (this))->DoGetWallData(iBlockNumber, iSiteNumber);
           }
 
-          void SetWallData(site_t iBlockNumber, site_t iSiteNumber, double* iData)
+          void SetWallData(site_t iBlockNumber, site_t iSiteNumber, const double* const iData)
           {
             return ((Derived*) (this))->DoSetWallData(iBlockNumber, iSiteNumber, iData);
           }
@@ -70,6 +77,99 @@ namespace hemelb
           {
             return Derived::DoNeedsWallNormals();
           }
+
+          const std::vector<util::Vector3D<float> > GetCorners() const
+          {
+            std::vector<util::Vector3D<float> > lCorners;
+
+            lCorners.push_back(util::Vector3D<float>(minSite.x, minSite.y, minSite.z));
+
+            lCorners.push_back(util::Vector3D<float>(minSite.x, minSite.y, maxSite.z));
+
+            lCorners.push_back(util::Vector3D<float>(minSite.x, maxSite.y, minSite.z));
+
+            lCorners.push_back(util::Vector3D<float>(minSite.x, maxSite.y, maxSite.z));
+
+            lCorners.push_back(util::Vector3D<float>(maxSite.x, minSite.y, minSite.z));
+
+            lCorners.push_back(util::Vector3D<float>(maxSite.x, minSite.y, maxSite.z));
+
+            lCorners.push_back(util::Vector3D<float>(maxSite.x, maxSite.y, minSite.z));
+
+            lCorners.push_back(util::Vector3D<float>(maxSite.x, maxSite.y, maxSite.z));
+
+            return lCorners;
+          }
+
+          /**
+           * True if the cluster type requires wall normals.
+           *
+           * This can be overridden by deriving classes.
+           * @return
+           */
+          static bool DoNeedsWallNormals()
+          {
+            return false;
+          }
+
+          unsigned short GetBlocksX() const
+          {
+            return blocksX;
+          }
+
+          unsigned short GetBlocksY() const
+          {
+            return blocksY;
+          }
+
+          unsigned short GetBlocksZ() const
+          {
+            return blocksZ;
+          }
+
+          const util::Vector3D<float>& GetMinSite() const
+          {
+            return minSite;
+          }
+
+          const util::Vector3D<float>& GetMaxSite() const
+          {
+            return maxSite;
+          }
+
+          const util::Vector3D<float>& GetLeastSiteOnLeastBlockInImage() const
+          {
+            return leastSiteOnLeastBlockInImage;
+          }
+
+        private:
+          /**
+           * Default version of this function doesn't need to do anything extra
+           *
+           * @param iBlockNumber
+           * @param iSize
+           */
+          void DoResizeVectorsForBlock(site_t iBlockNumber, site_t iSize)
+          {
+
+          }
+
+          //Stores the size of the cluster in terms of the number of blocks
+          unsigned short blocksX;
+          unsigned short blocksY;
+          unsigned short blocksZ;
+
+          //The min and maximum site location, in site units
+          //relative to the centre of the lattice
+          util::Vector3D<float> minSite;
+          util::Vector3D<float> maxSite;
+
+          //Stores the lowest x, y and z block location of the ClusterShared
+          //in terms of site units relative to the centre location
+          util::Vector3D<float> leastSiteOnLeastBlockInImage;
+
+          //    public:
+          std::vector<std::vector<SiteData_t> > SiteData;
       };
     }
   }
