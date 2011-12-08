@@ -10,6 +10,10 @@ if (TINYXML_FOUND)
 	message("TinyXML already installed, no need to download")
 else(TINYXML_FOUND)
 	message("TinyXML not installed, will download and build")
+	OPTION(TIXML_USE_STL "Use STL with TIXML" ON)
+	if(TIXML_USE_STL)
+		add_definitions(-DTIXML_USE_STL)
+	endif(TIXML_USE_STL)
 	find_file(TINYXML_TARBALL tinyxml_2_6_2.tar.gz 
 		DOC "Path to download TintXML (can be url http://)"
 		PATHS ${DEPENDENCIES_PATH}/distributions
