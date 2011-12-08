@@ -25,7 +25,6 @@ namespace hemelb
   const double BLOOD_DENSITY_Kg_per_m3 = 1000.0;
   const double BLOOD_VISCOSITY_Pa_s = 0.004;
   const double PULSATILE_PERIOD_s = 60.0 / 70.0;
-  const unsigned int VIS_FIELDS = 3;
 
   // These constants are used to pack a lot of stuff into a 32 bit int.
   // They are used in the setup tool and must be consistent.
