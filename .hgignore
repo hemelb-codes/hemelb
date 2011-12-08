@@ -6,6 +6,8 @@ syntax: glob
 .metadata/*
 build/*
 Doc/*
+CMakeFiles/*
+CMakeCache.txt
 Code/client/displayClient
 Code/parmetis/build/*
 Code/parmetis/libmetis.a
@@ -15,6 +17,10 @@ Scripts/ParMetis-3.1.1.tar
 .DS_Store
 *.orig
 *.rej
+dependencies/bin
+dependencies/lib
+dependencies/include
+dependencies/distributions
 Tools/visim/visim
 Tests/diffTest/CleanImages/*.ppm
 Tests/diffTest/checkpoint.tmp
