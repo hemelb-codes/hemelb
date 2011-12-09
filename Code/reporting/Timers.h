@@ -72,17 +72,18 @@ namespace hemelb
          */
         enum TimerName
         {
-          total, //!< Total time
+          total=0, //!< Total time
           domainDecomposition, //!< Time spent in domain decomposition
           fileRead, //!< Time spent in reading the geometry description file
           netInitialise, //!< Time spent initialising the network topology
           lb, //!< Time spent doing the core lattice boltzman simulation
           visualisation, //!< Time spent on visualisation
+          monitoring, //!< Time spent monitoring for stability, compressibility, etc.
           mpiSend, //!< Time spent sending MPI data
           mpiWait, //!< Time spent waiting for MPI
           snapshot, //!< Time spent producing snapshots
           simulation, //!< Total time for running the simulation
-          last //!< last
+          last //!< last, this has to be the last element of the enumeration so it can be used to track cardinality
         };
         static const unsigned int numberOfTimers = last;
         TimersBase() :
@@ -176,6 +177,7 @@ namespace hemelb
         "Net initialisation",
         "Lattice Boltzmann",
         "Visualisation",
+        "Monitoring",
         "MPI Send",
         "MPI Wait",
         "Snapshots",
