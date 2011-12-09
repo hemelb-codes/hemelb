@@ -17,11 +17,17 @@ Scripts/ParMetis-3.1.1.tar
 .DS_Store
 *.orig
 *.rej
+diffs
+dependencies/Makefile
+dependencies/cmake_install.cmake
 dependencies/bin
 dependencies/lib
 dependencies/include
 dependencies/share
 dependencies/distributions
+dependencies/parmetis-prefix
+dependencies/cppunit-prefix
+dependencies/tinyxml-prefix
 Tools/visim/visim
 Tests/diffTest/CleanImages/*.ppm
 Tests/diffTest/checkpoint.tmp
