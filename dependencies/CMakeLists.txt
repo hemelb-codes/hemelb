@@ -15,7 +15,7 @@ else(TINYXML_FOUND)
 		add_definitions(-DTIXML_USE_STL)
 	endif(TIXML_USE_STL)
 	find_file(TINYXML_TARBALL tinyxml_2_6_2.tar.gz 
-		DOC "Path to download TintXML (can be url http://)"
+		DOC "Path to download TinyXML (can be url http://)"
 		PATHS ${DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT TINYXML_TARBALL)
