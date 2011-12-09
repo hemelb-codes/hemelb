@@ -8,6 +8,7 @@ option(USE_HEMELB_DEBUGGER "Use built in hemelb debugger" OFF)
 option(USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
+option(USE_STREAKLINES "Calculate streakline images" OFF)
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
 set(HEMELB_STEERING_LIB basic
@@ -20,6 +21,10 @@ if (USE_ALL_WARNINGS_GNU)
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 endif(USE_ALL_WARNINGS_GNU)
+
+if (NOT USE_STREAKLINES)
+	add_definitions(-DNO_STREAKLINES)
+endif(NOT USE_STREAKLINES)
 #------Dependencies --------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${DEPENDENCIES_PATH}/include)
@@ -39,7 +44,6 @@ MESSAGE(STATUS "Found Parmetis: ${PARMETIS_LIBRARY}")
 
 #------TinyXML ----------------
 find_package(TinyXML REQUIRED)
-MESSAGE(STATUS "Found Tinyxml: ${TINYXML_LIBRARY}")
 OPTION(TIXML_USE_STL "Use STL with TIXML" ON)
 if(TIXML_USE_STL)
 	add_definitions(-DTIXML_USE_STL)
