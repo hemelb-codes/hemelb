@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.8)
 Project(HemeLB)
 set(DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-set(DEPENDENCIES_INSTALL_PATH ${DEPENDENCIES_PATH} CACHE "Path to install Dependencies")
+set(DEPENDENCIES_INSTALL_PATH ${DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
 include(ExternalProject)
 
