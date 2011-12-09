@@ -17,6 +17,7 @@ def complete_environment():
 	env.tools_build_path=env.pather.join(env.tools_path,'build',env.tools_build)
 	env.build_path=env.pather.join(env.remote_directory,'build')
 	env.install_path=env.pather.join(env.remote_directory,'install')
+	env.scripts_path=env.pather.join(env.remote_directory,'scripts')
 	module_commands=["module %s"%module for module in env.modules]
 	env.build_prefix=" && ".join(module_commands)
 	env.run_prefix=env.build_prefix + ("&& LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/dependencies/lib"%env.repository_path)

@@ -1,6 +1,5 @@
-from machines import *
-from fabric.contrib.project import *
 from templates import *
+from fabric.contrib.project import *
 
 @task
 def clone():
@@ -9,6 +8,7 @@ def clone():
 		run("rm -rf %s"%env.repository)
 		run("hg clone %(hg)s/%(repository)s"%{'hg':env.hg,'repository':env.repository})
 	run("mkdir -p %s"%env.build_path)
+	run("mkdir -p %s"%env.scripts_path)
 
 @task(alias='cold')
 def deploy_cold():
@@ -104,3 +104,16 @@ def patch(args=""):
 	put("fabric.diff",env.pather.join(env.remote_directory,env.repository))
 	with cd(env.repository_path):
 		run("patch -p1 < fabric.diff")
+
+@task
+def job(template,name,wall_time='0:1:0',nodes='4',memory='1GB'):
+	template_name="%s_%s"%(env.template_key,template)
+	job_script=fill_in_template(template_name,name=name,
+		wall_time=wall_time,nodes=nodes,memory=memory,
+		username=env.username,project=env.project,
+		executable_path=env.scripts_path
+		)
+	dest_name=env.pather.join(env.scripts_path,env.pather.basename(job_script))
+	put(job_script,dest_name)
+	#qsub would go here, but we're just practising for now
+	
