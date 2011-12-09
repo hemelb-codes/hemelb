@@ -16,6 +16,7 @@ set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 option(USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
+option(USE_STREAKLINES "Calculate streakline images" OFF)
 
 #------- Dependencies -----------
 
@@ -35,6 +36,7 @@ ExternalProject_Add(
 	-DHEMELB_STEERING_LIB=${HEMELB_STEERING_LIB}
 	-DUSE_MULTIMACHINE=${USE_MULTIMACHINE}
 	-DHEMELB_BUILD_UNITTESTS=${HEMELB_BUILD_UNITTESTS}
+	-DUSE_STREAKLINES=${USE_STREAKLINES}
 )
 ExternalProject_Get_Property(hemelb install_dir)
 FILE(GLOB results ${install_dir}/bin/*)
