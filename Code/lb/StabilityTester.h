@@ -25,7 +25,8 @@ namespace hemelb
       public:
         StabilityTester(const geometry::LatticeData * iLatDat,
                         net::Net* net,
-                        SimulationState* simState);
+                        SimulationState* simState,
+                        reporting::Timers& timings);
 
         /**
          * Override the reset method in the base class, to reset the stability variables.
@@ -82,6 +83,9 @@ namespace hemelb
          * Pointer to the simulation state used in the rest of the simulation.
          */
         lb::SimulationState* mSimState;
+
+        /** Timing object. */
+        reporting::Timers& timings;
     };
   }
 }
