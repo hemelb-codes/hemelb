@@ -25,7 +25,7 @@ namespace hemelb
      * @todo CommsPolicy and BroadcastPolicy should be unified
      */
     template<class ClockPolicy, class WriterPolicy, class CommsPolicy, class BroadcastPolicy> class ReporterBase : public WriterPolicy,
-                                                                                             public CommsPolicy
+                                                                                                                   public CommsPolicy
     {
       public:
         /**
@@ -39,7 +39,7 @@ namespace hemelb
         ReporterBase(const std::string &path,
                      const std::string &inputFile,
                      const long int aSiteCount,
-                     const TimersBase<ClockPolicy,CommsPolicy>& timers,
+                     const TimersBase<ClockPolicy, CommsPolicy>& timers,
                      const lb::SimulationState & aState,
                      const lb::IncompressibilityChecker<BroadcastPolicy>& aChecker);
         void Image(); //! Inform the reporter that an image has been saved.
@@ -55,7 +55,7 @@ namespace hemelb
         unsigned int imageCount; //! Number of images written.
         long int siteCount; //! Total number of sites.
         bool stability; //! Stability of the simulation.
-        const TimersBase<ClockPolicy,CommsPolicy> &timings; //! Reference to list of timers used to measure performance.
+        const TimersBase<ClockPolicy, CommsPolicy> &timings; //! Reference to list of timers used to measure performance.
         const lb::SimulationState & state; //! Reference to state of ongoing simulation.
         const lb::IncompressibilityChecker<BroadcastPolicy>& incompressibilityChecker;
     };
@@ -63,7 +63,8 @@ namespace hemelb
     /**
      * Concrete realisation of the reporter with appropriate policies to be used.
      */
-    typedef ReporterBase<HemeLBClockPolicy, FileWriterPolicy, MPICommsPolicy, net::PhasedBroadcastRegular<> > Reporter;
+    typedef ReporterBase<HemeLBClockPolicy, FileWriterPolicy, MPICommsPolicy,
+        net::PhasedBroadcastRegular<> > Reporter;
   }
 }
 
