@@ -11,7 +11,7 @@ namespace hemelb
     /**
      * Domain reference density used to compute relative differences.
      *
-     * TODO This value should not be hardcoded here but read from UnitConverter
+     * @todo #23 This value should not be hardcoded here but read from UnitConverter
      */
     static const distribn_t REFERENCE_DENSITY = 1.0;
 
@@ -113,6 +113,7 @@ namespace hemelb
         IncompressibilityChecker(const geometry::LatticeData * latticeData,
                                  net::Net* net,
                                  SimulationState* simState,
+                                 reporting::Timers& timings,
                                  distribn_t maximumRelativeDensityDifferenceAllowed = 0.05);
 
         /**
@@ -193,7 +194,7 @@ namespace hemelb
         /**
          * Slightly arbitrary spread factor for the tree.
          *
-         * TODO This is defined in StabilityChecker as well, refactor somewhere else?
+         * @todo #23 This is defined in StabilityChecker as well, refactor somewhere else?
          */
         static const unsigned int SPREADFACTOR = 10u;
 
@@ -202,6 +203,9 @@ namespace hemelb
 
         /** Pointer to the simulation state used in the rest of the simulation. */
         lb::SimulationState* mSimState;
+
+        /** Timing object. */
+        reporting::Timers& timings;
 
         /** Maximum density difference allowed in the domain (relative to reference density) */
         distribn_t maximumRelativeDensityDifferenceAllowed;
