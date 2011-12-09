@@ -9,18 +9,18 @@ namespace hemelb
   {
     template<class BroadcastPolicy>
     IncompressibilityChecker<BroadcastPolicy>::DensityTracker::DensityTracker() :
-      allocatedHere(true)
+        allocatedHere(true)
     {
       densitiesArray = new distribn_t[DENSITY_TRACKER_SIZE];
 
-      /// TODO: do we have a policy on floating point constants?
+      //! @todo #23 do we have a policy on floating point constants?
       densitiesArray[MIN_DENSITY] = DBL_MAX;
       densitiesArray[MAX_DENSITY] = -DBL_MAX;
     }
 
     template<class BroadcastPolicy>
     IncompressibilityChecker<BroadcastPolicy>::DensityTracker::DensityTracker(distribn_t* const densityValues) :
-      densitiesArray(densityValues), allocatedHere(false)
+        densitiesArray(densityValues), allocatedHere(false)
     {
     }
 
@@ -84,19 +84,19 @@ namespace hemelb
     IncompressibilityChecker<BroadcastPolicy>::IncompressibilityChecker(const geometry::LatticeData * latticeData,
                                                                         net::Net* net,
                                                                         SimulationState* simState,
+                                                                        reporting::Timers& timings,
                                                                         distribn_t maximumRelativeDensityDifferenceAllowed) :
-      BroadcastPolicy(net, simState, SPREADFACTOR), mLatDat(latticeData), mSimState(simState),
-          maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed),
-          globalDensityTracker(NULL)
+        BroadcastPolicy(net, simState, SPREADFACTOR), mLatDat(latticeData), mSimState(simState), timings(timings), maximumRelativeDensityDifferenceAllowed(maximumRelativeDensityDifferenceAllowed), globalDensityTracker(NULL)
     {
-        /*
-         *  childrenDensitiesSerialised must be initialised to something sensible since ReceiveFromChildren won't
-         *  fill it in completely unless the logarithm base SPREADFACTOR of the number of processes is an integer.
-         */
-        for (unsigned int index = 0; index < SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE; index++)
-        {
-          childrenDensitiesSerialised[index] = REFERENCE_DENSITY;
-        }
+      /*
+       *  childrenDensitiesSerialised must be initialised to something sensible since ReceiveFromChildren won't
+       *  fill it in completely unless the logarithm base SPREADFACTOR of the number of processes is an integer.
+       */
+      for (unsigned int index = 0; index < SPREADFACTOR * DensityTracker::DENSITY_TRACKER_SIZE;
+          index++)
+      {
+        childrenDensitiesSerialised[index] = REFERENCE_DENSITY;
+      }
 
     }
 
@@ -136,6 +136,8 @@ namespace hemelb
     template<class BroadcastPolicy>
     void IncompressibilityChecker<BroadcastPolicy>::PostReceiveFromChildren(unsigned long splayNumber)
     {
+      timings[hemelb::reporting::Timers::monitoring].Start();
+
       for (int childIndex = 0; childIndex < (int) SPREADFACTOR; childIndex++)
       {
         DensityTracker childDensities(&childrenDensitiesSerialised[childIndex
@@ -143,6 +145,8 @@ namespace hemelb
 
         upwardsDensityTracker.UpdateDensityTracker(childDensities);
       }
+
+      timings[hemelb::reporting::Timers::monitoring].Stop();
     }
 
     template<class BroadcastPolicy>
@@ -168,10 +172,12 @@ namespace hemelb
     template<class BroadcastPolicy>
     void IncompressibilityChecker<BroadcastPolicy>::ProgressToParent(unsigned long splayNumber)
     {
+      timings[hemelb::reporting::Timers::monitoring].Start();
+
       distribn_t localDensity;
       for (site_t i = 0; i < mLatDat->GetLocalFluidSiteCount(); i++)
       {
-        /// TODO Refactor into a method in the lattice class that computes *just* the density
+        //! @todo #23 Refactor into a method in the lattice class that computes *just* the density
         localDensity = 0.0;
         for (unsigned int l = 0; l < D3Q15::NUMVECTORS; l++)
         {
@@ -181,6 +187,7 @@ namespace hemelb
 
         upwardsDensityTracker.UpdateDensityTracker(localDensity);
       }
+      timings[hemelb::reporting::Timers::monitoring].Stop();
 
       this->SendToParent(upwardsDensityTracker.GetDensitiesArray(),
                          DensityTracker::DENSITY_TRACKER_SIZE);
