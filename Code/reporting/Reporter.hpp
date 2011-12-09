@@ -12,10 +12,8 @@ namespace hemelb
                                                                                const long int aSiteCount,
                                                                                const TimersBase<
                                                                                    ClockPolicy,
-                                                                                   CommsPolicy>& timers
-                                                                               ,
-                                                                               const lb::SimulationState &aState
-                                                                               ,
+                                                                                   CommsPolicy>& timers,
+                                                                               const lb::SimulationState &aState,
                                                                                const lb::IncompressibilityChecker<
                                                                                    BroadcastPolicy> &aChecker) :
         WriterPolicy(name), snapshotCount(0), imageCount(0), siteCount(aSiteCount), stability(true), timings(timers), state(aState), incompressibilityChecker(aChecker)
@@ -90,18 +88,22 @@ namespace hemelb
                             (unsigned long) CommsPolicy::FluidSitesOnProcessor(n));
       }
 
-      double normalisations[Timers::numberOfTimers] = { 1.0,
-                                                        1.0,
-                                                        1.0,
-                                                        1.0,
-                                                        cycles,
-                                                        imageCount,
-                                                        cycles,
-                                                        cycles,
-                                                        snapshotCount,
-                                                        1.0 };
+      std::vector<double> normalisations;
+      normalisations.push_back(1.0);
+      normalisations.push_back(1.0);
+      normalisations.push_back(1.0);
+      normalisations.push_back(1.0);
+      normalisations.push_back(cycles);
+      normalisations.push_back(imageCount);
+      normalisations.push_back(cycles);
+      normalisations.push_back(cycles);
+      normalisations.push_back(cycles);
+      normalisations.push_back(snapshotCount);
+      normalisations.push_back(1.0);
+      // If this assertion trips, it means you have added a new timer and not defined its normalisation factor above.
+      assert(normalisations.size() == Timers::numberOfTimers);
 
-      WriterPolicy::Print("\n\nPer-proc timing data (secs per [simulation,simulation,simulation,simulation,cycle,image,cycle,cycle,snapshot,simulation]): \n\n");
+      WriterPolicy::Print("\n\nPer-proc timing data (secs per [simulation,simulation,simulation,simulation,cycle,image,cycle,cycle,cycle,snapshot,simulation]): \n\n");
       WriterPolicy::Print("\t\tLocal \tMin \tMean \tMax\n");
       for (unsigned int ii = 0; ii < Timers::numberOfTimers; ii++)
       {

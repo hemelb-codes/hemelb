@@ -41,7 +41,7 @@ namespace hemelb
                      int root,
                      MPI_Comm comm)
           {
-            CPPUNIT_ASSERT_EQUAL(10, count);
+            CPPUNIT_ASSERT_EQUAL(11, count);
             for (int i = 0; i < count; i++)
             {
               CPPUNIT_ASSERT_EQUAL(10.0 * i, sendbuf[i]);
