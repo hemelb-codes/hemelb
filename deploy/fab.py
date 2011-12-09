@@ -6,13 +6,16 @@ def clone():
 	with cd(env.remote_directory):
 		run("rm -rf %s"%env.repository)
 		run("hg clone %(hg)s/%(repository)s"%{'hg':env.hg,'repository':env.repository})
+		run("mkdir -p dependencies/build")
+		run("mkdir -p Code/build")
 	
 @task(alias='cold')
 def deploy_cold():
 	execute(clone)
-	execute(parmetis)
+	execute(configure)
 	execute(build)
-	execute(build_python_tools)
+	execute(install)
+	execute(tools)
 	execute(test)
 
 @task
@@ -26,22 +29,7 @@ def clean():
 	with cd(env.code_path):
 		run("make clean_tree")
 
-@task
-def configure_parmetis():
-	with cd(env.parmetis_path):
-		with prefix(env.build_prefix):
-			run("make config")
 
-@task
-def build_parmetis():
-	with cd(env.parmetis_path):
-		with prefix(env.build_prefix):
-				run("make")
-
-@task(alias="metis")
-def parmetis():
-	execute(configure_parmetis)
-	execute(build_parmetis)
 
 @task(alias='tools')
 def build_python_tools():
@@ -49,16 +37,27 @@ def build_python_tools():
 		run("python setup.py build")
 
 @task
+def configure():
+	with cd(env.code_build_path):
+		with prefix(env.build_prefix):
+			run("ccmake .. -DCMAKE_INSTALL_PREFIX=%s"%env.install_path)
+
+@task
 def build():
-	with cd(env.code_path):
+	with cd(env.code_build_path):
 		with prefix(env.build_prefix):
 			run("make")
-		
+
+def install():
+	with cd(env.code_build_path):
+		with prefix(env.build_prefix):
+			run("make install")
+
 @task
 def test():
 	results_name="test_results.xml"
 	with cd(env.remote_directory):
-		run(env.pather.join(env.code_path,"build","unitTests")+" 2>"+results_name)
+		run(env.pather.join(env.install_path,"bin","unitTests")+" 2>"+results_name)
 		get(results_name,os.path.join("remote_files","%(host)s","tests","%(basename)s"))
 
 @task(alias='regress')
