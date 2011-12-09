@@ -17,6 +17,7 @@ set(HEMELB_STEERING_LIB basic
 option(USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(USE_STREAKLINES "Calculate streakline images" ON)
+set(OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 
 #------- Dependencies -----------
 
@@ -37,6 +38,7 @@ ExternalProject_Add(
 	-DUSE_MULTIMACHINE=${USE_MULTIMACHINE}
 	-DHEMELB_BUILD_UNITTESTS=${HEMELB_BUILD_UNITTESTS}
 	-DUSE_STREAKLINES=${USE_STREAKLINES}
+	-DOPTIMISATION=${OPTIMISATION}
 )
 ExternalProject_Get_Property(hemelb install_dir)
 FILE(GLOB results ${install_dir}/bin/*)

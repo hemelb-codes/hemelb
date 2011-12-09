@@ -15,12 +15,17 @@ set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 set(DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
 	CACHE FILEPATH "Path to find dependency includes and libraries")
+set(OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 	
 # Add warnings flags to development build types
 if (USE_ALL_WARNINGS_GNU)
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 endif(USE_ALL_WARNINGS_GNU)
+if(OPTIMISATION)
+	set( CMAKE_CXX_FLAGS_RELEASE OPTIMISATION)
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTIMISATION}")
+endif(OPTIMISATION)
 
 if (NOT USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
