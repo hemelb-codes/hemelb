@@ -18,7 +18,8 @@ namespace hemelb
       using namespace hemelb::reporting;
 
       typedef TimersBase<ClockMock, MPICommsMock> TimersMock;
-      typedef ReporterBase<ClockMock, WriterMock, MPICommsMock, net::BroadcastMock > ReporterMock;
+      typedef ReporterBase<ClockMock, WriterMock, MPICommsMock, net::BroadcastMock> ReporterMock;
+      typedef lb::IncompressibilityChecker<net::BroadcastMock> IncompressibilityCheckerMock;
 
       class ReporterTests : public CppUnit::TestFixture
       {
@@ -31,17 +32,22 @@ namespace hemelb
         public:
           void setUp()
           {
-            timers = new TimersMock();
+            mockTimers = new TimersMock();
+            realTimers = new reporting::Timers();
             state = new hemelb::lb::SimulationState(500, 2);
             net = new net::Net();
             latticeData = new FourCubeLatticeData();
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
-            incompChecker = new lb::IncompressibilityChecker<net::BroadcastMock>(latticeData, net, state, 10.0);
+            incompChecker = new IncompressibilityCheckerMock(latticeData,
+                                                             net,
+                                                             state,
+                                                             *realTimers,
+                                                             10.0);
             reporter = new ReporterMock("mock_path",
                                         "exampleinputfile",
                                         1234,
-                                        *timers,
+                                        *mockTimers,
                                         *state,
                                         *incompChecker);
           }
@@ -49,7 +55,8 @@ namespace hemelb
           void tearDown()
           {
             delete reporter;
-            delete timers;
+            delete mockTimers;
+            delete realTimers;
             delete incompChecker;
             delete net;
 
@@ -80,11 +87,11 @@ namespace hemelb
             {
               for (unsigned int j = 0; j < i; j++)
               {
-                (*timers)[i].Start();
-                (*timers)[i].Stop();
+                (*mockTimers)[i].Start();
+                (*mockTimers)[i].Stop();
               }
             }
-            timers->Reduce(); // invoke the Timers MPI mock
+            mockTimers->Reduce(); // invoke the Timers MPI mock
             reporter->Snapshot();
             reporter->Snapshot();
             reporter->Snapshot();
@@ -119,7 +126,7 @@ namespace hemelb
             reporter->Results().pop_back();
             reporter->Results().pop_back();
             CheckLastMessageContains("time steps per cycle: 500");
-            CheckLastMessageContains("time steps per second: 11.111");
+            CheckLastMessageContains("time steps per second: 10.000");
             CheckLastMessageContains("cycles and total time steps: 2, 1000");
             CheckLastMessageContains("fluid sites: 1234");
             CheckLastMessageContains("topology depths checked: 3");
@@ -161,7 +168,8 @@ namespace hemelb
             {
               normalisation = 3.0;
             }
-            if (row == Timers::lb || row == Timers::mpiSend || row == Timers::mpiWait)
+            if (row == Timers::lb || row == Timers::mpiSend || row == Timers::mpiWait
+                || row == Timers::monitoring)
             {
               normalisation = 2.0;
             }
@@ -173,9 +181,13 @@ namespace hemelb
 
         private:
           ReporterMock *reporter;
-          TimersMock *timers;
+
+          // We need two sets of timers because the incompressibility checker is not templated over timing policy.
+          TimersMock *mockTimers;
+          reporting::Timers* realTimers;
+
           lb::SimulationState *state;
-          lb::IncompressibilityChecker<net::BroadcastMock> *incompChecker;
+          IncompressibilityCheckerMock *incompChecker;
           net::Net *net;
           FourCubeLatticeData *latticeData;
 
