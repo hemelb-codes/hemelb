@@ -1,0 +1,35 @@
+#!/bin/bash -l
+
+# Batch script to run an MPI parallel job on Legion with the upgraded software
+# stack under SGE with OpenMPI.
+
+# 1. Force bash as the executing shell.
+#$$ -S /bin/bash
+
+# 2. Request wallclock time (format hours:minutes:seconds).
+#$$ -l h_rt=$wall_time
+
+# 3. Request 1 gigabyte of RAM per process.
+#$$ -l mem=$memory
+
+# 4. Set the name of the job.
+#$$ -N $name
+
+# 5. Select the OpenMPI parallel environment and 16 processes.
+#$$ -pe openmpi $nodes
+
+# 6. Select the project that this job will run under.
+# Find <your_project_id> by running the command "groups"
+#$$ -$project
+
+# 7. Set the working directory to somewhere in your scratch space.  This is
+# a necessary step with the upgraded software stack as compute nodes cannot
+# write to $$HOME.
+# Replace "<your_UCL_id>" with your UCL user ID :)
+#$$ -wd /home/$username/Scratch/output
+
+# 8. Run our MPI job.  $$NSLOTS is an SGE environment variable which is set to
+# the number of processors a user has requested.  Using it in submission
+# scripts means that the user only has to specify the number of processors
+# once.
+mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $executable_path/unittests_hemelb
