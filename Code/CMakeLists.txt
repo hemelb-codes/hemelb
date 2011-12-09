@@ -8,7 +8,7 @@ option(USE_HEMELB_DEBUGGER "Use built in hemelb debugger" OFF)
 option(USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
-option(USE_STREAKLINES "Calculate streakline images" OFF)
+option(USE_STREAKLINES "Calculate streakline images" ON)
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
 set(HEMELB_STEERING_LIB basic
