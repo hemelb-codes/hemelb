@@ -16,7 +16,7 @@ set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 option(USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
-option(USE_STREAKLINES "Calculate streakline images" OFF)
+option(USE_STREAKLINES "Calculate streakline images" ON)
 
 #------- Dependencies -----------
 
