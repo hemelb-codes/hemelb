@@ -17,8 +17,8 @@ set(DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
 	
 # Add warnings flags to development build types
 if (USE_ALL_WARNINGS_GNU)
-	list(APPEND CMAKE_CXX_FLAGS -Wall)
-	list(APPEND CMAKE_CXX_FLAGS_DEBUG -Wall)
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 endif(USE_ALL_WARNINGS_GNU)
 #------Dependencies --------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
