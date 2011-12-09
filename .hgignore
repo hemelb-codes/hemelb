@@ -5,6 +5,9 @@ syntax: glob
 *~
 .metadata/*
 build/*
+Code/build/*
+remote_files/*
+dependencies/build/*
 Doc/*
 CMakeFiles/*
 CMakeCache.txt

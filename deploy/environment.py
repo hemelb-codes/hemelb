@@ -7,6 +7,7 @@ env.modules=[]
 env.pather=posixpath
 env.remote_directory_name='FabricHemeLb'
 env.build_type='Release'
+env.localroot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def complete_environment():
 	env.remote_directory=env.pather.join("~",env.remote_directory_name)

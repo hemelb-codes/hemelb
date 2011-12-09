@@ -2,7 +2,7 @@ from environment import *
 	
 @task
 def planck():
-	env.hosts=['planck']
+	env.hosts=['planck.chem.ucl.ac.uk']
 	env.tools_build="lib.linux-x86_64-2.6"
 	complete_environment()
 

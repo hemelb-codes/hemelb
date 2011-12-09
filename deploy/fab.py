@@ -1,4 +1,6 @@
 from machines import *
+from fabric.contrib.project import *
+from templates import *
 
 @task
 def clone():
@@ -46,8 +48,8 @@ def build_python_tools():
 def configure():
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
-			run("cmake %s -DCMAKE_INSTALL_PREFIX=%s -DCMAKE_BUILD_TYPE=%s -DCMAKE_CXX_FLAGS_RELEASE=-O4" 
-			% (env.repository_path, env.install_path, env.build_type)
+			run("cmake %s -DCMAKE_INSTALL_PREFIX=%s -DCMAKE_BUILD_TYPE=%s -DCMAKE_CXX_FLAGS_RELEASE=-O4 -DDEPENDENCIES_INSTALL_PATH=%s" 
+			% (env.repository_path, env.install_path, env.build_type, env.install_path)
 			)
 
 @task
@@ -83,7 +85,19 @@ def regression_test():
 def revert(args="--all"):
 	with cd(env.repository_path):
 		run("hg revert %s"%args)
-		
+
+@task
+def sync():
+	rsync_project(
+		remote_dir=env.repository_path,
+		local_dir=env.localroot+'/',
+		exclude=map(lambda x: x.replace('\n',''),
+		list(open(os.path.join(env.localroot,'.hgignore')))+
+		['.hg']+
+		list(open(os.path.join(env.localroot,'RegressionTests','.hgignore')))
+		)
+	)
+
 @task
 def patch(args=""):
 	local("hg diff %s> fabric.diff"%args)
