@@ -6,9 +6,8 @@ def clone():
 	with cd(env.remote_directory):
 		run("rm -rf %s"%env.repository)
 		run("hg clone %(hg)s/%(repository)s"%{'hg':env.hg,'repository':env.repository})
-		run("mkdir -p dependencies/build")
-		run("mkdir -p Code/build")
-	
+		run("mkdir -p %s"%env.build_path)
+
 @task(alias='cold')
 def deploy_cold():
 	execute(clone)
@@ -26,10 +25,8 @@ def update():
 
 @task
 def clean():
-	with cd(env.code_path):
+	with cd(env.build_path):
 		run("make clean_tree")
-
-
 
 @task(alias='tools')
 def build_python_tools():
@@ -38,18 +35,18 @@ def build_python_tools():
 
 @task
 def configure():
-	with cd(env.code_build_path):
+	with cd(env.build_path):
 		with prefix(env.build_prefix):
 			run("ccmake .. -DCMAKE_INSTALL_PREFIX=%s"%env.install_path)
 
 @task
 def build():
-	with cd(env.code_build_path):
+	with cd(env.build_path):
 		with prefix(env.build_prefix):
 			run("make")
 
 def install():
-	with cd(env.code_build_path):
+	with cd(env.build_path):
 		with prefix(env.build_prefix):
 			run("make install")
 
@@ -64,7 +61,7 @@ def test():
 def regression_test():
 	with cd(env.regression_test_path):
 		with prefix(env.python_prefix):
-			run("./diffTest.sh")
+			run("HEMELB_INSTALL_DIR=%s ./diffTest.sh"%env.install_path)
 		get("results",os.path.join("remote_files","%(host)s","%(path)s"))
 		
 @task
