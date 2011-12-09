@@ -20,6 +20,7 @@ Scripts/ParMetis-3.1.1.tar
 dependencies/bin
 dependencies/lib
 dependencies/include
+dependencies/share
 dependencies/distributions
 Tools/visim/visim
 Tests/diffTest/CleanImages/*.ppm

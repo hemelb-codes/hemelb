@@ -77,10 +77,18 @@ else(CPPUNIT_FOUND)
 	   cppunit
 		INSTALL_DIR ${DEPENDENCIES_PATH}
 		URL ${CPPUNIT_TARBALL}
-		PATCH_COMMAND autoreconf -fvi #autoreconf required on osx - based on contents of portfile
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot
 		BUILD_IN_SOURCE 1
 	)
+	if (APPLE)
+		ExternalProject_Add_Step(
+			cppunit reconf
+			COMMAND autoreconf -fvi #autoreconf required on osx - based on contents of portfile
+			DEPENDEES download
+			DEPENDERS configure
+			WORKING_DIRECTORY <SOURCE_DIR>
+		)
+	endif(APPLE)
 endif(CPPUNIT_FOUND)
 
 # ---------BOOST -----------------------
