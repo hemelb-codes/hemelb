@@ -6,7 +6,7 @@ def clone():
 	with cd(env.remote_directory):
 		run("rm -rf %s"%env.repository)
 		run("hg clone %(hg)s/%(repository)s"%{'hg':env.hg,'repository':env.repository})
-		run("mkdir -p %s"%env.build_path)
+	run("mkdir -p %s"%env.build_path)
 
 @task(alias='cold')
 def deploy_cold():
@@ -15,6 +15,15 @@ def deploy_cold():
 	execute(build)
 	execute(install)
 	execute(tools)
+	execute(test)
+
+@task
+def update_test():
+	execute(update)
+	execute(configure)
+	execute(build)
+	execute(install)
+	execute(build_python_tools)
 	execute(test)
 
 @task
@@ -37,7 +46,9 @@ def build_python_tools():
 def configure():
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
-			run("ccmake .. -DCMAKE_INSTALL_PREFIX=%s"%env.install_path)
+			run("cmake %s -DCMAKE_INSTALL_PREFIX=%s -DCMAKE_BUILD_TYPE=%s -DCMAKE_CXX_FLAGS_RELEASE=-O4" 
+			% (env.repository_path, env.install_path, env.build_type)
+			)
 
 @task
 def build():
@@ -45,23 +56,27 @@ def build():
 		with prefix(env.build_prefix):
 			run("make")
 
+@task
 def install():
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
 			run("make install")
+			run("chmod u+x %s/bin/unittests_hemelb %s/bin/hemelb"%(env.install_path, env.install_path))
 
 @task
 def test():
 	results_name="test_results.xml"
 	with cd(env.remote_directory):
-		run(env.pather.join(env.install_path,"bin","unitTests")+" 2>"+results_name)
-		get(results_name,os.path.join("remote_files","%(host)s","tests","%(basename)s"))
+		with prefix(env.run_prefix):
+			run(env.pather.join(env.install_path,"bin","unittests_hemelb")+" -o "+results_name)
+			get(results_name,os.path.join("remote_files","%(host)s","tests","%(basename)s"))
 
 @task(alias='regress')
 def regression_test():
 	with cd(env.regression_test_path):
 		with prefix(env.python_prefix):
-			run("HEMELB_INSTALL_DIR=%s ./diffTest.sh"%env.install_path)
+			with prefix(env.run_prefix):
+				run("HEMELB_INSTALL_DIR=%s ./diffTest.sh"%env.install_path)
 		get("results",os.path.join("remote_files","%(host)s","%(path)s"))
 		
 @task
