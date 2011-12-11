@@ -20,5 +20,5 @@ def complete_environment():
 	env.scripts_path=env.pather.join(env.remote_directory,'scripts')
 	module_commands=["module %s"%module for module in env.modules]
 	env.build_prefix=" && ".join(module_commands)
-	env.run_prefix=env.build_prefix + ("&& LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/dependencies/lib"%env.repository_path)
+	env.run_prefix=env.build_prefix
 	env.python_prefix="export PYTHONPATH=$PYTHONPATH:%s"%env.pather.join(env.tools_build_path)
