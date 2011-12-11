@@ -30,10 +30,16 @@ endif(OPTIMISATION)
 if (NOT USE_STREAKLINES)
 	add_definitions(-DNO_STREAKLINES)
 endif(NOT USE_STREAKLINES)
+
 #------Dependencies --------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
 list(APPEND CMAKE_INCLUDE_PATH ${DEPENDENCIES_PATH}/include)
 list(APPEND CMAKE_LIBRARY_PATH ${DEPENDENCIES_PATH}/lib)
+
+#--- Set up runtime search path for DLLs -----
+
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+SET(CMAKE_INSTALL_RPATH "${DEPENDENCIES_PATH}/lib")
 
 # ------MPI------------------
 # Require MPI for this project:
