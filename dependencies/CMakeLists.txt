@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 2.8)
-Project(HemeLB)
+Project(HemeLBDependencies)
+include(ExternalProject)
 set(DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 set(DEPENDENCIES_INSTALL_PATH ${DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
-include(ExternalProject)
 
 # --------- tinyxml -------------------
 find_package(TinyXML QUIET)
@@ -47,7 +47,6 @@ else(PARMETIS_FOUND)
 		PATHS ${DEPENDENCIES_PATH}/distributions
 	)
 	if(NOT PARMETIS_TARBALL)
-		message("Here")
 		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz 
 		CACHE STRING "Path to download Parmetis (can be local file://)" FORCE)
 	endif(NOT PARMETIS_TARBALL)
@@ -76,6 +75,12 @@ else(CPPUNIT_FOUND)
 		set(CPPUNIT_TARBALL http://downloads.sourceforge.net/cppunit/cppunit-1.12.1.tar.gz
 			CACHE STRING "Path to download CPPUNIT (can be local file://)" FORCE)
 	endif(NOT CPPUNIT_TARBALL)
+	if(APPLE)
+		set(RECONFIGURE_CPPUNIT_DEFAULT ON)
+	else(APPLE)
+		set(RECONFIGURE_CPPUNIT_DEFAULT OFF)
+	endif(APPLE)
+	option(RECONFIGURE_CPPUNIT "Include Reconfigure step for CPPUNIT" ${RECONFIGURE_CPPUNIT_DEFAULT})
 	ExternalProject_Add(
 	   cppunit
 		INSTALL_DIR ${DEPENDENCIES_INSTALL_PATH}
@@ -83,7 +88,7 @@ else(CPPUNIT_FOUND)
 	   CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --mandir=<INSTALL_DIR>/share/man --disable-doxygen --disable-dot
 		BUILD_IN_SOURCE 1
 	)
-	if (APPLE)
+	if (RECONFIGURE_CPPUNIT)
 		ExternalProject_Add_Step(
 			cppunit reconf
 			COMMAND autoreconf -fvi #autoreconf required on osx - based on contents of portfile
@@ -91,7 +96,7 @@ else(CPPUNIT_FOUND)
 			DEPENDERS configure
 			WORKING_DIRECTORY <SOURCE_DIR>
 		)
-	endif(APPLE)
+	endif(RECONFIGURE_CPPUNIT)
 endif(CPPUNIT_FOUND)
 
 # ---------BOOST -----------------------
