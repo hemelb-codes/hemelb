@@ -1,23 +1,25 @@
 from templates import *
+from machines import *
 from fabric.contrib.project import *
 
 @task
 def clone():
-	run("mkdir -p "+env.remote_directory)
-	with cd(env.remote_directory):
+	run("mkdir -p "+env.remote_path)
+	with cd(env.remote_path):
 		run("rm -rf %s"%env.repository)
 		run("hg clone %(hg)s/%(repository)s"%{'hg':env.hg,'repository':env.repository})
 	run("mkdir -p %s"%env.build_path)
 	run("mkdir -p %s"%env.scripts_path)
+	run("mkdir -p %s"%env.install_path)
 
 @task(alias='cold')
 def deploy_cold():
 	execute(clone)
+	execute(send_distributions)
 	execute(configure)
 	execute(build)
 	execute(install)
 	execute(tools)
-	execute(test)
 
 @task
 def update_test():
@@ -26,7 +28,6 @@ def update_test():
 	execute(build)
 	execute(install)
 	execute(build_python_tools)
-	execute(test)
 
 @task
 def update():
@@ -35,9 +36,14 @@ def update():
 		run("hg update")
 
 @task
+def clear_build():
+	run("rm -rf %s"%env.build_path)
+	run("mkdir -p %s"%env.build_path)
+
+@task
 def clean():
 	with cd(env.build_path):
-		run("make clean_tree")
+		run("make clean")
 
 @task(alias='tools')
 def build_python_tools():
@@ -67,24 +73,28 @@ def install():
 
 @task
 def test():
-	results_name="test_results.xml"
-	with cd(env.remote_directory):
-		with prefix(env.run_prefix):
-			run(env.pather.join(env.install_path,"bin","unittests_hemelb")+" -o "+results_name)
-			get(results_name,os.path.join("remote_files","%(host)s","tests","%(basename)s"))
+	with prefix(env.run_prefix):
+		name='unittests'
+		execute(job,'unittests',name,nodes=1)
+		get(os.pather.join(env.results_path,name,'tests.xml'),
+			os.path.join(env.remote_files,"%(host)s","tests","%(basename)s"))
 
 @task(alias='regress')
 def regression_test():
-	with cd(env.regression_test_path):
-		with prefix(env.python_prefix):
-			with prefix(env.run_prefix):
-				run("HEMELB_INSTALL_DIR=%s ./diffTest.sh"%env.install_path)
-		get("results",os.path.join("remote_files","%(host)s","%(path)s"))
+	name='regression'
+	execute(job,'regression',name)
+	get(os.pather.join(env.results_path,name,'results'),
+		os.path.join(env.remote_files,"%(host)s","%(path)s"))
 		
 @task
 def revert(args="--all"):
 	with cd(env.repository_path):
 		run("hg revert %s"%args)
+	
+@task	
+def send_distributions():
+	put(os.path.join(env.localroot,'dependencies','distributions','*.tar.gz'),
+		env.pather.join(env.repository_path,'dependencies','distributions'))
 
 @task
 def sync():
@@ -101,19 +111,21 @@ def sync():
 @task
 def patch(args=""):
 	local("hg diff %s> fabric.diff"%args)
-	put("fabric.diff",env.pather.join(env.remote_directory,env.repository))
+	put("fabric.diff",env.pather.join(env.remote_path,env.repository))
 	with cd(env.repository_path):
 		run("patch -p1 < fabric.diff")
 
 @task
-def job(template,name,wall_time='0:1:0',nodes='4',memory='1GB'):
-	template_name="%s_%s"%(env.template_key,template)
+def job(template,name,wall_time='0:1:0',nodes=4,memory='1GB'):
+	template_name="%s_%s"%(env.machine_name,template)
+	results_directory=env.pather.join(env.results_path,name)
+	run("mkdir -p %s"%results_directory)
 	job_script=fill_in_template(template_name,name=name,
 		wall_time=wall_time,nodes=nodes,memory=memory,
 		username=env.username,project=env.project,
-		executable_path=env.scripts_path
+		executable_path=env.scripts_path,results=results_directory
 		)
 	dest_name=env.pather.join(env.scripts_path,env.pather.basename(job_script))
 	put(job_script,dest_name)
-	#qsub would go here, but we're just practising for now
+	run("%s %s")%(env.job_dispatch,dest_name)
 	
