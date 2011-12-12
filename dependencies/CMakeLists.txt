@@ -5,6 +5,8 @@ set(DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 set(DEPENDENCIES_INSTALL_PATH ${DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
 set(CMAKE_MODULE_PATH "${DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
 
+find_package(MPI REQUIRED) # Do this *after* we include the patched find MPI module
+
 # --------- tinyxml -------------------
 find_package(TinyXML QUIET)
 if (TINYXML_FOUND)
