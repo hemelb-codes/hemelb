@@ -55,6 +55,8 @@ else()
 	set(PARMETIS_CXX ${MPI_CXX_COMPILER} CACHE STRING "MPI Compiler to use for Parmetis, leave blank to let parmetis guess")
 	if(PARMETIS_CC)
 		set(PARMETIS_CC_OPTION cc=${PARMETIS_CC})
+	endif()
+	if(PARMETIS_CXX)
 		set(PARMETIS_CXX_OPTION cxx=${PARMETIS_CXX})
 	endif()
 	ExternalProject_Add(

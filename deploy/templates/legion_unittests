@@ -26,10 +26,10 @@
 # a necessary step with the upgraded software stack as compute nodes cannot
 # write to $$HOME.
 # Replace "<your_UCL_id>" with your UCL user ID :)
-#$$ -wd /home/$username/Scratch/output
+#$$ -wd $results
 
 # 8. Run our MPI job.  $$NSLOTS is an SGE environment variable which is set to
 # the number of processors a user has requested.  Using it in submission
 # scripts means that the user only has to specify the number of processors
 # once.
-mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $executable_path/unittests_hemelb
+mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $executable_path/unittests_hemelb -o 'tests.xml'
