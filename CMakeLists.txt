@@ -17,6 +17,7 @@ set(HEMELB_STEERING_LIB basic
 option(USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(USE_STREAKLINES "Calculate streakline images" ON)
+option(USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 set(OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 
 #------- Dependencies -----------
@@ -46,6 +47,7 @@ ExternalProject_Add(
 	-DMPI_CXX_COMPILER=${MPI_CXX_COMPILER}
 	-DMPI_C_NO_INTERROGATE=${MPI_C_NO_INTERROGATE}
 	-DMPI_CXX_NO_INTERROGATE=${MPI_CXX_NO_INTERROGATE}
+	-DUSE_ALL_WARNINGS_GNU=${USE_ALL_WARNINGS_GNU}
 )
 ExternalProject_Get_Property(hemelb install_dir)
 FILE(GLOB results ${install_dir}/bin/*)
