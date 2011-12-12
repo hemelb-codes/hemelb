@@ -77,16 +77,20 @@ def install():
 @task
 def test():
 	with prefix(env.run_prefix):
-		execute(job,'unittests',nodes=1)
+		execute(job,'unittests','unittests_%s'%env.build_number,nodes=1)
 
 @task(alias='regress')
 def regression_test():
-	execute(job,'regression')
-
+	execute(job,'regression','regression_%s'%env.build_number)
+	
 @task
 def fetch_results(name=''):
 	get(env.pather.join(env.results_path,name,'*'),
 		os.path.join(env.local_results,env.machine_name,name))
+		
+@task
+def clear_results(name=''):
+	run('rm -rf %s'%env.pather.join(env.results_path,name,'*'))		
 		
 @task
 def revert(args="--all"):

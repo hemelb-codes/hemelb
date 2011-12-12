@@ -23,7 +23,8 @@
 		"username":"jamespjh",
 		"project":"jamespjh_ccs",
 		"tools_build":"lib.linux-x86_64-2.6",
-		"results_path_template":"/home/$username/FabricHemeLb/results"
+		"results_path_template":"/home/$username/FabricHemeLb/results",
+		"run_prefix_commands":["export set TMP=/tmp"]
 	},
 	"hector":{
 		"cmake_options":{
