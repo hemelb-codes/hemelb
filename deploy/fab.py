@@ -54,8 +54,8 @@ def build_python_tools():
 def configure():
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
-			run("cmake %s -DCMAKE_INSTALL_PREFIX=%s -DCMAKE_BUILD_TYPE=%s -DCMAKE_CXX_FLAGS_RELEASE=-O4 -DDEPENDENCIES_INSTALL_PATH=%s" 
-			% (env.repository_path, env.install_path, env.build_type, env.install_path)
+			run("cmake %s -DCMAKE_INSTALL_PREFIX=%s -DDEPENDENCIES_INSTALL_PATH=%s %s" 
+			% (env.repository_path, env.install_path, env.install_path, env.cmake_flags)
 			)
 
 @task
