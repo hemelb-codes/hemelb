@@ -8,4 +8,7 @@
 		"username":"jamespjh", // override default user for this machine
 		"project":"jamespjh_ccs",
 	}
+	"entropy":{
+		"username":"jamespjh",	
+	}
 }
