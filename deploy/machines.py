@@ -32,11 +32,16 @@ def planck():
 @task 
 def legion():
 	execute(machine,'legion')
+	
+@task 
+def entropy():
+	execute(machine,'entropy')
 
 def complete_environment():
 	env.hosts=['%s@%s'%(env.username,env.remote)]
 	env.results_path=Template(env.results_path_template).substitute(env)
 	env.remote_path=Template(env.remote_path_template).substitute(env)
+	env.config_path=Template(env.config_path_template).substitute(env)
 	env.repository_path=env.pather.join(env.remote_path,env.repository)
 	env.tools_path=env.pather.join(env.repository_path,"Tools")
 	env.regression_test_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
@@ -45,6 +50,7 @@ def complete_environment():
 	env.install_path=env.pather.join(env.remote_path,'install')
 	env.scripts_path=env.pather.join(env.remote_path,'scripts')
 	env.local_results=os.path.join(env.localroot,'results')
+	env.local_configs=os.path.join(env.localroot,'config_files')
 	env.cmake_total_options=env.cmake_default_options.copy()
 	env.cmake_total_options.update(env.cmake_options)
 	env.cmake_flags=' '.join(["-D%s=%s"%option for option in env.cmake_total_options.iteritems()])

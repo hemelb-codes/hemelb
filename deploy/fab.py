@@ -82,11 +82,6 @@ def test():
 @task(alias='regress')
 def regression_test():
 	execute(job,'regression','regression_%s'%env.build_number)
-	
-@task
-def fetch_results(name=''):
-	get(env.pather.join(env.results_path,name,'*'),
-		os.path.join(env.local_results,env.machine_name,name))
 		
 @task
 def clear_results(name=''):
@@ -120,6 +115,24 @@ def patch(args=""):
 	put("fabric.diff",env.pather.join(env.remote_path,env.repository))
 	with cd(env.repository_path):
 		run("patch -p1 < fabric.diff")
+
+@task
+def fetch_configs(name):
+	get(env.pather.join(env.config_path,name,'*'),
+		os.path.join(env.local_results,env.machine_name,name))
+
+@task
+def put_configs(name):
+	put(os.path.join(env.local_configs,name,'*'),env.pather.join(env.config_path,name))
+
+@task
+def put_results(name):
+	put(os.path.join(env.local_results,env.machine_name,name,'*'),env.pather.join(env.results_path,name))
+	
+@task
+def fetch_results(name=''):
+	get(env.pather.join(env.results_path,name,'*'),
+		os.path.join(env.local_results,env.machine_name,name))
 
 @task
 def job(template,name=None,wall_time='0:1:0',nodes=4,memory='1G'):
