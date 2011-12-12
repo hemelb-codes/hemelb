@@ -59,10 +59,13 @@ def configure():
 			)
 
 @task
-def build():
+def build(verbose=False):
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
-			run("make")
+			if verbose:
+				run("make VERBOSE=1")
+			else:
+				run("make")
 
 @task
 def install():
