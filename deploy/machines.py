@@ -1,5 +1,6 @@
 from fabric.api import *
 import os
+import subprocess
 import posixpath
 import json
 from string import Template
@@ -51,4 +52,5 @@ def complete_environment():
 	env.build_prefix=" && ".join(module_commands+env.build_prefix_commands) or 'echo Building...'
 	env.run_prefix=" && ".join(module_commands+env.run_prefix_commands) or 'echo Running...'
 	env.python_prefix="export PYTHONPATH=$PYTHONPATH:%s"%env.pather.join(env.tools_build_path)
+	env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
 	
