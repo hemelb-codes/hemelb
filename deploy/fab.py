@@ -119,7 +119,7 @@ def patch(args=""):
 @task
 def fetch_configs(name):
 	get(env.pather.join(env.config_path,name,'*'),
-		os.path.join(env.local_results,env.machine_name,name))
+		os.path.join(env.local_results,name))
 
 @task
 def put_configs(name):
@@ -127,12 +127,12 @@ def put_configs(name):
 
 @task
 def put_results(name):
-	put(os.path.join(env.local_results,env.machine_name,name,'*'),env.pather.join(env.results_path,name))
+	put(os.path.join(env.local_results,name,'*'),env.pather.join(env.results_path,name))
 	
 @task
 def fetch_results(name=''):
 	get(env.pather.join(env.results_path,name,'*'),
-		os.path.join(env.local_results,env.machine_name,name))
+		os.path.join(env.local_results,name))
 
 @task
 def job(template,name=None,wall_time='0:1:0',nodes=4,memory='1G'):
@@ -147,6 +147,8 @@ def job(template,name=None,wall_time='0:1:0',nodes=4,memory='1G'):
 		)
 	dest_name=env.pather.join(env.scripts_path,env.pather.basename(job_script))
 	put(job_script,dest_name)
+	run("cp %s %s"%(dest_name,results_directory))
+	run("cp %s %s"%(env.build_cache,results_directory))
 	run("chmod u+x %s"%dest_name)
 	run("%s %s"%(env.job_dispatch,dest_name))
 	
