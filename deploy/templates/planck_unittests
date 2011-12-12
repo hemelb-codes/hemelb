@@ -1,2 +1,2 @@
 cd $results
-$executable_path/unittests_hemelb -o 'tests.xml'
+$executable_path/bin/unittests_hemelb -o 'tests.xml'

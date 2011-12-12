@@ -43,6 +43,7 @@ ExternalProject_Add(
 )
 ExternalProject_Get_Property(hemelb install_dir)
 FILE(GLOB results ${install_dir}/bin/*)
+message("Copying ${results} to install location")
 INSTALL(FILES ${results} DESTINATION bin)
 
 add_dependencies(hemelb cppunit parmetis tinyxml)
