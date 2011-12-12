@@ -9,9 +9,8 @@
 		"CMAKE_BUILD_TYPE":"Release",
 	   "CMAKE_CXX_FLAGS_RELEASE":"-O4"
 	},
+	"config_path_template":"$remote_path/config_files"
 	"legion":{
-		"username":"ucgajhe",
-		"project":"jamespjh_ccs",
 		"job_dispatch":"qsub",
 		"remote":"legion.rc.ucl.ac.uk",
 		"tools_build":"lib.linux-x86_64-2.6",
@@ -20,12 +19,15 @@
 	},
 	"planck":{
 		"remote":"planck.chem.ucl.ac.uk",
-		"username":"jamespjh",
-		"project":"jamespjh_ccs",
 		"tools_build":"lib.linux-x86_64-2.6",
 		"results_path_template":"/home/$username/FabricHemeLb/results",
 		"run_prefix_commands":["export set TMP=/tmp"]
 	},
+	"entropy":{
+		"remote":"entropy.ucl.ac.uk",
+		"results_path_template":"/store3/blood/Fabric/results",
+		"config_path_template":"/store3/blood/Fabric/config_files",
+	}
 	"hector":{
 		"cmake_options":{
 			"USE_ALL_WARNINGS_GNU":"OFF",
