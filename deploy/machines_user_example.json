@@ -1,0 +1,11 @@
+// Copy this file as machines_user.json, and fill in your details.
+{
+	"username":"ucgajhe"
+	"legion":{
+		"project":"jamespjh_ccs"
+	},
+	"planck":{
+		"username":"jamespjh", // override default user for this machine
+		"project":"jamespjh_ccs",
+	}
+}

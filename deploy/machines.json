@@ -1,0 +1,36 @@
+{
+	"hg":"ssh://hg@entropy.chem.ucl.ac.uk",
+	"repository":"hemelb",
+	"modules":[],
+	"build_prefix_commands":[],
+	"run_prefix_commands":[],
+	"remote_path_template":"/home/$username/FabricHemeLb",
+	"cmake_default_options":{
+		"CMAKE_BUILD_TYPE":"Release",
+	   "CMAKE_CXX_FLAGS_RELEASE":"-O4"
+	},
+	"legion":{
+		"username":"ucgajhe",
+		"project":"jamespjh_ccs",
+		"job_dispatch":"qsub",
+		"remote":"legion.rc.ucl.ac.uk",
+		"tools_build":"lib.linux-x86_64-2.6",
+		"modules":["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake"],
+		"results_path_template":"/home/$username/Scratch/FabricHemeLb/results"
+	},
+	"planck":{
+		"remote":"planck.chem.ucl.ac.uk",
+		"username":"jamespjh",
+		"project":"jamespjh_ccs",
+		"tools_build":"lib.linux-x86_64-2.6",
+		"results_path_template":"/home/$username/FabricHemeLb/results"
+	},
+	"hector":{
+		"cmake_options":{
+			"USE_ALL_WARNINGS_GNU":"OFF",
+			"CMAKE_CXX_COMPILER":"CC",
+			"CMAKE_C_COMPILER":"cc",
+			"OPTIMISATION":"-O3"
+		}
+	}
+}

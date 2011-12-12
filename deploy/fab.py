@@ -19,10 +19,10 @@ def deploy_cold():
 	execute(configure)
 	execute(build)
 	execute(install)
-	execute(tools)
+	execute(build_python_tools)
 
 @task
-def update_test():
+def update_build():
 	execute(update)
 	execute(configure)
 	execute(build)
@@ -77,19 +77,16 @@ def install():
 @task
 def test():
 	with prefix(env.run_prefix):
-		execute(job,'unittests','unittests',nodes=1)
-
-@task
-def fetch_test_results():
-	get(env.pather.join(env.results_path,name,'tests.xml'),
-		os.path.join(env.remote_files,"%(host)s","tests","%(basename)s"))
+		execute(job,'unittests',nodes=1)
 
 @task(alias='regress')
 def regression_test():
-	name='regression'
-	execute(job,'regression',name)
-	get(os.pather.join(env.results_path,name,'results'),
-		os.path.join(env.remote_files,"%(host)s","%(path)s"))
+	execute(job,'regression')
+
+@task
+def fetch_results(name=''):
+	get(env.pather.join(env.results_path,name,'*'),
+		os.path.join(env.local_results,env.machine_name,name))
 		
 @task
 def revert(args="--all"):
@@ -121,7 +118,8 @@ def patch(args=""):
 		run("patch -p1 < fabric.diff")
 
 @task
-def job(template,name,wall_time='0:1:0',nodes=4,memory='1GB'):
+def job(template,name=None,wall_time='0:1:0',nodes=4,memory='1G'):
+	name=name or template
 	template_name="%s_%s"%(env.machine_name,template)
 	results_directory=env.pather.join(env.results_path,name)
 	run("mkdir -p %s"%results_directory)
