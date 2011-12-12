@@ -50,7 +50,6 @@ else()
 		set(PARMETIS_TARBALL http://glaros.dtc.umn.edu/gkhome/fetch/sw/parmetis/parmetis-4.0.2.tar.gz 
 		CACHE STRING "Path to download Parmetis (can be local file://)" FORCE)
 	endif()
-	find_package(MPI REQUIRED)
 	set(PARMETIS_CC ${MPI_C_COMPILER} CACHE STRING "MPI Compiler to use for Parmetis, leave blank to let parmetis guess")
 	set(PARMETIS_CXX ${MPI_CXX_COMPILER} CACHE STRING "MPI Compiler to use for Parmetis, leave blank to let parmetis guess")
 	if(PARMETIS_CC)
