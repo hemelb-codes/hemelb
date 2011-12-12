@@ -49,8 +49,6 @@ def complete_environment():
 	env.build_path=env.pather.join(env.remote_path,'build')
 	env.install_path=env.pather.join(env.remote_path,'install')
 	env.scripts_path=env.pather.join(env.remote_path,'scripts')
-	env.local_results=os.path.join(env.localroot,'results')
-	env.local_configs=os.path.join(env.localroot,'config_files')
 	env.cmake_total_options=env.cmake_default_options.copy()
 	env.cmake_total_options.update(env.cmake_options)
 	env.cmake_flags=' '.join(["-D%s=%s"%option for option in env.cmake_total_options.iteritems()])
@@ -59,4 +57,6 @@ def complete_environment():
 	env.run_prefix=" && ".join(module_commands+env.run_prefix_commands) or 'echo Running...'
 	env.python_prefix="export PYTHONPATH=$PYTHONPATH:%s"%env.pather.join(env.tools_build_path)
 	env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
+	#env.build_number=run("hg id -i -r tip")
+	env.build_cache=env.pather.join(env.build_path,'CMakeCache.txt')
 	
