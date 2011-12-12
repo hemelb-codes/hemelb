@@ -3,7 +3,7 @@ Project(HemeLBDependencies)
 include(ExternalProject)
 set(DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 set(DEPENDENCIES_INSTALL_PATH ${DEPENDENCIES_PATH} CACHE STRING "Path to install Dependencies")
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
+set(CMAKE_MODULE_PATH "${DEPENDENCIES_PATH}/Modules/" ${CMAKE_MODULE_PATH})
 
 # --------- tinyxml -------------------
 find_package(TinyXML QUIET)
