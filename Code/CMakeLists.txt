@@ -9,11 +9,14 @@ option(USE_MULTIMACHINE "Use multi-level parallelism support" OFF)
 option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 option(USE_STREAKLINES "Calculate streakline images" ON)
+option(USE_MPI_COMPILER_WRAPPERS "Use MPI wrappers instead of options from FindMPI" OFF)
 set(HEMELB_LOG_LEVEL info
 	CACHE STRING "Log level, choose 'debug', 'warning', or 'info'" )
 set(HEMELB_STEERING_LIB basic
 	CACHE STRING "Steering library, choose 'basic' or 'none'" )
 set(DEPENDENCIES_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies"
+	CACHE FILEPATH "Path to find dependency find modules")
+set(DEPENDENCIES_INSTALL_PATH ${DEPENDENCIES_PATH}
 	CACHE FILEPATH "Path to find dependency includes and libraries")
 set(OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
 	
@@ -33,8 +36,8 @@ endif()
 
 #------Dependencies --------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${DEPENDENCIES_PATH}/Modules/")
-list(APPEND CMAKE_INCLUDE_PATH ${DEPENDENCIES_PATH}/include)
-list(APPEND CMAKE_LIBRARY_PATH ${DEPENDENCIES_PATH}/lib)
+list(APPEND CMAKE_INCLUDE_PATH ${DEPENDENCIES_INSTALL_PATH}/include)
+list(APPEND CMAKE_LIBRARY_PATH ${DEPENDENCIES_INSTALL_PATH}/lib)
 
 #--- Set up runtime search path for DLLs -----
 
@@ -118,4 +121,4 @@ if(HEMELB_BUILD_UNITTESTS)
 		${CPPUNIT_LIBRARY})
 	INSTALL(TARGETS unittests_hemelb RUNTIME DESTINATION bin)
 
-endif(HEMELB_BUILD_UNITTESTS)
+endif()
