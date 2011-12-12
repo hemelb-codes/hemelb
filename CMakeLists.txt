@@ -19,7 +19,8 @@ option(HEMELB_BUILD_UNITTESTS "Build the unit-tests" ON)
 option(USE_STREAKLINES "Calculate streakline images" ON)
 option(USE_ALL_WARNINGS_GNU "Show all compiler warnings on development builds (gnu-style-compilers)" ON)
 set(OPTIMISATION "-O4" CACHE STRING "Optimisation level (can be blank or -O1 to -O4)")
-
+	
+find_package(MPI REQUIRED)
 #------- Dependencies -----------
 
 add_subdirectory(dependencies)
