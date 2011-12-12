@@ -32,4 +32,4 @@
 # the number of processors a user has requested.  Using it in submission
 # scripts means that the user only has to specify the number of processors
 # once.
-mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $executable_path/unittests_hemelb -o 'tests.xml'
+mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $executable_path/bin/unittests_hemelb -o 'tests.xml'

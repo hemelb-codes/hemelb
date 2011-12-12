@@ -74,10 +74,12 @@ def install():
 @task
 def test():
 	with prefix(env.run_prefix):
-		name='unittests'
-		execute(job,'unittests',name,nodes=1)
-		get(os.pather.join(env.results_path,name,'tests.xml'),
-			os.path.join(env.remote_files,"%(host)s","tests","%(basename)s"))
+		execute(job,'unittests','unittests',nodes=1)
+
+@task
+def fetch_test_results():
+	get(env.pather.join(env.results_path,name,'tests.xml'),
+		os.path.join(env.remote_files,"%(host)s","tests","%(basename)s"))
 
 @task(alias='regress')
 def regression_test():
@@ -123,9 +125,10 @@ def job(template,name,wall_time='0:1:0',nodes=4,memory='1GB'):
 	job_script=fill_in_template(template_name,name=name,
 		wall_time=wall_time,nodes=nodes,memory=memory,
 		username=env.username,project=env.project,
-		executable_path=env.scripts_path,results=results_directory
+		executable_path=env.install_path,results=results_directory
 		)
 	dest_name=env.pather.join(env.scripts_path,env.pather.basename(job_script))
 	put(job_script,dest_name)
-	run("%s %s")%(env.job_dispatch,dest_name)
+	run("chmod u+x %s"%dest_name)
+	run("%s %s"%(env.job_dispatch,dest_name))
 	
