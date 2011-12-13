@@ -44,7 +44,7 @@ namespace hemelb
             topology::NetworkTopology::Instance()->Init(args, argv, &success);
 
             // Create a four-cube lattice data and a sim config with one inlet and one outlet.
-            latDat = new FourCubeLatticeData();
+            latDat = FourCubeLatticeData::Create();
             simConfig = new OneInOneOutSimConfig();
 
             // use these to initialise the simulations state, LBM parameters and a unit converter.

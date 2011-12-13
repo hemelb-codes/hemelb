@@ -35,7 +35,8 @@ namespace hemelb
       }
     }
 
-    void LBM::WriteConfigParallel(hemelb::lb::Stability const stability, std::string output_file_name) const
+    void LBM::WriteConfigParallel(hemelb::lb::Stability const stability,
+                                  std::string output_file_name) const
     {
       /* This routine writes the flow field on file, using MPIO to coordinate
        * the writing. The format is detailed in io/formats/snapshot.h
@@ -68,7 +69,8 @@ namespace hemelb
       {
         // Write the header according to format detailed in snapshot.h
         char lBuffer[io::formats::snapshot::HeaderLength];
-        io::writers::xdr::XdrMemWriter lWriter = io::writers::xdr::XdrMemWriter(lBuffer, io::formats::snapshot::HeaderLength);
+        io::writers::xdr::XdrMemWriter lWriter =
+            io::writers::xdr::XdrMemWriter(lBuffer, io::formats::snapshot::HeaderLength);
         lWriter << (unsigned int) io::formats::HemeLbMagicNumber
             << (unsigned int) io::formats::snapshot::MagicNumber
             << (unsigned int) io::formats::snapshot::VersionNumber;
@@ -76,9 +78,11 @@ namespace hemelb
         lWriter << stability;
         lWriter << mLatDat->GetVoxelSize();
         lWriter << mLatDat->GetXOrigin() << mLatDat->GetYOrigin() << mLatDat->GetZOrigin();
-        lWriter << (int) siteMins[0] << (int) siteMins[1] << (int) siteMins[2];
-        lWriter << (int) siteMaxes[0] << (int) siteMaxes[1] << (int) siteMaxes[2];
-        lWriter << (int) total_fluid_sites;
+        lWriter << (int) mLatDat->GetGlobalSiteMins().x << (int) mLatDat->GetGlobalSiteMins().y
+            << (int) mLatDat->GetGlobalSiteMins().z;
+        lWriter << (int) mLatDat->GetGlobalSiteMaxes().x << (int) mLatDat->GetGlobalSiteMaxes().y
+            << (int) mLatDat->GetGlobalSiteMaxes().z;
+        lWriter << (int) mLatDat->GetTotalFluidSites();
 
         MPI_File_write(lOutputFile,
                        lBuffer,
@@ -100,7 +104,7 @@ namespace hemelb
       for (proc_t ii = 0; ii < netTop->GetLocalRank(); ii++)
       {
         lLocalSitesInitialOffset += io::formats::snapshot::VoxelRecordLength
-            * netTop->FluidSitesOnEachProcessor[ii];
+            * mLatDat->GetFluidSiteCountOnProc(ii);
       }
 
       MPI_File_set_view(lOutputFile,
@@ -111,10 +115,11 @@ namespace hemelb
                         MPI_INFO_NULL);
 
       site_t lLocalWriteLength = io::formats::snapshot::VoxelRecordLength
-          * netTop->FluidSitesOnEachProcessor[netTop->GetLocalRank()];
+          * mLatDat->GetFluidSiteCountOnProc(netTop->GetLocalRank());
       char * lFluidSiteBuffer = new char[lLocalWriteLength];
-      hemelb::io::writers::xdr::XdrMemWriter lWriter = hemelb::io::writers::xdr::XdrMemWriter(lFluidSiteBuffer,
-                                                                  (unsigned int) lLocalWriteLength);
+      hemelb::io::writers::xdr::XdrMemWriter
+          lWriter = hemelb::io::writers::xdr::XdrMemWriter(lFluidSiteBuffer,
+                                                           (unsigned int) lLocalWriteLength);
 
       /* The following loops scan over every single macrocell (block). If
        * the block is non-empty, it scans the sites within that block. If the
@@ -225,8 +230,10 @@ namespace hemelb
 
                   stress = mUnits->ConvertStressToPhysicalUnits(stress);
 
-                  lWriter << (int) (site_i - siteMins[0]) << (int) (site_j - siteMins[1])
-                      << (int) (site_k - siteMins[2]);
+                  const util::Vector3D<site_t>& siteMins = mLatDat->GetGlobalSiteMins();
+
+                  lWriter << (int) (site_i - siteMins.x) << (int) (site_j - siteMins.y)
+                      << (int) (site_k - siteMins.z);
 
                   lWriter << float(pressure) << float(vx) << float(vy) << float(vz)
                       << float(stress);
