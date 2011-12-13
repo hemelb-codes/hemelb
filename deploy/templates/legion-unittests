@@ -25,7 +25,7 @@
 # 7. Set the working directory to somewhere in your scratch space.  This is
 # a necessary step with the upgraded software stack as compute nodes cannot
 # write to $$HOME.
-#$$ -wd $results
+#$$ -wd $job_results
 
 # 8. Run our MPI job.  $$NSLOTS is an SGE environment variable which is set to
 # the number of processors a user has requested.  Using it in submission
@@ -36,4 +36,4 @@
 $run_prefix
 
 #and run
-mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $executable_path/bin/unittests_hemelb -o 'tests.xml'
+mpirun -machinefile $$TMPDIR/machines -np $$NSLOTS $install_path/bin/unittests_hemelb -o 'tests.xml'

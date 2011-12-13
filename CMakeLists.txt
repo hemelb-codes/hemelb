@@ -50,8 +50,10 @@ ExternalProject_Add(
 	-DUSE_ALL_WARNINGS_GNU=${USE_ALL_WARNINGS_GNU}
 )
 ExternalProject_Get_Property(hemelb install_dir)
-FILE(GLOB results ${install_dir}/bin/*)
-message("Copying ${results} to install location")
-INSTALL(FILES ${results} DESTINATION bin)
+
+INSTALL(FILES ${install_dir}/bin/hemelb DESTINATION bin)
+if (HEMELB_BUILD_UNITTESTS)
+	INSTALL(FILES ${install_dir}/bin/unittests_hemelb DESTINATION bin)
+endif()
 
 add_dependencies(hemelb cppunit parmetis tinyxml)
