@@ -1,0 +1,21 @@
+#!/bin/bash -l
+
+#$$ -S /bin/bash
+
+#$$ -l h_rt=$wall_time
+
+#$$ -l mem=$memory
+
+#$$ -N $name
+
+#$$ -pe openmpi $nodes
+
+#$$ -P $project
+
+#$$ -wd $job_results
+
+cd $job_results
+$run_prefix
+rm -rf results
+cp $job_config_path/* .
+mpirun -np $nodes $install_path/bin/hemelb -in config.xml -i $images -s $snapshots -ss $steering
