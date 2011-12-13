@@ -506,9 +506,6 @@ namespace hemelb
 
       Render(startIteration);
 
-      // Status object for MPI comms.
-      MPI_Status status;
-
       /*
        * We do several iterations.
        *

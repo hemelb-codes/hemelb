@@ -109,14 +109,6 @@ namespace hemelb
                     continue;
                   }
 
-                  // If it's on another rank, make sure that we have a NeighbouringProcessor object
-                  // for it.
-                  VelocitySiteData
-                      * vel_site_data_p = GetVelocitySiteData(latDat,
-                                                              util::Vector3D<site_t>(neighbourI,
-                                                                                     neighbourJ,
-                                                                                     neighbourK));
-
                   if (neighbouringProcessors.count(*neigh_proc_id) == 0)
                   {
                     NeighbouringProcessor newProc(*neigh_proc_id);
@@ -228,8 +220,6 @@ namespace hemelb
                                                       const geometry::LatticeData& latDat,
                                                       util::Vector3D<float> localVelocityField[2][2][2])
       {
-        const proc_t thisRank = topology::NetworkTopology::Instance()->GetLocalRank();
-
         for (int unitGridI = 0; unitGridI <= 1; ++unitGridI)
         {
           site_t neighbourI = location.x + unitGridI;
