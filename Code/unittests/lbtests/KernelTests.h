@@ -34,7 +34,10 @@ namespace hemelb
             // Initialise the LBM parameters.
             lb::kernels::InitParams initParams;
 
-            latDat = new FourCubeLatticeData();
+            bool dummy;
+            topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
+
+            latDat = FourCubeLatticeData::Create();
             initParams.latDat = latDat;
             initParams.siteCount = initParams.latDat->GetLocalFluidSiteCount();
             distribn_t voxelSize = initParams.latDat->GetVoxelSize();

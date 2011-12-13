@@ -67,10 +67,9 @@ namespace hemelb
       }
     }
 
-    void LatticeData::GeometryReader::LoadAndDecompose(GlobalLatticeData* globLatDat,
-                                                       lb::LbmParameters* lbmParams,
-                                                       configuration::SimConfig* simConfig,
-                                                       reporting::Timers &timings)
+    LatticeData::GlobalLatticeData* LatticeData::GeometryReader::LoadAndDecompose(lb::LbmParameters* lbmParams,
+                                                                                  std::string& dataFilePath,
+                                                                                  reporting::Timers &timings)
     {
       timings[hemelb::reporting::Timers::fileRead].Start();
 
@@ -90,11 +89,7 @@ namespace hemelb
       MPI_Info_set(fileInfo, &buffering[0], &bufferingValue[0]);
 
       // Open the file.
-      error = MPI_File_open(MPI_COMM_WORLD,
-                            &simConfig->DataFilePath[0],
-                            MPI_MODE_RDONLY,
-                            fileInfo,
-                            &file);
+      error = MPI_File_open(MPI_COMM_WORLD, &dataFilePath[0], MPI_MODE_RDONLY, fileInfo, &file);
 
       currentCommRank = topology::NetworkTopology::Instance()->GetLocalRank();
       currentCommSize = topology::NetworkTopology::Instance()->GetProcessorCount();
@@ -103,14 +98,13 @@ namespace hemelb
       if (error != 0)
       {
         log::Logger::Log<log::Info, log::OnePerCore>("Unable to open file %s, exiting",
-                                                     simConfig->DataFilePath.c_str());
+                                                     dataFilePath.c_str());
         fflush(0x0);
         exit(0x0);
       }
       else
       {
-        log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s",
-                                                      simConfig->DataFilePath.c_str());
+        log::Logger::Log<log::Debug, log::OnePerCore>("Opened config file %s", dataFilePath.c_str());
       }
       fflush( NULL);
 
@@ -119,35 +113,40 @@ namespace hemelb
       MPI_File_set_view(file, 0, MPI_CHAR, MPI_CHAR, &mode[0], fileInfo);
 
       // Read the file preamble.
+      LatticeData::GlobalLatticeData* globalLattice = new LatticeData::GlobalLatticeData();
+
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file preamble");
-      ReadPreamble(lbmParams, globLatDat);
+      ReadPreamble(lbmParams, globalLattice);
 
       // Read the file header.
       log::Logger::Log<log::Debug, log::OnePerCore>("Reading file header");
 
-      site_t* sitesPerBlock = new site_t[globLatDat->GetBlockCount()];
+      site_t* sitesPerBlock = new site_t[globalLattice->GetBlockCount()];
       unsigned
-      int* bytesPerBlock = new unsigned int[globLatDat->GetBlockCount()];
+      int* bytesPerBlock = new unsigned int[globalLattice->GetBlockCount()];
 
-      ReadHeader(globLatDat->GetBlockCount(), sitesPerBlock, bytesPerBlock);
+      ReadHeader(globalLattice->GetBlockCount(), sitesPerBlock, bytesPerBlock);
 
       // Perform an initial decomposition, of which processor should read each block.
       log::Logger::Log<log::Debug, log::OnePerCore>("Beginning initial decomposition");
 
-      proc_t* procForEachBlock = new proc_t[globLatDat->GetBlockCount()];
+      proc_t* procForEachBlock = new proc_t[globalLattice->GetBlockCount()];
 
       if (!participateInTopology)
       {
-        for (site_t block = 0; block < globLatDat->GetBlockCount(); ++block)
+        for (site_t block = 0; block < globalLattice->GetBlockCount(); ++block)
         {
           procForEachBlock[block] = -1;
         }
       }
       else
       {
-        BlockDecomposition(globLatDat->GetBlockCount(), globLatDat, sitesPerBlock, procForEachBlock);
+        BlockDecomposition(globalLattice->GetBlockCount(),
+                           globalLattice,
+                           sitesPerBlock,
+                           procForEachBlock);
 
-        ValidateProcForEachBlock(procForEachBlock, globLatDat->GetBlockCount());
+        ValidateProcForEachBlock(procForEachBlock, globalLattice->GetBlockCount());
       }
 
       // Perform the initial read-in.
@@ -160,17 +159,21 @@ namespace hemelb
       {
         // Reopen in the file just between the nodes in the topology decomposition. Read in blocks
         // local to this node.
-        MPI_File_open(topologyComm, &simConfig->DataFilePath[0], MPI_MODE_RDONLY, fileInfo, &file);
+        MPI_File_open(topologyComm, &dataFilePath[0], MPI_MODE_RDONLY, fileInfo, &file);
 
         currentCommRank = topologyRank;
         currentCommSize = topologySize;
         currentComm = topologyComm;
 
-        ReadInLocalBlocks(globLatDat, sitesPerBlock, bytesPerBlock, procForEachBlock, topologyRank);
+        ReadInLocalBlocks(globalLattice,
+                          sitesPerBlock,
+                          bytesPerBlock,
+                          procForEachBlock,
+                          topologyRank);
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
-          ValidateGlobLatDat(globLatDat);
+          ValidateGlobLatDat(globalLattice);
         }
       }
 
@@ -182,12 +185,12 @@ namespace hemelb
       if (participateInTopology)
       {
         log::Logger::Log<log::Debug, log::OnePerCore>("Beginning domain decomposition optimisation");
-        OptimiseDomainDecomposition(sitesPerBlock, bytesPerBlock, procForEachBlock, globLatDat);
+        OptimiseDomainDecomposition(sitesPerBlock, bytesPerBlock, procForEachBlock, globalLattice);
         log::Logger::Log<log::Debug, log::OnePerCore>("Ending domain decomposition optimisation");
 
         if (log::Logger::ShouldDisplay<log::Debug>())
         {
-          ValidateGlobLatDat(globLatDat);
+          ValidateGlobLatDat(globalLattice);
         }
 
         MPI_File_close(&file);
@@ -201,6 +204,8 @@ namespace hemelb
       delete[] sitesPerBlock;
       delete[] bytesPerBlock;
       delete[] procForEachBlock;
+
+      return globalLattice;
     }
 
     /**

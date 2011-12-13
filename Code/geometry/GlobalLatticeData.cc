@@ -1,10 +1,55 @@
 #include "geometry/LatticeData.h"
 #include "log/Logger.h"
+#include "topology/NetworkTopology.h"
 
 namespace hemelb
 {
   namespace geometry
   {
+    LatticeData::GlobalLatticeData::GlobalLatticeData()
+    {
+      fluidSitesOnEachProcessor = NULL;
+    }
+
+    LatticeData::GlobalLatticeData::~GlobalLatticeData()
+    {
+      delete[] fluidSitesOnEachProcessor;
+      delete[] Blocks;
+    }
+
+    void LatticeData::GlobalLatticeData::CollectFluidSiteDistribution()
+    {
+      proc_t localRank = topology::NetworkTopology::Instance()->GetLocalRank();
+
+      site_t localFluidSites = 0;
+
+      for (site_t lBlock = 0; lBlock < GetBlockCount(); ++lBlock)
+      {
+        if (Blocks[lBlock].ProcessorRankForEachBlockSite != NULL)
+        {
+          for (site_t lSiteIndex = 0; lSiteIndex < GetSitesPerBlockVolumeUnit(); ++lSiteIndex)
+          {
+            if (Blocks[lBlock].ProcessorRankForEachBlockSite[lSiteIndex] == localRank)
+            {
+              ++localFluidSites;
+            }
+          }
+        }
+      }
+
+      fluidSitesOnEachProcessor
+          = new site_t[topology::NetworkTopology::Instance()->GetProcessorCount()];
+
+      hemelb::log::Logger::Log<hemelb::log::Warning, hemelb::log::Singleton>("Gathering lattice info.");
+      MPI_Allgather(&localFluidSites,
+                    1,
+                    MpiDataType<site_t> (),
+                    fluidSitesOnEachProcessor,
+                    1,
+                    MpiDataType<site_t> (),
+                    MPI_COMM_WORLD);
+    }
+
     void LatticeData::GlobalLatticeData::SetBasicDetails(site_t iBlocksX,
                                                          site_t iBlocksY,
                                                          site_t iBlocksZ,
@@ -112,11 +157,6 @@ namespace hemelb
     bool LatticeData::GlobalLatticeData::IsValidLatticeSite(site_t i, site_t j, site_t k) const
     {
       return i >= 0 && j >= 0 && k >= 0 && i < mSitesX && j < mSitesY && k < mSitesZ;
-    }
-
-    LatticeData::GlobalLatticeData::~GlobalLatticeData()
-    {
-      delete[] Blocks;
     }
 
     // Returns the type of collision/streaming update for the fluid site
@@ -253,7 +293,8 @@ namespace hemelb
           + localSiteK];
     }
 
-    void LatticeData::GlobalLatticeData::ReadBlock(const site_t block, io::writers::xdr::XdrReader* reader)
+    void LatticeData::GlobalLatticeData::ReadBlock(const site_t block,
+                                                   io::writers::xdr::XdrReader* reader)
     {
       if (Blocks[block].site_data == NULL)
       {
@@ -271,16 +312,10 @@ namespace hemelb
 
       for (site_t localSiteI = 0; localSiteI < GetBlockSize(); localSiteI++)
       {
-        site_t globalSiteI = GetSiteCoord(block, localSiteI);
-
         for (site_t localSiteJ = 0; localSiteJ < GetBlockSize(); localSiteJ++)
         {
-          site_t globalSiteJ = GetSiteCoord(block, localSiteJ);
-
           for (site_t localSiteK = 0; localSiteK < GetBlockSize(); localSiteK++)
           {
-            site_t globalSiteK = GetSiteCoord(block, localSiteK);
-
             ++localSiteIndex;
 
             unsigned int *site_type = &Blocks[block].site_data[localSiteIndex];
@@ -366,6 +401,100 @@ namespace hemelb
           } // kk
         } // jj
       } // ii
+    }
+
+    void LatticeData::GlobalLatticeData::GetThisRankSiteData(unsigned int*& bThisRankSiteData)
+    {
+      // Array of booleans to store whether any sites on a block are fluid
+      // sites residing on this rank.
+      bool *lBlockIsOnThisRank = new bool[GetBlockCount()];
+      // Initialise to false.
+      for (site_t n = 0; n < GetBlockCount(); n++)
+      {
+        lBlockIsOnThisRank[n] = false;
+      }
+
+      int lSiteIndexOnProc = 0;
+
+      for (site_t lBlockNumber = 0; lBlockNumber < GetBlockCount(); lBlockNumber++)
+      {
+        BlockData* lCurrentDataBlock = &Blocks[lBlockNumber];
+
+        // If we are in a block of solids, move to the next block.
+        if (lCurrentDataBlock->site_data == NULL)
+        {
+          continue;
+        }
+
+        // lCurrentDataBlock.site_data is set to the fluid site identifier on this rank or (1U << 31U) if a site is solid
+        // or not on this rank.  site_data is indexed by fluid site identifier and set to the site_data.
+        for (site_t lSiteIndexWithinBlock = 0; lSiteIndexWithinBlock < GetSitesPerBlockVolumeUnit(); lSiteIndexWithinBlock++)
+        {
+          if (topology::NetworkTopology::Instance()->GetLocalRank()
+              == lCurrentDataBlock->ProcessorRankForEachBlockSite[lSiteIndexWithinBlock])
+          {
+            // If the current site is non-solid, copy the site data into the array for
+            // this rank (in the whole-processor location), then set the site data
+            // for this site within the current block to be the site index over the whole
+            // processor.
+            if ( (lCurrentDataBlock->site_data[lSiteIndexWithinBlock] & SITE_TYPE_MASK)
+                != geometry::LatticeData::SOLID_TYPE)
+            {
+              bThisRankSiteData[lSiteIndexOnProc]
+                  = lCurrentDataBlock->site_data[lSiteIndexWithinBlock];
+              lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = lSiteIndexOnProc;
+              ++lSiteIndexOnProc;
+            }
+            else
+            {
+              // If this is a solid, set the site data on the current block to
+              // some massive value.
+              lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = BIG_NUMBER3;
+            }
+            // Set the array to notify that the current block has sites on this
+            // rank.
+            lBlockIsOnThisRank[lBlockNumber] = true;
+          }
+          // If this site is not on the current processor, set its whole processor
+          // index within the per-block store to a nonsense value.
+          else
+          {
+            lCurrentDataBlock->site_data[lSiteIndexWithinBlock] = BIG_NUMBER3;
+          }
+        }
+      }
+
+      // If we are in a block of solids, we set map_block[n].site_data to NULL.
+      for (site_t n = 0; n < GetBlockCount(); n++)
+      {
+        if (lBlockIsOnThisRank[n])
+        {
+          continue;
+        }
+
+        if (Blocks[n].site_data != NULL)
+        {
+          delete[] Blocks[n].site_data;
+          Blocks[n].site_data = NULL;
+        }
+
+        if (Blocks[n].wall_data != NULL)
+        {
+          delete[] Blocks[n].wall_data;
+          Blocks[n].wall_data = NULL;
+        }
+      }
+      delete[] lBlockIsOnThisRank;
+    }
+
+    const site_t* LatticeData::GlobalLatticeData::GetFluidSiteCountsOnEachProc() const
+    {
+      return fluidSitesOnEachProcessor;
+    }
+
+    site_t LatticeData::GlobalLatticeData::GetFluidSiteCountOnProc(proc_t proc) const
+    {
+      return fluidSitesOnEachProcessor[proc];
     }
 
   }
