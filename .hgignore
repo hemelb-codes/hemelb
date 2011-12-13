@@ -6,8 +6,10 @@ syntax: glob
 .metadata/*
 build/*
 Code/build/*
-remote_files/*
+results/*
 dependencies/build/*
+deploy/.jobscripts
+deploy/machines_user.json
 Doc/*
 CMakeFiles/*
 CMakeCache.txt
