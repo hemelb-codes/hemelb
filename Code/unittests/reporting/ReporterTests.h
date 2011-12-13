@@ -23,12 +23,11 @@ namespace hemelb
 
       class ReporterTests : public CppUnit::TestFixture
       {
-          CPPUNIT_TEST_SUITE(ReporterTests);
-          CPPUNIT_TEST(TestInit);
-          CPPUNIT_TEST(TestImage);
-          CPPUNIT_TEST(TestSnapshot);
-          CPPUNIT_TEST(TestMainReport);
-          CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST_SUITE( ReporterTests);
+          CPPUNIT_TEST( TestInit);
+          CPPUNIT_TEST( TestImage);
+          CPPUNIT_TEST( TestSnapshot);
+          CPPUNIT_TEST( TestMainReport);CPPUNIT_TEST_SUITE_END();
         public:
           void setUp()
           {
@@ -36,7 +35,7 @@ namespace hemelb
             realTimers = new reporting::Timers();
             state = new hemelb::lb::SimulationState(500, 2);
             net = new net::Net();
-            latticeData = new FourCubeLatticeData();
+            latticeData = FourCubeLatticeData::Create(5); // The 5 here is to match the topology size in the MPICommsMock
             lbtests::LbTestsHelper::InitialiseAnisotropicTestData(latticeData);
             latticeData->SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             incompChecker = new IncompressibilityCheckerMock(latticeData,
@@ -46,6 +45,7 @@ namespace hemelb
                                                              10.0);
             reporter = new ReporterMock("mock_path",
                                         "exampleinputfile",
+                                        latticeData->GetFluidSiteCountsOnEachProc(),
                                         1234,
                                         *mockTimers,
                                         *state,
@@ -117,7 +117,8 @@ namespace hemelb
             for (int j = 4; j >= 0; j--)
             {
               std::stringstream expectation;
-              expectation << "rank: " << j << ", fluid sites: " << j * 1000 << std::flush;
+              expectation << "rank: " << j << ", fluid sites: "
+                  << latticeData->GetFluidSiteCountsOnEachProc()[j] << std::flush;
               CheckLastMessageContains(expectation.str());
             }
             CheckLastMessageContains("Sub-domains info:");
@@ -135,8 +136,8 @@ namespace hemelb
 
         private:
 
-          void CheckRepeatedCallIncrementsCounter(std::mem_fun_t<void, ReporterMock> method
-                                                  ,const std::string &message)
+          void CheckRepeatedCallIncrementsCounter(std::mem_fun_t<void, ReporterMock> method,
+                                                  const std::string &message)
           {
             for (int times = 0; times < 5; times++)
             {
@@ -168,14 +169,14 @@ namespace hemelb
             {
               normalisation = 3.0;
             }
-            if (row == Timers::lb || row == Timers::mpiSend || row == Timers::mpiWait
-                || row == Timers::monitoring)
+            if (row == Timers::lb || row == Timers::mpiSend || row == Timers::mpiWait || row
+                == Timers::monitoring)
             {
               normalisation = 2.0;
             }
-            expectation << timerNames[row] << "\t\t" << row * 10.0 << "\t"
-                << row * 15.0 / normalisation << "\t" << row * 10.0 / normalisation << "\t"
-                << row * 5.0 / normalisation << std::flush;
+            expectation << timerNames[row] << "\t\t" << row * 10.0 << "\t" << row * 15.0
+                / normalisation << "\t" << row * 10.0 / normalisation << "\t" << row * 5.0
+                / normalisation << std::flush;
             CheckLastMessageContains(expectation.str());
           }
 
@@ -193,7 +194,7 @@ namespace hemelb
 
       };
 
-      CPPUNIT_TEST_SUITE_REGISTRATION(ReporterTests);
+      CPPUNIT_TEST_SUITE_REGISTRATION( ReporterTests);
 
     }
   }

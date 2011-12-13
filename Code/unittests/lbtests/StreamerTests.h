@@ -38,7 +38,7 @@ namespace hemelb
             bool success;
             topology::NetworkTopology::Instance()->Init(args, argv, &success);
 
-            latDat = new FourCubeLatticeData();
+            latDat = FourCubeLatticeData::Create();
             simConfig = new OneInOneOutSimConfig();
             simState = new lb::SimulationState(simConfig->StepsPerCycle, simConfig->NumCycles);
             lbmParams = new lb::LbmParameters(PULSATILE_PERIOD_s

@@ -3,14 +3,10 @@
 
 #include <vector>
 #include <map>
+#include <cstdlib>
 
 #include "constants.h"
 #include "mpiInclude.h"
-#include "D3Q15.h"
-#include "configuration/SimConfig.h"
-
-#include "geometry/LatticeData.h"
-#include "topology/NetworkTopology.h"
 
 namespace hemelb
 {
@@ -24,8 +20,6 @@ namespace hemelb
         Net(MPI_Comm commObject);
 
         ~Net();
-
-        site_t* Initialise(geometry::LatticeData* bLatDat);
 
         void Receive();
         void Send();
@@ -78,14 +72,6 @@ namespace hemelb
         }
 
       private:
-
-        void GetThisRankSiteData(const geometry::LatticeData* bLatDat,
-                                 unsigned int *& bThisRankSiteData);
-        void CountCollisionTypes(geometry::LatticeData* bLatDat,
-                                 const unsigned int * lThisRankSiteData);
-
-        void InitialisePointToPointComms(site_t** &lSharedFLocationForEachProc);
-
         /**
          * Struct representing all that's needed to successfully communicate with another processor.
          */
