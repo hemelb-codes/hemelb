@@ -115,34 +115,38 @@ def patch(args=""):
 def with_job(name):
 	env.job_results=env.pather.join(env.results_path,name)
 	env.job_results_local=os.path.join(env.local_results,name)
-	env.job_config_path=env.pather.join(env.config_path,name)
-	env.job_config_path_local=os.path.join(env.local_configs,name)
-	
-	env.job_config_contents=env.pather.join(env.job_config_path,'*')
 	env.job_results_contents=env.pather.join(env.job_results,'*')
 	env.job_results_contents_local=os.path.join(env.job_results_local,'*')
+
+
+def with_config(name):
+	env.job_config_path=env.pather.join(env.config_path,name)
+	env.job_config_path_local=os.path.join(env.local_configs,name)
+	env.job_config_contents=env.pather.join(env.job_config_path,'*')
 	env.job_config_contents_local=os.path.join(env.job_config_path_local,'*')
 	
 
 @task
-def fetch_configs(name=''):
-	with_job(name)
-	get(env.job_config_contents,env.job_config_path_local)
+def fetch_configs(config=''):
+	with_config(config)
+	local(template("rsync -pthrvz $host:$job_config_path/ $job_config_path_local"))
 
 @task
-def put_configs(name=''):
-	with_job(name)
-	put(env.job_config_contents_local,env.job_config_path)
+def put_configs(config=''):
+	with_config(config)
+	run(template("mkdir -p $job_config_path"))
+	rsync_project(local_dir=env.job_config_path_local+'/',remote_dir=env.job_config_path)
 
 @task
 def put_results(name=''):
 	with_job(name)
-	put(env.job_results_contents_local,env.job_results)
+	run(template("mkdir -p $job_results"))
+	rsync_project(local_dir=env.job_results_local+'/',remote_dir=env.job_results)
 	
 @task
 def fetch_results(name=''):
 	with_job(name)
-	get(env.job_results_contents,env.job_results_local)
+	local(template("rsync -pthrvz $host:$job_results/ $job_results_local"))
 
 @task
 def clear_results(name=''):
@@ -151,8 +155,16 @@ def clear_results(name=''):
 
 @task
 def test():
-	with prefix(env.run_prefix):
-		execute(job,script='unittests',name='unittests-$build_number-$machine_name',nodes=1)
+	execute(job,script='unittests',name='unittests-$build_number-$machine_name',nodes=1)
+		
+@task
+def hemelb(**args):
+	options=dict(script='hemelb',
+		name='$config-$build_number-$machine_name-$nodes',
+		nodes=4,images=10, snapshots=10, steering=1111)
+	options.update(args)
+	execute(put_configs,args['config'])
+	execute(job,**options)
 
 @task(alias='regress')
 def regression_test():
