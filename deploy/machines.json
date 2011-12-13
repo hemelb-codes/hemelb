@@ -1,0 +1,41 @@
+{
+	"hg":"ssh://hg@entropy.chem.ucl.ac.uk",
+	"repository":"hemelb",
+	"modules":[],
+	"build_prefix_commands":[],
+	"run_prefix_commands":[],
+	"remote_path_template":"/home/$username/FabricHemeLb",
+	"cmake_default_options":{
+		"CMAKE_BUILD_TYPE":"Release",
+	   "CMAKE_CXX_FLAGS_RELEASE":"-O4"
+	},
+	"config_path_template":"$remote_path/config_files",
+	"legion":{
+		"job_dispatch":"qsub",
+		"remote":"legion.rc.ucl.ac.uk",
+		"tools_build":"lib.linux-x86_64-2.6",
+		"modules":["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake"],
+		"results_path_template":"/home/$username/Scratch/FabricHemeLb/results",
+		"config_path_template":"/home/$username/Scratch/FabricHemeLb/config_files"
+	},
+	"planck":{
+		"remote":"planck.chem.ucl.ac.uk",
+		"tools_build":"lib.linux-x86_64-2.6",
+		"results_path_template":"/home/$username/FabricHemeLb/results",
+		"run_prefix_commands":["export set TMP=/tmp"]
+	},
+	"entropy":{
+		"remote":"entropy.chem.ucl.ac.uk",
+		"tools_build":"lib.linux-x86_64-2.6",
+		"results_path_template":"/store3/blood/$username/FabricHemeLb/results",
+		"config_path_template":"/store3/blood/$username/FabricHemeLb/config_files"
+	},
+	"hector":{
+		"cmake_options":{
+			"USE_ALL_WARNINGS_GNU":"OFF",
+			"CMAKE_CXX_COMPILER":"CC",
+			"CMAKE_C_COMPILER":"cc",
+			"OPTIMISATION":"-O3"
+		}
+	}
+}
