@@ -37,6 +37,10 @@ def legion():
 def entropy():
 	execute(machine,'entropy')
 
+@task 
+def hector():
+	execute(machine,'hector')
+
 def complete_environment():
 	env.hosts=['%s@%s'%(env.username,env.remote)]
 	env.results_path=template(env.results_path_template)
