@@ -39,7 +39,7 @@ def entropy():
 
 def complete_environment():
 	env.hosts=['%s@%s'%(env.username,env.remote)]
-	
+	env.host=env.hosts[0]
 	env.results_path=template(env.results_path_template)
 	env.remote_path=template(env.remote_path_template)
 	env.config_path=template(env.config_path_template)
