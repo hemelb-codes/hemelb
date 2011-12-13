@@ -4,17 +4,16 @@ from fabric.contrib.project import *
 
 @task
 def clone():
-	run("mkdir -p "+env.remote_path)
+	run(template("mkdir -p $remote_path"))
 	with cd(env.remote_path):
-		run("rm -rf %s"%env.repository)
-		run("hg clone %(hg)s/%(repository)s"%{'hg':env.hg,'repository':env.repository})
-	run("mkdir -p %s"%env.build_path)
-	run("mkdir -p %s"%env.scripts_path)
-	run("mkdir -p %s"%env.install_path)
+		run(template("rm -rf $repository"))
+		run(template("hg clone $hg/$repository"))
 
 @task(alias='cold')
 def deploy_cold():
 	execute(clone)
+	execute(clear_build)
+	execute(prepare_paths)
 	execute(send_distributions)
 	execute(configure)
 	execute(build)
@@ -35,10 +34,19 @@ def update():
 		run("hg pull")
 		run("hg update")
 
+@task 
+def prepare_paths():
+	run(template("mkdir -p $scripts_path"))
+	run(template("mkdir -p $results_path"))
+	run(template("mkdir -p $config_path"))
+	
 @task
 def clear_build():
-	run("rm -rf %s"%env.build_path)
-	run("mkdir -p %s"%env.build_path)
+	run(template("rm -rf $build_path"))
+	run(template("rm -rf $install_path"))
+	run(template("mkdir -p $build_path"))
+	run(template("mkdir -p $install_path"))
+	
 
 @task
 def clean():
@@ -54,9 +62,10 @@ def build_python_tools():
 def configure():
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
-			run("cmake %s -DCMAKE_INSTALL_PREFIX=%s -DDEPENDENCIES_INSTALL_PATH=%s %s" 
-			% (env.repository_path, env.install_path, env.install_path, env.cmake_flags)
-			)
+			run(template(
+			"cmake $repository_path -DCMAKE_INSTALL_PREFIX=$install_path "+
+			"-DDEPENDENCIES_INSTALL_PATH=$install_path $cmake_flags"
+			))
 
 @task
 def build(verbose=False):
@@ -72,20 +81,7 @@ def install():
 	with cd(env.build_path):
 		with prefix(env.build_prefix):
 			run("make install")
-			run("chmod u+x %s/bin/unittests_hemelb %s/bin/hemelb"%(env.install_path, env.install_path))
-
-@task
-def test():
-	with prefix(env.run_prefix):
-		execute(job,'unittests','unittests_%s'%env.build_number,nodes=1)
-
-@task(alias='regress')
-def regression_test():
-	execute(job,'regression','regression_%s'%env.build_number)
-		
-@task
-def clear_results(name=''):
-	run('rm -rf %s'%env.pather.join(env.results_path,name,'*'))		
+			run(template("chmod u+x $install_path/bin/unittests_hemelb $install_path/bin/hemelb"))
 		
 @task
 def revert(args="--all"):
@@ -116,39 +112,67 @@ def patch(args=""):
 	with cd(env.repository_path):
 		run("patch -p1 < fabric.diff")
 
-@task
-def fetch_configs(name):
-	get(env.pather.join(env.config_path,name,'*'),
-		os.path.join(env.local_results,name))
+def with_job(name):
+	env.job_results=env.pather.join(env.results_path,name)
+	env.job_results_local=os.path.join(env.local_results,name)
+	env.job_config_path=env.pather.join(env.config_path,name)
+	env.job_config_path_local=os.path.join(env.local_configs,name)
+	
+	env.job_config_contents=env.pather.join(env.job_config_path,'*')
+	env.job_results_contents=env.pather.join(env.job_results,'*')
+	env.job_results_contents_local=os.path.join(env.job_results_local,'*')
+	env.job_config_contents_local=os.path.join(env.job_config_path_local,'*')
+	
 
 @task
-def put_configs(name):
-	put(os.path.join(env.local_configs,name,'*'),env.pather.join(env.config_path,name))
+def fetch_configs(name=''):
+	with_job(name)
+	get(env.job_config_contents,env.job_config_path_local)
 
 @task
-def put_results(name):
-	put(os.path.join(env.local_results,name,'*'),env.pather.join(env.results_path,name))
+def put_configs(name=''):
+	with_job(name)
+	put(env.job_config_contents_local,env.job_config_path)
+
+@task
+def put_results(name=''):
+	with_job(name)
+	put(env.job_results_contents_local,env.job_results)
 	
 @task
 def fetch_results(name=''):
-	get(env.pather.join(env.results_path,name,'*'),
-		os.path.join(env.local_results,name))
+	with_job(name)
+	get(env.job_results_contents,env.job_results_local)
 
 @task
-def job(template,name=None,wall_time='0:1:0',nodes=4,memory='1G'):
-	name=name or template
-	template_name="%s_%s"%(env.machine_name,template)
-	results_directory=env.pather.join(env.results_path,name)
-	run("mkdir -p %s"%results_directory)
-	job_script=fill_in_template(template_name,name=name,
-		wall_time=wall_time,nodes=nodes,memory=memory,
-		username=env.username,project=env.project,
-		executable_path=env.install_path,results=results_directory
-		)
-	dest_name=env.pather.join(env.scripts_path,env.pather.basename(job_script))
-	put(job_script,dest_name)
-	run("cp %s %s"%(dest_name,results_directory))
-	run("cp %s %s"%(env.build_cache,results_directory))
-	run("chmod u+x %s"%dest_name)
-	run("%s %s"%(env.job_dispatch,dest_name))
+def clear_results(name=''):
+	with_job(name)
+	run(template('rm -rf $job_results_contents'))		
+
+@task
+def test():
+	with prefix(env.run_prefix):
+		execute(job,script='unittests',name='unittests-$build_number-$machine_name',nodes=1)
+
+@task(alias='regress')
+def regression_test():
+	execute(job,script='regression',name='regression-$build_number-$machine_name')
+
+@task
+def job(**args):
+	env.update(name=args['script'],wall_time='0:1:0',nodes=4,memory='1G') #defaults
+	env.update(**args)
+	env.update(name=template(env.name))
+	with_job(env.name)
+	
+	script_name=template("$machine_name-$script")
+	env.job_script=script_template(script_name)
+	env.dest_name=env.pather.join(env.scripts_path,env.pather.basename(env.job_script))
+	put(env.job_script,env.dest_name)
+	
+	run(template("mkdir -p $job_results"))
+	run(template("cp $dest_name $job_results"))
+	run(template("cp $build_cache $job_results"))
+	run(template("chmod u+x $dest_name"))
+	run(template("$job_dispatch $dest_name"))
 	
