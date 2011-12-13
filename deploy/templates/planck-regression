@@ -1,5 +1,5 @@
 cd $regression_test_path
-$python_prefix
+$run_prefix
 export set HEMELB_INSTALL_DIR=$install_path/bin
 mv results/* $results
 ./diffTest.sh

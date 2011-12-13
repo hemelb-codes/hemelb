@@ -3,7 +3,7 @@ import os
 import subprocess
 import posixpath
 import json
-from string import Template
+from templates import *
 
 
 env.localroot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,9 +39,10 @@ def entropy():
 
 def complete_environment():
 	env.hosts=['%s@%s'%(env.username,env.remote)]
-	env.results_path=Template(env.results_path_template).substitute(env)
-	env.remote_path=Template(env.remote_path_template).substitute(env)
-	env.config_path=Template(env.config_path_template).substitute(env)
+	
+	env.results_path=template(env.results_path_template)
+	env.remote_path=template(env.remote_path_template)
+	env.config_path=template(env.config_path_template)
 	env.repository_path=env.pather.join(env.remote_path,env.repository)
 	env.tools_path=env.pather.join(env.repository_path,"Tools")
 	env.regression_test_path=env.pather.join(env.repository_path,"RegressionTests","diffTest")
@@ -49,13 +50,17 @@ def complete_environment():
 	env.build_path=env.pather.join(env.remote_path,'build')
 	env.install_path=env.pather.join(env.remote_path,'install')
 	env.scripts_path=env.pather.join(env.remote_path,'scripts')
+	
 	env.cmake_total_options=env.cmake_default_options.copy()
 	env.cmake_total_options.update(env.cmake_options)
 	env.cmake_flags=' '.join(["-D%s=%s"%option for option in env.cmake_total_options.iteritems()])
+	
 	module_commands=["module %s"%module for module in env.modules]
 	env.build_prefix=" && ".join(module_commands+env.build_prefix_commands) or 'echo Building...'
+	
+	env.run_prefix_commands.append(template("export PYTHONPATH=$$PYTHONPATH:$tools_build_path"))
 	env.run_prefix=" && ".join(module_commands+env.run_prefix_commands) or 'echo Running...'
-	env.python_prefix="export PYTHONPATH=$PYTHONPATH:%s"%env.pather.join(env.tools_build_path)
+	
 	env.build_number=subprocess.check_output(['hg','id','-i','-rtip','%s/%s'%(env.hg,env.repository)]).strip()
 	#env.build_number=run("hg id -i -r tip")
 	env.build_cache=env.pather.join(env.build_path,'CMakeCache.txt')

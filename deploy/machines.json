@@ -15,7 +15,8 @@
 		"remote":"legion.rc.ucl.ac.uk",
 		"tools_build":"lib.linux-x86_64-2.6",
 		"modules":["remove ofed/qlogic/intel/64/1.2.7", "add ofed/openmpi/gcc/64/1.4.1", "load cmake"],
-		"results_path_template":"/home/$username/Scratch/FabricHemeLb/results"
+		"results_path_template":"/home/$username/Scratch/FabricHemeLb/results",
+		"config_path_template":"/home/$username/Scratch/FabricHemeLb/config_files"
 	},
 	"planck":{
 		"remote":"planck.chem.ucl.ac.uk",
@@ -25,8 +26,8 @@
 	},
 	"entropy":{
 		"remote":"entropy.ucl.ac.uk",
-		"results_path_template":"/store3/blood/Fabric/results",
-		"config_path_template":"/store3/blood/Fabric/config_files"
+		"results_path_template":"/store3/blood/FabricHemeLb/results",
+		"config_path_template":"/store3/blood/FabricHemeLb/config_files"
 	},
 	"hector":{
 		"cmake_options":{
