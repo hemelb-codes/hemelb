@@ -46,7 +46,10 @@ namespace hemelb
             net::Net net;
             lb::SimulationState simulationState(1000, 1);
 
-            FourCubeLatticeData latticeData;
+            bool dummy;
+            topology::NetworkTopology::Instance()->Init(0, NULL, &dummy);
+
+            FourCubeLatticeData latticeData = *(FourCubeLatticeData::Create());
             LbTestsHelper::InitialiseAnisotropicTestData(&latticeData);
             latticeData.SwapOldAndNew(); //Needed since InitialiseAnisotropicTestData only initialises FOld
             hemelb::reporting::Timers timings;
